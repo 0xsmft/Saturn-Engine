@@ -35,6 +35,23 @@
 
 namespace Saturn {
 
+	/*
+	* 	"/NOMSG",
+	"/SRC",
+	"/OUT",
+	"/MT",
+	"/VERBOSE"
+	*/
+
+	enum class ApplicationArguments
+	{
+		NoStartupMessage,
+		SourceFile,
+		OutputFile,
+		MultiThreaded,
+		VerboseLogging
+	};
+
 	class HeaderToolApplication
 	{
 	public:
@@ -42,7 +59,6 @@ namespace Saturn {
 		~HeaderToolApplication();
 
 		bool ValidateArgs();
-
 		void Run();
 
 	private:

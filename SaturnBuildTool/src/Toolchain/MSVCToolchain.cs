@@ -18,8 +18,8 @@ namespace SaturnBuildTool
             if( RunHeaderTool ) 
             {
                 // Add to queue
-                HeaderTool.Instance.GenerateHeader(InputFile);
-                HeaderTool.Instance.GenerateSource(InputFile);
+                //HeaderTool.Instance.GenerateHeader(InputFile);
+                //HeaderTool.Instance.GenerateSource(InputFile);
             }
 
             int result = -1;

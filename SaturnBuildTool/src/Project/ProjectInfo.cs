@@ -50,6 +50,9 @@ namespace SaturnBuildTool
         // The current "*.Build.cs" file path.
         public string BuildRuleFile { get; set; }
 
+        // Path to header tool exe
+        public string HeaderToolExePath { get; set; }
+
         // Setup the ProjectInfo
         // Args:
         // 0: The Action, BUILD, REBULD, CLEAN. TODO
@@ -105,6 +108,28 @@ namespace SaturnBuildTool
             StringToConfigKind();
 
             FindBuildRuleFile();
+
+            // Find Header tool location
+            string saturnLocation = Environment.GetEnvironmentVariable( "SATURN_DIR" );
+            switch( CurrentConfigKind ) 
+            {
+                case ConfigKind.Debug:
+                    {
+                       HeaderToolExePath = saturnLocation + "\\bin\\Debug-windows-x86_64\\SaturnHeaderTool\\SaturnHeaderTool.exe";
+                    } break;
+
+                case ConfigKind.Release:
+                    {
+                        HeaderToolExePath = Path.Combine(saturnLocation, "\\bin\\Release-windows-x86_64\\SaturnHeaderTool\\SaturnHeaderTool.exe");
+                    }
+                    break;
+
+                case ConfigKind.Dist:
+                    {
+                        HeaderToolExePath = Path.Combine(saturnLocation, "\\bin\\Dist-windows-x86_64\\SaturnHeaderTool\\SaturnHeaderTool.exe");
+                    }
+                    break;
+            }
         }
 
         private void StringToConfigKind() 

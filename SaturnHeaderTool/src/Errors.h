@@ -26,102 +26,44 @@
 *********************************************************************************************
 */
 
-#include "HeaderToolApplication.h"
+#pragma once
 
-#include <thread>
+#include <map>
 #include <string>
-#include <vector>
-
-static std::vector<std::string> s_ArgumentsMap 
-{
-	"/NOMSG",
-	"/SRC",
-	"/OUT",
-	"/MT",
-	"/VERBOSE"
-};
 
 namespace Saturn {
 
-	HeaderToolApplication::HeaderToolApplication( std::span<char*> args )
-		: m_Args( args )
+	enum class HeaderToolError : int
 	{
-		ValidateArgs();
-	}
+		/* Code Generation Errors */
+		CG001,
+		CG002,
+		CG003,
 
-	HeaderToolApplication::~HeaderToolApplication()
+		/* Header tool errors  */
+		TR001A,
+		TR000, /* internal error */
+	};
+
+	enum class HeaderToolWarning
 	{
-	}
+		CG001H,
+		CG002A
+	};
 
-	bool HeaderToolApplication::ValidateArgs()
+	static std::map<HeaderToolError, std::string> s_ErrorsMaps 
 	{
-		if( m_Args.size() < 3 ) return false;
+		{ HeaderToolError::CG001,  ":error (CG001) | No SCLASS macro was found in header file! Valid usage may follow: SCLASS(<args>)" },
+		{ HeaderToolError::CG002,  ":error (CG002) | GENERATED_BODY macro was found in header file! Valid usage may follow: GENERATED_BODY()" },
+		{ HeaderToolError::CG003,  ":error (CG003) | Expected variable definition after SPROPERTY macro." },
+		{ HeaderToolError::TR001A, ":error (TR001A) | Code generation terminated." },
+		{ HeaderToolError::TR000,  ":error (TR000) | Internal Error." },
+	};
 
-		std::map<std::string, std::string> ParsedMap;
-		
-		// Skip program path arg
-		for( size_t i = 0; i < m_Args.size(); i++ )
-		{
-			std::string arg = m_Args[ i ];
-
-			if( arg.starts_with( "/" ) )
-			{
-				// Now, look for the equal sign
-				auto equalPos = arg.find( "=" );
-
-				if( equalPos != std::string::npos )
-				{
-					std::string key = arg.substr( 0, equalPos );
-					std::string value = arg.substr( equalPos + 1 );
-
-					//std::transform( key.begin(), key.end(), key.begin(), std::toupper );
-					ParsedMap[ key ] = value;
-				}
-				else // Flag arg
-				{
-					ParsedMap[ arg ] = "true";
-				}
-			}
-		}
-		
-		{
-			auto itr = ParsedMap.find( "/OUT" );
-			
-			if( itr == ParsedMap.end() ) return false;
-		
-			std::string path = itr->second;
-			m_OutputPath = path;
-		}
-
-		{
-			auto itr = ParsedMap.find( "/SRC" );
-
-			if( itr == ParsedMap.end() ) return false;
-
-			std::string path = itr->second;
-			m_SourcePath = path;
-		}
-
-		m_HeaderTool.SetWorkingDir( m_OutputPath );
-
-		return std::filesystem::exists( m_OutputPath ) && std::filesystem::exists( m_SourcePath );
-	}
-
-	void HeaderToolApplication::Run()
+	static std::map<HeaderToolWarning, std::string> s_WarningMaps
 	{
-		std::vector<std::filesystem::path> headerFiles;
+		{ HeaderToolWarning::CG001H,  ":warning (CG001H) | Unknown SCLASS argument! Argument omitted." },
+		{ HeaderToolWarning::CG002A,  ":warning (CG002A) | No arguments are allowed in the GENERATED_BODY macro, arguments omitted." },
+	};
 
-		// Search source path for all header files.
-		for( const auto& rEntry : std::filesystem::recursive_directory_iterator( m_SourcePath ) )
-		{
-			if( rEntry.is_directory() ) continue;
-
-			auto& rPath = rEntry.path();
-			if( rPath.extension() == ".h" || rPath.extension() == ".hpp" )
-				headerFiles.push_back( rPath );
-		}
-
-		m_HeaderTool.SubmitWorkList( headerFiles );
-		m_HeaderTool.StartGeneration();
-	}
 }

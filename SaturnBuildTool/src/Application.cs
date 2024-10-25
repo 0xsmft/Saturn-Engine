@@ -268,6 +268,11 @@ namespace SaturnBuildTool
             }
         }
 
+        private void ExecuteHeaderTool() 
+        {
+            HeaderToolExt.RunHeaderTool();
+        }
+
         private void ActionBuild() 
         {
             Stopwatch time = Stopwatch.StartNew();
@@ -340,6 +345,7 @@ namespace SaturnBuildTool
                 case ActionType.Build:
                 case ActionType.Rebuild:
                     {
+                        ExecuteHeaderTool();
                         ActionBuild();
                     }
                     break;

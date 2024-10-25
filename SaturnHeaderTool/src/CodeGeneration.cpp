@@ -97,8 +97,60 @@ namespace Saturn {
 		return {};
 	}
 
-	static SPropertyType StringToSPropertyType( const std::string& rStr ) { return SPropertyType::Unknown; }
-	static std::string SPropertyTypeToString( SPropertyType type ) { return "Saturn::SPropertyType::Unknown"; }
+	static SPropertyType StringToSPropertyType( const std::string& str )
+	{
+		if( str == "char" ) return SPropertyType::Char;
+		else if( str == "float" ) return SPropertyType::Float;
+		else if( str == "int" ) return SPropertyType::Int;
+		else if( str == "double" ) return SPropertyType::Double;
+		else if( str == "uint8_t" ) return SPropertyType::Uint8;
+		else if( str == "uint16_t" ) return SPropertyType::Uint16;
+		else if( str == "uint32_t" ) return SPropertyType::Uint32;
+		else if( str == "uint64_t" ) return SPropertyType::Uint64;
+		else if( str == "int8_t" ) return SPropertyType::Int8;
+		else if( str == "int16_t" ) return SPropertyType::Int16;
+		else if( str == "int32_t" ) return SPropertyType::Int32;
+		else if( str == "int64_t" ) return SPropertyType::Int64;
+		else if( str == "glm::vec2" ) return SPropertyType::Vector2;
+		else if( str == "glm::vec3" ) return SPropertyType::Vector3;
+		else if( str == "glm::vec4" ) return SPropertyType::Vector4;
+		else if( str == "std::string" ) return SPropertyType::String;
+		else if( str == "Saturn::SPropertyType::Object" ) return SPropertyType::Object;
+		else if( str == "Saturn::AssetID" ) return SPropertyType::AssetHandle;
+		else if( str == "Saturn::SPropertyType::Class" ) return SPropertyType::Class;
+		else /*if( str == "Saturn::SPropertyType::Unknown" )*/ return SPropertyType::Unknown;
+	}
+
+	static std::string SPropertyTypeToString( SPropertyType type )
+	{
+		switch( type )
+		{
+			case SPropertyType::Char: return "Saturn::SPropertyType::Char";
+			case SPropertyType::Float: return "Saturn::SPropertyType::Float";
+			case SPropertyType::Int: return "Saturn::SPropertyType::Int";
+			case SPropertyType::Double: return "Saturn::SPropertyType::Double";
+			case SPropertyType::Uint8: return "Saturn::SPropertyType::Uint8";
+			case SPropertyType::Uint16: return "Saturn::SPropertyType::Uint16";
+			case SPropertyType::Uint32: return "Saturn::SPropertyType::Uint32";
+			case SPropertyType::Uint64: return "Saturn::SPropertyType::Uint64";
+			case SPropertyType::Int8: return "Saturn::SPropertyType::Int8";
+			case SPropertyType::Int16: return "Saturn::SPropertyType::Int16";
+			case SPropertyType::Int32: return "Saturn::SPropertyType::Int32";
+			case SPropertyType::Int64: return "Saturn::SPropertyType::Int64";
+			case SPropertyType::Vector2: return "Saturn::SPropertyType::Vector2";
+			case SPropertyType::Vector3: return "Saturn::SPropertyType::Vector3";
+			case SPropertyType::Vector4: return "Saturn::SPropertyType::Vector4";
+			case SPropertyType::String: return "Saturn::SPropertyType::String";
+			case SPropertyType::Object: return "Saturn::SPropertyType::Object";
+			case SPropertyType::AssetHandle: return "Saturn::SPropertyType::AssetHandle";
+			case SPropertyType::Class: return "Saturn::SPropertyType::Class";
+			case SPropertyType::Unknown: return "Saturn::SPropertyType::Unknown";
+
+			default: break;
+		}
+
+		return "";
+	}
 
 	bool HeaderTool::GenerateHeader( HeaderToolCommand& rCommand ) 
 	{
@@ -308,7 +360,7 @@ namespace Saturn {
 				pos += 2;
 			}
 
-			fout << std::format( "static void ReflCreateMetadatFor_{0}()\n", rClassName );
+			fout << std::format( "static void ReflCreateMetadataFor_{0}()\n", rClassName );
 			fout << "{\n";
 			fout << std::format( "\tSaturn::SClassMetadata __Metadata_{0};\n", rClassName );
 			fout << std::format( "\t__Metadata_{0}.Name = \"{0}\";\n", rClassName );
@@ -321,7 +373,7 @@ namespace Saturn {
 		}
 		else
 		{
-			fout << std::format( "static void ReflCreateMetadatFor_{0}()\n", rClassName );
+			fout << std::format( "static void ReflCreateMetadataFor_{0}()\n", rClassName );
 			fout << "{\n";
 			fout << std::format( "\tSaturn::SClassMetadata __Metadata_{0};\n", rClassName );
 			fout << std::format( "\t__Metadata_{0}.Name = \"{0}\";\n", rClassName );
@@ -354,14 +406,16 @@ namespace Saturn {
 
 		fout << "};\n\n";
 
-		fout << "static void ReflRegisterPropetiesFor_" << rClassName << "()\n";
+		fout << "static void ReflRegisterPropertiesFor_" << rClassName << "()\n";
 		fout << "{\n";
 
 		for( const auto& [lineNumber, rProperty] : rCommand.Properties )
 		{
 			std::string stringType = SPropertyTypeToString( rProperty.Type );
 
-			fout << std::format( "\tSaturn::SProperty Prop_{0} = {{ .Name = \"{0}\", .Type = {1}, .Flags = {2} }};\n", rProperty.Name, stringType, "0" );
+			fout << std::format( "\tSaturn::SProperty Prop_{0};\n", rProperty.Name );
+			fout << std::format( "\tProp_{0}.Name = \"{0}\";\n", rProperty.Name );
+			fout << std::format( "\tProp_{0}.Type = {1};\n", rProperty.Name, stringType );
 			fout << std::format( "\tProp_{0}.pGetPropertyFunction = &{1}::Get{0};\n", rProperty.Name, internalClassName );
 			fout << std::format( "\tProp_{0}.pSetPropertyFunction = &{1}::Set{0};\n", rProperty.Name, internalClassName );
 
@@ -376,9 +430,9 @@ namespace Saturn {
 		fout << std::format( "\tAr{0}_RTEditor()\n", rClassName );
 		fout << "\t{\n";
 		fout << std::format( "\t\tReflCreateMetadataFor_{0}();\n", rClassName );
-		fout << std::format( "\t\tReflRegisterPropetiesFor_{0}();\n", rClassName );
+		fout << std::format( "\t\tReflRegisterPropertiesFor_{0}();\n", rClassName );
 		fout << "\t}\n";
-		fout << "}\n\n";
+		fout << "};\n\n";
 		fout << std::format( "static Ar{0}_RTEditor Ar{0}_Runtime;\n", rClassName );
 		fout << "//^^^ Auto-Registration\n";
 

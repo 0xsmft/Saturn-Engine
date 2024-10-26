@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 
 namespace SaturnBuildTool
 {
     internal static class HeaderToolExt
     {
-        public static void RunHeaderTool() 
+        public static bool RunHeaderTool() 
         {
             var Args = new List<string>();
 
@@ -40,15 +41,22 @@ namespace SaturnBuildTool
 
             // Args
             Args.Add(" /NOMSG ");
-            Args.Add( string.Format( " /SRC={0}", ProjectInfo.Instance.SourceDir ) );
-            Args.Add( string.Format(" /OUT={0}", ProjectInfo.Instance.BuildDir ) );
+            Args.Add(string.Format(" /SRC={0}", ProjectInfo.Instance.SourceDir));
+            Args.Add(string.Format(" /OUT={0}", ProjectInfo.Instance.BuildDir));
 
             processStart.Arguments = string.Join("", Args);
+
+            Console.WriteLine( "Generating Code..." );
+            Stopwatch sw = Stopwatch.StartNew();
 
             headerToolProcess.Start();
             headerToolProcess.BeginErrorReadLine();
             headerToolProcess.BeginOutputReadLine();
             headerToolProcess.WaitForExit();
+
+            Console.WriteLine( "Done generating in {0}", sw.Elapsed );
+
+            return headerToolProcess.ExitCode == 0;
         }
     }
 }

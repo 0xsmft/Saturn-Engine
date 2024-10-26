@@ -27,17 +27,18 @@
 */
 
 #include "CodeGeneration.h"
+#include "Errors.h"
 
 #include "Saturn/GameFramework/SClass.h"
 
 #include <regex>
 #include <fstream>
+#include <iostream>
 
 namespace Saturn {
 
 	HeaderTool::HeaderTool()
 	{
-
 	}
 
 	HeaderTool::~HeaderTool()
@@ -63,19 +64,25 @@ namespace Saturn {
 		}
 	}
 
-	void HeaderTool::StartGeneration()
+	bool HeaderTool::StartGeneration()
 	{
+		int tasksFailed = 0;
+
 		for( auto& rCommand : m_Commands )
 		{
-			// Stage 1: Generate Header file.
-			GenerateHeader( rCommand );
+			if( !GenerateHeader( rCommand ) )
+			{
+				tasksFailed++;
+				continue;
+			}
 
-			// Stage 2: Generate Source file.
-			GenerateSource( rCommand );
+			if( !GenerateSource( rCommand ) ) tasksFailed++;
 		}
+
+		return tasksFailed == 0;
 	}
 
-	static bool LineIsNotComment( const std::string& rLine )
+	[[nodiscard]] static bool LineIsNotComment( const std::string& rLine )
 	{
 		std::regex regex( R"(^\s*(//.*|/\*.*\*/|/\*.*))" );
 		return !std::regex_match( rLine, regex );
@@ -203,7 +210,7 @@ namespace Saturn {
 				}
 				else
 				{
-					//std::cout << rPath.string() << ":error (CG003) | Expected variable definition after SPROPERTY macro.\n";
+					std::cout << rCommand.Filepath.string() << s_ErrorsMaps[ HeaderToolError::CG003 ] << "\n";
 				}
 
 				LastLineHadSP = false;
@@ -235,7 +242,7 @@ namespace Saturn {
 					}
 					else
 					{
-						//std::cout << rPath.string() << ":error (CG003) | Expected variable definition after SPROPERTY macro.\n";
+						std::cout << rCommand.Filepath.string() << s_ErrorsMaps[ HeaderToolError::CG003 ] << "\n";
 					}
 				}
 			}
@@ -273,7 +280,7 @@ namespace Saturn {
 
 					if( !args.empty() )
 					{
-						//std::cout << rPath.string() << ":warning (CG002A) | No arguments are allowed in the GENERATED_BODY macro, arguments omitted.\n";
+						std::cout << rCommand.Filepath.string() << s_WarningMaps[ HeaderToolWarning::CG002A ] << "\n";
 					}
 
 					// Parse generated header
@@ -297,6 +304,18 @@ namespace Saturn {
 
 		headerFile.close();
 		fout.close();
+
+		if( !GeneratedBodyFound )
+		{
+			std::cout << rCommand.Filepath.string() << s_ErrorsMaps[ HeaderToolError::CG002 ] << "\n";
+			result = false;
+		}
+
+		if( !SClassFound )
+		{
+			std::cout << rCommand.Filepath.string() << s_ErrorsMaps[ HeaderToolError::CG001 ] << "\n";
+			return false;
+		}
 
 		return result;
 	}
@@ -353,12 +372,14 @@ namespace Saturn {
 		{
 			std::string realPath = generatedHeaderPath.string();
 
+#if defined(SAT_PLATFORM_WINDOWS)
 			size_t pos = 0;
 			while( ( pos = realPath.find( '\\', pos ) ) != std::string::npos )
 			{
 				realPath.replace( pos, 1, "\\\\" );
 				pos += 2;
 			}
+#endif
 
 			fout << std::format( "static void ReflCreateMetadataFor_{0}()\n", rClassName );
 			fout << "{\n";
@@ -419,7 +440,7 @@ namespace Saturn {
 			fout << std::format( "\tProp_{0}.pGetPropertyFunction = &{1}::Get{0};\n", rProperty.Name, internalClassName );
 			fout << std::format( "\tProp_{0}.pSetPropertyFunction = &{1}::Set{0};\n", rProperty.Name, internalClassName );
 
-			fout << std::format( "\tSaturn::ClassMetadataHandler::Get().RegisterProperty( \"{0}\", Prop_{1} );\n", internalClassName, rProperty.Name );
+			fout << std::format( "\tSaturn::ClassMetadataHandler::Get().RegisterProperty( \"{0}\", Prop_{1} );\n", rClassName, rProperty.Name );
 		}
 
 		fout << "}\n\n";

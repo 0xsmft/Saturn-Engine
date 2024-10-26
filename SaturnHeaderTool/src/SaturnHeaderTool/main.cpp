@@ -27,9 +27,21 @@
 */
 
 #include "Base/HeaderToolApplication.h"
+#include "SaturnHeaderTool/Errors.h"
+
+#include <iostream>
 
 int main( int count, char** args ) 
 {
 	Saturn::HeaderToolApplication app( std::span<char*>( args, count ) );
-	app.Run();
+	
+	if( app.ValidateArgs() )
+	{
+		return !app.Run();
+	}
+	else
+	{
+		std::cout << Saturn::s_ErrorsMaps[ Saturn::HeaderToolError::TR000A ] << "\n";
+		return EXIT_FAILURE;
+	}
 }

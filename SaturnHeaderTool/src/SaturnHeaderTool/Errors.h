@@ -28,29 +28,46 @@
 
 #pragma once
 
-#include "Base/Core.h"
-
-#include <vector>
-#include <filesystem>
+#include <map>
+#include <string>
 
 namespace Saturn {
 
-	class HeaderTool 
+	enum class HeaderToolError : int
 	{
-	public:
-		HeaderTool();
-		~HeaderTool();
+		/* Code Generation Errors */
+		CG001,
+		CG002,
+		CG003,
 
-		void SetWorkingDir( const std::filesystem::path& rPath );
-		void SubmitWorkList( const std::vector<std::filesystem::path>& rCommands );
-		void StartGeneration();
-
-	private:
-		bool GenerateHeader( HeaderToolCommand& rCommand );
-		bool GenerateSource( HeaderToolCommand& rCommand );
-
-	private:
-		std::vector<HeaderToolCommand> m_Commands;
-		std::filesystem::path m_WorkingDir;
+		/* Header tool errors  */
+		TR000, /* internal error */
+		TR000A,
+		TR001,
+		TR002,
 	};
+
+	enum class HeaderToolWarning
+	{
+		CG001H,
+		CG002A
+	};
+
+	static std::map<HeaderToolError, std::string> s_ErrorsMaps 
+	{
+		{ HeaderToolError::CG001,  ":error (CG001) | No SCLASS macro was found in header file! Valid usage may follow: SCLASS(<args>)" },
+		{ HeaderToolError::CG002,  ":error (CG002) | GENERATED_BODY macro was found in header file! Valid usage may follow: GENERATED_BODY()" },
+		{ HeaderToolError::CG003,  ":error (CG003) | Expected variable definition after SPROPERTY macro." },
+		{ HeaderToolError::TR000A, "error (TR000A) | Code generation terminated." },
+		{ HeaderToolError::TR001,  "error (TR001) | Missing /SRC Argument. Valid usage is /SRC=<path_to_src>" },
+		{ HeaderToolError::TR002,  "error (TR002) | Missing /OUT Argument. Valid usage is /OUT=<path_to_output>" },
+		{ HeaderToolError::TR000,  "error (TR000) | Internal Error." },
+	};
+
+	static std::map<HeaderToolWarning, std::string> s_WarningMaps
+	{
+		{ HeaderToolWarning::CG001H,  ":warning (CG001H) | Unknown SCLASS argument! Argument omitted." },
+		{ HeaderToolWarning::CG002A,  ":warning (CG002A) | No arguments are allowed in the GENERATED_BODY macro, arguments omitted." },
+	};
+
 }

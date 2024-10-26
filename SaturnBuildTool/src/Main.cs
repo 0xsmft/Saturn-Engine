@@ -13,28 +13,20 @@ namespace SaturnBuildTool
     class EntryPoint
     {
         // Args:
-        // 0: The Action, BUILD, REBULD, CLEAN. TODO
+        // 0: The Action, BUILD, REBULD, CLEAN
         // 1: The project name
         // 2: The target platform, Win64
         // 3: The configuration, Debug, Release, Dist
         // 4: The project location
-        static void Main(string[] args)
+        static int Main(string[] args)
         {
-            if( IsHelpCommand( args ) ) { return; }
+            if( IsHelpCommand( args ) ) { return 0; }
 
             if (args.Length <= 4)
             {
                 Console.WriteLine("ERROR: You must provide 5 arguments!");
-                return;
+                return 1;
             }
-
-            /*
-            if (!ValidateArgs(args)) 
-            {
-                Console.WriteLine("ERROR: Validate args failed!");
-                return;
-            }
-            */
 
             // Safe to continue
             Application app = new Application(args);
@@ -43,6 +35,8 @@ namespace SaturnBuildTool
             {
                 app.Run();
             }
+
+            return app.ExitCode;
         }
 
         static bool IsHelpCommand(string[] args) 
@@ -71,41 +65,6 @@ namespace SaturnBuildTool
             }
 
             return false;
-        }
-
-        static bool ValidateArgs(string[] args)
-        {
-            for(int i = 0; i < args.Length; i++) 
-            {
-                Console.WriteLine(args[i]);
-            }
-
-            if( args[0] != "/BUILD" || args[0] != "/REBUILD" || args[0] != "/CLEAN")
-            {
-                Console.WriteLine("ERROR: Action argument must be /BUILD /REBUILD or /CLEAN");
-                Console.WriteLine( string.Format( "ERROR: Action was {0}", args[ 0 ] ) );
-                return false;
-            }
-
-            if( args[1].Contains(" ") )
-            {
-                Console.WriteLine("ERROR: Project argument must not contain a space!");
-                return false;
-            }
-
-            if( args[2] != "/Win64" || args[2] != "/Win86")
-            {
-                Console.WriteLine("ERROR: Target platform argument must be /Win64 or /Win86");
-                return false;
-            }
-
-            if (args[3] != "/Debug" || args[3] != "/Release" || args[3] != "/Dist")
-            {
-                Console.WriteLine("ERROR: Configuration argument must be /Debug /Release or /Dist");
-                return false;
-            }
-
-            return true;
         }
     }
 }

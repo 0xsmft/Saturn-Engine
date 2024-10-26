@@ -21,9 +21,10 @@ namespace SaturnBuildTool
 
     internal class Application
     {
-        private UserTarget TargetToBuild = null;
-
+        public int ExitCode = 0;
         public string[] Args;
+
+        private UserTarget TargetToBuild = null;
 
         public Toolchain Toolchain { get; set; }
 
@@ -66,8 +67,9 @@ namespace SaturnBuildTool
 
             if (TargetToBuild == null)
             {
-                Console.WriteLine("Could not find a user target!, looking for {0} Please regenerate it in the engine!", ProjectInfo.Instance.BuildRuleFile);
+                Console.WriteLine("ERROR: Could not find a user target!, looking for {0} Please regenerate it in the engine!", ProjectInfo.Instance.BuildRuleFile);
 
+                ExitCode = 1;
                 return false;
             }
 
@@ -268,9 +270,9 @@ namespace SaturnBuildTool
             }
         }
 
-        private void ExecuteHeaderTool() 
+        private bool ExecuteHeaderTool() 
         {
-            HeaderToolExt.RunHeaderTool();
+            return HeaderToolExt.RunHeaderTool();
         }
 
         private void ActionBuild() 
@@ -345,8 +347,15 @@ namespace SaturnBuildTool
                 case ActionType.Build:
                 case ActionType.Rebuild:
                     {
-                        ExecuteHeaderTool();
-                        ActionBuild();
+                        if (ExecuteHeaderTool()) 
+                        {
+                            ActionBuild();
+                        }
+                        else 
+                        {
+                            Console.WriteLine("ERROR: Stopping compilation, header tool failed -- FAILED");
+                            ExitCode = 1;
+                        }
                     }
                     break;
 

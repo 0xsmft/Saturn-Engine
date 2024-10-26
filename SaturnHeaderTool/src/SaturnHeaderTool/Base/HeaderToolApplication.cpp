@@ -26,48 +26,120 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "HeaderToolApplication.h"
 
-#include "SaturnHeaderTool/src/CodeGeneration.h"
+#include "SaturnHeaderTool/Errors.h"
 
-#include <span>
-#include <filesystem>
+#include <iostream>
+#include <string>
+#include <vector>
 
-namespace Saturn {
-
-	/*
-	* 	"/NOMSG",
+static std::vector<std::string> s_ArgumentsMap 
+{
+	"/NOMSG",
 	"/SRC",
 	"/OUT",
 	"/MT",
 	"/VERBOSE"
-	*/
+};
 
-	enum class ApplicationArguments
+namespace Saturn {
+
+	HeaderToolApplication::HeaderToolApplication( std::span<char*> args )
+		: m_Args( args )
 	{
-		NoStartupMessage,
-		SourceFile,
-		OutputFile,
-		MultiThreaded,
-		VerboseLogging
-	};
+	}
 
-	class HeaderToolApplication
+	HeaderToolApplication::~HeaderToolApplication()
 	{
-	public:
-		HeaderToolApplication( std::span<char*> args );
-		~HeaderToolApplication();
+	}
 
-		bool ValidateArgs();
-		void Run();
+	bool HeaderToolApplication::ValidateArgs()
+	{
+		bool result = true;
 
-	private:
-		HeaderTool m_HeaderTool;
+		std::map<std::string, std::string> ParsedMap;
+		
+		// Skip program path arg
+		for( size_t i = 0; i < m_Args.size(); i++ )
+		{
+			if( i == 0 ) continue;
 
-	private:
-		std::span<char*> m_Args;
+			std::string arg = m_Args[ i ];
 
-		std::filesystem::path m_SourcePath;
-		std::filesystem::path m_OutputPath;
-	};
+			if( arg.starts_with( "/" ) )
+			{
+				// Now, look for the equal sign
+				auto equalPos = arg.find( "=" );
+
+				if( equalPos != std::string::npos )
+				{
+					std::string key = arg.substr( 0, equalPos );
+					std::string value = arg.substr( equalPos + 1 );
+
+					//std::transform( key.begin(), key.end(), key.begin(), std::toupper );
+					ParsedMap[ key ] = value;
+				}
+				else // Flag arg
+				{
+					ParsedMap[ arg ] = "true";
+				}
+			}
+		}
+		
+		{
+			auto itr = ParsedMap.find( "/OUT" );
+			
+			if( itr == ParsedMap.end() )
+			{
+				result = false;
+
+				std::cout << s_ErrorsMaps[ HeaderToolError::TR002 ] << "\n";
+			}
+			else
+			{
+				std::string path = itr->second;
+				m_OutputPath = path;
+			}
+		}
+
+		{
+			auto itr = ParsedMap.find( "/SRC" );
+
+			if( itr == ParsedMap.end() ) 
+			{
+				result |= false; 
+				std::cout << s_ErrorsMaps[ HeaderToolError::TR001 ] << "\n";
+			}
+			else
+			{
+				std::string path = itr->second;
+				m_SourcePath = path;
+			}
+		}
+
+		m_HeaderTool.SetWorkingDir( m_OutputPath );
+
+		// result |= std::filesystem::exists( m_OutputPath ) && std::filesystem::exists( m_SourcePath );
+
+		return result;
+	}
+
+	bool HeaderToolApplication::Run()
+	{
+		std::vector<std::filesystem::path> headerFiles;
+
+		// Search source path for all header files.
+		for( const auto& rEntry : std::filesystem::recursive_directory_iterator( m_SourcePath ) )
+		{
+			if( rEntry.is_directory() ) continue;
+
+			auto& rPath = rEntry.path();
+			if( rPath.extension() == ".h" || rPath.extension() == ".hpp" )
+				headerFiles.push_back( rPath );
+		}
+
+		m_HeaderTool.SubmitWorkList( headerFiles );
+		return m_HeaderTool.StartGeneration();
+	}
 }

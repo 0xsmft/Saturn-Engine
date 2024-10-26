@@ -26,102 +26,48 @@
 *********************************************************************************************
 */
 
-#include "HeaderToolApplication.h"
+#pragma once
 
-#include <thread>
-#include <string>
-#include <vector>
+#include "SaturnHeaderTool/CodeGeneration.h"
 
-static std::vector<std::string> s_ArgumentsMap 
-{
-	"/NOMSG",
+#include <span>
+#include <filesystem>
+
+namespace Saturn {
+
+	/*
+	* 	"/NOMSG",
 	"/SRC",
 	"/OUT",
 	"/MT",
 	"/VERBOSE"
-};
+	*/
 
-namespace Saturn {
-
-	HeaderToolApplication::HeaderToolApplication( std::span<char*> args )
-		: m_Args( args )
+	enum class ApplicationArguments
 	{
-		ValidateArgs();
-	}
+		NoStartupMessage,
+		SourceFile,
+		OutputFile,
+		MultiThreaded,
+		VerboseLogging
+	};
 
-	HeaderToolApplication::~HeaderToolApplication()
+	class HeaderToolApplication
 	{
-	}
+	public:
+		HeaderToolApplication( std::span<char*> args );
+		~HeaderToolApplication();
 
-	bool HeaderToolApplication::ValidateArgs()
-	{
-		if( m_Args.size() < 3 ) return false;
+		bool ValidateArgs();
+		[[nodiscard]] bool Run();
 
-		std::map<std::string, std::string> ParsedMap;
-		
-		// Skip program path arg
-		for( size_t i = 0; i < m_Args.size(); i++ )
-		{
-			std::string arg = m_Args[ i ];
+	private:
+		HeaderTool m_HeaderTool;
 
-			if( arg.starts_with( "/" ) )
-			{
-				// Now, look for the equal sign
-				auto equalPos = arg.find( "=" );
+	private:
+		std::span<char*> m_Args;
 
-				if( equalPos != std::string::npos )
-				{
-					std::string key = arg.substr( 0, equalPos );
-					std::string value = arg.substr( equalPos + 1 );
-
-					//std::transform( key.begin(), key.end(), key.begin(), std::toupper );
-					ParsedMap[ key ] = value;
-				}
-				else // Flag arg
-				{
-					ParsedMap[ arg ] = "true";
-				}
-			}
-		}
-		
-		{
-			auto itr = ParsedMap.find( "/OUT" );
-			
-			if( itr == ParsedMap.end() ) return false;
-		
-			std::string path = itr->second;
-			m_OutputPath = path;
-		}
-
-		{
-			auto itr = ParsedMap.find( "/SRC" );
-
-			if( itr == ParsedMap.end() ) return false;
-
-			std::string path = itr->second;
-			m_SourcePath = path;
-		}
-
-		m_HeaderTool.SetWorkingDir( m_OutputPath );
-
-		return std::filesystem::exists( m_OutputPath ) && std::filesystem::exists( m_SourcePath );
-	}
-
-	void HeaderToolApplication::Run()
-	{
-		std::vector<std::filesystem::path> headerFiles;
-
-		// Search source path for all header files.
-		for( const auto& rEntry : std::filesystem::recursive_directory_iterator( m_SourcePath ) )
-		{
-			if( rEntry.is_directory() ) continue;
-
-			auto& rPath = rEntry.path();
-			if( rPath.extension() == ".h" || rPath.extension() == ".hpp" )
-				headerFiles.push_back( rPath );
-		}
-
-		m_HeaderTool.SubmitWorkList( headerFiles );
-		m_HeaderTool.StartGeneration();
-	}
+		std::filesystem::path m_SourcePath;
+		std::filesystem::path m_OutputPath;
+	};
 }

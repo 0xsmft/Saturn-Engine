@@ -610,6 +610,8 @@ project "SaturnHeaderTool"
 	
 	includedirs
 	{
+		"SaturnHeaderTool/src",
+
 		"Saturn/vendor/spdlog/include",
 		"Saturn/src",
 		"Saturn/vendor",

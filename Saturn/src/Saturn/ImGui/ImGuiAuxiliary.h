@@ -122,6 +122,16 @@ namespace Saturn::Auxiliary {
 	extern bool DrawBoolControl( const std::string& rLabel, bool& value, float columnWidth = 125.0f );
 	extern bool DrawDisabledBoolControl( const std::string& rLabel, bool& value, float columnWidth = 125.0f );
 	
+	extern bool DrawInt8Control( const std::string& rLabel, uint8_t& values, int min = 0.0f, int max = 500.0f, float columnWidth = 125.0f );
+	extern bool DrawInt16Control( const std::string& rLabel, uint16_t& values, int min = 0.0f, int max = 500.0f, float columnWidth = 125.0f );
+	extern bool DrawInt64Control( const std::string& rLabel, uint64_t& values, int min = 0.0f, int max = 500.0f, float columnWidth = 125.0f );
+
+	extern bool DrawUInt8Control( const std::string& rLabel, int8_t& values, int min = 0.0f, int max = 500.0f, float columnWidth = 125.0f );
+	extern bool DrawUInt16Control( const std::string& rLabel, int16_t& values, int min = 0.0f, int max = 500.0f, float columnWidth = 125.0f );
+	extern bool DrawUInt64Control( const std::string& rLabel, int32_t& values, int min = 0.0f, int max = 500.0f, float columnWidth = 125.0f );
+	
+	extern bool DrawDoubleControl( const std::string& rLabel, double& values, int min = 0.0f, int max = 500.0f, float columnWidth = 125.0f );
+
 	extern void DrawDisabledButton( const std::string& rLabel );
 
 	extern void Image( Ref< Image2D > Image, const ImVec2& Size, const ImVec2& UV0 = ImVec2( 0, 1 ), const ImVec2& UV1 = ImVec2( 1, 0 ), const ImVec4& TintColor = ImVec4( 1, 1, 1, 1 ), const ImVec4& BorderColor = ImVec4( 0, 0, 0, 0 ) );

@@ -410,6 +410,36 @@ namespace Saturn {
 						if( Auxiliary::DrawFloatControl( rProperty.Name, temporaryValue ) )
 							SetSProperty( rProperty, entity.Get(), temporaryValue );
 					} break;
+
+					case SPropertyType::Int:
+					{
+						auto temporaryValue = GetSProperty<int>( rProperty, entity.Get() );
+						if( Auxiliary::DrawIntControl( rProperty.Name, temporaryValue ) )
+							SetSProperty( rProperty, entity.Get(), temporaryValue );
+					} break;
+
+					case SPropertyType::Double:
+					{
+						auto temporaryValue = GetSProperty<double>( rProperty, entity.Get() );
+						if( Auxiliary::DrawDoubleControl( rProperty.Name, temporaryValue ) )
+							SetSProperty( rProperty, entity.Get(), temporaryValue );
+					} break;
+
+					/*
+					case SPropertyType::Vector2:
+					{
+						auto temporaryValue = GetSProperty<glm::vec2>( rProperty, entity.Get() );
+						if( Auxiliary::DrawVec2Control( rProperty.Name, temporaryValue ) )
+							SetSProperty( rProperty, entity.Get(), temporaryValue );
+					} break;
+
+					case SPropertyType::Vector3:
+					{
+						auto temporaryValue = GetSProperty<glm::vec3>( rProperty, entity.Get() );
+						if( Auxiliary::DrawVec3Control( rProperty.Name, temporaryValue ) )
+							SetSProperty( rProperty, entity.Get(), temporaryValue );
+					} break;
+					*/
 				}
 			}
 

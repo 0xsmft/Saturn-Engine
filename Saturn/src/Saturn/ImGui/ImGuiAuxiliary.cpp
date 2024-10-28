@@ -566,4 +566,94 @@ namespace Saturn::Auxiliary {
 		return Modified;
 	}
 
+	static bool DrawScalarControl( const std::string& rLabel, void* values, int min /*= 0.0f*/, int max /*= 500.0f*/, float columnWidth /*= 125.0f */, ImGuiDataType_ Type )
+	{
+		bool modified = false;
+
+		ImGuiIO& io = ImGui::GetIO();
+
+		ImGui::PushID( rLabel.c_str() );
+
+		ImGui::Columns( 2 );
+		ImGui::SetColumnWidth( 0, columnWidth );
+
+		ImGui::Text( rLabel.c_str() );
+
+		ImGui::NextColumn();
+
+		ImGui::PushMultiItemsWidths( 1, ImGui::CalcItemWidth() );
+		ImGui::PushStyleVar( ImGuiStyleVar_ItemSpacing, ImVec2{ 0, 0 } );
+
+		modified |= ImGui::DragScalarN( "##sclx", Type, &values, 1, 0.0f, &min, &max, "%.2f", ImGuiSliderFlags_AlwaysClamp );
+
+		ImGui::PopItemWidth();
+		ImGui::PopStyleVar();
+
+		ImGui::Columns( 1 );
+
+		ImGui::PopID();
+
+		return modified;
+	}
+
+	bool DrawUInt8Control( const std::string& rLabel, uint8_t& values, int min /*= 0.0f*/, int max /*= 500.0f*/, float columnWidth /*= 125.0f */ )
+	{
+		bool modified = DrawScalarControl( rLabel, &values, min, max, columnWidth, ImGuiDataType_U8 );
+		values = glm::clamp( values, ( uint8_t ) min, ( uint8_t ) max );
+
+		return modified;
+	}
+
+	bool DrawUInt16Control( const std::string& rLabel, uint16_t& values, int min /*= 0.0f*/, int max /*= 500.0f*/, float columnWidth /*= 125.0f */ )
+	{
+		bool modified = DrawScalarControl( rLabel, &values, min, max, columnWidth, ImGuiDataType_U16 );
+		values = glm::clamp( values, ( uint16_t ) min, ( uint16_t ) max );
+
+		return modified;
+	}
+
+	bool DrawUInt64Control( const std::string& rLabel, uint64_t& values, int min /*= 0.0f*/, int max /*= 500.0f*/, float columnWidth /*= 125.0f */ )
+	{
+		bool modified = DrawScalarControl( rLabel, &values, min, max, columnWidth, ImGuiDataType_U64 );
+		values = glm::clamp( values, ( uint64_t ) min, ( uint64_t ) max );
+
+		return modified;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	
+	bool DrawInt8Control( const std::string& rLabel, int8_t& values, int min /*= 0.0f*/, int max /*= 500.0f*/, float columnWidth /*= 125.0f */ )
+	{
+		bool modified = DrawScalarControl( rLabel, &values, min, max, columnWidth, ImGuiDataType_S8 );
+		values = glm::clamp( values, ( int8_t ) min, ( int8_t ) max );
+
+		return modified;
+	}
+
+	bool DrawInt16Control( const std::string& rLabel, int16_t& values, int min /*= 0.0f*/, int max /*= 500.0f*/, float columnWidth /*= 125.0f */ )
+	{
+		bool modified = DrawScalarControl( rLabel, &values, min, max, columnWidth, ImGuiDataType_S16 );
+		values = glm::clamp( values, ( int16_t ) min, ( int16_t ) max );
+
+		return modified;
+	}
+
+	bool DrawInt64Control( const std::string& rLabel, int64_t& values, int min /*= 0.0f*/, int max /*= 500.0f*/, float columnWidth /*= 125.0f */ )
+	{
+		bool modified = DrawScalarControl( rLabel, &values, min, max, columnWidth, ImGuiDataType_S64 );
+		values = glm::clamp( values, ( int64_t ) min, ( int64_t ) max );
+
+		return modified;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+
+	bool DrawDoubleControl( const std::string& rLabel, double& values, int min /*= 0.0f*/, int max /*= 500.0f*/, float columnWidth /*= 125.0f */ )
+	{
+		bool modified = DrawScalarControl( rLabel, &values, min, max, columnWidth, ImGuiDataType_Double );
+		values = glm::clamp( values, ( double ) min, ( double ) max );
+
+		return modified;
+	}
+
 }

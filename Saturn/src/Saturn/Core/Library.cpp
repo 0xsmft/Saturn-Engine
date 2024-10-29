@@ -40,12 +40,12 @@ namespace Saturn {
 		Free();
 	}
 
-	bool Library::Load( const std::string& rPath )
+	bool Library::Load( const std::filesystem::path& rPath )
 	{
 		bool result = false;
 
 #if defined(_WIN32)
-		m_Handle = LoadLibraryA( rPath.data() );
+		m_Handle = LoadLibraryW( rPath.wstring().data() );
 		result = ( bool ) m_Handle;
 #else
 		m_Handle = dlopen( rPath.data(), RTLD_LAZY );

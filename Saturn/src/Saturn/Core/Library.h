@@ -30,7 +30,7 @@
 
 #include "Ref.h"
 
-#include <string>
+#include <filesystem>
 
 #if defined(_WIN32)
 #include <Windows.h>
@@ -48,7 +48,7 @@ namespace Saturn {
 		Library();
 		~Library();
 
-		bool Load( const std::string& rPath );
+		bool Load( const std::filesystem::path& rPath );
 		void Free();
 
 #if defined(_WIN32)

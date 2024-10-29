@@ -49,7 +49,18 @@ namespace SaturnBuildTool
             Console.WriteLine( "Generating Code..." );
             Stopwatch sw = Stopwatch.StartNew();
 
-            headerToolProcess.Start();
+            try 
+            {
+                headerToolProcess.Start();
+            } 
+            catch (Exception ex) 
+            {
+                Console.WriteLine($"Failed to start header tool process: {ex.Message}");
+                Console.WriteLine("FAILED");
+
+                return false;
+            }
+
             headerToolProcess.BeginErrorReadLine();
             headerToolProcess.BeginOutputReadLine();
             headerToolProcess.WaitForExit();

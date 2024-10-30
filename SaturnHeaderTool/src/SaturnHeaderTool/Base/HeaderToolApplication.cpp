@@ -120,8 +120,6 @@ namespace Saturn {
 
 		m_HeaderTool.SetWorkingDir( m_OutputPath );
 
-		// result |= std::filesystem::exists( m_OutputPath ) && std::filesystem::exists( m_SourcePath );
-
 		return result;
 	}
 
@@ -135,8 +133,9 @@ namespace Saturn {
 			if( rEntry.is_directory() ) continue;
 
 			auto& rPath = rEntry.path();
-			if( rPath.extension() == ".h" || rPath.extension() == ".hpp" )
-				headerFiles.push_back( rPath );
+			auto extension = rPath.extension();
+
+			if( extension == ".h" || extension == ".hpp" ) headerFiles.push_back( rPath );
 		}
 
 		m_HeaderTool.SubmitWorkList( headerFiles );

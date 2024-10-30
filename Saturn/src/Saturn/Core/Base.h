@@ -68,12 +68,14 @@ constexpr auto SAT_CURRENT_VERSION_STRING = "0.1.3";
 #define SAT_DECODE_VERSION(source, major, minor, patch) \
 patch = (source) & 0xFF; \
 minor = ((source) >> 12) & 0x3FF;\
-major = (source) >> 22;
+major = (source) >> 22
 
-#define SAT_DECODE_VER_STRING(source, string) \
-uint32_t SAT_CONTACT(major_,__LINE__), SAT_CONTACT(minor_,__LINE__), SAT_CONTACT(patch_,__LINE__); \
-SAT_DECODE_VERSION(source, SAT_CONTACT(major_,__LINE__), SAT_CONTACT(minor_,__LINE__), SAT_CONTACT(patch_,__LINE__)) \
-string = std::format( "{0}.{1}.{2}", SAT_CONTACT(major_,__LINE__), SAT_CONTACT(minor_,__LINE__), SAT_CONTACT(patch_,__LINE__) );
+#define SAT_DECODE_VER_STRING( sourceVersion, string ) \
+{ \
+uint32_t major, minor, patch; \
+SAT_DECODE_VERSION( sourceVersion, major, minor, patch ); \
+string = std::format( "{0}.{1}.{2}", major, minor, patch ); \
+}
 
 namespace Saturn::Core {
 
@@ -90,6 +92,12 @@ namespace Saturn::Core {
 
 constexpr int MAX_FRAMES_IN_FLIGHT = 3;
 
+#if defined( SAT_DEBUG ) || defined( SAT_RELEASE )
+#define SAT_SINGLETON_LAZY( x ) static inline x& Get() { return *SingletonStorage::GetOrCreateSingleton<x>(); }
+#else
+#define SAT_SINGLETON_LAZY( x ) static inline x& Get() { static x _; return _; }
+#endif
+
 // Inject asserts
 #define __CORE_INCLUDED__
 #include "Asserts.h"
@@ -99,9 +107,3 @@ constexpr int MAX_FRAMES_IN_FLIGHT = 3;
 #include "Timestep.h"
 #include "Ref.h"
 #include "SingletonStorage.h"
-
-#if defined( SAT_DEBUG ) || defined( SAT_RELEASE )
-#define SAT_SINGLETON_LAZY( x ) static inline x& Get() { return *SingletonStorage::GetOrCreateSingleton<x>(); }
-#else
-#define SAT_SINGLETON_LAZY( x ) static inline x& Get() { static x _; return _; }
-#endif

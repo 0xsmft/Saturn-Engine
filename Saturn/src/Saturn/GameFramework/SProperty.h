@@ -56,13 +56,12 @@ namespace Saturn {
 		Uint64,
 		Int8,
 		Int16,
-		Int32, /* same as int*/
+		//Int32, /* same as int*/
 		Int64,
-		Vector3, /* glm::vec2 */
 		Vector2, /* glm::vec3 */
+		Vector3, /* glm::vec2 */
 		Vector4, /* glm::vec4 */
 		String, /* std::string */
-		Object,
 		AssetHandle,
 		Class,
 		Unknown

@@ -116,13 +116,11 @@ namespace Saturn {
 		else if( str == "uint64_t" ) return SPropertyType::Uint64;
 		else if( str == "int8_t" ) return SPropertyType::Int8;
 		else if( str == "int16_t" ) return SPropertyType::Int16;
-		else if( str == "int32_t" ) return SPropertyType::Int32;
 		else if( str == "int64_t" ) return SPropertyType::Int64;
 		else if( str == "glm::vec2" ) return SPropertyType::Vector2;
 		else if( str == "glm::vec3" ) return SPropertyType::Vector3;
 		else if( str == "glm::vec4" ) return SPropertyType::Vector4;
 		else if( str == "std::string" ) return SPropertyType::String;
-		else if( str == "Saturn::SPropertyType::Object" ) return SPropertyType::Object;
 		else if( str == "Saturn::AssetID" ) return SPropertyType::AssetHandle;
 		else if( str == "Saturn::SPropertyType::Class" ) return SPropertyType::Class;
 		else /*if( str == "Saturn::SPropertyType::Unknown" )*/ return SPropertyType::Unknown;
@@ -142,13 +140,11 @@ namespace Saturn {
 			case SPropertyType::Uint64: return "Saturn::SPropertyType::Uint64";
 			case SPropertyType::Int8: return "Saturn::SPropertyType::Int8";
 			case SPropertyType::Int16: return "Saturn::SPropertyType::Int16";
-			case SPropertyType::Int32: return "Saturn::SPropertyType::Int32";
 			case SPropertyType::Int64: return "Saturn::SPropertyType::Int64";
 			case SPropertyType::Vector2: return "Saturn::SPropertyType::Vector2";
 			case SPropertyType::Vector3: return "Saturn::SPropertyType::Vector3";
 			case SPropertyType::Vector4: return "Saturn::SPropertyType::Vector4";
 			case SPropertyType::String: return "Saturn::SPropertyType::String";
-			case SPropertyType::Object: return "Saturn::SPropertyType::Object";
 			case SPropertyType::AssetHandle: return "Saturn::SPropertyType::AssetHandle";
 			case SPropertyType::Class: return "Saturn::SPropertyType::Class";
 			case SPropertyType::Unknown: return "Saturn::SPropertyType::Unknown";

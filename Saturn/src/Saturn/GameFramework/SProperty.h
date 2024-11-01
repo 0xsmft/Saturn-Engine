@@ -67,16 +67,30 @@ namespace Saturn {
 		Unknown
 	};
 
-	struct SProperty
 	{
+	class SProperty
+	{
+	public:
+		SProperty( const std::string& rName, const std::string& rNativeType, SPropertyType PropType )
+			: Name( rName ), NativeType( rNativeType ), Type( PropType )
+		{
+		}
+
+		SProperty() = default;
+		~SProperty() = default;
+
+		void Serialise( SClass* pClass ) {}
+		void Deserialise( SClass* pClass ) {}
+
+	public:
 		std::string Name;
 		std::string NativeType;
 
-		SPropertyType Type;
-		SPropertyFlags Flags;
+		SPropertyType Type = SPropertyType::Unknown;
+		SPropertyFlags Flags = SPropertyFlags::None;
 
-		const void* pSetPropertyFunction;
-		const void* pGetPropertyFunction;
+		const void* pSetPropertyFunction = nullptr;
+		const void* pGetPropertyFunction = nullptr;
 	};
 
 #define SAT_CREATE_FNP_FOR_TYPE( typename, x ) \

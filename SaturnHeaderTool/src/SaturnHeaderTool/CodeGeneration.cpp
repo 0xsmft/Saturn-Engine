@@ -233,7 +233,7 @@ namespace Saturn {
 
 						SPropertyType spropType = StringToSPropertyType( type );
 
-						SProperty p{ .Name = name, .NativeType = type, .Type = spropType };
+						SProperty p{ name, type, spropType };
 						rCommand.Properties[ lineNumber ] = p;
 					}
 					else

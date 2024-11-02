@@ -67,7 +67,59 @@ namespace Saturn {
 		Unknown
 	};
 
+	//////////////////////////////////////////////////////////////////////////
+	// FUNCTION POINTERS
+
+	template<typename Ty>
+	using SetPropertyFn = void(__stdcall*)( SClass*, Ty );
+
+	template<typename Ty>
+	using GetPropertyFn = Ty( __stdcall* )( SClass* );
+
+	template<SPropertyType Type>
+	struct PropertyTypeTraits;
+
+#define SAT_CREATE_PROPERTY_TYPE_TRAIT(PropertyType, CppType) \
+template<> struct PropertyTypeTraits<SPropertyType::PropertyType> { using Type = CppType; }
+
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Char,   char );
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Double, double );
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Int,    int );
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Float,  float );
+
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Uint8,  uint8_t );
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Uint16, uint16_t );
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Uint32, uint32_t );
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Uint64, uint64_t );
+
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Int8,  int8_t );
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Int16, int16_t );
+	//SAT_CREATE_PROPERTY_TYPE_TRAIT( Int32, int32_t ); -- same as int
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Int64, int64_t );
+
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Vector2, glm::vec2 );
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Vector3, glm::vec3 );
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Vector4, glm::vec4 );
+
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Class, SClass* );
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Unknown, void* );
+
+	template<typename Ty>
+	void ModifyPropertyInternal( SClass* pClass, const void* fnp, Ty value )
 	{
+		auto func = reinterpret_cast< SetPropertyFn<Ty> >( fnp );
+		( func ) ( pClass, value );
+	}
+
+	template<typename Ty>
+	Ty ReadPropertyInternal( SClass* pClass, const void* fnp )
+	{
+		auto func = reinterpret_cast< GetPropertyFn<Ty> >( fnp );
+		return ( func ) ( pClass );
+	}
+
+
+	//////////////////////////////////////////////////////////////////////////
 	class SProperty
 	{
 	public:
@@ -93,6 +145,7 @@ namespace Saturn {
 		const void* pGetPropertyFunction = nullptr;
 	};
 
+	/*
 #define SAT_CREATE_FNP_FOR_TYPE( typename, x ) \
 	typedef void( __stdcall* SetPropertyFn_##typename )( SClass*, x ); \
 	typedef x( __stdcall* GetPropertyFn_##typename )( SClass* ); \
@@ -175,4 +228,5 @@ namespace Saturn {
 			//case SPropertyType::Unknown: { SAT_CALL_GET_FUNCTION_FOR_TYPE( Unknown, rProperty, pClass ); } break;
 		}
 	}
+	*/
 }

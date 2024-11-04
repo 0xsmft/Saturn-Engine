@@ -131,6 +131,12 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> { using Type =
 		SProperty() = default;
 		~SProperty() = default;
 
+		template<SPropertyType Ty>
+		typename PropertyTypeTraits<Ty>::Type Read( SClass* pClass )
+		{
+			return ReadPropertyInternal<typename PropertyTypeTraits<Ty>::Type>( pClass, pGetPropertyFunction );
+		}
+
 		void Serialise( SClass* pClass ) {}
 		void Deserialise( SClass* pClass ) {}
 

@@ -1558,7 +1558,7 @@ namespace Saturn {
 	{
 		if( ImGui::Begin( "Class Metadata Debug", &m_ShowMetadataDebug ) )
 		{
-			ClassMetadataHandler::Get().Each( 
+			ClassMetadataHandler::Get().EachTreeNode( 
 				[&]( const auto& rMetadata ) 
 				{
 					if( Auxiliary::TreeNode( rMetadata.Name.c_str(), false ) )

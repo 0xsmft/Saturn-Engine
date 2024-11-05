@@ -1272,7 +1272,7 @@ namespace Saturn {
 
 	void ContentBrowserPanel::GetSourceFiles( bool clear ) 
 	{
-		ClassMetadataHandler::Get().Each( 
+		ClassMetadataHandler::Get().EachTreeNode( 
 			[=]( const auto& rMetadata ) 
 			{
 				if( rMetadata.ExternalData )

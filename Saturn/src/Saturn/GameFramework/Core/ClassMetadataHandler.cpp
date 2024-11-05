@@ -34,27 +34,28 @@ namespace Saturn {
 	ClassMetadataHandler::ClassMetadataHandler()
 	{
 		constexpr size_t Classes = 3;
-		m_Metadata.reserve( Classes );
+		m_MetadataTree.reserve( Classes );
 
 		// Push some default classes.
 		// TODO: This should be done by the Build Tool however we are not using it for the Engine.
-		m_Metadata.emplace_back( "SClass", "", "", "", false );
-		m_Metadata.emplace_back( "Entity", "SClass", "", "", false );
-		m_Metadata.emplace_back( "Character", "Entity", "", "", false );
-
-		ConstructTree();
+		m_MetadataTree[ "SClass" ] = { "SClass", "", "", "", false };
+		m_MetadataTree[ "Entity" ] = { "Entity", "SClass", "", "", false };
+		m_MetadataTree[ "Character" ] = { "Character", "Entity", "", "", false };
 	}
 
 	ClassMetadataHandler::~ClassMetadataHandler()
 	{
-		m_Metadata.clear();
+		m_MetadataTree.clear();
 	}
 
 	void ClassMetadataHandler::AddMetadata( const SClassMetadata& rData )
 	{
-		m_Metadata.push_back( rData );
-		
-		ConstructTree();
+		const auto Itr = m_MetadataTree.find( rData.Name );
+
+		if( Itr == m_MetadataTree.end() )
+		{
+			m_MetadataTree[ rData.Name ] = rData;
+		}
 	}
 
 	SClassMetadata& ClassMetadataHandler::GetSClassMetadata()
@@ -72,7 +73,7 @@ namespace Saturn {
 		}
 	}
 
-	std::vector<SProperty>& ClassMetadataHandler::GetAllProperties( const std::string& rMetadataName )
+	std::vector<SProperty> ClassMetadataHandler::GetAllProperties( const std::string& rMetadataName )
 	{
 		const auto Itr = m_MetadataTree.find( rMetadataName );
 
@@ -81,14 +82,7 @@ namespace Saturn {
 			auto& properties = m_Properties[ rMetadataName ];
 			return properties;
 		}
-	}
 
-	void ClassMetadataHandler::ConstructTree()
-	{
-		for( const auto& data : m_Metadata )
-		{
-			m_MetadataTree[ data.Name ] = data;
-		}
+		return {};
 	}
-
 }

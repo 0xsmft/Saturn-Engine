@@ -44,13 +44,6 @@ namespace Saturn {
 		ClassMetadataHandler();
 		~ClassMetadataHandler();
 
-		template<typename Fn> 
-		void Each( Fn Function ) 
-		{
-			for( const auto& data : m_Metadata )
-				Function( data );
-		}
-
 		template<typename Fn>
 		void EachTreeNode( Fn Function )
 		{
@@ -63,16 +56,12 @@ namespace Saturn {
 
 		void RegisterProperty( const std::string& rMetadataName, const SProperty& rProperty );
 		
-		std::vector<SProperty>& GetAllProperties( const std::string& rMetadataName );
+		std::vector<SProperty> GetAllProperties( const std::string& rMetadataName );
 
 	public:
 		SClassMetadata& GetSClassMetadata();
 
 	private:
-		void ConstructTree();
-
-	private:
-		std::vector<SClassMetadata> m_Metadata;
 		std::unordered_map<std::string, SClassMetadata> m_MetadataTree;
 
 		// Metadata name -> SProperties

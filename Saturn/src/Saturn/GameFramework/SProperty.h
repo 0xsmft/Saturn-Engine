@@ -101,9 +101,12 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> { using Type =
 	SAT_CREATE_PROPERTY_TYPE_TRAIT( Vector3, glm::vec3 );
 	SAT_CREATE_PROPERTY_TYPE_TRAIT( Vector4, glm::vec4 );
 
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( String, std::string );
+
 	SAT_CREATE_PROPERTY_TYPE_TRAIT( Class, SClass* );
 	SAT_CREATE_PROPERTY_TYPE_TRAIT( Unknown, void* );
 
+	// Where Ty is the cpp type i.e. float, int etc
 	template<typename Ty>
 	void ModifyPropertyInternal( SClass* pClass, const void* fnp, Ty value )
 	{
@@ -111,6 +114,7 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> { using Type =
 		( func ) ( pClass, value );
 	}
 
+	// Where Ty is the cpp type i.e. float, int etc
 	template<typename Ty>
 	Ty ReadPropertyInternal( SClass* pClass, const void* fnp )
 	{
@@ -118,8 +122,8 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> { using Type =
 		return ( func ) ( pClass );
 	}
 
-
 	//////////////////////////////////////////////////////////////////////////
+
 	class SProperty
 	{
 	public:
@@ -130,9 +134,18 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> { using Type =
 
 		SProperty() = default;
 		~SProperty() = default;
+	
+		template<typename CppType>
+		void SetProperty( SClass* pClass, CppType value )
+		{
+			// Convert cpp type to SPropertyType
+			// TODO: Check if CppType is the same as our current type
+
+			ModifyPropertyInternal<CppType>( pClass, pSetPropertyFunction, value );
+		}
 
 		template<SPropertyType Ty>
-		typename PropertyTypeTraits<Ty>::Type Read( SClass* pClass )
+		[[nodiscard]] typename PropertyTypeTraits<Ty>::Type Read( SClass* pClass )
 		{
 			return ReadPropertyInternal<typename PropertyTypeTraits<Ty>::Type>( pClass, pGetPropertyFunction );
 		}

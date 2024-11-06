@@ -373,13 +373,15 @@ namespace Saturn {
 			ImGui::PopItemWidth();
 		}
 
+		bool hasScript = entity->HasComponent<ScriptComponent>();
+
 		// Draw ID and entity class type.
 		{
 			// ID
 			const auto& id = entity->GetComponent<IdComponent>().ID;
 			ImGui::TextDisabled( "%llu", id );
 
-			if( entity->HasComponent<ScriptComponent>() )
+			if( hasScript )
 			{
 				ImGui::SameLine();
 				ImGui::TextDisabled( "Class Instance (C++ Class) [%s]", entity->GetComponent<ScriptComponent>().ScriptName.c_str() );
@@ -399,52 +401,64 @@ namespace Saturn {
 		// Draw properties
 		if( ImGui::TreeNodeEx( ( void* ) ( ( uint32_t ) entity ), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_AllowItemOverlap, "Properties" ) ) 
 		{
-			auto& rProperties = ClassMetadataHandler::Get().GetAllProperties( entity->GetComponent<ScriptComponent>().ScriptName );
-			for( const auto& rProperty : rProperties )
+			if( hasScript )
 			{
-				switch( rProperty.Type )
+				auto properties = ClassMetadataHandler::Get().GetAllProperties( entity->GetComponent<ScriptComponent>().ScriptName );
+				for( auto& rProperty : properties )
 				{
-					case SPropertyType::Float:
+					switch( rProperty.Type )
 					{
-						float temporaryValue = GetSProperty<float>( rProperty, entity.Get() );
-						if( Auxiliary::DrawFloatControl( rProperty.Name, temporaryValue ) )
-							SetSProperty( rProperty, entity.Get(), temporaryValue );
-					} break;
+						case SPropertyType::Float:
+						{
+							float temporaryValue = rProperty.Read<SPropertyType::Float>( entity.Get() );
 
-					case SPropertyType::Int:
-					{
-						auto temporaryValue = GetSProperty<int>( rProperty, entity.Get() );
-						if( Auxiliary::DrawIntControl( rProperty.Name, temporaryValue ) )
-							SetSProperty( rProperty, entity.Get(), temporaryValue );
-					} break;
+							if( Auxiliary::DrawFloatControl( rProperty.Name, temporaryValue ) )
+								rProperty.SetProperty( entity.Get(), temporaryValue );
+						} break;
 
-					case SPropertyType::Double:
-					{
-						auto temporaryValue = GetSProperty<double>( rProperty, entity.Get() );
-						if( Auxiliary::DrawDoubleControl( rProperty.Name, temporaryValue ) )
-							SetSProperty( rProperty, entity.Get(), temporaryValue );
-					} break;
+						case SPropertyType::Int:
+						{
+							auto temporaryValue = rProperty.Read<SPropertyType::Int>( entity.Get() );
+							if( Auxiliary::DrawIntControl( rProperty.Name, temporaryValue ) )
+								rProperty.SetProperty( entity.Get(), temporaryValue );
+						} break;
 
-					/*
-					case SPropertyType::Vector2:
-					{
-						auto temporaryValue = GetSProperty<glm::vec2>( rProperty, entity.Get() );
-						if( Auxiliary::DrawVec2Control( rProperty.Name, temporaryValue ) )
-							SetSProperty( rProperty, entity.Get(), temporaryValue );
-					} break;
+						case SPropertyType::Double:
+						{
+							auto temporaryValue = rProperty.Read<SPropertyType::Double>( entity.Get() );
+							if( Auxiliary::DrawDoubleControl( rProperty.Name, temporaryValue ) )
+								rProperty.SetProperty( entity.Get(), temporaryValue );
+						} break;
 
-					case SPropertyType::Vector3:
-					{
-						auto temporaryValue = GetSProperty<glm::vec3>( rProperty, entity.Get() );
-						if( Auxiliary::DrawVec3Control( rProperty.Name, temporaryValue ) )
-							SetSProperty( rProperty, entity.Get(), temporaryValue );
-					} break;
-					*/
+						case SPropertyType::Vector2:
+						{
+							auto temporaryValue = rProperty.Read<SPropertyType::Vector2>( entity.Get() );
+							if( Auxiliary::DrawVec2Control( rProperty.Name, temporaryValue ) )
+								rProperty.SetProperty( entity.Get(), temporaryValue );
+						} break;
+
+						case SPropertyType::Vector3:
+						{
+							auto temporaryValue = rProperty.Read<SPropertyType::Vector3>( entity.Get() );
+							if( Auxiliary::DrawVec3Control( rProperty.Name, temporaryValue ) )
+								rProperty.SetProperty( entity.Get(), temporaryValue );
+						} break;
+					}
 				}
 			}
 
 			ImGui::TreePop();
 		}
+		
+		/*
+		if( ImGui::BeginItemTooltip() )
+		{
+			ImGui::Text( "C++ Properties." );
+			ImGui::Text( "Properties are only shown here if the SPROPERTY macro was placed beforehand." );
+
+			ImGui::EndTooltip();
+		}*/
+
 		ImGui::Separator();
 
 		DrawComponent<TransformComponent>( "Transform", entity, [&]( auto& tc )

@@ -37,6 +37,12 @@ namespace SaturnBuildTool
 
         public LinkerOutput OutputType = LinkerOutput.Executable;
 
+        public long UnixTimestamp = (long)DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
+
+        public string Timestamp = string.Empty;
+
+        public string OutputSuffix = string.Empty;
+
         public virtual void Init() 
         {
             Links.Add("dwmapi.lib");
@@ -53,7 +59,20 @@ namespace SaturnBuildTool
             PreprocessorDefines.Add("UNICODE");
             PreprocessorDefines.Add("_UNICODE");
             PreprocessorDefines.Add("_CRT_SECURE_NO_WARNINGS");
-            PreprocessorDefines.Add("SAT_PLATFORM_WINDOWS"); 
+            PreprocessorDefines.Add("SAT_PLATFORM_WINDOWS");
+            
+            Timestamp = UnixTimestamp.ToString();
+
+            switch (CurrentConfig) 
+            {
+                case ConfigKind.Debug:
+                case ConfigKind.Release:
+                    OutputSuffix = $"_{Timestamp}"; break;
+                
+                case ConfigKind.Dist:
+                default:
+                    break;
+            }
         }
 
         public List<string> GetIntermediateFiles() 
@@ -95,7 +114,7 @@ namespace SaturnBuildTool
             return BinDir;
         }
 
-        public string GetFullBinPath() 
+        public string GetFullBinPath(string customFileName)
         {
             string BinDir = GetBinDir();
 
@@ -103,27 +122,42 @@ namespace SaturnBuildTool
             {
                 case LinkerOutput.StaticLibrary:
                     {
-                        BinDir = Path.Combine(BinDir, ProjectName);
+                        BinDir = Path.Combine(BinDir, customFileName + OutputSuffix);
                         BinDir = Path.ChangeExtension(BinDir, ".lib");
                     }
                     break;
 
                 case LinkerOutput.SharedLibrary:
                     {
-                        BinDir = Path.Combine(BinDir, ProjectName);
+                        BinDir = Path.Combine(BinDir, customFileName + OutputSuffix);
                         BinDir = Path.ChangeExtension(BinDir, ".dll");
                     }
                     break;
 
                 case LinkerOutput.Executable:
                     {
-                        BinDir = Path.Combine(BinDir, ProjectName);
+                        BinDir = Path.Combine(BinDir, customFileName + OutputSuffix);
                         BinDir = Path.ChangeExtension(BinDir, ".exe");
                     }
                     break;
             }
 
             return BinDir;
+        }
+
+        public string GetFullPDBPath()
+        {
+            string BinDir = GetBinDir();
+
+            BinDir = Path.Combine( BinDir, ProjectName + OutputSuffix);
+            BinDir = Path.ChangeExtension(BinDir, ".pdb");
+
+            return BinDir;
+        }
+
+        public string GetFullBinPath() 
+        {
+            return GetFullBinPath( ProjectName );
         }
 
         public static UserTarget SetupUserTarget() 

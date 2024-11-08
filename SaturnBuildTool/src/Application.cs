@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -39,9 +40,12 @@ namespace SaturnBuildTool
 
         private ActionType Action = ActionType.Build;
 
-        List<string> SourceFiles = null;
-        List<string> BuildFiles = null;
+        private List<string> SourceFiles = null;
+        private List<string> BuildFiles = null;
 
+        // Force compile source file if header file has change or any other reason
+        private List<string> ForceCompileSourceFile = new List<string>();
+        
         // Args:
         // 0: The Action, BUILD, REBULD, CLEAN <--TODO
         // 1: The project name
@@ -111,14 +115,11 @@ namespace SaturnBuildTool
 
             foreach (string file in Files)
             {
-                // We are only building c++ files.
-                if (!FileCache.IsCppFile(file))
+                // We are only building C++ source files.
+                if (!FileCache.IsCppFile(file) && !FileCache.IsSourceFile(file))
                 {
                     continue;
                 }
-
-                // Only compile the file if it has not be changed.
-                FileCache.FilesInCache.TryGetValue(file, out DateTime LastTime);
 
                 if (Action == ActionType.Rebuild)
                 {
@@ -136,8 +137,8 @@ namespace SaturnBuildTool
                     else
                         NumTasksFailed++;
                 }
-                else if (LastTime != File.GetLastWriteTime(file))
-                {
+                else if (FileCache.HasSourceFileBeenModified(file))
+                { 
                     int exitCode = Toolchain.Compile(file);
 
                     if (exitCode == 0)
@@ -275,9 +276,64 @@ namespace SaturnBuildTool
             return HeaderToolExt.RunHeaderTool();
         }
 
+        private void RemoveTimestampFile() 
+        {
+            string outputPath = TargetToBuild.GetBinDir();
+            outputPath = Path.Combine(outputPath, "Timestamp");
+
+            if( File.Exists(outputPath) )
+            {
+                string time;
+                time = File.ReadAllText(outputPath);
+
+                // Delete timestamp
+                File.Delete(outputPath);
+            }
+        }
+
+        // Create the timestamp file for hot reloading.
+        private void CreateTimestampFile() 
+        {
+            string outputPath = TargetToBuild.GetBinDir();
+            outputPath = Path.Combine(outputPath, "Timestamp");
+            
+            FileStream fs = File.Create(outputPath);
+            StreamWriter sw = new StreamWriter(fs);
+
+            sw.Write(TargetToBuild.Timestamp);
+
+            sw.Close();
+            fs.Close();
+
+            // Now, delete any left over files that match the pattern: {PrjName}_{Timestamp}.{dll/lib/pdb}
+            string pattern = @"^.*_\d+\.[^.]+$";
+            Regex regex = new Regex(pattern, RegexOptions.IgnoreCase);
+
+            string[] files = Directory.GetFiles(TargetToBuild.GetBinDir());
+
+            foreach (string file in files)
+            {
+                string stem = Path.GetFileNameWithoutExtension(file);
+
+                if (regex.IsMatch(stem) && !stem.Contains(TargetToBuild.Timestamp))
+                {
+                    try
+                    {
+                        File.Delete(file);
+                    }
+                    catch (System.IO.IOException ex) // some files may be in use
+                    {
+                        Console.WriteLine(ex.ToString());
+                    }
+                }
+            }
+        }
+
         private void ActionBuild() 
         {
             Stopwatch time = Stopwatch.StartNew();
+
+            RemoveTimestampFile();
 
             // Compile all source files and all "build folder" files next.
             CompileSourceFiles();
@@ -286,7 +342,12 @@ namespace SaturnBuildTool
             Console.WriteLine(string.Format("{0} task(s) failed.", NumTasksFailed));
 
             if (HasCompiledAnyFile && NumTasksFailed == 0)
-                Toolchain.Link();
+            {
+                if( Toolchain.Link() == 0 ) 
+                {
+                    CreateTimestampFile();
+                }
+            }
 
             if (HasCompiledAnyFile)
             {

@@ -40,7 +40,7 @@ namespace SaturnBuildTool.Cache
 
         public bool IsCppFile( string Filepath )
         {
-            return Path.GetExtension(Filepath) == ".cpp" || Path.GetExtension(Filepath) == ".h";
+            return Path.GetExtension(Filepath) == ".cpp" || Path.GetExtension(Filepath) == ".h" || Path.GetExtension(Filepath) == ".hpp";
         }
 
         public bool IsSourceFile(string Filepath)
@@ -57,6 +57,19 @@ namespace SaturnBuildTool.Cache
         {
             FilesToCache.Clear();
             FilesInCache.Clear();
+        }
+
+        public bool HasSourceFileBeenModified( string path, bool includeHeaderFile = false ) 
+        {
+            string headerPath = Path.ChangeExtension(path, ".h");
+
+            FilesInCache.TryGetValue(path, out DateTime SourceLastTime);
+            FilesInCache.TryGetValue(headerPath, out DateTime HeaderLastTime);
+
+            bool sourceModifed = SourceLastTime != File.GetLastWriteTime( path );
+            bool headerModifed = HeaderLastTime != File.GetLastWriteTime( headerPath );
+
+            return sourceModifed || headerModifed;
         }
 
         public static void RT_WriteCache( FileCache fileCache ) 

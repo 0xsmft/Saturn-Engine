@@ -81,6 +81,9 @@ namespace SaturnBuildTool
             {
                 Args.Add(" /INCREMENTAL");
                 Args.Add(" /DEBUG:FULL" );
+
+                string pdbFile = TargetToBuild.GetFullPDBPath();
+                Args.Add($" /PDB:{pdbFile}");
             }
             else 
             {

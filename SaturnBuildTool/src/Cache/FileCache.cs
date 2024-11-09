@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 
 namespace SaturnBuildTool.Cache
@@ -61,13 +59,19 @@ namespace SaturnBuildTool.Cache
 
         public bool HasSourceFileBeenModified( string path, bool includeHeaderFile = false ) 
         {
-            string headerPath = Path.ChangeExtension(path, ".h");
+            string headerPath = string.Empty;
+            bool headerModifed = false;
+
+            if (includeHeaderFile) 
+            {
+                headerPath = Path.ChangeExtension(path, ".h");
+                FilesInCache.TryGetValue(headerPath, out DateTime HeaderLastTime);
+                headerModifed = HeaderLastTime != File.GetLastWriteTime(headerPath);
+            }
 
             FilesInCache.TryGetValue(path, out DateTime SourceLastTime);
-            FilesInCache.TryGetValue(headerPath, out DateTime HeaderLastTime);
 
             bool sourceModifed = SourceLastTime != File.GetLastWriteTime( path );
-            bool headerModifed = HeaderLastTime != File.GetLastWriteTime( headerPath );
 
             return sourceModifed || headerModifed;
         }
@@ -99,12 +103,26 @@ namespace SaturnBuildTool.Cache
             // HACK: Clear the file.
             File.WriteAllText(fileCache.Filepath, string.Empty);
 
-            // --- Begin write
-            FileStream fs = new FileStream(fileCache.Filepath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite);
-            BinaryFormatter bf = new BinaryFormatter();
+            // --- Begin write 
+            // We have to write this in a way that when the header tool reads this it can understand it
+            // So this has to be C++ compatible.
 
-            bf.Serialize( fs, fileCache.FilesInCache );
+            FileStream fs = new FileStream(fileCache.Filepath, FileMode.Truncate, FileAccess.Write, FileShare.ReadWrite);
+
+            var writer = new BinaryWriter(fs, Encoding.UTF8, false);
             
+            writer.Write( fileCache.FilesInCache.Count );
+
+            foreach(KeyValuePair<string, DateTime> kv in fileCache.FilesInCache)
+            {
+                writer.Write( (ulong)kv.Key.Length );
+                writer.Write( Encoding.UTF8.GetBytes( kv.Key ) );
+
+                Int64 unixTime = (Int64)kv.Value.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
+                writer.Write(unixTime);
+            }
+
+            writer.Close();
             fs.Close();
         }
 
@@ -144,20 +162,27 @@ namespace SaturnBuildTool.Cache
             }
 
             // --- Begin read
+            // We have to read this in a way that when the header tool reads this it can understand it
+            // So this has to be C++ compatible.
 
-            BinaryFormatter bf = new BinaryFormatter();
+            BinaryReader reader = new BinaryReader(fs, Encoding.UTF8);
 
-            try 
+            int count = reader.ReadInt32();
+
+            for (int i = 0; i < count; i++)
             {
-                fc.FilesInCache = (Dictionary<string, DateTime>)bf.Deserialize(fs);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Error when trying open filecache: {0}", e.Message);
-                Console.WriteLine("Filecache is empty, creating new cache...");
+                ulong length = reader.ReadUInt64();
+                string key = Encoding.UTF8.GetString(reader.ReadBytes((int)length));
+
+                Int64 unixTime = reader.ReadInt64();
+                DateTimeOffset offset = DateTimeOffset.FromUnixTimeSeconds(unixTime);
+
+                fc.FilesInCache.Add(key, offset.DateTime);
             }
 
+            reader.Close();
             fs.Close();
+
             return fc;
         }
     }

@@ -43,6 +43,7 @@ namespace SaturnBuildTool
             Args.Add(" /NOMSG ");
             Args.Add(string.Format(" /SRC={0}", ProjectInfo.Instance.SourceDir));
             Args.Add(string.Format(" /OUT={0}", ProjectInfo.Instance.BuildDir));
+            Args.Add(string.Format(" /FC={0}", ProjectInfo.Instance.FileCacheLocation));
 
             processStart.Arguments = string.Join("", Args);
 

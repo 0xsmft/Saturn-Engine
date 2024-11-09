@@ -45,7 +45,7 @@ namespace Saturn {
 		// And its fine because the ClassMetadataHandler is only used for the game when we are in the editor anyway.
 		ClassMetadataHandler::Get();
 
-		Load( false );
+		Load();
 	}
 
 	GameModule::~GameModule()
@@ -65,7 +65,7 @@ namespace Saturn {
 			return nullptr;
 	}
 
-	void GameModule::Load( bool reload /*=false*/ )
+	void GameModule::Load()
 	{
 #if defined(SAT_DIST)
 		// We are the game so there is no need to load the dll all we need to do is set the handle to ourself.
@@ -74,16 +74,33 @@ namespace Saturn {
 #else
 		// We are the editor, load game DLL.
 		auto binDir = Project::GetActiveProject()->GetBinDir();
-		auto& DllPath = binDir /= Project::GetActiveConfig().Name + ".dll";
+		
+		auto timestampFile = binDir / "Timestamp";
 
-		m_GameModule = Ref<Module>::Create( DllPath, Project::GetActiveConfig().Name );
-		m_GameModule->Load();
+		if( std::filesystem::exists( timestampFile ) )
+		{
+			std::ifstream stream( timestampFile );
+			std::stringstream buffer;
+			buffer << stream.rdbuf();
+			stream.close();
 
-		// Call the init function.
-		InitModuleFn initModFn = ( InitModuleFn ) m_GameModule->m_Library.GetSymbol( "InitializeModule" );
+			m_LastTimestamp = buffer.str();
 
-		if( initModFn )
-			( initModFn ) ( Project::GetActiveProject().Get(), tracy::GetProfilerDataPtr() );
+			std::string dllFilename = std::format( "{0}_{1}.dll", Project::GetActiveConfig().Name, m_LastTimestamp );
+			auto& DllPath = binDir /= dllFilename;
+
+			m_GameModule = Ref<Module>::Create( DllPath, Project::GetActiveConfig().Name );
+			m_GameModule->Load();
+
+			// Call the init function.
+			InitModuleFn initModFn = ( InitModuleFn ) m_GameModule->m_Library.GetSymbol( "InitializeModule" );
+
+			if( initModFn )
+				( initModFn ) ( Project::GetActiveProject().Get(), tracy::GetProfilerDataPtr() );
+
+		}
+		else
+			SAT_CORE_ASSERT( false, "Timestamp file does not exists! Please rebuild the game in your IDE." );
 #endif
 	}
 
@@ -97,6 +114,6 @@ namespace Saturn {
 	void GameModule::Reload() 
 	{
 		Unload();
-		Load(true);
+		Load();
 	}
 }

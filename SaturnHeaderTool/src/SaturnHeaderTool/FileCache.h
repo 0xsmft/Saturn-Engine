@@ -26,127 +26,37 @@
 *********************************************************************************************
 */
 
-#include "HeaderToolApplication.h"
+#pragma once
 
-#include "SaturnHeaderTool/Errors.h"
-
-#include <iostream>
+#include <unordered_map>
 #include <string>
-#include <vector>
-
-static std::vector<std::string> s_ArgumentsMap 
-{
-	"/NOMSG",
-	"/SRC",
-	"/OUT",
-	"/FC",
-	"/MT",
-	"/VERBOSE"
-};
+#include <filesystem>
 
 namespace Saturn {
 
-	HeaderToolApplication::HeaderToolApplication( std::span<char*> args )
-		: m_Args( args )
+	class FileCache
 	{
-	}
+	public:
+		FileCache() = default;
+		FileCache( const std::filesystem::path& rCacheLocation );
 
-	HeaderToolApplication::~HeaderToolApplication()
-	{
-	}
+		~FileCache();
 
-	bool HeaderToolApplication::ValidateArgs()
-	{
-		bool result = true;
+		void Load();
+		void SetLocation( const std::filesystem::path& rCacheLocation );
 
-		std::map<std::string, std::string> ParsedMap;
+	public:
+		bool IsCppFile( const std::filesystem::path& rFile );
+		bool IsSourceFile( const std::filesystem::path& rFile );
+		bool HasFileBeenModifed( const std::filesystem::path& rFile );
 		
-		// Skip program path arg
-		for( size_t i = 0; i < m_Args.size(); i++ )
-		{
-			if( i == 0 ) continue;
+		std::vector<std::filesystem::path> Analyse();
 
-			std::string arg = m_Args[ i ];
-
-			if( arg.starts_with( "/" ) )
-			{
-				// Now, look for the equal sign
-				auto equalPos = arg.find( "=" );
-
-				if( equalPos != std::string::npos )
-				{
-					std::string key = arg.substr( 0, equalPos );
-					std::string value = arg.substr( equalPos + 1 );
-
-					//std::transform( key.begin(), key.end(), key.begin(), std::toupper );
-					ParsedMap[ key ] = value;
-				}
-				else // Flag arg
-				{
-					ParsedMap[ arg ] = "true";
-				}
-			}
-		}
-		
-		{
-			auto itr = ParsedMap.find( "/OUT" );
-			
-			if( itr == ParsedMap.end() )
-			{
-				result = false;
-
-				std::cout << s_ErrorsMaps[ HeaderToolError::TR002 ] << "\n";
-			}
-			else
-			{
-				std::string path = itr->second;
-				m_OutputPath = path;
-			}
-		}
-
-		{
-			auto itr = ParsedMap.find( "/SRC" );
-
-			if( itr == ParsedMap.end() )
-			{
-				result |= false;
-				std::cout << s_ErrorsMaps[ HeaderToolError::TR001 ] << "\n";
-			}
-			else
-			{
-				std::string path = itr->second;
-				m_SourcePath = path;
-			}
-		}
-
-		{
-			auto itr = ParsedMap.find( "/FC" );
-
-			if( itr == ParsedMap.end() )
-			{
-				result |= false;
-				std::cout << s_ErrorsMaps[ HeaderToolError::TR003 ] << "\n";
-			}
-			else
-			{
-				std::string path = itr->second;
-				m_FileCache.SetLocation( path );
-			}
-		}
-
-		m_HeaderTool.SetWorkingDir( m_OutputPath );
-
-		return result;
-	}
-
-	bool HeaderToolApplication::Run()
-	{
-		m_FileCache.Load();
-
-		std::vector<std::filesystem::path> headerFiles = m_FileCache.Analyse();
-
-		m_HeaderTool.SubmitWorkList( headerFiles );
-		return m_HeaderTool.StartGeneration();
-	}
+	private:
+		std::unordered_map<std::filesystem::path, int64_t> m_FilesInCache;
+	
+	private:
+		std::filesystem::path m_Location;
+	};
 
 }

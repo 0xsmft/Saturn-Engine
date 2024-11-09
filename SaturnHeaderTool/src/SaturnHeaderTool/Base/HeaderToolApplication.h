@@ -29,6 +29,7 @@
 #pragma once
 
 #include "SaturnHeaderTool/CodeGeneration.h"
+#include "SaturnHeaderTool/FileCache.h"
 
 #include <span>
 #include <filesystem>
@@ -63,6 +64,7 @@ namespace Saturn {
 
 	private:
 		HeaderTool m_HeaderTool;
+		FileCache m_FileCache;
 
 	private:
 		std::span<char*> m_Args;

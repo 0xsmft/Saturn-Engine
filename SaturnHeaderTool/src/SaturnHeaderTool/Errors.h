@@ -45,6 +45,7 @@ namespace Saturn {
 		TR000A,
 		TR001,
 		TR002,
+		TR003,
 	};
 
 	enum class HeaderToolWarning
@@ -58,10 +59,11 @@ namespace Saturn {
 		{ HeaderToolError::CG001,  ":error (CG001) | No SCLASS macro was found in header file! Valid usage may follow: SCLASS(<args>)" },
 		{ HeaderToolError::CG002,  ":error (CG002) | GENERATED_BODY macro was found in header file! Valid usage may follow: GENERATED_BODY()" },
 		{ HeaderToolError::CG003,  ":error (CG003) | Expected variable definition after SPROPERTY macro." },
-		{ HeaderToolError::TR000A, "error (TR000A) | Code generation terminated." },
-		{ HeaderToolError::TR001,  "error (TR001) | Missing /SRC Argument. Valid usage is /SRC=<path_to_src>" },
-		{ HeaderToolError::TR002,  "error (TR002) | Missing /OUT Argument. Valid usage is /OUT=<path_to_output>" },
-		{ HeaderToolError::TR000,  "error (TR000) | Internal Error." },
+		{ HeaderToolError::TR000A, "ERROR: (TR000A) | Code generation terminated." },
+		{ HeaderToolError::TR001,  "ERROR: (TR001) | Missing /SRC Argument. Valid usage is /SRC=<path_to_src>" },
+		{ HeaderToolError::TR002,  "ERROR: (TR002) | Missing /OUT Argument. Valid usage is /OUT=<path_to_output>" },
+		{ HeaderToolError::TR003,  "ERROR: (TR003) | Missing /FC Argument. Valid usage is /FC=<path_to_filecache>" },
+		{ HeaderToolError::TR000,  "ERROR: (TR000) | Internal Error." },
 	};
 
 	static std::map<HeaderToolWarning, std::string> s_WarningMaps

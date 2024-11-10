@@ -53,11 +53,18 @@ namespace Saturn {
 		
 		void Reload();
 	private:
-		void Load( bool reload = false );
+		void Load();
 		void Unload();
+
+		bool CompareLastTimestamp() const;
+		void CompareLastTimestampAndClean();
 
 	private:
 		Ref<Module> m_GameModule;
+
+#if defined(SAT_DEBUG) || defined(SAT_RELEASE)
+		std::string m_LastTimestamp;
+#endif
 	};
 
 }

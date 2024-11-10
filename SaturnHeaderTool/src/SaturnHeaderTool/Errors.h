@@ -62,7 +62,7 @@ namespace Saturn {
 		{ HeaderToolError::TR000A, "ERROR: (TR000A) | Code generation terminated." },
 		{ HeaderToolError::TR001,  "ERROR: (TR001) | Missing /SRC Argument. Valid usage is /SRC=<path_to_src>" },
 		{ HeaderToolError::TR002,  "ERROR: (TR002) | Missing /OUT Argument. Valid usage is /OUT=<path_to_output>" },
-		{ HeaderToolError::TR003,  "ERROR: (TR003) | Missing /FC Argument. Valid usage is /FC=<path_to_filecache>" },
+		{ HeaderToolError::TR003,  "ERROR: (TR003) | Missing /FC Argument. Valid usage is /FC=<path_to_filecache>." },
 		{ HeaderToolError::TR000,  "ERROR: (TR000) | Internal Error." },
 	};
 

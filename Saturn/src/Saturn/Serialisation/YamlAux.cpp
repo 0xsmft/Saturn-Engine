@@ -366,7 +366,7 @@ namespace Saturn {
 				// Ask the game module to create the entity.
 				DeserialisedEntity = scene->CreateEntityWithIDScript( entityID, Tag, ScriptName );
 
-				auto& s = DeserialisedEntity->AddComponent< ScriptComponent >();
+				auto& s = DeserialisedEntity->GetComponent< ScriptComponent >();
 
 				s.ScriptName = ScriptName;
 				s.AssetID = srcc[ "ID" ].as< uint64_t >();

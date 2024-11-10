@@ -865,7 +865,7 @@ namespace Saturn {
 					prefab->Create( sourceEntity );
 
 					// Delete the temporary source entity from the current scene.
-					GActiveScene->DeleteEntity( sourceEntity );
+					GActiveScene->DeleteEntity( sourceEntity, true, 0 );
 
 					// Save the prefab.
 					PrefabSerialiser ps;

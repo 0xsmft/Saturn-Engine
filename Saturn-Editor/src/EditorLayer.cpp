@@ -964,11 +964,15 @@ namespace Saturn {
 
 	void EditorLayer::HotReloadGame()
 	{
-	//	SAT_CORE_ASSERT(false, "EditorLayer::HotReloadGame not implemented.");
-
 		SAT_CORE_INFO( "Begin hot reload" );
 
+		SaveFile();
+
+		ClassMetadataHandler::Get().BeginHotReload();
+
 		m_GameModule->Reload();
+
+		m_EditorScene->AcknowledgeHotReload();
 	}
 
 	void EditorLayer::DrawAssetRegistryDebug()

@@ -26,6 +26,7 @@
 *********************************************************************************************
 */
 
+#include "sppch.h"
 #include "HeaderToolApplication.h"
 
 #include "SaturnHeaderTool/Errors.h"
@@ -131,6 +132,15 @@ namespace Saturn {
 			{
 				std::string path = itr->second;
 				m_FileCache.SetLocation( path );
+			}
+		}
+
+		{
+			auto itr = ParsedMap.find( "/NOMSG" );
+
+			if( itr == ParsedMap.end() )
+			{
+				std::cout << "Saturn Header Tool version " << SAT_CURRENT_VERSION_STRING << "\n";
 			}
 		}
 

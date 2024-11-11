@@ -37,11 +37,11 @@ namespace SaturnBuildTool
 
         public LinkerOutput OutputType = LinkerOutput.Executable;
 
-        public long UnixTimestamp = (long)DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
+        private long UnixTimestamp = (long)DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
 
-        public string Timestamp = string.Empty;
+        public string Timestamp { get; set; }
 
-        public string OutputSuffix = string.Empty;
+        private string OutputSuffix = string.Empty;
 
         public virtual void Init() 
         {
@@ -69,7 +69,6 @@ namespace SaturnBuildTool
                 case ConfigKind.Release:
                     OutputSuffix = $"_{Timestamp}"; break;
                 
-                case ConfigKind.Dist:
                 default:
                     break;
             }

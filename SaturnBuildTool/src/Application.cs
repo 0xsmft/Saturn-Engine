@@ -40,12 +40,13 @@ namespace SaturnBuildTool
 
         private ActionType Action = ActionType.Build;
 
+        // Includes every file in the Source dir (inc, .hpp .cpp)
         private List<string> SourceFiles = null;
         private List<string> BuildFiles = null;
 
-        // Force compile source file if header file has change or any other reason
-        private List<string> ForceCompileSourceFile = new List<string>();
-        
+        // Source Files (only .cpp) that need to be build if modifed.
+        private List<string> SourceFilesToBuild = null;
+
         // Args:
         // 0: The Action, BUILD, REBULD, CLEAN <--TODO
         // 1: The project name
@@ -397,6 +398,25 @@ namespace SaturnBuildTool
             FileCache.RT_WriteCache(FileCache);
 
             Console.WriteLine("Done cleaning in {0}", time.Elapsed);
+        }
+
+        private void AnalyseFileChanges() 
+        {
+            if (Action == ActionType.Rebuild) 
+            {
+                SourceFilesToBuild = SourceFiles;
+                return;
+            }
+
+            Console.WriteLine("Analyzing Changes...");
+
+            foreach( string sourceFile in SourceFiles )
+            {
+                if(FileCache.HasSourceFileBeenModified(sourceFile)) 
+                {
+                    SourceFilesToBuild.Add(sourceFile);
+                }
+            }
         }
 
         public void Run() 

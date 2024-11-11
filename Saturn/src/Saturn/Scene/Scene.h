@@ -169,7 +169,7 @@ namespace Saturn {
 		void OnRenderRuntime( Timestep ts, SceneRenderer& rSceneRenderer );
 
 		Ref<Entity> DuplicateEntity( Ref<Entity> entity, Ref<Entity> parent = nullptr );
-		void DeleteEntity( Ref<Entity> entity, bool deleteChildren = true );
+		void DeleteEntity( Ref<Entity> entity, bool deleteChildren = true, UUID orphanParentID = 0 );
 		
 		void OnUpdate( Timestep ts );
 		void OnUpdatePhysics( Timestep ts );
@@ -256,6 +256,8 @@ namespace Saturn {
 		bool IsDirty() const { return false; }
 #endif
 
+		void AcknowledgeHotReload();
+
 		static void   SetActiveScene( Scene* pScene );
 		static Scene* GetActiveScene();
 
@@ -271,6 +273,8 @@ namespace Saturn {
 
 		template<typename IStream>
 		void DeserialiseInternal( IStream& rStream );
+
+		Ref<Entity> HotReloadReplaceOldEntity( Ref<Entity> source );
 
 	protected:
 		void OnEntityCreated( Ref<Entity> entity );

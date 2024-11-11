@@ -48,6 +48,7 @@
 #include "Saturn/Physics/PhysicsRigidBody.h"
 
 #include "Saturn/GameFramework/Core/GameModule.h"
+#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 
 #include "Saturn/Serialisation/SceneSerialiser.h"
 
@@ -484,6 +485,7 @@ namespace Saturn {
 		Ref<Entity> entity = GameModule::Get().CreateEntity( rScriptName );
 		entity->SetName( name );
 		entity->GetComponent<IdComponent>().ID = uuid;
+		entity->AddComponent<ScriptComponent>().ScriptName = rScriptName;
 
 		GActiveScene = ActiveScene;
 
@@ -608,17 +610,7 @@ namespace Saturn {
 		Ref<Entity> newEntity = Ref<Entity>::Create();
 		newEntity->SetName( entity->GetComponent<TagComponent>().Tag );
 
-		// Without TagComponent, IdComponent, RelationshipComponent
-		using DesiredComponents = ComponentGroup<TransformComponent, PrefabComponent,
-			StaticMeshComponent,
-			DirectionalLightComponent, SkylightComponent, PointLightComponent,
-			CameraComponent,
-			BoxColliderComponent, SphereColliderComponent, CapsuleColliderComponent, MeshColliderComponent, RigidbodyComponent,
-			ScriptComponent,
-			AudioPlayerComponent, AudioListenerComponent,
-			BillboardComponent>;
-
-		CopyComponentIfExists( DesiredComponents{}, newEntity->GetHandle(), entity->GetHandle(), m_Registry );
+		CopyComponentIfExists( AllDuplicatableComponents{}, newEntity->GetHandle(), entity->GetHandle(), m_Registry );
 
 		auto& relationshipComponent = newEntity->GetComponent<RelationshipComponent>();
 		auto& sourceRelationship = entity->GetComponent<RelationshipComponent>();
@@ -650,7 +642,7 @@ namespace Saturn {
 		return newEntity;
 	}
 
-	void Scene::DeleteEntity( Ref<Entity> entity, bool deleteChildren /*=true*/ )
+	void Scene::DeleteEntity( Ref<Entity> entity, bool deleteChildren /*=true*/, UUID orphanParentID /*=0*/ )
 	{
 		for( auto& rChild : entity->GetChildren() )
 		{
@@ -662,7 +654,7 @@ namespace Saturn {
 			}
 			else
 			{
-				child->SetParent( 0 );
+				child->SetParent( orphanParentID );
 			}
 		}
 
@@ -732,9 +724,9 @@ namespace Saturn {
 
 	void Scene::UpdateAudioListeners() 
 	{
-		auto linsteners = GetAllEntitiesWith< AudioListenerComponent >();
+		auto listeners = GetAllEntitiesWith< AudioListenerComponent >();
 
-		for( auto& entity : linsteners )
+		for( auto& entity : listeners )
 		{
 			auto& rComp = entity->GetComponent<AudioListenerComponent>();
 			
@@ -830,6 +822,36 @@ namespace Saturn {
 		return prefabEntity;
 	}
 
+	void Scene::AcknowledgeHotReload()
+	{
+		std::unordered_map<entt::entity, Ref<Entity>> replace;
+
+		for( auto&& [id, entity] : m_EntityIDMap )
+		{
+			if( entity->HasComponent<ScriptComponent>() )
+			{
+				auto& rScriptComponent = entity->GetComponent<ScriptComponent>();
+
+				Ref<Entity> newEntity = HotReloadReplaceOldEntity(entity);
+
+				replace[ id ] = newEntity;
+			}
+		}
+
+		for( auto& [id, entity] : replace )
+		{
+			auto& rOldEntity = m_EntityIDMap[ id ];
+
+			CopyComponentIfExists( AllDuplicatableComponents{}, entity->GetHandle(), rOldEntity->GetHandle(), m_Registry );
+
+			CopyComponentIfExists<RelationshipComponent>( entity->GetHandle(), rOldEntity->GetHandle(), m_Registry );
+
+			DeleteEntity( rOldEntity, false, entity->GetUUID() );
+		}
+
+		replace.clear();
+	}
+
 	void Scene::SetActiveScene( Scene* pScene )
 	{
 		GActiveScene = pScene;
@@ -843,6 +865,23 @@ namespace Saturn {
 	void Scene::OnEntityCreated( Ref<Entity> entity )
 	{
 		m_EntityIDMap[ entity->GetHandle() ] = entity;
+	}
+
+	Ref<Entity> Scene::HotReloadReplaceOldEntity( Ref<Entity> source )
+	{
+		auto& rScriptCompoent = source->GetComponent<ScriptComponent>();
+
+		// Create new entity
+		Ref<Entity> entity = GameModule::Get().CreateEntity( rScriptCompoent.ScriptName );
+
+		entity->SetName( source->GetName() );
+		entity->GetComponent<IdComponent>().ID = source->GetUUID();
+
+		// We don't replace the entt handle as we only entt for the backend
+		// So just remove the source entity from entt and we will handle our map.
+		//DeleteEntity( source );
+
+		return entity;
 	}
 
 	//////////////////////////////////////////////////////////////////////////

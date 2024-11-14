@@ -26,50 +26,27 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "SProperty.h"
 
-#include "SingletonStorage.h"
-#include "Saturn/GameFramework/SClass.h"
-
-#include <string>
-#include <vector>
+#include "SClass.h"
 
 namespace Saturn {
 
-	class ClassMetadataHandler : public RefTarget
+	void SProperty::Serialise( SClass* pClass )
 	{
-	public:
-		static inline ClassMetadataHandler& Get() { return *SingletonStorage::GetOrCreateSingleton<ClassMetadataHandler>(); }
-	public:
-		ClassMetadataHandler();
-		~ClassMetadataHandler();
+	}
 
-		template<typename Fn>
-		void EachTreeNode( Fn Function )
-		{
-			for( auto&& [name, data] : m_MetadataTree )
-				Function( data );
-		}
+	void SProperty::Deserialise( SClass* pClass )
+	{
+	}
 
-		void AddMetadata( const SClassMetadata& rData );
-		bool IsEngineMetadata( const SClassMetadata& rData ) { return !rData.ExternalData; }
+	void SProperty::SetFlag( SPropertyFlags flag, bool value )
+	{
+		if( value )
+			m_Flags |= flag;
+		else
+			m_Flags &= ~flag;
+	}
 
-		void RegisterProperty( const std::string& rMetadataName, const SProperty& rProperty );
-		
-		std::vector<SProperty>& GetAllProperties( const std::string& rMetadataName );
-
-	public:
-		SClassMetadata& GetSClassMetadata();
-
-	public:
-		// Hot reload
-		void BeginHotReload();
-		void AcknowledgeHotReload();
-
-	private:
-		std::unordered_map<std::string, SClassMetadata> m_MetadataTree;
-		
-		// Metadata name -> SProperties
-		std::unordered_map<std::string, std::vector<SProperty>> m_Properties;
-	};
 }

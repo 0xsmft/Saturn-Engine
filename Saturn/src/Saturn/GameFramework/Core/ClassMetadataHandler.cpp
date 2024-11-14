@@ -48,6 +48,14 @@ namespace Saturn {
 		m_MetadataTree.clear();
 	}
 
+	void ClassMetadataHandler::BeginHotReload()
+	{
+	}
+
+	void ClassMetadataHandler::AcknowledgeHotReload()
+	{
+	}
+
 	void ClassMetadataHandler::AddMetadata( const SClassMetadata& rData )
 	{
 		const auto Itr = m_MetadataTree.find( rData.Name );
@@ -73,7 +81,7 @@ namespace Saturn {
 		}
 	}
 
-	std::vector<SProperty> ClassMetadataHandler::GetAllProperties( const std::string& rMetadataName )
+	std::vector<SProperty>& ClassMetadataHandler::GetAllProperties( const std::string& rMetadataName )
 	{
 		const auto Itr = m_MetadataTree.find( rMetadataName );
 
@@ -83,6 +91,7 @@ namespace Saturn {
 			return properties;
 		}
 
-		return {};
+		static std::vector<SProperty> s_EmptyMap;
+		return s_EmptyMap;
 	}
 }

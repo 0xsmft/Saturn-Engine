@@ -407,15 +407,15 @@ namespace Saturn {
 		for( const auto& [lineNumber, rProperty] : rCommand.Properties )
 		{
 			// Set property function
-			fout << "\tstatic void Set" << rProperty.Name << "( " << rClassName << "* pClass, " << rProperty.NativeType << " value )\n";
+			fout << "\tstatic void Set" << rProperty.GetName() << "( " << rClassName << "* pClass, " << rProperty.GetNativeType() << " value )\n";
 			fout << "\t{\n";
-			fout << "\t\tpClass->" << rProperty.Name << " = value;\n";
+			fout << "\t\tpClass->" << rProperty.GetName() << " = value;\n";
 			fout << "\t}\n";
 
 			// Get property function
-			fout << "\tstatic " << rProperty.NativeType << " Get" << rProperty.Name << "( " << rClassName << "* pClass )\n";
+			fout << "\tstatic " << rProperty.GetNativeType() << " Get" << rProperty.GetName() << "( " << rClassName << "* pClass )\n";
 			fout << "\t{\n";
-			fout << "\t\treturn pClass->" << rProperty.Name << ";\n";
+			fout << "\t\treturn pClass->" << rProperty.GetName() << ";\n";
 			fout << "\t}\n";
 
 			fout << "\n";
@@ -428,15 +428,17 @@ namespace Saturn {
 
 		for( const auto& [lineNumber, rProperty] : rCommand.Properties )
 		{
-			std::string stringType = SPropertyTypeToString( rProperty.Type );
+			std::string stringType = SPropertyTypeToString( rProperty.GetType() );
 
-			fout << std::format( "\tSaturn::SProperty Prop_{0};\n", rProperty.Name );
-			fout << std::format( "\tProp_{0}.Name = \"{0}\";\n", rProperty.Name );
-			fout << std::format( "\tProp_{0}.Type = {1};\n", rProperty.Name, stringType );
-			fout << std::format( "\tProp_{0}.pGetPropertyFunction = &{1}::Get{0};\n", rProperty.Name, internalClassName );
-			fout << std::format( "\tProp_{0}.pSetPropertyFunction = &{1}::Set{0};\n", rProperty.Name, internalClassName );
+			fout << std::format( "\tSaturn::SProperty Prop_{0};\n", rProperty.GetName() );
+			
+			fout << std::format( "\tProp_{0}.SetName( \"{0}\" );\n", rProperty.GetName() );
+			fout << std::format( "\tProp_{0}.SetType( {1} );\n", rProperty.GetName(), stringType );
 
-			fout << std::format( "\tSaturn::ClassMetadataHandler::Get().RegisterProperty( \"{0}\", Prop_{1} );\n", rClassName, rProperty.Name );
+			fout << std::format( "\tProp_{0}.pGetPropertyFunction = &{1}::Get{0};\n", rProperty.GetName(), internalClassName );
+			fout << std::format( "\tProp_{0}.pSetPropertyFunction = &{1}::Set{0};\n", rProperty.GetName(), internalClassName );
+
+			fout << std::format( "\tSaturn::ClassMetadataHandler::Get().RegisterProperty( \"{0}\", Prop_{1} );\n", rClassName, rProperty.GetName() );
 		}
 
 		fout << "}\n\n";

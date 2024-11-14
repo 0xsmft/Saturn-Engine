@@ -403,44 +403,51 @@ namespace Saturn {
 		{
 			if( hasScript )
 			{
-				auto properties = ClassMetadataHandler::Get().GetAllProperties( entity->GetComponent<ScriptComponent>().ScriptName );
+				auto& properties = ClassMetadataHandler::Get().GetAllProperties( entity->GetComponent<ScriptComponent>().ScriptName );
 				for( auto& rProperty : properties )
 				{
-					switch( rProperty.Type )
+					std::string name = rProperty.GetName();
+
+					if( rProperty.IsDirty() )
+					{
+						name += "*";
+					}
+
+					switch( rProperty.GetType() )
 					{
 						case SPropertyType::Float:
 						{
 							float temporaryValue = rProperty.Read<SPropertyType::Float>( entity.Get() );
 
-							if( Auxiliary::DrawFloatControl( rProperty.Name, temporaryValue ) )
+							if( Auxiliary::DrawFloatControl( name, temporaryValue ) )
 								rProperty.SetProperty( entity.Get(), temporaryValue );
 						} break;
 
 						case SPropertyType::Int:
 						{
 							auto temporaryValue = rProperty.Read<SPropertyType::Int>( entity.Get() );
-							if( Auxiliary::DrawIntControl( rProperty.Name, temporaryValue ) )
+							if( Auxiliary::DrawIntControl( name, temporaryValue ) )
 								rProperty.SetProperty( entity.Get(), temporaryValue );
 						} break;
 
 						case SPropertyType::Double:
 						{
 							auto temporaryValue = rProperty.Read<SPropertyType::Double>( entity.Get() );
-							if( Auxiliary::DrawDoubleControl( rProperty.Name, temporaryValue ) )
+							if( Auxiliary::DrawDoubleControl( name, temporaryValue ) )
 								rProperty.SetProperty( entity.Get(), temporaryValue );
 						} break;
 
 						case SPropertyType::Vector2:
 						{
 							auto temporaryValue = rProperty.Read<SPropertyType::Vector2>( entity.Get() );
-							if( Auxiliary::DrawVec2Control( rProperty.Name, temporaryValue ) )
+							if( Auxiliary::DrawVec2Control( name, temporaryValue ) )
 								rProperty.SetProperty( entity.Get(), temporaryValue );
 						} break;
 
 						case SPropertyType::Vector3:
 						{
 							auto temporaryValue = rProperty.Read<SPropertyType::Vector3>( entity.Get() );
-							if( Auxiliary::DrawVec3Control( rProperty.Name, temporaryValue ) )
+							if( Auxiliary::DrawVec3Control( name, temporaryValue ) )
 								rProperty.SetProperty( entity.Get(), temporaryValue );
 						} break;
 					}

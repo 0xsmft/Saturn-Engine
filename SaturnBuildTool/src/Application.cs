@@ -138,7 +138,7 @@ namespace SaturnBuildTool
                     else
                         NumTasksFailed++;
                 }
-                else if (FileCache.HasSourceFileBeenModified(file))
+                else if (FileCache.HasSourceFileBeenModified(file, true))
                 { 
                     int exitCode = Toolchain.Compile(file);
 

@@ -77,7 +77,11 @@ namespace Saturn {
 			int64_t ticks = 0;
 			RawSerialisation::ReadObject( ticks, stream );
 		
-			m_FilesInCache.insert( { key, static_cast<int64_t>( ticks ) } );
+			int64_t time = 0;
+			RawSerialisation::ReadObject( time, stream );
+
+			FileCacheTime fileCacheTime{ .Ticks = ticks, .Time = time };
+			m_FilesInCache.emplace( key, fileCacheTime );
 		}
 
 		stream.close();
@@ -118,9 +122,11 @@ namespace Saturn {
 			if( IsSourceFile( rFile ) )
 			{
 				auto fsLastWriteTime = std::filesystem::last_write_time( rFile );
-				auto seconds = std::chrono::duration_cast< std::chrono::seconds >( fsLastWriteTime.time_since_epoch() ).count();
 
-				if( time != seconds )
+				auto systemClock = std::chrono::clock_cast< std::chrono::system_clock >( fsLastWriteTime );
+				auto systemTime = std::chrono::duration_cast<std::chrono::milliseconds>( systemClock.time_since_epoch() ).count();
+
+				if( time.Time != systemTime )
 				{
 					std::filesystem::path headerPath = rFile;
 					headerPath.replace_extension( ".h" );

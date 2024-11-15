@@ -29,13 +29,32 @@
 #pragma once
 
 #include <unordered_map>
-#include <string>
 #include <filesystem>
 
 namespace Saturn {
 
 	class FileCache
 	{
+	public:
+		struct FileCacheTime
+		{
+			// C# DateTime.Ticks
+			int64_t Ticks;
+
+			// Unix Timestamp (system time from C# Build Tool)
+			int64_t Time;
+
+			bool operator==( const FileCacheTime& rOther )
+			{
+				return Time == rOther.Time;
+			}
+
+			bool operator!=( const FileCacheTime& rOther )
+			{
+				return Time != rOther.Time;
+			}
+		};
+
 	public:
 		FileCache() = default;
 		FileCache( const std::filesystem::path& rCacheLocation );
@@ -53,7 +72,7 @@ namespace Saturn {
 		std::vector<std::filesystem::path> Analyse();
 
 	private:
-		std::unordered_map<std::filesystem::path, int64_t> m_FilesInCache;
+		std::unordered_map<std::filesystem::path, FileCacheTime> m_FilesInCache;
 	
 	private:
 		std::filesystem::path m_Location;

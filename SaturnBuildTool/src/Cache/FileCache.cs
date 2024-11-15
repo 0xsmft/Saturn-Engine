@@ -7,23 +7,52 @@ namespace SaturnBuildTool.Cache
 {
     internal class FileCache
     {
-        public IDictionary<string, DateTime> FilesToCache { get; set; }
-        public IDictionary<string, DateTime> FilesInCache { get; set; }
+        public struct FileCacheTime
+        {
+            // C# Ticks
+            public long Time;
+
+            // For C++ (unix time, system time)
+            public long UnixTime;
+ 
+            public static bool operator !=(FileCacheTime t1, FileCacheTime t2)
+            {
+                return t1.Time != t2.Time;
+            }
+
+            public static bool operator ==(FileCacheTime t1, FileCacheTime t2)
+            {
+                return t1.Time == t2.Time;
+            }
+
+            public static bool operator !=(FileCacheTime t1, DateTime d1)
+            {
+                return t1.Time != d1.Ticks;
+            }
+
+            public static bool operator ==(FileCacheTime t1, DateTime d1)
+            {
+                return t1.Time == d1.Ticks;
+            }
+        }
+
+        public IDictionary<string, FileCacheTime> FilesToCache { get; set; }
+        public IDictionary<string, FileCacheTime> FilesInCache { get; set; }
 
         private string Filepath;
 
         public FileCache(string CacheLocation)
         {
-            FilesToCache = new Dictionary<string, DateTime>();
-            FilesInCache = new Dictionary<string, DateTime>();
+            FilesToCache = new Dictionary<string, FileCacheTime>();
+            FilesInCache = new Dictionary<string, FileCacheTime>();
 
             Filepath = CacheLocation;
         }
 
         public FileCache()
         {
-            FilesToCache = new Dictionary<string, DateTime>();
-            FilesInCache = new Dictionary<string, DateTime>();
+            FilesToCache = new Dictionary<string, FileCacheTime>();
+            FilesInCache = new Dictionary<string, FileCacheTime>();
 
             Filepath = "";
         }
@@ -32,7 +61,13 @@ namespace SaturnBuildTool.Cache
         {
             if (IsCppFile(Filepath)) 
             {
-                FilesToCache.Add(Filepath, File.GetLastWriteTime(Filepath));
+                DateTime lastWriteTime = File.GetLastWriteTime(Filepath);
+
+                FileCacheTime fct = new FileCacheTime();
+                fct.Time = lastWriteTime.Ticks;
+                fct.UnixTime = (long)lastWriteTime.Subtract(new DateTime(1970, 1, 1)).TotalMilliseconds;
+
+                FilesToCache.Add(Filepath, fct);
             }
         }
 
@@ -59,28 +94,30 @@ namespace SaturnBuildTool.Cache
 
         public bool HasSourceFileBeenModified( string path, bool includeHeaderFile = false ) 
         {
-            string headerPath = string.Empty;
+            // Get cached value
+            FilesInCache.TryGetValue(path, out FileCacheTime sourceLastTime);
+            DateTime fsLastWriteTime = File.GetLastWriteTime(path);
+
+            bool sourceModifed = ( sourceLastTime != fsLastWriteTime );
+
             bool headerModifed = false;
-
-            if (includeHeaderFile) 
+            if ( includeHeaderFile ) 
             {
-                headerPath = Path.ChangeExtension(path, ".h");
-                FilesInCache.TryGetValue(headerPath, out DateTime HeaderLastTime);
-                headerModifed = HeaderLastTime != File.GetLastWriteTime(headerPath);
+                string headerPath = Path.ChangeExtension(path, ".h");
+                FilesInCache.TryGetValue(headerPath, out FileCacheTime headerLastTime);
+
+                DateTime headerFsLastWriteTime = File.GetLastWriteTime(headerPath);
+                headerModifed = (headerLastTime != headerFsLastWriteTime);
             }
-
-            FilesInCache.TryGetValue(path, out DateTime SourceLastTime);
-
-            bool sourceModifed = SourceLastTime != File.GetLastWriteTime( path );
 
             return sourceModifed || headerModifed;
         }
 
         public static void RT_WriteCache( FileCache fileCache ) 
         {
-            foreach (KeyValuePair<string, DateTime> kv in fileCache.FilesToCache) 
+            foreach (KeyValuePair<string, FileCacheTime> kv in fileCache.FilesToCache) 
             {
-                DateTime time;
+                FileCacheTime time;
                 fileCache.FilesInCache.TryGetValue(kv.Key, out time);
 
                 // Has the file been updated?
@@ -89,7 +126,10 @@ namespace SaturnBuildTool.Cache
                     // Yes, lets try to add it in the cache
                     if(fileCache.FilesInCache.ContainsKey(kv.Key))
                     {
-                        fileCache.FilesInCache[kv.Key] = kv.Value;
+                        if (File.Exists(kv.Key)) 
+                        {
+                            fileCache.FilesInCache[kv.Key] = kv.Value;
+                        }
                     }
                     else
                     {
@@ -108,18 +148,20 @@ namespace SaturnBuildTool.Cache
             // So this has to be C++ compatible.
 
             FileStream fs = new FileStream(fileCache.Filepath, FileMode.Truncate, FileAccess.Write, FileShare.ReadWrite);
-
-            var writer = new BinaryWriter(fs, Encoding.UTF8, false);
+            BinaryWriter writer = new BinaryWriter(fs, Encoding.UTF8, false);
             
             writer.Write( fileCache.FilesInCache.Count );
 
-            foreach(KeyValuePair<string, DateTime> kv in fileCache.FilesInCache)
+            foreach(KeyValuePair<string, FileCacheTime> kv in fileCache.FilesInCache)
             {
                 writer.Write( (ulong)kv.Key.Length );
                 writer.Write( Encoding.UTF8.GetBytes( kv.Key ) );
 
-                Int64 unixTime = (Int64)kv.Value.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
-                writer.Write(unixTime);
+                // Write Ticks for us
+                writer.Write(kv.Value.Time);
+
+                // Write unix time for Header Tool
+                writer.Write(kv.Value.UnixTime);
             }
 
             writer.Close();
@@ -174,10 +216,14 @@ namespace SaturnBuildTool.Cache
                 ulong length = reader.ReadUInt64();
                 string key = Encoding.UTF8.GetString(reader.ReadBytes((int)length));
 
-                Int64 unixTime = reader.ReadInt64();
-                DateTimeOffset offset = DateTimeOffset.FromUnixTimeSeconds(unixTime);
+                long ticks = reader.ReadInt64();
+                long unixTime = reader.ReadInt64();
 
-                fc.FilesInCache.Add(key, offset.DateTime);
+                FileCacheTime time = new FileCacheTime();
+                time.UnixTime = unixTime;
+                time.Time = ticks;
+
+                fc.FilesInCache.Add(key, time);
             }
 
             reader.Close();

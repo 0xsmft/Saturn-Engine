@@ -28,7 +28,6 @@
 
 #pragma once
 
-#include "StringAuxiliary.h"
 #include <unordered_map>
 
 namespace Saturn {

@@ -57,6 +57,7 @@ namespace Saturn {
 		void RegisterProperty( const std::string& rMetadataName, const SProperty& rProperty );
 		
 		std::vector<SProperty>& GetAllProperties( const std::string& rMetadataName );
+		SProperty& GetProperty( const std::string& rMetadataName, const std::string& rPropertyName );
 
 	public:
 		SClassMetadata& GetSClassMetadata();

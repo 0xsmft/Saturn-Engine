@@ -94,4 +94,29 @@ namespace Saturn {
 		static std::vector<SProperty> s_EmptyMap;
 		return s_EmptyMap;
 	}
+
+	SProperty& ClassMetadataHandler::GetProperty( const std::string& rMetadataName, const std::string& rPropertyName )
+	{
+		const auto Itr = m_MetadataTree.find( rMetadataName );
+
+		if( Itr != m_MetadataTree.end() )
+		{
+			auto& properties = m_Properties[ rMetadataName ];
+		
+			const auto propertyItr = std::find_if( properties.begin(), properties.end(), 
+				[rPropertyName](const auto& rProperty)
+				{
+					return rProperty.GetName() == rPropertyName;
+				} );
+
+			if( propertyItr != properties.end() )
+			{
+				return *propertyItr;
+			}
+		}
+
+		static SProperty s_EmptyProperty;
+		return s_EmptyProperty;
+	}
+
 }

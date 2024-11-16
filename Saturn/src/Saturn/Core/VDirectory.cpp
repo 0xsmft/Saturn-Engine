@@ -33,6 +33,8 @@
 
 #include "VFile.h"
 
+#include "StringAuxiliary.h"
+
 namespace Saturn {
 
 	VDirectory::VDirectory( const std::wstring& rName )

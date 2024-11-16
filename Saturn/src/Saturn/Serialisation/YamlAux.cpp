@@ -30,6 +30,7 @@
 #include "YamlAux.h"
 
 #include "Saturn/Asset/AssetManager.h"
+#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 
 namespace Saturn {
 
@@ -165,6 +166,54 @@ namespace Saturn {
 			rEmitter << YAML::Key << "Name" << YAML::Value << sc.ScriptName;
 			rEmitter << YAML::Key << "ID" << YAML::Value << sc.AssetID;
 
+			rEmitter << YAML::Key << "Properties";
+			rEmitter << YAML::BeginSeq;
+
+			auto& rProperties = ClassMetadataHandler::Get().GetAllProperties( sc.ScriptName );
+			for( const auto& rProperty : rProperties )
+			{
+				rEmitter << YAML::BeginMap;
+				rEmitter << YAML::Key << "Name" << YAML::Value << rProperty.GetName();
+	
+				rEmitter << YAML::Key << "ValueType" << YAML::Value << (int)rProperty.GetType();
+				
+				switch( rProperty.GetType() )
+				{
+					case SPropertyType::Float:
+					{
+						float temporaryValue = rProperty.Read<SPropertyType::Float>( entity.Get() );
+						rEmitter << YAML::Key << "Value" << YAML::Value << temporaryValue;
+					} break;
+
+					case SPropertyType::Int:
+					{
+						auto temporaryValue = rProperty.Read<SPropertyType::Int>( entity.Get() );
+						rEmitter << YAML::Key << "Value" << YAML::Value << temporaryValue;
+					} break;
+
+					case SPropertyType::Double:
+					{
+						auto temporaryValue = rProperty.Read<SPropertyType::Double>( entity.Get() );
+						rEmitter << YAML::Key << "Value" << YAML::Value << temporaryValue;
+					} break;
+
+					case SPropertyType::Vector2:
+					{
+						auto temporaryValue = rProperty.Read<SPropertyType::Vector2>( entity.Get() );
+						rEmitter << YAML::Key << "Value" << YAML::Value << temporaryValue;
+					} break;
+
+					case SPropertyType::Vector3:
+					{
+						auto temporaryValue = rProperty.Read<SPropertyType::Vector3>( entity.Get() );
+						rEmitter << YAML::Key << "Value" << YAML::Value << temporaryValue;
+					} break;
+				}
+
+				rEmitter << YAML::EndMap;
+			}
+
+			rEmitter << YAML::EndSeq;
 			rEmitter << YAML::EndMap;
 		}
 
@@ -372,6 +421,57 @@ namespace Saturn {
 				s.AssetID = srcc[ "ID" ].as< uint64_t >();
 
 				SAT_CORE_INFO( "Created entity with class name: {0}", s.ScriptName );
+
+				/////////////////////////////////
+				// Read Properties
+
+				auto properties = srcc[ "Properties" ];
+				for( auto property : properties )
+				{
+					std::string propertyName = property[ "Name" ].as<std::string>();
+					SPropertyType type = ( SPropertyType )property[ "ValueType" ].as<int>( (int)SPropertyType::Unknown );
+
+					auto& rProperty = ClassMetadataHandler::Get().GetProperty( ScriptName, propertyName );
+					
+					if( rProperty.GetName().empty() )
+						continue;
+
+					if( rProperty.GetType() == type )
+					{
+						switch( type )
+						{
+							case SPropertyType::Float:
+							{
+								auto value = property[ "Value" ].as<float>();
+								rProperty.SetProperty( DeserialisedEntity.Get(), value );
+							} break;
+
+							case SPropertyType::Int:
+							{
+								auto value = property[ "Value" ].as<float>();
+								rProperty.SetProperty( DeserialisedEntity.Get(), value );
+							} break;
+
+							case SPropertyType::Double:
+							{
+								auto value = property[ "Value" ].as<float>();
+								rProperty.SetProperty( DeserialisedEntity.Get(), value );
+							} break;
+
+							case SPropertyType::Vector2:
+							{
+								auto value = property[ "Value" ].as<float>();
+								rProperty.SetProperty( DeserialisedEntity.Get(), value );
+							} break;
+
+							case SPropertyType::Vector3:
+							{
+								auto value = property[ "Value" ].as<float>();
+								rProperty.SetProperty( DeserialisedEntity.Get(), value );
+							} break;
+						}
+					}
+				}
 			}
 			else
 			{

@@ -162,7 +162,7 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> { using Type =
 		}
 
 		template<SPropertyType Ty>
-		[[nodiscard]] typename PropertyTypeTraits<Ty>::Type Read( SClass* pClass )
+		[[nodiscard]] typename PropertyTypeTraits<Ty>::Type Read( SClass* pClass ) const
 		{
 			return ReadPropertyInternal<typename PropertyTypeTraits<Ty>::Type>( pClass, pGetPropertyFunction );
 		}

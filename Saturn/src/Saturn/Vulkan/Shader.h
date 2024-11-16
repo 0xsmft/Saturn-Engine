@@ -313,7 +313,7 @@ namespace Saturn {
 		const SpvSourceMap& GetSpvCode() const { return m_SpvCode; }
 		SpvSourceMap& GetSpvCode() { return m_SpvCode; }
 		
-		const std::vector< ShaderUniform > GetUniforms() const { return m_Uniforms; }
+		const std::vector< ShaderUniform >& GetUniforms() const { return m_Uniforms; }
 		
 		std::vector< ShaderSampledImage >& GetTextures() { return m_Textures; }
 		

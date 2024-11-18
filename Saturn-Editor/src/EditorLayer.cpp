@@ -949,6 +949,9 @@ namespace Saturn {
 			drawDebugText( "##PRJD6", "Bin Path", ActiveProject->GetBinDir().string() );
 			drawDebugText( "##PRJD7", "Cache Path", ActiveProject->GetFullCachePath().string() );
 
+			drawDebugText( "##PRJD8", "Module Path", GameModule::Get().GetModulePath().string() );
+			drawDebugText( "##PRJD9", "Module Timestamp", GameModule::Get().GetTimestamp() );
+
 			ImGui::EndVertical();
 #endif
 		}

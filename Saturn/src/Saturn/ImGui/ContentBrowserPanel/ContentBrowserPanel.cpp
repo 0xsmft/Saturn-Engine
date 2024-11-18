@@ -1193,16 +1193,25 @@ namespace Saturn {
 			} break;
 		}
 
-		m_RootPath = m_CurrentViewModeDirectory;
+		// Only create a new watcher if the root path has changed e.g. going from assets to scripts.
+		// Avoid destroying and creating new threads
+		// Condition m_RootPath != m_CurrentViewModeDirectory is only true if the user wants to go to the root folder in the same view mode.
+		if( m_RootPath != m_CurrentViewModeDirectory )
+		{
+			m_RootPath = m_CurrentViewModeDirectory;
+
+			delete m_Watcher;
+			m_Watcher = new filewatch::FileWatch<std::wstring>( m_RootPath.wstring(),
+				[this]( const std::wstring& path, const filewatch::Event event )
+				{
+					OnFilewatchEvent( path, event );
+				} );
+		}
+		else
+			m_RootPath = m_CurrentViewModeDirectory;
+
 		m_CurrentPath = m_CurrentViewModeDirectory;
 		m_FirstFolder = m_CurrentViewModeDirectory;
-
-		delete m_Watcher;
-		m_Watcher = new filewatch::FileWatch<std::wstring>( m_RootPath.wstring(),
-			[this]( const std::wstring& path, const filewatch::Event event )
-			{
-				OnFilewatchEvent( path, event );
-			} );
 
 		UpdateFiles( true );
 	}
@@ -1214,8 +1223,7 @@ namespace Saturn {
 
 		// First, browse to where the item is located as we may need to update the files
 		// Then, find item and select it.
-
-		auto fullPath = Project::GetActiveProject()->FilepathAbs( rPath.parent_path() );
+		const auto fullPath = Project::GetActiveProject()->FilepathAbs( rPath.parent_path() );
 
 		// Force an update here don't wait until next frame
 		if( m_CurrentPath != fullPath )

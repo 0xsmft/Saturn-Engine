@@ -73,6 +73,10 @@ namespace SaturnBuildTool
             // Eliminate Duplicate Strings
             Args.Add(" /GF");
 
+            Args.Add(" /MP");
+
+            Args.Add(" /GS");
+
             switch( TargetToBuild.CurrentConfig ) 
             {
                 case ConfigKind.Debug:

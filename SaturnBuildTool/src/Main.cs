@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Reflection;
-using System.Threading;
 
 [assembly: AssemblyVersion("0.0.2.0")]
 [assembly: AssemblyCompany("Saturn Engine")]

@@ -101,13 +101,14 @@ namespace SaturnBuildTool.Cache
             bool sourceModifed = ( sourceLastTime != fsLastWriteTime );
 
             bool headerModifed = false;
-            if ( includeHeaderFile ) 
+            if ( includeHeaderFile && Path.GetExtension( path ) != ".h" ) 
             {
                 string headerPath = Path.ChangeExtension(path, ".h");
-                FilesInCache.TryGetValue(headerPath, out FileCacheTime headerLastTime);
-
-                DateTime headerFsLastWriteTime = File.GetLastWriteTime(headerPath);
-                headerModifed = (headerLastTime != headerFsLastWriteTime);
+                if (FilesInCache.TryGetValue(headerPath, out FileCacheTime headerLastTime)) 
+                {
+                    DateTime headerFsLastWriteTime = File.GetLastWriteTime(headerPath);
+                    headerModifed = (headerLastTime != headerFsLastWriteTime);
+                }
             }
 
             return sourceModifed || headerModifed;

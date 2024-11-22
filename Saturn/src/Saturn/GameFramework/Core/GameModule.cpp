@@ -86,7 +86,7 @@ namespace Saturn {
 
 			m_LastTimestamp = buffer.str();
 
-			std::string dllFilename = std::format( "{0}_{1}.dll", Project::GetActiveConfig().Name, m_LastTimestamp );
+			std::string dllFilename = std::format( "{0}.dll", Project::GetActiveConfig().Name);
 			auto& DllPath = binDir /= dllFilename;
 
 			m_GameModule = Ref<Module>::Create( DllPath, Project::GetActiveConfig().Name );

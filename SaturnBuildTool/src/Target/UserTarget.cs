@@ -67,7 +67,7 @@ namespace SaturnBuildTool
             {
                 case ConfigKind.Debug:
                 case ConfigKind.Release:
-                    OutputSuffix = $"_{Timestamp}"; break;
+                    //OutputSuffix = $"_{Timestamp}"; break;
                 
                 default:
                     break;

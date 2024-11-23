@@ -439,6 +439,7 @@ namespace Saturn {
 
 						case SPropertyType::Vector2:
 						{
+							// Copy
 							auto temporaryValue = rProperty.Read<SPropertyType::Vector2>( entity.Get() );
 							if( Auxiliary::DrawVec2Control( name, temporaryValue ) )
 								rProperty.SetProperty( entity.Get(), temporaryValue );
@@ -446,6 +447,7 @@ namespace Saturn {
 
 						case SPropertyType::Vector3:
 						{
+							// Copy
 							auto temporaryValue = rProperty.Read<SPropertyType::Vector3>( entity.Get() );
 							if( Auxiliary::DrawVec3Control( name, temporaryValue ) )
 								rProperty.SetProperty( entity.Get(), temporaryValue );

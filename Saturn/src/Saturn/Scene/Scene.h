@@ -173,7 +173,7 @@ namespace Saturn {
 		
 		void OnUpdate( Timestep ts );
 		void OnUpdatePhysics( Timestep ts );
-
+		
 	public:
 		template<typename T>
 		std::vector<Ref<Entity>> GetAllEntitiesWith( void )
@@ -275,6 +275,8 @@ namespace Saturn {
 		void DeserialiseInternal( IStream& rStream );
 
 		Ref<Entity> HotReloadReplaceOldEntity( Ref<Entity> source );
+
+		void TransferModifiedProperties( const Ref<Entity>& rSourceEntity, Ref<Entity>& rEntity, const std::string& rMetadataName );
 
 	protected:
 		void OnEntityCreated( Ref<Entity> entity );

@@ -664,23 +664,33 @@ namespace Saturn {
 		entity->Invalidate();
 	}
 
+	void Scene::TransferModifiedProperties( const Ref<Entity>& rSourceEntity, Ref<Entity>& rEntity, const std::string& rMetadataName )
+	{
+		auto& rProperties = ClassMetadataHandler::Get().GetAllProperties( rMetadataName );
+
+		for( auto& rProperty : rProperties )
+		{
+			rProperty.RtCopyFromOther( const_cast< Entity* >( rSourceEntity.Get() ), rEntity.Get() );
+		}
+	}
+
 	void Scene::CopyScene( Ref<Scene>& NewScene )
 	{
 		// Copy entities
 		// I know we can just use the "=" operator, but we need to recreate the entities from the game.
 		for( auto&& [id, entity] : m_EntityIDMap )
 		{
-			auto& rSourceEntity = m_EntityIDMap[ id ];
-
-			if( rSourceEntity->HasComponent<ScriptComponent>() )
+			if( entity->HasComponent<ScriptComponent>() )
 			{
-				auto& rScriptComponent = rSourceEntity->GetComponent<ScriptComponent>();
+				auto& rScriptComponent = entity->GetComponent<ScriptComponent>();
 
-				NewScene->m_EntityIDMap[ id ] = NewScene->CreateEntityWithIDScript( rSourceEntity->GetUUID(), rSourceEntity->GetName(), rScriptComponent.ScriptName );
+				NewScene->m_EntityIDMap[ id ] = NewScene->CreateEntityWithIDScript( entity->GetUUID(), entity->GetName(), rScriptComponent.ScriptName );
+
+				TransferModifiedProperties( entity, NewScene->m_EntityIDMap[ id ], rScriptComponent.ScriptName );
 			}
 			else
 			{
-				NewScene->m_EntityIDMap[ id ] = Ref<Entity>::Create( rSourceEntity->GetName(), rSourceEntity->GetUUID() );
+				NewScene->m_EntityIDMap[ id ] = Ref<Entity>::Create( entity->GetName(), entity->GetUUID() );
 			}	
 		}
 

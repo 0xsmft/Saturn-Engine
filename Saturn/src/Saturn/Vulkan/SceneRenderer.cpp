@@ -1659,8 +1659,7 @@ namespace Saturn {
 			( uint32_t ) m_RendererData.LightCullingWorkGroups.y,
 			( uint32_t ) m_RendererData.LightCullingWorkGroups.z );
 
-		VkMemoryBarrier barrier = {};
-		barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+		VkMemoryBarrier barrier = { VK_STRUCTURE_TYPE_MEMORY_BARRIER };
 		barrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
 		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 

@@ -82,32 +82,42 @@ namespace Saturn {
 	template<SPropertyType Type>
 	struct PropertyTypeTraits;
 
-#define SAT_CREATE_PROPERTY_TYPE_TRAIT(PropertyType, CppType) \
-template<> struct PropertyTypeTraits<SPropertyType::PropertyType> { using Type = CppType; }
+#define SAT_CREATE_PROPERTY_TYPE_TRAIT(PropertyType, CppType, IsRef, PerfConstRef) \
+template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
+	{  \
+		using Value = CppType;  \
+		using Reference = CppType&; \
+		using ConstReference = const CppType&; \
+		\
+		using NeedsToBeReference = std::bool_constant<IsRef>; \
+		using PerferConstReference = std::bool_constant<PerfConstRef>; \
+		using Type = std::conditional_t<NeedsToBeReference::value, std::conditional_t<PerferConstReference::value, ConstReference, Reference>, std::conditional_t<PerferConstReference::value, ConstReference, Value>>; \
+	}
 
-	SAT_CREATE_PROPERTY_TYPE_TRAIT( Char,   char );
-	SAT_CREATE_PROPERTY_TYPE_TRAIT( Double, double );
-	SAT_CREATE_PROPERTY_TYPE_TRAIT( Int,    int );
-	SAT_CREATE_PROPERTY_TYPE_TRAIT( Float,  float );
+	//								SType    Type         IsRef  PerfConstRef 
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Char,    char,        false, false );
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Double,  double,      false, false );
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Int,     int,         false, false );
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Float,   float,       false, false );
 
-	SAT_CREATE_PROPERTY_TYPE_TRAIT( Uint8,  uint8_t );
-	SAT_CREATE_PROPERTY_TYPE_TRAIT( Uint16, uint16_t );
-	SAT_CREATE_PROPERTY_TYPE_TRAIT( Uint32, uint32_t );
-	SAT_CREATE_PROPERTY_TYPE_TRAIT( Uint64, uint64_t );
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Uint8,   uint8_t ,    false, false );
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Uint16,  uint16_t,    false, false );
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Uint32,  uint32_t,    false, false );
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Uint64,  uint64_t,    false, false );
 
-	SAT_CREATE_PROPERTY_TYPE_TRAIT( Int8,  int8_t );
-	SAT_CREATE_PROPERTY_TYPE_TRAIT( Int16, int16_t );
-	//SAT_CREATE_PROPERTY_TYPE_TRAIT( Int32, int32_t ); -- same as int
-	SAT_CREATE_PROPERTY_TYPE_TRAIT( Int64, int64_t );
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Int8,    int8_t,      false, false );
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Int16,   int16_t,     false, false );
+	//SAT_CREATE_PROPERTY_TYPE_TRAIT( Int32, int32_t,     false, false ); -- same as int
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Int64,   int64_t,     false, false );
 
-	SAT_CREATE_PROPERTY_TYPE_TRAIT( Vector2, glm::vec2 );
-	SAT_CREATE_PROPERTY_TYPE_TRAIT( Vector3, glm::vec3 );
-	SAT_CREATE_PROPERTY_TYPE_TRAIT( Vector4, glm::vec4 );
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Vector2, glm::vec2,   true, true );
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Vector3, glm::vec3,   true, true );
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Vector4, glm::vec4,   true, true );
 
-	SAT_CREATE_PROPERTY_TYPE_TRAIT( String, std::string );
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( String,  std::string, true, true );
 
-	SAT_CREATE_PROPERTY_TYPE_TRAIT( Class, SClass* );
-	SAT_CREATE_PROPERTY_TYPE_TRAIT( Unknown, void* );
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Class,  SClass*,      false, false );
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Unknown, void*,       false, true );
 
 	// Where Ty is the cpp type i.e. float, int etc
 	template<typename Ty>
@@ -165,6 +175,67 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> { using Type =
 		[[nodiscard]] typename PropertyTypeTraits<Ty>::Type Read( SClass* pClass ) const
 		{
 			return ReadPropertyInternal<typename PropertyTypeTraits<Ty>::Type>( pClass, pGetPropertyFunction );
+		}
+
+		void RtCopyFromOther( SClass* pSrcClass, SClass* pClass )
+		{
+#define SAT_HANDLE_TYPE(PropertyType, src, pClass) \
+{\
+typename PropertyTypeTraits<Saturn::SPropertyType::PropertyType>::Type value = Read<Saturn::SPropertyType::PropertyType>( src ); \
+SetProperty( pClass, value ); \
+} break
+
+			switch( m_Type )
+			{
+				case Saturn::SPropertyType::Char:
+					SAT_HANDLE_TYPE( Char, pSrcClass, pClass );
+
+				case Saturn::SPropertyType::Float:
+					SAT_HANDLE_TYPE( Float, pSrcClass, pClass );
+
+				case Saturn::SPropertyType::Int:
+					SAT_HANDLE_TYPE( Int, pSrcClass, pClass );
+
+				case Saturn::SPropertyType::Double:
+					SAT_HANDLE_TYPE( Double, pSrcClass, pClass );
+
+				case Saturn::SPropertyType::Uint8:
+					SAT_HANDLE_TYPE( Uint8, pSrcClass, pClass );
+
+				case Saturn::SPropertyType::Uint16:
+					SAT_HANDLE_TYPE( Uint16, pSrcClass, pClass );
+
+				case Saturn::SPropertyType::Uint32:
+					SAT_HANDLE_TYPE( Uint32, pSrcClass, pClass );
+
+				case Saturn::SPropertyType::Uint64:
+					SAT_HANDLE_TYPE( Uint64, pSrcClass, pClass );
+
+				case Saturn::SPropertyType::Int8:
+					SAT_HANDLE_TYPE( Int8, pSrcClass, pClass );
+
+				case Saturn::SPropertyType::Int16:
+					SAT_HANDLE_TYPE( Int16, pSrcClass, pClass );
+
+				case Saturn::SPropertyType::Int64:
+					SAT_HANDLE_TYPE( Int64, pSrcClass, pClass );
+
+				case Saturn::SPropertyType::Vector2:
+					SAT_HANDLE_TYPE( Vector2, pSrcClass, pClass );
+				
+				case Saturn::SPropertyType::Vector3:
+					SAT_HANDLE_TYPE( Vector3, pSrcClass, pClass );
+				
+				case Saturn::SPropertyType::Vector4:
+					SAT_HANDLE_TYPE( Vector4, pSrcClass, pClass );
+
+				case Saturn::SPropertyType::String:
+				case Saturn::SPropertyType::AssetHandle:
+				case Saturn::SPropertyType::Class:
+				case Saturn::SPropertyType::Unknown:
+				default:
+					break;
+			}
 		}
 
 	public:

@@ -448,25 +448,25 @@ namespace Saturn {
 
 							case SPropertyType::Int:
 							{
-								auto value = property[ "Value" ].as<float>();
+								auto value = property[ "Value" ].as<int>();
 								rProperty.SetProperty( DeserialisedEntity.Get(), value );
 							} break;
 
 							case SPropertyType::Double:
 							{
-								auto value = property[ "Value" ].as<float>();
+								auto value = property[ "Value" ].as<double>();
 								rProperty.SetProperty( DeserialisedEntity.Get(), value );
 							} break;
 
 							case SPropertyType::Vector2:
 							{
-								auto value = property[ "Value" ].as<float>();
+								auto value = property[ "Value" ].as<glm::vec2>();
 								rProperty.SetProperty( DeserialisedEntity.Get(), value );
 							} break;
 
 							case SPropertyType::Vector3:
 							{
-								auto value = property[ "Value" ].as<float>();
+								auto value = property[ "Value" ].as<glm::vec3>();
 								rProperty.SetProperty( DeserialisedEntity.Get(), value );
 							} break;
 						}

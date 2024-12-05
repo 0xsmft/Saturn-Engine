@@ -104,26 +104,52 @@ namespace Saturn {
 		return {};
 	}
 
-	static SPropertyType StringToSPropertyType( const std::string& str )
+	static SPropertyType StringToSPropertyType( const std::string& str, bool usingNamespace )
 	{
-		if( str == "char" ) return SPropertyType::Char;
-		else if( str == "float" ) return SPropertyType::Float;
-		else if( str == "int" ) return SPropertyType::Int;
-		else if( str == "double" ) return SPropertyType::Double;
-		else if( str == "uint8_t" ) return SPropertyType::Uint8;
-		else if( str == "uint16_t" ) return SPropertyType::Uint16;
-		else if( str == "uint32_t" ) return SPropertyType::Uint32;
-		else if( str == "uint64_t" ) return SPropertyType::Uint64;
-		else if( str == "int8_t" ) return SPropertyType::Int8;
-		else if( str == "int16_t" ) return SPropertyType::Int16;
-		else if( str == "int64_t" ) return SPropertyType::Int64;
-		else if( str == "glm::vec2" ) return SPropertyType::Vector2;
-		else if( str == "glm::vec3" ) return SPropertyType::Vector3;
-		else if( str == "glm::vec4" ) return SPropertyType::Vector4;
-		else if( str == "std::string" ) return SPropertyType::String;
-		else if( str == "Saturn::AssetID" ) return SPropertyType::AssetHandle;
-		else if( str == "Saturn::SPropertyType::Class" ) return SPropertyType::Class;
-		else /*if( str == "Saturn::SPropertyType::Unknown" )*/ return SPropertyType::Unknown;
+		if( usingNamespace )
+		{
+			if( str == "char" )             return SPropertyType::Char;
+			else if( str == "float" )       return SPropertyType::Float;
+			else if( str == "int" )         return SPropertyType::Int;
+			else if( str == "double" )      return SPropertyType::Double;
+			else if( str == "uint8_t" )     return SPropertyType::Uint8;
+			else if( str == "uint16_t" )    return SPropertyType::Uint16;
+			else if( str == "uint32_t" )    return SPropertyType::Uint32;
+			else if( str == "uint64_t" )    return SPropertyType::Uint64;
+			else if( str == "int8_t" )      return SPropertyType::Int8;
+			else if( str == "int16_t" )     return SPropertyType::Int16;
+			else if( str == "int64_t" )     return SPropertyType::Int64;
+			else if( str == "glm::vec2" )   return SPropertyType::Vector2;
+			else if( str == "glm::vec3" )   return SPropertyType::Vector3;
+			else if( str == "glm::vec4" )   return SPropertyType::Vector4;
+			else if( str == "std::string" ) return SPropertyType::String;
+			else if( str == "AssetID" )     return SPropertyType::AssetHandle;
+			else if( str == "UUID" )        return SPropertyType::AssetHandle;
+			else if( str == "Saturn::SPropertyType::Class" ) return SPropertyType::Class;
+			else /*if( str == "Saturn::SPropertyType::Unknown" )*/ return SPropertyType::Unknown;
+		}
+		else
+		{
+			if( str == "char" )                 return SPropertyType::Char;
+			else if( str == "float" )           return SPropertyType::Float;
+			else if( str == "int" )             return SPropertyType::Int;
+			else if( str == "double" )          return SPropertyType::Double;
+			else if( str == "uint8_t" )         return SPropertyType::Uint8;
+			else if( str == "uint16_t" )        return SPropertyType::Uint16;
+			else if( str == "uint32_t" )        return SPropertyType::Uint32;
+			else if( str == "uint64_t" )        return SPropertyType::Uint64;
+			else if( str == "int8_t" )          return SPropertyType::Int8;
+			else if( str == "int16_t" )         return SPropertyType::Int16;
+			else if( str == "int64_t" )         return SPropertyType::Int64;
+			else if( str == "glm::vec2" )       return SPropertyType::Vector2;
+			else if( str == "glm::vec3" )       return SPropertyType::Vector3;
+			else if( str == "glm::vec4" )       return SPropertyType::Vector4;
+			else if( str == "std::string" )     return SPropertyType::String;
+			else if( str == "Saturn::AssetID" ) return SPropertyType::AssetHandle;
+			else if( str == "Saturn::UUID" )    return SPropertyType::AssetHandle;
+			else if( str == "Saturn::SPropertyType::Class" ) return SPropertyType::Class;
+			else /*if( str == "Saturn::SPropertyType::Unknown" )*/ return SPropertyType::Unknown;
+		}
 	}
 
 	static std::string SPropertyTypeToString( SPropertyType type )
@@ -172,7 +198,7 @@ namespace Saturn {
 		// Read the header file
 		std::ifstream headerFile( rCommand.Filepath );
 
-		bool LastLineHadSP = false, SClassFound = false, GeneratedBodyFound = false;
+		bool LastLineHadSP = false, SClassFound = false, GeneratedBodyFound = false, UsingSaturnNamespace = false;
 
 		std::string line;
 		int lineNumber = 0;
@@ -189,17 +215,23 @@ namespace Saturn {
 				rCommand.BaseClass = pair.second;
 			}
 
+			if( line.contains( "using namespace Saturn;" ) && LineIsNotComment( line ) )
+			{
+				UsingSaturnNamespace = true;
+			}
+			
 			std::smatch match;
-			std::regex typeRegex( R"((\w+)\s+(\w+))" );
-
+			
 			if( LastLineHadSP && LineIsNotComment( line ) )
 			{
+				std::regex typeRegex( R"((\w+)\s+(\w+))" );
+
 				if( std::regex_search( line, match, typeRegex ) )
 				{
 					const std::string type = match[ 1 ].str();
 					const std::string name = match[ 2 ].str();
 
-					SPropertyType realType = StringToSPropertyType( type );
+					SPropertyType realType = StringToSPropertyType( type, UsingSaturnNamespace );
 
 					SProperty p{ name, type, realType };
 					rCommand.Properties[ lineNumber ] = p;
@@ -220,24 +252,39 @@ namespace Saturn {
 				const std::string args = match[ 1 ].str();
 				const std::string remainingContent = line.substr( match.position() + match.length() ).c_str();
 
+				// If SPROPERTY is typed like: SPROPERTY() float Speed;
+				// This is handled in the else statement
+				// However, if not then we need to parse the next line for the variable definition.
 				if( remainingContent.empty() || remainingContent[ 0 ] == '\n' )
 				{
 					LastLineHadSP = true;
 				}
 				else
 				{
+					// SPROPERTY(Asset)
+					// [AssetID, UUID, uint64_t, unsigned long long] m_Asset;
+					// OR
+					// [Saturn::AssetID, Saturn::UUID, uint64_t, unsigned long long] m_Asset;
+
+					// Parse SProperty args
+					if( !args.empty() )
+					{
+
+					}
+
 					if( std::regex_search( line, match, std::regex( R"(SPROPERTY\(.*?\)\s+(\w+)\s+(\w+))", std::regex::extended ) ) )
 					{
 						const std::string type = match[ 1 ].str();
 						const std::string name = match[ 2 ].str();
 
-						SPropertyType spropType = StringToSPropertyType( type );
+						SPropertyType spropType = StringToSPropertyType( type, UsingSaturnNamespace );
 
 						SProperty p{ name, type, spropType };
 						rCommand.Properties[ lineNumber ] = p;
 					}
 					else
 					{
+						// Expected variable definition after SPROPERTY macro.
 						std::cout << rCommand.Filepath.string() << s_ErrorsMaps[ HeaderToolError::CG003 ] << "\n";
 					}
 				}

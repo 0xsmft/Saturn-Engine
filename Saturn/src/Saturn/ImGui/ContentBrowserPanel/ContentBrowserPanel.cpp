@@ -976,6 +976,7 @@ namespace Saturn {
 				sound->ID = asset->ID;
 				sound->Path = assetPath;
 				sound->Type = AssetType::Sound;
+				sound->Name = m_ImportAssetPath.stem().string();
 
 				sound->OriginalImportPath = m_ImportAssetPath;
 				sound->SoundSourcePath = m_CurrentPath / m_ImportAssetPath.filename();

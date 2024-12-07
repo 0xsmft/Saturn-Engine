@@ -80,7 +80,6 @@ namespace Saturn {
 
 		// This may not be the best way... but it's better than lazy loading.
 		m_VulkanContext = new VulkanContext();
-
 		m_VulkanContext->Init();
 
 		// If we are in Dist we don't want to create the Scene Renderer now because it does not know where the shaders are. 

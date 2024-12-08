@@ -334,7 +334,7 @@ namespace SaturnBuildTool
         {
             Stopwatch time = Stopwatch.StartNew();
 
-            RemoveTimestampFile();
+//            RemoveTimestampFile();
 
             // Compile all source files and all "build folder" files next.
             CompileSourceFiles();

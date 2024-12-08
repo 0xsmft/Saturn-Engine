@@ -52,6 +52,10 @@ namespace Saturn {
 		Entity* CreateEntity( const std::string& rClassName );
 		
 		void Reload();
+
+		const std::string& GetTimestamp() const { return m_LastTimestamp; }
+		const std::filesystem::path& GetModulePath() const { return m_GameModule->m_Path; }
+
 	private:
 		void Load();
 		void Unload();

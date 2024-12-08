@@ -77,7 +77,7 @@ namespace Saturn {
 		
 		auto timestampFile = binDir / "Timestamp";
 
-		if( std::filesystem::exists( timestampFile ) )
+		if( true )
 		{
 			std::ifstream stream( timestampFile );
 			std::stringstream buffer;

@@ -576,6 +576,7 @@ namespace Saturn {
 				}
 			}
 
+#if defined(SAT_RELEASE)
 			if( Input::Get().KeyPressed( RubyKey::Alt ) )
 			{
 				switch( rEvent.GetScancode() )
@@ -586,6 +587,7 @@ namespace Saturn {
 					} break;
 				}
 			}
+#endif
 		}
 
 		return true;
@@ -967,15 +969,18 @@ namespace Saturn {
 
 	void EditorLayer::HotReloadGame()
 	{
+#if defined(SAT_RELEASE)
 		SAT_CORE_INFO( "Begin hot reload" );
 
 		SaveFile();
+		SaveProject();
 
-		ClassMetadataHandler::Get().BeginHotReload();
-
-		m_GameModule->Reload();
+		m_GameModule->BeginHotReload();
+		Project::GetActiveProject()->Build( ConfigKind::Release );
+		m_GameModule->EndHotReload();
 
 		m_EditorScene->AcknowledgeHotReload();
+#endif
 	}
 
 	void EditorLayer::DrawAssetRegistryDebug()
@@ -1897,14 +1902,25 @@ namespace Saturn {
 		ImGui::PushStyleColor( ImGuiCol_Button, { 0.0f, 0.0f, 0.0f, 0.0f } );
 		ImGui::PushStyleVar( ImGuiStyleVar_ItemSpacing, ImVec2( 5.0f * 2.0f, 0 ) );
 
+#if defined(SAT_RELEASE)
 		if( Auxiliary::ImageButton( m_SyncTexture, ImVec2( 24.0f, 24.0f ) ) )
 		{
 			HotReloadGame();
 		}
+#else
+		{
+			Auxiliary::ScopedDisabledFlag flag( true );
+			Auxiliary::ImageButton( m_SyncTexture, ImVec2( 24.0f, 24.0f ) );
+		}
+#endif
 
 		if( ImGui::BeginItemTooltip() )
 		{
+#if defined(SAT_RELEASE)
 			ImGui::Text( "Hot Reload (Alt+F5)" );
+#else
+			ImGui::Text( "Hot Reload is only available when using the \"Release\" build configuration (Alt+F5)" );
+#endif
 
 			ImGui::EndTooltip();
 		}

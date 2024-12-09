@@ -469,37 +469,36 @@ namespace Saturn {
 	{
 		std::filesystem::path BuildToolDir = FindBuildTool();
 
-		std::filesystem::path WorkingDir = BuildToolDir;
+		std::filesystem::path WorkingDir = BuildToolDir.parent_path();
 
-		BuildToolDir /= "SaturnBuildTool.exe";
+		std::string Args = BuildToolDir.string();
 
-		std::wstring Args = BuildToolDir.wstring();
-
-		Args += L" /BUILD ";
+		Args += " /BUILD /";
 		
-		Args += Auxiliary::ConvertString( m_Config.Name );
+		Args += m_Config.Name;
 		
-		Args += L" /Win64";
+		Args += " /Win64";
 		
 		switch( kind )
 		{
 			case Saturn::ConfigKind::Debug:
-				Args += L" /Debug ";
+				Args += " /Debug /";
 				break;
 		
 			case Saturn::ConfigKind::Release:
-				Args += L" /Release ";
+				Args += " /Release /";
 				break;
 			
 			case Saturn::ConfigKind::Dist:
-				Args += L" /Dist ";
+				Args += " /Dist /";
 				break;
 		}
 
-		Args += GetRootDir().wstring();
+		Args += GetRootDir().string();
+		std::wstring wArgs = Auxiliary::ConvertString( Args );
 
 		// Start the process
-		Process buildTool( Args, WorkingDir );
+		Process buildTool( wArgs, WorkingDir );
 
 		int exitCode = buildTool.ResultOfProcess();
 

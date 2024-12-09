@@ -65,6 +65,20 @@ namespace Saturn {
 			return nullptr;
 	}
 
+#if defined(SAT_DEBUG) || defined(SAT_RELEASE)
+
+	void GameModule::BeginHotReload()
+	{
+		m_GameModule = nullptr;
+	}
+
+	void GameModule::EndHotReload()
+	{
+		Load();
+	}
+
+#endif
+
 	void GameModule::Load()
 	{
 #if defined(SAT_DIST)

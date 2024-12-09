@@ -648,13 +648,16 @@ namespace Saturn {
 		{
 			auto child = FindEntityByID( rChild );
 
-			if( deleteChildren )
+			if( child )
 			{
-				DeleteEntity( child, true );
-			}
-			else
-			{
-				child->SetParent( orphanParentID );
+				if( deleteChildren )
+				{
+					DeleteEntity( child, true );
+				}
+				else
+				{
+					child->SetParent( orphanParentID );
+				}
 			}
 		}
 

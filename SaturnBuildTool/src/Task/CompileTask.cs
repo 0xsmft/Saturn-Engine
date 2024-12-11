@@ -93,10 +93,11 @@ namespace SaturnBuildTool
                             Args.Add(" /MT");
                         }
 
-                        Args.Add(" /ZI");
+                        Args.Add(" /Z7");
                         // No optimzation.
                         Args.Add(" /Od");
                         Args.Add(" /FS");
+                        Args.Add(" /Gw");
                     } break;
 
                 case ConfigKind.Dist:

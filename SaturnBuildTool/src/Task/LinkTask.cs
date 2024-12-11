@@ -76,14 +76,15 @@ namespace SaturnBuildTool
             }
             
             Args.Add(" /MACHINE:x64");
-    
+            Args.Add(" /PDBALTPATH:%_PDB%");
+
             if (TargetToBuild.CurrentConfig != ConfigKind.Dist ) 
             {
                 Args.Add(" /INCREMENTAL");
                 Args.Add(" /DEBUG:FULL" );
 
                 string pdbFile = TargetToBuild.GetFullPDBPath();
-                Args.Add($" /PDB:{pdbFile}");
+                Args.Add($" /PDB:\"{pdbFile}\"");
             }
             else 
             {
@@ -154,6 +155,8 @@ namespace SaturnBuildTool
             clProcess.EnableRaisingEvents = true;
 
             processStart.Arguments = string.Join("", Args);
+
+            Console.WriteLine($"Linking with args: {processStart.Arguments}");
 
             clProcess.OutputDataReceived += new DataReceivedEventHandler((s, e) =>
             {

@@ -39,6 +39,8 @@
 
 #include "Saturn/GameFramework/Core/GameModule.h"
 
+#include "Saturn/Serialisation/ProjectSerialiser.h"
+
 class EditorApplication final : public Saturn::Application
 {
 public:
@@ -58,6 +60,16 @@ public:
 		{
 			// TODO: if there is not startup project, then go to recent projects, if none, show dialog telling user to go to project browser.
 			m_ProjectPath = Saturn::EngineSettings::Get().StartupProject;
+
+			if( m_ProjectPath.empty() )
+			{
+				SAT_CORE_VERIFY( false, "No project was given. Please use project browser in order create one or open one (this will set the most recent project)" );
+			}
+		}
+		else
+		{
+			Saturn::ProjectSerialiser ps;
+			ps.Deserialise( m_ProjectPath );
 		}
 	}
 

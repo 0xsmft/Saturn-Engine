@@ -175,7 +175,7 @@ namespace Saturn {
 
 		// Setup content browser panel at project dir.
 		auto& rUserSettings = EngineSettings::Get();
-		contentBrowserPanel->ResetPath( rUserSettings.StartupProject );
+		contentBrowserPanel->ResetPath( Project::GetActiveProject()->GetRootDir() );
 
 		m_TitleBar->AddMenuBarFunction( SAT_BIND_EVENT_FN( DrawTitlebarOptions ) );
 		m_TitleBar->AddOnExitFunction( SAT_BIND_EVENT_FN( OnTitlebarExit ) );

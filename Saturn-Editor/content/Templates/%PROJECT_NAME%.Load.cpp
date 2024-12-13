@@ -26,6 +26,8 @@
 *********************************************************************************************
 */
 
+/* Generated code, DO NOT modify! */
+
 #include <Saturn/Project/Project.h>
 #include <Saturn/Core/Module.h>
 #include <Saturn/Core/OptickProfiler.h>

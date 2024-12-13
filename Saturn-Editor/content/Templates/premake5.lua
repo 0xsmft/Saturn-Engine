@@ -49,17 +49,17 @@ project "__PROJECT_NAME__"
 
 			buildcommands
 			{
-				"__SATURN_BT_DIR__/RT/Run.bat /BUILD /%{prj.name} /Win64 /Debug /%{prj.location}"
+				"__SATURN_BT_DIR__/RT/Run.bat /BUILD /NAME:%{prj.name} /Win64 /Debug /PROJECT:%{prj.location}"
 			}
 
 			rebuildcommands 
 			{
-				"__SATURN_BT_DIR__/RT/Run.bat /REBUILD /%{prj.name} /Win64 /Debug /%{prj.location}"
+				"__SATURN_BT_DIR__/RT/Run.bat /REBUILD /NAME:%{prj.name} /Win64 /Debug /PROJECT:%{prj.location}"
 			}
 
 			cleancommands
 			{
-				"__SATURN_BT_DIR__/RT/Run.bat /CLEAN /%{prj.name} /Win64 /Debug /%{prj.location}"
+				"__SATURN_BT_DIR__/RT/Run.bat /CLEAN /NAME:%{prj.name} /Win64 /Debug /PROJECT:%{prj.location}"
 			}
 
 		filter "configurations:Release"
@@ -72,17 +72,17 @@ project "__PROJECT_NAME__"
 
 			buildcommands
 			{
-				"__SATURN_BT_DIR__/RT/Run.bat /BUILD /%{prj.name} /Win64 /Release /%{prj.location}"
+				"__SATURN_BT_DIR__/RT/Run.bat /BUILD /NAME:%{prj.name} /Win64 /Release /PROJECT:%{prj.location}"
 			}
 
 			rebuildcommands 
 			{
-				"__SATURN_BT_DIR__/RT/Run.bat /REBUILD /%{prj.name} /Win64 /Release /%{prj.location}"
+				"__SATURN_BT_DIR__/RT/Run.bat /REBUILD /NAME:%{prj.name} /Win64 /Release /PROJECT:%{prj.location}"
 			}
 
 			cleancommands
 			{
-				"__SATURN_BT_DIR__/RT/Run.bat /CLEAN /%{prj.name} /Win64 /Release /%{prj.location}"
+				"__SATURN_BT_DIR__/RT/Run.bat /CLEAN /NAME:%{prj.name} /Win64 /Release /PROJECT:%{prj.location}"
 			}
 
 		filter "configurations:Dist"
@@ -91,15 +91,15 @@ project "__PROJECT_NAME__"
 
 			buildcommands
 			{
-				"__SATURN_BT_DIR__/RT/Run.bat /BUILD /%{prj.name} /Win64 /Dist /%{prj.location}"
+				"__SATURN_BT_DIR__/RT/Run.bat /BUILD /NAME:%{prj.name} /Win64 /Dist /PROJECT:%{prj.location}"
 			}
 
 			rebuildcommands 
 			{
-				"__SATURN_BT_DIR__/RT/Run.bat /REBUILD /%{prj.name} /Win64 /Dist /%{prj.location}"
+				"__SATURN_BT_DIR__/RT/Run.bat /REBUILD /NAME:%{prj.name} /Win64 /Dist /PROJECT:%{prj.location}"
 			}
 
 			cleancommands
 			{
-				"__SATURN_BT_DIR__/RT/Run.bat /CLEAN /%{prj.name} /Win64 /Dist /%{prj.location}"
+				"__SATURN_BT_DIR__/RT/Run.bat /CLEAN /NAME:%{prj.name} /Win64 /Dist /PROJECT:%{prj.location}"
 			}

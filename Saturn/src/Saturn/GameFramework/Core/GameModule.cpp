@@ -74,12 +74,12 @@ namespace Saturn {
 
 	void GameModule::EndHotReload()
 	{
-		Load();
+		Load( true );
 	}
 
 #endif
 
-	void GameModule::Load()
+	void GameModule::Load( bool wasHotReloaded /*=false*/)
 	{
 #if defined(SAT_DIST)
 		// We are the game so there is no need to load the dll all we need to do is set the handle to ourself.
@@ -89,9 +89,14 @@ namespace Saturn {
 		// We are the editor, load game DLL.
 		auto binDir = Project::GetActiveProject()->GetBinDir();
 		
-		auto timestampFile = binDir / "Timestamp";
+		std::filesystem::path timestampFile = binDir / "Timestamp";
 
-		if( true )
+		if( wasHotReloaded )
+		{
+			timestampFile = binDir / "Timestamp.hot";
+		}
+
+		if( std::filesystem::exists( timestampFile ) )
 		{
 			std::ifstream stream( timestampFile );
 			std::stringstream buffer;
@@ -100,11 +105,22 @@ namespace Saturn {
 
 			m_LastTimestamp = buffer.str();
 
-			std::string dllFilename = std::format( "{0}.dll", Project::GetActiveConfig().Name);
+			std::string dllFilename;
+			if( wasHotReloaded )
+			{
+				dllFilename = std::format( "{0}_{1}.dll", Project::GetActiveConfig().Name, m_LastTimestamp );
+			}
+			else
+				dllFilename = std::format( "{0}.dll", Project::GetActiveConfig().Name );
+
 			auto& DllPath = binDir /= dllFilename;
+
+			//////////////////////////////////////////////////////////////////////////
 
 			m_GameModule = Ref<Module>::Create( DllPath, Project::GetActiveConfig().Name );
 			m_GameModule->Load();
+
+			//////////////////////////////////////////////////////////////////////////
 
 			// Call the init function.
 			InitModuleFn initModFn = ( InitModuleFn ) m_GameModule->m_Library.GetSymbol( "InitializeModule" );

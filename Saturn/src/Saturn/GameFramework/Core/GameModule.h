@@ -62,7 +62,7 @@ namespace Saturn {
 #endif
 
 	private:
-		void Load();
+		void Load( bool wasHotReloaded = false );
 		void Unload();
 
 		bool CompareLastTimestamp() const;

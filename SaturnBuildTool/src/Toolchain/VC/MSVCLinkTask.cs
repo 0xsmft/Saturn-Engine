@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 
 using SaturnBuildTool.Tools;
 
@@ -16,11 +14,11 @@ namespace SaturnBuildTool
         Executable
     }
 
-    internal class LinkTask : AsyncTask
+    internal class MSVCLinkTask : TaskBase
     {
-        private UserTarget TargetToBuild;
+        private readonly UserTarget TargetToBuild;
 
-        public LinkTask( UserTarget target )
+        public MSVCLinkTask( UserTarget target )
         {
             TargetToBuild = target;
         }
@@ -34,7 +32,7 @@ namespace SaturnBuildTool
             ProcessStartInfo processStart = new ProcessStartInfo();
             processStart.CreateNoWindow = true;
 
-            switch (ProjectInfo.Instance.TargetPlatformKind)
+            switch( ProjectInfo.Instance.TargetPlatformKind )
             {
                 case ArchitectureKind.x64:
                     {
@@ -57,65 +55,66 @@ namespace SaturnBuildTool
             Process clProcess = new Process();
             clProcess.StartInfo = processStart;
 
-            Args.Add(" /NOLOGO");
+            Args.Add( " /NOLOGO" );
 
             // std libraries
             string sdkLibPath = WindowsSDK.GetLibraryPaths();
             string msvcLibPath = GetMSVCLibraryPath();
 
             // MSVC
-            Args.Add(string.Format(" /LIBPATH:\"{0}\"", msvcLibPath));
+            Args.Add( string.Format( " /LIBPATH:\"{0}\"", msvcLibPath ) );
 
             // SDK
-            Args.Add(string.Format(" /LIBPATH:\"{0}\"", sdkLibPath + "/um" + "/x64"));
-            Args.Add(string.Format(" /LIBPATH:\"{0}\"", sdkLibPath + "/ucrt" + "/x64"));
+            Args.Add( string.Format( " /LIBPATH:\"{0}\"", sdkLibPath + "/um" + "/x64" ) );
+            Args.Add( string.Format( " /LIBPATH:\"{0}\"", sdkLibPath + "/ucrt" + "/x64" ) );
 
-            foreach (string links in TargetToBuild.LibraryPaths)
+            foreach( string links in TargetToBuild.LibraryPaths )
             {
-                Args.Add(string.Format(" /LIBPATH:\"{0}\"", links));
+                Args.Add( string.Format( " /LIBPATH:\"{0}\"", links ) );
             }
-            
-            Args.Add(" /MACHINE:x64");
-            Args.Add(" /PDBALTPATH:%_PDB%");
 
-            if (TargetToBuild.CurrentConfig != ConfigKind.Dist ) 
+            Args.Add( " /MACHINE:x64" );
+            Args.Add( " /PDBALTPATH:%_PDB%" );
+
+            if( TargetToBuild.CurrentConfig != ConfigKind.Dist )
             {
-                Args.Add(" /INCREMENTAL");
-                Args.Add(" /DEBUG:FULL" );
+                Args.Add( " /INCREMENTAL" );
+                Args.Add( " /DEBUG:FULL" );
 
                 string pdbFile = TargetToBuild.GetFullPDBPath();
-                Args.Add($" /PDB:\"{pdbFile}\"");
+                Args.Add( $" /PDB:\"{pdbFile}\"" );
             }
-            else 
+            else
             {
-                Args.Add(" /DEBUG:NONE" );
-                Args.Add(" /INCREMENTAL:NO");
+                Args.Add( " /DEBUG:NONE" );
+                Args.Add( " /INCREMENTAL:NO" );
             }
 
-            switch (TargetToBuild.OutputType) 
+            switch( TargetToBuild.OutputType )
             {
                 case LinkerOutput.Executable:
                     {
-                        if (ProjectInfo.Instance.CurrentConfigKind == ConfigKind.Dist)
+                        if( ProjectInfo.Instance.CurrentConfigKind == ConfigKind.Dist )
                         {
-                            Args.Add(string.Format(" /SUBSYSTEM:WINDOWS /OUT:\"{0}\"", TargetToBuild.GetFullBinPath()));
+                            Args.Add( string.Format( " /SUBSYSTEM:WINDOWS /OUT:\"{0}\"", TargetToBuild.GetFullBinPath() ) );
                         }
                         else
                         {
-                            Args.Add(string.Format(" /SUBSYSTEM:CONSOLE /OUT:\"{0}\"", TargetToBuild.GetFullBinPath()));
+                            Args.Add( string.Format( " /SUBSYSTEM:CONSOLE /OUT:\"{0}\"", TargetToBuild.GetFullBinPath() ) );
                         }
-                    } break;
+                    }
+                    break;
 
 
                 case LinkerOutput.StaticLibrary:
                     {
-                        Args.Add(string.Format(" /LIB /OUT:\"{0}\"", TargetToBuild.GetFullBinPath()));
+                        Args.Add( string.Format( " /LIB /OUT:\"{0}\"", TargetToBuild.GetFullBinPath() ) );
                     }
                     break;
 
                 case LinkerOutput.SharedLibrary:
                     {
-                        Args.Add(string.Format(" /DLL /OUT:\"{0}\"", TargetToBuild.GetFullBinPath()));
+                        Args.Add( string.Format( " /DLL /OUT:\"{0}\"", TargetToBuild.GetFullBinPath() ) );
                     }
                     break;
             }
@@ -125,9 +124,9 @@ namespace SaturnBuildTool
 
             Args.Add( string.Format( " /ILK:\"{0}\"", ilkPath ) );
 
-            foreach (string links in TargetToBuild.Links)
+            foreach( string links in TargetToBuild.Links )
             {
-                Args.Add(string.Format(" \"{0}\"", links ));
+                Args.Add( string.Format( " \"{0}\"", links ) );
             }
 
             // Dynamic base
@@ -135,44 +134,44 @@ namespace SaturnBuildTool
             {
                 List<string> bases = new List<string>();
 
-                foreach ( string file in TargetToBuild.DynamicBase )
+                foreach( string file in TargetToBuild.DynamicBase )
                 {
-                    bases.Add(string.Format(" \"{0}\"", file));
+                    bases.Add( string.Format( " \"{0}\"", file ) );
                 }
 
-                Args.Add( string.Format( " /DYNAMICBASE{0}", string.Join("", bases) ) );
+                Args.Add( string.Format( " /DYNAMICBASE{0}", string.Join( "", bases ) ) );
             }
 
             // Object files
-            foreach (string file in TargetToBuild.GetIntermediateFiles())
+            foreach( string file in TargetToBuild.GetIntermediateFiles() )
             {
-                Args.Add(string.Format(" \"{0}\"", file));
+                Args.Add( string.Format( " \"{0}\"", file ) );
             }
 
             // Start the link...
-            Console.WriteLine("Linking");
+            Console.WriteLine( "Linking" );
 
             clProcess.EnableRaisingEvents = true;
 
-            processStart.Arguments = string.Join("", Args);
+            processStart.Arguments = string.Join( "", Args );
 
-            Console.WriteLine($"Linking with args: {processStart.Arguments}");
+            Console.WriteLine( $"Linking with args: {processStart.Arguments}" );
 
-            clProcess.OutputDataReceived += new DataReceivedEventHandler((s, e) =>
+            clProcess.OutputDataReceived += new DataReceivedEventHandler( ( s, e ) =>
             {
-                if (e.Data != null) 
+                if( e.Data != null )
                 {
-                    Console.WriteLine(e.Data);
+                    Console.WriteLine( e.Data );
                 }
-            });
+            } );
 
-            clProcess.ErrorDataReceived += new DataReceivedEventHandler((s, e) =>
+            clProcess.ErrorDataReceived += new DataReceivedEventHandler( ( s, e ) =>
             {
-                if (e.Data != null) 
+                if( e.Data != null )
                 {
-                    Console.WriteLine(e.Data);
+                    Console.WriteLine( e.Data );
                 }
-            });
+            } );
 
             clProcess.Start();
             clProcess.BeginErrorReadLine();
@@ -186,7 +185,7 @@ namespace SaturnBuildTool
         {
             string CLLocation = VSWhere.FindMSVCToolsDir();
 
-            switch (ProjectInfo.Instance.TargetPlatformKind)
+            switch( ProjectInfo.Instance.TargetPlatformKind )
             {
                 case ArchitectureKind.x64:
                     {

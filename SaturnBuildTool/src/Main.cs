@@ -21,12 +21,6 @@ namespace SaturnBuildTool
         {
             if( IsHelpCommand( args ) ) { return 0; }
 
-            if (args.Length <= 4)
-            {
-                Console.WriteLine("ERROR: You must provide 5 arguments!");
-                return 1;
-            }
-
             // Safe to continue
             Application app = new Application(args);
             

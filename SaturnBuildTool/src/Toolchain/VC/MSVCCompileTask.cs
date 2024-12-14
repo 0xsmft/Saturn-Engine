@@ -2,19 +2,17 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 
 using SaturnBuildTool.Tools;
 
 namespace SaturnBuildTool
 {
-    internal class CompileTask : AsyncTask
+    internal class MSVCCompileTask : TaskBase
     {
-        private string InputFile;
-        private UserTarget TargetToBuild;
+        private readonly string InputFile;
+        private readonly UserTarget TargetToBuild;
 
-        public CompileTask(string inputFile, UserTarget target)
+        public MSVCCompileTask(string inputFile, UserTarget target)
         {
             InputFile = inputFile;
             TargetToBuild = target;

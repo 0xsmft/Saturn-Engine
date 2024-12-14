@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
+using SaturnBuildTool.Auxiliary;
 
 namespace SaturnBuildTool
 {
@@ -60,19 +58,12 @@ namespace SaturnBuildTool
         // 2: The target platform, Win64
         // 3: The configuration, Debug, Release, Dist
         // 4: The project location
-        public void Setup( string[] Args ) 
+        public void Setup()
         {
-            string RootDir = Args[4];
-
-            // Get the project directory.
-            int index = RootDir.IndexOf( "/" );
-            RootDirectory = RootDir.Substring( index + 1 );
-            RootDirectory = RootDirectory.Replace( "/", "\\" );
+            RootDirectory = CommandLineParser.Instance.FindValueFromKey( "PROJECT" );
 
             // Name
-            Name = Args[1];
-            index = Name.IndexOf("/");
-            Name = Name.Substring( index + 1);
+            Name = CommandLineParser.Instance.FindValueFromKey( "NAME" );
 
             // Source
             SourceDir = Path.Combine( RootDirectory, "Source" );
@@ -86,7 +77,7 @@ namespace SaturnBuildTool
             // As the source folder contains a folder with all of the source of the project
             // And then a file with the build rules.
             TargetDir = Path.Combine( RootDirectory, "Source" );
-            TargetDir = TargetDir.Replace("/", "\\");
+            TargetDir = TargetDir.Replace( "/", "\\" );
 
             // Build folder
             BuildDir = Path.Combine( RootDirectory, "Build" );
@@ -95,28 +86,20 @@ namespace SaturnBuildTool
             // Filecache
             FileCacheLocation = Path.Combine( RootDirectory, "Filecache.fc" );
 
-            TargetPlatformName = Args[2];
-            index = TargetPlatformName.IndexOf("/");
-            TargetPlatformName = TargetPlatformName.Substring(index + 1);
-
-            StringToTargetPlatform();
-
-            ConfigName = Args[3];
-            index = ConfigName.IndexOf("/");
-            ConfigName = ConfigName.Substring(index + 1);
-
-            StringToConfigKind();
+            GetTargetPlatform();
+            GetConfigKind();
 
             FindBuildRuleFile();
 
             // Find Header tool location
             string saturnLocation = Environment.GetEnvironmentVariable( "SATURN_DIR" );
-            switch( CurrentConfigKind ) 
+            switch( CurrentConfigKind )
             {
                 case ConfigKind.Debug:
                     {
-                       HeaderToolExePath = saturnLocation + "\\bin\\Debug-windows-x86_64\\SaturnHeaderTool\\SaturnHeaderTool.exe";
-                    } break;
+                        HeaderToolExePath = saturnLocation + "\\bin\\Debug-windows-x86_64\\SaturnHeaderTool\\SaturnHeaderTool.exe";
+                    }
+                    break;
 
                 case ConfigKind.Release:
                     {
@@ -132,33 +115,42 @@ namespace SaturnBuildTool
             }
         }
 
-        private void StringToConfigKind() 
+        private void GetConfigKind()
         {
-            if (ConfigName == "Debug")
+            if( CommandLineParser.Instance.FindFlag( "Debug" ) )
             {
+                ConfigName = "Debug";
                 CurrentConfigKind = ConfigKind.Debug;
             }
-            else if (ConfigName == "Release")
+            else if( CommandLineParser.Instance.FindFlag( "Release" ) )
             {
+                ConfigName = "Release";
                 CurrentConfigKind = ConfigKind.Release;
             }
-            else if (ConfigName == "Dist")
+            else if( CommandLineParser.Instance.FindFlag( "Dist" ) )
             {
+                ConfigName = "Dist";
                 CurrentConfigKind = ConfigKind.Dist;
             }
         }
 
-        private void StringToTargetPlatform() 
+        private void GetTargetPlatform()
         {
-            if (TargetPlatformName == "Win64")
+            if( CommandLineParser.Instance.FindFlag( "Win64" ) )
+            {
+                TargetPlatformName = "Win64";
                 TargetPlatformKind = ArchitectureKind.x64;
-            else if (TargetPlatformName == "Win86")
+            }
+            else if( CommandLineParser.Instance.FindFlag( "Win86" ) ) 
+            {
+                TargetPlatformName = "Win86";
                 TargetPlatformKind = ArchitectureKind.x86;
+            }
         }
 
-        private void FindBuildRuleFile() 
+        private void FindBuildRuleFile()
         {
-            switch (CurrentConfigKind)
+            switch( CurrentConfigKind )
             {
                 case ConfigKind.Debug:
                 case ConfigKind.Release:
@@ -167,14 +159,15 @@ namespace SaturnBuildTool
                         BuildRuleFile += string.Format( "\\{0}.Build.cs", Name );
 
                         BuildRuleFile = BuildRuleFile.Replace( "/", "\\" );
-                    } break;
+                    }
+                    break;
 
                 case ConfigKind.Dist:
                     {
                         BuildRuleFile = TargetDir;
-                        BuildRuleFile += string.Format("\\{0}.RT_Build.cs", Name);
+                        BuildRuleFile += string.Format( "\\{0}.RT_Build.cs", Name );
 
-                        BuildRuleFile = BuildRuleFile.Replace("/", "\\");
+                        BuildRuleFile = BuildRuleFile.Replace( "/", "\\" );
                     }
                     break;
             }

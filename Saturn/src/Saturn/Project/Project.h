@@ -161,9 +161,9 @@ namespace Saturn {
 
 		std::filesystem::path FindBuildTool();
 
-		bool Build( ConfigKind kind );
-		bool Rebuild( ConfigKind kind );
-		void Distribute( ConfigKind kind );
+		bool Build( ConfigKind kind, const std::string& rExtraArgs = "" );
+		bool Rebuild( ConfigKind kind, const std::string& rExtraArgs = "" );
+		void Distribute( ConfigKind kind, const std::string& rExtraArgs = "" );
 
 		void PrepForDist();
 

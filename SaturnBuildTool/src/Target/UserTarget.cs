@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.CodeDom.Compiler;
@@ -7,6 +6,7 @@ using System.Linq;
 using System.IO;
 
 using SaturnBuildTool.Tools;
+using SaturnBuildTool.Auxiliary;
 
 namespace SaturnBuildTool
 {
@@ -37,7 +37,7 @@ namespace SaturnBuildTool
 
         public LinkerOutput OutputType = LinkerOutput.Executable;
 
-        private long UnixTimestamp = (long)DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
+        public long UnixTimestamp = (long)DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
 
         public string Timestamp { get; set; }
 
@@ -63,14 +63,31 @@ namespace SaturnBuildTool
             
             Timestamp = UnixTimestamp.ToString();
 
-            switch (CurrentConfig) 
+            if( CommandLineParser.Instance.FindFlag( "HOTRELOAD" ) ) 
             {
-                case ConfigKind.Debug:
-                case ConfigKind.Release:
-                    //OutputSuffix = $"_{Timestamp}"; break;
-                
-                default:
-                    break;
+                switch( CurrentConfig )
+                {
+                    case ConfigKind.Debug:
+                    case ConfigKind.Release:
+                        OutputSuffix = $"_{Timestamp}"; break;
+
+                    default: break;
+                }
+            }
+
+            CreateFoldersIfNeeded();
+        }
+
+        private void CreateFoldersIfNeeded() 
+        {
+            if( !Directory.Exists( OutputPath ) ) 
+            {
+                Directory.CreateDirectory( OutputPath );
+            }
+
+            if( !Directory.Exists( GetBinDir() ) )
+            {
+                Directory.CreateDirectory( GetBinDir() );
             }
         }
 

@@ -59,6 +59,28 @@ namespace SaturnBuildTool.Tools
             return strings;
         }
 
+        public static List<string> DirSearch( string sDir, List<string> exts )
+        {
+            List<string> strings = new List<string>();
+
+            try
+            {
+                foreach( string f in Directory.GetFiles( sDir ) )
+                {
+                    if( exts.Contains( Path.GetExtension( f ) ) )
+                    {
+                        strings.Add( f );
+                    }
+                }
+            }
+            catch( System.Exception excpt )
+            {
+                Console.WriteLine( excpt.Message );
+            }
+
+            return strings;
+        }
+
         public static List<string> DirSearch(string sDir, bool isSourceOnly)
         {
             List<string> strings = new List<string>();

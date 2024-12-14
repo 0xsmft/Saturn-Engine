@@ -1,8 +1,6 @@
-﻿using System;
-
-namespace SaturnBuildTool
+﻿namespace SaturnBuildTool
 {
-    enum Kind 
+    enum ApplicationKind 
     {
         SharedLibrary,
         StaticLibrary,

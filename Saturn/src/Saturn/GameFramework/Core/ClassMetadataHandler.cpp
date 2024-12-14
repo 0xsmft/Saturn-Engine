@@ -50,6 +50,7 @@ namespace Saturn {
 
 	void ClassMetadataHandler::BeginHotReload()
 	{
+		m_Properties.clear();
 	}
 
 	void ClassMetadataHandler::AcknowledgeHotReload()

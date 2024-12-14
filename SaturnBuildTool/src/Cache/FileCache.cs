@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using SaturnBuildTool.Auxiliary;
 
 namespace SaturnBuildTool.Cache
 {
@@ -33,6 +34,20 @@ namespace SaturnBuildTool.Cache
             public static bool operator ==(FileCacheTime t1, DateTime d1)
             {
                 return t1.Time == d1.Ticks;
+            }
+
+            public override bool Equals( object obj )
+            {
+                if( obj is FileCacheTime other ) 
+                {
+                    return this.Time == other.Time;
+                }
+                return false;
+            }
+
+            public override int GetHashCode()
+            {
+                return Time.GetHashCode();
             }
         }
 
@@ -147,6 +162,7 @@ namespace SaturnBuildTool.Cache
             // --- Begin write 
             // We have to write this in a way that when the header tool reads this it can understand it
             // So this has to be C++ compatible.
+            // See, FileCache.cpp (SaturnBuildTool)
 
             FileStream fs = new FileStream(fileCache.Filepath, FileMode.Truncate, FileAccess.Write, FileShare.ReadWrite);
             BinaryWriter writer = new BinaryWriter(fs, Encoding.UTF8, false);
@@ -207,6 +223,7 @@ namespace SaturnBuildTool.Cache
             // --- Begin read
             // We have to read this in a way that when the header tool reads this it can understand it
             // So this has to be C++ compatible.
+            // See, FileCache.cpp (SaturnBuildTool)
 
             BinaryReader reader = new BinaryReader(fs, Encoding.UTF8);
 

@@ -1,26 +1,17 @@
 ﻿using System;
 
-using SaturnBuildTool.Tools;
-
 namespace SaturnBuildTool
 {
-    internal class MSVCToolchain : Toolchain
+    internal class MSVCToolchain : ToolchainBase
     {
         public MSVCToolchain(UserTarget target)
         {
             TargetToBuild = target;
         }
 
-        public override int Compile(string InputFile, bool RunHeaderTool = true)
+        public override int Compile(string InputFile)
         {
-            CompileTask compileTask = new CompileTask( InputFile, TargetToBuild );
-
-            if( RunHeaderTool ) 
-            {
-                // Add to queue
-                //HeaderTool.Instance.GenerateHeader(InputFile);
-                //HeaderTool.Instance.GenerateSource(InputFile);
-            }
+            MSVCCompileTask compileTask = new MSVCCompileTask( InputFile, TargetToBuild );
 
             int result = -1;
 
@@ -38,7 +29,7 @@ namespace SaturnBuildTool
 
         public override int Link()
         {
-            LinkTask link = new LinkTask(TargetToBuild);
+            MSVCLinkTask link = new MSVCLinkTask( TargetToBuild );
 
             int result = -1;
 

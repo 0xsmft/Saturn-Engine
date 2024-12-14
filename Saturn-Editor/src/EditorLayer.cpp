@@ -975,8 +975,10 @@ namespace Saturn {
 		SaveFile();
 		SaveProject();
 
+		ClassMetadataHandler::Get().BeginHotReload();
+
 		m_GameModule->BeginHotReload();
-		Project::GetActiveProject()->Build( ConfigKind::Release );
+		Project::GetActiveProject()->Build( ConfigKind::Release, "/HOTRELOAD" );
 		m_GameModule->EndHotReload();
 
 		m_EditorScene->AcknowledgeHotReload();

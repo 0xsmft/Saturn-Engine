@@ -465,7 +465,7 @@ namespace Saturn {
 		return BuildToolDir;
 	}
 
-	bool Project::Build( ConfigKind kind )
+	bool Project::Build( ConfigKind kind, const std::string& rExtraArgs )
 	{
 		std::filesystem::path BuildToolDir = FindBuildTool();
 
@@ -473,7 +473,7 @@ namespace Saturn {
 
 		std::string Args = BuildToolDir.string();
 
-		Args += " /BUILD /";
+		Args += " /BUILD /NAME:";
 		
 		Args += m_Config.Name;
 		
@@ -482,19 +482,21 @@ namespace Saturn {
 		switch( kind )
 		{
 			case Saturn::ConfigKind::Debug:
-				Args += " /Debug /";
+				Args += " /Debug /PROJECT:";
 				break;
 		
 			case Saturn::ConfigKind::Release:
-				Args += " /Release /";
+				Args += " /Release /PROJECT:";
 				break;
 			
 			case Saturn::ConfigKind::Dist:
-				Args += " /Dist /";
+				Args += " /Dist /PROJECT:";
 				break;
 		}
-
+	
 		Args += GetRootDir().string();
+
+		Args += " " + rExtraArgs;
 		std::wstring wArgs = Auxiliary::ConvertString( Args );
 
 		// Start the process
@@ -505,7 +507,7 @@ namespace Saturn {
 		return exitCode == 0;
 	}
 
-	bool Project::Rebuild( ConfigKind kind )
+	bool Project::Rebuild( ConfigKind kind, const std::string& rExtraArgs )
 	{
 		std::filesystem::path BuildToolDir = FindBuildTool();
 		
@@ -545,7 +547,7 @@ namespace Saturn {
 		return exitCode == 0;
 	}
 
-	void Project::Distribute( ConfigKind kind )
+	void Project::Distribute( ConfigKind kind, const std::string& rExtraArgs )
 	{
 		std::filesystem::path SaturnBinDir = Auxiliary::GetEnvironmentVariable( "SATURN_DIR" );
 		std::filesystem::path binDir = GetRootDir();

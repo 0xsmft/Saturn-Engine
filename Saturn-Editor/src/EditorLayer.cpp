@@ -103,15 +103,11 @@ namespace Saturn {
 		// Init Physics
 		PhysicsFoundation* pPhysicsFoundation = new PhysicsFoundation();
 		pPhysicsFoundation->Init();
-
-		auto& rUserSettings = EngineSettings::Get();
-
-		ProjectSerialiser ps;
-		ps.Deserialise( rUserSettings.FullStartupProjPath.string() );
-
+		
+		// Editor Application should of loaded a project but if not assert.
 		SAT_CORE_ASSERT( Project::GetActiveProject(), "No project was given." );
 		
-		VirtualFS::Get().MountBase( Project::GetActiveConfig().Name, rUserSettings.StartupProject );
+		VirtualFS::Get().MountBase( Project::GetActiveConfig().Name, Project::GetActiveProject()->GetRootDir() );
 
 		m_AssetManager = Ref<AssetManager>::Create();
 
@@ -215,7 +211,6 @@ namespace Saturn {
 
 		VirtualFS::Get().UnmountBase( Project::GetActiveConfig().Name );
 
-		// I would free the game DLL, however, there is some threading issues with Tracy.
 		delete m_GameModule;
 		m_GameModule = nullptr;
 	}

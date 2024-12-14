@@ -63,7 +63,21 @@ public:
 
 			if( m_ProjectPath.empty() )
 			{
-				SAT_CORE_VERIFY( false, "No project was given. Please use project browser in order create one or open one (this will set the most recent project)" );
+				if( Saturn::EngineSettings::Get().RecentProjects.size() )
+				{
+					// Path to .sproject
+					m_ProjectPath = Saturn::EngineSettings::Get().RecentProjects.at( 0 );
+
+					Saturn::ProjectSerialiser ps;
+					ps.Deserialise( m_ProjectPath );
+
+					SAT_CORE_INFO( "No startup project, loading from most recent project" );
+				}
+				else
+				{
+					// No startup project and no recent project -- project browser for import
+					SAT_CORE_VERIFY( false, "No project was given. Please use project browser in order create one or open one (this will set the most recent project)" );
+				}
 			}
 		}
 		else
@@ -96,7 +110,7 @@ private:
 
 Saturn::Application* Saturn::CreateApplication( int argc, char** argv ) 
 {	
-	std::string projectPath = "";
+	std::string projectPath;
 	if( argc > 1 )
 		projectPath = argv[1];
 

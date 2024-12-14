@@ -173,6 +173,9 @@ namespace Saturn {
 	
 		if( m_RecentProjectThread.joinable() )
 			m_RecentProjectThread.join();
+
+		EngineSettingsSerialiser uss;
+		uss.Serialise();
 	}
 
 	void ProjectBrowserLayer::OnUpdate( Timestep time )
@@ -246,7 +249,13 @@ namespace Saturn {
 
 		ImGui::BeginHorizontal( "##project_browser_bottom" );
 
-		ImGui::Button( "Browse", ImVec2( bottomBarHeight, bottomBarHeight ) );
+		if( ImGui::Button( "Browse", ImVec2( bottomBarHeight, bottomBarHeight ) ) ) 
+		{
+			auto filePath = Application::Get().OpenFile( "Saturn Project files (*.sproject)\0 *.sproject\0" );
+
+			ImportExternalProject( filePath );
+		}
+
 		ImGui::Spring();
 
 		if( ImGui::Button( "Create New", ImVec2( bottomBarHeight, bottomBarHeight ) ) ) 
@@ -405,6 +414,26 @@ namespace Saturn {
 		pDrawList->AddText( lastWriteTimeTextPos, ImGui::GetColorU32( ImGuiCol_TextDisabled ), rProject.LastWriteTime.c_str() );
 	}
 
+	void ProjectBrowserLayer::ImportExternalProject( const std::filesystem::path& rPath )
+	{
+		ProjectSerialiser ps;
+		ps.Deserialise( rPath );
+
+		Ref<Project> activeProject = Project::GetActiveProject();
+
+		if( activeProject )
+		{
+			ProjectInformation info{};
+			info.Filepath = rPath;
+			info.Name = activeProject->GetConfig().Name;
+			info.AssetPath = activeProject->GetFullAssetPath();
+			info.LastWriteTime = std::format( "{0}", std::filesystem::last_write_time( rPath ) );
+			info.LastWriteTime = info.LastWriteTime.substr( 0, info.LastWriteTime.find_first_of( " " ) );
+
+			m_RecentProjects.push_back( info );
+		}
+	}
+
 	void ProjectBrowserLayer::CreateProject( const std::filesystem::path& rPath )
 	{
 		std::string ProjectName = rPath.filename().string();
@@ -500,10 +529,11 @@ namespace Saturn {
 #else
 		commandLine += "\\bin\\Release-windows-x86_64\\Saturn-Editor\\Saturn-Editor.exe";
 #endif
-		// We want the root path of the project not the entire path leading to the .sproject file
-		commandLine += " " + rProject.Filepath.parent_path().string();
+		commandLine += " " + rProject.Filepath.string();
 
 		DeatchedProcess dp( commandLine, workingDir );
+
+		EngineSettings::Get().RecentProjects.push_back( rProject.Filepath );
 
 		Application::Get().Close();
 	}

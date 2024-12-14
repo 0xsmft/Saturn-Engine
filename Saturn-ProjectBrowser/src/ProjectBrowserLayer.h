@@ -65,6 +65,8 @@ namespace Saturn {
 		void CreateProject( const std::filesystem::path& rPath );
 		void DrawRecentProject( const ProjectInformation& rProject );
 
+		void ImportExternalProject( const std::filesystem::path& rPath );
+
 	private:
 		Ref<Texture2D> m_NoIconTexture = nullptr;
 

@@ -224,7 +224,7 @@ namespace Saturn {
 			
 			if( LastLineHadSP && LineIsNotComment( line ) )
 			{
-				std::regex typeRegex( R"((\w+)\s+(\w+))" );
+				std::regex typeRegex( R"(([\w:]+)\s+(\w+))" );
 
 				if( std::regex_search( line, match, typeRegex ) )
 				{
@@ -453,14 +453,16 @@ namespace Saturn {
 
 		for( const auto& [lineNumber, rProperty] : rCommand.Properties )
 		{
+			std::string stringType = SPropertyTypeToString( rProperty.GetType() );
+
 			// Set property function
-			fout << "\tstatic void Set" << rProperty.GetName() << "( " << rClassName << "* pClass, " << rProperty.GetNativeType() << " value )\n";
+			fout << "\tstatic void Set" << rProperty.GetName() << "( " << rClassName << "* pClass, " << "typename Saturn::PropertyTypeTraits< " << stringType << ">::Type" << " value )\n";
 			fout << "\t{\n";
 			fout << "\t\tpClass->" << rProperty.GetName() << " = value;\n";
 			fout << "\t}\n";
 
 			// Get property function
-			fout << "\tstatic " << rProperty.GetNativeType() << " Get" << rProperty.GetName() << "( " << rClassName << "* pClass )\n";
+			fout << "\tstatic typename Saturn::PropertyTypeTraits<" << stringType << ">::Type" << " Get" << rProperty.GetName() << "( " << rClassName << "* pClass )\n";
 			fout << "\t{\n";
 			fout << "\t\treturn pClass->" << rProperty.GetName() << ";\n";
 			fout << "\t}\n";

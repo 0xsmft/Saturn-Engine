@@ -144,14 +144,19 @@ namespace Saturn {
 				// If its a still a cpp file then its most likely a header file
 				// So try to find the source counterpart and add it to the cache
 	
-				std::filesystem::path sourcePath = rFile;
-				sourcePath.replace_extension( ".cpp" );
+				auto fsLastWriteTime = std::filesystem::last_write_time( rFile );
 
-				auto Itr = std::find( files.begin(), files.end(), sourcePath);
+				auto systemClock = std::chrono::clock_cast< std::chrono::system_clock >( fsLastWriteTime );
+				auto systemTime = std::chrono::duration_cast< std::chrono::milliseconds >( systemClock.time_since_epoch() ).count();
 
-				if( Itr == files.end() )
+				if( time.Time != systemTime )
 				{
-			//		files.push_back( sourcePath );
+					auto Itr = std::find( files.begin(), files.end(), rFile );
+
+					if( Itr == files.end() )
+					{
+						files.push_back( rFile );
+					}
 				}
 			}
 		}
@@ -159,4 +164,14 @@ namespace Saturn {
 		return files;
 	}
 
+	/*
+	struct FileReference
+	{
+		std::string Name;
+		std::filesystem::path SourcePath;
+		std::filesystem::path HeaderPath;
+
+		std::vector<FileReference> References;
+	};
+	*/
 }

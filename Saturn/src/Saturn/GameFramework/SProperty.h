@@ -193,7 +193,11 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 
 		SPropertyType GetType() const { return m_Type; }
 
-		[[nodiscard]] bool IsDirty() const { return m_Modified; }
+#if defined(SAT_DIST)
+		/*[[nodiscard]]*/ bool IsDirty() const { return false; }
+#else
+	[[nodiscard]] bool IsDirty() const { return m_Modified; }
+#endif
 
 		void SetType( SPropertyType type ) { m_Type = type; }
 		void SetNativeType( const std::string& rNativeType ) { m_NativeType = rNativeType; }

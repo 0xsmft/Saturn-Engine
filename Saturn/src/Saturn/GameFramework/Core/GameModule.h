@@ -53,10 +53,11 @@ namespace Saturn {
 		
 		void Reload();
 
-		const std::string& GetTimestamp() const { return m_LastTimestamp; }
 		const std::filesystem::path& GetModulePath() const { return m_GameModule->m_Path; }
 
 #if defined(SAT_DEBUG) || defined(SAT_RELEASE)
+		const std::string& GetTimestamp() const { return m_LastTimestamp; }
+
 		void BeginHotReload();
 		void EndHotReload();
 #endif

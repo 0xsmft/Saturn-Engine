@@ -143,6 +143,7 @@ namespace Saturn {
 
 	bool GameModule::CompareLastTimestamp() const
 	{
+#if !defined(SAT_DIST)
 		auto binDir = Project::GetActiveProject()->GetBinDir();
 
 		auto timestampFile = binDir / "Timestamp";
@@ -160,10 +161,14 @@ namespace Saturn {
 		}
 
 		return false;
+#else
+		return false;
+#endif
 	}
 
 	void GameModule::CompareLastTimestampAndClean()
 	{
+#if !defined(SAT_DIST)
 		if( CompareLastTimestamp() )
 		{
 			auto binDir = Project::GetActiveProject()->GetBinDir();
@@ -190,6 +195,7 @@ namespace Saturn {
 				SAT_CORE_ERROR( "Hot Reload: Error when trying to delete file: {0}. Skipping!", error.what() );
 			}
 		}
+#endif
 	}
 
 	// Build Game while editor is running
@@ -201,10 +207,12 @@ namespace Saturn {
 
 	void GameModule::Reload() 
 	{
+#if !defined(SAT_DIST)
 		Unload();
 
 		CompareLastTimestampAndClean();
 
 		Load();
+#endif
 	}
 }

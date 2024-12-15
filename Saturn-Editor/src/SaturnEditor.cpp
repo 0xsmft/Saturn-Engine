@@ -68,10 +68,7 @@ public:
 					// Path to .sproject
 					m_ProjectPath = Saturn::EngineSettings::Get().RecentProjects.at( 0 );
 
-					Saturn::ProjectSerialiser ps;
-					ps.Deserialise( m_ProjectPath );
-
-					SAT_CORE_INFO( "No startup project, loading from most recent project" );
+					SAT_CORE_INFO( "No startup project, initialising from most recent project" );
 				}
 				else
 				{
@@ -80,11 +77,9 @@ public:
 				}
 			}
 		}
-		else
-		{
-			Saturn::ProjectSerialiser ps;
-			ps.Deserialise( m_ProjectPath );
-		}
+		
+		Saturn::ProjectSerialiser ps;
+		ps.Deserialise( m_ProjectPath );
 	}
 
 	virtual void OnInit() override

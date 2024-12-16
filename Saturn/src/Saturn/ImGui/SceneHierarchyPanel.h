@@ -108,10 +108,13 @@ namespace Saturn {
 
 		Ref<Texture2D> m_EditIcon;
 
-		bool m_OpenAssetFinderPopup = false;
+		// Asset Finder
 		AssetID m_CurrentAssetID = 0;
-
 		AssetType m_CurrentFinderType = AssetType::Unknown;
+
+		// Entity Finder
+		bool m_OpenEntityFinderPopup = false;
+		UUID m_CurrentEntityID = 0;
 
 		bool m_IsMultiSelecting = false;
 

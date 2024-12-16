@@ -36,13 +36,15 @@
 namespace Saturn {
 
 	class SClass;
+	class Entity;
 
 	enum SPropertyFlags_
 	{
 		SPropertyFlags_None = BIT( 0 ),
 		SPropertyFlags_ReadOnlyInEditor = BIT( 1 ), // NOTE: ReadOnlyInEditor is only available with the editor
 		SPropertyFlags_Asset = BIT( 2 ),
-		SPropertyFlags_Serialised = BIT( 3 )
+		SPropertyFlags_Serialised = BIT( 3 ),
+		SPropertyFlags_Entity = BIT( 4 )
 	};
 
 	typedef int SPropertyFlags;
@@ -66,6 +68,7 @@ namespace Saturn {
 		Vector4, /* glm::vec4 */
 		String, /* std::string */
 		AssetHandle,
+		Entity, // Ref<Entity>
 		Class,
 		Unknown
 	};
@@ -116,8 +119,9 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 
 	SAT_CREATE_PROPERTY_TYPE_TRAIT( String,  std::string, true, true ); 
 
-	SAT_CREATE_PROPERTY_TYPE_TRAIT( Class,  SClass*,      false, false );
-	SAT_CREATE_PROPERTY_TYPE_TRAIT( Unknown, void*,       false, true );
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Entity,  Ref<Entity>, true, false );
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Class,   SClass*,     false, false );
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Unknown, void*,       false, true  );
 
 	// Where Ty is the cpp type i.e. float, int etc
 	template<typename Ty>

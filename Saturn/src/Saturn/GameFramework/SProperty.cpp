@@ -30,6 +30,7 @@
 #include "SProperty.h"
 
 #include "SClass.h"
+#include "Saturn/Scene/Entity.h"
 #include "Saturn/Serialisation/RawSerialisation.h"
 
 namespace Saturn {
@@ -87,6 +88,7 @@ SetProperty( pClass, value ); \
 			case Saturn::SPropertyType::Vector4:
 				SAT_HANDLE_TYPE( Vector4, pSrcClass, pClass );
 
+			case Saturn::SPropertyType::Entity:
 			case Saturn::SPropertyType::String:
 			case Saturn::SPropertyType::Class:
 			case Saturn::SPropertyType::Unknown:
@@ -159,6 +161,13 @@ RawSerialisation::WriteObject( value, rStream ); \
 				RawSerialisation::WriteString( rValue, rStream );
 			} break;
 			
+			case Saturn::SPropertyType::Entity: 
+			{
+				Ref<Entity>& rEntity = Read<Saturn::SPropertyType::Entity>( pClass );
+
+				RawSerialisation::WriteObject( rEntity->GetUUID(), rStream );
+			} break;
+
 			case Saturn::SPropertyType::Class:
 			case Saturn::SPropertyType::Unknown:
 			default:
@@ -233,6 +242,7 @@ SetProperty( pClass, value );\
 				SetProperty( pClass, rValue );
 			} break;
 
+			case Saturn::SPropertyType::Entity:
 			case Saturn::SPropertyType::Class:
 			case Saturn::SPropertyType::Unknown:
 			default:

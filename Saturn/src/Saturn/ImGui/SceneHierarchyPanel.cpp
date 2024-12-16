@@ -441,7 +441,7 @@ namespace Saturn {
 						{
 							// Copy
 							auto temporaryValue = rProperty.Read<SPropertyType::Vector2>( entity.Get() );
-							if( Auxiliary::DrawVec2Control( name, temporaryValue ) )
+							if( Auxiliary::DrawVec2Control( name, temporaryValue, 0.0f, 125.0f ) )
 								rProperty.SetProperty( entity.Get(), temporaryValue );
 						} break;
 
@@ -449,8 +449,149 @@ namespace Saturn {
 						{
 							// Copy
 							auto temporaryValue = rProperty.Read<SPropertyType::Vector3>( entity.Get() );
-							if( Auxiliary::DrawVec3Control( name, temporaryValue ) )
+							if( Auxiliary::DrawVec3Control( name, temporaryValue, 0.0f, 125.0f ) )
 								rProperty.SetProperty( entity.Get(), temporaryValue );
+						} break;
+
+						/*
+						case SPropertyType::Class:
+						{
+							auto* pClass = rProperty.Read<SPropertyType::Class>( entity.Get() );
+
+							ImGuiIO& io = ImGui::GetIO();
+
+							ImGui::PushID( name.c_str() );
+
+							ImGui::Columns( 3 );
+							ImGui::SetColumnWidth( 0, 125.0f );
+							ImGui::Text( name.c_str() );
+							ImGui::NextColumn();
+							
+							ImGui::PushMultiItemsWidths( 1, ImGui::CalcItemWidth() );
+							ImGui::PushStyleVar( ImGuiStyleVar_ItemSpacing, ImVec2{ 0, 0 } );
+
+							if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), { 24.0f, 24.0f } ) )
+							{
+								m_OpenEntityFinderPopup = true;
+							}
+
+							ImGui::NextColumn();
+							ImGui::Text( pClass == nullptr ? "<no class set>" : "Set." );
+
+							ImGui::PopItemWidth();
+							ImGui::PopStyleVar();
+
+							ImGui::Columns( 1 );
+
+							ImGui::PopID();
+
+							if( m_OpenEntityFinderPopup )
+							{
+								ImGui::OpenPopup( "EntityFinderPopup" );
+
+								ImGui::SetNextWindowSize( { 250.0f, 0.0f } );
+								if( ImGui::BeginPopup( "EntityFinderPopup", ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize ) )
+								{
+									bool PopupModified = false;
+
+									if( ImGui::BeginListBox( "##ENTITYLIST", ImVec2( -FLT_MIN, 0.0f ) ) )
+									{
+										bool Selected = false;
+
+										m_Context->Each( [&]( Ref<Entity>& rEntity )
+											{
+												if( ImGui::Selectable( rEntity->GetComponent<TagComponent>().Tag.c_str(), Selected ) )
+												{
+													rProperty.SetProperty( entity.Get(), (SClass*)rEntity.Get() );
+													PopupModified = true;
+												}
+											} );
+
+										if( Selected )
+											ImGui::SetItemDefaultFocus();
+
+										ImGui::EndListBox();
+									}
+
+									if( PopupModified )
+									{
+										ImGui::CloseCurrentPopup();
+										m_OpenEntityFinderPopup = false;
+									}
+
+									ImGui::EndPopup();
+								}
+							}
+
+						} break;
+						*/
+
+						case SPropertyType::Entity: 
+						{
+							Ref<Entity>& entityFromProp = rProperty.Read<SPropertyType::Entity>( entity.Get() );
+
+							ImGui::PushID( name.c_str() );
+
+							ImGui::Columns( 2 );
+							ImGui::SetColumnWidth( 0, 125.0f );
+							ImGui::Text( name.c_str() );
+							ImGui::NextColumn();
+
+							ImGui::PushMultiItemsWidths( 1, ImGui::CalcItemWidth() );
+							ImGui::PushStyleVar( ImGuiStyleVar_ItemSpacing, ImVec2{ 0, 0 } );
+
+							if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), { 24.0f, 24.0f } ) )
+							{
+								m_OpenEntityFinderPopup = true;
+							}
+
+							ImGui::SameLine();
+							ImGui::Text( !entityFromProp ? " <no class set>" : entityFromProp->GetName().c_str() );
+
+							ImGui::PopItemWidth();
+							ImGui::PopStyleVar();
+
+							ImGui::Columns( 1 );
+
+							ImGui::PopID();
+
+							if( m_OpenEntityFinderPopup )
+							{
+								ImGui::OpenPopup( "EntityFinderPopup" );
+
+								ImGui::SetNextWindowSize( { 250.0f, 0.0f } );
+								if( ImGui::BeginPopup( "EntityFinderPopup", ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize ) )
+								{
+									bool PopupModified = false;
+
+									if( ImGui::BeginListBox( "##ENTITYLIST", ImVec2( -FLT_MIN, 0.0f ) ) )
+									{
+										bool Selected = false;
+
+										m_Context->Each( [ & ]( Ref<Entity>& rEntity )
+											{
+												if( ImGui::Selectable( rEntity->GetComponent<TagComponent>().Tag.c_str(), Selected ) )
+												{
+													rProperty.SetProperty( entity.Get(), rEntity );
+													PopupModified = true;
+												}
+											} );
+
+										if( Selected )
+											ImGui::SetItemDefaultFocus();
+
+										ImGui::EndListBox();
+									}
+
+									if( PopupModified )
+									{
+										ImGui::CloseCurrentPopup();
+										m_OpenEntityFinderPopup = false;
+									}
+
+									ImGui::EndPopup();
+								}
+							}
 						} break;
 					}
 				}

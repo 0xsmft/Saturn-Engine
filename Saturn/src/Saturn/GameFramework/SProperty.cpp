@@ -29,6 +29,7 @@
 #include "sppch.h"
 #include "SProperty.h"
 
+#include "Saturn/Asset/Asset.h"
 #include "SClass.h"
 #include "Saturn/Scene/Entity.h"
 #include "Saturn/Serialisation/RawSerialisation.h"
@@ -66,7 +67,6 @@ SetProperty( pClass, value ); \
 			case Saturn::SPropertyType::Uint32:
 				SAT_HANDLE_TYPE( Uint32, pSrcClass, pClass );
 
-			case Saturn::SPropertyType::AssetHandle:
 			case Saturn::SPropertyType::Uint64:
 				SAT_HANDLE_TYPE( Uint64, pSrcClass, pClass );
 
@@ -132,7 +132,6 @@ RawSerialisation::WriteObject( value, rStream ); \
 			case Saturn::SPropertyType::Uint32:
 				SAT_SERIALISE_PROPERTY( Uint32, pClass, rStream );
 
-			case Saturn::SPropertyType::AssetHandle:
 			case Saturn::SPropertyType::Uint64:
 				SAT_SERIALISE_PROPERTY( Uint64, pClass, rStream );
 
@@ -166,6 +165,14 @@ RawSerialisation::WriteObject( value, rStream ); \
 				Ref<Entity>& rEntity = Read<Saturn::SPropertyType::Entity>( pClass );
 
 				RawSerialisation::WriteObject( rEntity->GetUUID(), rStream );
+			} break;
+
+			case Saturn::SPropertyType::Asset: 
+			{
+				AssetReference& rAssetReference = Read<Saturn::SPropertyType::Asset>( pClass );
+
+				RawSerialisation::WriteObject( rAssetReference.ID, rStream );
+				RawSerialisation::WriteObject( rAssetReference.ExpectedType, rStream );
 			} break;
 
 			case Saturn::SPropertyType::Class:
@@ -214,7 +221,6 @@ SetProperty( pClass, value );\
 			case Saturn::SPropertyType::Uint32:
 				SAT_DESERIALISE_PROPERTY( Uint32, pClass, rStream );
 
-			case Saturn::SPropertyType::AssetHandle:
 			case Saturn::SPropertyType::Uint64:
 				SAT_DESERIALISE_PROPERTY( Uint64, pClass, rStream );
 
@@ -240,6 +246,17 @@ SetProperty( pClass, value );\
 			{
 				const std::string& rValue = RawSerialisation::ReadString( rStream );
 				SetProperty( pClass, rValue );
+			} break;
+
+			case Saturn::SPropertyType::Asset:
+			{
+				uint64_t id = 0;
+				int expectedType = 0;
+
+				RawSerialisation::ReadObject( id, rStream );
+				RawSerialisation::ReadObject( expectedType, rStream );
+
+				// TODO: Set...
 			} break;
 
 			case Saturn::SPropertyType::Entity:

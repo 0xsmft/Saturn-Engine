@@ -37,6 +37,7 @@ namespace Saturn {
 
 	class SClass;
 	class Entity;
+	class AssetReference;
 
 	enum SPropertyFlags_
 	{
@@ -67,7 +68,7 @@ namespace Saturn {
 		Vector3, /* glm::vec2 */
 		Vector4, /* glm::vec4 */
 		String, /* std::string */
-		AssetHandle,
+		Asset,
 		Entity, // Ref<Entity>
 		Class,
 		Unknown
@@ -118,6 +119,8 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 	SAT_CREATE_PROPERTY_TYPE_TRAIT( Vector4, glm::vec4,   true, true );
 
 	SAT_CREATE_PROPERTY_TYPE_TRAIT( String,  std::string, true, true ); 
+
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Asset,  AssetReference, true, false );
 
 	SAT_CREATE_PROPERTY_TYPE_TRAIT( Entity,  Ref<Entity>, true, false );
 	SAT_CREATE_PROPERTY_TYPE_TRAIT( Class,   SClass*,     false, false );

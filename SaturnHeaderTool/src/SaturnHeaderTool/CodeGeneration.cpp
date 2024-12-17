@@ -129,8 +129,9 @@ namespace Saturn {
 			else if( str == "glm::vec3" )   return SPropertyType::Vector3;
 			else if( str == "glm::vec4" )   return SPropertyType::Vector4;
 			else if( str == "std::string" ) return SPropertyType::String;
-			else if( str == "AssetID" )     return SPropertyType::AssetHandle;
-			else if( str == "UUID" )        return SPropertyType::AssetHandle;
+			else if( str == "AssetID" )     return SPropertyType::Uint64;
+			else if( str == "UUID" )        return SPropertyType::Uint64;
+			else if( str == "AssetReference" ) return SPropertyType::Asset;
 			else if( IsValidPointer( str ) ) return SPropertyType::Class;
 			else if( "Ref<Entity>" ) return SPropertyType::Entity;
 			else /*if( str == "Saturn::SPropertyType::Unknown" )*/ return SPropertyType::Unknown;
@@ -152,8 +153,9 @@ namespace Saturn {
 			else if( str == "glm::vec3" )       return SPropertyType::Vector3;
 			else if( str == "glm::vec4" )       return SPropertyType::Vector4;
 			else if( str == "std::string" )     return SPropertyType::String;
-			else if( str == "Saturn::AssetID" ) return SPropertyType::AssetHandle;
-			else if( str == "Saturn::UUID" )    return SPropertyType::AssetHandle;
+			else if( str == "Saturn::AssetID" ) return SPropertyType::Uint64;
+			else if( str == "Saturn::UUID" )    return SPropertyType::Uint64;
+			else if( str == "Saturn::AssetReference" ) return SPropertyType::Asset;
 			else if( IsValidPointer( str ) )    return SPropertyType::Class;
 			else if( "Saturn::Ref<Saturn::Entity>" ) return SPropertyType::Entity;
 			else /*if( str == "Saturn::SPropertyType::Unknown" )*/ return SPropertyType::Unknown;
@@ -179,7 +181,7 @@ namespace Saturn {
 			case SPropertyType::Vector3: return "Saturn::SPropertyType::Vector3";
 			case SPropertyType::Vector4: return "Saturn::SPropertyType::Vector4";
 			case SPropertyType::String: return "Saturn::SPropertyType::String";
-			case SPropertyType::AssetHandle: return "Saturn::SPropertyType::AssetHandle";
+			case SPropertyType::Asset: return "Saturn::SPropertyType::Asset";
 			case SPropertyType::Entity: return "Saturn::SPropertyType::Entity";
 			case SPropertyType::Class: return "Saturn::SPropertyType::Class";
 			case SPropertyType::Unknown: return "Saturn::SPropertyType::Unknown";
@@ -200,6 +202,23 @@ namespace Saturn {
 
 		// Get property function
 		fout << std::format( "\tstatic {0} Get{1}( {2}* pClass )\n", rProperty.GetNativeType(), rProperty.GetName(), rClassName );
+		fout << "\t{\n";
+		fout << "\t\treturn pClass->" << rProperty.GetName() << ";\n";
+		fout << "\t}\n";
+
+		fout << "\n";
+	}
+
+	static void CreateGetSetForAssetProp( const SProperty& rProperty, const std::string& rClassName, std::ofstream& fout )
+	{
+		// Set property function
+		fout << std::format( "\tstatic void Set{0}( {1}* pClass, Saturn::AssetID _ASSETID_ )\n", rProperty.GetName(), rClassName );
+		fout << "\t{\n";
+		fout << "\t\tpClass->" << rProperty.GetName() << ".ID = _ASSETID_;\n";
+		fout << "\t}\n";
+
+		// Get property function
+		fout << std::format( "\tstatic Saturn::AssetReference& Get{0}( {1}* pClass )\n", rProperty.GetName(), rClassName );
 		fout << "\t{\n";
 		fout << "\t\treturn pClass->" << rProperty.GetName() << ";\n";
 		fout << "\t}\n";
@@ -260,7 +279,7 @@ namespace Saturn {
 					SPropertyType realType = StringToSPropertyType( type, UsingSaturnNamespace );
 
 					SProperty p{ name, type, realType };
-					rCommand.Properties[ lineNumber ] = p;
+					rCommand.Properties[ lineNumber - 1 ] = p;
 				}
 				else
 				{
@@ -488,7 +507,11 @@ namespace Saturn {
 			if( rProperty.GetType() == SPropertyType::Class ) 
 			{
 				CreateGetSetForClassProp( rProperty, rClassName, fout );
-				
+				continue;
+			}
+			else if( rProperty.GetType() == SPropertyType::Asset ) 
+			{
+				CreateGetSetForAssetProp( rProperty, rClassName, fout );
 				continue;
 			}
 

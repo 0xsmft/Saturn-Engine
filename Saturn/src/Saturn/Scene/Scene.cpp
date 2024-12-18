@@ -677,12 +677,15 @@ namespace Saturn {
 			{
 				Ref<Entity>& currentEntity = rProperty.Read<SPropertyType::Entity>( const_cast< Entity* >( rSourceEntity.Get() ) );
 
-				UUID id = currentEntity->GetUUID();
+				if( currentEntity != nullptr )
+				{
+					UUID id = currentEntity->GetUUID();
 
-				// Find the same entity but in our scene
-				Ref<Entity> ourEntity = FindEntityByID( id );
+					// Find the same entity but in our scene
+					Ref<Entity> ourEntity = FindEntityByID( id );
 
-				rProperty.SetProperty( rEntity.Get(), ourEntity );
+					rProperty.SetProperty( rEntity.Get(), ourEntity );
+				}
 			}
 			else
 			{

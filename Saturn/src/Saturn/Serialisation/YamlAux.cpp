@@ -172,6 +172,12 @@ namespace Saturn {
 			auto& rProperties = ClassMetadataHandler::Get().GetAllProperties( sc.ScriptName );
 			for( const auto& rProperty : rProperties )
 			{
+#define SAT_SERIALISE_PROPERTY_YAML( PropertyType ) \
+{ \
+typename PropertyTypeTraits<Saturn::SPropertyType::PropertyType>::Type value = rProperty.Read<Saturn::SPropertyType::PropertyType>( entity.Get() ); \
+rEmitter << YAML::Key << "Value" << YAML::Value << value; \
+} break
+
 				rEmitter << YAML::BeginMap;
 				rEmitter << YAML::Key << "Name" << YAML::Value << rProperty.GetName();
 	
@@ -179,34 +185,76 @@ namespace Saturn {
 				
 				switch( rProperty.GetType() )
 				{
+					case SPropertyType::Char:
+						SAT_SERIALISE_PROPERTY_YAML( Char );
+
 					case SPropertyType::Float:
-					{
-						float temporaryValue = rProperty.Read<SPropertyType::Float>( entity.Get() );
-						rEmitter << YAML::Key << "Value" << YAML::Value << temporaryValue;
-					} break;
+						SAT_SERIALISE_PROPERTY_YAML( Float );
 
 					case SPropertyType::Int:
-					{
-						auto temporaryValue = rProperty.Read<SPropertyType::Int>( entity.Get() );
-						rEmitter << YAML::Key << "Value" << YAML::Value << temporaryValue;
-					} break;
+						SAT_SERIALISE_PROPERTY_YAML( Int );
 
 					case SPropertyType::Double:
-					{
-						auto temporaryValue = rProperty.Read<SPropertyType::Double>( entity.Get() );
-						rEmitter << YAML::Key << "Value" << YAML::Value << temporaryValue;
-					} break;
+						SAT_SERIALISE_PROPERTY_YAML( Double );
+
+					case SPropertyType::Uint8:
+						SAT_SERIALISE_PROPERTY_YAML( Uint8 );
+
+					case SPropertyType::Uint16:
+						SAT_SERIALISE_PROPERTY_YAML( Uint16 );
+
+					case SPropertyType::Uint32:
+						SAT_SERIALISE_PROPERTY_YAML( Uint32 );
+
+					case SPropertyType::Uint64:
+						SAT_SERIALISE_PROPERTY_YAML( Uint64 );
+
+					case SPropertyType::Int8:
+						SAT_SERIALISE_PROPERTY_YAML( Int8 );
+
+					case SPropertyType::Int16:
+						SAT_SERIALISE_PROPERTY_YAML( Int16 );
+
+					case SPropertyType::Int64:
+						SAT_SERIALISE_PROPERTY_YAML( Int64 );
 
 					case SPropertyType::Vector2:
 					{
-						auto temporaryValue = rProperty.Read<SPropertyType::Vector2>( entity.Get() );
+						auto& temporaryValue = rProperty.Read<SPropertyType::Vector2>( entity.Get() );
 						rEmitter << YAML::Key << "Value" << YAML::Value << temporaryValue;
 					} break;
 
 					case SPropertyType::Vector3:
 					{
-						auto temporaryValue = rProperty.Read<SPropertyType::Vector3>( entity.Get() );
+						auto& temporaryValue = rProperty.Read<SPropertyType::Vector3>( entity.Get() );
 						rEmitter << YAML::Key << "Value" << YAML::Value << temporaryValue;
+					} break;
+
+					case SPropertyType::Vector4:
+					{
+						auto& temporaryValue = rProperty.Read<SPropertyType::Vector4>( entity.Get() );
+						rEmitter << YAML::Key << "Value" << YAML::Value << temporaryValue;
+					} break;
+
+					case SPropertyType::String:
+						SAT_SERIALISE_PROPERTY_YAML( String );
+
+					case SPropertyType::Entity:
+					{
+						Ref<Entity>& rEntity = rProperty.Read<Saturn::SPropertyType::Entity>( entity.Get() );
+
+						if( rEntity != nullptr )
+							rEmitter << YAML::Key << "Value" << YAML::Value << rEntity->GetUUID();
+						else
+							rEmitter << YAML::Key << "Value" << YAML::Value << 0;
+					} break;
+
+					case SPropertyType::Asset:
+					{
+						AssetReference& rAssetReference = rProperty.Read<Saturn::SPropertyType::Asset>( entity.Get() );
+
+						rEmitter << YAML::Key << "Value"        << YAML::Value << rAssetReference.ID;
+						rEmitter << YAML::Key << "ExpectedType" << YAML::Value << (int)rAssetReference.ExpectedType;
 					} break;
 				}
 
@@ -428,6 +476,13 @@ namespace Saturn {
 				auto properties = srcc[ "Properties" ];
 				for( auto property : properties )
 				{
+#define SAT_DESERIALISE_PROPERTY_YAML( PropertyType ) \
+{ \
+auto value = property[ "Value" ].as<typename PropertyTypeTraits<Saturn::SPropertyType::PropertyType>::Type>(); \
+\
+rProperty.SetProperty( DeserialisedEntity.Get(), value ); \
+} break
+
 					std::string propertyName = property[ "Name" ].as<std::string>();
 					SPropertyType type = ( SPropertyType )property[ "ValueType" ].as<int>( (int)SPropertyType::Unknown );
 
@@ -440,23 +495,38 @@ namespace Saturn {
 					{
 						switch( type )
 						{
+							case SPropertyType::Char:
+								SAT_DESERIALISE_PROPERTY_YAML( Char );
+
 							case SPropertyType::Float:
-							{
-								auto value = property[ "Value" ].as<float>();
-								rProperty.SetProperty( DeserialisedEntity.Get(), value );
-							} break;
+								SAT_DESERIALISE_PROPERTY_YAML( Float );
 
 							case SPropertyType::Int:
-							{
-								auto value = property[ "Value" ].as<int>();
-								rProperty.SetProperty( DeserialisedEntity.Get(), value );
-							} break;
+								SAT_DESERIALISE_PROPERTY_YAML( Int );
 
 							case SPropertyType::Double:
-							{
-								auto value = property[ "Value" ].as<double>();
-								rProperty.SetProperty( DeserialisedEntity.Get(), value );
-							} break;
+								SAT_DESERIALISE_PROPERTY_YAML( Double );
+
+							case SPropertyType::Uint8:
+								SAT_DESERIALISE_PROPERTY_YAML( Uint8 );
+
+							case SPropertyType::Uint16:
+								SAT_DESERIALISE_PROPERTY_YAML( Uint16 );
+
+							case SPropertyType::Uint32:
+								SAT_DESERIALISE_PROPERTY_YAML( Uint32 );
+
+							case SPropertyType::Uint64:
+								SAT_DESERIALISE_PROPERTY_YAML( Uint64 );
+
+							case SPropertyType::Int8:
+								SAT_DESERIALISE_PROPERTY_YAML( Int8 );
+
+							case SPropertyType::Int16:
+								SAT_DESERIALISE_PROPERTY_YAML( Int16 );
+
+							case SPropertyType::Int64:
+								SAT_DESERIALISE_PROPERTY_YAML( Int64 );
 
 							case SPropertyType::Vector2:
 							{
@@ -468,6 +538,29 @@ namespace Saturn {
 							{
 								auto value = property[ "Value" ].as<glm::vec3>();
 								rProperty.SetProperty( DeserialisedEntity.Get(), value );
+							} break;
+
+							case SPropertyType::Vector4:
+							{
+								auto value = property[ "Value" ].as<glm::vec4>();
+								rProperty.SetProperty( DeserialisedEntity.Get(), value );
+							} break;
+
+							case SPropertyType::String:
+							{
+								auto value = property[ "Value" ].as<std::string>();
+								rProperty.SetProperty( DeserialisedEntity.Get(), value );
+							} break;
+
+							case SPropertyType::Asset:
+							{
+								auto value = property[ "Value" ].as<uint64_t>();
+								auto expectedType = property[ "Value" ].as<int>();
+
+								AssetReference& rAssetReference = rProperty.Read<SPropertyType::Asset>( DeserialisedEntity.Get() );
+
+								rAssetReference.ID = value;
+								rAssetReference.ExpectedType = ( AssetType ) expectedType;
 							} break;
 						}
 					}

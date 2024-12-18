@@ -38,55 +38,64 @@ namespace Saturn {
 
 	void SProperty::RtCopyFromOther( SClass* pSrcClass, SClass* pClass )
 	{
-#define SAT_HANDLE_TYPE(PropertyType, src, pClass) \
+#define SAT_HANDLE_TYPE( PropertyType ) \
 {\
-typename PropertyTypeTraits<Saturn::SPropertyType::PropertyType>::Type value = Read<Saturn::SPropertyType::PropertyType>( src ); \
-SetProperty( pClass, value ); \
+typename PropertyTypeTraits<Saturn::SPropertyType::PropertyType>::Type value = Read<Saturn::SPropertyType::PropertyType>( pSrcClass ); \
+SetProperty<typename PropertyTypeTraits<Saturn::SPropertyType::PropertyType>::Type>( pClass, value ); \
 } break
 
 		switch( m_Type )
 		{
 			case Saturn::SPropertyType::Char:
-				SAT_HANDLE_TYPE( Char, pSrcClass, pClass );
+				SAT_HANDLE_TYPE( Char );
 
 			case Saturn::SPropertyType::Float:
-				SAT_HANDLE_TYPE( Float, pSrcClass, pClass );
+				SAT_HANDLE_TYPE( Float );
 
 			case Saturn::SPropertyType::Int:
-				SAT_HANDLE_TYPE( Int, pSrcClass, pClass );
+				SAT_HANDLE_TYPE( Int );
 
 			case Saturn::SPropertyType::Double:
-				SAT_HANDLE_TYPE( Double, pSrcClass, pClass );
+				SAT_HANDLE_TYPE( Double );
 
 			case Saturn::SPropertyType::Uint8:
-				SAT_HANDLE_TYPE( Uint8, pSrcClass, pClass );
+				SAT_HANDLE_TYPE( Uint8 );
 
 			case Saturn::SPropertyType::Uint16:
-				SAT_HANDLE_TYPE( Uint16, pSrcClass, pClass );
+				SAT_HANDLE_TYPE( Uint16 );
 
 			case Saturn::SPropertyType::Uint32:
-				SAT_HANDLE_TYPE( Uint32, pSrcClass, pClass );
+				SAT_HANDLE_TYPE( Uint32 );
 
 			case Saturn::SPropertyType::Uint64:
-				SAT_HANDLE_TYPE( Uint64, pSrcClass, pClass );
+				SAT_HANDLE_TYPE( Uint64 );
 
 			case Saturn::SPropertyType::Int8:
-				SAT_HANDLE_TYPE( Int8, pSrcClass, pClass );
+				SAT_HANDLE_TYPE( Int8 );
 
 			case Saturn::SPropertyType::Int16:
-				SAT_HANDLE_TYPE( Int16, pSrcClass, pClass );
+				SAT_HANDLE_TYPE( Int16 );
 
 			case Saturn::SPropertyType::Int64:
-				SAT_HANDLE_TYPE( Int64, pSrcClass, pClass );
+				SAT_HANDLE_TYPE( Int64 );
 
 			case Saturn::SPropertyType::Vector2:
-				SAT_HANDLE_TYPE( Vector2, pSrcClass, pClass );
+			{
+				const glm::vec2& rValue = Read<Saturn::SPropertyType::Vector2>( pSrcClass );
+				SetProperty<const glm::vec2&>( pClass, rValue );
+			} break;
 
 			case Saturn::SPropertyType::Vector3:
-				SAT_HANDLE_TYPE( Vector3, pSrcClass, pClass );
+				SAT_HANDLE_TYPE( Vector3 );
 
 			case Saturn::SPropertyType::Vector4:
-				SAT_HANDLE_TYPE( Vector4, pSrcClass, pClass );
+				SAT_HANDLE_TYPE( Vector4 );
+
+			case Saturn::SPropertyType::Asset:
+			{
+				AssetReference& rValue = Read<Saturn::SPropertyType::Asset>( pSrcClass );
+				SetProperty<AssetID>( pClass, rValue.ID );
+			} break;
 
 			case Saturn::SPropertyType::Entity:
 			case Saturn::SPropertyType::String:
@@ -99,59 +108,59 @@ SetProperty( pClass, value ); \
 
 	void SProperty::Serialise( SClass* pClass, std::ofstream& rStream )
 	{
-#define SAT_SERIALISE_PROPERTY( PropertyType, pClass, rStream ) \
+#define SAT_SERIALISE_PROPERTY( PropertyType ) \
 { \
 typename PropertyTypeTraits<Saturn::SPropertyType::PropertyType>::Type value = Read<Saturn::SPropertyType::PropertyType>( pClass ); \
 RawSerialisation::WriteObject( value, rStream ); \
 } break
 
-		// Referring to YamlAux -- SProperty
+		// Referring to YamlAux -- SProperty (YamlAux.cpp)
 		RawSerialisation::WriteString( m_Name, rStream );
-		RawSerialisation::WriteObject( (int)m_Type, rStream );
+		RawSerialisation::WriteObject( ( int ) m_Type, rStream );
 
 		switch( m_Type )
 		{
 			case Saturn::SPropertyType::Char:
-				SAT_SERIALISE_PROPERTY( Char, pClass, rStream );
+				SAT_SERIALISE_PROPERTY( Char );
 
 			case Saturn::SPropertyType::Float:
-				SAT_SERIALISE_PROPERTY( Float, pClass, rStream );
+				SAT_SERIALISE_PROPERTY( Float );
 
 			case Saturn::SPropertyType::Int:
-				SAT_SERIALISE_PROPERTY( Int, pClass, rStream );
+				SAT_SERIALISE_PROPERTY( Int );
 
 			case Saturn::SPropertyType::Double:
-				SAT_SERIALISE_PROPERTY( Double, pClass, rStream );
+				SAT_SERIALISE_PROPERTY( Double );
 
 			case Saturn::SPropertyType::Uint8:
-				SAT_SERIALISE_PROPERTY( Uint8, pClass, rStream );
+				SAT_SERIALISE_PROPERTY( Uint8 );
 
 			case Saturn::SPropertyType::Uint16:
-				SAT_SERIALISE_PROPERTY( Uint16, pClass, rStream );
+				SAT_SERIALISE_PROPERTY( Uint16 );
 
 			case Saturn::SPropertyType::Uint32:
-				SAT_SERIALISE_PROPERTY( Uint32, pClass, rStream );
+				SAT_SERIALISE_PROPERTY( Uint32 );
 
 			case Saturn::SPropertyType::Uint64:
-				SAT_SERIALISE_PROPERTY( Uint64, pClass, rStream );
+				SAT_SERIALISE_PROPERTY( Uint64 );
 
 			case Saturn::SPropertyType::Int8:
-				SAT_SERIALISE_PROPERTY( Int8, pClass, rStream );
+				SAT_SERIALISE_PROPERTY( Int8 );
 
 			case Saturn::SPropertyType::Int16:
-				SAT_SERIALISE_PROPERTY( Int16, pClass, rStream );
+				SAT_SERIALISE_PROPERTY( Int16 );
 
 			case Saturn::SPropertyType::Int64:
-				SAT_SERIALISE_PROPERTY( Int64, pClass, rStream );
+				SAT_SERIALISE_PROPERTY( Int64 );
 
 			case Saturn::SPropertyType::Vector2:
-				SAT_SERIALISE_PROPERTY( Vector2, pClass, rStream );
+				SAT_SERIALISE_PROPERTY( Vector2 );
 
 			case Saturn::SPropertyType::Vector3:
-				SAT_SERIALISE_PROPERTY( Vector3, pClass, rStream );
+				SAT_SERIALISE_PROPERTY( Vector3 );
 
 			case Saturn::SPropertyType::Vector4:
-				SAT_SERIALISE_PROPERTY( Vector4, pClass, rStream );
+				SAT_SERIALISE_PROPERTY( Vector4 );
 
 			case Saturn::SPropertyType::String:
 			{
@@ -159,15 +168,15 @@ RawSerialisation::WriteObject( value, rStream ); \
 
 				RawSerialisation::WriteString( rValue, rStream );
 			} break;
-			
-			case Saturn::SPropertyType::Entity: 
+
+			case Saturn::SPropertyType::Entity:
 			{
 				Ref<Entity>& rEntity = Read<Saturn::SPropertyType::Entity>( pClass );
 
 				RawSerialisation::WriteObject( rEntity->GetUUID(), rStream );
 			} break;
 
-			case Saturn::SPropertyType::Asset: 
+			case Saturn::SPropertyType::Asset:
 			{
 				AssetReference& rAssetReference = Read<Saturn::SPropertyType::Asset>( pClass );
 
@@ -184,7 +193,7 @@ RawSerialisation::WriteObject( value, rStream ); \
 
 	void SProperty::Deserialise( SClass* pClass, std::ifstream& rStream )
 	{
-#define SAT_DESERIALISE_PROPERTY( PropertyType, pClass, rStream ) \
+#define SAT_DESERIALISE_PROPERTY( PropertyType ) \
 { \
 typename PropertyTypeTraits<Saturn::SPropertyType::PropertyType>::Type value{}; \
 RawSerialisation::ReadObject( value, rStream ); \
@@ -192,55 +201,55 @@ RawSerialisation::ReadObject( value, rStream ); \
 SetProperty( pClass, value );\
 } break
 
-		// Referring to YamlAux -- SProperty
+		// Referring to YamlAux -- SProperty (YamlAux.cpp)
 		const auto& rName = RawSerialisation::ReadString( rStream );
-		
+
 		int type = 0;
 		RawSerialisation::ReadObject( type, rStream );
 
 		switch( m_Type )
 		{
 			case Saturn::SPropertyType::Char:
-				SAT_DESERIALISE_PROPERTY( Char, pClass, rStream );
+				SAT_DESERIALISE_PROPERTY( Char );
 
 			case Saturn::SPropertyType::Float:
-				SAT_DESERIALISE_PROPERTY( Float, pClass, rStream );
+				SAT_DESERIALISE_PROPERTY( Float );
 
 			case Saturn::SPropertyType::Int:
-				SAT_DESERIALISE_PROPERTY( Int, pClass, rStream );
+				SAT_DESERIALISE_PROPERTY( Int );
 
 			case Saturn::SPropertyType::Double:
-				SAT_DESERIALISE_PROPERTY( Double, pClass, rStream );
+				SAT_DESERIALISE_PROPERTY( Double );
 
 			case Saturn::SPropertyType::Uint8:
-				SAT_DESERIALISE_PROPERTY( Uint8, pClass, rStream );
+				SAT_DESERIALISE_PROPERTY( Uint8 );
 
 			case Saturn::SPropertyType::Uint16:
-				SAT_DESERIALISE_PROPERTY( Uint16, pClass, rStream );
+				SAT_DESERIALISE_PROPERTY( Uint16 );
 
 			case Saturn::SPropertyType::Uint32:
-				SAT_DESERIALISE_PROPERTY( Uint32, pClass, rStream );
+				SAT_DESERIALISE_PROPERTY( Uint32 );
 
 			case Saturn::SPropertyType::Uint64:
-				SAT_DESERIALISE_PROPERTY( Uint64, pClass, rStream );
+				SAT_DESERIALISE_PROPERTY( Uint64 );
 
 			case Saturn::SPropertyType::Int8:
-				SAT_DESERIALISE_PROPERTY( Int8, pClass, rStream );
+				SAT_DESERIALISE_PROPERTY( Int8 );
 
 			case Saturn::SPropertyType::Int16:
-				SAT_DESERIALISE_PROPERTY( Int16, pClass, rStream );
+				SAT_DESERIALISE_PROPERTY( Int16 );
 
 			case Saturn::SPropertyType::Int64:
-				SAT_DESERIALISE_PROPERTY( Int64, pClass, rStream );
+				SAT_DESERIALISE_PROPERTY( Int64 );
 
-			//case Saturn::SPropertyType::Vector2:
-			//	SAT_DESERIALISE_PROPERTY( Vector2, pClass, rStream );
+				//case Saturn::SPropertyType::Vector2:
+				//	SAT_DESERIALISE_PROPERTY( Vector2 );
 
-			//case Saturn::SPropertyType::Vector3:
-			//	SAT_DESERIALISE_PROPERTY( Vector3, pClass, rStream );
+				//case Saturn::SPropertyType::Vector3:
+				//	SAT_DESERIALISE_PROPERTY( Vector3 );
 
-			//case Saturn::SPropertyType::Vector4:
-			//	SAT_DESERIALISE_PROPERTY( Vector4, pClass, rStream );
+				//case Saturn::SPropertyType::Vector4:
+				//	SAT_DESERIALISE_PROPERTY( Vector4 );
 
 			case Saturn::SPropertyType::String:
 			{
@@ -256,7 +265,10 @@ SetProperty( pClass, value );\
 				RawSerialisation::ReadObject( id, rStream );
 				RawSerialisation::ReadObject( expectedType, rStream );
 
-				// TODO: Set...
+				AssetReference& rAssetReference = Read<SPropertyType::Asset>( pClass );
+
+				rAssetReference.ID = id;
+				rAssetReference.ExpectedType = ( AssetType ) expectedType;
 			} break;
 
 			case Saturn::SPropertyType::Entity:

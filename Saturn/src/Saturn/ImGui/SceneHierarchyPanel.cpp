@@ -547,7 +547,14 @@ namespace Saturn {
 							}
 
 							ImGui::SameLine();
-							ImGui::Text( rRef.ID == 0 ? " <no class set>" : "<Set>" );
+							std::string assetName = " <no asset set>";
+
+							if( rRef.ID != 0 )
+							{
+								assetName = " " + AssetManager::Get().FindAsset( rRef.ID )->Name;
+							}
+
+							ImGui::Text( assetName.c_str() );
 
 							ImGui::PopItemWidth();
 							ImGui::PopStyleVar();

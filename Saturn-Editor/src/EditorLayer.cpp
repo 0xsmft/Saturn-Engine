@@ -104,7 +104,7 @@ namespace Saturn {
 		PhysicsFoundation* pPhysicsFoundation = new PhysicsFoundation();
 		pPhysicsFoundation->Init();
 		
-		// Editor Application should of loaded a project but if not assert.
+		// Editor Application (EditorApplication.cpp) should of loaded a project but if not assert.
 		SAT_CORE_ASSERT( Project::GetActiveProject(), "No project was given." );
 		
 		VirtualFS::Get().MountBase( Project::GetActiveConfig().Name, Project::GetActiveProject()->GetRootDir() );
@@ -572,7 +572,7 @@ namespace Saturn {
 			}
 
 #if defined(SAT_RELEASE)
-			if( Input::Get().KeyPressed( RubyKey::Alt ) )
+			if( Input::Get().KeyPressed( RubyKey::Alt ) && m_RuntimeScene == nullptr )
 			{
 				switch( rEvent.GetScancode() )
 				{
@@ -1899,17 +1899,15 @@ namespace Saturn {
 		ImGui::PushStyleColor( ImGuiCol_Button, { 0.0f, 0.0f, 0.0f, 0.0f } );
 		ImGui::PushStyleVar( ImGuiStyleVar_ItemSpacing, ImVec2( 5.0f * 2.0f, 0 ) );
 
-#if defined(SAT_RELEASE)
-		if( Auxiliary::ImageButton( m_SyncTexture, ImVec2( 24.0f, 24.0f ) ) )
 		{
+#if defined(SAT_RELEASE)
+		Auxiliary::ScopedDisabledFlag disabledFlag( m_RuntimeScene != nullptr );
+#else
+		Auxiliary::ScopedDisabledFlag disabledFlag( true );
+#endif
+		if( Auxiliary::ImageButton( m_SyncTexture, ImVec2( 24.0f, 24.0f ) ) )
 			HotReloadGame();
 		}
-#else
-		{
-			Auxiliary::ScopedDisabledFlag flag( true );
-			Auxiliary::ImageButton( m_SyncTexture, ImVec2( 24.0f, 24.0f ) );
-		}
-#endif
 
 		if( ImGui::BeginItemTooltip() )
 		{

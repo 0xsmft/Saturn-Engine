@@ -531,7 +531,7 @@ rProperty.SetProperty( DeserialisedEntity.Get(), value ); \
 							case SPropertyType::Vector2:
 							{
 								auto value = property[ "Value" ].as<glm::vec2>();
-								rProperty.SetProperty( DeserialisedEntity.Get(), value );
+								rProperty.SetProperty<glm::vec2&>( DeserialisedEntity.Get(), value );
 							} break;
 
 							case SPropertyType::Vector3:
@@ -555,7 +555,7 @@ rProperty.SetProperty( DeserialisedEntity.Get(), value ); \
 							case SPropertyType::Asset:
 							{
 								auto value = property[ "Value" ].as<uint64_t>();
-								auto expectedType = property[ "Value" ].as<int>();
+								auto expectedType = property[ "ExpectedType" ].as<int>();
 
 								AssetReference& rAssetReference = rProperty.Read<SPropertyType::Asset>( DeserialisedEntity.Get() );
 

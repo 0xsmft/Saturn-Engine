@@ -78,24 +78,30 @@ namespace SaturnBuildTool.Auxiliary
             {
                 if( kv.Value == "NAME" && kv.Value != null )
                 {
-                    result = true;
+                    result |= true;
                     continue;
                 }
                 else if( kv.Value == "WIN64" )
                 {
-                    result = true;
+                    result |= true;
                     continue;
                 }
                 else if( kv.Value == "DEBUG" || kv.Value == "RELEASE" || kv.Value == "DIST" )
                 {
-                    result = true;
+                    result |= true;
                     continue;
                 }
                 else if( kv.Value == "PROJECT" && kv.Value != null )
                 {
-                    result = true;
+                    result |= true;
                     continue;
                 }
+            }
+
+            if( FindFlag( "DEBUG" ) && FindFlag( "HOTRELOAD" ) ) 
+            {
+                Console.WriteLine( "ERROR: \"/HOTRELOAD\" is not available when building for a debug configuration. You must use a release configuration to use \"HOTRELOAD\"" );
+                result = false;
             }
 
             return result;

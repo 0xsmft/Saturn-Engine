@@ -97,7 +97,12 @@ namespace Saturn {
 			std::type_index info = typeid( Ty );
 			auto& map = GetSingletonMap();
 
-			map[ info ] = { .pObject = type };
+			auto Itr = map.find( info );
+
+			if( Itr == map.end() )
+			{
+				map[ info ] = { .pObject = type };
+			}
 		}
 
 		template<typename Ty>

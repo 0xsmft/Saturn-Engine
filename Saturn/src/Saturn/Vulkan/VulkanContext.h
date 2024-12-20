@@ -56,7 +56,8 @@ namespace Saturn {
 	class VulkanContext
 	{
 	public:
-		static VulkanContext& Get() { return *SingletonStorage::GetOrCreateSingleton<VulkanContext>(); }
+		static inline VulkanContext& Get() { return *SingletonStorage::GetSingleton<VulkanContext>(); }
+
 	public:
 		VulkanContext();
 		~VulkanContext() { Terminate(); }

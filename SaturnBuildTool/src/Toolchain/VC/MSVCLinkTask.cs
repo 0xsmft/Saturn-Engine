@@ -74,10 +74,10 @@ namespace SaturnBuildTool
             }
 
             Args.Add( " /MACHINE:x64" );
-            Args.Add( " /PDBALTPATH:%_PDB%" );
 
             if( TargetToBuild.CurrentConfig != ConfigKind.Dist )
             {
+                Args.Add( " /PDBALTPATH:%_PDB%" );
                 Args.Add( " /INCREMENTAL" );
                 Args.Add( " /DEBUG:FULL" );
 

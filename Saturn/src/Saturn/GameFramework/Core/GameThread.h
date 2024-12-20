@@ -38,7 +38,8 @@ namespace Saturn {
 	class GameThread
 	{
 	public:
-		static inline GameThread& Get() { return *SingletonStorage::GetOrCreateSingleton<GameThread>(); }
+		SAT_SINGLETON_LAZY( GameThread )
+
 	public:
 		GameThread();
 		~GameThread();

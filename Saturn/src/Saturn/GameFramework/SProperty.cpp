@@ -86,10 +86,16 @@ SetProperty<typename PropertyTypeTraits<Saturn::SPropertyType::PropertyType>::Ty
 			} break;
 
 			case Saturn::SPropertyType::Vector3:
-				SAT_HANDLE_TYPE( Vector3 );
+			{
+				const glm::vec3& rValue = Read<Saturn::SPropertyType::Vector3>( pSrcClass );
+				SetProperty<const glm::vec3&>( pClass, rValue );
+			} break;
 
 			case Saturn::SPropertyType::Vector4:
-				SAT_HANDLE_TYPE( Vector4 );
+			{
+				const glm::vec4& rValue = Read<Saturn::SPropertyType::Vector4>( pSrcClass );
+				SetProperty<const glm::vec4&>( pClass, rValue );
+			} break;
 
 			case Saturn::SPropertyType::Asset:
 			{
@@ -115,7 +121,6 @@ RawSerialisation::WriteObject( value, rStream ); \
 } break
 
 		// Referring to YamlAux -- SProperty (YamlAux.cpp)
-		RawSerialisation::WriteString( m_Name, rStream );
 		RawSerialisation::WriteObject( ( int ) m_Type, rStream );
 
 		switch( m_Type )
@@ -153,14 +158,23 @@ RawSerialisation::WriteObject( value, rStream ); \
 			case Saturn::SPropertyType::Int64:
 				SAT_SERIALISE_PROPERTY( Int64 );
 
-			case Saturn::SPropertyType::Vector2:
-				SAT_SERIALISE_PROPERTY( Vector2 );
+			case Saturn::SPropertyType::Vector2: 
+			{
+				const glm::vec2& value = Read<Saturn::SPropertyType::Vector2>( pClass );
+				RawSerialisation::WriteVec2( value, rStream );
+			} break;
 
 			case Saturn::SPropertyType::Vector3:
-				SAT_SERIALISE_PROPERTY( Vector3 );
+			{
+				const glm::vec3& value = Read<Saturn::SPropertyType::Vector3>( pClass );
+				RawSerialisation::WriteVec3( value, rStream );
+			} break;
 
 			case Saturn::SPropertyType::Vector4:
-				SAT_SERIALISE_PROPERTY( Vector4 );
+			{
+				const glm::vec4& value = Read<Saturn::SPropertyType::Vector4>( pClass );
+				RawSerialisation::WriteVec4( value, rStream );
+			} break;
 
 			case Saturn::SPropertyType::String:
 			{
@@ -171,9 +185,12 @@ RawSerialisation::WriteObject( value, rStream ); \
 
 			case Saturn::SPropertyType::Entity:
 			{
-				Ref<Entity>& rEntity = Read<Saturn::SPropertyType::Entity>( pClass );
+				//Ref<Entity>& rEntity = Read<Saturn::SPropertyType::Entity>( pClass );
 
-				RawSerialisation::WriteObject( rEntity->GetUUID(), rStream );
+				//if( rEntity )
+				//{
+				//	RawSerialisation::WriteObject( rEntity->GetUUID(), rStream );
+				//}
 			} break;
 
 			case Saturn::SPropertyType::Asset:
@@ -191,7 +208,7 @@ RawSerialisation::WriteObject( value, rStream ); \
 		}
 	}
 
-	void SProperty::Deserialise( SClass* pClass, std::ifstream& rStream )
+	void SProperty::Deserialise( SClass* pClass, std::istream& rStream )
 	{
 #define SAT_DESERIALISE_PROPERTY( PropertyType ) \
 { \
@@ -202,8 +219,6 @@ SetProperty( pClass, value );\
 } break
 
 		// Referring to YamlAux -- SProperty (YamlAux.cpp)
-		const auto& rName = RawSerialisation::ReadString( rStream );
-
 		int type = 0;
 		RawSerialisation::ReadObject( type, rStream );
 
@@ -242,14 +257,29 @@ SetProperty( pClass, value );\
 			case Saturn::SPropertyType::Int64:
 				SAT_DESERIALISE_PROPERTY( Int64 );
 
-				//case Saturn::SPropertyType::Vector2:
-				//	SAT_DESERIALISE_PROPERTY( Vector2 );
+			case Saturn::SPropertyType::Vector2: 
+			{
+				glm::vec2 rValue{};
+				RawSerialisation::ReadVec2( rValue, rStream );
+				
+				SetProperty<const glm::vec2&>( pClass, rValue );
+			} break;
 
-				//case Saturn::SPropertyType::Vector3:
-				//	SAT_DESERIALISE_PROPERTY( Vector3 );
+			case Saturn::SPropertyType::Vector3:
+			{
+				glm::vec3 rValue{};
+				RawSerialisation::ReadVec3( rValue, rStream );
 
-				//case Saturn::SPropertyType::Vector4:
-				//	SAT_DESERIALISE_PROPERTY( Vector4 );
+				SetProperty<const glm::vec3&>( pClass, rValue );
+			} break;
+
+			case Saturn::SPropertyType::Vector4:
+			{
+				glm::vec4 rValue{};
+				RawSerialisation::ReadVec4( rValue, rStream );
+
+				SetProperty<const glm::vec4&>( pClass, rValue );
+			} break;
 
 			case Saturn::SPropertyType::String:
 			{

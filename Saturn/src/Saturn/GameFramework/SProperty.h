@@ -188,7 +188,7 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 
 	public:
 		void Serialise( SClass* pClass, std::ofstream& rStream );
-		void Deserialise( SClass* pClass, std::ifstream& rStream );
+		void Deserialise( SClass* pClass, std::istream& rStream );
 
 	public:
 		void SetFlag( SPropertyFlags flag, bool value );

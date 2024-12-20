@@ -58,7 +58,8 @@ namespace Saturn {
 	class Renderer2D : public RefTarget
 	{
 	public:
-		static inline Renderer2D& Get() { return *SingletonStorage::GetOrCreateSingleton<Renderer2D>(); }
+		SAT_SINGLETON_LAZY( Renderer2D )
+
 	public:
 		Renderer2D() = default;
 		~Renderer2D() = default;

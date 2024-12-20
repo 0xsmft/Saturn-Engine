@@ -32,6 +32,8 @@
 #include "RawSerialisation.h"
 #include "Saturn/Asset/AssetManager.h"
 
+#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
+
 namespace Saturn {
 
 	template<typename Component, typename Func>
@@ -133,6 +135,16 @@ namespace Saturn {
 
 				RawSerialisation::WriteObject( sc.ScriptName, rStream );
 				RawSerialisation::WriteObject( sc.AssetID, rStream );
+
+				auto& rProperties = ClassMetadataHandler::Get().GetAllProperties( sc.ScriptName );
+				RawSerialisation::WriteObject( rProperties.size(), rStream );
+
+				for( auto& rProperty : rProperties ) 
+				{
+					RawSerialisation::WriteString( rProperty.GetName(), rStream );
+
+					rProperty.Serialise( rEntity.Get(), rStream );
+				}
 			} );
 
 		// Sky light component
@@ -338,6 +350,18 @@ namespace Saturn {
 
 				RawSerialisation::ReadObject( sc.ScriptName, rStream );
 				RawSerialisation::ReadObject( sc.AssetID, rStream );
+
+				size_t propertySize = 0;
+				RawSerialisation::ReadObject( propertySize, rStream );
+
+				for( size_t i = 0; i < propertySize; i++ )
+				{
+					const std::string& rName = RawSerialisation::ReadString( rStream );
+
+					SProperty& rProperty = ClassMetadataHandler::Get().GetProperty( sc.ScriptName, rName );
+
+					rProperty.Deserialise( rEntity.Get(), rStream );
+				}
 			} );
 
 		// Sky light component

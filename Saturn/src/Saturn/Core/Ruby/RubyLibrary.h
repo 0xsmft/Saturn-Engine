@@ -37,7 +37,8 @@ namespace Saturn {
 	class RubyLibrary final
 	{
 	public:
-		static inline RubyLibrary& Get() { return *SingletonStorage::GetOrCreateSingleton<RubyLibrary>(); };
+		SAT_SINGLETON_LAZY( RubyLibrary )
+
 	public:
 		RubyLibrary();
 		~RubyLibrary() = default;

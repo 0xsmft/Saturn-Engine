@@ -36,7 +36,8 @@ namespace Saturn {
 	class RenderThread : public Thread
 	{
 	public:
-		static inline RenderThread& Get() { return *SingletonStorage::GetOrCreateSingleton<RenderThread>(); }
+		SAT_SINGLETON_LAZY( RenderThread )
+
 	public:
 		RenderThread();
 		virtual ~RenderThread();

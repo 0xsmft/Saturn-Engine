@@ -1,7 +1,7 @@
 project "yaml-cpp"
 	kind "StaticLib"
 	language "C++"
-	cppdialect "C++20"
+	cppdialect "C++23"
 	staticruntime "On"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
@@ -43,3 +43,4 @@ project "yaml-cpp"
 	filter "configurations:Dist"
 		runtime "Release"
 		optimize "on"
+		symbols "off"

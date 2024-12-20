@@ -40,7 +40,8 @@ namespace Saturn {
 	class Log : RefTarget
 	{
 	public:
-		static inline Log& Get() { return *SingletonStorage::GetOrCreateSingleton<Log>(); }
+		SAT_SINGLETON_LAZY( Log )
+
 	public:
 		Log();
 		~Log();

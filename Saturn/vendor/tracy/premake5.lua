@@ -1,6 +1,7 @@
 project "Tracy"
 	kind "StaticLib"
 	language "C++"
+	cppdialect "C++23"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
@@ -24,13 +25,12 @@ project "Tracy"
 
 	filter "system:windows"
 		systemversion "latest"
-		cppdialect "C++20"
 		staticruntime "On"
 
 	filter "system:linux"
 		pic "On"
 		systemversion "latest"
-		cppdialect "C++17"
+		cppdialect "C++2a"
 		staticruntime "On"
 
 	filter "configurations:Debug"

@@ -39,7 +39,8 @@ namespace Saturn {
 	class JobSystem
 	{
 	public:
-		static inline JobSystem& Get() { return *SingletonStorage::GetOrCreateSingleton<JobSystem>(); }
+		SAT_SINGLETON_LAZY( JobSystem )
+
 	public:
 		JobSystem();
 		~JobSystem();

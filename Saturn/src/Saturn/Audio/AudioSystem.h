@@ -68,7 +68,8 @@ namespace Saturn {
 	class AudioSystem
 	{
 	public:
-		static inline AudioSystem& Get() { return *SingletonStorage::GetOrCreateSingleton<AudioSystem>(); }
+		SAT_SINGLETON_LAZY( AudioSystem )
+
 	public:
 		AudioSystem();
 		~AudioSystem();

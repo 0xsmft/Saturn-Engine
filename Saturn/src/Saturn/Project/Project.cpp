@@ -510,13 +510,12 @@ namespace Saturn {
 	bool Project::Rebuild( ConfigKind kind, const std::string& rExtraArgs )
 	{
 		std::filesystem::path BuildToolDir = FindBuildTool();
-		
-		// parent_path to remove file name
+
 		std::filesystem::path WorkingDir = BuildToolDir.parent_path();
 
 		std::string Args = BuildToolDir.string();
 
-		Args += " /REBUILD /";
+		Args += " /REBUILD /NAME:";
 
 		Args += m_Config.Name;
 
@@ -525,23 +524,26 @@ namespace Saturn {
 		switch( kind )
 		{
 			case Saturn::ConfigKind::Debug:
-				Args += " /Debug /";
+				Args += " /Debug /PROJECT:";
 				break;
 
 			case Saturn::ConfigKind::Release:
-				Args += " /Release /";
+				Args += " /Release /PROJECT:";
 				break;
 
 			case Saturn::ConfigKind::Dist:
-				Args += " /Dist /";
+				Args += " /Dist /PROJECT:";
 				break;
 		}
 
 		Args += GetRootDir().string();
+
+		Args += " " + rExtraArgs;
 		std::wstring wArgs = Auxiliary::ConvertString( Args );
 
 		// Start the process
-		Process buildTool( wArgs, WorkingDir, ProcessCreateFlags::Normal );
+		Process buildTool( wArgs, WorkingDir );
+
 		int exitCode = buildTool.ResultOfProcess();
 
 		return exitCode == 0;
@@ -615,7 +617,7 @@ namespace Saturn {
 		std::filesystem::copy_file( m_Config.Path, projectName );
 		
 		// TEMP: Copy over the editor assets
-		std::filesystem::path contentDir = Application::Get().GetRootContentDir().parent_path();
+		std::filesystem::path contentDir = Application::Get().GetRootContentDir();
 		
 		if( std::filesystem::exists( binDir / "content" ) )
 			std::filesystem::remove_all( binDir / "content" );

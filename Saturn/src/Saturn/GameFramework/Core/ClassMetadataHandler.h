@@ -39,7 +39,8 @@ namespace Saturn {
 	class ClassMetadataHandler : public RefTarget
 	{
 	public:
-		static inline ClassMetadataHandler& Get() { return *SingletonStorage::GetOrCreateSingleton<ClassMetadataHandler>(); }
+		SAT_SINGLETON_LAZY( ClassMetadataHandler )
+
 	public:
 		ClassMetadataHandler();
 		~ClassMetadataHandler();

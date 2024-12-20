@@ -43,7 +43,8 @@ namespace Saturn {
 	class VirtualFS
 	{
 	public:
-		static inline VirtualFS& Get() { return *SingletonStorage::GetOrCreateSingleton<VirtualFS>(); }
+		SAT_SINGLETON_LAZY( VirtualFS )
+
 	public:
 		VirtualFS();
 		~VirtualFS();

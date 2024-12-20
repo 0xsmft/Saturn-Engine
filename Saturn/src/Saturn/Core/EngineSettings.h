@@ -39,7 +39,8 @@ namespace Saturn {
 	class EngineSettings
 	{
 	public:
-		static inline EngineSettings& Get() { return *SingletonStorage::GetOrCreateSingleton<EngineSettings>(); }
+		SAT_SINGLETON_LAZY( EngineSettings )
+
 	public:
 		EngineSettings() = default;
 		~EngineSettings() = default;

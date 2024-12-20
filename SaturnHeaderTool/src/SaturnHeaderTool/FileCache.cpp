@@ -115,6 +115,7 @@ namespace Saturn {
 
 		for( const auto& [rFile, time] : m_FilesInCache )
 		{
+			if( rFile.filename().string().contains( ".Entry.cpp" ) ) continue;
 			if( rFile.filename().string().contains( ".Load.cpp" ) ) continue;
 			if( rFile.filename().string().contains( ".Gen.cpp" ) ) continue;
 			if( rFile.filename().string().contains( ".Gen.h" ) ) continue;

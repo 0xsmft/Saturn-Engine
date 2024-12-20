@@ -101,15 +101,10 @@ namespace SaturnBuildTool
                     }
                     break;
 
+                case ConfigKind.Dist:
                 case ConfigKind.Release:
                     {
                         HeaderToolExePath = saturnLocation + "\\bin\\Release-windows-x86_64\\SaturnHeaderTool\\SaturnHeaderTool.exe";
-                    }
-                    break;
-
-                case ConfigKind.Dist:
-                    {
-                        HeaderToolExePath = saturnLocation + "\\bin\\Dist-windows-x86_64\\SaturnHeaderTool\\SaturnHeaderTool.exe";
                     }
                     break;
             }

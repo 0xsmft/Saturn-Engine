@@ -38,7 +38,8 @@ namespace Saturn {
 	class Input
 	{
 	public:
-		static inline Input& Get() { return *SingletonStorage::GetOrCreateSingleton<Input>(); }
+		SAT_SINGLETON_LAZY( Input )
+
 	public:
 		Input();
 		~Input() = default;

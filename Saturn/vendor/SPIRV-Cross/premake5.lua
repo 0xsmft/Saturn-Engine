@@ -1,6 +1,7 @@
 project "SPIRV-Cross"
 	kind "StaticLib"
 	language "C++"
+	cppdialect "C++23"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
@@ -38,3 +39,4 @@ project "SPIRV-Cross"
 	filter "configurations:Dist"
 		runtime "Release"
 		optimize "on"
+		symbols "off"

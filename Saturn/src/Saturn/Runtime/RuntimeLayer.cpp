@@ -91,9 +91,9 @@ namespace Saturn {
 
 		OpenFile( Project::GetActiveProject()->GetConfig().StartupSceneID );
 
-		m_RuntimeScene->OnRuntimeStart();
-
 		Application::Get().GetWindow()->Show();
+
+		m_RuntimeScene->OnRuntimeStart();
 	}
 
 	RuntimeLayer::~RuntimeLayer()

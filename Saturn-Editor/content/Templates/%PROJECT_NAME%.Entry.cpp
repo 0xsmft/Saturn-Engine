@@ -50,11 +50,13 @@ static std::filesystem::path s_ProjectPath = "";
 // Saturn client main:
 extern int _main( int, char** );
 
+#if !defined(SAT_DIST)
 int main( int count, char** args )
 {
 	// Hand it off to Saturn:
 	return _main( count, args );
 }
+#endif
 
 #if defined ( _WIN32 )
 
@@ -78,9 +80,8 @@ public:
 		m_RootContentPath = std::filesystem::current_path() / "content";
 
 		// Load the project really early on because we still need to load the shader bundle and create the scene renderer.
-		Saturn::EngineSettings& rSettings = Saturn::EngineSettings::Get();
 		Saturn::ProjectSerialiser ps;
-		ps.Deserialise( rSettings.FullStartupProjPath.string() );
+		ps.Deserialise( s_ProjectPath );
 
 		// Load the shader bundle.
 		if( const auto result = Saturn::ShaderBundle::ReadBundle(); result != Saturn::ShaderBundleResult::Success )

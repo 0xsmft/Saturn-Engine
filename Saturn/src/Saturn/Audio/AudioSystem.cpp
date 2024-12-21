@@ -228,7 +228,7 @@ namespace Saturn {
 
 			newSound->Load( MA_SOUND_FLAG_NO_SPATIALIZATION );
 			// If the sound was already loaded then we can still disable it here.
-			newSound->SetSpatialization( false );
+			newSound->SetSpatialisation( false );
 			newSound->SetID( UniquePlayerID );
 
 			if( Play ) newSound->Play();
@@ -257,7 +257,7 @@ namespace Saturn {
 
 			newSound->Load();
 			// If the sound was already loaded then we can still enable it here.
-			newSound->SetSpatialization( true );
+			newSound->SetSpatialisation( true );
 			newSound->SetPosition( rPos );
 			newSound->SetID( UniquePlayerID );
 
@@ -303,7 +303,7 @@ namespace Saturn {
 			Ref<Sound> sound = m_PreviewSounds[ Identifier ][ AssetID ];
 
 			sound->Load( MA_SOUND_FLAG_NO_SPATIALIZATION );
-			sound->SetSpatialization( false );
+			sound->SetSpatialisation( false );
 			sound->Play();
 
 			m_AliveSounds[ AssetID ] = sound;

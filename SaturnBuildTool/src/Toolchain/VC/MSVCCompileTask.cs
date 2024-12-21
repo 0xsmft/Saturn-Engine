@@ -62,19 +62,22 @@ namespace SaturnBuildTool
 
             Args.Add(" /errorreport:prompt");
 
-            // Compile for C++
-            Args.Add(" /std:c++latest /D _HAS_EXCEPTIONS=0");
+            // Compile for C++ with C++23 working draft
+            Args.Add(" /std:c++latest");
 
-            // Unwind semantics.
+            // Exception handling (EH) -- Unwind stack (s) extern "C" function can't throw a C++ exception (c).
             Args.Add(" /EHsc");
 
             // Eliminate Duplicate Strings
             Args.Add(" /GF");
 
+            // Build with multiple processes
             Args.Add(" /MP");
 
+            // Buffer Security Check
             Args.Add(" /GS");
 
+            // Configuration specific
             switch( TargetToBuild.CurrentConfig ) 
             {
                 case ConfigKind.Debug:
@@ -83,26 +86,25 @@ namespace SaturnBuildTool
                         if(TargetToBuild.CurrentConfig == ConfigKind.Debug)
                         {
                             Args.Add(" /D \"SAT_DEBUG\"");
-                            Args.Add(" /MTd");
+                            Args.Add(" /MTd"); // Multithreaded debug RT
                         }
                         else 
                         {
                             Args.Add(" /D \"SAT_RELEASE\"");
-                            Args.Add(" /MT");
+                            Args.Add(" /MT"); // Multithreaded RT
                         }
 
-                        Args.Add(" /Z7");
-                        // No optimzation.
-                        Args.Add(" /Od");
-                        Args.Add(" /FS");
-                        Args.Add(" /Gw");
+                        Args.Add(" /Z7"); // Build with Z7 debug pdbs
+                        Args.Add(" /Od"); // No optimisation.
+                        Args.Add(" /FS"); // Force Synchronous PDB Writes
+                        Args.Add(" /Gw"); // Optimize Global Data
                     } break;
 
                 case ConfigKind.Dist:
                     {
                         Args.Add(" /D \"SAT_DIST\"");
-                        Args.Add(" /MT");
-                        Args.Add(" /Ox");
+                        Args.Add(" /MT"); // Multithreaded RT
+                        Args.Add(" /Ox"); // Favour speed (optimisation)
                     } break;
             }
 
@@ -126,13 +128,13 @@ namespace SaturnBuildTool
                 Args.Add(string.Format(" /I\"{0}\"", include));
             }
 
-            Args.Add(string.Format(" /I\"{0}\"", CLLocation + "/include"));
+            Args.Add(string.Format(" /I\"{0}\"", CLLocation + "\\include"));
 
             // Windows SDK
             string includeSDKFolder = WindowsSDK.GetIncludePaths();
-            Args.Add(string.Format(" /I\"{0}\"", includeSDKFolder + "/ucrt"));
-            Args.Add(string.Format(" /I\"{0}\"", includeSDKFolder + "/um"));
-            Args.Add(string.Format(" /I\"{0}\"", includeSDKFolder + "/shared"));
+            Args.Add(string.Format(" /I\"{0}\"", includeSDKFolder + "\\ucrt"));
+            Args.Add(string.Format(" /I\"{0}\"", includeSDKFolder + "\\um"));
+            Args.Add(string.Format(" /I\"{0}\"", includeSDKFolder + "\\shared"));
 
             // In
             Args.Add(string.Format(" /Tp\"{0}\"", InputFile));

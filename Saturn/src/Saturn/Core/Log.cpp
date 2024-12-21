@@ -28,7 +28,8 @@
 
 #include "sppch.h"
 #include "Log.h"
-#include "spdlog/sinks/stdout_color_sinks.h"
+
+#include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/basic_file_sink.h>
 
 namespace Saturn {
@@ -55,11 +56,16 @@ namespace Saturn {
 
 		std::vector<spdlog::sink_ptr> logSinks;
 		logSinks.emplace_back( std::make_shared< spdlog::sinks::stdout_color_sink_mt >() );
+#if defined(SAT_DIST)
+		logSinks.emplace_back( std::make_shared< spdlog::sinks::basic_file_sink_mt >( "Application-Dist-x64.log" ) );
+#endif
 
-		logSinks[ 0 ]->set_pattern( "%^[%T] %n: %v%$" );
+		for( size_t i = 0; i < logSinks.size(); i++ )
+		{
+			logSinks[ i ]->set_pattern( "%^[%T] %n: %v%$" );
+		}
 
 		m_CoreLogger = std::make_shared< spdlog::logger >( "Saturn", begin( logSinks ), end( logSinks ) );
-
 		m_ClientLogger = std::make_shared< spdlog::logger >( "App", begin( logSinks ), end( logSinks ) );
 
 		// configure the loggers

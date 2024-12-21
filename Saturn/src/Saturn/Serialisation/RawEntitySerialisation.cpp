@@ -351,15 +351,29 @@ namespace Saturn {
 				RawSerialisation::ReadObject( sc.ScriptName, rStream );
 				RawSerialisation::ReadObject( sc.AssetID, rStream );
 
+				/////////////////////////////////
+				// Read Properties
+				// We must check that the saved property information from the ScriptComponent matches with the already loaded properties from this module (this module meaning the game)
+				// We don't actually create the property we simply just load the saved data.
+
+				// Properties that are already present in the module
+				auto& rLoadedProperties = ClassMetadataHandler::Get().GetAllProperties( sc.ScriptName );
+
 				size_t propertySize = 0;
 				RawSerialisation::ReadObject( propertySize, rStream );
 
+				SAT_CORE_VERIFY( propertySize == rLoadedProperties.size(), "SPROPERTY MISMATCH! Property sizes from the current module do not match with loaded sizes from the ScriptComponent." );
+
 				for( size_t i = 0; i < propertySize; i++ )
 				{
+					SProperty& rProperty = rLoadedProperties[ i ];
+
 					const std::string& rName = RawSerialisation::ReadString( rStream );
 
-					SProperty& rProperty = ClassMetadataHandler::Get().GetProperty( sc.ScriptName, rName );
+					// Compare names
+					SAT_CORE_VERIFY( rProperty.GetName() == rName, "SPROPERTY MISMATCH! Property loaded from the ScriptComponent at the same index does not match with the module property name." );
 
+					// Deserialise for saved data
 					rProperty.Deserialise( rEntity.Get(), rStream );
 				}
 			} );

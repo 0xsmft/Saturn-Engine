@@ -51,7 +51,7 @@ namespace Saturn {
 		virtual void Reset() override;
 
 		void SetPosition( const glm::vec3& rPos );
-		void SetSpatialization( bool value );
+		void SetSpatialisation( bool value );
 	
 		void SetMaxDistance( float dist );
 		void SetMinDistance( float dist );
@@ -63,13 +63,13 @@ namespace Saturn {
 		static void OnSoundEnd( void* pUserData, ma_sound* pSound );
 
 	private:
-		void SetupSpatialization();
+		void SetupSpatialisation();
 		void LoadForDist( uint32_t flags );
 		void LoadFromFile( uint32_t flags );
 
 		Ref<SoundGroup> m_SoundGroup;
 
-		bool m_Spatialization = false;
+		bool m_Spatialisation = false;
 
 #if defined( SAT_DIST )
 		ma_audio_buffer m_AudioBuffer;

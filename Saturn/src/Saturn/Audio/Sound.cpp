@@ -80,7 +80,7 @@ namespace Saturn {
 //		ma_audio_buffer_uninit( &audioBuffer );
 
 		if( ( flags & ( uint32_t ) MA_SOUND_FLAG_NO_SPATIALIZATION ) == 0 )
-			SetupSpatialization();
+			SetupSpatialisation();
 #endif
 	}
 
@@ -97,12 +97,12 @@ namespace Saturn {
 			initFlags, m_SoundGroup->GetInternal(), nullptr, m_Sound ) );
 
 		if( ( initFlags & ( uint32_t ) MA_SOUND_FLAG_NO_SPATIALIZATION ) == 0 )
-			SetupSpatialization();
+			SetupSpatialisation();
 	}
 
-	void Sound::SetupSpatialization()
+	void Sound::SetupSpatialisation()
 	{
-		m_Spatialization = true;
+		m_Spatialisation = true;
 		SetMinDistance( 1.0f );
 		SetMaxDistance( 10.0f );
 
@@ -210,19 +210,19 @@ namespace Saturn {
 
 	void Sound::SetPosition( const glm::vec3& rPos )
 	{
-		if( m_Spatialization )
+		if( m_Spatialisation )
 		{
 			ma_sound_set_position( m_Sound, rPos.x, rPos.y, rPos.z );
 		}
 	}
 
-	void Sound::SetSpatialization( bool value )
+	void Sound::SetSpatialisation( bool value )
 	{
-		if( m_Spatialization == value )
+		if( m_Spatialisation == value )
 			return;
 
 		ma_sound_set_spatialization_enabled( m_Sound, value );
-		m_Spatialization = value;
+		m_Spatialisation = value;
 	}
 
 	void Sound::SetMaxDistance( float dist )

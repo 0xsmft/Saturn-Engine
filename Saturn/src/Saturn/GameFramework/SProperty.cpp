@@ -222,6 +222,8 @@ SetProperty( pClass, value );\
 		int type = 0;
 		RawSerialisation::ReadObject( type, rStream );
 
+		SAT_CORE_VERIFY( m_Type == (SPropertyType)type, "SPROPERTY MISMATCH! Property loaded from the ScriptComponent at the same index does not match with the module property data type." );
+
 		switch( m_Type )
 		{
 			case Saturn::SPropertyType::Char:

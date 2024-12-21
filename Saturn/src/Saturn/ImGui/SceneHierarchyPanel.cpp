@@ -1081,7 +1081,7 @@ namespace Saturn {
 					Auxiliary::DrawBoolControl( "Mute", ap.Mute );
 					
 					if( Auxiliary::DrawBoolControl( "Spatialization", ap.Spatialization ) )
-						sound->SetSpatialization( ap.Spatialization );
+						sound->SetSpatialisation( ap.Spatialization );
 
 					if( Auxiliary::DrawFloatControl( "Volume Multiplier", ap.VolumeMultiplier, 0.0f, 100.0f ) )
 						sound->SetVolumeMultiplier( ap.VolumeMultiplier );

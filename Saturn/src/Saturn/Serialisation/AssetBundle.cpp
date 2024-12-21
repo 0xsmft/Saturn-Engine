@@ -123,6 +123,7 @@ namespace Saturn {
 			DumpFileToAssetID[ p ] = id;
 		}
 
+		// Always do scenes last because when we load the Asset Bundle we want all the assets to be loaded before this.
 		for( auto& [id, asset] : AssetBundleRegistry->GetAssetMap() )
 		{
 			if( asset->Type != AssetType::Scene )

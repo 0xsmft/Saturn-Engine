@@ -59,6 +59,8 @@ namespace Saturn {
 		void SetVolumeMultiplier( float multiplier );
 		void SetPitchMultiplier( float multiplier );
 
+		void SetPitchByPercent( float percent );
+
 	private:
 		static void OnSoundEnd( void* pUserData, ma_sound* pSound );
 

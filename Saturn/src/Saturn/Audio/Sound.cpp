@@ -245,6 +245,16 @@ namespace Saturn {
 		ma_sound_set_pitch( m_Sound, multiplier );
 	}
 
+	void Sound::SetPitchByPercent( float percent )
+	{
+		// If percent was 3.5 multiplier should be 1.035 and if percent was -3.5 then multiplier should be 0.965
+		float multiplier = ( percent >= 0.0f ) 
+			? 1.0f + ( glm::abs( percent ) / 100.0f ) 
+			: 1.0f - ( glm::abs( percent ) / 100.0f );
+
+		SetPitchMultiplier( multiplier );
+	}
+
 	void Sound::OnSoundEnd( void* pUserData, ma_sound* pSound )
 	{
 		UUID ID = static_cast< uint64_t >( reinterpret_cast< intptr_t >( pUserData ) );

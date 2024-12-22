@@ -46,7 +46,6 @@ namespace Saturn {
 		m_Assets->m_Path = assetDir;
 
 		// In distribution builds asset registry is loaded by the Asset Bundle!
-		// Also, editor assets are not loaded when running dist!
 #if !defined(SAT_DIST)
 		AssetRegistrySerialiser ars;
 		ars.Deserialise( m_Assets );

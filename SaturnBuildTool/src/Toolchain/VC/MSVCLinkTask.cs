@@ -34,6 +34,7 @@ namespace SaturnBuildTool
 
             switch( ProjectInfo.Instance.TargetPlatformKind )
             {
+                default:
                 case ArchitectureKind.x64:
                     {
                         processStart.FileName = LinkLocation + "/bin/Hostx64/x64/link.exe";
@@ -117,6 +118,8 @@ namespace SaturnBuildTool
                         Args.Add( string.Format( " /DLL /OUT:\"{0}\"", TargetToBuild.GetFullBinPath() ) );
                     }
                     break;
+
+                default: break;
             }
 
             string ilkPath = Path.Combine( TargetToBuild.OutputPath, TargetToBuild.ProjectName );
@@ -157,7 +160,7 @@ namespace SaturnBuildTool
 
             Console.WriteLine( $"Linking with args: {processStart.Arguments}" );
 
-            clProcess.OutputDataReceived += new DataReceivedEventHandler( ( s, e ) =>
+            clProcess.OutputDataReceived += new DataReceivedEventHandler( ( _, e ) =>
             {
                 if( e.Data != null )
                 {
@@ -165,7 +168,7 @@ namespace SaturnBuildTool
                 }
             } );
 
-            clProcess.ErrorDataReceived += new DataReceivedEventHandler( ( s, e ) =>
+            clProcess.ErrorDataReceived += new DataReceivedEventHandler( ( _, e ) =>
             {
                 if( e.Data != null )
                 {

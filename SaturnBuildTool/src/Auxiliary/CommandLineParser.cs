@@ -13,12 +13,8 @@ namespace SaturnBuildTool.Auxiliary
     {
         public static readonly CommandLineParser Instance = new CommandLineParser();
 
-        private Dictionary<string, string> ParsedMap = new Dictionary<string, string>();
-
-        public CommandLineParser()
-        {
-        }
-
+        private readonly Dictionary<string, string> ParsedMap = new Dictionary<string, string>();
+        
         public bool Parse( List<string> args )
         {
             for( int i = 0; i < args.Count; i++ )
@@ -79,22 +75,18 @@ namespace SaturnBuildTool.Auxiliary
                 if( kv.Value == "NAME" && kv.Value != null )
                 {
                     result |= true;
-                    continue;
                 }
                 else if( kv.Value == "WIN64" )
                 {
                     result |= true;
-                    continue;
                 }
                 else if( kv.Value == "DEBUG" || kv.Value == "RELEASE" || kv.Value == "DIST" )
                 {
                     result |= true;
-                    continue;
                 }
                 else if( kv.Value == "PROJECT" && kv.Value != null )
                 {
                     result |= true;
-                    continue;
                 }
             }
 

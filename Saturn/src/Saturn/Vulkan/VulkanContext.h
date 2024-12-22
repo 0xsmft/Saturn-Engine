@@ -151,7 +151,6 @@ namespace Saturn {
 		// Depth resources.
 		Ref<Image2D> m_DepthImage = nullptr;
 
-
 		VulkanDebugMessenger* m_pDebugMessenger;
 		VulkanAllocator* m_pAllocator;
 

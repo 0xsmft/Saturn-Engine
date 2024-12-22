@@ -21,7 +21,7 @@ namespace SaturnBuildTool
     internal class Application
     {
         public int ExitCode = 0;
-        private List<string> Args;
+        private readonly List<string> Args;
 
         private UserTarget TargetToBuild = null;
 
@@ -255,7 +255,7 @@ namespace SaturnBuildTool
                 {
                     try
                     {
-                        File.Delete( file );
+                    //    File.Delete( file );
                     }
                     catch( System.IO.IOException ex )
                     {
@@ -295,9 +295,8 @@ namespace SaturnBuildTool
 
             SearchForFiles();
 
-            // Compile all source files and all "build folder" files next.
+            // Compile all source files.
             CompileSourceFiles();
-            //CompileBuildFolderFiles();
 
             Console.WriteLine( string.Format( "{0} task(s) failed.", NumTasksFailed ) );
 

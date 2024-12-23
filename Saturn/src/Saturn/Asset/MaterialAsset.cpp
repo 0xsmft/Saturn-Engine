@@ -98,35 +98,35 @@ namespace Saturn {
 
 	void MaterialAsset::SetAlbeoColor( glm::vec3 color )
 	{
-		m_ValuesChanged = true;
+		MarkDirty();
 
 		m_Material->Set<glm::vec3>( "u_Materials.AlbedoColor", color );
 	}
 
 	void MaterialAsset::UseNormalMap( bool val )
 	{
-		m_ValuesChanged = true;
+		MarkDirty();
 
 		m_Material->Set<float>( "u_Materials.UseNormalMap", val );
 	}
 
 	void MaterialAsset::SetRoughness( float val )
 	{
-		m_ValuesChanged = true;
+		MarkDirty();
 
 		m_Material->Set<float>( "u_Materials.Roughness", val );
 	}
 
 	void MaterialAsset::SetMetalness( float val )
 	{
-		m_ValuesChanged = true;
+		MarkDirty();
 
 		m_Material->Set<float>( "u_Materials.Metalness", val );
 	}
 
 	void MaterialAsset::SetEmissive( float val )
 	{
-		m_ValuesChanged = true;
+		MarkDirty();
 
 		m_Material->Set<float>( "u_Materials.Emissive", val );
 	}
@@ -138,7 +138,8 @@ namespace Saturn {
 
 	void MaterialAsset::SetResource( const std::string& rName, const Ref<Texture2D>& rTexture )
 	{
-		m_ValuesChanged = true;
+		MarkDirty();
+
 		m_PendingTextureChanges[ rName ] = rTexture;
 	}
 
@@ -241,10 +242,12 @@ namespace Saturn {
 			m_Material->WriteDescriptor( wds );
 		}
 		
+#if !defined( SAT_DIST )
 		if( m_ValuesChanged ) 
 		{
 			m_ValuesChanged = false;
 		}
+#endif
 	}
 
 	void MaterialAsset::Clean()
@@ -301,7 +304,7 @@ namespace Saturn {
 
 	void MaterialAsset::SetAlbeoMap( Ref<Texture2D>& rTexture )
 	{
-		m_ValuesChanged = true;
+		MarkDirty();
 
 		m_PendingTextureChanges[ "u_AlbedoTexture" ] = rTexture;
 	}
@@ -313,7 +316,7 @@ namespace Saturn {
 
 	void MaterialAsset::SetNormalMap( Ref<Texture2D>& rTexture )
 	{
-		m_ValuesChanged = true;
+		MarkDirty();
 
 		m_PendingTextureChanges[ "u_NormalTexture" ] = rTexture;
 	}
@@ -325,7 +328,7 @@ namespace Saturn {
 
 	void MaterialAsset::SetMetallicMap( Ref<Texture2D>& rTexture )
 	{
-		m_ValuesChanged = true;
+		MarkDirty();
 
 		m_PendingTextureChanges[ "u_MetallicTexture" ] = rTexture;
 	}
@@ -338,7 +341,7 @@ namespace Saturn {
 
 	void MaterialAsset::SetRoughnessMap( Ref<Texture2D>& rTexture )
 	{
-		m_ValuesChanged = true;
+		MarkDirty();
 
 		m_PendingTextureChanges[ "u_RoughnessTexture" ] = rTexture;
 	}

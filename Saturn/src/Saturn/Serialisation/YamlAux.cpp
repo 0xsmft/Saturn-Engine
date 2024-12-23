@@ -563,6 +563,8 @@ rProperty.SetProperty( DeserialisedEntity.Get(), value ); \
 								rAssetReference.ExpectedType = ( AssetType ) expectedType;
 							} break;
 						}
+
+						rProperty.MarkClean();
 					}
 				}
 			}

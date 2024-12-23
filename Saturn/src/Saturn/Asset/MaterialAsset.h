@@ -124,6 +124,8 @@ namespace Saturn {
 
 		void ForceUpdate();
 
+		inline void MarkDirty() { m_ValuesChanged = true; }
+
 	private:
 		Ref<Material> m_Material = nullptr;
 

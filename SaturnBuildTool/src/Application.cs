@@ -251,11 +251,13 @@ namespace SaturnBuildTool
             {
                 string stem = Path.GetFileName( file );
 
-                if( regex.IsMatch( stem ) && !stem.Contains( TargetToBuild.Timestamp ) )
+                if( regex.IsMatch( stem ) && !stem.Contains( TargetToBuild.Timestamp ) && stem.Contains( TargetToBuild.ProjectName ) )
                 {
                     try
                     {
-                    //    File.Delete( file );
+                        Console.WriteLine( $"Cleaning hot reloaded dll file: {file}" );
+
+                        File.Delete( file );
                     }
                     catch( System.IO.IOException ex )
                     {

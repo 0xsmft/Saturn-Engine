@@ -29,7 +29,7 @@
 #include "sppch.h"
 #include "HeaderToolApplication.h"
 
-#include "SaturnHeaderTool/Errors.h"
+#include "Errors.h"
 
 #include <iostream>
 #include <string>

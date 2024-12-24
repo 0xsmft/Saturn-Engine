@@ -27,7 +27,7 @@
 */
 
 #include "CodeGeneration.h"
-#include "Errors.h"
+#include "SaturnHeaderTool/Base/Errors.h"
 
 #include "Saturn/GameFramework/SClass.h"
 
@@ -463,7 +463,7 @@ namespace Saturn {
 
 		if( ( rCommand.ClassFlags & ( uint32_t ) SClassFlags::NoMetadata ) == 0 )
 		{
-			std::string realPath = generatedHeaderPath.string();
+			std::string realPath = rCommand.Filepath.string();
 
 #if defined(SAT_PLATFORM_WINDOWS)
 			size_t pos = 0;

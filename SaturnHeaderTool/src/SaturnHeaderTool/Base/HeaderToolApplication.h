@@ -28,8 +28,8 @@
 
 #pragma once
 
-#include "SaturnHeaderTool/CodeGeneration.h"
-#include "SaturnHeaderTool/FileCache.h"
+#include "SaturnHeaderTool/Generation/CodeGeneration.h"
+#include "SaturnHeaderTool/Cache/FileCache.h"
 
 #include <span>
 #include <filesystem>

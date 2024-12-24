@@ -236,6 +236,14 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 			pThis->GetParent()->DispatchEvent<RubyMouseEvent>( RubyEventType::MousePressed, ( int ) btn );
 		} break;
 
+		case WM_XBUTTONDOWN:
+		{
+			RubyMouseButton xbtn = GET_XBUTTON_WPARAM( WParam ) == XBUTTON1 ? RubyMouseButton::Extra1 : RubyMouseButton::Extra2;
+
+			pThis->GetParent()->IntrnlSetMouseState( xbtn );
+			pThis->GetParent()->DispatchEvent<RubyMouseEvent>( RubyEventType::MousePressed, ( int ) xbtn );
+		} break;
+
 		case WM_LBUTTONUP:
 		case WM_RBUTTONUP:
 		case WM_MBUTTONUP:
@@ -244,6 +252,14 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 
 			pThis->GetParent()->IntrnlSetMouseState( btn, false );
 			pThis->GetParent()->DispatchEvent<RubyMouseEvent>( RubyEventType::MouseReleased, ( int )btn );
+		} break;
+
+		case WM_XBUTTONUP:
+		{
+			RubyMouseButton xbtn = GET_XBUTTON_WPARAM( WParam ) == XBUTTON1 ? RubyMouseButton::Extra1 : RubyMouseButton::Extra2;
+
+			pThis->GetParent()->IntrnlSetMouseState( xbtn, false );
+			pThis->GetParent()->DispatchEvent<RubyMouseEvent>( RubyEventType::MouseReleased, ( int ) xbtn );
 		} break;
 
 		case WM_MOUSEHOVER:

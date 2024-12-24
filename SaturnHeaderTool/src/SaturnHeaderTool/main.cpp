@@ -27,7 +27,7 @@
 */
 
 #include "Base/HeaderToolApplication.h"
-#include "SaturnHeaderTool/Errors.h"
+#include "SaturnHeaderTool/Base/Errors.h"
 
 #include <iostream>
 

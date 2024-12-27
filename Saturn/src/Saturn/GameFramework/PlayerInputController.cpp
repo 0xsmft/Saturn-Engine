@@ -35,6 +35,7 @@
 
 #include "Saturn/Core/App.h"
 #include "Saturn/Core/Ruby/RubyWindow.h"
+#include "Saturn/Core/Ruby/RubyAuxiliary.h"
 
 namespace Saturn {
 
@@ -48,118 +49,42 @@ namespace Saturn {
 		m_Keys.clear();
 	}
 
-	void PlayerInputController::Update()
+	static std::unordered_map<RubyEventType, ActionBindingTriggerState> EventTypeToActionType
+	{
+		{ RubyEventType::KeyPressed, ActionBindingTriggerState::Pressed },
+		{ RubyEventType::KeyReleased, ActionBindingTriggerState::Released }
+	};
+
+	void PlayerInputController::UpdateState( const RubyKeyEvent& rEvent )
 	{
 		if( !m_ActionMap.size() )
 			return;
 
-		const std::unordered_set<RubyKey>& windowKeys = Application::Get().GetWindow()->GetCurrentKeys();
-		const RubyMouseButton mouseButton = Application::Get().GetWindow()->GetCurrentMouseButtons();
+		std::vector<ActionBinding> EventsToFire;
 
-		std::unordered_map<std::string, ActionBinding> EventsToFire;
-
-		auto addKeyEventToFire = [&](RubyKey key, bool state)
+		// Traverse the action map directly.
+		for( auto& [name, bindings] : m_ActionMap )
 		{
-			// Try to map the key to a binding.
-			auto bindingItr = std::find_if( m_ActionMap.begin(), m_ActionMap.end(),
-				[key]( const auto& a )
+			for( const auto& rBinding : bindings )
+			{
+				if( rBinding.Type != ActionBindingType::Key ) continue;
+
+				if( rBinding.Key == (RubyKey)rEvent.GetScancode() && rBinding.State == EventTypeToActionType[ rEvent.Type ] )
 				{
-					auto&& [k, v] = a;
-
-					return v.Key == key;
-				} );
-
-			if( bindingItr != m_ActionMap.end() )
-			{
-				auto&& [name, binding] = ( *bindingItr );
-
-				binding.State = state;
-				EventsToFire[ name ] = binding;
-			}
-		};
-
-		auto addMouseEventToFire = [&]( RubyMouseButton btn, bool state )
-		{
-			// Try to map the mouse button to a binding.
-			auto bindingItr = std::find_if( m_ActionMap.begin(), m_ActionMap.end(),
-				[btn]( const auto& a )
-				{
-					auto&& [k, v] = a;
-
-					return v.MouseButton == btn;
-				} );
-
-			if( bindingItr != m_ActionMap.end() )
-			{
-				auto&& [name, binding] = ( *bindingItr );
-
-				binding.State = state;
-				EventsToFire[ name ] = binding;
-			}
-		};
-
-		// What current keys are down in the window and try to map that to an action binding.
-		for( RubyKey key : windowKeys ) 
-		{
-			// Try to add the key to our local key map.
-			auto [it, inserted] = m_Keys.insert( key );
-
-			if( inserted )
-			{
-				addKeyEventToFire( key, true );
-			}
-			else if( m_Keys.find( key ) != m_Keys.end() )
-			{
-				// If the key already exists in our local map and is still down, then the key is being held, so add it to the events to fire.
-				addKeyEventToFire( key, true );
+					EventsToFire.push_back( rBinding );
+				}
 			}
 		}
 
-		// What current mouse button is down in the window and try to map that to an action binding.
-		// If the mouse button was already set and is the same then we are holding the key down.
-		if( m_MouseButton == mouseButton )
-		{
-			addMouseEventToFire( mouseButton, true );
-		}
-		else
-		{
-			m_MouseButton = mouseButton;
-			addMouseEventToFire( mouseButton, true );
-		}
-
-		// Now, check if our local copy contains keys that are no longer being pressed.
-		for( auto it = m_Keys.begin(); it != m_Keys.end(); ) 
-		{
-			auto key = *( it );
-
-			if( windowKeys.find( key ) == windowKeys.end() )
-			{
-				addKeyEventToFire( key, false );
-
-				it = m_Keys.erase( it );
-			}
-			else
-			{
-				++it;
-			}
-		}
-
-		// Now, check if our last mouse button is still pressed.
-		if( m_MouseButton != mouseButton )
-		{
-			addMouseEventToFire( m_MouseButton, false );
-			m_MouseButton = RubyMouseButton::Unknown;
-		}
-		
 		// Trigger events.
-		for( const auto& [name, binding] : EventsToFire )
+		for( const auto& rAction : EventsToFire )
 		{
-			if( binding.Function )
-				binding.Function();
+			if( rAction.Function )
+				( rAction.Function )();
 		}
 	}
 
-	void PlayerInputController::BindAction( const std::string& rBindingName, const ActionFunction& rFunction )
+	void PlayerInputController::BindAction( const std::string& rBindingName, ActionBindingTriggerState state, const ActionFunction& rFunction )
 	{
 		Ref<Project> project = Project::GetActiveProject();
 		const auto& bindings = project->GetActionBindings();
@@ -175,8 +100,9 @@ namespace Saturn {
 		{
 			auto& rBinding = *( it );
 			
-			m_ActionMap[ rBindingName ] = rBinding;
-			m_ActionMap[ rBindingName ].Function = rFunction;
+			m_ActionMap[ rBindingName ].push_back( ActionBinding( rBinding ) );
+			m_ActionMap[ rBindingName ].back().State = state;
+			m_ActionMap[ rBindingName ].back().Function = rFunction;
 		}
 	}
 

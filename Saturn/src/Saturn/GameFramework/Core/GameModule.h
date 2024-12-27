@@ -66,9 +66,6 @@ namespace Saturn {
 		void Load( bool wasHotReloaded = false );
 		void Unload();
 
-		bool CompareLastTimestamp() const;
-		void CompareLastTimestampAndClean();
-
 	private:
 		Ref<Module> m_GameModule;
 

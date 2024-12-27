@@ -74,6 +74,11 @@ namespace Saturn {
 		void MoveLeft();
 		void MoveRight();
 
+		void MoveForwardEnd();
+		void MoveBackEnd();
+		void MoveLeftEnd();
+		void MoveRightEnd();
+
 	protected:
 		Ref<PlayerInputController> m_PlayerInputController = nullptr;
 

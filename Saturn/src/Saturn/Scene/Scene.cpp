@@ -219,6 +219,19 @@ namespace Saturn {
 		}
 	}
 
+	void Scene::OnEvent( RubyEvent& rEvent )
+	{
+		if( rEvent.Type == RubyEventType::KeyPressed || rEvent.Type == RubyEventType::KeyReleased )
+		{
+			RubyKeyEvent keyEvent = ( RubyKeyEvent& )rEvent;
+
+			for( auto& rController : m_Controllers ) 
+			{
+				rController->UpdateState( keyEvent );
+			}
+		}
+	}
+
 	void Scene::OnRenderEditor( const EditorCamera& rCamera, Timestep ts, SceneRenderer& rSceneRenderer )
 	{
 		SAT_PF_EVENT();
@@ -838,6 +851,8 @@ namespace Saturn {
 		if( m_PhysicsScene )
 			delete m_PhysicsScene;
 
+		m_Controllers.clear();
+
 		DestroyAudioPlayers();
 
 		m_MainCameraEntity = nullptr;
@@ -880,6 +895,24 @@ namespace Saturn {
 		}
 
 		replace.clear();
+	}
+
+	void Scene::AddController( const Ref<PlayerInputController>& rPlayerInputController )
+	{
+		m_Controllers.push_back( rPlayerInputController );
+	}
+
+	void Scene::RemoveController( const Ref<PlayerInputController>& rPlayerInputController )
+	{
+		const auto Itr = std::find( m_Controllers.begin(), m_Controllers.end(), rPlayerInputController );
+
+		if( Itr != m_Controllers.end() )
+			m_Controllers.erase( Itr );
+	}
+
+	void Scene::RegisterNewPhysicsBody( physx::PxRigidActor& rBody )
+	{
+		m_PhysicsScene->AddToScene( rBody );
 	}
 
 	void Scene::SetActiveScene( Scene* pScene )

@@ -38,8 +38,6 @@ namespace Saturn {
 
 	Character::Character()
 	{
-		m_PlayerInputController = Ref<PlayerInputController>::Create();
-
 		m_MouseSensitivity = 3.0f;
 		m_MouseUpMovement = 0.0f;
 
@@ -51,6 +49,8 @@ namespace Saturn {
 
 	Character::~Character()
 	{
+		m_Scene->RemoveController( m_PlayerInputController );
+
 		m_PlayerInputController = nullptr;
 		m_CameraEntity = nullptr;
 	}
@@ -58,6 +58,9 @@ namespace Saturn {
 	void Character::BeginPlay()
 	{
 		Super::BeginPlay();
+
+		m_PlayerInputController = Ref<PlayerInputController>::Create();
+		m_Scene->AddController( m_PlayerInputController );
 
 		SetupInputBindings();
 
@@ -91,11 +94,7 @@ namespace Saturn {
 	{
 		Super::OnUpdate( ts );
 
-		m_MovementDirection.x = 0.0f;
-		m_MovementDirection.y = 0.0f;
-
-		// Update player input
-		m_PlayerInputController->Update();
+//		m_PlayerInputController->UpdateState();
 
 		if( Input::Get().KeyPressed( RubyKey::Esc ) && Input::Get().GetCursorMode() == RubyCursorMode::Locked )
 			Input::Get().SetCursorMode( RubyCursorMode::Normal, true );
@@ -217,6 +216,26 @@ namespace Saturn {
 	void Character::MoveRight()
 	{
 		m_MovementDirection.x = 1.0f;
+	}
+
+	void Character::MoveForwardEnd()
+	{
+		m_MovementDirection.y = 0.0f;
+	}
+
+	void Character::MoveBackEnd()
+	{
+		MoveForwardEnd();
+	}
+
+	void Character::MoveLeftEnd()
+	{
+		m_MovementDirection.x = 0.0f;
+	}
+
+	void Character::MoveRightEnd()
+	{
+		MoveLeftEnd();
 	}
 
 }

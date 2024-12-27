@@ -66,16 +66,16 @@ namespace Saturn {
 		void FlashAttention();
 
 		RubyIVec2 GetPosition() { return m_pDefaultBackend->GetWindowPos(); }
-		RubyIVec2 GetLastMousePos() { return m_LastMousePosition; }
-		RubyIVec2 GetVirtualMousePos() { return m_LockedMousePosition; }
+		RubyIVec2 GetLastMousePos()  const   { return m_LastMousePosition; }
+		RubyIVec2 GetVirtualMousePos() const { return m_LockedMousePosition; }
 
-		RubyCursorMode GetCursorMode() { return m_CursorMode; }
-		RubyCursorMode GetLastCursorMode() { return m_LastCursorMode; }
+		RubyCursorMode GetCursorMode()  const { return m_CursorMode; }
+		RubyCursorMode GetLastCursorMode() const { return m_LastCursorMode; }
 
-		uint32_t GetWidth() { return m_Width; }
-		uint32_t GetHeight() { return m_Height; }
-		RubyGraphicsAPI GetGraphicsAPI() { return m_GraphicsAPI; }
-		RubyStyle GetStyle() { return m_Style; }
+		uint32_t GetWidth()  const { return m_Width; }
+		uint32_t GetHeight() const { return m_Height; }
+		RubyGraphicsAPI GetGraphicsAPI() const { return m_GraphicsAPI; }
+		RubyStyle GetStyle() const { return m_Style; }
 
 		const char* GetClipboardText();
 		const wchar_t* GetClipboardTextW();
@@ -94,8 +94,8 @@ namespace Saturn {
 		void SetTiltebarHeight( uint32_t height );
 		void SetTitlebarCondition( bool condition );
 
-		uint32_t GetTitlebarHeight() { return m_TitlebarHeight; }
-		bool GetTitlebarCond() { return m_TitlebarCondition; }
+		uint32_t GetTitlebarHeight() const { return m_TitlebarHeight; }
+		bool GetTitlebarCond() const       { return m_TitlebarCondition; }
 
 		const std::unordered_set<RubyKey>& GetCurrentKeys() const { return m_Keys; }
 		std::unordered_set<RubyKey>& GetCurrentKeys() { return m_Keys; }
@@ -112,10 +112,9 @@ namespace Saturn {
 		std::vector<const char*> GetVulkanRequiredExtensions();
 		VkResult CreateVulkanWindowSurface( VkInstance Instance, VkSurfaceKHR* pOutSurface );
 
-		RubyWindowShowCmd GetCurrentShowCommand() { return m_ShowCommand; }
+		RubyWindowShowCmd GetCurrentShowCommand()  const { return m_ShowCommand; }
 
 	public:
-
 		template<typename Ty>
 		void SetEventTarget( Ty* Target )
 		{

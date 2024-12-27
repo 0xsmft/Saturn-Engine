@@ -123,11 +123,11 @@ namespace Saturn {
 		//////////////////////////////////////////////////////////////////////////
 		// Action Bindings
 
-		std::vector<ActionBinding>& GetActionBindings() { return m_ActionBindings; }
-		const std::vector<ActionBinding>& GetActionBindings() const { return m_ActionBindings; }
+		std::vector<ActionBindingData>& GetActionBindings() { return m_ActionBindings; }
+		const std::vector<ActionBindingData>& GetActionBindings() const { return m_ActionBindings; }
 		
-		void AddActionBinding( const ActionBinding& rBinding ) { m_ActionBindings.push_back( rBinding ); }
-		void RemoveActionBinding( const ActionBinding& rBinding );
+		void AddActionBinding( const ActionBindingData& rBinding ) { m_ActionBindings.push_back( rBinding ); }
+		void RemoveActionBinding( const ActionBindingData& rBinding );
 
 		//////////////////////////////////////////////////////////////////////////
 		// Sound Group
@@ -173,7 +173,7 @@ namespace Saturn {
 
 	private:
 		ProjectConfig m_Config;
-		std::vector<ActionBinding> m_ActionBindings;
+		std::vector<ActionBindingData> m_ActionBindings;
 		std::vector<Ref<SoundGroup>> m_SoundGroups;
 		UUID m_DefaultMaterialAsset = 0;
 		UUID m_DefaultPhysicsMaterialAsset = 0;

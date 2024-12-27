@@ -61,8 +61,6 @@ namespace Saturn {
 
 		std::string windowName = std::format( "{0}##{1}", m_SoundAsset->Name, std::to_string( m_SoundAsset->ID ) );
 
-		SAT_CORE_INFO( "{0}", m_Open );
-
 		ImGui::Begin( windowName.c_str(), &m_Open );
 
 		ImGui::BeginVertical( "##settings_hor" );

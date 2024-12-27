@@ -141,76 +141,10 @@ namespace Saturn {
 #endif
 	}
 
-	bool GameModule::CompareLastTimestamp() const
-	{
-#if !defined(SAT_DIST)
-		auto binDir = Project::GetActiveProject()->GetBinDir();
-
-		auto timestampFile = binDir / "Timestamp";
-
-		if( std::filesystem::exists( timestampFile ) )
-		{
-			std::ifstream stream( timestampFile );
-			std::stringstream buffer;
-			buffer << stream.rdbuf();
-			stream.close();
-		
-			std::string newTimestamp = buffer.str();
-
-			return m_LastTimestamp != newTimestamp;
-		}
-
-		return false;
-#else
-		return false;
-#endif
-	}
-
-	void GameModule::CompareLastTimestampAndClean()
-	{
-#if !defined(SAT_DIST)
-		if( CompareLastTimestamp() )
-		{
-			auto binDir = Project::GetActiveProject()->GetBinDir();
-
-			// delete file
-			std::filesystem::path dllPath = binDir;
-			std::filesystem::path libPath = binDir;
-
-			std::string dllFilename = std::format( "{0}_{1}.dll", Project::GetActiveConfig().Name, m_LastTimestamp );
-			dllPath /= dllFilename;
-
-			std::string libFilename = std::format( "{0}_{1}.lib", Project::GetActiveConfig().Name, m_LastTimestamp );
-			libPath /= libFilename;
-
-			std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
-
-			try
-			{
-				if( std::filesystem::exists( dllPath ) ) std::filesystem::remove( dllPath );
-				if( std::filesystem::exists( libPath ) ) std::filesystem::remove( libPath );
-			}
-			catch (std::filesystem::filesystem_error error)
-			{
-				SAT_CORE_ERROR( "Hot Reload: Error when trying to delete file: {0}. Skipping!", error.what() );
-			}
-		}
-#endif
-	}
-
-	// Build Game while editor is running
-	// BuildTool creates: dll, lib, pdb etc
-	// Engine uses: dll_, lib_, pdb_ etc
-	// Hot Reload
-	// delete: dll_, lib_, pdb_ etc
-	// load new dll_, lib_
-
 	void GameModule::Reload() 
 	{
 #if !defined(SAT_DIST)
 		Unload();
-
-		CompareLastTimestampAndClean();
 
 		Load();
 #endif

@@ -39,6 +39,14 @@
 
 namespace Saturn {
 
+	class RubyKeyEvent;
+
+	struct KeyCommand
+	{
+		RubyKey Key;
+		ActionBindingTriggerState State;
+	};
+
 	class PlayerInputController : public RefTarget
 	{
 	public:
@@ -47,15 +55,16 @@ namespace Saturn {
 		PlayerInputController();
 		~PlayerInputController();
 
-		void BindAction( const std::string& rBindingName, const ActionFunction& rFunction );
+		void BindAction( const std::string& rBindingName, ActionBindingTriggerState state, const ActionFunction& rFunction );
 		void RemoveAction( const std::string& rBindingName );
 
-	protected:
-		void Update();
+		void UpdateState( const RubyKeyEvent& rEvent );
 
 	private:
-		std::unordered_map<std::string, ActionBinding> m_ActionMap;
+		// BINDING NAME -> BINDINGS
+		std::unordered_map<std::string, std::vector<ActionBinding>> m_ActionMap;
 		std::unordered_set<RubyKey> m_Keys;
+
 		RubyMouseButton m_MouseButton = RubyMouseButton::Unknown;
 
 	private:

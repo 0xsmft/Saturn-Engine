@@ -202,8 +202,10 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 
 #if defined(SAT_DIST)
 		/*[[nodiscard]]*/ bool IsDirty() const { return false; }
+		void MarkClean() {}
 #else
 	[[nodiscard]] bool IsDirty() const { return m_Modified; }
+	void MarkClean() { m_Modified = false; }
 #endif
 
 		void SetType( SPropertyType type ) { m_Type = type; }

@@ -36,35 +36,58 @@
 
 namespace Saturn {
 
+	enum class ActionBindingTriggerState
+	{
+		Pressed = BIT( 0 ),
+		Released = BIT( 1 ),
+	};
+
 	enum class ActionBindingType 
 	{
 		Key,
 		Mouse
 	};
 
-	struct ActionBinding
+	struct ActionBindingData
 	{
 		std::string Name = "";
 		ActionBindingType Type = ActionBindingType::Key;
-		
-		// That state should did this event fire in. For example, Pressed or Released.
-		// This will not be set by the user and will be set by the Engine when this event is pressed or released.
-		bool State = false;
 
 		RubyKey Key = RubyKey::UnknownKey;
 		RubyMouseButton MouseButton = RubyMouseButton::Unknown;
-		
-		std::function<void()> Function = nullptr;
 
-		// Editor Only
-		// TODO: I want to create a SAT_HAS_EDITOR macro so that this code is only there in Debug, Release
-		// As our Dist config is our shipping for running the game without the editor attached.
+#if !defined(SAT_DIST)
 		std::string ActionName = "";
 		UUID ID;
+#endif
 
-		bool operator==( const ActionBinding& rOther ) 
+		bool operator==( const ActionBindingData& rOther ) 
 		{
-			return Name == rOther.Name && Type == rOther.Type && Key == rOther.Key && MouseButton == rOther.MouseButton && ID == rOther.ID;
+			return Name == rOther.Name
+				&& Type == rOther.Type
+				&& Key == rOther.Key
+				&& MouseButton == rOther.MouseButton
+#if !defined(SAT_DIST)
+				&& ID == rOther.ID;
+#else
+				;
+#endif
 		}
+	};
+
+	struct ActionBinding
+	{
+		ActionBinding( const ActionBindingData& rActionBindingData )
+			: Type( rActionBindingData.Type ), 
+			Key( rActionBindingData.Key ), 
+			MouseButton( rActionBindingData.MouseButton )
+		{
+		}
+
+		ActionBindingType Type = ActionBindingType::Key;
+		RubyKey Key = RubyKey::UnknownKey;
+		RubyMouseButton MouseButton = RubyMouseButton::Unknown;
+		ActionBindingTriggerState State = ActionBindingTriggerState::Pressed;
+		std::function<void()> Function = nullptr;
 	};
 }

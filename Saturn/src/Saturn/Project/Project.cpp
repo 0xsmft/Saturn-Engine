@@ -270,7 +270,7 @@ namespace Saturn {
 		return appData /= m_Config.Name;
 	}
 
-	void Project::RemoveActionBinding( const ActionBinding& rBinding )
+	void Project::RemoveActionBinding( const ActionBindingData& rBinding )
 	{
 		m_ActionBindings.erase( std::remove( m_ActionBindings.begin(), m_ActionBindings.end(), rBinding ), m_ActionBindings.end() );
 	}

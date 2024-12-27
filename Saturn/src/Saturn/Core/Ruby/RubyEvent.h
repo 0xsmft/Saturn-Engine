@@ -45,8 +45,13 @@ namespace Saturn {
 		RubyEventType Type;
 	};
 
+#define SAT_RBY_DEFINE_EVENT( Type ) \
+public: \
+static inline RubyEventType GetStaticType() { return Saturn::RubyEventType::Type; }
+
 	class RubyWindowResizeEvent : public RubyEvent
 	{
+		SAT_RBY_DEFINE_EVENT( Resize )
 	public:
 		RubyWindowResizeEvent() = default;
 		RubyWindowResizeEvent( RubyEventType type, uint32_t width, uint32_t height )
@@ -69,6 +74,7 @@ namespace Saturn {
 
 	class RubyMouseMoveEvent : public RubyEvent
 	{
+		SAT_RBY_DEFINE_EVENT( MouseMoved )
 	public:
 		RubyMouseMoveEvent() = default;
 		RubyMouseMoveEvent( RubyEventType type, float x, float y )
@@ -100,13 +106,14 @@ namespace Saturn {
 
 	class RubyMouseScrollEvent : public RubyEvent
 	{
+		SAT_RBY_DEFINE_EVENT( MouseScroll )
 	public:
 		RubyMouseScrollEvent() = default;
 		RubyMouseScrollEvent( RubyEventType type, int x, int y ) : RubyEvent( type ), m_MouseOffsetX( x ), m_MouseOffsetY( y ) {}
 		~RubyMouseScrollEvent() {}
 
-		int GetOffsetX() { return m_MouseOffsetX; }
-		int GetOffsetY() { return m_MouseOffsetY; }
+		int GetOffsetX() const { return m_MouseOffsetX; }
+		int GetOffsetY() const { return m_MouseOffsetY; }
 
 	private:
 		int m_MouseOffsetX = 0;
@@ -131,6 +138,7 @@ namespace Saturn {
 
 	class RubyCharacterEvent : public RubyEvent
 	{
+		SAT_RBY_DEFINE_EVENT( InputCharacter )
 	public:
 		RubyCharacterEvent() = default;
 		RubyCharacterEvent( RubyEventType Type, wchar_t wc ) : RubyEvent( Type ), m_WideCharacter( wc ) {}
@@ -146,6 +154,7 @@ namespace Saturn {
 
 	class RubyMaximizeEvent : public RubyEvent
 	{
+		SAT_RBY_DEFINE_EVENT( WindowMaximized )
 	public:
 		RubyMaximizeEvent() = default;
 		RubyMaximizeEvent( RubyEventType Type, bool state ) : RubyEvent( Type ), m_State( state ) {}
@@ -161,6 +170,7 @@ namespace Saturn {
 
 	class RubyFocusEvent : public RubyEvent
 	{
+		SAT_RBY_DEFINE_EVENT( WindowFocus )
 	public:
 		RubyFocusEvent() = default;
 		RubyFocusEvent( RubyEventType Type, bool state ) : RubyEvent( Type ), m_State( state ) {}
@@ -175,6 +185,7 @@ namespace Saturn {
 
 	class RubyMinimizeEvent : public RubyEvent
 	{
+		SAT_RBY_DEFINE_EVENT( WindowMinimized )
 	public:
 		RubyMinimizeEvent() = default;
 		RubyMinimizeEvent( RubyEventType Type, bool state ) : RubyEvent( Type ), m_State( state ) {}
@@ -193,8 +204,6 @@ namespace Saturn {
 		virtual ~RubyEventTarget() = default;
 
 		virtual bool OnEvent( RubyEvent& rEvent ) = 0;
-
-	public:
 	};
 
 }

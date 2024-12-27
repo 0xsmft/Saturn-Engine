@@ -382,11 +382,14 @@ namespace Saturn {
 		// The scroll event does not care if the camera is active or not.
 		if( m_MouseOverViewport ) m_EditorCamera.OnEvent( rEvent );
 		
-		if( false )	m_FallbackCamera.OnEvent( rEvent );
+//		if( false )	m_FallbackCamera.OnEvent( rEvent );
 
 		AssetViewer::ProcessEvent( rEvent );
 
-		if( rEvent.Type == RubyEventType::KeyPressed ) OnKeyPressed( (RubyKeyEvent&)rEvent );
+		if( rEvent.Type == RubyEventType::KeyPressed ) 
+			OnKeyPressed( (RubyKeyEvent&)rEvent );
+
+		GActiveScene->OnEvent( rEvent );
 	}
 
 	void EditorLayer::SaveFileAs()
@@ -833,7 +836,7 @@ namespace Saturn {
 
 			if( ImGui::SmallButton( "+" ) )
 			{
-				ActionBinding ab;
+				ActionBindingData ab;
 				ab.Name = "Empty Binding";
 
 				int count = 0;
@@ -1097,7 +1100,7 @@ namespace Saturn {
 
 			ImGui::PushStyleColor( ImGuiCol_Text, ImVec4{ 0.7f, 0.7f, 0.7f, 0.7f } );
 			ImGui::PushFont( italicsFont );
-			ImGui::Text( "Saturn Engine Version: %s", SAT_CURRENT_VERSION_STRING );
+			ImGui::Text( "Saturn Engine Version: %s (%d)", SAT_CURRENT_VERSION_STRING, SAT_CURRENT_VERSION );
 			ImGui::PopFont();
 			ImGui::PopStyleColor();
 

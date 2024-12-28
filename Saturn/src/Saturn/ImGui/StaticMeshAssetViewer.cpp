@@ -87,10 +87,10 @@ namespace Saturn {
 		}
 
 		// Viewport
-
-		ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse;
+		ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings;
 		std::string Name = "##" + std::to_string( m_AssetID );
 		ImGui::Begin( Name.c_str(), 0, flags );
+		ImGui::SetWindowDock( ImGui::GetCurrentWindow(), dockID, ImGuiCond_FirstUseEver );
 
 		ImGui::PushID( static_cast< int >( m_AssetID ) );
 		

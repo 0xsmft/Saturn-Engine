@@ -66,6 +66,8 @@ namespace Saturn {
 	
 	static inline ImVec2 operator+( const ImVec2& lhs, const ImVec2& rhs ) { return ImVec2( lhs.x + rhs.x, lhs.y + rhs.y ); }
 
+	static std::mutex s_UpdateFilesMutex;
+
 	ContentBrowserPanel::ContentBrowserPanel()
 		: ContentBrowserBase()
 	{
@@ -539,24 +541,24 @@ namespace Saturn {
 		if( m_ValidSearchFiles.size() )
 			m_ValidSearchFiles.clear();
 
-		for( const auto& entry : std::filesystem::recursive_directory_iterator( m_CurrentViewModeDirectory ) )
+		for( const auto& rEntry : std::filesystem::recursive_directory_iterator( m_CurrentViewModeDirectory ) )
 		{
-			const std::filesystem::path& rPath = entry.path();
+			const std::filesystem::path& rPath = rEntry.path();
 
 			if( m_TextFilter.PassFilter( rPath.filename().string().c_str() ) )
 			{
-				Ref<ContentBrowserItem> item = Ref<ContentBrowserItem>::Create( entry, ContentBrowserItemType::Asset );
+				Ref<ContentBrowserItem> item = Ref<ContentBrowserItem>::Create( rEntry, ContentBrowserItemType::Asset );
 				item->SetSelectedFn( SAT_BIND_EVENT_FN( ContentBrowserPanel::OnItemSelected ) );
 
-				if( auto Itr = std::find( m_ValidSearchFiles.begin(), m_ValidSearchFiles.end(), item ); Itr != m_ValidSearchFiles.end() )
+				if( const auto Itr = std::find( m_ValidSearchFiles.begin(), m_ValidSearchFiles.end(), item ); Itr != m_ValidSearchFiles.end() )
 				{
-					if( !std::filesystem::exists( entry ) )
+					if( !std::filesystem::exists( rEntry ) )
 						m_ValidSearchFiles.erase( Itr, m_ValidSearchFiles.end() );
 
 					continue;
 				}
 
-				if( !entry.is_directory() )
+				if( !rEntry.is_directory() )
 				{
 					if( ExtensionToAssetType( rPath.extension().string() ) == AssetType::Unknown )
 						continue;
@@ -854,13 +856,16 @@ namespace Saturn {
 					if( ClassMetadataHandler::Get().IsEngineMetadata( m_SelectedMetadata ) )
 					{
 						// TODO: Create the class somehow?
+						if( m_SelectedMetadata.Name == "Entity" ) 
+						{
+							sourceEntity = Ref<Entity>::Create();
+						}
 					}
 					else
 					{
 						sourceEntity = GameModule::Get().CreateEntity( m_SelectedMetadata.Name );
+						sourceEntity->AddComponent<ScriptComponent>().ScriptName = m_SelectedMetadata.Name;
 					}
-
-					sourceEntity->AddComponent<ScriptComponent>().ScriptName = m_SelectedMetadata.Name;
 
 					prefab->Create( sourceEntity );
 
@@ -1297,6 +1302,18 @@ namespace Saturn {
 
 	void ContentBrowserPanel::UpdateFiles( bool clear /*= false */ )
 	{
+		// Use a mutex here because when we add a new file filewatch (m_Watcher) will always get to this function first so, allow filewach it update files then when the main thread enters this function try to lock and wait.
+		// We could tell filewatch to skip this file as it will be handled by this panel however this way always provides thread safety between filewatch and this panel.
+
+		std::unique_lock<std::mutex> lock( s_UpdateFilesMutex, std::defer_lock );
+
+		if( !lock.try_lock() )
+		{
+			// Wait until the other thread is completed
+			std::unique_lock<std::mutex> waitLock( s_UpdateFilesMutex );
+			return;
+		}
+
 		if( clear )
 			m_Files.clear();
 
@@ -1346,20 +1363,20 @@ namespace Saturn {
 
 	void ContentBrowserPanel::DrawItems( std::vector<Ref<ContentBrowserItem>>& rList, ImVec2 size, float padding )
 	{
-		for( auto& item : rList )
+		for( auto& rItem : rList )
 		{
-			item->Draw( { size.x, size.y }, padding );
+			rItem->Draw( { size.x, size.y }, padding );
 
 			// This happens if we rename a file as we then have to create the file cache again.
-			if( !item )
+			if( !rItem )
 				break;
 
-			if( !item->IsSelected() )
+			if( !rItem->IsSelected() )
 			{
 				// Is the item in the selection list if so and we are no longer selected then we need to remove it.
-				if( const auto Itr = std::find( m_SelectedItems.begin(), m_SelectedItems.end(), item ); Itr != m_SelectedItems.end() )
+				if( const auto Itr = std::find( m_SelectedItems.begin(), m_SelectedItems.end(), rItem ); Itr != m_SelectedItems.end() )
 				{
-					item->Deselect();
+					rItem->Deselect();
 
 					m_SelectedItems.erase( Itr );
 				}

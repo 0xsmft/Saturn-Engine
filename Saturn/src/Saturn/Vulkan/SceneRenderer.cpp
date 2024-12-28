@@ -1175,7 +1175,10 @@ namespace Saturn {
 		CreateSkyboxComponents();
 		CreateGridComponents();
 
-		Renderer2D::Get().SetInitialRenderPass( m_RendererData.LateCompositePass, m_RendererData.LateCompositeFramebuffer );
+		if( HasFlag( SceneRendererFlag_MasterInstance ) )
+		{
+			Renderer2D::Get().SetInitialRenderPass( m_RendererData.LateCompositePass, m_RendererData.LateCompositeFramebuffer );
+		}
 	}
 
 	//////////////////////////////////////////////////////////////////////////

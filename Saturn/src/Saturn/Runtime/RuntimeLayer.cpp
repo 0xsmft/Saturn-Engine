@@ -141,30 +141,6 @@ namespace Saturn {
 	{
 		if( rEvent.Type == RubyEventType::Resize )
 			OnWindowResize( ( RubyWindowResizeEvent& ) rEvent );
-		else if( rEvent.Type == RubyEventType::KeyPressed )
-		{
-			RubyKeyEvent& KeyEvent = ( RubyKeyEvent& )rEvent;
-			
-			switch( KeyEvent.GetScancode() )
-			{
-				case RubyKey::F11:
-				{
-					switch( Application::Get().GetWindow()->GetCurrentShowCommand() )
-					{
-						case RubyWindowShowCmd::Default: 
-						{
-							Application::Get().GetWindow()->Show( RubyWindowShowCmd::Fullscreen );
-						} break; 
-
-						case RubyWindowShowCmd::Fullscreen:
-						{
-							Application::Get().GetWindow()->Restore();
-						} break;
-					}
-
-				} break;
-			}
-		}
 	}
 
 	bool RuntimeLayer::OnWindowResize( RubyWindowResizeEvent& e )

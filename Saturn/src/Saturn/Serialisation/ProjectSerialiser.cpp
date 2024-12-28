@@ -72,11 +72,13 @@ namespace Saturn {
 
 				out << YAML::Key << "ActionBinding" << YAML::Value << rBinding.Name;
 				
+#if !defined(SAT_DIST)
 				out << YAML::Key << "ActionName" << YAML::Value << rBinding.ActionName;
+				out << YAML::Key << "ID" << YAML::Value << (uint64_t)rBinding.ID;
+#endif
 				out << YAML::Key << "Key" << YAML::Value << (int)rBinding.Key;
 				out << YAML::Key << "MouseButton" << YAML::Value << (int)rBinding.MouseButton;
 				out << YAML::Key << "Type" << YAML::Value << (int)rBinding.Type;
-				out << YAML::Key << "ID" << YAML::Value << (uint64_t)rBinding.ID;
 
 				out << YAML::EndMap;
 			}
@@ -138,15 +140,16 @@ namespace Saturn {
 		{
 			for( const auto& binding : actionBindings )
 			{
-				ActionBinding ab;
-				ab.Name = binding[ "ActionBinding" ].as<std::string>();
-				ab.ActionName = binding[ "ActionName" ].as<std::string>();
+				ActionBindingData ab;
 
+#if !defined(SAT_DIST)
+				ab.ActionName = binding[ "ActionName" ].as<std::string>();
+				ab.ID = ( UUID ) binding[ "ID" ].as<uint64_t>();
+#endif
+				ab.Name = binding[ "ActionBinding" ].as<std::string>();
 				ab.Key = ( RubyKey ) binding[ "Key" ].as<int>( 0 );
 				ab.MouseButton = ( RubyMouseButton ) binding[ "Key" ].as<int>( 6 );
-
 				ab.Type = ( ActionBindingType ) binding[ "Type" ].as<int>( 0 );
-				ab.ID = ( UUID ) binding[ "ID" ].as<uint64_t>();
 
 				newProject->AddActionBinding( ab );
 			}

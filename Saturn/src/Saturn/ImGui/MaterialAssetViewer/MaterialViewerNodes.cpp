@@ -310,6 +310,71 @@ namespace Saturn {
 		return NodeEditorCompilationStatus::Success;
 	}
 
+	void MaterialColorPickerNode::OnRenderOutput( Ref<Pin> pin )
+	{
+		bool OpenAssetColorPicker = false;
+
+		if( Name == "Color Picker" && pin->Type == PinType::Material_Sampler2D )
+		{
+			ImGui::BeginHorizontal( "PickerH" );
+
+			ImVec2 buttonSize = { ImGui::GetFrameHeight(), ImGui::GetFrameHeight() };
+			ImRect boundingBox = { ImGui::GetCursorPos(), ImGui::GetCursorPos() + buttonSize };
+
+			bool hovered, held;
+
+			ImGui::ButtonBehavior( boundingBox, ImGui::GetID( &ID ), &hovered, &held );
+
+			// TODO: Ruby and ImGui do not match! so ImGuiButtonFlags_None = 0 and RubyMouse::Left = 0
+			if( hovered && ImGui::IsMouseClicked( ImGuiButtonFlags_None ) )
+			{
+				OpenAssetColorPicker = true;
+			}
+
+			Auxiliary::DrawColoredRect( buttonSize, ImVec4( PickedColor.x, PickedColor.y, PickedColor.z, 255.0f ) );
+
+			ImGui::EndHorizontal();
+		}
+
+		ed::Suspend();
+
+		if( OpenAssetColorPicker )
+		{
+			ImGui::OpenPopup( "AssetColorPicker" );
+		}
+
+		ImGui::SetNextWindowSize( { 350.0f, 0.0f } );
+		if( ImGui::BeginPopup( "AssetColorPicker", ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize ) )
+		{
+			bool PopupModified = false;
+
+			constexpr auto FALLBACK_COLOR = ImVec4( 114.0f / 255.0f, 144.0f / 255.0f, 154.0f / 255.0f, 200.0f / 255.0f );
+
+			ImVec4 color = ImVec4( PickedColor.x, PickedColor.y, PickedColor.z, 255.0f );
+
+			if( color.x == 0 && color.y == 0 && color.z == 0 && color.w == 0 )
+				color = FALLBACK_COLOR;
+
+			if( ImGui::ColorPicker3( "Color Picker", ( float* ) &color ) )
+			{
+				PickedColor = glm::vec3( color.x, color.y, color.z );
+
+				PopupModified = true;
+			}
+			else
+			{
+				if( PopupModified )
+				{
+					ImGui::CloseCurrentPopup();
+				}
+			}
+
+			ImGui::EndPopup();
+		}
+
+		ed::Resume();
+	}
+
 	//////////////////////////////////////////////////////////////////////////
 	// MATERIAL GET ASSET NODE
 

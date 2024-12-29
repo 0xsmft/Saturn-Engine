@@ -112,6 +112,15 @@ namespace Saturn {
 							Application::Get().Close();
 					}
 
+					if( hovered )
+					{
+						if( ImGui::BeginTooltip() )
+						{
+							ImGui::Text( "Close" );
+							ImGui::EndTooltip();
+						}
+					}
+
 					buttonRect.Min.x -= buttonSize;
 					buttonRect.Max.x -= buttonSize;
 				}
@@ -137,6 +146,15 @@ namespace Saturn {
 					if( pressed )
 						Application::Get().GetWindow()->Maximize();
 
+					if( hovered )
+					{
+						if( ImGui::BeginTooltip() )
+						{
+							ImGui::Text( "Maximize or Restore Down" );
+							ImGui::EndTooltip();
+						}
+					}
+
 					buttonRect.Min.x -= buttonSize;
 					buttonRect.Max.x -= buttonSize;
 				}
@@ -161,6 +179,15 @@ namespace Saturn {
 
 					if( pressed )
 						Application::Get().GetWindow()->Minimize();
+
+					if( hovered )
+					{
+						if( ImGui::BeginTooltip() )
+						{
+							ImGui::Text( "Minimize" );
+							ImGui::EndTooltip();
+						}
+					}
 
 					buttonRect.Min.x -= buttonSize;
 					buttonRect.Max.x -= buttonSize;

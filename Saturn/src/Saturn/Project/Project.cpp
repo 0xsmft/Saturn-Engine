@@ -227,7 +227,7 @@ namespace Saturn {
 		auto rootDir = GetRootDir();
 		rootDir /= "bin";
 
-#if defined(SAT_WINDOWS)
+#if defined(SAT_PLATFORM_WINDOWS)
 
 # if defined( SAT_DEBUG )
 		rootDir /= "Debug-windows-x86_64";
@@ -236,7 +236,7 @@ namespace Saturn {
 #  else // SAT_DIST
 		rootDir /= "Dist-windows-x86_64";
 # endif
-#else // SAT_WINDOWS
+#else // SAT_PLATFORM_WINDOWS
 
 #endif
 
@@ -456,7 +456,7 @@ namespace Saturn {
 #endif
 		BuildToolDir /= "SaturnBuildTool";
 
-#if defined( SAT_WINDOWS )
+#if defined( SAT_PLATFORM_WINDOWS )
 		BuildToolDir /= "SaturnBuildTool.exe";
 #else
 		BuildToolDir /= "SaturnBuildTool";

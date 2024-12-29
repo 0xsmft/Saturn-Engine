@@ -149,7 +149,7 @@ namespace SaturnBuildTool
             // Enable this for Debugging
             Console.WriteLine( "Command Line: {0}", processStart.Arguments );
             
-            clProcess.OutputDataReceived += new DataReceivedEventHandler((s, e) =>
+            clProcess.OutputDataReceived += new DataReceivedEventHandler((_, e) =>
             {
                 if (e.Data != null)
                 {
@@ -157,7 +157,7 @@ namespace SaturnBuildTool
                 }
             });
 
-            clProcess.ErrorDataReceived += new DataReceivedEventHandler((s, e) =>
+            clProcess.ErrorDataReceived += new DataReceivedEventHandler((_, e) =>
             {
                 if (e.Data != null)
                 {

@@ -91,6 +91,7 @@ namespace Saturn {
 		void DrawComponents( Ref<Entity> entity );
 		bool IsEntitySelected( Ref<Entity> entity );
 		void DrawEntityNode( Ref<Entity> entity );
+		void DrawEntityProperties( Ref<Entity> entity );
 		void DrawEntityComponents( Ref<Entity> entity );
 		void DrawEntities();
 

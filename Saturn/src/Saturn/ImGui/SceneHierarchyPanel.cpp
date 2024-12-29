@@ -29,15 +29,23 @@
 #include "sppch.h"
 #include "SceneHierarchyPanel.h"
 
-#include "Saturn/Core/App.h"
-#include "Saturn/Vulkan/Mesh.h"
-#include "Saturn/Scene/Entity.h"
-#include "Saturn/Vulkan/SceneRenderer.h"
-#include "Saturn/Audio/Sound.h"
-#include "Saturn/Asset/Prefab.h"
-#include "Saturn/Audio/AudioSystem.h"
 #include "ImGuiAuxiliary.h"
 #include "EditorIcons.h"
+
+#include "Saturn/Core/App.h"
+
+#include "Saturn/Vulkan/Mesh.h"
+#include "Saturn/Vulkan/SceneRenderer.h"
+
+#include "Saturn/Scene/Entity.h"
+
+#include "Saturn/Audio/Sound.h"
+#include "Saturn/Audio/AudioSystem.h"
+
+#include "Saturn/Asset/Prefab.h"
+
+#include "Saturn/Physics/PhysicsRigidBody.h"
+
 #include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 
 #include "Saturn/Vulkan/VulkanContext.h"
@@ -209,8 +217,6 @@ namespace Saturn {
 		{
 			DrawAddComponents<StaticMeshComponent>( "Static Mesh", m_SelectionContexts[ 0 ] );
 
-			DrawAddComponents<ScriptComponent>( "Script", m_SelectionContexts[ 0 ] );
-
 			DrawAddComponents<CameraComponent>( "Camera", m_SelectionContexts[ 0 ] );
 
 			DrawAddComponents<PointLightComponent>( "Point Light", m_SelectionContexts[ 0 ] );
@@ -222,8 +228,6 @@ namespace Saturn {
 			DrawAddComponents<SphereColliderComponent>( "Sphere Collider", m_SelectionContexts[ 0 ] );
 
 			DrawAddComponents<CapsuleColliderComponent>( "Capsule Collider", m_SelectionContexts[ 0 ] );
-
-			DrawAddComponents<MeshColliderComponent>( "Mesh Collider", m_SelectionContexts[ 0 ] );
 
 			DrawAddComponents<RigidbodyComponent>( "Rigidbody", m_SelectionContexts[ 0 ] );
 
@@ -346,60 +350,17 @@ namespace Saturn {
 		}
 	}
 
-	void SceneHierarchyPanel::DrawEntityComponents( Ref<Entity> entity )
+	void SceneHierarchyPanel::DrawEntityProperties( Ref<Entity> entity ) 
 	{
-		ImVec2 contentRegionAvailable = ImGui::GetContentRegionAvail();
-		bool isPrefab = entity->HasComponent<PrefabComponent>() || entity->HasComponent<ScriptComponent>();
-
-		ImGui::Image( m_EditIcon->GetDescriptorSet(), ImVec2( 30.0f, 30.0f ) );
-
-		ImGui::SameLine();
-
-		// TODO: We really don't need to check this as entities will always have a tag.
-		if( entity->HasComponent<TagComponent>() )
-		{
-			auto& tag = entity->GetComponent<TagComponent>().Tag;
-			char buffer[ 256 ];
-			memset( buffer, 0, 256 );
-			memcpy( buffer, tag.c_str(), tag.length() );
-
-			ImGui::PushItemWidth( contentRegionAvailable.x - ImGui::GetStyle().FramePadding.x );
-			if( ImGui::InputText( "##Tag", buffer, 256 ) )
-			{
-				tag = std::string( buffer );
-
-				m_Context->MarkDirty();
-			}
-			ImGui::PopItemWidth();
-		}
+		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_AllowItemOverlap;
 
 		bool hasScript = entity->HasComponent<ScriptComponent>();
 
-		// Draw ID and entity class type.
-		{
-			// ID
-			const auto& id = entity->GetComponent<IdComponent>().ID;
-			ImGui::TextDisabled( "%llu", id );
-
-			if( hasScript )
-			{
-				ImGui::SameLine();
-				ImGui::TextDisabled( "Class Instance (C++ Class) [%s]", entity->GetComponent<ScriptComponent>().ScriptName.c_str() );
-			}
-			else if( entity->HasComponent<PrefabComponent>() )
-			{
-				ImGui::SameLine();
-				ImGui::TextDisabled( "Class Instance (Prefab)" );
-			}
-			else 
-			{
-				ImGui::SameLine();
-				ImGui::TextDisabled( "Normal Entity" );
-			}
-		}
+		if( hasScript )
+			flags |= ImGuiTreeNodeFlags_DefaultOpen;
 
 		// Draw properties
-		if( ImGui::TreeNodeEx( ( void* ) ( ( uint32_t ) entity ), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_AllowItemOverlap, "Properties" ) ) 
+		if( ImGui::TreeNodeEx( ( void* ) ( ( uint32_t ) entity ), flags, "Properties" ) )
 		{
 			if( hasScript )
 			{
@@ -439,21 +400,21 @@ namespace Saturn {
 
 						case SPropertyType::Vector2:
 						{
-							// Copy
-							auto temporaryValue = rProperty.Read<SPropertyType::Vector2>( entity.Get() );
-							if( Auxiliary::DrawVec2Control( name, temporaryValue, 0.0f, 125.0f ) )
-								rProperty.SetProperty( entity.Get(), temporaryValue );
+							glm::vec2 value = rProperty.Read<SPropertyType::Vector2>( entity.Get() );
+
+							if( Auxiliary::DrawVec2Control( name, value, 0.0f, 125.0f ) )
+								rProperty.SetProperty( entity.Get(), value );
 						} break;
 
 						case SPropertyType::Vector3:
 						{
-							// Copy
-							auto temporaryValue = rProperty.Read<SPropertyType::Vector3>( entity.Get() );
-							if( Auxiliary::DrawVec3Control( name, temporaryValue, 0.0f, 125.0f ) )
-								rProperty.SetProperty( entity.Get(), temporaryValue );
+							glm::vec3 value = rProperty.Read<SPropertyType::Vector3>( entity.Get() );
+
+							if( Auxiliary::DrawVec3Control( name, value, 0.0f, 125.0f ) )
+								rProperty.SetProperty( entity.Get(), value );
 						} break;
 
-						case SPropertyType::Entity: 
+						case SPropertyType::Entity:
 						{
 							Ref<Entity>& entityFromProp = rProperty.Read<SPropertyType::Entity>( entity.Get() );
 
@@ -496,13 +457,13 @@ namespace Saturn {
 										bool Selected = false;
 
 										m_Context->Each( [ & ]( Ref<Entity>& rEntity )
+										{
+											if( ImGui::Selectable( rEntity->GetComponent<TagComponent>().Tag.c_str(), Selected ) )
 											{
-												if( ImGui::Selectable( rEntity->GetComponent<TagComponent>().Tag.c_str(), Selected ) )
-												{
-													rProperty.SetProperty( entity.Get(), rEntity );
-													PopupModified = true;
-												}
-											} );
+												rProperty.SetProperty( entity.Get(), rEntity );
+												PopupModified = true;
+											}
+										} );
 
 										if( Selected )
 											ImGui::SetItemDefaultFocus();
@@ -561,12 +522,12 @@ namespace Saturn {
 
 							ImGui::Columns( 1 );
 
-							ImGui::PopID();
-
 							if( Auxiliary::DrawAssetFinder( m_CurrentFinderType, &open, m_CurrentAssetID ) )
 							{
 								rProperty.SetProperty( entity.Get(), m_CurrentAssetID );
 							}
+
+							ImGui::PopID();
 						} break;
 					}
 				}
@@ -576,6 +537,59 @@ namespace Saturn {
 		}
 
 		ImGui::Separator();
+	} 
+
+	void SceneHierarchyPanel::DrawEntityComponents( Ref<Entity> entity )
+	{
+		ImVec2 contentRegionAvailable = ImGui::GetContentRegionAvail();
+		bool isPrefab = entity->HasComponent<PrefabComponent>() || entity->HasComponent<ScriptComponent>();
+
+		ImGui::Image( m_EditIcon->GetDescriptorSet(), ImVec2( 30.0f, 30.0f ) );
+
+		ImGui::SameLine();
+
+		// TODO: We really don't need to check this as entities will always have a tag.
+		if( entity->HasComponent<TagComponent>() )
+		{
+			auto& tag = entity->GetComponent<TagComponent>().Tag;
+			char buffer[ 256 ];
+			memset( buffer, 0, 256 );
+			memcpy( buffer, tag.c_str(), tag.length() );
+
+			ImGui::PushItemWidth( contentRegionAvailable.x - ImGui::GetStyle().FramePadding.x );
+			if( ImGui::InputText( "##Tag", buffer, 256 ) )
+			{
+				tag = std::string( buffer );
+
+				m_Context->MarkDirty();
+			}
+			ImGui::PopItemWidth();
+		}
+
+		// Draw ID and entity class type.
+		{
+			// ID
+			const auto& id = entity->GetComponent<IdComponent>().ID;
+			ImGui::TextDisabled( "%llu", id );
+
+			if( entity->HasComponent<ScriptComponent>() )
+			{
+				ImGui::SameLine();
+				ImGui::TextDisabled( "Class Instance (C++ Class) [%s]", entity->GetComponent<ScriptComponent>().ScriptName.c_str() );
+			}
+			else if( entity->HasComponent<PrefabComponent>() )
+			{
+				ImGui::SameLine();
+				ImGui::TextDisabled( "Class Instance (Prefab)" );
+			}
+			else 
+			{
+				ImGui::SameLine();
+				ImGui::TextDisabled( "Normal Entity" );
+			}
+		}
+
+		DrawEntityProperties( entity );
 
 		DrawComponent<TransformComponent>( "Transform", entity, [&]( auto& tc )
 		{
@@ -629,24 +643,6 @@ namespace Saturn {
 			else
 				ImGui::InputText( "##meshfilepath", ( char* ) "", 256, ImGuiInputTextFlags_ReadOnly );
 
-			if( Auxiliary::DrawAssetFinder( m_CurrentFinderType, &open, m_CurrentAssetID ) )
-			{
-				if( m_CurrentFinderType == AssetType::StaticMesh )
-				{
-					mc.Mesh = AssetManager::Get().GetAssetAs<StaticMesh>( m_CurrentAssetID );
-
-					mc.MaterialRegistry = nullptr;
-
-					mc.MaterialRegistry = Ref<MaterialRegistry>::Create( mc.Mesh );
-				}
-				else if ( m_CurrentFinderType == AssetType::Material )
-				{
-					mc.MaterialRegistry->SetMaterial( s_CurrentIndex, m_CurrentAssetID );
-				}
-
-				modified = true;
-			}
-			
 			if( mc.Mesh ) 
 			{
 				if( Auxiliary::TreeNode( "Materials" ) )
@@ -677,6 +673,24 @@ namespace Saturn {
 
 					Auxiliary::EndTreeNode();
 				}
+			}
+
+			if( Auxiliary::DrawAssetFinder( m_CurrentFinderType, &open, m_CurrentAssetID ) )
+			{
+				if( m_CurrentFinderType == AssetType::StaticMesh )
+				{
+					mc.Mesh = AssetManager::Get().GetAssetAs<StaticMesh>( m_CurrentAssetID );
+
+					mc.MaterialRegistry = nullptr;
+
+					mc.MaterialRegistry = Ref<MaterialRegistry>::Create( mc.Mesh );
+				}
+				else if( m_CurrentFinderType == AssetType::Material )
+				{
+					mc.MaterialRegistry->SetMaterial( s_CurrentIndex, m_CurrentAssetID );
+				}
+
+				modified = true;
 			}
 
 			ImGui::PopItemWidth();
@@ -796,12 +810,30 @@ namespace Saturn {
 		{
 			bool modified = false;
 
-			modified = Auxiliary::DrawBoolControl( "Kinematic Body", rb.IsKinematic );
-			modified |= Auxiliary::DrawBoolControl( "Use CCD", rb.UseCCD );
+			if( !m_Context->RuntimeRunning )
+			{
+				modified = Auxiliary::DrawBoolControl( "Kinematic Body", rb.IsKinematic );
+				modified |= Auxiliary::DrawBoolControl( "Use CCD", rb.UseCCD );
 
-			modified |= Auxiliary::DrawFloatControl( "Mass", rb.Mass );
-			modified |= Auxiliary::DrawFloatControl( "Linear Drag", rb.LinearDrag );
-			
+				modified |= Auxiliary::DrawFloatControl( "Mass", rb.Mass );
+				modified |= Auxiliary::DrawFloatControl( "Linear Drag", rb.LinearDrag );
+			}
+			else
+			{
+				{
+					Auxiliary::ScopedDisabledFlag disabled( true );
+					
+					Auxiliary::DrawBoolControl( "Kinematic Body", rb.IsKinematic );
+					Auxiliary::DrawBoolControl( "Use CCD", rb.UseCCD );
+				}
+				
+				if( Auxiliary::DrawFloatControl( "Mass", rb.Mass ) )
+					rb.Rigidbody->SetMass( rb.Mass );
+
+				if( Auxiliary::DrawFloatControl( "Linear Drag", rb.LinearDrag ) )
+					rb.Rigidbody->SetLinearDrag( rb.LinearDrag );
+			}
+
 			//////////////////////////////////////////////////////////////////////////
 
 			ImGui::Columns( 2 );
@@ -1114,11 +1146,11 @@ namespace Saturn {
 			if( modified ) m_Context->MarkDirty();
 		} );
 
-		DrawComponent<AudioListenerComponent>( "Audio Listener", entity, [&]( auto& al )
+		DrawComponent<AudioListenerComponent>( "Audio Listener", entity, [ & ]( auto& al )
 		{
 			bool modified = false;
 
-			modified =  Auxiliary::DrawBoolControl( "Primary", al.Primary );
+			modified = Auxiliary::DrawBoolControl( "Primary", al.Primary );
 			modified |= Auxiliary::DrawVec3Control( "Direction", al.Direction );
 			modified |= Auxiliary::DrawFloatControl( "ConeInnerAngle", al.ConeInnerAngle );
 			modified |= Auxiliary::DrawFloatControl( "ConeOuterAngle", al.ConeOuterAngle );

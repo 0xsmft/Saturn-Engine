@@ -30,7 +30,6 @@
 
 #include "Components.h"
 #include "Scene.h"
-#include "EntityVisibility.h"
 
 #include "Saturn/GameFramework/SClass.h"
 #include "Saturn/GameFramework/Core/GameScript.h"

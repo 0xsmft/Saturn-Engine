@@ -40,8 +40,6 @@
 
 #include "Saturn/Core/UUID.h"
 
-#include "EntityVisibility.h"
-
 #include "Saturn/Core/Renderer/SceneCamera.h"
 
 #include <string>

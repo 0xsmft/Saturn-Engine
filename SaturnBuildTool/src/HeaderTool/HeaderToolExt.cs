@@ -23,7 +23,7 @@ namespace SaturnBuildTool
                 StartInfo = processStart
             };
             headerToolProcess.EnableRaisingEvents = true;
-            headerToolProcess.OutputDataReceived += new DataReceivedEventHandler((s, e) =>
+            headerToolProcess.OutputDataReceived += new DataReceivedEventHandler((_, e) =>
             {
                 if (e.Data != null)
                 {
@@ -31,7 +31,7 @@ namespace SaturnBuildTool
                 }
             });
 
-            headerToolProcess.ErrorDataReceived += new DataReceivedEventHandler((s, e) =>
+            headerToolProcess.ErrorDataReceived += new DataReceivedEventHandler((_, e) =>
             {
                 if (e.Data != null)
                 {

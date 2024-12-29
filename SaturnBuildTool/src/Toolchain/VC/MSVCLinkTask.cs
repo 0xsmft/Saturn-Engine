@@ -7,13 +7,6 @@ using SaturnBuildTool.Tools;
 
 namespace SaturnBuildTool
 {
-    public enum LinkerOutput
-    {
-        StaticLibrary,
-        SharedLibrary,
-        Executable
-    }
-
     internal class MSVCLinkTask : TaskBase
     {
         private readonly UserTarget TargetToBuild;
@@ -118,8 +111,6 @@ namespace SaturnBuildTool
                         Args.Add( string.Format( " /DLL /OUT:\"{0}\"", TargetToBuild.GetFullBinPath() ) );
                     }
                     break;
-
-                default: break;
             }
 
             string ilkPath = Path.Combine( TargetToBuild.OutputPath, TargetToBuild.ProjectName );
@@ -200,9 +191,6 @@ namespace SaturnBuildTool
                     {
                         CLLocation += "/lib/x86";
                     }
-                    break;
-
-                default:
                     break;
             }
 

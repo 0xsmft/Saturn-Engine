@@ -55,7 +55,6 @@ namespace Saturn {
 	class PhysicsScene;
 	class SClass;
 	class SceneRenderer;
-	class PlayerInputController;
 
 	struct TransformComponent;
 	struct RaycastHitResult;
@@ -173,7 +172,8 @@ namespace Saturn {
 		
 		void OnUpdate( Timestep ts );
 		void OnUpdatePhysics( Timestep ts );
-		
+		void OnEvent( RubyEvent& rEvent );
+
 	public:
 		template<typename T>
 		std::vector<Ref<Entity>> GetAllEntitiesWith( void )
@@ -258,6 +258,8 @@ namespace Saturn {
 
 		void AcknowledgeHotReload();
 
+		void AddController( const Ref<PlayerInputController>& rPlayerInputController );
+		void RemoveController( const Ref<PlayerInputController>& rPlayerInputController );
 		static void   SetActiveScene( Scene* pScene );
 		static Scene* GetActiveScene();
 
@@ -341,6 +343,9 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		std::vector< Ref<Entity> > m_SelectedEntities;
 #endif
+
+		std::vector<Ref<PlayerInputController>> m_Controllers{};
+
 		Lights m_Lights;
 		Ref<Entity> m_MainCameraEntity = nullptr;
 

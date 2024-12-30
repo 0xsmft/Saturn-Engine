@@ -141,6 +141,8 @@ namespace Saturn {
 	{
 		if( rEvent.Type == RubyEventType::Resize )
 			OnWindowResize( ( RubyWindowResizeEvent& ) rEvent );
+
+		m_RuntimeScene->OnEvent( rEvent );
 	}
 
 	bool RuntimeLayer::OnWindowResize( RubyWindowResizeEvent& e )

@@ -389,7 +389,8 @@ namespace Saturn {
 		if( rEvent.Type == RubyEventType::KeyPressed ) 
 			OnKeyPressed( (RubyKeyEvent&)rEvent );
 
-		GActiveScene->OnEvent( rEvent );
+		if( m_RuntimeScene )
+			m_RuntimeScene->OnEvent( rEvent );
 	}
 
 	void EditorLayer::SaveFileAs()
@@ -513,6 +514,12 @@ namespace Saturn {
 				if( m_MouseOverViewport && !m_StartedRightClickInViewport )
 					m_GizmoOperation = ImGuizmo::OPERATION::SCALE;
 				break;
+
+			case RubyKey::F5:
+			{
+				if( m_MouseOverViewport || m_ViewportFocused )
+					m_RequestRuntime ^= 1;
+			} break;
 		}
 
 		if( Input::Get().KeyPressed( RubyKey::Ctrl ) && !m_RuntimeScene )
@@ -1325,48 +1332,13 @@ namespace Saturn {
 				if( !m_BlockingOperation )
 					m_BlockingOperation = Ref<JobProgress>::Create();
 
-				JobSystem::Get().AddJob( [this]()
-					{
-						m_JobModalOpen = true;
-						m_BlockingOperation->SetStatus( "Initializing..." );
+				CreateShaderBundleJob();
 
-						SaveFile();
-						SaveProject();
-
-						Project::GetActiveProject()->PrepForDist();
-						
-						m_BlockingOperation->SetStatus( "Building Shader bundle..." );
-						if( !BuildShaderBundle() )
-							return;
-
-						if( auto result = AssetBundle::BundleAssets( m_BlockingOperation ); result != AssetBundleResult::Success )
-						{
-							Application::Get().GetWindow()->FlashAttention();
-
-							auto resultStr = AssetBundleResultToString( result );
-
-							MessageBoxInfo msgBox
-							{
-								.Title = "Error",
-								.Text = std::format( "Asset bundle failed to build error was: {0}", resultStr ),
-								.Buttons = MessageBoxButtons_Ok
-							};
-
-							PushMessageBox( msgBox );
-						}
-						else
-						{
-							MessageBoxInfo msgBox
-							{
-								.Title = "Asset bundle successfully built",
-								.Text = "Asset Bundle successfully built. You may now compile the game in the \"Dist\" configuration.\nYou can do this in your IDE. Or go to Project->Distribute project in the title bar.",
-								.Buttons = MessageBoxButtons_Ok,
-								.Type = MessageBoxType::Information
-							};
-
-							PushMessageBox( msgBox );
-						}
-					} );
+				// TODO: Think of a better way for this... checking the sizes of the message boxes is not a good thing.
+				if( m_MessageBoxes.size() == 0 ) 
+				{
+					CreateAssetBundleJob();
+				}
 			}
 
 			if( ImGui::BeginItemTooltip() )
@@ -1397,15 +1369,7 @@ namespace Saturn {
 
 			if( ImGui::MenuItem( "DEBUG: Build Asset Bundle (no shaders)" ) )
 			{
-				JobSystem::Get().AddJob( [this]()
-					{
-						m_JobModalOpen = true;
-
-						if( auto result = AssetBundle::BundleAssets( m_BlockingOperation ); result != AssetBundleResult::Success )
-						{
-							SAT_CORE_ASSERT( false );
-						}
-					} );
+				CreateAssetBundleJob();
 			}
 #endif
 
@@ -1743,7 +1707,7 @@ namespace Saturn {
 		}
 
 		Positions /= selectedEntities.size();
-		Rotations /= selectedEntities.size();
+		Rotations /= static_cast<float>( selectedEntities.size() );
 		Scales /= selectedEntities.size();
 
 		glm::mat4 centerPoint = glm::translate( glm::mat4( 1.0f ), Positions ) * glm::toMat4( Rotations ) * glm::scale( glm::mat4( 1.0f ), Scales );
@@ -1821,9 +1785,26 @@ namespace Saturn {
 		ImGui::PushStyleColor( ImGuiCol_Button, { 0.0f, 0.0f, 0.0f, 0.0f } );
 		ImGui::PushStyleVar( ImGuiStyleVar_ItemSpacing, ImVec2( 5.0f * 2.0f, 0 ) );
 
+		auto showTooltip = []( const char* pText )
+		{
+			if( ImGui::BeginItemTooltip() ) 
+			{
+				ImGui::Text( pText );
+				ImGui::EndTooltip();
+			}
+		};
+
 		if( Auxiliary::ImageButton( m_TranslationTexture, { 24.0f, 24.0f } ) ) m_GizmoOperation = ImGuizmo::OPERATION::TRANSLATE;
+
+		showTooltip( "Translate (W)" );
+
 		if( Auxiliary::ImageButton( m_RotationTexture, { 24.0f, 24.0f } ) ) m_GizmoOperation = ImGuizmo::OPERATION::ROTATE;
+
+		showTooltip( "Rotate (E)" );
+
 		if( Auxiliary::ImageButton( m_ScaleTexture, { 24.0f, 24.0f } ) ) m_GizmoOperation = ImGuizmo::OPERATION::SCALE;
+
+		showTooltip( "Scale (R)" );
 
 		ImGui::PopStyleColor();
 		ImGui::PopStyleVar();
@@ -1866,6 +1847,12 @@ namespace Saturn {
 
 		if( Auxiliary::ImageButton( texture, ImVec2( 24.0f, 24.0f ) ) ) 
 			m_RequestRuntime ^= 1;
+
+		if( ImGui::BeginItemTooltip() )
+		{
+			ImGui::Text( "Request runtime to start" );
+			ImGui::EndTooltip();
+		}
 
 		ImGui::PopStyleColor();
 		ImGui::PopStyleVar();
@@ -2109,6 +2096,58 @@ namespace Saturn {
 		TexturePass = nullptr;
 	
 		return built;
+	}
+
+	void EditorLayer::CreateShaderBundleJob()
+	{
+		JobSystem::Get().AddJob( [ this ]()
+			{
+				m_JobModalOpen = true;
+				m_BlockingOperation->SetStatus( "Initializing..." );
+
+				SaveFile();
+				SaveProject();
+
+				Project::GetActiveProject()->PrepForDist();
+
+				m_BlockingOperation->SetStatus( "Building Shader bundle..." );
+				BuildShaderBundle();
+			} );
+	}
+
+	void EditorLayer::CreateAssetBundleJob()
+	{
+		JobSystem::Get().AddJob( [ this ]()
+			{
+				if( auto result = AssetBundle::BundleAssets( m_BlockingOperation ); result != AssetBundleResult::Success )
+				{
+					Application::Get().GetWindow()->FlashAttention();
+
+					auto resultStr = AssetBundleResultToString( result );
+
+					MessageBoxInfo msgBox
+					{
+						.Title = "Error",
+						.Text = std::format( "Asset bundle failed to build error was: {0}", resultStr ),
+						.Buttons = MessageBoxButtons_Ok,
+						.Type = MessageBoxType::Error
+					};
+
+					PushMessageBox( msgBox );
+				}
+				else
+				{
+					MessageBoxInfo msgBox
+					{
+						.Title = "Asset bundle successfully built",
+						.Text = "Asset Bundle successfully built. You may now compile the game in the \"Dist\" configuration.\nYou can do this in your IDE. Or go to Project->Distribute project in the title bar.",
+						.Buttons = MessageBoxButtons_Ok,
+						.Type = MessageBoxType::Information
+					};
+
+					PushMessageBox( msgBox );
+				}
+			} );
 	}
 
 	void EditorLayer::ShowOrHideContentBrowserPanel()

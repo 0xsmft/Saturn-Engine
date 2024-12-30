@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace SaturnBuildTool
+﻿namespace SaturnBuildTool
 {
     public class RuntimeGameTarget : GameUserTarget
     {

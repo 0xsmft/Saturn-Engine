@@ -51,7 +51,7 @@ namespace Saturn {
 		{ ".jpg"          },
 		{ ".jpeg"         },
 		{ ".hdr"          },
-		{ ".msnd"         },
+		{ ".snd"          },
 		{ ".gsnd"         },
 		{ ".scene"        },
 		{ ".smaterial"    },

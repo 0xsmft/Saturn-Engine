@@ -11,18 +11,20 @@ namespace SaturnBuildTool
         {
             var Args = new List<string>();
 
-            ProcessStartInfo processStart = new ProcessStartInfo();
-            processStart.CreateNoWindow = true;
-            processStart.RedirectStandardOutput = true;
-            processStart.RedirectStandardError = true;
-            processStart.UseShellExecute = false;
-            processStart.FileName = ProjectInfo.Instance.HeaderToolExePath;
+            ProcessStartInfo processStart = new ProcessStartInfo
+            {
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                FileName = ProjectInfo.Instance.HeaderToolExePath
+            };
 
             Process headerToolProcess = new Process
             {
-                StartInfo = processStart
+                StartInfo = processStart,
+                EnableRaisingEvents = true,
             };
-            headerToolProcess.EnableRaisingEvents = true;
             headerToolProcess.OutputDataReceived += new DataReceivedEventHandler((_, e) =>
             {
                 if (e.Data != null)

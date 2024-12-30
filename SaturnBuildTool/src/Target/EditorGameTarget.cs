@@ -1,7 +1,4 @@
-﻿using System;
-using System.IO;
-
-namespace SaturnBuildTool
+﻿namespace SaturnBuildTool
 {
     public class EditorGameTarget : GameUserTarget
     {

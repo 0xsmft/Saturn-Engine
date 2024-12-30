@@ -397,6 +397,7 @@ namespace SaturnBuildTool
         {
             switch( Action )
             {
+                default:
                 case ActionType.Build:
                 case ActionType.Rebuild:
                     {

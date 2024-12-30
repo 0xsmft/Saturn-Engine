@@ -101,6 +101,9 @@ namespace Saturn {
 
 		void CheckMissingEnv();
 		bool BuildShaderBundle();
+		
+		void CreateShaderBundleJob();
+		void CreateAssetBundleJob();
 
 		void ShowOrHideContentBrowserPanel();
 		void ShowOrHideSceneHierarchyPanel();

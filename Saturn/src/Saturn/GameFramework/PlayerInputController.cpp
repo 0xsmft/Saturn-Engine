@@ -46,16 +46,17 @@ namespace Saturn {
 	PlayerInputController::~PlayerInputController()
 	{
 		m_ActionMap.clear();
-		m_Keys.clear();
 	}
 
-	static std::unordered_map<RubyEventType, ActionBindingTriggerState> EventTypeToActionType
+	static std::unordered_map<RubyEventType, ActionBindingTriggerState> s_EventTypeToActionType
 	{
-		{ RubyEventType::KeyPressed, ActionBindingTriggerState::Pressed },
-		{ RubyEventType::KeyReleased, ActionBindingTriggerState::Released }
+		{ RubyEventType::KeyPressed,    ActionBindingTriggerState::Pressed  },
+		{ RubyEventType::KeyReleased,   ActionBindingTriggerState::Released },
+		{ RubyEventType::MousePressed,  ActionBindingTriggerState::Pressed  },
+		{ RubyEventType::MouseReleased, ActionBindingTriggerState::Released }
 	};
 
-	void PlayerInputController::UpdateState( const RubyKeyEvent& rEvent )
+	void PlayerInputController::UpdateKeyState( const RubyKeyEvent& rEvent )
 	{
 		if( !m_ActionMap.size() )
 			return;
@@ -69,7 +70,7 @@ namespace Saturn {
 			{
 				if( rBinding.Type != ActionBindingType::Key ) continue;
 
-				if( rBinding.Key == (RubyKey)rEvent.GetScancode() && rBinding.State == EventTypeToActionType[ rEvent.Type ] )
+				if( rBinding.Key == (RubyKey)rEvent.GetScancode() && rBinding.State == s_EventTypeToActionType[ rEvent.Type ] )
 				{
 					EventsToFire.push_back( rBinding );
 				}
@@ -81,6 +82,35 @@ namespace Saturn {
 		{
 			if( rAction.Function )
 				( rAction.Function )();
+		}
+	}
+
+	void PlayerInputController::UpdateMouseState( const RubyMouseEvent& rEvent )
+	{
+		if( !m_ActionMap.size() )
+			return;
+
+		std::vector<ActionBinding> EventsToFire;
+
+		// Traverse the action map directly.
+		for( auto& [name, bindings] : m_ActionMap )
+		{
+			for( const auto& rBinding : bindings )
+			{
+				if( rBinding.Type != ActionBindingType::Mouse ) continue;
+
+				if( rBinding.MouseButton == ( RubyMouseButton ) rEvent.GetButton() && rBinding.State == s_EventTypeToActionType[ rEvent.Type ] )
+				{
+					EventsToFire.push_back( rBinding );
+				}
+			}
+		}
+
+		// Trigger events.
+		for( const auto& rAction : EventsToFire )
+		{
+			if( rAction.Function )
+				( rAction.Function )( );
 		}
 	}
 

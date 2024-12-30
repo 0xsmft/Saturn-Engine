@@ -233,7 +233,16 @@ namespace Saturn {
 
 			for( auto& rController : m_Controllers ) 
 			{
-				rController->UpdateState( keyEvent );
+				rController->UpdateKeyState( keyEvent );
+			}
+		}
+		else if( rEvent.Type == RubyEventType::MousePressed || rEvent.Type == RubyEventType::MouseReleased )
+		{
+			RubyMouseEvent mouseEvent = ( RubyMouseEvent& ) rEvent;
+
+			for( auto& rController : m_Controllers )
+			{
+				rController->UpdateMouseState( mouseEvent );
 			}
 		}
 	}

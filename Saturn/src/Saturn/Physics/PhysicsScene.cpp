@@ -164,4 +164,12 @@ namespace Saturn {
 	{
 		m_PhysicsScene->addActor( rBody );
 	}
+
+	void PhysicsScene::InitialiseNewBody( Ref<Entity>& rEntity, RigidbodyComponent& rRigidbodyComponent )
+	{
+		rRigidbodyComponent.Rigidbody = new PhysicsRigidBody( rEntity );
+		rRigidbodyComponent.Rigidbody->CreateShape();
+
+		AddToScene( rRigidbodyComponent.Rigidbody->GetActor() );
+	}
 }

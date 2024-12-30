@@ -34,6 +34,8 @@
 
 namespace Saturn {
 
+	struct RigidbodyComponent;
+
 	struct RaycastHitResult
 	{
 		bool Success = false;
@@ -55,9 +57,13 @@ namespace Saturn {
 
 	private:
 		void AddToScene( physx::PxRigidActor& rBody );
+		void InitialiseNewBody( Ref<Entity>& rEntity, RigidbodyComponent& rRigidbodyComponent );
+	
 	private:
 		physx::PxScene* m_PhysicsScene;
-
 		Ref<Scene> m_Scene;
+
+	private:
+		friend class Scene;
 	};
 }

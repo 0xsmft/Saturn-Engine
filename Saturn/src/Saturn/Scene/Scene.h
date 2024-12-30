@@ -36,6 +36,7 @@
 #include "SharedGlobals.h"
 
 #include "Saturn/GameFramework/Core/GameScript.h"
+#include "Saturn/GameFramework/PlayerInputController.h"
 
 #include "Saturn/Core/Renderer/EditorCamera.h"
 

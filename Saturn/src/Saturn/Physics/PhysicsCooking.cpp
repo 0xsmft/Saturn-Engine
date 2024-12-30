@@ -242,9 +242,7 @@ namespace Saturn {
 
 		if( materialID == 0 || materialID == s_DefaultPhysicsMaterial )
 		{
-			Ref<PhysicsMaterialAsset> asset = AssetManager::Get().GetAssetAs<PhysicsMaterialAsset>( s_DefaultPhysicsMaterial, AssetRegistryType::Game );
-
-			pMaterial = &asset->GetMaterial();
+			pMaterial = PhysicsFoundation::Get().GetPhysics().createMaterial( 1.0f, 0.0f, 0.0f );
 		}
 		else
 		{

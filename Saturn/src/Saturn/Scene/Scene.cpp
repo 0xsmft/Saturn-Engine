@@ -215,6 +215,12 @@ namespace Saturn {
 		for( auto& entity : rigidBodies )
 		{
 			auto& rb = entity->GetComponent<RigidbodyComponent>();
+		
+			if( !rb.Rigidbody )
+			{
+				m_PhysicsScene->InitialiseNewBody( entity, rb );
+			}
+			
 			rb.Rigidbody->SyncTransfrom();
 		}
 	}

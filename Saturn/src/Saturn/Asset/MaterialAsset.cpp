@@ -534,7 +534,10 @@ namespace Saturn {
 
 		for( const auto& rMaterial : rRegistry.m_Materials )
 		{
-			RawSerialisation::WriteObject( rMaterial->ID, rStream );
+			if( rMaterial )
+				RawSerialisation::WriteObject( rMaterial->ID, rStream );
+			else
+				RawSerialisation::WriteObject( UUID( 0 ), rStream );
 		}
 	}
 
@@ -547,7 +550,10 @@ namespace Saturn {
 
 		for( const auto& rMaterial : rRegistry->m_Materials )
 		{
-			RawSerialisation::WriteObject( rMaterial->ID, rStream );
+			if( rMaterial )
+				RawSerialisation::WriteObject( rMaterial->ID, rStream );
+			else
+				RawSerialisation::WriteObject( UUID( 0 ), rStream );
 		}
 	}
 

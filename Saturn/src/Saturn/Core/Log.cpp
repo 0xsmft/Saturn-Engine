@@ -57,7 +57,7 @@ namespace Saturn {
 		std::vector<spdlog::sink_ptr> logSinks;
 		logSinks.emplace_back( std::make_shared< spdlog::sinks::stdout_color_sink_mt >() );
 #if defined(SAT_DIST)
-		logSinks.emplace_back( std::make_shared< spdlog::sinks::basic_file_sink_mt >( "Application-Dist-x64.log" ) );
+		logSinks.emplace_back( std::make_shared< spdlog::sinks::basic_file_sink_mt >( "Application-Dist-x64.log", true ) );
 #endif
 
 		for( size_t i = 0; i < logSinks.size(); i++ )
@@ -65,8 +65,8 @@ namespace Saturn {
 			logSinks[ i ]->set_pattern( "%^[%T] %n: %v%$" );
 		}
 
-		m_CoreLogger = std::make_shared< spdlog::logger >( "Saturn", begin( logSinks ), end( logSinks ) );
-		m_ClientLogger = std::make_shared< spdlog::logger >( "App", begin( logSinks ), end( logSinks ) );
+		m_CoreLogger = std::make_shared< spdlog::logger >( "Saturn", std::begin( logSinks ), std::end( logSinks ) );
+		m_ClientLogger = std::make_shared< spdlog::logger >( "App", std::begin( logSinks ), std::end( logSinks ) );
 
 		// configure the loggers
 		spdlog::set_pattern( "%^[%T] %n: %v%$" );

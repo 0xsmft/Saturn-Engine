@@ -1392,6 +1392,9 @@ namespace Saturn {
 
 						m_BlockingOperation->SetStatus( "Copying for Distribution" );
 						Project::GetActiveProject()->Distribute( ConfigKind::Dist );
+
+						m_BlockingOperation->SetProgress( 100.0f );
+						m_BlockingOperation->OnComplete();
 					} );
 			}
 

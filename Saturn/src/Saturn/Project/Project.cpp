@@ -595,17 +595,11 @@ namespace Saturn {
 			std::filesystem::copy_file( path, dstPath );
 		}
 
-		std::filesystem::path dstAssets = binDir / "Assets";
 		std::filesystem::path dstCache = binDir / "Cache";
-
-		// Copy our assets folder into the bin dir
-		if( std::filesystem::exists( dstAssets ) )
-			std::filesystem::remove_all( dstAssets );
 
 		if( std::filesystem::exists( dstCache ) )
 			std::filesystem::remove_all( dstCache );
 
-		std::filesystem::copy( GetFullAssetPath(), dstAssets, std::filesystem::copy_options::recursive );
 		std::filesystem::copy( GetRootDir() / "Cache", dstCache, std::filesystem::copy_options::recursive );
 
 		// Copy the project file over

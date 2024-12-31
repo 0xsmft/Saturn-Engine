@@ -28,7 +28,7 @@
 
 #if defined( _WIN32 )
 #include <Windows.h>
-#endif // SAT_WINDOWS
+#endif // SAT_PLATFORM_WINDOWS
 
 // Saturn client main:
 extern int _main( int, char** );
@@ -46,4 +46,4 @@ int WINAPI WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	return _main( __argc, __argv );
 }
 
-#endif // SAT_WINDOWS
+#endif // SAT_PLATFORM_WINDOWS

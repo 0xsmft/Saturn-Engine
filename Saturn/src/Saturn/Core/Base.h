@@ -28,19 +28,6 @@
 
 #pragma once
 
-#define SAT_DONT_USE_GL
-#define SAT_DONT_USE_DX
-
-// Short Macros
-#if defined ( SAT_PLATFORM_WINDOWS )
-#define SAT_WINDOWS 1
-#elif defined ( SAT_PLATFORM_LINUX )
-#define SAT_LINUX 1
-#include <signal.h>
-#else
-#define SAT_MAC 1
-#endif 
-
 #define SAT_ARRAYSIZE( x ) ( ( int ) ( sizeof( x ) / sizeof( *( x ) ) ) )
 
 #define SAT_BIND_EVENT_FN(fn) [this](auto&&... args) -> decltype(auto) { return this->fn(std::forward<decltype(args)>(args)...); }

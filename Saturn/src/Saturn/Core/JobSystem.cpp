@@ -90,8 +90,6 @@ namespace Saturn {
 
 	void JobSystem::ThreadRun()
 	{
-		using namespace std::chrono_literals;
-
 		SetThreadDescription( GetCurrentThread(), L"JobSystemThread" );
 
 		while( m_Running )
@@ -107,7 +105,7 @@ namespace Saturn {
 				{
 					auto& rJob = *Itr;
 
-					if( rJob )
+					if( rJob && rJob->CanRun() )
 					{
 						currentJob = rJob;
 						
@@ -125,7 +123,7 @@ namespace Saturn {
 				}
 			}
 
-			std::this_thread::sleep_for( 1ms );
+			std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
 		}
 	}
 

@@ -29,7 +29,7 @@
 #if defined( _WIN32 )
 #include <Windows.h>
 #include <stdio.h>
-#endif // SAT_WINDOWS
+#endif // SAT_PLATFORM_WINDOWS
 
 // Saturn client main:
 extern int _main( int, char** );

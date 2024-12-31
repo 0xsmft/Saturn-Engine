@@ -33,6 +33,7 @@
 
 #include <mutex>
 #include <thread>
+#include <span>
 
 namespace Saturn {
 
@@ -49,12 +50,16 @@ namespace Saturn {
 		void SetMaxThreads( size_t maxThreads );
 
 		template<typename Func>
-		void AddJob( Func&& rrFunc )
+		Ref<Job> AddJob( Func&& rrFunc )
 		{
 			std::unique_lock<std::mutex>( m_Mutex );
 
 			Ref<Job> newJob = Ref<Job>::Create( rrFunc );
+
+			// TODO: ADD DEPENDENCIES!
 			m_Jobs.push_back( newJob );
+		
+			return newJob;
 		}
 
 	private:

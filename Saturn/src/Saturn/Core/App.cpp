@@ -48,7 +48,7 @@
 
 #include "OptickProfiler.h"
 
-#if defined( SAT_WINDOWS )
+#if defined( SAT_PLATFORM_WINDOWS )
 #include <ShObjIdl.h>
 #include <ShlObj.h>
 #endif
@@ -296,7 +296,7 @@ namespace Saturn {
 
 	const char* Application::GetCurrentPlatformName()
 	{
-#if defined(SAT_WINDOWS) || _WIN32 || _WIN64
+#if defined(SAT_PLATFORM_WINDOWS) || _WIN32 || _WIN64
 		return "Windows";
 #elif defined(SAT_LINUX) || __linux__
 		return "Linux";
@@ -309,7 +309,7 @@ namespace Saturn {
 
 	const char* Application::GetCurrentPlatformBinaryName()
 	{
-#if defined(SAT_WINDOWS) || _WIN32 || _WIN64
+#if defined(SAT_PLATFORM_WINDOWS) || _WIN32 || _WIN64
 		return "windows";
 #elif defined(SAT_LINUX) || __linux__
 		return "linux";

@@ -26,41 +26,26 @@
 *********************************************************************************************
 */
 
-#pragma once
-
-#include "Ref.h"
-#include <functional>
-
-// This Job System is based from Geno IDE's system:
-// Thank You: https://github.com/Geno-IDE/Geno/blob/master/src/Common/Async/Job.cpp
+#include "sppch.h"
+#include "Job.h"
 
 namespace Saturn {
-
-	class Job : public RefTarget
+	
+	bool Job::CanRun() const
 	{
-	public:
-		template<typename Func>
-		explicit Job( Func&& rrFunc )
-			: m_Function( std::forward<Func>( rrFunc ) )
+		for( auto& rDependency : m_Dependencies )
 		{
+			auto ptr = rDependency.lock();
+
+			if( ptr && !ptr->m_Completed )
+				return false;
 		}
 
-		bool CanRun() const;
-		void DependsOn( std::weak_ptr< Job > job );
+		return true;
+	}
 
-	private:
-		void ExecuteJob()
-		{
-			m_Function();
-			m_Completed = true;
-		}
-
-	private:
-		bool m_Completed = false;
-
-		std::function<void()> m_Function;
-		std::vector< std::weak_ptr< Job > > m_Dependencies{};
-	private:
-		friend class JobSystem;
-	};
+	void Job::DependsOn( std::weak_ptr< Job > job )
+	{
+		m_Dependencies.emplace_back( job );
+	}
 }

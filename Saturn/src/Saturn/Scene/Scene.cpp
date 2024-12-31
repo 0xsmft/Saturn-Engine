@@ -925,11 +925,6 @@ namespace Saturn {
 			m_Controllers.erase( Itr );
 	}
 
-	void Scene::RegisterNewPhysicsBody( physx::PxRigidActor& rBody )
-	{
-		m_PhysicsScene->AddToScene( rBody );
-	}
-
 	void Scene::SetActiveScene( Scene* pScene )
 	{
 		GActiveScene = pScene;

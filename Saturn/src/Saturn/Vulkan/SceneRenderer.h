@@ -417,10 +417,12 @@ namespace Saturn {
 		void SetSwapchainTarget( bool target ) { m_RendererData.IsSwapchainTarget = target; }
 		void ChangeAOTechnique( AOTechnique newTechique );
 
-		AOTechnique GetAOTechnique() { return m_AOTechnique; }
+		AOTechnique GetAOTechnique() const { return m_AOTechnique; }
 
-		uint32_t Width() { return m_RendererData.Width; }
-		uint32_t Height() { return m_RendererData.Height; }
+		uint32_t Width() const { return m_RendererData.Width; }
+		uint32_t Height() const { return m_RendererData.Height; }
+
+		void Screenshot( const std::filesystem::path& rPath );
 
 	private:
 		void Init();

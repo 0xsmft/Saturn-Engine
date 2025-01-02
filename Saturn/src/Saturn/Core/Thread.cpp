@@ -70,10 +70,29 @@ namespace Saturn {
 
 	void Thread::ExecuteCommands()
 	{
-		for( auto& rFunc : m_CommandBuffer )
-			rFunc();
+		while( !m_CommandBuffer.empty() )
+		{
+			std::function<void()> currentFunction = nullptr;
 
-		m_CommandBuffer.clear();
+			for( auto Itr = m_CommandBuffer.begin(); Itr != m_CommandBuffer.end(); ++Itr )
+			{
+				auto& rFunc = *Itr;
+
+				if( rFunc )
+				{
+					currentFunction = rFunc;
+
+					// Make sure we remove it so that it cannot be executed again.
+					m_CommandBuffer.erase( Itr );
+					break;
+				}
+			}
+
+			if( currentFunction )
+			{
+				currentFunction();
+			}
+		}
 	}
 
 	void Thread::WaitCommands() 

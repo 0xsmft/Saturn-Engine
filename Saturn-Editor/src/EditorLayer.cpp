@@ -181,6 +181,19 @@ namespace Saturn {
 
 		std::string title = std::format( "{0} - Saturn", Project::GetActiveConfig().Name );
 		Application::Get().GetWindow()->ChangeTitle( title );
+
+		if( !Project::GetActiveProject()->HasThumbnail() )
+		{
+			JobSystem::Get().AddJob( []()
+			{
+				std::this_thread::sleep_for( std::chrono::seconds( 2 ) );
+
+				RenderThread::Get().Queue( []()
+				{
+					Application::Get().PrimarySceneRenderer().Screenshot( Project::GetActiveProject()->GetThumbnailPath() );
+				} );
+			} );
+		}
 	}
 
 	void EditorLayer::OnDetach()

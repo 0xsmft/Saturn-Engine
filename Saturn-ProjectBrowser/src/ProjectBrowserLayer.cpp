@@ -110,6 +110,14 @@ namespace Saturn {
 							info.AssetPath = project->GetFullAssetPath();
 							info.LastWriteTime = std::format( "{0}", std::filesystem::last_write_time( path ) );
 							info.LastWriteTime = info.LastWriteTime.substr( 0, info.LastWriteTime.find_first_of( " " ) );
+					
+							info.ThumbnailTexture = m_NoIconTexture;
+
+							if( project->HasThumbnail() )
+							{
+								info.ThumbnailPath = project->GetThumbnailPath();
+								info.ThumbnailTexture = Ref<Texture2D>::Create( info.ThumbnailPath );
+							}
 
 							m_RecentProjects.push_back( info );
 
@@ -394,12 +402,12 @@ namespace Saturn {
 			buttonBoundingBox.Min.y );
 
 		pDrawList->AddImage( 
-			m_NoIconTexture->GetDescriptorSet(), 
+			rProject.ThumbnailTexture->GetDescriptorSet(), 
 			imagePos, 
 			ImVec2( imagePos.x + imageSize.x, imagePos.y + imageSize.y ), { 0, 1 }, { 1,0 } );
 
-		float available_height = buttonSize.y - imageSize.y - ImGui::GetStyle().FramePadding.y * 2;
-		float line_height = available_height / 2;
+		float availableHeight = buttonSize.y - imageSize.y - ImGui::GetStyle().FramePadding.y * 2;
+		float lineHeight = availableHeight / 2;
 
 		ImVec2 projectNameTextPos = ImVec2(
 			buttonBoundingBox.Min.x + ( buttonSize.x - projectNameTextSize.x ) * 0.5f,
@@ -409,7 +417,7 @@ namespace Saturn {
 
 		ImVec2 lastWriteTimeTextPos = ImVec2(
 			buttonBoundingBox.Min.x + ImGui::GetStyle().FramePadding.x + ( buttonSize.x - lastWriteTextSize.x ) * 0.5f,
-			projectNameTextPos.y + line_height
+			projectNameTextPos.y + lineHeight
 		);
 		pDrawList->AddText( lastWriteTimeTextPos, ImGui::GetColorU32( ImGuiCol_TextDisabled ), rProject.LastWriteTime.c_str() );
 	}

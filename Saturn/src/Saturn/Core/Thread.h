@@ -57,7 +57,7 @@ namespace Saturn {
 		virtual void Start() = 0;
 		virtual void RequestJoin() = 0;
 
-		bool IsCurrentThread() { return m_ThreadID == std::this_thread::get_id(); }
+		bool IsCurrentThread() const { return m_ThreadID == std::this_thread::get_id(); }
 
 	protected:
 		void ExecuteCommands();

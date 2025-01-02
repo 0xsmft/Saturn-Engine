@@ -52,6 +52,10 @@ namespace Saturn {
 		std::filesystem::path Path;
 	};
 
+	struct ProjectThumbnailInformation
+	{
+	};
+
 	enum class ConfigKind
 	{
 		Debug,
@@ -77,6 +81,11 @@ namespace Saturn {
 		static std::filesystem::path FindProjectDir( const std::string& rName );
 
 		void CheckMissingAssetRefs();
+
+#if !defined(SAT_DIST)
+		bool HasThumbnail() const;
+		std::filesystem::path GetThumbnailPath() const;
+#endif
 
 	public:
 		//////////////////////////////////////////////////////////////////////////
@@ -180,6 +189,10 @@ namespace Saturn {
 
 		// Absolute root path
 		std::filesystem::path m_RootPath;
+
+#if !defined(SAT_DIST)
+		std::filesystem::path m_ThumbnailImagePath;
+#endif
 
 	private:
 		inline static Ref<Project> s_ActiveProject;

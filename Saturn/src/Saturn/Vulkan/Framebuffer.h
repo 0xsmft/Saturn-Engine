@@ -102,7 +102,7 @@ namespace Saturn {
 		Ref<Image2D>& GetDepthAttachmentsResource() { return m_DepthAttachmentResource; }
 		const Ref<Image2D>& GetDepthAttachmentsResource() const { return m_DepthAttachmentResource; }
 
-		void Screenshot( uint32_t ColorAttachmentIndex, const std::filesystem::path& rPath );
+		void Screenshot( uint32_t ColorAttachmentIndex, const std::filesystem::path& rPath, glm::vec2 resize = {} );
 
 	private:
 		void Create();

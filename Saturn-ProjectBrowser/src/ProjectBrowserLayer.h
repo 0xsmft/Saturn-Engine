@@ -40,6 +40,8 @@ namespace Saturn {
 		std::string Name;
 		std::filesystem::path Filepath;
 		std::filesystem::path AssetPath;
+		std::filesystem::path ThumbnailPath;
+		Ref<Texture2D> ThumbnailTexture = nullptr;
 
 		std::string LastWriteTime;
 	

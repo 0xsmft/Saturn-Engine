@@ -35,6 +35,7 @@
 #include "Saturn/Serialisation/ImageFileAux.h"
 
 #include <backends/imgui_impl_vulkan.h>
+#include <stb_image_resize.h>
 
 namespace Saturn {
 
@@ -237,7 +238,7 @@ namespace Saturn {
 		VK_CHECK( vkCreateFramebuffer( VulkanContext::Get().GetDevice(), &FramebufferCreateInfo, nullptr, &m_Framebuffer ) );
 	}
 
-	void Framebuffer::Screenshot( uint32_t ColorAttachmentIndex, const std::filesystem::path& rPath )
+	void Framebuffer::Screenshot( uint32_t ColorAttachmentIndex, const std::filesystem::path& rPath, glm::vec2 resize /*= {}*/ )
 	{
 		Ref<Image2D> SrcImage = m_ColorAttachmentsResources[ ColorAttachmentIndex ];
 		
@@ -363,6 +364,7 @@ namespace Saturn {
 		VK_CHECK( vkMapMemory( VulkanContext::Get().GetDevice(), ImageMemory, 0, VK_WHOLE_SIZE, 0, ( void** ) &pData ) );
 		pData += SubresourceLayout.offset;
 
+		/*
 		bool ColorSwizzle = false;
 		// TODO: Add more colors.
 		if( !BlitSuppored )
@@ -371,8 +373,34 @@ namespace Saturn {
 
 			ColorSwizzle = std::find( FormatsRGB.begin(), FormatsRGB.end(), VulkanContext::Get().GetSurfaceFormat().format ) != FormatsRGB.end();
 		}
+		*/
 
-		Auxiliary::WriteImageFile( rPath, Auxiliary::ImageFileType::PNG, m_Specification.Width, m_Specification.Height, 4, pData, (int)SubresourceLayout.rowPitch );
+		// Resize image if needed
+		if( resize.x > 0 && resize.y > 0 || resize.x != m_Specification.Width && resize.y != m_Specification.Height )
+		{
+			Buffer newData;
+			newData.Allocate( resize.x * resize.y * 4 );
+			newData.Zero_Memory();
+
+			stbir_resize( pData, 
+				m_Specification.Width, 
+				m_Specification.Height, 
+				( int ) SubresourceLayout.rowPitch, 
+
+				newData.Data, 
+				resize.x, 
+				resize.y, 
+				0, 
+				STBIR_RGBA, STBIR_TYPE_UINT8, STBIR_EDGE_CLAMP, STBIR_FILTER_MITCHELL );
+
+			Auxiliary::WriteImageFile( rPath, Auxiliary::ImageFileType::PNG, resize.x, resize.y, 4, newData.Data, 0 );
+
+			newData.Free();
+		}
+		else
+		{
+			Auxiliary::WriteImageFile( rPath, Auxiliary::ImageFileType::PNG, m_Specification.Width, m_Specification.Height, 4, pData, (int)SubresourceLayout.rowPitch );
+		}
 		
 		vkUnmapMemory( VulkanContext::Get().GetDevice(), ImageMemory );
 		vkFreeMemory( VulkanContext::Get().GetDevice(), ImageMemory, nullptr );

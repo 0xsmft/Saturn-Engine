@@ -42,13 +42,12 @@ namespace Saturn {
 
 	JobSystem::~JobSystem()
 	{
-		TerminateThreads();
+		Stop();
 	}
 
 	void JobSystem::Stop()
 	{
 		m_Running = false;
-	
 		TerminateThreads();
 	}
 

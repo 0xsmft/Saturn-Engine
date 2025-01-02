@@ -69,6 +69,15 @@ namespace Saturn {
 		: m_Config( rConfig )
 	{
 		m_RootPath = m_Config.Path.parent_path();
+
+#if !defined(SAT_DIST)
+		m_ThumbnailImagePath = GetFullCachePath() / "PerUser";
+
+		if( !std::filesystem::exists( m_ThumbnailImagePath ) )
+			std::filesystem::create_directories( m_ThumbnailImagePath );
+
+		m_ThumbnailImagePath /= "Thumbnail.png";
+#endif
 	}
 
 	Project::~Project()
@@ -186,6 +195,18 @@ namespace Saturn {
 		CheckOfflineAssets();
 		CheckNewAssets();
 	}
+
+#if !defined(SAT_DIST)
+	bool Project::HasThumbnail() const
+	{
+		return std::filesystem::exists( m_ThumbnailImagePath );
+	}
+
+	std::filesystem::path Project::GetThumbnailPath() const
+	{
+		return m_ThumbnailImagePath;
+	}
+#endif // !SAT_DIST
 
 	std::filesystem::path Project::GetAssetPath()
 	{

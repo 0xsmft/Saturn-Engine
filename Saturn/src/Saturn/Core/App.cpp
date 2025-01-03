@@ -233,18 +233,80 @@ namespace Saturn {
 #endif
 	}
 
+	void Application::PushLayer( Layer* pLayer )
+	{
+		m_Layers.push_back( pLayer );
+		pLayer->OnAttach();
+	}
+
+	void Application::PopLayer( Layer* pLayer )
+	{
+		// Find the layer in the layer stack.
+		auto it = std::find( m_Layers.begin(), m_Layers.end(), pLayer );
+		if( it != m_Layers.end() )
+		{
+			m_Layers.erase( it );
+			pLayer->OnDetach();
+		}
+	}
+
+	bool Application::OnEvent( RubyEvent& rEvent )
+	{
+		switch( rEvent.Type )
+		{
+			case RubyEventType::Resize:
+			{
+				OnWindowResize( ( RubyWindowResizeEvent& ) rEvent );
+			} break;
+
+			case RubyEventType::Close:
+			{
+				Close();
+			} break;
+		}
+
+		VulkanContext::Get().OnEvent( rEvent );
+
+		if( m_ImGuiLayer )
+			m_ImGuiLayer->OnEvent( rEvent );
+
+		// Pass events to layers, this is the only place in the engine where we actually care if an event is handled or not.
+		// Process Events backwards. 
+		// This is because if we are in a game and we click a button if the first layer gets that event it might shoot in the game however we wanted to click a button not shoot.
+		for( auto itr = m_Layers.end(); itr != m_Layers.begin(); )
+		{
+			( *--itr )->OnEvent( rEvent );
+
+			if( rEvent.Handled )
+				break;
+		}
+
+		return true;
+	}
+
+	bool Application::OnWindowResize( RubyWindowResizeEvent& e )
+	{
+		int width = e.GetWidth(), height = e.GetHeight();
+
+		if( width == 0 && height == 0 )
+			return false;
+
+		VulkanContext::Get().ResizeEvent();
+
+		return true;
+	}
+
 	std::filesystem::path Application::GetAppDataFolder() const
 	{
 		std::filesystem::path path = L"";
 
 #if defined(SAT_PLATFORM_WINDOWS)
-		PWSTR Path = 0;
-		SHGetKnownFolderPath( FOLDERID_RoamingAppData, KF_FLAG_DEFAULT, nullptr, &Path );
+		PWSTR nativePath = 0;
+		::SHGetKnownFolderPath( FOLDERID_RoamingAppData, KF_FLAG_DEFAULT, nullptr, &nativePath );
 
-		std::wstring fp = Path;
-		path = fp + L"/Saturn";
+		path = std::filesystem::path( nativePath ) / L"Saturn";
 
-		std::replace( fp.begin(), fp.end(), L'\\', L'/' );
+		::CoTaskMemFree( nativePath );
 #elif defined(SAT_PLATFORM_LINUX)
 
 #endif
@@ -279,19 +341,117 @@ namespace Saturn {
 		m_BlockCV.notify_all();
 	}
 
-	std::string Application::OpenFile( const char* pFilter ) const
+	std::filesystem::path Application::OpenFile( const char* pFilter ) const
 	{
-		return OpenFileInternal( pFilter );
+#ifdef  SAT_PLATFORM_WINDOWS
+		::OPENFILENAMEA ofn;
+		char szFile[ 260 ] = { 0 };
+
+		::ZeroMemory( &ofn, sizeof( OPENFILENAME ) );
+		ofn.lStructSize = sizeof( OPENFILENAME );
+		ofn.hwndOwner = ( HWND ) m_Window->GetNativeHandle();
+		ofn.lpstrFile = szFile;
+		ofn.nMaxFile = sizeof( szFile );
+		ofn.lpstrFilter = pFilter;
+		ofn.nFilterIndex = 1;
+		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
+
+		if( ::GetOpenFileNameA( &ofn ) == TRUE )
+		{
+			return std::filesystem::path( ofn.lpstrFile );
+		}
+
+		return "";
+#endif
+
+#ifdef  SAT_PLATFORM_LINUX
+		return "";
+#endif
 	}
 
-	std::string Application::SaveFile( const char* f ) const
+	std::filesystem::path Application::SaveFile( const char* pFilter ) const
 	{
-		return SaveFileInternal( f );
+#ifdef  SAT_PLATFORM_WINDOWS
+		::OPENFILENAMEA ofn;
+		char szFile[ 260 ] = { 0 };
+
+		::ZeroMemory( &ofn, sizeof( OPENFILENAME ) );
+		ofn.lStructSize = sizeof( OPENFILENAME );
+		ofn.hwndOwner = ( HWND ) m_Window->GetNativeHandle();
+		ofn.lpstrFile = szFile;
+		ofn.nMaxFile = sizeof( szFile );
+		ofn.lpstrFilter = pFilter;
+		ofn.nFilterIndex = 1;
+		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
+
+		if( ::GetSaveFileNameA( &ofn ) == TRUE )
+		{
+			return std::filesystem::path( ofn.lpstrFile );
+		}
+
+		return "";
+#endif
+
+#ifdef  SAT_PLATFORM_LINUX
+		return "";
+#endif
 	}
 
-	std::string Application::OpenFolder() const
+	std::filesystem::path Application::OpenFolder() const
 	{
-		return OpenFolderInternal();
+		std::filesystem::path path;
+
+#if defined (SAT_PLATFORM_WINDOWS)
+		::IFileOpenDialog* pFileOpen = nullptr;
+		::PWSTR pszFilePath = 0;
+
+		if( FAILED( ::CoInitialize( nullptr ) ) )
+		{
+			SAT_CORE_ASSERT( "Unable to initialise Windows COM.", false );
+		}
+
+		// Create the object.
+		::HRESULT hr = ::CoCreateInstance( CLSID_FileOpenDialog, NULL, CLSCTX_ALL, IID_IFileOpenDialog, ( void** ) &pFileOpen );
+
+		if( FAILED( hr ) )
+		{
+			SAT_CORE_ASSERT( "Unable to create Windows COM object (IID_IFileOpenDialog)", false );
+		}
+
+		::DWORD dwOptions;
+		pFileOpen->GetOptions( &dwOptions );
+		pFileOpen->SetOptions( dwOptions | FOS_PICKFOLDERS );
+
+		// Show the dialog.
+		hr = pFileOpen->Show( NULL );
+
+		// Get the file name from the dialog.
+		if( FAILED( hr ) )
+		{
+			SAT_CORE_ASSERT( "Unable to get the file name from the dialog using COM object (IID_IFileOpenDialog)", false );
+		}
+
+		::IShellItem* pItem;
+		hr = pFileOpen->GetResult( &pItem );
+
+		if( SUCCEEDED( hr ) )
+		{
+			hr = pItem->GetDisplayName( SIGDN_DESKTOPABSOLUTEPARSING, &pszFilePath );
+
+			path = std::filesystem::path( pszFilePath );
+
+			::CoTaskMemFree( pszFilePath );
+		}
+
+		pItem->Release();
+
+		pFileOpen->Release();
+		pFileOpen = NULL;
+
+		return path;
+#endif
+
+		return "";
 	}
 
 	const char* Application::GetCurrentPlatformName()
@@ -333,184 +493,4 @@ namespace Saturn {
 #endif
 	}
 
-	void Application::PushLayer( Layer* pLayer )
-	{
-		m_Layers.push_back( pLayer );
-		pLayer->OnAttach();
-	}
-
-	void Application::PopLayer( Layer* pLayer )
-	{
-		// Find the layer in the layer stack.
-		auto it = std::find( m_Layers.begin(), m_Layers.end(), pLayer );
-		if( it != m_Layers.end() )
-		{
-			m_Layers.erase( it );
-			pLayer->OnDetach();
-		}
-	}
-
-	bool Application::OnEvent( RubyEvent& rEvent )
-	{
-		switch( rEvent.Type )
-		{
-			case RubyEventType::Resize:
-			{
-				OnWindowResize( ( RubyWindowResizeEvent& )rEvent );
-			} break;
-
-			case RubyEventType::Close: 
-			{
-				Close();
-			} break;
-		}
-
-		VulkanContext::Get().OnEvent( rEvent );
-
-		if( m_ImGuiLayer )
-			m_ImGuiLayer->OnEvent( rEvent );
-
-		// Pass events to layers, this is the only place in the engine where we actually care if an event is handled or not.
-		// Process Events backwards. 
-		// This is because if we are in a game and we click a button if the first layer gets that event it might shoot in the game however we wanted to click a button not shoot.
-		for( auto itr = m_Layers.end(); itr != m_Layers.begin(); )
-		{
-			( *--itr )->OnEvent( rEvent );
-
-			if( rEvent.Handled )
-				break;
-		}
-
-		return true;
-	}
-
-	bool Application::OnWindowResize( RubyWindowResizeEvent& e )
-	{
-		int width = e.GetWidth(), height = e.GetHeight();
-
-		if( width == 0 && height == 0 )
-			return false;
-		
-		VulkanContext::Get().ResizeEvent();
-
-		return true;
-	}
-
-	std::string Application::OpenFileInternal( const char* pFilter ) const
-	{
-#ifdef  SAT_PLATFORM_WINDOWS
-		OPENFILENAMEA ofn;
-		CHAR szFile[ 260 ] = { 0 };
-
-		ZeroMemory( &ofn, sizeof( OPENFILENAME ) );
-		ofn.lStructSize = sizeof( OPENFILENAME );
-		ofn.hwndOwner = ( HWND ) m_Window->GetNativeHandle();
-		ofn.lpstrFile = szFile;
-		ofn.nMaxFile = sizeof( szFile );
-		ofn.lpstrFilter = pFilter;
-		ofn.nFilterIndex = 1;
-		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
-
-		if( GetOpenFileNameA( &ofn ) == TRUE )
-		{
-			return ofn.lpstrFile;
-		}
-
-		return "";
-#endif
-
-#ifdef  SAT_PLATFORM_LINUX
-		return "";
-#endif
-	}
-
-	std::string Application::SaveFileInternal( const char* pFilter ) const
-	{
-#ifdef  SAT_PLATFORM_WINDOWS
-		OPENFILENAMEA ofn;
-		CHAR szFile[ 260 ] = { 0 };
-
-		ZeroMemory( &ofn, sizeof( OPENFILENAME ) );
-		ofn.lStructSize = sizeof( OPENFILENAME );
-		ofn.hwndOwner = ( HWND ) m_Window->GetNativeHandle();
-		ofn.lpstrFile = szFile;
-		ofn.nMaxFile = sizeof( szFile );
-		ofn.lpstrFilter = pFilter;
-		ofn.nFilterIndex = 1;
-		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
-
-		if( GetSaveFileNameA( &ofn ) == TRUE )
-		{
-			return ofn.lpstrFile;
-		}
-
-		return "";
-#endif
-
-#ifdef  SAT_PLATFORM_LINUX
-		return "";
-#endif
-	}
-
-	std::string Application::OpenFolderInternal() const
-	{
-#ifdef  SAT_PLATFORM_WINDOWS
-		IFileOpenDialog* pFileOpen;
-		PWSTR pszFilePath;
-		std::string path;
-
-		CoInitialize( nullptr );
-
-		// Create the object.
-		HRESULT hr = CoCreateInstance( CLSID_FileOpenDialog, NULL, CLSCTX_ALL, IID_IFileOpenDialog, ( void** ) &pFileOpen );
-
-		if( SUCCEEDED( hr ) )
-		{
-			DWORD dwOptions;
-			pFileOpen->GetOptions( &dwOptions );
-			pFileOpen->SetOptions( dwOptions | FOS_PICKFOLDERS );
-
-			// Show the dialog.
-			hr = pFileOpen->Show( NULL );
-
-			// Get the file name from the dialog.
-			if( SUCCEEDED( hr ) )
-			{
-				IShellItem* pItem;
-				hr = pFileOpen->GetResult( &pItem );
-
-				if( SUCCEEDED( hr ) )
-				{
-					hr = pItem->GetDisplayName( SIGDN_DESKTOPABSOLUTEPARSING, &pszFilePath );
-
-					auto wstr = std::wstring( pszFilePath );
-
-					std::transform( wstr.begin(), wstr.end(), std::back_inserter( path ), []( wchar_t c )
-						{
-							return ( char ) c;
-						} );
-
-					CoTaskMemFree( pszFilePath );
-				}
-
-				pItem->Release();
-			}
-			else
-			{
-				SAT_CORE_ASSERT( false );
-			}
-
-			pFileOpen->Release();
-			pFileOpen = NULL;
-		}
-		else
-		{
-			SAT_CORE_ASSERT( false );
-		}
-
-		return path;
-#endif
-
-		return "";
-	}
 }

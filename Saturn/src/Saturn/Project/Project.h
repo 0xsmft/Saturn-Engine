@@ -52,10 +52,6 @@ namespace Saturn {
 		std::filesystem::path Path;
 	};
 
-	struct ProjectThumbnailInformation
-	{
-	};
-
 	enum class ConfigKind
 	{
 		Debug,

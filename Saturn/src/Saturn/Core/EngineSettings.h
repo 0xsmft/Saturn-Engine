@@ -49,11 +49,8 @@ namespace Saturn {
 		// The startup project name i.e. (MyProject)
 		std::string StartupProjectName;
 		
-		// The project root dir i.e. (D:\Projects\MyProject) [Serialised]
+		// The project file dir i.e. (D:\Projects\MyProject\MyProject.sproject) [Serialised]
 		std::filesystem::path StartupProject;
-
-		// The project file dir i.e. (D:\Projects\MyProject\MyProject.sproject)
-		std::filesystem::path FullStartupProjPath;
 
 		std::vector< std::filesystem::path > RecentProjects; // [Serialised]
 	};

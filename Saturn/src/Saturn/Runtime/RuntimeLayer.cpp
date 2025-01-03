@@ -66,14 +66,6 @@ namespace Saturn {
 		pPhysicsFoundation->Init();
 
 		auto& rUserSettings = EngineSettings::Get();
-#if !defined( SAT_DIST )
-
-		ProjectSerialiser ps;
-		ps.Deserialise( rUserSettings.FullStartupProjPath.string() );
-
-		SAT_CORE_ASSERT( Project::GetActiveProject(), "No project was given." );
-#endif
-
 		VirtualFS::Get().MountBase( Project::GetActiveConfig().Name, rUserSettings.StartupProject );
 
 		AssetManager* pAssetManager = new AssetManager();

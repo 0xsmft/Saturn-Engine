@@ -190,7 +190,7 @@ namespace Saturn {
 
 				RenderThread::Get().Queue( []()
 				{
-					Application::Get().PrimarySceneRenderer().Screenshot( Project::GetActiveProject()->GetThumbnailPath() );
+					Application::Get().PrimarySceneRenderer().Screenshot( Project::GetActiveProject()->GetThumbnailPath(), glm::vec2( 156.0f, 128.0f ) );
 				} );
 			} );
 		}
@@ -395,8 +395,6 @@ namespace Saturn {
 		// The scroll event does not care if the camera is active or not.
 		if( m_MouseOverViewport ) m_EditorCamera.OnEvent( rEvent );
 		
-//		if( false )	m_FallbackCamera.OnEvent( rEvent );
-
 		AssetViewer::ProcessEvent( rEvent );
 
 		if( rEvent.Type == RubyEventType::KeyPressed ) 
@@ -982,6 +980,8 @@ namespace Saturn {
 		{
 			ProjectSerialiser ps;
 			ps.Serialise( Project::GetActiveProject()->GetRootDir().string() );
+
+			ShouldSaveProject = false;
 		}
 	}
 

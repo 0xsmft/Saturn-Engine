@@ -38,25 +38,31 @@
 namespace YAML {
 
 	template <>
-	struct convert<std::filesystem::path> 
+	struct convert<std::filesystem::path>
 	{
-		static Node encode( std::filesystem::path rhs ) 
-		{ 
-			return Node( rhs.string() ); 
+		static Node encode( std::filesystem::path rhs )
+		{
+			return Node( rhs.string() );
 		}
 
 		static bool decode( const Node& node, std::filesystem::path& rhs )
 		{
 			rhs = node.as<std::string>();
-			
+
 			return true;
 		}
 	};
 
+	inline Emitter& operator<<( Emitter& emitter, const std::filesystem::path& v )
+	{
+		return emitter.Write( v.string() );
+	}
 }
 
 namespace Saturn {
 
+	// Engine Settings are designed to be per user and have nothing to do with the project
+	// So, we will always prefer to use the OS preferred separator
 	void EngineSettingsSerialiser::Serialise()
 	{
 		auto AppDataPath = Application::Get().GetAppDataFolder();
@@ -66,20 +72,15 @@ namespace Saturn {
 
 		out << YAML::BeginMap;
 
-		if( !rSettings.StartupProject.empty() )
-			out << YAML::Key << "Startup Project" << YAML::Value << rSettings.StartupProject.string();
-		
+		out << YAML::Key << "Startup Project" << YAML::Value << rSettings.StartupProject;
+
 		out << YAML::Key << "Recent Projects";
 		
 		out << YAML::BeginSeq;
 		
 		for( auto& rPath : rSettings.RecentProjects )
 		{
-			auto p = rPath.string();
-
-			std::replace( p.begin(), p.end(), '\\', '/' );
-
-			out << YAML::Key << YAML::Value << p;
+			out << YAML::Key << YAML::Value << rPath;
 		}
 
 		out << YAML::EndSeq;
@@ -106,21 +107,22 @@ namespace Saturn {
 		if( data.IsNull() )
 			return;
 
-		auto p = data[ "Recent Projects" ];
-		auto startup = data[ "Startup Project" ].as<std::string>( "" );
-
 		auto& rSettings = EngineSettings::Get();
-
-		if( !startup.empty() )
+		
+		auto startup = data[ "Startup Project" ];
+		if( !startup.IsNull() )
 		{
-			size_t found = startup.find_last_of( "/\\" );
-			rSettings.StartupProjectName = startup.substr( found + 1 );
-
-			rSettings.StartupProject = startup;
-			rSettings.FullStartupProjPath = std::format( "{0}\\{1}.sproject", startup, rSettings.StartupProjectName );
+			std::filesystem::path startupPath = startup.as<std::filesystem::path>();
+		
+			if( !startupPath.empty() )
+			{
+				rSettings.StartupProjectName = startupPath.stem().string();
+				rSettings.StartupProject = startupPath;
+			}
 		}
 
-		for ( auto project : p )
+		auto recentProjects = data[ "Recent Projects" ];
+		for( auto project : recentProjects )
 		{
 			auto path = project.as<std::filesystem::path>();
 			

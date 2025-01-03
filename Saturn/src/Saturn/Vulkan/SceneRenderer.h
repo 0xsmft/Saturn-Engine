@@ -422,7 +422,7 @@ namespace Saturn {
 		uint32_t Width() const { return m_RendererData.Width; }
 		uint32_t Height() const { return m_RendererData.Height; }
 
-		void Screenshot( const std::filesystem::path& rPath );
+		void Screenshot( const std::filesystem::path& rPath, const glm::vec2& rSize = {} );
 
 	private:
 		void Init();

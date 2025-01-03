@@ -90,9 +90,9 @@ namespace Saturn {
 
 		const Timestep& Time() { return m_Timestep; }
 
-		std::string OpenFile( const char* pFilter ) const;
-		std::string SaveFile( const char* pFilter ) const;
-		std::string OpenFolder() const;
+		std::filesystem::path OpenFile( const char* pFilter ) const;
+		std::filesystem::path SaveFile( const char* pFilter ) const;
+		std::filesystem::path OpenFolder() const;
 
 		ApplicationSpecification& GetSpecification() { return m_Specification; }
 
@@ -110,8 +110,8 @@ namespace Saturn {
 			m_MainThreadQueue.push_back( std::move( rrFunction ) );
 		}
 
-		std::filesystem::path& GetRootContentDir() { return m_RootContentPath; }
-		const std::filesystem::path& GetRootContentDir() const { return m_RootContentPath; }
+		std::filesystem::path& GetRootContentDir() { return RootContentPath; }
+		const std::filesystem::path& GetRootContentDir() const { return RootContentPath; }
 
 		constexpr bool HasFlag( ApplicationFlags flag ) const
 		{
@@ -135,12 +135,8 @@ namespace Saturn {
 
 		void RenderImGui();
 
-		std::string OpenFileInternal( const char* pFilter ) const;
-		std::string SaveFileInternal( const char* pFilter ) const;
-		std::string OpenFolderInternal() const;
-
 		// The path where the default content is. Path is absolute.
-		std::filesystem::path m_RootContentPath;
+		std::filesystem::path RootContentPath;
 
 	protected:
 		SceneRenderer* m_SceneRenderer = nullptr;

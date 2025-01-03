@@ -382,15 +382,15 @@ namespace Saturn {
 			newData.Allocate( resize.x * resize.y * 4 );
 			newData.Zero_Memory();
 
-			stbir_resize( pData, 
-				m_Specification.Width, 
-				m_Specification.Height, 
-				( int ) SubresourceLayout.rowPitch, 
+			stbir_resize( pData,
+				( int ) m_Specification.Width,
+				( int ) m_Specification.Height,
+				( int ) SubresourceLayout.rowPitch,
 
-				newData.Data, 
-				resize.x, 
-				resize.y, 
-				0, 
+				newData.Data,
+				( int ) resize.x,
+				( int ) resize.y,
+				0,
 				STBIR_RGBA, STBIR_TYPE_UINT8, STBIR_EDGE_CLAMP, STBIR_FILTER_MITCHELL );
 
 			Auxiliary::WriteImageFile( rPath, Auxiliary::ImageFileType::PNG, resize.x, resize.y, 4, newData.Data, 0 );

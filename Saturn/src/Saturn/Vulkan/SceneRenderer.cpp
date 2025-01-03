@@ -1972,9 +1972,9 @@ namespace Saturn {
 		// TODO: ChangeAOTechnique
 	}
 
-	void SceneRenderer::Screenshot( const std::filesystem::path& rPath )
+	void SceneRenderer::Screenshot( const std::filesystem::path& rPath, const glm::vec2& rSize )
 	{
-		m_RendererData.SceneCompositeFramebuffer->Screenshot( 0, rPath, glm::vec2( 156.0f, 128.0f ) );
+		m_RendererData.SceneCompositeFramebuffer->Screenshot( 0, rPath, rSize );
 	}
 
 	void SceneRenderer::InitBuffers()

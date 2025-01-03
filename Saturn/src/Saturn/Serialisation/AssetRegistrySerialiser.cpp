@@ -81,7 +81,16 @@ namespace Saturn {
 
 			out << YAML::Key << "Asset" << YAML::Value << id;
 
+			// On Windows make serialise as a Linux path for Linux support 
+#if defined(SAT_PLATFORM_WINDOWS)
+			std::wstring path = asset->GetPath().wstring();
+
+			std::replace( path.begin(), path.end(), L'\\', L'/' );
+
+			out << YAML::Key << "Path" << YAML::Value << path;
+#else
 			out << YAML::Key << "Path" << YAML::Value << asset->GetPath();
+#endif
 
 			out << YAML::Key << "Type" << YAML::Value << AssetTypeToString( asset->GetAssetType() );
 
@@ -126,7 +135,16 @@ namespace Saturn {
 
 			Ref<Asset> DeserialisedAsset = AssetRegistry->FindAsset( assetID );
 
+#if defined(SAT_PLATFORM_WINDOWS)
+			std::wstring windowsPath = path.wstring();
+
+			std::replace( windowsPath.begin(), windowsPath.end(), L'/', L'\\' );
+
+			DeserialisedAsset->Path = windowsPath;
+#else
 			DeserialisedAsset->Path = path;
+#endif
+
 			DeserialisedAsset->Name = path.stem().string();
 			DeserialisedAsset->Type = AssetTypeFromString( type );
 			DeserialisedAsset->Version = version;

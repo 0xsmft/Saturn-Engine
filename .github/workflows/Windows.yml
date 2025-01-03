@@ -18,7 +18,7 @@ jobs:
         submodules: recursive
         
     - name: Download Premake
-      uses: BEASTSM96/premake-action@v1.3.1
+      uses: BEASTSM96/premake-action@v1.4
       
     - name: Setup NuGet
       uses: NuGet/setup-nuget@v1.1.1

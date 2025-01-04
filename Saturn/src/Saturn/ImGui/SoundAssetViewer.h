@@ -48,5 +48,9 @@ namespace Saturn {
 	private:
 		Ref<SoundSpecification> m_SoundAsset;
 		Ref<Sound> m_PreviewSound = nullptr;
+
+		float m_CurrentProgress = 0.0f;
+		float m_LastProgress = 0.0f;
+		bool m_WasPlaying = false;
 	};
 }

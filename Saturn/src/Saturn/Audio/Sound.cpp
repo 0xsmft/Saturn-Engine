@@ -255,6 +255,54 @@ namespace Saturn {
 		SetPitchMultiplier( multiplier );
 	}
 
+	float Sound::GetDurationInSeconds()
+	{
+		float duration = 0.0f;
+		ma_sound_get_length_in_seconds( m_Sound, &duration );
+
+		return duration;
+	}
+
+	float Sound::GetCursorInSeconds()
+	{
+		float cursor = 0.0f;
+		ma_sound_get_cursor_in_seconds( m_Sound, &cursor );
+
+		return cursor;
+	}
+
+	std::string Sound::FormatSeconds( float seconds )
+	{
+		int s = ( int )seconds;
+
+		int hrs = s / 3600;
+		int mins = ( s % 3600 ) / 60;
+		int secs = s % 60;
+
+		return std::format( "{:02}:{:02}:{:02}", hrs, mins, secs );
+	}
+
+	uint64_t Sound::GetDurationInPCM()
+	{
+		uint64_t d = 0;
+		ma_sound_get_length_in_pcm_frames( m_Sound, &d );
+	
+		return d;
+	}
+
+	uint64_t Sound::GetCursorInPCM()
+	{
+		uint64_t c = 0;
+		ma_sound_get_cursor_in_pcm_frames( m_Sound, &c );
+	
+		return c;
+	}
+
+	void Sound::SeekTo( uint64_t pcmFrame )
+	{
+		ma_sound_seek_to_pcm_frame( m_Sound, pcmFrame );
+	}
+
 	void Sound::OnSoundEnd( void* pUserData, ma_sound* pSound )
 	{
 		UUID ID = static_cast< uint64_t >( reinterpret_cast< intptr_t >( pUserData ) );

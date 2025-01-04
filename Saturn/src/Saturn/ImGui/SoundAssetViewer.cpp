@@ -71,20 +71,18 @@ namespace Saturn {
 
 		if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), { 24, 24 } ) ) 
 		{
-			std::string filepath = Application::Get().OpenFile( "Supported asset types (*.wav, *.mp3, *.ogg)\0*.wav; *.mp3; *.ogg\0" );
+			std::filesystem::path path = Application::Get().OpenFile( "Supported asset types (*.wav, *.mp3, *.ogg)\0*.wav; *.mp3; *.ogg\0" );
 
-			if( !filepath.empty() )
+			if( !path.empty() )
 			{
 				std::filesystem::path currentRawPath = "";
 				currentRawPath = currentRawPath.parent_path();
 
-				std::filesystem::path path = filepath;
-
 				std::filesystem::path newPath = currentRawPath;
 				currentRawPath /= path.filename();
 
-				if( !std::filesystem::exists( filepath ) )
-					std::filesystem::copy_file( filepath, newPath );
+				if( !std::filesystem::exists( path ) )
+					std::filesystem::copy_file( path, newPath );
 
 				m_SoundAsset->SoundSourcePath = newPath;
 				m_SoundAsset->OriginalImportPath = path;
@@ -109,11 +107,14 @@ namespace Saturn {
 
 #if !defined(SAT_DIST)
 		ImGui::Spring();
-		ImGui::Text( "%s", m_SoundAsset->LastWriteTime );
+		ImGui::Text( "%s", m_SoundAsset->LastWriteTime.c_str() );
 #endif
 
 		ImGui::EndHorizontal();
 
+		ImGui::BeginHorizontal( "##media_controls" );
+
+		// TODO: Register m_PreviewSound to the AudioSystem!
 		if( m_PreviewSound && m_PreviewSound->IsPlaying() )
 		{
 			if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Stop" ), { 24.0f, 24.0f } ) )
@@ -132,6 +133,48 @@ namespace Saturn {
 				m_PreviewSound->Play();
 			}
 		}
+		
+		if( m_PreviewSound )
+		{
+			ImGui::Text( "%s", m_PreviewSound->FormatSeconds( m_PreviewSound->GetCursorInSeconds() ).c_str() );
+
+			uint64_t totalFrames = m_PreviewSound->GetDurationInPCM();
+			m_CurrentProgress = ( float ) m_PreviewSound->GetCursorInPCM() / ( float ) totalFrames;
+
+			if( ImGui::SliderFloat( "##SeekBar", &m_CurrentProgress, 0.0f, 1.0f, "%.4f", ImGuiSliderFlags_NoInput ) )
+			{
+				if( m_LastProgress != m_CurrentProgress )
+				{
+					m_PreviewSound->SeekTo( static_cast< uint64_t >( m_CurrentProgress * totalFrames ) );
+					m_LastProgress = m_CurrentProgress;
+				}
+			}
+
+			if( ImGui::IsItemActive() && !m_WasPlaying )
+			{
+				m_PreviewSound->Stop();
+				m_WasPlaying = true;
+			}
+			
+			if( !ImGui::IsItemActive() && m_WasPlaying )
+			{
+				m_PreviewSound->Play();
+				m_WasPlaying = false;
+			}
+
+			ImGui::Text( "%s", m_PreviewSound->FormatSeconds( m_PreviewSound->GetDurationInSeconds() ).c_str() );
+		}
+		else
+		{
+			// We have to create a separate branch as we can't use m_PreviewSound when it's null
+			Auxiliary::ScopedDisabledFlag disabled( true );
+			
+			ImGui::Text( "--:--:--" );
+			ImGui::SliderFloat( "##SeekBar", &m_CurrentProgress, 0.0f, 1.0f, "%.4f", ImGuiSliderFlags_NoInput );
+			ImGui::Text( "--:--:--" );
+		}
+
+		ImGui::EndHorizontal();
 
 		ImGui::EndVertical();
 

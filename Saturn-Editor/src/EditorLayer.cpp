@@ -1217,7 +1217,7 @@ namespace Saturn {
 
 			if( ImGui::Button( "...##opentexture", ImVec2( 50, 20 ) ) )
 			{
-				std::string file = Application::Get().OpenFile( "Texture File (*.png *.tga)\0*.tga; *.png\0" );
+				std::filesystem::path file = Application::Get().OpenFile( "Texture File (*.png *.tga)\0*.tga; *.png\0" );
 
 				if( !file.empty() )
 				{
@@ -2057,7 +2057,7 @@ namespace Saturn {
 
 				ImGui::Separator();
 
-				static std::string path = "";
+				static std::filesystem::path path = "";
 
 				ImGui::InputText( "##path", ( char* ) path.c_str(), 1024, ImGuiInputTextFlags_ReadOnly );
 				ImGui::SameLine();
@@ -2072,7 +2072,7 @@ namespace Saturn {
 					{
 						ImGui::CloseCurrentPopup();
 
-						Auxiliary::SetEnvironmentVariable( "SATURN_PREMAKE_PATH", path.c_str() );
+						Auxiliary::SetEnvironmentVariable( "SATURN_PREMAKE_PATH", path.string().c_str() );
 
 						m_HasPremakePath = true;
 					}

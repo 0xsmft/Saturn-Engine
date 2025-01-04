@@ -54,7 +54,7 @@ public:
 		// Set our root content path.
 		// TODO: Remove this
 		// We can't remove until we no longer need editor assets for Dist.
-		m_RootContentPath = std::filesystem::current_path() / "content";
+		RootContentPath = std::filesystem::current_path() / "content";
 
 		if( m_ProjectPath.empty() )
 		{

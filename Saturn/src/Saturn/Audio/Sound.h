@@ -61,6 +61,16 @@ namespace Saturn {
 
 		void SetPitchByPercent( float percent );
 
+		float GetDurationInSeconds();
+		float GetCursorInSeconds();
+
+		std::string FormatSeconds( float seconds );
+
+		uint64_t GetDurationInPCM();
+		uint64_t GetCursorInPCM();
+
+		void SeekTo( uint64_t pcmFrame );
+
 	private:
 		static void OnSoundEnd( void* pUserData, ma_sound* pSound );
 

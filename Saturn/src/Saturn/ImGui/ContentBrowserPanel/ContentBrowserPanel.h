@@ -97,6 +97,7 @@ namespace Saturn {
 
 		void GetContentFiles( bool clear );
 		void GetSourceFiles( bool clear );
+		void UpdateFirstFolder();
 
 	private:
 		std::filesystem::path m_ScriptPath;

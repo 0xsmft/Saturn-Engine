@@ -63,7 +63,6 @@ namespace Saturn {
 				m_CurrentPath = m_CurrentPath.parent_path();
 
 				ClearSelection();
-
 				UpdateFiles( true );
 			}
 		}
@@ -79,14 +78,13 @@ namespace Saturn {
 		ImGui::SameLine();
 
 		// Forward button.
-		if( std::filesystem::exists( m_FirstFolder ) )
+		if( !m_FirstFolder.empty() || std::filesystem::exists( m_FirstFolder ) )
 		{
 			if( Auxiliary::ImageButton( m_ForwardIcon, { 24, 24 } ) )
 			{
 				m_CurrentPath /= std::filesystem::relative( m_FirstFolder, m_RootPath );
 
 				ClearSelection();
-
 				UpdateFiles( true );
 			}
 		}
@@ -104,7 +102,6 @@ namespace Saturn {
 
 		ImGui::SameLine();
 
-		// I don't think this is a good way because this is the absolute path.
 		int i = 0;
 		for( auto& pFolder : m_CurrentPath )
 		{
@@ -175,13 +172,13 @@ namespace Saturn {
 			return (*Itr)->Rename();
 	}
 
-	int32_t ContentBrowserBase::GetFilenameCount( const std::string& rName )
+	int ContentBrowserBase::GetFilenameCount( const std::string& rName, bool directoriesOnly )
 	{
-		int32_t count = 0;
+		int count = 0;
 
 		for( const auto& rEntry : std::filesystem::directory_iterator( m_CurrentPath ) )
 		{
-			if( !rEntry.is_regular_file() )
+			if( directoriesOnly && !rEntry.is_directory() )
 				continue;
 
 			std::string filename = rEntry.path().stem().string();

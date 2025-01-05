@@ -282,9 +282,7 @@ namespace Saturn {
 
 			if( ImGui::MenuItem( "Browse" ) )
 			{
-				auto result = Application::Get().OpenFile( "Supported asset types (*.fbx *.gltf *.glb *.png *.tga *.jpeg *.jpg *wav *.ogg *.mp3)\0*.fbx; *.gltf; *.glb; *.png; *.tga; *.jpeg; *jpg; *.wav; *.ogg; *.mp3\0" );
-
-				std::filesystem::path path = result;
+				std::filesystem::path path = Application::Get().OpenFile( "Supported asset types (*.fbx *.gltf *.glb *.png *.tga *.jpeg *.jpg *wav *.ogg *.mp3)\0*.fbx; *.gltf; *.glb; *.png; *.tga; *.jpeg; *jpg; *.wav; *.ogg; *.mp3\0" );
 
 				if( path.extension() == ".png" || path.extension() == ".tga" || path.extension() == ".jpeg" || path.extension() == ".jpg" )
 				{
@@ -646,17 +644,6 @@ namespace Saturn {
 
 			if( !m_Searching && m_ValidSearchFiles.size() )
 				m_ValidSearchFiles.clear();
-
-			// Get the first folder in the current directory.
-			m_FirstFolder = "";
-			for( auto& rEntry : std::filesystem::directory_iterator( m_CurrentPath ) )
-			{
-				if( rEntry.is_directory() )
-				{
-					m_FirstFolder = rEntry.path();
-					break;
-				}
-			}
 
 			if( ImGui::IsMouseDown( 0 ) && ImGui::IsWindowHovered() )
 			{
@@ -1217,7 +1204,6 @@ namespace Saturn {
 			m_RootPath = m_CurrentViewModeDirectory;
 
 		m_CurrentPath = m_CurrentViewModeDirectory;
-		m_FirstFolder = m_CurrentViewModeDirectory;
 
 		UpdateFiles( true );
 	}
@@ -1300,6 +1286,19 @@ namespace Saturn {
 			} );
 	}
 
+	void ContentBrowserPanel::UpdateFirstFolder()
+	{
+		m_FirstFolder = "";
+		for( auto& rEntry : std::filesystem::directory_iterator( m_CurrentPath ) )
+		{
+			if( rEntry.is_directory() )
+			{
+				m_FirstFolder = rEntry.path();
+				break;
+			}
+		}
+	}
+
 	void ContentBrowserPanel::UpdateFiles( bool clear /*= false */ )
 	{
 		// Use a mutex here because when we add a new file filewatch (m_Watcher) will always get to this function first so, allow filewach it update files then when the main thread enters this function try to lock and wait.
@@ -1328,6 +1327,7 @@ namespace Saturn {
 		}
 
 		SortFiles();
+		UpdateFirstFolder();
 	}
 
 	void ContentBrowserPanel::OnItemSelected( ContentBrowserItem* pItem, bool clicked )

@@ -402,6 +402,8 @@ namespace Saturn {
 
 		const std::string& rMountBase = Project::GetActiveConfig().Name;
 
+		rAssetRegistry->m_Assets.reserve( header.Assets );
+
 		// Read header information
 		for( size_t i = 0; i < header.Assets; i++ )
 		{

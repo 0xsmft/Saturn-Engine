@@ -28,106 +28,32 @@
 
 #pragma once
 
-#include "ContentBrowserBase.h"
-
 #include "Saturn/Vulkan/Texture.h"
-
-#include "Saturn/Asset/Asset.h"
-
-#include "ContentBrowserItem.h"
-
-#include "Saturn/GameFramework/SClass.h"
-
-#include <imgui.h>
-#include <filesystem>
-#include <functional>
-#include <map>
-
-#include <filewatch/filewatch.h>
 
 namespace Saturn {
 
-	struct SClassMetadata;
+	constexpr int CB_DIRECTORY_ICON = 0;
+	constexpr int CB_FILE_ICON = 1;
 
-	class ContentBrowserPanel : public ContentBrowserBase
+	class Asset;
+
+	class ContentBrowserThumbnailCache
 	{
 	public:
-		ContentBrowserPanel();
-		ContentBrowserPanel( const std::string& rName );
+		static void Init();
+		static void Terminate();
 
-		virtual ~ContentBrowserPanel();
+		static void InsertNew( const std::filesystem::path& rPath, int64_t time, Ref<Texture2D> texture );
+		static void ModifyTexture( const std::filesystem::path& rPath, Ref<Texture2D> texture );
 
-		virtual void Draw() override;
-		static const char* GetStaticName()
-		{
-			return "Content Browser Panel";
-		}
+		static void OnUpdate();
 
-		virtual void ResetPath( const std::filesystem::path& rPath ) override;
-
-		void BrowseToItem( const std::filesystem::path& rPath, AssetID id );
-
-	private:
-		virtual void UpdateFiles( bool clear = false ) override;
-		virtual void OnItemSelected( ContentBrowserItem* pItem, bool clicked ) override;
-		virtual void DrawItems( std::vector<Ref<ContentBrowserItem>>& rList, ImVec2 size, float padding, int columnCount ) override;
-
-		void BuildSearchList();
-
-		void DrawFolderTree( const std::filesystem::path& rPath );
-
-		void DrawAssetsFolderTree();
-		void DrawScriptsFolderTree();
-
-		void DrawRootFolder( CBViewMode type, bool open = false );
-
-		void DrawBaseContextMenu();
-		void AssetsPopupContextMenu();
-		void ScriptsPopupContextMenu();
-
-		void OnFilewatchEvent( const std::wstring& rPath, const filewatch::Event Event );
-
-		Ref<ContentBrowserItem> GetActiveHoveredItem();
-
-		void DrawClassHierarchy( const std::string& rKeyName, const SClassMetadata& rData );
-
-		void ClearSearchQuery();
-		void DrawImportSoundPopup();
-		void DrawImportMeshPopup();
-
-		void GetContentFiles( bool clear );
-		void GetSourceFiles( bool clear );
-		void UpdateFirstFolder();
-
-	private:
-		std::filesystem::path m_ScriptPath;
-
-		ImGuiTextFilter m_TextFilter;
-
-		bool m_ShowFolderPopupMenu = false;
-
-		struct AssetInfo
-		{
-			AssetType Type;
-			std::filesystem::path Path;
-		};
-
-		bool m_RenderCreateWindow = false;
-
-		SClassMetadata m_SelectedMetadata = {};
-
-		filewatch::FileWatch<std::wstring>* m_Watcher = nullptr;
-
-	private:
-		bool m_ShowAssetImportPopup = false;
-		AssetType m_AssetImportType = AssetType::Unknown;
-		std::filesystem::path m_ImportAssetPath;
+		[[nodiscard]] static Ref<Texture2D> GetDefault( int Identifier );
+		[[nodiscard]] static Ref<Texture2D> GetFor( const Ref<Asset>& rAsset );
 		
-		// Popup data
-		std::string m_ClassInstanceName;
-		std::string m_NewClassName;
-
-		bool m_OpenScriptsPopup = false;
-		bool m_OpenClassInstancePopup = false;
+	public:
+		static void Serialise();
+		static void Deserialise();
 	};
+
 }

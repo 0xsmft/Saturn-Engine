@@ -44,7 +44,7 @@
 #include "Saturn/ImGui/SoundAssetViewer.h"
 #include "Saturn/Audio/SoundNodeEditor/GraphSoundAssetViewer.h"
 
-#include "ContentBrowserThumbnailGenerator.h"
+#include "ContentBrowserThumbnailCache.h"
 
 #include <imgui_internal.h>
 #include <regex>
@@ -77,7 +77,7 @@ namespace Saturn {
 		}
 
 		// Do not generate the icon in the constructor wait until render.
-		m_Icon = ContentBrowserThumbnailGenerator::GetDefault( m_IsDirectory ? CB_DIRECTORY_ICON : CB_FILE_ICON );
+		m_Icon = ContentBrowserThumbnailCache::GetDefault( m_IsDirectory ? CB_DIRECTORY_ICON : CB_FILE_ICON );
 	}
 
 	ContentBrowserItem::~ContentBrowserItem()
@@ -174,7 +174,7 @@ namespace Saturn {
 		{
 			// Generate new thumbnail OR return existing one in cache.
 			// Returns default icon while generating.
-			m_Icon = ContentBrowserThumbnailGenerator::GetFor( m_Asset );
+			m_Icon = ContentBrowserThumbnailCache::GetFor( m_Asset );
 
 			// Fill background.
 			pDrawList->AddRectFilled( TopLeft, ThumbnailBottomRight, ImGui::GetColorU32( ImGuiCol_Button ), 5.0f, ImDrawFlags_RoundCornersTop );
@@ -524,7 +524,7 @@ namespace Saturn {
 		if( m_Type == ContentBrowserItemType::SourceItem )
 			return;
 
-		auto Icon = ContentBrowserThumbnailGenerator::GetDefault( m_IsDirectory ? CB_DIRECTORY_ICON : CB_FILE_ICON );
+		auto Icon = ContentBrowserThumbnailCache::GetDefault( m_IsDirectory ? CB_DIRECTORY_ICON : CB_FILE_ICON );
 
 		if( ImGui::BeginDragDropSource( ImGuiDragDropFlags_SourceAllowNullID ) )
 		{

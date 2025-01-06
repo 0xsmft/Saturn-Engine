@@ -46,12 +46,11 @@ namespace Saturn {
 
 	private:
 		void AddTexture();
-		void DrawInternal();
 
 	private:
-		Ref<Asset> m_Asset;
+		Ref<Asset> m_Asset = nullptr;
 
 		// TODO: Support texture cubes?
-		Ref<Texture2D> m_Texture;
+		Ref<Texture2D> m_Texture = nullptr;
 	};
 }

@@ -57,7 +57,7 @@
 #include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 #include "Saturn/GameFramework/Core/GameModule.h"
 
-#include "ContentBrowserThumbnailGenerator.h"
+#include "ContentBrowserThumbnailCache.h"
 
 #include <imgui_internal.h>
 #include <ranges>
@@ -72,7 +72,7 @@ namespace Saturn {
 		: ContentBrowserBase()
 	{
 		m_ViewMode = CBViewMode::Assets;
-		ContentBrowserThumbnailGenerator::Init();
+		ContentBrowserThumbnailCache::Init();
 	}
 
 	ContentBrowserPanel::ContentBrowserPanel( const std::string& rName )
@@ -82,7 +82,7 @@ namespace Saturn {
 
 	ContentBrowserPanel::~ContentBrowserPanel()
 	{
-		ContentBrowserThumbnailGenerator::Terminate();
+		ContentBrowserThumbnailCache::Terminate();
 	}
 
 	void ContentBrowserPanel::DrawFolderTree( const std::filesystem::path& rPath )
@@ -323,11 +323,11 @@ namespace Saturn {
 			if( ImGui::MenuItem( "New Folder" ) )
 			{
 				auto newPath = m_CurrentPath / "New Folder";
-				int32_t count = GetFilenameCount( "New Folder" );
+				int32_t count = GetFilenameCount( "New Folder", true );
 
 				if( count >= 1 )
 				{
-					newPath = std::format( "{0}\\{1} ({2})", m_CurrentPath.string(), "New Folder", count );
+					newPath.replace_filename( std::format( "{0} ({1})", "New Folder", count ) );
 				}
 
 				std::filesystem::create_directories( newPath );
@@ -345,7 +345,7 @@ namespace Saturn {
 
 				if( count >= 1 )
 				{
-					newPath = std::format( "{0}\\{1} ({2}).smaterial", m_CurrentPath.string(), "Untitled Material", count );
+					newPath.replace_filename( std::format( "{0} ({1}).smaterial", "Untitled Material", count ) );
 				}
 
 				asset->SetAbsolutePath( newPath );
@@ -396,7 +396,7 @@ namespace Saturn {
 
 				if( count >= 1 )
 				{
-					newPath = std::format( "{0}\\{1} ({2}).sphymaterial", m_CurrentPath.string(), "Untitled Physics Material", count );
+					newPath.replace_filename( std::format( "{0} ({1}).sphymaterial", "Untitled Physics Material", count ) );
 				}
 
 				asset->SetAbsolutePath( newPath );
@@ -422,7 +422,7 @@ namespace Saturn {
 
 				if( count >= 1 )
 				{
-					newPath = std::format( "{0}\\{1} ({2}).scene", m_CurrentPath.string(), "Empty Scene", count );
+					newPath.replace_filename( std::format( "{0} ({1}).scene", "Empty Scene", count ) );
 				}
 
 				asset->SetAbsolutePath( newPath );
@@ -454,7 +454,7 @@ namespace Saturn {
 				int32_t count = GetFilenameCount( "New Sound Editor.gsnd" );
 
 				if( count >= 1 )
-					newPath = std::format( "{0}\\{1} ({2}).gsnd", m_CurrentPath.string(), "New Sound Editor", count );
+					newPath.replace_filename( std::format( "{0} ({1}).gsnd", "Empty Sound Editor", count ) );
 
 				asset->SetAbsolutePath( newPath );
 
@@ -615,6 +615,9 @@ namespace Saturn {
 
 			ImGui::EndHorizontal();
 
+			// Content begin...
+			ContentBrowserThumbnailCache::OnUpdate();
+
 			ImGui::PushStyleColor( ImGuiCol_Button, ImVec4( 0.0f, 0.0f, 0.0f, 0.0f ) );
 			ImGui::PushStyleColor( ImGuiCol_ButtonHovered, ImVec4( 0.3f, 0.3f, 0.3f, 0.35f ) );
 
@@ -629,9 +632,10 @@ namespace Saturn {
 
 			ImGui::Columns( columnCount, 0, false );
 
+			int itemCount = m_Searching ? m_ValidSearchFiles.size() : m_Files.size();
 			if( m_Searching )
 			{
-				DrawItems( m_ValidSearchFiles, { thumbnailSizeX, thumbnailSizeY }, padding );
+				DrawItems( m_ValidSearchFiles, { thumbnailSizeX, thumbnailSizeY }, padding, columnCount );
 
 				// No longer searching, means that user has clicked on a file/folder.
 				if( !m_Searching )
@@ -639,7 +643,7 @@ namespace Saturn {
 			}
 			else
 			{
-				DrawItems( m_Files, { thumbnailSizeX, thumbnailSizeY }, padding );
+				DrawItems( m_Files, { thumbnailSizeX, thumbnailSizeY }, padding, columnCount );
 			}
 
 			if( !m_Searching && m_ValidSearchFiles.size() )
@@ -1361,26 +1365,61 @@ namespace Saturn {
 		}
 	}
 
-	void ContentBrowserPanel::DrawItems( std::vector<Ref<ContentBrowserItem>>& rList, ImVec2 size, float padding )
+	void ContentBrowserPanel::DrawItems( std::vector<Ref<ContentBrowserItem>>& rList, ImVec2 size, float padding, int columnCount )
 	{
-		for( auto& rItem : rList )
+		ImGuiListClipper clipper;
+		clipper.Begin( rList.size() );
+
+		bool first = true;
+		while( clipper.Step() )
 		{
-			rItem->Draw( { size.x, size.y }, padding );
-
-			// This happens if we rename a file as we then have to create the file cache again.
-			if( !rItem )
-				break;
-
-			if( !rItem->IsSelected() )
+			auto Itr = rList.begin();
+			if( !first )
 			{
-				// Is the item in the selection list if so and we are no longer selected then we need to remove it.
-				if( const auto Itr = std::find( m_SelectedItems.begin(), m_SelectedItems.end(), rItem ); Itr != m_SelectedItems.end() )
+				for( int i = 0; i < clipper.DisplayStart; i++ )
 				{
-					rItem->Deselect();
-
-					m_SelectedItems.erase( Itr );
+					for( int c = 0; c < columnCount && Itr != rList.end(); c++ )
+					{
+						Itr++;
+					}
 				}
 			}
+
+			for( int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++ )
+			{
+				int c{};
+
+				for( int c = 0; c < columnCount && Itr != rList.end(); c++, Itr++ )
+				{
+					auto& rItem = *Itr;
+					rItem->Draw( size, padding );
+
+					// This happens if we rename a file as we then have to create the file cache again.
+					if( !rItem )
+						break;
+
+					if( !rItem->IsSelected() )
+					{
+						// Is the item in the selection list if so and we are no longer selected then we need to remove it.
+						if( const auto Itr = std::find( m_SelectedItems.begin(), m_SelectedItems.end(), rItem ); Itr != m_SelectedItems.end() )
+						{
+							rItem->Deselect();
+
+							m_SelectedItems.erase( Itr );
+						}
+					}
+				}
+
+				if( first && c < columnCount )
+				{
+					for( int extra = 0; extra < columnCount - c; extra++ )
+					{
+						ImGui::NextColumn();
+					}
+				}
+			}
+
+			first = false;
 		}
 	}
 

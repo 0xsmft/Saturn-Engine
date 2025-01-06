@@ -27,35 +27,51 @@
 */
 
 #include "sppch.h"
-#include "ContentBrowserThumbnailGenerator.h"
+#include "ThumbnailGenerator.h"
 
-#include "Saturn/Asset/Asset.h"
+#include "ContentBrowserThumbnailCache.h"
+
+#include "Saturn/Core/JobSystem.h"
+#include "Saturn/Core/Renderer/RenderThread.h"
 
 namespace Saturn {
 
-	static Ref<Texture2D> s_NoIcon;
-	static Ref<Texture2D> s_FolderIcon;
+	//////////////////////////////////////////////////////////////////////////
+	// ContentBrowserThumbnailGeneratorBase
 
-	void ContentBrowserThumbnailGenerator::Init()
+	Ref<Texture2D> ContentBrowserThumbnailGeneratorBase::GenerateForAssetType( Ref<Asset> asset )
 	{
-		//s_NoIcon = Ref<Texture2D>::Create( "content/textures/editor/NoIcon.png", AddressingMode::Repeat );
-		s_NoIcon = Ref<Texture2D>::Create( "content/textures/editor/FileIcon.png", AddressingMode::Repeat );
-		s_FolderIcon = Ref<Texture2D>::Create( "content/textures/editor/DirectoryIcon.png", AddressingMode::Repeat );
+		switch( asset->Type )
+		{
+			case AssetType::Texture:
+			{
+				return TextureAssetThumbnailGenerator::Generate( asset );
+			}
+
+			case AssetType::Unknown:
+			case AssetType::COUNT:
+			default: break;
+		}
+
+		return nullptr;
 	}
 
-	void ContentBrowserThumbnailGenerator::Terminate()
+	//////////////////////////////////////////////////////////////////////////
+	// TextureAssetThumbnailGenerator
+
+	Ref<Texture2D> TextureAssetThumbnailGenerator::Generate( Ref<Asset> textureAsset )
 	{
-		s_NoIcon = nullptr;
-		s_FolderIcon = nullptr;
+		if( textureAsset->Type != AssetType::Texture )
+			return nullptr;
+
+		// Add a null texture and wait for job system
+		ContentBrowserThumbnailCache::InsertNew( textureAsset->Path, 0, nullptr );
+
+		// Load the texture
+		auto fullPath = Project::GetActiveProject()->FilepathAbs( textureAsset->Path );
+
+		Ref<Texture2D> newTexture = Ref<Texture2D>::Create( fullPath );
+		return newTexture;
 	}
 
-	Ref<Texture2D> ContentBrowserThumbnailGenerator::GetDefault( int Identifier )
-	{
-		return Identifier == 0 ? s_FolderIcon : s_NoIcon;
-	}
-
-	Ref<Texture2D> ContentBrowserThumbnailGenerator::GetFor( const Ref<Asset>& rAsset )
-	{
-		return s_NoIcon;
-	}
 }

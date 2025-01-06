@@ -71,17 +71,15 @@ namespace Saturn {
 		ImGui::Spring();
 
 		std::string sizeText = std::format( "{0}x{1}", m_Texture->Width(), m_Texture->Height() );
-
-		ImGui::Text( "Texture Size" );
-		ImGui::InputText( "##textureSize", ( char* ) sizeText.c_str(), sizeText.size(), ImGuiInputTextFlags_ReadOnly );
+		ImGui::Text( "Texture Size: %s", sizeText.c_str() );
 
 		ImGui::EndVertical();
 
 		ImGui::EndHorizontal();
 
-		ImGui::EndChild();
-
 		Auxiliary::Image( m_Texture, { (float)m_Texture->Width() / 2, ( float ) m_Texture->Height() / 2 } );
+
+		ImGui::EndChild();
 
 		ImGui::End();
 
@@ -96,14 +94,9 @@ namespace Saturn {
 		// Load the real texture.
 		// TODO: Check if we have already loaded the texture somewhere else in the engine!
 
-		m_Texture = Ref<Texture2D>::Create( m_Asset->Path, AddressingMode::Repeat );
+		m_Texture = Ref<Texture2D>::Create( Project::GetActiveProject()->FilepathAbs( m_Asset->Path ), AddressingMode::Repeat );
 
 		m_Open = true;
-	}
-
-	void TextureViewer::DrawInternal()
-	{
-
 	}
 
 }

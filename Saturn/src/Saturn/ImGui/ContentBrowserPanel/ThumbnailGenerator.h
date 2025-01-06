@@ -28,23 +28,25 @@
 
 #pragma once
 
+#include "Saturn/Asset/Asset.h"
 #include "Saturn/Vulkan/Texture.h"
 
 namespace Saturn {
 
-	constexpr int CB_DIRECTORY_ICON = 0;
-	constexpr int CB_FILE_ICON = 1;
-
-	class Asset;
-
-	class ContentBrowserThumbnailGenerator
+	class ContentBrowserThumbnailGeneratorBase
 	{
 	public:
-		static void Init();
-		static void Terminate();
-
-		[[nodiscard]] static Ref<Texture2D> GetDefault( int Identifier );
-		[[nodiscard]] static Ref<Texture2D> GetFor( const Ref<Asset>& rAsset );
+		ContentBrowserThumbnailGeneratorBase() = default;
+		virtual ~ContentBrowserThumbnailGeneratorBase() = default;
+	
+		static Ref<Texture2D> GenerateForAssetType( Ref<Asset> asset );
 	};
+	
+	class TextureAssetThumbnailGenerator : public ContentBrowserThumbnailGeneratorBase
+	{
+	public:
+		static Ref<Texture2D> Generate( Ref<Asset> textureAsset );
 
+		static inline AssetType GetStaticType() { return AssetType::Texture; }
+	};
 }

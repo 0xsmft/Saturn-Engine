@@ -1370,10 +1370,13 @@ namespace Saturn {
 		ImGuiListClipper clipper;
 		clipper.Begin( rList.size() );
 
+		// TODO: This is slow
+		//		 With 600+ items we start to see a frame drop.
 		bool first = true;
 		while( clipper.Step() )
 		{
 			auto Itr = rList.begin();
+			/*
 			if( !first )
 			{
 				for( int i = 0; i < clipper.DisplayStart; i++ )
@@ -1383,6 +1386,13 @@ namespace Saturn {
 						Itr++;
 					}
 				}
+			}
+			*/
+
+			// Go to clipper.DisplayStart
+			if( !first )
+			{
+				std::advance( Itr, std::min( (size_t)clipper.DisplayStart * columnCount, rList.size() ) );
 			}
 
 			for( int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++ )

@@ -4,7 +4,7 @@
 *                                                                                           *
 * MIT License                                                                               *
 *                                                                                           *
-* Copyright (c) 2020 - 2024 BEAST                                                           *
+* Copyright (c) 2023 BEAST                                                                  *
 *                                                                                           *
 * Permission is hereby granted, free of charge, to any person obtaining a copy              *
 * of this software and associated documentation files (the "Software"), to deal             *
@@ -28,7 +28,7 @@
 
 // Game client main.
 /* Generated code, DO NOT modify! */
-// This files supports Saturn version 0.1.3 (4099)
+// This files supports Saturn version 0.1.4 (4100)
 
 #if defined(_WIN32)
 #include <Windows.h>

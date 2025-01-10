@@ -39,20 +39,25 @@
 
 namespace Saturn {
 
-	static Ref<Texture2D> s_NoIcon;
+	static Ref<Texture2D> s_FileIcon;
 	static Ref<Texture2D> s_FolderIcon;
 
+	// Stored for the lifetime of the content browser
+	// Stored per asset
 	struct CacheData
 	{
 		int64_t Time = 0;
 		Ref<Texture2D> Texture = nullptr;
 	};
 
+	// Stored per asset when generation is needed and then popped from the queue
+	// 	Time & Texture are passed to the Asset's CacheData in s_Cache hence why we need it the QueueData
 	struct QueueData
 	{
 		int64_t Time = 0;
-		Ref<Asset> Asset;
 		Ref<Texture2D> Texture = nullptr;
+
+		Ref<Asset> Asset = nullptr;
 	};
 
 	static std::unordered_map<std::filesystem::path, CacheData> s_Cache;
@@ -62,7 +67,7 @@ namespace Saturn {
 	{
 		Deserialise();
 
-		s_NoIcon = Ref<Texture2D>::Create( "content/textures/editor/FileIcon.png", AddressingMode::Repeat );
+		s_FileIcon = Ref<Texture2D>::Create( "content/textures/editor/FileIcon.png", AddressingMode::Repeat );
 		s_FolderIcon = Ref<Texture2D>::Create( "content/textures/editor/DirectoryIcon.png", AddressingMode::Repeat );
 	}
 
@@ -71,7 +76,7 @@ namespace Saturn {
 		Serialise();
 
 		s_Cache.clear();
-		s_NoIcon = nullptr;
+		s_FileIcon = nullptr;
 		s_FolderIcon = nullptr;
 	}
 
@@ -80,14 +85,9 @@ namespace Saturn {
 		s_Cache.insert( { rPath, { time, texture } } );
 	}
 
-	void ContentBrowserThumbnailCache::ModifyTexture( const std::filesystem::path& rPath, Ref<Texture2D> texture )
+	bool ContentBrowserThumbnailCache::AssetHasThumbail( const std::filesystem::path& rPath )
 	{
-		auto Itr = s_Cache.find( rPath );
-
-		if( Itr != s_Cache.end() )
-		{
-			( Itr )->second.Texture = texture;
-		}
+		return s_Cache.find( rPath ) != s_Cache.end();
 	}
 
 	void ContentBrowserThumbnailCache::OnUpdate()
@@ -96,8 +96,10 @@ namespace Saturn {
 		{
 			auto& rData = s_Queue.front();
 
+			// temp
 			if( rData.Asset->Type == AssetType::Texture )
 			{
+				// If it's somehow already in the cache pop it and move on to the next thumbnail
 				const auto Itr = s_Cache.find( rData.Asset->Path );
 				if( Itr != s_Cache.end() )
 				{
@@ -115,11 +117,12 @@ namespace Saturn {
 				{
 					s_Queue.pop();
 					continue;
-				}	
+				}
 
+				// Add to cache
 				auto& rCacheData = s_Cache[ rData.Asset->Path ];
-				rCacheData.Texture = rData.Texture;
 				rCacheData.Time = rData.Time;
+				rCacheData.Texture = rData.Texture;
 			}
 
 			s_Queue.pop();
@@ -129,14 +132,15 @@ namespace Saturn {
 
 	Ref<Texture2D> ContentBrowserThumbnailCache::GetDefault( int Identifier )
 	{
-		return Identifier == 0 ? s_FolderIcon : s_NoIcon;
+		return Identifier == 0 ? s_FolderIcon : s_FileIcon;
 	}
 
 	Ref<Texture2D> ContentBrowserThumbnailCache::GetFor( const Ref<Asset>& rAsset )
 	{
-		Ref<Texture2D> texture = s_NoIcon;
+		Ref<Texture2D> texture = s_FileIcon;
 		const auto Itr = s_Cache.find( rAsset->Path );
 		
+		// TODO: Don't get the last_write_time every frame and instead check once and use FileWatch
 		auto fullPath = Project::GetActiveProject()->FilepathAbs( rAsset->Path );
 		auto lastWriteTimePoint = std::filesystem::last_write_time( fullPath );
 		auto timestamp = std::chrono::duration_cast< std::chrono::milliseconds >( lastWriteTimePoint.time_since_epoch() ).count();
@@ -150,10 +154,12 @@ namespace Saturn {
 			}
 		}
 
+		// Temp
 		if( rAsset->Type != AssetType::Texture )
 			return texture;
 
-		s_Queue.push( { .Time = timestamp, .Asset = rAsset, .Texture = nullptr } );
+		// Generate texture & pass in needed information for cache data
+		s_Queue.push( { .Time = timestamp, .Texture = nullptr, .Asset = nullptr } );
 
 		return texture;
 	}

@@ -28,32 +28,85 @@
 
 #pragma once
 
-#include "Saturn/Vulkan/Texture.h"
+#include "Saturn/Core/Log.h"
 
-namespace Saturn {
+#include <KTX/ktx.h>
+#include <string>
 
-	constexpr int CB_DIRECTORY_ICON = 0;
-	constexpr int CB_FILE_ICON = 1;
+#define VK_KTX_CHECK( x ) _VkKtxCheckResult( x )
 
-	class Asset;
-
-	class ContentBrowserThumbnailCache
+inline std::string_view KtxErrorResultToStr( ktx_error_code_e Result )
+{
+	switch( Result )
 	{
-	public:
-		static void Init();
-		static void Terminate();
+		case KTX_SUCCESS:
+			return "KTX_SUCCESS";
+		case KTX_FILE_DATA_ERROR:
+			return "KTX_FILE_DATA_ERROR";
+		case KTX_FILE_ISPIPE:
+			return "KTX_FILE_ISPIPE";
+		case KTX_FILE_OPEN_FAILED:
+			return "KTX_FILE_OPEN_FAILED";
+		case KTX_FILE_OVERFLOW:
+			return "KTX_FILE_OVERFLOW";
+		case KTX_FILE_READ_ERROR:
+			return "KTX_FILE_READ_ERROR";
+		case KTX_FILE_SEEK_ERROR:
+			return "KTX_FILE_SEEK_ERROR";
+		case KTX_FILE_UNEXPECTED_EOF:
+			return "KTX_FILE_UNEXPECTED_EOF";
+		case KTX_FILE_WRITE_ERROR:
+			return "KTX_FILE_WRITE_ERROR";
+		case KTX_GL_ERROR:
+			return "KTX_GL_ERROR";
+		case KTX_INVALID_OPERATION:
+			return "KTX_INVALID_OPERATION";
+		case KTX_INVALID_VALUE:
+			return "KTX_INVALID_VALUE";
+		case KTX_NOT_FOUND:
+			return "KTX_NOT_FOUND";
+		case KTX_OUT_OF_MEMORY:
+			return "KTX_OUT_OF_MEMORY";
+		case KTX_TRANSCODE_FAILED:
+			return "KTX_TRANSCODE_FAILED";
+		case KTX_UNKNOWN_FILE_FORMAT:
+			return "KTX_UNKNOWN_FILE_FORMAT";
+		case KTX_UNSUPPORTED_TEXTURE_TYPE:
+			return "KTX_UNSUPPORTED_TEXTURE_TYPE";
+		case KTX_UNSUPPORTED_FEATURE:
+			return "KTX_UNSUPPORTED_FEATURE";
+		case KTX_LIBRARY_NOT_LINKED:
+			return "KTX_LIBRARY_NOT_LINKED";
+		case KTX_DECOMPRESS_LENGTH_ERROR:
+			return "KTX_DECOMPRESS_LENGTH_ERROR";
+		case KTX_DECOMPRESS_CHECKSUM_ERROR:
+			return "KTX_DECOMPRESS_CHECKSUM_ERROR";
 
-		static void InsertNew( const std::filesystem::path& rPath, int64_t time, Ref<Texture2D> texture );
-		static bool AssetHasThumbail( const std::filesystem::path& rPath );
+		default: break;
+	}
 
-		static void OnUpdate();
+	return "KTX_ERROR_UNKNOWN";
+}
 
-		[[nodiscard]] static Ref<Texture2D> GetDefault( int Identifier );
-		[[nodiscard]] static Ref<Texture2D> GetFor( const Ref<Asset>& rAsset );
-		
-	public:
-		static void Serialise();
-		static void Deserialise();
-	};
+inline void _VkKtxCheckResult( ktx_error_code_e Result )
+{
+	if( Result != KTX_SUCCESS )
+	{
+		auto ErrorStr = KtxErrorResultToStr( Result );
 
+		SAT_CORE_INFO( "[Vulkan KTX Error] {0}", ErrorStr );
+
+#if defined(SAT_DEBUG) || defined(SAT_RELEASE)
+
+#if defined( _WIN32 )
+		__debugbreak();
+#else
+		raise( SIGTRAP );
+#endif // _MSC_VER
+
+#else
+		std::string errorMsg = std::format( "Vulkan KTX Result failed: {0}", ErrorStr );
+		SAT_CORE_VERIFY( false, errorMsg );
+#endif
+	}
 }

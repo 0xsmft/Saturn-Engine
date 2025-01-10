@@ -73,8 +73,8 @@ namespace Saturn {
 		VkFormat FindDepthFormat();
 		bool HasStencilComponent( VkFormat Format );
 
-		bool FormatLinearBlitSupported( VkFormat Format );
-		bool FormatOptimalBlitSupported();
+		bool FormatLinearBlitSupported( VkFormat Format, bool source = false );
+		bool FormatOptimalBlitSupported( VkFormat Format, bool source = false );
 
 		VkCommandBuffer BeginSingleTimeCommands();
 		void EndSingleTimeCommands( VkCommandBuffer CommandBuffer );

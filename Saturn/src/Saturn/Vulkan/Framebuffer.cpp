@@ -37,6 +37,10 @@
 #include <backends/imgui_impl_vulkan.h>
 #include <stb_image_resize.h>
 
+#include "KTXAux.h"
+#include <KTX/ktx.h>
+#include <KTX/ktxvulkan.h>
+
 namespace Saturn {
 
 	namespace FramebufferUtills {
@@ -244,8 +248,8 @@ namespace Saturn {
 		
 		// First, check if the device supports blitting to linear images, and check if the device supports blitting from to optimal images.
 		bool BlitSuppored = false;
-		BlitSuppored = VulkanContext::Get().FormatOptimalBlitSupported();
-		BlitSuppored = VulkanContext::Get().FormatLinearBlitSupported( VulkanFormat( SrcImage->GetImageFormat() ) );
+//		BlitSuppored = VulkanContext::Get().FormatOptimalBlitSupported();
+//		BlitSuppored = VulkanContext::Get().FormatLinearBlitSupported( VulkanFormat( SrcImage->GetImageFormat() ) );
 
 		// Create the custom destination image
 		VkImageCreateInfo ImageCreateInfo = { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
@@ -402,6 +406,186 @@ namespace Saturn {
 			Auxiliary::WriteImageFile( rPath, Auxiliary::ImageFileType::PNG, m_Specification.Width, m_Specification.Height, 4, pData, (int)SubresourceLayout.rowPitch );
 		}
 		
+		vkUnmapMemory( VulkanContext::Get().GetDevice(), ImageMemory );
+		vkFreeMemory( VulkanContext::Get().GetDevice(), ImageMemory, nullptr );
+		vkDestroyImage( VulkanContext::Get().GetDevice(), DstImage, nullptr );
+	}
+
+	void Framebuffer::Capture( const std::filesystem::path& rPath, uint32_t ColorAttachmentIndex /*= 0 */, const glm::vec2& rResize )
+	{
+		Ref<Image2D> SrcImage = m_ColorAttachmentsResources[ ColorAttachmentIndex ];
+
+		bool SrcBlitSuppored = false;
+		if( SrcImage->GetTiling() == ImageTiling::Linear )
+		{
+			SrcBlitSuppored = VulkanContext::Get().FormatLinearBlitSupported( VulkanFormat( SrcImage->GetImageFormat() ), true );
+		}
+		else
+		{
+			SrcBlitSuppored = VulkanContext::Get().FormatOptimalBlitSupported( VulkanFormat( SrcImage->GetImageFormat() ), true );
+		}
+
+		// Check if dist supports Blit
+		bool BlitSupported = VulkanContext::Get().FormatLinearBlitSupported( VK_FORMAT_BC1_RGBA_UNORM_BLOCK, false ) && SrcBlitSuppored;
+
+		VkFormat textureFormat = VulkanFormat( SrcImage->GetImageFormat() );
+		if( BlitSupported )
+			textureFormat = VK_FORMAT_BC1_RGBA_UNORM_BLOCK;
+		else
+		{
+			// If not, check if the Source Image's format supports dst blitting and use that
+			if( SrcImage->GetTiling() == ImageTiling::Linear )
+			{
+				BlitSupported = VulkanContext::Get().FormatLinearBlitSupported( VulkanFormat( SrcImage->GetImageFormat() ), false );
+			}
+			else
+			{
+				BlitSupported = VulkanContext::Get().FormatOptimalBlitSupported( VulkanFormat( SrcImage->GetImageFormat() ), false );
+			}
+		}
+
+		VkImageCreateInfo ImageCreateInfo = { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
+		ImageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+		ImageCreateInfo.format = textureFormat; // Use the framebuffer's format
+		ImageCreateInfo.extent.width = m_Specification.Width;
+		ImageCreateInfo.extent.height = m_Specification.Height;
+		ImageCreateInfo.extent.depth = 1;
+		ImageCreateInfo.arrayLayers = 1;
+		ImageCreateInfo.mipLevels = 1;
+		ImageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		ImageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+		ImageCreateInfo.tiling = VK_IMAGE_TILING_LINEAR;
+		ImageCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+
+		VkImage DstImage;
+		VK_CHECK( vkCreateImage( VulkanContext::Get().GetDevice(), &ImageCreateInfo, nullptr, &DstImage ) );
+
+		VkMemoryRequirements MemoryRequirements;
+		vkGetImageMemoryRequirements( VulkanContext::Get().GetDevice(), DstImage, &MemoryRequirements );
+
+		VkMemoryAllocateInfo MemoryAllocateInfo = { VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO };
+		MemoryAllocateInfo.allocationSize = MemoryRequirements.size;
+		MemoryAllocateInfo.memoryTypeIndex = VulkanContext::Get().GetMemoryType( MemoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT );
+
+		VkDeviceMemory ImageMemory;
+		VK_CHECK( vkAllocateMemory( VulkanContext::Get().GetDevice(), &MemoryAllocateInfo, nullptr, &ImageMemory ) );
+		VK_CHECK( vkBindImageMemory( VulkanContext::Get().GetDevice(), DstImage, ImageMemory, 0 ) );
+
+		//////////////////////////////////////////////////////////////////////////
+
+		VkCommandBuffer CommandBuffer = VulkanContext::Get().BeginSingleTimeCommands();
+		
+		//////////////////////////////////////////////////////////////////////////
+
+		VkImageSubresourceRange SubresourceRange = { .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .baseMipLevel = 0, .levelCount = 1, .baseArrayLayer = 0, .layerCount = 1 };
+
+		// TRANSITION: Destination image to transfer destination layout.
+		TransitionImageLayout(
+			CommandBuffer,
+			DstImage,
+			VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+			SubresourceRange, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT );
+
+		// TRANSITION: Framebuffer image to VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL.
+		SrcImage->TransitionImageLayout(
+			CommandBuffer,
+			SrcImage->GetDescriptorInfo().imageLayout,
+			VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+			VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT );
+
+		// Copy or blit image
+		if( BlitSupported )
+		{
+			// Blit image.
+			VkOffset3D SrcOffset = { .x = static_cast< int32_t >( m_Specification.Width ), .y = static_cast< int32_t >( m_Specification.Height ), .z = 1 };
+
+			VkImageBlit BlitRegion{};
+			BlitRegion.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			BlitRegion.srcSubresource.layerCount = 1;
+			BlitRegion.srcOffsets[ 1 ] = SrcOffset;
+
+			VkOffset3D DstOffset = SrcOffset;
+			if( rResize.x != 0.0f && rResize.y != 0.0f ) 
+				DstOffset = { .x = static_cast< int32_t >( rResize.x ), .y = static_cast< int32_t >( rResize.y ), .z = 1 };
+
+			BlitRegion.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			BlitRegion.dstSubresource.layerCount = 1;
+			BlitRegion.dstOffsets[ 1 ] = DstOffset;
+
+			vkCmdBlitImage( CommandBuffer,
+				SrcImage->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+				DstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+				1, &BlitRegion, VK_FILTER_LINEAR );
+		}
+		else
+		{
+			VkImageCopy CopyRegion{};
+			CopyRegion.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			CopyRegion.srcSubresource.layerCount = 1;
+
+			CopyRegion.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			CopyRegion.dstSubresource.layerCount = 1;
+
+			CopyRegion.extent.width = m_Specification.Width;
+			CopyRegion.extent.height = m_Specification.Height;
+			CopyRegion.extent.depth = 1;
+
+			vkCmdCopyImage( CommandBuffer,
+				SrcImage->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+				DstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &CopyRegion );
+		}
+
+		// TRANSITION: Destination image to general layout for copying.
+		TransitionImageLayout(
+			CommandBuffer,
+			DstImage,
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+			VK_IMAGE_LAYOUT_GENERAL,
+			SubresourceRange,
+			VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT );
+		
+		// TRANSITION: Framebuffer image format back to previous specified format in descriptor layout.
+		//             Descriptor layout does not update because the image does not know we are changing it's layout (not a bug it's a feature).
+		SrcImage->TransitionImageLayout(
+			CommandBuffer,
+			VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+			SrcImage->GetDescriptorInfo().imageLayout,
+			VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT );
+
+		// Execute command buffer.
+		VulkanContext::Get().EndSingleTimeCommands( CommandBuffer );
+
+		//////////////////////////////////////////////////////////////////////////
+
+		VkImageSubresource Subresource{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 0 };
+		VkSubresourceLayout SubresourceLayout;
+		vkGetImageSubresourceLayout( VulkanContext::Get().GetDevice(), DstImage, &Subresource, &SubresourceLayout );
+
+		const char* pData = nullptr;
+		VK_CHECK( vkMapMemory( VulkanContext::Get().GetDevice(), ImageMemory, 0, VK_WHOLE_SIZE, 0, ( void** ) &pData ) );
+		pData += SubresourceLayout.offset;
+
+		ktxTextureCreateInfo textureCreateInfo{};
+		textureCreateInfo.vkFormat = VK_FORMAT_BC1_RGBA_UNORM_BLOCK;
+		textureCreateInfo.baseWidth = m_Specification.Width;
+		textureCreateInfo.baseHeight = m_Specification.Height;
+		textureCreateInfo.baseDepth = 1;
+		textureCreateInfo.numFaces = 1;
+		textureCreateInfo.numLayers = 1;
+		textureCreateInfo.numLevels = 1;
+		textureCreateInfo.numDimensions = 2;
+		textureCreateInfo.isArray = false;
+
+		ktxTexture2* pTexture = nullptr;
+		VK_KTX_CHECK( ktxTexture2_Create( &textureCreateInfo, KTX_TEXTURE_CREATE_ALLOC_STORAGE, &pTexture ) );
+
+		ktxTexture_SetImageFromMemory( reinterpret_cast<ktxTexture*>( pTexture ), 0, 0, 0, (unsigned char*)&pData, ( m_Specification.Width * m_Specification.Height * 4 ) );
+
+		ktxTexture2_CompressBasis( pTexture, 128 );
+
+		ktxTexture_WriteToNamedFile( reinterpret_cast< ktxTexture* >( pTexture ), rPath.string().c_str() );
+
+		ktxTexture_Destroy( reinterpret_cast< ktxTexture* >( pTexture ) );
 		vkUnmapMemory( VulkanContext::Get().GetDevice(), ImageMemory );
 		vkFreeMemory( VulkanContext::Get().GetDevice(), ImageMemory, nullptr );
 		vkDestroyImage( VulkanContext::Get().GetDevice(), DstImage, nullptr );

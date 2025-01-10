@@ -1974,7 +1974,7 @@ namespace Saturn {
 
 	void SceneRenderer::Screenshot( const std::filesystem::path& rPath, const glm::vec2& rSize )
 	{
-		m_RendererData.SceneCompositeFramebuffer->Screenshot( 0, rPath, rSize );
+		m_RendererData.SceneCompositeFramebuffer->Capture( rPath, 0, rSize );
 	}
 
 	void SceneRenderer::InitBuffers()

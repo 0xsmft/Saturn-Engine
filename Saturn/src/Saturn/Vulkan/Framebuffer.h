@@ -104,6 +104,8 @@ namespace Saturn {
 
 		void Screenshot( uint32_t ColorAttachmentIndex, const std::filesystem::path& rPath, glm::vec2 resize = {} );
 
+		void Capture( const std::filesystem::path& rPath, uint32_t ColorAttachmentIndex = 0, const glm::vec2& rResize = {} );
+
 	private:
 		void Create();
 		void Terminate();

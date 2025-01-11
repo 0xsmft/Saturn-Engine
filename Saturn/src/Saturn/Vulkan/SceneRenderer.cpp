@@ -972,9 +972,15 @@ namespace Saturn {
 			ImGui::Text( "Total (RenderThread::Execute): %.2f ms", RenderThread::Get().GetWaitTime() );
 			ImGui::Text( "Total : %.2f ms", Application::Get().Time().Milliseconds() );
 
-			if( ImGui::Button( "Screenshot" ) )
+			if( ImGui::Button( "Take snapshot of Scene Composite Framebuffer" ) )
 			{
-				m_RendererData.SceneCompositeFramebuffer->Screenshot( 0, "SceneComp.png" );
+				std::filesystem::path folderPath = Application::Get().OpenFolder();
+				if( !folderPath.empty() )
+				{
+					std::wstring name = std::format( L"Scene Composite (#{0}).png", Renderer::Get().GetCurrentFrame() );
+
+					m_RendererData.SceneCompositeFramebuffer->Capture( folderPath / name );
+				}
 			}
 
 			Auxiliary::EndTreeNode();

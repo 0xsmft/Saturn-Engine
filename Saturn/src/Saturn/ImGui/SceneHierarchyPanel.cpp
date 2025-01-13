@@ -810,7 +810,7 @@ namespace Saturn {
 		{
 			bool modified = false;
 
-			if( !m_Context->RuntimeRunning )
+			if( !m_Context->IsRuntimeRunning() )
 			{
 				modified = Auxiliary::DrawBoolControl( "Kinematic Body", rb.IsKinematic );
 				modified |= Auxiliary::DrawBoolControl( "Use CCD", rb.UseCCD );
@@ -1072,8 +1072,8 @@ namespace Saturn {
 				bool open = false;			
 				
 				// Push disabled flag if runtime running
-				Auxiliary::ScopedItemFlag disabledFlag( ImGuiItemFlags_Disabled, m_Context->RuntimeRunning );
-				Auxiliary::ScopedStyleVar<float> styleVar( ImGuiStyleVar_Alpha, m_Context->RuntimeRunning ? 0.5f : 1.0f );
+				Auxiliary::ScopedItemFlag disabledFlag( ImGuiItemFlags_Disabled, m_Context->IsRuntimeRunning() );
+				Auxiliary::ScopedStyleVar<float> styleVar( ImGuiStyleVar_Alpha, m_Context->IsRuntimeRunning() ? 0.5f : 1.0f );
 
 				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24, 24 ) ) )
 				{
@@ -1102,7 +1102,7 @@ namespace Saturn {
 				ImGui::PopID();
 			}
 
-			if( m_Context->RuntimeRunning )
+			if( m_Context->IsRuntimeRunning() )
 			{
 				Ref<Sound> sound = AudioSystem::Get().FindSound( ap.UniqueID );
 				if( sound )

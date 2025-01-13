@@ -185,7 +185,7 @@ namespace Saturn {
 		// Step 2: Update all entities.
 
 		// TODO: We might want to change the order of this update cycle.
-		if( RuntimeRunning ) 
+		if( IsRuntimeRunning() ) 
 		{
 			// Simulate the physics scene.
 			m_PhysicsScene->Update( ts );
@@ -759,7 +759,7 @@ namespace Saturn {
 		if( m_PhysicsScene )
 			delete m_PhysicsScene;
 
-		RuntimeRunning = true;
+		m_RuntimeState = RuntimeState::Starting;
 
 		m_PhysicsScene = new PhysicsScene( this );
 
@@ -778,9 +778,43 @@ namespace Saturn {
 			auto& rCameraComponent = m_MainCameraEntity->GetComponent<CameraComponent>();
 			rCameraComponent.Camera.SetFOV( rCameraComponent.Fov );
 		}
+
+		m_RuntimeState = RuntimeState::Running;
 	}
 
-	void Scene::UpdateAudioListeners() 
+	void Scene::SuspendRuntime()
+	{
+		if( m_RuntimeState != RuntimeState::Running )
+			return;
+
+		m_RuntimeState = RuntimeState::Suspended;
+
+		AudioSystem::Get().Suspend();
+	}
+
+	void Scene::ResumeRuntime()
+	{
+		if( m_RuntimeState != RuntimeState::Suspended )
+			return;
+
+		m_RuntimeState = RuntimeState::Running;
+
+		AudioSystem::Get().Resume();
+	}
+
+	void Scene::SuspendOrResumeRuntime()
+	{
+		if( m_RuntimeState == RuntimeState::Suspended )
+		{
+			ResumeRuntime();
+		}
+		else if( m_RuntimeState == RuntimeState::Running ) 
+		{
+			SuspendRuntime();
+		}
+	}
+
+	void Scene::UpdateAudioListeners()
 	{
 		auto listeners = GetAllEntitiesWith< AudioListenerComponent >();
 
@@ -845,7 +879,7 @@ namespace Saturn {
 		{
 			auto& rComp = entity->GetComponent<AudioPlayerComponent>();
 			
-			AudioSystem::Get().StopAndResetSound( rComp.UniqueID );
+			AudioSystem::Get().StopSound( rComp.UniqueID );
 		}
 	}
 
@@ -863,6 +897,11 @@ namespace Saturn {
 
 	void Scene::OnRuntimeEnd()
 	{
+		if( m_RuntimeState == RuntimeState::Suspended )
+			ResumeRuntime();
+
+		m_RuntimeState = RuntimeState::Ending;
+
 		if( m_PhysicsScene )
 			delete m_PhysicsScene;
 
@@ -872,7 +911,7 @@ namespace Saturn {
 
 		m_MainCameraEntity = nullptr;
 
-		RuntimeRunning = false;
+		m_RuntimeState = RuntimeState::NoState;
 	}
 
 	Ref<Entity> Scene::CreatePrefab( Ref<Prefab> prefabAsset )

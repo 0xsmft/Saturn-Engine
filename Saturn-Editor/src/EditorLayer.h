@@ -164,6 +164,8 @@ namespace Saturn {
 		Ref<JobProgress> m_BlockingOperation = nullptr;
 
 		EditorCamera m_EditorCamera;
+		EditorCamera m_SuspendedEditorCamera;
+
 		bool m_AllowCameraEvents = false;
 		bool m_StartedRightClickInViewport = false;
 		bool m_ViewportFocused = false;
@@ -192,8 +194,6 @@ namespace Saturn {
 		bool m_ShowOperation = false;
 
 		std::queue<MessageBoxInfo> m_MessageBoxes;
-
-		SceneFlyCamera m_FallbackCamera;
 
 		Ref<Scene> m_EditorScene = nullptr;
 		Ref<Scene> m_RuntimeScene = nullptr;

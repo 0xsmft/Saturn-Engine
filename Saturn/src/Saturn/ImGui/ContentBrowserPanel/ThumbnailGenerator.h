@@ -33,16 +33,15 @@
 
 namespace Saturn {
 
+	class Prefab;
+
 	class ContentBrowserThumbnailGeneratorBase
 	{
-	public:
-		ContentBrowserThumbnailGeneratorBase() = default;
-		virtual ~ContentBrowserThumbnailGeneratorBase() = default;
-	
+	public:	
 		static Ref<Texture2D> GenerateForAssetType( Ref<Asset> asset );
 	};
 	
-	class TextureAssetThumbnailGenerator : public ContentBrowserThumbnailGeneratorBase
+	class TextureAssetThumbnailGenerator
 	{
 	public:
 		static Ref<Texture2D> Generate( Ref<Asset> textureAsset );

@@ -156,6 +156,15 @@ namespace Saturn {
 		}
 	};
 
+	enum class RuntimeState
+	{
+		NoState,
+		Starting,
+		Running,
+		Ending,
+		Suspended
+	};
+
 	class Scene : public Asset
 	{
 		SAT_DECLARE_CLASS_NO_INTER( Scene, Asset )
@@ -217,9 +226,19 @@ namespace Saturn {
 		void CopyScene( Ref<Scene>& NewScene );
 		void Empty();
 
-		bool RuntimeRunning = false;
+		[[nodiscard]] bool IsRuntimeActive() const { return m_RuntimeState != RuntimeState::NoState || m_RuntimeState != RuntimeState::Ending; }
+
+		[[nodiscard]] bool IsRuntimeRunning() const { return m_RuntimeState == RuntimeState::Running; }
+
+		[[nodiscard]] RuntimeState GetRuntimeState() const { return m_RuntimeState; }
 
 		void OnRuntimeStart();
+
+		void SuspendRuntime();
+		void ResumeRuntime();
+		
+		void SuspendOrResumeRuntime();
+
 		void OnRuntimeEnd();
 
 		entt::registry& GetRegistry() { return m_Registry; }
@@ -242,9 +261,18 @@ namespace Saturn {
 			}
 		}
 
+		// Start NEW audio players
 		void StartAudioPlayers();
+
+		// Start already existing audio players 
+		void ResumeAudioPlayers();
+
+		// Pause audio players
 		void StopAudioPlayers();
+
+		// Stop and unload audio players
 		void DestroyAudioPlayers();
+		
 		void UpdateAudioListeners();
 
 #if defined(SAT_DEBUG) || defined(SAT_RELEASE)
@@ -341,6 +369,8 @@ namespace Saturn {
 
 		entt::entity m_SceneEntity{ entt::null };
 		
+		RuntimeState m_RuntimeState = RuntimeState::NoState;
+
 #if !defined(SAT_DIST)
 		std::vector< Ref<Entity> > m_SelectedEntities;
 #endif

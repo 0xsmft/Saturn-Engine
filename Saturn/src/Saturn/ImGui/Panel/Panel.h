@@ -45,6 +45,7 @@ namespace Saturn {
 		inline void OpenWindow() { m_Open = true; }
 		inline void CloseWindow() { m_Open = false; }
 		inline void ShowOrHide() { if( m_Open ) CloseWindow(); else OpenWindow(); }
+		inline bool IsOpen() const { return m_Open; }
 
 	protected:
 		std::string m_Name = "";

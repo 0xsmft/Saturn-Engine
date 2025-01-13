@@ -137,6 +137,9 @@ namespace Saturn {
 
 	Ref<Texture2D> ContentBrowserThumbnailCache::GetFor( const Ref<Asset>& rAsset )
 	{
+		if( rAsset == nullptr )
+			return GetDefault( 1 );
+
 		Ref<Texture2D> texture = s_FileIcon;
 		const auto Itr = s_Cache.find( rAsset->Path );
 		

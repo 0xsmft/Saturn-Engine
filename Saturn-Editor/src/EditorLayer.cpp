@@ -93,7 +93,7 @@ namespace Saturn {
 
 	EditorLayer::EditorLayer() 
 		: m_EditorCamera( 45.0f, 1280.0f, 720.0f, 0.1f, 1000.0f ), 
-		m_FallbackCamera( 45.0f, 1280.0f, 720.0f, 0.1f, 1000.0f ), 
+		m_SuspendedEditorCamera( 45.0f, 1280.0f, 720.0f, 0.1f, 1000.0f ), 
 		m_EditorScene( Ref<Scene>::Create() )
 	{
 		Scene::SetActiveScene( m_EditorScene.Get() );
@@ -238,16 +238,19 @@ namespace Saturn {
 		if( !Input::Get().MouseButtonPressed( RubyMouseButton::Right ) )
 			m_StartedRightClickInViewport = false;
 
-		Input::Get().SetCanSetCursorMode( m_RuntimeScene == nullptr ? m_AllowCameraEvents : m_MouseOverViewport );
+		bool canSetCursorMode = m_RuntimeScene == nullptr ? m_AllowCameraEvents : m_RuntimeScene->GetRuntimeState() == RuntimeState::Suspended ? m_AllowCameraEvents : m_MouseOverViewport;
+
+		Input::Get().SetCanSetCursorMode( canSetCursorMode );
 
 		///////////////////////////////
 
-		Ref<SceneHierarchyPanel> hierarchyPanel = m_PanelManager->GetPanel<SceneHierarchyPanel>();
-
+		// Start runtime if needed
 		if( m_RequestRuntime )
 		{
 			if( !m_RuntimeScene )
 			{
+				Ref<SceneHierarchyPanel> hierarchyPanel = m_PanelManager->GetPanel<SceneHierarchyPanel>();
+	
 				m_RuntimeScene = Ref<Scene>::Create();
 				Scene::SetActiveScene( m_RuntimeScene.Get() );
 
@@ -262,20 +265,29 @@ namespace Saturn {
 				Application::Get().PrimarySceneRenderer().SetCurrentScene( m_RuntimeScene.Get() );
 
 				m_EditorCamera.SetActive( false );
+
+				std::string title = std::format( "{0} (Running) - Saturn", Project::GetActiveConfig().Name );
+				Application::Get().GetWindow()->ChangeTitle( title );
 			}
 		}
 		else
 		{
-			if( m_RuntimeScene && m_RuntimeScene->RuntimeRunning )
+			if( m_RuntimeScene && m_RuntimeScene->IsRuntimeActive() )
 			{
+				Ref<SceneHierarchyPanel> hierarchyPanel = m_PanelManager->GetPanel<SceneHierarchyPanel>();
+				
 				m_RuntimeScene->OnRuntimeEnd();
 				Scene::SetActiveScene( m_EditorScene.Get() );
 
 				hierarchyPanel->SetContext( m_EditorScene );
 
+				m_SuspendedEditorCamera.SetActive( false );
 				m_RuntimeScene = nullptr;
 
 				Application::Get().PrimarySceneRenderer().SetCurrentScene( m_EditorScene.Get() );
+
+				std::string title = std::format( "{0} - Saturn", Project::GetActiveConfig().Name );
+				Application::Get().GetWindow()->ChangeTitle( title );
 			}
 		}
 
@@ -285,7 +297,18 @@ namespace Saturn {
 			Renderer2D::Get().PreRender();
 
 			m_RuntimeScene->OnUpdate( time );
-			m_RuntimeScene->OnRenderRuntime( time, Application::Get().PrimarySceneRenderer() );
+
+			if( m_RuntimeScene->GetRuntimeState() == RuntimeState::Suspended )
+			{
+				m_SuspendedEditorCamera.SetActive( m_AllowCameraEvents );
+				m_SuspendedEditorCamera.OnUpdate( time );
+
+				m_RuntimeScene->OnRenderEditor( m_SuspendedEditorCamera, time, Application::Get().PrimarySceneRenderer() );
+			}
+			else
+			{
+				m_RuntimeScene->OnRenderRuntime( time, Application::Get().PrimarySceneRenderer() );
+			}
 		}
 		else 
 		{
@@ -393,7 +416,13 @@ namespace Saturn {
 	{
 		// If the mouse is over the viewport allow for the scroll event to happen
 		// The scroll event does not care if the camera is active or not.
-		if( m_MouseOverViewport ) m_EditorCamera.OnEvent( rEvent );
+		if( m_MouseOverViewport )
+		{
+			m_EditorCamera.OnEvent( rEvent );
+
+			if( m_RequestRuntime )
+				m_SuspendedEditorCamera.OnEvent( rEvent );
+		}
 		
 		AssetViewer::ProcessEvent( rEvent );
 
@@ -510,7 +539,7 @@ namespace Saturn {
 				if( m_MouseOverViewport && !m_StartedRightClickInViewport )
 					m_GizmoOperation = 0;
 				break;
-	
+
 			case RubyKey::W:
 				if( m_MouseOverViewport && !m_StartedRightClickInViewport )
 					m_GizmoOperation = ImGuizmo::OPERATION::TRANSLATE;
@@ -520,7 +549,7 @@ namespace Saturn {
 				if( m_MouseOverViewport && !m_StartedRightClickInViewport )
 					m_GizmoOperation = ImGuizmo::OPERATION::ROTATE;
 				break;
-			
+
 			case RubyKey::R:
 				if( m_MouseOverViewport && !m_StartedRightClickInViewport )
 					m_GizmoOperation = ImGuizmo::OPERATION::SCALE;
@@ -1630,7 +1659,7 @@ namespace Saturn {
 			Application::Get().PrimarySceneRenderer().SetViewportSize( ( uint32_t ) m_ViewportSize.x, ( uint32_t ) m_ViewportSize.y );
 			Renderer2D::Get().SetViewportSize( ( uint32_t ) m_ViewportSize.x, ( uint32_t ) m_ViewportSize.y );
 			m_EditorCamera.SetViewportSize( ( uint32_t ) m_ViewportSize.x, ( uint32_t ) m_ViewportSize.y );
-			m_FallbackCamera.SetViewportSize( ( uint32_t ) m_ViewportSize.x, ( uint32_t ) m_ViewportSize.y );
+			m_SuspendedEditorCamera.SetViewportSize( ( uint32_t ) m_ViewportSize.x, ( uint32_t ) m_ViewportSize.y );
 		}
 
 		ImGui::PushID( "VIEWPORT_IMAGE" );
@@ -1841,7 +1870,7 @@ namespace Saturn {
 		ImVec2 maxBound = { minBound.x + m_ViewportSize.x, minBound.y + m_ViewportSize.y };
 
 		constexpr float windowHeight = 32.0f;
-		constexpr float icons = 1.0f;
+		constexpr float icons = 2.0f;
 		constexpr float neededSpace = 48.0f * icons - 10.0f;
 		constexpr float windowWidth = neededSpace - 10.0f;
 
@@ -1859,15 +1888,72 @@ namespace Saturn {
 		ImGui::PushStyleColor( ImGuiCol_Button, { 0.0f, 0.0f, 0.0f, 0.0f } );
 		ImGui::PushStyleVar( ImGuiStyleVar_ItemSpacing, ImVec2( 5.0f * 2.0f, 0 ) );
 
-		Ref<Texture2D> texture = m_RequestRuntime ? m_EndRuntimeTexture : m_StartRuntimeTexture;
+		Ref<Texture2D> texture = m_RequestRuntime ? ( m_RuntimeScene->GetRuntimeState() == RuntimeState::Suspended ? m_StartRuntimeTexture : m_EndRuntimeTexture ) : m_StartRuntimeTexture;
 
 		if( Auxiliary::ImageButton( texture, ImVec2( 24.0f, 24.0f ) ) ) 
-			m_RequestRuntime ^= 1;
+		{
+			if( m_RequestRuntime && m_RuntimeScene->GetRuntimeState() == RuntimeState::Suspended )
+			{
+				m_RuntimeScene->ResumeRuntime();
+			}
+			else
+			{
+				// Start/Stop runtime.
+				m_RequestRuntime ^= 1;
+			}
+		}
 
 		if( ImGui::BeginItemTooltip() )
 		{
+			ImGui::BeginHorizontal( "##centerRTtooltip" );
+
 			ImGui::Text( "Request runtime to start" );
+			ImGui::Spring();
+			ImGui::Text( "%s", m_RequestRuntime ? "RUNTIME RUNNING" : "RUNTIME NOT RUNNING" );
+			ImGui::Spring();
+
+			ImGui::EndHorizontal();
+
 			ImGui::EndTooltip();
+		}
+
+		{
+			bool canSuspendScene = false;
+
+			if( m_RequestRuntime )
+			{
+				if( m_RuntimeScene && m_RuntimeScene->GetRuntimeState() != RuntimeState::Suspended )
+					canSuspendScene = true;
+			}
+
+			Auxiliary::ScopedDisabledFlag disabledFlag( !canSuspendScene );
+
+			if( Auxiliary::ImageButton( m_CheckerboardTexture, ImVec2( 24.0f, 24.0f ) ) )
+			{
+				auto runtimeState = m_RuntimeScene->GetRuntimeState();
+
+				if( runtimeState == RuntimeState::Running )
+				{
+					m_RuntimeScene->SuspendRuntime();
+
+					std::string title = std::format( "{0} (RT Suspended) - Saturn", Project::GetActiveConfig().Name );
+					Application::Get().GetWindow()->ChangeTitle( title );
+				}
+				else if( runtimeState == RuntimeState::Suspended )
+				{
+					std::string title = std::format( "{0} (Running) - Saturn", Project::GetActiveConfig().Name );
+					Application::Get().GetWindow()->ChangeTitle( title );
+
+					m_RuntimeScene->ResumeRuntime();
+					m_SuspendedEditorCamera.SetActive( false );
+				}
+			}
+
+			if( ImGui::BeginItemTooltip() )
+			{
+				ImGui::Text( "Suspend the runtime and allowing the user to use the Editor Camera" );
+				ImGui::EndTooltip();
+			}
 		}
 
 		ImGui::PopStyleColor();

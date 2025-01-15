@@ -122,6 +122,7 @@ namespace Saturn {
 
 		m_StartRuntimeTexture = Ref< Texture2D >::Create( "content/textures/editor/Play.png", AddressingMode::ClampToEdge );
 		m_EndRuntimeTexture = Ref< Texture2D >::Create( "content/textures/editor/Stop.png", AddressingMode::ClampToEdge );
+		m_PauseRuntimeTexture = Ref< Texture2D >::Create( "content/textures/editor/Pause.png", AddressingMode::ClampToEdge );
 
 		m_TranslationTexture = Ref< Texture2D >::Create( "content/textures/editor/Move.png", AddressingMode::ClampToEdge );
 		m_RotationTexture = Ref< Texture2D >::Create( "content/textures/editor/Rotate.png", AddressingMode::ClampToEdge );
@@ -1870,9 +1871,9 @@ namespace Saturn {
 		ImVec2 maxBound = { minBound.x + m_ViewportSize.x, minBound.y + m_ViewportSize.y };
 
 		constexpr float windowHeight = 32.0f;
-		constexpr float icons = 2.0f;
-		constexpr float neededSpace = 48.0f * icons - 10.0f;
-		constexpr float windowWidth = neededSpace - 10.0f;
+		float icons = m_RequestRuntime ? 3.0f : 1.0f; // 3 icons if runtime is running
+		float neededSpace = 48.0f * icons - 10.0f;
+		float windowWidth = neededSpace - 10.0f;
 
 		float runtimeCenterX = minBound.x + m_ViewportSize.x * 0.5f - windowWidth * 0.5f;
 
@@ -1888,73 +1889,10 @@ namespace Saturn {
 		ImGui::PushStyleColor( ImGuiCol_Button, { 0.0f, 0.0f, 0.0f, 0.0f } );
 		ImGui::PushStyleVar( ImGuiStyleVar_ItemSpacing, ImVec2( 5.0f * 2.0f, 0 ) );
 
-		Ref<Texture2D> texture = m_RequestRuntime ? ( m_RuntimeScene->GetRuntimeState() == RuntimeState::Suspended ? m_StartRuntimeTexture : m_EndRuntimeTexture ) : m_StartRuntimeTexture;
-
-		if( Auxiliary::ImageButton( texture, ImVec2( 24.0f, 24.0f ) ) ) 
-		{
-			if( m_RequestRuntime && m_RuntimeScene->GetRuntimeState() == RuntimeState::Suspended )
-			{
-				m_RuntimeScene->ResumeRuntime();
-			}
-			else
-			{
-				// Start/Stop runtime.
-				m_RequestRuntime ^= 1;
-			}
-		}
-
-		if( ImGui::BeginItemTooltip() )
-		{
-			ImGui::BeginHorizontal( "##centerRTtooltip" );
-
-			ImGui::Text( "Request runtime to start" );
-			ImGui::Spring();
-			ImGui::Text( "%s", m_RequestRuntime ? "RUNTIME RUNNING" : "RUNTIME NOT RUNNING" );
-			ImGui::Spring();
-
-			ImGui::EndHorizontal();
-
-			ImGui::EndTooltip();
-		}
-
-		{
-			bool canSuspendScene = false;
-
-			if( m_RequestRuntime )
-			{
-				if( m_RuntimeScene && m_RuntimeScene->GetRuntimeState() != RuntimeState::Suspended )
-					canSuspendScene = true;
-			}
-
-			Auxiliary::ScopedDisabledFlag disabledFlag( !canSuspendScene );
-
-			if( Auxiliary::ImageButton( m_CheckerboardTexture, ImVec2( 24.0f, 24.0f ) ) )
-			{
-				auto runtimeState = m_RuntimeScene->GetRuntimeState();
-
-				if( runtimeState == RuntimeState::Running )
-				{
-					m_RuntimeScene->SuspendRuntime();
-
-					std::string title = std::format( "{0} (RT Suspended) - Saturn", Project::GetActiveConfig().Name );
-					Application::Get().GetWindow()->ChangeTitle( title );
-				}
-				else if( runtimeState == RuntimeState::Suspended )
-				{
-					std::string title = std::format( "{0} (Running) - Saturn", Project::GetActiveConfig().Name );
-					Application::Get().GetWindow()->ChangeTitle( title );
-
-					m_RuntimeScene->ResumeRuntime();
-					m_SuspendedEditorCamera.SetActive( false );
-				}
-			}
-
-			if( ImGui::BeginItemTooltip() )
-			{
-				ImGui::Text( "Suspend the runtime and allowing the user to use the Editor Camera" );
-				ImGui::EndTooltip();
-			}
-		}
+		if( m_RequestRuntime )
+			Viewport_RTControls_Running();
+		else
+			Viewport_RTControls_Default();
 
 		ImGui::PopStyleColor();
 		ImGui::PopStyleVar();
@@ -1965,6 +1903,86 @@ namespace Saturn {
 		ImGui::EndVertical();
 
 		ImGui::End();
+	}
+
+	void EditorLayer::Viewport_RTControls_Default()
+	{
+		if( Auxiliary::ImageButton( m_StartRuntimeTexture, ImVec2( 24.0f, 24.0f ) ) )
+		{
+			m_RequestRuntime = true;
+		}
+
+		if( ImGui::BeginItemTooltip() )
+		{
+			ImGui::BeginHorizontal( "##centerRTtooltip" );
+
+			ImGui::Text( "Request runtime to start" );
+			ImGui::Spring();
+#if defined(SAT_DEBUG)
+			ImGui::Text( "%s", m_RequestRuntime ? "RUNTIME RUNNING" : "RUNTIME NOT RUNNING" );
+			ImGui::Spring();
+#endif
+
+			ImGui::EndHorizontal();
+
+			ImGui::EndTooltip();
+		}
+	}
+
+	void EditorLayer::Viewport_RTControls_Running()
+	{
+		auto runtimeState = m_RuntimeScene->GetRuntimeState();
+
+		// Draw play/resume button
+		{
+			Auxiliary::ScopedDisabledFlag disabled( runtimeState != RuntimeState::Suspended );
+
+			if( Auxiliary::ImageButton( m_StartRuntimeTexture, ImVec2( 24.0f, 24.0f ) ) )
+			{
+				m_RuntimeScene->ResumeRuntime();
+
+				std::string title = std::format( "{0} (Running) - Saturn", Project::GetActiveConfig().Name );
+				Application::Get().GetWindow()->ChangeTitle( title );
+			}
+
+			if( ImGui::BeginItemTooltip() )
+			{
+				ImGui::Text( "Can not start a new runtime while the scene is already in runtime." );
+#if defined(SAT_DEBUG)
+				ImGui::Text( "%s", m_RequestRuntime ? "RUNTIME RUNNING" : "RUNTIME NOT RUNNING" );
+#endif
+				ImGui::EndTooltip();
+			}
+		}
+
+		// Stop
+		if( Auxiliary::ImageButton( m_EndRuntimeTexture, ImVec2( 24.0f, 24.0f ) ) )
+		{
+			m_RequestRuntime = false;
+		}
+
+		if( ImGui::BeginItemTooltip() )
+		{
+			ImGui::Text( "Stop the active runtime" );
+			ImGui::EndTooltip();
+		}
+
+		// Suspend
+		Auxiliary::ScopedDisabledFlag disabledFlag( runtimeState == RuntimeState::Suspended );
+
+		if( Auxiliary::ImageButton( m_PauseRuntimeTexture, ImVec2( 24.0f, 24.0f ) ) )
+		{
+			m_RuntimeScene->SuspendRuntime();
+
+			std::string title = std::format( "{0} (RT Suspended) - Saturn", Project::GetActiveConfig().Name );
+			Application::Get().GetWindow()->ChangeTitle( title );
+		}
+
+		if( ImGui::BeginItemTooltip() )
+		{
+			ImGui::Text( "Suspend the runtime and allowing the user to use the Editor Camera" );
+			ImGui::EndTooltip();
+		}
 	}
 
 	void EditorLayer::Viewport_RTSettings()

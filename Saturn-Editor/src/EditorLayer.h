@@ -95,6 +95,9 @@ namespace Saturn {
 		void Viewport_RTControls();
 		void Viewport_RTSettings();
 		
+		void Viewport_RTControls_Running();
+		void Viewport_RTControls_Default();
+
 		// Close editor and open the project browser.
 		void CloseEditorAndOpenPB();
 		bool OnTitlebarExit();
@@ -150,6 +153,7 @@ namespace Saturn {
 		Ref< Texture2D > m_CheckerboardTexture = nullptr;
 		Ref< Texture2D > m_StartRuntimeTexture = nullptr;
 		Ref< Texture2D > m_EndRuntimeTexture = nullptr;
+		Ref< Texture2D > m_PauseRuntimeTexture = nullptr;
 
 		Ref< Texture2D > m_TranslationTexture = nullptr;
 		Ref< Texture2D > m_RotationTexture = nullptr;

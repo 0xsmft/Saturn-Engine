@@ -46,9 +46,9 @@ namespace Saturn {
 		std::vector<RubyMonitor> GetAllMonitors();
 		RubyMonitor& GetPrimaryMonitor();
 
-		void AddMoninter( const RubyMonitor& rMoniter );
+		void AddMonintor( const RubyMonitor& rMonitor );
 
 	private:
-		std::vector<RubyMonitor> m_Moniters;
+		std::vector<RubyMonitor> m_Monitors;
 	};
 }

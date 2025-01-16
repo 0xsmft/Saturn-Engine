@@ -462,6 +462,22 @@ namespace Saturn {
 		}
 	}
 
+	void AudioSystem::StopSound( UUID UniquePlayerID )
+	{
+		const auto Itr = std::find_if( m_LoadedSounds.begin(), m_LoadedSounds.end(),
+			[ UniquePlayerID ]( const auto& kv )
+		{
+			return kv.first == UniquePlayerID;
+		} );
+
+		if( Itr != m_LoadedSounds.end() )
+		{
+			auto& rSound = ( Itr->second );
+
+			rSound->Stop();
+		}
+	}
+
 	void AudioSystem::UnloadSound( Ref<SoundBase> sound )
 	{
 		auto playerID = sound->m_PlayerID;

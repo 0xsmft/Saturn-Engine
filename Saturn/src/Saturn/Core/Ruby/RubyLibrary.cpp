@@ -61,7 +61,7 @@ namespace Saturn {
 			monitor.WorkSize.x = MonitorInfo.rcWork.right - MonitorInfo.rcWork.left;
 			monitor.WorkSize.y = MonitorInfo.rcWork.bottom - MonitorInfo.rcWork.top;
 
-			pThis->AddMoninter( monitor );
+			pThis->AddMonintor( monitor );
 		}
 
 		return TRUE;
@@ -75,19 +75,19 @@ namespace Saturn {
 		GetAllMonitors();
 	}
 
-	void RubyLibrary::AddMoninter( const RubyMonitor& rMoniter )
+	void RubyLibrary::AddMonintor( const RubyMonitor& rMonitor )
 	{
-		m_Moniters.push_back( rMoniter );
+		m_Monitors.push_back( rMonitor );
 	}
 
 	std::vector<RubyMonitor> RubyLibrary::GetAllMonitors()
 	{
 		int Monitors = GetSystemMetrics( SM_CMONITORS );
 
-		if( m_Moniters.size() != Monitors )
+		if( m_Monitors.size() != Monitors )
 		{
-			m_Moniters.clear();
-			m_Moniters.reserve( static_cast<size_t>( Monitors ) );
+			m_Monitors.clear();
+			m_Monitors.reserve( static_cast<size_t>( Monitors ) );
 
 #if defined(_WIN32)
 			LPARAM userData = (LPARAM)this;
@@ -95,15 +95,15 @@ namespace Saturn {
 #endif
 		}
 
-		return m_Moniters;
+		return m_Monitors;
 	}
 
 	RubyMonitor& RubyLibrary::GetPrimaryMonitor()
 	{
-		if( !m_Moniters.size() )
+		if( !m_Monitors.size() )
 			GetAllMonitors();
 
-		auto Itr = std::find_if( m_Moniters.begin(), m_Moniters.end(),
+		auto Itr = std::find_if( m_Monitors.begin(), m_Monitors.end(),
 			[]( auto& rMonitor ) 
 			{ 
 				return rMonitor.Primary; 

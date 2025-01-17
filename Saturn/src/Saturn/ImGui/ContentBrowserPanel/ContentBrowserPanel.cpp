@@ -635,7 +635,7 @@ namespace Saturn {
 			int itemCount = m_Searching ? m_ValidSearchFiles.size() : m_Files.size();
 			if( m_Searching )
 			{
-				DrawItems( m_ValidSearchFiles, { thumbnailSizeX, thumbnailSizeY }, padding, columnCount );
+				DrawItemsClipped( m_ValidSearchFiles, { thumbnailSizeX, thumbnailSizeY }, padding, columnCount );
 
 				// No longer searching, means that user has clicked on a file/folder.
 				if( !m_Searching )
@@ -643,7 +643,14 @@ namespace Saturn {
 			}
 			else
 			{
-				DrawItems( m_Files, { thumbnailSizeX, thumbnailSizeY }, padding, columnCount );
+				if( m_RenderUnclipped ) 
+				{
+					DrawItemsUnclipped( m_Files, { thumbnailSizeX, thumbnailSizeY }, padding );
+				}
+				else
+				{
+					DrawItemsClipped( m_Files, { thumbnailSizeX, thumbnailSizeY }, padding, columnCount );
+				}
 			}
 
 			if( !m_Searching && m_ValidSearchFiles.size() )
@@ -1238,6 +1245,13 @@ namespace Saturn {
 			if( rItem->GetAssetID() == id )
 			{
 				rItem->Select();
+
+				// TODO: This does not work because the clipper may clip the item cauing it to never be rendered and meaning that it will never get to set the scroll
+				// We could skip the clipper for one frame to allow the item to render and set it's scroll as then next time the will be visible.
+				rItem->ScrollTo();
+
+				m_RenderUnclipped = true;
+
 				break;
 			}
 		}
@@ -1365,7 +1379,7 @@ namespace Saturn {
 		}
 	}
 
-	void ContentBrowserPanel::DrawItems( std::vector<Ref<ContentBrowserItem>>& rList, ImVec2 size, float padding, int columnCount )
+	void ContentBrowserPanel::DrawItemsClipped( std::vector<Ref<ContentBrowserItem>>& rList, ImVec2 size, float padding, int columnCount )
 	{
 		ImGuiListClipper clipper;
 		clipper.Begin( rList.size() );
@@ -1431,6 +1445,31 @@ namespace Saturn {
 
 			first = false;
 		}
+	}
+
+	void ContentBrowserPanel::DrawItemsUnclipped( std::vector<Ref<ContentBrowserItem>>& rList, ImVec2 size, float padding )
+	{
+		for( auto& rItem : rList )
+		{
+			rItem->Draw( { size.x, size.y }, padding );
+
+			// This happens if we rename a file as we then have to create the file cache again.
+			if( !rItem )
+				break;
+
+			if( !rItem->IsSelected() )
+			{
+				// Is the item in the selection list if so and we are no longer selected then we need to remove it.
+				if( const auto Itr = std::find( m_SelectedItems.begin(), m_SelectedItems.end(), rItem ); Itr != m_SelectedItems.end() )
+				{
+					rItem->Deselect();
+
+					m_SelectedItems.erase( Itr );
+				}
+			}
+		}
+
+		m_RenderUnclipped = false;
 	}
 
 }

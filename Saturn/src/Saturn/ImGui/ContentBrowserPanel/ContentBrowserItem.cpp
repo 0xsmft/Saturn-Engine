@@ -99,6 +99,13 @@ namespace Saturn {
 		const ImVec2 InfoTopLeft = ImVec2( TopLeft.x, TopLeft.y + ThumbnailSize.y );
 		const ImVec2 BottomRight = ImVec2( TopLeft.x + ThumbnailSize.x, TopLeft.y + ThumbnailSize.y + InfoPanelHeight );
 
+		if( m_PendingScrollTo )
+		{
+			ImGui::SetScrollHereY();
+
+			m_PendingScrollTo = false;
+		}
+
 		ImGui::PushID( m_Path.c_str() );
 		ImGui::BeginGroup();
 
@@ -517,6 +524,11 @@ namespace Saturn {
 		}
 
 		std::filesystem::remove( m_Path );
+	}
+
+	void ContentBrowserItem::ScrollTo()
+	{
+		m_PendingScrollTo = true;
 	}
 
 	void ContentBrowserItem::HandleDragDrop()

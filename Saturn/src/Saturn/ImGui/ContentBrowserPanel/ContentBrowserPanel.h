@@ -70,7 +70,8 @@ namespace Saturn {
 	private:
 		virtual void UpdateFiles( bool clear = false ) override;
 		virtual void OnItemSelected( ContentBrowserItem* pItem, bool clicked ) override;
-		virtual void DrawItems( std::vector<Ref<ContentBrowserItem>>& rList, ImVec2 size, float padding, int columnCount ) override;
+		virtual void DrawItemsClipped( std::vector<Ref<ContentBrowserItem>>& rList, ImVec2 size, float padding, int columnCount ) override;
+		void DrawItemsUnclipped( std::vector<Ref<ContentBrowserItem>>& rList, ImVec2 size, float padding );
 
 		void BuildSearchList();
 
@@ -129,5 +130,6 @@ namespace Saturn {
 
 		bool m_OpenScriptsPopup = false;
 		bool m_OpenClassInstancePopup = false;
+		bool m_RenderUnclipped = false;
 	};
 }

@@ -61,7 +61,7 @@ namespace Saturn {
 		virtual void UpdateFiles( bool clear = false ) = 0;
 
 		virtual void OnItemSelected( ContentBrowserItem* pItem, bool clicked ) = 0;
-		virtual void DrawItems( std::vector<Ref<ContentBrowserItem>>& rList, ImVec2 size, float padding, int columnCount ) = 0;
+		virtual void DrawItemsClipped( std::vector<Ref<ContentBrowserItem>>& rList, ImVec2 size, float padding, int columnCount ) = 0;
 
 		Ref<ContentBrowserItem> FindItem( const std::filesystem::path& rPath );
 		void FindAndRenameItem( const std::filesystem::path& rName );

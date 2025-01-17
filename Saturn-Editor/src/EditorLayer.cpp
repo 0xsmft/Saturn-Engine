@@ -978,29 +978,40 @@ namespace Saturn {
 			ImGui::Separator();
 			ImGui::PopFont();
 
-			ImGui::BeginVertical( "##PRJDBGV" );
+			ImGuiTableFlags TableFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollX | ImGuiTableFlags_NoBordersInBody;
+			if( ImGui::BeginTable( "##DebugInfoPrj", 2, TableFlags ) )
+			{
+				ImGui::TableSetupColumn( "Key" );
+				ImGui::TableSetupColumn( "Value" );
 
-			auto drawDebugText = []( const std::string& id, const std::string& key, const std::string& value )
+				ImGui::TableHeadersRow();
+
 				{
-					ImGui::BeginHorizontal( id.c_str() );
-					ImGui::Text( "%s", key.c_str() );
-					ImGui::Text( " : " );
-					ImGui::Text( "%s", value.c_str() );
-					ImGui::EndHorizontal();
-				};
+					auto drawRow = []( const char* pKey, const std::string& value )
+					{
+						ImGui::TableNextRow();
+						
+						ImGui::TableSetColumnIndex( 0 );
+						ImGui::Text( "%s", pKey );
+						
+						ImGui::TableSetColumnIndex( 1 );
+						ImGui::Text( "%s", value.c_str() );
+					};
 
-			drawDebugText( "##PRJD1", "Root Path", ActiveProject->GetRootDir().string() );
-			drawDebugText( "##PRJD2", ".sproject Path", ActiveProject->GetConfig().Path.string() );
-			drawDebugText( "##PRJD3", "Assets Path", ActiveProject->GetFullAssetPath().string() );
-			drawDebugText( "##PRJD4", "Premake filename", ActiveProject->GetPremakeFile().string() );
-			drawDebugText( "##PRJD5", "Temp Path", ActiveProject->GetTempDir().string() );
-			drawDebugText( "##PRJD6", "Bin Path", ActiveProject->GetBinDir().string() );
-			drawDebugText( "##PRJD7", "Cache Path", ActiveProject->GetFullCachePath().string() );
+					drawRow( "Root Path", ActiveProject->GetRootDir().string() );
+					drawRow( ".sproject Path", ActiveProject->GetConfig().Path.string() );
+					drawRow( "Asset Path", ActiveProject->GetFullAssetPath().string() );
+					drawRow( "Premake filename", ActiveProject->GetPremakeFile().string() );
+					drawRow( "Temporary Path", ActiveProject->GetTempDir().string());
+					drawRow( "Binary Path", ActiveProject->GetBinDir().string() );
+					drawRow( "Cache Path", ActiveProject->GetFullCachePath().string() );
 
-			drawDebugText( "##PRJD8", "Module Path", GameModule::Get().GetModulePath().string() );
-			drawDebugText( "##PRJD9", "Module Timestamp", GameModule::Get().GetTimestamp() );
+					drawRow( "Module Path", GameModule::Get().GetModulePath().string() );
+					drawRow( "Module Timestamp", GameModule::Get().GetTimestamp() );
+				}
 
-			ImGui::EndVertical();
+				ImGui::EndTable();
+			}
 #endif
 		}
 
@@ -1045,13 +1056,14 @@ namespace Saturn {
 			Filter.Draw( "##search" );
 
 			ImGuiTableFlags TableFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollX | ImGuiTableFlags_NoBordersInBody;
-			if( ImGui::BeginTable( "##FileTable", 5, TableFlags, ImVec2( ImGui::GetWindowSize().x, ImGui::GetWindowSize().y ) ) )
+			if( ImGui::BeginTable( "##FileTable", 6, TableFlags, ImVec2( ImGui::GetWindowSize().x, ImGui::GetWindowSize().y ) ) )
 			{
 				ImGui::TableSetupColumn( "Asset Name" );
 				ImGui::TableSetupColumn( "ID" );
 				ImGui::TableSetupColumn( "Type" );
 				ImGui::TableSetupColumn( "Path" );
 				ImGui::TableSetupColumn( "Version" );
+				ImGui::TableSetupColumn( "Find Asset", ImGuiTableColumnFlags_NoHeaderLabel );
 
 				ImGui::TableHeadersRow();
 
@@ -1082,6 +1094,16 @@ namespace Saturn {
 						ImGui::SameLine();
 						ImGui::Text( "(Version does not match)" );
 					}
+
+					ImGui::TableSetColumnIndex( 5 );
+					ImGui::PushID( ( int ) id );
+					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), { 24.0f, ImGui::TableGetHeaderRowHeight() } ) )
+					{
+						Ref<ContentBrowserPanel> contentBrowserPanel = m_PanelManager->GetPanel<ContentBrowserPanel>();
+
+						contentBrowserPanel->BrowseToItem( asset->Path, id );
+					}
+					ImGui::PopID();
 				}
 
 				ImGui::EndTable();
@@ -1102,11 +1124,12 @@ namespace Saturn {
 			Filter.Draw( "##search" );
 
 			ImGuiTableFlags TableFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollX | ImGuiTableFlags_NoBordersInBody;
-			if( ImGui::BeginTable( "##FileTable", 3, TableFlags, ImVec2( ImGui::GetWindowSize().x, ImGui::GetWindowSize().y * 0.85f ) ) )
+			if( ImGui::BeginTable( "##FileTable", 4, TableFlags, ImVec2( ImGui::GetWindowSize().x, ImGui::GetWindowSize().y * 0.85f ) ) )
 			{
 				ImGui::TableSetupColumn( "Asset Name" );
 				ImGui::TableSetupColumn( "ID" );
 				ImGui::TableSetupColumn( "Type" );
+				ImGui::TableSetupColumn( "Find Asset", ImGuiTableColumnFlags_NoHeaderLabel );
 
 				ImGui::TableHeadersRow();
 
@@ -1125,6 +1148,16 @@ namespace Saturn {
 
 					ImGui::TableSetColumnIndex( 2 );
 					ImGui::Text( AssetTypeToString( asset->GetAssetType() ).data(), false );
+
+					ImGui::TableSetColumnIndex( 3 );
+					ImGui::PushID( (int)id );
+					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), { ImGui::TableGetHeaderRowHeight(), ImGui::TableGetHeaderRowHeight() } ) )
+					{
+						Ref<ContentBrowserPanel> contentBrowserPanel = m_PanelManager->GetPanel<ContentBrowserPanel>();
+
+						contentBrowserPanel->BrowseToItem( asset->Path, id );
+					}
+					ImGui::PopID();
 				}
 
 				ImGui::EndTable();

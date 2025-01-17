@@ -98,6 +98,7 @@ namespace Saturn {
 		void Deselect();
 		void Rename();
 		void Delete();
+		void ScrollTo();
 
 	private:
 		void HandleDragDrop();
@@ -119,6 +120,8 @@ namespace Saturn {
 
 		bool m_IsRenaming = false;
 		bool m_StartingRename = false;
+
+		bool m_PendingScrollTo = false;
 
 		Ref<Asset> m_Asset = nullptr;
 		ContentBrowserItemType m_Type = ContentBrowserItemType::Asset;

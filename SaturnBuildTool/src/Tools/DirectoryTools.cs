@@ -1,9 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SaturnBuildTool.Tools
 {
@@ -15,23 +12,19 @@ namespace SaturnBuildTool.Tools
 
             try
             {
-                foreach (string d in Directory.GetDirectories(sDir))
+                foreach( string f in Directory.GetFiles( sDir ) )
                 {
-                    foreach (string f in Directory.GetFiles(d))
-                    {
-                        strings.Add(f);
-                    }
-                    DirSearch(d);
+                    strings.Add( f );
                 }
 
-                foreach (string f in Directory.GetFiles(sDir))
+                foreach( string d in Directory.GetDirectories( sDir ) )
                 {
-                    strings.Add(f);
+                    strings.AddRange( DirSearch( d ) );
                 }
             }
-            catch (System.Exception excpt)
+            catch( System.Exception excpt )
             {
-                Console.WriteLine(excpt.Message);
+                Console.WriteLine( excpt.Message );
             }
 
             return strings;
@@ -102,7 +95,7 @@ namespace SaturnBuildTool.Tools
                         strings.Add(f);
                     }
 
-                    DirSearch(d, isSourceOnly);
+                    strings.AddRange( DirSearch(d, isSourceOnly) );
                 }
 
                 foreach (string f in Directory.GetFiles(sDir))

@@ -1,11 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.SymbolStore;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
-using System.Web;
 
 namespace SaturnBuildTool.Auxiliary
 {
@@ -15,7 +9,7 @@ namespace SaturnBuildTool.Auxiliary
 
         private readonly Dictionary<string, string> ParsedMap = new Dictionary<string, string>();
         
-        public bool Parse( List<string> args )
+        public void Parse( List<string> args )
         {
             for( int i = 0; i < args.Count; i++ )
             {
@@ -41,8 +35,6 @@ namespace SaturnBuildTool.Auxiliary
                     }
                 }
             }
-
-            return CheckForEssentialArgs();
         }
 
         public bool FindFlag( string key ) 
@@ -60,43 +52,14 @@ namespace SaturnBuildTool.Auxiliary
             return null;
         }
 
-        // Essential args are:
-        // The Action, BUILD, REBULD, CLEAN
-        // The project name (/NAME:)
-        // The target platform, /Win64
-        // The configuration, /Debug, /Release, /Dist
-        // The project location (/PROJECT:)
-        private bool CheckForEssentialArgs()
+        public bool HasArgument( string key ) 
         {
-            bool result = false;
+            return ParsedMap.ContainsKey( key );
+        }
 
-            foreach( KeyValuePair<string, string> kv in ParsedMap )
-            {
-                if( kv.Value == "NAME" && kv.Value != null )
-                {
-                    result |= true;
-                }
-                else if( kv.Value == "WIN64" )
-                {
-                    result |= true;
-                }
-                else if( kv.Value == "DEBUG" || kv.Value == "RELEASE" || kv.Value == "DIST" )
-                {
-                    result |= true;
-                }
-                else if( kv.Value == "PROJECT" && kv.Value != null )
-                {
-                    result |= true;
-                }
-            }
-
-            if( FindFlag( "DEBUG" ) && FindFlag( "HOTRELOAD" ) ) 
-            {
-                Console.WriteLine( "ERROR: \"/HOTRELOAD\" is not available when building for a debug configuration. You must use a release configuration to use \"HOTRELOAD\"" );
-                result = false;
-            }
-
-            return result;
+        public int GetComamndCount() 
+        {
+            return ParsedMap.Count;
         }
     }
 }

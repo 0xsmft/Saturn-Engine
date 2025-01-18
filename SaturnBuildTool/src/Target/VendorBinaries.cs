@@ -45,7 +45,7 @@ namespace SaturnBuildTool
         // TEMP: There is 1000% a better way of doing this.
         public static string GetBinPath(VendorProject project, UserTarget target) 
         {
-            string saturnDir = Environment.GetEnvironmentVariable("SATURN_DIR");
+            string saturnDir = ProjectInfo.Instance.SaturnDir;
             string binPath = Path.Combine(saturnDir, "Saturn\\vendor");
 
             switch ( project ) 

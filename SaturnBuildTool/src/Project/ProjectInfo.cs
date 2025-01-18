@@ -51,6 +51,8 @@ namespace SaturnBuildTool
         // Path to header tool exe
         public string HeaderToolExePath { get; set; }
 
+        public string SaturnDir { get; set; }
+
         // Setup the ProjectInfo
         // Args:
         // 0: The Action, BUILD, REBULD, CLEAN. TODO
@@ -58,8 +60,10 @@ namespace SaturnBuildTool
         // 2: The target platform, Win64
         // 3: The configuration, Debug, Release, Dist
         // 4: The project location
-        public void Setup()
+        public bool Setup()
         {
+            if( !CheckAllArgs() ) return false;
+
             RootDirectory = CommandLineParser.Instance.FindValueFromKey( "PROJECT" );
 
             // Name
@@ -92,22 +96,79 @@ namespace SaturnBuildTool
             FindBuildRuleFile();
 
             // Find Header tool location
-            string saturnLocation = Environment.GetEnvironmentVariable( "SATURN_DIR" );
+            SaturnDir = CommandLineParser.Instance.FindValueFromKey( "SATURNDIR" );
+
+            if( SaturnDir == string.Empty ) 
+            {
+                Console.WriteLine( "No override Saturn directory was set using location from SATURN_DIR Environment Variable." );
+                SaturnDir = Environment.GetEnvironmentVariable( "SATURN_DIR" );
+            }
+            
             switch( CurrentConfigKind )
             {
                 case ConfigKind.Debug:
                     {
-                        HeaderToolExePath = saturnLocation + "\\bin\\Debug-windows-x86_64\\SaturnHeaderTool\\SaturnHeaderTool.exe";
+                        HeaderToolExePath = SaturnDir + "\\bin\\Debug-windows-x86_64\\SaturnHeaderTool\\SaturnHeaderTool.exe";
                     }
                     break;
 
                 case ConfigKind.Dist:
                 case ConfigKind.Release:
                     {
-                        HeaderToolExePath = saturnLocation + "\\bin\\Release-windows-x86_64\\SaturnHeaderTool\\SaturnHeaderTool.exe";
+                        HeaderToolExePath = SaturnDir + "\\bin\\Release-windows-x86_64\\SaturnHeaderTool\\SaturnHeaderTool.exe";
                     }
                     break;
             }
+
+            return true;
+        }
+
+        private bool CheckAllArgs() 
+        {
+            bool result = true;
+
+            if( 
+                !CommandLineParser.Instance.HasArgument( "BUILD" ) || 
+                !CommandLineParser.Instance.HasArgument( "REBUILD" ) || 
+                !CommandLineParser.Instance.HasArgument( "CLEAN" ) ) 
+            {
+                Console.WriteLine( "Missing action command! (/BUILD /REBUILD /CLEAN)" );
+                result = false;
+            }
+
+            if(
+                !CommandLineParser.Instance.HasArgument( "DEBUG" ) ||
+                !CommandLineParser.Instance.HasArgument( "RELEASE" ) ||
+                !CommandLineParser.Instance.HasArgument( "DIST" ) )
+            {
+                Console.WriteLine( "Missing config command! (/DEBUG /RELEASE /DIST)" );
+                result = false;
+            }
+
+            if( !CommandLineParser.Instance.HasArgument( "NAME" ) )
+            {
+                Console.WriteLine( "Missing project name command! (/NAME)" );
+                result = false;
+            }
+
+            if( !CommandLineParser.Instance.HasArgument( "Win64" ) )
+            {
+                Console.WriteLine( "Missing target platform command! (/Win64)" );
+                result = false;
+            }
+
+            if( !CommandLineParser.Instance.HasArgument( "PROJECT" ) )
+            {
+                Console.WriteLine( "Missing project path command! (/PROJECT)" );
+                result = false;
+            }
+
+            if( !result )
+            {
+                Console.WriteLine( "Please use the help command (/HELP) for more information on the command line arguments." );
+            }
+
+            return result;
         }
 
         private void GetConfigKind()

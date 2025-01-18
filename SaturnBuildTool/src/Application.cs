@@ -41,12 +41,6 @@ namespace SaturnBuildTool
         // Includes every file in the Source dir (inc, .hpp .cpp)
         private List<string> SourceFiles = null;
 
-        // Args:
-        // 0: The Action, BUILD, REBULD, CLEAN <--TODO
-        // 1: The project name
-        // 2: The target platform, Win64
-        // 3: The configuration, Debug, Release, Dist
-        // 4: The project location
         public Application( string[] args )
         {
             Args = new List<string>();
@@ -55,12 +49,75 @@ namespace SaturnBuildTool
 
         public bool Init()
         {
-            Console.WriteLine( "==== Saturn Build Tool v0.0.3 (Engine Version: 0.1.3) ====" );
-
+            bool safeToContinue = false;
             CommandLineParser.Instance.Parse( Args );
 
+            // Handle command lines args
+            if( CheckArgs() ) 
+            {
+                safeToContinue = InitForBuilding();
+            }
+
+            return safeToContinue;
+        }
+
+        private bool CheckArgs() 
+        {
+            if( CommandLineParser.Instance.FindFlag( "HELP" ) )
+            {
+                Console.WriteLine( "Help for Saturn Build Tool X0.0.3 (Engine Version: 0.1.4 4100)" );
+                Console.WriteLine( "Options:" );
+                Console.WriteLine( " Action Options:" );
+                Console.WriteLine( "  /BUILD* -- build the project" );
+                Console.WriteLine( "  /REBUILD* -- rebuild the project" );
+                Console.WriteLine( "  /CLEAN* -- clean the project" );
+                Console.WriteLine( " Project Options:" );
+                Console.WriteLine( "  /PROJECT* -- path to the project root dir (same place where the .sproject file is located)" );
+                Console.WriteLine( "  /NAME* -- project name MUST match with the .sproject file name!" );
+                Console.WriteLine( "  /SATURNDIR -- override the Saturn Root Directory by default the build tool will use the \"SATURN_DIR\" environment variable" );
+                Console.WriteLine( " Compile Options:" );
+                Console.WriteLine( "  /WIN64* -- build for Windows x64" );
+                Console.WriteLine( "  /HOTRELOAD -- this is an internal command and is used for hot reloading, when this command is suggested the build tool will create a special timestamp file and output files with the timestamp suffix" );
+                Console.WriteLine( "  Configuration Options:" );
+                Console.WriteLine( "   /DEBUG* -- build the project for Debug configuration with full symbols" );
+                Console.WriteLine( "   /RELEASE* -- build the project for Release configuration with symbols on for this project but symbols off for third party projects" );
+                Console.WriteLine( "   /DIST* -- build the project for the Dist configuration" );
+                Console.WriteLine( " Auxiliary Options:" );
+                Console.WriteLine( "  /HELP -- this command that displays the help message" );
+                Console.WriteLine( "  /VERISON -- displays the version for the build tool" );
+                Console.WriteLine( " * indicates required argument" );
+
+                return false;
+            }
+
+            if( CommandLineParser.Instance.FindFlag( "VERSION" ) )
+            {
+                Console.WriteLine( "Saturn Build Tool X0.0.3 (Engine Version: 0.1.4 4100)" );
+                return false;
+            }
+
+            if( CommandLineParser.Instance.GetComamndCount() == 0 ) 
+            {
+                Console.WriteLine( "You must provide more than one argument!" );
+
+                // treat as error
+                ExitCode = 1;
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool InitForBuilding() 
+        {
+            Console.WriteLine( "==== Saturn Build Tool X0.0.3 (Engine Version: 0.1.4 4100) ====" );
+
             // Setup project info from args.
-            ProjectInfo.Instance.Setup();
+            if( !ProjectInfo.Instance.Setup() )
+            {
+                ExitCode = 1;
+                return false;
+            }
 
             TargetToBuild = UserTarget.SetupUserTarget();
 
@@ -392,7 +449,7 @@ namespace SaturnBuildTool
 
             Console.WriteLine( "Done cleaning in {0}", time.Elapsed );
         }
-
+        
         public void Run()
         {
             switch( Action )

@@ -182,8 +182,11 @@ namespace Saturn {
 		glm::vec2 currentMousePos = Input::Get().MousePosition();
 		glm::vec2 delta = m_LastMousePos - currentMousePos;
 
-		if( m_LastMousePos == currentMousePos )
+		if( m_LastMousePos == currentMousePos ) 
+		{
+			m_MouseUpMovement = 0.0f;
 			return;
+		}
 
 		if( delta.x != 0.0f )
 			m_MouseUpMovement = delta.x * m_MouseSensitivity * ts.Seconds();

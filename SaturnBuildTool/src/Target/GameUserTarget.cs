@@ -10,7 +10,7 @@ namespace SaturnBuildTool
         protected string SaturnSourceDir = "";
         protected string SaturnVendorDir = "";
 
-        public override void Init() 
+        public override void Init()
         {
             base.Init();
 
@@ -26,57 +26,58 @@ namespace SaturnBuildTool
             // Saturn:
             SaturnRootDir = ProjectInfo.Instance.SaturnDir;
 
-            SaturnSingletonDir = Path.Combine(SaturnRootDir, "Saturn-SharedStorage");
+            SaturnSingletonDir = Path.Combine( SaturnRootDir, "Saturn-SharedStorage" );
 
-            SaturnVendorDir = Path.Combine(SaturnRootDir, "Saturn\\vendor" );
-            SaturnSourceDir = Path.Combine(SaturnRootDir, "Saturn\\src" );
+            SaturnVendorDir = Path.Combine( SaturnRootDir, "Saturn", "vendor" );
+            SaturnSourceDir = Path.Combine( SaturnRootDir, "Saturn", "src" );
 
-            Includes.Add(SaturnSourceDir);
+            Includes.Add( SaturnSourceDir );
 
             // Saturn Vendor
-            Includes.Add( Path.Combine(SaturnVendorDir, "spdlog\\include") );
-            Includes.Add( Path.Combine(SaturnVendorDir, "vulkan\\include") );
-            Includes.Add( Path.Combine(SaturnVendorDir, "glm") );
-            Includes.Add( Path.Combine(SaturnVendorDir, "imgui") );
-            Includes.Add( Path.Combine(SaturnVendorDir, "entt\\include") );
-            Includes.Add( Path.Combine(SaturnVendorDir, "assimp\\include") );
-            Includes.Add( Path.Combine(SaturnVendorDir, "shaderc\\libshaderc\\include") );
-            Includes.Add( Path.Combine(SaturnVendorDir, "SPRIV-Cross\\src") );
-            Includes.Add( Path.Combine(SaturnVendorDir, "vma\\src") );
-            Includes.Add( Path.Combine(SaturnVendorDir, "ImGuizmo\\src") );
-            Includes.Add( Path.Combine(SaturnVendorDir, "yaml-cpp\\include") );
-            Includes.Add( Path.Combine(SaturnVendorDir, "imgui_node_editor") );
-            Includes.Add( Path.Combine(SaturnVendorDir, "physx\\include") );
-            Includes.Add( Path.Combine(SaturnVendorDir, "physx\\include\\pxshared") );
-            Includes.Add( Path.Combine(SaturnVendorDir, "physx\\include\\physx") );
-            Includes.Add( Path.Combine(SaturnVendorDir, "tracy\\src") );
-            Includes.Add( Path.Combine(SaturnVendorDir, "miniaudio\\src") );
-            Includes.Add( Path.Combine(SaturnSingletonDir, "src") );
+            Includes.Add( Path.Combine( SaturnVendorDir, "spdlog", "include" ) );
+            Includes.Add( Path.Combine( SaturnVendorDir, "vulkan", "include" ) );
+            Includes.Add( Path.Combine( SaturnVendorDir, "glm" ) );
+            Includes.Add( Path.Combine( SaturnVendorDir, "imgui" ) );
+            Includes.Add( Path.Combine( SaturnVendorDir, "entt", "include" ) );
+            Includes.Add( Path.Combine( SaturnVendorDir, "assimp", "include" ) );
+            Includes.Add( Path.Combine( SaturnVendorDir, "shaderc", "libshaderc", "include" ) );
+            Includes.Add( Path.Combine( SaturnVendorDir, "SPRIV-Cross", "src" ) );
+            Includes.Add( Path.Combine( SaturnVendorDir, "vma", "src" ) );
+            Includes.Add( Path.Combine( SaturnVendorDir, "ImGuizmo", "src" ) );
+            Includes.Add( Path.Combine( SaturnVendorDir, "yaml-cpp", "include" ) );
+            Includes.Add( Path.Combine( SaturnVendorDir, "imgui_node_editor" ) );
+            Includes.Add( Path.Combine( SaturnVendorDir, "physx", "include" ) );
+            Includes.Add( Path.Combine( SaturnVendorDir, "physx", "include", "pxshared" ) );
+            Includes.Add( Path.Combine( SaturnVendorDir, "physx", "include", "physx" ) );
+            Includes.Add( Path.Combine( SaturnVendorDir, "tracy", "src" ) );
+            Includes.Add( Path.Combine( SaturnVendorDir, "miniaudio", "src" ) );
+            Includes.Add( Path.Combine( SaturnSingletonDir, "src" ) );
 
             string saturnBinDir = SaturnRootDir;
             string ssBinDir = SaturnRootDir;
-            saturnBinDir = Path.Combine(saturnBinDir, "bin" );
-            ssBinDir = Path.Combine(ssBinDir, "bin" );
+            saturnBinDir = Path.Combine( saturnBinDir, "bin" );
+            ssBinDir = Path.Combine( ssBinDir, "bin" );
 
-            switch ( CurrentConfig ) 
+            switch( CurrentConfig )
             {
-                case ConfigKind.Debug: 
+                case ConfigKind.Debug:
                     {
-                        saturnBinDir = Path.Combine(saturnBinDir, "Debug-windows-x86_64\\Saturn" );
-                        ssBinDir = Path.Combine(ssBinDir, "Debug-windows-x86_64\\Saturn-SharedStorage");
-                    } break;
+                        saturnBinDir = Path.Combine( saturnBinDir, "Debug-windows-x86_64", "Saturn" );
+                        ssBinDir = Path.Combine( ssBinDir, "Debug-windows-x86_64", "Saturn-SharedStorage" );
+                    }
+                    break;
 
                 case ConfigKind.Release:
                     {
-                        saturnBinDir = Path.Combine(saturnBinDir, "Release-windows-x86_64\\Saturn");
-                        ssBinDir = Path.Combine(ssBinDir, "Release-windows-x86_64\\Saturn-SharedStorage");
+                        saturnBinDir = Path.Combine( saturnBinDir, "Release-windows-x86_64", "Saturn" );
+                        ssBinDir = Path.Combine( ssBinDir, "Release-windows-x86_64", "Saturn-SharedStorage" );
                     }
                     break;
 
                 case ConfigKind.Dist:
                     {
-                        saturnBinDir = Path.Combine(saturnBinDir, "Dist-windows-x86_64\\Saturn");
-                        ssBinDir = Path.Combine(ssBinDir, "Dist-windows-x86_64\\Saturn-SharedStorage");
+                        saturnBinDir = Path.Combine( saturnBinDir, "Dist-windows-x86_64", "Saturn" );
+                        ssBinDir = Path.Combine( ssBinDir, "Dist-windows-x86_64", "Saturn-SharedStorage" );
                     }
                     break;
             }
@@ -84,31 +85,31 @@ namespace SaturnBuildTool
             string libPath = saturnBinDir;
 
             // Core links
-            Links.Add("Saturn.lib");
-            Links.Add("Saturn-SharedStorage.lib");
+            Links.Add( "Saturn.lib" );
+            Links.Add( "Saturn-SharedStorage.lib" );
 
-            PreprocessorDefines.Add("SATURN_SS_IMPORT");
-            PreprocessorDefines.Add("TRACY_DELAYED_INIT");
-            PreprocessorDefines.Add("TRACY_MANUAL_LIFETIME");
-            PreprocessorDefines.Add("TRACY_ENABLE");
+            PreprocessorDefines.Add( "SATURN_SS_IMPORT" );
+            PreprocessorDefines.Add( "TRACY_DELAYED_INIT" );
+            PreprocessorDefines.Add( "TRACY_MANUAL_LIFETIME" );
+            PreprocessorDefines.Add( "TRACY_ENABLE" );
 
             LibraryPaths.Add( libPath );
             LibraryPaths.Add( ssBinDir );
 
-            for ( int i = 0; i < Enum.GetNames(typeof(VendorProject)).Length; i++ ) 
+            for( int i = 0; i < Enum.GetNames( typeof( VendorProject ) ).Length; i++ )
             {
-                string path = VendorBinaries.GetBinPath( (VendorProject)i, this );
+                string path = VendorBinaries.GetBinPath( ( VendorProject ) i, this );
 
-                LibraryPaths.Add(path);
+                LibraryPaths.Add( path );
             }
 
             // Vendor links
-            Links.Add("ImGui.lib");
-            Links.Add("shaderc.lib");
-            Links.Add("SPIRV-Cross.lib");
-            Links.Add("yaml-cpp.lib");
-            Links.Add("Tracy.lib");
-            Links.Add("zlib.lib");
+            Links.Add( "ImGui.lib" );
+            Links.Add( "shaderc.lib" );
+            Links.Add( "SPIRV-Cross.lib" );
+            Links.Add( "yaml-cpp.lib" );
+            Links.Add( "Tracy.lib" );
+            Links.Add( "zlib.lib" );
         }
     }
 }

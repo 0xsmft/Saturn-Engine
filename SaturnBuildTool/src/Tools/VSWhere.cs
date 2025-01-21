@@ -8,7 +8,7 @@ namespace SaturnBuildTool.Tools
     {
         public static string FindVSRootDir() 
         {
-            string VSWherePath = "C:/Program Files (x86)/Microsoft Visual Studio/Installer/vswhere.exe";
+            string VSWherePath = "C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\vswhere.exe";
 
             ProcessStartInfo vswinfo = new ProcessStartInfo();
             vswinfo.FileName = VSWherePath;
@@ -30,7 +30,7 @@ namespace SaturnBuildTool.Tools
         public static string FindMSVCToolsDir()
         {
             string VSWherePath = FindVSRootDir();
-            string CLLocation = Path.Combine( VSWherePath, "VC\\Tools\\MSVC\\" );
+            string CLLocation = Path.Combine( VSWherePath, "VC", "Tools", "MSVC" );
 
             // We now have folder with the version name, but we need make sure that the first one will be the highest version.
             var files = Directory.EnumerateDirectories( CLLocation ).OrderByDescending( filename => filename );
@@ -41,7 +41,7 @@ namespace SaturnBuildTool.Tools
                 return d;
             }
 
-            return "";
+            return null;
         }
     }
 }

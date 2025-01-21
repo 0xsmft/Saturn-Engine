@@ -4,7 +4,7 @@ namespace SaturnBuildTool
 {
     internal class MSVCToolchain : ToolchainBase
     {
-        public MSVCToolchain(UserTarget target)
+        public MSVCToolchain( UserTarget target )
         {
             TargetToBuild = target;
         }

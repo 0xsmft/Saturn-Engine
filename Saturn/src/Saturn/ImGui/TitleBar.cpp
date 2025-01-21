@@ -44,8 +44,8 @@ namespace Saturn {
 
 	void TitleBar::Draw()
 	{
-		ImGui::PushStyleVar( ImGuiStyleVar_FramePadding, ImVec2( 5, 5 ) );
-		ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 5, 5 ) );
+		ImGui::PushStyleVar( ImGuiStyleVar_FramePadding, ImVec2( 5.0f, 5.0f ) );
+		ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 5.0f, 5.0f ) );
 
 		RubyWindow* pWindow = Application::Get().GetWindow();
 
@@ -179,15 +179,6 @@ namespace Saturn {
 
 					if( pressed )
 						Application::Get().GetWindow()->Minimize();
-
-					if( hovered )
-					{
-						if( ImGui::BeginTooltip() )
-						{
-							ImGui::Text( "Minimize" );
-							ImGui::EndTooltip();
-						}
-					}
 
 					buttonRect.Min.x -= buttonSize;
 					buttonRect.Max.x -= buttonSize;

@@ -11,7 +11,7 @@ namespace SaturnBuildTool
 
         public override int Compile(string InputFile)
         {
-            MSVCCompileTask compileTask = new MSVCCompileTask(InputFile, TargetToBuild);
+            //MSVCCompileTask compileTask = new MSVCCompileTask(InputFile, TargetToBuild);
 
             int result = -1;
 
@@ -29,7 +29,7 @@ namespace SaturnBuildTool
 
         public override int Link()
         {
-            MSVCLinkTask link = new MSVCLinkTask(TargetToBuild);
+            //MSVCLinkTask link = new MSVCLinkTask(TargetToBuild);
 
             int result = -1;
 

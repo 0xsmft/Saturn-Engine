@@ -25,7 +25,7 @@ namespace SaturnBuildTool
 
         private UserTarget TargetToBuild = null;
 
-        private ToolchainBase Toolchain { get; set; }
+        private ToolchainBase Toolchain;
 
         private FileCache FileCache = null;
 

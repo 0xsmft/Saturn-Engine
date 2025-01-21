@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace SaturnBuildTool.Auxiliary
 {
@@ -11,6 +12,7 @@ namespace SaturnBuildTool.Auxiliary
         
         public void Parse( List<string> args )
         {
+            CultureInfo culture = CultureInfo.InvariantCulture;
             for( int i = 0; i < args.Count; i++ )
             {
                 string arg = args[ i ];
@@ -24,14 +26,14 @@ namespace SaturnBuildTool.Auxiliary
                     // Substring( 1 ) to remove "/"
                     if( position > 0 )
                     {
-                        string key = arg.Substring( 1, position - 1 ).ToUpper();
+                        string key = arg.Substring( 1, position - 1 ).ToUpper( culture );
                         string value = arg.Substring( position + 1 );
 
                         ParsedMap[ key ] = value;
                     }
                     else
                     {
-                        ParsedMap[ arg.Substring( 1 ) ] = "true";
+                        ParsedMap[ arg.Substring( 1 ).ToUpper( culture ) ] = "true";
                     }
                 }
             }
@@ -39,14 +41,14 @@ namespace SaturnBuildTool.Auxiliary
 
         public bool FindFlag( string key ) 
         {
-            return ParsedMap.ContainsKey( key );
+            return ParsedMap.ContainsKey( key.ToUpper( CultureInfo.InvariantCulture ) );
         }
 
         public string FindValueFromKey( string key ) 
         {
-            if( ParsedMap.ContainsKey( key ) ) 
+            if( ParsedMap.ContainsKey( key.ToUpper( CultureInfo.InvariantCulture ) ) ) 
             {
-                return ParsedMap[ key ];
+                return ParsedMap[ key.ToUpper( CultureInfo.InvariantCulture ) ];
             }
 
             return null;
@@ -54,7 +56,7 @@ namespace SaturnBuildTool.Auxiliary
 
         public bool HasArgument( string key ) 
         {
-            return ParsedMap.ContainsKey( key );
+            return ParsedMap.ContainsKey( key.ToUpper( CultureInfo.InvariantCulture ) );
         }
 
         public int GetComamndCount() 

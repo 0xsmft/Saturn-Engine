@@ -580,7 +580,7 @@ project "SaturnBuildTool"
 
 	postbuildcommands
 	{
-		'{COPYFILE} "../../../SaturnBuildTool/RT" "RT"'
+		'{COPY} "../../../SaturnBuildTool/RT" "RT/"'
 	}
 
 	filter { "configurations:Debug" }

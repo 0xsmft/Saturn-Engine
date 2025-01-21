@@ -37,10 +37,8 @@ namespace SaturnBuildTool
         // The directory where the ".Build.cs" files are located.
         public string TargetDir { get; set; }
 
-        private string TargetPlatformName { get; set; }
         public ArchitectureKind TargetPlatformKind = ArchitectureKind.Unknown;
 
-        private string ConfigName { get; set; }
         public ConfigKind CurrentConfigKind;
 
         public string FileCacheLocation { get; set; }
@@ -72,7 +70,12 @@ namespace SaturnBuildTool
             // Source
             SourceDir = Path.Combine( RootDirectory, "Source" );
             SourceDir = Path.Combine( SourceDir, Name );
-            SourceDir = SourceDir.Replace( "/", "\\" );
+
+            if( !Directory.Exists( SourceDir ) ) 
+            {
+                Console.WriteLine( $"Source directory \"{SourceDir}\" does not exist!" );
+                return false;
+            }
 
             // Target config file
             // So if we had a project it would be:
@@ -81,14 +84,24 @@ namespace SaturnBuildTool
             // As the source folder contains a folder with all of the source of the project
             // And then a file with the build rules.
             TargetDir = Path.Combine( RootDirectory, "Source" );
-            TargetDir = TargetDir.Replace( "/", "\\" );
 
             // Build folder
             BuildDir = Path.Combine( RootDirectory, "Build" );
-            BuildDir = BuildDir.Replace( "/", "\\" );
+
+            if( !Directory.Exists( BuildDir ) )
+            {
+                Console.WriteLine( $"Build directory \"{SourceDir}\" does not exist!" );
+                return false;
+            }
 
             // Filecache
             FileCacheLocation = Path.Combine( RootDirectory, "Filecache.fc" );
+
+            if( !File.Exists( FileCacheLocation ) )
+            {
+                Console.WriteLine( $"File cache does not exist looking for \"{SourceDir}\"" );
+                return false;
+            }
 
             GetTargetPlatform();
             GetConfigKind();
@@ -98,9 +111,9 @@ namespace SaturnBuildTool
             // Find Header tool location
             SaturnDir = CommandLineParser.Instance.FindValueFromKey( "SATURNDIR" );
 
-            if( SaturnDir == string.Empty ) 
+            if( SaturnDir == null || SaturnDir == string.Empty ) 
             {
-                Console.WriteLine( "No override Saturn directory was set using location from SATURN_DIR Environment Variable." );
+                Console.WriteLine( "No override Saturn directory was suggested, using location from \"SATURN_DIR\" Environment Variable." );
                 SaturnDir = Environment.GetEnvironmentVariable( "SATURN_DIR" );
             }
             
@@ -108,14 +121,15 @@ namespace SaturnBuildTool
             {
                 case ConfigKind.Debug:
                     {
-                        HeaderToolExePath = SaturnDir + "\\bin\\Debug-windows-x86_64\\SaturnHeaderTool\\SaturnHeaderTool.exe";
+                        HeaderToolExePath = Path.Combine( SaturnDir, "bin", "Debug-windows-x86_64", "SaturnHeaderTool", "SaturnHeaderTool.exe" );
                     }
                     break;
 
                 case ConfigKind.Dist:
                 case ConfigKind.Release:
                     {
-                        HeaderToolExePath = SaturnDir + "\\bin\\Release-windows-x86_64\\SaturnHeaderTool\\SaturnHeaderTool.exe";
+                        // Always use the release build on Dist
+                        HeaderToolExePath = Path.Combine( SaturnDir, "bin", "Release-windows-x86_64", "SaturnHeaderTool", "SaturnHeaderTool.exe" );
                     }
                     break;
             }
@@ -127,21 +141,23 @@ namespace SaturnBuildTool
         {
             bool result = true;
 
-            if( 
-                !CommandLineParser.Instance.HasArgument( "BUILD" ) || 
-                !CommandLineParser.Instance.HasArgument( "REBUILD" ) || 
-                !CommandLineParser.Instance.HasArgument( "CLEAN" ) ) 
+            if(
+                ( CommandLineParser.Instance.HasArgument( "BUILD" ) ? 1 : 0 ) +
+                ( CommandLineParser.Instance.HasArgument( "REBUILD" ) ? 1 : 0 ) +
+                ( CommandLineParser.Instance.HasArgument( "CLEAN" ) ? 1 : 0 ) != 1
+            )
             {
-                Console.WriteLine( "Missing action command! (/BUILD /REBUILD /CLEAN)" );
+                Console.WriteLine( "Exactly one action command must be suggested! (/BUILD, /REBUILD, /CLEAN)" );
                 result = false;
             }
 
             if(
-                !CommandLineParser.Instance.HasArgument( "DEBUG" ) ||
-                !CommandLineParser.Instance.HasArgument( "RELEASE" ) ||
-                !CommandLineParser.Instance.HasArgument( "DIST" ) )
+                ( CommandLineParser.Instance.HasArgument( "DEBUG" ) ? 1 : 0 ) +
+                ( CommandLineParser.Instance.HasArgument( "RELEASE" ) ? 1 : 0 ) +
+                ( CommandLineParser.Instance.HasArgument( "DIST" ) ? 1 : 0 ) != 1
+            )
             {
-                Console.WriteLine( "Missing config command! (/DEBUG /RELEASE /DIST)" );
+                Console.WriteLine( "Exactly one config command must be suggested! (/DEBUG, /RELEASE, /DIST)" );
                 result = false;
             }
 
@@ -151,7 +167,7 @@ namespace SaturnBuildTool
                 result = false;
             }
 
-            if( !CommandLineParser.Instance.HasArgument( "Win64" ) )
+            if( !CommandLineParser.Instance.HasArgument( "WIN64" ) )
             {
                 Console.WriteLine( "Missing target platform command! (/Win64)" );
                 result = false;
@@ -165,7 +181,7 @@ namespace SaturnBuildTool
 
             if( !result )
             {
-                Console.WriteLine( "Please use the help command (/HELP) for more information on the command line arguments." );
+                Console.WriteLine( "Please suggested the help command (/HELP) for more information on the command line arguments." );
             }
 
             return result;
@@ -175,17 +191,14 @@ namespace SaturnBuildTool
         {
             if( CommandLineParser.Instance.FindFlag( "Debug" ) )
             {
-                ConfigName = "Debug";
                 CurrentConfigKind = ConfigKind.Debug;
             }
             else if( CommandLineParser.Instance.FindFlag( "Release" ) )
             {
-                ConfigName = "Release";
                 CurrentConfigKind = ConfigKind.Release;
             }
             else if( CommandLineParser.Instance.FindFlag( "Dist" ) )
             {
-                ConfigName = "Dist";
                 CurrentConfigKind = ConfigKind.Dist;
             }
         }
@@ -194,12 +207,10 @@ namespace SaturnBuildTool
         {
             if( CommandLineParser.Instance.FindFlag( "Win64" ) )
             {
-                TargetPlatformName = "Win64";
                 TargetPlatformKind = ArchitectureKind.x64;
             }
             else if( CommandLineParser.Instance.FindFlag( "Win86" ) ) 
             {
-                TargetPlatformName = "Win86";
                 TargetPlatformKind = ArchitectureKind.x86;
             }
         }
@@ -211,19 +222,13 @@ namespace SaturnBuildTool
                 case ConfigKind.Debug:
                 case ConfigKind.Release:
                     {
-                        BuildRuleFile = TargetDir;
-                        BuildRuleFile += string.Format( "\\{0}.Build.cs", Name );
-
-                        BuildRuleFile = BuildRuleFile.Replace( "/", "\\" );
+                        BuildRuleFile = Path.Combine( TargetDir, string.Format( "{0}.Build.cs", Name ) );
                     }
                     break;
 
                 case ConfigKind.Dist:
                     {
-                        BuildRuleFile = TargetDir;
-                        BuildRuleFile += string.Format( "\\{0}.RT_Build.cs", Name );
-
-                        BuildRuleFile = BuildRuleFile.Replace( "/", "\\" );
+                        BuildRuleFile = Path.Combine( TargetDir, string.Format( "{0}.RT_Build.cs", Name ) );
                     }
                     break;
             }

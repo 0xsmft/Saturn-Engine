@@ -498,20 +498,20 @@ namespace Saturn {
 		
 		Args += m_Config.Name;
 		
-		Args += " /Win64";
+		Args += " /WIN64";
 		
 		switch( kind )
 		{
 			case Saturn::ConfigKind::Debug:
-				Args += " /Debug /PROJECT:";
+				Args += " /DEBUG /PROJECT:";
 				break;
 		
 			case Saturn::ConfigKind::Release:
-				Args += " /Release /PROJECT:";
+				Args += " /RELEASE /PROJECT:";
 				break;
 			
 			case Saturn::ConfigKind::Dist:
-				Args += " /Dist /PROJECT:";
+				Args += " /DIST /PROJECT:";
 				break;
 		}
 	
@@ -540,20 +540,20 @@ namespace Saturn {
 
 		Args += m_Config.Name;
 
-		Args += " /Win64";
+		Args += " /WIN64";
 
 		switch( kind )
 		{
 			case Saturn::ConfigKind::Debug:
-				Args += " /Debug /PROJECT:";
+				Args += " /DEBUG /PROJECT:";
 				break;
 
 			case Saturn::ConfigKind::Release:
-				Args += " /Release /PROJECT:";
+				Args += " /RELEASE /PROJECT:";
 				break;
 
 			case Saturn::ConfigKind::Dist:
-				Args += " /Dist /PROJECT:";
+				Args += " /DIST /PROJECT:";
 				break;
 		}
 
@@ -624,12 +624,12 @@ namespace Saturn {
 		std::filesystem::copy( GetRootDir() / "Cache", dstCache, std::filesystem::copy_options::recursive );
 
 		// Copy the project file over
-		std::string projectName = std::format( "{0}\\{1}.sproject", binDir.string(), m_Config.Name );
+		std::filesystem::path projectFilePathBin = binDir / std::filesystem::path( m_Config.Name ).replace_extension(".sproject");
 
-		if( std::filesystem::exists( projectName ) )
-			std::filesystem::remove( projectName );
+		if( std::filesystem::exists( projectFilePathBin ) )
+			std::filesystem::remove( projectFilePathBin );
 
-		std::filesystem::copy_file( m_Config.Path, projectName );
+		std::filesystem::copy_file( m_Config.Path, projectFilePathBin );
 		
 		// TEMP: Copy over the editor assets
 		std::filesystem::path contentDir = Application::Get().GetRootContentDir();

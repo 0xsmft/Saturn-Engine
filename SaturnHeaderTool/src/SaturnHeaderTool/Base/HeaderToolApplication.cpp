@@ -140,7 +140,7 @@ namespace Saturn {
 
 			if( itr == ParsedMap.end() )
 			{
-				std::cout << "Saturn Header Tool version " << SAT_CURRENT_VERSION_STRING << "\n";
+				std::cout << "=== Saturn Header Tool X" << SAT_CURRENT_VERSION_STRING << " ===\n";
 			}
 		}
 

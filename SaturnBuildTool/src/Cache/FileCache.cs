@@ -51,8 +51,8 @@ namespace SaturnBuildTool.Cache
             }
         }
 
-        public IDictionary<string, FileCacheTime> FilesToCache { get; set; }
-        public IDictionary<string, FileCacheTime> FilesInCache { get; set; }
+        public IDictionary<string, FileCacheTime> FilesToCache { get; }
+        public IDictionary<string, FileCacheTime> FilesInCache { get; }
 
         private string Filepath;
 

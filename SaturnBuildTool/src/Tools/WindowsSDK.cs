@@ -6,7 +6,7 @@ namespace SaturnBuildTool.Tools
     {
         public static string GetIncludePaths()
         {
-            string WinSDK = @"C:\Program Files (x86)\Windows Kits\";
+            string WinSDK = @"C://Program Files (x86)//Windows Kits";
 
             if( Directory.Exists( WinSDK ) ) 
             {
@@ -27,7 +27,7 @@ namespace SaturnBuildTool.Tools
 
         public static string GetLibraryPaths()
         {
-            string WinSDK = @"C:\Program Files (x86)\Windows Kits\";
+            string WinSDK = @"C://Program Files (x86)//Windows Kits//";
 
             if (Directory.Exists(WinSDK))
             {

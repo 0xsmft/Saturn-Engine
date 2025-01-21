@@ -522,8 +522,6 @@ namespace Saturn {
 
 	Ref<Entity> Scene::FindEntityByTag( const std::string& tag )
 	{
-		SAT_PF_EVENT();
-
 		for( auto&& [handle, entity] : m_EntityIDMap )
 		{
 			if( entity->GetComponent<TagComponent>().Tag == tag )
@@ -535,8 +533,6 @@ namespace Saturn {
 
 	Saturn::Ref<Saturn::Entity> Scene::FindEntityByID( const UUID& id )
 	{
-		SAT_PF_EVENT();
-
 		for( auto&& [handle, entity] : m_EntityIDMap )
 		{
 			if( entity->GetUUID() == id )

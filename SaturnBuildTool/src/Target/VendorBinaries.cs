@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 
 namespace SaturnBuildTool
 {
@@ -46,13 +45,13 @@ namespace SaturnBuildTool
         public static string GetBinPath(VendorProject project, UserTarget target) 
         {
             string saturnDir = ProjectInfo.Instance.SaturnDir;
-            string binPath = Path.Combine(saturnDir, "Saturn\\vendor");
+            string binPath = Path.Combine(saturnDir, "Saturn", "vendor");
 
             switch ( project ) 
             {
                 case VendorProject.PHYSX:
                     {
-                        binPath = Path.Combine(binPath, "phsyx\\bin\\");
+                        binPath = Path.Combine(binPath, "phsyx", "bin");
 
                         if (target.CurrentConfig == ConfigKind.Debug)
                         {
@@ -68,7 +67,7 @@ namespace SaturnBuildTool
 
                 case VendorProject.YAML_CPP:
                     {
-                        binPath = Path.Combine(binPath, "yaml-cpp\\bin\\");
+                        binPath = Path.Combine(binPath, "yaml-cpp", "bin");
 
                         binPath = GetRootBinPath(binPath, target);
 
@@ -79,7 +78,7 @@ namespace SaturnBuildTool
 
                 case VendorProject.IMGUI:
                     {
-                        binPath = Path.Combine(binPath, "imgui\\bin\\");
+                        binPath = Path.Combine(binPath, "imgui", "bin");
 
                         binPath = GetRootBinPath(binPath, target);
 
@@ -90,7 +89,7 @@ namespace SaturnBuildTool
 
                 case VendorProject.SPIRVCROSS:
                     {
-                        binPath = Path.Combine(binPath, "SPIRV-Cross\\bin\\");
+                        binPath = Path.Combine(binPath, "SPIRV-Cross", "bin");
 
                         binPath = GetRootBinPath(binPath, target);
 
@@ -101,7 +100,7 @@ namespace SaturnBuildTool
 
                 case VendorProject.SHADERC:
                     {
-                        binPath = Path.Combine(binPath, "shaderc\\bin\\");
+                        binPath = Path.Combine(binPath, "shaderc", "bin");
 
                         if (target.CurrentConfig == ConfigKind.Debug)
                         {
@@ -116,7 +115,7 @@ namespace SaturnBuildTool
 
                 case VendorProject.TRACY:
                     {
-                        binPath = Path.Combine(binPath, "tracy\\bin\\");
+                        binPath = Path.Combine(binPath, "tracy", "bin");
 
                         binPath = GetRootBinPath(binPath, target);
 
@@ -126,7 +125,7 @@ namespace SaturnBuildTool
 
                 case VendorProject.ZLIB:
                     {
-                        binPath = Path.Combine(binPath, "zlib\\bin\\");
+                        binPath = Path.Combine(binPath, "zlib", "bin");
 
                         binPath = GetRootBinPath(binPath, target);
 

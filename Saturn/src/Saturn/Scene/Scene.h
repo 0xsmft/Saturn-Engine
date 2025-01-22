@@ -216,6 +216,7 @@ namespace Saturn {
 		
 		[[nodiscard]] Ref<Entity> FindEntityByTag( const std::string& tag );
 		[[nodiscard]] Ref<Entity> FindEntityByID( const UUID& id );
+		[[nodiscard]] Ref<Entity> FindEntityByHandle( entt::entity handle );
 
 		glm::mat4 GetTransformRelativeToParent( Ref<Entity> entity );
 		TransformComponent GetWorldSpaceTransform( Ref<Entity> entity );

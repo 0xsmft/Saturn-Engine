@@ -542,6 +542,17 @@ namespace Saturn {
 		return nullptr;
 	}
 
+	Saturn::Ref<Saturn::Entity> Scene::FindEntityByHandle( entt::entity handle )
+	{
+		for( auto&& [entityHandle, entity] : m_EntityIDMap )
+		{
+			if( entityHandle == handle )
+				return entity;
+		}
+
+		return nullptr;
+	}
+
 	glm::mat4 Scene::GetTransformRelativeToParent( Ref<Entity> entity )
 	{
 		SAT_PF_EVENT();

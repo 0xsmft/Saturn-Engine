@@ -103,8 +103,10 @@ namespace Saturn {
 		bool OnTitlebarExit();
 
 		void CheckMissingEnv();
-		bool BuildShaderBundle();
+		[[nodiscard]] bool BuildShaderBundle();
 		
+		[[nodiscard]] bool ValidateProjectDefaults();
+
 		void CreateShaderBundleJob();
 		void CreateAssetBundleJob();
 
@@ -114,10 +116,12 @@ namespace Saturn {
 	private:
 		enum MessageBoxButtons_
 		{
-			MessageBoxButtons_Ok = BIT( 0 ),
+			MessageBoxButtons_Ok     = BIT( 0 ),
 			MessageBoxButtons_Cancel = BIT( 1 ),
-			MessageBoxButtons_Retry = BIT( 2 ),
-			MessageBoxButtons_Exit = BIT( 3 )
+			MessageBoxButtons_Retry  = BIT( 2 ),
+			MessageBoxButtons_Exit   = BIT( 3 ),
+			MessageBoxButtons_Yes    = BIT( 4 ),
+			MessageBoxButtons_No     = BIT( 5 ),
 		};
 
 		enum class MessageBoxType 

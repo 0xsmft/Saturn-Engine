@@ -108,6 +108,22 @@ namespace Saturn::Auxiliary {
 		}
 	};
 
+	class DisabledFlag
+	{
+	public:
+		DisabledFlag( bool value )
+		{
+			ImGui::PushStyleVar( ImGuiStyleVar_Alpha, value ? 0.5f : 1.0f );
+			ImGui::PushItemFlag( ImGuiItemFlags_Disabled, value );
+		}
+
+		void Pop()
+		{
+			ImGui::PopStyleVar();
+			ImGui::PopItemFlag();
+		}
+	};
+
 	extern bool DrawVec3Control( const std::string& rLabel, glm::vec3& values, float resetValue = 0.0f, float columnWidth = 100.0f );
 	extern bool DrawVec2Control( const std::string& rLabel, glm::vec2& values, float resetValue = 0.0f, float columnWidth = 100.0f );
 

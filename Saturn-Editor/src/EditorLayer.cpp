@@ -676,6 +676,8 @@ namespace Saturn {
 
 				ImGui::Spring();
 
+				Auxiliary::DisabledFlag inspectDisabledFlag( m_RequestRuntime );
+
 				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), { 24.0f, 24.0f } ) )
 					s_OpenAssetFinderPopup = true;
 
@@ -684,8 +686,10 @@ namespace Saturn {
 					ShouldSaveProject = true;
 				}
 
+				inspectDisabledFlag.Pop();
+
 				{
-					Auxiliary::ScopedDisabledFlag disabledFlag( rConfig.StartupSceneID == 0 );
+					Auxiliary::ScopedDisabledFlag disabledFlag( rConfig.StartupSceneID == 0 && !m_RequestRuntime );
 
 					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "NoIcon" ), { 24.0f, 24.0f } ) )
 					{
@@ -712,6 +716,8 @@ namespace Saturn {
 
 				ImGui::Spring();
 
+				Auxiliary::DisabledFlag inspectDisabledFlag( m_RequestRuntime );
+
 				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), { 24.0f, 24.0f } ) )
 					s_OpenAssetFinderPopup = true;
 
@@ -720,6 +726,8 @@ namespace Saturn {
 					ActiveProject->SetDefaultMaterialAsset( defaultMaterialID );
 					ShouldSaveProject = true;
 				}
+
+				inspectDisabledFlag.Pop();
 
 				{
 					Auxiliary::ScopedDisabledFlag disabledFlag( defaultMaterialID == 0 );
@@ -747,6 +755,8 @@ namespace Saturn {
 
 				ImGui::Spring();
 
+				Auxiliary::DisabledFlag inspectDisabledFlag( m_RequestRuntime );
+
 				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), { 24.0f, 24.0f } ) )
 					s_OpenAssetFinderPopup = true;
 
@@ -755,6 +765,8 @@ namespace Saturn {
 					ActiveProject->SetDefaultPhysicsMaterialAsset( defaultMaterialID );
 					ShouldSaveProject = true;
 				}
+
+				inspectDisabledFlag.Pop();
 
 				{
 					Auxiliary::ScopedDisabledFlag disabledFlag( defaultMaterialID == 0 );
@@ -780,6 +792,8 @@ namespace Saturn {
 			ImGui::Separator();
 
 			ImGui::PopFont();
+
+			Auxiliary::DisabledFlag disabledFlagIfRuntime( m_RequestRuntime );
 
 			for( auto rIt = ActiveProject->GetActionBindings().begin(); rIt != ActiveProject->GetActionBindings().end(); )
 			{
@@ -931,6 +945,34 @@ namespace Saturn {
 
 				ImGui::BeginHorizontal( rSoundGroup->GetName().data() );
 
+				// Volume & Pitch Control
+				float volume = rSoundGroup->GetVolume();
+				float pitch = rSoundGroup->GetPitch();
+
+				ImGui::BeginHorizontal( "##vpSliders" );
+				
+				ImGui::Text( "Volume" );
+
+				ImGui::SetNextItemWidth( 130.0f );
+				if( ImGui::SliderFloat( "##volumeSlider", &volume, 0.0f, 100.0f, "%.0f" ) ) 
+				{
+					rSoundGroup->SetVolume( volume );
+				}
+
+				ImGui::Spring();
+
+				ImGui::Text( "Pitch" );
+
+				ImGui::SetNextItemWidth( 130.0f );
+				if( ImGui::SliderFloat( "##pitchSlider", &pitch, 0.0f, 100.0f, "%.0f" ) )
+				{
+					rSoundGroup->SetPitch( pitch );
+				}
+
+				ImGui::Spring();
+
+				ImGui::EndHorizontal();
+
 				if( ImGui::SmallButton( "-" ) )
 				{
 					rIt = ActiveProject->GetSoundGroups().erase( rIt );
@@ -971,6 +1013,8 @@ namespace Saturn {
 
 			ImGui::PopID();
 
+			disabledFlagIfRuntime.Pop();
+
 			// This does not matter because the editor is not designed to run in Dist, however, right now I want to keep this in release builds.
 #if !defined(SAT_DIST)
 			ImGui::PushFont( boldFont );
@@ -1007,7 +1051,7 @@ namespace Saturn {
 					drawRow( "Cache Path", ActiveProject->GetFullCachePath().string() );
 
 					drawRow( "Module Path", GameModule::Get().GetModulePath().string() );
-					drawRow( "Module Timestamp", GameModule::Get().GetTimestamp() );
+					drawRow( "Module Timestamp (X/)", GameModule::Get().GetTimestamp() );
 				}
 
 				ImGui::EndTable();
@@ -1348,12 +1392,17 @@ namespace Saturn {
 	{
 		if( ImGui::BeginMenu( "File" ) )
 		{
+			Auxiliary::DisabledFlag disabledIfRuntime( m_RequestRuntime );
+				
 			if( ImGui::MenuItem( "Save Scene", "Ctrl+S" ) )          SaveFile();
 			if( ImGui::MenuItem( "Save Scene As", "Ctrl+Shift+S" ) ) SaveFileAs();
 
 			if( ImGui::MenuItem( "Save Project" ) )                  SaveProject();
 			if( ImGui::MenuItem( "Close Project" ) )                 CloseEditorAndOpenPB();
-			if( ImGui::MenuItem( "Exit", "Alt+F4" ) )                Application::Get().Close();
+
+			disabledIfRuntime.Pop();
+
+			if( ImGui::MenuItem( "Exit", "Alt+F4" ) )                OnTitlebarExit();
 
 			ImGui::EndMenu();
 		}
@@ -1380,58 +1429,100 @@ namespace Saturn {
 
 			ImGui::SeparatorText( "Compatibility" );
 
-			if( ImGui::MenuItem( "Upgrade assets" ) ) Project::GetActiveProject()->UpgradeAssets();
+			{
+				Auxiliary::ScopedDisabledFlag disabled( m_RequestRuntime );
+				if( ImGui::MenuItem( "Upgrade assets" ) ) Project::GetActiveProject()->UpgradeAssets();
+			}
 
 			ImGui::SeparatorText( "Building and Distribution" );
 
-			if( ImGui::MenuItem( "Recreate project files" ) )
 			{
-				m_HasPremakePath = Auxiliary::HasEnvironmentVariable( "SATURN_PREMAKE_PATH" );
+				Auxiliary::ScopedDisabledFlag disabled( m_RequestRuntime );
 
-				JobSystem::Get().AddJob( []()
+				if( ImGui::MenuItem( "Recreate project files" ) )
+				{
+					m_HasPremakePath = Auxiliary::HasEnvironmentVariable( "SATURN_PREMAKE_PATH" );
+
+					JobSystem::Get().AddJob( []()
 					{
 						if( !Project::GetActiveProject()->HasPremakeFile() )
 							Project::GetActiveProject()->CreatePremakeFile();
 
 						Premake::Launch( Project::GetActiveProject()->GetRootDir().wstring() );
 					} );
-			}
-
-			if( ImGui::BeginItemTooltip() )
-			{
-				ImGui::Text( "Uses Premake5 to regenerate the project files.\nEnvironment variable \"SATURN_PREMAKE_PATH\" must be set." );
-				ImGui::EndTooltip();
-			}
-
-			if( ImGui::MenuItem( "Setup Project for Distribution" ) )
-			{
-				if( !m_BlockingOperation )
-					m_BlockingOperation = Ref<JobProgress>::Create();
-
-				CreateShaderBundleJob();
-
-				// TODO: Think of a better way for this... checking the sizes of the message boxes is not a good thing.
-				if( m_MessageBoxes.size() == 0 ) 
-				{
-					CreateAssetBundleJob();
 				}
-			}
 
-			if( ImGui::BeginItemTooltip() )
-			{
-				ImGui::Text( "Attempts to build the Shader Bundle and the Asset Bundle and copies important build files for distribution.\nYou must run this before clicking the \"Distribute project\" button." );
-				ImGui::EndTooltip();
-			}
+				if( ImGui::BeginItemTooltip() )
+				{
+					ImGui::Text( "Uses Premake5 to regenerate the project files.\nEnvironment variable \"SATURN_PREMAKE_PATH\" must be set." );
+					ImGui::EndTooltip();
+				}
 
-			if( ImGui::MenuItem( "Build Shader Bundle" ) )
-			{
-				BuildShaderBundle();
-			}
+				if( ImGui::MenuItem( "Setup Project for Distribution & Build Asset Bundle" ) )
+				{
+					if( ValidateProjectDefaults() )
+					{
+						if( !m_BlockingOperation )
+							m_BlockingOperation = Ref<JobProgress>::Create();
 
-			if( ImGui::BeginItemTooltip() )
-			{
-				ImGui::Text( "Attempts to compile all shaders and bundles them all into one file.\nYou do not need to do this if your intent is to prepare the project for distribution as that option will build it for you.\nOnly build the Shader Bundle if there is a problem with your shaders." );
-				ImGui::EndTooltip();
+						CreateShaderBundleJob();
+
+						// TODO: Think of a better way for this... checking the sizes of the message boxes is not a good thing.
+						if( m_MessageBoxes.size() == 0 )
+						{
+							CreateAssetBundleJob();
+						}
+					}
+				}
+
+				if( ImGui::BeginItemTooltip() )
+				{
+					ImGui::Text( "Attempts to build the Shader Bundle and the Asset Bundle and copies important build files for distribution.\nYou must run this before clicking the \"Distribute project\" button." );
+					ImGui::EndTooltip();
+				}
+
+				if( ImGui::MenuItem( "Build Shader Bundle" ) )
+				{
+					BuildShaderBundle();
+				}
+
+				if( ImGui::BeginItemTooltip() )
+				{
+					ImGui::Text( "Attempts to compile all shaders and bundles them all into one file.\nYou do not need to do this if your intent is to prepare the project for distribution as that option will build it for you.\nOnly build the Shader Bundle if there is a problem with your shaders." );
+					ImGui::EndTooltip();
+				}
+
+
+				if( ImGui::MenuItem( "Distribute project" ) )
+				{
+					m_HasPremakePath = Auxiliary::HasEnvironmentVariable( "SATURN_PREMAKE_PATH" );
+
+					if( !m_BlockingOperation )
+						m_BlockingOperation = Ref<JobProgress>::Create();
+
+					JobSystem::Get().AddJob( [this]()
+						{
+							m_JobModalOpen = true;
+							m_BlockingOperation->SetTitle( "Distributing Project" );
+
+							m_BlockingOperation->SetStatus( "Building project" );
+							Project::GetActiveProject()->Rebuild( ConfigKind::Dist );
+
+							m_BlockingOperation->SetProgress( 50.0f );
+
+							m_BlockingOperation->SetStatus( "Copying for Distribution" );
+							Project::GetActiveProject()->Distribute( ConfigKind::Dist );
+
+							m_BlockingOperation->SetProgress( 100.0f );
+							m_BlockingOperation->OnComplete();
+						} );
+				}
+
+				if( ImGui::BeginItemTooltip() )
+				{
+					ImGui::Text( "Attempts to compile the project and fully setup the project for Distribution.\nMake sure you have prepare the project before attempting to distribute the project." );
+					ImGui::EndTooltip();
+				}
 			}
 
 #if defined( SAT_DEBUG )
@@ -1448,37 +1539,6 @@ namespace Saturn {
 				CreateAssetBundleJob();
 			}
 #endif
-
-			if( ImGui::MenuItem( "Distribute project" ) )
-			{
-				m_HasPremakePath = Auxiliary::HasEnvironmentVariable( "SATURN_PREMAKE_PATH" );
-
-				if( !m_BlockingOperation )
-					m_BlockingOperation = Ref<JobProgress>::Create();
-
-				JobSystem::Get().AddJob( [this]()
-					{
-						m_JobModalOpen = true;
-						m_BlockingOperation->SetTitle( "Distributing Project" );
-
-						m_BlockingOperation->SetStatus( "Building project" );
-						Project::GetActiveProject()->Rebuild( ConfigKind::Dist );
-
-						m_BlockingOperation->SetProgress( 50.0f );
-
-						m_BlockingOperation->SetStatus( "Copying for Distribution" );
-						Project::GetActiveProject()->Distribute( ConfigKind::Dist );
-
-						m_BlockingOperation->SetProgress( 100.0f );
-						m_BlockingOperation->OnComplete();
-					} );
-			}
-
-			if( ImGui::BeginItemTooltip() )
-			{
-				ImGui::Text( "Attempts to compile the project and fully setup the project for Distribution.\nMake sure you have prepare the project before attempting to distribute the project." );
-				ImGui::EndTooltip();
-			}
 
 			ImGui::EndMenu();
 		}
@@ -1505,6 +1565,52 @@ namespace Saturn {
 			if( ImGui::MenuItem( "Virtual Filesystem Debug", "" ) )   m_ShowVFSDebug           ^= 1;
 
 			ImGui::EndMenu();
+		}
+
+		if( m_RequestRuntime )
+		{
+			if( ImGui::BeginMenu( "Runtime" ) )
+			{
+				auto runtimeState = m_RuntimeScene->GetRuntimeState();
+
+				// Play
+				{
+					Auxiliary::ScopedDisabledFlag disabled( runtimeState != RuntimeState::Suspended );
+					if( ImGui::MenuItem( "Play" ) ) m_RuntimeScene->ResumeRuntime();
+
+					if( ImGui::BeginItemTooltip() )
+					{
+						ImGui::Text( "Can not start a new runtime while the scene is already in runtime." );
+#if defined(SAT_DEBUG)
+						ImGui::Text( "%s", m_RequestRuntime ? "RUNTIME RUNNING" : "RUNTIME NOT RUNNING" );
+#endif
+						ImGui::EndTooltip();
+					}
+				}
+
+				// Stop
+				if( ImGui::MenuItem( "Stop" ) ) m_RequestRuntime = false;
+
+				if( ImGui::BeginItemTooltip() )
+				{
+					ImGui::Text( "Stop the active runtime" );
+					ImGui::EndTooltip();
+				}
+
+				// Suspend
+				{
+					Auxiliary::ScopedDisabledFlag disabled( runtimeState == RuntimeState::Suspended );
+					if( ImGui::MenuItem( "Suspend" ) ) m_RuntimeScene->SuspendRuntime();
+
+					if( ImGui::BeginItemTooltip() )
+					{
+						ImGui::Text( "Suspend the runtime and allowing the user to use the Editor Camera" );
+						ImGui::EndTooltip();
+					}
+				}
+
+				ImGui::EndMenu();
+			}
 		}
 	}
 
@@ -1705,22 +1811,15 @@ namespace Saturn {
 		{
 			if( auto payload = ImGui::AcceptDragDropPayload( "CONTENT_BROWSER_ITEM_SCENE" ) )
 			{
-				const wchar_t* path = ( const wchar_t* ) payload->Data;
-				
-				std::filesystem::path p = path;
-				Ref<Asset> asset = AssetManager::Get().FindAsset( p );
-
-				if( asset ) OpenFile( asset->ID );
+				const UUID* pUUID = ( const UUID* ) payload->Data;
+				OpenFile( *pUUID );
 			}
 
 			if( auto payload = ImGui::AcceptDragDropPayload( "CONTENT_BROWSER_ITEM_PREFAB" ) )
 			{
-				const wchar_t* path = ( const wchar_t* ) payload->Data;
+				const UUID* pUUID = ( const UUID* ) payload->Data;
 
-				std::filesystem::path p = path;
-
-				Ref<Asset> asset = AssetManager::Get().FindAsset( p );
-				// Make sure to load the prefab.
+				Ref<Asset> asset = AssetManager::Get().FindAsset( *pUUID );
 				Ref<Prefab> prefabAsset = AssetManager::Get().GetAssetAs<Prefab>( asset->GetAssetID() );
 
 				m_EditorScene->CreatePrefab( prefabAsset );
@@ -1729,11 +1828,9 @@ namespace Saturn {
 
 			if( auto payload = ImGui::AcceptDragDropPayload( "CONTENT_BROWSER_ITEM_MODEL" ) )
 			{
-				const wchar_t* path = ( const wchar_t* ) payload->Data;
+				const UUID* pUUID = ( const UUID* ) payload->Data;
 
-				std::filesystem::path p = path;
-
-				Ref<Asset> asset = AssetManager::Get().FindAsset( p );
+				Ref<Asset> asset = AssetManager::Get().FindAsset( *pUUID );
 				Ref<StaticMesh> meshAsset = AssetManager::Get().GetAssetAs<StaticMesh>( asset->GetAssetID() );
 
 				Ref<Entity> entity = Ref<Entity>::Create();
@@ -2100,6 +2197,24 @@ namespace Saturn {
 
 	bool EditorLayer::OnTitlebarExit()
 	{
+		/*
+		* Disabled until retries.
+		if( m_RequestRuntime && m_RuntimeScene )
+		{
+			MessageBoxInfo msgBox
+			{
+				.Title = "Stop Runtime?",
+				.Text = "Do you want to stop the runtime?",
+				.Buttons = MessageBoxButtons_Yes | MessageBoxButtons_No,
+				.Type = MessageBoxType::InformationNoIcon
+			};
+
+			PushMessageBox( msgBox );
+		
+			return false;
+		}
+		*/
+
 		if( m_EditorScene->IsDirty() )
 		{
 			m_ShowSceneDirtyModal = true;
@@ -2108,13 +2223,13 @@ namespace Saturn {
 			Application::Get().GetWindow()->FlashAttention();
 		}
 
-		// Accept exit request if scene is not dirty.
+		// Otherwise, accept exit request if scene is not dirty.
 		return !m_EditorScene->IsDirty();
 	}
 
 	void EditorLayer::DrawMessageBox( const MessageBoxInfo& rInfo )
 	{
-		ImGui::SetNextWindowPos( ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Appearing, ImVec2( 0.5f, 0.5f ) );
+		ImGui::SetNextWindowPos( ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2( 0.5f, 0.5f ) );
 		if( ImGui::BeginPopupModal( rInfo.Title.c_str(), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings ) )
 		{
 			ImGui::BeginHorizontal( "##MsgBoxH" );
@@ -2141,9 +2256,12 @@ namespace Saturn {
 			ImGui::EndHorizontal();
 
 			ImGui::BeginHorizontal( "##MsgBoxOpts" );
+			int buttonIndex = 0;
 
 			if( ( rInfo.Buttons & ( uint32_t )MessageBoxButtons_Ok ) != 0 )
 			{
+				if( buttonIndex > 0 ) { ImGui::Spring(); buttonIndex++; }
+
 				if( ImGui::Button( "OK" ) )
 				{
 					ImGui::CloseCurrentPopup();
@@ -2153,7 +2271,7 @@ namespace Saturn {
 
 			if( ( rInfo.Buttons & ( uint32_t ) MessageBoxButtons_Cancel ) != 0 )
 			{
-				ImGui::Spring();
+				if( buttonIndex > 0 ) { ImGui::Spring(); buttonIndex++; }
 
 				if( ImGui::Button( "Cancel" ) )
 				{
@@ -2164,9 +2282,31 @@ namespace Saturn {
 			
 			if( ( rInfo.Buttons & ( uint32_t ) MessageBoxButtons_Exit ) != 0 )
 			{
-				ImGui::Spring();
+				if( buttonIndex > 0 ) { ImGui::Spring(); buttonIndex++; }
 
 				if( ImGui::Button( "Exit" ) )
+				{
+					ImGui::CloseCurrentPopup();
+					PopMessageBox();
+				}
+			}
+
+			if( ( rInfo.Buttons & ( uint32_t ) MessageBoxButtons_Yes ) != 0 )
+			{
+				if( buttonIndex > 0 ) { ImGui::Spring(); buttonIndex++; }
+
+				if( ImGui::Button( "Yes" ) )
+				{
+					ImGui::CloseCurrentPopup();
+					PopMessageBox();
+				}
+			}
+
+			if( ( rInfo.Buttons & ( uint32_t ) MessageBoxButtons_No ) != 0 )
+			{
+				if( buttonIndex > 0 ) { ImGui::Spring(); buttonIndex++; }
+
+				if( ImGui::Button( "No" ) )
 				{
 					ImGui::CloseCurrentPopup();
 					PopMessageBox();
@@ -2249,6 +2389,62 @@ namespace Saturn {
 		TexturePass = nullptr;
 	
 		return built;
+	}
+
+	bool EditorLayer::ValidateProjectDefaults()
+	{
+		bool result = true;
+
+		Ref<Project> ActiveProject = Project::GetActiveProject();
+		auto& rConfig = ActiveProject->GetConfig();
+
+		auto& startupScene = rConfig.StartupSceneID;
+		auto defaultMaterialID = ActiveProject->GetDefaultMaterialAsset();
+		auto defaultPhysMaterialID = ActiveProject->GetDefaultPhysicsMaterialAsset();
+
+		if( startupScene == 0 )
+		{
+			MessageBoxInfo msgBox
+			{
+				.Title = "Error",
+				.Text = "In order to build the project for distribution you must specify a start-up Scene!\nGo to Project->Project Settings, and select a startup scene.",
+				.Buttons = MessageBoxButtons_Ok
+			};
+
+			PushMessageBox( msgBox );
+
+			result = false;
+		}
+
+		if( defaultMaterialID == 0 )
+		{
+			MessageBoxInfo msgBox
+			{
+				.Title = "Error",
+				.Text = "In order to build the project for distribution you must specify a default Material Asset!\nGo to Project->Project Settings, and select a Material Asset.",
+				.Buttons = MessageBoxButtons_Ok
+			};
+
+			PushMessageBox( msgBox );
+
+			result = false;
+		}
+
+		if( defaultPhysMaterialID == 0 )
+		{
+			MessageBoxInfo msgBox
+			{
+				.Title = "Error",
+				.Text = "In order to build the project for distribution you must specify a default Physics Material Asset!\nGo to Project->Project Settings, and select a Physics Material Asset.",
+				.Buttons = MessageBoxButtons_Ok
+			};
+
+			PushMessageBox( msgBox );
+
+			result = false;
+		}
+
+		return result;
 	}
 
 	void EditorLayer::CreateShaderBundleJob()

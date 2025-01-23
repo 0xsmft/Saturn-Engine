@@ -128,7 +128,7 @@ namespace Saturn {
 			if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Play" ), { 24.0f, 24.0f } ) )
 			{
 				if( !m_PreviewSound )
-					m_PreviewSound = Ref<Sound>::Create( m_SoundAsset );
+					m_PreviewSound = Ref<Sound>::Create( m_SoundAsset, nullptr );
 
 				m_PreviewSound->Play();
 			}

@@ -35,7 +35,7 @@ namespace Saturn {
 	class Sound : public SoundBase
 	{
 	public:
-		Sound( const Ref<SoundSpecification>& rSpec );
+		Sound( const Ref<SoundSpecification>& rSpec, Ref<SoundGroup> soundGroup );
 		virtual ~Sound();
 
 		virtual void Play( int frameOffset = 0 ) override;

@@ -139,6 +139,8 @@ namespace Saturn {
 
 				m_MasterSoundGroup = Ref<SoundGroup>::Create( "Master" );
 				m_MasterSoundGroup->Init( true );
+
+				m_Initialised = true;
 			} );
 	}
 
@@ -201,6 +203,14 @@ namespace Saturn {
 		m_LoadedSounds.clear();
 	}
 
+	void AudioSystem::WaitForInit()
+	{
+		while( !m_Initialised )
+		{
+			std::this_thread::yield();
+		}
+	}
+
 	AudioSystem::~AudioSystem()
 	{
 		// No cleanup done in destructor, application already terminated the audio system.
@@ -212,12 +222,12 @@ namespace Saturn {
 		soundAsset->Play();
 	}
 
-	Ref<Sound> AudioSystem::RequestNewSound( AssetID ID, UUID UniquePlayerID, bool Play /*= true */ )
+	Ref<Sound> AudioSystem::RequestNewSound( AssetID ID, UUID UniquePlayerID, bool PlayNow /*= true */, Ref<SoundGroup> soundGroup /*= nullptr*/ )
 	{
 		// Load the sound spec.
 		Ref<SoundSpecification> spec = AssetManager::Get().GetAssetAs<SoundSpecification>( ID );
 
-		Ref<Sound> newSound = Ref<Sound>::Create( spec );
+		Ref<Sound> newSound = Ref<Sound>::Create( spec, soundGroup );
 		m_AliveSounds[ UniquePlayerID ] = newSound;
 
 		auto loadFunc = [=]() -> void
@@ -231,7 +241,7 @@ namespace Saturn {
 			newSound->SetSpatialisation( false );
 			newSound->SetID( UniquePlayerID );
 
-			if( Play ) newSound->Play();
+			if( PlayNow ) newSound->Play();
 
 			m_LoadedSounds[ UniquePlayerID ] = newSound;
 		};
@@ -241,12 +251,12 @@ namespace Saturn {
 		return newSound;
 	}
 
-	Ref<Sound> AudioSystem::PlaySoundAtLocation( AssetID ID, UUID UniquePlayerID, const glm::vec3& rPos, bool Play /*= true */ )
+	Ref<Sound> AudioSystem::PlaySoundAtLocation( AssetID ID, UUID UniquePlayerID, const glm::vec3& rPos, bool PlayNow /*= true */, Ref<SoundGroup> soundGroup /* = nullptr */ )
 	{
 		// Load the sound spec.
 		Ref<SoundSpecification> spec = AssetManager::Get().GetAssetAs<SoundSpecification>( ID );
 
-		Ref<Sound> newSound = Ref<Sound>::Create( spec );
+		Ref<Sound> newSound = Ref<Sound>::Create( spec, soundGroup );
 		m_AliveSounds[ UniquePlayerID ] = newSound;
 
 		auto loadFunc = [=]() -> void
@@ -261,7 +271,7 @@ namespace Saturn {
 			newSound->SetPosition( rPos );
 			newSound->SetID( UniquePlayerID );
 
-			if( Play ) newSound->Play();
+			if( PlayNow ) newSound->Play();
 
 			m_LoadedSounds[ UniquePlayerID ] = newSound;
 		};
@@ -294,7 +304,7 @@ namespace Saturn {
 		
 		Ref<SoundSpecification> soundSpec = AssetManager::Get().GetAssetAs<SoundSpecification>( AssetID );
 
-		Ref<Sound> snd = Ref<Sound>::Create( soundSpec );
+		Ref<Sound> snd = Ref<Sound>::Create( soundSpec, nullptr );
 		m_PreviewSounds[ Identifier ][ AssetID ] = snd;
 
 		auto loadFunc = [=]() 
@@ -515,6 +525,26 @@ namespace Saturn {
 
 			UnloadSound( rSound );
 		}
+	}
+
+	void AudioSystem::StartSoundGroups()
+	{
+		m_MasterSoundGroup->Start();
+
+		for( auto& rSoundGroup : Project::GetActiveProject()->GetSoundGroups() )
+		{
+			rSoundGroup->Start();
+		}
+	}
+
+	void AudioSystem::StopSoundGroups()
+	{
+		for( auto& rSoundGroup : Project::GetActiveProject()->GetSoundGroups() )
+		{
+			rSoundGroup->Stop();
+		}
+
+		m_MasterSoundGroup->Stop();
 	}
 
 	SoundDecodedInformation AudioSystem::DecodeSound( const Ref<SoundSpecification>& rSpec )

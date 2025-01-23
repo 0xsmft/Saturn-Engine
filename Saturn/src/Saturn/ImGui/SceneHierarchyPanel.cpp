@@ -1124,7 +1124,7 @@ namespace Saturn {
 				else
 				{
 					ImGui::Text( "Sound could not be found in active scene. This should not happen and may indicate a bug in the application." );
-					ImGui::Text( "Looking for: %llu (Asset: %llu). Was it marked for destruction?", ap.UniqueID, ap.SpecAssetID );
+					ImGui::Text( "Looking for: %llu (ASSET/%llu). Was it marked for destruction?", ap.UniqueID, ap.SpecAssetID );
 
 					Auxiliary::DrawDisabledBoolControl( "Loop", ap.Loop );
 					Auxiliary::DrawDisabledBoolControl( "Mute", ap.Mute );
@@ -1135,12 +1135,67 @@ namespace Saturn {
 			}
 			else
 			{
+				bool open = false;
+
 				modified |= Auxiliary::DrawBoolControl( "Loop", ap.Loop );
 				modified |= Auxiliary::DrawBoolControl( "Mute", ap.Mute );
 				modified |= Auxiliary::DrawBoolControl( "Spatialization", ap.Spatialization );
 
 				modified |= Auxiliary::DrawFloatControl( "Volume Multiplier", ap.VolumeMultiplier, 0.0f, 100.0f );
 				modified |= Auxiliary::DrawFloatControl( "Pitch Multiplier", ap.PitchMultiplier, 0.0f, 100.0f );
+
+				ImGui::PushID( "##select_sound_grp" );
+
+				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24, 24 ) ) )
+				{
+					open = true;
+				}
+
+				ImGui::PopID();
+
+				if( open == true && !ImGui::IsPopupOpen( "SoundGroupPopup" ) )
+				{
+					ImGui::OpenPopup( "SoundGroupPopup" );
+					open = false;
+				}
+
+				ImGui::SetNextWindowSize( { 250.0f, 0.0f } );
+				if( ImGui::BeginPopup( "SoundGroupPopup", ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize ) )
+				{
+					bool PopupModified = false;
+
+					if( ImGui::BeginListBox( "##ASSETLIST", ImVec2( -FLT_MIN, 0.0f ) ) )
+					{
+						for( const auto& rSoundGroup : Project::GetActiveProject()->GetSoundGroups() )
+						{
+							ImGui::PushID( rSoundGroup->GetName().c_str() );
+
+							if( ImGui::Selectable( rSoundGroup->GetName().c_str(), false ) )
+							{
+								ap.SoundGroup = rSoundGroup;
+
+								PopupModified = true;
+							}
+
+							ImGui::PopID();
+
+							//if( Selected )
+							//	ImGui::SetItemDefaultFocus();
+						}
+
+						ImGui::EndListBox();
+					}
+
+					if( PopupModified )
+					{
+						ImGui::CloseCurrentPopup();
+
+						modified |= true;
+						open = false;
+					}
+
+					ImGui::EndPopup();
+				}
 			}
 
 			if( modified ) m_Context->MarkDirty();

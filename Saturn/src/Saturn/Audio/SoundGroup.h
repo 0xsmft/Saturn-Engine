@@ -56,6 +56,9 @@ namespace Saturn {
 		void SetVolume( float volume );
 		void SetPitch( float pitch );
 
+		void Start();
+		void Stop();
+
 		ma_sound_group* GetInternal() const { return m_Group; }
 
 	private:

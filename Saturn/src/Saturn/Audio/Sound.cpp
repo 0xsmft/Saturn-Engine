@@ -33,8 +33,8 @@
 
 namespace Saturn {
 
-	Sound::Sound( const Ref<SoundSpecification>& rSpec )
-		: SoundBase()
+	Sound::Sound( const Ref<SoundSpecification>& rSpec, Ref<SoundGroup> soundGroup )
+		: SoundBase(), m_SoundGroup( soundGroup )
 	{
 		m_Specification = rSpec;
 	}
@@ -45,8 +45,9 @@ namespace Saturn {
 		{
 			SAT_CORE_INFO( "Loading sound: {0}", m_Specification->Name );
 
-			// By default always use the master sound group.
-			m_SoundGroup = AudioSystem::Get().GetMasterSoundGroup();
+			// Use master sound group if no group was specified
+			if( m_SoundGroup == nullptr ) 
+				m_SoundGroup = AudioSystem::Get().GetMasterSoundGroup();
 
 #if defined(SAT_DIST)
 			LoadForDist( flags );

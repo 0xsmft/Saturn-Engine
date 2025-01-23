@@ -86,6 +86,7 @@ namespace Saturn {
 
 		void AddID( UUID ID ) { m_CustomID = ID; }
 		void SetName( const std::string& rName ) { m_WindowName = rName; }
+		const std::string& GetName() const { return m_WindowName; }
 
 	protected:
 		void DrawComponents( Ref<Entity> entity );

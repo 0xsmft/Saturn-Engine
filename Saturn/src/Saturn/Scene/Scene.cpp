@@ -859,11 +859,11 @@ namespace Saturn {
 
 				if( rComp.Spatialization )
 				{
-					sound = AudioSystem::Get().PlaySoundAtLocation( rComp.SpecAssetID, rComp.UniqueID, entity->GetComponent<TransformComponent>().Position );
+					sound = AudioSystem::Get().PlaySoundAtLocation( rComp.SpecAssetID, rComp.UniqueID, entity->GetComponent<TransformComponent>().Position, true, rComp.SoundGroup );
 				}
 				else
 				{
-					sound = AudioSystem::Get().RequestNewSound( rComp.SpecAssetID, rComp.UniqueID );
+					sound = AudioSystem::Get().RequestNewSound( rComp.SpecAssetID, rComp.UniqueID, true, rComp.SoundGroup );
 				}
 
 				if( rComp.Loop )
@@ -876,6 +876,8 @@ namespace Saturn {
 				sound->SetPitchMultiplier( rComp.PitchMultiplier );
 			}
 		}
+
+		AudioSystem::Get().StartSoundGroups();
 	}
 
 	void Scene::StopAudioPlayers() 
@@ -888,6 +890,8 @@ namespace Saturn {
 			
 			AudioSystem::Get().StopSound( rComp.UniqueID );
 		}
+
+		AudioSystem::Get().StopSoundGroups();
 	}
 
 	void Scene::DestroyAudioPlayers()
@@ -900,6 +904,8 @@ namespace Saturn {
 
 			AudioSystem::Get().UnloadSound( rComp.UniqueID );
 		}
+
+		AudioSystem::Get().StopSoundGroups();
 	}
 
 	void Scene::OnRuntimeEnd()

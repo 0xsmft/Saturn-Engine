@@ -86,6 +86,18 @@ namespace Saturn {
 			ma_sound_group_set_pitch( m_Group, pitch );
 	}
 
+	void SoundGroup::Start()
+	{
+		if( m_Group )
+			ma_sound_group_start( m_Group );
+	}
+
+	void SoundGroup::Stop()
+	{
+		if( m_Group )
+			ma_sound_group_stop( m_Group );
+	}
+
 	void SoundGroup::Init( bool isMaster )
 	{
 		m_Group = new ma_sound();

@@ -286,6 +286,7 @@ namespace Saturn {
 		bool Spatialization = false;
 		float VolumeMultiplier = 1.0f;
 		float PitchMultiplier = 1.0f;
+		Ref<SoundGroup> SoundGroup = nullptr;
 	};
 
 	struct AudioListenerComponent

@@ -75,6 +75,7 @@ namespace Saturn {
 		~AudioSystem();
 
 		void Terminate();
+		void WaitForInit();
 
 		// Loads a new Sound2D to be played
 		// By default the sound will automatically play upon loading.
@@ -82,8 +83,8 @@ namespace Saturn {
 		//  This function uses the Audio Thread
 		//  This function will return the sound however, it may not be loaded as soon as it returns!
 		//  Use WaitUntilLoaded for safety.
-		Ref<Sound> RequestNewSound( AssetID ID, UUID UniquePlayerID, bool Play = true );
-		Ref<Sound> PlaySoundAtLocation( AssetID ID, UUID UniquePlayerID, const glm::vec3& rPos, bool Play = true );
+		Ref<Sound> RequestNewSound( AssetID ID, UUID UniquePlayerID, bool PlayNow = true, Ref<SoundGroup> soundGroup = nullptr );
+		Ref<Sound> PlaySoundAtLocation( AssetID ID, UUID UniquePlayerID, const glm::vec3& rPos, bool PlayNow = true, Ref<SoundGroup> soundGroup = nullptr );
 	
 		Ref<Sound> RequestPreviewSound( AssetID AssetID, UUID Identifier, bool allowMultiple = false );
 
@@ -105,6 +106,9 @@ namespace Saturn {
 
 		void UnloadSound( Ref<SoundBase> sound );
 		void UnloadSound( UUID UniquePlayerID );
+
+		void StartSoundGroups();
+		void StopSoundGroups();
 
 		ma_engine& GetAudioEngine() { return m_Engine; }
 		Ref<SoundGroup>& GetMasterSoundGroup() { return m_MasterSoundGroup; }
@@ -136,5 +140,7 @@ namespace Saturn {
 		ma_engine m_Engine;
 		ma_context m_Context;
 		ma_device m_Device;
+
+		bool m_Initialised = false;
 	};
 }

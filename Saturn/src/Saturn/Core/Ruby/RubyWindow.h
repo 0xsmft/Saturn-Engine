@@ -32,6 +32,7 @@
 
 #include "RubyEvent.h"
 #include "RubyPerfTimer.h"
+#include "RubyLibrary.h"
 
 #include "Saturn/Core/Ref.h"
 
@@ -72,8 +73,10 @@ namespace Saturn {
 		RubyCursorMode GetCursorMode()  const { return m_CursorMode; }
 		RubyCursorMode GetLastCursorMode() const { return m_LastCursorMode; }
 
-		uint32_t GetWidth()  const { return m_Width; }
-		uint32_t GetHeight() const { return m_Height; }
+		RubyIVec2 GetSize()   const;
+		uint32_t  GetWidth()  const;
+		uint32_t  GetHeight() const;
+
 		RubyGraphicsAPI GetGraphicsAPI() const { return m_GraphicsAPI; }
 		RubyStyle GetStyle() const { return m_Style; }
 
@@ -97,11 +100,11 @@ namespace Saturn {
 		uint32_t GetTitlebarHeight() const { return m_TitlebarHeight; }
 		bool GetTitlebarCond() const       { return m_TitlebarCondition; }
 
-		const std::unordered_set<RubyKey>& GetCurrentKeys() const { return m_Keys; }
-		std::unordered_set<RubyKey>& GetCurrentKeys() { return m_Keys; }
+		const std::unordered_set<RubyKey>& GetCurrentKeys() const { return RubyLibrary::Get().GetKeys(); }
+		std::unordered_set<RubyKey>& GetCurrentKeys() { return RubyLibrary::Get().GetKeys(); }
 
-		const RubyMouseButton GetCurrentMouseButtons() const { return m_CurrentMouseButton; }
-		RubyMouseButton GetCurrentMouseButtons() { return m_CurrentMouseButton; }
+		const std::unordered_set<RubyMouseButton>& GetCurrentMouseButtons() const { return RubyLibrary::Get().GetCurrentMouseButtons(); }
+		std::unordered_set<RubyMouseButton>& GetCurrentMouseButtons() { return RubyLibrary::Get().GetCurrentMouseButtons(); }
 
 	public:
 		WindowType_t GetNativeHandle();
@@ -143,18 +146,12 @@ namespace Saturn {
 
 		void IntrnlSetKeyDown( RubyKey key, bool value )
 		{
-			if( value )
-				m_Keys.insert( key );
-			else
-				m_Keys.erase( key );
+			RubyLibrary::Get().SetKeyState( key, value );
 		}
 
 		void IntrnlSetMouseState( RubyMouseButton button, bool pressed = true )
 		{
-			if( pressed )
-				m_CurrentMouseButton = button;
-			else
-				m_CurrentMouseButton = RubyMouseButton::Unknown;
+			RubyLibrary::Get().IntrnlSetMouseState( button, pressed );
 		}
 
 		void IntrnlSetLockedMousePos( const RubyIVec2& Position )
@@ -169,25 +166,17 @@ namespace Saturn {
 
 		void IntrnlClearKeysAndMouse()
 		{
-			m_Keys.clear();
-			m_CurrentMouseButton = RubyMouseButton::Unknown;
+			RubyLibrary::Get().IntrnlClearKeysAndMouse();
 		}
 
 	protected:
-		uint32_t m_Width = 0;
-		uint32_t m_Height = 0;
-
 		// Only used for borderless windows.
 		uint32_t m_TitlebarHeight = 0;
 		bool m_TitlebarCondition = false;
 
-		std::unordered_set<RubyKey> m_Keys;
-
-		RubyMouseButton m_CurrentMouseButton = RubyMouseButton::Unknown;
 		RubyCursorMode m_CursorMode = RubyCursorMode::Normal;
 		RubyCursorMode m_LastCursorMode = RubyCursorMode::Normal;
 
-		RubyIVec2 m_Position{};
 		RubyIVec2 m_LockedMousePosition{};
 		RubyIVec2 m_LastMousePosition{};
 

@@ -87,8 +87,6 @@ namespace Saturn {
 			rStyle.Colors[ ImGuiCol_WindowBg ].w = 1.0f;
 		}
 
-		rIO.ConfigWindowsResizeFromEdges = rIO.BackendFlags & ImGuiBackendFlags_HasMouseCursors;
-
 		rIO.Fonts->AddFontFromMemoryTTF( ( void* ) GNotoSansRegularEmbeded, sizeof( GNotoSansRegularEmbeded ), 18.0f );
 		rIO.FontDefault = rIO.Fonts->Fonts.back();
 		
@@ -160,9 +158,6 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		ImGuizmo::BeginFrame();
 #endif
-
-		ImGuiIO& io = ImGui::GetIO();
-		io.DisplaySize = ImVec2( ( float ) Application::Get().GetWindow()->GetWidth(), ( float ) Application::Get().GetWindow()->GetHeight() );
 	}
 
 	void ImGuiLayer::End( VkCommandBuffer CommandBuffer )

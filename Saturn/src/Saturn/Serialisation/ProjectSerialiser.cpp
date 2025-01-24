@@ -30,6 +30,7 @@
 #include "ProjectSerialiser.h"
 
 #include "YamlAux.h"
+#include "Saturn/Audio/AudioSystem.h"
 
 #include <fstream>
 #include <yaml-cpp/yaml.h>
@@ -94,7 +95,8 @@ namespace Saturn {
 
 				out << YAML::Key << "SoundGroup" << YAML::Value << rSoundGroup->GetName();
 
-				// TODO: Volume etc.
+				out << YAML::Key << "Volume" << YAML::Value << rSoundGroup->GetVolume();
+				out << YAML::Key << "Pitch"  << YAML::Value << rSoundGroup->GetPitch();
 
 				out << YAML::EndMap;
 			}
@@ -151,9 +153,15 @@ namespace Saturn {
 				ab.MouseButton = ( RubyMouseButton ) binding[ "Key" ].as<int>( 6 );
 				ab.Type = ( ActionBindingType ) binding[ "Type" ].as<int>( 0 );
 
+#if !defined(SAT_DIST)
+				SAT_CORE_INFO( "Adding new action binding with ID: BINDING/ACTION/{0} ({1})", ab.ID, ab.Name );
+#endif
+
 				newProject->AddActionBinding( ab );
 			}
 		}
+
+		AudioSystem::Get().WaitForInit();
 
 		auto soundGroups = project[ "SoundGroups" ];
 
@@ -164,7 +172,9 @@ namespace Saturn {
 				Ref<SoundGroup> sndGrp = Ref<SoundGroup>::Create();
 				sndGrp->Init( false );
 
-				sndGrp->SetName( grp[ "Name" ].as<std::string>() );
+				sndGrp->SetName( grp[ "SoundGroup" ].as<std::string>() );
+				sndGrp->SetVolume( grp[ "Volume" ].as<float>( 1.0f ) );
+				sndGrp->SetPitch( grp[ "Pitch" ].as<float>( 1.0f ) );
 
 				newProject->AddSoundGroup( sndGrp );
 			}

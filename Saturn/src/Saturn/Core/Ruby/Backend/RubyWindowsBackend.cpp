@@ -36,6 +36,8 @@
 #include <vulkan_win32.h>
 #endif
 
+#include <windowsx.h>
+
 //////////////////////////////////////////////////////////////////////////
 
 LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LParam );
@@ -129,8 +131,8 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 
 		case WM_SIZE: 
 		{
-			UINT width = LOWORD( LParam );
-			UINT height = HIWORD( LParam );
+			const UINT width = LOWORD( LParam );
+			const UINT height = HIWORD( LParam );
 
 			pThis->GetParent()->IntrnlSetSize( width, height );
 
@@ -150,12 +152,12 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 			}
 
 			pThis->GetParent()->DispatchEvent<RubyWindowResizeEvent>( RubyEventType::Resize, static_cast< uint32_t >( width ), static_cast< uint32_t >( height ) );
-		} break;
+		} return false;
 
 		//////////////////////////////////////////////////////////////////////////
 		// Window Position & Focus
 
-		case WM_WINDOWPOSCHANGING: 
+		case WM_MOVE: 
 		{
 			pThis->GetParent()->DispatchEvent<RubyEvent>( RubyEventType::WindowMoved );
 
@@ -164,7 +166,7 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 				pThis->ConfigureClipRect();
 				pThis->RecenterMousePos();
 			}
-		} break;
+		} return 0;
 
 		//////////////////////////////////////////////////////////////////////////
 		
@@ -175,14 +177,23 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 
 		case WM_KILLFOCUS: 
 		{
-			pThis->GetParent()->IntrnlClearKeysAndMouse();
-			[[fallthrough]];
-		}
+			if( pThis->GetParent()->GetCursorMode() == RubyCursorMode::Locked )
+			{
+				pThis->SetMouseCursor( RubyCursorType::Arrow );
+			}
+
+			pThis->GetParent()->DispatchEvent<RubyFocusEvent>( RubyEventType::WindowFocus, false );
+		} return 0;
 
 		case WM_SETFOCUS: 
 		{
-			pThis->GetParent()->DispatchEvent<RubyFocusEvent>( RubyEventType::WindowFocus, Msg == WM_SETFOCUS );
-		} break;
+			if( pThis->GetParent()->GetCursorMode() == RubyCursorMode::Locked )
+			{
+				pThis->SetMouseCursor( RubyCursorType::None );
+			}
+
+			pThis->GetParent()->DispatchEvent<RubyFocusEvent>( RubyEventType::WindowFocus, true );
+		} return 0;
 
 		//////////////////////////////////////////////////////////////////////////
 		// BEGIN: Mouse Events
@@ -190,8 +201,16 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 
 		case WM_MOUSEMOVE:
 		{
-			const int x = LOWORD( LParam );
-			const int y = HIWORD( LParam );
+			const int x = GET_X_LPARAM( LParam );
+			const int y = GET_Y_LPARAM( LParam );
+
+			if( !pThis->IsMouseTracked() )
+			{
+				TRACKMOUSEEVENT TrackMouseEvent{ sizeof( TrackMouseEvent ), TME_LEAVE, Handle };
+				pThis->SetTrackMouse( ::TrackMouseEvent( &TrackMouseEvent ) );
+
+				pThis->GetParent()->DispatchEvent<RubyEvent>( RubyEventType::MouseEnterWindow );
+			}
 
 			if( pThis->GetParent()->GetCursorMode() == RubyCursorMode::Locked )
 			{
@@ -232,17 +251,23 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 		{
 			RubyMouseButton btn = ( Msg == WM_LBUTTONDOWN ? RubyMouseButton::Left : Msg == WM_RBUTTONDOWN ? RubyMouseButton::Right : RubyMouseButton::Middle );
 
+			if( ::GetCapture() == nullptr && pThis->GetParent()->GetCurrentMouseButtons().size() == 0 )
+				::SetCapture( Handle );
+
 			pThis->GetParent()->IntrnlSetMouseState( btn );
 			pThis->GetParent()->DispatchEvent<RubyMouseEvent>( RubyEventType::MousePressed, ( int ) btn );
-		} break;
+		} return 0;
 
 		case WM_XBUTTONDOWN:
 		{
 			RubyMouseButton xbtn = GET_XBUTTON_WPARAM( WParam ) == XBUTTON1 ? RubyMouseButton::Extra1 : RubyMouseButton::Extra2;
 
+			if( ::GetCapture() == nullptr && pThis->GetParent()->GetCurrentMouseButtons().size() == 0 )
+				::SetCapture( Handle );
+
 			pThis->GetParent()->IntrnlSetMouseState( xbtn );
 			pThis->GetParent()->DispatchEvent<RubyMouseEvent>( RubyEventType::MousePressed, ( int ) xbtn );
-		} break;
+		} return 0;
 
 		case WM_LBUTTONUP:
 		case WM_RBUTTONUP:
@@ -252,7 +277,10 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 
 			pThis->GetParent()->IntrnlSetMouseState( btn, false );
 			pThis->GetParent()->DispatchEvent<RubyMouseEvent>( RubyEventType::MouseReleased, ( int )btn );
-		} break;
+			
+			if( ::GetCapture() == Handle && pThis->GetParent()->GetCurrentMouseButtons().size() == 0 )
+				::ReleaseCapture();
+		} return 0;
 
 		case WM_XBUTTONUP:
 		{
@@ -260,14 +288,19 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 
 			pThis->GetParent()->IntrnlSetMouseState( xbtn, false );
 			pThis->GetParent()->DispatchEvent<RubyMouseEvent>( RubyEventType::MouseReleased, ( int ) xbtn );
-		} break;
 
-		case WM_MOUSEHOVER:
+			if( ::GetCapture() == Handle && pThis->GetParent()->GetCurrentMouseButtons().size() == 0 )
+				::ReleaseCapture();
+		} return 0;
+
 		case WM_MOUSELEAVE:
 		{
-			RubyEventType Type = ( Msg == WM_MOUSEHOVER ? RubyEventType::MouseEnterWindow : RubyEventType::MouseLeaveWindow );
+			if( pThis->IsMouseTracked() )
+			{
+				pThis->SetTrackMouse( false );
+			}
 
-			pThis->GetParent()->DispatchEvent<RubyEvent>( Type );
+			pThis->GetParent()->DispatchEvent<RubyEvent>( RubyEventType::MouseLeaveWindow );
 		} break;
 		
 		// Vertical Scroll
@@ -277,7 +310,7 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 			yOffset /= WHEEL_DELTA;
 
 			pThis->GetParent()->DispatchEvent<RubyMouseScrollEvent>( RubyEventType::MouseScroll, 0, yOffset );
-		} break;
+		} return false;
 
 		// Horizontal Scroll
 		case WM_MOUSEHWHEEL: 
@@ -286,7 +319,7 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 			xOffset /= WHEEL_DELTA;
 
 			pThis->GetParent()->DispatchEvent<RubyMouseScrollEvent>( RubyEventType::MouseScroll, xOffset, 0 );
-		} break;
+		} return false;
 
 		// END: Mouse Events
 		//////////////////////////////////////////////////////////////////////////
@@ -303,7 +336,7 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 
 			pThis->GetParent()->IntrnlSetKeyDown( ( RubyKey ) nativeCode, true );
 			pThis->GetParent()->DispatchEvent<RubyKeyEvent>( RubyEventType::KeyPressed, nativeCode, Modifiers );
-		} break;
+		} return false;
 
 		case WM_SYSKEYUP:
 		case WM_KEYUP:
@@ -314,7 +347,7 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 
 			pThis->GetParent()->IntrnlSetKeyDown( ( RubyKey ) nativeCode, false );
 			pThis->GetParent()->DispatchEvent<RubyKeyEvent>( RubyEventType::KeyReleased, nativeCode, Modifiers );
-		} break;
+		} return false;
 
 		// The WM_CHAR message is sent when a printable character key is pressed.
 		// Handle Ansi (Ascii) characters and UTF-8
@@ -322,7 +355,7 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 		{
 			wchar_t wc = static_cast< wchar_t >( WParam );
 			pThis->GetParent()->DispatchEvent<RubyCharacterEvent>( RubyEventType::InputCharacter, wc );
-		} break;
+		} return false;
 
 		case WM_UNICHAR: 
 		{
@@ -331,7 +364,7 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 				// Tell any other applications that we support UTF-16
 				return TRUE;
 			}
-		} break;
+		} return false;
 
 		//////////////////////////////////////////////////////////////////////////
 		// Borderless Resizing support.
@@ -437,7 +470,18 @@ namespace Saturn {
 	{
 		DWORD WindowStyle = ChooseStyle();
 
-		m_Handle = ::CreateWindowExW( 0, DEFAULT_WINDOW_CLASS_NAME, m_pWindow->m_WindowTitle.data(), WindowStyle, CW_USEDEFAULT, CW_USEDEFAULT, ( int ) m_pWindow->GetWidth(), ( int ) m_pWindow->GetHeight(), NULL, NULL, GetModuleHandle( NULL ), NULL );
+		HWND ParentHWND = nullptr;
+		if( m_WindowSpecification.pParentWindow != nullptr )
+			ParentHWND = m_WindowSpecification.pParentWindow->GetNativeHandle();
+
+		m_Handle = ::CreateWindowExW( 
+			0, 
+			DEFAULT_WINDOW_CLASS_NAME, 
+			m_pWindow->m_WindowTitle.data(), 
+			WindowStyle, 
+			CW_USEDEFAULT, CW_USEDEFAULT, 
+			( int ) m_WindowSpecification.Width, ( int ) m_WindowSpecification.Height,
+			ParentHWND, nullptr, GetModuleHandle( nullptr ), nullptr );
 
 		::SetPropW( m_Handle, L"RubyData", this );
 
@@ -451,6 +495,10 @@ namespace Saturn {
 		{
 			case RubyStyle::Default:
 				return WS_OVERLAPPEDWINDOW;
+
+			case RubyStyle::BorderlessNoResize:
+				return WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_POPUP | WS_MINIMIZEBOX;
+
 			case RubyStyle::Borderless:
 				// Create the borderless window as a normal window however we will then set the required styles.
 				// TODO: For some reason adding WS_CAPTION does not work, so we'll add it when set the style long.
@@ -706,7 +754,9 @@ namespace Saturn {
 	{
 		if( m_Handle )
 		{
-			ReleaseDC( m_Handle, m_DrawContent );
+			ReleaseDC( m_Handle, m_DrawContext );
+
+			::RemovePropW( m_Handle, L"RubyData" );
 
 			::DestroyWindow( m_Handle );
 		}
@@ -741,14 +791,28 @@ namespace Saturn {
 
 	void RubyWindowsBackend::ResizeWindow( uint32_t Width, uint32_t Height )
 	{
-		RubyIVec2 currentPos = GetWindowPos();
+		RECT newWindowRect { 0, 0, Width, Height };
 
-		::MoveWindow( m_Handle, currentPos.x, currentPos.y, Width, Height, TRUE );
+		::AdjustWindowRect( &newWindowRect, ChooseStyle(), false );
+
+		::SetWindowPos( m_Handle, HWND_TOP, 0, 0, newWindowRect.right - newWindowRect.left, newWindowRect.bottom - newWindowRect.top, SWP_NOACTIVATE | SWP_NOOWNERZORDER | SWP_NOMOVE | SWP_NOZORDER );
+	}
+
+	RubyIVec2 RubyWindowsBackend::GetSize()
+	{
+		RECT size;
+		::GetClientRect( m_Handle, &size );
+
+		return { size.right, size.bottom };
 	}
 
 	void RubyWindowsBackend::MoveWindow( int x, int y )
 	{
-		::MoveWindow( m_Handle, x, y, m_pWindow->GetWidth(), m_pWindow->GetHeight(), TRUE );
+		RECT newWindowRect{ x, y, x, y };
+
+		::AdjustWindowRect( &newWindowRect, ChooseStyle(), false );
+
+		::SetWindowPos( m_Handle, nullptr, newWindowRect.left, newWindowRect.top, 0, 0, SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOZORDER );
 	}
 
 	void RubyWindowsBackend::PollEvents()
@@ -757,7 +821,7 @@ namespace Saturn {
 		// We should update all windows all at once.
 
 		MSG Message = {};
-		while( ::PeekMessage( &Message, m_Handle, 0, 0, PM_REMOVE ) > 0 )
+		while( ::PeekMessage( &Message, nullptr, 0, 0, PM_REMOVE ) > 0 )
 		{
 			::TranslateMessage( &Message );
 			::DispatchMessage( &Message );
@@ -792,12 +856,10 @@ namespace Saturn {
 
 	RubyIVec2 RubyWindowsBackend::GetWindowPos()
 	{
-		RECT WindowRect;
-		::GetWindowRect( m_Handle, &WindowRect );
+		POINT WindowPosition{ .x = 0, .y = 0 };
+		::ClientToScreen( m_Handle, &WindowPosition );
 
-		::MapWindowPoints( HWND_DESKTOP, ::GetParent( m_Handle ), ( LPPOINT ) &WindowRect, 2 );
-
-		return { WindowRect.left, WindowRect.top };
+		return { ( int ) WindowPosition.x, ( int ) WindowPosition.y };
 	}
 
 	bool RubyWindowsBackend::MouseInRect()
@@ -805,8 +867,11 @@ namespace Saturn {
 		RECT WindowRect;
 		POINT MousePos;
 
-		::GetWindowRect( m_Handle, &WindowRect );
+		::GetClientRect( m_Handle, &WindowRect );
 		::GetCursorPos( &MousePos );
+
+		::ClientToScreen( m_Handle, ( POINT* ) &WindowRect.left );
+		::ClientToScreen( m_Handle, ( POINT* ) &WindowRect.right );
 
 		return ::PtInRect( &WindowRect, MousePos );
 	}

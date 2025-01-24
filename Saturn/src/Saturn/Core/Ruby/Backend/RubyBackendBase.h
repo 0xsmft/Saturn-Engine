@@ -63,6 +63,8 @@ namespace Saturn {
 		virtual void PresentWindow( RubyWindowShowCmd Command = RubyWindowShowCmd::Default ) = 0;
 
 		virtual void ResizeWindow( uint32_t Width, uint32_t Height ) = 0;
+		virtual RubyIVec2 GetSize() = 0;
+
 		virtual void SetTitle( const std::string& rTitle ) = 0;
 		virtual void SetTitle( const std::wstring& rTitle ) = 0;
 

@@ -29,8 +29,11 @@
 #pragma once
 
 #include "RubyMonitor.h"
+#include "RubyEventType.h"
 
 #include "SingletonStorage.h"
+
+#include <unordered_set>
 
 namespace Saturn {
 
@@ -48,7 +51,49 @@ namespace Saturn {
 
 		void AddMonintor( const RubyMonitor& rMonitor );
 
+		bool IsKeyDown( RubyKey key )
+		{
+			return m_Keys.count( key ) > 0;
+		}
+
+		bool IsMouseButtonDown( RubyMouseButton btn )
+		{
+			return m_CurrentMouseButtons.count( btn ) > 0;
+		}
+
+		std::unordered_set<RubyMouseButton>& GetCurrentMouseButtons() { return m_CurrentMouseButtons; }
+		const std::unordered_set<RubyMouseButton>& GetCurrentMouseButtons() const { return m_CurrentMouseButtons; }
+
+		std::unordered_set<RubyKey>& GetKeys() { return m_Keys; }
+		const std::unordered_set<RubyKey>& GetKeys() const { return m_Keys; }
+
+		//////////////////////////////////////////////////////////////////////////
+
+		void SetKeyState( RubyKey key, bool state ) 
+		{
+			if( state )
+				m_Keys.insert( key );
+			else
+				m_Keys.erase( key );
+		}
+
+		void IntrnlSetMouseState( RubyMouseButton btn, bool state )
+		{
+			if( state )
+				m_CurrentMouseButtons.insert( btn );
+			else
+				m_CurrentMouseButtons.erase( btn );
+		}
+
+		void IntrnlClearKeysAndMouse()
+		{
+			m_Keys.clear();
+			m_CurrentMouseButtons.clear();
+		}
+
 	private:
 		std::vector<RubyMonitor> m_Monitors;
+		std::unordered_set<RubyKey> m_Keys;
+		std::unordered_set<RubyMouseButton> m_CurrentMouseButtons;
 	};
 }

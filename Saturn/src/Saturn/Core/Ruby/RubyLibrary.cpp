@@ -36,7 +36,7 @@
 namespace Saturn {
 
 #if defined(_WIN32)
-	BOOL CALLBACK MonitorEnumProc( HMONITOR Monitor, HDC HDCMonitor, LPRECT LPRCMonitor, LPARAM DWData )
+	static BOOL CALLBACK MonitorEnumProc( HMONITOR Monitor, HDC HDCMonitor, LPRECT LPRCMonitor, LPARAM DWData )
 	{
 		RubyLibrary* pThis = ( RubyLibrary* ) DWData;
 
@@ -82,7 +82,7 @@ namespace Saturn {
 
 	std::vector<RubyMonitor> RubyLibrary::GetAllMonitors()
 	{
-		int Monitors = GetSystemMetrics( SM_CMONITORS );
+		int Monitors = ::GetSystemMetrics( SM_CMONITORS );
 
 		if( m_Monitors.size() != Monitors )
 		{

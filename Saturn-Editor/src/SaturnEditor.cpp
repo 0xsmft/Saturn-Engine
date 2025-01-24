@@ -77,13 +77,13 @@ public:
 				}
 			}
 		}
-		
-		Saturn::ProjectSerialiser ps;
-		ps.Deserialise( m_ProjectPath );
 	}
 
 	virtual void OnInit() override
 	{
+		Saturn::ProjectSerialiser ps;
+		ps.Deserialise( m_ProjectPath );
+
 		m_EditorLayer = new Saturn::EditorLayer();
 
 		PushLayer( m_EditorLayer );

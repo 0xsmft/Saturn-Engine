@@ -60,6 +60,8 @@ namespace Saturn {
 		void PresentWindow( RubyWindowShowCmd Command = RubyWindowShowCmd::Default ) override;
 
 		void ResizeWindow( uint32_t Width, uint32_t Height ) override;
+		RubyIVec2 GetSize() override;
+
 		void MoveWindow( int x, int y ) override;
 
 		void SetTitle( const std::string& rTitle ) override;
@@ -99,6 +101,8 @@ namespace Saturn {
 		void UpdateCursorIcon();
 		void SetResizeCursor( RubyCursorType Type );
 		void ResetResizeCursor();
+		bool IsMouseTracked() { return m_MouseTracked; }
+		void SetTrackMouse( bool value ) { m_MouseTracked = value; }
 
 	private:
 		DWORD ChooseStyle();
@@ -110,7 +114,7 @@ namespace Saturn {
 	private:
 		HWND m_Handle = nullptr;
 
-		HDC m_DrawContent = nullptr;
+		HDC m_DrawContext = nullptr;
 		HGLRC m_OpenGLRenderContext = nullptr;
 
 		// For disabled mouse mode.
@@ -120,5 +124,7 @@ namespace Saturn {
 		// For example: Arrow, Hand or IBeam.
 		HCURSOR m_CurrentMouseCursorIcon = nullptr;
 		RubyCursorType m_CurrentCursorType = RubyCursorType::None;
+
+		bool m_MouseTracked = false;
 	};
 }

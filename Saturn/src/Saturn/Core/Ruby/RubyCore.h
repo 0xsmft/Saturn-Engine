@@ -64,6 +64,7 @@ namespace Saturn {
 	{
 		Default,
 		Borderless,
+		BorderlessNoResize, // Draws the same as Borderless however with no resize support or titlebar
 	};
 
 	enum class RubyCursorType
@@ -95,6 +96,7 @@ namespace Saturn {
 		Fullscreen
 	};
 
+	class RubyWindow;
 	struct RubyWindowSpecification
 	{
 		std::wstring_view Name;
@@ -103,6 +105,7 @@ namespace Saturn {
 		RubyGraphicsAPI GraphicsAPI = RubyGraphicsAPI::None;
 		RubyStyle Style = RubyStyle::Default;
 		bool ShowNow = true;
+		RubyWindow* pParentWindow = nullptr;
 	};
 
 	template<typename N>

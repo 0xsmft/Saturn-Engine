@@ -38,7 +38,7 @@
 namespace Saturn {
 
 	RubyWindow::RubyWindow( const RubyWindowSpecification& rSpec )
-		: m_WindowTitle( rSpec.Name ), m_Width( rSpec.Width ), m_Height( rSpec.Height ), m_GraphicsAPI( rSpec.GraphicsAPI ), m_Style( rSpec.Style )
+		: m_WindowTitle( rSpec.Name ), m_GraphicsAPI( rSpec.GraphicsAPI ), m_Style( rSpec.Style )
 	{
 #if defined(_WIN32)
 		m_pDefaultBackend = new RubyWindowsBackend( rSpec, this );
@@ -85,6 +85,7 @@ namespace Saturn {
 				m_pDefaultBackend->Maximize();
 			} break;
 
+			case RubyStyle::BorderlessNoResize:
 			case RubyStyle::Borderless:
 			{
 				if( Maximized() )
@@ -113,6 +114,7 @@ namespace Saturn {
 				m_pDefaultBackend->Minimize();
 			} break;
 
+			case RubyStyle::BorderlessNoResize:
 			case RubyStyle::Borderless:
 			{
 				if( Minimized() )
@@ -137,9 +139,6 @@ namespace Saturn {
 
 	void RubyWindow::Resize( uint32_t Width, uint32_t Height )
 	{
-		m_Width = Width;
-		m_Height = Height;
-
 		m_pDefaultBackend->ResizeWindow( Width, Height );
 	}
 
@@ -152,9 +151,6 @@ namespace Saturn {
 
 	void RubyWindow::SetPosition( int x, int y )
 	{
-		m_Position.x = x;
-		m_Position.y = y;
-
 		m_pDefaultBackend->MoveWindow( x, y );
 	}
 
@@ -197,6 +193,21 @@ namespace Saturn {
 		m_CursorMode = mode;
 
 		m_pDefaultBackend->SetMouseCursorMode( mode );
+	}
+
+	RubyIVec2 RubyWindow::GetSize() const
+	{
+		return m_pDefaultBackend->GetSize();
+	}
+
+	uint32_t RubyWindow::GetWidth() const
+	{
+		return m_pDefaultBackend->GetSize().x;
+	}
+
+	uint32_t RubyWindow::GetHeight() const
+	{
+		return m_pDefaultBackend->GetSize().y;
 	}
 
 	const char* RubyWindow::GetClipboardText()
@@ -258,12 +269,12 @@ namespace Saturn {
 
 	bool RubyWindow::IsKeyDown( RubyKey key )
 	{
-		return m_Keys.count( key ) > 0;
+		return RubyLibrary::Get().IsKeyDown( key );
 	}
 
 	bool RubyWindow::IsMouseButtonDown( RubyMouseButton button )
 	{
-		return m_CurrentMouseButton == button;
+		return RubyLibrary::Get().IsMouseButtonDown( button );
 	}
 
 	bool RubyWindow::MouseInWindow()
@@ -305,14 +316,10 @@ namespace Saturn {
 
 	void RubyWindow::IntrnlSetSize( uint32_t width, uint32_t height )
 	{
-		m_Width = width;
-		m_Height = height;
 	}
 
 	void RubyWindow::IntrnlSetPos( int x, int y )
 	{
-		m_Position.x = x;
-		m_Position.y = y;
 	}
 
 }

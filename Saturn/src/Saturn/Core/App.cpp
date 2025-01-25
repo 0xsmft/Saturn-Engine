@@ -407,7 +407,7 @@ namespace Saturn {
 
 		if( FAILED( ::CoInitialize( nullptr ) ) )
 		{
-			SAT_CORE_ASSERT( "Unable to initialise Windows COM.", false );
+			SAT_CORE_ASSERT( "Unable to initialise Windows COM (COM/0/0).", false );
 		}
 
 		// Create the object.
@@ -415,7 +415,7 @@ namespace Saturn {
 
 		if( FAILED( hr ) )
 		{
-			SAT_CORE_ASSERT( "Unable to create Windows COM object (IID_IFileOpenDialog)", false );
+			SAT_CORE_ASSERT( "Unable to create Windows COM/IID_IFileOpenDialog object", false );
 		}
 
 		::DWORD dwOptions;
@@ -428,7 +428,7 @@ namespace Saturn {
 		// Get the file name from the dialog.
 		if( FAILED( hr ) )
 		{
-			SAT_CORE_ASSERT( "Unable to get the file name from the dialog using COM object (IID_IFileOpenDialog)", false );
+			SAT_CORE_ASSERT( "Unable to get the file name from the dialog using COM/IID_IFileOpenDialog", false );
 		}
 
 		::IShellItem* pItem;

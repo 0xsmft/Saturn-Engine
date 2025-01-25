@@ -294,7 +294,6 @@ namespace Saturn {
 
 		if( m_RuntimeScene ) 
 		{
-			// TEMP:
 			Renderer2D::Get().PreRender();
 
 			m_RuntimeScene->OnUpdate( time );
@@ -919,59 +918,23 @@ namespace Saturn {
 				ShouldSaveProject = true;
 			}
 
+			disabledFlagIfRuntime.Pop();
+
 			ImGui::PushFont( boldFont );
 			ImGui::Text( "Audio Groups" );
 			ImGui::Separator();
 			ImGui::PopFont();
 
+			ProjectSettings_DrawSoundGroupEdit( AudioSystem::Get().GetMasterSoundGroup() );
+			ImGui::EndHorizontal(); // EndHorizontal from ProjectSettings_DrawSoundGroupEdit
+
 			for( auto rIt = ActiveProject->GetSoundGroups().begin(); rIt != ActiveProject->GetSoundGroups().end(); )
 			{
 				auto& rSoundGroup = *( rIt );
 
-				char buffer[ 256 ];
-				memset( buffer, 0, 256 );
-				memcpy( buffer, rSoundGroup->GetName().data(), rSoundGroup->GetName().length() );
+				ProjectSettings_DrawSoundGroupEdit( rSoundGroup );
 
-				// TODO: Change to unique ID
-				std::string id = "##entergrpname";
-
-				ImGui::SetNextItemWidth( 130.0f );
-				if( ImGui::InputText( id.data(), buffer, 256 ) )
-				{
-					rSoundGroup->SetName( std::string( buffer ) );
-				}
-
-				ImGui::SameLine(); // HACK, There seems to bug with the ImGui Layout as the InputText works fine when it's not in a Horizontal layout. (Update) Seems to be with certain IDs/labels
-
-				ImGui::BeginHorizontal( rSoundGroup->GetName().data() );
-
-				// Volume & Pitch Control
-				float volume = rSoundGroup->GetVolume();
-				float pitch = rSoundGroup->GetPitch();
-
-				ImGui::BeginHorizontal( "##vpSliders" );
-				
-				ImGui::Text( "Volume" );
-
-				ImGui::SetNextItemWidth( 130.0f );
-				if( ImGui::SliderFloat( "##volumeSlider", &volume, 0.0f, 100.0f, "%.0f" ) ) 
-				{
-					rSoundGroup->SetVolume( volume );
-				}
-
-				ImGui::Spring();
-
-				ImGui::Text( "Pitch" );
-
-				ImGui::SetNextItemWidth( 130.0f );
-				if( ImGui::SliderFloat( "##pitchSlider", &pitch, 0.0f, 100.0f, "%.0f" ) )
-				{
-					rSoundGroup->SetPitch( pitch );
-				}
-
-				ImGui::Spring();
-
-				ImGui::EndHorizontal();
+				Auxiliary::DisabledFlag disabledFlag( m_RequestRuntime );
 
 				if( ImGui::SmallButton( "-" ) )
 				{
@@ -982,6 +945,8 @@ namespace Saturn {
 				{
 					++rIt;
 				}
+
+				disabledFlag.Pop();
 
 				ImGui::EndHorizontal();
 			}
@@ -1012,8 +977,6 @@ namespace Saturn {
 			}
 
 			ImGui::PopID();
-
-			disabledFlagIfRuntime.Pop();
 
 			// This does not matter because the editor is not designed to run in Dist, however, right now I want to keep this in release builds.
 #if !defined(SAT_DIST)
@@ -1051,7 +1014,7 @@ namespace Saturn {
 					drawRow( "Cache Path", ActiveProject->GetFullCachePath().string() );
 
 					drawRow( "Module Path", GameModule::Get().GetModulePath().string() );
-					drawRow( "Module Timestamp (X/)", GameModule::Get().GetTimestamp() );
+					drawRow( "Module Timestamp", std::format( "X{0}", GameModule::Get().GetTimestamp() ) );
 				}
 
 				ImGui::EndTable();
@@ -1068,6 +1031,59 @@ namespace Saturn {
 
 			ShouldSaveProject = false;
 		}
+	}
+
+	void EditorLayer::ProjectSettings_DrawSoundGroupEdit( Ref<SoundGroup>& rSoundGroup )
+	{
+		char buffer[ 256 ];
+		memset( buffer, 0, 256 );
+		memcpy( buffer, rSoundGroup->GetName().data(), rSoundGroup->GetName().length() );
+
+		// TODO: Change to unique ID
+		std::string id = "##entergrpname";
+
+		ImGuiInputTextFlags inputTextFlags = m_RequestRuntime ? ImGuiInputTextFlags_ReadOnly : 0;
+
+		ImGui::SetNextItemWidth( 130.0f );
+		if( ImGui::InputText( id.data(), buffer, 256, inputTextFlags ) )
+		{
+			rSoundGroup->SetName( std::string( buffer ) );
+		}
+
+		ImGui::SameLine(); // HACK, There seems to bug with the ImGui Layout as the InputText works fine when it's not in a Horizontal layout. (Update) Seems to be with certain IDs/labels
+
+		ImGui::BeginHorizontal( rSoundGroup->GetName().data() );
+
+		// Volume & Pitch Control
+		float volume = rSoundGroup->GetVolume();
+		float pitch = rSoundGroup->GetPitch();
+
+		ImGui::BeginHorizontal( "##vpSliders" );
+
+		ImGui::Text( "Volume Multiplier" );
+
+		ImGui::SetNextItemWidth( 130.0f );
+		if( ImGui::DragFloat( "##volumeMul", &volume, 0.1f, 0.0f, 100.0f, "%.3f", ImGuiSliderFlags_AlwaysClamp ) )
+		{
+			rSoundGroup->SetVolume( volume );
+		}
+
+		ImGui::Spring();
+
+		ImGui::Text( "Pitch Multiplier" );
+
+		ImGui::SetNextItemWidth( 130.0f );
+		if( ImGui::DragFloat( "##pitchMul", &pitch, 0.1f, 0.0f, 100.0f, "%.3f", ImGuiSliderFlags_AlwaysClamp ) )
+		{
+			rSoundGroup->SetPitch( pitch );
+		}
+
+		ImGui::Spring();
+
+		// End vpSliders Horizontal
+		ImGui::EndHorizontal();
+		
+		// Don't end main horizontal as we might need to still draw more.
 	}
 
 	void EditorLayer::HotReloadGame()
@@ -1551,7 +1567,7 @@ namespace Saturn {
 			ImGui::EndMenu();
 		}
 
-		if( ImGui::BeginMenu( "Auxiliary" ) ) 
+		if( ImGui::BeginMenu( "Auxiliary" ) )
 		{
 			ImGui::SeparatorText( "Asset Registry" );
 			if( ImGui::MenuItem( "Asset Registry Debug", "" ) )       m_OpenAssetRegistryDebug ^= 1;
@@ -1739,7 +1755,7 @@ namespace Saturn {
 	void EditorLayer::DrawSceneDirtyPopup()
 	{
 		ImGui::SetNextWindowPos( ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Appearing, ImVec2( 0.5f, 0.5f ) );
-		if( ImGui::BeginPopupModal( "SceneDirtyPopup", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings ) )
+		if( ImGui::BeginPopupModal( "SceneDirtyPopup", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings ) )
 		{
 			ImGui::Text( "You have unsaved changes to this scene. Would you like to save them?" );
 
@@ -2327,7 +2343,7 @@ namespace Saturn {
 	{
 		if( !m_HasPremakePath )
 		{
-			if( ImGui::BeginPopupModal( "Missing Environment Variable", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings ) )
+			if( ImGui::BeginPopupModal( "Missing Environment Variable", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings ) )
 			{
 				ImGui::Text( "The environment variable SATURN_PREMAKE_PATH is not set." );
 				ImGui::Text( "This is required in order to build projects." );

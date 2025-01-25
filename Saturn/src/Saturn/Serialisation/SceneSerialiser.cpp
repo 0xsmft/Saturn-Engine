@@ -103,7 +103,7 @@ namespace Saturn {
 		if( !data[ "Scene" ] )
 			return;
 
-		SAT_CORE_INFO( "Deserialising scene '{0}'", m_Scene->Name );
+		SAT_CORE_INFO( "Deserialising scene SCENE/0/{0}", rPath.stem().string() );
 
 		auto entities = data[ "Entities" ];
 		DeserialiseEntities( entities, m_Scene );

@@ -98,6 +98,8 @@ namespace Saturn {
 		void Viewport_RTControls_Running();
 		void Viewport_RTControls_Default();
 
+		void ProjectSettings_DrawSoundGroupEdit( Ref<SoundGroup>& rSoundGroup );
+
 		// Close editor and open the project browser.
 		void CloseEditorAndOpenPB();
 		bool OnTitlebarExit();

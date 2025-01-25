@@ -160,8 +160,8 @@ namespace Saturn {
 		// Write asset header data.
 		for( auto& [id, asset] : AssetBundleRegistry->GetAssetMap() )
 		{
-			SAT_CORE_INFO( "Writing header information for asset: {0} ({1})", id, asset->Name );
-			std::string status = std::format( "Writing header information for asset: {0} ({1})", (uint64_t)id, asset->Name );
+			SAT_CORE_INFO( "Writing header information for asset: ASSET/{0} ({1})", id, asset->Name );
+			std::string status = std::format( "Writing header information for asset: ASSET/{0} ({1})", (uint64_t)id, asset->Name );
 
 			jobProgress->SetStatus( status );
 
@@ -392,6 +392,8 @@ namespace Saturn {
 			SAT_DECODE_VER_STRING( header.Version, decodedAssetBundleVer );
 			
 			SAT_CORE_ERROR( "Asset bundle version mismatch! This should not happen. Asset bundle version is: {0} while current Engine version is: {1}.", decodedAssetBundleVer, SAT_CURRENT_VERSION_STRING );
+
+			SAT_CORE_ERROR( "To developers: Have you forgot to rebuilt the Asset Bundle after rebuilding the project for disturbution or was the Asset Bundle built successfully?" );
 		
 			return AssetBundleResult::FileVersionMismatch;
 		}
@@ -412,7 +414,7 @@ namespace Saturn {
 
 			rAssetRegistry->m_Assets[ asset->ID ] = asset;
 
-			SAT_CORE_INFO( "Read asset header info: {0} ({1})", asset->ID, asset->Name );
+			SAT_CORE_INFO( "Read asset header info: ASSET/{0} ({1})", asset->ID, asset->Name );
 		}
 
 		// Load the VFS

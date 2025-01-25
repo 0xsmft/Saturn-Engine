@@ -591,6 +591,9 @@ namespace Saturn {
 
 		DrawEntityProperties( entity );
 
+		//////////////////////////////////////////////////////////////////////////
+		// Components
+
 		DrawComponent<TransformComponent>( "Transform", entity, [&]( auto& tc )
 		{
 			bool modified = false;
@@ -1072,8 +1075,7 @@ namespace Saturn {
 				bool open = false;			
 				
 				// Push disabled flag if runtime running
-				Auxiliary::ScopedItemFlag disabledFlag( ImGuiItemFlags_Disabled, m_Context->IsRuntimeRunning() );
-				Auxiliary::ScopedStyleVar<float> styleVar( ImGuiStyleVar_Alpha, m_Context->IsRuntimeRunning() ? 0.5f : 1.0f );
+				Auxiliary::ScopedDisabledFlag disabledFlag( m_Context->IsRuntimeRunning() );
 
 				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24, 24 ) ) )
 				{

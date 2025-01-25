@@ -451,7 +451,7 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 			if( entity[ "TagComponent" ] )
 				Tag = entity[ "TagComponent" ][ "Tag" ].as< std::string >();
 
-			SAT_CORE_INFO( "Deserialised entity with ID: {0}, with name : {1}", entityID, Tag );
+			SAT_CORE_INFO( "Deserialised entity with ID: ENTITY/{0}, with name : {1}", entityID, Tag );
 
 			Ref<Entity> DeserialisedEntity = nullptr;
 
@@ -468,7 +468,7 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 				s.ScriptName = ScriptName;
 				s.AssetID = srcc[ "ID" ].as< uint64_t >();
 
-				SAT_CORE_INFO( "Created entity with class name: {0}", s.ScriptName );
+				SAT_CORE_INFO( "Created entity with class name: X/{0}", s.ScriptName );
 
 				/////////////////////////////////
 				// Read Properties

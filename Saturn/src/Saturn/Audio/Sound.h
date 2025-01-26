@@ -59,6 +59,9 @@ namespace Saturn {
 		void SetVolumeMultiplier( float multiplier );
 		void SetPitchMultiplier( float multiplier );
 
+		float GetVolumeMultiplier();
+		float GetPitchMultiplier();
+
 		void SetPitchByPercent( float percent );
 
 		float GetDurationInSeconds();

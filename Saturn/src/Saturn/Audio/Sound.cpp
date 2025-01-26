@@ -246,6 +246,16 @@ namespace Saturn {
 		ma_sound_set_pitch( m_Sound, multiplier );
 	}
 
+	float Sound::GetVolumeMultiplier()
+	{
+		return ma_sound_get_volume( m_Sound );
+	}
+
+	float Sound::GetPitchMultiplier()
+	{
+		return ma_sound_get_pitch( m_Sound );
+	}
+
 	void Sound::SetPitchByPercent( float percent )
 	{
 		// If percent was 3.5 multiplier should be 1.035 and if percent was -3.5 then multiplier should be 0.965

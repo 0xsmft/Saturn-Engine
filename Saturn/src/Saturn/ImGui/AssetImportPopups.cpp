@@ -38,6 +38,9 @@
 
 #include "Saturn/Vulkan/Mesh.h"
 
+#include "ImGuiAuxiliary.h"
+#include "EditorIcons.h"
+
 #include <imgui.h>
 
 namespace Saturn::Auxiliary {
@@ -46,11 +49,13 @@ namespace Saturn::Auxiliary {
 	{
 		bool PopupModified = false;
 
-		if( ImGui::BeginPopupModal( "Import Mesh##IMPORT_MESH", pOpen, ImGuiWindowFlags_NoMove ) )
+		ImGui::SetNextWindowPos( ImGui::GetWindowViewport()->GetCenter(), ImGuiCond_Appearing );
+		if( ImGui::BeginPopupModal( "Import Mesh##IMPORT_MESH", pOpen, ImGuiWindowFlags_NoSavedSettings ) )
 		{
 			static std::filesystem::path s_GLTFBinPath = "";
 			static std::filesystem::path s_OriginalMeshPath = "";
 			static bool s_UseBinFile = true;
+			static AssetID s_CurrentAssetID = 0;
 
 			ImGui::BeginVertical( "##inputv" );
 
@@ -119,7 +124,7 @@ namespace Saturn::Auxiliary {
 
 				// TODO: This is bad.
 				// Create the mesh so we can copy over the texture (if any).
-				auto mesh = Ref<MeshSource>::Create( s_OriginalMeshPath, rImportTargetPath );
+				auto mesh = Ref<MeshCloner>::Create( s_OriginalMeshPath, rImportTargetPath );
 				mesh = nullptr;
 
 				// Create the mesh asset.

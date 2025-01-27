@@ -340,6 +340,28 @@ namespace Saturn {
 
 		out << YAML::Key << "Physics Material ID" << YAML::Value << (int)mesh->GetPhysicsMaterial();
 
+		out << YAML::Key << "MaterialRegistry";
+		out << YAML::BeginMap;
+
+		out << YAML::Key << "Materials";
+		out << YAML::BeginSeq;
+
+		if( mesh->GetMaterialRegistry() )
+		{
+			int i = 0;
+			for( const auto& material : mesh->GetMaterialRegistry()->GetMaterials() )
+			{
+				out << YAML::BeginMap;
+				out << YAML::Key << i << YAML::Value << material->ID;
+				out << YAML::EndMap;
+
+				i++;
+			}
+		}
+
+		out << YAML::EndSeq;
+		out << YAML::EndMap;
+
 		out << YAML::EndMap;
 
 		out << YAML::EndMap;
@@ -374,6 +396,27 @@ namespace Saturn {
 
 		mesh->SetAttachedShape( (ShapeType)shapeType );
 		mesh->SetPhysicsMaterial( physicsMaterial );
+
+		auto materialRegistry = meshData[ "MaterialRegistry" ];
+		if( materialRegistry )
+		{
+			auto materials = materialRegistry[ "Materials" ];
+			if( materials )
+			{
+				int i = 0;
+				for( auto materialNode : materials )
+				{
+					auto id = materialNode[ i ].as<uint64_t>();
+
+					if( id != 0 )
+					{
+						mesh->GetMaterialRegistry()->SetMaterial( i, AssetManager::Get().GetAssetAs<MaterialAsset>( id ) );
+					}
+
+					i++;
+				}
+			}
+		}
 
 		// TODO: (Asset) Fix this.
 		struct

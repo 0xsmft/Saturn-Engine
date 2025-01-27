@@ -31,10 +31,12 @@
 
 #include "Saturn/Core/Renderer/RenderThread.h"
 
-#include "Saturn/Asset/AssetRegistry.h"
+#include "Saturn/Asset/AssetManager.h"
 #include "Saturn/Vulkan/SceneRenderer.h"
 
-#include "Saturn/ImGui/ImGuiAuxiliary.h"
+#include "ImGuiAuxiliary.h"
+#include "EditorIcons.h"
+
 #include "Saturn/Scene/Components.h"
 
 #include "Saturn/Physics/PhysicsCooking.h"
@@ -181,13 +183,56 @@ namespace Saturn {
 			Auxiliary::EndTreeNode();
 		}
 
+		static AssetID s_id;
+
+		if( Auxiliary::TreeNode( "Materials" ) )
+		{
+			ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_FramePadding;
+
+			int i = 0;
+			for( auto& rMaterial : m_Mesh->GetMaterialAssets() )
+			{
+				ImGui::PushID( i );
+
+				if( ImGui::TreeNodeEx( rMaterial->GetName().c_str(), flags ) )
+				{
+					ImGui::Text( "Asset ID/%llu", ( uint64_t ) rMaterial->GetAssetID() );
+
+					bool open = false;
+
+					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
+					{
+						open = true;
+					}
+
+					ImGui::SameLine();
+
+					if( Auxiliary::DrawAssetFinder( AssetType::Material, &open, s_id ) )
+					{
+						Ref<MaterialAsset> newAsset = AssetManager::Get().GetAssetAs<MaterialAsset>( s_id );
+						rMaterial->SetMaterial( newAsset->GetMaterial() );
+
+						m_Mesh->GetMaterialRegistry()->SetMaterial( i, s_id );
+					}
+
+					Auxiliary::EndTreeNode();
+				}
+
+				ImGui::PopID();
+
+				i++;
+			}
+
+			Auxiliary::EndTreeNode();
+		}
+
 		ImGui::End();
 
 		ImGui::Begin( "##Toolbar" );
 
 		ImGui::BeginVertical( "##tbv" );
 
-		if( ImGui::Button( "Save", ImVec2( 50, 50 ) ) ) 
+		if( ImGui::Button( "Save", ImVec2( 50.0f, 50.0f ) ) ) 
 		{
 			StaticMeshAssetSerialiser sma;
 			sma.Serialise( m_Mesh );

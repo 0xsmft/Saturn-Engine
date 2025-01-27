@@ -223,17 +223,26 @@ namespace Saturn {
 		uint32_t Submeshes = 0;
 	};
 
-	// A mesh source class only exists to get information about a mesh, use the mesh class to render meshes.
-	class MeshSource : public RefTarget
+	enum MeshImportBehaviour_ : uint32_t
+	{
+		MeshImportBehaviour_NoMaterials = 1,
+		MeshImportBehaviour_ExcludeTextures = 2,
+		MeshImportBehaviour_AllowUnnamedMaterials = 4,
+		MeshImportBehaviour_Default = MeshImportBehaviour_AllowUnnamedMaterials | MeshImportBehaviour_NoMaterials,
+	};
+
+	// enum MeshImportBehaviour_
+	typedef uint32_t MeshImportBehaviour;
+
+	// A mesh cloner class only exists to get information about a mesh, use the mesh class to render meshes.
+	class MeshCloner : public RefTarget
 	{
 	public:
-		MeshSource( const std::filesystem::path& rPath, const std::filesystem::path& rDstPath );
-		~MeshSource();
+		MeshCloner( const std::filesystem::path& rPath, const std::filesystem::path& rDstPath, MeshImportBehaviour importBehaviour );
+		~MeshCloner();
 
 	private:
 #if !defined(SAT_DIST)
-		void TraverseNodes( aiNode* node, const glm::mat4& parentTransform = glm::mat4( 1.0f ), uint32_t level = 0 );
-
 		MeshInformation m_MeshInformation;
 
 		std::unique_ptr<Assimp::Importer> m_Importer;

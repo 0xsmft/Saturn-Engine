@@ -31,6 +31,7 @@
 
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
 #include "Saturn/ImGui/AssetImportPopups.h"
+#include "Saturn/ImGui/EditorIcons.h"
 
 #include "Saturn/Asset/MaterialAsset.h"
 #include "Saturn/Asset/PhysicsMaterialAsset.h"
@@ -1042,11 +1043,16 @@ namespace Saturn {
 			ImGui::OpenPopup( "Import Mesh##IMPORT_MESH" );
 	
 		bool PopupModified = false;
+
 		ImGui::SetNextWindowSize( { 350.0F, 0.0F } );
-		if( ImGui::BeginPopupModal( "Import Mesh##IMPORT_MESH", &m_ShowAssetImportPopup, ImGuiWindowFlags_NoMove ) )
+		ImGui::SetNextWindowPos( ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Appearing, ImVec2( 0.5f, 0.5f ) );
+
+		if( ImGui::BeginPopupModal( "Import Mesh##IMPORT_MESH", &m_ShowAssetImportPopup, ImGuiWindowFlags_NoSavedSettings ) )
 		{
 			static std::filesystem::path s_GLTFBinPath = "";
 			static bool s_UseBinFile = false;
+			static AssetID s_CurrentAssetID = 0;
+			static MeshImportBehaviour meshImportBehaviour = MeshImportBehaviour_Default;
 
 			ImGui::BeginVertical( "##inputv" );
 
@@ -1056,7 +1062,7 @@ namespace Saturn {
 
 			ImGui::InputText( "##path", ( char* ) m_ImportAssetPath.string().c_str(), 1024 );
 
-			if( ImGui::Button( "Browse" ) )
+			if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
 			{
 				m_ImportAssetPath = Application::Get().OpenFile( "Supported asset types (*.fbx *.gltf *.glb)\0*.fbx; *.gltf; *.glb\0" );
 			}
@@ -1073,6 +1079,8 @@ namespace Saturn {
 				{
 					s_GLTFBinPath = m_ImportAssetPath;
 					s_GLTFBinPath.replace_extension( ".bin" );
+
+					s_UseBinFile = std::filesystem::exists( s_GLTFBinPath );
 				}
 
 				ImGui::BeginVertical( "##gltfinput" );
@@ -1083,30 +1091,117 @@ namespace Saturn {
 
 				ImGui::InputText( "##binpath", ( char* ) s_GLTFBinPath.string().c_str(), 1024 );
 
-				if( ImGui::Button( "Browse" ) )
+				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
 				{
 					s_GLTFBinPath = Application::Get().OpenFile( "Supported asset types (*.glb *.bin)\0*.glb; *.bin\0" );
+
+					s_UseBinFile = std::filesystem::exists( s_GLTFBinPath );
 				}
 
 				ImGui::EndHorizontal();
 
-				ImGui::Checkbox( "Use Binary File", &s_UseBinFile );
+				Auxiliary::DrawBoolControl( "Use Binary File", s_UseBinFile );
 
 				ImGui::EndVertical();
 			}
 
+			ImGui::BeginHorizontal( "##defMaterial" );
+			
+			bool open = false;
+
+			ImGui::Text( "Default Material:" );
+			 
+			if( ImGui::BeginItemTooltip() )
+			{
+				ImGui::Text( "todo" );
+				ImGui::EndTooltip();
+			}
+
+			s_CurrentAssetID == 0 ? ImGui::Text( "None -- create new" ) : ImGui::Text( std::to_string( s_CurrentAssetID ).c_str() );
+
+			ImGui::Spring();
+
+			if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
+				open = true;
+
+			Auxiliary::DrawAssetFinder( AssetType::Material, &open, s_CurrentAssetID );
+
+			ImGui::EndHorizontal();
+
+			ImGui::Text( "Import Behaviour:" );
+
+			auto hasFlag = []( MeshImportBehaviour flag ) -> bool
+			{
+				return ( meshImportBehaviour & flag ) != 0;
+			};
+
+			ImGui::BeginHorizontal( "##importOption_aum" );
+			
+			bool allowUnnamedMaterials = hasFlag( MeshImportBehaviour_AllowUnnamedMaterials );
+			ImGui::Text( "Allow Unnamed Materials" );
+			ImGui::Spring();
+
+			ImGui::SetNextItemWidth( 130.0f );
+			if( ImGui::Checkbox( "##AllowUnnamedMaterials", &allowUnnamedMaterials ) )
+			{
+				if( hasFlag( MeshImportBehaviour_AllowUnnamedMaterials ) )
+					meshImportBehaviour &= ~MeshImportBehaviour_AllowUnnamedMaterials;
+				else
+					meshImportBehaviour |= MeshImportBehaviour_AllowUnnamedMaterials;
+			}
+			
+			ImGui::EndHorizontal();
+
+			ImGui::BeginHorizontal( "##importOption_nomat" );
+
+			bool noMaterials = hasFlag( MeshImportBehaviour_NoMaterials );
+			ImGui::Text( "No Materials" );
+			ImGui::Spring();
+
+			ImGui::SetNextItemWidth( 130.0f );
+			if( ImGui::Checkbox( "##NoMaterials", &noMaterials ) )
+			{
+				if( hasFlag( MeshImportBehaviour_NoMaterials ) )
+					meshImportBehaviour &= ~MeshImportBehaviour_NoMaterials;
+				else
+					meshImportBehaviour |= MeshImportBehaviour_NoMaterials;
+			}
+
+			ImGui::EndHorizontal();
+
+			ImGui::BeginHorizontal( "##importOption_ext" );
+
+			bool excludeTextures = hasFlag( MeshImportBehaviour_ExcludeTextures );
+			ImGui::Text( "Exclude Textures" );
+			ImGui::Spring();
+
+			ImGui::SetNextItemWidth( 130.0f );
+			if( ImGui::Checkbox( "##ExcludeTextures", &excludeTextures ) )
+			{
+				if( hasFlag( MeshImportBehaviour_ExcludeTextures ) )
+					meshImportBehaviour &= ~MeshImportBehaviour_ExcludeTextures;
+				else
+					meshImportBehaviour |= MeshImportBehaviour_ExcludeTextures;
+			}
+
+			ImGui::EndHorizontal();
+
+			ImGui::Separator();
+
 			ImGui::BeginHorizontal( "##actionsH" );
+
+			Auxiliary::DisabledFlag disabledIf( ( s_UseBinFile && s_GLTFBinPath.empty() ) || m_ImportAssetPath.empty() );
 
 			if( ImGui::Button( "Create" ) )
 			{
 				auto id = AssetManager::Get().CreateAsset( AssetType::StaticMesh );
 				auto asset = AssetManager::Get().FindAsset( id );
 
-				// Copy the mesh source.
-				std::filesystem::copy_file( m_ImportAssetPath, m_CurrentPath / m_ImportAssetPath.filename() );
+				// Copy the raw mesh file:
+				std::filesystem::copy_file( m_ImportAssetPath, m_CurrentPath / m_ImportAssetPath.filename(), std::filesystem::copy_options::overwrite_existing );
 
 				if( s_UseBinFile )
-					std::filesystem::copy_file( s_GLTFBinPath, m_CurrentPath / s_GLTFBinPath.filename() );
+					std::filesystem::copy_file( s_GLTFBinPath, m_CurrentPath / s_GLTFBinPath.filename(), std::filesystem::copy_options::overwrite_existing );
 
 				auto assetPath = m_CurrentPath / m_ImportAssetPath.filename();
 				assetPath.replace_extension( ".stmesh" );
@@ -1115,7 +1210,7 @@ namespace Saturn {
 
 				// TODO: This is bad.
 				// Create the mesh so we can copy over the texture (if any).
-				auto mesh = Ref<MeshSource>::Create( m_ImportAssetPath, m_CurrentPath );
+				auto mesh = Ref<MeshCloner>::Create( m_ImportAssetPath, m_CurrentPath, meshImportBehaviour );
 				mesh = nullptr;
 
 				// Create the mesh asset.
@@ -1135,6 +1230,8 @@ namespace Saturn {
 
 				PopupModified = true;
 			}
+
+			disabledIf.Pop();
 
 			auto exitPopup = [&]() -> void
 			{
@@ -1382,7 +1479,7 @@ namespace Saturn {
 	void ContentBrowserPanel::DrawItemsClipped( std::vector<Ref<ContentBrowserItem>>& rList, ImVec2 size, float padding, int columnCount )
 	{
 		ImGuiListClipper clipper;
-		clipper.Begin( rList.size() );
+		clipper.Begin( glm::ceil( ( float ) rList.size() / ( float ) columnCount ) );
 
 		// TODO: This is slow
 		//		 With 600+ items we start to see a frame drop.
@@ -1390,7 +1487,6 @@ namespace Saturn {
 		while( clipper.Step() )
 		{
 			auto Itr = rList.begin();
-			/*
 			if( !first )
 			{
 				for( int i = 0; i < clipper.DisplayStart; i++ )
@@ -1401,19 +1497,18 @@ namespace Saturn {
 					}
 				}
 			}
-			*/
 
 			// Go to clipper.DisplayStart
-			if( !first )
-			{
-				std::advance( Itr, std::min( (size_t)clipper.DisplayStart * columnCount, rList.size() ) );
-			}
+			//if( !first )
+			//{
+			//	std::advance( Itr, std::min( (size_t)clipper.DisplayStart * columnCount, rList.size() ) );
+			//}
 
 			for( int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++ )
 			{
 				int c{};
 
-				for( int c = 0; c < columnCount && Itr != rList.end(); c++, Itr++ )
+				for( c = 0; c < columnCount && Itr != rList.end(); c++, Itr++ )
 				{
 					auto& rItem = *Itr;
 					rItem->Draw( size, padding );

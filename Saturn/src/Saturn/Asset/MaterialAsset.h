@@ -101,7 +101,7 @@ namespace Saturn {
 		Ref<Material> GetMaterial() const { return m_Material; }
 
 		void ApplyChanges();
-		void SetMaterial( const Ref<Material>& rMaterial );
+		void SetMaterial( const Ref<Material> material );
 
 		void SetName( const std::string& rName ) { return m_Material->SetName( rName ); }
 
@@ -184,6 +184,9 @@ namespace Saturn {
 		static void Deserialise( Ref<MaterialRegistry>& rRegistry, std::istream& rStream );
 
 	private:
+		void SetMaterial( uint32_t index, Ref<MaterialAsset> material );
+
+	private:
 		Ref<StaticMesh> m_Mesh = nullptr;
 		std::vector< Ref<MaterialAsset> > m_Materials;
 
@@ -196,5 +199,6 @@ namespace Saturn {
 	private:
 		friend class MaterialAsset;
 		friend class StaticMesh;
+		friend class StaticMeshAssetSerialiser;
 	};
 }

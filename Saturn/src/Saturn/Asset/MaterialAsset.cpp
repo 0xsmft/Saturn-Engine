@@ -277,9 +277,9 @@ namespace Saturn {
 		}
 	}
 
-	void MaterialAsset::SetMaterial( const Ref<Material>& rMaterial )
+	void MaterialAsset::SetMaterial( const Ref<Material> material )
 	{
-		m_PendingMaterialChange = rMaterial;
+		m_PendingMaterialChange = material;
 	}
 
 	float MaterialAsset::IsUsingNormalMap()
@@ -514,7 +514,13 @@ namespace Saturn {
 		m_Materials[ index ] = AssetManager::Get().GetAssetAs<MaterialAsset>( id );
 	}
 
-	void MaterialRegistry::ResetMaterial( uint32_t index ) 
+	void MaterialRegistry::SetMaterial( uint32_t index, Ref<MaterialAsset> material )
+	{
+		m_HasOverridden[ index ] = false;
+		m_Materials[ index ] = material;
+	}
+
+	void MaterialRegistry::ResetMaterial( uint32_t index )
 	{
 		m_HasOverridden[ index ] = false;
 		m_Materials[ index ] = m_Mesh->GetMaterialRegistry()->GetMaterials()[ index ];

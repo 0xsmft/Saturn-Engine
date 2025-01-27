@@ -78,7 +78,7 @@ namespace Saturn {
 		aiProcess_OptimizeMeshes |          // Batch draws where possible
 		aiProcess_JoinIdenticalVertices |
 		aiProcess_ValidateDataStructure;    // Validation
-		//aiProcess_GlobalScale |             // e.g. convert cm to m for fbx import (and other formats where cm is native)
+	//aiProcess_GlobalScale |             // e.g. convert cm to m for fbx import (and other formats where cm is native)
 
 	struct AssimpLog : public Assimp::LogStream
 	{
@@ -128,6 +128,7 @@ namespace Saturn {
 		m_MaterialRegistry = Ref<MaterialRegistry>::Create();
 
 		CreateVertices();
+
 		CreateMaterials();
 #endif
 	}
@@ -165,7 +166,7 @@ namespace Saturn {
 			submesh.VertexCount = mesh->mNumVertices;
 			submesh.IndexCount = mesh->mNumFaces * 3;
 			submesh.MeshName = mesh->mName.C_Str();
-			
+
 			auto& rAABB = submesh.BoundingBox;
 			rAABB.Min = { FLT_MAX, FLT_MAX, FLT_MAX };
 			rAABB.Max = { -FLT_MAX, -FLT_MAX, -FLT_MAX };
@@ -251,12 +252,10 @@ namespace Saturn {
 
 			std::string MaterialName = std::string( name.C_Str() );
 
-			if( MaterialName.empty() ) 
+			if( MaterialName.empty() )
 			{
 				MaterialName = std::format( "Unnamed Material {0}", std::to_string( UUID() ) );
 			}
-
-			Ref<Texture2D> PinkTexture = Renderer::Get().GetPinkTexture();
 
 			// This is more of a hack, as we use parent_path just so we can add the material on to it.
 			auto assetPath = std::filesystem::path( m_FilePath ).parent_path();
@@ -268,291 +267,20 @@ namespace Saturn {
 			Ref<Asset> asset = AssetManager::Get().FindAsset( realPath );
 			Ref<MaterialAsset> materialAsset;
 
-			if( !asset ) 
+			if( !asset )
 			{
-				// Create the new asset
-				asset = AssetManager::Get().FindAsset( AssetManager::Get().CreateAsset( AssetType::Material ) );
-				asset->SetAbsolutePath( assetPath );
-
-				// Does not exists, mesh source did not copy it?
-				if( !std::filesystem::exists( assetPath ) )
-				{
-					materialAsset = Ref<MaterialAsset>::Create( nullptr );
-				}
-				else
-				{
-					materialAsset = AssetManager::Get().GetAssetAs<MaterialAsset>( asset->GetAssetID() );
-				}
-
-				// Material is still null but exists, likely a new material.
-				if( materialAsset == nullptr ) 
-				{
-					materialAsset = Ref<MaterialAsset>::Create( nullptr );
-				}
-
-				// Write to disk, create file.
-				// TODO: (Asset) Fix this.
-				struct
-				{
-					UUID ID;
-					AssetType Type;
-					uint32_t Flags;
-					std::filesystem::path Path;
-					std::string Name;
-				} OldAssetData = {};
-
-				OldAssetData.ID = asset->ID;
-				OldAssetData.Type = asset->Type;
-				OldAssetData.Flags = asset->Flags;
-				OldAssetData.Path = asset->Path;
-				OldAssetData.Name = asset->Name;
-
-				asset = materialAsset;
-				asset->ID = OldAssetData.ID;
-				asset->Type = OldAssetData.Type;
-				asset->Flags = OldAssetData.Flags;
-				asset->Path = OldAssetData.Path;
-				asset->Name = OldAssetData.Name;
-
-				// Save the material in it's most default state.
-				// So when we write the actual information in the asset will already be loaded.
-				// Because at this point this asset only exists in memory.
-				MaterialAssetSerialiser mas;
-				mas.Serialise( materialAsset );
-
-				materialAsset->SetName( MaterialName );
-
-				m_MaterialsAssets[ m ] = materialAsset;
+				// If no asset then create internal default material.
+				materialAsset = Ref<MaterialAsset>::Create( nullptr );
 			}
 			else
 			{
 				// Asset was already loaded.
 				materialAsset = AssetManager::Get().GetAssetAs<MaterialAsset>( asset->GetAssetID() );
-				m_MaterialsAssets[ m ] = materialAsset;
-
-				m_MaterialRegistry->AddAsset( materialAsset );
-
-				continue;
 			}
 
+			m_MaterialsAssets[ m ] = materialAsset;
 			m_MaterialRegistry->AddAsset( materialAsset );
-
-			// Set the material data (only for new materials).
-			
-			// Albedo Color
-			aiColor3D color;
-			if( material->Get( AI_MATKEY_COLOR_DIFFUSE, color ) == AI_SUCCESS )
-				materialAsset->SetAlbeoColor( glm::vec3( color.r, color.g, color.b ) );
-
-			float shininess, metalness;
-			if( material->Get( AI_MATKEY_SHININESS, shininess ) != aiReturn_SUCCESS )
-				shininess = 80.0f;
-
-			if( material->Get( AI_MATKEY_REFLECTIVITY, metalness ) != aiReturn_SUCCESS )
-				metalness = 0.0f;
-
-			float roughness = 1.0f - glm::sqrt( shininess / 100.0f );
-
-			// Albedo Texture
-			{
-				aiString AlbedoTexturePath;
-				bool HasAlbedoTexture = material->GetTexture( aiTextureType_DIFFUSE, 0, &AlbedoTexturePath ) == AI_SUCCESS;
-
-				if( HasAlbedoTexture )
-				{
-					std::filesystem::path AlbedoPath = m_FilePath;
-					auto pp = AlbedoPath.parent_path();
-
-					pp /= std::string( AlbedoTexturePath.data );
-
-					auto AlbedoTexturePath = pp.string();
-
-					Ref< Texture2D > AlbedoTexture;
-
-					SAT_CORE_INFO( " Albedo Map texture {0}", AlbedoTexturePath );
-
-					auto localTexturePath = assetPath.parent_path();
-
-					localTexturePath /= pp.filename();
-
-					if( !std::filesystem::exists( localTexturePath ) )
-						std::filesystem::copy_file( AlbedoTexturePath, localTexturePath );
-
-					if( std::filesystem::exists( localTexturePath ) )
-						AlbedoTexture = Ref< Texture2D >::Create( localTexturePath, AddressingMode::Repeat, false );
-
-					if( AlbedoTexture )
-					{
-						materialAsset->SetAlbeoMap( AlbedoTexture );
-					}
-					else
-					{
-						materialAsset->SetAlbeoMap( PinkTexture );
-					}
-				}
-				else
-				{
-					materialAsset->SetAlbeoMap( PinkTexture );
-				}
-			}
-
-			// Normal Texture
-			{
-				aiString NormalTexturePath;
-				bool HasNormalTexture = material->GetTexture( aiTextureType_NORMALS, 0, &NormalTexturePath ) == AI_SUCCESS;
-
-				if( HasNormalTexture )
-				{
-					std::filesystem::path Path = m_FilePath;
-					auto pp = Path.parent_path();
-
-					pp /= std::string( NormalTexturePath.data );
-
-					auto NormalTexturePath = pp.string();
-
-					Ref< Texture2D > NormalTexture;
-
-					SAT_CORE_INFO( " Normal Map texture {0}", NormalTexturePath );
-
-					auto localTexturePath = assetPath.parent_path();
-
-					localTexturePath /= pp.filename();
-
-					if( !std::filesystem::exists( localTexturePath ) )
-						std::filesystem::copy_file( NormalTexturePath, localTexturePath );
-
-					if( std::filesystem::exists( localTexturePath ) )
-						NormalTexture = Ref< Texture2D >::Create( localTexturePath, AddressingMode::Repeat, false );
-
-					if( NormalTexture )
-					{
-						materialAsset->SetNormalMap( NormalTexture );
-						materialAsset->UseNormalMap( 1.0f );
-					}
-					else
-					{
-						materialAsset->SetNormalMap( PinkTexture );
-						materialAsset->UseNormalMap( 0.0f );
-					}
-				}
-				else
-				{
-					materialAsset->SetNormalMap( PinkTexture );
-					materialAsset->UseNormalMap( 0.0f );
-				}
-			}
-
-			// Roughness texture
-			{
-				aiString RoughnessTexturePath;
-				bool HasRoughnessTexture = material->GetTexture( aiTextureType_SHININESS, 0, &RoughnessTexturePath ) == AI_SUCCESS;
-
-				materialAsset->Set( "u_Materials.Roughness", roughness );
-
-				materialAsset->SetRoughness( roughness );
-
-				if( HasRoughnessTexture )
-				{
-					std::filesystem::path Path = m_FilePath;
-					auto pp = Path.parent_path();
-
-					pp /= std::string( RoughnessTexturePath.data );
-
-					auto TexturePath = pp.string();
-
-					Ref< Texture2D > RoughnessTexture;
-
-					auto localTexturePath = assetPath.parent_path();
-
-					localTexturePath /= pp.filename();
-
-					if( !std::filesystem::exists( localTexturePath ) )
-						std::filesystem::copy_file( TexturePath, localTexturePath );
-
-					if( std::filesystem::exists( localTexturePath ) )
-						RoughnessTexture = Ref< Texture2D >::Create( localTexturePath, AddressingMode::Repeat, false );
-
-					if( RoughnessTexture )
-					{
-						materialAsset->SetRoughnessMap( RoughnessTexture );
-					}
-					else
-					{
-						materialAsset->SetRoughnessMap( PinkTexture );
-					}
-				}
-				else
-				{
-					materialAsset->SetRoughnessMap( PinkTexture );
-				}
-			}
-
-			// Metalness
-			{
-				bool FoundMetalness = false;
-
-				for( uint32_t i = 0; i < material->mNumProperties; i++ )
-				{
-					auto prop = material->mProperties[ i ];
-
-					if( prop->mType == aiPTI_String )
-					{
-						uint32_t StringLen = *( uint32_t* ) prop->mData;
-						std::string String( prop->mData + 4, StringLen );
-
-						std::string Key = prop->mKey.data;
-						if( Key == "$raw.ReflectionFactor|file" )
-						{
-							std::filesystem::path Path = m_FilePath;
-							auto pp = Path.parent_path();
-
-							pp /= String;
-
-							auto TexturePath = pp.string();
-
-							Ref< Texture2D > MetalnessTexture;
-
-							auto localTexturePath = assetPath.parent_path();
-
-							localTexturePath /= pp.filename();
-
-							if( !std::filesystem::exists( localTexturePath ) )
-								std::filesystem::copy_file( TexturePath, localTexturePath );
-
-							if( std::filesystem::exists( localTexturePath ) )
-								MetalnessTexture = Ref< Texture2D >::Create( localTexturePath, AddressingMode::Repeat, false );
-
-							if( MetalnessTexture )
-							{
-								FoundMetalness = true;
-
-								materialAsset->SetMetallicMap( MetalnessTexture );
-							}
-							else
-							{
-								materialAsset->SetMetallicMap( PinkTexture );
-							}
-
-							materialAsset->SetMetalness( 1.0f );
-
-							break;
-						}
-					}
-				}
-
-				if( !FoundMetalness )
-				{
-					materialAsset->SetMetallicMap( PinkTexture );
-					materialAsset->SetMetalness( metalness );
-				}
-
-				MaterialAssetSerialiser mas;
-				mas.Serialise( materialAsset );
-			}
 		}
-
-		// Serialise the asset registry to save any new materials.
-		AssetManager::Get().Save();
 	}
 #endif
 
@@ -632,8 +360,9 @@ namespace Saturn {
 	}
 
 	//////////////////////////////////////////////////////////////////////////
+	// MESH CLONER
 
-	MeshSource::MeshSource( const std::filesystem::path& rPath, const std::filesystem::path& rDstPath )
+	MeshCloner::MeshCloner( const std::filesystem::path& rPath, const std::filesystem::path& rDstPath, MeshImportBehaviour importBehaviour )
 	{
 #if !defined(SAT_DIST)
 		AssimpLog::Initialize();
@@ -647,6 +376,7 @@ namespace Saturn {
 
 		m_Scene = scene;
 
+		bool needToSaveAssetReg = false;
 		for( size_t m = 0; m < m_Scene->mNumMaterials; m++ )
 		{
 			aiMaterial* material = m_Scene->mMaterials[ m ];
@@ -659,6 +389,75 @@ namespace Saturn {
 			if( MaterialName.empty() )
 			{
 				MaterialName = "Unnamed Material " + std::to_string( rand() );
+
+				if( ( importBehaviour & MeshImportBehaviour_AllowUnnamedMaterials ) == 0 )
+				{
+					SAT_CORE_ERROR( "Unnamed Material at INDEX/{0} was found. If you want to import materials with no name please use the \"AllowUnnamedMaterials\" flag!" );
+
+					continue;
+				}
+			}
+
+			Ref<MaterialAsset> materialAsset = nullptr;
+
+			// Create a material asset if user wants to.
+			if( ( importBehaviour & MeshImportBehaviour_NoMaterials ) == 0 )
+			{
+				std::filesystem::path materialPath = rDstPath;
+				materialPath /= MaterialName;
+				materialPath.replace_extension( ".smaterial" );
+
+				Ref<Asset> asset = AssetManager::Get().FindAsset( AssetManager::Get().CreateAsset( AssetType::Material ) );
+				asset->SetAbsolutePath( materialPath );
+
+				materialAsset = Ref<MaterialAsset>::Create( nullptr );
+				materialAsset->SetName( MaterialName );
+
+				needToSaveAssetReg = true;
+
+				// Write to disk, create file.
+				// TODO: (Asset) Fix this.
+				struct
+				{
+					UUID ID;
+					AssetType Type;
+					uint32_t Flags;
+					std::filesystem::path Path;
+					std::string Name;
+				} OldAssetData = {};
+
+				OldAssetData.ID = asset->ID;
+				OldAssetData.Type = asset->Type;
+				OldAssetData.Flags = asset->Flags;
+				OldAssetData.Path = asset->Path;
+				OldAssetData.Name = asset->Name;
+
+				asset = materialAsset;
+				asset->ID = OldAssetData.ID;
+				asset->Type = OldAssetData.Type;
+				asset->Flags = OldAssetData.Flags;
+				asset->Path = OldAssetData.Path;
+				asset->Name = OldAssetData.Name;
+
+				//////////////////////////////////////////////////////////////////////////
+
+				// Set the material data (only for new materials).
+				// Albedo Color
+				aiColor3D color;
+				if( material->Get( AI_MATKEY_COLOR_DIFFUSE, color ) == AI_SUCCESS )
+					materialAsset->SetAlbeoColor( glm::vec3( color.r, color.g, color.b ) );
+
+				float shininess, metalness;
+				if( material->Get( AI_MATKEY_SHININESS, shininess ) != aiReturn_SUCCESS )
+					shininess = 80.0f;
+
+				if( material->Get( AI_MATKEY_REFLECTIVITY, metalness ) != aiReturn_SUCCESS )
+					metalness = 0.0f;
+
+				float roughness = 1.0f - glm::sqrt( shininess / 100.0f );
+
+				materialAsset->SetRoughness( roughness );
+				materialAsset->SetMetalness( metalness );
 			}
 
 			// Albedo Texture
@@ -666,7 +465,7 @@ namespace Saturn {
 				aiString AlbedoTexturePath;
 				bool HasAlbedoTexture = material->GetTexture( aiTextureType_DIFFUSE, 0, &AlbedoTexturePath ) == AI_SUCCESS;
 
-				if( HasAlbedoTexture )
+				if( HasAlbedoTexture && ( importBehaviour & MeshImportBehaviour_ExcludeTextures ) == 0 )
 				{
 					auto pp = rPath.parent_path();
 
@@ -675,11 +474,20 @@ namespace Saturn {
 					auto AlbedoTexturePath = pp.string();
 					auto LocalPath = rDstPath;
 
-
 					LocalPath /= pp.filename();
 
 					if( !std::filesystem::exists( LocalPath ) )
 						std::filesystem::copy_file( AlbedoTexturePath, LocalPath );
+
+					if( materialAsset )
+					{
+						auto texture = Ref<Texture2D>::Create( LocalPath, AddressingMode::Repeat, false );
+						materialAsset->SetAlbeoMap( texture );
+
+						Ref<Asset> asset = AssetManager::Get().FindAsset( AssetManager::Get().CreateAsset( AssetType::Texture ) );
+						asset->SetAbsolutePath( LocalPath );
+						needToSaveAssetReg = true;
+					}
 				}
 			}
 
@@ -688,7 +496,7 @@ namespace Saturn {
 				aiString TexturePath;
 				bool HasTexture = material->GetTexture( aiTextureType_NORMALS, 0, &TexturePath ) == AI_SUCCESS;
 
-				if( HasTexture )
+				if( HasTexture && ( importBehaviour & MeshImportBehaviour_ExcludeTextures ) == 0 )
 				{
 					auto pp = rPath.parent_path();
 
@@ -702,15 +510,26 @@ namespace Saturn {
 
 					if( !std::filesystem::exists( LocalPath ) )
 						std::filesystem::copy_file( NormalTexturePath, LocalPath );
+
+					if( materialAsset )
+					{
+						auto texture = Ref<Texture2D>::Create( LocalPath, AddressingMode::Repeat, false );
+						materialAsset->SetNormalMap( texture );
+						materialAsset->UseNormalMap( true );
+
+						Ref<Asset> asset = AssetManager::Get().FindAsset( AssetManager::Get().CreateAsset( AssetType::Texture ) );
+						asset->SetAbsolutePath( LocalPath );
+						needToSaveAssetReg = true;
+					}
 				}
 			}
 
-			// Normal Texture
+			// Roughness Texture
 			{
 				aiString TexturePath;
 				bool HasTexture = material->GetTexture( aiTextureType_SHININESS, 0, &TexturePath ) == AI_SUCCESS;
 
-				if( HasTexture )
+				if( HasTexture && ( importBehaviour & MeshImportBehaviour_ExcludeTextures ) == 0 )
 				{
 					auto pp = rPath.parent_path();
 
@@ -724,6 +543,16 @@ namespace Saturn {
 
 					if( !std::filesystem::exists( LocalPath ) )
 						std::filesystem::copy_file( RoughnessTexturePath, LocalPath );
+
+					if( materialAsset )
+					{
+						auto texture = Ref<Texture2D>::Create( LocalPath, AddressingMode::Repeat, false );
+						materialAsset->SetRoughnessMap( texture );
+
+						Ref<Asset> asset = AssetManager::Get().FindAsset( AssetManager::Get().CreateAsset( AssetType::Texture ) );
+						asset->SetAbsolutePath( LocalPath );
+						needToSaveAssetReg = true;
+					}
 				}
 			}
 
@@ -741,7 +570,7 @@ namespace Saturn {
 						std::string String( prop->mData + 4, StringLen );
 
 						std::string Key = prop->mKey.data;
-						if( Key == "$raw.ReflectionFactor|file" )
+						if( Key == "$raw.ReflectionFactor|file" && ( importBehaviour & MeshImportBehaviour_ExcludeTextures ) == 0 )
 						{
 							auto pp = rPath.parent_path();
 
@@ -758,22 +587,38 @@ namespace Saturn {
 							if( !std::filesystem::exists( localTexturePath ) )
 								std::filesystem::copy_file( TexturePath, localTexturePath );
 
+							if( materialAsset )
+							{
+								auto texture = Ref<Texture2D>::Create( localTexturePath, AddressingMode::Repeat, false );
+								materialAsset->SetMetallicMap( texture );
+
+								Ref<Asset> asset = AssetManager::Get().FindAsset( AssetManager::Get().CreateAsset( AssetType::Texture ) );
+								asset->SetAbsolutePath( localTexturePath );
+
+								needToSaveAssetReg = true;
+							}
+
 							break;
 						}
 					}
 				}
 			}
+
+			if( materialAsset )
+			{
+				MaterialAssetSerialiser mas;
+				mas.Serialise( materialAsset );
+			}
 		}
-#endif
-	}
 
-	MeshSource::~MeshSource()
-	{
-	}
-
-#if !defined(SAT_DIST)
-	void MeshSource::TraverseNodes( aiNode* node, const glm::mat4& parentTransform /*= glm::mat4( 1.0f )*/, uint32_t level /*= 0 */ )
-	{
+		if( needToSaveAssetReg )
+		{
+			AssetManager::Get().Save();
+		}
 	}
 #endif
+
+	MeshCloner::~MeshCloner()
+	{
+	}
 }

@@ -106,30 +106,31 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		AssimpLog::Initialize();
 
-		if( !std::filesystem::exists( m_FilePath ) )
+		if( !std::filesystem::exists( m_FilePath ) ) 
+		{
 			SAT_CORE_ERROR( "Failed to load mesh file (file does not exists): {0}", m_FilePath );
+			return;
+		}
 		else
 			SAT_CORE_INFO( "Loading mesh: {0}", m_FilePath.c_str() );
 
 		m_Importer = std::make_unique<Assimp::Importer>();
 
 		const aiScene* scene = m_Importer->ReadFile( m_FilePath, s_MeshImportFlags );
-		if( scene == nullptr || !scene->HasMeshes() )
+		if( scene == nullptr || !scene->HasMeshes() ) 
+		{
 			SAT_CORE_ERROR( "Failed to load mesh file (does the file have meshes?): {0}", m_FilePath );
+			return;
+		}
 
 		m_Scene = scene;
-		// Shader new is the static mesh pbr shader.
-		m_MeshShader = ShaderLibrary::Get().Find( "shader_new" );
-		m_BaseMaterial = Ref< Material >::Create( m_MeshShader, "Base Material" );
-
 		m_InverseTransform = glm::inverse( Mat4FromAssimpMat4( m_Scene->mRootNode->mTransformation ) );
 		m_Transform = Mat4FromAssimpMat4( m_Scene->mRootNode->mTransformation );
 
 		m_MaterialRegistry = Ref<MaterialRegistry>::Create();
+		m_MaterialRegistry->SetMesh( this );
 
 		CreateVertices();
-
-		CreateMaterials();
 #endif
 	}
 
@@ -142,11 +143,7 @@ namespace Saturn {
 
 		m_Submeshes.clear();
 
-		m_MeshShader = nullptr;
 		m_MaterialRegistry = nullptr;
-		m_BaseMaterial = nullptr;
-
-		m_MaterialsAssets.clear();
 	}
 
 #if !defined(SAT_DIST)
@@ -182,7 +179,7 @@ namespace Saturn {
 
 			for( size_t i = 0; i < mesh->mNumVertices; i++ )
 			{
-				StaticVertex vertex;
+				StaticVertex vertex{};
 				vertex.Position = { mesh->mVertices[ i ].x, mesh->mVertices[ i ].y, mesh->mVertices[ i ].z };
 				vertex.Normal = { mesh->mNormals[ i ].x, mesh->mNormals[ i ].y, mesh->mNormals[ i ].z };
 
@@ -241,6 +238,7 @@ namespace Saturn {
 
 	void StaticMesh::CreateMaterials()
 	{
+		/*
 		m_MaterialsAssets.resize( m_Scene->mNumMaterials );
 
 		for( size_t m = 0; m < m_Scene->mNumMaterials; m++ )
@@ -281,8 +279,19 @@ namespace Saturn {
 			m_MaterialsAssets[ m ] = materialAsset;
 			m_MaterialRegistry->AddAsset( materialAsset );
 		}
+		*/
 	}
 #endif
+
+	void StaticMesh::Import_InitMaterialRegistry()
+	{
+		if( m_MaterialRegistry == nullptr )
+			m_MaterialRegistry = Ref<MaterialRegistry>::Create();
+	}
+
+	void StaticMesh::Import_AddMaterialID( uint64_t index, AssetID assetID )
+	{
+	}
 
 	//////////////////////////////////////////////////////////////////////////
 	// SERIALISATION/DESERIALISATION
@@ -300,10 +309,10 @@ namespace Saturn {
 		RawSerialisation::WriteMatrix4x4( m_InverseTransform, rStream );
 
 		// Write materials
-		size_t materials = m_MaterialsAssets.size();
+		size_t materials = m_MaterialRegistry->GetMaterialAssets().size();
 		rStream.write( reinterpret_cast< char* >( &materials ), sizeof( size_t ) );
 
-		for( const auto& rMaterialAsset : m_MaterialsAssets )
+		for( const auto& rMaterialAsset : m_MaterialRegistry->GetMaterialAssets() )
 		{
 			RawSerialisation::WriteObject( rMaterialAsset->ID, rStream );
 		}
@@ -324,15 +333,13 @@ namespace Saturn {
 		m_VertexBuffer = Ref<VertexBuffer>::Create( m_Vertices.data(), ( uint32_t ) ( m_Vertices.size() * sizeof( StaticVertex ) ) );
 		m_IndexBuffer = Ref<IndexBuffer>::Create( m_Indices.data(), m_Indices.size() * sizeof( Index ) );
 
-		m_MeshShader = ShaderLibrary::Get().Find( "shader_new" );
-		m_BaseMaterial = Ref< Material >::Create( m_MeshShader, "Base Material" );
 		m_MaterialRegistry = Ref<MaterialRegistry>::Create();
 
 		// Read Materials
 		size_t materials = 0;
 		RawSerialisation::ReadObject( materials, rStream );
 
-		m_MaterialsAssets.resize( materials );
+		m_MaterialRegistry->GetMaterialAssets().resize( materials );
 
 		for( size_t i = 0; i < materials; i++ )
 		{
@@ -345,24 +352,21 @@ namespace Saturn {
 			// Failed to load material, create new and default it.
 			if( materialAsset == nullptr )
 			{
-				Ref<MaterialAsset> defaultMat = Ref<MaterialAsset>::Create( nullptr );
-				m_MaterialsAssets[ i ] = defaultMat;
-			}
-			else
-			{
-				m_MaterialsAssets[ i ] = materialAsset;
+				// Safe to fall back to project defaults because in Dist project defaults must be set in order to package.
+				materialAsset = AssetManager::Get().GetAssetAs<MaterialAsset>( Project::GetActiveProject()->GetDefaultMaterialAsset() );
 			}
 
-			m_MaterialRegistry->AddAsset( m_MaterialsAssets[ i ] );
+			m_MaterialRegistry->AddAsset( materialAsset );
 		}
 
 		m_MaterialRegistry->SetMesh( this );
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	// MESH CLONER
+	// MESH IMPORTER
 
-	MeshCloner::MeshCloner( const std::filesystem::path& rPath, const std::filesystem::path& rDstPath, MeshImportBehaviour importBehaviour )
+	MeshImporter::MeshImporter( const std::filesystem::path& rPath, const std::filesystem::path& rDstPath, MeshImportBehaviour importBehaviour )
+		: m_SourcePath( rPath ), m_DstPath( rDstPath ), m_ImportBehaviour( importBehaviour )
 	{
 #if !defined(SAT_DIST)
 		AssimpLog::Initialize();
@@ -376,7 +380,14 @@ namespace Saturn {
 
 		m_Scene = scene;
 
+		FindMaterials();
+	}
+
+	void MeshImporter::FindMaterials()
+	{
 		bool needToSaveAssetReg = false;
+		m_MeshInformation.MaterialAssets.resize( m_Scene->mNumMaterials );
+
 		for( size_t m = 0; m < m_Scene->mNumMaterials; m++ )
 		{
 			aiMaterial* material = m_Scene->mMaterials[ m ];
@@ -388,9 +399,9 @@ namespace Saturn {
 
 			if( MaterialName.empty() )
 			{
-				MaterialName = "Unnamed Material " + std::to_string( rand() );
+				MaterialName = "Unnamed Material " + std::to_string( UUID() );
 
-				if( ( importBehaviour & MeshImportBehaviour_AllowUnnamedMaterials ) == 0 )
+				if( ( m_ImportBehaviour & MeshImportBehaviour_AllowUnnamedMaterials ) == 0 )
 				{
 					SAT_CORE_ERROR( "Unnamed Material at INDEX/{0} was found. If you want to import materials with no name please use the \"AllowUnnamedMaterials\" flag!" );
 
@@ -401,9 +412,9 @@ namespace Saturn {
 			Ref<MaterialAsset> materialAsset = nullptr;
 
 			// Create a material asset if user wants to.
-			if( ( importBehaviour & MeshImportBehaviour_NoMaterials ) == 0 )
+			if( ( m_ImportBehaviour & MeshImportBehaviour_NoMaterials ) == 0 )
 			{
-				std::filesystem::path materialPath = rDstPath;
+				std::filesystem::path materialPath = m_DstPath;
 				materialPath /= MaterialName;
 				materialPath.replace_extension( ".smaterial" );
 
@@ -414,6 +425,8 @@ namespace Saturn {
 				materialAsset->SetName( MaterialName );
 
 				needToSaveAssetReg = true;
+
+				m_MeshInformation.MaterialAssets.at( m ) = (uint64_t)asset->ID;
 
 				// Write to disk, create file.
 				// TODO: (Asset) Fix this.
@@ -465,14 +478,14 @@ namespace Saturn {
 				aiString AlbedoTexturePath;
 				bool HasAlbedoTexture = material->GetTexture( aiTextureType_DIFFUSE, 0, &AlbedoTexturePath ) == AI_SUCCESS;
 
-				if( HasAlbedoTexture && ( importBehaviour & MeshImportBehaviour_ExcludeTextures ) == 0 )
+				if( HasAlbedoTexture && ( m_ImportBehaviour & MeshImportBehaviour_ExcludeTextures ) == 0 )
 				{
-					auto pp = rPath.parent_path();
+					auto pp = m_SourcePath.parent_path();
 
 					pp /= std::string( AlbedoTexturePath.data );
 
 					auto AlbedoTexturePath = pp.string();
-					auto LocalPath = rDstPath;
+					auto LocalPath = m_DstPath;
 
 					LocalPath /= pp.filename();
 
@@ -496,15 +509,15 @@ namespace Saturn {
 				aiString TexturePath;
 				bool HasTexture = material->GetTexture( aiTextureType_NORMALS, 0, &TexturePath ) == AI_SUCCESS;
 
-				if( HasTexture && ( importBehaviour & MeshImportBehaviour_ExcludeTextures ) == 0 )
+				if( HasTexture && ( m_ImportBehaviour & MeshImportBehaviour_ExcludeTextures ) == 0 )
 				{
-					auto pp = rPath.parent_path();
+					auto pp = m_SourcePath.parent_path();
 
 					pp /= std::string( TexturePath.data );
 
 					auto NormalTexturePath = pp.string();
 
-					auto LocalPath = rDstPath;
+					auto LocalPath = m_DstPath;
 
 					LocalPath /= pp.filename();
 
@@ -529,15 +542,15 @@ namespace Saturn {
 				aiString TexturePath;
 				bool HasTexture = material->GetTexture( aiTextureType_SHININESS, 0, &TexturePath ) == AI_SUCCESS;
 
-				if( HasTexture && ( importBehaviour & MeshImportBehaviour_ExcludeTextures ) == 0 )
+				if( HasTexture && ( m_ImportBehaviour & MeshImportBehaviour_ExcludeTextures ) == 0 )
 				{
-					auto pp = rPath.parent_path();
+					auto pp = m_SourcePath.parent_path();
 
 					pp /= std::string( TexturePath.data );
 
 					auto RoughnessTexturePath = pp.string();
 
-					auto LocalPath = rDstPath;
+					auto LocalPath = m_DstPath;
 
 					LocalPath /= pp.filename();
 
@@ -570,9 +583,9 @@ namespace Saturn {
 						std::string String( prop->mData + 4, StringLen );
 
 						std::string Key = prop->mKey.data;
-						if( Key == "$raw.ReflectionFactor|file" && ( importBehaviour & MeshImportBehaviour_ExcludeTextures ) == 0 )
+						if( Key == "$raw.ReflectionFactor|file" && ( m_ImportBehaviour & MeshImportBehaviour_ExcludeTextures ) == 0 )
 						{
-							auto pp = rPath.parent_path();
+							auto pp = m_SourcePath.parent_path();
 
 							pp /= String;
 
@@ -580,7 +593,7 @@ namespace Saturn {
 
 							Ref< Texture2D > MetalnessTexture;
 
-							auto localTexturePath = rDstPath;
+							auto localTexturePath = m_DstPath;
 
 							localTexturePath /= pp.filename();
 
@@ -616,9 +629,13 @@ namespace Saturn {
 			AssetManager::Get().Save();
 		}
 	}
+
 #endif
 
-	MeshCloner::~MeshCloner()
+	MeshImporter::~MeshImporter()
 	{
+		m_Importer.release();
+		delete m_Scene;
+		m_Scene = nullptr;
 	}
 }

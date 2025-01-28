@@ -651,7 +651,7 @@ namespace Saturn {
 				if( Auxiliary::TreeNode( "Materials" ) )
 				{
 					int i = 0;
-					for( auto& rAsset : mc.MaterialRegistry->GetMaterials() )
+					for( auto& rAsset : mc.MaterialRegistry->GetMaterialAssets() )
 					{
 						if( ImGui::Button( rAsset->Name.c_str() ) )
 						{

@@ -1208,10 +1208,7 @@ namespace Saturn {
 
 				asset->SetAbsolutePath( assetPath );
 
-				// TODO: This is bad.
-				// Create the mesh so we can copy over the texture (if any).
-				auto mesh = Ref<MeshCloner>::Create( m_ImportAssetPath, m_CurrentPath, meshImportBehaviour );
-				mesh = nullptr;
+				MeshImporter meshImporter( m_ImportAssetPath, m_CurrentPath, meshImportBehaviour );
 
 				// Create the mesh asset.
 				auto staticMesh = asset.As<StaticMesh>();
@@ -1221,8 +1218,15 @@ namespace Saturn {
 
 				auto& meshPath = assetPath.replace_extension( m_ImportAssetPath.extension() );
 				staticMesh->SetFilepath( meshPath.string() );
+				staticMesh->Import_InitMaterialRegistry();
 
-				// Save the mesh asset
+				// TOOD: Unload the material assets!! (Textures could be loaded!)
+				for( uint64_t materialID : meshImporter.GetMeshInformation().MaterialAssets )
+				{
+					staticMesh->GetMaterialRegistry()->AddAsset( AssetManager::Get().GetAssetAs<MaterialAsset>( materialID ) );
+				}
+
+				// Serialise the mesh asset
 				StaticMeshAssetSerialiser sma;
 				sma.Serialise( staticMesh );
 
@@ -1487,6 +1491,7 @@ namespace Saturn {
 		while( clipper.Step() )
 		{
 			auto Itr = rList.begin();
+			/*
 			if( !first )
 			{
 				for( int i = 0; i < clipper.DisplayStart; i++ )
@@ -1497,12 +1502,13 @@ namespace Saturn {
 					}
 				}
 			}
+			*/
 
 			// Go to clipper.DisplayStart
-			//if( !first )
-			//{
-			//	std::advance( Itr, std::min( (size_t)clipper.DisplayStart * columnCount, rList.size() ) );
-			//}
+			if( !first )
+			{
+				std::advance( Itr, std::min( (size_t)clipper.DisplayStart * columnCount, rList.size() ) );
+			}
 
 			for( int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++ )
 			{

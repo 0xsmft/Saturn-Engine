@@ -36,10 +36,10 @@ namespace Saturn {
 
 	enum class PhysicsMaterialFlags
 	{
+		None = 0,
 		DisableFriction = BIT( 0 ),
 		DisableHighFriction = BIT( 1 ),
-		ImprovedPatchFriction = BIT( 2 ),
-		None
+		ImprovedPatchFriction = BIT( 2 )
 	};
 
 	class PhysicsMaterialAsset : public Asset

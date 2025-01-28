@@ -72,7 +72,11 @@ namespace Saturn {
 	{
 		// Root Window.
 		ImGuiWindowFlags RootWindowFlags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoCollapse;
-		ImGui::Begin( "Static Mesh Asset Viewer", &m_Open, RootWindowFlags );
+		
+		ImGui::SetNextWindowPos( ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Once );
+		ImGui::SetNextWindowSize( ImVec2( 350.0f, 350.0f ), ImGuiCond_FirstUseEver );
+
+		ImGui::Begin( m_Mesh->Name.c_str(), &m_Open, RootWindowFlags );
 
 		// Create custom dockspace.
 		ImGuiID dockID = ImGui::GetID( "StaticMeshDckspc" );
@@ -170,7 +174,7 @@ namespace Saturn {
 			static AssetID id;
 			static bool s_Open = true;
 
-			if( ImGui::Button( "...##openmesh", ImVec2( 50, 20 ) ) )
+			if( ImGui::Button( "...##openmesh", ImVec2( 50.0f, 20.0f ) ) )
 			{
 				s_Open = !s_Open;
 			}

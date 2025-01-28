@@ -523,7 +523,7 @@ namespace Saturn {
 	void MaterialRegistry::ResetMaterial( uint32_t index )
 	{
 		m_HasOverridden[ index ] = false;
-		m_Materials[ index ] = m_Mesh->GetMaterialRegistry()->GetMaterials()[ index ];
+		m_Materials[ index ] = m_Mesh->GetMaterialRegistry()->GetMaterialAssets()[ index ];
 	}
 
 	bool MaterialRegistry::HasAnyOverrides()

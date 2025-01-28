@@ -133,7 +133,7 @@ namespace Saturn {
 			if( mc.MaterialRegistry )
 			{
 				int i = 0;
-				for( const auto& material : mc.MaterialRegistry->GetMaterials() )
+				for( const auto& material : mc.MaterialRegistry->GetMaterialAssets() )
 				{
 					rEmitter << YAML::BeginMap;
 

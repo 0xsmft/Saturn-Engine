@@ -147,16 +147,14 @@ namespace Saturn {
 		glm::mat4 GetInverseTransform() const { return m_InverseTransform; }
 		glm::mat4 GetTransform() const { return m_Transform; }
 
-		std::vector< Ref< MaterialAsset > >& GetMaterialAssets() { return m_MaterialsAssets; }
-		const std::vector< Ref< MaterialAsset > >& GetMaterialAssets() const { return m_MaterialsAssets; }
+		std::vector< Ref< MaterialAsset > >& GetMaterialAssets() { return m_MaterialRegistry->GetMaterialAssets(); }
+		const std::vector< Ref< MaterialAsset > >& GetMaterialAssets() const { return m_MaterialRegistry->GetMaterialAssets(); }
 
 		std::vector<Submesh>& Submeshes() { return m_Submeshes; }
 		const std::vector<Submesh>& Submeshes() const { return m_Submeshes; }
 
 		Ref<VertexBuffer> GetVertexBuffer() { return m_VertexBuffer; }
 		Ref<IndexBuffer> GetIndexBuffer() { return m_IndexBuffer; }
-
-		Ref<Shader> GetShader() { return m_MeshShader; }
 
 		std::vector<StaticVertex>& Vertices() { return m_Vertices; }
 		const std::vector<StaticVertex>& Vertices() const { return m_Vertices; }
@@ -172,6 +170,11 @@ namespace Saturn {
 
 		Ref<MaterialRegistry>& GetMaterialRegistry() { return m_MaterialRegistry; }
 		const Ref<MaterialRegistry>& GetMaterialRegistry() const { return m_MaterialRegistry; }
+
+	public:
+		// Import
+		void Import_InitMaterialRegistry();
+		void Import_AddMaterialID( uint64_t index, AssetID assetID );
 
 	public:
 		void SerialiseData( std::ofstream& rStream );
@@ -200,10 +203,6 @@ namespace Saturn {
 		uint32_t m_IndicesCount = 0;
 		uint32_t m_VertexCount = 0;
 
-		Ref<Shader> m_MeshShader;
-		Ref<Material> m_BaseMaterial;
-		std::vector< Ref< MaterialAsset > > m_MaterialsAssets;
-
 		ShapeType m_AttachedPhysicsShape = ShapeType::Unknown;
 		AssetID m_PhysicsMaterial = 0;
 
@@ -217,10 +216,12 @@ namespace Saturn {
 
 	struct MeshInformation
 	{
-		uint32_t TriangleCount = 0;
-		uint32_t IndicesCount = 0;
-		uint32_t VerticesCount = 0;
-		uint32_t Submeshes = 0;
+		uint32_t TriangleCount = 0; // not used yet.
+		uint32_t IndicesCount = 0;  // not used yet.
+		uint32_t VerticesCount = 0; // not used yet.
+		uint32_t Submeshes = 0;     // not used yet.
+
+		std::vector<uint64_t> MaterialAssets;
 	};
 
 	enum MeshImportBehaviour_ : uint32_t
@@ -235,14 +236,26 @@ namespace Saturn {
 	typedef uint32_t MeshImportBehaviour;
 
 	// A mesh cloner class only exists to get information about a mesh, use the mesh class to render meshes.
-	class MeshCloner : public RefTarget
+	class MeshImporter : public RefTarget
 	{
 	public:
-		MeshCloner( const std::filesystem::path& rPath, const std::filesystem::path& rDstPath, MeshImportBehaviour importBehaviour );
-		~MeshCloner();
+		MeshImporter( const std::filesystem::path& rPath, const std::filesystem::path& rDstPath, MeshImportBehaviour importBehaviour );
+		~MeshImporter();
+
+#if !defined(SAT_DIST)
+		const MeshInformation& GetMeshInformation()       { return m_MeshInformation; }
+		const MeshInformation& GetMeshInformation() const { return m_MeshInformation; }
+
+		MeshImportBehaviour GetImportBehaviour() const { return m_ImportBehaviour; }
 
 	private:
-#if !defined(SAT_DIST)
+		void FindMaterials();
+
+	private:
+		std::filesystem::path m_SourcePath;
+		std::filesystem::path m_DstPath;
+		MeshImportBehaviour m_ImportBehaviour;
+
 		MeshInformation m_MeshInformation;
 
 		std::unique_ptr<Assimp::Importer> m_Importer;

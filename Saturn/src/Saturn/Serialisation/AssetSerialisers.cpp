@@ -349,10 +349,15 @@ namespace Saturn {
 		if( mesh->GetMaterialRegistry() )
 		{
 			int i = 0;
-			for( const auto& material : mesh->GetMaterialRegistry()->GetMaterials() )
+			for( const auto& material : mesh->GetMaterialRegistry()->GetMaterialAssets() )
 			{
 				out << YAML::BeginMap;
-				out << YAML::Key << i << YAML::Value << material->ID;
+
+				if( material )
+					out << YAML::Key << i << YAML::Value << material->ID;
+				else
+					out << YAML::Key << i << YAML::Value << 0;
+
 				out << YAML::EndMap;
 
 				i++;
@@ -397,6 +402,7 @@ namespace Saturn {
 		mesh->SetAttachedShape( (ShapeType)shapeType );
 		mesh->SetPhysicsMaterial( physicsMaterial );
 
+		// Build master material registry
 		auto materialRegistry = meshData[ "MaterialRegistry" ];
 		if( materialRegistry )
 		{
@@ -410,7 +416,16 @@ namespace Saturn {
 
 					if( id != 0 )
 					{
-						mesh->GetMaterialRegistry()->SetMaterial( i, AssetManager::Get().GetAssetAs<MaterialAsset>( id ) );
+						mesh->GetMaterialRegistry()->AddAsset( AssetManager::Get().GetAssetAs<MaterialAsset>( id ) );
+					}
+					else
+					{
+						auto defaultProjectAsset = AssetManager::Get().FindAsset( Project::GetActiveProject()->GetDefaultMaterialAsset() );
+
+						if( defaultProjectAsset )
+							mesh->GetMaterialRegistry()->AddAsset( AssetManager::Get().GetAssetAs<MaterialAsset>( defaultProjectAsset->ID ) );
+						else
+							mesh->GetMaterialRegistry()->AddAsset( Ref<MaterialAsset>::Create( nullptr ) );
 					}
 
 					i++;

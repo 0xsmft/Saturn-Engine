@@ -276,7 +276,7 @@ namespace Saturn {
 
 		Submesh& rSubmesh = mesh->Submeshes()[ SubmeshIndex ];
 		{
-			auto& rMaterialAsset = materialRegistry->GetMaterials()[ rSubmesh.MaterialIndex ];
+			auto& rMaterialAsset = materialRegistry->GetMaterialAssets()[ rSubmesh.MaterialIndex ];
 
 			const auto& StorageWriteDescriptors = GetStorageBufferWriteDescriptors( rStorageBufferSet, rMaterialAsset );
 

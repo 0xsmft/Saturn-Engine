@@ -164,8 +164,8 @@ namespace Saturn {
 		void SetMaterial( uint32_t index, AssetID id );
 		void ResetMaterial( uint32_t index );
 	
-		std::vector< Ref<MaterialAsset> >& GetMaterials() { return m_Materials; }
-		const std::vector< Ref<MaterialAsset> >& GetMaterials() const { return m_Materials; }
+		std::vector< Ref<MaterialAsset> >& GetMaterialAssets() { return m_Materials; }
+		const std::vector< Ref<MaterialAsset> >& GetMaterialAssets() const { return m_Materials; }
 
 		UUID GetID() { return m_ID; }
 		const UUID GetID() const { return m_ID; }
@@ -175,7 +175,7 @@ namespace Saturn {
 		void SetOverries( uint32_t index, bool val ) { m_HasOverridden[ index ] = val; }
 
 		// This does not copy the material registry and is only to be used by the scene serialiser.
-		void SetMesh( const Ref<StaticMesh>& mesh ) { m_Mesh = mesh; }
+		void SetMesh( Ref<StaticMesh> mesh ) { m_Mesh = mesh; }
 
 	public:
 		static void Serialise( const MaterialRegistry& rRegistry, std::ofstream& rStream );

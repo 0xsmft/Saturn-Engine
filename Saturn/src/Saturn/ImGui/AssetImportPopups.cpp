@@ -124,7 +124,7 @@ namespace Saturn::Auxiliary {
 
 				// TODO: This is bad.
 				// Create the mesh so we can copy over the texture (if any).
-				auto mesh = Ref<MeshCloner>::Create( s_OriginalMeshPath, rImportTargetPath );
+				auto mesh = Ref<MeshImporter>::Create( s_OriginalMeshPath, rImportTargetPath, 0 );
 				mesh = nullptr;
 
 				// Create the mesh asset.

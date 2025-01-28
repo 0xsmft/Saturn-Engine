@@ -469,7 +469,7 @@ namespace Saturn {
 
 		Ref<Asset> asset = id == 0 ? nullptr : AssetManager::Get().FindAsset( id );
 		
-		if( id != 0 )
+		if( asset )
 		{
 			SceneSerialiser serialiser( newScene );
 			serialiser.Deserialise( asset->Path );

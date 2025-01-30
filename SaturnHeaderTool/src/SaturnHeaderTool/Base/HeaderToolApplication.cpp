@@ -35,16 +35,6 @@
 #include <string>
 #include <vector>
 
-static std::vector<std::string> s_ArgumentsMap 
-{
-	"/NOMSG",
-	"/SRC",
-	"/OUT",
-	"/FC",
-	"/MT",
-	"/VERBOSE"
-};
-
 namespace Saturn {
 
 	HeaderToolApplication::HeaderToolApplication( std::span<char*> args )

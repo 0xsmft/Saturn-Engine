@@ -60,6 +60,8 @@ namespace Saturn {
 		std::vector<SProperty>& GetAllProperties( const std::string& rMetadataName );
 		SProperty& GetProperty( const std::string& rMetadataName, const std::string& rPropertyName );
 
+		void ClearExternalData();
+
 	public:
 		SClassMetadata& GetSClassMetadata();
 

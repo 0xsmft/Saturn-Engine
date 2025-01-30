@@ -60,7 +60,7 @@ namespace Saturn {
 
 	struct ApplicationSpecification
 	{
-		ApplicationFlags Flags;
+		ApplicationFlags Flags = 0x7FFFFFFF;
 
 		bool Titlebar = false;
 		

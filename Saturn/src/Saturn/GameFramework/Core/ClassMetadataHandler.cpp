@@ -46,6 +46,7 @@ namespace Saturn {
 	ClassMetadataHandler::~ClassMetadataHandler()
 	{
 		m_MetadataTree.clear();
+		m_Properties.clear();
 	}
 
 	void ClassMetadataHandler::BeginHotReload()
@@ -118,6 +119,21 @@ namespace Saturn {
 
 		static SProperty s_EmptyProperty;
 		return s_EmptyProperty;
+	}
+
+	void ClassMetadataHandler::ClearExternalData()
+	{
+		for( auto Itr = m_MetadataTree.begin(); Itr != m_MetadataTree.end(); )
+		{
+			if( Itr->second.ExternalData )
+			{
+				Itr = m_MetadataTree.erase( Itr );
+			}
+			else
+				Itr++;
+		}
+
+		m_Properties.clear();
 	}
 
 }

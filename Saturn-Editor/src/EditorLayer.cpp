@@ -225,6 +225,8 @@ namespace Saturn {
 
 		VirtualFS::Get().UnmountBase( Project::GetActiveConfig().Name );
 
+		ClassMetadataHandler::Get().ClearExternalData();
+
 		delete m_GameModule;
 		m_GameModule = nullptr;
 	}

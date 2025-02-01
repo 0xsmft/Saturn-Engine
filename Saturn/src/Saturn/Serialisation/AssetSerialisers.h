@@ -30,10 +30,6 @@
 
 #include "Saturn/Asset/Asset.h"
 
-namespace YAML {
-	class Node;
-}
-
 #define SAT_SERIALISER_CLASS( Name ) \
 	class Name##AssetSerialiser : public AssetSerialiser \
 	{ \

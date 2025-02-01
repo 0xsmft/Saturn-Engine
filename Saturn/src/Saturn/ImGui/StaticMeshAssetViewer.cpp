@@ -120,7 +120,7 @@ namespace Saturn {
 
 		m_AllowCameraEvents = ImGui::IsMouseHoveringRect( minBound, maxBound ) && m_ViewportFocused || m_StartedRightClickInViewport;
 
-		ImGui::End();
+		ImGui::End(); // Viewport
 
 		ImGui::Begin( "Sidebar" );
 
@@ -200,7 +200,9 @@ namespace Saturn {
 
 				if( ImGui::TreeNodeEx( rMaterial->GetName().c_str(), flags ) )
 				{
-					ImGui::Text( "Asset ID/%llu", ( uint64_t ) rMaterial->GetAssetID() );
+					ImGui::BeginHorizontal( i );
+
+					ImGui::TextDisabled( "%s", rMaterial->Name.empty() ? "<NULL>" : rMaterial->Name.c_str() );
 
 					bool open = false;
 
@@ -209,7 +211,9 @@ namespace Saturn {
 						open = true;
 					}
 
-					ImGui::SameLine();
+					ImGui::Spring();
+
+					ImGui::EndHorizontal();
 
 					if( Auxiliary::DrawAssetFinder( AssetType::Material, &open, s_id ) )
 					{
@@ -252,6 +256,7 @@ namespace Saturn {
 		if( m_Open == false )
 		{
 			AssetViewer::DestroyViewer( m_AssetID );
+			m_Open = false;
 		}
 	}
 
@@ -264,9 +269,9 @@ namespace Saturn {
 		m_Scene->OnRenderEditor( m_Camera, ts, *m_SceneRenderer );
 
 		RenderThread::Get().Queue( [=]()
-			{
-				m_SceneRenderer->RenderScene();
-			} );
+		{
+			m_SceneRenderer->RenderScene();
+		} );
 
 		if( Input::Get().MouseButtonPressed( RubyMouseButton::Right ) && !m_StartedRightClickInViewport && m_ViewportFocused && m_MouseOverViewport )
 			m_StartedRightClickInViewport = true;

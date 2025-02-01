@@ -334,7 +334,16 @@ namespace Saturn {
 
 		out << YAML::BeginMap;
 
-		out << YAML::Key << "Filepath" << YAML::Value << std::filesystem::relative( mesh->FilePath(), Project::GetActiveProject()->GetRootDir() );
+		std::wstring path = std::filesystem::relative( mesh->FilePath(), Project::GetActiveProject()->GetRootDir() );
+
+		// On Windows make serialise as a Linux path for Linux support 
+#if defined(SAT_PLATFORM_WINDOWS)
+		std::replace( path.begin(), path.end(), L'\\', L'/' );
+
+		out << YAML::Key << "Filepath" << YAML::Value << path;
+#else
+		out << YAML::Key << "Filepath" << YAML::Value << path;
+#endif
 
 		out << YAML::Key << "Attached Shape" << YAML::Value << (int)mesh->GetAttachedShape();
 
@@ -392,9 +401,16 @@ namespace Saturn {
 			return false;
 
 		auto meshData = data[ "StaticMesh" ];
-		auto filepath = meshData[ "Filepath" ].as<std::string>();
 		auto shapeType = meshData[ "Attached Shape" ].as<int>( 0 );
 		auto physicsMaterial = meshData[ "Physics Material ID" ].as<uint64_t>( 0 );
+
+		std::filesystem::path filepath = meshData[ "Filepath" ].as<std::string>();
+
+#if defined(SAT_PLATFORM_WINDOWS)
+		std::wstring windowsPath = filepath.wstring();
+		std::replace( windowsPath.begin(), windowsPath.end(), L'/', L'\\' );
+		filepath = windowsPath;
+#endif
 
 		auto realMeshPath = Project::GetActiveProject()->FilepathAbs( filepath );
 		auto mesh = Ref<StaticMesh>::Create( realMeshPath.string() );
@@ -414,9 +430,16 @@ namespace Saturn {
 				{
 					auto id = materialNode[ i ].as<uint64_t>();
 
+					Ref<MaterialAsset> asset = AssetManager::Get().GetAssetAs<MaterialAsset>( id );
+
 					if( id != 0 )
 					{
-						mesh->GetMaterialRegistry()->AddAsset( AssetManager::Get().GetAssetAs<MaterialAsset>( id ) );
+						mesh->GetMaterialRegistry()->AddTargetMaterialAsset( id );
+					}
+
+					if( asset != nullptr )
+					{
+						mesh->GetMaterialRegistry()->AddAsset( asset );
 					}
 					else
 					{

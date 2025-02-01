@@ -117,6 +117,8 @@ namespace Saturn {
 			StopAudioPlayers();
 		}
 
+		m_Controllers.clear();
+
 		// Destroy all entities.
 		for( auto&& [id, entity] : m_EntityIDMap )
 		{

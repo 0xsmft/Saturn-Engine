@@ -235,52 +235,6 @@ namespace Saturn {
 		for( uint32_t i = 0; i < node->mNumChildren; i++ )
 			TraverseNodes( node->mChildren[ i ], transform, level + 1 );
 	}
-
-	void StaticMesh::CreateMaterials()
-	{
-		/*
-		m_MaterialsAssets.resize( m_Scene->mNumMaterials );
-
-		for( size_t m = 0; m < m_Scene->mNumMaterials; m++ )
-		{
-			aiMaterial* material = m_Scene->mMaterials[ m ];
-
-			aiString name;
-			material->Get( AI_MATKEY_NAME, name );
-
-			std::string MaterialName = std::string( name.C_Str() );
-
-			if( MaterialName.empty() )
-			{
-				MaterialName = std::format( "Unnamed Material {0}", std::to_string( UUID() ) );
-			}
-
-			// This is more of a hack, as we use parent_path just so we can add the material on to it.
-			auto assetPath = std::filesystem::path( m_FilePath ).parent_path();
-			assetPath /= MaterialName;
-			assetPath += ".smaterial";
-
-			auto realPath = std::filesystem::relative( assetPath, Project::GetActiveProject()->GetRootDir() );
-
-			Ref<Asset> asset = AssetManager::Get().FindAsset( realPath );
-			Ref<MaterialAsset> materialAsset;
-
-			if( !asset )
-			{
-				// If no asset then create internal default material.
-				materialAsset = Ref<MaterialAsset>::Create( nullptr );
-			}
-			else
-			{
-				// Asset was already loaded.
-				materialAsset = AssetManager::Get().GetAssetAs<MaterialAsset>( asset->GetAssetID() );
-			}
-
-			m_MaterialsAssets[ m ] = materialAsset;
-			m_MaterialRegistry->AddAsset( materialAsset );
-		}
-		*/
-	}
 #endif
 
 	void StaticMesh::Import_InitMaterialRegistry()

@@ -184,7 +184,6 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		void TraverseNodes( aiNode* node, const glm::mat4& parentTransform = glm::mat4( 1.0f ), uint32_t level = 0 );
 		void CreateVertices();
-		void CreateMaterials();
 #endif
 	private:
 		Ref<VertexBuffer> m_VertexBuffer;

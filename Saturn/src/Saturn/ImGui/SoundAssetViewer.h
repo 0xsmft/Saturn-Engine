@@ -52,5 +52,6 @@ namespace Saturn {
 		float m_CurrentProgress = 0.0f;
 		float m_LastProgress = 0.0f;
 		bool m_WasPlaying = false;
+		bool m_OpenSoundSettingsPopup = false;
 	};
 }

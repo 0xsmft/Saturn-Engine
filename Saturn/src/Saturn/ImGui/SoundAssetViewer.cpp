@@ -31,6 +31,7 @@
 
 #include "Saturn/Asset/AssetManager.h"
 #include "Saturn/Audio/Sound.h"
+#include "Saturn/Audio/AudioSystem.h"
 
 #include "ImGuiAuxiliary.h"
 #include "EditorIcons.h"
@@ -53,11 +54,12 @@ namespace Saturn {
 	SoundAssetViewer::~SoundAssetViewer()
 	{
 		m_PreviewSound = nullptr;
+		AudioSystem::Get().StopSoundGroups();
 	}
 
 	void SoundAssetViewer::OnImGuiRender()
 	{
-		ImGui::PushID( static_cast<int>( m_SoundAsset->ID ) );
+		ImGui::PushID( static_cast< int >( m_SoundAsset->ID ) );
 
 		std::string windowName = std::format( "{0}##{1}", m_SoundAsset->Name, std::to_string( m_SoundAsset->ID ) );
 
@@ -69,7 +71,7 @@ namespace Saturn {
 
 		ImGui::BeginHorizontal( "##srcsndfile" );
 
-		if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), { 24, 24 } ) ) 
+		if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), { 24, 24 } ) )
 		{
 			std::filesystem::path path = Application::Get().OpenFile( "Supported asset types (*.wav, *.mp3, *.ogg)\0*.wav; *.mp3; *.ogg\0" );
 
@@ -100,7 +102,7 @@ namespace Saturn {
 		ImGui::Text( "Original Import Path" );
 
 		ImGui::BeginHorizontal( "##importPath" );
-		
+
 		ImGui::PushStyleColor( ImGuiCol_Text, ImVec4( 1.0f, 1.0f, 1.0f, 0.5f ) );
 		ImGui::InputText( "##importPath", ( char* ) m_SoundAsset->OriginalImportPath.string().c_str(), 4096, ImGuiInputTextFlags_ReadOnly );
 		ImGui::PopStyleColor();
@@ -108,6 +110,12 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		ImGui::Spring();
 		ImGui::Text( "%s", m_SoundAsset->LastWriteTime.c_str() );
+
+		if( ImGui::BeginItemTooltip() )
+		{
+			ImGui::Text( "Date when the original file was created." );
+			ImGui::EndTooltip();
+		}
 #endif
 
 		ImGui::EndHorizontal();
@@ -121,6 +129,8 @@ namespace Saturn {
 			{
 				m_PreviewSound->Stop();
 				m_PreviewSound->Reset();
+
+				AudioSystem::Get().StopSoundGroups();
 			}
 		}
 		else
@@ -130,10 +140,12 @@ namespace Saturn {
 				if( !m_PreviewSound )
 					m_PreviewSound = Ref<Sound>::Create( m_SoundAsset, nullptr );
 
+				AudioSystem::Get().StartSoundGroups();
+
 				m_PreviewSound->Play();
 			}
 		}
-		
+
 		if( m_PreviewSound )
 		{
 			ImGui::Text( "%s", m_PreviewSound->FormatSeconds( m_PreviewSound->GetCursorInSeconds() ).c_str() );
@@ -155,7 +167,7 @@ namespace Saturn {
 				m_PreviewSound->Stop();
 				m_WasPlaying = true;
 			}
-			
+
 			if( !ImGui::IsItemActive() && m_WasPlaying )
 			{
 				m_PreviewSound->Play();
@@ -163,12 +175,17 @@ namespace Saturn {
 			}
 
 			ImGui::Text( "%s", m_PreviewSound->FormatSeconds( m_PreviewSound->GetDurationInSeconds() ).c_str() );
+
+			if( Auxiliary::ImageButton( EditorIcons::GetIcon( "NoIcon" ), { 24.0f, 24.0f } ) )
+			{
+				m_OpenSoundSettingsPopup = true;
+			}
 		}
 		else
 		{
 			// We have to create a separate branch as we can't use m_PreviewSound when it's null
 			Auxiliary::ScopedDisabledFlag disabled( true );
-			
+
 			ImGui::Text( "--:--:--" );
 			ImGui::SliderFloat( "##SeekBar", &m_CurrentProgress, 0.0f, 1.0f, "%.4f", ImGuiSliderFlags_NoInput );
 			ImGui::Text( "--:--:--" );
@@ -177,6 +194,31 @@ namespace Saturn {
 		ImGui::EndHorizontal();
 
 		ImGui::EndVertical();
+
+		if( m_OpenSoundSettingsPopup && !ImGui::IsPopupOpen( "SoundSettings" ) )
+		{
+			ImGui::OpenPopup( "SoundSettings" );
+			m_OpenSoundSettingsPopup = false;
+		}
+
+		ImGui::SetNextWindowSize( { 250.0f, 0.0f } );
+		if( ImGui::BeginPopup( "SoundSettings", ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize ) )
+		{
+			float pitchMultiplier = m_PreviewSound->GetPitchMultiplier();
+			float volumeMultiplier = m_PreviewSound->GetVolumeMultiplier();
+
+			if( Auxiliary::DrawFloatControl( "Pitch Multiplier", pitchMultiplier, 0.0f, 100.0f ) ) 
+			{
+				m_PreviewSound->SetPitchMultiplier( pitchMultiplier );
+			}
+
+			if( Auxiliary::DrawFloatControl( "Volume Multiplier", volumeMultiplier, 0.0f, 100.0f ) )
+			{
+				m_PreviewSound->SetVolumeMultiplier( volumeMultiplier );
+			}
+
+			ImGui::EndPopup();
+		}
 
 		ImGui::End();
 

@@ -130,19 +130,17 @@ namespace std {
 
 namespace Saturn {
 
-	class DescriptorSet;
-
 	class StaticMesh : public Asset
 	{
 	public:
 		StaticMesh() {}
-		StaticMesh( const std::string& rFilepath );
+		StaticMesh( const std::filesystem::path& rFilepath );
 		virtual ~StaticMesh();
 
-		std::string& FilePath() { return m_FilePath; }
-		const std::string& FilePath() const { return m_FilePath; }
-
-		void SetFilepath( const std::string& rFilepath ) { m_FilePath = rFilepath; }
+		void SetFilepath( const std::filesystem::path& rFilepath ) { m_FilePath = rFilepath; }
+		
+		std::filesystem::path FilePath() { return m_FilePath; }
+		const std::filesystem::path FilePath() const { return m_FilePath; }
 
 		glm::mat4 GetInverseTransform() const { return m_InverseTransform; }
 		glm::mat4 GetTransform() const { return m_Transform; }
@@ -172,7 +170,7 @@ namespace Saturn {
 		const Ref<MaterialRegistry>& GetMaterialRegistry() const { return m_MaterialRegistry; }
 
 	public:
-		// Import
+		// Import (Internal functions)
 		void Import_InitMaterialRegistry();
 		void Import_AddMaterialID( uint64_t index, AssetID assetID );
 
@@ -190,11 +188,10 @@ namespace Saturn {
 		Ref<IndexBuffer> m_IndexBuffer;
 
 		std::vector<StaticVertex> m_Vertices;
+		std::vector<Index> m_Indices;
 		std::vector<Submesh> m_Submeshes;
 
-		std::string m_FilePath;
-
-		std::vector<Index> m_Indices;
+		std::filesystem::path m_FilePath;
 
 		glm::mat4 m_InverseTransform = {};
 		glm::mat4 m_Transform = {};
@@ -205,6 +202,7 @@ namespace Saturn {
 		ShapeType m_AttachedPhysicsShape = ShapeType::Unknown;
 		AssetID m_PhysicsMaterial = 0;
 
+		// Materials
 		Ref<MaterialRegistry> m_MaterialRegistry;
 
 #if !defined(SAT_DIST)

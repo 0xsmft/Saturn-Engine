@@ -31,7 +31,6 @@
 
 #include "VulkanContext.h"
 #include "Renderer.h"
-#include "DescriptorSet.h"
 
 #include "Saturn/Serialisation/AssetRegistrySerialiser.h"
 #include "Saturn/Serialisation/AssetSerialisers.h"
@@ -59,7 +58,7 @@
 namespace Saturn {
 
 #if !defined(SAT_DIST)
-	glm::mat4 Mat4FromAssimpMat4( const aiMatrix4x4& matrix )
+	static glm::mat4 Mat4FromAssimpMat4( const aiMatrix4x4& matrix )
 	{
 		glm::mat4 result;
 		result[ 0 ][ 0 ] = matrix.a1; result[ 1 ][ 0 ] = matrix.a2; result[ 2 ][ 0 ] = matrix.a3; result[ 3 ][ 0 ] = matrix.a4;
@@ -100,7 +99,7 @@ namespace Saturn {
 
 	//////////////////////////////////////////////////////////////////////////
 
-	StaticMesh::StaticMesh( const std::string& rFilepath )
+	StaticMesh::StaticMesh( const std::filesystem::path& rFilepath )
 		: m_FilePath( rFilepath )
 	{
 #if !defined(SAT_DIST)
@@ -112,11 +111,11 @@ namespace Saturn {
 			return;
 		}
 		else
-			SAT_CORE_INFO( "Loading mesh: {0}", m_FilePath.c_str() );
+			SAT_CORE_INFO( "Loading mesh: {0}", m_FilePath.string().c_str() );
 
 		m_Importer = std::make_unique<Assimp::Importer>();
 
-		const aiScene* scene = m_Importer->ReadFile( m_FilePath, s_MeshImportFlags );
+		const aiScene* scene = m_Importer->ReadFile( m_FilePath.string(), s_MeshImportFlags );
 		if( scene == nullptr || !scene->HasMeshes() ) 
 		{
 			SAT_CORE_ERROR( "Failed to load mesh file (does the file have meshes?): {0}", m_FilePath );
@@ -144,6 +143,8 @@ namespace Saturn {
 		m_Submeshes.clear();
 
 		m_MaterialRegistry = nullptr;
+
+		m_Importer.release();
 	}
 
 #if !defined(SAT_DIST)
@@ -152,7 +153,7 @@ namespace Saturn {
 		m_Submeshes.reserve( m_Scene->mNumMeshes );
 
 		// Iterate over all meshes in the scene.
-		for( unsigned m = 0; m < m_Scene->mNumMeshes; m++ )
+		for( unsigned int m = 0; m < m_Scene->mNumMeshes; m++ )
 		{
 			aiMesh* mesh = m_Scene->mMeshes[ m ];
 
@@ -335,8 +336,10 @@ namespace Saturn {
 		m_Scene = scene;
 
 		FindMaterials();
+#endif
 	}
 
+#if !defined(SAT_DIST)
 	void MeshImporter::FindMaterials()
 	{
 		bool needToSaveAssetReg = false;
@@ -583,13 +586,14 @@ namespace Saturn {
 			AssetManager::Get().Save();
 		}
 	}
-
 #endif
 
 	MeshImporter::~MeshImporter()
 	{
+#if !defined(SAT_DIST)
 		m_Importer.release();
 		delete m_Scene;
 		m_Scene = nullptr;
+#endif
 	}
 }

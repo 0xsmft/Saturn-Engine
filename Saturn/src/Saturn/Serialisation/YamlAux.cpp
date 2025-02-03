@@ -335,6 +335,7 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 			rEmitter << YAML::Key << "Extents" << YAML::Value << bcc.Extents;
 			rEmitter << YAML::Key << "Offset" << YAML::Value << bcc.Offset;
 			rEmitter << YAML::Key << "IsTrigger" << YAML::Value << bcc.IsTrigger;
+			rEmitter << YAML::Key << "AutoAdjustExtent" << YAML::Value << bcc.AutoAdjustExtent;
 
 			rEmitter << YAML::EndMap;
 		}
@@ -712,6 +713,7 @@ rProperty.SetProperty( DeserialisedEntity.Get(), value ); \
 				b.Extents = bcc[ "Extents" ].as< glm::vec3 >();
 				b.Offset = bcc[ "Offset" ].as< glm::vec3 >();
 				b.IsTrigger = bcc[ "IsTrigger" ].as< bool >();
+				b.AutoAdjustExtent = bcc[ "AutoAdjustExtent" ].as< bool >( false );
 			}
 
 			auto scc = entity[ "SphereColliderComponent" ];

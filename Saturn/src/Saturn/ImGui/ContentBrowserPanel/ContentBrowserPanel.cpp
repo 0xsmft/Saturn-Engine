@@ -1217,7 +1217,7 @@ namespace Saturn {
 				staticMesh->Path = asset->Path;
 
 				auto& meshPath = assetPath.replace_extension( m_ImportAssetPath.extension() );
-				staticMesh->SetFilepath( meshPath.string() );
+				staticMesh->SetFilepath( meshPath );
 				staticMesh->Import_InitMaterialRegistry();
 
 				// TOOD: Unload the material assets!! (Textures could be loaded!)
@@ -1537,6 +1537,7 @@ namespace Saturn {
 
 				if( first && c < columnCount )
 				{
+					// Use the extra columns if we didn't use them
 					for( int extra = 0; extra < columnCount - c; extra++ )
 					{
 						ImGui::NextColumn();

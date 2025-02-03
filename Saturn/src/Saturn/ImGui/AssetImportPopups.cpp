@@ -134,7 +134,7 @@ namespace Saturn::Auxiliary {
 				staticMesh->Path = asset->Path;
 
 				auto& meshPath = assetPath.replace_extension( s_OriginalMeshPath.extension() );
-				staticMesh->SetFilepath( meshPath.string() );
+				staticMesh->SetFilepath( meshPath );
 
 				// Save the mesh asset
 				StaticMeshAssetSerialiser sma;

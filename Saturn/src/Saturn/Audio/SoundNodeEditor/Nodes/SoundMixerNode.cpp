@@ -42,10 +42,29 @@
 
 namespace Saturn {
 
-	SoundMixerNode::SoundMixerNode( const NodeSpecification& rSpec )
-		: Node( rSpec )
+	SoundMixerNode::SoundMixerNode()
+		: Node()
+	{
+		Name = "Mixer";
+		CreateNode();
+	}
+
+	SoundMixerNode::SoundMixerNode( const std::string& rName )
+		: Node()
+	{
+		Name = rName;
+		CreateNode();
+	}
+
+	void SoundMixerNode::CreateNode()
 	{
 		ExecutionType = NodeExecutionType::SoundMixer;
+		Color = ImColor( 173, 18, 128 );
+
+		Inputs.push_back( Ref<Pin>::Create( "Sound 1", PinType::Sound, PinKind::Input ) );
+		Inputs.push_back( Ref<Pin>::Create( "Sound 2", PinType::Sound, PinKind::Input ) );
+		
+		Outputs.push_back( Ref<Pin>::Create( "Result", PinType::Sound, PinKind::Output ) );
 	}
 
 	SoundMixerNode::~SoundMixerNode()
@@ -91,7 +110,7 @@ namespace Saturn {
 				case NodeExecutionType::SoundPlayer:
 				{
 					Ref<SoundPlayerNode> playerNode = neighorNode.As<SoundPlayerNode>();
-					PinToSoundMap[ index ] =  playerNode->SoundAssetID;
+					PinToSoundMap[ index ] =  playerNode->GetAssetID();
 				} break;
 
 				case NodeExecutionType::RandomSound:

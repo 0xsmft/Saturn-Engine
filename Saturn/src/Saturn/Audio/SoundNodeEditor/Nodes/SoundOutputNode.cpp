@@ -39,14 +39,23 @@
 
 namespace Saturn {
 
-	SoundOutputNode::SoundOutputNode( const NodeSpecification& rSpec )
-		: Node( rSpec )
+	SoundOutputNode::SoundOutputNode()
+		: Node()
+	{
+		Name = "Sound Output";
+		CreateNode();
+	}
+
+	void SoundOutputNode::CreateNode()
 	{
 		ExecutionType = NodeExecutionType::SoundOutput;
 #if !defined(SAT_DIST)
 		CanBeDeleted = false;
 		Color = ImColor( 237, 202, 5, 255 );
+		//Color = ImColor( 255, 128, 128 );
 #endif
+
+		Inputs.push_back( Ref<Pin>::Create( "Final Result", PinType::Sound, PinKind::Input ) );
 	}
 
 	SoundOutputNode::~SoundOutputNode()
@@ -82,4 +91,5 @@ namespace Saturn {
 
 		return NodeEditorCompilationStatus::Success;
 	}
+
 }

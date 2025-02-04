@@ -37,31 +37,13 @@
 
 namespace Saturn {
 
-	Node::Node( const NodeSpecification& rSpec )
-		: ID(), Name( rSpec.Name ), Color( rSpec.Color ), ExtraData()
+	Node::Node( const std::string& rName )
+		: Name( rName )
 	{
-		for( const auto& rInputSpec : rSpec.Inputs )
-		{
-			Ref<Pin> input = Ref<Pin>::Create( UUID(), rInputSpec.Name, rInputSpec.Type, ID );
-			Inputs.push_back( input );
-
-			input->ExtraData.Allocate( 64 );
-			input->ExtraData.Zero_Memory();
-		}
-
-		for( const auto& rOutputSpec : rSpec.Outputs )
-		{
-			Ref<Pin> output = Ref<Pin>::Create( UUID(), rOutputSpec.Name, rOutputSpec.Type, ID );
-			Outputs.push_back( output );
-		}
-
-		ExtraData.Allocate( 1024 );
-		ExtraData.Zero_Memory();
 	}
 
 	Node::~Node()
 	{
-		ExtraData.Free();
 	}
 
 	void Node::Destroy()
@@ -149,18 +131,10 @@ namespace Saturn {
 		RawSerialisation::WriteString( rObject->ActiveState, rStream );
 		RawSerialisation::WriteString( rObject->SavedState, rStream );
 
-		RawSerialisation::WriteSaturnBuffer( rObject->ExtraData, rStream );
-
-		size_t mapSize = rObject->Inputs.size();
-		RawSerialisation::WriteObject( mapSize, rStream );
-
 		for( const auto& rInput : rObject->Inputs )
 		{
 			Pin::Serialise( rInput, rStream );
 		}
-
-		mapSize = rObject->Outputs.size();
-		RawSerialisation::WriteObject( mapSize, rStream );
 
 		for( const auto& rOutput : rObject->Outputs )
 		{
@@ -185,34 +159,14 @@ namespace Saturn {
 		rObject->ActiveState = RawSerialisation::ReadString( rStream );
 		rObject->SavedState = RawSerialisation::ReadString( rStream );
 
-		RawSerialisation::ReadSaturnBuffer( rObject->ExtraData, rStream );
-
-		size_t mapSize = 0;
-		RawSerialisation::ReadObject( mapSize, rStream );
-
-		rObject->Inputs.resize( mapSize );
-
-		for( size_t i = 0; i < mapSize; i++ )
+		for( size_t i = 0; i < rObject->Inputs.size(); i++ )
 		{
-			Ref<Pin> pin = Ref<Pin>::Create();
-
-			Pin::Deserialise( pin, rStream );
-
-			rObject->Inputs[ i ] = pin;
+			Pin::Deserialise( rObject->Inputs[ i ], rStream );
 		}
 
-		mapSize = 0;
-		RawSerialisation::ReadObject( mapSize, rStream );
-
-		rObject->Outputs.resize( mapSize );
-
-		for( size_t i = 0; i < mapSize; i++ )
+		for( size_t i = 0; i < rObject->Outputs.size(); i++ )
 		{
-			Ref<Pin> pin = Ref<Pin>::Create();
-
-			Pin::Deserialise( pin, rStream );
-
-			rObject->Outputs[ i ] = pin;
+			Pin::Deserialise( rObject->Outputs[ i ], rStream );
 		}
 
 #if !defined(SAT_DIST)
@@ -221,4 +175,5 @@ namespace Saturn {
 
 		rObject->OnDeserialise( rStream );
 	}
+
 }

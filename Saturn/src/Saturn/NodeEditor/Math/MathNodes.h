@@ -4,7 +4,7 @@
 *                                                                                           *
 * MIT License                                                                               *
 *                                                                                           *
-* Copyright (c) 2020 - 2025 BEAST                                                           *
+* Copyright (c) 2020 - 2024 BEAST                                                           *
 *                                                                                           *
 * Permission is hereby granted, free of charge, to any person obtaining a copy              *
 * of this software and associated documentation files (the "Software"), to deal             *
@@ -28,22 +28,61 @@
 
 #pragma once
 
-#include "Saturn/NodeEditor/Node.h"
-#include "Saturn/Asset/Asset.h"
+#include "Saturn/NodeEditor/NodeEditorBase.h"
 
 namespace Saturn {
 
-	class SoundPlayerNode : public Node
+	class MathAddFloats : public Node
 	{
 	public:
-		SoundPlayerNode();
-		SoundPlayerNode( const std::string& rName );
+		MathAddFloats();
+		MathAddFloats( const std::string& rName );
 
-		virtual ~SoundPlayerNode();
+		virtual ~MathAddFloats();
 
-		virtual NodeEditorCompilationStatus EvaluateNode( NodeEditorRuntime* evaluator ) override;
+		NodeEditorCompilationStatus EvaluateNode( NodeEditorRuntime* pEvaluator ) override;
 
-		AssetID GetAssetID() const;
+	private:
+		void CreateNode();
+	};
+
+	class MathSubFloats : public Node
+	{
+	public:
+		MathSubFloats();
+		MathSubFloats( const std::string& rName );
+
+		virtual ~MathSubFloats();
+
+		NodeEditorCompilationStatus EvaluateNode( NodeEditorRuntime* pEvaluator ) override;
+
+	private:
+		void CreateNode();
+	};
+
+	class MathMulFloats : public Node
+	{
+	public:
+		MathMulFloats();
+		MathMulFloats( const std::string& rName );
+
+		virtual ~MathMulFloats();
+
+		NodeEditorCompilationStatus EvaluateNode( NodeEditorRuntime* pEvaluator ) override;
+
+	private:
+		void CreateNode();
+	};
+
+	class MathDivideFloats : public Node
+	{
+	public:
+		MathDivideFloats();
+		MathDivideFloats( const std::string& rName );
+
+		virtual ~MathDivideFloats();
+
+		NodeEditorCompilationStatus EvaluateNode( NodeEditorRuntime* pEvaluator ) override;
 
 	private:
 		void CreateNode();

@@ -254,7 +254,7 @@ namespace Saturn {
 			filename = std::format( "NCEditor.{0}.nce", ( uint64_t ) id );
 			cachePath = GetDefaultCachePath();
 		}
-		
+
 		if( !rCustomName.empty() )
 			filename = rCustomName;
 

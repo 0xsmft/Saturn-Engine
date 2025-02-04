@@ -4,7 +4,7 @@
 *                                                                                           *
 * MIT License                                                                               *
 *                                                                                           *
-* Copyright (c) 2020 - 2025 BEAST                                                           *
+* Copyright (c) 2020 - 2024 BEAST                                                           *
 *                                                                                           *
 * Permission is hereby granted, free of charge, to any person obtaining a copy              *
 * of this software and associated documentation files (the "Software"), to deal             *
@@ -28,24 +28,33 @@
 
 #pragma once
 
-#include "Saturn/NodeEditor/Node.h"
-#include "Saturn/Asset/Asset.h"
+#include "Saturn/NodeEditor/Pin.h"
 
 namespace Saturn {
 
-	class SoundPlayerNode : public Node
+	class MaterialViewerColorPin : public Pin
 	{
 	public:
-		SoundPlayerNode();
-		SoundPlayerNode( const std::string& rName );
+		MaterialViewerColorPin() = default;
+		MaterialViewerColorPin( const std::string& rName, PinKind kind, bool readonly = false, bool accpetOnlyTextures = false );
+		MaterialViewerColorPin( UUID id, const std::string& rName, PinType type, UUID nodeID );
 
-		virtual ~SoundPlayerNode();
+		~MaterialViewerColorPin();
 
-		virtual NodeEditorCompilationStatus EvaluateNode( NodeEditorRuntime* evaluator ) override;
+	public:
+		glm::vec3 Data{};
 
-		AssetID GetAssetID() const;
+		void SetReadOnly( bool value ) { m_ReadOnly = value; }
+		bool IsReadOnly() const { return m_ReadOnly; }
+
+	protected:
+		void OnRenderOutput() override;
+
+		void OnSerialise( std::ofstream& rStream ) const override;
+		void OnDeserialise( std::ifstream& rStream ) override;
 
 	private:
-		void CreateNode();
+		bool m_ReadOnly = false;
+		bool m_AccpetOnlyTextures = false;
 	};
 }

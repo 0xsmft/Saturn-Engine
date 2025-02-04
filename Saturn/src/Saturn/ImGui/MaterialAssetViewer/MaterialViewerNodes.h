@@ -43,8 +43,8 @@ namespace Saturn {
 			Ref<MaterialAsset> MaterialAsset = nullptr;
 		};
 	public:
-		MaterialOutputNode() = default;
-		MaterialOutputNode( const NodeSpecification& rSpec );
+		MaterialOutputNode();
+		MaterialOutputNode( const std::string& rName );
 
 		virtual ~MaterialOutputNode();
 
@@ -54,14 +54,16 @@ namespace Saturn {
 		RuntimeData RuntimeData;
 
 	private:
+		void CreateNode();
+
 		void HandleAlbedo( const MaterialEvaluatorValue& rTextureValue );
 	};
 
 	class MaterialSampler2DNode : public Node 
 	{
 	public:
-		MaterialSampler2DNode() = default;
-		MaterialSampler2DNode( const NodeSpecification& rSpec );
+		MaterialSampler2DNode();
+		MaterialSampler2DNode( const std::string& rName );
 
 		virtual ~MaterialSampler2DNode();
 
@@ -69,36 +71,58 @@ namespace Saturn {
 
 	public:
 		size_t TextureSlot = 0;
+	
+	private:
+		void CreateNode();
 	};
 
 	class MaterialColorPickerNode : public Node
 	{
 	public:
-		MaterialColorPickerNode() = default;
-		MaterialColorPickerNode( const NodeSpecification& rSpec );
+		MaterialColorPickerNode();
+		MaterialColorPickerNode( const std::string& rName );
 
 		virtual ~MaterialColorPickerNode();
 
 		NodeEditorCompilationStatus EvaluateNode( NodeEditorRuntime* evaluator ) override;
-		void OnRenderOutput( Ref<Pin> pin ) override;
+
+		void SetColor( const glm::vec3& rColor );
 
 	public:
 		size_t TextureSlot = 0;
-		glm::vec3 PickedColor{};
+
+	private:
+		void CreateNode();
 	};
 
 	class MaterialGetAssetNode : public Node
 	{
 	public:
-		MaterialGetAssetNode() = default;
-		MaterialGetAssetNode( const NodeSpecification& rSpec );
+		MaterialGetAssetNode();
+		MaterialGetAssetNode( const std::string& rName );
 
 		virtual ~MaterialGetAssetNode();
 
-		void OnRenderOutput( Ref<Pin> pin ) override;
+		NodeEditorCompilationStatus EvaluateNode( NodeEditorRuntime* evaluator ) override;
 
+		AssetID GetAssetID() const;
+
+	private:
+		void CreateNode();
+	};
+
+	class MaterialSeparateColorRGB : public Node
+	{
 	public:
-		AssetID AssetID = 0;
+		MaterialSeparateColorRGB();
+		MaterialSeparateColorRGB( const std::string& rName );
+
+		virtual ~MaterialSeparateColorRGB();
+
+		NodeEditorCompilationStatus EvaluateNode( NodeEditorRuntime* evaluator ) override;
+
+	private:
+		void CreateNode();
 	};
 
 	class MaterialNodeLibrary
@@ -106,12 +130,13 @@ namespace Saturn {
 	public:
 		static NodeEditorType GetStaticType() { return NodeEditorType::Material; }
 
-		static Ref<MaterialOutputNode> SpawnOutputNode( Ref<NodeEditorBase> rNodeEditor );
+		static Ref<MaterialOutputNode> SpawnOutputNode( Ref<NodeEditorBase> nodeEditor );
 
-		static Ref<MaterialGetAssetNode> SpawnGetAsset( Ref<NodeEditorBase> rNodeEditor );
-		static Ref<MaterialColorPickerNode> SpawnColorPicker( Ref<NodeEditorBase> rNodeEditor );
-		static Ref<MaterialSampler2DNode> SpawnSampler2D( Ref<NodeEditorBase> rNodeEditor );
+		static Ref<MaterialGetAssetNode> SpawnGetAsset( Ref<NodeEditorBase> nodeEditor );
+		static Ref<MaterialColorPickerNode> SpawnColorPicker( Ref<NodeEditorBase> nodeEditor );
+		static Ref<MaterialSampler2DNode> SpawnSampler2D( Ref<NodeEditorBase> nodeEditor );
+		static Ref<MaterialSeparateColorRGB> SpawnSeparateColorRGB( Ref<NodeEditorBase> nodeEditor );
 
-		static Ref<Node> SpawnMixColors( Ref<NodeEditorBase> rNodeEditor );
+		static Ref<Node> SpawnMixColors( Ref<NodeEditorBase> nodeEditor );
 	};
 }

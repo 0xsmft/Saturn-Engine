@@ -64,9 +64,6 @@ namespace Saturn {
 		MaterialNodeEditorEvaluator( const MaterialNodeEdInfo& rInfo );
 		virtual ~MaterialNodeEditorEvaluator() = default;
 
-		void SetTargetNodeEditor( Ref<NodeEditorBase> nodeEditor ) { m_NodeEditor = nodeEditor; }
-		Ref<NodeEditorBase> GetTargetEditor() const { return m_NodeEditor; }
-
 		[[nodiscard]] virtual NodeEditorCompilationStatus EvaluateEditor() override;
 
 		void AddToValueStack( const MaterialEvaluatorValue& rValue );
@@ -77,7 +74,6 @@ namespace Saturn {
 
 	private:
 		MaterialNodeEdInfo m_Info;
-		Ref<NodeEditorBase> m_NodeEditor;
 		std::stack<MaterialEvaluatorValue> m_ValueStack;
 
 	private:

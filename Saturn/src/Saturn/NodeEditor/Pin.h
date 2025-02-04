@@ -29,7 +29,6 @@
 #pragma once
 
 #include "Saturn/Core/Ref.h"
-#include "Saturn/Core/Memory/Buffer.h"
 #include "Saturn/Core/UUID.h"
 
 #include "Link.h"
@@ -59,7 +58,8 @@ namespace Saturn {
 		Object,
 		Function,
 		Delegate,
-		Material_Sampler2D,
+		Material_Color,
+		Material_TextureColor, // Sampler2D
 		Sound,
 		AssetID
 	};
@@ -90,7 +90,7 @@ namespace Saturn {
 				return "Function";
 			case Saturn::PinType::Delegate:
 				return "Delegate";
-			case Saturn::PinType::Material_Sampler2D:
+			case Saturn::PinType::Material_Color:
 				return "Material_Sampler2D";
 			case Saturn::PinType::AssetID:
 				return "AssetHandle";
@@ -118,7 +118,7 @@ namespace Saturn {
 		else if( rString == "Function" )
 			return PinType::Function;
 		else if( rString == "Material_Sampler2D" )
-			return PinType::Material_Sampler2D;
+			return PinType::Material_Color;
 		else if( rString == "AssetHandle" )
 			return PinType::AssetID;
 		else
@@ -131,32 +131,10 @@ namespace Saturn {
 	{
 	public:
 		Pin() = default;
+		Pin( const std::string& rName, PinType type, PinKind kind );
+		Pin( UUID id, const std::string& rName, PinType type, UUID nodeID );
 
-		Pin( UUID id, 
-			const std::string& rName, 
-			PinType type, 
-			UUID nodeID ) 
-			: Node( nullptr ), Name( rName ), Type( type ), Kind( PinKind::Input )
-		{
-			ID = std::move( id );
-
-			ExtraData = Buffer();
-		}
-
-		~Pin() 
-		{
-			ExtraData.Free();
-		}
-
-		PinIconType GetIconType() const;
-		ImColor GetPinColor() const;
-
-		void DrawIcon( bool connected, int alpha );
-		void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked, uint32_t pinIndex );
-
-	public:
-		static void Serialise( const Ref<Pin>& rObject, std::ofstream& rStream );
-		static void Deserialise( Ref<Pin>& rObject, std::ifstream& rStream );
+		virtual ~Pin() = default;
 
 	public:
 		UUID        ID;
@@ -164,13 +142,87 @@ namespace Saturn {
 		std::string Name;
 		PinType     Type = PinType::Flow;
 		PinKind     Kind = PinKind::Input;
-		Buffer      ExtraData;
 		bool        AcceptMultipleLinks = false;
+
+	public:
+		PinIconType GetIconType() const;
+		ImColor GetPinColor() const;
+
+		void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked, uint32_t pinIndex );
+
+	public:
+		static void Serialise( const Ref<Pin>& rObject, std::ofstream& rStream );
+		static void Deserialise( Ref<Pin>& rObject, std::ifstream& rStream );
+
+	protected:
+		virtual void OnRenderOutput() {}
+		virtual void OnRenderInput() {}
+		virtual void OnSerialise( std::ofstream& rStream ) const {}
+		virtual void OnDeserialise( std::ifstream& rStream ) {}
+
+		void DrawIcon( bool connected, int alpha ) const;
 
 	private:
 		void RenderInput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked, uint32_t pinIndex );
 		void RenderOutput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked );
 
-		bool CanCreateLink( const Ref<Pin>& rOther );
+		bool CanCreateLink( const Ref<Pin>& rOther ) const;
+	};
+
+	class FloatPin : public Pin
+	{
+	public:
+		FloatPin() = default;
+		FloatPin( const std::string& rName, PinKind kind );
+		FloatPin( UUID id, const std::string& rName, PinType type, UUID nodeID );
+
+		~FloatPin() = default;
+
+	protected:
+		void OnRenderInput() override;
+
+		void OnSerialise( std::ofstream& rStream ) const override;
+		void OnDeserialise( std::ifstream& rStream ) override;
+
+	public:
+		float Data = 0.0f;
+	};
+
+	class IntPin : public Pin
+	{
+	public:
+		IntPin() = default;
+		IntPin( const std::string& rName, PinKind kind );
+		IntPin( UUID id, const std::string& rName, PinType type, UUID nodeID );
+
+		~IntPin() = default;
+
+	protected:
+		void OnRenderInput() override;
+
+		void OnSerialise( std::ofstream& rStream ) const override;
+		void OnDeserialise( std::ifstream& rStream ) override;
+
+	public:
+		int Data = 0;
+	};
+
+	class BoolPin : public Pin
+	{
+	public:
+		BoolPin() = default;
+		BoolPin( const std::string& rName, PinKind kind );
+		BoolPin( UUID id, const std::string& rName, PinType type, UUID nodeID );
+
+		~BoolPin() = default;
+
+	protected:
+		void OnRenderInput() override;
+
+		void OnSerialise( std::ofstream& rStream ) const override;
+		void OnDeserialise( std::ifstream& rStream ) override;
+
+	public:
+		bool Data = false;
 	};
 }

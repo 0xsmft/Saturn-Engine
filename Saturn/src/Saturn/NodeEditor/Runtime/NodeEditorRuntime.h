@@ -32,13 +32,21 @@
 
 namespace Saturn {
 
+	class NodeEditorBase;
+
 	class NodeEditorRuntime : public RefTarget
 	{
 	public:
 		NodeEditorRuntime() = default;
 		virtual ~NodeEditorRuntime() = default;
 
+		void SetTargetNodeEditor( Ref<NodeEditorBase> nodeEditor ) { m_NodeEditor = nodeEditor; }
+		Ref<NodeEditorBase> GetTargetEditor() const { return m_NodeEditor; }
+
 		[[nodiscard]] virtual NodeEditorCompilationStatus EvaluateEditor() { return NodeEditorCompilationStatus::Failed; }
+
+	protected:
+		Ref<NodeEditorBase> m_NodeEditor;
 
 	private:
 		friend class NodeEditorBase;

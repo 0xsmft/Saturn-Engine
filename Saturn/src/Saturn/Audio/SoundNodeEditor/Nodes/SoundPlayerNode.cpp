@@ -30,6 +30,7 @@
 #include "SoundPlayerNode.h"
 
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
+#include "Saturn/NodeEditor/AssetIDPin.h"
 
 #if !defined(SAT_DIST)
 #include "Saturn/Audio/SoundNodeEditor/SoundEditorEvaluator.h"
@@ -38,10 +39,27 @@
 
 namespace Saturn {
 
-	SoundPlayerNode::SoundPlayerNode( const NodeSpecification& rSpec )
-		: Node( rSpec )
+	SoundPlayerNode::SoundPlayerNode()
+		: Node()
+	{
+		Name = "Sound Player";
+		CreateNode();
+	}
+
+	SoundPlayerNode::SoundPlayerNode( const std::string& rName )
+		: Node()
+	{
+		Name = rName;
+		CreateNode();
+	}
+
+	void SoundPlayerNode::CreateNode()
 	{
 		ExecutionType = NodeExecutionType::SoundPlayer;
+		Color = ImColor( 173, 18, 128 );
+
+		Outputs.push_back( Ref<AssetIDPin>::Create( "Sound Player", PinKind::Output, AssetType::Sound ) );
+		Outputs[ 0 ]->Type = PinType::Sound;
 	}
 
 	SoundPlayerNode::~SoundPlayerNode()
@@ -51,7 +69,7 @@ namespace Saturn {
 	NodeEditorCompilationStatus SoundPlayerNode::EvaluateNode( NodeEditorRuntime* evaluator )
 	{
 #if !defined(SAT_DIST)
-		if( SoundAssetID == 0 )
+		if( Outputs[ 0 ].As<AssetIDPin>()->GetAssetID() == 0 )
 		{
 			SoundEditorEvaluator* pSoundEvaluator = dynamic_cast<SoundEditorEvaluator*>( evaluator );
 
@@ -69,38 +87,9 @@ namespace Saturn {
 		return NodeEditorCompilationStatus::Success;
 	}
 
-	void SoundPlayerNode::OnRenderOutput( Ref<Pin> pin )
+	AssetID SoundPlayerNode::GetAssetID() const
 	{
-		bool showAssetFinder = false;
-		
-		switch( pin->Type )
-		{
-			case PinType::Sound:
-			{
-				std::string name = "Select Asset";
-
-				if( SoundAssetID != 0 )
-					name = std::to_string( SoundAssetID );
-
-				if( ImGui::Button( name.c_str() ) )
-				{
-					showAssetFinder = true;
-				}
-			} break;
-		}
-
-		ed::Suspend();
-		Auxiliary::DrawAssetFinder( AssetType::Sound, &showAssetFinder, SoundAssetID );
-		ed::Resume();
+		return Outputs[ 0 ].As<AssetIDPin>()->GetAssetID();
 	}
 
-	void SoundPlayerNode::OnSerialise( std::ofstream& rStream ) const
-	{
-		UUID::Serialise( SoundAssetID, rStream );
-	}
-
-	void SoundPlayerNode::OnDeserialise( std::ifstream& rStream )
-	{
-		UUID::Deserialise( SoundAssetID, rStream );
-	} 
 }

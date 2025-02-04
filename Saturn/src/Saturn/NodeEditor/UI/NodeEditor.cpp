@@ -121,53 +121,12 @@ namespace Saturn {
 		config.UserPointer = this;
 		config.CustomZoomLevels = zoomLvls;
 
-		config.SaveSettings = []( const char* pData, size_t size, ed::SaveReasonFlags reason, void* pUserPointer ) -> bool
-		{
-			auto* pThis = static_cast< NodeEditor* >( pUserPointer );
-
-			pThis->m_ActiveNodeEditorState = pData;
-
-			// TODO: Filter reasons
-			// Node editor is always modified when loading.
-			pThis->MarkDirty();
-
-			return true;
-		};
-
-		config.LoadSettings = []( char* pData, void* pUserData ) -> size_t
-		{
-			auto* pThis = static_cast< NodeEditor* >( pUserData );
-
-			const auto& State = pThis->m_ActiveNodeEditorState;
-
-			if( !pData )
-			{
-				return State.size();
-			}
-			else
-			{
-				memcpy( pData, State.data(), State.size() );
-			}
-
-			return 0;
-		};
-
-		config.LoadNodeSettings = []( ed::NodeId nodeId, char* pData, void* pUserPointer ) -> size_t
-		{
-			auto* pThis = static_cast< NodeEditor* >( pUserPointer );
-
-			auto pNode = pThis->FindNode( UUID( nodeId.Get() ) );
-
-			if( !pNode )
-				return 0;
-
-			if( pData != nullptr )
-				memcpy( pData, pNode->ActiveState.data(), pNode->ActiveState.size() );
-
-			return pNode->ActiveState.size();
-		};
-
-		config.SaveNodeSettings = []( ed::NodeId nodeId, const char* pData, size_t size, ed::SaveReasonFlags reason, void* pUserPointer ) -> bool
+		config.SaveNodeSettings = []( 
+			ed::NodeId nodeId, 
+			const char* pData, 
+			size_t size, 
+			ed::SaveReasonFlags reason, 
+			void* pUserPointer ) -> bool
 		{
 			auto* pThis = static_cast< NodeEditor* >( pUserPointer );
 
@@ -239,8 +198,6 @@ namespace Saturn {
 
 	void NodeEditor::OnImGuiRender()
 	{
-//		SAT_PF_EVENT();
-
 		// Safety
 		ed::SetCurrentEditor( m_Editor );
 
@@ -368,7 +325,7 @@ namespace Saturn {
 		}
 
 		for( const auto& rLink : m_Links )
-			ed::Link( ed::LinkId( rLink->ID ), ed::PinId( rLink->StartPinID ), ed::PinId( rLink->EndPinID ) );
+			ed::Link( ed::LinkId( rLink->ID ), ed::PinId( rLink->StartPinID ), ed::PinId( rLink->EndPinID ), rLink->Color );
 
 		if( !m_CreateNewNode )
 		{
@@ -441,7 +398,7 @@ namespace Saturn {
 								UUID start = UUID( StartPinId.Get() );
 								UUID end = UUID( EndPinId.Get() );
 
-								m_Links.push_back( Ref<Link>::Create( UUID(), start, end ) );
+								m_Links.push_back( Ref<Link>::Create( UUID(), start, end, StartPin->GetPinColor() ) );
 
 								MarkDirty();
 							}
@@ -574,8 +531,7 @@ namespace Saturn {
 							if( startPin->Kind == PinKind::Input ) 
 								std::swap( startID, endID );
 
-							m_Links.emplace_back( Ref<Link>::Create( UUID(), startID, endID ) );
-							m_Links.back()->Color = startPin->GetPinColor();
+							m_Links.emplace_back( Ref<Link>::Create( UUID(), startID, endID, startPin->GetPinColor() ) );
 
 							break;
 						}
@@ -657,7 +613,7 @@ namespace Saturn {
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	// SERIALISATION
+	// SERIALISATION (DEBUG AND RELEASE)
 
 	void NodeEditor::SerialiseData( std::ofstream& rStream )
 	{

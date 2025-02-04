@@ -62,16 +62,6 @@ namespace Saturn {
 			case NodeExecutionType::MaterialMixColors:
 				return MaterialNodeLibrary::SpawnMixColors( nodeEditorBase );
 
-			// Default nodes
-			case NodeExecutionType::Add:
-				return DefaultNodeLibrary::SpawnAddFloats( nodeEditorBase );
-			case NodeExecutionType::Subtract:
-				return DefaultNodeLibrary::SpawnSubFloats( nodeEditorBase );
-			case NodeExecutionType::Multiply:
-				return DefaultNodeLibrary::SpawnMulFloats( nodeEditorBase );
-			case NodeExecutionType::Divide:
-				return DefaultNodeLibrary::SpawnDivFloats( nodeEditorBase );
-
 			case NodeExecutionType::SoundOutput:
 				return SoundNodeLibrary::SpawnOutputNode( nodeEditorBase );
 			case NodeExecutionType::SoundPlayer:
@@ -81,6 +71,12 @@ namespace Saturn {
 			case NodeExecutionType::SoundMixer:
 				return SoundNodeLibrary::SpawnMixerNode( nodeEditorBase );
 
+			case NodeExecutionType::Add:
+			case NodeExecutionType::Subtract:
+			case NodeExecutionType::Multiply:
+			case NodeExecutionType::Divide:
+			case NodeExecutionType::LessThan:
+			case NodeExecutionType::GreaterThan:
 			case NodeExecutionType::None:
 			default:
 				return nullptr;

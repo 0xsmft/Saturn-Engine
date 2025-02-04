@@ -63,26 +63,16 @@ namespace Saturn {
 		Subtract,
 		Multiply,
 		Divide,
+		LessThan,
+		GreaterThan,
+		LessThanOrEqu,
+		GreaterThanOrEqu,
 		MaterialMixColors,
 		SoundOutput,
 		SoundPlayer,
 		RandomSound,
 		SoundMixer,
 		None
-	};
-
-	struct PinSpecification
-	{
-		std::string Name;
-		PinType     Type = PinType::Object;
-	};
-
-	struct NodeSpecification
-	{
-		std::string                   Name;
-		std::vector<PinSpecification> Outputs;
-		std::vector<PinSpecification> Inputs;
-		ImColor						  Color;
 	};
 
 	class NodeEditor;
@@ -93,7 +83,7 @@ namespace Saturn {
 	{
 	public:
 		Node() = default;
-		Node( const NodeSpecification& rSpec );
+		Node( const std::string& rName );
 		virtual ~Node();
 
 		void Destroy();
@@ -105,14 +95,16 @@ namespace Saturn {
 		static void Deserialise( Ref<Node>& rObject, std::ifstream& rStream );
 
 		virtual NodeEditorCompilationStatus EvaluateNode( NodeEditorRuntime* evaluator ) { return NodeEditorCompilationStatus::Success; }
+
 		virtual void OnRenderOutput( Ref<Pin> pin ) {}
+		virtual void OnRenderInput( Ref<Pin> pin ) {}
 
 	protected:
 		virtual void OnSerialise( std::ofstream& rStream ) const {}
 		virtual void OnDeserialise( std::ifstream& rStream ) {}
 
 	public:
-		UUID ID = 0;
+		UUID ID;
 		std::string Name;
 		std::vector<Ref<Pin>> Inputs;
 		std::vector<Ref<Pin>> Outputs;
@@ -122,9 +114,6 @@ namespace Saturn {
 		ImVec2 Size;
 		ImVec2 Position;
 		bool CanBeDeleted = true;
-
-		// Any other extra data that should be stored in the node.
-		Buffer ExtraData;
 
 		std::string ActiveState;
 		std::string SavedState;

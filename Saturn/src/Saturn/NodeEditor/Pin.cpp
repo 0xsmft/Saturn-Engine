@@ -39,20 +39,33 @@
 
 namespace Saturn {
 
+	Pin::Pin( const std::string& rName, PinType type, PinKind kind )
+		: Name( rName ), Type( type ), Kind( kind ), Node( nullptr ), ID()
+	{
+	}
+
+	Pin::Pin( UUID id, const std::string& rName, PinType type, UUID nodeID )
+		: Node( nullptr ), Name( rName ), Type( type ), Kind( PinKind::Input )
+	{
+		ID = std::move( id );
+	}
+
 	PinIconType Pin::GetIconType() const
 	{
 		switch( Type )
 		{
 			case PinType::Flow:				  return PinIconType::Flow;
-			case PinType::Bool:				  return PinIconType::Circle;
-			case PinType::Int:				  return PinIconType::Circle;
-			case PinType::Float:			  return PinIconType::Circle;
-			case PinType::String:			  return PinIconType::Circle;
-			case PinType::Object:			  return PinIconType::Circle;
-			case PinType::Function:			  return PinIconType::Circle;
-			case PinType::Material_Sampler2D: return PinIconType::Circle;
-			case PinType::AssetID:        return PinIconType::Circle;
 			case PinType::Delegate:           return PinIconType::Square;
+			
+			case PinType::Bool:				  
+			case PinType::Int:				  
+			case PinType::Float:			  
+			case PinType::String:			  
+			case PinType::Object:			  
+			case PinType::Function:			  
+			case PinType::Material_Color:
+			case PinType::Material_TextureColor:
+			case PinType::AssetID:            return PinIconType::Circle;
 		}
 
 		return PinIconType::Circle;
@@ -63,21 +76,23 @@ namespace Saturn {
 		switch( Type )
 		{
 			default:
-			case PinType::Flow:     return ImColor( 255, 255, 255 );
-			case PinType::Bool:     return ImColor( 220, 48, 48 );
-			case PinType::Int:      return ImColor( 68, 201, 156 );
-			case PinType::Float:    return ImColor( 147, 226, 74 );
-			case PinType::String:   return ImColor( 124, 21, 153 );
-			case PinType::Object:   return ImColor( 51, 150, 215 );
-			case PinType::Function: return ImColor( 218, 0, 183 );
-			case PinType::Delegate: return ImColor( 255, 48, 48 );
-			case PinType::AssetID: return ImColor( 0, 0, 255 );
+			case PinType::Flow:                  return ImColor( 255, 255, 255 );
+			case PinType::Bool:                  return ImColor( 220, 48, 48 );
+			case PinType::Int:                   return ImColor( 68, 201, 156 );
+			case PinType::Float:                 return ImColor( 147, 226, 74 );
+			case PinType::String:                return ImColor( 124, 21, 153 );
+			case PinType::Object:                return ImColor( 51, 150, 215 );
+			case PinType::Function:              return ImColor( 218, 0, 183 );
+			case PinType::Delegate:              return ImColor( 255, 48, 48 );
+			case PinType::AssetID:               return ImColor( 0, 0, 255 );
+			case PinType::Material_Color:        return ImColor( 142, 61, 186 );
+			case PinType::Material_TextureColor: return ImColor( 142, 61, 186 );
 		}
 
 		return ImColor( 0, 0, 255 );
 	}
 
-	void Pin::DrawIcon( bool connected, int alpha )
+	void Pin::DrawIcon( bool connected, int alpha ) const
 	{
 		auto rendererIcon = GetIconType();
 		ImColor color = GetPinColor();
@@ -136,23 +151,9 @@ namespace Saturn {
 			ImGui::Spring( 0 );
 		}
 
-		if( Type == PinType::Float && !linked )
-		{
-			float value = ExtraData.Read<float>( pinIndex * sizeof( float ) );
-
-			ImGui::SetNextItemWidth( 25.0f );
-
-			ImGui::PushID( static_cast<int>( ID ) );
-
-			if( ImGui::DragFloat( "##floatinput", &value ) )
-			{
-				ExtraData.Write( &value, sizeof( float ), pinIndex * sizeof(float) );
-			}
-
-			ImGui::PopID();
-
-			ImGui::Spring( 0 );
-		}
+		// Hand off to children only if not linked
+		if( !linked )
+			OnRenderInput();
 
 		ImGui::PopStyleVar();
 
@@ -175,7 +176,7 @@ namespace Saturn {
 			ImGui::Spring( 0 );
 			ImGui::TextUnformatted( Name.c_str() );
 
-			Node->OnRenderOutput( this );
+			OnRenderOutput();
 		}
 
 		ImGui::Spring( 0 );
@@ -185,7 +186,7 @@ namespace Saturn {
 		ImGui::PopStyleVar();
 	}
 
-	bool Pin::CanCreateLink( const Ref<Pin>& rOther )
+	bool Pin::CanCreateLink( const Ref<Pin>& rOther ) const
 	{
 		if( !rOther || Kind == rOther->Kind || Type != rOther->Type || Node == rOther->Node )
 			return false;
@@ -204,7 +205,7 @@ namespace Saturn {
 		RawSerialisation::WriteObject( rObject->Type, rStream );
 		RawSerialisation::WriteObject( rObject->Kind, rStream );
 
-		RawSerialisation::WriteSaturnBuffer( rObject->ExtraData, rStream );
+		rObject->OnSerialise( rStream );
 	}
 
 	void Pin::Deserialise( Ref<Pin>& rObject, std::ifstream& rStream )
@@ -215,6 +216,118 @@ namespace Saturn {
 		RawSerialisation::ReadObject( rObject->Type, rStream );
 		RawSerialisation::ReadObject( rObject->Kind, rStream );
 
-		RawSerialisation::ReadSaturnBuffer( rObject->ExtraData, rStream );
+		rObject->OnDeserialise( rStream );
 	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// FLOAT PIN
+
+	FloatPin::FloatPin( UUID id, const std::string& rName, PinType type, UUID nodeID )
+		: Pin( id, rName, type, nodeID )
+	{
+	}
+
+	FloatPin::FloatPin( const std::string& rName, PinKind kind )
+		: Pin()
+	{
+		Name = rName; 
+		Kind = kind;
+		Type = PinType::Float;
+	}
+
+	void FloatPin::OnRenderInput()
+	{
+		ImGui::SetNextItemWidth( 25.0f );
+
+		ImGui::PushID( static_cast< int >( ID ) );
+
+		ImGui::DragFloat( "##input", &Data );
+
+		ImGui::PopID();
+
+		ImGui::Spring( 0 );
+	}
+
+	void FloatPin::OnSerialise( std::ofstream& rStream ) const
+	{
+		RawSerialisation::WriteObject( Data, rStream );
+	}
+
+	void FloatPin::OnDeserialise( std::ifstream& rStream )
+	{
+		RawSerialisation::ReadObject( Data, rStream );
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// INT PIN
+
+	IntPin::IntPin( UUID id, const std::string& rName, PinType type, UUID nodeID )
+		: Pin( id, rName, type, nodeID )
+	{
+	}
+
+	IntPin::IntPin( const std::string& rName, PinKind kind )
+	{
+
+	}
+
+	void IntPin::OnRenderInput()
+	{
+		ImGui::SetNextItemWidth( 25.0f );
+
+		ImGui::PushID( static_cast< int >( ID ) );
+
+		ImGui::DragInt( "##input", &Data );
+
+		ImGui::PopID();
+
+		ImGui::Spring( 0 );
+	}
+
+	void IntPin::OnSerialise( std::ofstream& rStream ) const
+	{
+		RawSerialisation::WriteObject( Data, rStream );
+	}
+
+	void IntPin::OnDeserialise( std::ifstream& rStream )
+	{
+		RawSerialisation::ReadObject( Data, rStream );
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// BOOL PIN
+
+	BoolPin::BoolPin( UUID id, const std::string& rName, PinType type, UUID nodeID )
+		: Pin( id, rName, type, nodeID )
+	{
+	}
+
+	BoolPin::BoolPin( const std::string& rName, PinKind kind )
+	{
+
+	}
+
+	void BoolPin::OnRenderInput()
+	{
+		ImGui::SetNextItemWidth( 25.0f );
+
+		ImGui::PushID( static_cast< int >( ID ) );
+
+		ImGui::Checkbox( "##input", &Data );
+
+		ImGui::PopID();
+
+		ImGui::Spring( 0 );
+	}
+
+	void BoolPin::OnSerialise( std::ofstream& rStream ) const
+	{
+		RawSerialisation::WriteObject( Data, rStream );
+	}
+
+	void BoolPin::OnDeserialise( std::ifstream& rStream )
+	{
+		RawSerialisation::ReadObject( Data, rStream );
+	}
+
 }

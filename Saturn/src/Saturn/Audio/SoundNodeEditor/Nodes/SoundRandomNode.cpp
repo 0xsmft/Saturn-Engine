@@ -42,10 +42,29 @@
 
 namespace Saturn {
 
-	SoundRandomNode::SoundRandomNode( const NodeSpecification& rSpec )
-		: Node( rSpec )
+	SoundRandomNode::SoundRandomNode()
+		: Node()
+	{
+		Name = "Random Sound";
+		CreateNode();
+	}
+
+	SoundRandomNode::SoundRandomNode( const std::string& rName )
+		: Node()
+	{
+		Name = rName;
+		CreateNode();
+	}
+
+	void SoundRandomNode::CreateNode()
 	{
 		ExecutionType = NodeExecutionType::RandomSound;
+		Color = ImColor( 173, 18, 128 );
+
+		Inputs.push_back( Ref<Pin>::Create( "Sound 1", PinType::Sound, PinKind::Input ) );
+		Inputs.push_back( Ref<Pin>::Create( "Sound 2", PinType::Sound, PinKind::Input ) );
+		
+		Outputs.push_back( Ref<Pin>::Create( "Result", PinType::Sound, PinKind::Output ) );
 	}
 
 	SoundRandomNode::~SoundRandomNode()
@@ -92,7 +111,7 @@ namespace Saturn {
 				case NodeExecutionType::SoundPlayer:
 				{
 					Ref<SoundPlayerNode> playerNode = neighorNode.As<SoundPlayerNode>();
-					PinToSoundMap[ index ] = playerNode->SoundAssetID;
+					PinToSoundMap[ index ] = playerNode->GetAssetID();
 				} break;
 
 				case NodeExecutionType::RandomSound:
@@ -112,4 +131,5 @@ namespace Saturn {
 
 		return NodeEditorCompilationStatus::Success;
 	}
+
 }

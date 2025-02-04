@@ -38,22 +38,7 @@ namespace Saturn {
 
 	Ref<SoundRandomNode> SoundNodeLibrary::SpawnRandomNode( Ref<NodeEditorBase> nodeEditor )
 	{
-		NodeSpecification nodeSpec;
-		nodeSpec.Color = ImColor( 173, 18, 128 );
-		nodeSpec.Name = "Random";
-
-		PinSpecification pinSpec;
-		pinSpec.Name = "Sound 1";
-		pinSpec.Type = PinType::Sound;
-
-		nodeSpec.Inputs.push_back( pinSpec );
-		pinSpec.Name = "Sound 2";
-		nodeSpec.Inputs.push_back( pinSpec );
-
-		pinSpec.Name = "Out Sound";
-		nodeSpec.Outputs.push_back( pinSpec );
-
-		Ref<SoundRandomNode> node = Ref<SoundRandomNode>::Create( nodeSpec );
+		Ref<SoundRandomNode> node = Ref<SoundRandomNode>::Create();
 		nodeEditor->AddNode( node );
 
 		return node;
@@ -61,22 +46,7 @@ namespace Saturn {
 
 	Ref<SoundMixerNode> SoundNodeLibrary::SpawnMixerNode( Ref<NodeEditorBase> nodeEditor )
 	{
-		NodeSpecification nodeSpec;
-		nodeSpec.Color = ImColor( 173, 18, 128 );
-		nodeSpec.Name = "Mixer";
-
-		PinSpecification pinSpec;
-		pinSpec.Name = "Sound 1";
-		pinSpec.Type = PinType::Sound;
-
-		nodeSpec.Inputs.push_back( pinSpec );
-		pinSpec.Name = "Sound 2";
-		nodeSpec.Inputs.push_back( pinSpec );
-
-		pinSpec.Name = "Out Sound";
-		nodeSpec.Outputs.push_back( pinSpec );
-
-		Ref<SoundMixerNode> node = Ref<SoundMixerNode>::Create( nodeSpec );
+		Ref<SoundMixerNode> node = Ref<SoundMixerNode>::Create();
 		nodeEditor->AddNode( node );
 
 		return node;
@@ -84,16 +54,7 @@ namespace Saturn {
 
 	Ref<SoundPlayerNode> SoundNodeLibrary::SpawnPlayerNode( Ref<NodeEditorBase> nodeEditor )
 	{
-		PinSpecification inputPin;
-		inputPin.Name = "Sound";
-		inputPin.Type = PinType::Sound;
-
-		NodeSpecification nodeSpec;
-		nodeSpec.Color = ImColor( 173, 18, 128 );
-		nodeSpec.Name = "Sound Player";
-		nodeSpec.Outputs.push_back( inputPin );
-
-		Ref<SoundPlayerNode> node = Ref<SoundPlayerNode>::Create( nodeSpec );
+		Ref<SoundPlayerNode> node = Ref<SoundPlayerNode>::Create();
 		nodeEditor->AddNode( node );
 
 		return node;
@@ -101,16 +62,7 @@ namespace Saturn {
 
 	Ref<SoundOutputNode> SoundNodeLibrary::SpawnOutputNode( Ref<NodeEditorBase> nodeEditor )
 	{
-		PinSpecification inputPin;
-		inputPin.Name = "Final Result";
-		inputPin.Type = PinType::Sound;
-
-		NodeSpecification nodeSpec;
-		nodeSpec.Color = ImColor( 255, 128, 128 );
-		nodeSpec.Name = "Sound Output";
-		nodeSpec.Inputs.push_back( inputPin );
-
-		Ref<SoundOutputNode> node = Ref<SoundOutputNode>::Create( nodeSpec );
+		Ref<SoundOutputNode> node = Ref<SoundOutputNode>::Create();
 		nodeEditor->AddNode( node );
 
 		return node;

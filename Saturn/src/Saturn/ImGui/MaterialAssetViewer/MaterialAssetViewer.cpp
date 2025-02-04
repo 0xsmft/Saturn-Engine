@@ -32,6 +32,8 @@
 #include "Saturn/NodeEditor/NodeEditorBase.h"
 #include "Saturn/NodeEditor/UI/NodeEditor.h"
 #include "Saturn/NodeEditor/Serialisation/NodeCache.h"
+#include "Saturn/NodeEditor/Math/MathNodes.h"
+#include "Saturn/NodeEditor/Math/MathNodeLibrary.h"
 
 #include "MaterialNodeEditorEvaluator.h"
 #include "MaterialViewerNodes.h"
@@ -126,28 +128,31 @@ namespace Saturn {
 				if( ImGui::MenuItem( "Texture Sampler2D" ) )
 					node = MaterialNodeLibrary::SpawnSampler2D( m_NodeEditor );
 
-				if( ImGui::MenuItem( "Get Asset" ) )
+				if( ImGui::MenuItem( "Get Texure Asset" ) )
 					node = MaterialNodeLibrary::SpawnGetAsset( m_NodeEditor );
 
-				if( ImGui::MenuItem( "Color Picker" ) )
+				if( ImGui::MenuItem( "Color RGB" ) )
 					node = MaterialNodeLibrary::SpawnColorPicker( m_NodeEditor );
 
 				if( ImGui::MenuItem( "Color Mixer" ) )
 					node = MaterialNodeLibrary::SpawnMixColors( m_NodeEditor );
 
+				if( ImGui::MenuItem( "Separate Color (RGB)" ) )
+					node = MaterialNodeLibrary::SpawnSeparateColorRGB( m_NodeEditor );
+
 				ImGui::SeparatorText( "MATH" );
 
 				if( ImGui::MenuItem( "Add Floats" ) )
-					node = DefaultNodeLibrary::SpawnAddFloats( m_NodeEditor );
+					node = MathNodeLibrary::SpawnMathAdd( m_NodeEditor );
 
 				if( ImGui::MenuItem( "Subtract Floats" ) )
-					node = DefaultNodeLibrary::SpawnSubFloats( m_NodeEditor );
+					node = MathNodeLibrary::SpawnMathSub( m_NodeEditor );
 
 				if( ImGui::MenuItem( "Multiply Floats" ) )
-					node = DefaultNodeLibrary::SpawnMulFloats( m_NodeEditor );
+					node = MathNodeLibrary::SpawnMathMul( m_NodeEditor );
 
 				if( ImGui::MenuItem( "Divide Floats" ) )
-					node = DefaultNodeLibrary::SpawnDivFloats( m_NodeEditor );
+					node = MathNodeLibrary::SpawnMathDiv( m_NodeEditor );
 
 				return node;
 			} );
@@ -156,8 +161,8 @@ namespace Saturn {
 	void MaterialAssetViewer::SetupNewNodeEditor()
 	{
 		// Add material output node.
-		Ref<MaterialOutputNode> OutputNode = MaterialNodeLibrary::SpawnOutputNode( m_NodeEditor );
-		OutputNode->CanBeDeleted = false;
+		Ref<MaterialOutputNode> OutputNode = Ref<MaterialOutputNode>::Create();
+		m_NodeEditor->AddNode( OutputNode );
 
 		m_OutputNodeID = OutputNode->ID;
 
@@ -201,10 +206,6 @@ namespace Saturn {
 			Sampler2DNode = MaterialNodeLibrary::SpawnSampler2D( m_NodeEditor );
 			AssetNode = MaterialNodeLibrary::SpawnGetAsset( m_NodeEditor );
 
-			AssetNode->ExtraData.Allocate( 1024 );
-			AssetNode->ExtraData.Zero_Memory();
-			AssetNode->ExtraData.Write( ( uint8_t* ) &TextureAssetID, sizeof( UUID ), 0 );
-
 			Ref<Node> OutputNode = m_NodeEditor->FindNode( m_OutputNodeID );
 
 			m_NodeEditor->CreateLink( AssetNode->Outputs[ 0 ], Sampler2DNode->Inputs[ 0 ] );
@@ -215,7 +216,7 @@ namespace Saturn {
 			Ref<MaterialColorPickerNode> colorPickerNode = MaterialNodeLibrary::SpawnColorPicker( m_NodeEditor );
 
 			auto& albedoColor = m_HostMaterialAsset->Get<glm::vec3>( "u_Materials.AlbedoColor" );
-			colorPickerNode->PickedColor = albedoColor;
+			colorPickerNode->SetColor( albedoColor );
 
 			Ref<Node> outputNode = m_NodeEditor->FindNode( m_OutputNodeID );
 			m_NodeEditor->CreateLink( colorPickerNode->Outputs[ slot ], outputNode->Inputs[ slot ] );

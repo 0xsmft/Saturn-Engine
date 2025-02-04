@@ -4,7 +4,7 @@
 *                                                                                           *
 * MIT License                                                                               *
 *                                                                                           *
-* Copyright (c) 2020 - 2025 BEAST                                                           *
+* Copyright (c) 2020 - 2024 BEAST                                                           *
 *                                                                                           *
 * Permission is hereby granted, free of charge, to any person obtaining a copy              *
 * of this software and associated documentation files (the "Software"), to deal             *
@@ -28,24 +28,40 @@
 
 #pragma once
 
-#include "Saturn/NodeEditor/Node.h"
+#include "Pin.h"
 #include "Saturn/Asset/Asset.h"
 
 namespace Saturn {
 
-	class SoundPlayerNode : public Node
+	class AssetIDPin : public Pin
 	{
 	public:
-		SoundPlayerNode();
-		SoundPlayerNode( const std::string& rName );
+		AssetIDPin() = default;
+		AssetIDPin( const std::string& rName, PinKind kind, AssetType assetType );
+		AssetIDPin( UUID ID, const std::string& rName, PinType type, UUID nodeid );
 
-		virtual ~SoundPlayerNode();
+		~AssetIDPin();
 
-		virtual NodeEditorCompilationStatus EvaluateNode( NodeEditorRuntime* evaluator ) override;
+		AssetID GetAssetID() const { return m_AssetID; }
+		void SetAssetID( AssetID ID ) { m_AssetID = ID; }
 
-		AssetID GetAssetID() const;
+		AssetType GetAssetType() const { return m_AssetType; }
+		void SetAssetType( AssetType type ) { m_AssetType = type; }
+
+	protected:
+		void OnRenderInput() override;
+		void OnRenderOutput() override;
+
+	protected:
+		void OnSerialise( std::ofstream& rStream ) const override;
+		void OnDeserialise( std::ifstream& rStream ) override;
 
 	private:
-		void CreateNode();
+		void Render();
+
+	private:
+		AssetID m_AssetID = 0;
+		AssetType m_AssetType = AssetType::Unknown;
 	};
+
 }

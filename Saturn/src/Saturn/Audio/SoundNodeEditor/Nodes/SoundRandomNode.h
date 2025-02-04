@@ -35,8 +35,8 @@ namespace Saturn {
 	class SoundRandomNode : public Node
 	{
 	public:
-		SoundRandomNode() = default;
-		SoundRandomNode( const NodeSpecification& rSpec );
+		SoundRandomNode();
+		SoundRandomNode( const std::string& rName );
 
 		virtual ~SoundRandomNode();
 
@@ -44,5 +44,8 @@ namespace Saturn {
 
 	public:
 		UUID ChosenSoundID = 0;
+
+	private:
+		void CreateNode();
 	};
 }

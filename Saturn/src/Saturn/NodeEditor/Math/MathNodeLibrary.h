@@ -4,7 +4,7 @@
 *                                                                                           *
 * MIT License                                                                               *
 *                                                                                           *
-* Copyright (c) 2020 - 2025 BEAST                                                           *
+* Copyright (c) 2020 - 2024 BEAST                                                           *
 *                                                                                           *
 * Permission is hereby granted, free of charge, to any person obtaining a copy              *
 * of this software and associated documentation files (the "Software"), to deal             *
@@ -28,24 +28,23 @@
 
 #pragma once
 
-#include "Saturn/NodeEditor/Node.h"
-#include "Saturn/Asset/Asset.h"
+#include "Saturn/NodeEditor/NodeEditorBase.h"
 
 namespace Saturn {
 
-	class SoundPlayerNode : public Node
+	class MathAddFloats;
+	class MathSubFloats;
+	class MathMulFloats;
+	class MathDivideFloats;
+
+	class MathNodeLibrary
 	{
 	public:
-		SoundPlayerNode();
-		SoundPlayerNode( const std::string& rName );
+		static NodeEditorType GetStaticType() { return NodeEditorType::Default; }
 
-		virtual ~SoundPlayerNode();
-
-		virtual NodeEditorCompilationStatus EvaluateNode( NodeEditorRuntime* evaluator ) override;
-
-		AssetID GetAssetID() const;
-
-	private:
-		void CreateNode();
+		static Ref<MathAddFloats>    SpawnMathAdd( Ref<NodeEditorBase> rNodeEditor );
+		static Ref<MathSubFloats>    SpawnMathSub( Ref<NodeEditorBase> rNodeEditor );
+		static Ref<MathMulFloats>    SpawnMathMul( Ref<NodeEditorBase> rNodeEditor );
+		static Ref<MathDivideFloats> SpawnMathDiv( Ref<NodeEditorBase> rNodeEditor );
 	};
 }

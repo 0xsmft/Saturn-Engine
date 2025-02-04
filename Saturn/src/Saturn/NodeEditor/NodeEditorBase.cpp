@@ -46,89 +46,6 @@
 namespace Saturn {
 
 	//////////////////////////////////////////////////////////////////////////
-	// DEFAULT NODE LIBRARY
-
-	Ref<Node> DefaultNodeLibrary::SpawnAddFloats( Ref<NodeEditorBase> nodeEditorBase )
-	{
-		PinSpecification pinSpec;
-		pinSpec.Type = PinType::Float;
-
-		NodeSpecification nodeSpec{};
-		nodeSpec.Inputs.push_back( pinSpec );
-		nodeSpec.Inputs.push_back( pinSpec );
-
-		nodeSpec.Outputs.push_back( pinSpec );
-
-		nodeSpec.Name = "Add Floats";
-		
-		Ref<Node> node = Ref<Node>::Create( nodeSpec );
-		node->ExecutionType = NodeExecutionType::Add;
-		nodeEditorBase->AddNode( node );
-
-		return node;
-	}
-
-	Ref<Node> DefaultNodeLibrary::SpawnSubFloats( Ref<NodeEditorBase> nodeEditorBase )
-	{
-		PinSpecification pinSpec;
-		pinSpec.Type = PinType::Float;
-
-		NodeSpecification nodeSpec{};
-		nodeSpec.Inputs.push_back( pinSpec );
-		nodeSpec.Inputs.push_back( pinSpec );
-
-		nodeSpec.Outputs.push_back( pinSpec );
-
-		nodeSpec.Name = "Subtract Floats";
-
-		Ref<Node> node = Ref<Node>::Create( nodeSpec );
-		node->ExecutionType = NodeExecutionType::Subtract;
-		nodeEditorBase->AddNode( node );
-
-		return node;
-	}
-
-	Ref<Node> DefaultNodeLibrary::SpawnMulFloats( Ref<NodeEditorBase> nodeEditorBase )
-	{
-		PinSpecification pinSpec;
-		pinSpec.Type = PinType::Float;
-
-		NodeSpecification nodeSpec{};
-		nodeSpec.Inputs.push_back( pinSpec );
-		nodeSpec.Inputs.push_back( pinSpec );
-
-		nodeSpec.Outputs.push_back( pinSpec );
-
-		nodeSpec.Name = "Multiply Floats";
-
-		Ref<Node> node = Ref<Node>::Create( nodeSpec );
-		node->ExecutionType = NodeExecutionType::Multiply;
-		nodeEditorBase->AddNode( node );
-
-		return node;
-	}
-
-	Ref<Node> DefaultNodeLibrary::SpawnDivFloats( Ref<NodeEditorBase> nodeEditorBase )
-	{
-		PinSpecification pinSpec;
-		pinSpec.Type = PinType::Float;
-
-		NodeSpecification nodeSpec{};
-		nodeSpec.Inputs.push_back( pinSpec );
-		nodeSpec.Inputs.push_back( pinSpec );
-
-		nodeSpec.Outputs.push_back( pinSpec );
-
-		nodeSpec.Name = "Divide Floats";
-
-		Ref<Node> node = Ref<Node>::Create( nodeSpec );
-		node->ExecutionType = NodeExecutionType::Divide;
-		nodeEditorBase->AddNode( node );
-
-		return node;
-	}
-
-	//////////////////////////////////////////////////////////////////////////
 	// NODE EDITOR BASE
 
 	Ref<Texture2D> NodeEditorBase::GetBlueprintBackground()
@@ -183,13 +100,11 @@ namespace Saturn {
 		for( auto& input : rNode->Inputs )
 		{
 			input->Node = rNode;
-			input->Kind = PinKind::Input;
 		}
 
 		for( auto& output : rNode->Outputs )
 		{
 			output->Node = rNode;
-			output->Kind = PinKind::Output;
 		}
 	}
 
@@ -414,7 +329,7 @@ namespace Saturn {
 
 	void NodeEditorBase::CreateLink( const Ref<Pin>& rStart, const Ref<Pin>& rEnd )
 	{
-		m_Links.push_back( Ref<Link>::Create( UUID(), rStart->ID, rEnd->ID ) );
+		m_Links.push_back( Ref<Link>::Create( UUID(), rStart->ID, rEnd->ID, rStart->GetPinColor() ) );
 	}
 
 	void NodeEditorBase::ShowFlow()

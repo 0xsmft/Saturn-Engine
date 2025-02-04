@@ -46,21 +46,13 @@ namespace Saturn {
 	enum class NodeEditorType
 	{
 		Unknown,
+		Default,
 		Material,
 		Sound
 	};
 
 	class NodeEditorRuntime;
 	class Texture2D;
-
-	class DefaultNodeLibrary 
-	{
-	public:
-		static Ref<Node> SpawnAddFloats( Ref<NodeEditorBase> nodeEditorBase );
-		static Ref<Node> SpawnSubFloats( Ref<NodeEditorBase> nodeEditorBase );
-		static Ref<Node> SpawnMulFloats( Ref<NodeEditorBase> nodeEditorBase );
-		static Ref<Node> SpawnDivFloats( Ref<NodeEditorBase> nodeEditorBase );
-	};
 
 	class NodeEditorBase : public RefTarget
 	{
@@ -133,7 +125,7 @@ namespace Saturn {
 
 		void AddNode( Ref<Node> node );
 
-		bool IsOpen() { return m_WindowOpen; }
+		bool IsOpen() const { return m_WindowOpen; }
 
 		void SaveSettings();
 

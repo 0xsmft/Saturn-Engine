@@ -4,7 +4,7 @@
 *                                                                                           *
 * MIT License                                                                               *
 *                                                                                           *
-* Copyright (c) 2020 - 2025 BEAST                                                           *
+* Copyright (c) 2020 - 2024 BEAST                                                           *
 *                                                                                           *
 * Permission is hereby granted, free of charge, to any person obtaining a copy              *
 * of this software and associated documentation files (the "Software"), to deal             *
@@ -26,26 +26,62 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "AssetIDPin.h"
 
 #include "Saturn/NodeEditor/Node.h"
-#include "Saturn/Asset/Asset.h"
+
+#include "Saturn/ImGui/ImGuiAuxiliary.h"
 
 namespace Saturn {
 
-	class SoundPlayerNode : public Node
+	AssetIDPin::AssetIDPin( const std::string& rName, PinKind kind, AssetType assetType )
+		: Pin( rName, PinType::AssetID, kind ), m_AssetType( assetType )
 	{
-	public:
-		SoundPlayerNode();
-		SoundPlayerNode( const std::string& rName );
+	}
 
-		virtual ~SoundPlayerNode();
+	AssetIDPin::AssetIDPin( UUID ID, const std::string& rName, PinType type, UUID nodeid )
+		: Pin( ID, rName, PinType::AssetID, nodeid )
+	{
+	}
 
-		virtual NodeEditorCompilationStatus EvaluateNode( NodeEditorRuntime* evaluator ) override;
+	AssetIDPin::~AssetIDPin()
+	{
+	}
 
-		AssetID GetAssetID() const;
+	void AssetIDPin::OnRenderInput()
+	{
+		Render();
+	}
 
-	private:
-		void CreateNode();
-	};
+	void AssetIDPin::OnRenderOutput()
+	{
+		Render();
+	}
+
+	void AssetIDPin::Render()
+	{
+		bool openAssetIDPopup = false;
+
+		std::string name = m_AssetID == 0 ? "Select Asset" : std::to_string( m_AssetID );
+		if( ImGui::Button( name.c_str() ) )
+		{
+			openAssetIDPopup = true;
+		}
+
+		ed::Suspend();
+		Auxiliary::DrawAssetFinder( m_AssetType, &openAssetIDPopup, m_AssetID );
+		ed::Resume();
+	}
+
+	void AssetIDPin::OnSerialise( std::ofstream& rStream ) const
+	{
+		RawSerialisation::WriteObject( m_AssetID, rStream );
+	}
+
+	void AssetIDPin::OnDeserialise( std::ifstream& rStream )
+	{
+		RawSerialisation::ReadObject( m_AssetID, rStream );
+	}
+
 }

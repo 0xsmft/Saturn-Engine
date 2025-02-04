@@ -35,10 +35,13 @@ namespace Saturn {
 	class SoundMixerNode : public Node
 	{
 	public:
-		SoundMixerNode() = default;
-		SoundMixerNode( const NodeSpecification& rSpec );
+		SoundMixerNode();
+		SoundMixerNode( const std::string& rName );
 		virtual ~SoundMixerNode();
 
 		virtual NodeEditorCompilationStatus EvaluateNode( NodeEditorRuntime* evaluator ) override;
+
+	private:
+		void CreateNode();
 	};
 }

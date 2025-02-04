@@ -76,7 +76,7 @@ namespace Saturn {
 
 		void SetWindowName( const std::string& rName ) { m_Name = rName; }
 		void MarkDirty() { m_Dirty = true; }
-		bool IsDirty() { return m_Dirty; }
+		bool IsDirty() const { return m_Dirty; }
 
 	private:
 		virtual void SerialiseData( std::ofstream& rStream ) override;

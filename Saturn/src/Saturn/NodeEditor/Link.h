@@ -42,8 +42,8 @@ namespace Saturn {
 	public:
 		Link() = default;
 
-		Link( UUID id, UUID startPinId, UUID endPinId ) :
-			ID( id ), StartPinID( startPinId ), EndPinID( endPinId ), Color( 255, 255, 255 )
+		Link( UUID id, UUID startPinId, UUID endPinId, ImColor color = ImColor( 255, 255, 255 ) ) :
+			ID( id ), StartPinID( startPinId ), EndPinID( endPinId ), Color( color )
 		{
 		}
 

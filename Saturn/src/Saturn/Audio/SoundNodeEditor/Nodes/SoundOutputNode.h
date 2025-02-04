@@ -35,11 +35,14 @@ namespace Saturn {
 	class SoundOutputNode : public Node
 	{
 	public:
-		SoundOutputNode() = default;
-		SoundOutputNode( const NodeSpecification& rSpec );
+		SoundOutputNode();
+		SoundOutputNode( const std::string& rName );
 
 		virtual ~SoundOutputNode();
 
 		virtual NodeEditorCompilationStatus EvaluateNode( NodeEditorRuntime* evaluator ) override;
+
+	private:
+		void CreateNode();
 	};
 }

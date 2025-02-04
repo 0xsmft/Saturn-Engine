@@ -4,7 +4,7 @@
 *                                                                                           *
 * MIT License                                                                               *
 *                                                                                           *
-* Copyright (c) 2020 - 2025 BEAST                                                           *
+* Copyright (c) 2020 - 2024 BEAST                                                           *
 *                                                                                           *
 * Permission is hereby granted, free of charge, to any person obtaining a copy              *
 * of this software and associated documentation files (the "Software"), to deal             *
@@ -26,26 +26,43 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "MathNodeLibrary.h"
 
-#include "Saturn/NodeEditor/Node.h"
-#include "Saturn/Asset/Asset.h"
+#include "MathNodes.h"
 
 namespace Saturn {
 
-	class SoundPlayerNode : public Node
+	Ref<MathAddFloats> MathNodeLibrary::SpawnMathAdd( Ref<NodeEditorBase> rNodeEditor )
 	{
-	public:
-		SoundPlayerNode();
-		SoundPlayerNode( const std::string& rName );
+		Ref<MathAddFloats> node = Ref<MathAddFloats>::Create();
+		rNodeEditor->AddNode( node );
 
-		virtual ~SoundPlayerNode();
+		return node;
+	}
 
-		virtual NodeEditorCompilationStatus EvaluateNode( NodeEditorRuntime* evaluator ) override;
+	Ref<MathSubFloats> MathNodeLibrary::SpawnMathSub( Ref<NodeEditorBase> rNodeEditor )
+	{
+		Ref<MathSubFloats> node = Ref<MathSubFloats>::Create( );
+		rNodeEditor->AddNode( node );
 
-		AssetID GetAssetID() const;
+		return node;
+	}
 
-	private:
-		void CreateNode();
-	};
+	Ref<MathMulFloats> MathNodeLibrary::SpawnMathMul( Ref<NodeEditorBase> rNodeEditor )
+	{
+		Ref<MathMulFloats> node = Ref<MathMulFloats>::Create();
+		rNodeEditor->AddNode( node );
+
+		return node;
+	}
+
+	Ref<MathDivideFloats> MathNodeLibrary::SpawnMathDiv( Ref<NodeEditorBase> rNodeEditor )
+	{
+		Ref<MathDivideFloats> node = Ref<MathDivideFloats>::Create();
+		rNodeEditor->AddNode( node );
+
+		return node;
+	}
+
 }

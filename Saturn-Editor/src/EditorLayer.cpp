@@ -1737,6 +1737,41 @@ namespace Saturn {
 	{
 		if( ImGui::Begin( "Class Metadata Debug", &m_ShowMetadataDebug ) )
 		{
+			ImGuiTableFlags TableFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_NoBordersInBody;
+			if( ImGui::BeginTable( "##DebugInfoClsM", 4, TableFlags ) )
+			{
+				ImGui::TableSetupColumn( "Name" );
+				ImGui::TableSetupColumn( "Parent class" );
+				ImGui::TableSetupColumn( "Generated Source path" );
+				ImGui::TableSetupColumn( "Header path" );
+
+				ImGui::TableHeadersRow();
+
+				{
+					ClassMetadataHandler::Get().EachTreeNode(
+						[&]( const auto& rMetadata )
+					{
+						ImGui::TableNextRow();
+
+						ImGui::TableSetColumnIndex( 0 );
+						ImGui::Text( "%s", rMetadata.Name.c_str() );
+
+						ImGui::TableSetColumnIndex( 1 );
+						ImGui::Text( "%s", rMetadata.ParentClassName.c_str() );
+
+						ImGui::TableSetColumnIndex( 2 );
+						ImGui::Text( "%s", rMetadata.GeneratedSourcePath.string().c_str() );
+
+						ImGui::TableSetColumnIndex( 3 );
+						ImGui::Text( "%s", rMetadata.HeaderPath.string().c_str() );
+					} );
+				}
+
+				ImGui::EndTable();
+			}
+
+			ImGui::Separator();
+
 			ClassMetadataHandler::Get().EachTreeNode( 
 				[&]( const auto& rMetadata ) 
 				{
@@ -2507,7 +2542,7 @@ namespace Saturn {
 					MessageBoxInfo msgBox
 					{
 						.Title = "Asset bundle successfully built",
-						.Text = "Asset Bundle successfully built. You may now compile the game in the \"Dist\" configuration.\nYou can do this in your IDE. Or go to Project->Distribute project in the title bar.",
+						.Text = "Asset Bundle successfully built. You may now compile the game in the \"Dist\" configuration.\nYou can do this in your IDE or go to Project->Distribute project in the title bar.",
 						.Buttons = MessageBoxButtons_Ok,
 						.Type = MessageBoxType::Information
 					};

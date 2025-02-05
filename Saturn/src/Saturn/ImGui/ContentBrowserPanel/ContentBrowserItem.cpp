@@ -181,7 +181,7 @@ namespace Saturn {
 		{
 			// Generate new thumbnail OR return existing one in cache.
 			// Returns default icon while generating.
-			m_Icon = ContentBrowserThumbnailCache::GetFor( m_Asset );
+			m_Icon = ContentBrowserThumbnailCache::GetDefault( CB_FILE_ICON );
 
 			// Fill background.
 			pDrawList->AddRectFilled( TopLeft, ThumbnailBottomRight, ImGui::GetColorU32( ImGuiCol_Button ), 5.0f, ImDrawFlags_RoundCornersTop );

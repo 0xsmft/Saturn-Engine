@@ -91,7 +91,9 @@ namespace Saturn {
 			case Saturn::PinType::Delegate:
 				return "Delegate";
 			case Saturn::PinType::Material_Color:
-				return "Material_Sampler2D";
+				return "Material_Color";
+			case Saturn::PinType::Material_TextureColor:
+				return "Material_TextureColor";
 			case Saturn::PinType::AssetID:
 				return "AssetHandle";
 			default:
@@ -117,8 +119,10 @@ namespace Saturn {
 			return PinType::Object;
 		else if( rString == "Function" )
 			return PinType::Function;
-		else if( rString == "Material_Sampler2D" )
+		else if( rString == "Material_Color" )
 			return PinType::Material_Color;
+		else if( rString == "Material_TextureColor" )
+			return PinType::Material_TextureColor;
 		else if( rString == "AssetHandle" )
 			return PinType::AssetID;
 		else

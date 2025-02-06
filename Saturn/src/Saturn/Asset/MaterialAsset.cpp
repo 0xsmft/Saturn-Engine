@@ -31,6 +31,8 @@
 
 #include "AssetManager.h"
 
+#include "Saturn/Core/Renderer/RenderThread.h"
+
 #include "Saturn/Vulkan/Renderer.h"
 #include "Saturn/Vulkan/Mesh.h"
 #include "Saturn/Serialisation/AssetSerialisers.h"
@@ -52,6 +54,10 @@ namespace Saturn {
 
 	MaterialAsset::~MaterialAsset()
 	{
+		Reset();
+
+		m_Material = nullptr;
+		m_PendingMaterialChange = nullptr;
 	}
 
 	void MaterialAsset::Default()
@@ -150,11 +156,10 @@ namespace Saturn {
 
 	void MaterialAsset::Reset()
 	{
+		// We don't want to default the texture because what if the user has only changed the normal map. And we'd be reseting all of the textures.
 		m_TextureCache.clear();
 		m_VPendingTextureChanges.clear();
 		m_PendingTextureChanges.clear();
-
-		// We don't want to default the texture because what if the user has only changed the normal map. And we'd be reseting all of the textures.
 	}
 
 	void MaterialAsset::Bind( const Ref< StaticMesh >& rMesh, Submesh& rSubmsh, Ref< Shader >& Shader, const VkWriteDescriptorSet& rStorageBufferWDS )
@@ -255,26 +260,35 @@ namespace Saturn {
 		m_Material->RN_Clean();
 	}
 
-	void MaterialAsset::ApplyChanges()
+	void MaterialAsset::RT_ApplyChanges()
 	{
-		// Load texture (auto assume we have not loaded them).
-		Ref<Texture2D> texture = nullptr;
-
-		std::unordered_map<uint32_t, std::string> IndexToTextureIndex =
+		RenderThread::Get().Queue( [ this ]()
 		{
-			{ 0, "u_AlbedoTexture" },
-			{ 1, "u_NormalTexture" },
-			{ 2, "u_MetallicTexture" },
-			{ 3, "u_RoughnessTexture" }
-		};
+			Default();
 
-		for( auto&& [index, path] : m_VPendingTextureChanges )
-		{
-			auto fullPath = Project::GetActiveProject()->FilepathAbs( path );
-			texture = Ref<Texture2D>::Create( fullPath, AddressingMode::Repeat, false );
+			// Load texture (auto assume we have not loaded them).
+			Ref<Texture2D> texture = nullptr;
 
-			m_Material->SetResource( IndexToTextureIndex[ index ], texture );
-		}
+			std::unordered_map<uint32_t, std::string> IndexToTextureIndex =
+			{
+				{ 0, "u_AlbedoTexture" },
+				{ 1, "u_NormalTexture" },
+				{ 2, "u_MetallicTexture" },
+				{ 3, "u_RoughnessTexture" }
+			};
+
+			for( auto&& [index, path] : m_VPendingTextureChanges )
+			{
+				auto fullPath = Project::GetActiveProject()->FilepathAbs( path );
+				texture = Ref<Texture2D>::Create( fullPath, AddressingMode::Repeat, false );
+
+				m_Material->SetResource( IndexToTextureIndex[ index ], texture );
+			}
+
+			UseNormalMap( m_Material->GetResource( "u_NormalTexture" ) != Renderer::Get().GetPinkTexture() );
+
+			m_ValuesChanged = false;
+		} );
 	}
 
 	void MaterialAsset::SetMaterial( const Ref<Material> material )
@@ -337,7 +351,6 @@ namespace Saturn {
 	{
 		m_VPendingTextureChanges[ 2 ] = rPath;
 	}
-
 
 	void MaterialAsset::SetRoughnessMap( Ref<Texture2D>& rTexture )
 	{
@@ -482,6 +495,7 @@ namespace Saturn {
 
 	MaterialRegistry::~MaterialRegistry()
 	{
+		m_Materials.clear();
 	}
 
 	void MaterialRegistry::Copy( const Ref<MaterialRegistry>& rSrc )
@@ -518,6 +532,11 @@ namespace Saturn {
 	{
 		m_HasOverridden[ index ] = false;
 		m_Materials[ index ] = material;
+	}
+
+	void MaterialRegistry::AddTargetMaterialAsset( AssetID materialID )
+	{
+		m_MaterialAssetsIDs.push_back( materialID );
 	}
 
 	void MaterialRegistry::ResetMaterial( uint32_t index )

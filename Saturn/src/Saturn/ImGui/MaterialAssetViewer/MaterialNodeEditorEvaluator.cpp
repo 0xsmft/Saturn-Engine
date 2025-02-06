@@ -84,7 +84,7 @@ namespace Saturn {
 		// If we only have one node (output node always exists) then we fail as we need something connected to the albedo pin.
 		if( order.size() <= 1 )
 		{
-			uiEditor->ThrowError( "No other nodes exist! (excluding Output node)" );
+			uiEditor->ThrowError( "No other nodes exist! (excluding Output node). This could also mean that no other nodes have been linked to the Output node" );
 			return NodeEditorCompilationStatus::Failed;
 		}
 
@@ -140,7 +140,7 @@ namespace Saturn {
 			currentNode->EvaluateNode( this );
 		}
 
-		m_Info.HostMaterial->ApplyChanges();
+		m_Info.HostMaterial->RT_ApplyChanges();
 
 #if !defined(SAT_DIST)
 		uiEditor->ShowFlow();

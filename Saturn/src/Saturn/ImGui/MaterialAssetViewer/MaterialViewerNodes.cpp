@@ -211,9 +211,9 @@ namespace Saturn {
 
 		// Inputs
 		Inputs.push_back( Ref<MaterialViewerColorPin>::Create( "Albedo Map",    PinKind::Input ) );
-		Inputs.push_back( Ref<MaterialViewerColorPin>::Create( "Normal Map",    PinKind::Input ) );
-		Inputs.push_back( Ref<MaterialViewerColorPin>::Create( "Metallic Map",  PinKind::Input ) );
-		Inputs.push_back( Ref<MaterialViewerColorPin>::Create( "Roughness Map", PinKind::Input ) );
+		Inputs.push_back( Ref<MaterialViewerColorPin>::Create( "Normal Map",    PinKind::Input, false, true ) );
+		Inputs.push_back( Ref<MaterialViewerColorPin>::Create( "Metallic Map",  PinKind::Input, false, true ) );
+		Inputs.push_back( Ref<MaterialViewerColorPin>::Create( "Roughness Map", PinKind::Input, false, true ) );
 
 		// Float inputs
 		Inputs.push_back( Ref<FloatPin>::Create( "Emission", PinKind::Input ) );
@@ -276,12 +276,16 @@ namespace Saturn {
 
 		if( TextureSlot != UINT64_MAX )
 		{
-			auto neighbors = materialEval->GetTargetEditor()->FindNeighbors( this );
+			AssetID textureID = Inputs[ 0 ].As<AssetIDPin>()->GetAssetID();
 
-			Ref<MaterialGetAssetNode> assetNode = materialEval->GetTargetEditor()->FindNode( neighbors[ 0 ] );
+			auto neighbors = materialEval->GetTargetEditor()->FindNeighbors( this );
+			if( neighbors.size() )
+			{
+				textureID = materialEval->GetTargetEditor()->FindNode( neighbors[ 0 ] ).As<MaterialGetAssetNode>()->GetAssetID();
+			}
 
 			MaterialEvaluatorValue tv;
-			tv.TextureAssetID = assetNode->GetAssetID();
+			tv.TextureAssetID = textureID;
 			tv.Slot = static_cast<uint32_t>( TextureSlot );
 
 			// Add to root node

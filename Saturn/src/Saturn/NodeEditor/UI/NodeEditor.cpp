@@ -69,17 +69,6 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// NODE EDITOR
 
-	struct SelectAssetInfo
-	{
-		ed::PinId   ID = 0;
-		ed::NodeId  NodeID = 0;
-		AssetID     Asset = 0;
-		std::string AssetName = "";
-		AssetType DesiredAssetType = AssetType::Unknown;
-	};
-
-	static SelectAssetInfo s_SelectAssetInfo;
-
 	// TODO: What if we do want to add this node editor the the asset viewers list?
 	NodeEditor::NodeEditor( AssetID ID )
 		: NodeEditorBase( ID )

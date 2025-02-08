@@ -37,6 +37,8 @@
 #include "Nodes/SoundOutputNode.h" 
 #include "Nodes/SoundPlayerNode.h"
 #include "Nodes/SoundMixerNode.h"
+#include "Nodes/SoundPitchNode.h"
+#include "Nodes/SoundRandomPitchNode.h"
 
 #include "SoundNodeLibrary.h"
 
@@ -109,7 +111,8 @@ namespace Saturn {
 		{
 			SetupNewNodeEditor();
 		}
-
+		
+		m_NodeEditor->NcSetCustomName( filename );
 		m_NodeEditor->SetWindowName( asset->Name );
 
 		m_NodeEditor->Open( true );
@@ -143,7 +146,7 @@ namespace Saturn {
 			{
 				Ref<Node> result = nullptr;
 
-				ImGui::SeparatorText( "SOUND" );
+				ImGui::SeparatorText( "Sound" );
 
 				if( ImGui::MenuItem( "Sound Player" ) )
 					result = SoundNodeLibrary::SpawnPlayerNode( m_NodeEditor );
@@ -153,6 +156,12 @@ namespace Saturn {
 
 				if( ImGui::MenuItem( "Mixer" ) )
 					result = SoundNodeLibrary::SpawnMixerNode( m_NodeEditor );
+
+				if( ImGui::MenuItem( "Sound Pitch" ) )
+					result = SoundNodeLibrary::SpawnPitchNode( m_NodeEditor );
+
+				if( ImGui::MenuItem( "Random Pitch" ) )
+					result = SoundNodeLibrary::SpawnRandPitch( m_NodeEditor );
 
 				return result;
 			} );
@@ -175,34 +184,6 @@ namespace Saturn {
 					ImGui::EndTooltip();
 				}
 			} );
-	}
-
-	void GraphSoundAssetViewer::ShowDirtyModal()
-	{
-		// Keep the window open until user selects an option.
-		m_NodeEditor->Open( true );
-		m_Open = true;
-
-		if( m_ShowDirtyModal )
-		{
-			ImGui::OpenPopup( "DirtyModal" );
-		}
-
-		if( ImGui::BeginPopupModal( "DirtyModal", &m_ShowDirtyModal ) )
-		{
-			ImGui::Text( "You have unsaved changes to this editor." );
-			ImGui::Text( "Would you like to save before closing?" );
-
-			ImGui::BeginHorizontal( "##DirtyModalOpt" );
-
-			ImGui::Button( "Save" );
-			ImGui::Button( "Close without saving" );
-			ImGui::Button( "Cancel" );
-
-			ImGui::EndHorizontal();
-
-			ImGui::EndPopup();
-		}
 	}
 
 	void GraphSoundAssetViewer::OnUpdate( Timestep ts )

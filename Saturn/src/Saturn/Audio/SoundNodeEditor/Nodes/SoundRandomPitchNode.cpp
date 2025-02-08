@@ -4,7 +4,7 @@
 *                                                                                           *
 * MIT License                                                                               *
 *                                                                                           *
-* Copyright (c) 2020 - 2025 BEAST                                                           *
+* Copyright (c) 2020 - 2024 BEAST                                                           *
 *                                                                                           *
 * Permission is hereby granted, free of charge, to any person obtaining a copy              *
 * of this software and associated documentation files (the "Software"), to deal             *
@@ -26,38 +26,88 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "SoundRandomPitchNode.h"
 
-#include "Saturn/ImGui/AssetViewer.h"
+#if !defined(SAT_DIST)
 #include "Saturn/NodeEditor/UI/NodeEditor.h"
+#else
+#include "Saturn/NodeEditor/NodeEditorBase.h"
+#endif
+
 #include "Saturn/Audio/Sound.h"
+
+#include "Saturn/Audio/SoundNodeEditor/SoundPin.h"
+#include "Saturn/Audio/SoundNodeEditor/SoundEditorEvaluator.h"
+
+#include "Saturn/Core/Random.h"
 
 namespace Saturn {
 
-	class SoundEditorEvaluator;
-
-	class GraphSoundAssetViewer : public AssetViewer
+	SoundRandomPitchNode::SoundRandomPitchNode()
+		: Node()
 	{
-	public:
-		GraphSoundAssetViewer( AssetID id );
-		~GraphSoundAssetViewer();
+		Name = "Random Pitch";
+		CreateNode();
+	}
 
-		virtual void OnImGuiRender() override;
-		virtual void OnUpdate( Timestep ts ) override;
-		virtual void OnEvent( RubyEvent& rEvent ) override;
+	SoundRandomPitchNode::SoundRandomPitchNode( const std::string& rName )
+		: Node( rName )
+	{
+		CreateNode();
+	}
 
-	private:
-		void AddSoundAsset();
-		void SetupNewNodeEditor();
-		void SetupNodeEditorCallbacks();
+	void SoundRandomPitchNode::CreateNode()
+	{
+		ExecutionType = NodeExecutionType::SoundRandomPitch;
+		Color = ImColor( 173, 18, 128 );
 
-	private:
-		Ref<Asset> m_Asset = nullptr;
-		Ref<NodeEditor> m_NodeEditor = nullptr;
-		Ref<SoundEditorEvaluator> m_Runtime = nullptr;
+		Inputs.push_back( Ref<SoundPin>::Create( "Sound", PinKind::Input ) );
 
-		bool m_ShowDirtyModal = false;
+		Inputs.push_back( Ref<FloatPin>::Create( "Min", PinKind::Input ) );
+		Inputs.push_back( Ref<FloatPin>::Create( "Max", PinKind::Input ) );
 
-		UUID m_OutputNodeID = 0;
-	};
+		Outputs.push_back( Ref<SoundPin>::Create( "Result", PinKind::Output ) );
+
+		Inputs[ 1 ].As<FloatPin>()->Data = 1.0f;
+		Inputs[ 2 ].As<FloatPin>()->Data = 2.0f;
+	}
+
+	SoundRandomPitchNode::~SoundRandomPitchNode()
+	{
+	}
+
+	NodeEditorCompilationStatus SoundRandomPitchNode::EvaluateNode( NodeEditorRuntime* evaluator )
+	{
+		SoundEditorEvaluator* pSoundEditorEvaluator = dynamic_cast< SoundEditorEvaluator* >( evaluator );
+
+		if( !pSoundEditorEvaluator )
+			return NodeEditorCompilationStatus::Failed;
+
+		// Get random number in range
+		float pitch = Random::RandomFloatInRange( Inputs[ 1 ].As<FloatPin>()->Data, Inputs[ 2 ].As<FloatPin>()->Data );
+
+#if !defined( SAT_DIST )
+		Ref<NodeEditor> uiEditor = pSoundEditorEvaluator->GetTargetNodeEditor().As<NodeEditor>();
+		uiEditor->PushInfoMessage( std::format( "Random pitch is: {0} (NC/{1})", pitch, (uint64_t)ID ) );
+#endif
+
+		// Set pitch
+		Ref<SoundPin> soundPin = Inputs[ 0 ].As<SoundPin>();
+		pSoundEditorEvaluator->AliveSounds[ soundPin->Data ]->SetPitchMultiplier( pitch );
+
+		// Write data (pass from our input pin)
+		Ref<SoundPin> Outpin = Outputs[ 0 ].As<SoundPin>();
+
+		Ref<Link> link = pSoundEditorEvaluator->GetTargetEditor()->FindLinkByPin( Outpin->ID );
+		if( link )
+		{
+			// Find input node
+			Ref<SoundPin> inputPin = pSoundEditorEvaluator->GetTargetEditor()->FindPin( link->EndPinID );
+			inputPin->Data = Outpin->Data = soundPin->Data;
+		}
+
+		return NodeEditorCompilationStatus::Success;
+	}
+
 }

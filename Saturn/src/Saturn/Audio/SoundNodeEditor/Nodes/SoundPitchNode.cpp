@@ -4,7 +4,7 @@
 *                                                                                           *
 * MIT License                                                                               *
 *                                                                                           *
-* Copyright (c) 2020 - 2025 BEAST                                                           *
+* Copyright (c) 2020 - 2024 BEAST                                                           *
 *                                                                                           *
 * Permission is hereby granted, free of charge, to any person obtaining a copy              *
 * of this software and associated documentation files (the "Software"), to deal             *
@@ -26,52 +26,77 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "SoundPitchNode.h"
 
-#include "Saturn/NodeEditor/Runtime/NodeEditorRuntime.h"
+#if !defined(SAT_DIST)
+#include "Saturn/NodeEditor/UI/NodeEditor.h"
+#else
+#include "Saturn/NodeEditor/NodeEditorBase.h"
+#endif
 
-#include "Saturn/Core/Base.h"
-#include "Saturn/Core/UUID.h"
+#include "Saturn/Audio/Sound.h"
 
-#include <stack>
+#include "Saturn/Audio/SoundNodeEditor/SoundPin.h"
+#include "Saturn/Audio/SoundNodeEditor/SoundEditorEvaluator.h"
 
 namespace Saturn {
 
-	class Sound;
-	class NodeEditorBase;
-	class Node;
-	class SoundGroup;
-
-	class SoundEditorEvaluator : public NodeEditorRuntime
+	SoundPitchNode::SoundPitchNode()
+		: Node()
 	{
-	public:
-		struct SoundEdEvaluatorInfo
+		Name = "Sound Pitch";
+		CreateNode();
+	}
+
+	SoundPitchNode::SoundPitchNode( const std::string& rName )
+		: Node( rName )
+	{
+		CreateNode();
+	}
+
+	void SoundPitchNode::CreateNode()
+	{
+		ExecutionType = NodeExecutionType::SoundPitch;
+		Color = ImColor( 173, 18, 128 );
+
+		Inputs.push_back( Ref<SoundPin>::Create( "Sound", PinKind::Input ) );
+		Inputs.push_back( Ref<FloatPin>::Create( "Pitch", PinKind::Input ) );
+
+		Outputs.push_back( Ref<SoundPin>::Create( "Result", PinKind::Output ) );
+
+		Inputs[ 1 ].As<FloatPin>()->Data = 1.0f;
+	}
+
+	SoundPitchNode::~SoundPitchNode()
+	{
+	}
+
+	NodeEditorCompilationStatus SoundPitchNode::EvaluateNode( NodeEditorRuntime* evaluator )
+	{
+		SoundEditorEvaluator* pSoundEditorEvaluator = dynamic_cast< SoundEditorEvaluator* >( evaluator );
+
+		if( !pSoundEditorEvaluator )
+			return NodeEditorCompilationStatus::Failed;
+
+		Ref<SoundPin> soundPin = Inputs[ 0 ].As<SoundPin>();
+
+		if( pSoundEditorEvaluator->GetTargetEditor()->IsLinked( soundPin->ID ) )
 		{
-			Ref<SoundGroup> SoundGroup;
-			UUID OutputNodeID;
-		};
+			pSoundEditorEvaluator->AliveSounds[ soundPin->Data ]->SetPitchMultiplier( Inputs[ 1 ].As<FloatPin>()->Data );
+		}
 
-	public:
-		SoundEditorEvaluator( const SoundEditorEvaluator& ) = delete;
+		Ref<SoundPin> Outpin = Outputs[ 0 ].As<SoundPin>();
 
-		SoundEditorEvaluator( const SoundEdEvaluatorInfo& rInfo );
-		~SoundEditorEvaluator();
+		Ref<Link> link = pSoundEditorEvaluator->GetTargetEditor()->FindLinkByPin( Outpin->ID );
+		if( link )
+		{
+			// Find input node
+			Ref<SoundPin> inputPin = pSoundEditorEvaluator->GetTargetEditor()->FindPin( link->EndPinID );
+			inputPin->Data = Outpin->Data = soundPin->Data;
+		}
 
-		void SetTargetNodeEditor( Ref<NodeEditorBase> nodeEditor );
-		Ref<NodeEditorBase>& GetTargetNodeEditor() { return m_NodeEditor; }
+		return NodeEditorCompilationStatus::Success;
+	}
 
-		[[nodiscard]] virtual NodeEditorCompilationStatus EvaluateEditor() override;
-
-		void AddNewSound( UUID id );
-
-	public:
-		// Sounds that are currently playing
-		std::vector<Ref<Sound>> AliveSounds;
-
-	private:
-		void DestroyAliveSounds();
-	
-	private:
-		SoundEdEvaluatorInfo m_Info;
-	};
 }

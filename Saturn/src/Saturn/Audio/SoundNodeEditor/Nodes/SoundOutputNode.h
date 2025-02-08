@@ -36,8 +36,6 @@ namespace Saturn {
 	{
 	public:
 		SoundOutputNode();
-		SoundOutputNode( const std::string& rName );
-
 		virtual ~SoundOutputNode();
 
 		virtual NodeEditorCompilationStatus EvaluateNode( NodeEditorRuntime* evaluator ) override;

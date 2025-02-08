@@ -126,6 +126,14 @@ namespace Saturn {
 		return compileResult;
 	}
 
+	void SoundEditorEvaluator::AddNewSound( UUID id )
+	{
+		Ref<Sound> snd = AudioSystem::Get().RequestNewSound( id, UUID(), false, nullptr );
+		snd->WaitUntilLoaded();
+
+		AliveSounds.push_back( snd );
+	}
+
 	void SoundEditorEvaluator::DestroyAliveSounds()
 	{
 		for( auto& rSound : AliveSounds )

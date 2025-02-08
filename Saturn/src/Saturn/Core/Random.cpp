@@ -52,7 +52,12 @@ namespace Saturn {
 	size_t Random::RandomElementInRange( size_t min, size_t max )
 	{
 		std::uniform_int_distribution<size_t> rangeDistribution( min, max );
+		return rangeDistribution( s_RandomEngine );
+	}
 
+	float Random::RandomFloatInRange( float min, float max )
+	{
+		std::uniform_real_distribution<float> rangeDistribution( min, max );
 		return rangeDistribution( s_RandomEngine );
 	}
 

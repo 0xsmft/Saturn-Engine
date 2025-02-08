@@ -36,5 +36,7 @@ namespace Saturn {
 		static bool RandomBool();
 		static uint64_t RandomUUID();
 		static size_t RandomElementInRange( uint64_t min, uint64_t max );
+
+		static float RandomFloatInRange( float min, float max );
 	};
 }

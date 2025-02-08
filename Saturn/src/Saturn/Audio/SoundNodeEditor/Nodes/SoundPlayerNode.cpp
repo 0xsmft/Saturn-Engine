@@ -32,6 +32,8 @@
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
 #include "Saturn/NodeEditor/AssetIDPin.h"
 
+#include "Saturn/Audio/SoundNodeEditor/SoundPin.h"
+
 #if !defined(SAT_DIST)
 #include "Saturn/Audio/SoundNodeEditor/SoundEditorEvaluator.h"
 #include "Saturn/NodeEditor/UI/NodeEditor.h"
@@ -68,14 +70,19 @@ namespace Saturn {
 
 	NodeEditorCompilationStatus SoundPlayerNode::EvaluateNode( NodeEditorRuntime* evaluator )
 	{
-#if !defined(SAT_DIST)
-		if( Outputs[ 0 ].As<AssetIDPin>()->GetAssetID() == 0 )
-		{
-			SoundEditorEvaluator* pSoundEvaluator = dynamic_cast<SoundEditorEvaluator*>( evaluator );
+		SoundEditorEvaluator* pSoundEditorEvaluator = dynamic_cast< SoundEditorEvaluator* >( evaluator );
 
-			if( pSoundEvaluator )
+		if( !pSoundEditorEvaluator )
+			return NodeEditorCompilationStatus::Failed;
+
+		Ref<AssetIDPin> outPin = Outputs[ 0 ].As<AssetIDPin>();
+
+#if !defined(SAT_DIST)
+		if( outPin->GetAssetID() == 0 )
+		{
+			if( pSoundEditorEvaluator )
 			{
-				auto uiEditor = pSoundEvaluator->GetTargetNodeEditor().As<NodeEditor>();
+				auto uiEditor = pSoundEditorEvaluator->GetTargetNodeEditor().As<NodeEditor>();
 
 				uiEditor->ThrowError( "No Asset was chosen in the sound player node!" );
 			}
@@ -83,6 +90,26 @@ namespace Saturn {
 			return NodeEditorCompilationStatus::Failed;
 		}
 #endif
+
+		// BUG: FindLinkByPin only returns the first link!
+		// Create the sound now, if possible
+		Ref<Link> link = pSoundEditorEvaluator->GetTargetEditor()->FindLinkByPin( outPin->ID );
+		if( link )
+		{
+			// Find input node
+			Ref<Pin> inputPin = pSoundEditorEvaluator->GetTargetEditor()->FindPin( link->EndPinID );
+
+			Ref<Node> node = inputPin->Node;
+
+			// We cannot create the sound because we don't know if we'll be picked
+			// So only if it's not linked to a random sound can we create it.
+			if( node->ExecutionType != NodeExecutionType::SoundRandomSound )
+			{
+				pSoundEditorEvaluator->AddNewSound( outPin->GetAssetID() );
+			
+				inputPin.As<SoundPin>()->Data = (int)pSoundEditorEvaluator->AliveSounds.size() - 1;
+			}
+		}
 
 		return NodeEditorCompilationStatus::Success;
 	}

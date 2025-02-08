@@ -33,6 +33,8 @@
 #include "Nodes/SoundPlayerNode.h"
 #include "Nodes/SoundRandomNode.h" 
 #include "Nodes/SoundMixerNode.h" 
+#include "Nodes/SoundPitchNode.h" 
+#include "Nodes/SoundRandomPitchNode.h"
 
 namespace Saturn {
 
@@ -55,6 +57,22 @@ namespace Saturn {
 	Ref<SoundPlayerNode> SoundNodeLibrary::SpawnPlayerNode( Ref<NodeEditorBase> nodeEditor )
 	{
 		Ref<SoundPlayerNode> node = Ref<SoundPlayerNode>::Create();
+		nodeEditor->AddNode( node );
+
+		return node;
+	}
+
+	Ref<SoundPitchNode> SoundNodeLibrary::SpawnPitchNode( Ref<NodeEditorBase> nodeEditor )
+	{
+		Ref<SoundPitchNode> node = Ref<SoundPitchNode>::Create();
+		nodeEditor->AddNode( node );
+
+		return node;
+	}
+
+	Ref<SoundRandomPitchNode> SoundNodeLibrary::SpawnRandPitch( Ref<NodeEditorBase> nodeEditor )
+	{
+		Ref<SoundRandomPitchNode> node = Ref<SoundRandomPitchNode>::Create();
 		nodeEditor->AddNode( node );
 
 		return node;

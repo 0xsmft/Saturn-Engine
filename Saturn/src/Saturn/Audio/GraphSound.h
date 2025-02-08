@@ -52,6 +52,11 @@ namespace Saturn {
 		void Load( uint32_t flags ) override;
 		void Reset() override;
 
+		void WaitUntilLoaded();
+
+		void SetVolumeMultiplier( float m );
+		void SetPitchMultiplier( float m );
+
 	private:
 		void Unload() override;
 

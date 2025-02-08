@@ -4,7 +4,7 @@
 *                                                                                           *
 * MIT License                                                                               *
 *                                                                                           *
-* Copyright (c) 2020 - 2025 BEAST                                                           *
+* Copyright (c) 2020 - 2024 BEAST                                                           *
 *                                                                                           *
 * Permission is hereby granted, free of charge, to any person obtaining a copy              *
 * of this software and associated documentation files (the "Software"), to deal             *
@@ -28,50 +28,16 @@
 
 #pragma once
 
-#include "Saturn/NodeEditor/Runtime/NodeEditorRuntime.h"
-
-#include "Saturn/Core/Base.h"
-#include "Saturn/Core/UUID.h"
-
-#include <stack>
+#include "Saturn/NodeEditor/Pin.h"
 
 namespace Saturn {
 
-	class Sound;
-	class NodeEditorBase;
-	class Node;
-	class SoundGroup;
-
-	class SoundEditorEvaluator : public NodeEditorRuntime
+	class SoundPin : public IntPin
 	{
 	public:
-		struct SoundEdEvaluatorInfo
-		{
-			Ref<SoundGroup> SoundGroup;
-			UUID OutputNodeID;
-		};
-
-	public:
-		SoundEditorEvaluator( const SoundEditorEvaluator& ) = delete;
-
-		SoundEditorEvaluator( const SoundEdEvaluatorInfo& rInfo );
-		~SoundEditorEvaluator();
-
-		void SetTargetNodeEditor( Ref<NodeEditorBase> nodeEditor );
-		Ref<NodeEditorBase>& GetTargetNodeEditor() { return m_NodeEditor; }
-
-		[[nodiscard]] virtual NodeEditorCompilationStatus EvaluateEditor() override;
-
-		void AddNewSound( UUID id );
-
-	public:
-		// Sounds that are currently playing
-		std::vector<Ref<Sound>> AliveSounds;
-
-	private:
-		void DestroyAliveSounds();
-	
-	private:
-		SoundEdEvaluatorInfo m_Info;
+		SoundPin() = default;
+		SoundPin( const std::string& rName, PinKind kind );
+		SoundPin( UUID id, const std::string& rName, PinType type, UUID nodeID );
 	};
+	
 }

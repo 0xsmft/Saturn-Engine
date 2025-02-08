@@ -30,7 +30,9 @@
 #include "SoundOutputNode.h"
 
 #include "Saturn/NodeEditor/NodeEditorBase.h"
+
 #include "Saturn/Audio/SoundNodeEditor/SoundEditorEvaluator.h"
+#include "Saturn/Audio/SoundNodeEditor/SoundPin.h"
 
 #include "Saturn/Audio/AudioSystem.h"
 #include "Saturn/Audio/Sound.h"
@@ -52,10 +54,10 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		CanBeDeleted = false;
 		Color = ImColor( 237, 202, 5, 255 );
-		//Color = ImColor( 255, 128, 128 );
+//		Color = ImColor( 255, 128, 128 );
 #endif
 
-		Inputs.push_back( Ref<Pin>::Create( "Final Result", PinType::Sound, PinKind::Input ) );
+		Inputs.push_back( Ref<SoundPin>::Create( "Final Result", PinKind::Input ) );
 	}
 
 	SoundOutputNode::~SoundOutputNode()
@@ -69,25 +71,10 @@ namespace Saturn {
 		if( !pSoundEditorEvaluator )
 			return NodeEditorCompilationStatus::Failed;
 
-		std::stack<UUID>& soundStack = pSoundEditorEvaluator->SoundStack;
-		
-		std::vector<UUID> soundVector;
-		std::vector<UUID> playerID;
-
-		while( !soundStack.empty() )
+		for( Ref<Sound>& rSound : pSoundEditorEvaluator->AliveSounds )
 		{
-			const UUID soundAssetID = soundStack.top();
-			soundStack.pop();
-
-			soundVector.push_back( soundAssetID );
-			playerID.push_back( UUID() );
+			rSound->Play();
 		}
-
-		AudioSystem::Get().RequestNewSounds( soundVector, playerID, 
-			[=]( Ref<Sound> sound ) 
-			{
-				pSoundEditorEvaluator->AliveSounds.push_back( sound );
-			} );
 
 		return NodeEditorCompilationStatus::Success;
 	}

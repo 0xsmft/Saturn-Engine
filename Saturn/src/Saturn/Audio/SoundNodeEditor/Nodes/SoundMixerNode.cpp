@@ -38,6 +38,7 @@
 #include "SoundPlayerNode.h"
 #include "SoundRandomNode.h"
 
+#include "Saturn/Audio/SoundNodeEditor/SoundPin.h"
 #include "Saturn/Audio/SoundNodeEditor/SoundEditorEvaluator.h"
 
 namespace Saturn {
@@ -61,10 +62,10 @@ namespace Saturn {
 		ExecutionType = NodeExecutionType::SoundMixer;
 		Color = ImColor( 173, 18, 128 );
 
-		Inputs.push_back( Ref<Pin>::Create( "Sound 1", PinType::Sound, PinKind::Input ) );
-		Inputs.push_back( Ref<Pin>::Create( "Sound 2", PinType::Sound, PinKind::Input ) );
+		Inputs.push_back( Ref<SoundPin>::Create( "Sound 1", PinKind::Input ) );
+		Inputs.push_back( Ref<SoundPin>::Create( "Sound 2", PinKind::Input ) );
 		
-		Outputs.push_back( Ref<Pin>::Create( "Result", PinType::Sound, PinKind::Output ) );
+		Outputs.push_back( Ref<SoundPin>::Create( "Result", PinKind::Output ) );
 	}
 
 	SoundMixerNode::~SoundMixerNode()
@@ -113,7 +114,7 @@ namespace Saturn {
 					PinToSoundMap[ index ] =  playerNode->GetAssetID();
 				} break;
 
-				case NodeExecutionType::RandomSound:
+				case NodeExecutionType::SoundRandomSound:
 				{
 					Ref<SoundRandomNode> randomNode = neighorNode.As<SoundRandomNode>();
 					PinToSoundMap[ index ] = randomNode->ChosenSoundID;
@@ -134,7 +135,18 @@ namespace Saturn {
 
 		for( const auto& [ index, assetID ] : PinToSoundMap )
 		{
-			pSoundEditorEvaluator->SoundStack.push( assetID );
+			pSoundEditorEvaluator->AddNewSound( assetID );
+		}
+
+		// Write our chosen index to the output pin
+		Ref<SoundPin> outPin = Outputs[ 0 ].As<SoundPin>();
+
+		Ref<Link> link = pSoundEditorEvaluator->GetTargetEditor()->FindLinkByPin( outPin->ID );
+		if( link )
+		{
+			// Find input node
+			Ref<SoundPin> inputPin = pSoundEditorEvaluator->GetTargetEditor()->FindPin( link->EndPinID ).As<SoundPin>();
+			inputPin->Data = outPin->Data = ( int ) pSoundEditorEvaluator->AliveSounds.size() - 1;
 		}
 
 		return NodeEditorCompilationStatus::Success;

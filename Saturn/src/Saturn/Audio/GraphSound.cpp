@@ -125,6 +125,30 @@ namespace Saturn {
 		}
 	}
 
+	void GraphSound::WaitUntilLoaded()
+	{
+		while( !m_Loaded )
+		{
+			std::this_thread::yield();
+		}
+	}
+
+	void GraphSound::SetVolumeMultiplier( float m )
+	{
+		for( auto& rSound : m_Runtime->AliveSounds )
+		{
+			rSound->SetVolumeMultiplier( m );
+		}
+	}
+
+	void GraphSound::SetPitchMultiplier( float m )
+	{
+		for( auto& rSound : m_Runtime->AliveSounds )
+		{
+			rSound->SetPitchMultiplier( m );
+		}
+	}
+
 	void GraphSound::Unload()
 	{
 		for( auto& rSound : m_Runtime->AliveSounds )

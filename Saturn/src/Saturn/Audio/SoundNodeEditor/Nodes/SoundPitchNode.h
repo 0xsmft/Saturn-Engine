@@ -28,50 +28,20 @@
 
 #pragma once
 
-#include "Saturn/NodeEditor/Runtime/NodeEditorRuntime.h"
-
-#include "Saturn/Core/Base.h"
-#include "Saturn/Core/UUID.h"
-
-#include <stack>
+#include "Saturn/NodeEditor/Node.h"
 
 namespace Saturn {
 
-	class Sound;
-	class NodeEditorBase;
-	class Node;
-	class SoundGroup;
-
-	class SoundEditorEvaluator : public NodeEditorRuntime
+	class SoundPitchNode : public Node
 	{
 	public:
-		struct SoundEdEvaluatorInfo
-		{
-			Ref<SoundGroup> SoundGroup;
-			UUID OutputNodeID;
-		};
+		SoundPitchNode();
+		SoundPitchNode( const std::string& rName );
+		virtual ~SoundPitchNode();
 
-	public:
-		SoundEditorEvaluator( const SoundEditorEvaluator& ) = delete;
-
-		SoundEditorEvaluator( const SoundEdEvaluatorInfo& rInfo );
-		~SoundEditorEvaluator();
-
-		void SetTargetNodeEditor( Ref<NodeEditorBase> nodeEditor );
-		Ref<NodeEditorBase>& GetTargetNodeEditor() { return m_NodeEditor; }
-
-		[[nodiscard]] virtual NodeEditorCompilationStatus EvaluateEditor() override;
-
-		void AddNewSound( UUID id );
-
-	public:
-		// Sounds that are currently playing
-		std::vector<Ref<Sound>> AliveSounds;
+		virtual NodeEditorCompilationStatus EvaluateNode( NodeEditorRuntime* evaluator ) override;
 
 	private:
-		void DestroyAliveSounds();
-	
-	private:
-		SoundEdEvaluatorInfo m_Info;
+		void CreateNode();
 	};
 }

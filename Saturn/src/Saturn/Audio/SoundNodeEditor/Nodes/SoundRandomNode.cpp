@@ -36,6 +36,8 @@
 #endif
 
 #include "SoundPlayerNode.h"
+
+#include "Saturn/Audio/SoundNodeEditor/SoundPin.h"
 #include "Saturn/Audio/SoundNodeEditor/SoundEditorEvaluator.h"
 
 #include "Saturn/Core/Random.h"
@@ -58,13 +60,13 @@ namespace Saturn {
 
 	void SoundRandomNode::CreateNode()
 	{
-		ExecutionType = NodeExecutionType::RandomSound;
+		ExecutionType = NodeExecutionType::SoundRandomSound;
 		Color = ImColor( 173, 18, 128 );
 
-		Inputs.push_back( Ref<Pin>::Create( "Sound 1", PinType::Sound, PinKind::Input ) );
-		Inputs.push_back( Ref<Pin>::Create( "Sound 2", PinType::Sound, PinKind::Input ) );
+		Inputs.push_back( Ref<SoundPin>::Create( "Sound 1", PinKind::Input ) );
+		Inputs.push_back( Ref<SoundPin>::Create( "Sound 2", PinKind::Input ) );
 		
-		Outputs.push_back( Ref<Pin>::Create( "Result", PinType::Sound, PinKind::Output ) );
+		Outputs.push_back( Ref<SoundPin>::Create( "Result", PinKind::Output ) );
 	}
 
 	SoundRandomNode::~SoundRandomNode()
@@ -114,7 +116,7 @@ namespace Saturn {
 					PinToSoundMap[ index ] = playerNode->GetAssetID();
 				} break;
 
-				case NodeExecutionType::RandomSound:
+				case NodeExecutionType::SoundRandomSound:
 				{
 					Ref<SoundRandomNode> randomNode = neighorNode.As<SoundRandomNode>();
 					PinToSoundMap[ index ] = randomNode->ChosenSoundID;
@@ -127,7 +129,19 @@ namespace Saturn {
 		size_t pin = Random::RandomElementInRange( 0, Inputs.size() - 1 );
 		ChosenSoundID = PinToSoundMap[ pin ];
 
-		pSoundEditorEvaluator->SoundStack.push( ChosenSoundID );
+		// Add chosen sound
+		pSoundEditorEvaluator->AddNewSound( ChosenSoundID );
+
+		// Write our chosen index to the output pin
+		Ref<SoundPin> outPin = Outputs[ 0 ].As<SoundPin>();
+
+		Ref<Link> link = pSoundEditorEvaluator->GetTargetEditor()->FindLinkByPin( outPin->ID );
+		if( link )
+		{
+			// Find input node
+			Ref<SoundPin> inputPin = pSoundEditorEvaluator->GetTargetEditor()->FindPin( link->EndPinID ).As<SoundPin>();
+			inputPin->Data = outPin->Data = ( int ) pSoundEditorEvaluator->AliveSounds.size() - 1;
+		}
 
 		return NodeEditorCompilationStatus::Success;
 	}

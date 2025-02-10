@@ -87,7 +87,7 @@ namespace Saturn {
 			m_Material->Set( rName, rValue );
 		}
 		
-		void Reset();
+		void RT_Reset();
 
 		// Updates Uniform buffers, texture and storage buffers.
 		void Bind( const Ref< StaticMesh >& rMesh, Submesh& rSubmsh, Ref< Shader >& Shader, const VkWriteDescriptorSet& rStorageBufferWDS = VkWriteDescriptorSet{} );

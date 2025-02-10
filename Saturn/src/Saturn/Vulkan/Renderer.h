@@ -87,8 +87,8 @@ namespace Saturn {
 		void BeginFrame();
 		void EndFrame();
 		
-		uint32_t GetImageIndex() { return m_ImageIndex; }
-		uint32_t GetCurrentFrame() { return m_FrameCount; }
+		uint32_t GetImageIndex()   const { return m_ImageIndex; }
+		uint32_t GetCurrentFrame() const { return m_FrameCount; }
 
 		std::pair< float, float > GetFrameTimings() { return std::make_pair( m_BeginFrameTime, m_EndFrameTime ); }
 		float GetQueuePresentTime() { return m_QueuePresentTime; }

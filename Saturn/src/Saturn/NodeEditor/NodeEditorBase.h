@@ -81,6 +81,8 @@ namespace Saturn {
 		Ref<Link> FindLinkByPin( UUID id );
 		Ref<Node> FindNodeByPin( UUID id );
 
+		std::vector<Ref<Link>> FindLinksByPin( UUID id );
+
 		void SetRuntime( Ref<NodeEditorRuntime> runtime );
 		NodeEditorCompilationStatus Evaluate();
 

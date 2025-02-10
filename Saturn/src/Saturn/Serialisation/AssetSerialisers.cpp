@@ -166,7 +166,6 @@ namespace Saturn {
 
 			materialAsset->SetMetallicMap( texture );
 		}
-		
 
 		auto val = materialData[ "Roughness" ].as<float>();
 		auto roughnessID = materialData[ "RoughnessTexture" ].as<uint64_t>( 0 );

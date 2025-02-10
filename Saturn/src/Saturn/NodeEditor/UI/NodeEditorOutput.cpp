@@ -114,6 +114,12 @@ namespace Saturn {
 			m_SelectedMessageID = rMessage.ID;
 		}
 
+		if( ImGui::BeginItemTooltip() )
+		{
+			ImGui::Text( rMessage.MessageText.c_str() );
+			ImGui::EndTooltip();
+		}
+
 		ImGui::PushStyleColor( ImGuiCol_Button, ImVec4( 0.0f, 0.0f, 0.0f, 0.0f ) );
 
 		if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Bin" ), { height, height } ) )

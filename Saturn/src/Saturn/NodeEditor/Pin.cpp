@@ -45,9 +45,8 @@ namespace Saturn {
 	}
 
 	Pin::Pin( UUID id, const std::string& rName, PinType type, UUID nodeID )
-		: Node( nullptr ), Name( rName ), Type( type ), Kind( PinKind::Input )
+		: Node( nullptr ), Name( rName ), Type( type ), Kind( PinKind::Input ), ID( id )
 	{
-		ID = std::move( id );
 	}
 
 	PinIconType Pin::GetIconType() const
@@ -151,9 +150,13 @@ namespace Saturn {
 			ImGui::Spring( 0 );
 		}
 
+#if !defined(SAT_DEBUG)
 		// Hand off to children only if not linked
 		if( !linked )
+#endif
 			OnRenderInput();
+
+		ImGui::Spring( 0 );
 
 		ImGui::PopStyleVar();
 
@@ -162,9 +165,6 @@ namespace Saturn {
 
 	void Pin::RenderOutput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked )
 	{
-		bool OpenAssetColorPicker = false;
-		bool OpenAssetIDPopup = false;
-
 		auto alpha = ImGui::GetStyle().Alpha;
 
 		ImGui::PushStyleVar( ImGuiStyleVar_Alpha, alpha );
@@ -228,11 +228,8 @@ namespace Saturn {
 	}
 
 	FloatPin::FloatPin( const std::string& rName, PinKind kind )
-		: Pin()
+		: Pin( rName, PinType::Float, kind )
 	{
-		Name = rName; 
-		Kind = kind;
-		Type = PinType::Float;
 	}
 
 	void FloatPin::OnRenderInput()
@@ -267,8 +264,8 @@ namespace Saturn {
 	}
 
 	IntPin::IntPin( const std::string& rName, PinKind kind )
+		: Pin( rName, PinType::Int, kind )
 	{
-
 	}
 
 	void IntPin::OnRenderInput()
@@ -303,8 +300,8 @@ namespace Saturn {
 	}
 
 	BoolPin::BoolPin( const std::string& rName, PinKind kind )
+		: Pin( rName, PinType::Bool, kind )
 	{
-
 	}
 
 	void BoolPin::OnRenderInput()

@@ -151,10 +151,10 @@ namespace Saturn {
 				if( ImGui::MenuItem( "Sound Player" ) )
 					result = SoundNodeLibrary::SpawnPlayerNode( m_NodeEditor );
 
-				if( ImGui::MenuItem( "Random" ) )
+				if( ImGui::MenuItem( "Random Sound" ) )
 					result = SoundNodeLibrary::SpawnRandomNode( m_NodeEditor );
 
-				if( ImGui::MenuItem( "Mixer" ) )
+				if( ImGui::MenuItem( "Sound Mixer" ) )
 					result = SoundNodeLibrary::SpawnMixerNode( m_NodeEditor );
 
 				if( ImGui::MenuItem( "Sound Pitch" ) )

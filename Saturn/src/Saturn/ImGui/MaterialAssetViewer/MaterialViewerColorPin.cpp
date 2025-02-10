@@ -45,6 +45,8 @@ namespace Saturn {
 	MaterialViewerColorPin::MaterialViewerColorPin( const std::string& rName, PinKind kind, bool readonly, bool accpetOnlyTextures )
 		: Pin( rName, accpetOnlyTextures ? PinType::Material_TextureColor : PinType::Material_Color, kind ), m_ReadOnly( readonly ), m_AccpetOnlyTextures( accpetOnlyTextures )
 	{
+		if( accpetOnlyTextures )
+			Type = PinType::Material_TextureColor;
 	}
 
 	MaterialViewerColorPin::~MaterialViewerColorPin()
@@ -86,27 +88,11 @@ namespace Saturn {
 		ImGui::SetNextWindowSize( { 350.0f, 0.0f } );
 		if( ImGui::BeginPopup( "AssetColorPicker", ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize ) )
 		{
-			bool PopupModified = false;
-
-			constexpr auto FALLBACK_COLOR = ImVec4( 114.0f / 255.0f, 144.0f / 255.0f, 154.0f / 255.0f, 200.0f / 255.0f );
-
 			ImVec4 color = ImVec4( Data.x, Data.y, Data.z, 255.0f );
-
-			if( color.x == 0 && color.y == 0 && color.z == 0 && color.w == 0 )
-				color = FALLBACK_COLOR;
 
 			if( ImGui::ColorPicker3( "Color Picker", ( float* ) &color ) )
 			{
 				Data = glm::vec3( color.x, color.y, color.z );
-
-				PopupModified = true;
-			}
-			else
-			{
-				if( PopupModified )
-				{
-					ImGui::CloseCurrentPopup();
-				}
 			}
 
 			ImGui::EndPopup();

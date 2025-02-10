@@ -201,7 +201,8 @@ namespace Saturn {
 
 		// Unsaved changes modal
 		// TODO: Center window with our main window
-		if( ImGui::BeginPopupModal( "Unsaved Changes", &m_ShowUnsavedChanges ) )
+		ImGui::SetNextWindowPos( ImGui::GetWindowViewport()->GetCenter(), ImGuiCond_FirstUseEver );
+		if( ImGui::BeginPopupModal( "Unsaved Changes", &m_ShowUnsavedChanges, ImGuiWindowFlags_NoSavedSettings ) )
 		{
 			ImGui::Text( "You have unsaved changes to this editor." );
 			ImGui::Text( "Would you like to save before closing?" );
@@ -211,7 +212,7 @@ namespace Saturn {
 			if( ImGui::Button( "Save" ) )  
 			{
 				SaveSettings();
-				NodeCacheEditor::WriteNodeEditorCache( this );
+				NodeCacheEditor::WriteNodeEditorCache( this, m_CustomNameNC );
 
 				m_Dirty = false;
 				m_WindowOpen = false;
@@ -380,10 +381,26 @@ namespace Saturn {
 						}
 						else // Valid type, accept (create new link)
 						{
-							showLabel( "+ Create Link", ImColor( 32, 45, 32, 180 ) );
+							bool shouldDelete = false;
+
+							if( IsLinked( EndPin->ID ) && !EndPin->AcceptMultipleLinks )
+							{
+								showLabel( "+ Replace old link with current link", ImColor( 32, 45, 32, 180 ) );
+								shouldDelete = true;
+							}
+							else
+							{
+								showLabel( "+ Create Link", ImColor( 32, 45, 32, 180 ) );
+							}
 							
 							if( ed::AcceptNewItem( ImColor( 128, 255, 128 ), 4.0f ) )
 							{
+								if( shouldDelete ) 
+								{
+									ed::BreakLinks( EndPinId );
+									DeleteLink( FindLinkByPin( EndPin->ID )->ID );
+								}
+								
 								UUID start = UUID( StartPinId.Get() );
 								UUID end = UUID( EndPinId.Get() );
 
@@ -475,6 +492,31 @@ namespace Saturn {
 		ImGui::SetCursorScreenPos( cursorTopLeft );
 
 		ed::Suspend();
+
+#if defined(SAT_DEBUG)
+		ed::NodeId hoveredNode = ed::GetHoveredNode();
+		if( hoveredNode.Get() != 0 )
+		{
+			UUID id( hoveredNode.Get() );
+			Ref<Node> node = FindNode( id );
+
+			if( node )
+			{
+				if( ImGui::BeginTooltip() )
+				{
+					ImGui::Text( "NC/%llu", node->ID );
+					ImGui::Text( "%s", node->Name.c_str() );
+
+					ImGui::Separator();
+
+					ImGui::Text( "Size X/%f Y/%f", node->Size.x, node->Size.y );
+					ImGui::Text( "Pos X/%f Y/%f", node->Position.x, node->Position.y );
+
+					ImGui::EndTooltip();
+				}
+			}
+		}
+#endif
 
 		if( ed::ShowBackgroundContextMenu() )
 		{

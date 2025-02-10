@@ -96,7 +96,7 @@ namespace Saturn {
 		}
 #endif
 
-		m_Info.HostMaterial->Reset();
+		m_Info.HostMaterial->RT_Reset();
 
 		while( !order.empty() )
 		{

@@ -42,9 +42,6 @@ namespace Saturn {
 
 		virtual NodeEditorCompilationStatus EvaluateNode( NodeEditorRuntime* evaluator ) override;
 
-	public:
-		UUID ChosenSoundID = 0;
-
 	private:
 		void CreateNode();
 	};

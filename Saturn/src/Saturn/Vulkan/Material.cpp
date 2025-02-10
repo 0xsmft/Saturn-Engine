@@ -93,9 +93,6 @@ namespace Saturn {
 			if( !texture )
 				continue;
 
-			if( texture->IsRendererTexture() )
-				continue;
-			
 			texture = nullptr;
 		}
 	}

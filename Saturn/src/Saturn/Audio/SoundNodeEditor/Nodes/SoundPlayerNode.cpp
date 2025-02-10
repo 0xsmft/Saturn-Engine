@@ -49,9 +49,8 @@ namespace Saturn {
 	}
 
 	SoundPlayerNode::SoundPlayerNode( const std::string& rName )
-		: Node()
+		: Node( rName )
 	{
-		Name = rName;
 		CreateNode();
 	}
 
@@ -80,12 +79,8 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		if( outPin->GetAssetID() == 0 )
 		{
-			if( pSoundEditorEvaluator )
-			{
-				auto uiEditor = pSoundEditorEvaluator->GetTargetNodeEditor().As<NodeEditor>();
-
-				uiEditor->ThrowError( "No Asset was chosen in the sound player node!" );
-			}
+			auto uiEditor = pSoundEditorEvaluator->GetTargetNodeEditor().As<NodeEditor>();
+			uiEditor->ThrowError( "No Asset was chosen in the sound player node!" );
 
 			return NodeEditorCompilationStatus::Failed;
 		}
@@ -103,10 +98,9 @@ namespace Saturn {
 
 			// We cannot create the sound because we don't know if we'll be picked
 			// So only if it's not linked to a random sound can we create it.
-			if( node->ExecutionType != NodeExecutionType::SoundRandomSound )
+			//if( node->ExecutionType != NodeExecutionType::SoundRandomSound )
 			{
 				pSoundEditorEvaluator->AddNewSound( outPin->GetAssetID() );
-			
 				inputPin.As<SoundPin>()->Data = (int)pSoundEditorEvaluator->AliveSounds.size() - 1;
 			}
 		}

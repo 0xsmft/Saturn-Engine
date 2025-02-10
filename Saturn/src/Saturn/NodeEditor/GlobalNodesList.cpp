@@ -35,6 +35,8 @@
 #include "Saturn/Audio/SoundNodeEditor/Nodes/SoundPlayerNode.h"
 #include "Saturn/Audio/SoundNodeEditor/Nodes/SoundRandomNode.h"
 #include "Saturn/Audio/SoundNodeEditor/Nodes/SoundMixerNode.h"
+#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundRandomPitchNode.h"
+#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundPitchNode.h"
 
 #include "Saturn/Audio/SoundNodeEditor/SoundNodeLibrary.h"
 
@@ -66,8 +68,12 @@ namespace Saturn {
 				return SoundNodeLibrary::SpawnOutputNode( nodeEditorBase );
 			case NodeExecutionType::SoundPlayer:
 				return SoundNodeLibrary::SpawnPlayerNode( nodeEditorBase );
-			case NodeExecutionType::RandomSound:
+			case NodeExecutionType::SoundRandomSound:
 				return SoundNodeLibrary::SpawnRandomNode( nodeEditorBase );
+			case NodeExecutionType::SoundRandomPitch:
+				return SoundNodeLibrary::SpawnRandPitch( nodeEditorBase );
+			case NodeExecutionType::SoundPitch:
+				return SoundNodeLibrary::SpawnPitchNode( nodeEditorBase );
 			case NodeExecutionType::SoundMixer:
 				return SoundNodeLibrary::SpawnMixerNode( nodeEditorBase );
 

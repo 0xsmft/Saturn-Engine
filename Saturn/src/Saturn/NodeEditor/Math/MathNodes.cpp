@@ -281,6 +281,8 @@ namespace Saturn {
 
 		for( size_t i = 0; i < Inputs.size(); i++ )
 		{
+			if( i == maxIndex ) continue;
+
 			Ref<FloatPin> pin = Inputs[ i ].As<FloatPin>();
 			Result /= pin->Data;
 		}

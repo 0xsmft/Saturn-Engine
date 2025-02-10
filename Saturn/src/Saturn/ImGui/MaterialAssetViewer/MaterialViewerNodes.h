@@ -106,18 +106,33 @@ namespace Saturn {
 		NodeEditorCompilationStatus EvaluateNode( NodeEditorRuntime* evaluator ) override;
 
 		AssetID GetAssetID() const;
+		void SetAssetID( AssetID id );
 
 	private:
 		void CreateNode();
 	};
 
-	class MaterialSeparateColorRGB : public Node
+	class MaterialSeparateColorRGBNode : public Node
 	{
 	public:
-		MaterialSeparateColorRGB();
-		MaterialSeparateColorRGB( const std::string& rName );
+		MaterialSeparateColorRGBNode();
+		MaterialSeparateColorRGBNode( const std::string& rName );
 
-		virtual ~MaterialSeparateColorRGB();
+		virtual ~MaterialSeparateColorRGBNode();
+
+		NodeEditorCompilationStatus EvaluateNode( NodeEditorRuntime* evaluator ) override;
+
+	private:
+		void CreateNode();
+	};
+
+	class MaterialColorMixerNode : public Node
+	{
+	public:
+		MaterialColorMixerNode();
+		MaterialColorMixerNode( const std::string& rName );
+
+		virtual ~MaterialColorMixerNode();
 
 		NodeEditorCompilationStatus EvaluateNode( NodeEditorRuntime* evaluator ) override;
 
@@ -135,8 +150,8 @@ namespace Saturn {
 		static Ref<MaterialGetAssetNode> SpawnGetAsset( Ref<NodeEditorBase> nodeEditor );
 		static Ref<MaterialColorPickerNode> SpawnColorPicker( Ref<NodeEditorBase> nodeEditor );
 		static Ref<MaterialSampler2DNode> SpawnSampler2D( Ref<NodeEditorBase> nodeEditor );
-		static Ref<MaterialSeparateColorRGB> SpawnSeparateColorRGB( Ref<NodeEditorBase> nodeEditor );
+		static Ref<MaterialSeparateColorRGBNode> SpawnSeparateColorRGB( Ref<NodeEditorBase> nodeEditor );
 
-		static Ref<Node> SpawnMixColors( Ref<NodeEditorBase> nodeEditor );
+		static Ref<MaterialColorMixerNode> SpawnMixColors( Ref<NodeEditorBase> nodeEditor );
 	};
 }

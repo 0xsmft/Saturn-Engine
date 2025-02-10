@@ -96,6 +96,8 @@ namespace Saturn {
 			inputPin->Data = Outpin->Data = soundPin->Data;
 		}
 
+		pSoundEditorEvaluator->RegisterSound( Outpin->Data );
+
 		return NodeEditorCompilationStatus::Success;
 	}
 

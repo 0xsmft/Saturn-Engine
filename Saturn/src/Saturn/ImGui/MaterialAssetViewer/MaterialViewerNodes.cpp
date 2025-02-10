@@ -79,45 +79,20 @@ namespace Saturn {
 		return node;
 	}
 
-	Ref<MaterialSeparateColorRGB> MaterialNodeLibrary::SpawnSeparateColorRGB( Ref<NodeEditorBase> nodeEditor )
+	Ref<MaterialSeparateColorRGBNode> MaterialNodeLibrary::SpawnSeparateColorRGB( Ref<NodeEditorBase> nodeEditor )
 	{
-		Ref<MaterialSeparateColorRGB> node = Ref<MaterialSeparateColorRGB>::Create();
+		Ref<MaterialSeparateColorRGBNode> node = Ref<MaterialSeparateColorRGBNode>::Create();
 		nodeEditor->AddNode( node );
 
 		return node;
 	}
 
-	Ref<Node> MaterialNodeLibrary::SpawnMixColors( Ref<NodeEditorBase> nodeEditor )
+	Ref<MaterialColorMixerNode> MaterialNodeLibrary::SpawnMixColors( Ref<NodeEditorBase> nodeEditor )
 	{
-		/*
-		PinSpecification output;
-		output.Name = "Out";
-		output.Type = PinType::Material_Sampler2D;
-
-		PinSpecification input;
-		input.Name = "Color 1";
-		input.Type = PinType::Material_Sampler2D;
-
-		NodeSpecification nodeSpec;
-		nodeSpec.Name = "Mix Colors";
-		nodeSpec.Outputs.push_back( output );
-		nodeSpec.Inputs.push_back( input );
-
-		input.Name = "Color 2";
-		nodeSpec.Inputs.push_back( input );
-
-		input.Name = "Power";
-		input.Type = PinType::Float;
-		nodeSpec.Inputs.push_back( input );
-
-		Ref<Node> node = Ref<Node>::Create( nodeSpec );
-		node->ExecutionType = NodeExecutionType::MaterialMixColors;
+		Ref<MaterialColorMixerNode> node = Ref<MaterialColorMixerNode>::Create();
 		nodeEditor->AddNode( node );
 
 		return node;
-		*/
-
-		return nullptr;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -259,8 +234,8 @@ namespace Saturn {
 		ExecutionType = NodeExecutionType::Sampler2D;
 		Color = ImColor( 0, 255, 0 );
 
-		Inputs.push_back( Ref<AssetIDPin>::Create( "Asset",             PinKind::Output, AssetType::Texture ) );
-		Outputs.push_back( Ref<MaterialViewerColorPin>::Create( "RGBA", PinKind::Input, true ) );
+		Inputs.push_back( Ref<AssetIDPin>::Create( "Asset",             PinKind::Input, AssetType::Texture ) );
+		Outputs.push_back( Ref<MaterialViewerColorPin>::Create( "RGBA", PinKind::Output, true ) );
 	}
 
 	MaterialSampler2DNode::~MaterialSampler2DNode()
@@ -342,20 +317,8 @@ namespace Saturn {
 			if( pin )
 			{
 				Ref<MaterialViewerColorPin> inputColPin = pin.As<MaterialViewerColorPin>();
-
 				inputColPin->Data = colorPin->Data;
 			}
-		}
-
-		// If we are linked to the output node create a texture value.
-		if( TextureSlot != UINT64_MAX )
-		{
-			MaterialEvaluatorValue tv;
-			tv.Slot = static_cast<uint32_t>( TextureSlot );
-			tv.Color = colorPin->Data;
-
-			// Add to root node
-			materialEval->AddToValueStack( tv );
 		}
 
 		return NodeEditorCompilationStatus::Success;
@@ -420,24 +383,29 @@ namespace Saturn {
 		return Outputs[ 0 ].As<AssetIDPin>()->GetAssetID();
 	}
 
+	void MaterialGetAssetNode::SetAssetID( AssetID id )
+	{
+		Outputs[ 0 ].As<AssetIDPin>()->SetAssetID( id );
+	}
+
 	//////////////////////////////////////////////////////////////////////////
 	// MATERIAL SEPARATE COLOR RGB
 
-	MaterialSeparateColorRGB::MaterialSeparateColorRGB()
+	MaterialSeparateColorRGBNode::MaterialSeparateColorRGBNode()
 		: Node()
 	{
 		Name = "Separate Color RGB";
 		CreateNode();
 	}
 
-	MaterialSeparateColorRGB::MaterialSeparateColorRGB( const std::string& rName )
+	MaterialSeparateColorRGBNode::MaterialSeparateColorRGBNode( const std::string& rName )
 		: Node()
 	{
 		Name = rName;
 		CreateNode();
 	}
 
-	void MaterialSeparateColorRGB::CreateNode()
+	void MaterialSeparateColorRGBNode::CreateNode()
 	{
 		Inputs.push_back( Ref<MaterialViewerColorPin>::Create( "Color", PinKind::Input ) );
 
@@ -446,11 +414,11 @@ namespace Saturn {
 		Outputs.push_back( Ref<MaterialViewerColorPin>::Create( "B", PinKind::Output, true ) );
 	}
 
-	MaterialSeparateColorRGB::~MaterialSeparateColorRGB()
+	MaterialSeparateColorRGBNode::~MaterialSeparateColorRGBNode()
 	{
 	}
 
-	NodeEditorCompilationStatus MaterialSeparateColorRGB::EvaluateNode( NodeEditorRuntime* evaluator )
+	NodeEditorCompilationStatus MaterialSeparateColorRGBNode::EvaluateNode( NodeEditorRuntime* evaluator )
 	{
 		MaterialNodeEditorEvaluator* materialEval = dynamic_cast< MaterialNodeEditorEvaluator* >( evaluator );
 
@@ -465,6 +433,71 @@ namespace Saturn {
 			Outputs[ 0 ].As<MaterialViewerColorPin>()->Data.x = inputColorPin->Data.x;
 			Outputs[ 1 ].As<MaterialViewerColorPin>()->Data.y = inputColorPin->Data.y;
 			Outputs[ 2 ].As<MaterialViewerColorPin>()->Data.z = inputColorPin->Data.z;
+		}
+
+		return NodeEditorCompilationStatus::Success;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// MATERIAL COLOR MIXER NODE
+
+	MaterialColorMixerNode::MaterialColorMixerNode()
+		: Node()
+	{
+		Name = "Color Mixer";
+		CreateNode();
+	}
+
+	MaterialColorMixerNode::MaterialColorMixerNode( const std::string& rName )
+		: Node( rName )
+	{
+		CreateNode();
+	}
+
+	void MaterialColorMixerNode::CreateNode()
+	{
+		ExecutionType = NodeExecutionType::MaterialMixColors;
+		Color = ImColor( 252, 186, 3 );
+
+		Inputs.push_back( Ref<MaterialViewerColorPin>::Create( "Color 1", PinKind::Input ) );
+		Inputs.push_back( Ref<MaterialViewerColorPin>::Create( "Color 2", PinKind::Input ) );
+
+		Inputs.push_back( Ref<FloatPin>::Create( "Power", PinKind::Input ) );
+
+		Outputs.push_back( Ref<MaterialViewerColorPin>::Create( "Result", PinKind::Output, true ) );
+	}
+
+	MaterialColorMixerNode::~MaterialColorMixerNode()
+	{
+	}
+
+	NodeEditorCompilationStatus MaterialColorMixerNode::EvaluateNode( NodeEditorRuntime* evaluator )
+	{
+		MaterialNodeEditorEvaluator* materialEval = dynamic_cast< MaterialNodeEditorEvaluator* >( evaluator );
+
+		if( !materialEval )
+			return NodeEditorCompilationStatus::Failed;
+
+		Ref<MaterialViewerColorPin> col1 = Inputs[ 0 ].As<MaterialViewerColorPin>();
+		Ref<MaterialViewerColorPin> col2 = Inputs[ 1 ].As<MaterialViewerColorPin>();
+
+		Ref<FloatPin> power = Inputs[ 2 ].As<FloatPin>();
+
+		glm::vec3 result = glm::mix( col1->Data, col2->Data, power->Data );
+
+		Outputs[ 0 ].As<MaterialViewerColorPin>()->Data = result;
+
+		//////////////////////////////////////////////////////////////////////////
+		// Write ID from pin into input pin of link.
+		Ref<Link> link = materialEval->GetTargetEditor()->FindLinkByPin( Outputs[ 0 ]->ID );
+		if( link )
+		{
+			Ref<Pin> pin = materialEval->GetTargetEditor()->FindPin( link->EndPinID );
+			if( pin && pin->Type == PinType::Material_Color )
+			{
+				Ref<MaterialViewerColorPin> colPin = pin.As<MaterialViewerColorPin>();
+				colPin->Data = result;
+			}
 		}
 
 		return NodeEditorCompilationStatus::Success;

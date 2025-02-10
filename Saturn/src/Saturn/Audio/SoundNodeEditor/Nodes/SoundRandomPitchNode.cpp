@@ -106,6 +106,8 @@ namespace Saturn {
 			Ref<SoundPin> inputPin = pSoundEditorEvaluator->GetTargetEditor()->FindPin( link->EndPinID );
 			inputPin->Data = Outpin->Data = soundPin->Data;
 		}
+		
+		pSoundEditorEvaluator->RegisterSound( soundPin->Data );
 
 		return NodeEditorCompilationStatus::Success;
 	}

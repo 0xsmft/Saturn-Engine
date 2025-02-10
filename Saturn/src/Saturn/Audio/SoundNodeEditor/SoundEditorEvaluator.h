@@ -34,6 +34,7 @@
 #include "Saturn/Core/UUID.h"
 
 #include <stack>
+#include <unordered_set>
 
 namespace Saturn {
 
@@ -63,10 +64,13 @@ namespace Saturn {
 		[[nodiscard]] virtual NodeEditorCompilationStatus EvaluateEditor() override;
 
 		void AddNewSound( UUID id );
+		void RegisterSound( size_t id );
+		void UnregisterSound( size_t id );
 
 	public:
 		// Sounds that are currently playing
 		std::vector<Ref<Sound>> AliveSounds;
+		std::unordered_set<size_t> SoundsPlaying;
 
 	private:
 		void DestroyAliveSounds();

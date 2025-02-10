@@ -51,9 +51,8 @@ namespace Saturn {
 	}
 
 	SoundMixerNode::SoundMixerNode( const std::string& rName )
-		: Node()
+		: Node( rName )
 	{
-		Name = rName;
 		CreateNode();
 	}
 
@@ -96,57 +95,9 @@ namespace Saturn {
 		}
 #endif
 
-		std::map<UUID, UUID> PinToSoundMap;
-		uint32_t index = 0;
-
-		auto ids = pSoundEditorEvaluator->GetTargetNodeEditor()->FindNeighbors( this );
-		for( const auto& rID : ids )
+		for( size_t i = 0; i < Inputs.size(); i++ )
 		{
-			Ref<Node> neighorNode = pSoundEditorEvaluator->GetTargetNodeEditor()->FindNode( rID );
-			if( !neighorNode )
-				continue;
-
-			switch( neighorNode->ExecutionType )
-			{
-				case NodeExecutionType::SoundPlayer:
-				{
-					Ref<SoundPlayerNode> playerNode = neighorNode.As<SoundPlayerNode>();
-					PinToSoundMap[ index ] =  playerNode->GetAssetID();
-				} break;
-
-				case NodeExecutionType::SoundRandomSound:
-				{
-					Ref<SoundRandomNode> randomNode = neighorNode.As<SoundRandomNode>();
-					PinToSoundMap[ index ] = randomNode->ChosenSoundID;
-				} break;
-
-				// TODO:
-				/*
-				case NodeExecutionType::SoundMixer:
-				{
-					Ref<SoundPlayerNode> playerNode = neighorNode.As<SoundPlayerNode>();
-					PinToSoundMap[ index ] = playerNode->SoundAssetID;
-				} break;
-				*/
-			}
-
-			index++;
-		}
-
-		for( const auto& [ index, assetID ] : PinToSoundMap )
-		{
-			pSoundEditorEvaluator->AddNewSound( assetID );
-		}
-
-		// Write our chosen index to the output pin
-		Ref<SoundPin> outPin = Outputs[ 0 ].As<SoundPin>();
-
-		Ref<Link> link = pSoundEditorEvaluator->GetTargetEditor()->FindLinkByPin( outPin->ID );
-		if( link )
-		{
-			// Find input node
-			Ref<SoundPin> inputPin = pSoundEditorEvaluator->GetTargetEditor()->FindPin( link->EndPinID ).As<SoundPin>();
-			inputPin->Data = outPin->Data = ( int ) pSoundEditorEvaluator->AliveSounds.size() - 1;
+			pSoundEditorEvaluator->RegisterSound( i );
 		}
 
 		return NodeEditorCompilationStatus::Success;

@@ -264,7 +264,7 @@ namespace Saturn {
 
 	Ref<Link> NodeEditorBase::FindLinkByPin( UUID id )
 	{
-		if( !id )
+		if( id == 0 )
 			return nullptr;
 
 		if( !IsLinked( id ) )
@@ -288,6 +288,27 @@ namespace Saturn {
 			return rPin->Node;
 		
 		return nullptr;
+	}
+
+	std::vector<Ref<Link>> NodeEditorBase::FindLinksByPin( UUID id )
+	{
+		std::vector<Ref<Link>> result;
+
+		if( id == 0 )
+			return {};
+
+		if( !IsLinked( id ) )
+			return {};
+
+		for( const auto& rLink : m_Links )
+		{
+			if( rLink->StartPinID == id || rLink->EndPinID == id )
+			{
+				result.push_back( rLink );
+			}
+		}
+
+		return result;
 	}
 
 	void NodeEditorBase::SetRuntime( Ref<NodeEditorRuntime> runtime )

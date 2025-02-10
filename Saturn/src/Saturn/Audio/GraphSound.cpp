@@ -86,8 +86,6 @@ namespace Saturn {
 		m_Runtime->SetTargetNodeEditor( m_NodeEditor );
 
 		m_NodeEditor->SetRuntime( m_Runtime );
-
-		m_Loaded = true;
 	}
 
 	void GraphSound::Play( int frameOffset )
@@ -97,6 +95,7 @@ namespace Saturn {
 
 		m_NodeEditor->Evaluate();
 
+		m_Loaded = true;
 		m_Playing = true;
 	}
 
@@ -146,6 +145,22 @@ namespace Saturn {
 		for( auto& rSound : m_Runtime->AliveSounds )
 		{
 			rSound->SetPitchMultiplier( m );
+		}
+	}
+
+	void GraphSound::SetPosition( const glm::vec3& rPos )
+	{
+		for( auto& rSound : m_Runtime->AliveSounds )
+		{
+			rSound->SetPosition( rPos );
+		}
+	}
+
+	void GraphSound::SetSpatialisation( bool value )
+	{
+		for( auto& rSound : m_Runtime->AliveSounds )
+		{
+			rSound->SetSpatialisation( value );
 		}
 	}
 

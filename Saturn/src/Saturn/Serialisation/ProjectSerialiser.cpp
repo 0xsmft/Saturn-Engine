@@ -181,6 +181,8 @@ namespace Saturn {
 		}
 
 		Project::SetActiveProject( newProject );
+
+		AudioSystem::Get().StartSoundGroups();
 	}
 
 }

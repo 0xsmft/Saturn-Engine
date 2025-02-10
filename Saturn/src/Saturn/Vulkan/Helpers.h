@@ -58,7 +58,11 @@ namespace Saturn::Auxiliary {
 		ImageCreateInfo.usage = Usage;
 
 		VK_CHECK( vkCreateImage( VulkanContext::Get().GetDevice(), &ImageCreateInfo, nullptr, pImage ) );
+#if defined(SAT_DEBUG)
+		SetDebugUtilsObjectName( "Image (Saturn::Auxiliary)", ( uint64_t ) *pImage, VK_OBJECT_TYPE_IMAGE );
+#else
 		SetDebugUtilsObjectName( "Image", ( uint64_t ) *pImage, VK_OBJECT_TYPE_IMAGE );
+#endif
 
 		VkMemoryRequirements MemoryRequirements;
 		vkGetImageMemoryRequirements( VulkanContext::Get().GetDevice(), *pImage, &MemoryRequirements );

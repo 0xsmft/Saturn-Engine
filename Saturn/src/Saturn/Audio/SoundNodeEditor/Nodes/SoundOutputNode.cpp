@@ -29,7 +29,11 @@
 #include "sppch.h"
 #include "SoundOutputNode.h"
 
+#if !defined( SAT_DIST )
+#include "Saturn/NodeEditor/UI/NodeEditor.h"
+#else
 #include "Saturn/NodeEditor/NodeEditorBase.h"
+#endif
 
 #include "Saturn/Audio/SoundNodeEditor/SoundEditorEvaluator.h"
 #include "Saturn/Audio/SoundNodeEditor/SoundPin.h"
@@ -37,14 +41,11 @@
 #include "Saturn/Audio/AudioSystem.h"
 #include "Saturn/Audio/Sound.h"
 
-#include <unordered_map>
-
 namespace Saturn {
 
 	SoundOutputNode::SoundOutputNode()
-		: Node()
+		: Node( "Sound Output" )
 	{
-		Name = "Sound Output";
 		CreateNode();
 	}
 
@@ -71,10 +72,27 @@ namespace Saturn {
 		if( !pSoundEditorEvaluator )
 			return NodeEditorCompilationStatus::Failed;
 
+		size_t index = 0;
 		for( Ref<Sound>& rSound : pSoundEditorEvaluator->AliveSounds )
 		{
-			rSound->Play();
+			if( pSoundEditorEvaluator->SoundsPlaying.count( index ) > 0 ) 
+			{
+				rSound->Play();
+			}
+			else
+			{
+				// erase
+			}
+
+			index++;
 		}
+
+#if !defined( SAT_DIST )
+		Ref<NodeEditor> uiEditor = pSoundEditorEvaluator->GetTargetNodeEditor().As<NodeEditor>();
+		uiEditor->PushInfoMessage( std::format( "Playing {0} of out {1} sounds.", pSoundEditorEvaluator->SoundsPlaying.size(), pSoundEditorEvaluator->AliveSounds.size() ) );
+#endif
+
+		pSoundEditorEvaluator->SoundsPlaying.clear();
 
 		return NodeEditorCompilationStatus::Success;
 	}

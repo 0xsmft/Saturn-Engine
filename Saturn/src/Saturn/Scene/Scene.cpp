@@ -851,11 +851,24 @@ namespace Saturn {
 			if( !soundSpec )
 				continue;
 			
-			if( soundSpec->Type == AssetType::GraphSound ) [[unlikely]]
+			if( soundSpec->Type == AssetType::GraphSound )
 			{
-				AudioSystem::Get().PlayGraphSound( rComp.SpecAssetID, rComp.UniqueID );
+				Ref<GraphSound> sound = AudioSystem::Get().PlayGraphSound( rComp.SpecAssetID, rComp.UniqueID );
+
+				sound->WaitUntilLoaded();
+
+				if( rComp.Spatialization )
+				{
+					sound->SetSpatialisation( true );
+					sound->SetPosition( entity->GetComponent<TransformComponent>().Position );
+				}
+
+				sound->SetVolumeMultiplier( rComp.VolumeMultiplier );
+				sound->SetPitchMultiplier( rComp.PitchMultiplier );
+
+				// TODO: Looping
 			}
-			else [[likely]]
+			else
 			{
 				Ref<Sound> sound = nullptr;
 

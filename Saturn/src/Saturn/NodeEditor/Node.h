@@ -70,8 +70,10 @@ namespace Saturn {
 		MaterialMixColors,
 		SoundOutput,
 		SoundPlayer,
-		RandomSound,
+		SoundRandomSound,
+		SoundRandomPitch,
 		SoundMixer,
+		SoundPitch,
 		None
 	};
 

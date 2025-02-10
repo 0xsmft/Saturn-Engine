@@ -54,7 +54,9 @@ namespace Saturn {
 
 	MaterialAsset::~MaterialAsset()
 	{
-		Reset();
+		m_TextureCache.clear();
+		m_VPendingTextureChanges.clear();
+		m_PendingTextureChanges.clear();
 
 		m_Material = nullptr;
 		m_PendingMaterialChange = nullptr;
@@ -154,12 +156,20 @@ namespace Saturn {
 		m_Material->RN_Update();
 	}
 
-	void MaterialAsset::Reset()
+	void MaterialAsset::RT_Reset()
 	{
 		// We don't want to default the texture because what if the user has only changed the normal map. And we'd be reseting all of the textures.
 		m_TextureCache.clear();
 		m_VPendingTextureChanges.clear();
 		m_PendingTextureChanges.clear();
+
+		RenderThread::Get().Queue( [ this ]()
+		{
+			m_Material->SetResource( "u_AlbedoTexture", Renderer::Get().GetPinkTexture() );
+			m_Material->SetResource( "u_NormalTexture", Renderer::Get().GetPinkTexture() );
+			m_Material->SetResource( "u_MetallicTexture", Renderer::Get().GetPinkTexture() );
+			m_Material->SetResource( "u_RoughnessTexture", Renderer::Get().GetPinkTexture() );
+		} );
 	}
 
 	void MaterialAsset::Bind( const Ref< StaticMesh >& rMesh, Submesh& rSubmsh, Ref< Shader >& Shader, const VkWriteDescriptorSet& rStorageBufferWDS )
@@ -264,8 +274,6 @@ namespace Saturn {
 	{
 		RenderThread::Get().Queue( [ this ]()
 		{
-			Default();
-
 			// Load texture (auto assume we have not loaded them).
 			Ref<Texture2D> texture = nullptr;
 

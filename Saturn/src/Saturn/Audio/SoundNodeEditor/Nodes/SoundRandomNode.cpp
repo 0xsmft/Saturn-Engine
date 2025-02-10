@@ -100,37 +100,21 @@ namespace Saturn {
 			return NodeEditorCompilationStatus::Failed;
 		}
 #endif
-
-		uint32_t index = 0;
-		for( const auto& rID : ids )
-		{
-			Ref<Node> neighorNode = pSoundEditorEvaluator->GetTargetNodeEditor()->FindNode( rID );
-			if( !neighorNode )
-				continue;
-
-			switch( neighorNode->ExecutionType )
-			{
-				case NodeExecutionType::SoundPlayer:
-				{
-					Ref<SoundPlayerNode> playerNode = neighorNode.As<SoundPlayerNode>();
-					PinToSoundMap[ index ] = playerNode->GetAssetID();
-				} break;
-
-				case NodeExecutionType::SoundRandomSound:
-				{
-					Ref<SoundRandomNode> randomNode = neighorNode.As<SoundRandomNode>();
-					PinToSoundMap[ index ] = randomNode->ChosenSoundID;
-				} break;
-			}
-
-			index++;
-		}
-
+		// Read inputs for sound indexes.
 		size_t pin = Random::RandomElementInRange( 0, Inputs.size() - 1 );
-		ChosenSoundID = PinToSoundMap[ pin ];
+		size_t index = ( size_t ) Inputs[ pin ].As<SoundPin>()->Data;
 
-		// Add chosen sound
-		pSoundEditorEvaluator->AddNewSound( ChosenSoundID );
+		// Reg
+		pSoundEditorEvaluator->RegisterSound( index );
+
+		// Un reg
+		for( size_t i = 0; i < Inputs.size(); i++ )
+		{
+			if( i != index )
+			{
+				pSoundEditorEvaluator->UnregisterSound( i );
+			}
+		}
 
 		// Write our chosen index to the output pin
 		Ref<SoundPin> outPin = Outputs[ 0 ].As<SoundPin>();
@@ -140,7 +124,7 @@ namespace Saturn {
 		{
 			// Find input node
 			Ref<SoundPin> inputPin = pSoundEditorEvaluator->GetTargetEditor()->FindPin( link->EndPinID ).As<SoundPin>();
-			inputPin->Data = outPin->Data = ( int ) pSoundEditorEvaluator->AliveSounds.size() - 1;
+			inputPin->Data = outPin->Data = ( int ) index;
 		}
 
 		return NodeEditorCompilationStatus::Success;

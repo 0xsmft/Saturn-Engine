@@ -57,6 +57,9 @@ namespace Saturn {
 		void SetVolumeMultiplier( float m );
 		void SetPitchMultiplier( float m );
 
+		void SetPosition( const glm::vec3& rPos );
+		void SetSpatialisation( bool value );
+
 	private:
 		void Unload() override;
 

@@ -134,6 +134,16 @@ namespace Saturn {
 		AliveSounds.push_back( snd );
 	}
 
+	void SoundEditorEvaluator::RegisterSound( size_t id )
+	{
+		SoundsPlaying.insert( id );
+	}
+
+	void SoundEditorEvaluator::UnregisterSound( size_t id )
+	{
+		SoundsPlaying.erase( id );
+	}
+
 	void SoundEditorEvaluator::DestroyAliveSounds()
 	{
 		for( auto& rSound : AliveSounds )
@@ -145,6 +155,7 @@ namespace Saturn {
 		}
 
 		AliveSounds.clear();
+		SoundsPlaying.clear();
 	}
 
 }

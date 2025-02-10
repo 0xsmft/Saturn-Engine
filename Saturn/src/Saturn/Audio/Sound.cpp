@@ -46,8 +46,8 @@ namespace Saturn {
 			SAT_CORE_INFO( "Loading sound: {0}", m_Specification->Name );
 
 			// Use master sound group if no group was specified
-			if( m_SoundGroup == nullptr ) 
-				m_SoundGroup = AudioSystem::Get().GetMasterSoundGroup();
+			//if( m_SoundGroup == nullptr ) 
+			//	m_SoundGroup = AudioSystem::Get().GetMasterSoundGroup();
 
 #if defined(SAT_DIST)
 			LoadForDist( flags );
@@ -95,7 +95,7 @@ namespace Saturn {
 		// TODO: Wait for the sound to load by using the fence.
 		MA_CHECK( ma_sound_init_from_file( &AudioSystem::Get().GetAudioEngine(),
 			m_Specification->SoundSourcePath.string().c_str(),
-			initFlags, m_SoundGroup->GetInternal(), nullptr, m_Sound ) );
+			initFlags, nullptr, nullptr, m_Sound ) );
 
 		if( ( initFlags & ( uint32_t ) MA_SOUND_FLAG_NO_SPATIALIZATION ) == 0 )
 			SetupSpatialisation();

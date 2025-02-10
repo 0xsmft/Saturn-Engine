@@ -123,12 +123,12 @@ namespace Saturn {
 			{
 				Ref<Node> node = nullptr;
 
-				ImGui::SeparatorText( "MATERIAL" );
+				ImGui::SeparatorText( "Material" );
 
 				if( ImGui::MenuItem( "Texture Sampler2D" ) )
 					node = MaterialNodeLibrary::SpawnSampler2D( m_NodeEditor );
 
-				if( ImGui::MenuItem( "Get Texure Asset" ) )
+				if( ImGui::MenuItem( "Get Texture Asset" ) )
 					node = MaterialNodeLibrary::SpawnGetAsset( m_NodeEditor );
 
 				if( ImGui::MenuItem( "Color RGB" ) )
@@ -140,7 +140,7 @@ namespace Saturn {
 				if( ImGui::MenuItem( "Separate Color (RGB)" ) )
 					node = MaterialNodeLibrary::SpawnSeparateColorRGB( m_NodeEditor );
 
-				ImGui::SeparatorText( "MATH" );
+				ImGui::SeparatorText( "Math" );
 
 				if( ImGui::MenuItem( "Add Floats" ) )
 					node = MathNodeLibrary::SpawnMathAdd( m_NodeEditor );
@@ -202,9 +202,11 @@ namespace Saturn {
 			AssetID TextureAssetID = TextureAsset->GetAssetID();
 
 			Ref<MaterialSampler2DNode> Sampler2DNode;
-			Ref<Node> AssetNode;
+			Ref<MaterialGetAssetNode> AssetNode;
 			Sampler2DNode = MaterialNodeLibrary::SpawnSampler2D( m_NodeEditor );
 			AssetNode = MaterialNodeLibrary::SpawnGetAsset( m_NodeEditor );
+
+			AssetNode->SetAssetID( TextureAssetID );
 
 			Ref<Node> OutputNode = m_NodeEditor->FindNode( m_OutputNodeID );
 

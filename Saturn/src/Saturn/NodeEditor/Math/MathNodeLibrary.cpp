@@ -43,7 +43,7 @@ namespace Saturn {
 
 	Ref<MathSubFloats> MathNodeLibrary::SpawnMathSub( Ref<NodeEditorBase> rNodeEditor )
 	{
-		Ref<MathSubFloats> node = Ref<MathSubFloats>::Create( );
+		Ref<MathSubFloats> node = Ref<MathSubFloats>::Create();
 		rNodeEditor->AddNode( node );
 
 		return node;

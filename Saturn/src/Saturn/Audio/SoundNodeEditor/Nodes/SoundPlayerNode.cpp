@@ -34,9 +34,12 @@
 
 #include "Saturn/Audio/SoundNodeEditor/SoundPin.h"
 
-#if !defined(SAT_DIST)
 #include "Saturn/Audio/SoundNodeEditor/SoundEditorEvaluator.h"
+
+#if !defined(SAT_DIST)
 #include "Saturn/NodeEditor/UI/NodeEditor.h"
+#else
+#include "Saturn/NodeEditor/NodeEditorBase.h"
 #endif
 
 namespace Saturn {

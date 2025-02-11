@@ -299,4 +299,40 @@ namespace Saturn {
 		return true;
 	}
 
+	void NodeCacheEditor::ConvertToDistNC( AssetID id, const std::string& rCustomName /*= "" */ )
+	{
+		std::string filename;
+
+		Ref<Asset> asset = AssetManager::Get().FindAsset( id );
+		std::filesystem::path cachePath;
+
+		if( asset )
+		{
+			filename = std::format( "{0}.{1}.nce", asset->Name, ( uint64_t ) id );
+			cachePath = asset->Path.parent_path();
+		}
+		else
+		{
+			filename = std::format( "NCEditor.{0}.nce", ( uint64_t ) id );
+			cachePath = GetDefaultCachePath();
+		}
+
+		if( !rCustomName.empty() )
+			filename = rCustomName;
+
+		cachePath /= filename;
+
+		std::filesystem::path cachePathAbs = Project::GetActiveProject()->FilepathAbs( cachePath );
+
+		if( !std::filesystem::exists( cachePathAbs ) )
+			return;
+
+		// Copy for dist
+		std::filesystem::path newPath = Project::GetActiveProject()->GetTempDir();
+		newPath /= std::to_string( id );
+		newPath.replace_extension( ".vfs" );
+
+		std::filesystem::copy_file( cachePathAbs, newPath );
+	}
+
 }

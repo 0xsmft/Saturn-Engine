@@ -76,7 +76,7 @@ namespace Saturn {
 		MA_CHECK( ma_sound_init_from_data_source( 
 			&AudioSystem::Get().GetAudioEngine(),
 			&m_AudioBuffer, flags,
-			m_SoundGroup->GetInternal(), m_Sound ) );
+			nullptr, m_Sound ) );
 
 //		ma_audio_buffer_uninit( &audioBuffer );
 

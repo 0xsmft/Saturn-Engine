@@ -144,7 +144,9 @@ namespace Saturn {
 
 		m_MaterialRegistry = nullptr;
 
+#if !defined(SAT_DIST)
 		m_Importer.release();
+#endif
 	}
 
 #if !defined(SAT_DIST)
@@ -263,7 +265,8 @@ namespace Saturn {
 		RawSerialisation::WriteMatrix4x4( m_Transform, rStream );
 		RawSerialisation::WriteMatrix4x4( m_InverseTransform, rStream );
 
-		// Write materials
+		// Write asset material IDs
+		// Matches with StaticMeshAssetSerialiser
 		size_t materials = m_MaterialRegistry->GetMaterialAssets().size();
 		rStream.write( reinterpret_cast< char* >( &materials ), sizeof( size_t ) );
 
@@ -290,16 +293,25 @@ namespace Saturn {
 
 		m_MaterialRegistry = Ref<MaterialRegistry>::Create();
 
+		//////////////////////////////////////////////////////////////////////////
+		// Read Master
+		// Unable to call MaterialRegistry::Deserialise as Deserialise expects a map with the overrides
+		// and because we are the master we don't care about overrides
+		// So manual read it back.
+	
 		// Read Materials
 		size_t materials = 0;
 		RawSerialisation::ReadObject( materials, rStream );
 
-		m_MaterialRegistry->GetMaterialAssets().resize( materials );
+		m_MaterialRegistry->GetMaterialAssets().reserve( materials );
 
 		for( size_t i = 0; i < materials; i++ )
 		{
 			UUID materialID = 0;
 			RawSerialisation::ReadObject( materialID, rStream );
+
+			if( materialID )
+				m_MaterialRegistry->AddTargetMaterialAsset( materialID );
 
 			// Try load material
 			Ref<MaterialAsset> materialAsset = AssetManager::Get().GetAssetAs<MaterialAsset>( materialID );

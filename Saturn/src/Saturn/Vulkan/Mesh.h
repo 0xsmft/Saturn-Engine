@@ -249,15 +249,14 @@ namespace Saturn {
 		void FindMaterials();
 
 	private:
+		std::unique_ptr<Assimp::Importer> m_Importer;
+		const aiScene* m_Scene;
+#endif
+	private:
 		std::filesystem::path m_SourcePath;
 		std::filesystem::path m_DstPath;
 		MeshImportBehaviour m_ImportBehaviour;
 
 		MeshInformation m_MeshInformation;
-
-		std::unique_ptr<Assimp::Importer> m_Importer;
-
-		const aiScene* m_Scene;
-#endif
 	};
 }

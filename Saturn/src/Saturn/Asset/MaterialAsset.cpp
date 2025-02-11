@@ -604,8 +604,25 @@ namespace Saturn {
 			UUID MaterialID;
 			RawSerialisation::ReadObject( MaterialID, rStream );
 
+			// Load material asset
+			// Will call RawMaterialAssetSerialiser
 			Ref<MaterialAsset> asset = AssetManager::Get().GetAssetAs<MaterialAsset>( MaterialID );
-			rRegistry->m_Materials.push_back( asset );
+			
+			if( MaterialID != 0 ) 
+			{
+				rRegistry->AddTargetMaterialAsset( MaterialID );
+			}
+
+			if( asset )
+			{
+				rRegistry->AddAsset( asset );
+			}
+			else // Fallback to default
+			{
+				auto defaultProjectAsset = AssetManager::Get().FindAsset( Project::GetActiveProject()->GetDefaultMaterialAsset() );
+
+				rRegistry->AddAsset( Ref<MaterialAsset>::Create( nullptr ) );
+			}
 		}
 	}
 }

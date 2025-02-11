@@ -121,12 +121,10 @@ namespace Saturn {
 		UUID::Serialise( rObject->ID, rStream );
 		RawSerialisation::WriteString( rObject->Name, rStream );
 
-#if !defined(SAT_DIST)
 		RawSerialisation::WriteObject( rObject->Color, rStream );
 		RawSerialisation::WriteObject( rObject->Type, rStream );
 		SerialiseImVec2( rObject->Size, rStream );
 		SerialiseImVec2( rObject->Position, rStream );
-#endif
 
 		RawSerialisation::WriteString( rObject->ActiveState, rStream );
 		RawSerialisation::WriteString( rObject->SavedState, rStream );
@@ -149,12 +147,10 @@ namespace Saturn {
 		UUID::Deserialise( rObject->ID, rStream );
 		rObject->Name = RawSerialisation::ReadString( rStream );
 
-#if !defined(SAT_DIST)
 		RawSerialisation::ReadObject( rObject->Color, rStream );
 		RawSerialisation::ReadObject( rObject->Type, rStream );
 		DeserialiseImVec2( rObject->Size, rStream );
 		DeserialiseImVec2( rObject->Position, rStream );
-#endif
 
 		rObject->ActiveState = RawSerialisation::ReadString( rStream );
 		rObject->SavedState = RawSerialisation::ReadString( rStream );

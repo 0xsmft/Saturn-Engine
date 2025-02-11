@@ -56,7 +56,6 @@ namespace Saturn {
 		Scene,
 		Prefab,
 		Script,
-		MeshCollider,
 		PhysicsMaterial,
 		Unknown,
 		COUNT,
@@ -86,8 +85,6 @@ namespace Saturn {
 				return "Prefab";
 			case Saturn::AssetType::Script:
 				return "Script";
-			case Saturn::AssetType::MeshCollider:
-				return "MeshCollider";
 			case Saturn::AssetType::PhysicsMaterial:
 				return "PhysicsMaterial";
 			case Saturn::AssetType::Unknown:
@@ -131,8 +128,6 @@ namespace Saturn {
 				return COLOR_32( 255, 0, 255, 255 );
 			case Saturn::AssetType::Script:
 				return COLOR_32( 5, 183, 237, 255 );
-			case Saturn::AssetType::MeshCollider:
-				return COLOR_32( 255, 255, 255, 255 );
 			case Saturn::AssetType::PhysicsMaterial:
 				return COLOR_32( 235, 0, 55, 255 );
 			case Saturn::AssetType::Unknown:
@@ -166,8 +161,6 @@ namespace Saturn {
 			return AssetType::Prefab;
 		else if( str == "Script" )
 			return AssetType::Script;
-		else if( str == "MeshCollider" )
-			return AssetType::MeshCollider;
 		else if( str == "PhysicsMaterial" )
 			return AssetType::PhysicsMaterial;
 		else
@@ -260,7 +253,7 @@ namespace Saturn {
 		friend class AssetRegistry;
 	};
 
-	class AssetReference 
+	class AssetReference
 	{
 	public:
 		AssetID ID = 0;

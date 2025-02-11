@@ -38,10 +38,13 @@
 #include "Saturn/Serialisation/RawSerialisation.h"
 #include "Saturn/Serialisation/RawAssetSerialisers.h"
 
+#include "Saturn/NodeEditor/Serialisation/NodeCache.h"
+
 #include "Saturn/Asset/TextureSourceAsset.h"
 #include "Saturn/Asset/Prefab.h"
 #include "Saturn/Asset/MaterialAsset.h"
 #include "Saturn/Audio/SoundSpecification.h"
+#include "Saturn/Audio/GraphSound.h"
 
 #include "Saturn/Asset/PhysicsMaterialAsset.h"
 
@@ -354,11 +357,15 @@ namespace Saturn {
 
 			// TODO: GraphSound
 			case Saturn::AssetType::GraphSound: 
+			{
+				std::string filename = std::format( "{0}.{1}.gsnd", rAsset->Name, ( uint64_t ) id );
+				NodeCacheEditor::ConvertToDistNC( id, filename );
+			} break;
+
 			case Saturn::AssetType::Scene:
 			case Saturn::AssetType::SkeletalMesh:
 			case Saturn::AssetType::MaterialInstance:
 			case Saturn::AssetType::Script:
-			case Saturn::AssetType::MeshCollider:
 			case Saturn::AssetType::Unknown:
 			default:
 				break;

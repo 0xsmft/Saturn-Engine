@@ -325,15 +325,19 @@ namespace Saturn {
 
 				mc.MaterialRegistry = Ref<MaterialRegistry>::Create();
 
+				// Build local material registry
 				if( HasRegistry )
 					MaterialRegistry::Deserialise( mc.MaterialRegistry, rStream );
 
+				// Now load the mesh
 				if( ID != 0 )
 				{
-					// Load Mesh
+					// Load Mesh 
+					// Hand off to RawStaticMeshAssetSerialiser
 					auto mesh = AssetManager::Get().GetAssetAs<StaticMesh>( ID );
 					mc.Mesh = mesh;
 				
+					// If no overrides then copy the master registry
 					if( !mc.MaterialRegistry->HasAnyOverrides() ) 
 					{
 						mc.MaterialRegistry->Copy( mc.Mesh->GetMaterialRegistry() );

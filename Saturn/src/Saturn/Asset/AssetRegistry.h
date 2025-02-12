@@ -36,13 +36,6 @@
 
 namespace Saturn {
 
-	enum class AssetRegistryType
-	{
-		Game,
-		Editor,
-		Unknown
-	};
-
 	using AssetMap = std::unordered_map< AssetID, Ref<Asset> >;
 
 	class AssetRegistry : public RefTarget
@@ -91,7 +84,7 @@ namespace Saturn {
 		std::filesystem::path m_Path;
 
 	private:
-		friend class AssetRegistrySerialiser;
+		friend class AssetManagerSerialiser;
 		friend class AssetManager;
 		friend class AssetBundle;
 	};

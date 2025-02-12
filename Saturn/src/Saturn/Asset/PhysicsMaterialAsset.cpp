@@ -34,13 +34,22 @@
 
 namespace Saturn {
 
-	PhysicsMaterialAsset::PhysicsMaterialAsset( float StaticFriction, float DynamicFriction, float Restitution, PhysicsMaterialFlags flags )
-		: m_StaticFriction( StaticFriction ),  m_DynamicFriction( DynamicFriction ), m_Restitution( Restitution ), m_Flags( ( uint32_t ) flags )
+	PhysicsMaterialAsset::PhysicsMaterialAsset( const Ref<Asset>& rBase, float StaticFriction, float DynamicFriction, float Restitution, PhysicsMaterialFlags flags /*= PhysicsMaterialFlags::None */ )
+		: Asset( rBase ), m_StaticFriction( StaticFriction ), m_DynamicFriction( DynamicFriction ), m_Restitution( Restitution ), m_Flags( ( uint32_t ) flags )
 	{
 		m_Material = PhysicsFoundation::Get().GetPhysics().createMaterial( StaticFriction, DynamicFriction, Restitution );
 
 		if( flags != PhysicsMaterialFlags::None )
-			m_Material->setFlags( (physx::PxMaterialFlag::Enum)flags );
+			m_Material->setFlags( ( physx::PxMaterialFlag::Enum ) flags );
+	}
+
+	PhysicsMaterialAsset::PhysicsMaterialAsset( float StaticFriction, float DynamicFriction, float Restitution, PhysicsMaterialFlags flags /*= PhysicsMaterialFlags::None */ )
+		: Asset(), m_StaticFriction( StaticFriction ), m_DynamicFriction( DynamicFriction ), m_Restitution( Restitution ), m_Flags( ( uint32_t ) flags )
+	{
+		m_Material = PhysicsFoundation::Get().GetPhysics().createMaterial( StaticFriction, DynamicFriction, Restitution );
+
+		if( flags != PhysicsMaterialFlags::None )
+			m_Material->setFlags( ( physx::PxMaterialFlag::Enum ) flags );
 	}
 
 	PhysicsMaterialAsset::~PhysicsMaterialAsset()

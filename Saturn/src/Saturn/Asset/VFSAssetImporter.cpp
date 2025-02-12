@@ -38,6 +38,7 @@ namespace Saturn {
 
 	VFSAssetImporter::~VFSAssetImporter()
 	{
+		m_AssetSerialisers.clear();
 	}
 
 	void VFSAssetImporter::Init()

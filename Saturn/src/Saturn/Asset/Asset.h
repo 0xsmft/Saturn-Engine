@@ -203,7 +203,13 @@ namespace Saturn {
 		std::string Name;
 
 	public:
-		Asset() {}
+		Asset() = default;
+		
+		Asset( const Ref<Asset>& rOther ) 
+			: ID( rOther->ID ), Type( rOther->Type ), Flags( rOther->Flags ), Version( rOther->Version ), Path( rOther->Path ), Name( rOther->Name )
+		{
+		}
+
 		virtual ~Asset() = default;
 
 		const AssetType GetAssetType() const { return Type; }

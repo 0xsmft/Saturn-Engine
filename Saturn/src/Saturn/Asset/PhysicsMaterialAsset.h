@@ -46,19 +46,20 @@ namespace Saturn {
 	{
 	public:
 		PhysicsMaterialAsset( float StaticFriction, float DynamicFriction, float Restitution, PhysicsMaterialFlags flags = PhysicsMaterialFlags::None );
+		PhysicsMaterialAsset( const Ref<Asset>& rBase, float StaticFriction, float DynamicFriction, float Restitution, PhysicsMaterialFlags flags = PhysicsMaterialFlags::None );
 		virtual ~PhysicsMaterialAsset();
 
 		void SetStaticFriction( float val );
 		void SetDynamicFriction( float val );
 		void SetRestitution( float val );
 		 
-		float GetStaticFriction() { return m_StaticFriction; }
-		float GetDynamicFriction() { return m_DynamicFriction; }
-		float GetRestitution() { return m_Restitution; }
+		float GetStaticFriction()  const { return m_StaticFriction; }
+		float GetDynamicFriction() const { return m_DynamicFriction; }
+		float GetRestitution()     const { return m_Restitution; }
 
 		void SetFlag( PhysicsMaterialFlags flag, bool value );
-		bool IsFlagSet( PhysicsMaterialFlags flag ) { return ( m_Flags & (uint32_t)flag ) != 0; }
-		uint32_t GetFlags() { return m_Flags; }
+		bool IsFlagSet( PhysicsMaterialFlags flag ) const { return ( m_Flags & (uint32_t)flag ) != 0; }
+		uint32_t GetFlags() const { return m_Flags; }
 
 		physx::PxMaterial& GetMaterial() { return *m_Material; }
 		const physx::PxMaterial& GetMaterial() const { return *m_Material; }

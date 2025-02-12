@@ -39,6 +39,8 @@ namespace Saturn {
 	class MaterialAsset : public Asset
 	{
 	public:
+		MaterialAsset( const Ref<Asset>& rBase, Ref<Material> material );
+
 		MaterialAsset( Ref<Material> material );
 		virtual ~MaterialAsset();
 

@@ -52,6 +52,18 @@ namespace Saturn {
 			m_Material->Copy( material );
 	}
 
+	MaterialAsset::MaterialAsset( const Ref<Asset>& rBase, Ref<Material> material )
+		: Asset( rBase )
+	{
+		if( material == nullptr )
+		{
+			m_Material = Ref<Material>::Create( ShaderLibrary::Get().Find( "shader_new" ), "New Material" );
+			Default();
+		}
+		else
+			m_Material->Copy( material );
+	}
+
 	MaterialAsset::~MaterialAsset()
 	{
 		m_TextureCache.clear();

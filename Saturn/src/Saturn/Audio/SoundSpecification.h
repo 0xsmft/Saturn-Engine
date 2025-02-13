@@ -46,6 +46,12 @@ namespace Saturn {
 	class SoundSpecification : public Asset
 	{
 	public:
+		SoundSpecification() = default;
+		SoundSpecification( const Ref<Asset>& rBase ) 
+			: Asset( rBase )
+		{
+		}
+
 		std::filesystem::path SoundSourcePath;
 		std::filesystem::path OriginalImportPath;
 

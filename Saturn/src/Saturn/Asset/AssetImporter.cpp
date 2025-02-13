@@ -33,7 +33,7 @@ namespace Saturn {
 
 	AssetImporter::~AssetImporter()
 	{
-
+		m_AssetSerialisers.clear();
 	}
 
 	void AssetImporter::Init()

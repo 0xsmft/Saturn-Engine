@@ -617,7 +617,7 @@ rProperty.SetProperty( DeserialisedEntity.Get(), value ); \
 							int i = 0;
 							for( auto override : materialOverrides )
 							{
-								auto id = override[ i ].as<uint64_t>();
+								id = override[ i ].as<uint64_t>();
 
 								if( id != 0 )
 								{

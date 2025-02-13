@@ -308,7 +308,7 @@ namespace Saturn {
 
 			case Saturn::AssetType::StaticMesh:
 			{
-				Ref<StaticMesh> mesh = rAssetManager.GetAssetAs<StaticMesh>( AssetBundleRegistry, id );
+				Ref<StaticMesh> mesh = rAssetManager.ImportAssetAs<StaticMesh>( AssetBundleRegistry, id );
 
 				RawStaticMeshAssetSerialiser serialiser;
 				serialiser.DumpAndWriteToVFS( mesh );
@@ -316,7 +316,7 @@ namespace Saturn {
 
 			case Saturn::AssetType::Material:
 			{
-				Ref<MaterialAsset> materialAsset = rAssetManager.GetAssetAs<MaterialAsset>( AssetBundleRegistry, id );
+				Ref<MaterialAsset> materialAsset = rAssetManager.ImportAssetAs<MaterialAsset>( AssetBundleRegistry, id );
 
 				if( materialAsset )
 				{
@@ -327,7 +327,7 @@ namespace Saturn {
 
 			case Saturn::AssetType::PhysicsMaterial:
 			{
-				Ref<PhysicsMaterialAsset> physAsset = rAssetManager.GetAssetAs<PhysicsMaterialAsset>( AssetBundleRegistry, id );
+				Ref<PhysicsMaterialAsset> physAsset = rAssetManager.ImportAssetAs<PhysicsMaterialAsset>( AssetBundleRegistry, id );
 
 				RawPhysicsMaterialAssetSerialiser serialiser;
 				serialiser.DumpAndWriteToVFS( physAsset );
@@ -335,7 +335,7 @@ namespace Saturn {
 
 			case Saturn::AssetType::Prefab:
 			{
-				Ref<Prefab> prefabAsset = rAssetManager.GetAssetAs<Prefab>( AssetBundleRegistry, id );
+				Ref<Prefab> prefabAsset = rAssetManager.ImportAssetAs<Prefab>( AssetBundleRegistry, id );
 
 				if( prefabAsset )
 				{
@@ -346,7 +346,7 @@ namespace Saturn {
 
 			case Saturn::AssetType::Sound:
 			{
-				Ref<SoundSpecification> sndSpec = rAssetManager.GetAssetAs<SoundSpecification>( AssetBundleRegistry, id );
+				Ref<SoundSpecification> sndSpec = rAssetManager.ImportAssetAs<SoundSpecification>( AssetBundleRegistry, id );
 
 				if( sndSpec )
 				{

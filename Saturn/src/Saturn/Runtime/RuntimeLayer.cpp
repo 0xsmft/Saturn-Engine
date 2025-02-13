@@ -36,7 +36,7 @@
 #include "Saturn/Serialisation/SceneSerialiser.h"
 #include "Saturn/Serialisation/ProjectSerialiser.h"
 #include "Saturn/Serialisation/EngineSettingsSerialiser.h"
-#include "Saturn/Serialisation/AssetRegistrySerialiser.h"
+#include "Saturn/Serialisation/AssetManagerSerialiser.h"
 #include "Saturn/Serialisation/AssetSerialisers.h"
 #include "Saturn/Serialisation/AssetBundle.h"
 

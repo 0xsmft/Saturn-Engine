@@ -32,7 +32,7 @@
 #include "VulkanContext.h"
 #include "Renderer.h"
 
-#include "Saturn/Serialisation/AssetRegistrySerialiser.h"
+#include "Saturn/Serialisation/AssetManagerSerialiser.h"
 #include "Saturn/Serialisation/AssetSerialisers.h"
 
 #include "Saturn/Asset/AssetManager.h"
@@ -99,8 +99,8 @@ namespace Saturn {
 
 	//////////////////////////////////////////////////////////////////////////
 
-	StaticMesh::StaticMesh( const std::filesystem::path& rFilepath )
-		: m_FilePath( rFilepath )
+	StaticMesh::StaticMesh( const Ref<Asset>& rBase, const std::filesystem::path& rFilepath )
+		: Asset( rBase ), m_FilePath( rFilepath )
 	{
 #if !defined(SAT_DIST)
 		AssimpLog::Initialize();

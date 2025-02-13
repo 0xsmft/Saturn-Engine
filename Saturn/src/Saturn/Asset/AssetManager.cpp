@@ -30,7 +30,7 @@
 #include "AssetManager.h"
 
 #include "Saturn/Core/App.h"
-#include "Saturn/Serialisation/AssetRegistrySerialiser.h"
+#include "Saturn/Serialisation/AssetManagerSerialiser.h"
 
 namespace Saturn {
 
@@ -47,8 +47,8 @@ namespace Saturn {
 
 		// In distribution builds asset registry is loaded by the Asset Bundle!
 #if !defined(SAT_DIST)
-		AssetRegistrySerialiser ars;
-		ars.Deserialise( m_Assets );
+		AssetManagerSerialiser ars;
+		ars.Deserialise();
 #endif
 	}
 
@@ -58,136 +58,45 @@ namespace Saturn {
 			m_Assets = nullptr;
 	}
 
-	Ref<Asset> AssetManager::FindAsset( AssetID id, AssetRegistryType Dst )
-	{
-		switch( Dst )
-		{
-			case AssetRegistryType::Game:
-				return m_Assets->FindAsset( id );
-		
-			case AssetRegistryType::Unknown:
-			default:
-				return nullptr;
-		}
-
-		return nullptr;
-	}
-
 	Ref<Asset> AssetManager::FindAsset( AssetID id )
 	{
-		// Search in Game assets then editor.
-		Ref<Asset> result = nullptr;
-
-		result = m_Assets->FindAsset( id );
-
-		return result;
+		return m_Assets->FindAsset( id );
 	}
 
-	Ref<Asset> AssetManager::FindAsset( const std::filesystem::path& rPath, AssetRegistryType Dst /*= AssetRegistryType::Game */ )
+	Ref<Asset> AssetManager::FindAsset( const std::filesystem::path& rPath )
 	{
-		switch( Dst )
-		{
-			case AssetRegistryType::Game:
-				return m_Assets->FindAsset( rPath );
-
-			case AssetRegistryType::Editor:
-			case AssetRegistryType::Unknown:
-			default:
-				return nullptr;
-		}
-
-		return nullptr;
+		return m_Assets->FindAsset( rPath );
 	}
 
-	Ref<Asset> AssetManager::FindAsset( const std::string& rName, AssetType type, AssetRegistryType Dst /*= AssetRegistryType::Game */ )
+	Ref<Asset> AssetManager::FindAsset( const std::string& rName, AssetType type )
 	{
-		switch( Dst )
-		{
-			case AssetRegistryType::Game:
-				return m_Assets->FindAsset( rName, type );
-
-			case AssetRegistryType::Editor:
-			case AssetRegistryType::Unknown:
-			default:
-				return nullptr;
-		}
-
-		return nullptr;
+		return m_Assets->FindAsset( rName, type );
 	}
 
-	Ref<Asset> AssetManager::TryFindAsset( AssetID id )
+	AssetID AssetManager::CreateAsset( AssetType type )
 	{
-		Ref<Asset> result = nullptr;
-
-		if( m_Assets->DoesIDExists( id ) )
-			result = m_Assets->FindAsset( id );
-
-		return result;
+		return m_Assets->CreateAsset( type );
 	}
 
-	AssetID AssetManager::CreateAsset( AssetType type, AssetRegistryType Dst /*= AssetRegistryType::Game */ )
+	bool AssetManager::IsAssetLoaded( AssetID id )
 	{
-		// TODO: Check if multiple asset ids?
-		switch( Dst )
-		{
-			case AssetRegistryType::Game: 
-				return m_Assets->CreateAsset( type );
-
-			case AssetRegistryType::Editor:
-			case AssetRegistryType::Unknown:
-			default:
-				return 0;
-		}
-
-		return 0;
+		return m_Assets->IsAssetLoaded( id );
 	}
 
-	bool AssetManager::IsAssetLoaded( AssetID id, AssetRegistryType Dst /*= AssetRegistryType::Game */ )
+	AssetID AssetManager::PathToID( const std::filesystem::path& rPath )
 	{
-		switch( Dst )
-		{
-			case AssetRegistryType::Game:
-				return m_Assets->IsAssetLoaded( id );
-
-			case AssetRegistryType::Editor:
-			case AssetRegistryType::Unknown:
-			default:
-				return false;
-		}
-
-		return false;
+		return m_Assets->PathToID( rPath );
 	}
 
-	AssetID AssetManager::PathToID( const std::filesystem::path& rPath, AssetRegistryType Dst /*= AssetRegistryType::Game */ )
+	void AssetManager::Save()
 	{
-		switch( Dst )
-		{
-			case AssetRegistryType::Game:
-				return m_Assets->PathToID( rPath );
-
-			case AssetRegistryType::Editor:
-			case AssetRegistryType::Unknown:
-			default:
-				return 0;
-		}
+		AssetManagerSerialiser ars;
+		ars.Serialise();
 	}
 
-	void AssetManager::Save( AssetRegistryType Dst /*= AssetRegistryType::Game */ )
+	bool AssetManager::DoesAssetHaveDependencies( Ref<Asset> asset )
 	{
-		AssetRegistrySerialiser ars;
-
-		switch( Dst )
-		{
-			case AssetRegistryType::Game: 
-			{
-				ars.Serialise( m_Assets );
-			} break;
-
-			case AssetRegistryType::Editor: 
-			case AssetRegistryType::Unknown:
-			default:
-				break;
-		}
+		return m_AssetDependencies.contains( asset->ID );
 	}
 
 }

@@ -512,7 +512,14 @@ namespace Saturn {
 
 							if( rRef.ID != 0 )
 							{
-								assetName = " " + AssetManager::Get().FindAsset( rRef.ID )->Name;
+								if( Ref<Asset> asset = AssetManager::Get().FindAsset( rRef.ID ); asset != nullptr )
+								{
+									assetName = " " + asset->Name;
+								}
+								else
+								{
+									assetName = " <asset missing!>";
+								}
 							}
 
 							ImGui::Text( assetName.c_str() );
@@ -524,7 +531,11 @@ namespace Saturn {
 
 							if( Auxiliary::DrawAssetFinder( m_CurrentFinderType, &open, m_CurrentAssetID ) )
 							{
+								AssetManager::Get().UnregisterAssetDependency( rRef.ID, entity->GetUUID(), AssetDependencyType::Component );
+
 								rProperty.SetProperty( entity.Get(), m_CurrentAssetID );
+
+								AssetManager::Get().RegisterAssetDependency( m_CurrentAssetID, entity->GetUUID(), AssetDependencyType::Component );
 							}
 
 							ImGui::PopID();
@@ -682,11 +693,14 @@ namespace Saturn {
 			{
 				if( m_CurrentFinderType == AssetType::StaticMesh )
 				{
+					AssetManager::Get().UnregisterAssetDependency( mc.Mesh->ID, entity->GetUUID(), AssetDependencyType::Component );
+
 					mc.Mesh = AssetManager::Get().GetAssetAs<StaticMesh>( m_CurrentAssetID );
 
 					mc.MaterialRegistry = nullptr;
-
 					mc.MaterialRegistry = Ref<MaterialRegistry>::Create( mc.Mesh );
+
+					AssetManager::Get().RegisterAssetDependency( m_CurrentAssetID, entity->GetUUID(), AssetDependencyType::Component );
 				}
 				else if( m_CurrentFinderType == AssetType::Material )
 				{
@@ -891,8 +905,10 @@ namespace Saturn {
 					openAssetFinder = !openAssetFinder;
 					m_CurrentFinderType = AssetType::PhysicsMaterial;
 
-					if( rb.MaterialAssetID != 0 )
+					if( rb.MaterialAssetID != 0 ) 
+					{
 						m_CurrentAssetID = rb.MaterialAssetID;
+					}
 				}
 
 				// TODD: Remove double check (condition was already checked when we render the input text)
@@ -1090,8 +1106,12 @@ namespace Saturn {
 
 				if( Auxiliary::DrawAssetFinder( { AssetType::GraphSound, AssetType::Sound }, &open, m_CurrentAssetID ) )
 				{
+					AssetManager::Get().UnregisterAssetDependency( ap.SpecAssetID, entity->GetUUID(), AssetDependencyType::Component );
+
 					ap.SpecAssetID = m_CurrentAssetID;
 					modified = true;
+
+					AssetManager::Get().RegisterAssetDependency( ap.SpecAssetID, entity->GetUUID(), AssetDependencyType::Component );
 				}
 
 				ImGui::PushID( ( int ) ap.UniqueID );

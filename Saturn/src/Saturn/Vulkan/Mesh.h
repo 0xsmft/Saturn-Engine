@@ -130,11 +130,12 @@ namespace std {
 
 namespace Saturn {
 
+	// StaticMeshAsset
 	class StaticMesh : public Asset
 	{
 	public:
-		StaticMesh() {}
-		StaticMesh( const std::filesystem::path& rFilepath );
+		StaticMesh() = default;
+		StaticMesh( const Ref<Asset>& rBase, const std::filesystem::path& rFilepath );
 		virtual ~StaticMesh();
 
 		void SetFilepath( const std::filesystem::path& rFilepath ) { m_FilePath = rFilepath; }

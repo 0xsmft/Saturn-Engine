@@ -74,13 +74,14 @@ namespace Saturn {
 			return m_Entry == rOther.m_Entry && m_Filename == rOther.m_Filename && m_Path == rOther.m_Path;
 		}
 
-		bool IsDirectory()   const   { return m_IsDirectory;   }
-		bool IsHovered()     const   { return m_IsHovered;     }
-		bool IsSelected()    const   { return m_IsSelected;    }
-		bool MultiSelected() const   { return m_MultiSelected; }
-		bool IsRenaming()    const   { return m_IsRenaming;    }
-		AssetID GetAssetID() const   { if( m_Asset ) return m_Asset->ID; else return 0; }
-		void CanEverDrag( bool val ) { m_CanEverDrag = val;    }
+		bool IsDirectory()    const   { return m_IsDirectory;   }
+		bool IsHovered()      const   { return m_IsHovered;     }
+		bool IsSelected()     const   { return m_IsSelected;    }
+		bool MultiSelected()  const   { return m_MultiSelected; }
+		bool IsRenaming()     const   { return m_IsRenaming;    }
+		AssetID GetAssetID()  const   { if( m_Asset ) return m_Asset->ID; else return 0; }
+		Ref<Asset> GetAsset() const   { return m_Asset;         }
+		void CanEverDrag( bool val )  { m_CanEverDrag = val;    }
 
 		std::filesystem::path& Filename() { return m_Filename; }
 		const std::filesystem::path& Filename() const { return m_Filename; }

@@ -27,8 +27,7 @@
 */
 
 #include "sppch.h"
-#include "AssetRegistrySerialiser.h"
-#include "Saturn/Asset/AssetRegistry.h"
+#include "AssetManagerSerialiser.h"
 
 #include "Saturn/Project/Project.h"
 
@@ -63,11 +62,11 @@ namespace YAML {
 
 namespace Saturn {
 
-	void AssetRegistrySerialiser::Serialise( const Ref<AssetRegistry>& rAssetRegistry )
+	void AssetManagerSerialiser::Serialise()
 	{
 		YAML::Emitter out;
 
-		auto& Assets = rAssetRegistry->GetAssetMap();
+		auto& rAssetMap = AssetManager::Get().GetAssetRegistry()->GetAssetMap();
 
 		out << YAML::BeginMap;
 
@@ -75,7 +74,7 @@ namespace Saturn {
 
 		out << YAML::BeginSeq;
 
-		for( const auto& [id, asset] : Assets )
+		for( const auto& [id, asset] : rAssetMap )
 		{
 			out << YAML::BeginMap;
 
@@ -101,15 +100,47 @@ namespace Saturn {
 
 		out << YAML::EndSeq;
 
+		out << YAML::Key << "Asset Dependencies";
+
+		out << YAML::BeginSeq;
+
+		for( const auto& [id, dep] : AssetManager::Get().GetAssetDependencies() )
+		{
+			out << YAML::BeginMap;
+
+			out << YAML::Key << "DependencyID" << YAML::Value << id;
+
+			out << YAML::Key << "Dependencies";
+			
+			out << YAML::BeginSeq;
+			for( const auto& [dependsOn, Type] : dep )
+			{
+				// Only write Asset Dependencies that are Assets because the AssetManager does not deal with Components or Entities
+				// The Asset Manager only wants Assets
+				if( Type != AssetDependencyType::Asset )
+					continue;
+
+				out << YAML::BeginMap;
+				out << YAML::Key << "DependsOnMe" << YAML::Value << dependsOn;
+				out << YAML::Key << "Type" << YAML::Value << (int)Type;
+				out << YAML::EndMap;
+			}
+			out << YAML::EndSeq;
+
+			out << YAML::EndMap;
+		}
+
+		out << YAML::EndSeq;
+
 		out << YAML::EndMap;
 
-		std::ofstream stream( rAssetRegistry->GetPath() );
+		std::ofstream stream( AssetManager::Get().GetAssetRegistry()->GetPath() );
 		stream << out.c_str();
 	}
 
-	void AssetRegistrySerialiser::Deserialise( Ref<AssetRegistry> AssetRegistry )
+	void AssetManagerSerialiser::Deserialise()
 	{
-		std::ifstream FileIn( AssetRegistry->GetPath() );
+		std::ifstream FileIn( AssetManager::Get().GetAssetRegistry()->GetPath() );
 		std::stringstream ss;
 		ss << FileIn.rdbuf();
 
@@ -119,6 +150,8 @@ namespace Saturn {
 
 		if( assets.IsNull() )
 			return;
+
+		Ref<AssetRegistry>& rAssetRegistry = AssetManager::Get().GetAssetRegistry();
 
 		bool differingAssetVersions = false;
 		for( auto asset : assets )
@@ -131,9 +164,9 @@ namespace Saturn {
 			// Fallback to newest version if no version is present.
 			auto version = asset[ "Version" ].as< uint32_t >( SAT_CURRENT_VERSION );
 
-			AssetRegistry->AddAsset( assetID );
+			rAssetRegistry->AddAsset( assetID );
 
-			Ref<Asset> DeserialisedAsset = AssetRegistry->FindAsset( assetID );
+			Ref<Asset> DeserialisedAsset = rAssetRegistry->FindAsset( assetID );
 
 #if defined(SAT_PLATFORM_WINDOWS)
 			std::wstring windowsPath = path.wstring();
@@ -165,6 +198,25 @@ namespace Saturn {
 		if( differingAssetVersions )
 		{
 			SAT_CORE_WARN( "In order to fix differing versions go to \"Project->Upgrade Assets\" in the editor title bar." );
+		}
+
+		auto assetDependencies = data[ "Asset Dependencies" ];
+		if( !assetDependencies.IsNull() )
+		{
+			for( auto assetDep : assetDependencies )
+			{
+				UUID depID = assetDep[ "DependencyID" ].as< uint64_t >();
+
+				auto deps = data[ "Dependencies" ];
+
+				for( auto assetDep : assetDependencies )
+				{
+					UUID dependsOn = assetDep[ "DependsOnMe" ].as< uint64_t >();
+					AssetDependencyType depType = ( AssetDependencyType ) assetDep[ "Type" ].as< std::underlying_type<AssetDependencyType>::type >();
+
+					AssetManager::Get().RegisterAssetDependency( depID, dependsOn, depType );
+				}
+			}
 		}
 	}
 

@@ -94,6 +94,7 @@ namespace Saturn {
 
 		void ClearSearchQuery();
 		void DrawImportSoundPopup();
+		void DrawDeleteAssetPopup();
 		void DrawImportMeshPopup();
 
 		void GetContentFiles( bool clear );
@@ -127,9 +128,11 @@ namespace Saturn {
 		// Popup data
 		std::string m_ClassInstanceName;
 		std::string m_NewClassName;
+		Ref<Asset> m_AssetToDelete = nullptr;
 
 		bool m_OpenScriptsPopup = false;
 		bool m_OpenClassInstancePopup = false;
+		bool m_ShowDeleteAssetPopup = false;
 		bool m_RenderUnclipped = false;
 	};
 }

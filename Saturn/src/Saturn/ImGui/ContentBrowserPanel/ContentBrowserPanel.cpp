@@ -47,7 +47,7 @@
 #include "Saturn/Asset/AssetManager.h"
 #include "Saturn/Vulkan/Mesh.h"
 
-#include "Saturn/Serialisation/AssetRegistrySerialiser.h"
+#include "Saturn/Serialisation/AssetManagerSerialiser.h"
 
 #include "Saturn/Asset/Prefab.h"
 #include "Saturn/Audio/Sound.h"
@@ -258,7 +258,11 @@ namespace Saturn {
 				{
 					for( auto& rItem : m_SelectedItems )
 					{
-						rItem->Delete();
+						if( !rItem->Delete() ) 
+						{
+							m_AssetToDelete = rItem->GetAsset();
+							m_ShowDeleteAssetPopup = true;
+						}
 					}
 				}
 			}
@@ -295,8 +299,8 @@ namespace Saturn {
 
 					asset->SetAbsolutePath( m_CurrentPath / path.filename() );
 
-					AssetRegistrySerialiser ars;
-					ars.Serialise( AssetManager::Get().GetAssetRegistry() );
+					AssetManagerSerialiser ars;
+					ars.Serialise();
 				}
 
 				// Meshes
@@ -379,8 +383,8 @@ namespace Saturn {
 				MaterialAssetSerialiser mas;
 				mas.Serialise( asset );
 
-				AssetRegistrySerialiser ars;
-				ars.Serialise( AssetManager::Get().GetAssetRegistry() );
+				AssetManagerSerialiser ars;
+				ars.Serialise();
 
 				UpdateFiles( true );
 				
@@ -407,8 +411,8 @@ namespace Saturn {
 				PhysicsMaterialAssetSerialiser mas;
 				mas.Serialise( materialAsset );
 
-				AssetRegistrySerialiser ars;
-				ars.Serialise( AssetManager::Get().GetAssetRegistry() );
+				AssetManagerSerialiser ars;
+				ars.Serialise();
 
 				UpdateFiles( true );
 				FindAndRenameItem( asset->Name );
@@ -696,6 +700,7 @@ namespace Saturn {
 
 			DrawImportSoundPopup();
 			DrawImportMeshPopup();
+			DrawDeleteAssetPopup();
 
 			if( m_OpenScriptsPopup )
 				ImGui::OpenPopup( "Create A New Class##Create_Script" );
@@ -769,8 +774,8 @@ namespace Saturn {
 					// TODO: Get the correct source files.
 					SourceFileTemplateHelper::CreateEntitySourceFiles( m_CurrentPath, m_NewClassName.c_str() );
 
-					AssetRegistrySerialiser ars;
-					ars.Serialise( AssetManager::Get().GetAssetRegistry() );
+					AssetManagerSerialiser ars;
+					ars.Serialise();
 
 					PopupModified = true;
 
@@ -1021,13 +1026,78 @@ namespace Saturn {
 			{
 				exitPopup();
 
-				AssetRegistrySerialiser ars;
-				ars.Serialise( AssetManager::Get().GetAssetRegistry() );
+				AssetManagerSerialiser ars;
+				ars.Serialise();
 
 				UpdateFiles( true );
 
 				ImGui::CloseCurrentPopup();
 			}
+
+			ImGui::EndPopup();
+		}
+#endif
+	}
+
+	void ContentBrowserPanel::DrawDeleteAssetPopup()
+	{
+#if !defined(SAT_DIST)
+		if( m_ShowDeleteAssetPopup )
+			ImGui::OpenPopup( "Delete Asset##DELETEASSET" );
+
+		bool PopupModified = false;
+
+		ImGui::SetNextWindowPos( ImGui::GetMainViewport()->GetCenter(), ImGuiCond_FirstUseEver, ImVec2( 0.5f, 0.5f ) );
+		if( ImGui::BeginPopupModal( "Delete Asset##DELETEASSET", &m_ShowDeleteAssetPopup, ImGuiWindowFlags_NoSavedSettings ) )
+		{
+			auto& rDependencies = AssetManager::Get().GetAssetDependenciesForAsset( m_AssetToDelete );
+
+			ImGui::Text( "Are you sure you want to delete this asset?" );
+			ImGui::Text( "\"%s\" has %i dependencies.", m_AssetToDelete->Name.c_str(), rDependencies.size() );
+			ImGui::Text( "Deleting the asset cause everything that depends on \"%s\" to no longer be valid", m_AssetToDelete->Name.c_str() );
+
+			for( const auto& [depID, type] : rDependencies )
+			{
+				if( type == AssetDependencyType::Asset )
+				{
+					ImGui::Text( "Dependency Asset ID: %llu", depID );
+				}
+				else
+				{
+					// Get scene and check for dependencies
+					if( GActiveScene != nullptr )
+					{
+						ImGui::Text( "Dependency Entity ID: %llu", depID );
+						
+						if( Ref<Entity> entity = GActiveScene->FindEntityByID( depID ); entity != nullptr )
+						{
+							ImGui::Text( "Entity %s relies on Asset: %llu", entity->GetName().c_str() );
+							ImGui::Text( "Deleting this asset would invalidate \"%s\"", entity->GetName().c_str() );
+						}
+					}
+				}
+			}
+
+			ImGui::Text( "Please note that only entity/component dependencies in the active are shown." );
+
+			ImGui::BeginHorizontal( "##options" );
+			
+			if( ImGui::Button( "Delete" ) )
+			{
+				m_ShowDeleteAssetPopup = false;
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::Spring();
+
+			if( ImGui::Button( "Cancel" ) )
+			{
+				m_AssetToDelete = nullptr;
+				m_ShowDeleteAssetPopup = false;
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndHorizontal();
 
 			ImGui::EndPopup();
 		}
@@ -1257,8 +1327,8 @@ namespace Saturn {
 			{
 				exitPopup();
 
-				AssetRegistrySerialiser ars;
-				ars.Serialise( AssetManager::Get().GetAssetRegistry() );
+				AssetManagerSerialiser ars;
+				ars.Serialise();
 
 				UpdateFiles( true );
 

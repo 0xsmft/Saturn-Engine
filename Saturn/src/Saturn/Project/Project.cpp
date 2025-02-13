@@ -31,7 +31,7 @@
 
 #include "Saturn/Serialisation/EngineSettingsSerialiser.h"
 #include "Saturn/Serialisation/ProjectSerialiser.h"
-#include "Saturn/Serialisation/AssetRegistrySerialiser.h"
+#include "Saturn/Serialisation/AssetManagerSerialiser.h"
 
 #include "Saturn/Asset/AssetManager.h"
 
@@ -160,8 +160,8 @@ namespace Saturn {
 
 		if( FileChanged )
 		{
-			AssetRegistrySerialiser ars;
-			ars.Serialise( AssetManager::Get().GetAssetRegistry() );
+			AssetManagerSerialiser ars;
+			ars.Serialise();
 		}
 	}
 
@@ -185,8 +185,8 @@ namespace Saturn {
 
 		if( FileChanged )
 		{
-			AssetRegistrySerialiser ars;
-			ars.Serialise( AssetManager::Get().GetAssetRegistry() );
+			AssetManagerSerialiser ars;
+			ars.Serialise();
 		}
 	}
 
@@ -308,8 +308,8 @@ namespace Saturn {
 
 		AssetManager::Get().BumpAssetVersion( SAT_CURRENT_VERSION );
 		
-		AssetRegistrySerialiser ars;
-		ars.Serialise( AssetManager::Get().GetAssetRegistry() );
+		AssetManagerSerialiser ars;
+		ars.Serialise();
 	}
 
 	bool Project::HasPremakeFile()

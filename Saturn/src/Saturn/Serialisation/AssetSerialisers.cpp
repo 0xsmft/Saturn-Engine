@@ -122,7 +122,8 @@ namespace Saturn {
 		if( data.IsNull() )
 			return false;
 
-		auto materialAsset = Ref<MaterialAsset>::Create( nullptr );
+		// Create new Material Asset with rAsset being the base Asset
+		auto materialAsset = Ref<MaterialAsset>::Create( rAsset, nullptr );
 
 		auto materialData = data[ "Material" ];
 
@@ -139,6 +140,7 @@ namespace Saturn {
 			texture = Ref<Texture2D>::Create( Project::GetActiveProject()->FilepathAbs( rAsset->Path ), AddressingMode::Repeat );
 
 			materialAsset->SetAlbeoMap( texture );
+			AssetManager::Get().RegisterAssetDependency( albedoID, rAsset->ID );
 		}
 
 		auto useNormal = materialData[ "UseNormal" ].as<float>();
@@ -152,6 +154,7 @@ namespace Saturn {
 			texture = Ref<Texture2D>::Create( Project::GetActiveProject()->FilepathAbs( rAsset->Path ), AddressingMode::Repeat );
 
 			materialAsset->SetNormalMap( texture );
+			AssetManager::Get().RegisterAssetDependency( normalID, rAsset->ID );
 		}
 
 		auto metalness = materialData[ "Metalness" ].as<float>();
@@ -165,6 +168,7 @@ namespace Saturn {
 			texture = Ref<Texture2D>::Create( Project::GetActiveProject()->FilepathAbs( rAsset->Path ), AddressingMode::Repeat );
 
 			materialAsset->SetMetallicMap( texture );
+			AssetManager::Get().RegisterAssetDependency( metallicID, rAsset->ID );
 		}
 
 		auto val = materialData[ "Roughness" ].as<float>();
@@ -178,8 +182,8 @@ namespace Saturn {
 			texture = Ref<Texture2D>::Create( Project::GetActiveProject()->FilepathAbs( rAsset->Path ), AddressingMode::Repeat );
 
 			materialAsset->SetRoughnessMap( texture );
+			AssetManager::Get().RegisterAssetDependency( roughnessID, rAsset->ID );
 		}
-		
 
 		auto emissive = materialData[ "Emissive" ].as<float>( 0.0f );
 		materialAsset->SetEmissive( emissive );
@@ -188,31 +192,10 @@ namespace Saturn {
 		// However, we don't always know if it will ever be bound, for instance if we open a material in the material asset viewer, the material will not bound.
 		// Meaning that the textures will not be updated.
 		materialAsset->ForceUpdate();
-
-		// TODO: (Asset) Fix this.
-		struct
-		{
-			UUID ID;
-			AssetType Type;
-			uint32_t Flags;
-			std::filesystem::path Path;
-			std::string Name;
-		} OldAssetData = {};
-
-		OldAssetData.ID = rAsset->ID;
-		OldAssetData.Type = rAsset->Type;
-		OldAssetData.Flags = rAsset->Flags;
-		OldAssetData.Path = rAsset->Path;
-		OldAssetData.Name = rAsset->Name;
-
-		rAsset = materialAsset;
-		rAsset->ID = OldAssetData.ID;
-		rAsset->Type = OldAssetData.Type;
-		rAsset->Flags = OldAssetData.Flags;
-		rAsset->Path = OldAssetData.Path;
-		rAsset->Name = OldAssetData.Name;
-
 		materialAsset->SetName( rAsset->Name );
+
+		// Set rAsset reference to point to our new MaterialAsset
+		rAsset = materialAsset;
 
 		return true;
 	}
@@ -412,10 +395,13 @@ namespace Saturn {
 #endif
 
 		auto realMeshPath = Project::GetActiveProject()->FilepathAbs( filepath );
-		auto mesh = Ref<StaticMesh>::Create( realMeshPath.string() );
+		auto mesh = Ref<StaticMesh>::Create( rAsset, realMeshPath.string() );
 
 		mesh->SetAttachedShape( (ShapeType)shapeType );
 		mesh->SetPhysicsMaterial( physicsMaterial );
+
+		if( physicsMaterial != 0 )
+			AssetManager::Get().RegisterAssetDependency( physicsMaterial, rAsset->ID );
 
 		// Build master material registry
 		auto materialRegistry = meshData[ "MaterialRegistry" ];
@@ -434,6 +420,7 @@ namespace Saturn {
 					if( id != 0 )
 					{
 						mesh->GetMaterialRegistry()->AddTargetMaterialAsset( id );
+						AssetManager::Get().RegisterAssetDependency( id, rAsset->ID );
 					}
 
 					if( asset != nullptr )
@@ -454,29 +441,9 @@ namespace Saturn {
 				}
 			}
 		}
-
-		// TODO: (Asset) Fix this.
-		struct
-		{
-			UUID ID;
-			AssetType Type;
-			uint32_t Flags;
-			std::filesystem::path Path;
-			std::string Name;
-		} OldAssetData = {};
-
-		OldAssetData.ID = rAsset->ID;
-		OldAssetData.Type = rAsset->Type;
-		OldAssetData.Flags = rAsset->Flags;
-		OldAssetData.Path = rAsset->Path;
-		OldAssetData.Name = rAsset->Name;
-
+		
+		// Set rAsset reference to point to our new StaticMesh
 		rAsset = mesh;
-		rAsset->ID = OldAssetData.ID;
-		rAsset->Type = OldAssetData.Type;
-		rAsset->Flags = OldAssetData.Flags;
-		rAsset->Path = OldAssetData.Path;
-		rAsset->Name = OldAssetData.Name;
 
 		return true;
 	}
@@ -534,7 +501,7 @@ namespace Saturn {
 
 		auto realPath = Project::GetActiveProject()->FilepathAbs( filepath );
 
-		auto soundSpec = Ref<SoundSpecification>::Create();
+		auto soundSpec = Ref<SoundSpecification>::Create( rAsset );
 		soundSpec->SoundSourcePath = realPath;
 		soundSpec->OriginalImportPath = importPath;
 
@@ -543,28 +510,8 @@ namespace Saturn {
 		soundSpec->LastWriteTime = lastWriteTime;
 #endif
 
-		// TODO: (Asset) Fix this.
-		struct
-		{
-			UUID ID;
-			AssetType Type;
-			uint32_t Flags;
-			std::filesystem::path Path;
-			std::string Name;
-		} OldAssetData = {};
-
-		OldAssetData.ID = rAsset->ID;
-		OldAssetData.Type = rAsset->Type;
-		OldAssetData.Flags = rAsset->Flags;
-		OldAssetData.Path = rAsset->Path;
-		OldAssetData.Name = rAsset->Name;
-
+		// Set rAsset reference to point to our new SoundSpecification
 		rAsset = soundSpec;
-		rAsset->ID = OldAssetData.ID;
-		rAsset->Type = OldAssetData.Type;
-		rAsset->Flags = OldAssetData.Flags;
-		rAsset->Path = OldAssetData.Path;
-		rAsset->Name = OldAssetData.Name;
 
 		return true;
 	}
@@ -624,30 +571,10 @@ namespace Saturn {
 
 		auto flags = materialData[ "Flags" ].as<uint32_t>();
 
-		auto material = Ref<PhysicsMaterialAsset>::Create( staticFriction, dynamicFriction, restitution, (PhysicsMaterialFlags)flags );
+		auto material = Ref<PhysicsMaterialAsset>::Create( rAsset, staticFriction, dynamicFriction, restitution, (PhysicsMaterialFlags)flags );
 
-		// TODO: (Asset) Fix this.
-		struct
-		{
-			UUID ID;
-			AssetType Type;
-			uint32_t Flags;
-			std::filesystem::path Path;
-			std::string Name;
-		} OldAssetData = {};
-
-		OldAssetData.ID = rAsset->ID;
-		OldAssetData.Type = rAsset->Type;
-		OldAssetData.Flags = rAsset->Flags;
-		OldAssetData.Path = rAsset->Path;
-		OldAssetData.Name = rAsset->Name;
-
+		// Set rAsset reference to point to our new PhysicsMaterialAsset
 		rAsset = material;
-		rAsset->ID = OldAssetData.ID;
-		rAsset->Type = OldAssetData.Type;
-		rAsset->Flags = OldAssetData.Flags;
-		rAsset->Path = OldAssetData.Path;
-		rAsset->Name = OldAssetData.Name;
 
 		return true;
 	}

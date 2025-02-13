@@ -36,6 +36,45 @@
 
 namespace Saturn {
 
+	struct AssetDependency
+	{
+		UUID Identifier = 0;
+
+		enum class AssetDependencyType
+		{
+			Asset = BIT( 0 ), // Asset interdependence
+			Component = BIT( 1 ),
+			Entity = BIT( 2 )
+		};
+
+		AssetDependencyType Type = AssetDependencyType::Asset;
+
+		bool operator==( const AssetDependency& rOther ) const noexcept
+		{
+			return Identifier == rOther.Identifier && Type == rOther.Type;
+		}
+	};
+}
+
+namespace std {
+
+	template <>
+	struct hash<Saturn::AssetDependency>
+	{
+		std::size_t operator()( const Saturn::AssetDependency& rDependency ) const noexcept
+		{
+			std::size_t h1 = std::hash<Saturn::UUID>{}( rDependency.Identifier );
+			std::size_t h2 = std::hash<underlying_type<Saturn::AssetDependency::AssetDependencyType>::type>{}( static_cast< underlying_type<Saturn::AssetDependency::AssetDependencyType>::type >( rDependency.Type ) );
+
+			return h1 ^ ( h2 << 1 );
+		}
+	};
+}
+
+namespace Saturn {
+
+	using AssetDependencyType = AssetDependency::AssetDependencyType;
+
 	class AssetManager : public RefTarget
 	{
 	public:
@@ -43,27 +82,25 @@ namespace Saturn {
 	public:
 		AssetManager();
 		~AssetManager() { Terminate(); }
+
 		void Terminate();
 
-		Ref<Asset> FindAsset( AssetID id, AssetRegistryType Dst );
+	public:
+		AssetID CreateAsset( AssetType type );
+
 		Ref<Asset> FindAsset( AssetID id );
+		Ref<Asset> FindAsset( const std::string& rName, AssetType type );
 
-		Ref<Asset> TryFindAsset( AssetID id );
-
-		AssetID CreateAsset( AssetType type, AssetRegistryType Dst = AssetRegistryType::Game );
-
-		// Note:
-		// rPath must be a relative path.
-		Ref<Asset> FindAsset( const std::filesystem::path& rPath, AssetRegistryType Dst = AssetRegistryType::Game );
-		Ref<Asset> FindAsset( const std::string& rName, AssetType type, AssetRegistryType Dst = AssetRegistryType::Game );
+		// Note: rPath must be a relative path.
+		Ref<Asset> FindAsset( const std::filesystem::path& rPath );
 
 		template<typename Ty, typename... Args>
-		Ref<Asset> CreateAsset( AssetType type, Args&&... rrArgs, AssetRegistryType Dst = AssetRegistryType::Game )
+		Ref<Asset> CreateAssetAs( AssetType type, Args&&... rrArgs )
 		{
 			static_assert( std::is_base_of<Asset, Ty>::value, "Ty must be a child of Asset class!" );
 
 			// This might not be the best way, first we create the "real" asset and add it to the registry, then create the template asset.
-			auto id = CreateAsset( type, Dst );
+			auto id = CreateAsset( type );
 
 			Ref<Ty> asset = Ref<Ty>::Create( std::forward<Args>( rrArgs )... );
 			asset->ID = id;
@@ -72,61 +109,29 @@ namespace Saturn {
 			return asset;
 		}
 
+		// Import Asset using Ty
 		// Where Ty is an asset.
 		// This will try to find the loaded asset, if it does not exists it will try to load it.
 		// \return Ref<Ty> if found, nullptr if not
 		template<typename Ty>
-		Ref<Ty> GetAssetAs( AssetID id, AssetRegistryType Dst = AssetRegistryType::Game )
+		Ref<Ty> GetAssetAs( AssetID id )
 		{
 			static_assert( std::is_base_of<Asset, Ty>::value, "Ty must be a child of Asset class!" );
 
-			switch( Dst )
-			{
-				case AssetRegistryType::Game: 
-					return GetAssetAs<Ty>( m_Assets, id );
-
-				case AssetRegistryType::Editor:
-				case AssetRegistryType::Unknown:
-				default:
-					return nullptr;
-			}
+			return ImportAssetAs<Ty>( m_Assets, id );
 		}
 
 		// WARNING: THIS WILL PERMANENTLY REMOVE THE ASSET FROM THE REGISTRY!
-		// PLEASE USE "TerminateAsset" IF YOU INTENT TO UNLOAD THE ASSET!
-		void RemoveAsset( AssetID id, AssetRegistryType Dst = AssetRegistryType::Game )
+		void RemoveAsset( AssetID id )
 		{
-			switch( Dst )
-			{
-				case AssetRegistryType::Game:
-				{
-					m_Assets->RemoveAsset( id );
-				} break;
+			m_Assets->RemoveAsset( id );
 
-				// Cannot delete asset from the editor asset registry (read only).
-				case AssetRegistryType::Editor: 
-				case AssetRegistryType::Unknown:
-				default:
-					break;
-			}
-
-			Save( Dst );
+			Save();
 		}
 
-		void TerminateAsset( AssetID id, AssetRegistryType Dst = AssetRegistryType::Game )
+		void UnloadAsset( AssetID id )
 		{
-			switch( Dst )
-			{
-				case AssetRegistryType::Game:
-				{
-					m_Assets->TerminateAsset( id );
-				} break;
-
-				case AssetRegistryType::Editor:
-				case AssetRegistryType::Unknown:
-				default:
-					break;
-			}
+			m_Assets->TerminateAsset( id );
 		}
 
 		[[deprecated( "Saturn::AssetManager::GetCombinedAssetMap is deprecated and will be removed. Consider using \"AssetManager::GetAssetRegistry::GetAssetMap\" instead." )]]
@@ -138,48 +143,24 @@ namespace Saturn {
 		Ref<AssetRegistry>& GetAssetRegistry() { return m_Assets; }
 		const Ref<AssetRegistry>& GetAssetRegistry() const { return m_Assets; }
 
-		bool IsAssetLoaded( AssetID id, AssetRegistryType Dst = AssetRegistryType::Game );
+		bool IsAssetLoaded( AssetID id );
 
-		AssetID PathToID( const std::filesystem::path& rPath, AssetRegistryType Dst = AssetRegistryType::Game );
+		AssetID PathToID( const std::filesystem::path& rPath );
 
-		void Save( AssetRegistryType Dst = AssetRegistryType::Game );
+		void Save();
 
 		template<typename Func>
-		void Each( Func Function, AssetRegistryType Dst = AssetRegistryType::Game ) 
+		void Each( Func Function ) 
 		{
-			Ref<AssetRegistry> TargetRegistry = nullptr;
-
-			switch( Dst )
-			{
-				case Saturn::AssetRegistryType::Game: 
-				{
-					TargetRegistry = m_Assets;
-				} break;
-
-				case Saturn::AssetRegistryType::Editor:
-				case Saturn::AssetRegistryType::Unknown:
-				default:
-					return;
-			}
-
-			for( auto&& [ id, asset ] : TargetRegistry->GetAssetMap() )
+			for( auto&& [ id, asset ] : m_Assets->GetAssetMap() )
 			{
 				Function( asset );
 			}
 		}
 
-		[[nodiscard]] bool DoesAssetIDExist( AssetID id, AssetRegistryType Dst = AssetRegistryType::Game ) 
+		[[nodiscard]] bool DoesAssetIDExist( AssetID id ) 
 		{
-			switch( Dst )
-			{
-				case Saturn::AssetRegistryType::Game:
-					return m_Assets->DoesIDExists( id );
-
-				case Saturn::AssetRegistryType::Editor:
-				case Saturn::AssetRegistryType::Unknown:
-				default:
-					return false;
-			}
+			return m_Assets->DoesIDExists( id );
 		}
 
 		void BumpAssetVersion( uint32_t newVersion ) 
@@ -192,9 +173,39 @@ namespace Saturn {
 
 		size_t GetAssetRegistrySize() { return m_Assets->GetSize(); }
 
+		void RegisterAssetDependency( AssetID dependencyID, UUID dependsOn, AssetDependency::AssetDependencyType type = AssetDependencyType::Asset )
+		{
+			m_AssetDependencies[ dependencyID ].insert( { dependsOn, type } );
+		}
+
+		void UnregisterAssetDependency( AssetID dependencyID, UUID dependsOn, AssetDependency::AssetDependencyType type = AssetDependencyType::Asset )
+		{
+			if( m_AssetDependencies.find( dependencyID ) != m_AssetDependencies.end() )
+			{
+				m_AssetDependencies[ dependencyID ].erase( { dependsOn, type } );
+			}
+		}
+
+		const std::unordered_map<AssetID, std::unordered_set<AssetDependency>> GetAssetDependencies() const
+		{
+			return m_AssetDependencies;
+		}
+
+		const std::unordered_set<AssetDependency> GetAssetDependenciesForAsset( const Ref<Asset> asset ) const
+		{
+			if( m_AssetDependencies.contains( asset->ID ) )
+			{
+				return m_AssetDependencies.at( asset->ID );
+			}
+			else
+				return {};
+		}
+
+		[[nodiscard]] bool DoesAssetHaveDependencies( Ref<Asset> asset );
+
 	private:
 		template<typename Ty>
-		Ref<Ty> GetAssetAs( Ref<AssetRegistry> TargetRegistry, AssetID id )
+		Ref<Ty> ImportAssetAs( Ref<AssetRegistry> TargetRegistry, AssetID id )
 		{
 			auto AssetItr = TargetRegistry->m_Assets.find( id );
 
@@ -219,6 +230,10 @@ namespace Saturn {
 
 	private:
 		Ref<AssetRegistry> m_Assets = nullptr;
+
+		// An Asset in our registry -> unordered_set of AssetDependency who depend on Asset
+		//                 AssetID                     WhatDependsOnMe
+		std::unordered_map<AssetID, std::unordered_set<AssetDependency>> m_AssetDependencies;
 
 		// TODO: Don't hard code this.
 #if defined(SAT_DIST)

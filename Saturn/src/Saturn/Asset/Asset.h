@@ -255,7 +255,7 @@ namespace Saturn {
 		}
 
 	private:
-		friend class AssetRegistrySerialiser;
+		friend class AssetManagerSerialiser;
 		friend class AssetRegistry;
 	};
 

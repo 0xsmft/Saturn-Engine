@@ -28,18 +28,18 @@
 
 #pragma once
 
-#include "Saturn/Asset/AssetRegistry.h"
+#include "Saturn/Asset/AssetManager.h"
 
 namespace Saturn {
 
-	class AssetRegistrySerialiser
+	class AssetManagerSerialiser
 	{
 	public:
-		AssetRegistrySerialiser() = default;
-		~AssetRegistrySerialiser() = default;
+		AssetManagerSerialiser() = default;
+		~AssetManagerSerialiser() = default;
 
-		void Serialise( const Ref<AssetRegistry>& rAssetRegistry );
-		void Deserialise( Ref<AssetRegistry> AssetRegistry );
+		static void Serialise();
+		static void Deserialise();
 	};
 
 }

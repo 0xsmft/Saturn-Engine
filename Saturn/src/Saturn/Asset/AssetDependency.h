@@ -4,7 +4,7 @@
 *                                                                                           *
 * MIT License                                                                               *
 *                                                                                           *
-* Copyright (c) 2020 - 2025 BEAST                                                           *
+* Copyright (c) 2020 - 2024 BEAST                                                           *
 *                                                                                           *
 * Permission is hereby granted, free of charge, to any person obtaining a copy              *
 * of this software and associated documentation files (the "Software"), to deal             *
@@ -26,83 +26,70 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "AssetManager.h"
+#pragma once
 
-#include "Saturn/Core/App.h"
-#include "Saturn/Serialisation/AssetManagerSerialiser.h"
+#include "Asset.h"
 
 namespace Saturn {
 
-	AssetManager::AssetManager()
+	class AssetDependencyBase
 	{
-		SingletonStorage::AddSingleton( this );
-
-		auto project = Project::GetActiveProject();
-		auto assetDir = project->GetFullAssetPath();
-		assetDir /= "AssetRegistry.sreg";
-
-		m_Assets = Ref<AssetRegistry>::Create();
-		m_Assets->m_Path = assetDir;
-
-		// In distribution builds asset registry is loaded by the Asset Bundle!
 #if !defined(SAT_DIST)
-		AssetManagerSerialiser ars;
-		ars.Deserialise();
+	public:
+		virtual void OnUpdate( AssetID ) = 0;
+	protected:
+		void UnregisterAssetDependency( AssetID id );
+		void RegisterAssetDependency( AssetID id );
 #endif
-	}
+	};
 
-	void AssetManager::Terminate()
+	template<Saturn::AssetType... Types>
+	class AssetDependency : public AssetDependencyBase
 	{
-		if( m_Assets )
-			m_Assets = nullptr;
-	}
+	public:
+		AssetDependency() = default;
+		~AssetDependency() = default;
 
-	Ref<Asset> AssetManager::FindAsset( AssetID id )
-	{
-		return m_Assets->FindAsset( id );
-	}
+		AssetDependency( Saturn::AssetID id );
 
-	Ref<Asset> AssetManager::FindAsset( const std::filesystem::path& rPath )
-	{
-		return m_Assets->FindAsset( rPath );
-	}
+	public:
+		Saturn::AssetID AssetID = 0;
 
-	Ref<Asset> AssetManager::FindAsset( const std::string& rName, AssetType type )
-	{
-		return m_Assets->FindAsset( rName, type );
-	}
+		operator Saturn::AssetID() { return AssetID; }
+		operator const Saturn::AssetID() const { return AssetID; }
 
-	void AssetManager::RemoveAsset( AssetID id )
-	{
-		m_Assets->RemoveAsset( id );
-		Save();
-	}
+		operator uint64_t() { return AssetID; }
+		operator const uint64_t() const { return AssetID; }
 
-	AssetID AssetManager::CreateAsset( AssetType type )
-	{
-		return m_Assets->CreateAsset( type );
-	}
+		using TypesTuple = std::tuple<std::integral_constant<Saturn::AssetType, Types>...>;
 
-	bool AssetManager::IsAssetLoaded( AssetID id )
-	{
-		return m_Assets->IsAssetLoaded( id );
-	}
+		static constexpr std::array<Saturn::AssetType, sizeof...( Types )> GetTypes()
+		{
+			return { Types... };
+		}
 
-	AssetID AssetManager::PathToID( const std::filesystem::path& rPath )
-	{
-		return m_Assets->PathToID( rPath );
-	}
+#if !defined(SAT_DIST)
+		void OnUpdate( Saturn::AssetID newID )
+		{
+			AssetID = newID;
+		}
 
-	void AssetManager::Save()
-	{
-		AssetManagerSerialiser ars;
-		ars.Serialise();
-	}
+		Saturn::AssetID operator=( const Saturn::AssetID& rOther ) noexcept
+		{
+			UnregisterAssetDependency( AssetID );
+			
+			AssetID = rOther;
+			
+			RegisterAssetDependency( AssetID );
 
-	bool AssetManager::DoesAssetHaveDependencies( Ref<Asset> asset )
-	{
-		return m_AssetDependencies.contains( asset->ID );
-	}
-
+			return AssetID;
+		}
+#else
+		Saturn::AssetID operator=( const Saturn::AssetID& rOther ) noexcept
+		{
+			AssetID = rOther;
+			return AssetID;
+		}
+#endif
+	};
 }

@@ -4,7 +4,7 @@
 *                                                                                           *
 * MIT License                                                                               *
 *                                                                                           *
-* Copyright (c) 2020 - 2025 BEAST                                                           *
+* Copyright (c) 2020 - 2024 BEAST                                                           *
 *                                                                                           *
 * Permission is hereby granted, free of charge, to any person obtaining a copy              *
 * of this software and associated documentation files (the "Software"), to deal             *
@@ -29,80 +29,23 @@
 #include "sppch.h"
 #include "AssetManager.h"
 
-#include "Saturn/Core/App.h"
-#include "Saturn/Serialisation/AssetManagerSerialiser.h"
-
 namespace Saturn {
 
-	AssetManager::AssetManager()
+	template<Saturn::AssetType... Types>
+	Saturn::AssetDependency<Types...>::AssetDependency( Saturn::AssetID id )
+		: AssetID( id )
 	{
-		SingletonStorage::AddSingleton( this );
-
-		auto project = Project::GetActiveProject();
-		auto assetDir = project->GetFullAssetPath();
-		assetDir /= "AssetRegistry.sreg";
-
-		m_Assets = Ref<AssetRegistry>::Create();
-		m_Assets->m_Path = assetDir;
-
-		// In distribution builds asset registry is loaded by the Asset Bundle!
-#if !defined(SAT_DIST)
-		AssetManagerSerialiser ars;
-		ars.Deserialise();
-#endif
+		AssetManager::Get().RegisterAssetDependency( AssetID, this );
 	}
 
-	void AssetManager::Terminate()
+	void AssetDependencyBase::UnregisterAssetDependency( AssetID id )
 	{
-		if( m_Assets )
-			m_Assets = nullptr;
+		AssetManager::Get().UnregisterAssetDependency( id, this );
 	}
 
-	Ref<Asset> AssetManager::FindAsset( AssetID id )
+	void AssetDependencyBase::RegisterAssetDependency( AssetID id )
 	{
-		return m_Assets->FindAsset( id );
-	}
-
-	Ref<Asset> AssetManager::FindAsset( const std::filesystem::path& rPath )
-	{
-		return m_Assets->FindAsset( rPath );
-	}
-
-	Ref<Asset> AssetManager::FindAsset( const std::string& rName, AssetType type )
-	{
-		return m_Assets->FindAsset( rName, type );
-	}
-
-	void AssetManager::RemoveAsset( AssetID id )
-	{
-		m_Assets->RemoveAsset( id );
-		Save();
-	}
-
-	AssetID AssetManager::CreateAsset( AssetType type )
-	{
-		return m_Assets->CreateAsset( type );
-	}
-
-	bool AssetManager::IsAssetLoaded( AssetID id )
-	{
-		return m_Assets->IsAssetLoaded( id );
-	}
-
-	AssetID AssetManager::PathToID( const std::filesystem::path& rPath )
-	{
-		return m_Assets->PathToID( rPath );
-	}
-
-	void AssetManager::Save()
-	{
-		AssetManagerSerialiser ars;
-		ars.Serialise();
-	}
-
-	bool AssetManager::DoesAssetHaveDependencies( Ref<Asset> asset )
-	{
-		return m_AssetDependencies.contains( asset->ID );
+		AssetManager::Get().RegisterAssetDependency( id, this );
 	}
 
 }

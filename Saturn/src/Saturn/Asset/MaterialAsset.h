@@ -58,8 +58,8 @@ namespace Saturn {
 		float GetMetalness();
 		float GetEmissive();
 
-		std::string& GetName() { return m_Material->GetName(); }
-		const std::string& GetName() const { return m_Material->GetName(); }
+		std::string& GetMaterialName() { return m_Material->GetName(); }
+		const std::string& GetMaterialName() const { return m_Material->GetName(); }
 
 		void SetAlbeoMap( Ref<Texture2D>& rTexture );
 		void SetNormalMap( Ref<Texture2D>& rTexture );

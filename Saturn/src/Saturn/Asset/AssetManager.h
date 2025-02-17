@@ -35,48 +35,7 @@
 #include "VFSAssetImporter.h"
 #endif
 
-/*
 namespace Saturn {
-
-	struct AssetDependency
-	{
-		UUID Identifier = 0;
-
-		enum class AssetDependencyType
-		{
-			Asset = BIT( 0 ), // Asset interdependence
-			Component = BIT( 1 ),
-			Entity = BIT( 2 )
-		};
-
-		AssetDependencyType Type = AssetDependencyType::Asset;
-
-		bool operator==( const AssetDependency& rOther ) const noexcept
-		{
-			return Identifier == rOther.Identifier && Type == rOther.Type;
-		}
-	};
-}
-
-namespace std {
-
-	template <>
-	struct hash<Saturn::AssetDependency>
-	{
-		std::size_t operator()( const Saturn::AssetDependency& rDependency ) const noexcept
-		{
-			std::size_t h1 = std::hash<Saturn::UUID>{}( rDependency.Identifier );
-			std::size_t h2 = std::hash<underlying_type<Saturn::AssetDependency::AssetDependencyType>::type>{}( static_cast< underlying_type<Saturn::AssetDependency::AssetDependencyType>::type >( rDependency.Type ) );
-
-			return h1 ^ ( h2 << 1 );
-		}
-	};
-}
-*/
-
-namespace Saturn {
-
-//	using AssetDependencyType = AssetDependency::AssetDependencyType;
 
 	class AssetManager : public RefTarget
 	{
@@ -173,7 +132,8 @@ namespace Saturn {
 
 		void RegisterAssetDependency( AssetID dependencyID, AssetDependencyBase* pBase )
 		{
-			m_AssetDependencies[ dependencyID ].insert( { pBase } );
+			if( dependencyID != 0 )
+				m_AssetDependencies[ dependencyID ].insert( { pBase } );
 		}
 
 		void UnregisterAssetDependency( AssetID dependencyID, AssetDependencyBase* pBase )
@@ -181,6 +141,8 @@ namespace Saturn {
 			if( m_AssetDependencies.find( dependencyID ) != m_AssetDependencies.end() )
 			{
 				m_AssetDependencies[ dependencyID ].erase( { pBase } );
+
+				if( !m_AssetDependencies[ dependencyID ].size() ) m_AssetDependencies.erase( dependencyID );
 			}
 		}
 
@@ -233,7 +195,6 @@ namespace Saturn {
 		//                 AssetID                     WhatDependsOnMe
 		std::unordered_map<AssetID, std::unordered_set<AssetDependencyBase*>> m_AssetDependencies;
 
-		// TODO: Don't hard code this.
 #if defined(SAT_DIST)
 		VFSAssetImporter m_Importer;
 #else

@@ -500,10 +500,8 @@ namespace Saturn {
 		m_StartingRename = true;
 	}
 
-	void ContentBrowserItem::Delete()
+	bool ContentBrowserItem::Delete()
 	{
-		// TODO: Check for asset links.
-
 		if( m_IsDirectory )
 		{
 			AssetManager::Get().Each( [&]( Ref<Asset> asset ) 
@@ -516,6 +514,11 @@ namespace Saturn {
 		}
 		else
 		{
+			if( AssetManager::Get().DoesAssetHaveDependencies( m_Asset ) )
+			{
+				return false;
+			}
+
 			auto relativePath = std::filesystem::relative( m_Path, Project::GetActiveProject()->GetRootDir() );
 			Ref<Asset> asset = AssetManager::Get().FindAsset( relativePath );
 
@@ -524,6 +527,8 @@ namespace Saturn {
 		}
 
 		std::filesystem::remove( m_Path );
+
+		return true;
 	}
 
 	void ContentBrowserItem::ScrollTo()

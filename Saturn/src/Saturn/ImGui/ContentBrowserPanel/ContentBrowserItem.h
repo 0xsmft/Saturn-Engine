@@ -98,7 +98,7 @@ namespace Saturn {
 		void Select();
 		void Deselect();
 		void Rename();
-		void Delete();
+		bool Delete();
 		void ScrollTo();
 
 	private:

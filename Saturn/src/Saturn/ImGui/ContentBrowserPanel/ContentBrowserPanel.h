@@ -128,7 +128,8 @@ namespace Saturn {
 		// Popup data
 		std::string m_ClassInstanceName;
 		std::string m_NewClassName;
-		Ref<Asset> m_AssetToDelete = nullptr;
+
+		Ref<ContentBrowserItem> m_ItemToDelete = nullptr;
 
 		bool m_OpenScriptsPopup = false;
 		bool m_OpenClassInstancePopup = false;

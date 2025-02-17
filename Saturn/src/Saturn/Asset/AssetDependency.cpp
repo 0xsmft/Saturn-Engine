@@ -27,7 +27,7 @@
 */
 
 #include "sppch.h"
-#include "AssetManager.h"
+#include "AssetManager.h" // AssetManager includes AssetDependency.h
 
 namespace Saturn {
 
@@ -38,6 +38,7 @@ namespace Saturn {
 		AssetManager::Get().RegisterAssetDependency( AssetID, this );
 	}
 
+#if !defined(SAT_DIST)
 	void AssetDependencyBase::UnregisterAssetDependency( AssetID id )
 	{
 		AssetManager::Get().UnregisterAssetDependency( id, this );
@@ -47,5 +48,5 @@ namespace Saturn {
 	{
 		AssetManager::Get().RegisterAssetDependency( id, this );
 	}
-
+#endif
 }

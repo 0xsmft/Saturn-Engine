@@ -260,7 +260,7 @@ namespace Saturn {
 					{
 						if( !rItem->Delete() ) 
 						{
-							m_AssetToDelete = rItem->GetAsset();
+							m_ItemToDelete = rItem;
 							m_ShowDeleteAssetPopup = true;
 						}
 					}
@@ -354,40 +354,15 @@ namespace Saturn {
 				}
 
 				asset->SetAbsolutePath( newPath );
-				Ref<MaterialAsset> material = asset;
-				material = Ref<MaterialAsset>::Create( nullptr );
-
-				// TODO: (Asset) Fix this.
-				struct
-				{
-					UUID ID;
-					AssetType Type;
-					uint32_t Flags;
-					std::filesystem::path Path;
-					std::string Name;
-				} OldAssetData = {};
-
-				OldAssetData.ID = asset->ID;
-				OldAssetData.Type = asset->Type;
-				OldAssetData.Flags = asset->Flags;
-				OldAssetData.Path = asset->Path;
-				OldAssetData.Name = asset->Name;
-
-				asset = material;
-				asset->ID = OldAssetData.ID;
-				asset->Type = OldAssetData.Type;
-				asset->Flags = OldAssetData.Flags;
-				asset->Path = OldAssetData.Path;
-				asset->Name = OldAssetData.Name;
+				Ref<MaterialAsset> material = Ref<MaterialAsset>::Create( asset, nullptr );
 
 				MaterialAssetSerialiser mas;
-				mas.Serialise( asset );
+				mas.Serialise( material );
 
 				AssetManagerSerialiser ars;
 				ars.Serialise();
 
 				UpdateFiles( true );
-				
 				FindAndRenameItem( asset->Name );
 			}
 
@@ -969,24 +944,17 @@ namespace Saturn {
 			{
 				auto id = AssetManager::Get().CreateAsset( AssetType::Sound );
 				auto asset = AssetManager::Get().FindAsset( id );
-
-				// Copy the audio source.
-				std::filesystem::copy_file( m_ImportAssetPath, m_CurrentPath / m_ImportAssetPath.filename() );
-
 				auto assetPath = m_CurrentPath / m_ImportAssetPath.filename();
+				
+				// Copy the audio source.
+				std::filesystem::copy_file( m_ImportAssetPath, assetPath );
+
+				// Replace Extension for sound asset
 				assetPath.replace_extension( ".snd" );
-
-				assetPath = std::filesystem::relative( assetPath, Project::GetActiveProject()->GetRootDir() );
-
-				asset->Path = assetPath;
+				asset->SetAbsolutePath( assetPath );
 
 				// Create the asset.
-				auto sound = asset.As<SoundSpecification>();
-				sound = Ref<SoundSpecification>::Create();
-				sound->ID = asset->ID;
-				sound->Path = assetPath;
-				sound->Type = AssetType::Sound;
-				sound->Name = m_ImportAssetPath.stem().string();
+				auto sound = Ref<SoundSpecification>::Create( asset );
 
 				sound->OriginalImportPath = m_ImportAssetPath;
 				sound->SoundSourcePath = m_CurrentPath / m_ImportAssetPath.filename();
@@ -1050,40 +1018,27 @@ namespace Saturn {
 		ImGui::SetNextWindowPos( ImGui::GetMainViewport()->GetCenter(), ImGuiCond_FirstUseEver, ImVec2( 0.5f, 0.5f ) );
 		if( ImGui::BeginPopupModal( "Delete Asset##DELETEASSET", &m_ShowDeleteAssetPopup, ImGuiWindowFlags_NoSavedSettings ) )
 		{
-			auto& rDependencies = AssetManager::Get().GetAssetDependenciesForAsset( m_AssetToDelete );
+			Ref<Asset> assetToDelete = m_ItemToDelete->GetAsset();
+			auto& rDependencies = AssetManager::Get().GetAssetDependenciesForAsset( assetToDelete );
 
-			ImGui::Text( "Are you sure you want to delete this asset?" );
-			ImGui::Text( "\"%s\" has %i dependencies.", m_AssetToDelete->Name.c_str(), rDependencies.size() );
-			ImGui::Text( "Deleting the asset cause everything that depends on \"%s\" to no longer be valid", m_AssetToDelete->Name.c_str() );
+			ImGui::Text( "Are you sure you want to delete this asset? This action can not be undone." );
+			ImGui::Text( "%s has %i dependencies.", assetToDelete->Name.c_str(), rDependencies.size() );
+			ImGui::Text( "Deleting the asset cause everything that depends on \"%s\" to be invalid", assetToDelete->Name.c_str() );
 
-			for( const auto& [depID, type] : rDependencies )
-			{
-				if( type == AssetDependencyType::Asset )
-				{
-					ImGui::Text( "Dependency Asset ID: %llu", depID );
-				}
-				else
-				{
-					// Get scene and check for dependencies
-					if( GActiveScene != nullptr )
-					{
-						ImGui::Text( "Dependency Entity ID: %llu", depID );
-						
-						if( Ref<Entity> entity = GActiveScene->FindEntityByID( depID ); entity != nullptr )
-						{
-							ImGui::Text( "Entity %s relies on Asset: %llu", entity->GetName().c_str() );
-							ImGui::Text( "Deleting this asset would invalidate \"%s\"", entity->GetName().c_str() );
-						}
-					}
-				}
-			}
-
-			ImGui::Text( "Please note that only entity/component dependencies in the active are shown." );
+			ImGui::Separator();
 
 			ImGui::BeginHorizontal( "##options" );
 			
 			if( ImGui::Button( "Delete" ) )
 			{
+				for( AssetDependencyBase* pDependant : rDependencies )
+				{
+					pDependant->OnUpdate( 0 );
+				}
+
+				m_ItemToDelete->Delete();
+				m_ItemToDelete = nullptr;
+
 				m_ShowDeleteAssetPopup = false;
 				ImGui::CloseCurrentPopup();
 			}
@@ -1092,7 +1047,7 @@ namespace Saturn {
 
 			if( ImGui::Button( "Cancel" ) )
 			{
-				m_AssetToDelete = nullptr;
+				m_ItemToDelete = nullptr;
 				m_ShowDeleteAssetPopup = false;
 				ImGui::CloseCurrentPopup();
 			}

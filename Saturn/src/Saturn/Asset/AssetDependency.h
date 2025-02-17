@@ -43,6 +43,16 @@ namespace Saturn {
 #endif
 	};
 
+	// AssetDependency<AssetType...>
+	// This class is a wrapper for an AssetID with additional support for registering asset dependencies
+	// 
+	// In Development configurations:
+	// - The size of this class will be 16 bytes 8 for the AssetID and 8 for the virtual function
+	// - It will automatically RegisterAssetDependency/UnregisterAssetDependency when assigning a new value.
+	//
+	// In Distribution configurations:
+	// - This class then becomes a glorified Saturn::AssetID wrapper as this class will not register any Asset Dependencies futhermore, the size of this class will be 8 bytes only holding an AssetID
+	// - AssetDependencies do not exist in Distribution configurations
 	template<Saturn::AssetType... Types>
 	class AssetDependency : public AssetDependencyBase
 	{
@@ -71,7 +81,9 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		void OnUpdate( Saturn::AssetID newID )
 		{
+			UnregisterAssetDependency( AssetID );
 			AssetID = newID;
+			RegisterAssetDependency( AssetID );
 		}
 
 		Saturn::AssetID operator=( const Saturn::AssetID& rOther ) noexcept
@@ -92,4 +104,73 @@ namespace Saturn {
 		}
 #endif
 	};
+
+	// AssetDependencyNotifier
+	// This class is a wrapper for an AssetID with additional support for registering asset dependencies
+	// This class is very similar to AssetDependency<> however, it does not give compile time asset types.
+	// The usage of this class is similar to AssetDependency<> however, it should be used when you don't actually care about the asset ids but you still need to depend on them. (See: AssetRegistry)
+	// 
+	// AssetDependencyNotifier will call a function when the value is changed.
+	// 
+	// In Development configurations:
+	// - The size of this class will be 80 bytes, 8 for the AssetID and 8 for the virtual function and 64 bytes for the std::function
+	// - It will automatically RegisterAssetDependency/UnregisterAssetDependency when assigning a new value.
+	// - Call function when value changed.
+	//
+	// In Distribution configurations:
+	// - This class then becomes a glorified Saturn::AssetID wrapper as this class will not register any Asset Dependencies futhermore, the size of this class will be 8 bytes only holding an AssetID
+	// - AssetDependencies do not exist in Distribution configurations
+	class AssetDependencyNotifier : public AssetDependencyBase
+	{
+	public:
+		Saturn::AssetID ID;
+	public:
+		AssetDependencyNotifier() = default;
+
+		template<typename Func>
+		AssetDependencyNotifier( Func&& rrFunc ) 
+#if !defined(SAT_DIST)
+			: CallbackFunction( std::forward<Func>( rrFunc ) ) {}
+#else
+		{ }
+#endif
+
+		operator Saturn::AssetID() { return ID; }
+		operator const Saturn::AssetID() const { return ID; }
+
+		operator uint64_t() { return ID; }
+		operator const uint64_t() const { return ID; }
+
+		Saturn::AssetID operator=( const Saturn::AssetID& rOther ) noexcept
+		{
+#if !defined(SAT_DIST)
+			UnregisterAssetDependency( ID );
+
+			if( CallbackFunction ) ( ID, rOther );
+
+			ID = rOther;
+
+			RegisterAssetDependency( ID );
+#else
+			ID = rOther;
+#endif
+
+			return ID;
+		}
+
+#if !defined(SAT_DIST)
+	public:
+		void OnUpdate( Saturn::AssetID newID )
+		{
+			UnregisterAssetDependency( ID );
+			if( CallbackFunction ) ( ID, newID );
+			ID = newID;
+			RegisterAssetDependency( ID );
+		}
+	private:
+		//                          New       Old
+		std::function<void( Saturn::AssetID, Saturn::AssetID )> CallbackFunction;
+#endif
+	};
+
 }

@@ -29,6 +29,7 @@
 #include "sppch.h"
 #include "MaterialAsset.h"
 
+#include "AssetDependency.h"
 #include "AssetManager.h"
 
 #include "Saturn/Core/Renderer/RenderThread.h"
@@ -69,6 +70,9 @@ namespace Saturn {
 		m_TextureCache.clear();
 		m_VPendingTextureChanges.clear();
 		m_PendingTextureChanges.clear();
+#if !defined(SAT_DIST)
+		m_TextureAssetDependencies.clear();
+#endif
 
 		m_Material = nullptr;
 		m_PendingMaterialChange = nullptr;
@@ -411,6 +415,8 @@ namespace Saturn {
 			Ref<TextureSourceAsset> sourceAsset = AssetManager::Get().GetAssetAs<TextureSourceAsset>( AssetID );
 #else
 			Ref<TextureSourceAsset> sourceAsset = Ref<TextureSourceAsset>::Create( AssetManager::Get().FindAsset( AssetID )->Path );
+
+			m_TextureAssetDependencies[ "u_AlbedoTexture" ] = AssetID;
 #endif
 
 			Ref<Texture2D> albedo = Ref<Texture2D>::Create(
@@ -436,6 +442,8 @@ namespace Saturn {
 			Ref<TextureSourceAsset> sourceAsset = AssetManager::Get().GetAssetAs<TextureSourceAsset>( AssetID );
 #else
 			Ref<TextureSourceAsset> sourceAsset = Ref<TextureSourceAsset>::Create( AssetManager::Get().FindAsset( AssetID )->Path );
+
+			m_TextureAssetDependencies[ "u_NormalTexture" ] = AssetID;
 #endif
 
 			Ref<Texture2D> normalMap = Ref<Texture2D>::Create(
@@ -461,6 +469,8 @@ namespace Saturn {
 			Ref<TextureSourceAsset> sourceAsset = AssetManager::Get().GetAssetAs<TextureSourceAsset>( AssetID );
 #else
 			Ref<TextureSourceAsset> sourceAsset = Ref<TextureSourceAsset>::Create( AssetManager::Get().FindAsset( AssetID )->Path );
+
+			m_TextureAssetDependencies[ "u_MetalnessTexture" ] = AssetID;
 #endif
 
 			Ref<Texture2D> metalness = Ref<Texture2D>::Create(
@@ -486,6 +496,8 @@ namespace Saturn {
 			Ref<TextureSourceAsset> sourceAsset = AssetManager::Get().GetAssetAs<TextureSourceAsset>( AssetID );
 #else
 			Ref<TextureSourceAsset> sourceAsset = Ref<TextureSourceAsset>::Create( AssetManager::Get().FindAsset( AssetID )->Path );
+
+			m_TextureAssetDependencies[ "u_RoughnessTexture" ] = AssetID;
 #endif
 
 			Ref<Texture2D> roughness = Ref<Texture2D>::Create(
@@ -544,25 +556,52 @@ namespace Saturn {
 
 	void MaterialRegistry::SetMaterial( uint32_t index, AssetID id )
 	{
+		AddTargetMaterialAsset( index, id );
+
 		m_HasOverridden[ index ] = true;
 		m_Materials[ index ] = AssetManager::Get().GetAssetAs<MaterialAsset>( id );
 	}
 
 	void MaterialRegistry::SetMaterial( uint32_t index, Ref<MaterialAsset> material )
 	{
+		AddTargetMaterialAsset( index, material->ID );
+
 		m_HasOverridden[ index ] = false;
 		m_Materials[ index ] = material;
 	}
 
-	void MaterialRegistry::AddTargetMaterialAsset( AssetID materialID )
+	void MaterialRegistry::AddTargetMaterialAsset( uint32_t index, AssetID materialID )
 	{
-		m_MaterialAssetsIDs.push_back( materialID );
+#if !defined(SAT_DIST)
+		if( materialID == 0 )
+			return;
+
+		auto Itr = m_MaterialAssetsIDs.find( index );
+		if( Itr != m_MaterialAssetsIDs.end() )
+		{
+			Itr->second = materialID;
+		}
+		else
+		{
+			AssetDependencyNotifier notifier( SAT_BIND_EVENT_FN( OnAssetDependencyChanged ) );
+			notifier = materialID;
+
+			m_MaterialAssetsIDs[ index ] = notifier;
+		}
+#endif
+	}
+
+	void MaterialRegistry::OnAssetDependencyChanged( AssetID oldID, AssetID newID )
+	{
+		SAT_CORE_INFO( "OnAssetDependencyChanged: {0}, {1}", oldID, newID );
 	}
 
 	void MaterialRegistry::ResetMaterial( uint32_t index )
 	{
 		m_HasOverridden[ index ] = false;
 		m_Materials[ index ] = m_Mesh->GetMaterialRegistry()->GetMaterialAssets()[ index ];
+
+		m_MaterialAssetsIDs[ index ] = m_Mesh->GetMaterialRegistry()->GetMaterialAssets()[ index ]->ID;
 	}
 
 	bool MaterialRegistry::HasAnyOverrides()
@@ -622,7 +661,7 @@ namespace Saturn {
 			
 			if( MaterialID != 0 ) 
 			{
-				rRegistry->AddTargetMaterialAsset( MaterialID );
+				rRegistry->AddTargetMaterialAsset( i, MaterialID );
 			}
 
 			if( asset )

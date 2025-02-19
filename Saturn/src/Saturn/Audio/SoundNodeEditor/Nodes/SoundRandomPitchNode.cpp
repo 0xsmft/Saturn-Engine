@@ -94,7 +94,7 @@ namespace Saturn {
 
 		// Set pitch
 		Ref<SoundPin> soundPin = Inputs[ 0 ].As<SoundPin>();
-		pSoundEditorEvaluator->AliveSounds[ soundPin->Data ]->SetPitchMultiplier( pitch );
+		pSoundEditorEvaluator->AliveSounds[ soundPin->Data ]->SetPitch( pitch );
 
 		// Write data (pass from our input pin)
 		Ref<SoundPin> Outpin = Outputs[ 0 ].As<SoundPin>();

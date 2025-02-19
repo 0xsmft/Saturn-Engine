@@ -54,8 +54,8 @@ namespace Saturn {
 
 		void WaitUntilLoaded();
 
-		void SetVolumeMultiplier( float m );
-		void SetPitchMultiplier( float m );
+		void SetVolume( float volume );
+		void SetPitch( float pitch );
 
 		void SetPosition( const glm::vec3& rPos );
 		void SetSpatialisation( bool value );

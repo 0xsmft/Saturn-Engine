@@ -1062,7 +1062,7 @@ namespace Saturn {
 
 		ImGui::BeginHorizontal( "##vpSliders" );
 
-		ImGui::Text( "Volume Multiplier" );
+		ImGui::Text( "Volume" );
 
 		ImGui::SetNextItemWidth( 130.0f );
 		if( ImGui::DragFloat( "##volumeMul", &volume, 0.1f, 0.0f, 100.0f, "%.3f", ImGuiSliderFlags_AlwaysClamp ) )
@@ -1072,7 +1072,7 @@ namespace Saturn {
 
 		ImGui::Spring();
 
-		ImGui::Text( "Pitch Multiplier" );
+		ImGui::Text( "Pitch" );
 
 		ImGui::SetNextItemWidth( 130.0f );
 		if( ImGui::DragFloat( "##pitchMul", &pitch, 0.1f, 0.0f, 100.0f, "%.3f", ImGuiSliderFlags_AlwaysClamp ) )

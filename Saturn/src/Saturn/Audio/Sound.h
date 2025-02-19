@@ -56,11 +56,11 @@ namespace Saturn {
 		void SetMaxDistance( float dist );
 		void SetMinDistance( float dist );
 
-		void SetVolumeMultiplier( float multiplier );
-		void SetPitchMultiplier( float multiplier );
+		void SetVolume( float volume );
+		void SetPitch( float pitch );
 
-		float GetVolumeMultiplier();
-		float GetPitchMultiplier();
+		float GetVolume();
+		float GetPitch();
 
 		void SetPitchByPercent( float percent );
 

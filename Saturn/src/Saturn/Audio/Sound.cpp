@@ -236,22 +236,22 @@ namespace Saturn {
 		ma_sound_set_min_distance( m_Sound, dist );
 	}
 
-	void Sound::SetVolumeMultiplier( float multiplier )
+	void Sound::SetVolume( float volume )
 	{
-		ma_sound_set_volume( m_Sound, multiplier );
+		ma_sound_set_volume( m_Sound, volume );
 	}
 
-	void Sound::SetPitchMultiplier( float multiplier )
+	void Sound::SetPitch( float pitch )
 	{
-		ma_sound_set_pitch( m_Sound, multiplier );
+		ma_sound_set_pitch( m_Sound, pitch );
 	}
 
-	float Sound::GetVolumeMultiplier()
+	float Sound::GetVolume()
 	{
 		return ma_sound_get_volume( m_Sound );
 	}
 
-	float Sound::GetPitchMultiplier()
+	float Sound::GetPitch()
 	{
 		return ma_sound_get_pitch( m_Sound );
 	}
@@ -263,7 +263,7 @@ namespace Saturn {
 			? 1.0f + ( glm::abs( percent ) / 100.0f ) 
 			: 1.0f - ( glm::abs( percent ) / 100.0f );
 
-		SetPitchMultiplier( multiplier );
+		SetPitch( multiplier );
 	}
 
 	float Sound::GetDurationInSeconds()

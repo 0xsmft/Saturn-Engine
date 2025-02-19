@@ -204,17 +204,17 @@ namespace Saturn {
 		ImGui::SetNextWindowSize( { 250.0f, 0.0f } );
 		if( ImGui::BeginPopup( "SoundSettings", ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize ) )
 		{
-			float pitchMultiplier = m_PreviewSound->GetPitchMultiplier();
-			float volumeMultiplier = m_PreviewSound->GetVolumeMultiplier();
+			float pitch = m_PreviewSound->GetPitch();
+			float volume = m_PreviewSound->GetVolume();
 
-			if( Auxiliary::DrawFloatControl( "Pitch Multiplier", pitchMultiplier, 0.0f, 100.0f ) ) 
+			if( Auxiliary::DrawFloatControl( "Pitch", pitch, 0.0f, 100.0f ) ) 
 			{
-				m_PreviewSound->SetPitchMultiplier( pitchMultiplier );
+				m_PreviewSound->SetPitch( pitch );
 			}
 
-			if( Auxiliary::DrawFloatControl( "Volume Multiplier", volumeMultiplier, 0.0f, 100.0f ) )
+			if( Auxiliary::DrawFloatControl( "Volume", volume, 0.0f, 100.0f ) )
 			{
-				m_PreviewSound->SetVolumeMultiplier( volumeMultiplier );
+				m_PreviewSound->SetVolume( volume );
 			}
 
 			ImGui::EndPopup();

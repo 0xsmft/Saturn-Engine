@@ -83,7 +83,7 @@ namespace Saturn {
 
 		if( pSoundEditorEvaluator->GetTargetEditor()->IsLinked( soundPin->ID ) )
 		{
-			pSoundEditorEvaluator->AliveSounds[ soundPin->Data ]->SetPitchMultiplier( Inputs[ 1 ].As<FloatPin>()->Data );
+			pSoundEditorEvaluator->AliveSounds[ soundPin->Data ]->SetPitch( Inputs[ 1 ].As<FloatPin>()->Data );
 		}
 
 		Ref<SoundPin> Outpin = Outputs[ 0 ].As<SoundPin>();

@@ -132,19 +132,19 @@ namespace Saturn {
 		}
 	}
 
-	void GraphSound::SetVolumeMultiplier( float m )
+	void GraphSound::SetVolume( float volume )
 	{
 		for( auto& rSound : m_Runtime->AliveSounds )
 		{
-			rSound->SetVolumeMultiplier( m );
+			rSound->SetVolume( volume );
 		}
 	}
 
-	void GraphSound::SetPitchMultiplier( float m )
+	void GraphSound::SetPitch( float pitch )
 	{
 		for( auto& rSound : m_Runtime->AliveSounds )
 		{
-			rSound->SetPitchMultiplier( m );
+			rSound->SetPitch( pitch );
 		}
 	}
 

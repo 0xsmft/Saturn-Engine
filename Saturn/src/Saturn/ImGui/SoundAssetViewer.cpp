@@ -176,7 +176,7 @@ namespace Saturn {
 
 			ImGui::Text( "%s", m_PreviewSound->FormatSeconds( m_PreviewSound->GetDurationInSeconds() ).c_str() );
 
-			if( Auxiliary::ImageButton( EditorIcons::GetIcon( "NoIcon" ), { 24.0f, 24.0f } ) )
+			if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Settings" ), { 24.0f, 24.0f } ) )
 			{
 				m_OpenSoundSettingsPopup = true;
 			}

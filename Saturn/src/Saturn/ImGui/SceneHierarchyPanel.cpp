@@ -531,11 +531,7 @@ namespace Saturn {
 
 							if( Auxiliary::DrawAssetFinder( m_CurrentFinderType, &open, m_CurrentAssetID ) )
 							{
-								AssetManager::Get().UnregisterAssetDependency( rRef.ID, entity->GetUUID(), AssetDependencyType::Component );
-
 								rProperty.SetProperty( entity.Get(), m_CurrentAssetID );
-
-								AssetManager::Get().RegisterAssetDependency( m_CurrentAssetID, entity->GetUUID(), AssetDependencyType::Component );
 							}
 
 							ImGui::PopID();
@@ -627,7 +623,7 @@ namespace Saturn {
 			if( modified ) m_Context->MarkDirty();
 		} );
 
-		DrawComponent<StaticMeshComponent>( "Static Mesh", entity, [&]( auto& mc )
+		DrawComponent<StaticMeshComponent>( "Static Mesh", entity, [&]( StaticMeshComponent& mc )
 		{
 			bool modified = false;
 			bool open = false;
@@ -664,7 +660,9 @@ namespace Saturn {
 					int i = 0;
 					for( auto& rAsset : mc.MaterialRegistry->GetMaterialAssets() )
 					{
-						if( ImGui::Button( rAsset->Name.c_str() ) )
+						std::string name = rAsset->Name.empty() ? rAsset->GetMaterialName() : rAsset->Name;
+
+						if( ImGui::Button( name.c_str() ) )
 						{
 							m_CurrentFinderType = AssetType::Material;
 							open = !open;
@@ -693,14 +691,10 @@ namespace Saturn {
 			{
 				if( m_CurrentFinderType == AssetType::StaticMesh )
 				{
-					AssetManager::Get().UnregisterAssetDependency( mc.Mesh->ID, entity->GetUUID(), AssetDependencyType::Component );
-
 					mc.Mesh = AssetManager::Get().GetAssetAs<StaticMesh>( m_CurrentAssetID );
 
 					mc.MaterialRegistry = nullptr;
 					mc.MaterialRegistry = Ref<MaterialRegistry>::Create( mc.Mesh );
-
-					AssetManager::Get().RegisterAssetDependency( m_CurrentAssetID, entity->GetUUID(), AssetDependencyType::Component );
 				}
 				else if( m_CurrentFinderType == AssetType::Material )
 				{
@@ -1083,7 +1077,7 @@ namespace Saturn {
 			}
 		} );
 
-		DrawComponent<AudioPlayerComponent>( "Audio Player", entity, [&]( auto& ap )
+		DrawComponent<AudioPlayerComponent>( "Audio Player", entity, [&]( AudioPlayerComponent& ap )
 		{
 			bool modified = false;
 
@@ -1106,12 +1100,8 @@ namespace Saturn {
 
 				if( Auxiliary::DrawAssetFinder( { AssetType::GraphSound, AssetType::Sound }, &open, m_CurrentAssetID ) )
 				{
-					AssetManager::Get().UnregisterAssetDependency( ap.SpecAssetID, entity->GetUUID(), AssetDependencyType::Component );
-
 					ap.SpecAssetID = m_CurrentAssetID;
 					modified = true;
-
-					AssetManager::Get().RegisterAssetDependency( ap.SpecAssetID, entity->GetUUID(), AssetDependencyType::Component );
 				}
 
 				ImGui::PushID( ( int ) ap.UniqueID );
@@ -1137,11 +1127,11 @@ namespace Saturn {
 					if( Auxiliary::DrawBoolControl( "Spatialization", ap.Spatialization ) )
 						sound->SetSpatialisation( ap.Spatialization );
 
-					if( Auxiliary::DrawFloatControl( "Volume Multiplier", ap.VolumeMultiplier, 0.0f, 100.0f ) )
-						sound->SetVolumeMultiplier( ap.VolumeMultiplier );
+					if( Auxiliary::DrawFloatControl( "Volume", ap.Volume, 0.0f, 100.0f ) )
+						sound->SetVolume( ap.Volume );
 
-					if( Auxiliary::DrawFloatControl( "Pitch Multiplier", ap.PitchMultiplier, 0.0f, 100.0f ) )
-						sound->SetPitchMultiplier( ap.PitchMultiplier );
+					if( Auxiliary::DrawFloatControl( "Pitch", ap.Pitch, 0.0f, 100.0f ) )
+						sound->SetPitch( ap.Pitch );
 				}
 				else
 				{
@@ -1151,8 +1141,8 @@ namespace Saturn {
 					Auxiliary::DrawDisabledBoolControl( "Loop", ap.Loop );
 					Auxiliary::DrawDisabledBoolControl( "Mute", ap.Mute );
 					Auxiliary::DrawDisabledBoolControl( "Spatialization", ap.Spatialization );
-					Auxiliary::DrawDisabledFloatControl( "Volume Multiplier", ap.VolumeMultiplier );
-					Auxiliary::DrawDisabledFloatControl( "Pitch Multiplier", ap.PitchMultiplier );
+					Auxiliary::DrawDisabledFloatControl( "Volume", ap.Volume );
+					Auxiliary::DrawDisabledFloatControl( "Pitch", ap.Pitch );
 				}
 			}
 			else
@@ -1163,8 +1153,8 @@ namespace Saturn {
 				modified |= Auxiliary::DrawBoolControl( "Mute", ap.Mute );
 				modified |= Auxiliary::DrawBoolControl( "Spatialization", ap.Spatialization );
 
-				modified |= Auxiliary::DrawFloatControl( "Volume Multiplier", ap.VolumeMultiplier, 0.0f, 100.0f );
-				modified |= Auxiliary::DrawFloatControl( "Pitch Multiplier", ap.PitchMultiplier, 0.0f, 100.0f );
+				modified |= Auxiliary::DrawFloatControl( "Volume", ap.Volume, 0.0f, 100.0f );
+				modified |= Auxiliary::DrawFloatControl( "Pitch", ap.Pitch, 0.0f, 100.0f );
 
 				ImGui::PushID( "##select_sound_grp" );
 

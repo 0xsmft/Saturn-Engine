@@ -162,7 +162,7 @@ namespace Saturn {
 			return texture;
 
 		// Generate texture & pass in needed information for cache data
-		s_Queue.push( { .Time = timestamp, .Texture = nullptr, .Asset = nullptr } );
+		s_Queue.push( { .Time = timestamp, .Texture = nullptr, .Asset = rAsset } );
 
 		return texture;
 	}

@@ -358,6 +358,7 @@ namespace Saturn {
 		if( m_ShowSceneRendererWindow ) DrawSceneRendererWindow();
 		if( m_ShowRendererWindow )		DrawRendererWindow();
 		if( m_ShowMetadataDebug )       DrawMetadataDebug();
+		if( m_ShowAssetDependencies )   DrawAssetDependencies();
 		if( m_ShowSceneDirtyModal )     DrawSceneDirtyPopup();
 
 		AssetViewer::Draw();
@@ -1576,6 +1577,7 @@ namespace Saturn {
 			if( ImGui::MenuItem( "Asset Registry Debug", "" ) )       m_OpenAssetRegistryDebug ^= 1;
 			if( ImGui::MenuItem( "Loaded Assets Debug", "" ) )        m_OpenLoadedAssetDebug   ^= 1;
 			if( ImGui::MenuItem( "Metadata Debug", "" ) )             m_ShowMetadataDebug      ^= 1;
+			if( ImGui::MenuItem( "Asset Dependencies", "" ) )         m_ShowAssetDependencies ^= 1;
 
 			ImGui::SeparatorText( "Demo Window" );
 			if( ImGui::MenuItem( "Show demo window", "" ) )           m_ShowImGuiDemoWindow    ^= 1;
@@ -1788,6 +1790,73 @@ namespace Saturn {
 		}
 
 		ImGui::End();
+	}
+
+	void EditorLayer::DrawAssetDependencies() 
+	{
+		ImGui::SetNextWindowPos( ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Appearing, ImVec2( 0.5f, 0.5f ) );
+		if( ImGui::Begin( "Asset Dependencies", &m_ShowAssetDependencies, ImGuiWindowFlags_NoSavedSettings ) )
+		{
+			if( Auxiliary::TreeNode( "Asset Dependencies (ADN)", false ) )
+			{
+				for( auto& [assetID, rDependency] : AssetManager::Get().GetAssetDependencies() )
+				{
+					if( Auxiliary::TreeNode( std::to_string( assetID ), false ) )
+					{
+						for( AssetDependencyBase* pBase : rDependency )
+						{
+							ImGui::Text( "ADB/Base" );
+						}
+
+						Auxiliary::EndTreeNode();
+					}
+				}
+
+				Auxiliary::EndTreeNode();
+			}
+
+			if( Auxiliary::TreeNode( "Asset Dependencies (Pure)", false ) )
+			{
+				for( auto& [assetID, rDependencies] : AssetManager::Get().GetPureAssetDependencies() )
+				{
+					Ref<Asset> asset = AssetManager::Get().FindAsset( assetID );
+
+					if( Auxiliary::TreeNode( asset->Name, false ) )
+					{
+						for( AssetID id : rDependencies )
+						{
+							Ref<Asset> dependency = AssetManager::Get().FindAsset( id );
+							
+							if( dependency )
+							{
+								ImGui::Text( dependency->Name.data() );
+
+								if( ImGui::BeginItemTooltip() )
+								{
+									ImGui::Text( "Asset" );
+									ImGui::Separator();
+
+									ImGui::Text( "%s", dependency->Path.string().c_str() );
+									ImGui::Text( "Asset: %llu", dependency->ID );
+									ImGui::Text( "Asset Name: %s", dependency->Name.c_str() );
+									ImGui::Text( "Asset Version: %llu", dependency->Version );
+
+									ImGui::EndTooltip();
+								}
+							}
+							else
+								ImGui::TextColored( ImVec4( 1.0F, 0.0F, 0.0F, 1.0F ), "<NULL>" );
+						}
+
+						Auxiliary::EndTreeNode();
+					}
+				}
+
+				Auxiliary::EndTreeNode();
+			}
+
+			ImGui::End();
+		}
 	}
 
 	void EditorLayer::DrawSceneDirtyPopup()

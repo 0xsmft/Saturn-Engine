@@ -27,7 +27,9 @@
 */
 
 #include "sppch.h"
-#include "AssetManager.h" // AssetManager includes AssetDependency.h
+#include "AssetDependency.h"
+
+#include "AssetManager.h"
 
 namespace Saturn {
 

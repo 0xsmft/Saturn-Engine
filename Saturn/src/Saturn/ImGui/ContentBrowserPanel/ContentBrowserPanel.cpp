@@ -1025,6 +1025,19 @@ namespace Saturn {
 			ImGui::Text( "%s has %i dependencies.", assetToDelete->Name.c_str(), rDependencies.size() );
 			ImGui::Text( "Deleting the asset cause everything that depends on \"%s\" to be invalid", assetToDelete->Name.c_str() );
 
+			if( ImGui::BeginListBox( "##listpuredeps" ) )
+			{
+				auto& rPureDependencies = AssetManager::Get().GetPureAssetDependenciesForAsset( assetToDelete );
+				for( AssetID id : rPureDependencies )
+				{
+					Ref<Asset> dependant = AssetManager::Get().FindAsset( id );
+
+					ImGui::Selectable( dependant->Name.c_str() );
+				}
+
+				ImGui::EndListBox();
+			}
+
 			ImGui::Separator();
 
 			ImGui::BeginHorizontal( "##options" );

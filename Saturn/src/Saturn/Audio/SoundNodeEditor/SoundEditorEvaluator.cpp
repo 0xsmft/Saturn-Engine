@@ -39,6 +39,7 @@
 
 #if !defined(SAT_DIST)
 #include "Saturn/NodeEditor/UI/NodeEditor.h"
+#include "Saturn/Asset/AssetManager.h"
 #else
 #include "Saturn/NodeEditor/NodeEditorBase.h"
 #endif
@@ -85,6 +86,9 @@ namespace Saturn {
 			uiEditor->ThrowError( "No links are linked to the output node!" );
 			return NodeEditorCompilationStatus::Failed;
 		}
+
+		// Clear pure dependencies
+		AssetManager::Get().UnregisterAllAssetDependencies( uiEditor->GetAssetID() );
 #else
 		Ref<Node> OutputNode = m_NodeEditor->FindNode( m_Info.OutputNodeID );
 		UUID FinalSoundPinID = OutputNode->Inputs[ 0 ]->ID;
@@ -132,6 +136,10 @@ namespace Saturn {
 		snd->WaitUntilLoaded();
 
 		AliveSounds.push_back( snd );
+
+#if !defined( SAT_DIST )
+		AssetManager::Get().RegisterAssetDependency( m_NodeEditor->GetAssetID(), id );
+#endif
 	}
 
 	void SoundEditorEvaluator::RegisterSound( size_t id )

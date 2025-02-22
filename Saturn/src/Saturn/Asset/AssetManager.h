@@ -28,7 +28,6 @@
 
 #pragma once
 
-#include "AssetDependency.h"
 #include "AssetRegistry.h"
 
 #if defined(SAT_DIST)
@@ -36,6 +35,8 @@
 #endif
 
 namespace Saturn {
+
+	class AssetDependencyBase;
 
 	class AssetManager : public RefTarget
 	{
@@ -130,38 +131,23 @@ namespace Saturn {
 
 		size_t GetAssetRegistrySize() { return m_Assets->GetSize(); }
 
-		void RegisterAssetDependency( AssetID dependencyID, AssetDependencyBase* pBase )
-		{
-			if( dependencyID != 0 )
-				m_AssetDependencies[ dependencyID ].insert( { pBase } );
-		}
+	public:
+		void RegisterAssetDependency( AssetID dependencyID, AssetDependencyBase* pBase );
+		void UnregisterAssetDependency( AssetID dependencyID, AssetDependencyBase* pBase );
 
-		void UnregisterAssetDependency( AssetID dependencyID, AssetDependencyBase* pBase )
-		{
-			if( m_AssetDependencies.find( dependencyID ) != m_AssetDependencies.end() )
-			{
-				m_AssetDependencies[ dependencyID ].erase( { pBase } );
+		const std::unordered_map<AssetID, std::unordered_set<AssetDependencyBase*>> GetAssetDependencies() const;
 
-				if( !m_AssetDependencies[ dependencyID ].size() ) m_AssetDependencies.erase( dependencyID );
-			}
-		}
-
-		const std::unordered_map<AssetID, std::unordered_set<AssetDependencyBase*>> GetAssetDependencies() const
-		{
-			return m_AssetDependencies;
-		}
-
-		const std::unordered_set<AssetDependencyBase*> GetAssetDependenciesForAsset( const Ref<Asset> asset ) const
-		{
-			if( m_AssetDependencies.contains( asset->ID ) )
-			{
-				return m_AssetDependencies.at( asset->ID );
-			}
-			else
-				return {};
-		}
-
+		const std::unordered_set<AssetDependencyBase*> GetAssetDependenciesForAsset( const Ref<Asset> asset ) const;
 		[[nodiscard]] bool DoesAssetHaveDependencies( Ref<Asset> asset );
+
+		// Pure Dependencies
+		void RegisterAssetDependency( AssetID assetID, AssetID dependencyID );
+		void UnregisterAssetDependency( AssetID assetID, AssetID dependencyID );
+		void UnregisterAllAssetDependencies( AssetID assetID );
+		bool CheckPureAssetDependencies( Ref<Asset> asset );
+
+		const std::unordered_map<AssetID, std::unordered_set<AssetID>> GetPureAssetDependencies() const;
+		const std::unordered_set<AssetID> GetPureAssetDependenciesForAsset( const Ref<Asset> asset ) const;
 
 	private:
 		template<typename Ty>
@@ -191,14 +177,17 @@ namespace Saturn {
 	private:
 		Ref<AssetRegistry> m_Assets = nullptr;
 
+#if !defined(SAT_DIST)
 		// An Asset in our registry -> unordered_set of AssetDependency who depend on Asset
 		//                 AssetID                     WhatDependsOnMe
 		std::unordered_map<AssetID, std::unordered_set<AssetDependencyBase*>> m_AssetDependencies;
 
-#if defined(SAT_DIST)
-		VFSAssetImporter m_Importer;
-#else
+		//                 AssetID                     WhatIDependOn
+		std::unordered_map<AssetID, std::unordered_set<AssetID>> m_PureAssetDependencies;
+
 		AssetImporter m_Importer;
+#else
+		VFSAssetImporter m_Importer;
 #endif
 
 	private:

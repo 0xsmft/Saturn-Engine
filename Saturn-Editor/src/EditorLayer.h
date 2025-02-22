@@ -87,6 +87,7 @@ namespace Saturn {
 		void DrawSceneRendererWindow();
 		void DrawRendererWindow();
 		void DrawMetadataDebug();
+		void DrawAssetDependencies();
 		void DrawSceneDirtyPopup();
 
 		// Viewport
@@ -189,6 +190,7 @@ namespace Saturn {
 		bool m_JobModalOpen = false;
 		bool m_OpenAboutWindow = false;
 		bool m_ShowMetadataDebug = false;
+		bool m_ShowAssetDependencies = false;
 		bool m_ShowRendererWindow = true;
 		bool m_ShowSceneRendererWindow = true;
 		bool m_ShowSceneDirtyModal = false;

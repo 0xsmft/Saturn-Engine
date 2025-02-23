@@ -292,7 +292,6 @@ namespace Saturn {
 				if( path.extension() == ".png" || path.extension() == ".tga" || path.extension() == ".jpeg" || path.extension() == ".jpg" )
 				{
 					auto id = AssetManager::Get().CreateAsset( AssetType::Texture );
-
 					auto asset = AssetManager::Get().FindAsset( id );
 
 					std::filesystem::copy_file( path, m_CurrentPath / path.filename() );
@@ -495,8 +494,8 @@ namespace Saturn {
 			case filewatch::Event::renamed_new:
 			case filewatch::Event::renamed_old:
 			{
-				ClearSearchQuery();
-				UpdateFiles( true );
+//				ClearSearchQuery();
+//				UpdateFiles( true );
 			} break;
 
 			default:
@@ -969,8 +968,6 @@ namespace Saturn {
 				SoundSpecificationAssetSerialiser s2d;
 				s2d.Serialise( sound );
 
-				sound->SetAbsolutePath( assetPath );
-
 				PopupModified = true;
 			}
 
@@ -1019,53 +1016,151 @@ namespace Saturn {
 		if( ImGui::BeginPopupModal( "Delete Asset##DELETEASSET", &m_ShowDeleteAssetPopup, ImGuiWindowFlags_NoSavedSettings ) )
 		{
 			Ref<Asset> assetToDelete = m_ItemToDelete->GetAsset();
-			auto& rDependencies = AssetManager::Get().GetAssetDependenciesForAsset( assetToDelete );
+			auto& rMemoryDependencies = AssetManager::Get().GetAssetDependenciesForAsset( assetToDelete );
+			auto& rPureDependencies = AssetManager::Get().GetPureAssetDependenciesForAsset( assetToDelete );
 
-			ImGui::Text( "Are you sure you want to delete this asset? This action can not be undone." );
-			ImGui::Text( "%s has %i dependencies.", assetToDelete->Name.c_str(), rDependencies.size() );
-			ImGui::Text( "Deleting the asset cause everything that depends on \"%s\" to be invalid", assetToDelete->Name.c_str() );
+			ImGui::Text( "Are you sure you want to delete this asset?" );
 
+			auto boldFont = ImGui::GetIO().Fonts->Fonts[ 1 ];
+			ImGui::PushFont( boldFont );
+			ImGui::Text( "This action can not be undone." );
+			ImGui::PopFont();
+
+			ImGui::Text( "%s has %i Asset Dependencies and %i memory dependencies.", assetToDelete->Name.c_str(), rPureDependencies.size(), rMemoryDependencies.size() );
+			
+			ImGui::Text( "Deleting the asset cause everything that depends on \"%s\" to be invalid unless a replacement is given.", assetToDelete->Name.c_str() );
+
+			ImGui::Spacing();
+
+			ImGui::Text( "Asset Dependencies:" );
 			if( ImGui::BeginListBox( "##listpuredeps" ) )
 			{
-				auto& rPureDependencies = AssetManager::Get().GetPureAssetDependenciesForAsset( assetToDelete );
 				for( AssetID id : rPureDependencies )
 				{
 					Ref<Asset> dependant = AssetManager::Get().FindAsset( id );
-
 					ImGui::Selectable( dependant->Name.c_str() );
 				}
 
 				ImGui::EndListBox();
 			}
 
+			ImGui::Text( "Plus %i memory dependencies (entities, components)", rMemoryDependencies.size() );
+
 			ImGui::Separator();
 
-			ImGui::BeginHorizontal( "##options" );
-			
-			if( ImGui::Button( "Delete" ) )
+			constexpr int OPTIONS_COUNT = 3;
+
+			bool open = false;
+			static AssetID s_ID = 0;
+
+			if( ImGui::BeginTable( "OptionsTable", OPTIONS_COUNT, ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_NoSavedSettings ) )
 			{
-				for( AssetDependencyBase* pDependant : rDependencies )
+				ImGui::TableSetupColumn( "Replace", ImGuiTableColumnFlags_WidthStretch );
+				ImGui::TableSetupColumn( "Force Delete", ImGuiTableColumnFlags_WidthStretch );
+				ImGui::TableSetupColumn( "Cancel", ImGuiTableColumnFlags_WidthStretch );
+
+				ImGui::TableNextRow();
+
+				// First column
+				ImGui::TableSetColumnIndex( 0 );
+				ImGui::Text( "Delete the asset and replace with a pre-existing asset." );
+
+				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
 				{
-					pDependant->OnUpdate( 0 );
+					open ^= 1;
 				}
 
-				m_ItemToDelete->Delete();
-				m_ItemToDelete = nullptr;
+				Auxiliary::DrawAssetFinder( assetToDelete->Type, &open, s_ID, assetToDelete->ID );
 
-				m_ShowDeleteAssetPopup = false;
-				ImGui::CloseCurrentPopup();
+				std::string name = s_ID == 0 ? "No replacement" : std::to_string( s_ID );
+
+				ImGui::SameLine();
+				ImGui::InputText( "##replacementAsset", ( char* ) name.c_str(), name.size(), ImGuiInputTextFlags_ReadOnly );
+
+				// Second column
+				ImGui::TableSetColumnIndex( 1 );
+				ImGui::Text( "Force delete the asset only replacing memory dependencies to 0." );
+				ImGui::Text( "This will cause issues when loading assets." );
+
+				// Third column
+				ImGui::TableSetColumnIndex( 2 );
+				ImGui::Text( "Cancel the operation." );
+
+				ImGui::EndTable();
 			}
 
-			ImGui::Spring();
-
-			if( ImGui::Button( "Cancel" ) )
+			if( ImGui::BeginTable( "ButtonTable", OPTIONS_COUNT, ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_NoSavedSettings ) )
 			{
-				m_ItemToDelete = nullptr;
-				m_ShowDeleteAssetPopup = false;
-				ImGui::CloseCurrentPopup();
-			}
+				ImGui::TableNextRow();
 
-			ImGui::EndHorizontal();
+				ImGui::PushStyleColor( ImGuiCol_Button, ImColor( 196, 18, 18, 255 ).Value );
+				ImGui::PushStyleColor( ImGuiCol_ButtonHovered, ImVec4( 0.8f, 0.0f, 0.0f, 1.0f ) );
+				ImGui::PushStyleColor( ImGuiCol_ButtonActive, ImVec4( 0.6f, 0.0f, 0.0f, 1.0f ) );
+
+				ImGui::TableSetColumnIndex( 0 );
+				Auxiliary::DisabledFlag flag( s_ID == 0 );
+
+				if( ImGui::Button( "Replace & Delete" ) )
+				{
+					for( MemoryAssetDependencyBase* pDependant : rMemoryDependencies )
+					{
+						pDependant->OnUpdate( s_ID );
+					}
+
+					// Update asset (TODO)
+					for( AssetID assetID : rPureDependencies )
+					{
+
+					}
+
+					s_ID = 0;
+
+					m_ItemToDelete->Delete();
+					m_ItemToDelete = nullptr;
+
+					m_ShowDeleteAssetPopup = false;
+					ImGui::CloseCurrentPopup();
+				}
+
+				flag.Pop();
+
+				ImGui::PopStyleColor( 3 );
+
+				// Force delete button
+				ImGui::TableSetColumnIndex( 1 );
+				ImGui::PushStyleColor( ImGuiCol_Button, ImColor( 196, 18, 18, 255 ).Value );
+				ImGui::PushStyleColor( ImGuiCol_ButtonHovered, ImVec4( 0.8f, 0.0f, 0.0f, 1.0f ) );
+				ImGui::PushStyleColor( ImGuiCol_ButtonActive, ImVec4( 0.6f, 0.0f, 0.0f, 1.0f ) );
+
+				if( ImGui::Button( "Force Delete" ) )
+				{
+					for( MemoryAssetDependencyBase* pDependant : rMemoryDependencies )
+					{
+						pDependant->OnUpdate( 0 );
+					}
+
+					AssetManager::Get().UnregisterAllAssetDependencies( assetToDelete->ID );
+
+					m_ItemToDelete->Delete();
+					m_ItemToDelete = nullptr;
+
+					m_ShowDeleteAssetPopup = false;
+					ImGui::CloseCurrentPopup();
+				}
+
+				ImGui::PopStyleColor( 3 );
+
+				// Cancel button
+				ImGui::TableSetColumnIndex( 2 );
+				if( ImGui::Button( "Cancel" ) )
+				{
+					m_ItemToDelete = nullptr;
+					m_ShowDeleteAssetPopup = false;
+					ImGui::CloseCurrentPopup();
+				}
+
+				ImGui::EndTable();
+			}
 
 			ImGui::EndPopup();
 		}
@@ -1460,7 +1555,7 @@ namespace Saturn {
 
 	void ContentBrowserPanel::UpdateFiles( bool clear /*= false */ )
 	{
-		// Use a mutex here because when we add a new file filewatch (m_Watcher) will always get to this function first so, allow filewach it update files then when the main thread enters this function try to lock and wait.
+		// Use a mutex here because when we add a new file filewatch (m_Watcher) will always get to this function first so, allow filewatch it update files then when the main thread enters this function try to lock and wait.
 		// We could tell filewatch to skip this file as it will be handled by this panel however this way always provides thread safety between filewatch and this panel.
 
 		std::unique_lock<std::mutex> lock( s_UpdateFilesMutex, std::defer_lock );

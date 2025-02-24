@@ -130,6 +130,8 @@ namespace Saturn {
 
 		RuntimeData.MaterialAsset->SetAlbeoColor( Inputs[ 0 ].As<MaterialViewerColorPin>()->Data );
 
+		AssetManager::Get().UnregisterAllAssetDependencies( RuntimeData.MaterialAsset->ID );
+
 		// Textures
 		while( !TextureStack.empty() )
 		{
@@ -152,6 +154,9 @@ namespace Saturn {
 			{
 				RuntimeData.MaterialAsset->SetRoughnessMap( tv.TextureAssetID );
 			}
+
+			if( tv.TextureAssetID != 0 )
+				AssetManager::Get().RegisterAssetDependency( RuntimeData.MaterialAsset->ID, tv.TextureAssetID );
 		}
 
 		// Emission

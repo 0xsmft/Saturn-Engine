@@ -32,7 +32,6 @@
 
 #include "Saturn/Core/UUID.h"
 #include "Saturn/Core/Ref.h"
-#include "Saturn/Core/Memory/Buffer.h"
 
 #include "Saturn/Serialisation/RawSerialisation.h"
 
@@ -211,12 +210,6 @@ namespace Saturn {
 		}
 
 		virtual ~Asset() = default;
-
-		const AssetType GetAssetType() const { return Type; }
-		const AssetID& GetAssetID() const { return ID; }
-
-		const std::filesystem::path& GetPath() const { return Path; }
-		const std::string& GetName() const { return Name; }
 	
 		// rPath must be an absolute path.
 		// If you want to set a relative path just modify the 'Path' variable directly and update the name accordingly.

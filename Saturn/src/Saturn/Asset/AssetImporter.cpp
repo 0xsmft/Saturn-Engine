@@ -47,6 +47,6 @@ namespace Saturn {
 
 	bool AssetImporter::TryLoadData( Ref<Asset>& rAsset )
 	{
-		return m_AssetSerialisers[ rAsset->GetAssetType() ]->TryLoadData( rAsset );
+		return m_AssetSerialisers[ rAsset->Type ]->TryLoadData( rAsset );
 	}
 }

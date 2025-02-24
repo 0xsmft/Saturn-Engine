@@ -1133,19 +1133,19 @@ namespace Saturn {
 
 				for( auto&& [id, asset] : AssetManager::Get().GetCombinedAssetMap() )
 				{
-					if( !Filter.PassFilter( asset->GetName().c_str() ) )
+					if( !Filter.PassFilter( asset->Name.c_str() ) )
 						continue;
 
 					ImGui::TableNextRow();
 
 					ImGui::TableSetColumnIndex( 0 );
-					ImGui::Selectable( asset->GetName().c_str(), false );
+					ImGui::Selectable( asset->Name.c_str(), false );
 
 					ImGui::TableSetColumnIndex( 1 );
 					ImGui::Text( "%llu", id );
 
 					ImGui::TableSetColumnIndex( 2 );
-					ImGui::Text( AssetTypeToString( asset->GetAssetType() ).data(), false );
+					ImGui::Text( AssetTypeToString( asset->Type ).data(), false );
 
 					ImGui::TableSetColumnIndex( 3 );
 					ImGui::Text( asset->Path.string().c_str() );
@@ -1199,19 +1199,19 @@ namespace Saturn {
 
 				for( auto&& [id, asset] : AssetManager::Get().GetCombinedLoadedAssetMap() )
 				{
-					if( !Filter.PassFilter( asset->GetName().c_str() ) )
+					if( !Filter.PassFilter( asset->Name.c_str() ) )
 						continue;
 
 					ImGui::TableNextRow();
 
 					ImGui::TableSetColumnIndex( 0 );
-					ImGui::Selectable( asset->GetName().c_str(), false );
+					ImGui::Selectable( asset->Name.c_str(), false );
 
 					ImGui::TableSetColumnIndex( 1 );
 					ImGui::Text( "%llu", id );
 
 					ImGui::TableSetColumnIndex( 2 );
-					ImGui::Text( AssetTypeToString( asset->GetAssetType() ).data(), false );
+					ImGui::Text( AssetTypeToString( asset->Type ).data(), false );
 
 					ImGui::TableSetColumnIndex( 3 );
 					ImGui::PushID( (int)id );
@@ -1318,15 +1318,15 @@ namespace Saturn {
 					ImGui::Image( m_CheckerboardTexture->GetDescriptorSet(), ImVec2( 100, 100 ) );
 			};
 
-		if( ImGui::CollapsingHeader( rMaterial->GetName().c_str() ) )
+		if( ImGui::CollapsingHeader( rMaterial->Name.c_str() ) )
 		{
-			ImGui::PushID( static_cast< int >( rMaterial->GetAssetID() ) );
-			ImGui::Text( "Asset ID: %llu", ( uint64_t ) rMaterial->GetAssetID() );
+			ImGui::PushID( static_cast< int >( rMaterial->ID ) );
+			ImGui::Text( "Asset ID: %llu", ( uint64_t ) rMaterial->ID );
 
 			ImGui::Separator();
 
-			UUID id = rMaterial->GetAssetID();
-			Auxiliary::DrawAssetDragDropTarget<MaterialAsset>( "Change asset", rMaterial->GetName().c_str(), id,
+			UUID id = rMaterial->ID;
+			Auxiliary::DrawAssetDragDropTarget<MaterialAsset>( "Change asset", rMaterial->Name.c_str(), id,
 				[rMaterial]( Ref<MaterialAsset> asset ) mutable
 				{
 					rMaterial->SetMaterial( asset->GetMaterial() );

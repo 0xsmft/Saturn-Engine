@@ -246,8 +246,8 @@ namespace Saturn {
 				RawSerialisation::WriteObject( spc.Loop, rStream );
 				RawSerialisation::WriteObject( spc.Mute, rStream );
 				RawSerialisation::WriteObject( spc.Spatialization, rStream );
-				RawSerialisation::WriteObject( spc.VolumeMultiplier, rStream );
-				RawSerialisation::WriteObject( spc.PitchMultiplier, rStream );
+				RawSerialisation::WriteObject( spc.Volume, rStream );
+				RawSerialisation::WriteObject( spc.Pitch, rStream );
 			} );
 
 		// Audio Listener Component
@@ -480,8 +480,8 @@ namespace Saturn {
 				RawSerialisation::ReadObject( spc.Loop, rStream );
 				RawSerialisation::ReadObject( spc.Mute, rStream );
 				RawSerialisation::ReadObject( spc.Spatialization, rStream );
-				RawSerialisation::ReadObject( spc.VolumeMultiplier, rStream );
-				RawSerialisation::ReadObject( spc.PitchMultiplier, rStream );
+				RawSerialisation::ReadObject( spc.Volume, rStream );
+				RawSerialisation::ReadObject( spc.Pitch, rStream );
 			} );
 
 		// Audio Listener Component

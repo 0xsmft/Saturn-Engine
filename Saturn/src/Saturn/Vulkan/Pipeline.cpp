@@ -319,7 +319,7 @@ namespace Saturn {
 			ColorBlendAttachmentState.alphaBlendOp = VK_BLEND_OP_ADD;
 			*/
 
-			// TODO: Add Pipline spec option for this.
+			// TODO: Add Pipeline spec option for this.
 			ColorBlendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
 			ColorBlendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 			ColorBlendAttachmentState.colorBlendOp = VK_BLEND_OP_ADD;

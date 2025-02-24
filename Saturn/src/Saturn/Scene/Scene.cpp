@@ -863,8 +863,8 @@ namespace Saturn {
 					sound->SetPosition( entity->GetComponent<TransformComponent>().Position );
 				}
 
-				sound->SetVolumeMultiplier( rComp.VolumeMultiplier );
-				sound->SetPitchMultiplier( rComp.PitchMultiplier );
+				sound->SetVolume( rComp.Volume );
+				sound->SetPitch( rComp.Pitch );
 
 				// TODO: Looping
 			}
@@ -887,8 +887,8 @@ namespace Saturn {
 					sound->Loop();
 				}
 
-				sound->SetVolumeMultiplier( rComp.VolumeMultiplier );
-				sound->SetPitchMultiplier( rComp.PitchMultiplier );
+				sound->SetVolume( rComp.Volume );
+				sound->SetPitch( rComp.Pitch );
 			}
 		}
 

@@ -57,10 +57,8 @@ namespace Saturn {
 
 	void MaterialAssetSerialiser::Serialise( const Ref<Asset>& rAsset ) const
 	{
-		auto& basePath = rAsset->GetPath();
+		auto& basePath = rAsset->Path;
 		auto fullPath = GetFilepathAbs( basePath );
-
-		//auto materialAsset = AssetManager::Get().GetAssetAs<MaterialAsset>( rAsset->GetAssetID() );
 
 		auto materialAsset = rAsset.As<MaterialAsset>();
 
@@ -111,7 +109,7 @@ namespace Saturn {
 
 	bool MaterialAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
 	{
-		auto absolutePath = GetFilepathAbs( rAsset->GetPath() );
+		auto absolutePath = GetFilepathAbs( rAsset->Path );
 		std::ifstream FileIn( absolutePath );
 
 		std::stringstream ss;
@@ -140,7 +138,7 @@ namespace Saturn {
 			texture = Ref<Texture2D>::Create( Project::GetActiveProject()->FilepathAbs( rAsset->Path ), AddressingMode::Repeat );
 
 			materialAsset->SetAlbeoMap( texture );
-			AssetManager::Get().RegisterAssetDependency( albedoID, rAsset->ID );
+			AssetManager::Get().RegisterAssetDependency( rAsset->ID, albedoID );
 		}
 
 		auto useNormal = materialData[ "UseNormal" ].as<float>();
@@ -154,7 +152,7 @@ namespace Saturn {
 			texture = Ref<Texture2D>::Create( Project::GetActiveProject()->FilepathAbs( rAsset->Path ), AddressingMode::Repeat );
 
 			materialAsset->SetNormalMap( texture );
-			AssetManager::Get().RegisterAssetDependency( normalID, rAsset->ID );
+			AssetManager::Get().RegisterAssetDependency( rAsset->ID, normalID );
 		}
 
 		auto metalness = materialData[ "Metalness" ].as<float>();
@@ -168,7 +166,7 @@ namespace Saturn {
 			texture = Ref<Texture2D>::Create( Project::GetActiveProject()->FilepathAbs( rAsset->Path ), AddressingMode::Repeat );
 
 			materialAsset->SetMetallicMap( texture );
-			AssetManager::Get().RegisterAssetDependency( metallicID, rAsset->ID );
+			AssetManager::Get().RegisterAssetDependency( rAsset->ID, metallicID );
 		}
 
 		auto val = materialData[ "Roughness" ].as<float>();
@@ -182,7 +180,7 @@ namespace Saturn {
 			texture = Ref<Texture2D>::Create( Project::GetActiveProject()->FilepathAbs( rAsset->Path ), AddressingMode::Repeat );
 
 			materialAsset->SetRoughnessMap( texture );
-			AssetManager::Get().RegisterAssetDependency( roughnessID, rAsset->ID );
+			AssetManager::Get().RegisterAssetDependency( rAsset->ID, roughnessID );
 		}
 
 		auto emissive = materialData[ "Emissive" ].as<float>( 0.0f );
@@ -207,14 +205,14 @@ namespace Saturn {
 	{
 		auto prefabAsset = rAsset.As<Prefab>();
 
-		auto& basePath = rAsset->GetPath();
+		auto& basePath = rAsset->Path;
 		auto fullPath = GetFilepathAbs( basePath );
 
 		YAML::Emitter out;
 
 		out << YAML::BeginMap;
 
-		out << YAML::Key << "Prefab" << YAML::Value << prefabAsset->GetAssetID();
+		out << YAML::Key << "Prefab" << YAML::Value << prefabAsset->ID;
 
 		out << YAML::Key << "Entities";
 
@@ -236,7 +234,7 @@ namespace Saturn {
 	{
 		auto prefabAsset = Ref<Prefab>::Create();
 
-		auto absolutePath = GetFilepathAbs( rAsset->GetPath() );
+		auto absolutePath = GetFilepathAbs( rAsset->Path );
 		std::ifstream FileIn( absolutePath );
 
 		std::stringstream ss;
@@ -362,7 +360,7 @@ namespace Saturn {
 
 		out << YAML::EndMap;
 
-		auto& basePath = rAsset->GetPath();
+		auto& basePath = rAsset->Path;
 		auto fullPath = GetFilepathAbs( basePath );
 
 		std::ofstream fout( fullPath );
@@ -371,7 +369,7 @@ namespace Saturn {
 
 	bool StaticMeshAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
 	{
-		auto absolutePath = GetFilepathAbs( rAsset->GetPath() );
+		auto absolutePath = GetFilepathAbs( rAsset->Path );
 		std::ifstream FileIn( absolutePath );
 
 		std::stringstream ss;
@@ -400,8 +398,8 @@ namespace Saturn {
 		mesh->SetAttachedShape( (ShapeType)shapeType );
 		mesh->SetPhysicsMaterial( physicsMaterial );
 
-		if( physicsMaterial != 0 )
-			AssetManager::Get().RegisterAssetDependency( physicsMaterial, rAsset->ID );
+		if( physicsMaterial )
+			AssetManager::Get().RegisterAssetDependency( rAsset->ID, physicsMaterial );
 
 		// Build master material registry
 		auto materialRegistry = meshData[ "MaterialRegistry" ];
@@ -419,8 +417,9 @@ namespace Saturn {
 
 					if( id != 0 )
 					{
-						mesh->GetMaterialRegistry()->AddTargetMaterialAsset( id );
-						AssetManager::Get().RegisterAssetDependency( id, rAsset->ID );
+						mesh->GetMaterialRegistry()->AddTargetMaterialAsset( i, id );
+
+						AssetManager::Get().RegisterAssetDependency( rAsset->ID, id );
 					}
 
 					if( asset != nullptr )
@@ -475,7 +474,7 @@ namespace Saturn {
 
 		out << YAML::EndMap;
 
-		auto& basePath = rAsset->GetPath();
+		auto& basePath = rAsset->Path;
 		auto fullPath = GetFilepathAbs( basePath );
 
 		std::ofstream fout( fullPath );
@@ -484,7 +483,7 @@ namespace Saturn {
 
 	bool SoundSpecificationAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
 	{
-		auto absolutePath = GetFilepathAbs( rAsset->GetPath() );
+		auto absolutePath = GetFilepathAbs( rAsset->Path );
 		std::ifstream FileIn( absolutePath );
 
 		std::stringstream ss;
@@ -543,7 +542,7 @@ namespace Saturn {
 
 		out << YAML::EndMap;
 
-		auto& basePath = rAsset->GetPath();
+		auto& basePath = rAsset->Path;
 		auto fullPath = GetFilepathAbs( basePath );
 
 		std::ofstream fout( fullPath );
@@ -552,7 +551,7 @@ namespace Saturn {
 
 	bool PhysicsMaterialAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
 	{
-		auto absolutePath = GetFilepathAbs( rAsset->GetPath() );
+		auto absolutePath = GetFilepathAbs( rAsset->Path );
 		std::ifstream FileIn( absolutePath );
 
 		std::stringstream ss;

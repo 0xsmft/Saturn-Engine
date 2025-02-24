@@ -54,7 +54,7 @@ namespace Saturn {
 
 	void SceneSerialiser::Serialise()
 	{
-		auto& basePath = m_Scene->GetPath();
+		auto& basePath = m_Scene->Path;
 		auto fullPath = Project::GetActiveProject()->FilepathAbs( basePath );
 
 		YAML::Emitter out;
@@ -83,7 +83,7 @@ namespace Saturn {
 
 	void SceneSerialiser::Deserialise()
 	{
-		auto& basePath = m_Scene->GetPath();	
+		auto& basePath = m_Scene->Path;	
 		Deserialise( basePath );
 	}
 

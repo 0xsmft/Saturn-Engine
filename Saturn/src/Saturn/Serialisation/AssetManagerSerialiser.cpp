@@ -82,7 +82,7 @@ namespace Saturn {
 
 			// On Windows make serialise as a Linux path for Linux support 
 #if defined(SAT_PLATFORM_WINDOWS)
-			std::wstring path = asset->GetPath().wstring();
+			std::wstring path = asset->Path.wstring();
 
 			std::replace( path.begin(), path.end(), L'\\', L'/' );
 
@@ -91,7 +91,7 @@ namespace Saturn {
 			out << YAML::Key << "Path" << YAML::Value << asset->GetPath();
 #endif
 
-			out << YAML::Key << "Type" << YAML::Value << AssetTypeToString( asset->GetAssetType() );
+			out << YAML::Key << "Type" << YAML::Value << AssetTypeToString( asset->Type );
 
 			out << YAML::Key << "Version" << YAML::Value << asset->Version;
 
@@ -104,27 +104,23 @@ namespace Saturn {
 
 		out << YAML::BeginSeq;
 
-		for( const auto& [id, dep] : AssetManager::Get().GetAssetDependencies() )
+		for( const auto& [id, dependencies] : AssetManager::Get().GetPureAssetDependencies() )
 		{
 			out << YAML::BeginMap;
 
-			out << YAML::Key << "DependencyID" << YAML::Value << id;
+			out << YAML::Key << "AssetID" << YAML::Value << id;
 
 			out << YAML::Key << "Dependencies";
 			
 			out << YAML::BeginSeq;
-			for( const auto& [dependsOn, Type] : dep )
+			
+			for( const auto& rDependencyID : dependencies )
 			{
-				// Only write Asset Dependencies that are Assets because the AssetManager does not deal with Components or Entities
-				// The Asset Manager only wants Assets
-				if( Type != AssetDependencyType::Asset )
-					continue;
-
 				out << YAML::BeginMap;
-				out << YAML::Key << "DependsOnMe" << YAML::Value << dependsOn;
-				out << YAML::Key << "Type" << YAML::Value << (int)Type;
+				out << YAML::Key << "Dependency" << YAML::Value << rDependencyID;
 				out << YAML::EndMap;
 			}
+
 			out << YAML::EndSeq;
 
 			out << YAML::EndMap;
@@ -205,16 +201,15 @@ namespace Saturn {
 		{
 			for( auto assetDep : assetDependencies )
 			{
-				UUID depID = assetDep[ "DependencyID" ].as< uint64_t >();
+				UUID depID = assetDep[ "AssetID" ].as< uint64_t >();
 
-				auto deps = data[ "Dependencies" ];
+				auto deps = assetDep[ "Dependencies" ];
 
-				for( auto assetDep : assetDependencies )
+				for( auto assetDep : deps )
 				{
-					UUID dependsOn = assetDep[ "DependsOnMe" ].as< uint64_t >();
-					AssetDependencyType depType = ( AssetDependencyType ) assetDep[ "Type" ].as< std::underlying_type<AssetDependencyType>::type >();
+					UUID dependsOn = assetDep[ "Dependency" ].as< uint64_t >();
 
-					AssetManager::Get().RegisterAssetDependency( depID, dependsOn, depType );
+					AssetManager::Get().RegisterAssetDependency( depID, dependsOn );
 				}
 			}
 		}

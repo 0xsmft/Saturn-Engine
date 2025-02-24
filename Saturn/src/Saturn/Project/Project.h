@@ -54,9 +54,9 @@ namespace Saturn {
 
 	enum class ConfigKind
 	{
-		Debug,
-		Release,
-		Dist
+		Debug, // Development Configuration
+		Release, // Development Configuration
+		Dist // Distribution Configuration
 	};
 
 	class Project : public RefTarget

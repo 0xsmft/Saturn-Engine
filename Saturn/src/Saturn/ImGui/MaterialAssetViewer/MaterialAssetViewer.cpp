@@ -107,7 +107,7 @@ namespace Saturn {
 		rt->SetTargetNodeEditor( m_NodeEditor );
 
 		m_NodeEditor->SetRuntime( rt );
-		m_NodeEditor->SetWindowName( materialAsset->GetName() );
+		m_NodeEditor->SetWindowName( materialAsset->Name );
 
 		SetupNodeEditorCallbacks();
 
@@ -199,7 +199,7 @@ namespace Saturn {
 			auto relativePath = std::filesystem::relative( rPath, Project::GetActiveProject()->GetRootDir() );
 
 			Ref<Asset> TextureAsset = AssetManager::Get().FindAsset( relativePath );
-			AssetID TextureAssetID = TextureAsset->GetAssetID();
+			AssetID TextureAssetID = TextureAsset->ID;
 
 			Ref<MaterialSampler2DNode> Sampler2DNode;
 			Ref<MaterialGetAssetNode> AssetNode;

@@ -407,9 +407,9 @@ namespace Saturn {
 	void AudioSystem::Suspend()
 	{
 		// Stop and unload any alive sounds
-		for( auto& [id, asset] : m_AliveSounds )
+		for( auto& [id, sound] : m_AliveSounds )
 		{
-			asset->Stop();
+			sound->Stop();
 		}
 	
 		MA_CHECK( ma_device_stop( &m_Device ) );
@@ -419,9 +419,9 @@ namespace Saturn {
 	{
 		MA_CHECK( ma_device_start( &m_Device ) );
 
-		for( auto& [id, asset] : m_AliveSounds )
+		for( auto& [id, sound] : m_AliveSounds )
 		{
-			asset->Play( 0 );
+			sound->Play( 0 );
 		}
 	}
 

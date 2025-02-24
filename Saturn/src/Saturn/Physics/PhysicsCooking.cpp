@@ -231,7 +231,7 @@ namespace Saturn {
 		std::vector<physx::PxShape*> Shapes;
 
 		std::filesystem::path cachePath = Project::GetActiveProject()->GetFullCachePath();
-		cachePath /= rMesh->GetName();
+		cachePath /= rMesh->Name;
 		cachePath.replace_extension( ".smcs" );
 
 		if( !LoadColliderFile( cachePath ) )
@@ -302,7 +302,7 @@ namespace Saturn {
 
 		// Load the cache.
 		std::filesystem::path cachePath = Project::GetActiveProject()->GetFullCachePath();
-		cachePath /= rMesh->GetName();
+		cachePath /= rMesh->Name;
 		cachePath.replace_extension( ".smcs" );
 
 		if( !LoadColliderFile( cachePath ) )
@@ -375,7 +375,7 @@ namespace Saturn {
 		if( !std::filesystem::exists( cachePath ) )
 			std::filesystem::create_directories( cachePath );
 
-		cachePath /= rMesh->GetName();
+		cachePath /= rMesh->Name;
 		cachePath.replace_extension(".smcs" );
 
 		MeshCacheHeader hd{};

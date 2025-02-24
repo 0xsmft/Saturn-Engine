@@ -413,8 +413,8 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 			rEmitter << YAML::Key << "Loop"             << YAML::Value << spc.Loop;
 			rEmitter << YAML::Key << "Mute"             << YAML::Value << spc.Mute;
 			rEmitter << YAML::Key << "Spatialization"   << YAML::Value << spc.Spatialization;
-			rEmitter << YAML::Key << "VolumeMultiplier" << YAML::Value << spc.VolumeMultiplier;
-			rEmitter << YAML::Key << "PitchMultiplier"  << YAML::Value << spc.PitchMultiplier;
+			rEmitter << YAML::Key << "VolumeMultiplier" << YAML::Value << spc.Volume;
+			rEmitter << YAML::Key << "PitchMultiplier"  << YAML::Value << spc.Pitch;
 
 			rEmitter << YAML::EndMap;
 		}
@@ -775,8 +775,8 @@ rProperty.SetProperty( DeserialisedEntity.Get(), value ); \
 				sp.Loop             = spc[ "Loop" ].as< bool >( false );
 				sp.Mute             = spc[ "Mute" ].as< bool >( false );
 				sp.Spatialization   = spc[ "Spatialization" ].as<bool>( false );
-				sp.VolumeMultiplier = spc[ "VolumeMultiplier" ].as<float>( 1.0f );
-				sp.PitchMultiplier  = spc[ "PitchMultiplier" ].as<float>( 1.0f );
+				sp.Volume = spc[ "VolumeMultiplier" ].as<float>( 1.0f );
+				sp.Pitch  = spc[ "PitchMultiplier" ].as<float>( 1.0f );
 			}
 
 			auto alc = entity[ "AudioListenerComponent" ];

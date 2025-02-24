@@ -68,9 +68,9 @@ namespace Saturn {
 		asset->Type = type;
 		asset->ID = UUID();
 
-		m_Assets[ asset->GetAssetID() ] = asset;
+		m_Assets[ asset->ID ] = asset;
 
-		return asset->GetAssetID();
+		return asset->ID;
 	}
 
 	Ref<Asset> AssetRegistry::FindAsset( AssetID id )
@@ -94,7 +94,7 @@ namespace Saturn {
 	{
 		for( const auto& [id, asset] : m_Assets )
 		{
-			if( asset->Name == rName && asset->GetAssetType() == type )
+			if( asset->Name == rName && asset->Type == type )
 				return asset;
 		}
 
@@ -108,7 +108,7 @@ namespace Saturn {
 		// There is a better way of doing this however we'll just keep it for now.
 		for( const auto& [id, asset] : m_Assets )
 		{
-			if( asset->GetAssetType() == type )
+			if( asset->Type == type )
 				result.push_back( id );
 		}
 
@@ -119,7 +119,7 @@ namespace Saturn {
 	{
 		for( const auto& [id, asset] : m_Assets )
 		{
-			if( asset->GetPath() == rPath )
+			if( asset->Path == rPath )
 				return id;
 		}
 

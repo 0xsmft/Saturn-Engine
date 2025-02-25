@@ -169,7 +169,7 @@ namespace Saturn {
 
 	void MaterialAsset::RT_Bind( const std::vector<std::vector<VkWriteDescriptorSet>>& rStorageBufferWDS )
 	{
-		m_Material->RN_Update();
+		m_Material->RT_Update();
 	}
 
 	void MaterialAsset::RT_Reset()
@@ -214,7 +214,7 @@ namespace Saturn {
 		if( m_PendingTextureChanges.size() )
 			m_PendingTextureChanges.clear();
 
-		m_Material->RN_Update();
+		m_Material->RT_Update();
 
 		uint32_t frame = Renderer::Get().GetCurrentFrame();
 

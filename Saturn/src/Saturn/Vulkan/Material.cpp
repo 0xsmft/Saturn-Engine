@@ -116,7 +116,7 @@ namespace Saturn {
 	{
 		uint32_t frame = Renderer::Get().GetCurrentFrame();
 
-		RN_Update();
+		RT_Update();
 
 		VkDescriptorSet Set = m_DescriptorSets[ frame ];
 		Shader->WriteAllUBs( Set );
@@ -130,7 +130,7 @@ namespace Saturn {
 		vkCmdBindDescriptorSets( CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Layout, 0, 1, &Set, 0, nullptr );
 	}
 
-	void Material::RN_Update()
+	void Material::RT_Update()
 	{
 		uint32_t frame = Renderer::Get().GetCurrentFrame();
 

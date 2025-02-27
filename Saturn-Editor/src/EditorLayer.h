@@ -106,7 +106,7 @@ namespace Saturn {
 		bool OnTitlebarExit();
 
 		void CheckMissingEnv();
-		[[nodiscard]] bool BuildShaderBundle();
+		bool BuildShaderBundle();
 		
 		[[nodiscard]] bool ValidateProjectDefaults();
 

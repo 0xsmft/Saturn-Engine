@@ -113,7 +113,7 @@ namespace Saturn {
 
 		if( ImGui::BeginItemTooltip() )
 		{
-			ImGui::Text( "Date when the original file was created." );
+			ImGui::Text( "Date when the original file was created. (YYYY-MM-DD)" );
 			ImGui::EndTooltip();
 		}
 #endif

@@ -32,7 +32,8 @@
 
 namespace Saturn {
 
-	class AssetDependencyBase
+	// Memory Asset Dependency
+	class MemoryAssetDependencyBase
 	{
 #if !defined(SAT_DIST)
 	public:
@@ -43,7 +44,7 @@ namespace Saturn {
 #endif
 	};
 
-	// AssetDependency<AssetType...>
+	// MemoryAssetDependency<AssetType...>
 	// This class is a wrapper for an AssetID with additional support for registering asset dependencies
 	// 
 	// In Development configurations:
@@ -53,14 +54,15 @@ namespace Saturn {
 	// In Distribution configurations:
 	// - This class then becomes a glorified Saturn::AssetID wrapper as this class will not register any Asset Dependencies futhermore, the size of this class will be 8 bytes only holding an AssetID
 	// - AssetDependencies do not exist in Distribution configurations
+	// Memory Dependency
 	template<Saturn::AssetType... Types>
-	class AssetDependency : public AssetDependencyBase
+	class MemoryAssetDependency : public MemoryAssetDependencyBase
 	{
 	public:
-		AssetDependency() = default;
-		~AssetDependency() = default;
+		MemoryAssetDependency() = default;
+		~MemoryAssetDependency() = default;
 
-		AssetDependency( Saturn::AssetID id );
+		MemoryAssetDependency( Saturn::AssetID id );
 
 	public:
 		Saturn::AssetID AssetID = 0;
@@ -105,12 +107,12 @@ namespace Saturn {
 #endif
 	};
 
-	// AssetDependencyNotifier
+	// MemoryAssetDependencyNotifier
 	// This class is a wrapper for an AssetID with additional support for registering asset dependencies
 	// This class is very similar to AssetDependency<> however, it does not give compile time asset types.
-	// The usage of this class is similar to AssetDependency<> however, it should be used when you don't actually care about the asset ids but you still need to depend on them. (See: AssetRegistry)
+	// The usage of this class is similar to MemoryAssetDependency<> however, it should be used when you don't actually care about the asset ids but you still need to depend on them. (See: AssetRegistry)
 	// 
-	// AssetDependencyNotifier will call a function when the value is changed.
+	// MemoryAssetDependencyNotifier will call a function when the value is changed.
 	// 
 	// In Development configurations:
 	// - The size of this class will be 80 bytes, 8 for the AssetID and 8 for the virtual function and 64 bytes for the std::function
@@ -120,15 +122,16 @@ namespace Saturn {
 	// In Distribution configurations:
 	// - This class then becomes a glorified Saturn::AssetID wrapper as this class will not register any Asset Dependencies futhermore, the size of this class will be 8 bytes only holding an AssetID
 	// - AssetDependencies do not exist in Distribution configurations
-	class AssetDependencyNotifier : public AssetDependencyBase
+	// Memory Dependency
+	class MemoryAssetDependencyNotifier : public MemoryAssetDependencyBase
 	{
 	public:
 		Saturn::AssetID ID;
 	public:
-		AssetDependencyNotifier() = default;
+		MemoryAssetDependencyNotifier() = default;
 
 		template<typename Func>
-		AssetDependencyNotifier( Func&& rrFunc ) 
+		MemoryAssetDependencyNotifier( Func&& rrFunc ) 
 #if !defined(SAT_DIST)
 			: CallbackFunction( std::forward<Func>( rrFunc ) ) {}
 #else

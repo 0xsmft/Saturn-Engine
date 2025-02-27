@@ -179,7 +179,7 @@ namespace Saturn {
 				s_Open = !s_Open;
 			}
 			
-			if( Auxiliary::DrawAssetFinder( AssetType::PhysicsMaterial, &s_Open, id ) ) 
+			if( Auxiliary::DrawAssetFinder( AssetType::PhysicsMaterial, &s_Open, id, 0 ) ) 
 			{
 				m_Mesh->SetPhysicsMaterial( id );
 			}
@@ -198,7 +198,7 @@ namespace Saturn {
 			{
 				ImGui::PushID( i );
 
-				if( ImGui::TreeNodeEx( rMaterial->GetName().c_str(), flags ) )
+				if( ImGui::TreeNodeEx( rMaterial->Name.c_str(), flags ) )
 				{
 					ImGui::BeginHorizontal( i );
 
@@ -215,12 +215,17 @@ namespace Saturn {
 
 					ImGui::EndHorizontal();
 
-					if( Auxiliary::DrawAssetFinder( AssetType::Material, &open, s_id ) )
+					if( Auxiliary::DrawAssetFinder( AssetType::Material, &open, s_id, 0 ) )
 					{
 						Ref<MaterialAsset> newAsset = AssetManager::Get().GetAssetAs<MaterialAsset>( s_id );
 						rMaterial->SetMaterial( newAsset->GetMaterial() );
 
+						// Update Pure Dependencies & Update ADN Dependencies
+						AssetManager::Get().UnregisterAssetDependency( m_AssetID, rMaterial->ID );
+
 						m_Mesh->GetMaterialRegistry()->SetMaterial( i, s_id );
+
+						AssetManager::Get().RegisterAssetDependency( m_AssetID, s_id );
 					}
 
 					Auxiliary::EndTreeNode();

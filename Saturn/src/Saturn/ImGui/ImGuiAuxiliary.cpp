@@ -452,7 +452,7 @@ namespace Saturn::Auxiliary {
 		pDrawList->AddRectFilled( BoundingBox.Min, BoundingBox.Max, ImGui::GetColorU32( ColorNoAlpha ), rounding );
 	}
 
-	bool DrawAssetFinder( AssetType type, bool* rOpen, AssetID& rOut )
+	bool DrawAssetFinder( AssetType type, bool* rOpen, AssetID& rOut, AssetID ignoreID )
 	{
 		bool Modified = false;
 
@@ -476,7 +476,7 @@ namespace Saturn::Auxiliary {
 
 					ImGui::PushID( static_cast< int >( assetID ) );
 
-					if( rAsset->GetAssetType() == type || type == AssetType::Unknown )
+					if( ( rAsset->Type == type || type == AssetType::Unknown ) && assetID != ignoreID )
 					{
 						if( ImGui::Selectable( rAsset->Name.c_str(), Selected ) )
 						{
@@ -533,7 +533,7 @@ namespace Saturn::Auxiliary {
 
 					ImGui::PushID( static_cast< int >( assetID ) );
 
-					if( rAllowedTypes.find( rAsset->GetAssetType() ) != rAllowedTypes.end() )
+					if( rAllowedTypes.find( rAsset->Type ) != rAllowedTypes.end() )
 					{
 						if( ImGui::Selectable( rAsset->Name.c_str(), Selected ) )
 						{

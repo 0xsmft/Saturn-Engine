@@ -36,7 +36,7 @@
 
 namespace Saturn {
 
-	class AssetDependencyBase;
+	class MemoryAssetDependencyBase;
 
 	class AssetManager : public RefTarget
 	{
@@ -132,15 +132,16 @@ namespace Saturn {
 		size_t GetAssetRegistrySize() { return m_Assets->GetSize(); }
 
 	public:
-		void RegisterAssetDependency( AssetID dependencyID, AssetDependencyBase* pBase );
-		void UnregisterAssetDependency( AssetID dependencyID, AssetDependencyBase* pBase );
+		// Memory Asset Dependencies
+		void RegisterMemoryAssetDependency( AssetID dependencyID, MemoryAssetDependencyBase* pBase );
+		void UnregisterMemoryAssetDependency( AssetID dependencyID, MemoryAssetDependencyBase* pBase );
 
-		const std::unordered_map<AssetID, std::unordered_set<AssetDependencyBase*>> GetAssetDependencies() const;
+		const std::unordered_map<AssetID, std::unordered_set<MemoryAssetDependencyBase*>> GetAssetDependencies() const;
 
-		const std::unordered_set<AssetDependencyBase*> GetAssetDependenciesForAsset( const Ref<Asset> asset ) const;
+		const std::unordered_set<MemoryAssetDependencyBase*> GetAssetDependenciesForAsset( const Ref<Asset> asset ) const;
 		[[nodiscard]] bool DoesAssetHaveDependencies( Ref<Asset> asset );
 
-		// Pure Dependencies
+		// Asset Dependencies
 		void RegisterAssetDependency( AssetID assetID, AssetID dependencyID );
 		void UnregisterAssetDependency( AssetID assetID, AssetID dependencyID );
 		void UnregisterAllAssetDependencies( AssetID assetID );
@@ -179,11 +180,13 @@ namespace Saturn {
 
 #if !defined(SAT_DIST)
 		// An Asset in our registry -> unordered_set of AssetDependency who depend on Asset
+		// Memory Dependency
 		//                 AssetID                     WhatDependsOnMe
-		std::unordered_map<AssetID, std::unordered_set<AssetDependencyBase*>> m_AssetDependencies;
+		std::unordered_map<AssetID, std::unordered_set<MemoryAssetDependencyBase*>> m_MemoryAssetDependencies;
 
+		// Asset Dependency
 		//                 AssetID                     WhatIDependOn
-		std::unordered_map<AssetID, std::unordered_set<AssetID>> m_PureAssetDependencies;
+		std::unordered_map<AssetID, std::unordered_set<AssetID>> m_AssetDependencies;
 
 		AssetImporter m_Importer;
 #else

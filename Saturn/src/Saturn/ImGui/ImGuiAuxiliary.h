@@ -169,7 +169,7 @@ namespace Saturn::Auxiliary {
 
 	extern void DrawColoredRect( const ImVec2& size, const ImVec4& color );
 
-	extern bool DrawAssetFinder( AssetType type, bool* rOpen, AssetID& rOut );
+	extern bool DrawAssetFinder( AssetType type, bool* rOpen, AssetID& rOut, AssetID ignoreID = 0 );
 	extern bool DrawAssetFinder( const std::set<AssetType>& rAllowedTypes, bool* rOpen, AssetID& rOut );
 
 	template<typename Function>
@@ -242,7 +242,7 @@ namespace Saturn::Auxiliary {
 		std::string ButtonName = "";
 
 		if( auto asset = AssetManager::Get().FindAsset( returnID ) )
-			ButtonName = asset->GetName();
+			ButtonName = asset->Name;
 		else
 			ButtonName = "Unknown";
 

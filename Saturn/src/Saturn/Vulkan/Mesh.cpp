@@ -311,7 +311,7 @@ namespace Saturn {
 			RawSerialisation::ReadObject( materialID, rStream );
 
 			if( materialID )
-				m_MaterialRegistry->AddTargetMaterialAsset( materialID );
+				m_MaterialRegistry->AddTargetMaterialAsset( i, materialID );
 
 			// Try load material
 			Ref<MaterialAsset> materialAsset = AssetManager::Get().GetAssetAs<MaterialAsset>( materialID );

@@ -43,7 +43,7 @@
 #include <Saturn/Serialisation/SceneSerialiser.h>
 #include <Saturn/Serialisation/ProjectSerialiser.h>
 #include <Saturn/Serialisation/EngineSettingsSerialiser.h>
-#include <Saturn/Serialisation/AssetRegistrySerialiser.h>
+#include <Saturn/Serialisation/AssetManagerSerialiser.h>
 #include <Saturn/Serialisation/AssetSerialisers.h>
 #include <Saturn/Serialisation/AssetBundle.h>
 
@@ -503,8 +503,8 @@ namespace Saturn {
 		ProjectSerialiser ps( Project::GetActiveProject() );
 		ps.Serialise( Project::GetActiveProject()->GetConfig().Path );
 
-		AssetRegistrySerialiser ars;
-		ars.Serialise( AssetManager::Get().GetAssetRegistry() );
+		AssetManagerSerialiser ars;
+		ars.Serialise();
 	}
 
 	void EditorLayer::SelectionChanged( Ref<Entity> e )
@@ -745,7 +745,7 @@ namespace Saturn {
 							contentBrowserPanel->BrowseToItem( target->Path, defaultMaterialID );
 						}
 					}
-				}
+				} 
 			}
 			ImGui::EndHorizontal();
 
@@ -1797,13 +1797,13 @@ namespace Saturn {
 		ImGui::SetNextWindowPos( ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Appearing, ImVec2( 0.5f, 0.5f ) );
 		if( ImGui::Begin( "Asset Dependencies", &m_ShowAssetDependencies, ImGuiWindowFlags_NoSavedSettings ) )
 		{
-			if( Auxiliary::TreeNode( "Asset Dependencies (ADN)", false ) )
+			if( Auxiliary::TreeNode( "Asset Dependencies (Memory)", false ) )
 			{
 				for( auto& [assetID, rDependency] : AssetManager::Get().GetAssetDependencies() )
 				{
 					if( Auxiliary::TreeNode( std::to_string( assetID ), false ) )
 					{
-						for( AssetDependencyBase* pBase : rDependency )
+						for( MemoryAssetDependencyBase* pBase : rDependency )
 						{
 							ImGui::Text( "ADB/Base" );
 						}
@@ -1815,7 +1815,7 @@ namespace Saturn {
 				Auxiliary::EndTreeNode();
 			}
 
-			if( Auxiliary::TreeNode( "Asset Dependencies (Pure)", false ) )
+			if( Auxiliary::TreeNode( "Asset Dependencies", true ) )
 			{
 				for( auto& [assetID, rDependencies] : AssetManager::Get().GetPureAssetDependencies() )
 				{
@@ -1943,7 +1943,7 @@ namespace Saturn {
 				const UUID* pUUID = ( const UUID* ) payload->Data;
 
 				Ref<Asset> asset = AssetManager::Get().FindAsset( *pUUID );
-				Ref<Prefab> prefabAsset = AssetManager::Get().GetAssetAs<Prefab>( asset->GetAssetID() );
+				Ref<Prefab> prefabAsset = AssetManager::Get().GetAssetAs<Prefab>( asset->ID );
 
 				m_EditorScene->CreatePrefab( prefabAsset );
 				m_EditorScene->MarkDirty();
@@ -1954,7 +1954,7 @@ namespace Saturn {
 				const UUID* pUUID = ( const UUID* ) payload->Data;
 
 				Ref<Asset> asset = AssetManager::Get().FindAsset( *pUUID );
-				Ref<StaticMesh> meshAsset = AssetManager::Get().GetAssetAs<StaticMesh>( asset->GetAssetID() );
+				Ref<StaticMesh> meshAsset = AssetManager::Get().GetAssetAs<StaticMesh>( asset->ID );
 
 				Ref<Entity> entity = Ref<Entity>::Create();
 				entity->SetName( asset->Name );

@@ -29,7 +29,7 @@
 #include "sppch.h"
 #include "AssetManager.h"
 
-#include "AssetDependency.h"
+#include "MemoryAssetDependency.h"
 
 #include "Saturn/Core/App.h"
 #include "Saturn/Serialisation/AssetManagerSerialiser.h"
@@ -103,32 +103,32 @@ namespace Saturn {
 	}
 
 #if !defined(SAT_DIST)
-	void AssetManager::RegisterAssetDependency( AssetID dependencyID, AssetDependencyBase* pBase )
+	void AssetManager::RegisterMemoryAssetDependency( AssetID dependencyID, MemoryAssetDependencyBase* pBase )
 	{
 		if( dependencyID != 0 )
-			m_AssetDependencies[ dependencyID ].insert( { pBase } );
+			m_MemoryAssetDependencies[ dependencyID ].insert( { pBase } );
 	}
 
-	void AssetManager::UnregisterAssetDependency( AssetID dependencyID, AssetDependencyBase* pBase )
+	void AssetManager::UnregisterMemoryAssetDependency( AssetID dependencyID, MemoryAssetDependencyBase* pBase )
 	{
-		if( m_AssetDependencies.find( dependencyID ) != m_AssetDependencies.end() )
+		if( m_MemoryAssetDependencies.find( dependencyID ) != m_MemoryAssetDependencies.end() )
 		{
-			m_AssetDependencies[ dependencyID ].erase( { pBase } );
+			m_MemoryAssetDependencies[ dependencyID ].erase( { pBase } );
 
-			if( !m_AssetDependencies[ dependencyID ].size() ) m_AssetDependencies.erase( dependencyID );
+			if( !m_MemoryAssetDependencies[ dependencyID ].size() ) m_MemoryAssetDependencies.erase( dependencyID );
 		}
 	}
 
-	const std::unordered_map<Saturn::AssetID, std::unordered_set<AssetDependencyBase*>> AssetManager::GetAssetDependencies() const
+	const std::unordered_map<Saturn::AssetID, std::unordered_set<MemoryAssetDependencyBase*>> AssetManager::GetAssetDependencies() const
 	{
-		return m_AssetDependencies;
+		return m_MemoryAssetDependencies;
 	}
 
-	const std::unordered_set<AssetDependencyBase*> AssetManager::GetAssetDependenciesForAsset( const Ref<Asset> asset ) const
+	const std::unordered_set<MemoryAssetDependencyBase*> AssetManager::GetAssetDependenciesForAsset( const Ref<Asset> asset ) const
 	{
-		if( m_AssetDependencies.contains( asset->ID ) )
+		if( m_MemoryAssetDependencies.contains( asset->ID ) )
 		{
-			return m_AssetDependencies.at( asset->ID );
+			return m_MemoryAssetDependencies.at( asset->ID );
 		}
 		else
 			return {};
@@ -136,12 +136,12 @@ namespace Saturn {
 
 	bool AssetManager::DoesAssetHaveDependencies( Ref<Asset> asset )
 	{
-		return m_AssetDependencies.contains( asset->ID ) || CheckPureAssetDependencies( asset );
+		return m_MemoryAssetDependencies.contains( asset->ID ) || CheckPureAssetDependencies( asset );
 	}
 
 	bool AssetManager::CheckPureAssetDependencies( Ref<Asset> asset ) 
 	{
-		for( auto& [assetID, deps] : m_PureAssetDependencies )
+		for( auto& [assetID, deps] : m_AssetDependencies )
 		{
 			for( auto& depID : deps )
 			{
@@ -156,37 +156,37 @@ namespace Saturn {
 	void AssetManager::RegisterAssetDependency( AssetID assetID, AssetID dependencyID )
 	{
 		if( assetID != 0 && dependencyID != 0 )
-			m_PureAssetDependencies[ assetID ].insert( dependencyID );
+			m_AssetDependencies[ assetID ].insert( dependencyID );
 	}
 
 	void AssetManager::UnregisterAssetDependency( AssetID assetID, AssetID dependencyID )
 	{
-		if( m_PureAssetDependencies.find( dependencyID ) != m_PureAssetDependencies.end() )
+		if( m_AssetDependencies.find( dependencyID ) != m_AssetDependencies.end() )
 		{
-			m_PureAssetDependencies[ dependencyID ].erase( assetID );
+			m_AssetDependencies[ dependencyID ].erase( assetID );
 
-			if( !m_PureAssetDependencies[ dependencyID ].size() ) m_PureAssetDependencies.erase( dependencyID );
+			if( !m_AssetDependencies[ dependencyID ].size() ) m_AssetDependencies.erase( dependencyID );
 		}
 	}
 
 	void AssetManager::UnregisterAllAssetDependencies( AssetID assetID )
 	{
-		if( m_PureAssetDependencies.find( assetID ) != m_PureAssetDependencies.end() )
+		if( m_AssetDependencies.find( assetID ) != m_AssetDependencies.end() )
 		{
-			m_PureAssetDependencies.erase( assetID );
+			m_AssetDependencies.erase( assetID );
 		}
 	}
 
 	const std::unordered_map<AssetID, std::unordered_set<AssetID>> AssetManager::GetPureAssetDependencies() const
 	{
-		return m_PureAssetDependencies;
+		return m_AssetDependencies;
 	}
 
 	const std::unordered_set<AssetID> AssetManager::GetPureAssetDependenciesForAsset( const Ref<Asset> asset ) const
 	{
 		std::unordered_set<AssetID> map;
 
-		for( auto& [assetID, deps] : m_PureAssetDependencies )
+		for( auto& [assetID, deps] : m_AssetDependencies )
 		{
 			for( auto& depID : deps )
 			{
@@ -201,20 +201,20 @@ namespace Saturn {
 	}
 
 #else
-	void AssetManager::RegisterAssetDependency( AssetID dependencyID, AssetDependencyBase* pBase )
+	void AssetManager::RegisterMemoryAssetDependency( AssetID dependencyID, MemoryAssetDependencyBase* pBase )
 	{
 	}
 
-	void AssetManager::UnregisterAssetDependency( AssetID dependencyID, AssetDependencyBase* pBase )
+	void AssetManager::UnregisterAssetDependency( AssetID dependencyID, MemoryAssetDependencyBase* pBase )
 	{
 	}
 
-	const std::unordered_map<Saturn::AssetID, std::unordered_set<AssetDependencyBase*>> AssetManager::GetAssetDependencies() const
+	const std::unordered_map<Saturn::AssetID, std::unordered_set<MemoryAssetDependencyBase*>> AssetManager::GetAssetDependencies() const
 	{
 		return {};
 	}
 
-	const std::unordered_set<AssetDependencyBase*> AssetManager::GetAssetDependenciesForAsset( const Ref<Asset> asset ) const
+	const std::unordered_set<MemoryAssetDependencyBase*> AssetManager::GetAssetDependenciesForAsset( const Ref<Asset> asset ) const
 	{
 		return {};
 	}

@@ -35,7 +35,7 @@
 namespace Saturn {
 
 	class StaticMesh;
-	class AssetDependencyNotifier;
+	class MemoryAssetDependencyNotifier;
 
 	class MaterialAsset : public Asset
 	{
@@ -142,7 +142,7 @@ namespace Saturn {
 		std::unordered_map< uint32_t, std::filesystem::path > m_VPendingTextureChanges;
 
 #if !defined(SAT_DIST)
-		std::unordered_map< std::string, AssetDependencyNotifier > m_TextureAssetDependencies;
+		std::unordered_map< std::string, MemoryAssetDependencyNotifier > m_TextureAssetDependencies;
 #endif
 	private:
 		friend class MaterialNodeEditorEvaluator;
@@ -199,7 +199,7 @@ namespace Saturn {
 		Ref<StaticMesh> m_Mesh = nullptr;
 		std::vector< Ref<MaterialAsset> > m_Materials;
 
-		std::unordered_map<size_t, AssetDependencyNotifier> m_MaterialAssetsIDs;
+		std::unordered_map<size_t, MemoryAssetDependencyNotifier> m_MaterialAssetsIDs;
 
 		// This may not be the best way.
 		std::vector<bool> m_HasOverridden;

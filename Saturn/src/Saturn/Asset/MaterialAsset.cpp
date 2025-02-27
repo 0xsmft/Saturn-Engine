@@ -29,7 +29,7 @@
 #include "sppch.h"
 #include "MaterialAsset.h"
 
-#include "AssetDependency.h"
+#include "MemoryAssetDependency.h"
 #include "AssetManager.h"
 
 #include "Saturn/Core/Renderer/RenderThread.h"
@@ -583,7 +583,7 @@ namespace Saturn {
 		}
 		else
 		{
-			AssetDependencyNotifier notifier( SAT_BIND_EVENT_FN( OnAssetDependencyChanged ) );
+			MemoryAssetDependencyNotifier notifier( SAT_BIND_EVENT_FN( OnAssetDependencyChanged ) );
 			notifier = materialID;
 
 			m_MaterialAssetsIDs[ index ] = notifier;

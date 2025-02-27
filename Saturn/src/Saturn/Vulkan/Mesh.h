@@ -36,6 +36,7 @@
 #include "IndexBuffer.h"
 #include "Material.h"
 
+#include "Saturn/Asset/MemoryAssetDependency.h"
 #include "Saturn/Asset/MaterialAsset.h"
 
 #include "Saturn/Physics/PhysicsShapeTypes.h"
@@ -201,7 +202,7 @@ namespace Saturn {
 		uint32_t m_VertexCount = 0;
 
 		ShapeType m_AttachedPhysicsShape = ShapeType::Unknown;
-		AssetID m_PhysicsMaterial = 0;
+		MemoryAssetDependency<AssetType::PhysicsMaterial> m_PhysicsMaterial;
 
 		// Materials
 		Ref<MaterialRegistry> m_MaterialRegistry;

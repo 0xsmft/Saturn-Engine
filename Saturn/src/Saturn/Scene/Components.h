@@ -28,21 +28,20 @@
 
 #pragma once
 
+#include "Saturn/Asset/MemoryAssetDependency.h"
+
+#include "Saturn/Core/Math.h"
+#include "Saturn/Core/UUID.h"
+#include "Saturn/Core/Renderer/SceneCamera.h"
+
+#include "Saturn/Vulkan/EnvironmentMap.h"
+#include "Saturn/Vulkan/Mesh.h"
+
+#include <string>
+
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-
-#include "Saturn/Vulkan/EnvironmentMap.h"
-
-#include "Saturn/Core/Math.h"
-
-#include "Saturn/Vulkan/Mesh.h"
-
-#include "Saturn/Core/UUID.h"
-
-#include "Saturn/Core/Renderer/SceneCamera.h"
-
-#include <string>
 
 namespace Saturn {
 
@@ -135,7 +134,7 @@ namespace Saturn {
 
 	struct StaticMeshComponent
 	{
-		UUID AssetID = 0;
+		MemoryAssetDependency<AssetType::StaticMesh> AssetID;
 
 		// TODO: Change to Asset ID
 		Ref<Saturn::StaticMesh> Mesh;
@@ -233,7 +232,7 @@ namespace Saturn {
 		float LinearDrag = 1.0f;
 		uint32_t LockFlags = 0;
 
-		UUID MaterialAssetID = 0;
+		MemoryAssetDependency<AssetType::PhysicsMaterial> MaterialAssetID;
 
 		RigidbodyComponent() = default;
 		RigidbodyComponent( bool isKinematic ) : IsKinematic( isKinematic ) { }
@@ -253,7 +252,7 @@ namespace Saturn {
 	struct ScriptComponent
 	{
 		std::string ScriptName;
-		UUID AssetID = 0;
+		Saturn::AssetID AssetID;
 	};
 
 	struct RelationshipComponent
@@ -264,28 +263,29 @@ namespace Saturn {
 
 		RelationshipComponent() = default;
 		RelationshipComponent( RelationshipComponent& other ) = default;
-		RelationshipComponent( UUID parent ) : Parent( parent ) {  }
+		RelationshipComponent( UUID parent ) : Parent( parent ) {}
 	};
 
 	struct PrefabComponent
 	{
-		UUID AssetID = 0;
+		MemoryAssetDependency<AssetType::Prefab> AssetID;
+
 		bool Modified = false;
 
 		PrefabComponent() = default;
 		PrefabComponent( PrefabComponent& other ) = default;
-		PrefabComponent( UUID id ) : AssetID( id ) {  }
+		PrefabComponent( Saturn::AssetID id ) : AssetID( id ) {}
 	};
 
 	struct AudioPlayerComponent
 	{
-		UUID SpecAssetID = 0;
+		MemoryAssetDependency<AssetType::Sound, AssetType::GraphSound> SpecAssetID;
 		UUID UniqueID;
 		bool Loop = false;
 		bool Mute = false;
 		bool Spatialization = false;
-		float VolumeMultiplier = 1.0f;
-		float PitchMultiplier = 1.0f;
+		float Volume = 1.0f;
+		float Pitch = 1.0f;
 		Ref<SoundGroup> SoundGroup = nullptr;
 	};
 
@@ -301,11 +301,11 @@ namespace Saturn {
 
 	struct BillboardComponent
 	{
-		UUID AssetID = 0;
+		MemoryAssetDependency<AssetType::Texture> AssetID;
 
 		BillboardComponent() = default;
 		BillboardComponent( BillboardComponent& other ) = default;
-		BillboardComponent( UUID id ) : AssetID( id ) {  }
+		BillboardComponent( UUID id ) : AssetID( id ) {}
 	};
 
 	template<typename... V>

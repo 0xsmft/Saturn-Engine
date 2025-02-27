@@ -27,28 +27,28 @@
 */
 
 #include "sppch.h"
-#include "AssetDependency.h"
+#include "MemoryAssetDependency.h"
 
 #include "AssetManager.h"
 
 namespace Saturn {
 
 	template<Saturn::AssetType... Types>
-	Saturn::AssetDependency<Types...>::AssetDependency( Saturn::AssetID id )
+	Saturn::MemoryAssetDependency<Types...>::MemoryAssetDependency( Saturn::AssetID id )
 		: AssetID( id )
 	{
-		AssetManager::Get().RegisterAssetDependency( AssetID, this );
+		AssetManager::Get().RegisterMemoryAssetDependency( AssetID, this );
 	}
 
 #if !defined(SAT_DIST)
-	void AssetDependencyBase::UnregisterAssetDependency( AssetID id )
+	void MemoryAssetDependencyBase::UnregisterAssetDependency( AssetID id )
 	{
-		AssetManager::Get().UnregisterAssetDependency( id, this );
+		AssetManager::Get().UnregisterMemoryAssetDependency( id, this );
 	}
 
-	void AssetDependencyBase::RegisterAssetDependency( AssetID id )
+	void MemoryAssetDependencyBase::RegisterAssetDependency( AssetID id )
 	{
-		AssetManager::Get().RegisterAssetDependency( id, this );
+		AssetManager::Get().RegisterMemoryAssetDependency( id, this );
 	}
 #endif
 }

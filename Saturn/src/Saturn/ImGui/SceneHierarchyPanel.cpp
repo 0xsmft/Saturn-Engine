@@ -698,6 +698,7 @@ namespace Saturn {
 				}
 				else if( m_CurrentFinderType == AssetType::Material )
 				{
+					// Don't update pure dependencies here because pure dependencies are only for assets and this change is local to this material registry
 					mc.MaterialRegistry->SetMaterial( s_CurrentIndex, m_CurrentAssetID );
 				}
 

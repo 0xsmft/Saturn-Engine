@@ -47,7 +47,7 @@ namespace Saturn {
 	{
 		if( m_Library.Load( m_Path.string() ) ) 
 		{
-			SAT_CORE_INFO( "Loaded corresponding module DLL: {0} -> {1}", m_Name, m_Path.string() );
+			SAT_CORE_INFO( "Loaded corresponding module DLL: {0} -> {1} (X/{0})", m_Name, m_Path.string() );
 		}
 		else
 		{

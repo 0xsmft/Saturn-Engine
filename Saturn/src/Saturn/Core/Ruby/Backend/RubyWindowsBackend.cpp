@@ -905,7 +905,7 @@ namespace Saturn {
 				if( pData )
 				{
 					// Copy data.
-					wcscpy_s( ( wchar_t* ) pData, DataSize, rTextData.c_str() );
+					wcscpy_s( ( wchar_t* ) pData, rTextData.size() + 1, rTextData.c_str() );
 
 					::GlobalUnlock( ClipboardData );
 

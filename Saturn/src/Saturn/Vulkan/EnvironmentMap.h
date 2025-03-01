@@ -39,8 +39,8 @@ namespace Saturn {
 	class EnvironmentMap : public RefTarget
 	{
 	public:
-		Ref< TextureCube > RadianceMap;
-		Ref< TextureCube > IrradianceMap;
+		Ref< TextureCube > RadianceMap = nullptr;
+		Ref< TextureCube > IrradianceMap = nullptr;
 
 		// These values should ideally match up to the ones in the skylight entity.
 		float Turbidity = 0.0f;

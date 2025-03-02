@@ -251,6 +251,12 @@ namespace Saturn {
 
 					DeatchedProcess dp( CommandLine );
 				}
+
+				if( ImGui::MenuItem( "Copy Path" ) )
+				{
+					std::string text = m_SelectedItems[ 0 ]->Path().string();
+					ImGui::SetClipboardText( text.c_str() );
+				}
 			}
 			else
 			{
@@ -264,6 +270,25 @@ namespace Saturn {
 							m_ShowDeleteAssetPopup = true;
 						}
 					}
+				}
+
+				if( ImGui::MenuItem( "Copy Asset ID" ) )
+				{
+					std::string text = "";
+					for( auto& rItem : m_SelectedItems )
+					{
+						text += std::format( "{0} ", (uint64_t)rItem->GetAssetID() );
+					}
+
+					/*
+					* Await MSVC
+					text = std::views::transform( m_SelectedItems, []( const auto& rItem )
+					{
+						return std::format( "{0}", rItem->GetAssetID() );
+					} ) | std::ranges::join_with( "," );
+					*/
+
+					ImGui::SetClipboardText( text.c_str() );
 				}
 			}
 		}

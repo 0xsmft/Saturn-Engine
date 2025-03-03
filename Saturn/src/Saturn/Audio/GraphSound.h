@@ -52,6 +52,10 @@ namespace Saturn {
 		void Load( uint32_t flags ) override;
 		void Reset() override;
 
+		// Public non-static version of OnSoundEnd
+		// OnSoundCompleted is called by the Audio System
+		void OnSoundCompleted() override;
+
 		void WaitUntilLoaded();
 
 		void SetVolume( float volume );

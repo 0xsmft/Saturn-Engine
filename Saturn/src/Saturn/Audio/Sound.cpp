@@ -130,6 +130,8 @@ namespace Saturn {
 
 	Sound::~Sound()
 	{
+		m_CompletionFunctions.clear();
+
 		Stop();
 		Unload();
 	}
@@ -138,12 +140,6 @@ namespace Saturn {
 	{
 		if( !m_Loaded )
 			Load( 0 );
-
-		if( ma_sound_at_end( m_Sound ) )
-		{
-			SAT_CORE_WARN( "Playing sound from beginning: {0}", m_Specification->Name );
-			Reset();
-		}
 
 		if( frameOffset == 0 )
 		{
@@ -206,6 +202,14 @@ namespace Saturn {
 		if( m_Loaded )
 		{
 			MA_CHECK( ma_sound_seek_to_pcm_frame( m_Sound, 0 ) );
+		}
+	}
+
+	void Sound::OnSoundCompleted()
+	{
+		for( auto&& rrFunction : m_CompletionFunctions )
+		{
+			( rrFunction ) ( m_PlayerID );
 		}
 	}
 

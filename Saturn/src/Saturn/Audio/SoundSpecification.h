@@ -34,6 +34,7 @@ namespace Saturn {
 
 	struct SoundDecodedInformation
 	{
+		// Audio Format, see: ma_format
 		int Format = 0;
 		uint32_t Channels = 0;
 		uint32_t SampleRate = 0;

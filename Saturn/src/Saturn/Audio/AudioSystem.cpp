@@ -235,11 +235,11 @@ namespace Saturn {
 			// Intentional.
 			// Better to get the sound again rather than copy it into this lambda.
 			Ref<Sound> newSound = m_AliveSounds[ UniquePlayerID ];
+			newSound->SetID( UniquePlayerID );
 
 			newSound->Load( MA_SOUND_FLAG_NO_SPATIALIZATION );
 			// If the sound was already loaded then we can still disable it here.
 			newSound->SetSpatialisation( false );
-			newSound->SetID( UniquePlayerID );
 
 			if( PlayNow ) newSound->Play();
 
@@ -399,6 +399,7 @@ namespace Saturn {
 		{
 			auto& rSnd = ( Itr )->second;
 			rSnd->Stop();
+			rSnd->OnSoundCompleted();
 
 			m_AliveSounds.erase( Itr );
 		}

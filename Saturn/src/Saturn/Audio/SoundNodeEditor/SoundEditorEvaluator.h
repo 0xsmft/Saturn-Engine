@@ -67,6 +67,10 @@ namespace Saturn {
 		void RegisterSound( size_t id );
 		void UnregisterSound( size_t id );
 
+		void OnSoundCompleted( UUID PlayerID );
+
+		void Loop( bool loop ) { m_Looping = loop; }
+
 	public:
 		// Sounds that are currently playing
 		std::vector<Ref<Sound>> AliveSounds;
@@ -74,8 +78,10 @@ namespace Saturn {
 
 	private:
 		void DestroyAliveSounds();
-	
+		NodeEditorCompilationStatus EvalNoChecks();
+
 	private:
 		SoundEdEvaluatorInfo m_Info;
+		bool m_Looping = false;
 	};
 }

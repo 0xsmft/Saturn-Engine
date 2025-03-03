@@ -96,16 +96,24 @@ namespace Saturn {
 
 		DestroyAliveSounds();
 
+		return EvalNoChecks();
+	}
+
+	NodeEditorCompilationStatus SoundEditorEvaluator::EvalNoChecks()
+	{
+		Ref<NodeEditor> uiEditor = m_NodeEditor.As<NodeEditor>();
+		Ref<Node> OutputNode = m_NodeEditor->FindNode( m_Info.OutputNodeID );
+
 		// Stacks are last in first out, so our output node will be evaluated last which is what we want.
 		std::stack<UUID> order;
 		m_NodeEditor->TraverseFromStart( OutputNode,
-			[&]( const UUID id )
-			{
-				order.push( id );
-			} );
+			[ & ]( const UUID id )
+		{
+			order.push( id );
+		} );
 
 #if !defined( SAT_DIST )
-		if( order.size() <= 1 ) 
+		if( order.size() <= 1 )
 		{
 			uiEditor->ThrowWarning( "There is no other nodes to compile! (The only node that exists is the output node!)" );
 			return NodeEditorCompilationStatus::Failed;
@@ -124,7 +132,7 @@ namespace Saturn {
 			{
 				compileResult = NodeEditorCompilationStatus::Failed;
 				break;
-			}	
+			}
 		}
 
 		return compileResult;
@@ -133,6 +141,7 @@ namespace Saturn {
 	void SoundEditorEvaluator::AddNewSound( UUID id )
 	{
 		Ref<Sound> snd = AudioSystem::Get().RequestNewSound( id, UUID(), false, nullptr );
+		snd->AddOnCompleteFunction( SAT_BIND_EVENT_FN( SoundEditorEvaluator::OnSoundCompleted ) );
 		snd->WaitUntilLoaded();
 
 		AliveSounds.push_back( snd );
@@ -150,6 +159,25 @@ namespace Saturn {
 	void SoundEditorEvaluator::UnregisterSound( size_t id )
 	{
 		SoundsPlaying.erase( id );
+	}
+
+	void SoundEditorEvaluator::OnSoundCompleted( UUID PlayerID )
+	{
+		auto Itr = std::find_if( AliveSounds.begin(), AliveSounds.end(), 
+		[PlayerID]( const auto& rSound ) 
+		{
+			return rSound->GetPlayerID() == PlayerID;
+		} );
+
+		if( Itr != AliveSounds.end() )
+		{
+			AliveSounds.erase( Itr );
+		}
+
+		if( SoundsPlaying.size() == 0 && m_Looping )
+		{
+			EvalNoChecks();
+		}
 	}
 
 	void SoundEditorEvaluator::DestroyAliveSounds()

@@ -48,6 +48,7 @@ namespace Saturn {
 		virtual void Load( uint32_t flags ) = 0;
 		virtual void Reset() = 0;
 		virtual void Unload() = 0;
+		virtual void OnSoundCompleted() = 0;
 
 	public:
 		ma_sound* GetRawSound() { return m_Sound; }
@@ -57,6 +58,7 @@ namespace Saturn {
 
 	protected:
 		ma_sound* m_Sound = nullptr;
+		// Actual SoundSpecification asset
 		Ref<SoundSpecification> m_Specification;
 
 		UUID m_PlayerID = 0;

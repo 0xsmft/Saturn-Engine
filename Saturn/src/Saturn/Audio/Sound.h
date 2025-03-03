@@ -32,27 +32,65 @@
 
 namespace Saturn {
 
+	// Sound based from SoundBase
+	// 
+	// Represents a SoundSpecificationAsset that can be played, stopped and looped.
+	// Sound must be created from a SoundSpecificationAsset
+	// Automatic registration with the Audio system is provided.
+	//
+	// Furthermore, this class provides an interface for spatialisation, volume and pitch adjustments, seeking within an audio stream and Sound Groups. 
+	//
 	class Sound : public SoundBase
 	{
 	public:
 		Sound( const Ref<SoundSpecification>& rSpec, Ref<SoundGroup> soundGroup );
 		virtual ~Sound();
 
+	public:
+		//////////////////////////////////////////////////////////////////////////
+		// SoundBase overrides
+		//////////////////////////////////////////////////////////////////////////
+
+		// Play from the current PCM frame or start from beginning if the sound is at the end.
+		// @param frameOffset -- The PCM frame offset which this sound should start from.
 		virtual void Play( int frameOffset = 0 ) override;
+
 		virtual void Stop() override;
 		virtual void Loop( bool loop = true ) override;
+
+		// Load the actual sound from a data source
+		// 
+		// Data source could be a file or in Dist, it could be from a compressed sound buffer
+		// 
+		// This function should only be called if this Sound was not registered with the Audio System.
+		// 
+		// @param flags -- Load Flags (see: ma_sound_flags) default is no flags
 		virtual void Load( uint32_t flags = 0 ) override;
+
+		// Unload the data source
+		// You must not call any other functions that require a data source
+		//
+		// This function should only be called if this Sound was not registered with the Audio System.
 		virtual void Unload() override;
 
+		// Set the data source to be at the first PCM frame
+		virtual void Reset() override;
+
+		virtual void OnSoundCompleted() override;
+
+	public:
 		bool IsPlaying() const;
 		bool IsLooping() const;
 
+		// Pauses the active thread until the Audio System has fully initialised the data source.
 		void WaitUntilLoaded();
-		virtual void Reset() override;
 
+		// Set Spatialisation position in world space.
 		void SetPosition( const glm::vec3& rPos );
+
 		void SetSpatialisation( bool value );
 	
+		// Set Spatialisation min or max distance from primary listener.
 		void SetMaxDistance( float dist );
 		void SetMinDistance( float dist );
 
@@ -67,19 +105,27 @@ namespace Saturn {
 		float GetDurationInSeconds();
 		float GetCursorInSeconds();
 
+		// @returns in formatted string HH:MM:SS
 		std::string FormatSeconds( float seconds );
 
 		uint64_t GetDurationInPCM();
 		uint64_t GetCursorInPCM();
 
+		// Set the data source to a PCM frame
 		void SeekTo( uint64_t pcmFrame );
+
+		void AddOnCompleteFunction( std::function<void(UUID)>&& rrFunc ) { m_CompletionFunctions.push_back( rrFunc ); }
 
 	private:
 		static void OnSoundEnd( void* pUserData, ma_sound* pSound );
 
 	private:
 		void SetupSpatialisation();
+
+		// Load via buffer
 		void LoadForDist( uint32_t flags );
+		
+		// Load via file
 		void LoadFromFile( uint32_t flags );
 
 		Ref<SoundGroup> m_SoundGroup;
@@ -89,6 +135,8 @@ namespace Saturn {
 #if defined( SAT_DIST )
 		ma_audio_buffer m_AudioBuffer;
 #endif
+
+		std::vector<std::function<void(UUID)>> m_CompletionFunctions;
 
 	private:
 		friend class AudioSystem;

@@ -109,6 +109,7 @@ namespace Saturn {
 
 	void GraphSound::Loop( bool loop )
 	{
+		m_Runtime->Loop( loop );
 	}
 
 	void GraphSound::Load( uint32_t flags )
@@ -122,6 +123,11 @@ namespace Saturn {
 		{
 			rSound->Reset();
 		}
+	}
+
+	void GraphSound::OnSoundCompleted()
+	{
+
 	}
 
 	void GraphSound::WaitUntilLoaded()

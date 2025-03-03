@@ -72,16 +72,23 @@ namespace Saturn {
 		if( !pSoundEditorEvaluator )
 			return NodeEditorCompilationStatus::Failed;
 
+		// For all currently alive sounds check if they are allowed to play
+		// if they are then we play them if not then we'll unload and erase
 		size_t index = 0;
-		for( Ref<Sound>& rSound : pSoundEditorEvaluator->AliveSounds )
+		for( auto Itr = pSoundEditorEvaluator->AliveSounds.begin(); Itr != pSoundEditorEvaluator->AliveSounds.end(); )
 		{
-			if( pSoundEditorEvaluator->SoundsPlaying.count( index ) > 0 ) 
+			Ref<Sound>& rSound = *(Itr);
+
+			if( pSoundEditorEvaluator->SoundsPlaying.count( index ) > 0 )
 			{
 				rSound->Play();
+				Itr++;
 			}
 			else
 			{
 				// erase
+				rSound->Unload();
+				Itr = pSoundEditorEvaluator->AliveSounds.erase( Itr );
 			}
 
 			index++;

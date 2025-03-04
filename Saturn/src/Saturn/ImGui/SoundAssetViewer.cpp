@@ -128,7 +128,6 @@ namespace Saturn {
 			if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Stop" ), { 24.0f, 24.0f } ) )
 			{
 				m_PreviewSound->Stop();
-				m_PreviewSound->Reset();
 
 				AudioSystem::Get().StopSoundGroups();
 			}

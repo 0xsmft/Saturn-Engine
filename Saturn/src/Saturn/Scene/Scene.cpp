@@ -864,9 +864,8 @@ namespace Saturn {
 				}
 
 				sound->SetVolume( rComp.Volume );
-				sound->SetPitch( rComp.Pitch );
-
-				// TODO: Looping
+//				sound->SetPitch( rComp.Pitch );
+				sound->Loop( rComp.Loop );
 			}
 			else
 			{

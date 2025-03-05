@@ -78,6 +78,7 @@ namespace SaturnBuildTool
                 Console.WriteLine( " Compile Options:" );
                 Console.WriteLine( "  /WIN64* -- build for Windows x64" );
                 Console.WriteLine( "  /HOTRELOAD -- this is an internal command and is used for hot reloading, when this command is suggested the build tool will create a special timestamp file and output files with the timestamp suffix" );
+                Console.WriteLine( "  /DISTASDBG -- Build for Dist but compile with debug symbols and full \"/DIST\" must be suggested" );
                 Console.WriteLine( "  Configuration Options:" );
                 Console.WriteLine( "   /DEBUG* -- build the project for Debug configuration with full symbols" );
                 Console.WriteLine( "   /RELEASE* -- build the project for Release configuration with symbols on for this project but symbols off for third party projects" );
@@ -124,6 +125,14 @@ namespace SaturnBuildTool
             if( TargetToBuild == null )
             {
                 Console.WriteLine( "ERROR: Could not find a user target!, looking for {0} Please regenerate it in the engine!", ProjectInfo.Instance.BuildRuleFile );
+
+                ExitCode = 1;
+                return false;
+            }
+
+            if( CommandLineParser.Instance.FindFlag( "DISTASDBG" ) && TargetToBuild.CurrentConfig != ConfigKind.Dist ) 
+            {
+                Console.WriteLine( "ERROR: \"/DISTASDBG\" was suggested however, you aren't building for Dist! \"/DISTASDBG\" is only available when \"/DIST\" is suggested" );
 
                 ExitCode = 1;
                 return false;

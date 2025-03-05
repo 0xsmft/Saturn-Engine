@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-
+using SaturnBuildTool.Auxiliary;
 using SaturnBuildTool.Tools;
 
 namespace SaturnBuildTool
@@ -108,6 +108,11 @@ namespace SaturnBuildTool
                         Args.Add( " /Ox" ); // Favour speed (optimisation)
                     }
                     break;
+            }
+
+            if( CommandLineParser.Instance.FindFlag( "DISTASDBG" ) ) 
+            {
+                Args.Add( " /Z7" );
             }
 
             // Out

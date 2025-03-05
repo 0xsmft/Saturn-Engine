@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-
+using SaturnBuildTool.Auxiliary;
 using SaturnBuildTool.Tools;
 
 namespace SaturnBuildTool
@@ -71,7 +71,7 @@ namespace SaturnBuildTool
 
             Args.Add( " /MACHINE:x64" );
 
-            if( TargetToBuild.CurrentConfig != ConfigKind.Dist )
+            if( TargetToBuild.CurrentConfig != ConfigKind.Dist || CommandLineParser.Instance.FindFlag( "DISTASDBG" ) )
             {
                 Args.Add( " /PDBALTPATH:%_PDB%" );
                 Args.Add( " /INCREMENTAL" );

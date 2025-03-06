@@ -559,7 +559,7 @@ namespace Saturn {
 			ImGui::EndHorizontal();
 
 			auto path = std::filesystem::relative( m_Path, Project::GetActiveProject()->GetRootDir() );
-			const wchar_t* c = path.c_str();
+			const void* pData = &m_Asset->ID;
 
 			if( Input::Get().KeyPressed( RubyKey::Ctrl ) || Input::Get().KeyPressed( RubyKey::RightCtrl ) )
 			{
@@ -575,29 +575,29 @@ namespace Saturn {
 					break;
 				case Saturn::AssetType::StaticMesh:
 				{
-					ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_MODEL", c, ( wcslen( c ) + 1 ) * sizeof( wchar_t ), ImGuiCond_Once );
+					ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_MODEL", pData, sizeof( Saturn::UUID ), ImGuiCond_Once );
 				}	break;
 				case Saturn::AssetType::SkeletalMesh:
 				case Saturn::AssetType::Material:
 				{
-					ImGui::SetDragDropPayload( "asset_payload", c, ( wcslen( c ) + 1 ) * sizeof( wchar_t ), ImGuiCond_Once );
+					ImGui::SetDragDropPayload( "asset_payload", pData, sizeof( Saturn::UUID ), ImGuiCond_Once );
 				}	break;
 				case Saturn::AssetType::MaterialInstance:
 				case Saturn::AssetType::Sound:
 					break;
 				case Saturn::AssetType::Scene:
 				{
-					ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_SCENE", c, ( wcslen( c ) + 1 ) * sizeof( wchar_t ), ImGuiCond_Once );
+					ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_SCENE", pData, sizeof( Saturn::UUID ), ImGuiCond_Once );
 				} break;
 
 				case Saturn::AssetType::Prefab:
 				{
-					ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_PREFAB", c, ( wcslen( c ) + 1 ) * sizeof( wchar_t ), ImGuiCond_Once );
+					ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_PREFAB", pData, sizeof( Saturn::UUID ), ImGuiCond_Once );
 				} break;
 
 				case Saturn::AssetType::Script:
 				{
-					ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_SCRIPT", c, ( wcslen( c ) + 1 ) * sizeof( wchar_t ), ImGuiCond_Once );
+					ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_SCRIPT", pData, sizeof( Saturn::UUID ), ImGuiCond_Once );
 				} break;
 
 				case Saturn::AssetType::Unknown:

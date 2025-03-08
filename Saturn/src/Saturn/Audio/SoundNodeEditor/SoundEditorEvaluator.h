@@ -71,6 +71,8 @@ namespace Saturn {
 
 		void Loop( bool loop ) { m_Looping = loop; }
 
+		[[nodiscard]] bool IsCompleted() const { return m_Completed; }
+
 	public:
 		// Sounds that are currently playing
 		std::vector<Ref<Sound>> AliveSounds;
@@ -83,5 +85,6 @@ namespace Saturn {
 	private:
 		SoundEdEvaluatorInfo m_Info;
 		bool m_Looping = false;
+		bool m_Completed = false;
 	};
 }

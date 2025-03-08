@@ -104,15 +104,19 @@ namespace Saturn {
 		size_t pin = Random::RandomElementInRange( 0, Inputs.size() - 1 );
 		size_t index = ( size_t ) Inputs[ pin ].As<SoundPin>()->Data;
 
-		// Reg
+		// Register this sound to be played
 		pSoundEditorEvaluator->RegisterSound( index );
 
-		// Un reg
+		// Unregister any other sounds.
 		for( size_t i = 0; i < Inputs.size(); i++ )
 		{
-			if( i != index )
+			Ref<SoundPin> soundInputPin = Inputs[ i ].As<SoundPin>();
+
+			if( soundInputPin->Data != index )
 			{
-				pSoundEditorEvaluator->UnregisterSound( i );
+				// Don't use i because thats just the index in our Inputs array
+				// Use the actual data stored in the pin so we can the sound index.
+				pSoundEditorEvaluator->UnregisterSound( soundInputPin->Data );
 			}
 		}
 

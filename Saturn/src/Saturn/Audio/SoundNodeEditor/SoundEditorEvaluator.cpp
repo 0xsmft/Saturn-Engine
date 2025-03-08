@@ -154,11 +154,19 @@ namespace Saturn {
 	void SoundEditorEvaluator::RegisterSound( size_t id )
 	{
 		SoundsPlaying.insert( id );
+
+#if defined(SAT_DEBUG) || defined(SAT_RELEASE)
+		SAT_CORE_INFO( "[SoundEditorEvaluator] RegisterSound new sound with playing index/{0}", id );
+#endif
 	}
 
 	void SoundEditorEvaluator::UnregisterSound( size_t id )
 	{
 		SoundsPlaying.erase( id );
+
+#if defined(SAT_DEBUG) || defined(SAT_RELEASE)
+		SAT_CORE_INFO( "[SoundEditorEvaluator] UnregisterSound sound with playing index/{0}", id );
+#endif
 	}
 
 	void SoundEditorEvaluator::OnSoundCompleted( UUID PlayerID )
@@ -174,9 +182,12 @@ namespace Saturn {
 			AliveSounds.erase( Itr );
 		}
 
-		if( SoundsPlaying.size() == 0 && m_Looping )
+		if( SoundsPlaying.size() == 0 )
 		{
-			EvalNoChecks();
+			if( m_Looping )
+				EvalNoChecks();
+			else
+				m_Completed = true;
 		}
 	}
 

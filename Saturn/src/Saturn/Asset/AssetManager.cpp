@@ -205,7 +205,7 @@ namespace Saturn {
 	{
 	}
 
-	void AssetManager::UnregisterAssetDependency( AssetID dependencyID, MemoryAssetDependencyBase* pBase )
+	void AssetManager::UnregisterMemoryAssetDependency( AssetID dependencyID, MemoryAssetDependencyBase* pBase )
 	{
 	}
 
@@ -229,6 +229,10 @@ namespace Saturn {
 	}
 
 	void AssetManager::UnregisterAssetDependency( AssetID assetID, AssetID dependencyID )
+	{
+	}
+
+	void AssetManager::UnregisterAllAssetDependencies( AssetID assetID )
 	{
 	}
 

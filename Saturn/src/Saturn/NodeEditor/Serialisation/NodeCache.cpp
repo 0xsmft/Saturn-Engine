@@ -31,6 +31,11 @@
 
 #include "Saturn/Asset/AssetManager.h"
 
+#if defined(SAT_DIST)
+#include "Saturn/Core/VirtualFS.h"
+#include "Saturn/Core/MemoryStream.h"
+#endif
+
 namespace Saturn {
 
 	//////////////////////////////////////////////////////////////////////////
@@ -176,7 +181,7 @@ namespace Saturn {
 	struct NodeCacheEditorHeader
 	{
 		const char Magic[ 6 ] = ".NCE\0";
-		AssetID AssetID;
+		AssetID AssetID = 0;
 		uint32_t Version = SAT_CURRENT_VERSION;
 	};
 	
@@ -260,12 +265,27 @@ namespace Saturn {
 
 		cachePath /= filename;
 
+#if defined( SAT_DIST )
+		const std::string& rMountBase = Project::GetActiveConfig().Name;
+		Ref<VFile> file = VirtualFS::Get().FindFile( rMountBase, cachePath );
+
+		if( !file )
+		{
+			SAT_CORE_ERROR( "NodeCache VFile does not exist" );
+			return false;
+		}
+
+		PakFileMemoryBuffer membuf( file->FileContent );
+
+		std::istream stream( &membuf );
+#else
 		std::filesystem::path cachePathAbs = Project::GetActiveProject()->FilepathAbs( cachePath );
 
 		if( !std::filesystem::exists( cachePathAbs ) )
 			return false;
 
 		std::ifstream stream( cachePathAbs, std::ios::binary | std::ios::in );
+#endif
 
 		NodeCacheEditorHeader header{};
 		RawSerialisation::ReadObject( header, stream );
@@ -294,7 +314,9 @@ namespace Saturn {
 		nodeEditor->m_AssetID = id;
 		nodeEditor->DeserialiseData( stream );
 
+#if !defined(SAT_DIST)
 		stream.close();
+#endif
 
 		return true;
 	}

@@ -33,6 +33,7 @@
 #include "Saturn/Core/UUID.h"
 #include "Saturn/Core/Ref.h"
 
+#include "Saturn/Core/Log.h"
 #include "Saturn/Serialisation/RawSerialisation.h"
 
 #include "Saturn/Project/Project.h"
@@ -198,7 +199,9 @@ namespace Saturn {
 		uint32_t Flags = 0;
 		uint32_t Version = SAT_CURRENT_VERSION;
 
+		// The relative path to this Asset
 		std::filesystem::path Path;
+
 		std::string Name;
 
 	public:
@@ -211,7 +214,7 @@ namespace Saturn {
 
 		virtual ~Asset() = default;
 	
-		// rPath must be an absolute path.
+		// Path must be an absolute path.
 		// If you want to set a relative path just modify the 'Path' variable directly and update the name accordingly.
 		void SetAbsolutePath( const std::filesystem::path& rPath )
 		{

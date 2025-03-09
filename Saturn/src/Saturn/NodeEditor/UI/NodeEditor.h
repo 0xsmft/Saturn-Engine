@@ -84,8 +84,10 @@ namespace Saturn {
 		std::string m_CustomNameNC{};
 
 	private:
+#if !defined(SAT_DIST)
 		virtual void SerialiseData( std::ofstream& rStream ) override;
 		virtual void DeserialiseData( std::ifstream& rStream ) override;
+#endif
 
 	private:
 		void CreateEditor();

@@ -31,6 +31,10 @@
 #include "Pin.h"
 #include "Saturn/Asset/Asset.h"
 
+#if defined(SAT_DEBUG) || defined(SAT_RELEASE)
+#include <string>
+#endif
+
 namespace Saturn {
 
 	class AssetIDPin : public Pin
@@ -54,7 +58,7 @@ namespace Saturn {
 
 	protected:
 		void OnSerialise( std::ofstream& rStream ) const override;
-		void OnDeserialise( std::ifstream& rStream ) override;
+		void OnDeserialise( IStream& rStream ) override;
 
 	private:
 		void Render();
@@ -62,6 +66,9 @@ namespace Saturn {
 	private:
 		AssetID m_AssetID = 0;
 		AssetType m_AssetType = AssetType::Unknown;
+#if defined(SAT_DEBUG) || defined(SAT_RELEASE)
+		std::string m_AssetName = "";
+#endif
 	};
 
 }

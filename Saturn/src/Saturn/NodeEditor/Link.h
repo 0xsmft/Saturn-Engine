@@ -56,7 +56,8 @@ namespace Saturn {
 			RawSerialisation::WriteObject( rObject->Color, rStream );
 		}
 
-		static void Deserialise( Ref<Link>& rObject, std::ifstream& rStream )
+		template<typename IStream>
+		static void Deserialise( Ref<Link>& rObject, IStream& rStream )
 		{
 			UUID::Deserialise( rObject->ID, rStream );
 			UUID::Deserialise( rObject->StartPinID, rStream );

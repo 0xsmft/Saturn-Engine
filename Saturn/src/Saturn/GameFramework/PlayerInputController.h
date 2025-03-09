@@ -42,17 +42,34 @@ namespace Saturn {
 	class RubyKeyEvent;
 	class RubyMouseEvent;
 
+    // PlayerInputController
+	// Handles player input actions and key/mouse state updates.
+    // 
+    // This class manages input bindings from the project and allows functions to be assigned to specific actions.
 	class PlayerInputController : public RefTarget
 	{
 	public:
+		// Type alias for an action function. (std::function<void()>)
 		using ActionFunction = std::function<void()>;
 	public:
 		PlayerInputController();
 		~PlayerInputController();
 
+		// Binds an action to a function with a specific trigger state.
+		//
+		// @param rBindingName The name of the action binding, this much match with the one in the project settings
+		// @param state The trigger state of the action.
+		// @param rFunction The function to execute when the action is triggered.
 		void BindAction( const std::string& rBindingName, ActionBindingTriggerState state, const ActionFunction& rFunction );
+
+		// Removes a previously bound action.
+		//
+		// @param rBindingName The name of the action binding, this much match with the one in the project settings
 		void RemoveAction( const std::string& rBindingName );
 
+	public:
+		// Public internal functions
+		// Do not call
 		void UpdateKeyState( const RubyKeyEvent& rEvent );
 		void UpdateMouseState( const RubyMouseEvent& rEvent );
 

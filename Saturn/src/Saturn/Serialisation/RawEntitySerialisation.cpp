@@ -31,6 +31,7 @@
 
 #include "RawSerialisation.h"
 #include "Saturn/Asset/AssetManager.h"
+#include "Saturn/Asset/MemoryAssetDependency.h"
 
 #include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 
@@ -64,6 +65,23 @@ namespace Saturn {
 		}
 	}
 
+	// Write a MemoryAssetDependency
+	template<AssetType... Types>
+	static void WriteAssetDependency( const MemoryAssetDependency<Types...>& rDep, std::ofstream& rStream )
+	{
+		RawSerialisation::WriteObject( rDep.AssetID, rStream );
+	}
+
+	// Read a MemoryAssetDependency
+	template<AssetType... Types, typename IStream>
+	static void ReadAssetDependency( MemoryAssetDependency<Types...>& rDep, IStream& rStream )
+	{
+		AssetID id = 0;
+		RawSerialisation::ReadObject( id, rStream );
+
+		rDep = id;
+	}
+
 	void RawEntitySerialisation::SerialiseEntity( Ref<Entity>& rEntity, std::ofstream& rStream )
 	{
 		RawSerialisation::WriteObject( rEntity->GetComponent<IdComponent>().ID, rStream );
@@ -94,17 +112,16 @@ namespace Saturn {
 				auto& rc = rEntity->GetComponent< RelationshipComponent >();
 
 				RawSerialisation::WriteObject( rc.Parent, rStream );
-
 				RawSerialisation::WriteVector( rc.ChildrenID, rStream );
 			} );
 		
 		
-		// Relationship Component
+		// Prefab Component
 		WriteComponent<PrefabComponent>( rEntity, rStream, [&]()
 			{
 				auto& pc = rEntity->GetComponent< PrefabComponent >();
 
-				RawSerialisation::WriteObject( pc.AssetID, rStream );
+				WriteAssetDependency( pc.AssetID, rStream );
 				RawSerialisation::WriteObject( pc.Modified, rStream );
 			} );
 
@@ -118,22 +135,45 @@ namespace Saturn {
 				if( mc.Mesh )
 					ID = mc.Mesh->ID;
 
+				SAT_CORE_INFO( "WriteComponent<StaticMeshComponent> ID/{0}", ID );
+
 				RawSerialisation::WriteObject( ID, rStream );
 
 				bool HasRegistry = mc.MaterialRegistry != nullptr;
-
 				RawSerialisation::WriteObject( HasRegistry, rStream );
 
-				if( HasRegistry )
-					MaterialRegistry::Serialise( mc.MaterialRegistry, rStream );
+				// Write local material registry
+				// So only write what material have been overridden
+				if( HasRegistry ) 
+				{
+					RawSerialisation::WriteObject( mc.MaterialRegistry->GetMaterialAssets().size(), rStream );
+
+					int i = 0;
+					for( const auto& rMaterial : mc.MaterialRegistry->GetMaterialAssets() )
+					{
+						if( mc.MaterialRegistry->HasOverrides( i ) )
+						{
+							RawSerialisation::WriteObject( rMaterial->ID, rStream );
+						}
+						else
+						{
+							AssetID matID = 0;
+							RawSerialisation::WriteObject( matID, rStream );
+						}
+
+						i++;
+					}
+				}
+				//	MaterialRegistry::Serialise( mc.MaterialRegistry, rStream );
 			} );
 
+		/*
 		// Script Component
 		WriteComponent<ScriptComponent>( rEntity, rStream, [&]()
 			{
 				auto& sc = rEntity->GetComponent< ScriptComponent >();
 
-				RawSerialisation::WriteObject( sc.ScriptName, rStream );
+				RawSerialisation::WriteString( sc.ScriptName, rStream );
 				RawSerialisation::WriteObject( sc.AssetID, rStream );
 
 				auto& rProperties = ClassMetadataHandler::Get().GetAllProperties( sc.ScriptName );
@@ -146,6 +186,7 @@ namespace Saturn {
 					rProperty.Serialise( rEntity.Get(), rStream );
 				}
 			} );
+			*/
 
 		// Sky light component
 		WriteComponent<SkylightComponent>( rEntity, rStream, [&]()
@@ -171,7 +212,6 @@ namespace Saturn {
 				RawSerialisation::WriteObject( dlc.Intensity, rStream );
 				RawSerialisation::WriteObject( dlc.CastShadows, rStream );
 			} );
-
 
 		// Point Light Component
 		WriteComponent<PointLightComponent>( rEntity, rStream, [&]()
@@ -242,7 +282,7 @@ namespace Saturn {
 			{
 				auto& spc = rEntity->GetComponent< AudioPlayerComponent >();
 
-				RawSerialisation::WriteObject( spc.SpecAssetID, rStream );
+				WriteAssetDependency( spc.SpecAssetID, rStream );
 				RawSerialisation::WriteObject( spc.Loop, rStream );
 				RawSerialisation::WriteObject( spc.Mute, rStream );
 				RawSerialisation::WriteObject( spc.Spatialization, rStream );
@@ -295,7 +335,6 @@ namespace Saturn {
 				auto& rc = rEntity->GetComponent< RelationshipComponent >();
 
 				RawSerialisation::ReadObject( rc.Parent, rStream );
-
 				RawSerialisation::ReadVector( rc.ChildrenID, rStream );
 			} );
 
@@ -304,7 +343,7 @@ namespace Saturn {
 			{
 				auto& pc = rEntity->GetComponent< PrefabComponent >();
 
-				RawSerialisation::ReadObject( pc.AssetID, rStream );
+				ReadAssetDependency( pc.AssetID, rStream );
 				RawSerialisation::ReadObject( pc.Modified, rStream );
 			} );
 
@@ -314,10 +353,6 @@ namespace Saturn {
 				auto& mc = rEntity->GetComponent< StaticMeshComponent >();
 
 				AssetID ID = 0;
-
-				if( mc.Mesh )
-					ID = mc.Mesh->ID;
-
 				RawSerialisation::ReadObject( ID, rStream );
 
 				bool HasRegistry = false;
@@ -325,34 +360,54 @@ namespace Saturn {
 
 				mc.MaterialRegistry = Ref<MaterialRegistry>::Create();
 
-				// Build local material registry
-				if( HasRegistry )
-					MaterialRegistry::Deserialise( mc.MaterialRegistry, rStream );
-
-				// Now load the mesh
+				// Load the mesh before materials
 				if( ID != 0 )
 				{
 					// Load Mesh 
 					// Hand off to RawStaticMeshAssetSerialiser
 					auto mesh = AssetManager::Get().GetAssetAs<StaticMesh>( ID );
 					mc.Mesh = mesh;
-				
-					// If no overrides then copy the master registry
-					if( !mc.MaterialRegistry->HasAnyOverrides() ) 
-					{
-						mc.MaterialRegistry->Copy( mc.Mesh->GetMaterialRegistry() );
-					}
-					
+
 					mc.MaterialRegistry->SetMesh( mc.Mesh );
+				}
+
+				// Now, build local material registry
+				if( HasRegistry )
+				{
+					size_t materials = 0;
+					RawSerialisation::ReadObject( materials, rStream );
+
+					for( size_t i = 0; i < materials; i++ )
+					{
+						AssetID materialID = 0;
+						RawSerialisation::ReadObject( materialID, rStream );
+
+						// Load material asset
+						// Will call RawMaterialAssetSerialiser
+						Ref<MaterialAsset> asset = AssetManager::Get().GetAssetAs<MaterialAsset>( materialID );
+
+						if( asset )
+						{
+							mc.MaterialRegistry->AddAsset( asset );
+							mc.MaterialRegistry->SetOverries( i, true );
+						}
+					}
+				}
+
+				// If no overrides then copy the master registry
+				if( !mc.MaterialRegistry->HasAnyOverrides() )
+				{
+					mc.MaterialRegistry->Copy( mc.Mesh->GetMaterialRegistry() );
 				}
 			} );
 
+		/*
 		// Script Component
 		ReadComponent<ScriptComponent>( rEntity, rStream, [&]()
 			{
 				auto& sc = rEntity->GetComponent< ScriptComponent >();
 
-				RawSerialisation::ReadObject( sc.ScriptName, rStream );
+				sc.ScriptName = RawSerialisation::ReadString( rStream );
 				RawSerialisation::ReadObject( sc.AssetID, rStream );
 
 				/////////////////////////////////
@@ -381,6 +436,7 @@ namespace Saturn {
 					rProperty.Deserialise( rEntity.Get(), rStream );
 				}
 			} );
+			*/
 
 		// Sky light component
 		ReadComponent<SkylightComponent>( rEntity, rStream, [&]()
@@ -471,12 +527,12 @@ namespace Saturn {
 				RawSerialisation::ReadObject( cc.MainCamera, rStream );
 			} );
 
-		// Audio Component
+		// Audio Player Component
 		ReadComponent<AudioPlayerComponent>( rEntity, rStream, [&]()
 			{
 				auto& spc = rEntity->GetComponent< AudioPlayerComponent >();
 
-				RawSerialisation::ReadObject( spc.SpecAssetID, rStream );
+				ReadAssetDependency( spc.SpecAssetID, rStream );
 				RawSerialisation::ReadObject( spc.Loop, rStream );
 				RawSerialisation::ReadObject( spc.Mute, rStream );
 				RawSerialisation::ReadObject( spc.Spatialization, rStream );

@@ -643,6 +643,7 @@ namespace Saturn {
 			CreateEditor();
 	}
 
+#if !defined(SAT_DIST)
 	//////////////////////////////////////////////////////////////////////////
 	// SERIALISATION (DEBUG AND RELEASE)
 
@@ -720,4 +721,5 @@ namespace Saturn {
 
 		m_Loading = false;
 	}
+#endif
 }

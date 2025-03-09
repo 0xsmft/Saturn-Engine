@@ -134,7 +134,7 @@ namespace Saturn {
 		}
 	}
 
-	void NodeEditorBase::DeserialiseData( std::ifstream& rStream )
+	void NodeEditorBase::DeserialiseData( std::istream& rStream )
 	{
 		m_Loading = true;
 

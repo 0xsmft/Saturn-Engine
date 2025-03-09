@@ -108,7 +108,7 @@ namespace Saturn {
 		RawSerialisation::WriteVec3( Data, rStream );
 	}
 
-	void MaterialViewerColorPin::OnDeserialise( std::ifstream& rStream )
+	void MaterialViewerColorPin::OnDeserialise( IStream& rStream )
 	{
 		RawSerialisation::ReadVec3( Data, rStream );
 	}

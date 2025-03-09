@@ -137,7 +137,7 @@ namespace Saturn {
 		virtual void DeserialiseData( std::ifstream& rStream ) = 0;
 #else
 		virtual void SerialiseData( std::ofstream& rStream );
-		virtual void DeserialiseData( std::ifstream& rStream );
+		void DeserialiseData( std::istream& rStream );
 #endif
 
 	protected:

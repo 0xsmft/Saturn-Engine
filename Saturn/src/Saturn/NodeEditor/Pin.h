@@ -134,6 +134,12 @@ namespace Saturn {
 	class Pin : public RefTarget
 	{
 	public:
+#if !defined(SAT_DIST)
+		using IStream = std::ifstream;
+#else
+		using IStream = std::istream;
+#endif
+	public:
 		Pin() = default;
 		Pin( const std::string& rName, PinType type, PinKind kind );
 		Pin( UUID id, const std::string& rName, PinType type, UUID nodeID );
@@ -156,13 +162,13 @@ namespace Saturn {
 
 	public:
 		static void Serialise( const Ref<Pin>& rObject, std::ofstream& rStream );
-		static void Deserialise( Ref<Pin>& rObject, std::ifstream& rStream );
+		static void Deserialise( Ref<Pin>& rObject, IStream& rStream );
 
 	protected:
 		virtual void OnRenderOutput() {}
 		virtual void OnRenderInput() {}
 		virtual void OnSerialise( std::ofstream& rStream ) const {}
-		virtual void OnDeserialise( std::ifstream& rStream ) {}
+		virtual void OnDeserialise( IStream& rStream ) {}
 
 		void DrawIcon( bool connected, int alpha ) const;
 
@@ -186,7 +192,7 @@ namespace Saturn {
 		void OnRenderInput() override;
 
 		void OnSerialise( std::ofstream& rStream ) const override;
-		void OnDeserialise( std::ifstream& rStream ) override;
+		void OnDeserialise( IStream& rStream ) override;
 
 	public:
 		float Data = 0.0f;
@@ -205,7 +211,7 @@ namespace Saturn {
 		void OnRenderInput() override;
 
 		void OnSerialise( std::ofstream& rStream ) const override;
-		void OnDeserialise( std::ifstream& rStream ) override;
+		void OnDeserialise( IStream& rStream ) override;
 
 	public:
 		int Data = 0;
@@ -224,7 +230,7 @@ namespace Saturn {
 		void OnRenderInput() override;
 
 		void OnSerialise( std::ofstream& rStream ) const override;
-		void OnDeserialise( std::ifstream& rStream ) override;
+		void OnDeserialise( IStream& rStream ) override;
 
 	public:
 		bool Data = false;

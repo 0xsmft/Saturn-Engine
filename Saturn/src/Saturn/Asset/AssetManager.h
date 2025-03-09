@@ -75,7 +75,7 @@ namespace Saturn {
 		// Import Asset using Ty
 		// Where Ty is an asset.
 		// This will try to find the loaded asset, if it does not exists it will try to load it.
-		// \return Ref<Ty> if found, nullptr if not
+		// @return Ref<Ty> if found, nullptr if not
 		template<typename Ty>
 		Ref<Ty> GetAssetAs( AssetID id )
 		{

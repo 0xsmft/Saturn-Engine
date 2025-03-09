@@ -28,6 +28,7 @@
 
 #pragma once
 
+#include "Saturn/Core/Base.h"
 #include "Saturn/Core/Memory/Buffer.h"
 
 #include <fstream>
@@ -252,12 +253,14 @@ namespace Saturn {
 			}
 		}
 
+		// Write trivial object
 		template<typename Ty, typename OStream>
 		static void WriteObject( const Ty& rObject, OStream& rStream )
 		{
 			rStream.write( reinterpret_cast< const char* >( &rObject ), sizeof( Ty ) );
 		}
 
+		// Read trivial object
 		template<typename Ty, typename IStream>
 		static void ReadObject( Ty& rObject, IStream& rStream )
 		{

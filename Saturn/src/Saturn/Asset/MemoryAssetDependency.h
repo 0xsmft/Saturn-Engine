@@ -44,9 +44,9 @@ namespace Saturn {
 #endif
 	};
 
-	// MemoryAssetDependency<AssetType...>
-	// This class is a wrapper for an AssetID with additional support for registering asset dependencies
-	// 
+	// @class MemoryAssetDependency<AssetType...>
+	// @brief This class is a wrapper for an AssetID with additional support for registering asset dependencies automatically
+	//
 	// In Development configurations:
 	// - The size of this class will be 16 bytes 8 for the AssetID and 8 for the virtual function
 	// - It will automatically RegisterAssetDependency/UnregisterAssetDependency when assigning a new value.
@@ -54,7 +54,8 @@ namespace Saturn {
 	// In Distribution configurations:
 	// - This class then becomes a glorified Saturn::AssetID wrapper as this class will not register any Asset Dependencies futhermore, the size of this class will be 8 bytes only holding an AssetID
 	// - AssetDependencies do not exist in Distribution configurations
-	// Memory Dependency
+	//
+	// See this class as that only exist in the current scene as this will manly be used for entities/components etc
 	template<Saturn::AssetType... Types>
 	class MemoryAssetDependency : public MemoryAssetDependencyBase
 	{
@@ -88,6 +89,9 @@ namespace Saturn {
 			RegisterAssetDependency( AssetID );
 		}
 
+		// Automatically updates the AssetID and manages dependencies.
+		// @param rOther The new AssetID to assign.
+		// @return The updated AssetID.
 		Saturn::AssetID operator=( const Saturn::AssetID& rOther ) noexcept
 		{
 			UnregisterAssetDependency( AssetID );
@@ -99,6 +103,9 @@ namespace Saturn {
 			return AssetID;
 		}
 #else
+		// Change AssetID (no reregistration).
+		// @param rOther The new AssetID to assign.
+		// @return The updated AssetID.
 		Saturn::AssetID operator=( const Saturn::AssetID& rOther ) noexcept
 		{
 			AssetID = rOther;
@@ -122,7 +129,8 @@ namespace Saturn {
 	// In Distribution configurations:
 	// - This class then becomes a glorified Saturn::AssetID wrapper as this class will not register any Asset Dependencies futhermore, the size of this class will be 8 bytes only holding an AssetID
 	// - AssetDependencies do not exist in Distribution configurations
-	// Memory Dependency
+	//
+	// See this class as that only exist in the current scene as this will manly be used for entities/components etc
 	class MemoryAssetDependencyNotifier : public MemoryAssetDependencyBase
 	{
 	public:

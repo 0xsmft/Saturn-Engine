@@ -84,6 +84,12 @@ namespace Saturn {
 	class Node : public RefTarget
 	{
 	public:
+#if !defined(SAT_DIST)
+		using IStream = std::ifstream;
+#else
+		using IStream = std::istream;
+#endif
+	public:
 		Node() = default;
 		Node( const std::string& rName );
 		virtual ~Node();
@@ -94,7 +100,7 @@ namespace Saturn {
 
 	public:
 		static void Serialise( const Ref<Node>& rObject, std::ofstream& rStream );
-		static void Deserialise( Ref<Node>& rObject, std::ifstream& rStream );
+		static void Deserialise( Ref<Node>& rObject, IStream& rStream );
 
 		virtual NodeEditorCompilationStatus EvaluateNode( NodeEditorRuntime* evaluator ) { return NodeEditorCompilationStatus::Success; }
 
@@ -103,7 +109,7 @@ namespace Saturn {
 
 	protected:
 		virtual void OnSerialise( std::ofstream& rStream ) const {}
-		virtual void OnDeserialise( std::ifstream& rStream ) {}
+		virtual void OnDeserialise( IStream& rStream ) {}
 
 	public:
 		UUID ID;

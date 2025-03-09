@@ -464,7 +464,10 @@ namespace Saturn {
 		//void RenderDynamicMeshes();
 
 		void AddScheduledFunction( ScheduledFunc&& rrFunc );
+
+#if !defined(SAT_DIST)
 		void OnShaderReloaded( const std::string& rName );
+#endif
 
 		Ref<TextureCube> CreateDymanicSky();
 	private:

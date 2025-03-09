@@ -208,7 +208,7 @@ namespace Saturn {
 		rObject->OnSerialise( rStream );
 	}
 
-	void Pin::Deserialise( Ref<Pin>& rObject, std::ifstream& rStream )
+	void Pin::Deserialise( Ref<Pin>& rObject, IStream& rStream )
 	{
 		RawSerialisation::ReadObject( rObject->ID, rStream );
 
@@ -250,7 +250,7 @@ namespace Saturn {
 		RawSerialisation::WriteObject( Data, rStream );
 	}
 
-	void FloatPin::OnDeserialise( std::ifstream& rStream )
+	void FloatPin::OnDeserialise( IStream& rStream )
 	{
 		RawSerialisation::ReadObject( Data, rStream );
 	}
@@ -286,7 +286,7 @@ namespace Saturn {
 		RawSerialisation::WriteObject( Data, rStream );
 	}
 
-	void IntPin::OnDeserialise( std::ifstream& rStream )
+	void IntPin::OnDeserialise( IStream& rStream )
 	{
 		RawSerialisation::ReadObject( Data, rStream );
 	}
@@ -322,7 +322,7 @@ namespace Saturn {
 		RawSerialisation::WriteObject( Data, rStream );
 	}
 
-	void BoolPin::OnDeserialise( std::ifstream& rStream )
+	void BoolPin::OnDeserialise( IStream& rStream )
 	{
 		RawSerialisation::ReadObject( Data, rStream );
 	}

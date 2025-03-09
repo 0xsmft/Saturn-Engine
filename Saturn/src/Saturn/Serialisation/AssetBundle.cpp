@@ -358,8 +358,7 @@ namespace Saturn {
 			// TODO: GraphSound
 			case Saturn::AssetType::GraphSound: 
 			{
-				std::string filename = std::format( "{0}.{1}.gsnd", rAsset->Name, ( uint64_t ) id );
-				NodeCacheEditor::ConvertToDistNC( id, filename );
+				NodeCacheEditor::ConvertToDistNC( id, rAsset->Path.stem().string() );
 			} break;
 
 			case Saturn::AssetType::Scene:
@@ -469,7 +468,7 @@ namespace Saturn {
 
 			if( dfh.OrginalSize != dfh.CompressedSize )
 			{
-				SAT_CORE_INFO( "Decompressing file at offset {0}", dfh.Offset );
+				SAT_CORE_INFO( "Decompressing file at offset {0}, AssetID/{1}", dfh.Offset, dfh.Asset );
 
 				// Compression was used, uncompress. 
 				Buffer uncompressedData;
@@ -500,7 +499,7 @@ namespace Saturn {
 			}
 			else
 			{
-				SAT_CORE_INFO( "Loading uncompressed file at offset {0}", dfh.Offset );
+				SAT_CORE_INFO( "Loading uncompressed file at offset {0} AssetID/{1}", dfh.Offset, dfh.Asset );
 
 				Buffer uncompressedData;
 				RawSerialisation::ReadSaturnBuffer( uncompressedData, stream );

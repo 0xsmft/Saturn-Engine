@@ -61,17 +61,23 @@ namespace Saturn {
 
 	void AssetIDPin::Render()
 	{
+		// This function won't be called on Dist anyways
+#if defined(SAT_DEBUG) || defined(SAT_RELEASE)
 		bool openAssetIDPopup = false;
 
-		std::string name = m_AssetID == 0 ? "Select Asset" : std::to_string( m_AssetID );
+		std::string name = m_AssetID == 0 ? "Select Asset" : m_AssetName;
 		if( ImGui::Button( name.c_str() ) )
 		{
 			openAssetIDPopup = true;
 		}
 
 		ed::Suspend();
-		Auxiliary::DrawAssetFinder( m_AssetType, &openAssetIDPopup, m_AssetID );
+		if( Auxiliary::DrawAssetFinder( m_AssetType, &openAssetIDPopup, m_AssetID ) ) 
+		{
+			m_AssetName = AssetManager::Get().FindAsset( m_AssetID )->Name;
+		}
 		ed::Resume();
+#endif
 	}
 
 	void AssetIDPin::OnSerialise( std::ofstream& rStream ) const
@@ -79,9 +85,12 @@ namespace Saturn {
 		RawSerialisation::WriteObject( m_AssetID, rStream );
 	}
 
-	void AssetIDPin::OnDeserialise( std::ifstream& rStream )
+	void AssetIDPin::OnDeserialise( IStream& rStream )
 	{
 		RawSerialisation::ReadObject( m_AssetID, rStream );
+#if defined(SAT_DEBUG) || defined(SAT_RELEASE)
+		m_AssetName = m_AssetID == 0 ? "No Asset" : AssetManager::Get().FindAsset( m_AssetID )->Name;
+#endif
 	}
 
 }

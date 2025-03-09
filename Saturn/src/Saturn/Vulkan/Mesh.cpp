@@ -265,6 +265,7 @@ namespace Saturn {
 		RawSerialisation::WriteMatrix4x4( m_Transform, rStream );
 		RawSerialisation::WriteMatrix4x4( m_InverseTransform, rStream );
 
+		// Master material registry
 		// Write asset material IDs
 		// Matches with StaticMeshAssetSerialiser
 		size_t materials = m_MaterialRegistry->GetMaterialAssets().size();
@@ -297,7 +298,7 @@ namespace Saturn {
 		// Read Master
 		// Unable to call MaterialRegistry::Deserialise as Deserialise expects a map with the overrides
 		// and because we are the master we don't care about overrides
-		// So manual read it back.
+		// So manually read it back.
 	
 		// Read Materials
 		size_t materials = 0;

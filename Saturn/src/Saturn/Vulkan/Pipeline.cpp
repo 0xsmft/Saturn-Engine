@@ -415,6 +415,8 @@ namespace Saturn {
 		vkDestroyShaderModule( VulkanContext::Get().GetDevice(), VertexModule, nullptr );
 		vkDestroyShaderModule( VulkanContext::Get().GetDevice(), FragmentModule, nullptr );
 
+#if !defined(SAT_DIST)
 		Renderer::Get().FindShaderReference( m_Specification.Shader->GetShaderHash() ).Pipelines.push_back( this );
+#endif
 	}
 }

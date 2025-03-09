@@ -101,7 +101,6 @@ namespace Saturn {
 
 	NodeEditorCompilationStatus SoundEditorEvaluator::EvalNoChecks()
 	{
-		Ref<NodeEditor> uiEditor = m_NodeEditor.As<NodeEditor>();
 		Ref<Node> OutputNode = m_NodeEditor->FindNode( m_Info.OutputNodeID );
 
 		// Stacks are last in first out, so our output node will be evaluated last which is what we want.
@@ -113,6 +112,7 @@ namespace Saturn {
 		} );
 
 #if !defined( SAT_DIST )
+		Ref<NodeEditor> uiEditor = m_NodeEditor.As<NodeEditor>();
 		if( order.size() <= 1 )
 		{
 			uiEditor->ThrowWarning( "There is no other nodes to compile! (The only node that exists is the output node!)" );

@@ -99,7 +99,7 @@ namespace Saturn {
 		RawSerialisation::WriteObject( rColor.Value, rStream );
 	}
 
-	static void DeserialiseImColor( ImColor& rColor, std::ifstream& rStream )
+	static void DeserialiseImColor( ImColor& rColor, Node::IStream& rStream )
 	{
 		RawSerialisation::ReadObject( rColor.Value, rStream );
 	}
@@ -110,7 +110,7 @@ namespace Saturn {
 		RawSerialisation::WriteObject( rVector.y, rStream );
 	}
 
-	static void DeserialiseImVec2( ImVec2& rVector, std::ifstream& rStream )
+	static void DeserialiseImVec2( ImVec2& rVector, Node::IStream& rStream )
 	{
 		RawSerialisation::ReadObject( rVector.x, rStream );
 		RawSerialisation::ReadObject( rVector.y, rStream );
@@ -142,7 +142,7 @@ namespace Saturn {
 		rObject->OnSerialise( rStream );
 	}
 
-	void Node::Deserialise( Ref<Node>& rObject, std::ifstream& rStream )
+	void Node::Deserialise( Ref<Node>& rObject, IStream& rStream )
 	{
 		UUID::Deserialise( rObject->ID, rStream );
 		rObject->Name = RawSerialisation::ReadString( rStream );
@@ -171,5 +171,4 @@ namespace Saturn {
 
 		rObject->OnDeserialise( rStream );
 	}
-
 }

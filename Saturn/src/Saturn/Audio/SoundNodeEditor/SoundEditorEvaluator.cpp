@@ -118,6 +118,8 @@ namespace Saturn {
 			uiEditor->ThrowWarning( "There is no other nodes to compile! (The only node that exists is the output node!)" );
 			return NodeEditorCompilationStatus::Failed;
 		}
+
+		size_t index = 0;
 #endif
 
 		auto compileResult = NodeEditorCompilationStatus::Success;
@@ -133,6 +135,11 @@ namespace Saturn {
 				compileResult = NodeEditorCompilationStatus::Failed;
 				break;
 			}
+
+#if defined( SAT_DEBUG )
+			currentNode->EvaluationOrder = index;
+			index++;
+#endif
 		}
 
 		return compileResult;

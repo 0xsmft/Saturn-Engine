@@ -94,6 +94,8 @@ namespace Saturn {
 			uiEditor->ThrowError( "You must link either a TextureSampler2D node or a ColorPicker node to the albedo pin!" );
 			return NodeEditorCompilationStatus::Failed;
 		}
+
+		size_t index = 0;
 #endif
 
 		m_Info.HostMaterial->RT_Reset();
@@ -138,6 +140,11 @@ namespace Saturn {
 			}
 
 			currentNode->EvaluateNode( this );
+
+#if defined(SAT_DEBUG)
+			currentNode->EvaluationOrder = index;
+			index++;
+#endif
 		}
 
 		m_Info.HostMaterial->RT_ApplyChanges();

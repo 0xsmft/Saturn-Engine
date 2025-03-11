@@ -123,6 +123,10 @@ namespace Saturn {
 		ImVec2 Position;
 		bool CanBeDeleted = true;
 
+#if defined(SAT_DEBUG)
+		size_t EvaluationOrder = 0;
+#endif
+
 		std::string ActiveState;
 		std::string SavedState;
 	};

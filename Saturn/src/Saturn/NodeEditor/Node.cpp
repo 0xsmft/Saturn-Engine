@@ -74,6 +74,33 @@ namespace Saturn {
 		ImGui::Dummy( ImVec2( 0, 28 ) );
 		ImGui::Spring( 0 );
 
+#if defined( SAT_DEBUG )
+		// Draw debug evaluation order
+		auto* pDrawlist = ImGui::GetWindowDrawList();
+
+		ImVec2 headerEndPos = ImGui::GetCursorScreenPos();
+		ImVec2 badgePos = headerEndPos;
+		badgePos.y -= 20; // Move upward to be above header
+		badgePos.x -= 30; // Align at the end
+
+		ImVec2 badgeSize = ImVec2( 20.0f, 20.0f );
+
+		// Draw background
+		ImU32 badgeColor = IM_COL32( 255, 100, 100, 255 );
+		pDrawlist->AddRectFilled( badgePos, ImVec2( badgePos.x + badgeSize.x, badgePos.y + badgeSize.y ), badgeColor, 5.0f );
+
+		// Draw border
+		ImU32 borderColor = IM_COL32( 0, 0, 0, 255 );
+		pDrawlist->AddRect( badgePos, ImVec2( badgePos.x + badgeSize.x, badgePos.y + badgeSize.y ), borderColor, 5.0f );
+
+		// Draw text centered in the badge
+		std::string text = std::to_string( EvaluationOrder );
+
+		ImVec2 textSize = ImGui::CalcTextSize( text.data() );
+		ImVec2 textPos = ImVec2( badgePos.x + ( badgeSize.x - textSize.x ) * 0.5f, badgePos.y + ( badgeSize.y - textSize.y ) * 0.5f );
+		pDrawlist->AddText( textPos, IM_COL32( 255, 255, 255, 255 ), text.data() );
+#endif
+
 		rBuilder.EndHeader();
 
 		uint32_t pinIndex = 0;

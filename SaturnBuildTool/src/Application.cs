@@ -130,9 +130,19 @@ namespace SaturnBuildTool
                 return false;
             }
 
+            // TODO: Move this into CommandLineParser
+            // Maybe CommandLineParser.VerifyAll
             if( CommandLineParser.Instance.FindFlag( "DISTASDBG" ) && TargetToBuild.CurrentConfig != ConfigKind.Dist ) 
             {
                 Console.WriteLine( "ERROR: \"/DISTASDBG\" was suggested however, you aren't building for Dist! \"/DISTASDBG\" is only available when \"/DIST\" is suggested" );
+
+                ExitCode = 1;
+                return false;
+            }
+
+            if( CommandLineParser.Instance.FindFlag( "showconsole" ) && TargetToBuild.CurrentConfig != ConfigKind.Dist )
+            {
+                Console.WriteLine( "ERROR: \"/SHOWCONSOLE\" was suggested however, you aren't building for Dist! \"/showconsole\" is only available when \"/DIST\" is suggested" );
 
                 ExitCode = 1;
                 return false;

@@ -86,11 +86,17 @@ namespace SaturnBuildTool
                 Args.Add( " /INCREMENTAL:NO" );
             }
 
+            if( CommandLineParser.Instance.FindFlag( "distasdbg" ) ) 
+            {
+                Args.Add( " /INCREMENTAL" );
+                Args.Add( " /DEBUG:FULL" );
+            }
+
             switch( TargetToBuild.OutputType )
             {
                 case LinkerOutput.Executable:
                     {
-                        if( ProjectInfo.Instance.CurrentConfigKind == ConfigKind.Dist )
+                        if( ProjectInfo.Instance.CurrentConfigKind == ConfigKind.Dist && !CommandLineParser.Instance.FindFlag( "showconsole" ) )
                         {
                             Args.Add( string.Format( " /SUBSYSTEM:WINDOWS /OUT:\"{0}\"", TargetToBuild.GetFullBinPath() ) );
                         }

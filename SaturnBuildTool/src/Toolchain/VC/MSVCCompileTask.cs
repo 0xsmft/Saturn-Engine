@@ -77,6 +77,11 @@ namespace SaturnBuildTool
             // Buffer Security Check
             Args.Add( " /GS" );
 
+            if( CommandLineParser.Instance.FindFlag( "includestree" ) ) 
+            {
+                Args.Add( " /showIncludes" );
+            }
+
             // Configuration specific
             switch( TargetToBuild.CurrentConfig )
             {
@@ -125,6 +130,11 @@ namespace SaturnBuildTool
             foreach( string name in marcos )
             {
                 Args.Add( string.Format( " /D\"{0}\"", name ) );
+            }
+
+            if( CommandLineParser.Instance.FindFlag( "showconsole" ) )
+            {
+                Args.Add( " /D\"__X31_SHOWCONSOLE__\"" );
             }
 
             // Includes

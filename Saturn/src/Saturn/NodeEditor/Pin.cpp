@@ -245,6 +245,19 @@ namespace Saturn {
 		ImGui::Spring( 0 );
 	}
 
+	void FloatPin::OnRenderOutput()
+	{
+		ImGui::SetNextItemWidth( 25.0f );
+
+		ImGui::PushID( static_cast< int >( ID ) );
+
+		ImGui::DragFloat( "##output", &Data );
+
+		ImGui::PopID();
+
+		ImGui::Spring( 0 );
+	}
+
 	void FloatPin::OnSerialise( std::ofstream& rStream ) const
 	{
 		RawSerialisation::WriteObject( Data, rStream );

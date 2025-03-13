@@ -190,6 +190,7 @@ namespace Saturn {
 
 	protected:
 		void OnRenderInput() override;
+		void OnRenderOutput() override;
 
 		void OnSerialise( std::ofstream& rStream ) const override;
 		void OnDeserialise( IStream& rStream ) override;

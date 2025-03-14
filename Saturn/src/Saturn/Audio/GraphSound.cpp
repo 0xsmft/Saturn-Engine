@@ -58,6 +58,8 @@ namespace Saturn {
 
 	void GraphSound::Initialise()
 	{
+		m_SoundState = SoundState::Initialising;
+
 		if( m_Loaded )
 			return;
 
@@ -93,10 +95,13 @@ namespace Saturn {
 		if( m_OutputNodeID == 0 || !m_NodeEditor )
 			return;
 
-		m_NodeEditor->Evaluate();
+		if( m_Runtime->IsCompleted() && m_SoundState != SoundState::Playing )
+		{
+			m_NodeEditor->Evaluate();
 
-		m_Loaded = true;
-		m_Playing = true;
+			m_Loaded = true;
+			m_SoundState = SoundState::Playing;
+		}
 	}
 
 	void GraphSound::Stop()
@@ -105,6 +110,8 @@ namespace Saturn {
 		{
 			rSound->Stop();
 		}
+
+		m_SoundState = SoundState::Stopped;
 	}
 
 	void GraphSound::Loop( bool loop )
@@ -179,5 +186,6 @@ namespace Saturn {
 		}
 
 		m_Loaded = false;
+		m_SoundState = SoundState::NoDataSource;
 	}
 }

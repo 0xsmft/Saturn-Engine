@@ -52,6 +52,7 @@ namespace Saturn {
 		//////////////////////////////////////////////////////////////////////////
 
 		// Play from the current PCM frame or start from beginning if the sound is at the end.
+		// You must called SoundBase::Load() BEFORE calling this function!
 		// @param frameOffset -- The PCM frame offset which this sound should start from.
 		virtual void Play( int frameOffset = 0 ) override;
 

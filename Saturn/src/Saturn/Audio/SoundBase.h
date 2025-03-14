@@ -36,6 +36,15 @@
 
 namespace Saturn {
 
+	enum class SoundState
+	{
+		NoDataSource, // Default state used could be called a null state
+		Playing,
+		Stopped,
+		Initialising,
+		Initialised
+	};
+
 	class SoundBase : public RefTarget
 	{
 	public:
@@ -44,7 +53,7 @@ namespace Saturn {
 
 		virtual void Play( int frameOffset ) = 0;
 		virtual void Stop() = 0;
-		virtual void Loop(bool loop = true) = 0;
+		virtual void Loop( bool loop = true ) = 0;
 		virtual void Load( uint32_t flags ) = 0;
 		virtual void Reset() = 0;
 		virtual void Unload() = 0;
@@ -56,10 +65,15 @@ namespace Saturn {
 		inline void SetID( UUID id ) { m_PlayerID = id; }
 		inline void MarkForDestroy() { m_MarkedForDestroy = true; }
 
+		[[nodiscard]] bool HasDataSource() const { return m_Loaded; }
+		[[nodiscard]] bool IsPlaying() const { return m_SoundState == SoundState::Playing; }
+
 	protected:
 		ma_sound* m_Sound = nullptr;
 		// Actual SoundSpecification asset
 		Ref<SoundSpecification> m_Specification;
+
+		SoundState m_SoundState = SoundState::NoDataSource;
 
 		UUID m_PlayerID = 0;
 

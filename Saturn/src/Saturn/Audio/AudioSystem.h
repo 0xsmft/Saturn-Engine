@@ -117,6 +117,8 @@ namespace Saturn {
 
 		Ref<Sound> FindSound( UUID UniquePlayerID );
 
+		Ref<AudioThread> GetThread() { return m_AudioThread; }
+
 	private:
 		void Initialise();
 		void PlaySound( Ref<Sound> rSoundAsset );

@@ -37,12 +37,13 @@ namespace Saturn {
 		: SoundBase(), m_SoundGroup( soundGroup )
 	{
 		m_Specification = rSpec;
+		m_SoundState = SoundState::Initialising;
 	}
 
 	void Sound::Load( uint32_t flags )
 	{
-		if( !m_Loaded )
-		{
+		if( !HasDataSource() )
+		{	
 			SAT_CORE_INFO( "Loading sound: {0}", m_Specification->Name );
 
 			// Use master sound group if no group was specified
@@ -58,6 +59,7 @@ namespace Saturn {
 			m_Sound->pEndCallbackUserData = reinterpret_cast< void* >( static_cast< intptr_t >( m_PlayerID ) );
 			m_Sound->endCallback = OnSoundEnd;
 
+			m_SoundState = SoundState::Initialised;
 			m_Loaded = true;
 		}
 	}
@@ -77,8 +79,6 @@ namespace Saturn {
 			&AudioSystem::Get().GetAudioEngine(),
 			&m_AudioBuffer, flags,
 			nullptr, m_Sound ) );
-
-//		ma_audio_buffer_uninit( &audioBuffer );
 
 		if( ( flags & ( uint32_t ) MA_SOUND_FLAG_NO_SPATIALIZATION ) == 0 )
 			SetupSpatialisation();
@@ -113,7 +113,7 @@ namespace Saturn {
 
 	void Sound::Unload()
 	{
-		if( m_Loaded )
+		if( HasDataSource() )
 		{
 			ma_sound_uninit( m_Sound );
 			delete m_Sound;
@@ -125,6 +125,8 @@ namespace Saturn {
 #endif
 			m_Loaded = false;
 			m_Playing = false;
+
+			m_SoundState = SoundState::NoDataSource;
 		}
 	}
 
@@ -138,55 +140,91 @@ namespace Saturn {
 
 	void Sound::Play( int frameOffset )
 	{
-		if( !m_Loaded )
-			Load( 0 );
+		auto playFunc = [this, frameOffset]()
+		{
+			if( frameOffset != 0 )
+			{
+				SAT_CORE_INFO( "Trying to start sound \"{0}\" in {1} frames", m_Specification->Name, frameOffset );
+				ma_sound_set_start_time_in_pcm_frames( m_Sound,
+					ma_engine_get_time_in_pcm_frames( &AudioSystem::Get().GetAudioEngine() )
+					+ ( ma_engine_get_sample_rate( &AudioSystem::Get().GetAudioEngine() ) * frameOffset ) );
 
-		if( frameOffset == 0 )
-		{
-			SAT_CORE_INFO( "Trying to start sound \"{0}\" now", m_Specification->Name );
-			MA_CHECK( ma_sound_start( m_Sound ) );
-		}
-		else
-		{
-			SAT_CORE_INFO( "Trying to start sound \"{0}\" in {1} frames", m_Specification->Name, frameOffset );
-			ma_sound_set_start_time_in_pcm_frames( m_Sound,
-				ma_engine_get_time_in_pcm_frames( &AudioSystem::Get().GetAudioEngine() )
-				+ ( ma_engine_get_sample_rate( &AudioSystem::Get().GetAudioEngine() ) * frameOffset ) );
+			}
 
 			MA_CHECK( ma_sound_start( m_Sound ) );
-		}
 
-		m_Playing = true;
+			m_Playing = true;
+			m_SoundState = SoundState::Playing;
+		};
+
+		// Play sound if have a data source and we are not already playing
+		switch( m_SoundState )
+		{
+			case SoundState::NoDataSource:
+			case SoundState::Playing:
+				break;
+			
+			// Play now as we have a data source
+			case SoundState::Initialised:
+			case SoundState::Stopped:
+			{
+				if( HasDataSource() )
+				{
+					playFunc();
+		
+					SAT_CORE_INFO( "Sound has data source playing now" );
+				}
+			} break;
+
+			// Play on audio thread if we are waiting on a data source.
+			case SoundState::Initialising:
+			{
+				SAT_CORE_INFO( "Sound is initialising awaiting data source loading" );
+
+				AudioSystem::Get().GetThread()->Queue( playFunc );
+			} break;
+		}
 	}
 
 	void Sound::Stop()
 	{
-		if( !m_Playing )
-			return;
-
-		MA_CHECK( ma_sound_stop( m_Sound ) );
-		m_Playing = false;
+		if( HasDataSource() )
+		{
+			MA_CHECK( ma_sound_stop( m_Sound ) );
+			m_SoundState = SoundState::Stopped;
+		}
 	}
 
 	void Sound::Loop( bool loop )
 	{
-		ma_sound_set_looping( m_Sound, loop );
-		m_Looping = loop;
-
-		if( ma_sound_at_end( m_Sound ) && loop )
+		auto loopFunc = [ this, loop ]()
 		{
-			Play();
+			ma_sound_set_looping( m_Sound, loop );
+			m_Looping = loop;
+		};
+
+		switch( m_SoundState )
+		{
+			case SoundState::NoDataSource:
+				break;
+
+			// Set looping now if we have a data source
+			case SoundState::Playing:
+			case SoundState::Stopped:
+			case SoundState::Initialised:
+			{
+				if( HasDataSource() )
+				{
+					loopFunc();
+				}
+			} break;
+
+			// Set looping on audio thread if we have a data source
+			case SoundState::Initialising:
+			{
+				AudioSystem::Get().GetThread()->Queue( loopFunc );
+			} break;
 		}
-	}
-
-	bool Sound::IsPlaying() const
-	{
-		return m_Playing;
-	}
-
-	bool Sound::IsLooping() const
-	{
-		return m_Looping;
 	}
 
 	void Sound::WaitUntilLoaded()
@@ -199,7 +237,7 @@ namespace Saturn {
 
 	void Sound::Reset()
 	{
-		if( m_Loaded )
+		if( HasDataSource() )
 		{
 			MA_CHECK( ma_sound_seek_to_pcm_frame( m_Sound, 0 ) );
 		}
@@ -232,22 +270,128 @@ namespace Saturn {
 
 	void Sound::SetMaxDistance( float dist )
 	{
-		ma_sound_set_max_distance( m_Sound, dist );
+		switch( m_SoundState )
+		{
+			case SoundState::NoDataSource:
+				break;
+
+			// Set distance now if we have a data source
+			case SoundState::Playing:
+			case SoundState::Stopped:
+			case SoundState::Initialised:
+			{
+				if( HasDataSource() )
+				{
+					ma_sound_set_max_distance( m_Sound, dist );
+				}
+			} break;
+
+			// Set distance on audio thread if we are waiting on a data source
+			case SoundState::Initialising:
+			{
+				AudioSystem::Get().GetThread()->Queue( [ this, dist ]()
+				{
+					ma_sound_set_max_distance( m_Sound, dist );
+				} );
+			} break;
+		}
 	}
 
 	void Sound::SetMinDistance( float dist )
 	{
-		ma_sound_set_min_distance( m_Sound, dist );
+		switch( m_SoundState )
+		{
+			case SoundState::NoDataSource:
+				break;
+
+			// Set distance now if we have a data source
+			case SoundState::Playing:
+			case SoundState::Stopped:
+			case SoundState::Initialised:
+			{
+				if( HasDataSource() )
+				{
+					ma_sound_set_min_distance( m_Sound, dist );
+				}
+			} break;
+
+			// Set distance on audio thread if we are waiting on a data source
+			case SoundState::Initialising:
+			{
+				AudioSystem::Get().GetThread()->Queue( [ this, dist ]()
+				{
+					ma_sound_set_min_distance( m_Sound, dist );
+				} );
+			} break;
+		}
 	}
 
 	void Sound::SetVolume( float volume )
 	{
-		ma_sound_set_volume( m_Sound, volume );
+		switch( m_SoundState )
+		{
+			case SoundState::Stopped:
+			case SoundState::NoDataSource:
+				break;
+
+			// Set volume now if we have a data source
+			case SoundState::Initialised:
+			case SoundState::Playing:
+			{
+				if( HasDataSource() )
+				{
+					ma_sound_set_volume( m_Sound, volume );
+				}
+			} break;
+
+			// Set volume on audio thread if we are waiting on a data source
+			case SoundState::Initialising:
+			{
+				AudioSystem::Get().GetThread()->Queue( [this, volume]()
+				{
+					ma_sound_set_volume( m_Sound, volume );
+				} );
+			} break;
+		}
 	}
 
 	void Sound::SetPitch( float pitch )
 	{
-		ma_sound_set_pitch( m_Sound, pitch );
+		switch( m_SoundState )
+		{
+			case SoundState::Stopped:
+			case SoundState::NoDataSource:
+				break;
+
+			// Set pitch now if we have a data source
+			case SoundState::Initialised:
+			case SoundState::Playing:
+			{
+				if( HasDataSource() )
+				{
+					ma_sound_set_pitch( m_Sound, pitch );
+				}
+			} break;
+
+			// Set pitch on audio thread if we are waiting on a data source
+			case SoundState::Initialising:
+			{
+				AudioSystem::Get().GetThread()->Queue( [ this, pitch ]()
+				{
+					ma_sound_set_pitch( m_Sound, pitch );
+				} );
+			} break;
+		}
+	}
+
+	bool Sound::IsPlaying() const
+	{
+		return m_SoundState == SoundState::Playing;
+	}
+
+	bool Sound::IsLooping() const
+	{
+		return m_Looping;
 	}
 
 	float Sound::GetVolume()

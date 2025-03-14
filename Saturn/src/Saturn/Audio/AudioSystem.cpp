@@ -491,7 +491,9 @@ namespace Saturn {
 
 	void AudioSystem::UnloadSound( Ref<SoundBase> sound )
 	{
-		auto playerID = sound->m_PlayerID;
+		if( !sound ) return;
+
+		auto& playerID = sound->m_PlayerID;
 
 		sound->Stop();
 		sound->Unload();

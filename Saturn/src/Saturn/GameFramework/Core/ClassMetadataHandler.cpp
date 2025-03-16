@@ -38,9 +38,9 @@ namespace Saturn {
 
 		// Push some default classes.
 		// TODO: This should be done by the Build Tool however we are not using it for the Engine.
-		m_MetadataTree[ "SClass" ] = { "SClass", "", "", "", false };
-		m_MetadataTree[ "Entity" ] = { "Entity", "SClass", "", "", false };
-		m_MetadataTree[ "Character" ] = { "Character", "Entity", "", "", false };
+		m_MetadataTree[ "SClass" ] = { "SClass", "X/?", "X/?", "X/?", false };
+		m_MetadataTree[ "Entity" ] = { "Entity", "SClass", "X/?", "X/?", false };
+		m_MetadataTree[ "Character" ] = { "Character", "Entity", "X/?", "X/?", false };
 	}
 
 	ClassMetadataHandler::~ClassMetadataHandler()
@@ -123,15 +123,10 @@ namespace Saturn {
 
 	void ClassMetadataHandler::ClearExternalData()
 	{
-		for( auto Itr = m_MetadataTree.begin(); Itr != m_MetadataTree.end(); )
+		std::erase_if( m_MetadataTree, []( const auto& kv )
 		{
-			if( Itr->second.ExternalData )
-			{
-				Itr = m_MetadataTree.erase( Itr );
-			}
-			else
-				Itr++;
-		}
+			return kv.second.ExternalData;
+		} );
 
 		m_Properties.clear();
 	}

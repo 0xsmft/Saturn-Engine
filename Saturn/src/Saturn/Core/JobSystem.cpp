@@ -32,11 +32,13 @@
 #include "sppch.h"
 #include "JobSystem.h"
 
+constexpr size_t MAX_THREADS_COUNT = 2;
+
 namespace Saturn {
 
 	JobSystem::JobSystem()
 	{
-		SetMaxThreads( 2 );
+		SetMaxThreads( MAX_THREADS_COUNT );
 		CreateThreads();
 	}
 

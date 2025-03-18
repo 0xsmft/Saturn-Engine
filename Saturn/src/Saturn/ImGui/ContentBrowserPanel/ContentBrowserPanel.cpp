@@ -227,7 +227,7 @@ namespace Saturn {
 				break;
 		}
 	}
-
+	
 	void ContentBrowserPanel::DrawBaseContextMenu() 
 	{
 		// Theses actions are only going to be used when one item is selected.
@@ -1576,6 +1576,11 @@ namespace Saturn {
 				break;
 			}
 		}
+	}
+
+	bool ContentBrowserPanel::ItemIsNotInSelectionList( const Ref<ContentBrowserItem>& rItem )
+	{
+		return std::find( m_SelectedItems.begin(), m_SelectedItems.end(), rItem ) == m_SelectedItems.end();
 	}
 
 	void ContentBrowserPanel::UpdateFiles( bool clear /*= false */ )

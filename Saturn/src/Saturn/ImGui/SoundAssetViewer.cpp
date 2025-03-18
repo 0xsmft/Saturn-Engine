@@ -53,7 +53,9 @@ namespace Saturn {
 
 	SoundAssetViewer::~SoundAssetViewer()
 	{
+		AudioSystem::Get().UnloadSound( m_PreviewSound );
 		m_PreviewSound = nullptr;
+		 
 		AudioSystem::Get().StopSoundGroups();
 	}
 
@@ -108,7 +110,7 @@ namespace Saturn {
 		ImGui::PopStyleColor();
 
 #if !defined(SAT_DIST)
-		ImGui::Spring();
+		ImGui::Spacing();
 		ImGui::Text( "%s", m_SoundAsset->LastWriteTime.c_str() );
 
 		if( ImGui::BeginItemTooltip() )
@@ -122,7 +124,6 @@ namespace Saturn {
 
 		ImGui::BeginHorizontal( "##media_controls" );
 
-		// TODO: Register m_PreviewSound to the AudioSystem!
 		if( m_PreviewSound && m_PreviewSound->IsPlaying() )
 		{
 			if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Stop" ), { 24.0f, 24.0f } ) )
@@ -136,10 +137,10 @@ namespace Saturn {
 		{
 			if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Play" ), { 24.0f, 24.0f } ) )
 			{
-				if( !m_PreviewSound )
-					m_PreviewSound = Ref<Sound>::Create( m_SoundAsset, nullptr );
-
 				AudioSystem::Get().StartSoundGroups();
+
+				if( !m_PreviewSound )
+					m_PreviewSound = AudioSystem::Get().RequestNewSound( m_AssetID, UUID(), false );
 
 				m_PreviewSound->Play();
 			}

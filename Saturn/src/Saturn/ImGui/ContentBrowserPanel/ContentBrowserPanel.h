@@ -100,6 +100,7 @@ namespace Saturn {
 		void GetContentFiles( bool clear );
 		void GetSourceFiles( bool clear );
 		void UpdateFirstFolder();
+		bool ItemIsNotInSelectionList( const Ref<ContentBrowserItem>& rItem );
 
 	private:
 		std::filesystem::path m_ScriptPath;

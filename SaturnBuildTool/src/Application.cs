@@ -85,6 +85,7 @@ namespace SaturnBuildTool
                 Console.WriteLine( "   /DIST* -- build the project for the Dist configuration" );
                 Console.WriteLine( " Auxiliary Options:" );
                 Console.WriteLine( "  /HELP -- this command that displays the help message" );
+                Console.WriteLine( "  /INCLUDESTREE -- displays and create an include tree" );
                 Console.WriteLine( "  /VERISON -- displays the version for the build tool" );
                 Console.WriteLine( " * indicates required argument" );
 

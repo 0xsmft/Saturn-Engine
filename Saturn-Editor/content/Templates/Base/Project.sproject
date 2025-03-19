@@ -2,6 +2,8 @@ Project:
   Name: %PROJECT_NAME%
   AssetPath: Assets
   StartupScene: 0
+  DefaultMaterialAsset: 0
+  DefaultPhyMaterialAsset: 0
   ActionBindings:
     []
   SoundGroups:

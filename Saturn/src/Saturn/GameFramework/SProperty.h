@@ -86,7 +86,7 @@ namespace Saturn {
 	template<SPropertyType Type>
 	struct PropertyTypeTraits;
 
-#define SAT_CREATE_PROPERTY_TYPE_TRAIT(PropertyType, CppType, IsRef, PerfConstRef) \
+#define SAT_CREATE_PROPERTY_TYPE_TRAIT(PropertyType, CppType, IsRef, PrefConstRef) \
 template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 	{  \
 		using Value = CppType;  \
@@ -94,11 +94,11 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 		using ConstReference = const CppType&; \
 		\
 		using NeedsToBeReference = std::bool_constant<IsRef>; \
-		using PerferConstReference = std::bool_constant<PerfConstRef>; \
-		using Type = std::conditional_t<NeedsToBeReference::value, std::conditional_t<PerferConstReference::value, ConstReference, Reference>, std::conditional_t<PerferConstReference::value, ConstReference, Value>>; \
+		using PreferConstReference = std::bool_constant<PrefConstRef>; \
+		using Type = std::conditional_t<NeedsToBeReference::value, std::conditional_t<PreferConstReference::value, ConstReference, Reference>, std::conditional_t<PreferConstReference::value, ConstReference, Value>>; \
 	}
 
-	//								SType    Type         IsRef  PerfConstRef 
+	//								SType    Type         IsRef  PrefConstRef 
 	SAT_CREATE_PROPERTY_TYPE_TRAIT( Char,    char,        false, false );
 	SAT_CREATE_PROPERTY_TYPE_TRAIT( Double,  double,      false, false );
 	SAT_CREATE_PROPERTY_TYPE_TRAIT( Int,     int,         false, false );

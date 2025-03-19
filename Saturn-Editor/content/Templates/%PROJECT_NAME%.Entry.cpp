@@ -50,7 +50,7 @@ static std::filesystem::path s_ProjectPath = "";
 // Saturn client main:
 extern int _main( int, char** );
 
-#if !defined(SAT_DIST)
+#if !defined(SAT_DIST) || defined( __X31_SHOWCONSOLE__ )
 int main( int count, char** args )
 {
 	// Hand it off to Saturn:
@@ -77,7 +77,9 @@ public:
 		Saturn::EngineSettingsSerialiser uss;
 		uss.Deserialise();
 
-		m_RootContentPath = std::filesystem::current_path() / "content";
+		RootContentPath = std::filesystem::current_path() / "content";
+
+		SAT_CORE_VERIFY( !s_ProjectPath.empty(), "Could not find .sproject file!" );
 
 		// Load the project really early on because we still need to load the shader bundle and create the scene renderer.
 		Saturn::ProjectSerialiser ps;

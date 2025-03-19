@@ -13,6 +13,12 @@ IncludeDir = {}
 
 SaturnDir = os.getenv('SATURN_DIR')
 
+group "Engine"
+externalproject "Saturn"
+	location ( SaturnDir .. "Saturn" )
+	kind "StaticLib"
+	language "C++"
+
 group "Game"
 project "__PROJECT_NAME__"
 	kind "Makefile"

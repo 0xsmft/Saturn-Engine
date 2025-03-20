@@ -384,11 +384,6 @@ namespace Saturn {
 		}
 	}
 
-	bool Sound::IsPlaying() const
-	{
-		return m_SoundState == SoundState::Playing;
-	}
-
 	bool Sound::IsLooping() const
 	{
 		return m_Looping;

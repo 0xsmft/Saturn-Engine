@@ -80,7 +80,6 @@ namespace Saturn {
 		virtual void OnSoundCompleted() override;
 
 	public:
-		bool IsPlaying() const;
 		bool IsLooping() const;
 
 		// Pauses the active thread until the Audio System has fully initialised the data source.

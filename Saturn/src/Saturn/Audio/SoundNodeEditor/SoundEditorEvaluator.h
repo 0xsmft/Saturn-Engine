@@ -85,6 +85,8 @@ namespace Saturn {
 	private:
 		SoundEdEvaluatorInfo m_Info;
 		bool m_Looping = false;
-		bool m_Completed = false;
+
+		// Mark completed as true so the first time this runs it will evaluate.
+		bool m_Completed = true;
 	};
 }

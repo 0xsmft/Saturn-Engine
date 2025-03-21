@@ -65,6 +65,8 @@ namespace Saturn {
 
 	NodeEditorCompilationStatus SoundEditorEvaluator::EvaluateEditor()
 	{
+		m_Completed = false;
+
 #if !defined( SAT_DIST )
 		if( !m_NodeEditor )
 			return NodeEditorCompilationStatus::Failed;
@@ -89,9 +91,6 @@ namespace Saturn {
 
 		// Clear pure dependencies
 		AssetManager::Get().UnregisterAllAssetDependencies( uiEditor->GetAssetID() );
-#else
-		Ref<Node> OutputNode = m_NodeEditor->FindNode( m_Info.OutputNodeID );
-		UUID FinalSoundPinID = OutputNode->Inputs[ 0 ]->ID;
 #endif
 
 		DestroyAliveSounds();

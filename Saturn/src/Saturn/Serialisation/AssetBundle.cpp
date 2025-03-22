@@ -61,6 +61,12 @@ namespace Saturn {
 		uint32_t Version;
 	};
 
+	struct AssetBundleMinimalHeader
+	{
+		const char Magic[ 5 ] = ".AB\0";
+		uint32_t Version;
+	};
+
 	struct DumpFileHeader
 	{
 		char Magic[ 5 ] = { '.', 'P', 'A', 'K' };
@@ -83,7 +89,10 @@ namespace Saturn {
 	AssetBundleResult AssetBundle::BundleAssets( Ref<JobProgress>& jobProgress )
 	{
 		jobProgress->Reset();
-		jobProgress->SetTitle( "AssetBundle" );
+		jobProgress->SetTitle( "AssetBundle - Init (Minimal)" );
+
+		if( auto result = BundleMinimal(); result != AssetBundleResult::Success )
+			return result;
 
 		std::filesystem::path cachePath = Project::GetActiveProject()->GetFullCachePath();
 
@@ -358,7 +367,7 @@ namespace Saturn {
 			// TODO: GraphSound
 			case Saturn::AssetType::GraphSound: 
 			{
-				NodeCacheEditor::ConvertToDistNC( id, rAsset->Path.stem().string() );
+				NodeCacheEditor::ConvertToDistNC( id, rAsset->Path.filename().string() );
 			} break;
 
 			case Saturn::AssetType::Scene:
@@ -453,7 +462,7 @@ namespace Saturn {
 				return AssetBundleResult::AssetIDMismatch;
 			}
 
-			// The version that the file was generated in much match the engine version.
+			// The version that the file was generated in much also match the engine version.
 			if( dfh.Version != SAT_CURRENT_VERSION ) 
 			{
 				SAT_CORE_ERROR( "Pack file version mismatch!" );
@@ -521,4 +530,123 @@ namespace Saturn {
 
 		return AssetBundleResult::Success;
 	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// MINIMAL ASSET BUNDLE
+
+	AssetBundleResult AssetBundle::BundleMinimal()
+	{
+		std::filesystem::path cachePath = Project::GetActiveProject()->GetFullCachePath();
+
+		if( !std::filesystem::exists( cachePath ) )
+			std::filesystem::create_directories( cachePath );
+
+		cachePath /= "AssetBundle-Minimal.sab";
+
+		Ref<Project> ActiveProject = Project::GetActiveProject();
+		auto& rConfig = ActiveProject->GetConfig();
+
+		std::ofstream fout( cachePath, std::ios::binary | std::ios::trunc );
+
+		AssetBundleMinimalHeader header{};
+		header.Version = SAT_CURRENT_VERSION;
+
+		RawSerialisation::WriteObject( header, fout );
+
+		// Write Project file & write Startup scene
+		RawSerialisation::WriteString( rConfig.Name, fout );
+		RawSerialisation::WriteObject( rConfig.StartupSceneID, fout );
+		RawSerialisation::WriteObject( ActiveProject->GetDefaultMaterialAsset(), fout );
+		RawSerialisation::WriteObject( ActiveProject->GetDefaultPhysicsMaterialAsset(), fout );
+
+		// Action Bindings
+		// Write manually, avoid using our T::Serialise functions
+		RawSerialisation::WriteObject( ActiveProject->GetActionBindings().size(), fout );
+
+		for( const auto& rBinding : ActiveProject->GetActionBindings() )
+		{
+			RawSerialisation::WriteString( rBinding.Name, fout );
+
+			RawSerialisation::WriteObject( (int)rBinding.Key, fout );
+			RawSerialisation::WriteObject( (int)rBinding.MouseButton, fout );
+			RawSerialisation::WriteObject( (int)rBinding.Type, fout );
+		}
+
+		// Sound Groups
+		// Write manually, avoid using our T::Serialise functions
+		RawSerialisation::WriteObject( ActiveProject->GetSoundGroups().size(), fout );
+
+		for( const auto& rSoundGroup : ActiveProject->GetSoundGroups() )
+		{
+			RawSerialisation::WriteString( rSoundGroup->GetName(), fout );
+
+			RawSerialisation::WriteObject( rSoundGroup->GetVolume(), fout );
+			RawSerialisation::WriteObject( rSoundGroup->GetPitch(), fout );
+		}
+
+		fout.close();
+
+		return AssetBundleResult::Success;
+	}
+
+	AssetBundleResult AssetBundle::ReadMinimal()
+	{
+		std::filesystem::path cachePath = std::filesystem::current_path() / "Cache" / "AssetBundle-Minimal.sab";
+
+		if( !std::filesystem::exists( cachePath ) )
+			return AssetBundleResult::FileNotFound;
+
+		ProjectConfig newConfig{};
+
+		std::ifstream stream( cachePath, std::ios::binary | std::ios::in );
+
+		AssetBundleMinimalHeader header;
+		RawSerialisation::ReadObject( header.Version, stream );
+
+		if( header.Version != SAT_CURRENT_VERSION ) 
+		{
+			return AssetBundleResult::FileVersionMismatch;
+		}
+
+		newConfig.Name = RawSerialisation::ReadString( stream );
+		RawSerialisation::ReadObject( newConfig.StartupSceneID, stream );
+
+		// Create project
+		Ref<Project> newProject = Ref<Project>::Create( newConfig );
+
+		UUID defMatAsset = 0;
+		RawSerialisation::ReadObject( defMatAsset, stream );
+		newProject->SetDefaultMaterialAsset( defMatAsset );
+
+		RawSerialisation::ReadObject( defMatAsset, stream );
+		newProject->SetDefaultPhysicsMaterialAsset( defMatAsset );
+
+		size_t actionBindings = 0;
+		RawSerialisation::ReadObject( actionBindings, stream );
+
+		newProject->GetActionBindings().reserve( actionBindings );
+
+		for( size_t i = 0; i < actionBindings; i++ )
+		{
+			ActionBindingData ab;
+			
+			ab.Name = RawSerialisation::ReadString( stream );
+
+			RawSerialisation::ReadObject( ab.Key, stream );
+			RawSerialisation::ReadObject( ab.MouseButton, stream );
+			RawSerialisation::ReadObject( ab.Type, stream );
+
+			newProject->AddActionBinding( ab );
+		}
+
+		// TODO: Read Audio groups
+		// Disabled for now anyways.
+
+		stream.close();
+
+		Project::SetActiveProject( newProject );
+
+		return AssetBundleResult::Success;
+	}
+
 }

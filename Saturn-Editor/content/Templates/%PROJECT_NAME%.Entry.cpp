@@ -42,10 +42,7 @@
 #include <Saturn/Core/Timer.h>
 #include <Saturn/Vulkan/Renderer2D.h>
 #include <Saturn/Vulkan/SceneRenderer.h>
-#include <Saturn/Serialisation/EngineSettingsSerialiser.h>
-#include <Saturn/Serialisation/ProjectSerialiser.h>
-
-static std::filesystem::path s_ProjectPath = "";
+#include <Saturn/Serialisation/AssetBundle.h>
 
 // Saturn client main:
 extern int _main( int, char** );
@@ -74,16 +71,15 @@ public:
 	explicit __GameApplication( const Saturn::ApplicationSpecification& spec )
 		: Saturn::Application( spec )
 	{
-		Saturn::EngineSettingsSerialiser uss;
-		uss.Deserialise();
+		std::filesystem::path workingDir = std::filesystem::current_path();
 
-		RootContentPath = std::filesystem::current_path() / "content";
+		if( const auto result = Saturn::AssetBundle::ReadMinimal(); result != Saturn::AssetBundleResult::Success ) 
+		{
+			std::string errorMessage = std::format( "Failed to load AB-Minimal bundle! Error Code: {0}", ( int ) result );
+			SAT_CORE_VERIFY( false, errorMessage );
+		}
 
-		SAT_CORE_VERIFY( !s_ProjectPath.empty(), "Could not find .sproject file!" );
-
-		// Load the project really early on because we still need to load the shader bundle and create the scene renderer.
-		Saturn::ProjectSerialiser ps;
-		ps.Deserialise( s_ProjectPath );
+		RootContentPath = workingDir / "content";
 
 		// Load the shader bundle.
 		if( const auto result = Saturn::ShaderBundle::ReadBundle(); result != Saturn::ShaderBundleResult::Success )
@@ -121,8 +117,6 @@ Saturn::Application* Saturn::CreateApplication( int argc, char** argv )
 
 	Saturn::ApplicationSpecification spec{};
 	spec.Flags = Saturn::ApplicationFlag_CreateSceneRenderer | Saturn::ApplicationFlag_UseVFS | Saturn::ApplicationFlag_UseGameThread;
-
-	s_ProjectPath = Saturn::Project::FindProjectDir( "%PROJECT_NAME%" );
 
 	return new __GameApplication( spec );
 }

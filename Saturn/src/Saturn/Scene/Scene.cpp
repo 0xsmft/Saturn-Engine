@@ -880,12 +880,7 @@ namespace Saturn {
 					sound = AudioSystem::Get().RequestNewSound( rComp.SpecAssetID, rComp.UniqueID, true, rComp.SoundGroup );
 				}
 
-				if( rComp.Loop )
-				{
-					sound->WaitUntilLoaded();
-					sound->Loop();
-				}
-
+				sound->Loop( rComp.Loop );
 				sound->SetVolume( rComp.Volume );
 				sound->SetPitch( rComp.Pitch );
 			}

@@ -31,6 +31,9 @@
 #include "Saturn/Core/Layer.h"
 #include "Saturn/Scene/Scene.h"
 
+#include "Saturn/Physics/PhysicsFoundation.h"
+#include "Saturn/Asset/AssetManager.h"
+
 namespace Saturn {
 
 	class GameModule;
@@ -49,7 +52,10 @@ namespace Saturn {
 		void OpenFile( AssetID id );
 	
 	private:
-		Ref< Scene > m_RuntimeScene;
 		GameModule* m_GameModule = nullptr;
+		Ref<Scene> m_RuntimeScene;
+
+		PhysicsFoundation m_PhysicsFoundation;
+		AssetManager m_AssetManager;
 	};
 }

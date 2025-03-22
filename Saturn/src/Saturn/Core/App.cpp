@@ -37,7 +37,6 @@
 #include "Saturn/Vulkan/Renderer2D.h"
 #include "Saturn/Vulkan/VulkanContext.h"
 
-#include "Saturn/GameFramework/Core/GameThread.h"
 #include "Renderer/RenderThread.h"
 
 #include "Saturn/Audio/AudioSystem.h"

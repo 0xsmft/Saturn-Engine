@@ -48,8 +48,6 @@
 #include "Saturn/Asset/AssetManager.h"
 #include "Saturn/Asset/Prefab.h"
 
-#include "Saturn/Physics/PhysicsFoundation.h"
-
 #include "Saturn/Core/ErrorDialog.h"
 
 #include "Saturn/Core/Ruby/RubyWindow.h"
@@ -62,13 +60,9 @@ namespace Saturn {
 		Scene::SetActiveScene( m_RuntimeScene.Get() );
 
 		// Init Physics
-		PhysicsFoundation* pPhysicsFoundation = new PhysicsFoundation();
-		pPhysicsFoundation->Init();
+		m_PhysicsFoundation.Init();
 
-		auto& rUserSettings = EngineSettings::Get();
-		VirtualFS::Get().MountBase( Project::GetActiveConfig().Name, rUserSettings.StartupProject );
-
-		AssetManager* pAssetManager = new AssetManager();
+		VirtualFS::Get().MountBase( Project::GetActiveConfig().Name, Project::GetActiveProject()->GetRootDir() );
 
 		// Load Asset bundle.
 		if( auto result = AssetBundle::ReadBundle(); result != AssetBundleResult::Success )

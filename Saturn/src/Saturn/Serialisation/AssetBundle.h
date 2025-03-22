@@ -81,6 +81,9 @@ namespace Saturn {
 		[[nodiscard]] static AssetBundleResult BundleAssets( Ref<JobProgress>& jobProgress );
 		[[nodiscard]] static AssetBundleResult ReadBundle();
 
+		[[nodiscard]] static AssetBundleResult BundleMinimal();
+		[[nodiscard]] static AssetBundleResult ReadMinimal();
+
 	private:
 		static void RTDumpAsset( const Ref<Asset>& rAsset, Ref<AssetRegistry>& AssetBundleRegistry );
 	};

@@ -171,10 +171,7 @@ namespace Saturn {
 
 	void AssetManager::UnregisterAllAssetDependencies( AssetID assetID )
 	{
-		if( m_AssetDependencies.find( assetID ) != m_AssetDependencies.end() )
-		{
-			m_AssetDependencies.erase( assetID );
-		}
+		m_AssetDependencies.erase( assetID );
 	}
 
 	const std::unordered_map<AssetID, std::unordered_set<AssetID>> AssetManager::GetPureAssetDependencies() const

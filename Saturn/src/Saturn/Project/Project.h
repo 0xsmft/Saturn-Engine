@@ -87,7 +87,7 @@ namespace Saturn {
 		//////////////////////////////////////////////////////////////////////////
 		// File and Project folder helpers.
 
-		std::filesystem::path FilepathAbs( const std::filesystem::path& rPath );
+		std::filesystem::path FilepathAbs( const std::filesystem::path& rPath ) const;
 
 		// Relative Asset Path
 		std::filesystem::path GetAssetPath();
@@ -119,10 +119,10 @@ namespace Saturn {
 		static std::filesystem::path GetActiveProjectRootPath() { return s_ActiveProject->GetRootDir(); }
 
 		// Absolute cache dir
-		std::filesystem::path GetFullCachePath();
+		std::filesystem::path GetFullCachePath() const;
 
 		// Absolute App Data path for this project
-		std::filesystem::path GetAppDataFolder();
+		std::filesystem::path GetAppDataFolder() const;
 
 	public:
 		//////////////////////////////////////////////////////////////////////////

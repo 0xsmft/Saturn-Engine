@@ -985,7 +985,9 @@ namespace Saturn {
 
 				// Currently the date is YYYY-MM-DD HH-MM-SS however all we want is YYYY-MM-DD
 				std::string fullTime = std::format( "{0}", std::filesystem::last_write_time( m_ImportAssetPath ) );
-				fullTime = fullTime.substr( 0, fullTime.find_first_of( " " ) );
+				auto pos = fullTime.find_first_of( " " );
+				if( pos != std::string::npos )
+					fullTime.resize( fullTime.find_first_of( " " ) );
 
 				sound->LastWriteTime = fullTime;
 

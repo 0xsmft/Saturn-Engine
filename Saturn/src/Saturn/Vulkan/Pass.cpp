@@ -152,7 +152,6 @@ namespace Saturn {
 			DefaultSubpass.pDepthStencilAttachment = &m_DepthAttachment;
 		}
 
-		bool IsMultisamplePass = m_PassSpec.MSAASamples > VK_SAMPLE_COUNT_1_BIT;
 		if( m_ColorAttachments.size() ) 
 		{
 			DefaultSubpass.pColorAttachments = m_ColorAttachments.data();
@@ -184,10 +183,8 @@ namespace Saturn {
 			.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
 		} );
 
-		// Attachment Description
-
+		// Attachment Descriptions
 		std::vector< VkAttachmentDescription > AttachmentDescriptions;
-		uint32_t MSAA_AttachmentIndex = 0;
 
 		for ( auto attachment : m_PassSpec.Attachments )
 		{
@@ -208,19 +205,6 @@ namespace Saturn {
 					.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
 					.finalLayout = IsColorFormat( attachment ) ? VK_IMAGE_LAYOUT_PRESENT_SRC_KHR  : VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
 				} );
-
-				if( m_PassSpec.IsSwapchainTarget && m_PassSpec.MSAASamples > VK_SAMPLE_COUNT_1_BIT )
-				{
-					// Now that we have added our first attachment we can now (try) to add the MSAA attachment.
-					AddMultisampleAttachments( attachment, DefaultSubpass, AttachmentDescriptions );
-
-					// Attachment zero, because attachment zero will be our main color attachment.
-					VkAttachmentReference MSAAReslove = {};
-					MSAAReslove.attachment = 0;
-					MSAAReslove.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-					DefaultSubpass.pResolveAttachments = &MSAAReslove;
-				}
 			}
 			else
 			{
@@ -249,30 +233,6 @@ namespace Saturn {
 
 		VK_CHECK( vkCreateRenderPass( VulkanContext::Get().GetDevice(), &RenderPassCreateInfo, nullptr, &m_Pass ) );
 		SetDebugUtilsObjectName( m_PassSpec.Name, ( uint64_t ) m_Pass, VK_OBJECT_TYPE_RENDER_PASS );
-	}
-
-	void Pass::AddMultisampleAttachments(ImageFormat format, VkSubpassDescription& rSubpass, std::vector<VkAttachmentDescription>& rAttachments)
-	{
-		// We currently only allow for the swapchain pass to have an image that has a sample count.
-		if( !m_PassSpec.IsSwapchainTarget )
-			return;
-
-		// How MSAA works in Vulkan is that we can't present using an image that has a sample count more than one.
-
-		if ( IsColorFormat( format ) )
-		{
-			// Add our multisample attachment.
-			rAttachments.emplace_back(
-						0,
-						VK_FORMAT_B8G8R8A8_UNORM,
-						m_PassSpec.MSAASamples,
-						VK_ATTACHMENT_LOAD_OP_CLEAR,
-						VK_ATTACHMENT_STORE_OP_DONT_CARE,
-						VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-						VK_ATTACHMENT_STORE_OP_DONT_CARE,
-						VK_IMAGE_LAYOUT_UNDEFINED,
-						VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL );
-		}
 	}
 
 	void Pass::Terminate()

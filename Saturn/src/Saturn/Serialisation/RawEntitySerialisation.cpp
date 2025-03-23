@@ -367,8 +367,6 @@ namespace Saturn {
 					// Hand off to RawStaticMeshAssetSerialiser
 					auto mesh = AssetManager::Get().GetAssetAs<StaticMesh>( ID );
 					mc.Mesh = mesh;
-
-					mc.MaterialRegistry->SetMesh( mc.Mesh );
 				}
 
 				// Now, build local material registry

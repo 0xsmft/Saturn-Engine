@@ -91,8 +91,7 @@ namespace Saturn {
 		jobProgress->Reset();
 		jobProgress->SetTitle( "AssetBundle - Init (Minimal)" );
 
-		if( auto result = BundleMinimal(); result != AssetBundleResult::Success )
-			return result;
+		BundleMinimal();
 
 		std::filesystem::path cachePath = Project::GetActiveProject()->GetFullCachePath();
 
@@ -602,6 +601,12 @@ namespace Saturn {
 
 		AssetBundleMinimalHeader header;
 		RawSerialisation::ReadObject( header.Version, stream );
+
+		if( strcmp( header.Magic, ".AB\0" ) )
+		{
+			SAT_CORE_ERROR( "Invalid AB-Minimal file header or corrupt asset bundle file!" );
+			return AssetBundleResult::InvalidFileHeader;
+		}
 
 		if( header.Version != SAT_CURRENT_VERSION ) 
 		{

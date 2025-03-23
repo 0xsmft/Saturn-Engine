@@ -271,7 +271,7 @@ namespace Saturn {
 		return GetActiveProject()->GetConfig().Path;
 	}
 
-	std::filesystem::path Project::FilepathAbs( const std::filesystem::path& rPath )
+	std::filesystem::path Project::FilepathAbs( const std::filesystem::path& rPath ) const
 	{
 		std::filesystem::path rootDir = m_RootPath;
 		rootDir /= rPath;
@@ -279,12 +279,12 @@ namespace Saturn {
 		return rootDir;
 	}
 
-	std::filesystem::path Project::GetFullCachePath()
+	std::filesystem::path Project::GetFullCachePath() const
 	{
 		return m_RootPath / "Cache";
 	}
 
-	std::filesystem::path Project::GetAppDataFolder()
+	std::filesystem::path Project::GetAppDataFolder() const
 	{
 		std::filesystem::path appData = Application::Get().GetAppDataFolder();
 

@@ -633,8 +633,6 @@ rProperty.SetProperty( DeserialisedEntity.Get(), value ); \
 							m.MaterialRegistry->Copy( m.Mesh->GetMaterialRegistry() );
 						}
 					}
-					
-					m.MaterialRegistry->SetMesh( m.Mesh );
 				}
 			}
 

@@ -127,7 +127,6 @@ namespace Saturn {
 		m_Transform = Mat4FromAssimpMat4( m_Scene->mRootNode->mTransformation );
 
 		m_MaterialRegistry = Ref<MaterialRegistry>::Create();
-		m_MaterialRegistry->SetMesh( this );
 
 		CreateVertices();
 #endif
@@ -326,8 +325,6 @@ namespace Saturn {
 
 			m_MaterialRegistry->AddAsset( materialAsset );
 		}
-
-		m_MaterialRegistry->SetMesh( this );
 	}
 
 	//////////////////////////////////////////////////////////////////////////

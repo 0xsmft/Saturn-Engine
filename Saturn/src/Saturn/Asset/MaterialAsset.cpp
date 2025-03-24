@@ -520,7 +520,6 @@ namespace Saturn {
 	}
 
 	MaterialRegistry::MaterialRegistry( const Ref<StaticMesh>& mesh )
-		: m_Mesh( mesh )
 	{
 		Copy( mesh->GetMaterialRegistry() );
 	}
@@ -596,12 +595,12 @@ namespace Saturn {
 		SAT_CORE_INFO( "OnAssetDependencyChanged: {0}, {1}", oldID, newID );
 	}
 
-	void MaterialRegistry::ResetMaterial( uint32_t index )
+	void MaterialRegistry::ResetMaterial( uint32_t index, Ref<MaterialRegistry> srcRegistry )
 	{
 		m_HasOverridden[ index ] = false;
-		m_Materials[ index ] = m_Mesh->GetMaterialRegistry()->GetMaterialAssets()[ index ];
+		m_Materials[ index ] = srcRegistry->GetMaterialAssets()[ index ];
 
-		m_MaterialAssetsIDs[ index ] = m_Mesh->GetMaterialRegistry()->GetMaterialAssets()[ index ]->ID;
+		m_MaterialAssetsIDs[ index ] = srcRegistry->GetMaterialAssets()[ index ]->ID;
 	}
 
 	bool MaterialRegistry::HasAnyOverrides()

@@ -45,7 +45,7 @@ namespace Saturn {
 	AssetRegistry::~AssetRegistry()
 	{
 		m_Assets.clear();
-		
+
 		for( auto& [id, rAsset] : m_LoadedAssets )
 		{
 			rAsset = nullptr;
@@ -142,7 +142,7 @@ namespace Saturn {
 		}
 	}
 
-	void AssetRegistry::TerminateAsset( AssetID id )
+	void AssetRegistry::DestroyAsset( AssetID id )
 	{
 		if( DoesIDExists( id ) )
 		{

@@ -34,6 +34,8 @@
 #include "VFSAssetImporter.h"
 #endif
 
+#include <unordered_set>
+
 namespace Saturn {
 
 	class MemoryAssetDependencyBase;
@@ -89,14 +91,14 @@ namespace Saturn {
 
 		void UnloadAsset( AssetID id )
 		{
-			m_Assets->TerminateAsset( id );
+			m_Assets->DestroyAsset( id );
 		}
 
 		[[deprecated( "Saturn::AssetManager::GetCombinedAssetMap is deprecated and will be removed. Consider using \"AssetManager::GetAssetRegistry::GetAssetMap\" instead." )]]
-		inline AssetMap GetCombinedAssetMap() { return m_Assets->GetAssetMap(); }
+		inline UnorderedAssetMap GetCombinedAssetMap() { return m_Assets->GetAssetMap(); }
 
 		[[deprecated( "Saturn::AssetManager::GetCombinedLoadedAssetMap is deprecated and will be removed. Consider using \"AssetManager::GetAssetRegistry::GetLoadedAssetMap\" instead." )]]
-		inline AssetMap GetCombinedLoadedAssetMap() { return m_Assets->GetLoadedAssetsMap(); }
+		inline UnorderedAssetMap GetCombinedLoadedAssetMap() { return m_Assets->GetLoadedAssetsMap(); }
 
 		Ref<AssetRegistry>& GetAssetRegistry() { return m_Assets; }
 		const Ref<AssetRegistry>& GetAssetRegistry() const { return m_Assets; }

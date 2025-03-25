@@ -56,35 +56,14 @@
 
 namespace Saturn {
 
-	// This constructor is quite messy.
 	Application::Application( const ApplicationSpecification& spec )
 		: m_Specification( spec )
 	{
 		SingletonStorage::AddSingleton( this );
 
-		// Setup default width and height
-		const RubyMonitor& rPrimaryMonitor = RubyLibrary::Get().GetPrimaryMonitor();
-		uint32_t width = 0, height = 0;
+		InitWindow();
+		InitGraphics();
 
-		width = 3 * rPrimaryMonitor.MonitorSize.x / 4;
-		height = 3 * rPrimaryMonitor.MonitorSize.y / 4;
-
-		RubyStyle windowStyle = HasFlag( ApplicationFlag_Titlebar ) ? RubyStyle::Default : spec.WindowStyle;
-
-		RubyWindowSpecification windowSpec { .Name = L"Saturn", .Width = width, .Height = height, .GraphicsAPI = RubyGraphicsAPI::Vulkan, .Style = windowStyle, .ShowNow = false };
-		m_Window = new RubyWindow( windowSpec );
-		m_Window->SetEventTarget( this );
-
-		// This may not be the best way... but it's better than lazy loading.
-		m_VulkanContext = new VulkanContext();
-		m_VulkanContext->Init();
-
-		// If we are in Dist we don't want to create the Scene Renderer now because it does not know where the shaders are. 
-		// So we want to first the shader bundle however that requires the project to be loaded.
-#if !defined( SAT_DIST )
-		constexpr SceneRendererFlags flags = SceneRendererFlag_MasterInstance | SceneRendererFlag_RenderGrid;
-		m_SceneRenderer = new SceneRenderer( flags );
-#endif
 		// Now, resize to specification width and height
 		if( m_Specification.WindowWidth != 0 && m_Specification.WindowHeight != 0 )
 			m_Window->Resize( m_Specification.WindowWidth, m_Specification.WindowHeight );
@@ -105,6 +84,37 @@ namespace Saturn {
 #else
 		m_ImGuiLayer->OnAttach();
 		m_Window->Show();
+#endif
+	}
+
+	void Application::InitWindow()
+	{
+		// Setup default width and height
+		const RubyMonitor& rPrimaryMonitor = RubyLibrary::Get().GetPrimaryMonitor();
+		uint32_t width = 0, height = 0;
+
+		width = 3 * rPrimaryMonitor.MonitorSize.x / 4;
+		height = 3 * rPrimaryMonitor.MonitorSize.y / 4;
+
+		RubyStyle windowStyle = HasFlag( ApplicationFlag_Titlebar ) ? RubyStyle::Default : m_Specification.WindowStyle;
+
+		RubyWindowSpecification windowSpec{ .Name = L"Saturn", .Width = width, .Height = height, .GraphicsAPI = RubyGraphicsAPI::Vulkan, .Style = windowStyle, .ShowNow = false };
+
+		m_Window = new RubyWindow( windowSpec );
+		m_Window->SetEventTarget( this );
+	}
+
+	void Application::InitGraphics()
+	{
+		// This may not be the best way... but it's better than lazy loading.
+		m_VulkanContext = new VulkanContext();
+		m_VulkanContext->Init();
+
+		// If we are in Dist we don't want to create the Scene Renderer now because it does not know where the shaders are. 
+		// So we want to first the shader bundle however that requires the project to be loaded.
+#if !defined( SAT_DIST )
+		constexpr SceneRendererFlags flags = SceneRendererFlag_MasterInstance | SceneRendererFlag_RenderGrid;
+		m_SceneRenderer = new SceneRenderer( flags );
 #endif
 	}
 
@@ -161,10 +171,9 @@ namespace Saturn {
 		
 		// So the difference between "Terminate" and delete is delete will completely destroy the class and remove it from the singleton list. 
 		// However "Terminate" is used to destroy any data in the class but will not remove it from the singleton list, it is also used because we don't own the class so we can just implicitly destroy them.
-		GameThread::Get().Terminate();
 		RenderThread::Get().RequestJoin();
 
-		VulkanContext::Get().SubmitTerminateResource( [&]() 
+		m_VulkanContext->SubmitTerminateResource( [&]()
 		{
 			for ( auto& rLayer : m_Layers )
 			{

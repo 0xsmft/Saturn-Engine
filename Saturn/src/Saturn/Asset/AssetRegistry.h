@@ -32,11 +32,12 @@
 #include "AssetImporter.h"
 
 #include <unordered_map>
-#include <unordered_set>
+#include <map>
 
 namespace Saturn {
 
-	using AssetMap = std::unordered_map< AssetID, Ref<Asset> >;
+	using UnorderedAssetMap = std::unordered_map<AssetID, Ref<Asset>>;
+	using OrderedAssetMap = std::map<AssetID, Ref<Asset>>;
 
 	class AssetRegistry : public RefTarget
 	{
@@ -61,14 +62,14 @@ namespace Saturn {
 		AssetID PathToID( const std::filesystem::path& rPath );
 
 		void RemoveAsset( AssetID id );
-		void TerminateAsset( AssetID id );
+		void DestroyAsset( AssetID id );
 
 		[[nodiscard]] bool DoesIDExists( AssetID id );
 
 		size_t GetSize();
 
-		const AssetMap& GetAssetMap() const { return m_Assets; }
-		const AssetMap& GetLoadedAssetsMap() const { return m_LoadedAssets; }
+		const UnorderedAssetMap& GetAssetMap() const { return m_Assets; }
+		const UnorderedAssetMap& GetLoadedAssetsMap() const { return m_LoadedAssets; }
 
 		std::filesystem::path& GetPath() { return m_Path; }
 		const std::filesystem::path& GetPath() const { return m_Path; }
@@ -78,8 +79,8 @@ namespace Saturn {
 		bool IsAssetLoaded( AssetID id );
 
   	private:
-		AssetMap m_Assets;
-		AssetMap m_LoadedAssets;
+		UnorderedAssetMap m_Assets;
+		UnorderedAssetMap m_LoadedAssets;
 
 		std::filesystem::path m_Path;
 

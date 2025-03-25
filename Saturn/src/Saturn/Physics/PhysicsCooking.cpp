@@ -39,8 +39,22 @@
 
 namespace Saturn {
 
-//	static AssetID s_DefaultPhysicsMaterial = 13151293699070629621;
-	static AssetID s_DefaultPhysicsMaterial = 1421817985369887560;
+	static Ref<PhysicsMaterialAsset> GetPhysicsMaterial( Ref<StaticMesh> mesh )
+	{
+		Ref<PhysicsMaterialAsset> materialAsset;
+
+		Ref<Project> activeProject = Project::GetActiveProject();
+		if( mesh->GetPhysicsMaterial() == 0 || mesh->GetPhysicsMaterial() == activeProject->GetDefaultPhysicsMaterialAsset() )
+		{
+			materialAsset = AssetManager::Get().GetAssetAs<PhysicsMaterialAsset>( activeProject->GetDefaultPhysicsMaterialAsset() );
+		}
+		else
+		{
+			materialAsset = AssetManager::Get().GetAssetAs<PhysicsMaterialAsset>( mesh->GetPhysicsMaterial() );
+		}
+
+		return materialAsset;
+	}
 
 	PhysicsCooking::PhysicsCooking()
 	{
@@ -237,19 +251,8 @@ namespace Saturn {
 		if( !LoadColliderFile( cachePath ) )
 			return Shapes;
 
-		auto& materialID = rMesh->GetPhysicsMaterial();
-		physx::PxMaterial* pMaterial = nullptr;
-
-		if( materialID == 0 || materialID == s_DefaultPhysicsMaterial )
-		{
-			pMaterial = PhysicsFoundation::Get().GetPhysics().createMaterial( 1.0f, 0.0f, 0.0f );
-		}
-		else
-		{
-			Ref<PhysicsMaterialAsset> asset = AssetManager::Get().GetAssetAs<PhysicsMaterialAsset>( rMesh->GetPhysicsMaterial() );
-
-			pMaterial = &asset->GetMaterial();
-		}
+		Ref<PhysicsMaterialAsset> materialAsset = GetPhysicsMaterial( rMesh );
+		physx::PxMaterial* pMaterial = &materialAsset->GetMaterial();
 
 		// TEMP: We might want to change the filter data.
 		physx::PxFilterData data;
@@ -308,21 +311,8 @@ namespace Saturn {
 		if( !LoadColliderFile( cachePath ) )
 			return Shapes;
 
-		auto& materialID = rMesh->GetPhysicsMaterial();
-		physx::PxMaterial* pMaterial = nullptr;
-
-		if( materialID == 0 || materialID == s_DefaultPhysicsMaterial )
-		{
-			Ref<PhysicsMaterialAsset> asset = AssetManager::Get().GetAssetAs<PhysicsMaterialAsset>( s_DefaultPhysicsMaterial );
-
-			pMaterial = &asset->GetMaterial();
-		}
-		else
-		{
-			Ref<PhysicsMaterialAsset> asset = AssetManager::Get().GetAssetAs<PhysicsMaterialAsset>( rMesh->GetPhysicsMaterial() );
-
-			pMaterial = &asset->GetMaterial();
-		}
+		Ref<PhysicsMaterialAsset> materialAsset = GetPhysicsMaterial( rMesh );
+		physx::PxMaterial* pMaterial = &materialAsset->GetMaterial();
 
 		// TEMP: We might want to change the filter data.
 		physx::PxFilterData data;

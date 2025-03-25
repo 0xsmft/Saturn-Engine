@@ -138,6 +138,10 @@ namespace Saturn {
 		// The path where the default content is. Path is absolute.
 		std::filesystem::path RootContentPath;
 
+	private:
+		void InitWindow();
+		void InitGraphics();
+
 	protected:
 		SceneRenderer* m_SceneRenderer = nullptr;
 		RubyWindow* m_Window = nullptr;

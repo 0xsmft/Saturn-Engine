@@ -133,11 +133,7 @@ namespace Saturn {
 		VK_CHECK( vkCreatePipelineLayout( VulkanContext::Get().GetDevice(), &PipelineLayoutCreateInfo, nullptr, &m_PipelineLayout ) );
 
 		// Create the shader module.
-
-		std::string ComputeName = std::format( "{0}/Compute/0", m_ComputeShader->GetName() );
-
 		auto& SpvSrc = ShaderLibrary::Get().Find( m_ComputeShader->GetName() )->GetSpvCode();
-
 		std::vector<uint32_t> Code = SpvSrc.at( { ShaderType::Compute, 0 } );
 
 		VkShaderModuleCreateInfo ShaderModuleCreateInfo = { VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO };
@@ -148,11 +144,9 @@ namespace Saturn {
 
 		VK_CHECK( vkCreateShaderModule( VulkanContext::Get().GetDevice(), &ShaderModuleCreateInfo, nullptr, &ShaderModule ) );
 
-
 		SetDebugUtilsObjectName( "Compute shader module", ( uint64_t ) ShaderModule, VK_OBJECT_TYPE_SHADER_MODULE );
 
 		// Shader stage
-
 		VkPipelineShaderStageCreateInfo ShaderStage = {
 			.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
 			.stage = VK_SHADER_STAGE_COMPUTE_BIT,
@@ -161,7 +155,6 @@ namespace Saturn {
 		};
 
 		// Pipeline info
-
 		VkComputePipelineCreateInfo ComputePipelineCreateInfo = { VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO };
 		ComputePipelineCreateInfo.layout = m_PipelineLayout;
 		ComputePipelineCreateInfo.stage = ShaderStage;

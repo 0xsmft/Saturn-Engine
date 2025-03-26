@@ -303,12 +303,17 @@ namespace Saturn {
 	
 		Shader( const std::filesystem::path& rFilepath );
 		~Shader();
-		
+	
 		std::string& GetName() { return m_Name; }
 		const std::string& GetName() const { return m_Name; }
 
+#if !defined(SAT_DIST)
 		ShaderSourceMap& GetShaderSources() { return m_ShaderSources; }
 		const ShaderSourceMap& GetShaderSources() const { return m_ShaderSources; }
+
+		ShaderWriteMap& GetWriteDescriptors() { return m_DescriptorWrites; }
+		const ShaderWriteMap& GetWriteDescriptors() const { return m_DescriptorWrites; }
+#endif
 
 		const SpvSourceMap& GetSpvCode() const { return m_SpvCode; }
 		SpvSourceMap& GetSpvCode() { return m_SpvCode; }
@@ -319,9 +324,6 @@ namespace Saturn {
 		
 		Ref< DescriptorPool >& GetDescriptorPool() { return m_SetPool; }
 		const Ref< DescriptorPool >& GetDescriptorPool() const { return m_SetPool; }
-		
-		ShaderWriteMap& GetWriteDescriptors() { return m_DescriptorWrites; }
-		const ShaderWriteMap& GetWriteDescriptors() const { return m_DescriptorWrites; }
 		
 		std::vector< VkPushConstantRange >& GetPushConstantRanges() { return m_PushConstantRanges; }
 		const std::vector< VkPushConstantRange >& GetPushConstantRanges() const { return m_PushConstantRanges; }
@@ -360,7 +362,6 @@ namespace Saturn {
 		const UUID GetShaderHash() const;
 
 	private:
-
 		void ReadFile();
 
 		void DetermineShaderTypes();
@@ -372,15 +373,19 @@ namespace Saturn {
 		[[nodiscard]] bool CompileGlslToSpvAssembly();
 
 	private:
-		ShaderSourceMap m_ShaderSources;
 		SpvSourceMap m_SpvCode;
-
-		std::string m_FileContents = "";
-		size_t m_FileSize = 0;
 
 		std::string m_Name = "";
 
+#if !defined(SAT_DIST)
+		std::string m_FileContents = "";
+		size_t m_FileSize = 0;
+
 		std::filesystem::path m_Filepath = "";
+
+		ShaderSourceMap m_ShaderSources;
+		ShaderWriteMap m_DescriptorWrites;
+#endif
 		
 		std::vector< ShaderUniform > m_Uniforms;
 		std::vector< ShaderUniform > m_PushConstantUniforms;
@@ -390,12 +395,9 @@ namespace Saturn {
 		// Set -> ShaderDescriptorSet
 		std::unordered_map< uint32_t, ShaderDescriptorSet > m_DescriptorSets;
 
-		ShaderWriteMap m_DescriptorWrites;
-
 		uint32_t m_DescriptorSetCount = -1;
 
 		std::vector< VkDescriptorSetLayout > m_SetLayouts;
-
 		Ref< DescriptorPool > m_SetPool;
 
 		UUID m_ShaderHash;

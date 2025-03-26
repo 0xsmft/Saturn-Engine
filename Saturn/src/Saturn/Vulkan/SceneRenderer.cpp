@@ -147,8 +147,10 @@ namespace Saturn {
 		{
 			Renderer2D::Get().SetInitialRenderPass( m_RendererData.LateCompositePass, m_RendererData.LateCompositeFramebuffer );
 		}
-
+	
+#if !defined(SAT_DIST)
 		Renderer::Get().AddShaderReloadCB( SAT_BIND_EVENT_FN( OnShaderReloaded ) );
+#endif
 	}
 
 	Ref<Image2D> SceneRenderer::CompositeImage()
@@ -158,7 +160,9 @@ namespace Saturn {
 
 	void SceneRenderer::Terminate()
 	{
+#if !defined(SAT_DIST)
 		Renderer::Get().ClearShaderReferences();
+#endif
 
 		m_pScene = nullptr;
 
@@ -1904,6 +1908,7 @@ namespace Saturn {
 		m_ScheduledFunctions.push_back( rrFunc );
 	}
 
+#if !defined(SAT_DIST)
 	void SceneRenderer::OnShaderReloaded( const std::string& rName )
 	{
 		Ref<Shader> shader = ShaderLibrary::Get().Find( rName );
@@ -1920,6 +1925,7 @@ namespace Saturn {
 			//rMaterial;
 		}
 	}
+#endif
 
 	Ref<TextureCube> SceneRenderer::CreateDymanicSky()
 	{

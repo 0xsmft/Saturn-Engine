@@ -95,13 +95,14 @@ namespace Saturn {
 
 		void SubmitTerminateResource( std::function<void()>&& rrFunction );
 
-		Ref< Texture2D >   GetPinkTexture() { return m_PinkTexture; }
-		Ref< TextureCube > GetPinkTextureCube() { return m_PinkTextureCube; }
+		Ref<Texture2D>   GetPinkTexture() { return m_PinkTexture; }
+		Ref<TextureCube> GetPinkTextureCube() { return m_PinkTextureCube; }
 
 		std::pair< Ref<VertexBuffer>, Ref<IndexBuffer>> CreateFullscreenQuad();
 		
 		Ref<DescriptorPool> GetDescriptorPool() { return m_RendererDescriptorPools[ m_FrameCount ]; }
 
+#if !defined(SAT_DIST)
 		void AddShaderReloadCB( const std::function<void( const std::string& )>& rFunc );
 		void OnShaderReloaded( const std::string& rName );
 
@@ -110,12 +111,12 @@ namespace Saturn {
 		void ClearShaderReferences();
 
 		ShaderReference& FindShaderReference( UUID Hash );
+#endif
 
 	public:
 		VkCommandBuffer ActiveCommandBuffer() { return m_CommandBuffer; };
 
 	private:
-		
 		void Init();
 		void Terminate();
 
@@ -127,7 +128,6 @@ namespace Saturn {
 		std::vector<VkFence> m_FlightFences;
 		
 		std::vector< std::function<void()> > m_TerminateResourceFuncs;
-		std::vector< std::function<void(const std::string&)> > m_ShaderReloadedCB;
 		
 		VkSemaphore m_AcquireSemaphore = nullptr;
 		VkSemaphore m_SubmitSemaphore = nullptr;
@@ -143,8 +143,8 @@ namespace Saturn {
 		Timer m_QueuePresentTimer;
 		float m_QueuePresentTime = 0.0f;
 		
-		Ref< Texture2D > m_PinkTexture;
-		Ref< TextureCube > m_PinkTextureCube;
+		Ref<Texture2D> m_PinkTexture;
+		Ref<TextureCube> m_PinkTextureCube;
 
 		VkDescriptorSet m_RendererDescriptorSets[ MAX_FRAMES_IN_FLIGHT ]{};
 
@@ -153,8 +153,11 @@ namespace Saturn {
 		// frame -> shader name -> set
 		std::unordered_map< uint32_t, std::unordered_map< std::string, std::vector<VkWriteDescriptorSet>>> m_StorageBufferSets;
 
+#if !defined(SAT_DIST)
+		std::vector< std::function<void( const std::string& )> > m_ShaderReloadedCB;
 		std::unordered_map<size_t, ShaderReference> m_ShaderReferences;
 		std::vector<std::string> m_PendingShaderReloads;
+#endif
 
 	private:
 		friend class VulkanContext;

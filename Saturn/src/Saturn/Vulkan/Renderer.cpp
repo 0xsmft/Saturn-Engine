@@ -53,8 +53,6 @@ namespace Saturn {
 
 	void Renderer::Init()
 	{
-		SAT_PF_EVENT();
-
 		// Create Sync objects.
 		VkSemaphoreCreateInfo SemaphoreCreateInfo = { VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
 		VkFenceCreateInfo     FenceCreateInfo     = { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
@@ -86,6 +84,7 @@ namespace Saturn {
 		m_PinkTexture->SetIsRendererTexture( true );
 
 		m_PinkTextureCube = Ref< TextureCube >::Create( ImageFormat::BGRA8, 1, 1, pData );
+		m_PinkTextureCube->SetIsRendererTexture( true );
 
 		delete[] pData;
 
@@ -136,9 +135,11 @@ namespace Saturn {
 		for ( auto& rFunc : m_TerminateResourceFuncs )
 			rFunc();
 
+#if !defined(SAT_DIST)
 		m_ShaderReloadedCB.clear();
+#endif
 
-		m_PinkTextureCube->Terminate();
+		m_PinkTextureCube->SetForceTerminate( true );
 		m_PinkTextureCube = nullptr;
 
 		m_PinkTexture->SetForceTerminate( true );
@@ -368,6 +369,7 @@ namespace Saturn {
 
 		VK_CHECK( vkResetDescriptorPool( LogicalDevice, m_RendererDescriptorPools[ m_FrameCount ]->GetVulkanPool(), 0 ) );
 
+#if !defined(SAT_DIST)
 		if( m_PendingShaderReloads.size() )
 		{
 			for( const std::string& rName : m_PendingShaderReloads )
@@ -378,6 +380,7 @@ namespace Saturn {
 
 			m_PendingShaderReloads.clear();
 		}
+#endif
 
 		// ^^^ cleanup from last frame
 		// Actual Begin frame
@@ -517,6 +520,7 @@ namespace Saturn {
 		return { vertex, index };
 	}
 
+#if !defined(SAT_DIST)
 	void Renderer::AddShaderReloadCB( const std::function<void( const std::string& )>& rFunc )
 	{
 		m_ShaderReloadedCB.push_back( rFunc );
@@ -546,5 +550,6 @@ namespace Saturn {
 	{
 		return m_ShaderReferences[ Hash ];
 	}
+#endif
 
 }

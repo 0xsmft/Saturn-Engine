@@ -41,7 +41,7 @@
 
 #include <spirv/spirv_glsl.hpp>
 
-#if defined(SAT_DEBUG) || defined(SAT_RELEASE)
+#if !defined( SAT_DIST )
 #define SHADER_INFO(...) SAT_CORE_INFO(__VA_ARGS__)
 #else
 #define SHADER_INFO(...)
@@ -228,6 +228,7 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 
 	Shader::Shader( const std::filesystem::path& rFilepath )
+#if !defined(SAT_DIST)
 		: m_Filepath( rFilepath )
 	{
 		if( !std::filesystem::exists( m_Filepath ) )
@@ -255,12 +256,18 @@ namespace Saturn {
 	
 		Renderer::Get().AddShaderReference( m_ShaderHash );
 	}
+#else
+	{
+	}
+#endif
 
 	Shader::~Shader()
 	{
 		m_SpvCode.clear();
+#if !defined(SAT_DIST)
 		m_ShaderSources.clear();
-		
+#endif
+
 		for ( auto& uniform : m_Uniforms )
 		{
 			uniform.Terminate();
@@ -277,7 +284,9 @@ namespace Saturn {
 
 		m_SetPool = nullptr;
 
+#if !defined(SAT_DIST)
 		Renderer::Get().RemoveShaderReference( m_ShaderHash );
+#endif
 	}
 
 	void Shader::WriteDescriptor( const std::string& rName, VkDescriptorImageInfo& rImageInfo, VkDescriptorSet desSet )
@@ -458,6 +467,7 @@ namespace Saturn {
 
 	void Shader::ReadFile()
 	{
+#if !defined(SAT_DIST)
 		if( !std::filesystem::exists( m_Filepath ) )
 			return;
 		
@@ -472,10 +482,12 @@ namespace Saturn {
 		f.close();
 
 		m_FileContents = std::string( Buffer.begin(), Buffer.end() );
+#endif
 	}
 
 	void Shader::DetermineShaderTypes()
 	{
+#if !defined(SAT_DIST)
 		int VertexShaders = -1;
 		int FragmentShaders = -1;
 		int ComputeShaders = -1;
@@ -515,10 +527,12 @@ namespace Saturn {
 			ShaderSource src = ShaderSource( RawShaderCode, Shader_Type, Index );
 			m_ShaderSources[ ShaderSourceKey( Shader_Type, Index ) ] = src;
 		}
+#endif
 	}
 
 	void Shader::Reflect( ShaderType shaderType, const std::vector<uint32_t>& rShaderData )
 	{
+#if !defined(SAT_DIST)
 		spirv_cross::Compiler Compiler( rShaderData );
 		auto Resources = Compiler.get_shader_resources();
 
@@ -759,6 +773,7 @@ namespace Saturn {
 
 			m_DescriptorSets[ set ].StorageImages.push_back( { Name, shaderType, set, binding, arraySizes } );
 		}
+#endif
 	}
 
 	void Shader::CreateDescriptors()
@@ -910,6 +925,7 @@ namespace Saturn {
 
 	bool Shader::CompileGlslToSpvAssembly()
 	{
+#if !defined(SAT_DIST)
 		shaderc::Compiler       Compiler;
 		shaderc::CompileOptions CompilerOptions;
 
@@ -952,39 +968,14 @@ namespace Saturn {
 		SHADER_INFO( "Shader Compilation took {0} ms", CompileTimer.ElapsedMilliseconds() );
 		
 		return true;
-	}
-
-	void Shader::SerialiseShaderData( std::ofstream& rStream ) const
-	{
-		RawSerialisation::WriteUnorderedMap( m_SpvCode, rStream );
-		RawSerialisation::WriteUnorderedMap( m_DescriptorSets, rStream );
-		
-		RawSerialisation::WriteVector( m_Uniforms, rStream );
-		RawSerialisation::WriteVector( m_PushConstantUniforms, rStream );
-		RawSerialisation::WriteVector( m_Textures, rStream );
-		RawSerialisation::WriteVector( m_PushConstantRanges, rStream );
-	}
-
-	void Shader::DeserialiseShaderData( std::ifstream& rStream ) 
-	{
-		RawSerialisation::ReadUnorderedMap( m_SpvCode, rStream );
-		RawSerialisation::ReadUnorderedMap( m_DescriptorSets, rStream );
-
-		RawSerialisation::ReadVector( m_Uniforms, rStream );
-		RawSerialisation::ReadVector( m_PushConstantUniforms, rStream );
-
-		RawSerialisation::ReadVector( m_Textures, rStream );
-		RawSerialisation::ReadVector( m_PushConstantRanges, rStream );
-
-		// Clean up some of the data that was read.
-		for( auto&& [k, v] : m_DescriptorSets )
-			v.SetLayout = nullptr;
-		
-		CreateDescriptors();
+#else
+		return false;
+#endif
 	}
 
 	bool Shader::TryRecompile()
 	{
+#if !defined(SAT_DIST)
 		// Create copies of our data so if anything goes wrong we can set it back to what it was before.
 		std::string OldfileContents = m_FileContents;
 		size_t OldFileSize = m_FileSize;
@@ -1032,11 +1023,46 @@ namespace Saturn {
 		Renderer::Get().OnShaderReloaded( m_Name );
 
 		return true;
+#else
+		return false;
+#endif
 	}
 
 	const UUID Shader::GetShaderHash() const
 	{
 		return m_ShaderHash;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// Distribution shader serialisation
+
+	void Shader::SerialiseShaderData( std::ofstream& rStream ) const
+	{
+		RawSerialisation::WriteUnorderedMap( m_SpvCode, rStream );
+		RawSerialisation::WriteUnorderedMap( m_DescriptorSets, rStream );
+
+		RawSerialisation::WriteVector( m_Uniforms, rStream );
+		RawSerialisation::WriteVector( m_PushConstantUniforms, rStream );
+		RawSerialisation::WriteVector( m_Textures, rStream );
+		RawSerialisation::WriteVector( m_PushConstantRanges, rStream );
+	}
+
+	void Shader::DeserialiseShaderData( std::ifstream& rStream )
+	{
+		RawSerialisation::ReadUnorderedMap( m_SpvCode, rStream );
+		RawSerialisation::ReadUnorderedMap( m_DescriptorSets, rStream );
+
+		RawSerialisation::ReadVector( m_Uniforms, rStream );
+		RawSerialisation::ReadVector( m_PushConstantUniforms, rStream );
+
+		RawSerialisation::ReadVector( m_Textures, rStream );
+		RawSerialisation::ReadVector( m_PushConstantRanges, rStream );
+
+		// Clean up some of the data that was read.
+		for( auto&& [k, v] : m_DescriptorSets )
+			v.SetLayout = nullptr;
+
+		CreateDescriptors();
 	}
 
 }

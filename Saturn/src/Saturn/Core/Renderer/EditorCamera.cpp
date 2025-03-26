@@ -69,7 +69,7 @@ namespace Saturn {
 
 	void EditorCamera::OnUpdate( const Timestep ts )
 	{
-		const glm::vec2& mouse{ Input::Get().MouseX(), Input::Get().MouseY() };
+		const glm::vec2& mouse = Input::Get().MousePosition();
 		const glm::vec2 delta = ( mouse - m_InitialMousePosition ) * 0.002f;
 
 		if( !m_IsActive )

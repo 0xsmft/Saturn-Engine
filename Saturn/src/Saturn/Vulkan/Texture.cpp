@@ -79,6 +79,7 @@ namespace Saturn {
 	}
 
 	//////////////////////////////////////////////////////////////////////////
+	// TEXTURE
 
 	Texture::Texture( uint32_t width, uint32_t height, VkFormat Format, const void* pData )
 		: m_Width( width ), m_Height( height ), m_ImageFormat( Format )
@@ -88,9 +89,6 @@ namespace Saturn {
 
 	void Texture::Terminate()
 	{
-		if( m_IsRendererTexture && !m_ForceTerminate )
-			return;
-
 		if( m_Image )
 			vkDestroyImage( VulkanContext::Get().GetDevice(), m_Image, nullptr );
 
@@ -273,6 +271,18 @@ namespace Saturn {
 		VulkanContext::Get().EndSingleTimeCommands( CommandBuffer );
 	}
 
+	void Texture::SetIsRendererTexture( bool RendererTexture )
+	{
+		m_IsRendererTexture = RendererTexture; 
+		m_Path = "Renderer Pink Texture";
+		
+#if defined( SAT_DEBUG )
+		SetDebugUtilsObjectName( std::format( "Texture Sampler (FN/SetData) PATH/{0} PINK/{1}", m_Path.stem().string(), m_IsRendererTexture ), ( uint64_t ) m_Sampler, VK_OBJECT_TYPE_SAMPLER );
+		SetDebugUtilsObjectName( std::format( "Texture Image (FN/SetData) PATH/{0} PINK/{1}", m_Path.stem().string(), m_IsRendererTexture ), ( uint64_t ) m_Image, VK_OBJECT_TYPE_IMAGE );
+		SetDebugUtilsObjectName( std::format( "Texture Image View (FN/SetData) PATH/{0} PINK/{1}", m_Path.stem().string(), m_IsRendererTexture ), ( uint64_t ) m_ImageView, VK_OBJECT_TYPE_IMAGE_VIEW );
+#endif
+	}
+
 	//////////////////////////////////////////////////////////////////////////
 	// GLOBAL HELPERS														//
 	//////////////////////////////////////////////////////////////////////////
@@ -303,6 +313,11 @@ namespace Saturn {
 		ImageCreateInfo.flags = Flags;
 
 		VK_CHECK( vkCreateImage( VulkanContext::Get().GetDevice(), &ImageCreateInfo, nullptr, &rImage ) );
+#if defined(SAT_DEBUG)
+		SetDebugUtilsObjectName( "Texture Image (FN/CreateImage)", ( uint64_t ) rImage, VK_OBJECT_TYPE_IMAGE );
+#else
+		SetDebugUtilsObjectName( "Texture Image", ( uint64_t ) rImage, VK_OBJECT_TYPE_IMAGE );
+#endif
 
 		VkMemoryRequirements MemReq;
 		vkGetImageMemoryRequirements( VulkanContext::Get().GetDevice(), rImage, &MemReq );
@@ -331,6 +346,11 @@ namespace Saturn {
 
 		VkImageView ImageView;
 		VK_CHECK( vkCreateImageView( VulkanContext::Get().GetDevice(), &ImageViewCreateInfo, nullptr, &ImageView ) );
+#if defined(SAT_DEBUG)
+		SetDebugUtilsObjectName( "Texture Image View (FN/CreateImageView)", ( uint64_t ) ImageView, VK_OBJECT_TYPE_IMAGE_VIEW );
+#else
+		SetDebugUtilsObjectName( "Texture Image View", ( uint64_t ) ImageView, VK_OBJECT_TYPE_IMAGE_VIEW );
+#endif
 
 		return ImageView;
 	}
@@ -346,6 +366,11 @@ namespace Saturn {
 
 		VkImageView ImageView;
 		VK_CHECK( vkCreateImageView( VulkanContext::Get().GetDevice(), &ImageViewCreateInfo, nullptr, &ImageView ) );
+#if defined(SAT_DEBUG)
+		SetDebugUtilsObjectName( "Texture Image View (FN/CreateImageView(VkImageSubresourceRange)", ( uint64_t ) ImageView, VK_OBJECT_TYPE_IMAGE_VIEW );
+#else
+		SetDebugUtilsObjectName( "Texture Image View", ( uint64_t ) ImageView, VK_OBJECT_TYPE_IMAGE_VIEW );
+#endif
 
 		return ImageView;
 	}
@@ -364,6 +389,11 @@ namespace Saturn {
 
 		VkImageView ImageView;
 		VK_CHECK( vkCreateImageView( VulkanContext::Get().GetDevice(), &ImageViewCreateInfo, nullptr, &ImageView ) );
+#if defined(SAT_DEBUG)
+		SetDebugUtilsObjectName( "Texture Image View (FN/CreateImageView(VkImageAspectFlags)", ( uint64_t ) ImageView, VK_OBJECT_TYPE_IMAGE_VIEW );
+#else
+		SetDebugUtilsObjectName( "Texture Image View", ( uint64_t ) ImageView, VK_OBJECT_TYPE_IMAGE_VIEW );
+#endif
 
 		return ImageView;
 	}
@@ -410,8 +440,7 @@ namespace Saturn {
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	// TEXTURE 2D															//
-	//////////////////////////////////////////////////////////////////////////
+	// TEXTURE 2D
 
 	Texture2D::Texture2D( ImageFormat format, uint32_t width, uint32_t height, const void* pData, bool storage )
 		: Texture( width, height, VulkanFormat( format ), pData )
@@ -421,12 +450,15 @@ namespace Saturn {
 		SetData( pData );
 	}
 
-	void Texture2D::Terminate()
+	Texture2D::Texture2D( const std::filesystem::path& rPath, AddressingMode Mode /*= AddressingMode::Repeat*/, bool flip /*= true */ )
+		: Texture( rPath, Mode )
 	{
-		if( m_IsRendererTexture && !m_ForceTerminate )
-			return;
+		CreateTextureImage( flip );
+	}
 
-		Texture::Terminate();
+	Texture2D::~Texture2D()
+	{
+		Terminate();
 	}
 
 	void Texture2D::Copy( Ref<Texture2D> rOther )
@@ -688,6 +720,11 @@ namespace Saturn {
 			vkDestroySampler( VulkanContext::Get().GetDevice(), m_Sampler, nullptr );
 
 		VK_CHECK( vkCreateSampler( VulkanContext::Get().GetDevice(), &SamplerCreateInfo, nullptr, &m_Sampler ) );
+#if defined(SAT_DEBUG)
+		SetDebugUtilsObjectName( std::format( "Texture Sampler (FN/SetData) PATH/{0} PINK/{1}", m_Path.stem().string(), m_IsRendererTexture ), ( uint64_t ) m_Sampler, VK_OBJECT_TYPE_SAMPLER );
+#else
+		SetDebugUtilsObjectName( "Texture Sampler", ( uint64_t ) m_Sampler, VK_OBJECT_TYPE_SAMPLER );
+#endif
 
 		m_DescriptorImageInfo = {};
 		m_DescriptorImageInfo.imageLayout = m_Storage ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -710,6 +747,16 @@ namespace Saturn {
 		m_pData = ( void* ) pData;
 
 		CreateTextureImage( false );
+	}
+
+	TextureCube::TextureCube( const std::filesystem::path& rPath, AddressingMode Mode )
+		: Texture( rPath, Mode )
+	{
+	}
+
+	TextureCube::~TextureCube()
+	{
+		Terminate();
 	}
 
 	void TextureCube::CreateTextureImage( bool flip )
@@ -903,11 +950,6 @@ namespace Saturn {
 		m_MipsCreated = true;
 	}
 
-	void TextureCube::Terminate()
-	{
-		Texture::Terminate();
-	}
-
 	VkImageView TextureCube::GetOrCreateMipImageView( uint32_t mip )
 	{
 		return nullptr;
@@ -915,7 +957,6 @@ namespace Saturn {
 
 	void TextureCube::SetData( const void* pData )
 	{
-
 	}
 
 }

@@ -39,9 +39,6 @@
 #include <backends/imgui_impl_vulkan.h>
 #include <stb_image_resize.h>
 
-#include "KTXAux.h"
-#include <KTX/ktx.h>
-#include <KTX/ktxvulkan.h>
 
 namespace Saturn {
 

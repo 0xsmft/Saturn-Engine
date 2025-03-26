@@ -203,9 +203,6 @@ project "Saturn"
 				"Saturn/vendor/physx/bin/Debug/PhysXVehicle_static_64.lib",
 				"Saturn/vendor/physx/bin/Debug/SceneQuery_static_64.lib",
 				"Saturn/vendor/physx/bin/Debug/SimulationController_static_64.lib",
-
-				-- KTX_Software
-				"Saturn/vendor/KTX-Software/bin/Debug/ktx.lib",
 			}
 
 		filter "configurations:Release"
@@ -250,9 +247,6 @@ project "Saturn"
 				"Saturn/vendor/physx/bin/Release/PhysXVehicle_static_64.lib",
 				"Saturn/vendor/physx/bin/Release/SceneQuery_static_64.lib",
 				"Saturn/vendor/physx/bin/Release/SimulationController_static_64.lib",
-
-				-- KTX_Software
-				"Saturn/vendor/KTX-Software/bin/Release/ktx.lib",
 			}
 
 ---------------------------------------------------------------------------------------------------------------------------

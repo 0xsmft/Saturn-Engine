@@ -1098,8 +1098,6 @@ namespace Saturn {
 		SaveFile();
 		SaveProject();
 
-		ClassMetadataHandler::Get().BeginHotReload();
-
 		m_GameModule->BeginHotReload();
 		Project::GetActiveProject()->Build( ConfigKind::Release, "/HOTRELOAD" );
 		m_GameModule->EndHotReload();
@@ -1422,7 +1420,7 @@ namespace Saturn {
 
 			disabledIfRuntime.Pop();
 
-			if( ImGui::MenuItem( "Exit", "Alt+F4" ) )                OnTitlebarExit();
+			if( ImGui::MenuItem( "Exit", "Alt+F4" ) )                if( OnTitlebarExit() ) Application::Get().Close();
 
 			ImGui::EndMenu();
 		}
@@ -2056,6 +2054,9 @@ namespace Saturn {
 
 	void EditorLayer::Viewport_GizmoControl()
 	{
+		if( GActiveScene->IsRuntimeRunning() )
+			return;
+
 		ImVec2 minBound = ImGui::GetWindowPos();
 		ImVec2 maxBound = { minBound.x + m_ViewportSize.x, minBound.y + m_ViewportSize.y };
 
@@ -2240,6 +2241,11 @@ namespace Saturn {
 
 	void EditorLayer::Viewport_RTSettings()
 	{
+		// Only show the hot reload settings when no runtime is active
+		// So don't even show it while suspended.
+		if( GActiveScene->IsRuntimeRunning() )
+			return;
+
 		ImVec2 minBound = ImGui::GetWindowPos();
 		ImVec2 maxBound = { minBound.x + m_ViewportSize.x, minBound.y + m_ViewportSize.y };
 
@@ -2250,7 +2256,7 @@ namespace Saturn {
 
 		float runtimeRightX = minBound.x + m_ViewportSize.x - neededSpace - 2.5f;
 
-		// Runtime Controls
+		// Hot reload Controls
 		ImGui::SetNextWindowPos( ImVec2( runtimeRightX, minBound.y + 5.0f ) );
 		ImGui::SetNextWindowSize( ImVec2( windowWidth, windowHeight ) );
 
@@ -2263,9 +2269,7 @@ namespace Saturn {
 		ImGui::PushStyleVar( ImGuiStyleVar_ItemSpacing, ImVec2( 5.0f * 2.0f, 0 ) );
 
 		{
-#if defined(SAT_RELEASE)
-		Auxiliary::ScopedDisabledFlag disabledFlag( m_RuntimeScene != nullptr );
-#else
+#if !defined(SAT_RELEASE)
 		Auxiliary::ScopedDisabledFlag disabledFlag( true );
 #endif
 		if( Auxiliary::ImageButton( m_SyncTexture, ImVec2( 24.0f, 24.0f ) ) )
@@ -2575,7 +2579,7 @@ namespace Saturn {
 		JobSystem::Get().AddJob( [ this ]()
 			{
 				m_JobModalOpen = true;
-				m_BlockingOperation->SetStatus( "Initializing..." );
+				m_BlockingOperation->SetStatus( "Initialising..." );
 
 				SaveFile();
 				SaveProject();

@@ -52,6 +52,11 @@
 
 namespace Saturn {
 
+	static inline ImVec2  operator*( const ImVec2& lhs, const float rhs ) { return ImVec2( lhs.x * rhs, lhs.y * rhs ); }
+	static inline ImVec2  operator/( const ImVec2& lhs, const float rhs ) { return ImVec2( lhs.x / rhs, lhs.y / rhs ); }
+	static inline ImVec2  operator+( const ImVec2& lhs, const ImVec2& rhs ) { return ImVec2( lhs.x + rhs.x, lhs.y + rhs.y ); }
+	static inline ImVec2  operator-( const ImVec2& lhs, const ImVec2& rhs ) { return ImVec2( lhs.x - rhs.x, lhs.y - rhs.y ); }
+
 	static void ReplaceToken( std::string& str, const char* token, const std::string& value )
 	{
 		size_t pos = 0;
@@ -70,7 +75,6 @@ namespace Saturn {
 			m_SaturnDir = Auxiliary::GetEnvironmentVariable( "SATURN_DIR" );
 
 		memset( m_SaturnDirBuffer, 0, 1024 );
-		memset( m_ProjectFilePathBuffer, 0, 1024 );
 		memset( m_ProjectNameBuffer, 0, 1024 );
 
 		EngineSettingsSerialiser::Deserialise();
@@ -233,8 +237,13 @@ namespace Saturn {
 		}
 
 		ImGui::Begin( "##project_browser", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollbar );
-
 		ImGui::SetWindowDock( ImGui::GetCurrentWindow(), dockspaceID, ImGuiCond_FirstUseEver );
+
+		auto boldFont = ImGui::GetIO().Fonts->Fonts[ 1 ];
+		ImGui::PushFont( boldFont );
+		ImGui::Text( "Recent Projects" );
+		ImGui::Separator();
+		ImGui::PopFont();
 
 		// Recent Projects
 		ImGui::BeginHorizontal( "##recentProjects" );
@@ -287,13 +296,12 @@ namespace Saturn {
 			ImGui::SameLine();
 			ImGui::Text( ".sproject" );
 
-			ImGui::InputTextWithHint( "##project_loc", "Project location", m_ProjectFilePathBuffer, 1024 );
+			ImGui::InputTextWithHint( "##project_loc", "Project location", (char*)m_ProjectFilePath.string().c_str(), 1024, ImGuiInputTextFlags_ReadOnly );
 			ImGui::SameLine();
 
 			if( ImGui::SmallButton( "...##location" ) )
 			{
-				auto res = Application::Get().OpenFolder();
-				memcpy( m_ProjectFilePathBuffer, res.data(), res.size() );
+				m_ProjectFilePath = Application::Get().OpenFolder();
 			}
 
 			ImGui::Separator();
@@ -309,11 +317,11 @@ namespace Saturn {
 
 			auto createButtonFunc = [&]
 				{
-					if( m_ProjectNameBuffer == nullptr && m_ProjectFilePathBuffer == nullptr )
+					if( m_ProjectNameBuffer == nullptr && !m_ProjectFilePath.empty() )
 					{
 						drawDisabledBtn( "Create" );
 					}
-					else if( !std::filesystem::exists( m_ProjectFilePathBuffer ) )
+					else if( !std::filesystem::exists( m_ProjectFilePath ) )
 					{
 						drawDisabledBtn( "Create" );
 					}
@@ -322,7 +330,7 @@ namespace Saturn {
 						if( ImGui::Button( "Create" ) )
 						{
 							// Path: C:\{dirs}\{name}\{name}.sproject
-							std::filesystem::path fullPath = std::string( m_ProjectFilePathBuffer );
+							std::filesystem::path fullPath = m_ProjectFilePath;
 							fullPath /= std::string( m_ProjectNameBuffer );
 							fullPath /= std::string( m_ProjectNameBuffer );
 							fullPath.replace_extension( ".sproject" );

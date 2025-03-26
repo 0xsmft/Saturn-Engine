@@ -78,7 +78,7 @@ namespace Saturn {
 		std::filesystem::path m_SaturnDir;
 
 		char* m_ProjectNameBuffer = new char[ 1024 ];
-		char* m_ProjectFilePathBuffer = new char[ 1024 ];
+		std::filesystem::path m_ProjectFilePath;
 
 		bool m_ShowNewProjectPopup = false;
 		bool m_ShouldThreadTerminate = false;

@@ -33,9 +33,9 @@ IncludeDir["MiniAudio"] = "Saturn/vendor/miniaudio/src"
 IncludeDir["PhysX"] = "Saturn/vendor/physx/include"
 IncludeDir["SharedStorage"] = "Saturn-SharedStorage/src"
 IncludeDir["zlib"] = "Saturn/vendor/zlib"
+IncludeDir["KTX_Software"] = "Saturn/vendor/KTX-Software/include"
 
 group "Dependencies"
---	include "Saturn/vendor/Ruby"
 	include "Saturn/vendor/imgui"
 	include "Saturn/vendor/SPIRV-Cross"
 	include "Saturn/vendor/yaml-cpp"
@@ -75,15 +75,20 @@ project "Saturn"
 	defines
 	{
 		"_CRT_SECURE_NO_WARNINGS",
+
 		"PX_PHYSX_STATIC_LIB",
 		"PX_GENERATE_STATIC_LIBRARIES",
-		"AL_LIBTYPE_STATIC",
+		
 		"GLM_ENABLE_EXPERIMENTAL",
+		
 		"SATURN_SS_IMPORT",
+		
 		"TRACY_ENABLE",
 		"TRACY_DELAYED_INIT",
 		"TRACY_MANUAL_LIFETIME",
-		"SAT_RBY_INCLUDE_VULKAN"
+		
+		"SAT_RBY_INCLUDE_VULKAN",
+		"KHRONOS_STATIC"
 	}
 
 	includedirs
@@ -111,13 +116,13 @@ project "Saturn"
 		"%{IncludeDir.PhysX}",
 		"%{IncludeDir.PhysX}/pxshared",
 		"%{IncludeDir.PhysX}/physx",
+		"%{IncludeDir.KTX_Software}",
 
 		"%{IncludeDir.SharedStorage}"
 	}
 
 	links 
 	{
---		"Ruby",
 		"ImGui",
 		"SPIRV-Cross",
 		"yaml-cpp",
@@ -198,6 +203,9 @@ project "Saturn"
 				"Saturn/vendor/physx/bin/Debug/PhysXVehicle_static_64.lib",
 				"Saturn/vendor/physx/bin/Debug/SceneQuery_static_64.lib",
 				"Saturn/vendor/physx/bin/Debug/SimulationController_static_64.lib",
+
+				-- KTX_Software
+				"Saturn/vendor/KTX-Software/bin/Debug/ktx.lib",
 			}
 
 		filter "configurations:Release"
@@ -241,7 +249,10 @@ project "Saturn"
 				"Saturn/vendor/physx/bin/Release/PhysXTask_static_64.lib",
 				"Saturn/vendor/physx/bin/Release/PhysXVehicle_static_64.lib",
 				"Saturn/vendor/physx/bin/Release/SceneQuery_static_64.lib",
-				"Saturn/vendor/physx/bin/Release/SimulationController_static_64.lib"
+				"Saturn/vendor/physx/bin/Release/SimulationController_static_64.lib",
+
+				-- KTX_Software
+				"Saturn/vendor/KTX-Software/bin/Release/ktx.lib",
 			}
 
 ---------------------------------------------------------------------------------------------------------------------------
@@ -261,7 +272,10 @@ project "Saturn-Editor"
 	defines
 	{
 		"_CRT_SECURE_NO_WARNINGS",
-		"SAT_HAS_EDITOR"
+		"SAT_HAS_EDITOR",
+		"TRACY_ENABLE",
+		"TRACY_DELAYED_INIT",
+		"TRACY_MANUAL_LIFETIME",
 	}
 
 	files
@@ -294,6 +308,7 @@ project "Saturn-Editor"
 		"%{IncludeDir.MiniAudio}",
 		"%{IncludeDir.ImguiNodeEditor}",
 		"%{IncludeDir.Tracy}",
+		"%{IncludeDir.KTX_Software}",
 
 		"%{IncludeDir.SharedStorage}"
 	}
@@ -437,6 +452,7 @@ project "Saturn-ProjectBrowser"
 		"%{IncludeDir.ImGuizmo}",
 		"%{IncludeDir.Filewatch}",
 		"%{IncludeDir.MiniAudio}",
+		"%{IncludeDir.KTX_Software}",
 		"%{IncludeDir.SharedStorage}"
 	}
 
@@ -636,6 +652,7 @@ project "SaturnHeaderTool"
 		"%{IncludeDir.MiniAudio}",
 		"%{IncludeDir.ImguiNodeEditor}",
 		"%{IncludeDir.Tracy}",
+		"%{IncludeDir.KTX_Software}",
 
 		"%{IncludeDir.SharedStorage}"
 	}

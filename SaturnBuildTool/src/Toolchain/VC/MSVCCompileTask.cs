@@ -161,10 +161,13 @@ namespace SaturnBuildTool
 
             Console.WriteLine( "Building " + Path.GetFileName( InputFile ) );
 
+            // Enable this for Debugging
             clProcess.EnableRaisingEvents = true;
 
-            // Enable this for Debugging
-            Console.WriteLine( "Command Line: {0}", processStart.Arguments );
+            if( CommandLineParser.Instance.FindFlag( "args+" ) )
+            { 
+                Console.WriteLine( "Command Line: {0}", processStart.Arguments );
+            }
 
             clProcess.OutputDataReceived += new DataReceivedEventHandler( ( _, e ) =>
             {

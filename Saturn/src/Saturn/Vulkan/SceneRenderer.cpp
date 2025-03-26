@@ -97,7 +97,7 @@ namespace Saturn {
 
 		InitDirShadowMap();
 
-		InitBloom();
+//		InitBloom();
 
 		InitSceneComposite();
 
@@ -199,7 +199,6 @@ namespace Saturn {
 		FBSpec.Attachments = { ImageFormat::RGBA32F, ImageFormat::RGBA16F, ImageFormat::RGBA16F };
 
 		m_RendererData.GeometryFramebuffer = Ref< Framebuffer >::Create( FBSpec );
-
 
 		//////////////////////////////////////////////////////////////////////////
 		// STATIC MESHES
@@ -346,6 +345,8 @@ namespace Saturn {
 			m_RendererData.PreDepthPipeline = nullptr;
 		}
 
+//		Ref<Material> PreDepthMaterial = Ref<Material>::Create( m_RendererData.PreDepthShader, "PreDepth" );
+
 		PipelineSpecification PipelineSpec = {};
 		PipelineSpec.Width = m_RendererData.Width;
 		PipelineSpec.Height = m_RendererData.Height;
@@ -428,8 +429,8 @@ namespace Saturn {
 			m_RendererData.SC_DescriptorSet = m_RendererData.SceneCompositeShader->CreateDescriptorSet( 0 );
 
 		m_RendererData.SceneCompositeShader->WriteDescriptor( "u_GeometryPassTexture", m_RendererData.GeometryFramebuffer->GetColorAttachmentsResources()[ 0 ]->GetDescriptorInfo(), m_RendererData.SC_DescriptorSet->GetVulkanSet() );
-		m_RendererData.SceneCompositeShader->WriteDescriptor( "u_BloomTexture", m_RendererData.BloomTextures[ 2 ]->GetDescriptorInfo(), m_RendererData.SC_DescriptorSet->GetVulkanSet() );
-		m_RendererData.SceneCompositeShader->WriteDescriptor( "u_BloomDirtTexture", m_RendererData.BloomDirtTexture->GetDescriptorInfo(), m_RendererData.SC_DescriptorSet->GetVulkanSet() );
+//		m_RendererData.SceneCompositeShader->WriteDescriptor( "u_BloomTexture", m_RendererData.BloomTextures[ 2 ]->GetDescriptorInfo(), m_RendererData.SC_DescriptorSet->GetVulkanSet() );
+//		m_RendererData.SceneCompositeShader->WriteDescriptor( "u_BloomDirtTexture", m_RendererData.BloomDirtTexture->GetDescriptorInfo(), m_RendererData.SC_DescriptorSet->GetVulkanSet() );
 		m_RendererData.SceneCompositeShader->WriteDescriptor( "u_DepthTexture", m_RendererData.GeometryFramebuffer->GetDepthAttachmentsResource()->GetDescriptorInfo(), m_RendererData.SC_DescriptorSet->GetVulkanSet() );
 
 		m_RendererData.SceneCompositeShader->WriteAllUBs( m_RendererData.SC_DescriptorSet );
@@ -1157,6 +1158,7 @@ namespace Saturn {
 		
 		InitTexturePass();
 
+		/*
 		const glm::uvec2 viewportSize = { m_RendererData.Width, m_RendererData.Height };
 
 		glm::uvec2 bs = ( viewportSize + 1u ) / 2u;
@@ -1169,6 +1171,7 @@ namespace Saturn {
 			m_RendererData.BloomTextures[ i ] = Ref<Texture2D>::Create( ImageFormat::RGBA32F, bs.x, bs.y, nullptr, true );
 			m_RendererData.BloomTextures[ i ]->SetDebugName( "Bloom Texture: " + std::to_string( i ) );
 		}
+		*/
 
 		constexpr uint32_t TILE_SIZE = 16;
 		glm::uvec2 Viewport = { m_RendererData.Width, m_RendererData.Height };
@@ -1180,7 +1183,7 @@ namespace Saturn {
 		float size = m_RendererData.LightCullingWorkGroups.x * m_RendererData.LightCullingWorkGroups.y * 4.0f * 1024.0f;
 		m_RendererData.StorageBufferSet->Resize( 0, 14, ( size_t ) size );
 
-		m_RendererData.SceneCompositeShader->WriteDescriptor( "u_BloomTexture", m_RendererData.BloomTextures[ 2 ]->GetDescriptorInfo(), m_RendererData.SC_DescriptorSet->GetVulkanSet() );
+//		m_RendererData.SceneCompositeShader->WriteDescriptor( "u_BloomTexture", m_RendererData.BloomTextures[ 2 ]->GetDescriptorInfo(), m_RendererData.SC_DescriptorSet->GetVulkanSet() );
 
 		CreateSkyboxComponents();
 		CreateGridComponents();
@@ -1698,10 +1701,10 @@ namespace Saturn {
 		SAT_PF_EVENT();
 
 		m_RendererData.BloomTimer.Reset();
-		//m_RendererData.BloomTimer.Stop();
+		m_RendererData.BloomTimer.Stop();
 
 		// TEMP
-		//return;
+		return;
 
 		struct u_Settings
 		{

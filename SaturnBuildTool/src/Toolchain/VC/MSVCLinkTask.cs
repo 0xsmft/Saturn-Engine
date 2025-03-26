@@ -157,7 +157,10 @@ namespace SaturnBuildTool
 
             processStart.Arguments = string.Join( "", Args );
 
-            Console.WriteLine( $"Linking with args: {processStart.Arguments}" );
+            if( CommandLineParser.Instance.FindFlag( "args+" ) )
+            {
+                Console.WriteLine( $"Linking with args: {processStart.Arguments}" );
+            }
 
             clProcess.OutputDataReceived += new DataReceivedEventHandler( ( _, e ) =>
             {

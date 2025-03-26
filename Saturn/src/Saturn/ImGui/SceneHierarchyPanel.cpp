@@ -630,14 +630,14 @@ namespace Saturn {
 			static uint32_t s_CurrentIndex = 0;
 
 			ImGui::Columns( 3 );
-			ImGui::SetColumnWidth( 0, 100 );
-			ImGui::SetColumnWidth( 1, 300 );
-			ImGui::SetColumnWidth( 2, 40 );
+			ImGui::SetColumnWidth( 0, 100.0f );
+			ImGui::SetColumnWidth( 1, 300.0f );
+			ImGui::SetColumnWidth( 2, 40.0f );
 			ImGui::Text( "File Path" );
 			ImGui::NextColumn();
-			ImGui::PushItemWidth( -1 );
+			ImGui::PushItemWidth( -1.0f );
 
-			if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24, 24 ) ) )
+			if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
 			{
 				open = !open;
 				m_CurrentFinderType = AssetType::StaticMesh;
@@ -675,7 +675,7 @@ namespace Saturn {
 
 							if( ImGui::SmallButton( "x" ) )
 							{
-								mc.MaterialRegistry->ResetMaterial( i );
+								mc.MaterialRegistry->ResetMaterial( i, mc.Mesh->GetMaterialRegistry() );
 								modified |= true;
 							}
 						}

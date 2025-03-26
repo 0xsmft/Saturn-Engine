@@ -87,6 +87,7 @@ namespace SaturnBuildTool
                 Console.WriteLine( "  /HELP -- this command that displays the help message" );
                 Console.WriteLine( "  /INCLUDESTREE -- displays and create an include tree" );
                 Console.WriteLine( "  /VERISON -- displays the version for the build tool" );
+                Console.WriteLine( "  /ARGS+ -- displays the compiler and linker command line arguments" );
                 Console.WriteLine( " * indicates required argument" );
 
                 return false;
@@ -100,7 +101,7 @@ namespace SaturnBuildTool
 
             if( CommandLineParser.Instance.GetComamndCount() == 0 ) 
             {
-                Console.WriteLine( "You must provide more than one argument!" );
+                Console.WriteLine( "You must provide more than one argument! Try running /HELP for more" );
 
                 // treat as error
                 ExitCode = 1;

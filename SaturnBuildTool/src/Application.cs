@@ -65,11 +65,11 @@ namespace SaturnBuildTool
         {
             if( CommandLineParser.Instance.FindFlag( "HELP" ) )
             {
-                Console.WriteLine( "Help for Saturn Build Tool X0.0.3 (Engine Version: 0.1.4 4100)" );
+                Console.WriteLine( "Help for Saturn Build Tool X0.0.4 (Engine Version: 0.2.0 8192)" );
                 Console.WriteLine( "Options:" );
                 Console.WriteLine( " Action Options:" );
                 Console.WriteLine( "  /BUILD* -- build the project" );
-                Console.WriteLine( "  /REBUILD* -- rebuild the project" );
+                Console.WriteLine( "  /REBUILD* -- rebuild the project, ignoring the filecache" );
                 Console.WriteLine( "  /CLEAN* -- clean the project" );
                 Console.WriteLine( " Project Options:" );
                 Console.WriteLine( "  /PROJECT* -- path to the project root dir (same place where the .sproject file is located)" );
@@ -83,6 +83,14 @@ namespace SaturnBuildTool
                 Console.WriteLine( "   /DEBUG* -- build the project for Debug configuration with full symbols" );
                 Console.WriteLine( "   /RELEASE* -- build the project for Release configuration with symbols on for this project but symbols off for third party projects" );
                 Console.WriteLine( "   /DIST* -- build the project for the Dist configuration" );
+                Console.WriteLine( "  Warning Options:" );
+                Console.WriteLine( "   /XW+ -- treat warnings as errors" );
+                Console.WriteLine( "   /XW- -- no warnings" );
+                Console.WriteLine( "   /XW1 -- warnings level one" );
+                Console.WriteLine( "   /XW2 -- warnings level two" );
+                Console.WriteLine( "   /XW3 -- warnings level three (default)" );
+                Console.WriteLine( "   /XW4 -- warnings level four" );
+                Console.WriteLine( "   /XWAx -- all warnings" );
                 Console.WriteLine( " Auxiliary Options:" );
                 Console.WriteLine( "  /HELP -- this command that displays the help message" );
                 Console.WriteLine( "  /INCLUDESTREE -- displays and create an include tree" );
@@ -95,7 +103,7 @@ namespace SaturnBuildTool
 
             if( CommandLineParser.Instance.FindFlag( "VERSION" ) )
             {
-                Console.WriteLine( "Saturn Build Tool X0.0.3 (Engine Version: 0.1.4 4100)" );
+                Console.WriteLine( "Saturn Build Tool X0.0.4 (Engine Version: 0.2.0 8192)" );
                 return false;
             }
 
@@ -113,7 +121,7 @@ namespace SaturnBuildTool
 
         private bool InitForBuilding() 
         {
-            Console.WriteLine( "==== Saturn Build Tool X0.0.3 (Engine Version: 0.1.4 4100) ====" );
+            Console.WriteLine( "==== Saturn Build Tool X0.0.4 (Engine Version: 0.2.0 8192) ====" );
 
             // Setup project info from args.
             if( !ProjectInfo.Instance.Setup() )

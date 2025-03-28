@@ -34,12 +34,18 @@
 #include <string>
 #include <vector>
 
+#if defined(SAT_DIST)
+#define SAT_CMH_SINGLETON_X31( x ) SAT_SINGLETON_LAZY( x )
+#else
+#define SAT_CMH_SINGLETON_X31( x ) static inline x& Get() { return *SingletonStorage::GetSingleton<x>(); }
+#endif
+
 namespace Saturn {
 
 	class ClassMetadataHandler : public RefTarget
 	{
 	public:
-		SAT_SINGLETON_LAZY( ClassMetadataHandler )
+		SAT_CMH_SINGLETON_X31( ClassMetadataHandler )
 
 	public:
 		ClassMetadataHandler();

@@ -28,8 +28,9 @@
 
 #pragma once
 
-#include "SingletonStorage.h"
-#include "Saturn/GameFramework/SClass.h"
+#if !defined(SAT_DIST)
+#include "ClassMetadataHandler.h"
+#endif
 
 #include "Saturn/Core/Module.h"
 #include "Saturn/Core/Library.h"
@@ -39,21 +40,21 @@ namespace Saturn {
 	class Entity;
 	class Scene;
 
-	// This class holds and owns the Game Module.
-	// So this class should be the only way to access the game module.
 	class GameModule
 	{
 	public:
 		static GameModule& Get() { return *SingletonStorage::GetSingleton<GameModule>(); }
+
 	public:
 		GameModule();
 		~GameModule();
 
+	public:
 		Entity* CreateEntity( const std::string& rClassName );
 		
 		void Reload();
 
-		const std::filesystem::path& GetModulePath() const { return m_GameModule->m_Path; }
+		const std::filesystem::path& GetModulePath() const { return m_ModuleHandle->m_Path; }
 
 #if defined(SAT_DEBUG) || defined(SAT_RELEASE)
 		const std::string& GetTimestamp() const { return m_LastTimestamp; }
@@ -67,11 +68,14 @@ namespace Saturn {
 		void Unload();
 
 	private:
-		Ref<Module> m_GameModule;
+		Ref<Module> m_ModuleHandle;
 
 #if defined(SAT_DEBUG) || defined(SAT_RELEASE)
 		std::string m_LastTimestamp;
+
+		ClassMetadataHandler m_ClassMetadataHandler;
 #endif
+
 	};
 
 }

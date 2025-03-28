@@ -41,6 +41,10 @@ namespace Saturn {
 		m_MetadataTree[ "SClass" ] = { "SClass", "X/?", "X/?", "X/?", false };
 		m_MetadataTree[ "Entity" ] = { "Entity", "SClass", "X/?", "X/?", false };
 		m_MetadataTree[ "Character" ] = { "Character", "Entity", "X/?", "X/?", false };
+
+#if !defined(SAT_DIST)
+		SingletonStorage::AddSingleton( this );
+#endif
 	}
 
 	ClassMetadataHandler::~ClassMetadataHandler()
@@ -52,6 +56,7 @@ namespace Saturn {
 	void ClassMetadataHandler::BeginHotReload()
 	{
 		m_Properties.clear();
+		ClearExternalData();
 	}
 
 	void ClassMetadataHandler::AcknowledgeHotReload()

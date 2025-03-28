@@ -41,15 +41,14 @@ namespace Saturn {
 	{
 		SingletonStorage::AddSingleton( this );
 
-		// This is bad but I do not want the game to create this class.
-		// And its fine because the ClassMetadataHandler is only used for the game when we are in the editor anyway.
-		ClassMetadataHandler::Get();
-
 		Load();
 	}
 
 	GameModule::~GameModule()
 	{
+#if !defined(SAT_DIST)
+		m_ClassMetadataHandler.ClearExternalData();
+#endif
 		Unload();
 	}
 
@@ -57,7 +56,7 @@ namespace Saturn {
 	{
 		std::string funcName = "_Z_Create_" + rClassName;
 
-		CreateSClassFn createFunc = ( CreateSClassFn ) m_GameModule->GetOrFindFunction<CreateSClassFn>( funcName );
+		CreateSClassFn createFunc = ( CreateSClassFn ) m_ModuleHandle->GetOrFindFunction<CreateSClassFn>( funcName );
 
 		if( createFunc )
 			return ( createFunc ) ( );
@@ -69,7 +68,8 @@ namespace Saturn {
 
 	void GameModule::BeginHotReload()
 	{
-		m_GameModule = nullptr;
+		m_ModuleHandle = nullptr;
+		m_ClassMetadataHandler.BeginHotReload();
 	}
 
 	void GameModule::EndHotReload()
@@ -83,8 +83,8 @@ namespace Saturn {
 	{
 #if defined(SAT_DIST)
 		// We are the game so there is no need to load the dll all we need to do is set the handle to ourself.
-		m_GameModule = Ref<Module>::Create( "", Project::GetActiveConfig().Name );
-		m_GameModule->m_Library.SetExisting( ::GetModuleHandleW( nullptr ) );
+		m_ModuleHandle = Ref<Module>::Create( "", Project::GetActiveConfig().Name );
+		m_ModuleHandle->m_Library.SetExisting( ::GetModuleHandleW( nullptr ) );
 #else
 		// We are the editor, load game DLL.
 		auto binDir = Project::GetActiveProject()->GetBinDir();
@@ -117,13 +117,13 @@ namespace Saturn {
 
 			//////////////////////////////////////////////////////////////////////////
 
-			m_GameModule = Ref<Module>::Create( DllPath, Project::GetActiveConfig().Name );
-			m_GameModule->Load();
+			m_ModuleHandle = Ref<Module>::Create( DllPath, Project::GetActiveConfig().Name );
+			m_ModuleHandle->Load();
 
 			//////////////////////////////////////////////////////////////////////////
 
 			// Call the init function.
-			InitModuleFn initModFn = ( InitModuleFn ) m_GameModule->m_Library.GetSymbol( "InitializeModule" );
+			InitModuleFn initModFn = ( InitModuleFn ) m_ModuleHandle->m_Library.GetSymbol( "InitializeModule" );
 
 			if( initModFn )
 				( initModFn ) ( Project::GetActiveProject().Get(), tracy::GetProfilerDataPtr() );
@@ -137,7 +137,7 @@ namespace Saturn {
 	void GameModule::Unload()
 	{
 #if !defined(SAT_DIST)
-		m_GameModule = nullptr;
+		m_ModuleHandle = nullptr;
 #endif
 	}
 

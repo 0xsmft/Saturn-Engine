@@ -103,9 +103,35 @@ namespace Saturn {
 		: Asset( rBase ), m_FilePath( rFilepath )
 	{
 #if !defined(SAT_DIST)
+		Initialise();
+#endif
+	}
+
+	StaticMesh::StaticMesh( const std::vector<StaticVertex>& rVertices, const std::vector<Index>& rIndices, const glm::mat4& rTransform )
+		: m_Vertices( rVertices ), m_Indices( rIndices ), m_Transform( rTransform ), m_InverseTransform( glm::inverse( rTransform ) ), m_IndicesCount( rIndices.size() ), m_VertexCount( rVertices.size() )
+	{
+		Submesh submesh{};
+		submesh.BaseVertex = 0;
+		submesh.BaseIndex = 0;
+		submesh.MaterialIndex = 0;
+		submesh.VertexCount = m_VertexCount;
+		submesh.IndexCount = m_IndicesCount * 3u;
+		submesh.MeshName = "Default";
+		submesh.Transform = m_Transform;
+		m_Submeshes.push_back( submesh );
+
+		m_MaterialRegistry = Ref<MaterialRegistry>::Create();
+
+		m_VertexBuffer = Ref<VertexBuffer>::Create( m_Vertices.data(), m_Vertices.size() * sizeof( StaticVertex ) );
+		m_IndexBuffer = Ref<IndexBuffer>::Create( m_Indices.data(), m_Indices.size() * sizeof( Index ) );
+	}
+
+	void StaticMesh::Initialise()
+	{
+#if !defined(SAT_DIST)
 		AssimpLog::Initialize();
 
-		if( !std::filesystem::exists( m_FilePath ) ) 
+		if( !std::filesystem::exists( m_FilePath ) )
 		{
 			SAT_CORE_ERROR( "Failed to load mesh file (file does not exists): {0}", m_FilePath );
 			return;
@@ -116,7 +142,7 @@ namespace Saturn {
 		m_Importer = std::make_unique<Assimp::Importer>();
 
 		const aiScene* scene = m_Importer->ReadFile( m_FilePath.string(), s_MeshImportFlags );
-		if( scene == nullptr || !scene->HasMeshes() ) 
+		if( scene == nullptr || !scene->HasMeshes() )
 		{
 			SAT_CORE_ERROR( "Failed to load mesh file (does the file have meshes?): {0}", m_FilePath );
 			return;

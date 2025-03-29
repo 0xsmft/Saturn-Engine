@@ -28,6 +28,9 @@
 
 #pragma once
 
+#include "Saturn/Core/Base.h"
+#include "Saturn/Core/Memory/Buffer.h"
+
 #include <vulkan.h>
 
 namespace Saturn {
@@ -60,30 +63,35 @@ namespace Saturn {
 
 	// Represents a Vulkan Image, ImageView and Sampler
 	// This is different from the "Texture, Texture2D and TextureCube" classes because an Image2D and not be created from a file path.
-	// So this should only be used as a memory only Image.
+	// This should only be used as a memory only Image.
 	// For images that require a file use Texture2D or TextureCube
+	// Image2D's can not be storage images
 	class Image2D : public RefTarget
 	{
 	public:
-		Image2D( ImageFormat Format, uint32_t Width, uint32_t Height, uint32_t ArrayLevels = 1, uint32_t MSAASamples = 1, ImageTiling Tiling = ImageTiling::Optimal, void* pData = nullptr, size_t size = 0 );
+		Image2D( ImageFormat Format, uint32_t Width, uint32_t Height, uint32_t ArrayLevels = 1, uint32_t MSAASamples = 1, ImageTiling Tiling = ImageTiling::Optimal );
 		~Image2D();
 
-		void SetDebugName( const std::string& rName );
+		void SetDebugName( const std::string& rName ) const;
 
 		void Resize( uint32_t Width, uint32_t Height );
 
+		Buffer CopyToBuffer();
+
 		VkDescriptorImageInfo& GetDescriptorInfo() { return m_DescriptorImageInfo; }
 
-		VkImage GetImage() { return m_Image; }
+		VkImage GetImage() const { return m_Image; }
 		VkImageView GetImageView( size_t index = 0 ) { return m_ImageViews[ index ]; }
-		VkSampler GetSampler() { return m_Sampler; }
-		VkDeviceMemory GetMemory() { return m_Memory; }
+		VkSampler GetSampler() const { return m_Sampler; }
+		VkDeviceMemory GetMemory() const { return m_Memory; }
 
-		ImageFormat GetImageFormat() { return m_Format; }
-
-		ImageTiling GetTiling() { return m_Tiling; }
+		ImageFormat GetImageFormat() const { return m_Format; }
+		ImageTiling GetTiling() const { return m_Tiling; }
 
 		void TransitionImageLayout( VkCommandBuffer CommandBuffer, VkImageLayout OldLayout, VkImageLayout NewLayout, VkPipelineStageFlags DstStage, VkPipelineStageFlags SrcStage );
+
+		uint32_t GetWidth() const { return m_Width; }
+		uint32_t GetHeight() const { return m_Height; }
 
 	private:
 		void Create();
@@ -93,8 +101,8 @@ namespace Saturn {
 		void TransitionImageLayout( VkFormat Format, VkImageLayout OldLayout, VkImageLayout NewLayout );
 
 	private:
-		uint32_t m_Width;
-		uint32_t m_Height;
+		uint32_t m_Width = 0;
+		uint32_t m_Height = 0;
 
 		VkSampleCountFlagBits m_MSAASamples;
 
@@ -103,15 +111,14 @@ namespace Saturn {
 
 		std::vector<VkImageView> m_ImageViews;
 
-		VkImage m_Image;
-		VkImageView m_ImageView;
-		VkSampler m_Sampler;
-		VkDeviceMemory m_Memory;
+		VkImage m_Image = VK_NULL_HANDLE;
+		VkImageView m_ImageView = VK_NULL_HANDLE;
+		VkSampler m_Sampler = VK_NULL_HANDLE;
+		VkDeviceMemory m_Memory = VK_NULL_HANDLE;
 
 		uint32_t m_ArrayLevels;
 
-		void* m_pData;
-		size_t m_DataSize;
+		Buffer m_ImageBuffer;
 
 		VkDescriptorImageInfo m_DescriptorImageInfo;
 	};

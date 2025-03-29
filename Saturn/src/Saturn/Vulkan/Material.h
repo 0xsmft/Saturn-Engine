@@ -35,34 +35,30 @@
 
 namespace Saturn {
 
-	class Submesh;
-	class MaterialInstance;
-
 	class Material : public RefTarget
 	{
 	public:
-		 Material( const Ref< Saturn::Shader >& Shader, const std::string& MateralName );
+		 Material( const Ref<Shader>& Shader, const std::string& MateralName );
 		~Material();
 
 		void Initialise( const std::string& rMaterialName );
 
 		void Copy( Ref<Material>& rOther );
 
-		void Bind( VkCommandBuffer CommandBuffer, Ref< Shader >& Shader );
+		void Bind( VkCommandBuffer CommandBuffer, Ref<Shader>& rShader );
 		void BindDS( VkCommandBuffer CommandBuffer, VkPipelineLayout Layout );
 		
 		void RT_Update();
-		void RN_Clean();
 
-		void SetResource( const std::string& Name, const Ref< Saturn::Texture2D >& Texture );
-		void SetResource( const std::string& Name, const Ref< Saturn::Texture2D >& Texture, uint32_t Index );
+		void SetResource( const std::string& Name, const Ref<Texture2D>& Texture );
+		void SetResource( const std::string& Name, const Ref<Texture2D>& Texture, uint32_t Index );
 
 		template<typename Ty>
 		void Set( const std::string& Name, const Ty& Value ) 
 		{
-			for ( auto& Uniform : m_Uniforms )
+			for( auto& Uniform : m_Uniforms )
 			{
-				if ( Uniform.Name == Name )
+				if( Uniform.Name == Name )
 				{
 					if( Uniform.IsPushConstantData )
 					{
@@ -83,9 +79,10 @@ namespace Saturn {
 		template<typename Ty>
 		Ty& Get( const std::string& Name ) 
 		{
-			auto Itr = std::find_if( m_Uniforms.begin(), m_Uniforms.end(), 
-				[&]( auto& uniform ) { return uniform.Name == Name; } 
-			);
+			auto Itr = std::find_if( m_Uniforms.begin(), m_Uniforms.end(), [&]( auto& uniform ) 
+				{ 
+					return uniform.Name == Name;
+				} );
 
 			if( Itr != m_Uniforms.end() )
 			{
@@ -104,23 +101,21 @@ namespace Saturn {
 			return *( Ty* )nullptr;
 		}
 		
-		Ref< Texture2D > GetResource( const std::string& Name );
+		Ref<Texture2D> GetResource( const std::string& Name );
 
 		VkDescriptorSet GetDescriptorSet(uint32_t index = 0) { return m_DescriptorSets[index]; }
 
-		bool HasAnyValueChanged() { return m_AnyValueChanged; };
+		bool HasAnyValueChanged() const { return m_AnyValueChanged; };
 
 		void SetName( const std::string& rName ) { m_Name = rName; }
 
 	public:
-
-		Ref< Saturn::Shader >& GetShader() { return m_Shader; }
+		Ref<Shader>& GetShader() { return m_Shader; }
 		
 		std::string& GetName() { return m_Name; }
 		const std::string& GetName() const { return m_Name; }
 
 	private:
-
 		std::unordered_map< std::string, Ref<Texture2D> >& GetTextures() { return m_Textures; }
 		const std::unordered_map< std::string, Ref<Texture2D> >& GetTextures() const { return m_Textures; }
 
@@ -128,7 +123,7 @@ namespace Saturn {
 
 	private:
 		std::string m_Name = "";
-		Ref< Saturn::Shader > m_Shader;
+		Ref<Shader> m_Shader;
 
 		bool m_AnyValueChanged = false;
 
@@ -143,7 +138,6 @@ namespace Saturn {
 		VkDescriptorSet m_DescriptorSets[ MAX_FRAMES_IN_FLIGHT ];
 
 	private:
-		friend class MaterialInstance;
 		friend class MaterialAsset;
 	};
 }

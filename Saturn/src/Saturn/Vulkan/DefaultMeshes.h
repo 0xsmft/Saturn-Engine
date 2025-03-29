@@ -4,7 +4,7 @@
 *                                                                                           *
 * MIT License                                                                               *
 *                                                                                           *
-* Copyright (c) 2020 - 2025 BEAST                                                           *
+* Copyright (c) 2020 - 2024 BEAST                                                           *
 *                                                                                           *
 * Permission is hereby granted, free of charge, to any person obtaining a copy              *
 * of this software and associated documentation files (the "Software"), to deal             *
@@ -28,51 +28,17 @@
 
 #pragma once
 
-#include "Saturn/Vulkan/Texture.h"
+#include "Mesh.h"
+#include <glm/glm.hpp>
 
-namespace Saturn {
+namespace Saturn::Auxiliary {
 
-	constexpr int CB_DIRECTORY_ICON = 0;
-	constexpr int CB_FILE_ICON = 1;
-
-	class Asset;
-
-	enum class ThumbnailState
-	{
-		Initialising, // Initial state
-		Generating, // Currently generating this flag is only set when we need to generate the thumbnail over multiple frames
-		Generated
-	};
-
-	// Stored per asset when generation is needed and then popped from the queue
-	// Time & Texture are passed to the Asset's CacheData in s_Cache hence why we need it the QueueData
-	struct ThumbnailCacheQueueData
-	{
-		int64_t Time = 0;
-		ThumbnailState State = ThumbnailState::Initialising;
-		Ref<Texture2D> Texture = nullptr;
-
-		Ref<Asset> Asset = nullptr;
-	};
-
-	class ContentBrowserThumbnailCache
+	class DefaultMeshes
 	{
 	public:
-		static void Init();
-		static void Terminate();
-
-		static void InsertNew( const std::filesystem::path& rPath, int64_t time, Ref<Texture2D> texture );
-		static bool AssetHasThumbail( const std::filesystem::path& rPath );
-
-		static void UpdateCache();
-		static void OnUpdate();
-
-		[[nodiscard]] static Ref<Texture2D> GetDefault( int Identifier );
-		[[nodiscard]] static Ref<Texture2D> GetFor( const Ref<Asset>& rAsset );
-		
-	public:
-		static void Serialise();
-		static void Deserialise();
+		static Ref<StaticMesh> CreateSphere( float radius );
+		static Ref<StaticMesh> CreateCube( const glm::vec3& size );
+		static Ref<StaticMesh> CreateCapsule( float radius, float height );
 	};
 
 }

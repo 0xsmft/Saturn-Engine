@@ -283,7 +283,6 @@ namespace Saturn {
 
 	void MaterialAsset::Clean()
 	{
-		m_Material->RN_Clean();
 	}
 
 	void MaterialAsset::RT_ApplyChanges()
@@ -660,7 +659,7 @@ namespace Saturn {
 			
 			if( MaterialID != 0 ) 
 			{
-				rRegistry->AddTargetMaterialAsset( i, MaterialID );
+				rRegistry->AddTargetMaterialAsset( (uint32_t)i, MaterialID );
 			}
 
 			if( asset )

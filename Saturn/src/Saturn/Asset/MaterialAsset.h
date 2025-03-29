@@ -36,6 +36,7 @@ namespace Saturn {
 
 	class StaticMesh;
 	class MemoryAssetDependencyNotifier;
+	class Submesh;
 
 	class MaterialAsset : public Asset
 	{
@@ -52,7 +53,6 @@ namespace Saturn {
 		Ref<Texture2D> GetRoughnessMap();
 
 		// Colors and values
-
 		glm::vec3 GetAlbeoColor();
 		float IsUsingNormalMap();
 		float GetRoughness();
@@ -112,7 +112,6 @@ namespace Saturn {
 		void Default();
 
 	private:
-
 		// Used by MaterialAssetSerialiser & Material asset viewer (node editor)
 		void SetAlbeoMap( const std::filesystem::path& rPath );
 		void SetNormalMap( const std::filesystem::path& rPath );
@@ -156,7 +155,6 @@ namespace Saturn {
 	{
 	public:
 		MaterialRegistry();
-		// TODO: When we have animated meshes this will need to be re-worked.
 		MaterialRegistry( const Ref<StaticMesh>& mesh );
 
 		~MaterialRegistry();

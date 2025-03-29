@@ -137,8 +137,10 @@ namespace Saturn {
 	public:
 		StaticMesh() = default;
 		StaticMesh( const Ref<Asset>& rBase, const std::filesystem::path& rFilepath );
+		StaticMesh( const std::vector<StaticVertex>& rVertices, const std::vector<Index>& rIndices, const glm::mat4& rTransform );
+		
 		virtual ~StaticMesh();
-
+		
 		void SetFilepath( const std::filesystem::path& rFilepath ) { m_FilePath = rFilepath; }
 		
 		std::filesystem::path FilePath() { return m_FilePath; }
@@ -182,6 +184,8 @@ namespace Saturn {
 
 	private:
 #if !defined(SAT_DIST)
+		void Initialise();
+		
 		void TraverseNodes( aiNode* node, const glm::mat4& parentTransform = glm::mat4( 1.0f ), uint32_t level = 0 );
 		void CreateVertices();
 #endif

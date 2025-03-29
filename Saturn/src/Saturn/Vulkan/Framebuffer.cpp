@@ -39,7 +39,6 @@
 #include <backends/imgui_impl_vulkan.h>
 #include <stb_image_resize.h>
 
-
 namespace Saturn {
 
 	namespace FramebufferUtills {
@@ -85,16 +84,17 @@ namespace Saturn {
 		}
 	}
 
+	//////////////////////////////////////////////////////////////////////////
+
 	Framebuffer::Framebuffer( const FramebufferSpecification& Specification )
 		: m_Specification( Specification )
 	{
-
-		for( auto format : m_Specification.Attachments.Attachments )
+		for( auto& rFormat : m_Specification.Attachments.Attachments )
 		{
-			if( FramebufferUtills::IsDepthFormat( format.TextureFormat ) )
-				m_DepthFormat = format.TextureFormat;
+			if( FramebufferUtills::IsDepthFormat( rFormat.TextureFormat ) )
+				m_DepthFormat = rFormat.TextureFormat;
 			else
-				m_ColorAttachmentsFormats.push_back( format.TextureFormat );
+				m_ColorAttachmentsFormats.push_back( rFormat.TextureFormat );
 		}
 
 		Create();
@@ -146,12 +146,12 @@ namespace Saturn {
 		m_Specification.Width = Width;
 		m_Specification.Height = Height;
 
-		for( auto format : m_Specification.Attachments.Attachments )
+		for( auto& rFormat : m_Specification.Attachments.Attachments )
 		{
-			if( FramebufferUtills::IsDepthFormat( format.TextureFormat ) )
-				m_DepthFormat = format.TextureFormat;
+			if( FramebufferUtills::IsDepthFormat( rFormat.TextureFormat ) )
+				m_DepthFormat = rFormat.TextureFormat;
 			else
-				m_ColorAttachmentsFormats.push_back( format.TextureFormat );
+				m_ColorAttachmentsFormats.push_back( rFormat.TextureFormat );
 		}
 
 		Create();
@@ -159,13 +159,12 @@ namespace Saturn {
 
 	void Framebuffer::Create()
 	{
-		// Create Attachment resources
-		// Color
-		VkExtent3D Extent = { m_Specification.Width, m_Specification.Height, 1 };
-
+		// Resize to accommodate all attachments
 		size_t totalImageViews = m_Specification.Attachments.Attachments.size() + m_Specification.ExistingImages.size();
-
 		m_AttachmentImageViews.resize( totalImageViews );
+
+		//////////////////////////////////////////////////////////////////////////
+		// Existing attachments
 
 		for( auto& [imageIndex, rImage] : m_Specification.ExistingImages )
 		{
@@ -192,16 +191,19 @@ namespace Saturn {
 			}
 		}
 
+		//////////////////////////////////////////////////////////////////////////
+		// New attachments
+
+		// Color
 		int i = 0;
 		for( auto format : m_ColorAttachmentsFormats )
 		{
 			Ref<Image2D> image = Ref<Image2D>::Create( format, m_Specification.Width, m_Specification.Height, m_Specification.ArrayLevels, m_Specification.MSAASamples );
 
-			std::string imageDebugName = std::format( "Color Attachment for framebuffer {0} ({1})", m_Specification.RenderPass->GetName(), i );
-
+			std::string imageDebugName = std::format( "Color Attachment for FB/{0}@({1})", m_Specification.RenderPass->GetName(), i );
 			SetDebugUtilsObjectName( imageDebugName.c_str(), (uint64_t)image->GetImage(), VK_OBJECT_TYPE_IMAGE );
 
-			if( imageDebugName == "Color Attachment for framebuffer Late Composite pass (0)" )
+			if( imageDebugName == "Color Attachment for FB/Late Composite pass@(0)" )
 				Core::BreakDebug();
 
 			m_ColorAttachmentsResources.push_back( image );
@@ -214,12 +216,12 @@ namespace Saturn {
 			i++;
 		}
 		
+		// Depth
 		if( !m_DepthAttachmentResource && m_Specification.CreateDepth ) 
 		{
 			m_DepthAttachmentResource = Ref<Image2D>::Create( m_DepthFormat, m_Specification.Width, m_Specification.Height, m_Specification.ArrayLevels, m_Specification.MSAASamples );
 
-			std::string imageDebugName = std::format( "Depth Attachment for framebuffer {0}", m_Specification.RenderPass->GetName() );
-
+			std::string imageDebugName = std::format( "Depth Attachment for FB/{0}", m_Specification.RenderPass->GetName() );
 			SetDebugUtilsObjectName( imageDebugName.c_str(), ( uint64_t ) m_DepthAttachmentResource->GetImage(), VK_OBJECT_TYPE_IMAGE );
 
 			if( m_AttachmentImageViews.size() )
@@ -228,6 +230,7 @@ namespace Saturn {
 				m_AttachmentImageViews.push_back( m_DepthAttachmentResource->GetImageView( m_Specification.ExistingImageLayer ) );
 		}
 
+		// Create Framebuffer
 		VkFramebufferCreateInfo FramebufferCreateInfo = { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
 		FramebufferCreateInfo.renderPass = m_Specification.RenderPass->GetVulkanPass();
 

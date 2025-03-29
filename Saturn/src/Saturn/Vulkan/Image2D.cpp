@@ -35,8 +35,8 @@
 
 namespace Saturn {
 
-	Image2D::Image2D( ImageFormat Format, uint32_t Width, uint32_t Height, uint32_t ArrayLevels /*= 1*/, uint32_t MSAASamples /*= 1*/, ImageTiling Tiling /*= ImageTiling::Optimal*/, void* pData /*= nullptr*/, size_t size /*= 0 */ )
-		: m_Format( Format ), m_Width( Width ), m_Height( Height ), m_ArrayLevels( ArrayLevels ), m_Tiling( Tiling ), m_pData( pData ), m_DataSize( size )
+	Image2D::Image2D( ImageFormat Format, uint32_t Width, uint32_t Height, uint32_t ArrayLevels /*= 1*/, uint32_t MSAASamples /*= 1*/, ImageTiling Tiling /*= ImageTiling::Optimal*/ )
+		: m_Format( Format ), m_Width( Width ), m_Height( Height ), m_ArrayLevels( ArrayLevels ), m_Tiling( Tiling )
 	{
 		m_MSAASamples = (VkSampleCountFlagBits)MSAASamples;
 
@@ -63,7 +63,7 @@ namespace Saturn {
 		m_Memory = nullptr;
 	}
 
-	void Image2D::SetDebugName( const std::string& rName )
+	void Image2D::SetDebugName( const std::string& rName ) const
 	{
 		SetDebugUtilsObjectName( rName, ( uint64_t ) m_Image, VK_OBJECT_TYPE_IMAGE );
 	}
@@ -82,6 +82,63 @@ namespace Saturn {
 		m_Height = Height;
 
 		Create();
+	}
+
+	Buffer Image2D::CopyToBuffer()
+	{
+		VkDeviceSize ImageSize = m_Width * m_Height * 4;
+
+		// Copy image to vulkan buffer
+		VkBufferCreateInfo BufferCreateInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+		BufferCreateInfo.size = ImageSize;
+		BufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+		BufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+		VkBuffer ImgBuffer;
+
+		auto pAllocator = VulkanContext::Get().GetVulkanAllocator();
+		auto BufferAlloc = pAllocator->AllocateBuffer( BufferCreateInfo, VMA_MEMORY_USAGE_CPU_TO_GPU, &ImgBuffer );
+
+		VkCommandBuffer CommandBuffer = VulkanContext::Get().BeginSingleTimeCommands();
+
+		// TRANSITION: DescriptorImageInfo layout to VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+		TransitionImageLayout(
+			CommandBuffer,
+			m_DescriptorImageInfo.imageLayout,
+			VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, 
+			VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT );
+
+		VkBufferImageCopy Region = {};
+		Region.bufferOffset = 0;
+		Region.bufferRowLength = 0;
+		Region.bufferImageHeight = 0;
+		Region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		Region.imageSubresource.mipLevel = 0;
+		Region.imageSubresource.baseArrayLayer = 0;
+		Region.imageSubresource.layerCount = 1;
+		Region.imageOffset = { 0, 0, 0 };
+		Region.imageExtent = { m_Width, m_Height, 1 };
+
+		vkCmdCopyImageToBuffer( CommandBuffer, m_Image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, ImgBuffer, 1, &Region );
+
+		// TRANSITION: VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL back to DescriptorImageInfo layout
+		TransitionImageLayout(
+			CommandBuffer,
+			VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+			m_DescriptorImageInfo.imageLayout,
+			VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT );
+
+		VulkanContext::Get().EndSingleTimeCommands( CommandBuffer );
+
+		void* pMappedData = pAllocator->MapMemory<void*>( BufferAlloc );
+
+		Buffer buf = Buffer::Copy( ( const void* ) pMappedData, ImageSize );
+
+		pAllocator->UnmapMemory( BufferAlloc );
+
+		vkDestroyBuffer( VulkanContext::Get().GetDevice(), ImgBuffer, nullptr );
+
+		return buf;
 	}
 
 	void Image2D::Create()
@@ -125,7 +182,8 @@ namespace Saturn {
 		VK_CHECK( vkAllocateMemory( VulkanContext::Get().GetDevice(), &MemoryAllocateInfo, nullptr, &m_Memory ) );
 		VK_CHECK( vkBindImageMemory( VulkanContext::Get().GetDevice(), m_Image, m_Memory, 0 ) );
 
-		if( m_pData ) 
+		/*
+		if( false ) 
 		{
 			// TRANSITION: Initial layout to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
 			TransitionImageLayout( VulkanFormat( m_Format ), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL );
@@ -153,6 +211,7 @@ namespace Saturn {
 			// TRANSITION: VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL to descriptor image layout.
 			TransitionImageLayout( VulkanFormat( m_Format ), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, m_DescriptorImageInfo.imageLayout );
 		}
+		*/
 
 		if( IsColorFormat( m_Format ) )
 			m_DescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -244,7 +303,7 @@ namespace Saturn {
 		Region.imageSubresource.layerCount = 1;
 
 		Region.imageOffset = { 0, 0, 0 };
-		Region.imageExtent = { ( uint32_t ) m_Width, ( uint32_t ) m_Height, 1 };
+		Region.imageExtent = { m_Width, m_Height, 1 };
 
 		vkCmdCopyBufferToImage( CommandBuffer, Buffer, m_Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &Region );
 

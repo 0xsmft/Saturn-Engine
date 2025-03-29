@@ -33,9 +33,10 @@ namespace Saturn {
 	// This enum is in a separate header file because I don't want classes who just want the scene renderer flags have to include the whole entire Scene Renderer
 	enum SceneRendererFlags_
 	{
-		SceneRendererFlag_MasterInstance = BIT( 0 ),
-		SceneRendererFlag_SwapchainTarget = BIT( 1 ),
-		SceneRendererFlag_RenderGrid = BIT( 2 )
+		SceneRendererFlag_NoFlags = BIT( 0 ),
+		SceneRendererFlag_MasterInstance = BIT( 1 ),
+		SceneRendererFlag_SwapchainTarget = BIT( 2 ),
+		SceneRendererFlag_RenderGrid = BIT( 3 )
 	};
 
 	// enum SceneRendererFlags_

@@ -65,6 +65,9 @@ namespace Saturn {
 		ClampToBorder
 	};
 
+	// Represents a Vulkan Image, ImageView and Sampler
+	// Texture holds an Image2D internally and is used to create a texture from a file path
+	// This is different from the Image2D class as the Image2D as this has to be created by a filepath
 	class Texture : public RefTarget
 	{
 	public:

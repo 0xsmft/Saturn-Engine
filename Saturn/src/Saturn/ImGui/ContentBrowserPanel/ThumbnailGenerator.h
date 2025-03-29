@@ -29,23 +29,63 @@
 #pragma once
 
 #include "Saturn/Asset/Asset.h"
-#include "Saturn/Vulkan/Texture.h"
+
+#include "ContentBrowserThumbnailCache.h"
 
 namespace Saturn {
 
-	class Prefab;
-
 	class ContentBrowserThumbnailGeneratorBase
 	{
-	public:	
-		static Ref<Texture2D> GenerateForAssetType( Ref<Asset> asset );
+	public:
+		virtual Ref<Texture2D> Generate( ThumbnailCacheQueueData& rData ) = 0;
+		virtual void OnUpdate( ThumbnailCacheQueueData& rData ) = 0;
 	};
 	
-	class TextureAssetThumbnailGenerator
+	class TextureAssetThumbnailGenerator : public ContentBrowserThumbnailGeneratorBase
 	{
 	public:
-		static Ref<Texture2D> Generate( Ref<Asset> textureAsset );
+		Ref<Texture2D> Generate( ThumbnailCacheQueueData& rData ) override;
+		inline virtual void OnUpdate( ThumbnailCacheQueueData& rData ) override {}
 
 		static inline AssetType GetStaticType() { return AssetType::Texture; }
 	};
+
+	class MaterialAssetThumbnailGenerator : public ContentBrowserThumbnailGeneratorBase
+	{
+	public:
+		Ref<Texture2D> Generate( ThumbnailCacheQueueData& rData ) override;
+		inline virtual void OnUpdate( ThumbnailCacheQueueData& rData ) override {}
+
+		static inline AssetType GetStaticType() { return AssetType::Material; }
+	};
+
+	//////////////////////////////////////////////////////////////////////////
+	// Renderer Thumbnail Generators
+	class RendererThumbnailGenerator
+	{
+	public:
+		static Ref<Texture2D> Generate( ThumbnailCacheQueueData& rData );
+	};
+
+	//////////////////////////////////////////////////////////////////////////
+	// ContentBrowserThumbnailGenerator
+
+	class ContentBrowserThumbnailGenerator
+	{
+	public:
+		ContentBrowserThumbnailGenerator() { Initialise(); }
+		~ContentBrowserThumbnailGenerator() = default;
+		
+		Ref<Texture2D> GenerateForAssetType( ThumbnailCacheQueueData& rData );
+
+		void OnUpdate( ThumbnailCacheQueueData& rData );
+
+	private:
+		void Initialise();
+	
+	private:
+		// TODO: Maybe change to Ref?
+		std::unordered_map<AssetType, std::unique_ptr<ContentBrowserThumbnailGeneratorBase>> m_Generators;
+	};
+
 }

@@ -620,7 +620,7 @@ namespace Saturn {
 			ImGui::EndHorizontal();
 
 			// Content begin...
-			ContentBrowserThumbnailCache::OnUpdate();
+			ContentBrowserThumbnailCache::UpdateCache();
 
 			ImGui::PushStyleColor( ImGuiCol_Button, ImVec4( 0.0f, 0.0f, 0.0f, 0.0f ) );
 			ImGui::PushStyleColor( ImGuiCol_ButtonHovered, ImVec4( 0.3f, 0.3f, 0.3f, 0.35f ) );

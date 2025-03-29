@@ -50,18 +50,10 @@ namespace Saturn {
 		Ref<Texture2D> Texture = nullptr;
 	};
 
-	// Stored per asset when generation is needed and then popped from the queue
-	// 	Time & Texture are passed to the Asset's CacheData in s_Cache hence why we need it the QueueData
-	struct QueueData
-	{
-		int64_t Time = 0;
-		Ref<Texture2D> Texture = nullptr;
-
-		Ref<Asset> Asset = nullptr;
-	};
-
 	static std::unordered_map<std::filesystem::path, CacheData> s_Cache;
-	static std::queue<QueueData> s_Queue;
+
+	static std::queue<ThumbnailCacheQueueData> s_GeneratorQueue;
+	static ContentBrowserThumbnailGenerator s_Generator;
 
 	void ContentBrowserThumbnailCache::Init()
 	{
@@ -90,14 +82,14 @@ namespace Saturn {
 		return s_Cache.find( rPath ) != s_Cache.end();
 	}
 
-	void ContentBrowserThumbnailCache::OnUpdate()
+	void ContentBrowserThumbnailCache::UpdateCache()
 	{
-		while( !s_Queue.empty() )
+		while( !s_GeneratorQueue.empty() )
 		{
-			auto& rData = s_Queue.front();
+			auto& rData = s_GeneratorQueue.front();
 
 			// temp
-			if( rData.Asset->Type == AssetType::Texture )
+			if( rData.Asset->Type == AssetType::Texture || rData.Asset->Type == AssetType::Material )
 			{
 				// If it's somehow already in the cache pop it and move on to the next thumbnail
 				const auto Itr = s_Cache.find( rData.Asset->Path );
@@ -106,16 +98,18 @@ namespace Saturn {
 					const auto& rData = Itr->second;
 					if( rData.Time == rData.Time && rData.Texture != nullptr )
 					{
-						s_Queue.pop();
+						s_GeneratorQueue.pop();
 						continue;
 					}
 				}
 
-				rData.Texture = ContentBrowserThumbnailGeneratorBase::GenerateForAssetType( rData.Asset );
+				// Generate texture if not already in cache
+				rData.Texture = s_Generator.GenerateForAssetType( rData );
 
+				// Try again next frame
 				if( !rData.Texture )
 				{
-					s_Queue.pop();
+					s_GeneratorQueue.pop();
 					continue;
 				}
 
@@ -125,9 +119,13 @@ namespace Saturn {
 				rCacheData.Texture = rData.Texture;
 			}
 
-			s_Queue.pop();
+			s_GeneratorQueue.pop();
 			break;
 		}
+	}
+
+	void ContentBrowserThumbnailCache::OnUpdate()
+	{
 	}
 
 	Ref<Texture2D> ContentBrowserThumbnailCache::GetDefault( int Identifier )
@@ -158,11 +156,9 @@ namespace Saturn {
 		}
 
 		// Temp
-		if( rAsset->Type != AssetType::Texture )
-			return texture;
-
 		// Generate texture & pass in needed information for cache data
-		s_Queue.push( { .Time = timestamp, .Texture = nullptr, .Asset = rAsset } );
+		if( rAsset->Type == AssetType::Texture || rAsset->Type == AssetType::Material )
+			s_GeneratorQueue.push( { .Time = timestamp, .Texture = nullptr, .Asset = rAsset } );
 
 		return texture;
 	}

@@ -40,9 +40,8 @@
 namespace Saturn {
 
 	Material::Material( const Ref< Saturn::Shader >& Shader, const std::string& MateralName )
+		: m_Shader( Shader )
 	{
-		m_Shader = Shader;
-		
 		Initialise( MateralName );
 	}
 
@@ -64,7 +63,7 @@ namespace Saturn {
 		// Intentional copy of shader uniforms.
 		m_Uniforms.reserve( m_Shader->GetUniforms().size() );
 
-		for( auto rUniform : m_Shader->GetUniforms() )
+		for( auto& rUniform : m_Shader->GetUniforms() )
 		{
 			m_Uniforms.push_back( { rUniform.Name, rUniform.Location, rUniform.DataType, rUniform.Size, rUniform.Offset, rUniform.IsPushConstantData } );
 		}
@@ -112,14 +111,14 @@ namespace Saturn {
 		m_PushConstantData = rOther->m_PushConstantData;
 	}
 
-	void Material::Bind( VkCommandBuffer CommandBuffer, Ref< Shader >& Shader )
+	void Material::Bind( VkCommandBuffer CommandBuffer, Ref<Shader>& rShader )
 	{
 		uint32_t frame = Renderer::Get().GetCurrentFrame();
 
 		RT_Update();
 
 		VkDescriptorSet Set = m_DescriptorSets[ frame ];
-		Shader->WriteAllUBs( Set );
+		rShader->WriteAllUBs( Set );
 	}
 
 	void Material::BindDS( VkCommandBuffer CommandBuffer, VkPipelineLayout Layout )
@@ -162,11 +161,7 @@ namespace Saturn {
 		m_Shader->WriteAllUBs( m_DescriptorSets[ frame ] );
 	}
 
-	void Material::RN_Clean()
-	{
-	}
-
-	void Material::SetResource( const std::string& Name, const Ref< Saturn::Texture2D >& Texture )
+	void Material::SetResource( const std::string& Name, const Ref<Texture2D>& Texture )
 	{
 		if( m_Textures[ Name ] )
 			m_AnyValueChanged = true;
@@ -174,12 +169,8 @@ namespace Saturn {
 		m_Textures[ Name ] = Texture;
 	}
 
-	void Material::SetResource( const std::string& Name, const Ref< Saturn::Texture2D >& Texture, uint32_t Index )
+	void Material::SetResource( const std::string& Name, const Ref<Texture2D>& Texture, uint32_t Index )
 	{
-		// Already in the set and the images are the same,
-		//if( m_TextureArrays[ Name ][ Index ] == Texture )
-		//	return;
-
 		auto& textures = m_TextureArrays[ Name ];
 
 		if( textures.size() >= Index )
@@ -188,7 +179,7 @@ namespace Saturn {
 		textures[ Index ] = Texture;
 	}
 
-	Ref< Texture2D > Material::GetResource( const std::string& Name )
+	Ref<Texture2D> Material::GetResource( const std::string& Name )
 	{
 		if( m_Textures.size() > 0 )
 			return m_Textures.at( Name );

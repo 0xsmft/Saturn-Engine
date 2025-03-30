@@ -93,7 +93,7 @@ namespace Saturn {
 
 	struct RendererThumbnailCacheData
 	{
-		RendererThumbnailCacheData() : Camera( 45.0f, 1280.0f, 720.0f, 0.1f, 10000.0f ) {}
+		RendererThumbnailCacheData() : Camera( 45.0f, THUMBNAIL_SIZE, THUMBNAIL_SIZE, 0.1f, 100000.0f ) {}
 
 		Ref<SceneRenderer> SceneRenderer;
 		Ref<Scene> Scene;

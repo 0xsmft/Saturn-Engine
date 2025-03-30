@@ -61,7 +61,16 @@ namespace Saturn {
 
 		const glm::vec3& GetFocalPoint() const { return m_FocalPoint; }
 
-		inline void SetViewportSize( uint32_t width, uint32_t height ) { m_ViewportWidth = width; m_ViewportHeight = height; }
+		inline void SetViewportSize( uint32_t width, uint32_t height )
+		{ 
+			if( m_ViewportWidth == width || m_ViewportHeight == height )
+				return;
+
+			m_ViewportWidth = width; 
+			m_ViewportHeight = height; 
+			
+			SetProjectionMatrix( 45.0f, ( float ) m_ViewportWidth, ( float ) m_ViewportHeight, 0.1f, 1000.0f );
+		}
 
 		const glm::mat4& ViewMatrix() const { return m_ViewMatrix; }
 		glm::mat4 ViewProjection() const { return m_Projection * m_ViewMatrix; }

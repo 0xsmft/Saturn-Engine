@@ -170,12 +170,6 @@ namespace Saturn {
 				// Selected but not opened!
 				m_OnSelected( this, false );
 			}
-
-			if( m_IsSelected )
-			{
-				// Draw a highlight around the button.
-				pDrawList->AddRect( TopLeft, BottomRight, ImGui::GetColorU32( ImGuiCol_ButtonHovered ), 5.0f, ImDrawFlags_RoundCornersAll, 2.5f );
-			}
 		}
 		else
 		{
@@ -248,12 +242,6 @@ namespace Saturn {
 				m_OnSelected( this, m_IsSelected );
 			}
 
-			if( m_IsSelected )
-			{
-				// Draw a highlight around the button.
-				pDrawList->AddRect( TopLeft, BottomRight, ImGui::GetColorU32( ImGuiCol_ButtonHovered ), 5.0f, ImDrawFlags_RoundCornersAll, 2.5f );
-			}
-
 			HandleDragDrop();
 
 			if( Open && m_Asset )
@@ -313,11 +301,17 @@ namespace Saturn {
 
 		ImGui::EndGroup();
 
-		pDrawList->AddImage( 
+		pDrawList->AddImageRounded(
 			m_Icon->GetDescriptorSet(),
 			TopLeft, 
 			ImVec2( TopLeft.x + ThumbnailSize.x, TopLeft.y + ThumbnailSize.y ), 
-			{ 0, 1 }, { 1, 0 } );
+			{ 0, 1 }, { 1, 0 }, IM_COL32_WHITE, 5.0f, ImDrawFlags_RoundCornersTop );
+
+		if( m_IsSelected )
+		{
+			// Draw a thicker highlight around the button when selected.
+			pDrawList->AddRect( TopLeft, BottomRight, ImGui::GetColorU32( ImGuiCol_ButtonHovered ), 5.0f, ImDrawFlags_RoundCornersAll, 2.5f );
+		}
 
 		ImGui::SetCursorScreenPos( ImVec2( TopLeft.x + 2.0f, TopLeft.y + ThumbnailSize.y ) );
 

@@ -246,6 +246,21 @@ namespace Saturn {
 		m_IndexBuffer = Ref<IndexBuffer>::Create( m_Indices.data(), m_Indices.size() * sizeof( Index ) );
 
 		TraverseNodes( m_Scene->mRootNode );
+
+		for( const auto& rSubmesh : m_Submeshes )
+		{
+			AABB bb = rSubmesh.BoundingBox;
+			glm::vec3 min = glm::vec3( rSubmesh.Transform * glm::vec4( bb.Min, 1.0f ) );
+			glm::vec3 max = glm::vec3( rSubmesh.Transform * glm::vec4( bb.Max, 1.0f ) );
+
+			m_BoundingBox.Min.x = glm::min( m_BoundingBox.Min.x, min.x );
+			m_BoundingBox.Min.y = glm::min( m_BoundingBox.Min.y, min.y );
+			m_BoundingBox.Min.z = glm::min( m_BoundingBox.Min.z, min.z );
+
+			m_BoundingBox.Max.x = glm::max( m_BoundingBox.Max.x, max.x );
+			m_BoundingBox.Max.y = glm::max( m_BoundingBox.Max.y, max.y );
+			m_BoundingBox.Max.z = glm::max( m_BoundingBox.Max.z, max.z );
+		}
 	}
 
 	void StaticMesh::TraverseNodes( aiNode* node, const glm::mat4& parentTransform /*= glm::mat4( 1.0f )*/, uint32_t level /*= 0 */ )

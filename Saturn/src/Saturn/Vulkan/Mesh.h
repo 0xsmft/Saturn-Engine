@@ -211,6 +211,8 @@ namespace Saturn {
 		// Materials
 		Ref<MaterialRegistry> m_MaterialRegistry;
 
+		AABB m_BoundingBox{};
+
 #if !defined(SAT_DIST)
 		std::unique_ptr<Assimp::Importer> m_Importer;
 		const aiScene* m_Scene = nullptr;

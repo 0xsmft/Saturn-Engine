@@ -38,14 +38,12 @@ namespace Saturn {
 	{
 	public:
 		virtual Ref<Texture2D> Generate( ThumbnailCacheQueueData& rData ) = 0;
-		virtual void OnUpdate( ThumbnailCacheQueueData& rData ) = 0;
 	};
 	
 	class TextureAssetThumbnailGenerator : public ContentBrowserThumbnailGeneratorBase
 	{
 	public:
 		Ref<Texture2D> Generate( ThumbnailCacheQueueData& rData ) override;
-		inline virtual void OnUpdate( ThumbnailCacheQueueData& rData ) override {}
 
 		static inline AssetType GetStaticType() { return AssetType::Texture; }
 	};
@@ -54,17 +52,16 @@ namespace Saturn {
 	{
 	public:
 		Ref<Texture2D> Generate( ThumbnailCacheQueueData& rData ) override;
-		inline virtual void OnUpdate( ThumbnailCacheQueueData& rData ) override {}
 
 		static inline AssetType GetStaticType() { return AssetType::Material; }
 	};
 
-	//////////////////////////////////////////////////////////////////////////
-	// Renderer Thumbnail Generators
-	class RendererThumbnailGenerator
+	class StaticMeshAssetThumbnailGenerator : public ContentBrowserThumbnailGeneratorBase
 	{
 	public:
-		static Ref<Texture2D> Generate( ThumbnailCacheQueueData& rData );
+		Ref<Texture2D> Generate( ThumbnailCacheQueueData& rData ) override;
+
+		static inline AssetType GetStaticType() { return AssetType::Material; }
 	};
 
 	//////////////////////////////////////////////////////////////////////////

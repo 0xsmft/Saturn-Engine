@@ -89,7 +89,7 @@ namespace Saturn {
 			auto& rData = s_GeneratorQueue.front();
 
 			// temp
-			if( rData.Asset->Type == AssetType::Texture || rData.Asset->Type == AssetType::Material )
+			if( rData.Asset->Type == AssetType::Texture || rData.Asset->Type == AssetType::Material || rData.Asset->Type == AssetType::StaticMesh )
 			{
 				// If it's somehow already in the cache pop it and move on to the next thumbnail
 				const auto Itr = s_Cache.find( rData.Asset->Path );
@@ -155,9 +155,8 @@ namespace Saturn {
 			}
 		}
 
-		// Temp
 		// Generate texture & pass in needed information for cache data
-		if( rAsset->Type == AssetType::Texture || rAsset->Type == AssetType::Material )
+		if( rAsset->Type == AssetType::Texture || rAsset->Type == AssetType::Material || rAsset->Type == AssetType::StaticMesh )
 			s_GeneratorQueue.push( { .Time = timestamp, .Texture = nullptr, .Asset = rAsset } );
 
 		return texture;

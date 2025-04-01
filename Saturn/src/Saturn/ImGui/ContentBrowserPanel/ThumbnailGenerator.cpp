@@ -55,8 +55,9 @@ namespace Saturn {
 
 	void ContentBrowserThumbnailGenerator::Initialise()
 	{
-		m_Generators[ AssetType::Texture        ] = std::make_unique<TextureAssetThumbnailGenerator>();
-		m_Generators[ AssetType::Material       ] = std::make_unique<MaterialAssetThumbnailGenerator>();
+		m_Generators[ AssetType::Texture    ] = std::make_unique<TextureAssetThumbnailGenerator>();
+		m_Generators[ AssetType::Material   ] = std::make_unique<MaterialAssetThumbnailGenerator>();
+		m_Generators[ AssetType::StaticMesh ] = std::make_unique<StaticMeshAssetThumbnailGenerator>();
 	}
 
 	Ref<Texture2D> ContentBrowserThumbnailGenerator::GenerateForAssetType( ThumbnailCacheQueueData& rData )
@@ -66,7 +67,6 @@ namespace Saturn {
 
 	void ContentBrowserThumbnailGenerator::OnUpdate( ThumbnailCacheQueueData& rData )
 	{
-		m_Generators[ rData.Asset->Type ]->OnUpdate( rData );
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -101,100 +101,206 @@ namespace Saturn {
 
 		EditorCamera Camera;
 
-		bool CanRender = false;
-		bool Complete = false;
+		bool AwaitingRender = false;
+		bool RenderComplete = false;
 	};
 
 	static std::unordered_map<AssetID, RendererThumbnailCacheData> s_RendererThumbnailCache;
 
+	static void InitNewRenderThumbnail( ThumbnailCacheQueueData& rData, Ref<MaterialAsset> materialAsset )
+	{
+		RendererThumbnailCacheData cacheData{};
+		cacheData.SceneRenderer = Ref<SceneRenderer>::Create( SceneRendererFlag_NoFlags );
+		cacheData.SceneRenderer->SetDynamicSky( 2.0f, 0.0f, 0.0f );
+		cacheData.Camera.SetActive( true );
+
+		cacheData.Scene = Ref<Scene>::Create();
+		cacheData.SceneRenderer->SetCurrentScene( cacheData.Scene.Get() );
+
+		// Create entity
+		cacheData.SphereEntity = Ref<Entity>::Create( cacheData.Scene.Get() );
+		auto& mc = cacheData.SphereEntity->AddComponent<StaticMeshComponent>();
+		mc.Mesh = Auxiliary::DefaultMeshes::CreateSphere( 1.0f );
+		mc.Mesh->GetMaterialRegistry()->AddAsset( materialAsset );
+
+		s_RendererThumbnailCache[ rData.Asset->ID ] = cacheData;
+
+		// Complete init on render thread
+		// We must do this as we are going to destroy vulkan objects
+		RenderThread::Get().Queue( [ rData ]()
+		{
+			auto& rCacheData = s_RendererThumbnailCache[ rData.Asset->ID ];
+			rCacheData.SceneRenderer->SetViewportSize( THUMBNAIL_SIZE, THUMBNAIL_SIZE );
+
+			rCacheData.Camera.SetViewportSize( THUMBNAIL_SIZE, THUMBNAIL_SIZE );
+			rCacheData.Camera.SetDistance( 4.0f );
+
+			// Update to change the distance
+			rCacheData.Camera.OnUpdate( Application::Get().Time() );
+
+			rCacheData.AwaitingRender = true;
+		} );
+	}
+
+	static void StartFirstRender( RendererThumbnailCacheData& rCacheData )
+	{
+		// Start the render
+		rCacheData.Camera.OnUpdate( Application::Get().Time() );
+		rCacheData.Scene->OnRenderEditor( rCacheData.Camera, Application::Get().Time(), *rCacheData.SceneRenderer );
+		
+		rCacheData.AwaitingRender = false;
+
+		// Actual render on render thread
+		//RenderThread::Get().Queue( []()
+		{
+			rCacheData.SceneRenderer->RenderScene();
+			rCacheData.RenderComplete = true;
+		}// );
+	}
+
+	static Ref<Texture2D> CreateTextureFromFBImage( Ref<Image2D> image ) 
+	{
+		Buffer TemporaryBuffer = image->CopyToBuffer();
+
+		Ref<Texture2D> texture = Ref<Texture2D>::Create( image->GetImageFormat(), image->GetWidth(), image->GetHeight(), ( const void* ) TemporaryBuffer.Data, false );
+
+		TemporaryBuffer.Free();
+
+		return texture;
+	}
+
 	Ref<Texture2D> MaterialAssetThumbnailGenerator::Generate( ThumbnailCacheQueueData& rData )
 	{
-		// Load material
-		Ref<MaterialAsset> materialAsset = AssetManager::Get().GetAssetAs<MaterialAsset>( rData.Asset->ID );
-
 		if( rData.Asset->Type != AssetType::Material )
 			return nullptr;
 
-		// Check if we are waiting for the renderer to start
-		if( !s_RendererThumbnailCache.empty() )
+		// Load material
+		Ref<MaterialAsset> materialAsset = AssetManager::Get().GetAssetAs<MaterialAsset>( rData.Asset->ID );
+
+		// If we already exist then we could be waiting on render or we can get the final image if we are complete
+		auto itr = s_RendererThumbnailCache.find( rData.Asset->ID );
+		if( itr != s_RendererThumbnailCache.end() )
 		{
-			auto& rCacheData = s_RendererThumbnailCache[ rData.Asset->ID ];
-			if( rCacheData.CanRender )
+			auto& rCacheData = itr->second;
+
+			if( rCacheData.AwaitingRender )
 			{
-				// Start the render
-				rCacheData.Camera.SetActive( true );
-				rCacheData.Camera.OnUpdate( Application::Get().Time() );
-				rCacheData.Scene->OnRenderEditor( rCacheData.Camera, Application::Get().Time(), *rCacheData.SceneRenderer );
-				rCacheData.CanRender = false;
+				StartFirstRender( rCacheData );
 
-//				RenderThread::Get().Queue( []()
-				{
-					auto& rCacheData = s_RendererThumbnailCache[ rData.Asset->ID ];
-					rCacheData.SceneRenderer->RenderScene();
-					rCacheData.Complete = true;
-				}// );
-
+				// Return no texture as it has not been generated.
 				return nullptr;
 			}
 
-			if( rCacheData.Complete )
+			if( rCacheData.RenderComplete )
 			{
-				// Get final composite image and save it to buffer then create create texture
-				Ref<Image2D> finalImage = rCacheData.SceneRenderer->CompositeImage();
-				Buffer buffer = finalImage->CopyToBuffer();
-
-				Ref<Texture2D> texture = Ref<Texture2D>::Create( finalImage->GetImageFormat(), finalImage->GetWidth(), finalImage->GetHeight(), (const void*)buffer.Data, false );
-
 				rData.State = ThumbnailState::Generated;
+
+				// Destroy on render thread
 				RenderThread::Get().Queue( [ rData ]()
 				{
 					s_RendererThumbnailCache.erase( rData.Asset->ID );
 				} );
 
-				buffer.Free();
-				return texture;
+				return CreateTextureFromFBImage( rCacheData.SceneRenderer->CompositeImage() );
 			}
 		}
 
-		{
-			RendererThumbnailCacheData cacheData{};
-			cacheData.SceneRenderer = Ref<SceneRenderer>::Create( SceneRendererFlag_NoFlags );
-			cacheData.SceneRenderer->SetDynamicSky( 2.0f, 0.0f, 0.0f );
-			cacheData.Camera.SetActive( true );
-
-			cacheData.Scene = Ref<Scene>::Create();
-			cacheData.SceneRenderer->SetCurrentScene( cacheData.Scene.Get() );
-
-			cacheData.SphereEntity = Ref<Entity>::Create( cacheData.Scene.Get() );
-			cacheData.SphereEntity->AddComponent<StaticMeshComponent>().Mesh = Auxiliary::DefaultMeshes::CreateSphere( 1.0f );
-			cacheData.SphereEntity->GetComponent<StaticMeshComponent>().Mesh->GetMaterialRegistry()->AddAsset( materialAsset );
-			
-			s_RendererThumbnailCache[ rData.Asset->ID ] = cacheData;
-			RenderThread::Get().Queue( [rData]()
-			{
-				auto& rCacheData = s_RendererThumbnailCache[ rData.Asset->ID ];
-				rCacheData.SceneRenderer->SetViewportSize( THUMBNAIL_SIZE, THUMBNAIL_SIZE );
-				rCacheData.Camera.SetViewportSize( THUMBNAIL_SIZE, THUMBNAIL_SIZE );
-				rCacheData.Camera.SetDistance( 4.0f );
-				// Update to change the distance
-				rCacheData.Camera.OnUpdate( Application::Get().Time() );
-
-				rCacheData.CanRender = true;
-			} );
-		}
+		InitNewRenderThumbnail( rData, materialAsset );
 
 		rData.State = ThumbnailState::Generating;
-
 		rData.Asset = materialAsset;
 
+		// Return no texture as it has not been generated.
 		return nullptr;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	// RendererThumbnailGenerator
+	// Static mesh
 
-	Ref<Texture2D> RendererThumbnailGenerator::Generate( ThumbnailCacheQueueData& rData )
+	Ref<Texture2D> StaticMeshAssetThumbnailGenerator::Generate( ThumbnailCacheQueueData& rData )
 	{
+		if( rData.Asset->Type != AssetType::StaticMesh )
+			return nullptr;
+
+		// Load mesh
+		Ref<StaticMesh> staticMesh = AssetManager::Get().GetAssetAs<StaticMesh>( rData.Asset->ID );
+
+		// If we already exist then we could be waiting on render or we can get the final image if we are complete
+		auto itr = s_RendererThumbnailCache.find( rData.Asset->ID );
+		if( itr != s_RendererThumbnailCache.end() )
+		{
+			auto& rCacheData = itr->second;
+
+			if( rCacheData.AwaitingRender )
+			{
+				StartFirstRender( rCacheData );
+
+				// Return no texture as it has not been generated.
+				return nullptr;
+			}
+
+			if( rCacheData.RenderComplete )
+			{
+				rData.State = ThumbnailState::Generated;
+
+				// Destroy on render thread
+				RenderThread::Get().Queue( [ rData ]()
+				{
+					s_RendererThumbnailCache.erase( rData.Asset->ID );
+				} );
+
+				return CreateTextureFromFBImage( rCacheData.SceneRenderer->CompositeImage() );
+			}
+		}
+
+		rData.State = ThumbnailState::Generating;
+		rData.Asset = staticMesh;
+
+		RendererThumbnailCacheData cacheData{};
+		cacheData.SceneRenderer = Ref<SceneRenderer>::Create( SceneRendererFlag_NoFlags );
+		cacheData.SceneRenderer->SetDynamicSky( 2.0f, 0.0f, 0.0f );
+		cacheData.Camera.SetActive( true );
+
+		cacheData.Scene = Ref<Scene>::Create();
+		cacheData.SceneRenderer->SetCurrentScene( cacheData.Scene.Get() );
+
+		// Create entity
+		cacheData.SphereEntity = Ref<Entity>::Create( cacheData.Scene.Get() );
+		auto& mc = cacheData.SphereEntity->AddComponent<StaticMeshComponent>();
+		mc.Mesh = staticMesh;
+
+		s_RendererThumbnailCache[ rData.Asset->ID ] = cacheData;
+
+		// Complete init on render thread
+		// We must do this as we are going to destroy vulkan objects
+		RenderThread::Get().Queue( [ rData ]()
+		{
+			auto& rCacheData = s_RendererThumbnailCache[ rData.Asset->ID ];
+			rCacheData.SceneRenderer->SetViewportSize( THUMBNAIL_SIZE, THUMBNAIL_SIZE );
+
+			rCacheData.Camera.SetViewportSize( THUMBNAIL_SIZE, THUMBNAIL_SIZE );
+
+			auto staticMesh = rData.Asset.As<StaticMesh>();
+			auto& rBoundingBox = staticMesh->GetBoundingBox();
+
+			glm::vec3 center = ( rBoundingBox.Min + rBoundingBox.Max ) / 2.0f;
+			glm::vec3 halfd = ( rBoundingBox.Max - rBoundingBox.Min ) / 2.0f;
+
+			float maxD = glm::max( glm::max( halfd.x, halfd.y ), halfd.z );
+			constexpr float fov = glm::radians( 45.0f );
+			float tanFov = glm::tan( fov / 2.0f );
+
+			float dist = maxD / ( 2.0f * tanFov );
+
+			rCacheData.Camera.SetDistance( dist );
+
+			// Update to change the distance
+			rCacheData.Camera.OnUpdate( Application::Get().Time() );
+
+			rCacheData.AwaitingRender = true;
+		} );
+
+		// Return no texture as it has not been generated.
 		return nullptr;
 	}
 

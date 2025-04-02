@@ -76,16 +76,6 @@ namespace Saturn {
 
 		m_Pipeline = nullptr;
 		m_PipelineLayout = nullptr;
-
-		for ( auto& [ stage, Map ] : m_DescriptorSets )
-		{
-			for ( auto&& [ Index, set ] : Map )
-			{
-				set = nullptr;
-			}
-		}
-
-		m_DescriptorSets.clear();
 	}
 
 	void Pipeline::Bind( VkCommandBuffer CommandBuffer )
@@ -102,7 +92,6 @@ namespace Saturn {
 	void Pipeline::Create()
 	{
 		// Create the layout.
-
 		VkPipelineLayoutCreateInfo PipelineLayoutCreateInfo = { VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO };
 		if( m_Specification.Shader->GetPushConstantRanges().size() > 0 )
 		{
@@ -116,7 +105,6 @@ namespace Saturn {
 		VK_CHECK( vkCreatePipelineLayout( VulkanContext::Get().GetDevice(), &PipelineLayoutCreateInfo, nullptr, &m_PipelineLayout ) );
 
 		// Create shader modules
-
 		VkShaderModule VertexModule = VK_NULL_HANDLE;
 		VkShaderModule FragmentModule = VK_NULL_HANDLE;
 		
@@ -248,58 +236,6 @@ namespace Saturn {
 		VertexInputState.vertexAttributeDescriptionCount = ( uint32_t ) VertexInputAttributes.size();
 		VertexInputState.pVertexAttributeDescriptions = VertexInputAttributes.data();
 		
-		///// Descriptor sets
-		if( m_Specification.RequestDescriptorSets.SetIndex == -1 && m_Specification.RequestDescriptorSets.Stage == ShaderType::None )
-		{
-			// No descriptor set requested.
-		}
-		else
-		{
-			auto CurrentStage = m_Specification.RequestDescriptorSets.Stage;
-			auto Index = m_Specification.RequestDescriptorSets.SetIndex;
-
-			if( Index == -1 && CurrentStage != ShaderType::All )
-			{
-				SAT_CORE_ERROR( "You requested a descriptor set at index {0}, and at shader stage {1}, but index is -1!\n In order to use -1 as a binding point you must have your shader type is 'All'!", Index, (int) CurrentStage );
-
-				SAT_CORE_ASSERT( false );
-			}
-		
-			switch( CurrentStage )
-			{
-				case ShaderType::All:
-				{
-					DescriptorSetSpecification SetSpec = {};
-					SetSpec.Layout = m_Specification.Shader->GetSetLayout();
-					SetSpec.Pool = m_Specification.Shader->GetDescriptorPool();
-
-					if( Index == -1 )
-					{
-						for( size_t i = 0; i < m_Specification.Shader->GetDescriptorSetCount(); i++ )
-						{
-							m_DescriptorSets[ CurrentStage ][ Index ] = Ref<DescriptorSet>::Create( SetSpec );
-						}
-					} 
-					else
-					{
-						m_DescriptorSets[ CurrentStage ][ Index ] = Ref<DescriptorSet>::Create( SetSpec );
-					}
-				} break;
-
-				case ShaderType::Vertex:
-				case ShaderType::Fragment:
-				{
-					DescriptorSetSpecification SetSpec = {};
-					SetSpec.Layout = m_Specification.Shader->GetSetLayout();
-					SetSpec.Pool = m_Specification.Shader->GetDescriptorPool();
-
-					m_DescriptorSets[ CurrentStage ][ Index ] =  Ref<DescriptorSet>::Create( SetSpec );
-				} break;
-			}
-		}
-
-		/////
-
 		// Create the color blend attachment state.
 		VkPipelineColorBlendStateCreateInfo ColorBlendState = { VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO };
 		

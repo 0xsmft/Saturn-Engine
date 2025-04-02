@@ -31,6 +31,7 @@
 #include "VulkanContext.h"
 #include "EnvironmentMap.h"
 #include "StorageBufferSet.h"
+#include "UniformBufferSet.h"
 
 namespace Saturn {
 
@@ -57,22 +58,22 @@ namespace Saturn {
 		Renderer();
 		~Renderer();
 
-		void SubmitFullscreenQuad( VkCommandBuffer CommandBuffer, Ref<Saturn::Pipeline> Pipeline, Ref< DescriptorSet >& rDescriptorSet, Ref<IndexBuffer> IndexBuffer, Ref<VertexBuffer> VertexBuffer );
+		void SubmitFullscreenQuad( VkCommandBuffer CommandBuffer, Ref<Saturn::Pipeline> Pipeline, Ref<Material> material, Ref<UniformBufferSet> ubSet, Ref<IndexBuffer> IndexBuffer, Ref<VertexBuffer> VertexBuffer );
 
 		// Render pass helpers.
 		void BeginRenderPass( VkCommandBuffer CommandBuffer, Pass& rPass );
 		void EndRenderPass( VkCommandBuffer CommandBuffer );
 
-		void RenderMeshWithoutMaterial( VkCommandBuffer CommandBuffer, Ref<Saturn::Pipeline> Pipeline, Ref<StaticMesh> mesh, uint32_t count, Ref<VertexBuffer> transformVB, uint32_t TransformOffset, uint32_t SubmeshIndex, Buffer additionalData = Buffer() );
-
-		// Static mesh
-		void RenderSubmesh( VkCommandBuffer CommandBuffer, Ref<Saturn::Pipeline> Pipeline, Ref< StaticMesh > mesh, Submesh& rSubmsh, const glm::mat4 transform );
+		void RenderMeshWithoutMaterial( VkCommandBuffer CommandBuffer, Ref<Saturn::Pipeline> Pipeline, Ref<StaticMesh> mesh, Ref<Material> material, Ref<UniformBufferSet> ubSet,
+			Ref<StorageBufferSet> sbSet, uint32_t count, Ref<VertexBuffer> transformVB, uint32_t TransformOffset, uint32_t SubmeshIndex, Buffer additionalData = Buffer() );
 
 		void SubmitMesh( VkCommandBuffer CommandBuffer, Ref< Saturn::Pipeline > Pipeline, Ref< StaticMesh > mesh,
-			Ref<StorageBufferSet>& rStorageBufferSet, Ref< MaterialRegistry > materialRegistry, uint32_t SubmeshIndex, uint32_t count,
+			Ref<StorageBufferSet>& rStorageBufferSet, Ref<UniformBufferSet> rUniformBufferSet, Ref< MaterialRegistry > materialRegistry, uint32_t SubmeshIndex, uint32_t count,
 			Ref<VertexBuffer> transformData, uint32_t transformOffset );
 
-		const std::vector<VkWriteDescriptorSet>& GetStorageBufferWriteDescriptors( Ref<StorageBufferSet>& rStorageBufferSet, Ref<MaterialAsset>& rMaterialAsset );
+		const std::vector<VkWriteDescriptorSet>& GetStorageBufferWriteDescriptors( Ref<StorageBufferSet>& rStorageBufferSet, Ref<Material>& rMaterialAsset );
+
+		const std::vector<VkWriteDescriptorSet>& GetUniformBufferWriteDescriptors( Ref<UniformBufferSet>& rUniformBufferSet, Ref<Material>& rMaterialAsset );
 
 		void SetSceneEnvironment( Ref<Image2D> ShadowMap, Ref<EnvironmentMap> Environment, Ref<Texture2D> BDRF );
 
@@ -148,10 +149,12 @@ namespace Saturn {
 
 		VkDescriptorSet m_RendererDescriptorSets[ MAX_FRAMES_IN_FLIGHT ]{};
 
-		Ref< DescriptorPool > m_RendererDescriptorPools[ MAX_FRAMES_IN_FLIGHT ];
+		Ref<DescriptorPool> m_RendererDescriptorPools[ MAX_FRAMES_IN_FLIGHT ];
 
 		// frame -> shader name -> set
 		std::unordered_map< uint32_t, std::unordered_map< std::string, std::vector<VkWriteDescriptorSet>>> m_StorageBufferSets;
+
+		std::unordered_map< std::string, std::unordered_map< uint32_t, std::vector<VkWriteDescriptorSet>>> m_UniformBufferSets;
 
 #if !defined(SAT_DIST)
 		std::vector< std::function<void( const std::string& )> > m_ShaderReloadedCB;

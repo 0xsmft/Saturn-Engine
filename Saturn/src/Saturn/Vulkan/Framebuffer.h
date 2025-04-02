@@ -91,7 +91,7 @@ namespace Saturn {
 
 		operator VkFramebuffer() const { return m_Framebuffer; }
 
-		VkFramebuffer GetVulkanFramebuffer() { return m_Framebuffer; }
+		VkFramebuffer GetVulkanFramebuffer() const { return m_Framebuffer; }
 
 		std::vector< Ref<Image2D> >& GetColorAttachmentsResources() { return m_ColorAttachmentsResources; }
 		const std::vector< Ref<Image2D> >& GetColorAttachmentsResources() const { return m_ColorAttachmentsResources; }
@@ -99,8 +99,8 @@ namespace Saturn {
 		std::vector< ImageFormat >& GetColorAttachmentsFormats() { return m_ColorAttachmentsFormats; }
 		const std::vector< ImageFormat >& GetColorAttachmentsFormats() const { return m_ColorAttachmentsFormats; }
 
-		Ref<Image2D>& GetDepthAttachmentsResource() { return m_DepthAttachmentResource; }
-		const Ref<Image2D>& GetDepthAttachmentsResource() const { return m_DepthAttachmentResource; }
+		Ref<Image2D> GetDepthAttachmentResource() { return m_DepthAttachmentResource; }
+		const Ref<Image2D> GetDepthAttachmentResource() const { return m_DepthAttachmentResource; }
 
 		void Capture( const std::filesystem::path& rPath, uint32_t ColorAttachmentIndex = 0, const glm::vec2& rResize = {} );
 

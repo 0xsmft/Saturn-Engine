@@ -41,14 +41,15 @@ namespace Saturn {
 
 		void Resize( uint32_t newSize );
 
-		VkBuffer GetBuffer() { return m_Buffer; }
+		VkBuffer GetBuffer() const { return m_Buffer; }
 
-		const VkDescriptorBufferInfo& GetBufferInfo() { return m_BufferInfo; }
+		const VkDescriptorBufferInfo& GetBufferInfo() const { return m_BufferInfo; }
 
-		uint32_t GetBinding() { return m_Binding; }
+		uint32_t GetBinding() const { return m_Binding; }
 
 	private:
 		void Create();
+
 	private:
 		VkDescriptorBufferInfo m_BufferInfo{};
 		size_t m_Size;

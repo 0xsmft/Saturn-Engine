@@ -29,6 +29,7 @@
 #pragma once
 
 #include "Shader.h"
+#include "Material.h"
 
 #include <vulkan.h>
 #include <vector>
@@ -44,13 +45,14 @@ namespace Saturn {
 		void Bind();
 		void BindWithCommandBuffer( VkCommandBuffer CommandBuffer );
 
-		void Execute( VkDescriptorSet DescriptorSet, uint32_t X, uint32_t Y, uint32_t Z );
+		void Execute( Ref<Material> material, uint32_t X, uint32_t Y, uint32_t Z );
 
 		void AddPushConstant( const void* pData, uint32_t Offset = 0, size_t Size = 1 );
 
 		void Unbind();
 
-		VkCommandBuffer GetCommandBuffer() { return m_CommandBuffer; }
+		VkCommandBuffer GetCommandBuffer() const { return m_CommandBuffer; }
+		VkPipelineLayout GetLayout() const { return m_PipelineLayout; }
 
 	private:
 		void Create();

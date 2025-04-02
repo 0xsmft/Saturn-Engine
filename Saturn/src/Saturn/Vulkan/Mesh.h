@@ -173,6 +173,8 @@ namespace Saturn {
 		Ref<MaterialRegistry>& GetMaterialRegistry() { return m_MaterialRegistry; }
 		const Ref<MaterialRegistry>& GetMaterialRegistry() const { return m_MaterialRegistry; }
 
+		AABB& GetBoundingBox() { return m_BoundingBox; }
+
 	public:
 		// Import (Internal functions)
 		void Import_InitMaterialRegistry();

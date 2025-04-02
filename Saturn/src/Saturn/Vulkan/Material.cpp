@@ -55,37 +55,37 @@ namespace Saturn {
 		else
 			m_Name = rMaterialName;
 
-		for( auto&& texture : m_Shader->GetTextures() )
+		InitLayout();
+	}
+
+	void Material::InitLayout()
+	{
+		// We are always set 0
+		// Set 1 is owned by the renderer
+		ShaderDescriptorSetTemplate& rMaterialDS = m_Shader->GetShaderDescriptorSetTemplates( 0 );
+		
+		// Copy for our own use
+		m_DescriptorSetTemplate = ShaderDescriptorSetTemplate( rMaterialDS );
+
+		size_t totalPCSizes = 0;
+		for( const auto& rPushConstantBuffers : m_Shader->GetPushConstantBuffer() )
 		{
-			m_Textures[ texture.Name ] = nullptr;
+			totalPCSizes += rPushConstantBuffers.Size;
 		}
 
-		// Intentional copy of shader uniforms.
-		m_Uniforms.reserve( m_Shader->GetUniforms().size() );
-
-		for( auto& rUniform : m_Shader->GetUniforms() )
+		if( totalPCSizes )
 		{
-			m_Uniforms.push_back( { rUniform.Name, rUniform.Location, rUniform.DataType, rUniform.Size, rUniform.Offset, rUniform.IsPushConstantData } );
+			m_ShaderPC = m_Shader->GetPushConstantBuffer().back();
+		
+			m_PushConstantData.Allocate( totalPCSizes );
+			m_PushConstantData.Zero_Memory();
 		}
-
-		uint32_t Size = 0;
-
-		for( auto& rUniform : m_Uniforms )
-		{
-			if( rUniform.IsPushConstantData )
-			{
-				Size += static_cast< uint32_t >( rUniform.Size );
-			}
-		}
-
-		m_PushConstantData.Allocate( Size );
-		m_PushConstantData.Zero_Memory();
 	}
 
 	Material::~Material()
 	{
-		for ( auto& uniform : m_Uniforms )
-			uniform.Terminate();
+		m_PushConstantData.Free();
+		m_UniformBuffers.clear();
 
 		for( auto& [key, texture] : m_Textures )
 		{
@@ -99,34 +99,29 @@ namespace Saturn {
 	void Material::Copy( Ref<Material>& rOther )
 	{
 		m_Textures.clear();
-		m_Uniforms.clear();
+		m_UniformBuffers.clear();
 
 		m_Textures = rOther->m_Textures;
-		m_Uniforms = rOther->m_Uniforms;
+		m_UniformBuffers = rOther->m_UniformBuffers;
 
 		m_Name = rOther->GetName();
-		m_AnyValueChanged = rOther->HasAnyValueChanged();
 
 		m_Shader = rOther->m_Shader;
 		m_PushConstantData = rOther->m_PushConstantData;
 	}
 
-	void Material::Bind( VkCommandBuffer CommandBuffer, Ref<Shader>& rShader )
+	void Material::Bind( VkCommandBuffer CommandBuffer, VkPipelineLayout Layout, const std::vector<VkWriteDescriptorSet>& rExtraWds, VkPipelineBindPoint bindPoint )
 	{
-		uint32_t frame = Renderer::Get().GetCurrentFrame();
+		for( const auto& rWds : rExtraWds )
+		{
+			PushExternalWds( rWds );
+		}
 
+		uint32_t frame = Renderer::Get().GetCurrentFrame();
 		RT_Update();
 
 		VkDescriptorSet Set = m_DescriptorSets[ frame ];
-		rShader->WriteAllUBs( Set );
-	}
-
-	void Material::BindDS( VkCommandBuffer CommandBuffer, VkPipelineLayout Layout )
-	{
-		uint32_t frame = Renderer::Get().GetCurrentFrame();
-		VkDescriptorSet Set = m_DescriptorSets[ frame ];
-
-		vkCmdBindDescriptorSets( CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Layout, 0, 1, &Set, 0, nullptr );
+		vkCmdBindDescriptorSets( CommandBuffer, bindPoint, Layout, 0, 1, &Set, 0, nullptr );
 	}
 
 	void Material::RT_Update()
@@ -135,38 +130,121 @@ namespace Saturn {
 
 		m_DescriptorSets[ frame ] = m_Shader->AllocateDescriptorSet( 0, true );
 
-		for( auto& [name, texture] : m_Textures )
+		std::vector<VkWriteDescriptorSet> pendingWds;
+
+		// Sampled images
+		for( auto& texture : m_DescriptorSetTemplate.SampledImages )
 		{
-			VkDescriptorImageInfo ImageInfo = {};
-			ImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			// Texture arrays will be handled differently.
+			// TODO: Handle texture arrays here
+			if( texture.ArraySize > 1 )
+				continue;
 
-			ImageInfo.imageView = m_Textures[ name ]->GetImageView();
-			ImageInfo.sampler = m_Textures[ name ]->GetSampler();
+			m_DescriptorSetTemplate.WriteDescriptorSets[ texture.Binding ].dstSet = m_DescriptorSets[ frame ];
 
-			m_Shader->WriteDescriptor( name, ImageInfo, m_DescriptorSets[ frame ] );
+			pendingWds.push_back( m_DescriptorSetTemplate.WriteDescriptorSets[ texture.Binding ] );
 		}
 
+		// Storage images
+		for( auto& texture : m_DescriptorSetTemplate.StorageImages )
+		{
+			m_DescriptorSetTemplate.WriteDescriptorSets[ texture.Binding ].dstSet = m_DescriptorSets[ frame ];
+
+			pendingWds.push_back( m_DescriptorSetTemplate.WriteDescriptorSets[ texture.Binding ] );
+		}
+
+		// Uniform buffers
+		for( auto& [binding, ub] : m_DescriptorSetTemplate.UniformBuffers )
+		{
+			m_DescriptorSetTemplate.WriteDescriptorSets[ binding ].dstSet = m_DescriptorSets[ frame ];
+
+			pendingWds.push_back( m_DescriptorSetTemplate.WriteDescriptorSets[ binding ] );
+		}
+
+		// SB buffers
+		for( auto& [binding, sb] : m_DescriptorSetTemplate.StorageBuffers )
+		{
+			m_DescriptorSetTemplate.WriteDescriptorSets[ binding ].dstSet = m_DescriptorSets[ frame ];
+		
+			pendingWds.push_back( m_DescriptorSetTemplate.WriteDescriptorSets[ binding ] );
+		}
+
+		// Texture Arrays
 		for( auto& [name, textures] : m_TextureArrays )
 		{
 			std::vector<VkDescriptorImageInfo> ImageInfos;
 
-			for ( auto& texture : textures )
+			for( auto& texture : textures )
 			{
 				ImageInfos.push_back( texture->GetDescriptorInfo() );
 			}
 
-			m_Shader->WriteDescriptor( name, ImageInfos, m_DescriptorSets[ frame ] );
+			auto Itr = std::find_if( m_DescriptorSetTemplate.SampledImages.begin(), m_DescriptorSetTemplate.SampledImages.end(),
+				[ name ]( const ShaderSampledImage& rImage )
+			{
+				return rImage.Name == name;
+			} );
+
+			if( Itr != m_DescriptorSetTemplate.SampledImages.end() )
+			{
+				auto& rWds = m_DescriptorSetTemplate.WriteDescriptorSets[ Itr->Binding ];
+				rWds.pImageInfo = ImageInfos.data();
+				rWds.descriptorCount = ImageInfos.size();
+				rWds.dstSet = m_DescriptorSets[ frame ];
+
+				vkUpdateDescriptorSets( VulkanContext::Get().GetDevice(), 1, &rWds, 0, nullptr );
+			}
 		}
 
-		m_Shader->WriteAllUBs( m_DescriptorSets[ frame ] );
+		if( pendingWds.size() )
+		{
+			vkUpdateDescriptorSets( VulkanContext::Get().GetDevice(), (uint32_t)pendingWds.size(), pendingWds.data(), 0, nullptr );
+		}
+	}
+
+	void Material::PushExternalWds( const VkWriteDescriptorSet& rWds )
+	{
+		if( rWds.descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER || rWds.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER )
+		{
+			m_DescriptorSetTemplate.WriteDescriptorSets[ rWds.dstBinding ] = rWds;
+		}
+
+		if( rWds.descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE || rWds.descriptorType == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE )
+		{
+			m_DescriptorSetTemplate.WriteDescriptorSets[ rWds.dstBinding ] = rWds;
+		}
 	}
 
 	void Material::SetResource( const std::string& Name, const Ref<Texture2D>& Texture )
 	{
-		if( m_Textures[ Name ] )
-			m_AnyValueChanged = true;
-
 		m_Textures[ Name ] = Texture;
+
+		auto Itr = std::find_if( m_DescriptorSetTemplate.SampledImages.begin(), m_DescriptorSetTemplate.SampledImages.end(),
+			[ Name ]( const ShaderSampledImage& rImage )
+		{
+			return rImage.Name == Name;
+		} );
+
+		if( Itr != m_DescriptorSetTemplate.SampledImages.end() )
+		{
+			ShaderSampledImage ssi = *( Itr );
+			m_DescriptorSetTemplate.WriteDescriptorSets[ ssi.Binding ].pImageInfo = &Texture->GetDescriptorInfo();
+		}
+		else
+		{
+			// Check for if resource is a storage image
+			Itr = std::find_if( m_DescriptorSetTemplate.StorageImages.begin(), m_DescriptorSetTemplate.StorageImages.end(),
+				[ Name ]( const ShaderSampledImage& rImage )
+			{
+				return rImage.Name == Name;
+			} );
+
+			if( Itr != m_DescriptorSetTemplate.StorageImages.end() )
+			{
+				ShaderSampledImage ssi = *( Itr );
+				m_DescriptorSetTemplate.WriteDescriptorSets[ ssi.Binding ].pImageInfo = &Texture->GetDescriptorInfo();
+			}
+		}
 	}
 
 	void Material::SetResource( const std::string& Name, const Ref<Texture2D>& Texture, uint32_t Index )
@@ -179,6 +257,66 @@ namespace Saturn {
 		textures[ Index ] = Texture;
 	}
 
+	void Material::SetResource( const std::string& Name, Ref<Image2D> rImage )
+	{
+		auto Itr = std::find_if( m_DescriptorSetTemplate.SampledImages.begin(), m_DescriptorSetTemplate.SampledImages.end(),
+			[ Name ]( const ShaderSampledImage& rImage )
+		{
+			return rImage.Name == Name;
+		} );
+
+		if( Itr != m_DescriptorSetTemplate.SampledImages.end() )
+		{
+			ShaderSampledImage ssi = *( Itr );
+			m_DescriptorSetTemplate.WriteDescriptorSets[ ssi.Binding ].pImageInfo = &rImage->GetDescriptorInfo();
+		}
+		else
+		{
+			// Check for if resource is a storage image
+			Itr = std::find_if( m_DescriptorSetTemplate.StorageImages.begin(), m_DescriptorSetTemplate.StorageImages.end(),
+				[ Name ]( const ShaderSampledImage& rImage )
+			{
+				return rImage.Name == Name;
+			} );
+
+			if( Itr != m_DescriptorSetTemplate.StorageImages.end() )
+			{
+				ShaderSampledImage ssi;
+				m_DescriptorSetTemplate.WriteDescriptorSets[ ssi.Binding ].pImageInfo = &rImage->GetDescriptorInfo();
+			}
+		}
+	}
+
+	void Material::SetResource( const std::string& Name, const Ref<TextureCube>& Texture )
+	{
+		auto Itr = std::find_if( m_DescriptorSetTemplate.SampledImages.begin(), m_DescriptorSetTemplate.SampledImages.end(),
+			[ Name ]( const ShaderSampledImage& rImage )
+		{
+			return rImage.Name == Name;
+		} );
+
+		if( Itr != m_DescriptorSetTemplate.SampledImages.end() )
+		{
+			ShaderSampledImage ssi = *( Itr );
+			m_DescriptorSetTemplate.WriteDescriptorSets[ ssi.Binding ].pImageInfo = &Texture->GetDescriptorInfo();
+		}
+		else
+		{
+			// Check for if resource is a storage image
+			Itr = std::find_if( m_DescriptorSetTemplate.StorageImages.begin(), m_DescriptorSetTemplate.StorageImages.end(),
+				[ Name ]( const ShaderSampledImage& rImage )
+			{
+				return rImage.Name == Name;
+			} );
+
+			if( Itr != m_DescriptorSetTemplate.StorageImages.end() )
+			{
+				ShaderSampledImage ssi = *( Itr );
+				m_DescriptorSetTemplate.WriteDescriptorSets[ ssi.Binding ].pImageInfo = &Texture->GetDescriptorInfo();
+			}
+		}
+	}
+
 	Ref<Texture2D> Material::GetResource( const std::string& Name )
 	{
 		if( m_Textures.size() > 0 )
@@ -187,11 +325,37 @@ namespace Saturn {
 			return nullptr;
 	}
 
-	void Material::WriteDescriptor( VkWriteDescriptorSet& rWDS )
+	Ref<UniformBuffer> Material::GetOrCreateUB( uint32_t binding )
 	{
 		uint32_t frame = Renderer::Get().GetCurrentFrame();
-		rWDS.dstSet = m_DescriptorSets[ frame ];
 
-		vkUpdateDescriptorSets( VulkanContext::Get().GetDevice(), 1, &rWDS, 0, nullptr );
+		std::vector<Ref<UniformBuffer>> ubs = m_UniformBuffers[ binding ];
+
+		auto Itr = std::find( ubs.begin(), ubs.end(), frame + 1 );
+
+		if( Itr == ubs.end() )
+		{
+			auto ub = Ref<UniformBuffer>::Create( 0, binding, m_DescriptorSetTemplate.UniformBuffers[ binding ].Size );
+
+			m_UniformBuffers[ binding ].push_back( ub );
+
+			m_DescriptorSetTemplate.WriteDescriptorSets[ binding ].pBufferInfo = &ub->GetBufferInfo();
+
+			return ub;
+		}
+
+		return m_UniformBuffers[ binding ][ frame ];
 	}
+
+	void Material::UploadDataToUB( uint32_t Binding, void* pData, size_t size )
+	{
+		Ref<UniformBuffer> ub = GetOrCreateUB( Binding );
+		ub->UploadData( pData, size, 0 );
+	}
+
+	void Material::SetSB( uint32_t binding, const Ref<StorageBuffer>& rSB )
+	{
+		m_DescriptorSetTemplate.WriteDescriptorSets[ binding ].pBufferInfo = &rSB->GetBufferInfo();
+	}
+
 }

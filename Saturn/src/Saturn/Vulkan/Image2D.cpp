@@ -86,7 +86,7 @@ namespace Saturn {
 
 	Buffer Image2D::CopyToBuffer()
 	{
-		VkDeviceSize ImageSize = m_Width * m_Height * 4;
+		VkDeviceSize ImageSize = ( uint64_t ) m_Width * ( uint64_t ) m_Height * 4;
 
 		// Copy image to vulkan buffer
 		VkBufferCreateInfo BufferCreateInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
@@ -135,8 +135,7 @@ namespace Saturn {
 		Buffer buf = Buffer::Copy( ( const void* ) pMappedData, ImageSize );
 
 		pAllocator->UnmapMemory( BufferAlloc );
-
-		vkDestroyBuffer( VulkanContext::Get().GetDevice(), ImgBuffer, nullptr );
+		pAllocator->DestroyBuffer( ImgBuffer );
 
 		return buf;
 	}

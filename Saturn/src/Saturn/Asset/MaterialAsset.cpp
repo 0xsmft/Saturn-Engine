@@ -88,11 +88,11 @@ namespace Saturn {
 		m_Material->SetResource( "u_MetallicTexture", Renderer::Get().GetPinkTexture() );
 		m_Material->SetResource( "u_RoughnessTexture", Renderer::Get().GetPinkTexture() );
 
-		m_Material->Set<glm::vec3>( "u_Materials.AlbedoColor", { 1.0f, 1.0f, 1.0f } );
-		m_Material->Set<float>( "u_Materials.Metalness", 1.0f );
-		m_Material->Set<float>( "u_Materials.Roughness", 1.0f );
-		m_Material->Set<float>( "u_Materials.UseNormalMap", 0.0f );
-		m_Material->Set<float>( "u_Materials.Emissive", 0.0f );
+		m_Material->SetPC<glm::vec3>( "u_Materials.AlbedoColor", { 1.0f, 1.0f, 1.0f } );
+		m_Material->SetPC<float>( "u_Materials.Metalness", 1.0f );
+		m_Material->SetPC<float>( "u_Materials.Roughness", 1.0f );
+		m_Material->SetPC<float>( "u_Materials.UseNormalMap", 0.0f );
+		m_Material->SetPC<float>( "u_Materials.Emissive", 0.0f );
 	}
 
 	Saturn::Ref<Saturn::Texture2D> MaterialAsset::GetAlbeoMap()
@@ -124,35 +124,35 @@ namespace Saturn {
 	{
 		MarkDirty();
 
-		m_Material->Set<glm::vec3>( "u_Materials.AlbedoColor", color );
+		m_Material->SetPC<glm::vec3>( "u_Materials.AlbedoColor", color );
 	}
 
 	void MaterialAsset::UseNormalMap( bool val )
 	{
 		MarkDirty();
 
-		m_Material->Set<float>( "u_Materials.UseNormalMap", val );
+		m_Material->SetPC<float>( "u_Materials.UseNormalMap", val );
 	}
 
 	void MaterialAsset::SetRoughness( float val )
 	{
 		MarkDirty();
 
-		m_Material->Set<float>( "u_Materials.Roughness", val );
+		m_Material->SetPC<float>( "u_Materials.Roughness", val );
 	}
 
 	void MaterialAsset::SetMetalness( float val )
 	{
 		MarkDirty();
 
-		m_Material->Set<float>( "u_Materials.Metalness", val );
+		m_Material->SetPC<float>( "u_Materials.Metalness", val );
 	}
 
 	void MaterialAsset::SetEmissive( float val )
 	{
 		MarkDirty();
 
-		m_Material->Set<float>( "u_Materials.Emissive", val );
+		m_Material->SetPC<float>( "u_Materials.Emissive", val );
 	}
 
 	Saturn::Ref<Saturn::Texture2D> MaterialAsset::GetResource( const std::string& rName )
@@ -188,7 +188,7 @@ namespace Saturn {
 		} );
 	}
 
-	void MaterialAsset::Bind( const Ref< StaticMesh >& rMesh, Submesh& rSubmsh, Ref< Shader >& Shader, const VkWriteDescriptorSet& rStorageBufferWDS )
+	void MaterialAsset::RT_Update( const Ref< StaticMesh >& rMesh, Submesh& rSubmsh, Ref< Shader >& Shader, const std::vector<VkWriteDescriptorSet>& rExtraWds )
 	{
 		if( m_PendingMaterialChange )
 		{
@@ -214,8 +214,14 @@ namespace Saturn {
 		if( m_PendingTextureChanges.size() )
 			m_PendingTextureChanges.clear();
 
+		for( const auto& rWds : rExtraWds )
+		{
+			m_Material->PushExternalWds( rWds );
+		}
+
 		m_Material->RT_Update();
 
+		/*
 		uint32_t frame = Renderer::Get().GetCurrentFrame();
 
 		VkDescriptorSet CurrentSet = m_Material->GetDescriptorSet( frame );
@@ -241,7 +247,7 @@ namespace Saturn {
 				else // If the image view has changed, update the cache.
 				{
 					m_TextureCache[ name ] = texture->GetDescriptorInfo();
-					Shader->WriteDescriptor( name, ImageInfo, m_Material->m_DescriptorSets[ frame ] );
+					m_Material->WriteDescriptor( name, ImageInfo );
 
 					continue;
 				}
@@ -264,25 +270,16 @@ namespace Saturn {
 				ImageInfo.sampler = PinkTexture->GetSampler();
 			}
 
-			Shader->WriteDescriptor( name, ImageInfo, m_Material->m_DescriptorSets[ frame ] );
+			m_Material->WriteDescriptor( name, ImageInfo );
 		}
+		*/
 
-		if( rStorageBufferWDS.dstBinding != 0 )
-		{
-			auto wds = rStorageBufferWDS;
-			m_Material->WriteDescriptor( wds );
-		}
-		
 #if !defined( SAT_DIST )
 		if( m_ValuesChanged ) 
 		{
 			m_ValuesChanged = false;
 		}
 #endif
-	}
-
-	void MaterialAsset::Clean()
-	{
 	}
 
 	void MaterialAsset::RT_ApplyChanges()

@@ -268,14 +268,7 @@ namespace Saturn {
 		m_ShaderSources.clear();
 #endif
 
-		for ( auto& uniform : m_Uniforms )
-		{
-			uniform.Terminate();
-		}
-		
-		m_Uniforms.clear();
-
-		for ( auto& [ set, descriptorSet ] : m_DescriptorSets )
+		for( auto& [ set, descriptorSet ] : m_DescriptorSets )
 		{
 			vkDestroyDescriptorSetLayout( VulkanContext::Get().GetDevice(), descriptorSet.SetLayout, nullptr );
 		}
@@ -299,7 +292,7 @@ namespace Saturn {
 				{
 					descriptorSet.WriteDescriptorSets[ texture.Binding ].pImageInfo = &rImageInfo;
 					descriptorSet.WriteDescriptorSets[ texture.Binding ].dstSet = desSet;
-					
+
 					vkUpdateDescriptorSets( VulkanContext::Get().GetDevice(), 1, &descriptorSet.WriteDescriptorSets[ texture.Binding ], 0, nullptr );
 				}
 			}
@@ -315,130 +308,6 @@ namespace Saturn {
 				}
 			}
 		}
-	}
-
-	void Shader::WriteDescriptor( const std::string& rName, VkDescriptorBufferInfo& rBufferInfo, VkDescriptorSet desSet )
-	{
-		for( auto& [set, descriptorSet] : m_DescriptorSets )
-		{
-			for( auto& [ binding, ub ] : descriptorSet.UniformBuffers )
-			{
-				if( ub.Name == rName )
-				{
-					descriptorSet.WriteDescriptorSets[ binding ].pBufferInfo = &rBufferInfo;
-					descriptorSet.WriteDescriptorSets[ binding ].dstSet = desSet;
-
-					vkUpdateDescriptorSets( VulkanContext::Get().GetDevice(), 1, &descriptorSet.WriteDescriptorSets[ binding ], 0, nullptr );
-				}
-			}
-		}
-	}
-
-	void Shader::WriteDescriptor( const std::string& rName, std::vector<VkDescriptorImageInfo>& rImageInfos, VkDescriptorSet desSet )
-	{
-		for( auto& [set, descriptorSet] : m_DescriptorSets )
-		{
-			for( auto& texture : descriptorSet.SampledImages )
-			{
-				if( texture.Name == rName )
-				{
-					descriptorSet.WriteDescriptorSets[ texture.Binding ].pImageInfo = rImageInfos.data();
-					descriptorSet.WriteDescriptorSets[ texture.Binding ].descriptorCount = ( uint32_t ) rImageInfos.size();
-					descriptorSet.WriteDescriptorSets[ texture.Binding ].dstSet = desSet;
-
-					vkUpdateDescriptorSets( VulkanContext::Get().GetDevice(), 1, &descriptorSet.WriteDescriptorSets[ texture.Binding ], 0, nullptr );
-				}
-			}
-
-			for( auto& texture : descriptorSet.StorageImages )
-			{
-				if( texture.Name == rName )
-				{
-					descriptorSet.WriteDescriptorSets[ texture.Binding ].pImageInfo = rImageInfos.data();
-					descriptorSet.WriteDescriptorSets[ texture.Binding ].descriptorCount = ( uint32_t ) rImageInfos.size();
-					descriptorSet.WriteDescriptorSets[ texture.Binding ].dstSet = desSet;
-
-					vkUpdateDescriptorSets( VulkanContext::Get().GetDevice(), 1, &descriptorSet.WriteDescriptorSets[ texture.Binding ], 0, nullptr );
-				}
-			}
-		}
-	}
-
-	void Shader::WriteAllUBs( const Ref< DescriptorSet >& rSet )
-	{
-		SAT_CORE_ASSERT( rSet, "DescriptorSet is null!" );
-
-		// Iterate over uniform buffers
-		for( auto& [set, descriptorSet] : m_DescriptorSets )
-		{
-			for( auto& [binding, ub] : descriptorSet.UniformBuffers )
-			{
-				VkDescriptorBufferInfo BufferInfo = {};
-				BufferInfo.buffer = ub.Buffer;
-				BufferInfo.offset = 0;
-				BufferInfo.range = ub.Size;
-				
-				descriptorSet.WriteDescriptorSets[ binding ].pBufferInfo = &BufferInfo;
-				descriptorSet.WriteDescriptorSets[ binding ].dstSet = rSet->GetVulkanSet();
-
-				vkUpdateDescriptorSets( VulkanContext::Get().GetDevice(), 1, &descriptorSet.WriteDescriptorSets[ binding ], 0, nullptr );
-			}
-		}
-	}
-
-	void Shader::WriteAllUBs( VkDescriptorSet Set )
-	{
-		// Iterate over uniform buffers
-		for( auto& [set, descriptorSet] : m_DescriptorSets )
-		{
-			for( auto& [binding, ub] : descriptorSet.UniformBuffers )
-			{
-				VkDescriptorBufferInfo BufferInfo = {};
-				BufferInfo.buffer = ub.Buffer;
-				BufferInfo.offset = 0;
-				BufferInfo.range = ub.Size;
-
-				descriptorSet.WriteDescriptorSets[ binding ].pBufferInfo = &BufferInfo;
-				descriptorSet.WriteDescriptorSets[ binding ].dstSet = Set;
-
-				vkUpdateDescriptorSets( VulkanContext::Get().GetDevice(), 1, &descriptorSet.WriteDescriptorSets[ binding ], 0, nullptr );
-			}
-		}
-	}
-
-	void Shader::WriteSB( uint32_t set, uint32_t binding, const VkDescriptorBufferInfo& rInfo, Ref<DescriptorSet>& rSet )
-	{
-		m_DescriptorSets[ set ].WriteDescriptorSets[ binding ].pBufferInfo = &rInfo;
-		m_DescriptorSets[ set ].WriteDescriptorSets[ binding ].dstSet = rSet->GetVulkanSet();
-
-		vkUpdateDescriptorSets( VulkanContext::Get().GetDevice(), 1, &m_DescriptorSets[ set ].WriteDescriptorSets[ binding ], 0, nullptr );
-	}
-
-	void* Shader::MapUB( ShaderType Type, uint32_t Set, uint32_t Binding )
-	{
-		auto pAllocator = VulkanContext::Get().GetVulkanAllocator();
-
-		auto bufferAloc = pAllocator->GetAllocationFromBuffer( m_DescriptorSets[ Set ].UniformBuffers[ Binding ].Buffer );
-		
-		return pAllocator->MapMemory< void >( bufferAloc );
-	}
-
-	void Shader::UnmapUB( ShaderType Type, uint32_t Set, uint32_t Binding )
-	{
-		auto pAllocator = VulkanContext::Get().GetVulkanAllocator();
-		
-		auto bufferAloc = pAllocator->GetAllocationFromBuffer( m_DescriptorSets[ Set ].UniformBuffers[ Binding ].Buffer );
-		
-		pAllocator->UnmapMemory( bufferAloc );
-	}
-	
-	void Shader::UploadUB( ShaderType Type, uint32_t Set, uint32_t Binding, void* pData, size_t Size )
-	{
-		auto bufferData = MapUB( Type, Set, Binding );
-
-		memcpy( bufferData, (const uint8_t*)pData, Size );
-
-		UnmapUB( Type, Set, Binding );
 	}
 
 	Ref<DescriptorSet> Shader::CreateDescriptorSet( uint32_t set, bool UseRendererPool /*= false */ )
@@ -572,7 +441,7 @@ namespace Saturn {
 			SHADER_INFO( " Set: {0}", Set );
 
 			if( m_DescriptorSets[ Set ].Set == -1 )
-				m_DescriptorSets[ Set ] = { .Set = Set };
+				m_DescriptorSets[ Set ] = ShaderDescriptorSetTemplate( Set );
 
 			ShaderStorageBuffer Storage;
 			Storage.Binding = Binding;
@@ -616,7 +485,7 @@ namespace Saturn {
 				SHADER_INFO( "   Offset: {0}", offset );
 
 				// Use Binding as location it does not matter.
-				m_Uniforms.push_back( { MemberName, ( int ) Binding, SpvToSaturn( type ), size, offset } );
+//				m_Uniforms.push_back( { MemberName, ( int ) Binding, SpvToSaturn( type ), size, offset } );
 			}
 		}
 
@@ -636,7 +505,7 @@ namespace Saturn {
 			SHADER_INFO( " Set: {0}", Set);
 
 			if( m_DescriptorSets[ Set ].Set == -1 )
-				m_DescriptorSets[ Set ] = { .Set = Set };
+				m_DescriptorSets[ Set ] = ShaderDescriptorSetTemplate( Set );
 
 			ShaderUniformBuffer Uniform;
 			Uniform.Binding = Binding;
@@ -668,7 +537,7 @@ namespace Saturn {
 
 			for( int i = 0; i < MemberCount; i++ )
 			{
-				auto type = Compiler.get_type( BufferType.member_types[i] );
+				auto& type = Compiler.get_type( BufferType.member_types[i] );
 				const auto& memberName = Compiler.get_member_name( BufferType.self, i );
 				size_t size = Compiler.get_declared_struct_member_size( BufferType, i );
 				auto offset = Compiler.type_struct_member_offset( BufferType, i );
@@ -680,7 +549,7 @@ namespace Saturn {
 				SHADER_INFO( "   Offset: {0}", offset );
 
 				// Use Binding as location it does not matter.
-				m_Uniforms.push_back( { MemberName, (int)Binding, SpvToSaturn( type ), size, offset } );
+//				m_Uniforms.push_back( { MemberName, (int)Binding, SpvToSaturn( type ), size, offset } );
 			}
 		}
 
@@ -692,17 +561,21 @@ namespace Saturn {
 			uint32_t set = Compiler.get_decoration( pc.id, spv::DecorationDescriptorSet );
 
 			uint32_t Size = ( uint32_t ) Compiler.get_declared_struct_size( BufferType );
-			uint32_t Offset = 0;
+			uint32_t OffsetFromLastPC = 0;
 
 			// Make sure the buffer offset is size + offset for because that's what vulkan needs when we render.
-			if( m_PushConstantRanges.size() )
-				Offset = m_PushConstantRanges.back().offset + m_PushConstantRanges.back().size;
+			if( m_VulkanRanges.size() )
+				OffsetFromLastPC = m_VulkanRanges.back().offset + m_VulkanRanges.back().size;
 
-			m_PushConstantRanges.push_back( { .stageFlags = ShaderTypeToVulkan( shaderType ), .offset = Offset , .size = ( uint32_t )Size } );
+			ShaderPushConstantTemplate pc;
+			pc.Name = Name;
+			pc.Size = Size;
+			pc.Stage = shaderType;
+			m_VulkanRanges.push_back( { .stageFlags = ShaderTypeToVulkan( shaderType ), .offset = OffsetFromLastPC , .size = ( uint32_t ) Size } );
 
 			SHADER_INFO( "Push constant buffer: {0}", Name );
 			SHADER_INFO( " Size: {0}", Size );
-			SHADER_INFO( " Offset: {0}", Offset );
+			SHADER_INFO( " Offset: {0}", OffsetFromLastPC );
 			SHADER_INFO( " Set: {0}", ( uint32_t ) set );
 			SHADER_INFO( " Stage: {0}", ( uint32_t )shaderType );
 
@@ -729,9 +602,10 @@ namespace Saturn {
 				SHADER_INFO( "  Size: {0}", size );
 				SHADER_INFO( "  Offset: {0}", offset );
 
-				// Use Binding as location it does not matter.
-				m_Uniforms.push_back( { MemberName, ( int ) offset, SpvToSaturn( type ), size, offset - Offset, PushConstantData } );
+				pc.MemberOffsets[ MemberName ] = offset - OffsetFromLastPC;
 			}
+
+			m_PushConstants.push_back( pc );
 		}
 
 		for( const auto& Resource : Resources.sampled_images )
@@ -797,13 +671,6 @@ namespace Saturn {
 				Binding.descriptorCount = 1;
 				Binding.stageFlags = ub.Location == ShaderType::Vertex ? VK_SHADER_STAGE_VERTEX_BIT : ub.Location == ShaderType::All ? VK_SHADER_STAGE_ALL : ub.Location == ShaderType::Compute ? VK_SHADER_STAGE_COMPUTE_BIT : VK_SHADER_STAGE_FRAGMENT_BIT;
 				Binding.pImmutableSamplers = nullptr;
-
-				VkBufferCreateInfo BufferInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
-				BufferInfo.size = ub.Size;
-				BufferInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-				BufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-				pAllocator->AllocateBuffer( BufferInfo, VMA_MEMORY_USAGE_CPU_ONLY, &ub.Buffer );
 
 				PoolSizes.emplace_back( VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 250 );
 
@@ -939,7 +806,7 @@ namespace Saturn {
 
 		// TODO: Shader cache and shader hot reloading.
 		Timer CompileTimer;
-		
+	
 		for ( auto&& [key, src] : m_ShaderSources )
 		{
 			const std::string& rShaderSrcCode = src.Source;
@@ -958,7 +825,7 @@ namespace Saturn {
 				return false;
 			}
 
-			SHADER_INFO( "Shader Warings {0}", Res.GetNumWarnings() );
+			SHADER_INFO( "Shader Warnings {0}", Res.GetNumWarnings() );
 
 			std::vector< uint32_t > SpvBinary( Res.begin(), Res.end() );
 
@@ -982,10 +849,7 @@ namespace Saturn {
 
 		auto OldSpvMap          = m_SpvCode;
 		auto OldDescriptorSets  = m_DescriptorSets;
-		auto OldUniforms        = m_Uniforms;
-		auto OldPushConstsUni   = m_PushConstantUniforms;
-		auto OldTextures        = m_Textures;
-		auto OldPushConstsRange = m_PushConstantRanges;
+		auto OldPushConstsRange = m_VulkanRanges;
 
 		// Read the updated file.
 		ReadFile();
@@ -994,19 +858,13 @@ namespace Saturn {
 		// Clear descriptors and push consts.
 		m_SpvCode.clear();
 		m_DescriptorSets.clear();
-		m_Uniforms.clear();
-		m_PushConstantUniforms.clear();
-		m_Textures.clear();
-		m_PushConstantRanges.clear();
+		m_VulkanRanges.clear();
 
 		if( !CompileGlslToSpvAssembly() )
 		{
 			m_SpvCode              = OldSpvMap;
 			m_DescriptorSets       = OldDescriptorSets;
-			m_Uniforms             = OldUniforms;
-			m_PushConstantUniforms = OldPushConstsUni;
-			m_Textures             = OldTextures;
-			m_PushConstantRanges   = OldPushConstsRange;
+			m_VulkanRanges         = OldPushConstsRange;
 
 			SAT_CORE_ERROR( "Shader hot reloading failed. Shader did not compile successfully!" );
 
@@ -1041,10 +899,7 @@ namespace Saturn {
 		RawSerialisation::WriteUnorderedMap( m_SpvCode, rStream );
 		RawSerialisation::WriteUnorderedMap( m_DescriptorSets, rStream );
 
-		RawSerialisation::WriteVector( m_Uniforms, rStream );
-		RawSerialisation::WriteVector( m_PushConstantUniforms, rStream );
-		RawSerialisation::WriteVector( m_Textures, rStream );
-		RawSerialisation::WriteVector( m_PushConstantRanges, rStream );
+		RawSerialisation::WriteVector( m_VulkanRanges, rStream );
 	}
 
 	void Shader::DeserialiseShaderData( std::ifstream& rStream )
@@ -1052,11 +907,7 @@ namespace Saturn {
 		RawSerialisation::ReadUnorderedMap( m_SpvCode, rStream );
 		RawSerialisation::ReadUnorderedMap( m_DescriptorSets, rStream );
 
-		RawSerialisation::ReadVector( m_Uniforms, rStream );
-		RawSerialisation::ReadVector( m_PushConstantUniforms, rStream );
-
-		RawSerialisation::ReadVector( m_Textures, rStream );
-		RawSerialisation::ReadVector( m_PushConstantRanges, rStream );
+		RawSerialisation::ReadVector( m_VulkanRanges, rStream );
 
 		// Clean up some of the data that was read.
 		for( auto&& [k, v] : m_DescriptorSets )

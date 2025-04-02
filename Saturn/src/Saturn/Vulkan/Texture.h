@@ -95,6 +95,8 @@ namespace Saturn {
 		VkDescriptorSet GetDescriptorSet()         const { return m_DescriptorSet; }
 		VkDescriptorImageInfo& GetDescriptorInfo()       { return m_DescriptorImageInfo; }
 
+		const VkDescriptorImageInfo& GetDescriptorInfo() const { return m_DescriptorImageInfo; }
+
 		std::filesystem::path GetPath() { return m_Path; }
 		const std::filesystem::path& GetPath() const { return m_Path; }
 

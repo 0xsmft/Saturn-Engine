@@ -39,33 +39,28 @@ namespace Saturn {
 	class VulkanDebugMessenger
 	{
 	public:
-		VulkanDebugMessenger( VkInstance& rInstance );
+		VulkanDebugMessenger( VkInstance instance );
 		~VulkanDebugMessenger();
 
 	private:
-
 		void CreateDebugMessengerInfo( VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo );
 
-		VkResult _intrl_vkCreateDebugUtilsMessenger(
+		VkResult X31_vkCreateDebugUtilsMessenger(
 			VkInstance Instance,
 			const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
 			const VkAllocationCallbacks* pAllocator,
 			VkDebugUtilsMessengerEXT* pDebugMessenger );
 
-		void _intrl_vkDestroyDebugUtilsMessenger(
+		void X31_vkDestroyDebugUtilsMessenger(
 			VkInstance Instance,
 			VkDebugUtilsMessengerEXT DebugMessenger,
 			const VkAllocationCallbacks* pAllocator );
 
 	private:
-
 		VkDebugUtilsMessengerEXT m_DebugMessenger;
 
+		PFN_vkCreateDebugUtilsMessengerEXT m_pCreateFunc = nullptr;
+		PFN_vkDestroyDebugUtilsMessengerEXT m_pDestroyFunc = nullptr;
 	};
 
-	namespace Helpers {
-
-		extern void CreateDebugMessengerInfo( VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo );
-
-	}
 }

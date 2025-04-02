@@ -47,12 +47,6 @@ namespace Saturn {
 		FrontAndBack
 	};
 
-	struct RequestDescriptorSetInfo
-	{
-		ShaderType Stage = ShaderType::None;
-		uint32_t SetIndex;
-	};
-
 	struct PipelineSpecification
 	{
 		PipelineSpecification() {}
@@ -79,8 +73,6 @@ namespace Saturn {
 		VkSpecializationInfo SpecializationInfo = {};
 		bool UseSpecializationInfo = false;
 		ShaderType SpecializationStage = ShaderType::None;
-
-		RequestDescriptorSetInfo RequestDescriptorSets = {};
 	};
 
 	class Pipeline : public RefTarget
@@ -94,24 +86,17 @@ namespace Saturn {
 		void Recreate();
 		void Terminate();
 
-		VkPipeline GetPipeline() { return m_Pipeline; }
-		VkPipelineLayout GetPipelineLayout() { return m_PipelineLayout; }
+		VkPipeline GetPipeline() const { return m_Pipeline; }
+		VkPipelineLayout GetPipelineLayout() const { return m_PipelineLayout; }
 		
 		operator VkPipeline() const { return m_Pipeline; }
 
 		Ref<Shader>& GetShader() { return m_Specification.Shader; }
 
-		[[ nodiscard ]] Ref<DescriptorSet>& GetDescriptorSet( ShaderType Stage, uint32_t SetIndex ) { return m_DescriptorSets[Stage][SetIndex]; }
-		
-		VkDescriptorSet GetVulkanSet( ShaderType Stage, uint32_t SetIndex ) { return m_DescriptorSets[Stage][SetIndex]->GetVulkanSet(); }
-
 	private:
 		void Create();
 
 		PipelineSpecification m_Specification = {};
-		
-		// STAGE -> SET INDEX -> DESCRIPTOR SET
-		std::unordered_map< ShaderType, std::unordered_map< uint32_t, Ref< DescriptorSet > > > m_DescriptorSets;
 
 		VkPipelineLayout m_PipelineLayout = VK_NULL_HANDLE;
 		VkPipeline m_Pipeline = VK_NULL_HANDLE;

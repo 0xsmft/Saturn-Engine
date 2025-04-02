@@ -28,23 +28,35 @@
 
 #pragma once
 
-#include "Saturn/Core/Ref.h"
-#include "SingletonStorage.h"
+#include "Saturn/Core/Base.h"
+#include <vulkan.h>
 
 namespace Saturn {
 
-	enum class ShaderBundleResult 
-	{
-		Success,
-		FileNotFound,
-		InvalidShaderHeader,
-		Failed
-	};
-
-	class ShaderBundle
+	class UniformBuffer : public RefTarget
 	{
 	public:
-		[[nodiscard]] static ShaderBundleResult BundleShaders();
-		[[nodiscard]] static ShaderBundleResult ReadBundle();
+		UniformBuffer( uint32_t set, uint32_t binding, size_t size );
+		~UniformBuffer();
+
+		const VkDescriptorBufferInfo& GetBufferInfo() { return m_BufferInfo; }
+
+		VkBuffer GetBuffer() const { return m_Buffer; }
+		uint32_t GetBinding() const { return m_Binding; }
+
+		void UploadData( const void* pData, size_t size, uint32_t offset = 0 );
+
+	private:
+		void Create();
+		void Terminate();
+
+	private:
+		VkDescriptorBufferInfo m_BufferInfo{};
+
+		size_t m_Size;
+		VkBuffer m_Buffer = VK_NULL_HANDLE;
+
+		uint32_t m_Binding;
+		uint32_t m_Set;
 	};
 }

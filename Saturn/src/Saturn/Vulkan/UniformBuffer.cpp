@@ -4,7 +4,7 @@
 *                                                                                           *
 * MIT License                                                                               *
 *                                                                                           *
-* Copyright (c) 2020 - 2025 BEAST                                                           *
+* Copyright (c) 2020 - 2024 BEAST                                                           *
 *                                                                                           *
 * Permission is hereby granted, free of charge, to any person obtaining a copy              *
 * of this software and associated documentation files (the "Software"), to deal             *
@@ -26,25 +26,53 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "UniformBuffer.h"
 
-#include "Saturn/Core/Ref.h"
-#include "SingletonStorage.h"
+#include "VulkanContext.h"
 
 namespace Saturn {
 
-	enum class ShaderBundleResult 
+	UniformBuffer::UniformBuffer( uint32_t set, uint32_t binding, size_t size )
+		: m_Set( set ), m_Binding( binding ), m_Size( size )
 	{
-		Success,
-		FileNotFound,
-		InvalidShaderHeader,
-		Failed
-	};
+		Create();
+	}
 
-	class ShaderBundle
+	void UniformBuffer::Create()
 	{
-	public:
-		[[nodiscard]] static ShaderBundleResult BundleShaders();
-		[[nodiscard]] static ShaderBundleResult ReadBundle();
-	};
+		VkBufferCreateInfo BufferInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+		BufferInfo.size = m_Size;
+		BufferInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+		BufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+		auto pAllocator = VulkanContext::Get().GetVulkanAllocator();
+		pAllocator->AllocateBuffer( BufferInfo, VMA_MEMORY_USAGE_CPU_TO_GPU, &m_Buffer );
+
+		m_BufferInfo.buffer = m_Buffer;
+		m_BufferInfo.offset = 0;
+		m_BufferInfo.range = m_Size;
+	}
+
+	void UniformBuffer::Terminate()
+	{
+		auto pAllocator = VulkanContext::Get().GetVulkanAllocator();
+		pAllocator->DestroyBuffer( m_Buffer );
+	}
+
+	UniformBuffer::~UniformBuffer()
+	{
+		Terminate();
+	}
+
+	void UniformBuffer::UploadData( const void* pData, size_t size, uint32_t offset )
+	{
+		auto pAllocator = VulkanContext::Get().GetVulkanAllocator();
+		auto bufferAloc = pAllocator->GetAllocationFromBuffer( m_Buffer );
+
+		void* pBufferData = pAllocator->MapMemory<void>( bufferAloc );
+		memcpy( pBufferData, (const uint8_t*)pData + offset, size );
+		pAllocator->UnmapMemory( bufferAloc );
+	}
+
 }

@@ -285,7 +285,7 @@ namespace Saturn {
 
 		u_Matrices.ViewProjection = m_CameraViewProjection;
 
-		m_QuadShader->UploadUB( ShaderType::Vertex, 0, 0, &u_Matrices, sizeof( u_Matrices ) );
+		m_QuadMaterial->UploadDataToUB( 0, &u_Matrices, sizeof( u_Matrices ) );
 
 		uint32_t dataSize = ( uint32_t ) ( ( uint8_t* ) m_CurrentQuad - ( uint8_t* ) m_CurrentQuadBase[ frame ] );
 		if( dataSize )
@@ -300,8 +300,7 @@ namespace Saturn {
 					m_QuadMaterial->SetResource( "u_InputTexture", Renderer::Get().GetPinkTexture(), i );
 			}
 
-			m_QuadMaterial->Bind( m_CommandBuffer, m_QuadShader );
-			m_QuadMaterial->BindDS( m_CommandBuffer, m_QuadPipeline->GetPipelineLayout() );
+			m_QuadMaterial->Bind( m_CommandBuffer, m_QuadPipeline->GetPipelineLayout(), {} );
 
 			m_QuadPipeline->Bind( m_CommandBuffer );
 
@@ -327,15 +326,14 @@ namespace Saturn {
 
 		u_Matrices.ViewProjection = m_CameraViewProjection;
 
-		m_LineShader->UploadUB( ShaderType::Vertex, 0, 0, &u_Matrices, sizeof( u_Matrices ) );
+		m_LineMaterial->UploadDataToUB( 0, &u_Matrices, sizeof( u_Matrices ) );
 
 		uint32_t dataSize = ( uint32_t ) ( ( uint8_t* ) m_CurrentLine - ( uint8_t* ) m_CurrentLineBase[ frame ] );
 		if( dataSize )
 		{
 			m_LineVertexBuffers[ frame ]->Reallocate( m_CurrentLineBase[ frame ], dataSize );
 
-			m_LineMaterial->Bind( m_CommandBuffer, m_LineShader );
-			m_LineMaterial->BindDS( m_CommandBuffer, m_LinePipeline->GetPipelineLayout() );
+			m_LineMaterial->Bind( m_CommandBuffer, m_LinePipeline->GetPipelineLayout(), {} );
 
 			m_LinePipeline->Bind( m_CommandBuffer );
 

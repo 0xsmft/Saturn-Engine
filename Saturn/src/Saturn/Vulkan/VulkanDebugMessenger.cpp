@@ -41,24 +41,33 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL vkDebugCB(
 	else if( MessageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT )
 		SAT_CORE_WARN( "{0}", pCallbackData->pMessage );
 
-
 	return VK_FALSE;
 }
 
 namespace Saturn {
 
-	VulkanDebugMessenger::VulkanDebugMessenger( VkInstance& rInstance )
+	VulkanDebugMessenger::VulkanDebugMessenger( VkInstance instance )
 	{
 		VkDebugUtilsMessengerCreateInfoEXT CreateInfo;
 		CreateDebugMessengerInfo( &CreateInfo );
 
-		_intrl_vkCreateDebugUtilsMessenger( rInstance, &CreateInfo, nullptr, &m_DebugMessenger );
+		m_pCreateFunc = ( PFN_vkCreateDebugUtilsMessengerEXT ) vkGetInstanceProcAddr( instance, "vkCreateDebugUtilsMessengerEXT" );
+
+		m_pDestroyFunc = ( PFN_vkDestroyDebugUtilsMessengerEXT ) vkGetInstanceProcAddr( instance, "vkDestroyDebugUtilsMessengerEXT" );
+
+		X31_vkCreateDebugUtilsMessenger( instance, &CreateInfo, nullptr, &m_DebugMessenger );
 	}
 
 	VulkanDebugMessenger::~VulkanDebugMessenger()
 	{
-		_intrl_vkDestroyDebugUtilsMessenger( VulkanContext::Get().GetInstance(), m_DebugMessenger, nullptr );
+		X31_vkDestroyDebugUtilsMessenger( VulkanContext::Get().GetInstance(), m_DebugMessenger, nullptr );
+
+		m_pCreateFunc = nullptr;
+		m_pDestroyFunc = nullptr;
 	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// Internal functions
 
 	void VulkanDebugMessenger::CreateDebugMessengerInfo( VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo )
 	{
@@ -72,42 +81,24 @@ namespace Saturn {
 		*pCreateInfo = TempCreateInfo;
 	}
 
-	VkResult VulkanDebugMessenger::_intrl_vkCreateDebugUtilsMessenger( VkInstance Instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger )
+	VkResult VulkanDebugMessenger::X31_vkCreateDebugUtilsMessenger( VkInstance Instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger )
 	{
 		// Find and load the "vkCreateDebugUtilsMessengerEXT" function ptr.
-
-		auto func = ( PFN_vkCreateDebugUtilsMessengerEXT )vkGetInstanceProcAddr( Instance, "vkCreateDebugUtilsMessengerEXT" );
-
-		if( func != nullptr )
+		if( m_pCreateFunc != nullptr )
 		{
 			// Call vkCreateDebugUtilsMessengerEXT
-			return func( Instance, pCreateInfo, pAllocator, pDebugMessenger );
+			return ( *m_pCreateFunc )( Instance, pCreateInfo, pAllocator, pDebugMessenger );
 		}
 		else
 			return VK_ERROR_EXTENSION_NOT_PRESENT;
 	}
 
-	void VulkanDebugMessenger::_intrl_vkDestroyDebugUtilsMessenger( VkInstance Instance, VkDebugUtilsMessengerEXT DebugMessenger, const VkAllocationCallbacks* pAllocator )
+	void VulkanDebugMessenger::X31_vkDestroyDebugUtilsMessenger( VkInstance Instance, VkDebugUtilsMessengerEXT DebugMessenger, const VkAllocationCallbacks* pAllocator )
 	{
-		auto func = ( PFN_vkDestroyDebugUtilsMessengerEXT )vkGetInstanceProcAddr( Instance, "vkDestroyDebugUtilsMessengerEXT" );
-
-		if( func )
+		if( m_pDestroyFunc )
 		{
-			func( Instance, DebugMessenger, pAllocator );
+			( *m_pDestroyFunc )( Instance, DebugMessenger, pAllocator );
 		}
 	}
 
-	//////////////////////////////////////////////////////////////////////////
-
-	void Helpers::CreateDebugMessengerInfo( VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo )
-	{
-		VkDebugUtilsMessengerCreateInfoEXT TempCreateInfo ={ VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT };
-
-		TempCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-		TempCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-		TempCreateInfo.pfnUserCallback = vkDebugCB;
-		TempCreateInfo.pUserData = nullptr;
-
-		*pCreateInfo = TempCreateInfo;
-	}
 }

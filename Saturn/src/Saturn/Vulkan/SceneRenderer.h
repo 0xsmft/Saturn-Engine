@@ -43,6 +43,7 @@
 #include "Framebuffer.h"
 #include "ComputePipeline.h"
 #include "StorageBufferSet.h"
+#include "UniformBufferSet.h"
 
 #include "Pipeline.h"
 
@@ -149,6 +150,66 @@ namespace std {
 
 namespace Saturn {
 
+	struct UBGridMatrices
+	{
+		glm::mat4 ViewProjection;
+
+		glm::mat4 Transform;
+
+		float Scale;
+		float Res;
+	};
+
+	struct UBSkyboxMatrices
+	{
+		glm::mat4 InverseVP;
+	};
+
+	// Vertex, Binding 0
+	struct UBStaticMeshMatrices
+	{
+		glm::mat4 ViewProjection;
+		glm::mat4 View;
+	};
+
+	struct PCStaticMeshMaterial
+	{
+		alignas( 4 ) float UseAlbedoTexture;
+		alignas( 4 ) float UseMetallicTexture;
+		alignas( 4 ) float UseRoughnessTexture;
+		alignas( 4 ) float UseNormalTexture;
+
+		alignas( 16 ) glm::vec4 AlbedoColor;
+		alignas( 4 ) float Metalness;
+		alignas( 4 ) float Roughness;
+	};
+
+	// Fragment, Binding 13
+	struct UBPointLights
+	{
+		uint32_t nbLights = 0;
+		PointLight Lights[ 512 ]{};
+	};
+
+	// Vertex, Binding 1
+	struct UBLightData
+	{
+		glm::mat4 LightMatrix[ 4 ];
+	};
+
+	// Fragment, Binding 2
+	struct UBSceneData
+	{
+		DirLight Lights;
+		glm::vec3 CameraPosition;
+	};
+
+	// Fragment, Binding 3
+	struct UBShadowData
+	{
+		glm::vec4 CascadeSplits;
+	};
+
 	struct RendererData
 	{
 		void Terminate();
@@ -193,48 +254,8 @@ namespace Saturn {
 		Timer BloomTimer;
 
 		//////////////////////////////////////////////////////////////////////////
-
-		struct GridMatricesObject
-		{
-			glm::mat4 ViewProjection;
-			
-			glm::mat4 Transform;
-
-			float Scale;
-			float Res;
-		};
-		
-		struct SkyboxMatricesObject
-		{
-			glm::mat4 InverseVP;
-		};
-		
-		struct StaticMeshMatrices
-		{
-			glm::mat4 ViewProjection;
-			glm::mat4 View;
-		};
-
-		struct StaticMeshMaterial
-		{
-			alignas( 4 ) float UseAlbedoTexture;
-			alignas( 4 ) float UseMetallicTexture;
-			alignas( 4 ) float UseRoughnessTexture;
-			alignas( 4 ) float UseNormalTexture;
-
-			alignas( 16 ) glm::vec4 AlbedoColor;
-			alignas( 4 ) float Metalness;
-			alignas( 4 ) float Roughness;
-		};
-
-		struct PointLights
-		{
-			uint32_t nbLights = 0;
-			PointLight Lights[ 512 ]{};
-		};
-
-		//////////////////////////////////////////////////////////////////////////
 		Ref<StorageBufferSet> StorageBufferSet;
+		Ref<UniformBufferSet> UniformBufferSet;
 
 		//////////////////////////////////////////////////////////////////////////
 		// Quad Vertex and Index buffers
@@ -248,6 +269,7 @@ namespace Saturn {
 
 		std::vector< Ref< Pass > > DirShadowMapPasses;
 		std::vector< Ref< Pipeline > > DirShadowMapPipelines;
+		Ref<Material> DirShadowMapMaterial;
 
 		float CascadeSplitLambda = 0.92f;
 		float CascadeFarPlaneOffset = 100.0f;
@@ -261,10 +283,10 @@ namespace Saturn {
 		Ref<Pass> PreDepthPass = nullptr;
 		Ref<Pipeline> PreDepthPipeline = nullptr;
 		Ref<Framebuffer> PreDepthFramebuffer = nullptr;
-		//Ref< DescriptorSet > PreDepthDescriptorSet = nullptr;
+		Ref<Material> PreDepthMaterial = nullptr;
 
-		Ref< ComputePipeline > LightCullingPipeline = nullptr;
-		Ref< DescriptorSet > LightCullingDescriptorSet = nullptr;
+		Ref<ComputePipeline> LightCullingPipeline = nullptr;
+		Ref<Material> LightCullingMaterial = nullptr;
 		glm::vec3 LightCullingWorkGroups{};
 
 		// Geometry
@@ -278,21 +300,19 @@ namespace Saturn {
 
 		// Main geometry for static meshes.
 		Ref<Pipeline> StaticMeshPipeline = nullptr;
+		Ref<Material> StaticMeshMaterial;
 	
 		// GRID
-
 		Ref<Pipeline> GridPipeline = nullptr;
-
-		Ref< DescriptorSet > GridDescriptorSet = nullptr;
+		Ref<Material> GridMaterial = nullptr;
 
 		// SKYBOX
-
 		Ref<EnvironmentMap> SceneEnvironment = nullptr;
 
 		Ref<Pipeline> SkyboxPipeline = nullptr;
+		Ref<Material> SkyboxMaterial = nullptr;
 
-		Ref< DescriptorSet > SkyboxDescriptorSet = nullptr;
-		Ref< DescriptorSet > PreethamDescriptorSet = nullptr;
+		Ref<Material> PreethamMaterial = nullptr;
 
 		float SkyboxLod = 0.0f;
 		float Intensity = 1.0f;
@@ -311,14 +331,14 @@ namespace Saturn {
 		Ref<Pipeline> SceneCompositePipeline = nullptr;
 		
 		// Input
-		Ref< DescriptorSet > SC_DescriptorSet = nullptr;
+		Ref<Material> SceneCompositeMaterial = nullptr;
 		
 		// Texture pass
 		//////////////////////////////////////////////////////////////////////////
 		Ref<Pass> TexturePass = nullptr;
 		Ref<Pipeline> TexturePassPipeline = nullptr;
 		// Input
-		Ref< DescriptorSet > TexturePassDescriptorSet = nullptr;
+		Ref<Material> TexturePassMaterial = nullptr;
 
 		//////////////////////////////////////////////////////////////////////////
 		// End Scene Composite

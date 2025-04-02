@@ -31,6 +31,9 @@
 #include "Texture.h"
 #include "Shader.h"
 
+#include "UniformBuffer.h"
+#include "StorageBuffer.h"
+
 #include <string>
 
 namespace Saturn {
@@ -42,75 +45,39 @@ namespace Saturn {
 		~Material();
 
 		void Initialise( const std::string& rMaterialName );
-
 		void Copy( Ref<Material>& rOther );
+		void SetName( const std::string& rName ) { m_Name = rName; }
 
-		void Bind( VkCommandBuffer CommandBuffer, Ref<Shader>& rShader );
-		void BindDS( VkCommandBuffer CommandBuffer, VkPipelineLayout Layout );
-		
-		void RT_Update();
+		void Bind( VkCommandBuffer CommandBuffer, VkPipelineLayout Layout, const std::vector<VkWriteDescriptorSet>& rExtraWds, VkPipelineBindPoint bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS );
 
 		void SetResource( const std::string& Name, const Ref<Texture2D>& Texture );
 		void SetResource( const std::string& Name, const Ref<Texture2D>& Texture, uint32_t Index );
+		void SetResource( const std::string& Name, const Ref<TextureCube>& Texture );
+		void SetResource( const std::string& Name, Ref<Image2D> rImage );
+
+		Ref<Texture2D> GetResource( const std::string& Name );
 
 		template<typename Ty>
-		void Set( const std::string& Name, const Ty& Value ) 
+		void SetPC( const std::string& Name, const Ty& Value ) 
 		{
-			for( auto& Uniform : m_Uniforms )
-			{
-				if( Uniform.Name == Name )
-				{
-					if( Uniform.IsPushConstantData )
-					{
-						m_PushConstantData.Write( ( uint8_t* ) &Value, Uniform.Size, Uniform.Offset );
-					}
-					else
-					{
-						Uniform.Data.Write( ( uint8_t* ) &Value, Uniform.Size, Uniform.Offset );
-					}
-					
-					m_AnyValueChanged = true;
-
-					break;
-				}
-			}
+			uint32_t offset = m_ShaderPC.MemberOffsets[ Name ];
+			m_PushConstantData.Write( ( uint8_t* ) &Value, sizeof( Ty ), offset );
 		}
 		
 		template<typename Ty>
 		Ty& Get( const std::string& Name ) 
 		{
-			auto Itr = std::find_if( m_Uniforms.begin(), m_Uniforms.end(), [&]( auto& uniform ) 
-				{ 
-					return uniform.Name == Name;
-				} );
-
-			if( Itr != m_Uniforms.end() )
-			{
-				auto& Uniform = *( Itr );
-
-				if( Uniform.IsPushConstantData )
-				{
-					return m_PushConstantData.Read< Ty >( Uniform.Offset );
-				}
-				else
-				{
-					return Uniform.Data.Read< Ty >( Uniform.Offset );
-				}
-			}
-
-			return *( Ty* )nullptr;
+			uint32_t offset = m_ShaderPC.MemberOffsets[ Name ];
+			return m_PushConstantData.Read<Ty>( offset );
 		}
 		
-		Ref<Texture2D> GetResource( const std::string& Name );
+		VkDescriptorSet GetDescriptorSet(uint32_t index = 0) const { return m_DescriptorSets[index]; }
 
-		VkDescriptorSet GetDescriptorSet(uint32_t index = 0) { return m_DescriptorSets[index]; }
-
-		bool HasAnyValueChanged() const { return m_AnyValueChanged; };
-
-		void SetName( const std::string& rName ) { m_Name = rName; }
+		void UploadDataToUB( uint32_t Binding, void* pData, size_t size );
+		void SetSB( uint32_t binding, const Ref<StorageBuffer>& rInfo );
 
 	public:
-		Ref<Shader>& GetShader() { return m_Shader; }
+		Ref<Shader> GetShader() { return m_Shader; }
 		
 		std::string& GetName() { return m_Name; }
 		const std::string& GetName() const { return m_Name; }
@@ -119,21 +86,26 @@ namespace Saturn {
 		std::unordered_map< std::string, Ref<Texture2D> >& GetTextures() { return m_Textures; }
 		const std::unordered_map< std::string, Ref<Texture2D> >& GetTextures() const { return m_Textures; }
 
-		void WriteDescriptor( VkWriteDescriptorSet& rWDS );
+		void InitLayout();
+		void RT_Update();
+		void PushExternalWds( const VkWriteDescriptorSet& rWds );
+		Ref<UniformBuffer> GetOrCreateUB( uint32_t binding );
 
 	private:
 		std::string m_Name = "";
 		Ref<Shader> m_Shader;
 
-		bool m_AnyValueChanged = false;
-
 		Buffer m_PushConstantData;
 		
-		std::vector< ShaderUniform > m_Uniforms;
-		std::unordered_map< std::string, Ref<Texture2D> > m_Textures;
+		std::unordered_map< uint32_t, std::vector< Ref<UniformBuffer> > > m_UniformBuffers;
 
 		// Binding Name -> Textures
+		std::unordered_map< std::string, Ref<Texture2D> > m_Textures;
 		std::unordered_map< std::string, std::vector< Ref<Texture2D> > > m_TextureArrays;
+
+		// DescriptorSetTemplate, PushConstantTemplate
+		ShaderDescriptorSetTemplate m_DescriptorSetTemplate;
+		ShaderPushConstantTemplate m_ShaderPC{};
 
 		VkDescriptorSet m_DescriptorSets[ MAX_FRAMES_IN_FLIGHT ];
 

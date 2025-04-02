@@ -28,23 +28,28 @@
 
 #pragma once
 
+#include "UniformBuffer.h"
+
 #include "Saturn/Core/Ref.h"
-#include "SingletonStorage.h"
+
+#include <unordered_map>
 
 namespace Saturn {
 
-	enum class ShaderBundleResult 
-	{
-		Success,
-		FileNotFound,
-		InvalidShaderHeader,
-		Failed
-	};
-
-	class ShaderBundle
+	class UniformBufferSet : public RefTarget
 	{
 	public:
-		[[nodiscard]] static ShaderBundleResult BundleShaders();
-		[[nodiscard]] static ShaderBundleResult ReadBundle();
+		UniformBufferSet();
+		~UniformBufferSet();
+
+		void CreateBuffer( size_t size, uint32_t binding );
+		Ref<UniformBuffer> Get( uint32_t set, uint32_t binding, uint32_t frame );
+
+	private:
+		void Set( Ref<UniformBuffer>& rBuffer, uint32_t set, uint32_t binding );
+
+	private:
+		// Set, Binding, Frame, Buffer
+		std::unordered_map<uint32_t, std::unordered_map<uint32_t, std::unordered_map<uint32_t, Ref<UniformBuffer>>>> m_Buffers;
 	};
 }

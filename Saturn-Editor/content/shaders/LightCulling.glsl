@@ -23,13 +23,13 @@ layout(set = 0, binding = 0) uniform PointLightData
 	PointLight Lights[512];
 } u_Lights;
 
-// Must match with static meshes shader.
+// Set and Binding must match with StaticMesh shader for our StorageBufferSet.
 layout(std430, set = 0, binding = 14) buffer VisiblePointLightIndicesBuffer
 {
 	int Indices[];
 } s_VisiblePointLightIndicesBuffer;
 
-layout(std140, binding = 3) uniform ScreenData
+layout(std140, set = 0, binding = 3) uniform ScreenData
 {
 	vec2 FullResolution;
 } u_ScreenInfo;

@@ -14,10 +14,11 @@ layout(location = 6) in vec4 a_TransformBufferR2;
 layout(location = 7) in vec4 a_TransformBufferR3;
 layout(location = 8) in vec4 a_TransformBufferR4;
 
-layout(set = 0, binding = 0) uniform Matrices
+// Set and Binding must match with StaticMesh shader for our UniformBufferSet.
+layout(set = 0, binding = 1) uniform LightData
 {
 	mat4 ViewProjection[4];
-} u_Matrices;
+} u_LightData;
 
 layout(push_constant) uniform u_Transform
 {
@@ -32,12 +33,5 @@ void main()
 		a_TransformBufferR1.z, a_TransformBufferR2.z, a_TransformBufferR3.z, a_TransformBufferR4.z, 
 		a_TransformBufferR1.w, a_TransformBufferR2.w, a_TransformBufferR3.w, a_TransformBufferR4.w  );
 
-	gl_Position = u_Matrices.ViewProjection[ CascadeIndex ] * transform * vec4( a_Position, 1.0 );
-}
-
-#type fragment
-#version 430
-
-void main()
-{
+	gl_Position = u_LightData.ViewProjection[ CascadeIndex ] * transform * vec4( a_Position, 1.0 );
 }

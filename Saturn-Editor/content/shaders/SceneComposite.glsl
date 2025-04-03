@@ -101,6 +101,7 @@ void main()
 	vec3 GeometryPassColor = texture( u_GeometryPassTexture, vs_Input.TexCoord ).rgb;
 
 	// Bloom
+	/*
 	float sampleScale = 0.5;
 	ivec2 texSize = textureSize(u_BloomTexture, 0);
 	vec2 fTexSize = vec2(float(texSize.x), float(texSize.y));
@@ -108,6 +109,7 @@ void main()
 	vec3 dirt = texture( u_BloomDirtTexture, vs_Input.TexCoord ).rgb * 20.0f; 
 
 	GeometryPassColor += bloom;
+	*/
 
 	GeometryPassColor = ACES( GeometryPassColor );
 	GeometryPassColor = GammaCorrect( GeometryPassColor, gamma );

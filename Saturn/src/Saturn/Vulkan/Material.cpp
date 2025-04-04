@@ -28,21 +28,21 @@
 
 #include "sppch.h"
 #include "Material.h"
+
 #include "Mesh.h"
 #include "DescriptorSet.h"
 #include "Renderer.h"
 #include "Texture.h"
-
 #include "VulkanContext.h"
 
-// TODO: When we have an asset manager, this needs to be re-worked!
+#include "Saturn/Core/OptickProfiler.h"
 
 namespace Saturn {
 
-	Material::Material( const Ref< Saturn::Shader >& Shader, const std::string& MateralName )
-		: m_Shader( Shader )
+	Material::Material( const Ref< Saturn::Shader >& rShader, const std::string& rMateralName )
+		: m_Shader( rShader )
 	{
-		Initialise( MateralName );
+		Initialise( rMateralName );
 	}
 
 	void Material::Initialise( const std::string& rMaterialName )
@@ -108,6 +108,8 @@ namespace Saturn {
 
 		m_Shader = rOther->m_Shader;
 		m_PushConstantData = rOther->m_PushConstantData;
+		m_ShaderPC = rOther->m_ShaderPC;
+		m_DescriptorSetTemplate = rOther->m_DescriptorSetTemplate;
 	}
 
 	void Material::Bind( VkCommandBuffer CommandBuffer, VkPipelineLayout Layout, const std::vector<VkWriteDescriptorSet>& rExtraWds, VkPipelineBindPoint bindPoint )
@@ -126,6 +128,8 @@ namespace Saturn {
 
 	void Material::RT_Update()
 	{
+		SAT_PF_EVENT();
+
 		uint32_t frame = Renderer::Get().GetCurrentFrame();
 
 		m_DescriptorSets[ frame ] = m_Shader->AllocateDescriptorSet( 0, true );
@@ -189,8 +193,8 @@ namespace Saturn {
 			{
 				auto& rWds = m_DescriptorSetTemplate.WriteDescriptorSets[ Itr->Binding ];
 				rWds.pImageInfo = ImageInfos.data();
-				rWds.descriptorCount = ImageInfos.size();
 				rWds.dstSet = m_DescriptorSets[ frame ];
+				rWds.descriptorCount = ( uint32_t ) ImageInfos.size();
 
 				vkUpdateDescriptorSets( VulkanContext::Get().GetDevice(), 1, &rWds, 0, nullptr );
 			}
@@ -204,15 +208,7 @@ namespace Saturn {
 
 	void Material::PushExternalWds( const VkWriteDescriptorSet& rWds )
 	{
-		if( rWds.descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER || rWds.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER )
-		{
-			m_DescriptorSetTemplate.WriteDescriptorSets[ rWds.dstBinding ] = rWds;
-		}
-
-		if( rWds.descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE || rWds.descriptorType == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE )
-		{
-			m_DescriptorSetTemplate.WriteDescriptorSets[ rWds.dstBinding ] = rWds;
-		}
+		m_DescriptorSetTemplate.WriteDescriptorSets[ rWds.dstBinding ] = rWds;
 	}
 
 	void Material::SetResource( const std::string& Name, const Ref<Texture2D>& Texture )
@@ -327,24 +323,20 @@ namespace Saturn {
 
 	Ref<UniformBuffer> Material::GetOrCreateUB( uint32_t binding )
 	{
+		SAT_PF_EVENT();
+
 		uint32_t frame = Renderer::Get().GetCurrentFrame();
 
-		std::vector<Ref<UniformBuffer>> ubs = m_UniformBuffers[ binding ];
+		auto& ubs = m_UniformBuffers[ binding ];
 
-		auto Itr = std::find( ubs.begin(), ubs.end(), frame + 1 );
-
-		if( Itr == ubs.end() )
+		if( ubs[ frame ] == nullptr )
 		{
-			auto ub = Ref<UniformBuffer>::Create( 0, binding, m_DescriptorSetTemplate.UniformBuffers[ binding ].Size );
+			ubs[ frame ] = Ref<UniformBuffer>::Create( 0, binding, m_DescriptorSetTemplate.UniformBuffers[ binding ].Size );
 
-			m_UniformBuffers[ binding ].push_back( ub );
-
-			m_DescriptorSetTemplate.WriteDescriptorSets[ binding ].pBufferInfo = &ub->GetBufferInfo();
-
-			return ub;
+			m_DescriptorSetTemplate.WriteDescriptorSets[ binding ].pBufferInfo = &ubs[ frame ]->GetBufferInfo();
 		}
 
-		return m_UniformBuffers[ binding ][ frame ];
+		return ubs[ frame ];
 	}
 
 	void Material::UploadDataToUB( uint32_t Binding, void* pData, size_t size )

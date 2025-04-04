@@ -63,7 +63,7 @@ namespace Saturn {
 	// 	 mat4 View;
 	// } u_Matrices;
 	// Our C++ information would be 
-	// u_Matrices, 0, 128, ShaderType::All
+	// u_Matrices, 0, 128, ShaderType::Vertex
 	// NOTE: ShaderUniformBuffer do not allocate a Vulkan Buffer. That is done via the Uniform Buffer class
 	struct ShaderUniformBuffer
 	{
@@ -96,13 +96,24 @@ namespace Saturn {
 		}
 	};
 
+	// ShaderStorageBuffer
+	// Consider this class as a description to a storage buffer
+	// For example in a GLSL shader if we have:
+	//
+	// layout( std430, set = 0, binding = 14 ) buffer VisiblePointLightIndicesBuffer
+	// {
+	//	 int Indices[];
+	// } s_VisiblePointLightIndicesBuffer;
+	// 
+	// Our C++ information would be:
+	// s_VisiblePointLightIndicesBuffer, 14, -, ShaderType::Fragment/Compute
+	// NOTE: ShaderStorageBuffer do not allocate a Vulkan Buffer. That is done via the Storage Buffer class
 	struct ShaderStorageBuffer
 	{
 		std::string Name;
 		uint32_t Binding;
 		size_t Size = 0;
 		ShaderType Location = ShaderType::None;
-		bool Updated = false;
 
 		bool operator==( const ShaderStorageBuffer& rOther )
 		{
@@ -128,6 +139,13 @@ namespace Saturn {
 		}
 	};
 
+	// ShaderSampledImage
+	// Consider this class as a description to a sampled image
+	// For example in a GLSL shader if we have:
+	//
+	// layout(set = 0, binding = 1) uniform sampler2D u_AlbedoTexture;
+	// Our C++ information would be:
+	// u_AlbedoTexture, ShaderType::Fragment, 0, 1, 1
 	struct ShaderSampledImage
 	{
 		std::string Name;
@@ -156,12 +174,43 @@ namespace Saturn {
 		}
 	};
 
+	// ShaderPushConstantTemplate
+	// Consider this class as a description to a push constant buffer
+	// For example in a GLSL shader if we have:
+	//
+	// layout(push_constant) uniform PushConstantData
+	// {
+	//   mat4 ViewProjection;
+	//   mat4 View;
+	// } u_PushConstantData;
+	//
+	// Our C++ information would be:
+	// u_PushConstantData, ShaderType::Vertex, 128, MemberOffsets[(u_PushConstantData.ViewProjection, 0), (u_PushConstantData.View, 64)]
 	struct ShaderPushConstantTemplate
 	{
 		std::string Name;
 		ShaderType Stage = ShaderType::None;
 		uint32_t Size = 0;
+
+		// NAME -> OFFSET
 		std::unordered_map<std::string, uint32_t> MemberOffsets;
+
+	public:
+		static void Serialise( const ShaderPushConstantTemplate& rPushConst, std::ofstream& rStream )
+		{
+			RawSerialisation::WriteString( rPushConst.Name, rStream );
+			RawSerialisation::WriteObject( rPushConst.Stage, rStream );
+			RawSerialisation::WriteObject( rPushConst.Size, rStream );
+			RawSerialisation::WriteUnorderedMap( rPushConst.MemberOffsets, rStream );
+		}
+
+		static void Deserialise( ShaderPushConstantTemplate& rPushConst, std::ifstream& rStream )
+		{
+			rPushConst.Name = RawSerialisation::ReadString( rStream );
+			RawSerialisation::ReadObject( rPushConst.Stage, rStream );
+			RawSerialisation::ReadObject( rPushConst.Size, rStream );
+			RawSerialisation::ReadUnorderedMap( rPushConst.MemberOffsets, rStream );
+		}
 	};
 
 	// ShaderDescriptorSetTemplate
@@ -176,14 +225,21 @@ namespace Saturn {
 	// 
 	// layout (set = 0, binding = 1) uniform sampler2D u_AlbedoTexture;
 	// 
+	// layout( std430, set = 0, binding = 14 ) buffer VisiblePointLightIndicesBuffer
+	// {
+	//	 int Indices[];
+	// } s_VisiblePointLightIndicesBuffer;
+	// 
 	// Our C++ information would be:
 	// Set = 0
 	// SampledImages = 1 (u_AlbedoTexture [ShaderSampledImage])
 	// UniformBuffers = 1 (u_Matrices [ShaderUniformBuffer])
-	// WriteDescriptorSets = 2 (u_AlbedoTexture image wds, u_Matrices texture wds )
+	// StorageBuffers = 1 (s_VisiblePointLightIndicesBuffer [ShaderStorageBuffer])
+	// WriteDescriptorSets = 2 (u_AlbedoTexture image wds, u_Matrices texture wds, s_VisiblePointLightIndicesBuffer wds )
 	// 
-	// ShaderDescriptorSetTemplate do not own or create a Vulkan DescriptorSet it is simply used for information about the descriptor set. To allocate a descriptor set with such information you'd need to use the shader to create it with the correct set.
-	// ShaderDescriptorSetTemplate does contain the Vulkan Set Layout
+	// ShaderDescriptorSetTemplate do not own or create a Vulkan DescriptorSet it is simply used for information about the descriptor set. 
+	// To allocate a descriptor set with such information you'd need to use the shader to create it with the correct set.
+	// ShaderDescriptorSetTemplate does contain the Vulkan Descriptor Set Layout
 	class ShaderDescriptorSetTemplate
 	{
 	public:
@@ -205,16 +261,17 @@ namespace Saturn {
 		~ShaderDescriptorSetTemplate() = default;
 
 	public:
-		uint32_t Set;
+		uint32_t Set = UINT32_MAX;
 
 		VkDescriptorSetLayout SetLayout = nullptr;
 		
 		// BINDING -> WDS
 		std::unordered_map< uint32_t, VkWriteDescriptorSet > WriteDescriptorSets;
-		std::vector< ShaderSampledImage > SampledImages;
-		std::vector< ShaderSampledImage > StorageImages;
 		std::unordered_map< uint32_t, ShaderUniformBuffer > UniformBuffers;
 		std::unordered_map< uint32_t, ShaderStorageBuffer > StorageBuffers;
+
+		std::vector< ShaderSampledImage > SampledImages;
+		std::vector< ShaderSampledImage > StorageImages;
 
 	public:
 		static void Serialise( const ShaderDescriptorSetTemplate& rObject, std::ofstream& rStream )
@@ -319,35 +376,10 @@ namespace std {
 
 namespace Saturn {
 
-	static ShaderType VulkanStageToSaturn( VkShaderStageFlags Flags )
-	{
-		switch( Flags )
-		{
-			case VK_SHADER_STAGE_VERTEX_BIT:
-				return ShaderType::Vertex;
-			case VK_SHADER_STAGE_FRAGMENT_BIT:
-				return ShaderType::Fragment;
-			case VK_SHADER_STAGE_GEOMETRY_BIT:
-				return ShaderType::Geometry;
-			case VK_SHADER_STAGE_COMPUTE_BIT:
-				return ShaderType::Compute;
-			default:
-				return ShaderType::All;
-		}
-	}
-	
-	extern ShaderType ShaderTypeFromString( const std::string& Str );
-	extern std::string ShaderTypeToString( ShaderType Type );
-
 	class Shader : public RefTarget
 	{
 		using ShaderSourceMap = std::unordered_map< ShaderSourceKey, ShaderSource >;
 		using SpvSourceMap = std::unordered_map< ShaderSourceKey, std::vector< uint32_t > >;
-		using ShaderUBMap = std::unordered_map< ShaderType, std::unordered_map< uint32_t, ShaderUniformBuffer > >;
-		//                                      ShaderType,                     Binding,   UniformBuffer
-		
-		using ShaderWriteMap = std::unordered_map< ShaderType, std::unordered_map< std::string, VkWriteDescriptorSet > >;
-
 	public:
 		// Internal default constructor, only used when reading from a shader bundle.
 		// Do not use!
@@ -362,9 +394,6 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		ShaderSourceMap& GetShaderSources() { return m_ShaderSources; }
 		const ShaderSourceMap& GetShaderSources() const { return m_ShaderSources; }
-
-		ShaderWriteMap& GetWriteDescriptors() { return m_DescriptorWrites; }
-		const ShaderWriteMap& GetWriteDescriptors() const { return m_DescriptorWrites; }
 #endif
 
 		const SpvSourceMap& GetSpvCode() const { return m_SpvCode; }
@@ -381,15 +410,15 @@ namespace Saturn {
 		std::vector< VkPushConstantRange >& GetPushConstantRanges() { return m_VulkanRanges; }
 		const std::vector< VkPushConstantRange  >& GetPushConstantRanges() const { return m_VulkanRanges; }
 
-		uint32_t GetDescriptorSetCount() const { return m_DescriptorSetCount; }
+		size_t GetDescriptorSetCount() const { return m_DescriptorSets.size(); }
 
 		Ref<DescriptorSet> CreateDescriptorSet( uint32_t set, bool UseRendererPool = false );
 		VkDescriptorSet AllocateDescriptorSet( uint32_t set, bool UseRendererPool = false );
 
 		ShaderDescriptorSetTemplate& GetShaderDescriptorSetTemplates( uint32_t set ) { return m_DescriptorSets[ set ]; }
 
-		std::vector< VkDescriptorSetLayout >& GetSetLayouts() { return m_SetLayouts; }
-		VkDescriptorSetLayout GetSetLayout( uint32_t set = 0 ) { return m_SetLayouts[ set ]; }
+		std::vector< VkDescriptorSetLayout > GetSetLayouts();
+		inline VkDescriptorSetLayout GetSetLayout( uint32_t set = 0 ) { return m_DescriptorSets[ set ].SetLayout; }
 
 		void SerialiseShaderData( std::ofstream& rStream ) const;
 		void DeserialiseShaderData( std::ifstream& rStream );
@@ -421,18 +450,13 @@ namespace Saturn {
 		std::filesystem::path m_Filepath = "";
 
 		ShaderSourceMap m_ShaderSources;
-		ShaderWriteMap m_DescriptorWrites;
 #endif
 		// Set -> ShaderDescriptorSet
 		std::unordered_map< uint32_t, ShaderDescriptorSetTemplate > m_DescriptorSets;
 		std::vector<ShaderPushConstantTemplate> m_PushConstants;
 		std::vector<VkPushConstantRange> m_VulkanRanges;
 
-		uint32_t m_DescriptorSetCount = -1;
-
-		std::vector< VkDescriptorSetLayout > m_SetLayouts;
-		Ref< DescriptorPool > m_SetPool;
-
+		Ref<DescriptorPool> m_SetPool;
 		UUID m_ShaderHash;
 
 	private:

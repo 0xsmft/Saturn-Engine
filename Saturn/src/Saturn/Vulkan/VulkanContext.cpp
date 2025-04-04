@@ -141,11 +141,7 @@ namespace Saturn {
 	void VulkanContext::CreateInstance()
 	{
 #if !defined( SAT_DIST )
-
-		if( !CheckValidationLayerSupport() )
-			SAT_CORE_ASSERT( false, "Unable to find validation layer, please use DIST build if you want to run the app." );
-#else
-		CheckValidationLayerSupport();
+		SAT_CORE_ASSERT( CheckValidationLayerSupport(), "Unable to find validation layer." );
 #endif
 
 		VkApplicationInfo AppInfo  ={ VK_STRUCTURE_TYPE_APPLICATION_INFO };
@@ -169,12 +165,14 @@ namespace Saturn {
 			InstanceInfo.enabledLayerCount = static_cast< uint32_t >( ValidationLayers.size() );
 			InstanceInfo.ppEnabledLayerNames = ValidationLayers.data();
 
-			VkValidationFeatureEnableEXT Enabled[] = { VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT };
+			VkValidationFeatureEnableEXT  Enabled[]  = { VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT };
+			VkValidationFeatureDisableEXT Disabled[] = { VK_VALIDATION_FEATURE_DISABLE_UNIQUE_HANDLES_EXT };
+
 			VkValidationFeaturesEXT      Features{ VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT };
 			Features.disabledValidationFeatureCount = 0;
-			Features.enabledValidationFeatureCount = 1;
+			Features.enabledValidationFeatureCount = 0;
 			Features.pDisabledValidationFeatures = nullptr;
-			Features.pEnabledValidationFeatures = Enabled;
+			Features.pEnabledValidationFeatures = nullptr;
 
 			InstanceInfo.pNext = &Features;
 		}

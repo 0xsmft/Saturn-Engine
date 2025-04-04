@@ -41,13 +41,14 @@ namespace Saturn {
 	class Material : public RefTarget
 	{
 	public:
-		 Material( const Ref<Shader>& Shader, const std::string& MateralName );
+		 Material( const Ref<Shader>& rShader, const std::string& rMateralName );
 		~Material();
 
 		void Initialise( const std::string& rMaterialName );
 		void Copy( Ref<Material>& rOther );
 		void SetName( const std::string& rName ) { m_Name = rName; }
 
+		// Bind and update the material descriptor set.
 		void Bind( VkCommandBuffer CommandBuffer, VkPipelineLayout Layout, const std::vector<VkWriteDescriptorSet>& rExtraWds, VkPipelineBindPoint bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS );
 
 		void SetResource( const std::string& Name, const Ref<Texture2D>& Texture );
@@ -57,6 +58,7 @@ namespace Saturn {
 
 		Ref<Texture2D> GetResource( const std::string& Name );
 
+		// Set push constant data.
 		template<typename Ty>
 		void SetPC( const std::string& Name, const Ty& Value ) 
 		{
@@ -64,6 +66,7 @@ namespace Saturn {
 			m_PushConstantData.Write( ( uint8_t* ) &Value, sizeof( Ty ), offset );
 		}
 		
+		// Get push constant data.
 		template<typename Ty>
 		Ty& Get( const std::string& Name ) 
 		{
@@ -86,8 +89,9 @@ namespace Saturn {
 		std::unordered_map< std::string, Ref<Texture2D> >& GetTextures() { return m_Textures; }
 		const std::unordered_map< std::string, Ref<Texture2D> >& GetTextures() const { return m_Textures; }
 
-		void InitLayout();
+		// Internal Update function without binding the descriptor set.
 		void RT_Update();
+		void InitLayout();
 		void PushExternalWds( const VkWriteDescriptorSet& rWds );
 		Ref<UniformBuffer> GetOrCreateUB( uint32_t binding );
 
@@ -97,7 +101,8 @@ namespace Saturn {
 
 		Buffer m_PushConstantData;
 		
-		std::unordered_map< uint32_t, std::vector< Ref<UniformBuffer> > > m_UniformBuffers;
+		// Binding -> UniformBuffers (per frame in flight)
+		std::unordered_map< uint32_t, std::array< Ref<UniformBuffer>, MAX_FRAMES_IN_FLIGHT > > m_UniformBuffers;
 
 		// Binding Name -> Textures
 		std::unordered_map< std::string, Ref<Texture2D> > m_Textures;

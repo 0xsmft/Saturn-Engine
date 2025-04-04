@@ -323,8 +323,6 @@ namespace Saturn {
 	{
 		SAT_PF_EVENT();
 
-		Ref<Shader> Shader = Pipeline->GetShader();
-
 		VkDeviceSize transformOffsets[ 1 ] = { transformOffset };
 
 		mesh->GetVertexBuffer()->Bind( CommandBuffer );
@@ -348,7 +346,7 @@ namespace Saturn {
 				wds.insert( wds.end(), StorageWriteDescriptors.begin(), StorageWriteDescriptors.end() );
 			}
 
-			rMaterialAsset->RT_Update( mesh, rSubmesh, Shader, wds );
+			rMaterialAsset->RT_Update( mesh, rSubmesh, wds );
 
 			VkDescriptorSet Set = rMaterialAsset->GetMaterial()->GetDescriptorSet( m_FrameCount );
 

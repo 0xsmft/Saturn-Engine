@@ -1282,7 +1282,7 @@ namespace Saturn {
 			}
 		}
 
-	m_RendererData.UniformBufferSet->Get( 0, 0, frame )->UploadData( &u_Matrices, sizeof( u_Matrices ) );
+		m_RendererData.UniformBufferSet->Get( 0, 0, frame )->UploadData( &u_Matrices, sizeof( u_Matrices ) );
 
 	//		m_RendererData.UniformBufferSet->Get( 0, 1, frame )->UploadData( &u_LightData, sizeof( u_LightData ) );
 
@@ -1548,7 +1548,7 @@ namespace Saturn {
 		struct UB_Matrices
 		{
 			glm::mat4 ViewProjection;
-		} u_Matrices;
+		} u_Matrices{};
 
 		u_Matrices.ViewProjection = m_RendererData.CurrentCamera.Camera.ProjectionMatrix() * m_RendererData.CurrentCamera.ViewMatrix;
 
@@ -1698,7 +1698,6 @@ namespace Saturn {
 	//       And also we aren't freeing them after the stages are complete.
 	void SceneRenderer::BloomPass()
 	{
-		/*
 		SAT_PF_EVENT();
 
 		m_RendererData.BloomTimer.Reset();
@@ -1707,6 +1706,7 @@ namespace Saturn {
 		// TEMP
 		return;
 
+		/*
 		struct u_Settings
 		{
 			float Threshold;

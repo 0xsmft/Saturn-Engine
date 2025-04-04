@@ -86,26 +86,25 @@ namespace Saturn {
 		VkRenderPass GetDefaultVulkanPass() { return m_DefaultPass->GetVulkanPass(); }
 
 	public:
-		
-		VkInstance GetInstance() { return m_Instance; }
+		VkInstance GetInstance() const { return m_Instance; }
 
-		VkDevice GetDevice() { return m_LogicalDevice; }
+		VkDevice GetDevice() const { return m_LogicalDevice; }
 
-		VkSurfaceKHR GetSurface() { return m_Surface; }
+		VkSurfaceKHR GetSurface() const { return m_Surface; }
 		VkSurfaceFormatKHR& GetSurfaceFormat() { return m_SurfaceFormat; }
 
 		SwapchainCreationData GetSwapchainCreationData();
 
 		QueueFamilyIndices& GetQueueFamilyIndices() { return m_Indices; };
 
-		VkCommandPool GetCommandPool() { return m_CommandPool; }
+		VkCommandPool GetCommandPool() const { return m_CommandPool; }
 
-		VkQueue GetGraphicsQueue() { return m_GraphicsQueue; }
-		VkQueue GetPresentQueue() { return m_PresentQueue; }
+		VkQueue GetGraphicsQueue() const { return m_GraphicsQueue; }
+		VkQueue GetPresentQueue() const { return m_PresentQueue; }
 
-		VkPhysicalDevice GetPhysicalDevice() { return m_PhysicalDevice; }
+		VkPhysicalDevice GetPhysicalDevice() const { return m_PhysicalDevice; }
 
-		VkQueue GetComputeQueue() { return m_ComputeQueue; }
+		VkQueue GetComputeQueue() const { return m_ComputeQueue; }
 
 		Swapchain& GetSwapchain() { return m_SwapChain; }
 

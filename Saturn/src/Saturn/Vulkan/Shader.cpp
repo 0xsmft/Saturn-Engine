@@ -49,6 +49,23 @@
 
 namespace Saturn {
 	
+	static ShaderType VulkanStageToSaturn( VkShaderStageFlags Flags )
+	{
+		switch( Flags )
+		{
+			case VK_SHADER_STAGE_VERTEX_BIT:
+				return ShaderType::Vertex;
+			case VK_SHADER_STAGE_FRAGMENT_BIT:
+				return ShaderType::Fragment;
+			case VK_SHADER_STAGE_GEOMETRY_BIT:
+				return ShaderType::Geometry;
+			case VK_SHADER_STAGE_COMPUTE_BIT:
+				return ShaderType::Compute;
+			default:
+				return ShaderType::All;
+		}
+	}
+
 	static VkShaderStageFlags ShaderTypeToVulkan( ShaderType type ) 
 	{
 		switch( type )
@@ -93,6 +110,52 @@ namespace Saturn {
 
 		return ShaderDataType::None;
 	}
+
+	static ShaderType ShaderTypeFromString( const std::string& Str )
+	{
+		if( Str == "vertex" )
+		{
+			return ShaderType::Vertex;
+		}
+		else if( Str == "fragment" )
+		{
+			return ShaderType::Fragment;
+		}
+		else if( Str == "compute" )
+		{
+			return ShaderType::Compute;
+		}
+		else if( Str == "geometry" )
+		{
+			return ShaderType::Geometry;
+		}
+		else
+		{
+			return ShaderType::None;
+		}
+	}
+
+	static std::string ShaderTypeToString( ShaderType Type )
+	{
+		switch( Type )
+		{
+			case Saturn::ShaderType::Vertex:
+				return "Vertex";
+			case Saturn::ShaderType::Fragment:
+				return "Fragment";
+			case Saturn::ShaderType::Geometry:
+				return "Geometry";
+			case Saturn::ShaderType::Compute:
+				return "Compute";
+			default:
+				break;
+		}
+
+		return "";
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// SHADER LIBRARY
 
 	ShaderLibrary::ShaderLibrary()
 	{
@@ -177,55 +240,9 @@ namespace Saturn {
 
 		return m_Shaders.at( name );
 	}
-
-	//////////////////////////////////////////////////////////////////////////
-	
-	ShaderType ShaderTypeFromString( const std::string& Str )
-	{
-		if( Str == "vertex" )
-		{
-			return ShaderType::Vertex;
-		}
-		else if( Str == "fragment" )
-		{
-			return ShaderType::Fragment;
-		}
-		else if( Str == "compute" )
-		{
-			return ShaderType::Compute;
-		}
-		else if( Str == "geometry" )
-		{
-			return ShaderType::Geometry;
-		}
-		else
-		{
-			return ShaderType::None;
-		}
-	}
-
-	std::string ShaderTypeToString( ShaderType Type )
-	{
-		switch( Type )
-		{
-			case Saturn::ShaderType::Vertex:
-				return "Vertex";
-			case Saturn::ShaderType::Fragment:
-				return "Fragment";
-			case Saturn::ShaderType::Geometry:
-				return "Geometry";
-			case Saturn::ShaderType::Compute:
-				return "Compute";
-			default:
-				break;
-		}
-
-		return "";
-	}
 	
 	//////////////////////////////////////////////////////////////////////////
 	// SHADER
-	//////////////////////////////////////////////////////////////////////////
 
 	Shader::Shader( const std::filesystem::path& rFilepath )
 #if !defined(SAT_DIST)
@@ -267,13 +284,10 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		m_ShaderSources.clear();
 #endif
-
 		for( auto& [ set, descriptorSet ] : m_DescriptorSets )
 		{
 			vkDestroyDescriptorSetLayout( VulkanContext::Get().GetDevice(), descriptorSet.SetLayout, nullptr );
 		}
-
-		m_SetLayouts.clear();
 
 		m_SetPool = nullptr;
 
@@ -334,12 +348,40 @@ namespace Saturn {
 		return Set;
 	}
 
+	std::vector< VkDescriptorSetLayout > Shader::GetSetLayouts()
+	{
+		std::vector< VkDescriptorSetLayout > layouts;
+
+		for( auto& [set, descriptorSet] : m_DescriptorSets )
+		{
+			layouts.push_back( descriptorSet.SetLayout );
+		}
+
+		return layouts;
+	}
+
 	void Shader::ReadFile()
 	{
 #if !defined(SAT_DIST)
-		if( !std::filesystem::exists( m_Filepath ) )
+		// Read the raw GLSL text file.
+		std::ifstream stream( m_Filepath, std::ios::ate | std::ios::binary );
+		if( !stream.is_open() )
+		{
+			SAT_CORE_ERROR( "Failed to open shader file \"{0}\"", m_Filepath.string() );
+			SAT_CORE_ASSERT( false );
+		}
+
+		m_FileSize = ( size_t ) stream.tellg();
+		m_FileContents.resize( m_FileSize );
+
+		stream.seekg( 0 );
+		stream.read( m_FileContents.data(), m_FileSize );
+		stream.close();
+
+		/*
+		* 		if( !std::filesystem::exists( m_Filepath ) )
 			return;
-		
+
 		std::ifstream f( m_Filepath, std::ios::ate | std::ios::binary );
 
 		m_FileSize = static_cast< size_t >( f.tellg() );
@@ -351,6 +393,8 @@ namespace Saturn {
 		f.close();
 
 		m_FileContents = std::string( Buffer.begin(), Buffer.end() );
+*/
+
 #endif
 	}
 
@@ -783,8 +827,6 @@ namespace Saturn {
 			LayoutInfo.pBindings = Bindings.data();
 
 			VK_CHECK( vkCreateDescriptorSetLayout( VulkanContext::Get().GetDevice(), &LayoutInfo, nullptr, &descriptorSet.SetLayout ) );
-
-			m_SetLayouts.push_back( descriptorSet.SetLayout );
 		}
 
 		m_SetPool = Ref< DescriptorPool >::Create( PoolSizes, 10000 );
@@ -850,6 +892,7 @@ namespace Saturn {
 		auto OldSpvMap          = m_SpvCode;
 		auto OldDescriptorSets  = m_DescriptorSets;
 		auto OldPushConstsRange = m_VulkanRanges;
+		auto OldPushContsts = m_PushConstants;
 
 		// Read the updated file.
 		ReadFile();
@@ -859,12 +902,14 @@ namespace Saturn {
 		m_SpvCode.clear();
 		m_DescriptorSets.clear();
 		m_VulkanRanges.clear();
+		m_PushConstants.clear();
 
 		if( !CompileGlslToSpvAssembly() )
 		{
 			m_SpvCode              = OldSpvMap;
 			m_DescriptorSets       = OldDescriptorSets;
 			m_VulkanRanges         = OldPushConstsRange;
+			m_PushConstants        = OldPushContsts;
 
 			SAT_CORE_ERROR( "Shader hot reloading failed. Shader did not compile successfully!" );
 
@@ -899,6 +944,7 @@ namespace Saturn {
 		RawSerialisation::WriteUnorderedMap( m_SpvCode, rStream );
 		RawSerialisation::WriteUnorderedMap( m_DescriptorSets, rStream );
 
+		RawSerialisation::WriteVector( m_PushConstants, rStream );
 		RawSerialisation::WriteVector( m_VulkanRanges, rStream );
 	}
 
@@ -907,6 +953,7 @@ namespace Saturn {
 		RawSerialisation::ReadUnorderedMap( m_SpvCode, rStream );
 		RawSerialisation::ReadUnorderedMap( m_DescriptorSets, rStream );
 
+		RawSerialisation::ReadVector( m_PushConstants, rStream );
 		RawSerialisation::ReadVector( m_VulkanRanges, rStream );
 
 		// Clean up some of the data that was read.

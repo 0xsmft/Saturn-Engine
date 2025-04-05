@@ -93,7 +93,7 @@ namespace Saturn {
 
 	struct RendererThumbnailCacheData
 	{
-		RendererThumbnailCacheData() : Camera( 45.0f, THUMBNAIL_SIZE, THUMBNAIL_SIZE, 0.1f, 100000.0f ) {}
+		RendererThumbnailCacheData() : Camera( 45.0f, THUMBNAIL_SIZE, THUMBNAIL_SIZE, 0.1f, 1000.0f ) {}
 
 		Ref<SceneRenderer> SceneRenderer;
 		Ref<Scene> Scene;
@@ -283,16 +283,20 @@ namespace Saturn {
 			auto staticMesh = rData.Asset.As<StaticMesh>();
 			auto& rBoundingBox = staticMesh->GetBoundingBox();
 
-			glm::vec3 center = ( rBoundingBox.Min + rBoundingBox.Max ) / 2.0f;
-			glm::vec3 halfd = ( rBoundingBox.Max - rBoundingBox.Min ) / 2.0f;
+			// Set the distance based on the bounding box and make sure that we are not too close so the min is 4.0f
+			glm::vec3 size = rBoundingBox.Max - rBoundingBox.Min;
+			float maxSize = std::max( size.x, std::max( size.y, size.z ) );
 
-			float maxD = glm::max( glm::max( halfd.x, halfd.y ), halfd.z );
-			constexpr float fov = glm::radians( 45.0f );
-			float tanFov = glm::tan( fov / 2.0f );
+			float distance = maxSize * 2.0f;
+			distance = std::max( distance + 4.0f, 4.0f );
 
-			float dist = maxD / ( 2.0f * tanFov );
+			rCacheData.Camera.SetDistance( distance );
 
-			rCacheData.Camera.SetDistance( dist );
+			// Greater than the far clip
+			if( distance > 1000.0f )
+			{
+				rCacheData.Camera.SetProjectionMatrix( 45.0f, THUMBNAIL_SIZE, THUMBNAIL_SIZE, 0.1f, distance * 10.0f );
+			}
 
 			// Update to change the distance
 			rCacheData.Camera.OnUpdate( Application::Get().Time() );

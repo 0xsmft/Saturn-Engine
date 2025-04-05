@@ -63,6 +63,7 @@ namespace Saturn {
 
 		static void InsertNew( const std::filesystem::path& rPath, int64_t time, Ref<Texture2D> texture );
 		static bool AssetHasThumbail( const std::filesystem::path& rPath );
+		static void OnModified( Ref<Asset> asset );
 
 		static void UpdateCache();
 		static void OnUpdate();

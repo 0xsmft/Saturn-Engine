@@ -34,6 +34,7 @@
 #include "Saturn/Asset/Asset.h"
 
 #include "Saturn/Serialisation/RawSerialisation.h"
+#include "Saturn/Asset/TextureSourceAsset.h"
 
 #include <queue>
 
@@ -106,7 +107,7 @@ namespace Saturn {
 				// Generate texture if not already in cache
 				rData.Texture = s_Generator.GenerateForAssetType( rData );
 
-				// Try again next frame
+				// Try again next frame (could be still generating), move on to the next thumbnail
 				if( !rData.Texture )
 				{
 					s_GeneratorQueue.pop();
@@ -162,6 +163,10 @@ namespace Saturn {
 		return texture;
 	}
 
+	void ContentBrowserThumbnailCache::OnModified( Ref<Asset> asset )
+	{
+	}
+
 	//////////////////////////////////////////////////////////////////////////
 	// Serialisation
 
@@ -186,6 +191,19 @@ namespace Saturn {
 			RawSerialisation::WriteString( path, fout );
 
 			RawSerialisation::WriteObject( data.Time, fout );
+
+			// Write Texture buffer
+			Ref<Texture2D> texture = data.Texture;
+
+			uint32_t width = texture->Width();
+			uint32_t height = texture->Height();
+
+			RawSerialisation::WriteObject( width, fout );
+			RawSerialisation::WriteObject( height, fout );
+
+			Buffer TemporaryBuffer = texture->X31CopyToBuffer();
+			RawSerialisation::WriteSaturnBuffer( TemporaryBuffer, fout );
+			TemporaryBuffer.Free();
 		}
 
 		fout.close();
@@ -217,6 +235,20 @@ namespace Saturn {
 			std::filesystem::path path = RawSerialisation::ReadString( stream );
 
 			RawSerialisation::ReadObject( data.Time, stream );
+
+			// Read Texture buffer
+			uint32_t width = 0;
+			uint32_t height = 0;
+			RawSerialisation::ReadObject( width, stream );
+			RawSerialisation::ReadObject( height, stream );
+
+			Buffer buffer{};
+			RawSerialisation::ReadSaturnBuffer( buffer, stream );
+
+			// Create texture from buffer
+			data.Texture = Ref<Texture2D>::Create( ImageFormat::RGBA8, width, height, buffer.Data, false );
+
+			buffer.Free();
 
 			s_Cache[ path ] = data;
 		}

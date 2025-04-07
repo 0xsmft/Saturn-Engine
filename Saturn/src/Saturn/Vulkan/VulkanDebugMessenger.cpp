@@ -36,10 +36,12 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL vkDebugCB(
 	const VkDebugUtilsMessengerCallbackDataEXT*        pCallbackData,
 	void*                                              pUserData )
 {
-	if( MessageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT )
+	if( ( MessageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT ) != 0 )
 		SAT_CORE_ERROR( "{0}", pCallbackData->pMessage );
-	else if( MessageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT )
+	else if( ( MessageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT ) != 0 )
 		SAT_CORE_WARN( "{0}", pCallbackData->pMessage );
+//	else if( ( MessageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT ) != 0 )
+//		SAT_CORE_INFO( "Vulkan Information: {0}", pCallbackData->pMessage );
 
 	return VK_FALSE;
 }
@@ -87,7 +89,7 @@ namespace Saturn {
 		if( m_pCreateFunc != nullptr )
 		{
 			// Call vkCreateDebugUtilsMessengerEXT
-			return ( *m_pCreateFunc )( Instance, pCreateInfo, pAllocator, pDebugMessenger );
+			return ( m_pCreateFunc )( Instance, pCreateInfo, pAllocator, pDebugMessenger );
 		}
 		else
 			return VK_ERROR_EXTENSION_NOT_PRESENT;
@@ -97,7 +99,7 @@ namespace Saturn {
 	{
 		if( m_pDestroyFunc )
 		{
-			( *m_pDestroyFunc )( Instance, DebugMessenger, pAllocator );
+			( m_pDestroyFunc )( Instance, DebugMessenger, pAllocator );
 		}
 	}
 

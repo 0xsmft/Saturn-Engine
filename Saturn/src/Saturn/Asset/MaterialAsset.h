@@ -96,11 +96,11 @@ namespace Saturn {
 		void RT_Update(
 			const Ref< StaticMesh >& rMesh, 
 			Submesh& rSubmsh,
-			const std::vector<VkWriteDescriptorSet>& rExtraWds );
+			const std::vector<std::vector<VkWriteDescriptorSet>>& rExtraWds );
 
 		void RT_Bind( const std::vector<std::vector<VkWriteDescriptorSet>>& rStorageBufferWDS = std::vector<std::vector<VkWriteDescriptorSet>>() );
 
-		Buffer GetPushConstantData() { return m_Material->m_PushConstantData; }
+		Buffer GetPushConstantData() const { return m_Material->GetPushConstantData(); }
 
 		Ref<Material> GetMaterial() const { return m_Material; }
 

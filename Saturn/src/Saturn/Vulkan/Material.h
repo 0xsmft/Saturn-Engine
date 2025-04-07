@@ -49,7 +49,7 @@ namespace Saturn {
 		void SetName( const std::string& rName ) { m_Name = rName; }
 
 		// Bind and update the material descriptor set.
-		void Bind( VkCommandBuffer CommandBuffer, VkPipelineLayout Layout, const std::vector<VkWriteDescriptorSet>& rExtraWds, VkPipelineBindPoint bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS );
+		void Bind( VkCommandBuffer CommandBuffer, VkPipelineLayout Layout, const std::vector<std::vector<VkWriteDescriptorSet>>& rExtraWds, VkPipelineBindPoint bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS );
 
 		void SetResource( const std::string& Name, const Ref<Texture2D>& Texture );
 		void SetResource( const std::string& Name, const Ref<Texture2D>& Texture, uint32_t Index );
@@ -84,6 +84,8 @@ namespace Saturn {
 		
 		std::string& GetName() { return m_Name; }
 		const std::string& GetName() const { return m_Name; }
+
+		Buffer GetPushConstantData() const { return m_PushConstantData; }
 
 	private:
 		std::unordered_map< std::string, Ref<Texture2D> >& GetTextures() { return m_Textures; }

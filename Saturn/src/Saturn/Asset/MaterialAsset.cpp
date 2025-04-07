@@ -188,7 +188,7 @@ namespace Saturn {
 		} );
 	}
 
-	void MaterialAsset::RT_Update( const Ref< StaticMesh >& rMesh, Submesh& rSubmsh, const std::vector<VkWriteDescriptorSet>& rExtraWds )
+	void MaterialAsset::RT_Update( const Ref< StaticMesh >& rMesh, Submesh& rSubmsh, const std::vector<std::vector<VkWriteDescriptorSet>>& rExtraWds )
 	{
 		if( m_PendingMaterialChange )
 		{
@@ -214,7 +214,8 @@ namespace Saturn {
 		if( m_PendingTextureChanges.size() )
 			m_PendingTextureChanges.clear();
 
-		for( const auto& rWds : rExtraWds )
+		auto frame = Renderer::Get().GetCurrentFrame();
+		for( const auto& rWds : rExtraWds[ frame ] )
 		{
 			m_Material->PushExternalWds( rWds );
 		}

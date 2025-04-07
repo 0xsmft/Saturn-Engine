@@ -71,9 +71,9 @@ namespace Saturn {
 			Ref<StorageBufferSet>& rStorageBufferSet, Ref<UniformBufferSet> rUniformBufferSet, Ref< MaterialRegistry > materialRegistry, uint32_t SubmeshIndex, uint32_t count,
 			Ref<VertexBuffer> transformData, uint32_t transformOffset );
 
-		const std::vector<VkWriteDescriptorSet>& GetStorageBufferWriteDescriptors( Ref<StorageBufferSet>& rStorageBufferSet, Ref<Material>& rMaterialAsset );
+		const std::vector<std::vector<VkWriteDescriptorSet>>& GetStorageBufferWriteDescriptors( Ref<StorageBufferSet>& rStorageBufferSet, Ref<Material>& rMaterialAsset );
 
-		const std::vector<VkWriteDescriptorSet>& GetUniformBufferWriteDescriptors( Ref<UniformBufferSet>& rUniformBufferSet, Ref<Material>& rMaterialAsset );
+		const std::vector<std::vector<VkWriteDescriptorSet>>& GetUniformBufferWriteDescriptors( Ref<UniformBufferSet>& rUniformBufferSet, Ref<Material>& rMaterialAsset );
 
 		void SetSceneEnvironment( Ref<Image2D> ShadowMap, Ref<EnvironmentMap> Environment, Ref<Texture2D> BDRF );
 
@@ -152,9 +152,10 @@ namespace Saturn {
 		Ref<DescriptorPool> m_RendererDescriptorPools[ MAX_FRAMES_IN_FLIGHT ];
 
 		// frame -> shader name -> set
-		std::unordered_map< uint32_t, std::unordered_map< std::string, std::vector<VkWriteDescriptorSet>>> m_StorageBufferSets;
+		std::unordered_map<StorageBufferSet*, std::unordered_map<UUID, std::vector<std::vector<VkWriteDescriptorSet>>>> m_StorageBufferSets;
 
-		std::unordered_map< std::string, std::unordered_map< uint32_t, std::vector<VkWriteDescriptorSet>>> m_UniformBufferSets;
+		// ub ptr -> shader UUIDs -> Frame -> set
+		std::unordered_map<UniformBufferSet*, std::unordered_map<UUID, std::vector<std::vector<VkWriteDescriptorSet>>>> m_UniformBufferSets;
 
 #if !defined(SAT_DIST)
 		std::vector< std::function<void( const std::string& )> > m_ShaderReloadedCB;

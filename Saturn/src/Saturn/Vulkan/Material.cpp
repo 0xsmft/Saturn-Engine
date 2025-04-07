@@ -34,6 +34,7 @@
 #include "Renderer.h"
 #include "Texture.h"
 #include "VulkanContext.h"
+#include "VulkanDebug.h"
 
 #include "Saturn/Core/OptickProfiler.h"
 
@@ -112,14 +113,18 @@ namespace Saturn {
 		m_DescriptorSetTemplate = rOther->m_DescriptorSetTemplate;
 	}
 
-	void Material::Bind( VkCommandBuffer CommandBuffer, VkPipelineLayout Layout, const std::vector<VkWriteDescriptorSet>& rExtraWds, VkPipelineBindPoint bindPoint )
+	void Material::Bind( VkCommandBuffer CommandBuffer, VkPipelineLayout Layout, const std::vector<std::vector<VkWriteDescriptorSet>>& rExtraWds, VkPipelineBindPoint bindPoint )
 	{
-		for( const auto& rWds : rExtraWds )
+		uint32_t frame = Renderer::Get().GetCurrentFrame();
+
+		if( rExtraWds.size() )
 		{
-			PushExternalWds( rWds );
+			for( const auto& rWds : rExtraWds[ frame ] )
+			{
+				PushExternalWds( rWds );
+			}
 		}
 
-		uint32_t frame = Renderer::Get().GetCurrentFrame();
 		RT_Update();
 
 		VkDescriptorSet Set = m_DescriptorSets[ frame ];
@@ -277,7 +282,7 @@ namespace Saturn {
 
 			if( Itr != m_DescriptorSetTemplate.StorageImages.end() )
 			{
-				ShaderSampledImage ssi;
+				ShaderSampledImage ssi = *( Itr );
 				m_DescriptorSetTemplate.WriteDescriptorSets[ ssi.Binding ].pImageInfo = &rImage->GetDescriptorInfo();
 			}
 		}

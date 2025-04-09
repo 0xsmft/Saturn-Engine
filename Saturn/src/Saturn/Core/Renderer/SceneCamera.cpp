@@ -4,7 +4,7 @@
 *                                                                                           *
 * MIT License                                                                               *
 *                                                                                           *
-* Copyright (c) 2020 - 2025 BEAST                                                           *
+* Copyright (c) 2020 - 2024 BEAST                                                           *
 *                                                                                           *
 * Permission is hereby granted, free of charge, to any person obtaining a copy              *
 * of this software and associated documentation files (the "Software"), to deal             *
@@ -26,50 +26,17 @@
 *********************************************************************************************
 */
 
-#pragma once
-
-#include "Saturn/Serialisation/RawSerialisation.h"
-
-#include <glm/glm.hpp>
+#include "sppch.h"
+#include "SceneCamera.h"
 
 namespace Saturn {
 
-	struct AABB
+	SceneCamera::SceneCamera( const float fov, const float width, const float height )
+		: Camera( fov, width, width, 0.1f, 1000.0f )
 	{
-		glm::vec3 Min, Max;
+	}
 
-		AABB()
-			: Min( 0.0f ), Max( 0.0f )
-		{
-		}
-
-		AABB( const glm::vec3& min, const glm::vec3& max )
-			: Min( min ), Max( max )
-		{
-		}
-
-		glm::vec3 Center() const
-		{
-			return ( Min + Max ) * 0.5f;
-		}
-
-		glm::vec3 Extents() const
-		{
-			return ( Max - Min ) * 0.5f;
-		}
-
-	public:
-		static void Serialise( const AABB& rObject, std::ofstream& rStream )
-		{
-			RawSerialisation::WriteVec3( rObject.Min, rStream );
-			RawSerialisation::WriteVec3( rObject.Max, rStream );
-		}
-
-		static void Deserialise( AABB& rObject, std::ifstream& rStream )
-		{
-			RawSerialisation::ReadVec3( rObject.Min, rStream );
-			RawSerialisation::ReadVec3( rObject.Max, rStream );
-		}
-	};
-
+	void SceneCamera::OnUpdate( Timestep ts )
+	{
+	}
 }

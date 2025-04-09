@@ -36,28 +36,17 @@ namespace Saturn {
 	{
 	public:
 		SceneCamera() = default;
-		SceneCamera( float fov, float width, float height ) : Camera( fov, width, height, m_Near, m_Far ), m_Fov( fov ), m_Width( ( uint32_t ) width ), m_Height( ( uint32_t ) height ) {}
+		SceneCamera( const float fov, const float width, const float height );
 		~SceneCamera() = default;
+
+		void OnUpdate( Timestep ts );
 
 		void SetViewportSize( uint32_t width, uint32_t height )
 		{
-			if( m_Width == width || m_Height == height )
+			if( m_ViewportWidth == width || m_ViewportHeight == height )
 				return;
 
-			m_Width = width;
-			m_Height = height;
-
-			m_Projection = glm::perspectiveFov( m_Fov, ( float ) width, ( float ) height, m_Near, m_Far );
+			SetProjectionMatrix( m_Fov, ( float ) width, ( float ) height, m_NearPlane, m_FarPlane );
 		}
-
-		void SetFOV( float fov ) { m_Fov = fov; }
-
-	private:
-		float m_Fov = 45.0f;
-		float m_Far = 1000.0f;
-		float m_Near = 0.1f;
-	
-		uint32_t m_Width;
-		uint32_t m_Height;
 	};
 }

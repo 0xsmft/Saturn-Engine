@@ -85,7 +85,6 @@ namespace Saturn {
 			DisableMouse();
 
 			const float yawSign = GetUpDirection().y < 0 ? -1.0f : 1.0f;
-
 			const float speed = GetCameraSpeed();
 
 			if( Input::Get().KeyPressed( RubyKey::Q ) )
@@ -160,6 +159,8 @@ namespace Saturn {
 		m_YawDelta *= 0.6f;
 		m_PitchDelta *= 0.6f;
 		m_PositionDelta *= 0.8f;
+
+		m_CameraFrustum.Update( m_Position, GetForwardDirection(), GetRightDirection(), GetUpDirection(), glm::radians( m_Fov ), m_NearPlane, m_FarPlane, m_ViewportWidth / m_ViewportHeight, ViewProjection() );
 	}
 
 	void EditorCamera::Focus( const glm::vec3& focusPoint )
@@ -249,30 +250,8 @@ namespace Saturn {
 		m_PositionDelta += delta * ZoomSpeed() * forwardDir;
 	}
 
-	glm::vec3 EditorCamera::GetUpDirection() const
-	{
-		return glm::rotate( GetOrientation(), glm::vec3( 0.0f, 1.0f, 0.0f ) );
-	}
-
-	glm::vec3 EditorCamera::GetRightDirection() const
-	{
-		return glm::rotate( GetOrientation(), glm::vec3( 1.f, 0.f, 0.f ) );
-	}
-
-	glm::vec3 EditorCamera::GetForwardDirection() const
-	{
-		return glm::rotate( GetOrientation(), glm::vec3( 0.0f, 0.0f, -1.0f ) );
-	}
-
 	glm::vec3 EditorCamera::CalculatePosition() const
 	{
 		return m_FocalPoint - GetForwardDirection() * m_Distance + m_PositionDelta;
 	}
-
-	glm::quat EditorCamera::GetOrientation() const
-	{
-		return glm::quat( glm::vec3( -m_Pitch - m_PitchDelta, -m_Yaw - m_YawDelta, 0.0f ) );
-	}
-
-
 }

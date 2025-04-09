@@ -47,8 +47,9 @@ namespace Saturn {
 		EditorCamera( const float Fov, const float Width, const float Height, const float NearPlane, const float FarPlane );
 		~EditorCamera() = default;
 
-		void Focus( const glm::vec3& focusPoint );
 		void OnUpdate( Timestep ts );
+
+		void Focus( const glm::vec3& focusPoint );
 		void OnEvent( RubyEvent& event );
 
 		bool IsActive() const { return m_IsActive; }
@@ -65,9 +66,6 @@ namespace Saturn {
 		{ 
 			if( m_ViewportWidth == width || m_ViewportHeight == height )
 				return;
-
-			m_ViewportWidth = width; 
-			m_ViewportHeight = height; 
 			
 			SetProjectionMatrix( 45.0f, ( float ) m_ViewportWidth, ( float ) m_ViewportHeight, 0.1f, 1000.0f );
 		}
@@ -75,13 +73,7 @@ namespace Saturn {
 		const glm::mat4& ViewMatrix() const { return m_ViewMatrix; }
 		glm::mat4 ViewProjection() const { return m_Projection * m_ViewMatrix; }
 
-		glm::vec3 GetUpDirection() const;
-		glm::vec3 GetRightDirection() const;
-		glm::vec3 GetForwardDirection() const;
-
 		const glm::vec3& GetPosition() const { return m_Position; }
-
-		glm::quat GetOrientation() const;
 
 		float GetPitch() const { return m_Pitch; }
 		float GetYaw() const { return m_Yaw; }
@@ -102,7 +94,7 @@ namespace Saturn {
 		float ZoomSpeed() const;
 	private:
 		glm::mat4 m_ViewMatrix;
-		glm::vec3 m_Position, m_Rotation, m_FocalPoint;
+		glm::vec3 m_FocalPoint;
 
 		bool m_IsActive = false;
 		bool m_Panning, m_Rotating;
@@ -112,16 +104,9 @@ namespace Saturn {
 		float m_Distance;
 		float m_NormalSpeed{ 0.002f };
 
-		float m_Pitch, m_Yaw;
-		float m_PitchDelta{}, m_YawDelta{};
-		glm::vec3 m_PositionDelta{};
-		glm::vec3 m_RightDirection{};
-
 		CameraMode m_CameraMode{ CameraMode::ARCBALL };
 
 		float m_MinFocusDistance{ 100.0f };
-
-		uint32_t m_ViewportWidth{ 1280 }, m_ViewportHeight{ 720 };
 
 		constexpr static float MIN_SPEED{ 0.0005f }, MAX_SPEED{ 2.0f };
 

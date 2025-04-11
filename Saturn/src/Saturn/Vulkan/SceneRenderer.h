@@ -65,7 +65,7 @@ namespace Saturn {
 		Ref< Framebuffer > Framebuffer = nullptr;
 
 		float SplitDepth = 0.0f;
-		glm::mat4 ViewProjection;
+		glm::mat4 ViewProjection{};
 	};
 
 	// Most of theses structs MUST (most of the time) match the structs in the shader.
@@ -98,7 +98,7 @@ namespace Saturn {
 
 	struct StaticMeshKey
 	{
-		AssetID MeshID;
+		AssetID MeshID = 0;
 		Ref<MaterialRegistry> Registry;
 
 		uint32_t SubmeshIndex;
@@ -380,6 +380,11 @@ namespace Saturn {
 		std::vector< SubmeshTransformVB > SubmeshTransformData;
 
 		//////////////////////////////////////////////////////////////////////////
+		// Auxiliary
+
+		bool RenderMeshSubmeshAABB = false;
+
+		//////////////////////////////////////////////////////////////////////////
 		// SHADERS
 
 		Ref< Shader > GridShader = nullptr;
@@ -444,6 +449,7 @@ namespace Saturn {
 
 		void Screenshot( const std::filesystem::path& rPath, const glm::vec2& rSize = {} );
 
+		void RenderMeshAABB() { m_RendererData.RenderMeshSubmeshAABB ^= 1; }
 	private:
 		void Init();
 		void Terminate();
@@ -478,6 +484,7 @@ namespace Saturn {
 		void BloomPass();
 		void SceneCompositePass();
 		void LateCompPhysicsOutline();
+		void LateCompDbgMeshAABB();
 		void TexturePass();
 
 		void RenderStaticMeshes();

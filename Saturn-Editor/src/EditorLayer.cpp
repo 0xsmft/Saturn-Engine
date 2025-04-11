@@ -1583,6 +1583,9 @@ namespace Saturn {
 			ImGui::SeparatorText( "Virtual Filesystem (VFS)" );
 			if( ImGui::MenuItem( "Virtual Filesystem Debug", "" ) )   m_ShowVFSDebug           ^= 1;
 
+			ImGui::SeparatorText( "Scene Renderer" );
+			if( ImGui::MenuItem( "Render Mesh AABB", "" ) )           Application::Get().PrimarySceneRenderer().RenderMeshAABB();
+
 			ImGui::EndMenu();
 		}
 

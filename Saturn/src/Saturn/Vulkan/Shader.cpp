@@ -669,6 +669,9 @@ namespace Saturn {
 			if( arraySizes == 0 )
 				arraySizes = 1;
 
+			if( m_DescriptorSets[ set ].Set == UINT32_MAX )
+				m_DescriptorSets[ set ] = ShaderDescriptorSetTemplate( set );
+
 			m_DescriptorSets[ set ].SampledImages.push_back( { Name, shaderType, set, binding, arraySizes } );
 		}
 
@@ -688,6 +691,9 @@ namespace Saturn {
 
 			if( arraySizes == 0 )
 				arraySizes = 1;
+
+			if( m_DescriptorSets[ set ].Set == UINT32_MAX )
+				m_DescriptorSets[ set ] = ShaderDescriptorSetTemplate( set );
 
 			m_DescriptorSets[ set ].StorageImages.push_back( { Name, shaderType, set, binding, arraySizes } );
 		}

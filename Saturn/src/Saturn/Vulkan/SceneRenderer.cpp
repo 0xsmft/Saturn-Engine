@@ -1023,6 +1023,8 @@ namespace Saturn {
 				Auxiliary::EndTreeNode();
 			}
 
+			Auxiliary::DrawBoolControl( "Render Mesh AABB", m_RendererData.RenderMeshSubmeshAABB );
+
 			Auxiliary::EndTreeNode();
 		}
 	}
@@ -1069,35 +1071,39 @@ namespace Saturn {
 		auto& submeshes = mesh->Submeshes();
 		for( size_t i = 0; i < submeshes.size(); i++ )
 		{
-			StaticMeshKey key = { mesh->ID, materialRegistry, (uint32_t)i };
+			// Check if the submesh is in the camera frustum
+			AABB aabb = submeshes[ i ].BoundingBox;
+			if( m_RendererData.CurrentCamera.pCamera->GetFrustum().FrustumIntersectsAABB( aabb ) )
+			{
+				StaticMeshKey key = { mesh->ID, materialRegistry, ( uint32_t ) i };
 
-			glm::mat4 submeshTransform = transform * submeshes[ i ].Transform;
+				glm::mat4 submeshTransform = transform * submeshes[ i ].Transform;
 
-			auto& command = m_DrawList[ key ];
-			command.entity = entity;
-			command.Mesh = mesh;
-			command.SubmeshIndex = ( uint32_t ) i;
-			command.Instances++;
+				// Submit for rendering
+				auto& command = m_DrawList[ key ];
+				command.Mesh = mesh;
+				command.SubmeshIndex = ( uint32_t ) i;
+				command.Instances++;
 
-			auto& shadow = m_ShadowMapDrawList[ key ];
-			shadow.entity = entity;
-			shadow.Mesh = mesh;
-			shadow.SubmeshIndex = ( uint32_t ) i;
-			shadow.Instances++;
+				auto& shadow = m_ShadowMapDrawList[ key ];
+				shadow.Mesh = mesh;
+				shadow.SubmeshIndex = ( uint32_t ) i;
+				shadow.Instances++;
 
-			auto& data = m_RendererData.MeshTransforms[ key ].Data.emplace_back();
-			data.TransfromBufferR[ 0 ] = {
-				submeshTransform[ 0 ][ 0 ], submeshTransform[ 1 ][ 0 ], submeshTransform[ 2 ][ 0 ], submeshTransform[ 3 ][ 0 ]
-			};
-			data.TransfromBufferR[ 1 ] = {
-				submeshTransform[ 0 ][ 1 ], submeshTransform[ 1 ][ 1 ], submeshTransform[ 2 ][ 1 ], submeshTransform[ 3 ][ 1 ]
-			};
-			data.TransfromBufferR[ 2 ] = {
-				submeshTransform[ 0 ][ 2 ], submeshTransform[ 1 ][ 2 ], submeshTransform[ 2 ][ 2 ], submeshTransform[ 3 ][ 2 ]
-			};
-			data.TransfromBufferR[ 3 ] = {
-				submeshTransform[ 0 ][ 3 ], submeshTransform[ 1 ][ 3 ], submeshTransform[ 2 ][ 3 ], submeshTransform[ 3 ][ 3 ]
-			};
+				auto& data = m_RendererData.MeshTransforms[ key ].Data.emplace_back();
+				data.TransfromBufferR[ 0 ] = {
+					submeshTransform[ 0 ][ 0 ], submeshTransform[ 1 ][ 0 ], submeshTransform[ 2 ][ 0 ], submeshTransform[ 3 ][ 0 ]
+				};
+				data.TransfromBufferR[ 1 ] = {
+					submeshTransform[ 0 ][ 1 ], submeshTransform[ 1 ][ 1 ], submeshTransform[ 2 ][ 1 ], submeshTransform[ 3 ][ 1 ]
+				};
+				data.TransfromBufferR[ 2 ] = {
+					submeshTransform[ 0 ][ 2 ], submeshTransform[ 1 ][ 2 ], submeshTransform[ 2 ][ 2 ], submeshTransform[ 3 ][ 2 ]
+				};
+				data.TransfromBufferR[ 3 ] = {
+					submeshTransform[ 0 ][ 3 ], submeshTransform[ 1 ][ 3 ], submeshTransform[ 2 ][ 3 ], submeshTransform[ 3 ][ 3 ]
+				};
+			}
 		}
 	}
 
@@ -1572,6 +1578,34 @@ namespace Saturn {
 		}
 
 		m_RendererData.LateCompositePass->EndPass();
+	}
+
+	void SceneRenderer::LateCompDbgMeshAABB()
+	{
+		const glm::vec4 whiteColor = glm::vec4( 1.0f, 1.0f, 1.0f, 1.0f );
+
+		for( auto& [key, Cmd] : m_DrawList )
+		{
+			const auto& rAABB = Cmd.Mesh->GetBoundingBox();
+			
+			// Bottom face
+			Renderer2D::Get().SubmitLine( glm::vec3( rAABB.Min.x, rAABB.Min.y, rAABB.Min.z ), glm::vec3( rAABB.Max.x, rAABB.Min.y, rAABB.Min.z ), whiteColor );
+			Renderer2D::Get().SubmitLine( glm::vec3( rAABB.Max.x, rAABB.Min.y, rAABB.Min.z ), glm::vec3( rAABB.Max.x, rAABB.Max.y, rAABB.Min.z ), whiteColor );
+			Renderer2D::Get().SubmitLine( glm::vec3( rAABB.Max.x, rAABB.Max.y, rAABB.Min.z ), glm::vec3( rAABB.Min.x, rAABB.Max.y, rAABB.Min.z ), whiteColor );
+			Renderer2D::Get().SubmitLine( glm::vec3( rAABB.Min.x, rAABB.Max.y, rAABB.Min.z ), glm::vec3( rAABB.Min.x, rAABB.Min.y, rAABB.Min.z ), whiteColor );
+
+			// Top face
+			Renderer2D::Get().SubmitLine( glm::vec3( rAABB.Min.x, rAABB.Min.y, rAABB.Max.z ), glm::vec3( rAABB.Max.x, rAABB.Min.y, rAABB.Max.z ), whiteColor );
+			Renderer2D::Get().SubmitLine( glm::vec3( rAABB.Max.x, rAABB.Min.y, rAABB.Max.z ), glm::vec3( rAABB.Max.x, rAABB.Max.y, rAABB.Max.z ), whiteColor );
+			Renderer2D::Get().SubmitLine( glm::vec3( rAABB.Max.x, rAABB.Max.y, rAABB.Max.z ), glm::vec3( rAABB.Min.x, rAABB.Max.y, rAABB.Max.z ), whiteColor );
+			Renderer2D::Get().SubmitLine( glm::vec3( rAABB.Min.x, rAABB.Max.y, rAABB.Max.z ), glm::vec3( rAABB.Min.x, rAABB.Min.y, rAABB.Max.z ), whiteColor );
+
+			// Vertical edges
+			Renderer2D::Get().SubmitLine( glm::vec3( rAABB.Min.x, rAABB.Min.y, rAABB.Min.z ), glm::vec3( rAABB.Min.x, rAABB.Min.y, rAABB.Max.z ), whiteColor );
+			Renderer2D::Get().SubmitLine( glm::vec3( rAABB.Max.x, rAABB.Min.y, rAABB.Min.z ), glm::vec3( rAABB.Max.x, rAABB.Min.y, rAABB.Max.z ), whiteColor );
+			Renderer2D::Get().SubmitLine( glm::vec3( rAABB.Max.x, rAABB.Max.y, rAABB.Min.z ), glm::vec3( rAABB.Max.x, rAABB.Max.y, rAABB.Max.z ), whiteColor );
+			Renderer2D::Get().SubmitLine( glm::vec3( rAABB.Min.x, rAABB.Max.y, rAABB.Min.z ), glm::vec3( rAABB.Min.x, rAABB.Max.y, rAABB.Max.z ), whiteColor );
+		}
 	}
 
 	void SceneRenderer::TexturePass()
@@ -2082,18 +2116,24 @@ namespace Saturn {
 		}
 
 		{
-			ScopedDebugLabel label( m_RendererData.CommandBuffer, "Scene Composite - Post Processing" );
+			ScopedDebugLabel label( m_RendererData.CommandBuffer, "Scene Composite/Post Processing" );
 			SceneCompositePass();
 		}
 
 		{
-			ScopedDebugLabel label( m_RendererData.CommandBuffer, "Late Composite (SceneRenderer)" );
+			ScopedDebugLabel label( m_RendererData.CommandBuffer, "Late Composite/SceneRenderer" );
 			LateCompPhysicsOutline();
+		}
+
+		if( m_RendererData.RenderMeshSubmeshAABB )
+		{
+			ScopedDebugLabel label( m_RendererData.CommandBuffer, "Late Composite/SubmeshAABB" );
+			LateCompDbgMeshAABB();
 		}
 
 		if( m_RendererData.IsSwapchainTarget )
 		{
-			ScopedDebugLabel label( m_RendererData.CommandBuffer, "Scene Composite - Texture Pass" );
+			ScopedDebugLabel label( m_RendererData.CommandBuffer, "Scene Composite/Texture Pass" );
 			TexturePass();
 		}
 

@@ -253,11 +253,13 @@ namespace Saturn {
 	{
 		SAT_PF_EVENT();
 
-		m_RendererCamera.Camera = rCamera;
+		m_RendererCamera.pCamera = (Camera*)&rCamera;
 		m_RendererCamera.ViewMatrix = rCamera.ViewMatrix();
 
 		Renderer2D::Get().SetCamera( m_RendererCamera );
 		Renderer2D::Get().PreRender();
+
+		rSceneRenderer.SetCamera( m_RendererCamera );
 
 		// Lights
 		{
@@ -409,8 +411,6 @@ namespace Saturn {
 				}
 			}
 		}
-
-		rSceneRenderer.SetCamera( m_RendererCamera );
 	}
 
 	void Scene::OnRenderRuntime( Timestep ts, SceneRenderer& rSceneRenderer )
@@ -490,12 +490,19 @@ namespace Saturn {
 		// Check twice because we are always going to have to set the projection
 		if( m_MainCameraEntity )
 		{
+			auto tc = GetWorldSpaceTransform( m_MainCameraEntity );
+
+			auto view = glm::inverse( tc.GetTransform() );
+			
 			auto& rCamera = m_MainCameraEntity->GetComponent<CameraComponent>().Camera;
 			rCamera.SetViewportSize( rSceneRenderer.Width(), rSceneRenderer.Height() );
-			auto view = glm::inverse( GetTransformRelativeToParent( m_MainCameraEntity ) );
-			
-			m_RendererCamera.Camera = rCamera;
-			m_RendererCamera.ViewMatrix = view;
+			//rCamera.SetViewMatrix( view );
+			rCamera.SetPosition( tc.Position );
+
+			rCamera.OnUpdate( ts );
+
+			m_RendererCamera.pCamera = (Camera*)&rCamera;
+			m_RendererCamera.ViewMatrix = rCamera.ViewMatrix();
 		}
 		else
 		{
@@ -781,13 +788,6 @@ namespace Saturn {
 
 		// Init new scene camera
 		m_MainCameraEntity = GetMainCameraEntity( true );
-
-		if( m_MainCameraEntity )
-		{
-			auto& rCameraComponent = m_MainCameraEntity->GetComponent<CameraComponent>();
-			rCameraComponent.Camera.SetFOV( rCameraComponent.Fov );
-		}
-
 		m_RuntimeState = RuntimeState::Running;
 	}
 

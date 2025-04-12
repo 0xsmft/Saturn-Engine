@@ -29,14 +29,90 @@
 #include "sppch.h"
 #include "SceneCamera.h"
 
+#include "Saturn/Core/Input.h"
+
+#include <glm/glm.hpp>
+
+#include <glm/gtx/quaternion.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+constexpr auto M_PI = glm::pi<float>();
+
 namespace Saturn {
 
 	SceneCamera::SceneCamera( const float fov, const float width, const float height )
 		: Camera( fov, width, width, 0.1f, 1000.0f )
 	{
+		m_Yaw = 3.0f * ( float ) M_PI / 4.0f;
+		m_Pitch = M_PI / 4.0f;
+
+		const glm::quat orientation = GetOrientation();
+		m_Rotation = glm::eulerAngles( orientation ) * ( 180.0f / ( float ) M_PI );
+	}
+
+	static void DisableMouse()
+	{
+		Input::Get().SetCursorMode( RubyCursorMode::Locked );
+	}
+
+	static void EnableMouse()
+	{
+		Input::Get().SetCursorMode( RubyCursorMode::Normal );
 	}
 
 	void SceneCamera::OnUpdate( Timestep ts )
 	{
+		const glm::vec2& mouse = Input::Get().MousePosition();
+		const glm::vec2 delta = ( mouse - m_InitialMousePosition ) * 0.002f;
+
+		if( !m_IsActive )
+		{
+			EnableMouse();
+			return;
+		}
+		else
+		{
+			DisableMouse();
+
+			const float yawSign = GetUpDirection().y < 0 ? -1.0f : 1.0f;
+
+			constexpr float maxRate{ 0.12f };
+			m_YawDelta += glm::clamp( yawSign * delta.x, -maxRate, maxRate );
+			m_PitchDelta += glm::clamp( delta.y, -maxRate, maxRate );
+
+			m_RightDirection = glm::cross( m_Rotation, glm::vec3{ 0.f, yawSign, 0.f } );
+			m_Rotation = glm::rotate( glm::normalize( glm::cross( glm::angleAxis( -m_PitchDelta, m_RightDirection ),
+				glm::angleAxis( -m_YawDelta, glm::vec3{ 0.f, yawSign, 0.f } ) ) ), m_Rotation );
+		}
+
+		m_InitialMousePosition = mouse;
+
+		m_Yaw += m_YawDelta;
+		m_Pitch += m_PitchDelta;
+
+		m_Pitch = glm::clamp( m_Pitch, -88.0f, 88.0f );
+
+		UpdateCameraView();
+	}
+
+	void SceneCamera::UpdateCameraView()
+	{
+		const float yawSign = GetUpDirection().y < 0 ? -1.0f : 1.0f;
+
+		// Extra step to handle the problem when the camera direction is the same as the up vector
+		const float cosAngle = glm::dot( GetForwardDirection(), GetUpDirection() );
+		if( cosAngle * yawSign > 0.99f )
+			m_PitchDelta = 0.f;
+
+		const glm::vec3 lookAt = m_Position + GetForwardDirection();
+		m_Rotation = glm::normalize( lookAt - m_Position );
+		m_ViewMatrix = glm::lookAt( m_Position, lookAt, glm::vec3( 0.0f, yawSign, 0.0f ) );
+
+		//damping for smooth camera
+		m_YawDelta *= 0.6f;
+		m_PitchDelta *= 0.6f;
+
+		m_CameraFrustum.Update( m_Position, GetForwardDirection(), GetRightDirection(), GetUpDirection(), glm::radians( m_Fov ), m_NearPlane, m_FarPlane, m_ViewportWidth / m_ViewportHeight, ViewProjection() );
 	}
 }

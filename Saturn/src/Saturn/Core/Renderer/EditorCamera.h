@@ -52,9 +52,6 @@ namespace Saturn {
 		void Focus( const glm::vec3& focusPoint );
 		void OnEvent( RubyEvent& event );
 
-		bool IsActive() const { return m_IsActive; }
-		void SetActive( bool active ) { m_IsActive = active; }
-
 		CameraMode GetCurrentMode() const { return m_CameraMode; }
 
 		inline float GetDistance() const { return m_Distance; }
@@ -96,7 +93,6 @@ namespace Saturn {
 		glm::mat4 m_ViewMatrix;
 		glm::vec3 m_FocalPoint;
 
-		bool m_IsActive = false;
 		bool m_Panning, m_Rotating;
 		glm::vec2 m_InitialMousePosition{};
 		glm::vec3 m_InitialFocalPoint, m_InitialRotation;

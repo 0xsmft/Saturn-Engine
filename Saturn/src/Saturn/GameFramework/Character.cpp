@@ -97,10 +97,16 @@ namespace Saturn {
 //		m_PlayerInputController->UpdateState();
 
 		if( Input::Get().KeyPressed( RubyKey::Esc ) && Input::Get().GetCursorMode() == RubyCursorMode::Locked )
+		{
 			Input::Get().SetCursorMode( RubyCursorMode::Normal, true );
+			m_CameraEntity->GetComponent<CameraComponent>().Camera.SetActive( false );
+		}
 		else if( Input::Get().MouseButtonPressed( RubyMouseButton::Left ) && Input::Get().GetCursorMode() != RubyCursorMode::Locked ) 
 		{
 			Input::Get().SetCursorMode( RubyCursorMode::Locked );
+
+			if( Input::Get().CanSetCursorMode() )
+				m_CameraEntity->GetComponent<CameraComponent>().Camera.SetActive( true );
 
 			m_LastMousePos = Input::Get().MousePosition();
 		}
@@ -177,6 +183,7 @@ namespace Saturn {
 		if( Input::Get().GetCursorMode() != RubyCursorMode::Locked )
 			return;
 
+		/*
 		TransformComponent& tc = m_CameraEntity->GetComponent<TransformComponent>();
 
 		glm::vec2 currentMousePos = Input::Get().MousePosition();
@@ -199,6 +206,7 @@ namespace Saturn {
 		tc.SetRotation( glm::radians( glm::vec3( glm::clamp( glm::degrees( tc.GetRotationEuler().x ), -88.0f, 88.0f ), 0.0f, 0.0f ) ) );
 
 		m_LastMousePos = currentMousePos;
+		*/
 	}
 
 	void Character::MoveForward()

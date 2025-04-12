@@ -136,6 +136,8 @@ namespace Saturn {
 		Frustum& GetFrustum() { return m_CameraFrustum; }
 		const Frustum& GetFrustum() const { return m_CameraFrustum; }
 
+		bool IsActive() const { return m_IsActive; }
+		void SetActive( bool active ) { m_IsActive = active; }
 	protected:
 		glm::mat4 m_Projection = glm::mat4( 1.0f );
 		glm::vec3 m_Position = glm::vec3( 0.0f );
@@ -152,6 +154,7 @@ namespace Saturn {
 		float m_NearPlane = 0.1f;
 		float m_FarPlane = 1000.0f;
 		float m_Fov = 45.0f;
+		bool m_IsActive = false;
 
 		Frustum m_CameraFrustum{};
 	};

@@ -48,5 +48,20 @@ namespace Saturn {
 
 			SetProjectionMatrix( m_Fov, ( float ) width, ( float ) height, m_NearPlane, m_FarPlane );
 		}
+
+		const glm::mat4& ViewMatrix() const { return m_ViewMatrix; }
+		glm::mat4 ViewProjection() const { return m_Projection * m_ViewMatrix; }
+
+		void SetViewMatrix( const glm::mat4& mat ) { m_ViewMatrix = mat; }
+
+		void SetPosition( const glm::vec3& pos ) { m_Position = pos; }
+
+	private:
+		void UpdateCameraView();
+	
+	private:
+		glm::mat4 m_ViewMatrix{};
+
+		glm::vec2 m_InitialMousePosition{};
 	};
 }

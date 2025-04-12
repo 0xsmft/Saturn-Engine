@@ -126,7 +126,7 @@ namespace Saturn {
 		Renderer2D::Get().SubmitLine( corners[ 0 ], corners[ 4 ], CONNECT_COLOR );
 		Renderer2D::Get().SubmitLine( corners[ 1 ], corners[ 5 ], CONNECT_COLOR );
 		Renderer2D::Get().SubmitLine( corners[ 2 ], corners[ 6 ], CONNECT_COLOR );
-		Renderer2D::Get().SubmitLine( corners[ 3 ], corners[ 4 ], CONNECT_COLOR );
+		Renderer2D::Get().SubmitLine( corners[ 3 ], corners[ 7 ], CONNECT_COLOR );
 	}
 
 	std::array<glm::vec3, 8> Frustum::GetFrustumCorners()
@@ -142,6 +142,10 @@ namespace Saturn {
 		float farHeight = 2.0f * tanFov * Far;
 		float farWidth = farHeight * Aspect;
 
+//		const glm::vec3 forward = glm::normalize( Forward );
+//		const glm::vec3 right = glm::normalize( glm::cross( forward, Up ) );
+//		const glm::vec3 up = glm::normalize( glm::cross( right, forward ) );
+
 		// Calculate the center positions of the near and far planes
 		glm::vec3 nearCenter = Position + Forward * Near;
 		glm::vec3 farCenter = Position + Forward * Far;
@@ -149,7 +153,7 @@ namespace Saturn {
 		corners[ 0 ] = nearCenter + Up * ( nearHeight / 2.0f ) - Right * ( nearWidth / 2.0f );
 		corners[ 1 ] = nearCenter + Up * ( nearHeight / 2.0f ) + Right * ( nearWidth / 2.0f );
 		corners[ 2 ] = nearCenter - Up * ( nearHeight / 2.0f ) + Right * ( nearWidth / 2.0f );
-		corners[ 3 ] = nearCenter - Up * ( nearHeight / 2.0f ) - Right * ( nearCenter / 2.0f );
+		corners[ 3 ] = nearCenter - Up * ( nearHeight / 2.0f ) - Right * ( nearWidth / 2.0f );
 
 		corners[ 4 ] = farCenter + Up * ( farHeight / 2.0f ) - Right * ( farWidth / 2.0f );
 		corners[ 5 ] = farCenter + Up * ( farHeight / 2.0f ) + Right * ( farWidth / 2.0f );

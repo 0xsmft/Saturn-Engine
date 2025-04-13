@@ -628,7 +628,7 @@ namespace Saturn {
 
 		UBGridMatrices GridMatricesObject = {};
 		GridMatricesObject.Transform = trans;
-		GridMatricesObject.ViewProjection = m_RendererData.CurrentCamera.Camera.ProjectionMatrix() * m_RendererData.CurrentCamera.ViewMatrix;
+		GridMatricesObject.ViewProjection = m_RendererData.CurrentCamera.pCamera->ProjectionMatrix() * m_RendererData.CurrentCamera.ViewMatrix;
 
 		GridMatricesObject.Res = 0.025f;
 		GridMatricesObject.Scale = 16.025f;
@@ -670,7 +670,7 @@ namespace Saturn {
 		m_RendererData.SkyboxMaterial->SetResource( "u_CubeTexture", m_RendererData.SceneEnvironment->IrradianceMap );
 
 		UBSkyboxMatrices SkyboxMatricesObject = {};
-		SkyboxMatricesObject.InverseVP = glm::inverse( m_RendererData.CurrentCamera.Camera.ProjectionMatrix() * m_RendererData.CurrentCamera.ViewMatrix );
+		SkyboxMatricesObject.InverseVP = glm::inverse( m_RendererData.CurrentCamera.pCamera->ProjectionMatrix() * m_RendererData.CurrentCamera.ViewMatrix );
 
 		struct ub_Data
 		{
@@ -737,7 +737,7 @@ namespace Saturn {
 
 	void SceneRenderer::UpdateCascades( const glm::vec3& Direction )
 	{
-		const auto& viewProjection = m_RendererData.CurrentCamera.Camera.ProjectionMatrix() * m_RendererData.CurrentCamera.ViewMatrix;
+		const auto& viewProjection = m_RendererData.CurrentCamera.pCamera->ProjectionMatrix() * m_RendererData.CurrentCamera.ViewMatrix;
 
 		float cascadeSplits[ SHADOW_CASCADE_COUNT ];
 
@@ -951,7 +951,9 @@ namespace Saturn {
 
 			ImGui::Text( "SceneRenderer::GeometryPass: %.2f ms", m_RendererData.GeometryPassTimer.ElapsedMilliseconds() );
 
-			ImGui::Text( "SceneRenderer::BlomPass: %.3f ms", m_RendererData.BloomTimer.ElapsedMilliseconds() );
+			ImGui::Text( "SceneRenderer::BloomPass: %.3f ms", m_RendererData.BloomTimer.ElapsedMilliseconds() );
+
+			ImGui::Text( "SceneRenderer::SceneComposite: %.2f ms", m_RendererData.SceneCompPPTimer.ElapsedMilliseconds() );
 
 			ImGui::Text( "Renderer::EndFrame - Queue Present: %.2f ms", Renderer::Get().GetQueuePresentTime() );
 
@@ -1062,6 +1064,34 @@ namespace Saturn {
 		}
 	}
 
+	static AABB TransformAABB( const AABB& rAABB, const glm::mat4& rTransform )
+	{
+		// Get all 8 corners of the AABB
+		glm::vec4 corners[ 8 ] = {
+			rTransform * glm::vec4{ rAABB.Min.x, rAABB.Min.y, rAABB.Max.z, 1.0f },
+			rTransform * glm::vec4{ rAABB.Min.x, rAABB.Max.y, rAABB.Max.z, 1.0f },
+			rTransform * glm::vec4{ rAABB.Max.x, rAABB.Max.y, rAABB.Max.z, 1.0f },
+			rTransform * glm::vec4{ rAABB.Max.x, rAABB.Min.y, rAABB.Max.z, 1.0f },
+
+			rTransform * glm::vec4{ rAABB.Min.x, rAABB.Min.y, rAABB.Min.z, 1.0f },
+			rTransform * glm::vec4{ rAABB.Min.x, rAABB.Max.y, rAABB.Min.z, 1.0f },
+			rTransform * glm::vec4{ rAABB.Max.x, rAABB.Max.y, rAABB.Min.z, 1.0f },
+			rTransform * glm::vec4{ rAABB.Max.x, rAABB.Min.y, rAABB.Min.z, 1.0f }
+		};
+
+		glm::vec3 newMin( corners[ 0 ] );
+		glm::vec3 newMax( corners[ 0 ] );
+
+		for( int i = 0; i < 8; ++i )
+		{
+			glm::vec3 transformed = glm::vec3( corners[ i ] );
+			newMin = glm::min( newMin, transformed );
+			newMax = glm::max( newMax, transformed );
+		}
+
+		return { newMin, newMax };
+	}
+
 	void SceneRenderer::SubmitStaticMesh( Ref<Entity> entity, Ref< StaticMesh > mesh, Ref<MaterialRegistry> materialRegistry, const glm::mat4& transform )
 	{
 		SAT_PF_EVENT();
@@ -1071,13 +1101,14 @@ namespace Saturn {
 		auto& submeshes = mesh->Submeshes();
 		for( size_t i = 0; i < submeshes.size(); i++ )
 		{
-			// Check if the submesh is in the camera frustum
-			AABB aabb = submeshes[ i ].BoundingBox;
-			if( m_RendererData.CurrentCamera.pCamera->GetFrustum().FrustumIntersectsAABB( aabb ) )
+			glm::mat4 submeshTransform = transform * submeshes[ i ].Transform;
+
+			AABB submeshAABB = submeshes[ i ].BoundingBox;
+			AABB transformedAABB = TransformAABB( submeshAABB, submeshTransform );
+
+			if( m_RendererData.CurrentCamera.pCamera->CameraFrustumIntersectsAABB( transformedAABB ) )
 			{
 				StaticMeshKey key = { mesh->ID, materialRegistry, ( uint32_t ) i };
-
-				glm::mat4 submeshTransform = transform * submeshes[ i ].Transform;
 
 				// Submit for rendering
 				auto& command = m_DrawList[ key ];
@@ -1253,7 +1284,7 @@ namespace Saturn {
 		// u_Matrices
 		UBStaticMeshMatrices u_Matrices = {};
 		u_Matrices.View = m_RendererData.CurrentCamera.ViewMatrix;
-		u_Matrices.ViewProjection = m_RendererData.CurrentCamera.Camera.ProjectionMatrix() * m_RendererData.CurrentCamera.ViewMatrix;
+		u_Matrices.ViewProjection = m_RendererData.CurrentCamera.pCamera->ProjectionMatrix() * m_RendererData.CurrentCamera.ViewMatrix;
 
 		UBLightData u_LightData = {};
 		UBPointLights u_Lights;
@@ -1464,7 +1495,7 @@ namespace Saturn {
 			glm::mat4 ViewProjection;
 		} u_Matrices{};
 
-		u_Matrices.ViewProjection = m_RendererData.CurrentCamera.Camera.ProjectionMatrix() * m_RendererData.CurrentCamera.ViewMatrix;
+		u_Matrices.ViewProjection = m_RendererData.CurrentCamera.pCamera->ProjectionMatrix() * m_RendererData.CurrentCamera.ViewMatrix;
 
 		// We cannot write to the UniformBufferSet as we don't use the same UB as the other shaders
 		m_RendererData.PreDepthMaterial->UploadDataToUB( 0, &u_Matrices, sizeof( u_Matrices ) );
@@ -1556,7 +1587,7 @@ namespace Saturn {
 			glm::mat4 ViewProjection;
 		} u_Matrices{};
 
-		u_Matrices.ViewProjection = m_RendererData.CurrentCamera.Camera.ProjectionMatrix() * m_RendererData.CurrentCamera.ViewMatrix;
+		u_Matrices.ViewProjection = m_RendererData.CurrentCamera.pCamera->ProjectionMatrix() * m_RendererData.CurrentCamera.ViewMatrix;
 
 		m_RendererData.PhysicsOutlineMaterial->UploadDataToUB( 0, &u_Matrices, sizeof( u_Matrices ) );
 
@@ -1679,8 +1710,8 @@ namespace Saturn {
 			glm::mat4 InvP;
 		} u_Matrices{};
 
-		u_Matrices.ViewProjection = m_RendererData.CurrentCamera.Camera.ProjectionMatrix() * m_RendererData.CurrentCamera.ViewMatrix;
-		u_Matrices.Projection = m_RendererData.CurrentCamera.Camera.ProjectionMatrix();
+		u_Matrices.ViewProjection = m_RendererData.CurrentCamera.pCamera->ProjectionMatrix() * m_RendererData.CurrentCamera.ViewMatrix;
+		u_Matrices.Projection = m_RendererData.CurrentCamera.pCamera->ProjectionMatrix();
 		u_Matrices.View = glm::inverse( m_RendererData.CurrentCamera.ViewMatrix );
 		u_Matrices.InvP = glm::inverse( u_Matrices.Projection );
 

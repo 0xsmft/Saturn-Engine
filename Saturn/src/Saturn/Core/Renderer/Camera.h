@@ -52,51 +52,6 @@ namespace Saturn {
 		float Distance = 0.0F;
 	};
 
-	inline glm::vec3 FrustumPlaneIntersects( const FrustumPlane& rA, const FrustumPlane& rB, const FrustumPlane& rC )
-	{
-		const glm::mat3 x( rA.Normal, rB.Normal, rC.Normal );
-		const glm::vec3 y( -rA.Distance, -rB.Distance, -rC.Distance );
-
-		return glm::inverse( x ) * y;
-	}
-
-	class Frustum
-	{
-	public:
-		Frustum() = default;
-
-		Frustum( const glm::vec3& rPosition, const glm::vec3& rForward, const glm::vec3& rRight, const glm::vec3& rUp, float fov, float xnear, float xfar, float aspectRatio );
-
-	public:
-		float PlaneSignedDistance( const glm::vec3& rPoint, const FrustumPlane& rPlane );
-
-		bool PlaneIntersectsSphere( const glm::vec3& rCenter, float radius, const FrustumPlane& rPlane );
-
-		bool FrustumIntersectsSphere( const glm::vec3& rCenter, float radius );
-
-		bool PlaneIntersectsAABB( const glm::vec3& rExtent, const glm::vec3& rCenter, const FrustumPlane& rPlane );
-
-		bool FrustumIntersectsAABB( const AABB& rBoundingBox );
-
-		FrustumPlane Planes[ 6 ];
-
-		void RenderDebug();
-
-		std::array<glm::vec3, 8> GetFrustumCorners();
-
-		void Update( const glm::vec3& rPosition, const glm::vec3& rForward, const glm::vec3& rRight, const glm::vec3& rUp, float fov, float xnear, float xfar, float aspectRatio, const glm::mat4& rViewProjection );
-
-	public:
-		glm::vec3 Position{};
-		glm::vec3 Forward{};
-		glm::vec3 Right{};
-		glm::vec3 Up{};
-		float Aspect = 0.0f;
-		float Fov = 0.0f;
-		float Near = 0.0f;
-		float Far = 0.0f;
-	};
-
 	class Camera
 	{
 	public:
@@ -133,11 +88,16 @@ namespace Saturn {
 		float GetFarPlane()  const { return m_FarPlane; }
 		float GetFov()       const { return m_Fov; }
 
-		Frustum& GetFrustum() { return m_CameraFrustum; }
-		const Frustum& GetFrustum() const { return m_CameraFrustum; }
-
 		bool IsActive() const { return m_IsActive; }
 		void SetActive( bool active ) { m_IsActive = active; }
+	
+		bool CameraFrustumIntersectsAABB( const AABB& rBoundingBox );
+		void RenderDebugFrustum() const;
+		std::array<glm::vec3, 8> GetFrustumCorners() const;
+
+	protected:
+		void UpdateFrustum( const glm::mat4& rViewProjection );
+
 	protected:
 		glm::mat4 m_Projection = glm::mat4( 1.0f );
 		glm::vec3 m_Position = glm::vec3( 0.0f );
@@ -153,10 +113,11 @@ namespace Saturn {
 
 		float m_NearPlane = 0.1f;
 		float m_FarPlane = 1000.0f;
+		// Fov in degrees
 		float m_Fov = 45.0f;
 		bool m_IsActive = false;
 
-		Frustum m_CameraFrustum{};
+		std::array<FrustumPlane, 6> m_CameraFrustumPlanes;
 	};
 
 	// The current camera's information to be sent to a renderer (SceneRenderer/Renderer2D)

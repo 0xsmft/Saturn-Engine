@@ -4,7 +4,7 @@
 *                                                                                           *
 * MIT License                                                                               *
 *                                                                                           *
-* Copyright (c) 2020 - 2024 BEAST                                                           *
+* Copyright (c) 2020 - 2025 BEAST                                                           *
 *                                                                                           *
 * Permission is hereby granted, free of charge, to any person obtaining a copy              *
 * of this software and associated documentation files (the "Software"), to deal             *
@@ -49,6 +49,10 @@ namespace Saturn {
 
 		const glm::quat orientation = GetOrientation();
 		m_Rotation = glm::eulerAngles( orientation ) * ( 180.0f / ( float ) M_PI );
+		m_ViewMatrix = glm::translate( glm::mat4( 1.0f ), m_Position ) * glm::toMat4( orientation );
+		m_ViewMatrix = glm::inverse( m_ViewMatrix );
+
+		UpdateFrustum( ViewProjection() );
 	}
 
 	static void DisableMouse()
@@ -69,6 +73,12 @@ namespace Saturn {
 		if( !m_IsActive )
 		{
 			EnableMouse();
+
+			// Extra step to counteract the camera's position moving but we aren't active anymore.
+			const float yawSign = GetUpDirection().y < 0 ? -1.0f : 1.0f;
+			const glm::vec3 lookAt = m_Position + GetForwardDirection();
+			m_ViewMatrix = glm::lookAt( m_Position, lookAt, glm::vec3( 0.0f, yawSign, 0.0f ) );
+
 			return;
 		}
 		else
@@ -91,7 +101,7 @@ namespace Saturn {
 		m_Yaw += m_YawDelta;
 		m_Pitch += m_PitchDelta;
 
-		m_Pitch = glm::clamp( m_Pitch, -88.0f, 88.0f );
+		m_Pitch = glm::clamp( m_Pitch, glm::radians( -88.0f ), glm::radians( 88.0f ) );
 
 		UpdateCameraView();
 	}
@@ -109,10 +119,10 @@ namespace Saturn {
 		m_Rotation = glm::normalize( lookAt - m_Position );
 		m_ViewMatrix = glm::lookAt( m_Position, lookAt, glm::vec3( 0.0f, yawSign, 0.0f ) );
 
-		//damping for smooth camera
+		// Damping for smooth camera
 		m_YawDelta *= 0.6f;
 		m_PitchDelta *= 0.6f;
 
-		m_CameraFrustum.Update( m_Position, GetForwardDirection(), GetRightDirection(), GetUpDirection(), glm::radians( m_Fov ), m_NearPlane, m_FarPlane, m_ViewportWidth / m_ViewportHeight, ViewProjection() );
+		UpdateFrustum( ViewProjection() );
 	}
 }

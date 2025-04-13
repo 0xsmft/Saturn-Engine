@@ -55,6 +55,8 @@ namespace Saturn {
 		m_Rotation = glm::eulerAngles( orientation ) * ( 180.0f / ( float ) M_PI );
 		m_ViewMatrix = glm::translate( glm::mat4( 1.0f ), m_Position ) * glm::toMat4( orientation );
 		m_ViewMatrix = glm::inverse( m_ViewMatrix );
+
+		UpdateFrustum( ViewProjection() );
 	}
 
 	static void DisableMouse()
@@ -160,7 +162,7 @@ namespace Saturn {
 		m_PitchDelta *= 0.6f;
 		m_PositionDelta *= 0.8f;
 
-		m_CameraFrustum.Update( m_Position, GetForwardDirection(), GetRightDirection(), GetUpDirection(), glm::radians( m_Fov ), m_NearPlane, m_FarPlane, m_ViewportWidth / m_ViewportHeight, ViewProjection() );
+		UpdateFrustum( ViewProjection() );
 	}
 
 	void EditorCamera::Focus( const glm::vec3& focusPoint )

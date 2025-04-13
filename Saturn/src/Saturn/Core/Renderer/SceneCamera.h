@@ -32,6 +32,10 @@
 
 namespace Saturn {
 
+	// SceneCamera
+	// A SceneCamera does not calculate it's position, instead it's position is expected to be set from something else
+	// For example if an entity has a SceneCamera, we set the camera's position to the entity's position.
+	// Furthermore, SceneCamera does not contain the ability to move, it only has the ability to look around.
 	class SceneCamera : public Camera
 	{
 	public:
@@ -49,19 +53,16 @@ namespace Saturn {
 			SetProjectionMatrix( m_Fov, ( float ) width, ( float ) height, m_NearPlane, m_FarPlane );
 		}
 
+		void SetPosition( const glm::vec3& pos ) { m_Position = pos; }
+
 		const glm::mat4& ViewMatrix() const { return m_ViewMatrix; }
 		glm::mat4 ViewProjection() const { return m_Projection * m_ViewMatrix; }
-
-		void SetViewMatrix( const glm::mat4& mat ) { m_ViewMatrix = mat; }
-
-		void SetPosition( const glm::vec3& pos ) { m_Position = pos; }
 
 	private:
 		void UpdateCameraView();
 	
 	private:
 		glm::mat4 m_ViewMatrix{};
-
 		glm::vec2 m_InitialMousePosition{};
 	};
 }

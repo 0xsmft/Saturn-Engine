@@ -30,7 +30,7 @@
 
 #include "Saturn/Asset/MemoryAssetDependency.h"
 
-#include "Saturn/Core/Math.h"
+#include "Saturn/Core/Maths.h"
 #include "Saturn/Core/UUID.h"
 #include "Saturn/Core/Renderer/SceneCamera.h"
 
@@ -79,7 +79,7 @@ namespace Saturn {
 		
 		void SetTransform( const glm::mat4& rTransfrom )
 		{
-			Math::DecomposeTransform( rTransfrom, Position, RotationQuat, Scale );
+			Maths::DecomposeTransform( rTransfrom, Position, RotationQuat, Scale );
 			Rotation = glm::eulerAngles( RotationQuat );
 		}
 

@@ -30,7 +30,7 @@
 
 #include "PxPhysicsAPI.h"
 
-#include "Saturn/Core/Math.h"
+#include "Saturn/Core/Maths.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
@@ -67,7 +67,7 @@ namespace Saturn::Auxiliary {
 		glm::vec3 pos{}, scale{};
 		glm::quat rot{};
 
-		Math::DecomposeTransform( mat, pos, rot, scale );
+		Maths::DecomposeTransform( mat, pos, rot, scale );
 
 		physx::PxQuat r = QGLMToPx( rot );
 		physx::PxVec3 p = GLMToPx( pos );

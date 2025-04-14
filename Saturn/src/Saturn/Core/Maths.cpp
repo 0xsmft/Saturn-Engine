@@ -27,14 +27,14 @@
 */
 
 #include "sppch.h"
-#include "Math.h"
+#include "Maths.h"
 
 #include <glm/gtx/matrix_decompose.hpp>
 
 #include <glm/gtx/norm.hpp>
 #include <glm/gtx/quaternion.hpp>
 
-namespace Saturn::Math {
+namespace Saturn::Maths {
 
 	//////////////////////////////////////////////////////////////////////////
 	// DecomposeTransform with a vector3 as rotation.

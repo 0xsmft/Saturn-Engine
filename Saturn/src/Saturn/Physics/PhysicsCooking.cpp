@@ -35,7 +35,7 @@
 #include "Saturn/Asset/PhysicsMaterialAsset.h"
 #include "Saturn/Asset/AssetManager.h"
 
-#include "Saturn/Core/Math.h"
+#include "Saturn/Core/Maths.h"
 
 namespace Saturn {
 
@@ -270,7 +270,7 @@ namespace Saturn {
 
 			// Create the shape.
 			glm::vec3 submeshPosition, submeshRotation, submeshScale;
-			Math::DecomposeTransform( rSubmesh.Transform, submeshPosition, submeshRotation, submeshScale );
+			Maths::DecomposeTransform( rSubmesh.Transform, submeshPosition, submeshRotation, submeshScale );
 
 			physx::PxVec3 ShapeScale = Auxiliary::GLMToPx( submeshScale * Scale );
 			physx::PxMeshScale MeshScale( ShapeScale );
@@ -328,7 +328,7 @@ namespace Saturn {
 			physx::PxConvexMesh* pMesh = PhysicsFoundation::Get().GetPhysics().createConvexMesh( InputBuffer );
 
 			glm::vec3 submeshPosition, submeshRotation, submeshScale;
-			Math::DecomposeTransform( rSubmesh.Transform, submeshPosition, submeshRotation, submeshScale );
+			Maths::DecomposeTransform( rSubmesh.Transform, submeshPosition, submeshRotation, submeshScale );
 
 			physx::PxVec3 ShapeScale = Auxiliary::GLMToPx( submeshScale * Scale );
 			physx::PxMeshScale MeshScale( ShapeScale );

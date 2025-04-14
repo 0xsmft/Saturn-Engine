@@ -162,20 +162,12 @@ namespace Saturn {
 
 	glm::vec3 Character::CalculateRight()
 	{
-		auto& r = TransformComponent::Right;
-
-		TransformComponent result = m_Scene->GetWorldSpaceTransform( m_CameraEntity );
-
-		return result.GetRotation() * r;
+		return m_CameraEntity->GetComponent<CameraComponent>().Camera.GetRightDirection();
 	}
 
 	glm::vec3 Character::CalculateForward()
 	{
-		auto& f = TransformComponent::Forward;
-
-		TransformComponent result = m_Scene->GetWorldSpaceTransform( m_CameraEntity );
-
-		return result.GetRotation() * f;
+		return m_CameraEntity->GetComponent<CameraComponent>().Camera.GetForwardDirection();
 	}
 
 	void Character::HandleRotation( Timestep ts )

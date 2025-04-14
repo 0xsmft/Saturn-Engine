@@ -589,7 +589,7 @@ namespace Saturn {
 		glm::mat4 worldSpace = GetTransformRelativeToParent( entity );
 		glm::quat rotation{};
 
-		Math::DecomposeTransform( worldSpace, tc.Position, rotation, tc.Scale );
+		Maths::DecomposeTransform( worldSpace, tc.Position, rotation, tc.Scale );
 
 		tc.SetRotation( rotation );
 

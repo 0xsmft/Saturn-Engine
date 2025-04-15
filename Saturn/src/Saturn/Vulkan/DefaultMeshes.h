@@ -4,7 +4,7 @@
 *                                                                                           *
 * MIT License                                                                               *
 *                                                                                           *
-* Copyright (c) 2020 - 2024 BEAST                                                           *
+* Copyright (c) 2020 - 2025 BEAST                                                           *
 *                                                                                           *
 * Permission is hereby granted, free of charge, to any person obtaining a copy              *
 * of this software and associated documentation files (the "Software"), to deal             *
@@ -30,6 +30,10 @@
 
 #include "Mesh.h"
 #include <glm/glm.hpp>
+
+namespace Saturn {
+	class Frustum;
+}
 
 namespace Saturn::Auxiliary {
 

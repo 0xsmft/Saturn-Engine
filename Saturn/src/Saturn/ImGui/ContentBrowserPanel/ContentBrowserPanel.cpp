@@ -290,6 +290,14 @@ namespace Saturn {
 
 					ImGui::SetClipboardText( text.c_str() );
 				}
+
+				if( ImGui::MenuItem( "Regenerate Thumbnail" ) )
+				{
+					for( auto& rItem : m_SelectedItems )
+					{
+						ContentBrowserThumbnailCache::Invalidate( rItem->GetAsset() );
+					}
+				}
 			}
 		}
 		else

@@ -167,6 +167,27 @@ namespace Saturn {
 	{
 	}
 
+	void ContentBrowserThumbnailCache::Invalidate( Ref<Asset> asset )
+	{
+		const auto Itr = s_Cache.find( asset->Path );
+		if( Itr != s_Cache.end() )
+		{
+			auto& rData = Itr->second;
+		
+			// TODO: Don't get the last_write_time every frame and instead check once and use FileWatch
+			auto fullPath = Project::GetActiveProject()->FilepathAbs( asset->Path );
+			auto lastWriteTimePoint = std::filesystem::last_write_time( fullPath );
+			auto timestamp = std::chrono::duration_cast< std::chrono::milliseconds >( lastWriteTimePoint.time_since_epoch() ).count();
+
+			rData.Time = timestamp;
+			rData.Texture = nullptr;
+
+			// Generate texture & pass in needed information for cache data
+			if( asset->Type == AssetType::Texture || asset->Type == AssetType::Material || asset->Type == AssetType::StaticMesh )
+				s_GeneratorQueue.push( { .Time = timestamp, .Texture = nullptr, .Asset = asset } );
+		}
+	}
+
 	//////////////////////////////////////////////////////////////////////////
 	// Serialisation
 

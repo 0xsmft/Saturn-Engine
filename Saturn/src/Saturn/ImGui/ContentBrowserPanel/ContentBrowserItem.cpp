@@ -77,7 +77,7 @@ namespace Saturn {
 		}
 
 		// Do not generate the icon in the constructor wait until render.
-		m_Icon = ContentBrowserThumbnailCache::GetDefault( m_IsDirectory ? CB_DIRECTORY_ICON : CB_FILE_ICON );
+		m_Icon = ContentBrowserThumbnailCache::Get().GetDefault( m_IsDirectory ? CB_DIRECTORY_ICON : CB_FILE_ICON );
 	}
 
 	ContentBrowserItem::~ContentBrowserItem()
@@ -175,7 +175,7 @@ namespace Saturn {
 		{
 			// Generate new thumbnail OR return existing one in cache.
 			// Returns default icon while generating.
-			m_Icon = ContentBrowserThumbnailCache::GetFor( m_Asset );
+			m_Icon = ContentBrowserThumbnailCache::Get().GetFor( m_Asset );
 
 			// Fill background.
 			pDrawList->AddRectFilled( TopLeft, ThumbnailBottomRight, ImGui::GetColorU32( ImGuiCol_Button ), 5.0f, ImDrawFlags_RoundCornersTop );
@@ -301,11 +301,7 @@ namespace Saturn {
 
 		ImGui::EndGroup();
 
-		pDrawList->AddImageRounded(
-			m_Icon->GetDescriptorSet(),
-			TopLeft, 
-			ImVec2( TopLeft.x + ThumbnailSize.x, TopLeft.y + ThumbnailSize.y ), 
-			{ 0, 1 }, { 1, 0 }, IM_COL32_WHITE, 5.0f, ImDrawFlags_RoundCornersTop );
+		DrawIcon( ThumbnailSize, TopLeft, ThumbnailBottomRight );
 
 		if( m_IsSelected )
 		{
@@ -479,7 +475,6 @@ namespace Saturn {
 	void ContentBrowserItem::Select()
 	{
 		m_IsSelected = true;
-		m_MultiSelected = true;
 	}
 
 	void ContentBrowserItem::Deselect()
@@ -535,7 +530,7 @@ namespace Saturn {
 		if( m_Type == ContentBrowserItemType::SourceItem )
 			return;
 
-		auto Icon = ContentBrowserThumbnailCache::GetDefault( m_IsDirectory ? CB_DIRECTORY_ICON : CB_FILE_ICON );
+		auto Icon = ContentBrowserThumbnailCache::Get().GetDefault( m_IsDirectory ? CB_DIRECTORY_ICON : CB_FILE_ICON );
 
 		if( ImGui::BeginDragDropSource( ImGuiDragDropFlags_SourceAllowNullID ) )
 		{
@@ -602,6 +597,52 @@ namespace Saturn {
 
 			ImGui::EndDragDropSource();
 		}
+	}
+
+	void ContentBrowserItem::DrawIcon( const ImVec2& rThumbnailSize, const ImVec2& rTopLeft, const ImVec2& rBottomRight )
+	{
+		ImVec2 imageSize = ImVec2( m_Icon->Width(), m_Icon->Height() );
+		ImVec2 scaledSize = imageSize;
+
+		// TODO: We use 512x512 images not 180
+		float maxSize = rThumbnailSize.x;
+		float aspectRatio = imageSize.x / imageSize.y;
+
+		if( imageSize.x > maxSize || imageSize.y > maxSize )
+		{
+			if( aspectRatio > 1.0f )
+			{
+				// Wider than tall (rect)
+				scaledSize.x = maxSize;
+				scaledSize.y = maxSize / aspectRatio;
+
+				// Align to the bottom of the item
+				ImVec2 modifiedTopLeft = rTopLeft;
+				modifiedTopLeft.y += ( rThumbnailSize.y - scaledSize.y );
+
+				DrawIconInternal( modifiedTopLeft, rBottomRight, 256 );
+			}
+			else
+			{
+				// Every thumbnail image that does not come from a texture (source asset) will always have an aspect ratio of one
+				// as 512 / 512 = 1
+				// Now, if an image is taller than it is wider it would also come through here.
+				
+				// Draw normal
+				DrawIconInternal( rTopLeft, rBottomRight );
+			}
+		}
+	}
+
+	void ContentBrowserItem::DrawIconInternal( const ImVec2& rTopLeft, const ImVec2& rBottomRight, ImDrawFlags drawFlags )
+	{
+		ImDrawList* pDrawList = ImGui::GetWindowDrawList();
+
+		pDrawList->AddImageRounded(
+			m_Icon->GetDescriptorSet(),
+			rTopLeft,
+			rBottomRight,
+			{ 0, 1 }, { 1, 0 }, IM_COL32_WHITE, 5.0f, drawFlags );
 	}
 
 }

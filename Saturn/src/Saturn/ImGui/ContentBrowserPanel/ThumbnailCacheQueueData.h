@@ -28,65 +28,27 @@
 
 #pragma once
 
-#include "ThumbnailGenerator.h"
-
-#include <queue>
+#include "Saturn/Vulkan/Texture.h"
+#include "Saturn/Asset/Asset.h"
 
 namespace Saturn {
 
-	constexpr int CB_DIRECTORY_ICON = 0;
-	constexpr int CB_FILE_ICON = 1;
-
-	class Asset;
-
-	struct CacheData
+	enum class ThumbnailState
 	{
-		int64_t Time = 0;
-		Ref<Texture2D> Texture = nullptr;
-
-		std::filesystem::path AssetPath;
-		bool ExistsOnFS = false;
+		Initialising, // Initial state
+		Generating, // Currently generating, this flag is only set when we need to generate the thumbnail over multiple frames
+		Generated
 	};
 
-	class ContentBrowserThumbnailCache
+	// Stored per asset when generation is needed and then popped from the queue
+	// Time & Texture are passed to the Asset's CacheData in s_Cache hence why we need it the QueueData
+	struct ThumbnailCacheQueueData
 	{
-	public:
-		static inline ContentBrowserThumbnailCache& Get() { return *SingletonStorage::GetOrCreateSingleton<ContentBrowserThumbnailCache>(); }
-	public:
-		void Init();
-		void Terminate();
+		int64_t Time = 0;
+		ThumbnailState State = ThumbnailState::Initialising;
+		Ref<Texture2D> Texture = nullptr;
 
-		bool AssetHasThumbnail( AssetID assetID );
-		void OnModified( Ref<Asset> asset );
-		void Invalidate( Ref<Asset> asset );
-		void RemoveThumbnail( AssetID id );
-
-		void UpdateCache();
-		void ClearCache();
-
-		[[nodiscard]] Ref<Texture2D> GetDefault( int Identifier );
-		[[nodiscard]] Ref<Texture2D> GetFor( const Ref<Asset>& rAsset );
-		
-	public:
-		void SerialiseManifest();
-		void DeserialiseManifest();
-
-	private:
-		void SerialiseSingleThumbnail( AssetID id, const CacheData& rData );
-		void DeserialiseSingleThumbnail( AssetID id, CacheData& rData );
-
-	private:
-		Ref<Texture2D> m_FileIcon;
-		Ref<Texture2D> m_FolderIcon;
-
-		bool m_PendingManifestWrite = false;
-
-		std::unordered_map<AssetID, CacheData> m_Cache;
-
-		// Temporary generator queue
-		std::queue<ThumbnailCacheQueueData> m_GenerationQueue;
-
-		ContentBrowserThumbnailGenerator m_Generator;
+		Ref<Asset> Asset = nullptr;
 	};
 
 }

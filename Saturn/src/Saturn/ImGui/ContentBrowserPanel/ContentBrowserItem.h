@@ -104,6 +104,9 @@ namespace Saturn {
 	private:
 		void HandleDragDrop();
 
+		void DrawIcon( const ImVec2& rThumbnailSize, const ImVec2& rTopLeft, const ImVec2& rBottomRight );
+		void DrawIconInternal( const ImVec2& rTopLeft, const ImVec2& rBottomRight, ImDrawFlags drawFlags = ImDrawFlags_RoundCornersTop );
+
 	private:
 		std::filesystem::directory_entry m_Entry;
 		std::filesystem::path m_Filename;

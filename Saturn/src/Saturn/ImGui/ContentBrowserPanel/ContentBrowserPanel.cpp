@@ -73,7 +73,7 @@ namespace Saturn {
 		: ContentBrowserBase()
 	{
 		m_ViewMode = CBViewMode::Assets;
-		ContentBrowserThumbnailCache::Init();
+		ContentBrowserThumbnailCache::Get().Init();
 	}
 
 	ContentBrowserPanel::ContentBrowserPanel( const std::string& rName )
@@ -83,7 +83,7 @@ namespace Saturn {
 
 	ContentBrowserPanel::~ContentBrowserPanel()
 	{
-		ContentBrowserThumbnailCache::Terminate();
+		ContentBrowserThumbnailCache::Get().Terminate();
 	}
 
 	void ContentBrowserPanel::DrawFolderTree( const std::filesystem::path& rPath )
@@ -295,7 +295,7 @@ namespace Saturn {
 				{
 					for( auto& rItem : m_SelectedItems )
 					{
-						ContentBrowserThumbnailCache::Invalidate( rItem->GetAsset() );
+						ContentBrowserThumbnailCache::Get().Invalidate( rItem->GetAsset() );
 					}
 				}
 			}
@@ -522,6 +522,7 @@ namespace Saturn {
 
 			case filewatch::Event::modified:
 			{
+				
 			} break;
 
 			case filewatch::Event::renamed_new:
@@ -628,7 +629,7 @@ namespace Saturn {
 			ImGui::EndHorizontal();
 
 			// Content begin...
-			ContentBrowserThumbnailCache::UpdateCache();
+			ContentBrowserThumbnailCache::Get().UpdateCache();
 
 			ImGui::PushStyleColor( ImGuiCol_Button, ImVec4( 0.0f, 0.0f, 0.0f, 0.0f ) );
 			ImGui::PushStyleColor( ImGuiCol_ButtonHovered, ImVec4( 0.3f, 0.3f, 0.3f, 0.35f ) );

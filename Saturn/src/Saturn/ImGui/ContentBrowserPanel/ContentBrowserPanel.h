@@ -58,6 +58,7 @@ namespace Saturn {
 		virtual ~ContentBrowserPanel();
 
 		virtual void Draw() override;
+
 		static const char* GetStaticName()
 		{
 			return "Content Browser Panel";

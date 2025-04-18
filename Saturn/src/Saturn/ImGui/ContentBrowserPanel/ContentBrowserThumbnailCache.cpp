@@ -36,102 +36,106 @@
 #include "Saturn/Serialisation/RawSerialisation.h"
 #include "Saturn/Asset/TextureSourceAsset.h"
 
-#include <queue>
+#include "Saturn/Core/JobSystem.h"
+
+#include "Saturn/ImGui/EditorIcons.h"
 
 namespace Saturn {
-
-	static Ref<Texture2D> s_FileIcon;
-	static Ref<Texture2D> s_FolderIcon;
-
-	// Stored for the lifetime of the content browser
-	// Stored per asset
-	struct CacheData
-	{
-		int64_t Time = 0;
-		Ref<Texture2D> Texture = nullptr;
-	};
-
-	static std::unordered_map<std::filesystem::path, CacheData> s_Cache;
-
-	static std::queue<ThumbnailCacheQueueData> s_GeneratorQueue;
-	static ContentBrowserThumbnailGenerator s_Generator;
-
+	
 	void ContentBrowserThumbnailCache::Init()
 	{
-		Deserialise();
+		DeserialiseManifest();
 
-		s_FileIcon = Ref<Texture2D>::Create( "content/textures/editor/FileIcon.png", AddressingMode::Repeat );
-		s_FolderIcon = Ref<Texture2D>::Create( "content/textures/editor/DirectoryIcon.png", AddressingMode::Repeat );
+		m_FileIcon = Ref<Texture2D>::Create( "content/textures/editor/FileIcon.png", AddressingMode::Repeat );
+		m_FolderIcon = Ref<Texture2D>::Create( "content/textures/editor/DirectoryIcon.png", AddressingMode::Repeat );
+
+		EditorIcons::AddIcon( m_FileIcon );
+		EditorIcons::AddIcon( m_FolderIcon );
 	}
 
 	void ContentBrowserThumbnailCache::Terminate()
 	{
-		Serialise();
+		SerialiseManifest();
 
-		s_Cache.clear();
-		s_FileIcon = nullptr;
-		s_FolderIcon = nullptr;
+		m_Cache.clear();
+
+		m_FileIcon = nullptr;
+		m_FolderIcon = nullptr;
 	}
 
-	void ContentBrowserThumbnailCache::InsertNew( const std::filesystem::path& rPath, int64_t time, Ref<Texture2D> texture )
+	bool ContentBrowserThumbnailCache::AssetHasThumbnail( AssetID assetID )
 	{
-		s_Cache.insert( { rPath, { time, texture } } );
-	}
-
-	bool ContentBrowserThumbnailCache::AssetHasThumbail( const std::filesystem::path& rPath )
-	{
-		return s_Cache.find( rPath ) != s_Cache.end();
+		return m_Cache.find( assetID ) != m_Cache.end();
 	}
 
 	void ContentBrowserThumbnailCache::UpdateCache()
 	{
-		while( !s_GeneratorQueue.empty() )
-		{
-			auto& rData = s_GeneratorQueue.front();
+		// TODO: Fix double call to empty() 
 
-			// temp
+		if( m_PendingManifestWrite && m_GenerationQueue.empty() )
+		{
+			SerialiseManifest();
+			m_PendingManifestWrite = false;
+		}
+
+		while( !m_GenerationQueue.empty() )
+		{
+			auto& rData = m_GenerationQueue.front();
+
 			if( rData.Asset->Type == AssetType::Texture || rData.Asset->Type == AssetType::Material || rData.Asset->Type == AssetType::StaticMesh )
 			{
 				// If it's somehow already in the cache pop it and move on to the next thumbnail
-				const auto Itr = s_Cache.find( rData.Asset->Path );
-				if( Itr != s_Cache.end() )
+				const auto Itr = m_Cache.find( rData.Asset->ID );
+				if( Itr != m_Cache.end() )
 				{
 					const auto& rData = Itr->second;
 					if( rData.Time == rData.Time && rData.Texture != nullptr )
 					{
-						s_GeneratorQueue.pop();
+						m_GenerationQueue.pop();
 						continue;
 					}
 				}
 
 				// Generate texture if not already in cache
-				rData.Texture = s_Generator.GenerateForAssetType( rData );
+				rData.Texture = m_Generator.GenerateForAssetType( rData );
 
 				// Try again next frame (could be still generating), move on to the next thumbnail
 				if( !rData.Texture )
 				{
-					s_GeneratorQueue.pop();
+					m_GenerationQueue.pop();
 					continue;
 				}
 
 				// Add to cache
-				auto& rCacheData = s_Cache[ rData.Asset->Path ];
+				auto& rCacheData = m_Cache[ rData.Asset->ID ];
 				rCacheData.Time = rData.Time;
 				rCacheData.Texture = rData.Texture;
+				rCacheData.AssetPath = rData.Asset->Path;
+				rCacheData.ExistsOnFS = true;
+
+				SerialiseSingleThumbnail(  rData.Asset->ID, rCacheData );
+
+				m_PendingManifestWrite = true;
 			}
 
-			s_GeneratorQueue.pop();
+			m_GenerationQueue.pop();
+
 			break;
 		}
 	}
 
-	void ContentBrowserThumbnailCache::OnUpdate()
+	void ContentBrowserThumbnailCache::ClearCache()
 	{
+		std::filesystem::path thumbnailPath = Project::GetActiveProject()->GetFullCachePath() / "PerUser" / "Thumbnails";
+
+		std::filesystem::remove_all( thumbnailPath );
+
+		m_Cache.clear();
 	}
 
 	Ref<Texture2D> ContentBrowserThumbnailCache::GetDefault( int Identifier )
 	{
-		return Identifier == 0 ? s_FolderIcon : s_FileIcon;
+		return Identifier == 0 ? m_FolderIcon : m_FileIcon;
 	}
 
 	Ref<Texture2D> ContentBrowserThumbnailCache::GetFor( const Ref<Asset>& rAsset )
@@ -139,26 +143,34 @@ namespace Saturn {
 		if( rAsset == nullptr )
 			return GetDefault( 1 );
 
-		Ref<Texture2D> texture = s_FileIcon;
-		const auto Itr = s_Cache.find( rAsset->Path );
+		Ref<Texture2D> texture = m_FileIcon;
+		const auto Itr = m_Cache.find( rAsset->ID );
 		
 		// TODO: Don't get the last_write_time every frame and instead check once and use FileWatch
 		auto fullPath = Project::GetActiveProject()->FilepathAbs( rAsset->Path );
 		auto lastWriteTimePoint = std::filesystem::last_write_time( fullPath );
 		auto timestamp = std::chrono::duration_cast< std::chrono::milliseconds >( lastWriteTimePoint.time_since_epoch() ).count();
 
-		if( Itr != s_Cache.end() )
+		if( Itr != m_Cache.end() )
 		{
-			const auto& rData = Itr->second;
-			if( rData.Time == timestamp && rData.Texture != nullptr )
+			auto& rData = Itr->second;
+
+			if( rData.Time == timestamp && rData.Texture != nullptr && rData.ExistsOnFS )
 			{
 				return rData.Texture;
+			}
+			else
+			{
+				// Load texture from the cache on job system
+				DeserialiseSingleThumbnail( Itr->first, rData );
+
+				return texture; 
 			}
 		}
 
 		// Generate texture & pass in needed information for cache data
 		if( rAsset->Type == AssetType::Texture || rAsset->Type == AssetType::Material || rAsset->Type == AssetType::StaticMesh )
-			s_GeneratorQueue.push( { .Time = timestamp, .Texture = nullptr, .Asset = rAsset } );
+			m_GenerationQueue.push( { .Time = timestamp, .Texture = nullptr, .Asset = rAsset } );
 
 		return texture;
 	}
@@ -169,8 +181,8 @@ namespace Saturn {
 
 	void ContentBrowserThumbnailCache::Invalidate( Ref<Asset> asset )
 	{
-		const auto Itr = s_Cache.find( asset->Path );
-		if( Itr != s_Cache.end() )
+		const auto Itr = m_Cache.find( asset->ID );
+		if( Itr != m_Cache.end() )
 		{
 			auto& rData = Itr->second;
 		
@@ -181,98 +193,156 @@ namespace Saturn {
 
 			rData.Time = timestamp;
 			rData.Texture = nullptr;
+			rData.ExistsOnFS = false;
 
 			// Generate texture & pass in needed information for cache data
 			if( asset->Type == AssetType::Texture || asset->Type == AssetType::Material || asset->Type == AssetType::StaticMesh )
-				s_GeneratorQueue.push( { .Time = timestamp, .Texture = nullptr, .Asset = asset } );
+				m_GenerationQueue.push( { .Time = timestamp, .Texture = nullptr, .Asset = asset } );
 		}
+	}
+
+	void ContentBrowserThumbnailCache::RemoveThumbnail( AssetID id )
+	{
+		const auto Itr = m_Cache.find( id );
+		if( Itr == m_Cache.end() )
+			return;
+
+		m_Cache.erase( Itr );
+	
+		// Delete file
+		std::filesystem::path newPath = Project::GetActiveProject()->GetFullCachePath() / "PerUser" / "Thumbnails" / std::to_string( id );
+		newPath.replace_extension( ".stc" );
+
+		std::filesystem::remove( newPath );
+
+		SerialiseManifest();
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	// Serialisation
 
-	struct CacheHeader
+	struct CacheManifestHeader
 	{
-		const char Magic[ 6 ] = ".STC\0";
-		size_t Size = 0;
+		const char Magic[ 6 ] = ".STM\0";
+		size_t Thumbnails = 0;
 		uint32_t Version = SAT_CURRENT_VERSION;
 	};
 
-	void ContentBrowserThumbnailCache::Serialise()
+	static void CreateDirectoriesIfNeeded() 
 	{
-		CacheHeader header{ .Size = s_Cache.size() };
+		std::filesystem::path newPath = Project::GetActiveProject()->GetFullCachePath() / "PerUser" / "Thumbnails";
 
-		std::filesystem::path cachePath = Project::GetActiveProject()->GetFullCachePath() / "Thumbnails.stc";
+		if( !std::filesystem::exists( newPath ) )
+		{
+			std::filesystem::create_directories( newPath );
+		}
+	}
+
+	void ContentBrowserThumbnailCache::SerialiseManifest()
+	{
+		CreateDirectoriesIfNeeded();
+
+		std::filesystem::path cachePath = Project::GetActiveProject()->GetFullCachePath() / "PerUser" / "Thumbnails" / "Manifest.stm";
+
 		std::ofstream fout( cachePath, std::ios::binary | std::ios::trunc );
 
+		// Write manifest
+		CacheManifestHeader header{ .Thumbnails = m_Cache.size() };
 		RawSerialisation::WriteObject( header, fout );
 
-		for( const auto& [path, data] : s_Cache )
+		for( const auto& [id, data] : m_Cache )
 		{
-			RawSerialisation::WriteString( path, fout );
-
+			RawSerialisation::WriteObject( id, fout );
 			RawSerialisation::WriteObject( data.Time, fout );
-
-			// Write Texture buffer
-			Ref<Texture2D> texture = data.Texture;
-
-			uint32_t width = texture->Width();
-			uint32_t height = texture->Height();
-
-			RawSerialisation::WriteObject( width, fout );
-			RawSerialisation::WriteObject( height, fout );
-
-			Buffer TemporaryBuffer = texture->X31CopyToBuffer();
-			RawSerialisation::WriteSaturnBuffer( TemporaryBuffer, fout );
-			TemporaryBuffer.Free();
 		}
 
 		fout.close();
+
+		SAT_CORE_INFO( "Serialised content browser thumbnail manifest!" );
 	}
 
-	void ContentBrowserThumbnailCache::Deserialise()
+	void ContentBrowserThumbnailCache::SerialiseSingleThumbnail( AssetID id, const CacheData& rData )
 	{
-		std::filesystem::path cachePath = Project::GetActiveProject()->GetFullCachePath() / "Thumbnails.stc";
+		CreateDirectoriesIfNeeded();
+
+		std::filesystem::path newPath = Project::GetActiveProject()->GetFullCachePath() / "PerUser" / "Thumbnails" / std::to_string( id );
+		newPath.replace_extension( ".stc" );
+
+		std::ofstream tfout( newPath, std::ios::binary | std::ios::trunc );
+
+		// Write Texture buffer
+		Ref<Texture2D> texture = rData.Texture;
+
+		uint32_t width = texture->Width();
+		uint32_t height = texture->Height();
+
+		RawSerialisation::WriteObject( width, tfout );
+		RawSerialisation::WriteObject( height, tfout );
+
+		Buffer TemporaryBuffer = texture->X31CopyToBuffer();
+		RawSerialisation::WriteSaturnBuffer( TemporaryBuffer, tfout );
+		TemporaryBuffer.Free();
+
+		tfout.close();
+	}
+
+	void ContentBrowserThumbnailCache::DeserialiseManifest()
+	{
+		std::filesystem::path cachePath = Project::GetActiveProject()->GetFullCachePath() / "PerUser" / "Thumbnails" / "Manifest.stm";
 		
 		if( !std::filesystem::exists( cachePath ) )
 			return;
 
 		std::ifstream stream( cachePath, std::ios::binary | std::ios::in );
 
-		CacheHeader header{};
+		CacheManifestHeader header{};
 		RawSerialisation::ReadObject( header, stream );
 
-		if( strcmp( header.Magic, ".STC\0" ) )
+		if( strcmp( header.Magic, ".STM\0" ) )
 		{
+			SAT_CORE_ERROR( "Invalid CB Thumbnail Manifest file header!" );
 			return;
 		}
 
-		s_Cache.reserve( header.Size );
+		m_Cache.reserve( header.Thumbnails );
 
-		for( size_t i = 0; i < header.Size; i++ )
+		for( size_t i = 0; i < header.Thumbnails; i++ )
 		{
 			CacheData data{};
+			data.ExistsOnFS = true;
 
-			std::filesystem::path path = RawSerialisation::ReadString( stream );
-
+			AssetID id{};
+			RawSerialisation::ReadObject( id, stream );
 			RawSerialisation::ReadObject( data.Time, stream );
 
-			// Read Texture buffer
-			uint32_t width = 0;
-			uint32_t height = 0;
-			RawSerialisation::ReadObject( width, stream );
-			RawSerialisation::ReadObject( height, stream );
-
-			Buffer buffer{};
-			RawSerialisation::ReadSaturnBuffer( buffer, stream );
-
-			// Create texture from buffer
-			data.Texture = Ref<Texture2D>::Create( ImageFormat::RGBA8, width, height, buffer.Data, false );
-
-			buffer.Free();
-
-			s_Cache[ path ] = data;
+			m_Cache[ id ] = data;
 		}
+
+		stream.close();
+	}
+
+	void ContentBrowserThumbnailCache::DeserialiseSingleThumbnail( AssetID id, CacheData& rData )
+	{
+		std::filesystem::path newPath = Project::GetActiveProject()->GetFullCachePath() / "PerUser" / "Thumbnails" / std::to_string( id );
+		newPath.replace_extension( ".stc" );
+
+		if( !std::filesystem::exists( newPath ) )
+			return;
+
+		std::ifstream stream( newPath, std::ios::binary | std::ios::in );
+
+		uint32_t width = 0;
+		uint32_t height = 0;
+
+		RawSerialisation::ReadObject( width, stream );
+		RawSerialisation::ReadObject( height, stream );
+
+		Buffer TemporaryBuffer;
+		RawSerialisation::ReadSaturnBuffer( TemporaryBuffer, stream );
+		
+		rData.Texture = Ref<Texture2D>::Create( ImageFormat::RGBA8, width, height, TemporaryBuffer.Data, TemporaryBuffer.Size );
+		
+		TemporaryBuffer.Free();
 
 		stream.close();
 	}

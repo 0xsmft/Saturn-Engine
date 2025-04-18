@@ -109,36 +109,37 @@ namespace Saturn {
 
 	static void InitNewRenderThumbnail( ThumbnailCacheQueueData& rData, Ref<MaterialAsset> materialAsset )
 	{
-		RendererThumbnailCacheData cacheData{};
-		cacheData.SceneRenderer = Ref<SceneRenderer>::Create( SceneRendererFlag_NoFlags );
-		cacheData.SceneRenderer->SetDynamicSky( 2.0f, 0.0f, 0.0f );
-		cacheData.Camera.SetActive( true );
-
-		cacheData.Scene = Ref<Scene>::Create();
-		cacheData.SceneRenderer->SetCurrentScene( cacheData.Scene.Get() );
-
-		// Create entity
-		cacheData.SphereEntity = Ref<Entity>::Create( cacheData.Scene.Get() );
-		auto& mc = cacheData.SphereEntity->AddComponent<StaticMeshComponent>();
-		mc.Mesh = Auxiliary::DefaultMeshes::CreateSphere( 1.0f );
-		mc.Mesh->GetMaterialRegistry()->AddAsset( materialAsset );
-
-		s_RendererThumbnailCache[ rData.Asset->ID ] = cacheData;
-
 		// Complete init on render thread
-		// We must do this as we are going to destroy vulkan objects
-		RenderThread::Get().Queue( [ rData ]()
+		// We must do this as we are going to create vulkan objects
+		RenderThread::Get().Queue( [ rData, materialAsset ]()
 		{
-			auto& rCacheData = s_RendererThumbnailCache[ rData.Asset->ID ];
-			rCacheData.SceneRenderer->SetViewportSize( THUMBNAIL_SIZE, THUMBNAIL_SIZE );
+			// INIT
+			RendererThumbnailCacheData cacheData{};
+			cacheData.SceneRenderer = Ref<SceneRenderer>::Create( SceneRendererFlag_NoFlags );
+			cacheData.SceneRenderer->SetDynamicSky( 2.0f, 0.0f, 0.0f );
+			cacheData.Camera.SetActive( true );
 
-			rCacheData.Camera.SetViewportSize( THUMBNAIL_SIZE, THUMBNAIL_SIZE );
-			rCacheData.Camera.SetDistance( 4.0f );
+			cacheData.Scene = Ref<Scene>::Create();
+			cacheData.SceneRenderer->SetCurrentScene( cacheData.Scene.Get() );
+
+			// Create entity
+			cacheData.SphereEntity = Ref<Entity>::Create( cacheData.Scene.Get() );
+			auto& mc = cacheData.SphereEntity->AddComponent<StaticMeshComponent>();
+			mc.Mesh = Auxiliary::DefaultMeshes::CreateSphere( 1.0f );
+			mc.Mesh->GetMaterialRegistry()->AddAsset( materialAsset );
+
+			// INIT (PreRender)
+			cacheData.SceneRenderer->SetViewportSize( ( uint32_t ) THUMBNAIL_SIZE, ( uint32_t ) THUMBNAIL_SIZE );
+
+			cacheData.Camera.SetViewportSize( ( uint32_t ) THUMBNAIL_SIZE, ( uint32_t ) THUMBNAIL_SIZE );
+			cacheData.Camera.SetDistance( 4.0f );
 
 			// Update to change the distance
-			rCacheData.Camera.OnUpdate( Application::Get().Time() );
+			cacheData.Camera.OnUpdate( Application::Get().Time() );
 
-			rCacheData.AwaitingRender = true;
+			cacheData.AwaitingRender = true;
+
+			s_RendererThumbnailCache[ rData.Asset->ID ] = cacheData;
 		} );
 	}
 
@@ -150,12 +151,10 @@ namespace Saturn {
 		
 		rCacheData.AwaitingRender = false;
 
-		// Actual render on render thread
-		//RenderThread::Get().Queue( []()
-		{
-			rCacheData.SceneRenderer->RenderScene();
-			rCacheData.RenderComplete = true;
-		}// );
+		// We cannot render on the render thread because the command buffer will no longer be active
+		// As when StartFirstRender is called we are on the ImGui part.
+		rCacheData.SceneRenderer->RenderScene();
+		rCacheData.RenderComplete = true;
 	}
 
 	static Ref<Texture2D> CreateTextureFromFBImage( Ref<Image2D> image ) 
@@ -174,10 +173,8 @@ namespace Saturn {
 		if( rData.Asset->Type != AssetType::Material )
 			return nullptr;
 
-		// Load material
-		Ref<MaterialAsset> materialAsset = AssetManager::Get().GetAssetAs<MaterialAsset>( rData.Asset->ID );
-
 		// If we already exist then we could be waiting on render or we can get the final image if we are complete
+		// TRANSITION: MAIN THREAD
 		auto itr = s_RendererThumbnailCache.find( rData.Asset->ID );
 		if( itr != s_RendererThumbnailCache.end() )
 		{
@@ -196,6 +193,7 @@ namespace Saturn {
 				rData.State = ThumbnailState::Generated;
 
 				// Destroy on render thread
+				// TRANSITION: MAIN THREAD (RenderThread)
 				RenderThread::Get().Queue( [ rData ]()
 				{
 					s_RendererThumbnailCache.erase( rData.Asset->ID );
@@ -205,10 +203,17 @@ namespace Saturn {
 			}
 		}
 
-		InitNewRenderThumbnail( rData, materialAsset );
+		// Load and prepare SceneRenderer on JobSystem
+		// TRANSITION: JOB SYSTEM THREAD
+		JobSystem::Get().AddJob( [&]() 
+		{
+			// Load material
+			Ref<MaterialAsset> materialAsset = AssetManager::Get().GetAssetAs<MaterialAsset>( rData.Asset->ID );
 
-		rData.State = ThumbnailState::Generating;
-		rData.Asset = materialAsset;
+			InitNewRenderThumbnail( rData, materialAsset );
+			rData.State = ThumbnailState::Generating;
+			rData.Asset = materialAsset;
+		} );
 
 		// Return no texture as it has not been generated.
 		return nullptr;
@@ -219,13 +224,12 @@ namespace Saturn {
 
 	Ref<Texture2D> StaticMeshAssetThumbnailGenerator::Generate( ThumbnailCacheQueueData& rData )
 	{
+		// Invalid type
 		if( rData.Asset->Type != AssetType::StaticMesh )
 			return nullptr;
 
-		// Load mesh
-		Ref<StaticMesh> staticMesh = AssetManager::Get().GetAssetAs<StaticMesh>( rData.Asset->ID );
-
 		// If we already exist then we could be waiting on render or we can get the final image if we are complete
+		// We also want to exit if we exist in the cache because we could still be waiting for the mesh to be loaded as meshes may take longer to load.
 		auto itr = s_RendererThumbnailCache.find( rData.Asset->ID );
 		if( itr != s_RendererThumbnailCache.end() )
 		{
@@ -251,28 +255,66 @@ namespace Saturn {
 
 				return CreateTextureFromFBImage( rCacheData.SceneRenderer->CompositeImage() );
 			}
+
+			// Awaiting init
+			return nullptr;
 		}
 
-		rData.State = ThumbnailState::Generating;
-		rData.Asset = staticMesh;
+		// Execute init on JobSystem Thread
+		JobSystem::Get().AddJob( [&]() 
+		{
+			Ref<StaticMesh> staticMesh = AssetManager::Get().GetAssetAs<StaticMesh>( rData.Asset->ID );
 
-		RendererThumbnailCacheData cacheData{};
-		cacheData.SceneRenderer = Ref<SceneRenderer>::Create( SceneRendererFlag_NoFlags );
-		cacheData.SceneRenderer->SetDynamicSky( 2.0f, 0.0f, 0.0f );
-		cacheData.Camera.SetActive( true );
+			RenderThread::Get().Queue( [ rData ]()
+			{
+				Ref<StaticMesh> staticMesh = AssetManager::Get().GetAssetAs<StaticMesh>( rData.Asset->ID );
 
-		cacheData.Scene = Ref<Scene>::Create();
-		cacheData.SceneRenderer->SetCurrentScene( cacheData.Scene.Get() );
+				auto& cacheData = s_RendererThumbnailCache[ rData.Asset->ID ];
+				cacheData.SceneRenderer = Ref<SceneRenderer>::Create( SceneRendererFlag_NoFlags );
+				cacheData.SceneRenderer->SetDynamicSky( 2.0f, 0.0f, 0.0f );
+				cacheData.Camera.SetActive( true );
 
-		// Create entity
-		cacheData.SphereEntity = Ref<Entity>::Create( cacheData.Scene.Get() );
-		auto& mc = cacheData.SphereEntity->AddComponent<StaticMeshComponent>();
-		mc.Mesh = staticMesh;
+				cacheData.Scene = Ref<Scene>::Create();
+				cacheData.SceneRenderer->SetCurrentScene( cacheData.Scene.Get() );
 
-		s_RendererThumbnailCache[ rData.Asset->ID ] = cacheData;
+				// Create entity with the static mesh
+				cacheData.SphereEntity = Ref<Entity>::Create( cacheData.Scene.Get() );
+				auto& mc = cacheData.SphereEntity->AddComponent<StaticMeshComponent>();
+				mc.Mesh = staticMesh;
 
+				cacheData.SceneRenderer->SetViewportSize( ( uint32_t ) THUMBNAIL_SIZE, ( uint32_t ) THUMBNAIL_SIZE );
+				cacheData.Camera.SetViewportSize( ( uint32_t ) THUMBNAIL_SIZE, ( uint32_t ) THUMBNAIL_SIZE );
+
+				// Move the camera back to contain the whole mesh.
+				auto& rBoundingBox = staticMesh->GetBoundingBox();
+
+				// Set the distance based on the bounding box and make sure that we are not too close so the min is 4.0f
+				glm::vec3 size = rBoundingBox.Max - rBoundingBox.Min;
+				float maxSize = std::max( size.x, std::max( size.y, size.z ) );
+
+				float distance = maxSize * 2.0f;
+				distance = std::max( distance + 4.0f, 4.0f );
+
+				cacheData.Camera.SetDistance( distance );
+
+				// Greater than the far clip
+				if( distance > 1000.0f )
+				{
+					cacheData.Camera.SetProjectionMatrix( 45.0f, THUMBNAIL_SIZE, THUMBNAIL_SIZE, 0.1f, distance * 10.0f );
+				}
+
+				// Update to change the distance
+				cacheData.Camera.OnUpdate( Application::Get().Time() );
+				cacheData.AwaitingRender = true;
+			} );
+
+			// Ready to render next frame by the MainThread (RenderThread)
+			rData.State = ThumbnailState::Generating;
+			rData.Asset = staticMesh;
+		} );
+
+		/*
 		// Complete init on render thread
-		// We must do this as we are going to destroy vulkan objects
 		RenderThread::Get().Queue( [ rData ]()
 		{
 			auto& rCacheData = s_RendererThumbnailCache[ rData.Asset->ID ];
@@ -303,6 +345,7 @@ namespace Saturn {
 
 			rCacheData.AwaitingRender = true;
 		} );
+		*/
 
 		// Return no texture as it has not been generated.
 		return nullptr;

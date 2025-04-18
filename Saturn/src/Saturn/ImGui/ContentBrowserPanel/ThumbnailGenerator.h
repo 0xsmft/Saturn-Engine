@@ -28,9 +28,7 @@
 
 #pragma once
 
-#include "Saturn/Asset/Asset.h"
-
-#include "ContentBrowserThumbnailCache.h"
+#include "ThumbnailCacheQueueData.h"
 
 namespace Saturn {
 

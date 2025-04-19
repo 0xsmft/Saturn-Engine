@@ -40,6 +40,9 @@
 
 #include "Saturn/ImGui/EditorIcons.h"
 
+#include <imgui.h>
+#include "Saturn/ImGui/ImGuiAuxiliary.h"
+
 namespace Saturn {
 	
 	void ContentBrowserThumbnailCache::Init()
@@ -217,6 +220,59 @@ namespace Saturn {
 
 		SerialiseManifest();
 	}
+
+#if !defined(SAT_DIST)
+	//////////////////////////////////////////////////////////////////////////
+	// ImGui
+
+	void ContentBrowserThumbnailCache::OnImGuiRender( bool* pOpen )
+	{
+		if( ImGui::Begin( "ContentBrowserThumbnailCache", pOpen ) ) 
+		{
+			ImGuiTableFlags tableFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollX | ImGuiTableFlags_NoBordersInBody;
+
+			if( ImGui::BeginTable( "##DebugCBThumbnails", 4, tableFlags ) )
+			{
+				ImGui::TableSetupColumn( "Last Write Time" );
+				ImGui::TableSetupColumn( "In Manifest" );
+				ImGui::TableSetupColumn( "Asset ID" );
+				ImGui::TableSetupColumn( "Delete", ImGuiTableColumnFlags_NoHeaderLabel );
+
+				ImGui::TableHeadersRow();
+
+				for( const auto& [rID, rData] : m_Cache )
+				{
+					ImGui::PushID( static_cast< int >( rID ) );
+
+					ImGui::TableNextRow();
+
+					ImGui::TableNextColumn();
+					ImGui::Text( "%llu", rData.Time );
+
+					ImGui::TableNextColumn();
+					ImGui::Text( "%s", rData.ExistsOnFS ? "true" : "false" );
+
+					ImGui::TableNextColumn();
+					ImGui::Text( "%llu", rID );
+
+					ImGui::TableNextColumn();
+					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Bin" ), { 24.0f, 24.0f } ) )
+					{
+						RemoveThumbnail( rID );
+						ImGui::PopID();
+						break;
+					}
+
+					ImGui::PopID();
+				}
+
+				ImGui::EndTable();
+			}
+
+			ImGui::End();
+		}
+	}
+#endif
 
 	//////////////////////////////////////////////////////////////////////////
 	// Serialisation

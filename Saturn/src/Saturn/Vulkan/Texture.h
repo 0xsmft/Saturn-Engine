@@ -80,11 +80,9 @@ namespace Saturn {
 		void TransitionImageLayout( VkFormat Format, VkImageLayout OldLayout, VkImageLayout NewLayout );
 		void TransitionImageLayout( VkImageSubresourceRange& rCommand, VkImageLayout OldLayout, VkImageLayout NewLayout );
 
-		uint32_t GetMipMapLevels();
+		uint32_t GetMipMapLevels() const;
 
 		std::pair<uint32_t, uint32_t> GetMipSize( uint32_t mip ) const;
-
-		void CopyBufferToImage( VkBuffer Buffer );
 
 		void SetPath( const std::filesystem::path& rPath ) { m_Path = rPath; };
 
@@ -103,6 +101,8 @@ namespace Saturn {
 		int Width() const { return m_Width; }
 		int Height() const { return m_Height; }
 
+		void* GetData() const { return m_pData; }
+
 	public:
 		virtual void CreateTextureImage( bool flip ) = 0;
 		virtual void SetData( const void* pData ) = 0;
@@ -117,6 +117,7 @@ namespace Saturn {
 
 	protected:
 		void Terminate();
+		void CopyBufferToImage( VkBuffer Buffer );
 
 	protected:
 		std::filesystem::path m_Path = "";
@@ -160,6 +161,9 @@ namespace Saturn {
 		VkImageView GetOrCreateMipImageView( uint32_t mip ) override;
 
 		void SetDebugName( const std::string& rName );
+
+		Buffer X31CopyToBuffer();
+		Buffer GetMipTextureData( uint32_t w, uint32_t h, uint32_t mip );
 
 	private:
 		void CreateTextureImage( bool flip ) override;

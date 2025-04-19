@@ -64,6 +64,10 @@ namespace Saturn {
 		void UpdateCache();
 		void ClearCache();
 
+#if !defined(SAT_DIST)
+		void OnImGuiRender( bool* pOpen );
+#endif
+
 		[[nodiscard]] Ref<Texture2D> GetDefault( int Identifier );
 		[[nodiscard]] Ref<Texture2D> GetFor( const Ref<Asset>& rAsset );
 		

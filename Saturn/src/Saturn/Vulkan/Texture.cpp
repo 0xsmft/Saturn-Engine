@@ -229,7 +229,7 @@ namespace Saturn {
 		VulkanContext::Get().EndSingleTimeCommands( CommandBuffer );
 	}
 
-	uint32_t Texture::GetMipMapLevels()
+	uint32_t Texture::GetMipMapLevels() const
 	{
 		// Based from https://www.oreilly.com/library/view/opengl-programming-guide/9780132748445/ch06lev2sec20.html
 		return static_cast<uint32_t>( std::floor( std::log2( glm::min( m_Width, m_Height ) ) ) + 1 );
@@ -613,6 +613,178 @@ namespace Saturn {
 		SetDebugUtilsObjectName( rName.c_str(), (uint64_t)m_Image, VK_OBJECT_TYPE_IMAGE );
 		SetDebugUtilsObjectName( rName.c_str(), (uint64_t)m_ImageView, VK_OBJECT_TYPE_IMAGE_VIEW );
 		SetDebugUtilsObjectName( rName.c_str(), (uint64_t)m_Sampler, VK_OBJECT_TYPE_SAMPLER );
+	}
+
+	static void X31TransitionImageLayout(
+		VkCommandBuffer CommandBuffer,
+		VkImageLayout OldLayout, VkImageLayout NewLayout,
+		VkPipelineStageFlags DstStage, VkPipelineStageFlags SrcStage, VkFormat Format, VkImage Image )
+	{
+		VkImageMemoryBarrier ImageBarrier = { VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
+		ImageBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		ImageBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		ImageBarrier.oldLayout = OldLayout;
+		ImageBarrier.newLayout = NewLayout;
+		ImageBarrier.image = Image;
+
+		ImageBarrier.subresourceRange.aspectMask = IsColorFormat( Format ) ? VK_IMAGE_ASPECT_COLOR_BIT : VK_IMAGE_ASPECT_DEPTH_BIT;
+		ImageBarrier.subresourceRange.baseMipLevel = 0;
+		ImageBarrier.subresourceRange.levelCount = 1;
+		ImageBarrier.subresourceRange.baseArrayLayer = 0;
+		ImageBarrier.subresourceRange.layerCount = 1;
+
+		if( Format == VK_FORMAT_D32_SFLOAT_S8_UINT )
+			ImageBarrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+
+		vkCmdPipelineBarrier( CommandBuffer,
+			SrcStage,
+			DstStage,
+			0,
+			0, nullptr,
+			0, nullptr,
+			1, &ImageBarrier );
+	}
+
+	static void X31MipTransitionImageLayout(
+		VkCommandBuffer CommandBuffer,
+		VkImageLayout OldLayout, VkImageLayout NewLayout,
+		VkPipelineStageFlags DstStage, VkPipelineStageFlags SrcStage, VkFormat Format, VkImage Image, uint32_t mip )
+	{
+		VkImageMemoryBarrier ImageBarrier = { VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
+		ImageBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		ImageBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		ImageBarrier.oldLayout = OldLayout;
+		ImageBarrier.newLayout = NewLayout;
+		ImageBarrier.image = Image;
+
+		ImageBarrier.subresourceRange.aspectMask = IsColorFormat( Format ) ? VK_IMAGE_ASPECT_COLOR_BIT : VK_IMAGE_ASPECT_DEPTH_BIT;
+		ImageBarrier.subresourceRange.baseMipLevel = mip;
+		ImageBarrier.subresourceRange.levelCount = 1;
+		ImageBarrier.subresourceRange.baseArrayLayer = 0;
+		ImageBarrier.subresourceRange.layerCount = 1;
+
+		if( Format == VK_FORMAT_D32_SFLOAT_S8_UINT )
+			ImageBarrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+
+		vkCmdPipelineBarrier( CommandBuffer,
+			SrcStage,
+			DstStage,
+			0,
+			0, nullptr,
+			0, nullptr,
+			1, &ImageBarrier );
+	}
+
+	Buffer Texture2D::X31CopyToBuffer()
+	{
+		VkDeviceSize ImageSize = ( uint64_t ) m_Width * ( uint64_t ) m_Height * 4;
+
+		// Copy image to vulkan buffer
+		VkBufferCreateInfo BufferCreateInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+		BufferCreateInfo.size = ImageSize;
+		BufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+		BufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+		VkBuffer ImgBuffer;
+
+		auto pAllocator = VulkanContext::Get().GetVulkanAllocator();
+		auto BufferAlloc = pAllocator->AllocateBuffer( BufferCreateInfo, VMA_MEMORY_USAGE_CPU_ONLY, &ImgBuffer );
+
+		VkCommandBuffer CommandBuffer = VulkanContext::Get().BeginSingleTimeCommands();
+
+		// TRANSITION: DescriptorImageInfo layout to VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+		X31TransitionImageLayout(
+			CommandBuffer,
+			m_DescriptorImageInfo.imageLayout,
+			VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+			VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, m_ImageFormat, m_Image );
+
+		VkBufferImageCopy Region = {};
+		Region.bufferOffset = 0;
+		Region.bufferRowLength = 0;
+		Region.bufferImageHeight = 0;
+		Region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		Region.imageSubresource.mipLevel = 0;
+		Region.imageSubresource.baseArrayLayer = 0;
+		Region.imageSubresource.layerCount = 1;
+		Region.imageOffset = { 0, 0, 0 };
+		Region.imageExtent = { ( uint32_t ) m_Width, ( uint32_t ) m_Height, 1 };
+
+		vkCmdCopyImageToBuffer( CommandBuffer, m_Image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, ImgBuffer, 1, &Region );
+
+		// TRANSITION: VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL back to DescriptorImageInfo layout
+		X31TransitionImageLayout(
+			CommandBuffer,
+			VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+			m_DescriptorImageInfo.imageLayout,
+			VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, m_ImageFormat, m_Image );
+
+		VulkanContext::Get().EndSingleTimeCommands( CommandBuffer );
+
+		void* pMappedData = pAllocator->MapMemory<void*>( BufferAlloc );
+
+		Buffer buf = Buffer::Copy( ( const void* ) pMappedData, ImageSize );
+
+		pAllocator->UnmapMemory( BufferAlloc );
+		pAllocator->DestroyBuffer( ImgBuffer );
+
+		return buf;
+	}
+
+	Buffer Texture2D::GetMipTextureData( uint32_t w, uint32_t h, uint32_t mip )
+	{
+		VkDeviceSize ImageSize = ( uint64_t ) w * ( uint64_t ) h * 4;
+
+		// Copy image to vulkan buffer
+		VkBufferCreateInfo BufferCreateInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+		BufferCreateInfo.size = ImageSize;
+		BufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+		BufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+		VkBuffer ImgBuffer;
+
+		auto pAllocator = VulkanContext::Get().GetVulkanAllocator();
+		auto BufferAlloc = pAllocator->AllocateBuffer( BufferCreateInfo, VMA_MEMORY_USAGE_CPU_ONLY, &ImgBuffer );
+
+		VkCommandBuffer CommandBuffer = VulkanContext::Get().BeginSingleTimeCommands();
+
+		// TRANSITION: DescriptorImageInfo layout to VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+		X31MipTransitionImageLayout(
+			CommandBuffer,
+			m_DescriptorImageInfo.imageLayout,
+			VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+			VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, m_ImageFormat, m_Image, mip );
+
+		VkBufferImageCopy Region = {};
+		Region.bufferOffset = 0;
+		Region.bufferRowLength = 0;
+		Region.bufferImageHeight = 0;
+		Region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		Region.imageSubresource.mipLevel = mip;
+		Region.imageSubresource.baseArrayLayer = 0;
+		Region.imageSubresource.layerCount = 1;
+		Region.imageOffset = { 0, 0, 0 };
+		Region.imageExtent = { w, h, 1 };
+
+		vkCmdCopyImageToBuffer( CommandBuffer, m_Image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, ImgBuffer, 1, &Region );
+
+		// TRANSITION: VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL back to DescriptorImageInfo layout
+		X31MipTransitionImageLayout(
+			CommandBuffer,
+			VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+			m_DescriptorImageInfo.imageLayout,
+			VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, m_ImageFormat, m_Image, mip );
+
+		VulkanContext::Get().EndSingleTimeCommands( CommandBuffer );
+
+		void* pMappedData = pAllocator->MapMemory<void*>( BufferAlloc );
+
+		Buffer buf = Buffer::Copy( ( const void* ) pMappedData, ImageSize );
+
+		pAllocator->UnmapMemory( BufferAlloc );
+		pAllocator->DestroyBuffer( ImgBuffer );
+
+		return buf;
 	}
 
 	void Texture2D::SetData( const void* pData )

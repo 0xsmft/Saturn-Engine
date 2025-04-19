@@ -81,11 +81,33 @@ namespace Saturn {
 
 		// Load the texture
 		auto fullPath = Project::GetActiveProject()->FilepathAbs( textureAsset->Path );
-
 		Ref<Texture2D> newTexture = Ref<Texture2D>::Create( fullPath );
-		rData.State = ThumbnailState::Generated;
 
-		return newTexture;
+		uint32_t textureWidth = newTexture->Width();
+		uint32_t textureHeight = newTexture->Height();
+
+		uint32_t mipWidth, mipHeight, mip{};
+		for( uint32_t i = 0; i < newTexture->GetMipMapLevels(); i++ )
+		{
+			mipWidth = glm::max( 1u, textureWidth >> i );
+			mipHeight = glm::max( 1u, textureHeight >> i );
+
+			if( mipWidth <= THUMBNAIL_SIZE && mipHeight <= THUMBNAIL_SIZE )
+			{
+				// found a mip that is the correct size for our thumbnail.
+				mip = i;
+				break;
+			}
+		}
+
+		Buffer TemporaryBuffer = newTexture->GetMipTextureData( mipWidth, mipHeight, mip );
+		Ref<Texture2D> mippedImage = Ref<Texture2D>::Create( ImageFormat::RGBA8, mipWidth, mipHeight, TemporaryBuffer.Data, false );
+
+		newTexture = nullptr;
+		TemporaryBuffer.Free();
+
+		rData.State = ThumbnailState::Generated;
+		return mippedImage;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -257,14 +279,13 @@ namespace Saturn {
 			}
 
 			// Awaiting init
+			// Return no texture as it has not been generated.
 			return nullptr;
 		}
 
 		// Execute init on JobSystem Thread
 		JobSystem::Get().AddJob( [&]() 
 		{
-			Ref<StaticMesh> staticMesh = AssetManager::Get().GetAssetAs<StaticMesh>( rData.Asset->ID );
-
 			RenderThread::Get().Queue( [ rData ]()
 			{
 				Ref<StaticMesh> staticMesh = AssetManager::Get().GetAssetAs<StaticMesh>( rData.Asset->ID );
@@ -308,44 +329,11 @@ namespace Saturn {
 				cacheData.AwaitingRender = true;
 			} );
 
+			Ref<StaticMesh> staticMesh = AssetManager::Get().GetAssetAs<StaticMesh>( rData.Asset->ID );
 			// Ready to render next frame by the MainThread (RenderThread)
 			rData.State = ThumbnailState::Generating;
 			rData.Asset = staticMesh;
 		} );
-
-		/*
-		// Complete init on render thread
-		RenderThread::Get().Queue( [ rData ]()
-		{
-			auto& rCacheData = s_RendererThumbnailCache[ rData.Asset->ID ];
-			rCacheData.SceneRenderer->SetViewportSize( THUMBNAIL_SIZE, THUMBNAIL_SIZE );
-
-			rCacheData.Camera.SetViewportSize( THUMBNAIL_SIZE, THUMBNAIL_SIZE );
-
-			auto staticMesh = rData.Asset.As<StaticMesh>();
-			auto& rBoundingBox = staticMesh->GetBoundingBox();
-
-			// Set the distance based on the bounding box and make sure that we are not too close so the min is 4.0f
-			glm::vec3 size = rBoundingBox.Max - rBoundingBox.Min;
-			float maxSize = std::max( size.x, std::max( size.y, size.z ) );
-
-			float distance = maxSize * 2.0f;
-			distance = std::max( distance + 4.0f, 4.0f );
-
-			rCacheData.Camera.SetDistance( distance );
-
-			// Greater than the far clip
-			if( distance > 1000.0f )
-			{
-				rCacheData.Camera.SetProjectionMatrix( 45.0f, THUMBNAIL_SIZE, THUMBNAIL_SIZE, 0.1f, distance * 10.0f );
-			}
-
-			// Update to change the distance
-			rCacheData.Camera.OnUpdate( Application::Get().Time() );
-
-			rCacheData.AwaitingRender = true;
-		} );
-		*/
 
 		// Return no texture as it has not been generated.
 		return nullptr;

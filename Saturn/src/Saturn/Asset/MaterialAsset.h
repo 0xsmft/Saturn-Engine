@@ -94,8 +94,6 @@ namespace Saturn {
 
 		// Updates Uniform buffers, texture and storage buffers.
 		void RT_Update(
-			const Ref< StaticMesh >& rMesh, 
-			Submesh& rSubmsh,
 			const std::vector<std::vector<VkWriteDescriptorSet>>& rExtraWds );
 
 		void RT_Bind( const std::vector<std::vector<VkWriteDescriptorSet>>& rStorageBufferWDS = std::vector<std::vector<VkWriteDescriptorSet>>() );

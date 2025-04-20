@@ -188,7 +188,7 @@ namespace Saturn {
 		} );
 	}
 
-	void MaterialAsset::RT_Update( const Ref< StaticMesh >& rMesh, Submesh& rSubmsh, const std::vector<std::vector<VkWriteDescriptorSet>>& rExtraWds )
+	void MaterialAsset::RT_Update( const std::vector<std::vector<VkWriteDescriptorSet>>& rExtraWds )
 	{
 		if( m_PendingMaterialChange )
 		{

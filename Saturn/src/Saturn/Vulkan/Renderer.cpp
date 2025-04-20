@@ -355,7 +355,7 @@ namespace Saturn {
 				}
 			}
 
-			rMaterialAsset->RT_Update( mesh, rSubmesh, wds );
+			rMaterialAsset->RT_Update( wds );
 
 			VkDescriptorSet Set = rMaterialAsset->GetMaterial()->GetDescriptorSet( m_FrameCount );
 

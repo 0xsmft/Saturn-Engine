@@ -151,6 +151,22 @@ namespace Saturn {
 		void DrawMessageBox( const MessageBoxInfo& rInfo );
 
 	private:
+		struct EditorNotification
+		{
+			std::string Text{};
+			float Lifetime = 0.0f;
+
+			float AnimationTime = 0.0f;
+
+			UUID ID;
+		};
+
+		void PushNotification( EditorNotification& rInfo );
+		void PopNotification();
+		float DrawSingleNotification( EditorNotification& rInfo, float lastYOffset );
+		void DrawNotifications();
+
+	private:
 		GameModule* m_GameModule = nullptr;
 		Ref<AssetManager> m_AssetManager;
 
@@ -196,6 +212,7 @@ namespace Saturn {
 		bool m_ShowSceneDirtyModal = false;
 
 		bool m_RequestRuntime = false;
+		bool m_ShowCBThumbnailDebug = false;
 
 		// Translate as default
 		int m_GizmoOperation = 7 /* ImGuizmo::OPERATION::TRANSLATE */;
@@ -206,6 +223,7 @@ namespace Saturn {
 		bool m_ShowOperation = false;
 
 		std::queue<MessageBoxInfo> m_MessageBoxes;
+		std::vector<EditorNotification> m_Notifications;
 
 		Ref<Scene> m_EditorScene = nullptr;
 		Ref<Scene> m_RuntimeScene = nullptr;

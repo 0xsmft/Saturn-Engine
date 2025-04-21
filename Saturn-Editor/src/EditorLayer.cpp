@@ -1586,6 +1586,9 @@ namespace Saturn {
 			ImGui::SeparatorText( "Scene Renderer" );
 			if( ImGui::MenuItem( "Render Mesh AABB", "" ) )           Application::Get().PrimarySceneRenderer().RenderMeshAABB();
 
+			ImGui::SeparatorText( "Content Browser" );
+			if( ImGui::MenuItem( "Show Thumbnail Cache", "" ) )       m_ShowCBThumbnailDebug   ^= 1;
+
 			ImGui::EndMenu();
 		}
 
@@ -2037,7 +2040,7 @@ namespace Saturn {
 					glm::vec3 rotation;
 					glm::vec3 scale;
 
-					Math::DecomposeTransform( transform * offsetTransform, translation, rotation, scale );
+					Maths::DecomposeTransform( transform * offsetTransform, translation, rotation, scale );
 
 					glm::vec3 DeltaRotation = rotation - tc.GetRotationEuler();
 
@@ -2658,6 +2661,77 @@ namespace Saturn {
 	{
 		auto& rMessageBox = m_MessageBoxes.front();
 		DrawMessageBox( rMessageBox );
+	}
+
+	void EditorLayer::PushNotification( EditorNotification& rInfo )
+	{
+		m_Notifications.push_back( rInfo );
+	}
+
+	void EditorLayer::PopNotification()
+	{
+		m_Notifications.pop_back();
+	}
+
+	float EditorLayer::DrawSingleNotification( EditorNotification& rInfo, float lastYOffset )
+	{
+		auto dt = ImGui::GetIO().DeltaTime;
+
+		// Position bottom-right corner
+		const ImGuiViewport* pViewport = ImGui::GetMainViewport();
+		ImVec2 workPos = pViewport->WorkPos;
+		ImVec2 workSize = pViewport->WorkSize;
+
+		// Animate window alpha
+		// 0.5f is the duration
+		rInfo.AnimationTime += dt;
+		float t = ImClamp( rInfo.AnimationTime / 0.5f, 0.0f, 1.0f );
+
+		float easeAlpha = ImClamp( 1.0f - glm::pow( 1.0f - t, 3.0f ), 0.0f, 1.0f );
+
+		ImVec2 windowPos = ImVec2( 
+			workPos.x + workSize.x, 
+			workPos.y + workSize.y - 48.0f - lastYOffset );
+
+		ImVec2 windowPivot = ImVec2( 1.0f, 1.0f );
+
+		ImGui::SetNextWindowPos( windowPos, ImGuiCond_Always, windowPivot );
+		ImGui::PushStyleVar( ImGuiStyleVar_Alpha, easeAlpha );
+
+		std::string windowID = std::format( "##EDITOR_NOFITICATION/{0}", (uint64_t)rInfo.ID );
+		ImGui::Begin( windowID.c_str(), nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDocking );
+
+		ImGui::Text( "%s", rInfo.Text.c_str() );
+		
+		float sizeY = ImGui::GetWindowSize().y;
+		ImGui::End();
+		ImGui::PopStyleVar();
+
+		// Deduct lifetime
+		rInfo.Lifetime -= dt;
+
+		// YOffset
+		return lastYOffset + sizeY + 10.0f;
+	}
+
+	void EditorLayer::DrawNotifications()
+	{
+		float yOffset = 0.0f;
+		for( auto rIt = m_Notifications.begin(); rIt != m_Notifications.end(); )
+		{
+			auto& rNotification = *rIt;
+
+			yOffset = DrawSingleNotification( rNotification, yOffset );
+			
+			if( rNotification.Lifetime <= 0.0f )
+			{
+				rIt = m_Notifications.erase( rIt );
+			}
+			else
+			{
+				rIt++;
+			}
+		}
 	}
 
 }

@@ -86,7 +86,7 @@ namespace Saturn {
 		uint32_t textureWidth = newTexture->Width();
 		uint32_t textureHeight = newTexture->Height();
 
-		uint32_t mipWidth, mipHeight, mip{};
+		uint32_t mipWidth = textureWidth, mipHeight = textureHeight, mip{};
 		for( uint32_t i = 0; i < newTexture->GetMipMapLevels(); i++ )
 		{
 			mipWidth = glm::max( 1u, textureWidth >> i );
@@ -94,7 +94,7 @@ namespace Saturn {
 
 			if( mipWidth <= THUMBNAIL_SIZE && mipHeight <= THUMBNAIL_SIZE )
 			{
-				// found a mip that is the correct size for our thumbnail.
+				// Found a mip that is the correct size for our thumbnail.
 				mip = i;
 				break;
 			}

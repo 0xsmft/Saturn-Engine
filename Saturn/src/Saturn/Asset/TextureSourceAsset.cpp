@@ -29,6 +29,8 @@
 #include "sppch.h"
 #include "TextureSourceAsset.h"
 
+#include "Saturn/Vulkan/Texture.h"
+
 #include "Saturn/Core/VirtualFS.h"
 #include "Saturn/Core/MemoryStream.h"
 

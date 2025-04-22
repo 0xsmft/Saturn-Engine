@@ -33,6 +33,8 @@
 
 namespace Saturn {
 
+	class Texture;
+
 	class TextureSourceAsset : public Asset
 	{
 	public:
@@ -45,12 +47,12 @@ namespace Saturn {
 		void ReadFromVFS();
 
 	public:
-		uint32_t Width() { return m_Width; }
-		uint32_t Height() { return m_Height; }
+		uint32_t Width()  const { return m_Width; }
+		uint32_t Height() const { return m_Height; }
 
-		uint32_t Channels() { return m_Channels; }
+		uint32_t Channels() const { return m_Channels; }
 
-		Buffer TextureData() { return m_TextureBuffer; }
+		Buffer TextureData() const { return m_TextureBuffer; }
 
 	public:
 		//////////////////////////////////////////////////////////////////////////

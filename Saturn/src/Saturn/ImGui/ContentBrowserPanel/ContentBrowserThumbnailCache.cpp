@@ -143,7 +143,7 @@ namespace Saturn {
 
 	Ref<Texture2D> ContentBrowserThumbnailCache::GetFor( const Ref<Asset>& rAsset )
 	{
-		if( rAsset == nullptr )
+		if( !rAsset )
 			return GetDefault( 1 );
 
 		Ref<Texture2D> texture = m_FileIcon;
@@ -231,12 +231,13 @@ namespace Saturn {
 		{
 			ImGuiTableFlags tableFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollX | ImGuiTableFlags_NoBordersInBody;
 
-			if( ImGui::BeginTable( "##DebugCBThumbnails", 4, tableFlags ) )
+			if( ImGui::BeginTable( "##DebugCBThumbnails", 5, tableFlags ) )
 			{
 				ImGui::TableSetupColumn( "Last Write Time" );
 				ImGui::TableSetupColumn( "In Manifest" );
 				ImGui::TableSetupColumn( "Asset ID" );
 				ImGui::TableSetupColumn( "Delete", ImGuiTableColumnFlags_NoHeaderLabel );
+				ImGui::TableSetupColumn( "Regen", ImGuiTableColumnFlags_NoHeaderLabel );
 
 				ImGui::TableHeadersRow();
 
@@ -263,12 +264,24 @@ namespace Saturn {
 						break;
 					}
 
+					ImGui::TableNextColumn();
+					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Sync" ), { 24.0f, 24.0f } ) )
+					{
+						Ref<Asset> asset = AssetManager::Get().FindAsset( rID );
+						Invalidate( asset );
+					}
+
 					ImGui::PopID();
 				}
 
 				ImGui::EndTable();
 			}
 
+			if( ImGui::Button( "Clear All" ) )
+			{
+				ClearCache();
+			}
+	
 			ImGui::End();
 		}
 	}

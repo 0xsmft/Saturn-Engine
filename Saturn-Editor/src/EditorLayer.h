@@ -39,6 +39,7 @@
 
 #include <Saturn/ImGui/JobProgress.h>
 
+#include <Saturn/ImGui/UndoRedo/GlobalUndoRedoGroup.h>
 #include <queue>
 
 namespace Saturn {
@@ -155,6 +156,7 @@ namespace Saturn {
 		{
 			std::string Text{};
 			float Lifetime = 0.0f;
+			MessageBoxType NotificationType = MessageBoxType::InformationNoIcon;
 
 			float AnimationTime = 0.0f;
 
@@ -169,6 +171,9 @@ namespace Saturn {
 	private:
 		GameModule* m_GameModule = nullptr;
 		Ref<AssetManager> m_AssetManager;
+
+		Ref<GlobalUndoRedoGroup> m_GlobalUndoRedoGroup = nullptr;
+		Ref<UndoRedoGroupBase> m_EditorUndoRedoGroup = nullptr;
 
 	private:
 		Ref< TitleBar > m_TitleBar = nullptr;
@@ -214,6 +219,8 @@ namespace Saturn {
 		bool m_RequestRuntime = false;
 		bool m_ShowCBThumbnailDebug = false;
 
+		bool m_WasGizmoUsed = false;
+
 		// Translate as default
 		int m_GizmoOperation = 7 /* ImGuizmo::OPERATION::TRANSLATE */;
 
@@ -224,6 +231,8 @@ namespace Saturn {
 
 		std::queue<MessageBoxInfo> m_MessageBoxes;
 		std::vector<EditorNotification> m_Notifications;
+		std::unordered_map<entt::entity, std::tuple<glm::vec3, glm::vec3, glm::vec3>> m_GizmoOrignalTransforms;
+		std::unordered_map<entt::entity, std::tuple<glm::vec3, glm::vec3, glm::vec3>> m_GizmoModifiedTransforms;
 
 		Ref<Scene> m_EditorScene = nullptr;
 		Ref<Scene> m_RuntimeScene = nullptr;

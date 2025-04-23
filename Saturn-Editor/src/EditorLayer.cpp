@@ -196,6 +196,10 @@ namespace Saturn {
 				} );
 			} );
 		}
+
+		m_EditorUndoRedoGroup = Ref<UndoRedoGroupBase>::Create();
+		m_GlobalUndoRedoGroup = Ref<GlobalUndoRedoGroup>::Create();
+		m_GlobalUndoRedoGroup->AddGroup( m_EditorUndoRedoGroup );
 	}
 
 	void EditorLayer::OnDetach()
@@ -611,6 +615,16 @@ namespace Saturn {
 				case RubyKey::S:
 				{
 					SaveFile();
+				} break;
+
+				case RubyKey::Z:
+				{
+					m_GlobalUndoRedoGroup->GlobalUndoRecent();
+				} break;
+			
+				case RubyKey::Y:
+				{
+					m_GlobalUndoRedoGroup->GlobalRedoRecent();
 				} break;
 			}
 
@@ -2040,6 +2054,11 @@ namespace Saturn {
 					glm::vec3 rotation;
 					glm::vec3 scale;
 
+					if( !m_WasGizmoUsed )
+					{
+						m_GizmoOrignalTransforms[ entity->GetHandle() ] = std::make_tuple( tc.Position, tc.GetRotationEuler(), tc.Scale );
+					}
+
 					Maths::DecomposeTransform( transform * offsetTransform, translation, rotation, scale );
 
 					glm::vec3 DeltaRotation = rotation - tc.GetRotationEuler();
@@ -2048,9 +2067,29 @@ namespace Saturn {
 					tc.SetRotation( tc.GetRotationEuler() += DeltaRotation );
 					tc.Scale = scale;
 
-					// TODO: It would be nice if ImGuizmo provided a way for us to know when we stopped using instead of us marking the scene dirty every time we move.
-					m_EditorScene->MarkDirty();
+					m_GizmoModifiedTransforms[ entity->GetHandle() ] = std::make_tuple( tc.Position, tc.GetRotationEuler(), tc.Scale );
 				}
+
+				m_WasGizmoUsed = true;
+			}
+			else if( m_WasGizmoUsed )
+			{
+				m_EditorScene->MarkDirty();
+
+				for( const auto& [ handle, tuple ] : m_GizmoOrignalTransforms )
+				{
+					const auto& [position, rotation, scale] = tuple;
+					const auto& [newPosition, newRotation, newScale] = m_GizmoModifiedTransforms[ handle ];
+
+					Ref<UndoRedoActionModifyVec3> action = Ref<UndoRedoActionModifyVec3>::Create( "V3", "V3", &GActiveScene->FindEntityByHandle(handle)->GetComponent<TransformComponent>().Position, position, newPosition );
+				
+					m_EditorUndoRedoGroup->AddAction( action );
+				}
+
+				m_GizmoModifiedTransforms.clear();
+				m_GizmoOrignalTransforms.clear();
+
+				m_WasGizmoUsed = false;
 			}
 		}
 
@@ -2685,9 +2724,9 @@ namespace Saturn {
 		// Animate window alpha
 		// 0.5f is the duration
 		rInfo.AnimationTime += dt;
-		float t = ImClamp( rInfo.AnimationTime / 0.5f, 0.0f, 1.0f );
+		float t = glm::clamp( rInfo.AnimationTime / 0.5f, 0.0f, 1.0f );
 
-		float easeAlpha = ImClamp( 1.0f - glm::pow( 1.0f - t, 3.0f ), 0.0f, 1.0f );
+		float easeAlpha = glm::clamp( 1.0f - glm::pow( 1.0f - t, 3.0f ), 0.0f, 1.0f );
 
 		ImVec2 windowPos = ImVec2( 
 			workPos.x + workSize.x, 
@@ -2701,8 +2740,29 @@ namespace Saturn {
 		std::string windowID = std::format( "##EDITOR_NOFITICATION/{0}", (uint64_t)rInfo.ID );
 		ImGui::Begin( windowID.c_str(), nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDocking );
 
+		ImGui::BeginHorizontal( rInfo.ID );
+
+		switch( rInfo.NotificationType )
+		{
+			// TODO: Create info texture.
+			case MessageBoxType::Information:
+			case MessageBoxType::Warning: 
+			{
+				Auxiliary::Image( m_ExclamationTexture, ImVec2( 24.0f, 24.0f ) );
+			} break;
+
+			case MessageBoxType::Error:
+			{
+				Auxiliary::Image( EditorIcons::GetIcon( "Error" ), ImVec2( 24.0f, 24.0f ) );
+			} break;
+		}
+
+		ImGui::Spring();
+
 		ImGui::Text( "%s", rInfo.Text.c_str() );
-		
+		ImGui::Spring();
+		ImGui::EndHorizontal();
+
 		float sizeY = ImGui::GetWindowSize().y;
 		ImGui::End();
 		ImGui::PopStyleVar();

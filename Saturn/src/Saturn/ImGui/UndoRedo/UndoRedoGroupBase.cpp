@@ -29,44 +29,47 @@
 #include "sppch.h"
 #include "UndoRedoGroupBase.h"
 
+#include "GlobalUndoRedoGroup.h"
+
 namespace Saturn {
 
 	UndoRedoGroupBase::UndoRedoGroupBase()
 	{
+		GlobalUndoRedoGroup::Get().AddGroup( this );
 	}
 
 	UndoRedoGroupBase::~UndoRedoGroupBase()
 	{
-		m_Actions.clear();
 	}
 
 	void UndoRedoGroupBase::UndoMostRecent()
 	{
-		if( m_Actions.size() )
+		if( !m_UndoActions.empty() )
 		{
-			m_Actions.back()->Undo();
-		}
-	}
+			auto& rAction = m_UndoActions.top();
 
-	void UndoRedoGroupBase::UndoTo( size_t amount /*= 0 */ )
-	{
-		if( amount >= m_Actions.size() )
-			return;
-	
-		for( size_t i = m_Actions.size() - 1; i > amount; --i )
-		{
-			m_Actions[ i ]->Undo();
-			m_Actions.pop_back();
+			rAction->Undo();
+
+			m_RedoActions.push( rAction );
+			m_UndoActions.pop();
 		}
 	}
 
 	void UndoRedoGroupBase::RedoMostRecent()
 	{
-		m_Actions.back()->Redo();
+		if( !m_RedoActions.empty() )
+		{
+			auto& rAction = m_RedoActions.top();
+
+			rAction->Redo();
+			
+			m_UndoActions.push( rAction );
+			m_RedoActions.pop();
+		}
 	}
 
 	void UndoRedoGroupBase::AddAction( Ref<UndoRedoActionBase> action )
 	{
-		m_Actions.push_back( action );
+		m_UndoActions.push( action );
 	}
 }

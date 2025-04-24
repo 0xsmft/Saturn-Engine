@@ -30,34 +30,66 @@
 
 #include "UndoRedoActionBase.h"
 
-#include "Saturn/Core/Base.h"
-#include "Saturn/Core/UUID.h"
-
-#include <stack>
-
 namespace Saturn {
 
-	// [GLOBAL UNDO/REDO GROUP]
-	//  [LOCAL EDITOR GROUPS] (GraphSoundAssetViewer, SceneHierarchyPanel)
-	//   [ACTIONS] (with their custom type based from UndoRedoActionBase)
-
-	class UndoRedoGroupBase : public RefTarget
+	enum class UndoRedoComponentActionType
 	{
-	public:
-		UndoRedoGroupBase();
-		virtual ~UndoRedoGroupBase();
-
-		void UndoMostRecent();
-		void RedoMostRecent();
-
-		void AddAction( Ref<UndoRedoActionBase> action );
-
-	protected:
-		std::stack<Ref<UndoRedoActionBase>> m_RedoActions;
-		std::stack<Ref<UndoRedoActionBase>> m_UndoActions;
-	
-	private:
-		Saturn::UUID m_UndoRedoGroupID;
+		AddComponent,
+		RemoveComponent,
 	};
 
+	template<UndoRedoComponentActionType ComponentActionType, typename C>
+	class UndoRedoActionComponent : public UndoRedoActionBase
+	{
+	public:
+		UndoRedoActionComponent( const std::string& rName, const std::string& rDescription, Ref<Entity> entity ) : UndoRedoActionBase( rName, rDescription ), m_EntityHandle( entity->GetHandle() ), m_pScene( entity->GetScene() ) {}	
+
+		UndoRedoActionComponent( Ref<Entity> entity )
+			: UndoRedoActionBase( "Modify Entity Component", "Modify Entity Component" ), m_EntityHandle( entity->GetHandle() ), m_pScene( entity->GetScene() )
+		{
+		}
+
+	public:
+		void Undo() override
+		{
+			if constexpr( ComponentActionType == UndoRedoComponentActionType::AddComponent ) 
+			{
+				// Remove
+				if( m_pScene )
+					m_pScene->RemoveComponent<C>( m_EntityHandle );
+			}
+			else if constexpr( ComponentActionType == UndoRedoComponentActionType::RemoveComponent )
+			{
+				// Add
+				if( m_pScene )
+					m_pScene->AddComponent<C>( m_EntityHandle );
+			}
+		}
+
+		void Redo() override
+		{
+			if constexpr( ComponentActionType == UndoRedoComponentActionType::AddComponent )
+			{
+				// Add
+				if( m_pScene )
+					m_pScene->AddComponent<C>( m_EntityHandle );
+			}
+			else if constexpr( ComponentActionType == UndoRedoComponentActionType::RemoveComponent )
+			{
+				// Remove
+				if( m_pScene )
+					m_pScene->RemoveComponent<C>( m_EntityHandle );
+			}
+		}
+
+	private:
+		entt::entity m_EntityHandle;
+		Scene* m_pScene = nullptr;
+	};
+
+	template<typename Component>
+	using UndoRedoActionAddComponent = UndoRedoActionComponent<UndoRedoComponentActionType::AddComponent, Component>;
+
+	template<typename Component>
+	using UndoRedoActionRemoveComponent = UndoRedoActionComponent<UndoRedoComponentActionType::RemoveComponent, Component>;
 }

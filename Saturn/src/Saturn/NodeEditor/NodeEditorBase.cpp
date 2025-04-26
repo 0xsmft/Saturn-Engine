@@ -353,9 +353,20 @@ namespace Saturn {
 		m_Links.push_back( Ref<Link>::Create( UUID(), rStart->ID, rEnd->ID, rStart->GetPinColor() ) );
 	}
 
+	void NodeEditorBase::CreateLinkWithID( UUID linkID, const Ref<Pin>& rStart, const Ref<Pin>& rEnd )
+	{
+		m_Links.push_back( Ref<Link>::Create( linkID, rStart->ID, rEnd->ID, rStart->GetPinColor() ) );
+	}
+
 	void NodeEditorBase::ShowFlow()
 	{
 		for( const auto& rLink : m_Links )
+			ed::Flow( ed::LinkId( rLink->ID ) );
+	}
+
+	void NodeEditorBase::ShowFlow( const std::vector<Ref<Link>>& rLinks )
+	{
+		for( const auto& rLink : rLinks )
 			ed::Flow( ed::LinkId( rLink->ID ) );
 	}
 

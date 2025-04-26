@@ -29,6 +29,10 @@
 #include "sppch.h"
 #include "GlobalUndoRedoGroup.h"
 
+#if !defined(SAT_DIST)
+#include <imgui.h>
+#endif
+
 namespace Saturn {
 
 	GlobalUndoRedoGroup::GlobalUndoRedoGroup()
@@ -36,51 +40,139 @@ namespace Saturn {
 		SingletonStorage::AddSingleton( this );
 	}
 
-	void GlobalUndoRedoGroup::ClearGroups()
+	GlobalUndoRedoGroup::~GlobalUndoRedoGroup()
 	{
-		m_UndoRedoGroups.clear();
-
 		SingletonStorage::RemoveSingleton( this );
 	}
 
-	GlobalUndoRedoGroup::~GlobalUndoRedoGroup()
+	Ref<UndoRedoActionBase> GlobalUndoRedoGroup::GlobalUndoRecent()
 	{
-		ClearGroups();
+		if( !m_UndoActions.empty() )
+		{
+			auto& rAction = m_UndoActions.back();
+
+			rAction->Undo();
+
+			m_RedoActions.push_back( rAction );
+			m_UndoActions.pop_back();
+		
+			return m_RedoActions.back();
+		}
+
+		return nullptr;
 	}
 
-	void GlobalUndoRedoGroup::GlobalUndoRecent()
+	Ref<UndoRedoActionBase> GlobalUndoRedoGroup::GlobalRedoRecent()
 	{
-		for( auto& rGroup : m_UndoRedoGroups )
-			rGroup->UndoMostRecent();
-	}
+		if( !m_RedoActions.empty() )
+		{
+			auto& rAction = m_RedoActions.back();
 
-	void GlobalUndoRedoGroup::GlobalRedoRecent()
-	{
-		for( auto& rGroup : m_UndoRedoGroups )
-			rGroup->RedoMostRecent();
+			rAction->Redo();
+
+			m_UndoActions.push_back( rAction );
+			m_RedoActions.pop_back();
+			
+			return m_UndoActions.back();
+		}
+
+		return nullptr;
 	}
 
 	void GlobalUndoRedoGroup::GlobalUndoTo( size_t amount /*= 0 */ )
 	{
-		for( auto& rGroup : m_UndoRedoGroups )
-			rGroup->UndoTo( amount );
+		for( size_t i = 0; i < amount; i++ )
+		{
+			GlobalUndoRecent();
+		}
 	}
 
 	void GlobalUndoRedoGroup::GlobalRedoTo( size_t amount /*= 0 */ )
 	{
-		//for( auto& rGroup : m_UndoRedoGroups )
-		//	rGroup->RedoTo( amount );
+		for( size_t i = 0; i < amount; i++ )
+		{
+			GlobalRedoRecent();
+		}
 	}
 
-	void GlobalUndoRedoGroup::AddGroup( Ref<UndoRedoGroupBase> group )
+	void GlobalUndoRedoGroup::RemoveIfActionHasIdentifier( UUID identifier )
 	{
-		m_UndoRedoGroups.push_back( group );
+		auto itr = std::remove_if( m_UndoActions.begin(), m_UndoActions.end(),
+			[ identifier ]( const Ref<UndoRedoActionBase>& action )
+		{
+			return action->GetIdentifier() == identifier;
+		} );
+
+		m_UndoActions.erase( itr, m_UndoActions.end() );
+
+		itr = std::remove_if( m_RedoActions.begin(), m_RedoActions.end(),
+			[ identifier ]( const Ref<UndoRedoActionBase>& action )
+		{
+			return action->GetIdentifier() == identifier;
+		} );
+
+		m_RedoActions.erase( itr, m_RedoActions.end() );
 	}
 
-	void GlobalUndoRedoGroup::RemoveGroup( Ref<UndoRedoGroupBase> group )
+	void GlobalUndoRedoGroup::AddAction( Ref<UndoRedoActionBase> action, UUID identifier )
 	{
-		auto it = std::remove( m_UndoRedoGroups.begin(), m_UndoRedoGroups.end(), group );
-		m_UndoRedoGroups.erase( it, m_UndoRedoGroups.end() );
+		action->SetIdentifier( identifier );
+		m_UndoActions.push_back( action );
 	}
+
+	void GlobalUndoRedoGroup::RemoveAction( Ref<UndoRedoActionBase> action )
+	{
+	}
+
+#if !defined(SAT_DIST)
+	void GlobalUndoRedoGroup::OnImGuiRender( bool* pOpen )
+	{
+		if( ImGui::Begin( "Global Undo Redo Group", pOpen ) )
+		{
+			ImGui::Text( "Top of undo stack:" );
+			ImGui::Text( "%s", m_UndoActions.empty() ? "<empty>" : m_UndoActions.back()->GetName().c_str() );
+			ImGui::Text( "Size of undo stack:" );
+			ImGui::Text( "%i", m_UndoActions.size() );
+
+			ImGui::Text( "Top of redo stack:" );
+			ImGui::Text( "%s", m_RedoActions.empty() ? "<empty>" : m_RedoActions.back()->GetName().c_str() );
+			ImGui::Text( "Size of redo stack:" );
+			ImGui::Text( "%i", m_RedoActions.size() );
+
+			// Undo actions
+			ImGui::Text( "Undo Actions:" );
+			for( size_t i = 0; i < m_UndoActions.size(); i++ )
+			{
+				ImGui::Text( "%i: %s", i, m_UndoActions[ i ]->GetName().c_str() );
+			}
+
+			// Redo actions
+			ImGui::Text( "Redo Actions:" );
+			for( size_t i = 0; i < m_RedoActions.size(); i++ )
+			{
+				ImGui::Text( "%i: %s", i, m_RedoActions[ i ]->GetName().c_str() );
+			}
+
+			ImGui::BeginHorizontal( "##ACTIONRC" );
+
+			if( ImGui::Button( "Undo" ) )
+			{
+				GlobalUndoRecent();
+			}
+
+			ImGui::Spring();
+
+			if( ImGui::Button( "Redo" ) )
+			{
+				GlobalRedoRecent();
+			}
+
+			ImGui::Spring();
+			ImGui::EndHorizontal();
+			
+			ImGui::End();
+		}
+	}
+#endif
 
 }

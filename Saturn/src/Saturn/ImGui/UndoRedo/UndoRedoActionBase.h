@@ -28,7 +28,9 @@
 
 #pragma once
 
+#include "Saturn/Core/UUID.h"
 #include "Saturn/Core/Ref.h"
+
 #include <string>
 
 namespace Saturn {
@@ -45,12 +47,15 @@ namespace Saturn {
 	public:
 		const std::string& GetName() const { return m_Name; }
 		const std::string& GetDescription() const { return m_Description; }
+		UUID GetIdentifier() const { return m_Identifier; }
+
+		void SetIdentifier( UUID identifier ) { m_Identifier = identifier; }
 
 	private:
 		std::string m_Name;
 		std::string m_Description;
 
-		uint64_t m_ActionType = 0;
+		UUID m_Identifier{};
 	};
 
 	template<typename Ty>
@@ -90,4 +95,45 @@ namespace Saturn {
 	using UndoRedoActionModifyVec4 = UndoRedoActionModifyT<glm::vec4>;
 	using UndoRedoActionModifyMat4 = UndoRedoActionModifyT<glm::mat4>;
 	
+	class UndoRedoActionModifyString : public UndoRedoActionBase
+	{
+	public:
+		UndoRedoActionModifyString( 
+			const std::string& rName, 
+			const std::string& rDescription, 
+			      std::string* pTarget,
+			const std::string& rOldValue,
+			const std::string& rNewValue
+		)	: UndoRedoActionBase( rName, rDescription ), m_OriginalValue( rOldValue ), m_CurrentValue( rNewValue ), m_pTarget( pTarget ) 
+		{
+		}
+
+		UndoRedoActionModifyString(
+			std::string* pTarget,
+			const std::string& rOldValue,
+			const std::string& rNewValue
+		) : UndoRedoActionBase( "Modify String", "Modify String" ), m_OriginalValue( rOldValue ), m_CurrentValue( rNewValue ), m_pTarget( pTarget )
+		{
+		}
+
+	public:
+		void Undo() override
+		{
+			if( m_pTarget )
+				*m_pTarget = m_OriginalValue;
+		}
+
+		void Redo() override
+		{
+			if( m_pTarget )
+				*m_pTarget = m_CurrentValue;
+		}
+
+	private:
+		std::string m_CurrentValue;
+		std::string m_OriginalValue;
+
+		std::string* m_pTarget = nullptr;
+	};
+
 }

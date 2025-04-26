@@ -118,6 +118,8 @@ namespace Saturn {
 
 	void EditorLayer::OnAttach()
 	{
+		m_GlobalUndoRedoGroup = Ref<GlobalUndoRedoGroup>::Create();
+
 		m_CheckerboardTexture = Ref< Texture2D >::Create( "content/textures/editor/checkerboard.tga", AddressingMode::Repeat );
 
 		m_StartRuntimeTexture = Ref< Texture2D >::Create( "content/textures/editor/Play.png", AddressingMode::ClampToEdge );
@@ -186,6 +188,9 @@ namespace Saturn {
 
 		if( !Project::GetActiveProject()->HasThumbnail() )
 		{
+			EditorNotification notification{ .Text = "Generating Project Thumbnail", .Lifetime = 5.0f };
+			PushNotification( notification );
+
 			JobSystem::Get().AddJob( []()
 			{
 				std::this_thread::sleep_for( std::chrono::seconds( 2 ) );
@@ -196,10 +201,6 @@ namespace Saturn {
 				} );
 			} );
 		}
-
-		m_EditorUndoRedoGroup = Ref<UndoRedoGroupBase>::Create();
-		m_GlobalUndoRedoGroup = Ref<GlobalUndoRedoGroup>::Create();
-		m_GlobalUndoRedoGroup->AddGroup( m_EditorUndoRedoGroup );
 	}
 
 	void EditorLayer::OnDetach()
@@ -619,12 +620,22 @@ namespace Saturn {
 
 				case RubyKey::Z:
 				{
-					m_GlobalUndoRedoGroup->GlobalUndoRecent();
+					if( auto action = m_GlobalUndoRedoGroup->GlobalUndoRecent(); action )
+					{
+						std::string undoName = std::format( "Undo {0}", action->GetName() );
+						EditorNotification notification{ .Text = undoName, .Lifetime = 3.0f };
+						PushNotification( notification );
+					}
 				} break;
 			
 				case RubyKey::Y:
 				{
-					m_GlobalUndoRedoGroup->GlobalRedoRecent();
+					if( auto action = m_GlobalUndoRedoGroup->GlobalRedoRecent(); action )
+					{
+						std::string redoName = std::format( "Redo {0}", action->GetName() );
+						EditorNotification notification{ .Text = redoName, .Lifetime = 3.0f };
+						PushNotification( notification );
+					}
 				} break;
 			}
 

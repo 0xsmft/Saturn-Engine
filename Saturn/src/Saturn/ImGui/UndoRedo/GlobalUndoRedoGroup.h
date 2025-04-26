@@ -28,8 +28,10 @@
 
 #pragma once
 
-#include "UndoRedoGroupBase.h"
 #include "Saturn/Core/Base.h"
+#include "UndoRedoActionBase.h"
+
+#include <stack>
 
 namespace Saturn {
 
@@ -44,19 +46,28 @@ namespace Saturn {
 		~GlobalUndoRedoGroup();
 
 	public:
-		void GlobalUndoRecent();
-		void GlobalRedoRecent();
+		Ref<UndoRedoActionBase> GlobalUndoRecent();
+		Ref<UndoRedoActionBase> GlobalRedoRecent();
 		
 		void GlobalUndoTo( size_t amount = 0 );
 		void GlobalRedoTo( size_t amount = 0 );
+
+		void RemoveIfActionHasIdentifier( UUID identifier );
 		
-		void AddGroup( Ref<UndoRedoGroupBase> group );
-		void RemoveGroup( Ref<UndoRedoGroupBase> group );
-		
-		void ClearGroups();
+	public:
+		void AddAction( Ref<UndoRedoActionBase> action, UUID identifier );
+		void RemoveAction( Ref<UndoRedoActionBase> action );
+
+		Ref<UndoRedoActionBase> GetTopUndoAction() { return m_UndoActions.empty() ? nullptr : m_UndoActions.back(); }
+		Ref<UndoRedoActionBase> GetTopRedoAction() { return m_RedoActions.empty() ? nullptr : m_RedoActions.back(); }
+
+#if !defined(SAT_DIST)
+		void OnImGuiRender( bool* pOpen );
+#endif
 
 	private:
-		std::vector<Ref<UndoRedoGroupBase>> m_UndoRedoGroups;
+		std::vector<Ref<UndoRedoActionBase>> m_RedoActions;
+		std::vector<Ref<UndoRedoActionBase>> m_UndoActions;
 	};
 	
 }

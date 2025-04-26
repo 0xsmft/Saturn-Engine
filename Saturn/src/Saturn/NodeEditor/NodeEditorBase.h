@@ -114,7 +114,10 @@ namespace Saturn {
 		}
 
 		void CreateLink( const Ref<Pin>& rStart, const Ref<Pin>& rEnd );
+		void CreateLinkWithID( UUID linkID, const Ref<Pin>& rStart, const Ref<Pin>& rEnd );
+		
 		void ShowFlow();
+		void ShowFlow( const std::vector<Ref<Link>>& rLinks );
 
 	public:
 		AssetID GetAssetID() const { return m_AssetID; }

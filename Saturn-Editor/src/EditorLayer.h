@@ -173,7 +173,6 @@ namespace Saturn {
 		Ref<AssetManager> m_AssetManager;
 
 		Ref<GlobalUndoRedoGroup> m_GlobalUndoRedoGroup = nullptr;
-		Ref<UndoRedoGroupBase> m_EditorUndoRedoGroup = nullptr;
 
 	private:
 		Ref< TitleBar > m_TitleBar = nullptr;
@@ -215,9 +214,14 @@ namespace Saturn {
 		bool m_ShowRendererWindow = true;
 		bool m_ShowSceneRendererWindow = true;
 		bool m_ShowSceneDirtyModal = false;
-
+		bool m_ShowUserSettings = false;
 		bool m_RequestRuntime = false;
+		bool m_ShowCameraFrustum = false;
+		bool m_ShowMeshAABB = false;
 		bool m_ShowCBThumbnailDebug = false;
+		bool m_ShowUndoRedoDebug = false;
+		// JobProgress
+		bool m_ShowOperation = false;
 
 		bool m_WasGizmoUsed = false;
 

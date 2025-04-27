@@ -32,13 +32,14 @@
 #include <Saturn/Project/Project.h>
 
 #include <Saturn/ImGui/ImGuiAuxiliary.h>
-#include <Saturn/Vulkan/SceneRenderer.h>
 #include <Saturn/ImGui/TitleBar.h>
 #include <Saturn/ImGui/MaterialAssetViewer/MaterialAssetViewer.h>
 #include <Saturn/ImGui/PrefabViewer.h>
 #include <Saturn/ImGui/Panel/Panel.h>
 #include <Saturn/ImGui/Panel/PanelManager.h>
 #include <Saturn/ImGui/EditorIcons.h>
+#include <Saturn/ImGui/ContentBrowserPanel/ContentBrowserThumbnailCache.h>
+#include <Saturn/ImGui/UndoRedo/EntityUndoRedoActions.h>
 
 #include <Saturn/Serialisation/SceneSerialiser.h>
 #include <Saturn/Serialisation/ProjectSerialiser.h>
@@ -47,22 +48,23 @@
 #include <Saturn/Serialisation/AssetSerialisers.h>
 #include <Saturn/Serialisation/AssetBundle.h>
 
-#include <Saturn/Physics/PhysicsFoundation.h>
-
+#include <Saturn/Vulkan/SceneRenderer.h>
 #include <Saturn/Vulkan/ShaderBundle.h>
 #include <Saturn/Vulkan/Renderer2D.h>
 #include <Saturn/Vulkan/VulkanImageAux.h>
+#include <Saturn/Vulkan/DefaultMeshes.h>
 
-#include <Saturn/Core/EnvironmentVariables.h>
-
-#include <ImGuizmo/ImGuizmo.h>
-
-#include <imspinner/imspinner.h>
-
-#include <Saturn/Core/Math.h>
+#include <Saturn/Core/Maths.h>
 #include <Saturn/Core/StringAuxiliary.h>
 #include <Saturn/Core/EngineSettings.h>
 #include <Saturn/Core/OptickProfiler.h>
+#include <Saturn/Core/Ruby/RubyWindow.h>
+#include <Saturn/Core/Ruby/RubyAuxiliary.h>
+#include <Saturn/Core/OptickProfiler.h>
+#include <Saturn/Core/Process.h>
+#include <Saturn/Core/Renderer/RenderThread.h>
+#include <Saturn/Core/VirtualFS.h>
+#include <Saturn/Core/EnvironmentVariables.h>
 
 #include <Saturn/Asset/AssetRegistry.h>
 #include <Saturn/Asset/AssetManager.h>
@@ -71,18 +73,14 @@
 #include <Saturn/GameFramework/Core/GameModule.h>
 #include <Saturn/GameFramework/Core/ClassMetadataHandler.h>
 
-#include <Saturn/Core/Renderer/RenderThread.h>
-#include <Saturn/Core/VirtualFS.h>
-
 #include <Saturn/Audio/AudioSystem.h>
-
-#include <Saturn/Premake/Premake.h>
-#include <Saturn/Core/Process.h>
-
 #include <Saturn/Audio/SoundGroup.h>
 
-#include <Saturn/Core/Ruby/RubyWindow.h>
-#include <Saturn/Core/Ruby/RubyAuxiliary.h>
+#include <Saturn/Premake/Premake.h>
+
+#include <ImGuizmo/ImGuizmo.h>
+
+#include <imspinner/imspinner.h>
 
 #include <glm/gtc/type_ptr.hpp>
 
@@ -397,7 +395,7 @@ namespace Saturn {
 
 			if( float percent = m_BlockingOperation->GetProgress(); percent >= 1.0f )
 			{
-				ImGui::ProgressBar( percent / 100 );
+				ImGui::ProgressBar( percent / 100.0f );
 			}
 
 			ImGui::EndHorizontal();
@@ -2056,20 +2054,22 @@ namespace Saturn {
 
 			if( ImGuizmo::IsUsing() )
 			{
-				for( Ref<Entity>& entity : selectedEntities )
+				for( Ref<Entity>& rEntity : selectedEntities )
 				{
-					glm::mat4 transform = GActiveScene->GetTransformRelativeToParent( entity );
-					auto& tc = entity->GetComponent<TransformComponent>();
+					auto& tc = rEntity->GetComponent<TransformComponent>();
+
+					// Store original transform for undo/redo
+					if( !m_WasGizmoUsed )
+					{
+						m_GizmoOrignalTransforms[ rEntity->GetHandle() ] = std::make_tuple( tc.Position, tc.GetRotationEuler(), tc.Scale );
+					}
+
+					// Set new transform
+					glm::mat4 transform = GActiveScene->GetTransformRelativeToParent( rEntity );
 
 					glm::vec3 translation;
 					glm::vec3 rotation;
 					glm::vec3 scale;
-
-					if( !m_WasGizmoUsed )
-					{
-						m_GizmoOrignalTransforms[ entity->GetHandle() ] = std::make_tuple( tc.Position, tc.GetRotationEuler(), tc.Scale );
-					}
-
 					Maths::DecomposeTransform( transform * offsetTransform, translation, rotation, scale );
 
 					glm::vec3 DeltaRotation = rotation - tc.GetRotationEuler();
@@ -2078,12 +2078,13 @@ namespace Saturn {
 					tc.SetRotation( tc.GetRotationEuler() += DeltaRotation );
 					tc.Scale = scale;
 
-					m_GizmoModifiedTransforms[ entity->GetHandle() ] = std::make_tuple( tc.Position, tc.GetRotationEuler(), tc.Scale );
+					// Store modified transform for undo/redo
+					m_GizmoModifiedTransforms[ rEntity->GetHandle() ] = std::make_tuple( tc.Position, tc.GetRotationEuler(), tc.Scale );
 				}
 
 				m_WasGizmoUsed = true;
 			}
-			else if( m_WasGizmoUsed )
+			else if( m_WasGizmoUsed ) // Stopped using
 			{
 				m_EditorScene->MarkDirty();
 
@@ -2092,13 +2093,23 @@ namespace Saturn {
 					const auto& [position, rotation, scale] = tuple;
 					const auto& [newPosition, newRotation, newScale] = m_GizmoModifiedTransforms[ handle ];
 
-					Ref<UndoRedoActionModifyVec3> action = Ref<UndoRedoActionModifyVec3>::Create( "V3", "V3", &GActiveScene->FindEntityByHandle(handle)->GetComponent<TransformComponent>().Position, position, newPosition );
-				
-					m_EditorUndoRedoGroup->AddAction( action );
+					Ref<Entity> entity = m_EditorScene->FindEntityByHandle( handle );
+					TransformComponent& tc = entity->GetComponent<TransformComponent>();
+
+					glm::mat4 newTransform = glm::translate( glm::mat4( 1.0f ), newPosition )
+						* glm::toMat4( glm::quat( newRotation ) )
+						* glm::scale( glm::mat4( 1.0f ), newScale );
+
+					glm::mat4 oldTransform = glm::translate( glm::mat4( 1.0f ), position )
+						* glm::toMat4( glm::quat( rotation ) )
+						* glm::scale( glm::mat4( 1.0f ), scale );
+
+					Ref<UndoRedoActionModifyTransformation> action = Ref<UndoRedoActionModifyTransformation>::Create( entity, oldTransform, newTransform );
+					GlobalUndoRedoGroup::Get().AddAction( action, (uint64_t)entity->GetHandle() );
 				}
 
-				m_GizmoModifiedTransforms.clear();
 				m_GizmoOrignalTransforms.clear();
+				m_GizmoModifiedTransforms.clear();
 
 				m_WasGizmoUsed = false;
 			}

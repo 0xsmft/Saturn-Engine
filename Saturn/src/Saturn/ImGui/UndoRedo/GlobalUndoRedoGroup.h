@@ -36,6 +36,7 @@
 namespace Saturn {
 
 	// In development configurations this class will be owned by the EditorLayer
+	// In distribution configurations this class should not be created.
 	class GlobalUndoRedoGroup : public RefTarget
 	{
 	public:
@@ -46,7 +47,10 @@ namespace Saturn {
 		~GlobalUndoRedoGroup();
 
 	public:
+		// Undo the most recent action.
 		Ref<UndoRedoActionBase> GlobalUndoRecent();
+		
+		// Redo the most recent action.
 		Ref<UndoRedoActionBase> GlobalRedoRecent();
 		
 		void GlobalUndoTo( size_t amount = 0 );
@@ -55,8 +59,10 @@ namespace Saturn {
 		void RemoveIfActionHasIdentifier( UUID identifier );
 		
 	public:
+		// Adds an action to the undo stack.
+		// AddAction expects the action to already be done hence why it is added to the undo stack.
+		// @param identifier -- Every action should have an identifier that states who it's associated with. For example any entity action should have the entity handle as the identifier, so when the entity is deleted the action can be removed.
 		void AddAction( Ref<UndoRedoActionBase> action, UUID identifier );
-		void RemoveAction( Ref<UndoRedoActionBase> action );
 
 		Ref<UndoRedoActionBase> GetTopUndoAction() { return m_UndoActions.empty() ? nullptr : m_UndoActions.back(); }
 		Ref<UndoRedoActionBase> GetTopRedoAction() { return m_RedoActions.empty() ? nullptr : m_RedoActions.back(); }
@@ -68,6 +74,9 @@ namespace Saturn {
 	private:
 		std::vector<Ref<UndoRedoActionBase>> m_RedoActions;
 		std::vector<Ref<UndoRedoActionBase>> m_UndoActions;
+
+	private:
+		constexpr static inline size_t MAX_UNDO_REDO_ACTIONS = 1024;
 	};
 	
 }

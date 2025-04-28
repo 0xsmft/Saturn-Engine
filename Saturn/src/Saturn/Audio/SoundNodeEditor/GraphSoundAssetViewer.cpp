@@ -50,6 +50,8 @@
 #include "Saturn/Asset/AssetManager.h"
 #include "Saturn/Core/OptickProfiler.h"
 
+#include "Saturn/ImGui/UndoRedo/GlobalUndoRedoGroup.h"
+
 namespace Saturn {
 
 	GraphSoundAssetViewer::GraphSoundAssetViewer( AssetID id )
@@ -74,6 +76,7 @@ namespace Saturn {
 		m_NodeEditor->SetRuntime( nullptr );
 		m_Runtime = nullptr;
 
+		GlobalUndoRedoGroup::Get().RemoveIfActionHasIdentifier( m_AssetID );
 		m_NodeEditor = nullptr;
 	}
 

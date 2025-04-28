@@ -38,7 +38,7 @@ namespace Saturn {
 	class UndoRedoActionBase : public RefTarget
 	{
 	public:
-		UndoRedoActionBase( const std::string& rName, const std::string& rDescription ) : m_Name( rName ), m_Description( rDescription ) {}
+		UndoRedoActionBase( const std::string& rName ) : m_Name( rName ) {}
 		virtual ~UndoRedoActionBase() = default;
 
 		virtual void Undo() = 0;
@@ -46,14 +46,12 @@ namespace Saturn {
 
 	public:
 		const std::string& GetName() const { return m_Name; }
-		const std::string& GetDescription() const { return m_Description; }
 		UUID GetIdentifier() const { return m_Identifier; }
 
 		void SetIdentifier( UUID identifier ) { m_Identifier = identifier; }
 
 	private:
 		std::string m_Name;
-		std::string m_Description;
 
 		UUID m_Identifier{};
 	};
@@ -62,8 +60,8 @@ namespace Saturn {
 	class UndoRedoActionModifyT : public UndoRedoActionBase
 	{
 	public:
-		UndoRedoActionModifyT( const std::string& rName, const std::string& rDescription, Ty* pTarget, const Ty& rOldValue, const Ty& rNewValue )
-			: UndoRedoActionBase( rName, rDescription ), m_OriginalValue( rOldValue ), m_CurrentValue( rNewValue ), m_pTarget( pTarget ) {}
+		UndoRedoActionModifyT( const std::string& rName, Ty* pTarget, const Ty& rOldValue, const Ty& rNewValue )
+			: UndoRedoActionBase( rName ), m_OriginalValue( rOldValue ), m_CurrentValue( rNewValue ), m_pTarget( pTarget ) {}
 		
 		void Undo() override
 		{
@@ -89,51 +87,28 @@ namespace Saturn {
 	using UndoRedoActionModifyDouble = UndoRedoActionModifyT<double>;
 	using UndoRedoActionModifyBool = UndoRedoActionModifyT<bool>;
 
+	using UndoRedoActionModifyInt8 = UndoRedoActionModifyT<int8_t>;
+	using UndoRedoActionModifyInt16 = UndoRedoActionModifyT<int16_t>;
+	using UndoRedoActionModifyInt32 = UndoRedoActionModifyInt;
+	using UndoRedoActionModifyInt64 = UndoRedoActionModifyT<int64_t>;
+	using UndoRedoActionModifyUInt8 = UndoRedoActionModifyT<uint8_t>;
+	using UndoRedoActionModifyUInt16 = UndoRedoActionModifyT<uint16_t>;
+	using UndoRedoActionModifyUInt32 = UndoRedoActionModifyT<uint32_t>;
+	using UndoRedoActionModifyUInt64 = UndoRedoActionModifyT<uint64_t>;
+	using UndoRedoActionModifySizeT = UndoRedoActionModifyT<size_t>;
+
+	// Char types
+	using UndoRedoActionModifyChar = UndoRedoActionModifyT<char>;
+	using UndoRedoActionModifyWChar = UndoRedoActionModifyT<wchar_t>;
+
 	// Maths
 	using UndoRedoActionModifyVec2 = UndoRedoActionModifyT<glm::vec2>;
 	using UndoRedoActionModifyVec3 = UndoRedoActionModifyT<glm::vec3>;
 	using UndoRedoActionModifyVec4 = UndoRedoActionModifyT<glm::vec4>;
 	using UndoRedoActionModifyMat4 = UndoRedoActionModifyT<glm::mat4>;
 	
-	class UndoRedoActionModifyString : public UndoRedoActionBase
-	{
-	public:
-		UndoRedoActionModifyString( 
-			const std::string& rName, 
-			const std::string& rDescription, 
-			      std::string* pTarget,
-			const std::string& rOldValue,
-			const std::string& rNewValue
-		)	: UndoRedoActionBase( rName, rDescription ), m_OriginalValue( rOldValue ), m_CurrentValue( rNewValue ), m_pTarget( pTarget ) 
-		{
-		}
-
-		UndoRedoActionModifyString(
-			std::string* pTarget,
-			const std::string& rOldValue,
-			const std::string& rNewValue
-		) : UndoRedoActionBase( "Modify String", "Modify String" ), m_OriginalValue( rOldValue ), m_CurrentValue( rNewValue ), m_pTarget( pTarget )
-		{
-		}
-
-	public:
-		void Undo() override
-		{
-			if( m_pTarget )
-				*m_pTarget = m_OriginalValue;
-		}
-
-		void Redo() override
-		{
-			if( m_pTarget )
-				*m_pTarget = m_CurrentValue;
-		}
-
-	private:
-		std::string m_CurrentValue;
-		std::string m_OriginalValue;
-
-		std::string* m_pTarget = nullptr;
-	};
+	// Strings
+	using UndoRedoActionModifyString = UndoRedoActionModifyT<std::string>;
+	using UndoRedoActionModifyWString = UndoRedoActionModifyT<std::wstring>;
 
 }

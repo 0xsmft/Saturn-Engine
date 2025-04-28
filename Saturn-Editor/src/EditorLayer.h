@@ -39,7 +39,10 @@
 
 #include <Saturn/ImGui/JobProgress.h>
 
+#include <Saturn/Physics/PhysicsFoundation.h>
+
 #include <Saturn/ImGui/UndoRedo/GlobalUndoRedoGroup.h>
+
 #include <queue>
 
 namespace Saturn {
@@ -73,15 +76,11 @@ namespace Saturn {
 
 		// UI Functions.
 		void DrawProjectSettingsWindow();
-		bool m_ShowUserSettings = false;
-
 		void HotReloadGame();
 
 		void DrawAssetRegistryDebug();
 		void DrawLoadedAssetsDebug();
 		void DrawEditorSettings();
-		void DrawMaterials();
-		void DrawMaterialHeader( Ref<MaterialAsset>& rMaterial );
 		void DrawVFSDebug();
 		void DrawTitlebarOptions();
 		void DrawAboutWindow();
@@ -230,15 +229,17 @@ namespace Saturn {
 
 		ImVec2 m_ViewportSize;
 
+		// JobProgress
 		float m_OperationPercent = 0.0f;
-		bool m_ShowOperation = false;
 
 		std::queue<MessageBoxInfo> m_MessageBoxes;
 		std::vector<EditorNotification> m_Notifications;
-		std::unordered_map<entt::entity, std::tuple<glm::vec3, glm::vec3, glm::vec3>> m_GizmoOrignalTransforms;
+		std::unordered_map<entt::entity, glm::mat4> m_GizmoOrignalTransforms;
 		std::unordered_map<entt::entity, std::tuple<glm::vec3, glm::vec3, glm::vec3>> m_GizmoModifiedTransforms;
 
 		Ref<Scene> m_EditorScene = nullptr;
 		Ref<Scene> m_RuntimeScene = nullptr;
+
+		PhysicsFoundation m_PhysicsFoundation;
 	};
 }

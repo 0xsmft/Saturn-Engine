@@ -118,10 +118,13 @@ namespace Saturn {
 	{
 		action->SetIdentifier( identifier );
 		m_UndoActions.push_back( action );
-	}
 
-	void GlobalUndoRedoGroup::RemoveAction( Ref<UndoRedoActionBase> action )
-	{
+		// TODO: Also remove the action from the redo stack if it exists there?
+		// Remove last action if we exceed the max undo/redo actions
+		if( m_UndoActions.size() > MAX_UNDO_REDO_ACTIONS )
+		{
+			m_UndoActions.erase( m_UndoActions.begin() );
+		}
 	}
 
 #if !defined(SAT_DIST)

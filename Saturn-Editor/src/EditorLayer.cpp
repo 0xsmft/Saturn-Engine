@@ -94,15 +94,17 @@ namespace Saturn {
 		m_SuspendedEditorCamera( 45.0f, 1280.0f, 720.0f, 0.1f, 1000.0f ), 
 		m_EditorScene( Ref<Scene>::Create() )
 	{
+#if !defined(SAT_DIST)
+		tracy::StartupProfiler();
+#endif
 		Scene::SetActiveScene( m_EditorScene.Get() );
 
 		m_EditorCamera.SetActive( true );
 
 		// Init Physics
-		PhysicsFoundation* pPhysicsFoundation = new PhysicsFoundation();
-		pPhysicsFoundation->Init();
+		m_PhysicsFoundation.Init();
 		
-		// Editor Application (EditorApplication.cpp) should of loaded a project but if not assert.
+		// Editor Application should of loaded a project but if not assert.
 		SAT_CORE_ASSERT( Project::GetActiveProject(), "No project was given." );
 		
 		VirtualFS::Get().MountBase( Project::GetActiveConfig().Name, Project::GetActiveProject()->GetRootDir() );
@@ -213,7 +215,6 @@ namespace Saturn {
 		AssetViewer::Terminate();
 
 		m_TitleBar = nullptr;
-	
 		m_PanelManager = nullptr;
 
 		Application::Get().PrimarySceneRenderer().SetCurrentScene( nullptr );
@@ -229,7 +230,9 @@ namespace Saturn {
 
 		VirtualFS::Get().UnmountBase( Project::GetActiveConfig().Name );
 
-		ClassMetadataHandler::Get().ClearExternalData();
+#if !defined(SAT_DIST)
+		tracy::ShutdownProfiler();
+#endif
 
 		delete m_GameModule;
 		m_GameModule = nullptr;
@@ -315,6 +318,13 @@ namespace Saturn {
 			{
 				m_RuntimeScene->OnRenderRuntime( time, Application::Get().PrimarySceneRenderer() );
 			}
+
+			if( m_ShowCameraFrustum )
+			{
+				auto& cc = m_RuntimeScene->GetMainCameraEntity()->GetComponent<CameraComponent>().Camera;
+
+				cc.RenderDebugFrustum();
+			}
 		}
 		else 
 		{
@@ -323,6 +333,23 @@ namespace Saturn {
 
 			m_EditorScene->OnUpdate( time );
 			m_EditorScene->OnRenderEditor( m_EditorCamera, time, Application::Get().PrimarySceneRenderer() );
+		}
+
+		if( m_ShowMeshAABB )
+		{
+			Ref<SceneHierarchyPanel> hierarchyPanel = m_PanelManager->GetPanel<SceneHierarchyPanel>();
+
+			for( auto& rEntity : hierarchyPanel->GetSelectionContexts() )
+			{
+				glm::mat4 transform = rEntity->GetComponent<TransformComponent>().GetTransform();
+
+				if( rEntity->HasComponent<StaticMeshComponent>() )
+				{
+					auto& rMesh = rEntity->GetComponent<StaticMeshComponent>().Mesh;
+
+					Renderer2D::Get().SubmitAABB( rMesh->GetBoundingBox(), transform, { 1.0F, 0.0F, 0.0F, 1.0F } );
+				}
+			}
 		}
 
 		// Render scenes in other asset viewers
@@ -358,11 +385,14 @@ namespace Saturn {
 		if( m_ShowVFSDebug )            DrawVFSDebug();
 		if( m_OpenAboutWindow )         DrawAboutWindow();
 		if( m_MessageBoxes.size() )     HandleMessageBoxes();
+		if( m_Notifications.size() )    DrawNotifications();
 		if( m_ShowSceneRendererWindow ) DrawSceneRendererWindow();
 		if( m_ShowRendererWindow )		DrawRendererWindow();
 		if( m_ShowMetadataDebug )       DrawMetadataDebug();
 		if( m_ShowAssetDependencies )   DrawAssetDependencies();
 		if( m_ShowSceneDirtyModal )     DrawSceneDirtyPopup();
+		if( m_ShowCBThumbnailDebug )    ContentBrowserThumbnailCache::Get().OnImGuiRender( &m_ShowCBThumbnailDebug );
+		if( m_ShowUndoRedoDebug )       GlobalUndoRedoGroup::Get().OnImGuiRender( &m_ShowUndoRedoDebug );
 
 		AssetViewer::Draw();
 
@@ -409,14 +439,7 @@ namespace Saturn {
 			ImGui::EndPopup();
 		}
 		
-		// Deprecated -- user will set mesh materials in Scene Hierarchy Panel
-		//               user can change material data in material node editor.
-		//				 So for now there is no way for a mesh to have the same material but have different properties.
-		//DrawMaterials();
-		
 		DrawViewport();
-
-		//CheckMissingEnv();
 	}
 
 	void EditorLayer::OnEvent( RubyEvent& rEvent )
@@ -426,7 +449,7 @@ namespace Saturn {
 		if( m_MouseOverViewport )
 		{
 			m_EditorCamera.OnEvent( rEvent );
-
+		
 			if( m_RequestRuntime )
 				m_SuspendedEditorCamera.OnEvent( rEvent );
 		}
@@ -529,10 +552,11 @@ namespace Saturn {
 				if( hierarchyPanel && !m_RuntimeScene )
 				{
 					// Because of our ref system, the entity will be deleted when we clear the selections.
-					// What we are really doing here is freeing it from the registry.
-
+					// What we are really doing here is freeing it from the registry and removing the children.
 					for( auto& rEntity : hierarchyPanel->GetSelectionContexts() )
 					{
+						GlobalUndoRedoGroup::Get().RemoveIfActionHasIdentifier( (uint64_t)rEntity->GetHandle() );
+						
 						GActiveScene->DeleteEntity( rEntity );
 					}
 
@@ -1280,136 +1304,6 @@ namespace Saturn {
 		}
 	}
 
-	void EditorLayer::DrawMaterials()
-	{
-		ImGui::Begin( "Materials" );
-
-		Ref<SceneHierarchyPanel> hierarchyPanel = m_PanelManager->GetPanel<SceneHierarchyPanel>();
-
-		if( hierarchyPanel->GetSelectionContexts().size() > 0 )
-		{
-			Ref<Entity> rSelection = hierarchyPanel->GetSelectionContext();
-
-			if( rSelection->HasComponent<StaticMeshComponent>() )
-			{
-				if( auto& mesh = rSelection->GetComponent<StaticMeshComponent>().Mesh )
-				{
-					ImGui::TextDisabled( "%llx", rSelection->GetComponent<IdComponent>().ID );
-
-					ImGui::Separator();
-
-					for( auto& rMaterial : mesh->GetMaterialAssets() )
-					{
-						DrawMaterialHeader( rMaterial );
-					}
-				}
-			}
-		}
-
-		ImGui::End();
-	}
-
-	void EditorLayer::DrawMaterialHeader( Ref<MaterialAsset>& rMaterial )
-	{
-		auto drawItemValue = [&]( const char* name, const char* property )
-			{
-				ImGui::Text( name );
-
-				ImGui::Separator();
-
-				float v = rMaterial->Get< float >( property );
-
-				ImGui::PushID( name );
-
-				ImGui::DragFloat( "##drgflt", &v, 0.01f, 0.0f, 10000.0f );
-
-				ImGui::PopID();
-
-				if( v != rMaterial->Get<float>( property ) )
-					rMaterial->Set( property, v );
-			};
-
-		auto displayItemMap = [&]( const char* property )
-			{
-				Ref< Texture2D > v = rMaterial->GetResource( property );
-
-				if( v && v->GetDescriptorSet() )
-					ImGui::Image( v->GetDescriptorSet(), ImVec2( 100, 100 ) );
-				else
-					ImGui::Image( m_CheckerboardTexture->GetDescriptorSet(), ImVec2( 100, 100 ) );
-			};
-
-		if( ImGui::CollapsingHeader( rMaterial->Name.c_str() ) )
-		{
-			ImGui::PushID( static_cast< int >( rMaterial->ID ) );
-			ImGui::Text( "Asset ID: %llu", ( uint64_t ) rMaterial->ID );
-
-			ImGui::Separator();
-
-			UUID id = rMaterial->ID;
-			Auxiliary::DrawAssetDragDropTarget<MaterialAsset>( "Change asset", rMaterial->Name.c_str(), id,
-				[rMaterial]( Ref<MaterialAsset> asset ) mutable
-				{
-					rMaterial->SetMaterial( asset->GetMaterial() );
-				} );
-
-			ImGui::Separator();
-
-			ImGui::Text( "Albedo" );
-
-			ImGui::Separator();
-
-			displayItemMap( "u_AlbedoTexture" );
-
-			ImGui::SameLine();
-
-			if( ImGui::Button( "...##opentexture", ImVec2( 50, 20 ) ) )
-			{
-				std::filesystem::path file = Application::Get().OpenFile( "Texture File (*.png *.tga)\0*.tga; *.png\0" );
-
-				if( !file.empty() )
-				{
-					rMaterial->SetResource( "u_AlbedoTexture", Ref<Texture2D>::Create( file, AddressingMode::Repeat ) );
-				}
-			}
-
-			glm::vec3 color = rMaterial->Get<glm::vec3>( "u_Materials.AlbedoColor" );
-
-			bool changed = ImGui::ColorEdit3( "##Albedo Color", glm::value_ptr( color ), ImGuiColorEditFlags_NoInputs );
-
-			if( changed )
-				rMaterial->Set<glm::vec3>( "u_Materials.AlbedoColor", color );
-
-			drawItemValue( "Emissive", "u_Materials.Emissive" );
-
-			ImGui::Text( "Normal" );
-
-			ImGui::Separator();
-
-			bool UseNormalMap = rMaterial->Get< float >( "u_Materials.UseNormalMap" );
-
-			if( UseNormalMap )
-				displayItemMap( "u_NormalTexture" );
-
-			if( ImGui::Checkbox( "Use Normal Map", &UseNormalMap ) )
-				rMaterial->Set( "u_Materials.UseNormalMap", UseNormalMap ? 1.0f : 0.0f );
-
-			// Roughness Value
-			drawItemValue( "Roughness", "u_Materials.Roughness" );
-
-			// Roughness map
-			displayItemMap( "u_RoughnessTexture" );
-
-			// Metalness value
-			drawItemValue( "Metalness", "u_Materials.Metalness" );
-
-			// Metalness map
-			displayItemMap( "u_MetallicTexture" );
-
-			ImGui::PopID();
-		}
-	}
-
 	void EditorLayer::DrawVFSDebug()
 	{
 		VirtualFS& rVirtualFS = VirtualFS::Get();
@@ -1598,7 +1492,7 @@ namespace Saturn {
 			if( ImGui::MenuItem( "Asset Registry Debug", "" ) )       m_OpenAssetRegistryDebug ^= 1;
 			if( ImGui::MenuItem( "Loaded Assets Debug", "" ) )        m_OpenLoadedAssetDebug   ^= 1;
 			if( ImGui::MenuItem( "Metadata Debug", "" ) )             m_ShowMetadataDebug      ^= 1;
-			if( ImGui::MenuItem( "Asset Dependencies", "" ) )         m_ShowAssetDependencies ^= 1;
+			if( ImGui::MenuItem( "Asset Dependencies", "" ) )         m_ShowAssetDependencies  ^= 1;
 
 			ImGui::SeparatorText( "Demo Window" );
 			if( ImGui::MenuItem( "Show demo window", "" ) )           m_ShowImGuiDemoWindow    ^= 1;
@@ -1607,10 +1501,14 @@ namespace Saturn {
 			if( ImGui::MenuItem( "Virtual Filesystem Debug", "" ) )   m_ShowVFSDebug           ^= 1;
 
 			ImGui::SeparatorText( "Scene Renderer" );
-			if( ImGui::MenuItem( "Render Mesh AABB", "" ) )           Application::Get().PrimarySceneRenderer().RenderMeshAABB();
+			if( ImGui::MenuItem( "Render Mesh AABB", "" ) )           m_ShowMeshAABB           ^= 1;
+			if( ImGui::MenuItem( "Show Camera Frustum", "" ) )        m_ShowCameraFrustum      ^= 1;
 
 			ImGui::SeparatorText( "Content Browser" );
 			if( ImGui::MenuItem( "Show Thumbnail Cache", "" ) )       m_ShowCBThumbnailDebug   ^= 1;
+
+			ImGui::SeparatorText( "Undo Redo" );
+			if( ImGui::MenuItem( "Show Undo Redo Stack", "" ) )       m_ShowUndoRedoDebug      ^= 1;
 
 			ImGui::EndMenu();
 		}
@@ -1833,6 +1731,7 @@ namespace Saturn {
 						for( MemoryAssetDependencyBase* pBase : rDependency )
 						{
 							ImGui::Text( "ADB/Base" );
+							ImGui::Text( "%p", pBase );
 						}
 
 						Auxiliary::EndTreeNode();
@@ -2061,7 +1960,7 @@ namespace Saturn {
 					// Store original transform for undo/redo
 					if( !m_WasGizmoUsed )
 					{
-						m_GizmoOrignalTransforms[ rEntity->GetHandle() ] = std::make_tuple( tc.Position, tc.GetRotationEuler(), tc.Scale );
+						m_GizmoOrignalTransforms[ rEntity->GetHandle() ] = tc.GetTransform();
 					}
 
 					// Set new transform
@@ -2088,9 +1987,8 @@ namespace Saturn {
 			{
 				m_EditorScene->MarkDirty();
 
-				for( const auto& [ handle, tuple ] : m_GizmoOrignalTransforms )
+				for( const auto& [ handle, transform ] : m_GizmoOrignalTransforms )
 				{
-					const auto& [position, rotation, scale] = tuple;
 					const auto& [newPosition, newRotation, newScale] = m_GizmoModifiedTransforms[ handle ];
 
 					Ref<Entity> entity = m_EditorScene->FindEntityByHandle( handle );
@@ -2100,11 +1998,7 @@ namespace Saturn {
 						* glm::toMat4( glm::quat( newRotation ) )
 						* glm::scale( glm::mat4( 1.0f ), newScale );
 
-					glm::mat4 oldTransform = glm::translate( glm::mat4( 1.0f ), position )
-						* glm::toMat4( glm::quat( rotation ) )
-						* glm::scale( glm::mat4( 1.0f ), scale );
-
-					Ref<UndoRedoActionModifyTransformation> action = Ref<UndoRedoActionModifyTransformation>::Create( entity, oldTransform, newTransform );
+					Ref<UndoRedoActionModifyTransformation> action = Ref<UndoRedoActionModifyTransformation>::Create( entity, transform, newTransform );
 					GlobalUndoRedoGroup::Get().AddAction( action, (uint64_t)entity->GetHandle() );
 				}
 

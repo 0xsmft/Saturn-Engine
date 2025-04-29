@@ -32,33 +32,33 @@
 
 namespace Saturn {
 
-	enum class UndoRedoComponentActionType
+	enum class UndoRedoActionEntityComponentOp
 	{
 		AddComponent,
 		RemoveComponent,
 	};
 
-	template<UndoRedoComponentActionType ComponentActionType, typename C>
-	class UndoRedoActionComponent : public UndoRedoActionBase
+	template<UndoRedoActionEntityComponentOp ComponentActionType, typename C>
+	class UndoRedoActionEntityComponent : public UndoRedoActionBase
 	{
 	public:
-		UndoRedoActionComponent( const std::string& rName, const std::string& rDescription, Ref<Entity> entity ) : UndoRedoActionBase( rName, rDescription ), m_EntityHandle( entity->GetHandle() ), m_pScene( entity->GetScene() ) {}	
+		UndoRedoActionEntityComponent( const std::string& rName, Ref<Entity> entity ) : UndoRedoActionBase( rName  ), m_EntityHandle( entity->GetHandle() ), m_pScene( entity->GetScene() ) {}	
 
-		UndoRedoActionComponent( Ref<Entity> entity )
-			: UndoRedoActionBase( "Modify Entity Component" ), m_EntityHandle( entity->GetHandle() ), m_pScene( entity->GetScene() )
+		UndoRedoActionEntityComponent( Ref<Entity> entity )
+			: UndoRedoActionBase( ComponentActionType == UndoRedoActionEntityComponentOp::AddComponent ? "Add Component" : "Remove Component" ), m_EntityHandle( entity->GetHandle() ), m_pScene( entity->GetScene() )
 		{
 		}
 
 	public:
 		void Undo() override
 		{
-			if constexpr( ComponentActionType == UndoRedoComponentActionType::AddComponent ) 
+			if constexpr( ComponentActionType == UndoRedoActionEntityComponentOp::AddComponent ) 
 			{
 				// Remove
 				if( m_pScene )
 					m_pScene->RemoveComponent<C>( m_EntityHandle );
 			}
-			else if constexpr( ComponentActionType == UndoRedoComponentActionType::RemoveComponent )
+			else if constexpr( ComponentActionType == UndoRedoActionEntityComponentOp::RemoveComponent )
 			{
 				// Add
 				if( m_pScene )
@@ -68,13 +68,13 @@ namespace Saturn {
 
 		void Redo() override
 		{
-			if constexpr( ComponentActionType == UndoRedoComponentActionType::AddComponent )
+			if constexpr( ComponentActionType == UndoRedoActionEntityComponentOp::AddComponent )
 			{
 				// Add
 				if( m_pScene )
 					m_pScene->AddComponent<C>( m_EntityHandle );
 			}
-			else if constexpr( ComponentActionType == UndoRedoComponentActionType::RemoveComponent )
+			else if constexpr( ComponentActionType == UndoRedoActionEntityComponentOp::RemoveComponent )
 			{
 				// Remove
 				if( m_pScene )
@@ -88,10 +88,13 @@ namespace Saturn {
 	};
 
 	template<typename Component>
-	using UndoRedoActionAddComponent = UndoRedoActionComponent<UndoRedoComponentActionType::AddComponent, Component>;
+	using UndoRedoActionAddComponent = UndoRedoActionEntityComponent<UndoRedoActionEntityComponentOp::AddComponent, Component>;
 
 	template<typename Component>
-	using UndoRedoActionRemoveComponent = UndoRedoActionComponent<UndoRedoComponentActionType::RemoveComponent, Component>;
+	using UndoRedoActionRemoveComponent = UndoRedoActionEntityComponent<UndoRedoActionEntityComponentOp::RemoveComponent, Component>;
+
+	//////////////////////////////////////////////////////////////////////////
+	// MODIFY TRANSFORMATION
 
 	class UndoRedoActionModifyTransformation : public UndoRedoActionBase
 	{

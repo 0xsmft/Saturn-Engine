@@ -28,62 +28,65 @@
 
 #pragma once
 
-#include "SingletonStorage.h"
-#include "Saturn/GameFramework/SClass.h"
+#include "Saturn/NodeEditor/Node.h"
+#include "Saturn/NodeEditor/Link.h"
 
-#include <string>
-#include <vector>
+#include "Saturn/NodeEditor/UI/NodeEditor.h"
 
-// In distribution builds the class metadata handler is a lazy loaded singleton because it will be initialised when the application starts up and calls the ReflRegisterPropertiesFor_XXX functions. Lifetime is tied to the lifetime of the application.
-// However,
-// in development builds we want to tie the lifetime of the class to the lifetime of the editor layer. So ClassMetadataHandler is a owned by the editor layer.
-// X31 is used to as a unique identifier.
-#if defined(SAT_DIST)
-#define SAT_CMH_SINGLETON_X31( x ) SAT_SINGLETON_LAZY( x )
-#else
-#define SAT_CMH_SINGLETON_X31( x ) static inline x& Get() { return *SingletonStorage::GetSingleton<x>(); }
-#endif
+#include "Saturn/ImGui/UndoRedo/UndoRedoActionBase.h"
 
 namespace Saturn {
 
-	class ClassMetadataHandler : public RefTarget
+	enum class UndoRedoActionNodeEditorLinkOp
+	{
+		Create,
+		Delete
+	};
+
+	template<UndoRedoActionNodeEditorLinkOp Operation>
+	class UndoRedoActionNodeEditorLink : public UndoRedoActionBase
 	{
 	public:
-		SAT_CMH_SINGLETON_X31( ClassMetadataHandler )
-
-	public:
-		ClassMetadataHandler();
-		~ClassMetadataHandler();
-
-		template<typename Fn>
-		void EachTreeNode( Fn Function )
+		UndoRedoActionNodeEditorLink( Ref<NodeEditor> nodeEditor, Ref<Link> originalLink )
+			: UndoRedoActionBase( "Create Link" ), m_NodeEditor( nodeEditor )
 		{
-			for( auto&& [name, data] : m_MetadataTree )
-				Function( data );
+			m_LinkCopy = Ref<Link>::Create( originalLink->ID, originalLink->StartPinID, originalLink->EndPinID, originalLink->Color );
 		}
 
-		void AddMetadata( const SClassMetadata& rData );
-		bool IsEngineMetadata( const SClassMetadata& rData ) { return !rData.ExternalData; }
-
-		void RegisterProperty( const std::string& rMetadataName, const SProperty& rProperty );
-		
-		std::vector<SProperty>& GetAllProperties( const std::string& rMetadataName );
-		SProperty& GetProperty( const std::string& rMetadataName, const std::string& rPropertyName );
-
-		void ClearExternalData();
+		~UndoRedoActionNodeEditorLink() 
+		{
+		}
 
 	public:
-		SClassMetadata& GetSClassMetadata();
+		void Undo() override 
+		{
+			if constexpr( Operation == UndoRedoActionNodeEditorLinkOp::Create )
+			{
+				m_NodeEditor->CreateLinkWithID( m_LinkCopy->ID, m_NodeEditor->FindPin( m_LinkCopy->StartPinID ), m_NodeEditor->FindPin( m_LinkCopy->EndPinID ) );
+			}
+			else
+			{
+				m_NodeEditor->DeleteLink( m_LinkCopy->ID, true );
+			}
+		}
 
-	public:
-		// Hot reload
-		void BeginHotReload();
-		void AcknowledgeHotReload();
+		void Redo() override
+		{
+			if constexpr( Operation == UndoRedoActionNodeEditorLinkOp::Create )
+			{
+				m_NodeEditor->DeleteLink( m_LinkCopy->ID, true );
+			}
+			else
+			{
+				m_NodeEditor->CreateLinkWithID( m_LinkCopy->ID, m_NodeEditor->FindPin( m_LinkCopy->StartPinID ), m_NodeEditor->FindPin( m_LinkCopy->EndPinID ) );
+			}
+		}
 
 	private:
-		std::unordered_map<std::string, SClassMetadata> m_MetadataTree;
-		
-		// Metadata name -> SProperties
-		std::unordered_map<std::string, std::vector<SProperty>> m_Properties;
+		Ref<NodeEditor> m_NodeEditor;
+		Ref<Link> m_LinkCopy;
 	};
+
+	using UndoRedoActionCreateLink = UndoRedoActionNodeEditorLink<UndoRedoActionNodeEditorLinkOp::Create>;
+	using UndoRedoActionDeleteLink = UndoRedoActionNodeEditorLink<UndoRedoActionNodeEditorLinkOp::Delete>;
 }

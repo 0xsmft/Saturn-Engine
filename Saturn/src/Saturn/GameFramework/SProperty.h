@@ -193,7 +193,7 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 	public:
 		void SetFlag( SPropertyFlags flag, bool value );
 		[[nodiscard]] bool IsFlagSet( SPropertyFlags flag ) const { return ( m_Flags & ( SPropertyFlags_ ) flag ) != 0; }
-		SPropertyFlags GetFlags() { return m_Flags; }
+		SPropertyFlags GetFlags() const { return m_Flags; }
 
 		const std::string& GetName() const { return m_Name; }
 		const std::string& GetNativeType() const { return m_NativeType; }

@@ -566,6 +566,7 @@ namespace Saturn {
 				}
 			} break;
 
+			// We will never add Undo/Redo support to these as it's faster to just use the single shortcut key than do Control+Z/Y
 			case RubyKey::Q:
 				if( m_MouseOverViewport && !m_StartedRightClickInViewport )
 					m_GizmoOperation = 0;

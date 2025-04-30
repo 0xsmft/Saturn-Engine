@@ -305,7 +305,7 @@ namespace Saturn {
 		VkPhysicalDeviceFeatures Features;
 		vkGetPhysicalDeviceFeatures( m_PhysicalDevice, &Features );
 
-		SAT_CORE_ASSERT( Features.samplerAnisotropy, "The GPU does not support anisotropic filtering." );
+		SAT_CORE_VERIFY( Features.samplerAnisotropy, "The GPU does not support anisotropic filtering." );
 
 		Features.samplerAnisotropy = VK_TRUE;
 
@@ -313,18 +313,13 @@ namespace Saturn {
 		DeviceExtensions.push_back( VK_EXT_DEBUG_MARKER_EXTENSION_NAME );
 #endif
 
-		DeviceExtensions.push_back( VK_EXT_INLINE_UNIFORM_BLOCK_EXTENSION_NAME );
-
-		VkPhysicalDeviceInlineUniformBlockFeaturesEXT InlineUniformBlockFeatures = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INLINE_UNIFORM_BLOCK_FEATURES_EXT };
-		InlineUniformBlockFeatures.inlineUniformBlock = VK_TRUE;
-
 		VkDeviceCreateInfo DeviceInfo      ={ VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
 		DeviceInfo.enabledExtensionCount   = ( uint32_t ) DeviceExtensions.size();
 		DeviceInfo.ppEnabledExtensionNames = DeviceExtensions.data();
 		DeviceInfo.pQueueCreateInfos       = QueueCreateInfos.data();
 		DeviceInfo.queueCreateInfoCount    = ( uint32_t ) QueueCreateInfos.size();
 		DeviceInfo.pEnabledFeatures = &Features;
-		DeviceInfo.pNext = &InlineUniformBlockFeatures;
+		DeviceInfo.pNext = nullptr;
 
 		VK_CHECK( vkCreateDevice( m_PhysicalDevice, &DeviceInfo, nullptr, &m_LogicalDevice ) );
 		SetDebugUtilsObjectName( "Physical Device", ( uint64_t )m_LogicalDevice, VK_OBJECT_TYPE_DEVICE );
@@ -336,7 +331,7 @@ namespace Saturn {
 	}
 
 	// Get memory type.
-	uint32_t VulkanContext::GetMemoryType( uint32_t TypeFilter, VkMemoryPropertyFlags Properties )
+	uint32_t VulkanContext::GetMemoryType( uint32_t TypeFilter, VkMemoryPropertyFlags Properties ) const
 	{
 		VkPhysicalDeviceMemoryProperties MemProperties;
 		vkGetPhysicalDeviceMemoryProperties( m_PhysicalDevice, &MemProperties );
@@ -468,7 +463,7 @@ namespace Saturn {
 		return true;
 	}
 	
-	VkFormat VulkanContext::FindSupportedFormat( const std::vector<VkFormat>& Formats, VkImageTiling Tiling, VkFormatFeatureFlags Features )
+	VkFormat VulkanContext::FindSupportedFormat( const std::vector<VkFormat>& Formats, VkImageTiling Tiling, VkFormatFeatureFlags Features ) const
 	{
 		for ( VkFormat Format : Formats )
 		{
@@ -485,19 +480,19 @@ namespace Saturn {
 		return VK_FORMAT_UNDEFINED;
 	}
 
-	VkFormat VulkanContext::FindDepthFormat()
+	VkFormat VulkanContext::FindDepthFormat() const
 	{
 		return FindSupportedFormat( 
 			{ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT }, 
 			VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT );
 	}
 
-	bool VulkanContext::HasStencilComponent( VkFormat Format )
+	bool VulkanContext::HasStencilComponent( VkFormat Format ) const
 	{
 		return Format == VK_FORMAT_D32_SFLOAT_S8_UINT || Format == VK_FORMAT_D24_UNORM_S8_UINT;
 	}
 
-	bool VulkanContext::FormatLinearBlitSupported( VkFormat Format, bool source )
+	bool VulkanContext::FormatLinearBlitSupported( VkFormat Format, bool source ) const
 	{
 		VkFormatProperties FormatProps{};
 		vkGetPhysicalDeviceFormatProperties( m_PhysicalDevice, Format, &FormatProps );
@@ -505,7 +500,7 @@ namespace Saturn {
 		return FormatProps.linearTilingFeatures & ( source ? VK_FORMAT_FEATURE_BLIT_SRC_BIT : VK_FORMAT_FEATURE_BLIT_DST_BIT );
 	}
 
-	bool VulkanContext::FormatOptimalBlitSupported( VkFormat Format, bool source )
+	bool VulkanContext::FormatOptimalBlitSupported( VkFormat Format, bool source ) const
 	{
 		VkFormatProperties FormatProps{};
 		vkGetPhysicalDeviceFormatProperties( m_PhysicalDevice, Format, &FormatProps );
@@ -513,7 +508,7 @@ namespace Saturn {
 		return FormatProps.optimalTilingFeatures & ( source ? VK_FORMAT_FEATURE_BLIT_SRC_BIT : VK_FORMAT_FEATURE_BLIT_DST_BIT );
 	}
 
-	VkCommandBuffer VulkanContext::BeginSingleTimeCommands()
+	VkCommandBuffer VulkanContext::BeginSingleTimeCommands() const
 	{
 		VkCommandBufferAllocateInfo AllocInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
 		AllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
@@ -532,7 +527,7 @@ namespace Saturn {
 		return CommandBuffer;
 	}
 
-	void VulkanContext::EndSingleTimeCommands( VkCommandBuffer CommandBuffer )
+	void VulkanContext::EndSingleTimeCommands( VkCommandBuffer CommandBuffer ) const
 	{
 		constexpr uint64_t FENCE_TIMEOUT = 100000000000;
 
@@ -558,7 +553,7 @@ namespace Saturn {
 		vkFreeCommandBuffers( m_LogicalDevice, m_CommandPool, 1, &CommandBuffer );
 	}
 
-	VkCommandBuffer VulkanContext::BeginNewCommandBuffer()
+	VkCommandBuffer VulkanContext::BeginNewCommandBuffer() const
 	{
 		VkCommandBufferAllocateInfo cmdBufAllocateInfo = {};
 		cmdBufAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -577,7 +572,7 @@ namespace Saturn {
 		return CommandBuffer;
 	}
 
-	VkCommandBuffer VulkanContext::CreateComputeCommandBuffer()
+	VkCommandBuffer VulkanContext::CreateComputeCommandBuffer() const
 	{
 		VkCommandBufferAllocateInfo cmdBufAllocateInfo = {};
 		cmdBufAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -619,7 +614,7 @@ namespace Saturn {
 
 		m_DepthImage = Ref<Image2D>::Create( ImageFormat::Depth,
 			Application::Get().GetWindow()->GetWidth(), 
-			Application::Get().GetWindow()->GetHeight(), 1, GetMaxUsableMSAASamples() );
+			Application::Get().GetWindow()->GetHeight(), 1, 1, GetMaxUsableMSAASamples() );
 	}
 
 }

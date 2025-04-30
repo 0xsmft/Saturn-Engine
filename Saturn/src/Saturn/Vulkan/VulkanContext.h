@@ -65,25 +65,25 @@ namespace Saturn {
 		void Init();
 		void ResizeEvent();
 
-		uint32_t GetMemoryType( uint32_t TypeFilter, VkMemoryPropertyFlags Properties );
+		uint32_t GetMemoryType( uint32_t TypeFilter, VkMemoryPropertyFlags Properties ) const;
 		
 	public:
+		VkFormat FindSupportedFormat( const std::vector<VkFormat>& Formats, VkImageTiling Tiling, VkFormatFeatureFlags Features ) const;
 
-		VkFormat FindSupportedFormat( const std::vector<VkFormat>& Formats, VkImageTiling Tiling, VkFormatFeatureFlags Features );
-		VkFormat FindDepthFormat();
-		bool HasStencilComponent( VkFormat Format );
+		VkFormat FindDepthFormat() const;
+		bool HasStencilComponent( VkFormat Format ) const;
 
-		bool FormatLinearBlitSupported( VkFormat Format, bool source = false );
-		bool FormatOptimalBlitSupported( VkFormat Format, bool source = false );
+		bool FormatLinearBlitSupported( VkFormat Format, bool source = false ) const;
+		bool FormatOptimalBlitSupported( VkFormat Format, bool source = false ) const;
 
-		VkCommandBuffer BeginSingleTimeCommands();
-		void EndSingleTimeCommands( VkCommandBuffer CommandBuffer );
+		VkCommandBuffer BeginSingleTimeCommands() const;
+		void EndSingleTimeCommands( VkCommandBuffer CommandBuffer ) const;
 		
-		VkCommandBuffer BeginNewCommandBuffer();
-		VkCommandBuffer CreateComputeCommandBuffer();
+		VkCommandBuffer BeginNewCommandBuffer() const;
+		VkCommandBuffer CreateComputeCommandBuffer() const;
 
-		Ref<Pass> GetDefaultPass() { return m_DefaultPass; }
-		VkRenderPass GetDefaultVulkanPass() { return m_DefaultPass->GetVulkanPass(); }
+		Ref<Pass> GetDefaultPass() const { return m_DefaultPass; }
+		VkRenderPass GetDefaultVulkanPass() const { return m_DefaultPass->GetVulkanPass(); }
 
 	public:
 		VkInstance GetInstance() const { return m_Instance; }

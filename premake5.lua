@@ -34,6 +34,8 @@ IncludeDir["PhysX"] = "Saturn/vendor/physx/include"
 IncludeDir["SharedStorage"] = "Saturn-SharedStorage/src"
 IncludeDir["zlib"] = "Saturn/vendor/zlib"
 IncludeDir["KTX_Software"] = "Saturn/vendor/KTX-Software/include"
+IncludeDir["RecastRecast"] = "Saturn/vendor/Recast/Recast/Include"
+IncludeDir["RecastDetour"] = "Saturn/vendor/Recast/Detour/Include"
 
 group "Dependencies"
 	include "Saturn/vendor/imgui"
@@ -41,6 +43,7 @@ group "Dependencies"
 	include "Saturn/vendor/yaml-cpp"
 	include "Saturn/vendor/tracy"
 	include "Saturn/vendor/zlib"
+	include "Saturn/vendor/Recast"
 
 group "Engine"
 project "Saturn"
@@ -117,6 +120,8 @@ project "Saturn"
 		"%{IncludeDir.PhysX}/pxshared",
 		"%{IncludeDir.PhysX}/physx",
 		"%{IncludeDir.KTX_Software}",
+		"%{IncludeDir.RecastRecast}",
+		"%{IncludeDir.RecastDetour}",
 
 		"%{IncludeDir.SharedStorage}"
 	}
@@ -128,6 +133,8 @@ project "Saturn"
 		"yaml-cpp",
 		"Tracy",
 		"zlib",
+		"Recast",
+		"Detour",
 
 		"Saturn-SharedStorage"
 	}
@@ -303,6 +310,8 @@ project "Saturn-Editor"
 		"%{IncludeDir.ImguiNodeEditor}",
 		"%{IncludeDir.Tracy}",
 		"%{IncludeDir.KTX_Software}",
+		"%{IncludeDir.RecastRecast}",
+		"%{IncludeDir.RecastDetour}",
 
 		"%{IncludeDir.SharedStorage}"
 	}
@@ -437,17 +446,20 @@ project "Saturn-ProjectBrowser"
 		"%{IncludeDir.shaderc}",
 		"%{IncludeDir.SPIRV_Cross}",
 		"%{IncludeDir.vma}",
-		"%{IncludeDir.ImSpinner}",
 		"%{IncludeDir.PhysX}",
 		"%{IncludeDir.PhysX}/pxshared",
 		"%{IncludeDir.PhysX}/physx",
 		"%{IncludeDir.Optick}",
 		"Saturn/vendor/vulkan/include",
 		"%{IncludeDir.ImGuizmo}",
+		"%{IncludeDir.ImSpinner}",
 		"%{IncludeDir.Filewatch}",
 		"%{IncludeDir.MiniAudio}",
+		"%{IncludeDir.ImguiNodeEditor}",
+		"%{IncludeDir.Tracy}",
 		"%{IncludeDir.KTX_Software}",
-		"%{IncludeDir.SharedStorage}"
+		"%{IncludeDir.RecastRecast}",
+		"%{IncludeDir.RecastDetour}",
 	}
 
 	links

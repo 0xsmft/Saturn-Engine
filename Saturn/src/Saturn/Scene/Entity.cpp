@@ -42,8 +42,6 @@ namespace Saturn {
 		AddComponent<RelationshipComponent>();
 		AddComponent<TransformComponent>();
 		AddComponent<TagComponent>().Tag = "Unnamed Entity";
-
-		m_Scene->OnEntityCreated( this );
 	}
 
 	Entity::Entity( const std::string& rName, UUID Id )
@@ -55,8 +53,6 @@ namespace Saturn {
 		AddComponent<RelationshipComponent>();
 		AddComponent<TransformComponent>();
 		AddComponent<TagComponent>().Tag = rName;
-
-		m_Scene->OnEntityCreated( this );
 	}
 
 	Entity::Entity( const Entity& other )
@@ -74,8 +70,6 @@ namespace Saturn {
 		AddComponent<RelationshipComponent>();
 		AddComponent<TransformComponent>();
 		AddComponent<TagComponent>().Tag = "Unnamed Entity";
-
-		m_Scene->OnEntityCreated( this );
 	}
 
 	Entity::~Entity()

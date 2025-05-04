@@ -1883,8 +1883,7 @@ namespace Saturn {
 				Ref<Asset> asset = AssetManager::Get().FindAsset( *pUUID );
 				Ref<StaticMesh> meshAsset = AssetManager::Get().GetAssetAs<StaticMesh>( asset->ID );
 
-				Ref<Entity> entity = Ref<Entity>::Create();
-				entity->SetName( asset->Name );
+				Ref<Entity> entity = m_EditorScene->CreateEntity( asset->Name );
 
 				auto& rMeshComponent = entity->AddComponent<StaticMeshComponent>();
 				rMeshComponent.Mesh = meshAsset;

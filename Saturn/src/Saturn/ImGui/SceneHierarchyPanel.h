@@ -132,7 +132,6 @@ namespace Saturn {
 
 		Ref<Scene> m_Context;
 		std::vector< Ref<Entity> > m_SelectionContexts;
-		std::pair< Ref<Entity>, Ref<Entity> > m_ShiftStartEnd;
 		std::function<void( Ref<Entity> )> m_SelectionChangedCallback;
 	};
 }

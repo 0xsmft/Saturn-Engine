@@ -173,6 +173,26 @@ namespace Saturn {
 		~Scene();
 
 		[[nodiscard]] Ref<Entity> CreateEntityWithIDScript( UUID uuid, const std::string& name = "", const std::string& rScriptName = "" );
+
+		[[nodiscard]] Ref<Entity> CreateEntityWithID( UUID uuid, const std::string& name = "" );
+		[[nodiscard]] Ref<Entity> CreateEntity( const std::string& name = "" );
+
+		// This is not the same as CreateEntityWithIDScript
+		// Consider this as the internal counterpart for that function
+		// You must ensure that this scene is the active scene before calling this function! 
+		template<typename Ty>
+		[[nodiscard]] Ref<Ty> CreateEntityT( const std::string& name = "" ) 
+		{
+			static_assert( std::is_base_of<Entity, Ty>::value, "Ty must be based from an entity!" );
+
+			Ref<Ty> entity = Ref<Ty>::Create();
+			entity->SetName( name );
+
+			OnEntityCreated( entity );
+
+			return entity;
+		}
+
 	public:
 		void OnRenderEditor( const EditorCamera& rCamera, Timestep ts, SceneRenderer& rSceneRenderer );
 		void OnRenderRuntime( Timestep ts, SceneRenderer& rSceneRenderer );
@@ -264,9 +284,6 @@ namespace Saturn {
 
 		// Start NEW audio players
 		void StartAudioPlayers();
-
-		// Start already existing audio players 
-		void ResumeAudioPlayers();
 
 		// Pause audio players
 		void StopAudioPlayers();

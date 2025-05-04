@@ -870,7 +870,7 @@ namespace Saturn {
 						// TODO: Create the class somehow?
 						if( m_SelectedMetadata.Name == "Entity" ) 
 						{
-							sourceEntity = Ref<Entity>::Create();
+							sourceEntity = GActiveScene->CreateEntity();
 						}
 					}
 					else

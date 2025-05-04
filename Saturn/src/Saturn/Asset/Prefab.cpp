@@ -115,7 +115,7 @@ namespace Saturn {
 
 	Ref<Entity> Prefab::PrefabToEntity( Ref<Scene> Scene )
 	{
-		Ref<Entity> result = Ref<Entity>::Create();
+		Ref<Entity> result = Scene->CreateEntity();
 		result->AddComponent<PrefabComponent>().AssetID = ID;
 
 		// Now we need to find the root entity of the prefab.
@@ -155,7 +155,7 @@ namespace Saturn {
 
 	Ref<Entity> Prefab::CreateFromEntity( Ref<Entity> srcEntity )
 	{
-		Ref<Entity> result = Ref<Entity>::Create();
+		Ref<Entity> result = GActiveScene->CreateEntity();
 		result->AddComponent<PrefabComponent>().AssetID = ID;
 		
 		auto& rc = srcEntity->GetComponent<RelationshipComponent>();
@@ -180,7 +180,7 @@ namespace Saturn {
 	Ref<Entity> Prefab::CreateChildren( const Ref<Entity>& parent, Ref<Scene> Scene )
 	{
 		// Create the child in the new scene.
-		Ref<Entity> child = Ref<Entity>::Create();
+		Ref<Entity> child = GActiveScene->CreateEntity();
 		
 		// Copy Components, from our child in the scene.
 		CopyComponentIfExists( AllComponents{}, 

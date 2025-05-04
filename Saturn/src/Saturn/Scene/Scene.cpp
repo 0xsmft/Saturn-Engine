@@ -524,7 +524,30 @@ namespace Saturn {
 		entity->GetComponent<IdComponent>().ID = uuid;
 		entity->AddComponent<ScriptComponent>().ScriptName = rScriptName;
 
+		OnEntityCreated( entity );
+
 		GActiveScene = ActiveScene;
+
+		return entity;
+	}
+
+	Ref<Entity> Scene::CreateEntityWithID( UUID uuid, const std::string& name /*= "" */ )
+	{
+		Ref<Entity> entity = Ref<Entity>::Create( this );
+		entity->SetName( name );
+		entity->GetComponent<IdComponent>().ID = uuid;
+	
+		OnEntityCreated( entity );
+
+		return entity;
+	}
+
+	Ref<Entity> Scene::CreateEntity( const std::string& name /*= "" */ )
+	{
+		Ref<Entity> entity = Ref<Entity>::Create( this );
+		entity->SetName( name );
+
+		OnEntityCreated( entity );
 
 		return entity;
 	}
@@ -553,11 +576,9 @@ namespace Saturn {
 
 	Saturn::Ref<Saturn::Entity> Scene::FindEntityByHandle( entt::entity handle )
 	{
-		for( auto&& [entityHandle, entity] : m_EntityIDMap )
-		{
-			if( entityHandle == handle )
-				return entity;
-		}
+		const auto Itr = m_EntityIDMap.find( handle );
+		if( Itr != m_EntityIDMap.end() )
+			return Itr->second;
 
 		return nullptr;
 	}

@@ -145,7 +145,7 @@ namespace Saturn {
 			cacheData.SceneRenderer->SetCurrentScene( cacheData.Scene.Get() );
 
 			// Create entity
-			cacheData.SphereEntity = Ref<Entity>::Create( cacheData.Scene.Get() );
+			cacheData.SphereEntity = cacheData.Scene->CreateEntity();
 			auto& mc = cacheData.SphereEntity->AddComponent<StaticMeshComponent>();
 			mc.Mesh = Auxiliary::DefaultMeshes::CreateSphere( 1.0f );
 			mc.Mesh->GetMaterialRegistry()->AddAsset( materialAsset );
@@ -299,7 +299,7 @@ namespace Saturn {
 				cacheData.SceneRenderer->SetCurrentScene( cacheData.Scene.Get() );
 
 				// Create entity with the static mesh
-				cacheData.SphereEntity = Ref<Entity>::Create( cacheData.Scene.Get() );
+				cacheData.SphereEntity = cacheData.Scene->CreateEntity();
 				auto& mc = cacheData.SphereEntity->AddComponent<StaticMeshComponent>();
 				mc.Mesh = staticMesh;
 

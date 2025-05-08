@@ -1,3 +1,5 @@
+/* SATURN ENGINE MODIFIED */
+
 //
 // Copyright (c) 2009-2010 Mikko Mononen memon@inside.org
 //
@@ -121,7 +123,7 @@ static bool buildMeshAdjacency(unsigned short* polys, const int npolys,
 	return true;
 }
 
-
+/* SATURN ENGINE MODIFIED */
 static constexpr int VERTEX_BUCKET_COUNT = (1<<12);
 
 inline int computeVertexHash(int x, int y, int z)

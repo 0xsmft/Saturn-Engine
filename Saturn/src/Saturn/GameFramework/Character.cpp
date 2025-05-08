@@ -70,7 +70,7 @@ namespace Saturn {
 		if( cameraEntity == nullptr ) 
 		{
 			// Create the main camera.
-			m_CameraEntity = Ref<Entity>::Create();
+			m_CameraEntity = m_Scene->CreateEntity( "Camera" );
 			m_CameraEntity->SetParent( GetComponent<IdComponent>().ID );
 			m_CameraEntity->AddComponent<CameraComponent>().MainCamera = true;
 		}

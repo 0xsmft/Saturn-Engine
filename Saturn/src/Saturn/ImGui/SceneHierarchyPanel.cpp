@@ -140,7 +140,7 @@ namespace Saturn {
 			{
 				if( ImGui::MenuItem( "Create Empty Entity" ) )
 				{
-					SetSelected( m_Context->CreateEntity() );
+					SetSelected( m_Context->CreateEntity( "Unnamed Entity" ) );
 					m_Context->MarkDirty();
 				}
 

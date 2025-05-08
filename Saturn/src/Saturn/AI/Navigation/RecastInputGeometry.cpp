@@ -26,89 +26,64 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "RecastInputGeometry.h"
 
-#include "Saturn/Serialisation/RawSerialisation.h"
+#include "Recast.h"
 
-#include <glm/glm.hpp>
+#include "Saturn/Scene/Scene.h"
+#include "Saturn/Physics/PhysicsScene.h"
 
 namespace Saturn {
 
-	// Axis aligned bounding box
-	class AABB
+	void RecastInputGeometry::BeginImport()
 	{
-	public:
-		glm::vec3 Min, Max;
-
-	public:
-		AABB()
-			: Min( 0.0f ), Max( 0.0f )
+		if( m_pChunkyTriMesh )
 		{
+			delete m_pChunkyTriMesh;
+			m_pChunkyTriMesh = nullptr;
 		}
 
-		AABB( const glm::vec3& min, const glm::vec3& max )
-			: Min( min ), Max( max )
+		m_pChunkyTriMesh = new rcChunkyTriMesh();
+	}
+
+	void RecastInputGeometry::Add( Ref<StaticMesh> mesh, const glm::mat4& rModel )
+	{
+		auto& rVertices = mesh->Vertices();
+		auto& rIndices = mesh->Indices();
+
+		m_VertexBuffer.reserve( rVertices.size() );
+		m_IndexBuffer.reserve( rIndices.size() );
+
+		for( const auto& rVertex : rVertices )
 		{
+			glm::vec3 vertexPos = rVertex.Position;
+			glm::vec3 worldPos = glm::vec3( rModel * glm::vec4( vertexPos, 1.0f ) );
+
+			m_VertexBuffer.push_back( worldPos.x );
+			m_VertexBuffer.push_back( worldPos.y );
+			m_VertexBuffer.push_back( worldPos.z );
 		}
 
-	public:
-		glm::vec3 Center() const
+		for( const auto& rIndex : rIndices )
 		{
-			return ( Min + Max ) * 0.5f;
+			m_IndexBuffer.push_back( rIndex.V1 );
+			m_IndexBuffer.push_back( rIndex.V2 );
+			m_IndexBuffer.push_back( rIndex.V3 );
 		}
 
-		glm::vec3 HalfExtent() const
-		{
-			return ( Max - Min ) * 0.5f;
-		}
+		m_FaceCount += mesh->GetIndexCount();
+	}
 
-		glm::vec3 Extent() const
-		{
-			return ( Max - Min );
-		}
+	void RecastInputGeometry::EndImport()
+	{
+		float min[ 3 ], max[ 3 ];
+		rcCalcBounds( m_VertexBuffer.data(), m_VertexBuffer.size() / 3, min, max );
 
-		float Volume() const 
-		{
-			glm::vec3 size = Extent();
-			return size.x * size.y * size.z;
-		}
+		m_MinBounds = glm::vec3( min[ 0 ], min[ 1 ], min[ 2 ] );
+		m_MaxBounds = glm::vec3( max[ 0 ], max[ 1 ], max[ 2 ] );
 
-		// Check if a point is inside the AABB
-		bool Contains( const glm::vec3& point ) const
-		{
-			return (
-				point.x >= Min.x && point.x <= Max.x &&
-				point.y >= Min.y && point.y <= Max.y &&
-				point.z >= Min.z && point.z <= Max.z );
-		}
-
-		// Check if another AABB is inside this AABB
-		bool Contains( const AABB& rOther ) const
-		{
-			return ( rOther.Min.x >= Min.x && rOther.Max.x <= Max.x &&
-				rOther.Min.y >= Min.y && rOther.Max.y <= Max.y &&
-				rOther.Min.z >= Min.z && rOther.Max.z <= Max.z );
-		}
-
-		bool Intersects( const AABB& rOther ) const
-		{
-			return ( Min.x <= rOther.Max.x && Max.x >= rOther.Min.x ) &&
-				( Min.y <= rOther.Max.y && Max.y >= rOther.Min.y ) &&
-				( Min.z <= rOther.Max.z && Max.z >= rOther.Min.z );
-		}
-
-	public:
-		static void Serialise( const AABB& rObject, std::ofstream& rStream )
-		{
-			RawSerialisation::WriteVec3( rObject.Min, rStream );
-			RawSerialisation::WriteVec3( rObject.Max, rStream );
-		}
-
-		static void Deserialise( AABB& rObject, std::ifstream& rStream )
-		{
-			RawSerialisation::ReadVec3( rObject.Min, rStream );
-			RawSerialisation::ReadVec3( rObject.Max, rStream );
-		}
-	};
+		rcCreateChunkyTriMesh( m_VertexBuffer.data(), m_IndexBuffer.data(), m_IndexBuffer.size() / 3, 256, m_pChunkyTriMesh );
+	}
 
 }

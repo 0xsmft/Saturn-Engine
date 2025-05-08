@@ -1,3 +1,5 @@
+/* SATURN ENGINE MODIFIED */
+
 //
 // Copyright (c) 2009-2010 Mikko Mononen memon@inside.org
 //
@@ -26,30 +28,34 @@
 #include "DetourProximityGrid.h"
 #include "DetourPathQueue.h"
 
+/* SATURN ENGINE MODIFIED */
+
 /// The maximum number of neighbors that a crowd agent can take into account
 /// for steering decisions.
 /// @ingroup crowd
-static const int DT_CROWDAGENT_MAX_NEIGHBOURS = 6;
+static constexpr int DT_CROWDAGENT_MAX_NEIGHBOURS = 6;
 
 /// The maximum number of corners a crowd agent will look ahead in the path.
 /// This value is used for sizing the crowd agent corner buffers.
 /// Due to the behavior of the crowd manager, the actual number of useful
 /// corners will be one less than this number.
 /// @ingroup crowd
-static const int DT_CROWDAGENT_MAX_CORNERS = 4;
+static constexpr int DT_CROWDAGENT_MAX_CORNERS = 4;
 
 /// The maximum number of crowd avoidance configurations supported by the
 /// crowd manager.
 /// @ingroup crowd
 /// @see dtObstacleAvoidanceParams, dtCrowd::setObstacleAvoidanceParams(), dtCrowd::getObstacleAvoidanceParams(),
 ///		 dtCrowdAgentParams::obstacleAvoidanceType
-static const int DT_CROWD_MAX_OBSTAVOIDANCE_PARAMS = 8;
+static constexpr int DT_CROWD_MAX_OBSTAVOIDANCE_PARAMS = 8;
 
 /// The maximum number of query filter types supported by the crowd manager.
 /// @ingroup crowd
 /// @see dtQueryFilter, dtCrowd::getFilter() dtCrowd::getEditableFilter(),
 ///		dtCrowdAgentParams::queryFilterType
-static const int DT_CROWD_MAX_QUERY_FILTER_TYPE = 16;
+static constexpr int DT_CROWD_MAX_QUERY_FILTER_TYPE = 16;
+
+//////////////////////////////////////////////////////////////////////////
 
 /// Provides neighbor data for agents managed by the crowd.
 /// @ingroup crowd

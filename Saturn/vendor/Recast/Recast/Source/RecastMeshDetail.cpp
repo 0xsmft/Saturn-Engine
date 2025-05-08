@@ -1,3 +1,5 @@
+/* SATURN ENGINE MODIFIED */
+
 //
 // Copyright (c) 2009-2010 Mikko Mononen memon@inside.org
 //
@@ -25,7 +27,7 @@
 #include "RecastAlloc.h"
 #include "RecastAssert.h"
 
-
+/* SATURN ENGINE MODIFIED */
 static constexpr unsigned RC_UNSET_HEIGHT = 0xffff;
 
 struct rcHeightPatch

@@ -28,87 +28,33 @@
 
 #pragma once
 
-#include "Saturn/Serialisation/RawSerialisation.h"
-
-#include <glm/glm.hpp>
+#include "Saturn/Scene/Entity.h"
+#include "RecastNavigationMesh.h"
 
 namespace Saturn {
 
-	// Axis aligned bounding box
-	class AABB
+	class NavBoundsEntity : public Entity
 	{
 	public:
-		glm::vec3 Min, Max;
+		NavBoundsEntity();
+		~NavBoundsEntity() override;
 
-	public:
-		AABB()
-			: Min( 0.0f ), Max( 0.0f )
-		{
-		}
+		void BeginPlay() override;
+		void OnUpdate( Saturn::Timestep ts ) override;
+		void OnPhysicsUpdate( Saturn::Timestep ts ) override;
 
-		AABB( const glm::vec3& min, const glm::vec3& max )
-			: Min( min ), Max( max )
-		{
-		}
+		void SetAABB( const glm::vec3& rCenter, const glm::vec3& rExtent );
+		AABB GetBoundingBox();
 
-	public:
-		glm::vec3 Center() const
-		{
-			return ( Min + Max ) * 0.5f;
-		}
+		glm::vec3 GetRandomPoint();
 
-		glm::vec3 HalfExtent() const
-		{
-			return ( Max - Min ) * 0.5f;
-		}
+		void GatherGeometry();
 
-		glm::vec3 Extent() const
-		{
-			return ( Max - Min );
-		}
+		RecastNavigationMeshBuilder& GetBuilder() { return m_Builder; }
 
-		float Volume() const 
-		{
-			glm::vec3 size = Extent();
-			return size.x * size.y * size.z;
-		}
-
-		// Check if a point is inside the AABB
-		bool Contains( const glm::vec3& point ) const
-		{
-			return (
-				point.x >= Min.x && point.x <= Max.x &&
-				point.y >= Min.y && point.y <= Max.y &&
-				point.z >= Min.z && point.z <= Max.z );
-		}
-
-		// Check if another AABB is inside this AABB
-		bool Contains( const AABB& rOther ) const
-		{
-			return ( rOther.Min.x >= Min.x && rOther.Max.x <= Max.x &&
-				rOther.Min.y >= Min.y && rOther.Max.y <= Max.y &&
-				rOther.Min.z >= Min.z && rOther.Max.z <= Max.z );
-		}
-
-		bool Intersects( const AABB& rOther ) const
-		{
-			return ( Min.x <= rOther.Max.x && Max.x >= rOther.Min.x ) &&
-				( Min.y <= rOther.Max.y && Max.y >= rOther.Min.y ) &&
-				( Min.z <= rOther.Max.z && Max.z >= rOther.Min.z );
-		}
-
-	public:
-		static void Serialise( const AABB& rObject, std::ofstream& rStream )
-		{
-			RawSerialisation::WriteVec3( rObject.Min, rStream );
-			RawSerialisation::WriteVec3( rObject.Max, rStream );
-		}
-
-		static void Deserialise( AABB& rObject, std::ifstream& rStream )
-		{
-			RawSerialisation::ReadVec3( rObject.Min, rStream );
-			RawSerialisation::ReadVec3( rObject.Max, rStream );
-		}
+	private:
+		AABB m_Bounds;
+		RecastNavigationMeshBuilder m_Builder;
 	};
-
+	
 }

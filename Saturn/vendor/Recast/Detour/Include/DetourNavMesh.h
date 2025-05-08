@@ -1,3 +1,5 @@
+/* SATURN ENGINE MODIFIED */
+
 //
 // Copyright (c) 2009-2010 Mikko Mononen memon@inside.org
 //
@@ -56,9 +58,10 @@ typedef uint64_t dtTileRef;
 typedef unsigned int dtTileRef;
 #endif
 
+/* SATURN ENGINE MODIFIED */
 /// The maximum number of vertices per navigation polygon.
 /// @ingroup detour
-static const int DT_VERTS_PER_POLYGON = 6;
+static constexpr int DT_VERTS_PER_POLYGON = 6;
 
 /// @{
 /// @name Tile Serialization Constants
@@ -67,32 +70,33 @@ static const int DT_VERTS_PER_POLYGON = 6;
 ///
 
 /// A magic number used to detect compatibility of navigation tile data.
-static const int DT_NAVMESH_MAGIC = 'D'<<24 | 'N'<<16 | 'A'<<8 | 'V';
+static constexpr int DT_NAVMESH_MAGIC = 'D'<<24 | 'N'<<16 | 'A'<<8 | 'V';
 
 /// A version number used to detect compatibility of navigation tile data.
-static const int DT_NAVMESH_VERSION = 7;
+static constexpr int DT_NAVMESH_VERSION = 7;
 
 /// A magic number used to detect the compatibility of navigation tile states.
-static const int DT_NAVMESH_STATE_MAGIC = 'D'<<24 | 'N'<<16 | 'M'<<8 | 'S';
+static constexpr int DT_NAVMESH_STATE_MAGIC = 'D'<<24 | 'N'<<16 | 'M'<<8 | 'S';
 
 /// A version number used to detect compatibility of navigation tile states.
-static const int DT_NAVMESH_STATE_VERSION = 1;
+static constexpr int DT_NAVMESH_STATE_VERSION = 1;
 
 /// @}
 
 /// A flag that indicates that an entity links to an external entity.
 /// (E.g. A polygon edge is a portal that links to another polygon.)
-static const unsigned short DT_EXT_LINK = 0x8000;
+static constexpr unsigned short DT_EXT_LINK = 0x8000;
 
 /// A value that indicates the entity does not link to anything.
-static const unsigned int DT_NULL_LINK = 0xffffffff;
+static constexpr unsigned int DT_NULL_LINK = 0xffffffff;
 
 /// A flag that indicates that an off-mesh connection can be traversed in both directions. (Is bidirectional.)
-static const unsigned int DT_OFFMESH_CON_BIDIR = 1;
+static constexpr unsigned int DT_OFFMESH_CON_BIDIR = 1;
 
 /// The maximum number of user defined area ids.
 /// @ingroup detour
-static const int DT_MAX_AREAS = 64;
+static constexpr int DT_MAX_AREAS = 64;
+/* ---------------------------------------------------------------- */
 
 /// Tile flags used for various functions and fields.
 /// For an example, see dtNavMesh::addTile().
@@ -138,7 +142,9 @@ enum dtDetailTriEdgeFlags
 
 /// Limit raycasting during any angle pahfinding
 /// The limit is given as a multiple of the character radius
-static const float DT_RAY_CAST_LIMIT_PROPORTIONS = 50.0f;
+/// 
+/* SATURN ENGINE MODIFIED */
+static constexpr float DT_RAY_CAST_LIMIT_PROPORTIONS = 50.0f;
 
 /// Flags representing the type of a navigation mesh polygon.
 enum dtPolyTypes

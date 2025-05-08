@@ -28,87 +28,45 @@
 
 #pragma once
 
-#include "Saturn/Serialisation/RawSerialisation.h"
+#include "RecastChunkyTriMesh.h"
 
-#include <glm/glm.hpp>
+#include "Saturn/Vulkan/Mesh.h"
+#include "Saturn/Core/Ref.h"
 
 namespace Saturn {
 
-	// Axis aligned bounding box
-	class AABB
+	class RecastInputGeometry : public RefTarget
 	{
 	public:
-		glm::vec3 Min, Max;
+		RecastInputGeometry() = default;
+		~RecastInputGeometry() = default;
 
-	public:
-		AABB()
-			: Min( 0.0f ), Max( 0.0f )
-		{
-		}
+		void BeginImport();
+		void Add( Ref<StaticMesh> mesh, const glm::mat4& rModel );
+//		void Add( Ref<DynamicMesh> mesh );
+		void EndImport();
 
-		AABB( const glm::vec3& min, const glm::vec3& max )
-			: Min( min ), Max( max )
-		{
-		}
+		AABB GetAABB() const { return AABB( m_MinBounds, m_MaxBounds ); }
+		const glm::vec3& GetMinBounds() const { return m_MinBounds; }
+		const glm::vec3& GetMaxBounds() const { return m_MaxBounds; }
 
-	public:
-		glm::vec3 Center() const
-		{
-			return ( Min + Max ) * 0.5f;
-		}
+		rcChunkyTriMesh* GetChunkyTriMesh() const { return m_pChunkyTriMesh; }
 
-		glm::vec3 HalfExtent() const
-		{
-			return ( Max - Min ) * 0.5f;
-		}
+		const std::vector<float>& GetVertexBuffer() const { return m_VertexBuffer; }
+		const std::vector<int>& GetIndexBuffer() const { return m_IndexBuffer; }
 
-		glm::vec3 Extent() const
-		{
-			return ( Max - Min );
-		}
+		uint32_t GetFaceCount() const { return m_FaceCount; }
 
-		float Volume() const 
-		{
-			glm::vec3 size = Extent();
-			return size.x * size.y * size.z;
-		}
+	private:
+		std::vector<float> m_VertexBuffer;
+		std::vector<int> m_IndexBuffer;
 
-		// Check if a point is inside the AABB
-		bool Contains( const glm::vec3& point ) const
-		{
-			return (
-				point.x >= Min.x && point.x <= Max.x &&
-				point.y >= Min.y && point.y <= Max.y &&
-				point.z >= Min.z && point.z <= Max.z );
-		}
+		glm::vec3 m_MinBounds{};
+		glm::vec3 m_MaxBounds{};
 
-		// Check if another AABB is inside this AABB
-		bool Contains( const AABB& rOther ) const
-		{
-			return ( rOther.Min.x >= Min.x && rOther.Max.x <= Max.x &&
-				rOther.Min.y >= Min.y && rOther.Max.y <= Max.y &&
-				rOther.Min.z >= Min.z && rOther.Max.z <= Max.z );
-		}
+		uint32_t m_FaceCount = 0;
 
-		bool Intersects( const AABB& rOther ) const
-		{
-			return ( Min.x <= rOther.Max.x && Max.x >= rOther.Min.x ) &&
-				( Min.y <= rOther.Max.y && Max.y >= rOther.Min.y ) &&
-				( Min.z <= rOther.Max.z && Max.z >= rOther.Min.z );
-		}
-
-	public:
-		static void Serialise( const AABB& rObject, std::ofstream& rStream )
-		{
-			RawSerialisation::WriteVec3( rObject.Min, rStream );
-			RawSerialisation::WriteVec3( rObject.Max, rStream );
-		}
-
-		static void Deserialise( AABB& rObject, std::ifstream& rStream )
-		{
-			RawSerialisation::ReadVec3( rObject.Min, rStream );
-			RawSerialisation::ReadVec3( rObject.Max, rStream );
-		}
+	private:
+		rcChunkyTriMesh* m_pChunkyTriMesh = nullptr;
 	};
-
 }

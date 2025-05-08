@@ -1,3 +1,5 @@
+/* SATURN ENGINE MODIFIED */
+
 //
 // Copyright (c) 2009-2010 Mikko Mononen memon@inside.org
 //
@@ -19,8 +21,10 @@
 #ifndef DEBUGDRAW_H
 #define DEBUGDRAW_H
 
+/* SATURN ENGINE MODIFIED */
+
 // Some math headers don't have PI defined.
-static const float DU_PI = 3.14159265f;
+static constexpr float DU_PI = 3.14159265f;
 
 enum duDebugDrawPrimitives
 {

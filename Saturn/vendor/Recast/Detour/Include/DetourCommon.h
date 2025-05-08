@@ -1,3 +1,5 @@
+/* SATURN ENGINE MODIFIED */
+
 //
 // Copyright (c) 2009-2010 Mikko Mononen memon@inside.org
 //
@@ -39,6 +41,8 @@ feature to find minor members.
 /// and this silences the warning.
 template<class T> void dtIgnoreUnused(const T&) { }
 
+/* SATURN ENGINE MODIFIED */
+
 /// Swaps the values of the two parameters.
 ///  @param[in,out]	a	Value A
 ///  @param[in,out]	b	Value B
@@ -48,30 +52,32 @@ template<class T> inline void dtSwap(T& a, T& b) { T t = a; a = b; b = t; }
 ///  @param[in]		a	Value A
 ///  @param[in]		b	Value B
 ///  @return The minimum of the two values.
-template<class T> inline T dtMin(T a, T b) { return a < b ? a : b; }
+template<class T> inline constexpr T dtMin(T a, T b) { return a < b ? a : b; }
 
 /// Returns the maximum of two values.
 ///  @param[in]		a	Value A
 ///  @param[in]		b	Value B
 ///  @return The maximum of the two values.
-template<class T> inline T dtMax(T a, T b) { return a > b ? a : b; }
+template<class T> inline constexpr T dtMax(T a, T b) { return a > b ? a : b; }
 
 /// Returns the absolute value.
 ///  @param[in]		a	The value.
 ///  @return The absolute value of the specified value.
-template<class T> inline T dtAbs(T a) { return a < 0 ? -a : a; }
+template<class T> inline constexpr T dtAbs(T a) { return a < 0 ? -a : a; }
 
 /// Returns the square of the value.
 ///  @param[in]		a	The value.
 ///  @return The square of the value.
-template<class T> inline T dtSqr(T a) { return a*a; }
+template<class T> inline constexpr T dtSqr(T a) { return a*a; }
 
 /// Clamps the value to the specified range.
 ///  @param[in]		v	The value to clamp.
 ///  @param[in]		mn	The minimum permitted return value.
 ///  @param[in]		mx	The maximum permitted return value.
 ///  @return The value, clamped to the specified range.
-template<class T> inline T dtClamp(T v, T mn, T mx) { return v < mn ? mn : (v > mx ? mx : v); }
+template<class T> inline constexpr T dtClamp(T v, T mn, T mx) { return v < mn ? mn : (v > mx ? mx : v); }
+
+//////////////////////////////////////////////////////////////////////////
 
 /// @}
 /// @name Vector helper functions.

@@ -1,3 +1,5 @@
+/* SATURN ENGINE MODIFIED */
+
 //
 // Copyright (c) 2009-2010 Mikko Mononen memon@inside.org
 //
@@ -40,6 +42,7 @@
 #define RC_MAX_NEIS_DEF 16
 #endif
 
+/* SATURN ENGINE MODIFIED */
 // Keep type checking.
 static constexpr int RC_MAX_LAYERS = RC_MAX_LAYERS_DEF;
 static constexpr int RC_MAX_NEIS = RC_MAX_NEIS_DEF;

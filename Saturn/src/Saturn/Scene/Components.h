@@ -308,6 +308,12 @@ namespace Saturn {
 		BillboardComponent( UUID id ) : AssetID( id ) {}
 	};
 
+	struct NavigationMeshSpecificationComponent
+	{
+		glm::vec3 Extent;
+		bool HasBuilt = false;
+	};
+
 	template<typename... V>
 	struct ComponentGroup {};
 
@@ -318,9 +324,11 @@ namespace Saturn {
 		BoxColliderComponent, SphereColliderComponent, CapsuleColliderComponent, MeshColliderComponent, RigidbodyComponent,
 		ScriptComponent, 
 		AudioPlayerComponent, AudioListenerComponent,
-		BillboardComponent>;
+		BillboardComponent,
+		NavigationMeshSpecificationComponent>;
 
 	// Without TagComponent, IdComponent, RelationshipComponent
+	// We could use templates and concepts for this however that will add a new layer of complexity and ambiguity.
 	using AllDuplicatableComponents = ComponentGroup<TransformComponent, PrefabComponent,
 		StaticMeshComponent,
 		DirectionalLightComponent, SkylightComponent, PointLightComponent,
@@ -328,5 +336,6 @@ namespace Saturn {
 		BoxColliderComponent, SphereColliderComponent, CapsuleColliderComponent, MeshColliderComponent, RigidbodyComponent,
 		ScriptComponent,
 		AudioPlayerComponent, AudioListenerComponent,
-		BillboardComponent>;
+		BillboardComponent,
+		NavigationMeshSpecificationComponent>;
 }

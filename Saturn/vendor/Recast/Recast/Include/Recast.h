@@ -1,3 +1,5 @@
+/* SATURN ENGINE MODIFIED */
+
 //
 // Copyright (c) 2009-2010 Mikko Mononen memon@inside.org
 //
@@ -19,8 +21,9 @@
 #ifndef RECAST_H
 #define RECAST_H
 
+/* SATURN ENGINE MODIFIED */
 /// The value of PI used by Recast.
-static const float RC_PI = 3.14159265f;
+static constexpr float RC_PI = 3.14159265f;
 
 /// Used to ignore unused function parameters and silence any compiler warnings.
 template<class T> void rcIgnoreUnused(const T&) { }
@@ -577,12 +580,14 @@ void rcFreePolyMeshDetail(rcPolyMeshDetail* detailMesh);
 
 /// @}
 
+/* SATURN ENGINE MODIFIED */
+
 /// Heightfield border flag.
 /// If a heightfield region ID has this bit set, then the region is a border 
 /// region and its spans are considered un-walkable.
 /// (Used during the region and contour build process.)
 /// @see rcCompactSpan::reg
-static const unsigned short RC_BORDER_REG = 0x8000;
+static constexpr unsigned short RC_BORDER_REG = 0x8000;
 
 /// Polygon touches multiple regions.
 /// If a polygon has this region ID it was merged with or created
@@ -590,7 +595,7 @@ static const unsigned short RC_BORDER_REG = 0x8000;
 /// build step that removes redundant border vertices. 
 /// (Used during the polymesh and detail polymesh build processes)
 /// @see rcPolyMesh::regs
-static const unsigned short RC_MULTIPLE_REGS = 0;
+static constexpr unsigned short RC_MULTIPLE_REGS = 0;
 
 /// Border vertex flag.
 /// If a region ID has this bit set, then the associated element lies on
@@ -599,14 +604,14 @@ static const unsigned short RC_MULTIPLE_REGS = 0;
 /// at tile boundaries.
 /// (Used during the build process.)
 /// @see rcCompactSpan::reg, #rcContour::verts, #rcContour::rverts
-static const int RC_BORDER_VERTEX = 0x10000;
+static constexpr int RC_BORDER_VERTEX = 0x10000;
 
 /// Area border flag.
 /// If a region ID has this bit set, then the associated element lies on
 /// the border of an area.
 /// (Used during the region and contour build process.)
 /// @see rcCompactSpan::reg, #rcContour::verts, #rcContour::rverts
-static const int RC_AREA_BORDER = 0x20000;
+static constexpr int RC_AREA_BORDER = 0x20000;
 
 /// Contour build flags.
 /// @see rcBuildContours
@@ -616,30 +621,32 @@ enum rcBuildContoursFlags
 	RC_CONTOUR_TESS_AREA_EDGES = 0x02	///< Tessellate edges between areas during contour simplification.
 };
 
+/* SATURN ENGINE MODIFIED */
+
 /// Applied to the region id field of contour vertices in order to extract the region id.
 /// The region id field of a vertex may have several flags applied to it.  So the
 /// fields value can't be used directly.
 /// @see rcContour::verts, rcContour::rverts
-static const int RC_CONTOUR_REG_MASK = 0xffff;
+static constexpr int RC_CONTOUR_REG_MASK = 0xffff;
 
 /// An value which indicates an invalid index within a mesh.
 /// @note This does not necessarily indicate an error.
 /// @see rcPolyMesh::polys
-static const unsigned short RC_MESH_NULL_IDX = 0xffff;
+static constexpr unsigned short RC_MESH_NULL_IDX = 0xffff;
 
 /// Represents the null area.
 /// When a data element is given this value it is considered to no longer be 
 /// assigned to a usable area.  (E.g. It is un-walkable.)
-static const unsigned char RC_NULL_AREA = 0;
+static constexpr unsigned char RC_NULL_AREA = 0;
 
 /// The default area id used to indicate a walkable polygon. 
 /// This is also the maximum allowed area id, and the only non-null area id 
 /// recognized by some steps in the build process. 
-static const unsigned char RC_WALKABLE_AREA = 63;
+static constexpr unsigned char RC_WALKABLE_AREA = 63;
 
 /// The value returned by #rcGetCon if the specified direction is not connected
 /// to another span. (Has no neighbor.)
-static const int RC_NOT_CONNECTED = 0x3f;
+static constexpr int RC_NOT_CONNECTED = 0x3f;
 
 /// @name General helper functions
 /// @{
@@ -653,30 +660,30 @@ template<class T> inline void rcSwap(T& a, T& b) { T t = a; a = b; b = t; }
 /// @param[in]		a	Value A
 /// @param[in]		b	Value B
 /// @return The minimum of the two values.
-template<class T> inline T rcMin(T a, T b) { return a < b ? a : b; }
+template<class T> inline constexpr T rcMin(T a, T b) { return a < b ? a : b; }
 
 /// Returns the maximum of two values.
 /// @param[in]		a	Value A
 /// @param[in]		b	Value B
 /// @return The maximum of the two values.
-template<class T> inline T rcMax(T a, T b) { return a > b ? a : b; }
+template<class T> inline constexpr T rcMax(T a, T b) { return a > b ? a : b; }
 
 /// Returns the absolute value.
 /// @param[in]		a	The value.
 /// @return The absolute value of the specified value.
-template<class T> inline T rcAbs(T a) { return a < 0 ? -a : a; }
+template<class T> inline constexpr T rcAbs(T a) { return a < 0 ? -a : a; }
 
 /// Returns the square of the value.
 /// @param[in]		a	The value.
 /// @return The square of the value.
-template<class T> inline T rcSqr(T a) { return a*a; }
+template<class T> inline constexpr T rcSqr(T a) { return a*a; }
 
 /// Clamps the value to the specified range.
 /// @param[in]		value			The value to clamp.
 /// @param[in]		minInclusive	The minimum permitted return value.
 /// @param[in]		maxInclusive	The maximum permitted return value.
 /// @return The value, clamped to the specified range.
-template<class T> inline T rcClamp(T value, T minInclusive, T maxInclusive)
+template<class T> inline constexpr T rcClamp(T value, T minInclusive, T maxInclusive)
 {
 	return value < minInclusive ? minInclusive: (value > maxInclusive ? maxInclusive : value);
 }

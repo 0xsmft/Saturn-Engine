@@ -31,9 +31,10 @@
 #include "Saturn/Core/AABB/AABB.h"
 
 #include "RecastInputGeometry.h"
+#include "Visualisation/RecastDebugVisualisation.h"
 
-#include "Recast.h"
-#include "DetourNavMesh.h"
+#include <Recast/Recast.h>
+#include <Detour/DetourNavMesh.h>
 
 namespace Saturn {
 
@@ -51,10 +52,7 @@ namespace Saturn {
 	{
 	public:
 		RecastNavigationMeshBuilder();
-		RecastNavigationMeshBuilder( AABB bounds );
 		~RecastNavigationMeshBuilder();
-
-		void SetBounds( AABB bounds );
 
 		void Init();
 		void Build( const RecastInputGeometry& rInputGeometry );
@@ -62,17 +60,20 @@ namespace Saturn {
 		void DebugDraw();
 
 	private:
-		void NavBuildTile( int x, int y, const RecastInputGeometry& rInputGeometry );
+		unsigned char* NavBuildTile( int x, int y, const RecastInputGeometry& rInputGeometry, int& rOutDataSize );
 
 	private:
-		dtNavMesh* m_pDMesh = nullptr;
+		dtNavMesh* m_pNavMesh = nullptr;
+		rcPolyMesh* m_PolyMesh = nullptr;
+		rcPolyMeshDetail* m_PolyMeshDetail = nullptr;
+
+		unsigned char* m_AreaFlags = nullptr;
+
 		rcConfig m_Config{};
 		RecastContext m_Context;
+		RecastDebugVisualisation m_DebugDrawer{};
 
 		glm::vec3 m_LastTileMin{}, m_LastTileMax{};
-
-	private:
-		AABB m_Bounds;
 	};
 
 }

@@ -50,6 +50,12 @@ namespace Saturn {
 	{
 		enableLog( true );
 		enableTimer( true );
+
+		for( auto& [label, timer] : m_Timers )
+		{
+			timer.Stop();
+			timer.Reset();
+		}
 	}
 
 	void RecastContext::doLog( const rcLogCategory category, const char* pMessage, const int len )
@@ -68,6 +74,40 @@ namespace Saturn {
 				SAT_CORE_INFO( "Recast Navigation: {0}", pMessage );
 				break;
 		}
+	}
+
+	void RecastContext::doResetTimers()
+	{
+		for( auto& [label, timer] : m_Timers )
+		{
+			timer.Reset();
+		}
+	}
+
+	void RecastContext::doStartTimer( const rcTimerLabel label )
+	{
+		auto itr = m_Timers.find( label );
+
+		if( itr != m_Timers.end() )
+		{
+			m_Timers[ label ].Reset();
+		}
+	}
+
+	void RecastContext::doStopTimer( const rcTimerLabel label )
+	{
+		m_Timers[ label ].Stop();
+	}
+
+	int RecastContext::doGetAccumulatedTime( const rcTimerLabel label ) const
+	{
+		float ms = 0;
+		for( auto& [label, timer] : m_Timers )
+		{
+			ms += timer.ElapsedMilliseconds();
+		}
+
+		return ( int ) ms;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -340,7 +380,7 @@ namespace Saturn {
 		}
 
 		m_Context.stopTimer( RC_TIMER_TOTAL );
-		m_Context.log( RC_LOG_PROGRESS, "Building took: %i", m_Context.getAccumulatedTime( RC_TIMER_TOTAL ) );
+		m_Context.log( RC_LOG_PROGRESS, "Building took: %i ms", m_Context.getAccumulatedTime( RC_TIMER_TOTAL ) );
 		m_Context.log( RC_LOG_PROGRESS, "Tile mesh: %i verts %i ploys", m_PolyMesh->nverts, m_PolyMesh->npolys );
 
 		rOutDataSize = navDataSize;
@@ -349,11 +389,7 @@ namespace Saturn {
 
 	void RecastNavigationMeshBuilder::DebugDraw()
 	{
-//		duDebugDrawNavMesh( &m_DebugDrawer, *m_pNavMesh, DU_DRAWNAVMESH_COLOR_TILES );
-
-//		duDebugDrawBoxWire( &m_DebugDrawer,
-//			m_LastTileMin.x, m_LastTileMin.y, m_LastTileMin.z,
-//			m_LastTileMax.x, m_LastTileMax.y, m_LastTileMax.z, duRGBA( 255, 255, 255, 255 ), 1.0F );
+		duDebugDrawNavMesh( &m_DebugDrawer, *m_pNavMesh, DU_DRAWNAVMESH_COLOR_TILES );
 	}
 
 }

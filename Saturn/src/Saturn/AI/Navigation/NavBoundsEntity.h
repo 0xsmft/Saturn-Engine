@@ -46,8 +46,6 @@ namespace Saturn {
 		void SetAABB( const glm::vec3& rCenter, const glm::vec3& rExtent );
 		AABB GetBoundingBox();
 
-		glm::vec3 GetRandomPoint();
-
 		void GatherGeometry();
 
 		RecastNavigationMeshBuilder& GetBuilder() { return m_Builder; }

@@ -442,9 +442,10 @@ namespace Saturn {
 		{
 			fout << std::format( "__declspec(dllexport) Saturn::Entity* _Z_Create_{0}(Saturn::Scene* pScene)\n", rClassName );
 			fout << "{\n";
-			fout << std::format( "\tSaturn::Ref<{0}> Target = Saturn::Ref<{0}>::Create();\n", rClassName );
-			fout << "\tSaturn::Ref<Saturn::Entity> TargetReturn = Target.As<Saturn::Entity>();\n";
-			fout << "\treturn TargetReturn.Get();\n";
+			fout << "\t//vvv use raw pointer for init\n";
+			fout << std::format( "\t{0}* Target = new {0}();\n", rClassName );
+			fout << "\tSaturn::Entity* TargetReturn = (Saturn::Entity*)Target;\n";
+			fout << "\treturn TargetReturn;\n";
 			fout << "}\n";
 
 			fout << "//^^^ Spawnable\n";

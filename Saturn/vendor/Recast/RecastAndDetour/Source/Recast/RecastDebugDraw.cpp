@@ -19,7 +19,11 @@
 //
 
 #include <math.h>
+
+/* SATURN ENGINE MODIFIED */
+// Include shared debug draw.
 #include "DebugDraw.h"
+
 #include "RecastDebugDraw.h"
 #include "Recast.h"
 

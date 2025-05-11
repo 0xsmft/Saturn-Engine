@@ -28,60 +28,36 @@
 
 #pragma once
 
-#include "Saturn/Core/AABB/AABB.h"
-
-#include "RecastInputGeometry.h"
-#include "Visualisation/RecastDebugVisualisation.h"
-
-#include <Recast/Recast.h>
-#include <Detour/DetourNavMesh.h>
+#include <RecastShared/DebugDraw.h>
 
 namespace Saturn {
 
-	class RecastContext : public rcContext
+	// Recast and detour debug drawing
+	class RecastDebugVisualisation : public duDebugDraw
 	{
 	public:
-		RecastContext();
-		~RecastContext() = default;
+		RecastDebugVisualisation();
+		virtual ~RecastDebugVisualisation();
 
-	protected:
-		void doLog( const rcLogCategory category, const char* pMessage, const int len ) override;
-		
-		void doResetTimers() override;
-		void doStartTimer( const rcTimerLabel label ) override;
-		void doStopTimer( const rcTimerLabel label ) override;
-		int doGetAccumulatedTime( const rcTimerLabel label ) const override;
-
-	private:
-		std::map<rcTimerLabel, Timer> m_Timers;
-	};
-
-	class RecastNavigationMeshBuilder
-	{
 	public:
-		RecastNavigationMeshBuilder();
-		~RecastNavigationMeshBuilder();
+		void depthMask( bool state ) override;
+		void texture( bool state ) override;
 
-		void Init();
-		void Build( const RecastInputGeometry& rInputGeometry );
+		void begin( duDebugDrawPrimitives prim, float size = 1.0f ) override;
 
-		void DebugDraw();
+		void vertex( const float* pos, unsigned int color ) override;
+		void vertex( const float x, const float y, const float z, unsigned int color ) override;
+		void vertex( const float* pos, unsigned int color, const float* uv ) override;
+		void vertex( const float x, const float y, const float z, unsigned int color, const float u, const float v ) override;
+
+		void end() override;
 
 	private:
-		unsigned char* NavBuildTile( int x, int y, const RecastInputGeometry& rInputGeometry, int& rOutDataSize );
+		void DrawInternal( const glm::vec3& rPosition, const glm::vec4& rColor );
 
 	private:
-		dtNavMesh* m_pNavMesh = nullptr;
-		rcPolyMesh* m_PolyMesh = nullptr;
-		rcPolyMeshDetail* m_PolyMeshDetail = nullptr;
-
-		unsigned char* m_AreaFlags = nullptr;
-
-		rcConfig m_Config{};
-		RecastContext m_Context;
-		RecastDebugVisualisation m_DebugDrawer{};
-
-		glm::vec3 m_LastTileMin{}, m_LastTileMax{};
+		duDebugDrawPrimitives m_CurrentPolygonMode = DU_DRAW_LINES;
+		float m_Scale = 1.0f;
 	};
-
+	
 }

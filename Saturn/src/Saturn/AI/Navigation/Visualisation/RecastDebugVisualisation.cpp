@@ -26,62 +26,102 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "RecastDebugVisualisation.h"
 
-#include "Saturn/Core/AABB/AABB.h"
+#include "Saturn/Vulkan/Renderer2D.h"
 
-#include "RecastInputGeometry.h"
-#include "Visualisation/RecastDebugVisualisation.h"
+#include "Recast/Recast.h"
 
-#include <Recast/Recast.h>
-#include <Detour/DetourNavMesh.h>
+#include <glm/gtc/type_ptr.hpp>
 
 namespace Saturn {
-
-	class RecastContext : public rcContext
+	
+	RecastDebugVisualisation::RecastDebugVisualisation()
+		: duDebugDraw()
 	{
-	public:
-		RecastContext();
-		~RecastContext() = default;
+	}
 
-	protected:
-		void doLog( const rcLogCategory category, const char* pMessage, const int len ) override;
-		
-		void doResetTimers() override;
-		void doStartTimer( const rcTimerLabel label ) override;
-		void doStopTimer( const rcTimerLabel label ) override;
-		int doGetAccumulatedTime( const rcTimerLabel label ) const override;
-
-	private:
-		std::map<rcTimerLabel, Timer> m_Timers;
-	};
-
-	class RecastNavigationMeshBuilder
+	RecastDebugVisualisation::~RecastDebugVisualisation()
 	{
-	public:
-		RecastNavigationMeshBuilder();
-		~RecastNavigationMeshBuilder();
 
-		void Init();
-		void Build( const RecastInputGeometry& rInputGeometry );
+	}
 
-		void DebugDraw();
+	void RecastDebugVisualisation::depthMask( bool state )
+	{
+		// we only support drawing lines
+	}
 
-	private:
-		unsigned char* NavBuildTile( int x, int y, const RecastInputGeometry& rInputGeometry, int& rOutDataSize );
+	void RecastDebugVisualisation::texture( bool state )
+	{
+	}
 
-	private:
-		dtNavMesh* m_pNavMesh = nullptr;
-		rcPolyMesh* m_PolyMesh = nullptr;
-		rcPolyMeshDetail* m_PolyMeshDetail = nullptr;
+	void RecastDebugVisualisation::begin( duDebugDrawPrimitives prim, float size /*= 1.0f */ )
+	{
+		m_CurrentPolygonMode = prim;
+		m_Scale = size;
+	}
 
-		unsigned char* m_AreaFlags = nullptr;
+	static glm::vec4 UnpackColor( unsigned int color ) 
+	{
+		float r = ( color & 0xFF ) / 255.0f;
+		float g = ( ( color >> 8 ) & 0xFF ) / 255.0f;
+		float b = ( ( color >> 16 ) & 0xFF ) / 255.0f;
+		float a = ( ( color >> 24 ) & 0xFF ) / 255.0f;
 
-		rcConfig m_Config{};
-		RecastContext m_Context;
-		RecastDebugVisualisation m_DebugDrawer{};
+		return glm::vec4( r, g, b, a );
+	}
 
-		glm::vec3 m_LastTileMin{}, m_LastTileMax{};
-	};
+	void RecastDebugVisualisation::vertex( const float* pos, unsigned int color )
+	{
+		glm::vec3 start = glm::vec3( pos[ 0 ], pos[ 1 ], pos[ 2 ] );
+		start.y += 1.0f;
+		DrawInternal( start, UnpackColor( color ) );
+	}
+
+	void RecastDebugVisualisation::vertex( const float x, const float y, const float z, unsigned int color )
+	{
+		glm::vec3 start = glm::vec3( x, y, z );
+		DrawInternal( start, UnpackColor( color ) );
+	}
+
+	void RecastDebugVisualisation::vertex( const float* pos, unsigned int color, const float* uv )
+	{
+		// We don't support textured lines
+		glm::vec3 start = glm::vec3( pos[ 0 ], pos[ 1 ], pos[ 2 ] );
+		DrawInternal( start, UnpackColor( color ) );
+	}
+
+	void RecastDebugVisualisation::vertex( const float x, const float y, const float z, unsigned int color, const float u, const float v )
+	{
+		// We don't support textured lines
+		glm::vec3 start = glm::vec3( x, y, z );
+		DrawInternal( start, UnpackColor( color ) );
+	}
+
+	void RecastDebugVisualisation::end()
+	{
+	}
+
+	void RecastDebugVisualisation::DrawInternal( const glm::vec3& rPosition, const glm::vec4& rColor )
+	{
+		switch( m_CurrentPolygonMode )
+		{
+			case DU_DRAW_POINTS:
+				break;
+
+			case DU_DRAW_LINES:
+//				Renderer2D::Get().SubmitSingleLine( rPosition, rColor );
+				break;
+
+			case DU_DRAW_QUADS:
+				Renderer2D::Get().SubmitQuad( rPosition, rColor, glm::vec2{ m_Scale } );
+				break;
+
+			case DU_DRAW_TRIS:
+				Renderer2D::Get().SubmitTriangle1( rPosition, rColor );
+				break;
+		}
+	}
 
 }

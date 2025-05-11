@@ -23,7 +23,7 @@
 #include "DetourNavMesh.h"
 #include "DetourCommon.h"
 #include "DetourNode.h"
-
+#include "DetourAssert.h"
 
 static float distancePtLine2d(const float* pt, const float* p, const float* q)
 {
@@ -151,6 +151,8 @@ static void drawMeshTile(duDebugDraw* dd, const dtNavMesh& mesh, const dtNavMesh
 		
 		for (int j = 0; j < pd->triCount; ++j)
 		{
+			int triIndex = pd->triBase + j;
+
 			const unsigned char* t = &tile->detailTris[(pd->triBase+j)*4];
 			for (int k = 0; k < 3; ++k)
 			{

@@ -71,45 +71,12 @@ namespace Saturn {
 	Saturn::AABB NavBoundsEntity::GetBoundingBox()
 	{
 		auto& comp = GetComponent<NavigationMeshSpecificationComponent>().Extent;
-		auto& pos = GetComponent<TransformComponent>().Position;
+		auto pos = m_Scene->GetWorldSpaceTransform( this ).Position;
 
 		m_Bounds.Max = pos + comp;
 		m_Bounds.Min = pos - comp;
 
 		return m_Bounds;
-	}
-
-	glm::vec3 NavBoundsEntity::GetRandomPoint()
-	{
-		return {};
-	}
-
-	static AABB TransformAABB( const AABB& rAABB, const glm::mat4& rTransform )
-	{
-		// Get all 8 corners of the AABB
-		glm::vec4 corners[ 8 ] = {
-			rTransform * glm::vec4{ rAABB.Min.x, rAABB.Min.y, rAABB.Max.z, 1.0f },
-			rTransform * glm::vec4{ rAABB.Min.x, rAABB.Max.y, rAABB.Max.z, 1.0f },
-			rTransform * glm::vec4{ rAABB.Max.x, rAABB.Max.y, rAABB.Max.z, 1.0f },
-			rTransform * glm::vec4{ rAABB.Max.x, rAABB.Min.y, rAABB.Max.z, 1.0f },
-
-			rTransform * glm::vec4{ rAABB.Min.x, rAABB.Min.y, rAABB.Min.z, 1.0f },
-			rTransform * glm::vec4{ rAABB.Min.x, rAABB.Max.y, rAABB.Min.z, 1.0f },
-			rTransform * glm::vec4{ rAABB.Max.x, rAABB.Max.y, rAABB.Min.z, 1.0f },
-			rTransform * glm::vec4{ rAABB.Max.x, rAABB.Min.y, rAABB.Min.z, 1.0f }
-		};
-
-		glm::vec3 newMin( corners[ 0 ] );
-		glm::vec3 newMax( corners[ 0 ] );
-
-		for( int i = 0; i < 8; ++i )
-		{
-			glm::vec3 transformed = glm::vec3( corners[ i ] );
-			newMin = glm::min( newMin, transformed );
-			newMax = glm::max( newMax, transformed );
-		}
-
-		return { newMin, newMax };
 	}
 
 	void NavBoundsEntity::GatherGeometry()

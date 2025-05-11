@@ -341,7 +341,7 @@ namespace Saturn {
 
 			for( auto& rEntity : hierarchyPanel->GetSelectionContexts() )
 			{
-				glm::mat4 transform = rEntity->GetComponent<TransformComponent>().GetTransform();
+				glm::mat4 transform = GActiveScene->GetTransformRelativeToParent( rEntity );
 
 				if( rEntity->HasComponent<StaticMeshComponent>() )
 				{

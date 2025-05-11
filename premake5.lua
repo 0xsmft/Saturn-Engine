@@ -34,8 +34,7 @@ IncludeDir["PhysX"] = "Saturn/vendor/physx/include"
 IncludeDir["SharedStorage"] = "Saturn-SharedStorage/src"
 IncludeDir["zlib"] = "Saturn/vendor/zlib"
 IncludeDir["KTX_Software"] = "Saturn/vendor/KTX-Software/include"
-IncludeDir["RecastRecast"] = "Saturn/vendor/Recast/Recast/Include"
-IncludeDir["RecastDetour"] = "Saturn/vendor/Recast/Detour/Include"
+IncludeDir["Recast"] = "Saturn/vendor/Recast/RecastAndDetour/Include"
 
 group "Dependencies"
 	include "Saturn/vendor/imgui"
@@ -120,8 +119,7 @@ project "Saturn"
 		"%{IncludeDir.PhysX}/pxshared",
 		"%{IncludeDir.PhysX}/physx",
 		"%{IncludeDir.KTX_Software}",
-		"%{IncludeDir.RecastRecast}",
-		"%{IncludeDir.RecastDetour}",
+		"%{IncludeDir.Recast}",
 
 		"%{IncludeDir.SharedStorage}"
 	}
@@ -134,7 +132,6 @@ project "Saturn"
 		"Tracy",
 		"zlib",
 		"Recast",
-		"Detour",
 
 		"Saturn-SharedStorage"
 	}

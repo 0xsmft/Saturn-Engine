@@ -134,8 +134,6 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 			const UINT width = LOWORD( LParam );
 			const UINT height = HIWORD( LParam );
 
-			pThis->GetParent()->IntrnlSetSize( width, height );
-
 			if( pThis->GetParent()->GetCursorMode() == RubyCursorMode::Locked ) 
 			{
 				pThis->ConfigureClipRect();
@@ -627,7 +625,7 @@ namespace Saturn {
 		::ShowWindow( m_Handle, SW_RESTORE );
 	}
 
-	WindowType_t RubyWindowsBackend::GetNativeHandle()
+	WindowType RubyWindowsBackend::GetNativeHandle()
 	{
 		return m_Handle;
 	}
@@ -791,7 +789,7 @@ namespace Saturn {
 
 	void RubyWindowsBackend::ResizeWindow( uint32_t Width, uint32_t Height )
 	{
-		RECT newWindowRect { 0, 0, Width, Height };
+		RECT newWindowRect{ 0, 0, ( long ) Width, ( long ) Height };
 
 		::AdjustWindowRect( &newWindowRect, ChooseStyle(), false );
 

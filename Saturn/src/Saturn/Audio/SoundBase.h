@@ -38,7 +38,7 @@ namespace Saturn {
 
 	enum class SoundState
 	{
-		NoDataSource, // Default state used could be called a null state
+		NoDataSource, // Default state used, could be called a null state
 		Playing,
 		Stopped,
 		Initialising,
@@ -73,9 +73,9 @@ namespace Saturn {
 		// Actual SoundSpecification asset
 		Ref<SoundSpecification> m_Specification;
 
-		SoundState m_SoundState = SoundState::NoDataSource;
-
 		UUID m_PlayerID = 0;
+
+		SoundState m_SoundState = SoundState::NoDataSource;
 
 		bool m_Loaded = false;
 		bool m_Playing = false;

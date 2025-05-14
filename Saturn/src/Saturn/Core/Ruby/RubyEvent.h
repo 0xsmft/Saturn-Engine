@@ -41,8 +41,8 @@ namespace Saturn {
 		virtual ~RubyEvent() = default;
 
 	public:
-		bool Handled = false;
 		RubyEventType Type;
+		bool Handled = false;
 	};
 
 #define SAT_RBY_DEFINE_EVENT( Type ) \

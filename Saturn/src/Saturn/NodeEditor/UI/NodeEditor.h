@@ -80,6 +80,9 @@ namespace Saturn {
 		void MarkDirty() { m_Dirty = true; }
 		bool IsDirty() const { return m_Dirty; }
 
+		void DeleteLink( UUID id, bool skipUndoRedo = false );
+		void DeleteNode( UUID id, bool skipUndoRedo = false );
+
 	protected:
 		std::string m_CustomNameNC{};
 
@@ -93,18 +96,18 @@ namespace Saturn {
 		void CreateEditor();
 		void Close();
 		void DeleteDeadLinks( UUID nodeID );
-		void DeleteLink( UUID id );
 		void CreateNewEditorIfNeeded();
 
 	private:
+		std::function<Ref<Node>()> m_CreateNewNodeFunction;
+		std::function<void()> m_TopbarItemsFunction;
+
 		bool m_CreateNewNode = false;
 		bool m_ShowUnsavedChanges = false;
+		bool m_Dirty = false;
 
 		Ref<Pin> m_NewLinkPin = nullptr;
 		Ref<Pin> m_NewNodeLinkPin = nullptr;
-
-		std::function<Ref<Node>()> m_CreateNewNodeFunction;
-		std::function<void()> m_TopbarItemsFunction;
 
 		ImVec2 m_ViewportSize;
 
@@ -114,8 +117,6 @@ namespace Saturn {
 		util::BlueprintNodeBuilder m_Builder;
 
 		NodeEditorOutput m_OutputWindow;
-		bool m_Dirty = false;
-
 	private:
 		friend class NodeEditorCache;
 		friend class NodeCacheSettings;

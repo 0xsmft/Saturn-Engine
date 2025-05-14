@@ -83,7 +83,7 @@ namespace Saturn {
 		virtual const char* GetClipboardText() = 0;
 		virtual const wchar_t* GetClipboardTextW() = 0;
 
-		virtual WindowType_t GetNativeHandle() = 0;
+		virtual WindowType GetNativeHandle() = 0;
 
 		virtual VkResult CreateVulkanWindowSurface( VkInstance Instance, VkSurfaceKHR* pOutSurface ) = 0;
 
@@ -105,11 +105,12 @@ namespace Saturn {
 		virtual bool PendingClose() = 0;
 
 	protected:
+		RubyWindowSpecification m_WindowSpecification{};
+		RubyWindow* m_pWindow = nullptr;
+
 		bool m_ShouldClose = false;
 		bool m_BlockMouseCursor = false;
 
-		RubyWindowSpecification m_WindowSpecification{};
-		RubyWindow* m_pWindow = nullptr;
 	private:
 		friend class RubyWindow;
 	};

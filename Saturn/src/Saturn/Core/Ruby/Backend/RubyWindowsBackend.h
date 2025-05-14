@@ -50,7 +50,7 @@ namespace Saturn {
 		bool Maximized() override;
 		bool Focused() override;
 
-		WindowType_t GetNativeHandle() override;
+		WindowType GetNativeHandle() override;
 
 	public:
 		void Create() override;

@@ -178,8 +178,6 @@ namespace Saturn {
 		}
 
 	private:
-		Ref<AssetRegistry> m_Assets = nullptr;
-
 #if !defined(SAT_DIST)
 		// An Asset in our registry -> unordered_set of AssetDependency who depend on Asset
 		// Memory Dependency
@@ -195,6 +193,7 @@ namespace Saturn {
 		VFSAssetImporter m_Importer;
 #endif
 
+		Ref<AssetRegistry> m_Assets = nullptr;
 	private:
 		friend class AssetBundle;
 	};

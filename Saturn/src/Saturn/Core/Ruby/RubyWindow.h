@@ -107,7 +107,7 @@ namespace Saturn {
 		std::unordered_set<RubyMouseButton>& GetCurrentMouseButtons() { return RubyLibrary::Get().GetCurrentMouseButtons(); }
 
 	public:
-		WindowType_t GetNativeHandle();
+		WindowType GetNativeHandle();
 
 	public:
 		//////////////////////////////////////////////////////////////////////////
@@ -124,7 +124,7 @@ namespace Saturn {
 			m_pEventTarget = Target;
 		}
 
-		RubyEventTarget* GetEventTarget() { return m_pEventTarget; }
+		RubyEventTarget* GetEventTarget() const { return m_pEventTarget; }
 
 		template<typename Ty, typename... Args>
 		bool DispatchEvent( RubyEventType Type, Args&&... args )
@@ -140,9 +140,6 @@ namespace Saturn {
 	public:
 		//////////////////////////////////////////////////////////////////////////
 		// Internal Functions. Do not call.
-
-		void IntrnlSetSize( uint32_t width, uint32_t height );
-		void IntrnlSetPos( int x, int y );
 
 		void IntrnlSetKeyDown( RubyKey key, bool value )
 		{

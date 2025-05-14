@@ -32,6 +32,8 @@
 
 #define SAT_RBY_DISABLE_COPY( x ) x(const x&) = delete
 
+// Deprecated
+// Back when Ruby used to be a separate library this was needed however, there is no need for this as it will always be statically linked
 #if defined( SAT_RBY_DLL )
 #if defined( SAT_RBY_BUILD )
 #define RBY_API __declspec(dllexport)
@@ -47,9 +49,9 @@ namespace Saturn {
 #if defined(_WIN32)
 	// I did not want to include windows.h here, but we will need to in order to use the HWND handle.
 #include <Windows.h>
-	using WindowType_t = HWND;
+	using WindowType = HWND;
 #else
-	using WindowType_t = void*;
+	using WindowType = void*;
 #endif
 
 	enum class RubyGraphicsAPI
@@ -108,6 +110,8 @@ namespace Saturn {
 		RubyWindow* pParentWindow = nullptr;
 	};
 
+	// Deprecated
+	// Back when Ruby used to be a separate library this was needed however, now we can just use glm::vec2/glm::ivec2
 	template<typename N>
 	struct RubyBasicVector2
 	{

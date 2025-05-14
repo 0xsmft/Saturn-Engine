@@ -51,6 +51,7 @@ namespace SaturnBuildTool
             Includes.Add( Path.Combine( SaturnVendorDir, "physx", "include", "physx" ) );
             Includes.Add( Path.Combine( SaturnVendorDir, "tracy", "src" ) );
             Includes.Add( Path.Combine( SaturnVendorDir, "miniaudio", "src" ) );
+            Includes.Add( Path.Combine( SaturnVendorDir, "Recast", "RecastAndDetour", "Include" ) );
             Includes.Add( Path.Combine( SaturnSingletonDir, "src" ) );
 
             string saturnBinDir = SaturnRootDir;
@@ -110,6 +111,7 @@ namespace SaturnBuildTool
             Links.Add( "yaml-cpp.lib" );
             Links.Add( "Tracy.lib" );
             Links.Add( "zlib.lib" );
+            Links.Add( "Recast.lib" );
         }
     }
 }

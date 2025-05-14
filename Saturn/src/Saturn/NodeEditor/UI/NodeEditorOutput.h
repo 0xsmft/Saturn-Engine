@@ -64,8 +64,7 @@ namespace Saturn {
 		void ClearMessage( UUID messageID );
 
 	private:
-		UUID m_SelectedMessageID = 0;
-
 		std::vector<NodeEditorMessage> m_Messages;
+		UUID m_SelectedMessageID = 0;
 	};
 }

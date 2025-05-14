@@ -128,13 +128,7 @@ namespace Saturn {
 		inline void MarkDirty() { m_ValuesChanged = true; }
 
 	private:
-		Ref<Material> m_Material = nullptr;
-
-		bool m_ValuesChanged = false;
-
 		std::unordered_map< std::string, VkDescriptorImageInfo > m_TextureCache;
-
-		Ref<Material> m_PendingMaterialChange = nullptr;
 
 		std::unordered_map< std::string, Ref<Texture2D> > m_PendingTextureChanges;
 		std::unordered_map< uint32_t, std::filesystem::path > m_VPendingTextureChanges;
@@ -142,6 +136,12 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		std::unordered_map< std::string, MemoryAssetDependencyNotifier > m_TextureAssetDependencies;
 #endif
+
+		Ref<Material> m_Material = nullptr;
+		Ref<Material> m_PendingMaterialChange = nullptr;
+
+		bool m_ValuesChanged = false;
+
 	private:
 		friend class MaterialNodeEditorEvaluator;
 		friend class MaterialOutputNode;

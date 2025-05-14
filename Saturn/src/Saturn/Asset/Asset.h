@@ -194,15 +194,14 @@ namespace Saturn {
 	class Asset : public RefTarget
 	{
 	public:
+		// The relative path to this Asset
+		std::filesystem::path Path;
+		std::string Name;
+
 		AssetID ID = 0;
 		AssetType Type = AssetType::Unknown;
 		uint32_t Flags = 0;
 		uint32_t Version = SAT_CURRENT_VERSION;
-
-		// The relative path to this Asset
-		std::filesystem::path Path;
-
-		std::string Name;
 
 	public:
 		Asset() = default;
@@ -259,9 +258,9 @@ namespace Saturn {
 	{
 	public:
 		AssetID ID = 0;
-		AssetType ExpectedType = AssetType::Unknown;
-
 		Ref<Asset> LoadedAsset = nullptr;
+
+		AssetType ExpectedType = AssetType::Unknown;
 
 		Ref<Asset> operator->() { return LoadedAsset; }
 		const Ref<Asset> operator->() const { return LoadedAsset; }

@@ -292,7 +292,7 @@ namespace Saturn {
 		m_TitlebarCondition = condition;
 	}
 
-	WindowType_t RubyWindow::GetNativeHandle()
+	WindowType RubyWindow::GetNativeHandle()
 	{
 		return m_pDefaultBackend->GetNativeHandle();
 	}
@@ -312,14 +312,6 @@ namespace Saturn {
 	VkResult RubyWindow::CreateVulkanWindowSurface( VkInstance Instance, VkSurfaceKHR* pOutSurface )
 	{
 		return m_pDefaultBackend->CreateVulkanWindowSurface( Instance, pOutSurface );
-	}
-
-	void RubyWindow::IntrnlSetSize( uint32_t width, uint32_t height )
-	{
-	}
-
-	void RubyWindow::IntrnlSetPos( int x, int y )
-	{
 	}
 
 }

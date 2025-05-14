@@ -92,8 +92,8 @@ namespace Saturn {
 		}
 
 	private:
-		std::vector<RubyMonitor> m_Monitors;
 		std::unordered_set<RubyKey> m_Keys;
 		std::unordered_set<RubyMouseButton> m_CurrentMouseButtons;
+		std::vector<RubyMonitor> m_Monitors;
 	};
 }

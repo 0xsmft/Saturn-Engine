@@ -103,13 +103,13 @@ namespace Saturn {
 		glm::vec3 m_Position = glm::vec3( 0.0f );
 		glm::vec3 m_RightDirection{};
 		glm::vec3 m_Rotation{};
+		glm::vec3 m_PositionDelta{};
 
 		uint32_t m_ViewportWidth{};
 		uint32_t m_ViewportHeight{};
 
 		float m_Pitch{}, m_Yaw{};
 		float m_PitchDelta{}, m_YawDelta{};
-		glm::vec3 m_PositionDelta{};
 
 		float m_NearPlane = 0.1f;
 		float m_FarPlane = 1000.0f;

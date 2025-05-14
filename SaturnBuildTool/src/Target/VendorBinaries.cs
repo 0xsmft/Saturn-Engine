@@ -10,7 +10,8 @@ namespace SaturnBuildTool
         SPIRVCROSS,
         SHADERC,
         TRACY,
-        ZLIB
+        ZLIB,
+        RECAST, // ...and detour
     }
 
     internal class VendorBinaries
@@ -130,6 +131,16 @@ namespace SaturnBuildTool
                         binPath = GetRootBinPath(binPath, target);
 
                         binPath = Path.Combine(binPath, "zlib");
+                    }
+                    break;
+
+                case VendorProject.RECAST:
+                    {
+                        binPath = Path.Combine( binPath, "Recast", "bin" );
+
+                        binPath = GetRootBinPath( binPath, target );
+
+                        binPath = Path.Combine( binPath, "Recast" );
                     }
                     break;
             }

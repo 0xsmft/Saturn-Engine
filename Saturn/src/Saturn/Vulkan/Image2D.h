@@ -54,6 +54,15 @@ namespace Saturn {
 		Depth = DEPTH32F
 	};
 
+	// Linear tiled images:
+	// These are stored as is and can be copied directly to. But due to the linear nature they're not a good match for GPUs and format and feature support is very limited.
+	// It's not advised to use linear tiled images for anything else than copying from host to GPU if buffer copies are not an option.
+	//
+	// Optimal tiled images:
+	// These are stored in an implementation specific layout matching the capability of the hardware. They usually support more formats and features and are much faster.
+	// Optimal tiled images are stored on the device and not accessible by the host. So they can't be written directly to (like liner tiled images) and always require some sort of data copy, either from a buffer or a linear tiled image.
+	//
+	// In Short: Always use optimal tiled images for rendering.
 	enum class ImageTiling
 	{
 		Optimal = 0,
@@ -69,7 +78,7 @@ namespace Saturn {
 	class Image2D : public RefTarget
 	{
 	public:
-		Image2D( ImageFormat Format, uint32_t Width, uint32_t Height, uint32_t ArrayLevels = 1, uint32_t MSAASamples = 1, ImageTiling Tiling = ImageTiling::Optimal );
+		Image2D( ImageFormat Format, uint32_t Width, uint32_t Height, uint32_t ArrayLevels = 1, uint32_t MipCount = 1, uint32_t MSAASamples = 1, ImageTiling Tiling = ImageTiling::Optimal, bool storage = false );
 		~Image2D();
 
 		void SetDebugName( const std::string& rName ) const;
@@ -77,6 +86,7 @@ namespace Saturn {
 		void Resize( uint32_t Width, uint32_t Height );
 
 		Buffer CopyToBuffer();
+		Buffer CopyToBufferPixel( int x, int y );
 
 		VkDescriptorImageInfo& GetDescriptorInfo() { return m_DescriptorImageInfo; }
 
@@ -103,6 +113,7 @@ namespace Saturn {
 	private:
 		uint32_t m_Width = 0;
 		uint32_t m_Height = 0;
+		bool m_Storage = false;
 
 		VkSampleCountFlagBits m_MSAASamples;
 
@@ -116,7 +127,8 @@ namespace Saturn {
 		VkSampler m_Sampler = VK_NULL_HANDLE;
 		VkDeviceMemory m_Memory = VK_NULL_HANDLE;
 
-		uint32_t m_ArrayLevels;
+		uint32_t m_ArrayLevels = 0;
+		uint32_t m_MipCount = 0;
 
 		Buffer m_ImageBuffer;
 

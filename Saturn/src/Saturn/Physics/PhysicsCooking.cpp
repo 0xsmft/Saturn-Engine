@@ -58,18 +58,21 @@ namespace Saturn {
 
 	PhysicsCooking::PhysicsCooking()
 	{
-		physx::PxCookingParams Params( PhysicsFoundation::Get().m_Physics->getTolerancesScale() );
-		m_Cooking = PxCreateCooking( PX_PHYSICS_VERSION, *PhysicsFoundation::Get().m_Foundation, Params );
 	}
 
-	PhysicsCooking::~PhysicsCooking()
+	void PhysicsCooking::Init()
 	{
-		Terminate();
+		physx::PxCookingParams Params( PhysicsFoundation::Get().m_Physics->getTolerancesScale() );
+		m_Cooking = PxCreateCooking( PX_PHYSICS_VERSION, *PhysicsFoundation::Get().m_Foundation, Params );
 	}
 
 	void PhysicsCooking::Terminate()
 	{
 		PHYSX_TERMINATE_ITEM( m_Cooking );
+	}
+
+	PhysicsCooking::~PhysicsCooking()
+	{
 	}
 
 	bool PhysicsCooking::CookMeshCollider( const Ref<StaticMesh>& rMesh, ShapeType Type )
@@ -252,6 +255,13 @@ namespace Saturn {
 			return Shapes;
 
 		Ref<PhysicsMaterialAsset> materialAsset = GetPhysicsMaterial( rMesh );
+
+		// No material was found, so this means two things, one the project has no default material or (two) the mesh/project has a material asset but it can't be found.
+		if( !materialAsset )
+		{
+			materialAsset = Ref<PhysicsMaterialAsset>::Create( 1.0f, 1.0f, 1.0f );
+		}
+
 		physx::PxMaterial* pMaterial = &materialAsset->GetMaterial();
 
 		// TEMP: We might want to change the filter data.
@@ -312,6 +322,13 @@ namespace Saturn {
 			return Shapes;
 
 		Ref<PhysicsMaterialAsset> materialAsset = GetPhysicsMaterial( rMesh );
+
+		// No material was found, so this means two things, one the project has no default material or (two) the mesh/project has a material asset but it can't be found.
+		if( !materialAsset )
+		{
+			materialAsset = Ref<PhysicsMaterialAsset>::Create( 1.0f, 1.0f, 1.0f );
+		}
+
 		physx::PxMaterial* pMaterial = &materialAsset->GetMaterial();
 
 		// TEMP: We might want to change the filter data.

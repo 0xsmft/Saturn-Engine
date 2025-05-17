@@ -28,6 +28,7 @@
 
 #pragma once
 
+#include "PhysicsCooking.h"
 #include "PhysicsErrorCallbacks.h"
 
 #include "PxPhysicsAPI.h"
@@ -68,10 +69,12 @@ namespace Saturn {
 		physx::PxDefaultAllocator& GetAllocator() { return m_AllocatorCallback; }
 		const physx::PxDefaultAllocator& GetAllocator() const { return m_AllocatorCallback; }
 
+		[[nodiscard]] PhysicsCooking& GetCookingContext() { return m_CookingContext; }
+		[[nodiscard]] const PhysicsCooking& GetCookingContext() const { return m_CookingContext; }
+
 	private:
 		physx::PxFoundation*		   m_Foundation = nullptr;
 		physx::PxPhysics*			   m_Physics = nullptr;
-		physx::PxCooking*			   m_Cooking = nullptr;
 		physx::PxPvd*				   m_Pvd = nullptr;
 		physx::PxDefaultCpuDispatcher* m_Dispatcher = nullptr;
 
@@ -79,7 +82,8 @@ namespace Saturn {
 
 		PhysicsErrorCallback m_ErrorCallback;
 		PhysicsAssertCallback m_AssertCallback;
-		PhysicsContact m_ContantCallback;
+		PhysicsContact m_ContactCallback;
+		PhysicsCooking m_CookingContext;
 	private:
 		friend class PhysicsScene;
 		friend class PhysicsCooking;

@@ -198,7 +198,7 @@ namespace Saturn {
 		int i = 0;
 		for( auto format : m_ColorAttachmentsFormats )
 		{
-			Ref<Image2D> image = Ref<Image2D>::Create( format, m_Specification.Width, m_Specification.Height, m_Specification.ArrayLevels, m_Specification.MSAASamples );
+			Ref<Image2D> image = Ref<Image2D>::Create( format, m_Specification.Width, m_Specification.Height, m_Specification.ArrayLevels, 1, m_Specification.MSAASamples );
 
 			std::string imageDebugName = std::format( "Color Attachment for FB/{0}@({1})", m_Specification.RenderPass->GetName(), i );
 			SetDebugUtilsObjectName( imageDebugName.c_str(), (uint64_t)image->GetImage(), VK_OBJECT_TYPE_IMAGE );
@@ -219,7 +219,7 @@ namespace Saturn {
 		// Depth
 		if( !m_DepthAttachmentResource && m_Specification.CreateDepth ) 
 		{
-			m_DepthAttachmentResource = Ref<Image2D>::Create( m_DepthFormat, m_Specification.Width, m_Specification.Height, m_Specification.ArrayLevels, m_Specification.MSAASamples );
+			m_DepthAttachmentResource = Ref<Image2D>::Create( m_DepthFormat, m_Specification.Width, m_Specification.Height, m_Specification.ArrayLevels, 1, m_Specification.MSAASamples );
 
 			std::string imageDebugName = std::format( "Depth Attachment for FB/{0}", m_Specification.RenderPass->GetName() );
 			SetDebugUtilsObjectName( imageDebugName.c_str(), ( uint64_t ) m_DepthAttachmentResource->GetImage(), VK_OBJECT_TYPE_IMAGE );

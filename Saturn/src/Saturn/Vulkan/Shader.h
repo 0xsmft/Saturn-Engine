@@ -69,8 +69,8 @@ namespace Saturn {
 	{
 		std::string Name;
 		uint32_t Binding;
-		size_t Size = 0;
 		ShaderType Location = ShaderType::None;
+		size_t Size = 0;
 
 		bool operator==( const ShaderUniformBuffer& rOther ) 
 		{
@@ -112,8 +112,8 @@ namespace Saturn {
 	{
 		std::string Name;
 		uint32_t Binding;
-		size_t Size = 0;
 		ShaderType Location = ShaderType::None;
+		size_t Size = 0;
 
 		bool operator==( const ShaderStorageBuffer& rOther )
 		{

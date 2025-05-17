@@ -64,6 +64,15 @@ SAT_DECODE_VERSION( sourceVersion, major, minor, patch ); \
 string = std::format( "{0}.{1}.{2}", major, minor, patch ); \
 }
 
+// Key
+// A = Alpha ( BETA | ALPHA | PATCH )
+// X = Release ( MAJOR | MINOR | PATCH )
+constexpr auto SAT_VERSION_A_0_1_0 = SAT_MAKE_VERSION( 0, 1, 0 );
+constexpr auto SAT_VERSION_A_0_1_1 = SAT_MAKE_VERSION( 0, 1, 1 );
+constexpr auto SAT_VERSION_A_0_1_2 = SAT_MAKE_VERSION( 0, 1, 2 );
+constexpr auto SAT_VERSION_A_0_1_3 = SAT_MAKE_VERSION( 0, 1, 3 );
+constexpr auto SAT_VERSION_A_0_1_4 = SAT_MAKE_VERSION( 0, 1, 4 );
+
 namespace Saturn::Core {
 
 	inline void BreakDebug()

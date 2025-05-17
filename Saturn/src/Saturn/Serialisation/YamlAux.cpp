@@ -454,7 +454,7 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 
 			SAT_CORE_INFO( "Deserialised entity with ID: ENTITY/{0}, with name : {1}", entityID, Tag );
 
-			Ref<Entity> DeserialisedEntity = nullptr;
+			Ref<Entity> DeserialisedEntity;
 
 			auto srcc = entity[ "ScriptComponent" ];
 			if( srcc )
@@ -571,9 +571,7 @@ rProperty.SetProperty( DeserialisedEntity.Get(), value ); \
 			}
 			else
 			{
-				DeserialisedEntity = Ref<Entity>::Create( scene.Get() );
-				DeserialisedEntity->SetName( Tag );
-				DeserialisedEntity->GetComponent<IdComponent>().ID = entityID;
+				DeserialisedEntity = scene->CreateEntityWithID( entityID, Tag );
 			}
 
 			auto tc = entity[ "TransformComponent" ];

@@ -266,7 +266,7 @@ namespace Saturn {
 		vkCmdBeginRenderPass( m_CommandBuffer, &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
 	}
 
-	void Pass::EndPass()
+	void Pass::EndPass() const
 	{
 		vkCmdEndRenderPass( m_CommandBuffer );
 	}

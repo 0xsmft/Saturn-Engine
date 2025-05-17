@@ -67,10 +67,10 @@ namespace Saturn {
 		void CreateRedirectedStream( const std::wstring& rWorkingDir );
 
 	private:
+		std::wstring m_CommandLine;
+
 		ProcessHandle m_Handle = nullptr;
 		ProcessCreateFlags m_Flags = ProcessCreateFlags::Normal;
-
-		std::wstring m_CommandLine;
 
 		int m_ExitCode = 1;
 	

@@ -42,7 +42,7 @@ namespace Saturn {
 		m_MouseUpMovement = 0.0f;
 
 		AddComponent<StaticMeshComponent>();
-		AddComponent<RigidbodyComponent>().LockFlags = RigidbodyLockFlags::RotationX | RigidbodyLockFlags::RotationY | RigidbodyLockFlags::RotationZ;
+		AddComponent<RigidbodyComponent>().LockFlags = RigidbodyLockFlags::RigidbodyLock_RotationX | RigidbodyLockFlags::RigidbodyLock_RotationY | RigidbodyLockFlags::RigidbodyLock_RotationZ;
 		AddComponent<CapsuleColliderComponent>();
 		AddComponent<AudioListenerComponent>();
 	}

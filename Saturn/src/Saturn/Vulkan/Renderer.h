@@ -92,7 +92,7 @@ namespace Saturn {
 		uint32_t GetCurrentFrame() const { return m_FrameCount; }
 
 		std::pair< float, float > GetFrameTimings() { return std::make_pair( m_BeginFrameTime, m_EndFrameTime ); }
-		float GetQueuePresentTime() { return m_QueuePresentTime; }
+		float GetQueuePresentTime() const { return m_QueuePresentTime; }
 
 		void SubmitTerminateResource( std::function<void()>&& rrFunction );
 
@@ -115,7 +115,7 @@ namespace Saturn {
 #endif
 
 	public:
-		VkCommandBuffer ActiveCommandBuffer() { return m_CommandBuffer; };
+		VkCommandBuffer ActiveCommandBuffer() const { return m_CommandBuffer; };
 
 	private:
 		void Init();
@@ -135,14 +135,13 @@ namespace Saturn {
 
 		VkCommandBuffer m_CommandBuffer = nullptr;
 
-		Timer m_BeginFrameTimer;
 		float m_BeginFrameTime = 0.0f;
-
-		Timer m_EndFrameTimer;
 		float m_EndFrameTime = 0.0f;
-
-		Timer m_QueuePresentTimer;
 		float m_QueuePresentTime = 0.0f;
+
+		Timer m_BeginFrameTimer;
+		Timer m_EndFrameTimer;
+		Timer m_QueuePresentTimer;
 		
 		Ref<Texture2D> m_PinkTexture;
 		Ref<TextureCube> m_PinkTextureCube;

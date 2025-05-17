@@ -129,44 +129,45 @@ namespace Saturn {
 		static const char* GetCurrentPlatformBinaryName();
 
 	protected:
-
 		bool OnEvent( RubyEvent& rEvent ) override;
 		bool OnWindowResize( RubyWindowResizeEvent& e );
 
 		void RenderImGui();
 
-		// The path where the default content is. Path is absolute.
-		std::filesystem::path RootContentPath;
-
 	private:
 		void InitWindow();
 		void InitGraphics();
 
+	private:
+		// Concurrency (threading)
+		std::mutex m_Mutex;
+		std::condition_variable m_BlockCV;
+
+	protected:
+		// The path where the default content is. Path is absolute.
+		std::filesystem::path RootContentPath;
+
+	private:
+		std::vector<Layer*> m_Layers;
+		std::vector<std::function<void()>> m_MainThreadQueue;
+
+		ApplicationSpecification m_Specification;
+		
+		// TODO: Change all of these to refs, I really don't like this.
+		ImGuiLayer* m_ImGuiLayer = nullptr;
+		VulkanContext* m_VulkanContext = nullptr;
+
 	protected:
 		SceneRenderer* m_SceneRenderer = nullptr;
 		RubyWindow* m_Window = nullptr;
-
 	private:
 		bool m_Running = true;
-		
-		ImGuiLayer* m_ImGuiLayer = nullptr;
 
-		Timestep m_Timestep;
 		float m_LastFrameTime = 0.0f;
-		
-		ApplicationSpecification m_Specification;
-
-		std::vector<Layer*> m_Layers;
-
-		// TODO: Change all of these to refs, I really don't like this.
-		VulkanContext* m_VulkanContext = nullptr;
+		Timestep m_Timestep;
 
 		// Concurrency (threading)
 		std::thread::id m_MainThreadID;
-		std::condition_variable m_BlockCV;
-		std::mutex m_Mutex;
-
-		std::vector<std::function<void()>> m_MainThreadQueue;
 	};
 
 	Application* CreateApplication( int argc, char** argv );

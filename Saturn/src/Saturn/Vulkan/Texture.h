@@ -134,6 +134,7 @@ namespace Saturn {
 		bool m_IsRendererTexture = false;
 		bool m_ForceTerminate = false;
 		bool m_MipsCreated = false;
+		bool m_Storage = false;
 		
 		void* m_pData = nullptr;
 
@@ -143,8 +144,6 @@ namespace Saturn {
 
 		int m_Width = 0;
 		int m_Height = 0;
-
-		bool m_Storage = false;
 	};
 	
 	class Texture2D : public Texture

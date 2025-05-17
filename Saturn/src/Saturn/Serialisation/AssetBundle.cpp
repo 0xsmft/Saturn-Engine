@@ -224,7 +224,7 @@ namespace Saturn {
 			// Compression, allow for files under 500KB (0.5MB) to not be compressed.
 			if( fileSize > 500 * 1024 && path.extension() != ".vfsn" )
 			{
-				SAT_CORE_WARN( "Compressing file: {0} because file is {1} KB", path.string(), fileSize / 1000 );
+				SAT_CORE_WARN( "Compressing file: {0} because file is {1} KB", path.string(), fileSize / 1024 );
 				
 				jobProgress->SetStatus( std::format( "Compressing file: {0}", path.string() ) );
 
@@ -247,7 +247,7 @@ namespace Saturn {
 					RawSerialisation::WriteSaturnBuffer( fileBuffer, fout );
 				}
 
-				SAT_CORE_INFO( "Compressed file: {0} new file size is {1} KB", path.string(), compressedSize / 1000 );
+				SAT_CORE_INFO( "Compressed file: {0} new file size is {1} KB", path.string(), compressedSize / 1024 );
 
 				Buffer compressedData = Buffer::Copy( TemporaryBuffer.Data, compressedSize );
 				dfh.CompressedSize = compressedSize;

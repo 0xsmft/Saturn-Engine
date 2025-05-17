@@ -82,7 +82,7 @@ namespace Saturn {
 		{
 			if( Auxiliary::ImageButton( m_ForwardIcon, { 24, 24 } ) )
 			{
-				m_CurrentPath /= std::filesystem::relative( m_FirstFolder, m_RootPath );
+				m_CurrentPath /= std::filesystem::relative( m_FirstFolder, m_CurrentPath );
 
 				ClearSelection();
 				UpdateFiles( true );

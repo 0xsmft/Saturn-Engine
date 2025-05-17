@@ -52,11 +52,11 @@ namespace Saturn {
 
 	enum RigidbodyLockFlags : uint32_t
 	{
-		PositionX = BIT( 0 ),
-		PositionY = BIT( 1 ),
-		PositionZ = BIT( 2 ),
-		RotationX = BIT( 3 ),
-		RotationY = BIT( 4 ),
-		RotationZ = BIT( 5 )
+		RigidbodyLock_PositionX = BIT( 0 ),
+		RigidbodyLock_PositionY = BIT( 1 ),
+		RigidbodyLock_PositionZ = BIT( 2 ),
+		RigidbodyLock_RotationX = BIT( 3 ),
+		RigidbodyLock_RotationY = BIT( 4 ),
+		RigidbodyLock_RotationZ = BIT( 5 )
 	};
 }

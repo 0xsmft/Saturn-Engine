@@ -40,6 +40,8 @@
 
 namespace Saturn {
 
+	// A face in a mesh
+	// Defines three vertices which form a triangle.
 	struct Index
 	{
 		uint32_t V1, V2, V3;
@@ -52,7 +54,7 @@ namespace Saturn {
 		IndexBuffer( void* pData, size_t Size );
 		~IndexBuffer();
 
-		size_t GetSize() { return m_Size; }
+		size_t GetSize() const { return m_Size; }
 
 		void Bind( VkCommandBuffer CommandBuffer );
 		void Draw( VkCommandBuffer CommandBuffer );

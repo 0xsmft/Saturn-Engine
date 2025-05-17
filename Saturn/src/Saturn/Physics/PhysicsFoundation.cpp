@@ -115,11 +115,11 @@ namespace Saturn {
 #else
 		m_Physics = PxCreatePhysics( PX_PHYSICS_VERSION, *m_Foundation, Scale, true );
 #endif
-		m_Cooking = PxCreateCooking( PX_PHYSICS_VERSION, *m_Foundation, Scale );
-
 		m_Dispatcher = physx::PxDefaultCpuDispatcherCreate( std::thread::hardware_concurrency() / 2 );
 
 		physx::PxSetAssertHandler( m_AssertCallback );
+
+		m_CookingContext.Init();
 	}
 
 	void PhysicsFoundation::Terminate()
@@ -128,8 +128,9 @@ namespace Saturn {
 		m_Pvd->disconnect();
 #endif
 
+		m_CookingContext.Terminate();
+
 		PHYSX_TERMINATE_ITEM( m_Dispatcher );
-		PHYSX_TERMINATE_ITEM( m_Cooking );
 		PHYSX_TERMINATE_ITEM( m_Physics );
 		PHYSX_TERMINATE_ITEM( m_Pvd );
 		PHYSX_TERMINATE_ITEM( m_Foundation );

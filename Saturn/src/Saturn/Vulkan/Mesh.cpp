@@ -189,6 +189,7 @@ namespace Saturn {
 			submesh.BaseIndex = m_IndicesCount;
 			submesh.MaterialIndex = mesh->mMaterialIndex;
 			submesh.VertexCount = mesh->mNumVertices;
+			// Multiply by three because we don't care about the faces we want the number actual indices
 			submesh.IndexCount = mesh->mNumFaces * 3;
 			submesh.MeshName = mesh->mName.C_Str();
 
@@ -197,6 +198,7 @@ namespace Saturn {
 			rAABB.Max = { -FLT_MAX, -FLT_MAX, -FLT_MAX };
 
 			m_VertexCount += mesh->mNumVertices;
+			// Add to the entire mesh index count
 			m_IndicesCount += submesh.IndexCount;
 
 			SAT_CORE_ASSERT( mesh->HasPositions(), "Meshes require positions." );
@@ -232,6 +234,8 @@ namespace Saturn {
 			}
 
 			// Indices
+			// Reserve for number of faces in the current submesh
+			// We don't need to multiply by three because we are storing faces
 			m_Indices.reserve( mesh->mNumFaces );
 
 			for( size_t i = 0; i < mesh->mNumFaces; i++ )

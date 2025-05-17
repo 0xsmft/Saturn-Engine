@@ -67,10 +67,12 @@ namespace Saturn {
 		uint32_t BaseVertex;
 		uint32_t BaseIndex;
 		uint32_t MaterialIndex;
-		uint32_t IndexCount;
+		uint32_t IndexCount; // NOT face count, for face count divide by 3 (number of ints)
 		uint32_t VertexCount;
 
+		// Mesh-Space
 		glm::mat4 Transform;
+		// Mesh-Space
 		AABB BoundingBox;
 
 		std::string NodeName, MeshName;
@@ -174,6 +176,12 @@ namespace Saturn {
 		const Ref<MaterialRegistry>& GetMaterialRegistry() const { return m_MaterialRegistry; }
 
 		AABB& GetBoundingBox() { return m_BoundingBox; }
+
+		// Return the number of indices that make up a single face
+		uint32_t GetIndexCount() const { return m_IndicesCount; }
+
+		// Return the number of faces
+		size_t GetFaceCount() const { return m_Indices.size(); }
 
 	public:
 		// Import (Internal functions)

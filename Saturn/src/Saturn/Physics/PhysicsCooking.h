@@ -50,15 +50,17 @@ namespace Saturn {
 		Buffer Stream;
 	};
 
+	// Not RAII Safe as this needs to be tied with the PxFoundation's lifetime.
 	class PhysicsCooking
 	{
-	public:
-		SAT_SINGLETON_LAZY( PhysicsCooking )
-
 	public:
 		PhysicsCooking();
 		~PhysicsCooking();
 
+		void Init();
+		void Terminate();
+
+	public:
 		// Cook mesh collider to a triangle mesh, if the collider cache does not exist we will create it if it does exist we will not override it and we will not cook the mesh.
 		// For Static meshes only!
 		bool CookMeshCollider( const Ref<StaticMesh>& rMesh, ShapeType Type );
@@ -68,7 +70,6 @@ namespace Saturn {
 		std::vector<physx::PxShape*> CreateConvexMesh( const Ref<StaticMesh>& rMesh, physx::PxRigidActor& rActor, glm::vec3 Scale );
 
 	private:
-		void Terminate();
 		void ClearCache();
 		void WriteCache( const Ref<StaticMesh>& rMesh, ShapeType Type );
 		bool LoadColliderFile( const std::filesystem::path& rPath );

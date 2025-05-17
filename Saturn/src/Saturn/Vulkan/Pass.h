@@ -34,7 +34,7 @@
 #include "Image2D.h"
 
 namespace Saturn {
-	
+
 	struct PassSpecification
 	{
 		// Render Pass attachments
@@ -43,33 +43,32 @@ namespace Saturn {
 		std::vector< ImageFormat > Attachments = {};
 
 		std::string Name = "";
-		
+
 		// If this is true then this Render Pass will output to the Swapchain Framebuffer.
 		bool IsSwapchainTarget = false;
-
-		VkSampleCountFlagBits MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-
 		bool LoadColor = false;
 		bool LoadDepth = false;
+
+		VkSampleCountFlagBits MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 	};
 
 	class Pass : public RefTarget
 	{
 	public:
-		 Pass() { }
-		 Pass( const PassSpecification& rPassSpec );
+		Pass() = default;
+		Pass( const PassSpecification& rPassSpec );
 		~Pass();
-		
+
 		void Terminate();
 		void Recreate();
 
 		void BeginPass( VkCommandBuffer CommandBuffer, VkFramebuffer Framebuffer, VkExtent2D Extent );
-		void EndPass();
-		
-		operator VkRenderPass() { return m_Pass; }
-		VkRenderPass GetVulkanPass() { return m_Pass; }
+		void EndPass() const;
 
-		size_t GetColorAttachmetSize() { return m_ColorAttachments.size(); }
+		operator VkRenderPass() { return m_Pass; }
+		VkRenderPass GetVulkanPass() const { return m_Pass; }
+
+		size_t GetColorAttachmetSize() const { return m_ColorAttachments.size(); }
 
 		std::string& GetName() { return m_PassSpec.Name; }
 		const std::string& GetName() const { return m_PassSpec.Name; }

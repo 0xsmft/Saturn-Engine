@@ -28,60 +28,15 @@
 
 #pragma once
 
-#include "Saturn/Core/AABB/AABB.h"
-
-#include "RecastInputGeometry.h"
-#include "Visualisation/RecastDebugVisualisation.h"
-
-#include <Recast/Recast.h>
 #include <Detour/DetourNavMesh.h>
+#include <filesystem>
 
 namespace Saturn {
 
-	class RecastContext : public rcContext
+	class RecastNavigationMeshCache
 	{
 	public:
-		RecastContext();
-		~RecastContext() = default;
-
-	protected:
-		void doLog( const rcLogCategory category, const char* pMessage, const int len ) override;
-		
-		void doResetTimers() override;
-		void doStartTimer( const rcTimerLabel label ) override;
-		void doStopTimer( const rcTimerLabel label ) override;
-		int doGetAccumulatedTime( const rcTimerLabel label ) const override;
-
-	private:
-		std::map<rcTimerLabel, Timer> m_Timers;
+		static void SaveNavMesh( const std::filesystem::path& rPath, const dtNavMesh* pMesh );
+		static dtNavMesh* ReadNavMeshCache( const std::filesystem::path& rPath );
 	};
-
-	class RecastNavigationMeshBuilder
-	{
-	public:
-		RecastNavigationMeshBuilder();
-		~RecastNavigationMeshBuilder();
-
-		void Init();
-		void Build( const RecastInputGeometry& rInputGeometry );
-
-		void DebugDraw();
-
-	private:
-		unsigned char* NavBuildTile( int x, int y, const RecastInputGeometry& rInputGeometry, int& rOutDataSize );
-
-	private:
-		dtNavMesh* m_pNavMesh = nullptr;
-		rcPolyMesh* m_PolyMesh = nullptr;
-		rcPolyMeshDetail* m_PolyMeshDetail = nullptr;
-
-		unsigned char* m_AreaFlags = nullptr;
-
-		rcConfig m_Config{};
-		RecastContext m_Context;
-		RecastDebugVisualisation m_DebugDrawer{};
-
-		glm::vec3 m_LastTileMin{}, m_LastTileMax{};
-	};
-
 }

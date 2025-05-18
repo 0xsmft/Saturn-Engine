@@ -29,7 +29,9 @@
 #pragma once
 
 #include "Saturn/Scene/Entity.h"
-#include "RecastNavigationMesh.h"
+#include "RecastNavigationMeshBuilder.h"
+
+class dtNavMeshQuery;
 
 namespace Saturn {
 
@@ -37,7 +39,13 @@ namespace Saturn {
 	{
 	public:
 		NavBoundsEntity();
-		~NavBoundsEntity() override;
+		NavBoundsEntity( const std::string& rName, UUID id );
+		~NavBoundsEntity();
+
+		virtual NavBoundsEntity* Clone() override
+		{
+			return new NavBoundsEntity( GetName(), GetUUID() );
+		}
 
 		void BeginPlay() override;
 		void OnUpdate( Saturn::Timestep ts ) override;
@@ -46,12 +54,14 @@ namespace Saturn {
 		void SetAABB( const glm::vec3& rCenter, const glm::vec3& rExtent );
 		AABB GetBoundingBox();
 
-		void GatherGeometry();
+		void GatherGeometryAndBuild();
 
 		RecastNavigationMeshBuilder& GetBuilder() { return m_Builder; }
 
 	private:
-		AABB m_Bounds;
+		// The max bounds that the nav mesh can possibly extend to.
+		// The actual bounding volume of the Recast nav mesh may be smaller because our max bounds may extend beyond any geometry.
+		AABB m_MaxBounds;
 		RecastNavigationMeshBuilder m_Builder;
 	};
 	

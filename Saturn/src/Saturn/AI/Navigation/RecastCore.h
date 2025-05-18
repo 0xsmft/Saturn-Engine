@@ -45,7 +45,7 @@ inline void _rcCheckResult( bool Result )
 
 inline void _dtCheckResult( unsigned int Result ) 
 {
-	if( Result & DT_SUCCESS )
+	if( dtStatusSucceed( Result ) )
 		return;
 
 	std::string errorCode;

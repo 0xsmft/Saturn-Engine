@@ -28,12 +28,20 @@
 
 #pragma once
 
-#include "RecastChunkyTriMesh.h"
-
 #include "Saturn/Vulkan/Mesh.h"
 #include "Saturn/Core/Ref.h"
 
+struct rcChunkyTriMesh;
+
 namespace Saturn {
+
+	struct RecastInputGeometryExpData
+	{
+		std::vector<float> VertexBuffer;
+		std::vector<int> IndexBuffer;
+		
+		AABB Bounds;
+	};
 
 	class RecastInputGeometry : public RefTarget
 	{
@@ -42,9 +50,11 @@ namespace Saturn {
 		~RecastInputGeometry() = default;
 
 		void BeginImport();
-		void Add( Ref<StaticMesh> mesh, const glm::mat4& rModel );
-//		void Add( Ref<DynamicMesh> mesh );
-		void EndImport();
+		void AddVert( const glm::vec3& rVertex );
+		void AddIndex( const Index& rVertex );
+		void AddSingle( float x );
+		void AddSingleIndex( int i );
+		void EndImport( const AABB& rAABB );
 
 		AABB GetAABB() const { return AABB( m_MinBounds, m_MaxBounds ); }
 		const glm::vec3& GetMinBounds() const { return m_MinBounds; }
@@ -52,21 +62,27 @@ namespace Saturn {
 
 		rcChunkyTriMesh* GetChunkyTriMesh() const { return m_pChunkyTriMesh; }
 
-		const std::vector<float>& GetVertexBuffer() const { return m_VertexBuffer; }
-		const std::vector<int>& GetIndexBuffer() const { return m_IndexBuffer; }
+		const std::vector<float>& GetVertexBuffer() const { return m_ExportData.VertexBuffer; }
+		const std::vector<int>& GetIndexBuffer() const { return m_ExportData.IndexBuffer; }
 
-		uint32_t GetFaceCount() const { return m_FaceCount; }
+		RecastInputGeometryExpData& GetExportData() { return m_ExportData; }
 
 	private:
-		std::vector<float> m_VertexBuffer;
-		std::vector<int> m_IndexBuffer;
+		RecastInputGeometryExpData m_ExportData;
 
 		glm::vec3 m_MinBounds{};
 		glm::vec3 m_MaxBounds{};
 
-		uint32_t m_FaceCount = 0;
-
 	private:
 		rcChunkyTriMesh* m_pChunkyTriMesh = nullptr;
+	};
+
+	class PhysXSceneExporter
+	{
+	public:
+		PhysXSceneExporter();
+		~PhysXSceneExporter();
+
+		void Export( RecastInputGeometry& rInputGeom, AABB& rNavMeshBounds );
 	};
 }

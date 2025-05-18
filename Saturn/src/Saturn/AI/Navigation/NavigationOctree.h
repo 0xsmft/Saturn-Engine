@@ -26,81 +26,94 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "RecastInputGeometry.h"
+#pragma once
 
-#include <Recast/RecastChunkyTriMesh.h>
+#include "Saturn/Core/AABB/AABB.h"
 
-#include "Saturn/Scene/Scene.h"
-#include "Saturn/Physics/PhysicsScene.h"
-
-#include <Recast/Recast.h>
+#include <memory>
+#include <vector>
 
 namespace Saturn {
 
-	void RecastInputGeometry::BeginImport()
+	// Helper class to divide a world into 8 octants
+	// Which each represent an AABB
+	template<typename Ty>
+	class NavigationOctree
 	{
-		if( m_pChunkyTriMesh )
+	public:
+		constexpr static int MAX_OBJECTS = 8;
+		constexpr static int MAX_DEPTH = 5;
+
+	public:
+		AABB MaxBounds;
+		std::vector<Ty> Objects;
+		std::array<std::unique_ptr<NavigationOctree>, 8> Children;
+		int Depth = 0;
+
+	public:
+		NavigationOctree( const AABB& rBounds, int depth = 0 )
+			: MaxBounds( rBounds ), Depth( depth )
 		{
-			delete m_pChunkyTriMesh;
-			m_pChunkyTriMesh = nullptr;
 		}
 
-		m_pChunkyTriMesh = new rcChunkyTriMesh();
-	}
+		void Insert( const glm::vec3& rPoint, const Ty& rData ) 
+		{
+			if( !MaxBounds.Contains( rPoint ) ) return;
 
-	void RecastInputGeometry::AddVert( const glm::vec3& rVertex )
-	{
-		m_ExportData.VertexBuffer.push_back( rVertex.x );
-		m_ExportData.VertexBuffer.push_back( rVertex.y );
-		m_ExportData.VertexBuffer.push_back( rVertex.z );
-	}
+			if( Objects.size() < MAX_OBJECTS || Depth >= MAX_DEPTH )
+			{
+				Objects.emplace_back( rData );
+				return;
+			}
 
-	void RecastInputGeometry::AddIndex( const Index& rVertex )
-	{
-		m_ExportData.IndexBuffer.push_back( rVertex.V1 );
-		m_ExportData.IndexBuffer.push_back( rVertex.V2 );
-		m_ExportData.IndexBuffer.push_back( rVertex.V3 );
-	}
+			if( !Children[ 0 ] ) Sub();
 
-	void RecastInputGeometry::AddSingle( float x )
-	{
-		m_ExportData.VertexBuffer.push_back( x );
-	}
+			for( const auto& rChild : Children )
+			{
+				rChild->Insert( rPoint, rData );
+			}
+		}
 
-	void RecastInputGeometry::AddSingleIndex( int i )
-	{
-		m_ExportData.IndexBuffer.push_back( i );
-	}
+		void Sub() 
+		{
+			glm::vec3 center = MaxBounds.Center();
+			glm::vec3 min = MaxBounds.Min;
+			glm::vec3 max = MaxBounds.Max;
 
-	void RecastInputGeometry::EndImport( const AABB& rAABB )
-	{
-//		float min[ 3 ], max[ 3 ];
-//		rcCalcBounds( m_ExportData.VertexBuffer.data(), m_ExportData.VertexBuffer.size() / 3, min, max );
+			for( int i = 0; i < 8; i++ )
+			{
+				glm::vec3 newMin = { ( i & 1 ) ? center.x : min.x, ( i & 2 ) ? center.x : min.x, ( i & 4 ) ? center.x : min.x };
+				glm::vec3 newMax = { ( i & 1 ) ? max.x : center.x, ( i & 2 ) ? max.x : center.x, ( i & 4 ) ? max.x : center.x };
 
-//		m_MinBounds = glm::vec3( min[ 0 ], min[ 1 ], min[ 2 ] );
-//		m_MaxBounds = glm::vec3( max[ 0 ], max[ 1 ], max[ 2 ] );
+				Children[ i ] = std::make_unique<NavigationOctree>( AABB( newMin, newMax ), Depth + 1 );
+			}
+		}
 
-		m_MinBounds = rAABB.Min;
-		m_MaxBounds = rAABB.Max;
+		//template<typename U = Ty>
+		//typename std::enable_if<std::is_base_of<Entity, typename std::remove_pointer<typename U::value_type>::value>::value>::type;
+		void Query( const AABB& rRange, std::vector<Ty>& rOutResult ) 
+		{
+			if( !MaxBounds.Intersects( rRange ) );
 
-		rcCreateChunkyTriMesh( m_ExportData.VertexBuffer.data(), m_ExportData.IndexBuffer.data(), m_ExportData.IndexBuffer.size() / 3, 256, m_pChunkyTriMesh );
-	}
+			for( auto& rObject : Objects )
+			{
+				// Test
+				if( MaxBounds.Contains( rObject->GetComponent<TransformComponent>().Position ) )
+				{
+					rOutResult.push_back( rObject );
+				}
+			}
 
-	//////////////////////////////////////////////////////////////////////////
-	// PhysXSceneExporter
+			if( Children[ 0 ] )
+			{
+				for( const auto& rChild : Children )
+				{
+					rChild->Query( rRange, rOutResult );
+				}
+			}
+		}
 
-	PhysXSceneExporter::PhysXSceneExporter()
-	{
-	}
-
-	PhysXSceneExporter::~PhysXSceneExporter()
-	{
-	}
-
-	void PhysXSceneExporter::Export( RecastInputGeometry& rInputGeom, AABB& rNavMeshBounds )
-	{
-		GActiveScene->GetPhysicsScene()->ExportRc( rInputGeom.GetExportData(), rNavMeshBounds );
-	}
-
+		// TOOD: Add different function for non-entities or add a spacial function for all.
+	};
+	
 }

@@ -29,21 +29,38 @@
 #include "sppch.h"
 #include "NavBoundsEntity.h"
 
-#include "RecastNavigationMesh.h"
+#include "RecastNavigationMeshBuilder.h"
 #include "RecastInputGeometry.h"
+#include "RecastNavigationMeshCache.h"
+#include "NavigationOctree.h"
+
+#include "Detour/DetourNavMeshQuery.h"
 
 #include "Saturn/Vulkan/VertexBuffer.h"
 #include "Saturn/Vulkan/IndexBuffer.h"
-#include "Saturn/Core/Octree.h"
 
 namespace Saturn {
 
 	NavBoundsEntity::NavBoundsEntity()
 		: Entity()
 	{
-		auto& comp = AddComponent<NavigationMeshSpecificationComponent>().Extent = { 1000.0f, 10000.0f, 1000.0f };
+		AddComponent<NavigationMeshSpecificationComponent>();
 
-		SetAABB( GetComponent<TransformComponent>().Position, comp );
+		SetAABB( GetComponent<TransformComponent>().Position, glm::vec3( 10.0f ) );
+		GetComponent<TransformComponent>().Scale = glm::vec3( 10.0f );
+
+		std::filesystem::path path = Project::GetActiveProject()->GetFullCachePath();
+		path /= std::format( "NavMesh{0}.{1}.srnc", m_Scene->Name, ( uint64_t ) GetUUID() );
+		m_Builder.TryLoadFromCache( path );
+	}
+
+	NavBoundsEntity::NavBoundsEntity( const std::string& rName, UUID id )
+		: Entity( rName, id )
+	{
+		AddComponent<NavigationMeshSpecificationComponent>();
+
+		SetAABB( GetComponent<TransformComponent>().Position, glm::vec3( 10.0f ) );
+		GetComponent<TransformComponent>().Scale = glm::vec3( 10.0f );
 	}
 
 	NavBoundsEntity::~NavBoundsEntity()
@@ -64,52 +81,46 @@ namespace Saturn {
 
 	void NavBoundsEntity::SetAABB( const glm::vec3& rCenter, const glm::vec3& rExtent )
 	{
-		m_Bounds.Max = rCenter + rExtent;
-		m_Bounds.Min = rCenter - rExtent;
+		m_MaxBounds.Max = rCenter + rExtent;
+		m_MaxBounds.Min = rCenter - rExtent;
 	}
 
 	Saturn::AABB NavBoundsEntity::GetBoundingBox()
 	{
-		auto& comp = GetComponent<NavigationMeshSpecificationComponent>().Extent;
-		auto pos = m_Scene->GetWorldSpaceTransform( this ).Position;
+		TransformComponent tc = m_Scene->GetWorldSpaceTransform( this );
 
-		m_Bounds.Max = pos + comp;
-		m_Bounds.Min = pos - comp;
+		auto& comp = tc.Scale;
+		auto pos = tc.Position;
 
-		return m_Bounds;
+		m_MaxBounds.Max = pos + comp;
+		m_MaxBounds.Min = pos - comp;
+
+		return m_MaxBounds;
 	}
 
-	void NavBoundsEntity::GatherGeometry()
+	void NavBoundsEntity::GatherGeometryAndBuild()
 	{
-		std::vector<float> rOutVertices;
-		std::vector<int> rOutIndices;
-
 		GetBoundingBox();
 
-#if SAT_X31_OCTREE
-		Octree<Ref<Entity>> navOctree( m_Bounds );
+		m_Scene->PrepareForNavMeshBuilding();
 
+		RecastInputGeometry input;
+		input.BeginImport();
+		input.GetExportData().Bounds = m_MaxBounds;
+
+		AABB navMeshBounds;
+		navMeshBounds.Min = { FLT_MAX, FLT_MAX, FLT_MAX };
+		navMeshBounds.Max = { -FLT_MAX, -FLT_MAX, -FLT_MAX };
+
+#if defined(SAT_X31_VERT_INTERSECT_X21)
 		for( auto& rEntity : m_Scene->GetAllEntitiesWith<StaticMeshComponent>() )
 		{
-			auto& tc = rEntity->GetComponent<TransformComponent>();
 			auto& mesh = rEntity->GetComponent<StaticMeshComponent>();
 
 			if( mesh.Mesh )
 			{
-				navOctree.Insert( tc.Position, rEntity );
-			}
-		}
-
-		std::vector<Ref<Entity>> result;
-		navOctree.Query( m_Bounds, result );
-#elif SAT_X31_VERT_INTERSECT
-		for( auto& rEntity : m_Scene->GetAllEntitiesWith<StaticMeshComponent>() )
-		{
-			auto& mesh = rEntity->GetComponent<StaticMeshComponent>();
-			glm::mat4 entityTransform = GActiveScene->GetTransformRelativeToParent( rEntity );
-
-			if( mesh.Mesh )
-			{
+				glm::mat4 entityTransform = GActiveScene->GetTransformRelativeToParent( rEntity );
+				
 				auto& rVertices = mesh.Mesh->Vertices();
 				auto& rIndices = mesh.Mesh->Indices();
 				auto& rSubmeshes = mesh.Mesh->Submeshes();
@@ -118,91 +129,82 @@ namespace Saturn {
 				{
 					glm::mat4 model = entityTransform * rSubmesh.Transform;
 
-					std::unordered_map<uint32_t, uint32_t> indexMap;
-					uint32_t vertOffset = rVertices.size() / 3;
-					
-					for( uint32_t i = 0; i < rSubmesh.VertexCount; i++ )
-					{
-						uint32_t vertexIndex = i + rSubmesh.BaseVertex;
-						glm::vec3 vertexPos = rVertices[ vertexIndex ].Position;
-						glm::vec3 worldPos = glm::vec3( model * glm::vec4( vertexPos, 1.0f ) );
-
-						if( m_Bounds.Contains( worldPos ) )
-						{
-							rOutVertices.push_back( worldPos.x );
-							rOutVertices.push_back( worldPos.y );
-							rOutVertices.push_back( worldPos.z );
-							indexMap[ vertexIndex ] = vertOffset++;
-						}
-					}
-
-					uint32_t start = rSubmesh.BaseIndex / 3;
 					uint32_t count = rSubmesh.IndexCount / 3;
+					uint32_t start = rSubmesh.BaseIndex;
 
+					uint32_t vertOffset = input.GetVertexBuffer().size();
 					for( uint32_t i = 0; i < count; i++ )
 					{
-						const Index& rIndex = rIndices[ start + i ];
+						bool inBounds = false;
 
-						// Check if all three vertices were submitted
-						if( indexMap.count( rIndex.V1 ) && indexMap.count( rIndex.V2 ) && indexMap.count( rIndex.V3 ) )
+						glm::vec3 triWorld[ 3 ]{};
+
+						for( uint32_t vert = 0; vert < 3; vert++ )
 						{
-							rOutIndices.push_back( rIndex.V1 );
-							rOutIndices.push_back( rIndex.V2 );
-							rOutIndices.push_back( rIndex.V3 );
+							uint32_t vertexIndex = ( vert == 0 ) ? rIndices[ i ].V1 : ( vert == 1 ) ? rIndices[ i ].V2 : rIndices[ i ].V3;
+
+							glm::vec3 localVertexPos = rVertices[ vertexIndex ].Position;
+							glm::vec3 worldSpace = glm::vec3( model * glm::vec4( localVertexPos, 1.0f ) );
+
+							triWorld[ vert ] = worldSpace;
+
+							if( m_MaxBounds.Contains( worldSpace ) )
+							{
+								inBounds = true;
+							}
+						}
+
+						if( inBounds )
+						{
+							for( int j = 0; j < 3; j++ )
+							{
+								input.AddVert( triWorld[ j ] );
+							}
+
+							input.AddSingleIndex( vertOffset/*+0*/ );
+							input.AddSingleIndex( vertOffset + 1 );
+							input.AddSingleIndex( vertOffset + 2 );
+						
+							for( int j = 0; j < 3; j++ )
+							{
+								navMeshBounds.Min.x = glm::min( triWorld[ j ].x, navMeshBounds.Min.x );
+								navMeshBounds.Min.y = glm::min( triWorld[ j ].y, navMeshBounds.Min.y );
+								navMeshBounds.Min.z = glm::min( triWorld[ j ].z, navMeshBounds.Min.z );
+
+								navMeshBounds.Max.x = glm::max( triWorld[ j ].x, navMeshBounds.Max.x );
+								navMeshBounds.Max.y = glm::max( triWorld[ j ].y, navMeshBounds.Max.y );
+								navMeshBounds.Max.z = glm::max( triWorld[ j ].z, navMeshBounds.Max.z );
+
+//								navMeshBounds.Min = glm::min( navMeshBounds.Min, triWorld[ j ] );
+//								navMeshBounds.Max = glm::max( navMeshBounds.Max, triWorld[ j ] );
+							}
+
+							vertOffset += 3;
 						}
 					}
 				}
 			}
 		}
 #else
-		RecastInputGeometry input;
-		input.BeginImport();
-
-		for( auto& rEntity : m_Scene->GetAllEntitiesWith<StaticMeshComponent>() )
-		{
-			auto& mesh = rEntity->GetComponent<StaticMeshComponent>();
-			glm::mat4 entityTransform = GActiveScene->GetTransformRelativeToParent( rEntity );
-
-			if( mesh.Mesh )
-			{
-				bool moveOn = false;
-	
-				auto& rVertices = mesh.Mesh->Vertices();
-				auto& rIndices = mesh.Mesh->Indices();
-				auto& rSubmeshes = mesh.Mesh->Submeshes();
-
-				for( const auto& rSubmesh : rSubmeshes )
-				{
-					if( moveOn ) break;
-
-					glm::mat4 model = entityTransform * rSubmesh.Transform;
-
-					for( uint32_t i = 0; i < rSubmesh.VertexCount; i++ )
-					{
-						uint32_t vertexIndex = i + rSubmesh.BaseVertex;
-						glm::vec3 vertexPos = rVertices[ vertexIndex ].Position;
-						glm::vec3 worldPos = glm::vec3( model * glm::vec4( vertexPos, 1.0f ) );
-
-						// If one vertex is in the bounds submit the whole mesh
-						// Recast will clip it
-						if( m_Bounds.Contains( worldPos ) )
-						{
-							input.Add( mesh.Mesh, model );
-
-							moveOn = true;
-							break;
-						}
-					}
-				}
-			}
-		}
-
-		input.EndImport();
+		PhysXSceneExporter exp;
+		exp.Export( input, navMeshBounds );
 #endif
 
+		SAT_CORE_ASSERT( input.GetVertexBuffer().size() % 3 == 0 );
+		SAT_CORE_ASSERT( input.GetIndexBuffer().size() % 3 == 0 );
+
+		input.EndImport( navMeshBounds );
+
 		m_Builder.Init();
-		m_Builder.SetBounds( m_Bounds );
 		m_Builder.Build( input );
+
+		GetComponent<NavigationMeshSpecificationComponent>().HasBuilt = true;
+	
+		m_Scene->OnNavMeshBuildCompleted( GetHandle() );
+
+		std::filesystem::path path = Project::GetActiveProject()->GetFullCachePath();
+		path /= std::format( "NavMesh{0}.{1}.srnc", m_Scene->Name, ( uint64_t ) GetUUID() );
+		RecastNavigationMeshCache::SaveNavMesh( path, m_Builder.GetNavMesh() );
 	}
 
 }

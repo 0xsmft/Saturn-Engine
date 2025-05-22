@@ -55,7 +55,7 @@ namespace Saturn {
 	// - This class then becomes a glorified Saturn::AssetID wrapper as this class will not register any Asset Dependencies futhermore, the size of this class will be 8 bytes only holding an AssetID
 	// - AssetDependencies do not exist in Distribution configurations
 	//
-	// See this class as that only exist in the current scene as this will manly be used for entities/components etc
+	// The usage of the class will only exist in the current scene as this will manly be used for entities/components etc
 	template<Saturn::AssetType... Types>
 	class MemoryAssetDependency : public MemoryAssetDependencyBase
 	{

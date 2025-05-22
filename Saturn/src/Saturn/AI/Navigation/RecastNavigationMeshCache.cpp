@@ -40,10 +40,10 @@ namespace Saturn {
 
 	struct RecastNavMeshCacheFileHeader
 	{
-		char Magic[4];
+		const char Magic[ 5 ] = ".SRC";
 		uint32_t Version = 0;
 		int TileCount = 0;
-		dtNavMeshParams NavMeshParams{};
+		dtNavMeshParams NavMeshParams;
 	};
 
 	struct RecastNavMeshTileCacheFileHeader
@@ -56,7 +56,6 @@ namespace Saturn {
 		std::ofstream fout( rPath, std::ios::binary | std::ios::trunc );
 
 		RecastNavMeshCacheFileHeader header;
-		std::memcpy( header.Magic, SRNC_HEADER_MAGIC, 4 );
 		header.Version = SAT_CURRENT_VERSION;
 		
 		for( int i = 0; i < pMesh->getMaxTiles(); i++ )
@@ -69,7 +68,7 @@ namespace Saturn {
 		}
 
 		std::memcpy( &header.NavMeshParams, pMesh->getParams(), sizeof( dtNavMeshParams ) );
-
+		
 		RawSerialisation::WriteObject( header, fout );
 
 		// Save tiles
@@ -96,12 +95,12 @@ namespace Saturn {
 		if( !std::filesystem::exists( rPath ) )
 			return nullptr;
 
-		std::ifstream stream( rPath, std::ios::in | std::ios::ate );
+		std::ifstream stream( rPath, std::ios::binary | std::ios::in );
 
-		RecastNavMeshCacheFileHeader header{};
+		RecastNavMeshCacheFileHeader header;
 		RawSerialisation::ReadObject( header, stream );
 
-		if( std::memcmp( header.Magic, SRNC_HEADER_MAGIC, 4 ) != 0 )
+		if( std::memcmp( header.Magic, ".SRC", 4 ) != 0 )
 		{
 			SAT_CORE_ERROR( "Failed to read Recast Navigation Mesh Cache! File magic does not match" );
 			return nullptr;
@@ -112,6 +111,11 @@ namespace Saturn {
 			// Warning for now, until we make a major breaking change.
 			SAT_CORE_WARN( "File version mismatch! continuing read!" );
 		}
+
+		SAT_CORE_INFO( "Recast Navigation Mesh Cache:" );
+		SAT_CORE_INFO( " Version: {0}", header.Version );
+		SAT_CORE_INFO( " Tile count: {0}", header.TileCount );
+		SAT_CORE_INFO( "=====================================" );
 
 		dtNavMesh* pNavMesh = dtAllocNavMesh();
 		DT_CHECK( pNavMesh->init( &header.NavMeshParams ) );

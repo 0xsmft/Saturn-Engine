@@ -197,7 +197,10 @@ namespace Saturn {
 	bool RecastNavigationMeshBuilder::TryLoadFromCache( const std::filesystem::path& rPath )
 	{
 		if( m_pNavMesh )
-			return true;
+		{
+			dtFreeNavMesh( m_pNavMesh );
+			m_pNavMesh = nullptr;
+		}
 
 		m_pNavMesh = RecastNavigationMeshCache::ReadNavMeshCache( rPath );
 
@@ -207,7 +210,8 @@ namespace Saturn {
 	void RecastNavigationMeshBuilder::DebugDraw()
 	{
 #if !defined(SAT_DIST)
-		duDebugDrawNavMesh( &m_DebugDrawer, *m_pNavMesh, 0 );
+		if( m_pNavMesh ) 
+			duDebugDrawNavMesh( &m_DebugDrawer, *m_pNavMesh, 0 );
 #endif
 	}
 

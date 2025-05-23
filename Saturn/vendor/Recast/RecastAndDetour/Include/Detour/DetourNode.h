@@ -31,10 +31,11 @@ enum dtNodeFlags
 };
 
 typedef unsigned short dtNodeIndex;
-static const dtNodeIndex DT_NULL_IDX = (dtNodeIndex)~0;
+static constexpr dtNodeIndex DT_NULL_IDX = (dtNodeIndex)~0;
 
-static const int DT_NODE_PARENT_BITS = 24;
-static const int DT_NODE_STATE_BITS = 2;
+static constexpr int DT_NODE_PARENT_BITS = 24;
+static constexpr int DT_NODE_STATE_BITS = 2;
+
 struct dtNode
 {
 	float pos[3];								///< Position of the node.

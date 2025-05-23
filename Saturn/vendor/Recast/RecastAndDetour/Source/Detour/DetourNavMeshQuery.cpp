@@ -102,6 +102,7 @@ inline float dtQueryFilter::getCost(const float* pa, const float* pb,
 }
 #endif	
 	
+/* SATURN ENGINE MODIFIED */
 static constexpr float H_SCALE = 0.999f; // Search heuristic scale.
 
 

@@ -10,7 +10,7 @@ __FILE_NAME__::~__FILE_NAME__()
 
 }
 
-// Called Once, at the start of runtime.
+// Called once, at the start of runtime.
 void __FILE_NAME__::BeginPlay()
 {
 	Super::BeginPlay();

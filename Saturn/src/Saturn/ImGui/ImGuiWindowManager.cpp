@@ -26,32 +26,73 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "ImGuiWindowManager.h"
 
-#include <string>
+#include "Saturn/ImGui/ImGuiWindow.h"
+#include "Saturn/Core/Ruby/RubyEvent.h"
 
 namespace Saturn {
 
-	class Panel : public RefTarget
+	ImGuiWindowManager::ImGuiWindowManager()
 	{
-	public:
-		Panel() = default;
-		Panel( const std::string& rName ) { m_Name = rName; }
-		virtual ~Panel() {}
+		SingletonStorage::AddSingleton( this );
+	}
 
-		virtual void Draw() {}
-		static const char* GetStaticName() { return "Panel"; }
+	ImGuiWindowManager::~ImGuiWindowManager()
+	{
+		Terminate();
+	}
 
-		inline void OpenWindow() { m_Open = true; }
-		inline void CloseWindow() { m_Open = false; }
-		inline void ShowOrHide() { if( m_Open ) CloseWindow(); else OpenWindow(); }
-		inline bool IsOpen() const { return m_Open; }
+	void ImGuiWindowManager::Terminate()
+	{
+		for( auto&& [name, panel] : m_Panels )
+		{
+			panel = nullptr;
+		}
 
-	protected:
-		std::string m_Name = "";
-		bool m_Open = false;
+		m_Panels.clear();
+	}
 
-	private:
-		friend class PanelManager;
-	};
+	void ImGuiWindowManager::DrawAll()
+	{
+		for( auto Itr = m_Panels.begin(); Itr != m_Panels.end(); )
+		{
+			if( Itr->second->IsOpen() )
+			{
+				Itr->second->OnImGuiRender();
+				++Itr;
+			}
+			else
+			{
+				Itr->second = nullptr;
+				Itr = m_Panels.erase( Itr );
+			}
+		}
+	}
+
+	void ImGuiWindowManager::ProcessEvent( RubyEvent& rEvent )
+	{
+		for( auto&& [name, panel] : m_Panels )
+		{
+			if( panel->IsOpen() )
+				panel->OnEvent( rEvent );
+		}
+	}
+
+	void ImGuiWindowManager::OnUpdate( Timestep ts )
+	{
+		for( auto&& [name, panel] : m_Panels )
+		{
+			// TODO: Sometimes we many need to update while the window is closed...
+			if( panel->IsOpen() )
+				panel->OnUpdate( ts );
+		}
+	}
+
+	void ImGuiWindowManager::AddWindow( Ref<ImGuiWindow> window, const std::string& rCustomName )
+	{
+		m_Panels[ rCustomName ] = window;
+	}
+
 }

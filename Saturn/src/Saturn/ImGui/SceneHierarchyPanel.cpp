@@ -59,7 +59,8 @@
 
 namespace Saturn {
 
-	SceneHierarchyPanel::SceneHierarchyPanel() : Panel( "Scene Hierarchy Panel" )
+	SceneHierarchyPanel::SceneHierarchyPanel() 
+		: ImGuiWindow( "Scene Hierarchy Panel" )
 	{
 		m_EditIcon = Ref<Texture2D>::Create( "content/textures/editor/EditIcon.png", AddressingMode::Repeat, false );
 	}
@@ -115,7 +116,7 @@ namespace Saturn {
 		}
 	}
 
-	void SceneHierarchyPanel::Draw()
+	void SceneHierarchyPanel::OnImGuiRender()
 	{
 		ImGui::PushID( static_cast<int>( m_CustomID == 0 ? m_Context->ID : m_CustomID ) );
 
@@ -937,9 +938,9 @@ namespace Saturn {
 
 			ImGui::NextColumn();
 
-			bool posX = rb.LockFlags & RigidbodyLockFlags::PositionX;
-			bool posY = rb.LockFlags & RigidbodyLockFlags::PositionY;
-			bool posZ = rb.LockFlags & RigidbodyLockFlags::PositionZ;
+			bool posX = rb.LockFlags & RigidbodyLockFlags::RigidbodyLock_PositionX;
+			bool posY = rb.LockFlags & RigidbodyLockFlags::RigidbodyLock_PositionY;
+			bool posZ = rb.LockFlags & RigidbodyLockFlags::RigidbodyLock_PositionZ;
 
 			ImGui::PushMultiItemsWidths( 3, ImGui::CalcItemWidth() );
 			ImGui::PushStyleVar( ImGuiStyleVar_ItemSpacing, ImVec2{ 1.0f, 0.0f } );
@@ -947,9 +948,9 @@ namespace Saturn {
 			if( ImGui::Checkbox( "##posX", &posX ) )
 			{
 				if( posX )
-					rb.LockFlags |= RigidbodyLockFlags::PositionX;
+					rb.LockFlags |= RigidbodyLockFlags::RigidbodyLock_PositionX;
 				else
-					rb.LockFlags &= ~RigidbodyLockFlags::PositionX;
+					rb.LockFlags &= ~RigidbodyLockFlags::RigidbodyLock_PositionX;
 
 				modified |= true;
 			}
@@ -959,9 +960,9 @@ namespace Saturn {
 			if( ImGui::Checkbox( "##posY", &posY ) )
 			{
 				if( posY )
-					rb.LockFlags |= RigidbodyLockFlags::PositionY;
+					rb.LockFlags |= RigidbodyLockFlags::RigidbodyLock_PositionY;
 				else
-					rb.LockFlags &= ~RigidbodyLockFlags::PositionY;
+					rb.LockFlags &= ~RigidbodyLockFlags::RigidbodyLock_PositionY;
 
 				modified |= true;
 			}
@@ -971,9 +972,9 @@ namespace Saturn {
 			if( ImGui::Checkbox( "##posZ", &posZ ) ) 
 			{
 				if( posZ )
-					rb.LockFlags |= RigidbodyLockFlags::PositionZ;
+					rb.LockFlags |= RigidbodyLockFlags::RigidbodyLock_PositionZ;
 				else
-					rb.LockFlags &= ~RigidbodyLockFlags::PositionZ;
+					rb.LockFlags &= ~RigidbodyLockFlags::RigidbodyLock_PositionZ;
 			
 				modified |= true;
 			}
@@ -1004,16 +1005,16 @@ namespace Saturn {
 			ImGui::PushMultiItemsWidths( 3, ImGui::CalcItemWidth() );
 			ImGui::PushStyleVar( ImGuiStyleVar_ItemSpacing, ImVec2{ 1.0f, 0 } );
 
-			bool rotX = rb.LockFlags & RigidbodyLockFlags::RotationX;
-			bool rotY = rb.LockFlags & RigidbodyLockFlags::RotationY;
-			bool rotZ = rb.LockFlags & RigidbodyLockFlags::RotationZ;
+			bool rotX = rb.LockFlags & RigidbodyLockFlags::RigidbodyLock_RotationX;
+			bool rotY = rb.LockFlags & RigidbodyLockFlags::RigidbodyLock_RotationY;
+			bool rotZ = rb.LockFlags & RigidbodyLockFlags::RigidbodyLock_RotationZ;
 
 			if( ImGui::Checkbox( "##rotX", &rotX ) )
 			{
 				if( rotX )
-					rb.LockFlags |= RigidbodyLockFlags::RotationX;
+					rb.LockFlags |= RigidbodyLockFlags::RigidbodyLock_RotationX;
 				else
-					rb.LockFlags &= ~RigidbodyLockFlags::RotationX;
+					rb.LockFlags &= ~RigidbodyLockFlags::RigidbodyLock_RotationX;
 		
 				modified |= true;
 			}
@@ -1023,9 +1024,9 @@ namespace Saturn {
 			if( ImGui::Checkbox( "##rotY", &rotY ) )
 			{
 				if( rotY )
-					rb.LockFlags |= RigidbodyLockFlags::RotationY;
+					rb.LockFlags |= RigidbodyLockFlags::RigidbodyLock_RotationY;
 				else
-					rb.LockFlags &= ~RigidbodyLockFlags::RotationY;
+					rb.LockFlags &= ~RigidbodyLockFlags::RigidbodyLock_RotationY;
 			
 				modified |= true;
 			}
@@ -1035,9 +1036,9 @@ namespace Saturn {
 			if( ImGui::Checkbox( "##rotZ", &rotZ ) )
 			{
 				if( rotZ )
-					rb.LockFlags |= RigidbodyLockFlags::RotationZ;
+					rb.LockFlags |= RigidbodyLockFlags::RigidbodyLock_RotationZ;
 				else
-					rb.LockFlags &= ~RigidbodyLockFlags::RotationZ;
+					rb.LockFlags &= ~RigidbodyLockFlags::RigidbodyLock_RotationZ;
 			
 				modified |= true;
 			}
@@ -1249,7 +1250,8 @@ namespace Saturn {
 
 			if( ImGui::BeginPopup( "ComponentSettings" ) )
 			{
-				if constexpr( !std::is_same<T, TransformComponent>() )
+				// TODO: Add compile time flags to this
+				if constexpr( !std::is_same<T, TransformComponent>() && !std::is_same<T, NavigationMeshSpecificationComponent>() )
 				{
 					if( ImGui::MenuItem( "Remove component" ) )
 						removeComponent = true;

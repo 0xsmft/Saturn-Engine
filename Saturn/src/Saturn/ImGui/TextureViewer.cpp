@@ -55,7 +55,7 @@ namespace Saturn {
 	{
 		ImGui::PushID( (int)m_Asset->ID );
 
-		ImGui::Begin( "Texture Viewer", &m_Open );
+		ImGui::Begin( m_Name.c_str(), &m_Open );
 
 		ImGui::BeginChild( "Texture Information" );
 
@@ -97,6 +97,8 @@ namespace Saturn {
 		m_Texture = Ref<Texture2D>::Create( Project::GetActiveProject()->FilepathAbs( m_Asset->Path ), AddressingMode::Repeat );
 
 		m_Open = true;
+
+		m_Name = std::format( "{0}##TextureViewer", m_Asset->Name );
 	}
 
 }

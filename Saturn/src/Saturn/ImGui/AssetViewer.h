@@ -29,51 +29,23 @@
 #pragma once
 
 #include "Saturn/Asset/Asset.h"
-#include "Saturn/Core/Ruby/RubyEvent.h"
-
-#include <unordered_map>
+#include "ImGuiWindow.h"
 
 namespace Saturn {
 
-	class AssetViewer : public RefTarget
+	class AssetViewer : public ImGuiWindow
 	{
 	public:
 		AssetViewer() = default;
 		AssetViewer( AssetID ID );
 		virtual ~AssetViewer();
 
-		virtual void OnImGuiRender() = 0;
-
-		// This function is to only be used when a asset viewer has a SceneRenderer as this will be called after the main renderer is complete.
-		virtual void OnUpdate( Timestep ts ) = 0;
-
-		virtual void OnEvent( RubyEvent& rEvent ) = 0;
-
-		bool IsOpen() { return m_Open; }
-
 		void MarkDirty() { m_Dirty = true; }
 		void MarkClean() { m_Dirty = false; }
 
-	public: 
-		// Static API
-
-		template<typename Ty, typename... Args>
-		static Ty* Add( Args&&... rrArgs ) 
-		{
-			Ty* assetViewer = new Ty( std::forward<Args>( rrArgs )... );
-			return assetViewer;
-		}
-
-		static void Draw();
-		static void Update( Timestep ts );
-		static void ProcessEvent( RubyEvent& rEvent );
-		static void DestroyViewer( AssetID ID );
-		static void Terminate();
-
 	protected:
-		AssetType m_AssetType = AssetType::Unknown;
 		AssetID m_AssetID;
-		bool m_Open = false;
+		AssetType m_AssetType = AssetType::Unknown;
 		bool m_Dirty = false;
 	};
 }

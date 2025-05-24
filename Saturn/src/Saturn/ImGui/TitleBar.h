@@ -28,26 +28,19 @@
 
 #pragma once
 
-#include "Saturn/Core/App.h"
-
-#include "Saturn/Vulkan/Texture.h"
-
-#include "Panel/Panel.h"
-
-#define IMGUI_DEFINE_MATH_OPERATORS
-#include <imgui.h>
-#include <imgui_internal.h>
+#include "ImGuiWindow.h"
+#include <functional>
 
 namespace Saturn {
 
-	class TitleBar : public Panel
+	class TitleBar
 	{
 		using MenuBarFunction = std::function<void()>;
 	public:
 		TitleBar();
 		~TitleBar();
 
-		void Draw() override;
+		void OnImGuiRender();
 
 		float Height() const { return m_Height; }
 
@@ -55,8 +48,8 @@ namespace Saturn {
 		void AddOnExitFunction( std::function<bool()>&& rrFunc );
 
 	private:
-		std::vector<MenuBarFunction> m_MenuBarFunctions;
 		std::function<bool()> m_OnExitFunction = nullptr;
+		std::vector<MenuBarFunction> m_MenuBarFunctions;
 
 		float m_Height = 0.0f;
 	};

@@ -262,7 +262,7 @@ namespace Saturn {
 		std::vector<UUID> ChildrenID;
 
 		RelationshipComponent() = default;
-		RelationshipComponent( RelationshipComponent& other ) = default;
+		RelationshipComponent( const RelationshipComponent& other ) = default;
 		RelationshipComponent( UUID parent ) : Parent( parent ) {}
 	};
 
@@ -304,14 +304,17 @@ namespace Saturn {
 		MemoryAssetDependency<AssetType::Texture> AssetID;
 
 		BillboardComponent() = default;
-		BillboardComponent( BillboardComponent& other ) = default;
+		BillboardComponent( const BillboardComponent& other ) = default;
 		BillboardComponent( UUID id ) : AssetID( id ) {}
 	};
 
 	struct NavigationMeshSpecificationComponent
 	{
-		glm::vec3 Extent;
-		bool HasBuilt = false;
+		glm::vec3 Extent{};
+		unsigned int HasBuilt : 1;
+
+		NavigationMeshSpecificationComponent() = default;
+		NavigationMeshSpecificationComponent( const NavigationMeshSpecificationComponent& other ) = default;
 	};
 
 	template<typename... V>

@@ -46,7 +46,6 @@ namespace Saturn {
 
 	PhysicsMaterialAssetViewer::~PhysicsMaterialAssetViewer()
 	{
-
 	}
 
 	void PhysicsMaterialAssetViewer::OnImGuiRender()
@@ -60,14 +59,14 @@ namespace Saturn {
 		m_MaterialAsset = physMaterialAsset;
 
 		m_Open = true;
+		m_Name = std::format( "{0}##PhysicsMaterial", m_MaterialAsset->Name );
 	}
 
 	void PhysicsMaterialAssetViewer::DrawInternal()
 	{
 		ImGui::PushID( (int)m_MaterialAsset->ID );
 
-		std::string windowName = std::format( "{0}##PhysicsMaterial", m_MaterialAsset->Name );
-		ImGui::Begin( windowName.c_str(), &m_Open );
+		ImGui::Begin( m_Name.c_str(), &m_Open );
 
 		ImGui::BeginHorizontal( "##material_settings" );
 
@@ -100,8 +99,6 @@ namespace Saturn {
 		{
 			PhysicsMaterialAssetSerialiser mas;
 			mas.Serialise( m_MaterialAsset );
-
-			AssetViewer::DestroyViewer( m_AssetID );
 		}
 	}
 

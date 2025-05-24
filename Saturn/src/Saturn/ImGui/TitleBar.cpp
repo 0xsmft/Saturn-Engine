@@ -29,7 +29,12 @@
 #include "sppch.h"
 #include "TitleBar.h"
 
+#include "Saturn/Core/App.h"
 #include "Saturn/Core/Ruby/RubyWindow.h"
+
+#define IMGUI_DEFINE_MATH_OPERATORS
+#include <imgui.h>
+#include <imgui_internal.h>
 
 namespace Saturn {
 	
@@ -42,7 +47,7 @@ namespace Saturn {
 	{
 	}
 
-	void TitleBar::Draw()
+	void TitleBar::OnImGuiRender()
 	{
 		ImGui::PushStyleVar( ImGuiStyleVar_FramePadding, ImVec2( 5.0f, 5.0f ) );
 		ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 5.0f, 5.0f ) );

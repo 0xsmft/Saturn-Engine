@@ -32,16 +32,17 @@
 #include "Saturn/Scene/Entity.h"
 #include "Saturn/Scene/Scene.h"
 
-#include "Panel/Panel.h"
+#include "ImGuiWindow.h"
 #include "Saturn/Vulkan/Texture.h"
 
 #include <functional>
 // TODO: Remove this include (need to find a way to define ImGuiTextFilter without including the imgui header)
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui.h>
 
 namespace Saturn {
 
-	class SceneHierarchyPanel : public Panel
+	class SceneHierarchyPanel : public ImGuiWindow
 	{
 	public:
 		SceneHierarchyPanel();
@@ -75,7 +76,9 @@ namespace Saturn {
 			return m_SelectionContexts[ index ]; 
 		}
 
-		virtual void Draw() override;
+		virtual void OnImGuiRender() override;
+		virtual void OnEvent( RubyEvent& rEvent ) {}
+		virtual void OnUpdate( Timestep ts ) {}
 		
 		static const char* GetStaticName() 
 		{
@@ -106,8 +109,6 @@ namespace Saturn {
 		UUID m_CustomID = 0;
 		std::string m_WindowName = "Scene Hierarchy";
 
-		bool m_IsPrefabScene = false;
-
 		Ref<Texture2D> m_EditIcon;
 
 		// Asset Finder
@@ -115,9 +116,11 @@ namespace Saturn {
 		AssetType m_CurrentFinderType = AssetType::Unknown;
 
 		// Entity Finder
-		bool m_OpenEntityFinderPopup = false;
 		UUID m_CurrentEntityID = 0;
 
+		bool m_OpenEntityFinderPopup = false;
+		bool m_IsPrefabScene = false;
+		bool m_Searching = false;
 		bool m_IsMultiSelecting = false;
 
 		struct CopyComponentData
@@ -127,8 +130,9 @@ namespace Saturn {
 		};
 
 		CopyComponentData m_CopyComponentData{};
+
+		// Searching text filter
 		ImGuiTextFilter m_EntityTextFilter{};
-		bool m_Searching = false;
 
 		Ref<Scene> m_Context;
 		std::vector< Ref<Entity> > m_SelectionContexts;

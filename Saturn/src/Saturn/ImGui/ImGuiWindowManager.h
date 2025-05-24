@@ -35,30 +35,36 @@
 
 namespace Saturn {
 	
-	class Panel;
+	class ImGuiWindow;
+	class RubyEvent;
 
-	class PanelManager : public RefTarget
+	class ImGuiWindowManager : public RefTarget
 	{
 	public:
-		PanelManager();
-		~PanelManager();
+		static inline ImGuiWindowManager& Get() { return *SingletonStorage::GetSingleton<ImGuiWindowManager>(); }
 
-		void DrawAllPanels();
+	public:
+		ImGuiWindowManager();
+		~ImGuiWindowManager();
+
+		void DrawAll();
+		void ProcessEvent( RubyEvent& rEvent );
+		void OnUpdate( Timestep ts );
 		
 		template<typename Ty>
-		void AddPanel( const Ref<Ty>& rPanel )
+		void AddWindow( const Ref<Ty>& rPanel )
 		{
-			static_assert( std::is_base_of<Panel, Ty>::value, "Ty must be a child class of Panel!" );
+			static_assert( std::is_base_of<ImGuiWindow, Ty>::value, "Ty must be a child class of Panel!" );
 
 			m_Panels[ Ty::GetStaticName() ] = rPanel;
 		}
 
-		void AddPanel( const Ref<Panel>& rPanel, const std::string& rCustomName );
+		void AddWindow( Ref<ImGuiWindow> window, const std::string& rCustomName );
 
 		template<typename Ty>
-		[[nodiscard]] Ref<Ty> GetPanel( const std::string& rPanelName )
+		[[nodiscard]] Ref<Ty> GetWindow( const std::string& rPanelName )
 		{
-			static_assert( std::is_base_of<Panel, Ty>::value, "Ty must be a child class of Panel!" );
+			static_assert( std::is_base_of<ImGuiWindow, Ty>::value, "Ty must be a child class of Panel!" );
 
 			auto Itr = m_Panels.find( rPanelName );
 
@@ -71,7 +77,7 @@ namespace Saturn {
 		template<typename Ty>
 		[[nodiscard]] Ref<Ty> GetPanel()
 		{
-			static_assert( std::is_base_of<Panel, Ty>::value, "Ty must be a child class of Panel!" );
+			static_assert( std::is_base_of<ImGuiWindow, Ty>::value, "Ty must be a child class of Panel!" );
 
 			auto Itr = m_Panels.find( Ty::GetStaticName() );
 
@@ -97,6 +103,7 @@ namespace Saturn {
 		void Terminate();
 
 	private:
-		std::unordered_map<std::string, Ref<Panel>> m_Panels;
+		// NAME -> Window
+		std::unordered_map<std::string, Ref<ImGuiWindow>> m_Panels;
 	};
 }

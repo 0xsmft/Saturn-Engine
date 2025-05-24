@@ -53,12 +53,15 @@ namespace Saturn {
 		virtual void OnEvent( RubyEvent& rEvent ) override;
 
 		void AddPrefab();
+
+	private:
+		void SetupDockspace();
+		void ResetDockspace();
+
 	private:
 		Ref<Prefab> m_Prefab;
 		Ref<SceneRenderer> m_SceneRenderer;
 		EditorCamera m_Camera;
-
-		TitleBar* m_Titlebar;
 
 		bool m_AllowCameraEvents = false;
 		bool m_StartedRightClickInViewport = false;

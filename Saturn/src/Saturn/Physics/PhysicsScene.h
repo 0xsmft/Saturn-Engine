@@ -39,15 +39,17 @@ namespace Saturn {
 	struct RaycastHitResult
 	{
 		bool Success = false;
+		float Distance = 0.0f;
 		Ref<Entity> Hit = nullptr;
 		glm::vec3 Position;
-		float Distance = 0.0f;
 	};
+
+	struct RecastInputGeometryExpData;
 
 	class PhysicsScene : public RefTarget
 	{
 	public:
-		PhysicsScene( const Ref<Scene>& rScene );
+		PhysicsScene( Ref<Scene> scene );
 		~PhysicsScene();
 
 		void CreateScene();

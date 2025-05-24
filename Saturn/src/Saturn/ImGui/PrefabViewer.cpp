@@ -34,7 +34,9 @@
 #include "Saturn/Asset/AssetRegistry.h"
 #include "Saturn/Vulkan/SceneRenderer.h"
 
-#include "Saturn/ImGui/ImGuiAuxiliary.h"
+#include "ImGuiAuxiliary.h"
+
+#include "ContentBrowserPanel/ContentBrowserThumbnailCache.h"
 
 namespace Saturn {
 
@@ -47,6 +49,7 @@ namespace Saturn {
 		m_SceneHierarchyPanel = Ref<SceneHierarchyPanel>::Create();
 		m_SceneHierarchyPanel->AddID( m_AssetID );
 		m_SceneHierarchyPanel->SetName( "Prefab Hierarchy" );
+		m_SceneHierarchyPanel->OpenWindow();
 
 		AddPrefab();
 
@@ -55,18 +58,6 @@ namespace Saturn {
 		m_SceneRenderer->SetCurrentScene( m_Prefab->GetScene().Get() );
 
 		m_Camera.SetActive( true );
-		
-		m_Titlebar = new TitleBar();
-
-		m_Titlebar->AddMenuBarFunction( [&]() -> void
-			{
-				if( ImGui::BeginMenu( "Layout" ) )
-				{
-					if( ImGui::MenuItem( "Reset Dockspace" ) ) {}
-
-					ImGui::EndMenu();
-				}
-			} );
 	}
 
 	PrefabViewer::~PrefabViewer()
@@ -76,15 +67,57 @@ namespace Saturn {
 		m_Prefab = nullptr;
 	}
 
+	void PrefabViewer::SetupDockspace()
+	{
+		ImGuiID dockID = ImGui::GetID( "PrefabViewerDckspc" );
+		ImGui::DockBuilderRemoveNode( dockID );
+
+		ImGui::DockBuilderAddNode( dockID, ImGuiDockNodeFlags_DockSpace );
+		ImGui::DockBuilderSetNodeSize( dockID, ImGui::GetCurrentWindow()->Size );
+
+		ImGuiID DockLeftID = ImGui::DockBuilderSplitNode( dockID, ImGuiDir_Left, 0.25f, nullptr, &dockID );
+		ImGuiID DockDownID = ImGui::DockBuilderSplitNode( dockID, ImGuiDir_Down, 0.5f, nullptr, &DockLeftID );
+
+		ImGui::DockBuilderDockWindow( "viewport", DockLeftID );
+//		ImGui::DockBuilderDockWindow( m_SceneHierarchyPanel->GetName().c_str(), DockLeftID );
+
+		ImGui::DockBuilderFinish( dockID );
+	}
+
+	void PrefabViewer::ResetDockspace()
+	{
+
+	}
+
 	void PrefabViewer::OnImGuiRender()
 	{
 		// Root Window.
-		ImGuiWindowFlags RootWindowFlags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoCollapse;
-		ImGui::Begin( m_Prefab->Name.c_str(), &m_Open, RootWindowFlags );
+		ImGuiWindowFlags RootWindowFlags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_MenuBar;
+		ImGui::Begin( m_Name.c_str(), &m_Open, RootWindowFlags );
 
 		// Create custom dockspace.
 		ImGuiID dockID = ImGui::GetID( "PrefabViewerDckspc" );
 		ImGui::DockSpace( dockID, ImVec2( 0.0f, 0.0f ), ImGuiDockNodeFlags_None );
+
+		if( ImGui::BeginMenuBar() )
+		{
+			if( ImGui::BeginMenu( "Window" ) )
+			{
+				if( ImGui::MenuItem( "Reset Dock space" ) ) 
+				{
+					ResetDockspace();
+				}
+
+				if( ImGui::MenuItem( "Show or Hide Prefab Hierarchy" ) )
+				{
+					m_SceneHierarchyPanel->ShowOrHide();
+				}
+
+				ImGui::EndMenu();
+			}
+
+			ImGui::EndMenuBar();
+		}
 
 		//////////////////////////////////////////////////////////////////////////
 
@@ -97,14 +130,17 @@ namespace Saturn {
 		}
 
 		// Viewport
-		ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings;
-		std::string Name = "##" + std::to_string( m_AssetID );
+		ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse;
+
+		std::string Name = "Viewport##" + std::to_string( m_AssetID );
+
+		ImGuiWindowClass windowClass; 
+		windowClass.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_AutoHideTabBar;
+
+		ImGui::SetNextWindowClass( &windowClass );
 		ImGui::Begin( Name.c_str(), 0, flags );
-		ImGui::SetWindowDock( ImGui::GetCurrentWindow(), dockID, ImGuiCond_FirstUseEver );
 
-		m_Titlebar->Draw();
-
-		ImGui::PushID( static_cast< int >( m_AssetID ) );
+//		ImGui::PushID( static_cast< int >( m_AssetID ) );
 
 		if( m_ViewportSize != ImGui::GetContentRegionAvail() )
 		{
@@ -116,7 +152,7 @@ namespace Saturn {
 
 		Auxiliary::Image( m_SceneRenderer->CompositeImage(), m_ViewportSize, { 0, 1 }, { 1, 0 } );
 
-		ImGui::PopID();
+//		ImGui::PopID();
 
 		ImVec2 minBound = ImGui::GetWindowPos();
 		ImVec2 maxBound = { minBound.x + m_ViewportSize.x, minBound.y + m_ViewportSize.y };
@@ -126,21 +162,20 @@ namespace Saturn {
 
 		m_AllowCameraEvents = ImGui::IsMouseHoveringRect( minBound, maxBound ) && m_ViewportFocused || m_StartedRightClickInViewport;
 
-		ImGui::End();
+		ImGui::End(); // Viewport
 
 		ImGui::PopStyleVar(); // ImGuiStyleVar_WindowPadding
 
 		// Scene Hierarchy panel
-		m_SceneHierarchyPanel->Draw();
+		if( m_SceneHierarchyPanel->IsOpen() )
+			m_SceneHierarchyPanel->OnImGuiRender();
 
-		ImGui::End();
+		ImGui::End(); // Root window
 
 		if( m_Open == false )
 		{
 			PrefabSerialiser ps;
 			ps.Serialise( m_Prefab );
-
-			AssetViewer::DestroyViewer( m_AssetID );
 		}
 	}
 
@@ -179,5 +214,7 @@ namespace Saturn {
 		m_Prefab = prefab;
 
 		m_Open = true;
+		m_Name = std::format( "{0}##PrefabViewer", m_Prefab->Name );
 	}
+
 }

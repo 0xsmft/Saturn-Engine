@@ -26,44 +26,36 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "PanelManager.h"
+#pragma once
 
-#include "Panel.h"
+#include "Saturn/Core/Base.h"
+#include "Saturn/Core/Ref.h"
+#include "Saturn/Core/Ruby/RubyEvent.h"
 
 namespace Saturn {
 
-	PanelManager::PanelManager()
+	class ImGuiWindow : public RefTarget
 	{
-	}
+	public:
+		ImGuiWindow() = default;
+		ImGuiWindow( const std::string& rName ) { m_Name = rName; }
+		virtual ~ImGuiWindow() = default;
 
-	PanelManager::~PanelManager()
-	{
-		Terminate();
-	}
+		virtual void OnImGuiRender() = 0;
+		virtual void OnUpdate( Timestep ts ) = 0;
+		virtual void OnEvent( RubyEvent& rEvent ) = 0;
 
-	void PanelManager::Terminate()
-	{
-		for( auto&& [name, panel] : m_Panels )
-		{
-			panel = nullptr;
-		}
+		bool IsOpen() const { return m_Open; }
+		inline void OpenWindow() { m_Open = true; }
+		inline void CloseWindow() { m_Open = false; }
+		inline void ShowOrHide() { if( m_Open ) CloseWindow(); else OpenWindow(); }
 
-		m_Panels.clear();
-	}
+		const std::string& GetWindowName() { return m_Name; }
+		const std::string& GetWindowName() const { return m_Name; }
 
-	void PanelManager::DrawAllPanels()
-	{
-		for( auto&& [name, panel] : m_Panels )
-		{
-			if( panel->m_Open )
-				panel->Draw();
-		}
-	}
-
-	void PanelManager::AddPanel( const Ref<Panel>& rPanel, const std::string& rCustomName )
-	{
-		m_Panels[ rCustomName ] = rPanel;
-	}
+	protected:
+		std::string m_Name = "";
+		bool m_Open = false;
+	};
 
 }

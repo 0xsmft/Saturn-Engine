@@ -40,8 +40,8 @@
 
 namespace Saturn {
 
-	PhysicsScene::PhysicsScene( const Ref<Scene>& rScene )
-		: m_Scene( rScene )
+	PhysicsScene::PhysicsScene( Ref<Scene> scene )
+		: m_Scene( scene )
 	{
 		CreateScene();
 	}
@@ -65,7 +65,7 @@ namespace Saturn {
 		PHYSX_TERMINATE_ITEM( m_PhysicsScene );
 	}
 
-	physx::PxFilterFlags CollisionFilterShader(
+	static physx::PxFilterFlags CollisionFilterShader(
 		physx::PxFilterObjectAttributes Attributes0, physx::PxFilterData FilterData0,
 		physx::PxFilterObjectAttributes Attributes1, physx::PxFilterData FilterData1,
 		physx::PxPairFlags& rPairFlags, const void* pConstantBlock, physx::PxU32 ConstantBlockSize )
@@ -97,14 +97,14 @@ namespace Saturn {
 		SceneDesc.gravity = physx::PxVec3( 0.0f, -9.81f, 0.0f );
 
 		SceneDesc.cpuDispatcher = PhysicsFoundation::Get().m_Dispatcher;
-		SceneDesc.simulationEventCallback = &PhysicsFoundation::Get().m_ContantCallback;
+		SceneDesc.simulationEventCallback = &PhysicsFoundation::Get().m_ContactCallback;
 		SceneDesc.filterShader = CollisionFilterShader;
 
 		SceneDesc.broadPhaseType = physx::PxBroadPhaseType::eABP;
 		SceneDesc.frictionType = physx::PxFrictionType::ePATCH;
 		SceneDesc.flags = physx::PxSceneFlag::eENABLE_CCD;
 
-		m_PhysicsScene = PhysicsFoundation::Get().m_Physics->createScene( SceneDesc );
+		m_PhysicsScene = PhysicsFoundation::Get().GetPhysics().createScene( SceneDesc );
 		PhysicsFoundation::Get().ConnectPVD();
 
 		m_PhysicsScene->setVisualizationParameter( physx::PxVisualizationParameter::eSCALE, 1.0f );

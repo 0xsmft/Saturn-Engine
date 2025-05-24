@@ -136,6 +136,8 @@ namespace Saturn {
 		PHYSX_TERMINATE_ITEM( m_Foundation );
 	}
 
+	// NOTE: We debugging using the PhysX Visual Debugger, you may see two scenes, one for the editor and a second one for the runtime.
+	// The editor scene is only created if a nav mesh was created in the editor.
 	bool PhysicsFoundation::ConnectPVD()
 	{
 #if defined( SAT_DEBUG ) || defined( SAT_RELEASE )

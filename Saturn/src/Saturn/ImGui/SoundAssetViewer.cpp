@@ -49,6 +49,7 @@ namespace Saturn {
 		m_SoundAsset = snd;
 
 		m_Open = true;
+		m_Name = std::format( "{0}##{1}", m_SoundAsset->Name, std::to_string( m_SoundAsset->ID ) );
 	}
 
 	SoundAssetViewer::~SoundAssetViewer()
@@ -63,9 +64,7 @@ namespace Saturn {
 	{
 		ImGui::PushID( static_cast< int >( m_SoundAsset->ID ) );
 
-		std::string windowName = std::format( "{0}##{1}", m_SoundAsset->Name, std::to_string( m_SoundAsset->ID ) );
-
-		ImGui::Begin( windowName.c_str(), &m_Open );
+		ImGui::Begin( m_Name.c_str(), &m_Open );
 
 		ImGui::BeginVertical( "##settings_hor" );
 
@@ -228,8 +227,6 @@ namespace Saturn {
 		{
 			SoundSpecificationAssetSerialiser spec;
 			spec.Serialise( m_SoundAsset );
-
-			AssetViewer::DestroyViewer( m_AssetID );
 		}
 	}
 

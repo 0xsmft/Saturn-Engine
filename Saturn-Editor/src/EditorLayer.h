@@ -174,7 +174,7 @@ namespace Saturn {
 		Ref<GlobalUndoRedoGroup> m_GlobalUndoRedoGroup = nullptr;
 
 	private:
-		Ref< TitleBar > m_TitleBar = nullptr;
+		TitleBar m_TitleBar;
 		
 		Ref< Texture2D > m_CheckerboardTexture = nullptr;
 		Ref< Texture2D > m_StartRuntimeTexture = nullptr;
@@ -188,7 +188,7 @@ namespace Saturn {
 		Ref< Texture2D > m_PointLightTexture = nullptr;
 		Ref< Texture2D > m_ExclamationTexture = nullptr;
 
-		Ref< PanelManager > m_PanelManager = nullptr;
+		Ref<ImGuiWindowManager> m_ImGuiWindowManager = nullptr;
 
 		// Used to be called BlockingOperation hence the name.
 		Ref<JobProgress> m_BlockingOperation = nullptr;

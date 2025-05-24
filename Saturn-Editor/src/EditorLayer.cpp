@@ -35,8 +35,6 @@
 #include <Saturn/ImGui/TitleBar.h>
 #include <Saturn/ImGui/MaterialAssetViewer/MaterialAssetViewer.h>
 #include <Saturn/ImGui/PrefabViewer.h>
-#include <Saturn/ImGui/Panel/Panel.h>
-#include <Saturn/ImGui/Panel/PanelManager.h>
 #include <Saturn/ImGui/EditorIcons.h>
 #include <Saturn/ImGui/ContentBrowserPanel/ContentBrowserThumbnailCache.h>
 #include <Saturn/ImGui/UndoRedo/EntityUndoRedoActions.h>
@@ -158,27 +156,30 @@ namespace Saturn {
 		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Settings.png", AddressingMode::Repeat, true ) );
 		
 		// Create Panel Manager.
-		m_PanelManager = Ref<PanelManager>::Create();
+		m_ImGuiWindowManager = Ref<ImGuiWindowManager>::Create();
 
-		m_PanelManager->AddPanel( Ref<SceneHierarchyPanel>::Create() );
-		m_PanelManager->AddPanel( Ref<ContentBrowserPanel>::Create() );
+		m_ImGuiWindowManager->AddWindow( Ref<SceneHierarchyPanel>::Create() );
+		m_ImGuiWindowManager->AddWindow( Ref<ContentBrowserPanel>::Create() );
 
-		m_TitleBar = Ref<TitleBar>::Create();
-
-		Ref<SceneHierarchyPanel> hierarchyPanel = m_PanelManager->GetPanel<SceneHierarchyPanel>();
+		Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
 		hierarchyPanel->SetContext( m_EditorScene );
 		hierarchyPanel->SetSelectionChangedCallback( SAT_BIND_EVENT_FN( SelectionChanged ) );
 		hierarchyPanel->OpenWindow();
 
-		Ref<ContentBrowserPanel> contentBrowserPanel = m_PanelManager->GetPanel<ContentBrowserPanel>();
+		Ref<ContentBrowserPanel> contentBrowserPanel = m_ImGuiWindowManager->GetPanel<ContentBrowserPanel>();
 		contentBrowserPanel->OpenWindow();
 
 		// Setup content browser panel at project dir.
 		auto& rUserSettings = EngineSettings::Get();
 		contentBrowserPanel->ResetPath( Project::GetActiveProject()->GetRootDir() );
 
-		m_TitleBar->AddMenuBarFunction( SAT_BIND_EVENT_FN( DrawTitlebarOptions ) );
-		m_TitleBar->AddOnExitFunction( SAT_BIND_EVENT_FN( OnTitlebarExit ) );
+		m_TitleBar.AddMenuBarFunction( SAT_BIND_EVENT_FN( DrawTitlebarOptions ) );
+		m_TitleBar.AddOnExitFunction( SAT_BIND_EVENT_FN( OnTitlebarExit ) );
+
+		// Register node editor node types
+		GlobalNodesList::RegisterAll();
+
+		//////////////////////////////////////////////////////////////////////////
 
 		// Now open the startup scene
 		OpenFile( Project::GetActiveProject()->GetConfig().StartupSceneID );
@@ -212,10 +213,7 @@ namespace Saturn {
 
 	EditorLayer::~EditorLayer()
 	{
-		AssetViewer::Terminate();
-
-		m_TitleBar = nullptr;
-		m_PanelManager = nullptr;
+		m_ImGuiWindowManager = nullptr;
 
 		Application::Get().PrimarySceneRenderer().SetCurrentScene( nullptr );
 		
@@ -259,7 +257,7 @@ namespace Saturn {
 		{
 			if( !m_RuntimeScene )
 			{
-				Ref<SceneHierarchyPanel> hierarchyPanel = m_PanelManager->GetPanel<SceneHierarchyPanel>();
+				Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
 	
 				m_RuntimeScene = Ref<Scene>::Create();
 				Scene::SetActiveScene( m_RuntimeScene.Get() );
@@ -284,7 +282,7 @@ namespace Saturn {
 		{
 			if( m_RuntimeScene && m_RuntimeScene->IsRuntimeActive() )
 			{
-				Ref<SceneHierarchyPanel> hierarchyPanel = m_PanelManager->GetPanel<SceneHierarchyPanel>();
+				Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
 				
 				m_RuntimeScene->OnRuntimeEnd();
 				Scene::SetActiveScene( m_EditorScene.Get() );
@@ -337,7 +335,7 @@ namespace Saturn {
 
 		if( m_ShowMeshAABB )
 		{
-			Ref<SceneHierarchyPanel> hierarchyPanel = m_PanelManager->GetPanel<SceneHierarchyPanel>();
+			Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
 
 			for( auto& rEntity : hierarchyPanel->GetSelectionContexts() )
 			{
@@ -353,7 +351,7 @@ namespace Saturn {
 		}
 
 		// Render scenes in other asset viewers
-		AssetViewer::Update( time );
+		m_ImGuiWindowManager->OnUpdate( time );
 	}
 
 	void EditorLayer::OnImGuiRender()
@@ -374,8 +372,9 @@ namespace Saturn {
 			}
 		}
 
-		m_TitleBar->Draw();
-		m_PanelManager->DrawAllPanels();
+		m_TitleBar.OnImGuiRender();
+
+		m_ImGuiWindowManager->DrawAll();
 		
 		if( m_ShowImGuiDemoWindow )     ImGui::ShowDemoWindow( &m_ShowImGuiDemoWindow );
 		if( m_ShowUserSettings )        DrawProjectSettingsWindow();
@@ -393,8 +392,6 @@ namespace Saturn {
 		if( m_ShowSceneDirtyModal )     DrawSceneDirtyPopup();
 		if( m_ShowCBThumbnailDebug )    ContentBrowserThumbnailCache::Get().OnImGuiRender( &m_ShowCBThumbnailDebug );
 		if( m_ShowUndoRedoDebug )       GlobalUndoRedoGroup::Get().OnImGuiRender( &m_ShowUndoRedoDebug );
-
-		AssetViewer::Draw();
 
 		if( m_JobModalOpen )
 		{
@@ -454,7 +451,7 @@ namespace Saturn {
 				m_SuspendedEditorCamera.OnEvent( rEvent );
 		}
 		
-		AssetViewer::ProcessEvent( rEvent );
+		m_ImGuiWindowManager->ProcessEvent( rEvent );
 
 		if( rEvent.Type == RubyEventType::KeyPressed ) 
 			OnKeyPressed( (RubyKeyEvent&)rEvent );
@@ -489,7 +486,7 @@ namespace Saturn {
 
 	void EditorLayer::OpenFile( AssetID id )
 	{
-		Ref<SceneHierarchyPanel> hierarchyPanel = m_PanelManager->GetPanel<SceneHierarchyPanel>();
+		Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
 
 		Ref<Scene> newScene = Ref<Scene>::Create();
 		GActiveScene = newScene.Get();
@@ -547,7 +544,7 @@ namespace Saturn {
 		{
 			case RubyKey::Delete:
 			{
-				Ref<SceneHierarchyPanel> hierarchyPanel = m_PanelManager->GetPanel<SceneHierarchyPanel>();
+				Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
 
 				if( hierarchyPanel && !m_RuntimeScene )
 				{
@@ -600,7 +597,7 @@ namespace Saturn {
 			{
 				case RubyKey::D:
 				{
-					Ref<SceneHierarchyPanel> hierarchyPanel = m_PanelManager->GetPanel<SceneHierarchyPanel>();
+					Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
 
 					if( hierarchyPanel )
 					{
@@ -617,7 +614,7 @@ namespace Saturn {
 				// TODO: Support more than one selection.
 				case RubyKey::F:
 				{
-					Ref<SceneHierarchyPanel> hierarchyPanel = m_PanelManager->GetPanel<SceneHierarchyPanel>();
+					Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
 
 					if( hierarchyPanel )
 					{
@@ -748,7 +745,7 @@ namespace Saturn {
 
 						if( target )
 						{
-							Ref<ContentBrowserPanel> contentBrowserPanel = m_PanelManager->GetPanel<ContentBrowserPanel>();
+							Ref<ContentBrowserPanel> contentBrowserPanel = m_ImGuiWindowManager->GetPanel<ContentBrowserPanel>();
 							contentBrowserPanel->BrowseToItem( target->Path, rConfig.StartupSceneID );
 						}
 					}
@@ -789,7 +786,7 @@ namespace Saturn {
 
 						if( target )
 						{
-							Ref<ContentBrowserPanel> contentBrowserPanel = m_PanelManager->GetPanel<ContentBrowserPanel>();
+							Ref<ContentBrowserPanel> contentBrowserPanel = m_ImGuiWindowManager->GetPanel<ContentBrowserPanel>();
 							contentBrowserPanel->BrowseToItem( target->Path, defaultMaterialID );
 						}
 					}
@@ -828,7 +825,7 @@ namespace Saturn {
 
 						if( target )
 						{
-							Ref<ContentBrowserPanel> contentBrowserPanel = m_PanelManager->GetPanel<ContentBrowserPanel>();
+							Ref<ContentBrowserPanel> contentBrowserPanel = m_ImGuiWindowManager->GetPanel<ContentBrowserPanel>();
 							contentBrowserPanel->BrowseToItem( target->Path, defaultMaterialID );
 						}
 					}
@@ -1209,7 +1206,7 @@ namespace Saturn {
 					ImGui::PushID( ( int ) id );
 					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), { 24.0f, ImGui::TableGetHeaderRowHeight() } ) )
 					{
-						Ref<ContentBrowserPanel> contentBrowserPanel = m_PanelManager->GetPanel<ContentBrowserPanel>();
+						Ref<ContentBrowserPanel> contentBrowserPanel = m_ImGuiWindowManager->GetPanel<ContentBrowserPanel>();
 
 						contentBrowserPanel->BrowseToItem( asset->Path, id );
 					}
@@ -1263,7 +1260,7 @@ namespace Saturn {
 					ImGui::PushID( (int)id );
 					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), { ImGui::TableGetHeaderRowHeight(), ImGui::TableGetHeaderRowHeight() } ) )
 					{
-						Ref<ContentBrowserPanel> contentBrowserPanel = m_PanelManager->GetPanel<ContentBrowserPanel>();
+						Ref<ContentBrowserPanel> contentBrowserPanel = m_ImGuiWindowManager->GetPanel<ContentBrowserPanel>();
 
 						contentBrowserPanel->BrowseToItem( asset->Path, id );
 					}
@@ -1915,7 +1912,7 @@ namespace Saturn {
 		m_MouseOverViewport = ImGui::IsWindowHovered();
 		m_AllowCameraEvents = ImGui::IsMouseHoveringRect( minBound, maxBound ) && m_ViewportFocused || m_StartedRightClickInViewport;
 
-		Ref<SceneHierarchyPanel> hierarchyPanel = m_PanelManager->GetPanel<SceneHierarchyPanel>();
+		Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
 		std::vector<Ref<Entity>>& selectedEntities = hierarchyPanel->GetSelectionContexts();
 
 		// Calc center of transform.
@@ -2589,15 +2586,16 @@ namespace Saturn {
 
 	void EditorLayer::ShowOrHideContentBrowserPanel()
 	{
-		Ref<ContentBrowserPanel> contentBrowserPanel = m_PanelManager->GetPanel<ContentBrowserPanel>();
+		Ref<ContentBrowserPanel> contentBrowserPanel = m_ImGuiWindowManager->GetPanel<ContentBrowserPanel>();
 		contentBrowserPanel->ShowOrHide();
 	}
 
 	void EditorLayer::ShowOrHideSceneHierarchyPanel()
 	{
-		Ref<SceneHierarchyPanel> sceneHierarchyPanel = m_PanelManager->GetPanel<SceneHierarchyPanel>();
+		Ref<SceneHierarchyPanel> sceneHierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
 		sceneHierarchyPanel->ShowOrHide();
 	}
+
 
 	void EditorLayer::PushMessageBox( MessageBoxInfo& rInfo )
 	{

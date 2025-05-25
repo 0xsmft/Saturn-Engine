@@ -242,3 +242,7 @@ namespace Saturn {
 	}
 
 }
+
+#include "Saturn/GameFramework/Core/EngineGenerated.h"
+
+SAT_X31_CREATE_AUTO_REG( Character );

@@ -30,6 +30,7 @@
 
 #include "SingletonStorage.h"
 #include "Saturn/GameFramework/SClass.h"
+#include "FunctionTypedefs.h"
 
 #include <string>
 #include <vector>
@@ -41,7 +42,8 @@
 #if defined(SAT_DIST)
 #define SAT_CMH_SINGLETON_X31( x ) SAT_SINGLETON_LAZY( x )
 #else
-#define SAT_CMH_SINGLETON_X31( x ) static inline x& Get() { return *SingletonStorage::GetSingleton<x>(); }
+//#define SAT_CMH_SINGLETON_X31( x ) static inline x& Get() { return *SingletonStorage::GetSingleton<x>(); }
+#define SAT_CMH_SINGLETON_X31( x ) SAT_SINGLETON_LAZY( x )
 #endif
 
 namespace Saturn {
@@ -80,10 +82,19 @@ namespace Saturn {
 		void BeginHotReload();
 		void AcknowledgeHotReload();
 
+	public:
+		// Engine internal
+		void InitialiseEngineClass( const std::string& rName, SClassFlags flags, CreateSClassFn function );
+		[[nodiscard]] Entity* SpawnEngineClass( const std::string& rScriptName );
+
 	private:
 		std::unordered_map<std::string, SClassMetadata> m_MetadataTree;
 		
 		// Metadata name -> SProperties
 		std::unordered_map<std::string, std::vector<SProperty>> m_Properties;
+
+		// Engine spawnable classes
+		// TEMP
+		std::unordered_map<std::string, CreateSClassFn > m_SpawnableEngineClasses;
 	};
 }

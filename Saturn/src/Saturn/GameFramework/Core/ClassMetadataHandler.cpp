@@ -29,11 +29,21 @@
 #include "sppch.h"
 #include "ClassMetadataHandler.h"
 
+// TODO: We need to fix this!
+// Maybe consider using DLLs
+// Or maybe we can use a different approach to handle the metadata for classes?
+#include "Saturn/AI/AIAgentEntity.h"
+#include "Saturn/Scene/Entity.h"
+
+#include "Saturn/GameFramework/Core/EngineGenerated.h"
+
+SAT_X31_CREATE_AUTO_REG( AIAgentEntity );
+
 namespace Saturn {
 
 	ClassMetadataHandler::ClassMetadataHandler()
 	{
-		constexpr size_t Classes = 3;
+		constexpr size_t Classes = 4;
 		m_MetadataTree.reserve( Classes );
 
 		// Push some default classes.
@@ -41,6 +51,7 @@ namespace Saturn {
 		m_MetadataTree[ "SClass" ] = { "SClass", "X/?", "X/?", "X/?", false };
 		m_MetadataTree[ "Entity" ] = { "Entity", "SClass", "X/?", "X/?", false };
 		m_MetadataTree[ "Character" ] = { "Character", "Entity", "X/?", "X/?", false };
+		m_MetadataTree[ "AIAgentEntity" ] = { "AIAgentEntity", "Entity", "X/?", "X/?", false };
 
 #if !defined(SAT_DIST)
 		SingletonStorage::AddSingleton( this );
@@ -51,6 +62,7 @@ namespace Saturn {
 	{
 		m_MetadataTree.clear();
 		m_Properties.clear();
+		m_SpawnableEngineClasses.clear();
 	}
 
 	void ClassMetadataHandler::BeginHotReload()

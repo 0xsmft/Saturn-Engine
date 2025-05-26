@@ -191,7 +191,14 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 		void Deserialise( SClass* pClass, std::istream& rStream );
 
 	public:
-		void SetFlag( SPropertyFlags flag, bool value );
+		inline void SetFlag( SPropertyFlags flag, bool value ) 
+		{
+			if( value )
+				m_Flags |= flag;
+			else
+				m_Flags &= ~flag;
+		}
+
 		[[nodiscard]] bool IsFlagSet( SPropertyFlags flag ) const { return ( m_Flags & ( SPropertyFlags_ ) flag ) != 0; }
 		SPropertyFlags GetFlags() const { return m_Flags; }
 

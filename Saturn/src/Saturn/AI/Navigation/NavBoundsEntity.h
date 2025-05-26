@@ -39,12 +39,11 @@ namespace Saturn {
 	{
 	public:
 		NavBoundsEntity();
-		NavBoundsEntity( const std::string& rName, UUID id );
 		~NavBoundsEntity();
 
 		virtual NavBoundsEntity* Clone() override
 		{
-			return new NavBoundsEntity( GetName(), GetUUID() );
+			return new NavBoundsEntity();
 		}
 
 		void BeginPlay() override;
@@ -58,11 +57,31 @@ namespace Saturn {
 
 		RecastNavigationMeshBuilder& GetBuilder() { return m_Builder; }
 
+#if defined(SAT_DEBUG) || defined(SAT_RELEASE)
+		[[nodiscard]] bool NeedsRebuilding() const { return m_NeedsRebuilding; }
+		void CleanDirty() { m_NeedsRebuilding = false; }
+		void MarkDirty() { m_NeedsRebuilding = true; }
+#else
+		bool NeedsRebuilding() const { return false; }
+		void CleanDirty() { }
+		void MarkDirty() {}
+#endif
+
+	public:
+		void LoadNavMeshFromDisk();
+
+	private:
+		void Init();
+
 	private:
 		// The max bounds that the nav mesh can possibly extend to.
 		// The actual bounding volume of the Recast nav mesh may be smaller because our max bounds may extend beyond any geometry.
 		AABB m_MaxBounds;
 		RecastNavigationMeshBuilder m_Builder;
+
+#if defined(SAT_DEBUG) || defined(SAT_RELEASE)
+		bool m_NeedsRebuilding = false;
+#endif
 	};
 	
 }

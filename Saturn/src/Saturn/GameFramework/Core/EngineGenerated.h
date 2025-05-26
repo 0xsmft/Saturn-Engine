@@ -50,5 +50,5 @@ struct Ar_##ClassName																							\
 			( Saturn::CreateSClassFn ) _Z_Create_##ClassName );													\
 	}																											\
 };																												\
-};																												\
-static Auxiliary::ClassName::Ar_##ClassName s_##ClassName_Runtime
+static Ar_##ClassName s_Ar_##ClassName_##Runtime;																\
+}																												

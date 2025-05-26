@@ -44,18 +44,10 @@ namespace Saturn {
 	NavBoundsEntity::NavBoundsEntity()
 		: Entity()
 	{
-		AddComponent<NavigationMeshSpecificationComponent>();
-
-		SetAABB( GetComponent<TransformComponent>().Position, glm::vec3( 10.0f ) );
-		GetComponent<TransformComponent>().Scale = glm::vec3( 10.0f );
-
-		std::filesystem::path path = Project::GetActiveProject()->GetFullCachePath();
-		path /= std::format( "NavMesh{0}.{1}.srnc", m_Scene->Name, ( uint64_t ) GetUUID() );
-		m_Builder.TryLoadFromCache( path );
+		Init();
 	}
 
-	NavBoundsEntity::NavBoundsEntity( const std::string& rName, UUID id )
-		: Entity( rName, id )
+	void NavBoundsEntity::Init()
 	{
 		AddComponent<NavigationMeshSpecificationComponent>();
 
@@ -200,14 +192,24 @@ namespace Saturn {
 
 		GetComponent<NavigationMeshSpecificationComponent>().HasBuilt = true;
 	
-		m_Scene->OnNavMeshBuildCompleted( GetHandle() );
-
 		std::filesystem::path path = Project::GetActiveProject()->GetFullCachePath();
 		path /= std::format( "NavMesh{0}.{1}.srnc", m_Scene->Name, ( uint64_t ) GetUUID() );
 		RecastNavigationMeshCache::SaveNavMesh( path, m_Builder.GetNavMesh() );
+
+		CleanDirty();
+		m_Scene->DestroyPhysicsScene();
+	}
+
+	void NavBoundsEntity::LoadNavMeshFromDisk()
+	{
+		std::filesystem::path path = Project::GetActiveProject()->GetFullCachePath();
+		path /= std::format( "NavMesh{0}.{1}.srnc", m_Scene->Name, ( uint64_t ) GetUUID() );
+
+		GetComponent<NavigationMeshSpecificationComponent>().HasBuilt = m_Builder.TryLoadFromCache( path );
 	}
 
 }
+
 #include "Saturn/GameFramework/Core/EngineGenerated.h"
 
 SAT_X31_CREATE_AUTO_REG( NavBoundsEntity );

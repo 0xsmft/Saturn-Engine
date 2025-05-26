@@ -311,12 +311,4 @@ SetProperty( pClass, value );\
 		}
 	}
 
-	void SProperty::SetFlag( SPropertyFlags flag, bool value )
-	{
-		if( value )
-			m_Flags |= flag;
-		else
-			m_Flags &= ~flag;
-	}
-
 }

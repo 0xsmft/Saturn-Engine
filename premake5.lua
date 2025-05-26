@@ -307,8 +307,7 @@ project "Saturn-Editor"
 		"%{IncludeDir.ImguiNodeEditor}",
 		"%{IncludeDir.Tracy}",
 		"%{IncludeDir.KTX_Software}",
-		"%{IncludeDir.RecastRecast}",
-		"%{IncludeDir.RecastDetour}",
+		"%{IncludeDir.Recast}",
 
 		"%{IncludeDir.SharedStorage}"
 	}
@@ -421,7 +420,10 @@ project "Saturn-ProjectBrowser"
 	defines
 	{
 		"_CRT_SECURE_NO_WARNINGS",
-		"SATURN_SS_IMPORT"
+		"SATURN_SS_IMPORT",
+		"TRACY_ENABLE",
+		"TRACY_DELAYED_INIT",
+		"TRACY_MANUAL_LIFETIME"
 	}
 
 	files
@@ -455,8 +457,9 @@ project "Saturn-ProjectBrowser"
 		"%{IncludeDir.ImguiNodeEditor}",
 		"%{IncludeDir.Tracy}",
 		"%{IncludeDir.KTX_Software}",
-		"%{IncludeDir.RecastRecast}",
-		"%{IncludeDir.RecastDetour}",
+		"%{IncludeDir.Recast}",
+
+		"%{IncludeDir.SharedStorage}"
 	}
 
 	links
@@ -500,6 +503,8 @@ project "Saturn-ProjectBrowser"
 			optimize "on"
 			symbols "Off"
 			kind "WindowedApp"
+
+			removedefines { "TRACY_ENABLE", "TRACY_DELAYED_INIT", "TRACY_MANUAL_LIFETIME" }
 
 		filter "configurations:Release or configurations:Dist"
 			postbuildcommands 
@@ -662,7 +667,7 @@ project "SaturnHeaderTool"
 
 	links
 	{
-		"Saturn"
+	--	"Saturn"
 	}
 
 	filter "system:windows"
@@ -677,14 +682,17 @@ project "SaturnHeaderTool"
 		defines "SAT_DEBUG"
 		runtime "Debug"
 		symbols "on"
+		postbuildcommands { '{COPYFILE} "../bin/Debug-windows-x86_64/Saturn-SharedStorage/Saturn-SharedStorage.dll" "%{cfg.targetdir}"' }
 
 	filter "configurations:Release"
 		defines "SAT_RELEASE"
 		runtime "Release"
 		optimize "on"
+		postbuildcommands { '{COPYFILE} "../bin/Release-windows-x86_64/Saturn-SharedStorage/Saturn-SharedStorage.dll" "%{cfg.targetdir}"' }
 
 	filter "configurations:Dist"
 		defines "SAT_DIST"
 		runtime "Release"
 		optimize "on"
 		symbols "Off"
+		postbuildcommands { '{COPYFILE} "../bin/Dist-windows-x86_64/Saturn-SharedStorage/Saturn-SharedStorage.dll" "%{cfg.targetdir}"' }

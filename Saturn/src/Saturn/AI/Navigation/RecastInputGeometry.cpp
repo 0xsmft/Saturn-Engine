@@ -31,6 +31,8 @@
 
 #include <Recast/RecastChunkyTriMesh.h>
 
+#include "Saturn/AI/Navigation/NavBoundsEntity.h"
+
 #include "Saturn/Scene/Scene.h"
 #include "Saturn/Physics/PhysicsScene.h"
 

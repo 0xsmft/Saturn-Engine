@@ -121,9 +121,9 @@ namespace Saturn {
 	void MaterialAssetViewer::SetupNodeEditorCallbacks()
 	{
 		m_NodeEditor->SetCreateNewNodeFunction(
-			[&]() -> Ref<Node>
+			[&]() -> Ref<NodeEditorNodeBase>
 			{
-				Ref<Node> node = nullptr;
+				Ref<NodeEditorNodeBase> node = nullptr;
 
 				ImGui::SeparatorText( "Material" );
 
@@ -210,7 +210,7 @@ namespace Saturn {
 
 			AssetNode->SetAssetID( TextureAssetID );
 
-			Ref<Node> OutputNode = m_NodeEditor->FindNode( m_OutputNodeID );
+			Ref<NodeEditorNodeBase> OutputNode = m_NodeEditor->FindNode( m_OutputNodeID );
 
 			m_NodeEditor->CreateLink( AssetNode->Outputs[ 0 ], Sampler2DNode->Inputs[ 0 ] );
 			m_NodeEditor->CreateLink( Sampler2DNode->Outputs[ 0 ], OutputNode->Inputs[ slot ] );
@@ -222,7 +222,7 @@ namespace Saturn {
 			auto& albedoColor = m_HostMaterialAsset->Get<glm::vec3>( "u_Materials.AlbedoColor" );
 			colorPickerNode->SetColor( albedoColor );
 
-			Ref<Node> outputNode = m_NodeEditor->FindNode( m_OutputNodeID );
+			Ref<NodeEditorNodeBase> outputNode = m_NodeEditor->FindNode( m_OutputNodeID );
 			m_NodeEditor->CreateLink( colorPickerNode->Outputs[ slot ], outputNode->Inputs[ slot ] );
 		}
 	}

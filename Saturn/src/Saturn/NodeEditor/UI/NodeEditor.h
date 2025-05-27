@@ -53,7 +53,7 @@ namespace Saturn {
 		void Open( bool open ) { m_WindowOpen = open; }
 
 		// Happens when the user clicks on the empty space.
-		void SetCreateNewNodeFunction( std::function<Ref<Node>()>&& rrCreateNewNodeFunction )
+		void SetCreateNewNodeFunction( std::function<Ref<NodeEditorNodeBase>()>&& rrCreateNewNodeFunction )
 		{
 			m_CreateNewNodeFunction = std::move( rrCreateNewNodeFunction );
 		}
@@ -99,7 +99,7 @@ namespace Saturn {
 		void CreateNewEditorIfNeeded();
 
 	private:
-		std::function<Ref<Node>()> m_CreateNewNodeFunction;
+		std::function<Ref<NodeEditorNodeBase>()> m_CreateNewNodeFunction;
 		std::function<void()> m_TopbarItemsFunction;
 
 		bool m_CreateNewNode = false;
@@ -117,6 +117,7 @@ namespace Saturn {
 		util::BlueprintNodeBuilder m_Builder;
 
 		NodeEditorOutput m_OutputWindow;
+		std::string m_InternalEditorID{};
 	private:
 		friend class NodeEditorCache;
 		friend class NodeCacheSettings;

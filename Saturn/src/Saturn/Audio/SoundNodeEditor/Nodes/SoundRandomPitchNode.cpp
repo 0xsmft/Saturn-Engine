@@ -45,14 +45,14 @@
 namespace Saturn {
 
 	SoundRandomPitchNode::SoundRandomPitchNode()
-		: Node()
+		: NodeEditorBlueprintNode()
 	{
 		Name = "Random Pitch";
 		CreateNode();
 	}
 
 	SoundRandomPitchNode::SoundRandomPitchNode( const std::string& rName )
-		: Node( rName )
+		: NodeEditorBlueprintNode( rName )
 	{
 		CreateNode();
 	}
@@ -77,12 +77,12 @@ namespace Saturn {
 	{
 	}
 
-	NodeEditorCompilationStatus SoundRandomPitchNode::EvaluateNode( NodeEditorRuntime* evaluator )
+	Saturn::NodeEvaluationState SoundRandomPitchNode::EvaluateNode( NodeEditorRuntime* evaluator )
 	{
 		SoundEditorEvaluator* pSoundEditorEvaluator = dynamic_cast< SoundEditorEvaluator* >( evaluator );
 
 		if( !pSoundEditorEvaluator )
-			return NodeEditorCompilationStatus::Failed;
+			return NodeEvaluationState::Failed;
 
 		// Get random number in range
 		float pitch = Random::RandomFloatInRange( Inputs[ 1 ].As<FloatPin>()->Data, Inputs[ 2 ].As<FloatPin>()->Data );
@@ -109,7 +109,7 @@ namespace Saturn {
 		
 		pSoundEditorEvaluator->RegisterSound( soundPin->Data );
 
-		return NodeEditorCompilationStatus::Success;
+		return NodeEvaluationState::Evaluated;
 	}
 
 }

@@ -35,8 +35,24 @@
 #include "Nodes/SoundMixerNode.h" 
 #include "Nodes/SoundPitchNode.h" 
 #include "Nodes/SoundRandomPitchNode.h"
+#include "Nodes/SoundFloatConstNode.h"
+
+#include "Saturn/NodeEditor/GlobalNodesList.h"
 
 namespace Saturn {
+
+	void SoundNodeLibrary::RegisterAllNodes()
+	{
+		GlobalNodesList::RegisterLibrary( {
+			{ NodeExecutionType::SoundRandomSound, SoundNodeLibrary::SpawnRandomNode },
+			{ NodeExecutionType::SoundMixer,       SoundNodeLibrary::SpawnMixerNode },
+			{ NodeExecutionType::SoundPlayer,      SoundNodeLibrary::SpawnPlayerNode },
+			{ NodeExecutionType::SoundPitch,       SoundNodeLibrary::SpawnPitchNode },
+			{ NodeExecutionType::SoundRandomPitch, SoundNodeLibrary::SpawnRandPitch },
+			{ NodeExecutionType::SoundFloatConst,  SoundNodeLibrary::SpawnFloatConst },
+			{ NodeExecutionType::SoundOutput,      SoundNodeLibrary::SpawnOutputNode }
+		} );
+	}
 
 	Ref<SoundRandomNode> SoundNodeLibrary::SpawnRandomNode( Ref<NodeEditorBase> nodeEditor )
 	{
@@ -73,6 +89,14 @@ namespace Saturn {
 	Ref<SoundRandomPitchNode> SoundNodeLibrary::SpawnRandPitch( Ref<NodeEditorBase> nodeEditor )
 	{
 		Ref<SoundRandomPitchNode> node = Ref<SoundRandomPitchNode>::Create();
+		nodeEditor->AddNode( node );
+
+		return node;
+	}
+
+	Ref<SoundFloatConst> SoundNodeLibrary::SpawnFloatConst( Ref<NodeEditorBase> nodeEditor )
+	{
+		Ref<SoundFloatConst> node = Ref<SoundFloatConst>::Create();
 		nodeEditor->AddNode( node );
 
 		return node;

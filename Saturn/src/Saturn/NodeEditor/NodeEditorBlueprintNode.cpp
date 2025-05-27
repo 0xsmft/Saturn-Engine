@@ -26,109 +26,81 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "NodeEditorBlueprintNode.h"
 
-#include "Saturn/Core/Memory/Buffer.h"
-#include "Saturn/Core/UUID.h"
-#include "Pin.h"
-#include "NodeEditorCompilationStatus.h"
+#include "Saturn/NodeEditor/NodeEditorBase.h"
 
-#include <string>
-#include <vector>
-#include <imgui_node_editor.h>
-
-namespace ed = ax::NodeEditor;
-namespace util = ax::NodeEditor::Utilities;
-
-namespace ax::NodeEditor::Utilities {
-	struct BlueprintNodeBuilder;
-}
+#include "builders.h"
 
 namespace Saturn {
 
-	enum class NodeRenderType
+	NodeEditorBlueprintNode::NodeEditorBlueprintNode( const std::string& rName )
+		: NodeEditorNodeBase( rName )
 	{
-		Blueprint,
-		Comment
-	};
+	}
 
-	enum class NodeExecutionType
+	NodeEditorBlueprintNode::~NodeEditorBlueprintNode()
 	{
-		Value,
-		AssetID, // Values and Asset IDs are different as values can be added together however AssetIDs can not
-		Sampler2D,
-		MaterialOutput,
-		ColorPicker,
-		Add,
-		Subtract,
-		Multiply,
-		Divide,
-		LessThan,
-		GreaterThan,
-		LessThanOrEqu,
-		GreaterThanOrEqu,
-		MaterialMixColors,
-		SoundOutput,
-		SoundPlayer,
-		SoundRandomSound,
-		SoundRandomPitch,
-		SoundMixer,
-		SoundPitch,
-		None
-	};
+	}
 
-	class NodeEditor;
-	class NodeEditorBase;
-	class NodeEditorRuntime;
-
-	class Node : public RefTarget
+	void NodeEditorBlueprintNode::Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, NodeEditorBase* pBase )
 	{
-	public:
-#if !defined(SAT_DIST)
-		using IStream = std::ifstream;
-#else
-		using IStream = std::istream;
-#endif
-	public:
-		Node() = default;
-		Node( const std::string& rName );
-		virtual ~Node();
+		rBuilder.Begin( ed::NodeId( ID ) );
 
-		void Destroy();
+		rBuilder.Header( Color );
 
-		void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, NodeEditorBase* pBase );
+		ImGui::Spring( 0 );
+		ImGui::TextUnformatted( Name.c_str() );
+		ImGui::Spring( 1 );
+		ImGui::Dummy( ImVec2( 0, 28 ) );
+		ImGui::Spring( 0 );
 
-	public:
-		static void Serialise( const Ref<Node>& rObject, std::ofstream& rStream );
-		static void Deserialise( Ref<Node>& rObject, IStream& rStream );
+#if defined( SAT_DEBUG )
+		// Draw debug evaluation order
+		auto* pDrawlist = ImGui::GetWindowDrawList();
 
-		virtual NodeEditorCompilationStatus EvaluateNode( NodeEditorRuntime* evaluator ) { return NodeEditorCompilationStatus::Success; }
+		ImVec2 headerEndPos = ImGui::GetCursorScreenPos();
+		ImVec2 badgePos = headerEndPos;
+		badgePos.y -= 20; // Move upward to be above header
+		badgePos.x -= 30; // Align at the end
 
-		virtual void OnRenderOutput( Ref<Pin> pin ) {}
-		virtual void OnRenderInput( Ref<Pin> pin ) {}
+		ImVec2 badgeSize = ImVec2( 20.0f, 20.0f );
 
-	protected:
-		virtual void OnSerialise( std::ofstream& rStream ) const {}
-		virtual void OnDeserialise( IStream& rStream ) {}
+		// Draw background
+		ImU32 badgeColor = IM_COL32( 255, 100, 100, 255 );
+		pDrawlist->AddRectFilled( badgePos, ImVec2( badgePos.x + badgeSize.x, badgePos.y + badgeSize.y ), badgeColor, 5.0f );
 
-	public:
-		UUID ID;
-		std::string Name;
-		std::vector<Ref<Pin>> Inputs;
-		std::vector<Ref<Pin>> Outputs;
-		ImColor Color;
-		NodeRenderType Type = NodeRenderType::Blueprint;
-		NodeExecutionType ExecutionType = NodeExecutionType::None;
-		ImVec2 Size;
-		ImVec2 Position;
-		bool CanBeDeleted = true;
+		// Draw border
+		ImU32 borderColor = IM_COL32( 0, 0, 0, 255 );
+		pDrawlist->AddRect( badgePos, ImVec2( badgePos.x + badgeSize.x, badgePos.y + badgeSize.y ), borderColor, 5.0f );
 
-#if defined(SAT_DEBUG)
-		size_t EvaluationOrder = 0;
+		// Draw text centered in the badge
+		std::string text = std::to_string( EvaluationOrder );
+
+		ImVec2 textSize = ImGui::CalcTextSize( text.data() );
+		ImVec2 textPos = ImVec2( badgePos.x + ( badgeSize.x - textSize.x ) * 0.5f, badgePos.y + ( badgeSize.y - textSize.y ) * 0.5f );
+		pDrawlist->AddText( textPos, IM_COL32( 255, 255, 255, 255 ), text.data() );
 #endif
 
-		std::string ActiveState;
-		std::string SavedState;
-	};
+		rBuilder.EndHeader();
+
+		uint32_t pinIndex = 0;
+		for( auto& rInput : Inputs )
+		{
+			rInput->Render( rBuilder, pBase->IsLinked( rInput->ID ), pinIndex );
+			pinIndex++;
+		}
+
+		for( auto& rOutput : Outputs )
+		{
+			if( rOutput->Type == PinType::Delegate )
+				continue;
+
+			rOutput->Render( rBuilder, pBase->IsLinked( rOutput->ID ), 0 );
+		}
+
+		rBuilder.End();
+	}
 
 }

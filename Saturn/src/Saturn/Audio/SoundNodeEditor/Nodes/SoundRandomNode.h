@@ -28,11 +28,11 @@
 
 #pragma once
 
-#include "Saturn/NodeEditor/Node.h"
+#include "Saturn/NodeEditor/NodeEditorBlueprintNode.h"
 
 namespace Saturn {
 
-	class SoundRandomNode : public Node
+	class SoundRandomNode : public NodeEditorBlueprintNode
 	{
 	public:
 		SoundRandomNode();
@@ -40,7 +40,7 @@ namespace Saturn {
 
 		virtual ~SoundRandomNode();
 
-		virtual NodeEditorCompilationStatus EvaluateNode( NodeEditorRuntime* evaluator ) override;
+		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
 
 	private:
 		void CreateNode();

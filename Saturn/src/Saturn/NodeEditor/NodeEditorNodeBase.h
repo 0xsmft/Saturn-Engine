@@ -28,55 +28,120 @@
 
 #pragma once
 
-#include "Saturn/NodeEditor/Runtime/NodeEditorRuntime.h"
+#include "Pin.h"
+#include "NodeEditorCompilationStatus.h"
 
-#include "Saturn/Core/Base.h"
+#include "Saturn/Core/Memory/Buffer.h"
 #include "Saturn/Core/UUID.h"
 
-#include <glm/glm.hpp>
-#include <stack>
+#include <string>
+#include <vector>
+#include <imgui_node_editor.h>
+
+namespace ed = ax::NodeEditor;
+namespace util = ax::NodeEditor::Utilities;
+
+namespace ax::NodeEditor::Utilities {
+	struct BlueprintNodeBuilder;
+}
 
 namespace Saturn {
 
-	struct MaterialEvaluatorValue
+	enum class NodeRenderType
 	{
-		uint32_t Slot = 0;
-		glm::vec3 Color;
-		UUID TextureAssetID = 0;
+		Blueprint,
+		Tree,
+		Comment
 	};
 
-	class MaterialAsset;
+	// NOTE: When adding new execution types, make sure to be careful with the order of the enum values.
+	// If you change the order, you will break the serialisation of the nodes.
+	// So, make sure to add new execution types at the end of the enum
+	enum class NodeExecutionType
+	{
+		Value,
+		AssetID,
+		Sampler2D,
+		MaterialOutput,
+		ColorPicker,
+		Add,
+		Subtract,
+		Multiply,
+		Divide,
+		LessThan,
+		GreaterThan,
+		LessThanOrEqu,
+		GreaterThanOrEqu,
+		MaterialMixColors,
+		SoundOutput,
+		SoundPlayer,
+		SoundRandomSound,
+		SoundRandomPitch,
+		SoundMixer,
+		SoundPitch,
+		SoundFloatConst,
+		BehaviourTreeRootNode,
+		BehaviourTreeSelectorNode,
+		None
+	};
+
+	class NodeEditor;
 	class NodeEditorBase;
-	class NodeEditorNodeBase;
+	class NodeEditorRuntime;
 
-	class MaterialNodeEditorEvaluator : public NodeEditorRuntime
+#define SAT_NODE_EDITOR_NODE_BODY( ExecutionType ) \
+public: \
+static inline NodeExecutionType GetStaticExecutionType() { return ExecutionType; }
+
+	class NodeEditorNodeBase : public RefTarget
 	{
+		SAT_NODE_EDITOR_NODE_BODY( NodeExecutionType::None );
 	public:
-		MaterialNodeEditorEvaluator( const MaterialNodeEditorEvaluator& ) = delete;
+		UUID ID;
+		std::string Name;
+		std::vector<Ref<Pin>> Inputs;
+		std::vector<Ref<Pin>> Outputs;
+		ImColor Color;
+		NodeRenderType Type = NodeRenderType::Blueprint;
+		NodeExecutionType ExecutionType = NodeExecutionType::None;
+		ImVec2 Size;
+		ImVec2 Position;
+		bool CanBeDeleted = true;
 
-		struct MaterialNodeEdInfo
-		{
-			Ref<MaterialAsset> HostMaterial;
-			UUID OutputNodeID;
-		};
+#if defined(SAT_DEBUG)
+		size_t EvaluationOrder = 0;
+#endif
+
+		std::string ActiveState;
+		std::string SavedState;
 
 	public:
-		MaterialNodeEditorEvaluator( const MaterialNodeEdInfo& rInfo );
-		virtual ~MaterialNodeEditorEvaluator() = default;
+#if !defined(SAT_DIST)
+		using IStream = std::ifstream;
+#else
+		using IStream = std::istream;
+#endif
+	public:
+		NodeEditorNodeBase() = default;
+		NodeEditorNodeBase( const std::string& rName );
+		virtual ~NodeEditorNodeBase();
 
-		[[nodiscard]] virtual NodeEditorCompilationStatus EvaluateEditor() override;
+		void Destroy();
 
-		void AddToValueStack( const MaterialEvaluatorValue& rValue );
-		std::stack<MaterialEvaluatorValue>& GetTextureStack() { return m_ValueStack; }
+		virtual void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, NodeEditorBase* pBase ) = 0;
+		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) = 0;
+		
+	public:
+		static void Serialise( const Ref<NodeEditorNodeBase>& rObject, std::ofstream& rStream );
+		static void Deserialise( Ref<NodeEditorNodeBase>& rObject, IStream& rStream );
 
-	private:
-		size_t IsOutputsLinkedToOutNode( const Ref<NodeEditorNodeBase>& rNode );
+	public:
+		virtual void OnRenderOutput( Ref<Pin> pin ) {}
+		virtual void OnRenderInput( Ref<Pin> pin ) {}
 
-	private:
-		MaterialNodeEdInfo m_Info;
-		std::stack<MaterialEvaluatorValue> m_ValueStack;
-
-	private:
-		friend class MaterialOutputNode;
+	protected:
+		virtual void OnSerialise( std::ofstream& rStream ) const {}
+		virtual void OnDeserialise( IStream& rStream ) {}
 	};
+
 }

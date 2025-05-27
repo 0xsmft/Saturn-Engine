@@ -30,7 +30,7 @@
 #include "Pin.h"
 
 #include "Saturn/Serialisation/RawSerialisation.h"
-#include "Node.h"
+#include "Saturn/NodeEditor/NodeEditorBlueprintNode.h"
 
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
 
@@ -134,6 +134,77 @@ namespace Saturn {
 
 	void Pin::RenderInput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked, uint32_t pinIndex )
 	{
+		switch( RenderType )
+		{
+			case PinRenderType::Blueprint:
+			{
+				RenderBlueprintInput( rBuilder, linked, pinIndex );
+			} break;
+
+			case PinRenderType::Tree:
+			{
+				RenderTreeInput( rBuilder, linked, pinIndex );
+			} break;
+		}
+	}
+
+	void Pin::RenderOutput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked )
+	{
+		switch( RenderType )
+		{
+			case PinRenderType::Blueprint:
+			{
+				RenderBlueprintOutput( rBuilder, linked );
+			} break;
+
+			case PinRenderType::Tree:
+			{
+				RenderTreeOutput( rBuilder, linked );
+			} break;
+		}
+	}
+
+	void Pin::RenderBlueprintOutput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked )
+	{
+		auto alpha = ImGui::GetStyle().Alpha;
+
+		ImGui::PushStyleVar( ImGuiStyleVar_Alpha, alpha );
+
+		rBuilder.Output( ed::PinId( ID ) );
+
+		if( !Name.empty() )
+		{
+			ImGui::Spring( 0 );
+			ImGui::TextUnformatted( Name.c_str() );
+
+			OnRenderOutput();
+		}
+
+		ImGui::Spring( 0 );
+		DrawIcon( linked, ( int ) ( alpha * 255 ) );
+
+		rBuilder.EndOutput();
+		ImGui::PopStyleVar();
+	}
+
+	void Pin::RenderTreeOutput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked )
+	{
+		auto alpha = ImGui::GetStyle().Alpha;
+		ImRect itemRect( ImGui::GetItemRectMin(), ImGui::GetItemRectMax() );
+
+		ed::PushStyleVar( ed::StyleVar_PinCorners, ImDrawFlags_RoundCornersTop );
+
+		ed::BeginPin( ed::PinId( ID ), ed::PinKind::Output );
+
+		ed::PinPivotRect( itemRect.GetTL(), itemRect.GetBR() );
+		ed::PinRect( itemRect.GetTL(), itemRect.GetBR() );
+		// No need to hand off to children, tree pins don't need extra drawing.
+		ed::EndPin();
+		ed::PopStyleVar();
+	}
+
+	void Pin::RenderBlueprintInput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked, uint32_t pinIndex )
+	{
 		auto alpha = ImGui::GetStyle().Alpha;
 
 		rBuilder.Input( ed::PinId( ID ) );
@@ -163,27 +234,23 @@ namespace Saturn {
 		rBuilder.EndInput();
 	}
 
-	void Pin::RenderOutput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked )
+	void Pin::RenderTreeInput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked, uint32_t pinIndex )
 	{
 		auto alpha = ImGui::GetStyle().Alpha;
+		
+		ImRect itemRect( ImGui::GetItemRectMin(), ImGui::GetItemRectMax() );
 
-		ImGui::PushStyleVar( ImGuiStyleVar_Alpha, alpha );
-
-		rBuilder.Output( ed::PinId( ID ) );
-
-		if( !Name.empty() )
-		{
-			ImGui::Spring( 0 );
-			ImGui::TextUnformatted( Name.c_str() );
-
-			OnRenderOutput();
-		}
-
-		ImGui::Spring( 0 );
-		DrawIcon( linked, ( int ) ( alpha * 255 ) );
-
-		rBuilder.EndOutput();
-		ImGui::PopStyleVar();
+		// Set pin style and spacing
+		ed::PushStyleVar( ed::StyleVar_PinArrowSize, 10.0f );
+		ed::PushStyleVar( ed::StyleVar_PinArrowWidth, 10.0f );
+		ed::PushStyleVar( ed::StyleVar_PinCorners, ImDrawFlags_RoundCornersBottom );
+	
+		ed::BeginPin( ed::PinId( ID ), ed::PinKind::Input );
+		ed::PinPivotRect( itemRect.GetTL(), itemRect.GetBR() );
+		ed::PinRect( itemRect.GetTL(), itemRect.GetBR() );
+		// No need to hand off to children, tree pins don't need extra drawing.
+		ed::EndPin();
+		ed::PopStyleVar( 3 );
 	}
 
 	bool Pin::CanCreateLink( const Ref<Pin>& rOther ) const

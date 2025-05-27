@@ -45,14 +45,14 @@
 namespace Saturn {
 
 	SoundPlayerNode::SoundPlayerNode()
-		: Node()
+		: NodeEditorBlueprintNode()
 	{
 		Name = "Sound Player";
 		CreateNode();
 	}
 
 	SoundPlayerNode::SoundPlayerNode( const std::string& rName )
-		: Node( rName )
+		: NodeEditorBlueprintNode( rName )
 	{
 		CreateNode();
 	}
@@ -70,12 +70,12 @@ namespace Saturn {
 	{
 	}
 
-	NodeEditorCompilationStatus SoundPlayerNode::EvaluateNode( NodeEditorRuntime* evaluator )
+	Saturn::NodeEvaluationState SoundPlayerNode::EvaluateNode( NodeEditorRuntime* evaluator )
 	{
 		SoundEditorEvaluator* pSoundEditorEvaluator = dynamic_cast< SoundEditorEvaluator* >( evaluator );
 
 		if( !pSoundEditorEvaluator )
-			return NodeEditorCompilationStatus::Failed;
+			return NodeEvaluationState::Failed;
 
 		Ref<AssetIDPin> outPin = Outputs[ 0 ].As<AssetIDPin>();
 
@@ -85,7 +85,7 @@ namespace Saturn {
 			auto uiEditor = pSoundEditorEvaluator->GetTargetNodeEditor().As<NodeEditor>();
 			uiEditor->ThrowError( "No Asset was chosen in the sound player node!" );
 
-			return NodeEditorCompilationStatus::Failed;
+			return NodeEvaluationState::Failed;
 		}
 #endif
 
@@ -97,18 +97,20 @@ namespace Saturn {
 			// Find input node
 			Ref<Pin> inputPin = pSoundEditorEvaluator->GetTargetEditor()->FindPin( link->EndPinID );
 
-			Ref<Node> node = inputPin->Node;
+			Ref<NodeEditorNodeBase> node = inputPin->Node;
 
-			// We cannot create the sound because we don't know if we'll be picked
-			// So only if it's not linked to a random sound can we create it.
-			//if( node->ExecutionType != NodeExecutionType::SoundRandomSound )
+			// Submit to the evaluator
 			{
 				pSoundEditorEvaluator->AddNewSound( outPin->GetAssetID() );
+#if !defined(SAT_DIST)
+				pSoundEditorEvaluator->EvaluatedPath[ link->ID ] = NodeEvaluationState::Evaluated;
+#endif
+
 				inputPin.As<SoundPin>()->Data = (int)pSoundEditorEvaluator->AliveSounds.size() - 1;
 			}
 		}
 
-		return NodeEditorCompilationStatus::Success;
+		return NodeEvaluationState::Evaluated;
 	}
 
 	AssetID SoundPlayerNode::GetAssetID() const

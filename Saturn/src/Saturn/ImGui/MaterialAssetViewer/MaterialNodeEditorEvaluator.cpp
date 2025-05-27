@@ -37,7 +37,7 @@
 #include "Saturn/NodeEditor/NodeEditorBase.h"
 #endif
 
-#include "Saturn/NodeEditor/Node.h"
+#include "Saturn/NodeEditor/NodeEditorBlueprintNode.h"
 #include "Saturn/Vulkan/Mesh.h"
 #include "Saturn/Vulkan/Material.h"
 #include "Saturn/Asset/MaterialAsset.h"
@@ -55,7 +55,7 @@ namespace Saturn {
 		if( !m_NodeEditor )
 			return NodeEditorCompilationStatus::Failed;
 
-		Ref<Node> OutputNode = m_NodeEditor->FindNode( m_Info.OutputNodeID );
+		Ref<NodeEditorNodeBase> OutputNode = m_NodeEditor->FindNode( m_Info.OutputNodeID );
 
 #if !defined(SAT_DIST)
 		Ref<NodeEditor> uiEditor = m_NodeEditor.As<NodeEditor>();
@@ -105,7 +105,7 @@ namespace Saturn {
 			const UUID currentNodeID = order.top();
 			order.pop();
 
-			Ref<Node> currentNode = m_NodeEditor->FindNode( currentNodeID );
+			Ref<NodeEditorNodeBase> currentNode = m_NodeEditor->FindNode( currentNodeID );
 			
 			switch( currentNode->ExecutionType )
 			{
@@ -160,9 +160,9 @@ namespace Saturn {
 		return NodeEditorCompilationStatus::Success;
 	}
 
-	size_t MaterialNodeEditorEvaluator::IsOutputsLinkedToOutNode( const Ref<Node>& rNode )
+	size_t MaterialNodeEditorEvaluator::IsOutputsLinkedToOutNode( const Ref<NodeEditorNodeBase>& rNode )
 	{
-		Ref<Node> outputNode = m_NodeEditor->FindNode( m_Info.OutputNodeID );
+		Ref<NodeEditorNodeBase> outputNode = m_NodeEditor->FindNode( m_Info.OutputNodeID );
 
 		size_t i = 0;
 		for( const auto& rOutput : rNode->Outputs )

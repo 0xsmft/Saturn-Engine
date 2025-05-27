@@ -287,7 +287,7 @@ namespace Saturn {
 		std::ifstream stream( cachePathAbs, std::ios::binary | std::ios::in );
 #endif
 
-		NodeCacheEditorHeader header{};
+		NodeCacheEditorHeader header;
 		RawSerialisation::ReadObject( header, stream );
 
 		if( strcmp( header.Magic, ".NCE\0" ) )
@@ -296,6 +296,7 @@ namespace Saturn {
 			return false;
 		}
 
+		bool needsUpdate = false;
 		if( header.Version != SAT_CURRENT_VERSION )
 		{
 			std::string decodedAssetBundleVer;
@@ -303,6 +304,9 @@ namespace Saturn {
 
 			SAT_CORE_WARN( "Node Editor Cache version mismatch! This should not happen. Cache file version is: {0} while current engine version is: {1}.", decodedAssetBundleVer, SAT_CURRENT_VERSION_STRING );
 			SAT_CORE_WARN( "The engine will continue to load however this may result in the cache file not loading!" );
+		
+			needsUpdate = true;
+			return false;
 		}
 
 		if( header.AssetID != id )

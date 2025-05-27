@@ -29,7 +29,7 @@
 #include "sppch.h"
 #include "SoundPin.h"
 
-#include "Saturn/NodeEditor/Node.h"
+#include "Saturn/NodeEditor/NodeEditorNodeBase.h"
 
 namespace Saturn {
 

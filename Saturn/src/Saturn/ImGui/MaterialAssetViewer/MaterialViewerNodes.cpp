@@ -34,6 +34,7 @@
 #include "MaterialViewerColorPin.h"
 
 #include "Saturn/NodeEditor/AssetIDPin.h"
+#include "Saturn/NodeEditor/GlobalNodesList.h"
 
 #include "MaterialAssetViewer.h"
 #include "Saturn/Asset/AssetManager.h"
@@ -46,6 +47,18 @@ namespace Saturn {
 
 	//////////////////////////////////////////////////////////////////////////
 	// MATERIAL NODE LIBRARY
+
+	void MaterialNodeLibrary::RegisterAllNodes()
+	{
+		GlobalNodesList::RegisterLibrary( {
+			{ NodeExecutionType::MaterialOutput,           MaterialNodeLibrary::SpawnOutputNode },
+			{ NodeExecutionType::AssetID,                  MaterialNodeLibrary::SpawnGetAsset },
+			{ NodeExecutionType::ColorPicker,              MaterialNodeLibrary::SpawnColorPicker },
+			{ NodeExecutionType::Sampler2D,                MaterialNodeLibrary::SpawnSampler2D },
+//			{ NodeExecutionType8192::MaterialSeparateColorRGB, MaterialNodeLibrary::SpawnSeparateColorRGB },
+			{ NodeExecutionType::MaterialMixColors,        MaterialNodeLibrary::SpawnMixColors }
+		} );
+	}
 
 	Ref<MaterialOutputNode> MaterialNodeLibrary::SpawnOutputNode( Ref<NodeEditorBase> nodeEditor )
 	{
@@ -99,7 +112,7 @@ namespace Saturn {
 	// MATERIAL OUTPUT NODE
 
 	MaterialOutputNode::MaterialOutputNode()
-		: Node()
+		: NodeEditorBlueprintNode()
 	{
 		Name = "Material Output";
 
@@ -107,7 +120,7 @@ namespace Saturn {
 	}
 
 	MaterialOutputNode::MaterialOutputNode( const std::string& rName )
-		: Node()
+		: NodeEditorBlueprintNode()
 	{
 		Name = rName;
 
@@ -119,12 +132,12 @@ namespace Saturn {
 		RuntimeData.MaterialAsset = nullptr;
 	}
 
-	NodeEditorCompilationStatus MaterialOutputNode::EvaluateNode( NodeEditorRuntime* evaluator )
+	Saturn::NodeEvaluationState MaterialOutputNode::EvaluateNode( NodeEditorRuntime* evaluator )
 	{
 		MaterialNodeEditorEvaluator* materialEval = dynamic_cast< MaterialNodeEditorEvaluator* >( evaluator );
 
 		if( !materialEval )
-			return NodeEditorCompilationStatus::Failed;
+			return NodeEvaluationState::Failed;
 
 		auto& TextureStack = materialEval->GetTextureStack();
 
@@ -180,7 +193,7 @@ namespace Saturn {
 			RuntimeData.MaterialAsset->SetMetalness( fpin->Data );
 		}
 
-		return NodeEditorCompilationStatus::Success;
+		return NodeEvaluationState::Evaluated;
 	}
 
 	void MaterialOutputNode::CreateNode()
@@ -221,14 +234,14 @@ namespace Saturn {
 	// MATERIAL SAMPLER 2D NODE
 
 	MaterialSampler2DNode::MaterialSampler2DNode()
-		: Node()
+		: NodeEditorBlueprintNode()
 	{
 		Name = "Sampler2D";
 		CreateNode();
 	}
 
 	MaterialSampler2DNode::MaterialSampler2DNode( const std::string& rName )
-		: Node()
+		: NodeEditorBlueprintNode()
 	{
 		Name = rName;
 		CreateNode();
@@ -247,12 +260,12 @@ namespace Saturn {
 	{
 	}
 
-	NodeEditorCompilationStatus MaterialSampler2DNode::EvaluateNode( NodeEditorRuntime* evaluator )
+	Saturn::NodeEvaluationState MaterialSampler2DNode::EvaluateNode( NodeEditorRuntime* evaluator )
 	{
 		MaterialNodeEditorEvaluator* materialEval = dynamic_cast< MaterialNodeEditorEvaluator* >( evaluator );
 
 		if( !materialEval )
-			return NodeEditorCompilationStatus::Failed;
+			return NodeEvaluationState::Failed;
 
 		if( TextureSlot != UINT64_MAX )
 		{
@@ -272,21 +285,21 @@ namespace Saturn {
 			materialEval->AddToValueStack( tv );
 		}
 		
-		return NodeEditorCompilationStatus::Success;
+		return NodeEvaluationState::Evaluated;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	// MATERIAL COLOR PICKER NODE
 
 	MaterialColorPickerNode::MaterialColorPickerNode()
-		: Node()
+		: NodeEditorBlueprintNode()
 	{
 		Name = "Color Picker";
 		CreateNode();
 	}
 
 	MaterialColorPickerNode::MaterialColorPickerNode( const std::string& rName )
-		: Node()
+		: NodeEditorBlueprintNode()
 	{
 		Name = rName;
 		CreateNode();
@@ -304,12 +317,12 @@ namespace Saturn {
 	{
 	}
 
-	NodeEditorCompilationStatus MaterialColorPickerNode::EvaluateNode( NodeEditorRuntime* evaluator )
+	Saturn::NodeEvaluationState MaterialColorPickerNode::EvaluateNode( NodeEditorRuntime* evaluator )
 	{
 		MaterialNodeEditorEvaluator* materialEval = dynamic_cast< MaterialNodeEditorEvaluator* >( evaluator );
 
 		if( !materialEval )
-			return NodeEditorCompilationStatus::Failed;
+			return NodeEvaluationState::Failed;
 
 		Ref<MaterialViewerColorPin> colorPin = Outputs[ 0 ].As<MaterialViewerColorPin>();
 
@@ -326,7 +339,7 @@ namespace Saturn {
 			}
 		}
 
-		return NodeEditorCompilationStatus::Success;
+		return NodeEvaluationState::Evaluated;
 	}
 
 	void MaterialColorPickerNode::SetColor( const glm::vec3& rColor )
@@ -338,14 +351,14 @@ namespace Saturn {
 	// MATERIAL GET ASSET NODE
 
 	MaterialGetAssetNode::MaterialGetAssetNode()
-		: Node()
+		: NodeEditorBlueprintNode()
 	{
 		Name = "Get Asset";
 		CreateNode();
 	}
 
 	MaterialGetAssetNode::MaterialGetAssetNode( const std::string& rName )
-		: Node()
+		: NodeEditorBlueprintNode()
 	{
 		Name = rName;
 		CreateNode();
@@ -363,12 +376,12 @@ namespace Saturn {
 	{
 	}
 
-	NodeEditorCompilationStatus MaterialGetAssetNode::EvaluateNode( NodeEditorRuntime* evaluator )
+	Saturn::NodeEvaluationState MaterialGetAssetNode::EvaluateNode( NodeEditorRuntime* evaluator )
 	{
 		MaterialNodeEditorEvaluator* materialEval = dynamic_cast< MaterialNodeEditorEvaluator* >( evaluator );
 
 		if( !materialEval )
-			return NodeEditorCompilationStatus::Failed;
+			return NodeEvaluationState::Failed;
 
 		// Write ID from pin into input pin of link.
 		Ref<Link> link = materialEval->GetTargetEditor()->FindLinkByPin( Outputs[ 0 ]->ID );
@@ -380,7 +393,7 @@ namespace Saturn {
 			fpin->SetAssetID( Outputs[ 0 ].As<AssetIDPin>()->GetAssetID() );
 		}
 
-		return NodeEditorCompilationStatus::Success;
+		return NodeEvaluationState::Evaluated;
 	}
 
 	AssetID MaterialGetAssetNode::GetAssetID() const
@@ -397,14 +410,14 @@ namespace Saturn {
 	// MATERIAL SEPARATE COLOR RGB
 
 	MaterialSeparateColorRGBNode::MaterialSeparateColorRGBNode()
-		: Node()
+		: NodeEditorBlueprintNode()
 	{
 		Name = "Separate Color RGB";
 		CreateNode();
 	}
 
 	MaterialSeparateColorRGBNode::MaterialSeparateColorRGBNode( const std::string& rName )
-		: Node()
+		: NodeEditorBlueprintNode()
 	{
 		Name = rName;
 		CreateNode();
@@ -423,12 +436,12 @@ namespace Saturn {
 	{
 	}
 
-	NodeEditorCompilationStatus MaterialSeparateColorRGBNode::EvaluateNode( NodeEditorRuntime* evaluator )
+	Saturn::NodeEvaluationState MaterialSeparateColorRGBNode::EvaluateNode( NodeEditorRuntime* evaluator )
 	{
 		MaterialNodeEditorEvaluator* materialEval = dynamic_cast< MaterialNodeEditorEvaluator* >( evaluator );
 
 		if( !materialEval )
-			return NodeEditorCompilationStatus::Failed;
+			return NodeEvaluationState::Failed;
 
 		// Write separate color to the outs
 		if( materialEval->GetTargetEditor()->IsLinked( Inputs[ 0 ]->ID ) )
@@ -440,21 +453,21 @@ namespace Saturn {
 			Outputs[ 2 ].As<MaterialViewerColorPin>()->Data.z = inputColorPin->Data.z;
 		}
 
-		return NodeEditorCompilationStatus::Success;
+		return NodeEvaluationState::Evaluated;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	// MATERIAL COLOR MIXER NODE
 
 	MaterialColorMixerNode::MaterialColorMixerNode()
-		: Node()
+		: NodeEditorBlueprintNode()
 	{
 		Name = "Color Mixer";
 		CreateNode();
 	}
 
 	MaterialColorMixerNode::MaterialColorMixerNode( const std::string& rName )
-		: Node( rName )
+		: NodeEditorBlueprintNode( rName )
 	{
 		CreateNode();
 	}
@@ -476,12 +489,12 @@ namespace Saturn {
 	{
 	}
 
-	NodeEditorCompilationStatus MaterialColorMixerNode::EvaluateNode( NodeEditorRuntime* evaluator )
+	Saturn::NodeEvaluationState MaterialColorMixerNode::EvaluateNode( NodeEditorRuntime* evaluator )
 	{
 		MaterialNodeEditorEvaluator* materialEval = dynamic_cast< MaterialNodeEditorEvaluator* >( evaluator );
 
 		if( !materialEval )
-			return NodeEditorCompilationStatus::Failed;
+			return NodeEvaluationState::Failed;
 
 		Ref<MaterialViewerColorPin> col1 = Inputs[ 0 ].As<MaterialViewerColorPin>();
 		Ref<MaterialViewerColorPin> col2 = Inputs[ 1 ].As<MaterialViewerColorPin>();
@@ -505,7 +518,7 @@ namespace Saturn {
 			}
 		}
 
-		return NodeEditorCompilationStatus::Success;
+		return NodeEvaluationState::Evaluated;
 	}
 
 }

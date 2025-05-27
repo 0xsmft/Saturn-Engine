@@ -39,6 +39,7 @@
 #include "Nodes/SoundMixerNode.h"
 #include "Nodes/SoundPitchNode.h"
 #include "Nodes/SoundRandomPitchNode.h"
+#include "Nodes/SoundFloatConstNode.h"
 
 #include "SoundNodeLibrary.h"
 
@@ -145,9 +146,9 @@ namespace Saturn {
 	void GraphSoundAssetViewer::SetupNodeEditorCallbacks()
 	{
 		m_NodeEditor->SetCreateNewNodeFunction(
-			[&]() -> Ref<Node>
+			[&]() -> Ref<NodeEditorNodeBase>
 			{
-				Ref<Node> result = nullptr;
+				Ref<NodeEditorNodeBase> result = nullptr;
 
 				ImGui::SeparatorText( "Sound" );
 
@@ -165,6 +166,11 @@ namespace Saturn {
 
 				if( ImGui::MenuItem( "Random Pitch" ) )
 					result = SoundNodeLibrary::SpawnRandPitch( m_NodeEditor );
+				
+				//ImGui::SeparatorText( "Maths" );
+
+				//if( ImGui::MenuItem( "Constant Float" ) )
+				//	result = SoundNodeLibrary::SpawnFloatConst( m_NodeEditor );
 
 				return result;
 			} );

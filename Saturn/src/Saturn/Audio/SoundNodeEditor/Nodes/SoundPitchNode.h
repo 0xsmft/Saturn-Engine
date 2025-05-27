@@ -28,18 +28,18 @@
 
 #pragma once
 
-#include "Saturn/NodeEditor/Node.h"
+#include "Saturn/NodeEditor/NodeEditorBlueprintNode.h"
 
 namespace Saturn {
 
-	class SoundPitchNode : public Node
+	class SoundPitchNode : public NodeEditorBlueprintNode
 	{
 	public:
 		SoundPitchNode();
 		SoundPitchNode( const std::string& rName );
 		virtual ~SoundPitchNode();
 
-		virtual NodeEditorCompilationStatus EvaluateNode( NodeEditorRuntime* evaluator ) override;
+		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
 
 	private:
 		void CreateNode();

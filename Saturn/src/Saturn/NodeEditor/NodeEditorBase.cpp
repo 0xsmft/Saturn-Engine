@@ -37,6 +37,8 @@
 
 #include "Saturn/NodeEditor/Serialisation/NodeCache.h"
 
+#include "Saturn/NodeEditor/NodeEditorBlueprintNode.h"
+
 #if defined(SAT_DIST)
 #include "Saturn/NodeEditor/GlobalNodesList.h"
 #endif
@@ -95,7 +97,7 @@ namespace Saturn {
 		NodeCacheSettings::WriteEditorSettings( this );
 	}
 
-	static void BuildNode( Ref<Node>& rNode )
+	static void BuildNode( Ref<NodeEditorNodeBase>& rNode )
 	{
 		for( auto& input : rNode->Inputs )
 		{
@@ -122,7 +124,7 @@ namespace Saturn {
 
 			RawSerialisation::WriteObject( ( uint64_t ) value->ExecutionType, rStream );
 
-			Node::Serialise( value, rStream );
+			NodeEditorNodeBase::Serialise( value, rStream );
 		}
 
 		mapSize = m_Links.size();
@@ -154,12 +156,12 @@ namespace Saturn {
 			RawSerialisation::ReadObject( executionValue, rStream );
 			NodeExecutionType executionType = ( NodeExecutionType ) executionValue;
 
-			Ref<Node> node = GlobalNodesList::ConvertExecutionTypeToNode( executionType, this );
+			Ref<NodeEditorNodeBase> node = GlobalNodesList::ConvertExecutionTypeToNode( executionType, this );
 
 			if( !node )
-				node = Ref<Node>::Create();
+				node = Ref<NodeEditorBlueprintNode>::Create();
 
-			Node::Deserialise( node, rStream );
+			NodeEditorNodeBase::Deserialise( node, rStream );
 
 			m_Nodes[ key ] = node;
 			BuildNode( node );
@@ -241,7 +243,7 @@ namespace Saturn {
 		return nullptr;
 	}
 
-	Ref<Node> NodeEditorBase::FindNode( UUID id )
+	Ref<NodeEditorNodeBase> NodeEditorBase::FindNode( UUID id )
 	{
 		const auto Itr = m_Nodes.find( id );
 
@@ -251,7 +253,7 @@ namespace Saturn {
 		return nullptr;
 	}
 
-	Ref<Node> NodeEditorBase::FindNode( const std::string& rName )
+	Ref<NodeEditorNodeBase> NodeEditorBase::FindNode( const std::string& rName )
 	{
 		for( auto& [ id, node ]: m_Nodes )
 		{
@@ -282,7 +284,7 @@ namespace Saturn {
 		return nullptr;
 	}
 
-	Ref<Node> NodeEditorBase::FindNodeByPin( UUID id )
+	Ref<NodeEditorNodeBase> NodeEditorBase::FindNodeByPin( UUID id )
 	{
 		if( auto rPin = FindPin( id ) ) 
 			return rPin->Node;
@@ -324,7 +326,7 @@ namespace Saturn {
 		return m_Runtime->EvaluateEditor();
 	}
 
-	std::vector<UUID> NodeEditorBase::FindNeighbors( Ref<Node> node )
+	std::vector<UUID> NodeEditorBase::FindNeighbors( Ref<NodeEditorNodeBase> node )
 	{
 		std::vector<UUID> ids;
 
@@ -340,7 +342,7 @@ namespace Saturn {
 				continue;
 
 			const bool isStart = rLink->StartPinID == rInput->ID;
-			Ref<Node> otherNode = FindNodeByPin( isStart ? rLink->EndPinID : rLink->StartPinID );
+			Ref<NodeEditorNodeBase> otherNode = FindNodeByPin( isStart ? rLink->EndPinID : rLink->StartPinID );
 
 			ids.push_back( otherNode->ID );
 		}
@@ -370,7 +372,17 @@ namespace Saturn {
 			ed::Flow( ed::LinkId( rLink->ID ) );
 	}
 
-	void NodeEditorBase::AddNode( Ref<Node> node )
+	void NodeEditorBase::ShowFlow( const Ref<Link>& rLink )
+	{
+		ed::Flow( ed::LinkId( rLink->ID ) );
+	}
+
+	void NodeEditorBase::ShowFlow( UUID id )
+	{
+		ed::Flow( ed::LinkId( id ) );
+	}
+
+	void NodeEditorBase::AddNode( Ref<NodeEditorNodeBase> node )
 	{
 		if( m_Loading )
 			return;

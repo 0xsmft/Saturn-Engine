@@ -44,14 +44,14 @@
 namespace Saturn {
 
 	SoundMixerNode::SoundMixerNode()
-		: Node()
+		: NodeEditorBlueprintNode()
 	{
 		Name = "Mixer";
 		CreateNode();
 	}
 
 	SoundMixerNode::SoundMixerNode( const std::string& rName )
-		: Node( rName )
+		: NodeEditorBlueprintNode( rName )
 	{
 		CreateNode();
 	}
@@ -71,12 +71,12 @@ namespace Saturn {
 	{
 	}
 
-	NodeEditorCompilationStatus SoundMixerNode::EvaluateNode( NodeEditorRuntime* evaluator )
+	Saturn::NodeEvaluationState SoundMixerNode::EvaluateNode( NodeEditorRuntime* evaluator )
 	{
 		SoundEditorEvaluator* pSoundEditorEvaluator = dynamic_cast< SoundEditorEvaluator* >( evaluator );
 
 		if( !pSoundEditorEvaluator )
-			return NodeEditorCompilationStatus::Failed;
+			return NodeEvaluationState::Failed;
 
 #if !defined( SAT_DIST )
 		auto count = std::count_if( Inputs.begin(), Inputs.end(),
@@ -91,7 +91,7 @@ namespace Saturn {
 
 			uiEditor->ThrowError( "Not all pins are linked to the mixer node!" );
 
-			return NodeEditorCompilationStatus::Failed;
+			return NodeEvaluationState::Failed;
 		}
 #endif
 
@@ -100,7 +100,7 @@ namespace Saturn {
 			pSoundEditorEvaluator->RegisterSound( i );
 		}
 
-		return NodeEditorCompilationStatus::Success;
+		return NodeEvaluationState::Evaluated;
 	}
 
 }

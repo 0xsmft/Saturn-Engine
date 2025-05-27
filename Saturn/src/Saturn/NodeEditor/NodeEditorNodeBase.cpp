@@ -27,26 +27,24 @@
 */
 
 #include "sppch.h"
-#include "Node.h"
+#include "NodeEditorNodeBase.h"
 
 #include "UI/NodeEditor.h"
 
 #include "Saturn/Serialisation/RawSerialisation.h"
 
-#include "builders.h"
-
 namespace Saturn {
 
-	Node::Node( const std::string& rName )
+	NodeEditorNodeBase::NodeEditorNodeBase( const std::string& rName )
 		: Name( rName )
 	{
 	}
 
-	Node::~Node()
+	NodeEditorNodeBase::~NodeEditorNodeBase()
 	{
 	}
 
-	void Node::Destroy()
+	void NodeEditorNodeBase::Destroy()
 	{
 		for( auto& rInput : Inputs )
 		{
@@ -62,71 +60,12 @@ namespace Saturn {
 		Outputs.clear();
 	}
 
-	void Node::Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, NodeEditorBase* pBase )
-	{
-		rBuilder.Begin( ed::NodeId( ID ) );
-
-		rBuilder.Header( Color );
-
-		ImGui::Spring( 0 );
-		ImGui::TextUnformatted( Name.c_str() );
-		ImGui::Spring( 1 );
-		ImGui::Dummy( ImVec2( 0, 28 ) );
-		ImGui::Spring( 0 );
-
-#if defined( SAT_DEBUG )
-		// Draw debug evaluation order
-		auto* pDrawlist = ImGui::GetWindowDrawList();
-
-		ImVec2 headerEndPos = ImGui::GetCursorScreenPos();
-		ImVec2 badgePos = headerEndPos;
-		badgePos.y -= 20; // Move upward to be above header
-		badgePos.x -= 30; // Align at the end
-
-		ImVec2 badgeSize = ImVec2( 20.0f, 20.0f );
-
-		// Draw background
-		ImU32 badgeColor = IM_COL32( 255, 100, 100, 255 );
-		pDrawlist->AddRectFilled( badgePos, ImVec2( badgePos.x + badgeSize.x, badgePos.y + badgeSize.y ), badgeColor, 5.0f );
-
-		// Draw border
-		ImU32 borderColor = IM_COL32( 0, 0, 0, 255 );
-		pDrawlist->AddRect( badgePos, ImVec2( badgePos.x + badgeSize.x, badgePos.y + badgeSize.y ), borderColor, 5.0f );
-
-		// Draw text centered in the badge
-		std::string text = std::to_string( EvaluationOrder );
-
-		ImVec2 textSize = ImGui::CalcTextSize( text.data() );
-		ImVec2 textPos = ImVec2( badgePos.x + ( badgeSize.x - textSize.x ) * 0.5f, badgePos.y + ( badgeSize.y - textSize.y ) * 0.5f );
-		pDrawlist->AddText( textPos, IM_COL32( 255, 255, 255, 255 ), text.data() );
-#endif
-
-		rBuilder.EndHeader();
-
-		uint32_t pinIndex = 0;
-		for( auto& rInput : Inputs )
-		{
-			rInput->Render( rBuilder, pBase->IsLinked( rInput->ID ), pinIndex );
-			pinIndex++;
-		}
-
-		for( auto& rOutput : Outputs )
-		{
-			if( rOutput->Type == PinType::Delegate )
-				continue;
-
-			rOutput->Render( rBuilder, pBase->IsLinked( rOutput->ID ), 0 );
-		}
-
-		rBuilder.End();
-	}
-
 	static void SerialiseImColor( const ImColor& rColor, std::ofstream& rStream )
 	{
 		RawSerialisation::WriteObject( rColor.Value, rStream );
 	}
 
-	static void DeserialiseImColor( ImColor& rColor, Node::IStream& rStream )
+	static void DeserialiseImColor( ImColor& rColor, NodeEditorNodeBase::IStream& rStream )
 	{
 		RawSerialisation::ReadObject( rColor.Value, rStream );
 	}
@@ -137,13 +76,13 @@ namespace Saturn {
 		RawSerialisation::WriteObject( rVector.y, rStream );
 	}
 
-	static void DeserialiseImVec2( ImVec2& rVector, Node::IStream& rStream )
+	static void DeserialiseImVec2( ImVec2& rVector, NodeEditorNodeBase::IStream& rStream )
 	{
 		RawSerialisation::ReadObject( rVector.x, rStream );
 		RawSerialisation::ReadObject( rVector.y, rStream );
 	}
 
-	void Node::Serialise( const Ref<Node>& rObject, std::ofstream& rStream )
+	void NodeEditorNodeBase::Serialise( const Ref<NodeEditorNodeBase>& rObject, std::ofstream& rStream )
 	{
 		UUID::Serialise( rObject->ID, rStream );
 		RawSerialisation::WriteString( rObject->Name, rStream );
@@ -169,7 +108,7 @@ namespace Saturn {
 		rObject->OnSerialise( rStream );
 	}
 
-	void Node::Deserialise( Ref<Node>& rObject, IStream& rStream )
+	void NodeEditorNodeBase::Deserialise( Ref<NodeEditorNodeBase>& rObject, IStream& rStream )
 	{
 		UUID::Deserialise( rObject->ID, rStream );
 		rObject->Name = RawSerialisation::ReadString( rStream );
@@ -198,4 +137,5 @@ namespace Saturn {
 
 		rObject->OnDeserialise( rStream );
 	}
+
 }

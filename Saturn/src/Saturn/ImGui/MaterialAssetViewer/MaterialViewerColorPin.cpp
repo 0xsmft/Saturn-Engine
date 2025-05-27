@@ -28,7 +28,8 @@
 
 #include "sppch.h"
 #include "MaterialViewerColorPin.h"
-#include "Saturn/NodeEditor/Node.h"
+
+#include "Saturn/NodeEditor/NodeEditorNodeBase.h"
 
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
 

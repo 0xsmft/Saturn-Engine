@@ -44,7 +44,7 @@
 namespace Saturn {
 
 	SoundOutputNode::SoundOutputNode()
-		: Node( "Sound Output" )
+		: NodeEditorBlueprintNode( "Sound Output" )
 	{
 		CreateNode();
 	}
@@ -65,12 +65,12 @@ namespace Saturn {
 	{
 	}
 
-	NodeEditorCompilationStatus SoundOutputNode::EvaluateNode( NodeEditorRuntime* evaluator )
+	Saturn::NodeEvaluationState SoundOutputNode::EvaluateNode( NodeEditorRuntime* evaluator )
 	{
 		SoundEditorEvaluator* pSoundEditorEvaluator = dynamic_cast<SoundEditorEvaluator*>( evaluator );
 		
 		if( !pSoundEditorEvaluator )
-			return NodeEditorCompilationStatus::Failed;
+			return NodeEvaluationState::Failed;
 
 		// For all currently alive sounds check if they are allowed to play
 		// if they are then we play them if not then we'll unload and erase
@@ -88,6 +88,9 @@ namespace Saturn {
 			{
 				// erase
 				rSound->Unload();
+#if !defined( SAT_DIST )
+#endif
+
 				Itr = pSoundEditorEvaluator->AliveSounds.erase( Itr );
 			}
 
@@ -104,7 +107,7 @@ namespace Saturn {
 
 		pSoundEditorEvaluator->SoundsPlaying.clear();
 
-		return NodeEditorCompilationStatus::Success;
+		return NodeEvaluationState::Evaluated;
 	}
 
 }

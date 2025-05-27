@@ -34,14 +34,14 @@
 namespace Saturn {
 
 	MathAddFloats::MathAddFloats()
-		: Node()
+		: NodeEditorBlueprintNode()
 	{
 		Name = "Add Float";
 		CreateNode();
 	}
 
 	MathAddFloats::MathAddFloats( const std::string& rName )
-		: Node()
+		: NodeEditorBlueprintNode()
 	{
 		Name = rName;
 		CreateNode();
@@ -62,10 +62,10 @@ namespace Saturn {
 	{
 	}
 
-	NodeEditorCompilationStatus MathAddFloats::EvaluateNode( NodeEditorRuntime* pEvaluator )
+	Saturn::NodeEvaluationState MathAddFloats::EvaluateNode( NodeEditorRuntime* evaluator )
 	{
-		if( pEvaluator == nullptr )
-			return NodeEditorCompilationStatus::Failed;
+		if( evaluator == nullptr )
+			return NodeEvaluationState::Failed;
 		
 		float Result{};
 
@@ -78,19 +78,20 @@ namespace Saturn {
 		Outputs[ 0 ].As<FloatPin>()->Data = Result;
 
 		// Write our output to other node input
-		Ref<Link> link = pEvaluator->GetTargetEditor()->FindLinkByPin( Outputs[ 0 ]->ID );
+		Ref<Link> link = evaluator->GetTargetEditor()->FindLinkByPin( Outputs[ 0 ]->ID );
 
-		Ref<Pin> pin = pEvaluator->GetTargetEditor()->FindPin( link->EndPinID );
+		Ref<Pin> pin = evaluator->GetTargetEditor()->FindPin( link->EndPinID );
 		if( pin && pin->Type == PinType::Float )
 		{
 			Ref<FloatPin> fpin = pin.As<FloatPin>();
 			fpin->Data = Result;
 		}
 
-		return NodeEditorCompilationStatus::Success;
+		return NodeEvaluationState::Evaluated;
 	}
+
 	//////////////////////////////////////////////////////////////////////////
-	// MATH SUBTRACT (FLOAT)
+	// MATHS SUBTRACT (FLOAT)
 
 	MathSubFloats::MathSubFloats()
 	{
@@ -119,10 +120,10 @@ namespace Saturn {
 		Outputs.push_back( Ref<FloatPin>::Create( "", PinKind::Output ) );
 	}
 
-	NodeEditorCompilationStatus MathSubFloats::EvaluateNode( NodeEditorRuntime* pEvaluator )
+	Saturn::NodeEvaluationState MathSubFloats::EvaluateNode( NodeEditorRuntime* evaluator )
 	{
-		if( pEvaluator == nullptr )
-			return NodeEditorCompilationStatus::Failed;
+		if( evaluator == nullptr )
+			return NodeEvaluationState::Failed;
 
 		float Result{};
 
@@ -153,30 +154,30 @@ namespace Saturn {
 		Outputs[ 0 ].As<FloatPin>()->Data = Result;
 
 		// Write our output to other node input
-		Ref<Link> link = pEvaluator->GetTargetEditor()->FindLinkByPin( Outputs[ 0 ]->ID );
+		Ref<Link> link = evaluator->GetTargetEditor()->FindLinkByPin( Outputs[ 0 ]->ID );
 
-		Ref<Pin> pin = pEvaluator->GetTargetEditor()->FindPin( link->EndPinID );
+		Ref<Pin> pin = evaluator->GetTargetEditor()->FindPin( link->EndPinID );
 		if( pin && pin->Type == PinType::Float )
 		{
 			Ref<FloatPin> fpin = pin.As<FloatPin>();
 			fpin->Data = Result;
 		}
 
-		return NodeEditorCompilationStatus::Success;
+		return NodeEvaluationState::Evaluated;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	// MATH MULTIPLY (FLOAT)
+	// MATHS MULTIPLY (FLOAT)
 
 	MathMulFloats::MathMulFloats()
-		: Node()
+		: NodeEditorBlueprintNode()
 	{
 		Name = "Multiply Float";
 		CreateNode();
 	}
 
 	MathMulFloats::MathMulFloats( const std::string& rName )
-		: Node()
+		: NodeEditorBlueprintNode()
 	{
 		Name = rName;
 		CreateNode();
@@ -197,10 +198,10 @@ namespace Saturn {
 	{
 	}
 
-	NodeEditorCompilationStatus MathMulFloats::EvaluateNode( NodeEditorRuntime* pEvaluator )
+	Saturn::NodeEvaluationState MathMulFloats::EvaluateNode( NodeEditorRuntime* evaluator )
 	{
-		if( pEvaluator == nullptr )
-			return NodeEditorCompilationStatus::Failed;
+		if( evaluator == nullptr )
+			return NodeEvaluationState::Failed;
 
 		float Result{};
 
@@ -213,30 +214,30 @@ namespace Saturn {
 		Outputs[ 0 ].As<FloatPin>()->Data = Result;
 
 		// Write our output to other node input
-		Ref<Link> link = pEvaluator->GetTargetEditor()->FindLinkByPin( Outputs[ 0 ]->ID );
+		Ref<Link> link = evaluator->GetTargetEditor()->FindLinkByPin( Outputs[ 0 ]->ID );
 
-		Ref<Pin> pin = pEvaluator->GetTargetEditor()->FindPin( link->EndPinID );
+		Ref<Pin> pin = evaluator->GetTargetEditor()->FindPin( link->EndPinID );
 		if( pin && pin->Type == PinType::Float )
 		{
 			Ref<FloatPin> fpin = pin.As<FloatPin>();
 			fpin->Data = Result;
 		}
 
-		return NodeEditorCompilationStatus::Success;
+		return NodeEvaluationState::Evaluated;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	// MATH DIVIDE (FLOAT)
+	// MATHS DIVIDE (FLOAT)
 
 	MathDivideFloats::MathDivideFloats()
-		: Node()
+		: NodeEditorBlueprintNode()
 	{
 		Name = "Divide Float";
 		CreateNode();
 	}
 
 	MathDivideFloats::MathDivideFloats( const std::string& rName )
-		: Node()
+		: NodeEditorBlueprintNode()
 	{
 		Name = rName;
 		CreateNode();
@@ -257,10 +258,10 @@ namespace Saturn {
 	{
 	}
 
-	NodeEditorCompilationStatus MathDivideFloats::EvaluateNode( NodeEditorRuntime* pEvaluator )
+	Saturn::NodeEvaluationState MathDivideFloats::EvaluateNode( NodeEditorRuntime* evaluator )
 	{
-		if( pEvaluator == nullptr )
-			return NodeEditorCompilationStatus::Failed;
+		if( evaluator == nullptr )
+			return NodeEvaluationState::Failed;
 
 		float Result{};
 
@@ -290,16 +291,16 @@ namespace Saturn {
 		Outputs[ 0 ].As<FloatPin>()->Data = Result;
 
 		// Write our output to other node input
-		Ref<Link> link = pEvaluator->GetTargetEditor()->FindLinkByPin( Outputs[ 0 ]->ID );
+		Ref<Link> link = evaluator->GetTargetEditor()->FindLinkByPin( Outputs[ 0 ]->ID );
 
-		Ref<Pin> pin = pEvaluator->GetTargetEditor()->FindPin( link->EndPinID );
+		Ref<Pin> pin = evaluator->GetTargetEditor()->FindPin( link->EndPinID );
 		if( pin && pin->Type == PinType::Float )
 		{
 			Ref<FloatPin> fpin = pin.As<FloatPin>();
 			fpin->Data = Result;
 		}
 
-		return NodeEditorCompilationStatus::Success;
+		return NodeEvaluationState::Evaluated;
 	}
 
 }

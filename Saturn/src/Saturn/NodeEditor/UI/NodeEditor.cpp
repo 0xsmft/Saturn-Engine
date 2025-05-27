@@ -28,9 +28,11 @@
 
 #include "sppch.h"
 #include "NodeEditor.h"
+
 #include "Saturn/Asset/AssetManager.h"
 
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
+#include "Saturn/ImGui/EditorIcons.h"
 
 #include "Saturn/Serialisation/RawSerialisation.h"
 
@@ -51,7 +53,7 @@ namespace Saturn {
 	static constexpr inline bool operator==( const ImVec2& lhs, const ImVec2& rhs ) { return lhs.x == rhs.x && lhs.y == rhs.y; }
 	static constexpr inline bool operator!=( const ImVec2& lhs, const ImVec2& rhs ) { return !( lhs == rhs ); }
 
-	static void BuildNode( Ref<Node>& rNode )
+	static void BuildNode( Ref<NodeEditorNodeBase>& rNode )
 	{
 		for( auto& input : rNode->Inputs )
 		{
@@ -143,7 +145,10 @@ namespace Saturn {
 		auto texture = NodeEditorBase::GetBlueprintBackground();
 		m_Builder = util::BlueprintNodeBuilder( ( ImTextureID ) texture->GetDescriptorSet(), texture->Width(), texture->Height() );
 
+		m_OutputWindow.SetWindowID( m_AssetID );
 		m_OutputWindow.PushMessage( { .MessageText = "Initialised new editor!", .Type = NodeEditorMessageType::Info } );
+
+		m_InternalEditorID = std::format( "Nc##{0}", (uint64_t)m_AssetID );
 	}
 
 	void NodeEditor::Reload()
@@ -305,7 +310,7 @@ namespace Saturn {
 		ImGui::PopStyleColor();
 
 		// Hand off to imgui_node_editor and draw the actual node editor and nodes
-		ed::Begin( "Node Editor", ImGui::GetContentRegionAvail() );
+		ed::Begin( m_InternalEditorID.c_str(), ImGui::GetContentRegionAvail() );
 
 		auto cursorTopLeft = ImGui::GetCursorScreenPos();
 
@@ -498,7 +503,7 @@ namespace Saturn {
 		if( hoveredNode.Get() != 0 )
 		{
 			UUID id( hoveredNode.Get() );
-			Ref<Node> node = FindNode( id );
+			Ref<NodeEditorNodeBase> node = FindNode( id );
 
 			if( node )
 			{
@@ -532,7 +537,7 @@ namespace Saturn {
 		{
 			auto mousePos = ed::ScreenToCanvas( ImGui::GetMousePosOnOpeningCurrentPopup() );
 
-			Ref<Node> node = nullptr;
+			Ref<NodeEditorNodeBase> node = nullptr;
 
 			if( m_CreateNewNodeFunction )
 				node = m_CreateNewNodeFunction();
@@ -660,7 +665,7 @@ namespace Saturn {
 
 			RawSerialisation::WriteObject( (uint64_t)value->ExecutionType, rStream );
 
-			Node::Serialise( value, rStream );
+			NodeEditorNodeBase::Serialise( value, rStream );
 		}
 
 		mapSize = m_Links.size();
@@ -694,12 +699,12 @@ namespace Saturn {
 			RawSerialisation::ReadObject( executionValue, rStream );
 			NodeExecutionType executionType = ( NodeExecutionType ) executionValue;
 
-			Ref<Node> node = GlobalNodesList::ConvertExecutionTypeToNode( executionType, this );
+			Ref<NodeEditorNodeBase> node = GlobalNodesList::ConvertExecutionTypeToNode( executionType, this );
 			
 			if( !node )
-				node = Ref<Node>::Create();
+				node = Ref<NodeEditorBlueprintNode>::Create();
 
-			Node::Deserialise( node, rStream );
+			NodeEditorNodeBase::Deserialise( node, rStream );
 
 			m_Nodes[ key ] = node;
 			BuildNode( node );

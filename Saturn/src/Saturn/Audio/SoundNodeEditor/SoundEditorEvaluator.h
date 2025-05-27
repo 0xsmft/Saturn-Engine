@@ -40,7 +40,7 @@ namespace Saturn {
 
 	class Sound;
 	class NodeEditorBase;
-	class Node;
+	class NodeEditorNodeBase;
 	class SoundGroup;
 
 	class SoundEditorEvaluator : public NodeEditorRuntime
@@ -73,10 +73,23 @@ namespace Saturn {
 
 		[[nodiscard]] bool IsCompleted() const { return m_Completed; }
 
+		void TraceEvaluationPath();
+
+#if !defined(SAT_DIST)
+		Ref<NodeEditorNodeBase> GetMostRecentNode() const
+		{
+			return nullptr;
+		}
+#endif
+
 	public:
 		// Sounds that are currently playing
 		std::vector<Ref<Sound>> AliveSounds;
 		std::unordered_set<size_t> SoundsPlaying;
+
+#if !defined(SAT_DIST)
+		std::unordered_map<UUID, NodeEvaluationState> EvaluatedPath;
+#endif
 
 	private:
 		void DestroyAliveSounds();

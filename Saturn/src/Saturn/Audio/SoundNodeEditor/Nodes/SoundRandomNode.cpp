@@ -45,14 +45,14 @@
 namespace Saturn {
 
 	SoundRandomNode::SoundRandomNode()
-		: Node()
+		: NodeEditorBlueprintNode()
 	{
 		Name = "Random Sound";
 		CreateNode();
 	}
 
 	SoundRandomNode::SoundRandomNode( const std::string& rName )
-		: Node()
+		: NodeEditorBlueprintNode()
 	{
 		Name = rName;
 		CreateNode();
@@ -73,12 +73,12 @@ namespace Saturn {
 	{
 	}
 
-	NodeEditorCompilationStatus SoundRandomNode::EvaluateNode( NodeEditorRuntime* evaluator )
+	Saturn::NodeEvaluationState SoundRandomNode::EvaluateNode( NodeEditorRuntime* evaluator )
 	{
 		SoundEditorEvaluator* pSoundEditorEvaluator = dynamic_cast< SoundEditorEvaluator* >( evaluator );
 
 		if( !pSoundEditorEvaluator )
-			return NodeEditorCompilationStatus::Failed;
+			return NodeEvaluationState::Failed;
 
 		std::map<UUID, UUID> PinToSoundMap;
 
@@ -97,7 +97,7 @@ namespace Saturn {
 
 			uiEditor->ThrowError( "Not all pins are linked to the random node!" );
 
-			return NodeEditorCompilationStatus::Failed;
+			return NodeEvaluationState::Failed;
 		}
 #endif
 		// Read inputs for sound indexes.
@@ -117,6 +117,11 @@ namespace Saturn {
 				// Don't use i because thats just the index in our Inputs array
 				// Use the actual data stored in the pin so we can the sound index.
 				pSoundEditorEvaluator->UnregisterSound( soundInputPin->Data );
+
+#if	!defined( SAT_DIST )
+				Ref<Link> link = pSoundEditorEvaluator->GetTargetEditor()->FindLinkByPin( soundInputPin->ID );
+				pSoundEditorEvaluator->EvaluatedPath[ link->ID ] = NodeEvaluationState::WasEvaluated;
+#endif
 			}
 		}
 
@@ -131,7 +136,7 @@ namespace Saturn {
 			inputPin->Data = outPin->Data = ( int ) index;
 		}
 
-		return NodeEditorCompilationStatus::Success;
+		return NodeEvaluationState::Evaluated;
 	}
 
 }

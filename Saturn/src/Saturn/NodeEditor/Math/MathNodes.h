@@ -29,10 +29,11 @@
 #pragma once
 
 #include "Saturn/NodeEditor/NodeEditorBase.h"
+#include "Saturn/NodeEditor/NodeEditorBlueprintNode.h"
 
 namespace Saturn {
 
-	class MathAddFloats : public Node
+	class MathAddFloats : public NodeEditorBlueprintNode
 	{
 	public:
 		MathAddFloats();
@@ -40,13 +41,13 @@ namespace Saturn {
 
 		virtual ~MathAddFloats();
 
-		NodeEditorCompilationStatus EvaluateNode( NodeEditorRuntime* pEvaluator ) override;
+		NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
 
 	private:
 		void CreateNode();
 	};
 
-	class MathSubFloats : public Node
+	class MathSubFloats : public NodeEditorBlueprintNode
 	{
 	public:
 		MathSubFloats();
@@ -54,13 +55,13 @@ namespace Saturn {
 
 		virtual ~MathSubFloats();
 
-		NodeEditorCompilationStatus EvaluateNode( NodeEditorRuntime* pEvaluator ) override;
+		NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
 
 	private:
 		void CreateNode();
 	};
 
-	class MathMulFloats : public Node
+	class MathMulFloats : public NodeEditorBlueprintNode
 	{
 	public:
 		MathMulFloats();
@@ -68,13 +69,13 @@ namespace Saturn {
 
 		virtual ~MathMulFloats();
 
-		NodeEditorCompilationStatus EvaluateNode( NodeEditorRuntime* pEvaluator ) override;
+		NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
 
 	private:
 		void CreateNode();
 	};
 
-	class MathDivideFloats : public Node
+	class MathDivideFloats : public NodeEditorBlueprintNode
 	{
 	public:
 		MathDivideFloats();
@@ -82,7 +83,7 @@ namespace Saturn {
 
 		virtual ~MathDivideFloats();
 
-		NodeEditorCompilationStatus EvaluateNode( NodeEditorRuntime* pEvaluator ) override;
+		NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
 
 	private:
 		void CreateNode();

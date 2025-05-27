@@ -28,6 +28,7 @@
 
 #pragma once
 
+#include "Saturn/NodeEditor/NodeEditorBlueprintNode.h"
 #include "Saturn/NodeEditor/NodeEditorBase.h"
 
 namespace Saturn {
@@ -35,8 +36,9 @@ namespace Saturn {
 	class MaterialAsset;
 	struct MaterialEvaluatorValue;
 
-	class MaterialOutputNode : public Node
+	class MaterialOutputNode : public NodeEditorBlueprintNode
 	{
+		SAT_NODE_EDITOR_NODE_BODY( NodeExecutionType::MaterialOutput );
 	public:
 		struct RuntimeData
 		{
@@ -48,7 +50,7 @@ namespace Saturn {
 
 		virtual ~MaterialOutputNode();
 
-		NodeEditorCompilationStatus EvaluateNode( NodeEditorRuntime* evaluator ) override;
+		NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
 
 	public:
 		RuntimeData RuntimeData;
@@ -59,15 +61,16 @@ namespace Saturn {
 		void HandleAlbedo( const MaterialEvaluatorValue& rTextureValue );
 	};
 
-	class MaterialSampler2DNode : public Node 
+	class MaterialSampler2DNode : public NodeEditorBlueprintNode 
 	{
+		SAT_NODE_EDITOR_NODE_BODY( NodeExecutionType::Sampler2D );
 	public:
 		MaterialSampler2DNode();
 		MaterialSampler2DNode( const std::string& rName );
 
 		virtual ~MaterialSampler2DNode();
 
-		NodeEditorCompilationStatus EvaluateNode( NodeEditorRuntime* evaluator ) override;
+		NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
 
 	public:
 		size_t TextureSlot = 0;
@@ -76,15 +79,16 @@ namespace Saturn {
 		void CreateNode();
 	};
 
-	class MaterialColorPickerNode : public Node
+	class MaterialColorPickerNode : public NodeEditorBlueprintNode
 	{
+		SAT_NODE_EDITOR_NODE_BODY( NodeExecutionType::ColorPicker );
 	public:
 		MaterialColorPickerNode();
 		MaterialColorPickerNode( const std::string& rName );
 
 		virtual ~MaterialColorPickerNode();
 
-		NodeEditorCompilationStatus EvaluateNode( NodeEditorRuntime* evaluator ) override;
+		NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
 
 		void SetColor( const glm::vec3& rColor );
 
@@ -95,15 +99,16 @@ namespace Saturn {
 		void CreateNode();
 	};
 
-	class MaterialGetAssetNode : public Node
+	class MaterialGetAssetNode : public NodeEditorBlueprintNode
 	{
+		SAT_NODE_EDITOR_NODE_BODY( NodeExecutionType::AssetID );
 	public:
 		MaterialGetAssetNode();
 		MaterialGetAssetNode( const std::string& rName );
 
 		virtual ~MaterialGetAssetNode();
 
-		NodeEditorCompilationStatus EvaluateNode( NodeEditorRuntime* evaluator ) override;
+		NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
 
 		AssetID GetAssetID() const;
 		void SetAssetID( AssetID id );
@@ -112,29 +117,31 @@ namespace Saturn {
 		void CreateNode();
 	};
 
-	class MaterialSeparateColorRGBNode : public Node
+	class MaterialSeparateColorRGBNode : public NodeEditorBlueprintNode
 	{
+//		SAT_NODE_EDITOR_NODE_BODY( NodeExecutionType::MaterialSeparateColorRGB );
 	public:
 		MaterialSeparateColorRGBNode();
 		MaterialSeparateColorRGBNode( const std::string& rName );
 
 		virtual ~MaterialSeparateColorRGBNode();
 
-		NodeEditorCompilationStatus EvaluateNode( NodeEditorRuntime* evaluator ) override;
+		NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
 
 	private:
 		void CreateNode();
 	};
 
-	class MaterialColorMixerNode : public Node
+	class MaterialColorMixerNode : public NodeEditorBlueprintNode
 	{
+		SAT_NODE_EDITOR_NODE_BODY( NodeExecutionType::MaterialMixColors );
 	public:
 		MaterialColorMixerNode();
 		MaterialColorMixerNode( const std::string& rName );
 
 		virtual ~MaterialColorMixerNode();
 
-		NodeEditorCompilationStatus EvaluateNode( NodeEditorRuntime* evaluator ) override;
+		NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
 
 	private:
 		void CreateNode();
@@ -142,6 +149,9 @@ namespace Saturn {
 
 	class MaterialNodeLibrary
 	{
+	public:
+		static void RegisterAllNodes();
+
 	public:
 		static NodeEditorType GetStaticType() { return NodeEditorType::Material; }
 

@@ -37,7 +37,7 @@
 namespace Saturn {
 
 	class NodeEditor;
-	class Node;
+	class NodeEditorNodeBase;
 
 	class MaterialAssetViewer : public AssetViewer
 	{

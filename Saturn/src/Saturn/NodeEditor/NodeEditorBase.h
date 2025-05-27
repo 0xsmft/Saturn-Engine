@@ -32,7 +32,7 @@
 
 #include "NodeEditorCompilationStatus.h"
 
-#include "Node.h"
+#include "NodeEditorNodeBase.h"
 #include "Link.h"
 
 #include "imgui_node_editor.h"
@@ -48,8 +48,12 @@ namespace Saturn {
 		Unknown,
 		Default,
 		Material,
-		Sound
+		Sound,
+		BehaviourTree
 	};
+
+	template<typename EditorType, typename... V>
+	struct NodeEditorNodeGroup {};
 
 	class NodeEditorRuntime;
 	class Texture2D;
@@ -76,20 +80,20 @@ namespace Saturn {
 		bool IsLinked( UUID pinID );
 		Ref<Pin> FindPin( UUID id );
 		Ref<Link> FindLink( UUID id );
-		Ref<Node> FindNode( UUID id );
-		Ref<Node> FindNode( const std::string& rName );
+		Ref<NodeEditorNodeBase> FindNode( UUID id );
+		Ref<NodeEditorNodeBase> FindNode( const std::string& rName );
 		Ref<Link> FindLinkByPin( UUID id );
-		Ref<Node> FindNodeByPin( UUID id );
+		Ref<NodeEditorNodeBase> FindNodeByPin( UUID id );
 
 		std::vector<Ref<Link>> FindLinksByPin( UUID id );
 
 		void SetRuntime( Ref<NodeEditorRuntime> runtime );
 		NodeEditorCompilationStatus Evaluate();
 
-		std::vector<UUID> FindNeighbors( Ref<Node> node );
+		std::vector<UUID> FindNeighbors( Ref<NodeEditorNodeBase> node );
 
 		template<typename Function>
-		void TraverseFromStart( const Ref<Node>& rRootNode, Function func ) 
+		void TraverseFromStart( const Ref<NodeEditorNodeBase>& rRootNode, Function func ) 
 		{
 			// Last in first out
 			// So add our output node then add neighbors and continue as we want the last node with no more neighbors to be evaluated first.
@@ -105,7 +109,7 @@ namespace Saturn {
 				func( currentID );
 
 				// Find neighbors from inputs and continue until there is no neighbors
-				Ref<Node> nextNode = FindNode( currentID );
+				Ref<NodeEditorNodeBase> nextNode = FindNode( currentID );
 				for( const auto& rNeighbor : FindNeighbors( nextNode ) )
 				{
 					stack.push( rNeighbor );
@@ -118,17 +122,19 @@ namespace Saturn {
 		
 		void ShowFlow();
 		void ShowFlow( const std::vector<Ref<Link>>& rLinks );
+		void ShowFlow( const Ref<Link>& rLink );
+		void ShowFlow( UUID id );
 
 	public:
 		AssetID GetAssetID() const { return m_AssetID; }
 
-		const std::map<UUID, Ref<Node>>& GetNodes() const { return m_Nodes; }
-		std::map<UUID, Ref<Node>>& GetNodes() { return m_Nodes; }
+		const std::map<UUID, Ref<NodeEditorNodeBase>>& GetNodes() const { return m_Nodes; }
+		std::map<UUID, Ref<NodeEditorNodeBase>>& GetNodes() { return m_Nodes; }
 
 		const std::vector<Ref<Link>>& GetLinks() const { return m_Links; }
 		std::vector<Ref<Link>>& GetLinks() { return m_Links; }
 
-		void AddNode( Ref<Node> node );
+		void AddNode( Ref<NodeEditorNodeBase> node );
 
 		bool IsOpen() const { return m_WindowOpen; }
 
@@ -150,7 +156,7 @@ namespace Saturn {
 		ed::EditorContext* m_Editor = nullptr;
 		std::string m_ActiveNodeEditorState;
 
-		std::map<UUID, Ref<Node>> m_Nodes;
+		std::map<UUID, Ref<NodeEditorNodeBase>> m_Nodes;
 		std::vector<Ref<Link>> m_Links;
 
 		Ref<NodeEditorRuntime> m_Runtime;

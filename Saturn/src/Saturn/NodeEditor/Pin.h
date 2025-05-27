@@ -70,6 +70,12 @@ namespace Saturn {
 		Input
 	};
 
+	enum class PinRenderType
+	{
+		Blueprint,
+		Tree
+	};
+
 	inline std::string_view PinTypeToString( PinType type )
 	{
 		switch( type )
@@ -129,7 +135,7 @@ namespace Saturn {
 			return PinType::Object;
 	}
 
-	class Node;
+	class NodeEditorNodeBase;
 
 	class Pin : public RefTarget
 	{
@@ -147,12 +153,13 @@ namespace Saturn {
 		virtual ~Pin() = default;
 
 	public:
-		UUID        ID;
-		Ref<Node>   Node;
-		std::string Name;
-		PinType     Type = PinType::Flow;
-		PinKind     Kind = PinKind::Input;
-		bool        AcceptMultipleLinks = false;
+		UUID           ID;
+		Ref<NodeEditorNodeBase>      Node;
+		std::string    Name;
+		PinType        Type = PinType::Flow;
+		PinKind        Kind = PinKind::Input;
+		PinRenderType  RenderType = PinRenderType::Blueprint;
+		bool           AcceptMultipleLinks = false;
 
 	public:
 		PinIconType GetIconType() const;
@@ -175,6 +182,12 @@ namespace Saturn {
 	private:
 		void RenderInput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked, uint32_t pinIndex );
 		void RenderOutput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked );
+
+		void RenderBlueprintOutput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked );
+		void RenderTreeOutput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked );
+
+		void RenderBlueprintInput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked, uint32_t pinIndex );
+		void RenderTreeInput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked, uint32_t pinIndex );
 
 		bool CanCreateLink( const Ref<Pin>& rOther ) const;
 	};

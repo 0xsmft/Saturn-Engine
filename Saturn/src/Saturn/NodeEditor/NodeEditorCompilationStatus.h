@@ -36,4 +36,17 @@ namespace Saturn {
 		Failed
 	};
 
+	enum class NodeEvaluationState
+	{
+		// The node has never been evaluated in the current evaluation cycle
+		NeverEvaluated,
+		// The node has been evaluated in the current evaluation cycle however it has not reached to the end point
+		// This could mean that due to a condition it's no longer needed.
+		// For example, when using SoundRandomNode it will cause the previous nodes' evaluation to be invalidated if it was not picked.
+		WasEvaluated,
+		// The node has been evaluated in the current evaluation cycle and it has reached to the end point
+		Evaluated,
+		// Failed to evaluate the node
+		Failed
+	};
 }

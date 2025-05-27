@@ -28,12 +28,12 @@
 
 #pragma once
 
-#include "Saturn/NodeEditor/Node.h"
+#include "Saturn/NodeEditor/NodeEditorBlueprintNode.h"
 #include "Saturn/Asset/Asset.h"
 
 namespace Saturn {
 
-	class SoundPlayerNode : public Node
+	class SoundPlayerNode : public NodeEditorBlueprintNode
 	{
 	public:
 		SoundPlayerNode();
@@ -41,7 +41,7 @@ namespace Saturn {
 
 		virtual ~SoundPlayerNode();
 
-		virtual NodeEditorCompilationStatus EvaluateNode( NodeEditorRuntime* evaluator ) override;
+		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
 
 		AssetID GetAssetID() const;
 

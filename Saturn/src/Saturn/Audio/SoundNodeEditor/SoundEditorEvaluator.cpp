@@ -73,7 +73,7 @@ namespace Saturn {
 
 		Ref<NodeEditor> uiEditor = m_NodeEditor.As<NodeEditor>();
 
-		Ref<Node> OutputNode = m_NodeEditor->FindNode( m_Info.OutputNodeID );
+		Ref<NodeEditorNodeBase> OutputNode = m_NodeEditor->FindNode( m_Info.OutputNodeID );
 		if( !OutputNode ) 
 		{
 			uiEditor->ThrowError( "Output node was not found!" );
@@ -100,7 +100,7 @@ namespace Saturn {
 
 	NodeEditorCompilationStatus SoundEditorEvaluator::EvalNoChecks()
 	{
-		Ref<Node> OutputNode = m_NodeEditor->FindNode( m_Info.OutputNodeID );
+		Ref<NodeEditorNodeBase> OutputNode = m_NodeEditor->FindNode( m_Info.OutputNodeID );
 
 		// Stacks are last in first out, so our output node will be evaluated last which is what we want.
 		std::stack<UUID> order;
@@ -127,9 +127,10 @@ namespace Saturn {
 			const UUID currentNodeID = order.top();
 			order.pop();
 
-			Ref<Node> currentNode = m_NodeEditor->FindNode( currentNodeID );
+			Ref<NodeEditorNodeBase> currentNode = m_NodeEditor->FindNode( currentNodeID );
 
-			if( auto result = currentNode->EvaluateNode( this ); result != NodeEditorCompilationStatus::Success )
+			auto result = currentNode->EvaluateNode( this );
+			if( result != NodeEvaluationState::Evaluated )
 			{
 				compileResult = NodeEditorCompilationStatus::Failed;
 				break;
@@ -197,6 +198,19 @@ namespace Saturn {
 		}
 	}
 
+	void SoundEditorEvaluator::TraceEvaluationPath()
+	{
+#if !defined(SAT_DIST)
+		for( const auto& [id, state] : EvaluatedPath )
+		{
+			if( state == NodeEvaluationState::Evaluated )
+			{
+				m_NodeEditor->ShowFlow( id );
+			}
+		}
+#endif
+	}
+
 	void SoundEditorEvaluator::DestroyAliveSounds()
 	{
 		for( auto& rSound : AliveSounds )
@@ -209,6 +223,10 @@ namespace Saturn {
 
 		AliveSounds.clear();
 		SoundsPlaying.clear();
+
+#if !defined(SAT_DIST)
+		EvaluatedPath.clear();
+#endif
 	}
 
 }

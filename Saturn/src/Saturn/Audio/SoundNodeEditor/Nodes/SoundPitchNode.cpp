@@ -43,14 +43,14 @@
 namespace Saturn {
 
 	SoundPitchNode::SoundPitchNode()
-		: Node()
+		: NodeEditorBlueprintNode()
 	{
 		Name = "Sound Pitch";
 		CreateNode();
 	}
 
 	SoundPitchNode::SoundPitchNode( const std::string& rName )
-		: Node( rName )
+		: NodeEditorBlueprintNode( rName )
 	{
 		CreateNode();
 	}
@@ -72,12 +72,12 @@ namespace Saturn {
 	{
 	}
 
-	NodeEditorCompilationStatus SoundPitchNode::EvaluateNode( NodeEditorRuntime* evaluator )
+	Saturn::NodeEvaluationState SoundPitchNode::EvaluateNode( NodeEditorRuntime* evaluator )
 	{
 		SoundEditorEvaluator* pSoundEditorEvaluator = dynamic_cast< SoundEditorEvaluator* >( evaluator );
 
 		if( !pSoundEditorEvaluator )
-			return NodeEditorCompilationStatus::Failed;
+			return NodeEvaluationState::Failed;
 
 		Ref<SoundPin> soundPin = Inputs[ 0 ].As<SoundPin>();
 
@@ -98,7 +98,7 @@ namespace Saturn {
 
 		pSoundEditorEvaluator->RegisterSound( Outpin->Data );
 
-		return NodeEditorCompilationStatus::Success;
+		return NodeEvaluationState::Evaluated;
 	}
 
 }

@@ -28,7 +28,7 @@
 
 #pragma once
 
-#include "Node.h"
+#include "NodeEditorNodeBase.h"
 
 namespace Saturn {
 
@@ -37,6 +37,19 @@ namespace Saturn {
 	class GlobalNodesList
 	{
 	public:
-		static Ref<Node> ConvertExecutionTypeToNode( NodeExecutionType executionType, Ref<NodeEditorBase> nodeEditorBase );
+		// NOTE: This is not an auto-register function!
+		// The parent layer must call this function to register the nodes!
+		static void RegisterLibrary( const std::unordered_map<NodeExecutionType, std::function<Ref<NodeEditorNodeBase>( Ref<NodeEditorBase> )>>& rNodeMap );
+
+		// NOTE: This is not an auto-register function!
+		// The parent layer must call this function to register the nodes!
+		static void Terminate();
+
+		// NOTE: This is not an auto-register function!
+		// The parent layer must call this function to register the nodes!
+		static void RegisterAll();
+
+	public:
+		static Ref<NodeEditorNodeBase> ConvertExecutionTypeToNode( NodeExecutionType executionType, Ref<NodeEditorBase> nodeEditorBase );
 	};
 }

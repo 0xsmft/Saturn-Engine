@@ -65,7 +65,7 @@ namespace SaturnBuildTool
         {
             if( CommandLineParser.Instance.FindFlag( "HELP" ) )
             {
-                Console.WriteLine( "Help for Saturn Build Tool X0.0.4 (Engine Version: 0.2.0 8192)" );
+                Console.WriteLine( "Help for Saturn Build Tool X0.0.4 (Engine Version: 0.2.1 8193)" );
                 Console.WriteLine( "Options:" );
                 Console.WriteLine( " Action Options:" );
                 Console.WriteLine( "  /BUILD* -- build the project" );
@@ -103,7 +103,7 @@ namespace SaturnBuildTool
 
             if( CommandLineParser.Instance.FindFlag( "VERSION" ) )
             {
-                Console.WriteLine( "Saturn Build Tool X0.0.4 (Engine Version: 0.2.0 8192)" );
+                Console.WriteLine( "Saturn Build Tool X0.0.4 (Engine Version: 0.2.1 8193)" );
                 return false;
             }
 
@@ -121,7 +121,7 @@ namespace SaturnBuildTool
 
         private bool InitForBuilding() 
         {
-            Console.WriteLine( "==== Saturn Build Tool X0.0.4 (Engine Version: 0.2.0 8192) ====" );
+            Console.WriteLine( "==== Saturn Build Tool X0.0.4 (Engine Version: 0.2.1 8193) ====" );
 
             // Setup project info from args.
             if( !ProjectInfo.Instance.Setup() )

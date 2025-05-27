@@ -39,7 +39,7 @@
 
 #include "Saturn/Scene/Components.h"
 
-#include "Saturn/Physics/PhysicsCooking.h"
+#include "Saturn/Physics/PhysicsFoundation.h"
 
 namespace Saturn {
 
@@ -162,7 +162,7 @@ namespace Saturn {
 			{
 				if( ImGui::Button( "Generate Mesh Collider" ) )
 				{
-					bool Result = PhysicsCooking::Get().CookMeshCollider( m_Mesh, SelectedEnum );
+					bool Result = PhysicsFoundation::Get().GetCookingContext().CookMeshCollider( m_Mesh, SelectedEnum );
 
 					// TODO: Show a dialog box of what failed.
 				}
@@ -260,13 +260,21 @@ namespace Saturn {
 
 		if( m_Open == false )
 		{
-			AssetViewer::DestroyViewer( m_AssetID );
 			m_Open = false;
+
+			RenderThread::Get().Queue( [ = ]()
+			{
+				m_SceneRenderer = nullptr;
+			} );
 		}
 	}
 
 	void StaticMeshAssetViewer::OnUpdate( Timestep ts )
 	{
+		// Only true if we are awaiting a shutdown from closing our window.
+		if( !m_SceneRenderer )
+			return;
+
 		m_Camera.SetActive( m_AllowCameraEvents );
 		m_Camera.OnUpdate( ts );
 
@@ -299,9 +307,7 @@ namespace Saturn {
 
 		m_Open = true;
 
-		Ref<Entity> e = Ref<Entity>::Create( m_Scene.Get() );
-		e->SetName( "InternalViewerEntity" );
-
+		auto e = m_Scene->CreateEntity( "InternalViewerEntity" );
 		e->AddComponent<StaticMeshComponent>().Mesh = mesh;
 	}
 

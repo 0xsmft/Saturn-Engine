@@ -50,6 +50,9 @@
 
 #include "Saturn/Vulkan/VulkanContext.h"
 
+
+#include "Saturn/AI/Navigation/NavBoundsEntity.h"
+#include "Saturn/AI/AIAgentEntity.h"
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -68,7 +71,6 @@ namespace Saturn {
 	SceneHierarchyPanel::~SceneHierarchyPanel()
 	{
 		m_EditIcon = nullptr;
-
 		m_CopyComponentData.Buffer.Free();
 	}
 
@@ -176,6 +178,18 @@ namespace Saturn {
 					}
 				}
 
+				auto navBounds = m_Context->m_Registry.view<NavigationMeshSpecificationComponent>();
+				if( navBounds.empty() )
+				{
+					if( ImGui::MenuItem( "Create Navigation Bounds" ) )
+					{
+						auto navEntity = m_Context->CreateEntityScript<NavBoundsEntity>( "NavBoundsEntity", "Navigation Bounds" );
+						navEntity->GatherGeometryAndBuild();
+
+						SetSelected( navEntity );
+						m_Context->MarkDirty();
+					}
+				}
 				ImGui::EndPopup();
 			}
 
@@ -575,13 +589,12 @@ namespace Saturn {
 		// Draw ID and entity class type.
 		{
 			// ID
-			const auto& id = entity->GetComponent<IdComponent>().ID;
 			ImGui::TextDisabled( "%llu", id );
 
 			if( entity->HasComponent<ScriptComponent>() )
 			{
 				ImGui::SameLine();
-				ImGui::TextDisabled( "Class Instance (C++ Class) [%s]", entity->GetComponent<ScriptComponent>().ScriptName.c_str() );
+				ImGui::TextDisabled( "Class Instance (C++ Class) [%s]", entity->GetComponent<ScriptComponent>().ClassName.c_str() );
 			}
 			else if( entity->HasComponent<PrefabComponent>() )
 			{
@@ -609,7 +622,7 @@ namespace Saturn {
 			auto& scale = tc.Scale;
 
 			modified = Auxiliary::DrawVec3Control( "Translation", tc.Position );
-			
+		
 			if( Auxiliary::DrawVec3Control( "Rotation", rotation ) ) 
 			{
 				tc.SetRotation( glm::radians( rotation ) );
@@ -619,7 +632,16 @@ namespace Saturn {
 
 			modified |= Auxiliary::DrawVec3Control( "Scale", tc.Scale, 1.0f );
 
-			if( modified ) m_Context->MarkDirty();
+			if( modified )
+			{
+				m_Context->MarkDirty();
+			
+				if( m_Context->GetNavBoundsEntity() == entity )
+				{
+					m_Context->GetNavBoundsEntity()->SetAABB( tc.Position, tc.Scale );
+					m_Context->GetNavBoundsEntity()->MarkDirty();
+				}
+			}
 		} );
 
 		DrawComponent<StaticMeshComponent>( "Static Mesh", entity, [&]( StaticMeshComponent& mc )
@@ -1221,6 +1243,51 @@ namespace Saturn {
 			modified |= Auxiliary::DrawVec3Control( "Direction", al.Direction );
 			modified |= Auxiliary::DrawFloatControl( "ConeInnerAngle", al.ConeInnerAngle );
 			modified |= Auxiliary::DrawFloatControl( "ConeOuterAngle", al.ConeOuterAngle );
+
+			if( modified ) m_Context->MarkDirty();
+		} );
+
+		DrawComponent<NavigationMeshSpecificationComponent>( "Navigation Specification", entity, [ & ]( auto& nms )
+		{
+			Ref<NavBoundsEntity> boundsEntity = entity.As<NavBoundsEntity>();
+
+			bool modified = false;
+
+			Auxiliary::DisabledFlag disabledFlag( true );
+			Auxiliary::DrawVec3Control( "Extent", nms.Extent );
+			disabledFlag.Pop();
+
+			{
+				auto& transform = entity->GetComponent<TransformComponent>();
+				nms.Extent = transform.Scale;
+			}
+
+			if( ImGui::Button( "Build" ) )
+			{
+				nms.HasBuilt = true;
+
+				if( boundsEntity )
+				{
+					boundsEntity->GatherGeometryAndBuild();
+				}
+			}
+
+			if( boundsEntity->NeedsRebuilding() )
+			{
+				std::string text = "A rebuild is required for the changes to have effect!";
+
+				ImVec2 padding = ImGui::GetStyle().FramePadding;
+				ImVec2 textPosition = ImGui::GetCursorScreenPos();
+				ImVec2 textSize = ImGui::CalcTextSize( text.c_str() );
+
+				ImVec2 min = ImVec2( textPosition.x - padding.x, textPosition.y - padding.y );
+				ImVec2 max = ImVec2( textPosition.x + padding.x + textSize.x, textPosition.y + padding.y + textSize.y );
+
+				ImGui::GetWindowDrawList()->AddRectFilled( min, max,
+					IM_COL32( 200, 30, 60, 255 ), 2.0f, ImDrawFlags_RoundCornersAll );
+
+				ImGui::TextUnformatted( text.c_str() );
+			}
 
 			if( modified ) m_Context->MarkDirty();
 		} );

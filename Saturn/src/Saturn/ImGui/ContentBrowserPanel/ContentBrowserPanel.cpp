@@ -712,10 +712,10 @@ namespace Saturn {
 			DrawDeleteAssetPopup();
 
 			if( m_OpenScriptsPopup )
-				ImGui::OpenPopup( "Create A New Class##Create_Script" );
+				ImGui::OpenPopup( "Create New Class##Create_Script" );
 
 			ImGui::SetNextWindowSize( { 350.0F, 0.0F } );
-			if( ImGui::BeginPopupModal( "Create A New Class##Create_Script", &m_OpenScriptsPopup, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings ) )
+			if( ImGui::BeginPopupModal( "Create New Class##Create_Script", &m_OpenScriptsPopup, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings ) )
 			{
 				bool PopupModified = false;
 
@@ -751,24 +751,9 @@ namespace Saturn {
 
 				ImGui::EndVertical();
 
-				auto drawDisabledBtn = [&]( const char* n ) -> bool
-					{
-						ImGui::PushItemFlag( ImGuiItemFlags_Disabled, true );
-						ImGui::PushStyleVar( ImGuiStyleVar_Alpha, 0.5f );
-						bool value = ImGui::Button( n );
-						ImGui::PopStyleVar( 1 );
-						ImGui::PopItemFlag();
+				Auxiliary::DisabledFlag disabled( m_NewClassName.empty() || m_SelectedMetadata.Name.empty() );
 
-						return value;
-					};
-
-				bool Pressed = false;
-				if( m_NewClassName.empty() || m_SelectedMetadata.Name.empty() )
-					Pressed = drawDisabledBtn( "Create" );
-				else
-					Pressed = ImGui::Button( "Create" );
-
-				if( Pressed )
+				if( ImGui::Button( "Create" ) )
 				{
 					if( !Project::GetActiveProject()->HasPremakeFile() )
 					{
@@ -791,6 +776,8 @@ namespace Saturn {
 					UpdateFiles( true );
 				}
 
+				disabled.Pop();
+
 				if( PopupModified )
 				{
 					m_OpenScriptsPopup = false;
@@ -802,10 +789,10 @@ namespace Saturn {
 			}
 
 			if( m_OpenClassInstancePopup )
-				ImGui::OpenPopup( "Create A New Class Instance (Prefab)##Create_ClassIns" );
+				ImGui::OpenPopup( "Create New Class Instance (Prefab)##Create_ClassIns" );
 
 			ImGui::SetNextWindowSize( { 350.0F, 0.0F } );
-			if( ImGui::BeginPopupModal( "Create A New Class Instance (Prefab)##Create_ClassIns", &m_OpenClassInstancePopup, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings ) )
+			if( ImGui::BeginPopupModal( "Create New Class Instance (Prefab)##Create_ClassIns", &m_OpenClassInstancePopup, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings ) )
 			{
 				bool PopupModified = false;
 
@@ -835,16 +822,7 @@ namespace Saturn {
 					ImGui::EndListBox();
 				}
 
-				auto drawDisabledBtn = [&]( const char* n ) -> bool
-					{
-						ImGui::PushItemFlag( ImGuiItemFlags_Disabled, true );
-						ImGui::PushStyleVar( ImGuiStyleVar_Alpha, 0.5f );
-						bool value = ImGui::Button( n );
-						ImGui::PopStyleVar( 1 );
-						ImGui::PopItemFlag();
-
-						return value;
-					};
+				Auxiliary::DisabledFlag disabled( m_ClassInstanceName.empty() || m_SelectedMetadata.Name.empty() );
 
 				if( ImGui::Button( "Create" ) )
 				{
@@ -868,16 +846,20 @@ namespace Saturn {
 
 					if( ClassMetadataHandler::Get().IsEngineMetadata( m_SelectedMetadata ) )
 					{
+						GActiveScene->CreateEntityWithIDScript( UUID(), "Temporary", m_SelectedMetadata.Name, false );
+						
+						/*
 						// TODO: Create the class somehow?
 						if( m_SelectedMetadata.Name == "Entity" ) 
 						{
 							sourceEntity = GActiveScene->CreateEntity();
 						}
+						*/
 					}
 					else
 					{
 						sourceEntity = GameModule::Get().CreateEntity( m_SelectedMetadata.Name );
-						sourceEntity->AddComponent<ScriptComponent>().ScriptName = m_SelectedMetadata.Name;
+						sourceEntity->AddComponent<ScriptComponent>().ClassName = m_SelectedMetadata.Name;
 					}
 
 					prefab->Create( sourceEntity );
@@ -893,6 +875,8 @@ namespace Saturn {
 
 					PopupModified = true;
 				}
+
+				disabled.Pop();
 
 				if( PopupModified )
 				{
@@ -911,6 +895,23 @@ namespace Saturn {
 		}
 
 		ImGui::End();
+	}
+
+	void ContentBrowserPanel::OnEvent( RubyEvent& rEvent )
+	{
+		if( rEvent.Type == RubyEventType::MousePressed )
+		{
+			RubyMouseEvent& mouseEvent = ( RubyMouseEvent& ) rEvent;
+
+			if( mouseEvent.GetButton() == ( int ) RubyMouseButton::Extra1 )
+			{
+				UndoQuickAction();
+			}
+			else if( mouseEvent.GetButton() == ( int ) RubyMouseButton::Extra2 )
+			{
+				RedoQuickAction();
+			}
+		}
 	}
 
 	void ContentBrowserPanel::DrawClassHierarchy( const std::string& rKeyName, const SClassMetadata& rData )
@@ -1454,6 +1455,8 @@ namespace Saturn {
 	void ContentBrowserPanel::ResetPath( const std::filesystem::path& rProjectRootPath )
 	{
 		ClearSearchQuery();
+		// TEMP: We will soon have different quick actions that will allow us to undo/redo changing view modes.
+		ClearQuickActions();
 
 		m_ScriptPath = Project::GetActiveProject()->GetSourceDir();
 
@@ -1519,7 +1522,7 @@ namespace Saturn {
 			{
 				rItem->Select();
 
-				// TODO: This does not work because the clipper may clip the item cauing it to never be rendered and meaning that it will never get to set the scroll
+				// TODO: This does not work because the clipper may clip the item causing it to never be rendered and meaning that it will never get to set the scroll
 				// We could skip the clipper for one frame to allow the item to render and set it's scroll as then next time the will be visible.
 				rItem->ScrollTo();
 
@@ -1593,6 +1596,45 @@ namespace Saturn {
 	bool ContentBrowserPanel::ItemIsNotInSelectionList( const Ref<ContentBrowserItem>& rItem )
 	{
 		return std::find( m_SelectedItems.begin(), m_SelectedItems.end(), rItem ) == m_SelectedItems.end();
+	}
+
+	void ContentBrowserPanel::UndoQuickAction()
+	{
+		if( !m_QuickActionUndo.empty() )
+		{
+			auto& rAction = m_QuickActionUndo.back();
+
+			m_CurrentPath = rAction.OldPath;
+			m_ChangeDirectory = true;
+
+			m_QuickActionRedo.push_back( rAction );
+			m_QuickActionUndo.pop_back();
+		}
+	}
+
+	void ContentBrowserPanel::RedoQuickAction()
+	{
+		if( !m_QuickActionRedo.empty() )
+		{
+			auto& rAction = m_QuickActionRedo.back();
+
+			m_CurrentPath = rAction.NewPath;
+			m_ChangeDirectory = true;
+
+			m_QuickActionUndo.push_back( rAction );
+			m_QuickActionRedo.pop_back();
+		}
+	}
+
+	void ContentBrowserPanel::ClearQuickActions()
+	{
+		m_QuickActionRedo.clear();
+		m_QuickActionUndo.clear();
+	}
+
+	void ContentBrowserPanel::AddQuickAction( const std::filesystem::path& rOldPath, const std::filesystem::path& rNewPath )
+	{
+		m_QuickActionUndo.push_back( { .OldPath = rOldPath, .NewPath = rNewPath } );
 	}
 
 	void ContentBrowserPanel::UpdateFiles( bool clear /*= false */ )

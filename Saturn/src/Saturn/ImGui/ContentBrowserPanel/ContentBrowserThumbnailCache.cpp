@@ -165,7 +165,12 @@ namespace Saturn {
 			else
 			{
 				// Load texture from the cache on job system
-				DeserialiseSingleThumbnail( Itr->first, rData );
+				if( rData.Time != timestamp || !DeserialiseSingleThumbnail( Itr->first, rData ) )
+				{
+					// Failed to load from cache, regenerate the image next frame.
+					// We can do this by removing the image from the cache
+					m_Cache.erase( Itr );
+				}
 
 				return texture; 
 			}
@@ -390,13 +395,13 @@ namespace Saturn {
 		stream.close();
 	}
 
-	void ContentBrowserThumbnailCache::DeserialiseSingleThumbnail( AssetID id, CacheData& rData )
+	bool ContentBrowserThumbnailCache::DeserialiseSingleThumbnail( AssetID id, CacheData& rData )
 	{
 		std::filesystem::path newPath = Project::GetActiveProject()->GetFullCachePath() / "PerUser" / "Thumbnails" / std::to_string( id );
 		newPath.replace_extension( ".stc" );
 
 		if( !std::filesystem::exists( newPath ) )
-			return;
+			return false;
 
 		std::ifstream stream( newPath, std::ios::binary | std::ios::in );
 
@@ -409,11 +414,20 @@ namespace Saturn {
 		Buffer TemporaryBuffer;
 		RawSerialisation::ReadSaturnBuffer( TemporaryBuffer, stream );
 		
+		uint32_t expectedImageSize = width * height * 4;
+		if( TemporaryBuffer.Size != expectedImageSize )
+		{
+			SAT_CORE_ERROR( "Image Size does not match!, Expected: {0}, Got: {1} ( ASSET/{2}, PATH/{3} )", expectedImageSize, TemporaryBuffer.Size, id, newPath.string() );
+			return false;
+		}
+
 		rData.Texture = Ref<Texture2D>::Create( ImageFormat::RGBA8, width, height, TemporaryBuffer.Data, TemporaryBuffer.Size );
 		
 		TemporaryBuffer.Free();
 
 		stream.close();
+
+		return true;
 	}
 
 }

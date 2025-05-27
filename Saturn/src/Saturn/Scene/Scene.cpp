@@ -820,7 +820,7 @@ namespace Saturn {
 			}
 			else
 			{
-				NewScene->m_EntityIDMap[ hnd ] = originalEntity->Clone();
+				NewScene->m_EntityIDMap[ hnd ] = Ref<Entity>::Create();
 				NewScene->m_EntityIDMap[ hnd ]->GetComponent<IdComponent>().ID = originalEntity->GetUUID();
 			}	
 		}

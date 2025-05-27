@@ -377,7 +377,7 @@ namespace Saturn {
 		{
 			if( hasScript )
 			{
-				auto& properties = ClassMetadataHandler::Get().GetAllProperties( entity->GetComponent<ScriptComponent>().ScriptName );
+				auto& properties = ClassMetadataHandler::Get().GetAllProperties( entity->GetComponent<ScriptComponent>().ClassName );
 				for( auto& rProperty : properties )
 				{
 					std::string name = rProperty.GetName();

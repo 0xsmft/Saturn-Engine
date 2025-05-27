@@ -43,7 +43,6 @@
 #include "Saturn/ImGui/TextureViewer.h"
 #include "Saturn/ImGui/SoundAssetViewer.h"
 #include "Saturn/Audio/SoundNodeEditor/GraphSoundAssetViewer.h"
-#include "Saturn/AI/BehaviourTree/BehaviourTreeAssetViewer/BehaviourTreeAssetViewer.h"
 
 #include "ContentBrowserThumbnailCache.h"
 

@@ -49,6 +49,14 @@ namespace Saturn {
 
 	struct SClassMetadata;
 
+	struct ContentBrowserQuickAction
+	{
+		std::filesystem::path OldPath;
+		std::filesystem::path NewPath;
+	};
+
+	class RubyEvent;
+	
 	class ContentBrowserPanel : public ContentBrowserBase
 	{
 	public:
@@ -57,9 +65,11 @@ namespace Saturn {
 
 		virtual ~ContentBrowserPanel();
 
-		virtual void Draw() override;
+		virtual void OnImGuiRender() override;
+		virtual void OnEvent( RubyEvent& rEvent ) override;
+		virtual void OnUpdate( Timestep ts ) {}
 
-		static const char* GetStaticName()
+		static inline const char* GetStaticName()
 		{
 			return "Content Browser Panel";
 		}
@@ -103,6 +113,11 @@ namespace Saturn {
 		void UpdateFirstFolder();
 		bool ItemIsNotInSelectionList( const Ref<ContentBrowserItem>& rItem );
 
+		void UndoQuickAction();
+		void RedoQuickAction();
+		void ClearQuickActions();
+		void AddQuickAction( const std::filesystem::path& rOldPath, const std::filesystem::path& rNewPath );
+
 	private:
 		std::filesystem::path m_ScriptPath;
 
@@ -121,6 +136,10 @@ namespace Saturn {
 		SClassMetadata m_SelectedMetadata = {};
 
 		filewatch::FileWatch<std::wstring>* m_Watcher = nullptr;
+
+	private:
+		std::vector<ContentBrowserQuickAction> m_QuickActionUndo;
+		std::vector<ContentBrowserQuickAction> m_QuickActionRedo;
 
 	private:
 		bool m_ShowAssetImportPopup = false;

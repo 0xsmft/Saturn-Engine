@@ -59,6 +59,8 @@ namespace Saturn {
 		void ClearOutput();
 		void PushMessage( const NodeEditorMessage& rMessageData );
 
+		void SetWindowID( UUID id ) { m_OutputWindowID = id; }
+
 	private:
 		void DrawMessage( const NodeEditorMessage& rMessage );
 		void ClearMessage( UUID messageID );
@@ -66,5 +68,6 @@ namespace Saturn {
 	private:
 		std::vector<NodeEditorMessage> m_Messages;
 		UUID m_SelectedMessageID = 0;
+		UUID m_OutputWindowID;
 	};
 }

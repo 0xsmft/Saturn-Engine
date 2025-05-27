@@ -28,55 +28,44 @@
 
 #pragma once
 
+#include "Saturn/GameFramework/Core/GameScript.h"
 #include "Saturn/Scene/Entity.h"
-#include "RecastNavigationMeshBuilder.h"
-
-class dtNavMeshQuery;
+#include "Navigation/NavBoundsEntity.h"
 
 namespace Saturn {
 
-	class NavBoundsEntity : public Entity
+	class AIAgentEntity : public Entity
 	{
+		//////////////////////////////////////////////////////////////////////////
+		// Needed for game class.
+
+		SAT_DECLARE_CLASS( AIAgentEntity, Entity );
 	public:
-		NavBoundsEntity();
-		~NavBoundsEntity();
+		AIAgentEntity();
+		AIAgentEntity( const std::string& rName, UUID rId );
+		~AIAgentEntity();
 
-		void BeginPlay() override;
-		void OnUpdate( Saturn::Timestep ts ) override;
-		void OnPhysicsUpdate( Saturn::Timestep ts ) override;
+		virtual void BeginPlay() override;
+		virtual void OnUpdate( Saturn::Timestep ts ) override;
+		virtual void OnPhysicsUpdate( Saturn::Timestep ts ) override;
 
-		void SetAABB( const glm::vec3& rCenter, const glm::vec3& rExtent );
-		AABB GetBoundingBox();
-
-		void GatherGeometryAndBuild();
-
-		RecastNavigationMeshBuilder& GetBuilder() { return m_Builder; }
-
-#if defined(SAT_DEBUG) || defined(SAT_RELEASE)
-		[[nodiscard]] bool NeedsRebuilding() const { return m_NeedsRebuilding; }
-		void CleanDirty() { m_NeedsRebuilding = false; }
-		void MarkDirty() { m_NeedsRebuilding = true; }
-#else
-		bool NeedsRebuilding() const { return false; }
-		void CleanDirty() { }
-		void MarkDirty() {}
-#endif
-
-	public:
-		void LoadNavMeshFromDisk();
+		Ref<StaticMesh>& GetMesh() { return m_Mesh; }
+		const Ref<StaticMesh>& GetMesh() const { return m_Mesh; }
 
 	private:
-		void Init();
+		// TODO: Change to a base mesh class, we don't know what the user will have.
+		Ref<StaticMesh> m_Mesh;
+		// TODO: Move this to a movement component.
+		PhysicsRigidBody* m_RigidBody = nullptr;
 
-	private:
-		// The max bounds that the nav mesh can possibly extend to.
-		// The actual bounding volume of the Recast nav mesh may be smaller because our max bounds may extend beyond any geometry.
-		AABB m_MaxBounds;
-		RecastNavigationMeshBuilder m_Builder;
+		Ref<NavBoundsEntity> m_NavBoundsEntity;
 
-#if defined(SAT_DEBUG) || defined(SAT_RELEASE)
-		bool m_NeedsRebuilding = false;
-#endif
+		int m_FrameCount = 10;
+		bool m_Moving = false;
+		glm::vec3 m_TargetPosition{};
+
+		std::vector<glm::vec3> m_PathPoints;
+		size_t m_CurrentPathIndex = 0;
 	};
 	
 }

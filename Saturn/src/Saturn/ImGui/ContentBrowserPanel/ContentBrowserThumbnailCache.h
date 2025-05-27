@@ -77,7 +77,7 @@ namespace Saturn {
 
 	private:
 		void SerialiseSingleThumbnail( AssetID id, const CacheData& rData );
-		void DeserialiseSingleThumbnail( AssetID id, CacheData& rData );
+		[[nodiscard]] bool DeserialiseSingleThumbnail( AssetID id, CacheData& rData );
 
 	private:
 		Ref<Texture2D> m_FileIcon;

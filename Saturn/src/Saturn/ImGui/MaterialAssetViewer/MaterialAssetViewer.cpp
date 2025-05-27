@@ -99,6 +99,8 @@ namespace Saturn {
 			SetupNewNodeEditor();
 		}
 
+		m_Name = std::format( "{0}##{1}", m_HostMaterialAsset->Name, ( uint64_t ) m_AssetID );
+
 		MaterialNodeEditorEvaluator::MaterialNodeEdInfo info;
 		info.HostMaterial = m_HostMaterialAsset;
 		info.OutputNodeID = m_OutputNodeID;
@@ -107,7 +109,7 @@ namespace Saturn {
 		rt->SetTargetNodeEditor( m_NodeEditor );
 
 		m_NodeEditor->SetRuntime( rt );
-		m_NodeEditor->SetWindowName( materialAsset->Name );
+		m_NodeEditor->SetWindowName( m_Name );
 
 		SetupNodeEditorCallbacks();
 
@@ -140,7 +142,7 @@ namespace Saturn {
 				if( ImGui::MenuItem( "Separate Color (RGB)" ) )
 					node = MaterialNodeLibrary::SpawnSeparateColorRGB( m_NodeEditor );
 
-				ImGui::SeparatorText( "Math" );
+				ImGui::SeparatorText( "Maths" );
 
 				if( ImGui::MenuItem( "Add Floats" ) )
 					node = MathNodeLibrary::SpawnMathAdd( m_NodeEditor );
@@ -235,8 +237,6 @@ namespace Saturn {
 		{
 			m_NodeEditor->Open( false );
 			m_Open = false;
-
-			DestroyViewer( m_AssetID );
 		}
 	}
 }

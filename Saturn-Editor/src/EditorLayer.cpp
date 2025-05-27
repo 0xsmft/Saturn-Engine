@@ -1582,7 +1582,25 @@ namespace Saturn {
 				ImGui::Text( "Tracy" );
 				ImGui::Text( "yaml-cpp" );
 				ImGui::Text( "zlib: Version 1.3.1, January 22nd, 2024" );
-				ImGui::Text( "PhysX: Version 4.1.1" );
+				ImGui::Text( "PhysX: Version 4.1.1, Copyright NVIDIA Corporation" );
+				ImGui::Text( "Recast & Detour" );
+				ImGui::Text( "glm" );
+				ImGui::Text( "entt" );
+				ImGui::Text( "vma" );
+				ImGui::Text( "miniaudio" );
+
+				Auxiliary::EndTreeNode();
+			}
+
+			ImGui::Separator();
+
+			if( Auxiliary::TreeNode( "Past version numbers" ) )
+			{
+				ImGui::Text( "Saturn version 0.1.0 (%llu)", SAT_VERSION_A_0_1_0 );
+				ImGui::Text( "Saturn version 0.1.1 (%llu)", SAT_VERSION_A_0_1_1 );
+				ImGui::Text( "Saturn version 0.1.2 (%llu)", SAT_VERSION_A_0_1_2 );
+				ImGui::Text( "Saturn version 0.1.3 (%llu)", SAT_VERSION_A_0_1_3 );
+				ImGui::Text( "Saturn version 0.1.4 (%llu)", SAT_VERSION_A_0_1_4 );
 
 				Auxiliary::EndTreeNode();
 			}
@@ -2558,12 +2576,10 @@ namespace Saturn {
 				{
 					Application::Get().GetWindow()->FlashAttention();
 
-					auto resultStr = AssetBundleResultToString( result );
-
 					MessageBoxInfo msgBox
 					{
 						.Title = "Error",
-						.Text = std::format( "Asset bundle failed to build error was: {0}", resultStr ),
+						.Text = std::format( "Asset bundle failed to build error was: {0}", result ),
 						.Buttons = MessageBoxButtons_Ok,
 						.Type = MessageBoxType::Error
 					};

@@ -623,7 +623,7 @@ namespace Saturn {
 		m_Links.erase( removeIt, m_Links.end() );
 	}
 
-	void NodeEditor::DeleteLink( UUID id )
+	void NodeEditor::DeleteLink( UUID id, bool skipUndoRedo )
 	{
 		const auto Itr = std::find_if( m_Links.begin(), m_Links.end(),
 			[id]( const auto& rLink )

@@ -93,8 +93,6 @@ namespace Saturn {
 			AudioSystem::Get().StopPreviewSounds( m_AssetID );
 			m_NodeEditor->Open( false );
 			m_Open = false;
-
-			DestroyViewer( m_AssetID );
 		}
 	}
 
@@ -102,6 +100,8 @@ namespace Saturn {
 	{
 		Ref<Asset> asset = AssetManager::Get().FindAsset( m_AssetID );
 		m_Asset = asset;
+
+		m_Name = std::format( "{0}##{1}", m_Asset->Name, ( uint64_t ) m_AssetID );
 
 		m_NodeEditor = Ref<NodeEditor>::Create( m_AssetID );
 
@@ -116,7 +116,7 @@ namespace Saturn {
 		}
 		
 		m_NodeEditor->NcSetCustomName( filename );
-		m_NodeEditor->SetWindowName( asset->Name );
+		m_NodeEditor->SetWindowName( m_Name );
 
 		m_NodeEditor->Open( true );
 		m_Open = true;

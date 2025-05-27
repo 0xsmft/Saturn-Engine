@@ -31,6 +31,8 @@
 
 #include "Saturn/Core/OptickProfiler.h"
 
+#include "Saturn/AI/Navigation/RecastInputGeometry.h"
+
 #include "Saturn/Scene/Components.h"
 #include "Saturn/Scene/Entity.h"
 
@@ -158,6 +160,17 @@ namespace Saturn {
 
 		*pOut = Hit;
 		return success;
+	}
+
+	void PhysicsScene::ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds )
+	{
+		auto rView = m_Scene->GetAllEntitiesWith<RigidbodyComponent>();
+		for( auto& rEntity : rView )
+		{
+			auto& rb = rEntity->GetComponent<RigidbodyComponent>();
+			
+			rb.Rigidbody->ExportRc( rData, rNavMeshBounds );
+		}
 	}
 
 	void PhysicsScene::AddToScene( physx::PxRigidActor& rBody )

@@ -28,20 +28,21 @@
 
 #pragma once
 
+#include <Saturn/ImGui/ImGuiWindowManager.h>
 #include <Saturn/ImGui/SceneHierarchyPanel.h>
 #include <Saturn/ImGui/ContentBrowserPanel/ContentBrowserPanel.h>
+#include <Saturn/ImGui/JobProgress.h>
+#include <Saturn/ImGui/TitleBar.h>
+#include <Saturn/ImGui/UndoRedo/GlobalUndoRedoGroup.h>
 
 #include <Saturn/Asset/AssetManager.h>
 
 #include <Saturn/Scene/Scene.h>
-#include <Saturn/Core/Layer.h>
-#include <Saturn/Core/Renderer/SceneFlyCamera.h>
-
-#include <Saturn/ImGui/JobProgress.h>
 
 #include <Saturn/Physics/PhysicsFoundation.h>
 
-#include <Saturn/ImGui/UndoRedo/GlobalUndoRedoGroup.h>
+#include <Saturn/Core/Layer.h>
+#include <Saturn/Core/Renderer/SceneFlyCamera.h>
 
 #include <queue>
 
@@ -195,6 +196,7 @@ namespace Saturn {
 
 		EditorCamera m_EditorCamera;
 		EditorCamera m_SuspendedEditorCamera;
+		Camera* m_pRuntimeCamera = nullptr;
 
 		bool m_AllowCameraEvents = false;
 		bool m_StartedRightClickInViewport = false;
@@ -224,13 +226,12 @@ namespace Saturn {
 
 		bool m_WasGizmoUsed = false;
 
-		// Translate as default
-		int m_GizmoOperation = 7 /* ImGuizmo::OPERATION::TRANSLATE */;
-
 		ImVec2 m_ViewportSize;
 
 		// JobProgress
 		float m_OperationPercent = 0.0f;
+		// Translate as default
+		int m_GizmoOperation = 7 /* ImGuizmo::OPERATION::TRANSLATE */;
 
 		std::queue<MessageBoxInfo> m_MessageBoxes;
 		std::vector<EditorNotification> m_Notifications;

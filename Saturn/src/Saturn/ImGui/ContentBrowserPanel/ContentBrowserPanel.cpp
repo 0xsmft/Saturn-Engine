@@ -143,10 +143,11 @@ namespace Saturn {
 				// TODO: Think about this...
 
 				auto path = std::filesystem::relative( entry.path(), m_CurrentViewModeDirectory );
+				auto newPath = m_RootPath / path;
 
-				m_CurrentPath = m_RootPath;
-				m_CurrentPath /= path;
+				AddQuickAction( m_CurrentPath, newPath );
 
+				m_CurrentPath = newPath;
 				m_ChangeDirectory = true;
 			}
 		}
@@ -580,7 +581,7 @@ namespace Saturn {
 		}
 	}
 
-	void ContentBrowserPanel::Draw()
+	void ContentBrowserPanel::OnImGuiRender()
 	{
 		if( ImGui::Begin( "Content Browser", &m_Open ) ) 
 		{
@@ -1629,13 +1630,15 @@ namespace Saturn {
 	{
 		if( pItem->IsDirectory() && clicked && !pItem->MultiSelected() ) 
 		{
-			m_CurrentPath /= pItem->Path();
+			auto newPath = m_CurrentPath / pItem->Path();
+			AddQuickAction( m_CurrentPath, newPath );
 
+			m_CurrentPath = newPath;
 			m_ChangeDirectory = true;
 
 			ClearSelection();
-
 			m_Searching = false;
+
 		}
 		else
 		{

@@ -682,17 +682,14 @@ project "SaturnHeaderTool"
 		defines "SAT_DEBUG"
 		runtime "Debug"
 		symbols "on"
-		postbuildcommands { '{COPYFILE} "../bin/Debug-windows-x86_64/Saturn-SharedStorage/Saturn-SharedStorage.dll" "%{cfg.targetdir}"' }
 
 	filter "configurations:Release"
 		defines "SAT_RELEASE"
 		runtime "Release"
 		optimize "on"
-		postbuildcommands { '{COPYFILE} "../bin/Release-windows-x86_64/Saturn-SharedStorage/Saturn-SharedStorage.dll" "%{cfg.targetdir}"' }
 
 	filter "configurations:Dist"
 		defines "SAT_DIST"
 		runtime "Release"
 		optimize "on"
 		symbols "Off"
-		postbuildcommands { '{COPYFILE} "../bin/Dist-windows-x86_64/Saturn-SharedStorage/Saturn-SharedStorage.dll" "%{cfg.targetdir}"' }

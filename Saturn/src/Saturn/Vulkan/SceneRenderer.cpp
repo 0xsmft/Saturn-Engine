@@ -38,9 +38,11 @@
 #include "Material.h"
 #include "ComputePipeline.h"
 #include "Renderer2D.h"
-#include "Saturn/ImGui/ImGuiAuxiliary.h"
-#include "Saturn/Core/Memory/Buffer.h"
+#include "DefaultMeshes.h"
 
+#include "Saturn/ImGui/ImGuiAuxiliary.h"
+
+#include "Saturn/Core/Memory/Buffer.h"
 #include "Saturn/Core/OptickProfiler.h"
 
 #include <Saturn/Core/Ruby/RubyWindow.h>
@@ -106,13 +108,15 @@ namespace Saturn {
 
 		InitDirShadowMap();
 
-//		InitBloom();
+		InitBloom();
 
 		InitSceneComposite();
 
 		InitLateComposite();
 
 		InitTexturePass();
+
+//		InitSelection();
 
 		switch( m_AOTechnique )
 		{
@@ -133,12 +137,6 @@ namespace Saturn {
 
 		// TODO: Package BRDF texture into AssetBundle in dist
 		m_RendererData.BRDFLUT_Texture = Ref<Texture2D>::Create( "content/textures/BRDF_LUT.tga", AddressingMode::Repeat, false );
-
-		m_RendererData.SSAOPassTimer.Reset();
-		m_RendererData.SSAOPassTimer.Stop();
-
-		m_RendererData.AOCompositeTimer.Reset();
-		m_RendererData.AOCompositeTimer.Stop();
 
 		constexpr size_t TransformCount = static_cast<size_t>( 1024 ) * 10;
 		m_RendererData.SubmeshTransformData.resize( MAX_FRAMES_IN_FLIGHT );
@@ -172,7 +170,6 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		Renderer::Get().ClearShaderReferences();
 #endif
-
 		m_pScene = nullptr;
 
 		FlushDrawList();
@@ -260,6 +257,8 @@ namespace Saturn {
 		if( !m_RendererData.DirShadowMapShader )
 		{
 			m_RendererData.DirShadowMapShader = ShaderLibrary::Get().FindOrLoad( "ShadowMap", "content/shaders/ShadowMap.glsl" );
+
+			m_RendererData.DirShadowMapMaterial = Ref<Material>::Create( m_RendererData.DirShadowMapShader, "ShdMap" );
 		}
 
 		PipelineSpecification PipelineSpec = {};
@@ -272,7 +271,7 @@ namespace Saturn {
 			{ ShaderDataType::Float3, "a_Position" },
 			{ ShaderDataType::Float3, "a_Normal" },
 			{ ShaderDataType::Float3, "a_Tanget" },
-			{ ShaderDataType::Float3, "a_Position" },
+			{ ShaderDataType::Float3, "a_Binormal" },
 			{ ShaderDataType::Float2, "a_TexCoord" }
 		};
 		PipelineSpec.InstanceLayout = {
@@ -286,7 +285,7 @@ namespace Saturn {
 		PipelineSpec.FrontFace = VK_FRONT_FACE_CLOCKWISE;
 
 		// Layered image
-		Ref<Image2D> shadowImage = Ref<Image2D>::Create( ImageFormat::DEPTH32F, ( uint32_t ) SHADOW_MAP_SIZE, ( uint32_t ) SHADOW_MAP_SIZE, 4 );
+		Ref<Image2D> shadowImage = Ref<Image2D>::Create( ImageFormat::DEPTH32F, ( uint32_t ) SHADOW_MAP_SIZE, ( uint32_t ) SHADOW_MAP_SIZE, 4, 1 );
 		shadowImage->SetDebugName( "Layered shadow image" );
 
 		FramebufferSpecification FBSpec = {};
@@ -312,8 +311,6 @@ namespace Saturn {
 
 			m_RendererData.DirShadowMapPipelines[ i ] = Ref< Pipeline >::Create( PipelineSpec );
 		}
-
-		m_RendererData.DirShadowMapMaterial = Ref<Material>::Create( m_RendererData.DirShadowMapShader, "ShdMap" );
 	}
 
 	void SceneRenderer::InitPreDepth()
@@ -375,7 +372,7 @@ namespace Saturn {
 			{ ShaderDataType::Float3, "a_Position" },
 			{ ShaderDataType::Float3, "a_Normal" },
 			{ ShaderDataType::Float3, "a_Tanget" },
-			{ ShaderDataType::Float3, "a_Position" },
+			{ ShaderDataType::Float3, "a_Binormal" },
 			{ ShaderDataType::Float2, "a_TexCoord" }
 		};
 		PipelineSpec.InstanceLayout = {
@@ -533,7 +530,7 @@ namespace Saturn {
 			{ ShaderDataType::Float3, "a_Position" },
 			{ ShaderDataType::Float3, "a_Normal" },
 			{ ShaderDataType::Float3, "a_Tanget" },
-			{ ShaderDataType::Float3, "a_Position" },
+			{ ShaderDataType::Float3, "a_Binormal" },
 			{ ShaderDataType::Float2, "a_TexCoord" }
 		};
 		PipelineSpec.InstanceLayout = {
@@ -570,8 +567,7 @@ namespace Saturn {
 
 		m_RendererData.BloomDS = m_RendererData.BloomShader->CreateDescriptorSet( 0 );
 
-
-		m_RendererData.BloomDirtTexture = Ref<Texture2D>::Create( "content/textures/editor/BloomDirtTextureUE.png", AddressingMode::Repeat );
+//		m_RendererData.BloomDirtTexture = Ref<Texture2D>::Create( "content/textures/editor/BloomDirtTextureUE.png", AddressingMode::Repeat );
 	}
 
 	void SceneRenderer::InitTexturePass()
@@ -616,6 +612,77 @@ namespace Saturn {
 	{
 	}
 
+	/*
+	void SceneRenderer::InitSelection()
+	{
+		if( !m_RendererData.SelectionShader )
+		{
+			m_RendererData.SelectionShader = ShaderLibrary::Get().FindOrLoad( "Selection", "content/shaders/Selection.glsl" );
+		}
+
+		m_RendererData.SelectionMaterial = Ref<Material>::Create( m_RendererData.SelectionShader, "PhysicsOutline" );
+
+		if( m_RendererData.SelectionRenderPass )
+			m_RendererData.SelectionRenderPass->Recreate();
+		else
+		{
+			PassSpecification PassSpec = {};
+			PassSpec.Name = "Selection pass";
+			PassSpec.LoadDepth = true;
+
+			// Depth = PreDepth.
+			PassSpec.Attachments = { ImageFormat::RGBA8, ImageFormat::DEPTH24STENCIL8 };
+
+			m_RendererData.SelectionRenderPass = Ref< Pass >::Create( PassSpec );
+		}
+
+		if( m_RendererData.SelectionFramebuffer )
+		{
+			FramebufferSpecification NewSpec;
+			NewSpec.ExistingImages[ 1 ] = m_RendererData.PreDepthFramebuffer->GetDepthAttachmentResource();
+
+			m_RendererData.SelectionFramebuffer->Recreate( m_RendererData.Width, m_RendererData.Height, NewSpec );
+		}
+		else
+		{
+			FramebufferSpecification FBSpec = {};
+			FBSpec.RenderPass = m_RendererData.SelectionRenderPass;
+			FBSpec.Width = m_RendererData.Width;
+			FBSpec.Height = m_RendererData.Height;
+
+			FBSpec.Attachments = { ImageFormat::RGBA8 };
+			FBSpec.ExistingImages[ 1 ] = m_RendererData.PreDepthFramebuffer->GetDepthAttachmentResource();
+
+			m_RendererData.SelectionFramebuffer = Ref<Framebuffer>::Create( FBSpec );
+		}
+
+		PipelineSpecification PipelineSpec = {};
+		PipelineSpec.Width = m_RendererData.Width;
+		PipelineSpec.Height = m_RendererData.Height;
+		PipelineSpec.Name = "SelectionPipeline";
+		PipelineSpec.Shader = m_RendererData.SelectionShader;
+		PipelineSpec.RenderPass = m_RendererData.SelectionRenderPass;
+		PipelineSpec.UseDepthTest = true;
+		PipelineSpec.CullMode = CullMode::None;
+		PipelineSpec.FrontFace = VK_FRONT_FACE_CLOCKWISE;
+		PipelineSpec.PolygonMode = VK_POLYGON_MODE_FILL;
+		PipelineSpec.VertexLayout = {
+			{ ShaderDataType::Float3, "a_Position" },
+			{ ShaderDataType::Float3, "a_Normal" },
+			{ ShaderDataType::Float3, "a_Tanget" },
+			{ ShaderDataType::Float3, "a_Position" },
+			{ ShaderDataType::Float2, "a_TexCoord" }
+		};
+		PipelineSpec.InstanceLayout = {
+			{ ShaderDataType::Float4, "a_TransformBufferR1" },
+			{ ShaderDataType::Float4, "a_TransformBufferR2" },
+			{ ShaderDataType::Float4, "a_TransformBufferR3" },
+			{ ShaderDataType::Float4, "a_TransformBufferR4" }
+		};
+
+		m_RendererData.SelectionPipeline = Ref<Pipeline>::Create( PipelineSpec );
+	}
+	*/
 	void SceneRenderer::RenderGrid()
 	{
 		SAT_PF_EVENT();
@@ -895,7 +962,7 @@ namespace Saturn {
 			m_RendererData.PreethamShader = ShaderLibrary::Get().FindOrLoad( "Skybox_Compute", "content/shaders/Skybox_Compute.glsl" );
 
 			m_RendererData.SkyboxMaterial = Ref<Material>::Create( m_RendererData.SkyboxShader, "SkyboxComposite" );
-			m_RendererData.PreethamMaterial = Ref<Material>::Create( m_RendererData.PreethamShader, "PreethamShader" );
+			m_RendererData.PreethamMaterial = Ref<Material>::Create( m_RendererData.PreethamShader, "PreethamMat" );
 		}
 
 		if( m_RendererData.SkyboxPipeline )
@@ -962,17 +1029,6 @@ namespace Saturn {
 			ImGui::Text( "Total (RenderThread::Execute): %.2f ms", RenderThread::Get().GetWaitTime() );
 			ImGui::Text( "Total : %.2f ms", Application::Get().Time().Milliseconds() );
 
-			if( ImGui::Button( "Take snapshot of Scene Composite Framebuffer" ) )
-			{
-				std::filesystem::path folderPath = Application::Get().OpenFolder();
-				if( !folderPath.empty() )
-				{
-					std::wstring name = std::format( L"Scene Composite (#{0}).png", Renderer::Get().GetCurrentFrame() );
-
-					m_RendererData.SceneCompositeFramebuffer->Capture( folderPath / name );
-				}
-			}
-
 			Auxiliary::EndTreeNode();
 		}
 
@@ -1024,8 +1080,6 @@ namespace Saturn {
 
 				Auxiliary::EndTreeNode();
 			}
-
-			Auxiliary::DrawBoolControl( "Render Mesh AABB", m_RendererData.RenderMeshSubmeshAABB );
 
 			Auxiliary::EndTreeNode();
 		}
@@ -1149,7 +1203,6 @@ namespace Saturn {
 			StaticMeshKey key = { mesh->ID, materialRegistry, ( uint32_t ) i };
 
 			auto& command = m_PhysicsColliderDrawList[ key ];
-			command.entity = entity;
 			command.Mesh = mesh;
 			command.SubmeshIndex = ( uint32_t ) i;
 			command.Instances++;
@@ -1178,7 +1231,6 @@ namespace Saturn {
 		
 		InitTexturePass();
 
-		/*
 		const glm::uvec2 viewportSize = { m_RendererData.Width, m_RendererData.Height };
 
 		glm::uvec2 bs = ( viewportSize + 1u ) / 2u;
@@ -1186,12 +1238,9 @@ namespace Saturn {
 
 		for( uint32_t i = 0; i < 3; i++ )
 		{
-			m_RendererData.BloomTextures[ i ]->Terminate();
-
 			m_RendererData.BloomTextures[ i ] = Ref<Texture2D>::Create( ImageFormat::RGBA32F, bs.x, bs.y, nullptr, true );
 			m_RendererData.BloomTextures[ i ]->SetDebugName( "Bloom Texture: " + std::to_string( i ) );
 		}
-		*/
 
 		constexpr uint32_t TILE_SIZE = 16;
 		glm::uvec2 Viewport = { m_RendererData.Width, m_RendererData.Height };
@@ -1327,48 +1376,24 @@ namespace Saturn {
 		m_RendererData.UniformBufferSet->Get( 0, 3, frame )->UploadData( &u_ShadowData, sizeof( u_ShadowData ) );
 		m_RendererData.UniformBufferSet->Get( 0, 12, frame )->UploadData( &u_DebugData, sizeof( u_DebugData ) );
 		
+		// Alignment is 16 bytes
 		m_RendererData.UniformBufferSet->Get( 0, 13, frame )->UploadData( &u_Lights, 16ull + sizeof( u_Lights ) * u_Lights.nbLights );
-
-		/*
-		m_RendererData.StaticMeshMaterial->UploadDataToUB( 0, &u_Matrices, sizeof( u_Matrices ) );
-		m_RendererData.StaticMeshMaterial->UploadDataToUB( 1, &u_LightData, sizeof( u_LightData ) );
-
-		m_RendererData.StaticMeshMaterial->UploadDataToUB( 2, &u_SceneData, sizeof( u_SceneData ) );
-		m_RendererData.StaticMeshMaterial->UploadDataToUB( 3, &u_ShadowData, sizeof( u_ShadowData ) );
-		m_RendererData.StaticMeshMaterial->UploadDataToUB( 12, &u_DebugData, sizeof( u_DebugData ) );
-
-		m_RendererData.StaticMeshMaterial->UploadDataToUB( 13, &u_Lights, 16ull + sizeof( PointLight ) * u_Lights.nbLights );
-
-		StaticMeshShader->UploadUB( ShaderType::Vertex, 0, 0, &u_Matrices, sizeof( u_Matrices ) );
-		StaticMeshShader->UploadUB( ShaderType::Vertex, 0, 1, &u_LightData, sizeof( u_LightData ) );
-
-		StaticMeshShader->UploadUB( ShaderType::Fragment, 0, 2, &u_SceneData, sizeof( u_SceneData ) );
-		StaticMeshShader->UploadUB( ShaderType::Fragment, 0, 3, &u_ShadowData, sizeof( u_ShadowData ) );
-		StaticMeshShader->UploadUB( ShaderType::Fragment, 0, 12, &u_DebugData, sizeof( u_DebugData ) );
-
-		//StaticMeshShader->UploadUB( ShaderType::Fragment, 0, 13, &u_Lights, sizeof( u_Lights ) );
-		StaticMeshShader->UploadUB( ShaderType::Fragment, 0, 13, &u_Lights, 16ull + sizeof( PointLight ) * u_Lights.nbLights );
-		*/
 
 		for( auto&& [key, Cmd] : m_DrawList )
 		{
-			// Entity may of been deleted.
-			if( !Cmd.entity )
-				continue;
-
 			const auto& rTransformData = m_RendererData.MeshTransforms[ key ];
 
 			// Render Submesh
-			Renderer::Get().SubmitMesh( 
+			Renderer::Get().SubmitMesh(
 				m_RendererData.CommandBuffer,
 				m_RendererData.StaticMeshPipeline,
-				Cmd.Mesh, 
-				m_RendererData.StorageBufferSet, 
+				Cmd.Mesh,
+				m_RendererData.StorageBufferSet,
 				m_RendererData.UniformBufferSet,
-				key.Registry, 
-				Cmd.SubmeshIndex, 
-				Cmd.Instances, 
-				m_RendererData.SubmeshTransformData[ frame ].VertexBuffer, 
+				key.Registry,
+				Cmd.SubmeshIndex,
+				Cmd.Instances,
+				m_RendererData.SubmeshTransformData[ frame ].VertexBuffer,
 				rTransformData.Offset );
 		}
 	}
@@ -1433,10 +1458,6 @@ namespace Saturn {
 
 			for( auto&& [key, Cmd] : m_ShadowMapDrawList )
 			{
-				// Entity may of been deleted.
-				if( !Cmd.entity )
-					continue;
-
 				// Pass in the cascade index.
 				Buffer AdditionalData( sizeof( uint32_t ), &i );
 
@@ -1500,24 +1521,19 @@ namespace Saturn {
 		// We cannot write to the UniformBufferSet as we don't use the same UB as the other shaders
 		m_RendererData.PreDepthMaterial->UploadDataToUB( 0, &u_Matrices, sizeof( u_Matrices ) );
 
-		for( auto&& [key, Cmd]: m_DrawList )
+		for( auto&& [key, Cmd] : m_DrawList )
 		{
-			// Entity may of been deleted.
-			if( !Cmd.entity )
-				continue;
-
 			const auto& rTransformData = m_RendererData.MeshTransforms[ key ];
-
 			Renderer::Get().RenderMeshWithoutMaterial(
-				CommandBuffer, 
-				m_RendererData.PreDepthPipeline, 
-				Cmd.Mesh, 
-				m_RendererData.PreDepthMaterial, 
+				CommandBuffer,
+				m_RendererData.PreDepthPipeline,
+				Cmd.Mesh,
+				m_RendererData.PreDepthMaterial,
 				m_RendererData.UniformBufferSet,
 				m_RendererData.StorageBufferSet,
-				Cmd.Instances, 
-				m_RendererData.SubmeshTransformData[ frame ].VertexBuffer, 
-				rTransformData.Offset, 
+				Cmd.Instances,
+				m_RendererData.SubmeshTransformData[ frame ].VertexBuffer,
+				rTransformData.Offset,
 				Cmd.SubmeshIndex );
 		}
 
@@ -1528,6 +1544,8 @@ namespace Saturn {
 	void SceneRenderer::SceneCompositePass()
 	{
 		SAT_PF_EVENT();
+
+		m_RendererData.SceneCompPPTimer.Reset();
 
 		VkExtent2D Extent = { m_RendererData.Width,m_RendererData.Height };
 		VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
@@ -1556,6 +1574,8 @@ namespace Saturn {
 
 		// End scene composite pass.
 		m_RendererData.SceneComposite->EndPass();
+
+		m_RendererData.SceneCompPPTimer.Stop();
 	}
 
 	void SceneRenderer::LateCompPhysicsOutline()
@@ -1564,7 +1584,7 @@ namespace Saturn {
 			return;
 
 		uint32_t frame = Renderer::Get().GetCurrentFrame();
-		VkExtent2D Extent = { m_RendererData.Width,m_RendererData.Height };
+		VkExtent2D Extent = { m_RendererData.Width, m_RendererData.Height };
 		VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
 
 		m_RendererData.LateCompositePass->BeginPass( CommandBuffer, m_RendererData.LateCompositeFramebuffer->GetVulkanFramebuffer(), Extent );
@@ -1595,49 +1615,113 @@ namespace Saturn {
 		{
 			const auto& rTransformData = m_RendererData.MeshTransforms[ key ];
 
-			Renderer::Get().RenderMeshWithoutMaterial( 
-				CommandBuffer, 
-				m_RendererData.PhysicsOutlinePipeline, 
+			Renderer::Get().RenderMeshWithoutMaterial(
+				CommandBuffer,
+				m_RendererData.PhysicsOutlinePipeline,
 				Cmd.Mesh,
 				m_RendererData.PhysicsOutlineMaterial,
 				m_RendererData.UniformBufferSet,
 				m_RendererData.StorageBufferSet,
-				Cmd.Instances, 
-				m_RendererData.SubmeshTransformData[ frame ].VertexBuffer, 
-				rTransformData.Offset, 
+				Cmd.Instances,
+				m_RendererData.SubmeshTransformData[ frame ].VertexBuffer,
+				rTransformData.Offset,
 				Cmd.SubmeshIndex );
 		}
 
 		m_RendererData.LateCompositePass->EndPass();
 	}
 
-	void SceneRenderer::LateCompDbgMeshAABB()
+	/*
+	void SceneRenderer::SelectionPass()
 	{
-		const glm::vec4 whiteColor = glm::vec4( 1.0f, 1.0f, 1.0f, 1.0f );
+		uint32_t frame = Renderer::Get().GetCurrentFrame();
+		VkExtent2D Extent = { m_RendererData.Width,m_RendererData.Height };
+		VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
 
-		for( auto& [key, Cmd] : m_DrawList )
+		m_RendererData.SelectionRenderPass->BeginPass( CommandBuffer, m_RendererData.SelectionFramebuffer->GetVulkanFramebuffer(), Extent );
+
+		VkViewport Viewport = {};
+		Viewport.x = 0;
+		Viewport.y = 0;
+		Viewport.width = ( float ) m_RendererData.Width;
+		Viewport.height = ( float ) m_RendererData.Height;
+		Viewport.minDepth = 0.0f;
+		Viewport.maxDepth = 1.0f;
+
+		VkRect2D Scissor = { .offset = { 0, 0 }, .extent = Extent };
+
+		vkCmdSetViewport( CommandBuffer, 0, 1, &Viewport );
+		vkCmdSetScissor( CommandBuffer, 0, 1, &Scissor );
+
+		struct UB_Matrices
 		{
-			const auto& rAABB = Cmd.Mesh->GetBoundingBox();
-			
-			// Bottom face
-			Renderer2D::Get().SubmitLine( glm::vec3( rAABB.Min.x, rAABB.Min.y, rAABB.Min.z ), glm::vec3( rAABB.Max.x, rAABB.Min.y, rAABB.Min.z ), whiteColor );
-			Renderer2D::Get().SubmitLine( glm::vec3( rAABB.Max.x, rAABB.Min.y, rAABB.Min.z ), glm::vec3( rAABB.Max.x, rAABB.Max.y, rAABB.Min.z ), whiteColor );
-			Renderer2D::Get().SubmitLine( glm::vec3( rAABB.Max.x, rAABB.Max.y, rAABB.Min.z ), glm::vec3( rAABB.Min.x, rAABB.Max.y, rAABB.Min.z ), whiteColor );
-			Renderer2D::Get().SubmitLine( glm::vec3( rAABB.Min.x, rAABB.Max.y, rAABB.Min.z ), glm::vec3( rAABB.Min.x, rAABB.Min.y, rAABB.Min.z ), whiteColor );
+			glm::mat4 ViewProjection;
+		} u_Matrices{};
 
-			// Top face
-			Renderer2D::Get().SubmitLine( glm::vec3( rAABB.Min.x, rAABB.Min.y, rAABB.Max.z ), glm::vec3( rAABB.Max.x, rAABB.Min.y, rAABB.Max.z ), whiteColor );
-			Renderer2D::Get().SubmitLine( glm::vec3( rAABB.Max.x, rAABB.Min.y, rAABB.Max.z ), glm::vec3( rAABB.Max.x, rAABB.Max.y, rAABB.Max.z ), whiteColor );
-			Renderer2D::Get().SubmitLine( glm::vec3( rAABB.Max.x, rAABB.Max.y, rAABB.Max.z ), glm::vec3( rAABB.Min.x, rAABB.Max.y, rAABB.Max.z ), whiteColor );
-			Renderer2D::Get().SubmitLine( glm::vec3( rAABB.Min.x, rAABB.Max.y, rAABB.Max.z ), glm::vec3( rAABB.Min.x, rAABB.Min.y, rAABB.Max.z ), whiteColor );
+		u_Matrices.ViewProjection = m_RendererData.CurrentCamera.pCamera->ProjectionMatrix() * m_RendererData.CurrentCamera.ViewMatrix;
 
-			// Vertical edges
-			Renderer2D::Get().SubmitLine( glm::vec3( rAABB.Min.x, rAABB.Min.y, rAABB.Min.z ), glm::vec3( rAABB.Min.x, rAABB.Min.y, rAABB.Max.z ), whiteColor );
-			Renderer2D::Get().SubmitLine( glm::vec3( rAABB.Max.x, rAABB.Min.y, rAABB.Min.z ), glm::vec3( rAABB.Max.x, rAABB.Min.y, rAABB.Max.z ), whiteColor );
-			Renderer2D::Get().SubmitLine( glm::vec3( rAABB.Max.x, rAABB.Max.y, rAABB.Min.z ), glm::vec3( rAABB.Max.x, rAABB.Max.y, rAABB.Max.z ), whiteColor );
-			Renderer2D::Get().SubmitLine( glm::vec3( rAABB.Min.x, rAABB.Max.y, rAABB.Min.z ), glm::vec3( rAABB.Min.x, rAABB.Max.y, rAABB.Max.z ), whiteColor );
+		m_RendererData.SelectionMaterial->UploadDataToUB( 0, &u_Matrices, sizeof( u_Matrices ) );
+
+		for( auto& rCommand : m_TemporarySelectedMeshDrawList )
+		{
+			glm::mat4 transform = rCommand.entity->GetComponent<TransformComponent>();
+			ENTT_ID_TYPE handle = ( ENTT_ID_TYPE ) rCommand.entity->GetHandle();
+
+			glm::vec3 idColor{};
+
+			uint32_t r, g, b;
+			r = ( handle >> 16 ) & 0xFF;
+			g = ( handle >> 8 ) & 0xFF;
+			b = ( handle ) & 0xFF;
+
+			idColor = glm::vec3( r / 255.0f, g / 255.0f, b / 255.0f );
+
+			m_RendererData.SelectionMaterial->SetPC( "u_IDBuffer.IDColor", idColor );
+
+			vkCmdPushConstants( CommandBuffer, m_RendererData.SelectionPipeline->GetPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, ( uint32_t ) m_RendererData.SelectionMaterial->GetPushConstantData().Size, m_RendererData.SelectionMaterial->GetPushConstantData().Data );
+
+			Buffer transformBufer( sizeof( glm::mat4 ), &transform );
+
+			Renderer::Get().RenderMeshWithoutMaterial(
+				CommandBuffer,
+				m_RendererData.SelectionPipeline,
+				rCommand.Mesh,
+				m_RendererData.SelectionMaterial,
+				nullptr,
+				m_RendererData.StorageBufferSet,
+				rCommand.SubmeshIndex, transformBufer );
 		}
+
+		m_RendererData.SelectionRenderPass->EndPass();
+
+		// Now read the texture
+		Ref<Image2D> selectionOut = m_RendererData.SelectionFramebuffer->GetColorAttachmentsResources()[ 0 ];
+
+		glm::vec2 pos = Input::Get().MousePosition();
+
+		int x = glm::clamp( ( int ) pos.x - (int)m_RendererData.ViewportPos.x, 0, ( int ) m_RendererData.Width - 1 );
+		int y = glm::clamp( ( int ) pos.y - ( int ) m_RendererData.ViewportPos.y, 0, ( int ) m_RendererData.Height - 1 );
+	
+		Buffer pixel = selectionOut->CopyToBufferPixel( x, y );
+
+		if( pixel.Data )
+		{
+			uint32_t handle = ( ( ( pixel[ 0 ] & 0x0FF ) << 16 ) | ( ( pixel[ 1 ] & 0x0FF ) << 8 ) | ( pixel[ 2 ] & 0x0FF ) );
+
+			if( handle != 0 || handle != UINT32_MAX )
+			{
+				Ref<Entity> e = m_pScene->FindEntityByHandle( entt::entity( handle ) );
+
+				if( e )
+				{
+					m_pScene->AddSelectedEntity( e );
+				}
+			}
+		}
+
+		pixel.Free();
 	}
+	*/
 
 	void SceneRenderer::TexturePass()
 	{
@@ -1769,208 +1853,7 @@ namespace Saturn {
 		m_RendererData.BloomTimer.Stop();
 
 		// TEMP
-		return;
-
-		/*
-		struct u_Settings
-		{
-			float Threshold;
-			float Knee;
-			float TK; // Threshold - Knee
-			float DK; // Knee * 2.0f
-			float QK; // Knee / 0.25f
-			float Stage; // -1 = Prefilter, 0 = Downsample, 1 = Upsample
-			float LOD;
-		} pc_Settings{};
-
-		pc_Settings.LOD = 0.0f;
-		pc_Settings.Threshold = 1.5f;
-		pc_Settings.Knee = 0.1f;
-
-		pc_Settings.TK = pc_Settings.Knee - pc_Settings.Threshold;
-		pc_Settings.DK = pc_Settings.Knee * 2.0f;
-		pc_Settings.QK = pc_Settings.Knee / 0.25f;
-
-		auto& shader = m_RendererData.BloomShader;
-		auto& pipeline = m_RendererData.BloomComputePipeline;
-
-		VkDescriptorSet descriptorSet;
-		VkDescriptorPool descriptorPool = Renderer::Get().GetDescriptorPool()->GetVulkanPool();
-
-		VkDescriptorSetAllocateInfo info{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
-		info.descriptorPool = descriptorPool;
-		info.descriptorSetCount = 1;
-		info.pSetLayouts = shader->GetSetLayouts().data();
-
-		auto& InputImg = m_RendererData.GeometryFramebuffer->GetColorAttachmentsResources()[ 0 ];
-
-		glm::vec2 workgrps{};
-
-		// Step 0: Bind compute pipeline in graphics queue.
-		// Make sure to do it on the graphics queue.
-		pipeline->BindWithCommandBuffer( m_RendererData.CommandBuffer );
-
-		CmdBeginDebugLabel( m_RendererData.CommandBuffer, "Prefilter" );
-
-		// Step 0.5: Prefilter.
-		// Here we are just getting anything that is brighter than the bloom threshold.
-		pc_Settings.Stage = ( float ) BloomStage::Prefilter;
-		
-		{
-			VK_CHECK( vkAllocateDescriptorSets( VulkanContext::Get().GetDevice(), &info, &descriptorSet ) );
-
-			shader->WriteDescriptor( "u_InputTexture", InputImg->GetDescriptorInfo(), descriptorSet );
-			shader->WriteDescriptor( "u_BloomTexture", InputImg->GetDescriptorInfo(), descriptorSet );
-
-			auto descriptorInfo = m_RendererData.BloomTextures[ 0 ]->GetDescriptorInfo();
-			descriptorInfo.imageView = m_RendererData.BloomTextures[ 0 ]->GetOrCreateMipImageView( 0 );
-
-			shader->WriteDescriptor( "o_Image", descriptorInfo, descriptorSet );
-
-			workgrps.x = ( float ) m_RendererData.BloomTextures[ 0 ]->Width() / m_RendererData.BloomWorkSize;
-			workgrps.y = ( float ) m_RendererData.BloomTextures[ 0 ]->Height() / m_RendererData.BloomWorkSize;
-
-			pipeline->AddPushConstant( &pc_Settings, 0, sizeof( pc_Settings ) );
-			pipeline->Execute( descriptorSet, ( uint32_t ) workgrps.x, ( uint32_t ) workgrps.y, 1 );
-		}
-
-		CmdEndDebugLabel( m_RendererData.CommandBuffer );
-
-		CmdBeginDebugLabel( m_RendererData.CommandBuffer, "Downsample" );
-
-		if( m_RendererData.BloomTextures[ 0 ]->GetMipMapLevels() <= 1 )
-			return;
-
-		uint32_t mips = m_RendererData.BloomTextures[ 0 ]->GetMipMapLevels() - 2;
-
-		// Step 1: Downsample.
-		pc_Settings.Stage = ( float ) BloomStage::Downsample;
-		for( uint32_t i = 1; i < mips; i++ )
-		{
-			auto [w, h] = m_RendererData.BloomTextures[ 0 ]->GetMipSize( i );
-
-			workgrps.x = glm::ceil( ( float ) w / m_RendererData.BloomWorkSize );
-			workgrps.y = glm::ceil( ( float ) h / m_RendererData.BloomWorkSize );
-
-			{
-				auto descriptorInfo = m_RendererData.BloomTextures[ 1 ]->GetDescriptorInfo();
-				descriptorInfo.imageView = m_RendererData.BloomTextures[ 1 ]->GetOrCreateMipImageView( i );
-
-				VK_CHECK( vkAllocateDescriptorSets( VulkanContext::Get().GetDevice(), &info, &descriptorSet ) );
-
-				shader->WriteDescriptor( "u_InputTexture", m_RendererData.BloomTextures[ 0 ]->GetDescriptorInfo(), descriptorSet );
-				shader->WriteDescriptor( "u_BloomTexture", InputImg->GetDescriptorInfo(), descriptorSet );
-
-				shader->WriteDescriptor( "o_Image", descriptorInfo, descriptorSet );
-
-				pc_Settings.LOD = i - 1.0f;
-
-				// Step 1.5: Set push constants & execute the compute shader.
-				pipeline->AddPushConstant( &pc_Settings, 0, sizeof( pc_Settings ) );
-				pipeline->Execute( descriptorSet,
-					( uint32_t ) workgrps.x,
-					( uint32_t ) workgrps.y,
-					( uint32_t ) 1 );
-			}
-
-			// Now we do the same again.
-			// However this time we swap the textures.
-			{
-				VK_CHECK( vkAllocateDescriptorSets( VulkanContext::Get().GetDevice(), &info, &descriptorSet ) );
-
-				shader->WriteDescriptor( "u_InputTexture", m_RendererData.BloomTextures[ 1 ]->GetDescriptorInfo(), descriptorSet );
-				shader->WriteDescriptor( "u_BloomTexture", InputImg->GetDescriptorInfo(), descriptorSet );
-
-				auto descriptorInfo = m_RendererData.BloomTextures[ 0 ]->GetDescriptorInfo();
-				descriptorInfo.imageView = m_RendererData.BloomTextures[ 0 ]->GetOrCreateMipImageView( i );
-
-				shader->WriteDescriptor( "o_Image", descriptorInfo, descriptorSet );
-
-				pc_Settings.LOD = ( float ) i;
-
-				pipeline->AddPushConstant( &pc_Settings, 0, sizeof( pc_Settings ) );
-				pipeline->Execute( descriptorSet,
-					( uint32_t ) workgrps.x,
-					( uint32_t ) workgrps.y,
-					( uint32_t ) 1 );
-			}
-		}
-
-		CmdEndDebugLabel( m_RendererData.CommandBuffer );
-
-		CmdBeginDebugLabel( m_RendererData.CommandBuffer, "First Upsample" );
-
-		// Step 2: First upsample.
-		pc_Settings.Stage = ( float ) BloomStage::FirstUpsample;
-		workgrps.x *= 2;
-		workgrps.y *= 2;
-
-		{
-			VK_CHECK( vkAllocateDescriptorSets( VulkanContext::Get().GetDevice(), &info, &descriptorSet ) );
-
-			shader->WriteDescriptor( "u_InputTexture", m_RendererData.BloomTextures[ 0 ]->GetDescriptorInfo(), descriptorSet );
-			shader->WriteDescriptor( "u_BloomTexture", InputImg->GetDescriptorInfo(), descriptorSet );
-
-			auto info = m_RendererData.BloomTextures[ 0 ]->GetDescriptorInfo();
-			info.imageView = m_RendererData.BloomTextures[ 2 ]->GetOrCreateMipImageView( mips - 2 );
-
-			shader->WriteDescriptor( "o_Image", info, descriptorSet );
-
-			pc_Settings.LOD--;
-
-			auto [w, h] = m_RendererData.BloomTextures[ 2 ]->GetMipSize( mips - 2 );
-
-			workgrps.x = glm::ceil( ( float ) w / m_RendererData.BloomWorkSize );
-			workgrps.y = glm::ceil( ( float ) h / m_RendererData.BloomWorkSize );
-
-			pipeline->AddPushConstant( &pc_Settings, 0, sizeof( pc_Settings ) );
-			pipeline->Execute( descriptorSet,
-				( uint32_t ) workgrps.x,
-				( uint32_t ) workgrps.y,
-				( uint32_t ) 1 );
-		}
-
-		CmdEndDebugLabel( m_RendererData.CommandBuffer );
-
-		CmdBeginDebugLabel( m_RendererData.CommandBuffer, "Upsample" );
-
-		// Step 3: Upsample.
-		pc_Settings.Stage = ( float ) BloomStage::Upsample;
-		for( int32_t mip = mips - 3; mip >= 0; mip-- )
-		{
-			auto [w, h] = m_RendererData.BloomTextures[ 2 ]->GetMipSize( mip );
-
-			workgrps.x = glm::ceil( ( float ) w / m_RendererData.BloomWorkSize );
-			workgrps.y = glm::ceil( ( float ) h / m_RendererData.BloomWorkSize );
-
-			VK_CHECK( vkAllocateDescriptorSets( VulkanContext::Get().GetDevice(), &info, &descriptorSet ) );
-
-			{
-				shader->WriteDescriptor( "u_InputTexture", m_RendererData.BloomTextures[ 0 ]->GetDescriptorInfo(), descriptorSet );
-				shader->WriteDescriptor( "u_BloomTexture", m_RendererData.BloomTextures[ 2 ]->GetDescriptorInfo(), descriptorSet );
-
-				auto info = m_RendererData.BloomTextures[ 0 ]->GetDescriptorInfo();
-				info.imageView = m_RendererData.BloomTextures[ 2 ]->GetOrCreateMipImageView( mip );
-
-				shader->WriteDescriptor( "o_Image", info, descriptorSet );
-
-				pc_Settings.LOD = ( float ) mip;
-
-				// Step 2.5: Set push constants & Execute the compute shader.
-				pipeline->AddPushConstant( &pc_Settings, 0, sizeof( pc_Settings ) );
-				pipeline->Execute( descriptorSet,
-					( uint32_t ) workgrps.x,
-					( uint32_t ) workgrps.y,
-					( uint32_t ) 1 );
-			}
-		}
-
-		CmdEndDebugLabel( m_RendererData.CommandBuffer );
-
-		pipeline->Unbind();
-
-		m_RendererData.BloomTimer.Stop();
-		*/
+		//return;
 	}
 
 	void SceneRenderer::AddScheduledFunction( ScheduledFunc&& rrFunc )
@@ -1989,11 +1872,6 @@ namespace Saturn {
 		{
 			rPipeline->Recreate();
 		}
-
-		for( auto& rMaterial : rReference.Materials )
-		{
-			//rMaterial;
-		}
 	}
 #endif
 
@@ -2010,11 +1888,11 @@ namespace Saturn {
 		glm::vec3 params = { m_RendererData.SceneEnvironment->Turbidity, m_RendererData.SceneEnvironment->Azimuth, m_RendererData.SceneEnvironment->Inclination };
 
 		m_RendererData.PreethamMaterial->SetResource( "o_CubeMap", Environment );
+		m_RendererData.PreethamMaterial->SetPC( "pc_Params.Params", params );
 
 		auto CommandBuffer = m_RendererData.CommandBuffer;
 
 		pipeline->Bind();
-		pipeline->AddPushConstant( &params, 0, sizeof( glm::vec3 ) );
 		pipeline->Execute( m_RendererData.PreethamMaterial, cubemapSize / irradianceMap, cubemapSize / irradianceMap, 6 );
 		pipeline->Unbind();
 
@@ -2056,7 +1934,7 @@ namespace Saturn {
 
 	void SceneRenderer::Screenshot( const std::filesystem::path& rPath, const glm::vec2& rSize )
 	{
-		m_RendererData.SceneCompositeFramebuffer->Capture( rPath, 0, rSize );
+	//	m_RendererData.SceneCompositeFramebuffer->Capture( rPath, 0, rSize );
 	}
 
 	void SceneRenderer::InitBuffers()
@@ -2135,7 +2013,7 @@ namespace Saturn {
 			ScopedDebugLabel label( m_RendererData.CommandBuffer, "LightCulling" );
 			LightCullingPass();
 		}
-		
+	
 		{
 			ScopedDebugLabel label( m_RendererData.CommandBuffer, "Geometry" );
 			GeometryPass();
@@ -2154,12 +2032,6 @@ namespace Saturn {
 		{
 			ScopedDebugLabel label( m_RendererData.CommandBuffer, "Late Composite/SceneRenderer" );
 			LateCompPhysicsOutline();
-		}
-
-		if( m_RendererData.RenderMeshSubmeshAABB )
-		{
-			ScopedDebugLabel label( m_RendererData.CommandBuffer, "Late Composite/SubmeshAABB" );
-			LateCompDbgMeshAABB();
 		}
 
 		if( m_RendererData.IsSwapchainTarget )

@@ -43,13 +43,13 @@ namespace Saturn {
 		~ComputePipeline();
 
 		void Bind();
+		void Unbind();
+
+		// Bind the pipeline to a command buffer using the graphics queue.
 		void BindWithCommandBuffer( VkCommandBuffer CommandBuffer );
 
+		// Bind using the compute queue.
 		void Execute( Ref<Material> material, uint32_t X, uint32_t Y, uint32_t Z );
-
-		void AddPushConstant( const void* pData, uint32_t Offset = 0, size_t Size = 1 );
-
-		void Unbind();
 
 		VkCommandBuffer GetCommandBuffer() const { return m_CommandBuffer; }
 		VkPipelineLayout GetLayout() const { return m_PipelineLayout; }
@@ -58,13 +58,13 @@ namespace Saturn {
 		void Create();
 
 	private:
-		VkPipeline m_Pipeline;
-		VkPipelineLayout m_PipelineLayout;
+		VkPipeline m_Pipeline = nullptr;
+		VkPipelineLayout m_PipelineLayout = nullptr;
 
 		Ref<Shader> m_ComputeShader;
 
-		bool m_UseGraphicsQueue = false;
+		VkCommandBuffer m_CommandBuffer = nullptr;
 
-		VkCommandBuffer m_CommandBuffer;
+		bool m_UseGraphicsQueue = false;
 	};
 }

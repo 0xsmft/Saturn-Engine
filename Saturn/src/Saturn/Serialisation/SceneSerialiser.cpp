@@ -33,6 +33,8 @@
 #include "Saturn/Scene/Components.h"
 #include "Saturn/Vulkan/Mesh.h"
 
+#include "Saturn/AI/Navigation/NavBoundsEntity.h"
+
 #include "YamlAux.h"
 
 #include <fstream>
@@ -42,8 +44,8 @@
 
 namespace Saturn {
 
-	SceneSerialiser::SceneSerialiser( const Ref< Scene >& rScene )
-		: m_Scene( rScene )
+	SceneSerialiser::SceneSerialiser( Ref<Scene> scene )
+		: m_Scene( scene )
 	{
 	}
 
@@ -69,7 +71,7 @@ namespace Saturn {
 		
 		m_Scene->Each( [&]( Ref<Entity> entity ) 
 			{
-				SerialiseEntity( out, entity );
+				Auxiliary::SerialiseEntity( out, entity );
 			} );
 
 		out << YAML::EndSeq;
@@ -81,15 +83,9 @@ namespace Saturn {
 		m_Scene->CleanDirty();
 	}
 
-	void SceneSerialiser::Deserialise()
+	void SceneSerialiser::Deserialise( const Ref<Asset> asset )
 	{
-		auto& basePath = m_Scene->Path;	
-		Deserialise( basePath );
-	}
-
-	void SceneSerialiser::Deserialise( const std::filesystem::path& rPath )
-	{
-		auto fullPath = Project::GetActiveProject()->FilepathAbs( rPath );
+		auto fullPath = Project::GetActiveProject()->FilepathAbs( asset->Path );
 
 		std::ifstream FileIn( fullPath );
 		std::stringstream ss;
@@ -103,10 +99,20 @@ namespace Saturn {
 		if( !data[ "Scene" ] )
 			return;
 
-		SAT_CORE_INFO( "Deserialising scene SCENE/0/{0}", rPath.stem().string() );
+		// Init scene asset fields
+		m_Scene->Path = asset->Path;
+		m_Scene->Name = asset->Name;
+		m_Scene->ID = asset->ID;
+		m_Scene->Type = asset->Type;
+		m_Scene->Flags = asset->Flags;
+		m_Scene->Version = asset->Version;
 
+		SAT_CORE_INFO( "Deserialising scene SCENE/0/{0}", asset->Path.stem().string() );
+		
 		auto entities = data[ "Entities" ];
-		DeserialiseEntities( entities, m_Scene );
+		Auxiliary::DeserialiseEntities( entities, m_Scene );
+
+		m_Scene->PostDeserialise();
 
 		FileIn.close();
 	}

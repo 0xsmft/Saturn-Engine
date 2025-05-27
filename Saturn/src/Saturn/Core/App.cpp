@@ -130,7 +130,7 @@ namespace Saturn {
 
 		while( m_Running )
 		{
-			m_Window->PollEvents();
+			RubyLibrary::PollEvents();
 
 			for( auto&& rrFn : m_MainThreadQueue )
 				rrFn();

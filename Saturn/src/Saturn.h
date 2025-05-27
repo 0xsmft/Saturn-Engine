@@ -52,7 +52,7 @@
 #include "Saturn/ImGui/SceneHierarchyPanel.h"
 #include "Saturn/ImGui/Styles.h"
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
-#include "Saturn/ImGui/Panel/Panel.h"
+#include "Saturn/ImGui/ImGuiWindowManager.h"
 
 // --- Rendering
 #include "Saturn/Vulkan/Base.h"

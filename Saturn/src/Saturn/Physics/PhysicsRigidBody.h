@@ -35,6 +35,8 @@
 
 namespace Saturn {
 
+	struct RecastInputGeometryExpData;
+
 	class PhysicsRigidBody : public RefTarget
 	{
 	public:
@@ -46,6 +48,7 @@ namespace Saturn {
 		void SetKinematic( bool val );
 		void SetMass( float val );
 		void SetLinearDrag( float value );
+		void SetLinearVelocity( const glm::vec3& rVelocity );
 		float GetLinearDrag();
 		void ApplyForce( glm::vec3 ForceAmount, ForceMode Type );
 		void Rotate( const glm::vec3& rRotation );
@@ -53,20 +56,22 @@ namespace Saturn {
 
 		void SyncTransfrom();
 
-		bool IsKiniematic() { return m_Kinematic; }
+		bool IsKiniematic() const { return m_Kinematic; }
 
 		glm::vec3 GetPosition();
 		glm::vec3 GetRotation();
 		glm::mat4 GetTransform();
 
+		glm::vec3 GetLinearVelocity() const;
+
 		physx::PxRigidActor& GetActor() { return *m_Actor; }
 		const physx::PxRigidActor& GetActor() const { return *m_Actor; }
 
 		void SetLockFlags( RigidbodyLockFlags flags, bool value );
-		bool IsFlagSet( RigidbodyLockFlags flags ) { return ( m_LockFlags & flags ) != 0; }
-		RigidbodyLockFlags GetFlags() { return ( RigidbodyLockFlags )m_LockFlags; }
+		bool IsFlagSet( RigidbodyLockFlags flags ) const { return ( m_LockFlags & flags ) != 0; }
+		RigidbodyLockFlags GetFlags() const { return ( RigidbodyLockFlags )m_LockFlags; }
 		
-		bool AllRotationLocked();
+		bool AllRotationLocked() const;
 
 		void SetOnCollisionHit( std::function<void( Ref<Entity> rOther )>&& rrFunc ) { m_OnMeshHit = rrFunc; }
 		void SetOnCollisionExit( std::function<void( Ref<Entity> rOther )>&& rrFunc ) { m_OnMeshExit = rrFunc; }
@@ -76,17 +81,18 @@ namespace Saturn {
 
 		Ref<Entity> GetEntity() { return m_Entity; }
 
+		void ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
 	private:
 		void AttachPhysicsShape( ShapeType type );
 		void Destroy();
+
 	private:
 		physx::PxRigidActor* m_Actor = nullptr;
 		Ref<Entity> m_Entity;
 
-		bool m_Kinematic = false;
-
 		Ref<PhysicsShape> m_Shape;
 
+		bool m_Kinematic = false;
 		uint32_t m_LockFlags;
 
 		std::function<void( Ref<Entity> rOther )> m_OnMeshHit;

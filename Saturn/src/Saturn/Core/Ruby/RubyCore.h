@@ -94,7 +94,11 @@ namespace Saturn {
 
 	enum class RubyWindowShowCmd
 	{
+		// Show and activate the window
 		Default,
+		// Show the window but do not activate it
+		NoActivate, 
+		// Show the window as full screen and activate it
 		Fullscreen
 	};
 
@@ -115,6 +119,8 @@ namespace Saturn {
 	template<typename N>
 	struct RubyBasicVector2
 	{
+		using NumericalType = N;
+
 		constexpr RubyBasicVector2() = default;
 		constexpr RubyBasicVector2( N _x, N _y ) : x( _x ), y( _y ) {}
 
@@ -130,6 +136,12 @@ namespace Saturn {
 		RubyBasicVector2& operator-=( const RubyBasicVector2& other ) { x -= other.x; y -= other.y; return *this; }
 		RubyBasicVector2& operator*=( N scalar ) { x *= scalar; y *= scalar; return *this; }
 		RubyBasicVector2& operator/=( N divisor ) { x /= divisor; y /= divisor; return *this; }
+
+		template<typename Ty>
+		Ty To() 
+		{
+			return Ty( static_cast< Ty::NumericalType >( x ), static_cast< Ty::NumericalType >( y ) );
+		}
 	};
 
 	using RubyVec2 = RubyBasicVector2<float>;

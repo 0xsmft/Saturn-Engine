@@ -32,6 +32,8 @@
 #include "PhysicsFoundation.h"
 #include "PhysicsAuxiliary.h"
 
+#include "Saturn/AI/Navigation/RecastInputGeometry.h"
+
 namespace Saturn {
 
 	PhysicsRigidBody::PhysicsRigidBody( Ref<Entity> entity )
@@ -154,6 +156,12 @@ namespace Saturn {
 		m_Entity = nullptr;
 	}
 
+	void PhysicsRigidBody::ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds )
+	{
+		if( m_Shape )
+			m_Shape->ExportRc( *m_Actor, rData, rNavMeshBounds );
+	}
+
 	void PhysicsRigidBody::SetKinematic( bool val )
 	{
 		physx::PxRigidDynamic* pBody = ( physx::PxRigidDynamic* ) m_Actor;
@@ -172,6 +180,12 @@ namespace Saturn {
 	{
 		physx::PxRigidDynamic* pBody = ( physx::PxRigidDynamic* ) m_Actor;
 		pBody->setLinearDamping( value );
+	}
+
+	void PhysicsRigidBody::SetLinearVelocity( const glm::vec3& rVelocity )
+	{
+		physx::PxRigidDynamic* pBody = ( physx::PxRigidDynamic* ) m_Actor;
+		pBody->setLinearVelocity( Auxiliary::GLMToPx( rVelocity ) );
 	}
 
 	float PhysicsRigidBody::GetLinearDrag()
@@ -253,6 +267,14 @@ namespace Saturn {
 		return glm::mat4( pos * rot );
 	}
 
+	glm::vec3 PhysicsRigidBody::GetLinearVelocity() const
+	{
+		physx::PxRigidDynamic* pBody = ( physx::PxRigidDynamic* ) m_Actor;
+		physx::PxVec3 vel = pBody->getLinearVelocity();
+
+		return Auxiliary::PxToGLM( vel );
+	}
+
 	void PhysicsRigidBody::SetLockFlags( RigidbodyLockFlags flags, bool value )
 	{
 		if( value )
@@ -265,9 +287,9 @@ namespace Saturn {
 		pBody->setRigidDynamicLockFlag( ( physx::PxRigidDynamicLockFlag::Enum ) flags, value );
 	}
 
-	bool PhysicsRigidBody::AllRotationLocked()
+	bool PhysicsRigidBody::AllRotationLocked() const
 	{
-		return m_LockFlags & RigidbodyLockFlags::RotationX && m_LockFlags & RigidbodyLockFlags::RotationY && m_LockFlags & RigidbodyLockFlags::RotationZ;
+		return m_LockFlags & RigidbodyLockFlags::RigidbodyLock_RotationX && m_LockFlags & RigidbodyLockFlags::RigidbodyLock_RotationY && m_LockFlags & RigidbodyLockFlags::RigidbodyLock_RotationZ;
 	}
 
 	void PhysicsRigidBody::SyncTransfrom()
@@ -275,7 +297,6 @@ namespace Saturn {
 		TransformComponent& tc = m_Entity->GetComponent<TransformComponent>();
 
 		physx::PxTransform actorPose = m_Actor->getGlobalPose();
-
 		tc.Position = Auxiliary::PxToGLM( actorPose.p );
 
 		if( !AllRotationLocked() )

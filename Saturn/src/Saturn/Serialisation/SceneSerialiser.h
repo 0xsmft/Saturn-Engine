@@ -28,6 +28,7 @@
 
 #pragma once
 
+#include "Saturn/Asset/Asset.h"
 #include "Saturn/Scene/Scene.h"
 
 namespace Saturn {
@@ -36,16 +37,14 @@ namespace Saturn {
 	{
 	public:
 		SceneSerialiser() = default;
-		SceneSerialiser( const Ref< Scene >& rScene );
-
+		SceneSerialiser( Ref<Scene> scene );
 		~SceneSerialiser();
 
+	public:
 		void Serialise();
-
-		void Deserialise();
-		void Deserialise( const std::filesystem::path& rPath );
+		void Deserialise( const Ref<Asset> asset );
 
 	private:
-		Ref< Scene > m_Scene;
+		Ref<Scene> m_Scene;
 	};
 }

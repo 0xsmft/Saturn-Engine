@@ -126,9 +126,9 @@ namespace Saturn {
 		m_IndexBuffer = Ref<IndexBuffer>::Create( m_Indices.data(), m_Indices.size() * sizeof( Index ) );
 	}
 
+#if !defined(SAT_DIST)
 	void StaticMesh::Initialise()
 	{
-#if !defined(SAT_DIST)
 		AssimpLog::Initialize();
 
 		if( !std::filesystem::exists( m_FilePath ) )
@@ -155,8 +155,8 @@ namespace Saturn {
 		m_MaterialRegistry = Ref<MaterialRegistry>::Create();
 
 		CreateVertices();
-#endif
 	}
+#endif
 
 	StaticMesh::~StaticMesh()
 	{

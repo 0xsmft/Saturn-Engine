@@ -29,13 +29,13 @@
 #include "sppch.h"
 #include "ContentBrowserItem.h"
 
-#include "Saturn/ImGui/ImGuiAuxiliary.h"
-
-#include "Saturn/Serialisation/AssetSerialisers.h"
 #include "Saturn/Asset/AssetImporter.h"
 #include "Saturn/Asset/Asset.h"
 
-#include "Saturn/ImGui/AssetViewer.h"
+#include "Saturn/Serialisation/AssetSerialisers.h"
+
+#include "Saturn/ImGui/ImGuiAuxiliary.h"
+#include "Saturn/ImGui/ImGuiWindowManager.h"
 #include "Saturn/ImGui/PrefabViewer.h"
 #include "Saturn/ImGui/StaticMeshAssetViewer.h"
 #include "Saturn/ImGui/MaterialAssetViewer/MaterialAssetViewer.h"
@@ -43,6 +43,7 @@
 #include "Saturn/ImGui/TextureViewer.h"
 #include "Saturn/ImGui/SoundAssetViewer.h"
 #include "Saturn/Audio/SoundNodeEditor/GraphSoundAssetViewer.h"
+#include "Saturn/AI/BehaviourTree/BehaviourTreeAssetViewer/BehaviourTreeAssetViewer.h"
 
 #include "ContentBrowserThumbnailCache.h"
 
@@ -250,12 +251,14 @@ namespace Saturn {
 				{
 					case AssetType::Texture:
 					{
-						AssetViewer::Add<TextureViewer>( m_Asset->ID );
+						auto viewer = Ref<TextureViewer>::Create( m_Asset->ID );
+						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
 					} break;
 
 					case AssetType::StaticMesh:
 					{
-						AssetViewer::Add<StaticMeshAssetViewer>( m_Asset->ID );
+						auto viewer = Ref<StaticMeshAssetViewer>::Create( m_Asset->ID );
+						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
 					} break;
 
 					case AssetType::SkeletalMesh:
@@ -264,31 +267,42 @@ namespace Saturn {
 					case AssetType::Material:
 					{
 						// Importing the asset will happen in this function.
-						AssetViewer::Add<MaterialAssetViewer>( m_Asset->ID );
+						auto viewer = Ref<MaterialAssetViewer>::Create( m_Asset->ID );
+						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
 					} break;
 					case AssetType::MaterialInstance:
 						break;
 
 					case AssetType::Prefab:
 					{
-						AssetViewer::Add<PrefabViewer>( m_Asset->ID );
+						auto viewer = Ref<PrefabViewer>::Create( m_Asset->ID );
+						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
 					} break;
 
 					case AssetType::PhysicsMaterial:
 					{
-						AssetViewer::Add<PhysicsMaterialAssetViewer>( m_Asset->ID );
+						auto viewer = Ref<PhysicsMaterialAssetViewer>::Create( m_Asset->ID );
+						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
 					} break;
 
 					case AssetType::Sound:
 					{
-						AssetViewer::Add<SoundAssetViewer>( m_Asset->ID );
+						auto viewer = Ref<SoundAssetViewer>::Create( m_Asset->ID );
+						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
 					} break;
 
 					case AssetType::GraphSound: 
 					{
-						AssetViewer::Add<GraphSoundAssetViewer>( m_Asset->ID );
+						auto viewer = Ref<GraphSoundAssetViewer>::Create( m_Asset->ID );
+						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
 					} break;
 
+					case AssetType::BehaviourTree:
+					{
+						auto viewer = Ref<BehaviourTreeAssetViewer>::Create( m_Asset->ID );
+						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+					} break;
+					
 					case AssetType::Scene:
 					case AssetType::Script:
 					case AssetType::Unknown:

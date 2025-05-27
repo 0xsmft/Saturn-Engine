@@ -54,7 +54,6 @@ namespace Saturn {
 
 	struct DrawCommand
 	{
-		Ref<Entity> entity = nullptr;
 		Ref< StaticMesh > Mesh = nullptr;
 		uint32_t SubmeshIndex = 0;
 		uint32_t Instances = 0;
@@ -103,6 +102,7 @@ namespace Saturn {
 
 		uint32_t SubmeshIndex;
 
+		StaticMeshKey() = default;
 		StaticMeshKey( AssetID meshID, Ref<MaterialRegistry> materialReg, uint32_t submeshIndex ) : MeshID( meshID ), SubmeshIndex( submeshIndex ) { Registry = materialReg; }
 
 		bool operator==( const StaticMeshKey& rKey )
@@ -233,11 +233,13 @@ namespace Saturn {
 		bool IsSwapchainTarget = false;
 
 		//////////////////////////////////////////////////////////////////////////
+		
+		bool Resized = false;
 
 		uint32_t Width = 0;
 		uint32_t Height = 0;
-		
-		bool Resized = false;
+
+		glm::vec2 ViewportPos{};
 
 		//////////////////////////////////////////////////////////////////////////
 
@@ -247,11 +249,10 @@ namespace Saturn {
 	
 		Timer GeometryPassTimer;
 		Timer ShadowMapTimers[SHADOW_CASCADE_COUNT];
-		Timer SSAOPassTimer;
-		Timer AOCompositeTimer;
 		Timer PreDepthTimer;
 		Timer LightCullingTimer;
 		Timer BloomTimer;
+		Timer SceneCompPPTimer;
 
 		//////////////////////////////////////////////////////////////////////////
 		Ref<StorageBufferSet> StorageBufferSet;
@@ -380,11 +381,6 @@ namespace Saturn {
 		std::vector< SubmeshTransformVB > SubmeshTransformData;
 
 		//////////////////////////////////////////////////////////////////////////
-		// Auxiliary
-
-		bool RenderMeshSubmeshAABB = false;
-
-		//////////////////////////////////////////////////////////////////////////
 		// SHADERS
 
 		Ref< Shader > GridShader = nullptr;
@@ -400,6 +396,7 @@ namespace Saturn {
 		Ref< Shader > LightCullingShader = nullptr;
 		Ref< Shader > BloomShader = nullptr;
 		Ref< Shader > PhysicsOutlineShader = nullptr;
+		Ref< Shader > SelectionShader = nullptr;
 	};
 
 	class SceneRenderer : public RefTarget
@@ -421,6 +418,7 @@ namespace Saturn {
 		void SubmitPhysicsCollider( Ref<Entity> entity, Ref< StaticMesh > mesh, Ref<MaterialRegistry> materialRegistry, const glm::mat4& transform );
 
 		void SetViewportSize( uint32_t w, uint32_t h );
+		void SetViewportPosition( float x, float y ) { m_RendererData.ViewportPos = glm::vec2( x, y ); }
 
 		void FlushDrawList();
 
@@ -449,7 +447,8 @@ namespace Saturn {
 
 		void Screenshot( const std::filesystem::path& rPath, const glm::vec2& rSize = {} );
 
-		void RenderMeshAABB() { m_RendererData.RenderMeshSubmeshAABB ^= 1; }
+		void RenderSelectionNextFrame() { /*m_RendererData.PendingSelectionPass = true;*/ }
+
 	private:
 		void Init();
 		void Terminate();
@@ -474,6 +473,7 @@ namespace Saturn {
 		void InitTexturePass();
 		void InitSSAO();
 		void InitHBAO();
+//		void InitSelection();
 
 		void InitBuffers();
 
@@ -484,7 +484,7 @@ namespace Saturn {
 		void BloomPass();
 		void SceneCompositePass();
 		void LateCompPhysicsOutline();
-		void LateCompDbgMeshAABB();
+//		void SelectionPass();
 		void TexturePass();
 
 		void RenderStaticMeshes();
@@ -499,6 +499,7 @@ namespace Saturn {
 		Ref<TextureCube> CreateDymanicSky();
 	private:
 		SceneRendererFlags m_Flags;
+		AOTechnique m_AOTechnique = AOTechnique::None;
 
 		RendererData m_RendererData{};
 		Scene* m_pScene = nullptr;
@@ -508,9 +509,7 @@ namespace Saturn {
 		std::unordered_map< StaticMeshKey, DrawCommand > m_PhysicsColliderDrawList;
 
 		std::vector< ScheduledFunc > m_ScheduledFunctions;
-
 		ScheduledFunc m_LightCullingFunction;
-		AOTechnique m_AOTechnique = AOTechnique::None;
 
 	private:
 		friend class Scene;

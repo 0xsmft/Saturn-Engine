@@ -28,12 +28,12 @@
 
 #pragma once
 
+#include <Saturn/ImGui/TitleBar.h>
+
 #include <Saturn/Vulkan/Texture.h>
 #include <Saturn/Core/Layer.h>
 
 namespace Saturn {
-	
-	class TitleBar;
 
 	struct ProjectInformation
 	{
@@ -70,9 +70,9 @@ namespace Saturn {
 		void ImportExternalProject( const std::filesystem::path& rPath );
 
 	private:
-		Ref<Texture2D> m_NoIconTexture = nullptr;
+		TitleBar m_TitleBar;
 
-		TitleBar* m_TitleBar = nullptr;
+		Ref<Texture2D> m_NoIconTexture = nullptr;
 
 		char* m_SaturnDirBuffer = new char[ 1024 ];
 		std::filesystem::path m_SaturnDir;
@@ -87,6 +87,5 @@ namespace Saturn {
 		std::thread m_RecentProjectThread;
 
 		bool m_HasSaturnDir = false;
-
 	};
 }

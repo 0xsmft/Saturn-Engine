@@ -56,7 +56,7 @@ namespace Saturn {
 		void Show( RubyWindowShowCmd Command = RubyWindowShowCmd::Default );
 		void SetPosition( int x, int y );
 		void SetMousePos( double x, double y );
-		void GetMousePos( double* x, double* y );
+		RubyVec2 GetMousePos();
 		void SetMouseCursor( RubyCursorType Cursor );
 		void SetMouseCursorMode( RubyCursorMode mode );
 		void ChangeTitle( const std::string& rTitle );

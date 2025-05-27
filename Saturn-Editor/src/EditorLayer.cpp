@@ -206,6 +206,7 @@ namespace Saturn {
 
 	void EditorLayer::OnDetach()
 	{
+		GlobalNodesList::Terminate();
 		EditorIcons::Clear();
 		m_CheckerboardTexture = nullptr;
 		m_PointLightTexture = nullptr;
@@ -499,7 +500,7 @@ namespace Saturn {
 		if( asset )
 		{
 			SceneSerialiser serialiser( newScene );
-			serialiser.Deserialise( asset->Path );
+			serialiser.Deserialise( asset );
 		}
 
 		m_EditorScene = newScene;

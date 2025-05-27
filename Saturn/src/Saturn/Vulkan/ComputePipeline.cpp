@@ -40,7 +40,6 @@ namespace Saturn {
 		: m_ComputeShader( ComputeShader )
 	{
 		// TODO: Check if shader is really a compute shader.
-
 		Create();
 	}
 
@@ -73,12 +72,13 @@ namespace Saturn {
 	{
 		material->Bind( m_CommandBuffer, m_PipelineLayout, {}, VK_PIPELINE_BIND_POINT_COMPUTE );
 
+		Buffer pcBuffer = material->GetPushConstantData();
+		if( pcBuffer.Size )
+		{
+			vkCmdPushConstants( m_CommandBuffer, m_PipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, (uint32_t) pcBuffer.Size, pcBuffer.Data );
+		}
+		
 		vkCmdDispatch( m_CommandBuffer, X, Y, Z );
-	}
-
-	void ComputePipeline::AddPushConstant( const void* pData, uint32_t Offset, size_t Size )
-	{
-		vkCmdPushConstants( m_CommandBuffer, m_PipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, (uint32_t)Size, pData );
 	}
 
 	void ComputePipeline::Unbind()
@@ -146,7 +146,8 @@ namespace Saturn {
 
 		VK_CHECK( vkCreateShaderModule( VulkanContext::Get().GetDevice(), &ShaderModuleCreateInfo, nullptr, &ShaderModule ) );
 
-		SetDebugUtilsObjectName( "Compute shader module", ( uint64_t ) ShaderModule, VK_OBJECT_TYPE_SHADER_MODULE );
+		std::string debugName = m_ComputeShader->GetName() + "/Compute/X0";
+		SetDebugUtilsObjectName( debugName.c_str(), ( uint64_t ) ShaderModule, VK_OBJECT_TYPE_SHADER_MODULE );
 
 		// Shader stage
 		VkPipelineShaderStageCreateInfo ShaderStage = {
@@ -165,7 +166,8 @@ namespace Saturn {
 
 		vkDestroyShaderModule( VulkanContext::Get().GetDevice(), ShaderModule, nullptr );
 
-		SetDebugUtilsObjectName( "Compute Pipeline", ( uint64_t ) m_Pipeline, VK_OBJECT_TYPE_PIPELINE );
+		std::string pipelineName = m_ComputeShader->GetName() + "/ComputePipeline";
+		SetDebugUtilsObjectName( pipelineName.c_str(), ( uint64_t ) m_Pipeline, VK_OBJECT_TYPE_PIPELINE );
 	}
 
 }

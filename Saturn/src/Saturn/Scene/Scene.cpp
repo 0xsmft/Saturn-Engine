@@ -56,6 +56,11 @@
 
 #include "Saturn/ImGui/EditorIcons.h"
 
+#include "Saturn/AI/Navigation/NavBoundsEntity.h"
+#include "Saturn/AI/AIAgentEntity.h"
+
+#include <Detour/DetourNavMeshQuery.h>
+
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -76,6 +81,17 @@ namespace Saturn {
 	{
 		m_SceneEntity = m_Registry.create();
 		m_Registry.emplace<SceneComponent>( m_SceneEntity, m_InternalID );
+
+		m_Registry.on_construct<NavigationMeshSpecificationComponent>().connect<&Scene::OnNavMeshBuildCompAdded> ( *this );
+		m_Registry.on_destroy<NavigationMeshSpecificationComponent>().connect<&Scene::OnNavMeshBuildCompRemoved>( *this );
+	}
+
+	void Scene::OnNavMeshBuildCompAdded( entt::registry& reg, entt::entity entity )
+	{
+	}
+
+	void Scene::OnNavMeshBuildCompRemoved( entt::registry& reg, entt::entity entity )
+	{
 	}
 
 	Scene::~Scene()
@@ -115,9 +131,14 @@ namespace Saturn {
 			}
 
 			StopAudioPlayers();
+
+			// Only true if we are the editor scene or if OnRuntimeEnd was not called.
+			DestroyPhysicsScene();
 		}
 
 		m_Controllers.clear();
+		m_NavBoundsEntity = nullptr;
+		dtFreeNavMeshQuery( m_NavMeshQuery );
 
 		// Destroy all entities.
 		for( auto&& [id, entity] : m_EntityIDMap )
@@ -366,13 +387,12 @@ namespace Saturn {
 		}
 
 #if !defined(SAT_DIST)
-		// Physics Colliders (selected meshes only)
+		// Selected Meshes and Physics Colliders
 		{
 			for( auto& rSelectedEntity : m_SelectedEntities )
 			{
-				if( rSelectedEntity->HasComponent<RigidbodyComponent>() && rSelectedEntity->HasComponent<StaticMeshComponent>() )
+				if( rSelectedEntity->HasComponent<StaticMeshComponent>() )
 				{
-					auto& rbComp = rSelectedEntity->GetComponent<RigidbodyComponent>();
 					auto& meshComponent = rSelectedEntity->GetComponent<StaticMeshComponent>();
 					auto transform = GetTransformRelativeToParent( rSelectedEntity );
 
@@ -383,7 +403,20 @@ namespace Saturn {
 						if( meshComponent.MaterialRegistry && meshComponent.MaterialRegistry->HasAnyOverrides() )
 							targetMaterialRegistry = meshComponent.MaterialRegistry;
 
-						rSceneRenderer.SubmitPhysicsCollider( rSelectedEntity, meshComponent.Mesh, targetMaterialRegistry, transform );
+						// Submit to SceneRenderer as a selected mesh
+
+						if( rSelectedEntity->HasComponent<RigidbodyComponent>() )
+						{
+							rSceneRenderer.SubmitPhysicsCollider( rSelectedEntity, meshComponent.Mesh, targetMaterialRegistry, transform );
+						}
+					}
+				}
+				else if( rSelectedEntity->HasComponent<NavigationMeshSpecificationComponent>() ) 
+				{
+					if( Ref<NavBoundsEntity> boundsEntity = rSelectedEntity.As<NavBoundsEntity>() )
+					{
+						Renderer2D::Get().SubmitAABB( boundsEntity->GetBoundingBox(), glm::vec4( 0.0f, 1.0f, 0.0, 1.0f ) );
+						boundsEntity->GetBuilder().DebugDraw();
 					}
 				}
 			}
@@ -422,6 +455,31 @@ namespace Saturn {
 		{
 			m_MainCameraEntity = GetMainCameraEntity();
 		}
+
+		// Check twice because we are always going to have to set the projection
+		if( m_MainCameraEntity )
+		{
+			auto tc = GetWorldSpaceTransform( m_MainCameraEntity );
+
+			auto view = glm::inverse( tc.GetTransform() );
+
+			auto& rCamera = m_MainCameraEntity->GetComponent<CameraComponent>().Camera;
+			rCamera.SetViewportSize( rSceneRenderer.Width(), rSceneRenderer.Height() );
+			//rCamera.SetViewMatrix( view );
+			rCamera.SetPosition( tc.Position );
+
+			rCamera.OnUpdate( ts );
+
+			m_RendererCamera.pCamera = ( Camera* ) &rCamera;
+			m_RendererCamera.ViewMatrix = rCamera.ViewMatrix();
+		}
+		else
+		{
+			// TODO:
+		}
+
+		rSceneRenderer.SetCamera( m_RendererCamera );
+		Renderer2D::Get().SetCamera( m_RendererCamera );
 
 		// Lights
 		{
@@ -486,43 +544,28 @@ namespace Saturn {
 					rSceneRenderer.SubmitStaticMesh( entity, meshComponent.Mesh, targetMaterialRegistry, transform );
 			}
 		}
-
-		// Check twice because we are always going to have to set the projection
-		if( m_MainCameraEntity )
-		{
-			auto tc = GetWorldSpaceTransform( m_MainCameraEntity );
-
-			auto view = glm::inverse( tc.GetTransform() );
-			
-			auto& rCamera = m_MainCameraEntity->GetComponent<CameraComponent>().Camera;
-			rCamera.SetViewportSize( rSceneRenderer.Width(), rSceneRenderer.Height() );
-			//rCamera.SetViewMatrix( view );
-			rCamera.SetPosition( tc.Position );
-
-			rCamera.OnUpdate( ts );
-
-			m_RendererCamera.pCamera = (Camera*)&rCamera;
-			m_RendererCamera.ViewMatrix = rCamera.ViewMatrix();
-		}
-		else
-		{
-			// TODO:
-		}
-
-		rSceneRenderer.SetCamera( m_RendererCamera );
-		Renderer2D::Get().SetCamera( m_RendererCamera );
 	}
 
-	Ref<Entity> Scene::CreateEntityWithIDScript( UUID uuid, const std::string& name /*= "" */, const std::string& rScriptName )
+	Ref<Entity> Scene::CreateEntityWithIDScript( UUID uuid, const std::string& name /*= "" */, const std::string& rScriptName, bool externalData )
 	{
 		Scene* ActiveScene = GActiveScene;
 		if( GActiveScene != this )
 			GActiveScene = this;
 
-		Ref<Entity> entity = GameModule::Get().CreateEntity( rScriptName );
+		Ref<Entity> entity;
+
+		if( externalData )
+		{
+			entity = GameModule::Get().CreateEntity( rScriptName );
+		}
+		else
+		{
+			entity = ClassMetadataHandler::Get().SpawnEngineClass( rScriptName );
+		}
+
 		entity->SetName( name );
 		entity->GetComponent<IdComponent>().ID = uuid;
-		entity->AddComponent<ScriptComponent>().ScriptName = rScriptName;
+		entity->AddComponent<ScriptComponent>( ( unsigned int ) externalData ).ClassName = rScriptName;
 
 		OnEntityCreated( entity );
 
@@ -589,6 +632,7 @@ namespace Saturn {
 
 		glm::mat4 transform( 1.0f );
 
+		// TODO: Change RelationshipComponent's to use entt::entity handles as it will increase the proformance greatly.
 		const UUID& rParentID = entity->GetParent();
 
 		if( rParentID != 0 )
@@ -763,23 +807,30 @@ namespace Saturn {
 	{
 		// Copy entities
 		// I know we can just use the "=" operator, but we need to recreate the entities from the game.
-		for( auto&& [id, entity] : m_EntityIDMap )
+		for( auto&& [hnd, originalEntity] : m_EntityIDMap )
 		{
-			if( entity->HasComponent<ScriptComponent>() )
+			if( originalEntity->HasComponent<ScriptComponent>() )
 			{
-				auto& rScriptComponent = entity->GetComponent<ScriptComponent>();
+				auto& rScriptComponent = originalEntity->GetComponent<ScriptComponent>();
 
-				NewScene->m_EntityIDMap[ id ] = NewScene->CreateEntityWithIDScript( entity->GetUUID(), entity->GetName(), rScriptComponent.ScriptName );
+				// Create from game module
+				NewScene->m_EntityIDMap[ hnd ] = NewScene->CreateEntityWithIDScript( originalEntity->GetUUID(), originalEntity->GetName(), rScriptComponent.ClassName, rScriptComponent.ExternalData );
 
-				TransferModifiedProperties( entity, NewScene->m_EntityIDMap[ id ], rScriptComponent.ScriptName );
+				TransferModifiedProperties( originalEntity, NewScene->m_EntityIDMap[ hnd ], rScriptComponent.ClassName );
 			}
 			else
 			{
-				NewScene->m_EntityIDMap[ id ] = Ref<Entity>::Create( entity->GetName(), entity->GetUUID() );
+				NewScene->m_EntityIDMap[ hnd ] = originalEntity->Clone();
+				NewScene->m_EntityIDMap[ hnd ]->GetComponent<IdComponent>().ID = originalEntity->GetUUID();
 			}	
 		}
 
 		NewScene->m_Lights = m_Lights;
+		NewScene->m_NavMeshQuery = m_NavMeshQuery;
+		
+		// Asset props
+		NewScene->ID = ID;
+		NewScene->Name = Name;
 
 		std::unordered_map< UUID, entt::entity > EntityMap;
 		
@@ -789,16 +840,17 @@ namespace Saturn {
 			EntityMap[ entity->GetUUID() ] = entity->GetHandle();
 
 		CopyComponent( AllComponents{}, NewScene->m_Registry, m_Registry, EntityMap );
+
+		NewScene->PostDeserialise();
 	}
 
 	void Scene::OnRuntimeStart()
 	{
-		if( m_PhysicsScene )
-			delete m_PhysicsScene;
+		DestroyPhysicsScene();
 
 		m_RuntimeState = RuntimeState::Starting;
 
-		m_PhysicsScene = new PhysicsScene( this );
+		CreatePhysicsScene();
 
 		for( auto&& [id, entity] : m_EntityIDMap )
 		{
@@ -945,8 +997,7 @@ namespace Saturn {
 
 		m_RuntimeState = RuntimeState::Ending;
 
-		if( m_PhysicsScene )
-			delete m_PhysicsScene;
+		DestroyPhysicsScene();
 
 		m_Controllers.clear();
 
@@ -955,6 +1006,13 @@ namespace Saturn {
 		m_MainCameraEntity = nullptr;
 
 		m_RuntimeState = RuntimeState::NoState;
+		delete m_NavMeshQuery;
+		m_NavMeshQuery = nullptr;
+	}
+
+	Saturn::Ref<Saturn::NavBoundsEntity> Scene::GetNavBoundsEntity()
+	{
+		return m_NavBoundsEntity;
 	}
 
 	Ref<Entity> Scene::CreatePrefab( Ref<Prefab> prefabAsset )
@@ -1017,9 +1075,68 @@ namespace Saturn {
 		return GActiveScene;
 	}
 
+	void Scene::PostDeserialise()
+	{
+		// Find and load the nav mesh
+		auto entites = GetAllEntitiesWith<NavigationMeshSpecificationComponent>();
+
+		SAT_CORE_ASSERT( entites.size() <= 1, "There can only be one entity with a NavigationMeshSpecificationComponent in the scene!" );
+
+		for( const auto& rEntity : entites )
+		{
+			// Load initial nav mesh
+			Ref<NavBoundsEntity> boundsEntity = rEntity.As<NavBoundsEntity>();
+			boundsEntity->LoadNavMeshFromDisk();
+
+			m_NavBoundsEntity = boundsEntity;
+
+			OnNavMeshBuildCompleted();
+		}
+	}
+
 	void Scene::OnEntityCreated( Ref<Entity> entity )
 	{
 		m_EntityIDMap[ entity->GetHandle() ] = entity;
+	}
+
+	void Scene::RegisterEntityScript( Ref<Entity> entity, const std::string& rName )
+	{
+		entity->AddComponent<ScriptComponent>( 0 ).ClassName = rName;
+	}
+
+	void Scene::PrepareForNavMeshBuilding()
+	{
+		// NOTE: This function is called by both the editor scene and the runtime scene
+		//       So if we are the editor scene, we'll create the physics scene here
+		//       and keep it alive and add any new bodies to the scene.
+		// NOTE: Currently the need for PrepareForNavMeshBuilding to exist is pointless
+		//       however we may need to have special functionality here so it will be kept.
+		CreatePhysicsScene();
+	}
+
+	void Scene::OnNavMeshBuildCompleted()
+	{
+		dtNavMesh* pNavMesh = m_NavBoundsEntity->GetBuilder().GetNavMesh();
+
+		m_NavMeshQuery = dtAllocNavMeshQuery();
+		m_NavMeshQuery->init( pNavMesh, 2048 );
+	}
+
+	void Scene::CreatePhysicsScene()
+	{
+		if( !m_PhysicsScene )
+		{
+			m_PhysicsScene = new PhysicsScene( this );
+		}
+	}
+
+	void Scene::DestroyPhysicsScene()
+	{
+		if( m_PhysicsScene )
+		{
+			delete m_PhysicsScene;
+			m_PhysicsScene = nullptr;
+		}
 	}
 
 	Ref<Entity> Scene::HotReloadReplaceOldEntity( Ref<Entity> source )
@@ -1027,7 +1144,7 @@ namespace Saturn {
 		auto& rScriptCompoent = source->GetComponent<ScriptComponent>();
 
 		// Create new entity
-		Ref<Entity> entity = GameModule::Get().CreateEntity( rScriptCompoent.ScriptName );
+		Ref<Entity> entity = GameModule::Get().CreateEntity( rScriptCompoent.ClassName );
 
 		entity->SetName( source->GetName() );
 		entity->GetComponent<IdComponent>().ID = source->GetUUID();
@@ -1070,13 +1187,19 @@ namespace Saturn {
 			// K (entt::entity) is always trivial
 			RawSerialisation::WriteObject( k, rStream );
 
+			// TODO: It is annoying that we end up writing the data twice
+			// 1: Here, for initialising when reading back
+			// 2: In the Entity::Serialise function, for the actual serialisation (to write the ScriptComponent)
 			bool isScriptClass = v->HasComponent<ScriptComponent>();
 			RawSerialisation::WriteObject( isScriptClass, rStream );
 
 			if( isScriptClass )
 			{
-				std::string name = v->GetComponent<ScriptComponent>().ScriptName;
+				std::string name = v->GetComponent<ScriptComponent>().ClassName;
 				RawSerialisation::WriteString( name, rStream );
+
+				uint8_t isExternalData = v->GetComponent<ScriptComponent>().ExternalData ? 1 : 0;
+				RawSerialisation::WriteObject( isExternalData, rStream );
 			}
 
 			// V (Entity) is not trivial
@@ -1129,7 +1252,25 @@ namespace Saturn {
 			if( isScriptClass )
 			{
 				std::string className = RawSerialisation::ReadString( rStream );
-				V = GameModule::Get().CreateEntity( className );
+				
+				uint8_t isExternalData = 0;
+				RawSerialisation::ReadObject( isExternalData, rStream );
+				bool externalData = isExternalData != 0;
+				
+				if( externalData )
+				{
+					V = GameModule::Get().CreateEntity( className );
+				}
+				else
+				{
+					// Create engine class
+					V = ClassMetadataHandler::Get().SpawnEngineClass( className );
+
+					if( !V )
+					{
+						V = Ref<Entity>::Create();
+					}
+				}
 			}
 			else
 			{

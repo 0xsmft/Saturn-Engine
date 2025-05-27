@@ -60,8 +60,6 @@ namespace Saturn {
 
 	void RubyWindow::PollEvents()
 	{
-		m_pDefaultBackend->PollEvents();
-
 		if( !m_pDefaultBackend->Focused() && m_CursorMode >= RubyCursorMode::Hidden )
 		{
 			SetMouseCursorMode( RubyCursorMode::Normal );
@@ -166,16 +164,15 @@ namespace Saturn {
 		}
 	}
 
-	void RubyWindow::GetMousePos( double* x, double* y )
+	RubyVec2 RubyWindow::GetMousePos()
 	{
 		if( m_CursorMode == RubyCursorMode::Normal || m_CursorMode == RubyCursorMode::Hidden )
 		{
-			m_pDefaultBackend->GetMousePos( x, y );
+			return m_pDefaultBackend->GetMousePos();
 		}
 		else
 		{
-			*x = m_LockedMousePosition.x;
-			*y = m_LockedMousePosition.y;
+			return m_LockedMousePosition.To<RubyVec2>();
 		}
 	}
 

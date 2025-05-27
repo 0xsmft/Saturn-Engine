@@ -502,7 +502,7 @@ namespace Saturn {
 		}
 
 		//////////////////////////////////////////////////////////////////////////
-		// MATH & SATURN BUFFERS
+		// MATHS & SATURN BUFFERS
 
 		template<typename OStream>
 		static void WriteVec2( const glm::vec2& rVec, OStream& rStream )

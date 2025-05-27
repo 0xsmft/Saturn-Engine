@@ -32,6 +32,8 @@
 #include "Saturn/Project/Project.h"
 
 #include "Saturn/Core/VirtualFS.h"
+#include "Saturn/Core/ErrorDialog.h"
+#include "Saturn/Core/Ruby/RubyWindow.h"
 
 #include "Saturn/Serialisation/SceneSerialiser.h"
 #include "Saturn/Serialisation/ProjectSerialiser.h"
@@ -42,15 +44,13 @@
 
 #include "Saturn/GameFramework/Core/GameModule.h"
 
+#include "Saturn/NodeEditor/GlobalNodesList.h"
+
 #include "Saturn/Vulkan/SceneRenderer.h"
 #include "Saturn/Vulkan/Renderer2D.h"
 
 #include "Saturn/Asset/AssetManager.h"
 #include "Saturn/Asset/Prefab.h"
-
-#include "Saturn/Core/ErrorDialog.h"
-
-#include "Saturn/Core/Ruby/RubyWindow.h"
 
 namespace Saturn {
 
@@ -67,11 +67,13 @@ namespace Saturn {
 		// Load Asset bundle.
 		if( auto result = AssetBundle::ReadBundle(); result != AssetBundleResult::Success )
 		{
-			std::string errMsg = std::format( "Asset Bundle could not be read. Error code: {0}", AssetBundleResultToString( result ) );
+			std::string errMsg = std::format( "Asset Bundle could not be read. Error code: {0}", result );
 
 			SAT_CORE_VERIFY( false, errMsg );
 		}
 
+		GlobalNodesList::RegisterAll();
+		
 		// "Load" the Game Module
 		m_GameModule = new GameModule();
 

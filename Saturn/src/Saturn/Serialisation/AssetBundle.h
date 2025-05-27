@@ -89,3 +89,36 @@ namespace Saturn {
 	};
 
 }
+
+namespace std {
+
+	template<>
+	struct formatter<Saturn::AssetBundleResult>
+	{
+		constexpr auto parse( format_parse_context& ctx )
+		{
+			return ctx.begin();
+		}
+
+		template<typename FormatContext>
+		auto format( Saturn::AssetBundleResult result, FormatContext& ctx ) const
+		{
+			std::string_view errorName = "Unknown Error";
+
+			switch( result )
+			{
+				case Saturn::AssetBundleResult::Success:                 errorName = "Success"; break;
+				case Saturn::AssetBundleResult::FileNotFound:            errorName = "Asset Bundle file not found"; break;
+				case Saturn::AssetBundleResult::FailedToUncompress:      errorName = "Failed to uncompress"; break;
+				case Saturn::AssetBundleResult::InvalidFileHeader:       errorName = "Invalid asset bundle file header"; break;
+				case Saturn::AssetBundleResult::FileVersionMismatch:     errorName = "Asset bundle version mismatch"; break;
+				case Saturn::AssetBundleResult::InvalidPackFileHeader:   errorName = "Invalid pack file header"; break;
+				case Saturn::AssetBundleResult::PackFileVersionMismatch: errorName = "Pack version mismatch"; break;
+				case Saturn::AssetBundleResult::AssetIDMismatch:         errorName = "Asset ID mismatch"; break;
+			}
+
+			return std::format_to( ctx.out(), "{}", errorName );
+		}
+	};
+	
+}

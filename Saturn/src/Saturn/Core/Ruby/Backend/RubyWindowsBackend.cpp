@@ -483,8 +483,11 @@ namespace Saturn {
 
 		::SetPropW( m_Handle, L"RubyData", this );
 
-		if( m_WindowSpecification.Style == RubyStyle::Borderless )
+		if( m_WindowSpecification.Style == RubyStyle::Borderless ) 
+		{
 			::SetWindowLong( m_Handle, GWL_STYLE, GetWindowLong( m_Handle, GWL_STYLE ) | WS_CAPTION );
+			::SetWindowPos( m_Handle, nullptr, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED );
+		}
 	}
 
 	DWORD RubyWindowsBackend::ChooseStyle()
@@ -495,11 +498,11 @@ namespace Saturn {
 				return WS_OVERLAPPEDWINDOW;
 
 			case RubyStyle::BorderlessNoResize:
-				return WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_POPUP | WS_MINIMIZEBOX;
+				return WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_SYSMENU | WS_MINIMIZEBOX | WS_POPUP;
 
 			case RubyStyle::Borderless:
 				// Create the borderless window as a normal window however we will then set the required styles.
-				// TODO: For some reason adding WS_CAPTION does not work, so we'll add it when set the style long.
+				// TODO: For some reason adding WS_CAPTION does not work, so we'll add it when set the style.
 				return WS_POPUP | WS_EX_TOPMOST | WS_MAXIMIZEBOX;
 
 			default:
@@ -732,28 +735,23 @@ namespace Saturn {
 		::SetCursorPos( newPos.x, newPos.y );
 	}
 
-	void RubyWindowsBackend::GetMousePos( double* x, double* y )
+	RubyVec2 RubyWindowsBackend::GetMousePos()
 	{
 		POINT pos{};
-
-		if( x ) *x = 0;
-		if( y ) *y = 0;
-
 		if( ::GetCursorPos( &pos ) ) 
 		{
 			::ScreenToClient( m_Handle, &pos );
 
-			*x = pos.x;
-			*y = pos.y;
+			return { static_cast< float >( pos.x ), static_cast< float >( pos.y ) };
 		}
+
+		return { 0.0f, 0.0f };
 	}
 
 	void RubyWindowsBackend::DestroyWindow()
 	{
 		if( m_Handle )
 		{
-			ReleaseDC( m_Handle, m_DrawContext );
-
 			::RemovePropW( m_Handle, L"RubyData" );
 
 			::DestroyWindow( m_Handle );
@@ -771,6 +769,10 @@ namespace Saturn {
 		{
 			case RubyWindowShowCmd::Default:
 				::ShowWindow( m_Handle, SW_SHOW );
+				break;
+
+			case RubyWindowShowCmd::NoActivate:
+				::ShowWindow( m_Handle, SW_SHOWNA );
 				break;
 
 			case RubyWindowShowCmd::Fullscreen:
@@ -815,9 +817,7 @@ namespace Saturn {
 
 	void RubyWindowsBackend::PollEvents()
 	{
-		// TODO: I don't want to just update our window. 
-		// We should update all windows all at once.
-
+		// Process all the messages in the queue + process all windows owned by the current thread.
 		MSG Message = {};
 		while( ::PeekMessage( &Message, nullptr, 0, 0, PM_REMOVE ) > 0 )
 		{
@@ -825,17 +825,27 @@ namespace Saturn {
 			::DispatchMessage( &Message );
 		}
 
-		// Lock the mouse back to the center if it has moved.
-		if( m_pWindow->GetCursorMode() == RubyCursorMode::Locked )
+		HWND activeWindow = ::GetActiveWindow();
+		if( activeWindow )
 		{
-			RubyIVec2 lastPos = m_pWindow->GetLastMousePos();
-
-			uint32_t w = m_pWindow->GetWidth() / 2;
-			uint32_t h = m_pWindow->GetHeight() / 2;
-
-			if( lastPos.x != w || lastPos.y != h )
+			RubyWindowsBackend* pThis = ( RubyWindowsBackend* ) ::GetPropW( activeWindow, L"RubyData" );
+			if( pThis )
 			{
-				RecenterMousePos();
+				// Lock the mouse back to the center if it has moved.
+				if( pThis->GetParent()->GetCursorMode() == RubyCursorMode::Locked )
+				{
+					RubyIVec2 lastPos = pThis->GetParent()->GetLastMousePos();
+
+					uint32_t w = pThis->GetParent()->GetWidth() / 2;
+					uint32_t h = pThis->GetParent()->GetHeight() / 2;
+
+					if( lastPos.x != w || lastPos.y != h )
+					{
+						pThis->RecenterMousePos();
+					}
+				}
+
+				pThis->GetParent()->PollEvents();
 			}
 		}
 	}
@@ -865,9 +875,14 @@ namespace Saturn {
 		RECT WindowRect;
 		POINT MousePos;
 
-		::GetClientRect( m_Handle, &WindowRect );
-		::GetCursorPos( &MousePos );
+		if( !::GetCursorPos( &MousePos ) )
+			return false;
 
+		// WindowFromPoint is needed because we may have multiple windows in the same area, so we need to check if the mouse is over this specific window.
+		if( ::WindowFromPoint( MousePos ) != m_Handle )
+			return false;
+
+		::GetClientRect( m_Handle, &WindowRect );
 		::ClientToScreen( m_Handle, ( POINT* ) &WindowRect.left );
 		::ClientToScreen( m_Handle, ( POINT* ) &WindowRect.right );
 

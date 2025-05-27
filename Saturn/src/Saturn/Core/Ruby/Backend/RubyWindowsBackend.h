@@ -68,7 +68,7 @@ namespace Saturn {
 		void SetTitle( const std::wstring& rTitle ) override;
 
 		void SetMousePos( double x, double y ) override;
-		void GetMousePos( double* x, double* y ) override;
+		RubyVec2 GetMousePos() override;
 
 		VkResult CreateVulkanWindowSurface( VkInstance Instance, VkSurfaceKHR* pOutSurface ) override;
 
@@ -81,7 +81,7 @@ namespace Saturn {
 		const char* GetClipboardText() override;
 		const wchar_t* GetClipboardTextW() override;
 
-		void PollEvents() override;
+		static void PollEvents();
 		bool PendingClose() override;
 
 		void Focus() override;
@@ -101,7 +101,7 @@ namespace Saturn {
 		void UpdateCursorIcon();
 		void SetResizeCursor( RubyCursorType Type );
 		void ResetResizeCursor();
-		bool IsMouseTracked() { return m_MouseTracked; }
+		bool IsMouseTracked() const { return m_MouseTracked; }
 		void SetTrackMouse( bool value ) { m_MouseTracked = value; }
 
 	private:
@@ -113,9 +113,6 @@ namespace Saturn {
 
 	private:
 		HWND m_Handle = nullptr;
-
-		HDC m_DrawContext = nullptr;
-		HGLRC m_OpenGLRenderContext = nullptr;
 
 		// For disabled mouse mode.
 		RubyIVec2 m_MouseRestorePoint{};

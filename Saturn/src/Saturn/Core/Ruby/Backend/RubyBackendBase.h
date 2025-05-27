@@ -75,7 +75,7 @@ namespace Saturn {
 		virtual void MoveWindow( int x, int y ) = 0;
 
 		virtual void SetMousePos( double x, double y ) = 0;
-		virtual void GetMousePos( double* x, double* y ) = 0;
+		virtual RubyVec2 GetMousePos() = 0;
 
 		virtual void SetClipboardText( const std::string& rTextData ) = 0;
 		virtual void SetClipboardText( const std::wstring& rTextData ) = 0;
@@ -101,7 +101,6 @@ namespace Saturn {
 		virtual void FlashAttention() = 0;
 
 	public:
-		virtual void PollEvents() = 0;
 		virtual bool PendingClose() = 0;
 
 	protected:

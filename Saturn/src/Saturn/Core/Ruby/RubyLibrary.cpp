@@ -29,13 +29,14 @@
 #include "sppch.h"
 #include "RubyLibrary.h"
 
-#if defined(_WIN32)
+#if defined( SAT_PLATFORM_WINDOWS )
 #include <Windows.h>
+#include "Backend/RubyWindowsBackend.h"
 #endif
 
 namespace Saturn {
 
-#if defined(_WIN32)
+#if defined( SAT_PLATFORM_WINDOWS )
 	static BOOL CALLBACK MonitorEnumProc( HMONITOR Monitor, HDC HDCMonitor, LPRECT LPRCMonitor, LPARAM DWData )
 	{
 		RubyLibrary* pThis = ( RubyLibrary* ) DWData;
@@ -78,6 +79,13 @@ namespace Saturn {
 	void RubyLibrary::AddMonintor( const RubyMonitor& rMonitor )
 	{
 		m_Monitors.push_back( rMonitor );
+	}
+
+	void RubyLibrary::PollEvents()
+	{
+#if defined( SAT_PLATFORM_WINDOWS )
+		RubyWindowsBackend::PollEvents();
+#endif
 	}
 
 	std::vector<RubyMonitor> RubyLibrary::GetAllMonitors()

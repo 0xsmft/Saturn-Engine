@@ -9,10 +9,10 @@ const float PI = 3.141592;
 
 layout(binding = 0, rgba32f) restrict writeonly uniform imageCube o_CubeMap;
 
-layout(push_constant) uniform u_Matrices 
+layout(push_constant) uniform Params 
 {
 	vec3 Params;
-} pc_Matrices;
+} pc_Params;
 
 vec3 GetCubeMapTexCoord()
 {
@@ -128,9 +128,9 @@ void main()
 {
 	vec3 cubeTC = GetCubeMapTexCoord();
 
-	float turbidity = pc_Matrices.Params.x;
-	float azimuth = pc_Matrices.Params.y;
-	float inclination = pc_Matrices.Params.z;
+	float turbidity     = pc_Params.Params.x;
+	float azimuth       = pc_Params.Params.y;
+	float inclination   = pc_Params.Params.z;
 
 	vec3 sunDir     	= normalize( vec3( sin(inclination) * cos(azimuth), cos(inclination), sin(inclination) * sin(azimuth) ) );
     vec3 viewDir  		= cubeTC;

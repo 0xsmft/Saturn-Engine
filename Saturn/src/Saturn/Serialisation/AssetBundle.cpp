@@ -145,7 +145,7 @@ namespace Saturn {
 			scene->ID = asset->ID;
 
 			SceneSerialiser serialiser( scene );
-			serialiser.Deserialise();
+			serialiser.Deserialise( asset );
 
 			scene->SerialiseData();
 		}
@@ -600,7 +600,7 @@ namespace Saturn {
 		std::ifstream stream( cachePath, std::ios::binary | std::ios::in );
 
 		AssetBundleMinimalHeader header;
-		RawSerialisation::ReadObject( header.Version, stream );
+		RawSerialisation::ReadObject( header, stream );
 
 		if( strcmp( header.Magic, ".AB\0" ) )
 		{

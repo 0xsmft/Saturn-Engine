@@ -38,6 +38,7 @@
 namespace Saturn {
 
 	class PhysicsMaterialAsset;
+	struct RecastInputGeometryExpData;
 
 	class PhysicsShape : public RefTarget
 	{
@@ -47,6 +48,7 @@ namespace Saturn {
 
 		virtual void Create( physx::PxRigidActor& rActor ) = 0;
 		virtual void Detach( physx::PxRigidActor& rActor );
+		virtual void ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds ) = 0;
 
 		// Only use this for basic shapes as this only works for one shape.
 		void SetFilterData();
@@ -69,6 +71,7 @@ namespace Saturn {
 		~BoxShape();
 
 		void Create( physx::PxRigidActor& rActor ) override;
+		void ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
 
 	private:
 		float m_Extent = 0.0f;
@@ -81,6 +84,7 @@ namespace Saturn {
 		~SphereShape();
 
 		void Create( physx::PxRigidActor& rActor ) override;
+		void ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
 
 	private:
 		float m_Radius = 0.0f;
@@ -93,6 +97,7 @@ namespace Saturn {
 		~CapsuleShape();
 
 		void Create( physx::PxRigidActor& rActor ) override;
+		void ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
 
 	private:
 		float m_Height = 0.0f;
@@ -109,6 +114,8 @@ namespace Saturn {
 		void Create( physx::PxRigidActor& rActor ) override;
 		virtual void Detach( physx::PxRigidActor& rActor ) override;
 
+		void ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
+
 	private:
 		Ref<StaticMesh> m_Mesh;
 		std::vector<physx::PxShape*> m_Shapes;
@@ -123,6 +130,8 @@ namespace Saturn {
 		// This assumes the the mesh collider has already been cooked.
 		void Create( physx::PxRigidActor& rActor ) override;
 		virtual void Detach( physx::PxRigidActor& rActor ) override;
+
+		void ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
 
 	private:
 		Ref<StaticMesh> m_Mesh;

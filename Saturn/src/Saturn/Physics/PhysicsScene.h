@@ -57,6 +57,8 @@ namespace Saturn {
 
 		[[nodiscard]] bool Raycast( const glm::vec3& Origin, const glm::vec3& Direction, float MaxDistance, RaycastHitResult* pOut );
 
+		void ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
+
 	private:
 		void AddToScene( physx::PxRigidActor& rBody );
 		void InitialiseNewBody( Ref<Entity>& rEntity, RigidbodyComponent& rRigidbodyComponent );

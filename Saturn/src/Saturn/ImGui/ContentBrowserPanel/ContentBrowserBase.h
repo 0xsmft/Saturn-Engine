@@ -28,7 +28,7 @@
 
 #pragma once
 
-#include "Saturn/ImGui/Panel/Panel.h"
+#include "Saturn/ImGui/ImGuiWindow.h"
 #include "ContentBrowserItem.h"
 #include "Saturn/Vulkan/Texture.h"
 
@@ -45,13 +45,12 @@ namespace Saturn {
 		Scripts
 	};
 
-	class ContentBrowserBase : public Panel
+	class ContentBrowserBase : public ImGuiWindow
 	{
 	public:
 		ContentBrowserBase();
 		virtual ~ContentBrowserBase();
 
-		virtual void Draw() = 0;
 		virtual void ResetPath( const std::filesystem::path& rPath ) = 0;
 
 	protected:

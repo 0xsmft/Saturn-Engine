@@ -200,7 +200,7 @@ namespace YAML {
 	}
 }
 
-namespace Saturn {
+namespace Saturn::Auxiliary {
 
 	extern void SerialiseEntity( YAML::Emitter& rEmitter, Ref<Entity> entity );
 

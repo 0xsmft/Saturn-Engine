@@ -49,6 +49,8 @@
 #include <shared_mutex>
 #endif
 
+class dtNavMeshQuery;
+
 namespace Saturn {
 
 	class Entity;
@@ -56,6 +58,7 @@ namespace Saturn {
 	class PhysicsScene;
 	class SClass;
 	class SceneRenderer;
+	class NavBoundsEntity;
 
 	struct TransformComponent;
 	struct RaycastHitResult;
@@ -132,7 +135,7 @@ namespace Saturn {
 		DirectionalLight DirectionalLights[ 4 ];
 		std::vector<PointLight> PointLights;
 
-		[[nodiscard]] uint32_t GetPointLightSize() { return static_cast<uint32_t>( sizeof( PointLight ) * PointLights.size() ); };
+		[[nodiscard]] uint32_t GetPointLightSize() const { return static_cast<uint32_t>( sizeof( PointLight ) * PointLights.size() ); };
 
 		static void Serialise( const Lights& rObject, std::ofstream& rStream )
 		{
@@ -172,21 +175,19 @@ namespace Saturn {
 		Scene();
 		~Scene();
 
-		[[nodiscard]] Ref<Entity> CreateEntityWithIDScript( UUID uuid, const std::string& name = "", const std::string& rScriptName = "" );
+		[[nodiscard]] Ref<Entity> CreateEntityWithIDScript( UUID uuid, const std::string& name = "", const std::string& rScriptName = "", bool externalData = true );
 
 		[[nodiscard]] Ref<Entity> CreateEntityWithID( UUID uuid, const std::string& name = "" );
 		[[nodiscard]] Ref<Entity> CreateEntity( const std::string& name = "" );
 
-		// This is not the same as CreateEntityWithIDScript
-		// Consider this as the internal counterpart for that function
-		// You must ensure that this scene is the active scene before calling this function! 
 		template<typename Ty>
-		[[nodiscard]] Ref<Ty> CreateEntityT( const std::string& name = "" ) 
+		[[nodiscard]] Ref<Ty> CreateEntityScript( const std::string& rScriptName, const std::string& name = "" )
 		{
 			static_assert( std::is_base_of<Entity, Ty>::value, "Ty must be based from an entity!" );
 
 			Ref<Ty> entity = Ref<Ty>::Create();
 			entity->SetName( name );
+			RegisterEntityScript( entity, rScriptName );
 
 			OnEntityCreated( entity );
 
@@ -238,7 +239,10 @@ namespace Saturn {
 		[[nodiscard]] Ref<Entity> FindEntityByID( const UUID& id );
 		[[nodiscard]] Ref<Entity> FindEntityByHandle( entt::entity handle );
 
+		// Convert the local space transformation into world space
 		glm::mat4 GetTransformRelativeToParent( Ref<Entity> entity );
+
+		// Convert the local space transformation into world space
 		TransformComponent GetWorldSpaceTransform( Ref<Entity> entity );
 
 		[[nodiscard]] bool Raycast( const glm::vec3& Origin, const glm::vec3& Direction, float MaxDistance, RaycastHitResult* pOut );
@@ -264,6 +268,8 @@ namespace Saturn {
 
 		entt::registry& GetRegistry() { return m_Registry; }
 		const entt::registry& GetRegistry() const { return m_Registry; }
+
+		Ref<NavBoundsEntity> GetNavBoundsEntity();
 
 		// This transfers a prefab to an entity.
 		// The prefabs holds an entity however that entity is local to it's scene and we want that entity to be our scene.
@@ -310,6 +316,8 @@ namespace Saturn {
 		static void   SetActiveScene( Scene* pScene );
 		static Scene* GetActiveScene();
 
+		void PostDeserialise();
+
 	public:
 		//////////////////////////////////////////////////////////////////////////
 		// #WARNING This should not be confused with AssetSerialisers. This is for raw binary serialisation!
@@ -329,8 +337,10 @@ namespace Saturn {
 
 	protected:
 		void OnEntityCreated( Ref<Entity> entity );
+		// Internal Function to add ScriptComponent
+		void RegisterEntityScript( Ref<Entity> entity, const std::string& rName );
 
-	private:
+	public:
 
 		//////////////////////////////////////////////////////////////////////////
 		// TODO: Rework this is as locking a mutex every frame can be bad for performance.
@@ -381,8 +391,21 @@ namespace Saturn {
 			return m_Registry.get<Ty>( entity );
 		}
 
+		void PrepareForNavMeshBuilding();
+
+		void OnNavMeshBuildCompleted();
+		dtNavMeshQuery* GetNavMeshQuery() { return m_NavMeshQuery; }
+		PhysicsScene* GetPhysicsScene() { return m_PhysicsScene; }
+
+		void DestroyPhysicsScene();
 	private:
-		std::unordered_map<entt::entity, Ref<Entity>> m_EntityIDMap;
+		void CreatePhysicsScene();
+
+		void OnNavMeshBuildCompAdded( entt::registry& reg, entt::entity entity );
+		void OnNavMeshBuildCompRemoved( entt::registry& reg, entt::entity entity );
+
+	private:
+		std::map<entt::entity, Ref<Entity>> m_EntityIDMap;
 		entt::registry m_Registry;
 
 		entt::entity m_SceneEntity{ entt::null };
@@ -397,6 +420,7 @@ namespace Saturn {
 
 		Lights m_Lights;
 		Ref<Entity> m_MainCameraEntity = nullptr;
+		Ref<NavBoundsEntity> m_NavBoundsEntity = nullptr;
 
 #if defined( SAT_ENABLE_GAMETHREAD )
 		std::mutex m_Mutex;
@@ -407,15 +431,18 @@ namespace Saturn {
 		// TODO: Change raw pointer to Ref?
 		PhysicsScene* m_PhysicsScene = nullptr;
 
+		dtNavMeshQuery* m_NavMeshQuery = nullptr;
+
 		UUID m_InternalID;
 		bool m_Dirty = false;
 
 	private:
-
+		friend class PhysXSceneExporter;
 		friend class Entity;
 		friend class Prefab;
 		friend class SceneHierarchyPanel;
 		friend class SceneSerialiser;
 		friend class SceneRenderer;
 	};
+
 }

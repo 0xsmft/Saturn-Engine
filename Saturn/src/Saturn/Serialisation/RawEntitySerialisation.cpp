@@ -167,16 +167,17 @@ namespace Saturn {
 				//	MaterialRegistry::Serialise( mc.MaterialRegistry, rStream );
 			} );
 
-		/*
 		// Script Component
 		WriteComponent<ScriptComponent>( rEntity, rStream, [&]()
 			{
 				auto& sc = rEntity->GetComponent< ScriptComponent >();
 
-				RawSerialisation::WriteString( sc.ScriptName, rStream );
-				RawSerialisation::WriteObject( sc.AssetID, rStream );
+				RawSerialisation::WriteString( sc.ClassName, rStream );
 
-				auto& rProperties = ClassMetadataHandler::Get().GetAllProperties( sc.ScriptName );
+				uint8_t bit = sc.ExternalData;
+				rStream.write( reinterpret_cast< const char* >( &bit ), sizeof( bit ) );
+
+				auto& rProperties = ClassMetadataHandler::Get().GetAllProperties( sc.ClassName );
 				RawSerialisation::WriteObject( rProperties.size(), rStream );
 
 				for( auto& rProperty : rProperties ) 
@@ -186,7 +187,6 @@ namespace Saturn {
 					rProperty.Serialise( rEntity.Get(), rStream );
 				}
 			} );
-			*/
 
 		// Sky light component
 		WriteComponent<SkylightComponent>( rEntity, rStream, [&]()
@@ -300,6 +300,17 @@ namespace Saturn {
 				RawSerialisation::WriteObject( alc.ConeInnerAngle, rStream );
 				RawSerialisation::WriteObject( alc.ConeOuterAngle, rStream );
 			} );
+
+		// Navigation Mesh Specification Component
+		WriteComponent<NavigationMeshSpecificationComponent>( rEntity, rStream, [ & ]()
+			{
+				auto& nmsc = rEntity->GetComponent< NavigationMeshSpecificationComponent >();
+				
+				RawSerialisation::WriteVec3( nmsc.Extent, rStream );
+
+				uint8_t bit = nmsc.HasBuilt;
+				rStream.write( reinterpret_cast< const char* >( &bit ), sizeof( bit ) );
+			} );
 	}
 
 	void RawEntitySerialisation::DeserialiseEntity( Ref<Entity>& rEntity, std::istream& rStream )
@@ -387,7 +398,7 @@ namespace Saturn {
 						if( asset )
 						{
 							mc.MaterialRegistry->AddAsset( asset );
-							mc.MaterialRegistry->SetOverries( i, true );
+							mc.MaterialRegistry->SetOverries( ( uint32_t ) i, true );
 						}
 					}
 				}
@@ -399,14 +410,16 @@ namespace Saturn {
 				}
 			} );
 
-		/*
 		// Script Component
 		ReadComponent<ScriptComponent>( rEntity, rStream, [&]()
 			{
 				auto& sc = rEntity->GetComponent< ScriptComponent >();
 
-				sc.ScriptName = RawSerialisation::ReadString( rStream );
-				RawSerialisation::ReadObject( sc.AssetID, rStream );
+				sc.ClassName = RawSerialisation::ReadString( rStream );
+
+				uint8_t tempExternalData = 0;
+				RawSerialisation::ReadObject( tempExternalData, rStream );
+				sc.ExternalData = tempExternalData ? 1 : 0;
 
 				/////////////////////////////////
 				// Read Properties
@@ -414,7 +427,7 @@ namespace Saturn {
 				// We don't actually create the property we simply just load the saved data.
 
 				// Properties that are already present in the module
-				auto& rLoadedProperties = ClassMetadataHandler::Get().GetAllProperties( sc.ScriptName );
+				auto& rLoadedProperties = ClassMetadataHandler::Get().GetAllProperties( sc.ClassName );
 
 				size_t propertySize = 0;
 				RawSerialisation::ReadObject( propertySize, rStream );
@@ -434,7 +447,6 @@ namespace Saturn {
 					rProperty.Deserialise( rEntity.Get(), rStream );
 				}
 			} );
-			*/
 
 		// Sky light component
 		ReadComponent<SkylightComponent>( rEntity, rStream, [&]()
@@ -547,6 +559,17 @@ namespace Saturn {
 				RawSerialisation::ReadVec3( alc.Direction, rStream );
 				RawSerialisation::ReadObject( alc.ConeInnerAngle, rStream );
 				RawSerialisation::ReadObject( alc.ConeOuterAngle, rStream );
+			} );
+
+		// Navigation Mesh Specification Component
+		ReadComponent<NavigationMeshSpecificationComponent>( rEntity, rStream, [ & ]()
+			{
+				auto& nmsc = rEntity->GetComponent< NavigationMeshSpecificationComponent >();
+				RawSerialisation::ReadVec3( nmsc.Extent, rStream );
+			
+				uint8_t bit = 0;
+				rStream.read( reinterpret_cast< char* >( &bit ), sizeof( bit ) );
+				nmsc.HasBuilt = bit ? true : false;
 			} );
 	}
 

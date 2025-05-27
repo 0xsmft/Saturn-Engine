@@ -31,9 +31,10 @@
 
 #include "PhysicsAuxiliary.h"
 #include "PhysicsFoundation.h"
-#include "PhysicsCooking.h"
 #include "Saturn/Asset/PhysicsMaterialAsset.h"
 #include "Saturn/Asset/AssetManager.h"
+
+#include "Saturn/AI/Navigation/RecastInputGeometry.h"
 
 namespace Saturn {
 
@@ -124,6 +125,54 @@ namespace Saturn {
 		SetFilterData();
 	}
 
+	void BoxShape::ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds )
+	{
+		glm::vec3 localVertices[ 8 ] = { 
+			{-1.0f, -1.0f, -1.0f},
+			{ 1.0f, -1.0f, -1.0f},
+			{ 1.0f,  1.0f, -1.0f},
+			{-1.0f,  1.0f, -1.0f},
+			{-1.0f, -1.0f,  1.0f},
+			{ 1.0f, -1.0f,  1.0f},
+			{ 1.0f,  1.0f,  1.0f},
+			{-1.0f,  1.0f,  1.0f},
+		};
+
+		uint32_t indices[ 36 ] = {
+			0, 1, 2,  0, 2, 3,
+			4, 6, 5,  4, 7, 6,
+			4, 5, 1,  4, 1, 0,
+			3, 2, 6,  3, 6, 7,
+			0, 3, 7,  0, 7, 4,
+			1, 5, 6,  1, 6, 2
+		};
+
+		glm::mat4 actorTransform = m_Entity->Transform();
+
+		if( m_Shape->getGeometryType() == physx::PxGeometryType::eBOX )
+		{
+			physx::PxBoxGeometry geometry;
+			if( m_Shape->getBoxGeometry( geometry ) )
+			{
+				physx::PxTransform globalPose = physx::PxShapeExt::getGlobalPose( *m_Shape, rActor );
+
+				glm::vec3 halfExtents = { geometry.halfExtents.x, geometry.halfExtents.y, geometry.halfExtents.z };
+
+				for( int i = 0; i < 8; i++ )
+				{
+					glm::vec3 scaled = localVertices[ i ] * halfExtents;
+					glm::vec4 worldPos = actorTransform * glm::vec4( scaled, 1.0f );
+
+					rData.VertexBuffer.push_back( worldPos.x );
+					rData.VertexBuffer.push_back( worldPos.y );
+					rData.VertexBuffer.push_back( worldPos.z );
+				}
+
+				rData.IndexBuffer.insert( rData.IndexBuffer.end(), std::begin( indices ), std::end( indices ) );
+			}
+		}
+	}
+
 	//////////////////////////////////////////////////////////////////////////
 	// Sphere
 
@@ -174,6 +223,165 @@ namespace Saturn {
 		rActor.attachShape( *pShape );
 
 		SetFilterData();
+	}
+
+	void SphereShape::ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds )
+	{
+		physx::PxTransform actorTransform = rActor.getGlobalPose();
+
+		if( m_Shape->getGeometryType() == physx::PxGeometryType::eSPHERE )
+		{
+			physx::PxSphereGeometry geometry;
+			if( m_Shape->getSphereGeometry( geometry ) )
+			{
+				physx::PxTransform localTransform = actorTransform * m_Shape->getLocalPose();
+
+				const float radius = geometry.radius;
+
+				// Sphere tessellation resolution
+				// vertical slices
+				constexpr int latSegments = 6;
+				
+				// horizontal rings
+				constexpr int lonSegments = 12;  
+
+				uint32_t baseIndex = (size_t)rData.VertexBuffer.size() / 3;
+				uint32_t vertexCounter = baseIndex;
+
+				std::vector<uint32_t> vertexIndices;
+
+				// Top pole
+				physx::PxVec3 top = localTransform.transform( physx::PxVec3( 0, radius, 0 ) );
+				glm::vec3 glmTop = Auxiliary::PxToGLM( top );
+				if( rData.Bounds.Contains( glmTop ) )
+				{
+					rData.VertexBuffer.push_back( top.x );
+					rData.VertexBuffer.push_back( top.y );
+					rData.VertexBuffer.push_back( top.z );
+					vertexIndices.push_back( vertexCounter++ );
+					rNavMeshBounds.Min = glm::min( rNavMeshBounds.Min, glmTop );
+					rNavMeshBounds.Max = glm::max( rNavMeshBounds.Max, glmTop );
+				}
+				else
+				{
+					vertexIndices.push_back( UINT32_MAX ); // mark as invalid
+					vertexCounter++;
+				}
+
+				// Rings (excluding poles)
+				for( int lat = 1; lat < latSegments; lat++ )
+				{
+					float theta = lat * ( physx::PxPi / latSegments );
+					float y = cos( theta );
+					float r = sin( theta );
+
+					for( int lon = 0; lon < lonSegments; lon++ )
+					{
+						float phi = lon * ( physx::PxTwoPi / lonSegments );
+						float x = cos( phi ) * r;
+						float z = sin( phi ) * r;
+
+						physx::PxVec3 localPos( x * radius, y * radius, z * radius );
+						physx::PxVec3 worldPos = localTransform.transform( localPos );
+						glm::vec3 glmPos = Auxiliary::PxToGLM( worldPos );
+
+						if( rData.Bounds.Contains( glmPos ) )
+						{
+							rData.VertexBuffer.push_back( worldPos.x );
+							rData.VertexBuffer.push_back( worldPos.y );
+							rData.VertexBuffer.push_back( worldPos.z );
+							vertexIndices.push_back( vertexCounter++ );
+							rNavMeshBounds.Min = glm::min( rNavMeshBounds.Min, glmPos );
+							rNavMeshBounds.Max = glm::max( rNavMeshBounds.Max, glmPos );
+						}
+						else
+						{
+							vertexIndices.push_back( UINT32_MAX );
+							vertexCounter++;
+						}
+					}
+				}
+
+				// Bottom pole
+				physx::PxVec3 bottom = localTransform.transform( physx::PxVec3( 0, -radius, 0 ) );
+				glm::vec3 glmBottom = Auxiliary::PxToGLM( bottom );
+				if( rData.Bounds.Contains( glmBottom ) )
+				{
+					rData.VertexBuffer.push_back( bottom.x );
+					rData.VertexBuffer.push_back( bottom.y );
+					rData.VertexBuffer.push_back( bottom.z );
+					vertexIndices.push_back( vertexCounter++ );
+					rNavMeshBounds.Min = glm::min( rNavMeshBounds.Min, glmBottom );
+					rNavMeshBounds.Max = glm::max( rNavMeshBounds.Max, glmBottom );
+				}
+				else
+				{
+					vertexIndices.push_back( UINT32_MAX );
+					vertexCounter++;
+				}
+
+				// Build triangle indices
+				auto index = [ & ]( int lat, int lon ) -> uint32_t {
+					return 1 + ( lat - 1 ) * lonSegments + ( lon % lonSegments );
+				};
+
+				// Top cap
+				for( int lon = 0; lon < lonSegments; lon++ )
+				{
+					uint32_t topIdx = vertexIndices[ 0 ];
+					uint32_t a = vertexIndices[ index( 1, lon ) ];
+					uint32_t b = vertexIndices[ index( 1, lon + 1 ) ];
+
+					if( topIdx != UINT32_MAX && a != UINT32_MAX && b != UINT32_MAX )
+					{
+						rData.IndexBuffer.push_back( topIdx );
+						rData.IndexBuffer.push_back( b );
+						rData.IndexBuffer.push_back( a );
+					}
+				}
+
+				// Middle bands
+				for( int lat = 1; lat < latSegments - 1; lat++ )
+				{
+					for( int lon = 0; lon < lonSegments; lon++ )
+					{
+						uint32_t a = vertexIndices[ index( lat, lon ) ];
+						uint32_t b = vertexIndices[ index( lat + 1, lon ) ];
+						uint32_t c = vertexIndices[ index( lat, lon + 1 ) ];
+						uint32_t d = vertexIndices[ index( lat + 1, lon + 1 ) ];
+
+						if( a != UINT32_MAX && b != UINT32_MAX && c != UINT32_MAX )
+						{
+							rData.IndexBuffer.push_back( a );
+							rData.IndexBuffer.push_back( b );
+							rData.IndexBuffer.push_back( c );
+						}
+						if( c != UINT32_MAX && b != UINT32_MAX && d != UINT32_MAX )
+						{
+							rData.IndexBuffer.push_back( c );
+							rData.IndexBuffer.push_back( b );
+							rData.IndexBuffer.push_back( d );
+						}
+					}
+				}
+
+				// Bottom cap
+				uint32_t bottomIdx = vertexIndices.back();
+				int lastRingStart = 1 + ( latSegments - 2 ) * lonSegments;
+				for( int lon = 0; lon < lonSegments; lon++ )
+				{
+					uint32_t a = vertexIndices[ lastRingStart + lon ];
+					uint32_t b = vertexIndices[ lastRingStart + ( lon + 1 ) % lonSegments ];
+
+					if( bottomIdx != UINT32_MAX && a != UINT32_MAX && b != UINT32_MAX )
+					{
+						rData.IndexBuffer.push_back( a );
+						rData.IndexBuffer.push_back( b );
+						rData.IndexBuffer.push_back( bottomIdx );
+					}
+				}
+			}
+		}
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -233,6 +441,104 @@ namespace Saturn {
 		SetFilterData();
 	}
 
+	void CapsuleShape::ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds )
+	{
+		physx::PxTransform actorTransform = rActor.getGlobalPose();
+
+		if( m_Shape->getGeometryType() == physx::PxGeometryType::eCAPSULE )
+		{
+			physx::PxCapsuleGeometry geometry;
+			if( m_Shape->getCapsuleGeometry( geometry ) )
+			{
+				physx::PxTransform localTransform = actorTransform * m_Shape->getLocalPose();
+
+				const float radius = geometry.radius;
+				const float halfHeight = geometry.halfHeight;
+
+				const int segmentCount = 12;
+				const uint32_t baseIndex = ( size_t ) rData.VertexBuffer.size() / 3;
+
+				std::vector<glm::vec3> ring0, ring1;
+				std::vector<uint32_t> validIndices;
+				uint32_t vertexCounter = baseIndex;
+
+				for( int i = 0; i < segmentCount; ++i )
+				{
+					float angle = ( i / float( segmentCount ) ) * physx::PxPi * 2.0f;
+					float x = cos( angle ) * radius;
+					float z = sin( angle ) * radius;
+
+					physx::PxVec3 local0( x, -halfHeight, z );
+					physx::PxVec3 local1( x, +halfHeight, z );
+
+					physx::PxVec3 world0 = localTransform.transform( local0 );
+					physx::PxVec3 world1 = localTransform.transform( local1 );
+
+					glm::vec3 glm0 = Auxiliary::PxToGLM( world0 );
+					glm::vec3 glm1 = Auxiliary::PxToGLM( world1 );
+
+					bool inBounds = rData.Bounds.Contains( glm0 ) || rData.Bounds.Contains( glm1 );
+
+					if( inBounds )
+					{
+						// Add both vertices to buffer
+						rData.VertexBuffer.push_back( world0.x );
+						rData.VertexBuffer.push_back( world0.y );
+						rData.VertexBuffer.push_back( world0.z );
+
+						rData.VertexBuffer.push_back( world1.x );
+						rData.VertexBuffer.push_back( world1.y );
+						rData.VertexBuffer.push_back( world1.z );
+
+						ring0.push_back( glm0 );
+						ring1.push_back( glm1 );
+
+						validIndices.push_back( vertexCounter );     // index for lower vertex
+						validIndices.push_back( vertexCounter + 1 ); // index for upper vertex
+						vertexCounter += 2;
+
+						// Update nav mesh bounds
+						for( const auto& v : { glm0, glm1 } )
+						{
+							rNavMeshBounds.Min = glm::min( rNavMeshBounds.Min, v );
+							rNavMeshBounds.Max = glm::max( rNavMeshBounds.Max, v );
+						}
+					}
+					else
+					{
+						// Still increment counters to stay aligned
+						vertexCounter += 2;
+					}
+				}
+
+				// Only generate triangles if we have enough valid vertices
+				if( validIndices.size() >= 6 )
+				{
+					const uint32_t validSegments = ( uint32_t ) validIndices.size() / 2;
+					for( uint32_t i = 0; i < validSegments; ++i )
+					{
+						uint32_t next = ( i + 1 ) % validSegments;
+
+						uint32_t i0 = validIndices[ i * 2 ];
+						uint32_t i1 = validIndices[ next * 2 ];
+						uint32_t i2 = validIndices[ i * 2 + 1 ];
+						uint32_t i3 = validIndices[ next * 2 + 1 ];
+
+						// Triangle 1
+						rData.IndexBuffer.push_back( i0 );
+						rData.IndexBuffer.push_back( i1 );
+						rData.IndexBuffer.push_back( i2 );
+
+						// Triangle 2
+						rData.IndexBuffer.push_back( i2 );
+						rData.IndexBuffer.push_back( i1 );
+						rData.IndexBuffer.push_back( i3 );
+					}
+				}
+			}
+		}
+	}
+
 	//////////////////////////////////////////////////////////////////////////
 	// Triangle
 
@@ -255,7 +561,7 @@ namespace Saturn {
 		TransformComponent& transform = m_Entity->GetComponent<TransformComponent>();
 		physx::PxTransform PxTrans = Auxiliary::GLMTransformToPx( transform.GetTransform() );
 
-		const std::vector<physx::PxShape*>& rShapes = PhysicsCooking::Get().CreateTriangleMesh( m_Mesh, rActor, transform.Scale );
+		const std::vector<physx::PxShape*>& rShapes = PhysicsFoundation::Get().GetCookingContext().CreateTriangleMesh( m_Mesh, rActor, transform.Scale );
 
 		if( rShapes.size() )
 		{
@@ -273,6 +579,102 @@ namespace Saturn {
 		for( physx::PxShape* rShape : m_Shapes )
 		{
 			rActor.detachShape( *rShape );
+		}
+	}
+
+	void TriangleMeshShape::ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds )
+	{
+		physx::PxTransform actorTransform = rActor.getGlobalPose();
+
+		for( physx::PxShape* pShape : m_Shapes )
+		{
+			physx::PxTransform localActorTransform = actorTransform * pShape->getLocalPose();
+
+			if( pShape->getGeometryType() == physx::PxGeometryType::eTRIANGLEMESH )
+			{
+				physx::PxTriangleMeshGeometry geometry;
+				if( pShape->getTriangleMeshGeometry( geometry ) )
+				{
+					physx::PxTriangleMesh* pMesh = geometry.triangleMesh;
+
+					auto vertCount = pMesh->getNbVertices();
+					auto triCount = pMesh->getNbTriangles();
+
+					const auto* verts = pMesh->getVertices();
+
+					// Convert to Recast
+					int offset = ( int ) rData.VertexBuffer.size() / 3;
+					rData.VertexBuffer.reserve( vertCount * 3 );
+					rData.IndexBuffer.reserve( triCount * 3 );
+
+					physx::PxU8 flags = pMesh->getTriangleMeshFlags();
+					if( ( flags & physx::PxTriangleMeshFlag::e16_BIT_INDICES ) != 0 )
+					{
+						const physx::PxU16* tris = ( const physx::PxU16* ) pMesh->getTriangles();
+						
+						for( physx::PxU32 i = 0; i < triCount; i++ )
+						{
+							bool inBounds = false;
+							for( auto vert = 0; vert < 3; vert++ )
+							{
+								physx::PxVec3 vertexPos = verts[ tris[ vert ] ];
+								physx::PxVec3 worldSpace = localActorTransform.transform( vertexPos );
+
+								if( rData.Bounds.Contains( Auxiliary::PxToGLM( worldSpace ) ) )
+								{
+									rNavMeshBounds.Min.x = glm::min( rNavMeshBounds.Min.x, worldSpace.x );
+									rNavMeshBounds.Min.y = glm::min( rNavMeshBounds.Min.y, worldSpace.y );
+									rNavMeshBounds.Min.z = glm::min( rNavMeshBounds.Min.z, worldSpace.z );
+
+									rNavMeshBounds.Max.x = glm::max( rNavMeshBounds.Max.x, worldSpace.x );
+									rNavMeshBounds.Max.y = glm::max( rNavMeshBounds.Max.y, worldSpace.y );
+									rNavMeshBounds.Max.z = glm::max( rNavMeshBounds.Max.z, worldSpace.z );
+
+									rData.VertexBuffer.push_back( worldSpace.x );
+									rData.VertexBuffer.push_back( worldSpace.y );
+									rData.VertexBuffer.push_back( worldSpace.z );
+
+									inBounds = true;
+								}
+							}
+							tris += 3;
+
+							if( inBounds )
+							{
+								rData.IndexBuffer.push_back( offset );
+								rData.IndexBuffer.push_back( offset + 1 );
+								rData.IndexBuffer.push_back( offset + 2 );
+
+								offset += 3;
+							}
+						}
+					}
+					else
+					{
+						const physx::PxU32* tris = ( const physx::PxU32* ) pMesh->getTriangles();
+
+						for( physx::PxU32 i = 0; i < triCount; i++ )
+						{
+							for( auto vert = 0; vert < 3; vert++ )
+							{
+								physx::PxVec3 vertexPos = verts[ tris[ vert ] ];
+								physx::PxVec3 transformedVertex = actorTransform.transform( vertexPos );
+
+								rData.VertexBuffer.push_back( transformedVertex.x );
+								rData.VertexBuffer.push_back( transformedVertex.y );
+								rData.VertexBuffer.push_back( transformedVertex.z );
+							}
+							tris += 3;
+
+							rData.IndexBuffer.push_back( offset );
+							rData.IndexBuffer.push_back( offset );
+							rData.IndexBuffer.push_back( offset );
+
+							offset += 3;
+						}
+					}
+				}
+			}
 		}
 	}
 
@@ -298,7 +700,7 @@ namespace Saturn {
 		TransformComponent& transform = m_Entity->GetComponent<TransformComponent>();
 		physx::PxTransform PxTrans = Auxiliary::GLMTransformToPx( transform.GetTransform() );
 
-		const std::vector<physx::PxShape*>& rShapes = PhysicsCooking::Get().CreateConvexMesh( m_Mesh, rActor, transform.Scale );
+		const std::vector<physx::PxShape*>& rShapes = PhysicsFoundation::Get().GetCookingContext().CreateConvexMesh( m_Mesh, rActor, transform.Scale );
 
 		if( rShapes.size() )
 		{
@@ -316,6 +718,61 @@ namespace Saturn {
 		for( physx::PxShape* rShape : m_Shapes )
 		{
 			rActor.detachShape( *rShape );
+		}
+	}
+
+	void ConvexMeshShape::ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds )
+	{
+		glm::mat4 actorTransform = m_Entity->Transform();
+
+		for( physx::PxShape* pShape : m_Shapes )
+		{
+			if( pShape->getGeometryType() == physx::PxGeometryType::eCONVEXMESH )
+			{
+				physx::PxConvexMeshGeometry geometry;
+				if( pShape->getConvexMeshGeometry( geometry ) )
+				{
+					physx::PxConvexMesh* pMesh = geometry.convexMesh;
+
+					auto triCount = pMesh->getNbPolygons();
+
+					auto* pVertexBuffer = pMesh->getVertices();
+					auto* pIndexBuffer = pMesh->getIndexBuffer();
+
+					for( int i = 0; i < triCount; i++ )
+					{
+						physx::PxHullPolygon poly{};
+						if( pMesh->getPolygonData( i, poly ) ) continue;
+					
+						uint32_t vertexCount = poly.mNbVerts;
+						const physx::PxU8* pPolyIndices = pIndexBuffer + poly.mIndexBase;
+
+						for( int j = 1; j < vertexCount -1; j++ )
+						{
+							glm::vec3 v0 = glm::vec3( actorTransform * glm::vec4( Auxiliary::PxToGLM( pVertexBuffer[ pPolyIndices[ 0 ] ] ), 1.0f ) );
+							glm::vec3 v1 = glm::vec3( actorTransform * glm::vec4( Auxiliary::PxToGLM( pVertexBuffer[ pPolyIndices[ j ] ] ), 1.0f ) );
+							glm::vec3 v2 = glm::vec3( actorTransform * glm::vec4( Auxiliary::PxToGLM( pVertexBuffer[ pPolyIndices[ i + 1 ] ] ), 1.0f ) );
+
+							uint32_t baseIndex = ( uint32_t ) rData.VertexBuffer.size();
+							rData.VertexBuffer.push_back( v0.x );
+							rData.VertexBuffer.push_back( v0.y );
+							rData.VertexBuffer.push_back( v0.z );
+
+							rData.VertexBuffer.push_back( v1.x );
+							rData.VertexBuffer.push_back( v1.y );
+							rData.VertexBuffer.push_back( v1.z );
+							
+							rData.VertexBuffer.push_back( v2.x );
+							rData.VertexBuffer.push_back( v2.y );
+							rData.VertexBuffer.push_back( v2.z );
+
+							rData.IndexBuffer.push_back( baseIndex );
+							rData.IndexBuffer.push_back( baseIndex + 1 );
+							rData.IndexBuffer.push_back( baseIndex + 2 );
+						}
+					}
+				}
+			}
 		}
 	}
 

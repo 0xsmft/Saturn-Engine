@@ -105,7 +105,9 @@ namespace Saturn {
 		{
 			Input::Get().SetCursorMode( RubyCursorMode::Locked );
 
+#if !defined(SAT_DIST)
 			if( Input::Get().CanSetCursorMode() )
+#endif
 				m_CameraEntity->GetComponent<CameraComponent>().Camera.SetActive( true );
 
 			m_LastMousePos = Input::Get().MousePosition();

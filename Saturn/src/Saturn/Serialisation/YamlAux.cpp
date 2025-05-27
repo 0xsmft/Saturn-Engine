@@ -32,7 +32,7 @@
 #include "Saturn/Asset/AssetManager.h"
 #include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 
-namespace Saturn {
+namespace Saturn::Auxiliary {
 
 	void SerialiseEntity( YAML::Emitter& rEmitter, Ref<Entity> entity )
 	{
@@ -163,13 +163,15 @@ namespace Saturn {
 
 			auto& sc = entity->GetComponent< ScriptComponent >();
 
-			rEmitter << YAML::Key << "Name" << YAML::Value << sc.ScriptName;
-			rEmitter << YAML::Key << "ID" << YAML::Value << sc.AssetID;
+			rEmitter << YAML::Key << "Name" << YAML::Value << sc.ClassName;
+
+			unsigned int bit = sc.ExternalData ? 1 : 0;
+			rEmitter << YAML::Key << "ExternalData" << YAML::Value << bit;
 
 			rEmitter << YAML::Key << "Properties";
 			rEmitter << YAML::BeginSeq;
 
-			auto& rProperties = ClassMetadataHandler::Get().GetAllProperties( sc.ScriptName );
+			auto& rProperties = ClassMetadataHandler::Get().GetAllProperties( sc.ClassName );
 			for( const auto& rProperty : rProperties )
 			{
 #define SAT_SERIALISE_PROPERTY_YAML( PropertyType ) \
@@ -435,6 +437,22 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 			rEmitter << YAML::EndMap;
 		}
 
+		// Navigation Mesh Specification Component
+		if( entity->HasComponent<NavigationMeshSpecificationComponent>() )
+		{
+			rEmitter << YAML::Key << "NavigationMeshSpecificationComponent";
+			rEmitter << YAML::BeginMap;
+
+			auto& nmsc = entity->GetComponent< NavigationMeshSpecificationComponent >();
+
+			unsigned int bit = nmsc.HasBuilt ? 1 : 0;
+
+			rEmitter << YAML::Key << "Extent" << YAML::Value << nmsc.Extent;
+			rEmitter << YAML::Key << "HasBuilt" << YAML::Value << bit;
+
+			rEmitter << YAML::EndMap;
+		}
+
 		rEmitter << YAML::EndMap;
 	}
 
@@ -461,15 +479,17 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 			{
 				std::string ScriptName = srcc[ "Name" ].as< std::string >();
 
-				// Ask the game module to create the entity.
-				DeserialisedEntity = scene->CreateEntityWithIDScript( entityID, Tag, ScriptName );
+				uint8_t bit = srcc[ "ExternalData" ].as<uint8_t>();
+				unsigned int externalData = bit ? 1 : 0;
+
+				// Create from T
+				DeserialisedEntity = scene->CreateEntityWithIDScript( entityID, Tag, ScriptName, externalData );
 
 				auto& s = DeserialisedEntity->GetComponent< ScriptComponent >();
 
-				s.ScriptName = ScriptName;
-				s.AssetID = srcc[ "ID" ].as< uint64_t >();
+				s.ClassName = ScriptName;
 
-				SAT_CORE_INFO( "Created entity with class name: X/{0}", s.ScriptName );
+				SAT_CORE_INFO( "Created entity with class name: X/{0}", s.ClassName );
 
 				/////////////////////////////////
 				// Read Properties
@@ -784,6 +804,18 @@ rProperty.SetProperty( DeserialisedEntity.Get(), value ); \
 				al.Direction      = alc[ "Direction" ].as< glm::vec3 >();
 				al.ConeInnerAngle = alc[ "ConeInner" ].as< float >( 0.0f );
 				al.ConeOuterAngle = alc[ "ConeOuter" ].as< float >( 0.0f );
+			}
+
+			auto nmsc = entity[ "NavigationMeshSpecificationComponent" ];
+			if( nmsc )
+			{
+				auto& nms = DeserialisedEntity->AddComponent< NavigationMeshSpecificationComponent >();
+				nms.Extent = nmsc[ "Extent" ].as< glm::vec3 >();
+
+				uint8_t bit = nmsc[ "HasBuilt" ].as<uint8_t>();
+				unsigned int externalData = bit ? 1 : 0;
+
+				nms.HasBuilt = externalData;
 			}
 		}
 	}

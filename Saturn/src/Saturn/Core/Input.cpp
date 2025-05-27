@@ -62,12 +62,8 @@ namespace Saturn {
 
 	glm::vec2 Input::MousePosition()
 	{
-		double x = 0.0;
-		double y = 0.0;
-
-		Application::Get().GetWindow()->GetMousePos( &x, &y );
-
-		return { ( float ) x, ( float ) y };
+		RubyVec2 pos = Application::Get().GetWindow()->GetMousePos();
+		return { pos.x, pos.y };
 	}
 
 	void Input::SetCursorMode( RubyCursorMode mode, bool bypassGuard /*= false*/ )

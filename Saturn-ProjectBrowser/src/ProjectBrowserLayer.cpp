@@ -29,20 +29,19 @@
 #include "sppch.h"
 #include "ProjectBrowserLayer.h"
 
-#include <Saturn/ImGui/Panel/Panel.h>
-#include <Saturn/ImGui/Panel/PanelManager.h>
+#include <Saturn/ImGui/ImGuiWindow.h>
+#include <Saturn/ImGui/ImGuiWindowManager.h>
 #include <Saturn/ImGui/ImGuiAuxiliary.h>
-#include <Saturn/ImGui/TitleBar.h>
-#include <Saturn/Core/Ruby/RubyWindow.h>
 
+#include <Saturn/Core/Ruby/RubyWindow.h>
 #include <Saturn/Core/StringAuxiliary.h>
 #include <Saturn/Core/EnvironmentVariables.h>
 #include <Saturn/Core/Process.h>
+#include <Saturn/Core/JobSystem.h>
+#include <Saturn/Core/OptickProfiler.h>
 
 #include <Saturn/Serialisation/ProjectSerialiser.h>
 #include <Saturn/Serialisation/EngineSettingsSerialiser.h>
-
-#include <Saturn/Core/JobSystem.h>
 
 #include <glm/gtc/type_ptr.hpp>
 
@@ -69,6 +68,10 @@ namespace Saturn {
 
 	ProjectBrowserLayer::ProjectBrowserLayer()
 	{
+#if defined(SAT_PROFILER_ENABLE)
+		tracy::StartupProfiler();
+#endif
+
 		m_HasSaturnDir = Auxiliary::HasEnvironmentVariable( "SATURN_DIR" );
 
 		if( m_HasSaturnDir )
@@ -156,8 +159,7 @@ namespace Saturn {
 
 	void ProjectBrowserLayer::OnAttach()
 	{	
-		m_TitleBar = new TitleBar();
-		m_TitleBar->AddOnExitFunction( [this]() -> bool
+		m_TitleBar.AddOnExitFunction( [this]() -> bool
 		{
 			m_ShouldThreadTerminate = true;
 
@@ -176,7 +178,10 @@ namespace Saturn {
 	ProjectBrowserLayer::~ProjectBrowserLayer()
 	{
 		m_NoIconTexture = nullptr;
-		delete m_TitleBar;
+	
+#if defined(SAT_PROFILER_ENABLE)
+		tracy::ShutdownProfiler();
+#endif
 	}
 	
 	void ProjectBrowserLayer::OnDetach()
@@ -201,8 +206,7 @@ namespace Saturn {
 		ImGuiID dockspaceID = ImGui::DockSpaceOverViewport( pViewport, ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoWindowMenuButton | ImGuiDockNodeFlags_NoDockingOverMe | ImGuiDockNodeFlags_NoUndocking );
 
 		// --- Title bar
-		
-		m_TitleBar->Draw();
+		m_TitleBar.OnImGuiRender();
 
 		// --- Check if Saturn directory is set, if not show prompt to set it
 		if( !m_HasSaturnDir )

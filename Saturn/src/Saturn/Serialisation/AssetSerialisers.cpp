@@ -220,7 +220,7 @@ namespace Saturn {
 
 		prefabAsset->m_Scene->Each( [&]( Ref<Entity> entity ) 
 			{
-				SerialiseEntity( out, entity );
+				Auxiliary::SerialiseEntity( out, entity );
 			} );
 
 		out << YAML::EndSeq;
@@ -252,7 +252,7 @@ namespace Saturn {
 
 		Scene::SetActiveScene( prefabAsset->m_Scene.Get() );
 
-		DeserialiseEntities( entities, prefabAsset->m_Scene );
+		Auxiliary::DeserialiseEntities( entities, prefabAsset->m_Scene );
 
 		auto view = prefabAsset->m_Scene->GetAllEntitiesWith<RelationshipComponent>();
 
@@ -564,9 +564,12 @@ namespace Saturn {
 
 		auto materialData = data[ "PhysicsMaterial" ];
 
-		auto staticFriction = materialData[ "Static Friction" ].as<float>();
-		auto dynamicFriction = materialData[ "Dynamic Friction" ].as<float>();
-		auto restitution = materialData[ "Restitution" ].as<float>();
+		if( materialData.IsNull() )
+			return false;
+
+		auto staticFriction = materialData[ "Static Friction" ].as<float>( 0.0f );
+		auto dynamicFriction = materialData[ "Dynamic Friction" ].as<float>( 0.0f );
+		auto restitution = materialData[ "Restitution" ].as<float>( 0.0f );
 
 		auto flags = materialData[ "Flags" ].as<uint32_t>();
 

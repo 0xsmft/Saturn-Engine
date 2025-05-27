@@ -46,6 +46,8 @@ namespace Saturn {
 		RubyLibrary();
 		~RubyLibrary() = default;
 
+		static void PollEvents();
+
 		std::vector<RubyMonitor> GetAllMonitors();
 		RubyMonitor& GetPrimaryMonitor();
 

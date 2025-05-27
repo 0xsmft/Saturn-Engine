@@ -79,6 +79,14 @@ namespace Saturn {
 		void SubmitLine( const glm::vec3& rStart, const glm::vec3& rEnd, const glm::vec4& rColor );
 		void SubmitLine( const glm::vec3& rStart, const glm::vec3& rEnd, const glm::vec4& rColor, float Thinkness );
 
+		void SubmitSingleLine( const glm::vec3& rStart, const glm::vec4& rColor );
+
+		void SubmitAABB( const AABB& rAABB, const glm::mat4& rTransform, const glm::vec4& rColor );
+		void SubmitAABB( const AABB& rAABB, const glm::vec4& rColor );
+
+		void SubmitTriangle3( const glm::vec3& rV0, const glm::vec3& rV1, const glm::vec3& rV2, const glm::vec4& rColor );
+		void SubmitTriangle1( const glm::vec3& rV0, const glm::vec4& rColor );
+
 		void SetCamera( const RendererCamera& rRendererCamera );
 
 		void PreRender();
@@ -105,19 +113,29 @@ namespace Saturn {
 		std::vector< Ref<VertexBuffer> > m_QuadVertexBuffers;
 		std::vector< QuadDrawCommand* > m_CurrentQuadBase;
 		
-		QuadDrawCommand* m_CurrentQuad = nullptr;
-		uint32_t m_QuadIndexCount = 0;
+		QuadDrawCommand* m_pCurrentQuad = nullptr;
 
 		//////////////////////////////////////////////////////////////////////////
 		// LINES
 		std::vector< Ref<VertexBuffer> > m_LineVertexBuffers;
 		std::vector< LineDrawCommand* > m_CurrentLineBase;
 		
-		LineDrawCommand* m_CurrentLine = nullptr;
-		uint32_t m_LineVertexCount = 0;
+		LineDrawCommand* m_pCurrentLine = nullptr;
+
+		// Triangle (part of the lines)
+		std::vector< Ref<VertexBuffer> > m_TriangleVertexBuffers;
+		std::vector< LineDrawCommand* > m_CurrentTriangleBase;
+
+		LineDrawCommand* m_pCurrentTriangle = nullptr;
 
 		//////////////////////////////////////////////////////////////////////////
+		// Counts
+		uint32_t m_QuadIndexCount = 0;
+		uint32_t m_LineVertexCount = 0;
+		uint32_t m_TriangleVextexCount = 0;
 
+		//////////////////////////////////////////////////////////////////////////
+		
 		std::array<Ref<Texture2D>, 32> m_Textures;
 		uint32_t m_DefaultTextureSlot = 1;
 		uint32_t m_CurrentTextureSlot = 0;
@@ -128,11 +146,10 @@ namespace Saturn {
 		uint32_t m_Width = 0;
 		uint32_t m_Height = 0;
 
-		bool m_Resized = false;
-
 		VkCommandBuffer m_CommandBuffer = nullptr;
 		// Default line width specified in Pipeline.cpp
 		float m_LineWidth = 2.0f;
+		bool m_Resized = false;
 
 		//////////////////////////////////////////////////////////////////////////
 		// VULKAN RESOURCES
@@ -149,5 +166,9 @@ namespace Saturn {
 		Ref<IndexBuffer> m_LineIndexBuffer = nullptr;
 		Ref<Shader> m_LineShader = nullptr;
 		Ref<Material> m_LineMaterial = nullptr;
+		
+		// Line fill (triangle)
+		Ref<Pipeline> m_TrianglePipeline = nullptr;
+		Ref<IndexBuffer> m_TriangleIndexBuffer = nullptr;
 	};
 }

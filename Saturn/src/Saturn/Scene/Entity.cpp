@@ -97,3 +97,7 @@ namespace Saturn {
 		serialiser.DeserialiseEntity( rObject, rStream );
 	}
 }
+
+#include "Saturn/GameFramework/Core/EngineGenerated.h"
+
+SAT_X31_CREATE_AUTO_REG( Entity );

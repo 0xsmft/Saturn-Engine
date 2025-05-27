@@ -74,6 +74,10 @@
 #include <Saturn/Audio/AudioSystem.h>
 #include <Saturn/Audio/SoundGroup.h>
 
+#include <Saturn/AI/Navigation/NavBoundsEntity.h>
+
+#include <Saturn/NodeEditor/GlobalNodesList.h>
+
 #include <Saturn/Premake/Premake.h>
 
 #include <ImGuizmo/ImGuizmo.h>
@@ -1139,6 +1143,12 @@ namespace Saturn {
 	void EditorLayer::HotReloadGame()
 	{
 #if defined(SAT_RELEASE)
+		EditorNotification notification;
+		notification.Text = "Attemping hot reload";
+		notification.Lifetime = 5.0f;
+
+		PushNotification( notification );
+
 		SAT_CORE_INFO( "Begin hot reload" );
 
 		SaveFile();
@@ -1149,6 +1159,9 @@ namespace Saturn {
 		m_GameModule->EndHotReload();
 
 		m_EditorScene->AcknowledgeHotReload();
+
+		notification.Text = "Hot reload complete";
+		PushNotification( notification );
 #endif
 	}
 
@@ -2016,6 +2029,12 @@ namespace Saturn {
 
 					Ref<UndoRedoActionModifyTransformation> action = Ref<UndoRedoActionModifyTransformation>::Create( entity, transform, newTransform );
 					GlobalUndoRedoGroup::Get().AddAction( action, (uint64_t)entity->GetHandle() );
+
+					if( entity->HasComponent<NavigationMeshSpecificationComponent>() )
+					{
+						Ref<NavBoundsEntity> bounds = entity.As<NavBoundsEntity>();
+						bounds->GatherGeometryAndBuild();
+					}
 				}
 
 				m_GizmoOrignalTransforms.clear();

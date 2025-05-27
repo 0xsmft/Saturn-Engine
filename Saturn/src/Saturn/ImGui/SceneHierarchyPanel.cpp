@@ -563,6 +563,7 @@ namespace Saturn {
 	{
 		ImVec2 contentRegionAvailable = ImGui::GetContentRegionAvail();
 		bool isPrefab = entity->HasComponent<PrefabComponent>() || entity->HasComponent<ScriptComponent>();
+		const auto& id = entity->GetComponent<IdComponent>().ID;
 
 		ImGui::Image( m_EditIcon->GetDescriptorSet(), ImVec2( 30.0f, 30.0f ) );
 

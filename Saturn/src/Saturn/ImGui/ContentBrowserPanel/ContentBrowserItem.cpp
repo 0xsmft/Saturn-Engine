@@ -296,12 +296,14 @@ namespace Saturn {
 						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
 					} break;
 
+					/*
 					case AssetType::BehaviourTree:
 					{
 						auto viewer = Ref<BehaviourTreeAssetViewer>::Create( m_Asset->ID );
 						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
 					} break;
-					
+					*/
+
 					case AssetType::Scene:
 					case AssetType::Script:
 					case AssetType::Unknown:

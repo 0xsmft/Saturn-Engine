@@ -39,7 +39,6 @@
 #include "Nodes/SoundMixerNode.h"
 #include "Nodes/SoundPitchNode.h"
 #include "Nodes/SoundRandomPitchNode.h"
-#include "Nodes/SoundFloatConstNode.h"
 
 #include "SoundNodeLibrary.h"
 

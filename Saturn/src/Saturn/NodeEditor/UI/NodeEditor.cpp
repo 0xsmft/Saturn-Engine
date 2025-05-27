@@ -37,12 +37,10 @@
 #include "Saturn/Serialisation/RawSerialisation.h"
 
 #include "Saturn/NodeEditor/Runtime/NodeEditorRuntime.h"
-
 #include "Saturn/NodeEditor/Serialisation/NodeCache.h"
 
-#include "Saturn/ImGui/EditorIcons.h"
-
 #include "Saturn/NodeEditor/GlobalNodesList.h"
+#include "Saturn/NodeEditor/NodeEditorBlueprintNode.h"
 
 #include "Saturn/Core/OptickProfiler.h"
 

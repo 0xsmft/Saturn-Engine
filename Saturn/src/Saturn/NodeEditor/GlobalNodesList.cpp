@@ -37,13 +37,9 @@
 #include "Saturn/Audio/SoundNodeEditor/Nodes/SoundMixerNode.h"
 #include "Saturn/Audio/SoundNodeEditor/Nodes/SoundRandomPitchNode.h"
 #include "Saturn/Audio/SoundNodeEditor/Nodes/SoundPitchNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundFloatConstNode.h"
+//#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundFloatConstNode.h"
 
 #include "Saturn/Audio/SoundNodeEditor/SoundNodeLibrary.h"
-
-#include "Saturn/AI/BehaviourTree/BehaviourTreeAssetViewer/Nodes/BehaviourTreeRootNode.h"
-#include "Saturn/AI/BehaviourTree/BehaviourTreeAssetViewer/Nodes/BehaviourTreeSelectorNode.h"
-#include "Saturn/AI/BehaviourTree/BehaviourTreeAssetViewer/BehaviourTreeNodeLibrary.h"
 
 #include "NodeEditorBase.h"
 
@@ -68,7 +64,7 @@ namespace Saturn {
 	{
 		MaterialNodeLibrary::RegisterAllNodes();
 		SoundNodeLibrary::RegisterAllNodes();
-		BehaviourTreeNodeLibrary::RegisterAllNodes();
+//		BehaviourTreeNodeLibrary::RegisterAllNodes();
 	}
 
 	Ref<NodeEditorNodeBase> GlobalNodesList::ConvertExecutionTypeToNode( NodeExecutionType executionType, Ref<NodeEditorBase> nodeEditorBase )

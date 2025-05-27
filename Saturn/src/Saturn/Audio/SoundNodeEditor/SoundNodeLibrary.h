@@ -53,7 +53,7 @@ namespace Saturn {
 		static Ref<SoundPlayerNode>      SpawnPlayerNode( Ref<NodeEditorBase> nodeEditor );
 		static Ref<SoundPitchNode>       SpawnPitchNode( Ref<NodeEditorBase> nodeEditor );
 		static Ref<SoundRandomPitchNode> SpawnRandPitch( Ref<NodeEditorBase> nodeEditor );
-		static Ref<SoundFloatConst>      SpawnFloatConst( Ref<NodeEditorBase> nodeEditor );
+//		static Ref<SoundFloatConst>      SpawnFloatConst( Ref<NodeEditorBase> nodeEditor );
 
 		static Ref<SoundOutputNode> SpawnOutputNode( Ref<NodeEditorBase> nodeEditor );
 	};

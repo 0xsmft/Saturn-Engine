@@ -35,7 +35,7 @@
 #include "Nodes/SoundMixerNode.h" 
 #include "Nodes/SoundPitchNode.h" 
 #include "Nodes/SoundRandomPitchNode.h"
-#include "Nodes/SoundFloatConstNode.h"
+//#include "Nodes/SoundFloatConstNode.h"
 
 #include "Saturn/NodeEditor/GlobalNodesList.h"
 
@@ -49,7 +49,7 @@ namespace Saturn {
 			{ NodeExecutionType::SoundPlayer,      SoundNodeLibrary::SpawnPlayerNode },
 			{ NodeExecutionType::SoundPitch,       SoundNodeLibrary::SpawnPitchNode },
 			{ NodeExecutionType::SoundRandomPitch, SoundNodeLibrary::SpawnRandPitch },
-			{ NodeExecutionType::SoundFloatConst,  SoundNodeLibrary::SpawnFloatConst },
+//			{ NodeExecutionType::SoundFloatConst,  SoundNodeLibrary::SpawnFloatConst },
 			{ NodeExecutionType::SoundOutput,      SoundNodeLibrary::SpawnOutputNode }
 		} );
 	}
@@ -94,6 +94,7 @@ namespace Saturn {
 		return node;
 	}
 
+	/*
 	Ref<SoundFloatConst> SoundNodeLibrary::SpawnFloatConst( Ref<NodeEditorBase> nodeEditor )
 	{
 		Ref<SoundFloatConst> node = Ref<SoundFloatConst>::Create();
@@ -101,6 +102,7 @@ namespace Saturn {
 
 		return node;
 	}
+	*/
 
 	Ref<SoundOutputNode> SoundNodeLibrary::SpawnOutputNode( Ref<NodeEditorBase> nodeEditor )
 	{

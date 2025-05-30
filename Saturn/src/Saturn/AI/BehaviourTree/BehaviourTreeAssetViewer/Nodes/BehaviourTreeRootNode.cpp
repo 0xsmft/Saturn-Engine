@@ -27,56 +27,47 @@
 */
 
 #include "sppch.h"
-#include "GlobalNodesList.h"
+#include "BehaviourTreeRootNode.h"
 
-#include "Saturn/ImGui/MaterialAssetViewer/MaterialViewerNodes.h"
-
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundOutputNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundPlayerNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundRandomNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundMixerNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundRandomPitchNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundPitchNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundFloatConstNode.h"
-
-#include "Saturn/AI/BehaviourTree/BehaviourTreeAssetViewer/BehaviourTreeNodeLibrary.h"
-
-#include "Saturn/Audio/SoundNodeEditor/SoundNodeLibrary.h"
-
-#include "NodeEditorBase.h"
+#if !defined( SAT_DIST )
+#include "Saturn/NodeEditor/UI/NodeEditor.h"
+#else
+#include "Saturn/NodeEditor/NodeEditorBase.h"
+#endif
 
 namespace Saturn {
 
-	static std::unordered_map<NodeExecutionType, std::function<Ref<NodeEditorNodeBase>( Ref<NodeEditorBase> )>> s_RegisteredNodeMap;
-
-	void GlobalNodesList::RegisterLibrary( const std::unordered_map<NodeExecutionType, std::function<Ref<NodeEditorNodeBase>( Ref<NodeEditorBase> )>>& rNodeMap )
+	BehaviourTreeRootNode::BehaviourTreeRootNode()
+		: NodeEditorTreeNode( "Root Node" )
 	{
-		for( const auto& [executionType, nodeCreator] : rNodeMap )
+		CreateNode();
+	}
+
+	void BehaviourTreeRootNode::CreateNode()
+	{
+		ExecutionType = NodeExecutionType::BehaviourTreeRootNode;
+
+#if !defined(SAT_DIST)
+		CanBeDeleted = false;
+		Color = ImColor( 48, 128, 255, 100 );
+		Type = NodeRenderType::Tree;
+#endif
+
+		Outputs.push_back( Ref<Pin>::Create( "Out", PinType::Flow, PinKind::Output ) );
+
+		for( auto& rOutput : Outputs )
 		{
-			s_RegisteredNodeMap[ executionType ] = nodeCreator;
+			rOutput->RenderType = PinRenderType::Tree;
 		}
 	}
 
-	void GlobalNodesList::Terminate()
+	BehaviourTreeRootNode::~BehaviourTreeRootNode()
 	{
-		s_RegisteredNodeMap.clear();
 	}
 
-	void GlobalNodesList::RegisterAll()
+	NodeEvaluationState BehaviourTreeRootNode::EvaluateNode( NodeEditorRuntime* pEvaluator )
 	{
-		MaterialNodeLibrary::RegisterAllNodes();
-		SoundNodeLibrary::RegisterAllNodes();
-		BehaviourTreeNodeLibrary::RegisterAllNodes();
+		return NodeEvaluationState::Failed;
 	}
 
-	Ref<NodeEditorNodeBase> GlobalNodesList::ConvertExecutionTypeToNode( NodeExecutionType executionType, Ref<NodeEditorBase> nodeEditorBase )
-	{
-		auto Itr = s_RegisteredNodeMap.find( executionType );
-		if( Itr != s_RegisteredNodeMap.end() )
-		{
-			return Itr->second( nodeEditorBase );
-		}
-
-		return nullptr;
-	}
 }

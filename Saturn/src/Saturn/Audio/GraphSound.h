@@ -64,6 +64,10 @@ namespace Saturn {
 		void SetPosition( const glm::vec3& rPos );
 		void SetSpatialisation( bool value );
 
+#if !defined(SAT_DIST)
+		Ref<NodeEditor> GetNodeEditor() const;
+#endif
+
 	private:
 		void Unload() override;
 

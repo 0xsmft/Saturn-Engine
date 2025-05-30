@@ -32,6 +32,7 @@
 
 namespace Saturn {
 
+	// A SoundPin is a specialized IntPin that represents the index of what sound should play.
 	class SoundPin : public IntPin
 	{
 	public:

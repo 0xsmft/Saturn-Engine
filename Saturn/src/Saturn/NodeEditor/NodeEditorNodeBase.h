@@ -82,6 +82,7 @@ namespace Saturn {
 		SoundFloatConst,
 		BehaviourTreeRootNode,
 		BehaviourTreeSelectorNode,
+		BehaviourTreeSequenceNode,
 		None
 	};
 

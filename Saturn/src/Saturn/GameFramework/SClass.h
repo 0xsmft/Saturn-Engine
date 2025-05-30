@@ -39,9 +39,7 @@ namespace Saturn {
 
 	//////////////////////////////////////////////////////////////////////////
 	// SClass Metadata
-	// Editor Only
-	// This information could of been inside of the SClass however I want to keep this away from whatever class uses this.
-	// This is mainly used when choosing a parent class for a new class in the editor.
+	// Describes the metadata of a class in the game framework.
 	struct SClassMetadata 
 	{
 		std::string Name;
@@ -50,6 +48,7 @@ namespace Saturn {
 		std::filesystem::path GeneratedSourcePath;
 		std::filesystem::path HeaderPath;
 
+		// Does this class come from an external source e.g. the game.
 		bool ExternalData = false;
 	};
 
@@ -70,6 +69,9 @@ namespace Saturn {
 		virtual void BeginPlay() {}
 		virtual void OnUpdate( Saturn::Timestep ts ) {}
 		virtual void OnPhysicsUpdate( Saturn::Timestep ts ) {}
+
+	private:
+		SClassFlags m_Flags = SClassFlags::None;
 	};
 
 }

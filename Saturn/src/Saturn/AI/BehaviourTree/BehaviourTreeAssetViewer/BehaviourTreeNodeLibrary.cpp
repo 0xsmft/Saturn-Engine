@@ -27,56 +27,47 @@
 */
 
 #include "sppch.h"
-#include "GlobalNodesList.h"
+#include "BehaviourTreeNodeLibrary.h"
 
-#include "Saturn/ImGui/MaterialAssetViewer/MaterialViewerNodes.h"
+#include "Nodes/BehaviourTreeRootNode.h"
+#include "Nodes/BehaviourTreeSelectorNode.h"
+#include "Nodes/BehaviourTreeSequenceNode.h"
 
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundOutputNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundPlayerNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundRandomNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundMixerNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundRandomPitchNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundPitchNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundFloatConstNode.h"
-
-#include "Saturn/AI/BehaviourTree/BehaviourTreeAssetViewer/BehaviourTreeNodeLibrary.h"
-
-#include "Saturn/Audio/SoundNodeEditor/SoundNodeLibrary.h"
-
-#include "NodeEditorBase.h"
+#include "Saturn/NodeEditor/GlobalNodesList.h"
 
 namespace Saturn {
 
-	static std::unordered_map<NodeExecutionType, std::function<Ref<NodeEditorNodeBase>( Ref<NodeEditorBase> )>> s_RegisteredNodeMap;
-
-	void GlobalNodesList::RegisterLibrary( const std::unordered_map<NodeExecutionType, std::function<Ref<NodeEditorNodeBase>( Ref<NodeEditorBase> )>>& rNodeMap )
+	void BehaviourTreeNodeLibrary::RegisterAllNodes()
 	{
-		for( const auto& [executionType, nodeCreator] : rNodeMap )
-		{
-			s_RegisteredNodeMap[ executionType ] = nodeCreator;
-		}
+		GlobalNodesList::RegisterLibrary( {
+			{ NodeExecutionType::BehaviourTreeRootNode,     BehaviourTreeNodeLibrary::SpawnRootNode     },
+			{ NodeExecutionType::BehaviourTreeSelectorNode, BehaviourTreeNodeLibrary::SpawnSelectorNode },
+			{ NodeExecutionType::BehaviourTreeSequenceNode, BehaviourTreeNodeLibrary::SpawnSequenceNode },
+		} );
 	}
 
-	void GlobalNodesList::Terminate()
+	Ref<BehaviourTreeSelectorNode> BehaviourTreeNodeLibrary::SpawnSelectorNode( Ref<NodeEditorBase> nodeEditor )
 	{
-		s_RegisteredNodeMap.clear();
+		Ref<BehaviourTreeSelectorNode> node = Ref<BehaviourTreeSelectorNode>::Create();
+		nodeEditor->AddNode( node );
+
+		return node;
 	}
 
-	void GlobalNodesList::RegisterAll()
+	Ref<BehaviourTreeSequenceNode> BehaviourTreeNodeLibrary::SpawnSequenceNode( Ref<NodeEditorBase> nodeEditor )
 	{
-		MaterialNodeLibrary::RegisterAllNodes();
-		SoundNodeLibrary::RegisterAllNodes();
-		BehaviourTreeNodeLibrary::RegisterAllNodes();
+		Ref<BehaviourTreeSequenceNode> node = Ref<BehaviourTreeSequenceNode>::Create();
+		nodeEditor->AddNode( node );
+
+		return node;
 	}
 
-	Ref<NodeEditorNodeBase> GlobalNodesList::ConvertExecutionTypeToNode( NodeExecutionType executionType, Ref<NodeEditorBase> nodeEditorBase )
+	Ref<BehaviourTreeRootNode> BehaviourTreeNodeLibrary::SpawnRootNode( Ref<NodeEditorBase> nodeEditor )
 	{
-		auto Itr = s_RegisteredNodeMap.find( executionType );
-		if( Itr != s_RegisteredNodeMap.end() )
-		{
-			return Itr->second( nodeEditorBase );
-		}
+		Ref<BehaviourTreeRootNode> node = Ref<BehaviourTreeRootNode>::Create();
+		nodeEditor->AddNode( node );
 
-		return nullptr;
+		return node;
 	}
+
 }

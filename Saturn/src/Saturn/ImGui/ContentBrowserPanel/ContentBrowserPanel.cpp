@@ -480,6 +480,26 @@ namespace Saturn {
 				FindAndRenameItem( asset->Name );
 			}
 
+			if( ImGui::MenuItem( "New Behaviour Tree" ) )
+			{
+				auto id = AssetManager::Get().CreateAsset( AssetType::BehaviourTree );
+				auto asset = AssetManager::Get().FindAsset( id );
+				auto newPath = m_CurrentPath / "New Behaviour Tree.sbt";
+				int32_t count = GetFilenameCount( "New Behaviour Tree.sbt" );
+
+				if( count >= 1 )
+					newPath.replace_filename( std::format( "{0} ({1}).sbt", "New Behaviour Tree", count ) );
+
+				asset->SetAbsolutePath( newPath );
+
+				std::ofstream fout( newPath );
+				fout.close();
+
+				AssetManager::Get().Save();
+
+				UpdateFiles( true );
+				FindAndRenameItem( asset->Name );
+			}
 			if( ImGui::MenuItem( "New Class Instance" ) ) 
 			{
 				m_OpenClassInstancePopup = true;

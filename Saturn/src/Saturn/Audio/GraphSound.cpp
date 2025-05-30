@@ -178,6 +178,13 @@ namespace Saturn {
 		}
 	}
 
+#if !defined(SAT_DIST)
+	Ref<NodeEditor> GraphSound::GetNodeEditor() const
+	{
+		return m_NodeEditor;
+	}
+#endif
+
 	void GraphSound::Unload()
 	{
 		for( auto& rSound : m_Runtime->AliveSounds )

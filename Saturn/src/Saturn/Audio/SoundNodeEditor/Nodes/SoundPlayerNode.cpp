@@ -89,10 +89,8 @@ namespace Saturn {
 		}
 #endif
 
-		// BUG: FindLinkByPin only returns the first link!
-		// Create the sound now, if possible
-		Ref<Link> link = pSoundEditorEvaluator->GetTargetEditor()->FindLinkByPin( outPin->ID );
-		if( link )
+		auto links = pSoundEditorEvaluator->GetTargetEditor()->FindLinksByPin( outPin->ID );
+		for( const auto& link : links )
 		{
 			// Find input node
 			Ref<Pin> inputPin = pSoundEditorEvaluator->GetTargetEditor()->FindPin( link->EndPinID );

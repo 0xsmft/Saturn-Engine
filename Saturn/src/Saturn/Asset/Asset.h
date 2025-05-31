@@ -57,6 +57,7 @@ namespace Saturn {
 		Prefab,
 		Script,
 		PhysicsMaterial,
+		BehaviourTree,
 		Unknown,
 		COUNT,
 	};
@@ -87,6 +88,8 @@ namespace Saturn {
 				return "Script";
 			case Saturn::AssetType::PhysicsMaterial:
 				return "PhysicsMaterial";
+			case Saturn::AssetType::BehaviourTree:
+				return "BehaviourTree";
 			case Saturn::AssetType::Unknown:
 				return "Unknown";
 		}
@@ -130,6 +133,8 @@ namespace Saturn {
 				return COLOR_32( 5, 183, 237, 255 );
 			case Saturn::AssetType::PhysicsMaterial:
 				return COLOR_32( 235, 0, 55, 255 );
+			case Saturn::AssetType::BehaviourTree:
+				return COLOR_32( 50, 168, 82, 255 );
 			case Saturn::AssetType::Unknown:
 				return COLOR_32( 255, 255, 255, 255 );
 			default:
@@ -163,6 +168,8 @@ namespace Saturn {
 			return AssetType::Script;
 		else if( str == "PhysicsMaterial" )
 			return AssetType::PhysicsMaterial;
+		else if( str == "BehaviourTree" )
+			return AssetType::BehaviourTree;
 		else
 			return AssetType::Unknown;
 	}
@@ -187,6 +194,8 @@ namespace Saturn {
 			return AssetType::StaticMesh;
 		else if( str == ".sphymaterial" )
 			return AssetType::PhysicsMaterial;
+		else if( str == ".sbt" )
+			return AssetType::BehaviourTree;
 		else
 			return AssetType::Unknown;
 	}

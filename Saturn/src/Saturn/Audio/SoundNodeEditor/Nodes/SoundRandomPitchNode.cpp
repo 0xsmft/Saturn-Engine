@@ -99,12 +99,14 @@ namespace Saturn {
 		// Write data (pass from our input pin)
 		Ref<SoundPin> Outpin = Outputs[ 0 ].As<SoundPin>();
 
-		Ref<Link> link = pSoundEditorEvaluator->GetTargetEditor()->FindLinkByPin( Outpin->ID );
-		if( link )
+		auto links = pSoundEditorEvaluator->GetTargetEditor()->FindLinksByPin( Outpin->ID );
+		for( const auto& link : links )
 		{
 			// Find input node
 			Ref<SoundPin> inputPin = pSoundEditorEvaluator->GetTargetEditor()->FindPin( link->EndPinID );
 			inputPin->Data = Outpin->Data = soundPin->Data;
+
+			pSoundEditorEvaluator->EvaluatedPath[ link->ID ] = NodeEvaluationState::Evaluated;
 		}
 		
 		pSoundEditorEvaluator->RegisterSound( soundPin->Data );

@@ -194,12 +194,14 @@ namespace SaturnBuildTool
             foreach (var defaultReference in DefaultReferences)
                 references.Add(defaultReference.Location);
 
-            CompilerParameters cp = new CompilerParameters();
-            cp.GenerateExecutable = false;
-            cp.WarningLevel = 3;
-            cp.TreatWarningsAsErrors = false;
-            cp.GenerateInMemory = true;
-            cp.IncludeDebugInformation = false;
+            CompilerParameters cp = new CompilerParameters
+            {
+                GenerateExecutable = false,
+                WarningLevel = 3,
+                TreatWarningsAsErrors = false,
+                GenerateInMemory = true,
+                IncludeDebugInformation = false
+            };
             cp.ReferencedAssemblies.AddRange( references.ToArray() );
 
             CompilerResults cr = codeDomProvider.CompileAssemblyFromFile(cp, BuildFile);

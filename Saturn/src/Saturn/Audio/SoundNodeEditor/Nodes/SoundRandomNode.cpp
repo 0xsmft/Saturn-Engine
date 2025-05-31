@@ -82,7 +82,7 @@ namespace Saturn {
 
 		std::map<UUID, UUID> PinToSoundMap;
 
-		auto ids = pSoundEditorEvaluator->GetTargetNodeEditor()->FindNeighbors( this );
+		auto ids = pSoundEditorEvaluator->GetTargetNodeEditor()->FindNeighborsRight( this );
 
 #if !defined( SAT_DIST )
 		auto count = std::count_if( Inputs.begin(), Inputs.end(), 
@@ -119,8 +119,14 @@ namespace Saturn {
 				pSoundEditorEvaluator->UnregisterSound( soundInputPin->Data );
 
 #if	!defined( SAT_DIST )
-				Ref<Link> link = pSoundEditorEvaluator->GetTargetEditor()->FindLinkByPin( soundInputPin->ID );
-				pSoundEditorEvaluator->EvaluatedPath[ link->ID ] = NodeEvaluationState::WasEvaluated;
+				auto links = pSoundEditorEvaluator->GetTargetEditor()->FindLinksByPin( soundInputPin->ID );
+				for( auto& link : links )
+				{
+					if( link->EndPinID == soundInputPin->ID )
+					{
+						pSoundEditorEvaluator->EvaluatedPath[ link->ID ] = NodeEvaluationState::WasEvaluated;
+					}
+				}
 #endif
 			}
 		}
@@ -128,12 +134,14 @@ namespace Saturn {
 		// Write our chosen index to the output pin
 		Ref<SoundPin> outPin = Outputs[ 0 ].As<SoundPin>();
 
-		Ref<Link> link = pSoundEditorEvaluator->GetTargetEditor()->FindLinkByPin( outPin->ID );
-		if( link )
+		auto links = pSoundEditorEvaluator->GetTargetEditor()->FindLinksByPin( outPin->ID );
+		for( const auto& link : links )
 		{
 			// Find input node
 			Ref<SoundPin> inputPin = pSoundEditorEvaluator->GetTargetEditor()->FindPin( link->EndPinID ).As<SoundPin>();
 			inputPin->Data = outPin->Data = ( int ) index;
+
+			pSoundEditorEvaluator->EvaluatedPath[ link->ID ] = NodeEvaluationState::Evaluated;
 		}
 
 		return NodeEvaluationState::Evaluated;

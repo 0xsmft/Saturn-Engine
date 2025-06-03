@@ -761,3 +761,30 @@ int ax::NodeEditor::GetOrderedNodeIds(NodeId* nodes, int size)
 {
 	return s_Editor->GetNodeIds(nodes, size);
 }
+
+/* SATURN ENGINE MODIFIED */
+
+const ImVec2& ax::NodeEditor::GetRectMin()
+{
+	return s_Editor->GetRect().Min;
+}
+
+const ImVec2& ax::NodeEditor::GetRectMax()
+{
+	return s_Editor->GetRect().Max;
+}
+
+const ImVec2& ax::NodeEditor::GetViewRectMin()
+{
+	return s_Editor->GetViewRect().Min;
+}
+
+const ImVec2& ax::NodeEditor::GetViewRectMax()
+{
+	return s_Editor->GetViewRect().Max;
+}
+
+void ax::NodeEditor::StopFlow()
+{
+	s_Editor->StopFlowAnimation();
+}

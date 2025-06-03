@@ -138,7 +138,7 @@ namespace Saturn {
 
 	void NodeEditorBase::DeserialiseData( std::istream& rStream )
 	{
-		m_Loading = true;
+		m_State = NodeEditorState::Loading;
 
 		NodeCacheSettings::ReadEditorSettings( this );
 
@@ -181,7 +181,7 @@ namespace Saturn {
 			m_Links[ i ] = link;
 		}
 
-		m_Loading = false;
+		m_State = NodeEditorState::Editing;
 	}
 #endif
 
@@ -273,10 +273,10 @@ namespace Saturn {
 			return nullptr;
 
 		const auto Itr = std::find_if( m_Links.begin(), m_Links.end(),
-			[id]( const auto& rLink )
-			{
-				return rLink->StartPinID == id || rLink->EndPinID == id;
-			} );
+			[ id ]( const auto& rLink )
+		{
+			return rLink->StartPinID == id || rLink->EndPinID == id;
+		} );
 
 		if( Itr != m_Links.end() )
 			return *Itr;
@@ -297,10 +297,7 @@ namespace Saturn {
 		std::vector<Ref<Link>> result;
 
 		if( id == 0 )
-			return {};
-
-		if( !IsLinked( id ) )
-			return {};
+			return result;
 
 		for( const auto& rLink : m_Links )
 		{
@@ -320,13 +317,15 @@ namespace Saturn {
 
 	NodeEditorCompilationStatus NodeEditorBase::Evaluate()
 	{
-		if( !m_Runtime )
+		if( !m_Runtime || m_State == NodeEditorState::Loading || !HasPrivilege( NodeEditorPrivileges_Evaluation ) )
 			return NodeEditorCompilationStatus::Failed;
+
+		m_State = NodeEditorState::Evaluating;
 
 		return m_Runtime->EvaluateEditor();
 	}
 
-	std::vector<UUID> NodeEditorBase::FindNeighbors( Ref<NodeEditorNodeBase> node )
+	std::vector<UUID> NodeEditorBase::FindNeighborsRight( Ref<NodeEditorNodeBase> node )
 	{
 		std::vector<UUID> ids;
 
@@ -336,15 +335,38 @@ namespace Saturn {
 				continue;
 
 			// If the pin is linked find the other end of it and add it to our list.
-			Ref<Link> rLink = FindLinkByPin( rInput->ID );
+			auto links = FindLinksByPin( rInput->ID );
+			for( const auto& rLink : links )
+			{
+				const bool isStart = rLink->StartPinID == rInput->ID;
+				Ref<NodeEditorNodeBase> otherNode = FindNodeByPin( isStart ? rLink->EndPinID : rLink->StartPinID );
 
-			if( !rLink )
+				ids.push_back( otherNode->ID );
+			}
+		}
+
+		return ids;
+	}
+
+	std::vector<UUID> NodeEditorBase::FindNeighborsLeft( Ref<NodeEditorNodeBase> node )
+	{
+		std::vector<UUID> ids;
+
+		for( const auto& rOutput : node->Outputs )
+		{
+			if( !IsLinked( rOutput->ID ) )
 				continue;
 
-			const bool isStart = rLink->StartPinID == rInput->ID;
-			Ref<NodeEditorNodeBase> otherNode = FindNodeByPin( isStart ? rLink->EndPinID : rLink->StartPinID );
+			// If the pin is linked find the other end of it and add it to our list.
+			auto links = FindLinksByPin( rOutput->ID );
 
-			ids.push_back( otherNode->ID );
+			for( const auto& rLink : links )
+			{
+				const bool isStart = rLink->StartPinID == rOutput->ID;
+				Ref<NodeEditorNodeBase> otherNode = FindNodeByPin( isStart ? rLink->EndPinID : rLink->StartPinID );
+
+				ids.push_back( otherNode->ID );
+			}
 		}
 
 		return ids;
@@ -382,9 +404,22 @@ namespace Saturn {
 		ed::Flow( ed::LinkId( id ) );
 	}
 
+	bool NodeEditorBase::HasPrivilege( NodeEditorPrivileges privilege ) const
+	{
+		return m_Privileges & privilege;
+	}
+
+	void NodeEditorBase::SetPrivileges( NodeEditorPrivileges privilege, bool value )
+	{
+		if( value )
+			m_Privileges |= ( NodeEditorPrivileges ) privilege;
+		else
+			m_Privileges &= ~( NodeEditorPrivileges ) privilege;
+	}
+
 	void NodeEditorBase::AddNode( Ref<NodeEditorNodeBase> node )
 	{
-		if( m_Loading )
+		if( m_State == NodeEditorState::Loading )
 			return;
 
 		m_Nodes[ node->ID ] = node;

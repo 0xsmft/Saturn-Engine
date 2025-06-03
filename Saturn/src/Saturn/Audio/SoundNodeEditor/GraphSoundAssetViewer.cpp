@@ -50,6 +50,8 @@
 #include "Saturn/Asset/AssetManager.h"
 #include "Saturn/Core/OptickProfiler.h"
 
+#include "Saturn/Scene/Scene.h"
+
 #include "Saturn/ImGui/UndoRedo/GlobalUndoRedoGroup.h"
 
 namespace Saturn {
@@ -178,11 +180,7 @@ namespace Saturn {
 			{
 				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Billboard_AudioMuted" ), { 24, 24 } ) )
 				{
-					for( auto& rSound : m_Runtime->AliveSounds )
-					{
-						rSound->Stop();
-						rSound->Reset();
-					}
+					m_Runtime->TerminateEvaluation();
 				}
 
 				if( ImGui::IsItemHovered() )
@@ -190,6 +188,31 @@ namespace Saturn {
 					ImGui::BeginTooltip();
 					ImGui::Text( "Stop all sounds." );
 					ImGui::EndTooltip();
+				}
+
+				ImGui::SeparatorEx( ImGuiSeparatorFlags_Vertical );
+
+				// drop down
+				ImGui::Text( "References" );
+
+				ImGui::SetNextItemWidth( 134.0F );
+				if( ImGui::BeginCombo( "##References", "" ) ) 
+				{
+					for( const auto& rAsset : m_ReferencingAssets )
+					{
+						std::string name = std::to_string( rAsset->GetPlayerID() );
+						if( ImGui::Selectable( name.c_str() ) )
+						{
+							// TODO: There isn't technically API to support this asset viewer changing its node editor
+							//       however, maybe we should think of a different way to show what the referencing assets are doing
+							m_NodeEditor = rAsset->GetNodeEditor();
+							m_NodeEditor->Open( true );
+
+							SetupNodeEditorCallbacks();
+						}
+					}
+
+					ImGui::EndCombo();
 				}
 			} );
 	}
@@ -201,4 +224,35 @@ namespace Saturn {
 	void GraphSoundAssetViewer::OnEvent( RubyEvent& rEvent )
 	{
 	}
+
+	void GraphSoundAssetViewer::OnRuntimeStateChanged( RuntimeState newState, RuntimeState oldState )
+	{
+		switch( newState )
+		{
+			case RuntimeState::Starting:
+			case RuntimeState::NoState:
+			case RuntimeState::Suspended:
+				break;
+
+			case RuntimeState::Running:
+			{
+				if( oldState == RuntimeState::Starting || oldState == RuntimeState::NoState )
+					m_OriginalNodeEditor = m_NodeEditor;
+			} break;
+
+			case RuntimeState::Ending:
+			{
+				m_NodeEditor = m_OriginalNodeEditor;
+				m_ReferencingAssets.clear();
+			} break;
+		}
+	}
+
+#if !defined(SAT_DIST)
+	void GraphSoundAssetViewer::AddSoundReference( Ref<GraphSound> asset )
+	{
+		m_ReferencingAssets.push_back( asset );
+	}
+#endif
+
 }

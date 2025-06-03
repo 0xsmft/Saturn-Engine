@@ -423,11 +423,14 @@ IMGUI_NODE_EDITOR_API ImVec2 CanvasToScreen(const ImVec2& pos);
 IMGUI_NODE_EDITOR_API int GetNodeCount();                                // Returns number of submitted nodes since Begin() call
 IMGUI_NODE_EDITOR_API int GetOrderedNodeIds(NodeId* nodes, int size);    // Fills an array with node id's in order they're drawn; up to 'size` elements are set. Returns actual size of filled id's.
 
+/* SATURN ENGINE MODIFIED */
 
+IMGUI_NODE_EDITOR_API const ImVec2& GetRectMin();
+IMGUI_NODE_EDITOR_API const ImVec2& GetRectMax();
 
-
-
-
+IMGUI_NODE_EDITOR_API const ImVec2& GetViewRectMin();
+IMGUI_NODE_EDITOR_API const ImVec2& GetViewRectMax();
+IMGUI_NODE_EDITOR_API void StopFlow();
 
 //------------------------------------------------------------------------------
 namespace Details {

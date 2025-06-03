@@ -11,6 +11,7 @@
 //------------------------------------------------------------------------------
 # include "sppch.h"
 # include "imgui_node_editor_internal.h"
+
 # include <cstdio> // snprintf
 # include <string>
 # include <fstream>
@@ -20,6 +21,9 @@
 # include <sstream>
 # include <streambuf>
 # include <type_traits>
+
+/* SATURN ENGINE MOFIFIED */
+#include "Saturn/Core/Log.h"
 
 // https://stackoverflow.com/a/8597498
 # define DECLARE_HAS_NESTED(Name, Member)                                          \
@@ -136,34 +140,9 @@ static constexpr auto  c_AllRoundCornersFlags = ImDrawFlags_RoundCornersAll;
 static constexpr auto  c_AllRoundCornersFlags = 15;
 #endif
 
-
-//------------------------------------------------------------------------------
-# if defined(_DEBUG) && defined(_WIN32)
-extern "C" __declspec(dllimport) void __stdcall OutputDebugStringA(const char* string);
-
-static void LogV(const char* fmt, va_list args)
-{
-	const int buffer_size = 1024;
-	static char buffer[1024];
-
-	vsnprintf(buffer, buffer_size - 1, fmt, args);
-	buffer[buffer_size - 1] = 0;
-
-	ImGui::LogText("\nNode Editor: %s", buffer);
-
-	OutputDebugStringA("NodeEditor: ");
-	OutputDebugStringA(buffer);
-	OutputDebugStringA("\n");
-}
-# endif
-
 void ed::Log(const char* fmt, ...)
 {
 # if defined(_DEBUG) && defined(_WIN32)
-	va_list args;
-	va_start(args, fmt);
-	LogV(fmt, args);
-	va_end(args);
 # endif
 }
 
@@ -254,96 +233,6 @@ static void ImDrawList_SwapSplitter(ImDrawList* drawList, ImDrawListSplitter& sp
 	currentSplitter._Channels.swap(splitter._Channels);
 }
 
-//static void ImDrawList_TransformChannel_Inner(ImVector<ImDrawVert>& vtxBuffer, const ImVector<ImDrawIdx>& idxBuffer, const ImVector<ImDrawCmd>& cmdBuffer, const ImVec2& preOffset, const ImVec2& scale, const ImVec2& postOffset)
-//{
-//    auto idxRead = idxBuffer.Data;
-//
-//    int indexOffset = 0;
-//    for (auto& cmd : cmdBuffer)
-//    {
-//        auto idxCount = cmd.ElemCount;
-//
-//        if (idxCount == 0) continue;
-//
-//        auto minIndex = idxRead[indexOffset];
-//        auto maxIndex = idxRead[indexOffset];
-//
-//        for (auto i = 1u; i < idxCount; ++i)
-//        {
-//            auto idx = idxRead[indexOffset + i];
-//            minIndex = std::min(minIndex, idx);
-//            maxIndex = ImMax(maxIndex, idx);
-//        }
-//
-//        for (auto vtx = vtxBuffer.Data + minIndex, vtxEnd = vtxBuffer.Data + maxIndex + 1; vtx < vtxEnd; ++vtx)
-//        {
-//            vtx->pos.x = (vtx->pos.x + preOffset.x) * scale.x + postOffset.x;
-//            vtx->pos.y = (vtx->pos.y + preOffset.y) * scale.y + postOffset.y;
-//        }
-//
-//        indexOffset += idxCount;
-//    }
-//}
-
-//static void ImDrawList_TransformChannels(ImDrawList* drawList, int begin, int end, const ImVec2& preOffset, const ImVec2& scale, const ImVec2& postOffset)
-//{
-//    int lastCurrentChannel = drawList->_ChannelsCurrent;
-//    if (lastCurrentChannel != 0)
-//        drawList->ChannelsSetCurrent(0);
-//
-//    auto& vtxBuffer = drawList->VtxBuffer;
-//
-//    if (begin == 0 && begin != end)
-//    {
-//        ImDrawList_TransformChannel_Inner(vtxBuffer, drawList->IdxBuffer, drawList->CmdBuffer, preOffset, scale, postOffset);
-//        ++begin;
-//    }
-//
-//    for (int channelIndex = begin; channelIndex < end; ++channelIndex)
-//    {
-//        auto& channel = drawList->_Channels[channelIndex];
-//        ImDrawList_TransformChannel_Inner(vtxBuffer, channel.IdxBuffer, channel.CmdBuffer, preOffset, scale, postOffset);
-//    }
-//
-//    if (lastCurrentChannel != 0)
-//        drawList->ChannelsSetCurrent(lastCurrentChannel);
-//}
-
-//static void ImDrawList_ClampClipRects_Inner(ImVector<ImDrawCmd>& cmdBuffer, const ImVec4& clipRect, const ImVec2& offset)
-//{
-//    for (auto& cmd : cmdBuffer)
-//    {
-//        cmd.ClipRect.x = ImMax(cmd.ClipRect.x + offset.x, clipRect.x);
-//        cmd.ClipRect.y = ImMax(cmd.ClipRect.y + offset.y, clipRect.y);
-//        cmd.ClipRect.z = std::min(cmd.ClipRect.z + offset.x, clipRect.z);
-//        cmd.ClipRect.w = std::min(cmd.ClipRect.w + offset.y, clipRect.w);
-//    }
-//}
-
-//static void ImDrawList_TranslateAndClampClipRects(ImDrawList* drawList, int begin, int end, const ImVec2& offset)
-//{
-//    int lastCurrentChannel = drawList->_ChannelsCurrent;
-//    if (lastCurrentChannel != 0)
-//        drawList->ChannelsSetCurrent(0);
-//
-//    auto clipRect = drawList->_ClipRectStack.back();
-//
-//    if (begin == 0 && begin != end)
-//    {
-//        ImDrawList_ClampClipRects_Inner(drawList->CmdBuffer, clipRect, offset);
-//        ++begin;
-//    }
-//
-//    for (int channelIndex = begin; channelIndex < end; ++channelIndex)
-//    {
-//        auto& channel = drawList->_Channels[channelIndex];
-//        ImDrawList_ClampClipRects_Inner(channel.CmdBuffer, clipRect, offset);
-//    }
-//
-//    if (lastCurrentChannel != 0)
-//        drawList->ChannelsSetCurrent(lastCurrentChannel);
-//}
-
 static void ImDrawList_PathBezierOffset(ImDrawList* drawList, float offset, const ImVec2& p0, const ImVec2& p1, const ImVec2& p2, const ImVec2& p3)
 {
 	using namespace ed;
@@ -355,117 +244,6 @@ static void ImDrawList_PathBezierOffset(ImDrawList* drawList, float offset, cons
 
 	ImCubicBezierSubdivide(acceptPoint, p0, p1, p2, p3);
 }
-
-/*
-static void ImDrawList_PolyFillScanFlood(ImDrawList *draw, std::vector<ImVec2>* poly, ImColor color, int gap = 1, float strokeWidth = 1.0f)
-{
-	std::vector<ImVec2> scanHits;
-	ImVec2 min, max; // polygon min/max points
-	auto io = ImGui::GetIO();
-	float y;
-	bool isMinMaxDone = false;
-	unsigned int polysize = poly->size();
-
-	// find the orthagonal bounding box
-	// probably can put this as a predefined
-	if (!isMinMaxDone)
-	{
-		min.x = min.y = FLT_MAX;
-		max.x = max.y = FLT_MIN;
-		for (auto p : *poly)
-		{
-			if (p.x < min.x) min.x = p.x;
-			if (p.y < min.y) min.y = p.y;
-			if (p.x > max.x) max.x = p.x;
-			if (p.y > max.y) max.y = p.y;
-		}
-		isMinMaxDone = true;
-	}
-
-	// Bounds check
-	if ((max.x < 0) || (min.x > io.DisplaySize.x) || (max.y < 0) || (min.y > io.DisplaySize.y)) return;
-
-	// Vertically clip
-	if (min.y < 0) min.y = 0;
-	if (max.y > io.DisplaySize.y) max.y = io.DisplaySize.y;
-
-	// so we know we start on the outside of the object we step out by 1.
-	min.x -= 1;
-	max.x += 1;
-
-	// Initialise our starting conditions
-	y = min.y;
-
-	// Go through each scan line iteratively, jumping by 'gap' pixels each time
-	while (y < max.y)
-	{
-		scanHits.clear();
-
-		{
-			int jump = 1;
-			ImVec2 fp = poly->at(0);
-
-			for (size_t i = 0; i < polysize - 1; i++)
-			{
-				ImVec2 pa = poly->at(i);
-				ImVec2 pb = poly->at(i + 1);
-
-				// jump double/dud points
-				if (pa.x == pb.x && pa.y == pb.y) continue;
-
-				// if we encounter our hull/poly start point, then we've now created the
-				// closed
-				// hull, jump the next segment and reset the first-point
-				if ((!jump) && (fp.x == pb.x) && (fp.y == pb.y))
-				{
-					if (i < polysize - 2)
-					{
-						fp = poly->at(i + 2);
-						jump = 1;
-						i++;
-					}
-				}
-				else
-				{
-					jump = 0;
-				}
-
-				// test to see if this segment makes the scan-cut.
-				if ((pa.y > pb.y && y < pa.y && y > pb.y) || (pa.y < pb.y && y > pa.y && y < pb.y))
-				{
-					ImVec2 intersect;
-
-					intersect.y = y;
-					if (pa.x == pb.x)
-					{
-						intersect.x = pa.x;
-					}
-					else
-					{
-						intersect.x = (pb.x - pa.x) / (pb.y - pa.y) * (y - pa.y) + pa.x;
-					}
-					scanHits.push_back(intersect);
-				}
-			}
-
-			// Sort the scan hits by X, so we have a proper left->right ordering
-			sort(scanHits.begin(), scanHits.end(), [](ImVec2 const &a, ImVec2 const &b) { return a.x < b.x; });
-
-			// generate the line segments.
-			{
-				int i = 0;
-				int l = scanHits.size() - 1; // we need pairs of points, this prevents segfault.
-				for (i = 0; i < l; i += 2)
-				{
-					draw->AddLine(scanHits[i], scanHits[i + 1], color, strokeWidth);
-				}
-			}
-		}
-		y += gap;
-	} // for each scan line
-	scanHits.clear();
-}
-*/
 
 static void ImDrawList_AddBezierWithArrows(ImDrawList* drawList, const ImCubicBezierPoints& curve, float thickness,
 	float startArrowSize, float startArrowWidth, float endArrowSize, float endArrowWidth,
@@ -1806,7 +1584,7 @@ bool ed::EditorContext::IsSelected(Object* object)
 	// return std::find(m_SelectedObjects.begin(), m_SelectedObjects.end(), object) != m_SelectedObjects.end();
 }
 
-const ed::vector<ed::Object*>& ed::EditorContext::GetSelectedObjects()
+const std::vector<ed::Object*>& ed::EditorContext::GetSelectedObjects()
 {
 	return m_SelectedObjects;
 }
@@ -1843,7 +1621,7 @@ ed::Node* ed::EditorContext::FindNodeAt(const ImVec2& p)
 	return nullptr;
 }
 
-void ed::EditorContext::FindNodesInRect(const ImRect& r, vector<Node*>& result, bool append, bool includeIntersecting)
+void ed::EditorContext::FindNodesInRect(const ImRect& r, std::vector<Node*>& result, bool append, bool includeIntersecting)
 {
 	if (!append)
 		result.resize(0);
@@ -1856,7 +1634,7 @@ void ed::EditorContext::FindNodesInRect(const ImRect& r, vector<Node*>& result, 
 			result.push_back(node);
 }
 
-void ed::EditorContext::FindLinksInRect(const ImRect& r, vector<Link*>& result, bool append)
+void ed::EditorContext::FindLinksInRect(const ImRect& r, std::vector<Link*>& result, bool append)
 {
 	if (!append)
 		result.resize(0);
@@ -1931,7 +1709,7 @@ int ed::EditorContext::BreakLinks(PinId pinId)
 	return result;
 }
 
-void ed::EditorContext::FindLinksForNode(NodeId nodeId, vector<Link*>& result, bool add)
+void ed::EditorContext::FindLinksForNode(NodeId nodeId, std::vector<Link*>& result, bool add)
 {
 	if (!add)
 		result.clear();
@@ -2287,6 +2065,12 @@ void ed::EditorContext::UpdateAnimations()
 void ed::EditorContext::Flow(Link* link, FlowDirection direction)
 {
 	m_FlowAnimationController.Flow(link, direction);
+}
+
+/* SATURN ENGINE MODIFIED */
+void ed::EditorContext::StopFlowAnimation()
+{
+	m_FlowAnimationController.StopFlow();
 }
 
 void ed::EditorContext::SetUserContext(bool globalSpace)
@@ -3173,7 +2957,7 @@ void ed::FlowAnimation::UpdatePath()
 
 void ed::FlowAnimation::ClearPath()
 {
-	vector<CurvePoint>().swap(m_Path);
+	std::vector<CurvePoint>().swap(m_Path);
 	m_PathLength = 0.0f;
 }
 
@@ -3278,10 +3062,23 @@ ed::FlowAnimation* ed::FlowAnimationController::GetOrCreate(Link* link)
 
 void ed::FlowAnimationController::Release(FlowAnimation* animation)
 {
-	IM_UNUSED(animation);
+	IM_UNUSED( animation );
 }
 
+/* SATURN ENGINE MODIFIED */
+void ed::FlowAnimationController::StopFlow()
+{
+	for( auto animation : m_Animations )
+	{
+		animation->Finish();
+	}
 
+	for( auto animation : m_Animations )
+		delete animation;
+
+	m_Animations.clear();
+	m_FreePool.clear();
+}
 
 //------------------------------------------------------------------------------
 //
@@ -4128,8 +3925,8 @@ bool ed::SelectAction::Process(const Control& control)
 		if (rect.GetHeight() <= 0)
 			rect.Max.y = rect.Min.y + 1;
 
-		vector<Node*> nodes;
-		vector<Link*> links;
+		std::vector<Node*> nodes;
+		std::vector<Link*> links;
 
 		if (m_SelectLinkMode)
 		{
@@ -4390,7 +4187,7 @@ ed::EditorAction::AcceptResult ed::ShortcutAction::Accept(const Control& control
 				m_Context.assign(selection.begin(), selection.end());
 
 				// Expand groups
-				vector<Node*> extra;
+				std::vector<Node*> extra;
 				for (auto object : m_Context)
 				{
 					auto node = object->AsNode();
@@ -4897,7 +4694,7 @@ ed::DeleteItemsAction::DeleteItemsAction(EditorContext* editor):
 
 void ed::DeleteItemsAction::DeleteDeadLinks(NodeId nodeId)
 {
-	vector<ed::Link*> links;
+	std::vector<ed::Link*> links;
 	Editor->FindLinksForNode(nodeId, links, true);
 	for (auto link : links)
 	{

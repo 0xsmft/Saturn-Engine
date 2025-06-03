@@ -55,6 +55,11 @@
 #include "Saturn/Audio/AudioSystem.h"
 
 #include "Saturn/ImGui/EditorIcons.h"
+#if !defined(SAT_DIST)
+#include "Saturn/ImGui/ImGuiWindow.h"
+#include "Saturn/ImGui/ImGuiWindowManager.h"
+#include "Saturn/Audio/SoundNodeEditor/GraphSoundAssetViewer.h"
+#endif
 
 #include "Saturn/AI/Navigation/NavBoundsEntity.h"
 #include "Saturn/AI/AIAgentEntity.h"
@@ -939,6 +944,17 @@ namespace Saturn {
 				sound->SetVolume( rComp.Volume );
 //				sound->SetPitch( rComp.Pitch );
 				sound->Loop( rComp.Loop );
+
+#if !defined(SAT_DIST)
+				// Add reference if a graph sound asset viewer is open
+				std::string name = std::format( "{0}##{1}", soundSpec->Name, ( uint64_t ) soundSpec->ID );
+				Ref<GraphSoundAssetViewer> window = ImGuiWindowManager::Get().GetWindow<GraphSoundAssetViewer>( name );
+
+				if( window )
+				{
+					window->AddSoundReference( sound );
+				}
+#endif
 			}
 			else
 			{

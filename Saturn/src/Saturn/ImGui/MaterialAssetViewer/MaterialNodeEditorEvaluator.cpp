@@ -167,14 +167,15 @@ namespace Saturn {
 		size_t i = 0;
 		for( const auto& rOutput : rNode->Outputs )
 		{
-			Ref<Link> link = m_NodeEditor->FindLinkByPin( rOutput->ID );
-			if( !link )
-				continue;
+			auto links = m_NodeEditor->FindLinksByPin( rOutput->ID );
 
-			// Inputs are always the end id.
-			if( link->EndPinID == outputNode->Inputs[ i ]->ID )
+			for( const auto& rLink : links )
 			{
-				return i;
+				// Inputs are always the end id.
+				if( rLink->EndPinID == outputNode->Inputs[ i ]->ID )
+				{
+					return i;
+				}
 			}
 
 			i++;

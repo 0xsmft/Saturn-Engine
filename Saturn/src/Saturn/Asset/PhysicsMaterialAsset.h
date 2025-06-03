@@ -69,8 +69,8 @@ namespace Saturn {
 		float m_DynamicFriction = 0.6f;
 		float m_Restitution = 0.0f;
 
-		physx::PxMaterial* m_Material = nullptr;
 		uint32_t m_Flags = -1;
+		physx::PxMaterial* m_Material = nullptr;
 
 	private:
 		friend class PhysicsMaterialAssetViewer;

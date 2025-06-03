@@ -43,6 +43,8 @@
 #include "Saturn/Core/UUID.h"
 #include "Saturn/Core/Timestep.h"
 
+#include "RuntimeState.h"
+
 #include "entt.hpp"
 
 #if defined( SAT_ENABLE_GAMETHREAD )
@@ -157,15 +159,6 @@ namespace Saturn {
 			DirectionalLight::Deserialise( rObject.DirectionalLights[ 2 ], rStream );
 			DirectionalLight::Deserialise( rObject.DirectionalLights[ 3 ], rStream );
 		}
-	};
-
-	enum class RuntimeState
-	{
-		NoState,
-		Starting,
-		Running,
-		Ending,
-		Suspended
 	};
 
 	class Scene : public Asset

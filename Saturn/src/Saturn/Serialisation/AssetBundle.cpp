@@ -222,7 +222,7 @@ namespace Saturn {
 			stream.close();
 
 			// Compression, allow for files under 500KB (0.5MB) to not be compressed.
-			if( fileSize > 500 * 1024 && path.extension() != ".vfsn" )
+			if( fileSize > 500llu * 1024llu && path.extension() != ".vfsn" )
 			{
 				SAT_CORE_WARN( "Compressing file: {0} because file is {1} KB", path.string(), fileSize / 1024 );
 				

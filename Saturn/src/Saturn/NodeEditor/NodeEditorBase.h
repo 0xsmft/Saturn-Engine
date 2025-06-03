@@ -38,6 +38,7 @@
 #include "imgui_node_editor.h"
 
 #include <stack>
+#include <queue>
 
 namespace ed = ax::NodeEditor;
 
@@ -51,6 +52,64 @@ namespace Saturn {
 		Sound,
 		BehaviourTree
 	};
+
+	enum class NodeEditorState
+	{
+		// Default state when the editor is not in any specific state
+		Editing,
+		// This state can only happen if evaluation was successful and we are ready to actually use the evaluated data
+		// For example, GraphSounds are evaluated then they are ready to be simulated (played).
+		Simulating,
+		// Only true if we are simulating and the simulation is paused i.e. editor suspended
+		Suspended,
+		// Used when the node editor is being loaded from NC
+		Loading,
+		// Used when evaluation is in progress
+		Evaluating 
+	};
+
+	enum NodeEditorPrivileges_
+	{
+		// No editing or no evaluation
+		NodeEditorPrivileges_ReadOnly,
+		// User can edit the nodes
+		NodeEditorPrivileges_Editing,
+		// User can evaluate the editor
+		NodeEditorPrivileges_Evaluation,
+		NodeEditorPrivileges_All = NodeEditorPrivileges_Editing | NodeEditorPrivileges_Evaluation,
+	};
+
+	enum class NodeEditorFlowDirection 
+	{
+		// Backwards flow, start from the origin node. 
+		// It is called "Left" because the origin node is on the left hand side of the node editor
+		// Also known as:
+		// Data propagation, forward execution
+		//
+		// ------------------>
+		// 
+		// ROOT NODE -> Node A -> Node B
+		//                          /
+		//                        Node D
+		//
+		Left,
+
+		// Forwards, start from a node and work way back to origin/out node.
+		// It is called "Right" because the origin node is on the right hand side of the node editor
+		// Also known as:
+		// Data resolution, backwards execution
+		//
+		// ------------------>
+		// 
+		// Node A -> Node B -> ROOT NODE
+		//          /
+		//      Node D
+		//
+		Right
+	};
+
+	// enum NodeEditorPrivileges_
+	typedef int NodeEditorPrivileges;
 
 	template<typename EditorType, typename... V>
 	struct NodeEditorNodeGroup {};
@@ -82,7 +141,6 @@ namespace Saturn {
 		Ref<Link> FindLink( UUID id );
 		Ref<NodeEditorNodeBase> FindNode( UUID id );
 		Ref<NodeEditorNodeBase> FindNode( const std::string& rName );
-		Ref<Link> FindLinkByPin( UUID id );
 		Ref<NodeEditorNodeBase> FindNodeByPin( UUID id );
 
 		std::vector<Ref<Link>> FindLinksByPin( UUID id );
@@ -90,30 +148,63 @@ namespace Saturn {
 		void SetRuntime( Ref<NodeEditorRuntime> runtime );
 		NodeEditorCompilationStatus Evaluate();
 
-		std::vector<UUID> FindNeighbors( Ref<NodeEditorNodeBase> node );
+		// Search via inputs
+		std::vector<UUID> FindNeighborsRight( Ref<NodeEditorNodeBase> node );
+		
+		// Search via outputs
+		std::vector<UUID> FindNeighborsLeft( Ref<NodeEditorNodeBase> node );
 
 		template<typename Function>
-		void TraverseFromStart( const Ref<NodeEditorNodeBase>& rRootNode, Function func ) 
+		void TraverseFromStart( const Ref<NodeEditorNodeBase>& rRootNode, NodeEditorFlowDirection dir, Function func )
 		{
-			// Last in first out
-			// So add our output node then add neighbors and continue as we want the last node with no more neighbors to be evaluated first.
-
-			std::stack<UUID> stack;
-			stack.push( rRootNode->ID );
-
-			while( !stack.empty() )
+			switch( dir )
 			{
-				const auto currentID = stack.top();
-				stack.pop();
-
-				func( currentID );
-
-				// Find neighbors from inputs and continue until there is no neighbors
-				Ref<NodeEditorNodeBase> nextNode = FindNode( currentID );
-				for( const auto& rNeighbor : FindNeighbors( nextNode ) )
+				// NOTE: std::queue is FIFO
+				case NodeEditorFlowDirection::Left:
 				{
-					stack.push( rNeighbor );
-				}
+					std::queue<UUID> temporaryStack;
+					temporaryStack.push( rRootNode->ID );
+
+					while( !temporaryStack.empty() )
+					{
+						const auto currentID = temporaryStack.front();
+						temporaryStack.pop();
+
+						// Visit, add evaluation stack
+						func( currentID );
+
+						// Find neighbors from outputs and continue until there is no neighbors
+						Ref<NodeEditorNodeBase> currentNode = FindNode( currentID );
+						const auto& rNeighbours = FindNeighborsLeft( currentNode );
+
+						for( auto Itr = rNeighbours.rbegin(); Itr != rNeighbours.rend(); Itr++ )
+						{
+							temporaryStack.push( *Itr );
+						}
+					}
+				} break;
+
+				// NOTE: std::stack is LIFO
+				case NodeEditorFlowDirection::Right:
+				{
+					std::stack<UUID> stack;
+					stack.push( rRootNode->ID );
+
+					while( !stack.empty() )
+					{
+						const auto currentID = stack.top();
+						stack.pop();
+
+						func( currentID );
+
+						// Find neighbors from inputs and continue until there is no neighbors
+						Ref<NodeEditorNodeBase> currentNode = FindNode( currentID );
+						for( const auto& rNeighbor : FindNeighborsRight( currentNode ) )
+						{
+							stack.push( rNeighbor );
+						}
+					}
+				} break;
 			}
 		}
 
@@ -124,6 +215,19 @@ namespace Saturn {
 		void ShowFlow( const std::vector<Ref<Link>>& rLinks );
 		void ShowFlow( const Ref<Link>& rLink );
 		void ShowFlow( UUID id );
+
+		NodeEditorState GetState() const { return m_State; }
+		void SetState( NodeEditorState state )
+		{
+			if( m_State != state )
+			{
+				m_State = state;
+//				m_Runtime->SetState( state );
+			}
+		}
+
+		[[nodiscard]] bool HasPrivilege( NodeEditorPrivileges privilege ) const;
+		void SetPrivileges( NodeEditorPrivileges privilege, bool value );
 
 	public:
 		AssetID GetAssetID() const { return m_AssetID; }
@@ -150,6 +254,9 @@ namespace Saturn {
 #endif
 
 	protected:
+		Ref<Link> FindLinkByPin( UUID id );
+
+	protected:
 		std::string m_Name;
 		bool m_WindowOpen = false;
 
@@ -163,11 +270,13 @@ namespace Saturn {
 
 		AssetID m_AssetID = 0;
 
-		bool m_Loading = false;
+		NodeEditorState m_State = NodeEditorState::Editing;
+		NodeEditorPrivileges m_Privileges = NodeEditorPrivileges_All;
 
 	private:
 		friend class NodeEditorCache;
 		friend class NodeCacheEditor;
 		friend class NodeCacheSettings;
 	};
+
 }

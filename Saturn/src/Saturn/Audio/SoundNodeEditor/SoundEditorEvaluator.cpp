@@ -191,6 +191,7 @@ namespace Saturn {
 
 		if( SoundsPlaying.size() == 0 )
 		{
+			m_NodeEditor->SetState( NodeEditorState::Evaluating );
 			if( m_Looping )
 				EvalNoChecks();
 			else

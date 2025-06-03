@@ -28,58 +28,17 @@
 
 #pragma once
 
-#include "Saturn/ImGui/AssetViewer.h"
-#include "Saturn/NodeEditor/UI/NodeEditor.h"
-#include "Saturn/Audio/Sound.h"
-
 namespace Saturn {
 
-	class SoundEditorEvaluator;
-	class GraphSound;
-
-#if !defined(SAT_DIST)
-	struct GraphSoundAssetViewerReference
+	// NOTE: This enum is separated from Scene.h as this enum is used by the Node Editors
+	//       So this allows us to use it in the Node Editor without including Scene.h
+	enum class RuntimeState
 	{
-		Ref<GraphSound> Sound;
+		NoState,
+		Starting,
+		Running,
+		Ending,
+		Suspended
 	};
-#endif
-
-	class GraphSoundAssetViewer : public AssetViewer
-	{
-	public:
-		GraphSoundAssetViewer( AssetID id );
-		~GraphSoundAssetViewer();
-
-		virtual void OnImGuiRender() override;
-		virtual void OnUpdate( Timestep ts ) override;
-		virtual void OnEvent( RubyEvent& rEvent ) override;
-		virtual void OnRuntimeStateChanged( RuntimeState newState, RuntimeState oldState ) override;
-
-#if !defined(SAT_DIST)
-		void AddSoundReference( Ref<GraphSound> sound );
-#endif
-
-	private:
-		void AddSoundAsset();
-		void SetupNewNodeEditor();
-		void SetupNodeEditorCallbacks();
-
-	private:
-		// Sound specification asset
-		Ref<Asset> m_Asset = nullptr;
-		Ref<NodeEditor> m_NodeEditor = nullptr;
-		Ref<SoundEditorEvaluator> m_Runtime = nullptr;
-
-		bool m_ShowDirtyModal = false;
-
-		UUID m_OutputNodeID = 0;
-
-#if !defined(SAT_DIST)
-		// The asset that is referencing this viewer
-		// For example we could have the same sound spec asset being used in different places so which one are we trying to view (only available when in Runtime).
-		std::vector<Ref<GraphSound>> m_ReferencingAssets;
-
-		Ref<NodeEditor> m_OriginalNodeEditor = nullptr;
-#endif
-	};
+	
 }

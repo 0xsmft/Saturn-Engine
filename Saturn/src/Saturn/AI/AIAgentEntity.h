@@ -34,6 +34,8 @@
 
 namespace Saturn {
 
+	class BehaviourTree;
+
 	class AIAgentEntity : public Entity
 	{
 		//////////////////////////////////////////////////////////////////////////
@@ -59,6 +61,7 @@ namespace Saturn {
 		PhysicsRigidBody* m_RigidBody = nullptr;
 
 		Ref<NavBoundsEntity> m_NavBoundsEntity;
+		Ref<BehaviourTree> m_BehaviourTree;
 
 		int m_FrameCount = 10;
 		bool m_Moving = false;

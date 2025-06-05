@@ -3729,7 +3729,7 @@ bool ed::DragAction::Process(const Control& control)
 		for (auto object : m_Objects)
 		{
 			if (object->EndDrag())
-				Editor->MakeDirty(SaveReasonFlags::Position | SaveReasonFlags::User, object->AsNode());
+				Editor->MakeDirty(SaveReasonFlags::Position | SaveReasonFlags::User | SaveReasonFlags::EndDrag, object->AsNode());
 		}
 
 		m_Objects.resize(0);

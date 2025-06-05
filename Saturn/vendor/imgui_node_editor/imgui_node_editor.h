@@ -18,6 +18,8 @@
 # include <imgui.h>
 # include <cstdint> // std::uintXX_t
 # include <utility> // std::move
+/* SATURN ENGINE MODIFIED */
+# include <type_traits> // std::underlying_type
 
 
 //------------------------------------------------------------------------------
@@ -64,20 +66,35 @@ enum class CanvasSizeMode
 
 
 //------------------------------------------------------------------------------
-enum class SaveReasonFlags: uint32_t
+enum class SaveReasonFlags : uint32_t
 {
     None       = 0x00000000,
     Navigation = 0x00000001,
+    /* NOTE: SATURN ENGINE: We don't use the Position flag because that fires from different places, the only way that the user can change the position of the Node is by dragging it hence why we have implemented the EndDrag flag.
+    * Position is called from ed::SetNodePosition which we called */
     Position   = 0x00000002,
     Size       = 0x00000004,
     Selection  = 0x00000008,
     AddNode    = 0x00000010,
     RemoveNode = 0x00000020,
-    User       = 0x00000040
+    User       = 0x00000040,
+    /* SATURN ENGINE MODIFIED */
+    EndDrag    = 0x00000080
 };
 
-inline SaveReasonFlags operator |(SaveReasonFlags lhs, SaveReasonFlags rhs) { return static_cast<SaveReasonFlags>(static_cast<uint32_t>(lhs) | static_cast<uint32_t>(rhs)); }
-inline SaveReasonFlags operator &(SaveReasonFlags lhs, SaveReasonFlags rhs) { return static_cast<SaveReasonFlags>(static_cast<uint32_t>(lhs) & static_cast<uint32_t>(rhs)); }
+/* SATURN ENGINE MODIFIED */
+inline SaveReasonFlags operator| ( SaveReasonFlags lhs, SaveReasonFlags rhs )
+{
+    using Underlying = std::underlying_type_t<SaveReasonFlags>;
+	return static_cast< SaveReasonFlags >( static_cast< Underlying >( lhs ) | static_cast< Underlying >( rhs ) );
+}
+
+/* SATURN ENGINE MODIFIED */
+inline SaveReasonFlags operator& ( SaveReasonFlags lhs, SaveReasonFlags rhs )
+{
+    using Underlying = std::underlying_type_t<SaveReasonFlags>;
+	return static_cast< SaveReasonFlags >( static_cast< Underlying >( lhs ) & static_cast< Underlying >( rhs ) );
+}
 
 using ConfigSaveSettings     = bool   (*)(const char* data, size_t size, SaveReasonFlags reason, void* userPointer);
 using ConfigLoadSettings     = size_t (*)(char* data, void* userPointer);

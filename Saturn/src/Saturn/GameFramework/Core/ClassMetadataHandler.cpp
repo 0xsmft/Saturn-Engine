@@ -37,7 +37,7 @@
 
 #include "Saturn/GameFramework/Core/EngineGenerated.h"
 
-//SAT_X31_CREATE_AUTO_REG( AIAgentEntity );
+SAT_X31_CREATE_AUTO_REG( AIAgentEntity );
 
 namespace Saturn {
 

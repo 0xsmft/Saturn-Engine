@@ -26,22 +26,76 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "BehaviourTreeNodeLibrary.h"
 
-#include "Saturn/NodeEditor/NodeEditorTreeNode.h"
+#include "Nodes/BehaviourTreeRootNode.h"
+#include "Nodes/BehaviourTreeSelectorNode.h"
+#include "Nodes/BehaviourTreeSequenceNode.h"
+#include "Nodes/BehaviourTreeTaskNodes.h"
+
+#include "Saturn/NodeEditor/GlobalNodesList.h"
 
 namespace Saturn {
 
-	class BehaviourTreeSequenceNode : public NodeEditorTreeNode
+	void BehaviourTreeNodeLibrary::RegisterAllNodes()
 	{
-	public:
-		BehaviourTreeSequenceNode();
-		virtual ~BehaviourTreeSequenceNode();
+		GlobalNodesList::RegisterLibrary( {
+			{ NodeExecutionType::BehaviourTreeRootNode,      BehaviourTreeNodeLibrary::SpawnRootNode      },
+			{ NodeExecutionType::BehaviourTreeSelectorNode,  BehaviourTreeNodeLibrary::SpawnSelectorNode  },
+			{ NodeExecutionType::BehaviourTreeSequenceNode,  BehaviourTreeNodeLibrary::SpawnSequenceNode  },
+			{ NodeExecutionType::BehaviourTreeWaitNode,      BehaviourTreeNodeLibrary::SpawnWaitNode      },
+			{ NodeExecutionType::BehaviourTreePlaySoundNode, BehaviourTreeNodeLibrary::SpawnPlaySoundNode },
+			{ NodeExecutionType::BehaviourTreeMoveTo,        BehaviourTreeNodeLibrary::SpawnMoveToNode    },
+		} );
+	}
 
-		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* pEvaluator ) override;
+	Ref<BehaviourTreeSelectorNode> BehaviourTreeNodeLibrary::SpawnSelectorNode( Ref<NodeEditorBase> nodeEditor )
+	{
+		Ref<BehaviourTreeSelectorNode> node = Ref<BehaviourTreeSelectorNode>::Create();
+		nodeEditor->AddNode( node );
 
-	private:
-		void CreateNode();
-	};
-	
+		return node;
+	}
+
+	Ref<BehaviourTreeSequenceNode> BehaviourTreeNodeLibrary::SpawnSequenceNode( Ref<NodeEditorBase> nodeEditor )
+	{
+		Ref<BehaviourTreeSequenceNode> node = Ref<BehaviourTreeSequenceNode>::Create();
+		nodeEditor->AddNode( node );
+
+		return node;
+	}
+
+	Ref<BehaviourTreeWaitNode> BehaviourTreeNodeLibrary::SpawnWaitNode( Ref<NodeEditorBase> nodeEditor )
+	{
+		Ref<BehaviourTreeWaitNode> node = Ref<BehaviourTreeWaitNode>::Create();
+		nodeEditor->AddNode( node );
+
+		return node;
+	}
+
+	Ref<BehaviourTreePlaySoundNode> BehaviourTreeNodeLibrary::SpawnPlaySoundNode( Ref<NodeEditorBase> nodeEditor )
+	{
+		Ref<BehaviourTreePlaySoundNode> node = Ref<BehaviourTreePlaySoundNode>::Create();
+		nodeEditor->AddNode( node );
+
+		return node;
+	}
+
+	Ref<BehaviourTreeMoveToNode> BehaviourTreeNodeLibrary::SpawnMoveToNode( Ref<NodeEditorBase> nodeEditor )
+	{
+		Ref<BehaviourTreeMoveToNode> node = Ref<BehaviourTreeMoveToNode>::Create();
+		nodeEditor->AddNode( node );
+
+		return node;
+	}
+
+	Ref<BehaviourTreeRootNode> BehaviourTreeNodeLibrary::SpawnRootNode( Ref<NodeEditorBase> nodeEditor )
+	{
+		Ref<BehaviourTreeRootNode> node = Ref<BehaviourTreeRootNode>::Create();
+		nodeEditor->AddNode( node );
+
+		return node;
+	}
+
 }

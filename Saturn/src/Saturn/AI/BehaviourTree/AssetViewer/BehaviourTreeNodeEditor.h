@@ -28,26 +28,80 @@
 
 #pragma once
 
-#include "Saturn/NodeEditor/NodeEditorBase.h"
+#include "Saturn/NodeEditor/UI/NodeEditor.h"
 
 namespace Saturn {
-	
-	class BehaviourTreeRootNode;
-	class BehaviourTreeSelectorNode;
-	class BehaviourTreeSequenceNode;
 
-	class BehaviourTreeNodeLibrary
+	class BehaviourTreeBaseTask;
+	class AIAgentEntity;
+
+#if !defined(SAT_DIST)
+	typedef NodeEditor BehaviourTreeNodeEditorSuper;
+#else
+	typedef NodeEditorBase BehaviourTreeNodeEditorSuper;
+#endif
+
+	struct BehaviourTreeCompositeOrderInfo
+	{
+		UUID NodeID = 0;
+		int Level = 0;
+
+		static inline void Serialise( const BehaviourTreeCompositeOrderInfo& rObject, std::ofstream& rStream )
+		{
+			RawSerialisation::WriteObject( rObject.NodeID, rStream );
+			RawSerialisation::WriteObject( rObject.Level, rStream );
+		}
+
+		static inline void Deserialise( BehaviourTreeCompositeOrderInfo& rObject, std::istream& rStream )
+		{
+			RawSerialisation::ReadObject( rObject.NodeID, rStream );
+			RawSerialisation::ReadObject( rObject.Level, rStream );
+		}
+	};
+
+	class BehaviourTreeNodeEditor : public BehaviourTreeNodeEditorSuper
 	{
 	public:
-		static void RegisterAllNodes();
+		BehaviourTreeNodeEditor();
+		BehaviourTreeNodeEditor( AssetID id );
+		virtual ~BehaviourTreeNodeEditor();
 
-	public:
-		static NodeEditorType GetStaticType() { return NodeEditorType::BehaviourTree; }
+		void TraverseBehaviourTree( const Ref<NodeEditorNodeBase>& rRootNode );
+		void InitBehaviourTree();
 
-		static Ref<BehaviourTreeSelectorNode> SpawnSelectorNode( Ref<NodeEditorBase> nodeEditor );
-		static Ref<BehaviourTreeSequenceNode> SpawnSequenceNode( Ref<NodeEditorBase> nodeEditor );
+		void Tick( Timestep ts );
 
-		static Ref<BehaviourTreeRootNode> SpawnRootNode( Ref<NodeEditorBase> nodeEditor );
+		BehaviourTreeBaseTask* GetTaskFor( UUID node );
+
+		void ResetAllTasks();
+
+		void SetTargetAgent( Ref<AIAgentEntity> agent ) { m_AIAgentEntity = agent; }
+		[[nodiscard]] Ref<AIAgentEntity> GetTargetAgent() const;
+
+#if !defined(SAT_DIST)
+		virtual void OnTopBarRender() override;
+		virtual void OnExtraRender() override;
+		virtual void OnNodeEditorEvent( NodeEditorAction action ) override;
+
+	protected:
+		virtual void SerialiseData( std::ofstream& rStream ) override;
+		virtual void DeserialiseData( std::ifstream& rStream ) override;
+#endif
+
+	private:
+		BehaviourTreeBaseTask* m_CurrentTask = nullptr;
+		size_t m_CurrentTaskIndex = 0;
+
+#if !defined(SAT_DIST)
+		bool m_AutoEvaluate = true;
+#endif
+
+		Ref<AIAgentEntity> m_AIAgentEntity;
+
+		std::map<UUID, BehaviourTreeBaseTask*> m_Tasks;
+		std::map<size_t, BehaviourTreeBaseTask*> m_LevelOneTasks;
+
+		std::vector<BehaviourTreeCompositeOrderInfo> m_EvaluationOrder;
 	};
-	
+
 }

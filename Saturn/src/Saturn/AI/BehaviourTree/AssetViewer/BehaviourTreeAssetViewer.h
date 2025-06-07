@@ -26,47 +26,40 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "BehaviourTreeSequenceNode.h"
+#pragma once
+
+#include "Saturn/ImGui/AssetViewer.h"
+
+#include "Nodes/BehaviourTreeSequenceNode.h"
+#include "BehaviourTreeNodeEditor.h"
+
+#include "Saturn/AI/BehaviourTree/BehaviourTree.h"
 
 namespace Saturn {
 
-	BehaviourTreeSequenceNode::BehaviourTreeSequenceNode()
-		: NodeEditorTreeNode( "Sequence" )
+	class BehaviourTreeEditorEvaluator;
+
+	class BehaviourTreeAssetViewer : public	AssetViewer
 	{
-		CreateNode();
-	}
+	public:
+		BehaviourTreeAssetViewer( AssetID id );
+		~BehaviourTreeAssetViewer();
 
-	void BehaviourTreeSequenceNode::CreateNode()
-	{
-		ExecutionType = NodeExecutionType::BehaviourTreeSequenceNode;
+		void OnImGuiRender() override;
+		void OnUpdate( Timestep ts ) override;
+		void OnEvent( RubyEvent& rEvent ) override;
 
-#if !defined(SAT_DIST)
-		Color = ImColor( 48, 128, 255, 100 );
-		Type = NodeRenderType::Tree;
-#endif
+	private:
+		void AddBehaviourTree();
+		void SetupNewNodeEditor();
+		void SetupNodeEditorCallbacks();
 
-		Inputs.push_back( Ref<Pin>::Create( "In", PinType::Flow, PinKind::Input ) );
-		Outputs.push_back( Ref<Pin>::Create( "Out", PinType::Flow, PinKind::Output ) );
+	private:
+		Ref<Asset> m_Asset = nullptr;
+		Ref<BehaviourTreeNodeEditor> m_NodeEditor = nullptr;
+		Ref<BehaviourTreeEditorEvaluator> m_Runtime = nullptr;
 
-		for( auto& rOutput : Outputs )
-		{
-			rOutput->RenderType = PinRenderType::Tree;
-		}
-
-		for( auto& rInput : Inputs )
-		{
-			rInput->RenderType = PinRenderType::Tree;
-		}
-	}
-
-	BehaviourTreeSequenceNode::~BehaviourTreeSequenceNode()
-	{
-	}
-
-	NodeEvaluationState BehaviourTreeSequenceNode::EvaluateNode( NodeEditorRuntime* pEvaluator )
-	{
-		return NodeEvaluationState::Failed;
-	}
+		UUID m_RootNodeID = 0;
+	};	
 
 }

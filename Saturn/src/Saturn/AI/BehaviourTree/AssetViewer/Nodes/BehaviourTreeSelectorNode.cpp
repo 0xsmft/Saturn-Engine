@@ -26,35 +26,104 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "BehaviourTreeSelectorNode.h"
 
-#include "Saturn/ImGui/AssetViewer.h"
-#include "Saturn/NodeEditor/UI/NodeEditor.h"
+#include "Saturn/AI/BehaviourTree/Tasks/BehaviourTreeCompositeTasks.h"
 
-#include "Saturn/AI/BehaviourTree/BehaviourTree.h"
+#include "Saturn/NodeEditor/NodeEditorBase.h"
+#include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeEditorEvaluator.h"
 
 namespace Saturn {
 
-	class BehaviourTreeAssetViewer : public	AssetViewer
+	BehaviourTreeSelectorNode::BehaviourTreeSelectorNode()
+		: BehaviourTreeNodeBase( "Selector" )
 	{
-	public:
-		BehaviourTreeAssetViewer( AssetID id );
-		~BehaviourTreeAssetViewer();
+		CreateNode();
+	}
 
-		void OnImGuiRender() override;
-		void OnUpdate( Timestep ts ) override;
-		void OnEvent( RubyEvent& rEvent ) override;
+	void BehaviourTreeSelectorNode::CreateNode()
+	{
+		ExecutionType = NodeExecutionType::BehaviourTreeSelectorNode;
 
-	private:
-		void AddBehaviourTree();
-		void SetupNewNodeEditor();
-		void SetupNodeEditorCallbacks();
+#if !defined(SAT_DIST)
+		Color = ImColor( 48, 128, 255, 100 );
+		Type = NodeRenderType::Tree;
+#endif
 
-	private:
-		Ref<Asset> m_Asset = nullptr;
-		Ref<NodeEditor> m_NodeEditor = nullptr;
+		Inputs.push_back( Ref<Pin>::Create( "In", PinType::BehaviourTreeCompositeLink, PinKind::Input ) );
+		Outputs.push_back( Ref<Pin>::Create( "Out", PinType::Flow, PinKind::Output ) );
 
-		UUID m_RootNodeID = 0;
-	};	
+		for( auto& rOutput : Outputs )
+		{
+			rOutput->RenderType = PinRenderType::Tree;
+		}
+
+		for( auto& rInput : Inputs )
+		{
+			rInput->RenderType = PinRenderType::Tree;
+		}
+	}
+
+	BehaviourTreeSelectorNode::~BehaviourTreeSelectorNode()
+	{
+		Reset();
+	}
+
+	NodeEvaluationState BehaviourTreeSelectorNode::EvaluateNode( NodeEditorRuntime* pEvaluator )
+	{
+		BehaviourTreeEditorEvaluator* pBehaviourEvaluator = dynamic_cast< BehaviourTreeEditorEvaluator* >( pEvaluator );
+		if( !pBehaviourEvaluator )
+			return NodeEvaluationState::Failed;
+
+		Ref<NodeEditorBase> base = pBehaviourEvaluator->GetTargetNodeEditor();
+		if( !base )
+			return NodeEvaluationState::Failed;
+
+		for( auto& rNodeID : m_Children )
+		{
+			Ref<NodeEditorTreeNode> treeNode = base->FindNode( rNodeID ).As<NodeEditorTreeNode>();
+			if( treeNode )
+			{
+				auto status = treeNode->EvaluateNode( pEvaluator );
+				if( status != NodeEvaluationState::Failed )
+				{
+					return status;
+				}
+			}
+		}
+
+		return NodeEvaluationState::Failed;
+	}
+
+	void BehaviourTreeSelectorNode::OnSerialise( std::ofstream& rStream ) const
+	{
+		RawSerialisation::WriteVector( m_Children, rStream );
+	}
+
+	void BehaviourTreeSelectorNode::OnDeserialise( IStream& rStream )
+	{
+		RawSerialisation::ReadVector( m_Children, rStream );
+	}
+
+	BehaviourTreeBaseTask* BehaviourTreeSelectorNode::ConvertToTask()
+	{
+		return new BehaviourTreeSelectorTask();
+	}
+
+	void BehaviourTreeSelectorNode::AddChildren( const std::vector<UUID>& rChildrenID )
+	{
+		for( auto& rID : rChildrenID )
+		{
+			m_Children.emplace_back( rID );
+		}
+	}
+
+	void BehaviourTreeSelectorNode::Reset()
+	{
+		m_Children.clear();
+		m_CurrentNode = nullptr;
+		m_CurrentNodeID = 0;
+	}
 
 }

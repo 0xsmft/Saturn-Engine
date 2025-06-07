@@ -27,67 +27,96 @@
 */
 
 #include "sppch.h"
-#include "SourceFileTemplateHelper.h"
+#include "BehaviourTreeEditorEvaluator.h"
 
-#include "Saturn/Project/Project.h"
+#include "Nodes/BehaviourTreeNodeBase.h"
+
+#include "Saturn/AI/AIAgentEntity.h"
+#include "BehaviourTreeNodeEditor.h"
+
+#if !defined(SAT_DIST)
+#include "Saturn/NodeEditor/UI/NodeEditor.h"
+#include "Saturn/Asset/AssetManager.h"
+#else
+#include "Saturn/NodeEditor/NodeEditorBase.h"
+#endif
 
 namespace Saturn {
 
-	void SourceFileTemplateHelper::CreateEntitySourceFiles( const std::filesystem::path& rPath, const char* pName )
+	BehaviourTreeEditorEvaluator::BehaviourTreeEditorEvaluator( const BehaviourTreeEdEvaluatorInfo& rInfo )
+		: m_Info( rInfo )
 	{
-		auto prjRootDir = Project::GetActiveProject()->GetRootDir();
+	}
 
-		// Copy entity code from templates.
-		std::filesystem::copy_file( "content/Templates/EntityCode.cpp", rPath / "EntityCode.cpp" );
-		std::filesystem::copy_file( "content/Templates/EntityCode.h", rPath / "EntityCode.h" );
+	BehaviourTreeEditorEvaluator::~BehaviourTreeEditorEvaluator()
+	{
+	}
 
-		std::filesystem::path src = rPath.string();
-		src.append( pName );
-		src.replace_extension( ".cpp" );
+	void BehaviourTreeEditorEvaluator::SetTargetNodeEditor( Ref<NodeEditorBase> nodeEditor )
+	{
+		m_NodeEditor = nodeEditor;
+	}
 
-		std::filesystem::path header = rPath.string();
-		header.append( pName );
-		header.replace_extension( ".h" );
-
-		std::filesystem::rename( rPath / "EntityCode.cpp", src );
-		std::filesystem::rename( rPath / "EntityCode.h", header );
-
-		// Wait for rename.
-		std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
-
-		auto replaceInFile = [&]( bool IsHeader ) 
+	void BehaviourTreeEditorEvaluator::Tick( Timestep ts )
+	{
+		/*
+		if( !m_EvaluationComplete ) 
 		{
-			std::string fileData;
+			if( EvalNoChecks() != NodeEditorCompilationStatus::Success )
+				return;
 
-			std::ifstream stream( IsHeader ? header : src );
+			SAT_CORE_WARN( "Behaviour Tree was not evaluated before! Attempting evaluation now!" );
+		}
+		*/
 
-			// Load the file.
+		// Tick the current nodes
+		for( auto& rNode : m_TickOrder )
+		{
+			auto status = rNode->EvaluateNode( this );
 
-			if( stream )
+			if( status == NodeEvaluationState::Evaluated || status == NodeEvaluationState::Failed ) 
 			{
-				stream.seekg( 0, std::ios_base::end );
-				auto size = static_cast< size_t >( stream.tellg() );
-				stream.seekg( 0, std::ios_base::beg );
-
-				fileData.reserve( size );
-				fileData.assign( std::istreambuf_iterator<char>( stream ), std::istreambuf_iterator<char>() );
+				m_NodeEditor->SetState( NodeEditorState::Editing );
 			}
+		}
+	}
 
-			size_t pos = fileData.find( "__FILE_NAME__" );
+	void BehaviourTreeEditorEvaluator::AddForTick( UUID nodeID )
+	{
+		Ref<BehaviourTreeNodeEditor> behaviourTreeEditor = m_NodeEditor.As<BehaviourTreeNodeEditor>();
+		m_TickOrder.push_back( behaviourTreeEditor->FindNode( nodeID ) );
+	}
 
-			while( pos != std::string::npos )
-			{
-				fileData.replace( pos, 13, pName );
+	NodeEditorCompilationStatus BehaviourTreeEditorEvaluator::EvaluateEditor()
+	{
+		m_EvaluationComplete = false;
+		m_TickOrder.clear();
 
-				pos = fileData.find( "__FILE_NAME__" );
-			}
+		return EvalNoChecks();
+	}
 
-			std::ofstream fout( IsHeader ? header : src );
-			fout << fileData;
-		};
+	NodeEditorCompilationStatus BehaviourTreeEditorEvaluator::EvalNoChecks()
+	{
+		Ref<BehaviourTreeNodeEditor> behaviourTreeEditor = m_NodeEditor.As<BehaviourTreeNodeEditor>();
+		Ref<NodeEditorNodeBase> OutputNode = m_NodeEditor->FindNode( m_Info.OutputNodeID );
+		
+		m_NodeEditor->SetState( NodeEditorState::Evaluating );
 
-		replaceInFile( true );
-		replaceInFile( false );
+		behaviourTreeEditor->TraverseBehaviourTree( OutputNode );
+
+		m_EvaluationComplete = true;
+
+		return NodeEditorCompilationStatus::Success;
+	}
+
+	void BehaviourTreeEditorEvaluator::TraceEvaluationPath()
+	{
+	}
+
+	void BehaviourTreeEditorEvaluator::TerminateEvaluation()
+	{
+		m_EvaluationComplete = false;
+		m_NodeEditor->SetState( NodeEditorState::Editing );
 	}
 
 }

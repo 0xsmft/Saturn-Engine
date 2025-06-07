@@ -26,68 +26,62 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "SourceFileTemplateHelper.h"
+#pragma once
 
-#include "Saturn/Project/Project.h"
+#include "Saturn/NodeEditor/Runtime/NodeEditorRuntime.h"
+
+#include "Saturn/Core/Base.h"
+#include "Saturn/Core/UUID.h"
+
+#include <queue>
+#include <unordered_set>
 
 namespace Saturn {
 
-	void SourceFileTemplateHelper::CreateEntitySourceFiles( const std::filesystem::path& rPath, const char* pName )
+	class NodeEditorBase;
+	class NodeEditorNodeBase;
+	class NodeEditorTreeNode;
+	class BehaviourTreeNodeBase;
+	class Link;
+
+	class BehaviourTreeEditorEvaluator : public NodeEditorRuntime
 	{
-		auto prjRootDir = Project::GetActiveProject()->GetRootDir();
-
-		// Copy entity code from templates.
-		std::filesystem::copy_file( "content/Templates/EntityCode.cpp", rPath / "EntityCode.cpp" );
-		std::filesystem::copy_file( "content/Templates/EntityCode.h", rPath / "EntityCode.h" );
-
-		std::filesystem::path src = rPath.string();
-		src.append( pName );
-		src.replace_extension( ".cpp" );
-
-		std::filesystem::path header = rPath.string();
-		header.append( pName );
-		header.replace_extension( ".h" );
-
-		std::filesystem::rename( rPath / "EntityCode.cpp", src );
-		std::filesystem::rename( rPath / "EntityCode.h", header );
-
-		// Wait for rename.
-		std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
-
-		auto replaceInFile = [&]( bool IsHeader ) 
+	public:
+		struct BehaviourTreeEdEvaluatorInfo
 		{
-			std::string fileData;
-
-			std::ifstream stream( IsHeader ? header : src );
-
-			// Load the file.
-
-			if( stream )
-			{
-				stream.seekg( 0, std::ios_base::end );
-				auto size = static_cast< size_t >( stream.tellg() );
-				stream.seekg( 0, std::ios_base::beg );
-
-				fileData.reserve( size );
-				fileData.assign( std::istreambuf_iterator<char>( stream ), std::istreambuf_iterator<char>() );
-			}
-
-			size_t pos = fileData.find( "__FILE_NAME__" );
-
-			while( pos != std::string::npos )
-			{
-				fileData.replace( pos, 13, pName );
-
-				pos = fileData.find( "__FILE_NAME__" );
-			}
-
-			std::ofstream fout( IsHeader ? header : src );
-			fout << fileData;
+			UUID OutputNodeID = 0;
 		};
 
-		replaceInFile( true );
-		replaceInFile( false );
-	}
+	public:
+		BehaviourTreeEditorEvaluator( const BehaviourTreeEditorEvaluator& ) = delete;
+
+	public:
+		BehaviourTreeEditorEvaluator( const BehaviourTreeEdEvaluatorInfo& rInfo );
+		~BehaviourTreeEditorEvaluator();
+
+		void TraceEvaluationPath() override;
+		[[nodiscard]] virtual NodeEditorCompilationStatus EvaluateEditor() override;
+		void TerminateEvaluation() override;
+
+		void SetTargetNodeEditor( Ref<NodeEditorBase> nodeEditor );
+		Ref<NodeEditorBase>& GetTargetNodeEditor() { return m_NodeEditor; }
+
+		// Simulation API
+	public:
+		void Tick( Timestep ts );
+		void AddForTick( UUID nodeID );
+
+		const std::vector<Ref<BehaviourTreeNodeBase>>& GetTickOrder() const { return m_TickOrder; }
+
+	private:
+		NodeEditorCompilationStatus EvalNoChecks();
+
+	private:
+		BehaviourTreeEdEvaluatorInfo m_Info{};
+
+		bool m_EvaluationComplete = false;
+
+		std::vector<Ref<BehaviourTreeNodeBase>> m_TickOrder;
+	};
 
 }

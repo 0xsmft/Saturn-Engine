@@ -26,48 +26,38 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "BehaviourTreeNodeLibrary.h"
+#pragma once
 
-#include "Nodes/BehaviourTreeRootNode.h"
-#include "Nodes/BehaviourTreeSelectorNode.h"
-#include "Nodes/BehaviourTreeSequenceNode.h"
-
-#include "Saturn/NodeEditor/GlobalNodesList.h"
+#include "BehaviourTreeNodeBase.h"
 
 namespace Saturn {
 
-	void BehaviourTreeNodeLibrary::RegisterAllNodes()
+	class NodeEditorTreeNode;
+
+	class BehaviourTreeSequenceNode : public BehaviourTreeNodeBase
 	{
-		GlobalNodesList::RegisterLibrary( {
-			{ NodeExecutionType::BehaviourTreeRootNode,     BehaviourTreeNodeLibrary::SpawnRootNode     },
-			{ NodeExecutionType::BehaviourTreeSelectorNode, BehaviourTreeNodeLibrary::SpawnSelectorNode },
-			{ NodeExecutionType::BehaviourTreeSequenceNode, BehaviourTreeNodeLibrary::SpawnSequenceNode },
-		} );
-	}
+	public:
+		BehaviourTreeSequenceNode();
+		virtual ~BehaviourTreeSequenceNode();
 
-	Ref<BehaviourTreeSelectorNode> BehaviourTreeNodeLibrary::SpawnSelectorNode( Ref<NodeEditorBase> nodeEditor )
-	{
-		Ref<BehaviourTreeSelectorNode> node = Ref<BehaviourTreeSelectorNode>::Create();
-		nodeEditor->AddNode( node );
+		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* pEvaluator ) override;
+		virtual void OnSerialise( std::ofstream& rStream ) const;
+		virtual void OnDeserialise( IStream& rStream );
+		virtual BehaviourTreeBaseTask* ConvertToTask();
 
-		return node;
-	}
+		void AddChildren( const std::vector<UUID>& rChildrenID );
+		void Reset();
 
-	Ref<BehaviourTreeSequenceNode> BehaviourTreeNodeLibrary::SpawnSequenceNode( Ref<NodeEditorBase> nodeEditor )
-	{
-		Ref<BehaviourTreeSequenceNode> node = Ref<BehaviourTreeSequenceNode>::Create();
-		nodeEditor->AddNode( node );
+		const std::vector<UUID>& GetChildren() const { return m_Children; }
 
-		return node;
-	}
+	private:
+		void CreateNode();
 
-	Ref<BehaviourTreeRootNode> BehaviourTreeNodeLibrary::SpawnRootNode( Ref<NodeEditorBase> nodeEditor )
-	{
-		Ref<BehaviourTreeRootNode> node = Ref<BehaviourTreeRootNode>::Create();
-		nodeEditor->AddNode( node );
-
-		return node;
-	}
-
+	private:
+		std::vector<UUID> m_Children;
+		
+		size_t m_CurrentNodeID = 0;
+		Ref<NodeEditorTreeNode> m_CurrentNode = nullptr;
+	};
+	
 }

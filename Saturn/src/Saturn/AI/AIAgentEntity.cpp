@@ -83,10 +83,9 @@ namespace Saturn {
 	{
 		Super::OnUpdate( ts );
 
-		m_FrameCount--;
-
 		m_BehaviourTree->Tick( ts );
 
+		/*
 		if( m_FrameCount <= 0 && !m_Moving )
 		{
 			// move to random location
@@ -177,6 +176,7 @@ namespace Saturn {
 				rPosition += movement;
 			}
 		}
+		*/
 	}
 
 	void AIAgentEntity::OnPhysicsUpdate( Saturn::Timestep ts )

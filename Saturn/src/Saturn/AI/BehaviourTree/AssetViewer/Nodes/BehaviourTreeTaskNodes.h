@@ -26,48 +26,93 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "BehaviourTreeRootNode.h"
+#pragma once
 
-#if !defined( SAT_DIST )
-#include "Saturn/NodeEditor/UI/NodeEditor.h"
-#else
-#include "Saturn/NodeEditor/NodeEditorBase.h"
-#endif
+#include "BehaviourTreeNodeBase.h"
+
+#include "Saturn/Asset/Asset.h"
+
+#include <chrono>
 
 namespace Saturn {
 
-	BehaviourTreeRootNode::BehaviourTreeRootNode()
-		: NodeEditorTreeNode( "Root Node" )
+	class BehaviourTreeWaitNode : public BehaviourTreeNodeBase
 	{
-		CreateNode();
-	}
+	public:
+		BehaviourTreeWaitNode();
+		virtual ~BehaviourTreeWaitNode();
 
-	void BehaviourTreeRootNode::CreateNode()
-	{
-		ExecutionType = NodeExecutionType::BehaviourTreeRootNode;
+		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* pEvaluator ) override;
+		virtual void OnSerialise( std::ofstream& rStream ) const override;
+		virtual void OnDeserialise( IStream& rStream ) override;
+		virtual BehaviourTreeBaseTask* ConvertToTask() override;
 
 #if !defined(SAT_DIST)
-		CanBeDeleted = false;
-		Color = ImColor( 48, 128, 255, 100 );
-		Type = NodeRenderType::Tree;
+		virtual void RenderDetails() override;
+		virtual void OnRenderExtra() override;
 #endif
 
-		Outputs.push_back( Ref<Pin>::Create( "Out", PinType::Flow, PinKind::Output ) );
+	public:
+		float WaitDuration = 1.0f;
 
-		for( auto& rOutput : Outputs )
-		{
-			rOutput->RenderType = PinRenderType::Tree;
-		}
-	}
+	private:
+		void CreateNode();
 
-	BehaviourTreeRootNode::~BehaviourTreeRootNode()
+	private:
+		bool m_Started = false;
+		std::chrono::steady_clock::time_point m_StartTime;
+	};
+
+	class BehaviourTreePlaySoundNode : public BehaviourTreeNodeBase
 	{
-	}
+	public:
+		BehaviourTreePlaySoundNode();
+		virtual ~BehaviourTreePlaySoundNode();
 
-	NodeEvaluationState BehaviourTreeRootNode::EvaluateNode( NodeEditorRuntime* pEvaluator )
+		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* pEvaluator ) override;
+		virtual void OnSerialise( std::ofstream& rStream ) const override;
+		virtual void OnDeserialise( IStream& rStream ) override;
+		virtual BehaviourTreeBaseTask* ConvertToTask() override;
+
+#if !defined(SAT_DIST)
+		virtual void OnRenderExtra() override;
+		virtual void RenderDetails() override;
+#endif
+
+		void SetSoundID( AssetID id ) { m_SoundID = id; }
+		AssetID GetSoundID() const { return m_SoundID; }
+
+	private:
+		void CreateNode();
+
+	private:
+		AssetID m_SoundID = 0;
+	};
+
+	class BehaviourTreeMoveToNode : public BehaviourTreeNodeBase
 	{
-		return NodeEvaluationState::Failed;
-	}
+	public:
+		BehaviourTreeMoveToNode();
+		virtual ~BehaviourTreeMoveToNode();
+
+		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* pEvaluator ) override;
+		virtual void OnSerialise( std::ofstream& rStream ) const override;
+		virtual void OnDeserialise( IStream& rStream ) override;
+		virtual BehaviourTreeBaseTask* ConvertToTask() override;
+
+#if !defined(SAT_DIST)
+		virtual void OnRenderExtra() override;
+		virtual void RenderDetails() override;
+#endif
+
+		void SetTargetPosition( const glm::vec3& rPosition ) { m_TargetPosition = rPosition; }
+		glm::vec3 GetTargetPosition() const { return m_TargetPosition; }
+
+	private:
+		void CreateNode();
+
+	private:
+		glm::vec3 m_TargetPosition{};
+	};
 
 }

@@ -27,26 +27,31 @@
 */
 
 #include "sppch.h"
-#include "BehaviourTreeSelectorNode.h"
+#include "BehaviourTreeSequenceNode.h"
+
+#include "Saturn/NodeEditor/NodeEditorBase.h"
+
+#include "Saturn/AI/BehaviourTree/Tasks/BehaviourTreeCompositeTasks.h"
+#include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeEditorEvaluator.h"
 
 namespace Saturn {
 
-	BehaviourTreeSelectorNode::BehaviourTreeSelectorNode()
-		: NodeEditorTreeNode( "Selector" )
+	BehaviourTreeSequenceNode::BehaviourTreeSequenceNode()
+		: BehaviourTreeNodeBase( "Sequence" )
 	{
 		CreateNode();
 	}
 
-	void BehaviourTreeSelectorNode::CreateNode()
+	void BehaviourTreeSequenceNode::CreateNode()
 	{
-		ExecutionType = NodeExecutionType::BehaviourTreeSelectorNode;
+		ExecutionType = NodeExecutionType::BehaviourTreeSequenceNode;
 
 #if !defined(SAT_DIST)
 		Color = ImColor( 48, 128, 255, 100 );
 		Type = NodeRenderType::Tree;
 #endif
 
-		Inputs.push_back( Ref<Pin>::Create( "In", PinType::Flow, PinKind::Input ) );
+		Inputs.push_back( Ref<Pin>::Create( "In", PinType::BehaviourTreeCompositeLink, PinKind::Input ) );
 		Outputs.push_back( Ref<Pin>::Create( "Out", PinType::Flow, PinKind::Output ) );
 
 		for( auto& rOutput : Outputs )
@@ -60,13 +65,88 @@ namespace Saturn {
 		}
 	}
 
-	BehaviourTreeSelectorNode::~BehaviourTreeSelectorNode()
+	BehaviourTreeSequenceNode::~BehaviourTreeSequenceNode()
 	{
+		Reset();
 	}
 
-	NodeEvaluationState BehaviourTreeSelectorNode::EvaluateNode( NodeEditorRuntime* pEvaluator )
+	NodeEvaluationState BehaviourTreeSequenceNode::EvaluateNode( NodeEditorRuntime* pEvaluator )
 	{
-		return NodeEvaluationState::Failed;
+		BehaviourTreeEditorEvaluator* pBehaviourEvaluator = dynamic_cast< BehaviourTreeEditorEvaluator* >( pEvaluator );
+		if( !pBehaviourEvaluator )
+			return NodeEvaluationState::Failed;
+
+		Ref<NodeEditorBase> base = pBehaviourEvaluator->GetTargetNodeEditor();
+		if( !base )
+			return NodeEvaluationState::Failed;
+
+		if( m_CurrentNodeID >= m_Children.size() )
+			return NodeEvaluationState::Evaluated;
+
+		// Get try current node.
+		if( m_CurrentNode == nullptr )
+		{
+			Ref<NodeEditorTreeNode> treeNode = base->FindNode( m_Children[ m_CurrentNodeID ] ).As<NodeEditorTreeNode>();
+			if( !treeNode )
+			{
+				Reset();
+				return NodeEvaluationState::Failed;
+			}
+
+			m_CurrentNode = treeNode;
+		}
+
+		// Evaluate current node.
+		auto status = m_CurrentNode->EvaluateNode( pEvaluator );
+		if( status == NodeEvaluationState::Evaluated )
+		{
+			// Try move onto the next node
+			m_CurrentNode = nullptr; 
+			m_CurrentNodeID++;
+
+			if( m_CurrentNodeID >= m_Children.size() )
+				return NodeEvaluationState::Evaluated;
+		}
+		else if( status == NodeEvaluationState::Failed ) 
+		{
+			m_CurrentNode = nullptr;
+			Reset();
+
+			return NodeEvaluationState::Failed;
+		}
+
+		// Still waiting for current node to complete
+		return NodeEvaluationState::WasEvaluated;
+	}
+
+	void BehaviourTreeSequenceNode::OnSerialise( std::ofstream& rStream ) const
+	{
+		RawSerialisation::WriteVector( m_Children, rStream );
+	}
+
+	void BehaviourTreeSequenceNode::OnDeserialise( IStream& rStream )
+	{
+		RawSerialisation::ReadVector( m_Children, rStream );
+	}
+
+	BehaviourTreeBaseTask* BehaviourTreeSequenceNode::ConvertToTask()
+	{
+		return new BehaviourTreeSequenceTask();
+	}
+
+	void BehaviourTreeSequenceNode::AddChildren( const std::vector<UUID>& rChildrenID )
+	{
+		for( auto& rID : rChildrenID )
+		{
+			m_Children.emplace_back( rID );
+		}
+	}
+
+	void BehaviourTreeSequenceNode::Reset()
+	{
+		m_Children.clear();
+		m_CurrentNode = nullptr;
+		m_CurrentNodeID = 0;
 	}
 
 }

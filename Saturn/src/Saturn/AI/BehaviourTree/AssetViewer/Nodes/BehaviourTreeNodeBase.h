@@ -32,16 +32,24 @@
 
 namespace Saturn {
 
-	class BehaviourTreeSelectorNode : public NodeEditorTreeNode
+	class BehaviourTreeBaseTask;
+
+	class BehaviourTreeNodeBase : public NodeEditorTreeNode
 	{
+		SAT_NODE_EDITOR_NODE_BODY( NodeExecutionType::None );
 	public:
-		BehaviourTreeSelectorNode();
-		virtual ~BehaviourTreeSelectorNode();
+		BehaviourTreeNodeBase() = default;
+		BehaviourTreeNodeBase( const std::string& rName ) 
+			: NodeEditorTreeNode( rName )
+		{
+		}
 
-		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* pEvaluator ) override;
+		virtual ~BehaviourTreeNodeBase() = default;
 
-	private:
-		void CreateNode();
+#if !defined(SAT_DIST)
+		virtual void RenderDetails() {}
+#endif
+		virtual BehaviourTreeBaseTask* ConvertToTask() { return nullptr; }
 	};
-
+	
 }

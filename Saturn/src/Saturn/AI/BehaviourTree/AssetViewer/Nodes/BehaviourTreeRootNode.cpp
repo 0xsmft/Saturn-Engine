@@ -27,67 +27,47 @@
 */
 
 #include "sppch.h"
-#include "SourceFileTemplateHelper.h"
+#include "BehaviourTreeRootNode.h"
 
-#include "Saturn/Project/Project.h"
+#if !defined( SAT_DIST )
+#include "Saturn/NodeEditor/UI/NodeEditor.h"
+#else
+#include "Saturn/NodeEditor/NodeEditorBase.h"
+#endif
 
 namespace Saturn {
 
-	void SourceFileTemplateHelper::CreateEntitySourceFiles( const std::filesystem::path& rPath, const char* pName )
+	BehaviourTreeRootNode::BehaviourTreeRootNode()
+		: BehaviourTreeNodeBase( "Root Node" )
 	{
-		auto prjRootDir = Project::GetActiveProject()->GetRootDir();
+		CreateNode();
+	}
 
-		// Copy entity code from templates.
-		std::filesystem::copy_file( "content/Templates/EntityCode.cpp", rPath / "EntityCode.cpp" );
-		std::filesystem::copy_file( "content/Templates/EntityCode.h", rPath / "EntityCode.h" );
+	void BehaviourTreeRootNode::CreateNode()
+	{
+		ExecutionType = NodeExecutionType::BehaviourTreeRootNode;
 
-		std::filesystem::path src = rPath.string();
-		src.append( pName );
-		src.replace_extension( ".cpp" );
+#if !defined(SAT_DIST)
+		CanBeDeleted = false;
+		Color = ImColor( 48, 128, 255, 100 );
+		Type = NodeRenderType::Tree;
+#endif
 
-		std::filesystem::path header = rPath.string();
-		header.append( pName );
-		header.replace_extension( ".h" );
+		Outputs.push_back( Ref<Pin>::Create( "Out", PinType::BehaviourTreeCompositeLink, PinKind::Output ) );
 
-		std::filesystem::rename( rPath / "EntityCode.cpp", src );
-		std::filesystem::rename( rPath / "EntityCode.h", header );
-
-		// Wait for rename.
-		std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
-
-		auto replaceInFile = [&]( bool IsHeader ) 
+		for( auto& rOutput : Outputs )
 		{
-			std::string fileData;
+			rOutput->RenderType = PinRenderType::Tree;
+		}
+	}
 
-			std::ifstream stream( IsHeader ? header : src );
+	BehaviourTreeRootNode::~BehaviourTreeRootNode()
+	{
+	}
 
-			// Load the file.
-
-			if( stream )
-			{
-				stream.seekg( 0, std::ios_base::end );
-				auto size = static_cast< size_t >( stream.tellg() );
-				stream.seekg( 0, std::ios_base::beg );
-
-				fileData.reserve( size );
-				fileData.assign( std::istreambuf_iterator<char>( stream ), std::istreambuf_iterator<char>() );
-			}
-
-			size_t pos = fileData.find( "__FILE_NAME__" );
-
-			while( pos != std::string::npos )
-			{
-				fileData.replace( pos, 13, pName );
-
-				pos = fileData.find( "__FILE_NAME__" );
-			}
-
-			std::ofstream fout( IsHeader ? header : src );
-			fout << fileData;
-		};
-
-		replaceInFile( true );
-		replaceInFile( false );
+	NodeEvaluationState BehaviourTreeRootNode::EvaluateNode( NodeEditorRuntime* pEvaluator )
+	{	
+		return NodeEvaluationState::Evaluated;
 	}
 
 }

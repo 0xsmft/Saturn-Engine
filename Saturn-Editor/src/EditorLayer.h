@@ -48,7 +48,6 @@
 
 namespace Saturn {
 	
-	class TitleBar;
 	class GameModule;
 
 	class EditorLayer : public Layer
@@ -116,6 +115,8 @@ namespace Saturn {
 
 		void ShowOrHideContentBrowserPanel();
 		void ShowOrHideSceneHierarchyPanel();
+
+		glm::vec2 ConvertMouseToViewport();
 
 	private:
 		enum MessageBoxButtons_

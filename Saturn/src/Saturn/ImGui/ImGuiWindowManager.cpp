@@ -95,4 +95,13 @@ namespace Saturn {
 		m_Panels[ rCustomName ] = window;
 	}
 
+	void ImGuiWindowManager::OnRuntimeStateChanged( RuntimeState newState, RuntimeState oldState )
+	{
+		for( auto&& [name, panel] : m_Panels )
+		{
+			if( panel->IsOpen() )
+				panel->OnRuntimeStateChanged( newState, oldState );
+		}
+	}
+
 }

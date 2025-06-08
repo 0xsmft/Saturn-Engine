@@ -262,6 +262,8 @@ namespace Saturn {
 		{
 			if( !m_RuntimeScene )
 			{
+				m_ImGuiWindowManager->OnRuntimeStateChanged( RuntimeState::Starting, RuntimeState::NoState );
+
 				Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
 	
 				m_RuntimeScene = Ref<Scene>::Create();
@@ -281,12 +283,16 @@ namespace Saturn {
 
 				std::string title = std::format( "{0} (Running) - Saturn", Project::GetActiveConfig().Name );
 				Application::Get().GetWindow()->ChangeTitle( title );
+
+				m_ImGuiWindowManager->OnRuntimeStateChanged( RuntimeState::Running, RuntimeState::Starting );
 			}
 		}
 		else
 		{
 			if( m_RuntimeScene && m_RuntimeScene->IsRuntimeActive() )
 			{
+				m_ImGuiWindowManager->OnRuntimeStateChanged( RuntimeState::Ending, GActiveScene->GetRuntimeState() );
+
 				Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
 				
 				m_RuntimeScene->OnRuntimeEnd();
@@ -301,6 +307,8 @@ namespace Saturn {
 
 				std::string title = std::format( "{0} - Saturn", Project::GetActiveConfig().Name );
 				Application::Get().GetWindow()->ChangeTitle( title );
+
+				m_ImGuiWindowManager->OnRuntimeStateChanged( RuntimeState::NoState, RuntimeState::Ending );
 			}
 		}
 
@@ -1938,6 +1946,8 @@ namespace Saturn {
 		//// Render the real gizmo
 
 		ImVec2 minBound = ImGui::GetWindowPos();
+		Application::Get().PrimarySceneRenderer().SetViewportPosition( minBound.x, minBound.y );
+
 		ImVec2 maxBound = { minBound.x + m_ViewportSize.x, minBound.y + m_ViewportSize.y };
 
 		m_ViewportFocused = ImGui::IsWindowFocused();
@@ -2632,6 +2642,10 @@ namespace Saturn {
 		sceneHierarchyPanel->ShowOrHide();
 	}
 
+	glm::vec2 EditorLayer::ConvertMouseToViewport()
+	{
+		return {};
+	}
 
 	void EditorLayer::PushMessageBox( MessageBoxInfo& rInfo )
 	{

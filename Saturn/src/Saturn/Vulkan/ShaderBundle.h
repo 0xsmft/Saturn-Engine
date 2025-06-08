@@ -48,3 +48,33 @@ namespace Saturn {
 		[[nodiscard]] static ShaderBundleResult ReadBundle();
 	};
 }
+
+namespace std {
+
+	template<>
+	struct formatter<Saturn::ShaderBundleResult>
+	{
+		constexpr auto parse( format_parse_context& ctx )
+		{
+			return ctx.begin();
+		}
+
+		template<typename FormatContext>
+		auto format( Saturn::ShaderBundleResult result, FormatContext& ctx ) const
+		{
+			std::string_view errorName = "Unknown Error";
+
+			switch( result )
+			{
+				default:
+				case Saturn::ShaderBundleResult::Success:             errorName = "Success"; break;
+				case Saturn::ShaderBundleResult::FileNotFound:        errorName = "Shader Bundle file not found"; break;
+				case Saturn::ShaderBundleResult::InvalidShaderHeader: errorName = "Invalid shader header"; break;
+				case Saturn::ShaderBundleResult::Failed:              errorName = "Failed, internal error"; break;
+			}
+
+			return std::format_to( ctx.out(), "{}", errorName );
+		}
+	};
+
+}

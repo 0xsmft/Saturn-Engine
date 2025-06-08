@@ -249,9 +249,9 @@ namespace Saturn {
 	}
 
 #if !defined(SAT_DIST)
-	void GraphSoundAssetViewer::AddSoundReference( Ref<GraphSound> asset )
+	void GraphSoundAssetViewer::AddSoundReference( Ref<GraphSound> sound )
 	{
-		m_ReferencingAssets.push_back( asset );
+		m_ReferencingAssets.push_back( sound );
 	}
 #endif
 

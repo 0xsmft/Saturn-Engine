@@ -338,12 +338,12 @@ namespace Saturn {
 			memset( m_AreaFlags, 0, nTri * sizeof( unsigned char ) );
 			rcMarkWalkableTriangles(
 				&rContext, config.walkableSlopeAngle,
-				vb.data(), vb.size() / 3,
+				vb.data(), ( int ) vb.size() / 3u,
 				pTris, nTri,
 				m_AreaFlags );
 
 			RC_CHECK( rcRasterizeTriangles( &rContext,
-				vb.data(), vb.size() / 3,
+				vb.data(), ( int ) vb.size() / 3u,
 				pTris, m_AreaFlags, nTri, *m_pSolidHeightfield, config.walkableClimb ) );
 
 			rContext.log( RC_LOG_PROGRESS, "Rasterised %d triangles into heightfield", nTri );
@@ -397,7 +397,7 @@ namespace Saturn {
 			&rContext,
 			*m_pPolyMesh,
 			*m_pCompactHeightfield,
-			config.maxVertsPerPoly,
+			( float ) config.maxVertsPerPoly,
 			config.maxSimplificationError,
 			*m_pPolyMeshDetail ) );
 

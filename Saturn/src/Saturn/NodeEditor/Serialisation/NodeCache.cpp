@@ -316,6 +316,7 @@ namespace Saturn {
 		}
 
 		nodeEditor->m_AssetID = id;
+		nodeEditor->m_Version = header.Version;
 		nodeEditor->DeserialiseData( stream );
 
 #if !defined(SAT_DIST)

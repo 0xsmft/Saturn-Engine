@@ -28,55 +28,30 @@
 
 #pragma once
 
-#include "Saturn/Core/Base.h"
-#include "UndoRedoActionBase.h"
-
-#include <stack>
-
 namespace Saturn {
 
-	// In development configurations this class will be owned by the EditorLayer
-	// In distribution configurations this class should not be created.
-	class GlobalUndoRedoGroup : public RefTarget
+	template<typename Ty>
+	class VariableGuard
 	{
 	public:
-		static inline GlobalUndoRedoGroup& Get() { return *SingletonStorage::GetSingleton<GlobalUndoRedoGroup>(); }
+		VariableGuard( Ty& rVariable, Ty temporaryValue ) 
+			: m_Variable( rVariable ), m_OldValue( rVariable )
+		{
+			m_Variable = temporaryValue;
+		}
 
-	public:
-		GlobalUndoRedoGroup();
-		~GlobalUndoRedoGroup();
-
-	public:
-		// Undo the most recent action.
-		Ref<UndoRedoActionBase> GlobalUndoRecent();
-		
-		// Redo the most recent action.
-		Ref<UndoRedoActionBase> GlobalRedoRecent();
-		
-		void GlobalUndoTo( size_t amount = 0 );
-		void GlobalRedoTo( size_t amount = 0 );
-
-		void RemoveIfActionHasIdentifier( UUID identifier );
-		
-	public:
-		// Adds an action to the undo stack.
-		// AddAction expects the action to already be done hence why it is added to the undo stack.
-		// @param identifier -- Every action should have an identifier that states who it's associated with. For example any entity action should have the entity handle as the identifier, so when the entity is deleted the action can be removed.
-		void AddAction( Ref<UndoRedoActionBase> action, UUID identifier );
-
-		Ref<UndoRedoActionBase> GetTopUndoAction() { return m_UndoActions.empty() ? nullptr : m_UndoActions.back(); }
-		Ref<UndoRedoActionBase> GetTopRedoAction() { return m_RedoActions.empty() ? nullptr : m_RedoActions.back(); }
-
-#if !defined(SAT_DIST)
-		void OnImGuiRender( bool* pOpen );
-#endif
+		~VariableGuard() 
+		{
+			m_Variable = m_OldValue;
+		}
 
 	private:
-		std::vector<Ref<UndoRedoActionBase>> m_RedoActions;
-		std::vector<Ref<UndoRedoActionBase>> m_UndoActions;
+		VariableGuard( const VariableGuard& ) = delete;
+		VariableGuard& operator=( const VariableGuard& ) = delete;
 
 	private:
-		static constexpr inline size_t MAX_UNDO_REDO_ACTIONS = 1024;
+		Ty& m_Variable;
+		Ty m_OldValue;
 	};
 	
 }

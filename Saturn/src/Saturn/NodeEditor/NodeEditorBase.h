@@ -259,6 +259,7 @@ namespace Saturn {
 	protected:
 		std::string m_Name;
 		bool m_WindowOpen = false;
+		uint32_t m_Version = SAT_CURRENT_VERSION;
 
 		ed::EditorContext* m_Editor = nullptr;
 		std::string m_ActiveNodeEditorState;

@@ -29,6 +29,8 @@
 #pragma once
 
 #include "Saturn/Asset/Asset.h"
+#include "Saturn/Scene/RuntimeState.h"
+
 #include "ImGuiWindow.h"
 
 namespace Saturn {

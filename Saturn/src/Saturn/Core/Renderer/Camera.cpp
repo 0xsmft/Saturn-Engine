@@ -38,7 +38,7 @@ namespace Saturn {
 
 	Camera::Camera( const float Fov, const float Width, const float Height, const float NearPlane, const float FarPlane )
 		: m_Projection( glm::perspectiveFov( glm::radians( Fov ), Width, Height, NearPlane, FarPlane ) ), 
-		m_ViewportWidth( Width ), m_ViewportHeight( Height ), m_Fov( Fov ), m_NearPlane( NearPlane ), m_FarPlane( FarPlane )
+		m_ViewportWidth( (uint32_t)Width ), m_ViewportHeight( (uint32_t)Height ), m_Fov( Fov ), m_NearPlane( NearPlane ), m_FarPlane( FarPlane )
 	{
 	}
 

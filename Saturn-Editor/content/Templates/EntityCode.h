@@ -9,7 +9,7 @@
 using namespace Saturn;
 
 SCLASS( Spawnable, VisibleInEditor )
-class __FILE_NAME__ : public __SUPER_CLASS__
+class __FILE_NAME__ : public Entity
 {
 	GENERATED_BODY()
 public:

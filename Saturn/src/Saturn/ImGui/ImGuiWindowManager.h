@@ -29,6 +29,7 @@
 #pragma once
 
 #include "Saturn/Core/Ref.h"
+#include "Saturn/Scene/RuntimeState.h"
 
 #include <string>
 #include <unordered_map>
@@ -98,6 +99,8 @@ namespace Saturn {
 				m_Panels.erase( Itr );
 			}
 		}
+
+		void OnRuntimeStateChanged( RuntimeState newState, RuntimeState oldState );
 
 	private:
 		void Terminate();

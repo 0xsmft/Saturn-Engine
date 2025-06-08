@@ -31,6 +31,7 @@
 #include "Saturn/Core/Base.h"
 #include "Saturn/Core/Ref.h"
 #include "Saturn/Core/Ruby/RubyEvent.h"
+#include "Saturn/Scene/RuntimeState.h"
 
 namespace Saturn {
 
@@ -44,6 +45,7 @@ namespace Saturn {
 		virtual void OnImGuiRender() = 0;
 		virtual void OnUpdate( Timestep ts ) = 0;
 		virtual void OnEvent( RubyEvent& rEvent ) = 0;
+		virtual void OnRuntimeStateChanged( RuntimeState newState, RuntimeState oldState ) {}
 
 		bool IsOpen() const { return m_Open; }
 		inline void OpenWindow() { m_Open = true; }

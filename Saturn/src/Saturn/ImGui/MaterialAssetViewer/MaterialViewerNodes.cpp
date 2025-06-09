@@ -51,10 +51,10 @@ namespace Saturn {
 	void MaterialNodeLibrary::RegisterAllNodes()
 	{
 		GlobalNodesList::RegisterLibrary( {
-			{ NodeExecutionType::MaterialOutput,           MaterialNodeLibrary::SpawnOutputNode },
-			{ NodeExecutionType::AssetID,                  MaterialNodeLibrary::SpawnGetAsset },
+			{ NodeExecutionType::AssetID,                  MaterialNodeLibrary::SpawnGetAsset    },
+			{ NodeExecutionType::Sampler2D,                MaterialNodeLibrary::SpawnSampler2D   },
+			{ NodeExecutionType::MaterialOutput,           MaterialNodeLibrary::SpawnOutputNode  },
 			{ NodeExecutionType::ColorPicker,              MaterialNodeLibrary::SpawnColorPicker },
-			{ NodeExecutionType::Sampler2D,                MaterialNodeLibrary::SpawnSampler2D },
 //			{ NodeExecutionType8192::MaterialSeparateColorRGB, MaterialNodeLibrary::SpawnSeparateColorRGB },
 			{ NodeExecutionType::MaterialMixColors,        MaterialNodeLibrary::SpawnMixColors }
 		} );
@@ -271,7 +271,7 @@ namespace Saturn {
 		{
 			AssetID textureID = Inputs[ 0 ].As<AssetIDPin>()->GetAssetID();
 
-			auto neighbors = materialEval->GetTargetEditor()->FindNeighbors( this );
+			auto neighbors = materialEval->GetTargetEditor()->FindNeighborsRight( this );
 			if( neighbors.size() )
 			{
 				textureID = materialEval->GetTargetEditor()->FindNode( neighbors[ 0 ] ).As<MaterialGetAssetNode>()->GetAssetID();
@@ -326,12 +326,11 @@ namespace Saturn {
 
 		Ref<MaterialViewerColorPin> colorPin = Outputs[ 0 ].As<MaterialViewerColorPin>();
 
-		Ref<Link> link = materialEval->GetTargetEditor()->FindLinkByPin( Outputs[ 0 ]->ID );
-
 		// Write our data to the input pin of the link.
-		if( link )
+		auto links = materialEval->GetTargetEditor()->FindLinksByPin( Outputs[ 0 ]->ID );
+		for( const auto& rLink : links )
 		{
-			Ref<Pin> pin = materialEval->GetTargetEditor()->FindPin( link->EndPinID );
+			Ref<Pin> pin = materialEval->GetTargetEditor()->FindPin( rLink->EndPinID );
 			if( pin )
 			{
 				Ref<MaterialViewerColorPin> inputColPin = pin.As<MaterialViewerColorPin>();
@@ -384,13 +383,16 @@ namespace Saturn {
 			return NodeEvaluationState::Failed;
 
 		// Write ID from pin into input pin of link.
-		Ref<Link> link = materialEval->GetTargetEditor()->FindLinkByPin( Outputs[ 0 ]->ID );
+		auto links = materialEval->GetTargetEditor()->FindLinksByPin( Outputs[ 0 ]->ID );
 
-		Ref<Pin> pin = materialEval->GetTargetEditor()->FindPin( link->EndPinID );
-		if( pin && pin->Type == PinType::AssetID )
+		for( const auto& rLink : links )
 		{
-			Ref<AssetIDPin> fpin = pin.As<AssetIDPin>();
-			fpin->SetAssetID( Outputs[ 0 ].As<AssetIDPin>()->GetAssetID() );
+			Ref<Pin> pin = materialEval->GetTargetEditor()->FindPin( rLink->EndPinID );
+			if( pin && pin->Type == PinType::AssetID )
+			{
+				Ref<AssetIDPin> fpin = pin.As<AssetIDPin>();
+				fpin->SetAssetID( Outputs[ 0 ].As<AssetIDPin>()->GetAssetID() );
+			}
 		}
 
 		return NodeEvaluationState::Evaluated;
@@ -507,10 +509,12 @@ namespace Saturn {
 
 		//////////////////////////////////////////////////////////////////////////
 		// Write ID from pin into input pin of link.
-		Ref<Link> link = materialEval->GetTargetEditor()->FindLinkByPin( Outputs[ 0 ]->ID );
-		if( link )
+
+		auto links = materialEval->GetTargetEditor()->FindLinksByPin( Outputs[ 0 ]->ID );
+		
+		for( const auto& rLink : links )
 		{
-			Ref<Pin> pin = materialEval->GetTargetEditor()->FindPin( link->EndPinID );
+			Ref<Pin> pin = materialEval->GetTargetEditor()->FindPin( rLink->EndPinID );
 			if( pin && pin->Type == PinType::Material_Color )
 			{
 				Ref<MaterialViewerColorPin> colPin = pin.As<MaterialViewerColorPin>();

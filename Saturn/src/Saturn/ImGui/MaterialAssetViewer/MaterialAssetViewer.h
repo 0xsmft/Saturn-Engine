@@ -32,7 +32,6 @@
 #include "Saturn/Asset/MaterialAsset.h"
 #include "Saturn/NodeEditor/NodeEditorBase.h"
 #include "Saturn/NodeEditor/Runtime/NodeEditorRuntime.h"
-#include "Saturn/NodeEditor/Runtime/NodeRuntime.h"
 
 namespace Saturn {
 

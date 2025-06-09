@@ -79,6 +79,9 @@ namespace Saturn {
 		NodeEditorPrivileges_All = NodeEditorPrivileges_Editing | NodeEditorPrivileges_Evaluation,
 	};
 
+	// enum NodeEditorPrivileges_
+	typedef int NodeEditorPrivileges;
+
 	enum class NodeEditorFlowDirection 
 	{
 		// Backwards flow, start from the origin node. 
@@ -107,9 +110,6 @@ namespace Saturn {
 		//
 		Right
 	};
-
-	// enum NodeEditorPrivileges_
-	typedef int NodeEditorPrivileges;
 
 	template<typename EditorType, typename... V>
 	struct NodeEditorNodeGroup {};

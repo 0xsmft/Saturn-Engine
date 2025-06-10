@@ -27,56 +27,80 @@
 */
 
 #include "sppch.h"
-#include "GlobalNodesList.h"
+#include "BehaviourTree.h"
 
-#include "Saturn/ImGui/MaterialAssetViewer/MaterialViewerNodes.h"
+#include "AssetViewer/Nodes/BehaviourTreeSequenceNode.h"
+#include "AssetViewer/BehaviourTreeNodeEditor.h"
 
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundOutputNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundPlayerNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundRandomNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundMixerNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundRandomPitchNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundPitchNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundFloatConstNode.h"
+#include "Saturn/Asset/AssetManager.h"
 
-#include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeNodeLibrary.h"
-
-#include "Saturn/Audio/SoundNodeEditor/SoundNodeLibrary.h"
-
-#include "NodeEditorBase.h"
+#include "Saturn/NodeEditor/NodeEditorBase.h"
+#include "Saturn/NodeEditor/UI/NodeEditor.h"
+#include "Saturn/NodeEditor/Serialisation/NodeCache.h"
 
 namespace Saturn {
 
-	static std::unordered_map<NodeExecutionType, std::function<Ref<NodeEditorNodeBase>( Ref<NodeEditorBase> )>> s_RegisteredNodeMap;
-
-	void GlobalNodesList::RegisterLibrary( const std::unordered_map<NodeExecutionType, std::function<Ref<NodeEditorNodeBase>( Ref<NodeEditorBase> )>>& rNodeMap )
+	BehaviourTree::BehaviourTree( AssetID id )
 	{
-		for( const auto& [executionType, nodeCreator] : rNodeMap )
+		m_BehaviourTreeAsset = AssetManager::Get().FindAsset( id );
+	}
+
+	BehaviourTree::~BehaviourTree()
+	{
+		if( m_NodeEditor )
+			m_NodeEditor->SetRuntime( nullptr );
+
+		m_Runtime = nullptr;
+		m_NodeEditor = nullptr;
+	}
+
+	void BehaviourTree::Initialise( Ref<AIAgentEntity> entity )
+	{
+#if defined(SAT_DIST)
+		m_NodeEditor = Ref<BehaviourTreeNodeEditor>::Create( m_BehaviourTreeAsset->ID );
+#else
+		m_NodeEditor = Ref<BehaviourTreeNodeEditor>::Create( m_BehaviourTreeAsset->ID );
+		m_NodeEditor->SetPrivileges( NodeEditorPrivileges_All, false );
+#endif
+
+		std::string filename = std::format( "{0}.sbt", m_BehaviourTreeAsset->Name );
+		if( NodeCacheEditor::ReadNodeEditorCache( m_NodeEditor, m_BehaviourTreeAsset->ID, filename ) )
 		{
-			s_RegisteredNodeMap[ executionType ] = nodeCreator;
+			m_OutputNodeID = m_NodeEditor->FindNode( "Root Node" )->ID;
 		}
-	}
-
-	void GlobalNodesList::Terminate()
-	{
-		s_RegisteredNodeMap.clear();
-	}
-
-	void GlobalNodesList::RegisterAll()
-	{
-		MaterialNodeLibrary::RegisterAllNodes();
-		SoundNodeLibrary::RegisterAllNodes();
-		BehaviourTreeNodeLibrary::RegisterAllNodes();
-	}
-
-	Ref<NodeEditorNodeBase> GlobalNodesList::ConvertExecutionTypeToNode( NodeExecutionType executionType, Ref<NodeEditorBase> nodeEditorBase )
-	{
-		auto Itr = s_RegisteredNodeMap.find( executionType );
-		if( Itr != s_RegisteredNodeMap.end() )
+		else
 		{
-			return Itr->second( nodeEditorBase );
+			SAT_CORE_WARN( "Failed to read node editor, using empty behaviour tree" );
+			SAT_CORE_ASSERT( false );
 		}
 
-		return nullptr;
+		BehaviourTreeEditorEvaluator::BehaviourTreeEdEvaluatorInfo info{};
+		info.OutputNodeID = m_OutputNodeID;
+
+		m_Runtime = Ref<BehaviourTreeEditorEvaluator>::Create( info );
+		m_Runtime->SetTargetNodeEditor( m_NodeEditor );
+
+		m_NodeEditor->SetRuntime( m_Runtime );
+
+		m_AIAgentEntity = entity;
+		m_NodeEditor->SetTargetAgent( m_AIAgentEntity );
+
+		// Convert nodes into tasks.
+		m_NodeEditor->InitBehaviourTree();
+	
+#if !defined(SAT_DIST)
+		m_NodeEditor->SetState( NodeEditorState::Simulating );
+#endif
 	}
+
+	void BehaviourTree::FirstEvaluate()
+	{
+		m_NodeEditor->Evaluate();
+	}
+
+	void BehaviourTree::Tick( Timestep ts )
+	{
+		m_NodeEditor->Tick( ts );
+	}
+
 }

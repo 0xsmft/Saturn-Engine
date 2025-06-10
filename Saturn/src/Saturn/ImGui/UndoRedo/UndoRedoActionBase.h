@@ -35,6 +35,8 @@
 
 namespace Saturn {
 
+	// The base class for all undo redo actions
+	// Most UndoRedo action are added to the global list AFTER it has been executed
 	class UndoRedoActionBase : public RefTarget
 	{
 	public:
@@ -53,6 +55,7 @@ namespace Saturn {
 	private:
 		std::string m_Name;
 
+		// Every action should have an identifier that states who it's associated with. For example any entity action should have the entity handle as the identifier, so when the entity is deleted the action can be removed.
 		UUID m_Identifier{};
 	};
 

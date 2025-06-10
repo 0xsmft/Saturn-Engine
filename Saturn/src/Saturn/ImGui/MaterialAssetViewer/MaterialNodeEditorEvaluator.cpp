@@ -74,7 +74,7 @@ namespace Saturn {
 
 		// Stacks are last in first out, so our output node will be evaluated last which is what we want.
 		std::stack<UUID> order;
-		m_NodeEditor->TraverseFromStart( OutputNode,
+		m_NodeEditor->TraverseFromStart( OutputNode, NodeEditorFlowDirection::Right,
 			[&]( const UUID id )
 			{
 				order.push( id );

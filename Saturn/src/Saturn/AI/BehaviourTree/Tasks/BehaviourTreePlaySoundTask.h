@@ -26,57 +26,26 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "GlobalNodesList.h"
+#pragma once
 
-#include "Saturn/ImGui/MaterialAssetViewer/MaterialViewerNodes.h"
+#include "BehaviourTreeBaseTask.h"
 
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundOutputNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundPlayerNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundRandomNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundMixerNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundRandomPitchNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundPitchNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundFloatConstNode.h"
-
-#include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeNodeLibrary.h"
-
-#include "Saturn/Audio/SoundNodeEditor/SoundNodeLibrary.h"
-
-#include "NodeEditorBase.h"
+#include "Saturn/Audio/SoundBase.h"
 
 namespace Saturn {
 
-	static std::unordered_map<NodeExecutionType, std::function<Ref<NodeEditorNodeBase>( Ref<NodeEditorBase> )>> s_RegisteredNodeMap;
-
-	void GlobalNodesList::RegisterLibrary( const std::unordered_map<NodeExecutionType, std::function<Ref<NodeEditorNodeBase>( Ref<NodeEditorBase> )>>& rNodeMap )
+	class BehaviourTreePlaySoundTask : public BehaviourTreeBaseTask
 	{
-		for( const auto& [executionType, nodeCreator] : rNodeMap )
-		{
-			s_RegisteredNodeMap[ executionType ] = nodeCreator;
-		}
-	}
+	public:
+		BehaviourTreePlaySoundTask( AssetID assetID );
+		virtual ~BehaviourTreePlaySoundTask();
 
-	void GlobalNodesList::Terminate()
-	{
-		s_RegisteredNodeMap.clear();
-	}
+		virtual void InitialiseTask( BehaviourTreeNodeEditor* pEditor, BehaviourTreeNodeBase* pNode ) override;
+		virtual BehaviourTreeTaskState Tick( Timestep ts ) override;
+		virtual void Reset() override;
 
-	void GlobalNodesList::RegisterAll()
-	{
-		MaterialNodeLibrary::RegisterAllNodes();
-		SoundNodeLibrary::RegisterAllNodes();
-		BehaviourTreeNodeLibrary::RegisterAllNodes();
-	}
+	private:
+		Ref<SoundBase> m_Sound;
+	};
 
-	Ref<NodeEditorNodeBase> GlobalNodesList::ConvertExecutionTypeToNode( NodeExecutionType executionType, Ref<NodeEditorBase> nodeEditorBase )
-	{
-		auto Itr = s_RegisteredNodeMap.find( executionType );
-		if( Itr != s_RegisteredNodeMap.end() )
-		{
-			return Itr->second( nodeEditorBase );
-		}
-
-		return nullptr;
-	}
 }

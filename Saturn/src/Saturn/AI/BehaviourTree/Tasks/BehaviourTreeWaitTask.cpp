@@ -27,56 +27,59 @@
 */
 
 #include "sppch.h"
-#include "GlobalNodesList.h"
+#include "BehaviourTreeWaitTask.h"
 
-#include "Saturn/ImGui/MaterialAssetViewer/MaterialViewerNodes.h"
-
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundOutputNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundPlayerNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundRandomNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundMixerNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundRandomPitchNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundPitchNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundFloatConstNode.h"
-
-#include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeNodeLibrary.h"
-
-#include "Saturn/Audio/SoundNodeEditor/SoundNodeLibrary.h"
-
-#include "NodeEditorBase.h"
+#include "Saturn/AI/BehaviourTree/AssetViewer/Nodes/BehaviourTreeNodeBase.h"
 
 namespace Saturn {
 
-	static std::unordered_map<NodeExecutionType, std::function<Ref<NodeEditorNodeBase>( Ref<NodeEditorBase> )>> s_RegisteredNodeMap;
-
-	void GlobalNodesList::RegisterLibrary( const std::unordered_map<NodeExecutionType, std::function<Ref<NodeEditorNodeBase>( Ref<NodeEditorBase> )>>& rNodeMap )
+	BehaviourTreeWaitTask::BehaviourTreeWaitTask( float WaitDuration )
+		: m_WaitDuration( WaitDuration )
 	{
-		for( const auto& [executionType, nodeCreator] : rNodeMap )
+	}
+
+	void BehaviourTreeWaitTask::InitialiseTask( BehaviourTreeNodeEditor* pEditor, BehaviourTreeNodeBase* pNode )
+	{
+		m_NodeID = pNode->ID;
+	}
+
+	BehaviourTreeWaitTask::~BehaviourTreeWaitTask()
+	{
+	}
+
+	BehaviourTreeTaskState BehaviourTreeWaitTask::Tick( Timestep ts )
+	{
+		if( !m_Started )
 		{
-			s_RegisteredNodeMap[ executionType ] = nodeCreator;
-		}
-	}
+			m_StartTime = std::chrono::steady_clock::now();
+			m_Started = true;
 
-	void GlobalNodesList::Terminate()
-	{
-		s_RegisteredNodeMap.clear();
-	}
+			SAT_CORE_INFO( "[BehaviourTreeWaitTask] Wait started, will be awaiting for: {0} seconds", m_WaitDuration );
 
-	void GlobalNodesList::RegisterAll()
-	{
-		MaterialNodeLibrary::RegisterAllNodes();
-		SoundNodeLibrary::RegisterAllNodes();
-		BehaviourTreeNodeLibrary::RegisterAllNodes();
-	}
-
-	Ref<NodeEditorNodeBase> GlobalNodesList::ConvertExecutionTypeToNode( NodeExecutionType executionType, Ref<NodeEditorBase> nodeEditorBase )
-	{
-		auto Itr = s_RegisteredNodeMap.find( executionType );
-		if( Itr != s_RegisteredNodeMap.end() )
-		{
-			return Itr->second( nodeEditorBase );
+			m_CurrentState = BehaviourTreeTaskState::Starting;
+			return m_CurrentState;
 		}
 
-		return nullptr;
+		auto now = std::chrono::steady_clock::now();
+		std::chrono::duration<float> elasped = now - m_StartTime;
+
+		if( elasped.count() >= m_WaitDuration )
+		{
+			m_Started = false;
+			SAT_CORE_INFO( "[BehaviourTreeWaitTask] Wait ended" );
+
+			m_CurrentState = BehaviourTreeTaskState::Completed;
+			return m_CurrentState;
+		}
+
+		// Still waiting
+		m_CurrentState = BehaviourTreeTaskState::Running;
+		return m_CurrentState;
 	}
+
+	void BehaviourTreeWaitTask::Reset()
+	{
+		m_Started = false;
+	}
+
 }

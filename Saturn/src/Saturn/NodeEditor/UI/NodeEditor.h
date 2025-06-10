@@ -37,6 +37,21 @@
 
 namespace Saturn {
 
+	enum class NodeEditorAction 
+	{
+		CreateLink,
+		BreakLink,
+		CreateNode,
+		DestroyNode,
+		MoveNode,
+		PreEvaluate,
+		PostEvaluate,
+		SelectNode,
+		DeselectNode,
+		SelectLink,
+		DeselectLink
+	};
+
 	class NodeEditor : public NodeEditorBase
 	{
 	public:
@@ -46,9 +61,16 @@ namespace Saturn {
 
 		bool CanCreateLink( const Ref<Pin>& a, const Ref<Pin>& b );	
 
+		// NodeEditorBase overrides
 		virtual void OnImGuiRender() override;
-		virtual void OnUpdate( Timestep ts ) override {}
+		virtual void OnUpdate( Timestep ts ) override;
 		virtual void OnEvent( RubyEvent& rEvent ) override {}
+
+		// NodeEditor virtuals
+		virtual void OnTopBarRender() {}
+		// NOTE: The ImGui window has already begun when this function is called.
+		virtual void OnExtraRender() {}
+		virtual void OnNodeEditorEvent( NodeEditorAction action ) {}
 
 		void Open( bool open ) { m_WindowOpen = open; }
 
@@ -83,10 +105,17 @@ namespace Saturn {
 		void DeleteLink( UUID id, bool skipUndoRedo = false );
 		void DeleteNode( UUID id, bool skipUndoRedo = false );
 
+		void SetNodePosition( UUID nodeID, const ImVec2& rNewPosition );
+
 	protected:
+		// By default the NodeCache will save this node editor to a file called NCEdtior.{ID}.nce OR {AssetID}.{ID}.nce
+		// However, in some cases such as GraphSounds or BehaviourTrees we want a custom name.
 		std::string m_CustomNameNC{};
 
-	private:
+		void OnChooseNewNode( Ref<NodeEditorNodeBase> node );
+		std::vector<UUID> GetSelectedNodes();
+
+	protected:
 #if !defined(SAT_DIST)
 		virtual void SerialiseData( std::ofstream& rStream ) override;
 		virtual void DeserialiseData( std::ifstream& rStream ) override;
@@ -97,6 +126,7 @@ namespace Saturn {
 		void Close();
 		void DeleteDeadLinks( UUID nodeID );
 		void CreateNewEditorIfNeeded();
+		void DrawSimulatingCanvas();
 
 	private:
 		std::function<Ref<NodeEditorNodeBase>()> m_CreateNewNodeFunction;
@@ -118,6 +148,7 @@ namespace Saturn {
 
 		NodeEditorOutput m_OutputWindow;
 		std::string m_InternalEditorID{};
+
 	private:
 		friend class NodeEditorCache;
 		friend class NodeCacheSettings;

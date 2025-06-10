@@ -27,56 +27,56 @@
 */
 
 #include "sppch.h"
-#include "GlobalNodesList.h"
+#include "BehaviourTreePlaySoundTask.h"
 
-#include "Saturn/ImGui/MaterialAssetViewer/MaterialViewerNodes.h"
+#include "Saturn/AI/BehaviourTree/AssetViewer/Nodes/BehaviourTreeNodeBase.h"
 
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundOutputNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundPlayerNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundRandomNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundMixerNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundRandomPitchNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundPitchNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundFloatConstNode.h"
-
-#include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeNodeLibrary.h"
-
-#include "Saturn/Audio/SoundNodeEditor/SoundNodeLibrary.h"
-
-#include "NodeEditorBase.h"
+#include "Saturn/Asset/AssetManager.h"
+#include "Saturn/Audio/AudioSystem.h"
 
 namespace Saturn {
 
-	static std::unordered_map<NodeExecutionType, std::function<Ref<NodeEditorNodeBase>( Ref<NodeEditorBase> )>> s_RegisteredNodeMap;
-
-	void GlobalNodesList::RegisterLibrary( const std::unordered_map<NodeExecutionType, std::function<Ref<NodeEditorNodeBase>( Ref<NodeEditorBase> )>>& rNodeMap )
+	BehaviourTreePlaySoundTask::BehaviourTreePlaySoundTask( AssetID assetID )
 	{
-		for( const auto& [executionType, nodeCreator] : rNodeMap )
+		Ref<Asset> asset = AssetManager::Get().FindAsset( assetID );
+		if( asset->Type == AssetType::GraphSound )
 		{
-			s_RegisteredNodeMap[ executionType ] = nodeCreator;
+			m_Sound = AudioSystem::Get().PlayGraphSound( assetID, UUID() );
+		}
+		else if( asset->Type == AssetType::Sound ) 
+		{
+			m_Sound = AudioSystem::Get().RequestNewSound( assetID, UUID(), false );
 		}
 	}
 
-	void GlobalNodesList::Terminate()
+	void BehaviourTreePlaySoundTask::InitialiseTask( BehaviourTreeNodeEditor* pEditor, BehaviourTreeNodeBase* pNode )
 	{
-		s_RegisteredNodeMap.clear();
+		m_NodeID = pNode->ID;
 	}
 
-	void GlobalNodesList::RegisterAll()
+	BehaviourTreePlaySoundTask::~BehaviourTreePlaySoundTask()
 	{
-		MaterialNodeLibrary::RegisterAllNodes();
-		SoundNodeLibrary::RegisterAllNodes();
-		BehaviourTreeNodeLibrary::RegisterAllNodes();
+		Reset();
+		m_Sound = nullptr;
 	}
 
-	Ref<NodeEditorNodeBase> GlobalNodesList::ConvertExecutionTypeToNode( NodeExecutionType executionType, Ref<NodeEditorBase> nodeEditorBase )
+	BehaviourTreeTaskState BehaviourTreePlaySoundTask::Tick( Timestep ts )
 	{
-		auto Itr = s_RegisteredNodeMap.find( executionType );
-		if( Itr != s_RegisteredNodeMap.end() )
+		if( m_Sound->IsPlaying() )
 		{
-			return Itr->second( nodeEditorBase );
+			m_CurrentState = BehaviourTreeTaskState::Running;
+			return m_CurrentState;
 		}
 
-		return nullptr;
+		m_Sound->Play( 0 );
+
+		m_CurrentState = BehaviourTreeTaskState::Starting;
+		return m_CurrentState;
 	}
+
+	void BehaviourTreePlaySoundTask::Reset()
+	{
+		AudioSystem::Get().UnloadSound( m_Sound );
+	}
+
 }

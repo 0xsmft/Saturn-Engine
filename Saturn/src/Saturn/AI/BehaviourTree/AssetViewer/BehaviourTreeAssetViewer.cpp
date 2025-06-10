@@ -172,7 +172,7 @@ namespace Saturn {
 			if( ImGui::MenuItem( "Move To" ) )
 				result = BehaviourTreeNodeLibrary::SpawnMoveToNode( m_NodeEditor );
 
-			showTooltip( "Move to a predetermined Position in the NavMesh, the Position must be in the NavMesh as if it it not the task will fail!" );
+			showTooltip( "Move to a predetermined Position in the NavMesh, the Position must be in the NavMesh as if not the task will fail!" );
 
 			return result;
 		} );

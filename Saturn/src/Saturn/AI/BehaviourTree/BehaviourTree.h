@@ -26,57 +26,40 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "GlobalNodesList.h"
+#pragma once
 
-#include "Saturn/ImGui/MaterialAssetViewer/MaterialViewerNodes.h"
+#include "Saturn/AI/AIAgentEntity.h"
 
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundOutputNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundPlayerNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundRandomNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundMixerNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundRandomPitchNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundPitchNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundFloatConstNode.h"
-
-#include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeNodeLibrary.h"
-
-#include "Saturn/Audio/SoundNodeEditor/SoundNodeLibrary.h"
-
-#include "NodeEditorBase.h"
+#include "Saturn/Asset/Asset.h"
+#include "AssetViewer/BehaviourTreeEditorEvaluator.h"
 
 namespace Saturn {
 
-	static std::unordered_map<NodeExecutionType, std::function<Ref<NodeEditorNodeBase>( Ref<NodeEditorBase> )>> s_RegisteredNodeMap;
+	class BehaviourTreeNodeEditor;
 
-	void GlobalNodesList::RegisterLibrary( const std::unordered_map<NodeExecutionType, std::function<Ref<NodeEditorNodeBase>( Ref<NodeEditorBase> )>>& rNodeMap )
+	class BehaviourTree : public RefTarget
 	{
-		for( const auto& [executionType, nodeCreator] : rNodeMap )
-		{
-			s_RegisteredNodeMap[ executionType ] = nodeCreator;
-		}
-	}
+	public:
+		BehaviourTree() = default;
+		BehaviourTree( AssetID id );
+		~BehaviourTree();
 
-	void GlobalNodesList::Terminate()
-	{
-		s_RegisteredNodeMap.clear();
-	}
+		void Initialise( Ref<AIAgentEntity> entity );
+		void FirstEvaluate();
+		void Tick( Timestep ts );
 
-	void GlobalNodesList::RegisterAll()
-	{
-		MaterialNodeLibrary::RegisterAllNodes();
-		SoundNodeLibrary::RegisterAllNodes();
-		BehaviourTreeNodeLibrary::RegisterAllNodes();
-	}
+		Ref<Asset> GetAsset() const { return m_BehaviourTreeAsset; }
+		Ref<BehaviourTreeNodeEditor> GetNodeEditor() const { return m_NodeEditor; }
 
-	Ref<NodeEditorNodeBase> GlobalNodesList::ConvertExecutionTypeToNode( NodeExecutionType executionType, Ref<NodeEditorBase> nodeEditorBase )
-	{
-		auto Itr = s_RegisteredNodeMap.find( executionType );
-		if( Itr != s_RegisteredNodeMap.end() )
-		{
-			return Itr->second( nodeEditorBase );
-		}
+	private:
+		// The "BehaviourTree" class is not an asset however BehaviourTree are an asset
+		Ref<Asset> m_BehaviourTreeAsset;
+		Ref<BehaviourTreeEditorEvaluator> m_Runtime;
+		Ref<BehaviourTreeNodeEditor> m_NodeEditor;
 
-		return nullptr;
-	}
+		Ref<AIAgentEntity> m_AIAgentEntity;
+
+		UUID m_OutputNodeID = 0;
+	};
+
 }

@@ -26,57 +26,29 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "GlobalNodesList.h"
+#pragma once
 
-#include "Saturn/ImGui/MaterialAssetViewer/MaterialViewerNodes.h"
+#include "BehaviourTreeBaseTask.h"
 
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundOutputNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundPlayerNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundRandomNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundMixerNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundRandomPitchNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundPitchNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundFloatConstNode.h"
-
-#include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeNodeLibrary.h"
-
-#include "Saturn/Audio/SoundNodeEditor/SoundNodeLibrary.h"
-
-#include "NodeEditorBase.h"
+#include <chrono>
 
 namespace Saturn {
 
-	static std::unordered_map<NodeExecutionType, std::function<Ref<NodeEditorNodeBase>( Ref<NodeEditorBase> )>> s_RegisteredNodeMap;
-
-	void GlobalNodesList::RegisterLibrary( const std::unordered_map<NodeExecutionType, std::function<Ref<NodeEditorNodeBase>( Ref<NodeEditorBase> )>>& rNodeMap )
+	class BehaviourTreeWaitTask : public BehaviourTreeBaseTask
 	{
-		for( const auto& [executionType, nodeCreator] : rNodeMap )
-		{
-			s_RegisteredNodeMap[ executionType ] = nodeCreator;
-		}
-	}
+	public:
+		BehaviourTreeWaitTask( float WaitDuration );
+		virtual ~BehaviourTreeWaitTask();
 
-	void GlobalNodesList::Terminate()
-	{
-		s_RegisteredNodeMap.clear();
-	}
+		virtual void InitialiseTask( BehaviourTreeNodeEditor* pEditor, BehaviourTreeNodeBase* pNode ) override;
+		virtual BehaviourTreeTaskState Tick( Timestep ts ) override;
+		virtual void Reset() override;
 
-	void GlobalNodesList::RegisterAll()
-	{
-		MaterialNodeLibrary::RegisterAllNodes();
-		SoundNodeLibrary::RegisterAllNodes();
-		BehaviourTreeNodeLibrary::RegisterAllNodes();
-	}
+	private:
+		float m_WaitDuration = 0.0f;
 
-	Ref<NodeEditorNodeBase> GlobalNodesList::ConvertExecutionTypeToNode( NodeExecutionType executionType, Ref<NodeEditorBase> nodeEditorBase )
-	{
-		auto Itr = s_RegisteredNodeMap.find( executionType );
-		if( Itr != s_RegisteredNodeMap.end() )
-		{
-			return Itr->second( nodeEditorBase );
-		}
-
-		return nullptr;
-	}
+		bool m_Started = false;
+		std::chrono::steady_clock::time_point m_StartTime;
+	};
+	
 }

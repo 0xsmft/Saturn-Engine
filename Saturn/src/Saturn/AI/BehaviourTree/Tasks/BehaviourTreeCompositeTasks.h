@@ -26,57 +26,57 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "GlobalNodesList.h"
+#pragma once
 
-#include "Saturn/ImGui/MaterialAssetViewer/MaterialViewerNodes.h"
+#include "BehaviourTreeBaseTask.h"
 
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundOutputNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundPlayerNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundRandomNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundMixerNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundRandomPitchNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundPitchNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundFloatConstNode.h"
-
-#include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeNodeLibrary.h"
-
-#include "Saturn/Audio/SoundNodeEditor/SoundNodeLibrary.h"
-
-#include "NodeEditorBase.h"
+#include <chrono>
 
 namespace Saturn {
 
-	static std::unordered_map<NodeExecutionType, std::function<Ref<NodeEditorNodeBase>( Ref<NodeEditorBase> )>> s_RegisteredNodeMap;
-
-	void GlobalNodesList::RegisterLibrary( const std::unordered_map<NodeExecutionType, std::function<Ref<NodeEditorNodeBase>( Ref<NodeEditorBase> )>>& rNodeMap )
+	// The base class for all composite tasks
+	class BehaviourTreeCompositeBaseTask : public BehaviourTreeBaseTask
 	{
-		for( const auto& [executionType, nodeCreator] : rNodeMap )
-		{
-			s_RegisteredNodeMap[ executionType ] = nodeCreator;
-		}
-	}
+	public:
+		virtual void Reset() override;
 
-	void GlobalNodesList::Terminate()
+	protected:
+		size_t m_CurrentTaskIndex = 0;
+		BehaviourTreeBaseTask* m_pCurrentTask = nullptr;
+		std::vector<BehaviourTreeBaseTask*> m_Children;
+	};
+
+	// Selector
+	// Find the first child that returns Completed, if none are found return Failed.
+	// Could be thought of as a logical OR operator as it finds the branch that does not fail.
+	// Though not atomic tasks, composite nodes like Selectors implement the same API as BehaviourTreeBaseTask.
+	class BehaviourTreeSelectorTask : public BehaviourTreeCompositeBaseTask
 	{
-		s_RegisteredNodeMap.clear();
-	}
+	public:
+		BehaviourTreeSelectorTask();
+		virtual ~BehaviourTreeSelectorTask();
 
-	void GlobalNodesList::RegisterAll()
+		virtual void InitialiseTask( BehaviourTreeNodeEditor* pEditor, BehaviourTreeNodeBase* pNode ) override;
+
+	public:
+		virtual BehaviourTreeTaskState Tick( Timestep ts ) override;
+	};
+
+	// Sequence 
+	// Run all children and as soon as one task returns Failed the sequence will break and return failed.
+	// If they all succeed the sequence will return Completed.
+	// Could be thought of as a logical AND operator as it requires all children to succeed.
+	// Though not atomic tasks, composite nodes like Sequence implement the same API as BehaviourTreeBaseTask.
+	class BehaviourTreeSequenceTask : public BehaviourTreeCompositeBaseTask
 	{
-		MaterialNodeLibrary::RegisterAllNodes();
-		SoundNodeLibrary::RegisterAllNodes();
-		BehaviourTreeNodeLibrary::RegisterAllNodes();
-	}
+	public:
+		BehaviourTreeSequenceTask();
+		virtual ~BehaviourTreeSequenceTask();
 
-	Ref<NodeEditorNodeBase> GlobalNodesList::ConvertExecutionTypeToNode( NodeExecutionType executionType, Ref<NodeEditorBase> nodeEditorBase )
-	{
-		auto Itr = s_RegisteredNodeMap.find( executionType );
-		if( Itr != s_RegisteredNodeMap.end() )
-		{
-			return Itr->second( nodeEditorBase );
-		}
+		virtual void InitialiseTask( BehaviourTreeNodeEditor* pEditor, BehaviourTreeNodeBase* pNode ) override;
 
-		return nullptr;
-	}
+	public:
+		virtual BehaviourTreeTaskState Tick( Timestep ts ) override;
+	};
+
 }

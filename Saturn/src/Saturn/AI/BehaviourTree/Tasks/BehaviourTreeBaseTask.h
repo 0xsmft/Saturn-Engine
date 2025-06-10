@@ -26,57 +26,43 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "GlobalNodesList.h"
+#pragma once
 
-#include "Saturn/ImGui/MaterialAssetViewer/MaterialViewerNodes.h"
-
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundOutputNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundPlayerNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundRandomNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundMixerNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundRandomPitchNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundPitchNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundFloatConstNode.h"
-
-#include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeNodeLibrary.h"
-
-#include "Saturn/Audio/SoundNodeEditor/SoundNodeLibrary.h"
-
-#include "NodeEditorBase.h"
+#include "Saturn/Core/Base.h"
+#include "Saturn/GameFramework/Core/GameScript.h"
+#include "Saturn/Core/UUID.h"
 
 namespace Saturn {
 
-	static std::unordered_map<NodeExecutionType, std::function<Ref<NodeEditorNodeBase>( Ref<NodeEditorBase> )>> s_RegisteredNodeMap;
+	class BehaviourTreeNodeBase;
+	class BehaviourTreeNodeEditor;
 
-	void GlobalNodesList::RegisterLibrary( const std::unordered_map<NodeExecutionType, std::function<Ref<NodeEditorNodeBase>( Ref<NodeEditorBase> )>>& rNodeMap )
+	enum class BehaviourTreeTaskState 
 	{
-		for( const auto& [executionType, nodeCreator] : rNodeMap )
-		{
-			s_RegisteredNodeMap[ executionType ] = nodeCreator;
-		}
-	}
+		Unknown,
+		Starting,
+		Running,
+		Completed, // success flag
+		Failed
+	};
 
-	void GlobalNodesList::Terminate()
+	class BehaviourTreeBaseTask : public RefTarget
 	{
-		s_RegisteredNodeMap.clear();
-	}
+		SAT_DECLARE_CLASS_NO_INTER( BehaviourTreeBaseTask, RefTarget )
+	public:
+		BehaviourTreeBaseTask() = default;
+		virtual ~BehaviourTreeBaseTask() = default;
 
-	void GlobalNodesList::RegisterAll()
-	{
-		MaterialNodeLibrary::RegisterAllNodes();
-		SoundNodeLibrary::RegisterAllNodes();
-		BehaviourTreeNodeLibrary::RegisterAllNodes();
-	}
+		virtual void InitialiseTask( BehaviourTreeNodeEditor* pEditor, BehaviourTreeNodeBase* pNode ) {}
+		virtual BehaviourTreeTaskState Tick( Timestep ts ) { return BehaviourTreeTaskState::Unknown; }
+		virtual void Reset() {}
 
-	Ref<NodeEditorNodeBase> GlobalNodesList::ConvertExecutionTypeToNode( NodeExecutionType executionType, Ref<NodeEditorBase> nodeEditorBase )
-	{
-		auto Itr = s_RegisteredNodeMap.find( executionType );
-		if( Itr != s_RegisteredNodeMap.end() )
-		{
-			return Itr->second( nodeEditorBase );
-		}
+		Saturn::UUID GetNodeID() const { return m_NodeID; }
+		BehaviourTreeTaskState GetState() const { return m_CurrentState; }
 
-		return nullptr;
-	}
+	protected:
+		Saturn::UUID m_NodeID = 0;
+		BehaviourTreeTaskState m_CurrentState = BehaviourTreeTaskState::Unknown;
+	};
+	
 }

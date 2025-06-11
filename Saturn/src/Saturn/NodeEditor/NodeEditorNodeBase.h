@@ -83,6 +83,9 @@ namespace Saturn {
 		BehaviourTreeRootNode,
 		BehaviourTreeSelectorNode,
 		BehaviourTreeSequenceNode,
+		BehaviourTreeWaitNode,
+		BehaviourTreePlaySoundNode,
+		BehaviourTreeMoveTo,
 		None
 	};
 
@@ -94,6 +97,10 @@ namespace Saturn {
 public: \
 static inline NodeExecutionType GetStaticExecutionType() { return ExecutionType; }
 
+	// NOTE: Tips when adding a new node
+	// 1) You must add a custom execution type
+	// 2) You must add the node to its NodeLibrary
+	// 3) Refer to the NodeEditor for the Node you are trying to add, for example, BehaviourTrees need a Task counterpart when adding a Task node so you'll need to refer to that
 	class NodeEditorNodeBase : public RefTarget
 	{
 		SAT_NODE_EDITOR_NODE_BODY( NodeExecutionType::None );
@@ -109,7 +116,7 @@ static inline NodeExecutionType GetStaticExecutionType() { return ExecutionType;
 		ImVec2 Position;
 		bool CanBeDeleted = true;
 
-#if defined(SAT_DEBUG)
+#if !defined(SAT_DIST)
 		size_t EvaluationOrder = 0;
 #endif
 

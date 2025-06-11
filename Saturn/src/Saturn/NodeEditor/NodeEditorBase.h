@@ -71,11 +71,11 @@ namespace Saturn {
 	enum NodeEditorPrivileges_
 	{
 		// No editing or no evaluation
-		NodeEditorPrivileges_ReadOnly,
+		NodeEditorPrivileges_ReadOnly = BIT( 0 ),
 		// User can edit the nodes
-		NodeEditorPrivileges_Editing,
+		NodeEditorPrivileges_Editing = BIT( 1 ),
 		// User can evaluate the editor
-		NodeEditorPrivileges_Evaluation,
+		NodeEditorPrivileges_Evaluation = BIT( 2 ),
 		NodeEditorPrivileges_All = NodeEditorPrivileges_Editing | NodeEditorPrivileges_Evaluation,
 	};
 
@@ -116,6 +116,25 @@ namespace Saturn {
 
 	class NodeEditorRuntime;
 	class Texture2D;
+	
+	template<>
+	class VariableGuard<ed::EditorContext*>
+	{
+	public:
+		VariableGuard( ed::EditorContext* pTemporaryValue ) 
+		{
+			m_OldValue = ed::GetCurrentEditor();
+			ed::SetCurrentEditor( pTemporaryValue );
+		}
+
+		~VariableGuard() 
+		{
+			ed::SetCurrentEditor( m_OldValue );
+		}
+
+	private:
+		ed::EditorContext* m_OldValue = nullptr;
+	};
 
 	class NodeEditorBase : public RefTarget
 	{

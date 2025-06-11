@@ -78,13 +78,16 @@ namespace Saturn {
 		Outputs[ 0 ].As<FloatPin>()->Data = Result;
 
 		// Write our output to other node input
-		Ref<Link> link = evaluator->GetTargetEditor()->FindLinkByPin( Outputs[ 0 ]->ID );
+		auto links = evaluator->GetTargetEditor()->FindLinksByPin( Outputs[ 0 ]->ID );
 
-		Ref<Pin> pin = evaluator->GetTargetEditor()->FindPin( link->EndPinID );
-		if( pin && pin->Type == PinType::Float )
+		for( const auto& rLink : links )
 		{
-			Ref<FloatPin> fpin = pin.As<FloatPin>();
-			fpin->Data = Result;
+			Ref<Pin> pin = evaluator->GetTargetEditor()->FindPin( rLink->EndPinID );
+			if( pin && pin->Type == PinType::Float )
+			{
+				Ref<FloatPin> fpin = pin.As<FloatPin>();
+				fpin->Data = Result;
+			}
 		}
 
 		return NodeEvaluationState::Evaluated;
@@ -154,13 +157,15 @@ namespace Saturn {
 		Outputs[ 0 ].As<FloatPin>()->Data = Result;
 
 		// Write our output to other node input
-		Ref<Link> link = evaluator->GetTargetEditor()->FindLinkByPin( Outputs[ 0 ]->ID );
-
-		Ref<Pin> pin = evaluator->GetTargetEditor()->FindPin( link->EndPinID );
-		if( pin && pin->Type == PinType::Float )
+		auto links = evaluator->GetTargetEditor()->FindLinksByPin( Outputs[ 0 ]->ID );
+		for( const auto& rLink : links )
 		{
-			Ref<FloatPin> fpin = pin.As<FloatPin>();
-			fpin->Data = Result;
+			Ref<Pin> pin = evaluator->GetTargetEditor()->FindPin( rLink->EndPinID );
+			if( pin && pin->Type == PinType::Float )
+			{
+				Ref<FloatPin> fpin = pin.As<FloatPin>();
+				fpin->Data = Result;
+			}
 		}
 
 		return NodeEvaluationState::Evaluated;
@@ -214,13 +219,15 @@ namespace Saturn {
 		Outputs[ 0 ].As<FloatPin>()->Data = Result;
 
 		// Write our output to other node input
-		Ref<Link> link = evaluator->GetTargetEditor()->FindLinkByPin( Outputs[ 0 ]->ID );
-
-		Ref<Pin> pin = evaluator->GetTargetEditor()->FindPin( link->EndPinID );
-		if( pin && pin->Type == PinType::Float )
+		auto links = evaluator->GetTargetEditor()->FindLinksByPin( Outputs[ 0 ]->ID );
+		for( const auto& rLink : links )
 		{
-			Ref<FloatPin> fpin = pin.As<FloatPin>();
-			fpin->Data = Result;
+			Ref<Pin> pin = evaluator->GetTargetEditor()->FindPin( rLink->EndPinID );
+			if( pin && pin->Type == PinType::Float )
+			{
+				Ref<FloatPin> fpin = pin.As<FloatPin>();
+				fpin->Data = Result;
+			}
 		}
 
 		return NodeEvaluationState::Evaluated;
@@ -291,13 +298,15 @@ namespace Saturn {
 		Outputs[ 0 ].As<FloatPin>()->Data = Result;
 
 		// Write our output to other node input
-		Ref<Link> link = evaluator->GetTargetEditor()->FindLinkByPin( Outputs[ 0 ]->ID );
-
-		Ref<Pin> pin = evaluator->GetTargetEditor()->FindPin( link->EndPinID );
-		if( pin && pin->Type == PinType::Float )
+		auto links = evaluator->GetTargetEditor()->FindLinksByPin( Outputs[ 0 ]->ID );
+		for( const auto& rLink : links )
 		{
-			Ref<FloatPin> fpin = pin.As<FloatPin>();
-			fpin->Data = Result;
+			Ref<Pin> pin = evaluator->GetTargetEditor()->FindPin( rLink->EndPinID );
+			if( pin && pin->Type == PinType::Float )
+			{
+				Ref<FloatPin> fpin = pin.As<FloatPin>();
+				fpin->Data = Result;
+			}
 		}
 
 		return NodeEvaluationState::Evaluated;

@@ -64,6 +64,32 @@ namespace Saturn {
 		ed::PushStyleVar( ed::StyleVar_PinRadius, 5.0f );
 		ed::BeginNode( ed::NodeId( ID ) );
 
+		auto* pDrawList = ImGui::GetWindowDrawList();
+
+		///////////////////////////////
+		// Evaluation Order
+
+		ImVec2 headerEndPos = ImGui::GetCursorScreenPos();
+		ImVec2 badgePos = headerEndPos + Size;
+		badgePos.y -= 20.0f + ImGui::GetStyle().FramePadding.x;
+
+		ImVec2 badgeSize = ImVec2( 20.0f, 20.0f );
+
+		// Draw background
+		ImU32 badgeColor = IM_COL32( 255, 100, 100, 255 );
+		pDrawList->AddRectFilled( badgePos, ImVec2( badgePos.x + badgeSize.x, badgePos.y + badgeSize.y ), badgeColor, 5.0f );
+
+		// Draw border
+		ImU32 borderColor = IM_COL32( 0, 0, 0, 255 );
+		pDrawList->AddRect( badgePos, ImVec2( badgePos.x + badgeSize.x, badgePos.y + badgeSize.y ), borderColor, 5.0f );
+
+		// Draw text centered in the badge
+		std::string text = std::to_string( EvaluationOrder );
+
+		ImVec2 textSize = ImGui::CalcTextSize( text.data() );
+		ImVec2 textPos = ImVec2( badgePos.x + ( badgeSize.x - textSize.x ) * 0.5f, badgePos.y + ( badgeSize.y - textSize.y ) * 0.5f );
+		pDrawList->AddText( textPos, IM_COL32( 255, 255, 255, 255 ), text.data() );
+
 		ImGui::BeginVertical( (int)ID );
 		ImGui::BeginHorizontal( "inputs" );
 		ImGui::Spring( 0, padding * 2 );
@@ -97,6 +123,9 @@ namespace Saturn {
 		ImGui::Dummy( ImVec2( 160, 0 ) );
 		ImGui::Spring( 1 );
 		ImGui::TextUnformatted( Name.c_str() );
+#if !defined(SAT_DIST)
+		OnRenderExtra();
+#endif
 		ImGui::Spring( 1 );
 		ImGui::EndVertical();
 
@@ -137,7 +166,7 @@ namespace Saturn {
 		ed::PopStyleVar( 7 );
 		ed::PopStyleColor( 4 );
 
-		auto* pDrawList = ed::GetNodeBackgroundDrawList( ed::NodeId( ID ) );
+		pDrawList = ed::GetNodeBackgroundDrawList( ed::NodeId( ID ) );
 
 		// Draw output box
 		pDrawList->AddRectFilled(

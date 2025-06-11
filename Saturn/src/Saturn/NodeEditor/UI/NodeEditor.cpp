@@ -86,6 +86,8 @@ namespace Saturn {
 
 	NodeEditor::~NodeEditor()
 	{
+		GlobalUndoRedoGroup::Get().RemoveIfActionHasIdentifier( m_AssetID );
+
 		m_ZoomTexture = nullptr;
 		m_CompileTexture = nullptr;
 		
@@ -128,15 +130,19 @@ namespace Saturn {
 			pNode->Position = ed::GetNodePosition( nodeId );
 			pNode->Size = ed::GetNodeSize( nodeId );
 
-			// TODO: Filter reasons
-			pThis->MarkDirty();
+			// Only mark dirty if we are not loading
+			// imgui_node_editor will call this function when initialising
+			if( pThis->GetState() != NodeEditorState::Loading )
+			{
+				pThis->MarkDirty();
+			}
 
 			return true;
 		};
 
 		m_Editor = ed::CreateEditor( &config );
 		ed::SetCurrentEditor( m_Editor );
-	
+
 		m_ZoomTexture = EditorIcons::GetIcon( "Inspect" );
 		m_CompileTexture = EditorIcons::GetIcon( "NoIcon" );
 		
@@ -190,7 +196,8 @@ namespace Saturn {
 
 	void NodeEditor::OnImGuiRender()
 	{
-		// Safety
+		// Ensure our editor is the current one
+		// We'll use a VariableGuard<ed::EditorContext*> when we can't be sure that we are the current node editor.
 		ed::SetCurrentEditor( m_Editor );
 
 		if( !m_WindowOpen )
@@ -251,7 +258,7 @@ namespace Saturn {
 
 		ImGui::PushStyleColor( ImGuiCol_ChildBg, ImVec4( 0.0f, 0.0f, 0.0f, 0.0f ) );
 
-		ImGui::BeginChild( "Topbar", ImVec2( 0, 30 ), 0, flags );
+		ImGui::BeginChild( "Topbar", ImVec2( 0.0f, 30.0f ), 0, flags );
 		ImGui::BeginHorizontal( "##TopbarItems" );
 
 		if( Auxiliary::ImageButton( m_ZoomTexture, { 24, 24 } ) )

@@ -3728,6 +3728,7 @@ bool ed::DragAction::Process(const Control& control)
 
 		for (auto object : m_Objects)
 		{
+			/* SATURN ENGINE MODIFIED */
 			if (object->EndDrag())
 				Editor->MakeDirty(SaveReasonFlags::Position | SaveReasonFlags::User | SaveReasonFlags::EndDrag, object->AsNode());
 		}

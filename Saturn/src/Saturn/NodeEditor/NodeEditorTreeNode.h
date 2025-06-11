@@ -40,6 +40,10 @@ namespace Saturn {
 		NodeEditorTreeNode( const std::string& rName );
 		virtual ~NodeEditorTreeNode();
 
+#if !defined(SAT_DIST)
+		virtual void OnRenderExtra() {}
+#endif
+
 		void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, NodeEditorBase* pBase ) override;
 		NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
 	};

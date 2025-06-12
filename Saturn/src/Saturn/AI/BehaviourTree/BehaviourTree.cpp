@@ -60,7 +60,7 @@ namespace Saturn {
 		m_NodeEditor = Ref<BehaviourTreeNodeEditor>::Create( m_BehaviourTreeAsset->ID );
 #else
 		m_NodeEditor = Ref<BehaviourTreeNodeEditor>::Create( m_BehaviourTreeAsset->ID );
-		m_NodeEditor->SetPrivileges( NodeEditorPrivileges_All, false );
+		m_NodeEditor->SetPrivileges( NodeEditorPrivileges::All, false );
 #endif
 
 		std::string filename = std::format( "{0}.sbt", m_BehaviourTreeAsset->Name );

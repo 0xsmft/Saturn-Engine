@@ -306,7 +306,6 @@ namespace Saturn {
 			SAT_CORE_WARN( "The engine will continue to load however this may result in the cache file not loading!" );
 		
 			needsUpdate = true;
-			return false;
 		}
 
 		if( header.AssetID != id )

@@ -69,7 +69,7 @@ namespace Saturn {
 		m_NodeEditor = Ref<NodeEditor>::Create( m_GraphAsset->ID );
 #endif
 
-		m_NodeEditor->SetPrivileges( NodeEditorPrivileges_Evaluation, true );
+		m_NodeEditor->SetPrivileges( NodeEditorPrivileges::Evaluation, true );
 
 		std::string filename = std::format( "{0}.gsnd", m_GraphAsset->Name );
 		if( NodeCacheEditor::ReadNodeEditorCache( m_NodeEditor, m_GraphAsset->ID, filename ) )

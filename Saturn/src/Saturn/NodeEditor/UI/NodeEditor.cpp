@@ -82,6 +82,8 @@ namespace Saturn {
 		: NodeEditorBase()
 	{
 		m_Editor = nullptr;
+
+		SetPrivileges( NodeEditorPrivileges::All, true );
 	}
 
 	NodeEditor::~NodeEditor()
@@ -206,7 +208,7 @@ namespace Saturn {
 		// Draw main window
 		ImGui::Begin( m_Name.c_str(), &m_WindowOpen, m_Dirty ? ImGuiWindowFlags_UnsavedDocument : 0 );
 
-		if( m_ShowUnsavedChanges )
+		if( m_ShowUnsavedChanges && HasPrivilege( NodeEditorPrivileges::Editing ) )
 			ImGui::OpenPopup( "Unsaved Changes" );
 
 		// Unsaved changes modal
@@ -273,7 +275,9 @@ namespace Saturn {
 			ImGui::EndTooltip();
 		}
 
-		if( Auxiliary::ImageButton( m_CompileTexture, { 24, 24 } ) )
+		Auxiliary::DisabledFlag disabled( !HasPrivilege( NodeEditorPrivileges::Evaluation ) );
+
+		if( Auxiliary::ImageButton( m_CompileTexture, { 24.0f, 24.0f } ) )
 		{
 			m_OutputWindow.ClearOutput();
 
@@ -327,7 +331,7 @@ namespace Saturn {
 		for( const auto& rLink : m_Links )
 			ed::Link( ed::LinkId( rLink->ID ), ed::PinId( rLink->StartPinID ), ed::PinId( rLink->EndPinID ), rLink->Color );
 
-		if( !m_CreateNewNode )
+		if( !m_CreateNewNode && HasPrivilege( NodeEditorPrivileges::Editing ) )
 		{
 			if( ed::BeginCreate( ImColor( 255, 255, 255 ), 2.0f ) )
 			{
@@ -537,7 +541,19 @@ namespace Saturn {
 
 		ed::Suspend();
 
-		ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 8, 8 ) );
+		// Extra information window
+		if( ImGui::Begin( "Details" ) )
+		{
+			Auxiliary::DisabledFlag disabled( !HasPrivilege( NodeEditorPrivileges::Editing ) );
+
+			OnExtraRender();
+
+			disabled.Pop();
+
+			ImGui::End();
+		}
+
+		ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 8.0f, 8.0f ) );
 		if( ImGui::BeginPopup( "Create New Node" ) )
 		{
 			auto mousePos = ed::ScreenToCanvas( ImGui::GetMousePosOnOpeningCurrentPopup() );
@@ -549,37 +565,8 @@ namespace Saturn {
 
 			if( node )
 			{
-				BuildNode( node );
-
-				m_CreateNewNode = false;
-
 				ed::SetNodePosition( ed::NodeId( node->ID ), mousePos );
-
-				if( auto& startPin = m_NewNodeLinkPin ) 
-				{
-					auto& pins = startPin->Kind == PinKind::Input ? node->Outputs : node->Inputs;
-
-					for( auto& pin : pins ) 
-					{
-						if( CanCreateLink( startPin, pin ) )
-						{
-							auto& endPin = pin;
-
-							UUID startID = startPin->ID;
-							UUID endID = endPin->ID;
-
-							// Start of the link must be the output pin
-							if( startPin->Kind == PinKind::Input ) 
-								std::swap( startID, endID );
-
-							m_Links.emplace_back( Ref<Link>::Create( UUID(), startID, endID, startPin->GetPinColor() ) );
-
-							break;
-						}
-					}
-				}
-
-				MarkDirty();
+				OnChooseNewNode( node );
 			}
 
 			ImGui::EndPopup();
@@ -684,7 +671,7 @@ namespace Saturn {
 
 	void NodeEditor::DeserialiseData( std::ifstream& rStream )
 	{
-		m_Loading = true;
+		m_State = NodeEditorState::Loading;
 
 		NodeCacheSettings::ReadEditorSettings( this );
 
@@ -730,6 +717,8 @@ namespace Saturn {
 		}
 
 		m_Loading = false;
+
+		m_State = NodeEditorState::Editing;
 	}
 #endif
 }

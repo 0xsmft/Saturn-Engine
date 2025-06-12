@@ -68,19 +68,36 @@ namespace Saturn {
 		Evaluating 
 	};
 
-	enum NodeEditorPrivileges_
+	// NOTE: This enum if a flag enum and does NOT have a bitwise or (|) operator or a and (&) operator.
+	//       You must do m_Flags = m_Flags | <flag>
+	enum class NodeEditorPrivileges
 	{
 		// No editing or no evaluation
-		NodeEditorPrivileges_ReadOnly = BIT( 0 ),
+		ReadOnly = BIT( 0 ),
 		// User can edit the nodes
-		NodeEditorPrivileges_Editing = BIT( 1 ),
+		Editing = BIT( 1 ),
 		// User can evaluate the editor
-		NodeEditorPrivileges_Evaluation = BIT( 2 ),
-		NodeEditorPrivileges_All = NodeEditorPrivileges_Editing | NodeEditorPrivileges_Evaluation,
+		Evaluation = BIT( 2 ),
+		All = Editing | Evaluation,
 	};
 
-	// enum NodeEditorPrivileges_
-	typedef int NodeEditorPrivileges;
+	inline constexpr NodeEditorPrivileges operator|( NodeEditorPrivileges lhs, NodeEditorPrivileges rhs )
+	{
+		using U = std::underlying_type_t<NodeEditorPrivileges>;
+		return static_cast< NodeEditorPrivileges >( static_cast< U >( lhs ) | static_cast< U >( rhs ) );
+	}
+
+	inline constexpr NodeEditorPrivileges operator&( NodeEditorPrivileges lhs, NodeEditorPrivileges rhs )
+	{
+		using U = std::underlying_type_t<NodeEditorPrivileges>;
+		return static_cast< NodeEditorPrivileges >( static_cast< U >( lhs ) & static_cast< U >( rhs ) );
+	}
+	
+	inline constexpr NodeEditorPrivileges operator~( NodeEditorPrivileges rhs )
+	{
+		using U = std::underlying_type_t<NodeEditorPrivileges>;
+		return static_cast< NodeEditorPrivileges >( ~static_cast< U >( rhs ) );
+	}
 
 	enum class NodeEditorFlowDirection 
 	{
@@ -291,7 +308,7 @@ namespace Saturn {
 		AssetID m_AssetID = 0;
 
 		NodeEditorState m_State = NodeEditorState::Editing;
-		NodeEditorPrivileges m_Privileges = NodeEditorPrivileges_All;
+		NodeEditorPrivileges m_Privileges = NodeEditorPrivileges::All;
 
 	private:
 		friend class NodeEditorCache;

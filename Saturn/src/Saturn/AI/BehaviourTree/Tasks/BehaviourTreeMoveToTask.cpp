@@ -178,8 +178,6 @@ namespace Saturn {
 
 	void BehaviourTreeMoveToTask::Reset()
 	{
-		m_Agent = nullptr;
-
 		ClearWaypoints();
 	}
 

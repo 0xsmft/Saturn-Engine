@@ -45,6 +45,7 @@ namespace Saturn {
 		virtual void Reset() override;
 
 	private:
+		// Wait time in seconds
 		float m_WaitDuration = 0.0f;
 
 		bool m_Started = false;

@@ -133,7 +133,7 @@ namespace Saturn {
 			RawSerialisation::ReadSaturnBuffer( TemporaryBuffer, stream );
 
 			// Pass on the data to Recast to assume ownership of.
-			pNavMesh->addTile( TemporaryBuffer.Data, TemporaryBuffer.Size, DT_TILE_FREE_DATA, tileHeader.TileReference, nullptr );
+			pNavMesh->addTile( TemporaryBuffer.Data, (int)TemporaryBuffer.Size, DT_TILE_FREE_DATA, tileHeader.TileReference, nullptr );
 		}
 
 		stream.close();

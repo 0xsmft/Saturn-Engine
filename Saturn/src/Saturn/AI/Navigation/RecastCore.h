@@ -30,57 +30,71 @@
 
 #include "Saturn/Core/Base.h"
 
-#define RC_CHECK( x ) _rcCheckResult(x)
-#define DT_CHECK( x ) _dtCheckResult(x)
+#define RC_CHECK( x ) Saturn::_rcCheckResult(x)
+#define DT_CHECK( x ) Saturn::_dtCheckResult(x)
 
-inline void _rcCheckResult( bool Result )
-{
-	if( !Result )
+namespace Saturn {
+
+	inline void _rcCheckResult( bool Result )
 	{
-		SAT_CORE_INFO( "[Recast/Detour Error] Function operation did not succeed!" );
+		if( !Result )
+		{
+			SAT_CORE_INFO( "[Recast/Detour Error] Function operation did not succeed!" );
 
-		Saturn::Core::BreakDebug();
+			Core::BreakDebug();
+		}
 	}
-}
-
-inline void _dtCheckResult( unsigned int Result ) 
-{
-	if( dtStatusSucceed( Result ) )
-		return;
-
-	std::string errorCode;
-	if( Result & DT_FAILURE )
-		errorCode = "DT_FAILURE";
 	
-	if( Result & DT_IN_PROGRESS )
-		errorCode = "DT_IN_PROGRESS";
+	namespace Auxiliary {
 
-	unsigned int detail = Result & DT_STATUS_DETAIL_MASK;
-	if( detail & DT_WRONG_MAGIC )
-		errorCode = "DT_WRONG_MAGIC";
+		inline std::string DetourErrorToString( unsigned int Result )
+		{
+			std::string errorCode;
+			if( Result & DT_FAILURE )
+				errorCode = "DT_FAILURE";
 
-	if( detail & DT_WRONG_VERSION )
-		errorCode = "DT_WRONG_VERSION";
+			if( Result & DT_IN_PROGRESS )
+				errorCode = "DT_IN_PROGRESS";
 
-	if( detail & DT_OUT_OF_MEMORY )
-		errorCode = "DT_OUT_OF_MEMORY";
+			unsigned int detail = Result & DT_STATUS_DETAIL_MASK;
+			if( detail & DT_WRONG_MAGIC )
+				errorCode = "DT_WRONG_MAGIC";
 
-	if( detail & DT_INVALID_PARAM )
-		errorCode = "DT_INVALID_PARAM";
+			if( detail & DT_WRONG_VERSION )
+				errorCode = "DT_WRONG_VERSION";
 
-	if( detail & DT_BUFFER_TOO_SMALL )
-		errorCode = "DT_BUFFER_TOO_SMALL";
+			if( detail & DT_OUT_OF_MEMORY )
+				errorCode = "DT_OUT_OF_MEMORY";
 
-	if( detail & DT_OUT_OF_NODES )
-		errorCode = "DT_OUT_OF_NODES\n";
+			if( detail & DT_INVALID_PARAM )
+				errorCode = "DT_INVALID_PARAM";
 
-	if( detail & DT_PARTIAL_RESULT )
-		errorCode = "DT_PARTIAL_RESULT";
+			if( detail & DT_BUFFER_TOO_SMALL )
+				errorCode = "DT_BUFFER_TOO_SMALL";
 
-	if( detail & DT_ALREADY_OCCUPIED )
-		errorCode = "DT_ALREADY_OCCUPIED";
+			if( detail & DT_OUT_OF_NODES )
+				errorCode = "DT_OUT_OF_NODES\n";
 
-	SAT_CORE_INFO( "[Detour] Detour status check failed! STATUS/{0}", errorCode );
+			if( detail & DT_PARTIAL_RESULT )
+				errorCode = "DT_PARTIAL_RESULT";
 
-	Saturn::Core::BreakDebug();
+			if( detail & DT_ALREADY_OCCUPIED )
+				errorCode = "DT_ALREADY_OCCUPIED";
+
+			return errorCode;
+		}
+
+	}
+
+	inline void _dtCheckResult( unsigned int Result )
+	{
+		if( dtStatusSucceed( Result ) )
+			return;
+
+		std::string errorCode = Auxiliary::DetourErrorToString( Result );
+		SAT_CORE_INFO( "[Detour] Detour status check failed! STATUS/{0}", errorCode );
+
+		Core::BreakDebug();
+	}
+
 }

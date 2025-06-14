@@ -34,6 +34,8 @@ namespace Saturn {
 
 	class BehaviourTreeBaseTask;
 
+	// The base class for all nodes in the Behaviour Tree
+	// This class exists because it allows us to convert the node to BehaviourTree Tasks
 	class BehaviourTreeNodeBase : public NodeEditorTreeNode
 	{
 		SAT_NODE_EDITOR_NODE_BODY( NodeExecutionType::None );

@@ -34,6 +34,8 @@ namespace Saturn {
 
 	class NodeEditorTreeNode;
 
+	// Sequence	Node -- Could be thought of as a logical AND operator as it requires all children to succeed.
+	// NOTE: Calls to EvaluateNode only check if the Sequence has children, it does not actually do the sequence as that is done in the SequenceTask class
 	class BehaviourTreeSequenceNode : public BehaviourTreeNodeBase
 	{
 	public:

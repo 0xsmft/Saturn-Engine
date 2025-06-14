@@ -44,13 +44,13 @@ namespace Saturn {
 	void SoundNodeLibrary::RegisterAllNodes()
 	{
 		GlobalNodesList::RegisterLibrary( {
-			{ NodeExecutionType::SoundRandomSound, SoundNodeLibrary::SpawnRandomNode },
-			{ NodeExecutionType::SoundMixer,       SoundNodeLibrary::SpawnMixerNode },
+			{ NodeExecutionType::SoundOutput,      SoundNodeLibrary::SpawnOutputNode },
 			{ NodeExecutionType::SoundPlayer,      SoundNodeLibrary::SpawnPlayerNode },
-			{ NodeExecutionType::SoundPitch,       SoundNodeLibrary::SpawnPitchNode },
-			{ NodeExecutionType::SoundRandomPitch, SoundNodeLibrary::SpawnRandPitch },
-//			{ NodeExecutionType::SoundFloatConst,  SoundNodeLibrary::SpawnFloatConst },
-			{ NodeExecutionType::SoundOutput,      SoundNodeLibrary::SpawnOutputNode }
+			{ NodeExecutionType::SoundRandomSound, SoundNodeLibrary::SpawnRandomNode },
+			{ NodeExecutionType::SoundRandomPitch, SoundNodeLibrary::SpawnRandPitch  },
+			{ NodeExecutionType::SoundMixer,       SoundNodeLibrary::SpawnMixerNode  },
+			{ NodeExecutionType::SoundPitch,       SoundNodeLibrary::SpawnPitchNode  },
+//			{ NodeExecutionType::SoundFloatConst,  SoundNodeLibrary::SpawnFloatConst }
 		} );
 	}
 

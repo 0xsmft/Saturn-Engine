@@ -615,7 +615,7 @@ namespace Saturn {
 
 	void ContentBrowserItem::DrawIcon( const ImVec2& rThumbnailSize, const ImVec2& rTopLeft, const ImVec2& rBottomRight )
 	{
-		ImVec2 imageSize = ImVec2( m_Icon->Width(), m_Icon->Height() );
+		ImVec2 imageSize = ImVec2( ( float ) m_Icon->Width(), ( float ) m_Icon->Height() );
 		ImVec2 scaledSize = imageSize;
 
 		// TODO: We use 512x512 images not 180

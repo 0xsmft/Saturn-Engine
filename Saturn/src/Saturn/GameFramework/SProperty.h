@@ -74,6 +74,37 @@ namespace Saturn {
 		Unknown
 	};
 
+	// NOTE: The build tool has its own function of this however it is the full enum name (so, SPropertyType::Char instead of Char)
+	inline std::string SPropertyTypeToStringInNamespace( SPropertyType type )
+	{
+		switch( type )
+		{
+			case SPropertyType::Char: return "Char";
+			case SPropertyType::Float: return "Float";
+			case SPropertyType::Int: return "Int";
+			case SPropertyType::Double: return "Double";
+			case SPropertyType::Uint8: return "Uint8";
+			case SPropertyType::Uint16: return "Uint16";
+			case SPropertyType::Uint32: return "Uint32";
+			case SPropertyType::Uint64: return "Uint64";
+			case SPropertyType::Int8: return "Int8";
+			case SPropertyType::Int16: return "Int16";
+			case SPropertyType::Int64: return "Int64";
+			case SPropertyType::Vector2: return "Vector2";
+			case SPropertyType::Vector3: return "Vector3";
+			case SPropertyType::Vector4: return "Vector4";
+			case SPropertyType::String: return "String";
+			case SPropertyType::Asset: return "Asset";
+			case SPropertyType::Entity: return "Entity";
+			case SPropertyType::Class: return "Class";
+			case SPropertyType::Unknown: return "Unknown";
+
+			default: break;
+		}
+
+		return "";
+	}
+
 	//////////////////////////////////////////////////////////////////////////
 	// FUNCTION POINTERS
 

@@ -42,6 +42,17 @@
 #include <Detour/DetourNavMeshQuery.h>
 #include <glm/gtc/type_ptr.hpp>
 
+#define DT_CHECK_RETURN_FAIL_BT( x ) \
+{\
+unsigned int result = x; \
+if( dtStatusFailed( (result) ) ) \
+{ \
+	std::string errorText = Auxiliary::DetourErrorToString( result ); \
+	SAT_CORE_INFO( "[BehaviourTreeMoveToTask] Detour operation failed! Error code was DETOUR ERROR/{0}" ); \
+	return BehaviourTreeTaskState::Failed; \
+}\
+}
+
 namespace Saturn {
 
 	static float RcRandomFunction()
@@ -66,12 +77,11 @@ namespace Saturn {
 	BehaviourTreeMoveToTask::~BehaviourTreeMoveToTask()
 	{
 		m_Agent = nullptr;
+		Reset();
 	}
 
 	BehaviourTreeTaskState BehaviourTreeMoveToTask::Tick( Timestep ts )
 	{
-		return BehaviourTreeTaskState::Completed;
-
 		if( !m_Moving )
 		{
 			// InitPathTo will return Failed or Starting
@@ -96,28 +106,30 @@ namespace Saturn {
 		float outStartNearest[ 3 ], outEndNearest[ 3 ];
 
 		glm::vec3& rCurrentPosition = m_Agent->GetComponent<TransformComponent>().Position;
-		DT_CHECK( pNavMeshQuery->findNearestPoly( glm::value_ptr( rCurrentPosition ), polyPickExt, &filter, &startPoly, outStartNearest ) );
+		DT_CHECK_RETURN_FAIL_BT( pNavMeshQuery->findNearestPoly( glm::value_ptr( rCurrentPosition ), polyPickExt, &filter, &startPoly, outStartNearest ) );
 		
-		auto status = pNavMeshQuery->findNearestPoly( glm::value_ptr( m_TargetPosition ), polyPickExt, &filter, &endPoly, outEndNearest );
+		DT_CHECK_RETURN_FAIL_BT( pNavMeshQuery->findNearestPoly( glm::value_ptr( m_TargetPosition ), polyPickExt, &filter, &endPoly, outEndNearest ) );
 
+		/*
 		if( dtStatusFailed( status ) )
 		{
 			SAT_CORE_ERROR( "[BehaviourTreeMoveToTask] Invalid position! so unable to move Agent/{0} to {1}", m_Agent->GetName(), m_TargetPosition );
 			return BehaviourTreeTaskState::Failed;
 		}
+		*/
 
 		// Now that we have found the polys we can now build a path.
 		dtPolyRef pathRefs[ 256 ];
 		int pathCount = 0;
 		
-		DT_CHECK( pNavMeshQuery->findPath( startPoly, endPoly, outStartNearest, outEndNearest, &filter, pathRefs, &pathCount, 256 ) );
+		DT_CHECK_RETURN_FAIL_BT( pNavMeshQuery->findPath( startPoly, endPoly, outStartNearest, outEndNearest, &filter, pathRefs, &pathCount, 256 ) );
 
 		float straightPath[ 256 * 3 ];
 		unsigned char straightPathFlags[ 256 ];
 		dtPolyRef straightPathPolys[ 256 ];
 		int straightPathCount = 0;
 
-		status = pNavMeshQuery->findStraightPath( outStartNearest, outEndNearest, pathRefs, pathCount, straightPath, straightPathFlags, straightPathPolys, &straightPathCount, 256 );
+		auto status = pNavMeshQuery->findStraightPath( outStartNearest, outEndNearest, pathRefs, pathCount, straightPath, straightPathFlags, straightPathPolys, &straightPathCount, 256 );
 
 		if( dtStatusSucceed( status ) && straightPathCount > 0 )
 		{

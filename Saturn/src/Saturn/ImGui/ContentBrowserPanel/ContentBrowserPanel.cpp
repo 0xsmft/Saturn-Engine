@@ -392,8 +392,7 @@ namespace Saturn {
 				MaterialAssetSerialiser mas;
 				mas.Serialise( material );
 
-				AssetManagerSerialiser ars;
-				ars.Serialise();
+				AssetManager::Get().Save();
 
 				UpdateFiles( true );
 				FindAndRenameItem( asset->Name );
@@ -419,8 +418,7 @@ namespace Saturn {
 				PhysicsMaterialAssetSerialiser mas;
 				mas.Serialise( materialAsset );
 
-				AssetManagerSerialiser ars;
-				ars.Serialise();
+				AssetManager::Get().Save();
 
 				UpdateFiles( true );
 				FindAndRenameItem( asset->Name );
@@ -1724,7 +1722,7 @@ namespace Saturn {
 	void ContentBrowserPanel::DrawItemsClipped( std::vector<Ref<ContentBrowserItem>>& rList, ImVec2 size, float padding, int columnCount )
 	{
 		ImGuiListClipper clipper;
-		clipper.Begin( glm::ceil( ( float ) rList.size() / ( float ) columnCount ) );
+		clipper.Begin( (int)glm::ceil( ( float ) rList.size() / ( float ) columnCount ) );
 
 		// TODO: This is slow
 		//		 With 600+ items we start to see a frame drop.

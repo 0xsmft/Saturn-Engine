@@ -172,7 +172,7 @@ namespace Saturn {
 
 		ImGui::Text( "Sound Specification" );
 
-		if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24, 24 ) ) )
+		if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
 		{
 			open = true;
 		}

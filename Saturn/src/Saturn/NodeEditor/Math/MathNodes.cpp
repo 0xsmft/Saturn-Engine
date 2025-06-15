@@ -131,7 +131,7 @@ namespace Saturn {
 		float Result{};
 
 		float maxValue = std::numeric_limits<float>::lowest();
-		float maxIndex = 0;
+		size_t maxIndex = 0;
 
 		for( size_t i = 0; i < Inputs.size(); i++ )
 		{
@@ -273,7 +273,7 @@ namespace Saturn {
 		float Result{};
 
 		float maxValue = std::numeric_limits<float>::lowest();
-		float maxIndex = 0;
+		size_t maxIndex = 0;
 
 		for( size_t i = 0; i < Inputs.size(); i++ )
 		{

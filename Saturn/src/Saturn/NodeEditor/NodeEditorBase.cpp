@@ -122,7 +122,7 @@ namespace Saturn {
 		{
 			UUID::Serialise( key, rStream );
 
-			RawSerialisation::WriteObject( ( uint64_t ) value->ExecutionType, rStream );
+			RawSerialisation::WriteObject( ( std::underlying_type_t<NodeExecutionType> ) value->ExecutionType, rStream );
 
 			NodeEditorNodeBase::Serialise( value, rStream );
 		}
@@ -152,7 +152,7 @@ namespace Saturn {
 			UUID key = 0;
 			UUID::Deserialise( key, rStream );
 
-			uint64_t executionValue = 0;
+			std::underlying_type_t<NodeExecutionType> executionValue = 0;
 			RawSerialisation::ReadObject( executionValue, rStream );
 			NodeExecutionType executionType = ( NodeExecutionType ) executionValue;
 

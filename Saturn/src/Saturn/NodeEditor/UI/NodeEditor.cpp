@@ -655,7 +655,7 @@ namespace Saturn {
 		{
 			UUID::Serialise( key, rStream );
 
-			RawSerialisation::WriteObject( (uint64_t)value->ExecutionType, rStream );
+			RawSerialisation::WriteObject( (std::underlying_type_t<NodeExecutionType>)value->ExecutionType, rStream );
 
 			NodeEditorNodeBase::Serialise( value, rStream );
 		}
@@ -687,9 +687,24 @@ namespace Saturn {
 			UUID key = 0;
 			UUID::Deserialise( key, rStream );
 
-			uint64_t executionValue = 0;
-			RawSerialisation::ReadObject( executionValue, rStream );
-			NodeExecutionType executionType = ( NodeExecutionType ) executionValue;
+			// TODO: This is temporary, as we will need a system convert this
+			NodeExecutionType executionType = NodeExecutionType::None;
+
+			if( m_Version != SAT_CURRENT_VERSION )
+			{
+				uint64_t executionValue = 0;
+				RawSerialisation::ReadObject( executionValue, rStream );
+
+				executionType = ( NodeExecutionType ) executionValue;
+			}
+			else
+			{
+				// In 0.2.2+, std::underlying_type_t is now used
+				std::underlying_type_t<NodeExecutionType> executionValue = 0;
+				RawSerialisation::ReadObject( executionValue, rStream );
+
+				executionType = ( NodeExecutionType ) executionValue;
+			}
 
 			Ref<NodeEditorNodeBase> node = GlobalNodesList::ConvertExecutionTypeToNode( executionType, this );
 			

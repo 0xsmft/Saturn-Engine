@@ -28,12 +28,12 @@
 
 #pragma once
 
-#include "Saturn/ImGui/AssetViewer.h"
-
 #include "NodeEditorCompilationStatus.h"
-
 #include "NodeEditorNodeBase.h"
 #include "Link.h"
+
+#include "Saturn/Core/VariableGuard.h"
+#include "Saturn/ImGui/AssetViewer.h"
 
 #include "imgui_node_editor.h"
 

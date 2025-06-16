@@ -317,7 +317,7 @@ namespace Saturn {
 
 	NodeEditorCompilationStatus NodeEditorBase::Evaluate()
 	{
-		if( !m_Runtime || m_State == NodeEditorState::Loading || !HasPrivilege( NodeEditorPrivileges_Evaluation ) )
+		if( !m_Runtime || m_State == NodeEditorState::Loading || !HasPrivilege( NodeEditorPrivileges::Evaluation ) )
 			return NodeEditorCompilationStatus::Failed;
 
 		m_State = NodeEditorState::Evaluating;
@@ -406,15 +406,15 @@ namespace Saturn {
 
 	bool NodeEditorBase::HasPrivilege( NodeEditorPrivileges privilege ) const
 	{
-		return m_Privileges & privilege;
+		return ( m_Privileges & privilege ) == privilege;
 	}
 
 	void NodeEditorBase::SetPrivileges( NodeEditorPrivileges privilege, bool value )
 	{
 		if( value )
-			m_Privileges |= ( NodeEditorPrivileges ) privilege;
+			m_Privileges = m_Privileges | privilege;
 		else
-			m_Privileges &= ~( NodeEditorPrivileges ) privilege;
+			m_Privileges = m_Privileges & ~privilege;
 	}
 
 	void NodeEditorBase::AddNode( Ref<NodeEditorNodeBase> node )
@@ -425,6 +425,8 @@ namespace Saturn {
 		m_Nodes[ node->ID ] = node;
 
 		BuildNode( node );
+
+		VariableGuard<ed::EditorContext*> guard( m_Editor );
 
 		if( node->Position.x != 0.0f && node->Position.y != 0.0f )
 			ed::SetNodePosition( ed::NodeId( node->ID ), node->Position );

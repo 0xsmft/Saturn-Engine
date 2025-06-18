@@ -419,7 +419,7 @@ namespace Saturn {
 			for( int i = 0; i < m_pPolyMesh->npolys; ++i )
 			{
 				if( m_pPolyMesh->areas[ i ] == RC_WALKABLE_AREA )
-					m_pPolyMesh->areas[ i ] = (std::underlying_type<NavigationMeshArea>::type) NavigationMeshArea::Ground;
+					m_pPolyMesh->areas[ i ] = (std::underlying_type_t<NavigationMeshArea> ) NavigationMeshArea::Ground;
 
 				if( m_pPolyMesh->areas[ i ] == ( int ) NavigationMeshArea::Ground ||
 					m_pPolyMesh->areas[ i ] == ( int ) NavigationMeshArea::Grass ||
@@ -427,11 +427,11 @@ namespace Saturn {
 				{
 					m_pPolyMesh->flags[ i ] = NavigationMeshPolyFlag_Walk;
 				}
-				else if( m_pPolyMesh->areas[ i ] == ( std::underlying_type<NavigationMeshArea>::type )NavigationMeshArea::Water )
+				else if( m_pPolyMesh->areas[ i ] == ( std::underlying_type_t<NavigationMeshArea> )NavigationMeshArea::Water )
 				{
 					m_pPolyMesh->flags[ i ] = NavigationMeshPolyFlag_Swim;
 				}
-				else if( m_pPolyMesh->areas[ i ] == ( std::underlying_type<NavigationMeshArea>::type )NavigationMeshArea::Door )
+				else if( m_pPolyMesh->areas[ i ] == ( std::underlying_type_t<NavigationMeshArea> )NavigationMeshArea::Door )
 				{
 					m_pPolyMesh->flags[ i ] = NavigationMeshPolyFlag_Walk | NavigationMeshPolyFlag_Door;
 				}

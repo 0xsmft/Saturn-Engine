@@ -104,7 +104,7 @@ namespace Saturn {
 		navMeshBounds.Min = { FLT_MAX, FLT_MAX, FLT_MAX };
 		navMeshBounds.Max = { -FLT_MAX, -FLT_MAX, -FLT_MAX };
 
-#if defined(SAT_X31_VERT_INTERSECT_X21)
+#if defined(SAT_VERT_INTERSECT)
 		for( auto& rEntity : m_Scene->GetAllEntitiesWith<StaticMeshComponent>() )
 		{
 			auto& mesh = rEntity->GetComponent<StaticMeshComponent>();

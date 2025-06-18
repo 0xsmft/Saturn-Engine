@@ -26,102 +26,58 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "RecastDebugVisualisation.h"
+#pragma once
 
-#include "Saturn/Vulkan/Renderer2D.h"
-
-#include "Recast/Recast.h"
-
-#include <glm/gtc/type_ptr.hpp>
+#include <glm/glm.hpp>
+#include <vector>
 
 namespace Saturn {
-	
-	RecastDebugVisualisation::RecastDebugVisualisation()
-		: duDebugDraw()
+
+	// A navigation path from one poly to another
+	// The NavPath class does not preform any modification of a position
+	// It simply creates the path, and provides a way to get the current point and move onto the next path
+	// NavPath essentially wraps a detour straight path
+	// NavPaths have the ability to be Serialised, allowing for pre-baked paths
+	class NavPath
 	{
-	}
+	public:
+		NavPath( const glm::vec3& rTo, const glm::vec3& rFrom );
+		~NavPath();
 
-	RecastDebugVisualisation::~RecastDebugVisualisation()
-	{
+		[[nodiscard]] bool CreatePath();
+		void InvalidatePath();
 
-	}
+		[[nodiscard]] uint32_t GetCurrentWaypointIndex() const { return m_CurrentWaypoint; }
+		[[nodiscard]] uint32_t GetNextWaypointIndex() const { return m_CurrentWaypoint + 1; }
+		[[nodiscard]] bool IsLive() const { return m_IsLive; }
+		[[nodiscard]] glm::vec3 GetCurrentWaypoint();
 
-	void RecastDebugVisualisation::depthMask( bool state )
-	{
-		// we only support drawing lines
-	}
-
-	void RecastDebugVisualisation::texture( bool state )
-	{
-	}
-
-	void RecastDebugVisualisation::begin( duDebugDrawPrimitives prim, float size /*= 1.0f */ )
-	{
-		m_CurrentPolygonMode = prim;
-		m_Scale = size;
-	}
-
-	static glm::vec4 UnpackColor( unsigned int color ) 
-	{
-		float r = ( color & 0xFF ) / 255.0f;
-		float g = ( ( color >> 8 ) & 0xFF ) / 255.0f;
-		float b = ( ( color >> 16 ) & 0xFF ) / 255.0f;
-		float a = ( ( color >> 24 ) & 0xFF ) / 255.0f;
-
-		return glm::vec4( r, g, b, a );
-	}
-
-	void RecastDebugVisualisation::vertex( const float* pos, unsigned int color )
-	{
-		glm::vec3 start = glm::vec3( pos[ 0 ], pos[ 1 ], pos[ 2 ] );
-		start.y += 1.0f;
-		DrawInternal( start, UnpackColor( color ) );
-	}
-
-	void RecastDebugVisualisation::vertex( const float x, const float y, const float z, unsigned int color )
-	{
-		glm::vec3 start = glm::vec3( x, y, z );
-		DrawInternal( start, UnpackColor( color ) );
-	}
-
-	void RecastDebugVisualisation::vertex( const float* pos, unsigned int color, const float* uv )
-	{
-		// We don't support textured lines
-		glm::vec3 start = glm::vec3( pos[ 0 ], pos[ 1 ], pos[ 2 ] );
-		DrawInternal( start, UnpackColor( color ) );
-	}
-
-	void RecastDebugVisualisation::vertex( const float x, const float y, const float z, unsigned int color, const float u, const float v )
-	{
-		// We don't support textured lines
-		glm::vec3 start = glm::vec3( x, y, z );
-		DrawInternal( start, UnpackColor( color ) );
-	}
-
-	void RecastDebugVisualisation::end()
-	{
-	}
-
-	void RecastDebugVisualisation::DrawInternal( const glm::vec3& rPosition, const glm::vec4& rColor )
-	{
-		switch( m_CurrentPolygonMode )
+		// Move onto the next waypoint index
+		inline void NextWaypoint()
 		{
-			case DU_DRAW_POINTS:
-				break;
+			m_CurrentWaypoint++;
 
-			case DU_DRAW_LINES:
-				Renderer2D::Get().SubmitSingleLine( rPosition, rColor );
-				break;
-
-			case DU_DRAW_QUADS:
-				Renderer2D::Get().SubmitQuad( rPosition, rColor, glm::vec2{ m_Scale } );
-				break;
-
-			case DU_DRAW_TRIS:
-				Renderer2D::Get().SubmitTriangle1( rPosition, rColor );
-				break;
+			if( m_CurrentWaypoint >= m_PathPoints.size() )
+			{
+				InvalidatePath();
+			}
 		}
-	}
 
+		// Change the path to a completely different start and end point.
+		[[nodiscard]] bool RetargetPath( const glm::vec3& rTo, const glm::vec3& rFrom );
+
+	public:
+		static void Serialise( const NavPath& rObject, std::ofstream& rStream );
+		static void Deserialise(     NavPath& rObject, std::istream& rStream );
+
+	private:
+		glm::vec3 m_To;
+		glm::vec3 m_From;
+		
+		uint32_t m_CurrentWaypoint = 0;
+		bool m_IsLive = false;
+
+		std::vector<glm::vec3> m_PathPoints;
+	};
+	
 }

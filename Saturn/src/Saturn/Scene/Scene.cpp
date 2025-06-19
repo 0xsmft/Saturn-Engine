@@ -421,7 +421,7 @@ namespace Saturn {
 					if( Ref<NavBoundsEntity> boundsEntity = rSelectedEntity.As<NavBoundsEntity>() )
 					{
 						Renderer2D::Get().SubmitAABB( boundsEntity->GetBoundingBox(), glm::vec4( 0.0f, 1.0f, 0.0, 1.0f ) );
-						boundsEntity->GetBuilder().DebugDraw();
+						boundsEntity->DebugDraw();
 					}
 				}
 			}

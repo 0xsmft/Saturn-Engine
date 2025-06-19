@@ -47,7 +47,7 @@
 
 namespace Saturn {
 
-	static std::filesystem::path GetFilepathAbs( const std::filesystem::path& rPath, bool IsEditorAsset = false ) 
+	static std::filesystem::path GetFilepathAbs( const std::filesystem::path& rPath ) 
 	{
 		return Project::GetActiveProject()->FilepathAbs( rPath );
 	}
@@ -316,7 +316,7 @@ namespace Saturn {
 
 		std::wstring path = std::filesystem::relative( mesh->FilePath(), Project::GetActiveProject()->GetRootDir() );
 
-		// On Windows make serialise as a Linux path for Linux support 
+		// On Windows we serialise the path as a Linux path for Linux support 
 #if defined(SAT_PLATFORM_WINDOWS)
 		std::replace( path.begin(), path.end(), L'\\', L'/' );
 

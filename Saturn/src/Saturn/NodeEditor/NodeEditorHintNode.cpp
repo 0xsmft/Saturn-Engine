@@ -26,24 +26,97 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "NodeEditorHintNode.h"
 
-#include "NodeEditorNodeBase.h"
+#include "UI/NodeEditor.h"
+#include <imgui_internal.h>
 
 namespace Saturn {
 
-	// Base class for all "blueprint" nodes
-	// By blueprint we mean the traditional look of a node
-	class NodeEditorBlueprintNode : public NodeEditorNodeBase
+	NodeEditorHintNode::NodeEditorHintNode( const std::string& rName )
+		: NodeEditorNodeBase( rName )
 	{
-		SAT_NODE_EDITOR_NODE_BODY( NodeExecutionType::None );
-	public:
-		NodeEditorBlueprintNode() = default;
-		NodeEditorBlueprintNode( const std::string& rName );
-		virtual ~NodeEditorBlueprintNode();
+		Type = NodeRenderType::Comment;
+		ExecutionType = NodeExecutionType::HintNode;
+	}
 
-		void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, NodeEditorBase* pBase ) override;
-		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) { return NodeEvaluationState::Failed; }
-	};
+	NodeEditorHintNode::~NodeEditorHintNode()
+	{
+	}
+
+	void NodeEditorHintNode::Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, NodeEditorBase* pBase )
+	{
+		constexpr float HINT_ALPHA = 0.75f;
+
+		ImGui::PushStyleVar( ImGuiStyleVar_Alpha, HINT_ALPHA );
+
+		ed::PushStyleColor( ed::StyleColor_NodeBg, ImColor( 255, 255, 255, 64 ) );
+		ed::PushStyleColor( ed::StyleColor_NodeBorder, ImColor( 255, 255, 255, 64 ) );
+
+		ed::BeginNode( ed::NodeId( ID ) );
+		ImGui::PushID( ( int ) ID );
+
+		ImGui::BeginVertical( "content" );
+		ImGui::BeginHorizontal( "horizontal" );
+
+		ImGui::Spring( 1 );
+		ImGui::TextUnformatted( Name.c_str() );
+		ImGui::Spring( 1 );
+
+		ImGui::EndHorizontal();
+		
+		ed::Group( Size );
+		ImGui::EndVertical();
+		ImGui::PopID();
+
+		ed::EndNode();
+		ed::PopStyleColor( 2 );
+
+		ImGui::PopStyleVar();
+
+		if( ed::BeginGroupHint( ed::NodeId( ID ) ) )
+		{
+			auto bgAlpha = static_cast< int >( ImGui::GetStyle().Alpha * 255 );
+			auto min = ed::GetGroupMin();
+
+			ImGui::SetCursorScreenPos( min - ImVec2( -8.0f, ImGui::GetTextLineHeightWithSpacing() + 4.0f ) );
+			ImGui::BeginGroup();
+			ImGui::TextUnformatted( Name.c_str() );
+			ImGui::EndGroup();
+
+			auto* pDrawList = ed::GetHintBackgroundDrawList();
+
+			auto hintBounds = ImRect( ImGui::GetItemRectMin(), ImGui::GetItemRectMax() );
+			hintBounds.Expand( ImVec2( 8.0f, 4.0f ) );
+
+			pDrawList->AddRectFilled(
+				hintBounds.GetTL(),
+				hintBounds.GetBR(),
+				IM_COL32( 255, 255, 255, 64 * bgAlpha / 255 ), 4.0f );
+
+			pDrawList->AddRect(
+				hintBounds.GetTL(),
+				hintBounds.GetBR(),
+				IM_COL32( 255, 255, 255, 128 * bgAlpha / 255 ), 4.0f );
+		}
+		ed::EndGroupHint();
+	}
+
+	NodeEvaluationState NodeEditorHintNode::EvaluateNode( NodeEditorRuntime* evaluator )
+	{
+		return NodeEvaluationState::NeverEvaluated;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// STATIC API
+
+	Ref<NodeEditorHintNode> NodeEditorHintNode::SpawnHintNode( Ref<NodeEditorBase> nodeEditor )
+	{
+		Ref<NodeEditorHintNode> node = Ref<NodeEditorHintNode>::Create();
+		nodeEditor->AddNode( node );
+
+		return node;
+	}
 
 }

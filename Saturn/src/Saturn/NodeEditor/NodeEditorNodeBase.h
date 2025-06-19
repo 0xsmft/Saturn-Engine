@@ -86,6 +86,7 @@ namespace Saturn {
 		BehaviourTreeWaitNode,
 		BehaviourTreePlaySoundNode,
 		BehaviourTreeMoveTo,
+		HintNode, // Comment node
 		None
 	};
 
@@ -109,24 +110,26 @@ static inline NodeExecutionType GetStaticExecutionType() { return ExecutionType;
 		std::string Name;
 		std::vector<Ref<Pin>> Inputs;
 		std::vector<Ref<Pin>> Outputs;
-		ImColor Color;
 		NodeRenderType Type = NodeRenderType::Blueprint;
 		NodeExecutionType ExecutionType = NodeExecutionType::None;
-		ImVec2 Size;
-		ImVec2 Position;
 		bool CanBeDeleted = true;
 
 #if !defined(SAT_DIST)
+		ImColor Color;
+		ImVec2 Size;
+		ImVec2 Position;
+
 		size_t EvaluationOrder = 0;
-#endif
 
 		std::string ActiveState;
 		std::string SavedState;
+#endif
 
 	public:
 #if !defined(SAT_DIST)
 		using IStream = std::ifstream;
 #else
+		// In Dist, we read from a VFS file which is not an actual file so we can't use std::ifstream
 		using IStream = std::istream;
 #endif
 	public:
@@ -139,7 +142,15 @@ static inline NodeExecutionType GetStaticExecutionType() { return ExecutionType;
 		virtual void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, NodeEditorBase* pBase ) = 0;
 		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) = 0;
 		
+#if !defined(SAT_DIST)
+		// This function is not pure virtual because not every Node needs a special right click menu
+		// Unlike Render and Evaluate where every Node needs to have some sort of implementation for those functions
+		// The same rule applies for OnRenderOutput, OnRenderInput, OnSerialise, OnDeserialise
+		virtual void RenderContextWindow() {}
+#endif
+
 	public:
+		// Static Serialise/Deserialise called by NodeCache
 		static void Serialise( const Ref<NodeEditorNodeBase>& rObject, std::ofstream& rStream );
 		static void Deserialise( Ref<NodeEditorNodeBase>& rObject, IStream& rStream );
 
@@ -148,6 +159,7 @@ static inline NodeExecutionType GetStaticExecutionType() { return ExecutionType;
 		virtual void OnRenderInput( Ref<Pin> pin ) {}
 
 	protected:
+		// A helper function to all child classes to write their data when Serialising/Deserialising
 		virtual void OnSerialise( std::ofstream& rStream ) const {}
 		virtual void OnDeserialise( IStream& rStream ) {}
 	};

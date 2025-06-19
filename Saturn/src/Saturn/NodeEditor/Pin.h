@@ -156,6 +156,7 @@ namespace Saturn {
 
 	public:
 		UUID           ID;
+		// TODO: Use weak ref
 		Ref<NodeEditorNodeBase>      Node;
 		std::string    Name;
 		PinType        Type = PinType::Flow;

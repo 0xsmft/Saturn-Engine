@@ -41,6 +41,7 @@ namespace Saturn {
 	class NavPath
 	{
 	public:
+		NavPath() = default;
 		NavPath( const glm::vec3& rTo, const glm::vec3& rFrom );
 		~NavPath();
 
@@ -71,8 +72,8 @@ namespace Saturn {
 		static void Deserialise(     NavPath& rObject, std::istream& rStream );
 
 	private:
-		glm::vec3 m_To;
-		glm::vec3 m_From;
+		glm::vec3 m_To{};
+		glm::vec3 m_From{};
 		
 		uint32_t m_CurrentWaypoint = 0;
 		bool m_IsLive = false;

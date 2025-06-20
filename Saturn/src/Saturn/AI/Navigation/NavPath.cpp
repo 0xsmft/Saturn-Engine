@@ -69,9 +69,9 @@ namespace Saturn {
 		float polyPickExt[ 3 ] = { 2.0f, 2.0f, 2.0f }; // Extent of the poly pick.
 
 		float outStartNearest[ 3 ], outEndNearest[ 3 ];
-		DT_CHECK_AND_RETURN( pNavMeshQuery->findNearestPoly( glm::value_ptr( m_To ), polyPickExt, &filter, &startPoly, outStartNearest ) );
+		DT_CHECK_AND_RETURN( pNavMeshQuery->findNearestPoly( glm::value_ptr( m_From ), polyPickExt, &filter, &startPoly, outStartNearest ) );
 
-		DT_CHECK_AND_RETURN( pNavMeshQuery->findNearestPoly( glm::value_ptr( m_From ), polyPickExt, &filter, &endPoly, outEndNearest ) );
+		DT_CHECK_AND_RETURN( pNavMeshQuery->findNearestPoly( glm::value_ptr( m_To ), polyPickExt, &filter, &endPoly, outEndNearest ) );
 
 		// Found the polys, build the actual path
 		dtPolyRef pathRefs[ 256 ];
@@ -88,13 +88,12 @@ namespace Saturn {
 
 		if( dtStatusSucceed( status ) && straightPathCount > 0 )
 		{
-			m_PathPoints.clear();
 			m_PathPoints.reserve( straightPathCount );
 
-			for( int i = 0; i < straightPathCount; i++ )
+			for( size_t i = 0; i < straightPathCount; i++ )
 			{
 				float* pPath = &straightPath[ i * 3 ];
-				m_PathPoints.push_back( glm::vec3( pPath[ 0 ], pPath[ 1 ], pPath[ 2 ] ) );
+				m_PathPoints.emplace_back( pPath[ 0 ], pPath[ 1 ], pPath[ 2 ] );
 			}
 	
 			m_IsLive = true;

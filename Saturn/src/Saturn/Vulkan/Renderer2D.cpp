@@ -580,6 +580,48 @@ namespace Saturn {
 		m_LineVertexCount++;
 	}
 
+	void Renderer2D::SubmitDiamond( const glm::vec3& rCenter, float size, const glm::vec4& rColor )
+	{
+		const float halfSize = size * 0.5f;
+
+		const glm::vec3 top     = rCenter + glm::vec3( 0.0f, halfSize, 0.0f );
+		const glm::vec3 bottom  = rCenter + glm::vec3( 0.0f, -halfSize, 0.0f );
+
+		// Square in the middle
+		const glm::vec3 front   = rCenter + glm::vec3( 0.0f, 0.0f, halfSize );
+		const glm::vec3 back    = rCenter + glm::vec3( 0.0f, 0.0f, -halfSize );
+		const glm::vec3 right   = rCenter + glm::vec3( halfSize, 0.0f, 0.0f );
+		const glm::vec3 left    = rCenter + glm::vec3( -halfSize, 0.0f, 0.0f );
+
+		// A diamond is a square on the XZ plane (when looking right down at it)
+		/*
+		*
+		*
+		*		 top
+		*		  *
+		*		 /|\
+		*	    / | \
+		* left *--+--* right
+		*	    \ | /
+		*		 \|/
+		*		  *
+		*		bottom
+		*
+		*/
+
+		// Top 4, draw line from top to every corner on the square
+		SubmitLine( top, front, rColor );
+		SubmitLine( top, back, rColor );
+		SubmitLine( top, left, rColor );
+		SubmitLine( top, right, rColor );
+
+		// Bottom 4, draw line from bottom to every corner on the square
+		SubmitLine( bottom, front, rColor );
+		SubmitLine( bottom, back, rColor );
+		SubmitLine( bottom, left, rColor );
+		SubmitLine( bottom, right, rColor );
+	}
+
 	void Renderer2D::SubmitAABB( const AABB& rAABB, const glm::mat4& rTransform, const glm::vec4& rColor )
 	{
 		glm::vec4 corners[ 8 ] =

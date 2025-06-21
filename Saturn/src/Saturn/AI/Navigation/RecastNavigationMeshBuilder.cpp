@@ -207,7 +207,7 @@ namespace Saturn {
 		return m_pNavMesh != nullptr;
 	}
 
-	void RecastNavigationMeshBuilder::DebugDraw()
+	void RecastNavigationMeshBuilder::DebugDrawNavMesh()
 	{
 #if !defined(SAT_DIST)
 		if( m_pNavMesh ) 

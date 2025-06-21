@@ -86,7 +86,7 @@ namespace Saturn {
 		m_MinBounds = rAABB.Min;
 		m_MaxBounds = rAABB.Max;
 
-		rcCreateChunkyTriMesh( m_ExportData.VertexBuffer.data(), m_ExportData.IndexBuffer.data(), m_ExportData.IndexBuffer.size() / 3, 256, m_pChunkyTriMesh );
+		rcCreateChunkyTriMesh( m_ExportData.VertexBuffer.data(), m_ExportData.IndexBuffer.data(), (int)m_ExportData.IndexBuffer.size() / 3, 256, m_pChunkyTriMesh );
 	}
 
 	//////////////////////////////////////////////////////////////////////////

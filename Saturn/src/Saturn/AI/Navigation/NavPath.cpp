@@ -33,6 +33,8 @@
 
 #include "Saturn/Serialisation/RawSerialisation.h"
 
+#include "Saturn/Vulkan/Renderer2D.h"
+
 #include <Detour/DetourNavMeshQuery.h>
 #include <glm/gtc/type_ptr.hpp>
 
@@ -123,6 +125,29 @@ namespace Saturn {
 
 		InvalidatePath();
 		return CreatePath();
+	}
+
+	void NavPath::DebugDraw()
+	{
+		if( !m_IsLive )
+			return;
+
+		const glm::vec4 startColor = glm::vec4( 0.0f, 1.0f, 0.0f, 1.0f );
+		const glm::vec4 pathColor  = glm::vec4( 1.0f, 1.0f, 0.0f, 1.0f );
+		const glm::vec4 endColor   = glm::vec4( 1.0f, 0.0f, 0.0f, 1.0f );
+
+		for( size_t i = 0; i < m_PathPoints.size() - 1; i++ )
+		{
+			const glm::vec3& rPathA = m_PathPoints[ i ];
+			const glm::vec3& rPathB = m_PathPoints[ i + 1 ];
+
+			glm::vec4 color = pathColor;
+			if( i == 0 ) color = startColor;
+			else if( i == m_PathPoints.size() - 1 ) color = endColor;
+
+			Renderer2D::Get().SubmitLine( rPathA, rPathB, color );
+			Renderer2D::Get().SubmitDiamond( rPathB, 0.75f, color );
+		}
 	}
 
 	//////////////////////////////////////////////////////////////////////////

@@ -244,7 +244,7 @@ namespace Saturn {
 		void CopyScene( Ref<Scene>& NewScene );
 		void Empty();
 
-		[[nodiscard]] bool IsRuntimeActive() const { return m_RuntimeState != RuntimeState::NoState || m_RuntimeState != RuntimeState::Ending; }
+		[[nodiscard]] bool IsRuntimeActive() const { return m_RuntimeState != RuntimeState::NoState && m_RuntimeState != RuntimeState::Ending; }
 
 		[[nodiscard]] bool IsRuntimeRunning() const { return m_RuntimeState == RuntimeState::Running; }
 

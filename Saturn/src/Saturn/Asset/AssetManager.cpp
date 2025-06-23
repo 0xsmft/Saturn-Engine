@@ -96,7 +96,7 @@ namespace Saturn {
 		return m_Assets->PathToID( rPath );
 	}
 
-	void AssetManager::Save()
+	void AssetManager::Save() const
 	{
 		AssetManagerSerialiser ars;
 		ars.Serialise();

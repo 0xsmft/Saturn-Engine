@@ -64,9 +64,9 @@ namespace Saturn {
 		void RemoveAsset( AssetID id );
 		void DestroyAsset( AssetID id );
 
-		[[nodiscard]] bool DoesIDExists( AssetID id );
+		[[nodiscard]] bool DoesIDExists( AssetID id ) const;
 
-		size_t GetSize();
+		size_t GetSize() const;
 
 		const UnorderedAssetMap& GetAssetMap() const { return m_Assets; }
 		const UnorderedAssetMap& GetLoadedAssetsMap() const { return m_LoadedAssets; }
@@ -76,7 +76,7 @@ namespace Saturn {
 
 	private:
 		void AddAsset( AssetID id );
-		bool IsAssetLoaded( AssetID id );
+		bool IsAssetLoaded( AssetID id ) const;
 
   	private:
 		UnorderedAssetMap m_Assets;

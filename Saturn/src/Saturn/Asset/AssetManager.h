@@ -107,7 +107,7 @@ namespace Saturn {
 
 		AssetID PathToID( const std::filesystem::path& rPath );
 
-		void Save();
+		void Save() const;
 
 		template<typename Func>
 		void Each( Func Function ) 
@@ -118,7 +118,7 @@ namespace Saturn {
 			}
 		}
 
-		[[nodiscard]] bool DoesAssetIDExist( AssetID id ) 
+		[[nodiscard]] bool DoesAssetIDExist( AssetID id ) const
 		{
 			return m_Assets->DoesIDExists( id );
 		}
@@ -131,7 +131,7 @@ namespace Saturn {
 			}
 		}
 
-		size_t GetAssetRegistrySize() { return m_Assets->GetSize(); }
+		size_t GetAssetRegistrySize() const { return m_Assets->GetSize(); }
 
 	public:
 		// Memory Asset Dependencies

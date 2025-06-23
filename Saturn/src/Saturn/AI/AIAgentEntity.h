@@ -30,6 +30,7 @@
 
 #include "Saturn/GameFramework/Core/GameScript.h"
 #include "Saturn/Scene/Entity.h"
+
 #include "Navigation/NavBoundsEntity.h"
 
 namespace Saturn {
@@ -62,13 +63,6 @@ namespace Saturn {
 
 		Ref<NavBoundsEntity> m_NavBoundsEntity;
 		Ref<BehaviourTree> m_BehaviourTree;
-
-		int m_FrameCount = 10;
-		bool m_Moving = false;
-		glm::vec3 m_TargetPosition{};
-
-		std::vector<glm::vec3> m_PathPoints;
-		size_t m_CurrentPathIndex = 0;
 	};
 	
 }

@@ -155,17 +155,17 @@ namespace Saturn {
 		}
 	}
 
-	bool AssetRegistry::DoesIDExists( AssetID id )
+	bool AssetRegistry::DoesIDExists( AssetID id ) const
 	{
 		return m_Assets.contains( id );
 	}
 
-	bool AssetRegistry::IsAssetLoaded( AssetID id )
+	bool AssetRegistry::IsAssetLoaded( AssetID id ) const
 	{
 		return m_LoadedAssets.contains( id );
 	}
 
-	size_t AssetRegistry::GetSize()
+	size_t AssetRegistry::GetSize() const
 	{
 		return m_Assets.size();
 	}

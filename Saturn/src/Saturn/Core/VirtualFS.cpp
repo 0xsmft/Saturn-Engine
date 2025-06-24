@@ -199,8 +199,6 @@ namespace Saturn {
 			return;
 		}
 
-		auto& MountBasePath = Itr->second;
-
 		// Get the mount base folder.
 		Ref<VDirectory>& rMountBaseDir = m_RootDirectory->Directories[ rID ];
 
@@ -227,8 +225,6 @@ namespace Saturn {
 
 			return;
 		}
-
-		auto& MountBasePath = Itr->second;
 
 		// Get the mount base folder.
 		Ref<VDirectory>& rMountBaseDir = m_RootDirectory->Directories[ rMountBase ];

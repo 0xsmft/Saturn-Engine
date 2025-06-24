@@ -77,7 +77,12 @@ namespace Saturn {
 
 	void ClassMetadataHandler::InitialiseEngineClass( const std::string& rName, SClassFlags flags, CreateSClassFn function )
 	{
-		m_SpawnableEngineClasses[ rName ] = function;
+		const auto Itr = m_SpawnableEngineClasses.find( rName );
+
+		if( Itr == m_SpawnableEngineClasses.end() )
+		{
+			m_SpawnableEngineClasses[ rName ] = function;
+		}
 	}
 
 	Saturn::Entity* ClassMetadataHandler::SpawnEngineClass( const std::string& rScriptName )

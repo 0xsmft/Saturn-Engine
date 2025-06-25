@@ -29,6 +29,7 @@
 #pragma once
 
 #include "Saturn/Scene/Entity.h"
+
 #include "RecastNavigationMeshBuilder.h"
 
 class dtNavMeshQuery;
@@ -45,6 +46,7 @@ namespace Saturn {
 		void OnUpdate( Saturn::Timestep ts ) override;
 		void OnPhysicsUpdate( Saturn::Timestep ts ) override;
 
+	public:
 		void SetAABB( const glm::vec3& rCenter, const glm::vec3& rExtent );
 		AABB GetBoundingBox();
 
@@ -56,6 +58,8 @@ namespace Saturn {
 		[[nodiscard]] bool NeedsRebuilding() const { return m_NeedsRebuilding; }
 		void CleanDirty() { m_NeedsRebuilding = false; }
 		void MarkDirty() { m_NeedsRebuilding = true; }
+
+		void DebugDraw();
 #else
 		bool NeedsRebuilding() const { return false; }
 		void CleanDirty() { }

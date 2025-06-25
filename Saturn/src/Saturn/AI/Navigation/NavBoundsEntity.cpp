@@ -208,6 +208,13 @@ namespace Saturn {
 		GetComponent<NavigationMeshSpecificationComponent>().HasBuilt = m_Builder.TryLoadFromCache( path );
 	}
 
+#if !defined(SAT_DIST)
+	void NavBoundsEntity::DebugDraw()
+	{
+		m_Builder.DebugDrawNavMesh();
+	}
+#endif
+
 }
 
 #include "Saturn/GameFramework/Core/EngineGenerated.h"

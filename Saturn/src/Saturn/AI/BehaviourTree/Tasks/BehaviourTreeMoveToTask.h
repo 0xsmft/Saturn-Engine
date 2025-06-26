@@ -30,6 +30,8 @@
 
 #include "BehaviourTreeBaseTask.h"
 
+#include "Saturn/AI/Navigation/NavPath.h"
+
 namespace Saturn {
 
 	class AIAgentEntity;
@@ -45,16 +47,13 @@ namespace Saturn {
 		virtual void Reset() override;
 
 	private:
-		bool m_Moving = false;
-		size_t m_CurrentWaypointIndex = 0;
 		Ref<AIAgentEntity> m_Agent;
 
 		glm::vec3 m_TargetPosition{};
-		std::vector<glm::vec3> m_Waypoints;
+		NavPath m_Path{};
 
 	private:
 		[[nodiscard]] BehaviourTreeTaskState InitPathTo();
-		void ClearWaypoints();
 		[[nodiscard]] BehaviourTreeTaskState WalkToNextWaypoint( Timestep ts );
 	};
 	

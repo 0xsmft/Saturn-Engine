@@ -123,15 +123,11 @@ namespace Saturn {
 
 		ImGuiTextFilter m_TextFilter;
 
-		bool m_ShowFolderPopupMenu = false;
-
 		struct AssetInfo
 		{
 			AssetType Type;
 			std::filesystem::path Path;
 		};
-
-		bool m_RenderCreateWindow = false;
 
 		SClassMetadata m_SelectedMetadata = {};
 
@@ -142,7 +138,6 @@ namespace Saturn {
 		std::vector<ContentBrowserQuickAction> m_QuickActionRedo;
 
 	private:
-		bool m_ShowAssetImportPopup = false;
 		AssetType m_AssetImportType = AssetType::Unknown;
 		std::filesystem::path m_ImportAssetPath;
 		
@@ -152,9 +147,12 @@ namespace Saturn {
 
 		Ref<ContentBrowserItem> m_ItemToDelete = nullptr;
 
+		bool m_ShowAssetImportPopup = false;
 		bool m_OpenScriptsPopup = false;
 		bool m_OpenClassInstancePopup = false;
 		bool m_ShowDeleteAssetPopup = false;
 		bool m_RenderUnclipped = false;
+		bool m_RenderCreateWindow = false;
+		bool m_ShowFolderPopupMenu = false;
 	};
 }

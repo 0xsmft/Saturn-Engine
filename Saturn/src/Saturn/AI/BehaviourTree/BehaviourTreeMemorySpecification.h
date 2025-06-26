@@ -28,30 +28,61 @@
 
 #pragma once
 
-#include "BehaviourTreeBaseTask.h"
-
-#include <chrono>
+#include "Saturn/Asset/Asset.h"
+#include "Saturn/GameFramework/SProperty.h"
 
 namespace Saturn {
 
-	class BehaviourTreeWaitTask : public BehaviourTreeBaseTask
+	// This struct specifies a variable (key) in the Behaviour Tree Memory
+	// It does not contain the actual data. It is simply a specification of what this variable should be when we convert it to a BehaviourTreeMemoryVariable struct
+	class BehaviourTreeMemoryVariableSpec : public RefTarget
 	{
 	public:
-		BehaviourTreeWaitTask( float WaitDuration );
-		BehaviourTreeWaitTask( UUID WaitDurationVarID );
+		BehaviourTreeMemoryVariableSpec() = default;
 
-		virtual ~BehaviourTreeWaitTask();
+		BehaviourTreeMemoryVariableSpec( const std::string& rName, SPropertyType dataType, UUID varID ) 
+			: Name( rName ), DataType( dataType ), VariableID( varID )
+		{
+		}
 
-		virtual void InitialiseTask( BehaviourTreeNodeEditor* pEditor, BehaviourTreeNodeBase* pNode ) override;
-		virtual BehaviourTreeTaskState Tick( Timestep ts ) override;
-		virtual void Reset() override;
+	public:
+		// [Serialised]
+		std::string Name;
+		SPropertyType DataType = SPropertyType::Unknown;
+		UUID VariableID = 0;
+
+#if !defined(SAT_DIST)
+		UUID RenderID;
+		bool IsActive = false;
+#endif
+	};
+
+	class BehaviourTreeMemorySpecification : public Asset
+	{
+	public:
+		BehaviourTreeMemorySpecification() = default;
+		BehaviourTreeMemorySpecification( const Ref<Asset>& rBase );
+
+#if !defined( SAT_DIST )
+		Ref<BehaviourTreeMemoryVariableSpec> DrawVariableFinder( SPropertyType type, Ref<BehaviourTreeMemoryVariableSpec> selectedVar );
+#endif
+
+		Ref<BehaviourTreeMemoryVariableSpec> PostInitVariable( UUID variableID );
+
+		const std::vector<Ref<BehaviourTreeMemoryVariableSpec>>& GetVariableSpecs() const { return m_SpecificationData; }
 
 	private:
-		// Wait time in seconds
-		float m_WaitDuration = 0.0f;
+		inline void AddNew( const std::string& rName, SPropertyType dataType, UUID varID )
+		{
+			m_SpecificationData.emplace_back( Ref<BehaviourTreeMemoryVariableSpec>::Create( rName, dataType, varID ) );
+		}
 
-		bool m_Started = false;
-		std::chrono::steady_clock::time_point m_StartTime;
+	private:
+		std::vector<Ref<BehaviourTreeMemoryVariableSpec>> m_SpecificationData;
+
+	private:
+		friend class BehaviourTreeMemoryAssetViewer;
+		friend class BehaviourTreeMemorySpecAssetSerialiser;
 	};
 	
 }

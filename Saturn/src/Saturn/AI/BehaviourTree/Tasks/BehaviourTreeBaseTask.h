@@ -60,9 +60,20 @@ namespace Saturn {
 		Saturn::UUID GetNodeID() const { return m_NodeID; }
 		BehaviourTreeTaskState GetState() const { return m_CurrentState; }
 
+		void SetBlackboard( Ref<BehaviourTreeMemory> mem );
+
+	protected:
+		template<typename CppType>
+		std::optional<CppType> TryRetrieveBBKey( Saturn::UUID variableID )
+		{
+			return m_Blackboard->Get<CppType>( variableID );
+		}
+
 	protected:
 		Saturn::UUID m_NodeID = 0;
 		BehaviourTreeTaskState m_CurrentState = BehaviourTreeTaskState::Unknown;
+
+		Ref<BehaviourTreeMemory> m_Blackboard;
+		Saturn::UUID m_BlackboardVariableID = 0;
 	};
-	
 }

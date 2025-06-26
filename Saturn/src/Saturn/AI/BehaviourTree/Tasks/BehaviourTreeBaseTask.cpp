@@ -26,32 +26,16 @@
 *********************************************************************************************
 */
 
-#pragma once
-
+#include "sppch.h"
 #include "BehaviourTreeBaseTask.h"
 
-#include <chrono>
+#include "Saturn/AI/BehaviourTree/BehaviourTreeMemory.h"
 
 namespace Saturn {
 
-	class BehaviourTreeWaitTask : public BehaviourTreeBaseTask
+	void BehaviourTreeBaseTask::SetBlackboard( Ref<BehaviourTreeMemory> mem )
 	{
-	public:
-		BehaviourTreeWaitTask( float WaitDuration );
-		BehaviourTreeWaitTask( UUID WaitDurationVarID );
+		m_Blackboard = mem;
+	}
 
-		virtual ~BehaviourTreeWaitTask();
-
-		virtual void InitialiseTask( BehaviourTreeNodeEditor* pEditor, BehaviourTreeNodeBase* pNode ) override;
-		virtual BehaviourTreeTaskState Tick( Timestep ts ) override;
-		virtual void Reset() override;
-
-	private:
-		// Wait time in seconds
-		float m_WaitDuration = 0.0f;
-
-		bool m_Started = false;
-		std::chrono::steady_clock::time_point m_StartTime;
-	};
-	
 }

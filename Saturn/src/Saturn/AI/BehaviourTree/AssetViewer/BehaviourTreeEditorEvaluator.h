@@ -66,13 +66,6 @@ namespace Saturn {
 		void SetTargetNodeEditor( Ref<NodeEditorBase> nodeEditor );
 		Ref<NodeEditorBase>& GetTargetNodeEditor() { return m_NodeEditor; }
 
-		// Simulation API
-	public:
-		void Tick( Timestep ts );
-		void AddForTick( UUID nodeID );
-
-		const std::vector<Ref<BehaviourTreeNodeBase>>& GetTickOrder() const { return m_TickOrder; }
-
 	private:
 		NodeEditorCompilationStatus EvalNoChecks();
 
@@ -80,8 +73,6 @@ namespace Saturn {
 		BehaviourTreeEdEvaluatorInfo m_Info{};
 
 		bool m_EvaluationComplete = false;
-
-		std::vector<Ref<BehaviourTreeNodeBase>> m_TickOrder;
 	};
 
 }

@@ -28,6 +28,8 @@
 
 #pragma once
 
+#include "BehaviourTreeMemory.h"
+
 #include "Saturn/AI/AIAgentEntity.h"
 
 #include "Saturn/Asset/Asset.h"

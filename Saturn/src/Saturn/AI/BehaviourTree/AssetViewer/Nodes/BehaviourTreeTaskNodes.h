@@ -46,6 +46,7 @@ namespace Saturn {
 		virtual void OnSerialise( std::ofstream& rStream ) const override;
 		virtual void OnDeserialise( IStream& rStream ) override;
 		virtual BehaviourTreeBaseTask* ConvertToTask() override;
+		virtual void PostDeserialise() override;
 
 #if !defined(SAT_DIST)
 		virtual void RenderDetails() override;
@@ -56,11 +57,11 @@ namespace Saturn {
 		float WaitDuration = 1.0f;
 
 	private:
-		void CreateNode();
+		// TODO: Weak Ref #WREF_BehaviourTreeBaseTask
+		Ref<BehaviourTreeMemoryVariableSpec> m_MemVariable;
 
 	private:
-		bool m_Started = false;
-		std::chrono::steady_clock::time_point m_StartTime;
+		void CreateNode();
 	};
 
 	class BehaviourTreePlaySoundNode : public BehaviourTreeNodeBase
@@ -75,7 +76,9 @@ namespace Saturn {
 		virtual BehaviourTreeBaseTask* ConvertToTask() override;
 
 #if !defined(SAT_DIST)
+		// From NodeEditorTreeNode
 		virtual void OnRenderExtra() override;
+		// From BehaviourTreeNodeBase
 		virtual void RenderDetails() override;
 #endif
 
@@ -89,6 +92,7 @@ namespace Saturn {
 		AssetID m_SoundID = 0;
 	};
 
+	// Move the AI Agent to a position
 	class BehaviourTreeMoveToNode : public BehaviourTreeNodeBase
 	{
 	public:
@@ -101,8 +105,12 @@ namespace Saturn {
 		virtual BehaviourTreeBaseTask* ConvertToTask() override;
 
 #if !defined(SAT_DIST)
+		// From NodeEditorTreeNode
 		virtual void OnRenderExtra() override;
+		// From BehaviourTreeNodeBase
 		virtual void RenderDetails() override;
+		// From NodeEditorNodeBase
+		virtual void RenderContextWindow() override;
 #endif
 
 		void SetTargetPosition( const glm::vec3& rPosition ) { m_TargetPosition = rPosition; }
@@ -113,6 +121,9 @@ namespace Saturn {
 
 	private:
 		glm::vec3 m_TargetPosition{};
+
+		// TODO: Weak Ref #WREF_BehaviourTreeBaseTask
+		Ref<BehaviourTreeMemoryVariableSpec> m_Variable;
 	};
 
 }

@@ -38,6 +38,8 @@
 #include "Saturn/Audio/SoundSpecification.h"
 #include "Saturn/Audio/GraphSound.h"
 
+#include "Saturn/AI/BehaviourTree/BehaviourTreeMemorySpecification.h"
+
 #include "YamlAux.h"
 
 #include "Saturn/Vulkan/Renderer.h"
@@ -580,4 +582,83 @@ namespace Saturn {
 
 		return true;
 	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// BehaviourTreeMemorySpec
+
+	void BehaviourTreeMemorySpecAssetSerialiser::Serialise( const Ref<Asset>& rAsset ) const
+	{
+		auto btMemorySpec = rAsset.As<BehaviourTreeMemorySpecification>();
+
+		YAML::Emitter out;
+
+		out << YAML::BeginMap;
+
+		out << YAML::Key << "BehaviourTreeMemorySpecification" << YAML::Value;
+
+		out << YAML::BeginMap;
+		out << YAML::Key << "Variables" << YAML::Value;
+		out << YAML::BeginSeq;
+
+		for( const auto& rData : btMemorySpec->m_SpecificationData )
+		{
+			out << YAML::BeginMap;
+
+			out << YAML::Key << "Name" << YAML::Value << rData->Name;
+			out << YAML::Key << "DataType" << YAML::Value << ( std::underlying_type_t<SPropertyType> )rData->DataType;
+			out << YAML::Key << "VariableID" << YAML::Value << ( uint64_t )rData->VariableID;
+
+			out << YAML::EndMap;
+		}
+
+		out << YAML::EndSeq;
+
+		out << YAML::EndMap;
+
+		out << YAML::EndMap;
+
+		auto& basePath = rAsset->Path;
+		auto fullPath = GetFilepathAbs( basePath );
+
+		std::ofstream fout( fullPath );
+		fout << out.c_str();
+	}
+
+	bool BehaviourTreeMemorySpecAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
+	{
+		auto absolutePath = GetFilepathAbs( rAsset->Path );
+		std::ifstream FileIn( absolutePath );
+
+		std::stringstream ss;
+		ss << FileIn.rdbuf();
+
+		YAML::Node data = YAML::Load( ss.str() );
+
+		if( data.IsNull() )
+			return false;
+
+		auto specData = data[ "BehaviourTreeMemorySpecification" ];
+
+		if( specData.IsNull() )
+			return false;
+
+		auto variables = specData[ "Variables" ];
+
+		auto specAsset = Ref<BehaviourTreeMemorySpecification>::Create( rAsset );
+	
+		for( auto variable : variables )
+		{
+			auto name = variable[ "Name" ].as<std::string>();
+			auto dataType = variable[ "DataType" ].as<std::underlying_type_t<SPropertyType>>();
+			auto varID = variable[ "VariableID" ].as<uint64_t>( UUID() );
+
+			specAsset->AddNew( name, ( SPropertyType ) dataType, varID );
+		}
+
+		// Set rAsset reference to point to our new BehaviourTreeMemorySpecification
+		rAsset = specAsset;
+
+		return true;
+	}
+
 }

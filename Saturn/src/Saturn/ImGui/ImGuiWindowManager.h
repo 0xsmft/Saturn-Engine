@@ -62,6 +62,21 @@ namespace Saturn {
 
 		void AddWindow( Ref<ImGuiWindow> window, const std::string& rCustomName );
 
+		template<typename Ty, typename... VaArgs>
+		void OpenOrShowWindow( const std::string& rCustomName, VaArgs&&... rrArgs )
+		{
+			Ref<Ty> window = GetWindow<Ty>( rCustomName );
+
+			if( window )
+			{
+				window->OpenWindow();
+			}
+			else
+			{
+				AddWindow( Ref<Ty>::Create( std::forward<VaArgs>( rrArgs )... ), rCustomName );
+			}
+		}
+
 		template<typename Ty>
 		[[nodiscard]] Ref<Ty> GetWindow( const std::string& rPanelName )
 		{
@@ -106,7 +121,7 @@ namespace Saturn {
 		void Terminate();
 
 	private:
-		// NAME -> Window
+		//                        NAME -> Window
 		std::unordered_map<std::string, Ref<ImGuiWindow>> m_Panels;
 	};
 }

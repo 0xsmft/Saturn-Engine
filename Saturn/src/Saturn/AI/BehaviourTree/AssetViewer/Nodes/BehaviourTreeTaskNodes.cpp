@@ -86,27 +86,87 @@ namespace Saturn {
 	void BehaviourTreeWaitNode::OnSerialise( std::ofstream& rStream ) const
 	{
 		RawSerialisation::WriteObject( WaitDuration, rStream );
+		
+		UUID variableID = 0;
+		if( m_MemVariable->VariableID )
+			variableID = m_MemVariable->VariableID;
+
+		RawSerialisation::WriteObject( variableID, rStream );
 	}
 
 	void BehaviourTreeWaitNode::OnDeserialise( IStream& rStream )
 	{
 		RawSerialisation::ReadObject( WaitDuration, rStream );
+
+		UUID variableID = 0;
+		RawSerialisation::ReadObject( variableID, rStream );
+
+		// NOTE: BehaviourTreeMemorySpecification is null at this point
+		// NOTE: m_MemVariable is a placeholder and will be point to the real variable spec when PostDeserialise is called.
+		m_MemVariable = Ref<BehaviourTreeMemoryVariableSpec>::Create( "", SPropertyType::Unknown, variableID );
+
+		if( variableID )
+			m_MemVariable->IsActive = true;
 	}
 	
 	BehaviourTreeBaseTask* BehaviourTreeWaitNode::ConvertToTask()
 	{
-		return new BehaviourTreeWaitTask( WaitDuration );
+		if( m_MemVariable->VariableID )
+		{
+			return new BehaviourTreeWaitTask( m_MemVariable->VariableID );
+		}
+		else
+		{
+			return new BehaviourTreeWaitTask( WaitDuration );
+		}
+	}
+
+	void BehaviourTreeWaitNode::PostDeserialise()
+	{
+		if( m_MemVariable->IsActive )
+		{
+			m_MemVariable = BehaviourTreeMemorySpecification->PostInitVariable( m_MemVariable->VariableID );
+		}
 	}
 
 #if !defined(SAT_DIST)
 	void BehaviourTreeWaitNode::RenderDetails()
 	{
 		Auxiliary::DrawFloatControl( "Wait duration", WaitDuration );
+
+		if( m_MemVariable )
+		{
+			Auxiliary::DrawBoolControl( "Use Behaviour Memory", m_MemVariable->IsActive );
+
+			if( m_MemVariable->IsActive )
+			{
+				if( ImGui::BeginCombo( "##waitvariable", m_MemVariable->Name.c_str() ) )
+				{
+					if( auto out = BehaviourTreeMemorySpecification->DrawVariableFinder( SPropertyType::Float, m_MemVariable ); out )
+					{
+						m_MemVariable = out;
+					}
+
+					ImGui::EndCombo();
+				}
+			}
+		}
+		else
+		{
+			m_MemVariable = Ref<BehaviourTreeMemoryVariableSpec>::Create();
+		}
 	}
 
 	void BehaviourTreeWaitNode::OnRenderExtra()
 	{
-		ImGui::Text( "%.2fs", WaitDuration );
+		if( m_MemVariable && m_MemVariable->VariableID )
+		{
+			ImGui::Text( "[%s]", m_MemVariable->Name.c_str() );
+		}
+		else
+		{
+			ImGui::Text( "%.2fs", WaitDuration );
+		}
 	}
 #endif
 
@@ -253,12 +313,33 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 	void BehaviourTreeMoveToNode::RenderDetails()
 	{
+		Auxiliary::DisabledFlag disabledIfBTM( m_Variable->IsActive );
 		Auxiliary::DrawVec3Control( "Destination", m_TargetPosition );
+		disabledIfBTM.Pop();
+
+		Auxiliary::DrawBoolControl( "Use Behaviour Memory", m_Variable->IsActive );
+
+		if( m_Variable->IsActive )
+		{
+			if( ImGui::BeginCombo( "var", m_Variable->Name.c_str() ) )
+			{
+				if( auto out = BehaviourTreeMemorySpecification->DrawVariableFinder( SPropertyType::Vector3, m_Variable ); out )
+				{
+					m_Variable = out;
+				}
+
+				ImGui::EndCombo();
+			}
+		}
 	}
 
 	void BehaviourTreeMoveToNode::OnRenderExtra()
 	{
 		ImGui::Text( "X %.2f Y %.2f Z %.2f", m_TargetPosition.x, m_TargetPosition.y, m_TargetPosition.z );
+	}
+
+	void BehaviourTreeMoveToNode::RenderContextWindow()
+	{
 	}
 #endif
 

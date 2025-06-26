@@ -26,32 +26,61 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "BehaviourTreeMemorySpecification.h"
 
-#include "BehaviourTreeBaseTask.h"
-
-#include <chrono>
+#if !defined( SAT_DIST )
+#include "Saturn/ImGui/ImGuiAuxiliary.h"
+#endif
 
 namespace Saturn {
 
-	class BehaviourTreeWaitTask : public BehaviourTreeBaseTask
+	BehaviourTreeMemorySpecification::BehaviourTreeMemorySpecification( const Ref<Asset>& rBase )
+		: Asset( rBase )
 	{
-	public:
-		BehaviourTreeWaitTask( float WaitDuration );
-		BehaviourTreeWaitTask( UUID WaitDurationVarID );
+	}
 
-		virtual ~BehaviourTreeWaitTask();
+#if !defined( SAT_DIST )
+	Ref<BehaviourTreeMemoryVariableSpec> BehaviourTreeMemorySpecification::DrawVariableFinder( SPropertyType type, Ref<BehaviourTreeMemoryVariableSpec> selectedVar )
+	{
+		bool clicked = false;
+		for( auto& rVariable : m_SpecificationData )
+		{
+			if( rVariable->DataType != type )
+				continue;
 
-		virtual void InitialiseTask( BehaviourTreeNodeEditor* pEditor, BehaviourTreeNodeBase* pNode ) override;
-		virtual BehaviourTreeTaskState Tick( Timestep ts ) override;
-		virtual void Reset() override;
+			bool isSelected = selectedVar->VariableID == rVariable->VariableID;
+			if( ImGui::Selectable( rVariable->Name.c_str(), isSelected ) )
+			{
+				rVariable->IsActive = true;
+				selectedVar->IsActive = false;
 
-	private:
-		// Wait time in seconds
-		float m_WaitDuration = 0.0f;
+				return rVariable;
+			}
+		}
 
-		bool m_Started = false;
-		std::chrono::steady_clock::time_point m_StartTime;
-	};
-	
+		return nullptr;
+	}
+
+#endif
+
+	Ref<BehaviourTreeMemoryVariableSpec> BehaviourTreeMemorySpecification::PostInitVariable( UUID variableID )
+	{
+		auto itr = std::find_if( m_SpecificationData.begin(), m_SpecificationData.end(), 
+			[ variableID ](const auto& rItem) 
+		{
+			return rItem->VariableID == variableID;
+		} );
+
+		if( itr != m_SpecificationData.end() )
+		{
+			auto& var = *itr;
+			var->IsActive = true;
+
+			return var;
+		}
+
+		return nullptr;
+	}
+
 }

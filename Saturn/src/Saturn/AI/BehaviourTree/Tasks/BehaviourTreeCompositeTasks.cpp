@@ -64,9 +64,9 @@ namespace Saturn {
 			{
 				m_Children.push_back( pBehaviourTreeNodeEditor->GetTaskFor( rNode ) );
 			}
-		}
 
-		m_NodeID = pNode->ID;
+			m_NodeID = pSelectorNode->ID;
+		}
 	}
 
 	BehaviourTreeSelectorTask::~BehaviourTreeSelectorTask()
@@ -111,9 +111,9 @@ namespace Saturn {
 			{
 				m_Children.push_back( pBehaviourTreeNodeEditor->GetTaskFor( rNode ) );
 			}
-		}
 
-		m_NodeID = pNode->ID;
+			m_NodeID = pSelectorNode->ID;
+		}
 	}
 
 	BehaviourTreeSequenceTask::~BehaviourTreeSequenceTask()

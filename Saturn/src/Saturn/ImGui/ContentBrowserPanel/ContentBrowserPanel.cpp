@@ -37,6 +37,8 @@
 #include "Saturn/Asset/PhysicsMaterialAsset.h"
 #include "Saturn/Asset/AssetImporter.h"
 
+#include "Saturn/AI/BehaviourTree/BehaviourTreeMemorySpecification.h"
+
 #include "Saturn/Serialisation/AssetSerialisers.h"
 #include "Saturn/Serialisation/SceneSerialiser.h"
 
@@ -498,6 +500,29 @@ namespace Saturn {
 				UpdateFiles( true );
 				FindAndRenameItem( asset->Name );
 			}
+
+			if( ImGui::MenuItem( "New Behaviour Tree Memory (Blackboard)" ) )
+			{
+				auto id = AssetManager::Get().CreateAsset( AssetType::BehaviourTreeMemory );
+				auto asset = AssetManager::Get().FindAsset( id );
+				auto newPath = m_CurrentPath / "New Behaviour Tree Memory.sbtm";
+				int32_t count = GetFilenameCount( "New Behaviour Tree Memory.sbtm" );
+
+				if( count >= 1 )
+					newPath.replace_filename( std::format( "{0} ({1}).sbtm", "New Behaviour Tree Memory", count ) );
+
+				asset->SetAbsolutePath( newPath );
+				Ref<BehaviourTreeMemorySpecification> spec = Ref<BehaviourTreeMemorySpecification>::Create( asset );
+
+				BehaviourTreeMemorySpecAssetSerialiser btms;
+				btms.Serialise( spec );
+
+				AssetManager::Get().Save();
+
+				UpdateFiles( true );
+				FindAndRenameItem( asset->Name );
+			}
+
 			if( ImGui::MenuItem( "New Class Instance" ) ) 
 			{
 				m_OpenClassInstancePopup = true;

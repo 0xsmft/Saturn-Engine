@@ -28,30 +28,25 @@
 
 #pragma once
 
-#include "BehaviourTreeBaseTask.h"
-
-#include <chrono>
+#include "Saturn/ImGui/AssetViewer.h"
+#include "BehaviourTreeMemorySpecification.h"
 
 namespace Saturn {
 
-	class BehaviourTreeWaitTask : public BehaviourTreeBaseTask
+	class BehaviourTreeMemoryAssetViewer : public AssetViewer
 	{
 	public:
-		BehaviourTreeWaitTask( float WaitDuration );
-		BehaviourTreeWaitTask( UUID WaitDurationVarID );
+		BehaviourTreeMemoryAssetViewer( AssetID id );
+		~BehaviourTreeMemoryAssetViewer();
 
-		virtual ~BehaviourTreeWaitTask();
-
-		virtual void InitialiseTask( BehaviourTreeNodeEditor* pEditor, BehaviourTreeNodeBase* pNode ) override;
-		virtual BehaviourTreeTaskState Tick( Timestep ts ) override;
-		virtual void Reset() override;
+		virtual void OnImGuiRender() override;
+		virtual void OnUpdate( Timestep ts ) override {}
+		virtual void OnEvent( RubyEvent& rEvent ) override {}
 
 	private:
-		// Wait time in seconds
-		float m_WaitDuration = 0.0f;
+		Ref<BehaviourTreeMemorySpecification> m_SpecAsset;
 
-		bool m_Started = false;
-		std::chrono::steady_clock::time_point m_StartTime;
+		bool m_Dirty = false;
+		bool m_CanSave = true;
 	};
-	
 }

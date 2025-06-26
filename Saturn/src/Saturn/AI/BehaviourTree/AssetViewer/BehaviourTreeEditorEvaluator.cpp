@@ -57,41 +57,9 @@ namespace Saturn {
 		m_NodeEditor = nodeEditor;
 	}
 
-	void BehaviourTreeEditorEvaluator::Tick( Timestep ts )
-	{
-		/*
-		if( !m_EvaluationComplete ) 
-		{
-			if( EvalNoChecks() != NodeEditorCompilationStatus::Success )
-				return;
-
-			SAT_CORE_WARN( "Behaviour Tree was not evaluated before! Attempting evaluation now!" );
-		}
-		*/
-
-		// Tick the current nodes
-		for( auto& rNode : m_TickOrder )
-		{
-			auto status = rNode->EvaluateNode( this );
-
-			if( status == NodeEvaluationState::Evaluated || status == NodeEvaluationState::Failed ) 
-			{
-				m_NodeEditor->SetState( NodeEditorState::Editing );
-			}
-		}
-	}
-
-	void BehaviourTreeEditorEvaluator::AddForTick( UUID nodeID )
-	{
-		Ref<BehaviourTreeNodeEditor> behaviourTreeEditor = m_NodeEditor.As<BehaviourTreeNodeEditor>();
-		m_TickOrder.push_back( behaviourTreeEditor->FindNode( nodeID ) );
-	}
-
 	NodeEditorCompilationStatus BehaviourTreeEditorEvaluator::EvaluateEditor()
 	{
 		m_EvaluationComplete = false;
-		m_TickOrder.clear();
-
 		return EvalNoChecks();
 	}
 

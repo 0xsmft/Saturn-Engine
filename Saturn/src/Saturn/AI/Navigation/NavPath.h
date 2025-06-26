@@ -51,6 +51,7 @@ namespace Saturn {
 		[[nodiscard]] uint32_t GetCurrentWaypointIndex() const { return m_CurrentWaypoint; }
 		[[nodiscard]] uint32_t GetNextWaypointIndex() const { return m_CurrentWaypoint + 1; }
 		[[nodiscard]] bool IsLive() const { return m_IsLive; }
+		[[nodiscard]] bool IsCompleted() const { return m_CurrentWaypoint == m_PathPoints.size(); }
 		[[nodiscard]] glm::vec3 GetCurrentWaypoint();
 
 		// Move onto the next waypoint index

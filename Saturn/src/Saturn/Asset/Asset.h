@@ -58,6 +58,7 @@ namespace Saturn {
 		Script,
 		PhysicsMaterial,
 		BehaviourTree,
+		BehaviourTreeMemory,
 		Unknown,
 		COUNT,
 	};
@@ -90,6 +91,8 @@ namespace Saturn {
 				return "PhysicsMaterial";
 			case Saturn::AssetType::BehaviourTree:
 				return "BehaviourTree";
+			case Saturn::AssetType::BehaviourTreeMemory:
+				return "BehaviourTreeMemory";
 			case Saturn::AssetType::Unknown:
 				return "Unknown";
 		}
@@ -135,6 +138,8 @@ namespace Saturn {
 				return COLOR_32( 235, 0, 55, 255 );
 			case Saturn::AssetType::BehaviourTree:
 				return COLOR_32( 50, 168, 82, 255 );
+			case Saturn::AssetType::BehaviourTreeMemory:
+				return COLOR_32( 168, 50, 82, 255 );
 			case Saturn::AssetType::Unknown:
 				return COLOR_32( 255, 255, 255, 255 );
 			default:
@@ -170,6 +175,8 @@ namespace Saturn {
 			return AssetType::PhysicsMaterial;
 		else if( str == "BehaviourTree" )
 			return AssetType::BehaviourTree;
+		else if( str == "BehaviourTreeMemory" )
+			return AssetType::BehaviourTreeMemory;
 		else
 			return AssetType::Unknown;
 	}
@@ -196,6 +203,8 @@ namespace Saturn {
 			return AssetType::PhysicsMaterial;
 		else if( str == ".sbt" )
 			return AssetType::BehaviourTree;
+		else if( str == ".sbtm" )
+			return AssetType::BehaviourTreeMemory;
 		else
 			return AssetType::Unknown;
 	}

@@ -29,6 +29,7 @@
 #pragma once
 
 #include "Saturn/NodeEditor/UI/NodeEditor.h"
+#include "Saturn/AI/BehaviourTree/BehaviourTreeMemory.h"
 
 namespace Saturn {
 
@@ -75,10 +76,13 @@ namespace Saturn {
 
 		void ResetAllTasks();
 
-		void SetTargetAgent( Ref<AIAgentEntity> agent ) { m_AIAgentEntity = agent; }
+		inline void SetTargetAgent( Ref<AIAgentEntity> agent ) { m_AIAgentEntity = agent; }
 		[[nodiscard]] Ref<AIAgentEntity> GetTargetAgent() const;
 
+//		inline void SetBlackboard( Ref<BehaviourTreeMemory> blackboard ) { m_Blackboard = blackboard; }
+
 #if !defined(SAT_DIST)
+	public:
 		virtual void OnTopBarRender() override;
 		virtual void OnExtraRender() override;
 		virtual void OnNodeEditorEvent( NodeEditorAction action ) override;
@@ -86,22 +90,40 @@ namespace Saturn {
 	protected:
 		virtual void SerialiseData( std::ofstream& rStream ) override;
 		virtual void DeserialiseData( std::ifstream& rStream ) override;
+	
+	private:
+		void ShowTreeFlow();
+		void FindTreeFlow();
 #endif
 
 	private:
-		BehaviourTreeBaseTask* m_CurrentTask = nullptr;
+		BehaviourTreeBaseTask* m_pCurrentTask = nullptr;
 		size_t m_CurrentTaskIndex = 0;
+		
+		AssetID m_BehaviourTreeMemoryAssetID = 0;
 
 #if !defined(SAT_DIST)
 		bool m_AutoEvaluate = true;
 #endif
 
+		// The current Agent that we are trying to control
 		Ref<AIAgentEntity> m_AIAgentEntity;
 
+		// All tasks in the tree
+		//       NODE ID -> TASK*
 		std::map<UUID, BehaviourTreeBaseTask*> m_Tasks;
+		
+		// All tasks at level one, level one meaning right below the root node
+		//       INDEX -> TASK* (Index is relative to the m_Tasks map)
 		std::map<size_t, BehaviourTreeBaseTask*> m_LevelOneTasks;
 
 		std::vector<BehaviourTreeCompositeOrderInfo> m_EvaluationOrder;
+
+#if !defined(SAT_DIST)
+		std::vector<Ref<Link>> m_EditorLinkPath;
+#endif
+		Ref<BehaviourTreeMemorySpecification> m_BlackboardSpec;
+		Ref<BehaviourTreeMemory> m_Blackboard;
 	};
 
 }

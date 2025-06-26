@@ -34,8 +34,6 @@
 #include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeNodeEditor.h"
 #include "Saturn/AI/BehaviourTree/AssetViewer/Nodes/BehaviourTreeNodeBase.h"
 
-#include "Saturn/Core/Random.h"
-
 #include "Saturn/Physics/PhysicsRigidBody.h"
 
 #include "Saturn/AI/Navigation/RecastCore.h"
@@ -54,11 +52,6 @@ if( dtStatusFailed( (result) ) ) \
 }
 
 namespace Saturn {
-
-	static float RcRandomFunction()
-	{
-		return Random::RandomFloatInRange( 0.0f, 1.0f );
-	}
 
 	//////////////////////////////////////////////////////////////////////////
 	// Behaviour Tree Move To Task
@@ -82,7 +75,7 @@ namespace Saturn {
 
 	BehaviourTreeTaskState BehaviourTreeMoveToTask::Tick( Timestep ts )
 	{
-		if( !m_Moving )
+		if( !m_Path.IsLive() )
 		{
 			// InitPathTo will return Failed or Starting
 			m_CurrentState = InitPathTo();
@@ -94,68 +87,24 @@ namespace Saturn {
 		return m_CurrentState;
 	}
 
-	// TODO: This API is will be replaced when we have a proper waypoint system that will be handled by the NavSystem or the NavMeshBouding.
+	// TODO: This API is will be replaced when we have a proper waypoint system that will be handled by the NavSystem or the NavMeshBounds.
 	BehaviourTreeTaskState BehaviourTreeMoveToTask::InitPathTo()
 	{
-		auto* pNavMeshQuery = GActiveScene->GetNavMeshQuery();
-
-		dtQueryFilter filter;
-		dtPolyRef startPoly, endPoly;
-		float polyPickExt[ 3 ] = { 2.0f, 2.0f, 2.0f }; // Extent of the poly pick.
-
-		float outStartNearest[ 3 ], outEndNearest[ 3 ];
-
-		glm::vec3& rCurrentPosition = m_Agent->GetComponent<TransformComponent>().Position;
-		DT_CHECK_RETURN_FAIL_BT( pNavMeshQuery->findNearestPoly( glm::value_ptr( rCurrentPosition ), polyPickExt, &filter, &startPoly, outStartNearest ) );
-		
-		DT_CHECK_RETURN_FAIL_BT( pNavMeshQuery->findNearestPoly( glm::value_ptr( m_TargetPosition ), polyPickExt, &filter, &endPoly, outEndNearest ) );
-
-		/*
-		if( dtStatusFailed( status ) )
+		if( m_Path.RetargetPath( m_TargetPosition, m_Agent->GetComponent<TransformComponent>().Position ) )
 		{
-			SAT_CORE_ERROR( "[BehaviourTreeMoveToTask] Invalid position! so unable to move Agent/{0} to {1}", m_Agent->GetName(), m_TargetPosition );
-			return BehaviourTreeTaskState::Failed;
+			return BehaviourTreeTaskState::Starting;
 		}
-		*/
 
-		// Now that we have found the polys we can now build a path.
-		dtPolyRef pathRefs[ 256 ];
-		int pathCount = 0;
-		
-		DT_CHECK_RETURN_FAIL_BT( pNavMeshQuery->findPath( startPoly, endPoly, outStartNearest, outEndNearest, &filter, pathRefs, &pathCount, 256 ) );
-
-		float straightPath[ 256 * 3 ];
-		unsigned char straightPathFlags[ 256 ];
-		dtPolyRef straightPathPolys[ 256 ];
-		int straightPathCount = 0;
-
-		auto status = pNavMeshQuery->findStraightPath( outStartNearest, outEndNearest, pathRefs, pathCount, straightPath, straightPathFlags, straightPathPolys, &straightPathCount, 256 );
-
-		if( dtStatusSucceed( status ) && straightPathCount > 0 )
-		{
-			m_Waypoints.clear();
-			m_Waypoints.reserve( straightPathCount );
-
-			for( size_t i = 0; i < straightPathCount; i++ )
-			{
-				float* p = &straightPath[ i * 3 ];
-				m_Waypoints.push_back( glm::vec3( p[ 0 ], p[ 1 ], p[ 2 ] ) );
-				m_Moving = true;
-			}
-		}
-		else
-			return BehaviourTreeTaskState::Failed;
-
-		return BehaviourTreeTaskState::Starting;
+		return BehaviourTreeTaskState::Failed;
 	}
 
 	BehaviourTreeTaskState BehaviourTreeMoveToTask::WalkToNextWaypoint( Timestep ts )
 	{
-		if( !m_Moving )
+		if( !m_Path.IsLive() )
 			return BehaviourTreeTaskState::Completed;
 
 		glm::vec3& rCurrentPosition = m_Agent->GetComponent<TransformComponent>().Position;
-		const auto& rCurrentWaypoint = m_Waypoints[ m_CurrentWaypointIndex ];
+		const auto& rCurrentWaypoint = m_Path.GetCurrentWaypoint();
 
 		glm::vec3 diff = rCurrentWaypoint - rCurrentPosition;
 		float step = 5.0f * ts.Seconds();
@@ -164,12 +113,11 @@ namespace Saturn {
 		if( distance <= 0.2f )
 		{
 			// Move on to the next waypoint.
-			m_CurrentWaypointIndex++;
+			m_Path.NextWaypoint();
 
-			if( m_CurrentWaypointIndex >= m_Waypoints.size() )
+			// If its zero after the NextWaypoint call we know that we have reached the end
+			if( m_Path.GetCurrentWaypointIndex() == 0 )
 			{
-				ClearWaypoints();
-
 				return BehaviourTreeTaskState::Completed;
 			}
 		}
@@ -190,14 +138,7 @@ namespace Saturn {
 
 	void BehaviourTreeMoveToTask::Reset()
 	{
-		ClearWaypoints();
-	}
-
-	void BehaviourTreeMoveToTask::ClearWaypoints() 
-	{
-		m_Moving = false;
-		m_Waypoints.clear();
-		m_CurrentWaypointIndex = 0;
+		m_Path.InvalidatePath();
 	}
 
 }

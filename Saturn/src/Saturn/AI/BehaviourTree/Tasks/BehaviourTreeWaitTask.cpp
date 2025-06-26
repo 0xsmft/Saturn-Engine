@@ -38,6 +38,12 @@ namespace Saturn {
 	{
 	}
 
+	BehaviourTreeWaitTask::BehaviourTreeWaitTask( UUID WaitDurationVarID )
+		: m_WaitDuration( -1.0f )
+	{
+		m_BlackboardVariableID = WaitDurationVarID;
+	}
+
 	void BehaviourTreeWaitTask::InitialiseTask( BehaviourTreeNodeEditor* pEditor, BehaviourTreeNodeBase* pNode )
 	{
 		m_NodeID = pNode->ID;
@@ -53,6 +59,12 @@ namespace Saturn {
 		{
 			m_StartTime = std::chrono::steady_clock::now();
 			m_Started = true;
+
+			auto waitTimeBB = TryRetrieveBBKey<float>( m_BlackboardVariableID );
+			if( waitTimeBB.has_value() )
+			{
+				m_WaitDuration = waitTimeBB.value_or( m_WaitDuration );
+			}
 
 			SAT_CORE_INFO( "[BehaviourTreeWaitTask] Wait started, will be awaiting for: {0} seconds", m_WaitDuration );
 

@@ -29,10 +29,12 @@
 #pragma once
 
 #include "Saturn/NodeEditor/NodeEditorTreeNode.h"
+#include "Saturn/AI/BehaviourTree/BehaviourTreeMemorySpecification.h"
 
 namespace Saturn {
 
 	class BehaviourTreeBaseTask;
+	class BehaviourTreeNodeEditor;
 
 	// The base class for all nodes in the Behaviour Tree
 	// This class exists because it allows us to convert the node to BehaviourTree Tasks
@@ -48,10 +50,16 @@ namespace Saturn {
 
 		virtual ~BehaviourTreeNodeBase() = default;
 
+		virtual BehaviourTreeBaseTask* ConvertToTask() = 0;
+		virtual void PostDeserialise() {}
+
 #if !defined(SAT_DIST)
 		virtual void RenderDetails() {}
+
+	public:
+		// TODO: Weak Ref #WREF_BehaviourTreeBaseTask
+		Ref<BehaviourTreeMemorySpecification> BehaviourTreeMemorySpecification;
 #endif
-		virtual BehaviourTreeBaseTask* ConvertToTask() { return nullptr; }
 	};
 	
 }

@@ -44,6 +44,7 @@
 #include "Saturn/ImGui/SoundAssetViewer.h"
 #include "Saturn/Audio/SoundNodeEditor/GraphSoundAssetViewer.h"
 #include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeAssetViewer.h"
+#include "Saturn/AI/BehaviourTree/BehaviourTreeMemoryAssetViewer.h"
 
 #include "ContentBrowserThumbnailCache.h"
 
@@ -300,6 +301,12 @@ namespace Saturn {
 					case AssetType::BehaviourTree:
 					{
 						auto viewer = Ref<BehaviourTreeAssetViewer>::Create( m_Asset->ID );
+						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+					} break;
+
+					case AssetType::BehaviourTreeMemory:
+					{
+						auto viewer = Ref<BehaviourTreeMemoryAssetViewer>::Create( m_Asset->ID );
 						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
 					} break;
 

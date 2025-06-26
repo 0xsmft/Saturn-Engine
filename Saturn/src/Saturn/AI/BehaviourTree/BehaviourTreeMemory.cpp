@@ -26,32 +26,106 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "BehaviourTreeMemory.h"
 
-#include "BehaviourTreeBaseTask.h"
-
-#include <chrono>
+#include "Saturn/Asset/AssetManager.h"
 
 namespace Saturn {
 
-	class BehaviourTreeWaitTask : public BehaviourTreeBaseTask
+	BehaviourTreeMemory::BehaviourTreeMemory()
 	{
-	public:
-		BehaviourTreeWaitTask( float WaitDuration );
-		BehaviourTreeWaitTask( UUID WaitDurationVarID );
+	}
 
-		virtual ~BehaviourTreeWaitTask();
+	BehaviourTreeMemory::~BehaviourTreeMemory()
+	{
+		m_Data.clear();
+	}
 
-		virtual void InitialiseTask( BehaviourTreeNodeEditor* pEditor, BehaviourTreeNodeBase* pNode ) override;
-		virtual BehaviourTreeTaskState Tick( Timestep ts ) override;
-		virtual void Reset() override;
+	bool BehaviourTreeMemory::ContainsVariable( const std::string& rName ) const
+	{
+		return m_Data.contains( rName );
+	}
 
-	private:
-		// Wait time in seconds
-		float m_WaitDuration = 0.0f;
+	void BehaviourTreeMemory::InitialiseVariables( AssetID id )
+	{
+		m_Specification = AssetManager::Get().GetAssetAs<BehaviourTreeMemorySpecification>( id );
 
-		bool m_Started = false;
-		std::chrono::steady_clock::time_point m_StartTime;
-	};
-	
+		for( const auto& rVariable : m_Specification->GetVariableSpecs() )
+		{
+			m_Data[ rVariable->Name ] = Ref<BehaviourTreeMemoryVariable>::Create( rVariable->VariableID, rVariable->DataType );
+
+			m_Data[ rVariable->Name ]->Init();
+		}
+	}
+
+	void BehaviourTreeMemoryVariable::Init()
+	{
+		switch( m_DataType )
+		{
+			case Saturn::SPropertyType::Char:
+			//	Set<char>( 0 );
+				break;
+			
+			case Saturn::SPropertyType::Float:
+				Set<float>( 0.0f );
+				break;
+			
+			case Saturn::SPropertyType::Int:
+				Set<int>( 0 );
+				break;
+			
+			case Saturn::SPropertyType::Double:
+				Set<double>( 0.0 );
+				break;
+			
+			case Saturn::SPropertyType::Uint8:
+				Set<uint8_t>( uint8_t( 0 ) );
+				break;
+			
+			case Saturn::SPropertyType::Uint16:
+				Set<uint16_t>( uint16_t( 0 ) );
+				break;
+			
+			case Saturn::SPropertyType::Uint32:
+				Set<uint32_t>( uint32_t( 0 ) );
+				break;
+			
+			case Saturn::SPropertyType::Uint64:
+				Set<uint64_t>( 0llu );
+				break;
+			
+			case Saturn::SPropertyType::Int8:
+				Set<uint8_t>( uint8_t( 0 ) );
+				break;
+			
+			case Saturn::SPropertyType::Int16:
+				Set<int16_t>( int64_t( 0 ) );
+				break;
+			
+			case Saturn::SPropertyType::Int64:
+				Set<int64_t>( 0ll );
+				break;
+			
+			case Saturn::SPropertyType::Vector2:
+				Set<glm::vec2>( glm::vec2( 0.0f ) );
+				break;
+			
+			case Saturn::SPropertyType::Vector3:
+				Set<glm::vec3>( glm::vec3( 0.0f ) );
+				break;
+			
+			case Saturn::SPropertyType::Vector4:
+				Set<glm::vec4>( glm::vec4( 0.0f ) );
+				break;
+			
+			case Saturn::SPropertyType::String:
+			case Saturn::SPropertyType::Asset:
+			case Saturn::SPropertyType::Entity:
+			case Saturn::SPropertyType::Class:
+			case Saturn::SPropertyType::Unknown:
+			default: break;
+		}
+	}
+
 }

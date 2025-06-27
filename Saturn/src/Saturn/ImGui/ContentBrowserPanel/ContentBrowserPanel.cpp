@@ -736,6 +736,8 @@ namespace Saturn {
 			// CONTEXT MENU (RIGHT CLICK MENU)
 			if( ImGui::BeginPopupContextWindow( "CB_ItemAction", ImGuiPopupFlags_MouseButtonRight ) )
 			{
+				Auxiliary::DisabledFlag disabledIfRuntime( GActiveScene->IsRuntimeActive() );
+
 				switch( m_ViewMode )
 				{
 					case CBViewMode::Assets:
@@ -747,6 +749,7 @@ namespace Saturn {
 						break;
 				}
 
+				disabledIfRuntime.Pop();
 				ImGui::EndPopup();
 			}
 

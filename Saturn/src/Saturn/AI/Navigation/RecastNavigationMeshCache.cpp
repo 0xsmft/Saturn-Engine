@@ -102,14 +102,14 @@ namespace Saturn {
 
 		if( std::memcmp( header.Magic, ".SRC", 4 ) != 0 )
 		{
-			SAT_CORE_ERROR( "Failed to read Recast Navigation Mesh Cache! File magic does not match" );
+			SAT_CORE_ERROR( "[RecastNavigationMeshCache] Failed to read Recast Navigation Mesh Cache! File magic does not match" );
 			return nullptr;
 		}
 
 		if( header.Version != SAT_CURRENT_VERSION )
 		{
 			// Warning for now, until we make a major breaking change.
-			SAT_CORE_WARN( "File version mismatch! continuing read!" );
+			SAT_CORE_WARN( "[RecastNavigationMeshCache] File version mismatch! continuing read!" );
 		}
 
 		SAT_CORE_INFO( "Recast Navigation Mesh Cache:" );

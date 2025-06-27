@@ -600,7 +600,7 @@ namespace Saturn {
 		m_MaterialAssetsIDs[ index ] = srcRegistry->GetMaterialAssets()[ index ]->ID;
 	}
 
-	bool MaterialRegistry::HasAnyOverrides()
+	bool MaterialRegistry::HasAnyOverrides() const
 	{
 		return std::any_of( m_HasOverridden.begin(), m_HasOverridden.end(), []( bool x ) { return x; } );
 	}

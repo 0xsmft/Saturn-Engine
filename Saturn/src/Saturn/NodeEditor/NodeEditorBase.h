@@ -60,7 +60,7 @@ namespace Saturn {
 		// This state can only happen if evaluation was successful and we are ready to actually use the evaluated data
 		// For example, GraphSounds are evaluated then they are ready to be simulated (played).
 		Simulating,
-		// Only true if we are simulating and the simulation is paused i.e. editor suspended
+		// Only true if we are simulating and the simulation is paused i.e. editor suspended or when the NodeEditor is loaded but is not being used.
 		Suspended,
 		// Used when the node editor is being loaded from NC
 		Loading,
@@ -68,8 +68,8 @@ namespace Saturn {
 		Evaluating 
 	};
 
-	// NOTE: This enum if a flag enum and does NOT have a bitwise or (|) operator or a and (&) operator.
-	//       You must do m_Flags = m_Flags | <flag>
+	// NOTE: This enum does NOT have a bitwise OR (|) operator or a AND (&) operator.
+	//       You must do m_Flags = m_Flags | <flag>, instead of m_Flags =| <flag>
 	enum class NodeEditorPrivileges
 	{
 		// No editing or no evaluation
@@ -110,7 +110,7 @@ namespace Saturn {
 		// 
 		// ROOT NODE -> Node A -> Node B
 		//                          /
-		//                        Node D
+		//                        Node C
 		//
 		Left,
 
@@ -123,7 +123,7 @@ namespace Saturn {
 		// 
 		// Node A -> Node B -> ROOT NODE
 		//          /
-		//      Node D
+		//      Node C
 		//
 		Right
 	};
@@ -250,7 +250,7 @@ namespace Saturn {
 		void ShowFlow();
 		void ShowFlow( const std::vector<Ref<Link>>& rLinks );
 		void ShowFlow( const Ref<Link>& rLink );
-		void ShowFlow( UUID id );
+		void ShowFlow( UUID linkID );
 
 		NodeEditorState GetState() const { return m_State; }
 		void SetState( NodeEditorState state )

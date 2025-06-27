@@ -399,9 +399,9 @@ namespace Saturn {
 		ed::Flow( ed::LinkId( rLink->ID ) );
 	}
 
-	void NodeEditorBase::ShowFlow( UUID id )
+	void NodeEditorBase::ShowFlow( UUID linkID )
 	{
-		ed::Flow( ed::LinkId( id ) );
+		ed::Flow( ed::LinkId( linkID ) );
 	}
 
 	bool NodeEditorBase::HasPrivilege( NodeEditorPrivileges privilege ) const

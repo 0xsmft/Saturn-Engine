@@ -45,7 +45,7 @@ namespace Saturn {
 
 	void Module::Load()
 	{
-		if( m_Library.Load( m_Path.string() ) ) 
+		if( m_Library.Load( m_Path ) ) 
 		{
 			SAT_CORE_INFO( "Loaded corresponding module DLL: {0} -> {1} (X/{0})", m_Name, m_Path.string() );
 		}

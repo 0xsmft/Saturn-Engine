@@ -175,7 +175,7 @@ namespace Saturn {
 		const UUID GetID() const { return m_ID; }
 
 		bool HasOverrides( uint32_t index ) const { return m_HasOverridden[ index ]; }
-		bool HasAnyOverrides();
+		bool HasAnyOverrides() const;
 		void SetOverries( uint32_t index, bool val ) { m_HasOverridden[ index ] = val; }
 
 	public:

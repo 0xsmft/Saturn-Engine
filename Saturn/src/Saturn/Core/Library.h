@@ -28,8 +28,6 @@
 
 #pragma once
 
-#include "Ref.h"
-
 #include <filesystem>
 
 #if defined(_WIN32)
@@ -42,7 +40,7 @@ using LibraryHandle = void*;
 
 namespace Saturn {
 
-	class Library : public RefTarget
+	class Library
 	{
 	public:
 		Library();

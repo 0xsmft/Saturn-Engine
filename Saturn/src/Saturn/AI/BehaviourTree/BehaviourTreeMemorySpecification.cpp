@@ -43,7 +43,6 @@ namespace Saturn {
 #if !defined( SAT_DIST )
 	Ref<BehaviourTreeMemoryVariableSpec> BehaviourTreeMemorySpecification::DrawVariableFinder( SPropertyType type, Ref<BehaviourTreeMemoryVariableSpec> selectedVar )
 	{
-		bool clicked = false;
 		for( auto& rVariable : m_SpecificationData )
 		{
 			if( rVariable->DataType != type )

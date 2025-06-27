@@ -57,7 +57,7 @@ namespace Saturn::Auxiliary {
 			rEmitter << YAML::Key << "TransformComponent";
 			rEmitter << YAML::BeginMap;
 
-			auto& tc = entity->GetComponent< TransformComponent >();
+			const auto& tc = entity->GetComponent< TransformComponent >();
 
 			rEmitter << YAML::Key << "Position" << YAML::Value << tc.Position;
 			rEmitter << YAML::Key << "Rotation" << YAML::Value << glm::degrees( tc.GetRotationEuler() );
@@ -73,7 +73,7 @@ namespace Saturn::Auxiliary {
 			rEmitter << YAML::Key << "RelationshipComponent";
 			rEmitter << YAML::BeginMap;
 
-			auto& rc = entity->GetComponent< RelationshipComponent >();
+			const auto& rc = entity->GetComponent< RelationshipComponent >();
 
 			rEmitter << YAML::Key << "Parent" << YAML::Value << rc.Parent;
 
@@ -112,7 +112,7 @@ namespace Saturn::Auxiliary {
 			rEmitter << YAML::Key << "MeshComponent";
 			rEmitter << YAML::BeginMap;
 
-			auto& mc = entity->GetComponent< StaticMeshComponent >();
+			const auto& mc = entity->GetComponent< StaticMeshComponent >();
 
 			if( mc.Mesh )
 				rEmitter << YAML::Key << "Asset" << YAML::Value << mc.Mesh->ID;
@@ -161,16 +161,17 @@ namespace Saturn::Auxiliary {
 			rEmitter << YAML::Key << "ScriptComponent";
 			rEmitter << YAML::BeginMap;
 
-			auto& sc = entity->GetComponent< ScriptComponent >();
+			const auto& sc = entity->GetComponent< ScriptComponent >();
 
 			rEmitter << YAML::Key << "Name" << YAML::Value << sc.ClassName;
 
-			unsigned int bit = sc.ExternalData ? 1 : 0;
+			const unsigned int bit = sc.ExternalData ? 1 : 0;
 			rEmitter << YAML::Key << "ExternalData" << YAML::Value << bit;
 
 			rEmitter << YAML::Key << "Properties";
 			rEmitter << YAML::BeginSeq;
 
+			/*
 			auto& rProperties = ClassMetadataHandler::Get().GetAllProperties( sc.ClassName );
 			for( const auto& rProperty : rProperties )
 			{
@@ -262,6 +263,7 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 
 				rEmitter << YAML::EndMap;
 			}
+			*/
 
 			rEmitter << YAML::EndSeq;
 			rEmitter << YAML::EndMap;
@@ -273,7 +275,7 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 			rEmitter << YAML::Key << "SkyLightComponent";
 			rEmitter << YAML::BeginMap;
 
-			auto& slc = entity->GetComponent< SkylightComponent >();
+			const auto& slc = entity->GetComponent< SkylightComponent >();
 
 			rEmitter << YAML::Key << "IsPreetham" << YAML::Value << slc.DynamicSky;
 
@@ -298,7 +300,7 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 			rEmitter << YAML::Key << "DirectionalLightComponent";
 			rEmitter << YAML::BeginMap;
 
-			auto& dlc = entity->GetComponent< DirectionalLightComponent >();
+			const auto& dlc = entity->GetComponent< DirectionalLightComponent >();
 
 			rEmitter << YAML::Key << "Radiance" << YAML::Value << dlc.Radiance;
 			rEmitter << YAML::Key << "Intensity" << YAML::Value << dlc.Intensity;
@@ -313,7 +315,7 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 			rEmitter << YAML::Key << "PointLightComponent";
 			rEmitter << YAML::BeginMap;
 
-			auto& plc = entity->GetComponent< PointLightComponent >();
+			const auto& plc = entity->GetComponent< PointLightComponent >();
 
 			rEmitter << YAML::Key << "Radiance" << YAML::Value << plc.Radiance;
 			rEmitter << YAML::Key << "Intensity" << YAML::Value << plc.Intensity;
@@ -332,7 +334,7 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 			rEmitter << YAML::Key << "BoxColliderComponent";
 			rEmitter << YAML::BeginMap;
 
-			auto& bcc = entity->GetComponent< BoxColliderComponent >();
+			const auto& bcc = entity->GetComponent< BoxColliderComponent >();
 
 			rEmitter << YAML::Key << "Extents" << YAML::Value << bcc.Extents;
 			rEmitter << YAML::Key << "Offset" << YAML::Value << bcc.Offset;
@@ -348,7 +350,7 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 			rEmitter << YAML::Key << "SphereColliderComponent";
 			rEmitter << YAML::BeginMap;
 
-			auto& scc = entity->GetComponent< SphereColliderComponent >();
+			const auto& scc = entity->GetComponent< SphereColliderComponent >();
 
 			rEmitter << YAML::Key << "Radius" << YAML::Value << scc.Radius;
 			rEmitter << YAML::Key << "Offset" << YAML::Value << scc.Offset;
@@ -363,7 +365,7 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 			rEmitter << YAML::Key << "CapsuleColliderComponent";
 			rEmitter << YAML::BeginMap;
 
-			auto& ccc = entity->GetComponent< CapsuleColliderComponent >();
+			const auto& ccc = entity->GetComponent< CapsuleColliderComponent >();
 
 			rEmitter << YAML::Key << "Height" << YAML::Value << ccc.Height;
 			rEmitter << YAML::Key << "Radius" << YAML::Value << ccc.Radius;
@@ -379,7 +381,7 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 			rEmitter << YAML::Key << "RigidbodyComponent";
 			rEmitter << YAML::BeginMap;
 
-			auto& rbc = entity->GetComponent< RigidbodyComponent >();
+			const auto& rbc = entity->GetComponent< RigidbodyComponent >();
 
 			rEmitter << YAML::Key << "IsKinematic" << YAML::Value << rbc.IsKinematic;
 			rEmitter << YAML::Key << "CCD" << YAML::Value << rbc.UseCCD;
@@ -396,7 +398,7 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 			rEmitter << YAML::Key << "CameraComponent";
 			rEmitter << YAML::BeginMap;
 
-			auto& cc = entity->GetComponent< CameraComponent >();
+			const auto& cc = entity->GetComponent< CameraComponent >();
 
 			rEmitter << YAML::Key << "MainCamera" << YAML::Value << cc.MainCamera;
 
@@ -409,7 +411,7 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 			rEmitter << YAML::Key << "AudioPlayerComponent";
 			rEmitter << YAML::BeginMap;
 
-			auto& spc = entity->GetComponent< AudioPlayerComponent >();
+			const auto& spc = entity->GetComponent< AudioPlayerComponent >();
 
 			rEmitter << YAML::Key << "AssetID"          << YAML::Value << spc.SpecAssetID;
 			rEmitter << YAML::Key << "Loop"             << YAML::Value << spc.Loop;
@@ -427,7 +429,7 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 			rEmitter << YAML::Key << "AudioListenerComponent";
 			rEmitter << YAML::BeginMap;
 
-			auto& alc = entity->GetComponent< AudioListenerComponent >();
+			const auto& alc = entity->GetComponent< AudioListenerComponent >();
 
 			rEmitter << YAML::Key << "Primary"    << YAML::Value << alc.Primary;
 			rEmitter << YAML::Key << "Direction"  << YAML::Value << alc.Direction;
@@ -443,9 +445,9 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 			rEmitter << YAML::Key << "NavigationMeshSpecificationComponent";
 			rEmitter << YAML::BeginMap;
 
-			auto& nmsc = entity->GetComponent< NavigationMeshSpecificationComponent >();
+			const auto& nmsc = entity->GetComponent< NavigationMeshSpecificationComponent >();
 
-			unsigned int bit = nmsc.HasBuilt ? 1 : 0;
+			const unsigned int bit = nmsc.HasBuilt ? 1 : 0;
 
 			rEmitter << YAML::Key << "Extent" << YAML::Value << nmsc.Extent;
 			rEmitter << YAML::Key << "HasBuilt" << YAML::Value << bit;
@@ -626,7 +628,7 @@ rProperty.SetProperty( DeserialisedEntity.Get(), value ); \
 					auto materialRegistry = mc[ "MaterialRegistry" ];
 					if( materialRegistry )
 					{
-						bool hasOverrides = materialRegistry[ "AnyOverrides" ].as<bool>();
+						const bool hasOverrides = materialRegistry[ "AnyOverrides" ].as<bool>();
 
 						if( hasOverrides )
 						{
@@ -654,7 +656,7 @@ rProperty.SetProperty( DeserialisedEntity.Get(), value ); \
 				}
 			}
 
-			auto rcNode = entity[ "RelationshipComponent" ];
+			const auto rcNode = entity[ "RelationshipComponent" ];
 			auto& rc = DeserialisedEntity->GetComponent<RelationshipComponent>();
 			rc.Parent = rcNode[ "Parent" ] ? rcNode[ "Parent" ].as<uint64_t>() : 0;
 
@@ -766,7 +768,7 @@ rProperty.SetProperty( DeserialisedEntity.Get(), value ); \
 
 				if ( lockNode )
 				{
-					rb.LockFlags = lockNode.as< int >(0);
+					rb.LockFlags = lockNode.as< int >( 0 );
 				}
 				else
 				{

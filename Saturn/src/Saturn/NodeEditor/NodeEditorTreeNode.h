@@ -44,7 +44,7 @@ namespace Saturn {
 		virtual void OnRenderExtra() {}
 #endif
 
-		void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, NodeEditorBase* pBase ) override;
+		void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, NodeEditorBase* pBase ) override final;
 		NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
 	};
 	

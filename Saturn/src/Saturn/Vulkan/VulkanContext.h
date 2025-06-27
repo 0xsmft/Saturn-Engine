@@ -33,7 +33,7 @@ namespace Saturn {
 		std::optional<uint32_t> PresentFamily;
 		std::optional<uint32_t> ComputeFamily;
 
-		bool Complete() { return GraphicsFamily.has_value() && PresentFamily.has_value() && ComputeFamily.has_value(); }
+		bool Complete() const { return GraphicsFamily.has_value() && PresentFamily.has_value() && ComputeFamily.has_value(); }
 	};
 
 	struct SwapchainCreationData

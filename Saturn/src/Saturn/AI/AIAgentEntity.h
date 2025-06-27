@@ -45,7 +45,6 @@ namespace Saturn {
 		SAT_DECLARE_CLASS( AIAgentEntity, Entity );
 	public:
 		AIAgentEntity();
-		AIAgentEntity( const std::string& rName, UUID rId );
 		~AIAgentEntity();
 
 		virtual void BeginPlay() override;

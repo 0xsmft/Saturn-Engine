@@ -99,8 +99,7 @@ namespace SaturnBuildTool
 
             if( !File.Exists( FileCacheLocation ) )
             {
-                Console.WriteLine( $"File cache does not exist looking for \"{SourceDir}\"" );
-                return false;
+                Console.WriteLine( $"File cache does not exist looking for \"{SourceDir}\" Resulting in a new FileCache being used." );
             }
 
             GetTargetPlatform();

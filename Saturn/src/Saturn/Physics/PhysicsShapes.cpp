@@ -127,37 +127,35 @@ namespace Saturn {
 
 	void BoxShape::ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds )
 	{
-		glm::vec3 localVertices[ 8 ] = { 
-			{-1.0f, -1.0f, -1.0f},
-			{ 1.0f, -1.0f, -1.0f},
-			{ 1.0f,  1.0f, -1.0f},
-			{-1.0f,  1.0f, -1.0f},
-			{-1.0f, -1.0f,  1.0f},
-			{ 1.0f, -1.0f,  1.0f},
-			{ 1.0f,  1.0f,  1.0f},
-			{-1.0f,  1.0f,  1.0f},
-		};
-
-		uint32_t indices[ 36 ] = {
-			0, 1, 2,  0, 2, 3,
-			4, 6, 5,  4, 7, 6,
-			4, 5, 1,  4, 1, 0,
-			3, 2, 6,  3, 6, 7,
-			0, 3, 7,  0, 7, 4,
-			1, 5, 6,  1, 6, 2
-		};
-
-		glm::mat4 actorTransform = m_Entity->Transform();
-
 		if( m_Shape->getGeometryType() == physx::PxGeometryType::eBOX )
 		{
 			physx::PxBoxGeometry geometry;
 			if( m_Shape->getBoxGeometry( geometry ) )
 			{
-				physx::PxTransform globalPose = physx::PxShapeExt::getGlobalPose( *m_Shape, rActor );
+				glm::vec3 localVertices[ 8 ] = {
+					{ -1.0f, -1.0f, -1.0f },
+					{  1.0f, -1.0f, -1.0f },
+					{  1.0f,  1.0f, -1.0f },
+					{ -1.0f,  1.0f, -1.0f },
+					{ -1.0f, -1.0f,  1.0f },
+					{  1.0f, -1.0f,  1.0f },
+					{  1.0f,  1.0f,  1.0f },
+					{ -1.0f,  1.0f,  1.0f },
+				};
 
+				uint32_t indices[ 36 ] = {
+					0, 1, 2,  0, 2, 3,
+					4, 6, 5,  4, 7, 6,
+					4, 5, 1,  4, 1, 0,
+					3, 2, 6,  3, 6, 7,
+					0, 3, 7,  0, 7, 4,
+					1, 5, 6,  1, 6, 2
+				};
+
+				physx::PxTransform globalPose = physx::PxShapeExt::getGlobalPose( *m_Shape, rActor );
 				glm::vec3 halfExtents = { geometry.halfExtents.x, geometry.halfExtents.y, geometry.halfExtents.z };
 
+				glm::mat4 actorTransform = m_Entity->Transform();
 				for( int i = 0; i < 8; i++ )
 				{
 					glm::vec3 scaled = localVertices[ i ] * halfExtents;

@@ -65,10 +65,9 @@ namespace Saturn {
 		VirtualFS::Get().MountBase( Project::GetActiveConfig().Name, Project::GetActiveProject()->GetRootDir() );
 
 		// Load Asset bundle.
-		if( auto result = AssetBundle::ReadBundle(); result != AssetBundleResult::Success )
+		if( const auto result = AssetBundle::ReadBundle(); result != AssetBundleResult::Success )
 		{
-			std::string errMsg = std::format( "Asset Bundle could not be read. Error code: {0}", result );
-
+			const std::string errMsg = std::format( "Asset Bundle could not be read. Error code: {0}", result );
 			SAT_CORE_VERIFY( false, errMsg );
 		}
 
@@ -94,7 +93,7 @@ namespace Saturn {
 
 	void RuntimeLayer::OpenFile( AssetID id )
 	{
-		Ref<Asset> asset = AssetManager::Get().FindAsset( id );
+		const Ref<Asset> asset = AssetManager::Get().FindAsset( id );
 
 		Ref<Scene> newScene = Ref<Scene>::Create();
 		newScene->Path = asset->Path;

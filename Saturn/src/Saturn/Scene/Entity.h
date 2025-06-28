@@ -31,7 +31,7 @@
 #include "Components.h"
 #include "Scene.h"
 
-#include "Saturn/GameFramework/SClass.h"
+#include "Saturn/GameFramework/SObject.h"
 #include "Saturn/GameFramework/Core/GameScript.h"
 
 #include <glm/glm.hpp>
@@ -39,12 +39,12 @@
 
 namespace Saturn {
 
-	class Entity : public SClass
+	class Entity : public SObject
 	{
 		//////////////////////////////////////////////////////////////////////////
 		// Needed for game class.
 
-		SAT_DECLARE_CLASS_MOVE( Entity, SClass )
+		SAT_DECLARE_CLASS_MOVE( Entity, SObject )
 	public:
 		Entity();
 		Entity( Scene* scene );
@@ -102,9 +102,9 @@ namespace Saturn {
 		UUID GetUUID() { return GetComponent<IdComponent>().ID; }
 		[[nodiscard]] const std::string& GetName() { return GetComponent<TagComponent>().Tag; }
 
-		void BeginPlay() override {}
-		void OnUpdate( Saturn::Timestep ts ) override {}
-		void OnPhysicsUpdate( Saturn::Timestep ts ) override {}
+		virtual void BeginPlay() {}
+		virtual void OnUpdate( Saturn::Timestep ts ) {}
+		virtual void OnPhysicsUpdate( Saturn::Timestep ts ) {}
 
 		void SetParent( const UUID& rID ) 
 		{

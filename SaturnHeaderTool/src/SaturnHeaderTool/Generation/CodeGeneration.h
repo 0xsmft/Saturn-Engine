@@ -46,7 +46,7 @@ namespace Saturn {
 		[[nodiscard]] bool StartGeneration();
 
 	private:
-		bool GenerateHeader( HeaderToolCommand& rCommand );
+		bool GenerateHeader( HeaderToolCommand& rCommand ) const;
 		bool GenerateSource( HeaderToolCommand& rCommand );
 
 	private:

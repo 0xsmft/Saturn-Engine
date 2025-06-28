@@ -46,7 +46,8 @@ namespace Saturn {
 
 	void BehaviourTreeWaitTask::InitialiseTask( BehaviourTreeNodeEditor* pEditor, BehaviourTreeNodeBase* pNode )
 	{
-		m_NodeID = pNode->ID;
+		if( pNode )
+			m_NodeID = pNode->ID;
 	}
 
 	BehaviourTreeWaitTask::~BehaviourTreeWaitTask()

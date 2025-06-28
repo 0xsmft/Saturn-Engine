@@ -28,8 +28,6 @@
 
 #pragma once
 
-#include "Saturn/GameFramework/Core/FunctionTypedefs.h"
-
 #include "Ref.h"
 #include "Library.h"
 #include "Log.h"
@@ -54,29 +52,20 @@ namespace Saturn {
 		void Load();
 		void InitFixedGlobals( const Ref<Project>& rProject );
 		
-		// Where Ty, must be a valid function pointer type i.e. CreateSClassFn
+		// Where Ty, must be a valid function pointer type
 		template<typename Ty>
 		Ty GetOrFindFunction( const std::string& rName )
 		{
-			if( m_CreateFuntions.find( rName ) == m_CreateFuntions.end() )
+			auto result = m_Library.GetSymbol( rName.c_str() );
+
+			SAT_CORE_ASSERT( result, "Could not find function in module!" );
+
+			if( result )
 			{
-				auto result = m_Library.GetSymbol( rName.c_str() );
-				
-				SAT_CORE_ASSERT( result, "Could not find function in module!" );
-
-				if( result ) 
-				{
-					m_CreateFuntions[ rName ] = (Ty)result;
-
-					return (Ty)result;
-				}
-				else
-					SAT_CORE_ERROR( "Could not find funtion {0} looking in module DLL: {1}", rName, m_Name );
+				return ( Ty ) result;
 			}
 			else
-			{
-				return (Ty)m_CreateFuntions[ rName ];
-			}
+				SAT_CORE_ERROR( "Could not find funtion {0} looking in module DLL: {1}", rName, m_Name );
 
 			return nullptr;
 		}
@@ -89,9 +78,6 @@ namespace Saturn {
 
 		std::filesystem::path m_Path;
 		std::string m_Name;
-
-		// If we are a game module then we want to store all of out "_Z_Create_{CLASSNAME}" function pointers.
-		std::unordered_map<std::string, CreateSClassFn> m_CreateFuntions;
 
 	private:
 		friend class GameModule;

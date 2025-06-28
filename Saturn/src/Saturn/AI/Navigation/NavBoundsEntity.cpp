@@ -219,4 +219,4 @@ namespace Saturn {
 
 #include "Saturn/GameFramework/Core/EngineGenerated.h"
 
-SAT_X31_CREATE_AUTO_REG( NavBoundsEntity );
+SAT_X31_CREATE_AUTO_REG_SPWN( NavBoundsEntity );

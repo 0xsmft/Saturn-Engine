@@ -416,7 +416,8 @@ namespace Saturn {
 						}
 					}
 				}
-				else if( rSelectedEntity->HasComponent<NavigationMeshSpecificationComponent>() ) 
+				
+				if( rSelectedEntity->GetClass() == NavBoundsEntity::StaticClass() ) 
 				{
 					if( Ref<NavBoundsEntity> boundsEntity = rSelectedEntity.As<NavBoundsEntity>() )
 					{
@@ -557,20 +558,11 @@ namespace Saturn {
 		if( GActiveScene != this )
 			GActiveScene = this;
 
-		Ref<Entity> entity;
-
-		if( externalData )
-		{
-			entity = GameModule::Get().CreateEntity( rScriptName );
-		}
-		else
-		{
-			entity = ClassMetadataHandler::Get().SpawnEngineClass( rScriptName );
-		}
+		Ref<Entity> entity = (Entity*)ClassMetadataHandler::Get().CreateClassObject( rScriptName );
 
 		entity->SetName( name );
 		entity->GetComponent<IdComponent>().ID = uuid;
-		entity->AddComponent<ScriptComponent>( ( unsigned int ) externalData ).ClassName = rScriptName;
+		entity->AddComponent<DScriptComponent>( ( unsigned int ) externalData ).ClassName = rScriptName;
 
 		OnEntityCreated( entity );
 
@@ -783,6 +775,7 @@ namespace Saturn {
 
 	void Scene::TransferModifiedProperties( const Ref<Entity>& rSourceEntity, Ref<Entity>& rEntity, const std::string& rMetadataName )
 	{
+		/*
 		auto& rProperties = ClassMetadataHandler::Get().GetAllProperties( rMetadataName );
 
 		for( auto& rProperty : rProperties )
@@ -806,6 +799,7 @@ namespace Saturn {
 				rProperty.RtCopyFromOther( const_cast< Entity* >( rSourceEntity.Get() ), rEntity.Get() );
 			}
 		}
+		*/
 	}
 
 	void Scene::CopyScene( Ref<Scene>& NewScene )
@@ -814,9 +808,9 @@ namespace Saturn {
 		// I know we can just use the "=" operator, but we need to recreate the entities from the game.
 		for( auto&& [hnd, originalEntity] : m_EntityIDMap )
 		{
-			if( originalEntity->HasComponent<ScriptComponent>() )
+			if( originalEntity->HasComponent<DScriptComponent>() )
 			{
-				auto& rScriptComponent = originalEntity->GetComponent<ScriptComponent>();
+				auto& rScriptComponent = originalEntity->GetComponent<DScriptComponent>();
 
 				// Create from game module
 				NewScene->m_EntityIDMap[ hnd ] = NewScene->CreateEntityWithIDScript( originalEntity->GetUUID(), originalEntity->GetName(), rScriptComponent.ClassName, rScriptComponent.ExternalData );
@@ -1044,9 +1038,9 @@ namespace Saturn {
 
 		for( auto&& [id, entity] : m_EntityIDMap )
 		{
-			if( entity->HasComponent<ScriptComponent>() )
+			if( entity->HasComponent<DScriptComponent>() )
 			{
-				auto& rScriptComponent = entity->GetComponent<ScriptComponent>();
+				auto& rScriptComponent = entity->GetComponent<DScriptComponent>();
 
 				Ref<Entity> newEntity = HotReloadReplaceOldEntity(entity);
 
@@ -1117,7 +1111,7 @@ namespace Saturn {
 
 	void Scene::RegisterEntityScript( Ref<Entity> entity, const std::string& rName )
 	{
-		entity->AddComponent<ScriptComponent>( 0 ).ClassName = rName;
+		entity->AddComponent<DScriptComponent>( 0 ).ClassName = rName;
 	}
 
 	void Scene::PrepareForNavMeshBuilding()
@@ -1157,10 +1151,10 @@ namespace Saturn {
 
 	Ref<Entity> Scene::HotReloadReplaceOldEntity( Ref<Entity> source )
 	{
-		auto& rScriptCompoent = source->GetComponent<ScriptComponent>();
+		auto& rScriptComponent = source->GetComponent<DScriptComponent>();
 
 		// Create new entity
-		Ref<Entity> entity = GameModule::Get().CreateEntity( rScriptCompoent.ClassName );
+		Ref<Entity> entity = (Entity*)ClassMetadataHandler::Get().CreateClassObject( rScriptComponent.ClassName );
 
 		entity->SetName( source->GetName() );
 		entity->GetComponent<IdComponent>().ID = source->GetUUID();
@@ -1206,15 +1200,15 @@ namespace Saturn {
 			// TODO: It is annoying that we end up writing the data twice
 			// 1: Here, for initialising when reading back
 			// 2: In the Entity::Serialise function, for the actual serialisation (to write the ScriptComponent)
-			bool isScriptClass = v->HasComponent<ScriptComponent>();
+			bool isScriptClass = v->HasComponent<DScriptComponent>();
 			RawSerialisation::WriteObject( isScriptClass, rStream );
 
 			if( isScriptClass )
 			{
-				std::string name = v->GetComponent<ScriptComponent>().ClassName;
+				std::string name = v->GetComponent<DScriptComponent>().ClassName;
 				RawSerialisation::WriteString( name, rStream );
 
-				uint8_t isExternalData = v->GetComponent<ScriptComponent>().ExternalData ? 1 : 0;
+				uint8_t isExternalData = v->GetComponent<DScriptComponent>().ExternalData ? 1 : 0;
 				RawSerialisation::WriteObject( isExternalData, rStream );
 			}
 
@@ -1273,20 +1267,7 @@ namespace Saturn {
 				RawSerialisation::ReadObject( isExternalData, rStream );
 				bool externalData = isExternalData != 0;
 				
-				if( externalData )
-				{
-					V = GameModule::Get().CreateEntity( className );
-				}
-				else
-				{
-					// Create engine class
-					V = ClassMetadataHandler::Get().SpawnEngineClass( className );
-
-					if( !V )
-					{
-						V = Ref<Entity>::Create();
-					}
-				}
+				V = (Entity*)ClassMetadataHandler::Get().CreateClassObject( className );
 			}
 			else
 			{

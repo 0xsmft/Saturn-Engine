@@ -157,7 +157,7 @@ namespace Saturn {
 						}
 						else
 						{
-							AssetID matID = 0;
+							const AssetID matID = 0;
 							RawSerialisation::WriteObject( matID, rStream );
 						}
 
@@ -168,9 +168,10 @@ namespace Saturn {
 			} );
 
 		// Script Component
-		WriteComponent<ScriptComponent>( rEntity, rStream, [&]()
+		/*
+		WriteComponent<DScriptComponent>( rEntity, rStream, [&]()
 			{
-				auto& sc = rEntity->GetComponent< ScriptComponent >();
+				auto& sc = rEntity->GetComponent< DScriptComponent >();
 
 				RawSerialisation::WriteString( sc.ClassName, rStream );
 
@@ -187,6 +188,7 @@ namespace Saturn {
 					rProperty.Serialise( rEntity.Get(), rStream );
 				}
 			} );
+			*/
 
 		// Sky light component
 		WriteComponent<SkylightComponent>( rEntity, rStream, [&]()
@@ -411,9 +413,9 @@ namespace Saturn {
 			} );
 
 		// Script Component
-		ReadComponent<ScriptComponent>( rEntity, rStream, [&]()
+		ReadComponent<DScriptComponent>( rEntity, rStream, [&]()
 			{
-				auto& sc = rEntity->GetComponent< ScriptComponent >();
+				auto& sc = rEntity->GetComponent< DScriptComponent >();
 
 				sc.ClassName = RawSerialisation::ReadString( rStream );
 
@@ -444,7 +446,7 @@ namespace Saturn {
 					SAT_CORE_VERIFY( rProperty.GetName() == rName, "SPROPERTY MISMATCH! Property loaded from the ScriptComponent at the same index does not match with the module property name." );
 
 					// Deserialise for saved data
-					rProperty.Deserialise( rEntity.Get(), rStream );
+					//rProperty.Deserialise( rEntity.Get(), rStream );
 				}
 			} );
 

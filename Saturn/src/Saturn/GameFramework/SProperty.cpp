@@ -29,14 +29,15 @@
 #include "sppch.h"
 #include "SProperty.h"
 
+#include "SObject.h"
+
 #include "Saturn/Asset/Asset.h"
-#include "SClass.h"
 #include "Saturn/Scene/Entity.h"
 #include "Saturn/Serialisation/RawSerialisation.h"
 
 namespace Saturn {
 
-	void SProperty::RtCopyFromOther( SClass* pSrcClass, SClass* pClass )
+	void SProperty::RtCopyFromOther( SObject* pSrcClass, SObject* pClass )
 	{
 #define SAT_HANDLE_TYPE( PropertyType ) \
 {\
@@ -112,7 +113,7 @@ SetProperty<typename PropertyTypeTraits<Saturn::SPropertyType::PropertyType>::Ty
 		}
 	}
 
-	void SProperty::Serialise( SClass* pClass, std::ofstream& rStream )
+	void SProperty::Serialise( SObject* pClass, std::ofstream& rStream )
 	{
 #define SAT_SERIALISE_PROPERTY( PropertyType ) \
 { \
@@ -208,7 +209,7 @@ RawSerialisation::WriteObject( value, rStream ); \
 		}
 	}
 
-	void SProperty::Deserialise( SClass* pClass, std::istream& rStream )
+	void SProperty::Deserialise( SObject* pClass, std::istream& rStream )
 	{
 #define SAT_DESERIALISE_PROPERTY( PropertyType ) \
 { \

@@ -91,7 +91,7 @@ namespace Saturn {
 		pDrawList->AddText( textPos, IM_COL32( 255, 255, 255, 255 ), text.data() );
 
 		ImGui::BeginVertical( (int)ID );
-		ImGui::BeginHorizontal( "inputs" );
+		ImGui::BeginHorizontal( "Inputs" );
 		ImGui::Spring( 0, padding * 2 );
 
 		ImRect inputRect;
@@ -116,7 +116,9 @@ namespace Saturn {
 		ImGui::Spring( 0, padding * 2 );
 		ImGui::EndHorizontal();
 
-		ImGui::BeginHorizontal( "content_frame" );
+		OnRenderNextSection();
+
+		ImGui::BeginHorizontal( "ContentFrame" );
 		ImGui::Spring( 1, padding );
 
 		ImGui::BeginVertical( "content", ImVec2( 0.0f, 0.0f ) );
@@ -134,7 +136,7 @@ namespace Saturn {
 		ImGui::Spring( 1, padding );
 		ImGui::EndHorizontal();
 
-		ImGui::BeginHorizontal( "outputs" );
+		ImGui::BeginHorizontal( "Outputs" );
 		ImGui::Spring( 0, padding * 2 );
 
 		ImRect outputRect;

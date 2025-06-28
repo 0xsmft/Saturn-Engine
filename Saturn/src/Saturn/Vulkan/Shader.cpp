@@ -637,10 +637,12 @@ namespace Saturn {
 				else
 					MemberName = Name + "." + memberName;
 
+				/*
 				bool PushConstantData = false;
 
 				if( shaderType == ShaderType::Fragment )
 					PushConstantData = true;
+				*/
 
 				SHADER_INFO( "  {0}", memberName );
 				SHADER_INFO( "  Size: {0}", size );

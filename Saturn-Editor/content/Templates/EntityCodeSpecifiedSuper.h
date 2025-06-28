@@ -20,6 +20,8 @@ public:
 	virtual void OnUpdate( Saturn::Timestep ts ) override;
 	virtual void OnPhysicsUpdate( Saturn::Timestep ts ) override;
 
+	__SUPER_CLASS_FUNCS__
+
 private:
 
 };

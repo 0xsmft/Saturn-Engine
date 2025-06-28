@@ -47,7 +47,7 @@
 
 namespace Saturn {
 
-	struct SClassMetadata;
+	struct SClassExtendedMetadata;
 
 	struct ContentBrowserQuickAction
 	{
@@ -101,7 +101,7 @@ namespace Saturn {
 
 		Ref<ContentBrowserItem> GetActiveHoveredItem();
 
-		void DrawClassHierarchy( const std::string& rKeyName, const SClassMetadata& rData );
+		void DrawClassHierarchy( const std::string& rKeyName, const SClass* pClass );
 
 		void ClearSearchQuery();
 		void DrawImportSoundPopup();
@@ -129,7 +129,8 @@ namespace Saturn {
 			std::filesystem::path Path;
 		};
 
-		SClassMetadata m_SelectedMetadata = {};
+		// This used to be SClassExtendedMetadata hence the name
+		const SClass* m_SelectedMetadata = SObject::StaticClass();
 
 		filewatch::FileWatch<std::wstring>* m_Watcher = nullptr;
 

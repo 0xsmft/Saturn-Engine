@@ -38,7 +38,9 @@ namespace Saturn::Auxiliary {
 	{
 		rEmitter << YAML::BeginMap;
 		rEmitter << YAML::Key << "Entity" << YAML::Value << entity->GetComponent< IdComponent >().ID;
-		bool isPrefab = entity->HasComponent<PrefabComponent>();
+		rEmitter << YAML::Key << "Class" << YAML::Value << entity->GetClass()->GetName();
+
+		const bool isPrefab = entity->HasComponent<PrefabComponent>();
 
 		// Tag Component
 		if( entity->HasComponent<TagComponent>() )
@@ -156,12 +158,12 @@ namespace Saturn::Auxiliary {
 		}
 
 		// Script Component
-		if( entity->HasComponent<ScriptComponent>() )
+		if( entity->HasComponent<DScriptComponent>() )
 		{
 			rEmitter << YAML::Key << "ScriptComponent";
 			rEmitter << YAML::BeginMap;
 
-			const auto& sc = entity->GetComponent< ScriptComponent >();
+			const auto& sc = entity->GetComponent< DScriptComponent >();
 
 			rEmitter << YAML::Key << "Name" << YAML::Value << sc.ClassName;
 
@@ -171,22 +173,23 @@ namespace Saturn::Auxiliary {
 			rEmitter << YAML::Key << "Properties";
 			rEmitter << YAML::BeginSeq;
 
-			/*
-			auto& rProperties = ClassMetadataHandler::Get().GetAllProperties( sc.ClassName );
-			for( const auto& rProperty : rProperties )
+			auto* pProperties = entity->GetClass()->GetProperties();
+			for( int i = 0; i < entity->GetClass()->GetPropertyCount(); i++ )
 			{
 #define SAT_SERIALISE_PROPERTY_YAML( PropertyType ) \
 { \
-typename PropertyTypeTraits<Saturn::SPropertyType::PropertyType>::Type value = rProperty.Read<Saturn::SPropertyType::PropertyType>( entity.Get() ); \
+typename PropertyTypeTraits<Saturn::SPropertyType::PropertyType>::Type value = pProperty->Read<Saturn::SPropertyType::PropertyType>( entity.Get() ); \
 rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 } break
 
+				const SProperty* pProperty = pProperties[ i ];
+
 				rEmitter << YAML::BeginMap;
-				rEmitter << YAML::Key << "Name" << YAML::Value << rProperty.GetName();
+				rEmitter << YAML::Key << "Name" << YAML::Value << pProperty->GetName();
 	
-				rEmitter << YAML::Key << "ValueType" << YAML::Value << (int)rProperty.GetType();
+				rEmitter << YAML::Key << "ValueType" << YAML::Value << (int)pProperty->GetType();
 				
-				switch( rProperty.GetType() )
+				switch( pProperty->GetType() )
 				{
 					case SPropertyType::Char:
 						SAT_SERIALISE_PROPERTY_YAML( Char );
@@ -223,19 +226,19 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 
 					case SPropertyType::Vector2:
 					{
-						auto& temporaryValue = rProperty.Read<SPropertyType::Vector2>( entity.Get() );
+						auto& temporaryValue = pProperty->Read<SPropertyType::Vector2>( entity.Get() );
 						rEmitter << YAML::Key << "Value" << YAML::Value << temporaryValue;
 					} break;
 
 					case SPropertyType::Vector3:
 					{
-						auto& temporaryValue = rProperty.Read<SPropertyType::Vector3>( entity.Get() );
+						auto& temporaryValue = pProperty->Read<SPropertyType::Vector3>( entity.Get() );
 						rEmitter << YAML::Key << "Value" << YAML::Value << temporaryValue;
 					} break;
 
 					case SPropertyType::Vector4:
 					{
-						auto& temporaryValue = rProperty.Read<SPropertyType::Vector4>( entity.Get() );
+						auto& temporaryValue = pProperty->Read<SPropertyType::Vector4>( entity.Get() );
 						rEmitter << YAML::Key << "Value" << YAML::Value << temporaryValue;
 					} break;
 
@@ -244,7 +247,7 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 
 					case SPropertyType::Entity:
 					{
-						Ref<Entity>& rEntity = rProperty.Read<Saturn::SPropertyType::Entity>( entity.Get() );
+						Ref<Entity>& rEntity = pProperty->Read<Saturn::SPropertyType::Entity>( entity.Get() );
 
 						if( rEntity != nullptr )
 							rEmitter << YAML::Key << "Value" << YAML::Value << rEntity->GetUUID();
@@ -254,7 +257,7 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 
 					case SPropertyType::Asset:
 					{
-						AssetReference& rAssetReference = rProperty.Read<Saturn::SPropertyType::Asset>( entity.Get() );
+						AssetReference& rAssetReference = pProperty->Read<Saturn::SPropertyType::Asset>( entity.Get() );
 
 						rEmitter << YAML::Key << "Value"        << YAML::Value << rAssetReference.ID;
 						rEmitter << YAML::Key << "ExpectedType" << YAML::Value << (int)rAssetReference.ExpectedType;
@@ -263,7 +266,6 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 
 				rEmitter << YAML::EndMap;
 			}
-			*/
 
 			rEmitter << YAML::EndSeq;
 			rEmitter << YAML::EndMap;
@@ -465,21 +467,28 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 
 		for( auto entity : rNode )
 		{
-			UUID entityID = entity[ "Entity" ].as< uint64_t >();
+			const UUID entityID = entity[ "Entity" ].as< uint64_t >();
+
+			// Fall back to entity because this scene may be pre 0.2.1
+			const std::string className = entity[ "Class" ].as< std::string >( "Entity" );
 
 			std::string Tag = "";
 
 			if( entity[ "TagComponent" ] )
 				Tag = entity[ "TagComponent" ][ "Tag" ].as< std::string >();
 
-			SAT_CORE_INFO( "Deserialised entity with ID: ENTITY/{0}, with name : {1}", entityID, Tag );
+			SAT_CORE_INFO( "Deserialised entity with ID: ENTITY/{0}, with name: {1} and class name: {2}", entityID, Tag, className );
 
 			Ref<Entity> DeserialisedEntity;
 
+			// Pre 0.2.1, this would be an entity
+			DeserialisedEntity = scene->CreateEntityWithIDScript( entityID, Tag, className, false );
+
+			/*
 			auto srcc = entity[ "ScriptComponent" ];
 			if( srcc )
 			{
-				std::string ScriptName = srcc[ "Name" ].as< std::string >();
+				const std::string ScriptName = srcc[ "Name" ].as< std::string >();
 
 				uint8_t bit = srcc[ "ExternalData" ].as<uint8_t>();
 				unsigned int externalData = bit ? 1 : 0;
@@ -487,7 +496,7 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 				// Create from T
 				DeserialisedEntity = scene->CreateEntityWithIDScript( entityID, Tag, ScriptName, externalData );
 
-				auto& s = DeserialisedEntity->GetComponent< ScriptComponent >();
+				auto& s = DeserialisedEntity->GetComponent< DScriptComponent >();
 
 				s.ClassName = ScriptName;
 
@@ -496,6 +505,7 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 				/////////////////////////////////
 				// Read Properties
 
+				/*
 				auto properties = srcc[ "Properties" ];
 				for( auto property : properties )
 				{
@@ -595,6 +605,7 @@ rProperty.SetProperty( DeserialisedEntity.Get(), value ); \
 			{
 				DeserialisedEntity = scene->CreateEntityWithID( entityID, Tag );
 			}
+			*/
 
 			auto tc = entity[ "TransformComponent" ];
 			if( tc )

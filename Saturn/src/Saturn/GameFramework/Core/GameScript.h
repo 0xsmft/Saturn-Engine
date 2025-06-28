@@ -38,11 +38,26 @@
 #define CURRENT_FILE_ID
 #define GENERATED_BODY(...) SAT_CONTACT_FOUR(CURRENT_FILE_ID,_,__LINE__,_GENERATED_BODY);
 
+#define SAT_DECLARE_CLASS_EXTERNAL_BASE_NO_INT( x ) \
+private: \
+	x& operator=(x&&); \
+	x& operator=(const x&); \
+	static SClass* GetStaticClassInternal(); \
+public: \
+	inline static SObject* X31_DefConstructor() { return static_cast< SObject* >( new x ); } \
+	inline static [[nodiscard]] SClass* StaticClass() { return GetStaticClassInternal(); } \
+public: \
+	typedef x ThisClass; \
+
 #define SAT_DECLARE_CLASS( x, BaseClass ) \
 private: \
 	x& operator=(x&&); \
 	x& operator=(const x&); \
 	friend class x##Int; \
+	static SClass* GetStaticClassInternal(); \
+public: \
+	inline static SObject* X31_DefConstructor() { return static_cast< SObject* >( new x ); } \
+	inline static [[nodiscard]] SClass* StaticClass() { return GetStaticClassInternal(); } \
 public: \
 	typedef x ThisClass; \
 	typedef BaseClass Super; \
@@ -53,12 +68,19 @@ private: \
 	x& operator=(x&&); \
 	x& operator=(const x&); \
 public: \
+	inline static SObject* X31_DefConstructor() { return static_cast< SObject* >( new x ); } \
+	inline static [[nodiscard]] SClass* StaticClass() { return nullptr; } \
+public: \
 	typedef x ThisClass; \
 	typedef BaseClass Super; \
 
 #define SAT_DECLARE_CLASS_MOVE( x, BaseClass ) \
 private: \
 	friend class x##Int;\
+	static SClass* GetStaticClassInternal(); \
+public: \
+	inline static SObject* X31_DefConstructor() { return static_cast< SObject* >( new x ); } \
+	inline static [[nodiscard]] SClass* StaticClass() { return GetStaticClassInternal(); } \
 public: \
 	typedef x ThisClass; \
 	typedef BaseClass Super; \

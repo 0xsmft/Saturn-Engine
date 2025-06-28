@@ -226,7 +226,7 @@ namespace Saturn {
 		fout << "\n";
 	}
 
-	bool HeaderTool::GenerateHeader( HeaderToolCommand& rCommand ) 
+	bool HeaderTool::GenerateHeader( HeaderToolCommand& rCommand ) const
 	{
 		bool result = true;
 		
@@ -348,17 +348,17 @@ namespace Saturn {
 
 					if( args.contains( "Spawnable" ) )
 					{
-						rCommand.ClassFlags |= ( uint32_t ) SClassFlags::Spawnable;
+						rCommand.ClassFlags |= ( uint32_t ) SClassFlags::SC_Spawnable;
 					}
 
 					if( args.contains( "VisibleInEditor" ) )
 					{
-						rCommand.ClassFlags |= ( uint32_t ) SClassFlags::VisibleInEditor;
+						rCommand.ClassFlags |= ( uint32_t ) SClassFlags::SC_VisibleInEditor;
 					}
 
-					if( args.contains( "NoMetadata" ) )
+					if( args.contains( "NoMetadata" ) || args.contains( "NoExtendedMetadata" ) )
 					{
-						rCommand.ClassFlags |= ( uint32_t ) SClassFlags::NoMetadata;
+						rCommand.ClassFlags |= ( uint32_t ) SClassFlags::SC_NoExtendedMetadata;
 					}
 
 					SClassFound = true;
@@ -425,44 +425,27 @@ namespace Saturn {
 		generatedHeaderPath /= rCommand.Filepath.stem();
 		generatedHeaderPath += ".Gen.h";
 
+		generatedHeaderPath = std::filesystem::relative( generatedHeaderPath, m_WorkingDir );
+
 		std::ofstream fout( outputPath );
 
 		fout << "/* Generated code, DO NOT modify! */\n";
 		fout << "#include \"Saturn/GameFramework/Core/GameScript.h\"\n";
 		fout << "#include \"Saturn/GameFramework/Core/ClassMetadataHandler.h\"\n";
 		fout << "#include \"Saturn/Scene/Entity.h\"\n";
+
+		std::filesystem::path sourceDir = m_WorkingDir.parent_path().parent_path();
+		sourceDir /= "Source";
+
+		// TODO: On Windows this will result in us using the windows file system separator i.e. "\" instead of using / 
+		std::filesystem::path relativePath = std::filesystem::relative( rCommand.Filepath, sourceDir );
+
 		fout << std::format( "#include \"{0}\"\n", rCommand.Filepath.string() );
 		fout << std::format( "#include \"{0}\"\n\n", generatedHeaderPath.string() );
 
 		auto& rClassName = rCommand.ClassName;
 
-		fout << "extern \"C\" {\n";
-
-		if( ( rCommand.ClassFlags & ( uint32_t ) SClassFlags::Spawnable ) != 0 )
-		{
-			fout << std::format( "__declspec(dllexport) Saturn::Entity* _Z_Create_{0}(Saturn::Scene* pScene)\n", rClassName );
-			fout << "{\n";
-			fout << "\t//vvv use raw pointer for init\n";
-			fout << std::format( "\t{0}* Target = new {0}();\n", rClassName );
-			fout << "\tSaturn::Entity* TargetReturn = (Saturn::Entity*)Target;\n";
-			fout << "\treturn TargetReturn;\n";
-			fout << "}\n";
-
-			fout << "//^^^ Spawnable\n";
-		}
-		else
-		{
-			fout << std::format( "__declspec(dllexport) Saturn::Entity* _Z_Create_{0}(Saturn::Scene* pScene)\n", rClassName );
-			fout << "{\n";
-			fout << "\treturn nullptr;\n";
-			fout << "}\n";
-
-			fout << "//^^^ NO Spawnable\n";
-		}
-
-		fout << "}\n\n";
-
-		if( ( rCommand.ClassFlags & ( uint32_t ) SClassFlags::NoMetadata ) == 0 )
+		if( ( rCommand.ClassFlags & ( uint32_t ) SClassFlags::SC_NoExtendedMetadata ) == 0 )
 		{
 			std::string realPath = rCommand.Filepath.string();
 
@@ -475,23 +458,11 @@ namespace Saturn {
 			}
 #endif
 
-			fout << std::format( "static void ReflCreateMetadataFor_{0}()\n", rClassName );
+			fout << std::format( "static void RCreateMetadataFor_{0}()\n", rClassName );
 			fout << "{\n";
-			fout << std::format( "\tSaturn::SClassMetadata __Metadata_{0};\n", rClassName );
-			fout << std::format( "\t__Metadata_{0}.Name = \"{0}\";\n", rClassName );
-			fout << std::format( "\t__Metadata_{0}.ParentClassName = \"{1}\";\n", rClassName, rCommand.BaseClass );
-			fout << std::format( "\t__Metadata_{0}.GeneratedSourcePath = __FILE__;\n", rClassName );
+			fout << std::format( "\tSaturn::SClassExtendedMetadata __Metadata_{0};\n", rClassName );
 			fout << std::format( "\t__Metadata_{0}.HeaderPath = \"{1}\";\n", rClassName, realPath );
-			fout << std::format( "\t__Metadata_{0}.ExternalData = true;\n", rClassName );
-			fout << std::format( "\tSaturn::ClassMetadataHandler::Get().AddMetadata( __Metadata_{0} );\n", rClassName );
-			fout << "}\n\n";
-		}
-		else
-		{
-			fout << std::format( "static void ReflCreateMetadataFor_{0}()\n", rClassName );
-			fout << "{\n";
-			fout << std::format( "\tSaturn::SClassMetadata __Metadata_{0};\n", rClassName );
-			fout << std::format( "\t__Metadata_{0}.Name = \"{0}\";\n", rClassName );
+//			fout << std::format( "\t__Metadata_{0}.ExternalData = true;\n", rClassName );
 			fout << std::format( "\tSaturn::ClassMetadataHandler::Get().AddMetadata( __Metadata_{0} );\n", rClassName );
 			fout << "}\n\n";
 		}
@@ -535,37 +506,69 @@ namespace Saturn {
 
 		fout << "};\n\n";
 
-		fout << "static void ReflRegisterPropertiesFor_" << rClassName << "()\n";
-		fout << "{\n";
+//		fout << "static void RRegisterPropertiesFor_" << rClassName << "()\n";
+//		fout << "{\n";
 
 		for( const auto& [lineNumber, rProperty] : rCommand.Properties )
 		{
 			std::string stringType = SPropertyTypeToString( rProperty.GetType() );
 
-			fout << std::format( "\tSaturn::SProperty Prop_{0};\n", rProperty.GetName() );
+			fout << std::format( "const Saturn::SProperty Prop_{0}( \"{0}\", {1}, &{2}::Get{0}, &{2}::Set{0} );\n", rProperty.GetName(), stringType, internalClassName );
 			
+			/*
 			fout << std::format( "\tProp_{0}.SetName( \"{0}\" );\n", rProperty.GetName() );
 			fout << std::format( "\tProp_{0}.SetType( {1} );\n", rProperty.GetName(), stringType );
 
 			fout << std::format( "\tProp_{0}.pGetPropertyFunction = &{1}::Get{0};\n", rProperty.GetName(), internalClassName );
 			fout << std::format( "\tProp_{0}.pSetPropertyFunction = &{1}::Set{0};\n", rProperty.GetName(), internalClassName );
+			*/
 
-			fout << std::format( "\tSaturn::ClassMetadataHandler::Get().RegisterProperty( \"{0}\", Prop_{1} );\n", rClassName, rProperty.GetName() );
+//			fout << std::format( "\tSaturn::ClassMetadataHandler::Get().RegisterProperty( \"{0}\", Prop_{1} );\n", rClassName, rProperty.GetName() );
 		}
 
+		fout << "const Saturn::SProperty* const PropertyPointers[] =\n{";
+		for( const auto& [lineNumber, rProperty] : rCommand.Properties )
+		{
+			fout << std::format( "\t(const Saturn::SProperty*)&Prop_{0},\n", rProperty.GetName() );
+		}
+		fout << "};\n";
+
+//		fout << "}\n\n";
+
+		// Class Auto-Registration
+		int propSize = ( int ) rCommand.Properties.size();
+
+		fout << std::format( "Saturn::SClass* RStaticLnk{0}()\n", rClassName );
+		fout << "{\n";
+		fout << "\tstatic Saturn::SClass* pClass = nullptr;\n";
+		fout << "\tif( !pClass )\n";
+		fout << "\t{\n";
+		fout << std::vformat( "\t\tconst SClassSpecification spec{{ \"{0}\", (SClassFlags) {1}, {2}, sizeof( {0} ), alignof( {0} ), {0}::Super::StaticClass(), Saturn::RInternalConstructor<{0}>, RStaticLnk{0}, PropertyPointers }};\n", std::make_format_args( rClassName, rCommand.ClassFlags, propSize ) );
+		fout << "\t\tSClass::RConstructClass( &pClass, spec );\n";
+		fout << "\t}\n\n";
+		fout << "\treturn pClass;\n";
 		fout << "}\n\n";
 
-		// Auto-Registration (DLL only).
-		fout << std::format( "struct Ar{0}_RTEditor\n", rClassName );
+		fout << std::vformat( 
+			"static Saturn::SClassRegistrar RCR{0}( RStaticLnk{0} );\n", std::make_format_args( rClassName ) );
+	
+		// ^^^ results in static SClassRegistrar RCRMyClass( 
+		// SClassSpecification{ 
+		// "MyClass", 
+		// (SClassFlags) Saturn::SClassFlags::SC_None, 
+		// sizeof( MyClass ), alignof( MyClass ), 
+		// Saturn::RInternalConstructor<MyClass>, 
+		// RStaticLnkMyClass 
+		// } );
+
+		fout << "//^^^ Auto-Registration\n\n";
+
+		// GetStaticClassInternal
+		fout << "//vvv GetStaticClassInternal X31\n";
+		fout << std::format( "Saturn::SClass* {0}::GetStaticClassInternal()\n", rCommand.ClassName );
 		fout << "{\n";
-		fout << std::format( "\tAr{0}_RTEditor()\n", rClassName );
-		fout << "\t{\n";
-		fout << std::format( "\t\tReflCreateMetadataFor_{0}();\n", rClassName );
-		fout << std::format( "\t\tReflRegisterPropertiesFor_{0}();\n", rClassName );
-		fout << "\t}\n";
-		fout << "};\n\n";
-		fout << std::format( "static Ar{0}_RTEditor Ar{0}_Runtime;\n", rClassName );
-		fout << "//^^^ Auto-Registration\n";
+		fout << std::format( "\treturn RStaticLnk{0}();\n", rCommand.ClassName );
+		fout << "}\n";
 
 		fout.close();
 

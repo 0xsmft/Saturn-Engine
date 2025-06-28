@@ -46,22 +46,7 @@ namespace Saturn {
 
 	GameModule::~GameModule()
 	{
-#if !defined(SAT_DIST)
-		m_ClassMetadataHandler.ClearExternalData();
-#endif
 		Unload();
-	}
-
-	Entity* GameModule::CreateEntity( const std::string& rClassName )
-	{
-		std::string funcName = "_Z_Create_" + rClassName;
-
-		CreateSClassFn createFunc = ( CreateSClassFn ) m_ModuleHandle->GetOrFindFunction<CreateSClassFn>( funcName );
-
-		if( createFunc )
-			return ( createFunc ) ( );
-		else
-			return nullptr;
 	}
 
 #if defined(SAT_DEBUG) || defined(SAT_RELEASE)
@@ -69,7 +54,6 @@ namespace Saturn {
 	void GameModule::BeginHotReload()
 	{
 		m_ModuleHandle = nullptr;
-		m_ClassMetadataHandler.BeginHotReload();
 	}
 
 	void GameModule::EndHotReload()

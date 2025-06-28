@@ -558,7 +558,7 @@ namespace Saturn {
 			// Tooltip
 			ImGui::BeginHorizontal( "##dndinfo" );
 
-			Auxiliary::Image( Icon, ImVec2( 24, 24 ) );
+			Auxiliary::Image( Icon, ImVec2( 24.0f, 24.0f ) );
 			ImGui::Text( m_Filename.string().c_str() );
 
 			if( m_MultiSelected )
@@ -627,10 +627,10 @@ namespace Saturn {
 
 		// TODO: We use 512x512 images not 180
 		float maxSize = rThumbnailSize.x;
-		float aspectRatio = imageSize.x / imageSize.y;
-
 		if( imageSize.x > maxSize || imageSize.y > maxSize )
 		{
+			float aspectRatio = imageSize.x / imageSize.y;
+
 			if( aspectRatio > 1.0f )
 			{
 				// Wider than tall (rect)

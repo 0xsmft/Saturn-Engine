@@ -31,7 +31,7 @@
 #include "Saturn/Core/App.h"
 
 #include "Saturn/Core/UUID.h"
-#include "Saturn/Core/Ref.h"
+#include "Saturn/GameFramework/SObject.h"
 
 #include "Saturn/Core/Log.h"
 #include "Saturn/Serialisation/RawSerialisation.h"
@@ -209,7 +209,7 @@ namespace Saturn {
 			return AssetType::Unknown;
 	}
 
-	class Asset : public RefTarget
+	class Asset : public SObject
 	{
 	public:
 		// The relative path to this Asset

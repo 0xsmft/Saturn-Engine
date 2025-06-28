@@ -30,71 +30,61 @@
 
 #include "SingletonStorage.h"
 #include "Saturn/GameFramework/SClass.h"
-#include "FunctionTypedefs.h"
+#include "Saturn/GameFramework/SProperty.h"
 
 #include <string>
 #include <vector>
 
-// In distribution builds the class metadata handler is a lazy loaded singleton because it will be initialised when the application starts up and calls the ReflRegisterPropertiesFor_XXX functions. Lifetime is tied to the lifetime of the application.
-// However,
-// in development builds we want to tie the lifetime of the class to the lifetime of the editor layer. So ClassMetadataHandler is a owned by the editor layer.
-// X31 is used to as a unique identifier.
-#if defined(SAT_DIST)
-#define SAT_CMH_SINGLETON_X31( x ) SAT_SINGLETON_LAZY( x )
-#else
-//#define SAT_CMH_SINGLETON_X31( x ) static inline x& Get() { return *SingletonStorage::GetSingleton<x>(); }
-#define SAT_CMH_SINGLETON_X31( x ) SAT_SINGLETON_LAZY( x )
-#endif
-
 namespace Saturn {
 
-	class ClassMetadataHandler : public RefTarget
+#define SAT_ClassMetadataHandler_EachTreeNode_Deprecated [[deprecated( "Saturn::ClassMetadataHandler::EachTreeNode is deprecated and will be removed. Consider using \"ClassMetadataHandler::EachClassNode\" instead." )]]
+
+	class ClassMetadataHandler
 	{
 	public:
-		SAT_CMH_SINGLETON_X31( ClassMetadataHandler )
+		SAT_SINGLETON_LAZY( ClassMetadataHandler )
 
 	public:
 		ClassMetadataHandler();
 		~ClassMetadataHandler();
 
 		template<typename Fn>
-		void EachTreeNode( Fn Function )
+		SAT_ClassMetadataHandler_EachTreeNode_Deprecated void EachTreeNode( Fn Function )
 		{
-			for( auto&& [name, data] : m_MetadataTree )
-				Function( data );
+			EachClassNode( Function );
 		}
 
-		void AddMetadata( const SClassMetadata& rData );
-		bool IsEngineMetadata( const SClassMetadata& rData ) { return !rData.ExternalData; }
+		template<typename Fn>
+		void EachClassNode( Fn Function )
+		{
+			for( auto&& [name, pClass] : m_Classes )
+				Function( pClass );
+		}
 
-		void RegisterProperty( const std::string& rMetadataName, const SProperty& rProperty );
+	public:
+		void AddMetadata( const SClassExtendedMetadata& rData );
+		bool IsEngineMetadata( const SClassExtendedMetadata& rData ) { return true; }
 		
 		std::vector<SProperty>& GetAllProperties( const std::string& rMetadataName );
-		SProperty& GetProperty( const std::string& rMetadataName, const std::string& rPropertyName );
 
 		void ClearExternalData();
 
 	public:
-		SClassMetadata& GetSClassMetadata();
+		[[nodiscard]] SObject* CreateClassObject( const std::string& rScriptName );
+		[[nodiscard]] SObject* CreateClassObject( SClass* pClass );
+		void RegisterClass( SClass* pClass );
+
+	public:
+		[[deprecated( "Saturn::ClassMetadataHandler::GetSObjectMetadata is deprecated and will be removed. Consider using \"SObject::StaticClass\" instead." )]]
+		SClass* GetSObjectMetadata();
 
 	public:
 		// Hot reload
 		void BeginHotReload();
 		void AcknowledgeHotReload();
 
-	public:
-		// Engine internal
-		void InitialiseEngineClass( const std::string& rName, SClassFlags flags, CreateSClassFn function );
-		[[nodiscard]] Entity* SpawnEngineClass( const std::string& rScriptName );
-
-	private:
-		std::unordered_map<std::string, SClassMetadata> m_MetadataTree;
-		
-		// Metadata name -> SProperties
-		std::unordered_map<std::string, std::vector<SProperty>> m_Properties;
-
-		// Engine spawnable classes
-		// TEMP
-		std::unordered_map<std::string, CreateSClassFn > m_SpawnableEngineClasses;
+	private:		
+		// All of the classes that have reflection data tied to them.
+		std::unordered_map<std::string, SClass*> m_Classes;
 	};
 }

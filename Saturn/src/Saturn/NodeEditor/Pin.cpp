@@ -93,16 +93,16 @@ namespace Saturn {
 
 	void Pin::DrawIcon( bool connected, int alpha ) const
 	{
-		auto rendererIcon = GetIconType();
-		ImColor color = GetPinColor();
-		color.Value.w = alpha / 255.0f;
-
 		constexpr float PIN_ICON_SIZE = 24.0f;
 		constexpr ImVec2 size = ImVec2( PIN_ICON_SIZE, PIN_ICON_SIZE );
 
 		if( ImGui::IsRectVisible( size ) )
 		{
-			auto cursorPos = ImGui::GetCursorScreenPos();
+			const auto rendererIcon = GetIconType();
+			ImColor color = GetPinColor();
+			color.Value.w = alpha / 255.0f;
+
+			const auto cursorPos = ImGui::GetCursorScreenPos();
 			auto drawList = ImGui::GetWindowDrawList();
 
 			Auxiliary::DrawPinIconInternal( drawList,
@@ -166,7 +166,7 @@ namespace Saturn {
 
 	void Pin::RenderBlueprintOutput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked )
 	{
-		auto alpha = ImGui::GetStyle().Alpha;
+		const auto alpha = ImGui::GetStyle().Alpha;
 
 		ImGui::PushStyleVar( ImGuiStyleVar_Alpha, alpha );
 
@@ -189,8 +189,8 @@ namespace Saturn {
 
 	void Pin::RenderTreeOutput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked )
 	{
-		auto alpha = ImGui::GetStyle().Alpha;
-		ImRect itemRect( ImGui::GetItemRectMin(), ImGui::GetItemRectMax() );
+		const auto alpha = ImGui::GetStyle().Alpha;
+		const ImRect itemRect( ImGui::GetItemRectMin(), ImGui::GetItemRectMax() );
 
 		ed::PushStyleVar( ed::StyleVar_PinCorners, ImDrawFlags_RoundCornersTop );
 
@@ -205,7 +205,7 @@ namespace Saturn {
 
 	void Pin::RenderBlueprintInput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked, uint32_t pinIndex )
 	{
-		auto alpha = ImGui::GetStyle().Alpha;
+		const auto alpha = ImGui::GetStyle().Alpha;
 
 		rBuilder.Input( ed::PinId( ID ) );
 
@@ -236,9 +236,8 @@ namespace Saturn {
 
 	void Pin::RenderTreeInput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked, uint32_t pinIndex )
 	{
-		auto alpha = ImGui::GetStyle().Alpha;
-		
-		ImRect itemRect( ImGui::GetItemRectMin(), ImGui::GetItemRectMax() );
+		const auto alpha = ImGui::GetStyle().Alpha;
+		const ImRect itemRect( ImGui::GetItemRectMin(), ImGui::GetItemRectMax() );
 
 		// Set pin style and spacing
 		ed::PushStyleVar( ed::StyleVar_PinArrowSize, 10.0f );

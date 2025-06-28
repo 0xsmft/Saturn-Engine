@@ -28,10 +28,10 @@
 
 #pragma once
 
-#include "Saturn/Core/Ref.h"
-#include "Saturn/Core/Timestep.h"
+#include "SObject.h"
+#include "Core/GameScript.h"
 
-#include "SProperty.h"
+#include "Saturn/Core/Timestep.h"
 
 #include <filesystem>
 
@@ -40,38 +40,113 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// SClass Metadata
 	// Describes the metadata of a class in the game framework.
-	struct SClassMetadata 
+	struct SClassExtendedMetadata 
+	{
+#if !defined(SAT_DIST)
+		std::filesystem::path HeaderPath;
+#endif
+	};
+
+	enum SClassFlags
+	{
+		SC_None = 0,
+		SC_Initialised = 1 << 0,
+		SC_Abstract   = 1 << 1,
+		SC_Spawnable  = 1 << 2,
+		SC_VisibleInEditor = 1 << 3,
+		SC_NoExtendedMetadata = 1 << 4,
+		SC_External = 1 << 5,
+	};
+
+	class SClass;
+	class SProperty;
+
+	struct SClassSpecification
 	{
 		std::string Name;
-		std::string ParentClassName;
+		std::underlying_type_t<SClassFlags> Flags = SClassFlags::SC_None;
+		int Properties = 0;
+		size_t Size = 0;
+		size_t Alignment = 0;
 
-		std::filesystem::path GeneratedSourcePath;
-		std::filesystem::path HeaderPath;
+		SClass* pParentClass = nullptr;
 
-		// Does this class come from an external source e.g. the game.
-		bool ExternalData = false;
+		SObject* ( *pClassConstructor )( ) = nullptr;
+		SClass* ( *pStaticLinkFunction )() = nullptr;
+
+		const SProperty* const* SProperties = nullptr;
 	};
 
-	enum class SClassFlags
+	static inline void RClassCompiledIn( SClass* ( *pStaticLinkFunction )( ) )
 	{
-		None = 0,
-		Spawnable = 1 << 0,
-		VisibleInEditor = 1 << 1,
-		NoMetadata = 1 << 2
+		( pStaticLinkFunction ) ( );
+	}
+
+	struct SClassRegistrar
+	{
+		SClassRegistrar( SClass* ( *pStaticLinkFunction )( ) )
+		{
+			RClassCompiledIn( pStaticLinkFunction );
+		}
 	};
 
-	class SClass : public RefTarget
+	class SClass : public SObject
 	{
+		SAT_DECLARE_CLASS_NO_INTER( SClass, SObject )
 	public:
 		SClass() {}
+		SClass( const SClassSpecification& rSpec ) 
+			: SObject(), m_Name( rSpec.Name ), m_Flags( (SClassFlags)rSpec.Flags ), m_PropertyCount( rSpec.Properties ), m_Size( rSpec.Size ), m_Alignment( rSpec.Alignment ), m_pClassConstructor( rSpec.pClassConstructor ), m_pStaticLinkFunction( rSpec.pStaticLinkFunction ), m_pParentClass( rSpec.pParentClass ), m_Properties( rSpec.SProperties )
+		{
+		}
+
 		virtual ~SClass() = default;
 
-		virtual void BeginPlay() {}
-		virtual void OnUpdate( Saturn::Timestep ts ) {}
-		virtual void OnPhysicsUpdate( Saturn::Timestep ts ) {}
+		inline SObject* CreateDefaultObject() 
+		{
+			return ( m_pClassConstructor )( );
+		}
+
+	public:
+		inline SClassFlags GetFlags() const { return m_Flags; }
+		inline const std::string& GetName() const { return m_Name; }
+
+		inline size_t GetSize() const { return m_Size; }
+		inline size_t GetAlignment() const { return m_Alignment; }
+
+		inline void SetFlag( SClassFlags flag )
+		{
+			m_Flags = static_cast<SClassFlags>( m_Flags | flag );
+		}
+
+		inline const SClass* GetParentClass() const { return m_pParentClass; }
+		inline int GetPropertyCount() const { return m_PropertyCount; }
+
+		// Pointer to the first element
+		inline const SProperty* const* GetProperties() const { return m_Properties; }
+
+	public:
+		static void RConstructClass( SClass** ppClass, const SClassSpecification& rSpec );
+
+		SProperty& GetProperty( const std::string& rPropertyName ) const;
 
 	private:
-		SClassFlags m_Flags = SClassFlags::None;
+		std::string m_Name;
+		SClassFlags m_Flags = SClassFlags::SC_None;
+		int m_PropertyCount = 0;
+		size_t m_Size = 0;
+		size_t m_Alignment = 0;
+
+		SObject* ( *m_pClassConstructor )( ) = nullptr;
+		SClass* ( *m_pStaticLinkFunction )( ) = nullptr;
+
+		SClass* m_pParentClass = nullptr;
+		const SProperty* const* m_Properties = nullptr;
 	};
 
+	template<class RClass>
+	[[nodiscard]] SObject* RInternalConstructor() 
+	{
+		return ( SObject* ) RClass::X31_DefConstructor();
+	}
 }

@@ -28,10 +28,6 @@
 
 #pragma once
 
-#if !defined(SAT_DIST)
-#include "ClassMetadataHandler.h"
-#endif
-
 #include "Saturn/Core/Module.h"
 #include "Saturn/Core/Library.h"
 
@@ -49,11 +45,9 @@ namespace Saturn {
 		GameModule();
 		~GameModule();
 
-	public:
-		Entity* CreateEntity( const std::string& rClassName );
-		
 		void Reload();
 
+	public:		
 		const std::filesystem::path& GetModulePath() const { return m_ModuleHandle->m_Path; }
 
 #if defined(SAT_DEBUG) || defined(SAT_RELEASE)
@@ -72,8 +66,6 @@ namespace Saturn {
 
 #if defined(SAT_DEBUG) || defined(SAT_RELEASE)
 		std::string m_LastTimestamp;
-
-		ClassMetadataHandler m_ClassMetadataHandler;
 #endif
 
 	};

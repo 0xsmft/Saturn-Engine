@@ -193,7 +193,6 @@ namespace Saturn {
 		if( additionalData.Size > 0 )
 			PushConstant.Write( additionalData.Data, additionalData.Size, 0 );
 
-		auto& rSubmesh = mesh->Submeshes()[ SubmeshIndex ];
 		{ 
 			mesh->GetVertexBuffer()->Bind( CommandBuffer );
 
@@ -228,6 +227,7 @@ namespace Saturn {
 
 			material->Bind( CommandBuffer, Pipeline->GetPipelineLayout(), externalWds );
 
+			auto& rSubmesh = mesh->Submeshes()[ SubmeshIndex ];
 			vkCmdDrawIndexed( CommandBuffer, rSubmesh.IndexCount, count, rSubmesh.BaseIndex, rSubmesh.BaseVertex, 0 );
 		}
 
@@ -337,8 +337,8 @@ namespace Saturn {
 
 		auto frame = Renderer::Get().GetCurrentFrame();
 
-		Submesh& rSubmesh = mesh->Submeshes()[ SubmeshIndex ];
 		{
+			Submesh& rSubmesh = mesh->Submeshes()[ SubmeshIndex ];
 			auto& rMaterialAsset = materialRegistry->GetMaterialAssets()[ rSubmesh.MaterialIndex ];
 			Ref<Material> mat = rMaterialAsset->GetMaterial();
 
@@ -473,7 +473,7 @@ namespace Saturn {
 
 		m_ImageIndex = ImageIndex;
 
-		SAT_CORE_ASSERT( ImageIndex != UINT32_MAX || ImageIndex != 3435973836 );
+		SAT_CORE_ASSERT( ImageIndex != UINT32_MAX );
 
 		m_BeginFrameTime = m_BeginFrameTimer.ElapsedMilliseconds();
 	}

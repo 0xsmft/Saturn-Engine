@@ -38,6 +38,10 @@ namespace Saturn {
 
 	class NavBoundsEntity : public Entity
 	{
+		//////////////////////////////////////////////////////////////////////////
+		// Needed for game class.
+
+		SAT_DECLARE_CLASS( NavBoundsEntity, Entity );
 	public:
 		NavBoundsEntity();
 		~NavBoundsEntity();

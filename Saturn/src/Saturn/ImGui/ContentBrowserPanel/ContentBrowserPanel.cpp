@@ -56,7 +56,7 @@
 
 #include "Saturn/Premake/Premake.h"
 
-#include "Saturn/GameFramework/Core/SourceFileTemplateHelper.h"
+#include "Saturn/GameFramework/Core/ClassTemplateFileHelper.h"
 #include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 #include "Saturn/GameFramework/Core/GameModule.h"
 
@@ -689,7 +689,6 @@ namespace Saturn {
 
 			ImGui::Columns( columnCount, 0, false );
 
-			int itemCount = m_Searching ? m_ValidSearchFiles.size() : m_Files.size();
 			if( m_Searching )
 			{
 				DrawItemsClipped( m_ValidSearchFiles, { thumbnailSizeX, thumbnailSizeY }, padding, columnCount );
@@ -790,14 +789,14 @@ namespace Saturn {
 				if( ImGui::BeginListBox( "##classes", ImVec2( -FLT_MIN, 0.0f ) ) )
 				{
 					// Root Tree
-					DrawClassHierarchy( "SClass", ClassMetadataHandler::Get().GetSClassMetadata() );
+					DrawClassHierarchy( "SObject", ClassMetadataHandler::Get().GetSObjectMetadata() );
 
 					ImGui::EndListBox();
 				}
 
 				ImGui::EndVertical();
 
-				Auxiliary::DisabledFlag disabled( m_NewClassName.empty() || m_SelectedMetadata.Name.empty() );
+				Auxiliary::DisabledFlag disabled( m_NewClassName.empty() || m_SelectedMetadata == nullptr );
 
 				if( ImGui::Button( "Create" ) )
 				{
@@ -811,8 +810,7 @@ namespace Saturn {
 					// Update or create the project files.
 					Premake::Launch( Project::GetActiveProject()->GetRootDir().wstring() );
 
-					// TODO: Get the correct source files.
-					SourceFileTemplateHelper::CreateEntitySourceFiles( m_CurrentPath, m_NewClassName.c_str() );
+					ClassTemplateFileHelper::CreateAndAmendTemplateFile( m_SelectedMetadata, m_CurrentPath, m_NewClassName.c_str() );
 
 					AssetManagerSerialiser ars;
 					ars.Serialise();
@@ -863,12 +861,12 @@ namespace Saturn {
 				if( ImGui::BeginListBox( "##CLASSES_INST", ImVec2( -FLT_MIN, 0.0f ) ) )
 				{
 					// Root Tree
-					DrawClassHierarchy( "SClass", ClassMetadataHandler::Get().GetSClassMetadata() );
+					DrawClassHierarchy( "SObject", ClassMetadataHandler::Get().GetSObjectMetadata() );
 
 					ImGui::EndListBox();
 				}
 
-				Auxiliary::DisabledFlag disabled( m_ClassInstanceName.empty() || m_SelectedMetadata.Name.empty() );
+				Auxiliary::DisabledFlag disabled( m_ClassInstanceName.empty() || m_SelectedMetadata == nullptr );
 
 				if( ImGui::Button( "Create" ) )
 				{
@@ -890,23 +888,7 @@ namespace Saturn {
 					// Create the source entity.
 					Ref<Entity> sourceEntity = nullptr;
 
-					if( ClassMetadataHandler::Get().IsEngineMetadata( m_SelectedMetadata ) )
-					{
-						GActiveScene->CreateEntityWithIDScript( UUID(), "Temporary", m_SelectedMetadata.Name, false );
-						
-						/*
-						// TODO: Create the class somehow?
-						if( m_SelectedMetadata.Name == "Entity" ) 
-						{
-							sourceEntity = GActiveScene->CreateEntity();
-						}
-						*/
-					}
-					else
-					{
-						sourceEntity = GameModule::Get().CreateEntity( m_SelectedMetadata.Name );
-						sourceEntity->AddComponent<ScriptComponent>().ClassName = m_SelectedMetadata.Name;
-					}
+					GActiveScene->CreateEntityWithIDScript( UUID(), "Temporary", m_SelectedMetadata->GetName(), false );
 
 					prefab->Create( sourceEntity );
 
@@ -960,26 +942,31 @@ namespace Saturn {
 		}
 	}
 
-	void ContentBrowserPanel::DrawClassHierarchy( const std::string& rKeyName, const SClassMetadata& rData )
+	void ContentBrowserPanel::DrawClassHierarchy( const std::string& rKeyName, const SClass* pClass )
 	{
 		ImGuiTreeNodeFlags Flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
-		m_SelectedMetadata.Name == rKeyName ? Flags |= ImGuiTreeNodeFlags_Selected : 0;
+		
+		if( m_SelectedMetadata )
+			m_SelectedMetadata->GetName() == rKeyName ? Flags |= ImGuiTreeNodeFlags_Selected : 0;
 
 		bool opened = ImGui::TreeNodeEx( rKeyName.c_str(), Flags );
 
 		if( ImGui::IsItemClicked() )
 		{
-			m_SelectedMetadata = rData;
+			m_SelectedMetadata = pClass;
 		}
 
 		if( opened ) 
 		{
-			ClassMetadataHandler::Get().EachTreeNode(
-				[&]( auto& rMetadata )
+			ClassMetadataHandler::Get().EachClassNode(
+				[&]( const auto* pNextClass )
 				{
-					if( rMetadata.ParentClassName == rKeyName )
+					const auto& rParentClassName = pNextClass->GetParentClass() != nullptr ? pNextClass->GetParentClass()->GetName() : "";
+
+					// Draw next set of classes if name machetes.
+					if( rParentClassName == rKeyName )
 					{
-						DrawClassHierarchy( rMetadata.Name, rMetadata );
+						DrawClassHierarchy( pNextClass->GetName(), pNextClass );
 					}
 				} );
 
@@ -1093,8 +1080,6 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		if( m_ShowDeleteAssetPopup )
 			ImGui::OpenPopup( "Delete Asset##DELETEASSET" );
-
-		bool PopupModified = false;
 
 		ImGui::SetNextWindowPos( ImGui::GetMainViewport()->GetCenter(), ImGuiCond_FirstUseEver, ImVec2( 0.5f, 0.5f ) );
 		if( ImGui::BeginPopupModal( "Delete Asset##DELETEASSET", &m_ShowDeleteAssetPopup, ImGuiWindowFlags_NoSavedSettings ) )
@@ -1260,13 +1245,13 @@ namespace Saturn {
 		if( m_ShowAssetImportPopup )
 			ImGui::OpenPopup( "Import Mesh##IMPORT_MESH" );
 	
-		bool PopupModified = false;
-
 		ImGui::SetNextWindowSize( { 350.0F, 0.0F } );
 		ImGui::SetNextWindowPos( ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Appearing, ImVec2( 0.5f, 0.5f ) );
 
 		if( ImGui::BeginPopupModal( "Import Mesh##IMPORT_MESH", &m_ShowAssetImportPopup, ImGuiWindowFlags_NoSavedSettings ) )
 		{
+			bool PopupModified = false;
+
 			static std::filesystem::path s_GLTFBinPath = "";
 			static bool s_UseBinFile = false;
 			static AssetID s_CurrentAssetID = 0;
@@ -1612,18 +1597,22 @@ namespace Saturn {
 
 	void ContentBrowserPanel::GetSourceFiles( bool clear ) 
 	{
+#if !defined(SAT_DIST)
 		ClassMetadataHandler::Get().EachTreeNode( 
 			[=]( const auto& rMetadata ) 
 			{
-				if( rMetadata.ExternalData )
+				if( false /*rMetadata.ExternalData*/ )
 				{
+					/*
 					Ref<ContentBrowserItem> item = Ref<ContentBrowserItem>::Create( std::filesystem::directory_entry( rMetadata.HeaderPath ), ContentBrowserItemType::SourceItem );
 					item->SetSelectedFn( SAT_BIND_EVENT_FN( ContentBrowserPanel::OnItemSelected ) );
 
 					m_Files.push_back( item );
 					m_FilesNeedSorting = true;
+					*/
 				}
 			} );
+#endif
 	}
 
 	void ContentBrowserPanel::UpdateFirstFolder()

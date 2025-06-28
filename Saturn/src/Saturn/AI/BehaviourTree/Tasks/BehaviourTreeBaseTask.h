@@ -46,9 +46,9 @@ namespace Saturn {
 		Failed
 	};
 
-	class BehaviourTreeBaseTask : public RefTarget
+	class BehaviourTreeBaseTask : public SObject
 	{
-		SAT_DECLARE_CLASS_NO_INTER( BehaviourTreeBaseTask, RefTarget )
+		SAT_DECLARE_CLASS_NO_INTER( BehaviourTreeBaseTask, SObject )
 	public:
 		BehaviourTreeBaseTask() = default;
 		virtual ~BehaviourTreeBaseTask() = default;

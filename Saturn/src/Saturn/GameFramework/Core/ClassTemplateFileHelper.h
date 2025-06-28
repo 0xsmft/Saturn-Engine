@@ -28,13 +28,14 @@
 
 #pragma once
 
+#include "Saturn/GameFramework/SClass.h"
 #include <filesystem>
 
 namespace Saturn {
 
-	class SourceFileTemplateHelper
+	class ClassTemplateFileHelper
 	{
 	public:
-		static void CreateEntitySourceFiles( const std::filesystem::path& rPath, const char* pName );
+		static void CreateAndAmendTemplateFile( const SClass* pSelectedClass, const std::filesystem::path& rDestPath, const std::string& rNewClassName );
 	};
 }

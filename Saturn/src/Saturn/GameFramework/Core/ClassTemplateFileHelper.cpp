@@ -27,42 +27,36 @@
 */
 
 #include "sppch.h"
-#include "SourceFileTemplateHelper.h"
+#include "ClassTemplateFileHelper.h"
 
 #include "Saturn/Project/Project.h"
 
 namespace Saturn {
 
-	void SourceFileTemplateHelper::CreateEntitySourceFiles( const std::filesystem::path& rPath, const char* pName )
+	void ClassTemplateFileHelper::CreateAndAmendTemplateFile( const SClass* pSelectedClass, const std::filesystem::path& rDestPath, const std::string& rNewClassName )
 	{
 		auto prjRootDir = Project::GetActiveProject()->GetRootDir();
 
-		// Copy entity code from templates.
-		std::filesystem::copy_file( "content/Templates/EntityCode.cpp", rPath / "EntityCode.cpp" );
-		std::filesystem::copy_file( "content/Templates/EntityCode.h", rPath / "EntityCode.h" );
+//		std::filesystem::path templateFilepath = rMetadata.TemplateFile.empty() ? "content/Templates/ClassCode.h" : rMetadata.TemplateFile;
 
-		std::filesystem::path src = rPath.string();
-		src.append( pName );
-		src.replace_extension( ".cpp" );
+		std::filesystem::path templateFilepath = "";
 
-		std::filesystem::path header = rPath.string();
-		header.append( pName );
-		header.replace_extension( ".h" );
+		std::filesystem::path templateFilepathSource = templateFilepath.replace_extension( ".cpp" );
 
-		std::filesystem::rename( rPath / "EntityCode.cpp", src );
-		std::filesystem::rename( rPath / "EntityCode.h", header );
+		std::filesystem::path rDestPathBase = rDestPath / rNewClassName;
+		std::filesystem::path destPathHeader = rDestPathBase.replace_extension( ".h" );
+		std::filesystem::path destPathSource = rDestPathBase.replace_extension( ".cpp" );
 
-		// Wait for rename.
-		std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
+		std::filesystem::copy_file( templateFilepath, destPathHeader );
+		std::filesystem::copy_file( templateFilepathSource, destPathSource );
 
-		auto replaceInFile = [&]( bool IsHeader ) 
+		auto replaceInFile = [ & ]( const std::filesystem::path& rFile )
 		{
 			std::string fileData;
 
-			std::ifstream stream( IsHeader ? header : src );
+			std::ifstream stream( rFile );
 
 			// Load the file.
-
 			if( stream )
 			{
 				stream.seekg( 0, std::ios_base::end );
@@ -74,20 +68,35 @@ namespace Saturn {
 			}
 
 			size_t pos = fileData.find( "__FILE_NAME__" );
-
 			while( pos != std::string::npos )
 			{
-				fileData.replace( pos, 13, pName );
+				fileData.replace( pos, 13, rNewClassName );
 
 				pos = fileData.find( "__FILE_NAME__" );
 			}
 
-			std::ofstream fout( IsHeader ? header : src );
+			pos = fileData.find( "__SUPER_CLASS__" );
+			while( pos != std::string::npos )
+			{
+				fileData.replace( pos, 15, pSelectedClass->GetName() );
+
+				pos = fileData.find( "__SUPER_CLASS__" );
+			}
+
+			pos = fileData.find( "__SUPER_CLASS_H_PATH__" );
+			while( pos != std::string::npos )
+			{
+//				fileData.replace( pos, 22, pSelectedClass().HeaderPath.string() );
+
+				pos = fileData.find( "__SUPER_CLASS_H_PATH__" );
+			}
+
+			std::ofstream fout( rFile );
 			fout << fileData;
 		};
 
-		replaceInFile( true );
-		replaceInFile( false );
+		replaceInFile( destPathHeader );
+		replaceInFile( destPathSource );
 	}
 
 }

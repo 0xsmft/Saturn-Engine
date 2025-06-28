@@ -45,7 +45,7 @@ namespace Saturn {
 	{
 		for( auto& rVariable : m_SpecificationData )
 		{
-			if( rVariable->DataType != type )
+			if( type != SPropertyType::Unknown && rVariable->DataType != type )
 				continue;
 
 			bool isSelected = selectedVar->VariableID == rVariable->VariableID;

@@ -105,8 +105,7 @@ inline void _VkCheckResult( VkResult Result )
 {
 	if( Result != VK_SUCCESS )
 	{
-		auto ErrorStr = VulkanResultToStr( Result );
-
+		const auto ErrorStr = VulkanResultToStr( Result );
 		SAT_CORE_INFO( "[Vulkan Error] {0}", ErrorStr );
 
 #if defined(SAT_DEBUG) || defined(SAT_RELEASE)
@@ -118,7 +117,7 @@ inline void _VkCheckResult( VkResult Result )
 #endif // _MSC_VER
 
 #else
-		std::string errorMsg = std::format( "Vulkan Result failed: {0}", ErrorStr );
+		const std::string errorMsg = std::format( "Vulkan Result failed: {0}", ErrorStr );
 		SAT_CORE_VERIFY( false, errorMsg );
 #endif
 	}

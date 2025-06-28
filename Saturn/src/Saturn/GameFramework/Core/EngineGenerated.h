@@ -29,26 +29,41 @@
 #pragma once
 
 #include "ClassMetadataHandler.h"
-#include "FunctionTypedefs.h"
 
-#define SAT_X31_CREATE_AUTO_REG( ClassName )																	\
-namespace Auxiliary::ClassName {																				\
-static Saturn::Entity* _Z_Create_##ClassName( Saturn::Scene* pScene )											\
+// Register a spawnable class
+#define SAT_X31_CREATE_AUTO_REG_SPWN( ClassName )																\
+static Saturn::SClass* RStaticLnk()																				\
 {																												\
-	Saturn::ClassName* Target = new Saturn::ClassName();														\
-	Saturn::Entity* TargetReturn = dynamic_cast< Saturn::Entity* >( Target );									\
-	return TargetReturn;																						\
-}																												\
-																												\
-struct Ar_##ClassName																							\
-{																												\
-	Ar_##ClassName()																							\
+	static Saturn::SClass* pClass = nullptr;																	\
+	if( !pClass )																								\
 	{																											\
-		Saturn::ClassMetadataHandler::Get().InitialiseEngineClass(												\
-			#ClassName,																							\
-			Saturn::SClassFlags::Spawnable,																		\
-			( Saturn::CreateSClassFn ) _Z_Create_##ClassName );													\
+		const auto spec = Saturn::SClassSpecification{ #ClassName, (Saturn::SClassFlags) Saturn::SC_Spawnable | Saturn::SC_VisibleInEditor, 0, sizeof( Saturn::##ClassName ), alignof( Saturn::##ClassName ), Saturn::ClassName::Super::StaticClass(), Saturn::RInternalConstructor<Saturn::##ClassName>, RStaticLnk, nullptr };\
+		Saturn::SClass::RConstructClass( &pClass, spec );														\
 	}																											\
-};																												\
-static Ar_##ClassName s_Ar_##ClassName_##Runtime;																\
-}																												
+																												\
+	return pClass;																								\
+}																												\
+Saturn::SClass* Saturn::ClassName::GetStaticClassInternal()														\
+{																												\
+	return RStaticLnk();																						\
+}																												\
+static Saturn::SClassRegistrar RCR##ClassName( RStaticLnk )
+
+// Register a non-spawnable class
+#define SAT_X31_CREATE_AUTO_REG( ClassName )																	\
+static Saturn::SClass* RStaticLnk##ClassName()																	\
+{																												\
+	static Saturn::SClass* pClass = nullptr;																	\
+	if( !pClass )																								\
+	{																											\
+		const auto spec = Saturn::SClassSpecification{ #ClassName, (Saturn::SClassFlags) Saturn::SC_VisibleInEditor, 0, sizeof( Saturn::##ClassName ), alignof( Saturn::##ClassName ), Saturn::ClassName::Super::StaticClass(), Saturn::RInternalConstructor<Saturn::##ClassName>, RStaticLnk, nullptr };\
+		Saturn::SClass::RConstructClass( &pClass, spec );														\
+	}																											\
+																												\
+	return pClass;																								\
+}																												\
+Saturn::SClass* Saturn::ClassName::GetStaticClassInternal()														\
+{																												\
+	return RStaticLnk##ClassName();																				\
+}																												\
+static Saturn::SClassRegistrar RCR##ClassName( RStaticLnk )

@@ -35,7 +35,9 @@
 
 namespace Saturn {
 
+	class SObject;
 	class SClass;
+
 	class Entity;
 	class AssetReference;
 
@@ -109,10 +111,10 @@ namespace Saturn {
 	// FUNCTION POINTERS
 
 	template<typename Ty>
-	using SetPropertyFn = void(__stdcall*)( SClass*, Ty );
+	using SetPropertyFn = void(__stdcall*)( SObject*, Ty );
 
 	template<typename Ty>
-	using GetPropertyFn = Ty( __stdcall* )( SClass* );
+	using GetPropertyFn = Ty( __stdcall* )( SObject* );
 
 	template<SPropertyType Type>
 	struct PropertyTypeTraits;
@@ -159,7 +161,7 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 
 	// Where Ty is the cpp type i.e. float, int etc
 	template<typename Ty>
-	void ModifyPropertyInternal( SClass* pClass, const void* fnp, Ty value )
+	void ModifyPropertyInternal( SObject* pClass, const void* const fnp, Ty value )
 	{
 		auto func = reinterpret_cast< SetPropertyFn<Ty> >( fnp );
 		( func ) ( pClass, value );
@@ -167,7 +169,7 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 
 	// Where Ty is the cpp type i.e. float, int etc
 	template<typename Ty>
-	Ty ReadPropertyInternal( SClass* pClass, const void* fnp )
+	Ty ReadPropertyInternal( SObject* pClass, const void* const fnp )
 	{
 		auto func = reinterpret_cast< GetPropertyFn<Ty> >( fnp );
 		return ( func ) ( pClass );
@@ -178,8 +180,14 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 	class SProperty
 	{
 	public:
+		// INTERNAL FOR USE BY HEADER TOOL ONLY!
 		SProperty( const std::string& rName, const std::string& rNativeType, SPropertyType PropType )
 			: m_Name( rName ), m_NativeType( rNativeType ), m_Type( PropType )
+		{
+		}
+
+		SProperty( const std::string& rName, SPropertyType propType, const void* pGetFnp, const void* pSetFnp )
+			: m_Name( rName ), m_Type( propType ), pGetPropertyFunction( pGetFnp ), pSetPropertyFunction( pSetFnp )
 		{
 		}
 
@@ -188,7 +196,7 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 	
 	public:
 		template<typename CppType>
-		void SetProperty( SClass* pClass, CppType value )
+		void SetProperty( SObject* pClass, CppType value )
 		{
 			// SPropertyFlags_ReadOnlyInEditor is only available with the editor
 #if !defined(SAT_DIST)
@@ -210,16 +218,16 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 		}
 
 		template<SPropertyType Ty>
-		[[nodiscard]] typename PropertyTypeTraits<Ty>::Type Read( SClass* pClass ) const
+		[[nodiscard]] typename PropertyTypeTraits<Ty>::Type Read( SObject* pClass ) const
 		{
 			return ReadPropertyInternal<typename PropertyTypeTraits<Ty>::Type>( pClass, pGetPropertyFunction );
 		}
 
-		void RtCopyFromOther( SClass* pSrcClass, SClass* pClass );
+		void RtCopyFromOther( SObject* pSrcClass, SObject* pClass );
 
 	public:
-		void Serialise( SClass* pClass, std::ofstream& rStream );
-		void Deserialise( SClass* pClass, std::istream& rStream );
+		void Serialise( SObject* pClass, std::ofstream& rStream );
+		void Deserialise( SObject* pClass, std::istream& rStream );
 
 	public:
 		inline void SetFlag( SPropertyFlags flag, bool value ) 
@@ -242,8 +250,8 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 		/*[[nodiscard]]*/ bool IsDirty() const { return false; }
 		void MarkClean() {}
 #else
-	[[nodiscard]] bool IsDirty() const { return m_Modified; }
-	void MarkClean() { m_Modified = false; }
+		[[nodiscard]] bool IsDirty() const { return m_Modified; }
+		void MarkClean() { m_Modified = false; }
 #endif
 
 		void SetType( SPropertyType type ) { m_Type = type; }

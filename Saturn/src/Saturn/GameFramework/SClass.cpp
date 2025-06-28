@@ -26,87 +26,45 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "SClass.h"
+#include "SProperty.h"
 
-#include "Saturn/Scene/Entity.h"
-#include "Core/GameScript.h"
-
-#include "PlayerInputController.h"
+#include "Core/ClassMetadataHandler.h"
 
 namespace Saturn {
 
-	// TODO: Make this an SCLASS macro as well be able to spawn this correctly.
-	//       However this is need more work because we'll need to use the Build Tool to compile the engine which is not supported right now.
-	class Character : public Entity
+	void SClass::RConstructClass( SClass** ppClass, const SClassSpecification& rSpec )
 	{
-		//////////////////////////////////////////////////////////////////////////
-		// This is here because we aren't using the Build Tool.
-	
-		SAT_DECLARE_CLASS( Character, Entity );
+		if( *ppClass != nullptr && ( ( *ppClass )->GetFlags() & SC_Initialised ) == 0 )
+		{
+			return;
+		}
 
-	public:
-		Character();
-		~Character();
+		// TODO: Objects will have their own names and Classes will have a different name
+//		std::string configName = std::format( "^{0}", rSpec.Name );
+		SClass* pNewClass = new SClass( rSpec );
+		*ppClass = pNewClass;
 
-	public:
-		//////////////////////////////////////////////////////////////////////////
-		// Entity overrides
+		( *ppClass )->SetFlag( SC_Initialised );
 
-		virtual void BeginPlay() override;
-		virtual void OnUpdate( Timestep ts ) override;
-		virtual void OnPhysicsUpdate( Timestep ts ) override;
+		ClassMetadataHandler::Get().RegisterClass( *ppClass );
+	}
 
-		Ref<StaticMesh>& GetMesh() { return m_Mesh; }
-		const Ref<StaticMesh>& GetMesh() const { return m_Mesh; }
-		
-	protected:
-		//////////////////////////////////////////////////////////////////////////
-		// Physics
+	SProperty& SClass::GetProperty( const std::string& rPropertyName ) const
+	{
+		for( int i = 0; i < m_PropertyCount; i++ )
+		{
+			const SProperty* pProp = m_Properties[ i ];
+			
+			if( pProp->GetName() == rPropertyName )
+			{
+				return *( SProperty* ) pProp;
+			}
+		}
 
-		void OnMeshHit( Ref<Entity> Other );
-		void OnMeshExit( Ref<Entity> Other );
-		
-		virtual void SetupInputBindings() {};
+		static SProperty s_Empty;
+		return s_Empty;
+	}
 
-		void MoveForward();
-		void MoveBack();
-		void MoveLeft();
-		void MoveRight();
-
-		void MoveForwardEnd();
-		void MoveBackEnd();
-		void MoveLeftEnd();
-		void MoveRightEnd();
-
-	protected:
-		Ref<PlayerInputController> m_PlayerInputController = nullptr;
-
-		Ref<Entity>& GetCameraEntity() { return m_CameraEntity; }
-		const Ref<Entity>& GetCameraEntity() const { return m_CameraEntity; }
-
-	protected:
-		//////////////////////////////////////////////////////////////////////////
-		// Movement
-
-		glm::vec3 CalculateRight();
-		glm::vec3 CalculateForward();
-
-	private:
-		void HandleMovement() {}
-		void HandleRotation( Timestep ts );
-
-		glm::vec2 m_MovementDirection{};
-		glm::vec2 m_LastMousePos{};
-
-		float m_MouseUpMovement = 0.0f;
-		float m_MouseSensitivity = 0.0f;
-
-	private:
-		// TODO: Change to a base mesh class, we don't know what the user will have.
-		Ref<StaticMesh> m_Mesh;
-		// TODO: Move this to a movement component.
-		PhysicsRigidBody* m_RigidBody = nullptr;
-
-		Ref<Entity> m_CameraEntity = nullptr;
-	};
 }

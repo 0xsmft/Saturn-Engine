@@ -29,30 +29,12 @@
 #include "sppch.h"
 #include "ClassMetadataHandler.h"
 
-// TODO: We need to fix this!
-// Maybe consider using DLLs
-// Or maybe we can use a different approach to handle the metadata for classes?
-#include "Saturn/AI/AIAgentEntity.h"
 #include "Saturn/Scene/Entity.h"
-
-#include "Saturn/GameFramework/Core/EngineGenerated.h"
-
-SAT_X31_CREATE_AUTO_REG( AIAgentEntity );
 
 namespace Saturn {
 
 	ClassMetadataHandler::ClassMetadataHandler()
-	{
-		constexpr size_t Classes = 4;
-		m_MetadataTree.reserve( Classes );
-
-		// Push some default classes.
-		// TODO: This should be done by the Build Tool however we are not using it for the Engine.
-		m_MetadataTree[ "SClass" ] = { "SClass", "X/?", "X/?", "X/?", false };
-		m_MetadataTree[ "Entity" ] = { "Entity", "SClass", "X/?", "X/?", false };
-		m_MetadataTree[ "Character" ] = { "Character", "Entity", "X/?", "X/?", false };
-		m_MetadataTree[ "AIAgentEntity" ] = { "AIAgentEntity", "Entity", "X/?", "X/?", false };
-
+	{	
 #if !defined(SAT_DIST)
 		SingletonStorage::AddSingleton( this );
 #endif
@@ -60,14 +42,11 @@ namespace Saturn {
 
 	ClassMetadataHandler::~ClassMetadataHandler()
 	{
-		m_MetadataTree.clear();
-		m_Properties.clear();
-		m_SpawnableEngineClasses.clear();
+		m_Classes.clear();
 	}
 
 	void ClassMetadataHandler::BeginHotReload()
 	{
-		m_Properties.clear();
 		ClearExternalData();
 	}
 
@@ -75,55 +54,39 @@ namespace Saturn {
 	{
 	}
 
-	void ClassMetadataHandler::InitialiseEngineClass( const std::string& rName, SClassFlags flags, CreateSClassFn function )
+	Saturn::SObject* ClassMetadataHandler::CreateClassObject( const std::string& rScriptName )
 	{
-		const auto Itr = m_SpawnableEngineClasses.find( rName );
-
-		if( Itr == m_SpawnableEngineClasses.end() )
+		const auto Itr = m_Classes.find( rScriptName );
+		if( Itr != m_Classes.end() )
 		{
-			m_SpawnableEngineClasses[ rName ] = function;
-		}
-	}
+			SObject* pObject = Itr->second->CreateDefaultObject();
+			pObject->m_pClass = Itr->second;
 
-	Saturn::Entity* ClassMetadataHandler::SpawnEngineClass( const std::string& rScriptName )
-	{
-		const auto Itr = m_SpawnableEngineClasses.find( rScriptName );
-
-		if( Itr != m_SpawnableEngineClasses.end() )
-		{
-			return ( m_SpawnableEngineClasses[ rScriptName ] )( );
+			return pObject;
 		}
+		else
+			SAT_CORE_VERIFY( false, "Could not find Class!" );
 
 		return nullptr;
 	}
 
-	void ClassMetadataHandler::AddMetadata( const SClassMetadata& rData )
+	Saturn::SObject* ClassMetadataHandler::CreateClassObject( SClass* pClass )
 	{
-		const auto Itr = m_MetadataTree.find( rData.Name );
-
-		if( Itr == m_MetadataTree.end() )
-		{
-			m_MetadataTree[ rData.Name ] = rData;
-		}
+		return CreateClassObject( pClass->GetName() );
 	}
 
-	SClassMetadata& ClassMetadataHandler::GetSClassMetadata()
+	void ClassMetadataHandler::AddMetadata( const SClassExtendedMetadata& rData )
 	{
-		return m_MetadataTree.at( "SClass" );
 	}
 
-	void ClassMetadataHandler::RegisterProperty( const std::string& rMetadataName, const SProperty& rProperty )
+	SClass* ClassMetadataHandler::GetSObjectMetadata()
 	{
-		const auto Itr = m_MetadataTree.find( rMetadataName );
-
-		if( Itr != m_MetadataTree.end() )
-		{
-			m_Properties[ rMetadataName ].push_back( rProperty );
-		}
+		return SObject::StaticClass();
 	}
 
 	std::vector<SProperty>& ClassMetadataHandler::GetAllProperties( const std::string& rMetadataName )
 	{
+		/*
 		const auto Itr = m_MetadataTree.find( rMetadataName );
 
 		if( Itr != m_MetadataTree.end() )
@@ -132,42 +95,28 @@ namespace Saturn {
 			return properties;
 		}
 
+		*/
 		static std::vector<SProperty> s_EmptyMap;
 		return s_EmptyMap;
 	}
 
-	SProperty& ClassMetadataHandler::GetProperty( const std::string& rMetadataName, const std::string& rPropertyName )
-	{
-		const auto Itr = m_MetadataTree.find( rMetadataName );
-
-		if( Itr != m_MetadataTree.end() )
-		{
-			auto& properties = m_Properties[ rMetadataName ];
-		
-			const auto propertyItr = std::find_if( properties.begin(), properties.end(), 
-				[rPropertyName](const auto& rProperty)
-				{
-					return rProperty.GetName() == rPropertyName;
-				} );
-
-			if( propertyItr != properties.end() )
-			{
-				return *propertyItr;
-			}
-		}
-
-		static SProperty s_EmptyProperty;
-		return s_EmptyProperty;
-	}
-
 	void ClassMetadataHandler::ClearExternalData()
 	{
+		/*
 		std::erase_if( m_MetadataTree, []( const auto& kv )
 		{
 			return kv.second.ExternalData;
 		} );
+		*/
+	}
 
-		m_Properties.clear();
+	void ClassMetadataHandler::RegisterClass( SClass* pClass )
+	{
+		const auto Itr = m_Classes.find( pClass->GetName() );
+		if( Itr == m_Classes.end() )
+		{
+			m_Classes[ pClass->GetName() ] = pClass;
+		}
 	}
 
 }

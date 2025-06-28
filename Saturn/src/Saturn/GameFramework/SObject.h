@@ -28,11 +28,30 @@
 
 #pragma once
 
+#include "Saturn/Core/Ref.h"
+#include "Core/GameScript.h"
+
 namespace Saturn {
 
-	class Entity;
+	// The base class for all Game Objects, TODO: This will be moved into /Core/SObject.h as it will become the base class for objects in the engine as well.
+	class SClass;
+	class SObject : public RefTarget
+	{
+		// NOTE: RefTarget is outwith the Reflection system so it does not count as a viable base class
+		// Declare class with no base class and no internal class
+		SAT_DECLARE_CLASS_EXTERNAL_BASE_NO_INT( SObject );
+	public:
+		SObject() = default;
+		virtual ~SObject() = default;
 
-	// This returns an Entity fine for now as we only support creating entities, in the future this can just be changed to return and SClass.
-	// This function will be defined in the generated source file, and is always called "_Z_Create_{CLASSNAME}" and will always return an SClass (just not right now).
-	typedef Entity* ( __stdcall* CreateSClassFn )( );
+	public:
+		[[nodiscard]] inline const SClass* GetClass() const { return m_pClass; }
+
+	private:
+		SClass* m_pClass = nullptr;
+
+	private:
+		friend class ClassMetadataHandler;
+	};
+	
 }

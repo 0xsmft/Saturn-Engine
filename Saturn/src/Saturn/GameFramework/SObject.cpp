@@ -26,87 +26,34 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
 
-#include "Saturn/Scene/Entity.h"
-#include "Core/GameScript.h"
+#include "SClass.h"
+#include "SObject.h"
 
-#include "PlayerInputController.h"
+#include "Core/EngineGenerated.h"
 
-namespace Saturn {
-
-	// TODO: Make this an SCLASS macro as well be able to spawn this correctly.
-	//       However this is need more work because we'll need to use the Build Tool to compile the engine which is not supported right now.
-	class Character : public Entity
+static Saturn::SClass* RStaticLnk()
+{
+	static Saturn::SClass* pClass = nullptr; 
+	if( !pClass ) 
 	{
-		//////////////////////////////////////////////////////////////////////////
-		// This is here because we aren't using the Build Tool.
+		const auto spec = Saturn::SClassSpecification{ 
+			"SObject", 
+			( Saturn::SClassFlags ) Saturn::SC_None, 0, 
+			sizeof( Saturn::SObject ), alignof( Saturn::SObject ), 
+			nullptr, Saturn::RInternalConstructor<Saturn::SObject>, RStaticLnk, nullptr 
+		}; 
+		
+		Saturn::SClass::RConstructClass( &pClass, spec );
+	} 
 	
-		SAT_DECLARE_CLASS( Character, Entity );
+	return pClass;
+} 
 
-	public:
-		Character();
-		~Character();
-
-	public:
-		//////////////////////////////////////////////////////////////////////////
-		// Entity overrides
-
-		virtual void BeginPlay() override;
-		virtual void OnUpdate( Timestep ts ) override;
-		virtual void OnPhysicsUpdate( Timestep ts ) override;
-
-		Ref<StaticMesh>& GetMesh() { return m_Mesh; }
-		const Ref<StaticMesh>& GetMesh() const { return m_Mesh; }
-		
-	protected:
-		//////////////////////////////////////////////////////////////////////////
-		// Physics
-
-		void OnMeshHit( Ref<Entity> Other );
-		void OnMeshExit( Ref<Entity> Other );
-		
-		virtual void SetupInputBindings() {};
-
-		void MoveForward();
-		void MoveBack();
-		void MoveLeft();
-		void MoveRight();
-
-		void MoveForwardEnd();
-		void MoveBackEnd();
-		void MoveLeftEnd();
-		void MoveRightEnd();
-
-	protected:
-		Ref<PlayerInputController> m_PlayerInputController = nullptr;
-
-		Ref<Entity>& GetCameraEntity() { return m_CameraEntity; }
-		const Ref<Entity>& GetCameraEntity() const { return m_CameraEntity; }
-
-	protected:
-		//////////////////////////////////////////////////////////////////////////
-		// Movement
-
-		glm::vec3 CalculateRight();
-		glm::vec3 CalculateForward();
-
-	private:
-		void HandleMovement() {}
-		void HandleRotation( Timestep ts );
-
-		glm::vec2 m_MovementDirection{};
-		glm::vec2 m_LastMousePos{};
-
-		float m_MouseUpMovement = 0.0f;
-		float m_MouseSensitivity = 0.0f;
-
-	private:
-		// TODO: Change to a base mesh class, we don't know what the user will have.
-		Ref<StaticMesh> m_Mesh;
-		// TODO: Move this to a movement component.
-		PhysicsRigidBody* m_RigidBody = nullptr;
-
-		Ref<Entity> m_CameraEntity = nullptr;
-	};
+Saturn::SClass* Saturn::SObject::GetStaticClassInternal() 
+{
+	return RStaticLnk();
 }
+
+static Saturn::SClassRegistrar RCRSObject( RStaticLnk );

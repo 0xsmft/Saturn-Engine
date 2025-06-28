@@ -45,6 +45,9 @@ namespace Saturn {
 
 		[[nodiscard]] virtual NodeEditorCompilationStatus EvaluateEditor() { return NodeEditorCompilationStatus::Failed; }
 
+		virtual void TraceEvaluationPath() {}
+		virtual void TerminateEvaluation() {}
+
 	protected:
 		Ref<NodeEditorBase> m_NodeEditor;
 

@@ -190,6 +190,15 @@ namespace Saturn {
 						m_Context->MarkDirty();
 					}
 				}
+
+				if( ImGui::MenuItem( "Create AI Agent" ) )
+				{
+					auto agent = m_Context->CreateEntityScript<AIAgentEntity>( "AIAgentEntity", "AI Agent" );
+					
+					SetSelected( agent );
+					m_Context->MarkDirty();
+				}
+				
 				ImGui::EndPopup();
 			}
 
@@ -263,8 +272,8 @@ namespace Saturn {
 	{
 		if( entity->HasComponent<TagComponent>() )
 		{
-			auto& rTag = entity->GetComponent<TagComponent>().Tag;
-			bool isPrefab = entity->HasComponent<PrefabComponent>() || entity->HasComponent<ScriptComponent>();
+			const auto& rTag = entity->GetComponent<TagComponent>().Tag;
+			const bool isPrefab = entity->HasComponent<PrefabComponent>();
 
 			if( m_Searching && !m_EntityTextFilter.PassFilter( rTag.c_str() ) )
 				return;
@@ -367,7 +376,7 @@ namespace Saturn {
 	{
 		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_AllowItemOverlap;
 
-		bool hasScript = entity->HasComponent<ScriptComponent>();
+		const bool hasScript = entity->HasComponent<DScriptComponent>();
 
 		if( hasScript )
 			flags |= ImGuiTreeNodeFlags_DefaultOpen;
@@ -377,59 +386,63 @@ namespace Saturn {
 		{
 			if( hasScript )
 			{
-				auto& properties = ClassMetadataHandler::Get().GetAllProperties( entity->GetComponent<ScriptComponent>().ClassName );
-				for( auto& rProperty : properties )
-				{
-					std::string name = rProperty.GetName();
+				auto propCount = entity->GetClass()->GetPropertyCount();
+				auto properties = entity->GetClass()->GetProperties();
 
-					if( rProperty.IsDirty() )
+				for( int i = 0; i < propCount; i++ )
+				{
+					SProperty* pProperty = ( SProperty* ) properties[ i ];
+
+					std::string name = pProperty->GetName();
+
+					if( pProperty->IsDirty() )
 					{
 						name += "*";
 					}
 
-					switch( rProperty.GetType() )
+					switch( pProperty->GetType() )
 					{
 						case SPropertyType::Float:
 						{
-							float temporaryValue = rProperty.Read<SPropertyType::Float>( entity.Get() );
+							float temporaryValue = pProperty->Read<SPropertyType::Float>( entity.Get() );
 
 							if( Auxiliary::DrawFloatControl( name, temporaryValue ) )
-								rProperty.SetProperty( entity.Get(), temporaryValue );
+								pProperty->SetProperty( entity.Get(), temporaryValue );
 						} break;
 
 						case SPropertyType::Int:
 						{
-							auto temporaryValue = rProperty.Read<SPropertyType::Int>( entity.Get() );
+							auto temporaryValue = pProperty->Read<SPropertyType::Int>( entity.Get() );
 							if( Auxiliary::DrawIntControl( name, temporaryValue ) )
-								rProperty.SetProperty( entity.Get(), temporaryValue );
+								pProperty->SetProperty( entity.Get(), temporaryValue );
 						} break;
 
 						case SPropertyType::Double:
 						{
-							auto temporaryValue = rProperty.Read<SPropertyType::Double>( entity.Get() );
+							auto temporaryValue = pProperty->Read<SPropertyType::Double>( entity.Get() );
 							if( Auxiliary::DrawDoubleControl( name, temporaryValue ) )
-								rProperty.SetProperty( entity.Get(), temporaryValue );
+								pProperty->SetProperty( entity.Get(), temporaryValue );
 						} break;
 
 						case SPropertyType::Vector2:
 						{
-							glm::vec2 value = rProperty.Read<SPropertyType::Vector2>( entity.Get() );
+							glm::vec2 value = pProperty->Read<SPropertyType::Vector2>( entity.Get() );
 
-							if( Auxiliary::DrawVec2Control( name, value, 0.0f, 125.0f ) )
-								rProperty.SetProperty( entity.Get(), value );
+							if( Auxiliary::DrawVec2Control( name, value, 0.0f, true, 125.0f ) )
+								pProperty->SetProperty( entity.Get(), value );
 						} break;
 
 						case SPropertyType::Vector3:
 						{
-							glm::vec3 value = rProperty.Read<SPropertyType::Vector3>( entity.Get() );
+							glm::vec3 value = pProperty->Read<SPropertyType::Vector3>( entity.Get() );
 
-							if( Auxiliary::DrawVec3Control( name, value, 0.0f, 125.0f ) )
-								rProperty.SetProperty( entity.Get(), value );
+							if( Auxiliary::DrawVec3Control( name, value, 0.0f, true, 125.0f ) )
+								pProperty->SetProperty( entity.Get(), value );
 						} break;
 
 						case SPropertyType::Entity:
 						{
-							Ref<Entity>& entityFromProp = rProperty.Read<SPropertyType::Entity>( entity.Get() );
+							Ref<Entity>& entityFromProp = pProperty->Read<SPropertyType::Entity>( entity.Get() );
 
 							ImGui::PushID( name.c_str() );
 
@@ -471,9 +484,9 @@ namespace Saturn {
 
 										m_Context->Each( [ & ]( Ref<Entity>& rEntity )
 										{
-											if( ImGui::Selectable( rEntity->GetComponent<TagComponent>().Tag.c_str(), Selected ) )
+											if( ImGui::Selectable( rEntity->GetComponent<TagComponent>().Tag.c_str(), &Selected ) )
 											{
-												rProperty.SetProperty( entity.Get(), rEntity );
+												pProperty->SetProperty( entity.Get(), rEntity );
 												PopupModified = true;
 											}
 										} );
@@ -499,7 +512,7 @@ namespace Saturn {
 						{
 							static bool open = false;
 
-							auto& rRef = rProperty.Read<SPropertyType::Asset>( entity.Get() );
+							auto& rRef = pProperty->Read<SPropertyType::Asset>( entity.Get() );
 
 							ImGui::PushID( name.c_str() );
 
@@ -544,7 +557,7 @@ namespace Saturn {
 
 							if( Auxiliary::DrawAssetFinder( m_CurrentFinderType, &open, m_CurrentAssetID ) )
 							{
-								rProperty.SetProperty( entity.Get(), m_CurrentAssetID );
+								pProperty->SetProperty( entity.Get(), m_CurrentAssetID );
 							}
 
 							ImGui::PopID();
@@ -562,7 +575,7 @@ namespace Saturn {
 	void SceneHierarchyPanel::DrawEntityComponents( Ref<Entity> entity )
 	{
 		ImVec2 contentRegionAvailable = ImGui::GetContentRegionAvail();
-		bool isPrefab = entity->HasComponent<PrefabComponent>() || entity->HasComponent<ScriptComponent>();
+		const bool isPrefab = entity->HasComponent<PrefabComponent>();
 		const auto& id = entity->GetComponent<IdComponent>().ID;
 
 		ImGui::Image( m_EditIcon->GetDescriptorSet(), ImVec2( 30.0f, 30.0f ) );
@@ -592,10 +605,10 @@ namespace Saturn {
 			// ID
 			ImGui::TextDisabled( "%llu", id );
 
-			if( entity->HasComponent<ScriptComponent>() )
+			if( entity->HasComponent<DScriptComponent>() )
 			{
 				ImGui::SameLine();
-				ImGui::TextDisabled( "Class Instance (C++ Class) [%s]", entity->GetComponent<ScriptComponent>().ClassName.c_str() );
+				ImGui::TextDisabled( "Class Instance (C++ Class) [%s]", entity->GetClass()->GetName().c_str() );
 			}
 			else if( entity->HasComponent<PrefabComponent>() )
 			{
@@ -1252,8 +1265,6 @@ namespace Saturn {
 		{
 			Ref<NavBoundsEntity> boundsEntity = entity.As<NavBoundsEntity>();
 
-			bool modified = false;
-
 			Auxiliary::DisabledFlag disabledFlag( true );
 			Auxiliary::DrawVec3Control( "Extent", nms.Extent );
 			disabledFlag.Pop();
@@ -1289,8 +1300,6 @@ namespace Saturn {
 
 				ImGui::TextUnformatted( text.c_str() );
 			}
-
-			if( modified ) m_Context->MarkDirty();
 		} );
 	}
 

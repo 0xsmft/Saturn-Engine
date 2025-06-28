@@ -54,6 +54,9 @@
 #include <iostream>
 #include <string>
 
+// Define this to force enable validation layers even in dist builds.
+#define SAT_FORCE_ENABLE_VALIDATION_LAYERS
+
 namespace Saturn {
 	
 	VulkanContext::VulkanContext()
@@ -125,7 +128,7 @@ namespace Saturn {
 
 		vkDestroyDevice( m_LogicalDevice, nullptr );
 
-#if !defined(SAT_DIST)
+#if !defined(SAT_DIST) || defined( SAT_FORCE_ENABLE_VALIDATION_LAYERS )
 		delete m_pDebugMessenger;
 		m_pDebugMessenger = nullptr;
 #endif
@@ -140,7 +143,7 @@ namespace Saturn {
 
 	void VulkanContext::CreateInstance()
 	{
-#if !defined( SAT_DIST )
+#if !defined( SAT_DIST ) || defined( SAT_FORCE_ENABLE_VALIDATION_LAYERS )
 		SAT_CORE_ASSERT( CheckValidationLayerSupport(), "Unable to find validation layer." );
 #endif
 
@@ -157,7 +160,7 @@ namespace Saturn {
 		VkInstanceCreateInfo InstanceInfo ={ VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO };
 		InstanceInfo.pApplicationInfo = &AppInfo;
 
-#if !defined( SAT_DIST )
+#if !defined( SAT_DIST ) || defined( SAT_FORCE_ENABLE_VALIDATION_LAYERS )
 		Extensions.push_back( VK_EXT_DEBUG_REPORT_EXTENSION_NAME );
 
 		{
@@ -185,7 +188,7 @@ namespace Saturn {
 
 		CreateSurface();
 
-#if !defined(SAT_DIST)
+#if !defined(SAT_DIST) || defined( SAT_FORCE_ENABLE_VALIDATION_LAYERS )
 		m_pDebugMessenger = new VulkanDebugMessenger( m_Instance );
 #endif
 	}

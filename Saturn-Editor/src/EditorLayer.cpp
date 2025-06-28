@@ -1707,49 +1707,34 @@ namespace Saturn {
 			if( ImGui::BeginTable( "##DebugInfoClsM", 4, TableFlags ) )
 			{
 				ImGui::TableSetupColumn( "Name" );
-				ImGui::TableSetupColumn( "Parent class" );
-				ImGui::TableSetupColumn( "Generated Source path" );
-				ImGui::TableSetupColumn( "Header path" );
+				ImGui::TableSetupColumn( "Size" );
+				ImGui::TableSetupColumn( "Align" );
+				ImGui::TableSetupColumn( "Properties" );
 
 				ImGui::TableHeadersRow();
 
 				{
-					ClassMetadataHandler::Get().EachTreeNode(
-						[&]( const auto& rMetadata )
+					ClassMetadataHandler::Get().EachClassNode(
+						[&]( const SClass* pClass )
 					{
 						ImGui::TableNextRow();
 
 						ImGui::TableSetColumnIndex( 0 );
-						ImGui::Text( "%s", rMetadata.Name.c_str() );
+						ImGui::Text( "%s", pClass->GetName().c_str() );
 
 						ImGui::TableSetColumnIndex( 1 );
-						ImGui::Text( "%s", rMetadata.ParentClassName.c_str() );
+						ImGui::Text( "%llu", pClass->GetSize() );
 
 						ImGui::TableSetColumnIndex( 2 );
-						ImGui::Text( "%s", rMetadata.GeneratedSourcePath.string().c_str() );
+						ImGui::Text( "%llu", pClass->GetAlignment() );
 
 						ImGui::TableSetColumnIndex( 3 );
-						ImGui::Text( "%s", rMetadata.HeaderPath.string().c_str() );
+						ImGui::Text( "%i", pClass->GetPropertyCount() );
 					} );
 				}
 
 				ImGui::EndTable();
 			}
-
-			ImGui::Separator();
-
-			ClassMetadataHandler::Get().EachTreeNode( 
-				[&]( const auto& rMetadata ) 
-				{
-					if( Auxiliary::TreeNode( rMetadata.Name.c_str(), false ) )
-					{
-						ImGui::Text( "Parent Class: %s", rMetadata.ParentClassName.c_str() );
-						ImGui::Text( "Generated Source path: %s", rMetadata.GeneratedSourcePath.string().c_str() );
-						ImGui::Text( "Header path: %s", rMetadata.HeaderPath.string().c_str() );
-
-						Auxiliary::EndTreeNode();
-					}
-				} );
 		}
 
 		ImGui::End();

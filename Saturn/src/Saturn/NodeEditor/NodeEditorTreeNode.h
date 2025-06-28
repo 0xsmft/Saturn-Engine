@@ -42,6 +42,7 @@ namespace Saturn {
 
 #if !defined(SAT_DIST)
 		virtual void OnRenderExtra() {}
+		virtual void OnRenderNextSection() {}
 #endif
 
 		void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, NodeEditorBase* pBase ) override final;

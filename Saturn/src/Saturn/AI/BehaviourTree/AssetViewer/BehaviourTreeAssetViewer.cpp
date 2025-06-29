@@ -33,13 +33,17 @@
 #include "Nodes/BehaviourTreeSelectorNode.h"
 #include "Nodes/BehaviourTreeSequenceNode.h"
 #include "Nodes/BehaviourTreeTaskNodes.h"
-#include "BehaviourTreeNodeLibrary.h"
 
+#include "BehaviourTreeNodeLibrary.h"
 #include "BehaviourTreeEditorEvaluator.h"
 
+#include "Saturn/NodeEditor/NodeEditorHintNode.h"
 #include "Saturn/NodeEditor/Serialisation/NodeCache.h"
+
 #include "Saturn/ImGui/UndoRedo/GlobalUndoRedoGroup.h"
 #include "Saturn/Asset/AssetManager.h"
+
+#include <imgui_internal.h>
 
 namespace Saturn {
 
@@ -79,19 +83,6 @@ namespace Saturn {
 			m_NodeEditor->Open( false );
 			m_Open = false;
 		}
-	}
-
-	void BehaviourTreeAssetViewer::OnUpdate( Timestep ts )
-	{
-		if( m_NodeEditor->GetState() == NodeEditorState::Simulating )
-		{
-			m_Runtime->Tick( ts );
-		}
-	}
-
-	void BehaviourTreeAssetViewer::OnEvent( RubyEvent& rEvent )
-	{
-
 	}
 
 	void BehaviourTreeAssetViewer::AddBehaviourTree()
@@ -174,8 +165,74 @@ namespace Saturn {
 
 			showTooltip( "Move to a predetermined Position in the NavMesh, the Position must be in the NavMesh as if not the task will fail!" );
 
+			ImGui::SeparatorText( "Auxiliary" );
+
+			if( ImGui::MenuItem( "Hint (Comment) Node" ) )
+				result = NodeEditorHintNode::SpawnHintNode( m_NodeEditor );
+
 			return result;
+		} );
+
+		m_NodeEditor->SetTopBarFunction( [ & ]()
+		{
+			if( !GActiveScene->IsRuntimeActive() )
+				return;
+
+			ImGui::SeparatorEx( ImGuiSeparatorFlags_Vertical );
+
+			// drop down
+			ImGui::Text( "References" );
+
+			ImGui::SetNextItemWidth( 134.0F );
+			if( ImGui::BeginCombo( "##References", "" ) )
+			{
+				for( const auto& rAsset : m_ReferencingAssets )
+				{
+					if( ImGui::Selectable( rAsset->GetAsset()->Name.c_str() ) )
+					{
+						// TODO: There isn't technically API to support this asset viewer changing its node editor
+						//       however, maybe we should think of a different way to show what the referencing assets are doing
+						m_NodeEditor = rAsset->GetNodeEditor();
+						m_NodeEditor->Open( true );
+						m_NodeEditor->SetState( NodeEditorState::Simulating );
+
+						SetupNodeEditorCallbacks();
+					}
+				}
+
+				ImGui::EndCombo();
+			}
 		} );
 	}
 
+#if !defined(SAT_DIST)
+	void BehaviourTreeAssetViewer::OnRuntimeStateChanged( RuntimeState newState, RuntimeState oldState )
+	{
+		switch( newState )
+		{
+			case RuntimeState::Starting:
+			case RuntimeState::NoState:
+			case RuntimeState::Suspended:
+				break;
+
+			case RuntimeState::Running:
+			{
+				if( oldState == RuntimeState::Starting || oldState == RuntimeState::NoState )
+					m_OriginalNodeEditor = m_NodeEditor;
+			} break;
+
+			case RuntimeState::Ending:
+			{
+				m_NodeEditor = m_OriginalNodeEditor;
+				m_ReferencingAssets.clear();
+			} break;
+		}
+	}
+
+	void BehaviourTreeAssetViewer::AddBehviourTreeReference( Ref<BehaviourTree> asset )
+	{
+		m_ReferencingAssets.push_back( asset );
+	}
+
+#endif
 }

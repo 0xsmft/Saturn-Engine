@@ -39,6 +39,11 @@
 #include <Detour/DetourNavMeshQuery.h>
 #include <glm/gtc/type_ptr.hpp>
 
+#if !defined(SAT_DIST)
+#include "BehaviourTree/AssetViewer/BehaviourTreeAssetViewer.h"
+#include "Saturn/ImGui/ImGuiWindowManager.h"
+#endif
+
 namespace Saturn {
 
 	AIAgentEntity::AIAgentEntity()
@@ -64,11 +69,17 @@ namespace Saturn {
 
 		m_BehaviourTree->Initialise( this );
 		m_BehaviourTree->FirstEvaluate();
-	}
 
-	static float RcRandomFunction() 
-	{
-		return Random::RandomFloatInRange( 0.0f, 1.0f );
+#if !defined(SAT_DIST)
+		// Add reference if asset viewer is open
+		std::string name = std::format( "{0}##{1}", m_BehaviourTree->GetAsset()->Name, ( uint64_t ) id );
+		Ref<BehaviourTreeAssetViewer> window = ImGuiWindowManager::Get().GetWindow<BehaviourTreeAssetViewer>( name );
+
+		if( window )
+		{
+			window->AddBehviourTreeReference( m_BehaviourTree );
+		}
+#endif
 	}
 
 	void AIAgentEntity::OnUpdate( Saturn::Timestep ts )

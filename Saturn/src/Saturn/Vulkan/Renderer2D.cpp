@@ -580,6 +580,35 @@ namespace Saturn {
 		m_LineVertexCount++;
 	}
 
+	void Renderer2D::SubmitArrow( const glm::vec3& rStart, const glm::vec3& rEnd, const glm::vec4& rColor, float headLength /*= 10.0f*/, float headAngle /*= 0.5f */ )
+	{
+		SubmitLine( rStart, rEnd, rColor );
+
+		glm::vec3 dir = glm::normalize( rEnd - rStart );
+
+		// Build arrowhead
+		glm::vec3 up( 0.0f, 1.0f, 0.0f );
+		if( glm::abs( glm::dot( up, dir ) ) > 0.99f )
+			up = glm::vec3( 1.0f, 0.0f, 0.0f ); // pick another axis if colinear
+
+		glm::vec3 right = glm::normalize( glm::cross( dir, up ) );
+		glm::vec3 upVec = glm::normalize( glm::cross( right, dir ) );
+
+		const float angleRad = glm::radians( headAngle );
+		const float cosA = std::cos( angleRad );
+		const float sinA = std::sin( angleRad );
+
+		glm::vec3 headDir1 = glm::normalize( cosA * ( -dir ) + sinA * right ) * headLength;
+		glm::vec3 headDir2 = glm::normalize( cosA * ( -dir ) - sinA * right ) * headLength;
+		glm::vec3 headDir3 = glm::normalize( cosA * ( -dir ) + sinA * upVec ) * headLength;
+		glm::vec3 headDir4 = glm::normalize( cosA * ( -dir ) - sinA * upVec ) * headLength;
+
+		SubmitLine( rEnd, rEnd + headDir1, rColor );
+		SubmitLine( rEnd, rEnd + headDir2, rColor );
+		SubmitLine( rEnd, rEnd + headDir3, rColor );
+		SubmitLine( rEnd, rEnd + headDir4, rColor );
+	}
+
 	void Renderer2D::SubmitDiamond( const glm::vec3& rCenter, float size, const glm::vec4& rColor )
 	{
 		const float halfSize = size * 0.5f;

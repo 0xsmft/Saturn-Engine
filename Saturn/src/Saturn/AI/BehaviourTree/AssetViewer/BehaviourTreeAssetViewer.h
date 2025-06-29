@@ -46,8 +46,14 @@ namespace Saturn {
 		~BehaviourTreeAssetViewer();
 
 		void OnImGuiRender() override;
-		void OnUpdate( Timestep ts ) override;
-		void OnEvent( RubyEvent& rEvent ) override;
+		inline void OnUpdate( Timestep ts ) {}
+		inline void OnEvent( RubyEvent& rEvent ) {}
+
+#if !defined(SAT_DIST)
+		void OnRuntimeStateChanged( RuntimeState newState, RuntimeState oldState ) override;
+
+		void AddBehviourTreeReference( Ref<BehaviourTree> asset );
+#endif
 
 	private:
 		void AddBehaviourTree();
@@ -60,6 +66,16 @@ namespace Saturn {
 		Ref<BehaviourTreeEditorEvaluator> m_Runtime = nullptr;
 
 		UUID m_RootNodeID = 0;
+
+#if !defined(SAT_DIST)
+		// The asset that is referencing this viewer
+		// For example we could have the same sound spec asset being used in different places so which one are we trying to view (only available when in Runtime).
+
+		// TODO: Weak Ref #WREF_BehaviourTreeBaseTask
+		std::vector<Ref<BehaviourTree>> m_ReferencingAssets;
+
+		Ref<BehaviourTreeNodeEditor> m_OriginalNodeEditor = nullptr;
+#endif
 	};	
 
 }

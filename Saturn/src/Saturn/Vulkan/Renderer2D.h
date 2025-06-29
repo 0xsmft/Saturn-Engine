@@ -79,6 +79,8 @@ namespace Saturn {
 		void SubmitLine( const glm::vec3& rStart, const glm::vec3& rEnd, const glm::vec4& rColor );
 		void SubmitLine( const glm::vec3& rStart, const glm::vec3& rEnd, const glm::vec4& rColor, float Thinkness );
 
+		void SubmitArrow( const glm::vec3& rStart, const glm::vec3& rEnd, const glm::vec4& rColor, float headLength = 10.0f, float headAngle = 0.5f );
+
 		void SubmitDiamond( const glm::vec3& rCenter, float size, const glm::vec4& rColor );
 
 		void SubmitSingleLine( const glm::vec3& rStart, const glm::vec4& rColor );

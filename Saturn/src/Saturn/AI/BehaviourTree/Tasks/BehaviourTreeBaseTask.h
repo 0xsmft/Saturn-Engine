@@ -28,6 +28,8 @@
 
 #pragma once
 
+#include "Saturn/AI/BehaviourTree/BehaviourTreeMemory.h"
+
 #include "Saturn/Core/Base.h"
 #include "Saturn/GameFramework/Core/GameScript.h"
 #include "Saturn/Core/UUID.h"

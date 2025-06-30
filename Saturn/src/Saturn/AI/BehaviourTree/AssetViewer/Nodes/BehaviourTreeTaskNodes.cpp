@@ -125,7 +125,7 @@ namespace Saturn {
 	{
 		if( m_MemVariable->IsActive )
 		{
-			m_MemVariable = BehaviourTreeMemorySpecification->PostInitVariable( m_MemVariable->VariableID );
+			m_MemVariable = BTMemorySpecification->PostInitVariable( m_MemVariable->VariableID );
 		}
 	}
 
@@ -142,7 +142,7 @@ namespace Saturn {
 			{
 				if( ImGui::BeginCombo( "##waitvariable", m_MemVariable->Name.c_str() ) )
 				{
-					if( auto out = BehaviourTreeMemorySpecification->DrawVariableFinder( SPropertyType::Float, m_MemVariable ); out )
+					if( auto out = BTMemorySpecification->DrawVariableFinder( SPropertyType::Float, m_MemVariable ); out )
 					{
 						m_MemVariable = out;
 					}
@@ -323,7 +323,7 @@ namespace Saturn {
 		{
 			if( ImGui::BeginCombo( "var", m_Variable->Name.c_str() ) )
 			{
-				if( auto out = BehaviourTreeMemorySpecification->DrawVariableFinder( SPropertyType::Vector3, m_Variable ); out )
+				if( auto out = BTMemorySpecification->DrawVariableFinder( SPropertyType::Vector3, m_Variable ); out )
 				{
 					m_Variable = out;
 				}

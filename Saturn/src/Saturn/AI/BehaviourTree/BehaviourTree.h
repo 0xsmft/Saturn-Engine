@@ -59,6 +59,7 @@ namespace Saturn {
 		Ref<BehaviourTreeEditorEvaluator> m_Runtime;
 		Ref<BehaviourTreeNodeEditor> m_NodeEditor;
 
+		// TODO: Weak Ref? #WREF_BehaviourTreeBaseTask
 		Ref<AIAgentEntity> m_AIAgentEntity;
 
 		UUID m_OutputNodeID = 0;

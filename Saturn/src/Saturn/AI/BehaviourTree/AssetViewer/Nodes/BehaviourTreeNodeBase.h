@@ -58,7 +58,7 @@ namespace Saturn {
 
 	public:
 		// TODO: Weak Ref #WREF_BehaviourTreeBaseTask
-		Ref<BehaviourTreeMemorySpecification> BehaviourTreeMemorySpecification;
+		Ref<BehaviourTreeMemorySpecification> BTMemorySpecification;
 #endif
 	};
 	

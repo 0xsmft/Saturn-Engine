@@ -66,7 +66,7 @@ namespace Saturn {
 			Ref<BehaviourTreeNodeBase> treeNode = rNode.As<BehaviourTreeNodeBase>();
 			if( treeNode )
 			{
-				treeNode->BehaviourTreeMemorySpecification = nullptr;
+				treeNode->BTMemorySpecification = nullptr;
 			}
 		}
 
@@ -419,7 +419,7 @@ namespace Saturn {
 				Ref<BehaviourTreeNodeBase> treeNode = rNode.As<BehaviourTreeNodeBase>();
 				if( treeNode )
 				{
-					treeNode->BehaviourTreeMemorySpecification = m_BlackboardSpec;
+					treeNode->BTMemorySpecification = m_BlackboardSpec;
 
 					treeNode->PostDeserialise();
 				}

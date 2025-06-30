@@ -42,13 +42,14 @@ namespace Saturn {
 		BehaviourTreeSequenceNode();
 		virtual ~BehaviourTreeSequenceNode();
 
-		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* pEvaluator ) override;
 		virtual void OnSerialise( std::ofstream& rStream ) const;
 		virtual void OnDeserialise( IStream& rStream );
+
+		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* pEvaluator ) override;
 		virtual BehaviourTreeBaseTask* ConvertToTask();
 
-		void AddChildren( const std::vector<UUID>& rChildrenID );
 		void Reset();
+		void AddChildren( const std::vector<UUID>& rChildrenID );
 
 		const std::vector<UUID>& GetChildren() const { return m_Children; }
 
@@ -57,9 +58,6 @@ namespace Saturn {
 
 	private:
 		std::vector<UUID> m_Children;
-		
-		size_t m_CurrentNodeID = 0;
-		Ref<NodeEditorTreeNode> m_CurrentNode = nullptr;
 	};
 	
 }

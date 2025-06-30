@@ -788,8 +788,3 @@ void ax::NodeEditor::StopFlow()
 {
 	s_Editor->StopFlowAnimation();
 }
-
-void ax::NodeEditor::ClearDirty()
-{
-	s_Editor->ClearDirty();
-}

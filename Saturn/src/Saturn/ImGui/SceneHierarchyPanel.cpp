@@ -50,9 +50,12 @@
 
 #include "Saturn/Vulkan/VulkanContext.h"
 
+#include "UndoRedo/GlobalUndoRedoGroup.h"
+#include "UndoRedo/EntityUndoRedoActions.h"
 
 #include "Saturn/AI/Navigation/NavBoundsEntity.h"
 #include "Saturn/AI/AIAgentEntity.h"
+
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -112,6 +115,9 @@ namespace Saturn {
 			if( ImGui::Button( pName ) )
 			{
 				m_SelectionContexts[ 0 ]->AddComponent<Ty>();
+
+				Ref<UndoRedoActionAddComponent<Ty>> action = Ref<UndoRedoActionAddComponent<Ty>>::Create( entity );
+				GlobalUndoRedoGroup::Get().AddAction( action, ( uint64_t ) entity->GetHandle() );
 
 				ImGui::CloseCurrentPopup();
 			}
@@ -593,8 +599,12 @@ namespace Saturn {
 			ImGui::PushItemWidth( contentRegionAvailable.x - ImGui::GetStyle().FramePadding.x );
 			if( ImGui::InputText( "##Tag", buffer, 256 ) )
 			{
-				tag = std::string( buffer );
+				std::string newChar( buffer );
+				tag = newChar;
 
+				Ref<UndoRedoActionModifyString> action = Ref<UndoRedoActionModifyString>::Create( "Modify Entity Tag", &tag, tag, newChar );
+
+				GlobalUndoRedoGroup::Get().AddAction( action, ( uint64_t ) entity->GetHandle() );
 				m_Context->MarkDirty();
 			}
 			ImGui::PopItemWidth();

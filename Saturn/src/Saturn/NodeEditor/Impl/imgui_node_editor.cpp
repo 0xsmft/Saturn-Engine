@@ -2073,11 +2073,6 @@ void ed::EditorContext::StopFlowAnimation()
 	m_FlowAnimationController.StopFlow();
 }
 
-void ed::EditorContext::ClearDirty()
-{
-	m_Settings.ClearDirty( nullptr );
-}
-
 void ed::EditorContext::SetUserContext(bool globalSpace)
 {
 	const auto mousePos = ImGui::GetMousePos();

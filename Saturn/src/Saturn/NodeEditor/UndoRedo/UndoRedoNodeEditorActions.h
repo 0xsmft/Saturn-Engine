@@ -28,7 +28,7 @@
 
 #pragma once
 
-#include "Saturn/NodeEditor/Node.h"
+#include "Saturn/NodeEditor/NodeEditorNodeBase.h"
 #include "Saturn/NodeEditor/Link.h"
 
 #include "Saturn/NodeEditor/UI/NodeEditor.h"
@@ -89,4 +89,59 @@ namespace Saturn {
 
 	using UndoRedoActionCreateLink = UndoRedoActionNodeEditorLink<UndoRedoActionNodeEditorLinkOp::Create>;
 	using UndoRedoActionDeleteLink = UndoRedoActionNodeEditorLink<UndoRedoActionNodeEditorLinkOp::Delete>;
+
+	//////////////////////////////////////////////////////////////////////////
+	// MODIFY NODE POSITON
+
+	// NOTE: This action will be submitted to the global list BEFORE it has been executed, Undo and Redo function will still work the same though
+	class UndoRedoActionModifyNodePosition : public UndoRedoActionBase
+	{
+	public:
+		UndoRedoActionModifyNodePosition( Ref<NodeEditor> nodeEditor, Ref<NodeEditorNodeBase> originalNode, const ImVec2& rOldPosition );
+		~UndoRedoActionModifyNodePosition();
+
+	public:
+		void Undo() override;
+		void Redo() override;
+
+	private:
+		Ref<NodeEditor> m_NodeEditor;
+		Ref<NodeEditorNodeBase> m_NodeCopy;
+
+		ImVec2 m_OldPosition{};
+		ImVec2 m_NewPosition{};
+	};
+
+	//////////////////////////////////////////////////////////////////////////
+	// CREATE NODE/DELETE NODE
+
+	class UndoRedoActionCreateNode : public UndoRedoActionBase
+	{
+	public:
+		UndoRedoActionCreateNode( Ref<NodeEditor> nodeEditor, Ref<NodeEditorNodeBase> originalNode );
+		~UndoRedoActionCreateNode();
+
+	public:
+		void Undo() override;
+		void Redo() override;
+
+	private:
+		Ref<NodeEditor> m_NodeEditor;
+		Ref<NodeEditorNodeBase> m_NodeCopy;
+	};
+
+	class UndoRedoActionDeleteNode : public UndoRedoActionBase
+	{
+	public:
+		UndoRedoActionDeleteNode( Ref<NodeEditor> nodeEditor, Ref<NodeEditorNodeBase> originalNode );
+		~UndoRedoActionDeleteNode();
+
+	public:
+		void Undo() override;
+		void Redo() override;
+
+	private:
+		Ref<NodeEditor> m_NodeEditor;
+		Ref<NodeEditorNodeBase> m_NodeCopy;
+	};
 }

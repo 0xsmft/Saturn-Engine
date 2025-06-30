@@ -38,9 +38,11 @@
 
 #include "Saturn/NodeEditor/Runtime/NodeEditorRuntime.h"
 #include "Saturn/NodeEditor/Serialisation/NodeCache.h"
-
 #include "Saturn/NodeEditor/GlobalNodesList.h"
 #include "Saturn/NodeEditor/NodeEditorBlueprintNode.h"
+#include "Saturn/NodeEditor/UndoRedo/UndoRedoNodeEditorActions.h"
+
+#include "Saturn/ImGui/UndoRedo/GlobalUndoRedoGroup.h"
 
 #include "Saturn/Core/OptickProfiler.h"
 
@@ -69,7 +71,6 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// NODE EDITOR
 
-	// TODO: What if we do want to add this node editor the the asset viewers list?
 	NodeEditor::NodeEditor( AssetID ID )
 		: NodeEditorBase( ID )
 	{
@@ -122,11 +123,27 @@ namespace Saturn {
 			void* pUserPointer ) -> bool
 		{
 			auto* pThis = static_cast< NodeEditor* >( pUserPointer );
-
 			auto pNode = pThis->FindNode( UUID( nodeId.Get() ) );
 
 			if( !pNode )
 				return false;
+
+			if( ( reason & ed::SaveReasonFlags::EndDrag ) == ed::SaveReasonFlags::EndDrag )
+			{
+				pThis->OnNodeEditorEvent( NodeEditorAction::MoveNode );
+
+				Ref<UndoRedoActionModifyNodePosition> action = Ref<UndoRedoActionModifyNodePosition>::Create(
+					pThis,
+					pNode,
+					ed::GetNodePosition( nodeId ) );
+
+				GlobalUndoRedoGroup::Get().AddAction( action, pThis->GetAssetID() );
+			}
+
+			if( ( reason & ed::SaveReasonFlags::Selection ) == ed::SaveReasonFlags::Selection )
+			{
+				pThis->OnNodeEditorEvent( NodeEditorAction::SelectNode );
+			}
 
 			pNode->ActiveState.assign( pData, size );
 			pNode->Position = ed::GetNodePosition( nodeId );
@@ -172,6 +189,7 @@ namespace Saturn {
 
 	void NodeEditor::Close()
 	{
+		m_HoveredNode = nullptr;
 		m_OutputWindow.ClearOutput();
 
 		ed::DestroyEditor( m_Editor );
@@ -283,7 +301,11 @@ namespace Saturn {
 
 			if( m_Runtime )
 			{
+				OnNodeEditorEvent( NodeEditorAction::PreEvaluate );
+
 				NodeEditorCompilationStatus result = m_Runtime->EvaluateEditor();
+				
+				OnNodeEditorEvent( NodeEditorAction::PostEvaluate );
 
 				switch( result )
 				{
@@ -310,6 +332,10 @@ namespace Saturn {
 
 			ImGui::EndTooltip();
 		}
+
+		disabled.Pop();
+
+		OnTopBarRender();
 
 		if( m_TopbarItemsFunction )
 			m_TopbarItemsFunction();
@@ -411,8 +437,18 @@ namespace Saturn {
 							{
 								if( shouldDelete ) 
 								{
+									if( m_State == NodeEditorState::Simulating )
+									{
+										ed::StopFlow();
+
+										// Terminate simulation
+										m_Runtime->TerminateEvaluation();
+									}
+
 									ed::BreakLinks( EndPinId );
 									DeleteLink( FindLinkByPin( EndPin->ID )->ID );
+
+									OnNodeEditorEvent( NodeEditorAction::BreakLink );
 								}
 								
 								UUID start = UUID( StartPinId.Get() );
@@ -421,6 +457,10 @@ namespace Saturn {
 								m_Links.push_back( Ref<Link>::Create( UUID(), start, end, StartPin->GetPinColor() ) );
 
 								MarkDirty();
+
+								Ref<UndoRedoActionCreateLink> action = Ref<UndoRedoActionCreateLink>::Create( this, m_Links.back() );
+								GlobalUndoRedoGroup::Get().AddAction( action, m_AssetID );
+								OnNodeEditorEvent( NodeEditorAction::CreateLink );
 							}
 						}
 					}
@@ -433,7 +473,7 @@ namespace Saturn {
 					m_NewLinkPin = FindPin( UUID( id.Get() ) );
 
 					if( m_NewLinkPin )
-						showLabel( "+ Create Node", ImColor( 32, 45, 32, 180 ) );
+						showLabel( "+ Create Node", ImColor( 32.0F, 45.0F, 32.0F, 180.0F ) );
 
 					if( ed::AcceptNewItem() )
 					{
@@ -460,7 +500,16 @@ namespace Saturn {
 				{
 					if( ed::AcceptDeletedItem() )
 					{
+						if( m_State == NodeEditorState::Simulating )
+						{
+							ed::StopFlow();
+
+							// Terminate simulation
+							m_Runtime->TerminateEvaluation();
+						}
+
 						DeleteLink( linkId.Get() );
+						OnNodeEditorEvent( NodeEditorAction::BreakLink );
 
 						MarkDirty();
 					}
@@ -485,7 +534,20 @@ namespace Saturn {
 						{
 							if( ed::AcceptDeletedItem() )
 							{
+								if( m_State == NodeEditorState::Simulating )
+								{
+									ed::StopFlow();
+
+									// Terminate simulation
+									m_Runtime->TerminateEvaluation();
+								}
+
+								Ref<UndoRedoActionDeleteNode> action = Ref<UndoRedoActionDeleteNode>::Create( this, rNode );
+								GlobalUndoRedoGroup::Get().AddAction( action, m_AssetID );
+
 								DeleteDeadLinks( id );
+
+								OnNodeEditorEvent( NodeEditorAction::DestroyNode );
 
 								rNode = nullptr;
 								m_Nodes.erase( itr );
@@ -507,30 +569,12 @@ namespace Saturn {
 
 		ed::Suspend();
 
-#if defined(SAT_DEBUG)
-		ed::NodeId hoveredNode = ed::GetHoveredNode();
-		if( hoveredNode.Get() != 0 )
+		ed::NodeId activeID{};
+		if( ed::ShowNodeContextMenu( &activeID ) )
 		{
-			UUID id( hoveredNode.Get() );
-			Ref<NodeEditorNodeBase> node = FindNode( id );
-
-			if( node )
-			{
-				if( ImGui::BeginTooltip() )
-				{
-					ImGui::Text( "NC/%llu", node->ID );
-					ImGui::Text( "%s", node->Name.c_str() );
-
-					ImGui::Separator();
-
-					ImGui::Text( "Size X/%f Y/%f", node->Size.x, node->Size.y );
-					ImGui::Text( "Pos X/%f Y/%f", node->Position.x, node->Position.y );
-
-					ImGui::EndTooltip();
-				}
-			}
+			ImGui::OpenPopup( "NE_NodeAction" );
+			m_HoveredNode = FindNode( UUID( activeID.Get() ) );
 		}
-#endif
 
 		if( ed::ShowBackgroundContextMenu() )
 		{
@@ -553,20 +597,26 @@ namespace Saturn {
 			ImGui::End();
 		}
 
+		// Create new node context popup window
 		ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 8.0f, 8.0f ) );
 		if( ImGui::BeginPopup( "Create New Node" ) )
 		{
-			auto mousePos = ed::ScreenToCanvas( ImGui::GetMousePosOnOpeningCurrentPopup() );
-
-			Ref<NodeEditorNodeBase> node = nullptr;
-
-			if( m_CreateNewNodeFunction )
-				node = m_CreateNewNodeFunction();
-
-			if( node )
+			if( HasPrivilege( NodeEditorPrivileges::ReadOnly ) )
 			{
-				ed::SetNodePosition( ed::NodeId( node->ID ), mousePos );
-				OnChooseNewNode( node );
+				ImGui::Text( "Not enough privilege to add node. PR/(READ ONLY)" );
+			}
+			else
+			{
+				Ref<NodeEditorNodeBase> node = nullptr;
+
+				if( m_CreateNewNodeFunction )
+					node = m_CreateNewNodeFunction();
+
+				if( node )
+				{
+					ed::SetNodePosition( ed::NodeId( node->ID ), ed::ScreenToCanvas( ImGui::GetMousePosOnOpeningCurrentPopup() ) );
+					OnChooseNewNode( node );
+				}
 			}
 
 			ImGui::EndPopup();
@@ -575,9 +625,50 @@ namespace Saturn {
 			m_CreateNewNode = false;
 
 		ImGui::PopStyleVar();
+
+		// Node context window popup
+		if( ImGui::BeginPopup( "NE_NodeAction" ) )
+		{
+			m_HoveredNode->RenderContextWindow();
+
+			Auxiliary::DisabledFlag disabled( true );
+
+			ImGui::Separator();
+
+			ImGui::Text( "NC/%llu", m_HoveredNode->ID );
+			ImGui::Text( "%s", m_HoveredNode->Name.c_str() );
+
+			ImGui::Separator();
+
+			ImGui::Text( "Size X/%f Y/%f", m_HoveredNode->Size.x, m_HoveredNode->Size.y );
+			ImGui::Text( "Pos X/%f Y/%f", m_HoveredNode->Position.x, m_HoveredNode->Position.y );
+
+			disabled.Pop();
+			ImGui::EndPopup();
+		}
+
 		ed::Resume();
 
 		ed::End();
+
+		switch( m_State )
+		{
+			case NodeEditorState::Loading:
+			case NodeEditorState::Editing:
+			case NodeEditorState::Evaluating:
+			case NodeEditorState::Suspended:
+				break;
+
+			case NodeEditorState::Simulating:
+			{
+				DrawSimulatingCanvas();
+
+				if( m_Runtime )
+				{
+					m_Runtime->TraceEvaluationPath();
+				}
+			} break;
+		}
 
 		m_OutputWindow.Draw();
 
@@ -592,7 +683,11 @@ namespace Saturn {
 		}
 	}
 
-	void NodeEditor::ThrowError( const std::string & rMessage )
+	void NodeEditor::OnUpdate( Timestep ts )
+	{
+	}
+
+	void NodeEditor::ThrowError( const std::string& rMessage )
 	{
 		m_OutputWindow.PushMessage( { .MessageText = rMessage, .Type = NodeEditorMessageType::Error } );
 	}
@@ -630,8 +725,56 @@ namespace Saturn {
 
 		if( Itr != m_Links.end() )
 		{
+			// Because "DeleteLink" is called from the undo/redo stack we don't want to add a new action.
+			if( !skipUndoRedo )
+			{
+				Ref<Link> link = *Itr;
+
+				Ref<UndoRedoActionDeleteLink> action = Ref<UndoRedoActionDeleteLink>::Create( this, link );
+				GlobalUndoRedoGroup::Get().AddAction( action, m_AssetID );
+			}
+
 			m_Links.erase( Itr );
 		}
+
+		OnNodeEditorEvent( NodeEditorAction::BreakLink );
+	}
+
+	void NodeEditor::DeleteNode( UUID id, bool skipUndoRedo /*= false */ )
+	{
+		const auto Itr = std::find_if( m_Nodes.begin(), m_Nodes.end(),
+			[ id ]( const auto& rNode )
+		{
+			return rNode.first == id;
+		} );
+
+		if( Itr != m_Nodes.end() )
+		{
+			auto& rNode = ( Itr->second );
+
+			if( rNode->CanBeDeleted )
+			{
+				if( !skipUndoRedo )
+				{
+					Ref<UndoRedoActionDeleteNode> action = Ref<UndoRedoActionDeleteNode>::Create( this, rNode );
+					GlobalUndoRedoGroup::Get().AddAction( action, m_AssetID );
+				}
+
+				DeleteDeadLinks( id );
+
+				rNode = nullptr;
+				m_Nodes.erase( Itr );
+
+				OnNodeEditorEvent( NodeEditorAction::DestroyNode );
+			}
+		}
+	}
+
+	void NodeEditor::SetNodePosition( UUID nodeID, const ImVec2& rNewPosition )
+	{
+		VariableGuard<ed::EditorContext*> guard( m_Editor );
+
+		ed::SetNodePosition( ed::NodeId( nodeID ), rNewPosition );
 	}
 
 	void NodeEditor::CreateNewEditorIfNeeded()
@@ -640,7 +783,85 @@ namespace Saturn {
 			CreateEditor();
 	}
 
+	void NodeEditor::DrawSimulatingCanvas()
+	{
+		auto canvasRect = ImRect( ed::GetRectMin(), ed::GetRectMax() );
+		ImDrawList* pDrawList = ImGui::GetWindowDrawList();
+
+		const ImU32 borderColor = IM_COL32( 100, 150, 255, 255 );
+		const float thickness = 6.0F;
+		const float rounding = 12.0F;
+
+		// Draw
+		pDrawList->AddRect( canvasRect.Min, canvasRect.Max, borderColor, rounding, ImDrawFlags_RoundCornersAll, thickness );
+
+		const std::string canvasName = "SIMULATING";
+		const ImVec2 textSize = ImGui::CalcTextSize( canvasName.c_str() );
+		const float padding = 10.0f;
+
+		const ImVec2 textPos = ImVec2( canvasRect.Min.x + padding, canvasRect.Min.y + padding );
+		pDrawList->AddText( textPos, IM_COL32( 255, 255, 255, 255 ), canvasName.c_str() );
+	}
+
 #if !defined(SAT_DIST)
+
+	void NodeEditor::OnChooseNewNode( Ref<NodeEditorNodeBase> node )
+	{
+		BuildNode( node );
+
+		m_CreateNewNode = false;
+
+		Ref<UndoRedoActionCreateNode> action = Ref<UndoRedoActionCreateNode>::Create( this, node );
+		GlobalUndoRedoGroup::Get().AddAction( action, m_AssetID );
+
+		if( auto& startPin = m_NewNodeLinkPin )
+		{
+			auto& pins = startPin->Kind == PinKind::Input ? node->Outputs : node->Inputs;
+
+			for( auto& pin : pins )
+			{
+				if( CanCreateLink( startPin, pin ) )
+				{
+					auto& endPin = pin;
+
+					UUID startID = startPin->ID;
+					UUID endID = endPin->ID;
+
+					// Start of the link must be the output pin
+					if( startPin->Kind == PinKind::Input )
+						std::swap( startID, endID );
+
+					m_Links.push_back( Ref<Link>::Create( UUID(), startID, endID, startPin->GetPinColor() ) );
+
+					break;
+				}
+			}
+		}
+
+		MarkDirty();
+		OnNodeEditorEvent( NodeEditorAction::CreateNode );
+	}
+
+	std::vector<UUID> NodeEditor::GetSelectedNodes()
+	{
+		auto maxSize = m_Nodes.size();
+		
+		std::vector<ed::NodeId> temporary( maxSize );
+
+		int selected = ed::GetSelectedNodes( temporary.data(), static_cast<int>( m_Nodes.size() ) );
+
+		// Shrink to selected size
+		temporary.resize( selected );
+
+		std::vector<UUID> result;
+		result.reserve( temporary.size() );
+
+		for( const auto& id : temporary )
+			result.emplace_back( id.Get() );
+
+		return result;
+	}
+
 	//////////////////////////////////////////////////////////////////////////
 	// SERIALISATION (DEBUG AND RELEASE)
 
@@ -730,8 +951,6 @@ namespace Saturn {
 
 			m_Links[ i ] = link;
 		}
-
-		m_Loading = false;
 
 		m_State = NodeEditorState::Editing;
 	}

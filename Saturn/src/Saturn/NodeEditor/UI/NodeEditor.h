@@ -135,9 +135,16 @@ namespace Saturn {
 		bool m_CreateNewNode = false;
 		bool m_ShowUnsavedChanges = false;
 		bool m_Dirty = false;
+#if !defined(SAT_DIST)
+		bool m_ShowRightClickContextMenu = false;
+#endif
 
 		Ref<Pin> m_NewLinkPin = nullptr;
 		Ref<Pin> m_NewNodeLinkPin = nullptr;
+#if !defined(SAT_DIST)
+		// TODO: Weak ptr
+		Ref<NodeEditorNodeBase> m_HoveredNode = nullptr;
+#endif
 
 		ImVec2 m_ViewportSize;
 

@@ -67,56 +67,11 @@ namespace Saturn {
 
 	BehaviourTreeSequenceNode::~BehaviourTreeSequenceNode()
 	{
-		Reset();
 	}
 
 	NodeEvaluationState BehaviourTreeSequenceNode::EvaluateNode( NodeEditorRuntime* pEvaluator )
 	{
-		BehaviourTreeEditorEvaluator* pBehaviourEvaluator = dynamic_cast< BehaviourTreeEditorEvaluator* >( pEvaluator );
-		if( !pBehaviourEvaluator )
-			return NodeEvaluationState::Failed;
-
-		Ref<NodeEditorBase> base = pBehaviourEvaluator->GetTargetNodeEditor();
-		if( !base )
-			return NodeEvaluationState::Failed;
-
-		if( m_CurrentNodeID >= m_Children.size() )
-			return NodeEvaluationState::Evaluated;
-
-		// Get try current node.
-		if( m_CurrentNode == nullptr )
-		{
-			Ref<NodeEditorTreeNode> treeNode = base->FindNode( m_Children[ m_CurrentNodeID ] ).As<NodeEditorTreeNode>();
-			if( !treeNode )
-			{
-				Reset();
-				return NodeEvaluationState::Failed;
-			}
-
-			m_CurrentNode = treeNode;
-		}
-
-		// Evaluate current node.
-		auto status = m_CurrentNode->EvaluateNode( pEvaluator );
-		if( status == NodeEvaluationState::Evaluated )
-		{
-			// Try move onto the next node
-			m_CurrentNode = nullptr; 
-			m_CurrentNodeID++;
-
-			if( m_CurrentNodeID >= m_Children.size() )
-				return NodeEvaluationState::Evaluated;
-		}
-		else if( status == NodeEvaluationState::Failed ) 
-		{
-			m_CurrentNode = nullptr;
-			Reset();
-
-			return NodeEvaluationState::Failed;
-		}
-
-		// Still waiting for current node to complete
-		return NodeEvaluationState::WasEvaluated;
+		return m_Children.empty() ? NodeEvaluationState::Failed : NodeEvaluationState::Evaluated;
 	}
 
 	void BehaviourTreeSequenceNode::OnSerialise( std::ofstream& rStream ) const
@@ -132,6 +87,11 @@ namespace Saturn {
 	BehaviourTreeBaseTask* BehaviourTreeSequenceNode::ConvertToTask()
 	{
 		return new BehaviourTreeSequenceTask();
+	}
+
+	void BehaviourTreeSequenceNode::Reset()
+	{
+		m_Children.clear();
 	}
 
 	void BehaviourTreeSequenceNode::AddChildren( const std::vector<UUID>& rChildrenID )

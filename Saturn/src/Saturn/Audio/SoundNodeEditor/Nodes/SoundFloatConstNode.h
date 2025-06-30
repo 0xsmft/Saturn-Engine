@@ -28,42 +28,20 @@
 
 #pragma once
 
-#include "Saturn/GameFramework/SClass.h"
+#include "Saturn/NodeEditor/NodeEditorBlueprintNode.h"
 
-// Register a spawnable class
-#define SAT_X31_CREATE_AUTO_REG_SPWN( ClassName )																\
-static Saturn::SClass* RStaticLnk()																				\
-{																												\
-	static Saturn::SClass* pClass = nullptr;																	\
-	if( !pClass )																								\
-	{																											\
-		const auto spec = Saturn::SClassSpecification{ #ClassName, (Saturn::SClassFlags) Saturn::SC_Spawnable | Saturn::SC_VisibleInEditor, 0, sizeof( Saturn::##ClassName ), alignof( Saturn::##ClassName ), Saturn::ClassName::Super::StaticClass(), Saturn::RInternalConstructor<Saturn::##ClassName>, RStaticLnk, nullptr };\
-		Saturn::SClass::RConstructClass( &pClass, spec );														\
-	}																											\
-																												\
-	return pClass;																								\
-}																												\
-Saturn::SClass* Saturn::ClassName::GetStaticClassInternal()														\
-{																												\
-	return RStaticLnk();																						\
-}																												\
-static Saturn::SClassRegistrar RCR##ClassName( RStaticLnk )
+namespace Saturn {
 
-// Register a non-spawnable class
-#define SAT_X31_CREATE_AUTO_REG( ClassName )																	\
-static Saturn::SClass* RStaticLnk##ClassName()																	\
-{																												\
-	static Saturn::SClass* pClass = nullptr;																	\
-	if( !pClass )																								\
-	{																											\
-		const auto spec = Saturn::SClassSpecification{ #ClassName, (Saturn::SClassFlags) Saturn::SC_VisibleInEditor, 0, sizeof( Saturn::##ClassName ), alignof( Saturn::##ClassName ), Saturn::ClassName::Super::StaticClass(), Saturn::RInternalConstructor<Saturn::##ClassName>, RStaticLnk, nullptr };\
-		Saturn::SClass::RConstructClass( &pClass, spec );														\
-	}																											\
-																												\
-	return pClass;																								\
-}																												\
-Saturn::SClass* Saturn::ClassName::GetStaticClassInternal()														\
-{																												\
-	return RStaticLnk##ClassName();																				\
-}																												\
-static Saturn::SClassRegistrar RCR##ClassName( RStaticLnk )
+	class SoundFloatConst : public NodeEditorBlueprintNode
+	{
+	public:
+		SoundFloatConst();
+		SoundFloatConst( const std::string& rName );
+		virtual ~SoundFloatConst();
+
+		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) { return NodeEvaluationState::Failed; }
+
+	private:
+		void CreateNode();
+	};
+}

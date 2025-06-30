@@ -38,7 +38,7 @@ static Saturn::SClass* RStaticLnk()
 	static Saturn::SClass* pClass = nullptr; 
 	if( !pClass ) 
 	{
-		const auto spec = Saturn::SClassSpecification{ 
+		const Saturn::SClassSpecification spec{
 			"SObject", 
 			( Saturn::SClassFlags ) Saturn::SC_None, 0, 
 			sizeof( Saturn::SObject ), alignof( Saturn::SObject ), 

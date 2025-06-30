@@ -29,8 +29,6 @@
 #include "sppch.h"
 #include "ClassMetadataHandler.h"
 
-#include "Saturn/Scene/Entity.h"
-
 namespace Saturn {
 
 	ClassMetadataHandler::ClassMetadataHandler()

@@ -107,9 +107,9 @@ namespace Saturn {
 		const auto& rCurrentWaypoint = m_Path.GetCurrentWaypoint();
 
 		glm::vec3 diff = rCurrentWaypoint - rCurrentPosition;
-		float step = 5.0f * ts.Seconds();
+		const float step = 5.0f * ts.Seconds();
 
-		float distance = glm::length( diff );
+		const float distance = glm::length( diff );
 		if( distance <= 0.2f )
 		{
 			// Move on to the next waypoint.
@@ -124,7 +124,7 @@ namespace Saturn {
 		else
 		{
 			// Walk.
-			glm::vec3 dir = glm::normalize( diff );
+			const glm::vec3 dir = glm::normalize( diff );
 			glm::vec3 movement = dir * step;
 
 			if( glm::length( movement ) > distance )

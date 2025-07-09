@@ -38,7 +38,7 @@
 namespace Saturn {
 
 	template<typename Component, typename Func>
-	static void WriteComponent( Ref<Entity>& rEntity, std::ofstream& rStream, Func Function )
+	static void WriteComponent( const Ref<Entity>& rEntity, std::ofstream& rStream, Func Function )
 	{
 		bool hasT = rEntity->HasComponent<Component>();
 
@@ -82,7 +82,7 @@ namespace Saturn {
 		rDep = id;
 	}
 
-	void RawEntitySerialisation::SerialiseEntity( Ref<Entity>& rEntity, std::ofstream& rStream )
+	void RawEntitySerialisation::SerialiseEntity( const Ref<Entity>& rEntity, std::ofstream& rStream )
 	{
 		RawSerialisation::WriteObject( rEntity->GetComponent<IdComponent>().ID, rStream );
 		RawSerialisation::WriteObject( rEntity->GetHandle(), rStream );

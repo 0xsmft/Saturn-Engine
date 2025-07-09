@@ -34,7 +34,7 @@
 
 namespace Saturn::Auxiliary {
 
-	void SerialiseEntity( YAML::Emitter& rEmitter, Ref<Entity> entity )
+	void SerialiseEntity( YAML::Emitter& rEmitter, const Ref<Entity> entity )
 	{
 		rEmitter << YAML::BeginMap;
 		rEmitter << YAML::Key << "Entity" << YAML::Value << entity->GetComponent< IdComponent >().ID;
@@ -488,20 +488,6 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 			auto srcc = entity[ "ScriptComponent" ];
 			if( srcc )
 			{
-				const std::string ScriptName = srcc[ "Name" ].as< std::string >();
-
-				uint8_t bit = srcc[ "ExternalData" ].as<uint8_t>();
-				unsigned int externalData = bit ? 1 : 0;
-
-				// Create from T
-				DeserialisedEntity = scene->CreateEntityWithIDScript( entityID, Tag, ScriptName, externalData );
-
-				auto& s = DeserialisedEntity->GetComponent< DScriptComponent >();
-
-				s.ClassName = ScriptName;
-
-				SAT_CORE_INFO( "Created entity with class name: X/{0}", s.ClassName );
-
 				/////////////////////////////////
 				// Read Properties
 

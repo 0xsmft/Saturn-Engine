@@ -113,7 +113,7 @@ SetProperty<typename PropertyTypeTraits<Saturn::SPropertyType::PropertyType>::Ty
 		}
 	}
 
-	void SProperty::Serialise( SObject* pClass, std::ofstream& rStream )
+	void SProperty::Serialise( const SObject* pClass, std::ofstream& rStream ) const
 	{
 #define SAT_SERIALISE_PROPERTY( PropertyType ) \
 { \

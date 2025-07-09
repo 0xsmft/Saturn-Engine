@@ -39,8 +39,8 @@ namespace Saturn {
 	PhysicsRigidBody::PhysicsRigidBody( Ref<Entity> entity )
 		: m_Entity( entity )
 	{
-		TransformComponent& tc = entity->GetComponent<TransformComponent>();
-		RigidbodyComponent& rb = entity->GetComponent<RigidbodyComponent>();
+		const TransformComponent& tc = entity->GetComponent<TransformComponent>();
+		const RigidbodyComponent& rb = entity->GetComponent<RigidbodyComponent>();
 
 		physx::PxRigidDynamic* pBody = PhysicsFoundation::Get().GetPhysics().createRigidDynamic( Auxiliary::GLMTransformToPx( tc.GetTransform() ) );
 		

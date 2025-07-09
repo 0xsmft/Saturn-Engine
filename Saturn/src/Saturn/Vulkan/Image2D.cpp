@@ -36,10 +36,8 @@
 namespace Saturn {
 
 	Image2D::Image2D( ImageFormat Format, uint32_t Width, uint32_t Height, uint32_t ArrayLevels /*= 1*/, uint32_t MipCount /*= 1*/, uint32_t MSAASamples /*= 1*/, ImageTiling Tiling /*= ImageTiling::Optimal*/, bool storage )
-		: m_Format( Format ), m_Width( Width ), m_Height( Height ), m_ArrayLevels( ArrayLevels ), m_MipCount( MipCount ), m_Tiling( Tiling ), m_Storage( storage )
+		: m_Format( Format ), m_Width( Width ), m_Height( Height ), m_ArrayLevels( ArrayLevels ), m_MipCount( MipCount ), m_MSAASamples( ( VkSampleCountFlagBits ) MSAASamples ), m_Tiling( Tiling ), m_Storage( storage )
 	{
-		m_MSAASamples = (VkSampleCountFlagBits)MSAASamples;
-
 		m_ImageViews.resize( m_ArrayLevels );
 
 		Create();

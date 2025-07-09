@@ -87,9 +87,9 @@ namespace Saturn {
 		// Get the 8 corners of the frustum
 		std::array<glm::vec3, 8> corners = GetFrustumCorners();
 
-		glm::vec4 NEAR_COLOR = glm::vec4( 1.0f, 0.0f, 0.0f, 1.0f );
-		glm::vec4 FAR_COLOR = glm::vec4( 0.0f, 1.0, 0.0f, 1.0f );
-		glm::vec4 CONNECT_COLOR = glm::vec4( 0.0F, 0.0f, 1.0f, 1.0f );
+		const glm::vec4 NEAR_COLOR = glm::vec4( 1.0f, 0.0f, 0.0f, 1.0f );
+		const glm::vec4 FAR_COLOR = glm::vec4( 0.0f, 1.0, 0.0f, 1.0f );
+		const glm::vec4 CONNECT_COLOR = glm::vec4( 0.0F, 0.0f, 1.0f, 1.0f );
 
 		// Near plane
 		Renderer2D::Get().SubmitLine( corners[ 0 ], corners[ 1 ], NEAR_COLOR );

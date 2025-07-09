@@ -44,9 +44,8 @@ namespace Saturn {
 	static inline bool operator!=( const ImVec2& lhs, const ImVec2& rhs ) { return !( lhs == rhs ); }
 
 	PrefabViewer::PrefabViewer( AssetID id )
-		: AssetViewer( id ), m_Camera( 45.0f, 1280.0f, 720.0f, 0.1f, 1000.0f )
+		: AssetViewer( id ), m_Camera( 45.0f, 1280.0f, 720.0f, 0.1f, 1000.0f ), m_SceneHierarchyPanel( Ref<SceneHierarchyPanel>::Create() )
 	{
-		m_SceneHierarchyPanel = Ref<SceneHierarchyPanel>::Create();
 		m_SceneHierarchyPanel->AddID( m_AssetID );
 		m_SceneHierarchyPanel->SetName( "Prefab Hierarchy" );
 		m_SceneHierarchyPanel->OpenWindow();

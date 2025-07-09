@@ -394,7 +394,7 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		// Selected Meshes and Physics Colliders
 		{
-			for( auto& rSelectedEntity : m_SelectedEntities )
+			for( const auto& rSelectedEntity : m_SelectedEntities )
 			{
 				if( rSelectedEntity->HasComponent<StaticMeshComponent>() )
 				{
@@ -409,7 +409,6 @@ namespace Saturn {
 							targetMaterialRegistry = meshComponent.MaterialRegistry;
 
 						// Submit to SceneRenderer as a selected mesh
-
 						if( rSelectedEntity->HasComponent<RigidbodyComponent>() )
 						{
 							rSceneRenderer.SubmitPhysicsCollider( rSelectedEntity, meshComponent.Mesh, targetMaterialRegistry, transform );
@@ -431,13 +430,11 @@ namespace Saturn {
 
 		// Static meshes
 		{
-			auto entities = GetAllEntitiesWith<StaticMeshComponent>();
-
-			for( auto& entity : entities )
+			const auto entities = GetAllEntitiesWith<StaticMeshComponent>();
+			for( const auto& entity : entities )
 			{
-				auto& meshComponent = entity->GetComponent<StaticMeshComponent>();
-
-				auto transform = GetTransformRelativeToParent( entity );
+				const auto& meshComponent = entity->GetComponent<StaticMeshComponent>();
+				const auto transform = GetTransformRelativeToParent( entity );
 
 				if( meshComponent.Mesh )
 				{
@@ -558,11 +555,11 @@ namespace Saturn {
 		if( GActiveScene != this )
 			GActiveScene = this;
 
+		// UNSAFE! We just assume that rScriptName will be a subclass of an entity, could lead to UB
 		Ref<Entity> entity = (Entity*)ClassMetadataHandler::Get().CreateClassObject( rScriptName );
 
 		entity->SetName( name );
 		entity->GetComponent<IdComponent>().ID = uuid;
-		entity->AddComponent<DScriptComponent>( ( unsigned int ) externalData ).ClassName = rScriptName;
 
 		OnEntityCreated( entity );
 
@@ -623,7 +620,7 @@ namespace Saturn {
 		return nullptr;
 	}
 
-	glm::mat4 Scene::GetTransformRelativeToParent( Ref<Entity> entity )
+	glm::mat4 Scene::GetTransformRelativeToParent( const Ref<Entity> entity )
 	{
 		SAT_PF_EVENT();
 
@@ -642,7 +639,7 @@ namespace Saturn {
 		return transform * entity->GetComponent<TransformComponent>().GetTransform();
 	}
 
-	TransformComponent Scene::GetWorldSpaceTransform( Ref<Entity> entity )
+	TransformComponent Scene::GetWorldSpaceTransform( const Ref<Entity> entity )
 	{
 		SAT_PF_EVENT();
 
@@ -711,7 +708,7 @@ namespace Saturn {
 		CopyComponentIfExists<V...>( dst, src, rRegistry );
 	}
 
-	Ref<Entity> Scene::DuplicateEntity( Ref<Entity> entity, Ref<Entity> parent )
+	Ref<Entity> Scene::DuplicateEntity( const Ref<Entity> entity, const Ref<Entity> parent )
 	{
 		Ref<Entity> newEntity = Ref<Entity>::Create();
 		newEntity->SetName( entity->GetComponent<TagComponent>().Tag );
@@ -719,7 +716,7 @@ namespace Saturn {
 		CopyComponentIfExists( AllDuplicatableComponents{}, newEntity->GetHandle(), entity->GetHandle(), m_Registry );
 
 		auto& relationshipComponent = newEntity->GetComponent<RelationshipComponent>();
-		auto& sourceRelationship = entity->GetComponent<RelationshipComponent>();
+		const auto& sourceRelationship = entity->GetComponent<RelationshipComponent>();
 		
 		relationshipComponent.ChildrenID.resize( entity->GetChildren().size() );
 		
@@ -739,7 +736,7 @@ namespace Saturn {
 
 		for( const auto& rID : sourceRelationship.ChildrenID )
 		{
-			Ref<Entity> child = FindEntityByID( rID );
+			const Ref<Entity> child = FindEntityByID( rID );
 			Ref<Entity> newChild = DuplicateEntity( child, newEntity );
 
 			newEntity->GetChildren().push_back( newChild->GetUUID() );

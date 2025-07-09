@@ -88,7 +88,7 @@ namespace Saturn {
 	void Entity::Serialise( const Ref<Entity>& rObject, std::ofstream& rStream )
 	{
 		RawEntitySerialisation serialiser;
-		serialiser.SerialiseEntity( const_cast< Ref<Entity>& >( rObject ), rStream );
+		serialiser.SerialiseEntity( rObject, rStream );
 	}
 
 	void Entity::Deserialise( Ref<Entity>& rObject, std::istream& rStream )

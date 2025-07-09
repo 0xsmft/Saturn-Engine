@@ -53,6 +53,15 @@ namespace Saturn {
 
 		virtual ~Entity();
 
+		// Called when the Runtime begins or when this entity is spawned
+		virtual void BeginPlay() {}
+
+		// Called every frame with a potentially variable timestep 
+		virtual void OnUpdate( Saturn::Timestep ts ) {}
+
+		// Called every frame with a fixed timestep 
+		virtual void OnPhysicsUpdate( Saturn::Timestep ts ) {}
+
 	public:
 		template<typename T, typename... Args>
 		inline T& AddComponent( Args&&... args )
@@ -62,6 +71,12 @@ namespace Saturn {
 
 		template<typename T>
 		[[nodiscard]] inline T& GetComponent()
+		{
+			return m_Scene->GetComponent<T>( m_EntityHandle );
+		}
+
+		template<typename T>
+		[[nodiscard]] inline const T& GetComponent() const
 		{
 			return m_Scene->GetComponent<T>( m_EntityHandle );
 		}
@@ -92,36 +107,34 @@ namespace Saturn {
 		Scene* GetScene() { return m_Scene; }
 		const Scene* GetScene() const { return m_Scene; }
 
-		glm::mat4 Transform() { return m_Scene->m_Registry.get<TransformComponent>( m_EntityHandle ).GetTransform(); }
+		glm::mat4 Transform() const { return m_Scene->m_Registry.get<TransformComponent>( m_EntityHandle ).GetTransform(); }
 		
 		void SetName( const std::string& rName );
 
 		const entt::entity GetHandle()       { return m_EntityHandle; }
 		const entt::entity GetHandle() const { return m_EntityHandle; }
 
-		UUID GetUUID() { return GetComponent<IdComponent>().ID; }
+		UUID GetUUID() const { return GetComponent<IdComponent>().ID; }
 		[[nodiscard]] const std::string& GetName() { return GetComponent<TagComponent>().Tag; }
 
-		virtual void BeginPlay() {}
-		virtual void OnUpdate( Saturn::Timestep ts ) {}
-		virtual void OnPhysicsUpdate( Saturn::Timestep ts ) {}
-
-		void SetParent( const UUID& rID ) 
+		inline void SetParent( const UUID& rID )
 		{
 			GetComponent<RelationshipComponent>().Parent = rID;
 		}
 
-		UUID GetParent()
+		inline UUID GetParent() const
 		{
 			return GetComponent<RelationshipComponent>().Parent;
 		}
 
-		std::vector<UUID>& GetChildren()             { return GetComponent<RelationshipComponent>().ChildrenID; }
+		inline const std::vector<UUID>& GetChildren() const { return GetComponent<RelationshipComponent>().ChildrenID; }
+
+		inline std::vector<UUID>& GetChildren() { return GetComponent<RelationshipComponent>().ChildrenID; }
 		
-		[[nodiscard]] bool HasParent()   { return GetComponent<RelationshipComponent>().Parent != 0; }
-		[[nodiscard]] bool HasChildren() { return GetComponent<RelationshipComponent>().ChildrenID.size() > 0; }
+		[[nodiscard]] bool HasParent()   const { return GetComponent<RelationshipComponent>().Parent != 0; }
+		[[nodiscard]] bool HasChildren() const { return GetComponent<RelationshipComponent>().ChildrenID.size() > 0; }
 		
-		[[nodiscard]] bool IsSibling( Ref<Entity>& rOther ) 
+		[[nodiscard]] inline  bool IsSibling( const Ref<Entity>& rOther ) const
 		{
 			auto& rRc = GetComponent<RelationshipComponent>(); 
 			auto& rOtherRc = rOther->GetComponent<RelationshipComponent>();
@@ -129,7 +142,7 @@ namespace Saturn {
 			return rRc.Parent == rOtherRc.Parent; 
 		}
 
-		[[nodiscard]] bool IsDescendant( Ref<Entity>& rOther )
+		[[nodiscard]] inline bool IsDescendant( const Ref<Entity>& rOther ) const
 		{
 			auto& rOtherRc = rOther->GetComponent<RelationshipComponent>();
 
@@ -159,7 +172,7 @@ namespace Saturn {
 		Scene* m_Scene = nullptr;
 
 	private:
-		void Invalidate()
+		inline void Invalidate()
 		{
 			m_EntityHandle = entt::null;
 		}

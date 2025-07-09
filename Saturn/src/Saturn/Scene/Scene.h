@@ -191,7 +191,7 @@ namespace Saturn {
 		void OnRenderEditor( const EditorCamera& rCamera, Timestep ts, SceneRenderer& rSceneRenderer );
 		void OnRenderRuntime( Timestep ts, SceneRenderer& rSceneRenderer );
 
-		Ref<Entity> DuplicateEntity( Ref<Entity> entity, Ref<Entity> parent = nullptr );
+		Ref<Entity> DuplicateEntity( const Ref<Entity> entity, const Ref<Entity> parent = nullptr );
 		void DeleteEntity( Ref<Entity> entity, bool deleteChildren = true, UUID orphanParentID = 0 );
 		
 		void OnUpdate( Timestep ts );
@@ -233,10 +233,10 @@ namespace Saturn {
 		[[nodiscard]] Ref<Entity> FindEntityByHandle( entt::entity handle );
 
 		// Convert the local space transformation into world space
-		glm::mat4 GetTransformRelativeToParent( Ref<Entity> entity );
+		glm::mat4 GetTransformRelativeToParent( const Ref<Entity> entity );
 
 		// Convert the local space transformation into world space
-		TransformComponent GetWorldSpaceTransform( Ref<Entity> entity );
+		TransformComponent GetWorldSpaceTransform( const Ref<Entity> entity );
 
 		[[nodiscard]] bool Raycast( const glm::vec3& Origin, const glm::vec3& Direction, float MaxDistance, RaycastHitResult* pOut );
 
@@ -353,7 +353,7 @@ namespace Saturn {
 		}
 
 		template<typename Ty>
-		[[nodiscard]] bool HasComponent( entt::entity entity )
+		[[nodiscard]] bool HasComponent( entt::entity entity ) const
 		{
 #if defined( SAT_ENABLE_GAMETHREAD )
 			std::unique_lock<std::mutex> Lock( m_Mutex, std::try_to_lock );
@@ -375,6 +375,17 @@ namespace Saturn {
 
 		template<typename Ty>
 		[[nodiscard]] Ty& GetComponent( entt::entity entity )
+		{
+#if defined( SAT_ENABLE_GAMETHREAD )
+			std::unique_lock<std::mutex> Lock( m_Mutex, std::try_to_lock );
+#endif
+			SAT_CORE_ASSERT( HasComponent<Ty>( entity ), "Entity does not have component!" );
+
+			return m_Registry.get<Ty>( entity );
+		}
+
+		template<typename Ty>
+		[[nodiscard]] const Ty& GetComponent( entt::entity entity ) const
 		{
 #if defined( SAT_ENABLE_GAMETHREAD )
 			std::unique_lock<std::mutex> Lock( m_Mutex, std::try_to_lock );

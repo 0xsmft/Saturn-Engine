@@ -49,7 +49,7 @@ namespace Saturn {
 
 	void ProjectSerialiser::Serialise( const std::filesystem::path& rFilePath )
 	{
-		Ref<Project> rProject = Project::GetActiveProject();
+		const Ref<Project> rProject = Project::GetActiveProject();
 
 		YAML::Emitter out;
 

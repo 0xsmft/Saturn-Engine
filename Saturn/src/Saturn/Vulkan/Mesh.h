@@ -176,6 +176,7 @@ namespace Saturn {
 		const Ref<MaterialRegistry>& GetMaterialRegistry() const { return m_MaterialRegistry; }
 
 		AABB& GetBoundingBox() { return m_BoundingBox; }
+		const AABB& GetBoundingBox() const { return m_BoundingBox; }
 
 		// Return the number of indices that make up a single face
 		uint32_t GetIndexCount() const { return m_IndicesCount; }

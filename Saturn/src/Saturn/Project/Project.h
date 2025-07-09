@@ -59,14 +59,30 @@ namespace Saturn {
 		Dist // Distribution Configuration
 	};
 
+	// Project
+	//
+	// Represents a .sproject file.
+	// This is the highest level of the project chain
+	// 
+	// Project
+	//  GameModule
+	//   Game DLL file
+	//    Game SObjects/SClass that get compiled into the ClassMetadataHandler
+	// AssetManager relies on Project but is not owned or created by the project
+	//
+	// A Project MUST exist, if not, the editor will not startup
+	//
 	class Project : public RefTarget
 	{
 	public:
+		// INTERNAL FOR USE BY PROJECT BROWSER ONLY!
 		Project();
 		Project( const ProjectConfig& rConfig );
 		~Project();
 
 		ProjectConfig& GetConfig() { return m_Config; }
+		const ProjectConfig& GetConfig() const { return m_Config; }
+
 		static ProjectConfig& GetActiveConfig() { return s_ActiveProject->m_Config; }
 
 		// Local per module (copied to game when running in editor.)
@@ -90,23 +106,23 @@ namespace Saturn {
 		std::filesystem::path FilepathAbs( const std::filesystem::path& rPath ) const;
 
 		// Relative Asset Path
-		std::filesystem::path GetAssetPath();
+		std::filesystem::path GetAssetPath() const;
 		
 		// Absolute Asset Path
-		std::filesystem::path GetFullAssetPath();
-		std::filesystem::path GetAbsoluteAssetPath() { return GetFullAssetPath(); }
+		std::filesystem::path GetFullAssetPath() const;
+		std::filesystem::path GetAbsoluteAssetPath() const { return GetFullAssetPath(); }
 	
 		// Relative Premake file
-		std::filesystem::path GetPremakeFile();
+		std::filesystem::path GetPremakeFile() const;
 		
 		// Absolute project dir
-		std::filesystem::path GetRootDir();
+		std::filesystem::path GetRootDir() const;
 		
 		// Absolute Temp dir
-		std::filesystem::path GetTempDir();
+		std::filesystem::path GetTempDir() const;
 
 		// Absolute source dir
-		std::filesystem::path GetSourceDir();
+		std::filesystem::path GetSourceDir() const;
 
 		// Absolute bin dir
 		std::filesystem::path GetBinDir();
@@ -191,6 +207,6 @@ namespace Saturn {
 #endif
 
 	private:
-		inline static Ref<Project> s_ActiveProject;
+		static inline Ref<Project> s_ActiveProject;
 	};
 }

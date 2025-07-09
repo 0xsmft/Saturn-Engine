@@ -281,7 +281,7 @@ namespace Saturn {
 
 				m_EditorCamera.SetActive( false );
 
-				std::string title = std::format( "{0} (Running) - Saturn", Project::GetActiveConfig().Name );
+				const std::string title = std::format( "{0} (Running) - Saturn", Project::GetActiveConfig().Name );
 				Application::Get().GetWindow()->ChangeTitle( title );
 
 				m_ImGuiWindowManager->OnRuntimeStateChanged( RuntimeState::Running, RuntimeState::Starting );
@@ -305,7 +305,7 @@ namespace Saturn {
 
 				Application::Get().PrimarySceneRenderer().SetCurrentScene( m_EditorScene.Get() );
 
-				std::string title = std::format( "{0} - Saturn", Project::GetActiveConfig().Name );
+				const std::string title = std::format( "{0} - Saturn", Project::GetActiveConfig().Name );
 				Application::Get().GetWindow()->ChangeTitle( title );
 
 				m_ImGuiWindowManager->OnRuntimeStateChanged( RuntimeState::NoState, RuntimeState::Ending );
@@ -332,8 +332,7 @@ namespace Saturn {
 
 			if( m_ShowCameraFrustum )
 			{
-				auto& cc = m_RuntimeScene->GetMainCameraEntity()->GetComponent<CameraComponent>().Camera;
-
+				const auto& cc = m_RuntimeScene->GetMainCameraEntity()->GetComponent<CameraComponent>().Camera;
 				cc.RenderDebugFrustum();
 			}
 		}
@@ -348,16 +347,13 @@ namespace Saturn {
 
 		if( m_ShowMeshAABB )
 		{
-			Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
-
-			for( auto& rEntity : hierarchyPanel->GetSelectionContexts() )
+			const Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
+			for( const auto& rEntity : hierarchyPanel->GetSelectionContexts() )
 			{
-				glm::mat4 transform = GActiveScene->GetTransformRelativeToParent( rEntity );
-
+				const glm::mat4 transform = GActiveScene->GetTransformRelativeToParent( rEntity );
 				if( rEntity->HasComponent<StaticMeshComponent>() )
 				{
-					auto& rMesh = rEntity->GetComponent<StaticMeshComponent>().Mesh;
-
+					const auto& rMesh = rEntity->GetComponent<StaticMeshComponent>().Mesh;
 					Renderer2D::Get().SubmitAABB( rMesh->GetBoundingBox(), transform, { 1.0F, 0.0F, 0.0F, 1.0F } );
 				}
 			}

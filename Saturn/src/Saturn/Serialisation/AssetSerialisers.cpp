@@ -236,13 +236,13 @@ namespace Saturn {
 	{
 		auto prefabAsset = Ref<Prefab>::Create();
 
-		auto absolutePath = GetFilepathAbs( rAsset->Path );
+		const auto absolutePath = GetFilepathAbs( rAsset->Path );
 		std::ifstream FileIn( absolutePath );
 
 		std::stringstream ss;
 		ss << FileIn.rdbuf();
 
-		YAML::Node data = YAML::Load( ss.str() );
+		const YAML::Node data = YAML::Load( ss.str() );
 
 		if( data.IsNull() )
 			return false;
@@ -261,7 +261,7 @@ namespace Saturn {
 		// Find root entity
 		Ref<Entity> RootEntity = nullptr;
 
-		for( auto& entity : view )
+		for( const auto& entity : view )
 		{
 			if( entity->GetComponent<RelationshipComponent>().Parent != 0 )
 				continue;

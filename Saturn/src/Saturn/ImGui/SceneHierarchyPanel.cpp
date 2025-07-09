@@ -66,9 +66,8 @@
 namespace Saturn {
 
 	SceneHierarchyPanel::SceneHierarchyPanel() 
-		: ImGuiWindow( "Scene Hierarchy Panel" )
+		: ImGuiWindow( "Scene Hierarchy Panel" ), m_EditIcon( Ref<Texture2D>::Create( "content/textures/editor/EditIcon.png", AddressingMode::Repeat, false ) )
 	{
-		m_EditIcon = Ref<Texture2D>::Create( "content/textures/editor/EditIcon.png", AddressingMode::Repeat, false );
 	}
 
 	SceneHierarchyPanel::~SceneHierarchyPanel()
@@ -308,7 +307,7 @@ namespace Saturn {
 			if( ImGui::BeginItemTooltip() )
 			{
 				ImGui::BeginHorizontal( (void*)entity.Get() );
-				ImGui::Text( "%s -- %s", rTag.c_str(), isPrefab ? "Prefab or Class Instance" : "Spawned");
+				ImGui::Text( "%s | %s", rTag.c_str(), entity->GetClass()->GetName().c_str() );
 				ImGui::Spring();
 				ImGui::Text( "ECS Handle: %i", entity->GetHandle() );
 				ImGui::Spring();
@@ -329,7 +328,6 @@ namespace Saturn {
 			if( ImGui::BeginDragDropTarget() )
 			{
 				const ImGuiPayload* pPayload = ImGui::AcceptDragDropPayload( "ENTITY_PARENT_SCHPANEL" );
-
 				if( pPayload )
 				{
 					Ref<Entity> e = (Entity*)pPayload->Data;
@@ -615,20 +613,13 @@ namespace Saturn {
 			// ID
 			ImGui::TextDisabled( "%llu", id );
 
-			if( entity->HasComponent<DScriptComponent>() )
-			{
-				ImGui::SameLine();
-				ImGui::TextDisabled( "Class Instance (C++ Class) [%s]", entity->GetClass()->GetName().c_str() );
-			}
-			else if( entity->HasComponent<PrefabComponent>() )
+			ImGui::SameLine();
+			ImGui::TextDisabled( "%s", entity->GetClass()->GetName().c_str() );
+
+			if( entity->HasComponent<PrefabComponent>() )
 			{
 				ImGui::SameLine();
 				ImGui::TextDisabled( "Class Instance (Prefab)" );
-			}
-			else 
-			{
-				ImGui::SameLine();
-				ImGui::TextDisabled( "Normal Entity" );
 			}
 		}
 

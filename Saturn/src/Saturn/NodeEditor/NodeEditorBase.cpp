@@ -54,7 +54,7 @@ namespace Saturn {
 	{
 		if( EditorIcons::GetIcon( "BlueprintBackground" ) == nullptr )
 		{
-			auto texture = Ref<Texture2D>::Create( "content/textures/editor/BlueprintBackground.png", AddressingMode::Repeat, false );
+			const auto texture = Ref<Texture2D>::Create( "content/textures/editor/BlueprintBackground.png", AddressingMode::Repeat, false );
 
 			EditorIcons::AddIcon( texture );
 
@@ -66,15 +66,14 @@ namespace Saturn {
 		return EditorIcons::GetIcon( "BlueprintBackground" );
 	}
 
-	NodeEditorBase::NodeEditorBase()
+	NodeEditorBase::NodeEditorBase() 
+		: m_Runtime( Ref<NodeEditorRuntime>::Create() )
 	{
-		m_Runtime = Ref<NodeEditorRuntime>::Create();
 	}
 
 	NodeEditorBase::NodeEditorBase( AssetID id )
-		: m_AssetID( id )
+		: m_AssetID( id ), m_Runtime( Ref<NodeEditorRuntime>::Create() )
 	{
-		m_Runtime = Ref<NodeEditorRuntime>::Create();
 	}
 
 	NodeEditorBase::~NodeEditorBase()

@@ -56,12 +56,9 @@ namespace Saturn {
 	static char s_RenameBuffer[ 1024 ];
 
 	ContentBrowserItem::ContentBrowserItem( const std::filesystem::directory_entry& rEntry, ContentBrowserItemType type )
-		: m_Entry( rEntry ), m_Type( type )
+		: m_Entry( rEntry ), m_Type( type ), m_Path( rEntry.path() ), m_IsDirectory( rEntry.is_directory() )  
 	{
-		m_Path = rEntry.path();
 		m_Filename = m_Path.stem().string();
-
-		m_IsDirectory = rEntry.is_directory();
 
 		if( m_IsDirectory )
 		{
@@ -252,13 +249,13 @@ namespace Saturn {
 				{
 					case AssetType::Texture:
 					{
-						auto viewer = Ref<TextureViewer>::Create( m_Asset->ID );
+						const auto viewer = Ref<TextureViewer>::Create( m_Asset->ID );
 						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
 					} break;
 
 					case AssetType::StaticMesh:
 					{
-						auto viewer = Ref<StaticMeshAssetViewer>::Create( m_Asset->ID );
+						const auto viewer = Ref<StaticMeshAssetViewer>::Create( m_Asset->ID );
 						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
 					} break;
 
@@ -268,7 +265,7 @@ namespace Saturn {
 					case AssetType::Material:
 					{
 						// Importing the asset will happen in this function.
-						auto viewer = Ref<MaterialAssetViewer>::Create( m_Asset->ID );
+						const auto viewer = Ref<MaterialAssetViewer>::Create( m_Asset->ID );
 						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
 					} break;
 					case AssetType::MaterialInstance:
@@ -276,37 +273,37 @@ namespace Saturn {
 
 					case AssetType::Prefab:
 					{
-						auto viewer = Ref<PrefabViewer>::Create( m_Asset->ID );
+						const auto viewer = Ref<PrefabViewer>::Create( m_Asset->ID );
 						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
 					} break;
 
 					case AssetType::PhysicsMaterial:
 					{
-						auto viewer = Ref<PhysicsMaterialAssetViewer>::Create( m_Asset->ID );
+						const auto viewer = Ref<PhysicsMaterialAssetViewer>::Create( m_Asset->ID );
 						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
 					} break;
 
 					case AssetType::Sound:
 					{
-						auto viewer = Ref<SoundAssetViewer>::Create( m_Asset->ID );
+						const auto viewer = Ref<SoundAssetViewer>::Create( m_Asset->ID );
 						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
 					} break;
 
 					case AssetType::GraphSound: 
 					{
-						auto viewer = Ref<GraphSoundAssetViewer>::Create( m_Asset->ID );
+						const auto viewer = Ref<GraphSoundAssetViewer>::Create( m_Asset->ID );
 						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
 					} break;
 
 					case AssetType::BehaviourTree:
 					{
-						auto viewer = Ref<BehaviourTreeAssetViewer>::Create( m_Asset->ID );
+						const auto viewer = Ref<BehaviourTreeAssetViewer>::Create( m_Asset->ID );
 						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
 					} break;
 
 					case AssetType::BehaviourTreeMemory:
 					{
-						auto viewer = Ref<BehaviourTreeMemoryAssetViewer>::Create( m_Asset->ID );
+						const auto viewer = Ref<BehaviourTreeMemoryAssetViewer>::Create( m_Asset->ID );
 						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
 					} break;
 
@@ -622,11 +619,11 @@ namespace Saturn {
 
 	void ContentBrowserItem::DrawIcon( const ImVec2& rThumbnailSize, const ImVec2& rTopLeft, const ImVec2& rBottomRight )
 	{
-		ImVec2 imageSize = ImVec2( ( float ) m_Icon->Width(), ( float ) m_Icon->Height() );
+		const ImVec2 imageSize = ImVec2( ( float ) m_Icon->Width(), ( float ) m_Icon->Height() );
 		ImVec2 scaledSize = imageSize;
 
 		// TODO: We use 512x512 images not 180
-		float maxSize = rThumbnailSize.x;
+		const float maxSize = rThumbnailSize.x;
 		if( imageSize.x > maxSize || imageSize.y > maxSize )
 		{
 			float aspectRatio = imageSize.x / imageSize.y;

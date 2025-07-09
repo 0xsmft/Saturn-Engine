@@ -111,10 +111,10 @@ namespace Saturn {
 	// FUNCTION POINTERS
 
 	template<typename Ty>
-	using SetPropertyFn = void(__stdcall*)( SObject*, Ty );
+	using SetPropertyFn = void( __stdcall* )( SObject*, Ty );
 
 	template<typename Ty>
-	using GetPropertyFn = Ty( __stdcall* )( SObject* );
+	using GetPropertyFn = Ty( __stdcall* )( const SObject* );
 
 	template<SPropertyType Type>
 	struct PropertyTypeTraits;
@@ -169,7 +169,7 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 
 	// Where Ty is the cpp type i.e. float, int etc
 	template<typename Ty>
-	Ty ReadPropertyInternal( SObject* pClass, const void* const fnp )
+	Ty ReadPropertyInternal( const SObject* pClass, const void* const fnp )
 	{
 		auto func = reinterpret_cast< GetPropertyFn<Ty> >( fnp );
 		return ( func ) ( pClass );
@@ -223,13 +223,20 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 			return ReadPropertyInternal<typename PropertyTypeTraits<Ty>::Type>( pClass, pGetPropertyFunction );
 		}
 
+		template<SPropertyType Ty>
+		[[nodiscard]] typename PropertyTypeTraits<Ty>::Type Read( const SObject* pClass ) const
+		{
+			return ReadPropertyInternal<typename PropertyTypeTraits<Ty>::Type>( pClass, pGetPropertyFunction );
+		}
+
 		void RtCopyFromOther( SObject* pSrcClass, SObject* pClass );
 
 	public:
-		void Serialise( SObject* pClass, std::ofstream& rStream );
+		void Serialise( const SObject* pClass, std::ofstream& rStream ) const;
 		void Deserialise( SObject* pClass, std::istream& rStream );
 
 	public:
+		// NOTE: This function HAS to be defined inline as the HeaderTool will call this function
 		inline void SetFlag( SPropertyFlags flag, bool value ) 
 		{
 			if( value )

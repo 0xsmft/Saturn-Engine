@@ -41,8 +41,8 @@
 namespace Saturn {
 
 	GraphSound::GraphSound( AssetID id )
+		: m_GraphAsset( AssetManager::Get().FindAsset( id ) )
 	{
-		m_GraphAsset = AssetManager::Get().FindAsset( id );
 	}
 
 	GraphSound::~GraphSound()

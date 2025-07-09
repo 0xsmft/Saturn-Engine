@@ -201,7 +201,7 @@ namespace Saturn {
 		fout << "\t}\n";
 
 		// Get property function
-		fout << std::format( "\tstatic {0} Get{1}( {2}* pClass )\n", rProperty.GetNativeType(), rProperty.GetName(), rClassName );
+		fout << std::format( "\tstatic const {0} Get{1}( const {2}* pClass )\n", rProperty.GetNativeType(), rProperty.GetName(), rClassName );
 		fout << "\t{\n";
 		fout << "\t\treturn pClass->" << rProperty.GetName() << ";\n";
 		fout << "\t}\n";
@@ -218,7 +218,7 @@ namespace Saturn {
 		fout << "\t}\n";
 
 		// Get property function
-		fout << std::format( "\tstatic Saturn::AssetReference& Get{0}( {1}* pClass )\n", rProperty.GetName(), rClassName );
+		fout << std::format( "\tstatic const Saturn::AssetReference& Get{0}( const {1}* pClass )\n", rProperty.GetName(), rClassName );
 		fout << "\t{\n";
 		fout << "\t\treturn pClass->" << rProperty.GetName() << ";\n";
 		fout << "\t}\n";
@@ -496,7 +496,7 @@ namespace Saturn {
 			fout << "\t}\n";
 
 			// Get property function
-			fout << "\tstatic typename Saturn::PropertyTypeTraits<" << stringType << ">::Type" << " Get" << rProperty.GetName() << "( " << rClassName << "* pClass )\n";
+			fout << "\tstatic typename Saturn::PropertyTypeTraits<" << stringType << ">::Type" << " Get" << rProperty.GetName() << "( const " << rClassName << "* pClass )\n";
 			fout << "\t{\n";
 			fout << "\t\treturn pClass->" << rProperty.GetName() << ";\n";
 			fout << "\t}\n";

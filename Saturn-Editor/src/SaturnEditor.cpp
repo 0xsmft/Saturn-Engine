@@ -63,6 +63,7 @@ public:
 
 			if( m_ProjectPath.empty() )
 			{
+				// Try get first recent project if there is no startup project
 				if( Saturn::EngineSettings::Get().RecentProjects.size() )
 				{
 					// Path to .sproject

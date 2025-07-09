@@ -208,13 +208,13 @@ namespace Saturn {
 	}
 #endif // !SAT_DIST
 
-	std::filesystem::path Project::GetAssetPath()
+	std::filesystem::path Project::GetAssetPath() const
 	{
 		std::filesystem::path asset = GetActiveProject()->GetConfig().AssetPath;
 		return std::filesystem::relative( asset, asset.parent_path() );
 	}
 
-	std::filesystem::path Project::GetFullAssetPath()
+	std::filesystem::path Project::GetFullAssetPath() const
 	{
 		// Root dir
 		std::filesystem::path rootDir = m_RootPath;
@@ -223,22 +223,22 @@ namespace Saturn {
 		return rootDir;
 	}
 
-	std::filesystem::path Project::GetPremakeFile()
+	std::filesystem::path Project::GetPremakeFile() const
 	{
 		return GetAssetPath().parent_path() / "premake5.lua";
 	}
 
-	std::filesystem::path Project::GetRootDir()
+	std::filesystem::path Project::GetRootDir() const
 	{
 		return m_RootPath;
 	}
 
-	std::filesystem::path Project::GetTempDir()
+	std::filesystem::path Project::GetTempDir() const
 	{
 		return m_RootPath / "Temp";
 	}
 
-	std::filesystem::path Project::GetSourceDir()
+	std::filesystem::path Project::GetSourceDir() const
 	{
 		return m_RootPath / "Source" / m_Config.Name;
 	}

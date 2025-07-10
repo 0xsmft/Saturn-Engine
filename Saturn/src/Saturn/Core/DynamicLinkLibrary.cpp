@@ -26,38 +26,68 @@
 *********************************************************************************************
 */
 
-#pragma once
-
-#include <filesystem>
-
-#if defined(_WIN32)
-#include <Windows.h>
-using LibraryHandle = HMODULE;
-#else
-#include <dlfcn.h>
-using LibraryHandle = void*;
-#endif
+#include "sppch.h"
+#include "DynamicLinkLibrary.h"
 
 namespace Saturn {
 
-	class Library
+	DynamicLinkLibrary::DynamicLinkLibrary()
 	{
-	public:
-		Library();
-		~Library();
+	}
 
-		bool Load( const std::filesystem::path& rPath );
-		void Free();
+	DynamicLinkLibrary::~DynamicLinkLibrary()
+	{
+		Free();
+	}
+
+	bool DynamicLinkLibrary::Load( const std::filesystem::path& rPath )
+	{
+		if( m_Handle ) 
+			Free();
+
+		bool result = false;
 
 #if defined(_WIN32)
-		FARPROC GetSymbol( const char* pName );
+		m_Handle = LoadLibraryW( rPath.wstring().data() );
+		result = ( bool ) m_Handle;
 #else
-		void* GetSymbol( const char* pName );
+		m_Handle = dlopen( rPath.data(), RTLD_LAZY );
+		result = ( bool ) m_Handle;
 #endif
 
-		void SetExisting( LibraryHandle NewHandle );
+		return result;
+	}
 
-	private:
-		LibraryHandle m_Handle = nullptr;
-	};
+	void DynamicLinkLibrary::Free()
+	{
+		if( !m_Handle )
+			return;
+
+#if defined(_WIN32)
+		FreeLibrary( m_Handle );
+		m_Handle = nullptr;
+#else
+		dlclose( m_Handle );
+		m_Handle = nullptr;
+#endif
+	}
+
+#if defined(_WIN32)
+	FARPROC DynamicLinkLibrary::GetSymbol( const char* pName ) const
+	{
+		return GetProcAddress( m_Handle, pName );
+	}
+#else
+	void* DynamicLinkLibrary::GetSymbol( const char* pName )
+	{
+		return dlsym( m_Handle, pName );
+	}
+#endif
+
+	void DynamicLinkLibrary::SetExisting( LibraryHandle NewHandle )
+	{
+		Free();
+		m_Handle = NewHandle;
+	}
+
 }

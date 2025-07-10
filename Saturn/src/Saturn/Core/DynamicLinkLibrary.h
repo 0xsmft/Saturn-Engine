@@ -26,65 +26,53 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "Library.h"
+#pragma once
+
+#include <filesystem>
+
+#if defined(_WIN32)
+#include <Windows.h>
+using LibraryHandle = HMODULE;
+#else
+#include <dlfcn.h>
+using LibraryHandle = void*;
+#endif
 
 namespace Saturn {
 
-	Library::Library()
+	// DynamicLinkLibrary
+	// 
+	// Encapsulates the low level loading and unloading of dynamic libraries.
+	// NOTE: This class by it self should not be used, you should create the appropriate SModule/Module for it.
+	//
+	class DynamicLinkLibrary
 	{
-	}
+		DynamicLinkLibrary( const DynamicLinkLibrary& ) = delete;
+	public:
+		DynamicLinkLibrary();
 
-	Library::~Library()
-	{
-		Free();
-	}
+		// Automatically calls Free() to release any loaded library.
+		~DynamicLinkLibrary();
 
-	bool Library::Load( const std::filesystem::path& rPath )
-	{
-		bool result = false;
+		// Load the actual .dll file, automatically calls Free() if it's already loaded.
+		[[nodiscard]] bool Load( const std::filesystem::path& rPath );
+		
+		// Unloads the .dll file, if any.
+		void Free();
 
 #if defined(_WIN32)
-		m_Handle = LoadLibraryW( rPath.wstring().data() );
-		result = ( bool ) m_Handle;
+		FARPROC GetSymbol( const char* pName ) const;
 #else
-		m_Handle = dlopen( rPath.data(), RTLD_LAZY );
-		result = ( bool ) m_Handle;
+		void* GetSymbol( const char* pName );
 #endif
 
-		return result;
-	}
+		// Set the existing library handle.
+		// This function is internal and should not typically be used, however it can be used if you must.
+		// Automatically calls Free().
+		void SetExisting( LibraryHandle newHandle );
 
-	void Library::Free()
-	{
-		if( !m_Handle )
-			return;
-
-#if defined(_WIN32)
-		FreeLibrary( m_Handle );
-		m_Handle = nullptr;
-#else
-		dlclose( m_Handle );
-		m_Handle = nullptr;
-#endif
-	}
-
-#if defined(_WIN32)
-	FARPROC Library::GetSymbol( const char* pName )
-	{
-		return GetProcAddress( m_Handle, pName );
-	}
-#else
-	void* Library::GetSymbol( const char* pName )
-	{
-		return dlsym( m_Handle, pName );
-	}
-#endif
-
-	void Library::SetExisting( LibraryHandle NewHandle )
-	{
-		Free();
-		m_Handle = NewHandle;
-	}
-
+	private:
+		// Handle to the platform specific type.
+		LibraryHandle m_Handle = nullptr;
+	};
 }

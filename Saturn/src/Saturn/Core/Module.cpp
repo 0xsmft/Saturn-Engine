@@ -59,9 +59,4 @@ namespace Saturn {
 	{
 		m_Library.Free();
 	}
-
-	void Module::InitFixedGlobals( const Ref<Project>& rProject )
-	{
-		Project::SetActiveProject( rProject );
-	}
 }

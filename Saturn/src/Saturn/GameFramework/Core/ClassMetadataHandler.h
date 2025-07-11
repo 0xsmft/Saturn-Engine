@@ -72,7 +72,7 @@ namespace Saturn {
 	public:
 		[[nodiscard]] SObject* CreateClassObject( const std::string& rScriptName );
 		[[nodiscard]] SObject* CreateClassObject( SClass* pClass );
-		void RegisterClass( SClass* pClass );
+		void RegisterSClass( SClass* pClass, const std::string& rModuleName );
 
 	public:
 		[[deprecated( "Saturn::ClassMetadataHandler::GetSObjectMetadata is deprecated and will be removed. Consider using \"SObject::StaticClass\" instead." )]]

@@ -94,13 +94,13 @@ namespace Saturn {
 
 	bool FileCache::IsCppFile( const std::filesystem::path& rFile )
 	{
-		auto ext = rFile.extension();
+		const auto ext = rFile.extension();
 		return ext == ".cpp" || ext == ".h" || ext == ".hpp";
 	}
 
 	bool FileCache::IsSourceFile( const std::filesystem::path& rFile )
 	{
-		auto ext = rFile.extension();
+		const auto ext = rFile.extension();
 		return ext == ".cpp";
 	}
 

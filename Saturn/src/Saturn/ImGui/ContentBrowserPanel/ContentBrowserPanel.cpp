@@ -1599,17 +1599,15 @@ namespace Saturn {
 	{
 #if !defined(SAT_DIST)
 		ClassMetadataHandler::Get().EachTreeNode( 
-			[=]( const auto& rMetadata ) 
+			[=]( const SClass* pClass ) 
 			{
-				if( false /*rMetadata.ExternalData*/ )
+				if( ( pClass->GetFlags() & SC_NoExtendedMetadata ) == 0 )
 				{
-					/*
-					Ref<ContentBrowserItem> item = Ref<ContentBrowserItem>::Create( std::filesystem::directory_entry( rMetadata.HeaderPath ), ContentBrowserItemType::SourceItem );
+					Ref<ContentBrowserItem> item = Ref<ContentBrowserItem>::Create( std::filesystem::directory_entry( pClass->GetHeaderPath() ), ContentBrowserItemType::SourceItem );
 					item->SetSelectedFn( SAT_BIND_EVENT_FN( ContentBrowserPanel::OnItemSelected ) );
 
 					m_Files.push_back( item );
 					m_FilesNeedSorting = true;
-					*/
 				}
 			} );
 #endif
@@ -1618,7 +1616,7 @@ namespace Saturn {
 	void ContentBrowserPanel::UpdateFirstFolder()
 	{
 		m_FirstFolder = "";
-		for( auto& rEntry : std::filesystem::directory_iterator( m_CurrentPath ) )
+		for( const auto& rEntry : std::filesystem::directory_iterator( m_CurrentPath ) )
 		{
 			if( rEntry.is_directory() )
 			{

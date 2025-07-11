@@ -132,28 +132,27 @@ namespace Saturn {
 	{
 		SAT_PF_EVENT();
 
-		float FixedTimestep = 1.0f / 100.0f;
-
+		constexpr float FixedTimestep = 1.0f / 100.0f;
 		m_PhysicsScene->simulate( FixedTimestep );
 		m_PhysicsScene->fetchResults( true );
 	}
 
-	bool PhysicsScene::Raycast( const glm::vec3& Origin, const glm::vec3& Direction, float MaxDistance, RaycastHitResult* pOut )
+	bool PhysicsScene::Raycast( const glm::vec3& rOrigin, const glm::vec3& rDirection, float maxDistance, RaycastHitResult* pOut )
 	{
 		RaycastHitResult Hit = {};
 
 		physx::PxRaycastBuffer PhysXOutHit = {};
 
-		bool success = m_PhysicsScene->raycast( Auxiliary::GLMToPx( Origin ), Auxiliary::GLMToPx( glm::normalize( Direction ) ), MaxDistance, PhysXOutHit );
+		const bool success = m_PhysicsScene->raycast( Auxiliary::GLMToPx( rOrigin ), Auxiliary::GLMToPx( glm::normalize( rDirection ) ), maxDistance, PhysXOutHit );
 
 		Hit.Success = success;
 		if( Hit.Success )
 		{
-			physx::PxRaycastHit& Target = PhysXOutHit.block;
+			const physx::PxRaycastHit& Target = PhysXOutHit.block;
 
-			PhysicsRigidBody* body = ( PhysicsRigidBody* ) Target.actor->userData;
+			PhysicsRigidBody* pBody = ( PhysicsRigidBody* ) Target.actor->userData;
 			
-			Hit.Hit = body->GetEntity();
+			Hit.Hit = pBody->GetEntity();
 			Hit.Distance = Target.distance;
 			Hit.Position = Auxiliary::PxToGLM( Target.position );
 		}

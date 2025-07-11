@@ -41,7 +41,7 @@ namespace Saturn {
 	{
 		SingletonStorage::AddSingleton( this );
 
-		Load();
+		LoadModule();
 	}
 
 	GameModule::~GameModule()
@@ -58,20 +58,16 @@ namespace Saturn {
 
 	void GameModule::EndHotReload()
 	{
-		Load( true );
+		LoadModule( true );
 	}
 
 #endif
 
-	void GameModule::Load( bool wasHotReloaded /*=false*/)
+	void GameModule::LoadModule( bool wasHotReloaded /*=false*/ )
 	{
-#if defined(SAT_DIST)
-		// We are the game so there is no need to load the dll all we need to do is set the handle to ourself.
-		m_ModuleHandle = Ref<Module>::Create( "", Project::GetActiveConfig().Name );
-		m_ModuleHandle->m_Library.SetExisting( ::GetModuleHandleW( nullptr ) );
-#else
+#if !defined(SAT_DIST)
 		// We are the editor, load game DLL.
-		auto binDir = Project::GetActiveProject()->GetBinDir();
+		const auto binDir = Project::GetActiveProject()->GetBinDir();
 		
 		std::filesystem::path timestampFile = binDir / "Timestamp";
 
@@ -89,6 +85,8 @@ namespace Saturn {
 
 			m_LastTimestamp = buffer.str();
 
+			// If /HOTRELOAD was suggested when this module was compiled, the Build Tool will output
+			// {ProjectName}_{BuildTimestamp}.dll instead of {ProjectName}.dll
 			std::string dllFilename;
 			if( wasHotReloaded )
 			{
@@ -97,7 +95,7 @@ namespace Saturn {
 			else
 				dllFilename = std::format( "{0}.dll", Project::GetActiveConfig().Name );
 
-			auto& DllPath = binDir /= dllFilename;
+			const auto DllPath = binDir / dllFilename;
 
 			//////////////////////////////////////////////////////////////////////////
 
@@ -114,12 +112,14 @@ namespace Saturn {
 
 		}
 		else
-			SAT_CORE_ASSERT( false, "Timestamp file does not exists! Please rebuild the game in your IDE." );
+			SAT_CORE_WARN( "Timestamp file does not exists! Please rebuild the game in your IDE." );
 #endif
 	}
 
 	void GameModule::Unload()
 	{
+		ClassMetadataHandler::Get().OnModuleShutdown( m_ModuleHandle->m_Name );
+
 #if !defined(SAT_DIST)
 		m_ModuleHandle = nullptr;
 #endif
@@ -130,7 +130,11 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		Unload();
 
-		Load();
+		LoadModule();
 #endif
 	}
 }
+
+#include "Saturn/GameFramework/Core/EngineGenerated.h"
+
+SAT_X31_CREATE_AUTO_REG( GameModule );

@@ -57,17 +57,17 @@ namespace Saturn {
 		{
 			if( i == 0 ) continue;
 
-			std::string arg = m_Args[ i ];
+			const std::string arg = m_Args[ i ];
 
 			if( arg.starts_with( "/" ) )
 			{
 				// Now, look for the equal sign
-				auto equalPos = arg.find( "=" );
+				const auto equalPos = arg.find( "=" );
 
 				if( equalPos != std::string::npos )
 				{
-					std::string key = arg.substr( 0, equalPos );
-					std::string value = arg.substr( equalPos + 1 );
+					const std::string key = arg.substr( 0, equalPos );
+					const std::string value = arg.substr( equalPos + 1 );
 
 					//std::transform( key.begin(), key.end(), key.begin(), std::toupper );
 					ParsedMap[ key ] = value;
@@ -80,8 +80,7 @@ namespace Saturn {
 		}
 		
 		{
-			auto itr = ParsedMap.find( "/OUT" );
-			
+			const auto itr = ParsedMap.find( "/OUT" );
 			if( itr == ParsedMap.end() )
 			{
 				result = false;
@@ -96,8 +95,7 @@ namespace Saturn {
 		}
 
 		{
-			auto itr = ParsedMap.find( "/SRC" );
-
+			const auto itr = ParsedMap.find( "/SRC" );
 			if( itr == ParsedMap.end() )
 			{
 				result |= false;
@@ -111,8 +109,7 @@ namespace Saturn {
 		}
 
 		{
-			auto itr = ParsedMap.find( "/FC" );
-
+			const auto itr = ParsedMap.find( "/FC" );
 			if( itr == ParsedMap.end() )
 			{
 				result |= false;
@@ -126,8 +123,7 @@ namespace Saturn {
 		}
 
 		{
-			auto itr = ParsedMap.find( "/NOMSG" );
-
+			const auto itr = ParsedMap.find( "/NOMSG" );
 			if( itr == ParsedMap.end() )
 			{
 				std::cout << "=== Saturn Header Tool X" << SAT_CURRENT_VERSION_STRING << " ===\n";
@@ -143,7 +139,7 @@ namespace Saturn {
 	{
 		m_FileCache.Load();
 
-		std::vector<std::filesystem::path> headerFiles = m_FileCache.Analyse();
+		const std::vector<std::filesystem::path> headerFiles = m_FileCache.Analyse();
 
 		m_HeaderTool.SubmitWorkList( headerFiles );
 		return m_HeaderTool.StartGeneration();

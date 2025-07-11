@@ -29,16 +29,21 @@
 #pragma once
 
 #include "Saturn/Core/Module.h"
-#include "Saturn/Core/Library.h"
+#include "Saturn/Core/DynamicLinkLibrary.h"
+
+#include "Saturn/GameFramework/SObject.h"
+#include "Saturn/GameFramework/Core/GameScript.h"
 
 namespace Saturn {
 
 	class Entity;
 	class Scene;
 
-	class GameModule
+	class GameModule : public SObject
 	{
+		SAT_DECLARE_CLASS( GameModule, SObject );
 	public:
+		// NOTE: GameModule owned by parent application layer, EditorLayer if editor and RuntimeLayer when in Dist
 		static GameModule& Get() { return *SingletonStorage::GetSingleton<GameModule>(); }
 
 	public:
@@ -58,7 +63,7 @@ namespace Saturn {
 #endif
 
 	private:
-		void Load( bool wasHotReloaded = false );
+		void LoadModule( bool wasHotReloaded = false );
 		void Unload();
 
 	private:
@@ -67,7 +72,6 @@ namespace Saturn {
 #if defined(SAT_DEBUG) || defined(SAT_RELEASE)
 		std::string m_LastTimestamp;
 #endif
-
 	};
 
 }

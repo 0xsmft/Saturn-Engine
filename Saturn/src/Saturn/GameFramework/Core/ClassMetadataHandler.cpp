@@ -63,7 +63,10 @@ namespace Saturn {
 			return pObject;
 		}
 		else
-			SAT_CORE_VERIFY( false, "Could not find Class!" );
+		{
+			const std::string message = std::format( "Class/{0} does not exist in any module! Unable to continue!", rScriptName );
+			SAT_CORE_VERIFY( false, message );
+		}
 
 		return nullptr;
 	}

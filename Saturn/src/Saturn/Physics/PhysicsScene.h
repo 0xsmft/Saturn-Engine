@@ -55,7 +55,7 @@ namespace Saturn {
 		void CreateScene();
 		void Update( Timestep ts );
 
-		[[nodiscard]] bool Raycast( const glm::vec3& Origin, const glm::vec3& Direction, float MaxDistance, RaycastHitResult* pOut );
+		[[nodiscard]] bool Raycast( const glm::vec3& rOrigin, const glm::vec3& rDirection, float maxDistance, RaycastHitResult* pOut );
 
 		void ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
 

@@ -293,13 +293,13 @@ namespace Saturn {
 
 			// Directional Lights
 			{
-				auto lights = m_Registry.group<DirectionalLightComponent>( entt::get<TransformComponent> );
+				const auto lights = m_Registry.group<DirectionalLightComponent>( entt::get<TransformComponent> );
 				uint32_t lightCount = 0;
 				for( const auto& e : lights )
 				{
-					auto [transformComponent, lightComponent] = lights.get<TransformComponent, DirectionalLightComponent>( e );
+					const auto [transformComponent, lightComponent] = lights.get<TransformComponent, DirectionalLightComponent>( e );
 
-					glm::vec3 direction = -glm::normalize( glm::mat3( transformComponent.GetTransform() ) * glm::vec3( 1.0f ) );
+					const glm::vec3 direction = -glm::normalize( glm::mat3( transformComponent.GetTransform() ) * glm::vec3( 1.0f ) );
 
 					m_Lights.DirectionalLights[ lightCount++ ] = { direction, lightComponent.Radiance, lightComponent.Intensity };
 				}
@@ -307,18 +307,17 @@ namespace Saturn {
 
 			// Point lights
 			{
-				auto points = m_Registry.group<PointLightComponent>( entt::get<TransformComponent> );
-
+				const auto points = m_Registry.group<PointLightComponent>( entt::get<TransformComponent> );
 				if( points.size() )
 				{
-					uint32_t plIndex = 0;
-					Ref<Texture2D> pointLightBillboardTex = EditorIcons::GetIcon( "Billboard_PointLight" );
+					const Ref<Texture2D> pointLightBillboardTex = EditorIcons::GetIcon( "Billboard_PointLight" );
 
 					m_Lights.PointLights.reserve( points.size() );
 
+					uint32_t plIndex = 0;
 					for( const auto& e : points )
 					{
-						auto [transformComponent, lightComponent] = points.get<TransformComponent, PointLightComponent>( e );
+						const auto [transformComponent, lightComponent] = points.get<TransformComponent, PointLightComponent>( e );
 
 						PointLight pl = {
 							.Position = transformComponent.Position,
@@ -341,16 +340,16 @@ namespace Saturn {
 
 		// Audio Billboards
 		{
-			auto players = m_Registry.group<AudioPlayerComponent>( entt::get<TransformComponent> );
+			const auto players = m_Registry.group<AudioPlayerComponent>( entt::get<TransformComponent> );
 			if( players.size() )
 			{
-				Ref<Texture2D> audio = EditorIcons::GetIcon( "Billboard_Audio" );
-				Ref<Texture2D> audioMuted = EditorIcons::GetIcon( "Billboard_AudioMuted" );
-				Ref<Texture2D> audioLooped = EditorIcons::GetIcon( "Billboard_AudioLooping" );
+				const Ref<Texture2D> audio = EditorIcons::GetIcon( "Billboard_Audio" );
+				const Ref<Texture2D> audioMuted = EditorIcons::GetIcon( "Billboard_AudioMuted" );
+				const Ref<Texture2D> audioLooped = EditorIcons::GetIcon( "Billboard_AudioLooping" );
 
 				for( const auto& e : players )
 				{
-					auto [transformComponent, playerComponent] = players.get<TransformComponent, AudioPlayerComponent>( e );
+					const auto [transformComponent, playerComponent] = players.get<TransformComponent, AudioPlayerComponent>( e );
 
 					Ref<Texture2D> submissionTexture = audio;
 
@@ -366,16 +365,16 @@ namespace Saturn {
 				}
 			}
 
-			auto listeners = m_Registry.group<AudioListenerComponent>( entt::get<TransformComponent> );
+			const auto listeners = m_Registry.group<AudioListenerComponent>( entt::get<TransformComponent> );
 			if( listeners.size() )
 			{
-				Ref<Texture2D> listenTexture = EditorIcons::GetIcon( "Billboard_AudioListen" );
+				const Ref<Texture2D> listenTexture = EditorIcons::GetIcon( "Billboard_AudioListen" );
 
 				for( const auto& e : listeners )
 				{
-					auto [transformComponent, comp] = listeners.get<TransformComponent, AudioListenerComponent>( e );
+					const auto [transformComponent, comp] = listeners.get<TransformComponent, AudioListenerComponent>( e );
 
-					auto pos = glm::vec3( transformComponent.Position.x, transformComponent.Position.y + 2.5f, transformComponent.Position.z );
+					const auto pos = glm::vec3( transformComponent.Position.x, transformComponent.Position.y + 2.5f, transformComponent.Position.z );
 
 					Renderer2D::Get().SubmitBillboardTextured(
 						pos,
@@ -383,8 +382,8 @@ namespace Saturn {
 						listenTexture, glm::vec2( 1.0f ) );
 
 					// Use billboard pos as starting pos
-					auto start = pos;
-					auto end = start + glm::normalize( comp.Direction ) * 2.0f;
+					const auto start = pos;
+					const auto end = start + glm::normalize( comp.Direction ) * 2.0f;
 
 					Renderer2D::Get().SubmitLine( start, end, glm::vec4( 1.0f ) );
 				}
@@ -398,8 +397,8 @@ namespace Saturn {
 			{
 				if( rSelectedEntity->HasComponent<StaticMeshComponent>() )
 				{
-					auto& meshComponent = rSelectedEntity->GetComponent<StaticMeshComponent>();
-					auto transform = GetTransformRelativeToParent( rSelectedEntity );
+					const auto& meshComponent = rSelectedEntity->GetComponent<StaticMeshComponent>();
+					const auto transform = GetTransformRelativeToParent( rSelectedEntity );
 
 					if( meshComponent.Mesh ) 
 					{
@@ -462,9 +461,9 @@ namespace Saturn {
 		// Check twice because we are always going to have to set the projection
 		if( m_MainCameraEntity )
 		{
-			auto tc = GetWorldSpaceTransform( m_MainCameraEntity );
+			const auto tc = GetWorldSpaceTransform( m_MainCameraEntity );
 
-			auto view = glm::inverse( tc.GetTransform() );
+			const auto view = glm::inverse( tc.GetTransform() );
 
 			auto& rCamera = m_MainCameraEntity->GetComponent<CameraComponent>().Camera;
 			rCamera.SetViewportSize( rSceneRenderer.Width(), rSceneRenderer.Height() );
@@ -805,20 +804,9 @@ namespace Saturn {
 		// I know we can just use the "=" operator, but we need to recreate the entities from the game.
 		for( auto&& [hnd, originalEntity] : m_EntityIDMap )
 		{
-			if( originalEntity->HasComponent<DScriptComponent>() )
-			{
-				auto& rScriptComponent = originalEntity->GetComponent<DScriptComponent>();
+			NewScene->m_EntityIDMap[ hnd ] = NewScene->CreateEntityWithIDScript( originalEntity->GetUUID(), originalEntity->GetName(), originalEntity->GetClass()->GetName(), false );
 
-				// Create from game module
-				NewScene->m_EntityIDMap[ hnd ] = NewScene->CreateEntityWithIDScript( originalEntity->GetUUID(), originalEntity->GetName(), rScriptComponent.ClassName, rScriptComponent.ExternalData );
-
-				TransferModifiedProperties( originalEntity, NewScene->m_EntityIDMap[ hnd ], rScriptComponent.ClassName );
-			}
-			else
-			{
-				NewScene->m_EntityIDMap[ hnd ] = Ref<Entity>::Create();
-				NewScene->m_EntityIDMap[ hnd ]->GetComponent<IdComponent>().ID = originalEntity->GetUUID();
-			}	
+			TransferModifiedProperties( originalEntity, NewScene->m_EntityIDMap[ hnd ], originalEntity->GetClass()->GetName() );
 		}
 
 		NewScene->m_Lights = m_Lights;
@@ -1104,11 +1092,11 @@ namespace Saturn {
 	void Scene::OnEntityCreated( Ref<Entity> entity )
 	{
 		m_EntityIDMap[ entity->GetHandle() ] = entity;
-	}
 
-	void Scene::RegisterEntityScript( Ref<Entity> entity, const std::string& rName )
-	{
-		entity->AddComponent<DScriptComponent>( 0 ).ClassName = rName;
+		if( IsRuntimeRunning() )
+		{
+			entity->BeginPlay();
+		}
 	}
 
 	void Scene::PrepareForNavMeshBuilding()
@@ -1194,20 +1182,8 @@ namespace Saturn {
 			// K (entt::entity) is always trivial
 			RawSerialisation::WriteObject( k, rStream );
 
-			// TODO: It is annoying that we end up writing the data twice
-			// 1: Here, for initialising when reading back
-			// 2: In the Entity::Serialise function, for the actual serialisation (to write the ScriptComponent)
-			bool isScriptClass = v->HasComponent<DScriptComponent>();
-			RawSerialisation::WriteObject( isScriptClass, rStream );
-
-			if( isScriptClass )
-			{
-				std::string name = v->GetComponent<DScriptComponent>().ClassName;
-				RawSerialisation::WriteString( name, rStream );
-
-				uint8_t isExternalData = v->GetComponent<DScriptComponent>().ExternalData ? 1 : 0;
-				RawSerialisation::WriteObject( isExternalData, rStream );
-			}
+			const std::string className = v->GetClass()->GetName();
+			RawSerialisation::WriteString( className, rStream );
 
 			// V (Entity) is not trivial
 			Entity::Serialise( v, rStream );
@@ -1240,9 +1216,7 @@ namespace Saturn {
 		size_t mapSize = 0;
 		rStream.read( reinterpret_cast< char* >( &mapSize ), sizeof( size_t ) );
 
-		// We can not guarantee that we are the active scene, so temporarily set it while loading.
-		Scene* ActiveScene = GActiveScene;
-		GActiveScene = this;
+		VariableGuard<Scene*> ActiveScene( GActiveScene, this );
 
 		for( size_t i = 0; i < mapSize; i++ )
 		{
@@ -1251,33 +1225,16 @@ namespace Saturn {
 			// K is always trivial
 			RawSerialisation::ReadObject( K, rStream );
 
-			bool isScriptClass = false;
-			RawSerialisation::ReadObject( isScriptClass, rStream );
+			std::string className = RawSerialisation::ReadString( rStream );
 
 			Ref<Entity> V = nullptr;
-
-			if( isScriptClass )
-			{
-				std::string className = RawSerialisation::ReadString( rStream );
-				
-				uint8_t isExternalData = 0;
-				RawSerialisation::ReadObject( isExternalData, rStream );
-				bool externalData = isExternalData != 0;
-				
-				V = (Entity*)ClassMetadataHandler::Get().CreateClassObject( className );
-			}
-			else
-			{
-				V = Ref<Entity>::Create();
-			}
+			V = (Entity*)ClassMetadataHandler::Get().CreateClassObject( className );
 
 			// V is always non-trivial
 			Entity::Deserialise( V, rStream );
 
 			m_EntityIDMap[ K ] = V;
 		}
-
-		GActiveScene = ActiveScene;
 	}
 
 }

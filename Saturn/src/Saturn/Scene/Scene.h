@@ -180,7 +180,6 @@ namespace Saturn {
 
 			Ref<Ty> entity = Ref<Ty>::Create();
 			entity->SetName( name );
-			RegisterEntityScript( entity, rScriptName );
 
 			OnEntityCreated( entity );
 
@@ -330,8 +329,6 @@ namespace Saturn {
 
 	protected:
 		void OnEntityCreated( Ref<Entity> entity );
-		// Internal Function to add ScriptComponent
-		void RegisterEntityScript( Ref<Entity> entity, const std::string& rName );
 
 	public:
 

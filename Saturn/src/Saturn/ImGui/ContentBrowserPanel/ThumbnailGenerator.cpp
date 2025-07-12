@@ -80,11 +80,11 @@ namespace Saturn {
 			return nullptr;
 
 		// Load the texture
-		auto fullPath = Project::GetActiveProject()->FilepathAbs( textureAsset->Path );
+		const auto fullPath = Project::GetActiveProject()->FilepathAbs( textureAsset->Path );
 		Ref<Texture2D> newTexture = Ref<Texture2D>::Create( fullPath );
 
-		uint32_t textureWidth = newTexture->Width();
-		uint32_t textureHeight = newTexture->Height();
+		const uint32_t textureWidth = newTexture->Width();
+		const uint32_t textureHeight = newTexture->Height();
 
 		uint32_t mipWidth = textureWidth, mipHeight = textureHeight, mip{};
 		for( uint32_t i = 0; i < newTexture->GetMipMapLevels(); i++ )

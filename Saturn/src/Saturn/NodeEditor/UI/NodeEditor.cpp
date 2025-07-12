@@ -473,7 +473,7 @@ namespace Saturn {
 					m_NewLinkPin = FindPin( UUID( id.Get() ) );
 
 					if( m_NewLinkPin )
-						showLabel( "+ Create Node", ImColor( 32.0F, 45.0F, 32.0F, 180.0F ) );
+						showLabel( "+ Create Node", ImColor( 32, 45, 32, 180 ) );
 
 					if( ed::AcceptNewItem() )
 					{

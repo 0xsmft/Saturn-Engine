@@ -114,7 +114,7 @@ namespace Saturn {
 		// Set the data source to a PCM frame
 		void SeekTo( uint64_t pcmFrame );
 
-		void AddOnCompleteFunction( std::function<void(UUID)>&& rrFunc ) { m_CompletionFunctions.push_back( rrFunc ); }
+		void AddOnCompleteFunction( std::function<void(UUID)>&& rrFunc ) { m_CompletionFunctions.emplace_back( rrFunc ); }
 
 	private:
 		static void OnSoundEnd( void* pUserData, ma_sound* pSound );

@@ -34,7 +34,8 @@
 
 namespace Saturn {
 
-	using BehaviourTreeMemoryTypes = std::variant<
+	using BehaviourTreeMemoryKeyTypes = std::variant<
+		std::monostate,
 		double,
 		int,
 		float,
@@ -45,10 +46,10 @@ namespace Saturn {
 		PropertyTypeTraits<SPropertyType::Vector4>::Value,
 		std::string>;
 
-	class BehaviourTreeMemoryVariable : public RefTarget
+	class BehaviourTreeMemoryKey : public RefTarget
 	{
 	public:
-		BehaviourTreeMemoryVariable( UUID variableID, SPropertyType dataType )
+		BehaviourTreeMemoryKey( UUID variableID, SPropertyType dataType )
 			: m_VariableID( variableID ), m_DataType( dataType )
 		{
 		}
@@ -62,7 +63,15 @@ namespace Saturn {
 		template<typename CppType>
 		void Set( CppType value );
 
-		void Init();
+		[[nodiscard]] inline bool HoldsAnyValue() const
+		{
+			return !std::holds_alternative<std::monostate>( m_Value );
+		}
+
+		inline void ClearValue() 
+		{
+			m_Value = std::monostate{};
+		}
 
 	public:
 		UUID GetID() const { return m_VariableID; }
@@ -72,12 +81,12 @@ namespace Saturn {
 		UUID m_VariableID;
 		SPropertyType m_DataType;
 
-		BehaviourTreeMemoryTypes m_Value;
+		BehaviourTreeMemoryKeyTypes m_Value;
 	};
 
 #define SAT_BEHAVIOUR_TREE_MEM_VAR_CREATE_SET_FN( CppType )				\
 template<>																\
-inline void BehaviourTreeMemoryVariable::Set<CppType>( CppType val )	\
+inline void BehaviourTreeMemoryKey::Set<CppType>( CppType val )			\
 {																		\
 m_Value = val;															\
 }																		\
@@ -110,10 +119,28 @@ m_Value = val;															\
 		[[nodiscard]] bool ContainsVariable( const std::string& rName ) const;
 	
 	public:
-		template<typename CppType>
-		inline std::optional<CppType> Get( UUID id ) const
+		// Try get the BehaviourTreeMemoryKey
+		// Not the same as GetKeyValue<>() as that returns the value stored in the Key
+		// This function returns the key itself.
+		inline Ref<BehaviourTreeMemoryKey> GetKey( UUID id ) const
 		{
-			auto itr = std::find_if( m_Data.begin(), m_Data.end(), [id]( const auto& rItem )
+			const auto itr = std::find_if( m_Data.begin(), m_Data.end(), [ id ]( const auto& rItem )
+			{
+				return rItem.second->GetID() == id;
+			} );
+
+			return itr == m_Data.end() ? nullptr : itr->second;
+		}
+
+		// Attempts to get the blackboard key value associated with the ID.
+		// If the key does not exist it will return std::nullopt.
+		//		
+		// NOTE: The data stored in a BehaviourTreeMemoryKey isn't optional, there always is a value even if its std::monostate
+		//       However, the BehaviourTreeMemoryKey itself is optional because it may not exist and it communicate this clearly std::optional is used.
+		template<typename CppType>
+		inline std::optional<CppType> GetKeyValue( UUID id ) const
+		{
+			const auto itr = std::find_if( m_Data.begin(), m_Data.end(), [ id ]( const auto& rItem )
 			{
 				return rItem.second->GetID() == id;
 			} );
@@ -141,10 +168,8 @@ m_Value = val;															\
 		}
 
 	private:
-		Ref<BehaviourTreeMemorySpecification> m_Specification;
-
 		//					NAME      ->	VARIABLE
-		std::unordered_map<std::string, Ref<BehaviourTreeMemoryVariable>> m_Data;
+		std::unordered_map<std::string, Ref<BehaviourTreeMemoryKey>> m_Data;
 	};
 	
 }

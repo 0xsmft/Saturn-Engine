@@ -82,60 +82,56 @@ namespace Saturn {
 		RawSerialisation::ReadObject( rVector.y, rStream );
 	}
 
-	void NodeEditorNodeBase::Serialise( const Ref<NodeEditorNodeBase>& rObject, std::ofstream& rStream )
+	void NodeEditorNodeBase::Serialise( std::ofstream& rStream ) const
 	{
-		UUID::Serialise( rObject->ID, rStream );
-		RawSerialisation::WriteString( rObject->Name, rStream );
+		UUID::Serialise( ID, rStream );
+		RawSerialisation::WriteString( Name, rStream );
 
-		RawSerialisation::WriteObject( rObject->Color, rStream );
-		RawSerialisation::WriteObject( rObject->Type, rStream );
-		SerialiseImVec2( rObject->Size, rStream );
-		SerialiseImVec2( rObject->Position, rStream );
+		RawSerialisation::WriteObject( Color, rStream );
+		RawSerialisation::WriteObject( Type, rStream );
+		SerialiseImVec2( Size, rStream );
+		SerialiseImVec2( Position, rStream );
 
-		RawSerialisation::WriteString( rObject->ActiveState, rStream );
-		RawSerialisation::WriteString( rObject->SavedState, rStream );
+		RawSerialisation::WriteString( ActiveState, rStream );
+		RawSerialisation::WriteString( SavedState, rStream );
 
-		for( const auto& rInput : rObject->Inputs )
+		for( const auto& rInput : Inputs )
 		{
 			Pin::Serialise( rInput, rStream );
 		}
 
-		for( const auto& rOutput : rObject->Outputs )
+		for( const auto& rOutput : Outputs )
 		{
 			Pin::Serialise( rOutput, rStream );
 		}
-
-		rObject->OnSerialise( rStream );
 	}
 
-	void NodeEditorNodeBase::Deserialise( Ref<NodeEditorNodeBase>& rObject, IStream& rStream )
+	void NodeEditorNodeBase::Deserialise( IStream& rStream )
 	{
-		UUID::Deserialise( rObject->ID, rStream );
-		rObject->Name = RawSerialisation::ReadString( rStream );
+		UUID::Deserialise( ID, rStream );
+		Name = RawSerialisation::ReadString( rStream );
 
-		RawSerialisation::ReadObject( rObject->Color, rStream );
-		RawSerialisation::ReadObject( rObject->Type, rStream );
-		DeserialiseImVec2( rObject->Size, rStream );
-		DeserialiseImVec2( rObject->Position, rStream );
+		RawSerialisation::ReadObject( Color, rStream );
+		RawSerialisation::ReadObject( Type, rStream );
+		DeserialiseImVec2( Size, rStream );
+		DeserialiseImVec2( Position, rStream );
 
-		rObject->ActiveState = RawSerialisation::ReadString( rStream );
-		rObject->SavedState = RawSerialisation::ReadString( rStream );
+		ActiveState = RawSerialisation::ReadString( rStream );
+		SavedState = RawSerialisation::ReadString( rStream );
 
-		for( size_t i = 0; i < rObject->Inputs.size(); i++ )
+		for( size_t i = 0; i < Inputs.size(); i++ )
 		{
-			Pin::Deserialise( rObject->Inputs[ i ], rStream );
+			Pin::Deserialise( Inputs[ i ], rStream );
 		}
 
-		for( size_t i = 0; i < rObject->Outputs.size(); i++ )
+		for( size_t i = 0; i < Outputs.size(); i++ )
 		{
-			Pin::Deserialise( rObject->Outputs[ i ], rStream );
+			Pin::Deserialise( Outputs[ i ], rStream );
 		}
 
 #if !defined(SAT_DIST)
-		ed::SetNodePosition( ed::NodeId( rObject->ID ), rObject->Position );
+		ed::SetNodePosition( ed::NodeId( ID ), Position );
 #endif
-
-		rObject->OnDeserialise( rStream );
 	}
 
 }

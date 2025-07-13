@@ -878,7 +878,7 @@ namespace Saturn {
 
 			RawSerialisation::WriteObject( (std::underlying_type_t<NodeExecutionType>)value->ExecutionType, rStream );
 
-			NodeEditorNodeBase::Serialise( value, rStream );
+			value->Serialise( rStream );
 		}
 
 		mapSize = m_Links.size();
@@ -932,7 +932,7 @@ namespace Saturn {
 			if( !node )
 				node = Ref<NodeEditorBlueprintNode>::Create();
 
-			NodeEditorNodeBase::Deserialise( node, rStream );
+			node->Deserialise( rStream );
 
 			m_Nodes[ key ] = node;
 			BuildNode( node );

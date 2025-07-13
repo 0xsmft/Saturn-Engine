@@ -150,18 +150,9 @@ static inline NodeExecutionType GetStaticExecutionType() { return ExecutionType;
 #endif
 
 	public:
-		// Static Serialise/Deserialise called by NodeCache
-		static void Serialise( const Ref<NodeEditorNodeBase>& rObject, std::ofstream& rStream );
-		static void Deserialise( Ref<NodeEditorNodeBase>& rObject, IStream& rStream );
-
-	public:
-		virtual void OnRenderOutput( Ref<Pin> pin ) {}
-		virtual void OnRenderInput( Ref<Pin> pin ) {}
-
-	protected:
-		// A helper function to all child classes to write their data when Serialising/Deserialising
-		virtual void OnSerialise( std::ofstream& rStream ) const {}
-		virtual void OnDeserialise( IStream& rStream ) {}
+		// Serialise/Deserialise NodeCache (NC)
+		virtual void Serialise( std::ofstream& rStream ) const;
+		virtual void Deserialise( IStream& rStream );
 	};
 
 }

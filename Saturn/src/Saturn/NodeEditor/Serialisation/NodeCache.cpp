@@ -329,7 +329,7 @@ namespace Saturn {
 	{
 		std::string filename;
 
-		Ref<Asset> asset = AssetManager::Get().FindAsset( id );
+		const Ref<Asset> asset = AssetManager::Get().FindAsset( id );
 		std::filesystem::path cachePath;
 
 		if( asset )
@@ -348,8 +348,7 @@ namespace Saturn {
 
 		cachePath /= filename;
 
-		std::filesystem::path cachePathAbs = Project::GetActiveProject()->FilepathAbs( cachePath );
-
+		const std::filesystem::path cachePathAbs = Project::GetActiveProject()->FilepathAbs( cachePath );
 		if( !std::filesystem::exists( cachePathAbs ) )
 			return;
 

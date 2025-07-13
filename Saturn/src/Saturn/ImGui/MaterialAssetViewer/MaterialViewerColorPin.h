@@ -48,7 +48,7 @@ namespace Saturn {
 		bool IsReadOnly() const { return m_ReadOnly; }
 
 	protected:
-		void OnRenderOutput() override;
+		void OnRenderOutput() override final;
 
 		void OnSerialise( std::ofstream& rStream ) const override;
 		void OnDeserialise( IStream& rStream ) override;

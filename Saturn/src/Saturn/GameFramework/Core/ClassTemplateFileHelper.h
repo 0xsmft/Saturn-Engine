@@ -28,11 +28,11 @@
 
 #pragma once
 
-#include "Saturn/GameFramework/SClass.h"
 #include <filesystem>
 
 namespace Saturn {
 
+	class SClass;
 	class ClassTemplateFileHelper
 	{
 	public:

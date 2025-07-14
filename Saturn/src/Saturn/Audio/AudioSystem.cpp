@@ -128,7 +128,7 @@ namespace Saturn {
 				MA_CHECK( ma_device_init( &m_Context, &deviceConfig, &m_Device ) );
 
 				SAT_CORE_INFO( "Audio Device information:" );
-				SAT_CORE_INFO( " Using backend API: {0}", ma_get_backend_name( backends[0] ) );
+				SAT_CORE_INFO( " Using backend API: {0}", ma_get_backend_name( backends[ 0 ] ) );
 				SAT_CORE_INFO( " Device Name: {0}", deviceInfo.name );
 				SAT_CORE_INFO( " Is Primary: {0}", deviceInfo.isDefault );
 				SAT_CORE_INFO( " Channels: {0}", m_Device.playback.channels );
@@ -140,7 +140,7 @@ namespace Saturn {
 				m_MasterSoundGroup = Ref<SoundGroup>::Create( "Master" );
 				m_MasterSoundGroup->Init( true );
 
-				m_Initialised = true;
+				m_Initialised.store( true );
 			} );
 	}
 
@@ -205,7 +205,7 @@ namespace Saturn {
 
 	void AudioSystem::WaitForInit()
 	{
-		while( !m_Initialised )
+		while( !m_Initialised.load() )
 		{
 			std::this_thread::yield();
 		}

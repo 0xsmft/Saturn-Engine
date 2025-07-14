@@ -1699,13 +1699,20 @@ namespace Saturn {
 	{
 		if( ImGui::Begin( "Class Metadata Debug", &m_ShowMetadataDebug ) )
 		{
-			ImGuiTableFlags TableFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_NoBordersInBody;
-			if( ImGui::BeginTable( "##DebugInfoClsM", 4, TableFlags ) )
+			ImGuiIO& rIO = ImGui::GetIO();
+
+			auto italicsFont = rIO.Fonts->Fonts[ 2 ];
+			ImGui::PushFont( italicsFont );
+			ImGui::TextDisabled( "Showing all SClasses" );
+			ImGui::PopFont();
+
+			if( ImGui::BeginTable( "##DebugInfoClsM", 5, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_NoBordersInBody ) )
 			{
 				ImGui::TableSetupColumn( "Name" );
 				ImGui::TableSetupColumn( "Size" );
 				ImGui::TableSetupColumn( "Align" );
 				ImGui::TableSetupColumn( "Properties" );
+				ImGui::TableSetupColumn( "Path" );
 
 				ImGui::TableHeadersRow();
 
@@ -1726,11 +1733,18 @@ namespace Saturn {
 
 						ImGui::TableSetColumnIndex( 3 );
 						ImGui::Text( "%i", pClass->GetPropertyCount() );
+
+						ImGui::TableSetColumnIndex( 4 );
+						ImGui::Text( "%s", pClass->GetHeaderPath().string().c_str() );
 					} );
 				}
 
 				ImGui::EndTable();
 			}
+
+			ImGui::PushFont( italicsFont );
+			ImGui::TextDisabled( "%i SClasses", ClassMetadataHandler::Get().GetNumberOfClasses() );
+			ImGui::PopFont();
 		}
 
 		ImGui::End();
@@ -1743,14 +1757,14 @@ namespace Saturn {
 		{
 			if( Auxiliary::TreeNode( "Asset Dependencies (Memory)", false ) )
 			{
-				for( auto& [assetID, rDependency] : AssetManager::Get().GetAssetDependencies() )
+				for( const auto& [assetID, rDependency] : AssetManager::Get().GetAssetDependencies() )
 				{
 					if( Auxiliary::TreeNode( std::to_string( assetID ), false ) )
 					{
-						for( MemoryAssetDependencyBase* pBase : rDependency )
+						for( const MemoryAssetDependencyBase* pBase : rDependency )
 						{
 							ImGui::Text( "ADB/Base" );
-							ImGui::Text( "%p", pBase );
+							ImGui::Text( "%p", ( void* ) pBase );
 						}
 
 						Auxiliary::EndTreeNode();
@@ -1762,16 +1776,14 @@ namespace Saturn {
 
 			if( Auxiliary::TreeNode( "Asset Dependencies", true ) )
 			{
-				for( auto& [assetID, rDependencies] : AssetManager::Get().GetPureAssetDependencies() )
+				for( const auto& [assetID, rDependencies] : AssetManager::Get().GetPureAssetDependencies() )
 				{
-					Ref<Asset> asset = AssetManager::Get().FindAsset( assetID );
-
+					const Ref<Asset> asset = AssetManager::Get().FindAsset( assetID );
 					if( Auxiliary::TreeNode( asset->Name, false ) )
 					{
-						for( AssetID id : rDependencies )
+						for( const AssetID id : rDependencies )
 						{
-							Ref<Asset> dependency = AssetManager::Get().FindAsset( id );
-							
+							const Ref<Asset> dependency = AssetManager::Get().FindAsset( id );
 							if( dependency )
 							{
 								ImGui::Text( dependency->Name.data() );
@@ -1856,7 +1868,7 @@ namespace Saturn {
 		// Viewport Image & Drag and drop handling
 		ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 0, 0 ) );
 
-		ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove;
+		const ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove;
 
 		ImGui::Begin( "Viewport", 0, flags );
 
@@ -1926,10 +1938,10 @@ namespace Saturn {
 
 		//// Render the real gizmo
 
-		ImVec2 minBound = ImGui::GetWindowPos();
+		const ImVec2 minBound = ImGui::GetWindowPos();
 		Application::Get().PrimarySceneRenderer().SetViewportPosition( minBound.x, minBound.y );
 
-		ImVec2 maxBound = { minBound.x + m_ViewportSize.x, minBound.y + m_ViewportSize.y };
+		const ImVec2 maxBound = { minBound.x + m_ViewportSize.x, minBound.y + m_ViewportSize.y };
 
 		m_ViewportFocused = ImGui::IsWindowFocused();
 		m_MouseOverViewport = ImGui::IsWindowHovered();
@@ -2044,8 +2056,8 @@ namespace Saturn {
 		if( GActiveScene->IsRuntimeRunning() )
 			return;
 
-		ImVec2 minBound = ImGui::GetWindowPos();
-		ImVec2 maxBound = { minBound.x + m_ViewportSize.x, minBound.y + m_ViewportSize.y };
+		const ImVec2 minBound = ImGui::GetWindowPos();
+		const ImVec2 maxBound = { minBound.x + m_ViewportSize.x, minBound.y + m_ViewportSize.y };
 
 		// Viewport Gizmo toolbar
 		ImGui::PushID( "VP_GIZMO" );
@@ -2058,8 +2070,8 @@ namespace Saturn {
 		//const float windowWidth = 166.0f;
 
 		// For 3 icons
-		// Formula is 24 * x - 10.0f (for item spacing)
-		// Where x is number of icons
+		// Formula is 24 * n - 10.0f (for item spacing)
+		// Where n is number of icons
 		constexpr float windowWidth = neededSpace - 10.0f;
 
 		ImGui::SetNextWindowPos( ImVec2( minBound.x + 5.0f, minBound.y + 5.0f ) );

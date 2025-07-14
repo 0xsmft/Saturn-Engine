@@ -57,10 +57,7 @@ namespace Saturn {
 
 		for( const auto& rCommand : rCommands )
 		{
-			HeaderToolCommand command;
-			command.Filepath = rCommand;
-
-			m_Commands.push_back( command );
+			m_Commands.emplace_back( rCommand );
 		}
 	}
 
@@ -82,15 +79,15 @@ namespace Saturn {
 		return tasksFailed == 0;
 	}
 
-	[[nodiscard]] static bool LineIsNotComment( const std::string& rLine )
+	[[nodiscard]] static bool LineIsComment( const std::string& rLine )
 	{
 		std::regex regex( R"(^\s*(//.*|/\*.*\*/|/\*.*))" );
-		return !std::regex_match( rLine, regex );
+		return std::regex_match( rLine, regex );
 	}
 
 	static std::pair<std::string, std::string> GetClassNameAndBaseClass( const std::string& rLine )
 	{
-		if( !LineIsNotComment( rLine ) )
+		if( LineIsComment( rLine ) )
 			return {};
 
 		std::regex classPattern( R"(class\s+(\w+)\s*:\s*public\s+(\w+))" );
@@ -133,7 +130,7 @@ namespace Saturn {
 			else if( str == "UUID" )        return SPropertyType::Uint64;
 			else if( str == "AssetReference" ) return SPropertyType::Asset;
 			else if( IsValidPointer( str ) ) return SPropertyType::Class;
-			else if( "Ref<Entity>" ) return SPropertyType::Entity;
+			else if( "Ref<Entity>" ) return SPropertyType::EntityType;
 			else /*if( str == "Saturn::SPropertyType::Unknown" )*/ return SPropertyType::Unknown;
 		}
 		else
@@ -157,7 +154,7 @@ namespace Saturn {
 			else if( str == "Saturn::UUID" )    return SPropertyType::Uint64;
 			else if( str == "Saturn::AssetReference" ) return SPropertyType::Asset;
 			else if( IsValidPointer( str ) )    return SPropertyType::Class;
-			else if( "Saturn::Ref<Saturn::Entity>" ) return SPropertyType::Entity;
+			else if( "Saturn::Ref<Saturn::Entity>" ) return SPropertyType::EntityType;
 			else /*if( str == "Saturn::SPropertyType::Unknown" )*/ return SPropertyType::Unknown;
 		}
 	}
@@ -182,7 +179,7 @@ namespace Saturn {
 			case SPropertyType::Vector4: return "Saturn::SPropertyType::Vector4";
 			case SPropertyType::String: return "Saturn::SPropertyType::String";
 			case SPropertyType::Asset: return "Saturn::SPropertyType::Asset";
-			case SPropertyType::Entity: return "Saturn::SPropertyType::Entity";
+			case SPropertyType::EntityType: return "Saturn::SPropertyType::Entity";
 			case SPropertyType::Class: return "Saturn::SPropertyType::Class";
 			case SPropertyType::Unknown: return "Saturn::SPropertyType::Unknown";
 
@@ -226,6 +223,22 @@ namespace Saturn {
 		fout << "\n";
 	}
 
+	static void WriteGeneratedBody( std::ofstream& fout, const std::string& line, HeaderToolCommand& rCommand, uint32_t lineNumber ) 
+	{
+		// Parse generated header
+		fout << std::format( "#undef CURRENT_FILE_ID\n#define CURRENT_FILE_ID FID_{0}_h\n\n", rCommand.ClassName );
+
+		const std::string baseFileId = std::format( "FID_{0}_h_{1}", rCommand.ClassName, lineNumber );
+
+		// Could result in #define FID_MyClass_24_GENERATED_BODY FID_MyClass_24_CLASSDECLS
+		const std::string idGeneratedBody = std::format( "#define {0}_GENERATED_BODY {0}_CLASSDECLS\n", baseFileId );
+
+		const std::string classDecls = std::format( "#define {0}_CLASSDECLS \\\nprivate: \\\n\tSAT_DECLARE_CLASS({1},{2}) \\\npublic:\\\n\n", baseFileId, rCommand.ClassName, rCommand.BaseClass );
+
+		fout << classDecls;
+		fout << idGeneratedBody;
+	}
+
 	bool HeaderTool::GenerateHeader( HeaderToolCommand& rCommand ) const
 	{
 		bool result = true;
@@ -246,28 +259,30 @@ namespace Saturn {
 		bool LastLineHadSP = false, SClassFound = false, GeneratedBodyFound = false, UsingSaturnNamespace = false;
 
 		std::string line;
-		int lineNumber = 0;
+		uint32_t lineNumber = 0;
 		while( std::getline( headerFile, line ) )
 		{
 			lineNumber++;
 			if( line.empty() ) continue;
+			if( LineIsComment( line ) ) continue;
 
 			if( rCommand.ClassName.empty() || rCommand.BaseClass.empty() )
 			{
-				auto pair = GetClassNameAndBaseClass( line );
+				const auto [className, baseClass] = GetClassNameAndBaseClass( line );
 
-				rCommand.ClassName = pair.first;
-				rCommand.BaseClass = pair.second;
+				rCommand.ClassName = className;
+				rCommand.BaseClass = baseClass;
 			}
 
-			if( line.contains( "using namespace Saturn;" ) && LineIsNotComment( line ) )
+			if( line.contains( "using namespace Saturn;" ) )
 			{
+				// Use qualified names
 				UsingSaturnNamespace = true;
 			}
 			
 			std::smatch match;
 			
-			if( LastLineHadSP && LineIsNotComment( line ) )
+			if( LastLineHadSP )
 			{
 				std::regex typeRegex( R"(([\w:]+(?:<[^<>]+>)?(?:\s*[*&]+)*)\s+(\w+))" );
 
@@ -276,10 +291,12 @@ namespace Saturn {
 					const std::string type = match[ 1 ].str();
 					const std::string name = match[ 2 ].str();
 
-					SPropertyType realType = StringToSPropertyType( type, UsingSaturnNamespace );
+					const SPropertyType realType = StringToSPropertyType( type, UsingSaturnNamespace );
 
-					SProperty p{ name, type, realType };
-					rCommand.Properties[ lineNumber - 1 ] = p;
+					rCommand.Properties.emplace(
+						std::piecewise_construct,
+						std::forward_as_tuple( lineNumber - 1 ),
+						std::forward_as_tuple( name, type, realType ) );
 				}
 				else
 				{
@@ -292,7 +309,7 @@ namespace Saturn {
 			// Check for SPROPERTY
 			std::regex spropertyRegex( R"(SPROPERTY\((.*)\))", std::regex::extended );
 
-			if( std::regex_search( line, match, spropertyRegex ) && LineIsNotComment( line ) )
+			if( std::regex_search( line, match, spropertyRegex ) )
 			{
 				const std::string args = match[ 1 ].str();
 				const std::string remainingContent = line.substr( match.position() + match.length() ).c_str();
@@ -311,10 +328,12 @@ namespace Saturn {
 						const std::string type = match[ 1 ].str();
 						const std::string name = match[ 2 ].str();
 
-						SPropertyType spropType = StringToSPropertyType( type, UsingSaturnNamespace );
+						const SPropertyType spropType = StringToSPropertyType( type, UsingSaturnNamespace );
 
-						SProperty p{ name, type, spropType };
-						rCommand.Properties[ lineNumber ] = p;
+						rCommand.Properties.emplace(
+							std::piecewise_construct,
+							std::forward_as_tuple( lineNumber - 1 ),
+							std::forward_as_tuple( name, type, spropType ) );
 					}
 					else
 					{
@@ -334,15 +353,15 @@ namespace Saturn {
 				{
 					if( args.contains( "Entity" ) )
 					{
-						rCommand.Properties[ lineNumber ].SetFlag( SPropertyFlags_Entity, true );
-						rCommand.Properties[ lineNumber ].SetType( SPropertyType::Entity );
+						rCommand.Properties[ lineNumber ].SetFlag( SPropertyFlags_EntityType, true );
+						rCommand.Properties[ lineNumber ].SetType( SPropertyType::EntityType );
 					}
 				}
 			}
 
 			if( !SClassFound )
 			{
-				if( std::regex_search( line, match, std::regex( R"(SCLASS\((.*)\))", std::regex::extended ) ) && LineIsNotComment( line ) )
+				if( std::regex_search( line, match, std::regex( R"(SCLASS\((.*)\))", std::regex::extended ) ) )
 				{
 					const std::string args = match[ 1 ].str();
 
@@ -367,7 +386,7 @@ namespace Saturn {
 
 			if( !GeneratedBodyFound )
 			{
-				if( std::regex_search( line, match, std::regex( R"(GENERATED_BODY\((.*)\))", std::regex::extended ) ) && LineIsNotComment( line ) )
+				if( std::regex_search( line, match, std::regex( R"(GENERATED_BODY\((.*)\))", std::regex::extended ) ) )
 				{
 					const std::string args = match[ 1 ].str();
 
@@ -376,24 +395,13 @@ namespace Saturn {
 						std::cout << rCommand.Filepath.string() << s_WarningMaps[ HeaderToolWarning::CG002A ] << "\n";
 					}
 
-					// Parse generated header
-
-					std::string baseFileId = std::format( "FID_{0}_h_{1}", rCommand.ClassName, lineNumber );
-
-					std::string CFI = std::format( "#undef CURRENT_FILE_ID\n#define CURRENT_FILE_ID FID_{0}_h\n\n", rCommand.ClassName );
-
-					fout << CFI;
-
-					std::string idGeneratedBody = std::format( "#define {0}_GENERATED_BODY {0}_CLASSDECLS\n", baseFileId );
-					std::string classDecls = std::format( "#define {0}_CLASSDECLS \\\nprivate: \\\n\tSAT_DECLARE_CLASS({1},{2}) \\\npublic:\\\n\n", baseFileId, rCommand.ClassName, rCommand.BaseClass );
-
-					fout << classDecls;
-					fout << idGeneratedBody;
-
+					WriteGeneratedBody( fout, line, rCommand, lineNumber );
 					GeneratedBodyFound = true;
 				}
 			}
 		}
+
+		fout << "\n// [END OF GENERATED FILE]\n";
 
 		headerFile.close();
 		fout.close();
@@ -402,6 +410,11 @@ namespace Saturn {
 		{
 			std::cout << rCommand.Filepath.string() << s_ErrorsMaps[ HeaderToolError::CG002 ] << "\n";
 			result = false;
+		
+			if( rCommand.BaseClass.empty() )
+			{
+				std::cout << rCommand.Filepath.string() << s_ErrorsMaps[ HeaderToolError::CG004 ] << "\n";
+			}
 		}
 
 		if( !SClassFound )
@@ -431,6 +444,7 @@ namespace Saturn {
 
 		fout << "/* Generated code, DO NOT modify! */\n";
 		fout << "#include \"Saturn/GameFramework/Core/GameScript.h\"\n";
+		fout << "#include \"Saturn/GameFramework/SClass.h\"\n";
 		fout << "#include \"Saturn/GameFramework/Core/ClassMetadataHandler.h\"\n";
 		fout << "#include \"Saturn/Scene/Entity.h\"\n";
 
@@ -443,51 +457,35 @@ namespace Saturn {
 		fout << std::format( "#include \"{0}\"\n", rCommand.Filepath.string() );
 		fout << std::format( "#include \"{0}\"\n\n", generatedHeaderPath.string() );
 
-		auto& rClassName = rCommand.ClassName;
+		const auto& rClassName = rCommand.ClassName;
 
-		if( ( rCommand.ClassFlags & ( uint32_t ) SClassFlags::SC_NoExtendedMetadata ) == 0 )
-		{
-			std::string realPath = rCommand.Filepath.string();
+		fout << std::format( "void LinkSymbol{0}() {{}}\n", rClassName );
+		fout << std::format( "__declspec(dllexport) Saturn::SClass* RStaticLnk{0}();\n\n", rClassName );
 
-#if defined(SAT_PLATFORM_WINDOWS)
-			size_t pos = 0;
-			while( ( pos = realPath.find( '\\', pos ) ) != std::string::npos )
-			{
-				realPath.replace( pos, 1, "\\\\" );
-				pos += 2;
-			}
-#endif
-
-			fout << std::format( "static void RCreateMetadataFor_{0}()\n", rClassName );
-			fout << "{\n";
-			fout << std::format( "\tSaturn::SClassExtendedMetadata __Metadata_{0};\n", rClassName );
-			fout << std::format( "\t__Metadata_{0}.HeaderPath = \"{1}\";\n", rClassName, realPath );
-//			fout << std::format( "\t__Metadata_{0}.ExternalData = true;\n", rClassName );
-			fout << std::format( "\tSaturn::ClassMetadataHandler::Get().AddMetadata( __Metadata_{0} );\n", rClassName );
-			fout << "}\n\n";
-		}
-
-		std::string internalClassName = std::format( "{0}Int", rClassName );
-
+		// [BEGIN INTERNAL CLASS]
+		const std::string internalClassName = std::format( "{0}Int", rClassName );
 		fout << "class " << internalClassName << "\n";
 		fout << "{\n";
 		fout << "public:\n";
 
+		// Properties
+		const bool classHasSProps = !rCommand.Properties.empty();
+
 		// Properties -- getters and setters for internal class
 		for( const auto& [lineNumber, rProperty] : rCommand.Properties )
 		{
-			if( rProperty.GetType() == SPropertyType::Class ) 
+			if( rProperty.GetType() == SPropertyType::Class )
 			{
 				CreateGetSetForClassProp( rProperty, rClassName, fout );
 				continue;
 			}
-			else if( rProperty.GetType() == SPropertyType::Asset ) 
+			else if( rProperty.GetType() == SPropertyType::Asset )
 			{
 				CreateGetSetForAssetProp( rProperty, rClassName, fout );
 				continue;
 			}
 
-			std::string stringType = SPropertyTypeToString( rProperty.GetType() );
+			const std::string stringType = SPropertyTypeToString( rProperty.GetType() );
 
 			// Set property function
 			fout << "\tstatic void Set" << rProperty.GetName() << "( " << rClassName << "* pClass, " << "typename Saturn::PropertyTypeTraits< " << stringType << ">::Type" << " value )\n";
@@ -505,45 +503,55 @@ namespace Saturn {
 		}
 
 		fout << "};\n\n";
+		// ^^^ [END INTERNAL CLASS]
 
-//		fout << "static void RRegisterPropertiesFor_" << rClassName << "()\n";
-//		fout << "{\n";
-
-		for( const auto& [lineNumber, rProperty] : rCommand.Properties )
+		if( classHasSProps )
 		{
-			std::string stringType = SPropertyTypeToString( rProperty.GetType() );
+			// Declare SProperty
+			for( const auto& [lineNumber, rProperty] : rCommand.Properties )
+			{
+				const std::string stringType = SPropertyTypeToString( rProperty.GetType() );
 
-			fout << std::format( "const Saturn::SProperty Prop_{0}( \"{0}\", {1}, &{2}::Get{0}, &{2}::Set{0} );\n", rProperty.GetName(), stringType, internalClassName );
-			
-			/*
-			fout << std::format( "\tProp_{0}.SetName( \"{0}\" );\n", rProperty.GetName() );
-			fout << std::format( "\tProp_{0}.SetType( {1} );\n", rProperty.GetName(), stringType );
+				fout << std::format( "const Saturn::SProperty Prop_{0}( \"{0}\", {1}, &{2}::Get{0}, &{2}::Set{0} );\n", rProperty.GetName(), stringType, internalClassName );
+			}
 
-			fout << std::format( "\tProp_{0}.pGetPropertyFunction = &{1}::Get{0};\n", rProperty.GetName(), internalClassName );
-			fout << std::format( "\tProp_{0}.pSetPropertyFunction = &{1}::Set{0};\n", rProperty.GetName(), internalClassName );
-			*/
-
-//			fout << std::format( "\tSaturn::ClassMetadataHandler::Get().RegisterProperty( \"{0}\", Prop_{1} );\n", rClassName, rProperty.GetName() );
+			// PropertyPointers array
+			fout << "const Saturn::SProperty* const PropertyPointers[] =\n{";
+			for( const auto& [lineNumber, rProperty] : rCommand.Properties )
+			{
+				fout << std::format( "\t(const Saturn::SProperty*)&Prop_{0},\n", rProperty.GetName() );
+			}
+			fout << "};\n";
 		}
-
-		fout << "const Saturn::SProperty* const PropertyPointers[] =\n{";
-		for( const auto& [lineNumber, rProperty] : rCommand.Properties )
-		{
-			fout << std::format( "\t(const Saturn::SProperty*)&Prop_{0},\n", rProperty.GetName() );
-		}
-		fout << "};\n";
-
-//		fout << "}\n\n";
 
 		// Class Auto-Registration
-		int propSize = ( int ) rCommand.Properties.size();
+		const int propSize = ( int ) rCommand.Properties.size();
+
+#if defined(SAT_PLATFORM_WINDOWS)
+		std::string realPath = rCommand.Filepath.string();
+
+		if( ( rCommand.ClassFlags & SC_NoExtendedMetadata ) == 0 )
+		{
+			// Convert the path from C:\MyPath to C:\\MyPath
+			// Because it we don't it will output it as the string literal
+			size_t pos = 0;
+			while( ( pos = realPath.find( '\\', pos ) ) != std::string::npos )
+			{
+				realPath.replace( pos, 1, "\\\\" );
+				pos += 2;
+			}
+		}
+#else
+		const std::string realPath = rCommand.Filepath.string();
+#endif
 
 		fout << std::format( "Saturn::SClass* RStaticLnk{0}()\n", rClassName );
 		fout << "{\n";
 		fout << "\tstatic Saturn::SClass* pClass = nullptr;\n";
 		fout << "\tif( !pClass )\n";
 		fout << "\t{\n";
-		fout << std::vformat( "\t\tconst SClassSpecification spec{{ \"{0}\", (SClassFlags) {1}, {2}, sizeof( {0} ), alignof( {0} ), {0}::Super::StaticClass(), Saturn::RInternalConstructor<{0}>, RStaticLnk{0}, PropertyPointers }};\n", std::make_format_args( rClassName, rCommand.ClassFlags, propSize ) );
+		const std::string propertyPointersFieldName = classHasSProps ? "PropertyPointers" : "nullptr";
+		fout << std::vformat( "\t\tconst SClassSpecification spec{{ \"{0}\", ( SClassFlags ) {1}, {2}, sizeof( {0} ), alignof( {0} ), {0}::Super::StaticClass(), Saturn::RInternalConstructor<{0}>, RStaticLnk{0}, {4}, Saturn::SClassExtendedMetadata{{ \"{3}\" }} }};\n", std::make_format_args( rClassName, rCommand.ClassFlags, propSize, realPath, propertyPointersFieldName ) );
 		fout << "\t\tSClass::RConstructClass( &pClass, spec );\n";
 		fout << "\t}\n\n";
 		fout << "\treturn pClass;\n";
@@ -555,7 +563,7 @@ namespace Saturn {
 		// ^^^ results in static SClassRegistrar RCRMyClass( 
 		// SClassSpecification{ 
 		// "MyClass", 
-		// (SClassFlags) Saturn::SClassFlags::SC_None, 
+		// ( SClassFlags ) Saturn::SClassFlags::SC_None, 
 		// sizeof( MyClass ), alignof( MyClass ), 
 		// Saturn::RInternalConstructor<MyClass>, 
 		// RStaticLnkMyClass 
@@ -569,6 +577,8 @@ namespace Saturn {
 		fout << "{\n";
 		fout << std::format( "\treturn RStaticLnk{0}();\n", rCommand.ClassName );
 		fout << "}\n";
+
+		fout << "\n// [END OF GENERATED FILE]\n";
 
 		fout.close();
 

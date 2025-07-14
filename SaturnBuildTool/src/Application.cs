@@ -289,8 +289,8 @@ namespace SaturnBuildTool
 
         private void SearchForFiles()
         {
-            SourceFiles = DirectoryTools.DirSearch( ProjectInfo.Instance.SourceDir, true );
-            SourceFiles.AddRange( DirectoryTools.DirSearch( ProjectInfo.Instance.BuildDir, true ) );
+            SourceFiles = DirectoryTools.SourceSearch( ProjectInfo.Instance.SourceDir, true );
+            SourceFiles.AddRange( DirectoryTools.SourceSearch( ProjectInfo.Instance.BuildDir, true ) );
 
             // Remove the entry file if we are not an exe.
             if( ProjectInfo.Instance.CurrentConfigKind != ConfigKind.Dist )

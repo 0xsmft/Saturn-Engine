@@ -29,23 +29,47 @@
 #include "sppch.h"
 #include "ClassTemplateFileHelper.h"
 
+#include "Saturn/GameFramework/SClass.h"
+
 #include "Saturn/Project/Project.h"
+
+// Template classes
+#include "Saturn/GameFramework/Character.h"
 
 namespace Saturn {
 
+	static std::filesystem::path GetTemplateFileForClass( const SClass* pClass ) 
+	{
+		if( pClass->GetClass() == Character::StaticClass() )
+		{
+			return "content/Templates/CharacterCode.h";
+		}
+		else if( pClass->GetClass() == Entity::StaticClass() )
+		{
+			return "content/Templates/EntityCode.h";
+		}
+		else
+		{
+			return "content/Templates/ClassCode.h";
+		}
+	}
+
+	static std::filesystem::path ReplaceExtension( const std::filesystem::path& rPath, const std::string& rNewExt )
+	{
+		std::filesystem::path temp = rPath;
+		temp.replace_extension( rNewExt );
+		return temp;
+	}
+
 	void ClassTemplateFileHelper::CreateAndAmendTemplateFile( const SClass* pSelectedClass, const std::filesystem::path& rDestPath, const std::string& rNewClassName )
 	{
-		auto prjRootDir = Project::GetActiveProject()->GetRootDir();
-
-//		std::filesystem::path templateFilepath = rMetadata.TemplateFile.empty() ? "content/Templates/ClassCode.h" : rMetadata.TemplateFile;
-
-		std::filesystem::path templateFilepath = "";
-
-		std::filesystem::path templateFilepathSource = templateFilepath.replace_extension( ".cpp" );
+		// Always returns the path to the template header file
+		std::filesystem::path templateFilepath = GetTemplateFileForClass( pSelectedClass );
+		std::filesystem::path templateFilepathSource = ReplaceExtension( templateFilepath, ".cpp" );
 
 		std::filesystem::path rDestPathBase = rDestPath / rNewClassName;
-		std::filesystem::path destPathHeader = rDestPathBase.replace_extension( ".h" );
-		std::filesystem::path destPathSource = rDestPathBase.replace_extension( ".cpp" );
+		const std::filesystem::path destPathHeader = ReplaceExtension( rDestPathBase, ".h" );
+		const std::filesystem::path destPathSource = ReplaceExtension( rDestPathBase, ".cpp" );
 
 		std::filesystem::copy_file( templateFilepath, destPathHeader );
 		std::filesystem::copy_file( templateFilepathSource, destPathSource );
@@ -83,10 +107,11 @@ namespace Saturn {
 				pos = fileData.find( "__SUPER_CLASS__" );
 			}
 
+			// TODO:
 			pos = fileData.find( "__SUPER_CLASS_H_PATH__" );
 			while( pos != std::string::npos )
 			{
-//				fileData.replace( pos, 22, pSelectedClass().HeaderPath.string() );
+//				fileData.replace( pos, 22, pSelectedClass->GetHeaderPath().string() );
 
 				pos = fileData.find( "__SUPER_CLASS_H_PATH__" );
 			}

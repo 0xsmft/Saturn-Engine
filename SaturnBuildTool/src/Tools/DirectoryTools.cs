@@ -74,6 +74,48 @@ namespace SaturnBuildTool.Tools
             return strings;
         }
 
+        public static List<string> SourceSearch( string sDir, bool isSourceOnly )
+        {
+            List<string> files = new List<string>();
+
+            try
+            {
+                // Process current directory's files.
+                foreach( string f in Directory.GetFiles( sDir ) )
+                {
+                    if( IsCppSourceFile( f ) )
+                    {
+                        files.Add( f );
+                    }
+                }
+
+                // Recurse into subdirectories.
+                foreach( string dir in Directory.GetDirectories( sDir ) )
+                {
+                    string dirName = Path.GetFileName( dir );
+
+                    if( isSourceOnly && !( dirName.Equals( "src", StringComparison.OrdinalIgnoreCase ) || dirName.Equals( "source", StringComparison.OrdinalIgnoreCase ) ) )
+                    {
+                        continue;
+                    }
+
+                    files.AddRange( DirSearch( dir, isSourceOnly ) );
+                }
+            }
+            catch( Exception ex )
+            {
+                Console.WriteLine( $"Error reading directory '{sDir}': {ex.Message}" );
+            }
+
+            return files;
+        }
+
+        private static bool IsCppSourceFile( string path )
+        {
+            string ext = Path.GetExtension( path ).ToLowerInvariant();
+            return ext == ".cpp" || ext == ".cc" || ext == ".c";
+        }
+
         public static List<string> DirSearch(string sDir, bool isSourceOnly)
         {
             List<string> strings = new List<string>();

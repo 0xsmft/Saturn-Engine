@@ -39,6 +39,7 @@ namespace Saturn {
 		CG001,
 		CG002,
 		CG003,
+		CG004,
 
 		/* Header tool errors  */
 		TR000, /* internal error */
@@ -59,6 +60,9 @@ namespace Saturn {
 		{ HeaderToolError::CG001,  ":error (CG001) | No SCLASS macro was found in header file! Valid usage may follow: SCLASS(<args>)" },
 		{ HeaderToolError::CG002,  ":error (CG002) | GENERATED_BODY macro was found in header file! Valid usage may follow: GENERATED_BODY()" },
 		{ HeaderToolError::CG003,  ":error (CG003) | Expected variable definition after SPROPERTY macro." },
+		{ HeaderToolError::CG004,  ":error (CG004) | GENERATED_BODY/SCLASS was used, however no base class was specified. You must specifiy a base class driving from Saturn::SObject" },
+
+		// Header tool errors must have "ERROR:" so that VS picks it up as an error can will actually display it in error list, using ":error" sometimes works, however "ERROR:" will flag it as an execution error.
 		{ HeaderToolError::TR000A, "ERROR: (TR000A) | Code generation terminated." },
 		{ HeaderToolError::TR001,  "ERROR: (TR001) | Missing /SRC Argument. Valid usage is /SRC=<path_to_src>" },
 		{ HeaderToolError::TR002,  "ERROR: (TR002) | Missing /OUT Argument. Valid usage is /OUT=<path_to_output>" },

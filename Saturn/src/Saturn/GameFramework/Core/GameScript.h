@@ -28,6 +28,8 @@
 
 #pragma once
 
+#include "Saturn/GameFramework/SAutoCompletionAux.h"
+
 #define SCLASS(...)
 #define SPROPERTY(...)
 

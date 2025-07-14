@@ -143,6 +143,6 @@ namespace Saturn {
 		ma_context m_Context;
 		ma_device m_Device;
 
-		bool m_Initialised = false;
+		std::atomic<bool> m_Initialised = false;
 	};
 }

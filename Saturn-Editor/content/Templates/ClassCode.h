@@ -9,7 +9,7 @@
 
 using namespace Saturn;
 
-SCLASS()
+SCLASS( VisibleInEditor )
 class __FILE_NAME__ : public __SUPER_CLASS__
 {
 	GENERATED_BODY()

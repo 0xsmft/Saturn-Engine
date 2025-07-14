@@ -28,21 +28,35 @@
 
 #pragma once
 
-#include "Saturn/GameFramework/SProperty.h"
-
-#include <filesystem>
-#include <map>
-
 namespace Saturn {
 
-	struct HeaderToolCommand
+	//////////////////////////////////////////////////////////////////////////
+	// Internal auto completion enums DO NOT USE
+	// These enums exist so that when a user is typing their IDE should come up with these
+
+#if !defined(SAT_DIST)
+
+	// Always refer to SClassFlags
+	// If you add/remove/modify SClassFlags you must add it here and vice versa
+	enum XSC 
 	{
-		std::filesystem::path Filepath;
-
-		std::string ClassName;
-		std::string BaseClass;
-		uint32_t ClassFlags = 0 /* SClassFlags::None */;
-
-		std::map<uint32_t, SProperty> Properties;
+		Initialised,
+		Abstract,
+		Spawnable,
+		VisibleInEditor,
+		NoExtendedMetadata,
+		External
 	};
+	
+	// Always refer to SPropertyFlags_
+	// If you add/remove/modify SPropertyFlags_ you must add it here and vice versa
+	enum XSP 
+	{
+		ReadOnlyInEditor,
+		AssetRef,
+		Serialised,
+		EntityType
+	};
+
+#endif
 }

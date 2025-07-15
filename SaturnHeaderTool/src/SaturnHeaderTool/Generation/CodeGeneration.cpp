@@ -301,6 +301,7 @@ namespace Saturn {
 				else
 				{
 					std::cout << rCommand.Filepath.string() << s_ErrorsMaps[ HeaderToolError::CG003 ] << "\n";
+					result = false;
 				}
 
 				LastLineHadSP = false;
@@ -339,6 +340,7 @@ namespace Saturn {
 					{
 						// Expected variable definition after SPROPERTY macro.
 						std::cout << rCommand.Filepath.string() << s_ErrorsMaps[ HeaderToolError::CG003 ] << "\n";
+						result = false;
 					}
 				}
 
@@ -551,7 +553,10 @@ namespace Saturn {
 		fout << "\tif( !pClass )\n";
 		fout << "\t{\n";
 		const std::string propertyPointersFieldName = classHasSProps ? "PropertyPointers" : "nullptr";
-		fout << std::vformat( "\t\tconst SClassSpecification spec{{ \"{0}\", ( SClassFlags ) {1}, {2}, sizeof( {0} ), alignof( {0} ), {0}::Super::StaticClass(), Saturn::RInternalConstructor<{0}>, RStaticLnk{0}, {4}, Saturn::SClassExtendedMetadata{{ \"{3}\" }} }};\n", std::make_format_args( rClassName, rCommand.ClassFlags, propSize, realPath, propertyPointersFieldName ) );
+		const uint64_t classHash = FNV1A64( rClassName.c_str() );
+
+		fout << std::vformat( "\t\tconst SClassSpecification spec{{ \"{0}\", ( SClassFlags ) {1}, {2}, sizeof( {0} ), alignof( {0} ), {5}llu, {0}::Super::StaticClass(), Saturn::RInternalConstructor<{0}>, RStaticLnk{0}, {4}, Saturn::SClassExtendedMetadata{{ \"{3}\" }} }};\n", std::make_format_args( rClassName, rCommand.ClassFlags, propSize, realPath, propertyPointersFieldName, classHash ) );
+	
 		fout << "\t\tSClass::RConstructClass( &pClass, spec );\n";
 		fout << "\t}\n\n";
 		fout << "\treturn pClass;\n";

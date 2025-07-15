@@ -1706,11 +1706,12 @@ namespace Saturn {
 			ImGui::TextDisabled( "Showing all SClasses" );
 			ImGui::PopFont();
 
-			if( ImGui::BeginTable( "##DebugInfoClsM", 5, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_NoBordersInBody ) )
+			if( ImGui::BeginTable( "##DebugInfoClsM", 6, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_NoBordersInBody ) )
 			{
 				ImGui::TableSetupColumn( "Name" );
 				ImGui::TableSetupColumn( "Size" );
 				ImGui::TableSetupColumn( "Align" );
+				ImGui::TableSetupColumn( "Hash" );
 				ImGui::TableSetupColumn( "Properties" );
 				ImGui::TableSetupColumn( "Path" );
 
@@ -1732,9 +1733,12 @@ namespace Saturn {
 						ImGui::Text( "%llu", pClass->GetAlignment() );
 
 						ImGui::TableSetColumnIndex( 3 );
-						ImGui::Text( "%i", pClass->GetPropertyCount() );
+						ImGui::Text( "%llu", pClass->GetHash() );
 
 						ImGui::TableSetColumnIndex( 4 );
+						ImGui::Text( "%i", pClass->GetPropertyCount() );
+
+						ImGui::TableSetColumnIndex( 5 );
 						ImGui::Text( "%s", pClass->GetHeaderPath().string().c_str() );
 					} );
 				}

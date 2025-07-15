@@ -250,6 +250,9 @@ namespace Saturn {
 	};
 
 	// DEPRECATED IN 0.2.1
+	// This component was deprecated in 0.2.1 in favour of using GetStaticClass() and GetClass()
+	// There is not a direct replacement to this component. Try use GetStaticClass() or GetClass()
+	// ----
 	// This is an internal component use for identification
 	// This component cannot be added/removed from the Editor
 	// The usage of this class is so that we know what class this entity is based from and from this when we are loading and/or spawning in entities we know what class to create

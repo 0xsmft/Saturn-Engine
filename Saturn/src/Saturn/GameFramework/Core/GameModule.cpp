@@ -118,8 +118,6 @@ namespace Saturn {
 
 	void GameModule::Unload()
 	{
-		ClassMetadataHandler::Get().OnModuleShutdown( m_ModuleHandle->m_Name );
-
 #if !defined(SAT_DIST)
 		m_ModuleHandle = nullptr;
 #endif

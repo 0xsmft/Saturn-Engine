@@ -48,7 +48,7 @@ namespace Saturn {
 
 		( *ppClass )->SetFlag( SC_Initialised );
 
-		ClassMetadataHandler::Get().RegisterClass( *ppClass );
+		ClassMetadataHandler::Get().RegisterSClass( *ppClass, "" );
 	}
 
 	SProperty& SClass::GetProperty( const std::string& rPropertyName ) const
@@ -65,6 +65,42 @@ namespace Saturn {
 
 		static SProperty s_Empty;
 		return s_Empty;
+	}
+
+	bool SClass::IsChildOf( const SClass* pBase ) const
+	{
+		if( !pBase ) return false;
+
+		const SClass* pClass = this;
+		while( pClass )
+		{
+			if( pClass == pBase )
+			{
+				return true;
+			}
+
+			pClass = pClass->GetParentClass();
+		}
+
+		/*
+		for( const SClass* pCurrentClass = this; pCurrentClass; pCurrentClass = pCurrentClass->GetParentClass() )
+		{
+			if( pCurrentClass == pBase ) 
+			{
+				return true;
+			}
+		}
+		*/
+
+		return false;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// RClass Static link
+
+	void RClassCompiledIn( SClass* ( *pStaticLinkFunction )( ) )
+	{
+		( pStaticLinkFunction ) ( );
 	}
 
 }

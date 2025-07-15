@@ -68,6 +68,7 @@ namespace Saturn {
 		int Properties = 0;
 		size_t Size = 0;
 		size_t Alignment = 0;
+		uint64_t Hash = 0;
 
 		SClass* pParentClass = nullptr;
 
@@ -75,12 +76,11 @@ namespace Saturn {
 		SClass* ( *pStaticLinkFunction )() = nullptr;
 
 		const SProperty* const* SProperties = nullptr;
+
+		SClassExtendedMetadata ClassExtendedMetadata{};
 	};
 
-	static inline void RClassCompiledIn( SClass* ( *pStaticLinkFunction )( ) )
-	{
-		( pStaticLinkFunction ) ( );
-	}
+	extern void RClassCompiledIn( SClass* ( *pStaticLinkFunction )( ) );
 
 	struct SClassRegistrar
 	{
@@ -96,7 +96,18 @@ namespace Saturn {
 	public:
 		SClass() {}
 		SClass( const SClassSpecification& rSpec ) 
-			: SObject(), m_Name( rSpec.Name ), m_Flags( (SClassFlags)rSpec.Flags ), m_PropertyCount( rSpec.Properties ), m_Size( rSpec.Size ), m_Alignment( rSpec.Alignment ), m_pClassConstructor( rSpec.pClassConstructor ), m_pStaticLinkFunction( rSpec.pStaticLinkFunction ), m_pParentClass( rSpec.pParentClass ), m_Properties( rSpec.SProperties )
+			: SObject(), 
+			m_Name( rSpec.Name ),
+			m_Flags( (SClassFlags)rSpec.Flags ),
+			m_PropertyCount( rSpec.Properties ), 
+			m_Size( rSpec.Size ), 
+			m_Alignment( rSpec.Alignment ), 
+			m_ClassHash( rSpec.Hash ),
+			m_pClassConstructor( rSpec.pClassConstructor ), 
+			m_pStaticLinkFunction( rSpec.pStaticLinkFunction ),
+			m_pParentClass( rSpec.pParentClass ), 
+			m_Properties( rSpec.SProperties ),
+			m_ExtendedMetadata( rSpec.ClassExtendedMetadata )
 		{
 		}
 
@@ -113,6 +124,7 @@ namespace Saturn {
 
 		inline size_t GetSize() const { return m_Size; }
 		inline size_t GetAlignment() const { return m_Alignment; }
+		inline uint64_t GetHash() const { return m_ClassHash; }
 
 		inline void SetFlag( SClassFlags flag )
 		{
@@ -125,10 +137,15 @@ namespace Saturn {
 		// Pointer to the first element
 		inline const SProperty* const* GetProperties() const { return m_Properties; }
 
+		inline std::filesystem::path GetHeaderPath() const { return m_ExtendedMetadata.HeaderPath; }
+
 	public:
 		static void RConstructClass( SClass** ppClass, const SClassSpecification& rSpec );
 
+	public:
 		SProperty& GetProperty( const std::string& rPropertyName ) const;
+
+		bool IsChildOf( const SClass* pBase ) const;
 
 	private:
 		std::string m_Name;
@@ -136,12 +153,18 @@ namespace Saturn {
 		int m_PropertyCount = 0;
 		size_t m_Size = 0;
 		size_t m_Alignment = 0;
+		uint64_t m_ClassHash = 0;
 
 		SObject* ( *m_pClassConstructor )( ) = nullptr;
 		SClass* ( *m_pStaticLinkFunction )( ) = nullptr;
 
 		SClass* m_pParentClass = nullptr;
 		const SProperty* const* m_Properties = nullptr;
+
+		SClassExtendedMetadata m_ExtendedMetadata{};
+
+	private:
+		friend class ClassMetadataHandler;
 	};
 
 	template<class RClass>
@@ -149,4 +172,22 @@ namespace Saturn {
 	{
 		return ( SObject* ) RClass::X31_DefConstructor();
 	}
+
+	template<typename RClass> SClass* StaticClass();
+
+	static constexpr uint64_t FNV1A64( const char* pStr )
+	{
+		constexpr uint64_t offset = 14695981039346656037ull;
+		constexpr uint64_t prime = 1099511628211ull;
+
+		uint64_t hash = offset;
+		while( *pStr )
+		{
+			hash ^= static_cast< uint64_t >( *pStr++ );
+			hash *= prime;
+		}
+
+		return hash;
+	}
+
 }

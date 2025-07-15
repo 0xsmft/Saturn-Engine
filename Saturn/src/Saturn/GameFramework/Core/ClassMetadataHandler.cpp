@@ -45,7 +45,6 @@ namespace Saturn {
 
 	void ClassMetadataHandler::BeginHotReload()
 	{
-		ClearExternalData();
 	}
 
 	void ClassMetadataHandler::AcknowledgeHotReload()
@@ -54,7 +53,9 @@ namespace Saturn {
 
 	Saturn::SObject* ClassMetadataHandler::CreateClassObject( const std::string& rScriptName )
 	{
-		const auto Itr = m_Classes.find( rScriptName );
+		const uint64_t hash = FNV1A64( rScriptName.c_str() );
+
+		const auto Itr = m_Classes.find( hash );
 		if( Itr != m_Classes.end() )
 		{
 			SObject* pObject = Itr->second->CreateDefaultObject();
@@ -64,7 +65,7 @@ namespace Saturn {
 		}
 		else
 		{
-			const std::string message = std::format( "Class/{0} does not exist in any module! Unable to continue!", rScriptName );
+			const std::string message = std::format( "Class/{0} ({1}) does not exist in any module! Unable to continue!", rScriptName, hash );
 			SAT_CORE_VERIFY( false, message );
 		}
 
@@ -73,11 +74,10 @@ namespace Saturn {
 
 	Saturn::SObject* ClassMetadataHandler::CreateClassObject( SClass* pClass )
 	{
-		return CreateClassObject( pClass->GetName() );
-	}
+		SObject* pObject = pClass->CreateDefaultObject();
+		pObject->m_pClass = pClass;
 
-	void ClassMetadataHandler::AddMetadata( const SClassExtendedMetadata& rData )
-	{
+		return pObject;
 	}
 
 	SClass* ClassMetadataHandler::GetSObjectMetadata()
@@ -101,22 +101,12 @@ namespace Saturn {
 		return s_EmptyMap;
 	}
 
-	void ClassMetadataHandler::ClearExternalData()
+	void ClassMetadataHandler::RegisterSClass( SClass* pClass, const std::string& rModuleName )
 	{
-		/*
-		std::erase_if( m_MetadataTree, []( const auto& kv )
-		{
-			return kv.second.ExternalData;
-		} );
-		*/
-	}
-
-	void ClassMetadataHandler::RegisterClass( SClass* pClass )
-	{
-		const auto Itr = m_Classes.find( pClass->GetName() );
+		const auto Itr = m_Classes.find( pClass->GetHash() );
 		if( Itr == m_Classes.end() )
 		{
-			m_Classes[ pClass->GetName() ] = pClass;
+			m_Classes[ pClass->GetHash() ] = pClass;
 		}
 	}
 

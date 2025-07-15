@@ -62,21 +62,18 @@ namespace Saturn {
 		}
 
 	public:
-		void AddMetadata( const SClassExtendedMetadata& rData );
-		bool IsEngineMetadata( const SClassExtendedMetadata& rData ) { return true; }
-		
-		std::vector<SProperty>& GetAllProperties( const std::string& rMetadataName );
-
-		void ClearExternalData();
-
-	public:
 		[[nodiscard]] SObject* CreateClassObject( const std::string& rScriptName );
 		[[nodiscard]] SObject* CreateClassObject( SClass* pClass );
 		void RegisterSClass( SClass* pClass, const std::string& rModuleName );
 
+		[[nodiscard]] size_t GetNumberOfClasses() const { return m_Classes.size(); }
+
 	public:
 		[[deprecated( "Saturn::ClassMetadataHandler::GetSObjectMetadata is deprecated and will be removed. Consider using \"SObject::StaticClass\" instead." )]]
 		SClass* GetSObjectMetadata();
+
+	public:
+		std::vector<SProperty>& GetAllProperties( const std::string& rMetadataName );
 
 	public:
 		// Hot reload
@@ -85,6 +82,7 @@ namespace Saturn {
 
 	private:		
 		// All of the classes that have reflection data tied to them.
-		std::unordered_map<std::string, SClass*> m_Classes;
+		//                 HASH    -> CLASS*
+		std::unordered_map<uint64_t, SClass*> m_Classes;
 	};
 }

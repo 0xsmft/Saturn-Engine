@@ -39,7 +39,7 @@ namespace SaturnBuildTool.Auxiliary
             }
         }
 
-        public bool FindFlag( string key ) 
+        public bool FindFlag( string key )
         {
             return ParsedMap.ContainsKey( key.ToUpper( CultureInfo.InvariantCulture ) );
         }

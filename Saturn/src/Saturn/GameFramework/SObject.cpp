@@ -33,16 +33,17 @@
 
 #include "Core/EngineGenerated.h"
 
-static Saturn::SClass* RStaticLnk()
+static Saturn::SClass* RStaticLnkSObject()
 {
 	static Saturn::SClass* pClass = nullptr; 
 	if( !pClass ) 
 	{
 		const Saturn::SClassSpecification spec{
-			"SObject", 
-			( Saturn::SClassFlags ) Saturn::SC_None, 0, 
+			"SObject",
+			( Saturn::SClassFlags ) Saturn::SC_None | Saturn::SC_NoExtendedMetadata, 0, 
 			sizeof( Saturn::SObject ), alignof( Saturn::SObject ), 
-			nullptr, Saturn::RInternalConstructor<Saturn::SObject>, RStaticLnk, nullptr 
+			Saturn::FNV1A64( "SObject" ), 
+			nullptr, Saturn::RInternalConstructor<Saturn::SObject>, RStaticLnkSObject, nullptr
 		}; 
 		
 		Saturn::SClass::RConstructClass( &pClass, spec );
@@ -53,7 +54,7 @@ static Saturn::SClass* RStaticLnk()
 
 Saturn::SClass* Saturn::SObject::GetStaticClassInternal() 
 {
-	return RStaticLnk();
+	return RStaticLnkSObject();
 }
 
-static Saturn::SClassRegistrar RCRSObject( RStaticLnk );
+static Saturn::SClassRegistrar RCRSObject( RStaticLnkSObject );

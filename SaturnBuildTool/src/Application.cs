@@ -96,6 +96,7 @@ namespace SaturnBuildTool
                 Console.WriteLine( "  /INCLUDESTREE -- displays and create an include tree" );
                 Console.WriteLine( "  /VERISON -- displays the version for the build tool" );
                 Console.WriteLine( "  /ARGS+ -- displays the compiler and linker command line arguments" );
+                Console.WriteLine( "  /EXPORTFILECACHE -- exports the filecache into a human readable format" );
                 Console.WriteLine( " * indicates required argument" );
 
                 return false;
@@ -399,6 +400,11 @@ namespace SaturnBuildTool
             if( HasCompiledAnyFile )
             {
                 FileCache.RT_WriteCache( FileCache );
+
+                if( CommandLineParser.Instance.FindFlag( "EXPORTFILECACHE" ) ) 
+                {
+                    FileCache.RT_WriteCacheHumanReadable( FileCache );
+                }
             }
 
             CleanupFromLastHotReload();

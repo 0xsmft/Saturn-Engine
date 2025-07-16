@@ -53,23 +53,19 @@ namespace Saturn {
 
 	Saturn::SObject* ClassMetadataHandler::CreateClassObject( const std::string& rScriptName )
 	{
-		const uint64_t hash = FNV1A64( rScriptName.c_str() );
+#if defined(SAT_DIST)
+		return CreateClassObject( FNV1A64( rScriptName.c_str() ) );
+#else
+		SObject* pObject = CreateClassObject( FNV1A64( rScriptName.c_str() ) );
 
-		const auto Itr = m_Classes.find( hash );
-		if( Itr != m_Classes.end() )
+		if( !pObject )
 		{
-			SObject* pObject = Itr->second->CreateDefaultObject();
-			pObject->m_pClass = Itr->second;
-
-			return pObject;
-		}
-		else
-		{
-			const std::string message = std::format( "Class/{0} ({1}) does not exist in any module! Unable to continue!", rScriptName, hash );
+			const std::string message = std::format( "Class/{0} does not exist in any module! Unable to continue!", rScriptName );
 			SAT_CORE_VERIFY( false, message );
 		}
 
-		return nullptr;
+		return pObject;
+#endif
 	}
 
 	Saturn::SObject* ClassMetadataHandler::CreateClassObject( SClass* pClass )
@@ -78,6 +74,20 @@ namespace Saturn {
 		pObject->m_pClass = pClass;
 
 		return pObject;
+	}
+
+	Saturn::SObject* ClassMetadataHandler::CreateClassObject( uint64_t classHash )
+	{
+		const auto Itr = m_Classes.find( classHash );
+		if( Itr != m_Classes.end() )
+		{
+			SObject* pObject = Itr->second->CreateDefaultObject();
+			pObject->m_pClass = Itr->second;
+
+			return pObject;
+		}
+
+		return nullptr;
 	}
 
 	SClass* ClassMetadataHandler::GetSObjectMetadata()

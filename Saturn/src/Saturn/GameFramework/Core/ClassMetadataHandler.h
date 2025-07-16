@@ -61,9 +61,26 @@ namespace Saturn {
 				Function( pClass );
 		}
 
+		template<typename Ty>
+		inline std::vector<SClass*> GetAllClassesBasedFrom() const
+		{
+			std::vector<SClass*> map;
+			for( const auto& [hash, pClass] : m_Classes )
+			{
+				if( pClass->IsChildOf( Ty::StaticClass() ) )
+				{
+					map.push_back( pClass );
+				}
+			}
+
+			return map;
+		}
+
 	public:
 		[[nodiscard]] SObject* CreateClassObject( const std::string& rScriptName );
+		[[nodiscard]] SObject* CreateClassObject( uint64_t classHash );
 		[[nodiscard]] SObject* CreateClassObject( SClass* pClass );
+
 		void RegisterSClass( SClass* pClass, const std::string& rModuleName );
 
 		[[nodiscard]] size_t GetNumberOfClasses() const { return m_Classes.size(); }

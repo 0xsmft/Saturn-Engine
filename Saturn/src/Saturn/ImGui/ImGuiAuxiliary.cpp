@@ -705,4 +705,51 @@ namespace Saturn::Auxiliary {
 		return modified;
 	}
 
+	//////////////////////////////////////////////////////////////////////////
+	// PORTED FROM imgui_stblib.cpp
+
+	struct InputTextCallback_UserData
+	{
+		std::string*			pStr;
+		ImGuiInputTextCallback  ChainCallback;
+		void*					pChainCallbackUserData;
+	};
+
+	static int InputTextCallback( ImGuiInputTextCallbackData* pData )
+	{
+		InputTextCallback_UserData* pUserData = ( InputTextCallback_UserData* ) pData->UserData;
+
+		if( pData->EventFlag == ImGuiInputTextFlags_CallbackResize )
+		{
+			// Resize string callback
+			// If for some reason we refuse the new length (BufTextLen) and/or capacity (BufSize) we need to set them back to what we want.
+			std::string* pStr = pUserData->pStr;
+			IM_ASSERT( pData->Buf == pStr->c_str() );
+
+			pStr->resize( pData->BufTextLen );
+			pData->Buf = ( char* ) pStr->c_str();
+		}
+		else if( pUserData->ChainCallback )
+		{
+			// Forward to user callback, if any
+			pData->UserData = pUserData->pChainCallbackUserData;
+			return pUserData->ChainCallback( pData );
+		}
+
+		return 0;
+	}
+
+	bool InputText( const char* label, std::string* str, ImGuiInputTextFlags flags, ImGuiInputTextCallback callback, void* user_data )
+	{
+		IM_ASSERT( ( flags & ImGuiInputTextFlags_CallbackResize ) == 0 );
+		flags |= ImGuiInputTextFlags_CallbackResize;
+
+		InputTextCallback_UserData userDataCB{};
+		userDataCB.pStr = str;
+		userDataCB.ChainCallback = callback;
+		userDataCB.pChainCallbackUserData = user_data;
+		
+		return ImGui::InputText( label, ( char* ) str->c_str(), str->capacity() + 1, flags, InputTextCallback, &userDataCB );
+	}
+
 }

@@ -178,6 +178,8 @@ namespace Saturn::Auxiliary {
 	extern bool DrawAssetFinder( AssetType type, bool* rOpen, AssetID& rOut, AssetID ignoreID = 0 );
 	extern bool DrawAssetFinder( const std::set<AssetType>& rAllowedTypes, bool* rOpen, AssetID& rOut );
 
+	extern bool InputText( const char* label, std::string* str, ImGuiInputTextFlags flags = 0, ImGuiInputTextCallback callback = nullptr, void* user_data = nullptr );
+
 	template<typename Function>
 	inline bool DrawAssetFinder( AssetType allowedTypes, AssetID lastID, bool* rOpen, Function&& rrFunction )
 	{

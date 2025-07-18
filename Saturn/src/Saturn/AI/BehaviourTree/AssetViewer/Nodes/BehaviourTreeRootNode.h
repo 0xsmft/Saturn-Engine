@@ -34,6 +34,7 @@ namespace Saturn {
 
 	class BehaviourTreeRootNode : public BehaviourTreeNodeBase
 	{
+		SAT_DECLARE_CLASS( BehaviourTreeRootNode, BehaviourTreeNodeBase );
 	public:
 		BehaviourTreeRootNode();
 		virtual ~BehaviourTreeRootNode();

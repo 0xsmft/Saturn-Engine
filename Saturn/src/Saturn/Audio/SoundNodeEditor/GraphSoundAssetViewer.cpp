@@ -33,7 +33,7 @@
 
 #include "SoundEditorEvaluator.h"
 
-#include "Nodes/SoundRandomNode.h" 
+#include "Nodes/SoundRandomSoundNode.h" 
 #include "Nodes/SoundOutputNode.h" 
 #include "Nodes/SoundPlayerNode.h"
 #include "Nodes/SoundMixerNode.h"

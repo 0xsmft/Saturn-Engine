@@ -38,7 +38,10 @@ namespace Saturn {
 
 	class BehaviourTreeMoveToTask : public BehaviourTreeBaseTask
 	{
+		SAT_DECLARE_CLASS_MOVE( BehaviourTreeMoveToTask, BehaviourTreeBaseTask )
 	public:
+		BehaviourTreeMoveToTask() = default;
+
 		BehaviourTreeMoveToTask( const glm::vec3& rTargetPosition );
 		virtual ~BehaviourTreeMoveToTask();
 
@@ -46,8 +49,14 @@ namespace Saturn {
 		virtual BehaviourTreeTaskState Tick( Timestep ts ) override;
 		virtual void Reset() override;
 
+#if !defined(SAT_DIST)
+		[[nodiscard]] virtual bool IsSpawnableNode() const { return true; }
+		virtual const char* GetTaskName() const { return "Move To"; }
+#endif
+
 	private:
-		Ref<AIAgentEntity> m_Agent;
+		// #WREF_BehaviourTreeBaseTask, for now it's a raw ptr
+		AIAgentEntity* m_Agent = nullptr;
 
 		glm::vec3 m_TargetPosition{};
 		NavPath m_Path{};

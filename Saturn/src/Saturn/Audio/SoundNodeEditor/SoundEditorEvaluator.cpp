@@ -35,7 +35,7 @@
 
 #include "Nodes/SoundOutputNode.h"
 #include "Nodes/SoundPlayerNode.h"
-#include "Nodes/SoundRandomNode.h"
+#include "Nodes/SoundRandomSoundNode.h"
 
 #if !defined(SAT_DIST)
 #include "Saturn/NodeEditor/UI/NodeEditor.h"
@@ -142,7 +142,35 @@ namespace Saturn {
 #endif
 		}
 
+		m_NodeEditor->SetState( compileResult == NodeEditorCompilationStatus::Success ? NodeEditorState::Simulating : NodeEditorState::Editing );
+
+		for( const auto& [id, state] : EvaluatedPath )
+		{
+			if( state == NodeEvaluationState::WasEvaluated )
+			{
+				PropagateNotEvaluated( m_NodeEditor->FindLink( id ), state );
+			}
+		}
+
 		return compileResult;
+	}
+
+	void SoundEditorEvaluator::PropagateNotEvaluated( Ref<Link> node, NodeEvaluationState state )
+	{
+		if( EvaluatedPath[ node->ID ] == NodeEvaluationState::WasEvaluated )
+			return;
+
+		EvaluatedPath[ node->ID ] = NodeEvaluationState::WasEvaluated;
+
+		auto links = m_NodeEditor->FindLinksByPin( node->EndPinID );
+		for( const auto& link : links )
+		{
+			auto endNode = m_NodeEditor->FindNodeByPin( link->StartPinID );
+			if( endNode )
+			{
+				PropagateNotEvaluated( link, state );
+			}
+		}
 	}
 
 	void SoundEditorEvaluator::AddNewSound( UUID id )
@@ -197,6 +225,12 @@ namespace Saturn {
 			else
 				m_Completed = true;
 		}
+	}
+
+	void SoundEditorEvaluator::TerminateEvaluation()
+	{
+		DestroyAliveSounds();
+		m_NodeEditor->SetState( NodeEditorState::Editing );
 	}
 
 	void SoundEditorEvaluator::TraceEvaluationPath()

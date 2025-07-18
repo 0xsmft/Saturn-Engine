@@ -36,7 +36,10 @@ namespace Saturn {
 
 	class BehaviourTreeWaitTask : public BehaviourTreeBaseTask
 	{
+		SAT_DECLARE_CLASS_MOVE( BehaviourTreeWaitTask, BehaviourTreeBaseTask )
 	public:
+		BehaviourTreeWaitTask() = default;
+
 		BehaviourTreeWaitTask( float WaitDuration );
 		BehaviourTreeWaitTask( UUID WaitDurationVarID );
 
@@ -45,6 +48,17 @@ namespace Saturn {
 		virtual void InitialiseTask( BehaviourTreeNodeEditor* pEditor, BehaviourTreeNodeBase* pNode ) override;
 		virtual BehaviourTreeTaskState Tick( Timestep ts ) override;
 		virtual void Reset() override;
+
+#if !defined(SAT_DIST)
+		[[nodiscard]] virtual bool IsSpawnableNode() const { return true; }
+		virtual const char* GetTaskName() const { return "Wait"; }
+		virtual void OnRenderExtra() override;
+		virtual void RenderDetails() override;
+#endif
+
+	public:
+		virtual void Serialise( std::ofstream& rStream ) const;
+		virtual void Deserialise( FDependentIStream& rStream );
 
 	private:
 		// Wait time in seconds

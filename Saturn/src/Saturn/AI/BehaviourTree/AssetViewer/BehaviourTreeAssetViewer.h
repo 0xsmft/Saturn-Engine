@@ -75,6 +75,8 @@ namespace Saturn {
 		std::vector<Ref<BehaviourTree>> m_ReferencingAssets;
 
 		Ref<BehaviourTreeNodeEditor> m_OriginalNodeEditor = nullptr;
+
+		std::vector<BehaviourTreeBaseTask*> m_ClassCache;
 #endif
 	};	
 

@@ -121,9 +121,9 @@ namespace Saturn {
 		{
 			UUID::Serialise( key, rStream );
 
-			RawSerialisation::WriteObject( ( std::underlying_type_t<NodeExecutionType> ) value->ExecutionType, rStream );
+			RawSerialisation::WriteObject( value->GetClass()->GetHash(), rStream );
 
-			NodeEditorNodeBase::Serialise( value, rStream );
+			value->Serialise( value, rStream );
 		}
 
 		mapSize = m_Links.size();
@@ -151,16 +151,22 @@ namespace Saturn {
 			UUID key = 0;
 			UUID::Deserialise( key, rStream );
 
-			std::underlying_type_t<NodeExecutionType> executionValue = 0;
-			RawSerialisation::ReadObject( executionValue, rStream );
-			NodeExecutionType executionType = ( NodeExecutionType ) executionValue;
+			uint64_t targetClassHash = 0;
+			RawSerialisation::ReadObject( targetClassHash, rStream );
 
-			Ref<NodeEditorNodeBase> node = GlobalNodesList::ConvertExecutionTypeToNode( executionType, this );
+			NodeEditorNodeBase* pNode = dynamic_cast< NodeEditorNodeBase* >( ClassMetadataHandler::Get().CreateClassObject( targetClassHash ) );
 
-			if( !node )
+			Ref<NodeEditorNodeBase> node = pNode;
+			if( node )
+			{
+				AddNode( node );
+			}
+			else
+			{
 				node = Ref<NodeEditorBlueprintNode>::Create();
+			}
 
-			NodeEditorNodeBase::Deserialise( node, rStream );
+			node->Deserialise( node, rStream );
 
 			m_Nodes[ key ] = node;
 			BuildNode( node );
@@ -429,5 +435,8 @@ namespace Saturn {
 
 		if( node->Position.x != 0.0f && node->Position.y != 0.0f )
 			ed::SetNodePosition( ed::NodeId( node->ID ), node->Position );
+
+		node->pOuter = this;
 	}
+
 }

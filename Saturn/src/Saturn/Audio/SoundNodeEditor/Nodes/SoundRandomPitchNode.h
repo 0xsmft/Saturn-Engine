@@ -34,6 +34,7 @@ namespace Saturn {
 
 	class SoundRandomPitchNode : public NodeEditorBlueprintNode
 	{
+		SAT_DECLARE_CLASS( SoundRandomPitchNode, NodeEditorBlueprintNode );
 	public:
 		SoundRandomPitchNode();
 		SoundRandomPitchNode( const std::string& rName );

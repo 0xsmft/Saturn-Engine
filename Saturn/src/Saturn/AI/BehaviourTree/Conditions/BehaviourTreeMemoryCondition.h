@@ -28,28 +28,66 @@
 
 #pragma once
 
-#include "NodeEditorNodeBase.h"
+#include "BehaviourTreeCondition.h"
 
 namespace Saturn {
 
-	class NodeEditorBase;
-
-	class GlobalNodesList
+	enum class BTMemoryConditionQueryType
 	{
-	public:
-		// NOTE: This is not an auto-register function!
-		// The parent layer must call this function to register the nodes!
-		static void RegisterLibrary( const std::unordered_map<NodeExecutionType, std::function<Ref<NodeEditorNodeBase>( Ref<NodeEditorBase> )>>& rNodeMap );
-
-		// NOTE: This is not an auto-register function!
-		// The parent layer must call this function to register the nodes!
-		static void Terminate();
-
-		// NOTE: This is not an auto-register function!
-		// The parent layer must call this function to register the nodes!
-		static void RegisterAll();
-
-	public:
-		static Ref<NodeEditorNodeBase> ConvertExecutionTypeToNode( NodeExecutionType executionType, Ref<NodeEditorBase> nodeEditorBase );
+		Set,
+		NotSet
 	};
+
+	inline std::string BTMemoryConditionQueryTypeToString( BTMemoryConditionQueryType type ) 
+	{
+		switch( type )
+		{
+			case BTMemoryConditionQueryType::Set:
+				return "Is Set";
+
+			case BTMemoryConditionQueryType::NotSet:
+				return "Is Not Set";
+
+			default: return "Unknown";
+		}
+	}
+
+	// BehaviourTreeMemoryCondition
+	//
+	// Condition if a blackboard key has a valid value or not, determined by the QueryType (BTMemoryConditionQueryType)
+	//
+	class BehaviourTreeMemoryCondition : public BehaviourTreeCondition
+	{
+		SAT_DECLARE_CLASS_MOVE( BehaviourTreeMemoryCondition, BehaviourTreeCondition )
+	public:
+		BehaviourTreeMemoryCondition();
+		~BehaviourTreeMemoryCondition();
+
+		//////////////////////////////////////////////////////////////////////////
+		// BehaviourTreeBaseTask
+
+		void InitialiseTask( BehaviourTreeNodeEditor* pEditor, BehaviourTreeNodeBase* pNode ) override;
+		BehaviourTreeTaskState Tick( Timestep ts ) override;
+		void Reset() override;
+
+	public:
+		//////////////////////////////////////////////////////////////////////////
+		// BehaviourTreeCondition
+
+#if !defined( SAT_DIST )
+		virtual void RenderDetails() override;
+		virtual std::string GetTitleText() const override;
+#endif
+		virtual void Serialise( std::ofstream& rStream ) const override;
+		virtual void Deserialise( std::ifstream& rStream ) override;
+
+	private:
+		BTMemoryConditionQueryType m_QueryType = BTMemoryConditionQueryType::Set;
+
+		// On Dist, we don't need to store our key spec, only with editor to allow us to select a target variable
+#if !defined( SAT_DIST )
+		Ref<BehaviourTreeMemoryKeySpec> m_VariableSpec;
+#endif
+	};
+
 }

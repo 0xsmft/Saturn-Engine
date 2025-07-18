@@ -45,8 +45,8 @@
 unsigned int result = x; \
 if( dtStatusFailed( (result) ) ) \
 { \
-	std::string errorText = Auxiliary::DetourErrorToString( result ); \
-	SAT_CORE_INFO( "[BehaviourTreeMoveToTask] Detour operation failed! Error code was DETOUR ERROR/{0}" ); \
+	const std::string errorText = Auxiliary::DetourErrorToString( result ); \
+	SAT_CORE_INFO( "[BehaviourTreeMoveToTask] Detour operation failed! Error code was DETOUR ERROR/{0}", errorText ); \
 	return BehaviourTreeTaskState::Failed; \
 }\
 }
@@ -142,3 +142,7 @@ namespace Saturn {
 	}
 
 }
+
+#include "Saturn/GameFramework/Core/EngineGenerated.h"
+
+//SAT_X31_CREATE_AUTO_REG( BehaviourTreeMoveToTask );

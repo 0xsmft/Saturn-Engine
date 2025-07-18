@@ -34,13 +34,14 @@ namespace Saturn {
 
 	class BehaviourTreeSelectorNode : public BehaviourTreeNodeBase
 	{
+		SAT_DECLARE_CLASS( BehaviourTreeSelectorNode, BehaviourTreeNodeBase );
 	public:
 		BehaviourTreeSelectorNode();
 		virtual ~BehaviourTreeSelectorNode();
 
 		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* pEvaluator ) override;
-		virtual void OnSerialise( std::ofstream& rStream ) const;
-		virtual void OnDeserialise( IStream& rStream );
+		virtual void Serialise( std::ofstream& rStream ) const;
+		virtual void Deserialise( FDependentIStream& rStream );
 		virtual BehaviourTreeBaseTask* ConvertToTask();
 
 		void AddChildren( const std::vector<UUID>& rChildrenID );

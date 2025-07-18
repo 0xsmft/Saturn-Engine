@@ -34,16 +34,27 @@
 
 namespace Saturn {
 
+	class BehaviourTreeCondition;
+
 	// The base class for all composite tasks
 	class BehaviourTreeCompositeBaseTask : public BehaviourTreeBaseTask
 	{
+		SAT_DECLARE_CLASS_MOVE( BehaviourTreeCompositeBaseTask, BehaviourTreeBaseTask )
 	public:
 		virtual void Reset() override;
+
+#if !defined(SAT_DIST)
+		// Composite tasks aren't normal tasks and thus cannot be created from the right click context menu (and would be a TaskNode) instead they are BehaviourTreeSelectorNode/SBehaviourTreeSequenceNode
+		[[nodiscard]] virtual bool IsSpawnableNode() const override final { return false; }
+		virtual const char* GetTaskName() const override final { return ""; }
+#endif
 
 	protected:
 		size_t m_CurrentTaskIndex = 0;
 		BehaviourTreeBaseTask* m_pCurrentTask = nullptr;
 		std::vector<BehaviourTreeBaseTask*> m_Children;
+
+		BehaviourTreeCondition* m_pNodeCondition = nullptr;
 	};
 
 	// Selector
@@ -52,6 +63,7 @@ namespace Saturn {
 	// Though not atomic tasks, composite nodes like Selectors implement the same API as BehaviourTreeBaseTask.
 	class BehaviourTreeSelectorTask : public BehaviourTreeCompositeBaseTask
 	{
+		SAT_DECLARE_CLASS_MOVE( BehaviourTreeSelectorTask, BehaviourTreeCompositeBaseTask )
 	public:
 		BehaviourTreeSelectorTask();
 		virtual ~BehaviourTreeSelectorTask();
@@ -69,6 +81,7 @@ namespace Saturn {
 	// Though not atomic tasks, composite nodes like Sequence implement the same API as BehaviourTreeBaseTask.
 	class BehaviourTreeSequenceTask : public BehaviourTreeCompositeBaseTask
 	{
+		SAT_DECLARE_CLASS_MOVE( BehaviourTreeSequenceTask, BehaviourTreeCompositeBaseTask )
 	public:
 		BehaviourTreeSequenceTask();
 		virtual ~BehaviourTreeSequenceTask();

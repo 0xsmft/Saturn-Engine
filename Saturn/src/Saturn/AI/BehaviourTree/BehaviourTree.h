@@ -56,11 +56,10 @@ namespace Saturn {
 	private:
 		// The "BehaviourTree" class is not an asset however BehaviourTree are an asset
 		Ref<Asset> m_BehaviourTreeAsset;
-		Ref<BehaviourTreeEditorEvaluator> m_Runtime;
 		Ref<BehaviourTreeNodeEditor> m_NodeEditor;
 
-		// TODO: Weak Ref? #WREF_BehaviourTreeBaseTask
-		Ref<AIAgentEntity> m_AIAgentEntity;
+		// TODO: Weak Ref? #WREF_BehaviourTreeBaseTask, non owning ptr
+		AIAgentEntity* m_AIAgentEntity = nullptr;
 
 		UUID m_OutputNodeID = 0;
 	};

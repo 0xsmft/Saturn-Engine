@@ -27,24 +27,40 @@
 */
 
 #include "sppch.h"
-#include "BehaviourTreeSelectorNode.h"
+#include "BehaviourTreeTaskNode.h"
 
-#include "Saturn/AI/BehaviourTree/Tasks/BehaviourTreeCompositeTasks.h"
+#include "Saturn/GameFramework/core/ClassMetadataHandler.h"
 
-#include "Saturn/NodeEditor/NodeEditorBase.h"
-#include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeEditorEvaluator.h"
+#include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeNodeEditor.h"
 
 namespace Saturn {
 
-	BehaviourTreeSelectorNode::BehaviourTreeSelectorNode()
-		: BehaviourTreeNodeBase( "Selector" )
+	BehaviourTreeTaskNode::BehaviourTreeTaskNode()
+		: BehaviourTreeNodeBase( "<NULL TASK>" )
 	{
-		CreateNode();
+		SetTaskInstance( nullptr );
 	}
 
-	void BehaviourTreeSelectorNode::CreateNode()
+	BehaviourTreeTaskNode::BehaviourTreeTaskNode( BehaviourTreeBaseTask* pTaskInstance )
+		: BehaviourTreeNodeBase( pTaskInstance->GetTaskName() ), m_TaskInstance( pTaskInstance )
 	{
-		ExecutionType = NodeExecutionType::BehaviourTreeSelectorNode;
+		SetTaskInstance( pTaskInstance );
+	}
+
+	void BehaviourTreeTaskNode::SetTaskInstance( BehaviourTreeBaseTask* pTaskInstance )
+	{
+		m_TaskInstance = pTaskInstance;
+
+		CreateNode();
+
+#if !defined(SAT_DIST)
+		m_MemVariable = Ref<BehaviourTreeMemoryKeySpec>::Create();
+#endif
+	}
+
+	void BehaviourTreeTaskNode::CreateNode()
+	{
+		ExecutionType = NodeExecutionType::BehaviourTreeGeneralTaskNode;
 
 #if !defined(SAT_DIST)
 		Color = ImColor( 48, 128, 255, 100 );
@@ -52,12 +68,6 @@ namespace Saturn {
 #endif
 
 		Inputs.push_back( Ref<Pin>::Create( "In", PinType::Flow, PinKind::Input ) );
-		Outputs.push_back( Ref<Pin>::Create( "Out", PinType::Flow, PinKind::Output ) );
-
-		for( auto& rOutput : Outputs )
-		{
-			rOutput->RenderType = PinRenderType::Tree;
-		}
 
 		for( auto& rInput : Inputs )
 		{
@@ -65,52 +75,66 @@ namespace Saturn {
 		}
 	}
 
-	BehaviourTreeSelectorNode::~BehaviourTreeSelectorNode()
+	BehaviourTreeTaskNode::~BehaviourTreeTaskNode()
 	{
-		Reset();
 	}
 
-	NodeEvaluationState BehaviourTreeSelectorNode::EvaluateNode( NodeEditorRuntime* pEvaluator )
+	NodeEvaluationState BehaviourTreeTaskNode::EvaluateNode( NodeEditorRuntime* pEvaluator )
 	{
 		return NodeEvaluationState::Failed;
 	}
 
-	void BehaviourTreeSelectorNode::Serialise( std::ofstream& rStream ) const
+	void BehaviourTreeTaskNode::Serialise( std::ofstream& rStream ) const
 	{
 		BehaviourTreeNodeBase::Serialise( rStream );
 
-		RawSerialisation::WriteVector( m_Children, rStream );
+		RawSerialisation::WriteString( m_TaskInstance->GetClass()->GetName(), rStream );
+
+		m_TaskInstance->Serialise( rStream );
 	}
 
-	void BehaviourTreeSelectorNode::Deserialise( FDependentIStream& rStream )
+	void BehaviourTreeTaskNode::Deserialise( FDependentIStream& rStream )
 	{
 		BehaviourTreeNodeBase::Deserialise( rStream );
 
-		RawSerialisation::ReadVector( m_Children, rStream );
-	}
+		const std::string& className = RawSerialisation::ReadString( rStream );
+	
+		BehaviourTreeBaseTask* pObject = dynamic_cast< BehaviourTreeBaseTask* >( ClassMetadataHandler::Get().CreateClassObject( className ) );
 
-	BehaviourTreeBaseTask* BehaviourTreeSelectorNode::ConvertToTask()
-	{
-		return new BehaviourTreeSelectorTask();
-	}
-
-	void BehaviourTreeSelectorNode::AddChildren( const std::vector<UUID>& rChildrenID )
-	{
-		for( auto& rID : rChildrenID )
+		if( pObject )
 		{
-			m_Children.emplace_back( rID );
+			// Promote to strong ref.
+			m_TaskInstance = pObject;
+			Name = m_TaskInstance->GetTaskName();
 		}
+		else
+			delete ( SObject* )pObject;
+
+		m_TaskInstance->Deserialise( rStream );
 	}
 
-	void BehaviourTreeSelectorNode::Reset()
+	void BehaviourTreeTaskNode::PostDeserialise()
 	{
-		m_Children.clear();
-		m_CurrentNode = nullptr;
-		m_CurrentNodeID = 0;
 	}
+
+#if !defined( SAT_DIST )
+	void BehaviourTreeTaskNode::RenderDetails()
+	{
+		m_TaskInstance->RenderDetails();
+
+		const std::string dbgText = std::format( "{0} ~ {1}", m_TaskInstance->GetTaskName(), m_TaskInstance->GetClass()->GetName() );
+		ImGui::TextDisabled( dbgText.c_str() );
+	}
+
+	void BehaviourTreeTaskNode::OnRenderExtra()
+	{
+		m_TaskInstance->OnRenderExtra();
+	}
+
+#endif
 
 }
 
 #include "Saturn/GameFramework/Core/EngineGenerated.h"
 
-SAT_X31_CREATE_AUTO_REG( BehaviourTreeSelectorNode );
+SAT_X31_CREATE_AUTO_REG( BehaviourTreeTaskNode );

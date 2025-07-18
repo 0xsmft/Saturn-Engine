@@ -28,21 +28,60 @@
 
 #pragma once
 
-#include "Saturn/NodeEditor/NodeEditorBlueprintNode.h"
+#include "BehaviourTreeNodeBase.h"
 
 namespace Saturn {
 
-	class SoundRandomNode : public NodeEditorBlueprintNode
+	class BehaviourTreeTaskNode : public BehaviourTreeNodeBase
 	{
+		SAT_DECLARE_CLASS( BehaviourTreeTaskNode, BehaviourTreeNodeBase );
 	public:
-		SoundRandomNode();
-		SoundRandomNode( const std::string& rName );
+		// NOTE: INTERNAL, FOR USE WHEN DESERIALSING NODE EDITOR!
+		BehaviourTreeTaskNode();
 
-		virtual ~SoundRandomNode();
+		BehaviourTreeTaskNode( BehaviourTreeBaseTask* pTaskInstance );
+		virtual ~BehaviourTreeTaskNode();
 
-		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
+	public:
+		//////////////////////////////////////////////////////////////////////////
+		// NodeEditorNodeBase
+
+		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* pEvaluator ) override;
+		virtual void Serialise( std::ofstream& rStream ) const override;
+		virtual void Deserialise( FDependentIStream& rStream ) override;
+
+	public:
+		//////////////////////////////////////////////////////////////////////////
+		// BehaviourTreeNodeBase
+
+		virtual BehaviourTreeBaseTask* ConvertToTask() override { return nullptr; }
+		virtual void PostDeserialise() override;
+
+#if !defined(SAT_DIST)
+		virtual void RenderDetails() override;
+
+	public:
+		//////////////////////////////////////////////////////////////////////////
+		// NodeEditorTreeNode
+
+		virtual void OnRenderExtra() override;
+#endif
+		void SetTaskInstance( BehaviourTreeBaseTask* pTaskInstance );
+
+	public:
+		inline Ref<BehaviourTreeBaseTask> GetTaskInstance() const { return m_TaskInstance; }
 
 	private:
 		void CreateNode();
+
+	private:
+		Ref<BehaviourTreeBaseTask> m_TaskInstance;
+		UUID m_MemoryVariableID = 0;
+
+#if !defined(SAT_DIST)
+		// Only when in Editor, used for selecting a memory variable
+		Ref<BehaviourTreeMemoryKeySpec> m_MemVariable;
+#endif
 	};
+		
 }

@@ -27,90 +27,44 @@
 */
 
 #include "sppch.h"
-#include "BehaviourTreeSelectorNode.h"
+#include "BehaviourTreeCondition.h"
 
-#include "Saturn/AI/BehaviourTree/Tasks/BehaviourTreeCompositeTasks.h"
+#include "Saturn/Serialisation/RawSerialisation.h"
 
-#include "Saturn/NodeEditor/NodeEditorBase.h"
-#include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeEditorEvaluator.h"
+#if !defined( SAT_DIST )
+#include "Saturn/Asset/AssetManager.h"
+#endif
 
 namespace Saturn {
 
-	BehaviourTreeSelectorNode::BehaviourTreeSelectorNode()
-		: BehaviourTreeNodeBase( "Selector" )
+	void BehaviourTreeCondition::SetupMemVariable( AssetID memSpecID )
 	{
-		CreateNode();
-	}
-
-	void BehaviourTreeSelectorNode::CreateNode()
-	{
-		ExecutionType = NodeExecutionType::BehaviourTreeSelectorNode;
-
-#if !defined(SAT_DIST)
-		Color = ImColor( 48, 128, 255, 100 );
-		Type = NodeRenderType::Tree;
+#if !defined( SAT_DIST )
+		m_BlackboardSpec = AssetManager::Get().GetAssetAs<BehaviourTreeMemorySpecification>( memSpecID );
 #endif
-
-		Inputs.push_back( Ref<Pin>::Create( "In", PinType::Flow, PinKind::Input ) );
-		Outputs.push_back( Ref<Pin>::Create( "Out", PinType::Flow, PinKind::Output ) );
-
-		for( auto& rOutput : Outputs )
-		{
-			rOutput->RenderType = PinRenderType::Tree;
-		}
-
-		for( auto& rInput : Inputs )
-		{
-			rInput->RenderType = PinRenderType::Tree;
-		}
 	}
 
-	BehaviourTreeSelectorNode::~BehaviourTreeSelectorNode()
+	//////////////////////////////////////////////////////////////////////////
+
+	void BehaviourTreeCondition::Serialise( std::ofstream& rStream ) const
 	{
-		Reset();
+		RawSerialisation::WriteObject( m_RTBlackboardVariableID, rStream );
+		RawSerialisation::WriteObject( (std::underlying_type_t<BehaviourTreeConditionType>)m_ConditionType, rStream );
+		RawSerialisation::WriteString( m_Title, rStream );
 	}
 
-	NodeEvaluationState BehaviourTreeSelectorNode::EvaluateNode( NodeEditorRuntime* pEvaluator )
+	void BehaviourTreeCondition::Deserialise( std::ifstream& rStream )
 	{
-		return NodeEvaluationState::Failed;
-	}
+		RawSerialisation::ReadObject( m_RTBlackboardVariableID, rStream );
+		RawSerialisation::ReadObject( m_ConditionType, rStream );
 
-	void BehaviourTreeSelectorNode::Serialise( std::ofstream& rStream ) const
-	{
-		BehaviourTreeNodeBase::Serialise( rStream );
-
-		RawSerialisation::WriteVector( m_Children, rStream );
-	}
-
-	void BehaviourTreeSelectorNode::Deserialise( FDependentIStream& rStream )
-	{
-		BehaviourTreeNodeBase::Deserialise( rStream );
-
-		RawSerialisation::ReadVector( m_Children, rStream );
-	}
-
-	BehaviourTreeBaseTask* BehaviourTreeSelectorNode::ConvertToTask()
-	{
-		return new BehaviourTreeSelectorTask();
-	}
-
-	void BehaviourTreeSelectorNode::AddChildren( const std::vector<UUID>& rChildrenID )
-	{
-		for( auto& rID : rChildrenID )
-		{
-			m_Children.emplace_back( rID );
-		}
-	}
-
-	void BehaviourTreeSelectorNode::Reset()
-	{
-		m_Children.clear();
-		m_CurrentNode = nullptr;
-		m_CurrentNodeID = 0;
+		m_Title = RawSerialisation::ReadString( rStream );
 	}
 
 }
 
+//////////////////////////////////////////////////////////////////////////
+
 #include "Saturn/GameFramework/Core/EngineGenerated.h"
 
-SAT_X31_CREATE_AUTO_REG( BehaviourTreeSelectorNode );
+SAT_X31_CREATE_AUTO_REG( BehaviourTreeCondition );

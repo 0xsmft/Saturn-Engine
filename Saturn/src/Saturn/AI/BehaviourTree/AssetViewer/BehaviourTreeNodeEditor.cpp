@@ -32,15 +32,20 @@
 
 #include "BehaviourTreeNodeEditor.h"
 
-#include "BehaviourTreeEditorEvaluator.h"
-
+#include "Nodes/BehaviourTreeTaskNode.h"
 #include "Nodes/BehaviourTreeNodeBase.h"
 
+#include "BehaviourTreeEditorEvaluator.h"
+
 #include "Saturn/AI/BehaviourTree/Tasks/BehaviourTreeBaseTask.h"
+#include "Saturn/AI/BehaviourTree/Tasks/BehaviourTreeCompositeTasks.h"
+
 #include "Saturn/AI/AIAgentEntity.h"
 #include "Saturn/AI/BehaviourTree/BehaviourTreeMemoryAssetViewer.h"
 
 #include "Saturn/ImGui/ImGuiWindowManager.h"
+
+#include "Saturn/GameFramework/SClass.h"
 
 #if !defined(SAT_DIST)
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
@@ -61,21 +66,10 @@ namespace Saturn {
 
 	BehaviourTreeNodeEditor::~BehaviourTreeNodeEditor()
 	{
-		for( auto&& [id, rNode] : m_Nodes )
-		{
-			Ref<BehaviourTreeNodeBase> treeNode = rNode.As<BehaviourTreeNodeBase>();
-			if( treeNode )
-			{
-				treeNode->BTMemorySpecification = nullptr;
-			}
-		}
-
-		for( auto& [id, pTask] : m_Tasks )
-		{
-			delete pTask;
-		}
-
+		m_CurrentTask = nullptr;
+		m_LevelOneTasks.clear();
 		m_Tasks.clear();
+
 		m_Runtime = nullptr;
 	}
 
@@ -116,8 +110,8 @@ namespace Saturn {
 				std::sort( rNeighbours.begin(), rNeighbours.end(),
 					[ this ]( const UUID& a, const UUID& b )
 				{
-					auto nodeA = FindNode( a );
-					auto nodeB = FindNode( b );
+					const auto nodeA = FindNode( a );
+					const auto nodeB = FindNode( b );
 					return nodeA->Position.x < nodeB->Position.x;
 				} );
 
@@ -155,7 +149,12 @@ namespace Saturn {
 		}
 	}
 
-	void BehaviourTreeNodeEditor::InitBehaviourTree()
+	void BehaviourTreeNodeEditor::SetTargetAgent( AIAgentEntity* pAgent )
+	{
+		m_pAIAgentEntity = pAgent;
+	}
+
+	void BehaviourTreeNodeEditor::InitBBAndTasks()
 	{
 		if( m_BlackboardSpec )
 		{
@@ -166,39 +165,46 @@ namespace Saturn {
 		size_t levelIndex = 0;
 		for( const auto& [id, rNode] : m_Nodes )
 		{
-			Ref<BehaviourTreeNodeBase> behaviourTreeNode = rNode.As<BehaviourTreeNodeBase>();
-			if( behaviourTreeNode )
+			if( rNode->GetClass()->IsChildOf( BehaviourTreeTaskNode::StaticClass() ) )
 			{
-				auto Itr = std::find_if( m_EvaluationOrder.begin(), m_EvaluationOrder.end(), 
-					[ id ](const auto& rInfo)
+				Ref<BehaviourTreeTaskNode> taskNode = rNode.As<BehaviourTreeTaskNode>();
+				m_Tasks[ id ] = taskNode->GetTaskInstance().Get();
+
+				continue;
+			}
+			else
+			{
+				Ref<BehaviourTreeNodeBase> behaviourTreeNode = rNode.As<BehaviourTreeNodeBase>();
+
+				auto Itr = std::find_if( m_EvaluationOrder.begin(), m_EvaluationOrder.end(),
+					[ id ]( const auto& rInfo )
 				{
 					return rInfo.NodeID == id;
 				} );
 
-				auto* pTask = behaviourTreeNode->ConvertToTask();
-				if( pTask )
-				{
-					m_Tasks[ id ] = pTask;
-				}
-
 				if( Itr != m_EvaluationOrder.end() )
 				{
+					auto* pTask = behaviourTreeNode->ConvertToTask();
+
 					// Found at level one add to list.
 					m_LevelOneTasks[ levelIndex++ ] = pTask;
+					m_Tasks[ id ] = pTask;
 				}
 			}
 		}
 
 		// Init all tasks
-		for( const auto& [id, pTask] : m_Tasks )
+		for( auto& [id, pTask] : m_Tasks )
 		{
 			BehaviourTreeNodeBase* pNode = dynamic_cast< BehaviourTreeNodeBase* >( m_Nodes[ id ].Get() );
-			pTask->SetBlackboard( m_Blackboard );
+
+			// NOTE: Use raw ptr because we don't want tasks to stop the destruction of the blackboard
+			pTask->SetBlackboard( m_Blackboard.Get() );
 			pTask->InitialiseTask( this, pNode );
 		}
 	}
 
-	BehaviourTreeBaseTask* BehaviourTreeNodeEditor::GetTaskFor( UUID node )
+	Ref<BehaviourTreeBaseTask> BehaviourTreeNodeEditor::GetTaskFor( UUID node ) const
 	{
 		auto Itr = m_Tasks.find( node );
 		if( Itr != m_Tasks.end() )
@@ -240,8 +246,7 @@ namespace Saturn {
 
 		if( ImGui::Button( "Open Tree Memory" ) )
 		{
-			Ref<Asset> asset = AssetManager::Get().FindAsset( m_BehaviourTreeMemoryAssetID );
-
+			const Ref<Asset> asset = AssetManager::Get().FindAsset( m_BehaviourTreeMemoryAssetID );
 			if( asset )
 			{
 				std::string windowName = std::format( "{0}##{1}", asset->Name, ( uint64_t ) m_BehaviourTreeMemoryAssetID );
@@ -294,6 +299,8 @@ namespace Saturn {
 					m_BehaviourTreeMemoryAssetID = tempID;
 
 					AssetManager::Get().RegisterAssetDependency( m_AssetID, m_BehaviourTreeMemoryAssetID );
+
+					m_BlackboardSpec = AssetManager::Get().GetAssetAs< BehaviourTreeMemorySpecification>( m_BehaviourTreeMemoryAssetID );
 				}
 
 				if( m_BehaviourTreeMemoryAssetID != 0 )
@@ -345,47 +352,52 @@ namespace Saturn {
 			pTask->Reset();
 		}
 
-		m_pCurrentTask = nullptr;
+		m_CurrentTask = nullptr;
 		m_CurrentTaskIndex = 0;
 	}
 
-	Ref<AIAgentEntity> BehaviourTreeNodeEditor::GetTargetAgent() const
+	AIAgentEntity* BehaviourTreeNodeEditor::GetTargetAgent() const
 	{
-		return m_AIAgentEntity;
+		return m_pAIAgentEntity;
 	}
 
 	void BehaviourTreeNodeEditor::Tick( Timestep ts )
 	{
-		if( m_pCurrentTask )
+		if( m_CurrentTask )
 		{
-			auto status = m_pCurrentTask->Tick( ts );
-
+			const auto status = m_CurrentTask->Tick( ts );
 			if( status == BehaviourTreeTaskState::Completed )
 			{
 				// Move on to the next one
-				m_pCurrentTask = nullptr;			
+				m_CurrentTask = nullptr;			
 			}
+#if !defined(SAT_DIST)
 			else if( status == BehaviourTreeTaskState::Starting )
 			{
 				FindTreeFlow();
 			}
+#endif
 		}
 
-		if( m_pCurrentTask == nullptr )
+		if( m_CurrentTask == nullptr )
 		{
 			if( m_CurrentTaskIndex + 1 > m_LevelOneTasks.size() )
 			{
 				m_CurrentTaskIndex = 0;
-				m_pCurrentTask = nullptr;
+				m_CurrentTask = nullptr;
 			
 				// Tree is completed or a node has failed, restart from the root node
 				ResetAllTasks();
 
+#if !defined(SAT_DIST)
+				ed::StopFlow();
+
 				SAT_CORE_INFO( "Tree completed, restarting..." );
+#endif
 			}
 			else
 			{
-				m_pCurrentTask = m_LevelOneTasks.at( m_CurrentTaskIndex++ );
+				m_CurrentTask = m_LevelOneTasks.at( m_CurrentTaskIndex++ );
 			}
 		}
 
@@ -395,6 +407,103 @@ namespace Saturn {
 	}
 
 #if !defined(SAT_DIST)
+	void BehaviourTreeNodeEditor::ShowTreeFlow()
+	{
+		VariableGuard<ed::EditorContext*> guard( m_Editor );
+
+		ShowFlow( m_EditorLinkPath );
+	}
+
+	void BehaviourTreeNodeEditor::FindTreeFlow()
+	{
+		if( !m_CurrentTask )
+			return;
+
+		m_EditorLinkPath.clear();
+		ed::StopFlow();
+
+		Ref<BehaviourTreeNodeBase> rootNode = FindNode( m_CurrentTask->GetNodeID() ).As<BehaviourTreeNodeBase>();
+		BuildFlow( rootNode );
+	}
+
+	void BehaviourTreeNodeEditor::BuildFlow( Ref<BehaviourTreeNodeBase> node )
+	{
+		if( !node || node->Inputs.empty() )
+			return;
+
+		const Ref<Link> link = FindLinkByPin( node->Inputs[ 0 ]->ID );
+		if( link )
+			m_EditorLinkPath.push_back( link );
+
+		// TODO: To avoid code dupe we should create a base class or a template function
+		switch( node->ExecutionType )
+		{
+			case NodeExecutionType::BehaviourTreeSequenceNode:
+			{
+				Ref<BehaviourTreeSequenceNode> seq = node.As<BehaviourTreeSequenceNode>();
+				if( !seq )
+					break;
+
+				for( const auto& childNodeID : seq->GetChildren() )
+				{
+					auto itr = m_Tasks.find( childNodeID );
+					if( itr != m_Tasks.end() )
+					{
+						auto& rChildTask = itr->second;
+						if( !rChildTask )
+							continue;
+
+						// Only recurse into running or starting tasks
+						if( rChildTask->GetState() == BehaviourTreeTaskState::Running ||
+							rChildTask->GetState() == BehaviourTreeTaskState::Starting )
+						{
+							Ref<BehaviourTreeNodeBase> childNode = FindNode( childNodeID ).As<BehaviourTreeNodeBase>();
+							if( childNode )
+							{
+								BuildFlow( childNode );
+								break;
+							}
+						}
+					}
+				}
+			} break;
+
+			case NodeExecutionType::BehaviourTreeSelectorNode:
+			{
+				Ref<BehaviourTreeSelectorNode> selector = node.As<BehaviourTreeSelectorNode>();
+				if( !selector )
+					break;
+
+				for( const auto& childNodeID : selector->GetChildren() )
+				{
+					auto itr = m_Tasks.find( childNodeID );
+					if( itr != m_Tasks.end() )
+					{
+						auto& rChildTask = itr->second;
+						if( !rChildTask )
+							continue;
+
+						// Only recurse into running or starting tasks
+						if( rChildTask->GetState() == BehaviourTreeTaskState::Running ||
+							rChildTask->GetState() == BehaviourTreeTaskState::Starting )
+						{
+							Ref<BehaviourTreeNodeBase> childNode = FindNode( childNodeID ).As<BehaviourTreeNodeBase>();
+							if( childNode )
+							{
+								// Recursive step
+								BuildFlow( childNode ); 
+								break;
+							}
+						}
+
+					}
+				}
+			} break;
+
+			default: break;
+		}
+	}
+
 	void BehaviourTreeNodeEditor::SerialiseData( std::ofstream& rStream )
 	{
 		BehaviourTreeNodeEditorSuper::SerialiseData( rStream );
@@ -419,8 +528,6 @@ namespace Saturn {
 				Ref<BehaviourTreeNodeBase> treeNode = rNode.As<BehaviourTreeNodeBase>();
 				if( treeNode )
 				{
-					treeNode->BTMemorySpecification = m_BlackboardSpec;
-
 					treeNode->PostDeserialise();
 				}
 			}

@@ -34,7 +34,7 @@ namespace Saturn {
 
 	class NodeEditorTreeNode : public NodeEditorNodeBase
 	{
-		SAT_NODE_EDITOR_NODE_BODY( NodeExecutionType::None );
+		SAT_DECLARE_CLASS( NodeEditorTreeNode, NodeEditorNodeBase );
 	public:
 		NodeEditorTreeNode() = default;
 		NodeEditorTreeNode( const std::string& rName );
@@ -49,8 +49,9 @@ namespace Saturn {
 	public:
 		//////////////////////////////////////////////////////////////////////////
 		// NodeEditorNodeBase
-		void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, NodeEditorBase* pBase ) override final;
-		NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
+		
+		virtual void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder ) override final;
+		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override { return NodeEvaluationState::Failed; }
 	};
 	
 }

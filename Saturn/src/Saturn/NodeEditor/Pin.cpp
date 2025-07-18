@@ -263,26 +263,22 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// SERIAILSATION
 
-	void Pin::Serialise( const Ref<Pin>& rObject, std::ofstream& rStream )
+	void Pin::Serialise( std::ofstream& rStream ) const
 	{
-		RawSerialisation::WriteObject( rObject->ID, rStream );
+		RawSerialisation::WriteObject( ID, rStream );
 
-		RawSerialisation::WriteString( rObject->Name, rStream );
-		RawSerialisation::WriteObject( rObject->Type, rStream );
-		RawSerialisation::WriteObject( rObject->Kind, rStream );
-
-		rObject->OnSerialise( rStream );
+		RawSerialisation::WriteString( Name, rStream );
+		RawSerialisation::WriteObject( Type, rStream );
+		RawSerialisation::WriteObject( Kind, rStream );
 	}
 
-	void Pin::Deserialise( Ref<Pin>& rObject, IStream& rStream )
+	void Pin::Deserialise( FDependentIStream& rStream )
 	{
-		RawSerialisation::ReadObject( rObject->ID, rStream );
+		RawSerialisation::ReadObject( ID, rStream );
 
-		rObject->Name = RawSerialisation::ReadString( rStream );
-		RawSerialisation::ReadObject( rObject->Type, rStream );
-		RawSerialisation::ReadObject( rObject->Kind, rStream );
-
-		rObject->OnDeserialise( rStream );
+		Name = RawSerialisation::ReadString( rStream );
+		RawSerialisation::ReadObject( Type, rStream );
+		RawSerialisation::ReadObject( Kind, rStream );
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -324,13 +320,17 @@ namespace Saturn {
 		ImGui::Spring( 0 );
 	}
 
-	void FloatPin::OnSerialise( std::ofstream& rStream ) const
+	void FloatPin::Serialise( std::ofstream& rStream ) const
 	{
+		Pin::Serialise( rStream );
+
 		RawSerialisation::WriteObject( Data, rStream );
 	}
 
-	void FloatPin::OnDeserialise( IStream& rStream )
+	void FloatPin::Deserialise( FDependentIStream& rStream )
 	{
+		Pin::Deserialise( rStream );
+
 		RawSerialisation::ReadObject( Data, rStream );
 	}
 
@@ -360,13 +360,17 @@ namespace Saturn {
 		ImGui::Spring( 0 );
 	}
 
-	void IntPin::OnSerialise( std::ofstream& rStream ) const
+	void IntPin::Serialise( std::ofstream& rStream ) const
 	{
+		Pin::Serialise( rStream );
+
 		RawSerialisation::WriteObject( Data, rStream );
 	}
 
-	void IntPin::OnDeserialise( IStream& rStream )
+	void IntPin::Deserialise( FDependentIStream& rStream )
 	{
+		Pin::Deserialise( rStream );
+
 		RawSerialisation::ReadObject( Data, rStream );
 	}
 
@@ -396,13 +400,17 @@ namespace Saturn {
 		ImGui::Spring( 0 );
 	}
 
-	void BoolPin::OnSerialise( std::ofstream& rStream ) const
+	void BoolPin::Serialise( std::ofstream& rStream ) const
 	{
+		Pin::Serialise( rStream );
+
 		RawSerialisation::WriteObject( Data, rStream );
 	}
 
-	void BoolPin::OnDeserialise( IStream& rStream )
+	void BoolPin::Deserialise( FDependentIStream& rStream )
 	{
+		Pin::Deserialise( rStream );
+
 		RawSerialisation::ReadObject( Data, rStream );
 	}
 

@@ -26,91 +26,24 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "BehaviourTreeSelectorNode.h"
+#pragma once
 
-#include "Saturn/AI/BehaviourTree/Tasks/BehaviourTreeCompositeTasks.h"
-
-#include "Saturn/NodeEditor/NodeEditorBase.h"
-#include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeEditorEvaluator.h"
+#include "Saturn/NodeEditor/NodeEditorBlueprintNode.h"
 
 namespace Saturn {
 
-	BehaviourTreeSelectorNode::BehaviourTreeSelectorNode()
-		: BehaviourTreeNodeBase( "Selector" )
+	class SoundRandomSoundNode : public NodeEditorBlueprintNode
 	{
-		CreateNode();
-	}
+		SAT_DECLARE_CLASS( SoundRandomSoundNode, NodeEditorBlueprintNode );
+	public:
+		SoundRandomSoundNode();
+		SoundRandomSoundNode( const std::string& rName );
 
-	void BehaviourTreeSelectorNode::CreateNode()
-	{
-		ExecutionType = NodeExecutionType::BehaviourTreeSelectorNode;
+		virtual ~SoundRandomSoundNode();
 
-#if !defined(SAT_DIST)
-		Color = ImColor( 48, 128, 255, 100 );
-		Type = NodeRenderType::Tree;
-#endif
+		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
 
-		Inputs.push_back( Ref<Pin>::Create( "In", PinType::Flow, PinKind::Input ) );
-		Outputs.push_back( Ref<Pin>::Create( "Out", PinType::Flow, PinKind::Output ) );
-
-		for( auto& rOutput : Outputs )
-		{
-			rOutput->RenderType = PinRenderType::Tree;
-		}
-
-		for( auto& rInput : Inputs )
-		{
-			rInput->RenderType = PinRenderType::Tree;
-		}
-	}
-
-	BehaviourTreeSelectorNode::~BehaviourTreeSelectorNode()
-	{
-		Reset();
-	}
-
-	NodeEvaluationState BehaviourTreeSelectorNode::EvaluateNode( NodeEditorRuntime* pEvaluator )
-	{
-		return NodeEvaluationState::Failed;
-	}
-
-	void BehaviourTreeSelectorNode::Serialise( std::ofstream& rStream ) const
-	{
-		BehaviourTreeNodeBase::Serialise( rStream );
-
-		RawSerialisation::WriteVector( m_Children, rStream );
-	}
-
-	void BehaviourTreeSelectorNode::Deserialise( FDependentIStream& rStream )
-	{
-		BehaviourTreeNodeBase::Deserialise( rStream );
-
-		RawSerialisation::ReadVector( m_Children, rStream );
-	}
-
-	BehaviourTreeBaseTask* BehaviourTreeSelectorNode::ConvertToTask()
-	{
-		return new BehaviourTreeSelectorTask();
-	}
-
-	void BehaviourTreeSelectorNode::AddChildren( const std::vector<UUID>& rChildrenID )
-	{
-		for( auto& rID : rChildrenID )
-		{
-			m_Children.emplace_back( rID );
-		}
-	}
-
-	void BehaviourTreeSelectorNode::Reset()
-	{
-		m_Children.clear();
-		m_CurrentNode = nullptr;
-		m_CurrentNodeID = 0;
-	}
-
+	private:
+		void CreateNode();
+	};
 }
-
-#include "Saturn/GameFramework/Core/EngineGenerated.h"
-
-SAT_X31_CREATE_AUTO_REG( BehaviourTreeSelectorNode );

@@ -29,6 +29,8 @@
 #include "sppch.h"
 #include "BehaviourTreeCompositeTasks.h"
 
+#include "Saturn/AI/BehaviourTree/Conditions/BehaviourTreeCondition.h"
+
 #include "Saturn/AI/AIAgentEntity.h"
 #include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeNodeEditor.h"
 
@@ -62,10 +64,16 @@ namespace Saturn {
 		{
 			for( const auto& rNode : pSelectorNode->GetChildren() )
 			{
-				m_Children.push_back( pBehaviourTreeNodeEditor->GetTaskFor( rNode ) );
+				m_Children.push_back( pBehaviourTreeNodeEditor->GetTaskFor( rNode ).Get() );
 			}
 
 			m_NodeID = pSelectorNode->ID;
+
+			m_pNodeCondition = pSelectorNode->NodeCondition.Get();
+			if( m_pNodeCondition )
+			{
+				m_pNodeCondition->InitialiseTask( pEditor, pNode );
+			}
 		}
 	}
 
@@ -76,11 +84,18 @@ namespace Saturn {
 
 	BehaviourTreeTaskState BehaviourTreeSelectorTask::Tick( Timestep ts )
 	{
+		// Next, check our condition, if any
+		if( m_pNodeCondition )
+		{
+			if( const auto status = m_pNodeCondition->Tick( ts ); status != BehaviourTreeTaskState::Completed )
+				return status;
+		}
+
 		for( auto* pTask : m_Children )
 		{
 			if( pTask )
 			{
-				auto status = pTask->Tick( ts );
+				const auto status = pTask->Tick( ts );
 				if( status != BehaviourTreeTaskState::Failed )
 				{
 					m_CurrentState = status;
@@ -104,15 +119,21 @@ namespace Saturn {
 	{
 		BehaviourTreeNodeEditor* pBehaviourTreeNodeEditor = dynamic_cast< BehaviourTreeNodeEditor* >( pEditor );
 
-		BehaviourTreeSequenceNode* pSelectorNode = dynamic_cast< BehaviourTreeSequenceNode* >( pNode );
-		if( pSelectorNode )
+		BehaviourTreeSequenceNode* pSequenceNode = dynamic_cast< BehaviourTreeSequenceNode* >( pNode );
+		if( pSequenceNode )
 		{
-			for( const auto& rNode : pSelectorNode->GetChildren() )
+			for( const auto& rNode : pSequenceNode->GetChildren() )
 			{
-				m_Children.push_back( pBehaviourTreeNodeEditor->GetTaskFor( rNode ) );
+				m_Children.push_back( pBehaviourTreeNodeEditor->GetTaskFor( rNode ).Get() );
 			}
 
-			m_NodeID = pSelectorNode->ID;
+			m_NodeID = pSequenceNode->ID;
+
+			m_pNodeCondition = pSequenceNode->NodeCondition.Get();
+			if( m_pNodeCondition )
+			{
+				m_pNodeCondition->InitialiseTask( pEditor, pNode );
+			}
 		}
 	}
 
@@ -128,6 +149,13 @@ namespace Saturn {
 		{
 			m_CurrentState = BehaviourTreeTaskState::Completed;
 			return m_CurrentState;
+		}
+
+		// Next, check our condition, if any
+		if( m_pNodeCondition )
+		{
+			if( const auto status = m_pNodeCondition->Tick( ts ); status != BehaviourTreeTaskState::Completed )
+				return status;
 		}
 
 		// Get try current task.
@@ -177,3 +205,9 @@ namespace Saturn {
 	}
 
 }
+
+#include "Saturn/GameFramework/Core/EngineGenerated.h"
+
+SAT_X31_CREATE_AUTO_REG( BehaviourTreeCompositeBaseTask );
+SAT_X31_CREATE_AUTO_REG( BehaviourTreeSelectorTask );
+SAT_X31_CREATE_AUTO_REG( BehaviourTreeSequenceTask );

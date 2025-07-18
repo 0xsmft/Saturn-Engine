@@ -104,13 +104,17 @@ namespace Saturn {
 
 	//////////////////////////////////////////////////////////////////////////
 
-	void MaterialViewerColorPin::OnSerialise( std::ofstream& rStream ) const
+	void MaterialViewerColorPin::Serialise( std::ofstream& rStream ) const
 	{
+		Pin::Serialise( rStream );
+
 		RawSerialisation::WriteVec3( Data, rStream );
 	}
 
-	void MaterialViewerColorPin::OnDeserialise( IStream& rStream )
+	void MaterialViewerColorPin::Deserialise( FDependentIStream& rStream )
 	{
+		Pin::Deserialise( rStream );
+
 		RawSerialisation::ReadVec3( Data, rStream );
 	}
 

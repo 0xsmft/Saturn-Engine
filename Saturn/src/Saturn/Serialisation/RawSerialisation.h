@@ -38,6 +38,14 @@
 
 namespace Saturn {
 
+#if !defined(SAT_DIST)
+	// Determined by current build config, in Development configs read from a file, in Dist, we read from a span so use istream
+	using FDependentIStream = std::ifstream;
+#else
+	// In Dist, we read from a VFS file which is not an actual file so we can't use std::ifstream
+	using FDependentIStream = std::istream;
+#endif
+
 	// Helpers for reading/writing in binary.
 	class RawSerialisation
 	{

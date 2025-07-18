@@ -142,12 +142,6 @@ namespace Saturn {
 	class Pin : public RefTarget
 	{
 	public:
-#if !defined(SAT_DIST)
-		using IStream = std::ifstream;
-#else
-		using IStream = std::istream;
-#endif
-	public:
 		Pin() = default;
 		Pin( const std::string& rName, PinType type, PinKind kind );
 		Pin( UUID id, const std::string& rName, PinType type, UUID nodeID );
@@ -171,14 +165,12 @@ namespace Saturn {
 		void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked, uint32_t pinIndex );
 
 	public:
-		static void Serialise( const Ref<Pin>& rObject, std::ofstream& rStream );
-		static void Deserialise( Ref<Pin>& rObject, IStream& rStream );
+		virtual void Serialise( std::ofstream& rStream ) const;
+		virtual void Deserialise( FDependentIStream& rStream );
 
 	protected:
 		virtual void OnRenderOutput() {}
 		virtual void OnRenderInput() {}
-		virtual void OnSerialise( std::ofstream& rStream ) const {}
-		virtual void OnDeserialise( IStream& rStream ) {}
 
 		void DrawIcon( bool connected, int alpha ) const;
 
@@ -204,12 +196,13 @@ namespace Saturn {
 
 		~FloatPin() = default;
 
+	public:
+		void Serialise( std::ofstream& rStream ) const override;
+		void Deserialise( FDependentIStream& rStream ) override;
+
 	protected:
 		void OnRenderInput() override;
 		void OnRenderOutput() override;
-
-		void OnSerialise( std::ofstream& rStream ) const override;
-		void OnDeserialise( IStream& rStream ) override;
 
 	public:
 		float Data = 0.0f;
@@ -224,11 +217,12 @@ namespace Saturn {
 
 		~IntPin() = default;
 
+	public:
+		void Serialise( std::ofstream& rStream ) const override;
+		void Deserialise( FDependentIStream& rStream ) override;
+
 	protected:
 		void OnRenderInput() override;
-
-		void OnSerialise( std::ofstream& rStream ) const override;
-		void OnDeserialise( IStream& rStream ) override;
 
 	public:
 		int Data = 0;
@@ -243,11 +237,12 @@ namespace Saturn {
 
 		~BoolPin() = default;
 
+	public:
+		void Serialise( std::ofstream& rStream ) const override;
+		void Deserialise( FDependentIStream& rStream ) override;
+
 	protected:
 		void OnRenderInput() override;
-
-		void OnSerialise( std::ofstream& rStream ) const override;
-		void OnDeserialise( IStream& rStream ) override;
 
 	public:
 		bool Data = false;

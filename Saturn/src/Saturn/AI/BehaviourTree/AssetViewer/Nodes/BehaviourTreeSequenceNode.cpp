@@ -29,10 +29,21 @@
 #include "sppch.h"
 #include "BehaviourTreeSequenceNode.h"
 
+#include "Saturn/GameFramework/SClass.h"
+#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
+
 #include "Saturn/NodeEditor/NodeEditorBase.h"
 
-#include "Saturn/AI/BehaviourTree/Tasks/BehaviourTreeCompositeTasks.h"
 #include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeEditorEvaluator.h"
+#include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeNodeEditor.h"
+
+#include "Saturn/AI/BehaviourTree/Tasks/BehaviourTreeCompositeTasks.h"
+
+#include "Saturn/AI/BehaviourTree/Conditions/BehaviourTreeMemoryCondition.h"
+
+#if !defined(SAT_DIST)
+#include "Saturn/ImGui/ImGuiAuxiliary.h"
+#endif
 
 namespace Saturn {
 
@@ -51,7 +62,7 @@ namespace Saturn {
 		Type = NodeRenderType::Tree;
 #endif
 
-		Inputs.push_back( Ref<Pin>::Create( "In", PinType::BehaviourTreeCompositeLink, PinKind::Input ) );
+		Inputs.push_back( Ref<Pin>::Create( "In", PinType::Flow, PinKind::Input ) );
 		Outputs.push_back( Ref<Pin>::Create( "Out", PinType::Flow, PinKind::Output ) );
 
 		for( auto& rOutput : Outputs )
@@ -71,23 +82,63 @@ namespace Saturn {
 
 	NodeEvaluationState BehaviourTreeSequenceNode::EvaluateNode( NodeEditorRuntime* pEvaluator )
 	{
-		return m_Children.empty() ? NodeEvaluationState::Failed : NodeEvaluationState::Evaluated;
+		return NodeEvaluationState::Failed;
 	}
 
-	void BehaviourTreeSequenceNode::OnSerialise( std::ofstream& rStream ) const
+	void BehaviourTreeSequenceNode::Serialise( std::ofstream& rStream ) const
 	{
+		BehaviourTreeNodeBase::Serialise( rStream );
+
 		RawSerialisation::WriteVector( m_Children, rStream );
+
+		const bool hasNodeCondition = NodeCondition != nullptr;
+		RawSerialisation::WriteObject( hasNodeCondition, rStream );
+
+		if( hasNodeCondition )
+		{
+			RawSerialisation::WriteString( NodeCondition->GetClass()->GetName(), rStream );
+
+			NodeCondition->Serialise( rStream );
+		}
 	}
 
-	void BehaviourTreeSequenceNode::OnDeserialise( IStream& rStream )
+	void BehaviourTreeSequenceNode::Deserialise( FDependentIStream& rStream )
 	{
+		BehaviourTreeNodeBase::Deserialise( rStream );
+
 		RawSerialisation::ReadVector( m_Children, rStream );
+
+		bool hadNodeCondition = false;
+		RawSerialisation::ReadObject( hadNodeCondition, rStream );
+
+		if( hadNodeCondition )
+		{
+			std::string className = RawSerialisation::ReadString( rStream );
+
+			auto* pCondition = dynamic_cast<BehaviourTreeCondition*>( ClassMetadataHandler::Get().CreateClassObject( className ) );
+
+			if( pCondition )
+			{
+				pCondition->Deserialise( rStream );
+				NodeCondition = pCondition;
+			}
+		}
 	}
 
 	BehaviourTreeBaseTask* BehaviourTreeSequenceNode::ConvertToTask()
 	{
 		return new BehaviourTreeSequenceTask();
 	}
+
+#if !defined( SAT_DIST )
+	void BehaviourTreeSequenceNode::PostDeserialise()
+	{
+		if( NodeCondition && GetParent()->GetBlackboardSpec() )
+		{
+			NodeCondition->SetupMemVariable( GetParent()->GetBlackboardSpec()->ID );
+		}
+	}
+#endif
 
 	void BehaviourTreeSequenceNode::Reset()
 	{
@@ -102,11 +153,50 @@ namespace Saturn {
 		}
 	}
 
-	void BehaviourTreeSequenceNode::Reset()
+#if !defined(SAT_DIST)
+	void BehaviourTreeSequenceNode::RenderContextWindow()
 	{
-		m_Children.clear();
-		m_CurrentNode = nullptr;
-		m_CurrentNodeID = 0;
+		Auxiliary::DisabledFlag disabledIfCondition( NodeCondition );
+
+		if( ImGui::BeginMenu( "Add Condition" ) )
+		{
+			if( ImGui::MenuItem( "Blackboard" ) )
+			{
+				auto* pCond = ( BehaviourTreeMemoryCondition* )ClassMetadataHandler::Get().CreateClassObject( BehaviourTreeMemoryCondition::StaticClass() );
+				
+				if( GetParent()->GetBlackboardSpec() )
+				{
+					pCond->SetupMemVariable( GetParent()->GetBlackboardSpec()->ID );
+				}
+
+				NodeCondition = pCond;
+			}
+
+			ImGui::EndMenu();
+		}
+
+		disabledIfCondition.Pop();
+
+		Auxiliary::DisabledFlag disabledIfNoCondition( !NodeCondition );
+
+		if( ImGui::MenuItem( "Remove Condition" ) )
+		{
+			NodeCondition = nullptr;
+		}
+
+		disabledIfNoCondition.Pop();
 	}
 
+	void BehaviourTreeSequenceNode::RenderDetails()
+	{
+		if( NodeCondition )
+			NodeCondition->RenderDetails();
+	}
+
+#endif
+
 }
+
+#include "Saturn/GameFramework/Core/EngineGenerated.h"
+
+SAT_X31_CREATE_AUTO_REG( BehaviourTreeSequenceNode );

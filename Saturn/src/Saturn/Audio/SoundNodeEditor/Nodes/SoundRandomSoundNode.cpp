@@ -27,7 +27,7 @@
 */
 
 #include "sppch.h"
-#include "SoundRandomNode.h"
+#include "SoundRandomSoundNode.h"
 
 #if !defined(SAT_DIST)
 #include "Saturn/NodeEditor/UI/NodeEditor.h"
@@ -44,21 +44,21 @@
 
 namespace Saturn {
 
-	SoundRandomNode::SoundRandomNode()
+	SoundRandomSoundNode::SoundRandomSoundNode()
 		: NodeEditorBlueprintNode()
 	{
 		Name = "Random Sound";
 		CreateNode();
 	}
 
-	SoundRandomNode::SoundRandomNode( const std::string& rName )
+	SoundRandomSoundNode::SoundRandomSoundNode( const std::string& rName )
 		: NodeEditorBlueprintNode()
 	{
 		Name = rName;
 		CreateNode();
 	}
 
-	void SoundRandomNode::CreateNode()
+	void SoundRandomSoundNode::CreateNode()
 	{
 		ExecutionType = NodeExecutionType::SoundRandomSound;
 		Color = ImColor( 173, 18, 128 );
@@ -69,11 +69,11 @@ namespace Saturn {
 		Outputs.push_back( Ref<SoundPin>::Create( "Result", PinKind::Output ) );
 	}
 
-	SoundRandomNode::~SoundRandomNode()
+	SoundRandomSoundNode::~SoundRandomSoundNode()
 	{
 	}
 
-	Saturn::NodeEvaluationState SoundRandomNode::EvaluateNode( NodeEditorRuntime* evaluator )
+	Saturn::NodeEvaluationState SoundRandomSoundNode::EvaluateNode( NodeEditorRuntime* evaluator )
 	{
 		SoundEditorEvaluator* pSoundEditorEvaluator = dynamic_cast< SoundEditorEvaluator* >( evaluator );
 
@@ -148,3 +148,7 @@ namespace Saturn {
 	}
 
 }
+
+#include "Saturn/GameFramework/Core/EngineGenerated.h"
+
+SAT_X31_CREATE_AUTO_REG( SoundRandomSoundNode );

@@ -81,7 +81,19 @@ namespace Saturn {
 		[[nodiscard]] SObject* CreateClassObject( uint64_t classHash );
 		[[nodiscard]] SObject* CreateClassObject( SClass* pClass );
 
+		template<typename Ty, typename... VaArgs>
+		[[nodiscard]] Ty* CreateClassObject( SClass* pClass, VaArgs&&... args ) 
+		{
+			static_assert( std::is_base_of<SObject, Ty>::value, "Ty must be a child of SObject class!" );
+
+			Ty* pObject = new Ty( std::forward<VaArgs>( args )... );
+			pObject->m_pClass = pClass;
+
+			return pObject;
+		}
+
 		void RegisterSClass( SClass* pClass, const std::string& rModuleName );
+		SClass* RFastCheckClass( uint64_t classHash );
 
 		[[nodiscard]] size_t GetNumberOfClasses() const { return m_Classes.size(); }
 

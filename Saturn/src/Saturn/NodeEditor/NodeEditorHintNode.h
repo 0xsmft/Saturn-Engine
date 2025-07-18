@@ -34,7 +34,6 @@ namespace Saturn {
 
 	class NodeEditorHintNode final : public NodeEditorNodeBase
 	{
-		SAT_NODE_EDITOR_NODE_BODY( NodeExecutionType::HintNode );
 	public:
 		NodeEditorHintNode() = default;
 		NodeEditorHintNode( const std::string& rName );
@@ -44,8 +43,8 @@ namespace Saturn {
 		static Ref<NodeEditorHintNode> SpawnHintNode( Ref<NodeEditorBase> nodeEditor );
 
 	public:
-		void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, NodeEditorBase* pBase ) override;
-		NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
+		virtual void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder ) override;
+		NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override { return NodeEvaluationState::NeverEvaluated; }
 	};
 
 }

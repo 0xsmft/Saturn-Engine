@@ -29,13 +29,25 @@
 #include "sppch.h"
 #include "BehaviourTreeBaseTask.h"
 
-#include "Saturn/AI/BehaviourTree/BehaviourTreeMemory.h"
+#include "Saturn/AI/AIAgentEntity.h"
+
+#include "BehaviourTreeWaitTask.h"
+#include "BehaviourTreeMoveToTask.h"
+#include "BehaviourTreePlaySoundTask.h"
 
 namespace Saturn {
 
-	void BehaviourTreeBaseTask::SetBlackboard( Ref<BehaviourTreeMemory> mem )
+	void BehaviourTreeBaseTask::SetBlackboard( BehaviourTreeMemory* pBlackboard )
 	{
-		m_Blackboard = mem;
+		m_pRTBlackboard = pBlackboard;
 	}
 
 }
+
+#include "Saturn/GameFramework/Core/EngineGenerated.h"
+
+SAT_X31_CREATE_AUTO_REG( BehaviourTreeBaseTask );
+
+SAT_X31_CREATE_AUTO_REG( BehaviourTreeWaitTask );
+SAT_X31_CREATE_AUTO_REG( BehaviourTreeMoveToTask );
+SAT_X31_CREATE_AUTO_REG( BehaviourTreePlaySoundTask );

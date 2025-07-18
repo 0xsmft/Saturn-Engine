@@ -30,6 +30,7 @@
 
 #include "Saturn/NodeEditor/NodeEditorTreeNode.h"
 #include "Saturn/AI/BehaviourTree/BehaviourTreeMemorySpecification.h"
+#include "Saturn/AI/BehaviourTree/Conditions/BehaviourTreeCondition.h"
 
 namespace Saturn {
 
@@ -40,10 +41,24 @@ namespace Saturn {
 	// This class exists because it allows us to convert the node to BehaviourTree Tasks
 	class BehaviourTreeNodeBase : public NodeEditorTreeNode
 	{
-		SAT_NODE_EDITOR_NODE_BODY( NodeExecutionType::None );
+		// NOTE: SAT_DECLARE_CLASS expanded
+	private:
+		NodeEditorNodeBase& operator=( NodeEditorNodeBase&& );
+		NodeEditorNodeBase& operator=( const NodeEditorNodeBase& );
+		static SClass* GetStaticClassInternal();
+
+	public:
+		inline static [[nodiscard]] SClass* StaticClass()
+		{
+			return GetStaticClassInternal();
+		}
+	public:
+		typedef NodeEditorNodeBase ThisClass;
+		typedef NodeEditorTreeNode Super;
+
 	public:
 		BehaviourTreeNodeBase() = default;
-		BehaviourTreeNodeBase( const std::string& rName ) 
+		BehaviourTreeNodeBase( const std::string& rName )
 			: NodeEditorTreeNode( rName )
 		{
 		}
@@ -53,13 +68,18 @@ namespace Saturn {
 		virtual BehaviourTreeBaseTask* ConvertToTask() = 0;
 		virtual void PostDeserialise() {}
 
+	public:
 #if !defined(SAT_DIST)
 		virtual void RenderDetails() {}
+		virtual void OnRenderNextSection() override final;
 
 	public:
 		// TODO: Weak Ref #WREF_BehaviourTreeBaseTask
-		Ref<BehaviourTreeMemorySpecification> BTMemorySpecification;
+		Ref<BehaviourTreeCondition> NodeCondition;
 #endif
+
+	protected:
+		[[nodiscard]] BehaviourTreeNodeEditor* GetParent();
 	};
 	
 }

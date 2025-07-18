@@ -76,8 +76,6 @@
 
 #include <Saturn/AI/Navigation/NavBoundsEntity.h>
 
-#include <Saturn/NodeEditor/GlobalNodesList.h>
-
 #include <Saturn/Premake/Premake.h>
 
 #include <ImGuizmo/ImGuizmo.h>
@@ -180,9 +178,6 @@ namespace Saturn {
 		m_TitleBar.AddMenuBarFunction( SAT_BIND_EVENT_FN( DrawTitlebarOptions ) );
 		m_TitleBar.AddOnExitFunction( SAT_BIND_EVENT_FN( OnTitlebarExit ) );
 
-		// Register node editor node types
-		GlobalNodesList::RegisterAll();
-
 		//////////////////////////////////////////////////////////////////////////
 
 		// Now open the startup scene
@@ -210,7 +205,6 @@ namespace Saturn {
 
 	void EditorLayer::OnDetach()
 	{
-		GlobalNodesList::Terminate();
 		EditorIcons::Clear();
 		m_CheckerboardTexture = nullptr;
 		m_PointLightTexture = nullptr;

@@ -29,8 +29,6 @@
 #include "sppch.h"
 #include "UndoRedoNodeEditorActions.h"
 
-#include "Saturn/NodeEditor/GlobalNodesList.h"
-
 namespace Saturn {
 
 	//////////////////////////////////////////////////////////////////////////

@@ -26,57 +26,51 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "GlobalNodesList.h"
+#pragma once
 
-#include "Saturn/ImGui/MaterialAssetViewer/MaterialViewerNodes.h"
-
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundOutputNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundPlayerNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundRandomNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundMixerNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundRandomPitchNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundPitchNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundFloatConstNode.h"
-
-#include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeNodeLibrary.h"
-
-#include "Saturn/Audio/SoundNodeEditor/SoundNodeLibrary.h"
-
-#include "NodeEditorBase.h"
+#include "Saturn/AI/BehaviourTree/Tasks/BehaviourTreeBaseTask.h"
+#include "BehaviourTreeConditionInfo.h"
 
 namespace Saturn {
 
-	static std::unordered_map<NodeExecutionType, std::function<Ref<NodeEditorNodeBase>( Ref<NodeEditorBase> )>> s_RegisteredNodeMap;
-
-	void GlobalNodesList::RegisterLibrary( const std::unordered_map<NodeExecutionType, std::function<Ref<NodeEditorNodeBase>( Ref<NodeEditorBase> )>>& rNodeMap )
+	class BehaviourTreeCondition : public BehaviourTreeBaseTask
 	{
-		for( const auto& [executionType, nodeCreator] : rNodeMap )
+		SAT_DECLARE_CLASS_MOVE( BehaviourTreeCondition, BehaviourTreeBaseTask )
+	public:
+		BehaviourTreeCondition() = default;
+		BehaviourTreeCondition( const std::string& rTitle, BehaviourTreeConditionType type ) 
+			: m_Title( rTitle ), m_ConditionType( type )
 		{
-			s_RegisteredNodeMap[ executionType ] = nodeCreator;
-		}
-	}
-
-	void GlobalNodesList::Terminate()
-	{
-		s_RegisteredNodeMap.clear();
-	}
-
-	void GlobalNodesList::RegisterAll()
-	{
-		MaterialNodeLibrary::RegisterAllNodes();
-		SoundNodeLibrary::RegisterAllNodes();
-		BehaviourTreeNodeLibrary::RegisterAllNodes();
-	}
-
-	Ref<NodeEditorNodeBase> GlobalNodesList::ConvertExecutionTypeToNode( NodeExecutionType executionType, Ref<NodeEditorBase> nodeEditorBase )
-	{
-		auto Itr = s_RegisteredNodeMap.find( executionType );
-		if( Itr != s_RegisteredNodeMap.end() )
-		{
-			return Itr->second( nodeEditorBase );
 		}
 
-		return nullptr;
-	}
+		~BehaviourTreeCondition() = default;
+
+#if !defined( SAT_DIST )
+		virtual void RenderDetails() {}
+		virtual std::string GetTitleText() const { return m_Title; }
+
+		[[nodiscard]] virtual bool IsSpawnableNode() const override final { return false; }
+		virtual const char* GetTaskName() const override final { return ""; }
+		virtual void OnRenderExtra() override final {}
+#endif
+
+		BehaviourTreeConditionType GetConditionType() const { return m_ConditionType; }
+
+	public:
+		void SetupMemVariable( AssetID memSpecID );
+
+	public:
+		virtual void Serialise( std::ofstream& rStream ) const;
+		virtual void Deserialise( std::ifstream& rStream );
+
+	protected:
+#if !defined( SAT_DIST )
+		std::string m_Title;
+
+		Ref<BehaviourTreeMemorySpecification> m_BlackboardSpec;
+#endif
+
+		BehaviourTreeConditionType m_ConditionType = BehaviourTreeConditionType::None;
+	};
+
 }

@@ -34,6 +34,7 @@ namespace Saturn {
 
 	class SoundFloatConst : public NodeEditorBlueprintNode
 	{
+		SAT_DECLARE_CLASS( SoundFloatConst, NodeEditorBlueprintNode );
 	public:
 		SoundFloatConst();
 		SoundFloatConst( const std::string& rName );

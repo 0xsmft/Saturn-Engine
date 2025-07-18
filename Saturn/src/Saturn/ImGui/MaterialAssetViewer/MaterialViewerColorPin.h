@@ -47,11 +47,12 @@ namespace Saturn {
 		void SetReadOnly( bool value ) { m_ReadOnly = value; }
 		bool IsReadOnly() const { return m_ReadOnly; }
 
+	public:
+		void Serialise( std::ofstream& rStream ) const override;
+		void Deserialise( FDependentIStream& rStream ) override;
+
 	protected:
 		void OnRenderOutput() override final;
-
-		void OnSerialise( std::ofstream& rStream ) const override;
-		void OnDeserialise( IStream& rStream ) override;
 
 	private:
 		bool m_ReadOnly = false;

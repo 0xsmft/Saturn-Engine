@@ -36,13 +36,21 @@ namespace Saturn {
 
 	class BehaviourTreePlaySoundTask : public BehaviourTreeBaseTask
 	{
+		SAT_DECLARE_CLASS_MOVE( BehaviourTreePlaySoundTask, BehaviourTreeBaseTask )
 	public:
+		BehaviourTreePlaySoundTask() = default;
+
 		BehaviourTreePlaySoundTask( AssetID assetID );
 		virtual ~BehaviourTreePlaySoundTask();
 
 		virtual void InitialiseTask( BehaviourTreeNodeEditor* pEditor, BehaviourTreeNodeBase* pNode ) override;
 		virtual BehaviourTreeTaskState Tick( Timestep ts ) override;
 		virtual void Reset() override;
+
+#if !defined(SAT_DIST)
+		[[nodiscard]] virtual bool IsSpawnableNode() const { return true; }
+		virtual const char* GetTaskName() const { return "Play Sound"; }
+#endif
 
 	private:
 		Ref<SoundBase> m_Sound;

@@ -113,11 +113,14 @@ namespace Saturn {
 
 	void ClassMetadataHandler::RegisterSClass( SClass* pClass, const std::string& rModuleName )
 	{
-		const auto Itr = m_Classes.find( pClass->GetHash() );
-		if( Itr == m_Classes.end() )
-		{
-			m_Classes[ pClass->GetHash() ] = pClass;
-		}
+		m_Classes.emplace( pClass->GetHash(), pClass );
+	}
+
+	SClass* ClassMetadataHandler::RFastCheckClass( uint64_t classHash )
+	{
+		const auto Itr = m_Classes.find( classHash );
+		
+		return Itr == m_Classes.end() ? nullptr : Itr->second;
 	}
 
 }

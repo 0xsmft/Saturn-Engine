@@ -50,7 +50,7 @@ namespace Saturn {
 
 	class BehaviourTreeBaseTask : public SObject
 	{
-		SAT_DECLARE_CLASS_NO_INTER( BehaviourTreeBaseTask, SObject )
+		SAT_DECLARE_CLASS_MOVE( BehaviourTreeBaseTask, SObject )
 	public:
 		BehaviourTreeBaseTask() = default;
 		virtual ~BehaviourTreeBaseTask() = default;
@@ -62,20 +62,35 @@ namespace Saturn {
 		Saturn::UUID GetNodeID() const { return m_NodeID; }
 		BehaviourTreeTaskState GetState() const { return m_CurrentState; }
 
-		void SetBlackboard( Ref<BehaviourTreeMemory> mem );
+		void SetBlackboard( BehaviourTreeMemory* pBlackboard );
+
+#if !defined(SAT_DIST)
+		virtual const char* GetTaskName() const { return "Base Task"; }
+		[[nodiscard]] virtual bool IsSpawnableNode() const { return false; }
+		virtual void OnRenderExtra() {}
+		virtual void RenderDetails() {}
+#endif
+
+	public:
+		virtual void Serialise( std::ofstream& rStream ) const {}
+		virtual void Deserialise( FDependentIStream& rStream ) {}
 
 	protected:
 		template<typename CppType>
 		std::optional<CppType> TryRetrieveBBKey( Saturn::UUID variableID )
 		{
-			return m_Blackboard->Get<CppType>( variableID );
+			if( !m_pRTBlackboard ) return std::nullopt;
+
+			return m_pRTBlackboard->GetKeyValue<CppType>( variableID );
 		}
 
 	protected:
 		Saturn::UUID m_NodeID = 0;
 		BehaviourTreeTaskState m_CurrentState = BehaviourTreeTaskState::Unknown;
 
-		Ref<BehaviourTreeMemory> m_Blackboard;
-		Saturn::UUID m_BlackboardVariableID = 0;
+		// Non owning ptr, owned by BehaviourTreeNodeEditor
+		// Runtime blackboard information
+		BehaviourTreeMemory* m_pRTBlackboard = nullptr;
+		Saturn::UUID m_RTBlackboardVariableID = 0;
 	};
 }

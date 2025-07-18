@@ -88,8 +88,6 @@ namespace Saturn {
 			{
 				// erase
 				rSound->Unload();
-#if !defined( SAT_DIST )
-#endif
 
 				Itr = pSoundEditorEvaluator->AliveSounds.erase( Itr );
 			}
@@ -111,3 +109,7 @@ namespace Saturn {
 	}
 
 }
+
+#include "Saturn/GameFramework/Core/EngineGenerated.h"
+
+SAT_X31_CREATE_AUTO_REG( SoundOutputNode );

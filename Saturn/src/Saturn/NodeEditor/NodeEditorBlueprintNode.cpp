@@ -44,7 +44,7 @@ namespace Saturn {
 	{
 	}
 
-	void NodeEditorBlueprintNode::Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, NodeEditorBase* pBase )
+	void NodeEditorBlueprintNode::Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder )
 	{
 		rBuilder.Begin( ed::NodeId( ID ) );
 
@@ -88,7 +88,7 @@ namespace Saturn {
 		uint32_t pinIndex = 0;
 		for( auto& rInput : Inputs )
 		{
-			rInput->Render( rBuilder, pBase->IsLinked( rInput->ID ), pinIndex );
+			rInput->Render( rBuilder, pOuter->IsLinked( rInput->ID ), pinIndex );
 			pinIndex++;
 		}
 
@@ -97,10 +97,14 @@ namespace Saturn {
 			if( rOutput->Type == PinType::Delegate )
 				continue;
 
-			rOutput->Render( rBuilder, pBase->IsLinked( rOutput->ID ), 0 );
+			rOutput->Render( rBuilder, pOuter->IsLinked( rOutput->ID ), 0 );
 		}
 
 		rBuilder.End();
 	}
 
 }
+
+#include "Saturn/GameFramework/Core/EngineGenerated.h"
+
+SAT_X31_CREATE_AUTO_REG( NodeEditorBlueprintNode );

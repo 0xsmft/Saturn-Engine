@@ -41,6 +41,13 @@ namespace Saturn {
 			return;
 		}
 
+		SClass* pFoundClass = ClassMetadataHandler::Get().RFastCheckClass( rSpec.Hash );
+		if( pFoundClass )
+		{
+			*ppClass = pFoundClass;
+			return;
+		}
+
 		// TODO: Objects will have their own names and Classes will have a different name
 //		std::string configName = std::format( "^{0}", rSpec.Name );
 		SClass* pNewClass = new SClass( rSpec );

@@ -36,14 +36,18 @@ namespace Saturn {
 	// By blueprint we mean the traditional look of a node
 	class NodeEditorBlueprintNode : public NodeEditorNodeBase
 	{
-		SAT_NODE_EDITOR_NODE_BODY( NodeExecutionType::None );
+		SAT_DECLARE_CLASS( NodeEditorBlueprintNode, NodeEditorNodeBase );
 	public:
 		NodeEditorBlueprintNode() = default;
 		NodeEditorBlueprintNode( const std::string& rName );
 		virtual ~NodeEditorBlueprintNode();
 
-		void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, NodeEditorBase* pBase ) override;
-		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) { return NodeEvaluationState::Failed; }
+	public:
+		//////////////////////////////////////////////////////////////////////////
+		// NodeEditorNodeBase
+		
+		virtual void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder ) override;
+		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override { return NodeEvaluationState::Failed; }
 	};
 
 }

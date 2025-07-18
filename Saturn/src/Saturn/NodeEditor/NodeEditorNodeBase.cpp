@@ -65,7 +65,7 @@ namespace Saturn {
 		RawSerialisation::WriteObject( rColor.Value, rStream );
 	}
 
-	static void DeserialiseImColor( ImColor& rColor, NodeEditorNodeBase::IStream& rStream )
+	static void DeserialiseImColor( ImColor& rColor, FDependentIStream& rStream )
 	{
 		RawSerialisation::ReadObject( rColor.Value, rStream );
 	}
@@ -76,7 +76,7 @@ namespace Saturn {
 		RawSerialisation::WriteObject( rVector.y, rStream );
 	}
 
-	static void DeserialiseImVec2( ImVec2& rVector, NodeEditorNodeBase::IStream& rStream )
+	static void DeserialiseImVec2( ImVec2& rVector, FDependentIStream& rStream )
 	{
 		RawSerialisation::ReadObject( rVector.x, rStream );
 		RawSerialisation::ReadObject( rVector.y, rStream );
@@ -87,6 +87,7 @@ namespace Saturn {
 		UUID::Serialise( ID, rStream );
 		RawSerialisation::WriteString( Name, rStream );
 
+#if !defined(SAT_DIST)
 		RawSerialisation::WriteObject( Color, rStream );
 		RawSerialisation::WriteObject( Type, rStream );
 		SerialiseImVec2( Size, rStream );
@@ -94,44 +95,77 @@ namespace Saturn {
 
 		RawSerialisation::WriteString( ActiveState, rStream );
 		RawSerialisation::WriteString( SavedState, rStream );
+#endif
 
 		for( const auto& rInput : Inputs )
 		{
-			Pin::Serialise( rInput, rStream );
+			rInput->Serialise( rStream );
 		}
 
 		for( const auto& rOutput : Outputs )
 		{
-			Pin::Serialise( rOutput, rStream );
+			rOutput->Serialise( rStream );
 		}
 	}
 
-	void NodeEditorNodeBase::Deserialise( IStream& rStream )
+	void NodeEditorNodeBase::Deserialise( FDependentIStream& rStream )
 	{
 		UUID::Deserialise( ID, rStream );
 		Name = RawSerialisation::ReadString( rStream );
 
+#if !defined(SAT_DIST)
 		RawSerialisation::ReadObject( Color, rStream );
 		RawSerialisation::ReadObject( Type, rStream );
 		DeserialiseImVec2( Size, rStream );
 		DeserialiseImVec2( Position, rStream );
+	
+		ed::SetNodePosition( ed::NodeId( ID ), Position );
 
 		ActiveState = RawSerialisation::ReadString( rStream );
 		SavedState = RawSerialisation::ReadString( rStream );
+#endif
 
+		// NOTE: Pins are already created at this point hence why we don't write the size of the pins
+		//       All we do is read back the data
 		for( size_t i = 0; i < Inputs.size(); i++ )
 		{
-			Pin::Deserialise( Inputs[ i ], rStream );
+			Inputs[ i ]->Deserialise( rStream );
 		}
 
 		for( size_t i = 0; i < Outputs.size(); i++ )
 		{
-			Pin::Deserialise( Outputs[ i ], rStream );
+			Outputs[ i ]->Deserialise( rStream );
 		}
-
-#if !defined(SAT_DIST)
-		ed::SetNodePosition( ed::NodeId( ID ), Position );
-#endif
 	}
 
 }
+
+#include "Saturn/GameFramework/Core/EngineGenerated.h"
+
+static Saturn::SClass* RStaticLnkNodeEditorNodeBase()
+{
+	static Saturn::SClass* pClass = nullptr;
+	if( !pClass ) 
+	{
+		const Saturn::SClassSpecification spec
+		{ 
+			"NodeEditorNodeBase", 
+			( Saturn::SClassFlags ) Saturn::SC_VisibleInEditor | Saturn::SC_NoExtendedMetadata | Saturn::SC_Abstract, 
+			0, 
+			sizeof( Saturn::NodeEditorNodeBase ), alignof( Saturn::NodeEditorNodeBase ), 
+			Saturn::FNV1A64( "NodeEditorNodeBase" ), 
+			Saturn::NodeEditorNodeBase::Super::StaticClass(), nullptr, RStaticLnkNodeEditorNodeBase, nullptr, {}
+		}; 
+		
+		Saturn::SClass::RConstructClass( &pClass, spec );
+	} 
+	
+	return pClass;
+}
+
+Saturn::SClass* Saturn::NodeEditorNodeBase::GetStaticClassInternal() 
+{
+	return RStaticLnkNodeEditorNodeBase();
+} 
+
+static Saturn::SClassRegistrar RCRNodeEditorNodeBase( RStaticLnkNodeEditorNodeBase );

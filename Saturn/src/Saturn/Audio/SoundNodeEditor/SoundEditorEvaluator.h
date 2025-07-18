@@ -42,6 +42,7 @@ namespace Saturn {
 	class NodeEditorBase;
 	class NodeEditorNodeBase;
 	class SoundGroup;
+	class Link;
 
 	class SoundEditorEvaluator : public NodeEditorRuntime
 	{
@@ -58,6 +59,7 @@ namespace Saturn {
 		SoundEditorEvaluator( const SoundEdEvaluatorInfo& rInfo );
 		~SoundEditorEvaluator();
 
+		void TraceEvaluationPath() override;
 		void SetTargetNodeEditor( Ref<NodeEditorBase> nodeEditor );
 		Ref<NodeEditorBase>& GetTargetNodeEditor() { return m_NodeEditor; }
 
@@ -70,10 +72,9 @@ namespace Saturn {
 		void OnSoundCompleted( UUID PlayerID );
 
 		void Loop( bool loop ) { m_Looping = loop; }
+		void TerminateEvaluation() override;
 
 		[[nodiscard]] bool IsCompleted() const { return m_Completed; }
-
-		void TraceEvaluationPath();
 
 #if !defined(SAT_DIST)
 		Ref<NodeEditorNodeBase> GetMostRecentNode() const
@@ -94,6 +95,7 @@ namespace Saturn {
 	private:
 		void DestroyAliveSounds();
 		NodeEditorCompilationStatus EvalNoChecks();
+		void PropagateNotEvaluated( Ref<Link> node, NodeEvaluationState state );
 
 	private:
 		SoundEdEvaluatorInfo m_Info;
@@ -102,4 +104,5 @@ namespace Saturn {
 		// Mark completed as true so the first time this runs it will evaluate.
 		bool m_Completed = true;
 	};
+
 }

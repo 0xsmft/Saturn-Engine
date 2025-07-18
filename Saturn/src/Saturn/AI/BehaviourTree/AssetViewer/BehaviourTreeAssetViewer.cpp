@@ -32,7 +32,7 @@
 #include "Nodes/BehaviourTreeRootNode.h"
 #include "Nodes/BehaviourTreeSelectorNode.h"
 #include "Nodes/BehaviourTreeSequenceNode.h"
-#include "Nodes/BehaviourTreeTaskNodes.h"
+#include "Nodes/BehaviourTreeTaskNode.h"
 
 #include "BehaviourTreeNodeLibrary.h"
 #include "BehaviourTreeEditorEvaluator.h"
@@ -42,6 +42,8 @@
 
 #include "Saturn/ImGui/UndoRedo/GlobalUndoRedoGroup.h"
 #include "Saturn/Asset/AssetManager.h"
+
+#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 
 #include <imgui_internal.h>
 
@@ -56,7 +58,7 @@ namespace Saturn {
 
 	BehaviourTreeAssetViewer::~BehaviourTreeAssetViewer()
 	{
-		std::string filename = std::format( "{0}.sbt", m_Asset->Name );
+		const std::string filename = std::format( "{0}.sbt", m_Asset->Name );
 
 		m_Asset = nullptr;
 
@@ -70,6 +72,15 @@ namespace Saturn {
 
 		GlobalUndoRedoGroup::Get().RemoveIfActionHasIdentifier( m_AssetID );
 		m_NodeEditor = nullptr;
+
+		AssetManager::Get().Save();
+
+		for( BehaviourTreeBaseTask* pTaskClass : m_ClassCache )
+		{
+			delete pTaskClass;
+		}
+
+		m_ClassCache.clear();
 	}
 
 	void BehaviourTreeAssetViewer::OnImGuiRender()
@@ -87,13 +98,13 @@ namespace Saturn {
 
 	void BehaviourTreeAssetViewer::AddBehaviourTree()
 	{
-		Ref<Asset> asset = AssetManager::Get().FindAsset( m_AssetID );
+		const Ref<Asset> asset = AssetManager::Get().FindAsset( m_AssetID );
 		m_Asset = asset;
 
 		m_Name = std::format( "{0}##{1}", m_Asset->Name, ( uint64_t ) m_AssetID );
 
 		m_NodeEditor = Ref<BehaviourTreeNodeEditor>::Create( m_AssetID );
-		std::string filename = std::format( "{0}.sbt", m_Asset->Name );
+		const std::string filename = std::format( "{0}.sbt", m_Asset->Name );
 
 		if( NodeCacheEditor::ReadNodeEditorCache( m_NodeEditor, m_AssetID, filename ) )
 		{
@@ -118,6 +129,19 @@ namespace Saturn {
 		m_Runtime->SetTargetNodeEditor( m_NodeEditor );
 
 		m_NodeEditor->SetRuntime( m_Runtime );
+
+		// Discover all classes that are based from BehaviourTreeBaseTask for out context menu
+		const auto map = ClassMetadataHandler::Get().GetAllClassesBasedFrom<BehaviourTreeBaseTask>();
+		for( auto* pClass : map )
+		{
+			BehaviourTreeBaseTask* pObject = dynamic_cast<BehaviourTreeBaseTask*>( ClassMetadataHandler::Get().CreateClassObject( pClass ) );
+			
+			if( pObject ) 
+			{
+				// Create default task object from SClass
+				m_ClassCache.push_back( pObject );
+			}
+		}
 	}
 
 	void BehaviourTreeAssetViewer::SetupNewNodeEditor()
@@ -133,17 +157,36 @@ namespace Saturn {
 		m_NodeEditor->SetCreateNewNodeFunction(
 			[ & ]() -> Ref<NodeEditorNodeBase>
 		{
-			auto showTooltip = []( const char* pText )
+			Ref<NodeEditorNodeBase> result;
+
+			ImGui::SeparatorText( "Basic/Composite" );
+			
+			if( ImGui::MenuItem( "Selector" ) )
+				result = BehaviourTreeNodeLibrary::SpawnSelectorNode( m_NodeEditor );
+
+			if( ImGui::MenuItem( "Sequence" ) )
+				result = BehaviourTreeNodeLibrary::SpawnSequenceNode( m_NodeEditor );
+
+			ImGui::SeparatorText( "Tasks" );
+			for( auto* pClass : m_ClassCache )
 			{
-				if( ImGui::BeginItemTooltip() )
+				if( !pClass->IsSpawnableNode() ) continue;
+
+				if( ImGui::MenuItem( pClass->GetTaskName() ) ) 
 				{
-					ImGui::Text( pText );
-					ImGui::EndTooltip();
+					// NOTE: Raw ptr converted to Ref<> by BehaviourTreeTaskNode
+					SObject* pNewTaskObject = ClassMetadataHandler::Get().CreateClassObject( pClass->GetClass()->GetName() );
+
+					BehaviourTreeTaskNode* pNode = ClassMetadataHandler::Get().CreateClassObject<BehaviourTreeTaskNode>( BehaviourTreeTaskNode::StaticClass(),( BehaviourTreeBaseTask* ) pNewTaskObject );
+
+					result = pNode;
+					m_NodeEditor->AddNode( result );
+
+					break;
 				}
-			};
+			}
 
-			Ref<NodeEditorNodeBase> result = nullptr;
-
+			/*
 			ImGui::SeparatorText( "Basic/Composite" );
 
 			if( ImGui::MenuItem( "Selector" ) )
@@ -164,6 +207,7 @@ namespace Saturn {
 				result = BehaviourTreeNodeLibrary::SpawnMoveToNode( m_NodeEditor );
 
 			showTooltip( "Move to a predetermined Position in the NavMesh, the Position must be in the NavMesh as if not the task will fail!" );
+			*/
 
 			ImGui::SeparatorText( "Auxiliary" );
 

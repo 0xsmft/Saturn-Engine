@@ -34,7 +34,7 @@
 
 namespace Saturn {
 
-	NodeEditorTreeNode::NodeEditorTreeNode( const std::string& rName ) 
+	NodeEditorTreeNode::NodeEditorTreeNode( const std::string& rName )
 		: NodeEditorNodeBase( rName ) 
 	{
 	}
@@ -43,7 +43,7 @@ namespace Saturn {
 	{
 	}
 
-	void NodeEditorTreeNode::Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, NodeEditorBase* pBase )
+	void NodeEditorTreeNode::Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder )
 	{
 		const float rounding = 5.0f;
 		const float padding = 12.0f;
@@ -103,7 +103,7 @@ namespace Saturn {
 		
 			inputRect = ImRect( ImGui::GetItemRectMin(), ImGui::GetItemRectMax() );
 
-			rInput->Render( rBuilder, pBase->IsLinked( rInput->ID ), pinIndex );
+			rInput->Render( rBuilder, pOuter->IsLinked( rInput->ID ), pinIndex );
 			pinIndex++;
 		}
 
@@ -150,7 +150,7 @@ namespace Saturn {
 
 			outputRect = ImRect( ImGui::GetItemRectMin(), ImGui::GetItemRectMax() );
 
-			rOutput->Render( rBuilder, pBase->IsLinked( rOutput->ID ), 0 );
+			rOutput->Render( rBuilder, pOuter->IsLinked( rOutput->ID ), 0 );
 		}
 
 		// Dummy if no outputs
@@ -197,9 +197,8 @@ namespace Saturn {
 		pDrawList->AddRect( itemRect.GetTL(), itemRect.GetBR(), Color, 0.0f );
 	}
 
-	NodeEvaluationState NodeEditorTreeNode::EvaluateNode( NodeEditorRuntime* evaluator )
-	{
-		return NodeEvaluationState::Failed;
-	}
-
 }
+
+#include "Saturn/GameFramework/Core/EngineGenerated.h"
+
+SAT_X31_CREATE_AUTO_REG( NodeEditorTreeNode );

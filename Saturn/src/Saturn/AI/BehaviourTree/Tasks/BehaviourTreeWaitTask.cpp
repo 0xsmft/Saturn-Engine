@@ -31,6 +31,10 @@
 
 #include "Saturn/AI/BehaviourTree/AssetViewer/Nodes/BehaviourTreeNodeBase.h"
 
+#if !defined(SAT_DIST)
+#include "Saturn/ImGui/ImGuiAuxiliary.h"
+#endif
+
 namespace Saturn {
 
 	BehaviourTreeWaitTask::BehaviourTreeWaitTask( float WaitDuration )
@@ -41,7 +45,7 @@ namespace Saturn {
 	BehaviourTreeWaitTask::BehaviourTreeWaitTask( UUID WaitDurationVarID )
 		: m_WaitDuration( -1.0f )
 	{
-		m_BlackboardVariableID = WaitDurationVarID;
+		m_RTBlackboardVariableID = WaitDurationVarID;
 	}
 
 	void BehaviourTreeWaitTask::InitialiseTask( BehaviourTreeNodeEditor* pEditor, BehaviourTreeNodeBase* pNode )
@@ -61,7 +65,7 @@ namespace Saturn {
 			m_StartTime = std::chrono::steady_clock::now();
 			m_Started = true;
 
-			auto waitTimeBB = TryRetrieveBBKey<float>( m_BlackboardVariableID );
+			const auto waitTimeBB = TryRetrieveBBKey<float>( m_RTBlackboardVariableID );
 			if( waitTimeBB.has_value() )
 			{
 				m_WaitDuration = waitTimeBB.value_or( m_WaitDuration );
@@ -73,8 +77,8 @@ namespace Saturn {
 			return m_CurrentState;
 		}
 
-		auto now = std::chrono::steady_clock::now();
-		std::chrono::duration<float> elasped = now - m_StartTime;
+		const auto now = std::chrono::steady_clock::now();
+		const std::chrono::duration<float> elasped = now - m_StartTime;
 
 		if( elasped.count() >= m_WaitDuration )
 		{
@@ -93,6 +97,28 @@ namespace Saturn {
 	void BehaviourTreeWaitTask::Reset()
 	{
 		m_Started = false;
+	}
+
+#if !defined(SAT_DIST)
+	void BehaviourTreeWaitTask::OnRenderExtra()
+	{
+		ImGui::Text( "%.2fs", m_WaitDuration );
+	}
+
+	void BehaviourTreeWaitTask::RenderDetails()
+	{
+		Auxiliary::DrawFloatControl( "Wait duration", m_WaitDuration );
+	}
+#endif
+
+	void BehaviourTreeWaitTask::Serialise( std::ofstream& rStream ) const
+	{
+		RawSerialisation::WriteObject( m_WaitDuration, rStream );
+	}
+
+	void BehaviourTreeWaitTask::Deserialise( FDependentIStream& rStream )
+	{
+		RawSerialisation::ReadObject( m_WaitDuration, rStream );
 	}
 
 }

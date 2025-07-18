@@ -35,12 +35,12 @@ namespace Saturn {
 
 	// This struct specifies a variable (key) in the Behaviour Tree Memory
 	// It does not contain the actual data. It is simply a specification of what this variable should be when we convert it to a BehaviourTreeMemoryVariable struct
-	class BehaviourTreeMemoryVariableSpec : public RefTarget
+	class BehaviourTreeMemoryKeySpec : public RefTarget
 	{
 	public:
-		BehaviourTreeMemoryVariableSpec() = default;
+		BehaviourTreeMemoryKeySpec() = default;
 
-		BehaviourTreeMemoryVariableSpec( const std::string& rName, SPropertyType dataType, UUID varID ) 
+		BehaviourTreeMemoryKeySpec( const std::string& rName, SPropertyType dataType, UUID varID ) 
 			: Name( rName ), DataType( dataType ), VariableID( varID )
 		{
 		}
@@ -64,21 +64,21 @@ namespace Saturn {
 		BehaviourTreeMemorySpecification( const Ref<Asset>& rBase );
 
 #if !defined( SAT_DIST )
-		Ref<BehaviourTreeMemoryVariableSpec> DrawVariableFinder( SPropertyType type, Ref<BehaviourTreeMemoryVariableSpec> selectedVar );
+		Ref<BehaviourTreeMemoryKeySpec> DrawKeyFinder( SPropertyType type, Ref<BehaviourTreeMemoryKeySpec> selectedVar );
 #endif
+		Ref<BehaviourTreeMemoryKeySpec> PostInitKey( UUID variableID );
+		Ref<BehaviourTreeMemoryKeySpec> GetKeySpec( UUID variableID ) const;
 
-		Ref<BehaviourTreeMemoryVariableSpec> PostInitVariable( UUID variableID );
-
-		const std::vector<Ref<BehaviourTreeMemoryVariableSpec>>& GetVariableSpecs() const { return m_SpecificationData; }
+		const std::vector<Ref<BehaviourTreeMemoryKeySpec>>& GetKeySpecs() const { return m_SpecificationData; }
 
 	private:
 		inline void AddNew( const std::string& rName, SPropertyType dataType, UUID varID )
 		{
-			m_SpecificationData.emplace_back( Ref<BehaviourTreeMemoryVariableSpec>::Create( rName, dataType, varID ) );
+			m_SpecificationData.emplace_back( Ref<BehaviourTreeMemoryKeySpec>::Create( rName, dataType, varID ) );
 		}
 
 	private:
-		std::vector<Ref<BehaviourTreeMemoryVariableSpec>> m_SpecificationData;
+		std::vector<Ref<BehaviourTreeMemoryKeySpec>> m_SpecificationData;
 
 	private:
 		friend class BehaviourTreeMemoryAssetViewer;

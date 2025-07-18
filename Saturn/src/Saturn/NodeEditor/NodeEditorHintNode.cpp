@@ -45,7 +45,7 @@ namespace Saturn {
 	{
 	}
 
-	void NodeEditorHintNode::Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, NodeEditorBase* pBase )
+	void NodeEditorHintNode::Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder )
 	{
 		constexpr float HINT_ALPHA = 0.75f;
 
@@ -101,11 +101,6 @@ namespace Saturn {
 				IM_COL32( 255, 255, 255, 128 * bgAlpha / 255 ), 4.0f );
 		}
 		ed::EndGroupHint();
-	}
-
-	NodeEvaluationState NodeEditorHintNode::EvaluateNode( NodeEditorRuntime* evaluator )
-	{
-		return NodeEvaluationState::NeverEvaluated;
 	}
 
 	//////////////////////////////////////////////////////////////////////////

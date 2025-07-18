@@ -32,70 +32,33 @@
 #include "Nodes/BehaviourTreeRootNode.h"
 #include "Nodes/BehaviourTreeSelectorNode.h"
 #include "Nodes/BehaviourTreeSequenceNode.h"
-#include "Nodes/BehaviourTreeTaskNodes.h"
 
-#include "Saturn/NodeEditor/GlobalNodesList.h"
+#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 
 namespace Saturn {
 
-	void BehaviourTreeNodeLibrary::RegisterAllNodes()
-	{
-		GlobalNodesList::RegisterLibrary( {
-			{ NodeExecutionType::BehaviourTreeRootNode,      BehaviourTreeNodeLibrary::SpawnRootNode      },
-			{ NodeExecutionType::BehaviourTreeSelectorNode,  BehaviourTreeNodeLibrary::SpawnSelectorNode  },
-			{ NodeExecutionType::BehaviourTreeSequenceNode,  BehaviourTreeNodeLibrary::SpawnSequenceNode  },
-			{ NodeExecutionType::BehaviourTreeWaitNode,      BehaviourTreeNodeLibrary::SpawnWaitNode      },
-			{ NodeExecutionType::BehaviourTreePlaySoundNode, BehaviourTreeNodeLibrary::SpawnPlaySoundNode },
-			{ NodeExecutionType::BehaviourTreeMoveTo,        BehaviourTreeNodeLibrary::SpawnMoveToNode    },
-		} );
-	}
-
 	Ref<BehaviourTreeSelectorNode> BehaviourTreeNodeLibrary::SpawnSelectorNode( Ref<NodeEditorBase> nodeEditor )
 	{
-		Ref<BehaviourTreeSelectorNode> node = Ref<BehaviourTreeSelectorNode>::Create();
-		nodeEditor->AddNode( node );
+		BehaviourTreeSelectorNode* pNode = ( BehaviourTreeSelectorNode* )ClassMetadataHandler::Get().CreateClassObject( BehaviourTreeSelectorNode::StaticClass() );
 
-		return node;
+		nodeEditor->AddNode( pNode );
+		return pNode;
 	}
 
 	Ref<BehaviourTreeSequenceNode> BehaviourTreeNodeLibrary::SpawnSequenceNode( Ref<NodeEditorBase> nodeEditor )
 	{
-		Ref<BehaviourTreeSequenceNode> node = Ref<BehaviourTreeSequenceNode>::Create();
-		nodeEditor->AddNode( node );
+		BehaviourTreeSequenceNode* pNode = ( BehaviourTreeSequenceNode* ) ClassMetadataHandler::Get().CreateClassObject( BehaviourTreeSequenceNode::StaticClass() );
 
-		return node;
-	}
-
-	Ref<BehaviourTreeWaitNode> BehaviourTreeNodeLibrary::SpawnWaitNode( Ref<NodeEditorBase> nodeEditor )
-	{
-		Ref<BehaviourTreeWaitNode> node = Ref<BehaviourTreeWaitNode>::Create();
-		nodeEditor->AddNode( node );
-
-		return node;
-	}
-
-	Ref<BehaviourTreePlaySoundNode> BehaviourTreeNodeLibrary::SpawnPlaySoundNode( Ref<NodeEditorBase> nodeEditor )
-	{
-		Ref<BehaviourTreePlaySoundNode> node = Ref<BehaviourTreePlaySoundNode>::Create();
-		nodeEditor->AddNode( node );
-
-		return node;
-	}
-
-	Ref<BehaviourTreeMoveToNode> BehaviourTreeNodeLibrary::SpawnMoveToNode( Ref<NodeEditorBase> nodeEditor )
-	{
-		Ref<BehaviourTreeMoveToNode> node = Ref<BehaviourTreeMoveToNode>::Create();
-		nodeEditor->AddNode( node );
-
-		return node;
+		nodeEditor->AddNode( pNode );
+		return pNode;
 	}
 
 	Ref<BehaviourTreeRootNode> BehaviourTreeNodeLibrary::SpawnRootNode( Ref<NodeEditorBase> nodeEditor )
 	{
-		Ref<BehaviourTreeRootNode> node = Ref<BehaviourTreeRootNode>::Create();
-		nodeEditor->AddNode( node );
+		BehaviourTreeRootNode* pNode = ( BehaviourTreeRootNode* ) ClassMetadataHandler::Get().CreateClassObject( BehaviourTreeRootNode::StaticClass() );
 
-		return node;
+		nodeEditor->AddNode( pNode );
+		return pNode;
 	}
 
 }

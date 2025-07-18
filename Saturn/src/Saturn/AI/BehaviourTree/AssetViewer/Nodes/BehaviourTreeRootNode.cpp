@@ -53,7 +53,7 @@ namespace Saturn {
 		Type = NodeRenderType::Tree;
 #endif
 
-		Outputs.push_back( Ref<Pin>::Create( "Out", PinType::BehaviourTreeCompositeLink, PinKind::Output ) );
+		Outputs.emplace_back( Ref<Pin>::Create( "Out", PinType::Flow, PinKind::Output ) );
 
 		for( auto& rOutput : Outputs )
 		{
@@ -71,3 +71,7 @@ namespace Saturn {
 	}
 
 }
+
+#include "Saturn/GameFramework/Core/EngineGenerated.h"
+
+SAT_X31_CREATE_AUTO_REG( BehaviourTreeRootNode );

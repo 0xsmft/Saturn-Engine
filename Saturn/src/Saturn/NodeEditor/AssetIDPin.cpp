@@ -80,13 +80,17 @@ namespace Saturn {
 #endif
 	}
 
-	void AssetIDPin::OnSerialise( std::ofstream& rStream ) const
+	void AssetIDPin::Serialise( std::ofstream& rStream ) const
 	{
+		Pin::Serialise( rStream );
+
 		RawSerialisation::WriteObject( m_AssetID, rStream );
 	}
 
-	void AssetIDPin::OnDeserialise( IStream& rStream )
+	void AssetIDPin::Deserialise( FDependentIStream& rStream )
 	{
+		Pin::Deserialise( rStream );
+
 		RawSerialisation::ReadObject( m_AssetID, rStream );
 #if defined(SAT_DEBUG) || defined(SAT_RELEASE)
 		m_AssetName = m_AssetID == 0 ? "No Asset" : AssetManager::Get().FindAsset( m_AssetID )->Name;

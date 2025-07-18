@@ -42,16 +42,10 @@ namespace Saturn {
 	class BehaviourTreeNodeLibrary
 	{
 	public:
-		static void RegisterAllNodes();
-
-	public:
 		static NodeEditorType GetStaticType() { return NodeEditorType::BehaviourTree; }
 
 		static Ref<BehaviourTreeSelectorNode>  SpawnSelectorNode( Ref<NodeEditorBase> nodeEditor );
 		static Ref<BehaviourTreeSequenceNode>  SpawnSequenceNode( Ref<NodeEditorBase> nodeEditor );
-		static Ref<BehaviourTreeWaitNode>      SpawnWaitNode( Ref<NodeEditorBase> nodeEditor );
-		static Ref<BehaviourTreePlaySoundNode> SpawnPlaySoundNode( Ref<NodeEditorBase> nodeEditor );
-		static Ref<BehaviourTreeMoveToNode>    SpawnMoveToNode( Ref<NodeEditorBase> nodeEditor );
 
 		static Ref<BehaviourTreeRootNode>     SpawnRootNode( Ref<NodeEditorBase> nodeEditor );
 	};

@@ -44,8 +44,6 @@
 
 #include "Saturn/GameFramework/Core/GameModule.h"
 
-#include "Saturn/NodeEditor/GlobalNodesList.h"
-
 #include "Saturn/Vulkan/SceneRenderer.h"
 #include "Saturn/Vulkan/Renderer2D.h"
 
@@ -71,8 +69,6 @@ namespace Saturn {
 			SAT_CORE_VERIFY( false, errMsg );
 		}
 
-		GlobalNodesList::RegisterAll();
-		
 		// "Load" the Game Module
 		m_GameModule = new GameModule();
 

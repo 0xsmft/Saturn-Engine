@@ -38,20 +38,35 @@ namespace Saturn {
 	// NOTE: Calls to EvaluateNode only check if the Sequence has children, it does not actually do the sequence as that is done in the SequenceTask class
 	class BehaviourTreeSequenceNode : public BehaviourTreeNodeBase
 	{
+		SAT_DECLARE_CLASS( BehaviourTreeSequenceNode, BehaviourTreeNodeBase );
 	public:
 		BehaviourTreeSequenceNode();
 		virtual ~BehaviourTreeSequenceNode();
-
-		virtual void OnSerialise( std::ofstream& rStream ) const;
-		virtual void OnDeserialise( IStream& rStream );
-
-		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* pEvaluator ) override;
-		virtual BehaviourTreeBaseTask* ConvertToTask();
 
 		void Reset();
 		void AddChildren( const std::vector<UUID>& rChildrenID );
 
 		const std::vector<UUID>& GetChildren() const { return m_Children; }
+
+	public:
+		//////////////////////////////////////////////////////////////////////////
+		// NodeEditorNodeBase
+		virtual void Serialise( std::ofstream& rStream ) const override;
+		virtual void Deserialise( FDependentIStream& rStream ) override;
+		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* pEvaluator ) override;
+		
+		//////////////////////////////////////////////////////////////////////////
+		// BehaviourTreeNodeBase
+		virtual BehaviourTreeBaseTask* ConvertToTask() override;
+
+#if !defined(SAT_DIST)
+		virtual void PostDeserialise() override;
+		virtual void RenderDetails() override;
+
+		//////////////////////////////////////////////////////////////////////////
+		// NodeEditorNodeBase (non Dist)
+		virtual void RenderContextWindow() override;
+#endif
 
 	private:
 		void CreateNode();

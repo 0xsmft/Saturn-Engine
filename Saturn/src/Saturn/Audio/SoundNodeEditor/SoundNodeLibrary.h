@@ -34,7 +34,7 @@ namespace Saturn {
 
 	class SoundOutputNode;
 	class SoundPlayerNode;
-	class SoundRandomNode;
+	class SoundRandomSoundNode;
 	class SoundMixerNode;
 	class SoundPitchNode;
 	class SoundRandomPitchNode;
@@ -43,17 +43,14 @@ namespace Saturn {
 	class SoundNodeLibrary
 	{
 	public:
-		static void RegisterAllNodes();
-
-	public:
 		static NodeEditorType GetStaticType() { return NodeEditorType::Material; }
 
-		static Ref<SoundRandomNode>      SpawnRandomNode( Ref<NodeEditorBase> nodeEditor );
+		static Ref<SoundRandomSoundNode>      SpawnRandomNode( Ref<NodeEditorBase> nodeEditor );
 		static Ref<SoundMixerNode>       SpawnMixerNode( Ref<NodeEditorBase> nodeEditor );
 		static Ref<SoundPlayerNode>      SpawnPlayerNode( Ref<NodeEditorBase> nodeEditor );
 		static Ref<SoundPitchNode>       SpawnPitchNode( Ref<NodeEditorBase> nodeEditor );
 		static Ref<SoundRandomPitchNode> SpawnRandPitch( Ref<NodeEditorBase> nodeEditor );
-//		static Ref<SoundFloatConst>      SpawnFloatConst( Ref<NodeEditorBase> nodeEditor );
+		static Ref<SoundFloatConst>      SpawnFloatConst( Ref<NodeEditorBase> nodeEditor );
 
 		static Ref<SoundOutputNode> SpawnOutputNode( Ref<NodeEditorBase> nodeEditor );
 	};

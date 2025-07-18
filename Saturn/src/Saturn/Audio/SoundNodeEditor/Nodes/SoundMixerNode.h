@@ -34,6 +34,7 @@ namespace Saturn {
 
 	class SoundMixerNode : public NodeEditorBlueprintNode
 	{
+		SAT_DECLARE_CLASS( SoundMixerNode, NodeEditorBlueprintNode );
 	public:
 		SoundMixerNode();
 		SoundMixerNode( const std::string& rName );

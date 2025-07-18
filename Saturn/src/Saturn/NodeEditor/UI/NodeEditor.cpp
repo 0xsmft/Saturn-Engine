@@ -38,11 +38,13 @@
 
 #include "Saturn/NodeEditor/Runtime/NodeEditorRuntime.h"
 #include "Saturn/NodeEditor/Serialisation/NodeCache.h"
-#include "Saturn/NodeEditor/GlobalNodesList.h"
 #include "Saturn/NodeEditor/NodeEditorBlueprintNode.h"
 #include "Saturn/NodeEditor/UndoRedo/UndoRedoNodeEditorActions.h"
 
 #include "Saturn/ImGui/UndoRedo/GlobalUndoRedoGroup.h"
+
+#include "Saturn/GameFramework/SClass.h"
+#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 
 #include "Saturn/Core/OptickProfiler.h"
 
@@ -216,6 +218,7 @@ namespace Saturn {
 
 	void NodeEditor::OnImGuiRender()
 	{
+#if !defined(SAT_DIST)
 		// Ensure our editor is the current one
 		// We'll use a VariableGuard<ed::EditorContext*> when we can't be sure that we are the current node editor.
 		ed::SetCurrentEditor( m_Editor );
@@ -274,11 +277,9 @@ namespace Saturn {
 		if( m_ViewportSize != ImGui::GetContentRegionAvail() )
 			m_ViewportSize = ImGui::GetContentRegionAvail();
 
-		ImGuiWindowFlags flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoTitleBar;
-
 		ImGui::PushStyleColor( ImGuiCol_ChildBg, ImVec4( 0.0f, 0.0f, 0.0f, 0.0f ) );
 
-		ImGui::BeginChild( "Topbar", ImVec2( 0.0f, 30.0f ), 0, flags );
+		ImGui::BeginChild( "Topbar", ImVec2( 0.0f, 30.0f ), 0, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoTitleBar );
 		ImGui::BeginHorizontal( "##TopbarItems" );
 
 		if( Auxiliary::ImageButton( m_ZoomTexture, { 24, 24 } ) )
@@ -351,7 +352,7 @@ namespace Saturn {
 
 		for( auto& [id, rNode] : m_Nodes )
 		{
-			rNode->Render( m_Builder, this );
+			rNode->Render( m_Builder );
 		}
 
 		for( const auto& rLink : m_Links )
@@ -593,30 +594,24 @@ namespace Saturn {
 			OnExtraRender();
 
 			disabled.Pop();
-
-			ImGui::End();
 		}
+
+		ImGui::End();
 
 		// Create new node context popup window
 		ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 8.0f, 8.0f ) );
 		if( ImGui::BeginPopup( "Create New Node" ) )
 		{
-			if( HasPrivilege( NodeEditorPrivileges::ReadOnly ) )
-			{
-				ImGui::Text( "Not enough privilege to add node. PR/(READ ONLY)" );
-			}
-			else
-			{
-				Ref<NodeEditorNodeBase> node = nullptr;
+			const ImVec2 mousePos = ImGui::GetMousePosOnOpeningCurrentPopup();
+			Ref<NodeEditorNodeBase> node = nullptr;
 
-				if( m_CreateNewNodeFunction )
-					node = m_CreateNewNodeFunction();
+			if( m_CreateNewNodeFunction )
+				node = m_CreateNewNodeFunction();
 
-				if( node )
-				{
-					ed::SetNodePosition( ed::NodeId( node->ID ), ed::ScreenToCanvas( ImGui::GetMousePosOnOpeningCurrentPopup() ) );
-					OnChooseNewNode( node );
-				}
+			if( node )
+			{
+				ed::SetNodePosition( ed::NodeId( node->ID ), ed::ScreenToCanvas( mousePos ) );
+				OnChooseNewNode( node );
 			}
 
 			ImGui::EndPopup();
@@ -625,7 +620,7 @@ namespace Saturn {
 			m_CreateNewNode = false;
 
 		ImGui::PopStyleVar();
-
+		
 		// Node context window popup
 		if( ImGui::BeginPopup( "NE_NodeAction" ) )
 		{
@@ -681,6 +676,7 @@ namespace Saturn {
 		
 			m_ShowUnsavedChanges = true;
 		}
+#endif
 	}
 
 	void NodeEditor::OnUpdate( Timestep ts )
@@ -742,6 +738,7 @@ namespace Saturn {
 
 	void NodeEditor::DeleteNode( UUID id, bool skipUndoRedo /*= false */ )
 	{
+#if !defined(SAT_DIST)
 		const auto Itr = std::find_if( m_Nodes.begin(), m_Nodes.end(),
 			[ id ]( const auto& rNode )
 		{
@@ -768,6 +765,7 @@ namespace Saturn {
 				OnNodeEditorEvent( NodeEditorAction::DestroyNode );
 			}
 		}
+#endif
 	}
 
 	void NodeEditor::SetNodePosition( UUID nodeID, const ImVec2& rNewPosition )
@@ -872,13 +870,13 @@ namespace Saturn {
 		size_t mapSize = m_Nodes.size();
 		rStream.write( reinterpret_cast< char* >( &mapSize ), sizeof( size_t ) );
 
-		for( const auto& [key, value] : m_Nodes )
+		for( const auto& [key, node] : m_Nodes )
 		{
 			UUID::Serialise( key, rStream );
 
-			RawSerialisation::WriteObject( (std::underlying_type_t<NodeExecutionType>)value->ExecutionType, rStream );
+			RawSerialisation::WriteObject( node->GetClass()->GetHash(), rStream );
 
-			value->Serialise( rStream );
+			node->Serialise( rStream );
 		}
 
 		mapSize = m_Links.size();
@@ -908,30 +906,23 @@ namespace Saturn {
 			UUID key = 0;
 			UUID::Deserialise( key, rStream );
 
-			// TODO: This is temporary, as we will need a system convert this
-			NodeExecutionType executionType = NodeExecutionType::None;
+			uint64_t targetClassHash = 0;
+			RawSerialisation::ReadObject( targetClassHash, rStream );
 
-			if( m_Version != SAT_CURRENT_VERSION )
+			NodeEditorNodeBase* pNode = dynamic_cast< NodeEditorNodeBase* >( ClassMetadataHandler::Get().CreateClassObject( targetClassHash ) );
+
+			Ref<NodeEditorNodeBase> node = pNode;
+			if( node )
 			{
-				uint64_t executionValue = 0;
-				RawSerialisation::ReadObject( executionValue, rStream );
-
-				executionType = ( NodeExecutionType ) executionValue;
+				AddNode( node );
 			}
 			else
 			{
-				// In 0.2.2+, std::underlying_type_t is now used
-				std::underlying_type_t<NodeExecutionType> executionValue = 0;
-				RawSerialisation::ReadObject( executionValue, rStream );
-
-				executionType = ( NodeExecutionType ) executionValue;
+				node = Ref<NodeEditorBlueprintNode>::Create();
 			}
 
-			Ref<NodeEditorNodeBase> node = GlobalNodesList::ConvertExecutionTypeToNode( executionType, this );
-			
-			if( !node )
-				node = Ref<NodeEditorBlueprintNode>::Create();
-
+			// NOTE: Although AddNode sets the pOuter, we want to override it to point to us (a NodeEditor), instead of NodeEditorBase
+			node->pOuter = this;
 			node->Deserialise( rStream );
 
 			m_Nodes[ key ] = node;

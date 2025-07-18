@@ -31,32 +31,19 @@
 
 #include "Nodes/SoundOutputNode.h"
 #include "Nodes/SoundPlayerNode.h"
-#include "Nodes/SoundRandomNode.h" 
+#include "Nodes/SoundRandomSoundNode.h" 
 #include "Nodes/SoundMixerNode.h" 
 #include "Nodes/SoundPitchNode.h" 
 #include "Nodes/SoundRandomPitchNode.h"
-//#include "Nodes/SoundFloatConstNode.h"
+#include "Nodes/SoundFloatConstNode.h"
 
-#include "Saturn/NodeEditor/GlobalNodesList.h"
+#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 
 namespace Saturn {
 
-	void SoundNodeLibrary::RegisterAllNodes()
+	Ref<SoundRandomSoundNode> SoundNodeLibrary::SpawnRandomNode( Ref<NodeEditorBase> nodeEditor )
 	{
-		GlobalNodesList::RegisterLibrary( {
-			{ NodeExecutionType::SoundOutput,      SoundNodeLibrary::SpawnOutputNode },
-			{ NodeExecutionType::SoundPlayer,      SoundNodeLibrary::SpawnPlayerNode },
-			{ NodeExecutionType::SoundRandomSound, SoundNodeLibrary::SpawnRandomNode },
-			{ NodeExecutionType::SoundRandomPitch, SoundNodeLibrary::SpawnRandPitch  },
-			{ NodeExecutionType::SoundMixer,       SoundNodeLibrary::SpawnMixerNode  },
-			{ NodeExecutionType::SoundPitch,       SoundNodeLibrary::SpawnPitchNode  },
-//			{ NodeExecutionType::SoundFloatConst,  SoundNodeLibrary::SpawnFloatConst }
-		} );
-	}
-
-	Ref<SoundRandomNode> SoundNodeLibrary::SpawnRandomNode( Ref<NodeEditorBase> nodeEditor )
-	{
-		Ref<SoundRandomNode> node = Ref<SoundRandomNode>::Create();
+		Ref<SoundRandomSoundNode> node = ( SoundRandomSoundNode* ) ClassMetadataHandler::Get().CreateClassObject( SoundRandomSoundNode::StaticClass() );
 		nodeEditor->AddNode( node );
 
 		return node;
@@ -64,7 +51,7 @@ namespace Saturn {
 
 	Ref<SoundMixerNode> SoundNodeLibrary::SpawnMixerNode( Ref<NodeEditorBase> nodeEditor )
 	{
-		Ref<SoundMixerNode> node = Ref<SoundMixerNode>::Create();
+		Ref<SoundMixerNode> node = ( SoundMixerNode* ) ClassMetadataHandler::Get().CreateClassObject( SoundMixerNode::StaticClass() );
 		nodeEditor->AddNode( node );
 
 		return node;
@@ -72,7 +59,7 @@ namespace Saturn {
 
 	Ref<SoundPlayerNode> SoundNodeLibrary::SpawnPlayerNode( Ref<NodeEditorBase> nodeEditor )
 	{
-		Ref<SoundPlayerNode> node = Ref<SoundPlayerNode>::Create();
+		Ref<SoundPlayerNode> node = ( SoundPlayerNode* ) ClassMetadataHandler::Get().CreateClassObject( SoundPlayerNode::StaticClass() );
 		nodeEditor->AddNode( node );
 
 		return node;
@@ -80,7 +67,7 @@ namespace Saturn {
 
 	Ref<SoundPitchNode> SoundNodeLibrary::SpawnPitchNode( Ref<NodeEditorBase> nodeEditor )
 	{
-		Ref<SoundPitchNode> node = Ref<SoundPitchNode>::Create();
+		Ref<SoundPitchNode> node = ( SoundPitchNode* ) ClassMetadataHandler::Get().CreateClassObject( SoundPitchNode::StaticClass() );
 		nodeEditor->AddNode( node );
 
 		return node;
@@ -88,25 +75,23 @@ namespace Saturn {
 
 	Ref<SoundRandomPitchNode> SoundNodeLibrary::SpawnRandPitch( Ref<NodeEditorBase> nodeEditor )
 	{
-		Ref<SoundRandomPitchNode> node = Ref<SoundRandomPitchNode>::Create();
+		Ref<SoundRandomPitchNode> node = ( SoundRandomPitchNode* ) ClassMetadataHandler::Get().CreateClassObject( SoundRandomPitchNode::StaticClass() );
 		nodeEditor->AddNode( node );
 
 		return node;
 	}
 
-	/*
 	Ref<SoundFloatConst> SoundNodeLibrary::SpawnFloatConst( Ref<NodeEditorBase> nodeEditor )
 	{
-		Ref<SoundFloatConst> node = Ref<SoundFloatConst>::Create();
+		Ref<SoundFloatConst> node = ( SoundFloatConst* ) ClassMetadataHandler::Get().CreateClassObject( SoundFloatConst::StaticClass() );
 		nodeEditor->AddNode( node );
 
 		return node;
 	}
-	*/
 
 	Ref<SoundOutputNode> SoundNodeLibrary::SpawnOutputNode( Ref<NodeEditorBase> nodeEditor )
 	{
-		Ref<SoundOutputNode> node = Ref<SoundOutputNode>::Create();
+		Ref<SoundOutputNode> node = ( SoundOutputNode* ) ClassMetadataHandler::Get().CreateClassObject( SoundOutputNode::StaticClass() );
 		nodeEditor->AddNode( node );
 
 		return node;

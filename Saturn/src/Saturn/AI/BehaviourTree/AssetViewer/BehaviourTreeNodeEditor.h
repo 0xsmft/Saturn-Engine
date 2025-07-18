@@ -67,19 +67,20 @@ namespace Saturn {
 		BehaviourTreeNodeEditor( AssetID id );
 		virtual ~BehaviourTreeNodeEditor();
 
-		void TraverseBehaviourTree( const Ref<NodeEditorNodeBase>& rRootNode );
-		void InitBehaviourTree();
-
+		// RUNTIME | SIMULATION ONLY
 		void Tick( Timestep ts );
+		void InitBBAndTasks();
 
-		BehaviourTreeBaseTask* GetTaskFor( UUID node );
+		Ref<BehaviourTreeBaseTask> GetTaskFor( UUID node ) const;
 
-		void ResetAllTasks();
+	public:
+		void TraverseBehaviourTree( const Ref<NodeEditorNodeBase>& rRootNode );
 
-		inline void SetTargetAgent( Ref<AIAgentEntity> agent ) { m_AIAgentEntity = agent; }
-		[[nodiscard]] Ref<AIAgentEntity> GetTargetAgent() const;
+		void SetTargetAgent( AIAgentEntity* agent );
+		[[nodiscard]] AIAgentEntity* GetTargetAgent() const;
 
-//		inline void SetBlackboard( Ref<BehaviourTreeMemory> blackboard ) { m_Blackboard = blackboard; }
+		Ref<BehaviourTreeMemory> GetBlackboard() const { return	m_Blackboard; }
+		Ref<BehaviourTreeMemorySpecification> GetBlackboardSpec() const { return m_BlackboardSpec; }
 
 #if !defined(SAT_DIST)
 	public:
@@ -94,10 +95,13 @@ namespace Saturn {
 	private:
 		void ShowTreeFlow();
 		void FindTreeFlow();
+		void BuildFlow( Ref<BehaviourTreeNodeBase> node );
 #endif
 
+		void ResetAllTasks();
+
 	private:
-		BehaviourTreeBaseTask* m_pCurrentTask = nullptr;
+		Ref<BehaviourTreeBaseTask> m_CurrentTask;
 		size_t m_CurrentTaskIndex = 0;
 		
 		AssetID m_BehaviourTreeMemoryAssetID = 0;
@@ -107,21 +111,23 @@ namespace Saturn {
 #endif
 
 		// The current Agent that we are trying to control
-		Ref<AIAgentEntity> m_AIAgentEntity;
+		// #WREF_BehaviourTreeBaseTask, non owning ptr, should be converted to a weak ptr because we don't want to stop the entity from delete, we are "child" of it
+		AIAgentEntity* m_pAIAgentEntity = nullptr;
 
 		// All tasks in the tree
 		//       NODE ID -> TASK*
-		std::map<UUID, BehaviourTreeBaseTask*> m_Tasks;
+		std::map<UUID, Ref<BehaviourTreeBaseTask>> m_Tasks;
 		
 		// All tasks at level one, level one meaning right below the root node
 		//       INDEX -> TASK* (Index is relative to the m_Tasks map)
-		std::map<size_t, BehaviourTreeBaseTask*> m_LevelOneTasks;
+		std::map<size_t, Ref<BehaviourTreeBaseTask>> m_LevelOneTasks;
 
 		std::vector<BehaviourTreeCompositeOrderInfo> m_EvaluationOrder;
 
 #if !defined(SAT_DIST)
 		std::vector<Ref<Link>> m_EditorLinkPath;
 #endif
+
 		Ref<BehaviourTreeMemorySpecification> m_BlackboardSpec;
 		Ref<BehaviourTreeMemory> m_Blackboard;
 	};

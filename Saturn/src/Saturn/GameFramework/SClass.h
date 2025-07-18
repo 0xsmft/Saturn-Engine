@@ -111,7 +111,7 @@ namespace Saturn {
 		{
 		}
 
-		virtual ~SClass() = default;
+		~SClass() = default;
 
 		inline SObject* CreateDefaultObject() 
 		{

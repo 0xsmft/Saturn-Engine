@@ -41,7 +41,7 @@ namespace Saturn {
 	}
 
 #if !defined( SAT_DIST )
-	Ref<BehaviourTreeMemoryVariableSpec> BehaviourTreeMemorySpecification::DrawVariableFinder( SPropertyType type, Ref<BehaviourTreeMemoryVariableSpec> selectedVar )
+	Ref<BehaviourTreeMemoryKeySpec> BehaviourTreeMemorySpecification::DrawKeyFinder( SPropertyType type, Ref<BehaviourTreeMemoryKeySpec> selectedVar )
 	{
 		for( auto& rVariable : m_SpecificationData )
 		{
@@ -63,9 +63,9 @@ namespace Saturn {
 
 #endif
 
-	Ref<BehaviourTreeMemoryVariableSpec> BehaviourTreeMemorySpecification::PostInitVariable( UUID variableID )
+	Ref<BehaviourTreeMemoryKeySpec> BehaviourTreeMemorySpecification::PostInitKey( UUID variableID )
 	{
-		auto itr = std::find_if( m_SpecificationData.begin(), m_SpecificationData.end(), 
+		const auto itr = std::find_if( m_SpecificationData.begin(), m_SpecificationData.end(), 
 			[ variableID ](const auto& rItem) 
 		{
 			return rItem->VariableID == variableID;
@@ -80,6 +80,17 @@ namespace Saturn {
 		}
 
 		return nullptr;
+	}
+
+	Ref<BehaviourTreeMemoryKeySpec> BehaviourTreeMemorySpecification::GetKeySpec( UUID variableID ) const
+	{
+		const auto itr = std::find_if( m_SpecificationData.begin(), m_SpecificationData.end(),
+			[ variableID ]( const auto& rItem )
+		{
+			return rItem->VariableID == variableID;
+		} );
+
+		return itr == m_SpecificationData.end() ? nullptr : *itr;
 	}
 
 }

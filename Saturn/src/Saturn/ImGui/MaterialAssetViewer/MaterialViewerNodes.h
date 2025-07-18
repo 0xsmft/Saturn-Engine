@@ -38,7 +38,7 @@ namespace Saturn {
 
 	class MaterialOutputNode : public NodeEditorBlueprintNode
 	{
-		SAT_NODE_EDITOR_NODE_BODY( NodeExecutionType::MaterialOutput );
+		SAT_DECLARE_CLASS( MaterialOutputNode, NodeEditorBlueprintNode );
 	public:
 		struct RuntimeData
 		{
@@ -63,7 +63,7 @@ namespace Saturn {
 
 	class MaterialSampler2DNode : public NodeEditorBlueprintNode 
 	{
-		SAT_NODE_EDITOR_NODE_BODY( NodeExecutionType::Sampler2D );
+		SAT_DECLARE_CLASS( MaterialSampler2DNode, NodeEditorBlueprintNode );
 	public:
 		MaterialSampler2DNode();
 		MaterialSampler2DNode( const std::string& rName );
@@ -81,7 +81,7 @@ namespace Saturn {
 
 	class MaterialColorPickerNode : public NodeEditorBlueprintNode
 	{
-		SAT_NODE_EDITOR_NODE_BODY( NodeExecutionType::ColorPicker );
+		SAT_DECLARE_CLASS( MaterialColorPickerNode, NodeEditorBlueprintNode );
 	public:
 		MaterialColorPickerNode();
 		MaterialColorPickerNode( const std::string& rName );
@@ -101,7 +101,7 @@ namespace Saturn {
 
 	class MaterialGetAssetNode : public NodeEditorBlueprintNode
 	{
-		SAT_NODE_EDITOR_NODE_BODY( NodeExecutionType::AssetID );
+		SAT_DECLARE_CLASS( MaterialGetAssetNode, NodeEditorBlueprintNode );
 	public:
 		MaterialGetAssetNode();
 		MaterialGetAssetNode( const std::string& rName );
@@ -119,7 +119,7 @@ namespace Saturn {
 
 	class MaterialSeparateColorRGBNode : public NodeEditorBlueprintNode
 	{
-//		SAT_NODE_EDITOR_NODE_BODY( NodeExecutionType::MaterialSeparateColorRGB );
+		SAT_DECLARE_CLASS( MaterialSeparateColorRGBNode, NodeEditorBlueprintNode );
 	public:
 		MaterialSeparateColorRGBNode();
 		MaterialSeparateColorRGBNode( const std::string& rName );
@@ -134,7 +134,7 @@ namespace Saturn {
 
 	class MaterialColorMixerNode : public NodeEditorBlueprintNode
 	{
-		SAT_NODE_EDITOR_NODE_BODY( NodeExecutionType::MaterialMixColors );
+		SAT_DECLARE_CLASS( MaterialColorMixerNode, NodeEditorBlueprintNode );
 	public:
 		MaterialColorMixerNode();
 		MaterialColorMixerNode( const std::string& rName );
@@ -150,11 +150,6 @@ namespace Saturn {
 	class MaterialNodeLibrary
 	{
 	public:
-		static void RegisterAllNodes();
-
-	public:
-		static NodeEditorType GetStaticType() { return NodeEditorType::Material; }
-
 		static Ref<MaterialOutputNode> SpawnOutputNode( Ref<NodeEditorBase> nodeEditor );
 
 		static Ref<MaterialGetAssetNode> SpawnGetAsset( Ref<NodeEditorBase> nodeEditor );

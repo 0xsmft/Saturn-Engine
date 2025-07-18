@@ -50,7 +50,6 @@ namespace Saturn {
 		if( m_NodeEditor )
 			m_NodeEditor->SetRuntime( nullptr );
 
-		m_Runtime = nullptr;
 		m_NodeEditor = nullptr;
 	}
 
@@ -73,22 +72,14 @@ namespace Saturn {
 		else
 		{
 			SAT_CORE_WARN( "Failed to read node editor, using empty behaviour tree" );
-			SAT_CORE_ASSERT( false );
+			SAT_CORE_VERIFY( false );
 		}
 
-		BehaviourTreeEditorEvaluator::BehaviourTreeEdEvaluatorInfo info{};
-		info.OutputNodeID = m_OutputNodeID;
-
-		m_Runtime = Ref<BehaviourTreeEditorEvaluator>::Create( info );
-		m_Runtime->SetTargetNodeEditor( m_NodeEditor );
-
-		m_NodeEditor->SetRuntime( m_Runtime );
-
-		m_AIAgentEntity = entity;
+		m_AIAgentEntity = entity.Get();
 		m_NodeEditor->SetTargetAgent( m_AIAgentEntity );
 
 		// Convert nodes into tasks.
-		m_NodeEditor->InitBehaviourTree();
+		m_NodeEditor->InitBBAndTasks();
 	
 #if !defined(SAT_DIST)
 		m_NodeEditor->SetState( NodeEditorState::Simulating );

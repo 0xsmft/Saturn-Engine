@@ -28,6 +28,8 @@
 
 #pragma once
 
+#include "Saturn/GameFramework/SObject.h"
+
 #include "Pin.h"
 #include "NodeEditorCompilationStatus.h"
 
@@ -83,9 +85,7 @@ namespace Saturn {
 		BehaviourTreeRootNode,
 		BehaviourTreeSelectorNode,
 		BehaviourTreeSequenceNode,
-		BehaviourTreeWaitNode,
-		BehaviourTreePlaySoundNode,
-		BehaviourTreeMoveTo,
+		BehaviourTreeGeneralTaskNode,
 		HintNode, // Comment node
 		None
 	};
@@ -94,17 +94,25 @@ namespace Saturn {
 	class NodeEditorBase;
 	class NodeEditorRuntime;
 
-#define SAT_NODE_EDITOR_NODE_BODY( ExecutionType ) \
-public: \
-static inline NodeExecutionType GetStaticExecutionType() { return ExecutionType; }
-
-	// NOTE: Tips when adding a new node
-	// 1) You must add a custom execution type
-	// 2) You must add the node to its NodeLibrary
-	// 3) Refer to the NodeEditor for the Node you are trying to add, for example, BehaviourTrees need a Task counterpart when adding a Task node so you'll need to refer to that
-	class NodeEditorNodeBase : public RefTarget
+	class NodeEditorNodeBase : public SObject
 	{
-		SAT_NODE_EDITOR_NODE_BODY( NodeExecutionType::None );
+		// NOTE: SAT_DECLARE_CLASS expanded
+	private: 
+		NodeEditorNodeBase& operator=( NodeEditorNodeBase&& ); 
+		NodeEditorNodeBase& operator=( const NodeEditorNodeBase& ); 
+		static SClass* GetStaticClassInternal(); 
+
+	public: 
+		inline static [[nodiscard]] SClass* StaticClass() 
+		{
+			return GetStaticClassInternal();
+		}
+	public: 
+		typedef NodeEditorNodeBase ThisClass; 
+		typedef SObject Super; 
+
+		//////////////////////////////////////////////////////////////////////////
+
 	public:
 		UUID ID;
 		std::string Name;
@@ -112,26 +120,20 @@ static inline NodeExecutionType GetStaticExecutionType() { return ExecutionType;
 		std::vector<Ref<Pin>> Outputs;
 		NodeRenderType Type = NodeRenderType::Blueprint;
 		NodeExecutionType ExecutionType = NodeExecutionType::None;
-		bool CanBeDeleted = true;
+		size_t EvaluationOrder = 0;
+		NodeEditorBase* pOuter = nullptr;
 
 #if !defined(SAT_DIST)
+		std::string ActiveState;
+		std::string SavedState;
+
 		ImColor Color;
 		ImVec2 Size;
 		ImVec2 Position;
 
-		size_t EvaluationOrder = 0;
-
-		std::string ActiveState;
-		std::string SavedState;
+		bool CanBeDeleted = true;
 #endif
 
-	public:
-#if !defined(SAT_DIST)
-		using IStream = std::ifstream;
-#else
-		// In Dist, we read from a VFS file which is not an actual file so we can't use std::ifstream
-		using IStream = std::istream;
-#endif
 	public:
 		NodeEditorNodeBase() = default;
 		NodeEditorNodeBase( const std::string& rName );
@@ -139,7 +141,7 @@ static inline NodeExecutionType GetStaticExecutionType() { return ExecutionType;
 
 		void Destroy();
 
-		virtual void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, NodeEditorBase* pBase ) = 0;
+		virtual void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder ) = 0;
 		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) = 0;
 		
 #if !defined(SAT_DIST)
@@ -152,7 +154,7 @@ static inline NodeExecutionType GetStaticExecutionType() { return ExecutionType;
 	public:
 		// Serialise/Deserialise NodeCache (NC)
 		virtual void Serialise( std::ofstream& rStream ) const;
-		virtual void Deserialise( IStream& rStream );
+		virtual void Deserialise( FDependentIStream& rStream );
 	};
 
 }

@@ -34,6 +34,7 @@ namespace Saturn {
 
 	class SoundOutputNode : public NodeEditorBlueprintNode
 	{
+		SAT_DECLARE_CLASS( SoundOutputNode, NodeEditorBlueprintNode );
 	public:
 		SoundOutputNode();
 		virtual ~SoundOutputNode();

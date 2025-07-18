@@ -57,32 +57,27 @@ namespace Saturn {
 	void BehaviourTreeMemoryAssetViewer::OnImGuiRender()
 	{
 #if !defined(SAT_DIST)
-		ImGuiWindowFlags flags = m_Dirty ? ImGuiWindowFlags_UnsavedDocument : 0;
+		const ImGuiWindowFlags flags = m_Dirty ? ImGuiWindowFlags_UnsavedDocument : 0;
 		if( ImGui::Begin( m_Name.c_str(), &m_Open, flags ) )
 		{
 			for( auto& rData : m_SpecAsset->m_SpecificationData )
 			{
-				char buffer[ 1024 ];
-				memset( buffer, 0, 256 );
-				memcpy( buffer, rData->Name.data(), rData->Name.length() );
-
-				std::string id = std::format( "##{}", ( uint64_t ) rData->RenderID );
+				const std::string id = std::format( "##{}", ( uint64_t ) rData->RenderID );
 
 				ImGui::SetNextItemWidth( 130.0f );
-				if( ImGui::InputText( id.c_str(), buffer, 1024 ) )
+				if( Auxiliary::InputText( id.c_str(), &rData->Name ) )
 				{
-					rData->Name = std::string( buffer );
 					m_Dirty = true;
 				}
 
-				std::string currentType = SPropertyTypeToStringInNamespace( rData->DataType );
-				auto textSize = ImGui::CalcTextSize( currentType.c_str() );
+				const std::string currentType = SPropertyTypeToStringInNamespace( rData->DataType );
+				const auto textSize = ImGui::CalcTextSize( currentType.c_str() );
 
 				ImGui::SameLine();
 
 				ImGui::SetNextItemWidth( 130.0f );
 
-				std::string dataTypeID = std::format( "##DataType/{0}", ( uint64_t ) rData->RenderID );
+				const std::string dataTypeID = std::format( "##DataType/{0}", ( uint64_t ) rData->RenderID );
 				if( ImGui::BeginCombo( dataTypeID.c_str(), currentType.c_str() ) )
 				{
 					for( size_t i = 0; i < std::underlying_type_t<SPropertyType>( SPropertyType::Unknown ); i++ )
@@ -102,17 +97,16 @@ namespace Saturn {
 				// No new line!
 				if( rData->Name.empty() )
 				{
-					std::string text = "The variable name cannot be empty!";
+					const std::string text = "The variable name cannot be empty!";
 
-					ImVec2 padding = ImGui::GetStyle().FramePadding;
-					ImVec2 textPosition = ImGui::GetCursorScreenPos();
-					ImVec2 textSize = ImGui::CalcTextSize( text.c_str() );
+					const ImVec2 padding = ImGui::GetStyle().FramePadding;
+					const ImVec2 textPosition = ImGui::GetCursorScreenPos();
+					const ImVec2 textSize = ImGui::CalcTextSize( text.c_str() );
 
-					ImVec2 min = ImVec2( textPosition.x - padding.x, textPosition.y - padding.y );
-					ImVec2 max = ImVec2( textPosition.x + padding.x + textSize.x, textPosition.y + padding.y + textSize.y );
+					const ImVec2 min = ImVec2( textPosition.x - padding.x, textPosition.y - padding.y );
+					const ImVec2 max = ImVec2( textPosition.x + padding.x + textSize.x, textPosition.y + padding.y + textSize.y );
 
-					ImGui::GetWindowDrawList()->AddRectFilled( min, max,
-						IM_COL32( 200, 30, 60, 255 ), 2.0f, ImDrawFlags_RoundCornersAll );
+					ImGui::GetWindowDrawList()->AddRectFilled( min, max, IM_COL32( 200, 30, 60, 255 ), 2.0f, ImDrawFlags_RoundCornersAll );
 
 					ImGui::TextUnformatted( text.c_str() );
 

@@ -55,9 +55,12 @@ namespace Saturn {
 		}
 
 		template<typename CppType>
-		typename CppType Get() const
+		typename const CppType Get() const
 		{
-			return std::get< CppType >( m_Value );
+			if( HoldsAnyValue() )
+				return std::get< CppType >( m_Value );
+
+			return CppType{};
 		}
 
 		template<typename CppType>

@@ -569,7 +569,7 @@ namespace Saturn {
 
 	Ref<Entity> Scene::CreateEntityWithID( UUID uuid, const std::string& name /*= "" */ )
 	{
-		Ref<Entity> entity = Ref<Entity>::Create( this );
+		Ref<Entity> entity = ClassMetadataHandler::Get().CreateClassObject<Entity>( Entity::StaticClass(), this );
 		entity->SetName( name );
 		entity->GetComponent<IdComponent>().ID = uuid;
 	
@@ -580,7 +580,7 @@ namespace Saturn {
 
 	Ref<Entity> Scene::CreateEntity( const std::string& name /*= "" */ )
 	{
-		Ref<Entity> entity = Ref<Entity>::Create( this );
+		Ref<Entity> entity = ClassMetadataHandler::Get().CreateClassObject<Entity>( Entity::StaticClass(), this );
 		entity->SetName( name );
 
 		OnEntityCreated( entity );

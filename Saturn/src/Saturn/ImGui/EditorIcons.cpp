@@ -35,13 +35,13 @@
 
 namespace Saturn {
 
-#if defined( SAT_DEBUG ) || defined( SAT_RELEASE )
+#if !defined( SAT_DIST )
 	static std::unordered_map<std::string, Ref<Texture2D>> s_Textures;
 #endif
 
 	Ref<Texture2D> EditorIcons::GetIcon( const std::string& rName )
 	{
-#if defined( SAT_DEBUG ) || defined( SAT_RELEASE )
+#if !defined( SAT_DIST )
 		const auto Itr = s_Textures.find( rName );
 
 		return Itr == s_Textures.end() ? nullptr : Itr->second;
@@ -54,15 +54,15 @@ namespace Saturn {
 
 	void EditorIcons::AddIcon( const Ref<Texture2D>& rTexture )
 	{
-#if defined( SAT_DEBUG ) || defined( SAT_RELEASE )
-		std::string name = rTexture->GetPath().stem().string();
+#if !defined( SAT_DIST )
+		const std::string name = rTexture->GetPath().stem().string();
 		s_Textures[ name ] = rTexture;
 #endif
 	}
 
 	void EditorIcons::Clear()
 	{
-#if defined( SAT_DEBUG ) || defined( SAT_RELEASE )
+#if !defined( SAT_DIST )
 		s_Textures.clear();
 #endif
 	}

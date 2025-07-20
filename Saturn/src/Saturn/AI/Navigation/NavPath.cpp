@@ -45,8 +45,8 @@
 unsigned int result = x; \
 if( dtStatusFailed( (result) ) ) \
 { \
-	std::string errorText = Auxiliary::DetourErrorToString( result ); \
-	SAT_CORE_INFO( "[NavPath] Detour operation failed! Error code was DETOUR ERROR/{0}" ); \
+	const std::string errorText = Auxiliary::DetourErrorToString( result ); \
+	SAT_CORE_INFO( "[NavPath] Detour operation failed! Error code was DETOUR ERROR/{0}", errorText ); \
 	return false; \
 }\
 }

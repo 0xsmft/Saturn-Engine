@@ -47,6 +47,7 @@ namespace Saturn {
 #endif
 	};
 
+	// If you modify this enum you must ditto to XSC auto completion enum
 	enum SClassFlags
 	{
 		SC_None = 0,

@@ -166,27 +166,38 @@ namespace Saturn {
 
 		//////////////////////////////////////////////////////////////////////////
 		// Defaults
+
 		const UUID GetDefaultMaterialAsset() const { return m_DefaultMaterialAsset; }
 		void SetDefaultMaterialAsset( UUID newID ) { m_DefaultMaterialAsset = newID; }
 
 		const UUID GetDefaultPhysicsMaterialAsset() const { return m_DefaultPhysicsMaterialAsset; }
 		void SetDefaultPhysicsMaterialAsset( UUID newID ) { m_DefaultPhysicsMaterialAsset = newID; }
 
+		//////////////////////////////////////////////////////////////////////////
+		// Auto Saves, Editor only
+#if !defined(SAT_DIST)
+		inline float GetAutoSaveInterval() const { return m_AutoSaveInterval; }
+		inline bool IsAutoSavesEnabled() const { return m_EnableAutoSaves; }
+
+		inline void SetAutoSaveInterval( float interval ) { m_AutoSaveInterval = interval; }
+		inline void EnableAutoSaves( bool value ) { m_EnableAutoSaves = value; }
+#endif
+
 	public:
 		//////////////////////////////////////////////////////////////////////////
 		// Premake, Building & Preparation for Distribution (Used in Editor)
 
-		bool HasPremakeFile();
-		void CreatePremakeFile();
-		void CreateBuildFile();
+		bool HasPremakeFile() const;
+		void CreatePremakeFile( bool force = false ) const;
+		void CreateBuildFile( bool force = false ) const;
 
-		std::filesystem::path FindBuildTool();
+		std::filesystem::path FindBuildTool() const;
 
 		bool Build( ConfigKind kind, const std::string& rExtraArgs = "" );
 		bool Rebuild( ConfigKind kind, const std::string& rExtraArgs = "" );
 		void Distribute( ConfigKind kind, const std::string& rExtraArgs = "" );
 
-		void PrepForDist();
+		void PrepForDist() const;
 
 	private:
 		void CheckNewAssets();
@@ -198,6 +209,12 @@ namespace Saturn {
 		std::vector<Ref<SoundGroup>> m_SoundGroups;
 		UUID m_DefaultMaterialAsset = 0;
 		UUID m_DefaultPhysicsMaterialAsset = 0;
+		
+#if !defined(SAT_DIST)
+		// Time in seconds, converted to minutes in the Editor, when changing the time
+		float m_AutoSaveInterval = 300.0f;
+		bool m_EnableAutoSaves = false;
+#endif
 
 		// Absolute root path
 		std::filesystem::path m_RootPath;

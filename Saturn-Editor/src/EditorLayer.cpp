@@ -337,6 +337,15 @@ namespace Saturn {
 
 			m_EditorScene->OnUpdate( time );
 			m_EditorScene->OnRenderEditor( m_EditorCamera, time, Application::Get().PrimarySceneRenderer() );
+
+			m_LastAutoSaveTime += time;
+
+			if( auto prj = Project::GetActiveProject(); prj->IsAutoSavesEnabled() && m_LastAutoSaveTime >= prj->GetAutoSaveInterval() )
+			{
+				SaveFileAuto();
+
+				m_LastAutoSaveTime = 0.0f;
+			}
 		}
 
 		if( m_ShowMeshAABB )
@@ -410,7 +419,7 @@ namespace Saturn {
 
 			ImGui::Separator();
 
-			if( std::string status = m_BlockingOperation->GetStatus(); !status.empty() )
+			if( const std::string status = m_BlockingOperation->GetStatus(); !status.empty() )
 			{
 				ImGui::Text( status.c_str() );
 			}
@@ -423,7 +432,7 @@ namespace Saturn {
 
 			ImGui::Spring();
 
-			if( float percent = m_BlockingOperation->GetProgress(); percent >= 1.0f )
+			if( const float percent = m_BlockingOperation->GetProgress(); percent >= 1.0f )
 			{
 				ImGui::ProgressBar( percent / 100.0f );
 			}
@@ -466,16 +475,15 @@ namespace Saturn {
 	void EditorLayer::SaveFileAs()
 	{
 		// TODO: Support Saving scene as!
-		auto res = Application::Get().SaveFile( "Saturn Scene file (*.scene, *.sc)\0*.scene; *.sc\0" );
+		const auto res = Application::Get().SaveFile( "Saturn Scene file (*.scene, *.sc)\0*.scene; *.sc\0" );
 
 		SceneSerialiser serialiser( m_EditorScene );
-		serialiser.Serialise();
+		serialiser.Serialise( res );
 	}
 
 	void EditorLayer::SaveFile()
 	{
-		auto fullPath = Project::GetActiveProject()->FilepathAbs( m_EditorScene->Path );
-
+		const auto fullPath = Project::GetActiveProject()->FilepathAbs( m_EditorScene->Path );
 		if( std::filesystem::exists( fullPath ) )
 		{
 			SceneSerialiser ss( m_EditorScene );
@@ -485,6 +493,20 @@ namespace Saturn {
 		{
 			SaveFileAs();
 		}
+	}
+
+	void EditorLayer::SaveFileAuto()
+	{
+		m_AutoSaveCount = ( m_AutoSaveCount + 1 ) % 2;
+
+		std::filesystem::path overridePath = "Cache";
+		overridePath /= std::format( "{0}.{1}.autoscene", m_EditorScene->Name, m_AutoSaveCount );
+
+		SceneSerialiser ss( m_EditorScene );
+		ss.Serialise( overridePath );
+
+		EditorNotification notification{ .Text = "AUTO SAVING, PLEASE WAIT", .Lifetime = 5.0f };
+		PushNotification( notification );
 	}
 
 	void EditorLayer::OpenFile( AssetID id )
@@ -497,7 +519,7 @@ namespace Saturn {
 		hierarchyPanel->ClearSelection();
 		hierarchyPanel->SetContext( nullptr );
 
-		Ref<Asset> asset = id == 0 ? nullptr : AssetManager::Get().FindAsset( id );
+		const Ref<Asset> asset = id == 0 ? nullptr : AssetManager::Get().FindAsset( id );
 		
 		if( asset )
 		{
@@ -835,6 +857,37 @@ namespace Saturn {
 				}
 			}
 			ImGui::EndHorizontal();
+
+//			ImGui::BeginHorizontal( "##prj_autosaves" );
+			{
+				bool enableAutoSaves = ActiveProject->IsAutoSavesEnabled();
+			
+				if( Auxiliary::DrawBoolControl( "Enable Auto Saves", enableAutoSaves ) ) 
+				{
+					ActiveProject->EnableAutoSaves( enableAutoSaves );
+				}
+
+				Auxiliary::DisabledFlag disabledIfNoAutoSaves( !ActiveProject->IsAutoSavesEnabled() );
+
+				ImGui::BeginHorizontal( "##prj_autosaves_interval" );
+
+				float interval = ActiveProject->GetAutoSaveInterval() / 60;
+				if( Auxiliary::DrawFloatControl( "Auto Save Interval", interval ) )
+				{
+					ActiveProject->SetAutoSaveInterval( interval * 60 );
+
+					// Reset timer because this value is incremented even when auto saves are disabled.
+					m_LastAutoSaveTime = 0.0f;
+				}
+
+				ImGui::Spring();
+				ImGui::Text( "minutes" );
+
+				ImGui::EndHorizontal();
+
+				disabledIfNoAutoSaves.Pop();
+			}
+//			ImGui::EndHorizontal();
 
 			ImGui::EndVertical();
 
@@ -2522,9 +2575,9 @@ namespace Saturn {
 		Ref<Project> ActiveProject = Project::GetActiveProject();
 		auto& rConfig = ActiveProject->GetConfig();
 
-		auto& startupScene = rConfig.StartupSceneID;
-		auto defaultMaterialID = ActiveProject->GetDefaultMaterialAsset();
-		auto defaultPhysMaterialID = ActiveProject->GetDefaultPhysicsMaterialAsset();
+		const auto& startupScene = rConfig.StartupSceneID;
+		const auto defaultMaterialID = ActiveProject->GetDefaultMaterialAsset();
+		const auto defaultPhysMaterialID = ActiveProject->GetDefaultPhysicsMaterialAsset();
 
 		if( startupScene == 0 )
 		{
@@ -2669,25 +2722,25 @@ namespace Saturn {
 
 	float EditorLayer::DrawSingleNotification( EditorNotification& rInfo, float lastYOffset )
 	{
-		auto dt = ImGui::GetIO().DeltaTime;
+		const auto dt = ImGui::GetIO().DeltaTime;
 
 		// Position bottom-right corner
 		const ImGuiViewport* pViewport = ImGui::GetMainViewport();
-		ImVec2 workPos = pViewport->WorkPos;
-		ImVec2 workSize = pViewport->WorkSize;
+		const ImVec2 workPos = pViewport->WorkPos;
+		const ImVec2 workSize = pViewport->WorkSize;
 
 		// Animate window alpha
 		// 0.5f is the duration
 		rInfo.AnimationTime += dt;
-		float t = glm::clamp( rInfo.AnimationTime / 0.5f, 0.0f, 1.0f );
+		const float t = glm::clamp( rInfo.AnimationTime / 0.5f, 0.0f, 1.0f );
 
-		float easeAlpha = glm::clamp( 1.0f - glm::pow( 1.0f - t, 3.0f ), 0.0f, 1.0f );
+		const float easeAlpha = glm::clamp( 1.0f - glm::pow( 1.0f - t, 3.0f ), 0.0f, 1.0f );
 
-		ImVec2 windowPos = ImVec2( 
+		const ImVec2 windowPos = ImVec2( 
 			workPos.x + workSize.x, 
 			workPos.y + workSize.y - 48.0f - lastYOffset );
 
-		ImVec2 windowPivot = ImVec2( 1.0f, 1.0f );
+		const ImVec2 windowPivot = ImVec2( 1.0f, 1.0f );
 
 		ImGui::SetNextWindowPos( windowPos, ImGuiCond_Always, windowPivot );
 		ImGui::PushStyleVar( ImGuiStyleVar_Alpha, easeAlpha );
@@ -2718,7 +2771,7 @@ namespace Saturn {
 		ImGui::Spring();
 		ImGui::EndHorizontal();
 
-		float sizeY = ImGui::GetWindowSize().y;
+		const float sizeY = ImGui::GetWindowSize().y;
 		ImGui::End();
 		ImGui::PopStyleVar();
 

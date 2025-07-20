@@ -312,19 +312,19 @@ namespace Saturn {
 		ars.Serialise();
 	}
 
-	bool Project::HasPremakeFile()
+	bool Project::HasPremakeFile() const
 	{
 		return std::filesystem::exists( m_RootPath / "premake5.lua" );
 	}
 
-	void Project::CreatePremakeFile()
+	void Project::CreatePremakeFile( bool force ) const
 	{
-		auto PremakePath = m_RootPath / "premake5.lua";
+		const auto PremakePath = m_RootPath / "premake5.lua";
 
-		if( std::filesystem::exists( PremakePath ) )
-			std::filesystem::remove( PremakePath );
+		if( std::filesystem::exists( PremakePath ) || !force )
+			return;
 
-		std::filesystem::copy( "content/Templates/premake5.lua", PremakePath );
+		std::filesystem::copy( "content/Templates/premake5.lua", PremakePath, std::filesystem::copy_options::overwrite_existing );
 
 		std::ifstream ifs( PremakePath );
 
@@ -333,7 +333,7 @@ namespace Saturn {
 		if( ifs )
 		{
 			ifs.seekg( 0, std::ios_base::end );
-			auto size = static_cast< size_t >( ifs.tellg() );
+			const auto size = static_cast< size_t >( ifs.tellg() );
 			ifs.seekg( 0, std::ios_base::beg );
 
 			fileData.reserve( size );
@@ -401,23 +401,23 @@ namespace Saturn {
 		fout << fileData;
 	}
 
-	void Project::CreateBuildFile()
+	void Project::CreateBuildFile( bool force ) const
 	{
 		auto BuildFilePath = GetRootDir() / "Source";
 		BuildFilePath /= m_Config.Name + ".Build.cs";
 
-		if( !std::filesystem::exists( BuildFilePath ) )
+		if( !std::filesystem::exists( BuildFilePath ) || force )
 			std::filesystem::copy( "content/Templates/%PROJECT_NAME%.Build.cs", BuildFilePath );
 	}
 
-	void Project::PrepForDist()
+	void Project::PrepForDist() const
 	{
 		// Copy over the runtime build file.
 		auto BuildFilePath = GetRootDir() / "Source";
-		BuildFilePath /= m_Config.Name + ".RT_Build.cs";
+		BuildFilePath /= m_Config.Name + ".Distribution.cs";
 
 		if( !std::filesystem::exists( BuildFilePath ) )
-			std::filesystem::copy( "content/Templates/%PROJECT_NAME%.RT_Build.cs", BuildFilePath );
+			std::filesystem::copy( "content/Templates/%PROJECT_NAME%.Distribution.cs", BuildFilePath );
 
 		// Copy over the client main file
 		auto BuildPath = GetFullAssetPath().parent_path() / "Build";
@@ -460,9 +460,9 @@ namespace Saturn {
 		fout << fileData;
 	}
 
-	std::filesystem::path Project::FindBuildTool()
+	std::filesystem::path Project::FindBuildTool() const
 	{
-		std::filesystem::path SaturnRootDir = Auxiliary::GetEnvironmentVariable( "SATURN_DIR" );
+		const std::filesystem::path SaturnRootDir = Auxiliary::GetEnvironmentVariable( "SATURN_DIR" );
 		std::filesystem::path BuildToolDir = SaturnRootDir;
 
 		BuildToolDir /= "bin";

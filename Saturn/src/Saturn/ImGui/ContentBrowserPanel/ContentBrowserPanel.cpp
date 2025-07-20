@@ -249,7 +249,7 @@ namespace Saturn {
 				if( ImGui::MenuItem( "Show In Explorer" ) )
 				{
 					std::wstring CommandLine = L"";
-					std::filesystem::path AssetPath = m_SelectedItems[ 0 ]->Path();
+					const std::filesystem::path AssetPath = m_SelectedItems[ 0 ]->Path();
 					CommandLine = std::format( L"explorer.exe \"{0}\"", AssetPath.wstring() );
 
 					DeatchedProcess dp( CommandLine );
@@ -257,7 +257,7 @@ namespace Saturn {
 
 				if( ImGui::MenuItem( "Copy Path" ) )
 				{
-					std::string text = m_SelectedItems[ 0 ]->Path().string();
+					const std::string text = m_SelectedItems[ 0 ]->Path().string();
 					ImGui::SetClipboardText( text.c_str() );
 				}
 			}
@@ -760,7 +760,7 @@ namespace Saturn {
 				ImGui::OpenPopup( "Create New Class##Create_Script" );
 
 			ImGui::SetNextWindowSize( { 350.0F, 0.0F } );
-			if( ImGui::BeginPopupModal( "Create New Class##Create_Script", &m_OpenScriptsPopup, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings ) )
+			if( ImGui::BeginPopupModal( "Create New Class##Create_Script", &m_OpenScriptsPopup, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings ) )
 			{
 				bool PopupModified = false;
 
@@ -768,14 +768,7 @@ namespace Saturn {
 				ImGui::BeginHorizontal( "##inputh" );
 
 				ImGui::Text( "Name:" );
-				char buffer[ 256 ];
-				memset( buffer, 0, 256 );
-				memcpy( buffer, m_NewClassName.data(), m_NewClassName.length() );
-
-				if( ImGui::InputText( "##n", buffer, 256 ) )
-				{
-					m_NewClassName = std::string( buffer );
-				}
+				Auxiliary::InputText( "##newclassname", &m_Name );
 
 				ImGui::EndHorizontal();
 
@@ -836,23 +829,14 @@ namespace Saturn {
 				ImGui::OpenPopup( "Create New Class Instance (Prefab)##Create_ClassIns" );
 
 			ImGui::SetNextWindowSize( { 350.0F, 0.0F } );
-			if( ImGui::BeginPopupModal( "Create New Class Instance (Prefab)##Create_ClassIns", &m_OpenClassInstancePopup, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings ) )
+			if( ImGui::BeginPopupModal( "Create New Class Instance (Prefab)##Create_ClassIns", &m_OpenClassInstancePopup, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings ) )
 			{
 				bool PopupModified = false;
 
 				ImGui::BeginHorizontal( "##inputH" );
 
 				ImGui::Text( "Name:" );
-
-				// I wish that we did not have to do this. But for some reason ImGui does not work well when I use a string.
-				char buffer[ 256 ];
-				memset( buffer, 0, 256 );
-				memcpy( buffer, m_ClassInstanceName.c_str(), m_ClassInstanceName.length() );
-
-				if( ImGui::InputText( "##instanceName", buffer, 256 ) )
-				{
-					m_ClassInstanceName = std::string( buffer );
-				}
+				Auxiliary::InputText( "##instanceName", &m_ClassInstanceName );
 
 				ImGui::EndHorizontal();
 
@@ -866,7 +850,7 @@ namespace Saturn {
 					ImGui::EndListBox();
 				}
 
-				Auxiliary::DisabledFlag disabled( m_ClassInstanceName.empty() || m_SelectedMetadata == nullptr );
+				Auxiliary::DisabledFlag disabled( m_ClassInstanceName.empty() );
 
 				if( ImGui::Button( "Create" ) )
 				{
@@ -888,7 +872,7 @@ namespace Saturn {
 					// Create the source entity.
 					Ref<Entity> sourceEntity = nullptr;
 
-					GActiveScene->CreateEntityWithIDScript( UUID(), "Temporary", m_SelectedMetadata->GetName(), false );
+					sourceEntity = GActiveScene->CreateEntityWithIDScript( UUID(), "Temporary", m_SelectedMetadata->GetName(), false );
 
 					prefab->Create( sourceEntity );
 

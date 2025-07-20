@@ -89,16 +89,6 @@ namespace Saturn {
 			pClass = pClass->GetParentClass();
 		}
 
-		/*
-		for( const SClass* pCurrentClass = this; pCurrentClass; pCurrentClass = pCurrentClass->GetParentClass() )
-		{
-			if( pCurrentClass == pBase ) 
-			{
-				return true;
-			}
-		}
-		*/
-
 		return false;
 	}
 

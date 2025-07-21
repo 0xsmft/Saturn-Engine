@@ -58,6 +58,16 @@ namespace Saturn {
 	// enum ApplicationFlags_
 	typedef int ApplicationFlags;
 
+	enum class ApplicationConfigKind
+	{
+		// Development Configuration
+		Debug, 
+		// Development Configuration
+		Release, 
+		// Distribution Configuration
+		Dist 
+	};
+
 	struct ApplicationSpecification
 	{
 		ApplicationFlags Flags = 0x7FFFFFFF;

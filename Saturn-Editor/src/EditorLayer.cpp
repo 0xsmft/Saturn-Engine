@@ -245,7 +245,7 @@ namespace Saturn {
 		if( !Input::Get().MouseButtonPressed( RubyMouseButton::Right ) )
 			m_StartedRightClickInViewport = false;
 
-		bool canSetCursorMode = m_RuntimeScene == nullptr ? m_AllowCameraEvents : m_RuntimeScene->GetRuntimeState() == RuntimeState::Suspended ? m_AllowCameraEvents : m_MouseOverViewport;
+		const bool canSetCursorMode = m_RuntimeScene == nullptr ? m_AllowCameraEvents : m_RuntimeScene->GetRuntimeState() == RuntimeState::Suspended ? m_AllowCameraEvents : m_MouseOverViewport;
 
 		Input::Get().SetCanSetCursorMode( canSetCursorMode );
 
@@ -267,18 +267,35 @@ namespace Saturn {
 
 				Input::Get().SetCanSetCursorMode( true );
 
-				m_RuntimeScene->OnRuntimeStart();
+				if( m_RuntimeScene->OnRuntimeStart() ) 
+				{
+					m_LastRuntimeAttemptFailed = false;
 
-				hierarchyPanel->SetContext( m_RuntimeScene );
+					hierarchyPanel->SetContext( m_RuntimeScene );
 
-				Application::Get().PrimarySceneRenderer().SetCurrentScene( m_RuntimeScene.Get() );
+					Application::Get().PrimarySceneRenderer().SetCurrentScene( m_RuntimeScene.Get() );
 
-				m_EditorCamera.SetActive( false );
+					m_EditorCamera.SetActive( false );
 
-				const std::string title = std::format( "{0} (Running) - Saturn", Project::GetActiveConfig().Name );
-				Application::Get().GetWindow()->ChangeTitle( title );
+					const std::string title = std::format( "{0} (Running) - Saturn", Project::GetActiveConfig().Name );
+					Application::Get().GetWindow()->ChangeTitle( title );
 
-				m_ImGuiWindowManager->OnRuntimeStateChanged( RuntimeState::Running, RuntimeState::Starting );
+					m_ImGuiWindowManager->OnRuntimeStateChanged( RuntimeState::Running, RuntimeState::Starting );
+				}
+				else
+				{
+					// Runtime was rejected, clean up and restore state
+					m_ImGuiWindowManager->OnRuntimeStateChanged( RuntimeState::NoState, RuntimeState::Starting );
+
+					GActiveScene = m_EditorScene.Get();
+					m_RuntimeScene = nullptr;
+
+					m_RequestRuntime = false;
+					m_LastRuntimeAttemptFailed = true;
+
+					EditorNotification notification{ .Text = "Runtime request blocked. No camera was found after BeginPlay was called!", .Lifetime = 15.0f };
+					PushNotification( notification );
+				}
 			}
 		}
 		else
@@ -371,9 +388,7 @@ namespace Saturn {
 		SAT_PF_EVENT();
 
 		// Draw dockspace.
-		ImGuiIO& io = ImGui::GetIO();
-		ImGuiViewport* pViewport = ImGui::GetWindowViewport();
-		ImGui::DockSpaceOverViewport( pViewport );
+		ImGui::DockSpaceOverViewport( ImGui::GetWindowViewport() );
 		
 		if( ImGui::IsMouseClicked( ImGuiMouseButton_Left ) || ( ImGui::IsMouseClicked( ImGuiMouseButton_Right ) && !m_StartedRightClickInViewport ) )
 		{
@@ -807,7 +822,7 @@ namespace Saturn {
 
 					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "NoIcon" ), { 24.0f, 24.0f } ) )
 					{
-						Ref<Asset> target = AssetManager::Get().FindAsset( defaultMaterialID );
+						const Ref<Asset> target = AssetManager::Get().FindAsset( defaultMaterialID );
 
 						if( target )
 						{
@@ -846,7 +861,7 @@ namespace Saturn {
 
 					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "NoIcon" ), { 24.0f, 24.0f } ) )
 					{
-						Ref<Asset> target = AssetManager::Get().FindAsset( defaultMaterialID );
+						const Ref<Asset> target = AssetManager::Get().FindAsset( defaultMaterialID );
 
 						if( target )
 						{
@@ -871,17 +886,49 @@ namespace Saturn {
 
 				ImGui::BeginHorizontal( "##prj_autosaves_interval" );
 
-				float interval = ActiveProject->GetAutoSaveInterval() / 60;
-				if( Auxiliary::DrawFloatControl( "Auto Save Interval", interval ) )
+				float intervalSeconds = ActiveProject->GetAutoSaveInterval();
+				std::string unit;
+				float displayValue = intervalSeconds;
+
+				if( intervalSeconds < 60.0f )
 				{
-					ActiveProject->SetAutoSaveInterval( interval * 60 );
+					unit = "seconds";
+				}
+				else if( intervalSeconds < 3600.0f ) 
+				{
+					unit = "minutes";
+					displayValue /= 60.0f;
+				}
+				else 
+				{
+					unit = "hours";
+					displayValue /= 3600.0f;
+				}
+
+				if( Auxiliary::DrawFloatControl( "Auto Save Interval", displayValue ) )
+				{
+					if( unit == "seconds" )
+					{
+						intervalSeconds = displayValue;
+					}
+					else if( unit == "minutes" )
+					{
+						intervalSeconds = displayValue * 60.0f;
+					}
+					else
+					{
+						// Anything larger, display as hours
+						intervalSeconds = displayValue * 3600.0f;
+					}
+
+					ActiveProject->SetAutoSaveInterval( intervalSeconds );
 
 					// Reset timer because this value is incremented even when auto saves are disabled.
 					m_LastAutoSaveTime = 0.0f;
 				}
 
 				ImGui::Spring();
-				ImGui::Text( "minutes" );
+				ImGui::Text( unit.c_str() );
 
 				ImGui::EndHorizontal();
 
@@ -903,17 +950,10 @@ namespace Saturn {
 			{
 				auto& rBinding = *( rIt );
 
-				char buffer[ 256 ];
-				memset( buffer, 0, 256 );
-				memcpy( buffer, rBinding.Name.data(), rBinding.Name.length() );
-
-				std::string id = "##" + std::to_string( rBinding.ID );
+				const std::string id = "##" + std::to_string( rBinding.ID );
 
 				ImGui::SetNextItemWidth( 130.0f );
-				if( ImGui::InputText( id.data(), buffer, 256 ) )
-				{
-					rBinding.Name = std::string( buffer );
-				}
+				Auxiliary::InputText( id.data(), &rBinding.Name );
 
 				ImGui::SameLine(); // HACK, There seems to bug with the ImGui Layout as the InputText works fine when it's not in a Horizontal layout. (Update) Seems to be with certain IDs/labels
 
@@ -1206,7 +1246,7 @@ namespace Saturn {
 		SaveProject();
 
 		m_GameModule->BeginHotReload();
-		Project::GetActiveProject()->Build( ConfigKind::Release, "/HOTRELOAD" );
+		Project::GetActiveProject()->Build( ApplicationConfigKind::Release, "/HOTRELOAD" );
 		m_GameModule->EndHotReload();
 
 		m_EditorScene->AcknowledgeHotReload();
@@ -1504,12 +1544,12 @@ namespace Saturn {
 							m_BlockingOperation->SetTitle( "Distributing Project" );
 
 							m_BlockingOperation->SetStatus( "Building project" );
-							Project::GetActiveProject()->Rebuild( ConfigKind::Dist );
+							Project::GetActiveProject()->Rebuild( ApplicationConfigKind::Dist );
 
 							m_BlockingOperation->SetProgress( 50.0f );
 
 							m_BlockingOperation->SetStatus( "Copying for Distribution" );
-							Project::GetActiveProject()->Distribute( ConfigKind::Dist );
+							Project::GetActiveProject()->Distribute( ApplicationConfigKind::Dist );
 
 							m_BlockingOperation->SetProgress( 100.0f );
 							m_BlockingOperation->OnComplete();
@@ -2211,7 +2251,8 @@ namespace Saturn {
 
 	void EditorLayer::Viewport_RTControls_Default()
 	{
-		if( Auxiliary::ImageButton( m_StartRuntimeTexture, ImVec2( 24.0f, 24.0f ) ) )
+		const Ref<Texture2D> texture = m_LastRuntimeAttemptFailed ? m_StartErrorRuntimeTexture : m_StartRuntimeTexture;
+		if( Auxiliary::ImageButton( texture, ImVec2( 24.0f, 24.0f ) ) )
 		{
 			m_RequestRuntime = true;
 		}
@@ -2220,7 +2261,7 @@ namespace Saturn {
 		{
 			ImGui::BeginHorizontal( "##centerRTtooltip" );
 
-			ImGui::Text( "Request runtime to start" );
+			ImGui::Text( m_LastRuntimeAttemptFailed ? "Runtime request blocked. No camera was found after BeginPlay was called!" : "Request runtime to start" );
 			ImGui::Spring();
 #if defined(SAT_DEBUG)
 			ImGui::Text( "%s", m_RequestRuntime ? "RUNTIME RUNNING" : "RUNTIME NOT RUNNING" );
@@ -2542,11 +2583,11 @@ namespace Saturn {
 	bool EditorLayer::BuildShaderBundle()
 	{
 		// Make sure we include the Texture Pass shader.
-		// Texture Pass shader is only ever loaded in Dist and we are not on Dist at this point.
+		// Texture Pass shader is only ever loaded in Dist and we are not on Dist at this point, so load it now.
 		Ref<Shader> TexturePass = ShaderLibrary::Get().FindOrLoad( "TexturePass", "content/shaders/TexturePass.glsl" );
 
-		auto shaderRes = ShaderBundle::BundleShaders();
-		bool built = shaderRes == ShaderBundleResult::Success;
+		const auto shaderRes = ShaderBundle::BundleShaders();
+		const bool built = shaderRes == ShaderBundleResult::Success;
 
 		if( !built )
 		{
@@ -2745,7 +2786,7 @@ namespace Saturn {
 		ImGui::SetNextWindowPos( windowPos, ImGuiCond_Always, windowPivot );
 		ImGui::PushStyleVar( ImGuiStyleVar_Alpha, easeAlpha );
 
-		std::string windowID = std::format( "##EDITOR_NOFITICATION/{0}", (uint64_t)rInfo.ID );
+		const std::string windowID = std::format( "##EDITOR_NOFITICATION/{0}", (uint64_t)rInfo.ID );
 		ImGui::Begin( windowID.c_str(), nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDocking );
 
 		ImGui::BeginHorizontal( rInfo.ID );

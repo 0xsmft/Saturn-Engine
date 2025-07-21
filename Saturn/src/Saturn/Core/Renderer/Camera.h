@@ -80,6 +80,8 @@ namespace Saturn {
 		glm::vec3 GetForwardDirection() const;
 		glm::quat GetOrientation() const;
 
+		glm::vec3 GetRotation() const { return m_Rotation; }
+
 		uint32_t GetViewportWidth() const { return m_ViewportWidth; }
 		uint32_t GetViewportHeight() const { return m_ViewportHeight; }
 		uint32_t GetAspectRatio() const { return m_ViewportWidth / m_ViewportHeight; }

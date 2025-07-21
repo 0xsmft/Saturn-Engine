@@ -67,7 +67,7 @@ namespace Saturn {
 		// Try find our camera.
 		Ref<Entity> cameraEntity = m_Scene->GetMainCameraEntity();
 		
-		if( cameraEntity == nullptr ) 
+		if( !cameraEntity ) 
 		{
 			// Create the main camera.
 			m_CameraEntity = m_Scene->CreateEntity( "Camera" );

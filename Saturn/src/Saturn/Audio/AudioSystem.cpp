@@ -564,8 +564,8 @@ namespace Saturn {
 		uint64_t frames = 0;
 		MA_CHECK( ma_decoder_get_length_in_pcm_frames( &decoder, &frames ) );
 
-		uint64_t bpf = ma_get_bytes_per_frame( decoder.outputFormat, decoder.outputChannels );
-		size_t bufferSize = frames * bpf;
+		const uint64_t bpf = ma_get_bytes_per_frame( decoder.outputFormat, decoder.outputChannels );
+		const size_t bufferSize = frames * bpf;
 
 		decodedInformation.PCMFrameCount = frames;
 		decodedInformation.BytesPerFrame = bpf;

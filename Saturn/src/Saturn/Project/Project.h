@@ -29,6 +29,8 @@
 #pragma once
 
 #include "Saturn/Core/Base.h"
+#include "Saturn/Core/App.h"
+
 #include "Saturn/GameFramework/ActionBinding.h"
 #include "Saturn/Audio/SoundGroup.h"
 
@@ -50,13 +52,6 @@ namespace Saturn {
 		
 		// Path to the .sproject file
 		std::filesystem::path Path;
-	};
-
-	enum class ConfigKind
-	{
-		Debug, // Development Configuration
-		Release, // Development Configuration
-		Dist // Distribution Configuration
 	};
 
 	// Project
@@ -193,9 +188,9 @@ namespace Saturn {
 
 		std::filesystem::path FindBuildTool() const;
 
-		bool Build( ConfigKind kind, const std::string& rExtraArgs = "" );
-		bool Rebuild( ConfigKind kind, const std::string& rExtraArgs = "" );
-		void Distribute( ConfigKind kind, const std::string& rExtraArgs = "" );
+		bool Build( ApplicationConfigKind kind, const std::string& rExtraArgs = "" );
+		bool Rebuild( ApplicationConfigKind kind, const std::string& rExtraArgs = "" );
+		void Distribute( ApplicationConfigKind kind, const std::string& rExtraArgs = "" );
 
 		void PrepForDist() const;
 

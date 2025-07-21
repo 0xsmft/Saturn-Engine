@@ -67,6 +67,7 @@ namespace Saturn {
 		void OpenFile( AssetID id );
 
 		void SaveFile();
+		void SaveFileAuto();
 
 		void SaveProject();
 
@@ -180,6 +181,7 @@ namespace Saturn {
 		
 		Ref< Texture2D > m_CheckerboardTexture = nullptr;
 		Ref< Texture2D > m_StartRuntimeTexture = nullptr;
+		Ref< Texture2D > m_StartErrorRuntimeTexture = nullptr;
 		Ref< Texture2D > m_EndRuntimeTexture = nullptr;
 		Ref< Texture2D > m_PauseRuntimeTexture = nullptr;
 
@@ -226,13 +228,17 @@ namespace Saturn {
 		bool m_ShowOperation = false;
 
 		bool m_WasGizmoUsed = false;
-
-		ImVec2 m_ViewportSize;
+		bool m_LastRuntimeAttemptFailed = false;
 
 		// JobProgress
 		float m_OperationPercent = 0.0f;
 		// Translate as default
 		int m_GizmoOperation = 7 /* ImGuizmo::OPERATION::TRANSLATE */;
+
+		float m_LastAutoSaveTime = 0.0f;
+		uint32_t m_AutoSaveCount = 0u;
+
+		ImVec2 m_ViewportSize;
 
 		std::queue<MessageBoxInfo> m_MessageBoxes;
 		std::vector<EditorNotification> m_Notifications;

@@ -486,7 +486,7 @@ namespace Saturn {
 		return BuildToolDir;
 	}
 
-	bool Project::Build( ConfigKind kind, const std::string& rExtraArgs )
+	bool Project::Build( ApplicationConfigKind kind, const std::string& rExtraArgs )
 	{
 		std::filesystem::path BuildToolDir = FindBuildTool();
 
@@ -502,15 +502,15 @@ namespace Saturn {
 		
 		switch( kind )
 		{
-			case Saturn::ConfigKind::Debug:
+			case Saturn::ApplicationConfigKind::Debug:
 				Args += " /DEBUG /PROJECT:";
 				break;
 		
-			case Saturn::ConfigKind::Release:
+			case Saturn::ApplicationConfigKind::Release:
 				Args += " /RELEASE /PROJECT:";
 				break;
 			
-			case Saturn::ConfigKind::Dist:
+			case Saturn::ApplicationConfigKind::Dist:
 				Args += " /DIST /PROJECT:";
 				break;
 		}
@@ -528,7 +528,7 @@ namespace Saturn {
 		return exitCode == 0;
 	}
 
-	bool Project::Rebuild( ConfigKind kind, const std::string& rExtraArgs )
+	bool Project::Rebuild( ApplicationConfigKind kind, const std::string& rExtraArgs )
 	{
 		std::filesystem::path BuildToolDir = FindBuildTool();
 
@@ -544,15 +544,15 @@ namespace Saturn {
 
 		switch( kind )
 		{
-			case Saturn::ConfigKind::Debug:
+			case Saturn::ApplicationConfigKind::Debug:
 				Args += " /DEBUG /PROJECT:";
 				break;
 
-			case Saturn::ConfigKind::Release:
+			case Saturn::ApplicationConfigKind::Release:
 				Args += " /RELEASE /PROJECT:";
 				break;
 
-			case Saturn::ConfigKind::Dist:
+			case Saturn::ApplicationConfigKind::Dist:
 				Args += " /DIST /PROJECT:";
 				break;
 		}
@@ -570,7 +570,7 @@ namespace Saturn {
 		return exitCode == 0;
 	}
 
-	void Project::Distribute( ConfigKind kind, const std::string& rExtraArgs )
+	void Project::Distribute( ApplicationConfigKind kind, const std::string& rExtraArgs )
 	{
 		std::filesystem::path SaturnBinDir = Auxiliary::GetEnvironmentVariable( "SATURN_DIR" );
 		std::filesystem::path binDir = GetRootDir();
@@ -580,17 +580,17 @@ namespace Saturn {
 		
 		switch( kind )
 		{
-			case Saturn::ConfigKind::Debug: 
+			case Saturn::ApplicationConfigKind::Debug:
 				SaturnBinDir /= "Debug-windows-x86_64";
 				binDir /= "Debug-windows-x86_64";
 				break;
 
-			case Saturn::ConfigKind::Release:
+			case Saturn::ApplicationConfigKind::Release:
 				SaturnBinDir /= "Release-windows-x86_64";
 				binDir /= "Release-windows-x86_64";
 				break;
 
-			case Saturn::ConfigKind::Dist:
+			case Saturn::ApplicationConfigKind::Dist:
 				SaturnBinDir /= "Release-windows-x86_64"; // Use editor release dlls -- same as release ones
 				binDir /= "Dist-windows-x86_64";
 				break;

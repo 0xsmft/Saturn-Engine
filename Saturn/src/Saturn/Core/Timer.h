@@ -28,11 +28,7 @@
 
 #pragma once
 
-#include <iostream>
-#include <string>
 #include <chrono>
-#include <unordered_map>
-#include <string>
 
 namespace Saturn {
 
@@ -44,13 +40,13 @@ namespace Saturn {
 			Reset();
 		}
 
-		void Stop() 
+		inline void Stop() 
 		{
 			m_Stop = std::chrono::high_resolution_clock::now();
 			m_Stopped = true;
 		}
 
-		void Reset() 
+		inline void Reset() 
 		{
 			m_Start = std::chrono::high_resolution_clock::now();
 			m_Stopped = false;
@@ -76,80 +72,4 @@ namespace Saturn {
 		std::chrono::time_point<std::chrono::high_resolution_clock> m_Stop;
 	};
 
-	class TimerOnEvent
-	{
-	public:
-		TimerOnEvent() {}
-
-		// Time in seconds
-		template<typename Fn, typename... Args>
-		TimerOnEvent( float Interval, bool repeat, Fn&& rrFunction, Args&&... rrArgs )
-			: m_Function(std::bind(std::forward<Fn>(rrFunction), std::forward<Args>(rrArgs)...))
-		{
-			m_Interval = Interval;
-			m_Repeat = repeat;
-
-			Reset();
-		}
-		
-		~TimerOnEvent() 
-		{
-			ForceStop();
-		}
-
-		TimerOnEvent( const TimerOnEvent& ) = delete;
-		TimerOnEvent& operator=( const TimerOnEvent& ) = delete;
-
-		void Start()
-		{
-			m_FuncThread = std::thread( [this]() 
-				{
-					while (!ShouldStop())
-					{
-						// Call the function
-						std::invoke(m_Function);
-
-						std::this_thread::sleep_for( std::chrono::seconds( ( int64_t ) m_Interval ) );
-
-						Reset();
-					}
-				} );
-		}
-
-		void Reset() 
-		{
-			m_Start = std::chrono::high_resolution_clock::now();
-
-			m_EndTime = m_Start + std::chrono::seconds( (int64_t)m_Interval );
-		}
-
-		void ForceStop() 
-		{
-			if( m_FuncThread.joinable() )
-				m_FuncThread.join();
-		}
-	private:
-		bool ShouldStop() 
-		{
-			auto timeNow = std::chrono::high_resolution_clock::now();
-
-			if( timeNow == m_EndTime && !( m_Repeat ) )
-				return true;
-			else
-				return false;
-		}
-
-	private:
-		float m_Interval = 0.0f;
-		bool m_Repeat = false;
-
-		std::chrono::time_point<std::chrono::high_resolution_clock> m_Start;
-		std::chrono::time_point<std::chrono::high_resolution_clock> m_EndTime;
-
-		std::function<void()> m_Function;
-
-		std::thread m_FuncThread;
-	};
-
-	using TimerMap = std::unordered_map<std::string, Timer>;
 }

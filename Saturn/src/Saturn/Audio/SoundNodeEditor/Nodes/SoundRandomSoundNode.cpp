@@ -45,23 +45,23 @@
 namespace Saturn {
 
 	SoundRandomSoundNode::SoundRandomSoundNode()
-		: NodeEditorBlueprintNode()
+		: NodeEditorBlueprintNode( "Random Sound" )
 	{
-		Name = "Random Sound";
 		CreateNode();
 	}
 
 	SoundRandomSoundNode::SoundRandomSoundNode( const std::string& rName )
-		: NodeEditorBlueprintNode()
+		: NodeEditorBlueprintNode( rName )
 	{
-		Name = rName;
 		CreateNode();
 	}
 
 	void SoundRandomSoundNode::CreateNode()
 	{
 		ExecutionType = NodeExecutionType::SoundRandomSound;
+#if !defined(SAT_DIST)
 		Color = ImColor( 173, 18, 128 );
+#endif
 
 		Inputs.push_back( Ref<SoundPin>::Create( "Sound 1", PinKind::Input ) );
 		Inputs.push_back( Ref<SoundPin>::Create( "Sound 2", PinKind::Input ) );
@@ -141,7 +141,9 @@ namespace Saturn {
 			Ref<SoundPin> inputPin = pSoundEditorEvaluator->GetTargetEditor()->FindPin( link->EndPinID ).As<SoundPin>();
 			inputPin->Data = outPin->Data = ( int ) index;
 
+#if !defined(SAT_DIST)
 			pSoundEditorEvaluator->EvaluatedPath[ link->ID ] = NodeEvaluationState::Evaluated;
+#endif
 		}
 
 		return NodeEvaluationState::Evaluated;

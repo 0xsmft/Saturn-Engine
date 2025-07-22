@@ -35,9 +35,8 @@ namespace Saturn {
 	{
 	public:
 		VariableGuard( Ty& rVariable, Ty temporaryValue ) 
-			: m_Variable( rVariable ), m_OldValue( rVariable )
+			: m_Variable( temporaryValue ), m_OldValue( rVariable )
 		{
-			m_Variable = temporaryValue;
 		}
 
 		~VariableGuard() 

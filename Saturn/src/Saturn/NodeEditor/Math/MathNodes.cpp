@@ -34,23 +34,23 @@
 namespace Saturn {
 
 	MathAddFloats::MathAddFloats()
-		: NodeEditorBlueprintNode()
+		: NodeEditorBlueprintNode( "Add Float" )
 	{
-		Name = "Add Float";
 		CreateNode();
 	}
 
 	MathAddFloats::MathAddFloats( const std::string& rName )
-		: NodeEditorBlueprintNode()
+		: NodeEditorBlueprintNode( rName )
 	{
-		Name = rName;
 		CreateNode();
 	}
 
 	void MathAddFloats::CreateNode()
 	{
 		ExecutionType = NodeExecutionType::Add;
+#if !defined(SAT_DIST)
 		Color = ImColor( 147, 226, 74 );
+#endif
 
 		Inputs.push_back( Ref<FloatPin>::Create( "", PinKind::Input ) );
 		Inputs.push_back( Ref<FloatPin>::Create( "", PinKind::Input ) );
@@ -97,14 +97,14 @@ namespace Saturn {
 	// MATHS SUBTRACT (FLOAT)
 
 	MathSubFloats::MathSubFloats()
+		: NodeEditorBlueprintNode( "Subtract Float" )
 	{
-		Name = "Subtract Float";
 		CreateNode();
 	}
 
 	MathSubFloats::MathSubFloats( const std::string& rName )
+		: NodeEditorBlueprintNode( rName )
 	{
-		Name = rName;
 		CreateNode();
 	}
 
@@ -115,7 +115,9 @@ namespace Saturn {
 	void MathSubFloats::CreateNode()
 	{
 		ExecutionType = NodeExecutionType::Subtract;
+#if !defined(SAT_DIST)
 		Color = ImColor( 147, 226, 74 );
+#endif
 
 		Inputs.push_back( Ref<FloatPin>::Create( "", PinKind::Input ) );
 		Inputs.push_back( Ref<FloatPin>::Create( "", PinKind::Input ) );
@@ -175,23 +177,23 @@ namespace Saturn {
 	// MATHS MULTIPLY (FLOAT)
 
 	MathMulFloats::MathMulFloats()
-		: NodeEditorBlueprintNode()
+		: NodeEditorBlueprintNode( "Multiply Float" )
 	{
-		Name = "Multiply Float";
 		CreateNode();
 	}
 
 	MathMulFloats::MathMulFloats( const std::string& rName )
-		: NodeEditorBlueprintNode()
+		: NodeEditorBlueprintNode( rName )
 	{
-		Name = rName;
 		CreateNode();
 	}
 
 	void MathMulFloats::CreateNode()
 	{
 		ExecutionType = NodeExecutionType::Multiply;
+#if !defined(SAT_DIST)
 		Color = ImColor( 147, 226, 74 );
+#endif
 
 		Inputs.push_back( Ref<FloatPin>::Create( "", PinKind::Input ) );
 		Inputs.push_back( Ref<FloatPin>::Create( "", PinKind::Input ) );
@@ -237,23 +239,23 @@ namespace Saturn {
 	// MATHS DIVIDE (FLOAT)
 
 	MathDivideFloats::MathDivideFloats()
-		: NodeEditorBlueprintNode()
+		: NodeEditorBlueprintNode( "Divide Float" )
 	{
-		Name = "Divide Float";
 		CreateNode();
 	}
 
 	MathDivideFloats::MathDivideFloats( const std::string& rName )
-		: NodeEditorBlueprintNode()
+		: NodeEditorBlueprintNode( rName )
 	{
-		Name = rName;
 		CreateNode();
 	}
 
 	void MathDivideFloats::CreateNode()
 	{
 		ExecutionType = NodeExecutionType::Divide;
+#if !defined(SAT_DIST)
 		Color = ImColor( 147, 226, 74 );
+#endif
 
 		Inputs.push_back( Ref<FloatPin>::Create( "", PinKind::Input ) );
 		Inputs.push_back( Ref<FloatPin>::Create( "", PinKind::Input ) );

@@ -146,6 +146,7 @@ namespace Saturn {
 
 	void GraphSoundAssetViewer::SetupNodeEditorCallbacks()
 	{
+#if !defined(SAT_DIST)
 		m_NodeEditor->SetCreateNewNodeFunction(
 			[&]() -> Ref<NodeEditorNodeBase>
 			{
@@ -215,6 +216,7 @@ namespace Saturn {
 					ImGui::EndCombo();
 				}
 			} );
+#endif
 	}
 
 	void GraphSoundAssetViewer::OnUpdate( Timestep ts )
@@ -225,6 +227,7 @@ namespace Saturn {
 	{
 	}
 
+#if !defined(SAT_DIST)
 	void GraphSoundAssetViewer::OnRuntimeStateChanged( RuntimeState newState, RuntimeState oldState )
 	{
 		switch( newState )
@@ -248,7 +251,6 @@ namespace Saturn {
 		}
 	}
 
-#if !defined(SAT_DIST)
 	void GraphSoundAssetViewer::AddSoundReference( Ref<GraphSound> sound )
 	{
 		m_ReferencingAssets.push_back( sound );

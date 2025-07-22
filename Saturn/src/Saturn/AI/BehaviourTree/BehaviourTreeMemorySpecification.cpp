@@ -73,10 +73,14 @@ namespace Saturn {
 
 		if( itr != m_SpecificationData.end() )
 		{
+#if !defined(SAT_DIST)
 			auto& var = *itr;
 			var->IsActive = true;
 
 			return var;
+#else
+			return *itr;
+#endif
 		}
 
 		return nullptr;

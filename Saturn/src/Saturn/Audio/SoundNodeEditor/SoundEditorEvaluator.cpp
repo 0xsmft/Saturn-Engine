@@ -144,6 +144,7 @@ namespace Saturn {
 
 		m_NodeEditor->SetState( compileResult == NodeEditorCompilationStatus::Success ? NodeEditorState::Simulating : NodeEditorState::Editing );
 
+#if !defined(SAT_DIST)
 		for( const auto& [id, state] : EvaluatedPath )
 		{
 			if( state == NodeEvaluationState::WasEvaluated )
@@ -151,12 +152,14 @@ namespace Saturn {
 				PropagateNotEvaluated( m_NodeEditor->FindLink( id ), state );
 			}
 		}
+#endif
 
 		return compileResult;
 	}
 
 	void SoundEditorEvaluator::PropagateNotEvaluated( Ref<Link> node, NodeEvaluationState state )
 	{
+#if !defined(SAT_DIST)
 		if( EvaluatedPath[ node->ID ] == NodeEvaluationState::WasEvaluated )
 			return;
 
@@ -171,6 +174,7 @@ namespace Saturn {
 				PropagateNotEvaluated( link, state );
 			}
 		}
+#endif
 	}
 
 	void SoundEditorEvaluator::AddNewSound( UUID id )

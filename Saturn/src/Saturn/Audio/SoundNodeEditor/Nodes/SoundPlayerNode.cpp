@@ -45,9 +45,8 @@
 namespace Saturn {
 
 	SoundPlayerNode::SoundPlayerNode()
-		: NodeEditorBlueprintNode()
+		: NodeEditorBlueprintNode( "Sound Player" )
 	{
-		Name = "Sound Player";
 		CreateNode();
 	}
 
@@ -60,7 +59,9 @@ namespace Saturn {
 	void SoundPlayerNode::CreateNode()
 	{
 		ExecutionType = NodeExecutionType::SoundPlayer;
+#if !defined(SAT_DIST)
 		Color = ImColor( 173, 18, 128 );
+#endif
 
 		Outputs.push_back( Ref<AssetIDPin>::Create( "Sound Player", PinKind::Output, AssetType::Sound ) );
 		Outputs[ 0 ]->Type = PinType::Sound;

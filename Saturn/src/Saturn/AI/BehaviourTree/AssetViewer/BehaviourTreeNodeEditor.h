@@ -82,15 +82,15 @@ namespace Saturn {
 		Ref<BehaviourTreeMemory> GetBlackboard() const { return	m_Blackboard; }
 		Ref<BehaviourTreeMemorySpecification> GetBlackboardSpec() const { return m_BlackboardSpec; }
 
+	protected:
+		virtual void SerialiseData( std::ofstream& rStream, bool isForDist ) override;
+		virtual void DeserialiseData( FDependentIStream& rStream ) override;
+
 #if !defined(SAT_DIST)
 	public:
 		virtual void OnTopBarRender() override;
 		virtual void OnExtraRender() override;
 		virtual void OnNodeEditorEvent( NodeEditorAction action ) override;
-
-	protected:
-		virtual void SerialiseData( std::ofstream& rStream ) override;
-		virtual void DeserialiseData( std::ifstream& rStream ) override;
 	
 	private:
 		void ShowTreeFlow();
@@ -111,7 +111,7 @@ namespace Saturn {
 #endif
 
 		// The current Agent that we are trying to control
-		// #WREF_BehaviourTreeBaseTask, non owning ptr, should be converted to a weak ptr because we don't want to stop the entity from delete, we are "child" of it
+		// #ReplaceRawPtrOrRefWithWeakRef, non owning ptr, should be converted to a weak ptr because we don't want to stop the entity from delete, we are "child" of it
 		AIAgentEntity* m_pAIAgentEntity = nullptr;
 
 		// All tasks in the tree

@@ -107,8 +107,11 @@ namespace Saturn {
 			m_pClassConstructor( rSpec.pClassConstructor ), 
 			m_pStaticLinkFunction( rSpec.pStaticLinkFunction ),
 			m_pParentClass( rSpec.pParentClass ), 
-			m_Properties( rSpec.SProperties ),
+			m_Properties( rSpec.SProperties )
+#if !defined(SAT_DIST)
+			,
 			m_ExtendedMetadata( rSpec.ClassExtendedMetadata )
+#endif
 		{
 		}
 
@@ -138,7 +141,11 @@ namespace Saturn {
 		// Pointer to the first element
 		inline const SProperty* const* GetProperties() const { return m_Properties; }
 
+#if !defined(SAT_DIST)
 		inline std::filesystem::path GetHeaderPath() const { return m_ExtendedMetadata.HeaderPath; }
+#else
+		inline std::filesystem::path GetHeaderPath() const { return std::filesystem::path{}; }
+#endif
 
 	public:
 		static void RConstructClass( SClass** ppClass, const SClassSpecification& rSpec );

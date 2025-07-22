@@ -36,12 +36,10 @@
 #include "Saturn/ImGui/EditorIcons.h"
 
 #include "Saturn/NodeEditor/Serialisation/NodeCache.h"
-
 #include "Saturn/NodeEditor/NodeEditorBlueprintNode.h"
 
-#if defined(SAT_DIST)
-#include "Saturn/NodeEditor/GlobalNodesList.h"
-#endif
+#include "Saturn/GameFramework/SClass.h"
+#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 
 #include <backends/imgui_impl_vulkan.h>
 
@@ -109,8 +107,7 @@ namespace Saturn {
 		}
 	}
 
-#if defined(SAT_DIST)
-	void NodeEditorBase::SerialiseData( std::ofstream& rStream )
+	void NodeEditorBase::SerialiseData( std::ofstream& rStream, bool isForDist )
 	{
 		RawSerialisation::WriteString( m_Name, rStream );
 
@@ -123,7 +120,7 @@ namespace Saturn {
 
 			RawSerialisation::WriteObject( value->GetClass()->GetHash(), rStream );
 
-			value->Serialise( value, rStream );
+			value->Serialise( rStream, isForDist );
 		}
 
 		mapSize = m_Links.size();
@@ -135,6 +132,7 @@ namespace Saturn {
 		}
 	}
 
+#if defined(SAT_DIST)
 	void NodeEditorBase::DeserialiseData( std::istream& rStream )
 	{
 		m_State = NodeEditorState::Loading;
@@ -166,7 +164,7 @@ namespace Saturn {
 				node = Ref<NodeEditorBlueprintNode>::Create();
 			}
 
-			node->Deserialise( node, rStream );
+			node->Deserialise( rStream );
 
 			m_Nodes[ key ] = node;
 			BuildNode( node );
@@ -433,8 +431,10 @@ namespace Saturn {
 
 		VariableGuard<ed::EditorContext*> guard( m_Editor );
 
+#if !defined(SAT_DIST)
 		if( node->Position.x != 0.0f && node->Position.y != 0.0f )
 			ed::SetNodePosition( ed::NodeId( node->ID ), node->Position );
+#endif
 
 		node->pOuter = this;
 	}

@@ -148,7 +148,7 @@ namespace Saturn {
 		RawSerialisation::WriteObject( ( std::underlying_type_t<BTMemoryConditionQueryType> )m_QueryType, rStream );
 	}
 
-	void BehaviourTreeMemoryCondition::Deserialise( std::ifstream& rStream )
+	void BehaviourTreeMemoryCondition::Deserialise( FDependentIStream& rStream )
 	{
 		Super::Deserialise( rStream );
 

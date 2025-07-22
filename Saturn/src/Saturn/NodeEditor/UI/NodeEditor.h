@@ -108,7 +108,7 @@ namespace Saturn {
 		void SetNodePosition( UUID nodeID, const ImVec2& rNewPosition );
 
 	protected:
-		// By default the NodeCache will save this node editor to a file called NCEdtior.{ID}.nce OR {AssetID}.{ID}.nce
+		// By default the NodeCache will save this node editor to a file called NCEditor.{ID}.nce OR {AssetID}.{ID}.nce
 		// However, in some cases such as GraphSounds or BehaviourTrees we want a custom name.
 		std::string m_CustomNameNC{};
 
@@ -117,7 +117,7 @@ namespace Saturn {
 
 	protected:
 #if !defined(SAT_DIST)
-		virtual void SerialiseData( std::ofstream& rStream ) override;
+		virtual void SerialiseData( std::ofstream& rStream, bool isForDist ) override;
 		virtual void DeserialiseData( std::ifstream& rStream ) override;
 #endif
 

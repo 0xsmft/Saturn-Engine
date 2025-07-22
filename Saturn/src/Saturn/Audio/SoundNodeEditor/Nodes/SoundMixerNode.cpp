@@ -44,9 +44,8 @@
 namespace Saturn {
 
 	SoundMixerNode::SoundMixerNode()
-		: NodeEditorBlueprintNode()
+		: NodeEditorBlueprintNode( "Mixer" )
 	{
-		Name = "Mixer";
 		CreateNode();
 	}
 
@@ -59,7 +58,9 @@ namespace Saturn {
 	void SoundMixerNode::CreateNode()
 	{
 		ExecutionType = NodeExecutionType::SoundMixer;
+#if !defined(SAT_DIST)
 		Color = ImColor( 173, 18, 128 );
+#endif
 
 		Inputs.push_back( Ref<SoundPin>::Create( "Sound 1", PinKind::Input ) );
 		Inputs.push_back( Ref<SoundPin>::Create( "Sound 2", PinKind::Input ) );

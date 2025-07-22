@@ -75,9 +75,9 @@ namespace Saturn {
 		return NodeEvaluationState::Failed;
 	}
 
-	void BehaviourTreeSelectorNode::Serialise( std::ofstream& rStream ) const
+	void BehaviourTreeSelectorNode::Serialise( std::ofstream& rStream, bool isForDist ) const
 	{
-		BehaviourTreeNodeBase::Serialise( rStream );
+		BehaviourTreeNodeBase::Serialise( rStream, isForDist );
 
 		RawSerialisation::WriteVector( m_Children, rStream );
 	}

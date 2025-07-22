@@ -237,7 +237,13 @@ namespace Saturn {
 
 		RawSerialisation::WriteObject( header, fout );
 
-		nodeEditor->SerialiseData( fout );
+#if !defined(SAT_DIST)
+		const bool isDist = false;
+#else
+		const bool isDist = true;
+#endif
+
+		nodeEditor->SerialiseData( fout, isDist );
 
 		fout.close();
 	}
@@ -357,7 +363,7 @@ namespace Saturn {
 		newPath /= std::to_string( id );
 		newPath.replace_extension( ".vfs" );
 
-		std::filesystem::copy_file( cachePathAbs, newPath );
+		std::filesystem::copy_file( cachePathAbs, newPath, std::filesystem::copy_options::overwrite_existing );
 	}
 
 }

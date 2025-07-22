@@ -153,7 +153,7 @@ namespace Saturn {
 
 	public:
 		// Serialise/Deserialise NodeCache (NC)
-		virtual void Serialise( std::ofstream& rStream ) const;
+		virtual void Serialise( std::ofstream& rStream, bool isForDist ) const;
 		virtual void Deserialise( FDependentIStream& rStream );
 	};
 

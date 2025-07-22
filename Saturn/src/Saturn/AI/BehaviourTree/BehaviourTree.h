@@ -58,7 +58,7 @@ namespace Saturn {
 		Ref<Asset> m_BehaviourTreeAsset;
 		Ref<BehaviourTreeNodeEditor> m_NodeEditor;
 
-		// TODO: Weak Ref? #WREF_BehaviourTreeBaseTask, non owning ptr
+		// TODO: Weak Ref? #ReplaceRawPtrOrRefWithWeakRef, non owning ptr
 		AIAgentEntity* m_AIAgentEntity = nullptr;
 
 		UUID m_OutputNodeID = 0;

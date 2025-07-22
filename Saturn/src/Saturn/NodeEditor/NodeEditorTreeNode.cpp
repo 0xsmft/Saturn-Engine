@@ -45,6 +45,7 @@ namespace Saturn {
 
 	void NodeEditorTreeNode::Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder )
 	{
+#if !defined(SAT_DIST)
 		const float rounding = 5.0f;
 		const float padding = 12.0f;
 
@@ -195,6 +196,7 @@ namespace Saturn {
 		// Draw the node backdrop for the text
 		pDrawList->AddRectFilled( itemRect.GetTL(), itemRect.GetBR(), Color, 0.0f );
 		pDrawList->AddRect( itemRect.GetTL(), itemRect.GetBR(), Color, 0.0f );
+#endif
 	}
 
 }

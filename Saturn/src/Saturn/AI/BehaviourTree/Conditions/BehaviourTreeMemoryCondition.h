@@ -79,7 +79,7 @@ namespace Saturn {
 		virtual std::string GetTitleText() const override;
 #endif
 		virtual void Serialise( std::ofstream& rStream ) const override;
-		virtual void Deserialise( std::ifstream& rStream ) override;
+		virtual void Deserialise( FDependentIStream& rStream ) override;
 
 	private:
 		BTMemoryConditionQueryType m_QueryType = BTMemoryConditionQueryType::Set;

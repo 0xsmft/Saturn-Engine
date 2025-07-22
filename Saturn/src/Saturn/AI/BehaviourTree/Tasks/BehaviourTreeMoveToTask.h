@@ -55,7 +55,7 @@ namespace Saturn {
 #endif
 
 	private:
-		// #WREF_BehaviourTreeBaseTask, for now it's a raw ptr
+		// #ReplaceRawPtrOrRefWithWeakRef, for now it's a raw ptr
 		AIAgentEntity* m_Agent = nullptr;
 
 		glm::vec3 m_TargetPosition{};

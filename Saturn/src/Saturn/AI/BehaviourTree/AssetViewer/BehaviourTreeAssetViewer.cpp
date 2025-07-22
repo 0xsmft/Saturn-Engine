@@ -58,6 +58,7 @@ namespace Saturn {
 
 	BehaviourTreeAssetViewer::~BehaviourTreeAssetViewer()
 	{
+#if !defined(SAT_DIST)
 		const std::string filename = std::format( "{0}.sbt", m_Asset->Name );
 
 		m_Asset = nullptr;
@@ -81,10 +82,12 @@ namespace Saturn {
 		}
 
 		m_ClassCache.clear();
+#endif
 	}
 
 	void BehaviourTreeAssetViewer::OnImGuiRender()
 	{
+#if !defined(SAT_DIST)
 		if( m_NodeEditor->IsOpen() )
 		{
 			m_NodeEditor->OnImGuiRender();
@@ -94,6 +97,7 @@ namespace Saturn {
 			m_NodeEditor->Open( false );
 			m_Open = false;
 		}
+#endif
 	}
 
 	void BehaviourTreeAssetViewer::AddBehaviourTree()
@@ -115,9 +119,11 @@ namespace Saturn {
 			SetupNewNodeEditor();
 		}
 
+#if !defined(SAT_DIST)
 		m_NodeEditor->NcSetCustomName( filename );
 		m_NodeEditor->SetWindowName( m_Name );
 		m_NodeEditor->Open( true );
+#endif
 		m_Open = true;
 
 		SetupNodeEditorCallbacks();
@@ -130,6 +136,7 @@ namespace Saturn {
 
 		m_NodeEditor->SetRuntime( m_Runtime );
 
+#if !defined(SAT_DIST)
 		// Discover all classes that are based from BehaviourTreeBaseTask for out context menu
 		const auto map = ClassMetadataHandler::Get().GetAllClassesBasedFrom<BehaviourTreeBaseTask>();
 		for( auto* pClass : map )
@@ -142,6 +149,7 @@ namespace Saturn {
 				m_ClassCache.push_back( pObject );
 			}
 		}
+#endif
 	}
 
 	void BehaviourTreeAssetViewer::SetupNewNodeEditor()
@@ -154,6 +162,7 @@ namespace Saturn {
 
 	void BehaviourTreeAssetViewer::SetupNodeEditorCallbacks()
 	{
+#if !defined(SAT_DIST)
 		m_NodeEditor->SetCreateNewNodeFunction(
 			[ & ]() -> Ref<NodeEditorNodeBase>
 		{
@@ -247,6 +256,7 @@ namespace Saturn {
 				ImGui::EndCombo();
 			}
 		} );
+#endif
 	}
 
 #if !defined(SAT_DIST)

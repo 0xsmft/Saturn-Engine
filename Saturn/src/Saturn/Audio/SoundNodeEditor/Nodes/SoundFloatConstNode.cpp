@@ -48,7 +48,9 @@ namespace Saturn {
 	void SoundFloatConst::CreateNode()
 	{
 		ExecutionType = NodeExecutionType::SoundFloatConst;
+#if !defined(SAT_DIST)
 		Color = ImColor( 173, 18, 128 );
+#endif
 
 		Outputs.push_back( Ref<FloatPin>::Create( "Constant", PinKind::Output ) );
 	}

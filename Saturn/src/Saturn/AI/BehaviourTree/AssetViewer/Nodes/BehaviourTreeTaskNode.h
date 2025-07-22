@@ -47,7 +47,7 @@ namespace Saturn {
 		// NodeEditorNodeBase
 
 		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* pEvaluator ) override;
-		virtual void Serialise( std::ofstream& rStream ) const override;
+		virtual void Serialise( std::ofstream& rStream, bool isForDist ) const override;
 		virtual void Deserialise( FDependentIStream& rStream ) override;
 
 	public:

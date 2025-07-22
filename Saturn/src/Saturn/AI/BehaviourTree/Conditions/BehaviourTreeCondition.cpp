@@ -50,15 +50,19 @@ namespace Saturn {
 	{
 		RawSerialisation::WriteObject( m_RTBlackboardVariableID, rStream );
 		RawSerialisation::WriteObject( (std::underlying_type_t<BehaviourTreeConditionType>)m_ConditionType, rStream );
+#if !defined(SAT_DIST)
 		RawSerialisation::WriteString( m_Title, rStream );
+#endif
 	}
 
-	void BehaviourTreeCondition::Deserialise( std::ifstream& rStream )
+	void BehaviourTreeCondition::Deserialise( FDependentIStream& rStream )
 	{
 		RawSerialisation::ReadObject( m_RTBlackboardVariableID, rStream );
 		RawSerialisation::ReadObject( m_ConditionType, rStream );
 
+#if !defined(SAT_DIST)
 		m_Title = RawSerialisation::ReadString( rStream );
+#endif
 	}
 
 }

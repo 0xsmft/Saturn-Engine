@@ -82,7 +82,7 @@ namespace Saturn {
 		RawSerialisation::ReadObject( rVector.y, rStream );
 	}
 
-	void NodeEditorNodeBase::Serialise( std::ofstream& rStream ) const
+	void NodeEditorNodeBase::Serialise( std::ofstream& rStream, bool isForDist ) const
 	{
 		UUID::Serialise( ID, rStream );
 		RawSerialisation::WriteString( Name, rStream );

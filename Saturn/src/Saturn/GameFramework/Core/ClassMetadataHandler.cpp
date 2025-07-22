@@ -53,9 +53,6 @@ namespace Saturn {
 
 	Saturn::SObject* ClassMetadataHandler::CreateClassObject( const std::string& rScriptName )
 	{
-#if defined(SAT_DIST)
-		return CreateClassObject( FNV1A64( rScriptName.c_str() ) );
-#else
 		SObject* pObject = CreateClassObject( FNV1A64( rScriptName.c_str() ) );
 
 		if( !pObject )
@@ -65,7 +62,6 @@ namespace Saturn {
 		}
 
 		return pObject;
-#endif
 	}
 
 	Saturn::SObject* ClassMetadataHandler::CreateClassObject( SClass* pClass )

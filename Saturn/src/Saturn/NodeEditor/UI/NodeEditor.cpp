@@ -147,9 +147,11 @@ namespace Saturn {
 				pThis->OnNodeEditorEvent( NodeEditorAction::SelectNode );
 			}
 
+#if !defined(SAT_DIST)
 			pNode->ActiveState.assign( pData, size );
 			pNode->Position = ed::GetNodePosition( nodeId );
 			pNode->Size = ed::GetNodeSize( nodeId );
+#endif
 
 			// Only mark dirty if we are not loading
 			// imgui_node_editor will call this function when initialising
@@ -191,7 +193,9 @@ namespace Saturn {
 
 	void NodeEditor::Close()
 	{
+#if !defined(SAT_DIST)
 		m_HoveredNode = nullptr;
+#endif
 		m_OutputWindow.ClearOutput();
 
 		ed::DestroyEditor( m_Editor );
@@ -863,29 +867,9 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// SERIALISATION (DEBUG AND RELEASE)
 
-	void NodeEditor::SerialiseData( std::ofstream& rStream )
+	void NodeEditor::SerialiseData( std::ofstream& rStream, bool isForDist )
 	{
-		RawSerialisation::WriteString( m_Name, rStream );
-
-		size_t mapSize = m_Nodes.size();
-		rStream.write( reinterpret_cast< char* >( &mapSize ), sizeof( size_t ) );
-
-		for( const auto& [key, node] : m_Nodes )
-		{
-			UUID::Serialise( key, rStream );
-
-			RawSerialisation::WriteObject( node->GetClass()->GetHash(), rStream );
-
-			node->Serialise( rStream );
-		}
-
-		mapSize = m_Links.size();
-		RawSerialisation::WriteObject( mapSize, rStream );
-
-		for( auto& rLinks : m_Links )
-		{
-			Link::Serialise( rLinks, rStream );
-		}
+		NodeEditorBase::SerialiseData( rStream, isForDist );
 	}
 
 	void NodeEditor::DeserialiseData( std::ifstream& rStream )

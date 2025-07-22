@@ -68,15 +68,15 @@ namespace Saturn {
 		virtual BehaviourTreeBaseTask* ConvertToTask() = 0;
 		virtual void PostDeserialise() {}
 
-	public:
 #if !defined(SAT_DIST)
+	public:
 		virtual void RenderDetails() {}
 		virtual void OnRenderNextSection() override final;
+#endif
 
 	public:
-		// TODO: Weak Ref #WREF_BehaviourTreeBaseTask
+		// TODO: Weak Ref #ReplaceRawPtrOrRefWithWeakRef
 		Ref<BehaviourTreeCondition> NodeCondition;
-#endif
 
 	protected:
 		[[nodiscard]] BehaviourTreeNodeEditor* GetParent();

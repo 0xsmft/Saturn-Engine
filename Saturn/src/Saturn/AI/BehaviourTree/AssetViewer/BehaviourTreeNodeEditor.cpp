@@ -75,6 +75,7 @@ namespace Saturn {
 
 	void BehaviourTreeNodeEditor::TraverseBehaviourTree( const Ref<NodeEditorNodeBase>& rRootNode )
 	{
+#if !defined(SAT_DIST)
 		Ref<BehaviourTreeEditorEvaluator> runtime = m_Runtime.As<BehaviourTreeEditorEvaluator>();
 		m_EvaluationOrder.clear();
 
@@ -147,6 +148,7 @@ namespace Saturn {
 				}
 			}
 		}
+#endif
 	}
 
 	void BehaviourTreeNodeEditor::SetTargetAgent( AIAgentEntity* pAgent )
@@ -503,22 +505,24 @@ namespace Saturn {
 			default: break;
 		}
 	}
+#endif
 
-	void BehaviourTreeNodeEditor::SerialiseData( std::ofstream& rStream )
+	void BehaviourTreeNodeEditor::SerialiseData( std::ofstream& rStream, bool isForDist )
 	{
-		BehaviourTreeNodeEditorSuper::SerialiseData( rStream );
+		BehaviourTreeNodeEditorSuper::SerialiseData( rStream, isForDist );
 		RawSerialisation::WriteVector( m_EvaluationOrder, rStream );
 
 		RawSerialisation::WriteObject( m_BehaviourTreeMemoryAssetID, rStream );
 	}
 
-	void BehaviourTreeNodeEditor::DeserialiseData( std::ifstream& rStream )
+	void BehaviourTreeNodeEditor::DeserialiseData( FDependentIStream& rStream )
 	{
 		BehaviourTreeNodeEditorSuper::DeserialiseData( rStream );
 		RawSerialisation::ReadVector( m_EvaluationOrder, rStream );
 
 		RawSerialisation::ReadObject( m_BehaviourTreeMemoryAssetID, rStream );
 
+#if !defined(SAT_DIST)
 		m_BlackboardSpec = AssetManager::Get().GetAssetAs< BehaviourTreeMemorySpecification>( m_BehaviourTreeMemoryAssetID );
 
 		if( m_BlackboardSpec )
@@ -532,7 +536,7 @@ namespace Saturn {
 				}
 			}
 		}
-	}
 #endif
+	}
 
 }

@@ -43,9 +43,8 @@
 namespace Saturn {
 
 	SoundPitchNode::SoundPitchNode()
-		: NodeEditorBlueprintNode()
+		: NodeEditorBlueprintNode( "Sound Pitch" )
 	{
-		Name = "Sound Pitch";
 		CreateNode();
 	}
 
@@ -58,7 +57,9 @@ namespace Saturn {
 	void SoundPitchNode::CreateNode()
 	{
 		ExecutionType = NodeExecutionType::SoundPitch;
+#if !defined(SAT_DIST)
 		Color = ImColor( 173, 18, 128 );
+#endif
 
 		Inputs.push_back( Ref<SoundPin>::Create( "Sound", PinKind::Input ) );
 		Inputs.push_back( Ref<FloatPin>::Create( "Pitch", PinKind::Input ) );
@@ -95,7 +96,9 @@ namespace Saturn {
 			Ref<SoundPin> inputPin = pSoundEditorEvaluator->GetTargetEditor()->FindPin( link->EndPinID );
 			inputPin->Data = Outpin->Data = soundPin->Data;
 
+#if !defined(SAT_DIST)
 			pSoundEditorEvaluator->EvaluatedPath[ link->ID ] = NodeEvaluationState::Evaluated;
+#endif
 		}
 
 		pSoundEditorEvaluator->RegisterSound( Outpin->Data );

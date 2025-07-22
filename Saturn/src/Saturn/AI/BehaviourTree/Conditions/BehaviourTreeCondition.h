@@ -61,12 +61,12 @@ namespace Saturn {
 
 	public:
 		virtual void Serialise( std::ofstream& rStream ) const;
-		virtual void Deserialise( std::ifstream& rStream );
+		virtual void Deserialise( FDependentIStream& rStream );
 
 	protected:
-#if !defined( SAT_DIST )
 		std::string m_Title;
 
+#if !defined( SAT_DIST )
 		Ref<BehaviourTreeMemorySpecification> m_BlackboardSpec;
 #endif
 

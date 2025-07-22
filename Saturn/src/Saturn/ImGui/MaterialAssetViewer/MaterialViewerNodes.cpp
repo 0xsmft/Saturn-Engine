@@ -238,7 +238,9 @@ namespace Saturn {
 	void MaterialSampler2DNode::CreateNode()
 	{
 		ExecutionType = NodeExecutionType::Sampler2D;
+#if !defined(SAT_DIST)
 		Color = ImColor( 0, 255, 0 );
+#endif
 
 		Inputs.push_back( Ref<AssetIDPin>::Create( "Asset",             PinKind::Input, AssetType::Texture ) );
 		Outputs.push_back( Ref<MaterialViewerColorPin>::Create( "RGBA", PinKind::Output, true ) );
@@ -462,7 +464,9 @@ namespace Saturn {
 	void MaterialColorMixerNode::CreateNode()
 	{
 		ExecutionType = NodeExecutionType::MaterialMixColors;
+#if !defined(SAT_DIST)
 		Color = ImColor( 252, 186, 3 );
+#endif
 
 		Inputs.push_back( Ref<MaterialViewerColorPin>::Create( "Color 1", PinKind::Input ) );
 		Inputs.push_back( Ref<MaterialViewerColorPin>::Create( "Color 2", PinKind::Input ) );

@@ -42,6 +42,8 @@
 #if !defined(SAT_DIST)
 #include "BehaviourTree/AssetViewer/BehaviourTreeAssetViewer.h"
 #include "Saturn/ImGui/ImGuiWindowManager.h"
+#else
+#include "BehaviourTree/AssetViewer/BehaviourTreeNodeEditor.h"
 #endif
 
 namespace Saturn {

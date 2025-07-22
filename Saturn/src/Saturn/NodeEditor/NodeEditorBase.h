@@ -281,12 +281,12 @@ namespace Saturn {
 		void SaveSettings();
 
 	public:
+		virtual void SerialiseData( std::ofstream& rStream, bool isForDist );
+
 #if !defined(SAT_DIST)
-		virtual void SerialiseData( std::ofstream& rStream ) = 0;
 		virtual void DeserialiseData( std::ifstream& rStream ) = 0;
 #else
-		virtual void SerialiseData( std::ofstream& rStream );
-		void DeserialiseData( std::istream& rStream );
+		virtual void DeserialiseData( std::istream& rStream );
 #endif
 
 	protected:

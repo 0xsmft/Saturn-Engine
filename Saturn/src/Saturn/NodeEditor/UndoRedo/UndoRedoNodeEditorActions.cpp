@@ -159,9 +159,11 @@ namespace Saturn {
 	UndoRedoActionModifyNodePosition::UndoRedoActionModifyNodePosition( Ref<NodeEditor> nodeEditor, Ref<NodeEditorNodeBase> originalNode, const ImVec2& rOldPosition )
 		: UndoRedoActionBase( "Modify Node Position" ), m_NodeEditor( nodeEditor )
 	{
+#if !defined(SAT_DIST)
 		m_NodeCopy = originalNode;
 		m_NewPosition = rOldPosition;
 		m_OldPosition = originalNode->Position;
+#endif
 	}
 
 	UndoRedoActionModifyNodePosition::~UndoRedoActionModifyNodePosition()

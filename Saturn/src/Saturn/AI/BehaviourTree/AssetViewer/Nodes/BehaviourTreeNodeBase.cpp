@@ -33,6 +33,7 @@
 
 namespace Saturn {
 
+#if !defined(SAT_DIST)
 	void BehaviourTreeNodeBase::OnRenderNextSection()
 	{
 		if( !NodeCondition )
@@ -78,6 +79,7 @@ namespace Saturn {
 		ImGui::Spring( 1.0f, 6.0f );
 		ImGui::EndHorizontal();
 	}
+#endif
 
 	BehaviourTreeNodeEditor* BehaviourTreeNodeBase::GetParent()
 	{
@@ -88,11 +90,7 @@ namespace Saturn {
 
 #include "Saturn/GameFramework/Core/EngineGenerated.h"
 
-#if !defined(SAT_DIST)
 constexpr std::underlying_type_t<Saturn::SClassFlags> RStaticClassFlagsBehaviourTreeNodeBase = ( Saturn::SClassFlags ) Saturn::SC_VisibleInEditor | Saturn::SC_NoExtendedMetadata | Saturn::SC_Abstract;
-#else
-constexpr std::underlying_type_t<Saturn::SClassFlags> RStaticClassFlagsBehaviourTreeNodeBase = Saturn::SC_VisibleInEditor | Saturn::SC_NoExtendedMetadata;
-#endif
 
 static Saturn::SClass* RStaticLnkBehaviourTreeNodeBase()
 {

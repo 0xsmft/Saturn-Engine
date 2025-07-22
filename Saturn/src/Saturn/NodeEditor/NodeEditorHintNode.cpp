@@ -47,6 +47,7 @@ namespace Saturn {
 
 	void NodeEditorHintNode::Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder )
 	{
+#if !defined(SAT_DIST)
 		constexpr float HINT_ALPHA = 0.75f;
 
 		ImGui::PushStyleVar( ImGuiStyleVar_Alpha, HINT_ALPHA );
@@ -100,7 +101,9 @@ namespace Saturn {
 				hintBounds.GetBR(),
 				IM_COL32( 255, 255, 255, 128 * bgAlpha / 255 ), 4.0f );
 		}
+
 		ed::EndGroupHint();
+#endif
 	}
 
 	//////////////////////////////////////////////////////////////////////////

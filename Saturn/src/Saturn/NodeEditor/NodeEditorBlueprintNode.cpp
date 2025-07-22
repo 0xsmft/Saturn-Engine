@@ -46,6 +46,7 @@ namespace Saturn {
 
 	void NodeEditorBlueprintNode::Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder )
 	{
+#if !defined(SAT_DIST)
 		rBuilder.Begin( ed::NodeId( ID ) );
 
 		rBuilder.Header( Color );
@@ -101,6 +102,7 @@ namespace Saturn {
 		}
 
 		rBuilder.End();
+#endif
 	}
 
 }

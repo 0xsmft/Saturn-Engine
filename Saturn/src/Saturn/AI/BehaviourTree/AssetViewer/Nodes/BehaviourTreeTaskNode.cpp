@@ -42,7 +42,12 @@ namespace Saturn {
 	}
 
 	BehaviourTreeTaskNode::BehaviourTreeTaskNode( BehaviourTreeBaseTask* pTaskInstance )
-		: BehaviourTreeNodeBase( pTaskInstance->GetTaskName() ), m_TaskInstance( pTaskInstance )
+#if !defined(SAT_DIST)
+		: BehaviourTreeNodeBase( pTaskInstance->GetTaskName() ),
+#else
+		: BehaviourTreeNodeBase(),
+#endif
+		m_TaskInstance( pTaskInstance )
 	{
 		SetTaskInstance( pTaskInstance );
 	}
@@ -84,9 +89,9 @@ namespace Saturn {
 		return NodeEvaluationState::Failed;
 	}
 
-	void BehaviourTreeTaskNode::Serialise( std::ofstream& rStream ) const
+	void BehaviourTreeTaskNode::Serialise( std::ofstream& rStream, bool isForDist ) const
 	{
-		BehaviourTreeNodeBase::Serialise( rStream );
+		BehaviourTreeNodeBase::Serialise( rStream, isForDist );
 
 		RawSerialisation::WriteString( m_TaskInstance->GetClass()->GetName(), rStream );
 
@@ -105,7 +110,9 @@ namespace Saturn {
 		{
 			// Promote to strong ref.
 			m_TaskInstance = pObject;
+#if !defined(SAT_DIST)
 			Name = m_TaskInstance->GetTaskName();
+#endif
 		}
 		else
 			delete ( SObject* )pObject;

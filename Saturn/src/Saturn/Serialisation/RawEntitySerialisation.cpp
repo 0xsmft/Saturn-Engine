@@ -413,6 +413,7 @@ namespace Saturn {
 			} );
 
 		// Script Component
+		/*
 		ReadComponent<DScriptComponent>( rEntity, rStream, [&]()
 			{
 				auto& sc = rEntity->GetComponent< DScriptComponent >();
@@ -449,6 +450,7 @@ namespace Saturn {
 					//rProperty.Deserialise( rEntity.Get(), rStream );
 				}
 			} );
+		*/
 
 		// Sky light component
 		ReadComponent<SkylightComponent>( rEntity, rStream, [&]()

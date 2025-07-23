@@ -54,10 +54,13 @@ namespace Saturn {
 		m_Scene = nullptr;
 	}
 
-	void SceneSerialiser::Serialise()
+	void SceneSerialiser::Serialise( const std::filesystem::path& rOverridePath, bool isAutoSave )
 	{
-		auto& basePath = m_Scene->Path;
-		auto fullPath = Project::GetActiveProject()->FilepathAbs( basePath );
+		std::filesystem::path basePath = rOverridePath;
+		if( rOverridePath.empty() )
+			basePath = m_Scene->Path;
+
+		const auto fullPath = Project::GetActiveProject()->FilepathAbs( basePath );
 
 		YAML::Emitter out;
 		
@@ -77,19 +80,21 @@ namespace Saturn {
 		out << YAML::EndSeq;
 		out << YAML::EndMap;
 		
-		std::ofstream FileOut( fullPath );
-		FileOut << out.c_str();
+		std::ofstream fout( fullPath );
+		fout << out.c_str();
 
-		m_Scene->CleanDirty();
+		// Don't mark auto saves as clean
+		if( !isAutoSave )
+			m_Scene->CleanDirty();
 	}
 
 	void SceneSerialiser::Deserialise( const Ref<Asset> asset )
 	{
-		auto fullPath = Project::GetActiveProject()->FilepathAbs( asset->Path );
+		const auto fullPath = Project::GetActiveProject()->FilepathAbs( asset->Path );
 
-		std::ifstream FileIn( fullPath );
+		std::ifstream stream( fullPath );
 		std::stringstream ss;
-		ss << FileIn.rdbuf();
+		ss << stream.rdbuf();
 
 		YAML::Node data = YAML::Load( ss.str() );
 
@@ -114,7 +119,7 @@ namespace Saturn {
 
 		m_Scene->PostDeserialise();
 
-		FileIn.close();
+		stream.close();
 	}
 
 }

@@ -36,15 +36,15 @@ namespace Saturn {
 	class SceneSerialiser
 	{
 	public:
-		SceneSerialiser() = default;
 		SceneSerialiser( Ref<Scene> scene );
 		~SceneSerialiser();
 
 	public:
-		void Serialise();
+		void Serialise( const std::filesystem::path& rOverridePath = {}, bool isAutoSave = false );
 		void Deserialise( const Ref<Asset> asset );
 
 	private:
+		// We use a Ref<> here so that the Scene cannot be destroyed while we are Serialising
 		Ref<Scene> m_Scene;
 	};
 }

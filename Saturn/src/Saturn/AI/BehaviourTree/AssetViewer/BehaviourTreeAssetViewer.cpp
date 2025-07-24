@@ -184,7 +184,7 @@ namespace Saturn {
 				if( ImGui::MenuItem( pClass->GetTaskName() ) ) 
 				{
 					// NOTE: Raw ptr converted to Ref<> by BehaviourTreeTaskNode
-					SObject* pNewTaskObject = ClassMetadataHandler::Get().CreateClassObject( pClass->GetClass()->GetName() );
+					SObject* pNewTaskObject = ClassMetadataHandler::Get().CreateClassObject( pClass->GetClass()->GetHash() );
 
 					BehaviourTreeTaskNode* pNode = ClassMetadataHandler::Get().CreateClassObject<BehaviourTreeTaskNode>( BehaviourTreeTaskNode::StaticClass(),( BehaviourTreeBaseTask* ) pNewTaskObject );
 

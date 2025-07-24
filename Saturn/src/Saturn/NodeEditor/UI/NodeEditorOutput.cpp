@@ -65,6 +65,31 @@ namespace Saturn {
 			}
 		}
 
+		if( m_SelectedMessageID != 0 && ImGui::BeginPopupContextWindow( "NeOutMsg", ImGuiPopupFlags_MouseButtonRight ) )
+		{
+			if( ImGui::MenuItem( "Copy" ) )
+			{
+				const auto Itr = std::find_if( m_Messages.begin(), m_Messages.end(),
+					[messageID = m_SelectedMessageID]( const auto& rMessage )
+				{
+					return rMessage.ID == messageID;
+				} );
+
+				if( Itr != m_Messages.end() )
+				{
+					const NodeEditorMessage msg = *Itr;
+					ImGui::SetClipboardText( msg.MessageText.c_str() );
+				}
+			}
+
+			if( ImGui::MenuItem( "Delete" ) )
+			{
+				ClearMessage( m_SelectedMessageID );
+			}
+
+			ImGui::EndPopup();
+		}
+
 		ImGui::EndChild();
 		ImGui::EndVertical();
 		ImGui::End();
@@ -82,7 +107,7 @@ namespace Saturn {
 
 	void NodeEditorOutput::DrawMessage( const NodeEditorMessage& rMessage )
 	{
-		float height = ImGui::GetTextLineHeightWithSpacing();
+		const float height = ImGui::GetTextLineHeightWithSpacing();
 
 		ImGui::BeginHorizontal( (int)rMessage.ID );
 
@@ -105,10 +130,10 @@ namespace Saturn {
 
 		ImGui::Spring();
 
-		float width = ImGui::GetContentRegionAvail().x;
+		const float width = ImGui::GetContentRegionAvail().x;
 		// Leave space for the bin icon
-		ImVec2 size( width - ( height * 2 ), height );
-
+		const ImVec2 size( width - ( height * 2 ), height );
+		
 		if( ImGui::Selectable( rMessage.MessageText.c_str(), rMessage.ID == m_SelectedMessageID, 0, size ) )
 		{
 			m_SelectedMessageID = rMessage.ID;
@@ -118,6 +143,12 @@ namespace Saturn {
 		{
 			ImGui::Text( rMessage.MessageText.c_str() );
 			ImGui::EndTooltip();
+		}
+
+		if( ImGui::IsItemClicked( ImGuiMouseButton_Right ) )
+		{
+			// Select the message so we can use it in the right click context menu
+			m_SelectedMessageID = rMessage.ID;
 		}
 
 		ImGui::PushStyleColor( ImGuiCol_Button, ImVec4( 0.0f, 0.0f, 0.0f, 0.0f ) );

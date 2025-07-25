@@ -58,7 +58,6 @@
 #include <Saturn/Core/OptickProfiler.h>
 #include <Saturn/Core/Ruby/RubyWindow.h>
 #include <Saturn/Core/Ruby/RubyAuxiliary.h>
-#include <Saturn/Core/OptickProfiler.h>
 #include <Saturn/Core/Process.h>
 #include <Saturn/Core/Renderer/RenderThread.h>
 #include <Saturn/Core/VirtualFS.h>

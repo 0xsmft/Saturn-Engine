@@ -123,7 +123,7 @@ namespace Saturn {
 		// Remove last action if we exceed the max undo/redo actions
 		if( m_UndoActions.size() > MAX_UNDO_REDO_ACTIONS )
 		{
-			m_UndoActions.erase( m_UndoActions.begin() );
+			m_UndoActions.erase( std::remove( m_UndoActions.begin(), m_UndoActions.end(), m_UndoActions.front() ) );
 		}
 	}
 

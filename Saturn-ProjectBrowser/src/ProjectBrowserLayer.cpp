@@ -470,7 +470,6 @@ namespace Saturn {
 		targetPath /= "Saturn-Editor";
 		targetPath /= "content";
 		targetPath /= "Templates";
-		targetPath /= "Base";
 
 		std::filesystem::copy( targetPath, ProjectFolderPath, std::filesystem::copy_options::recursive );
 

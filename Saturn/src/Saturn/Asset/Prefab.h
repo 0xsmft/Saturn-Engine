@@ -55,9 +55,6 @@ namespace Saturn {
 		Ref<Scene>& GetScene() { return m_Scene; }
 		const Ref<Scene>& GetScene() const { return m_Scene; }
 
-		// Only used when create a prefab of a game class.
-		void SetEntity( const Ref<Entity>& entity ) { m_Entity = entity; }
-		void CreateScene();
 
 	public:
 		void SerialisePrefab( std::ofstream& rStream );

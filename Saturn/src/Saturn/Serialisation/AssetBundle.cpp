@@ -240,8 +240,7 @@ namespace Saturn {
 
 				if( result != Z_OK )
 				{
-					SAT_CORE_ERROR( "Failed to compress {0}! zlib error is: {1}. Writing uncompressed data.", path.string(
-					), result );
+					SAT_CORE_ERROR( "Failed to compress {0}! zlib error is: {1}. Writing uncompressed data.", path.string(), result );
 
 					RawSerialisation::WriteObject( dfh, fout );
 					RawSerialisation::WriteSaturnBuffer( fileBuffer, fout );
@@ -282,7 +281,7 @@ namespace Saturn {
 
 		DumpFileToAssetID.clear();
 
-		// Delete the temp folder as we will no longer be needing it.
+		// Delete the temp folder.
 		std::filesystem::remove_all( ActiveProject->GetTempDir() );
 
 		AssetBundleRegistry = nullptr;

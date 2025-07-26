@@ -33,8 +33,10 @@
 
 #include "Saturn/Serialisation/RawSerialisation.h"
 
+#if !defined(SAT_DIST)
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
 #include <imgui.h>
+#endif
 
 namespace Saturn {
 
@@ -157,7 +159,7 @@ namespace Saturn {
 			else
 				path = dirName + "/" + path;
 
-			currentDir = &currentDir->GetParent();
+			currentDir = currentDir->GetParent();
 		}
 
 		m_PathToDir[ rMountBase ][ path ] = rDir;
@@ -181,7 +183,7 @@ namespace Saturn {
 			std::string dirName = currentDir->GetName();
 			path = dirName + "/" + path;
 
-			currentDir = &currentDir->GetParent();
+			currentDir = currentDir->GetParent();
 		}
 
 		m_PathToFile[ rMountBase ][ path ] = rFile;
@@ -241,7 +243,7 @@ namespace Saturn {
 			Ref<VDirectory>& rDirectory = m_PathToDir[ rMountBase ][ rVirtualPath ];
 
 			rDirectory->Clear();
-			rDirectory->GetParent().RemoveDirectory( rDirectory->GetName() );
+			rDirectory->GetParent()->RemoveDirectory( rDirectory->GetName() );
 		}
 	}
 
@@ -413,6 +415,7 @@ namespace Saturn {
 		return mounts;
 	}
 
+#if !defined(SAT_DIST)
 	//////////////////////////////////////////////////////////////////////////
 	// IMGUI
 
@@ -495,4 +498,6 @@ namespace Saturn {
 			Auxiliary::EndTreeNode();
 		}
 	}
+#endif
+
 }

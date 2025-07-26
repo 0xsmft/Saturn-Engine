@@ -91,11 +91,10 @@ namespace Saturn {
 	void PrefabViewer::OnImGuiRender()
 	{
 		// Root Window.
-		ImGuiWindowFlags RootWindowFlags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_MenuBar;
-		ImGui::Begin( m_Name.c_str(), &m_Open, RootWindowFlags );
+		ImGui::Begin( m_Name.c_str(), &m_Open, ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_MenuBar );
 
 		// Create custom dockspace.
-		ImGuiID dockID = ImGui::GetID( "PrefabViewerDckspc" );
+		const ImGuiID dockID = ImGui::GetID( "PrefabViewerDckspc" );
 		ImGui::DockSpace( dockID, ImVec2( 0.0f, 0.0f ), ImGuiDockNodeFlags_None );
 
 		if( ImGui::BeginMenuBar() )
@@ -129,9 +128,9 @@ namespace Saturn {
 		}
 
 		// Viewport
-		ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse;
+		const ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse;
 
-		std::string Name = "Viewport##" + std::to_string( m_AssetID );
+		const std::string Name = "Viewport##" + std::to_string( m_AssetID );
 
 		ImGuiWindowClass windowClass; 
 		windowClass.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_AutoHideTabBar;
@@ -153,8 +152,8 @@ namespace Saturn {
 
 //		ImGui::PopID();
 
-		ImVec2 minBound = ImGui::GetWindowPos();
-		ImVec2 maxBound = { minBound.x + m_ViewportSize.x, minBound.y + m_ViewportSize.y };
+		const ImVec2 minBound = ImGui::GetWindowPos();
+		const ImVec2 maxBound = { minBound.x + m_ViewportSize.x, minBound.y + m_ViewportSize.y };
 
 		m_ViewportFocused = ImGui::IsWindowFocused();
 		m_MouseOverViewport = ImGui::IsWindowHovered();

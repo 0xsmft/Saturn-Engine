@@ -58,7 +58,7 @@ namespace Saturn {
 		}
 
 		template<typename Ty>
-		Ty& Read( uint32_t Offset = 0 ) 
+		Ty& Read( uint32_t Offset = 0 ) const
 		{
 			return *( Ty* ) ( Data + Offset );
 		}

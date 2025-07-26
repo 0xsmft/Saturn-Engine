@@ -49,18 +49,15 @@
 
 namespace Saturn {
 
-	static std::filesystem::path GetFilepathAbs( const std::filesystem::path& rPath ) 
-	{
-		return Project::GetActiveProject()->FilepathAbs( rPath );
-	}
+#define GetFilepathAbs( rPath ) Project::GetActiveProject()->FilepathAbs( rPath )
 
 	//////////////////////////////////////////////////////////////////////////
 	// MATERIAL
 
 	void MaterialAssetSerialiser::Serialise( const Ref<Asset>& rAsset ) const
 	{
-		auto& basePath = rAsset->Path;
-		auto fullPath = GetFilepathAbs( basePath );
+		const auto& basePath = rAsset->Path;
+		const auto fullPath = GetFilepathAbs( basePath );
 
 		auto materialAsset = rAsset.As<MaterialAsset>();
 
@@ -111,7 +108,7 @@ namespace Saturn {
 
 	bool MaterialAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
 	{
-		auto absolutePath = GetFilepathAbs( rAsset->Path );
+		const auto absolutePath = GetFilepathAbs( rAsset->Path );
 		std::ifstream FileIn( absolutePath );
 
 		std::stringstream ss;
@@ -211,6 +208,8 @@ namespace Saturn {
 		auto fullPath = GetFilepathAbs( basePath );
 
 		YAML::Emitter out;
+
+		out << YAML::Comment( "WARNING, MODIFICATIONS TO THIS FILE WILL NOT UPDATE GLOBALLY IN EDITOR!" );
 
 		out << YAML::BeginMap;
 

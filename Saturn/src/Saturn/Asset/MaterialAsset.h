@@ -67,7 +67,7 @@ namespace Saturn {
 		void SetMetallicMap( Ref<Texture2D>& rTexture );
 		void SetRoughnessMap( Ref<Texture2D>& rTexture );
 
-		void SetAlbeoColor( glm::vec3 color );
+		void SetAlbeoColor( const glm::vec3& color );
 		void UseNormalMap( bool val );
 		void SetRoughness( float val );
 		void SetMetalness( float val );

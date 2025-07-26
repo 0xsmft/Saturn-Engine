@@ -356,7 +356,7 @@ namespace Saturn {
 
 			m_LastAutoSaveTime += time;
 
-			if( auto prj = Project::GetActiveProject(); prj->IsAutoSavesEnabled() && m_LastAutoSaveTime >= prj->GetAutoSaveInterval() )
+			if( const auto prj = Project::GetActiveProject(); prj->IsAutoSavesEnabled() && m_LastAutoSaveTime >= prj->GetAutoSaveInterval() )
 			{
 				SaveFileAuto();
 
@@ -710,7 +710,7 @@ namespace Saturn {
 			}
 
 #if defined(SAT_RELEASE)
-			if( Input::Get().KeyPressed( RubyKey::Alt ) && m_RuntimeScene == nullptr )
+			if( Input::Get().KeyPressed( RubyKey::Alt ) && GActiveScene != m_RuntimeScene )
 			{
 				switch( rEvent.GetScancode() )
 				{
@@ -879,6 +879,7 @@ namespace Saturn {
 				if( Auxiliary::DrawBoolControl( "Enable Auto Saves", enableAutoSaves ) ) 
 				{
 					ActiveProject->EnableAutoSaves( enableAutoSaves );
+					ShouldSaveProject = true;
 				}
 
 				Auxiliary::DisabledFlag disabledIfNoAutoSaves( !ActiveProject->IsAutoSavesEnabled() );
@@ -920,6 +921,7 @@ namespace Saturn {
 						intervalSeconds = displayValue * 3600.0f;
 					}
 
+					ShouldSaveProject = true;
 					ActiveProject->SetAutoSaveInterval( intervalSeconds );
 
 					// Reset timer because this value is incremented even when auto saves are disabled.
@@ -969,7 +971,7 @@ namespace Saturn {
 						if( result.empty() )
 							continue;
 
-						bool IsSelected = ( rBinding.ActionName == result );
+						const bool IsSelected = ( rBinding.ActionName == result );
 
 						ImGui::PushID( i );
 
@@ -1000,7 +1002,7 @@ namespace Saturn {
 						if( result.empty() )
 							continue;
 
-						bool IsSelected = ( rBinding.ActionName == result );
+						const bool IsSelected = ( rBinding.ActionName == result );
 
 						ImGui::PushID( i );
 
@@ -2685,7 +2687,7 @@ namespace Saturn {
 	{
 		JobSystem::Get().AddJob( [ this ]()
 			{
-				if( auto result = AssetBundle::BundleAssets( m_BlockingOperation ); result != AssetBundleResult::Success )
+				if( const auto result = AssetBundle::BundleAssets( m_BlockingOperation ); result != AssetBundleResult::Success )
 				{
 					Application::Get().GetWindow()->FlashAttention();
 
@@ -2716,8 +2718,7 @@ namespace Saturn {
 
 	void EditorLayer::ShowOrHideContentBrowserPanel()
 	{
-		Ref<ContentBrowserPanel> contentBrowserPanel = m_ImGuiWindowManager->GetPanel<ContentBrowserPanel>();
-		contentBrowserPanel->ShowOrHide();
+		m_ImGuiWindowManager->GetPanel<ContentBrowserPanel>()->ShowOrHide();
 	}
 
 	void EditorLayer::ShowOrHideSceneHierarchyPanel()

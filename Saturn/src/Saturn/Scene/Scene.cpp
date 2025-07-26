@@ -43,6 +43,7 @@
 #include "Saturn/Core/VirtualFS.h"
 #include "Saturn/Core/MemoryStream.h"
 #include "Saturn/Core/Renderer/SceneFlyCamera.h"
+#include "Saturn/Core/VariableGuard.h"
 
 #include "Saturn/Physics/PhysicsScene.h"
 #include "Saturn/Physics/PhysicsRigidBody.h"
@@ -87,8 +88,10 @@ namespace Saturn {
 		m_SceneEntity = m_Registry.create();
 		m_Registry.emplace<SceneComponent>( m_SceneEntity, m_InternalID );
 
+		/*
 		m_Registry.on_construct<NavigationMeshSpecificationComponent>().connect<&Scene::OnNavMeshBuildCompAdded> ( *this );
 		m_Registry.on_destroy<NavigationMeshSpecificationComponent>().connect<&Scene::OnNavMeshBuildCompRemoved>( *this );
+		*/
 	}
 
 	void Scene::OnNavMeshBuildCompAdded( entt::registry& reg, entt::entity entity )
@@ -828,7 +831,7 @@ namespace Saturn {
 		NewScene->PostDeserialise();
 	}
 
-	void Scene::OnRuntimeStart()
+	bool Scene::OnRuntimeStart()
 	{
 		DestroyPhysicsScene();
 
@@ -846,6 +849,20 @@ namespace Saturn {
 		// Init new scene camera
 		m_MainCameraEntity = GetMainCameraEntity( true );
 		m_RuntimeState = RuntimeState::Running;
+
+		m_NavigationSystem.Initialise();
+
+		if( !m_MainCameraEntity )
+		{
+			// Reject runtime, no camera was found after BeginPlay was called
+			OnRuntimeEnd();
+
+			SAT_CORE_ERROR( "Runtime request blocked. No camera was found after BeginPlay was called!" );
+		
+			return false;
+		}
+
+		return true;
 	}
 
 	void Scene::SuspendRuntime()
@@ -1079,6 +1096,12 @@ namespace Saturn {
 
 		for( const auto& rEntity : entites )
 		{
+			if( rEntity->GetClass() != NavBoundsEntity::StaticClass() )
+			{
+				SAT_CORE_ERROR( "Invalid class type for navigation bounds!" );
+				continue;
+			}
+
 			// Load initial nav mesh
 			Ref<NavBoundsEntity> boundsEntity = rEntity.As<NavBoundsEntity>();
 			boundsEntity->LoadNavMeshFromDisk();
@@ -1216,7 +1239,7 @@ namespace Saturn {
 		size_t mapSize = 0;
 		rStream.read( reinterpret_cast< char* >( &mapSize ), sizeof( size_t ) );
 
-		VariableGuard<Scene*> ActiveScene( GActiveScene, this );
+		VariableGuard<Scene*> activeScene( GActiveScene, this );
 
 		for( size_t i = 0; i < mapSize; i++ )
 		{

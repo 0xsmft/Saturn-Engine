@@ -104,7 +104,7 @@ SetProperty<typename PropertyTypeTraits<Saturn::SPropertyType::PropertyType>::Ty
 				SetProperty<AssetID>( pClass, rValue.ID );
 			} break;
 
-			case Saturn::SPropertyType::Entity:
+			case Saturn::SPropertyType::EntityType:
 			case Saturn::SPropertyType::String:
 			case Saturn::SPropertyType::Class:
 			case Saturn::SPropertyType::Unknown:
@@ -184,7 +184,7 @@ RawSerialisation::WriteObject( value, rStream ); \
 				RawSerialisation::WriteString( rValue, rStream );
 			} break;
 
-			case Saturn::SPropertyType::Entity:
+			case Saturn::SPropertyType::EntityType:
 			{
 				//Ref<Entity>& rEntity = Read<Saturn::SPropertyType::Entity>( pClass );
 
@@ -304,7 +304,7 @@ SetProperty( pClass, value );\
 				rAssetReference.ExpectedType = ( AssetType ) expectedType;
 			} break;
 
-			case Saturn::SPropertyType::Entity:
+			case Saturn::SPropertyType::EntityType:
 			case Saturn::SPropertyType::Class:
 			case Saturn::SPropertyType::Unknown:
 			default:

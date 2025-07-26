@@ -95,12 +95,6 @@ namespace Saturn {
 		m_Scene = Ref<Scene>::Create();
 	}
 
-	void Prefab::CreateScene()
-	{
-		m_Scene = nullptr;
-		m_Scene = Ref<Scene>::Create();
-	}
-
 	void Prefab::SerialisePrefab( std::ofstream& rStream )
 	{
 		m_Scene->SerialiseInternal( rStream );

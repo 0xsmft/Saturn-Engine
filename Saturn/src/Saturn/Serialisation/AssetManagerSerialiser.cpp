@@ -80,7 +80,7 @@ namespace Saturn {
 
 			out << YAML::Key << "Asset" << YAML::Value << id;
 
-			// On Windows make serialise as a Linux path for Linux support 
+			// On Windows serialise as a Linux path for Linux support 
 #if defined(SAT_PLATFORM_WINDOWS)
 			std::wstring path = asset->Path.wstring();
 

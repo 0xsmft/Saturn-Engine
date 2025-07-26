@@ -444,9 +444,9 @@ namespace Saturn {
 								pProperty->SetProperty( entity.Get(), value );
 						} break;
 
-						case SPropertyType::Entity:
+						case SPropertyType::EntityType:
 						{
-							Ref<Entity>& entityFromProp = pProperty->Read<SPropertyType::Entity>( entity.Get() );
+							Ref<Entity>& entityFromProp = pProperty->Read<SPropertyType::EntityType>( entity.Get() );
 
 							ImGui::PushID( name.c_str() );
 

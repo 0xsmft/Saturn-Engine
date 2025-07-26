@@ -115,7 +115,7 @@ namespace Saturn {
 		const entt::entity GetHandle() const { return m_EntityHandle; }
 
 		UUID GetUUID() const { return GetComponent<IdComponent>().ID; }
-		[[nodiscard]] const std::string& GetName() { return GetComponent<TagComponent>().Tag; }
+		[[nodiscard]] const std::string& GetName() const { return GetComponent<TagComponent>().Tag; }
 
 		inline void SetParent( const UUID& rID )
 		{

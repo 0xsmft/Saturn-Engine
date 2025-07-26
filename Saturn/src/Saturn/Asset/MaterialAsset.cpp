@@ -120,7 +120,7 @@ namespace Saturn {
 		return m_Material->Get<glm::vec3>( "u_Materials.AlbedoColor" );
 	}
 
-	void MaterialAsset::SetAlbeoColor( glm::vec3 color )
+	void MaterialAsset::SetAlbeoColor( const glm::vec3& color )
 	{
 		MarkDirty();
 

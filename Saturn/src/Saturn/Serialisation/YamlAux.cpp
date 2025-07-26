@@ -245,9 +245,9 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 					case SPropertyType::String:
 						SAT_SERIALISE_PROPERTY_YAML( String );
 
-					case SPropertyType::Entity:
+					case SPropertyType::EntityType:
 					{
-						Ref<Entity>& rEntity = pProperty->Read<Saturn::SPropertyType::Entity>( entity.Get() );
+						Ref<Entity>& rEntity = pProperty->Read<Saturn::SPropertyType::EntityType>( entity.Get() );
 
 						if( rEntity != nullptr )
 							rEmitter << YAML::Key << "Value" << YAML::Value << rEntity->GetUUID();

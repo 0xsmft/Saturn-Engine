@@ -249,7 +249,7 @@ namespace Saturn {
 
 		[[nodiscard]] RuntimeState GetRuntimeState() const { return m_RuntimeState; }
 
-		void OnRuntimeStart();
+		[[nodiscard]] bool OnRuntimeStart();
 
 		void SuspendRuntime();
 		void ResumeRuntime();
@@ -265,7 +265,7 @@ namespace Saturn {
 
 		// This transfers a prefab to an entity.
 		// The prefabs holds an entity however that entity is local to it's scene and we want that entity to be our scene.
-		Ref<Entity> CreatePrefab( Ref<Prefab> prefabAsset );
+		[[nodiscard]] Ref<Entity> CreatePrefab( Ref<Prefab> prefabAsset );
 
 		[[nodiscard]] entt::entity CreateHandle()
 		{

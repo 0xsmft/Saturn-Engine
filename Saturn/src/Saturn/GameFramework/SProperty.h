@@ -30,6 +30,8 @@
 
 #include "Saturn/Core/Base.h"
 
+#include "SAutoCompletionAux.h"
+
 #include <string>
 #include <glm/glm.hpp>
 
@@ -41,13 +43,14 @@ namespace Saturn {
 	class Entity;
 	class AssetReference;
 
+	// If you modify this enum you must ditto to XSP auto completion enum
 	enum SPropertyFlags_
 	{
 		SPropertyFlags_None = BIT( 0 ),
 		SPropertyFlags_ReadOnlyInEditor = BIT( 1 ), // NOTE: ReadOnlyInEditor is only available with the editor
-		SPropertyFlags_Asset = BIT( 2 ),
+		SPropertyFlags_AssetType = BIT( 2 ),
 		SPropertyFlags_Serialised = BIT( 3 ),
-		SPropertyFlags_Entity = BIT( 4 )
+		SPropertyFlags_EntityType = BIT( 4 )
 	};
 
 	typedef int SPropertyFlags;
@@ -71,7 +74,7 @@ namespace Saturn {
 		Vector4, /* glm::vec4 */
 		String, /* std::string */
 		Asset,
-		Entity, // Ref<Entity>
+		EntityType, // Ref<Entity>
 		Class,
 		Unknown
 	};
@@ -97,7 +100,7 @@ namespace Saturn {
 			case SPropertyType::Vector4: return "Vector4";
 			case SPropertyType::String: return "String";
 			case SPropertyType::Asset: return "Asset";
-			case SPropertyType::Entity: return "Entity";
+			case SPropertyType::EntityType: return "Entity";
 			case SPropertyType::Class: return "Class";
 			case SPropertyType::Unknown: return "Unknown";
 
@@ -155,7 +158,7 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 
 	SAT_CREATE_PROPERTY_TYPE_TRAIT( Asset,  AssetReference, true, false );
 
-	SAT_CREATE_PROPERTY_TYPE_TRAIT( Entity,  Ref<Entity>, true, false );
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( EntityType,  Ref<Entity>, true, false );
 	SAT_CREATE_PROPERTY_TYPE_TRAIT( Class,   SClass*,     false, false );
 	SAT_CREATE_PROPERTY_TYPE_TRAIT( Unknown, void*,       false, true  );
 

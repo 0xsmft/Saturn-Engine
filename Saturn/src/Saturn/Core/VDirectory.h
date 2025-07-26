@@ -70,10 +70,9 @@ namespace Saturn {
 
 		void Clear();
 
-		const std::string& GetName()       { return m_Name; }
 		const std::string& GetName() const { return m_Name; }
 
-		VDirectory& GetParent() { return *ParentDirectory; }
+		VDirectory* GetParent() const { return ParentDirectory; }
 
 	public:
 		static void Serialise( const Ref<VDirectory>& rObject, std::ofstream& rStream );

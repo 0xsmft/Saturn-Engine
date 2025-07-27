@@ -45,6 +45,7 @@
 #include <Saturn/Core/Renderer/SceneFlyCamera.h>
 
 #include <queue>
+#include <imgui_internal.h>
 
 namespace Saturn {
 	
@@ -74,6 +75,7 @@ namespace Saturn {
 		void SelectionChanged( Ref<Entity> e );
 		void ViewportSizeCallback( uint32_t Width, uint32_t Height );
 		bool OnKeyPressed( RubyKeyEvent& rEvent );
+		bool OnMousePressed( RubyMouseEvent& rEvent );
 
 		// UI Functions.
 		void DrawProjectSettingsWindow();
@@ -117,7 +119,8 @@ namespace Saturn {
 		void ShowOrHideContentBrowserPanel();
 		void ShowOrHideSceneHierarchyPanel();
 
-		glm::vec2 ConvertMouseToViewport();
+		glm::vec2 ConvertMouseToViewportNDC();
+		std::pair<glm::vec3, glm::vec3> RayCast( float mx, float my );
 
 	private:
 		enum MessageBoxButtons_
@@ -239,6 +242,7 @@ namespace Saturn {
 		uint32_t m_AutoSaveCount = 0u;
 
 		ImVec2 m_ViewportSize;
+		ImRect m_ViewportBounds;
 
 		std::queue<MessageBoxInfo> m_MessageBoxes;
 		std::vector<EditorNotification> m_Notifications;

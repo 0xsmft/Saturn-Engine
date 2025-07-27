@@ -482,6 +482,9 @@ namespace Saturn {
 		if( rEvent.Type == RubyEventType::KeyPressed ) 
 			OnKeyPressed( (RubyKeyEvent&)rEvent );
 
+		if( rEvent.Type == RubyEventType::MousePressed )
+			OnMousePressed( ( RubyMouseEvent& ) rEvent );
+
 		if( m_RuntimeScene )
 			m_RuntimeScene->OnEvent( rEvent );
 	}
@@ -724,6 +727,121 @@ namespace Saturn {
 		}
 
 		return true;
+	}
+
+	struct Ray
+	{
+		glm::vec3 Origin;
+		glm::vec3 Direction;
+
+		inline bool IntersectsAABB( const AABB& rBB, float& t ) const
+		{
+			glm::vec3 dirfrac{};
+			// r.dir is unit direction vector of ray
+			dirfrac.x = 1.0f / Direction.x;
+			dirfrac.y = 1.0f / Direction.y;
+			dirfrac.z = 1.0f / Direction.z;
+			// lb is the corner of AABB with minimal coordinates - left bottom, rt is maximal corner
+			// r.org is origin of ray
+			const glm::vec3& lb = rBB.Min;
+			const glm::vec3& rt = rBB.Max;
+			const float t1 = ( lb.x - Origin.x ) * dirfrac.x;
+			const float t2 = ( rt.x - Origin.x ) * dirfrac.x;
+			const float t3 = ( lb.y - Origin.y ) * dirfrac.y;
+			const float t4 = ( rt.y - Origin.y ) * dirfrac.y;
+			const float t5 = ( lb.z - Origin.z ) * dirfrac.z;
+			const float t6 = ( rt.z - Origin.z ) * dirfrac.z;
+
+			const float tmin = glm::max( glm::max( glm::min( t1, t2 ), glm::min( t3, t4 ) ), glm::min( t5, t6 ) );
+			const float tmax = glm::min( glm::min( glm::max( t1, t2 ), glm::max( t3, t4 ) ), glm::max( t5, t6 ) );
+
+			// if tmax < 0, ray (line) is intersecting AABB, but the whole AABB is behind us
+			if( tmax < 0 )
+			{
+				t = tmax;
+				return false;
+			}
+
+			// if tmin > tmax, ray doesn't intersect AABB
+			if( tmin > tmax )
+			{
+				t = tmax;
+				return false;
+			}
+
+			t = tmin;
+			return true;
+		}
+
+		bool IntersectsTri( const glm::vec3& a, const glm::vec3& b, const glm::vec3& c, float& t ) const
+		{
+			const glm::vec3 E1 = b - a;
+			const glm::vec3 E2 = c - a;
+			const glm::vec3 N = cross( E1, E2 );
+			const float det = -glm::dot( Direction, N );
+			const float invdet = 1.f / det;
+			const glm::vec3 AO = Origin - a;
+			const glm::vec3 DAO = glm::cross( AO, Direction );
+			const float u = glm::dot( E2, DAO ) * invdet;
+			const float v = -glm::dot( E1, DAO ) * invdet;
+			t = glm::dot( AO, N ) * invdet;
+			return ( det >= 1e-6f && t >= 0.0f && u >= 0.0f && v >= 0.0f && ( u + v ) <= 1.0f );
+		}
+	};
+
+	bool EditorLayer::OnMousePressed( RubyMouseEvent& rEvent )
+	{
+		if( !m_MouseOverViewport || rEvent.GetButton() != (int)RubyMouseButton::Left )
+			return false;
+
+		const auto viewportMouse = ConvertMouseToViewportNDC();
+		if( viewportMouse.x > -1.0f && viewportMouse.x < 1.0f && viewportMouse.y > -1.0f && viewportMouse.y < 1.0f )
+		{
+			const auto [origin, dir] = RayCast( viewportMouse.x, viewportMouse.y );
+
+			const auto staticMeshes = GActiveScene->GetAllEntitiesWith<StaticMeshComponent>();
+			for( const auto& rEntity : staticMeshes )
+			{
+				const auto& comp = rEntity->GetComponent<StaticMeshComponent>();
+				if( !comp.Mesh ) 
+					continue;
+
+				auto& rSubmeshes = comp.Mesh->Submeshes();
+				for( uint32_t i = 0; i < rSubmeshes.size(); i++ )
+				{
+					const auto& rSubmesh = rSubmeshes[ i ];
+					const glm::mat4 transform = GActiveScene->GetWorldSpaceTransform( rEntity ).GetTransform() * rSubmesh.Transform;
+
+					Ray ray = { .Origin = glm::inverse( transform ) * glm::vec4( origin, 1.0f ), .Direction = glm::inverse( glm::mat3( transform ) ) * dir };
+
+					float t;
+					const bool hit = ray.IntersectsAABB( rSubmesh.BoundingBox, t );
+					if( hit )
+					{
+						const auto& rIndices = comp.Mesh->Indices();
+						const auto& rVertices = comp.Mesh->Vertices();
+
+						for( const auto& tri : rIndices )
+						{
+							const glm::vec3& rV0 = rVertices[ tri.V1 ].Position;
+							const glm::vec3& rV1 = rVertices[ tri.V2 ].Position;
+							const glm::vec3& rV2 = rVertices[ tri.V3 ].Position;
+
+							float t;
+							if( ray.IntersectsTri( rV0, rV1, rV2, t ) )
+							{
+								Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
+								hierarchyPanel->SetSelected( rEntity );
+
+								break;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		return false;
 	}
 
 	static bool s_OpenAssetFinderPopup = false;
@@ -1170,6 +1288,7 @@ namespace Saturn {
 
 		ImGui::End();
 
+		// Only save project if the window has been closed.
 		if( ShouldSaveProject && !m_ShowUserSettings )
 		{
 			ProjectSerialiser ps;
@@ -2038,6 +2157,7 @@ namespace Saturn {
 		m_ViewportFocused = ImGui::IsWindowFocused();
 		m_MouseOverViewport = ImGui::IsWindowHovered();
 		m_AllowCameraEvents = ImGui::IsMouseHoveringRect( minBound, maxBound ) && m_ViewportFocused || m_StartedRightClickInViewport;
+		m_ViewportBounds = ImRect( minBound, maxBound );
 
 		Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
 		std::vector<Ref<Entity>>& selectedEntities = hierarchyPanel->GetSelectionContexts();
@@ -2723,13 +2843,32 @@ namespace Saturn {
 
 	void EditorLayer::ShowOrHideSceneHierarchyPanel()
 	{
-		Ref<SceneHierarchyPanel> sceneHierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
-		sceneHierarchyPanel->ShowOrHide();
+		m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>()->ShowOrHide();
 	}
 
-	glm::vec2 EditorLayer::ConvertMouseToViewport()
+	glm::vec2 EditorLayer::ConvertMouseToViewportNDC()
 	{
-		return {};
+		auto [mx, my] = ImGui::GetMousePos();
+		const auto& viewportBounds = m_ViewportBounds;
+
+		mx -= m_ViewportBounds.Min.x;
+		my -= m_ViewportBounds.Min.y;
+
+		return { ( mx / m_ViewportSize.x ) * 2.0f -1.0f, ( ( my / m_ViewportSize.y ) * 2.0f - 1.0f ) * -1.0f };
+	}
+
+	std::pair<glm::vec3, glm::vec3> EditorLayer::RayCast( float mx, float my )
+	{
+		const glm::vec4 mouseClipPos = { mx, my, -1.0f, 1.0f };
+
+		const auto inverseProj = glm::inverse( m_EditorCamera.ProjectionMatrix() );
+		const auto inverseView = glm::inverse( glm::mat3( m_EditorCamera.ViewMatrix() ) );
+
+		const glm::vec4 ray = inverseProj * mouseClipPos;
+		const glm::vec3 rayPos = m_EditorCamera.GetPosition();
+		const glm::vec3 rayDir = inverseView * glm::vec3( ray );
+
+		return { rayPos, rayDir };
 	}
 
 	void EditorLayer::PushMessageBox( MessageBoxInfo& rInfo )

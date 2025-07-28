@@ -137,7 +137,7 @@ namespace Saturn {
 		m_NodeEditor->SetRuntime( m_Runtime );
 
 #if !defined(SAT_DIST)
-		// Discover all classes that are based from BehaviourTreeBaseTask for out context menu
+		// Discover all classes that are based from BehaviourTreeBaseTask for our context menu
 		const auto map = ClassMetadataHandler::Get().GetAllClassesBasedFrom<BehaviourTreeBaseTask>();
 		for( auto* pClass : map )
 		{
@@ -186,7 +186,7 @@ namespace Saturn {
 					// NOTE: Raw ptr converted to Ref<> by BehaviourTreeTaskNode
 					SObject* pNewTaskObject = ClassMetadataHandler::Get().CreateClassObject( pClass->GetClass()->GetHash() );
 
-					BehaviourTreeTaskNode* pNode = ClassMetadataHandler::Get().CreateClassObject<BehaviourTreeTaskNode>( BehaviourTreeTaskNode::StaticClass(),( BehaviourTreeBaseTask* ) pNewTaskObject );
+					BehaviourTreeTaskNode* pNode = ClassMetadataHandler::Get().CreateClassObject<BehaviourTreeTaskNode>( BehaviourTreeTaskNode::StaticClass(), ( BehaviourTreeBaseTask* ) pNewTaskObject );
 
 					result = pNode;
 					m_NodeEditor->AddNode( result );

@@ -28,80 +28,37 @@
 
 #pragma once
 
-#include "Saturn/Core/UUID.h"
-
-#include <string>
-#include <functional>
-#include "Saturn/Core/Ruby/RubyEventType.h"
+#include <stdint.h>
 
 namespace Saturn {
 
-	enum class ActionBindingTriggerState
+	static constexpr uint64_t FNV1A64( const char* pStr )
 	{
-		Pressed = BIT( 0 ),
-		Released = BIT( 1 ),
-	};
+		constexpr uint64_t offset = 14695981039346656037ull;
+		constexpr uint64_t prime = 1099511628211ull;
 
-	enum class ActionBindingType 
-	{
-		Key,
-		Mouse
-	};
-
-	// @class ActionBindingData
-	//
-	// @breif This struct can be thought of as a specification for the real ActionBindings it contains the name, type, Key, MouseButton, ActionBindingData are owned and created by the current Project.
-	//
-	// In Development configurations:
-	// - This struct will hold a special RenderID, and an ActionName
-	// In Distribution configurations:
-	// - RenderID and ActionName are stripped out.
-	struct ActionBindingData
-	{
-		std::string Name = "";
-		ActionBindingType Type = ActionBindingType::Key;
-
-		RubyKey Key = RubyKey::UnknownKey;
-		RubyMouseButton MouseButton = RubyMouseButton::Unknown;
-
-#if !defined(SAT_DIST)
-		// The name of the Key/Mouse button
-		std::string ActionName = "";
-		// RenderID
-		UUID ID;
-#endif
-
-		bool operator==( const ActionBindingData& rOther ) 
+		uint64_t hash = offset;
+		while( *pStr )
 		{
-			return Name == rOther.Name
-				&& Type == rOther.Type
-				&& Key == rOther.Key
-				&& MouseButton == rOther.MouseButton
-#if !defined(SAT_DIST)
-				&& ID == rOther.ID;
-#else
-				;
-#endif
-		}
-	};
-
-	// @class ActionBinding
-	//
-	// @breif An ActionBinding is an event that triggers based on certain conditions for example, if the 'A' key is pressed, the project will search for any ActionBinding that matches. Unlike ActionBindingData, ActionBindings are created by the PlayerInputController. A ActionBinding is defined by it's ActionBindingData.
-	//
-	struct ActionBinding
-	{
-		ActionBinding( const ActionBindingData& rActionBindingData )
-			: Type( rActionBindingData.Type ), 
-			Key( rActionBindingData.Key ), 
-			MouseButton( rActionBindingData.MouseButton )
-		{
+			hash ^= static_cast< uint64_t >( *pStr++ );
+			hash *= prime;
 		}
 
-		ActionBindingType Type = ActionBindingType::Key;
-		RubyKey Key = RubyKey::UnknownKey;
-		RubyMouseButton MouseButton = RubyMouseButton::Unknown;
-		ActionBindingTriggerState State = ActionBindingTriggerState::Pressed;
-		std::function<void()> Function = nullptr;
-	};
+		return hash;
+	}
+	
+	static constexpr uint32_t FNV1A32( const char* pStr ) 
+	{
+		constexpr uint32_t offset = 2166136261;
+		constexpr uint32_t prime = 16777619;
+
+		uint32_t hash = offset;
+		while( *pStr )
+		{
+			hash ^= static_cast< uint32_t >( *pStr++ );
+			hash *= prime;
+		}
+
+		return hash;
+	}
 }

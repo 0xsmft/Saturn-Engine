@@ -32,6 +32,7 @@
 #include "Core/GameScript.h"
 
 #include "Saturn/Core/Timestep.h"
+#include "Saturn/Core/HashFNV1A.h"
 
 #include <filesystem>
 
@@ -182,20 +183,5 @@ namespace Saturn {
 	}
 
 	template<typename RClass> SClass* StaticClass();
-
-	static constexpr uint64_t FNV1A64( const char* pStr )
-	{
-		constexpr uint64_t offset = 14695981039346656037ull;
-		constexpr uint64_t prime = 1099511628211ull;
-
-		uint64_t hash = offset;
-		while( *pStr )
-		{
-			hash ^= static_cast< uint64_t >( *pStr++ );
-			hash *= prime;
-		}
-
-		return hash;
-	}
 
 }

@@ -26,7 +26,70 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
+#pragma once
 
-#include "backends/imgui_impl_vulkan.cpp"
-#include "backends/imgui_impl_ruby.cpp"
+#include <functional>
+#include <algorithm>
+#include <vector>
+#include <type_traits>
+
+// This Event class is based from Geno IDE's class, however slightly modified:
+// Courtesy of https://github.com/Geno-IDE/Geno/blob/master/include/Common/Event.h
+
+namespace Saturn {
+	
+	template<typename Instigator, typename FalseFunction>
+	class Event 
+	{
+	};
+
+	template<typename Instigator, typename... Params>
+	class Event<Instigator, void(Params...)>
+	{
+	public:
+		struct Receiver
+		{
+			std::function<void( Instigator&, Params... )> Function;
+			uint64_t ID;
+		};
+
+	public:
+		template<typename F>
+		void operator+=( F&& rrFunctor )
+		{
+			static_assert( std::is_invocable_r_v<void, std::decay_t<F>, Instigator&, Params...>, "Event Receiver must be invocable as void(Instigator&, Params...), you may be missing an argument!" );
+
+			Receiver r;
+			r.Function = std::forward<F>( rrFunctor );
+			r.ID = m_Counter++;
+
+			m_Receivers.emplace_back( std::move( r ) );
+		}
+
+		void operator()( Instigator& rSender, Params... params )
+		{
+			std::vector<Receiver> copy( m_Receivers.begin(), m_Receivers.end() );
+			for( auto& rReceiver : copy )
+			{
+				std::invoke( rReceiver.Function, rSender, params... );
+			}
+
+			while( !copy.empty() )
+			{
+				typename std::vector<Receiver>::iterator itr = std::find_if( m_Receivers.begin(), m_Receivers.end(),
+					[ &copy ]( const Receiver& rCandidate )
+				{
+					return rCandidate.ID == copy.back().ID;
+				} );
+
+				m_Receivers.erase( itr );
+				copy.pop_back();
+			}
+		}
+
+	private:
+		std::vector<Receiver> m_Receivers;
+		uint64_t m_Counter = 0;
+	};
+
+}

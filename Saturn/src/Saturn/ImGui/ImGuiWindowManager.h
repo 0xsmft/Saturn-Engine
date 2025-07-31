@@ -37,7 +37,7 @@
 namespace Saturn {
 	
 	class ImGuiWindow;
-	class RubyEvent;
+	class Event;
 
 	class ImGuiWindowManager : public RefTarget
 	{
@@ -49,7 +49,7 @@ namespace Saturn {
 		~ImGuiWindowManager();
 
 		void DrawAll();
-		void ProcessEvent( RubyEvent& rEvent );
+		void ProcessEvent( Event& rEvent );
 		void OnUpdate( Timestep ts );
 		
 		template<typename Ty>

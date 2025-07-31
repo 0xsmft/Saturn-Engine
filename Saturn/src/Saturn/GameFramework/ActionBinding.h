@@ -91,10 +91,11 @@ namespace Saturn {
 	//
 	struct ActionBinding
 	{
-		ActionBinding( const ActionBindingData& rActionBindingData )
+		template<typename F>
+		ActionBinding( const ActionBindingData& rActionBindingData, ActionBindingTriggerState state, F&& rrFunc )
 			: Type( rActionBindingData.Type ), 
 			Key( rActionBindingData.Key ), 
-			MouseButton( rActionBindingData.MouseButton )
+			MouseButton( rActionBindingData.MouseButton ), State( state ), Function( std::move( rrFunc ) )
 		{
 		}
 

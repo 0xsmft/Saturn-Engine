@@ -71,7 +71,7 @@ namespace Saturn {
 		}
 	}
 
-	void ImGuiWindowManager::ProcessEvent( RubyEvent& rEvent )
+	void ImGuiWindowManager::ProcessEvent( Event& rEvent )
 	{
 		for( auto&& [name, panel] : m_Panels )
 		{

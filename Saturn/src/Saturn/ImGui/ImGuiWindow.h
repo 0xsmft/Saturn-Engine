@@ -39,12 +39,15 @@ namespace Saturn {
 	{
 	public:
 		ImGuiWindow() = default;
-		ImGuiWindow( const std::string& rName ) { m_Name = rName; }
+		ImGuiWindow( const std::string& rName )
+			: m_Name( rName )
+		{ 
+		}
 		virtual ~ImGuiWindow() = default;
 
 		virtual void OnImGuiRender() = 0;
 		virtual void OnUpdate( Timestep ts ) = 0;
-		virtual void OnEvent( RubyEvent& rEvent ) = 0;
+		virtual void OnEvent( Event& rEvent ) = 0;
 		virtual void OnRuntimeStateChanged( RuntimeState newState, RuntimeState oldState ) {}
 
 		bool IsOpen() const { return m_Open; }

@@ -163,11 +163,11 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		virtual void OnImGuiRender() = 0;
 		virtual void OnUpdate( Timestep ts ) = 0;
-		virtual void OnEvent( RubyEvent& rEvent ) = 0;
+		virtual void OnEvent( Event& rEvent ) = 0;
 #else
 		virtual void OnImGuiRender() {}
 		virtual void OnUpdate( Timestep ts ) {}
-		virtual void OnEvent( RubyEvent& rEvent ) {}
+		virtual void OnEvent( Event& rEvent ) {}
 #endif
 
 		static Ref<Texture2D> GetBlueprintBackground();

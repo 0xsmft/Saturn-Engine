@@ -91,7 +91,7 @@ namespace Saturn {
 		[[nodiscard]] bool IsMouseButtonDown( RubyMouseButton button );
 		[[nodiscard]] bool MouseInWindow();
 
-		double GetTime() { return m_Timer.GetTicks(); }
+		double GetTime() const { return m_Timer.GetTicks(); }
 
 		// Set title bar hit-test height
 		void SetTiltebarHeight( uint32_t height );
@@ -126,8 +126,9 @@ namespace Saturn {
 
 		RubyEventTarget* GetEventTarget() const { return m_pEventTarget; }
 
+		// Dispatch an event immediately, this is an internal function called by a Window Backend, and should not be used!
 		template<typename Ty, typename... Args>
-		bool DispatchEvent( RubyEventType Type, Args&&... args )
+		bool DispatchEvent( EventType Type, Args&&... args )
 		{
 			Ty event( Type, std::forward<Args>( args )... );
 

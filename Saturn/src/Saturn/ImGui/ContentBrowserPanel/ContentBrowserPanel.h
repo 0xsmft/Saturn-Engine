@@ -55,7 +55,7 @@ namespace Saturn {
 		std::filesystem::path NewPath;
 	};
 
-	class RubyEvent;
+	class Event;
 	
 	class ContentBrowserPanel : public ContentBrowserBase
 	{
@@ -66,7 +66,7 @@ namespace Saturn {
 		virtual ~ContentBrowserPanel();
 
 		virtual void OnImGuiRender() override;
-		virtual void OnEvent( RubyEvent& rEvent ) override;
+		virtual void OnEvent( Event& rEvent ) override;
 		virtual void OnUpdate( Timestep ts ) {}
 
 		static inline const char* GetStaticName()

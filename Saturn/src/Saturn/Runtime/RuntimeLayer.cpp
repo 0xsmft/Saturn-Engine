@@ -120,9 +120,9 @@ namespace Saturn {
 		m_RuntimeScene->OnRenderRuntime( time, Application::Get().PrimarySceneRenderer() );
 	}
 
-	void RuntimeLayer::OnEvent( RubyEvent& rEvent )
+	void RuntimeLayer::OnEvent( Event& rEvent )
 	{
-		if( rEvent.Type == RubyEventType::Resize )
+		if( rEvent.Type == EventType::Resize )
 			OnWindowResize( ( RubyWindowResizeEvent& ) rEvent );
 
 		m_RuntimeScene->OnEvent( rEvent );

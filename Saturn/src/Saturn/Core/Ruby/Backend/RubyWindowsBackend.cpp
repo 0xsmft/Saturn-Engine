@@ -113,7 +113,7 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 		case WM_CLOSE:
 		{
 			// Send a last minute event to tell the client that the window is about to close.
-			pThis->GetParent()->DispatchEvent<RubyEvent>( RubyEventType::Close );
+			pThis->GetParent()->DispatchEvent<Event>( EventType::Close, EventCategory::EC_Ruby );
 
 			pThis->CloseWindow();
 			
@@ -142,14 +142,14 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 
 			if( WParam == SIZE_MAXIMIZED )
 			{
-				pThis->GetParent()->DispatchEvent<RubyMaximizeEvent>( RubyEventType::WindowMaximized, true );
+				pThis->GetParent()->DispatchEvent<RubyMaximizeEvent>( EventType::WindowMaximized, true );
 			}
 			else if( WParam == SIZE_MINIMIZED ) 
 			{
-				pThis->GetParent()->DispatchEvent<RubyMinimizeEvent>( RubyEventType::WindowMinimized, true );
+				pThis->GetParent()->DispatchEvent<RubyMinimizeEvent>( EventType::WindowMinimized, true );
 			}
 
-			pThis->GetParent()->DispatchEvent<RubyWindowResizeEvent>( RubyEventType::Resize, static_cast< uint32_t >( width ), static_cast< uint32_t >( height ) );
+			pThis->GetParent()->DispatchEvent<RubyWindowResizeEvent>( EventType::Resize, static_cast< uint32_t >( width ), static_cast< uint32_t >( height ) );
 		} return false;
 
 		//////////////////////////////////////////////////////////////////////////
@@ -157,7 +157,7 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 
 		case WM_MOVE: 
 		{
-			pThis->GetParent()->DispatchEvent<RubyEvent>( RubyEventType::WindowMoved );
+			pThis->GetParent()->DispatchEvent<Event>( EventType::WindowMoved, EventCategory::EC_Ruby );
 
 			if( pThis->GetParent()->GetCursorMode() == RubyCursorMode::Locked )
 			{
@@ -170,7 +170,7 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 		
 		case WM_DISPLAYCHANGE: 
 		{
-			pThis->GetParent()->DispatchEvent<RubyEvent>( RubyEventType::DisplayChanged );
+			pThis->GetParent()->DispatchEvent<Event>( EventType::DisplayChanged, EventCategory::EC_Ruby );
 		} break;
 
 		case WM_KILLFOCUS: 
@@ -180,7 +180,7 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 				pThis->SetMouseCursor( RubyCursorType::Arrow );
 			}
 
-			pThis->GetParent()->DispatchEvent<RubyFocusEvent>( RubyEventType::WindowFocus, false );
+			pThis->GetParent()->DispatchEvent<RubyFocusEvent>( EventType::WindowFocus, false );
 		} return 0;
 
 		case WM_SETFOCUS: 
@@ -190,7 +190,7 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 				pThis->SetMouseCursor( RubyCursorType::None );
 			}
 
-			pThis->GetParent()->DispatchEvent<RubyFocusEvent>( RubyEventType::WindowFocus, true );
+			pThis->GetParent()->DispatchEvent<RubyFocusEvent>( EventType::WindowFocus, true );
 		} return 0;
 
 		//////////////////////////////////////////////////////////////////////////
@@ -207,7 +207,7 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 				TRACKMOUSEEVENT TrackMouseEvent{ sizeof( TrackMouseEvent ), TME_LEAVE, Handle };
 				pThis->SetTrackMouse( ::TrackMouseEvent( &TrackMouseEvent ) );
 
-				pThis->GetParent()->DispatchEvent<RubyEvent>( RubyEventType::MouseEnterWindow );
+				pThis->GetParent()->DispatchEvent<Event>( EventType::MouseEnterWindow, EventCategory::EC_Ruby );
 			}
 
 			if( pThis->GetParent()->GetCursorMode() == RubyCursorMode::Locked )
@@ -219,13 +219,13 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 				lockedDelta += deltaPos;
 				
 				pThis->GetParent()->DispatchEvent<RubyMouseMoveEvent>( 
-					RubyEventType::MouseMoved, ( float ) lockedDelta.x, ( float ) lockedDelta.y );
+					EventType::MouseMoved, ( float ) lockedDelta.x, ( float ) lockedDelta.y );
 
 				pThis->GetParent()->IntrnlSetLockedMousePos( lockedDelta );
 			}
 			else
 			{
-				pThis->GetParent()->DispatchEvent<RubyMouseMoveEvent>( RubyEventType::MouseMoved, ( float ) x, ( float ) y );
+				pThis->GetParent()->DispatchEvent<RubyMouseMoveEvent>( EventType::MouseMoved, ( float ) x, ( float ) y );
 			}
 			
 			pThis->GetParent()->IntrnlSetLastMousePos( { x, y } );
@@ -253,7 +253,7 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 				::SetCapture( Handle );
 
 			pThis->GetParent()->IntrnlSetMouseState( btn );
-			pThis->GetParent()->DispatchEvent<RubyMouseEvent>( RubyEventType::MousePressed, ( int ) btn );
+			pThis->GetParent()->DispatchEvent<RubyMouseEvent>( EventType::MousePressed, ( int ) btn );
 		} return 0;
 
 		case WM_XBUTTONDOWN:
@@ -264,7 +264,7 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 				::SetCapture( Handle );
 
 			pThis->GetParent()->IntrnlSetMouseState( xbtn );
-			pThis->GetParent()->DispatchEvent<RubyMouseEvent>( RubyEventType::MousePressed, ( int ) xbtn );
+			pThis->GetParent()->DispatchEvent<RubyMouseEvent>( EventType::MousePressed, ( int ) xbtn );
 		} return 0;
 
 		case WM_LBUTTONUP:
@@ -274,7 +274,7 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 			RubyMouseButton btn = ( Msg == WM_LBUTTONUP ? RubyMouseButton::Left : Msg == WM_RBUTTONUP ? RubyMouseButton::Right : RubyMouseButton::Middle );
 
 			pThis->GetParent()->IntrnlSetMouseState( btn, false );
-			pThis->GetParent()->DispatchEvent<RubyMouseEvent>( RubyEventType::MouseReleased, ( int )btn );
+			pThis->GetParent()->DispatchEvent<RubyMouseEvent>( EventType::MouseReleased, ( int )btn );
 			
 			if( ::GetCapture() == Handle && pThis->GetParent()->GetCurrentMouseButtons().size() == 0 )
 				::ReleaseCapture();
@@ -285,7 +285,7 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 			RubyMouseButton xbtn = GET_XBUTTON_WPARAM( WParam ) == XBUTTON1 ? RubyMouseButton::Extra1 : RubyMouseButton::Extra2;
 
 			pThis->GetParent()->IntrnlSetMouseState( xbtn, false );
-			pThis->GetParent()->DispatchEvent<RubyMouseEvent>( RubyEventType::MouseReleased, ( int ) xbtn );
+			pThis->GetParent()->DispatchEvent<RubyMouseEvent>( EventType::MouseReleased, ( int ) xbtn );
 
 			if( ::GetCapture() == Handle && pThis->GetParent()->GetCurrentMouseButtons().size() == 0 )
 				::ReleaseCapture();
@@ -298,7 +298,7 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 				pThis->SetTrackMouse( false );
 			}
 
-			pThis->GetParent()->DispatchEvent<RubyEvent>( RubyEventType::MouseLeaveWindow );
+			pThis->GetParent()->DispatchEvent<Event>( EventType::MouseLeaveWindow, EventCategory::EC_Ruby );
 		} break;
 		
 		// Vertical Scroll
@@ -307,7 +307,7 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 			int yOffset = GET_WHEEL_DELTA_WPARAM( WParam );
 			yOffset /= WHEEL_DELTA;
 
-			pThis->GetParent()->DispatchEvent<RubyMouseScrollEvent>( RubyEventType::MouseScroll, 0, yOffset );
+			pThis->GetParent()->DispatchEvent<RubyMouseScrollEvent>( EventType::MouseScroll, 0, yOffset );
 		} return false;
 
 		// Horizontal Scroll
@@ -316,7 +316,7 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 			int xOffset = GET_WHEEL_DELTA_WPARAM( WParam );
 			xOffset /= WHEEL_DELTA;
 
-			pThis->GetParent()->DispatchEvent<RubyMouseScrollEvent>( RubyEventType::MouseScroll, xOffset, 0 );
+			pThis->GetParent()->DispatchEvent<RubyMouseScrollEvent>( EventType::MouseScroll, xOffset, 0 );
 		} return false;
 
 		// END: Mouse Events
@@ -333,7 +333,7 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 			int Modifiers = HandleKeyMods();
 
 			pThis->GetParent()->IntrnlSetKeyDown( ( RubyKey ) nativeCode, true );
-			pThis->GetParent()->DispatchEvent<RubyKeyEvent>( RubyEventType::KeyPressed, nativeCode, Modifiers );
+			pThis->GetParent()->DispatchEvent<RubyKeyEvent>( EventType::KeyPressed, nativeCode, Modifiers );
 		} return false;
 
 		case WM_SYSKEYUP:
@@ -344,7 +344,7 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 			int Modifiers = HandleKeyMods();
 
 			pThis->GetParent()->IntrnlSetKeyDown( ( RubyKey ) nativeCode, false );
-			pThis->GetParent()->DispatchEvent<RubyKeyEvent>( RubyEventType::KeyReleased, nativeCode, Modifiers );
+			pThis->GetParent()->DispatchEvent<RubyKeyEvent>( EventType::KeyReleased, nativeCode, Modifiers );
 		} return false;
 
 		// The WM_CHAR message is sent when a printable character key is pressed.
@@ -352,7 +352,7 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 		case WM_CHAR: 
 		{
 			wchar_t wc = static_cast< wchar_t >( WParam );
-			pThis->GetParent()->DispatchEvent<RubyCharacterEvent>( RubyEventType::InputCharacter, wc );
+			pThis->GetParent()->DispatchEvent<RubyCharacterEvent>( EventType::InputCharacter, wc );
 		} return false;
 
 		case WM_UNICHAR: 
@@ -588,7 +588,7 @@ namespace Saturn {
 
 	void RubyWindowsBackend::RecenterMousePos()
 	{
-		SetMousePos( m_pWindow->GetWidth() / 2.0, m_pWindow->GetHeight() / 2.0 );
+		SetMousePos( m_pWindow->GetWidth() * 0.5f, m_pWindow->GetHeight() * 0.5f );
 	}
 
 	void RubyWindowsBackend::DisableCursor()
@@ -834,10 +834,10 @@ namespace Saturn {
 				// Lock the mouse back to the center if it has moved.
 				if( pThis->GetParent()->GetCursorMode() == RubyCursorMode::Locked )
 				{
-					RubyIVec2 lastPos = pThis->GetParent()->GetLastMousePos();
+					const RubyIVec2 lastPos = pThis->GetParent()->GetLastMousePos();
 
-					uint32_t w = pThis->GetParent()->GetWidth() / 2;
-					uint32_t h = pThis->GetParent()->GetHeight() / 2;
+					const uint32_t w = pThis->GetParent()->GetWidth() / 2u;
+					const uint32_t h = pThis->GetParent()->GetHeight() / 2u;
 
 					if( lastPos.x != w || lastPos.y != h )
 					{

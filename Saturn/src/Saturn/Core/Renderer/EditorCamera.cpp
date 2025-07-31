@@ -203,9 +203,9 @@ namespace Saturn {
 		return speed;
 	}
 
-	void EditorCamera::OnEvent( RubyEvent& event )
+	void EditorCamera::OnEvent( Event& event )
 	{
-		if( event.Type == RubyEventType::MouseScroll )
+		if( event.Type == EventType::MouseScroll )
 			OnMouseScroll( (RubyMouseScrollEvent&) event );
 	}
 

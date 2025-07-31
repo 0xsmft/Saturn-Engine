@@ -33,7 +33,6 @@
 #include "Ruby/RubyEvent.h"
 
 #include "Layer.h"
-#include "Events.h"
 #include "Input.h"
 #include "EngineSettings.h"
 
@@ -92,13 +91,16 @@ namespace Saturn {
 		Application( const ApplicationSpecification& spec );
 		virtual ~Application();
 
-		void Run();
-		void Close();
-	
-	public:
 		bool Running() const { return m_Running; }
 
-		const Timestep& Time() { return m_Timestep; }
+		void Run();
+		void Close();
+
+		virtual void OnInit() {}
+		virtual void OnShutdown() {}
+	
+	public:
+		Timestep Time() const { return m_Timestep; }
 
 		std::filesystem::path OpenFile( const char* pFilter ) const;
 		std::filesystem::path SaveFile( const char* pFilter ) const;
@@ -109,9 +111,6 @@ namespace Saturn {
 		void PushLayer( Layer* pLayer );
 		void PopLayer( Layer* pLayer );
 
-		virtual void OnInit() {}
-		virtual void OnShutdown() {}
-		
 		SceneRenderer& PrimarySceneRenderer() { return *m_SceneRenderer; }
 		RubyWindow* GetWindow() { return m_Window; }
 
@@ -138,13 +137,39 @@ namespace Saturn {
 		static const char* GetCurrentConfigName();
 		static const char* GetCurrentPlatformBinaryName();
 
-	protected:
-		bool OnEvent( RubyEvent& rEvent ) override;
-		bool OnWindowResize( RubyWindowResizeEvent& e );
+	public:
+		//////////////////////////////////////////////////////////////////////////
+		// Events, public
+		template<typename EventT, bool DispatchImmediately = false, typename... Args>
+		void DispatchEvent( Args&&... rrArgs ) 
+		{
+//			static_assert( std::is_convertible<EventT, Event> && EventT::GetStaticCategory() == EC_Ruby );
 
-		void RenderImGui();
+			EventT event( std::forward<Args>( rrArgs )... );
+			if constexpr( DispatchImmediately )
+			{
+				OnCustomEvent( event );
+			}
+			else
+			{
+				// Add To Queue
+			}
+		}
+
+	protected:
+		//////////////////////////////////////////////////////////////////////////
+		// Internal! Called by Ruby, we know that any event that is passed in here is a Window Event
+		// Private
+		bool OnEvent( Event& rEvent ) override;
+
+		//////////////////////////////////////////////////////////////////////////
+		// This is different to OnEvent as this only handles events that were incurred by us and not the Window
+		void OnCustomEvent( Event& rEvent );
 
 	private:
+		void OnWindowResize( RubyWindowResizeEvent& e );
+		
+		void RenderImGui();
 		void InitWindow();
 		void InitGraphics();
 

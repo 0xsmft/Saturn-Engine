@@ -48,12 +48,12 @@ namespace Saturn {
 		m_ActionMap.clear();
 	}
 
-	static std::unordered_map<RubyEventType, ActionBindingTriggerState> s_EventTypeToActionType
+	static std::unordered_map<EventType, ActionBindingTriggerState> s_EventTypeToActionType
 	{
-		{ RubyEventType::KeyPressed,    ActionBindingTriggerState::Pressed  },
-		{ RubyEventType::KeyReleased,   ActionBindingTriggerState::Released },
-		{ RubyEventType::MousePressed,  ActionBindingTriggerState::Pressed  },
-		{ RubyEventType::MouseReleased, ActionBindingTriggerState::Released }
+		{ EventType::KeyPressed,    ActionBindingTriggerState::Pressed  },
+		{ EventType::KeyReleased,   ActionBindingTriggerState::Released },
+		{ EventType::MousePressed,  ActionBindingTriggerState::Pressed  },
+		{ EventType::MouseReleased, ActionBindingTriggerState::Released }
 	};
 
 	void PlayerInputController::UpdateKeyState( const RubyKeyEvent& rEvent )
@@ -64,7 +64,7 @@ namespace Saturn {
 		std::vector<ActionBinding> EventsToFire;
 
 		// Traverse the action map directly.
-		for( auto& [name, bindings] : m_ActionMap )
+		for( const auto& [name, bindings] : m_ActionMap )
 		{
 			for( const auto& rBinding : bindings )
 			{
@@ -93,7 +93,7 @@ namespace Saturn {
 		std::vector<ActionBinding> EventsToFire;
 
 		// Traverse the action map directly.
-		for( auto& [name, bindings] : m_ActionMap )
+		for( const auto& [name, bindings] : m_ActionMap )
 		{
 			for( const auto& rBinding : bindings )
 			{
@@ -120,7 +120,7 @@ namespace Saturn {
 		const auto& bindings = project->GetActionBindings();
 
 		// Check if the binding exists in the project
-		auto it = std::find_if( bindings.begin(), bindings.end(),
+		const auto it = std::find_if( bindings.begin(), bindings.end(),
 			[rBindingName]( const auto& binding )
 			{
 				return binding.Name == rBindingName;
@@ -128,11 +128,11 @@ namespace Saturn {
 
 		if( it != bindings.end() )
 		{
-			auto& rBinding = *( it );
+			const auto& rBindingData = *( it );
 			
-			m_ActionMap[ rBindingName ].push_back( ActionBinding( rBinding ) );
-			m_ActionMap[ rBindingName ].back().State = state;
-			m_ActionMap[ rBindingName ].back().Function = rFunction;
+			m_ActionMap[ rBindingName ].emplace_back( rBindingData, state, rFunction );
+//			m_ActionMap[ rBindingName ].back().State = state;
+//			m_ActionMap[ rBindingName ].back().Function = rFunction;
 		}
 	}
 

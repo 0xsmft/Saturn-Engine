@@ -28,34 +28,17 @@
 
 #pragma once
 
-#include "RubyEventType.h"
+#include "Saturn/Core/Event.h"
 
 namespace Saturn {
 
-	class RubyEvent
+	class RubyWindowResizeEvent : public Event
 	{
-	public:
-		RubyEvent() = default;
-		RubyEvent( RubyEventType newType ) : Type( newType ) {}
-
-		virtual ~RubyEvent() = default;
-
-	public:
-		RubyEventType Type;
-		bool Handled = false;
-	};
-
-#define SAT_RBY_DEFINE_EVENT( Type ) \
-public: \
-static inline RubyEventType GetStaticType() { return Saturn::RubyEventType::Type; }
-
-	class RubyWindowResizeEvent : public RubyEvent
-	{
-		SAT_RBY_DEFINE_EVENT( Resize )
+		SAT_DEFINE_EVENT( Resize, EC_Ruby )
 	public:
 		RubyWindowResizeEvent() = default;
-		RubyWindowResizeEvent( RubyEventType type, uint32_t width, uint32_t height )
-			: RubyEvent( type ), m_Width( width ), m_Height( height )
+		RubyWindowResizeEvent( EventType type, uint32_t width, uint32_t height )
+			: Event( type, EC_Ruby ), m_Width( width ), m_Height( height )
 		{
 		}
 
@@ -72,13 +55,13 @@ static inline RubyEventType GetStaticType() { return Saturn::RubyEventType::Type
 		uint32_t m_Height = 0;
 	};
 
-	class RubyMouseMoveEvent : public RubyEvent
+	class RubyMouseMoveEvent : public Event
 	{
-		SAT_RBY_DEFINE_EVENT( MouseMoved )
+		SAT_DEFINE_EVENT( MouseMoved, EC_Ruby )
 	public:
 		RubyMouseMoveEvent() = default;
-		RubyMouseMoveEvent( RubyEventType type, float x, float y )
-			: RubyEvent( type ), X( x ), Y( y )
+		RubyMouseMoveEvent( EventType type, float x, float y )
+			: Event( type, EC_Ruby ), X( x ), Y( y )
 		{
 		}
 
@@ -91,11 +74,11 @@ static inline RubyEventType GetStaticType() { return Saturn::RubyEventType::Type
 		float X, Y;
 	};
 
-	class RubyMouseEvent : public RubyEvent
+	class RubyMouseEvent : public Event
 	{
 	public:
 		RubyMouseEvent() = default;
-		RubyMouseEvent( RubyEventType type, int ButtonCode ) : RubyEvent( type ), m_ButtonCode( ButtonCode ) {}
+		RubyMouseEvent( EventType type, int ButtonCode ) : Event( type, EC_Ruby ), m_ButtonCode( ButtonCode ) {}
 		~RubyMouseEvent() {}
 
 		int GetButton() const { return m_ButtonCode; }
@@ -104,12 +87,12 @@ static inline RubyEventType GetStaticType() { return Saturn::RubyEventType::Type
 		int m_ButtonCode = 0;
 	};
 
-	class RubyMouseScrollEvent : public RubyEvent
+	class RubyMouseScrollEvent : public Event
 	{
-		SAT_RBY_DEFINE_EVENT( MouseScroll )
+		SAT_DEFINE_EVENT( MouseScroll, EC_Ruby )
 	public:
 		RubyMouseScrollEvent() = default;
-		RubyMouseScrollEvent( RubyEventType type, int x, int y ) : RubyEvent( type ), m_MouseOffsetX( x ), m_MouseOffsetY( y ) {}
+		RubyMouseScrollEvent( EventType type, int x, int y ) : Event( type, EC_Ruby ), m_MouseOffsetX( x ), m_MouseOffsetY( y ) {}
 		~RubyMouseScrollEvent() {}
 
 		int GetOffsetX() const { return m_MouseOffsetX; }
@@ -120,11 +103,11 @@ static inline RubyEventType GetStaticType() { return Saturn::RubyEventType::Type
 		int m_MouseOffsetY = 0;
 	};
 
-	class RubyKeyEvent : public RubyEvent
+	class RubyKeyEvent : public Event
 	{
 	public:
 		RubyKeyEvent() = default;
-		RubyKeyEvent( RubyEventType Type, int scanCode, int modifiers ) : RubyEvent( Type ), m_ScanCode( scanCode ), m_Modifiers( modifiers ) {}
+		RubyKeyEvent( EventType Type, int scanCode, int modifiers ) : Event( Type, EC_Ruby ), m_ScanCode( scanCode ), m_Modifiers( modifiers ) {}
 
 		~RubyKeyEvent() = default;
 
@@ -136,12 +119,12 @@ static inline RubyEventType GetStaticType() { return Saturn::RubyEventType::Type
 		int m_Modifiers = 0;
 	};
 
-	class RubyCharacterEvent : public RubyEvent
+	class RubyCharacterEvent : public Event
 	{
-		SAT_RBY_DEFINE_EVENT( InputCharacter )
+		SAT_DEFINE_EVENT( InputCharacter, EC_Ruby )
 	public:
 		RubyCharacterEvent() = default;
-		RubyCharacterEvent( RubyEventType Type, wchar_t wc ) : RubyEvent( Type ), m_WideCharacter( wc ) {}
+		RubyCharacterEvent( EventType Type, wchar_t wc ) : Event( Type, EC_Ruby ), m_WideCharacter( wc ) {}
 
 		~RubyCharacterEvent() = default;
 
@@ -152,12 +135,12 @@ static inline RubyEventType GetStaticType() { return Saturn::RubyEventType::Type
 		wchar_t m_WideCharacter;
 	};
 
-	class RubyMaximizeEvent : public RubyEvent
+	class RubyMaximizeEvent : public Event
 	{
-		SAT_RBY_DEFINE_EVENT( WindowMaximized )
+		SAT_DEFINE_EVENT( WindowMaximized, EC_Ruby )
 	public:
 		RubyMaximizeEvent() = default;
-		RubyMaximizeEvent( RubyEventType Type, bool state ) : RubyEvent( Type ), m_State( state ) {}
+		RubyMaximizeEvent( EventType Type, bool state ) : Event( Type, EC_Ruby ), m_State( state ) {}
 
 		~RubyMaximizeEvent() = default;
 
@@ -168,12 +151,12 @@ static inline RubyEventType GetStaticType() { return Saturn::RubyEventType::Type
 		bool m_State = false;
 	};
 
-	class RubyFocusEvent : public RubyEvent
+	class RubyFocusEvent : public Event
 	{
-		SAT_RBY_DEFINE_EVENT( WindowFocus )
+		SAT_DEFINE_EVENT( WindowFocus, EC_Ruby )
 	public:
 		RubyFocusEvent() = default;
-		RubyFocusEvent( RubyEventType Type, bool state ) : RubyEvent( Type ), m_State( state ) {}
+		RubyFocusEvent( EventType Type, bool state ) : Event( Type, EC_Ruby ), m_State( state ) {}
 
 		~RubyFocusEvent() = default;
 
@@ -183,12 +166,12 @@ static inline RubyEventType GetStaticType() { return Saturn::RubyEventType::Type
 		bool m_State = false;
 	};
 
-	class RubyMinimizeEvent : public RubyEvent
+	class RubyMinimizeEvent : public Event
 	{
-		SAT_RBY_DEFINE_EVENT( WindowMinimized )
+		SAT_DEFINE_EVENT( WindowMinimized, EC_Ruby )
 	public:
 		RubyMinimizeEvent() = default;
-		RubyMinimizeEvent( RubyEventType Type, bool state ) : RubyEvent( Type ), m_State( state ) {}
+		RubyMinimizeEvent( EventType Type, bool state ) : Event( Type, EC_Ruby ), m_State( state ) {}
 
 		~RubyMinimizeEvent() = default;
 
@@ -203,7 +186,7 @@ static inline RubyEventType GetStaticType() { return Saturn::RubyEventType::Type
 	public:
 		virtual ~RubyEventTarget() = default;
 
-		virtual bool OnEvent( RubyEvent& rEvent ) = 0;
+		virtual bool OnEvent( Event& rEvent ) = 0;
 	};
 
 }

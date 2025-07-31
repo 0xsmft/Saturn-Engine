@@ -223,7 +223,7 @@ namespace Saturn {
 	{
 	}
 
-	void GraphSoundAssetViewer::OnEvent( RubyEvent& rEvent )
+	void GraphSoundAssetViewer::OnEvent( Event& rEvent )
 	{
 	}
 

@@ -52,7 +52,7 @@ namespace Saturn {
 
 		virtual void OnImGuiRender() override;
 		virtual void OnUpdate( Timestep ts ) override;
-		virtual void OnEvent( RubyEvent& rEvent ) override;
+		virtual void OnEvent( Event& rEvent ) override;
 		virtual void OnRuntimeStateChanged( RuntimeState newState, RuntimeState oldState ) override;
 
 #if !defined(SAT_DIST)

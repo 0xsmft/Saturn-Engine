@@ -256,25 +256,32 @@ namespace Saturn {
 		}
 	}
 
-	void Scene::OnEvent( RubyEvent& rEvent )
+	void Scene::OnEvent( Event& rEvent )
 	{
-		if( rEvent.Type == RubyEventType::KeyPressed || rEvent.Type == RubyEventType::KeyReleased )
+		switch( rEvent.Type )
 		{
-			RubyKeyEvent keyEvent = ( RubyKeyEvent& )rEvent;
-
-			for( auto& rController : m_Controllers ) 
+			default: break;
+			case EventType::KeyPressed:
+			case EventType::KeyReleased:
 			{
-				rController->UpdateKeyState( keyEvent );
-			}
-		}
-		else if( rEvent.Type == RubyEventType::MousePressed || rEvent.Type == RubyEventType::MouseReleased )
-		{
-			RubyMouseEvent mouseEvent = ( RubyMouseEvent& ) rEvent;
+				RubyKeyEvent keyEvent = ( RubyKeyEvent& ) rEvent;
 
-			for( auto& rController : m_Controllers )
+				for( auto& rController : m_Controllers )
+				{
+					rController->UpdateKeyState( keyEvent );
+				}
+			} break;
+
+			case EventType::MousePressed:
+			case EventType::MouseReleased:
 			{
-				rController->UpdateMouseState( mouseEvent );
-			}
+				RubyMouseEvent mouseEvent = ( RubyMouseEvent& ) rEvent;
+
+				for( auto& rController : m_Controllers )
+				{
+					rController->UpdateMouseState( mouseEvent );
+				}
+			} break;
 		}
 	}
 

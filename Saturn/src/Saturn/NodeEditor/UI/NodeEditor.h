@@ -64,7 +64,7 @@ namespace Saturn {
 		// NodeEditorBase overrides
 		virtual void OnImGuiRender() override;
 		virtual void OnUpdate( Timestep ts ) override;
-		virtual void OnEvent( RubyEvent& rEvent ) override {}
+		virtual void OnEvent( Event& rEvent ) override {}
 
 		// NodeEditor virtuals
 		virtual void OnTopBarRender() {}

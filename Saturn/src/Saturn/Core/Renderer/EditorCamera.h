@@ -50,7 +50,7 @@ namespace Saturn {
 		void OnUpdate( Timestep ts );
 
 		void Focus( const glm::vec3& focusPoint );
-		void OnEvent( RubyEvent& event );
+		void OnEvent( Event& event );
 
 		CameraMode GetCurrentMode() const { return m_CameraMode; }
 

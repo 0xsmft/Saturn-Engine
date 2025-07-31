@@ -49,7 +49,7 @@ namespace Saturn {
 #endif
 		}
 
-		double GetTicks()
+		double GetTicks() const
 		{
 #if defined(_WIN32)
 			uint64_t ticks;

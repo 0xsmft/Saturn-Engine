@@ -91,10 +91,8 @@ namespace Saturn {
 	{
 		// Setup default width and height
 		const RubyMonitor& rPrimaryMonitor = RubyLibrary::Get().GetPrimaryMonitor();
-		uint32_t width = 0, height = 0;
-
-		width = 3 * rPrimaryMonitor.MonitorSize.x / 4;
-		height = 3 * rPrimaryMonitor.MonitorSize.y / 4;
+		const uint32_t width = 3 * rPrimaryMonitor.MonitorSize.x / 4;
+		const uint32_t height = 3 * rPrimaryMonitor.MonitorSize.y / 4;
 
 		RubyStyle windowStyle = HasFlag( ApplicationFlag_Titlebar ) ? RubyStyle::Default : m_Specification.WindowStyle;
 
@@ -158,9 +156,8 @@ namespace Saturn {
 			// Execute render thread (last frame).
 			RenderThread::Get().WaitAll();
 
-			float time = ( float ) m_Window->GetTime();
-
-			float frametime = time - m_LastFrameTime;
+			const float time = ( float ) m_Window->GetTime();
+			const float frametime = time - m_LastFrameTime;
 
 			m_Timestep = std::min<float>( frametime, 0.0333f );
 
@@ -242,33 +239,30 @@ namespace Saturn {
 	void Application::PopLayer( Layer* pLayer )
 	{
 		// Find the layer in the layer stack.
-		auto it = std::find( m_Layers.begin(), m_Layers.end(), pLayer );
-		if( it != m_Layers.end() )
+		const auto itr = std::find( m_Layers.begin(), m_Layers.end(), pLayer );
+		if( itr != m_Layers.end() )
 		{
-			m_Layers.erase( it );
+			m_Layers.erase( itr );
 			pLayer->OnDetach();
 		}
 	}
 
-	bool Application::OnEvent( RubyEvent& rEvent )
+	bool Application::OnEvent( Event& rEvent )
 	{
 		switch( rEvent.Type )
 		{
-			case RubyEventType::Resize:
+			case EventType::Resize:
 			{
 				OnWindowResize( ( RubyWindowResizeEvent& ) rEvent );
 			} break;
 
-			case RubyEventType::Close:
+			case EventType::Close:
 			{
 				Close();
 			} break;
+
+			default: break;
 		}
-
-		VulkanContext::Get().OnEvent( rEvent );
-
-		if( m_ImGuiLayer )
-			m_ImGuiLayer->OnEvent( rEvent );
 
 		// Pass events to layers, this is the only place in the engine where we actually care if an event is handled or not.
 		// Process Events backwards. 
@@ -284,16 +278,28 @@ namespace Saturn {
 		return true;
 	}
 
-	bool Application::OnWindowResize( RubyWindowResizeEvent& e )
+	void Application::OnWindowResize( RubyWindowResizeEvent& e )
 	{
-		int width = e.GetWidth(), height = e.GetHeight();
+		const int width = e.GetWidth(), height = e.GetHeight();
 
 		if( width == 0 && height == 0 )
-			return false;
+			return;
 
 		VulkanContext::Get().ResizeEvent();
+	}
 
-		return true;
+	void Application::OnCustomEvent( Event& rEvent )
+	{
+		// Pass events to layers, this is the only place in the engine where we actually care if an event is handled or not.
+		// Process Events backwards. 
+		// This is because if we are in a game and we click a button if the first layer gets that event it might shoot in the game however we wanted to click a button not shoot.
+		for( auto itr = m_Layers.end(); itr != m_Layers.begin(); )
+		{
+			( *--itr )->OnEvent( rEvent );
+
+			if( rEvent.Handled )
+				break;
+		}
 	}
 
 	std::filesystem::path Application::GetAppDataFolder() const

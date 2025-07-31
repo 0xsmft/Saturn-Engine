@@ -152,9 +152,9 @@ namespace Saturn {
 		m_PositionDelta *= 0.8f;
 	}
 
-	void SceneFlyCamera::OnEvent( RubyEvent& e )
+	void SceneFlyCamera::OnEvent( Event& e )
 	{
-		if( e.Type == RubyEventType::MouseScroll )
+		if( e.Type == EventType::MouseScroll )
 			OnMouseScroll( ( RubyMouseScrollEvent& ) e );
 	}
 

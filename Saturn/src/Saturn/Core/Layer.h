@@ -38,14 +38,14 @@ namespace Saturn {
 	class Layer
 	{
 	public:
-		Layer();
-		~Layer();
+		Layer() = default;
+		virtual ~Layer() = default;
 		
 		virtual void OnAttach() {}
 		virtual void OnDetach() {}
 		virtual void OnUpdate( Timestep time ) {}
 		virtual void OnImGuiRender() {}
-		virtual void OnEvent( RubyEvent& rEvent ) {}
+		virtual void OnEvent( Event& rEvent ) {}
 	};
 
 	class ImGuiLayer : public Layer
@@ -55,15 +55,17 @@ namespace Saturn {
 		~ImGuiLayer();
 
 		void Begin();
-
 		void End( VkCommandBuffer CommandBuffer );
-
-		virtual void OnAttach( void ) override;
-		virtual void OnDetach( void ) override;
 		virtual void OnImGuiRender( void ) {}
 
-		VkDescriptorPool GetPool() { return m_DescriptorPool; }
-		VkDescriptorSetLayout GetLayout() { return m_DescriptorLayout; }
+	public:
+		// Layer
+		virtual void OnAttach( void ) override;
+		virtual void OnDetach( void ) override;
+
+	public:
+		VkDescriptorPool GetPool() const        { return m_DescriptorPool; }
+		VkDescriptorSetLayout GetLayout() const { return m_DescriptorLayout; }
 
 	private:
 		VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;

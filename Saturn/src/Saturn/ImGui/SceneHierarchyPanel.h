@@ -77,7 +77,7 @@ namespace Saturn {
 		}
 
 		virtual void OnImGuiRender() override;
-		virtual void OnEvent( RubyEvent& rEvent ) {}
+		virtual void OnEvent( Event& rEvent ) {}
 		virtual void OnUpdate( Timestep ts ) {}
 		
 		static const char* GetStaticName() 

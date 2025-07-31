@@ -42,7 +42,7 @@ namespace Saturn {
 		~SceneFlyCamera() = default;
 
 		void OnUpdate( Timestep ts );
-		void OnEvent( RubyEvent& e );
+		void OnEvent( Event& e );
 		inline void SetViewportSize( uint32_t width, uint32_t height ) { m_ViewportWidth = width; m_ViewportHeight = height; }
 
 		const glm::mat4& ViewMatrix() const { return m_ViewMatrix; }

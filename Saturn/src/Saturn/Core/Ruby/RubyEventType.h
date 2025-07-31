@@ -30,28 +30,6 @@
 
 namespace Saturn {
 
-	enum class RubyEventType
-	{
-		Resize,
-		Close,
-		MouseMoved,
-		MousePressed,
-		MouseReleased,
-		MouseEnterWindow,
-		MouseLeaveWindow,
-		MouseScroll,
-		KeyReleased,
-		KeyPressed,
-		KeyHeld, // Dispatches as KeyPressed
-		InputCharacter,
-		WindowMaximized,
-		WindowMinimized,
-		WindowRestored,
-		WindowMoved,
-		WindowFocus,
-		DisplayChanged
-	};
-
 	using KeyCode = int;
 
 	enum RubyKey

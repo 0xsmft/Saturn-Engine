@@ -909,9 +909,9 @@ namespace Saturn {
 		ImGui::End();
 	}
 
-	void ContentBrowserPanel::OnEvent( RubyEvent& rEvent )
+	void ContentBrowserPanel::OnEvent( Event& rEvent )
 	{
-		if( rEvent.Type == RubyEventType::MousePressed )
+		if( rEvent.Type == EventType::MousePressed )
 		{
 			RubyMouseEvent& mouseEvent = ( RubyMouseEvent& ) rEvent;
 

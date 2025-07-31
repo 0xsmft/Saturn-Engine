@@ -28,68 +28,69 @@
 
 #pragma once
 
-#include <functional>
-#include <algorithm>
-#include <vector>
-#include <type_traits>
-
-// This Event class is based from Geno IDE's class, however slightly modified:
-// Courtesy of https://github.com/Geno-IDE/Geno/blob/master/include/Common/Event.h
-
 namespace Saturn {
-	
-	template<typename Instigator, typename FalseFunction>
+
+#define SAT_DEFINE_EVENT( Type, Category ) \
+public: \
+static inline EventType GetStaticType()     { return EventType::Type; } \
+static inline EventCategory GetStaticCategory() { return EventCategory::Category; } \
+	   inline EventCategory GetCategory()       { return EventCategory::Category; }
+
+	enum class EventType
+	{
+		None,
+
+		//////////////////////////////////////////////////////////////////////////
+		// RubyEventType
+
+		Resize,
+		Close,
+		MouseMoved,
+		MousePressed,
+		MouseReleased,
+		MouseEnterWindow,
+		MouseLeaveWindow,
+		MouseScroll,
+		KeyReleased,
+		KeyPressed,
+		KeyHeld, // Dispatches as KeyPressed
+		InputCharacter,
+		WindowMaximized,
+		WindowMinimized,
+		WindowRestored,
+		WindowMoved,
+		WindowFocus,
+		DisplayChanged,
+
+		//////////////////////////////////////////////////////////////////////////
+		// Editor
+
+		HotReload,
+
+		//////////////////////////////////////////////////////////////////////////
+		// Runtime
+
+		SceneTravel,
+	};
+
+	enum EventCategory
+	{
+		EC_None    = 1 << 0,
+		EC_Ruby    = 1 << 1, // Window, mouse, keyboard events
+		EC_Editor  = 1 << 2,
+		EC_Runtime = 1 << 3,
+		EC_Scene   = 1 << 4
+	};
+
 	class Event 
 	{
-	};
-
-	template<typename Instigator, typename... Params>
-	class Event<Instigator, void(Params...)>
-	{
 	public:
-		struct Receiver
-		{
-			std::function<void( Instigator&, Params... )> Function;
-			uint64_t ID;
-		};
+		Event() = default;
+		Event( EventType type, EventCategory eventCategory ) : Type( type ), Category( eventCategory ) {}
+		virtual ~Event() = default;
 
-	public:
-		template<typename F>
-		void operator+=( F&& rrFunctor )
-		{
-			static_assert( std::is_invocable_r_v<void, std::decay_t<F>, Instigator&, Params...>, "Event Receiver must be invocable as void(Instigator&, Params...), you may be missing an argument!" );
-
-			Receiver r;
-			r.Function = std::forward<F>( rrFunctor );
-			r.ID = m_Counter++;
-
-			m_Receivers.emplace_back( std::move( r ) );
-		}
-
-		void operator()( Instigator& rSender, Params... params )
-		{
-			std::vector<Receiver> copy( m_Receivers.begin(), m_Receivers.end() );
-			for( auto& rReceiver : copy )
-			{
-				std::invoke( rReceiver.Function, rSender, params... );
-			}
-
-			while( !copy.empty() )
-			{
-				typename std::vector<Receiver>::iterator itr = std::find_if( m_Receivers.begin(), m_Receivers.end(),
-					[ &copy ]( const Receiver& rCandidate )
-				{
-					return rCandidate.ID == copy.back().ID;
-				} );
-
-				m_Receivers.erase( itr );
-				copy.pop_back();
-			}
-		}
-
-	private:
-		std::vector<Receiver> m_Receivers;
-		uint64_t m_Counter = 0;
+		EventType Type = EventType::None;
+		EventCategory Category = EC_None;
+		bool Handled = false;
 	};
-
 }

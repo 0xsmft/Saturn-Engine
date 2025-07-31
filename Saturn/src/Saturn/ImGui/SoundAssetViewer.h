@@ -43,7 +43,7 @@ namespace Saturn {
 
 		virtual void OnImGuiRender() override;
 		virtual void OnUpdate( Timestep ts ) override {}
-		virtual void OnEvent( RubyEvent& rEvent ) override {}
+		virtual void OnEvent( Event& rEvent ) override {}
 
 	private:
 		Ref<SoundSpecification> m_SoundAsset;

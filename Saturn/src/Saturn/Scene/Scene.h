@@ -195,7 +195,7 @@ namespace Saturn {
 		
 		void OnUpdate( Timestep ts );
 		void OnUpdatePhysics( Timestep ts );
-		void OnEvent( RubyEvent& rEvent );
+		void OnEvent( Event& rEvent );
 
 	public:
 		template<typename T>

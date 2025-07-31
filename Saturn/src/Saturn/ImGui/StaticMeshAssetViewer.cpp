@@ -293,7 +293,7 @@ namespace Saturn {
 			m_StartedRightClickInViewport = false;
 	}
 
-	void StaticMeshAssetViewer::OnEvent( RubyEvent& rEvent )
+	void StaticMeshAssetViewer::OnEvent( Event& rEvent )
 	{
 		if( m_MouseOverViewport && m_AllowCameraEvents )
 			m_Camera.OnEvent( rEvent );

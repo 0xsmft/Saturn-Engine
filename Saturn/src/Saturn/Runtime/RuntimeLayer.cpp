@@ -76,7 +76,7 @@ namespace Saturn {
 
 		Application::Get().GetWindow()->Show();
 
-		m_RuntimeScene->OnRuntimeStart();
+		SAT_CORE_VERIFY( m_RuntimeScene->OnRuntimeStart(), "Initial runtime request failed!" );
 	}
 
 	RuntimeLayer::~RuntimeLayer()
@@ -114,6 +114,52 @@ namespace Saturn {
 		Application::Get().PrimarySceneRenderer().SetCurrentScene( m_RuntimeScene.Get() );
 	}
 
+	void RuntimeLayer::OpenFileInRuntime( AssetID id )
+	{
+		Ref<Scene> temporaryScene = Ref<Scene>::Create();
+		Scene::SetActiveScene( temporaryScene.Get() );
+
+		m_RuntimeScene->OnRuntimeEnd();
+
+		const Ref<Asset> asset = AssetManager::Get().FindAsset( id );
+
+		SceneSerialiser serialiser( temporaryScene );
+		serialiser.Deserialise( asset );
+
+		m_RuntimeScene = temporaryScene;
+
+		m_RuntimeScene->Name = asset->Name;
+		m_RuntimeScene->Path = asset->Path;
+		m_RuntimeScene->ID = asset->ID;
+		m_RuntimeScene->Type = asset->Type;
+		m_RuntimeScene->Flags = asset->Flags;
+
+		Scene::SetActiveScene( m_RuntimeScene.Get() );
+
+		temporaryScene = nullptr;
+
+		Application::Get().PrimarySceneRenderer().SetCurrentScene( m_RuntimeScene.Get() );
+
+		// If we fail to start runtime, terminate it for good.
+		if( !m_RuntimeScene->OnRuntimeStart() )
+		{
+//			CleanupRuntimeWhenFailed( RuntimeState::Running );
+		}
+	}
+
+	void RuntimeLayer::HandleSceneTravel( SceneTravelEvent& rEvent )
+	{
+		AssetID destinationID = rEvent.GetID();
+		Ref<Asset> sceneAsset = AssetManager::Get().FindAsset( destinationID );
+
+		if( !sceneAsset )
+		{
+			SAT_CORE_ERROR( "Failed to travel as {0} is not a valid scene ID", destinationID );
+		}
+
+		OpenFileInRuntime( destinationID );
+	}
+
 	void RuntimeLayer::OnUpdate( Timestep time )
 	{
 		m_RuntimeScene->OnUpdate( time );
@@ -126,18 +172,26 @@ namespace Saturn {
 			OnWindowResize( ( RubyWindowResizeEvent& ) rEvent );
 
 		m_RuntimeScene->OnEvent( rEvent );
+
+		switch( rEvent.Type )
+		{
+			default: break;
+			case EventType::SceneTravel:
+			{
+				HandleSceneTravel( ( SceneTravelEvent& ) rEvent );
+			} break;
+		}
 	}
 
-	bool RuntimeLayer::OnWindowResize( RubyWindowResizeEvent& e )
+	void RuntimeLayer::OnWindowResize( RubyWindowResizeEvent& e )
 	{
-		int width = e.GetWidth(), height = e.GetHeight();
+		const int width = e.GetWidth(), height = e.GetHeight();
 
 		if( width == 0 && height == 0 )
-			return false;
+			return;
 
 		Application::Get().PrimarySceneRenderer().SetViewportSize( ( uint32_t ) width, ( uint32_t ) height );
 		Renderer2D::Get().SetViewportSize( ( uint32_t ) width, ( uint32_t ) height );
-
-		return true;
 	}
+
 }

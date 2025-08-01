@@ -77,6 +77,8 @@
 
 #include <Saturn/Premake/Premake.h>
 
+#include <Saturn/Runtime/RuntimeEvents.h>
+
 #include <ImGuizmo/ImGuizmo.h>
 
 #include <imspinner/imspinner.h>
@@ -255,45 +257,15 @@ namespace Saturn {
 		{
 			if( !m_RuntimeScene )
 			{
-				m_ImGuiWindowManager->OnRuntimeStateChanged( RuntimeState::Starting, RuntimeState::NoState );
-
-				Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
-	
-				m_RuntimeScene = Ref<Scene>::Create();
-				Scene::SetActiveScene( m_RuntimeScene.Get() );
-
-				m_EditorScene->CopyScene( m_RuntimeScene );
-
-				Input::Get().SetCanSetCursorMode( true );
+				PreInitRuntime();
 
 				if( m_RuntimeScene->OnRuntimeStart() ) 
 				{
-					m_LastRuntimeAttemptFailed = false;
-
-					hierarchyPanel->SetContext( m_RuntimeScene );
-
-					Application::Get().PrimarySceneRenderer().SetCurrentScene( m_RuntimeScene.Get() );
-
-					m_EditorCamera.SetActive( false );
-
-					const std::string title = std::format( "{0} (Running) - Saturn", Project::GetActiveConfig().Name );
-					Application::Get().GetWindow()->ChangeTitle( title );
-
-					m_ImGuiWindowManager->OnRuntimeStateChanged( RuntimeState::Running, RuntimeState::Starting );
+					PostInitRuntime();
 				}
 				else
 				{
-					// Runtime was rejected, clean up and restore state
-					m_ImGuiWindowManager->OnRuntimeStateChanged( RuntimeState::NoState, RuntimeState::Starting );
-
-					GActiveScene = m_EditorScene.Get();
-					m_RuntimeScene = nullptr;
-
-					m_RequestRuntime = false;
-					m_LastRuntimeAttemptFailed = true;
-
-					EditorNotification notification{ .Text = "Runtime request blocked. No camera was found after BeginPlay was called!", .Lifetime = 15.0f };
-					PushNotification( notification );
+					CleanupRuntimeWhenFailed();
 				}
 			}
 		}
@@ -301,24 +273,7 @@ namespace Saturn {
 		{
 			if( m_RuntimeScene && m_RuntimeScene->IsRuntimeActive() )
 			{
-				m_ImGuiWindowManager->OnRuntimeStateChanged( RuntimeState::Ending, GActiveScene->GetRuntimeState() );
-
-				Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
-				
-				m_RuntimeScene->OnRuntimeEnd();
-				Scene::SetActiveScene( m_EditorScene.Get() );
-
-				hierarchyPanel->SetContext( m_EditorScene );
-
-				m_SuspendedEditorCamera.SetActive( false );
-				m_RuntimeScene = nullptr;
-
-				Application::Get().PrimarySceneRenderer().SetCurrentScene( m_EditorScene.Get() );
-
-				const std::string title = std::format( "{0} - Saturn", Project::GetActiveConfig().Name );
-				Application::Get().GetWindow()->ChangeTitle( title );
-
-				m_ImGuiWindowManager->OnRuntimeStateChanged( RuntimeState::NoState, RuntimeState::Ending );
+				EndRuntime();
 			}
 		}
 
@@ -465,28 +420,46 @@ namespace Saturn {
 		DrawViewport();
 	}
 
-	void EditorLayer::OnEvent( RubyEvent& rEvent )
+	void EditorLayer::OnEvent( Event& rEvent )
 	{
-		// If the mouse is over the viewport allow for the scroll event to happen
-		// The scroll event does not care if the camera is active or not.
-		if( m_MouseOverViewport )
+		// Cameras and ImGui Windows should only receive Ruby events and/or Editor events
+		if( rEvent.HasCategory( EC_Ruby ) || rEvent.HasCategory( EC_Editor ) )
 		{
-			m_EditorCamera.OnEvent( rEvent );
+			// If the mouse is over the viewport allow for the scroll event to happen
+			// The scroll event does not care if the camera is active or not.
+			if( m_MouseOverViewport )
+			{
+				m_EditorCamera.OnEvent( rEvent );
 		
-			if( m_RequestRuntime )
-				m_SuspendedEditorCamera.OnEvent( rEvent );
+				if( m_RequestRuntime )
+					m_SuspendedEditorCamera.OnEvent( rEvent );
+			}
+
+			if( m_RuntimeScene )
+				m_RuntimeScene->OnEvent( rEvent );
+	
+			m_ImGuiWindowManager->ProcessEvent( rEvent );
 		}
-		
-		m_ImGuiWindowManager->ProcessEvent( rEvent );
 
-		if( rEvent.Type == RubyEventType::KeyPressed ) 
-			OnKeyPressed( (RubyKeyEvent&)rEvent );
+		switch( rEvent.Type )
+		{
+			default: break;
 
-		if( rEvent.Type == RubyEventType::MousePressed )
-			OnMousePressed( ( RubyMouseEvent& ) rEvent );
+			case EventType::KeyPressed:
+			{
+				OnKeyPressed( ( RubyKeyEvent& ) rEvent );
+			} break;
 
-		if( m_RuntimeScene )
-			m_RuntimeScene->OnEvent( rEvent );
+			case EventType::MousePressed:
+			{
+				OnMousePressed( ( RubyMouseEvent& ) rEvent );
+			} break;
+
+			case EventType::SceneTravel:
+			{
+				HandleSceneTravel( ( SceneTravelEvent& ) rEvent );
+			} break;
+		}
 	}
 
 	void EditorLayer::SaveFileAs()
@@ -563,6 +536,46 @@ namespace Saturn {
 		Application::Get().PrimarySceneRenderer().SetCurrentScene( m_EditorScene.Get() );
 	}
 
+	void EditorLayer::OpenFileInRuntime( AssetID id )
+	{
+		Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
+
+		Ref<Scene> newScene = Ref<Scene>::Create();
+		g_ActiveScene = newScene.Get();
+
+		hierarchyPanel->ClearSelection();
+		hierarchyPanel->SetContext( nullptr );
+
+		m_RuntimeScene->OnRuntimeEnd();
+
+		const Ref<Asset> asset = AssetManager::Get().FindAsset( id );
+
+		SceneSerialiser serialiser( newScene );
+		serialiser.Deserialise( asset );
+
+		m_RuntimeScene = newScene;
+
+		m_RuntimeScene->Name = asset->Name;
+		m_RuntimeScene->Path = asset->Path;
+		m_RuntimeScene->ID = asset->ID;
+		m_RuntimeScene->Type = asset->Type;
+		m_RuntimeScene->Flags = asset->Flags;
+
+		g_ActiveScene = m_RuntimeScene.Get();
+
+		hierarchyPanel->SetContext( m_RuntimeScene );
+		newScene = nullptr;
+
+		Application::Get().PrimarySceneRenderer().SetCurrentScene( m_RuntimeScene.Get() );
+
+		// If we fail to start runtime, terminate it for good.
+		if( !m_RuntimeScene->OnRuntimeStart() )
+		{
+			hierarchyPanel->SetContext( m_EditorScene );
+			CleanupRuntimeWhenFailed( RuntimeState::Running );
+		}
+	}
+
 	void EditorLayer::SaveProject()
 	{
 		ProjectSerialiser ps( Project::GetActiveProject() );
@@ -572,12 +585,69 @@ namespace Saturn {
 		ars.Serialise();
 	}
 
-	void EditorLayer::SelectionChanged( Ref<Entity> e )
+	void EditorLayer::PreInitRuntime()
 	{
+		m_ImGuiWindowManager->OnRuntimeStateChanged( RuntimeState::Starting, RuntimeState::NoState );
+
+		m_RuntimeScene = Ref<Scene>::Create();
+		Scene::SetActiveScene( m_RuntimeScene.Get() );
+
+		m_EditorScene->CopyScene( m_RuntimeScene );
+
+		Input::Get().SetCanSetCursorMode( true );
 	}
 
-	void EditorLayer::ViewportSizeCallback( uint32_t Width, uint32_t Height )
+	void EditorLayer::PostInitRuntime()
 	{
+		m_LastRuntimeAttemptFailed = false;
+
+		m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>()->SetContext( m_RuntimeScene );
+
+		Application::Get().PrimarySceneRenderer().SetCurrentScene( m_RuntimeScene.Get() );
+
+		m_EditorCamera.SetActive( false );
+
+		const std::string title = std::format( "{0} (Running) - Saturn", Project::GetActiveConfig().Name );
+		Application::Get().GetWindow()->ChangeTitle( title );
+
+		m_ImGuiWindowManager->OnRuntimeStateChanged( RuntimeState::Running, RuntimeState::Starting );
+	}
+
+	void EditorLayer::EndRuntime()
+	{
+		m_ImGuiWindowManager->OnRuntimeStateChanged( RuntimeState::Ending, g_ActiveScene->GetRuntimeState() );
+
+		Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
+
+		m_RuntimeScene->OnRuntimeEnd();
+		Scene::SetActiveScene( m_EditorScene.Get() );
+
+		hierarchyPanel->SetContext( m_EditorScene );
+
+		m_SuspendedEditorCamera.SetActive( false );
+		m_RuntimeScene = nullptr;
+
+		Application::Get().PrimarySceneRenderer().SetCurrentScene( m_EditorScene.Get() );
+
+		const std::string title = std::format( "{0} - Saturn", Project::GetActiveConfig().Name );
+		Application::Get().GetWindow()->ChangeTitle( title );
+
+		m_ImGuiWindowManager->OnRuntimeStateChanged( RuntimeState::NoState, RuntimeState::Ending );
+	}
+
+	void EditorLayer::CleanupRuntimeWhenFailed( RuntimeState lastState /*=RuntimeState::Starting*/ )
+	{
+		// Runtime was rejected, clean up and restore state
+		m_ImGuiWindowManager->OnRuntimeStateChanged( RuntimeState::NoState, lastState );
+
+		g_ActiveScene = m_EditorScene.Get();
+		m_RuntimeScene = nullptr;
+
+		m_RequestRuntime = false;
+		m_LastRuntimeAttemptFailed = true;
+
+		EditorNotification notification{ .Text = "Runtime request blocked. No camera was found after BeginPlay was called!", .Lifetime = 15.0f };
+		PushNotification( notification );
 	}
 
 	bool EditorLayer::OnKeyPressed( RubyKeyEvent& rEvent )
@@ -684,7 +754,7 @@ namespace Saturn {
 				{
 					if( auto action = m_GlobalUndoRedoGroup->GlobalUndoRecent(); action )
 					{
-						std::string undoName = std::format( "Undo {0}", action->GetName() );
+						const std::string undoName = std::format( "Undo {0}", action->GetName() );
 						EditorNotification notification{ .Text = undoName, .Lifetime = 3.0f };
 						PushNotification( notification );
 					}
@@ -694,7 +764,7 @@ namespace Saturn {
 				{
 					if( auto action = m_GlobalUndoRedoGroup->GlobalRedoRecent(); action )
 					{
-						std::string redoName = std::format( "Redo {0}", action->GetName() );
+						const std::string redoName = std::format( "Redo {0}", action->GetName() );
 						EditorNotification notification{ .Text = redoName, .Lifetime = 3.0f };
 						PushNotification( notification );
 					}
@@ -791,7 +861,7 @@ namespace Saturn {
 
 	bool EditorLayer::OnMousePressed( RubyMouseEvent& rEvent )
 	{
-		if( !m_MouseOverViewport || rEvent.GetButton() != (int)RubyMouseButton::Left )
+		if( m_RuntimeScene || !m_MouseOverViewport || rEvent.GetButton() != (int)RubyMouseButton::Left )
 			return false;
 
 		const auto viewportMouse = ConvertMouseToViewportNDC();
@@ -844,8 +914,20 @@ namespace Saturn {
 		return false;
 	}
 
+	void EditorLayer::HandleSceneTravel( SceneTravelEvent& rEvent )
+	{
+		AssetID destinationID = rEvent.GetID();
+		Ref<Asset> sceneAsset = AssetManager::Get().FindAsset( destinationID );
+		
+		if( !sceneAsset )
+		{
+			SAT_CORE_ERROR( "Failed to travel as {0} is not a valid scene ID", destinationID );
+		}
+
+		OpenFileInRuntime( destinationID );
+	}
+
 	static bool s_OpenAssetFinderPopup = false;
-	static AssetID s_AssetFinderID = 0;
 
 	void EditorLayer::DrawProjectSettingsWindow()
 	{
@@ -1249,8 +1331,7 @@ namespace Saturn {
 			ImGui::Separator();
 			ImGui::PopFont();
 
-			ImGuiTableFlags TableFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollX | ImGuiTableFlags_NoBordersInBody;
-			if( ImGui::BeginTable( "##DebugInfoPrj", 2, TableFlags ) )
+			if( ImGui::BeginTable( "##DebugInfoPrj", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollX | ImGuiTableFlags_NoBordersInBody ) )
 			{
 				ImGui::TableSetupColumn( "Key" );
 				ImGui::TableSetupColumn( "Value" );

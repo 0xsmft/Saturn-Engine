@@ -128,7 +128,7 @@ namespace Saturn {
 
 		while( m_Running )
 		{
-			RubyLibrary::PollEvents();
+			ProcessAllEvents();
 
 			for( auto&& rrFn : m_MainThreadQueue )
 				rrFn();
@@ -244,6 +244,23 @@ namespace Saturn {
 		{
 			m_Layers.erase( itr );
 			pLayer->OnDetach();
+		}
+	}
+
+	void Application::ProcessAllEvents()
+	{
+		// Poll all windows owned by the main thread
+		RubyLibrary::PollEvents();
+
+		std::scoped_lock<std::mutex> lock( m_Mutex );
+
+		// After that, process any events that queued
+		while( m_IncurredEventQueue.size() )
+		{
+			auto& rEvent = m_IncurredEventQueue.front();
+			OnCustomEvent( *rEvent.get() );
+
+			m_IncurredEventQueue.pop();
 		}
 	}
 

@@ -345,7 +345,6 @@ namespace Saturn {
 		DirectionalLightComponent, SkylightComponent, PointLightComponent,
 		CameraComponent,
 		BoxColliderComponent, SphereColliderComponent, CapsuleColliderComponent, MeshColliderComponent, RigidbodyComponent,
-		DScriptComponent, 
 		AudioPlayerComponent, AudioListenerComponent,
 		BillboardComponent,
 		NavigationMeshSpecificationComponent>;
@@ -357,7 +356,6 @@ namespace Saturn {
 		DirectionalLightComponent, SkylightComponent, PointLightComponent,
 		CameraComponent,
 		BoxColliderComponent, SphereColliderComponent, CapsuleColliderComponent, MeshColliderComponent, RigidbodyComponent,
-		DScriptComponent,
 		AudioPlayerComponent, AudioListenerComponent,
 		BillboardComponent,
 		NavigationMeshSpecificationComponent>;

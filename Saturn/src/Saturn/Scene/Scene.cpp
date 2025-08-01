@@ -297,108 +297,13 @@ namespace Saturn {
 
 		rSceneRenderer.SetCamera( m_RendererCamera );
 
+		//////////////////////////////////////////////////////////////////////////
+
 		// Lights
-		{
-			m_Lights = Lights();
+		RtSetupLights();
 
-			// Directional Lights
-			{
-				const auto lights = m_Registry.group<DirectionalLightComponent>( entt::get<TransformComponent> );
-				uint32_t lightCount = 0;
-				for( const auto& e : lights )
-				{
-					const auto [transformComponent, lightComponent] = lights.get<TransformComponent, DirectionalLightComponent>( e );
-
-					const glm::vec3 direction = -glm::normalize( glm::mat3( transformComponent.GetTransform() ) * glm::vec3( 1.0f ) );
-
-					m_Lights.DirectionalLights[ lightCount++ ] = { direction, lightComponent.Radiance, lightComponent.Intensity };
-				}
-			}
-
-			// Point lights
-			{
-				const auto points = m_Registry.group<PointLightComponent>( entt::get<TransformComponent> );
-				if( points.size() )
-				{
-					const Ref<Texture2D> pointLightBillboardTex = EditorIcons::GetIcon( "Billboard_PointLight" );
-
-					m_Lights.PointLights.reserve( points.size() );
-
-					uint32_t plIndex = 0;
-					for( const auto& e : points )
-					{
-						const auto [transformComponent, lightComponent] = points.get<TransformComponent, PointLightComponent>( e );
-
-						PointLight pl = {
-							.Position = transformComponent.Position,
-							.Radiance = lightComponent.Radiance,
-							.Multiplier = lightComponent.Multiplier,
-							.LightSize = lightComponent.LightSize,
-							.Radius = lightComponent.Radius,
-							.MinRadius = lightComponent.MinRadius,
-							.Falloff = lightComponent.Falloff };
-
-						m_Lights.PointLights.push_back( pl );
-
-						Renderer2D::Get().SubmitBillboardTextured( pl.Position, glm::vec4( 1.0f ), pointLightBillboardTex, glm::vec2( 1.5f ) );
-
-						plIndex++;
-					}
-				}
-			}
-		}
-
-		// Audio Billboards
-		{
-			const auto players = m_Registry.group<AudioPlayerComponent>( entt::get<TransformComponent> );
-			if( players.size() )
-			{
-				const Ref<Texture2D> audio = EditorIcons::GetIcon( "Billboard_Audio" );
-				const Ref<Texture2D> audioMuted = EditorIcons::GetIcon( "Billboard_AudioMuted" );
-				const Ref<Texture2D> audioLooped = EditorIcons::GetIcon( "Billboard_AudioLooping" );
-
-				for( const auto& e : players )
-				{
-					const auto [transformComponent, playerComponent] = players.get<TransformComponent, AudioPlayerComponent>( e );
-
-					Ref<Texture2D> submissionTexture = audio;
-
-					if( playerComponent.Loop )
-						submissionTexture = audioLooped;
-					else if( playerComponent.Mute )
-						submissionTexture = audioMuted;
-
-					Renderer2D::Get().SubmitBillboardTextured(
-						transformComponent.Position,
-						glm::vec4( 1.0f ),
-						submissionTexture, glm::vec2( 1.0f ) );
-				}
-			}
-
-			const auto listeners = m_Registry.group<AudioListenerComponent>( entt::get<TransformComponent> );
-			if( listeners.size() )
-			{
-				const Ref<Texture2D> listenTexture = EditorIcons::GetIcon( "Billboard_AudioListen" );
-
-				for( const auto& e : listeners )
-				{
-					const auto [transformComponent, comp] = listeners.get<TransformComponent, AudioListenerComponent>( e );
-
-					const auto pos = glm::vec3( transformComponent.Position.x, transformComponent.Position.y + 2.5f, transformComponent.Position.z );
-
-					Renderer2D::Get().SubmitBillboardTextured(
-						pos,
-						glm::vec4( 1.0f ),
-						listenTexture, glm::vec2( 1.0f ) );
-
-					// Use billboard pos as starting pos
-					const auto start = pos;
-					const auto end = start + glm::normalize( comp.Direction ) * 2.0f;
-
-					Renderer2D::Get().SubmitLine( start, end, glm::vec4( 1.0f ) );
-				}
-			}
-		}
+		// Renderer2D 
+		RtBuildRenderer2DCommands();
 
 #if !defined(SAT_DIST)
 		// Selected Meshes and Physics Colliders
@@ -437,25 +342,7 @@ namespace Saturn {
 		}
 #endif
 
-		// Static meshes
-		{
-			const auto entities = GetAllEntitiesWith<StaticMeshComponent>();
-			for( const auto& entity : entities )
-			{
-				const auto& meshComponent = entity->GetComponent<StaticMeshComponent>();
-				const auto transform = GetTransformRelativeToParent( entity );
-
-				if( meshComponent.Mesh )
-				{
-					Ref<MaterialRegistry> targetMaterialRegistry = meshComponent.Mesh->GetMaterialRegistry();
-			
-					if( meshComponent.MaterialRegistry && meshComponent.MaterialRegistry->HasAnyOverrides() )
-						targetMaterialRegistry = meshComponent.MaterialRegistry;
-
-					rSceneRenderer.SubmitStaticMesh( entity, meshComponent.Mesh, targetMaterialRegistry, transform );
-				}
-			}
-		}
+		RtBuildSceneRendererCommands( rSceneRenderer );
 	}
 
 	void Scene::OnRenderRuntime( Timestep ts, SceneRenderer& rSceneRenderer )
@@ -487,39 +374,52 @@ namespace Saturn {
 		}
 		else
 		{
-			// TODO:
+			// TODO: Try to find a new camera, or create one
 		}
 
 		rSceneRenderer.SetCamera( m_RendererCamera );
 		Renderer2D::Get().SetCamera( m_RendererCamera );
 
+		//////////////////////////////////////////////////////////////////////////
+
 		// Lights
+		RtSetupLights();
+
+		// Scene Renderer
+		RtBuildSceneRendererCommands( rSceneRenderer );
+	}
+
+	void Scene::RtSetupLights()
+	{
+		m_Lights = Lights();
+
+		// Directional Lights
 		{
-			m_Lights = Lights();
-
-			// Directional Lights
+			const auto lights = m_Registry.group<DirectionalLightComponent>( entt::get<TransformComponent> );
+			uint32_t lightCount = 0;
+			for( const auto& e : lights )
 			{
-				auto lights = m_Registry.group<DirectionalLightComponent>( entt::get<TransformComponent> );
-				uint32_t lightCount = 0;
-				for( const auto& e : lights )
-				{
-					auto [transformComponent, lightComponent] = lights.get<TransformComponent, DirectionalLightComponent>( e );
+				const auto [transformComponent, lightComponent] = lights.get<TransformComponent, DirectionalLightComponent>( e );
 
-					glm::vec3 direction = -glm::normalize( glm::mat3( transformComponent.GetTransform() ) * glm::vec3( 1.0f ) );
+				const glm::vec3 direction = -glm::normalize( glm::mat3( transformComponent.GetTransform() ) * glm::vec3( 1.0f ) );
 
-					m_Lights.DirectionalLights[ lightCount++ ] = { direction, lightComponent.Radiance, lightComponent.Intensity };
-				}
+				m_Lights.DirectionalLights[ lightCount++ ] = { direction, lightComponent.Radiance, lightComponent.Intensity };
 			}
+		}
 
-			// Point lights
+		// Point lights
+		{
+			const auto points = m_Registry.group<PointLightComponent>( entt::get<TransformComponent> );
+			if( points.size() )
 			{
-				auto points = m_Registry.group<PointLightComponent>( entt::get<TransformComponent> );
+				const Ref<Texture2D> pointLightBillboardTex = EditorIcons::GetIcon( "Billboard_PointLight" );
+
+				m_Lights.PointLights.reserve( points.size() );
 
 				uint32_t plIndex = 0;
-
 				for( const auto& e : points )
 				{
-					auto [transformComponent, lightComponent] = points.get<TransformComponent, PointLightComponent>( e );
+					const auto [transformComponent, lightComponent] = points.get<TransformComponent, PointLightComponent>( e );
 
 					PointLight pl = {
 						.Position = transformComponent.Position,
@@ -532,28 +432,84 @@ namespace Saturn {
 
 					m_Lights.PointLights.push_back( pl );
 
+					Renderer2D::Get().SubmitBillboardTextured( pl.Position, glm::vec4( 1.0f ), pointLightBillboardTex, glm::vec2( 1.5f ) );
+
 					plIndex++;
 				}
 			}
 		}
+	}
 
-		// Static meshes
+	void Scene::RtBuildRenderer2DCommands()
+	{
+		// Audio Billboards
+		const auto players = m_Registry.group<AudioPlayerComponent>( entt::get<TransformComponent> );
+		if( players.size() )
 		{
-			auto entities = GetAllEntitiesWith<StaticMeshComponent>();
+			const Ref<Texture2D> audio = EditorIcons::GetIcon( "Billboard_Audio" );
+			const Ref<Texture2D> audioMuted = EditorIcons::GetIcon( "Billboard_AudioMuted" );
+			const Ref<Texture2D> audioLooped = EditorIcons::GetIcon( "Billboard_AudioLooping" );
 
-			for( auto& entity : entities )
+			for( const auto& e : players )
 			{
-				auto& meshComponent = entity->GetComponent<StaticMeshComponent>();
+				const auto [transformComponent, playerComponent] = players.get<TransformComponent, AudioPlayerComponent>( e );
 
-				auto transform = GetTransformRelativeToParent( entity );
+				Ref<Texture2D> submissionTexture = audio;
 
+				if( playerComponent.Loop )
+					submissionTexture = audioLooped;
+				else if( playerComponent.Mute )
+					submissionTexture = audioMuted;
+
+				Renderer2D::Get().SubmitBillboardTextured(
+					transformComponent.Position,
+					glm::vec4( 1.0f ),
+					submissionTexture, glm::vec2( 1.0f ) );
+			}
+		}
+
+		// Direction for Audio listeners
+		const auto listeners = m_Registry.group<AudioListenerComponent>( entt::get<TransformComponent> );
+		if( listeners.size() )
+		{
+			const Ref<Texture2D> listenTexture = EditorIcons::GetIcon( "Billboard_AudioListen" );
+
+			for( const auto& e : listeners )
+			{
+				const auto [transformComponent, comp] = listeners.get<TransformComponent, AudioListenerComponent>( e );
+
+				const auto pos = glm::vec3( transformComponent.Position.x, transformComponent.Position.y + 2.5f, transformComponent.Position.z );
+
+				Renderer2D::Get().SubmitBillboardTextured(
+					pos,
+					glm::vec4( 1.0f ),
+					listenTexture, glm::vec2( 1.0f ) );
+
+				// Use billboard pos as starting pos
+				const auto start = pos;
+				const auto end = start + glm::normalize( comp.Direction ) * 2.0f;
+
+				Renderer2D::Get().SubmitLine( start, end, glm::vec4( 1.0f ) );
+			}
+		}
+	}
+
+	void Scene::RtBuildSceneRendererCommands( SceneRenderer& rSceneRenderer )
+	{
+		const auto entities = GetAllEntitiesWith<StaticMeshComponent>();
+		for( const auto& entity : entities )
+		{
+			const auto& meshComponent = entity->GetComponent<StaticMeshComponent>();
+			const auto transform = GetTransformRelativeToParent( entity );
+
+			if( meshComponent.Mesh )
+			{
 				Ref<MaterialRegistry> targetMaterialRegistry = meshComponent.Mesh->GetMaterialRegistry();
 
-				if( meshComponent.MaterialRegistry->HasAnyOverrides() )
+				if( meshComponent.MaterialRegistry && meshComponent.MaterialRegistry->HasAnyOverrides() )
 					targetMaterialRegistry = meshComponent.MaterialRegistry;
 
-				if( meshComponent.Mesh )
-					rSceneRenderer.SubmitStaticMesh( entity, meshComponent.Mesh, targetMaterialRegistry, transform );
+				rSceneRenderer.SubmitStaticMesh( entity, meshComponent.Mesh, targetMaterialRegistry, transform );
 			}
 		}
 	}
@@ -836,6 +792,12 @@ namespace Saturn {
 		CopyComponent( AllComponents{}, NewScene->m_Registry, m_Registry, EntityMap );
 
 		NewScene->PostDeserialise();
+	}
+
+	void Scene::TravelToScene( AssetID newSceneID )
+	{
+		// There isn't much we can do, we must let the parent layer handle a scene travel.
+		Application::Get().DispatchEvent<SceneTravelEvent>( newSceneID );
 	}
 
 	bool Scene::OnRuntimeStart()
@@ -1166,10 +1128,8 @@ namespace Saturn {
 
 	Ref<Entity> Scene::HotReloadReplaceOldEntity( Ref<Entity> source )
 	{
-		auto& rScriptComponent = source->GetComponent<DScriptComponent>();
-
 		// Create new entity
-		Ref<Entity> entity = (Entity*)ClassMetadataHandler::Get().CreateClassObject( rScriptComponent.ClassName );
+		Ref<Entity> entity = (Entity*)ClassMetadataHandler::Get().CreateClassObject( source->GetClass()->GetHash() );
 
 		entity->SetName( source->GetName() );
 		entity->GetComponent<IdComponent>().ID = source->GetUUID();

@@ -39,6 +39,7 @@
 #include "SingletonStorage.h"
 
 #include <vector>
+#include <queue>
 #include <functional>
 #include <thread>
 #include <mutex>
@@ -145,14 +146,18 @@ namespace Saturn {
 		{
 //			static_assert( std::is_convertible<EventT, Event> && EventT::GetStaticCategory() == EC_Ruby );
 
-			EventT event( std::forward<Args>( rrArgs )... );
 			if constexpr( DispatchImmediately )
 			{
+				EventT event( std::forward<Args>( rrArgs )... );
 				OnCustomEvent( event );
 			}
 			else
 			{
 				// Add To Queue
+				std::scoped_lock<std::mutex> lock( m_Mutex );
+
+				std::shared_ptr event = std::make_shared<EventT>( std::forward<Args>( rrArgs )... );
+				m_IncurredEventQueue.push( event );
 			}
 		}
 
@@ -167,6 +172,7 @@ namespace Saturn {
 		void OnCustomEvent( Event& rEvent );
 
 	private:
+		void ProcessAllEvents();
 		void OnWindowResize( RubyWindowResizeEvent& e );
 		
 		void RenderImGui();
@@ -174,6 +180,8 @@ namespace Saturn {
 		void InitGraphics();
 
 	private:
+		std::queue<std::shared_ptr<Event>> m_IncurredEventQueue;
+
 		// Concurrency (threading)
 		std::mutex m_Mutex;
 		std::condition_variable m_BlockCV;

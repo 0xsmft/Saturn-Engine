@@ -193,6 +193,7 @@ namespace Saturn {
 		Ref<Entity> DuplicateEntity( const Ref<Entity> entity, const Ref<Entity> parent = nullptr );
 		void DeleteEntity( Ref<Entity> entity, bool deleteChildren = true, UUID orphanParentID = 0 );
 		
+		void TravelToScene( AssetID newSceneID );
 		void OnUpdate( Timestep ts );
 		void OnUpdatePhysics( Timestep ts );
 		void OnEvent( Event& rEvent );
@@ -404,6 +405,11 @@ namespace Saturn {
 
 		void OnNavMeshBuildCompAdded( entt::registry& reg, entt::entity entity );
 		void OnNavMeshBuildCompRemoved( entt::registry& reg, entt::entity entity );
+
+	private:
+		void RtSetupLights();
+		void RtBuildRenderer2DCommands();
+		void RtBuildSceneRendererCommands( SceneRenderer& rSceneRenderer );
 
 	private:
 		std::map<entt::entity, Ref<Entity>> m_EntityIDMap;

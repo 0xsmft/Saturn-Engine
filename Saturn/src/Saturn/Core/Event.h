@@ -77,9 +77,10 @@ static inline EventCategory GetStaticCategory() { return EventCategory::Category
 	{
 		EC_None    = 1 << 0,
 		EC_Ruby    = 1 << 1, // Window, mouse, keyboard events
-		EC_Editor  = 1 << 2,
-		EC_Runtime = 1 << 3,
-		EC_Scene   = 1 << 4
+		EC_Editor  = 1 << 2, // Hot Reload, On Runtime Start etc
+		EC_Runtime = 1 << 3, // Scene Travel, events that fire during runtime
+		EC_Scene   = 1 << 4, // Events to do with Scenes, Scene unloaded
+		EC_Auxiliary = 1 << 5
 	};
 
 	class Event 
@@ -88,6 +89,11 @@ static inline EventCategory GetStaticCategory() { return EventCategory::Category
 		Event() = default;
 		Event( EventType type, EventCategory eventCategory ) : Type( type ), Category( eventCategory ) {}
 		virtual ~Event() = default;
+
+		[[nodiscard]] inline bool HasCategory( EventCategory ec ) const
+		{
+			return Category & ec;
+		}
 
 		EventType Type = EventType::None;
 		EventCategory Category = EC_None;

@@ -28,39 +28,24 @@
 
 #pragma once
 
-#include "Saturn/Core/Layer.h"
-#include "Saturn/Scene/Scene.h"
-
-#include "Saturn/Physics/PhysicsFoundation.h"
-#include "Saturn/Asset/AssetManager.h"
-
-#include "RuntimeEvents.h"
+#include "Saturn/Core/Event.h"
 
 namespace Saturn {
 
-	class GameModule;
-
-	class RuntimeLayer : public Layer
+	class SceneTravelEvent : public Event
 	{
+		SAT_DEFINE_EVENT( SceneTravel, EC_Scene );
 	public:
-		RuntimeLayer();
-		~RuntimeLayer();
+		SceneTravelEvent( unsigned long long id )
+			: Event( EventType::SceneTravel, EC_Scene ), m_NewSceneID( id )
+		{
+		}
 
-		void OnUpdate( Timestep time ) override;
-		void OnEvent( Event& rEvent ) override;
+		virtual ~SceneTravelEvent() = default;
 
-	private:
-		void OnWindowResize( RubyWindowResizeEvent& e );
-		void HandleSceneTravel( SceneTravelEvent& rEvent );
-
-		void OpenFile( AssetID id );
-		void OpenFileInRuntime( AssetID id );
+		[[nodiscard]] inline unsigned long long GetID() const { return m_NewSceneID; }
 
 	private:
-		GameModule* m_GameModule = nullptr;
-		Ref<Scene> m_RuntimeScene;
-
-		PhysicsFoundation m_PhysicsFoundation;
-		AssetManager m_AssetManager;
+		unsigned long long m_NewSceneID = 0;
 	};
 }

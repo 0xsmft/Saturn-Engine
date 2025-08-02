@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Base.h"
+#include "VulkanError.h"
 #include "Saturn/Core/App.h"
 #include "Saturn/Core/Renderer/EditorCamera.h"
 #include "Shader.h"
@@ -118,8 +118,6 @@ namespace Saturn {
 
 		VkSampleCountFlagBits GetMaxUsableMSAASamples();
 
-		void OnEvent( RubyEvent& e );
-
 		VkImageView GetDepthImageView() { return m_DepthImage->GetImageView(); }
 		VkImage GetDepthImage() { return m_DepthImage->GetImage(); }
 
@@ -136,6 +134,7 @@ namespace Saturn {
 
 		bool CheckValidationLayerSupport();
 
+	private:
 		VkInstance m_Instance = nullptr;
 		VkSurfaceKHR m_Surface = nullptr;
 		VkPhysicalDevice m_PhysicalDevice = nullptr;

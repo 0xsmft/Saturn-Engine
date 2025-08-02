@@ -28,7 +28,7 @@
 
 #pragma once
 
-#include "Base.h"
+#include "VulkanError.h"
 
 #include "VulkanAllocator.h"
 

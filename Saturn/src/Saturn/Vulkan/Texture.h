@@ -28,9 +28,9 @@
 
 #pragma once
 
-#include "Base.h"
+#include "VulkanError.h"
 #include "Image2D.h"
-#include "Saturn/Core/Memory/Buffer.h"
+#include "Saturn/Core/Buffer.h"
 
 #include <filesystem>
 

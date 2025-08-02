@@ -393,7 +393,7 @@ namespace Saturn {
 			}
 		}
 #endif
-		auto Itr = m_AliveSounds.find( UniquePlayerID );
+		const auto Itr = m_AliveSounds.find( UniquePlayerID );
 
 		if( Itr != m_AliveSounds.end() ) 
 		{

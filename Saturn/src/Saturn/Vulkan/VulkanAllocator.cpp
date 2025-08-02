@@ -28,7 +28,7 @@
 
 #include "sppch.h"
 #include "VulkanAllocator.h"
-#include "Base.h"
+#include "VulkanError.h"
 
 #include "VulkanContext.h"
 

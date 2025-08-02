@@ -104,12 +104,12 @@ namespace Saturn {
 
 			//////////////////////////////////////////////////////////////////////////
 
-			// Call the init function.
+			// Find the init function.
 			InitModuleFn initModFn = ( InitModuleFn ) m_ModuleHandle->m_Library.GetSymbol( "InitializeModule" );
 
-			if( initModFn )
-				( initModFn ) ( Project::GetActiveProject().Get(), tracy::GetProfilerDataPtr() );
+			SAT_CORE_VERIFY( initModFn, "Failed to find \"InitializeModule\" function in Game Module!" );
 
+			( initModFn ) ( Project::GetActiveProject().Get(), tracy::GetProfilerDataPtr() );
 		}
 		else
 			SAT_CORE_WARN( "Timestamp file does not exists! Please rebuild the game in your IDE." );

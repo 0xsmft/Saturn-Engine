@@ -196,13 +196,16 @@ namespace Saturn {
 
 		ApplicationSpecification m_Specification;
 		
-		// TODO: Change all of these to refs, I really don't like this.
 		ImGuiLayer* m_ImGuiLayer = nullptr;
+
+		// TODO: This is not great at all, we ideally want the parent layer to own the Vulkan Context and not the main Application class
 		VulkanContext* m_VulkanContext = nullptr;
 
 	protected:
+		// TODO: This is not great at all, we ideally want the parent layer to own the SceneRenderer and not the main Application class
 		SceneRenderer* m_SceneRenderer = nullptr;
 		RubyWindow* m_Window = nullptr;
+
 	private:
 		bool m_Running = true;
 

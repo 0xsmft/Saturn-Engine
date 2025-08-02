@@ -41,10 +41,10 @@
 
 #if defined(SAT_DEBUG) || defined(SAT_RELEASE)
 #define SAT_BREAK_DEBUG() Saturn::Core::BreakDebug()
-#define SAT_SHOW_ERROR_DIALOG( title, text ) Saturn::Core::ShowErrorDialogBox( title, text, true )
+#define SAT_SHOW_ERROR_DIALOG( title, text ) Saturn::Core::ShowErrorDialogBoxAndTerminate( title, text, true )
 #else
 #define SAT_BREAK_DEBUG()
-#define SAT_SHOW_ERROR_DIALOG( title, text ) Saturn::Core::ShowErrorDialogBox( title, text, true )
+#define SAT_SHOW_ERROR_DIALOG( title, text ) Saturn::Core::ShowErrorDialogBoxAndTerminate( title, text, true )
 #endif
 
 #define SAT_VERIFY_NO_MSG(cond) { if(!(cond)) { SAT_CORE_ERROR("Verify Failed: {0}, Line {1}, File {2}", #cond, __LINE__, __FILE__); SAT_SHOW_ERROR_DIALOG( "Verify Failed!", "No Message!" ); SAT_BREAK_DEBUG(); } }

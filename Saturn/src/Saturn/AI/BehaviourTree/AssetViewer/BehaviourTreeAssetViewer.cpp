@@ -137,7 +137,7 @@ namespace Saturn {
 		m_NodeEditor->SetRuntime( m_Runtime );
 
 #if !defined(SAT_DIST)
-		// Discover all classes that are based from BehaviourTreeBaseTask for our context menu
+		// Discover all classes that are based from BehaviourTreeBaseTask for our context menu.
 		const auto map = ClassMetadataHandler::Get().GetAllClassesBasedFrom<BehaviourTreeBaseTask>();
 		for( auto* pClass : map )
 		{

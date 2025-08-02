@@ -141,7 +141,7 @@ namespace Saturn {
 		template<typename Func>
 		MemoryAssetDependencyNotifier( Func&& rrFunc ) 
 #if !defined(SAT_DIST)
-			: CallbackFunction( std::forward<Func>( rrFunc ) ) {}
+			: m_CallbackFunction( std::forward<Func>( rrFunc ) ) {}
 #else
 		{ }
 #endif
@@ -157,7 +157,7 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 			UnregisterAssetDependency( ID );
 
-			if( CallbackFunction ) ( ID, rOther );
+			if( m_CallbackFunction ) ( ID, rOther );
 
 			ID = rOther;
 
@@ -174,13 +174,13 @@ namespace Saturn {
 		void OnUpdate( Saturn::AssetID newID )
 		{
 			UnregisterAssetDependency( ID );
-			if( CallbackFunction ) ( ID, newID );
+			if( m_CallbackFunction ) ( ID, newID );
 			ID = newID;
 			RegisterAssetDependency( ID );
 		}
 	private:
 		//                          New       Old
-		std::function<void( Saturn::AssetID, Saturn::AssetID )> CallbackFunction;
+		std::function<void( Saturn::AssetID, Saturn::AssetID )> m_CallbackFunction;
 #endif
 	};
 

@@ -29,7 +29,7 @@
 #pragma once
 
 #include "Saturn/Core/Base.h"
-#include "Saturn/Core/Memory/Buffer.h"
+#include "Saturn/Core/Buffer.h"
 
 #include <vulkan.h>
 

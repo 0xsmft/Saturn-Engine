@@ -31,7 +31,6 @@
 #include "Saturn/Core/Log.h"
 
 #include <vulkan.h>
-#include <iostream>
 #include <string>
 
 #define VK_CHECK( x ) _VkCheckResult( x )
@@ -97,8 +96,6 @@ inline std::string_view VulkanResultToStr( VkResult Result )
 		default:
 			return "VK_ERROR_UNKNOWN";
 	}
-	
-	return "VK_ERROR_UNKNOWN";
 }
 
 inline void _VkCheckResult( VkResult Result )
@@ -108,6 +105,7 @@ inline void _VkCheckResult( VkResult Result )
 		const auto ErrorStr = VulkanResultToStr( Result );
 		SAT_CORE_INFO( "[Vulkan Error] {0}", ErrorStr );
 
+		// If we are on a development config, break debug else, verify.
 #if defined(SAT_DEBUG) || defined(SAT_RELEASE)
 
 #if defined( _WIN32 )

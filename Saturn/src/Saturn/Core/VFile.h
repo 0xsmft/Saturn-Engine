@@ -29,9 +29,6 @@
 #pragma once
 
 #include "VDirectory.h"
-
-#include "Memory/Buffer.h"
-
 #include "Saturn/Serialisation/RawSerialisation.h"
 
 #include <string>

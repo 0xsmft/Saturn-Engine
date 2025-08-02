@@ -67,11 +67,11 @@ namespace Saturn {
 		StartupInfo.dwFlags = STARTF_USESTDHANDLES;
 
 		PROCESS_INFORMATION ProcessInfo;
-		bool result = CreateProcessW( 
+		bool result = ::CreateProcessW( 
 			nullptr, m_CommandLine.data(), nullptr, nullptr, FALSE, 0, nullptr, 
 			rWorkingDir.empty() ? nullptr : rWorkingDir.data(), &StartupInfo, &ProcessInfo );
 
-		CloseHandle( ProcessInfo.hThread );
+		::CloseHandle( ProcessInfo.hThread );
 		m_Handle = ProcessInfo.hProcess;
 #endif
 	}
@@ -81,7 +81,7 @@ namespace Saturn {
 #if defined( SAT_PLATFORM_WINDOWS )
 		SECURITY_ATTRIBUTES securityAttributes{ .nLength = sizeof( SECURITY_ATTRIBUTES ), .lpSecurityDescriptor = nullptr, .bInheritHandle = TRUE };
 
-		if( CreatePipe( &m_ReadHandle, &m_WriteHandle, &securityAttributes, 0 ) ) 
+		if( ::CreatePipe( &m_ReadHandle, &m_WriteHandle, &securityAttributes, 0 ) ) 
 		{
 			STARTUPINFOW StartupInfo = {};
 			StartupInfo.cb = sizeof( StartupInfo );
@@ -91,11 +91,11 @@ namespace Saturn {
 			StartupInfo.hStdOutput = m_WriteHandle;
 
 			PROCESS_INFORMATION ProcessInfo;
-			bool result = CreateProcessW(
+			bool result = ::CreateProcessW(
 				nullptr, m_CommandLine.data(), nullptr, nullptr, TRUE, 0, nullptr,
 				rWorkingDir.empty() ? nullptr : rWorkingDir.data(), &StartupInfo, &ProcessInfo );
 
-			CloseHandle( ProcessInfo.hThread );
+			::CloseHandle( ProcessInfo.hThread );
 			m_Handle = ProcessInfo.hProcess;
 		}
 #endif
@@ -107,9 +107,9 @@ namespace Saturn {
 		if( m_Handle ) 
 		{
 			if( m_ReadHandle )
-				CloseHandle( m_ReadHandle );
+				::CloseHandle( m_ReadHandle );
 
-			TerminateProcess( m_Handle, 0 );
+			::TerminateProcess( m_Handle, 0 );
 
 			m_Handle = nullptr;
 		}
@@ -122,16 +122,16 @@ namespace Saturn {
 		bool Result;
 		DWORD ExitCode;
 
-		while( Result = GetExitCodeProcess( m_Handle, &ExitCode ) && ExitCode == STATUS_PENDING )
+		while( Result = ::GetExitCodeProcess( m_Handle, &ExitCode ) && ExitCode == STATUS_PENDING )
 		{
-			Sleep( 1 );
+			::Sleep( 1 );
 		}
 
 		// Process exited somehow... cleanup.
-		CloseHandle( m_Handle );
+		::CloseHandle( m_Handle );
 
 		if( m_ReadHandle )
-			CloseHandle( m_ReadHandle );
+			::CloseHandle( m_ReadHandle );
 
 		m_Handle = nullptr;
 		m_ReadHandle = nullptr;
@@ -155,19 +155,19 @@ namespace Saturn {
 		std::wstring Out;
 
 		DWORD availableBytes;
-		if( PeekNamedPipe( m_ReadHandle, nullptr, 0, nullptr, &availableBytes, nullptr ) && availableBytes )
+		if( ::PeekNamedPipe( m_ReadHandle, nullptr, 0, nullptr, &availableBytes, nullptr ) && availableBytes )
 		{
 			std::string TemporaryBuffer;
 			
 			Out.resize( availableBytes );
 			TemporaryBuffer.resize( availableBytes );
 		
-			ReadFile( m_ReadHandle, TemporaryBuffer.data(), availableBytes, nullptr, nullptr );
-			MultiByteToWideChar( CP_ACP, 0, TemporaryBuffer.data(), availableBytes, Out.data(), availableBytes );
+			::ReadFile( m_ReadHandle, TemporaryBuffer.data(), availableBytes, nullptr, nullptr );
+			::MultiByteToWideChar( CP_ACP, 0, TemporaryBuffer.data(), availableBytes, Out.data(), availableBytes );
 		}
 
 		if( closeHandle )
-			CloseHandle( m_ReadHandle );
+			::CloseHandle( m_ReadHandle );
 
 		return Out;
 #endif
@@ -192,12 +192,12 @@ namespace Saturn {
 		StartupInfo.cb = sizeof( StartupInfo );
 
 		PROCESS_INFORMATION ProcessInfo;
-		bool result = CreateProcessW(
+		bool result = ::CreateProcessW(
 			nullptr, (LPWSTR)rCommandLine.data(), nullptr, nullptr, FALSE, DETACHED_PROCESS, nullptr,
 			rWorkingDir.empty() ? nullptr : rWorkingDir.data(), &StartupInfo, &ProcessInfo );
 
-		CloseHandle( ProcessInfo.hThread );
-		CloseHandle( ProcessInfo.hProcess );
+		::CloseHandle( ProcessInfo.hThread );
+		::CloseHandle( ProcessInfo.hProcess );
 #endif
 	}
 

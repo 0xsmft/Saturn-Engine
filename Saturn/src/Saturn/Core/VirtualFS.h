@@ -29,10 +29,8 @@
 #pragma once
 
 #include "StringAuxiliary.h"
-
 #include "VFile.h"
-
-#include "Memory/Buffer.h"
+#include "Buffer.h"
 
 #include <filesystem>
 #include <string>
@@ -100,7 +98,7 @@ namespace Saturn {
 		void BuildPath( Ref<VDirectory>& rDir, const std::string& rMountBase );
 		void BuildPath( Ref<VFile>& rFile, const std::string& rMountBase );
 
-		void DrawDirectory( Ref<VDirectory>& rDirectory );
+		void DrawDirectory( const Ref<VDirectory>& rDirectory );
 		size_t GetMountsForDir( Ref<VDirectory>& rDirectory );
 
 		void WriteDir( const Ref<VDirectory>& rDir, std::ofstream& rStream );

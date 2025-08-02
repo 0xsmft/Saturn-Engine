@@ -183,7 +183,7 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 	class SProperty
 	{
 	public:
-		// INTERNAL FOR USE BY HEADER TOOL ONLY!
+		// INTERNAL, FOR USE BY HEADER TOOL ONLY!
 		SProperty( const std::string& rName, const std::string& rNativeType, SPropertyType PropType )
 			: m_Name( rName ), m_NativeType( rNativeType ), m_Type( PropType )
 		{
@@ -256,6 +256,10 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 
 		SPropertyType GetType() const { return m_Type; }
 
+		inline void SetType( SPropertyType type ) { m_Type = type; }
+		inline void SetNativeType( const std::string& rNativeType ) { m_NativeType = rNativeType; }
+		inline void SetName( const std::string& rName ) { m_Name = rName; }
+
 #if defined(SAT_DIST)
 		/*[[nodiscard]]*/ bool IsDirty() const { return false; }
 		void MarkClean() {}
@@ -264,23 +268,22 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 		void MarkClean() { m_Modified = false; }
 #endif
 
-		void SetType( SPropertyType type ) { m_Type = type; }
-		void SetNativeType( const std::string& rNativeType ) { m_NativeType = rNativeType; }
-		void SetName( const std::string& rName ) { m_Name = rName; }
-
-	public:
-		const void* pSetPropertyFunction = nullptr;
-		const void* pGetPropertyFunction = nullptr;
-
-	private:
+	protected:
 		std::string m_Name;
+		// HEADER TOOL ONLY!, stores the native C++ type, i.e. float, bool, int, double as a string
 		std::string m_NativeType;
 
 		SPropertyType m_Type = SPropertyType::Unknown;
 		SPropertyFlags m_Flags = SPropertyFlags_None;
 
+	private:
 #if !defined(SAT_DIST)
 		bool m_Modified = false;
 #endif
+
+	private:
+		const void* pSetPropertyFunction = nullptr;
+		const void* pGetPropertyFunction = nullptr;
 	};
+
 }

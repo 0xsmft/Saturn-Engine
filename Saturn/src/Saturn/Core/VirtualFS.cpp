@@ -77,8 +77,6 @@ namespace Saturn {
 		if( Itr == m_MountBases.end() )
 			return false;
 
-		auto& MountBasePath = Itr->second;
-
 		// Get the mount base folder.
 		Ref<VDirectory>& rMountBaseDir = m_RootDirectory->Directories[ rMountBase ];
 
@@ -86,8 +84,8 @@ namespace Saturn {
 
 		for( auto it = rVirtualPath.begin(); it != rVirtualPath.end(); ++it )
 		{
-			std::filesystem::path temporaryPath = *it;
-			std::string segmentStr = temporaryPath.string();
+			const std::filesystem::path temporaryPath = *it;
+			const std::string segmentStr = temporaryPath.string();
 
 			if( !temporaryPath.has_extension() )
 			{
@@ -116,8 +114,7 @@ namespace Saturn {
 			}
 			else
 			{
-				auto fileItr = pCurrentDir->Files.find( segmentStr );
-
+				const auto fileItr = pCurrentDir->Files.find( segmentStr );
 				if( fileItr == pCurrentDir->Files.end() )
 				{
 					Ref<VFile> file = Ref<VFile>::Create( segmentStr, pCurrentDir );
@@ -419,11 +416,11 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// IMGUI
 
-	void VirtualFS::DrawDirectory( Ref<VDirectory>& rDirectory )
+	void VirtualFS::DrawDirectory( const Ref<VDirectory>& rDirectory )
 	{
 		if( ImGui::TreeNode( rDirectory->GetName().c_str() ) )
 		{
-			for( auto&& [name, rDirectory] : rDirectory->Directories )
+			for( const auto& [name, rDirectory] : rDirectory->Directories )
 			{
 				DrawDirectory( rDirectory );
 			}
@@ -441,7 +438,7 @@ namespace Saturn {
 	{
 		if( Auxiliary::TreeNode( "Mount Bases", false ) ) 
 		{
-			for( auto&& [name, rPath] : m_MountBases )
+			for( const auto& [name, rPath] : m_MountBases )
 			{
 				if( ImGui::TreeNode( name.c_str() ) )
 				{
@@ -457,7 +454,7 @@ namespace Saturn {
 
 		if( Auxiliary::TreeNode( "Mounts", false ) )
 		{
-			for( auto&& [name, rDirectory] : m_RootDirectory->Directories )
+			for( const auto& [name, rDirectory] : m_RootDirectory->Directories )
 			{
 				DrawDirectory( rDirectory );
 			}
@@ -467,11 +464,11 @@ namespace Saturn {
 
 		if( Auxiliary::TreeNode( "Path to Dir & File Map", false ) )
 		{
-			for( auto&& [mountBase, pathToDir] : m_PathToDir )
+			for( const auto& [mountBase, pathToDir] : m_PathToDir )
 			{
 				if( Auxiliary::TreeNode( mountBase.c_str(), false ) )
 				{
-					for( auto&& [path, dir] : pathToDir )
+					for( const auto& [path, dir] : pathToDir )
 					{
 						ImGui::Text( "Mapped to Dir name: %s", dir->GetName().c_str() );
 						ImGui::Text( "Path: %s", path.string().c_str() );
@@ -481,11 +478,11 @@ namespace Saturn {
 				}
 			}
 
-			for( auto&& [mountBase, pathToDir] : m_PathToFile )
+			for( const auto& [mountBase, pathToDir] : m_PathToFile )
 			{
 				if( Auxiliary::TreeNode( mountBase.c_str(), false ) )
 				{
-					for( auto&& [path, file] : pathToDir )
+					for( const auto& [path, file] : pathToDir )
 					{
 						ImGui::Text( "Mapped to Dir name: %s", file->Name.c_str() );
 						ImGui::Text( "Path: %s", path.string().c_str() );

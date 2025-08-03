@@ -61,8 +61,8 @@ namespace Saturn {
 		std::string Name = "";
 		ActionBindingType Type = ActionBindingType::Key;
 
-		RubyKey Key = RubyKey::UnknownKey;
-		RubyMouseButton MouseButton = RubyMouseButton::Unknown;
+		RubyKey Key = RubyKey_UnknownKey;
+		RubyMouseButton MouseButton = RubyMouseButton_Unknown;
 
 #if !defined(SAT_DIST)
 		// The name of the Key/Mouse button
@@ -87,7 +87,7 @@ namespace Saturn {
 
 	// @class ActionBinding
 	//
-	// @breif An ActionBinding is an event that triggers based on certain conditions for example, if the 'A' key is pressed, the project will search for any ActionBinding that matches. Unlike ActionBindingData, ActionBindings are created by the PlayerInputController. A ActionBinding is defined by it's ActionBindingData.
+	// @breif An ActionBinding is an key or mouse event that triggers based on certain conditions for example, if the 'A' key is pressed, the project will search for any ActionBinding that matches. Unlike ActionBindingData, ActionBindings are created by the PlayerInputController. A ActionBinding is defined by it's ActionBindingData.
 	//
 	struct ActionBinding
 	{
@@ -100,8 +100,8 @@ namespace Saturn {
 		}
 
 		ActionBindingType Type = ActionBindingType::Key;
-		RubyKey Key = RubyKey::UnknownKey;
-		RubyMouseButton MouseButton = RubyMouseButton::Unknown;
+		RubyKey Key = RubyKey_UnknownKey;
+		RubyMouseButton MouseButton = RubyMouseButton_Unknown;
 		ActionBindingTriggerState State = ActionBindingTriggerState::Pressed;
 		std::function<void()> Function = nullptr;
 	};

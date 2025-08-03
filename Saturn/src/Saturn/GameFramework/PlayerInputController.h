@@ -74,10 +74,7 @@ namespace Saturn {
 		void UpdateMouseState( const RubyMouseEvent& rEvent );
 
 	private:
-		// BINDING NAME -> BINDINGS
+		//					BINDING NAME -> BINDINGS
 		std::unordered_map<std::string, std::vector<ActionBinding>> m_ActionMap;
-
-	private:
-		friend class Character;
 	};
 }

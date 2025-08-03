@@ -59,7 +59,7 @@ namespace Saturn {
 
 		void OnUpdate( Timestep time ) override;
 		void OnImGuiRender() override;
-		void OnEvent( RubyEvent& rEvent ) override;
+		void OnEvent( Event& rEvent ) override;
 		void OnAttach() override;
 		void OnDetach() override;
 		

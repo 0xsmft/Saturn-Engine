@@ -74,24 +74,24 @@ namespace Saturn {
 		const glm::vec2& mouse{ Input::Get().MouseX(), Input::Get().MouseY() };
 		const glm::vec2 delta = ( mouse - m_InitialMousePosition ) * 0.002f;
 
-		if( !Input::Get().KeyPressed( RubyKey::Esc ) )
+		if( !Input::Get().KeyPressed( RubyKey_Esc ) )
 		{
 			DisableMouse();
 			const float yawSign = GetUpDirection().y < 0 ? -1.0f : 1.0f;
 
 			const float speed = GetCameraSpeed();
 
-			if( Input::Get().KeyPressed( RubyKey::Q ) )
+			if( Input::Get().KeyPressed( RubyKey_Q ) )
 				m_PositionDelta -= ts.Milliseconds() * speed * glm::vec3{ 0.f, yawSign, 0.f };
-			if( Input::Get().KeyPressed( RubyKey::E ) )
+			if( Input::Get().KeyPressed( RubyKey_E ) )
 				m_PositionDelta += ts.Milliseconds() * speed * glm::vec3{ 0.f, yawSign, 0.f };
-			if( Input::Get().KeyPressed( RubyKey::S ) )
+			if( Input::Get().KeyPressed( RubyKey_S ) )
 				m_PositionDelta -= ts.Milliseconds() * speed * m_Rotation;
-			if( Input::Get().KeyPressed( RubyKey::W ) )
+			if( Input::Get().KeyPressed( RubyKey_W ) )
 				m_PositionDelta += ts.Milliseconds() * speed * m_Rotation;
-			if( Input::Get().KeyPressed( RubyKey::A ) )
+			if( Input::Get().KeyPressed( RubyKey_A ) )
 				m_PositionDelta -= ts.Milliseconds() * speed * m_RightDirection;
-			if( Input::Get().KeyPressed( RubyKey::D ) )
+			if( Input::Get().KeyPressed( RubyKey_D ) )
 				m_PositionDelta += ts.Milliseconds() * speed * m_RightDirection;
 
 			constexpr float maxRate{ 0.12f };
@@ -124,9 +124,9 @@ namespace Saturn {
 	float SceneFlyCamera::GetCameraSpeed() const
 	{
 		float speed = m_NormalSpeed;
-		if( Input::Get().KeyPressed( RubyKey::Ctrl ) )
+		if( Input::Get().KeyPressed( RubyKey_LeftCtrl ) )
 			speed /= 2 - glm::log( m_NormalSpeed );
-		if( Input::Get().KeyPressed( RubyKey::Shift ) )
+		if( Input::Get().KeyPressed( RubyKey_LeftShift ) )
 			speed *= 2 - glm::log( m_NormalSpeed );
 
 		return glm::clamp( speed, MIN_SPEED, MAX_SPEED );
@@ -160,7 +160,7 @@ namespace Saturn {
 
 	bool SceneFlyCamera::OnMouseScroll( RubyMouseScrollEvent& e )
 	{
-		if( Input::Get().MouseButtonPressed( RubyMouseButton::Right ) )
+		if( Input::Get().MouseButtonPressed( RubyMouseButton_Right ) )
 		{
 			m_NormalSpeed += e.GetOffsetY() * 0.3f * m_NormalSpeed;
 			m_NormalSpeed = std::clamp( m_NormalSpeed, MIN_SPEED, MAX_SPEED );

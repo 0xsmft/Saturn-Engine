@@ -63,39 +63,162 @@ struct RubyWindowRegister
 
 static int HandleKeyMods() 
 {
-	int Modifiers = Saturn::RubyKey::UnknownKey;
+	int Modifiers = Saturn::RubyKey_UnknownKey;
 
 	if( GetKeyState( VK_LSHIFT ) & 0x8000 )
 	{
-		Modifiers |= Saturn::RubyKey::Shift;
+		Modifiers |= Saturn::RubyKey_LeftShift;
 	}
 
 	if( GetKeyState( VK_RSHIFT ) & 0x8000 )
 	{
-		Modifiers |= Saturn::RubyKey::RightShift;
+		Modifiers |= Saturn::RubyKey_RightShift;
 	}
 
 	if( GetKeyState( VK_LMENU ) & 0x8000 )
 	{
-		Modifiers |= Saturn::RubyKey::Alt;
+		Modifiers |= Saturn::RubyKey_LeftAlt;
 	}
 
 	if( GetKeyState( VK_RMENU ) & 0x8000 )
 	{
-		Modifiers |= Saturn::RubyKey::RightAlt;
+		Modifiers |= Saturn::RubyKey_RightAlt;
 	}
 
 	if( GetKeyState( VK_LCONTROL ) & 0x8000 )
 	{
-		Modifiers |= Saturn::RubyKey::Ctrl;
+		Modifiers |= Saturn::RubyKey_LeftCtrl;
 	}
 
 	if( GetKeyState( VK_RCONTROL ) & 0x8000 )
 	{
-		Modifiers |= Saturn::RubyKey::RightCtrl;
+		Modifiers |= Saturn::RubyKey_RightCtrl;
 	}
 
 	return Modifiers;
+}
+
+static Saturn::RubyKey ConvertWinScancodeToRuby( uint32_t scanCode ) 
+{
+	using namespace Saturn;
+
+	switch( scanCode )
+	{
+		case 0x01: return RubyKey_Esc;
+		case 0x02: return RubyKey_Num1;
+		case 0x03: return RubyKey_Num2;
+		case 0x04: return RubyKey_Num3;
+		case 0x05: return RubyKey_Num4;
+		case 0x06: return RubyKey_Num5;
+		case 0x07: return RubyKey_Num6;
+		case 0x08: return RubyKey_Num7;
+		case 0x09: return RubyKey_Num8;
+		case 0x0A: return RubyKey_Num9;
+		case 0x0B: return RubyKey_Num0;
+		case 0x0C: return RubyKey_Minus;
+		case 0x0D: return RubyKey_Equal;
+		case 0x0E: return RubyKey_Backspace;
+		case 0x0F: return RubyKey_Tab;
+		case 0x10: return RubyKey_Q;
+		case 0x11: return RubyKey_W;
+		case 0x12: return RubyKey_E;
+		case 0x13: return RubyKey_R;
+		case 0x14: return RubyKey_T;
+		case 0x15: return RubyKey_Y;
+		case 0x16: return RubyKey_U;
+		case 0x17: return RubyKey_I;
+		case 0x18: return RubyKey_O;
+		case 0x19: return RubyKey_P;
+		case 0x1A: return RubyKey_LeftBracket;     // [ {
+		case 0x1B: return RubyKey_RightBracket;    // ] }
+		case 0x1C: return RubyKey_Enter;
+		case 0x1D: return RubyKey_LeftCtrl;
+		case 0x1E: return RubyKey_A;
+		case 0x1F: return RubyKey_S;
+		case 0x20: return RubyKey_D;
+		case 0x21: return RubyKey_F;
+		case 0x22: return RubyKey_G;
+		case 0x23: return RubyKey_H;
+		case 0x24: return RubyKey_J;
+		case 0x25: return RubyKey_K;
+		case 0x26: return RubyKey_L;
+		case 0x27: return RubyKey_Semicolon;       // ; :
+		case 0x28: return RubyKey_Apostrophe;      // ' "
+		case 0x29: return RubyKey_Grave;           // ` ~
+		case 0x2A: return RubyKey_LeftShift;
+		case 0x2B: return RubyKey_Backslash;       // \ |
+		case 0x2C: return RubyKey_Z;
+		case 0x2D: return RubyKey_X;
+		case 0x2E: return RubyKey_C;
+		case 0x2F: return RubyKey_V;
+		case 0x30: return RubyKey_B;
+		case 0x31: return RubyKey_N;
+		case 0x32: return RubyKey_M;
+		case 0x33: return RubyKey_Comma;           // , <
+		case 0x34: return RubyKey_Period;          // . >
+		case 0x35: return RubyKey_Slash;           // / ?
+		case 0x36: return RubyKey_RightShift;
+		case 0x37: return RubyKey_NumpadMultiply;
+		case 0x38: return RubyKey_LeftAlt;
+		case 0x39: return RubyKey_Space;
+		case 0x3A: return RubyKey_CapsLock;
+		case 0x3B: return RubyKey_F1;
+		case 0x3C: return RubyKey_F2;
+		case 0x3D: return RubyKey_F3;
+		case 0x3E: return RubyKey_F4;
+		case 0x3F: return RubyKey_F5;
+		case 0x40: return RubyKey_F6;
+		case 0x41: return RubyKey_F7;
+		case 0x42: return RubyKey_F8;
+		case 0x43: return RubyKey_F9;
+		case 0x44: return RubyKey_F10;
+		case 0x45: return RubyKey_Pause;
+		case 0x46: return RubyKey_ScrollLock;
+
+		// Numpad (non-extended)
+		case 0x47: return RubyKey_Numpad7;
+		case 0x48: return RubyKey_Numpad8;
+		case 0x49: return RubyKey_Numpad9;
+		case 0x4A: return RubyKey_NumpadSubtract;
+		case 0x4B: return RubyKey_Numpad4;
+		case 0x4C: return RubyKey_Numpad5;
+		case 0x4D: return RubyKey_Numpad6;
+		case 0x4E: return RubyKey_NumpadAdd;
+		case 0x4F: return RubyKey_Numpad1;
+		case 0x50: return RubyKey_Numpad2;
+		case 0x51: return RubyKey_Numpad3;
+		case 0x52: return RubyKey_Numpad0;
+		case 0x53: return RubyKey_NumpadDecimal;
+		case 0x11C: return RubyKey_NumpadEnter;
+		case 0x135: return RubyKey_NumpadDivide;
+		case 0x145: return RubyKey_NumLock;
+
+		case 0x57: return RubyKey_F11;
+		case 0x58: return RubyKey_F12;
+
+		case 0x146: return RubyKey_Pause;
+
+		// Extended keys (0xE0)
+		case 0xE01C: return RubyKey_NumpadEnter;
+		case 0xE01D: return RubyKey_RightCtrl;
+		case 0xE035: return RubyKey_NumpadDivide;
+		case 0xE038: return RubyKey_RightAlt;
+		case 0xE047: return RubyKey_Home;
+		case 0xE048: return RubyKey_UpArrow;
+		case 0xE049: return RubyKey_PageUp;
+		case 0xE04B: return RubyKey_LeftArrow;
+		case 0xE04D: return RubyKey_RightArrow;
+		case 0xE04F: return RubyKey_End;
+		case 0xE050: return RubyKey_DownArrow;
+		case 0xE051: return RubyKey_PageDown;
+		case 0xE052: return RubyKey_Insert;
+		case 0xE053: return RubyKey_Delete;
+		case 0xE05B: return RubyKey_OSKey;
+		case 0xE05C: return RubyKey_OSKeyRight;
+		case 0xE05D: return RubyKey_Menu;
+
+		default: return RubyKey_UnknownKey;
+	}
 }
 
 LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LParam ) 
@@ -247,7 +370,7 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 		case WM_RBUTTONDOWN:
 		case WM_MBUTTONDOWN:
 		{
-			RubyMouseButton btn = ( Msg == WM_LBUTTONDOWN ? RubyMouseButton::Left : Msg == WM_RBUTTONDOWN ? RubyMouseButton::Right : RubyMouseButton::Middle );
+			const RubyMouseButton btn = ( Msg == WM_LBUTTONDOWN ? RubyMouseButton_Left : Msg == WM_RBUTTONDOWN ? RubyMouseButton_Right : RubyMouseButton_Middle );
 
 			if( ::GetCapture() == nullptr && pThis->GetParent()->GetCurrentMouseButtons().size() == 0 )
 				::SetCapture( Handle );
@@ -258,7 +381,7 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 
 		case WM_XBUTTONDOWN:
 		{
-			RubyMouseButton xbtn = GET_XBUTTON_WPARAM( WParam ) == XBUTTON1 ? RubyMouseButton::Extra1 : RubyMouseButton::Extra2;
+			const RubyMouseButton xbtn = GET_XBUTTON_WPARAM( WParam ) == XBUTTON1 ? RubyMouseButton_Extra1 : RubyMouseButton_Extra2;
 
 			if( ::GetCapture() == nullptr && pThis->GetParent()->GetCurrentMouseButtons().size() == 0 )
 				::SetCapture( Handle );
@@ -271,7 +394,7 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 		case WM_RBUTTONUP:
 		case WM_MBUTTONUP:
 		{
-			RubyMouseButton btn = ( Msg == WM_LBUTTONUP ? RubyMouseButton::Left : Msg == WM_RBUTTONUP ? RubyMouseButton::Right : RubyMouseButton::Middle );
+			const RubyMouseButton btn = ( Msg == WM_LBUTTONUP ? RubyMouseButton_Left : Msg == WM_RBUTTONUP ? RubyMouseButton_Right : RubyMouseButton_Middle );
 
 			pThis->GetParent()->IntrnlSetMouseState( btn, false );
 			pThis->GetParent()->DispatchEvent<RubyMouseEvent>( EventType::MouseReleased, ( int )btn );
@@ -282,7 +405,7 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 
 		case WM_XBUTTONUP:
 		{
-			RubyMouseButton xbtn = GET_XBUTTON_WPARAM( WParam ) == XBUTTON1 ? RubyMouseButton::Extra1 : RubyMouseButton::Extra2;
+			const RubyMouseButton xbtn = GET_XBUTTON_WPARAM( WParam ) == XBUTTON1 ? RubyMouseButton_Extra1 : RubyMouseButton_Extra2;
 
 			pThis->GetParent()->IntrnlSetMouseState( xbtn, false );
 			pThis->GetParent()->DispatchEvent<RubyMouseEvent>( EventType::MouseReleased, ( int ) xbtn );
@@ -328,30 +451,32 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 		case WM_SYSKEYDOWN:
 		case WM_KEYDOWN:
 		{
-			// In Ruby our key codes match with the Win32 ones.
-			int nativeCode = ( int ) WParam;
-			int Modifiers = HandleKeyMods();
+			const UINT scanCode = HIWORD( LParam ) & ( KF_EXTENDED | 0xFF );
+			const int Modifiers = HandleKeyMods();
 
-			pThis->GetParent()->IntrnlSetKeyDown( ( RubyKey ) nativeCode, true );
-			pThis->GetParent()->DispatchEvent<RubyKeyEvent>( EventType::KeyPressed, nativeCode, Modifiers );
+			const RubyKey saturnKey = ConvertWinScancodeToRuby( scanCode );
+
+			pThis->GetParent()->IntrnlSetKeyDown( saturnKey, true );
+			pThis->GetParent()->DispatchEvent<RubyKeyEvent>( EventType::KeyPressed, saturnKey, scanCode, Modifiers );
 		} return false;
 
 		case WM_SYSKEYUP:
 		case WM_KEYUP:
 		{
-			// In Ruby our key codes match with the Win32 ones.
-			int nativeCode = ( int ) WParam;
-			int Modifiers = HandleKeyMods();
+			const UINT scanCode = HIWORD( LParam ) & ( KF_EXTENDED | 0xFF );
+			const int Modifiers = HandleKeyMods();
 
-			pThis->GetParent()->IntrnlSetKeyDown( ( RubyKey ) nativeCode, false );
-			pThis->GetParent()->DispatchEvent<RubyKeyEvent>( EventType::KeyReleased, nativeCode, Modifiers );
+			const RubyKey saturnKey = ConvertWinScancodeToRuby( scanCode );
+
+			pThis->GetParent()->IntrnlSetKeyDown( saturnKey, false );
+			pThis->GetParent()->DispatchEvent<RubyKeyEvent>( EventType::KeyReleased, saturnKey, scanCode, Modifiers );
 		} return false;
 
 		// The WM_CHAR message is sent when a printable character key is pressed.
 		// Handle Ansi (Ascii) characters and UTF-8
 		case WM_CHAR: 
 		{
-			wchar_t wc = static_cast< wchar_t >( WParam );
+			const wchar_t wc = static_cast< wchar_t >( WParam );
 			pThis->GetParent()->DispatchEvent<RubyCharacterEvent>( EventType::InputCharacter, wc );
 		} return false;
 
@@ -454,9 +579,8 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 namespace Saturn {
 
 	RubyWindowsBackend::RubyWindowsBackend( const RubyWindowSpecification& rSpec, RubyWindow* pWindow )
+		: RubyBackendBase( m_WindowSpecification, pWindow )
 	{
-		m_pWindow = pWindow;
-		m_WindowSpecification = rSpec;
 	}
 
 	RubyWindowsBackend::~RubyWindowsBackend()
@@ -466,11 +590,8 @@ namespace Saturn {
 
 	void RubyWindowsBackend::Create()
 	{
-		DWORD WindowStyle = ChooseStyle();
-
-		HWND ParentHWND = nullptr;
-		if( m_WindowSpecification.pParentWindow != nullptr )
-			ParentHWND = m_WindowSpecification.pParentWindow->GetNativeHandle();
+		const DWORD WindowStyle = ChooseStyle();
+		const HWND ParentHWND = m_WindowSpecification.pParentWindow != nullptr ? m_WindowSpecification.pParentWindow->GetNativeHandle() : nullptr;
 
 		m_Handle = ::CreateWindowExW( 
 			0, 
@@ -777,7 +898,7 @@ namespace Saturn {
 
 			case RubyWindowShowCmd::Fullscreen:
 			{
-				HMONITOR Monitor = ::MonitorFromWindow( m_Handle, MONITOR_DEFAULTTONEAREST );
+				const HMONITOR Monitor = ::MonitorFromWindow( m_Handle, MONITOR_DEFAULTTONEAREST );
 
 				MONITORINFO Info = { .cbSize = sizeof( MONITORINFO ) };
 				::GetMonitorInfo( Monitor, &Info );
@@ -896,7 +1017,7 @@ namespace Saturn {
 
 	void RubyWindowsBackend::SetClipboardText( const std::string& rTextData )
 	{
-		std::wstring textDataW = Auxiliary::ConvertString( rTextData );
+		const std::wstring textDataW = Auxiliary::ConvertString( rTextData );
 		SetClipboardText( textDataW );
 	}
 

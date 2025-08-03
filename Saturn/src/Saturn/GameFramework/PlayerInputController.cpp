@@ -70,7 +70,7 @@ namespace Saturn {
 			{
 				if( rBinding.Type != ActionBindingType::Key ) continue;
 
-				if( rBinding.Key == (RubyKey)rEvent.GetScancode() && rBinding.State == s_EventTypeToActionType[ rEvent.Type ] )
+				if( rBinding.Key == rEvent.GetKeycode() && rBinding.State == s_EventTypeToActionType[ rEvent.Type ] )
 				{
 					EventsToFire.push_back( rBinding );
 				}
@@ -131,8 +131,6 @@ namespace Saturn {
 			const auto& rBindingData = *( it );
 			
 			m_ActionMap[ rBindingName ].emplace_back( rBindingData, state, rFunction );
-//			m_ActionMap[ rBindingName ].back().State = state;
-//			m_ActionMap[ rBindingName ].back().Function = rFunction;
 		}
 	}
 

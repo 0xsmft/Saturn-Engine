@@ -184,7 +184,7 @@ namespace Saturn {
 		// Now open the startup scene
 		OpenFile( Project::GetActiveProject()->GetConfig().StartupSceneID );
 
-		std::string title = std::format( "{0} - Saturn", Project::GetActiveConfig().Name );
+		const std::string title = std::format( "{0} - Saturn", Project::GetActiveConfig().Name );
 		Application::Get().GetWindow()->ChangeTitle( title );
 
 		if( !Project::GetActiveProject()->HasThumbnail() )
@@ -240,10 +240,10 @@ namespace Saturn {
 	{
 		SAT_PF_EVENT();
 
-		if( Input::Get().MouseButtonPressed( RubyMouseButton::Right ) && !m_StartedRightClickInViewport && m_ViewportFocused && m_MouseOverViewport )
+		if( Input::Get().MouseButtonPressed( RubyMouseButton_Right ) && !m_StartedRightClickInViewport && m_ViewportFocused && m_MouseOverViewport )
 			m_StartedRightClickInViewport = true;
 
-		if( !Input::Get().MouseButtonPressed( RubyMouseButton::Right ) )
+		if( !Input::Get().MouseButtonPressed( RubyMouseButton_Right ) )
 			m_StartedRightClickInViewport = false;
 
 		const bool canSetCursorMode = m_RuntimeScene == nullptr ? m_AllowCameraEvents : m_RuntimeScene->GetRuntimeState() == RuntimeState::Suspended ? m_AllowCameraEvents : m_MouseOverViewport;
@@ -283,14 +283,14 @@ namespace Saturn {
 
 			m_RuntimeScene->OnUpdate( time );
 
-			if( m_RuntimeScene->GetRuntimeState() == RuntimeState::Suspended )
+			if( m_RuntimeScene->GetRuntimeState() == RuntimeState::Suspended ) [[unlikely]]
 			{
 				m_SuspendedEditorCamera.SetActive( m_AllowCameraEvents );
 				m_SuspendedEditorCamera.OnUpdate( time );
 
 				m_RuntimeScene->OnRenderEditor( m_SuspendedEditorCamera, time, Application::Get().PrimarySceneRenderer() );
 			}
-			else
+			else [[likely]]
 			{
 				m_RuntimeScene->OnRenderRuntime( time, Application::Get().PrimarySceneRenderer() );
 			}
@@ -652,9 +652,9 @@ namespace Saturn {
 
 	bool EditorLayer::OnKeyPressed( RubyKeyEvent& rEvent )
 	{
-		switch( rEvent.GetScancode() )
+		switch( rEvent.GetKeycode() )
 		{
-			case RubyKey::Delete:
+			case RubyKey_Delete:
 			{
 				Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
 
@@ -676,38 +676,38 @@ namespace Saturn {
 			} break;
 
 			// We will never add Undo/Redo support to these as it's faster to just use the single shortcut key than do Control+Z/Y
-			case RubyKey::Q:
+			case RubyKey_Q:
 				if( m_MouseOverViewport && !m_StartedRightClickInViewport )
 					m_GizmoOperation = 0;
 				break;
 
-			case RubyKey::W:
+			case RubyKey_W:
 				if( m_MouseOverViewport && !m_StartedRightClickInViewport )
 					m_GizmoOperation = ImGuizmo::OPERATION::TRANSLATE;
 				break;
 
-			case RubyKey::E:
+			case RubyKey_E:
 				if( m_MouseOverViewport && !m_StartedRightClickInViewport )
 					m_GizmoOperation = ImGuizmo::OPERATION::ROTATE;
 				break;
 
-			case RubyKey::R:
+			case RubyKey_R:
 				if( m_MouseOverViewport && !m_StartedRightClickInViewport )
 					m_GizmoOperation = ImGuizmo::OPERATION::SCALE;
 				break;
 
-			case RubyKey::F5:
+			case RubyKey_F5:
 			{
 				if( m_MouseOverViewport || m_ViewportFocused )
 					m_RequestRuntime ^= 1;
 			} break;
 		}
 
-		if( Input::Get().KeyPressed( RubyKey::Ctrl ) && !m_RuntimeScene )
+		if( Input::Get().KeyPressed( RubyKey_LeftCtrl ) && !m_RuntimeScene )
 		{
-			switch( rEvent.GetScancode() )
+			switch( rEvent.GetKeycode() )
 			{
-				case RubyKey::D:
+				case RubyKey_D:
 				{
 					Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
 
@@ -724,7 +724,7 @@ namespace Saturn {
 				} break;
 
 				// TODO: Support more than one selection.
-				case RubyKey::F:
+				case RubyKey_F:
 				{
 					Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
 
@@ -745,12 +745,12 @@ namespace Saturn {
 					}
 				} break;
 
-				case RubyKey::S:
+				case RubyKey_S:
 				{
 					SaveFile();
 				} break;
 
-				case RubyKey::Z:
+				case RubyKey_Z:
 				{
 					if( auto action = m_GlobalUndoRedoGroup->GlobalUndoRecent(); action )
 					{
@@ -760,7 +760,7 @@ namespace Saturn {
 					}
 				} break;
 			
-				case RubyKey::Y:
+				case RubyKey_Y:
 				{
 					if( auto action = m_GlobalUndoRedoGroup->GlobalRedoRecent(); action )
 					{
@@ -771,11 +771,11 @@ namespace Saturn {
 				} break;
 			}
 
-			if( Input::Get().KeyPressed( RubyKey::Shift ) )
+			if( Input::Get().KeyPressed( RubyKey_LeftShift ) || Input::Get().KeyPressed( RubyKey_RightShift ) )
 			{
-				switch( rEvent.GetScancode() )
+				switch( rEvent.GetKeycode() )
 				{
-					case RubyKey::S:
+					case RubyKey_S:
 					{
 						SaveFileAs();
 					} break;
@@ -783,11 +783,11 @@ namespace Saturn {
 			}
 
 #if defined(SAT_RELEASE)
-			if( Input::Get().KeyPressed( RubyKey::Alt ) && GActiveScene != m_RuntimeScene )
+			if( Input::Get().KeyPressed( RubyKey_LeftAlt ) && g_ActiveScene != m_RuntimeScene.Get() )
 			{
-				switch( rEvent.GetScancode() )
+				switch( rEvent.GetKeycode() )
 				{
-					case RubyKey::F5:
+					case RubyKey_F5:
 					{
 						HotReloadGame();
 					} break;
@@ -861,7 +861,7 @@ namespace Saturn {
 
 	bool EditorLayer::OnMousePressed( RubyMouseEvent& rEvent )
 	{
-		if( m_RuntimeScene || !m_MouseOverViewport || rEvent.GetButton() != (int)RubyMouseButton::Left )
+		if( m_RuntimeScene || !m_MouseOverViewport || rEvent.GetButton() != (int)RubyMouseButton_Left )
 			return false;
 
 		const auto viewportMouse = ConvertMouseToViewportNDC();
@@ -1163,7 +1163,7 @@ namespace Saturn {
 				ImGui::SetNextItemWidth( 130.0f );
 				if( ImGui::BeginCombo( "##KEYLIST", rBinding.ActionName.data() ) )
 				{
-					for( int i = 0; i < RubyKey::EnumSize; i++ )
+					for( uint16_t i = 0; i < RubyKey_EnumSize; i++ )
 					{
 						const auto& result = RubyKeyToString( ( RubyKey ) i );
 
@@ -1179,7 +1179,7 @@ namespace Saturn {
 						if( ImGui::Selectable( result.data(), IsSelected ) )
 						{
 							if( rBinding.Type == ActionBindingType::Mouse )
-								rBinding.MouseButton = RubyMouseButton::Unknown;
+								rBinding.MouseButton = RubyMouseButton_Unknown;
 
 							rBinding.Key = ( RubyKey ) i;
 							rBinding.Type = ActionBindingType::Key;
@@ -1210,7 +1210,7 @@ namespace Saturn {
 						if( ImGui::Selectable( result.data(), IsSelected ) )
 						{
 							if( rBinding.Type == ActionBindingType::Key )
-								rBinding.Key = RubyKey::UnknownKey;
+								rBinding.Key = RubyKey_UnknownKey;
 
 							rBinding.MouseButton = ( RubyMouseButton ) i;
 							rBinding.Type = ActionBindingType::Mouse;

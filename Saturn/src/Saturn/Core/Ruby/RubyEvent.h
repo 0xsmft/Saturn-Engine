@@ -29,6 +29,7 @@
 #pragma once
 
 #include "Saturn/Core/Event.h"
+#include "RubyEventType.h"
 
 namespace Saturn {
 
@@ -107,15 +108,20 @@ namespace Saturn {
 	{
 	public:
 		RubyKeyEvent() = default;
-		RubyKeyEvent( EventType Type, int scanCode, int modifiers ) : Event( Type, EC_Ruby ), m_ScanCode( scanCode ), m_Modifiers( modifiers ) {}
-
+		RubyKeyEvent( EventType Type, RubyKey keyCode, uint32_t scanCode, int modifiers ) 
+			: Event( Type, EC_Ruby ), m_KeyCode( keyCode ), m_ScanCode( scanCode ), m_Modifiers( modifiers ) 
+		{
+		}
 		~RubyKeyEvent() = default;
 
+		RubyKey GetKeycode() const { return m_KeyCode; }
 		int GetScancode() const { return m_ScanCode; }
 		int GetModifers() const { return m_Modifiers; }
 
 	private:
-		int m_ScanCode = 0;
+		RubyKey m_KeyCode = RubyKey_UnknownKey;
+		
+		uint32_t m_ScanCode = 0;
 		int m_Modifiers = 0;
 	};
 

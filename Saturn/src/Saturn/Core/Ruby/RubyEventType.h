@@ -30,60 +30,131 @@
 
 namespace Saturn {
 
-	using KeyCode = int;
+	using KeyCode = uint16_t;
 
 	enum RubyKey
 	{
-		UnknownKey,
+		//////////////////////////////////////////////////////////////////////////
+		// Undefined key
+		
+		RubyKey_UnknownKey = 0,
 
-		// Alphabetic keys (match with Ansi)
-		A = 0x41, B = 0x42, C = 0x43, D = 0x44, E = 0x45, F = 0x46, G = 0x47, H = 0x48,
-		I = 0x49, J = 0x4A, K = 0x4B, L = 0x4C, M = 0x4D, N = 0x4E, O = 0x4F, P = 0x50,
-		Q = 0x51, R = 0x52, S = 0x53, T = 0x54, U = 0x55, V = 0x56, W = 0x57, X = 0x58,
-		Y = 0x59, Z = 0x5A,
-
-		// Numeric keys
-		Num0 = 0x30, Num1 = 0x31, Num2 = 0x32, Num3 = 0x33, Num4 = 0x34, Num5 = 0x35,
-		Num6 = 0x36, Num7 = 0x37, Num8 = 0x38, Num9 = 0x39,
-
-		// Special keys
-		Space = 0x20, Enter = 0x0D, Tab = 0x09,
-		Esc = 0x1B, Backspace = 0x08, CapsLock = 0x14, Shift = 0x10, Ctrl = 0x11, Alt = 0x12,
-		OSKey = 0x5B,
-		Insert = 0x2D, Delete = 0x2E, Home = 0x24, End = 0x23, PageUp = 0x21, PageDown = 0x22,
-
-		Numpad0 = 0x60, Numpad1 = 0x61, Numpad2 = 0x62, Numpad3 = 0x63,
-		Numpad4 = 0x64, Numpad5 = 0x65, Numpad6 = 0x66, Numpad7 = 0x67,
-		Numpad8 = 0x68, Numpad9 = 0x69,
-		NumpadAdd = 0x6B, NumpadSubtract = 0x6D, NumpadMultiply = 0x6A,
-		NumpadDivide = 0x6F, NumpadEnter = 0x0D,
-
-		// Arrow keys
-		LeftArrow = 0x25,
-		UpArrow = 0x26,
-		RightArrow = 0x27,
-		DownArrow = 0x28,
-
-		// Function keys
-		F1 = 0x70, F2 = 0x71, F3 = 0x72, F4 = 0x73, F5 = 0x74, F6 = 0x75, F7 = 0x76, F8 = 0x77,
-		F9 = 0x78, F10 = 0x79, F11 = 0x7A, F12 = 0x7B,
-
+		//////////////////////////////////////////////////////////////////////////
 		// Modifier keys
-		RightCtrl = 0xA3,
-		RightShift = 0xA1,
-		RightAlt = 0xA5,
+		
+		RubyKey_LeftShift,
+		RubyKey_RightShift,
+		RubyKey_LeftCtrl,
+		RubyKey_RightCtrl,
+		RubyKey_LeftAlt,
+		RubyKey_RightAlt,
+		RubyKey_OSKey,
+		RubyKey_OSKeyRight,
 
-		EnumSize
+		//////////////////////////////////////////////////////////////////////////
+		// Lock keys
+
+		RubyKey_CapsLock,
+		RubyKey_NumLock,
+		RubyKey_ScrollLock,
+
+		//////////////////////////////////////////////////////////////////////////
+		// Function keys
+		
+		RubyKey_F1, RubyKey_F2, RubyKey_F3, RubyKey_F4, RubyKey_F5, RubyKey_F6,
+		RubyKey_F7, RubyKey_F8, RubyKey_F9, RubyKey_F10, RubyKey_F11, RubyKey_F12,
+
+		//////////////////////////////////////////////////////////////////////////
+		// Printable keys
+		
+		RubyKey_A, RubyKey_B, RubyKey_C, RubyKey_D, RubyKey_E, RubyKey_F, RubyKey_G,
+		RubyKey_H, RubyKey_I, RubyKey_J, RubyKey_K, RubyKey_L, RubyKey_M, RubyKey_N,
+		RubyKey_O, RubyKey_P, RubyKey_Q, RubyKey_R, RubyKey_S, RubyKey_T, RubyKey_U,
+		RubyKey_V, RubyKey_W, RubyKey_X, RubyKey_Y, RubyKey_Z,
+
+		
+		//////////////////////////////////////////////////////////////////////////
+		// Numerical keys
+		RubyKey_Num0, RubyKey_Num1, RubyKey_Num2, RubyKey_Num3, RubyKey_Num4,
+		RubyKey_Num5, RubyKey_Num6, RubyKey_Num7, RubyKey_Num8, RubyKey_Num9,
+
+		//////////////////////////////////////////////////////////////////////////
+		// Grammar / symbols
+
+		RubyKey_Space,
+		RubyKey_Apostrophe,
+		RubyKey_Hash, // UK Only
+		RubyKey_Comma,
+		RubyKey_Minus,
+		RubyKey_Period,
+		RubyKey_Slash,
+		RubyKey_Semicolon,
+		RubyKey_Equal,
+		RubyKey_LeftBracket,
+		RubyKey_Backslash,   
+		RubyKey_RightBracket,
+		RubyKey_Grave,          // `
+
+		//////////////////////////////////////////////////////////////////////////
+		// Navigation / editing
+
+		RubyKey_Esc,
+		RubyKey_Enter,
+		RubyKey_Tab,
+		RubyKey_Backspace,
+		RubyKey_Insert,
+		RubyKey_Delete,
+		RubyKey_Home,
+		RubyKey_End,
+		RubyKey_PageUp,
+		RubyKey_PageDown,
+
+		//////////////////////////////////////////////////////////////////////////
+		// Arrows
+
+		RubyKey_UpArrow,
+		RubyKey_DownArrow,
+		RubyKey_LeftArrow,
+		RubyKey_RightArrow,
+
+		//////////////////////////////////////////////////////////////////////////
+		// Numpad
+
+		RubyKey_Numpad0,
+		RubyKey_Numpad1,
+		RubyKey_Numpad2,
+		RubyKey_Numpad3,
+		RubyKey_Numpad4,
+		RubyKey_Numpad5,
+		RubyKey_Numpad6,
+		RubyKey_Numpad7,
+		RubyKey_Numpad8,
+		RubyKey_Numpad9,
+		RubyKey_NumpadDecimal,
+		RubyKey_NumpadAdd,
+		RubyKey_NumpadSubtract,
+		RubyKey_NumpadMultiply,
+		RubyKey_NumpadDivide,
+		RubyKey_NumpadEnter,
+
+		//////////////////////////////////////////////////////////////////////////
+		// AUX
+		
+		RubyKey_PrintScreen,
+		RubyKey_Pause,
+		RubyKey_Menu,
+
+		RubyKey_EnumSize
 	};
 
-	enum class RubyMouseButton : unsigned int
+	enum RubyMouseButton : unsigned int
 	{
-		Unknown = 6,
+		RubyMouseButton_Unknown = 6,
 
-		Left = 0,
-		Right = 1,
-		Middle = 2,
-		Extra1 = 3,
-		Extra2 = 4
+		RubyMouseButton_Left = 0,
+		RubyMouseButton_Right = 1,
+		RubyMouseButton_Middle = 2,
+		RubyMouseButton_Extra1 = 3,
+		RubyMouseButton_Extra2 = 4
 	};
 }

@@ -52,7 +52,10 @@ namespace Saturn {
 	class RubyBackendBase
 	{
 	public:
-		RubyBackendBase() {}
+		RubyBackendBase( const RubyWindowSpecification& rSpec, RubyWindow* pWindow )
+			: m_WindowSpecification( rSpec ), m_pWindow( pWindow )
+		{
+		}
 		virtual ~RubyBackendBase() = default;
 
 	public:

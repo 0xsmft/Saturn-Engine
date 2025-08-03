@@ -96,12 +96,12 @@ namespace Saturn {
 
 //		m_PlayerInputController->UpdateState();
 
-		if( Input::Get().KeyPressed( RubyKey::Esc ) && Input::Get().GetCursorMode() == RubyCursorMode::Locked )
+		if( Input::Get().KeyPressed( RubyKey_Esc ) && Input::Get().GetCursorMode() == RubyCursorMode::Locked )
 		{
 			Input::Get().SetCursorMode( RubyCursorMode::Normal, true );
 			m_CameraEntity->GetComponent<CameraComponent>().Camera.SetActive( false );
 		}
-		else if( Input::Get().MouseButtonPressed( RubyMouseButton::Left ) && Input::Get().GetCursorMode() != RubyCursorMode::Locked ) 
+		else if( Input::Get().MouseButtonPressed( RubyMouseButton_Left ) && Input::Get().GetCursorMode() != RubyCursorMode::Locked ) 
 		{
 			Input::Get().SetCursorMode( RubyCursorMode::Locked );
 

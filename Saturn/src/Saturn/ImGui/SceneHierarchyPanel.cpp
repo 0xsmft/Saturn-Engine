@@ -221,7 +221,7 @@ namespace Saturn {
 		if( !m_IsPrefabScene )
 			ImGui::End();
 
-		if( Input::Get().KeyPressed( RubyKey::Ctrl ) || Input::Get().KeyPressed( RubyKey::RightCtrl ) )
+		if( Input::Get().KeyPressed( RubyKey_LeftCtrl ) || Input::Get().KeyPressed( RubyKey_RightCtrl ) )
 		{
 			m_IsMultiSelecting = true;
 		}
@@ -296,7 +296,7 @@ namespace Saturn {
 			if( isPrefab )
 				ImGui::PopStyleColor();
 
-			if( ImGui::IsItemClicked() )
+			if( ImGui::IsItemClicked( ImGuiMouseButton_Left ) || ImGui::IsItemClicked( ImGuiMouseButton_Right ) )
 			{
 				SetSelected( entity );
 

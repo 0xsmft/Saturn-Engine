@@ -34,6 +34,8 @@
 #include "Saturn/Core/App.h"
 #include "Saturn/Serialisation/AssetManagerSerialiser.h"
 
+#include "Saturn/Project/Project.h"
+
 namespace Saturn {
 
 	AssetManager::AssetManager()

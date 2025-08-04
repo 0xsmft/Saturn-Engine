@@ -28,15 +28,10 @@
 
 #pragma once
 
-#include "Saturn/Core/App.h"
-
 #include "Saturn/Core/UUID.h"
 #include "Saturn/GameFramework/SObject.h"
 
-#include "Saturn/Core/Log.h"
 #include "Saturn/Serialisation/RawSerialisation.h"
-
-#include "Saturn/Project/Project.h"
 
 #include <filesystem>
 
@@ -93,11 +88,10 @@ namespace Saturn {
 				return "BehaviourTree";
 			case Saturn::AssetType::BehaviourTreeMemory:
 				return "BehaviourTreeMemory";
+			default:
 			case Saturn::AssetType::Unknown:
 				return "Unknown";
 		}
-
-		return "Unknown";
 	}
 
 	// I don't want to include the imgui header so we will just copy the macro.
@@ -140,13 +134,10 @@ namespace Saturn {
 				return COLOR_32( 50, 168, 82, 255 );
 			case Saturn::AssetType::BehaviourTreeMemory:
 				return COLOR_32( 168, 50, 82, 255 );
+			default:
 			case Saturn::AssetType::Unknown:
 				return COLOR_32( 255, 255, 255, 255 );
-			default:
-				break;
 		}
-
-		return 0;
 	}
 
 	inline AssetType AssetTypeFromString( const std::string& str )
@@ -209,6 +200,7 @@ namespace Saturn {
 			return AssetType::Unknown;
 	}
 
+	// NOTE: The Asset class has no reflection data, but we can allow other assets to have reflection data, so thats why we are based from SObject
 	class Asset : public SObject
 	{
 	public:
@@ -233,19 +225,13 @@ namespace Saturn {
 	
 		// Path must be an absolute path.
 		// If you want to set a relative path just modify the 'Path' variable directly and update the name accordingly.
-		void SetAbsolutePath( const std::filesystem::path& rPath )
-		{
-			std::filesystem::path rootDir = Project::GetActiveProject()->GetRootDir();
-
-			Path = std::filesystem::relative( rPath, rootDir );
-			Name = Path.stem().string();
-		}
+		void SetAbsolutePath( const std::filesystem::path& rPath );
 
 	public:
 		//////////////////////////////////////////////////////////////////////////
 		// #WARNING This should not be confused with AssetSerialisers. This is for raw binary serialisation! (see: AssetBundle)
 
-		void SerialiseData( std::ofstream& rStream ) const
+		inline void SerialiseData( std::ofstream& rStream ) const
 		{
 			// TODO: Support writing for a filesystem path.
 			RawSerialisation::WriteString( Name, rStream );
@@ -256,7 +242,7 @@ namespace Saturn {
 			RawSerialisation::WriteObject( Flags, rStream );
 		}
 
-		void DeserialiseData( std::ifstream& rStream )
+		inline void DeserialiseData( std::ifstream& rStream )
 		{
 			// TODO: Support reading for a filesystem path.
 			Name = RawSerialisation::ReadString( rStream );

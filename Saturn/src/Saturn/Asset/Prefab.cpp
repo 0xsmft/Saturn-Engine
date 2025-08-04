@@ -29,6 +29,8 @@
 #include "sppch.h"
 #include "Prefab.h"
 
+#include "Saturn/Audio/SoundGroup.h"
+
 #include "Saturn/Asset/AssetManager.h"
 
 #include "Saturn/Scene/Scene.h"

@@ -61,6 +61,8 @@ namespace Saturn {
 	class SClass;
 	class SceneRenderer;
 	class NavBoundsEntity;
+	class PhysicsRigidBody;
+	class PlayerInputController;
 
 	struct TransformComponent;
 	struct RaycastHitResult;
@@ -161,25 +163,42 @@ namespace Saturn {
 		}
 	};
 
+	struct CreateEntityParameters
+	{
+		UUID ID;
+		std::string Tag;
+		Ref<Entity> Parent;
+		// TODO: We could use Entity::StaticClass but then we have to include Entity.h, not really ideal
+		SClass* pClass = nullptr;
+
+		// TODO: We could use TransformComponent but then we have to include Components.h, not really ideal
+		glm::vec3 Position;
+		glm::vec3 Rotation;
+		glm::vec3 Scale = { 1.0F, 1.0F, 1.0F };
+	};
+
 	class Scene : public Asset
 	{
 		SAT_DECLARE_CLASS_NO_INTER( Scene, Asset )
 	public:
 		Scene();
 		~Scene();
+		
+		// Spawn an entity, this is the most basic function for spawning an Entity
+		[[nodiscard]] Ref<Entity> CreateEntity( const std::string& name = "" );
+
+		// Spawn an entity, with custom parameters
+		[[nodiscard]] Ref<Entity> CreateEntity( CreateEntityParameters& rParams );
 
 		[[nodiscard]] Ref<Entity> CreateEntityWithIDScript( UUID uuid, const std::string& name = "", const std::string& rScriptName = "", bool externalData = true );
 
-		[[nodiscard]] Ref<Entity> CreateEntityWithID( UUID uuid, const std::string& name = "" );
-		[[nodiscard]] Ref<Entity> CreateEntity( const std::string& name = "" );
-
 		template<typename Ty>
-		[[nodiscard]] Ref<Ty> CreateEntityScript( const std::string& rScriptName, const std::string& name = "" )
+		[[nodiscard]] Ref<Ty> CreateEntityFromClass( const std::string& rEntityName = "" )
 		{
-			static_assert( std::is_base_of<Entity, Ty>::value, "Ty must be based from an entity!" );
+			static_assert( std::is_convertible<Ty, Entity>::value, "Ty must be based from an entity!" );
 
-			Ref<Ty> entity = Ref<Ty>::Create();
-			entity->SetName( name );
+			Ref<Ty> entity = dynamic_cast<Ty*>( ClassMetadataHandler::Get().CreateClassObject( Ty::StaticClass() ) );
+			entity->SetName( rEntityName );
 
 			OnEntityCreated( entity );
 

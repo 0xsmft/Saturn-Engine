@@ -533,21 +533,35 @@ namespace Saturn {
 		return entity;
 	}
 
-	Ref<Entity> Scene::CreateEntityWithID( UUID uuid, const std::string& name /*= "" */ )
+	Ref<Entity> Scene::CreateEntity( const std::string& name /*= "" */ )
 	{
 		Ref<Entity> entity = ClassMetadataHandler::Get().CreateClassObject<Entity>( Entity::StaticClass(), this );
 		entity->SetName( name );
-		entity->GetComponent<IdComponent>().ID = uuid;
-	
+
 		OnEntityCreated( entity );
 
 		return entity;
 	}
 
-	Ref<Entity> Scene::CreateEntity( const std::string& name /*= "" */ )
+	Ref<Entity> Scene::CreateEntity( CreateEntityParameters& rParams )
 	{
-		Ref<Entity> entity = ClassMetadataHandler::Get().CreateClassObject<Entity>( Entity::StaticClass(), this );
-		entity->SetName( name );
+		if( !rParams.pClass->IsChildOf( Entity::StaticClass() ) || rParams.pClass == nullptr ) 
+			return nullptr;
+
+		Ref<Entity> entity = dynamic_cast<Entity*>( ClassMetadataHandler::Get().CreateClassObject( rParams.pClass ) );
+		entity->SetName( rParams.Tag );
+		entity->GetComponent<IdComponent>().ID = rParams.ID;
+
+		if( rParams.Parent )
+		{
+			entity->SetParent( rParams.Parent->GetUUID() );
+			rParams.Parent->AddChild( entity->GetUUID() );
+		}
+
+		auto& tc = entity->GetComponent<TransformComponent>();
+		tc.Position = rParams.Position;
+		tc.SetRotation( rParams.Rotation );
+		tc.Scale = rParams.Scale;
 
 		OnEntityCreated( entity );
 

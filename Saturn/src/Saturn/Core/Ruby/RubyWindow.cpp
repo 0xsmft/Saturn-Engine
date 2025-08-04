@@ -41,7 +41,7 @@ namespace Saturn {
 		: m_WindowTitle( rSpec.Name ), m_GraphicsAPI( rSpec.GraphicsAPI ), m_Style( rSpec.Style )
 	{
 #if defined(_WIN32)
-		m_pDefaultBackend = new RubyWindowsBackend( rSpec, this );
+		m_pDefaultBackend = std::make_unique<RubyWindowsBackend>( rSpec, this );
 #endif
 
 		m_pDefaultBackend->Create();
@@ -55,7 +55,6 @@ namespace Saturn {
 		m_pEventTarget = nullptr;
 
 		m_pDefaultBackend->DestroyWindow();
-		delete m_pDefaultBackend;
 	}
 
 	void RubyWindow::PollEvents()
@@ -297,6 +296,8 @@ namespace Saturn {
 	std::vector<const char*> RubyWindow::GetVulkanRequiredExtensions()
 	{
 		std::vector<const char*> Extensions;
+		Extensions.reserve( 2 );
+
 		Extensions.push_back( "VK_KHR_surface" );
 
 #if defined(_WIN32)

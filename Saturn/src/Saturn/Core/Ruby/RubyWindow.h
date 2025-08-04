@@ -183,7 +183,7 @@ namespace Saturn {
 		RubyWindowShowCmd m_ShowCommand = RubyWindowShowCmd::Fullscreen;
 
 	private:
-		RubyBackendBase* m_pDefaultBackend = nullptr;
+		std::unique_ptr<RubyBackendBase> m_pDefaultBackend = nullptr;
 		RubyEventTarget* m_pEventTarget = nullptr;
 
 		std::wstring m_WindowTitle = L"";

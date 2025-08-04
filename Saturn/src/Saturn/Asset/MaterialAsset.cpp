@@ -38,6 +38,8 @@
 #include "Saturn/Vulkan/Mesh.h"
 #include "Saturn/Serialisation/AssetSerialisers.h"
 
+#include "Saturn/Project/Project.h"
+
 #include "TextureSourceAsset.h"
 
 namespace Saturn {
@@ -300,7 +302,7 @@ namespace Saturn {
 
 			for( auto&& [index, path] : m_VPendingTextureChanges )
 			{
-				auto fullPath = Project::GetActiveProject()->FilepathAbs( path );
+				const auto fullPath = Project::GetActiveProject()->FilepathAbs( path );
 				texture = Ref<Texture2D>::Create( fullPath, AddressingMode::Repeat, false );
 
 				m_Material->SetResource( IndexToTextureIndex[ index ], texture );
@@ -572,7 +574,7 @@ namespace Saturn {
 		if( materialID == 0 )
 			return;
 
-		auto Itr = m_MaterialAssetsIDs.find( index );
+		const auto Itr = m_MaterialAssetsIDs.find( index );
 		if( Itr != m_MaterialAssetsIDs.end() )
 		{
 			Itr->second = materialID;
@@ -666,7 +668,7 @@ namespace Saturn {
 			}
 			else // Fallback to default
 			{
-				auto defaultProjectAsset = AssetManager::Get().FindAsset( Project::GetActiveProject()->GetDefaultMaterialAsset() );
+				const auto defaultProjectAsset = AssetManager::Get().FindAsset( Project::GetActiveProject()->GetDefaultMaterialAsset() );
 
 				rRegistry->AddAsset( Ref<MaterialAsset>::Create( nullptr ) );
 			}

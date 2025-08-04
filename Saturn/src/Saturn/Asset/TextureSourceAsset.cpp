@@ -34,6 +34,8 @@
 #include "Saturn/Core/VirtualFS.h"
 #include "Saturn/Core/MemoryStream.h"
 
+#include "Saturn/Project/Project.h"
+
 #include <stb_image.h>
 
 namespace Saturn {

@@ -39,7 +39,6 @@
 
 namespace Saturn {
 
-	struct RubyWindowSpecification;
 	class RubyWindow;
 
 	enum class RubyMouseCursorSetReason
@@ -52,6 +51,8 @@ namespace Saturn {
 	class RubyBackendBase
 	{
 	public:
+		RubyBackendBase() = default;
+
 		RubyBackendBase( const RubyWindowSpecification& rSpec, RubyWindow* pWindow )
 			: m_WindowSpecification( rSpec ), m_pWindow( pWindow )
 		{

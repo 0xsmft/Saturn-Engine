@@ -46,6 +46,7 @@ namespace Saturn {
 	{
 	public:
 		SceneHierarchyPanel();
+		SceneHierarchyPanel( const std::string& rWindowName );
 		~SceneHierarchyPanel();
 
 		void SetContext( const Ref<Scene>& scene );
@@ -82,14 +83,11 @@ namespace Saturn {
 		
 		static const char* GetStaticName() 
 		{
-			return "Scene Hierarchy Panel";
+			return "Scene Hierarchy";
 		}
 
-		void SetIsPrefabScene( bool value ) { m_IsPrefabScene = value; }
-
-		void AddID( UUID ID ) { m_CustomID = ID; }
-		void SetName( const std::string& rName ) { m_WindowName = rName; }
-		const std::string& GetName() const { return m_WindowName; }
+		inline void SetIsPrefabScene( bool value ) { m_IsPrefabScene = value; }
+		inline void SetCustomID( UUID ID ) { m_CustomID = ID; }
 
 	protected:
 		void DrawComponents( Ref<Entity> entity );
@@ -105,9 +103,11 @@ namespace Saturn {
 		template<typename T, typename UIFunction>
 		void DrawComponent( const std::string& name, Ref<Entity> entity, UIFunction uiFunction );
 
+		void PopupContextMenuNormal();
+		void SelectedEntityPopup();
+
 	private:
 		UUID m_CustomID = 0;
-		std::string m_WindowName = "Scene Hierarchy";
 
 		Ref<Texture2D> m_EditIcon;
 

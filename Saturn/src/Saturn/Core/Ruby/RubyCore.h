@@ -66,7 +66,8 @@ namespace Saturn {
 	{
 		Default,
 		Borderless,
-		BorderlessNoResize, // Draws the same as Borderless however with no resize support or titlebar
+		// Draws the same as Borderless however with no resize support or titlebar
+		BorderlessNoResize, 
 	};
 
 	enum class RubyCursorType

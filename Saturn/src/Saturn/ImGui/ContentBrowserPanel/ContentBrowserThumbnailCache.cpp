@@ -32,16 +32,18 @@
 #include "ThumbnailGenerator.h"
 
 #include "Saturn/Asset/Asset.h"
+#include "Saturn/Asset/TextureSourceAsset.h"
+
+#include "Saturn/Project/Project.h"
 
 #include "Saturn/Serialisation/RawSerialisation.h"
-#include "Saturn/Asset/TextureSourceAsset.h"
 
 #include "Saturn/Core/JobSystem.h"
 
 #include "Saturn/ImGui/EditorIcons.h"
+#include "Saturn/ImGui/ImGuiAuxiliary.h"
 
 #include <imgui.h>
-#include "Saturn/ImGui/ImGuiAuxiliary.h"
 
 namespace Saturn {
 	

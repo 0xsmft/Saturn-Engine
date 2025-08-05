@@ -44,6 +44,8 @@
 #include "Saturn/Asset/AssetManager.h"
 #include "Saturn/Serialisation/AssetSerialisers.h"
 
+#include "Saturn/Project/Project.h"
+
 #include <imgui.h>
 #include <imgui_node_editor.h>
 #include <stack>

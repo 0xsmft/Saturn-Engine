@@ -36,6 +36,7 @@
 
 #include "Saturn/Vulkan/Mesh.h"
 #include "Saturn/Vulkan/SceneRenderer.h"
+#include "Saturn/Vulkan/VulkanContext.h"
 
 #include "Saturn/Scene/Entity.h"
 
@@ -48,7 +49,7 @@
 
 #include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 
-#include "Saturn/Vulkan/VulkanContext.h"
+#include "Saturn/Project/Project.h"
 
 #include "UndoRedo/GlobalUndoRedoGroup.h"
 #include "UndoRedo/EntityUndoRedoActions.h"
@@ -66,7 +67,12 @@
 namespace Saturn {
 
 	SceneHierarchyPanel::SceneHierarchyPanel() 
-		: ImGuiWindow( "Scene Hierarchy Panel" ), m_EditIcon( Ref<Texture2D>::Create( "content/textures/editor/EditIcon.png", AddressingMode::Repeat, false ) )
+		: ImGuiWindow( "Scene Hierarchy" ), m_EditIcon( EditorIcons::GetIcon( "EditIcon" ) )
+	{
+	}
+
+	SceneHierarchyPanel::SceneHierarchyPanel( const std::string& rWindowName )
+		: ImGuiWindow( rWindowName ), m_EditIcon( EditorIcons::GetIcon( "EditIcon" ) )
 	{
 	}
 
@@ -128,7 +134,7 @@ namespace Saturn {
 		ImGui::PushID( static_cast<int>( m_CustomID == 0 ? m_Context->ID : m_CustomID ) );
 
 		if( !m_IsPrefabScene )
-			ImGui::Begin( m_WindowName.c_str(), &m_Open );
+			ImGui::Begin( m_Name.c_str(), &m_Open );
 
 		if( m_Context )
 		{	
@@ -146,68 +152,19 @@ namespace Saturn {
 
 			if( ImGui::BeginPopupContextWindow( 0, ImGuiPopupFlags_MouseButtonRight ) )
 			{
-				if( ImGui::MenuItem( "Create Empty Entity" ) )
+				if( m_SelectionContexts.size() )
 				{
-					SetSelected( m_Context->CreateEntity( "Unnamed Entity" ) );
-					m_Context->MarkDirty();
+					SelectedEntityPopup();
+				}
+				else
+				{
+					PopupContextMenuNormal();
 				}
 
-				auto directionalLights = m_Context->m_Registry.view<DirectionalLightComponent>();
-				if( directionalLights.empty() )
-				{
-					if( ImGui::MenuItem( "Directional Light" ) )
-					{
-						Ref<Entity> entity = m_Context->CreateEntity( "Directional Light" );
-
-						entity->AddComponent<DirectionalLightComponent>();
-						entity->GetComponent<TransformComponent>().SetRotation( glm::radians( glm::vec3( 80.0f, 10.0f, 0.0f ) ) );
-
-						SetSelected( entity );
-						m_Context->MarkDirty();
-					}
-				}
-
-				auto SkylightComponents = m_Context->m_Registry.view<SkylightComponent>();
-				if( SkylightComponents.empty() )
-				{
-					if( ImGui::MenuItem( "Skylight" ) )
-					{
-						auto entity = m_Context->CreateEntity( "Skylight" );
-						entity->AddComponent<SkylightComponent>();
-						
-						// Defaults
-						Application::Get().PrimarySceneRenderer().SetDynamicSky( 2.0f, 0.0f, 0.0f );
-
-						SetSelected( entity );
-						m_Context->MarkDirty();
-					}
-				}
-
-				auto navBounds = m_Context->m_Registry.view<NavigationMeshSpecificationComponent>();
-				if( navBounds.empty() )
-				{
-					if( ImGui::MenuItem( "Create Navigation Bounds" ) )
-					{
-						auto navEntity = m_Context->CreateEntityScript<NavBoundsEntity>( "NavBoundsEntity", "Navigation Bounds" );
-						navEntity->GatherGeometryAndBuild();
-
-						SetSelected( navEntity );
-						m_Context->MarkDirty();
-					}
-				}
-
-				if( ImGui::MenuItem( "Create AI Agent" ) )
-				{
-					auto agent = m_Context->CreateEntityScript<AIAgentEntity>( "AIAgentEntity", "AI Agent" );
-					
-					SetSelected( agent );
-					m_Context->MarkDirty();
-				}
-				
 				ImGui::EndPopup();
 			}
 
-			std::string name = "Inspector##" + m_WindowName;
+			const std::string name = "Inspector##" + m_Name;
 			ImGui::Begin( name.c_str(), nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse );
 
 			if( m_SelectionContexts.size() )
@@ -231,6 +188,87 @@ namespace Saturn {
 		}
 
 		ImGui::PopID();
+	}
+
+	void SceneHierarchyPanel::SelectedEntityPopup()
+	{
+		if( ImGui::MenuItem( "Create Empty Entity as child" ) )
+		{
+			Ref<Entity> child = m_Context->CreateEntity( "Unnamed Entity" );
+			
+			// Only add to most recent selection.
+			Ref<Entity> parent = m_SelectionContexts.back();
+			if( parent )
+			{
+				parent->GetComponent<RelationshipComponent>().ChildrenID.push_back( child->GetUUID() );
+				child->SetParent( parent->GetUUID() );
+			}
+
+			SetSelected( child );
+
+			m_Context->MarkDirty();
+		}
+	}
+
+	void SceneHierarchyPanel::PopupContextMenuNormal()
+	{
+		if( ImGui::MenuItem( "Create Empty Entity" ) )
+		{
+			SetSelected( m_Context->CreateEntity( "Unnamed Entity" ) );
+			m_Context->MarkDirty();
+		}
+
+		const auto directionalLights = m_Context->m_Registry.view<DirectionalLightComponent>();
+		if( directionalLights.empty() )
+		{
+			if( ImGui::MenuItem( "Directional Light" ) )
+			{
+				Ref<Entity> entity = m_Context->CreateEntity( "Directional Light" );
+
+				entity->AddComponent<DirectionalLightComponent>();
+				entity->GetComponent<TransformComponent>().SetRotation( glm::radians( glm::vec3( 80.0f, 10.0f, 0.0f ) ) );
+
+				SetSelected( entity );
+				m_Context->MarkDirty();
+			}
+		}
+
+		const auto SkylightComponents = m_Context->m_Registry.view<SkylightComponent>();
+		if( SkylightComponents.empty() )
+		{
+			if( ImGui::MenuItem( "Skylight" ) )
+			{
+				auto entity = m_Context->CreateEntity( "Skylight" );
+				entity->AddComponent<SkylightComponent>();
+
+				// Defaults
+				Application::Get().PrimarySceneRenderer().SetDynamicSky( 2.0f, 0.0f, 0.0f );
+
+				SetSelected( entity );
+				m_Context->MarkDirty();
+			}
+		}
+
+		const auto navBounds = m_Context->m_Registry.view<NavigationMeshSpecificationComponent>();
+		if( navBounds.empty() )
+		{
+			if( ImGui::MenuItem( "Create Navigation Bounds" ) )
+			{
+				auto navEntity = m_Context->CreateEntityFromClass<NavBoundsEntity>( "Navigation Bounds" );
+				navEntity->GatherGeometryAndBuild();
+
+				SetSelected( navEntity );
+				m_Context->MarkDirty();
+			}
+		}
+
+		if( ImGui::MenuItem( "Create AI Agent" ) )
+		{
+			const auto agent = m_Context->CreateEntityFromClass<AIAgentEntity>( "AI Agent" );
+
+			SetSelected( agent );
+			m_Context->MarkDirty();
+		}
 	}
 
 	void SceneHierarchyPanel::DrawComponents( Ref<Entity> entity )
@@ -320,7 +358,7 @@ namespace Saturn {
 			{
 				ImGui::Text( rTag.c_str() );
 
-				ImGui::SetDragDropPayload( "ENTITY_PARENT_SCHPANEL", entity.Get(), sizeof( Entity ), ImGuiCond_Once );
+				ImGui::SetDragDropPayload( "ENTITY_PARENT_SCHPANEL", entity.Get(), sizeof( uintptr_t ), ImGuiCond_Once );
 
 				ImGui::EndDragDropSource();
 			}
@@ -335,7 +373,7 @@ namespace Saturn {
 
 					// If a child is trying to parent it's parent.
 					bool ParentToParent = false;
-					for( auto& child : e->GetChildren() )
+					for( const auto& child : e->GetChildren() )
 					{
 						if( child == entity->GetUUID() )
 						{
@@ -348,6 +386,7 @@ namespace Saturn {
 					{
 						if( previousParent )
 						{
+							// Remove target entity from it's parent, replaced with new parent
 							auto& children = previousParent->GetChildren();
 							children.erase( std::remove( children.begin(), children.end(), e->GetComponent<IdComponent>().ID ), children.end() );
 						}
@@ -380,17 +419,17 @@ namespace Saturn {
 	{
 		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_AllowItemOverlap;
 
-		const bool hasScript = entity->HasComponent<DScriptComponent>();
+		const bool hasScript = entity->GetClass()->GetPropertyCount();
 
 		if( hasScript )
 			flags |= ImGuiTreeNodeFlags_DefaultOpen;
 
 		// Draw properties
-		if( ImGui::TreeNodeEx( ( void* ) ( ( uint32_t ) entity ), flags, "Properties" ) )
+		if( ImGui::TreeNodeEx( ( void* )entity.Get(), flags, "Properties" ) )
 		{
 			if( hasScript )
 			{
-				auto propCount = entity->GetClass()->GetPropertyCount();
+				const auto propCount = entity->GetClass()->GetPropertyCount();
 				auto properties = entity->GetClass()->GetProperties();
 
 				for( int i = 0; i < propCount; i++ )
@@ -542,7 +581,7 @@ namespace Saturn {
 
 							if( rRef.ID != 0 )
 							{
-								if( Ref<Asset> asset = AssetManager::Get().FindAsset( rRef.ID ); asset != nullptr )
+								if( Ref<Asset> asset = AssetManager::Get().FindAsset( rRef.ID ); asset )
 								{
 									assetName = " " + asset->Name;
 								}
@@ -685,9 +724,9 @@ namespace Saturn {
 			ImGui::SameLine();
 
 			if( mc.Mesh )
-				ImGui::InputText( "##meshfilepath", ( char* ) mc.Mesh->Name.c_str(), 256, ImGuiInputTextFlags_ReadOnly );
+				Auxiliary::InputText( "##meshfilepath", &mc.Mesh->Name, ImGuiInputTextFlags_ReadOnly );
 			else
-				ImGui::InputText( "##meshfilepath", ( char* ) "", 256, ImGuiInputTextFlags_ReadOnly );
+				ImGui::InputText( "##meshfilepath", ( char* ) "", 1, ImGuiInputTextFlags_ReadOnly );
 
 			if( mc.Mesh ) 
 			{
@@ -696,8 +735,7 @@ namespace Saturn {
 					int i = 0;
 					for( auto& rAsset : mc.MaterialRegistry->GetMaterialAssets() )
 					{
-						std::string name = rAsset->Name.empty() ? rAsset->GetMaterialName() : rAsset->Name;
-
+						const std::string name = rAsset->Name.empty() ? rAsset->GetMaterialName() : rAsset->Name;
 						if( ImGui::Button( name.c_str() ) )
 						{
 							m_CurrentFinderType = AssetType::Material;
@@ -1287,14 +1325,14 @@ namespace Saturn {
 
 			if( boundsEntity->NeedsRebuilding() )
 			{
-				std::string text = "A rebuild is required for the changes to have effect!";
+				const std::string text = "A rebuild is required for the changes to have effect!";
 
-				ImVec2 padding = ImGui::GetStyle().FramePadding;
-				ImVec2 textPosition = ImGui::GetCursorScreenPos();
-				ImVec2 textSize = ImGui::CalcTextSize( text.c_str() );
+				const ImVec2 padding = ImGui::GetStyle().FramePadding;
+				const ImVec2 textPosition = ImGui::GetCursorScreenPos();
+				const ImVec2 textSize = ImGui::CalcTextSize( text.c_str() );
 
-				ImVec2 min = ImVec2( textPosition.x - padding.x, textPosition.y - padding.y );
-				ImVec2 max = ImVec2( textPosition.x + padding.x + textSize.x, textPosition.y + padding.y + textSize.y );
+				const ImVec2 min = ImVec2( textPosition.x - padding.x, textPosition.y - padding.y );
+				const ImVec2 max = ImVec2( textPosition.x + padding.x + textSize.x, textPosition.y + padding.y + textSize.y );
 
 				ImGui::GetWindowDrawList()->AddRectFilled( min, max,
 					IM_COL32( 200, 30, 60, 255 ), 2.0f, ImDrawFlags_RoundCornersAll );
@@ -1314,7 +1352,7 @@ namespace Saturn {
 
 			auto& component = entity->GetComponent<T>();
 
-			bool open = ImGui::TreeNodeEx( ( void* ) ( ( uint32_t ) entity | typeid( T ).hash_code() ), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_AllowItemOverlap, name.c_str() );
+			bool open = ImGui::TreeNodeEx( ( void* ) ( ( uintptr_t ) entity.Get() | typeid( T ).hash_code() ), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_AllowItemOverlap, name.c_str() );
 
 			ImGui::SameLine();
 			ImGui::PushStyleColor( ImGuiCol_Button, ImVec4( 0, 0, 0, 0 ) );

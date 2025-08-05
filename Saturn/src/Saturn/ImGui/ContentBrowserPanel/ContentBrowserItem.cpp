@@ -46,6 +46,8 @@
 #include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeAssetViewer.h"
 #include "Saturn/AI/BehaviourTree/BehaviourTreeMemoryAssetViewer.h"
 
+#include "Saturn/Project/Project.h"
+
 #include "ContentBrowserThumbnailCache.h"
 
 #include <imgui_internal.h>
@@ -66,8 +68,8 @@ namespace Saturn {
 		}
 		else if( m_Type == ContentBrowserItemType::Asset )
 		{
-			auto path = std::filesystem::relative( m_Path, Project::GetActiveProject()->GetRootDir() );
-			auto asset = AssetManager::Get().FindAsset( path );
+			const auto path = std::filesystem::relative( m_Path, Project::GetActiveProject()->GetRootDir() );
+			const auto asset = AssetManager::Get().FindAsset( path );
 
 			if( asset )
 			{
@@ -88,7 +90,7 @@ namespace Saturn {
 	void ContentBrowserItem::Draw( ImVec2 ThumbnailSize, float Padding )
 	{
 		ImDrawList* pDrawList = ImGui::GetWindowDrawList();
-		ImGuiStyle& style = ImGui::GetStyle();
+		const ImGuiStyle& style = ImGui::GetStyle();
 
 		const float EdgeOffset = 4.0f;
 		const float TextLineHeight = ImGui::GetTextLineHeightWithSpacing() * 2.0f + EdgeOffset * 2.0f;
@@ -330,8 +332,7 @@ namespace Saturn {
 		ImGui::SetCursorScreenPos( ImVec2( TopLeft.x + 2.0f, TopLeft.y + ThumbnailSize.y ) );
 
 		// Filename
-
-		ImVec2 cursor = ImGui::GetCursorPos();
+		const ImVec2 cursor = ImGui::GetCursorPos();
 		ImGui::SetCursorPos( ImVec2( cursor.x + EdgeOffset + 5.0f, cursor.y + EdgeOffset + 5.0f ) );
 
 		std::string Filename = m_Filename.string();
@@ -344,7 +345,7 @@ namespace Saturn {
 
 			ImGui::PushTextWrapPos( ImGui::GetCursorPosX() + ( ThumbnailSize.x - EdgeOffset * 3.0f ) );
 
-			float textWidth = std::min( ImGui::CalcTextSize( Filename.c_str() ).x, ThumbnailSize.x );
+			const float textWidth = std::min( ImGui::CalcTextSize( Filename.c_str() ).x, ThumbnailSize.x );
 
 			ImGui::SetNextItemWidth( textWidth );
 
@@ -453,10 +454,10 @@ namespace Saturn {
 
 		m_Filename = rName;
 
-		std::filesystem::path oldPath = m_Path;
+		const std::filesystem::path oldPath = m_Path;
 		const std::string extension = oldPath.extension().string();
 
-		std::filesystem::path newPath = std::format( "{0}\\{1}{2}", oldPath.parent_path().string(), rName, extension );
+		const std::filesystem::path newPath = std::format( "{0}\\{1}{2}", oldPath.parent_path().string(), rName, extension );
 
 		// Rename the file on the filesystem
 		std::filesystem::rename( oldPath, newPath );
@@ -466,7 +467,8 @@ namespace Saturn {
 		m_Path = m_Entry.path();
 
 		// Find our asset.
-		auto relative = std::filesystem::relative( oldPath, Project::GetActiveProject()->GetRootDir() );
+		const auto relative = std::filesystem::relative( oldPath, Project::GetActiveProject()->GetRootDir() );
+
 		Ref<Asset> asset = AssetManager::Get().FindAsset( relative );
 		if( asset )
 		{
@@ -526,7 +528,7 @@ namespace Saturn {
 				return false;
 			}
 
-			auto relativePath = std::filesystem::relative( m_Path, Project::GetActiveProject()->GetRootDir() );
+			const auto relativePath = std::filesystem::relative( m_Path, Project::GetActiveProject()->GetRootDir() );
 			Ref<Asset> asset = AssetManager::Get().FindAsset( relativePath );
 
 			if( asset )
@@ -548,7 +550,7 @@ namespace Saturn {
 		if( m_Type == ContentBrowserItemType::SourceItem )
 			return;
 
-		auto Icon = ContentBrowserThumbnailCache::Get().GetDefault( m_IsDirectory ? CB_DIRECTORY_ICON : CB_FILE_ICON );
+		const auto Icon = ContentBrowserThumbnailCache::Get().GetDefault( m_IsDirectory ? CB_DIRECTORY_ICON : CB_FILE_ICON );
 
 		if( ImGui::BeginDragDropSource( ImGuiDragDropFlags_SourceAllowNullID ) )
 		{
@@ -565,7 +567,7 @@ namespace Saturn {
 
 			ImGui::EndHorizontal();
 
-			auto path = std::filesystem::relative( m_Path, Project::GetActiveProject()->GetRootDir() );
+			const auto path = std::filesystem::relative( m_Path, Project::GetActiveProject()->GetRootDir() );
 			const void* pData = &m_Asset->ID;
 
 			if( Input::Get().KeyPressed( RubyKey_LeftCtrl ) || Input::Get().KeyPressed( RubyKey_RightCtrl ) )
@@ -622,11 +624,11 @@ namespace Saturn {
 		const ImVec2 imageSize = ImVec2( ( float ) m_Icon->Width(), ( float ) m_Icon->Height() );
 		ImVec2 scaledSize = imageSize;
 
-		// TODO: We use 512x512 images not 180
+		// TODO: We use 512x512 images not 180x180
 		const float maxSize = rThumbnailSize.x;
 		if( imageSize.x > maxSize || imageSize.y > maxSize )
 		{
-			float aspectRatio = imageSize.x / imageSize.y;
+			const float aspectRatio = imageSize.x / imageSize.y;
 
 			if( aspectRatio > 1.0f )
 			{
@@ -635,15 +637,12 @@ namespace Saturn {
 				scaledSize.y = maxSize / aspectRatio;
 
 				// Align to the bottom of the item
-				ImVec2 modifiedTopLeft = rTopLeft;
-				modifiedTopLeft.y += ( rThumbnailSize.y - scaledSize.y );
-
+				const ImVec2 modifiedTopLeft = ImVec2( rTopLeft.x, rTopLeft.y + ( rThumbnailSize.y - scaledSize.y ) );
 				DrawIconInternal( modifiedTopLeft, rBottomRight, 256 );
 			}
 			else
 			{
-				// Every thumbnail image that does not come from a texture (source asset) will always have an aspect ratio of one
-				// as 512 / 512 = 1
+				// Every thumbnail image that does not come from a texture (source asset) will always have an aspect ratio of one (as 512 / 512 = 1)
 				// Now, if an image is taller than it is wider it would also come through here.
 				
 				// Draw normal
@@ -655,7 +654,6 @@ namespace Saturn {
 	void ContentBrowserItem::DrawIconInternal( const ImVec2& rTopLeft, const ImVec2& rBottomRight, ImDrawFlags drawFlags )
 	{
 		ImDrawList* pDrawList = ImGui::GetWindowDrawList();
-
 		pDrawList->AddImageRounded(
 			m_Icon->GetDescriptorSet(),
 			rTopLeft,

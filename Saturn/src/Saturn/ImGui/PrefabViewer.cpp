@@ -44,10 +44,9 @@ namespace Saturn {
 	static inline bool operator!=( const ImVec2& lhs, const ImVec2& rhs ) { return !( lhs == rhs ); }
 
 	PrefabViewer::PrefabViewer( AssetID id )
-		: AssetViewer( id ), m_Camera( 45.0f, 1280.0f, 720.0f, 0.1f, 1000.0f ), m_SceneHierarchyPanel( Ref<SceneHierarchyPanel>::Create() )
+		: AssetViewer( id ), m_Camera( 45.0f, 1280.0f, 720.0f, 0.1f, 1000.0f ), m_SceneHierarchyPanel( Ref<SceneHierarchyPanel>::Create( "Prefab Hierarchy" ) )
 	{
-		m_SceneHierarchyPanel->AddID( m_AssetID );
-		m_SceneHierarchyPanel->SetName( "Prefab Hierarchy" );
+		m_SceneHierarchyPanel->SetCustomID( m_AssetID );
 		m_SceneHierarchyPanel->OpenWindow();
 
 		AddPrefab();
@@ -119,7 +118,7 @@ namespace Saturn {
 
 		//////////////////////////////////////////////////////////////////////////
 
-		ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 0, 0 ) );
+		ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 0.0f, 0.0f ) );
 
 		if( ImGui::IsMouseClicked( ImGuiMouseButton_Left ) || ( ImGui::IsMouseClicked( ImGuiMouseButton_Right ) && !m_StartedRightClickInViewport ) )
 		{

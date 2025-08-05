@@ -32,7 +32,6 @@
 #include "ContentBrowserThumbnailCache.h"
 
 #include "Saturn/Core/Ruby/RubyWindow.h"
-
 #include "Saturn/Core/JobSystem.h"
 #include "Saturn/Core/Renderer/RenderThread.h"
 #include "Saturn/Core/Renderer/EditorCamera.h"
@@ -42,7 +41,10 @@
 
 #include "Saturn/Vulkan/DefaultMeshes.h"
 #include "Saturn/Vulkan/SceneRenderer.h"
+
 #include "Saturn/Scene/Scene.h"
+
+#include "Saturn/Project/Project.h"
 
 #include <queue>
 

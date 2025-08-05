@@ -38,6 +38,8 @@
 
 #include "Saturn/Vulkan/Mesh.h"
 
+#include "Saturn/Project/Project.h"
+
 #include "ImGuiAuxiliary.h"
 #include "EditorIcons.h"
 

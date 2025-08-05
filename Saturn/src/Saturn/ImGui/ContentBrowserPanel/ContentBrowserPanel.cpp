@@ -915,11 +915,11 @@ namespace Saturn {
 		{
 			RubyMouseEvent& mouseEvent = ( RubyMouseEvent& ) rEvent;
 
-			if( mouseEvent.GetButton() == ( int ) RubyMouseButton::Extra1 )
+			if( mouseEvent.GetButton() == ( int ) RubyMouseButton_Extra1 )
 			{
 				UndoQuickAction();
 			}
-			else if( mouseEvent.GetButton() == ( int ) RubyMouseButton::Extra2 )
+			else if( mouseEvent.GetButton() == ( int ) RubyMouseButton_Extra2 )
 			{
 				RedoQuickAction();
 			}

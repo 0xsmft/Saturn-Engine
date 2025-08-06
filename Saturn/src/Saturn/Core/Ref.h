@@ -29,159 +29,39 @@
 #pragma once
 
 #include <type_traits>
+#include <atomic>
 
 namespace Saturn {
 
+	//////////////////////////////////////////////////////////////////////////
+	// INTRUSIVE REFERENCE COUNTED OBJECTS
+
+	// Base class for all intrusive reference counted objects
 	class RefTarget
 	{
 	public:
-		void AddRef() const
+		inline void AddRef() const
 		{
 			m_RefCount++;
 		}
 
-		void RemoveRef() const
+		inline void RemoveRef() const
 		{
 			m_RefCount--;
 		}
 
-		void AddWeakRef() const
-		{
-			m_WeakRefCount++;
-		}
-
-		void RemoveWeakRef() const
-		{
-			m_WeakRefCount--;
-		}
-
-		uint32_t GetRefCount() const { return m_RefCount; }
-		uint32_t GetWeakRefCount() const { return m_WeakRefCount; }
+		inline uint32_t GetRefCount() const { return m_RefCount; }
 
 	private:
-		mutable int m_RefCount = 0;
-		mutable int m_WeakRefCount = 0;
-	};
-	
-	template<typename T>
-	class Ref;
-
-	template<typename T>
-	class WeakRef final
-	{
-		static_assert( std::is_base_of<RefTarget, T>::value, "T must be a child of RefTarget class!" );
-	public:
-		WeakRef() : m_Pointer( nullptr ) {}
-		WeakRef( std::nullptr_t ) : m_Pointer( nullptr ) {}
-
-		// Construct from strong ref
-		WeakRef( const Ref<T>& rStrongRef ) 
-			: m_Pointer( rStrongRef.m_Pointer )
-		{
-			AddWeakRef();
-		}
-
-		WeakRef( const WeakRef<T>& rRef )
-			: m_Pointer( rRef.m_Pointer )
-		{
-			AddWeakRef();
-		}
-
-		WeakRef( const WeakRef<T>&& rrOther )
-			: m_Pointer( rrOther.m_Pointer )
-		{
-			rrOther.m_Pointer = nullptr;
-		}
-
-		~WeakRef()
-		{
-			RemoveWeakRef();
-
-			m_Pointer = nullptr;
-		}
-
-	public:
-		WeakRef& operator=( std::nullptr_t )
-		{
-			RemoveWeakRef();
-
-			m_Pointer = nullptr;
-			
-			return *this;
-		}
-
-		WeakRef& operator=( const Ref<T>& rStrongRef )
-		{
-			m_Pointer = rStrongRef.m_Pointer;
-		
-			AddWeakRef();
-
-			return *this;
-		}
-
-		WeakRef& operator=( const WeakRef<T>& rOther )
-		{
-			if( *this == rOther )
-				return;
-
-			RemoveWeakRef();
-			m_Pointer = rOther.m_Pointer;
-			AddWeakRef();
-
-			return *this;
-		}
-
-		WeakRef& operator=( const WeakRef<T>&& rrOther )
-		{
-			if( *this == rrOther )
-				return;
-
-			RemoveWeakRef();
-			m_Pointer = rrOther.m_Pointer;
-			rrOther.m_Pointer = nullptr;
-
-			return *this;
-		}
-
-		bool operator ==( const Ref<T>& rOther ) const { return m_Pointer == rOther.m_Pointer; }
-		bool operator !=( const Ref<T>& rOther ) const { return m_Pointer != rOther.m_Pointer; }
-
-	public:
-		Ref<T> Access() const 
-		{
-			if( !Expired() )
-			{
-				return Ref<T>( m_Pointer );
-			}
-
-			return nullptr;
-		}
-
-		bool Expired() const { return m_Pointer == nullptr || m_Pointer->GetRefCount() == 0; }
-
-	private:
-		void AddWeakRef() const 
-		{
-			if( m_Pointer )
-				m_Pointer->AddWeakRef();
-		}
-
-		void RemoveWeakRef() const 
-		{
-			if( m_Pointer )
-			{
-				m_Pointer->RemoveWeakRef();
-			}
-		}
-
-	private:
-		mutable T* m_Pointer;
-
-	private:
-		friend class Ref<T>;
-		friend class WeakRef;
+		// Maximum references for a single object is 4,294,967,296
+		mutable unsigned int m_RefCount = 0;
 	};
 
+	// Ref is an intrusive, shared ownership, reference counted, smart pointer similar to std::shared_ptr
+	// Intrusive refs do not support the usage of WeakRefs, you must use SharedPtr for that!
+	// Refs take up less space than SharedPtrs, as the Ref class it self only needs 8 bytes (on 64 bit machines) for the pointer and then T needs an additional 4 bytes for the reference count bringing it to a total of 12 bytes.
+	//
+	// NOTE: Any class that must use Ref must be a child of RefTarget
 	template<typename T>
 	class Ref final
 	{
@@ -207,12 +87,6 @@ namespace Saturn {
 			RemoveRef();
 		}
 
-		[[deprecated("Saturn::Ref::Delete is deprecated and will be removed. Consider using \"Ref::Reset\" instead.")]]
-		void Delete() 
-		{
-			RemoveRef();
-		}
-
 		void Reset()
 		{
 			RemoveRef();
@@ -227,7 +101,6 @@ namespace Saturn {
 		}
 
 	public:
-	
 		Ref& operator=( std::nullptr_t ) 
 		{
 			RemoveRef();
@@ -322,7 +195,6 @@ namespace Saturn {
 		}
 
 	private:
-
 		void AddRef() const
 		{
 			if( m_Pointer )
@@ -344,13 +216,346 @@ namespace Saturn {
 		}
 
 	private:
-
 		mutable T* m_Pointer;
 
 	private:
 		// Fix cannot access private member declared in class
 		friend class Ref;
-		friend class WeakRef<T>;
+	};
+
+	//////////////////////////////////////////////////////////////////////////
+	// NON-INTRUSIVE REFERENCE COUNTED OBJECTS
+
+	class __declspec(novtable) ReferenceControlBlockBase
+	{
+	protected:
+		constexpr ReferenceControlBlockBase() noexcept = default;
+
+	public:
+		virtual ~ReferenceControlBlockBase() {}
+
+		virtual void Destroy() = 0;
+
+		void AddRef() 
+		{
+			_MT_INCR( m_RefCount );
+		}
+
+		void AddWeakRef()
+		{
+			_MT_INCR( m_WeakCount );
+		}
+
+		void DecRef() 
+		{
+			if( _MT_DECR( m_RefCount ) == 0 )
+			{
+				Destroy();
+				// Check if we can delete this
+				DecWeakRef();
+			}
+		} 
+
+		void DecWeakRef()
+		{
+			if( _MT_DECR( m_WeakCount ) == 0 )
+			{
+				delete this;
+			}
+		}
+
+		[[nodiscard]] long GetRefCount() const { return (long)m_RefCount; }
+
+	private:
+		unsigned long m_RefCount{ 1 };
+		unsigned long m_WeakCount{ 1 };
+	};
+	
+	template<typename Ty>
+	class ReferenceControlBlock : public ReferenceControlBlockBase
+	{
+	public:
+		ReferenceControlBlock( Ty* pClass ) 
+			: m_pClass( pClass ) 
+		{
+		}
+
+		ReferenceControlBlock( ReferenceControlBlock& ) = delete;
+		ReferenceControlBlock& operator=( const ReferenceControlBlock& ) = delete;
+		ReferenceControlBlock( ReferenceControlBlock&& ) = delete;
+		ReferenceControlBlock& operator=( ReferenceControlBlock&& ) = delete;
+
+		~ReferenceControlBlock() 
+		{
+			Destroy();
+		}
+
+		inline virtual void Destroy() override 
+		{
+			if( m_pClass )
+			{
+				delete m_pClass;
+				m_pClass = nullptr;
+			}
+		}
+
+		[[nodiscard]] Ty* GetClass() const { return m_pClass; }
+
+	private:
+		Ty* m_pClass = nullptr;
+	};
+
+	template<typename Ty, typename Deleter>
+	class ReferenceControlBlockDeleter : public ReferenceControlBlockBase
+	{
+	public:
+		ReferenceControlBlockDeleter( Ty* pClass, Deleter d )
+			: m_pClass( pClass ), m_Deleter( d )
+		{
+		}
+
+		~ReferenceControlBlockDeleter() noexcept override = default;
+
+		inline virtual void Destroy() override
+		{
+			if( m_pClass )
+			{
+				m_Deleter( m_pClass );
+				m_pClass = nullptr;
+			}
+		}
+
+	private:
+		Ty* m_pClass = nullptr;
+		Deleter m_Deleter;
+	};
+
+	template<typename Ty>
+	class WeakRef;
+
+	template<class Callee, class Args, class = void>
+	struct IsSharedPtrDeleterViaible : std::false_type {};
+
+	template<class Callee, class Args>
+	struct IsSharedPtrDeleterViaible<Callee, Args, std::void_t<decltype(std::declval<Callee>()(std::declval<Args>()))>> : std::true_type {};
+
+	// Shared ownership of a single pointer, smart pointer, reference counted, 
+	// works very similar to std::shared_ptr.
+	//
+	// SharedPtr is non-intrusive, thread safe and authoritative.
+	template<typename Ty>
+	class SharedPtr
+	{
+	public:
+		SharedPtr() = default;
+		SharedPtr( std::nullptr_t ) {}
+
+		SharedPtr( Ty* pPointer )
+			: m_Pointer( pPointer )
+		{
+			m_pControlBlock = new ReferenceControlBlock<Ty>( pPointer );
+			// no need to inc ref count... it's already at one
+		}
+
+		template<typename Deleter>
+		SharedPtr( Ty* pPointer, Deleter deleter )
+			: m_Pointer( pPointer )
+		{
+			m_pControlBlock = new ReferenceControlBlockDeleter<Ty, Deleter>( pPointer, std::move( deleter ) );
+			// no need to inc ref count... it's already at one
+		}
+
+		// Copy from SharedPtr with the same type
+		SharedPtr( const SharedPtr& rOther )
+		{
+			m_Pointer = rOther.m_Pointer;
+			m_pControlBlock = rOther.m_pControlBlock;
+			m_pControlBlock->AddRef();
+		}
+
+		// Copy from SharedPtr a different type
+		template<typename Ty2>
+		SharedPtr( const SharedPtr<Ty2>& rOther )
+		{
+			m_Pointer = rOther.m_Pointer;
+			m_pControlBlock = rOther.m_pControlBlock;
+			m_pControlBlock->AddRef();
+		}
+
+		// Move from SharedPtr with the same type
+		SharedPtr( SharedPtr&& rrOther )
+		{
+			MoveFrom( std::move( rrOther ) );
+		}
+
+		~SharedPtr() 
+		{
+			TryRelease();
+		}
+
+		//////////////////////////////////////////////////////////////////////////
+
+		Ty* Get() const { return m_Pointer; }
+		Ty* operator->() const { return m_Pointer; }
+		Ty& operator*() const { return *m_Pointer; }
+		operator bool() const { return m_Pointer != nullptr; }
+
+		SharedPtr operator=( const SharedPtr& rOther )
+		{
+			if( this != rOther )
+			{
+				TryRelease();
+
+				m_pControlBlock = rOther.m_pControlBlock;
+				m_Pointer = rOther.m_Pointer;
+
+				m_pControlBlock->AddRef();
+			}
+
+			return *this;
+		}
+		
+		bool operator==( const SharedPtr& rOther ) const
+		{
+			return m_Pointer == rOther.m_Pointer;
+		}
+
+		bool operator!=( const SharedPtr& rOther ) const
+		{
+			return m_Pointer != rOther.m_Pointer;
+		}
+
+	public:
+		template<typename... VaArgs>
+		[[nodiscard]] static SharedPtr<Ty> Create( VaArgs&&... rrArgs ) 
+		{
+			return SharedPtr<Ty>( new Ty( std::forward<VaArgs>( rrArgs )... ) );
+		}
+
+	protected:
+		void ConstructWeak( const WeakRef<Ty>& weak ) 
+		{
+			m_Pointer = weak.m_pPointer;
+			m_pControlBlock = weak.m_pControlBlock;
+
+			m_pControlBlock->AddRef();
+		}
+
+	private:
+		void TryRelease() 
+		{
+			if( m_pControlBlock )
+			{
+				m_pControlBlock->DecRef();
+			}
+
+			m_Pointer = nullptr;
+			m_pControlBlock = nullptr;
+		}
+
+		template<typename T2>
+		void MoveFrom( SharedPtr<T2>&& rrOther )
+		{
+			m_Pointer = rrOther.m_Pointer;
+			m_pControlBlock = rrOther.m_pControlBlock;
+
+			rrOther.m_pControlBlock = nullptr;
+			rrOther.m_Pointer = nullptr;
+		}
+
+	private:
+		Ty* m_Pointer = nullptr;
+		ReferenceControlBlockBase* m_pControlBlock = nullptr;
+
+	private:
+		friend class SharedPtr;
+		friend class WeakRef<Ty>;
+	};
+	
+	template<typename Ty>
+	class SharedPtr;
+
+	// WeakRef, reference counted, works very similar to std::weak_ptr.
+	// WeakRef is non-intrusive however, NOT authoritative.
+	//
+	// A Weak pointer can help break cyclic dependencies (which would otherwise be stopped by using a raw ptr or some workaround) they can also be used in places where we simply want to use the object (if it's alive) without owning it and stopping it from deletion.
+	template<typename Ty>
+	class WeakRef
+	{
+	public:
+		WeakRef() = default;
+		
+		// Construct from strong ref
+		WeakRef( const SharedPtr<Ty>& rStrongRef )
+			: m_pPointer( rStrongRef.m_Pointer ), m_pControlBlock( rStrongRef.m_pControlBlock )
+		{
+			m_pControlBlock->AddWeakRef();
+		}
+
+		WeakRef( const WeakRef<Ty>& rRef )
+			: m_pPointer( rRef.m_pPointer ), m_pControlBlock( rRef.m_pControlBlock )
+		{
+			m_pControlBlock->AddWeakRef();
+		}
+
+		WeakRef( const WeakRef<Ty>&& rrOther )
+			: m_pPointer( rrOther.m_pPointer ), m_pControlBlock( rrOther.m_pControlBlock )
+		{
+			rrOther.m_pPointer = nullptr;
+			rrOther.m_pControlBlock = nullptr;
+		}
+
+		~WeakRef() 
+		{
+			TryRelease();
+		}
+
+		SharedPtr<Ty> Access() const
+		{
+			if( !Expired() )
+			{
+				SharedPtr<Ty> strongRef;
+				strongRef.ConstructWeak( *this );
+
+				return strongRef;
+			}
+
+			return nullptr;
+		}
+
+		[[nodiscard]] bool Expired() const { return m_pControlBlock->GetRefCount() == 0; }
+
+		WeakRef& operator=( const SharedPtr<Ty>& rStrongRef )
+		{
+			TryRelease();
+
+			m_pPointer = rStrongRef.m_Pointer;
+			m_pControlBlock = rStrongRef.m_pControlBlock;
+
+			m_pControlBlock->AddWeakRef();
+
+			return *this;
+		}
+
+	private:
+		void TryRelease() 
+		{
+			if( m_pControlBlock )
+			{
+				m_pControlBlock->DecWeakRef();
+			}
+
+			m_pPointer = nullptr;
+			m_pControlBlock = nullptr;
+		}
+
+	private:
+		Ty* m_pPointer = nullptr;
+		ReferenceControlBlockBase* m_pControlBlock = nullptr;
+
+	private:
+		friend class WeakRef;
+		friend class SharedPtr<Ty>;
 	};
 
 }

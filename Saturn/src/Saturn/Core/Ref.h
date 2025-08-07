@@ -33,6 +33,24 @@
 
 namespace Saturn {
 
+	/* 
+	+----------------------------------------------------------------------------------------+
+	| TYPE          | NAME       | USAGE       | LIMIATIONS									 |	
+	+----------------------------------------------------------------------------------------+
+	| INTRUSIVE     | Ref        | All Classes | No Weak Refs								 |
+	| NON-INTRUSIVE | SharedPtr  | All Classes | More heap demand + use of virtual functions |
+	| NON-INTRUSIVE | WeakRef    | All Classes | See above									 |
+	| -				| -			 | -		   | -											 |
+	| -				| -			 | -		   | -											 |
+	+----------------------------------------------------------------------------------------+
+	*/
+
+	/*
+	* NOTE: You may see throughout the Engine that we use Ref<Ty> and SharedPtr<Ty> in the same place,
+	* The reason why is using Ref is the preferred way and should be picked over SharedPtr,
+	* SharedPtr should only be used if we know that we are going to need to use a WeakRef or if we just want to reference count non-intrusively, or we know that an object could be used over different threads (as Ref is not thread safe atm)
+	*/
+
 	//////////////////////////////////////////////////////////////////////////
 	// INTRUSIVE REFERENCE COUNTED OBJECTS
 
@@ -265,6 +283,7 @@ namespace Saturn {
 		}
 
 		[[nodiscard]] long GetRefCount() const { return (long)m_RefCount; }
+		[[nodiscard]] long GetWeakCount() const { return (long)m_WeakCount; }
 
 	private:
 		unsigned long m_RefCount{ 1 };
@@ -339,6 +358,37 @@ namespace Saturn {
 	template<class Callee, class Args>
 	struct IsSharedPtrDeleterViaible<Callee, Args, std::void_t<decltype(std::declval<Callee>()(std::declval<Args>()))>> : std::true_type {};
 
+	template<typename Ty>
+	class SharedPtr;
+
+	template<typename Ty>
+	class EnabledSharedFromThis
+	{
+	public:
+		[[nodiscard]] SharedPtr<Ty> SharedFromThis() 
+		{
+			return m_Weak.Access();
+		}
+
+		[[nodiscard]] SharedPtr<const Ty> SharedFromThis() const 
+		{
+			return m_Weak.Access();
+		}
+
+		friend class SharedPtr<Ty>;
+
+	protected:
+		mutable WeakRef<Ty> m_Weak;
+	};
+
+	template<typename Ty, typename = void>
+	struct IsEnableSharedFromThis : std::false_type {};
+
+	template<typename Ty>
+	struct IsEnableSharedFromThis<
+		Ty, 
+		std::void_t<decltype(std::declval<Ty&>().m_Weak)>> : std::true_type {};
+
 	// Shared ownership of a single pointer, smart pointer, reference counted, 
 	// works very similar to std::shared_ptr.
 	//
@@ -347,43 +397,47 @@ namespace Saturn {
 	class SharedPtr
 	{
 	public:
-		SharedPtr() = default;
-		SharedPtr( std::nullptr_t ) {}
+		SharedPtr() noexcept = default;
+		SharedPtr( std::nullptr_t ) noexcept {}
 
 		SharedPtr( Ty* pPointer )
-			: m_Pointer( pPointer )
+			: m_Pointer( pPointer ), m_pControlBlock( new ReferenceControlBlock<Ty>( pPointer ) )
 		{
-			m_pControlBlock = new ReferenceControlBlock<Ty>( pPointer );
 			// no need to inc ref count... it's already at one
+			if constexpr( IsEnableSharedFromThis<Ty>::value )
+			{
+				pPointer->m_Weak = *this;
+			}
 		}
 
 		template<typename Deleter>
 		SharedPtr( Ty* pPointer, Deleter deleter )
-			: m_Pointer( pPointer )
+			: m_Pointer( pPointer ), m_pControlBlock( new ReferenceControlBlockDeleter<Ty, Deleter>( pPointer, std::move( deleter ) ) )
 		{
-			m_pControlBlock = new ReferenceControlBlockDeleter<Ty, Deleter>( pPointer, std::move( deleter ) );
 			// no need to inc ref count... it's already at one
+			if constexpr( IsEnableSharedFromThis<Ty>::value )
+			{
+				pPointer->m_Weak = *this;
+			}
 		}
 
 		// Copy from SharedPtr with the same type
 		SharedPtr( const SharedPtr& rOther )
+			: m_Pointer( ( Ty* ) rOther.m_Pointer ), m_pControlBlock( rOther.m_pControlBlock )
 		{
-			m_Pointer = rOther.m_Pointer;
-			m_pControlBlock = rOther.m_pControlBlock;
 			m_pControlBlock->AddRef();
 		}
 
 		// Copy from SharedPtr a different type
 		template<typename Ty2>
 		SharedPtr( const SharedPtr<Ty2>& rOther )
+			: m_Pointer( ( Ty* ) rOther.m_Pointer ), m_pControlBlock( rOther.m_pControlBlock )
 		{
-			m_Pointer = rOther.m_Pointer;
-			m_pControlBlock = rOther.m_pControlBlock;
 			m_pControlBlock->AddRef();
 		}
 
 		// Move from SharedPtr with the same type
-		SharedPtr( SharedPtr&& rrOther )
+		SharedPtr( SharedPtr&& rrOther ) noexcept
 		{
 			MoveFrom( std::move( rrOther ) );
 		}
@@ -395,34 +449,95 @@ namespace Saturn {
 
 		//////////////////////////////////////////////////////////////////////////
 
-		Ty* Get() const { return m_Pointer; }
+		[[nodiscard]] Ty* Get() const { return m_Pointer; }
 		Ty* operator->() const { return m_Pointer; }
 		Ty& operator*() const { return *m_Pointer; }
 		operator bool() const { return m_Pointer != nullptr; }
 
-		SharedPtr operator=( const SharedPtr& rOther )
+		SharedPtr<Ty>& operator=( std::nullptr_t )
 		{
-			if( this != rOther )
-			{
-				TryRelease();
+			TryRelease();
 
-				m_pControlBlock = rOther.m_pControlBlock;
-				m_Pointer = rOther.m_Pointer;
-
-				m_pControlBlock->AddRef();
-			}
+			m_Pointer = nullptr;
+			m_pControlBlock = nullptr;
 
 			return *this;
 		}
-		
-		bool operator==( const SharedPtr& rOther ) const
+
+		SharedPtr<Ty>& operator=( const SharedPtr<Ty>& rOther )
+		{
+			TryRelease();
+
+			m_pControlBlock = rOther.m_pControlBlock;
+			m_Pointer = rOther.m_Pointer;
+			m_pControlBlock->AddRef();
+
+			return *this;
+		}
+
+		template<typename T2>
+		SharedPtr<T2>& operator=( const SharedPtr<T2>& rOther )
+		{
+			TryRelease();
+
+			m_pControlBlock = rOther.m_pControlBlock;
+			m_Pointer = rOther.m_Pointer;
+			m_pControlBlock->AddRef();
+
+			return *this;
+		}
+
+		SharedPtr<Ty>& operator=( SharedPtr<Ty>& rOther )
+		{
+			TryRelease();
+
+			m_pControlBlock = rOther.m_pControlBlock;
+			m_Pointer = rOther.m_Pointer;
+			m_pControlBlock->AddRef();
+
+			return *this;
+		}
+
+		template<typename T2>
+		SharedPtr& operator=( SharedPtr<T2>& rOther )
+		{
+			TryRelease();
+
+			m_pControlBlock = rOther.m_pControlBlock;
+			m_Pointer = rOther.m_Pointer;
+			m_pControlBlock->AddRef();
+
+			return *this;
+		}
+
+		template<typename T2>
+		SharedPtr& operator=( SharedPtr<T2>&& rrOther )
+		{
+			TryRelease();
+
+			m_pControlBlock = rrOther.m_pControlBlock;
+			m_Pointer = rrOther.m_Pointer;
+
+			rrOther.m_pControlBlock = nullptr;
+			rrOther.m_Pointer = nullptr;
+
+			return *this;
+		}
+
+		bool operator==( const SharedPtr<Ty>& rOther ) const
 		{
 			return m_Pointer == rOther.m_Pointer;
 		}
 
-		bool operator!=( const SharedPtr& rOther ) const
+		bool operator!=( const SharedPtr<Ty>& rOther ) const
 		{
 			return m_Pointer != rOther.m_Pointer;
+		}
+
+		template <typename T2>
+		[[nodiscard]] SharedPtr<T2> As() const
+		{
+			return SharedPtr<T2>( *this );
 		}
 
 	public:
@@ -471,9 +586,6 @@ namespace Saturn {
 		friend class SharedPtr;
 		friend class WeakRef<Ty>;
 	};
-	
-	template<typename Ty>
-	class SharedPtr;
 
 	// WeakRef, reference counted, works very similar to std::weak_ptr.
 	// WeakRef is non-intrusive however, NOT authoritative.

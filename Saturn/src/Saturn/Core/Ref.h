@@ -77,7 +77,7 @@ namespace Saturn {
 
 	// Ref is an intrusive, shared ownership, reference counted, smart pointer similar to std::shared_ptr
 	// Intrusive refs do not support the usage of WeakRefs, you must use SharedPtr for that!
-	// Refs take up less space than SharedPtrs, as the Ref class it self only needs 8 bytes (on 64 bit machines) for the pointer and then T needs an additional 4 bytes for the reference count bringing it to a total of 12 bytes.
+	// Refs take up less space than SharedPtrs, as the Ref class it self only needs 8 bytes (on 64 bit machines) for the pointer and then T needs an additional 4 bytes for the reference count bringing it to a total of 12 bytes but only 8 bytes per ref!
 	//
 	// NOTE: Any class that must use Ref must be a child of RefTarget
 	template<typename T>
@@ -291,7 +291,7 @@ namespace Saturn {
 	};
 	
 	template<typename Ty>
-	class ReferenceControlBlock : public ReferenceControlBlockBase
+	class ReferenceControlBlock final : public ReferenceControlBlockBase
 	{
 	public:
 		ReferenceControlBlock( Ty* pClass ) 
@@ -325,7 +325,7 @@ namespace Saturn {
 	};
 
 	template<typename Ty, typename Deleter>
-	class ReferenceControlBlockDeleter : public ReferenceControlBlockBase
+	class ReferenceControlBlockDeleter final : public ReferenceControlBlockBase
 	{
 	public:
 		ReferenceControlBlockDeleter( Ty* pClass, Deleter d )
@@ -394,7 +394,7 @@ namespace Saturn {
 	//
 	// SharedPtr is non-intrusive, thread safe and authoritative.
 	template<typename Ty>
-	class SharedPtr
+	class SharedPtr final
 	{
 	public:
 		SharedPtr() noexcept = default;
@@ -592,7 +592,7 @@ namespace Saturn {
 	//
 	// A Weak pointer can help break cyclic dependencies (which would otherwise be stopped by using a raw ptr or some workaround) they can also be used in places where we simply want to use the object (if it's alive) without owning it and stopping it from deletion.
 	template<typename Ty>
-	class WeakRef
+	class WeakRef final
 	{
 	public:
 		WeakRef() = default;
@@ -601,16 +601,18 @@ namespace Saturn {
 		WeakRef( const SharedPtr<Ty>& rStrongRef )
 			: m_pPointer( rStrongRef.m_Pointer ), m_pControlBlock( rStrongRef.m_pControlBlock )
 		{
-			m_pControlBlock->AddWeakRef();
+			TryAddWeakRef();
 		}
 
+		// copy
 		WeakRef( const WeakRef<Ty>& rRef )
 			: m_pPointer( rRef.m_pPointer ), m_pControlBlock( rRef.m_pControlBlock )
 		{
-			m_pControlBlock->AddWeakRef();
+			TryAddWeakRef();
 		}
 
-		WeakRef( const WeakRef<Ty>&& rrOther )
+		// move
+		WeakRef( WeakRef<Ty>&& rrOther ) noexcept
 			: m_pPointer( rrOther.m_pPointer ), m_pControlBlock( rrOther.m_pControlBlock )
 		{
 			rrOther.m_pPointer = nullptr;
@@ -635,7 +637,7 @@ namespace Saturn {
 			return nullptr;
 		}
 
-		[[nodiscard]] bool Expired() const { return m_pControlBlock->GetRefCount() == 0; }
+		[[nodiscard]] bool Expired() const { return m_pControlBlock ? m_pControlBlock->GetRefCount() == 0 : true; }
 
 		WeakRef& operator=( const SharedPtr<Ty>& rStrongRef )
 		{
@@ -644,13 +646,28 @@ namespace Saturn {
 			m_pPointer = rStrongRef.m_Pointer;
 			m_pControlBlock = rStrongRef.m_pControlBlock;
 
-			m_pControlBlock->AddWeakRef();
+			TryAddWeakRef();
+
+			return *this;
+		}
+
+		WeakRef& operator=( const WeakRef<Ty>& rOther )
+		{
+			if( this == &rOther )
+				return *this;
+
+			TryRelease();
+			
+			m_pPointer = rOther.m_pPointer;
+			m_pControlBlock = rOther.m_pControlBlock;
+
+			TryAddWeakRef();
 
 			return *this;
 		}
 
 	private:
-		void TryRelease() 
+		inline void TryRelease()
 		{
 			if( m_pControlBlock )
 			{
@@ -659,6 +676,14 @@ namespace Saturn {
 
 			m_pPointer = nullptr;
 			m_pControlBlock = nullptr;
+		}
+
+		inline void TryAddWeakRef()
+		{
+			if( m_pControlBlock )
+			{
+				m_pControlBlock->AddWeakRef();
+			}
 		}
 
 	private:

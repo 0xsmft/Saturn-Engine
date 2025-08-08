@@ -178,6 +178,11 @@ project "Saturn"
 			"SAT_PLATFORM_WINDOWS"
 		}
 
+		files 
+		{
+			"%{prj.name}/visualisers/*.natvis"
+		}
+
 		filter "configurations:Debug"
 			defines "SAT_DEBUG"
 			runtime "Debug"
@@ -324,6 +329,11 @@ project "Saturn-Editor"
 		{
 			"SAT_PLATFORM_WINDOWS",
 			"SATURN_SS_IMPORT"
+		}
+
+		files 
+		{
+			"Saturn/visualisers/*.natvis"
 		}
 
 	filter "configurations:Debug"

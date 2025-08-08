@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?> 
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+  <Type Name="Saturn::Ref&lt;*&gt;">
+    <DisplayString IncludeView="Pointer" Condition="m_Pointer == 0">nullptr</DisplayString>
+    <DisplayString IncludeView="Pointer" Condition="m_Pointer != 0">{*m_Pointer}</DisplayString>
+    <Expand>
+      <Item Condition="m_Pointer == 0" Name="[Pointer]">nullptr</Item>
+      
+      <Item Condition="m_Pointer != 0" Name="[Pointer]">m_Pointer</Item>
+      <Item Condition="m_Pointer != 0" Name="[RefCount]">((Saturn::RefTarget*)m_Pointer)->m_RefCount</Item>
+    </Expand>
+  </Type>
+  
+  <Type Name="Saturn::SharedPtr&lt;*&gt;">
+    <SmartPointer Usage="Minimal">m_Pointer</SmartPointer>
+    <DisplayString Condition="m_pControlBlock == 0">nullptr</DisplayString>
+    <Expand>
+      <Item Condition="m_pControlBlock != 0" Name="[ptr]">m_Pointer</Item>
+      <Item Condition="m_pControlBlock != 0" Name="[crtl block]">*m_pControlBlock</Item>
+    </Expand>
+  </Type>
+
+</AutoVisualizer>

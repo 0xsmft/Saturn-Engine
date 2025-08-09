@@ -34,15 +34,15 @@
 namespace Saturn {
 
 	/* 
-	+----------------------------------------------------------------------------------------+
-	| TYPE          | NAME       | USAGE       | LIMIATIONS									 |	
-	+----------------------------------------------------------------------------------------+
-	| INTRUSIVE     | Ref        | All Classes | No Weak Refs								 |
-	| NON-INTRUSIVE | SharedPtr  | All Classes | More heap demand + use of virtual functions |
-	| NON-INTRUSIVE | WeakRef    | All Classes | See above									 |
-	| -				| -			 | -		   | -											 |
-	| -				| -			 | -		   | -											 |
-	+----------------------------------------------------------------------------------------+
+	+---------------+------------+------------------+---------------------------------------------+
+	| TYPE          | NAME       | USAGE			| LIMIATIONS								  |	
+	+---------------+------------+------------------+---------------------------------------------+
+	| INTRUSIVE     | Ref        | RefTargets only  | No Weak Refs								  |
+	| NON-INTRUSIVE | SharedPtr  | All Classes		| More heap demand + use of virtual functions |
+	| NON-INTRUSIVE | WeakRef    | All Classes		| See above									  |
+	| -				| -			 | -				| -											  |
+	| -				| -			 | -				| -											  |
+	+---------------+------------+------------------+---------------------------------------------+
 	*/
 
 	/*
@@ -71,7 +71,7 @@ namespace Saturn {
 		inline uint32_t GetRefCount() const { return m_RefCount; }
 
 	private:
-		// Maximum references for a single object is 4,294,967,296
+		// Maximum references for a single object is 4294967295
 		mutable unsigned int m_RefCount = 0;
 	};
 
@@ -425,7 +425,7 @@ namespace Saturn {
 		SharedPtr( const SharedPtr& rOther )
 			: m_Pointer( ( Ty* ) rOther.m_Pointer ), m_pControlBlock( rOther.m_pControlBlock )
 		{
-			m_pControlBlock->AddRef();
+			TryAddRef();
 		}
 
 		// Copy from SharedPtr a different type
@@ -433,7 +433,7 @@ namespace Saturn {
 		SharedPtr( const SharedPtr<Ty2>& rOther )
 			: m_Pointer( ( Ty* ) rOther.m_Pointer ), m_pControlBlock( rOther.m_pControlBlock )
 		{
-			m_pControlBlock->AddRef();
+			TryAddRef();
 		}
 
 		// Move from SharedPtr with the same type
@@ -470,7 +470,7 @@ namespace Saturn {
 
 			m_pControlBlock = rOther.m_pControlBlock;
 			m_Pointer = rOther.m_Pointer;
-			m_pControlBlock->AddRef();
+			TryAddRef();
 
 			return *this;
 		}
@@ -482,7 +482,7 @@ namespace Saturn {
 
 			m_pControlBlock = rOther.m_pControlBlock;
 			m_Pointer = rOther.m_Pointer;
-			m_pControlBlock->AddRef();
+			TryAddRef();
 
 			return *this;
 		}
@@ -493,7 +493,7 @@ namespace Saturn {
 
 			m_pControlBlock = rOther.m_pControlBlock;
 			m_Pointer = rOther.m_Pointer;
-			m_pControlBlock->AddRef();
+			TryAddRef();
 
 			return *this;
 		}
@@ -505,7 +505,7 @@ namespace Saturn {
 
 			m_pControlBlock = rOther.m_pControlBlock;
 			m_Pointer = rOther.m_Pointer;
-			m_pControlBlock->AddRef();
+			TryAddRef();
 
 			return *this;
 		}
@@ -553,7 +553,7 @@ namespace Saturn {
 			m_Pointer = weak.m_pPointer;
 			m_pControlBlock = weak.m_pControlBlock;
 
-			m_pControlBlock->AddRef();
+			TryAddRef();
 		}
 
 	private:
@@ -566,6 +566,14 @@ namespace Saturn {
 
 			m_Pointer = nullptr;
 			m_pControlBlock = nullptr;
+		}
+
+		void TryAddRef()
+		{
+			if( m_pControlBlock )
+			{
+				m_pControlBlock->AddRef();
+			}
 		}
 
 		template<typename T2>
@@ -638,6 +646,11 @@ namespace Saturn {
 		}
 
 		[[nodiscard]] bool Expired() const { return m_pControlBlock ? m_pControlBlock->GetRefCount() == 0 : true; }
+
+		inline void Reset() 
+		{
+			TryRelease();
+		}
 
 		WeakRef& operator=( const SharedPtr<Ty>& rStrongRef )
 		{

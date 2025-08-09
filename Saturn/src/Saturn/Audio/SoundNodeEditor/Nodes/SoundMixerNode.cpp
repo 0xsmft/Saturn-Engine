@@ -80,7 +80,7 @@ namespace Saturn {
 			return NodeEvaluationState::Failed;
 
 #if !defined( SAT_DIST )
-		auto count = std::count_if( Inputs.begin(), Inputs.end(),
+		const auto count = std::count_if( Inputs.begin(), Inputs.end(),
 			[=]( const auto& pin )
 			{
 				return pSoundEditorEvaluator->GetTargetNodeEditor()->IsLinked( pin->ID );

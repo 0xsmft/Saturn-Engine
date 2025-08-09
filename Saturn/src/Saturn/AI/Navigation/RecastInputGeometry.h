@@ -80,9 +80,6 @@ namespace Saturn {
 	class PhysXSceneExporter
 	{
 	public:
-		PhysXSceneExporter();
-		~PhysXSceneExporter();
-
-		void Export( RecastInputGeometry& rInputGeom, AABB& rNavMeshBounds );
+		static void Export( RecastInputGeometry& rInputGeom, AABB& rNavMeshBounds );
 	};
 }

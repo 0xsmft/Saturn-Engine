@@ -29,6 +29,7 @@
 #pragma once
 
 #include "SoundBase.h"
+#include "SoundGroup.h"
 
 namespace Saturn {
 

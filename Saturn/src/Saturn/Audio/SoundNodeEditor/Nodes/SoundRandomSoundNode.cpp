@@ -82,10 +82,10 @@ namespace Saturn {
 
 		std::map<UUID, UUID> PinToSoundMap;
 
-		auto ids = pSoundEditorEvaluator->GetTargetNodeEditor()->FindNeighborsRight( this );
+		const auto ids = pSoundEditorEvaluator->GetTargetNodeEditor()->FindNeighborsRight( SharedFromThis() );
 
 #if !defined( SAT_DIST )
-		auto count = std::count_if( Inputs.begin(), Inputs.end(), 
+		const auto count = std::count_if( Inputs.begin(), Inputs.end(), 
 			[=](const auto& pin)
 			{
 				return pSoundEditorEvaluator->GetTargetNodeEditor()->IsLinked( pin->ID );
@@ -93,7 +93,7 @@ namespace Saturn {
 
 		if( count != Inputs.size() )
 		{
-			Ref<NodeEditor> uiEditor = pSoundEditorEvaluator->GetTargetNodeEditor().As<NodeEditor>();
+			SharedPtr<NodeEditor> uiEditor = pSoundEditorEvaluator->GetTargetNodeEditor().As<NodeEditor>();
 
 			uiEditor->ThrowError( "Not all pins are linked to the random node!" );
 
@@ -101,8 +101,8 @@ namespace Saturn {
 		}
 #endif
 		// Read inputs for sound indexes.
-		size_t pin = Random::RandomElementInRange( 0, Inputs.size() - 1 );
-		size_t index = ( size_t ) Inputs[ pin ].As<SoundPin>()->Data;
+		const size_t pin = Random::RandomElementInRange( 0, Inputs.size() - 1 );
+		const size_t index = ( size_t ) Inputs[ pin ].As<SoundPin>()->Data;
 
 		// Register this sound to be played
 		pSoundEditorEvaluator->RegisterSound( index );
@@ -110,8 +110,7 @@ namespace Saturn {
 		// Unregister any other sounds.
 		for( size_t i = 0; i < Inputs.size(); i++ )
 		{
-			Ref<SoundPin> soundInputPin = Inputs[ i ].As<SoundPin>();
-
+			const Ref<SoundPin> soundInputPin = Inputs[ i ].As<SoundPin>();
 			if( soundInputPin->Data != index )
 			{
 				// Don't use i because thats just the index in our Inputs array
@@ -134,7 +133,7 @@ namespace Saturn {
 		// Write our chosen index to the output pin
 		Ref<SoundPin> outPin = Outputs[ 0 ].As<SoundPin>();
 
-		auto links = pSoundEditorEvaluator->GetTargetEditor()->FindLinksByPin( outPin->ID );
+		const auto links = pSoundEditorEvaluator->GetTargetEditor()->FindLinksByPin( outPin->ID );
 		for( const auto& link : links )
 		{
 			// Find input node

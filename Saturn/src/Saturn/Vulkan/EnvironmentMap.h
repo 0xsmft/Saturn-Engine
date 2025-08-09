@@ -31,9 +31,6 @@
 #include "Saturn/Core/Ref.h"
 #include "Texture.h"
 
-#include <string>
-#include <filesystem>
-
 namespace Saturn {
 
 	class EnvironmentMap : public RefTarget

@@ -96,8 +96,6 @@ namespace Saturn {
 			// Find input node
 			Ref<Pin> inputPin = pSoundEditorEvaluator->GetTargetEditor()->FindPin( link->EndPinID );
 
-			Ref<NodeEditorNodeBase> node = inputPin->Node;
-
 			// Submit to the evaluator
 			{
 				pSoundEditorEvaluator->AddNewSound( outPin->GetAssetID() );

@@ -557,7 +557,7 @@ namespace Saturn {
 		Application::Get().Close();
 	}
 
-	void ProjectBrowserLayer::OnEvent( RubyEvent& rEvent )
+	void ProjectBrowserLayer::OnEvent( Event& rEvent )
 	{
 	}
 

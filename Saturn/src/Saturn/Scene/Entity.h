@@ -131,6 +131,16 @@ namespace Saturn {
 
 		inline std::vector<UUID>& GetChildren() { return GetComponent<RelationshipComponent>().ChildrenID; }
 		
+		inline void AddChild( UUID id ) 
+		{
+			auto& children = GetComponent<RelationshipComponent>().ChildrenID;
+
+			const auto itr = std::find( children.begin(), children.end(), id );
+			if( itr == children.end() )
+			{
+				children.push_back( id );
+			}
+		}
 		[[nodiscard]] bool HasParent()   const { return GetComponent<RelationshipComponent>().Parent != 0; }
 		[[nodiscard]] bool HasChildren() const { return GetComponent<RelationshipComponent>().ChildrenID.size() > 0; }
 		

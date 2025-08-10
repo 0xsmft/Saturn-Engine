@@ -31,6 +31,8 @@
 
 #include "Saturn/Asset/AssetManager.h"
 
+#include "Saturn/Project/Project.h"
+
 #include "ImGuiAuxiliary.h"
 
 #include <imgui.h>
@@ -64,13 +66,13 @@ namespace Saturn {
 		ImGui::BeginVertical( "##textureInfoV" );
 
 		ImGui::Text( "Texture Path" );
-		std::string texturePath = m_Asset->Path.string();
+		const std::string texturePath = m_Asset->Path.string();
 
 		ImGui::InputText( "##texturepath", (char*) texturePath.c_str(), texturePath.size(), ImGuiInputTextFlags_ReadOnly );
 
 		ImGui::Spring();
 
-		std::string sizeText = std::format( "{0}x{1}", m_Texture->Width(), m_Texture->Height() );
+		const std::string sizeText = std::format( "{0}x{1}", m_Texture->Width(), m_Texture->Height() );
 		ImGui::Text( "Texture Size: %s", sizeText.c_str() );
 
 		ImGui::EndVertical();

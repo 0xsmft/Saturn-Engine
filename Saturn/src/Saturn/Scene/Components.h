@@ -235,7 +235,7 @@ namespace Saturn {
 		MemoryAssetDependency<AssetType::PhysicsMaterial> MaterialAssetID;
 
 		RigidbodyComponent() = default;
-		RigidbodyComponent( bool isKinematic ) : IsKinematic( isKinematic ) { }
+		RigidbodyComponent( bool isKinematic ) : IsKinematic( isKinematic ) {}
 	};
 
 	struct PointLightComponent
@@ -297,6 +297,7 @@ namespace Saturn {
 		PrefabComponent( Saturn::AssetID id ) : AssetID( id ) {}
 	};
 
+	class SoundGroup;
 	struct AudioPlayerComponent
 	{
 		MemoryAssetDependency<AssetType::Sound, AssetType::GraphSound> SpecAssetID;
@@ -331,7 +332,7 @@ namespace Saturn {
 	struct NavigationMeshSpecificationComponent
 	{
 		glm::vec3 Extent{};
-		unsigned int HasBuilt : 1;
+		unsigned int HasBuilt : 1 = 0;
 
 		NavigationMeshSpecificationComponent() = default;
 		NavigationMeshSpecificationComponent( const NavigationMeshSpecificationComponent& other ) = default;

@@ -172,7 +172,7 @@ namespace Saturn {
 		for( auto& [id, asset] : AssetBundleRegistry->GetAssetMap() )
 		{
 			SAT_CORE_INFO( "Writing header information for asset: ASSET/{0} ({1})", id, asset->Name );
-			std::string status = std::format( "Writing header information for asset: ASSET/{0} ({1})", (uint64_t)id, asset->Name );
+			const std::string status = std::format( "Writing header information for asset: ASSET/{0} ({1})", (uint64_t)id, asset->Name );
 
 			jobProgress->SetStatus( status );
 
@@ -204,7 +204,7 @@ namespace Saturn {
 			Buffer fileBuffer;
 			std::ifstream stream( path, std::ios::binary | std::ios::in | std::ios::ate );
 
-			uint64_t fileSize = stream.tellg();
+			const uint64_t fileSize = stream.tellg();
 
 			DumpFileHeader dfh;
 			dfh.Asset = DumpFileToAssetID.at( path );

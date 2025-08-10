@@ -151,7 +151,7 @@ namespace Saturn {
 		std::vector<Ref<SoundGroup>>& GetSoundGroups() { return m_SoundGroups; }
 		const std::vector<Ref<SoundGroup>>& GetSoundGroups() const { return m_SoundGroups; }
 
-		void AddSoundGroup( const Ref<SoundGroup>& rGrp ) { m_SoundGroups.push_back( rGrp ); }
+		void AddSoundGroup( const Ref<SoundGroup>& rGrp );
 		void RemoveSoundGroup( const Ref<SoundGroup>& rGrp );
 
 		//////////////////////////////////////////////////////////////////////////

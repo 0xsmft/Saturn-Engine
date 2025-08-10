@@ -29,8 +29,6 @@
 #include "sppch.h"
 #include "AssetViewer.h"
 
-#include "Saturn/Core/OptickProfiler.h"
-
 namespace Saturn {
 
 //	static std::unordered_map<AssetID, AssetViewer*> s_AssetViewers;

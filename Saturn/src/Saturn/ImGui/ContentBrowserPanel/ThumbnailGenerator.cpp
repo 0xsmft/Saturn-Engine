@@ -312,8 +312,8 @@ namespace Saturn {
 				auto& rBoundingBox = staticMesh->GetBoundingBox();
 
 				// Set the distance based on the bounding box and make sure that we are not too close so the min is 4.0f
-				glm::vec3 size = rBoundingBox.Max - rBoundingBox.Min;
-				float maxSize = std::max( size.x, std::max( size.y, size.z ) );
+				const glm::vec3 size = rBoundingBox.Max - rBoundingBox.Min;
+				const float maxSize = std::max( size.x, std::max( size.y, size.z ) );
 
 				float distance = maxSize * 2.0f;
 				distance = std::max( distance + 4.0f, 4.0f );

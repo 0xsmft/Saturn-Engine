@@ -79,10 +79,9 @@ namespace Saturn {
 
 	Saturn::AABB NavBoundsEntity::GetBoundingBox()
 	{
-		TransformComponent tc = m_Scene->GetWorldSpaceTransform( this );
-
-		auto& comp = tc.Scale;
-		auto pos = tc.Position;
+		const TransformComponent tc = m_Scene->GetWorldSpaceTransform( SharedFromThis() );
+		const auto& comp = tc.Scale;
+		const auto pos = tc.Position;
 
 		m_MaxBounds.Max = pos + comp;
 		m_MaxBounds.Min = pos - comp;
@@ -178,8 +177,7 @@ namespace Saturn {
 			}
 		}
 #else
-		PhysXSceneExporter exp;
-		exp.Export( input, navMeshBounds );
+		PhysXSceneExporter::Export( input, navMeshBounds );
 #endif
 
 		SAT_CORE_ASSERT( input.GetVertexBuffer().size() % 3 == 0 );

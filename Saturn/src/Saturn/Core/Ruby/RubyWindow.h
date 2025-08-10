@@ -48,6 +48,7 @@ namespace Saturn {
 		RubyWindow( const RubyWindowSpecification& rSpec );
 		~RubyWindow();
 
+		// FOR USE BY RUBYLIBRARY ONLY!
 		void PollEvents();
 		void Maximize();
 		void Minimize();
@@ -175,12 +176,12 @@ namespace Saturn {
 		RubyCursorMode m_CursorMode = RubyCursorMode::Normal;
 		RubyCursorMode m_LastCursorMode = RubyCursorMode::Normal;
 
+		RubyWindowShowCmd m_ShowCommand = RubyWindowShowCmd::Fullscreen;
+
 		RubyIVec2 m_LockedMousePosition{};
 		RubyIVec2 m_LastMousePosition{};
 
 		RubyPerfTimer m_Timer;
-
-		RubyWindowShowCmd m_ShowCommand = RubyWindowShowCmd::Fullscreen;
 
 	private:
 		std::unique_ptr<RubyBackendBase> m_pDefaultBackend = nullptr;

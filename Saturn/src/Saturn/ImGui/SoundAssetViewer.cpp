@@ -33,6 +33,8 @@
 #include "Saturn/Audio/Sound.h"
 #include "Saturn/Audio/AudioSystem.h"
 
+#include "Saturn/Project/Project.h"
+
 #include "ImGuiAuxiliary.h"
 #include "EditorIcons.h"
 
@@ -72,9 +74,9 @@ namespace Saturn {
 
 		ImGui::BeginHorizontal( "##srcsndfile" );
 
-		if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), { 24, 24 } ) )
+		if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), { 24.0f, 24.0f } ) )
 		{
-			std::filesystem::path path = Application::Get().OpenFile( "Supported asset types (*.wav, *.mp3, *.ogg)\0*.wav; *.mp3; *.ogg\0" );
+			const std::filesystem::path path = Application::Get().OpenFile( "Supported asset types (*.wav, *.mp3, *.ogg)\0*.wav; *.mp3; *.ogg\0" );
 
 			if( !path.empty() )
 			{
@@ -149,7 +151,7 @@ namespace Saturn {
 		{
 			ImGui::Text( "%s", m_PreviewSound->FormatSeconds( m_PreviewSound->GetCursorInSeconds() ).c_str() );
 
-			uint64_t totalFrames = m_PreviewSound->GetDurationInPCM();
+			const uint64_t totalFrames = m_PreviewSound->GetDurationInPCM();
 			m_CurrentProgress = ( float ) m_PreviewSound->GetCursorInPCM() / ( float ) totalFrames;
 
 			if( ImGui::SliderFloat( "##SeekBar", &m_CurrentProgress, 0.0f, 1.0f, "%.4f", ImGuiSliderFlags_NoInput ) )

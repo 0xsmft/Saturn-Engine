@@ -52,10 +52,9 @@ namespace Saturn {
 		ImGui::PushStyleVar( ImGuiStyleVar_FramePadding, ImVec2( 5.0f, 5.0f ) );
 		ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 5.0f, 5.0f ) );
 
-		RubyWindow* pWindow = Application::Get().GetWindow();
-
 		if( ImGui::BeginMainMenuBar() )
 		{
+			RubyWindow* pWindow = Application::Get().GetWindow();
 			float height = ImGui::GetWindowHeight();
 
 			if( m_Height != height )

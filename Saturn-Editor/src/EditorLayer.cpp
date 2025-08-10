@@ -157,23 +157,22 @@ namespace Saturn {
 		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Exclamation_Small.png", AddressingMode::Repeat, true ) );
 		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Information_Small.png", AddressingMode::Repeat, true ) );
 		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Settings.png", AddressingMode::Repeat, true ) );
+		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/EditIcon.png", AddressingMode::Repeat, false ) );
 		
 		// Create Panel Manager.
 		m_ImGuiWindowManager = Ref<ImGuiWindowManager>::Create();
 
-		m_ImGuiWindowManager->AddWindow( Ref<SceneHierarchyPanel>::Create() );
-		m_ImGuiWindowManager->AddWindow( Ref<ContentBrowserPanel>::Create() );
+		m_ImGuiWindowManager->AddWindow<SceneHierarchyPanel>();
+		m_ImGuiWindowManager->AddWindow<ContentBrowserPanel>();
 
 		Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
 		hierarchyPanel->SetContext( m_EditorScene );
-		hierarchyPanel->SetSelectionChangedCallback( SAT_BIND_EVENT_FN( SelectionChanged ) );
 		hierarchyPanel->OpenWindow();
 
 		Ref<ContentBrowserPanel> contentBrowserPanel = m_ImGuiWindowManager->GetPanel<ContentBrowserPanel>();
 		contentBrowserPanel->OpenWindow();
 
 		// Setup content browser panel at project dir.
-		auto& rUserSettings = EngineSettings::Get();
 		contentBrowserPanel->ResetPath( Project::GetActiveProject()->GetRootDir() );
 
 		m_TitleBar.AddMenuBarFunction( SAT_BIND_EVENT_FN( DrawTitlebarOptions ) );
@@ -259,7 +258,7 @@ namespace Saturn {
 			{
 				PreInitRuntime();
 
-				if( m_RuntimeScene->OnRuntimeStart() ) 
+				if( m_RuntimeScene->OnRuntimeStart() )
 				{
 					PostInitRuntime();
 				}
@@ -371,51 +370,9 @@ namespace Saturn {
 		if( m_ShowMetadataDebug )       DrawMetadataDebug();
 		if( m_ShowAssetDependencies )   DrawAssetDependencies();
 		if( m_ShowSceneDirtyModal )     DrawSceneDirtyPopup();
+		if( m_JobModalOpen )            DrawBlockingActionModal();
 		if( m_ShowCBThumbnailDebug )    ContentBrowserThumbnailCache::Get().OnImGuiRender( &m_ShowCBThumbnailDebug );
 		if( m_ShowUndoRedoDebug )       GlobalUndoRedoGroup::Get().OnImGuiRender( &m_ShowUndoRedoDebug );
-
-		if( m_JobModalOpen )
-		{
-			ImGui::OpenPopup( "Blocking Action" );
-		}
-
-		if( ImGui::BeginPopupModal( "Blocking Action", &m_JobModalOpen, ImGuiWindowFlags_NoSavedSettings ) )
-		{
-			if( m_BlockingOperation->GetTitle().empty() )
-				ImGui::Text( "Please wait for the operation to complete..." );
-			else
-				ImGui::Text( m_BlockingOperation->GetTitle().c_str() );
-
-			ImGui::Separator();
-
-			if( const std::string status = m_BlockingOperation->GetStatus(); !status.empty() )
-			{
-				ImGui::Text( status.c_str() );
-			}
-
-			ImGui::Separator();
-
-			ImGui::BeginHorizontal( "##ItemsH" );
-
-			ImSpinner::SpinnerAng( "##OPERATION_SPINNER", 25.0f / 2.0f, 2.0f, ImSpinner::white, ImSpinner::half_white, 8.6F );
-
-			ImGui::Spring();
-
-			if( const float percent = m_BlockingOperation->GetProgress(); percent >= 1.0f )
-			{
-				ImGui::ProgressBar( percent / 100.0f );
-			}
-
-			ImGui::EndHorizontal();
-		
-			if( m_BlockingOperation->Completed() )
-			{
-				m_JobModalOpen = false;
-				m_BlockingOperation->Reset();
-			}
-
-			ImGui::EndPopup();
-		}
 		
 		DrawViewport();
 	}
@@ -493,7 +450,7 @@ namespace Saturn {
 		overridePath /= std::format( "{0}.{1}.autoscene", m_EditorScene->Name, m_AutoSaveCount );
 
 		SceneSerialiser ss( m_EditorScene );
-		ss.Serialise( overridePath );
+		ss.Serialise( overridePath, true );
 
 		EditorNotification notification{ .Text = "AUTO SAVING, PLEASE WAIT", .Lifetime = 5.0f };
 		PushNotification( notification );
@@ -880,9 +837,9 @@ namespace Saturn {
 				for( uint32_t i = 0; i < rSubmeshes.size(); i++ )
 				{
 					const auto& rSubmesh = rSubmeshes[ i ];
-					const glm::mat4 transform = GActiveScene->GetWorldSpaceTransform( rEntity ).GetTransform() * rSubmesh.Transform;
+					const glm::mat4 transform = g_ActiveScene->GetWorldSpaceTransform( rEntity ).GetTransform() * rSubmesh.Transform;
 
-					Ray ray = { .Origin = glm::inverse( transform ) * glm::vec4( origin, 1.0f ), .Direction = glm::inverse( glm::mat3( transform ) ) * dir };
+					const Ray ray = { .Origin = glm::inverse( transform ) * glm::vec4( origin, 1.0f ), .Direction = glm::inverse( glm::mat3( transform ) ) * dir };
 
 					float t;
 					const bool hit = ray.IntersectsAABB( rSubmesh.BoundingBox, t );
@@ -891,16 +848,16 @@ namespace Saturn {
 						const auto& rIndices = comp.Mesh->Indices();
 						const auto& rVertices = comp.Mesh->Vertices();
 
-						for( const auto& tri : rIndices )
+						for( const auto& rTri : rIndices )
 						{
-							const glm::vec3& rV0 = rVertices[ tri.V1 ].Position;
-							const glm::vec3& rV1 = rVertices[ tri.V2 ].Position;
-							const glm::vec3& rV2 = rVertices[ tri.V3 ].Position;
+							const glm::vec3& rV0 = rVertices[ rTri.V1 ].Position;
+							const glm::vec3& rV1 = rVertices[ rTri.V2 ].Position;
+							const glm::vec3& rV2 = rVertices[ rTri.V3 ].Position;
 
 							float t;
 							if( ray.IntersectsTri( rV0, rV1, rV2, t ) )
 							{
-								Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
+								auto hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
 								hierarchyPanel->SetSelected( rEntity );
 
 								break;
@@ -916,12 +873,13 @@ namespace Saturn {
 
 	void EditorLayer::HandleSceneTravel( SceneTravelEvent& rEvent )
 	{
-		AssetID destinationID = rEvent.GetID();
-		Ref<Asset> sceneAsset = AssetManager::Get().FindAsset( destinationID );
+		const AssetID destinationID = rEvent.GetID();
+		const Ref<Asset> sceneAsset = AssetManager::Get().FindAsset( destinationID );
 		
 		if( !sceneAsset )
 		{
-			SAT_CORE_ERROR( "Failed to travel as {0} is not a valid scene ID", destinationID );
+			SAT_CORE_ERROR( "Failed to travel as ASSET/{0} is not a valid scene ID!", destinationID );
+			return;
 		}
 
 		OpenFileInRuntime( destinationID );
@@ -939,15 +897,14 @@ namespace Saturn {
 		Ref<Project> ActiveProject = Project::GetActiveProject();
 
 		auto& rConfig = ActiveProject->GetConfig();
-		auto& startupScene = rConfig.StartupSceneID;
-
-		Ref<Asset> asset = AssetManager::Get().FindAsset( startupScene );
+		auto& startupSceneID = rConfig.StartupSceneID;
+		Ref<Asset> startupSceneAsset = AssetManager::Get().FindAsset( startupSceneID );
 
 		ImGui::SetNextWindowPos( ImVec2( rIO.DisplaySize.x * 0.5f - 150.0f, rIO.DisplaySize.y * 0.5f - 150.0f ), ImGuiCond_Once );
 
 		if( ImGui::Begin( "Project settings", &m_ShowUserSettings ) ) 
 		{
-			auto boldFont = rIO.Fonts->Fonts[ 1 ];
+			const auto boldFont = rIO.Fonts->Fonts[ 1 ];
 			ImGui::PushFont( boldFont );
 			ImGui::Text( "Project Defaults" );
 			ImGui::Separator();
@@ -959,7 +916,7 @@ namespace Saturn {
 			ImGui::BeginHorizontal( "##prj_strtscene" );
 			{
 				ImGui::Text( "Startup Scene:" );
-				startupScene == 0 ? ImGui::TextColored( ImVec4( 1.0f, 0.0f, 0.0f, 1.0f ), "None" ) : ImGui::Text( asset->Name.c_str() );
+				startupSceneID == 0 ? ImGui::TextColored( ImVec4( 1.0f, 0.0f, 0.0f, 1.0f ), "None" ) : ImGui::Text( startupSceneAsset->Name.c_str() );
 
 				ImGui::Spring();
 
@@ -1536,8 +1493,7 @@ namespace Saturn {
 			ImGui::SameLine();
 			Filter.Draw( "##search" );
 
-			ImGuiTableFlags TableFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollX | ImGuiTableFlags_NoBordersInBody;
-			if( ImGui::BeginTable( "##FileTable", 4, TableFlags, ImVec2( ImGui::GetWindowSize().x, ImGui::GetWindowSize().y * 0.85f ) ) )
+			if( ImGui::BeginTable( "##FileTable", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollX | ImGuiTableFlags_NoBordersInBody, ImVec2( ImGui::GetWindowSize().x, ImGui::GetWindowSize().y * 0.85f ) ) )
 			{
 				ImGui::TableSetupColumn( "Asset Name" );
 				ImGui::TableSetupColumn( "ID" );
@@ -1587,8 +1543,8 @@ namespace Saturn {
 		ImGui::SetNextWindowSize( ImVec2( 750.0f, 750.0f ), ImGuiCond_Appearing );
 		if( ImGui::Begin( "Editor Settings", &m_OpenEditorSettings ) )
 		{
-			auto boldFont = rIO.Fonts->Fonts[ 1 ];
-			auto italicsFont = rIO.Fonts->Fonts[ 2 ];
+			const auto boldFont = rIO.Fonts->Fonts[ 1 ];
+			const auto italicsFont = rIO.Fonts->Fonts[ 2 ];
 
 			ImGui::PushFont( boldFont );
 			ImGui::Text( "Saturn Editor Settings" );
@@ -1906,6 +1862,9 @@ namespace Saturn {
 				ImGui::Text( "Saturn version 0.1.2 (%llu)", SAT_VERSION_A_0_1_2 );
 				ImGui::Text( "Saturn version 0.1.3 (%llu)", SAT_VERSION_A_0_1_3 );
 				ImGui::Text( "Saturn version 0.1.4 (%llu)", SAT_VERSION_A_0_1_4 );
+				ImGui::Text( "Saturn version 0.2.0 (%llu)", SAT_VERSION_A_0_2_0 );
+				ImGui::Text( "Saturn version 0.2.1 (%llu)", SAT_VERSION_A_0_2_1 );
+				ImGui::Text( "Saturn version 0.2.2 (%llu)", SAT_VERSION_A_0_2_2 );
 
 				Auxiliary::EndTreeNode();
 			}
@@ -1989,7 +1948,7 @@ namespace Saturn {
 		{
 			ImGuiIO& rIO = ImGui::GetIO();
 
-			auto italicsFont = rIO.Fonts->Fonts[ 2 ];
+			const auto italicsFont = rIO.Fonts->Fonts[ 2 ];
 			ImGui::PushFont( italicsFont );
 			ImGui::TextDisabled( "Showing all SClasses" );
 			ImGui::PopFont();
@@ -2155,14 +2114,56 @@ namespace Saturn {
 		ImGui::OpenPopup( "SceneDirtyPopup" );
 	}
 
+	void EditorLayer::DrawBlockingActionModal()
+	{
+		// Force the popup to be open
+		ImGui::OpenPopup( "Blocking Action" );
+
+		if( ImGui::BeginPopupModal( "Blocking Action", &m_JobModalOpen, ImGuiWindowFlags_NoSavedSettings ) )
+		{
+			if( m_BlockingOperation->GetTitle().empty() )
+				ImGui::Text( "Please wait for the operation to complete..." );
+			else
+				ImGui::Text( m_BlockingOperation->GetTitle().c_str() );
+
+			ImGui::Separator();
+
+			if( const std::string status = m_BlockingOperation->GetStatus(); !status.empty() )
+			{
+				ImGui::Text( status.c_str() );
+			}
+
+			ImGui::Separator();
+
+			ImGui::BeginHorizontal( "##ItemsH" );
+
+			ImSpinner::SpinnerAng( "##OPERATION_SPINNER", 25.0f / 2.0f, 2.0f, ImSpinner::white, ImSpinner::half_white, 8.6F );
+
+			ImGui::Spring();
+
+			if( const float percent = m_BlockingOperation->GetProgress(); percent >= 1.0f )
+			{
+				ImGui::ProgressBar( percent / 100.0f );
+			}
+
+			ImGui::EndHorizontal();
+
+			if( m_BlockingOperation->Completed() )
+			{
+				m_JobModalOpen = false;
+				m_BlockingOperation->Reset();
+			}
+
+			ImGui::EndPopup();
+		}
+	}
+
 	void EditorLayer::DrawViewport()
 	{
 		// Viewport Image & Drag and drop handling
-		ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 0, 0 ) );
+		ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 0.0f, 0.0f ) );
 
-		const ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove;
-
-		ImGui::Begin( "Viewport", 0, flags );
+		ImGui::Begin( "Viewport", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove );
 
 		if( m_ViewportSize != ImGui::GetContentRegionAvail() )
 		{
@@ -2219,126 +2220,17 @@ namespace Saturn {
 
 		ImGui::PopID();
 
-		// Viewport Gizmo controls
+		// Viewport Gizmo controls on the left
 		Viewport_GizmoControl();
 
-		// Viewport Runtime controls
+		// Viewport Runtime controls on the middle
 		Viewport_RTControls();
 
-		// Viewport Runtime settings controls
+		// Viewport Runtime settings controls on the right
 		Viewport_RTSettings();
 
 		//// Render the real gizmo
-
-		const ImVec2 minBound = ImGui::GetWindowPos();
-		Application::Get().PrimarySceneRenderer().SetViewportPosition( minBound.x, minBound.y );
-
-		const ImVec2 maxBound = { minBound.x + m_ViewportSize.x, minBound.y + m_ViewportSize.y };
-
-		m_ViewportFocused = ImGui::IsWindowFocused();
-		m_MouseOverViewport = ImGui::IsWindowHovered();
-		m_AllowCameraEvents = ImGui::IsMouseHoveringRect( minBound, maxBound ) && m_ViewportFocused || m_StartedRightClickInViewport;
-		m_ViewportBounds = ImRect( minBound, maxBound );
-
-		Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
-		std::vector<Ref<Entity>>& selectedEntities = hierarchyPanel->GetSelectionContexts();
-
-		// Calc center of transform.
-		glm::vec3 Positions = {};
-		glm::quat Rotations = {};
-		glm::vec3 Scales = {};
-
-		for( const auto& rEntity : selectedEntities )
-		{
-			TransformComponent worldSpace = GActiveScene->GetWorldSpaceTransform( rEntity );
-			Positions += worldSpace.Position;
-			Rotations += worldSpace.GetRotation();
-			Scales += worldSpace.Scale; 
-		}
-
-		Positions /= selectedEntities.size();
-		Rotations /= static_cast<float>( selectedEntities.size() );
-		Scales /= selectedEntities.size();
-
-		glm::mat4 centerPoint = glm::translate( glm::mat4( 1.0f ), Positions ) * glm::toMat4( Rotations ) * glm::scale( glm::mat4( 1.0f ), Scales );
-		glm::mat4 offsetTransform( 1.0f );
-
-		///////////////////
-
-		if( selectedEntities.size() && m_GizmoOperation != 0 )
-		{
-			ImGuizmo::SetOrthographic( false );
-			ImGuizmo::SetDrawlist();
-			ImGuizmo::SetRect( minBound.x, minBound.y, m_ViewportSize.x, m_ViewportSize.y );
-
-			const glm::mat4 Projection = m_EditorCamera.ProjectionMatrix();
-			const glm::mat4 View = m_EditorCamera.ViewMatrix();
-
-			ImGuizmo::Manipulate( glm::value_ptr( View ), glm::value_ptr( Projection ), ( ImGuizmo::OPERATION ) m_GizmoOperation, ImGuizmo::LOCAL, glm::value_ptr( centerPoint ), glm::value_ptr( offsetTransform ) );
-
-			if( ImGuizmo::IsUsing() )
-			{
-				for( Ref<Entity>& rEntity : selectedEntities )
-				{
-					auto& tc = rEntity->GetComponent<TransformComponent>();
-
-					// Store original transform for undo/redo
-					if( !m_WasGizmoUsed )
-					{
-						m_GizmoOrignalTransforms[ rEntity->GetHandle() ] = tc.GetTransform();
-					}
-
-					// Set new transform
-					glm::mat4 transform = GActiveScene->GetTransformRelativeToParent( rEntity );
-
-					glm::vec3 translation;
-					glm::vec3 rotation;
-					glm::vec3 scale;
-					Maths::DecomposeTransform( transform * offsetTransform, translation, rotation, scale );
-
-					glm::vec3 DeltaRotation = rotation - tc.GetRotationEuler();
-
-					tc.Position = translation;
-					tc.SetRotation( tc.GetRotationEuler() += DeltaRotation );
-					tc.Scale = scale;
-
-					// Store modified transform for undo/redo
-					m_GizmoModifiedTransforms[ rEntity->GetHandle() ] = std::make_tuple( tc.Position, tc.GetRotationEuler(), tc.Scale );
-				}
-
-				m_WasGizmoUsed = true;
-			}
-			else if( m_WasGizmoUsed ) // Stopped using
-			{
-				m_EditorScene->MarkDirty();
-
-				for( const auto& [ handle, transform ] : m_GizmoOrignalTransforms )
-				{
-					const auto& [newPosition, newRotation, newScale] = m_GizmoModifiedTransforms[ handle ];
-
-					Ref<Entity> entity = m_EditorScene->FindEntityByHandle( handle );
-					TransformComponent& tc = entity->GetComponent<TransformComponent>();
-
-					glm::mat4 newTransform = glm::translate( glm::mat4( 1.0f ), newPosition )
-						* glm::toMat4( glm::quat( newRotation ) )
-						* glm::scale( glm::mat4( 1.0f ), newScale );
-
-					Ref<UndoRedoActionModifyTransformation> action = Ref<UndoRedoActionModifyTransformation>::Create( entity, transform, newTransform );
-					GlobalUndoRedoGroup::Get().AddAction( action, (uint64_t)entity->GetHandle() );
-
-					if( entity->HasComponent<NavigationMeshSpecificationComponent>() )
-					{
-						Ref<NavBoundsEntity> bounds = entity.As<NavBoundsEntity>();
-						bounds->GatherGeometryAndBuild();
-					}
-				}
-
-				m_GizmoOrignalTransforms.clear();
-				m_GizmoModifiedTransforms.clear();
-
-				m_WasGizmoUsed = false;
-			}
-		}
+		Viewport_DrawGizmo();
 
 		ImGui::PopStyleVar();
 		ImGui::End();
@@ -2413,15 +2305,15 @@ namespace Saturn {
 
 	void EditorLayer::Viewport_RTControls()
 	{
-		ImVec2 minBound = ImGui::GetWindowPos();
-		ImVec2 maxBound = { minBound.x + m_ViewportSize.x, minBound.y + m_ViewportSize.y };
+		const ImVec2 minBound = ImGui::GetWindowPos();
+		const ImVec2 maxBound = { minBound.x + m_ViewportSize.x, minBound.y + m_ViewportSize.y };
 
 		constexpr float windowHeight = 32.0f;
-		float icons = m_RequestRuntime ? 3.0f : 1.0f; // 3 icons if runtime is running
-		float neededSpace = 48.0f * icons - 10.0f;
-		float windowWidth = neededSpace - 10.0f;
+		const float icons = m_RequestRuntime ? 3.0f : 1.0f; // 3 icons if runtime is running else, one icon (play button)
+		const float neededSpace = 48.0f * icons - 10.0f;
+		const float windowWidth = neededSpace - 10.0f;
 
-		float runtimeCenterX = minBound.x + m_ViewportSize.x * 0.5f - windowWidth * 0.5f;
+		const float runtimeCenterX = minBound.x + m_ViewportSize.x * 0.5f - windowWidth * 0.5f;
 
 		// Runtime Controls
 		ImGui::SetNextWindowPos( ImVec2( runtimeCenterX, minBound.y + 5.0f ) );
@@ -2478,7 +2370,7 @@ namespace Saturn {
 
 	void EditorLayer::Viewport_RTControls_Running()
 	{
-		auto runtimeState = m_RuntimeScene->GetRuntimeState();
+		const auto runtimeState = m_RuntimeScene->GetRuntimeState();
 
 		// Draw play/resume button
 		{
@@ -2488,7 +2380,7 @@ namespace Saturn {
 			{
 				m_RuntimeScene->ResumeRuntime();
 
-				std::string title = std::format( "{0} (Running) - Saturn", Project::GetActiveConfig().Name );
+				const std::string title = std::format( "{0} (Running) - Saturn", Project::GetActiveConfig().Name );
 				Application::Get().GetWindow()->ChangeTitle( title );
 			}
 
@@ -2521,7 +2413,7 @@ namespace Saturn {
 		{
 			m_RuntimeScene->SuspendRuntime();
 
-			std::string title = std::format( "{0} (RT Suspended) - Saturn", Project::GetActiveConfig().Name );
+			const std::string title = std::format( "{0} (RT Suspended) - Saturn", Project::GetActiveConfig().Name );
 			Application::Get().GetWindow()->ChangeTitle( title );
 		}
 
@@ -2536,18 +2428,18 @@ namespace Saturn {
 	{
 		// Only show the hot reload settings when no runtime is active
 		// So don't even show it while suspended.
-		if( GActiveScene->IsRuntimeRunning() )
+		if( g_ActiveScene->IsRuntimeRunning() )
 			return;
 
-		ImVec2 minBound = ImGui::GetWindowPos();
-		ImVec2 maxBound = { minBound.x + m_ViewportSize.x, minBound.y + m_ViewportSize.y };
+		const ImVec2 minBound = ImGui::GetWindowPos();
+		const ImVec2 maxBound = { minBound.x + m_ViewportSize.x, minBound.y + m_ViewportSize.y };
 
 		constexpr float windowHeight = 32.0f;
 		constexpr float icons = 1.0f;
 		constexpr float neededSpace = 48.0f * icons - 10.0f;
 		constexpr float windowWidth = neededSpace - 10.0f;
 
-		float runtimeRightX = minBound.x + m_ViewportSize.x - neededSpace - 2.5f;
+		const float runtimeRightX = minBound.x + m_ViewportSize.x - neededSpace - 2.5f;
 
 		// Hot reload Controls
 		ImGui::SetNextWindowPos( ImVec2( runtimeRightX, minBound.y + 5.0f ) );
@@ -2589,6 +2481,119 @@ namespace Saturn {
 		ImGui::EndVertical();
 
 		ImGui::End();
+	}
+
+	void EditorLayer::Viewport_DrawGizmo()
+	{
+		const ImVec2 minBound = ImGui::GetWindowPos();
+		Application::Get().PrimarySceneRenderer().SetViewportPosition( minBound.x, minBound.y );
+
+		const ImVec2 maxBound = { minBound.x + m_ViewportSize.x, minBound.y + m_ViewportSize.y };
+
+		m_ViewportFocused = ImGui::IsWindowFocused();
+		m_MouseOverViewport = ImGui::IsWindowHovered();
+		m_AllowCameraEvents = ImGui::IsMouseHoveringRect( minBound, maxBound ) && m_ViewportFocused || m_StartedRightClickInViewport;
+		m_ViewportBounds = ImRect( minBound, maxBound );
+
+		Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
+		std::vector<SharedPtr<Entity>>& selectedEntities = hierarchyPanel->GetSelectionContexts();
+
+		// Calc center of transform.
+		glm::vec3 Positions = {};
+		glm::quat Rotations = {};
+		glm::vec3 Scales = {};
+
+		for( const auto& rEntity : selectedEntities )
+		{
+			TransformComponent worldSpace = g_ActiveScene->GetWorldSpaceTransform( rEntity );
+			Positions += worldSpace.Position;
+			Rotations += worldSpace.GetRotation();
+			Scales += worldSpace.Scale;
+		}
+
+		Positions /= selectedEntities.size();
+		Rotations /= static_cast< float >( selectedEntities.size() );
+		Scales /= selectedEntities.size();
+
+		glm::mat4 centerPoint = glm::translate( glm::mat4( 1.0f ), Positions ) * glm::toMat4( Rotations ) * glm::scale( glm::mat4( 1.0f ), Scales );
+		glm::mat4 offsetTransform( 1.0f );
+
+		///////////////////
+
+		if( selectedEntities.size() && m_GizmoOperation != 0 )
+		{
+			ImGuizmo::SetOrthographic( false );
+			ImGuizmo::SetDrawlist();
+			ImGuizmo::SetRect( minBound.x, minBound.y, m_ViewportSize.x, m_ViewportSize.y );
+
+			const glm::mat4 Projection = m_EditorCamera.ProjectionMatrix();
+			const glm::mat4 View = m_EditorCamera.ViewMatrix();
+
+			ImGuizmo::Manipulate( glm::value_ptr( View ), glm::value_ptr( Projection ), ( ImGuizmo::OPERATION ) m_GizmoOperation, ImGuizmo::LOCAL, glm::value_ptr( centerPoint ), glm::value_ptr( offsetTransform ) );
+
+			if( ImGuizmo::IsUsing() )
+			{
+				for( SharedPtr<Entity>& rEntity : selectedEntities )
+				{
+					auto& tc = rEntity->GetComponent<TransformComponent>();
+
+					// Store original transform for undo/redo
+					if( !m_WasGizmoUsed )
+					{
+						m_GizmoOrignalTransforms[ rEntity->GetHandle() ] = tc.GetTransform();
+					}
+
+					// Set new transform
+					glm::mat4 transform = g_ActiveScene->GetTransformRelativeToParent( rEntity );
+
+					glm::vec3 translation;
+					glm::vec3 rotation;
+					glm::vec3 scale;
+					Maths::DecomposeTransform( transform * offsetTransform, translation, rotation, scale );
+
+					glm::vec3 DeltaRotation = rotation - tc.GetRotationEuler();
+
+					tc.Position = translation;
+					tc.SetRotation( tc.GetRotationEuler() += DeltaRotation );
+					tc.Scale = scale;
+
+					// Store modified transform for undo/redo
+					m_GizmoModifiedTransforms[ rEntity->GetHandle() ] = std::make_tuple( tc.Position, tc.GetRotationEuler(), tc.Scale );
+				}
+
+				m_WasGizmoUsed = true;
+			}
+			else if( m_WasGizmoUsed ) // Stopped using
+			{
+				m_EditorScene->MarkDirty();
+
+				for( const auto& [handle, transform] : m_GizmoOrignalTransforms )
+				{
+					const auto& [newPosition, newRotation, newScale] = m_GizmoModifiedTransforms[ handle ];
+
+					SharedPtr<Entity> entity = m_EditorScene->FindEntityByHandle( handle );
+					TransformComponent& tc = entity->GetComponent<TransformComponent>();
+
+					glm::mat4 newTransform = glm::translate( glm::mat4( 1.0f ), newPosition )
+						* glm::toMat4( glm::quat( newRotation ) )
+						* glm::scale( glm::mat4( 1.0f ), newScale );
+
+					Ref<UndoRedoActionModifyTransformation> action = Ref<UndoRedoActionModifyTransformation>::Create( entity, transform, newTransform );
+					GlobalUndoRedoGroup::Get().AddAction( action, ( uint64_t ) entity->GetHandle() );
+
+					if( entity->HasComponent<NavigationMeshSpecificationComponent>() )
+					{
+						SharedPtr<NavBoundsEntity> bounds = entity.As<NavBoundsEntity>();
+						bounds->GatherGeometryAndBuild();
+					}
+				}
+
+				m_GizmoOrignalTransforms.clear();
+				m_GizmoModifiedTransforms.clear();
+
+				m_WasGizmoUsed = false;
+			}
+		}
 	}
 
 	void EditorLayer::CloseEditorAndOpenPB()

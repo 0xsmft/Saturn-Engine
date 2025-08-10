@@ -91,22 +91,6 @@ namespace Saturn {
 		return SObject::StaticClass();
 	}
 
-	std::vector<SProperty>& ClassMetadataHandler::GetAllProperties( const std::string& rMetadataName )
-	{
-		/*
-		const auto Itr = m_MetadataTree.find( rMetadataName );
-
-		if( Itr != m_MetadataTree.end() )
-		{
-			auto& properties = m_Properties[ rMetadataName ];
-			return properties;
-		}
-
-		*/
-		static std::vector<SProperty> s_EmptyMap;
-		return s_EmptyMap;
-	}
-
 	void ClassMetadataHandler::RegisterSClass( SClass* pClass, const std::string& rModuleName )
 	{
 		m_Classes.emplace( pClass->GetHash(), pClass );

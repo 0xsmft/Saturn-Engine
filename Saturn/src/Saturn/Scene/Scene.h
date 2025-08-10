@@ -99,6 +99,13 @@ namespace Saturn {
 
 	struct PointLight
 	{
+		PointLight() = default;
+
+		PointLight( const glm::vec3& rPosition, const glm::vec3& rRadiance, float multiplier, float lightSize, float radius, float minRadius, float fallOff )
+			: Position( rPosition ), Radiance( rRadiance ), Multiplier( multiplier ), LightSize( lightSize ), Radius( radius ), MinRadius( minRadius ), Falloff( fallOff ) 
+		{
+		}
+
 		alignas( 16 ) glm::vec3 Position = { 0.0f, 0.0f, 0.0f };
 		alignas( 16 ) glm::vec3 Radiance = { 0.0f, 0.0f, 0.0f };
 

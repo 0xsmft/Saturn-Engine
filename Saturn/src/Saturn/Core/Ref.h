@@ -389,10 +389,8 @@ namespace Saturn {
 		Ty, 
 		std::void_t<decltype(std::declval<Ty&>().m_Weak)>> : std::true_type {};
 
-	// Shared ownership of a single pointer, smart pointer, reference counted, 
-	// works very similar to std::shared_ptr.
-	//
-	// SharedPtr is non-intrusive, thread safe and authoritative.
+	// SharedPtr is a reference counted, non-intrusive, thread safe and authoritative smart pointer that works very similar to std::shared_ptr.
+	// The size of this class is 16 bytes however, depending on the control block it may become 24 bytes
 	template<typename Ty>
 	class SharedPtr final
 	{
@@ -577,7 +575,7 @@ namespace Saturn {
 		}
 
 		template<typename T2>
-		void MoveFrom( SharedPtr<T2>&& rrOther )
+		void MoveFrom( SharedPtr<T2>&& rrOther ) noexcept
 		{
 			m_Pointer = rrOther.m_Pointer;
 			m_pControlBlock = rrOther.m_pControlBlock;

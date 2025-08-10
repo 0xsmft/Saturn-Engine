@@ -296,6 +296,11 @@ namespace Saturn {
 		m_ActionBindings.erase( std::remove( m_ActionBindings.begin(), m_ActionBindings.end(), rBinding ), m_ActionBindings.end() );
 	}
 
+	void Project::AddSoundGroup( const Ref<SoundGroup>& rGrp )
+	{
+		m_SoundGroups.push_back( rGrp );
+	}
+
 	void Project::RemoveSoundGroup( const Ref<SoundGroup>& rGrp )
 	{
 		m_SoundGroups.erase( std::remove( m_SoundGroups.begin(), m_SoundGroups.end(), rGrp ), m_SoundGroups.end() );

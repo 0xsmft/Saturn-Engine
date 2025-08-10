@@ -130,7 +130,7 @@ namespace Saturn {
 		if( data.IsNull() )
 			return;	
 
-		auto project = data[ "Project" ];
+		const auto project = data[ "Project" ];
 
 		ProjectConfig newConfig{};
 
@@ -150,8 +150,7 @@ namespace Saturn {
 		newProject->SetAutoSaveInterval( project[ "AutoSavesInterval" ].as<float>( 300.0f ) );
 #endif
 
-		auto actionBindings = project[ "ActionBindings" ];
-
+		const auto actionBindings = project[ "ActionBindings" ];
 		if( actionBindings )
 		{
 			for( const auto& binding : actionBindings )
@@ -177,8 +176,7 @@ namespace Saturn {
 
 		AudioSystem::Get().WaitForInit();
 
-		auto soundGroups = project[ "SoundGroups" ];
-
+		const auto soundGroups = project[ "SoundGroups" ];
 		if( soundGroups )
 		{
 			for( const auto& grp : soundGroups )

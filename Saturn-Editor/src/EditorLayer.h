@@ -50,6 +50,7 @@
 namespace Saturn {
 	
 	class GameModule;
+	class SceneTravelEvent;
 
 	class EditorLayer : public Layer
 	{
@@ -66,16 +67,22 @@ namespace Saturn {
 	private:
 		void SaveFileAs();
 		void OpenFile( AssetID id );
+		void OpenFileInRuntime( AssetID id );
 
 		void SaveFile();
 		void SaveFileAuto();
 
 		void SaveProject();
 
-		void SelectionChanged( Ref<Entity> e );
-		void ViewportSizeCallback( uint32_t Width, uint32_t Height );
+		// Runtime
+		void PreInitRuntime();
+		void PostInitRuntime();
+		void EndRuntime();
+		void CleanupRuntimeWhenFailed( RuntimeState lastState = RuntimeState::Starting );
+
 		bool OnKeyPressed( RubyKeyEvent& rEvent );
 		bool OnMousePressed( RubyMouseEvent& rEvent );
+		void HandleSceneTravel( SceneTravelEvent& rEvent );
 
 		// UI Functions.
 		void DrawProjectSettingsWindow();
@@ -92,13 +99,15 @@ namespace Saturn {
 		void DrawMetadataDebug();
 		void DrawAssetDependencies();
 		void DrawSceneDirtyPopup();
+		void DrawBlockingActionModal();
 
 		// Viewport
 		void DrawViewport();
 		void Viewport_GizmoControl();
 		void Viewport_RTControls();
 		void Viewport_RTSettings();
-		
+		void Viewport_DrawGizmo();
+
 		void Viewport_RTControls_Running();
 		void Viewport_RTControls_Default();
 

@@ -33,7 +33,6 @@
 #include "Saturn/GameFramework/SProperty.h"
 
 #include <string>
-#include <vector>
 
 namespace Saturn {
 
@@ -100,9 +99,6 @@ namespace Saturn {
 	public:
 		[[deprecated( "Saturn::ClassMetadataHandler::GetSObjectMetadata is deprecated and will be removed. Consider using \"SObject::StaticClass\" instead." )]]
 		SClass* GetSObjectMetadata();
-
-	public:
-		std::vector<SProperty>& GetAllProperties( const std::string& rMetadataName );
 
 	public:
 		// Hot reload

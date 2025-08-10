@@ -46,7 +46,7 @@ namespace Saturn {
 		void MarkClean() { m_Dirty = false; }
 
 	protected:
-		AssetID m_AssetID;
+		AssetID m_AssetID = 0;
 		AssetType m_AssetType = AssetType::Unknown;
 		bool m_Dirty = false;
 	};

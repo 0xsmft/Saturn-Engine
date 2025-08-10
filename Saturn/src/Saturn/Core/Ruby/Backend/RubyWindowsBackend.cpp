@@ -579,8 +579,11 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 namespace Saturn {
 
 	RubyWindowsBackend::RubyWindowsBackend( const RubyWindowSpecification& rSpec, RubyWindow* pWindow )
-		: RubyBackendBase( m_WindowSpecification, pWindow )
+//		: RubyBackendBase( m_WindowSpecification, pWindow )
+// TODO: ^^ seems to give us garbage data... but works fine when not in the initialiser list
 	{
+		m_WindowSpecification = rSpec;
+		m_pWindow = pWindow;
 	}
 
 	RubyWindowsBackend::~RubyWindowsBackend()

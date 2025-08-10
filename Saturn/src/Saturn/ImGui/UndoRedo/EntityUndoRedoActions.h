@@ -42,15 +42,23 @@ namespace Saturn {
 	class UndoRedoActionEntityComponent : public UndoRedoActionBase
 	{
 	public:
-		UndoRedoActionEntityComponent( const std::string& rName, Ref<Entity> entity ) : UndoRedoActionBase( rName  ), m_EntityHandle( entity->GetHandle() ), m_pScene( entity->GetScene() ) {}	
+		UndoRedoActionEntityComponent( const std::string& rName, SharedPtr<Entity> entity ) 
+			: UndoRedoActionBase( rName  ), 
+			m_EntityHandle( entity->GetHandle() ), 
+			m_pScene( entity->GetScene() ) 
+		{
+		}	
 
-		UndoRedoActionEntityComponent( Ref<Entity> entity )
-			: UndoRedoActionBase( ComponentActionType == UndoRedoActionEntityComponentOp::AddComponent ? "Add Component" : "Remove Component" ), m_EntityHandle( entity->GetHandle() ), m_pScene( entity->GetScene() )
+		UndoRedoActionEntityComponent( SharedPtr<Entity> entity )
+			: UndoRedoActionBase( 
+				ComponentActionType == UndoRedoActionEntityComponentOp::AddComponent ? "Add Component" : "Remove Component" ), 
+			m_EntityHandle( entity->GetHandle() ),
+			m_pScene( entity->GetScene() )
 		{
 		}
 
 	public:
-		void Undo() override
+		inline void Undo() override
 		{
 			if constexpr( ComponentActionType == UndoRedoActionEntityComponentOp::AddComponent ) 
 			{
@@ -66,7 +74,7 @@ namespace Saturn {
 			}
 		}
 
-		void Redo() override
+		inline void Redo() override
 		{
 			if constexpr( ComponentActionType == UndoRedoActionEntityComponentOp::AddComponent )
 			{
@@ -101,7 +109,7 @@ namespace Saturn {
 	public:
 		UndoRedoActionModifyTransformation() = default;
 
-		UndoRedoActionModifyTransformation( Ref<Entity> entity, const glm::mat4& rOriginalRotation, const glm::mat4& rCurrentValue )
+		UndoRedoActionModifyTransformation( SharedPtr<Entity> entity, const glm::mat4& rOriginalRotation, const glm::mat4& rCurrentValue )
 			: UndoRedoActionBase( "Modify Entity Transformation" ), m_OriginalTransform( rOriginalRotation ), m_CurrentTransform( rCurrentValue )
 		{
 			m_pTransformComponent = &entity->GetComponent<TransformComponent>();

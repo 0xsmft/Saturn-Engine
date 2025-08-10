@@ -28,7 +28,6 @@
 
 #pragma once
 
-#include "ImGuiWindow.h"
 #include <functional>
 
 namespace Saturn {

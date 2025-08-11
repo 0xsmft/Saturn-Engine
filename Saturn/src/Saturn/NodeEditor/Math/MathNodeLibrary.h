@@ -42,9 +42,9 @@ namespace Saturn {
 	public:
 		static NodeEditorType GetStaticType() { return NodeEditorType::Default; }
 
-		static Ref<MathAddFloats>    SpawnMathAdd( Ref<NodeEditorBase> rNodeEditor );
-		static Ref<MathSubFloats>    SpawnMathSub( Ref<NodeEditorBase> rNodeEditor );
-		static Ref<MathMulFloats>    SpawnMathMul( Ref<NodeEditorBase> rNodeEditor );
-		static Ref<MathDivideFloats> SpawnMathDiv( Ref<NodeEditorBase> rNodeEditor );
+		static SharedPtr<MathAddFloats>    SpawnMathAdd( SharedPtr<NodeEditorBase> rNodeEditor );
+		static SharedPtr<MathSubFloats>    SpawnMathSub( SharedPtr<NodeEditorBase> rNodeEditor );
+		static SharedPtr<MathMulFloats>    SpawnMathMul( SharedPtr<NodeEditorBase> rNodeEditor );
+		static SharedPtr<MathDivideFloats> SpawnMathDiv( SharedPtr<NodeEditorBase> rNodeEditor );
 	};
 }

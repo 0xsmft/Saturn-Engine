@@ -63,25 +63,8 @@ namespace Saturn {
 	{
 		Super::BeginPlay();
 
-		AssetID id = 12076914912353493827llu;
-		m_BehaviourTree = Ref<BehaviourTree>::Create( id );
-
 		auto e = m_Scene->GetAllEntitiesWith<NavigationMeshSpecificationComponent>();
 		m_NavBoundsEntity = e[ 0 ].As<NavBoundsEntity>();
-
-		m_BehaviourTree->Initialise( this );
-		m_BehaviourTree->FirstEvaluate();
-
-#if !defined(SAT_DIST)
-		// Add reference if asset viewer is open
-		std::string name = std::format( "{0}##{1}", m_BehaviourTree->GetAsset()->Name, ( uint64_t ) id );
-		Ref<BehaviourTreeAssetViewer> window = ImGuiWindowManager::Get().GetWindow<BehaviourTreeAssetViewer>( name );
-
-		if( window )
-		{
-			window->AddBehviourTreeReference( m_BehaviourTree );
-		}
-#endif
 	}
 
 	void AIAgentEntity::OnUpdate( Saturn::Timestep ts )
@@ -94,6 +77,22 @@ namespace Saturn {
 	void AIAgentEntity::OnPhysicsUpdate( Saturn::Timestep ts )
 	{
 		Super::OnPhysicsUpdate( ts );
+	}
+
+	void AIAgentEntity::StartBehaviourTree( AssetID id )
+	{
+		m_BehaviourTree = Ref<BehaviourTree>::Create( id );
+		m_BehaviourTree->Initialise( SharedFromThis() );
+		m_BehaviourTree->FirstEvaluate();
+
+#if !defined(SAT_DIST)
+		// Add reference if asset viewer is open
+		const std::string name = std::format( "{0}##{1}", m_BehaviourTree->GetAsset()->Name, ( uint64_t ) id );
+		if( Ref<BehaviourTreeAssetViewer> window = ImGuiWindowManager::Get().GetWindow<BehaviourTreeAssetViewer>( name ); window )
+		{
+			window->AddBehviourTreeReference( m_BehaviourTree );
+		}
+#endif
 	}
 
 }

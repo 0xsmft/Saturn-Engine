@@ -70,33 +70,36 @@ namespace Saturn {
 
 	// NOTE: This enum does NOT have a bitwise OR (|) operator or a AND (&) operator.
 	//       You must do m_Flags = m_Flags | <flag>, instead of m_Flags =| <flag>
-	enum class NodeEditorPrivileges
+	//
+	// ~NodeEditorUserAuthority~
+	// How much authority does the user have other this Node Editor
+	// We can pick and choose what we want the user to be able todo.
+	enum class NodeEditorUserAuthority
 	{
-		// No editing or no evaluation
-		ReadOnly = BIT( 0 ),
 		// User can edit the nodes
-		Editing = BIT( 1 ),
+		Editing = BIT( 0 ),
 		// User can evaluate the editor
-		Evaluation = BIT( 2 ),
-		All = Editing | Evaluation,
+		Evaluation = BIT( 1 ),
+		
+		Full = Editing | Evaluation,
 	};
 
-	inline constexpr NodeEditorPrivileges operator|( NodeEditorPrivileges lhs, NodeEditorPrivileges rhs )
+	inline constexpr NodeEditorUserAuthority operator|( NodeEditorUserAuthority lhs, NodeEditorUserAuthority rhs )
 	{
-		using U = std::underlying_type_t<NodeEditorPrivileges>;
-		return static_cast< NodeEditorPrivileges >( static_cast< U >( lhs ) | static_cast< U >( rhs ) );
+		using U = std::underlying_type_t<NodeEditorUserAuthority>;
+		return static_cast< NodeEditorUserAuthority >( static_cast< U >( lhs ) | static_cast< U >( rhs ) );
 	}
 
-	inline constexpr NodeEditorPrivileges operator&( NodeEditorPrivileges lhs, NodeEditorPrivileges rhs )
+	inline constexpr NodeEditorUserAuthority operator&( NodeEditorUserAuthority lhs, NodeEditorUserAuthority rhs )
 	{
-		using U = std::underlying_type_t<NodeEditorPrivileges>;
-		return static_cast< NodeEditorPrivileges >( static_cast< U >( lhs ) & static_cast< U >( rhs ) );
+		using U = std::underlying_type_t<NodeEditorUserAuthority>;
+		return static_cast< NodeEditorUserAuthority >( static_cast< U >( lhs ) & static_cast< U >( rhs ) );
 	}
 	
-	inline constexpr NodeEditorPrivileges operator~( NodeEditorPrivileges rhs )
+	inline constexpr NodeEditorUserAuthority operator~( NodeEditorUserAuthority rhs )
 	{
-		using U = std::underlying_type_t<NodeEditorPrivileges>;
-		return static_cast< NodeEditorPrivileges >( ~static_cast< U >( rhs ) );
+		using U = std::underlying_type_t<NodeEditorUserAuthority>;
+		return static_cast< NodeEditorUserAuthority >( ~static_cast< U >( rhs ) );
 	}
 
 	enum class NodeEditorFlowDirection 
@@ -134,6 +137,7 @@ namespace Saturn {
 	class NodeEditorRuntime;
 	class Texture2D;
 	
+	// VariableGuard template specialization for ed::EditorContext*
 	template<>
 	class VariableGuard<ed::EditorContext*>
 	{
@@ -153,7 +157,13 @@ namespace Saturn {
 		ed::EditorContext* m_OldValue = nullptr;
 	};
 
-	class NodeEditorBase : public RefTarget
+	// The base class for all Node Editors (Node Graphs).
+	// NodeEditorBase does not inherit from ImGuiWindow because NodeEditorBase is more of the backend and doesn't
+	// need to always be a window.
+	// NodeEditorBase does not draw anything, it simply provides the logical code for nodes without any rendering
+	// For example, you can setup a NodeEditorBase the same way as a NodeEditor would of been created and use it the same way just without any graphical representation. 
+	// On dist, this class will ALWAYS be used in place of NodeEditor
+	class NodeEditorBase
 	{
 	public:
 		NodeEditorBase();
@@ -170,14 +180,12 @@ namespace Saturn {
 		virtual void OnEvent( Event& rEvent ) {}
 #endif
 
-		static Ref<Texture2D> GetBlueprintBackground();
-
 		bool IsLinked( UUID pinID );
 		Ref<Pin> FindPin( UUID id );
 		Ref<Link> FindLink( UUID id );
-		Ref<NodeEditorNodeBase> FindNode( UUID id );
-		Ref<NodeEditorNodeBase> FindNode( const std::string& rName );
-		Ref<NodeEditorNodeBase> FindNodeByPin( UUID id );
+		SharedPtr<NodeEditorNodeBase> FindNode( UUID id );
+		SharedPtr<NodeEditorNodeBase> FindNode( const std::string& rName );
+		SharedPtr<NodeEditorNodeBase> FindNodeByPin( UUID id );
 
 		std::vector<Ref<Link>> FindLinksByPin( UUID id );
 
@@ -185,13 +193,13 @@ namespace Saturn {
 		NodeEditorCompilationStatus Evaluate();
 
 		// Search via inputs
-		std::vector<UUID> FindNeighborsRight( Ref<NodeEditorNodeBase> node );
-		
+		std::vector<UUID> FindNeighborsRight( SharedPtr<NodeEditorNodeBase> node );
+
 		// Search via outputs
-		std::vector<UUID> FindNeighborsLeft( Ref<NodeEditorNodeBase> node );
+		std::vector<UUID> FindNeighborsLeft( SharedPtr<NodeEditorNodeBase> node );
 
 		template<typename Function>
-		void TraverseFromStart( const Ref<NodeEditorNodeBase>& rRootNode, NodeEditorFlowDirection dir, Function func )
+		void TraverseFromStart( const SharedPtr<NodeEditorNodeBase>& rRootNode, NodeEditorFlowDirection dir, Function func )
 		{
 			switch( dir )
 			{
@@ -210,7 +218,7 @@ namespace Saturn {
 						func( currentID );
 
 						// Find neighbors from outputs and continue until there is no neighbors
-						Ref<NodeEditorNodeBase> currentNode = FindNode( currentID );
+						SharedPtr<NodeEditorNodeBase> currentNode = FindNode( currentID );
 						const auto& rNeighbours = FindNeighborsLeft( currentNode );
 
 						for( auto Itr = rNeighbours.rbegin(); Itr != rNeighbours.rend(); Itr++ )
@@ -234,7 +242,7 @@ namespace Saturn {
 						func( currentID );
 
 						// Find neighbors from inputs and continue until there is no neighbors
-						Ref<NodeEditorNodeBase> currentNode = FindNode( currentID );
+						SharedPtr<NodeEditorNodeBase> currentNode = FindNode( currentID );
 						for( const auto& rNeighbor : FindNeighborsRight( currentNode ) )
 						{
 							stack.push( rNeighbor );
@@ -246,7 +254,7 @@ namespace Saturn {
 
 		void CreateLink( const Ref<Pin>& rStart, const Ref<Pin>& rEnd );
 		void CreateLinkWithID( UUID linkID, const Ref<Pin>& rStart, const Ref<Pin>& rEnd );
-		
+
 		void ShowFlow();
 		void ShowFlow( const std::vector<Ref<Link>>& rLinks );
 		void ShowFlow( const Ref<Link>& rLink );
@@ -262,19 +270,19 @@ namespace Saturn {
 			}
 		}
 
-		[[nodiscard]] bool HasPrivilege( NodeEditorPrivileges privilege ) const;
-		void SetPrivileges( NodeEditorPrivileges privilege, bool value );
+		[[nodiscard]] bool HasPrivilege( NodeEditorUserAuthority privilege ) const;
+		void SetPrivileges( NodeEditorUserAuthority privilege, bool value );
 
 	public:
 		AssetID GetAssetID() const { return m_AssetID; }
 
-		const std::map<UUID, Ref<NodeEditorNodeBase>>& GetNodes() const { return m_Nodes; }
-		std::map<UUID, Ref<NodeEditorNodeBase>>& GetNodes() { return m_Nodes; }
+		const std::map<UUID, SharedPtr<NodeEditorNodeBase>>& GetNodes() const { return m_Nodes; }
+		std::map<UUID, SharedPtr<NodeEditorNodeBase>>& GetNodes() { return m_Nodes; }
 
 		const std::vector<Ref<Link>>& GetLinks() const { return m_Links; }
 		std::vector<Ref<Link>>& GetLinks() { return m_Links; }
 
-		void AddNode( Ref<NodeEditorNodeBase> node );
+		void AddNode( SharedPtr<NodeEditorNodeBase> node );
 
 		bool IsOpen() const { return m_WindowOpen; }
 
@@ -300,7 +308,7 @@ namespace Saturn {
 		ed::EditorContext* m_Editor = nullptr;
 		std::string m_ActiveNodeEditorState;
 
-		std::map<UUID, Ref<NodeEditorNodeBase>> m_Nodes;
+		std::map<UUID, SharedPtr<NodeEditorNodeBase>> m_Nodes;
 		std::vector<Ref<Link>> m_Links;
 
 		Ref<NodeEditorRuntime> m_Runtime;
@@ -308,7 +316,8 @@ namespace Saturn {
 		AssetID m_AssetID = 0;
 
 		NodeEditorState m_State = NodeEditorState::Editing;
-		NodeEditorPrivileges m_Privileges = NodeEditorPrivileges::All;
+		// User has full authority over this node editor by default
+		NodeEditorUserAuthority m_Privileges = NodeEditorUserAuthority::Full;
 
 	private:
 		friend class NodeEditorCache;

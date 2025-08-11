@@ -49,49 +49,49 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// MATERIAL NODE LIBRARY
 
-	Ref<MaterialOutputNode> MaterialNodeLibrary::SpawnOutputNode( Ref<NodeEditorBase> nodeEditor )
+	SharedPtr<MaterialOutputNode> MaterialNodeLibrary::SpawnOutputNode( SharedPtr<NodeEditorBase> nodeEditor )
 	{
-		Ref<MaterialOutputNode> node = ( MaterialOutputNode* ) ClassMetadataHandler::Get().CreateClassObject( MaterialOutputNode::StaticClass() );
+		SharedPtr<MaterialOutputNode> node = ( MaterialOutputNode* ) ClassMetadataHandler::Get().CreateClassObject( MaterialOutputNode::StaticClass() );
 		nodeEditor->AddNode( node );
 
 		return node;
 	}
 
-	Ref<MaterialGetAssetNode> MaterialNodeLibrary::SpawnGetAsset( Ref<NodeEditorBase> nodeEditor )
+	SharedPtr<MaterialGetAssetNode> MaterialNodeLibrary::SpawnGetAsset( SharedPtr<NodeEditorBase> nodeEditor )
 	{
-		Ref<MaterialGetAssetNode> node = ( MaterialGetAssetNode* ) ClassMetadataHandler::Get().CreateClassObject( MaterialGetAssetNode::StaticClass() );
+		SharedPtr<MaterialGetAssetNode> node = ( MaterialGetAssetNode* ) ClassMetadataHandler::Get().CreateClassObject( MaterialGetAssetNode::StaticClass() );
 		nodeEditor->AddNode( node );
 
 		return node;
 	}
 
-	Ref<MaterialColorPickerNode> MaterialNodeLibrary::SpawnColorPicker( Ref<NodeEditorBase> nodeEditor )
+	SharedPtr<MaterialColorPickerNode> MaterialNodeLibrary::SpawnColorPicker( SharedPtr<NodeEditorBase> nodeEditor )
 	{
-		Ref<MaterialColorPickerNode> node = ( MaterialColorPickerNode* ) ClassMetadataHandler::Get().CreateClassObject( MaterialColorPickerNode::StaticClass() );
+		SharedPtr<MaterialColorPickerNode> node = ( MaterialColorPickerNode* ) ClassMetadataHandler::Get().CreateClassObject( MaterialColorPickerNode::StaticClass() );
 		nodeEditor->AddNode( node );
 
 		return node;
 	}
 
-	Ref<MaterialSampler2DNode> MaterialNodeLibrary::SpawnSampler2D( Ref<NodeEditorBase> nodeEditor )
+	SharedPtr<MaterialSampler2DNode> MaterialNodeLibrary::SpawnSampler2D( SharedPtr<NodeEditorBase> nodeEditor )
 	{
-		Ref<MaterialSampler2DNode> node = ( MaterialSampler2DNode* ) ClassMetadataHandler::Get().CreateClassObject( MaterialSampler2DNode::StaticClass() );
+		SharedPtr<MaterialSampler2DNode> node = ( MaterialSampler2DNode* ) ClassMetadataHandler::Get().CreateClassObject( MaterialSampler2DNode::StaticClass() );
 		nodeEditor->AddNode( node );
 
 		return node;
 	}
 
-	Ref<MaterialSeparateColorRGBNode> MaterialNodeLibrary::SpawnSeparateColorRGB( Ref<NodeEditorBase> nodeEditor )
+	SharedPtr<MaterialSeparateColorRGBNode> MaterialNodeLibrary::SpawnSeparateColorRGB( SharedPtr<NodeEditorBase> nodeEditor )
 	{
-		Ref<MaterialSeparateColorRGBNode> node = ( MaterialSeparateColorRGBNode* ) ClassMetadataHandler::Get().CreateClassObject( MaterialSeparateColorRGBNode::StaticClass() );
+		SharedPtr<MaterialSeparateColorRGBNode> node = ( MaterialSeparateColorRGBNode* ) ClassMetadataHandler::Get().CreateClassObject( MaterialSeparateColorRGBNode::StaticClass() );
 		nodeEditor->AddNode( node );
 
 		return node;
 	}
 
-	Ref<MaterialColorMixerNode> MaterialNodeLibrary::SpawnMixColors( Ref<NodeEditorBase> nodeEditor )
+	SharedPtr<MaterialColorMixerNode> MaterialNodeLibrary::SpawnMixColors( SharedPtr<NodeEditorBase> nodeEditor )
 	{
-		Ref<MaterialColorMixerNode> node = ( MaterialColorMixerNode* ) ClassMetadataHandler::Get().CreateClassObject( MaterialColorMixerNode::StaticClass() );
+		SharedPtr<MaterialColorMixerNode> node = ( MaterialColorMixerNode* ) ClassMetadataHandler::Get().CreateClassObject( MaterialColorMixerNode::StaticClass() );
 		nodeEditor->AddNode( node );
 
 		return node;
@@ -261,7 +261,7 @@ namespace Saturn {
 		{
 			AssetID textureID = Inputs[ 0 ].As<AssetIDPin>()->GetAssetID();
 
-			auto neighbors = materialEval->GetTargetEditor()->FindNeighborsRight( this );
+			const auto neighbors = materialEval->GetTargetEditor()->FindNeighborsRight( SharedFromThis() );
 			if( neighbors.size() )
 			{
 				textureID = materialEval->GetTargetEditor()->FindNode( neighbors[ 0 ] ).As<MaterialGetAssetNode>()->GetAssetID();

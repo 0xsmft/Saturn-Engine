@@ -46,17 +46,17 @@ namespace Saturn {
 		BehaviourTree( AssetID id );
 		~BehaviourTree();
 
-		void Initialise( Ref<AIAgentEntity> entity );
+		void Initialise( SharedPtr<AIAgentEntity> entity );
 		void FirstEvaluate();
 		void Tick( Timestep ts );
 
 		Ref<Asset> GetAsset() const { return m_BehaviourTreeAsset; }
-		Ref<BehaviourTreeNodeEditor> GetNodeEditor() const { return m_NodeEditor; }
+		SharedPtr<BehaviourTreeNodeEditor> GetNodeEditor() const { return m_NodeEditor; }
 
 	private:
 		// The "BehaviourTree" class is not an asset however BehaviourTree are an asset
 		Ref<Asset> m_BehaviourTreeAsset;
-		Ref<BehaviourTreeNodeEditor> m_NodeEditor;
+		SharedPtr<BehaviourTreeNodeEditor> m_NodeEditor;
 
 		// TODO: Weak Ref? #ReplaceRawPtrOrRefWithWeakRef, non owning ptr
 		AIAgentEntity* m_AIAgentEntity = nullptr;

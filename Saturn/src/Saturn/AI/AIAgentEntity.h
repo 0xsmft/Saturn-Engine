@@ -54,13 +54,19 @@ namespace Saturn {
 		Ref<StaticMesh>& GetMesh() { return m_Mesh; }
 		const Ref<StaticMesh>& GetMesh() const { return m_Mesh; }
 
+	public:
+		//////////////////////////////////////////////////////////////////////////
+		// AIAgentEntity API
+
+		void StartBehaviourTree( AssetID id );
+
 	private:
 		// TODO: Change to a base mesh class, we don't know what the user will have.
 		Ref<StaticMesh> m_Mesh;
 		// TODO: Move this to a movement component.
 		PhysicsRigidBody* m_RigidBody = nullptr;
 
-		Ref<NavBoundsEntity> m_NavBoundsEntity;
+		SharedPtr<NavBoundsEntity> m_NavBoundsEntity;
 		Ref<BehaviourTree> m_BehaviourTree;
 	};
 	

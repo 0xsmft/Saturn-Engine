@@ -64,16 +64,15 @@ namespace Saturn {
 			return;
 
 #if defined(SAT_DIST)
-		m_NodeEditor = Ref<NodeEditorBase>::Create( m_GraphAsset->ID );
+		m_NodeEditor = SharedPtr<NodeEditorBase>::Create( m_GraphAsset->ID );
 #else
-		m_NodeEditor = Ref<NodeEditor>::Create( m_GraphAsset->ID );
+		m_NodeEditor = SharedPtr<NodeEditor>::Create( m_GraphAsset->ID );
 #endif
 
-		m_NodeEditor->SetPrivileges( NodeEditorPrivileges::Evaluation, true );
-		m_NodeEditor->SetPrivileges( NodeEditorPrivileges::ReadOnly, true );
-		m_NodeEditor->SetPrivileges( NodeEditorPrivileges::Editing, false );
+		m_NodeEditor->SetPrivileges( NodeEditorUserAuthority::Full, false );
+		m_NodeEditor->SetPrivileges( NodeEditorUserAuthority::Evaluation, true );
 
-		std::string filename = std::format( "{0}.gsnd", m_GraphAsset->Name );
+		const std::string filename = std::format( "{0}.gsnd", m_GraphAsset->Name );
 		if( NodeCacheEditor::ReadNodeEditorCache( m_NodeEditor, m_GraphAsset->ID, filename ) )
 		{
 			m_OutputNodeID = m_NodeEditor->FindNode( "Sound Output" )->ID;
@@ -183,7 +182,7 @@ namespace Saturn {
 	}
 
 #if !defined(SAT_DIST)
-	Ref<NodeEditor> GraphSound::GetNodeEditor() const
+	SharedPtr<NodeEditor> GraphSound::GetNodeEditor() const
 	{
 		return m_NodeEditor;
 	}

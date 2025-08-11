@@ -52,8 +52,12 @@ namespace Saturn {
 		DeselectLink
 	};
 
+	// The NodeEditor class is a graphical representation of NodeEditorBase
 	class NodeEditor : public NodeEditorBase
 	{
+	public:
+		static Ref<Texture2D> GetBlueprintBackground();
+
 	public:
 		NodeEditor();
 		NodeEditor( AssetID ID );
@@ -75,7 +79,7 @@ namespace Saturn {
 		void Open( bool open ) { m_WindowOpen = open; }
 
 		// Happens when the user clicks on the empty space.
-		void SetCreateNewNodeFunction( std::function<Ref<NodeEditorNodeBase>()>&& rrCreateNewNodeFunction )
+		void SetCreateNewNodeFunction( std::function<SharedPtr<NodeEditorNodeBase>()>&& rrCreateNewNodeFunction )
 		{
 			m_CreateNewNodeFunction = std::move( rrCreateNewNodeFunction );
 		}
@@ -112,7 +116,7 @@ namespace Saturn {
 		// However, in some cases such as GraphSounds or BehaviourTrees we want a custom name.
 		std::string m_CustomNameNC{};
 
-		void OnChooseNewNode( Ref<NodeEditorNodeBase> node );
+		void OnChooseNewNode( SharedPtr<NodeEditorNodeBase> node );
 		std::vector<UUID> GetSelectedNodes();
 
 	protected:
@@ -129,7 +133,7 @@ namespace Saturn {
 		void DrawSimulatingCanvas();
 
 	private:
-		std::function<Ref<NodeEditorNodeBase>()> m_CreateNewNodeFunction;
+		std::function<SharedPtr<NodeEditorNodeBase>()> m_CreateNewNodeFunction;
 		std::function<void()> m_TopbarItemsFunction;
 
 		bool m_CreateNewNode = false;
@@ -142,8 +146,8 @@ namespace Saturn {
 		Ref<Pin> m_NewLinkPin = nullptr;
 		Ref<Pin> m_NewNodeLinkPin = nullptr;
 #if !defined(SAT_DIST)
-		// TODO: Weak ptr
-		Ref<NodeEditorNodeBase> m_HoveredNode = nullptr;
+		// TODO: Weak ptr #ReplaceRawPtrOrRefWithWeakRef
+		SharedPtr<NodeEditorNodeBase> m_HoveredNode = nullptr;
 #endif
 
 		ImVec2 m_ViewportSize;

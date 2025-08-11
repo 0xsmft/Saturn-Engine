@@ -65,7 +65,7 @@ namespace Saturn {
 		void SetSpatialisation( bool value );
 
 #if !defined(SAT_DIST)
-		Ref<NodeEditor> GetNodeEditor() const;
+		SharedPtr<NodeEditor> GetNodeEditor() const;
 #endif
 
 	private:
@@ -78,9 +78,9 @@ namespace Saturn {
 		Ref<SoundEditorEvaluator> m_Runtime;
 
 #if !defined(SAT_DIST)
-		Ref<NodeEditor> m_NodeEditor;
+		SharedPtr<NodeEditor> m_NodeEditor;
 #else
-		Ref<NodeEditorBase> m_NodeEditor;
+		SharedPtr<NodeEditorBase> m_NodeEditor;
 #endif
 		UUID m_OutputNodeID = 0;
 	};

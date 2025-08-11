@@ -86,21 +86,21 @@ namespace Saturn {
 			return NodeEvaluationState::Failed;
 
 		// Get random number in range
-		float pitch = Random::RandomFloatInRange( Inputs[ 1 ].As<FloatPin>()->Data, Inputs[ 2 ].As<FloatPin>()->Data );
+		const float pitch = Random::RandomFloatInRange( Inputs[ 1 ].As<FloatPin>()->Data, Inputs[ 2 ].As<FloatPin>()->Data );
 
 #if !defined( SAT_DIST )
-		Ref<NodeEditor> uiEditor = pSoundEditorEvaluator->GetTargetNodeEditor().As<NodeEditor>();
+		SharedPtr<NodeEditor> uiEditor = pSoundEditorEvaluator->GetTargetNodeEditor().As<NodeEditor>();
 		uiEditor->PushInfoMessage( std::format( "Random pitch is: {0} (NC/{1})", pitch, (uint64_t)ID ) );
 #endif
 
 		// Set pitch
-		Ref<SoundPin> soundPin = Inputs[ 0 ].As<SoundPin>();
+		const Ref<SoundPin> soundPin = Inputs[ 0 ].As<SoundPin>();
 		pSoundEditorEvaluator->AliveSounds[ soundPin->Data ]->SetPitch( pitch );
 
 		// Write data (pass from our input pin)
 		Ref<SoundPin> Outpin = Outputs[ 0 ].As<SoundPin>();
 
-		auto links = pSoundEditorEvaluator->GetTargetEditor()->FindLinksByPin( Outpin->ID );
+		const auto links = pSoundEditorEvaluator->GetTargetEditor()->FindLinksByPin( Outpin->ID );
 		for( const auto& link : links )
 		{
 			// Find input node

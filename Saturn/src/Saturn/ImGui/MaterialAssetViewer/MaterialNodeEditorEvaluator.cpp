@@ -55,10 +55,10 @@ namespace Saturn {
 		if( !m_NodeEditor )
 			return NodeEditorCompilationStatus::Failed;
 
-		Ref<NodeEditorNodeBase> OutputNode = m_NodeEditor->FindNode( m_Info.OutputNodeID );
+		SharedPtr<NodeEditorNodeBase> OutputNode = m_NodeEditor->FindNode( m_Info.OutputNodeID );
 
 #if !defined(SAT_DIST)
-		Ref<NodeEditor> uiEditor = m_NodeEditor.As<NodeEditor>();
+		SharedPtr<NodeEditor> uiEditor = m_NodeEditor.As<NodeEditor>();
 
 		if( !OutputNode )
 		{
@@ -105,7 +105,7 @@ namespace Saturn {
 			const UUID currentNodeID = order.top();
 			order.pop();
 
-			Ref<NodeEditorNodeBase> currentNode = m_NodeEditor->FindNode( currentNodeID );
+			SharedPtr<NodeEditorNodeBase> currentNode = m_NodeEditor->FindNode( currentNodeID );
 			
 			switch( currentNode->ExecutionType )
 			{
@@ -113,9 +113,9 @@ namespace Saturn {
 				{
 					// Because we are a color picker check to make sure if we are linked to the output node
 					// If so then create the texture value.
-					size_t index = IsOutputsLinkedToOutNode( currentNode );
+					const size_t index = IsOutputsLinkedToOutNode( currentNode );
 
-					Ref<MaterialColorPickerNode> pickerNode = currentNode.As<MaterialColorPickerNode>();
+					SharedPtr<MaterialColorPickerNode> pickerNode = currentNode.As<MaterialColorPickerNode>();
 					pickerNode->TextureSlot = index;
 
 					currentNode = pickerNode;
@@ -123,9 +123,9 @@ namespace Saturn {
 
 				case NodeExecutionType::Sampler2D:
 				{
-					size_t index = IsOutputsLinkedToOutNode( currentNode );
+					const size_t index = IsOutputsLinkedToOutNode( currentNode );
 
-					Ref<MaterialSampler2DNode> sampler2DNode = currentNode.As<MaterialSampler2DNode>();
+					SharedPtr<MaterialSampler2DNode> sampler2DNode = currentNode.As<MaterialSampler2DNode>();
 					sampler2DNode->TextureSlot = index;
 
 					currentNode = sampler2DNode;
@@ -133,7 +133,7 @@ namespace Saturn {
 
 				case NodeExecutionType::MaterialOutput:
 				{
-					Ref<MaterialOutputNode> outNode = currentNode.As<MaterialOutputNode>();
+					SharedPtr<MaterialOutputNode> outNode = currentNode.As<MaterialOutputNode>();
 					outNode->RuntimeData.MaterialAsset = m_Info.HostMaterial;
 					currentNode = outNode;
 				} break;
@@ -160,9 +160,9 @@ namespace Saturn {
 		return NodeEditorCompilationStatus::Success;
 	}
 
-	size_t MaterialNodeEditorEvaluator::IsOutputsLinkedToOutNode( const Ref<NodeEditorNodeBase>& rNode )
+	size_t MaterialNodeEditorEvaluator::IsOutputsLinkedToOutNode( const SharedPtr<NodeEditorNodeBase>& rNode )
 	{
-		Ref<NodeEditorNodeBase> outputNode = m_NodeEditor->FindNode( m_Info.OutputNodeID );
+		SharedPtr<NodeEditorNodeBase> outputNode = m_NodeEditor->FindNode( m_Info.OutputNodeID );
 
 		size_t i = 0;
 		for( const auto& rOutput : rNode->Outputs )

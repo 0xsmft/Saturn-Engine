@@ -73,7 +73,7 @@ namespace Saturn {
 		m_Runtime = nullptr;
 	}
 
-	void BehaviourTreeNodeEditor::TraverseBehaviourTree( const Ref<NodeEditorNodeBase>& rRootNode )
+	void BehaviourTreeNodeEditor::TraverseBehaviourTree( const SharedPtr<NodeEditorNodeBase>& rRootNode )
 	{
 #if !defined(SAT_DIST)
 		Ref<BehaviourTreeEditorEvaluator> runtime = m_Runtime.As<BehaviourTreeEditorEvaluator>();
@@ -100,7 +100,7 @@ namespace Saturn {
 			}
 			
 			// Find neighbors from outputs then keep going down that path until there is no more neighbors
-			Ref<BehaviourTreeNodeBase> treeNode = FindNode( currentID ).As<BehaviourTreeNodeBase>();
+			SharedPtr<BehaviourTreeNodeBase> treeNode = FindNode( currentID ).As<BehaviourTreeNodeBase>();
 			if( treeNode )
 			{
 				treeNode->EvaluationOrder = nodeEvaluationOrder++;
@@ -122,7 +122,7 @@ namespace Saturn {
 
 					case NodeExecutionType::BehaviourTreeSequenceNode:
 					{
-						Ref<BehaviourTreeSequenceNode> seq = treeNode.As<BehaviourTreeSequenceNode>();
+						SharedPtr<BehaviourTreeSequenceNode> seq = treeNode.As<BehaviourTreeSequenceNode>();
 						if( seq )
 						{
 							seq->Reset();
@@ -132,7 +132,7 @@ namespace Saturn {
 
 					case NodeExecutionType::BehaviourTreeSelectorNode:
 					{
-						Ref<BehaviourTreeSelectorNode> selector = treeNode.As<BehaviourTreeSelectorNode>();
+						SharedPtr<BehaviourTreeSelectorNode> selector = treeNode.As<BehaviourTreeSelectorNode>();
 						if( selector )
 						{
 							selector->Reset();
@@ -169,16 +169,16 @@ namespace Saturn {
 		{
 			if( rNode->GetClass()->IsChildOf( BehaviourTreeTaskNode::StaticClass() ) )
 			{
-				Ref<BehaviourTreeTaskNode> taskNode = rNode.As<BehaviourTreeTaskNode>();
+				SharedPtr<BehaviourTreeTaskNode> taskNode = rNode.As<BehaviourTreeTaskNode>();
 				m_Tasks[ id ] = taskNode->GetTaskInstance().Get();
 
 				continue;
 			}
 			else
 			{
-				Ref<BehaviourTreeNodeBase> behaviourTreeNode = rNode.As<BehaviourTreeNodeBase>();
+				SharedPtr<BehaviourTreeNodeBase> behaviourTreeNode = rNode.As<BehaviourTreeNodeBase>();
 
-				auto Itr = std::find_if( m_EvaluationOrder.begin(), m_EvaluationOrder.end(),
+				const auto Itr = std::find_if( m_EvaluationOrder.begin(), m_EvaluationOrder.end(),
 					[ id ]( const auto& rInfo )
 				{
 					return rInfo.NodeID == id;
@@ -251,7 +251,7 @@ namespace Saturn {
 			const Ref<Asset> asset = AssetManager::Get().FindAsset( m_BehaviourTreeMemoryAssetID );
 			if( asset )
 			{
-				std::string windowName = std::format( "{0}##{1}", asset->Name, ( uint64_t ) m_BehaviourTreeMemoryAssetID );
+				const std::string windowName = std::format( "{0}##{1}", asset->Name, ( uint64_t ) m_BehaviourTreeMemoryAssetID );
 				ImGuiWindowManager::Get().OpenOrShowWindow<BehaviourTreeMemoryAssetViewer>( windowName, m_BehaviourTreeMemoryAssetID );
 
 				ImGui::SetWindowFocus( windowName.c_str() );
@@ -264,7 +264,7 @@ namespace Saturn {
 		std::vector<UUID> nodes = GetSelectedNodes();
 		if( nodes.size() == 1 )
 		{
-			Ref<BehaviourTreeNodeBase> treeNode = FindNode( nodes[ 0 ] ).As<BehaviourTreeNodeBase>();
+			SharedPtr<BehaviourTreeNodeBase> treeNode = FindNode( nodes[ 0 ] ).As<BehaviourTreeNodeBase>();
 			if( treeNode && treeNode->Type == NodeRenderType::Tree )
 			{
 				ImGui::Text( "%s/%llu", treeNode->Name.c_str(), treeNode->ID );
@@ -424,11 +424,11 @@ namespace Saturn {
 		m_EditorLinkPath.clear();
 		ed::StopFlow();
 
-		Ref<BehaviourTreeNodeBase> rootNode = FindNode( m_CurrentTask->GetNodeID() ).As<BehaviourTreeNodeBase>();
+		SharedPtr<BehaviourTreeNodeBase> rootNode = FindNode( m_CurrentTask->GetNodeID() ).As<BehaviourTreeNodeBase>();
 		BuildFlow( rootNode );
 	}
 
-	void BehaviourTreeNodeEditor::BuildFlow( Ref<BehaviourTreeNodeBase> node )
+	void BehaviourTreeNodeEditor::BuildFlow( SharedPtr<BehaviourTreeNodeBase> node )
 	{
 		if( !node || node->Inputs.empty() )
 			return;
@@ -442,7 +442,7 @@ namespace Saturn {
 		{
 			case NodeExecutionType::BehaviourTreeSequenceNode:
 			{
-				Ref<BehaviourTreeSequenceNode> seq = node.As<BehaviourTreeSequenceNode>();
+				SharedPtr<BehaviourTreeSequenceNode> seq = node.As<BehaviourTreeSequenceNode>();
 				if( !seq )
 					break;
 
@@ -459,7 +459,7 @@ namespace Saturn {
 						if( rChildTask->GetState() == BehaviourTreeTaskState::Running ||
 							rChildTask->GetState() == BehaviourTreeTaskState::Starting )
 						{
-							Ref<BehaviourTreeNodeBase> childNode = FindNode( childNodeID ).As<BehaviourTreeNodeBase>();
+							SharedPtr<BehaviourTreeNodeBase> childNode = FindNode( childNodeID ).As<BehaviourTreeNodeBase>();
 							if( childNode )
 							{
 								BuildFlow( childNode );
@@ -472,7 +472,7 @@ namespace Saturn {
 
 			case NodeExecutionType::BehaviourTreeSelectorNode:
 			{
-				Ref<BehaviourTreeSelectorNode> selector = node.As<BehaviourTreeSelectorNode>();
+				SharedPtr<BehaviourTreeSelectorNode> selector = node.As<BehaviourTreeSelectorNode>();
 				if( !selector )
 					break;
 
@@ -489,7 +489,7 @@ namespace Saturn {
 						if( rChildTask->GetState() == BehaviourTreeTaskState::Running ||
 							rChildTask->GetState() == BehaviourTreeTaskState::Starting )
 						{
-							Ref<BehaviourTreeNodeBase> childNode = FindNode( childNodeID ).As<BehaviourTreeNodeBase>();
+							SharedPtr<BehaviourTreeNodeBase> childNode = FindNode( childNodeID ).As<BehaviourTreeNodeBase>();
 							if( childNode )
 							{
 								// Recursive step
@@ -529,7 +529,7 @@ namespace Saturn {
 		{
 			for( auto&& [id, rNode] : m_Nodes )
 			{
-				Ref<BehaviourTreeNodeBase> treeNode = rNode.As<BehaviourTreeNodeBase>();
+				SharedPtr<BehaviourTreeNodeBase> treeNode = rNode.As<BehaviourTreeNodeBase>();
 				if( treeNode )
 				{
 					treeNode->PostDeserialise();

@@ -107,7 +107,7 @@ namespace Saturn {
 
 		m_Name = std::format( "{0}##{1}", m_Asset->Name, ( uint64_t ) m_AssetID );
 
-		m_NodeEditor = Ref<BehaviourTreeNodeEditor>::Create( m_AssetID );
+		m_NodeEditor = SharedPtr<BehaviourTreeNodeEditor>::Create( m_AssetID );
 		const std::string filename = std::format( "{0}.sbt", m_Asset->Name );
 
 		if( NodeCacheEditor::ReadNodeEditorCache( m_NodeEditor, m_AssetID, filename ) )
@@ -154,7 +154,7 @@ namespace Saturn {
 
 	void BehaviourTreeAssetViewer::SetupNewNodeEditor()
 	{
-		Ref<BehaviourTreeRootNode> OutputNode = BehaviourTreeNodeLibrary::SpawnRootNode( m_NodeEditor );
+		SharedPtr<BehaviourTreeRootNode> OutputNode = BehaviourTreeNodeLibrary::SpawnRootNode( m_NodeEditor );
 		m_RootNodeID = OutputNode->ID;
 
 		MarkDirty();
@@ -164,9 +164,9 @@ namespace Saturn {
 	{
 #if !defined(SAT_DIST)
 		m_NodeEditor->SetCreateNewNodeFunction(
-			[ & ]() -> Ref<NodeEditorNodeBase>
+			[ & ]() -> SharedPtr<NodeEditorNodeBase>
 		{
-			Ref<NodeEditorNodeBase> result;
+			SharedPtr<NodeEditorNodeBase> result;
 
 			ImGui::SeparatorText( "Basic/Composite" );
 			

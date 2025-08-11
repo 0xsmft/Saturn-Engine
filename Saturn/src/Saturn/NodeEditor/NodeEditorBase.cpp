@@ -31,38 +31,16 @@
 
 #include "Runtime/NodeEditorRuntime.h"
 
-#include "Saturn/Vulkan/Texture.h"
-
-#include "Saturn/ImGui/EditorIcons.h"
-
 #include "Saturn/NodeEditor/Serialisation/NodeCache.h"
 #include "Saturn/NodeEditor/NodeEditorBlueprintNode.h"
 
 #include "Saturn/GameFramework/SClass.h"
 #include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 
-#include <backends/imgui_impl_vulkan.h>
-
 namespace Saturn {
 
 	//////////////////////////////////////////////////////////////////////////
 	// NODE EDITOR BASE
-
-	Ref<Texture2D> NodeEditorBase::GetBlueprintBackground()
-	{
-		if( EditorIcons::GetIcon( "BlueprintBackground" ) == nullptr )
-		{
-			const auto texture = Ref<Texture2D>::Create( "content/textures/editor/BlueprintBackground.png", AddressingMode::Repeat, false );
-
-			EditorIcons::AddIcon( texture );
-
-			ImGui_ImplVulkan_AddTexture( texture->GetSampler(), texture->GetImageView(), texture->GetDescriptorInfo().imageLayout );
-
-			return texture;
-		}
-
-		return EditorIcons::GetIcon( "BlueprintBackground" );
-	}
 
 	NodeEditorBase::NodeEditorBase() 
 		: m_Runtime( Ref<NodeEditorRuntime>::Create() )
@@ -94,7 +72,7 @@ namespace Saturn {
 		NodeCacheSettings::WriteEditorSettings( this );
 	}
 
-	static void BuildNode( Ref<NodeEditorNodeBase>& rNode )
+	static void BuildNode( SharedPtr<NodeEditorNodeBase>& rNode )
 	{
 		for( auto& input : rNode->Inputs )
 		{
@@ -116,7 +94,7 @@ namespace Saturn {
 
 		for( const auto& [key, value] : m_Nodes )
 		{
-			UUID::Serialise( key, rStream );
+			RawSerialisation::WriteUUID( key, rStream );
 
 			RawSerialisation::WriteObject( value->GetClass()->GetHash(), rStream );
 
@@ -154,14 +132,14 @@ namespace Saturn {
 
 			NodeEditorNodeBase* pNode = dynamic_cast< NodeEditorNodeBase* >( ClassMetadataHandler::Get().CreateClassObject( targetClassHash ) );
 
-			Ref<NodeEditorNodeBase> node = pNode;
+			SharedPtr<NodeEditorNodeBase> node = pNode;
 			if( node )
 			{
 				AddNode( node );
 			}
 			else
 			{
-				node = Ref<NodeEditorBlueprintNode>::Create();
+				node = SharedPtr<NodeEditorBlueprintNode>::Create();
 			}
 
 			node->Deserialise( rStream );
@@ -246,7 +224,7 @@ namespace Saturn {
 		return nullptr;
 	}
 
-	Ref<NodeEditorNodeBase> NodeEditorBase::FindNode( UUID id )
+	SharedPtr<NodeEditorNodeBase> NodeEditorBase::FindNode( UUID id )
 	{
 		const auto Itr = m_Nodes.find( id );
 
@@ -256,7 +234,7 @@ namespace Saturn {
 		return nullptr;
 	}
 
-	Ref<NodeEditorNodeBase> NodeEditorBase::FindNode( const std::string& rName )
+	SharedPtr<NodeEditorNodeBase> NodeEditorBase::FindNode( const std::string& rName )
 	{
 		for( auto& [ id, node ]: m_Nodes )
 		{
@@ -287,7 +265,7 @@ namespace Saturn {
 		return nullptr;
 	}
 
-	Ref<NodeEditorNodeBase> NodeEditorBase::FindNodeByPin( UUID id )
+	SharedPtr<NodeEditorNodeBase> NodeEditorBase::FindNodeByPin( UUID id )
 	{
 		if( auto rPin = FindPin( id ) ) 
 			return rPin->Node;
@@ -320,7 +298,7 @@ namespace Saturn {
 
 	NodeEditorCompilationStatus NodeEditorBase::Evaluate()
 	{
-		if( !m_Runtime || m_State == NodeEditorState::Loading || !HasPrivilege( NodeEditorPrivileges::Evaluation ) )
+		if( !m_Runtime || m_State == NodeEditorState::Loading || !HasPrivilege( NodeEditorUserAuthority::Evaluation ) )
 			return NodeEditorCompilationStatus::Failed;
 
 		m_State = NodeEditorState::Evaluating;
@@ -328,7 +306,7 @@ namespace Saturn {
 		return m_Runtime->EvaluateEditor();
 	}
 
-	std::vector<UUID> NodeEditorBase::FindNeighborsRight( Ref<NodeEditorNodeBase> node )
+	std::vector<UUID> NodeEditorBase::FindNeighborsRight( SharedPtr<NodeEditorNodeBase> node )
 	{
 		std::vector<UUID> ids;
 
@@ -338,11 +316,11 @@ namespace Saturn {
 				continue;
 
 			// If the pin is linked find the other end of it and add it to our list.
-			auto links = FindLinksByPin( rInput->ID );
+			const auto links = FindLinksByPin( rInput->ID );
 			for( const auto& rLink : links )
 			{
 				const bool isStart = rLink->StartPinID == rInput->ID;
-				Ref<NodeEditorNodeBase> otherNode = FindNodeByPin( isStart ? rLink->EndPinID : rLink->StartPinID );
+				SharedPtr<NodeEditorNodeBase> otherNode = FindNodeByPin( isStart ? rLink->EndPinID : rLink->StartPinID );
 
 				ids.push_back( otherNode->ID );
 			}
@@ -351,7 +329,7 @@ namespace Saturn {
 		return ids;
 	}
 
-	std::vector<UUID> NodeEditorBase::FindNeighborsLeft( Ref<NodeEditorNodeBase> node )
+	std::vector<UUID> NodeEditorBase::FindNeighborsLeft( SharedPtr<NodeEditorNodeBase> node )
 	{
 		std::vector<UUID> ids;
 
@@ -361,12 +339,12 @@ namespace Saturn {
 				continue;
 
 			// If the pin is linked find the other end of it and add it to our list.
-			auto links = FindLinksByPin( rOutput->ID );
+			const auto links = FindLinksByPin( rOutput->ID );
 
 			for( const auto& rLink : links )
 			{
 				const bool isStart = rLink->StartPinID == rOutput->ID;
-				Ref<NodeEditorNodeBase> otherNode = FindNodeByPin( isStart ? rLink->EndPinID : rLink->StartPinID );
+				SharedPtr<NodeEditorNodeBase> otherNode = FindNodeByPin( isStart ? rLink->EndPinID : rLink->StartPinID );
 
 				ids.push_back( otherNode->ID );
 			}
@@ -407,12 +385,12 @@ namespace Saturn {
 		ed::Flow( ed::LinkId( linkID ) );
 	}
 
-	bool NodeEditorBase::HasPrivilege( NodeEditorPrivileges privilege ) const
+	bool NodeEditorBase::HasPrivilege( NodeEditorUserAuthority privilege ) const
 	{
 		return ( m_Privileges & privilege ) == privilege;
 	}
 
-	void NodeEditorBase::SetPrivileges( NodeEditorPrivileges privilege, bool value )
+	void NodeEditorBase::SetPrivileges( NodeEditorUserAuthority privilege, bool value )
 	{
 		if( value )
 			m_Privileges = m_Privileges | privilege;
@@ -420,7 +398,7 @@ namespace Saturn {
 			m_Privileges = m_Privileges & ~privilege;
 	}
 
-	void NodeEditorBase::AddNode( Ref<NodeEditorNodeBase> node )
+	void NodeEditorBase::AddNode( SharedPtr<NodeEditorNodeBase> node )
 	{
 		if( m_State == NodeEditorState::Loading )
 			return;
@@ -429,9 +407,9 @@ namespace Saturn {
 
 		BuildNode( node );
 
+#if !defined(SAT_DIST)
 		VariableGuard<ed::EditorContext*> guard( m_Editor );
 
-#if !defined(SAT_DIST)
 		if( node->Position.x != 0.0f && node->Position.y != 0.0f )
 			ed::SetNodePosition( ed::NodeId( node->ID ), node->Position );
 #endif

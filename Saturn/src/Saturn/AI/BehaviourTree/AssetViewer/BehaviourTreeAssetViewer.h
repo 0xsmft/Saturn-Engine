@@ -62,7 +62,7 @@ namespace Saturn {
 
 	private:
 		Ref<Asset> m_Asset = nullptr;
-		Ref<BehaviourTreeNodeEditor> m_NodeEditor = nullptr;
+		SharedPtr<BehaviourTreeNodeEditor> m_NodeEditor = nullptr;
 		Ref<BehaviourTreeEditorEvaluator> m_Runtime = nullptr;
 
 		UUID m_RootNodeID = 0;
@@ -74,7 +74,7 @@ namespace Saturn {
 		// TODO: Weak Ref #ReplaceRawPtrOrRefWithWeakRef
 		std::vector<Ref<BehaviourTree>> m_ReferencingAssets;
 
-		Ref<BehaviourTreeNodeEditor> m_OriginalNodeEditor = nullptr;
+		SharedPtr<BehaviourTreeNodeEditor> m_OriginalNodeEditor = nullptr;
 
 		std::vector<BehaviourTreeBaseTask*> m_ClassCache;
 #endif

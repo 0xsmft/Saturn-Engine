@@ -48,6 +48,8 @@
 
 #include "Saturn/Core/OptickProfiler.h"
 
+#include <backends/imgui_impl_vulkan.h>
+
 namespace util = ax::NodeEditor::Utilities;
 
 namespace Saturn {
@@ -55,7 +57,7 @@ namespace Saturn {
 	static constexpr inline bool operator==( const ImVec2& lhs, const ImVec2& rhs ) { return lhs.x == rhs.x && lhs.y == rhs.y; }
 	static constexpr inline bool operator!=( const ImVec2& lhs, const ImVec2& rhs ) { return !( lhs == rhs ); }
 
-	static void BuildNode( Ref<NodeEditorNodeBase>& rNode )
+	static void BuildNode( SharedPtr<NodeEditorNodeBase>& rNode )
 	{
 		for( auto& input : rNode->Inputs )
 		{
@@ -68,6 +70,23 @@ namespace Saturn {
 			output->Node = rNode;
 			output->Kind = PinKind::Output;
 		}
+	}
+
+	Ref<Texture2D> NodeEditor::GetBlueprintBackground()
+	{
+		auto icon = EditorIcons::GetIcon( "BlueprintBackground" );
+		if( icon == nullptr )
+		{
+			const auto texture = Ref<Texture2D>::Create( "content/textures/editor/BlueprintBackground.png", AddressingMode::Repeat, false );
+
+			EditorIcons::AddIcon( texture );
+
+			ImGui_ImplVulkan_AddTexture( texture->GetSampler(), texture->GetImageView(), texture->GetDescriptorInfo().imageLayout );
+
+			return texture;
+		}
+
+		return icon;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -86,7 +105,7 @@ namespace Saturn {
 	{
 		m_Editor = nullptr;
 
-		SetPrivileges( NodeEditorPrivileges::All, true );
+		SetPrivileges( NodeEditorUserAuthority::Full, true );
 	}
 
 	NodeEditor::~NodeEditor()
@@ -169,7 +188,7 @@ namespace Saturn {
 		m_ZoomTexture = EditorIcons::GetIcon( "Inspect" );
 		m_CompileTexture = EditorIcons::GetIcon( "NoIcon" );
 		
-		auto texture = NodeEditorBase::GetBlueprintBackground();
+		const auto texture = GetBlueprintBackground();
 		m_Builder = util::BlueprintNodeBuilder( ( ImTextureID ) texture->GetDescriptorSet(), texture->Width(), texture->Height() );
 
 		m_OutputWindow.SetWindowID( m_AssetID );
@@ -233,7 +252,7 @@ namespace Saturn {
 		// Draw main window
 		ImGui::Begin( m_Name.c_str(), &m_WindowOpen, m_Dirty ? ImGuiWindowFlags_UnsavedDocument : 0 );
 
-		if( m_ShowUnsavedChanges && HasPrivilege( NodeEditorPrivileges::Editing ) )
+		if( m_ShowUnsavedChanges && HasPrivilege( NodeEditorUserAuthority::Editing ) )
 			ImGui::OpenPopup( "Unsaved Changes" );
 
 		// Unsaved changes modal
@@ -298,7 +317,7 @@ namespace Saturn {
 			ImGui::EndTooltip();
 		}
 
-		Auxiliary::DisabledFlag disabled( !HasPrivilege( NodeEditorPrivileges::Evaluation ) );
+		Auxiliary::DisabledFlag disabled( !HasPrivilege( NodeEditorUserAuthority::Evaluation ) );
 
 		if( Auxiliary::ImageButton( m_CompileTexture, { 24.0f, 24.0f } ) )
 		{
@@ -362,7 +381,7 @@ namespace Saturn {
 		for( const auto& rLink : m_Links )
 			ed::Link( ed::LinkId( rLink->ID ), ed::PinId( rLink->StartPinID ), ed::PinId( rLink->EndPinID ), rLink->Color );
 
-		if( !m_CreateNewNode && HasPrivilege( NodeEditorPrivileges::Editing ) )
+		if( !m_CreateNewNode && HasPrivilege( NodeEditorUserAuthority::Editing ) )
 		{
 			if( ed::BeginCreate( ImColor( 255, 255, 255 ), 2.0f ) )
 			{
@@ -593,11 +612,9 @@ namespace Saturn {
 		// Extra information window
 		if( ImGui::Begin( "Details" ) )
 		{
-			Auxiliary::DisabledFlag disabled( !HasPrivilege( NodeEditorPrivileges::Editing ) );
+			Auxiliary::ScopedDisabledFlag disabled( !HasPrivilege( NodeEditorUserAuthority::Editing ) );
 
 			OnExtraRender();
-
-			disabled.Pop();
 		}
 
 		ImGui::End();
@@ -606,16 +623,23 @@ namespace Saturn {
 		ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 8.0f, 8.0f ) );
 		if( ImGui::BeginPopup( "Create New Node" ) )
 		{
-			const ImVec2 mousePos = ImGui::GetMousePosOnOpeningCurrentPopup();
-			Ref<NodeEditorNodeBase> node = nullptr;
-
-			if( m_CreateNewNodeFunction )
-				node = m_CreateNewNodeFunction();
-
-			if( node )
+			if( HasPrivilege( NodeEditorUserAuthority::Editing ) )
 			{
-				ed::SetNodePosition( ed::NodeId( node->ID ), ed::ScreenToCanvas( mousePos ) );
-				OnChooseNewNode( node );
+				const ImVec2 mousePos = ImGui::GetMousePosOnOpeningCurrentPopup();
+				SharedPtr<NodeEditorNodeBase> node = nullptr;
+
+				if( m_CreateNewNodeFunction )
+					node = m_CreateNewNodeFunction();
+
+				if( node )
+				{
+					ed::SetNodePosition( ed::NodeId( node->ID ), ed::ScreenToCanvas( mousePos ) );
+					OnChooseNewNode( node );
+				}
+			}
+			else
+			{
+				ImGui::Text( "Insufficient User Authority to add a new node." );
 			}
 
 			ImGui::EndPopup();
@@ -704,14 +728,14 @@ namespace Saturn {
 
 	void NodeEditor::DeleteDeadLinks( UUID nodeID )
 	{
-		auto wasConnectedToTheNode = [&]( const Ref<Link>& link )
+		const auto wasConnectedToTheNode = [&]( const Ref<Link>& link )
 			{
 				return ( !FindPin( link->StartPinID ) ) || ( !FindPin( link->EndPinID ) )
 					|| FindPin( link->StartPinID )->Node->ID == nodeID
 					|| FindPin( link->EndPinID )->Node->ID == nodeID;
 			};
 
-		auto removeIt = std::remove_if( m_Links.begin(), m_Links.end(), wasConnectedToTheNode );
+		const auto removeIt = std::remove_if( m_Links.begin(), m_Links.end(), wasConnectedToTheNode );
 		m_Links.erase( removeIt, m_Links.end() );
 	}
 
@@ -807,7 +831,7 @@ namespace Saturn {
 
 #if !defined(SAT_DIST)
 
-	void NodeEditor::OnChooseNewNode( Ref<NodeEditorNodeBase> node )
+	void NodeEditor::OnChooseNewNode( SharedPtr<NodeEditorNodeBase> node )
 	{
 		BuildNode( node );
 
@@ -888,21 +912,21 @@ namespace Saturn {
 		for( size_t i = 0; i < mapSize; i++ )
 		{
 			UUID key = 0;
-			UUID::Deserialise( key, rStream );
+			RawSerialisation::ReadUUID( key, rStream );
 
 			uint64_t targetClassHash = 0;
 			RawSerialisation::ReadObject( targetClassHash, rStream );
 
 			NodeEditorNodeBase* pNode = dynamic_cast< NodeEditorNodeBase* >( ClassMetadataHandler::Get().CreateClassObject( targetClassHash ) );
 
-			Ref<NodeEditorNodeBase> node = pNode;
+			SharedPtr<NodeEditorNodeBase> node = pNode;
 			if( node )
 			{
 				AddNode( node );
 			}
 			else
 			{
-				node = Ref<NodeEditorBlueprintNode>::Create();
+				node = SharedPtr<NodeEditorBlueprintNode>::Create();
 			}
 
 			// NOTE: Although AddNode sets the pOuter, we want to override it to point to us (a NodeEditor), instead of NodeEditorBase

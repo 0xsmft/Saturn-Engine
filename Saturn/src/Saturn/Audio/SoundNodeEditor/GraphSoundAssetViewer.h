@@ -67,7 +67,7 @@ namespace Saturn {
 	private:
 		// Sound specification asset
 		Ref<Asset> m_Asset = nullptr;
-		Ref<NodeEditor> m_NodeEditor = nullptr;
+		SharedPtr<NodeEditor> m_NodeEditor = nullptr;
 		Ref<SoundEditorEvaluator> m_Runtime = nullptr;
 
 		bool m_ShowDirtyModal = false;
@@ -79,7 +79,7 @@ namespace Saturn {
 		// For example we could have the same sound spec asset being used in different places so which one are we trying to view (only available when in Runtime).
 		std::vector<Ref<GraphSound>> m_ReferencingAssets;
 
-		Ref<NodeEditor> m_OriginalNodeEditor = nullptr;
+		SharedPtr<NodeEditor> m_OriginalNodeEditor = nullptr;
 #endif
 	};
 }

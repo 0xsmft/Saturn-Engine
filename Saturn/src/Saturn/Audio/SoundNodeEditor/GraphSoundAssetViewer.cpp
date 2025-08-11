@@ -105,7 +105,7 @@ namespace Saturn {
 
 		m_Name = std::format( "{0}##{1}", m_Asset->Name, ( uint64_t ) m_AssetID );
 
-		m_NodeEditor = Ref<NodeEditor>::Create( m_AssetID );
+		m_NodeEditor = SharedPtr<NodeEditor>::Create( m_AssetID );
 
 		std::string filename = std::format( "{0}.gsnd", m_Asset->Name );
 		if( NodeCacheEditor::ReadNodeEditorCache( m_NodeEditor, m_AssetID, filename ) )
@@ -137,7 +137,7 @@ namespace Saturn {
 
 	void GraphSoundAssetViewer::SetupNewNodeEditor()
 	{
-		Ref<SoundOutputNode> OutputNode = SoundNodeLibrary::SpawnOutputNode( m_NodeEditor );
+		SharedPtr<SoundOutputNode> OutputNode = SoundNodeLibrary::SpawnOutputNode( m_NodeEditor );
 
 		m_OutputNodeID = OutputNode->ID;
 
@@ -148,9 +148,9 @@ namespace Saturn {
 	{
 #if !defined(SAT_DIST)
 		m_NodeEditor->SetCreateNewNodeFunction(
-			[&]() -> Ref<NodeEditorNodeBase>
+			[&]() -> SharedPtr<NodeEditorNodeBase>
 			{
-				Ref<NodeEditorNodeBase> result = nullptr;
+				SharedPtr<NodeEditorNodeBase> result = nullptr;
 
 				ImGui::SeparatorText( "Sound" );
 

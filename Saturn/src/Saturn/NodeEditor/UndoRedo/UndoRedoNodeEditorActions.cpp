@@ -37,7 +37,7 @@ namespace Saturn {
 	// TODO: USE GLOBAL NODE LIST FOR EVAL
 	// TODO: CREATE COPY OPERATOR
 
-	UndoRedoActionCreateNode::UndoRedoActionCreateNode( Ref<NodeEditor> nodeEditor, Ref<NodeEditorNodeBase> originalNode )
+	UndoRedoActionCreateNode::UndoRedoActionCreateNode( SharedPtr<NodeEditor> nodeEditor, SharedPtr<NodeEditorNodeBase> originalNode )
 		: UndoRedoActionBase( "Create Node" ), m_NodeEditor( nodeEditor )
 	{
 		/*
@@ -95,7 +95,7 @@ namespace Saturn {
 		*/
 	}
 
-	UndoRedoActionDeleteNode::UndoRedoActionDeleteNode( Ref<NodeEditor> nodeEditor, Ref<NodeEditorNodeBase> originalNode )
+	UndoRedoActionDeleteNode::UndoRedoActionDeleteNode( SharedPtr<NodeEditor> nodeEditor, SharedPtr<NodeEditorNodeBase> originalNode )
 		: UndoRedoActionBase( "Delete Node" ), m_NodeEditor( nodeEditor )
 	{
 		/*
@@ -156,7 +156,7 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// MODIFY NODE POSITION
 
-	UndoRedoActionModifyNodePosition::UndoRedoActionModifyNodePosition( Ref<NodeEditor> nodeEditor, Ref<NodeEditorNodeBase> originalNode, const ImVec2& rOldPosition )
+	UndoRedoActionModifyNodePosition::UndoRedoActionModifyNodePosition( SharedPtr<NodeEditor> nodeEditor, SharedPtr<NodeEditorNodeBase> originalNode, const ImVec2& rOldPosition )
 		: UndoRedoActionBase( "Modify Node Position" ), m_NodeEditor( nodeEditor )
 	{
 #if !defined(SAT_DIST)

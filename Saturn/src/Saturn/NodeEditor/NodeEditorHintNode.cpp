@@ -109,9 +109,9 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// STATIC API
 
-	Ref<NodeEditorHintNode> NodeEditorHintNode::SpawnHintNode( Ref<NodeEditorBase> nodeEditor )
+	SharedPtr<NodeEditorHintNode> NodeEditorHintNode::SpawnHintNode( SharedPtr<NodeEditorBase> nodeEditor )
 	{
-		Ref<NodeEditorHintNode> node = Ref<NodeEditorHintNode>::Create();
+		SharedPtr<NodeEditorHintNode> node = SharedPtr<NodeEditorHintNode>::Create();
 		nodeEditor->AddNode( node );
 
 		return node;

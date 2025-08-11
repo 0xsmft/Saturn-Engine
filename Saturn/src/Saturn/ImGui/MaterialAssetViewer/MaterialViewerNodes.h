@@ -150,13 +150,13 @@ namespace Saturn {
 	class MaterialNodeLibrary
 	{
 	public:
-		static Ref<MaterialOutputNode> SpawnOutputNode( Ref<NodeEditorBase> nodeEditor );
+		static SharedPtr<MaterialOutputNode> SpawnOutputNode( SharedPtr<NodeEditorBase> nodeEditor );
 
-		static Ref<MaterialGetAssetNode> SpawnGetAsset( Ref<NodeEditorBase> nodeEditor );
-		static Ref<MaterialColorPickerNode> SpawnColorPicker( Ref<NodeEditorBase> nodeEditor );
-		static Ref<MaterialSampler2DNode> SpawnSampler2D( Ref<NodeEditorBase> nodeEditor );
-		static Ref<MaterialSeparateColorRGBNode> SpawnSeparateColorRGB( Ref<NodeEditorBase> nodeEditor );
+		static SharedPtr<MaterialGetAssetNode> SpawnGetAsset( SharedPtr<NodeEditorBase> nodeEditor );
+		static SharedPtr<MaterialColorPickerNode> SpawnColorPicker( SharedPtr<NodeEditorBase> nodeEditor );
+		static SharedPtr<MaterialSampler2DNode> SpawnSampler2D( SharedPtr<NodeEditorBase> nodeEditor );
+		static SharedPtr<MaterialSeparateColorRGBNode> SpawnSeparateColorRGB( SharedPtr<NodeEditorBase> nodeEditor );
 
-		static Ref<MaterialColorMixerNode> SpawnMixColors( Ref<NodeEditorBase> nodeEditor );
+		static SharedPtr<MaterialColorMixerNode> SpawnMixColors( SharedPtr<NodeEditorBase> nodeEditor );
 	};
 }

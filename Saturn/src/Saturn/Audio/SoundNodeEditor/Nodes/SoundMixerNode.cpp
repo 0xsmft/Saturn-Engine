@@ -88,7 +88,7 @@ namespace Saturn {
 
 		if( count != Inputs.size() )
 		{
-			Ref<NodeEditor> uiEditor = pSoundEditorEvaluator->GetTargetNodeEditor().As<NodeEditor>();
+			SharedPtr<NodeEditor> uiEditor = pSoundEditorEvaluator->GetTargetNodeEditor().As<NodeEditor>();
 
 			uiEditor->ThrowError( "Not all pins are linked to the mixer node!" );
 

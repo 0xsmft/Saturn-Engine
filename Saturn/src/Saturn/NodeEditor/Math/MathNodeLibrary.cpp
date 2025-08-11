@@ -33,33 +33,33 @@
 
 namespace Saturn {
 
-	Ref<MathAddFloats> MathNodeLibrary::SpawnMathAdd( Ref<NodeEditorBase> rNodeEditor )
+	SharedPtr<MathAddFloats> MathNodeLibrary::SpawnMathAdd( SharedPtr<NodeEditorBase> rNodeEditor )
 	{
-		Ref<MathAddFloats> node = Ref<MathAddFloats>::Create();
+		SharedPtr<MathAddFloats> node = SharedPtr<MathAddFloats>::Create();
 		rNodeEditor->AddNode( node );
 
 		return node;
 	}
 
-	Ref<MathSubFloats> MathNodeLibrary::SpawnMathSub( Ref<NodeEditorBase> rNodeEditor )
+	SharedPtr<MathSubFloats> MathNodeLibrary::SpawnMathSub( SharedPtr<NodeEditorBase> rNodeEditor )
 	{
-		Ref<MathSubFloats> node = Ref<MathSubFloats>::Create();
+		SharedPtr<MathSubFloats> node = SharedPtr<MathSubFloats>::Create();
 		rNodeEditor->AddNode( node );
 
 		return node;
 	}
 
-	Ref<MathMulFloats> MathNodeLibrary::SpawnMathMul( Ref<NodeEditorBase> rNodeEditor )
+	SharedPtr<MathMulFloats> MathNodeLibrary::SpawnMathMul( SharedPtr<NodeEditorBase> rNodeEditor )
 	{
-		Ref<MathMulFloats> node = Ref<MathMulFloats>::Create();
+		SharedPtr<MathMulFloats> node = SharedPtr<MathMulFloats>::Create();
 		rNodeEditor->AddNode( node );
 
 		return node;
 	}
 
-	Ref<MathDivideFloats> MathNodeLibrary::SpawnMathDiv( Ref<NodeEditorBase> rNodeEditor )
+	SharedPtr<MathDivideFloats> MathNodeLibrary::SpawnMathDiv( SharedPtr<NodeEditorBase> rNodeEditor )
 	{
-		Ref<MathDivideFloats> node = Ref<MathDivideFloats>::Create();
+		SharedPtr<MathDivideFloats> node = SharedPtr<MathDivideFloats>::Create();
 		rNodeEditor->AddNode( node );
 
 		return node;

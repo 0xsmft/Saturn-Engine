@@ -44,20 +44,27 @@ namespace Saturn {
 
 	void NavigationSystem::Initialise()
 	{
-		m_pNavBoundsEntity = GActiveScene->GetNavBoundsEntity().Get();
-		m_pNavMeshQuery = GActiveScene->GetNavMeshQuery();
+		m_NavBoundsEntity = g_ActiveScene->GetNavBoundsEntity();
 
-		if( m_pNavBoundsEntity )
+		if( SharedPtr<NavBoundsEntity> entity = m_NavBoundsEntity.Access() ) 
+		{	
+			const dtNavMesh* pNavMesh = entity->GetBuilder().GetNavMesh();
+
+			m_pNavMeshQuery = dtAllocNavMeshQuery();
+			m_pNavMeshQuery->init( pNavMesh, 1048 );
+
 			m_Initialised = true;
+		}
 	}
 
 	void NavigationSystem::Terminate()
 	{
+		dtFreeNavMeshQuery( m_pNavMeshQuery );
+		m_pNavMeshQuery = nullptr;
 	}
 
 	NavigationSystem::~NavigationSystem()
 	{
-
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -67,7 +74,7 @@ namespace Saturn {
 		return Random::RandomFloatInRange( 0.0f, 1.0f );
 	}
 
-	std::expected<glm::vec3, dtStatus> NavigationSystem::GetRandomPointInNavMesh( const glm::vec3& rOrigin, float maxRadius )
+	std::expected<glm::vec3, dtStatus> NavigationSystem::GetRandomPointInNavMesh( const glm::vec3& rOrigin, float maxRadius ) const
 	{
 		glm::vec3 dest{};
 

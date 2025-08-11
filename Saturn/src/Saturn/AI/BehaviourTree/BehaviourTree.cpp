@@ -53,18 +53,18 @@ namespace Saturn {
 		m_NodeEditor = nullptr;
 	}
 
-	void BehaviourTree::Initialise( Ref<AIAgentEntity> entity )
+	void BehaviourTree::Initialise( SharedPtr<AIAgentEntity> entity )
 	{
 #if defined(SAT_DIST)
-		m_NodeEditor = Ref<BehaviourTreeNodeEditor>::Create( m_BehaviourTreeAsset->ID );
+		m_NodeEditor = SharedPtr<BehaviourTreeNodeEditor>::Create( m_BehaviourTreeAsset->ID );
 #else
-		m_NodeEditor = Ref<BehaviourTreeNodeEditor>::Create( m_BehaviourTreeAsset->ID );
-		m_NodeEditor->SetPrivileges( NodeEditorPrivileges::All, false );
-		m_NodeEditor->SetPrivileges( NodeEditorPrivileges::ReadOnly, true );
-		m_NodeEditor->SetPrivileges( NodeEditorPrivileges::Editing, false );
+		m_NodeEditor = SharedPtr<BehaviourTreeNodeEditor>::Create( m_BehaviourTreeAsset->ID );
+
+		// Read only...
+		m_NodeEditor->SetPrivileges( NodeEditorUserAuthority::Full, false );
 #endif
 
-		std::string filename = std::format( "{0}.sbt", m_BehaviourTreeAsset->Name );
+		const std::string filename = std::format( "{0}.sbt", m_BehaviourTreeAsset->Name );
 		if( NodeCacheEditor::ReadNodeEditorCache( m_NodeEditor, m_BehaviourTreeAsset->ID, filename ) )
 		{
 			m_OutputNodeID = m_NodeEditor->FindNode( "Root Node" )->ID;

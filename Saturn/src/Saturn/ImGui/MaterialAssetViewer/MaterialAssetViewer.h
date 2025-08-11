@@ -61,7 +61,7 @@ namespace Saturn {
 		Ref<MaterialAsset> m_HostMaterialAsset = nullptr;
 		Ref<Material> m_EditingMaterial = nullptr;
 
-		Ref<NodeEditor> m_NodeEditor = nullptr;
+		SharedPtr<NodeEditor> m_NodeEditor = nullptr;
 
 		UUID m_OutputNodeID = 0;
 	};

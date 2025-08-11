@@ -47,7 +47,7 @@ namespace Saturn {
 	class UndoRedoActionNodeEditorLink : public UndoRedoActionBase
 	{
 	public:
-		UndoRedoActionNodeEditorLink( Ref<NodeEditor> nodeEditor, Ref<Link> originalLink )
+		UndoRedoActionNodeEditorLink( SharedPtr<NodeEditor> nodeEditor, Ref<Link> originalLink )
 			: UndoRedoActionBase( "Create Link" ), m_NodeEditor( nodeEditor )
 		{
 			m_LinkCopy = Ref<Link>::Create( originalLink->ID, originalLink->StartPinID, originalLink->EndPinID, originalLink->Color );
@@ -83,7 +83,7 @@ namespace Saturn {
 		}
 
 	private:
-		Ref<NodeEditor> m_NodeEditor;
+		SharedPtr<NodeEditor> m_NodeEditor;
 		Ref<Link> m_LinkCopy;
 	};
 
@@ -97,7 +97,7 @@ namespace Saturn {
 	class UndoRedoActionModifyNodePosition : public UndoRedoActionBase
 	{
 	public:
-		UndoRedoActionModifyNodePosition( Ref<NodeEditor> nodeEditor, Ref<NodeEditorNodeBase> originalNode, const ImVec2& rOldPosition );
+		UndoRedoActionModifyNodePosition( SharedPtr<NodeEditor> nodeEditor, SharedPtr<NodeEditorNodeBase> originalNode, const ImVec2& rOldPosition );
 		~UndoRedoActionModifyNodePosition();
 
 	public:
@@ -105,8 +105,8 @@ namespace Saturn {
 		void Redo() override;
 
 	private:
-		Ref<NodeEditor> m_NodeEditor;
-		Ref<NodeEditorNodeBase> m_NodeCopy;
+		SharedPtr<NodeEditor> m_NodeEditor;
+		SharedPtr<NodeEditorNodeBase> m_NodeCopy;
 
 		ImVec2 m_OldPosition{};
 		ImVec2 m_NewPosition{};
@@ -118,7 +118,7 @@ namespace Saturn {
 	class UndoRedoActionCreateNode : public UndoRedoActionBase
 	{
 	public:
-		UndoRedoActionCreateNode( Ref<NodeEditor> nodeEditor, Ref<NodeEditorNodeBase> originalNode );
+		UndoRedoActionCreateNode( SharedPtr<NodeEditor> nodeEditor, SharedPtr<NodeEditorNodeBase> originalNode );
 		~UndoRedoActionCreateNode();
 
 	public:
@@ -126,14 +126,14 @@ namespace Saturn {
 		void Redo() override;
 
 	private:
-		Ref<NodeEditor> m_NodeEditor;
-		Ref<NodeEditorNodeBase> m_NodeCopy;
+		SharedPtr<NodeEditor> m_NodeEditor;
+		SharedPtr<NodeEditorNodeBase> m_NodeCopy;
 	};
 
 	class UndoRedoActionDeleteNode : public UndoRedoActionBase
 	{
 	public:
-		UndoRedoActionDeleteNode( Ref<NodeEditor> nodeEditor, Ref<NodeEditorNodeBase> originalNode );
+		UndoRedoActionDeleteNode( SharedPtr<NodeEditor> nodeEditor, SharedPtr<NodeEditorNodeBase> originalNode );
 		~UndoRedoActionDeleteNode();
 
 	public:
@@ -141,7 +141,7 @@ namespace Saturn {
 		void Redo() override;
 
 	private:
-		Ref<NodeEditor> m_NodeEditor;
-		Ref<NodeEditorNodeBase> m_NodeCopy;
+		SharedPtr<NodeEditor> m_NodeEditor;
+		SharedPtr<NodeEditorNodeBase> m_NodeCopy;
 	};
 }

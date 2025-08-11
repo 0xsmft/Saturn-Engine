@@ -45,13 +45,13 @@ namespace Saturn {
 	public:
 		static NodeEditorType GetStaticType() { return NodeEditorType::Material; }
 
-		static Ref<SoundRandomSoundNode>      SpawnRandomNode( Ref<NodeEditorBase> nodeEditor );
-		static Ref<SoundMixerNode>       SpawnMixerNode( Ref<NodeEditorBase> nodeEditor );
-		static Ref<SoundPlayerNode>      SpawnPlayerNode( Ref<NodeEditorBase> nodeEditor );
-		static Ref<SoundPitchNode>       SpawnPitchNode( Ref<NodeEditorBase> nodeEditor );
-		static Ref<SoundRandomPitchNode> SpawnRandPitch( Ref<NodeEditorBase> nodeEditor );
-		static Ref<SoundFloatConst>      SpawnFloatConst( Ref<NodeEditorBase> nodeEditor );
-
-		static Ref<SoundOutputNode> SpawnOutputNode( Ref<NodeEditorBase> nodeEditor );
+		static SharedPtr<SoundRandomSoundNode> SpawnRandomNode( SharedPtr<NodeEditorBase> nodeEditor );
+		static SharedPtr<SoundMixerNode>       SpawnMixerNode ( SharedPtr<NodeEditorBase> nodeEditor );
+		static SharedPtr<SoundPlayerNode>      SpawnPlayerNode( SharedPtr<NodeEditorBase> nodeEditor );
+		static SharedPtr<SoundPitchNode>       SpawnPitchNode ( SharedPtr<NodeEditorBase> nodeEditor );
+		static SharedPtr<SoundRandomPitchNode> SpawnRandPitch ( SharedPtr<NodeEditorBase> nodeEditor );
+		static SharedPtr<SoundFloatConst>      SpawnFloatConst( SharedPtr<NodeEditorBase> nodeEditor );
+		
+		static SharedPtr<SoundOutputNode>      SpawnOutputNode( SharedPtr<NodeEditorBase> nodeEditor );
 	};
 }

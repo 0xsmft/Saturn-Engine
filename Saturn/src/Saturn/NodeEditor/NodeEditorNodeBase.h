@@ -33,7 +33,7 @@
 #include "Pin.h"
 #include "NodeEditorCompilationStatus.h"
 
-#include "Saturn/Core/Memory/Buffer.h"
+#include "Saturn/Core/Buffer.h"
 #include "Saturn/Core/UUID.h"
 
 #include <string>
@@ -87,6 +87,7 @@ namespace Saturn {
 		BehaviourTreeSequenceNode,
 		BehaviourTreeGeneralTaskNode,
 		HintNode, // Comment node
+		//^^^^ add new node types here ^^^^
 		None
 	};
 
@@ -94,7 +95,7 @@ namespace Saturn {
 	class NodeEditorBase;
 	class NodeEditorRuntime;
 
-	class NodeEditorNodeBase : public SObject
+	class NodeEditorNodeBase : public SObject, public EnabledSharedFromThis<NodeEditorNodeBase>
 	{
 		// NOTE: SAT_DECLARE_CLASS expanded
 	private: 

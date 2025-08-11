@@ -90,7 +90,7 @@ namespace Saturn {
 		m_HostMaterialAsset = materialAsset;
 		m_EditingMaterial = Ref<Material>( m_HostMaterialAsset->GetMaterial() );
 
-		m_NodeEditor = Ref<NodeEditor>::Create( m_AssetID );
+		m_NodeEditor = SharedPtr<NodeEditor>::Create( m_AssetID );
 
 		if( NodeCacheEditor::ReadNodeEditorCache( m_NodeEditor, m_AssetID ) )
 		{
@@ -123,9 +123,9 @@ namespace Saturn {
 	void MaterialAssetViewer::SetupNodeEditorCallbacks()
 	{
 		m_NodeEditor->SetCreateNewNodeFunction(
-			[&]() -> Ref<NodeEditorNodeBase>
+			[&]() -> SharedPtr<NodeEditorNodeBase>
 			{
-				Ref<NodeEditorNodeBase> node = nullptr;
+				SharedPtr<NodeEditorNodeBase> node = nullptr;
 
 				ImGui::SeparatorText( "Material" );
 
@@ -165,7 +165,7 @@ namespace Saturn {
 	void MaterialAssetViewer::SetupNewNodeEditor()
 	{
 		// Add material output node.
-		Ref<MaterialOutputNode> OutputNode = Ref<MaterialOutputNode>::Create();
+		SharedPtr<MaterialOutputNode> OutputNode = SharedPtr<MaterialOutputNode>::Create();
 		m_NodeEditor->AddNode( OutputNode );
 
 		m_OutputNodeID = OutputNode->ID;
@@ -195,36 +195,36 @@ namespace Saturn {
 	void MaterialAssetViewer::CreateNodesFromTexture( const Ref<Texture2D>& rTexture, int slot )
 	{
 		const auto& rPath = rTexture->GetPath();
-		bool HasTexture = rTexture != Renderer::Get().GetPinkTexture();
+		const bool HasTexture = rTexture != Renderer::Get().GetPinkTexture();
 
 		if( HasTexture )
 		{
 			// Find the texture asset.
-			auto relativePath = std::filesystem::relative( rPath, Project::GetActiveProject()->GetRootDir() );
+			const auto relativePath = std::filesystem::relative( rPath, Project::GetActiveProject()->GetRootDir() );
 
 			Ref<Asset> TextureAsset = AssetManager::Get().FindAsset( relativePath );
 			AssetID TextureAssetID = TextureAsset->ID;
 
-			Ref<MaterialSampler2DNode> Sampler2DNode;
-			Ref<MaterialGetAssetNode> AssetNode;
+			SharedPtr<MaterialSampler2DNode> Sampler2DNode;
+			SharedPtr<MaterialGetAssetNode> AssetNode;
 			Sampler2DNode = MaterialNodeLibrary::SpawnSampler2D( m_NodeEditor );
 			AssetNode = MaterialNodeLibrary::SpawnGetAsset( m_NodeEditor );
 
 			AssetNode->SetAssetID( TextureAssetID );
 
-			Ref<NodeEditorNodeBase> OutputNode = m_NodeEditor->FindNode( m_OutputNodeID );
+			SharedPtr<NodeEditorNodeBase> OutputNode = m_NodeEditor->FindNode( m_OutputNodeID );
 
 			m_NodeEditor->CreateLink( AssetNode->Outputs[ 0 ], Sampler2DNode->Inputs[ 0 ] );
 			m_NodeEditor->CreateLink( Sampler2DNode->Outputs[ 0 ], OutputNode->Inputs[ slot ] );
 		}
 		else if( slot == 0 )
 		{
-			Ref<MaterialColorPickerNode> colorPickerNode = MaterialNodeLibrary::SpawnColorPicker( m_NodeEditor );
+			SharedPtr<MaterialColorPickerNode> colorPickerNode = MaterialNodeLibrary::SpawnColorPicker( m_NodeEditor );
 
 			auto& albedoColor = m_HostMaterialAsset->Get<glm::vec3>( "u_Materials.AlbedoColor" );
 			colorPickerNode->SetColor( albedoColor );
 
-			Ref<NodeEditorNodeBase> outputNode = m_NodeEditor->FindNode( m_OutputNodeID );
+			SharedPtr<NodeEditorNodeBase> outputNode = m_NodeEditor->FindNode( m_OutputNodeID );
 			m_NodeEditor->CreateLink( colorPickerNode->Outputs[ slot ], outputNode->Inputs[ slot ] );
 		}
 	}

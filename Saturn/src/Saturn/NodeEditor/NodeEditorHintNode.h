@@ -40,7 +40,7 @@ namespace Saturn {
 		virtual ~NodeEditorHintNode();
 
 	public:
-		static Ref<NodeEditorHintNode> SpawnHintNode( Ref<NodeEditorBase> nodeEditor );
+		static SharedPtr<NodeEditorHintNode> SpawnHintNode( SharedPtr<NodeEditorBase> nodeEditor );
 
 	public:
 		virtual void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder ) override;

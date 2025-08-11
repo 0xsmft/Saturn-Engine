@@ -63,8 +63,8 @@ namespace Saturn {
 		[[nodiscard]] virtual NodeEditorCompilationStatus EvaluateEditor() override;
 		void TerminateEvaluation() override;
 
-		void SetTargetNodeEditor( Ref<NodeEditorBase> nodeEditor );
-		Ref<NodeEditorBase>& GetTargetNodeEditor() { return m_NodeEditor; }
+		void SetTargetNodeEditor( SharedPtr<NodeEditorBase> nodeEditor );
+		SharedPtr<NodeEditorBase>& GetTargetNodeEditor() { return m_NodeEditor; }
 
 	private:
 		NodeEditorCompilationStatus EvalNoChecks();

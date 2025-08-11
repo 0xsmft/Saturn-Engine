@@ -74,7 +74,7 @@ namespace Saturn {
 		Ref<BehaviourTreeBaseTask> GetTaskFor( UUID node ) const;
 
 	public:
-		void TraverseBehaviourTree( const Ref<NodeEditorNodeBase>& rRootNode );
+		void TraverseBehaviourTree( const SharedPtr<NodeEditorNodeBase>& rRootNode );
 
 		void SetTargetAgent( AIAgentEntity* agent );
 		[[nodiscard]] AIAgentEntity* GetTargetAgent() const;
@@ -95,7 +95,7 @@ namespace Saturn {
 	private:
 		void ShowTreeFlow();
 		void FindTreeFlow();
-		void BuildFlow( Ref<BehaviourTreeNodeBase> node );
+		void BuildFlow( SharedPtr<BehaviourTreeNodeBase> node );
 #endif
 
 		void ResetAllTasks();

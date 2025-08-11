@@ -58,7 +58,7 @@ namespace Saturn {
 		DestroyAliveSounds();
 	}
 
-	void SoundEditorEvaluator::SetTargetNodeEditor( Ref<NodeEditorBase> nodeEditor )
+	void SoundEditorEvaluator::SetTargetNodeEditor( SharedPtr<NodeEditorBase> nodeEditor )
 	{
 		m_NodeEditor = nodeEditor;
 	}
@@ -71,16 +71,16 @@ namespace Saturn {
 		if( !m_NodeEditor )
 			return NodeEditorCompilationStatus::Failed;
 
-		Ref<NodeEditor> uiEditor = m_NodeEditor.As<NodeEditor>();
+		SharedPtr<NodeEditor> uiEditor = m_NodeEditor.As<NodeEditor>();
 
-		Ref<NodeEditorNodeBase> OutputNode = m_NodeEditor->FindNode( m_Info.OutputNodeID );
+		SharedPtr<NodeEditorNodeBase> OutputNode = m_NodeEditor->FindNode( m_Info.OutputNodeID );
 		if( !OutputNode ) 
 		{
 			uiEditor->ThrowError( "Output node was not found!" );
 			return NodeEditorCompilationStatus::Failed;
 		}
 
-		UUID FinalSoundPinID = OutputNode->Inputs[ 0 ]->ID;
+		const UUID FinalSoundPinID = OutputNode->Inputs[ 0 ]->ID;
 
 		// We must have something linked to the final output.
 		if( !m_NodeEditor->IsLinked( FinalSoundPinID ) ) 
@@ -100,7 +100,7 @@ namespace Saturn {
 
 	NodeEditorCompilationStatus SoundEditorEvaluator::EvalNoChecks()
 	{
-		Ref<NodeEditorNodeBase> OutputNode = m_NodeEditor->FindNode( m_Info.OutputNodeID );
+		SharedPtr<NodeEditorNodeBase> OutputNode = m_NodeEditor->FindNode( m_Info.OutputNodeID );
 
 		// Stacks are last in first out, so our output node will be evaluated last which is what we want.
 		std::stack<UUID> order;
@@ -111,7 +111,7 @@ namespace Saturn {
 		} );
 
 #if !defined( SAT_DIST )
-		Ref<NodeEditor> uiEditor = m_NodeEditor.As<NodeEditor>();
+		SharedPtr<NodeEditor> uiEditor = m_NodeEditor.As<NodeEditor>();
 		if( order.size() <= 1 )
 		{
 			uiEditor->ThrowWarning( "There is no other nodes to compile! (The only node that exists is the output node!)" );
@@ -127,7 +127,7 @@ namespace Saturn {
 			const UUID currentNodeID = order.top();
 			order.pop();
 
-			Ref<NodeEditorNodeBase> currentNode = m_NodeEditor->FindNode( currentNodeID );
+			SharedPtr<NodeEditorNodeBase> currentNode = m_NodeEditor->FindNode( currentNodeID );
 
 			auto result = currentNode->EvaluateNode( this );
 			if( result != NodeEvaluationState::Evaluated )

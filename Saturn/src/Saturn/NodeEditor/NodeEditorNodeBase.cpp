@@ -60,38 +60,16 @@ namespace Saturn {
 		Outputs.clear();
 	}
 
-	static void SerialiseImColor( const ImColor& rColor, std::ofstream& rStream )
-	{
-		RawSerialisation::WriteObject( rColor.Value, rStream );
-	}
-
-	static void DeserialiseImColor( ImColor& rColor, FDependentIStream& rStream )
-	{
-		RawSerialisation::ReadObject( rColor.Value, rStream );
-	}
-
-	static void SerialiseImVec2( const ImVec2& rVector, std::ofstream& rStream )
-	{
-		RawSerialisation::WriteObject( rVector.x, rStream );
-		RawSerialisation::WriteObject( rVector.y, rStream );
-	}
-
-	static void DeserialiseImVec2( ImVec2& rVector, FDependentIStream& rStream )
-	{
-		RawSerialisation::ReadObject( rVector.x, rStream );
-		RawSerialisation::ReadObject( rVector.y, rStream );
-	}
-
 	void NodeEditorNodeBase::Serialise( std::ofstream& rStream, bool isForDist ) const
 	{
-		UUID::Serialise( ID, rStream );
+		RawSerialisation::WriteUUID( ID, rStream );
 		RawSerialisation::WriteString( Name, rStream );
 
 #if !defined(SAT_DIST)
 		RawSerialisation::WriteObject( Color, rStream );
 		RawSerialisation::WriteObject( Type, rStream );
-		SerialiseImVec2( Size, rStream );
-		SerialiseImVec2( Position, rStream );
+		Auxiliary::SerialiseImVec2( Size, rStream );
+		Auxiliary::SerialiseImVec2( Position, rStream );
 
 		RawSerialisation::WriteString( ActiveState, rStream );
 		RawSerialisation::WriteString( SavedState, rStream );
@@ -110,14 +88,14 @@ namespace Saturn {
 
 	void NodeEditorNodeBase::Deserialise( FDependentIStream& rStream )
 	{
-		UUID::Deserialise( ID, rStream );
+		RawSerialisation::ReadUUID( ID, rStream );
 		Name = RawSerialisation::ReadString( rStream );
 
 #if !defined(SAT_DIST)
 		RawSerialisation::ReadObject( Color, rStream );
 		RawSerialisation::ReadObject( Type, rStream );
-		DeserialiseImVec2( Size, rStream );
-		DeserialiseImVec2( Position, rStream );
+		Auxiliary::DeserialiseImVec2( Size, rStream );
+		Auxiliary::DeserialiseImVec2( Position, rStream );
 	
 		ed::SetNodePosition( ed::NodeId( ID ), Position );
 

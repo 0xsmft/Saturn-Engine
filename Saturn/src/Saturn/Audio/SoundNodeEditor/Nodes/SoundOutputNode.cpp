@@ -96,8 +96,8 @@ namespace Saturn {
 		}
 
 #if !defined( SAT_DIST )
-		Ref<NodeEditor> uiEditor = pSoundEditorEvaluator->GetTargetNodeEditor().As<NodeEditor>();
-		std::string message = std::format( "Playing {0} of out {1} sounds.", pSoundEditorEvaluator->SoundsPlaying.size(), pSoundEditorEvaluator->AliveSounds.size() );
+		SharedPtr<NodeEditor> uiEditor = pSoundEditorEvaluator->GetTargetNodeEditor().As<NodeEditor>();
+		const std::string message = std::format( "Playing {0} of out {1} sounds.", pSoundEditorEvaluator->SoundsPlaying.size(), pSoundEditorEvaluator->AliveSounds.size() );
 
 		uiEditor->PushInfoMessage( message );
 		SAT_CORE_INFO( message );

@@ -151,7 +151,7 @@ namespace Saturn {
 	public:
 		UUID           ID;
 		// TODO: Use weak ref #ReplaceRawPtrOrRefWithWeakRef
-		Ref<NodeEditorNodeBase>      Node;
+		SharedPtr<NodeEditorNodeBase>      Node;
 		std::string    Name;
 		PinType        Type = PinType::Flow;
 		PinKind        Kind = PinKind::Input;

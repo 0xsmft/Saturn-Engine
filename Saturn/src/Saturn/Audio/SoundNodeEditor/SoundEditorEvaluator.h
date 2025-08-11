@@ -60,8 +60,8 @@ namespace Saturn {
 		~SoundEditorEvaluator();
 
 		void TraceEvaluationPath() override;
-		void SetTargetNodeEditor( Ref<NodeEditorBase> nodeEditor );
-		Ref<NodeEditorBase>& GetTargetNodeEditor() { return m_NodeEditor; }
+		void SetTargetNodeEditor( SharedPtr<NodeEditorBase> nodeEditor );
+		SharedPtr<NodeEditorBase>& GetTargetNodeEditor() { return m_NodeEditor; }
 
 		[[nodiscard]] virtual NodeEditorCompilationStatus EvaluateEditor() override;
 

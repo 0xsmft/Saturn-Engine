@@ -31,6 +31,8 @@
 
 #include "Saturn/Asset/AssetManager.h"
 
+#include "Saturn/Project/Project.h"
+
 #if defined(SAT_DIST)
 #include "Saturn/Core/VirtualFS.h"
 #include "Saturn/Core/MemoryStream.h"
@@ -48,7 +50,7 @@ namespace Saturn {
 		uint64_t Version = SAT_CURRENT_VERSION;
 	};
 	
-	bool NodeCacheSettings::WriteEditorSettings( Ref<NodeEditorBase> rNodeEditor )
+	bool NodeCacheSettings::WriteEditorSettings( SharedPtr<NodeEditorBase> rNodeEditor )
 	{
 		std::filesystem::path filepath = Project::GetActiveProject()->GetAppDataFolder();
 
@@ -66,7 +68,7 @@ namespace Saturn {
 		return true;
 	}
 
-	void NodeCacheSettings::ReadEditorSettings( Ref<NodeEditorBase> rNodeEditor )
+	void NodeCacheSettings::ReadEditorSettings( NodeEditorBase* pNodeEditor )
 	{
 		std::filesystem::path filepath = Project::GetActiveProject()->GetAppDataFolder();
 
@@ -94,12 +96,12 @@ namespace Saturn {
 
 		stream.close();
 
-		const auto Itr = stateMap.find( rNodeEditor->GetAssetID() );
+		const auto Itr = stateMap.find( pNodeEditor->GetAssetID() );
 
 		// New node editor is being cached so update file header
 		if( Itr != stateMap.end() )
 		{
-			rNodeEditor->m_ActiveNodeEditorState = Itr->second;
+			pNodeEditor->m_ActiveNodeEditorState = Itr->second;
 		}
 	}
 
@@ -116,7 +118,7 @@ namespace Saturn {
 		return size != 0;
 	}
 
-	void NodeCacheSettings::OverrideFile( const std::filesystem::path& rFilepath, Ref<NodeEditorBase> rNodeEditor )
+	void NodeCacheSettings::OverrideFile( const std::filesystem::path& rFilepath, SharedPtr<NodeEditorBase> rNodeEditor )
 	{
 		SettingsFileHeader fileHeader;
 		fileHeader.SettingsCount++;
@@ -132,7 +134,7 @@ namespace Saturn {
 		fout.close();
 	}
 
-	void NodeCacheSettings::AppendFile( const std::filesystem::path& rFilepath, Ref<NodeEditorBase> rNodeEditor )
+	void NodeCacheSettings::AppendFile( const std::filesystem::path& rFilepath, SharedPtr<NodeEditorBase> rNodeEditor )
 	{
 		std::ifstream stream( rFilepath, std::ios::binary | std::ios::in );
 
@@ -204,7 +206,7 @@ namespace Saturn {
 		return dir;
 	}
 
-	void NodeCacheEditor::WriteNodeEditorCache( Ref<NodeEditorBase> nodeEditor, const std::string& rCustomName )
+	void NodeCacheEditor::WriteNodeEditorCache( SharedPtr<NodeEditorBase> nodeEditor, const std::string& rCustomName )
 	{
 		Ref<Asset> asset = AssetManager::Get().FindAsset( nodeEditor->GetAssetID() );
 		std::string filename;
@@ -248,7 +250,7 @@ namespace Saturn {
 		fout.close();
 	}
 
-	bool NodeCacheEditor::ReadNodeEditorCache( Ref<NodeEditorBase> nodeEditor, AssetID id, const std::string& rCustomName )
+	bool NodeCacheEditor::ReadNodeEditorCache( SharedPtr<NodeEditorBase> nodeEditor, AssetID id, const std::string& rCustomName )
 	{
 		std::string filename;
 		

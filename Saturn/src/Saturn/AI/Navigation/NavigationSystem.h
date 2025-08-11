@@ -28,6 +28,7 @@
 
 #pragma once
 
+#include "Saturn/Core/Ref.h"
 #include "NavPath.h"
 
 #include <vector>
@@ -49,13 +50,16 @@ namespace Saturn {
 		void Terminate();
 
 	public:
-		std::expected<glm::vec3, unsigned int> GetRandomPointInNavMesh( const glm::vec3& rOrigin, float maxRadius );
+		dtNavMeshQuery* GetNavMeshQuery() const { return m_pNavMeshQuery; }
+
+	public:
+		std::expected<glm::vec3, unsigned int> GetRandomPointInNavMesh( const glm::vec3& rOrigin, float maxRadius ) const;
 
 	private:
 		bool m_Initialised = false;
 
 		// #ReplaceRawPtrOrRefWithWeakRef
-		NavBoundsEntity* m_pNavBoundsEntity = nullptr;
+		WeakRef<NavBoundsEntity> m_NavBoundsEntity;
 
 		dtNavMeshQuery* m_pNavMeshQuery = nullptr;
 

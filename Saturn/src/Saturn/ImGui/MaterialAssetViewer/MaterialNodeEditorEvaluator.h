@@ -70,7 +70,7 @@ namespace Saturn {
 		std::stack<MaterialEvaluatorValue>& GetTextureStack() { return m_ValueStack; }
 
 	private:
-		size_t IsOutputsLinkedToOutNode( const Ref<NodeEditorNodeBase>& rNode );
+		size_t IsOutputsLinkedToOutNode( const SharedPtr<NodeEditorNodeBase>& rNode );
 
 	private:
 		MaterialNodeEdInfo m_Info;

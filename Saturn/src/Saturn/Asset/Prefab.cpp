@@ -33,10 +33,16 @@
 
 #include "Saturn/Asset/AssetManager.h"
 
+#include "Saturn/Serialisation/YamlAux.h"
+
 #include "Saturn/Scene/Scene.h"
 #include "Saturn/Scene/Entity.h"
 
+#include "Saturn/GameFramework/SClass.h"
+
 namespace Saturn {
+
+	//////////////////////////////////////////////////////////////////////////
 
 	template<typename... V>
 	static void CopyComponentIfExists( entt::entity dst, entt::entity src, entt::registry& rRegistry, entt::registry& rDstRegistry )
@@ -59,66 +65,103 @@ namespace Saturn {
 
 	static void SwapActiveScene( Scene* pScene ) 
 	{
-		if( GActiveScene != pScene )
-			GActiveScene = pScene;
+		if( g_ActiveScene != pScene )
+			g_ActiveScene = pScene;
 	}
 
 	static void RestoreActiveScene( Scene* pNewScene ) 
 	{
-		if( GActiveScene != pNewScene )
-			GActiveScene = pNewScene;
+		if( g_ActiveScene != pNewScene )
+			g_ActiveScene = pNewScene;
 	}
 
 	Prefab::Prefab()
 	{
 	}
 
-	Prefab::~Prefab()
+	Prefab::Prefab( const Ref<Asset>& rBase )
+		: Asset( rBase )
 	{
-		m_Scene = nullptr;
 	}
 
-	void Prefab::Create( const Ref<Entity>& srcEntity )
+	Prefab::~Prefab()
+	{
+	}
+
+	void Prefab::InitPrefab( const SharedPtr<Entity>& srcEntity )
 	{
 		m_Scene = Ref<Scene>::Create();
 
-		Scene* CurrentScene = GActiveScene;
+		Scene* pCurrentScene = g_ActiveScene;
 		SwapActiveScene( m_Scene.Get() );
 
 		// TODO: (Entities using refs) Fix this
 		if( srcEntity->Valid() )
 			m_Entity = CreateFromEntity( srcEntity );
 
-		RestoreActiveScene( CurrentScene );
+		RestoreActiveScene( pCurrentScene );
 	}
 
-	void Prefab::Create()
+	void Prefab::ConvertSceneEntityIntoPrefabEntity( const SharedPtr<Entity> srcEntity )
 	{
-		m_Scene = Ref<Scene>::Create();
 	}
 
-	void Prefab::SerialisePrefab( std::ofstream& rStream )
+	SharedPtr<Entity> Prefab::CreateFromEntity( SharedPtr<Entity> srcEntity )
 	{
-		m_Scene->SerialiseInternal( rStream );
+		SharedPtr<Entity> result = g_ActiveScene->CreateEntity();
+		result->AddComponent<PrefabComponent>().AssetID = ID;
+		
+		auto& rc = srcEntity->GetComponent<RelationshipComponent>();
+
+		CopyComponentIfExists( AllComponents{}, 
+			result->m_EntityHandle, srcEntity->m_EntityHandle,
+			srcEntity->m_Scene->m_Registry, m_Scene->m_Registry );
+
+		for( auto& childId : srcEntity->GetChildren() )
+		{
+			SharedPtr<Entity> child = CreateFromEntity( srcEntity->m_Scene->FindEntityByID( childId ) );
+
+			auto& rc = result->GetComponent<RelationshipComponent>();
+
+			child->SetParent( result->GetComponent<IdComponent>().ID );
+			rc.ChildrenID.push_back( child->GetComponent<IdComponent>().ID );
+		}
+
+		return result;
 	}
 
-	void Prefab::DeserialisePrefab( std::istream& rStream )
+	SharedPtr<Entity> Prefab::CreateChildren( const SharedPtr<Entity>& parent, Ref<Scene> Scene )
 	{
-		Create();
+		// Create the child in the new scene.
+		SharedPtr<Entity> child = g_ActiveScene->CreateEntity();
+		
+		// Copy Components, from our child in the scene.
+		CopyComponentIfExists( AllComponents{}, 
+			child->m_EntityHandle, parent->m_EntityHandle, 
+			m_Scene->m_Registry, Scene->m_Registry );
 
-		m_Scene->DeserialiseInternal( rStream );
+		// Check if this entity has any children.
+		for( auto& childId : child->GetChildren() )
+		{
+			SharedPtr<Entity> c = CreateChildren( child, Scene );
+
+			c->SetParent( child->GetComponent<IdComponent>().ID );
+			
+			child->GetComponent<RelationshipComponent>().ChildrenID.push_back( c->GetComponent<IdComponent>().ID );
+		}
+
+		return child;
 	}
 
-	Ref<Entity> Prefab::PrefabToEntity( Ref<Scene> Scene )
+	SharedPtr<Entity> Prefab::PrefabToEntity( Ref<Scene> Scene )
 	{
-		Ref<Entity> result = Scene->CreateEntity();
+		SharedPtr<Entity> result = Scene->CreateEntity();
 		result->AddComponent<PrefabComponent>().AssetID = ID;
 
 		// Now we need to find the root entity of the prefab.
-
 		auto entities = m_Scene->GetAllEntitiesWith<RelationshipComponent>();
 
-		Ref<Entity> RootEntity = nullptr;
+		SharedPtr<Entity> RootEntity = nullptr;
 
 		for( auto& entity : entities )
 		{
@@ -132,7 +175,7 @@ namespace Saturn {
 		if( !RootEntity )
 			RootEntity = m_Entity;
 
-		CopyComponentIfExists( AllComponents{}, 
+		CopyComponentIfExists( AllComponents{},
 			result->m_EntityHandle, RootEntity->m_EntityHandle,
 			m_Scene->m_Registry, Scene->m_Registry );
 
@@ -141,7 +184,7 @@ namespace Saturn {
 
 		for( auto& childId : RootEntity->GetChildren() )
 		{
-			Ref<Entity> child = CreateChildren( m_Scene->FindEntityByID( childId ), Scene );
+			SharedPtr<Entity> child = CreateChildren( m_Scene->FindEntityByID( childId ), Scene );
 
 			child->SetParent( result->GetComponent<IdComponent>().ID );
 		}
@@ -149,51 +192,13 @@ namespace Saturn {
 		return result;
 	}
 
-	Ref<Entity> Prefab::CreateFromEntity( Ref<Entity> srcEntity )
+	void Prefab::SerialisePrefab( std::ofstream& rStream )
 	{
-		Ref<Entity> result = GActiveScene->CreateEntity();
-		result->AddComponent<PrefabComponent>().AssetID = ID;
-		
-		auto& rc = srcEntity->GetComponent<RelationshipComponent>();
-
-		CopyComponentIfExists( AllComponents{}, 
-			result->m_EntityHandle, srcEntity->m_EntityHandle,
-			srcEntity->m_Scene->m_Registry, m_Scene->m_Registry );
-
-		for( auto& childId : srcEntity->GetChildren() )
-		{
-			Ref<Entity> child = CreateFromEntity( srcEntity->m_Scene->FindEntityByID( childId ) );
-
-			auto& rc = result->GetComponent<RelationshipComponent>();
-
-			child->SetParent( result->GetComponent<IdComponent>().ID );
-			rc.ChildrenID.push_back( child->GetComponent<IdComponent>().ID );
-		}
-
-		return result;
+		m_Scene->SerialiseInternal( rStream );
 	}
 
-	Ref<Entity> Prefab::CreateChildren( const Ref<Entity>& parent, Ref<Scene> Scene )
+	void Prefab::DeserialisePrefab( std::istream& rStream )
 	{
-		// Create the child in the new scene.
-		Ref<Entity> child = GActiveScene->CreateEntity();
-		
-		// Copy Components, from our child in the scene.
-		CopyComponentIfExists( AllComponents{}, 
-			child->m_EntityHandle, parent->m_EntityHandle, 
-			m_Scene->m_Registry, Scene->m_Registry );
-
-		// Check if this entity has any children.
-		for( auto& childId : child->GetChildren() )
-		{
-			Ref<Entity> c = CreateChildren( child, Scene );
-
-			c->SetParent( child->GetComponent<IdComponent>().ID );
-			
-			child->GetComponent<RelationshipComponent>().ChildrenID.push_back( c->GetComponent<IdComponent>().ID );
-		}
-
-		return child;
+		m_Scene->DeserialiseInternal( rStream );
 	}
-
 }

@@ -42,7 +42,7 @@ namespace Saturn {
 	{
 		SingletonStorage::AddSingleton( this );
 
-		auto project = Project::GetActiveProject();
+		const auto project = Project::GetActiveProject();
 		auto assetDir = project->GetFullAssetPath();
 		assetDir /= "AssetRegistry.sreg";
 
@@ -117,6 +117,7 @@ namespace Saturn {
 		{
 			m_MemoryAssetDependencies[ dependencyID ].erase( { pBase } );
 
+			// Remove dependency if there is no more dependencies
 			if( !m_MemoryAssetDependencies[ dependencyID ].size() ) m_MemoryAssetDependencies.erase( dependencyID );
 		}
 	}
@@ -143,9 +144,9 @@ namespace Saturn {
 
 	bool AssetManager::CheckPureAssetDependencies( Ref<Asset> asset ) 
 	{
-		for( auto& [assetID, deps] : m_AssetDependencies )
+		for( const auto& [assetID, deps] : m_AssetDependencies )
 		{
-			for( auto& depID : deps )
+			for( const auto& depID : deps )
 			{
 				if( depID == asset->ID )
 					return true;

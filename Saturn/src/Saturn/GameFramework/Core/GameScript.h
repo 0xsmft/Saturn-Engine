@@ -46,7 +46,7 @@ private: \
 	x& operator=(const x&); \
 	static SClass* GetStaticClassInternal(); \
 public: \
-	inline static SObject* X31_DefConstructor() { return static_cast< SObject* >( new x ); } \
+	inline static SObject* X31_DefConstructor() { return static_cast< SObject* >( new x() ); } \
 	inline static [[nodiscard]] SClass* StaticClass() { return GetStaticClassInternal(); } \
 public: \
 	typedef x ThisClass; \
@@ -58,7 +58,7 @@ private: \
 	friend class x##Int; \
 	static SClass* GetStaticClassInternal(); \
 public: \
-	inline static SObject* X31_DefConstructor() { return static_cast< SObject* >( new x ); } \
+	inline static SObject* X31_DefConstructor() { return static_cast< SObject* >( new x() ); } \
 	inline static [[nodiscard]] SClass* StaticClass() { return GetStaticClassInternal(); } \
 public: \
 	typedef x ThisClass; \
@@ -70,7 +70,7 @@ private: \
 	x& operator=(x&&); \
 	x& operator=(const x&); \
 public: \
-	inline static SObject* X31_DefConstructor() { return static_cast< SObject* >( new x ); } \
+	inline static SObject* X31_DefConstructor() { return static_cast< SObject* >( new x() ); } \
 	inline static [[nodiscard]] SClass* StaticClass() { return nullptr; } \
 public: \
 	typedef x ThisClass; \
@@ -81,7 +81,7 @@ private: \
 	friend class x##Int;\
 	static SClass* GetStaticClassInternal(); \
 public: \
-	inline static SObject* X31_DefConstructor() { return static_cast< SObject* >( new x ); } \
+	inline static SObject* X31_DefConstructor() { return static_cast< SObject* >( new x() ); } \
 	inline static [[nodiscard]] SClass* StaticClass() { return GetStaticClassInternal(); } \
 public: \
 	typedef x ThisClass; \

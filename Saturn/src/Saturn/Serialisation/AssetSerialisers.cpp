@@ -204,8 +204,8 @@ namespace Saturn {
 	{
 		auto prefabAsset = rAsset.As<Prefab>();
 
-		auto& basePath = rAsset->Path;
-		auto fullPath = GetFilepathAbs( basePath );
+		const auto& basePath = rAsset->Path;
+		const auto fullPath = GetFilepathAbs( basePath );
 
 		YAML::Emitter out;
 
@@ -249,7 +249,7 @@ namespace Saturn {
 		auto entities = data[ "Entities" ];
 
 		prefabAsset->m_Scene = Ref<Scene>::Create();
-		Scene* CurrentScene = GActiveScene;
+		Scene* CurrentScene = g_ActiveScene;
 
 		Scene::SetActiveScene( prefabAsset->m_Scene.Get() );
 
@@ -587,7 +587,7 @@ namespace Saturn {
 
 	void BehaviourTreeMemorySpecAssetSerialiser::Serialise( const Ref<Asset>& rAsset ) const
 	{
-		auto btMemorySpec = rAsset.As<BehaviourTreeMemorySpecification>();
+		const auto btMemorySpec = rAsset.As<BehaviourTreeMemorySpecification>();
 
 		YAML::Emitter out;
 
@@ -625,7 +625,7 @@ namespace Saturn {
 
 	bool BehaviourTreeMemorySpecAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
 	{
-		auto absolutePath = GetFilepathAbs( rAsset->Path );
+		const auto absolutePath = GetFilepathAbs( rAsset->Path );
 		std::ifstream FileIn( absolutePath );
 
 		std::stringstream ss;

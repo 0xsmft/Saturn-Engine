@@ -143,7 +143,7 @@ namespace Saturn {
 		const std::unordered_set<MemoryAssetDependencyBase*> GetAssetDependenciesForAsset( const Ref<Asset> asset ) const;
 		[[nodiscard]] bool DoesAssetHaveDependencies( Ref<Asset> asset );
 
-		// Asset Dependencies
+		// Asset Dependencies, i.e. asset interdependence, known as "Pure Dependencies" in the Engine.
 		void RegisterAssetDependency( AssetID assetID, AssetID dependencyID );
 		void UnregisterAssetDependency( AssetID assetID, AssetID dependencyID );
 		void UnregisterAllAssetDependencies( AssetID assetID );

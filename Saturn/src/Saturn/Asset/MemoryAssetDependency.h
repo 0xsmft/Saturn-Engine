@@ -30,6 +30,8 @@
 
 #include "Asset.h"
 
+#include <functional>
+
 namespace Saturn {
 
 	// Memory Asset Dependency

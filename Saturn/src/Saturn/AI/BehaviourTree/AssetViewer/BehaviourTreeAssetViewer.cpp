@@ -228,7 +228,7 @@ namespace Saturn {
 
 		m_NodeEditor->SetTopBarFunction( [ & ]()
 		{
-			if( !GActiveScene->IsRuntimeActive() )
+			if( !g_ActiveScene->IsRuntimeActive() )
 				return;
 
 			ImGui::SeparatorEx( ImGuiSeparatorFlags_Vertical );

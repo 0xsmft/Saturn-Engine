@@ -27,12 +27,19 @@
 */
 
 #include "SharedGlobals.h"
+#include "Saturn/Core/Memory/BinnedAllocator.h"
+
+// SATURN_SS_STATIC is true if we are building monolithically
+#if defined(SATURN_SS_STATIC)
+// Internal linkage...
+#define SAT_SHARED_STORAGE_STATIC
+#else
+#define SAT_SHARED_STORAGE_STATIC static
+#endif
 
 namespace Saturn {
+	SS_API Scene* g_ActiveScene = nullptr;
+	SS_API Scene* g_TemporaryScene = nullptr;
 
-#if defined(SATURN_SS_STATIC)
-	Scene* GActiveScene = nullptr;
-#else
-	static Scene* GActiveScene = nullptr;
-#endif
+	SS_API BinnedAllocator g_BinnedAllocator;
 }

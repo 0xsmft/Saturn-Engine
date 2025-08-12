@@ -54,7 +54,7 @@
 #include "Saturn/Asset/Prefab.h"
 #include "Saturn/Audio/Sound.h"
 
-#include "Saturn/Premake/Premake.h"
+#include "Saturn/Project/Premake.h"
 
 #include "Saturn/GameFramework/Core/ClassTemplateFileHelper.h"
 #include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
@@ -445,7 +445,7 @@ namespace Saturn {
 				newScene->SetAbsolutePath( newPath );
 				newScene->ID = id;
 
-				Scene* CurrentScene = GActiveScene;
+				Scene* CurrentScene = g_ActiveScene;
 				Scene::SetActiveScene( newScene.Get() );
 
 				SceneSerialiser ss( newScene );
@@ -735,7 +735,7 @@ namespace Saturn {
 			// CONTEXT MENU (RIGHT CLICK MENU)
 			if( ImGui::BeginPopupContextWindow( "CB_ItemAction", ImGuiPopupFlags_MouseButtonRight ) )
 			{
-				Auxiliary::DisabledFlag disabledIfRuntime( GActiveScene->IsRuntimeActive() );
+				Auxiliary::DisabledFlag disabledIfRuntime( g_ActiveScene->IsRuntimeActive() );
 
 				switch( m_ViewMode )
 				{
@@ -877,7 +877,7 @@ namespace Saturn {
 					prefab->Create( sourceEntity );
 
 					// Delete the temporary source entity from the current scene.
-					GActiveScene->DeleteEntity( sourceEntity, true, 0 );
+					g_ActiveScene->DeleteEntity( sourceEntity, true, 0 );
 
 					// Save the prefab.
 					PrefabSerialiser ps;
@@ -926,6 +926,7 @@ namespace Saturn {
 		}
 	}
 
+	// TODO: This is slow, we should use a linked list instead...
 	void ContentBrowserPanel::DrawClassHierarchy( const std::string& rKeyName, const SClass* pClass )
 	{
 		ImGuiTreeNodeFlags Flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
@@ -1262,7 +1263,7 @@ namespace Saturn {
 			if( m_ImportAssetPath.extension() == ".gltf" || m_ImportAssetPath.extension() == ".glb" )
 			{
 				// We can assume the bin file has the same name as the mesh.
-				if( s_GLTFBinPath == "" )
+				if( s_GLTFBinPath.empty() )
 				{
 					s_GLTFBinPath = m_ImportAssetPath;
 					s_GLTFBinPath.replace_extension( ".bin" );

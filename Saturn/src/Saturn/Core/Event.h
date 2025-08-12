@@ -79,7 +79,7 @@ static inline EventCategory GetStaticCategory() { return EventCategory::Category
 		EC_Ruby    = 1 << 1, // Window, mouse, keyboard events
 		EC_Editor  = 1 << 2, // Hot Reload, On Runtime Start etc
 		EC_Runtime = 1 << 3, // Scene Travel, events that fire during runtime
-		EC_Scene   = 1 << 4, // Events to do with Scenes, Scene unloaded
+		EC_Scene   = 1 << 4, // Events to do with Scenes, Scene unloaded, if the event happens during runtime it will use the Runtime Category and not the Scene category!
 		EC_Auxiliary = 1 << 5
 	};
 

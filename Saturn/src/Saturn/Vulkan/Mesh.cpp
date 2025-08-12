@@ -40,6 +40,8 @@
 #include "Saturn/Asset/MaterialAsset.h"
 #include "Saturn/Asset/AssetImporter.h"
 
+#include "Saturn/Project/Project.h"
+
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 

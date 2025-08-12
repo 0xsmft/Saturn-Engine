@@ -35,6 +35,8 @@
 #include "Saturn/Asset/PhysicsMaterialAsset.h"
 #include "Saturn/Asset/AssetManager.h"
 
+#include "Saturn/Project/Project.h"
+
 #include "Saturn/Core/Maths.h"
 
 namespace Saturn {

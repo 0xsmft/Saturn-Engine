@@ -28,48 +28,59 @@
 
 #pragma once
 
-#include "Saturn/Scene/Entity.h"
 #include "Asset.h"
+#include "Saturn/Scene/Entity.h"
+
+#include <entt.hpp>
 
 namespace Saturn {
 
 	class Scene;
 
 	//////////////////////////////////////////////////////////////////////////
-	// Prefab
-	// This is not like a normal prefab. Think of this like an instance of another class (class means Entity or type defined in the game code).
-	// This is used for entities that need to be persistent throughout multiple levels.
-	// Or for entities that can be spawned in e.g. a bullet.
-	// Prefabs can only represents one entity.
+	// Prefab also known as ClassInstance
+	//
+	// This is not like a normal prefab. Think of this like an instance of another class (class means Entity or type defined in the game).
+	// Prefabs can only represent one root entity however, that entity can have children
+	// Prefabs can not depend on other prefabs, this means that any child must not have a prefab component, only the root entity can (which would point to this prefab instance)
 	class Prefab : public Asset
 	{
 	public:
 		Prefab();
+		Prefab( const Ref<Asset>& rBase );
 		virtual ~Prefab();
 
-		void Create( const Ref<Entity>& srcEntity );
-		void Create();
+		// Convert an entity into a prefab
+		void InitPrefab( const SharedPtr<Entity>& srcEntity );
+		
+		SharedPtr<Entity> PrefabToEntity( Ref<Scene> Scene );
 
-		Ref<Entity> PrefabToEntity( Ref<Scene> Scene );
-
-		Ref<Scene>& GetScene() { return m_Scene; }
-		const Ref<Scene>& GetScene() const { return m_Scene; }
-
+		Ref<Scene> GetScene() { return m_Scene; }
+		const Ref<Scene> GetScene() const { return m_Scene; }
 
 	public:
+		//////////////////////////////////////////////////////////////////////////
+		// #WARNING This should not be confused with AssetSerialisers. This is for raw binary serialisation!
+		// ASSET BUNDLE ONLY!
 		void SerialisePrefab( std::ofstream& rStream );
 		void DeserialisePrefab( std::istream& rStream );
 
 	private:
-		Ref<Entity> CreateFromEntity( Ref<Entity> srcEntity );
-		Ref<Entity> CreateChildren( const Ref<Entity>& parent, Ref<Scene> Scene );
+		SharedPtr<Entity> CreateFromEntity( SharedPtr<Entity> srcEntity );
+		SharedPtr<Entity> CreateChildren( const SharedPtr<Entity>& parent, Ref<Scene> Scene );
+
+		void ConvertSceneEntityIntoPrefabEntity( const SharedPtr<Entity> srcEntity );
+
 	private:
-		Ref<Entity> m_Entity;
-		
-		// We need a scene to create entities in the prefab.
-		Ref<Scene> m_Scene = nullptr;
+		SharedPtr<Entity> m_Entity;
+		SharedPtr<Entity> m_RootEntity;
+
+		Ref<Scene> m_Scene;
+
+//		UUID m_ModificationID;
 
 	private:
 		friend class PrefabSerialiser;
 	};
+
 }

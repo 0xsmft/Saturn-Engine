@@ -35,5 +35,10 @@
 
 namespace Saturn {
 	class Scene;
-	extern SS_API Scene* GActiveScene;
+	class BinnedAllocator;
+
+	extern SS_API Scene* g_ActiveScene;
+	extern SS_API Scene* g_TemporaryScene;
+
+	extern SS_API BinnedAllocator g_BinnedAllocator;
 }

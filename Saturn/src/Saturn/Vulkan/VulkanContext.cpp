@@ -414,7 +414,6 @@ namespace Saturn {
 
 	void VulkanContext::CreateSwapChain()
 	{
-		m_SwapChain = Swapchain();
 		m_SwapChain.Create();
 	}
 

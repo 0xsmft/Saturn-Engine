@@ -36,6 +36,8 @@
 
 #include "Detour/DetourNavMeshQuery.h"
 
+#include "Saturn/Project/Project.h"
+
 #include "Saturn/Vulkan/VertexBuffer.h"
 #include "Saturn/Vulkan/IndexBuffer.h"
 
@@ -110,7 +112,7 @@ namespace Saturn {
 
 			if( mesh.Mesh )
 			{
-				glm::mat4 entityTransform = GActiveScene->GetTransformRelativeToParent( rEntity );
+				glm::mat4 entityTransform = g_ActiveScene->GetTransformRelativeToParent( rEntity );
 				
 				auto& rVertices = mesh.Mesh->Vertices();
 				auto& rIndices = mesh.Mesh->Indices();

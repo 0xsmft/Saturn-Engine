@@ -75,7 +75,7 @@
 
 #include <Saturn/AI/Navigation/NavBoundsEntity.h>
 
-#include <Saturn/Premake/Premake.h>
+#include <Saturn/Project/Premake.h>
 
 #include <Saturn/Runtime/RuntimeEvents.h>
 
@@ -323,7 +323,7 @@ namespace Saturn {
 			const Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
 			for( const auto& rEntity : hierarchyPanel->GetSelectionContexts() )
 			{
-				const glm::mat4 transform = GActiveScene->GetTransformRelativeToParent( rEntity );
+				const glm::mat4 transform = g_ActiveScene->GetTransformRelativeToParent( rEntity );
 				if( rEntity->HasComponent<StaticMeshComponent>() )
 				{
 					const auto& rMesh = rEntity->GetComponent<StaticMeshComponent>().Mesh;
@@ -461,7 +461,7 @@ namespace Saturn {
 		Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
 
 		Ref<Scene> newScene = Ref<Scene>::Create();
-		GActiveScene = newScene.Get();
+		g_ActiveScene = newScene.Get();
 
 		hierarchyPanel->ClearSelection();
 		hierarchyPanel->SetContext( nullptr );
@@ -485,7 +485,7 @@ namespace Saturn {
 			m_EditorScene->Flags = asset->Flags;
 		}
 	
-		GActiveScene = m_EditorScene.Get();
+		g_ActiveScene = m_EditorScene.Get();
 
 		hierarchyPanel->SetContext( m_EditorScene );
 		newScene = nullptr;
@@ -623,12 +623,12 @@ namespace Saturn {
 					{
 						GlobalUndoRedoGroup::Get().RemoveIfActionHasIdentifier( (uint64_t)rEntity->GetHandle() );
 						
-						GActiveScene->DeleteEntity( rEntity );
+						g_ActiveScene->DeleteEntity( rEntity );
 					}
 
 					hierarchyPanel->ClearSelection();
 
-					GActiveScene->MarkDirty();
+					g_ActiveScene->MarkDirty();
 				}
 			} break;
 
@@ -672,10 +672,10 @@ namespace Saturn {
 					{
 						for( const auto& rEntity : hierarchyPanel->GetSelectionContexts() )
 						{
-							GActiveScene->DuplicateEntity( rEntity );
+							g_ActiveScene->DuplicateEntity( rEntity );
 						}
 
-						GActiveScene->MarkDirty();
+						g_ActiveScene->MarkDirty();
 					}
 
 				} break;
@@ -692,7 +692,7 @@ namespace Saturn {
 						glm::vec3 Positions = {};
 						for( auto& rEntity : selectedEntities )
 						{
-							TransformComponent worldSpace = GActiveScene->GetWorldSpaceTransform( rEntity );
+							TransformComponent worldSpace = g_ActiveScene->GetWorldSpaceTransform( rEntity );
 							Positions += worldSpace.Position;
 						}
 
@@ -826,7 +826,7 @@ namespace Saturn {
 		{
 			const auto [origin, dir] = RayCast( viewportMouse.x, viewportMouse.y );
 
-			const auto staticMeshes = GActiveScene->GetAllEntitiesWith<StaticMeshComponent>();
+			const auto staticMeshes = g_ActiveScene->GetAllEntitiesWith<StaticMeshComponent>();
 			for( const auto& rEntity : staticMeshes )
 			{
 				const auto& comp = rEntity->GetComponent<StaticMeshComponent>();
@@ -2238,7 +2238,7 @@ namespace Saturn {
 
 	void EditorLayer::Viewport_GizmoControl()
 	{
-		if( GActiveScene->IsRuntimeRunning() )
+		if( g_ActiveScene->IsRuntimeRunning() )
 			return;
 
 		const ImVec2 minBound = ImGui::GetWindowPos();

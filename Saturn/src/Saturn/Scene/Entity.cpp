@@ -35,7 +35,7 @@ namespace Saturn {
 
 	Entity::Entity()
 	{
-		m_Scene = GActiveScene;
+		m_Scene = g_ActiveScene;
 		m_EntityHandle = m_Scene->CreateHandle();
 		
 		AddComponent<IdComponent>();
@@ -46,7 +46,7 @@ namespace Saturn {
 
 	Entity::Entity( const std::string& rName, UUID Id )
 	{
-		m_Scene = GActiveScene;
+		m_Scene = g_ActiveScene;
 		m_EntityHandle = m_Scene->CreateHandle();
 
 		AddComponent<IdComponent>().ID = Id;

@@ -71,7 +71,8 @@ namespace Saturn {
 	{
 		Super::OnUpdate( ts );
 
-		m_BehaviourTree->Tick( ts );
+		if( m_BehaviourTree )
+			m_BehaviourTree->Tick( ts );
 	}
 
 	void AIAgentEntity::OnPhysicsUpdate( Saturn::Timestep ts )

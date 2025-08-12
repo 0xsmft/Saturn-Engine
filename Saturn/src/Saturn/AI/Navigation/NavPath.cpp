@@ -64,7 +64,7 @@ namespace Saturn {
 
 	bool NavPath::CreatePath()
 	{
-		auto* pNavMeshQuery = GActiveScene->GetNavMeshQuery();
+		auto* pNavMeshQuery = g_ActiveScene->GetNavigationSystem().GetNavMeshQuery();
 
 		dtQueryFilter filter;
 		dtPolyRef startPoly, endPoly;

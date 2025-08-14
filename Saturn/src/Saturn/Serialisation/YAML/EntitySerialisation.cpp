@@ -27,14 +27,21 @@
 */
 
 #include "sppch.h"
+#include "EntitySerialisation.h"
+
 #include "YamlAux.h"
+
+#include "Saturn/Audio/SoundGroup.h"
+
+#include "Saturn/Scene/Entity.h"
+#include "Saturn/Scene/Components.h"
 
 #include "Saturn/Asset/AssetManager.h"
 #include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 
-namespace Saturn::Auxiliary {
+namespace Saturn {
 
-	void SerialiseEntity( YAML::Emitter& rEmitter, const Ref<Entity> entity )
+	void EntitySerialisation::SerialiseEntity( YAML::Emitter& rEmitter, const SharedPtr<Entity> entity )
 	{
 		rEmitter << YAML::BeginMap;
 		rEmitter << YAML::Key << "Entity" << YAML::Value << entity->GetComponent< IdComponent >().ID;
@@ -50,6 +57,114 @@ namespace Saturn::Auxiliary {
 
 			rEmitter << YAML::Key << "Tag" << YAML::Value << entity->GetComponent< TagComponent >().Tag;
 
+			rEmitter << YAML::EndMap;
+		}
+
+		{
+			rEmitter << YAML::Key << "ClassInformation";
+			rEmitter << YAML::BeginMap;
+
+			const auto propCount = entity->GetClass()->GetPropertyCount();
+			rEmitter << YAML::Key << "LastPropertyCount" << YAML::Value << propCount;
+
+			rEmitter << YAML::Key << "Properties";
+			rEmitter << YAML::BeginSeq;
+
+			const auto* pProperties = entity->GetClass()->GetProperties();
+			for( int i = 0; i < propCount; i++ )
+			{
+#define SAT_SERIALISE_PROPERTY_YAML( PropertyType ) \
+{ \
+typename PropertyTypeTraits<Saturn::SPropertyType::PropertyType>::Type value = pProperty->Read<Saturn::SPropertyType::PropertyType>( entity.Get() ); \
+rEmitter << YAML::Key << "Value" << YAML::Value << value; \
+} break
+
+				const SProperty* pProperty = pProperties[ i ];
+
+				rEmitter << YAML::BeginMap;
+				rEmitter << YAML::Key << "Name" << YAML::Value << pProperty->GetName();
+
+				rEmitter << YAML::Key << "ValueType" << YAML::Value << ( int ) pProperty->GetType();
+
+				switch( pProperty->GetType() )
+				{
+					case SPropertyType::Char:
+						SAT_SERIALISE_PROPERTY_YAML( Char );
+
+					case SPropertyType::Float:
+						SAT_SERIALISE_PROPERTY_YAML( Float );
+
+					case SPropertyType::Int:
+						SAT_SERIALISE_PROPERTY_YAML( Int );
+
+					case SPropertyType::Double:
+						SAT_SERIALISE_PROPERTY_YAML( Double );
+
+					case SPropertyType::Uint8:
+						SAT_SERIALISE_PROPERTY_YAML( Uint8 );
+
+					case SPropertyType::Uint16:
+						SAT_SERIALISE_PROPERTY_YAML( Uint16 );
+
+					case SPropertyType::Uint32:
+						SAT_SERIALISE_PROPERTY_YAML( Uint32 );
+
+					case SPropertyType::Uint64:
+						SAT_SERIALISE_PROPERTY_YAML( Uint64 );
+
+					case SPropertyType::Int8:
+						SAT_SERIALISE_PROPERTY_YAML( Int8 );
+
+					case SPropertyType::Int16:
+						SAT_SERIALISE_PROPERTY_YAML( Int16 );
+
+					case SPropertyType::Int64:
+						SAT_SERIALISE_PROPERTY_YAML( Int64 );
+
+					case SPropertyType::Vector2:
+					{
+						auto& temporaryValue = pProperty->Read<SPropertyType::Vector2>( entity.Get() );
+						rEmitter << YAML::Key << "Value" << YAML::Value << temporaryValue;
+					} break;
+
+					case SPropertyType::Vector3:
+					{
+						auto& temporaryValue = pProperty->Read<SPropertyType::Vector3>( entity.Get() );
+						rEmitter << YAML::Key << "Value" << YAML::Value << temporaryValue;
+					} break;
+
+					case SPropertyType::Vector4:
+					{
+						auto& temporaryValue = pProperty->Read<SPropertyType::Vector4>( entity.Get() );
+						rEmitter << YAML::Key << "Value" << YAML::Value << temporaryValue;
+					} break;
+
+					case SPropertyType::String:
+						SAT_SERIALISE_PROPERTY_YAML( String );
+
+					case SPropertyType::EntityType:
+					{
+						SharedPtr<Entity>& rEntity = pProperty->Read<Saturn::SPropertyType::EntityType>( entity.Get() );
+
+						if( rEntity )
+							rEmitter << YAML::Key << "Value" << YAML::Value << rEntity->GetUUID();
+						else
+							rEmitter << YAML::Key << "Value" << YAML::Value << 0;
+					} break;
+
+					case SPropertyType::Asset:
+					{
+						const AssetReference& rAssetReference = pProperty->Read<Saturn::SPropertyType::Asset>( entity.Get() );
+
+						rEmitter << YAML::Key << "Value" << YAML::Value << rAssetReference.ID;
+						rEmitter << YAML::Key << "ExpectedType" << YAML::Value << ( int ) rAssetReference.ExpectedType;
+					} break;
+				}
+
+				rEmitter << YAML::EndMap;
+			}
+
+			rEmitter << YAML::EndSeq;
 			rEmitter << YAML::EndMap;
 		}
 
@@ -123,8 +238,8 @@ namespace Saturn::Auxiliary {
 
 			rEmitter << YAML::Key << "MaterialRegistry";
 			rEmitter << YAML::BeginMap;
-			
-			if( mc.MaterialRegistry ) 
+
+			if( mc.MaterialRegistry )
 				rEmitter << YAML::Key << "AnyOverrides" << YAML::Value << mc.MaterialRegistry->HasAnyOverrides();
 			else
 				rEmitter << YAML::Key << "AnyOverrides" << YAML::Value << false;
@@ -154,120 +269,6 @@ namespace Saturn::Auxiliary {
 
 			rEmitter << YAML::EndMap;
 
-			rEmitter << YAML::EndMap;
-		}
-
-		// Script Component
-		if( entity->HasComponent<DScriptComponent>() )
-		{
-			rEmitter << YAML::Key << "ScriptComponent";
-			rEmitter << YAML::BeginMap;
-
-			const auto& sc = entity->GetComponent< DScriptComponent >();
-
-			rEmitter << YAML::Key << "Name" << YAML::Value << sc.ClassName;
-
-			const unsigned int bit = sc.ExternalData ? 1 : 0;
-			rEmitter << YAML::Key << "ExternalData" << YAML::Value << bit;
-
-			rEmitter << YAML::Key << "Properties";
-			rEmitter << YAML::BeginSeq;
-
-			auto* pProperties = entity->GetClass()->GetProperties();
-			for( int i = 0; i < entity->GetClass()->GetPropertyCount(); i++ )
-			{
-#define SAT_SERIALISE_PROPERTY_YAML( PropertyType ) \
-{ \
-typename PropertyTypeTraits<Saturn::SPropertyType::PropertyType>::Type value = pProperty->Read<Saturn::SPropertyType::PropertyType>( entity.Get() ); \
-rEmitter << YAML::Key << "Value" << YAML::Value << value; \
-} break
-
-				const SProperty* pProperty = pProperties[ i ];
-
-				rEmitter << YAML::BeginMap;
-				rEmitter << YAML::Key << "Name" << YAML::Value << pProperty->GetName();
-	
-				rEmitter << YAML::Key << "ValueType" << YAML::Value << (int)pProperty->GetType();
-				
-				switch( pProperty->GetType() )
-				{
-					case SPropertyType::Char:
-						SAT_SERIALISE_PROPERTY_YAML( Char );
-
-					case SPropertyType::Float:
-						SAT_SERIALISE_PROPERTY_YAML( Float );
-
-					case SPropertyType::Int:
-						SAT_SERIALISE_PROPERTY_YAML( Int );
-
-					case SPropertyType::Double:
-						SAT_SERIALISE_PROPERTY_YAML( Double );
-
-					case SPropertyType::Uint8:
-						SAT_SERIALISE_PROPERTY_YAML( Uint8 );
-
-					case SPropertyType::Uint16:
-						SAT_SERIALISE_PROPERTY_YAML( Uint16 );
-
-					case SPropertyType::Uint32:
-						SAT_SERIALISE_PROPERTY_YAML( Uint32 );
-
-					case SPropertyType::Uint64:
-						SAT_SERIALISE_PROPERTY_YAML( Uint64 );
-
-					case SPropertyType::Int8:
-						SAT_SERIALISE_PROPERTY_YAML( Int8 );
-
-					case SPropertyType::Int16:
-						SAT_SERIALISE_PROPERTY_YAML( Int16 );
-
-					case SPropertyType::Int64:
-						SAT_SERIALISE_PROPERTY_YAML( Int64 );
-
-					case SPropertyType::Vector2:
-					{
-						auto& temporaryValue = pProperty->Read<SPropertyType::Vector2>( entity.Get() );
-						rEmitter << YAML::Key << "Value" << YAML::Value << temporaryValue;
-					} break;
-
-					case SPropertyType::Vector3:
-					{
-						auto& temporaryValue = pProperty->Read<SPropertyType::Vector3>( entity.Get() );
-						rEmitter << YAML::Key << "Value" << YAML::Value << temporaryValue;
-					} break;
-
-					case SPropertyType::Vector4:
-					{
-						auto& temporaryValue = pProperty->Read<SPropertyType::Vector4>( entity.Get() );
-						rEmitter << YAML::Key << "Value" << YAML::Value << temporaryValue;
-					} break;
-
-					case SPropertyType::String:
-						SAT_SERIALISE_PROPERTY_YAML( String );
-
-					case SPropertyType::EntityType:
-					{
-						Ref<Entity>& rEntity = pProperty->Read<Saturn::SPropertyType::EntityType>( entity.Get() );
-
-						if( rEntity != nullptr )
-							rEmitter << YAML::Key << "Value" << YAML::Value << rEntity->GetUUID();
-						else
-							rEmitter << YAML::Key << "Value" << YAML::Value << 0;
-					} break;
-
-					case SPropertyType::Asset:
-					{
-						AssetReference& rAssetReference = pProperty->Read<Saturn::SPropertyType::Asset>( entity.Get() );
-
-						rEmitter << YAML::Key << "Value"        << YAML::Value << rAssetReference.ID;
-						rEmitter << YAML::Key << "ExpectedType" << YAML::Value << (int)rAssetReference.ExpectedType;
-					} break;
-				}
-
-				rEmitter << YAML::EndMap;
-			}
-
-			rEmitter << YAML::EndSeq;
 			rEmitter << YAML::EndMap;
 		}
 
@@ -389,13 +390,13 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 			rEmitter << YAML::Key << "CCD" << YAML::Value << rbc.UseCCD;
 			rEmitter << YAML::Key << "Mass" << YAML::Value << rbc.Mass;
 
-			rEmitter << YAML::Key << "LockFlags" << YAML::Value << (int)rbc.LockFlags;
+			rEmitter << YAML::Key << "LockFlags" << YAML::Value << ( int ) rbc.LockFlags;
 
 			rEmitter << YAML::EndMap;
 		}
 
 		// Camera Component
-		if ( entity->HasComponent<CameraComponent>() )
+		if( entity->HasComponent<CameraComponent>() )
 		{
 			rEmitter << YAML::Key << "CameraComponent";
 			rEmitter << YAML::BeginMap;
@@ -415,12 +416,12 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 
 			const auto& spc = entity->GetComponent< AudioPlayerComponent >();
 
-			rEmitter << YAML::Key << "AssetID"          << YAML::Value << spc.SpecAssetID;
-			rEmitter << YAML::Key << "Loop"             << YAML::Value << spc.Loop;
-			rEmitter << YAML::Key << "Mute"             << YAML::Value << spc.Mute;
-			rEmitter << YAML::Key << "Spatialization"   << YAML::Value << spc.Spatialization;
+			rEmitter << YAML::Key << "AssetID" << YAML::Value << spc.SpecAssetID;
+			rEmitter << YAML::Key << "Loop" << YAML::Value << spc.Loop;
+			rEmitter << YAML::Key << "Mute" << YAML::Value << spc.Mute;
+			rEmitter << YAML::Key << "Spatialization" << YAML::Value << spc.Spatialization;
 			rEmitter << YAML::Key << "VolumeMultiplier" << YAML::Value << spc.Volume;
-			rEmitter << YAML::Key << "PitchMultiplier"  << YAML::Value << spc.Pitch;
+			rEmitter << YAML::Key << "PitchMultiplier" << YAML::Value << spc.Pitch;
 
 			rEmitter << YAML::EndMap;
 		}
@@ -433,10 +434,10 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 
 			const auto& alc = entity->GetComponent< AudioListenerComponent >();
 
-			rEmitter << YAML::Key << "Primary"    << YAML::Value << alc.Primary;
-			rEmitter << YAML::Key << "Direction"  << YAML::Value << alc.Direction;
-			rEmitter << YAML::Key << "ConeInner"  << YAML::Value << alc.ConeInnerAngle;
-			rEmitter << YAML::Key << "ConeOuter"  << YAML::Value << alc.ConeOuterAngle;
+			rEmitter << YAML::Key << "Primary" << YAML::Value << alc.Primary;
+			rEmitter << YAML::Key << "Direction" << YAML::Value << alc.Direction;
+			rEmitter << YAML::Key << "ConeInner" << YAML::Value << alc.ConeInnerAngle;
+			rEmitter << YAML::Key << "ConeOuter" << YAML::Value << alc.ConeOuterAngle;
 
 			rEmitter << YAML::EndMap;
 		}
@@ -460,138 +461,169 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 		rEmitter << YAML::EndMap;
 	}
 
-	void DeserialiseEntities( YAML::Node& rNode, Ref<Scene> scene )
+	void EntitySerialisation::DeserialiseEntities( YAML::Node& rNode, Ref<Scene> scene )
 	{
 		if( rNode.IsNull() )
 			return;
 
-		for( auto entity : rNode )
+		for( const auto entity : rNode )
 		{
 			const UUID entityID = entity[ "Entity" ].as< uint64_t >();
 
 			// Fall back to entity because this scene may be pre 0.2.1
 			const std::string className = entity[ "Class" ].as< std::string >( "Entity" );
 
-			std::string Tag = "";
-
-			if( entity[ "TagComponent" ] )
-				Tag = entity[ "TagComponent" ][ "Tag" ].as< std::string >();
+			const std::string Tag = entity[ "TagComponent" ][ "Tag" ].as< std::string >( "Empty Entity" );
 
 			SAT_CORE_INFO( "Deserialised entity with ID: ENTITY/{0}, with name: {1} and class name: {2}", entityID, Tag, className );
 
-			Ref<Entity> DeserialisedEntity;
-
 			// Pre 0.2.1, this would be an entity
-			DeserialisedEntity = scene->CreateEntityWithIDScript( entityID, Tag, className, false );
+			SharedPtr<Entity> DeserialisedEntity = scene->CreateEntityWithIDScript( entityID, Tag, className, false );
 
-			/*
-			auto srcc = entity[ "ScriptComponent" ];
-			if( srcc )
+			const auto classInfo = entity[ "ClassInformation" ];
+			if( classInfo )
 			{
-				/////////////////////////////////
-				// Read Properties
+				const auto propertyCount = classInfo[ "LastPropertyCount" ].as<int>();
 
-				/*
-				auto properties = srcc[ "Properties" ];
-				for( auto property : properties )
+				if( propertyCount != DeserialisedEntity->GetClass()->GetPropertyCount() )
 				{
+					SAT_CORE_WARN( "Property count does not match!, Last/{0}, Current/{1}", propertyCount, DeserialisedEntity->GetClass()->GetPropertyCount() );
+				}
+
+				std::vector<std::string> savedPropertyNames;
+
+				const auto lastProperties = classInfo[ "Properties" ];
+				for( const auto property : lastProperties )
+				{
+					savedPropertyNames.push_back( property[ "Name" ].as<std::string>() );
+				}
+
+				// Now, we get the current properties from the SClass.
+				const auto SClassPropCount = DeserialisedEntity->GetClass()->GetPropertyCount();
+				auto SClassProps = DeserialisedEntity->GetClass()->GetProperties();
+
+				std::vector<std::string> compiledInPropertyNames;
+				compiledInPropertyNames.reserve( SClassPropCount );
+
+				for( size_t i = 0; i < SClassPropCount; i++ )
+				{
+					SProperty* pProperty = ( SProperty* ) SClassProps[ i ];
+
+					compiledInPropertyNames.push_back( pProperty->GetName() );
+				}
+
 #define SAT_DESERIALISE_PROPERTY_YAML( PropertyType ) \
 { \
-auto value = property[ "Value" ].as<typename PropertyTypeTraits<Saturn::SPropertyType::PropertyType>::Type>(); \
+const auto value = property[ "Value" ].as<typename PropertyTypeTraits<Saturn::SPropertyType::PropertyType>::Type>(); \
 \
-rProperty.SetProperty( DeserialisedEntity.Get(), value ); \
+pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value ); \
 } break
 
-					std::string propertyName = property[ "Name" ].as<std::string>();
-					SPropertyType type = ( SPropertyType )property[ "ValueType" ].as<int>( (int)SPropertyType::Unknown );
+				// Now, we must make sure we use the compiled in SProperties
+				for( size_t i = 0; i < SClassPropCount; i++ )
+				{
+					// Try to find the name at i, in both maps
+					const auto savedNameItr = std::find( savedPropertyNames.begin(), savedPropertyNames.end(), compiledInPropertyNames[ i ] );
 
-					auto& rProperty = ClassMetadataHandler::Get().GetProperty( ScriptName, propertyName );
-					
-					if( rProperty.GetName().empty() )
-						continue;
-
-					if( rProperty.GetType() == type )
+					if( savedNameItr != savedPropertyNames.end() )
 					{
-						switch( type )
+						const auto property = lastProperties[ i ];
+
+						// Property exists
+						const SPropertyType savedType = ( SPropertyType ) property[ "ValueType" ].as<int>( ( int ) SPropertyType::Unknown );
+
+						SPropertyEditor* pCompiledInProperty = ( SPropertyEditor* ) SClassProps[ i ];
+						if( savedType == pCompiledInProperty->GetType() )
 						{
-							case SPropertyType::Char:
-								SAT_DESERIALISE_PROPERTY_YAML( Char );
-
-							case SPropertyType::Float:
-								SAT_DESERIALISE_PROPERTY_YAML( Float );
-
-							case SPropertyType::Int:
-								SAT_DESERIALISE_PROPERTY_YAML( Int );
-
-							case SPropertyType::Double:
-								SAT_DESERIALISE_PROPERTY_YAML( Double );
-
-							case SPropertyType::Uint8:
-								SAT_DESERIALISE_PROPERTY_YAML( Uint8 );
-
-							case SPropertyType::Uint16:
-								SAT_DESERIALISE_PROPERTY_YAML( Uint16 );
-
-							case SPropertyType::Uint32:
-								SAT_DESERIALISE_PROPERTY_YAML( Uint32 );
-
-							case SPropertyType::Uint64:
-								SAT_DESERIALISE_PROPERTY_YAML( Uint64 );
-
-							case SPropertyType::Int8:
-								SAT_DESERIALISE_PROPERTY_YAML( Int8 );
-
-							case SPropertyType::Int16:
-								SAT_DESERIALISE_PROPERTY_YAML( Int16 );
-
-							case SPropertyType::Int64:
-								SAT_DESERIALISE_PROPERTY_YAML( Int64 );
-
-							case SPropertyType::Vector2:
+							// set value to saved value
+							switch( savedType )
 							{
-								auto value = property[ "Value" ].as<glm::vec2>();
-								rProperty.SetProperty<glm::vec2&>( DeserialisedEntity.Get(), value );
-							} break;
+								case SPropertyType::Char:
+									SAT_DESERIALISE_PROPERTY_YAML( Char );
 
-							case SPropertyType::Vector3:
-							{
-								auto value = property[ "Value" ].as<glm::vec3>();
-								rProperty.SetProperty( DeserialisedEntity.Get(), value );
-							} break;
+								case SPropertyType::Float:
+									SAT_DESERIALISE_PROPERTY_YAML( Float );
 
-							case SPropertyType::Vector4:
-							{
-								auto value = property[ "Value" ].as<glm::vec4>();
-								rProperty.SetProperty( DeserialisedEntity.Get(), value );
-							} break;
+								case SPropertyType::Int:
+									SAT_DESERIALISE_PROPERTY_YAML( Int );
 
-							case SPropertyType::String:
-							{
-								auto value = property[ "Value" ].as<std::string>();
-								rProperty.SetProperty( DeserialisedEntity.Get(), value );
-							} break;
+								case SPropertyType::Double:
+									SAT_DESERIALISE_PROPERTY_YAML( Double );
 
-							case SPropertyType::Asset:
-							{
-								auto value = property[ "Value" ].as<uint64_t>();
-								auto expectedType = property[ "ExpectedType" ].as<int>();
+								case SPropertyType::Uint8:
+									SAT_DESERIALISE_PROPERTY_YAML( Uint8 );
 
-								AssetReference& rAssetReference = rProperty.Read<SPropertyType::Asset>( DeserialisedEntity.Get() );
+								case SPropertyType::Uint16:
+									SAT_DESERIALISE_PROPERTY_YAML( Uint16 );
 
-								rAssetReference.ID = value;
-								rAssetReference.ExpectedType = ( AssetType ) expectedType;
-							} break;
+								case SPropertyType::Uint32:
+									SAT_DESERIALISE_PROPERTY_YAML( Uint32 );
+
+								case SPropertyType::Uint64:
+									SAT_DESERIALISE_PROPERTY_YAML( Uint64 );
+
+								case SPropertyType::Int8:
+									SAT_DESERIALISE_PROPERTY_YAML( Int8 );
+
+								case SPropertyType::Int16:
+									SAT_DESERIALISE_PROPERTY_YAML( Int16 );
+
+								case SPropertyType::Int64:
+									SAT_DESERIALISE_PROPERTY_YAML( Int64 );
+
+								case SPropertyType::Vector2:
+								{
+									auto value = property[ "Value" ].as<glm::vec2>();
+									pCompiledInProperty->SetProperty<glm::vec2&>( DeserialisedEntity.Get(), value );
+								} break;
+
+								case SPropertyType::Vector3:
+								{
+									auto value = property[ "Value" ].as<glm::vec3>();
+									pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value );
+								} break;
+
+								case SPropertyType::Vector4:
+								{
+									auto value = property[ "Value" ].as<glm::vec4>();
+									pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value );
+								} break;
+
+								case SPropertyType::String:
+								{
+									auto value = property[ "Value" ].as<std::string>();
+									pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value );
+								} break;
+
+								case SPropertyType::Asset:
+								{
+									auto value = property[ "Value" ].as<uint64_t>();
+									auto expectedType = property[ "ExpectedType" ].as<int>();
+
+									AssetReference& rAssetReference = pCompiledInProperty->Read<SPropertyType::Asset>( DeserialisedEntity.Get() );
+
+									rAssetReference.ID = value;
+									rAssetReference.ExpectedType = ( AssetType ) expectedType;
+								} break;
+							}
+
+							//							pCompiledInProperty->MarkClean();
 						}
-
-						rProperty.MarkClean();
+					}
+					else
+					{
+						SAT_CORE_WARN( "SProperty \"{0}\" could not be found!", *savedNameItr );
 					}
 				}
 			}
-			else
+
+			const auto pc = entity[ "PrefabComponent" ];
+			if( pc )
 			{
-				DeserialisedEntity = scene->CreateEntityWithID( entityID, Tag );
+				auto& p = DeserialisedEntity->AddComponent< PrefabComponent >();
+
+				p.AssetID = pc[ "AssetID" ].as< uint64_t >();
 			}
-			*/
 
 			auto tc = entity[ "TransformComponent" ];
 			if( tc )
@@ -601,7 +633,7 @@ rProperty.SetProperty( DeserialisedEntity.Get(), value ); \
 				t.Position = tc[ "Position" ].as< glm::vec3 >();
 
 				t.SetRotation( glm::radians( tc[ "Rotation" ].as< glm::vec3 >() ) );
-				
+
 				// This might not be needed.
 				//t.SetRotation( tc[ "Quaternion" ].as< glm::quat >() );
 
@@ -614,8 +646,7 @@ rProperty.SetProperty( DeserialisedEntity.Get(), value ); \
 				auto& m = DeserialisedEntity->AddComponent< StaticMeshComponent >();
 
 				auto id = mc[ "Asset" ].as<uint64_t>( 0 );
-
-				if( id != 0 ) 
+				if( id != 0 )
 				{
 					auto mesh = AssetManager::Get().GetAssetAs<StaticMesh>( id );
 
@@ -665,14 +696,6 @@ rProperty.SetProperty( DeserialisedEntity.Get(), value ); \
 					uint64_t id = child[ "ID" ].as<uint64_t>();
 					rc.ChildrenID.push_back( id );
 				}
-			}
-			
-			auto pc = entity["PrefabComponent" ];
-			if( pc )
-			{
-				auto& p = DeserialisedEntity->AddComponent< PrefabComponent >();
-
-				p.AssetID = pc[ "AssetID" ].as< uint64_t >();
 			}
 
 			auto slc = entity[ "SkyLightComponent" ];
@@ -763,7 +786,7 @@ rProperty.SetProperty( DeserialisedEntity.Get(), value ); \
 
 				auto lockNode = rbc[ "LockFlags" ];
 
-				if ( lockNode )
+				if( lockNode )
 				{
 					rb.LockFlags = lockNode.as< int >( 0 );
 				}
@@ -786,12 +809,12 @@ rProperty.SetProperty( DeserialisedEntity.Get(), value ); \
 			{
 				auto& sp = DeserialisedEntity->AddComponent< AudioPlayerComponent >();
 
-				sp.SpecAssetID      = spc[ "AssetID" ].as< uint64_t >( 0 );
-				sp.Loop             = spc[ "Loop" ].as< bool >( false );
-				sp.Mute             = spc[ "Mute" ].as< bool >( false );
-				sp.Spatialization   = spc[ "Spatialization" ].as<bool>( false );
+				sp.SpecAssetID = spc[ "AssetID" ].as< uint64_t >( 0 );
+				sp.Loop = spc[ "Loop" ].as< bool >( false );
+				sp.Mute = spc[ "Mute" ].as< bool >( false );
+				sp.Spatialization = spc[ "Spatialization" ].as<bool>( false );
 				sp.Volume = spc[ "VolumeMultiplier" ].as<float>( 1.0f );
-				sp.Pitch  = spc[ "PitchMultiplier" ].as<float>( 1.0f );
+				sp.Pitch = spc[ "PitchMultiplier" ].as<float>( 1.0f );
 			}
 
 			auto alc = entity[ "AudioListenerComponent" ];
@@ -799,8 +822,8 @@ rProperty.SetProperty( DeserialisedEntity.Get(), value ); \
 			{
 				auto& al = DeserialisedEntity->AddComponent< AudioListenerComponent >();
 
-				al.Primary        = alc[ "Primary" ].as< bool >();
-				al.Direction      = alc[ "Direction" ].as< glm::vec3 >();
+				al.Primary = alc[ "Primary" ].as< bool >();
+				al.Direction = alc[ "Direction" ].as< glm::vec3 >();
 				al.ConeInnerAngle = alc[ "ConeInner" ].as< float >( 0.0f );
 				al.ConeOuterAngle = alc[ "ConeOuter" ].as< float >( 0.0f );
 			}

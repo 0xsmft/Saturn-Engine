@@ -33,18 +33,21 @@
 #include "Saturn/Asset/Prefab.h"
 #include "Saturn/Asset/PhysicsMaterialAsset.h"
 #include "Saturn/Asset/TextureSourceAsset.h"
+#include "Saturn/Asset/MaterialAsset.h"
+
 #include "Saturn/Audio/SoundSpecification.h"
 #include "Saturn/Audio/AudioSystem.h"
 
 #include "Saturn/Core/VirtualFS.h"
+#include "Saturn/Core/MemoryStream.h"
 
 #include "Saturn/Physics/PhysicsShapeTypes.h"
 
-#include "Saturn/Asset/MaterialAsset.h"
 #include "Saturn/Vulkan/Renderer.h"
 
+#include "Saturn/Project/Project.h"
+
 #include "RawSerialisation.h"
-#include "Saturn/Core/MemoryStream.h"
 
 // #NOTE
 // NOTES WHEN ADDING NEW FIELDS TO SERIALISE:
@@ -216,9 +219,8 @@ namespace Saturn {
 	bool RawPrefabSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
 	{
 		auto prefabAsset = Ref<Prefab>::Create();
-		prefabAsset->Create();
 
-		//prefabAsset->DeserialisePrefab();
+//		prefabAsset->DeserialisePrefab();
 
 		// TODO: (Asset) Fix this.
 		struct

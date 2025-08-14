@@ -35,7 +35,7 @@ namespace Saturn {
 	class RawEntitySerialisation
 	{
 	public:
-		static void SerialiseEntity( const Ref<Entity>& rEntity, std::ofstream& rStream );
-		static void DeserialiseEntity( Ref<Entity>& rEntity, std::istream& rStream );
+		static void SerialiseEntity( const SharedPtr<Entity>& rEntity, std::ofstream& rStream );
+		static void DeserialiseEntity( SharedPtr<Entity>& rEntity, std::istream& rStream );
 	};
 }

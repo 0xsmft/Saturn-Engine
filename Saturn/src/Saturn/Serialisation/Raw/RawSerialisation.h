@@ -28,8 +28,10 @@
 
 #pragma once
 
+#include "Saturn/Core/Log.h"
 #include "Saturn/Core/Base.h"
-#include "Saturn/Core/Memory/Buffer.h"
+#include "Saturn/Core/Buffer.h"
+#include "Saturn/Core/UUID.h"
 
 #include <fstream>
 #include <unordered_map>
@@ -39,12 +41,25 @@
 namespace Saturn {
 
 #if !defined(SAT_DIST)
-	// Determined by current build config, in Development configs read from a file, in Dist, we read from a span so use istream
+	// Determined by current build config, in Development configs read from a file
 	using FDependentIStream = std::ifstream;
 #else
 	// In Dist, we read from a VFS file which is not an actual file so we can't use std::ifstream
+	// VFS files are just a contentious span of file data
 	using FDependentIStream = std::istream;
 #endif
+
+	template<typename Ty, typename OStream>
+	concept HasSerialiseFunction = requires( const Ty& rObject, OStream& rStream )
+	{
+		{ Ty::Serialise( rObject, rStream ) } -> std::same_as<void>;
+	};
+
+	template<typename Ty, typename IStream>
+	concept HasDeserialiseFunction = requires( Ty& rObject, IStream& rStream )
+	{
+		{ Ty::Deserialise( rObject, rStream ) } -> std::same_as<void>;
+	};
 
 	// Helpers for reading/writing in binary.
 	class RawSerialisation
@@ -61,37 +76,8 @@ namespace Saturn {
 
 			for( const auto& [key, value] : rMap )
 			{
-				if constexpr( std::is_trivial<K>() )
-				{
-					WriteObject( key, rStream );
-				}
-				else
-				{
-					if constexpr( std::is_same<K, std::string>() )
-					{
-						WriteString( key, rStream );
-					}
-					else
-					{
-						K::Serialise( key, rStream );
-					}
-				}
-
-				if constexpr( std::is_trivial<V>() )
-				{
-					WriteObject( value, rStream );
-				}
-				else
-				{
-					if constexpr( std::is_same<V, std::string>() )
-					{
-						WriteString( value, rStream );
-					}
-					else
-					{
-						V::Serialise( value, rStream );
-					}
-				}
+				WriteObjectChecked( key, rStream );
+				WriteObjectChecked( value, rStream );
 			}
 		}
 
@@ -121,21 +107,7 @@ namespace Saturn {
 
 			for( const auto& [key, value] : rMap )
 			{
-				if constexpr( std::is_trivial<K>() )
-				{
-					WriteObject( key, rStream );
-				}
-				else
-				{
-					if constexpr( std::is_same<K, std::string>() )
-					{
-						WriteString( key, rStream );
-					}
-					else
-					{
-						K::Serialise( key, rStream );
-					}
-				}
+				WriteObjectChecked( key, rStream );
 
 				WriteVector( value, rStream );
 			}
@@ -152,37 +124,8 @@ namespace Saturn {
 
 			for( const auto& [key, value] : rMap )
 			{
-				if constexpr( std::is_trivial<K>() )
-				{
-					WriteObject( key, rStream );
-				}
-				else
-				{
-					if constexpr( std::is_same<K, std::string>() )
-					{
-						WriteString( key, rStream );
-					}
-					else
-					{
-						K::Serialise( key, rStream );
-					}
-				}
-
-				if constexpr( std::is_trivial<V>() )
-				{
-					WriteObject( value, rStream );
-				}
-				else
-				{
-					if constexpr( std::is_same<V, std::string>() )
-					{
-						WriteString( value, rStream );
-					}
-					else
-					{
-						V::Serialise( value, rStream );
-					}
-				}
+				WriteObjectChecked( key, rStream );
+				WriteObjectChecked( value, rStream );
 			}
 		}
 
@@ -197,22 +140,10 @@ namespace Saturn {
 
 			for( const auto& [key, value] : rMap )
 			{
-				if constexpr( std::is_trivial<K>() )
-				{
-					WriteObject( key, rStream );
-				}
-				else
-				{
-					if constexpr( std::is_same<K, std::string>() )
-					{
-						WriteString( key, rStream );
-					}
-					else
-					{
-						K::Serialise( key, rStream );
-					}
-				}
+				// key
+				WriteObjectChecked( key, rStream );
 
+				// value
 				WriteMap( value, rStream );
 			}
 		}
@@ -243,36 +174,82 @@ namespace Saturn {
 
 			for( const auto& value : rMap )
 			{
-				if constexpr( std::is_trivial<Ty>() )
-				{
-					WriteObject( value, rStream );
-				}
-				else
-				{
-					if constexpr( std::is_same<Ty, std::string>() )
-					{
-						WriteString( value, rStream );
-					}
-					else
-					{
-						Ty::Serialise( value, rStream );
-					}
-				}
+				WriteObjectChecked( value, rStream );
 			}
 		}
 
-		// Write trivial object
-		template<typename Ty, typename OStream>
+		// Write object (unchecked)
+		template<typename Ty, typename OStream/*, std::enable_if_t<std::is_trivial<Ty>::value, bool> = true*/>
 		static void WriteObject( const Ty& rObject, OStream& rStream )
 		{
 			rStream.write( reinterpret_cast< const char* >( &rObject ), sizeof( Ty ) );
 		}
 
-		// Read trivial object
-		template<typename Ty, typename IStream>
+		// Attempts to find the most suitable serialisation method for this object based on it's traits
+		// If Ty trival it will end up calling WriteObject()
+		// If Ty is std::string or UUID, it will end up calling WriteString/WriteUUID
+		// However, if it's none, it will end up calling Ty::Serialise
+		template<typename Ty, typename OStream>
+		static void WriteObjectChecked( const Ty& rObject, OStream& rStream )
+		{
+			// If trivial, write directly
+			if constexpr( std::is_trivial<Ty>() )
+			{
+				WriteObject( rObject, rStream );
+			}
+			// If its a string, WriteString
+			else if constexpr( std::is_same<Ty, std::string>() )
+			{
+				WriteString( rObject, rStream );
+			}
+			// If its a UUID, WriteUUID
+			else if constexpr( std::is_same<Ty, Saturn::UUID>() )
+			{
+				WriteUUID( rObject, rStream );
+			}
+			// Fall back to defined "Serialise" function.
+			else 
+			{
+				static_assert( HasSerialiseFunction<Ty, OStream>, "Ty is not trivial nor a std::string or a Saturn::UUID, in that case it must have a static void Serialise( const Ty&, std::ofstream )" );
+
+				Ty::Serialise( rObject, rStream );
+			}
+		}
+
+		// Read object (unchecked)
+		template<typename Ty, typename IStream/*, std::enable_if_t<std::is_trivial<Ty>::value, bool> = true*/>
 		static void ReadObject( Ty& rObject, IStream& rStream )
 		{
-			rStream.read( reinterpret_cast<char*>( &rObject ), sizeof( Ty ) );
+			rStream.read( reinterpret_cast< char* >( &rObject ), sizeof( Ty ) );
+		}
+
+		// Attempts to find the most suitable deserialisation method for this object based on it's traits
+		// If Ty trival it will end up calling ReadObject()
+		// If Ty is std::string or UUID, it will end up calling ReadString/ReadUUID
+		// However, if its none, it will end up calling Ty::Deserialise
+		template<typename Ty, typename IStream>
+		static void ReadObjectChecked( Ty& rObject, IStream& rStream )
+		{
+			// If trivial, read directly
+			if constexpr( std::is_trivial<Ty>() )
+			{
+				ReadObject( rObject, rStream );
+			}
+			// If its a string, ReadString
+			else if constexpr( std::is_same<Ty, std::string>() )
+			{
+				rObject = ReadString( rStream );
+			}
+			else if constexpr( std::is_same<Ty, Saturn::UUID>() )
+			{
+				ReadUUID( rObject, rStream );
+			}
+			else // fall back to defined "Deserialise" function
+			{
+				static_assert( HasDeserialiseFunction<Ty, IStream>, "Ty is not trivial nor a std::string or a Saturn::UUID, in that case it must have a static void Deserialise( <Ty>&, <FDependentIStream|std::ifstream> )" );
+
+				Ty::Deserialise( rObject, rStream );
+			}
 		}
 
 		template<typename OStream>
@@ -287,14 +264,14 @@ namespace Saturn {
 		template<typename OStream>
 		static void WriteString( const std::filesystem::path& rString, OStream& rStream )
 		{
-			std::string stringbuf = rString.string();
+			const std::string stringbuf = rString.string();
 			WriteString( stringbuf, rStream );
 		}
 
 		template<typename OStream>
 		static void WriteString( const std::stringstream& rString, OStream& rStream )
 		{
-			std::string stringbuf = rString.str();
+			const std::string stringbuf = rString.str();
 
 			size_t size = stringbuf.size();
 			rStream.write( reinterpret_cast< const char* >( &size ), sizeof( size ) );
@@ -318,23 +295,9 @@ namespace Saturn {
 			for( size_t i = 0; i < size; i++ )
 			{
 				Ty value{};
-				if constexpr( std::is_trivial<Ty>() )
-				{
-					ReadObject<Ty>( value, rStream );
-				}
-				else
-				{
-					if constexpr( std::is_same<Ty, std::string>() )
-					{
-						value = ReadString( rStream );
-					}
-					else
-					{
-						Ty::Deserialise( value, rStream );
-					}
-				}
+				ReadObjectChecked<Ty>( value, rStream );
 
-				rMap[i] = value;
+				rMap[ i ] = value;
 			}
 		}
 
@@ -350,39 +313,11 @@ namespace Saturn {
 			for( size_t i = 0; i < size; i++ )
 			{
 				K key{};
-				if constexpr( std::is_trivial<K>() )
-				{
-					ReadObject<K>( key, rStream );
-				}
-				else
-				{
-					if constexpr( std::is_same<K, std::string>() )
-					{
-						key = ReadString( rStream );
-					}
-					else
-					{
-						K::Deserialise( key, rStream );
-					}
-				}
-
+				ReadObjectChecked<K>( key, rStream );
+				
 				V value{};
-				if constexpr( std::is_trivial<V>() )
-				{
-					ReadObject<V>( value, rStream );
-				}
-				else
-				{
-					if constexpr( std::is_same<V, std::string>() )
-					{
-						value = ReadString( rStream );
-					}
-					else
-					{
-						V::Deserialise( value, rStream );
-					}
-				}
-
+				ReadObjectChecked<V>( value, rStream );
+	
 				rMap[ key ] = value;
 			}
 		}
@@ -419,21 +354,7 @@ namespace Saturn {
 			for( size_t i = 0; i < size; i++ )
 			{
 				K key{};
-				if constexpr( std::is_trivial<K>() )
-				{
-					ReadObject<K>( key, rStream );
-				}
-				else
-				{
-					if constexpr( std::is_same<K, std::string>() )
-					{
-						key = ReadString( rStream );
-					}
-					else
-					{
-						K::Deserialise( key, rStream );
-					}
-				}
+				ReadObjectChecked<K>( key, rStream );
 
 				std::vector<V> values{};
 				ReadVector( values, rStream );
@@ -454,38 +375,10 @@ namespace Saturn {
 			for( size_t i = 0; i < size; i++ )
 			{
 				K key{};
-				if constexpr( std::is_trivial<K>() )
-				{
-					ReadObject<K>( key, rStream );
-				}
-				else
-				{
-					if constexpr( std::is_same<K, std::string>() )
-					{
-						key = ReadString( rStream );
-					}
-					else
-					{
-						K::Deserialise( key, rStream );
-					}
-				}
+				ReadObjectChecked<K>( key, rStream );
 
 				V value{};
-				if constexpr( std::is_trivial<V>() )
-				{
-					ReadObject<V>( value, rStream );
-				}
-				else
-				{
-					if constexpr( std::is_same<V, std::string>() )
-					{
-						value = ReadString( rStream );
-					}
-					else
-					{
-						V::Deserialise( value, rStream );
-					}
-				}
+				ReadObjectChecked<V>( value, rStream );
 
 				rMap[ key ] = value;
 			}
@@ -589,6 +482,24 @@ namespace Saturn {
 			rBuffer = Buffer::Copy( pData, BufferSize );
 
 			delete[] pData;
+		}
+
+		//////////////////////////////////////////////////////////////////////////
+		// UUID
+
+		template<typename OStream>
+		static void WriteUUID( const Saturn::UUID& rUUID, OStream& rStream )
+		{
+			RawSerialisation::WriteObject( (uint64_t)rUUID, rStream );
+		}
+
+		template<typename IStream>
+		static void ReadUUID( Saturn::UUID& rUUID, IStream& rStream )
+		{
+			uint64_t id = 0;
+			RawSerialisation::ReadObject( id, rStream );
+
+			rUUID.SetID( id );
 		}
 	};
 }

@@ -30,6 +30,9 @@
 #include "RawEntitySerialisation.h"
 
 #include "RawSerialisation.h"
+
+#include "Saturn/Audio/SoundGroup.h"
+
 #include "Saturn/Asset/AssetManager.h"
 #include "Saturn/Asset/MemoryAssetDependency.h"
 
@@ -38,7 +41,7 @@
 namespace Saturn {
 
 	template<typename Component, typename Func>
-	static void WriteComponent( const Ref<Entity>& rEntity, std::ofstream& rStream, Func Function )
+	static void WriteComponent( const SharedPtr<Entity>& rEntity, std::ofstream& rStream, Func Function )
 	{
 		bool hasT = rEntity->HasComponent<Component>();
 
@@ -51,7 +54,7 @@ namespace Saturn {
 	}
 
 	template<typename Component, typename IStream, typename Func>
-	static void ReadComponent( Ref<Entity>& rEntity, IStream& rStream, Func Function )
+	static void ReadComponent( SharedPtr<Entity>& rEntity, IStream& rStream, Func Function )
 	{
 		bool hadT = false;
 		RawSerialisation::ReadObject( hadT, rStream );
@@ -82,7 +85,7 @@ namespace Saturn {
 		rDep = id;
 	}
 
-	void RawEntitySerialisation::SerialiseEntity( const Ref<Entity>& rEntity, std::ofstream& rStream )
+	void RawEntitySerialisation::SerialiseEntity( const SharedPtr<Entity>& rEntity, std::ofstream& rStream )
 	{
 		RawSerialisation::WriteObject( rEntity->GetComponent<IdComponent>().ID, rStream );
 		RawSerialisation::WriteObject( rEntity->GetHandle(), rStream );
@@ -315,7 +318,7 @@ namespace Saturn {
 			} );
 	}
 
-	void RawEntitySerialisation::DeserialiseEntity( Ref<Entity>& rEntity, std::istream& rStream )
+	void RawEntitySerialisation::DeserialiseEntity( SharedPtr<Entity>& rEntity, std::istream& rStream )
 	{
 		RawSerialisation::ReadObject( rEntity->GetComponent<IdComponent>().ID, rStream );
 		

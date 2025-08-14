@@ -34,7 +34,7 @@
 #include "VulkanImageAux.h"
 #include "Helpers.h"
 
-#include "Saturn/Serialisation/ImageFileAux.h"
+#include "Saturn/Serialisation/Raw/ImageFileAux.h"
 
 #include <backends/imgui_impl_vulkan.h>
 #include <stb_image_resize.h>

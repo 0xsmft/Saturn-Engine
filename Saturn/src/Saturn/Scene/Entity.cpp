@@ -29,7 +29,7 @@
 #include "sppch.h"
 #include "Entity.h"
 
-#include "Saturn/Serialisation/RawEntitySerialisation.h"
+#include "Saturn/Serialisation/Raw/RawEntitySerialisation.h"
 
 namespace Saturn {
 

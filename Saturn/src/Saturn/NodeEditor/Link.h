@@ -29,7 +29,7 @@
 #pragma once
 
 #include "Saturn/Core/Ref.h"
-#include "Saturn/Serialisation/RawSerialisation.h"
+#include "Saturn/Serialisation/Raw/RawSerialisation.h"
 #include "Saturn/Core/UUID.h"
 
 #define IMGUI_DEFINE_MATH_OPERATORS

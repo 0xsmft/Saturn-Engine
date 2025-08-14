@@ -29,7 +29,6 @@
 #pragma once
 
 #include "Saturn/Asset/AssetRegistry.h"
-
 #include "Saturn/ImGui/JobProgress.h"
 
 namespace Saturn {

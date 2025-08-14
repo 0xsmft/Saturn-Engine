@@ -29,7 +29,7 @@
 #include "sppch.h"
 #include "BehaviourTreeCondition.h"
 
-#include "Saturn/Serialisation/RawSerialisation.h"
+#include "Saturn/Serialisation/Raw/RawSerialisation.h"
 
 #if !defined( SAT_DIST )
 #include "Saturn/Asset/AssetManager.h"

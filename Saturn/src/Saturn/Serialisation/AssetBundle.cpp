@@ -35,8 +35,8 @@
 #include "Saturn/Core/VirtualFS.h"
 
 #include "Saturn/Project/Project.h"
-#include "Saturn/Serialisation/RawSerialisation.h"
-#include "Saturn/Serialisation/RawAssetSerialisers.h"
+#include "Saturn/Serialisation/Raw/RawSerialisation.h"
+#include "Saturn/Serialisation/Raw/RawAssetSerialisers.h"
 
 #include "Saturn/NodeEditor/Serialisation/NodeCache.h"
 
@@ -48,7 +48,7 @@
 
 #include "Saturn/Asset/PhysicsMaterialAsset.h"
 
-#include "Saturn/Serialisation/SceneSerialiser.h"
+#include "Saturn/Serialisation/YAML/SceneSerialiser.h"
 
 #include <zlib.h>
 

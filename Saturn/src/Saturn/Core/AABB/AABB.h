@@ -28,7 +28,7 @@
 
 #pragma once
 
-#include "Saturn/Serialisation/RawSerialisation.h"
+#include "Saturn/Serialisation/Raw/RawSerialisation.h"
 
 #include <glm/glm.hpp>
 

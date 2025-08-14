@@ -30,7 +30,7 @@
 
 #include "AssetImporterBase.h"
 
-#include "Saturn/Serialisation/RawAssetSerialisers.h"
+#include "Saturn/Serialisation/Raw/RawAssetSerialisers.h"
 
 namespace Saturn {
 

@@ -35,7 +35,10 @@
 
 #include "Saturn/AI/Navigation/NavBoundsEntity.h"
 
+#include "Saturn/Project/Project.h"
+
 #include "YamlAux.h"
+#include "EntitySerialisation.h"
 
 #include <fstream>
 
@@ -72,9 +75,9 @@ namespace Saturn {
 
 		out << YAML::BeginSeq;
 		
-		m_Scene->Each( [&]( Ref<Entity> entity ) 
+		m_Scene->Each( [&]( SharedPtr<Entity> entity ) 
 			{
-				Auxiliary::SerialiseEntity( out, entity );
+				EntitySerialisation::SerialiseEntity( out, entity );
 			} );
 
 		out << YAML::EndSeq;
@@ -115,7 +118,13 @@ namespace Saturn {
 		SAT_CORE_INFO( "Deserialising scene SCENE/0/{0}", asset->Path.stem().string() );
 		
 		auto entities = data[ "Entities" ];
-		Auxiliary::DeserialiseEntities( entities, m_Scene );
+		if( entities.IsNull() )
+		{
+			SAT_CORE_ERROR( "Missing YAML Node \"Entities\"!" );
+			stream.close();
+		}
+
+		EntitySerialisation::DeserialiseEntities( entities, m_Scene );
 
 		m_Scene->PostDeserialise();
 

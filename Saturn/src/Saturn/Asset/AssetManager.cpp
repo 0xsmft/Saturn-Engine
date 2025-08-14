@@ -32,7 +32,7 @@
 #include "MemoryAssetDependency.h"
 
 #include "Saturn/Core/App.h"
-#include "Saturn/Serialisation/AssetManagerSerialiser.h"
+#include "Saturn/Serialisation/YAML/AssetManagerSerialiser.h"
 
 #include "Saturn/Project/Project.h"
 

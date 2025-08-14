@@ -38,11 +38,14 @@
 #include "Saturn/Audio/SoundSpecification.h"
 #include "Saturn/Audio/GraphSound.h"
 
+#include "Saturn/Project/Project.h"
+
 #include "Saturn/AI/BehaviourTree/BehaviourTreeMemorySpecification.h"
 
-#include "YamlAux.h"
-
 #include "Saturn/Vulkan/Renderer.h"
+
+#include "YamlAux.h"
+#include "EntitySerialisation.h"
 
 #include <yaml-cpp/yaml.h>
 #include <fstream>
@@ -215,13 +218,30 @@ namespace Saturn {
 
 		out << YAML::Key << "Prefab" << YAML::Value << prefabAsset->ID;
 
+		// Find root entity
+		SharedPtr<Entity> RootEntity = nullptr;
+
+		const auto view = prefabAsset->m_Scene->GetAllEntitiesWith<RelationshipComponent>();
+		for( const auto& entity : view )
+		{
+			if( entity->GetComponent<RelationshipComponent>().Parent != 0 )
+				continue;
+
+			if( entity->GetChildren().size() > 0 )
+				continue;
+
+			RootEntity = entity;
+		}
+
+		out << YAML::Key << "Root Entity" << YAML::Value << RootEntity->GetUUID();
+		
 		out << YAML::Key << "Entities";
 
 		out << YAML::BeginSeq;
 
-		prefabAsset->m_Scene->Each( [&]( Ref<Entity> entity ) 
+		prefabAsset->m_Scene->Each( [&]( SharedPtr<Entity> entity ) 
 			{
-				Auxiliary::SerialiseEntity( out, entity );
+				EntitySerialisation::SerialiseEntity( out, entity );
 			} );
 
 		out << YAML::EndSeq;
@@ -233,7 +253,7 @@ namespace Saturn {
 
 	bool PrefabSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
 	{
-		auto prefabAsset = Ref<Prefab>::Create();
+		auto prefabAsset = Ref<Prefab>::Create( rAsset );
 
 		const auto absolutePath = GetFilepathAbs( rAsset->Path );
 		std::ifstream FileIn( absolutePath );
@@ -253,12 +273,12 @@ namespace Saturn {
 
 		Scene::SetActiveScene( prefabAsset->m_Scene.Get() );
 
-		Auxiliary::DeserialiseEntities( entities, prefabAsset->m_Scene );
+		EntitySerialisation::DeserialiseEntities( entities, prefabAsset->m_Scene );
 
-		auto view = prefabAsset->m_Scene->GetAllEntitiesWith<RelationshipComponent>();
+		const auto view = prefabAsset->m_Scene->GetAllEntitiesWith<RelationshipComponent>();
 
 		// Find root entity
-		Ref<Entity> RootEntity = nullptr;
+		SharedPtr<Entity> RootEntity = nullptr;
 
 		for( const auto& entity : view )
 		{
@@ -274,28 +294,7 @@ namespace Saturn {
 		prefabAsset->m_Entity = RootEntity;
 		Scene::SetActiveScene( CurrentScene );
 
-		// TODO: (Asset) Fix this.
-		struct
-		{
-			UUID ID;
-			AssetType Type;
-			uint32_t Flags;
-			std::filesystem::path Path;
-			std::string Name;
-		} OldAssetData = {};
-
-		OldAssetData.ID = rAsset->ID;
-		OldAssetData.Type = rAsset->Type;
-		OldAssetData.Flags = rAsset->Flags;
-		OldAssetData.Path = rAsset->Path;
-		OldAssetData.Name = rAsset->Name;
-
 		rAsset = prefabAsset;
-		rAsset->ID = OldAssetData.ID;
-		rAsset->Type = OldAssetData.Type;
-		rAsset->Flags = OldAssetData.Flags;
-		rAsset->Path = OldAssetData.Path;
-		rAsset->Name = OldAssetData.Name;
 
 		return true;
 	}

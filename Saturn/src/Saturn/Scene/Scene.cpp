@@ -48,10 +48,13 @@
 #include "Saturn/Physics/PhysicsScene.h"
 #include "Saturn/Physics/PhysicsRigidBody.h"
 
+#include "Saturn/Project/Project.h"
+
 #include "Saturn/GameFramework/Core/GameModule.h"
 #include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
+#include "Saturn/GameFramework/PlayerInputController.h"
 
-#include "Saturn/Serialisation/SceneSerialiser.h"
+#include "Saturn/Serialisation/YAML/SceneSerialiser.h"
 
 #include "Saturn/Audio/AudioSystem.h"
 
@@ -64,6 +67,8 @@
 
 #include "Saturn/AI/Navigation/NavBoundsEntity.h"
 #include "Saturn/AI/AIAgentEntity.h"
+
+#include "Saturn/Runtime/RuntimeEvents.h"
 
 #include <Detour/DetourNavMeshQuery.h>
 

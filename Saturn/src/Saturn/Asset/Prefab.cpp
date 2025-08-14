@@ -33,7 +33,7 @@
 
 #include "Saturn/Asset/AssetManager.h"
 
-#include "Saturn/Serialisation/YamlAux.h"
+#include "Saturn/Serialisation/YAML/YamlAux.h"
 
 #include "Saturn/Scene/Scene.h"
 #include "Saturn/Scene/Entity.h"

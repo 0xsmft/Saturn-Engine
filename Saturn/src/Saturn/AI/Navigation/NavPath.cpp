@@ -31,7 +31,7 @@
 
 #include "Saturn/Scene/Scene.h"
 
-#include "Saturn/Serialisation/RawSerialisation.h"
+#include "Saturn/Serialisation/Raw/RawSerialisation.h"
 
 #include "Saturn/Vulkan/Renderer2D.h"
 

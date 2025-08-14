@@ -26,49 +26,20 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "Prefab2.h"
+#pragma once
 
-#include "Saturn/Serialisation/YAML/EntitySerialisation.h"
-
-#include "Saturn/GameFramework/SClass.h"
+#include <yaml-cpp/yaml.h>
+#include "Saturn/Scene/Entity.h"
 
 namespace Saturn {
 
-	Prefab2::Prefab2()
+	class Entity;
+
+	// YAML Entity Serialisation
+	class EntitySerialisation
 	{
-	}
-
-	Prefab2::Prefab2( const Ref<Asset>& rBase )
-		: Asset( rBase )
-	{
-	}
-
-	Prefab2::~Prefab2()
-	{
-	}
-
-	void Prefab2::CreatePrefabFromSceneEntity( SharedPtr<Entity> entity )
-	{
-//		YAML::Emitter em;
-//		EntitySerialisation::SerialiseEntity( em, entity );
-//		prefabEntity.SerialisedText = em.c_str();
-
-		PrefabEntity prefabEntity;
-		prefabEntity.ID = entity->GetUUID();
-		prefabEntity.ParentID = entity->GetParent();
-		prefabEntity.ClassHash = entity->GetClass()->GetHash();
-
-		m_Entities[ ( uint32_t ) entity->GetHandle() ] = prefabEntity;
-
-		for( const auto& rChildId : entity->GetChildren() )
-		{
-			SharedPtr<Entity> child = entity->GetScene()->FindEntityByID( rChildId );
-			if( child )
-			{
-				CreatePrefabFromSceneEntity( child );
-			}
-		}
-	}
-
+	public:
+		static void SerialiseEntity( YAML::Emitter& rEmitter, const SharedPtr<Entity> entity );
+		static void DeserialiseEntities( YAML::Node& rNode, Ref<Scene> scene );
+	};
 }

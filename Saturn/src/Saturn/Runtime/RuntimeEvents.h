@@ -32,12 +32,15 @@
 
 namespace Saturn {
 
+	// Runtime events happen during playtime!
+	// So for example a scene travel happens during runtime
+
 	class SceneTravelEvent : public Event
 	{
-		SAT_DEFINE_EVENT( SceneTravel, EC_Scene );
+		SAT_DEFINE_EVENT( SceneTravel, EC_Runtime );
 	public:
 		SceneTravelEvent( unsigned long long id )
-			: Event( EventType::SceneTravel, EC_Scene ), m_NewSceneID( id )
+			: Event( EventType::SceneTravel, EC_Runtime ), m_NewSceneID( id )
 		{
 		}
 

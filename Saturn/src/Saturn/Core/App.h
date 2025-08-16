@@ -141,6 +141,7 @@ namespace Saturn {
 	public:
 		//////////////////////////////////////////////////////////////////////////
 		// Events, public
+		// NOTE: When DispatchImmediately is true, it is not thread safe, you have to make sure that whatever even is dispatched does not cause any issues!
 		template<typename EventT, bool DispatchImmediately = false, typename... Args>
 		void DispatchEvent( Args&&... rrArgs ) 
 		{
@@ -157,7 +158,7 @@ namespace Saturn {
 				std::scoped_lock<std::mutex> lock( m_Mutex );
 
 				std::shared_ptr event = std::make_shared<EventT>( std::forward<Args>( rrArgs )... );
-				m_IncurredEventQueue.push( event );
+				m_DeferredEventQueue.push( event );
 			}
 		}
 
@@ -168,7 +169,7 @@ namespace Saturn {
 		bool OnEvent( Event& rEvent ) override;
 
 		//////////////////////////////////////////////////////////////////////////
-		// This is different to OnEvent as this only handles events that were incurred by us and not the Window
+		// This is different to OnEvent as this only handles events that were deferred by us and not the Window
 		void OnCustomEvent( Event& rEvent );
 
 	private:
@@ -180,7 +181,7 @@ namespace Saturn {
 		void InitGraphics();
 
 	private:
-		std::queue<std::shared_ptr<Event>> m_IncurredEventQueue;
+		std::queue<std::shared_ptr<Event>> m_DeferredEventQueue;
 
 		// Concurrency (threading)
 		std::mutex m_Mutex;

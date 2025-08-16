@@ -189,16 +189,27 @@ static Saturn::RubyKey ConvertWinScancodeToRuby( uint32_t scanCode )
 		case 0x51: return RubyKey_Numpad3;
 		case 0x52: return RubyKey_Numpad0;
 		case 0x53: return RubyKey_NumpadDecimal;
-		case 0x11C: return RubyKey_NumpadEnter;
-		case 0x135: return RubyKey_NumpadDivide;
-		case 0x145: return RubyKey_NumLock;
-
+		case 0x56: return RubyKey_Backslash;
 		case 0x57: return RubyKey_F11;
 		case 0x58: return RubyKey_F12;
 
-		case 0x146: return RubyKey_Pause;
+		//////////////////////////////////////////////////////////////////////////
+		// ^^[END OF SINGLE BYTE SCANCODES]
 
-		// Extended keys (0xE0)
+		case 0x11C: return RubyKey_NumpadEnter;
+		case 0x135: return RubyKey_NumpadDivide;
+		case 0x145: return RubyKey_NumLock;
+		case 0x11D: return RubyKey_RightCtrl;
+		case 0x15D: return RubyKey_Menu;
+
+		// NOTE: Clicking the "Alt Gr" key is the same as doing Ctrl+Alt
+		// So, Windows fires two key events one for the left Ctrl and then one for the right alt
+		case 0x138: return RubyKey_RightAlt;
+		
+		case 0x146: return RubyKey_Pause;
+		case 0x153: return RubyKey_Delete;
+
+		// Extended keys (0xE0, 57344)
 		case 0xE01C: return RubyKey_NumpadEnter;
 		case 0xE01D: return RubyKey_RightCtrl;
 		case 0xE035: return RubyKey_NumpadDivide;

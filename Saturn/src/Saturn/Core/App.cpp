@@ -255,12 +255,12 @@ namespace Saturn {
 		std::scoped_lock<std::mutex> lock( m_Mutex );
 
 		// After that, process any events that queued
-		while( m_IncurredEventQueue.size() )
+		while( m_DeferredEventQueue.size() )
 		{
-			auto& rEvent = m_IncurredEventQueue.front();
+			auto& rEvent = m_DeferredEventQueue.front();
 			OnCustomEvent( *rEvent.get() );
 
-			m_IncurredEventQueue.pop();
+			m_DeferredEventQueue.pop();
 		}
 	}
 

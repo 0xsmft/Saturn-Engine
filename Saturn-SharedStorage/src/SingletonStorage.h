@@ -85,20 +85,20 @@ namespace Saturn {
 		template<typename Ty>
 		static Ty* GetSingleton()
 		{
-			std::type_index info = typeid( Ty );
+			const std::type_index info = typeid( Ty );
 			auto& map = GetSingletonMap();
 
-			return reinterpret_cast<Ty*>( map[ info ].pObject );
+			const auto Itr = map.find( info );
+			return Itr == map.end() ? nullptr : reinterpret_cast<Ty*>( map[ info ].pObject );
 		}
 
 		template<typename Ty>
 		static void AddSingleton( Ty* type )
 		{
-			std::type_index info = typeid( Ty );
+			const std::type_index info = typeid( Ty );
 			auto& map = GetSingletonMap();
 
-			auto Itr = map.find( info );
-
+			const auto Itr = map.find( info );
 			if( Itr == map.end() )
 			{
 				map[ info ] = { .pObject = type };
@@ -108,7 +108,7 @@ namespace Saturn {
 		template<typename Ty>
 		static void RemoveSingleton( Ty* type )
 		{
-			std::type_index info = typeid( Ty );
+			const std::type_index info = typeid( Ty );
 			auto& map = GetSingletonMap();
 
 			map.erase( info );

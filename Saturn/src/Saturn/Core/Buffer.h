@@ -33,6 +33,7 @@
 
 namespace Saturn {
 
+	// Buffer is not RAII safe, you must call free before this object exits the scope.
 	class Buffer
 	{
 	public:

@@ -152,9 +152,9 @@ namespace Saturn {
 		const auto Itr = m_Cache.find( rAsset->ID );
 		
 		// TODO: Don't get the last_write_time every frame and instead check once and use FileWatch
-		auto fullPath = Project::GetActiveProject()->FilepathAbs( rAsset->Path );
-		auto lastWriteTimePoint = std::filesystem::last_write_time( fullPath );
-		auto timestamp = std::chrono::duration_cast< std::chrono::milliseconds >( lastWriteTimePoint.time_since_epoch() ).count();
+		const auto fullPath = Project::GetActiveProject()->FilepathAbs( rAsset->Path );
+		const auto lastWriteTimePoint = std::filesystem::last_write_time( fullPath );
+		const auto timestamp = std::chrono::duration_cast< std::chrono::milliseconds >( lastWriteTimePoint.time_since_epoch() ).count();
 
 		if( Itr != m_Cache.end() )
 		{
@@ -180,7 +180,7 @@ namespace Saturn {
 
 		// Generate texture & pass in needed information for cache data
 		if( rAsset->Type == AssetType::Texture || rAsset->Type == AssetType::Material || rAsset->Type == AssetType::StaticMesh )
-			m_GenerationQueue.push( { .Time = timestamp, .Texture = nullptr, .Asset = rAsset } );
+			m_GenerationQueue.emplace( timestamp, nullptr, rAsset );
 
 		return texture;
 	}
@@ -197,9 +197,9 @@ namespace Saturn {
 			auto& rData = Itr->second;
 		
 			// TODO: Don't get the last_write_time every frame and instead check once and use FileWatch
-			auto fullPath = Project::GetActiveProject()->FilepathAbs( asset->Path );
-			auto lastWriteTimePoint = std::filesystem::last_write_time( fullPath );
-			auto timestamp = std::chrono::duration_cast< std::chrono::milliseconds >( lastWriteTimePoint.time_since_epoch() ).count();
+			const auto fullPath = Project::GetActiveProject()->FilepathAbs( asset->Path );
+			const auto lastWriteTimePoint = std::filesystem::last_write_time( fullPath );
+			const auto timestamp = std::chrono::duration_cast< std::chrono::milliseconds >( lastWriteTimePoint.time_since_epoch() ).count();
 
 			rData.Time = timestamp;
 			rData.Texture = nullptr;
@@ -207,7 +207,7 @@ namespace Saturn {
 
 			// Generate texture & pass in needed information for cache data
 			if( asset->Type == AssetType::Texture || asset->Type == AssetType::Material || asset->Type == AssetType::StaticMesh )
-				m_GenerationQueue.push( { .Time = timestamp, .Texture = nullptr, .Asset = asset } );
+				m_GenerationQueue.emplace( timestamp, nullptr, asset );
 		}
 	}
 
@@ -236,13 +236,12 @@ namespace Saturn {
 	{
 		if( ImGui::Begin( "ContentBrowserThumbnailCache", pOpen ) ) 
 		{
-			ImGuiTableFlags tableFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollX | ImGuiTableFlags_NoBordersInBody;
-
-			if( ImGui::BeginTable( "##DebugCBThumbnails", 5, tableFlags ) )
+			if( ImGui::BeginTable( "##DebugCBThumbnails", 6, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollX | ImGuiTableFlags_NoBordersInBody ) )
 			{
 				ImGui::TableSetupColumn( "Last Write Time" );
 				ImGui::TableSetupColumn( "In Manifest" );
 				ImGui::TableSetupColumn( "Asset ID" );
+				ImGui::TableSetupColumn( "Texture" );
 				ImGui::TableSetupColumn( "Delete", ImGuiTableColumnFlags_NoHeaderLabel );
 				ImGui::TableSetupColumn( "Regen", ImGuiTableColumnFlags_NoHeaderLabel );
 
@@ -262,6 +261,9 @@ namespace Saturn {
 
 					ImGui::TableNextColumn();
 					ImGui::Text( "%llu", rID );
+
+					ImGui::TableNextColumn();
+					Auxiliary::Image( rData.Texture == nullptr ? m_FileIcon : rData.Texture, ImVec2( 24.0f, 24.0f ) );
 
 					ImGui::TableNextColumn();
 					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Bin" ), { 24.0f, 24.0f } ) )
@@ -364,7 +366,7 @@ namespace Saturn {
 
 	void ContentBrowserThumbnailCache::DeserialiseManifest()
 	{
-		std::filesystem::path cachePath = Project::GetActiveProject()->GetFullCachePath() / "PerUser" / "Thumbnails" / "Manifest.stm";
+		const std::filesystem::path cachePath = Project::GetActiveProject()->GetFullCachePath() / "PerUser" / "Thumbnails" / "Manifest.stm";
 		
 		if( !std::filesystem::exists( cachePath ) )
 			return;

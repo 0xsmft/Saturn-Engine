@@ -31,6 +31,7 @@
 
 #include "ImGuiAuxiliary.h"
 #include "EditorIcons.h"
+#include "EntitySelectionManager.h"
 
 #include "Saturn/Core/App.h"
 
@@ -84,42 +85,39 @@ namespace Saturn {
 
 	void SceneHierarchyPanel::SetContext( const Ref<Scene>& scene )
 	{
+		// Clear global selections if we change
+		// make sure to do this before changing scene just in case the m_Context's ref count is one
+		EntitySelectionManager::Get().ClearSelection();
+
 		m_Context = scene;
-		m_SelectionContexts.clear();
 	}
 
-	void SceneHierarchyPanel::SetSelected( Ref<Entity> entity )
+	void SceneHierarchyPanel::SetSelected( SharedPtr<Entity> entity )
 	{
 		if( !m_IsMultiSelecting )
-			ClearSelection();
+			EntitySelectionManager::Get().ClearSelection();
 
-		m_SelectionContexts.push_back( entity );
-		m_Context->AddSelectedEntity( entity );
+		EntitySelectionManager::Get().Select( entity );
 	}
 
 	void SceneHierarchyPanel::DrawEntities()
 	{
-		m_Context->Each( [&]( Ref<Entity> entity )
+		m_Context->Each( [&]( SharedPtr<Entity> entity )
 			{
 				if( !entity->HasParent() )
 					DrawEntityNode( entity );
 			} );
 	}
 
-	void SceneHierarchyPanel::ClearSelection()
-	{
-		m_SelectionContexts.clear();
-		m_Context->ClearSelectedEntities();
-	}
-
 	template<typename Ty>
-	void SceneHierarchyPanel::DrawAddComponents( const char* pName, Ref<Entity> entity )
+	void SceneHierarchyPanel::DrawAddComponents( const char* pName, SharedPtr<Entity> entity )
 	{
-		if( !m_SelectionContexts[ 0 ]->HasComponent<Ty>() )
+		auto& rSelections = EntitySelectionManager::Get().GetSelectionContexts();
+		if( !rSelections[ 0 ]->HasComponent<Ty>() )
 		{
 			if( ImGui::Button( pName ) )
 			{
-				m_SelectionContexts[ 0 ]->AddComponent<Ty>();
+				rSelections[ 0 ]->AddComponent<Ty>();
 
 				Ref<UndoRedoActionAddComponent<Ty>> action = Ref<UndoRedoActionAddComponent<Ty>>::Create( entity );
 				GlobalUndoRedoGroup::Get().AddAction( action, ( uint64_t ) entity->GetHandle() );
@@ -147,12 +145,12 @@ namespace Saturn {
 
 			if( ImGui::IsMouseDown( 0 ) && ImGui::IsWindowHovered() && !m_IsMultiSelecting )
 			{
-				ClearSelection();
+				EntitySelectionManager::Get().ClearSelection();
 			}
 
 			if( ImGui::BeginPopupContextWindow( 0, ImGuiPopupFlags_MouseButtonRight ) )
 			{
-				if( m_SelectionContexts.size() )
+				if( EntitySelectionManager::Get().GetSelectionCount() )
 				{
 					SelectedEntityPopup();
 				}
@@ -167,9 +165,9 @@ namespace Saturn {
 			const std::string name = "Inspector##" + m_Name;
 			ImGui::Begin( name.c_str(), nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse );
 
-			if( m_SelectionContexts.size() )
+			if( EntitySelectionManager::Get().GetSelectionCount() )
 			{
-				DrawComponents( m_SelectionContexts.front() );
+				DrawComponents( EntitySelectionManager::Get().GetSelectionContexts().front() );
 			}
 
 			ImGui::End();
@@ -194,10 +192,10 @@ namespace Saturn {
 	{
 		if( ImGui::MenuItem( "Create Empty Entity as child" ) )
 		{
-			Ref<Entity> child = m_Context->CreateEntity( "Unnamed Entity" );
+			SharedPtr<Entity> child = m_Context->CreateEntity( "Unnamed Entity" );
 			
 			// Only add to most recent selection.
-			Ref<Entity> parent = m_SelectionContexts.back();
+			SharedPtr<Entity> parent = EntitySelectionManager::Get().GetSelectionContexts().back();
 			if( parent )
 			{
 				parent->GetComponent<RelationshipComponent>().ChildrenID.push_back( child->GetUUID() );
@@ -223,7 +221,7 @@ namespace Saturn {
 		{
 			if( ImGui::MenuItem( "Directional Light" ) )
 			{
-				Ref<Entity> entity = m_Context->CreateEntity( "Directional Light" );
+				SharedPtr<Entity> entity = m_Context->CreateEntity( "Directional Light" );
 
 				entity->AddComponent<DirectionalLightComponent>();
 				entity->GetComponent<TransformComponent>().SetRotation( glm::radians( glm::vec3( 80.0f, 10.0f, 0.0f ) ) );
@@ -271,47 +269,44 @@ namespace Saturn {
 		}
 	}
 
-	void SceneHierarchyPanel::DrawComponents( Ref<Entity> entity )
+	void SceneHierarchyPanel::DrawComponents( SharedPtr<Entity> entity )
 	{
-		DrawEntityComponents( m_SelectionContexts[ 0 ] );
+		DrawEntityComponents( EntitySelectionManager::Get().GetSelectionContexts()[ 0 ] );
 
 		if( ImGui::Button( "Add Component" ) )
 			ImGui::OpenPopup( "AddComponentPanel" );
 
+		auto& rSelections = EntitySelectionManager::Get().GetSelectionContexts();
+
 		if( ImGui::BeginPopup( "AddComponentPanel" ) )
 		{
-			DrawAddComponents<StaticMeshComponent>( "Static Mesh", m_SelectionContexts[ 0 ] );
+			DrawAddComponents<StaticMeshComponent>( "Static Mesh", rSelections[ 0 ] );
 
-			DrawAddComponents<CameraComponent>( "Camera", m_SelectionContexts[ 0 ] );
+			DrawAddComponents<CameraComponent>( "Camera", rSelections[ 0 ] );
 
-			DrawAddComponents<PointLightComponent>( "Point Light", m_SelectionContexts[ 0 ] );
+			DrawAddComponents<PointLightComponent>( "Point Light", rSelections[ 0 ] );
 
-			DrawAddComponents<DirectionalLightComponent>( "Directional Light", m_SelectionContexts[ 0 ] );
+			DrawAddComponents<DirectionalLightComponent>( "Directional Light", rSelections[ 0 ] );
 
-			DrawAddComponents<BoxColliderComponent>( "Box Collider", m_SelectionContexts[ 0 ] );
+			DrawAddComponents<BoxColliderComponent>( "Box Collider", rSelections[ 0 ] );
 
-			DrawAddComponents<SphereColliderComponent>( "Sphere Collider", m_SelectionContexts[ 0 ] );
+			DrawAddComponents<SphereColliderComponent>( "Sphere Collider", rSelections[ 0 ] );
 
-			DrawAddComponents<CapsuleColliderComponent>( "Capsule Collider", m_SelectionContexts[ 0 ] );
+			DrawAddComponents<CapsuleColliderComponent>( "Capsule Collider", rSelections[ 0 ] );
 
-			DrawAddComponents<RigidbodyComponent>( "Rigidbody", m_SelectionContexts[ 0 ] );
+			DrawAddComponents<RigidbodyComponent>( "Rigidbody", rSelections[ 0 ] );
 
-			DrawAddComponents<BillboardComponent>( "Billboard", m_SelectionContexts[ 0 ] );
+			DrawAddComponents<BillboardComponent>( "Billboard", rSelections[ 0 ] );
 
-			DrawAddComponents<AudioPlayerComponent>( "Audio Player", m_SelectionContexts[ 0 ] );
+			DrawAddComponents<AudioPlayerComponent>( "Audio Player", rSelections[ 0 ] );
 			
-			DrawAddComponents<AudioListenerComponent>( "Audio Listener", m_SelectionContexts[ 0 ] );
+			DrawAddComponents<AudioListenerComponent>( "Audio Listener", rSelections[ 0 ] );
 
 			ImGui::EndPopup();
 		}
 	}
 
-	bool SceneHierarchyPanel::IsEntitySelected( Ref<Entity> entity )
-	{
-		return std::find( m_SelectionContexts.begin(), m_SelectionContexts.end(), entity ) != m_SelectionContexts.end();
-	}
-
-	void SceneHierarchyPanel::DrawEntityNode( Ref<Entity> entity )
+	void SceneHierarchyPanel::DrawEntityNode( SharedPtr<Entity> entity )
 	{
 		if( entity->HasComponent<TagComponent>() )
 		{
@@ -321,8 +316,8 @@ namespace Saturn {
 			if( m_Searching && !m_EntityTextFilter.PassFilter( rTag.c_str() ) )
 				return;
 
-			ImGuiTreeNodeFlags Flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
-			IsEntitySelected( entity ) ? Flags |= ImGuiTreeNodeFlags_Selected : 0;
+			ImGuiTreeNodeFlags Flags = /*ImGuiTreeNodeFlags_OpenOnArrow |*/ ImGuiTreeNodeFlags_SpanAvailWidth;
+			EntitySelectionManager::Get().IsSelected( entity ) ? Flags |= ImGuiTreeNodeFlags_Selected : 0;
 
 			bool Clicked;
 
@@ -337,9 +332,6 @@ namespace Saturn {
 			if( ImGui::IsItemClicked( ImGuiMouseButton_Left ) || ImGui::IsItemClicked( ImGuiMouseButton_Right ) )
 			{
 				SetSelected( entity );
-
-				if( m_SelectionChangedCallback )
-					m_SelectionChangedCallback( entity );
 			}
 
 			if( ImGui::BeginItemTooltip() )
@@ -368,8 +360,8 @@ namespace Saturn {
 				const ImGuiPayload* pPayload = ImGui::AcceptDragDropPayload( "ENTITY_PARENT_SCHPANEL" );
 				if( pPayload )
 				{
-					Ref<Entity> e = (Entity*)pPayload->Data;
-					Ref<Entity> previousParent = m_Context->FindEntityByID( e->GetParent() );
+					SharedPtr<Entity> e = (Entity*)pPayload->Data;
+					SharedPtr<Entity> previousParent = m_Context->FindEntityByID( e->GetParent() );
 
 					// If a child is trying to parent it's parent.
 					bool ParentToParent = false;
@@ -405,7 +397,7 @@ namespace Saturn {
 			{
 				for ( auto& child : entity->GetChildren() )
 				{
-					Ref<Entity> e = m_Context->FindEntityByID( child );
+					SharedPtr<Entity> e = m_Context->FindEntityByID( child );
 					if( e )
 						DrawEntityNode( e );
 				}
@@ -415,7 +407,7 @@ namespace Saturn {
 		}
 	}
 
-	void SceneHierarchyPanel::DrawEntityProperties( Ref<Entity> entity ) 
+	void SceneHierarchyPanel::DrawEntityProperties( SharedPtr<Entity> entity ) 
 	{
 		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_AllowItemOverlap;
 
@@ -434,11 +426,10 @@ namespace Saturn {
 
 				for( int i = 0; i < propCount; i++ )
 				{
-					SProperty* pProperty = ( SProperty* ) properties[ i ];
+					SPropertyEditor* pProperty = ( SPropertyEditor* ) properties[ i ];
 
 					std::string name = pProperty->GetName();
-
-					if( pProperty->IsDirty() )
+					if( /*pProperty->IsDirty()*/ false )
 					{
 						name += "*";
 					}
@@ -485,7 +476,7 @@ namespace Saturn {
 
 						case SPropertyType::EntityType:
 						{
-							Ref<Entity>& entityFromProp = pProperty->Read<SPropertyType::EntityType>( entity.Get() );
+							SharedPtr<Entity>& entityFromProp = pProperty->Read<SPropertyType::EntityType>( entity.Get() );
 
 							ImGui::PushID( name.c_str() );
 
@@ -525,7 +516,7 @@ namespace Saturn {
 									{
 										bool Selected = false;
 
-										m_Context->Each( [ & ]( Ref<Entity>& rEntity )
+										m_Context->Each( [ & ]( SharedPtr<Entity>& rEntity )
 										{
 											if( ImGui::Selectable( rEntity->GetComponent<TagComponent>().Tag.c_str(), &Selected ) )
 											{
@@ -615,7 +606,7 @@ namespace Saturn {
 		ImGui::Separator();
 	} 
 
-	void SceneHierarchyPanel::DrawEntityComponents( Ref<Entity> entity )
+	void SceneHierarchyPanel::DrawEntityComponents( SharedPtr<Entity> entity )
 	{
 		ImVec2 contentRegionAvailable = ImGui::GetContentRegionAvail();
 		const bool isPrefab = entity->HasComponent<PrefabComponent>();
@@ -1302,7 +1293,7 @@ namespace Saturn {
 
 		DrawComponent<NavigationMeshSpecificationComponent>( "Navigation Specification", entity, [ & ]( auto& nms )
 		{
-			Ref<NavBoundsEntity> boundsEntity = entity.As<NavBoundsEntity>();
+			SharedPtr<NavBoundsEntity> boundsEntity = entity.As<NavBoundsEntity>();
 
 			Auxiliary::DisabledFlag disabledFlag( true );
 			Auxiliary::DrawVec3Control( "Extent", nms.Extent );
@@ -1343,7 +1334,7 @@ namespace Saturn {
 	}
 
 	template<typename T, typename UIFunction>
-	void Saturn::SceneHierarchyPanel::DrawComponent( const std::string& name, Ref<Entity> entity, UIFunction uiFunction )
+	void Saturn::SceneHierarchyPanel::DrawComponent( const std::string& name, SharedPtr<Entity> entity, UIFunction uiFunction )
 	{
 		// TODO: Support multiple selections (for this function)
 		if( entity->HasComponent<T>() )

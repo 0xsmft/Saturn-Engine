@@ -59,6 +59,7 @@
 #include "Saturn/Audio/AudioSystem.h"
 
 #include "Saturn/ImGui/EditorIcons.h"
+#include "Saturn/ImGui/EntitySelectionManager.h"
 #if !defined(SAT_DIST)
 #include "Saturn/ImGui/ImGuiWindow.h"
 #include "Saturn/ImGui/ImGuiWindowManager.h"
@@ -114,11 +115,11 @@ namespace Saturn {
 
 	void Scene::Empty()
 	{
-		ClearSelectedEntities();
+		EntitySelectionManager::Get().ClearSelection();
 
 		{
+/*
 			auto staticMeshes = GetAllEntitiesWith<StaticMeshComponent>();
-
 			for( auto& entity : staticMeshes )
 			{
 				auto& rMeshComponent = entity->GetComponent<StaticMeshComponent>();
@@ -284,7 +285,7 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		// Selected Meshes and Physics Colliders
 		{
-			for( const auto& rSelectedEntity : m_SelectedEntities )
+			for( const auto& rSelectedEntity : EntitySelectionManager::Get().GetSelectionContexts() )
 			{
 				if( rSelectedEntity->HasComponent<StaticMeshComponent>() )
 				{

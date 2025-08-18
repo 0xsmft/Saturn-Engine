@@ -39,11 +39,11 @@
 #include <Saturn/ImGui/ContentBrowserPanel/ContentBrowserThumbnailCache.h>
 #include <Saturn/ImGui/UndoRedo/EntityUndoRedoActions.h>
 
-#include <Saturn/Serialisation/SceneSerialiser.h>
-#include <Saturn/Serialisation/ProjectSerialiser.h>
-#include <Saturn/Serialisation/EngineSettingsSerialiser.h>
-#include <Saturn/Serialisation/AssetManagerSerialiser.h>
-#include <Saturn/Serialisation/AssetSerialisers.h>
+#include <Saturn/Serialisation/YAML/SceneSerialiser.h>
+#include <Saturn/Serialisation/YAML/ProjectSerialiser.h>
+#include <Saturn/Serialisation/YAML/EngineSettingsSerialiser.h>
+#include <Saturn/Serialisation/YAML/AssetManagerSerialiser.h>
+#include <Saturn/Serialisation/YAML/AssetSerialisers.h>
 #include <Saturn/Serialisation/AssetBundle.h>
 
 #include <Saturn/Vulkan/SceneRenderer.h>
@@ -104,7 +104,7 @@ namespace Saturn {
 
 		// Init Physics
 		m_PhysicsFoundation.Init();
-		
+
 		// Editor Application should of loaded a project but if not assert.
 		SAT_CORE_ASSERT( Project::GetActiveProject(), "No project was given." );
 		
@@ -119,6 +119,7 @@ namespace Saturn {
 
 	void EditorLayer::OnAttach()
 	{
+		m_SelectionManager = std::make_unique<EntitySelectionManager>();
 		m_GlobalUndoRedoGroup = Ref<GlobalUndoRedoGroup>::Create();
 
 		m_CheckerboardTexture = Ref< Texture2D >::Create( "content/textures/editor/checkerboard.tga", AddressingMode::Repeat );
@@ -216,6 +217,8 @@ namespace Saturn {
 
 		Application::Get().PrimarySceneRenderer().SetCurrentScene( nullptr );
 		
+		m_SelectionManager.reset();
+
 		if( m_RuntimeScene ) 
 		{	
 			m_RuntimeScene->OnRuntimeEnd();
@@ -267,6 +270,16 @@ namespace Saturn {
 					CleanupRuntimeWhenFailed();
 				}
 			}
+			else if( !m_RuntimeScene->IsRuntimeActive() ) 
+			{
+				// Because the Runtime Scene it self ended runtime, we must reset the mouse because normally we wouldn't
+				// because to end runtime via the Editor requires the mouse.
+				// TODO: A better way to handle runtime, would be to create a OnRuntimeStart, OnRuntimeSuspend, OnRuntimeEnd events
+				Input::Get().SetCursorMode( RubyCursorMode::Normal, true );
+				m_RequestRuntime = false;
+
+				EndRuntime();
+			}
 		}
 		else
 		{
@@ -296,8 +309,11 @@ namespace Saturn {
 
 			if( m_ShowCameraFrustum )
 			{
-				const auto& cc = m_RuntimeScene->GetMainCameraEntity()->GetComponent<CameraComponent>().Camera;
-				cc.RenderDebugFrustum();
+				if( auto entity = m_RuntimeScene->GetMainCameraEntity().Access() )
+				{
+					const auto& cc = entity->GetComponent<CameraComponent>().Camera;
+					cc.RenderDebugFrustum();
+				}
 			}
 		}
 		else 
@@ -320,8 +336,7 @@ namespace Saturn {
 
 		if( m_ShowMeshAABB )
 		{
-			const Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
-			for( const auto& rEntity : hierarchyPanel->GetSelectionContexts() )
+			for( const auto& rEntity : EntitySelectionManager::Get().GetSelectionContexts() )
 			{
 				const glm::mat4 transform = g_ActiveScene->GetTransformRelativeToParent( rEntity );
 				if( rEntity->HasComponent<StaticMeshComponent>() )
@@ -463,7 +478,7 @@ namespace Saturn {
 		Ref<Scene> newScene = Ref<Scene>::Create();
 		g_ActiveScene = newScene.Get();
 
-		hierarchyPanel->ClearSelection();
+		EntitySelectionManager::Get().ClearSelection();
 		hierarchyPanel->SetContext( nullptr );
 
 		const Ref<Asset> asset = id == 0 ? nullptr : AssetManager::Get().FindAsset( id );
@@ -500,7 +515,7 @@ namespace Saturn {
 		Ref<Scene> newScene = Ref<Scene>::Create();
 		g_ActiveScene = newScene.Get();
 
-		hierarchyPanel->ClearSelection();
+		EntitySelectionManager::Get().ClearSelection();
 		hierarchyPanel->SetContext( nullptr );
 
 		m_RuntimeScene->OnRuntimeEnd();
@@ -613,20 +628,19 @@ namespace Saturn {
 		{
 			case RubyKey_Delete:
 			{
-				Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
-
-				if( hierarchyPanel && !m_RuntimeScene )
+				if( !m_RuntimeScene )
 				{
 					// Because of our ref system, the entity will be deleted when we clear the selections.
 					// What we are really doing here is freeing it from the registry and removing the children.
-					for( auto& rEntity : hierarchyPanel->GetSelectionContexts() )
+					for( auto& rEntity : EntitySelectionManager::Get().GetSelectionContexts() )
 					{
 						GlobalUndoRedoGroup::Get().RemoveIfActionHasIdentifier( (uint64_t)rEntity->GetHandle() );
 						
 						g_ActiveScene->DeleteEntity( rEntity );
 					}
 
-					hierarchyPanel->ClearSelection();
+					// The entities will be freed here!
+					EntitySelectionManager::Get().ClearSelection();
 
 					g_ActiveScene->MarkDirty();
 				}
@@ -665,41 +679,30 @@ namespace Saturn {
 			switch( rEvent.GetKeycode() )
 			{
 				case RubyKey_D:
-				{
-					Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
-
-					if( hierarchyPanel )
+				{					
+					for( const auto& rEntity : EntitySelectionManager::Get().GetSelectionContexts() )
 					{
-						for( const auto& rEntity : hierarchyPanel->GetSelectionContexts() )
-						{
-							g_ActiveScene->DuplicateEntity( rEntity );
-						}
-
-						g_ActiveScene->MarkDirty();
+						g_ActiveScene->DuplicateEntity( rEntity );
 					}
 
+					g_ActiveScene->MarkDirty();
 				} break;
 
 				// TODO: Support more than one selection.
 				case RubyKey_F:
 				{
-					Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
+					auto& rSelectedEntities = EntitySelectionManager::Get().GetSelectionContexts();
 
-					if( hierarchyPanel )
+					glm::vec3 Positions = {};
+					for( auto& rEntity : rSelectedEntities )
 					{
-						auto& selectedEntities = hierarchyPanel->GetSelectionContexts();
-
-						glm::vec3 Positions = {};
-						for( auto& rEntity : selectedEntities )
-						{
-							TransformComponent worldSpace = g_ActiveScene->GetWorldSpaceTransform( rEntity );
-							Positions += worldSpace.Position;
-						}
-
-						Positions /= selectedEntities.size();
-
-						m_EditorCamera.Focus( Positions );
+						TransformComponent worldSpace = g_ActiveScene->GetWorldSpaceTransform( rEntity );
+						Positions += worldSpace.Position;
 					}
+
+					Positions /= rSelectedEntities.size();
+
+					m_EditorCamera.Focus( Positions );
 				} break;
 
 				case RubyKey_S:
@@ -2206,7 +2209,7 @@ namespace Saturn {
 				Ref<Asset> asset = AssetManager::Get().FindAsset( *pUUID );
 				Ref<StaticMesh> meshAsset = AssetManager::Get().GetAssetAs<StaticMesh>( asset->ID );
 
-				Ref<Entity> entity = m_EditorScene->CreateEntity( asset->Name );
+				SharedPtr<Entity> entity = m_EditorScene->CreateEntity( asset->Name );
 
 				auto& rMeshComponent = entity->AddComponent<StaticMeshComponent>();
 				rMeshComponent.Mesh = meshAsset;
@@ -2495,15 +2498,14 @@ namespace Saturn {
 		m_AllowCameraEvents = ImGui::IsMouseHoveringRect( minBound, maxBound ) && m_ViewportFocused || m_StartedRightClickInViewport;
 		m_ViewportBounds = ImRect( minBound, maxBound );
 
-		Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
-		std::vector<SharedPtr<Entity>>& selectedEntities = hierarchyPanel->GetSelectionContexts();
+		std::vector<SharedPtr<Entity>>& rSelectedEntities = EntitySelectionManager::Get().GetSelectionContexts();
 
 		// Calc center of transform.
 		glm::vec3 Positions = {};
 		glm::quat Rotations = {};
 		glm::vec3 Scales = {};
 
-		for( const auto& rEntity : selectedEntities )
+		for( const auto& rEntity : rSelectedEntities )
 		{
 			TransformComponent worldSpace = g_ActiveScene->GetWorldSpaceTransform( rEntity );
 			Positions += worldSpace.Position;
@@ -2511,16 +2513,16 @@ namespace Saturn {
 			Scales += worldSpace.Scale;
 		}
 
-		Positions /= selectedEntities.size();
-		Rotations /= static_cast< float >( selectedEntities.size() );
-		Scales /= selectedEntities.size();
+		Positions /= rSelectedEntities.size();
+		Rotations /= static_cast< float >( rSelectedEntities.size() );
+		Scales /= rSelectedEntities.size();
 
 		glm::mat4 centerPoint = glm::translate( glm::mat4( 1.0f ), Positions ) * glm::toMat4( Rotations ) * glm::scale( glm::mat4( 1.0f ), Scales );
 		glm::mat4 offsetTransform( 1.0f );
 
 		///////////////////
 
-		if( selectedEntities.size() && m_GizmoOperation != 0 )
+		if( rSelectedEntities.size() && m_GizmoOperation != 0 )
 		{
 			ImGuizmo::SetOrthographic( false );
 			ImGuizmo::SetDrawlist();
@@ -2533,7 +2535,7 @@ namespace Saturn {
 
 			if( ImGuizmo::IsUsing() )
 			{
-				for( SharedPtr<Entity>& rEntity : selectedEntities )
+				for( SharedPtr<Entity>& rEntity : rSelectedEntities )
 				{
 					auto& tc = rEntity->GetComponent<TransformComponent>();
 

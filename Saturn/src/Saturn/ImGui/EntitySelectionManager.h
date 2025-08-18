@@ -28,91 +28,64 @@
 
 #pragma once
 
-#include "Saturn/Core/Base.h"
-#include "Saturn/Scene/Entity.h"
-#include "Saturn/Scene/Scene.h"
-
-#include "ImGuiWindow.h"
-#include "Saturn/Vulkan/Texture.h"
-
-#include <functional>
-// TODO: Remove this include (need to find a way to define ImGuiTextFilter without including the imgui header)
-#define IMGUI_DEFINE_MATH_OPERATORS
-#include <imgui.h>
+#include "Saturn/Core/Ref.h"
+#include "SingletonStorage.h"
 
 namespace Saturn {
 
-	class SceneHierarchyPanel : public ImGuiWindow
+	class Entity;
+
+	// EntitySelectionManager
+	// This class holds the global list for the currently selected entities, 
+	// selections mainly change from the Scene Hierarchy Panel however, the list is always stored in this class
+	//
+	// NOTE: Selections are stored only for the current scene, so when the scene changes this list will be cleared,
+	//       In addition, the selected entities are held with a SharedPtr (which is an authoritative ref) and will stop the deletion if it's not cleared prior to calling DeleteEntity or equiv. however, in most cases this step is already handled, but just keep that in mind.
+	// 
+	// Ownership:
+	//  - EditorLayer
+	//
+	class EntitySelectionManager
 	{
 	public:
-		SceneHierarchyPanel();
-		SceneHierarchyPanel( const std::string& rWindowName );
-		~SceneHierarchyPanel();
+		static inline EntitySelectionManager& Get() { return *SingletonStorage::GetSingleton<EntitySelectionManager>(); }
+	public:
+		EntitySelectionManager();
+		~EntitySelectionManager();
 
-		void SetContext( const Ref<Scene>& scene );
+		void Select( const SharedPtr<Entity> entity );
+		void Remove( const SharedPtr<Entity> entity );
 
-		void SetSelected( SharedPtr<Entity> entity );
+		void ClearSelection();
 
-		static const char* GetStaticName() 
+		[[nodiscard]] SharedPtr<Entity> GetSelectionContextAt( uint32_t index = 0 )
 		{
-			return "Scene Hierarchy";
+			if( m_SelectedEntities.size() < index || !m_SelectedEntities.size() )
+			{
+				return nullptr;
+			}
+
+			return m_SelectedEntities[ index ];
 		}
 
-		inline void SetIsPrefabScene( bool value ) { m_IsPrefabScene = value; }
-		inline void SetCustomID( UUID ID ) { m_CustomID = ID; }
+		[[nodiscard]] SharedPtr<Entity> GetSelectionContextAt( uint32_t index = 0 ) const
+		{
+			if( m_SelectedEntities.size() < index || !m_SelectedEntities.size() )
+			{
+				return nullptr;
+			}
 
-	public:
-		//////////////////////////////////////////////////////////////////////////
-		// ImGuiWindow
-	
-		virtual void OnImGuiRender() override;
-		virtual void OnEvent( Event& rEvent ) {}
-		virtual void OnUpdate( Timestep ts ) {}
+			return m_SelectedEntities[ index ];
+		}
 
-	protected:
-		void DrawComponents( SharedPtr<Entity> entity );
-		void DrawEntityNode( SharedPtr<Entity> entity );
-		void DrawEntityProperties( SharedPtr<Entity> entity );
-		void DrawEntityComponents( SharedPtr<Entity> entity );
-		void DrawEntities();
+		[[nodiscard]] bool IsSelected( const SharedPtr<Entity> entity ) const;
 
-		template<typename Ty>
-		void DrawAddComponents( const char* pName, SharedPtr<Entity> entity );
+		[[nodiscard]] std::vector<SharedPtr<Entity>>& GetSelectionContexts() { return m_SelectedEntities; }
+		[[nodiscard]] const std::vector<SharedPtr<Entity>>& GetSelectionContexts() const { return m_SelectedEntities; }
 
-		template<typename T, typename UIFunction>
-		void DrawComponent( const std::string& name, SharedPtr<Entity> entity, UIFunction uiFunction );
-
-		void PopupContextMenuNormal();
-		void SelectedEntityPopup();
+		[[nodiscard]] size_t GetSelectionCount() const { return m_SelectedEntities.size(); }
 
 	private:
-		UUID m_CustomID = 0;
-
-		Ref<Texture2D> m_EditIcon;
-
-		// Asset Finder
-		AssetID m_CurrentAssetID = 0;
-		AssetType m_CurrentFinderType = AssetType::Unknown;
-
-		// Entity Finder
-		UUID m_CurrentEntityID = 0;
-
-		bool m_OpenEntityFinderPopup = false;
-		bool m_IsPrefabScene = false;
-		bool m_Searching = false;
-		bool m_IsMultiSelecting = false;
-
-		struct CopyComponentData
-		{
-			Buffer Buffer;
-			std::string Name;
-		};
-
-		CopyComponentData m_CopyComponentData{};
-
-		// Searching text filter
-		ImGuiTextFilter m_EntityTextFilter{};
-
-		Ref<Scene> m_Context;
+		std::vector<SharedPtr<Entity>> m_SelectedEntities;
 	};
 }

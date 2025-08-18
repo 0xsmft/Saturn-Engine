@@ -28,11 +28,15 @@
 
 #pragma once
 
+#include <Saturn/Core/Layer.h>
+#include <Saturn/Core/Renderer/SceneFlyCamera.h>
+
 #include <Saturn/ImGui/ImGuiWindowManager.h>
 #include <Saturn/ImGui/SceneHierarchyPanel.h>
-#include <Saturn/ImGui/ContentBrowserPanel/ContentBrowserPanel.h>
+#include <Saturn/ImGui/EntitySelectionManager.h>
 #include <Saturn/ImGui/JobProgress.h>
 #include <Saturn/ImGui/TitleBar.h>
+#include <Saturn/ImGui/ContentBrowserPanel/ContentBrowserPanel.h>
 #include <Saturn/ImGui/UndoRedo/GlobalUndoRedoGroup.h>
 
 #include <Saturn/Asset/AssetManager.h>
@@ -40,9 +44,6 @@
 #include <Saturn/Scene/Scene.h>
 
 #include <Saturn/Physics/PhysicsFoundation.h>
-
-#include <Saturn/Core/Layer.h>
-#include <Saturn/Core/Renderer/SceneFlyCamera.h>
 
 #include <queue>
 #include <imgui_internal.h>
@@ -187,6 +188,7 @@ namespace Saturn {
 		Ref<AssetManager> m_AssetManager;
 
 		Ref<GlobalUndoRedoGroup> m_GlobalUndoRedoGroup = nullptr;
+		std::unique_ptr<EntitySelectionManager> m_SelectionManager;
 
 	private:
 		TitleBar m_TitleBar;

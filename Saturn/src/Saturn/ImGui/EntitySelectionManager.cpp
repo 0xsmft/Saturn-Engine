@@ -26,93 +26,44 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "EntitySelectionManager.h"
 
-#include "Saturn/Core/Base.h"
 #include "Saturn/Scene/Entity.h"
-#include "Saturn/Scene/Scene.h"
-
-#include "ImGuiWindow.h"
-#include "Saturn/Vulkan/Texture.h"
-
-#include <functional>
-// TODO: Remove this include (need to find a way to define ImGuiTextFilter without including the imgui header)
-#define IMGUI_DEFINE_MATH_OPERATORS
-#include <imgui.h>
 
 namespace Saturn {
 
-	class SceneHierarchyPanel : public ImGuiWindow
+	EntitySelectionManager::EntitySelectionManager()
 	{
-	public:
-		SceneHierarchyPanel();
-		SceneHierarchyPanel( const std::string& rWindowName );
-		~SceneHierarchyPanel();
+		SAT_CORE_ASSERT( !SingletonStorage::GetSingleton<EntitySelectionManager>(), "A EntitySelectionManager already exists!" );
 
-		void SetContext( const Ref<Scene>& scene );
+		SingletonStorage::AddSingleton<EntitySelectionManager>( this );
+	}
 
-		void SetSelected( SharedPtr<Entity> entity );
+	EntitySelectionManager::~EntitySelectionManager()
+	{
+		ClearSelection();
+	}
 
-		static const char* GetStaticName() 
-		{
-			return "Scene Hierarchy";
-		}
+	void EntitySelectionManager::Select( const SharedPtr<Entity> entity )
+	{
+		if( !IsSelected( entity ) )
+			m_SelectedEntities.push_back( entity );
+	}
 
-		inline void SetIsPrefabScene( bool value ) { m_IsPrefabScene = value; }
-		inline void SetCustomID( UUID ID ) { m_CustomID = ID; }
+	void EntitySelectionManager::Remove( const SharedPtr<Entity> entity )
+	{
+		m_SelectedEntities.erase( std::remove( m_SelectedEntities.begin(), m_SelectedEntities.end(), entity ) );
+	}
 
-	public:
-		//////////////////////////////////////////////////////////////////////////
-		// ImGuiWindow
-	
-		virtual void OnImGuiRender() override;
-		virtual void OnEvent( Event& rEvent ) {}
-		virtual void OnUpdate( Timestep ts ) {}
+	void EntitySelectionManager::ClearSelection()
+	{
+		m_SelectedEntities.clear();
+	}
 
-	protected:
-		void DrawComponents( SharedPtr<Entity> entity );
-		void DrawEntityNode( SharedPtr<Entity> entity );
-		void DrawEntityProperties( SharedPtr<Entity> entity );
-		void DrawEntityComponents( SharedPtr<Entity> entity );
-		void DrawEntities();
+	bool EntitySelectionManager::IsSelected( const SharedPtr<Entity> entity ) const
+	{
+		return std::find( m_SelectedEntities.begin(), m_SelectedEntities.end(), entity ) != m_SelectedEntities.end();
+	}
 
-		template<typename Ty>
-		void DrawAddComponents( const char* pName, SharedPtr<Entity> entity );
-
-		template<typename T, typename UIFunction>
-		void DrawComponent( const std::string& name, SharedPtr<Entity> entity, UIFunction uiFunction );
-
-		void PopupContextMenuNormal();
-		void SelectedEntityPopup();
-
-	private:
-		UUID m_CustomID = 0;
-
-		Ref<Texture2D> m_EditIcon;
-
-		// Asset Finder
-		AssetID m_CurrentAssetID = 0;
-		AssetType m_CurrentFinderType = AssetType::Unknown;
-
-		// Entity Finder
-		UUID m_CurrentEntityID = 0;
-
-		bool m_OpenEntityFinderPopup = false;
-		bool m_IsPrefabScene = false;
-		bool m_Searching = false;
-		bool m_IsMultiSelecting = false;
-
-		struct CopyComponentData
-		{
-			Buffer Buffer;
-			std::string Name;
-		};
-
-		CopyComponentData m_CopyComponentData{};
-
-		// Searching text filter
-		ImGuiTextFilter m_EntityTextFilter{};
-
-		Ref<Scene> m_Context;
-	};
 }

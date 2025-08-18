@@ -63,8 +63,8 @@ namespace Saturn {
 		//////////////////////////////////////////////////////////////////////////
 		// Physics
 
-		void OnMeshHit( Ref<Entity> Other );
-		void OnMeshExit( Ref<Entity> Other );
+		void OnMeshHit( SharedPtr<Entity> Other );
+		void OnMeshExit( SharedPtr<Entity> Other );
 		
 		virtual void SetupInputBindings() {};
 
@@ -81,8 +81,8 @@ namespace Saturn {
 	protected:
 		Ref<PlayerInputController> m_PlayerInputController = nullptr;
 
-		Ref<Entity>& GetCameraEntity() { return m_CameraEntity; }
-		const Ref<Entity>& GetCameraEntity() const { return m_CameraEntity; }
+		SharedPtr<Entity>& GetCameraEntity() { return m_CameraEntity; }
+		const SharedPtr<Entity>& GetCameraEntity() const { return m_CameraEntity; }
 
 	protected:
 		//////////////////////////////////////////////////////////////////////////
@@ -107,6 +107,6 @@ namespace Saturn {
 		// TODO: Move this to a movement component.
 		PhysicsRigidBody* m_RigidBody = nullptr;
 
-		Ref<Entity> m_CameraEntity = nullptr;
+		SharedPtr<Entity> m_CameraEntity = nullptr;
 	};
 }

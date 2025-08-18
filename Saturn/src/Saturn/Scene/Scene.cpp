@@ -163,54 +163,25 @@ namespace Saturn {
 		m_Registry.clear();
 	}
 
-	// TODO: We don't want to search for the main camera entity every frame.
-	Ref<Entity> Scene::GetMainCameraEntity( bool force )
+	WeakRef<Entity> Scene::GetMainCameraEntity( bool force )
 	{
-		if( m_MainCameraEntity && !force )
-			return m_MainCameraEntity;
+		if( !m_pMainCameraEntity.Expired() && !force )
+			return m_pMainCameraEntity;
 
-		auto entities = GetAllEntitiesWith<CameraComponent>();
-
+		const auto entities = GetAllEntitiesWith<CameraComponent>();
 		for( auto& entity : entities )
 		{
 			if( entity->GetComponent<CameraComponent>().MainCamera )
 			{
-				m_MainCameraEntity = entity;
-				return m_MainCameraEntity;
+				m_pMainCameraEntity = entity;
+				return m_pMainCameraEntity;
 			}
 		}
 
-		return nullptr;
+		// If we get here, that means that there is no camera, reset weak ref
+		m_pMainCameraEntity.Reset();
+		return m_pMainCameraEntity;
 	}
-
-#if defined(SAT_DEBUG) || defined(SAT_RELEASE)
-	void Scene::AddSelectedEntity( Ref<Entity> entity )
-	{
-		m_SelectedEntities.push_back( entity );
-	}
-
-	void Scene::DeselectEntity( Ref<Entity> entity )
-	{
-		m_SelectedEntities.erase( std::remove( m_SelectedEntities.begin(), m_SelectedEntities.end(), entity ), m_SelectedEntities.end() );
-	}
-
-	void Scene::ClearSelectedEntities()
-	{
-		m_SelectedEntities.clear();
-	}
-#else
-	void Scene::AddSelectedEntity( Ref<Entity> entity )
-	{
-	}
-
-	void Scene::DeselectEntity( Ref<Entity> entity )
-	{
-	}
-
-	void Scene::ClearSelectedEntities()
-	{
-	}
-#endif
 
 	void Scene::OnUpdate( Timestep ts )
 	{
@@ -337,7 +308,7 @@ namespace Saturn {
 				
 				if( rSelectedEntity->GetClass() == NavBoundsEntity::StaticClass() ) 
 				{
-					if( Ref<NavBoundsEntity> boundsEntity = rSelectedEntity.As<NavBoundsEntity>() )
+					if( SharedPtr<NavBoundsEntity> boundsEntity = rSelectedEntity.As<NavBoundsEntity>() )
 					{
 						Renderer2D::Get().SubmitAABB( boundsEntity->GetBoundingBox(), glm::vec4( 0.0f, 1.0f, 0.0, 1.0f ) );
 						boundsEntity->DebugDraw();
@@ -355,19 +326,19 @@ namespace Saturn {
 		SAT_PF_EVENT();
 
 		// Try find new main camera entity if current saved one is null
-		if( !m_MainCameraEntity )
+		if( m_pMainCameraEntity.Expired() )
 		{
-			m_MainCameraEntity = GetMainCameraEntity();
+			m_pMainCameraEntity = GetMainCameraEntity();
 		}
 
 		// Check twice because we are always going to have to set the projection
-		if( m_MainCameraEntity )
+		if( auto entity = m_pMainCameraEntity.Access() )
 		{
-			const auto tc = GetWorldSpaceTransform( m_MainCameraEntity );
+			const auto tc = GetWorldSpaceTransform( entity );
 
 			const auto view = glm::inverse( tc.GetTransform() );
 
-			auto& rCamera = m_MainCameraEntity->GetComponent<CameraComponent>().Camera;
+			auto& rCamera = entity->GetComponent<CameraComponent>().Camera;
 			rCamera.SetViewportSize( rSceneRenderer.Width(), rSceneRenderer.Height() );
 			//rCamera.SetViewMatrix( view );
 			rCamera.SetPosition( tc.Position );
@@ -379,7 +350,8 @@ namespace Saturn {
 		}
 		else
 		{
-			// TODO: Try to find a new camera, or create one
+			// TODO: Try to find a new camera or create one or even end runtime
+			m_RuntimeState = RuntimeState::Ending;
 		}
 
 		rSceneRenderer.SetCamera( m_RendererCamera );
@@ -519,14 +491,14 @@ namespace Saturn {
 		}
 	}
 
-	Ref<Entity> Scene::CreateEntityWithIDScript( UUID uuid, const std::string& name /*= "" */, const std::string& rScriptName, bool externalData )
+	SharedPtr<Entity> Scene::CreateEntityWithIDScript( UUID uuid, const std::string& name /*= "" */, const std::string& rScriptName, bool externalData )
 	{
-		Scene* ActiveScene = GActiveScene;
-		if( GActiveScene != this )
-			GActiveScene = this;
+		Scene* ActiveScene = g_ActiveScene;
+		if( g_ActiveScene != this )
+			g_ActiveScene = this;
 
 		// UNSAFE! We just assume that rScriptName will be a subclass of an entity, could lead to UB
-		Ref<Entity> entity = (Entity*)ClassMetadataHandler::Get().CreateClassObject( rScriptName );
+		SharedPtr<Entity> entity = (Entity*)ClassMetadataHandler::Get().CreateClassObject( rScriptName );
 
 		entity->SetName( name );
 		entity->GetComponent<IdComponent>().ID = uuid;
@@ -538,9 +510,9 @@ namespace Saturn {
 		return entity;
 	}
 
-	Ref<Entity> Scene::CreateEntity( const std::string& name /*= "" */ )
+	SharedPtr<Entity> Scene::CreateEntity( const std::string& name /*= "" */ )
 	{
-		Ref<Entity> entity = ClassMetadataHandler::Get().CreateClassObject<Entity>( Entity::StaticClass(), this );
+		SharedPtr<Entity> entity = ClassMetadataHandler::Get().CreateClassObject<Entity>( Entity::StaticClass(), this );
 		entity->SetName( name );
 
 		OnEntityCreated( entity );
@@ -548,12 +520,12 @@ namespace Saturn {
 		return entity;
 	}
 
-	Ref<Entity> Scene::CreateEntity( CreateEntityParameters& rParams )
+	SharedPtr<Entity> Scene::CreateEntity( CreateEntityParameters& rParams )
 	{
 		if( !rParams.pClass->IsChildOf( Entity::StaticClass() ) || rParams.pClass == nullptr ) 
 			return nullptr;
 
-		Ref<Entity> entity = dynamic_cast<Entity*>( ClassMetadataHandler::Get().CreateClassObject( rParams.pClass ) );
+		SharedPtr<Entity> entity = dynamic_cast<Entity*>( ClassMetadataHandler::Get().CreateClassObject( rParams.pClass ) );
 		entity->SetName( rParams.Tag );
 		entity->GetComponent<IdComponent>().ID = rParams.ID;
 
@@ -573,7 +545,7 @@ namespace Saturn {
 		return entity;
 	}
 
-	Ref<Entity> Scene::FindEntityByTag( const std::string& tag )
+	SharedPtr<Entity> Scene::FindEntityByTag( const std::string& tag )
 	{
 		for( auto&& [handle, entity] : m_EntityIDMap )
 		{
@@ -584,7 +556,7 @@ namespace Saturn {
 		return nullptr;
 	}
 
-	Saturn::Ref<Saturn::Entity> Scene::FindEntityByID( const UUID& id )
+	SharedPtr<Entity> Scene::FindEntityByID( const UUID& id )
 	{
 		for( auto&& [handle, entity] : m_EntityIDMap )
 		{
@@ -595,7 +567,7 @@ namespace Saturn {
 		return nullptr;
 	}
 
-	Saturn::Ref<Saturn::Entity> Scene::FindEntityByHandle( entt::entity handle )
+	SharedPtr<Entity> Scene::FindEntityByHandle( entt::entity handle )
 	{
 		const auto Itr = m_EntityIDMap.find( handle );
 		if( Itr != m_EntityIDMap.end() )
@@ -604,7 +576,7 @@ namespace Saturn {
 		return nullptr;
 	}
 
-	glm::mat4 Scene::GetTransformRelativeToParent( const Ref<Entity> entity )
+	glm::mat4 Scene::GetTransformRelativeToParent( const SharedPtr<Entity> entity )
 	{
 		SAT_PF_EVENT();
 
@@ -615,7 +587,7 @@ namespace Saturn {
 
 		if( rParentID != 0 )
 		{
-			Ref<Entity> parent = FindEntityByID( rParentID );
+			SharedPtr<Entity> parent = FindEntityByID( rParentID );
 			if( parent )
 				transform = GetTransformRelativeToParent( parent );
 		}
@@ -623,7 +595,7 @@ namespace Saturn {
 		return transform * entity->GetComponent<TransformComponent>().GetTransform();
 	}
 
-	TransformComponent Scene::GetWorldSpaceTransform( const Ref<Entity> entity )
+	TransformComponent Scene::GetWorldSpaceTransform( const SharedPtr<Entity> entity )
 	{
 		SAT_PF_EVENT();
 
@@ -692,9 +664,9 @@ namespace Saturn {
 		CopyComponentIfExists<V...>( dst, src, rRegistry );
 	}
 
-	Ref<Entity> Scene::DuplicateEntity( const Ref<Entity> entity, const Ref<Entity> parent )
+	SharedPtr<Entity> Scene::DuplicateEntity( const SharedPtr<Entity> entity, const SharedPtr<Entity> parent )
 	{
-		Ref<Entity> newEntity = Ref<Entity>::Create();
+		SharedPtr<Entity> newEntity = dynamic_cast<Entity*>( ClassMetadataHandler::Get().CreateClassObject( (SClass*)entity->GetClass() ) );
 		newEntity->SetName( entity->GetComponent<TagComponent>().Tag );
 
 		CopyComponentIfExists( AllDuplicatableComponents{}, newEntity->GetHandle(), entity->GetHandle(), m_Registry );
@@ -712,16 +684,16 @@ namespace Saturn {
 
 		if( entity->HasParent() && !parent )
 		{
-			Ref<Entity> parent = FindEntityByID( entity->GetParent() );
-			Ref<Entity> newParent = DuplicateEntity( parent, nullptr );
+			SharedPtr<Entity> parent = FindEntityByID( entity->GetParent() );
+			SharedPtr<Entity> newParent = DuplicateEntity( parent, nullptr );
 
 			newEntity->SetParent( newParent->GetUUID() );
 		}
 
 		for( const auto& rID : sourceRelationship.ChildrenID )
 		{
-			const Ref<Entity> child = FindEntityByID( rID );
-			Ref<Entity> newChild = DuplicateEntity( child, newEntity );
+			const SharedPtr<Entity> child = FindEntityByID( rID );
+			SharedPtr<Entity> newChild = DuplicateEntity( child, newEntity );
 
 			newEntity->GetChildren().push_back( newChild->GetUUID() );
 		}
@@ -729,7 +701,7 @@ namespace Saturn {
 		return newEntity;
 	}
 
-	void Scene::DeleteEntity( Ref<Entity> entity, bool deleteChildren /*=true*/, UUID orphanParentID /*=0*/ )
+	void Scene::DeleteEntity( SharedPtr<Entity> entity, bool deleteChildren /*=true*/, UUID orphanParentID /*=0*/ )
 	{
 		for( auto& rChild : entity->GetChildren() )
 		{
@@ -748,10 +720,12 @@ namespace Saturn {
 			}
 		}
 
-		m_EntityIDMap.erase( entity->GetHandle() );
-		m_Registry.destroy( entity->GetHandle() );
-		
+		entt::entity handle = entity->GetHandle();
 		entity->Invalidate();
+
+		m_EntityIDMap.erase( handle );
+		m_Registry.destroy( handle );
+	}
 	}
 
 	void Scene::TransferModifiedProperties( const Ref<Entity>& rSourceEntity, Ref<Entity>& rEntity, const std::string& rMetadataName )
@@ -887,7 +861,7 @@ namespace Saturn {
 
 	void Scene::UpdateAudioListeners()
 	{
-		auto listeners = GetAllEntitiesWith< AudioListenerComponent >();
+		const auto listeners = GetAllEntitiesWith< AudioListenerComponent >();
 
 		for( auto& entity : listeners )
 		{
@@ -1010,21 +984,21 @@ namespace Saturn {
 		m_NavMeshQuery = nullptr;
 	}
 
-	Saturn::Ref<Saturn::NavBoundsEntity> Scene::GetNavBoundsEntity()
+	SharedPtr<NavBoundsEntity> Scene::GetNavBoundsEntity() const
 	{
 		return m_NavBoundsEntity;
 	}
 
-	Ref<Entity> Scene::CreatePrefab( Ref<Prefab> prefabAsset )
+	SharedPtr<Entity> Scene::CreatePrefab( Ref<Prefab> prefabAsset )
 	{
-		Ref<Entity> prefabEntity = prefabAsset->PrefabToEntity( this );
+		SharedPtr<Entity> prefabEntity = prefabAsset->PrefabToEntity( this );
 
 		return prefabEntity;
 	}
 
 	void Scene::AcknowledgeHotReload()
 	{
-		std::unordered_map<entt::entity, Ref<Entity>> replace;
+		std::unordered_map<entt::entity, SharedPtr<Entity>> replace;
 
 		for( auto&& [id, entity] : m_EntityIDMap )
 		{
@@ -1032,7 +1006,7 @@ namespace Saturn {
 			{
 				auto& rScriptComponent = entity->GetComponent<DScriptComponent>();
 
-				Ref<Entity> newEntity = HotReloadReplaceOldEntity(entity);
+				SharedPtr<Entity> newEntity = HotReloadReplaceOldEntity(entity);
 
 				replace[ id ] = newEntity;
 			}
@@ -1052,14 +1026,14 @@ namespace Saturn {
 		replace.clear();
 	}
 
-	void Scene::AddController( const Ref<PlayerInputController>& rPlayerInputController )
+	void Scene::AddController( Ref<PlayerInputController> playerInputController )
 	{
-		m_Controllers.push_back( rPlayerInputController );
+		m_Controllers.push_back( playerInputController );
 	}
 
-	void Scene::RemoveController( const Ref<PlayerInputController>& rPlayerInputController )
+	void Scene::RemoveController( Ref<PlayerInputController> playerInputController )
 	{
-		const auto Itr = std::find( m_Controllers.begin(), m_Controllers.end(), rPlayerInputController );
+		const auto Itr = std::find( m_Controllers.begin(), m_Controllers.end(), playerInputController );
 
 		if( Itr != m_Controllers.end() )
 			m_Controllers.erase( Itr );
@@ -1067,12 +1041,12 @@ namespace Saturn {
 
 	void Scene::SetActiveScene( Scene* pScene )
 	{
-		GActiveScene = pScene;
+		g_ActiveScene = pScene;
 	}
 
 	Scene* Scene::GetActiveScene()
 	{
-		return GActiveScene;
+		return g_ActiveScene;
 	}
 
 	void Scene::PostDeserialise()
@@ -1091,16 +1065,16 @@ namespace Saturn {
 			}
 
 			// Load initial nav mesh
-			Ref<NavBoundsEntity> boundsEntity = rEntity.As<NavBoundsEntity>();
+			SharedPtr<NavBoundsEntity> boundsEntity = rEntity.As<NavBoundsEntity>();
 			boundsEntity->LoadNavMeshFromDisk();
 
 			m_NavBoundsEntity = boundsEntity;
 
-			OnNavMeshBuildCompleted();
+//			OnNavMeshBuildCompleted();
 		}
 	}
 
-	void Scene::OnEntityCreated( Ref<Entity> entity )
+	void Scene::OnEntityCreated( SharedPtr<Entity> entity )
 	{
 		m_EntityIDMap[ entity->GetHandle() ] = entity;
 
@@ -1122,33 +1096,22 @@ namespace Saturn {
 
 	void Scene::OnNavMeshBuildCompleted()
 	{
-		dtNavMesh* pNavMesh = m_NavBoundsEntity->GetBuilder().GetNavMesh();
-
-		m_NavMeshQuery = dtAllocNavMeshQuery();
-		m_NavMeshQuery->init( pNavMesh, 2048 );
 	}
 
 	void Scene::CreatePhysicsScene()
 	{
-		if( !m_PhysicsScene )
-		{
-			m_PhysicsScene = new PhysicsScene( this );
-		}
+		m_PhysicsScene = std::make_shared<PhysicsScene>( this );
 	}
 
 	void Scene::DestroyPhysicsScene()
 	{
-		if( m_PhysicsScene )
-		{
-			delete m_PhysicsScene;
-			m_PhysicsScene = nullptr;
-		}
+		m_PhysicsScene.reset();
 	}
 
-	Ref<Entity> Scene::HotReloadReplaceOldEntity( Ref<Entity> source )
+	SharedPtr<Entity> Scene::HotReloadReplaceOldEntity( SharedPtr<Entity> source )
 	{
 		// Create new entity
-		Ref<Entity> entity = (Entity*)ClassMetadataHandler::Get().CreateClassObject( source->GetClass()->GetHash() );
+		SharedPtr<Entity> entity = (Entity*)ClassMetadataHandler::Get().CreateClassObject( source->GetClass()->GetHash() );
 
 		entity->SetName( source->GetName() );
 		entity->GetComponent<IdComponent>().ID = source->GetUUID();
@@ -1225,7 +1188,7 @@ namespace Saturn {
 		size_t mapSize = 0;
 		rStream.read( reinterpret_cast< char* >( &mapSize ), sizeof( size_t ) );
 
-		VariableGuard<Scene*> activeScene( GActiveScene, this );
+		VariableGuard<Scene*> activeScene( g_ActiveScene, this );
 
 		for( size_t i = 0; i < mapSize; i++ )
 		{
@@ -1236,7 +1199,7 @@ namespace Saturn {
 
 			std::string className = RawSerialisation::ReadString( rStream );
 
-			Ref<Entity> V = nullptr;
+			SharedPtr<Entity> V = nullptr;
 			V = (Entity*)ClassMetadataHandler::Get().CreateClassObject( className );
 
 			// V is always non-trivial

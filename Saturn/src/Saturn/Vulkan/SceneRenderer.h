@@ -411,11 +411,11 @@ namespace Saturn {
 
 		void SetCurrentScene( Scene* pScene );
 
-		void SubmitStaticMesh( Ref<Entity> entity, Ref< StaticMesh > mesh, Ref<MaterialRegistry> materialRegistry, const glm::mat4& transform );
+		void SubmitStaticMesh( SharedPtr<Entity> entity, Ref< StaticMesh > mesh, Ref<MaterialRegistry> materialRegistry, const glm::mat4& transform );
 		
 		// This will work for now (as atm now we are just gonna render the mesh ).
 		// However, if we have a different collider mesh than the mesh it will not be correct.
-		void SubmitPhysicsCollider( Ref<Entity> entity, Ref< StaticMesh > mesh, Ref<MaterialRegistry> materialRegistry, const glm::mat4& transform );
+		void SubmitPhysicsCollider( SharedPtr<Entity> entity, Ref< StaticMesh > mesh, Ref<MaterialRegistry> materialRegistry, const glm::mat4& transform );
 
 		void SetViewportSize( uint32_t w, uint32_t h );
 		void SetViewportPosition( float x, float y ) { m_RendererData.ViewportPos = glm::vec2( x, y ); }

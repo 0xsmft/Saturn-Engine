@@ -869,11 +869,11 @@ namespace Saturn {
 					prefab->Flags = prefabAsset->Flags;
 
 					// Create the source entity.
-					Ref<Entity> sourceEntity = nullptr;
+					SharedPtr<Entity> sourceEntity = nullptr;
 
-					sourceEntity = GActiveScene->CreateEntityWithIDScript( UUID(), "Temporary", m_SelectedMetadata->GetName(), false );
+					sourceEntity = g_ActiveScene->CreateEntityWithIDScript( UUID(), m_ClassInstanceName, m_SelectedMetadata->GetName(), false );
 
-					prefab->Create( sourceEntity );
+					prefab->InitPrefab( sourceEntity );
 
 					// Delete the temporary source entity from the current scene.
 					g_ActiveScene->DeleteEntity( sourceEntity, true, 0 );
@@ -882,6 +882,7 @@ namespace Saturn {
 					PrefabSerialiser ps;
 					ps.Serialise( prefab );
 
+					prefabAsset = prefab;
 					AssetManager::Get().Save();
 
 					PopupModified = true;

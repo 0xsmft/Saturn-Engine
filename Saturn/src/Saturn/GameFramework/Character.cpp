@@ -64,14 +64,13 @@ namespace Saturn {
 
 		SetupInputBindings();
 
-		// Try find our camera.
-		Ref<Entity> cameraEntity = m_Scene->GetMainCameraEntity();
-		
-		if( !cameraEntity ) 
+		// If the scene already has a camera, we can take ownership of it, if not we create our own camera as a child.
+		auto wTemporaryCameraEntity = m_Scene->GetMainCameraEntity();
+		if( wTemporaryCameraEntity.Expired() )
 		{
 			// Create the main camera.
 			CreateEntityParameters params{};
-			params.Parent = this;
+			params.Parent = SharedFromThis();
 			params.Tag = "Camera";
 			params.pClass = Entity::StaticClass();
 
@@ -80,7 +79,7 @@ namespace Saturn {
 		}
 		else
 		{
-			m_CameraEntity = cameraEntity;
+			m_CameraEntity = wTemporaryCameraEntity.Access();
 		}
 
 		m_RigidBody = GetComponent<RigidbodyComponent>().Rigidbody;
@@ -156,12 +155,12 @@ namespace Saturn {
 		}
 	}
 
-	void Character::OnMeshHit( Ref<Entity> Other )
+	void Character::OnMeshHit( SharedPtr<Entity> Other )
 	{
 
 	}
 
-	void Character::OnMeshExit( Ref<Entity> Other )
+	void Character::OnMeshExit( SharedPtr<Entity> Other )
 	{
 
 	}

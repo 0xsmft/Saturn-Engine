@@ -36,7 +36,7 @@
 
 namespace Saturn {
 
-	PhysicsRigidBody::PhysicsRigidBody( Ref<Entity> entity )
+	PhysicsRigidBody::PhysicsRigidBody( SharedPtr<Entity> entity )
 		: m_Entity( entity )
 	{
 		const TransformComponent& tc = entity->GetComponent<TransformComponent>();

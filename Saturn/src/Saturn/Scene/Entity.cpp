@@ -85,12 +85,12 @@ namespace Saturn {
 		GetComponent<TagComponent>().Tag = rName;
 	}
 
-	void Entity::Serialise( const Ref<Entity>& rObject, std::ofstream& rStream )
+	void Entity::Serialise( const SharedPtr<Entity>& rObject, std::ofstream& rStream )
 	{
 		RawEntitySerialisation::SerialiseEntity( rObject, rStream );
 	}
 
-	void Entity::Deserialise( Ref<Entity>& rObject, std::istream& rStream )
+	void Entity::Deserialise( SharedPtr<Entity>& rObject, std::istream& rStream )
 	{
 		RawEntitySerialisation::DeserialiseEntity( rObject, rStream );
 	}

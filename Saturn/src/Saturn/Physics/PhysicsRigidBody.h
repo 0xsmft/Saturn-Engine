@@ -40,7 +40,7 @@ namespace Saturn {
 	class PhysicsRigidBody : public RefTarget
 	{
 	public:
-		PhysicsRigidBody( Ref<Entity> entity );
+		PhysicsRigidBody( SharedPtr<Entity> entity );
 		~PhysicsRigidBody();
 
 		void CreateShape();
@@ -73,13 +73,13 @@ namespace Saturn {
 		
 		bool AllRotationLocked() const;
 
-		void SetOnCollisionHit( std::function<void( Ref<Entity> rOther )>&& rrFunc ) { m_OnMeshHit = rrFunc; }
-		void SetOnCollisionExit( std::function<void( Ref<Entity> rOther )>&& rrFunc ) { m_OnMeshExit = rrFunc; }
+		void SetOnCollisionHit( std::function<void( SharedPtr<Entity> rOther )>&& rrFunc ) { m_OnMeshHit = rrFunc; }
+		void SetOnCollisionExit( std::function<void( SharedPtr<Entity> rOther )>&& rrFunc ) { m_OnMeshExit = rrFunc; }
 
-		void OnCollisionHit ( Ref<Entity> rOther ) { m_OnMeshHit( rOther ); }
-		void OnCollisionExit( Ref<Entity> rOther ) { m_OnMeshExit( rOther ); }
+		void OnCollisionHit ( SharedPtr<Entity> rOther ) { m_OnMeshHit( rOther ); }
+		void OnCollisionExit( SharedPtr<Entity> rOther ) { m_OnMeshExit( rOther ); }
 
-		Ref<Entity> GetEntity() { return m_Entity; }
+		SharedPtr<Entity> GetEntity() { return m_Entity; }
 
 		void ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
 	private:
@@ -88,15 +88,15 @@ namespace Saturn {
 
 	private:
 		physx::PxRigidActor* m_Actor = nullptr;
-		Ref<Entity> m_Entity;
+		SharedPtr<Entity> m_Entity;
 
 		Ref<PhysicsShape> m_Shape;
 
 		bool m_Kinematic = false;
 		uint32_t m_LockFlags;
 
-		std::function<void( Ref<Entity> rOther )> m_OnMeshHit;
-		std::function<void( Ref<Entity> rOther )> m_OnMeshExit;
+		std::function<void( SharedPtr<Entity> rOther )> m_OnMeshHit;
+		std::function<void( SharedPtr<Entity> rOther )> m_OnMeshExit;
 	private:
 		friend class PhysicsShape;
 		friend class PhysicsFoundation;

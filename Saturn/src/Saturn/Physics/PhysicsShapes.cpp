@@ -31,8 +31,11 @@
 
 #include "PhysicsAuxiliary.h"
 #include "PhysicsFoundation.h"
+
 #include "Saturn/Asset/PhysicsMaterialAsset.h"
 #include "Saturn/Asset/AssetManager.h"
+
+#include "Saturn/Project/Project.h"
 
 #include "Saturn/AI/Navigation/RecastInputGeometry.h"
 
@@ -74,7 +77,7 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// Box
 
-	BoxShape::BoxShape( Ref<Entity> entity )
+	BoxShape::BoxShape( SharedPtr<Entity> entity )
 		: PhysicsShape( entity )
 	{
 		m_Type = ShapeType::Box;
@@ -174,7 +177,7 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// Sphere
 
-	SphereShape::SphereShape( Ref<Entity> entity )
+	SphereShape::SphereShape( SharedPtr<Entity> entity )
 		: PhysicsShape( entity )
 	{
 		m_Type = ShapeType::Sphere;
@@ -385,7 +388,7 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// Capsule
 
-	CapsuleShape::CapsuleShape( Ref<Entity> entity )
+	CapsuleShape::CapsuleShape( SharedPtr<Entity> entity )
 		: PhysicsShape( entity )
 	{
 		m_Type = ShapeType::Capusle;
@@ -540,7 +543,7 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// Triangle
 
-	TriangleMeshShape::TriangleMeshShape( Ref<Entity> entity )
+	TriangleMeshShape::TriangleMeshShape( SharedPtr<Entity> entity )
 		: PhysicsShape( entity )
 	{
 		m_Type = ShapeType::TriangleMesh;
@@ -679,7 +682,7 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// Convex
 
-	ConvexMeshShape::ConvexMeshShape( Ref<Entity> entity )
+	ConvexMeshShape::ConvexMeshShape( SharedPtr<Entity> entity )
 		: PhysicsShape( entity )
 	{
 		m_Type = ShapeType::ConvexMesh;

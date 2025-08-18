@@ -180,7 +180,7 @@ namespace Saturn {
 
 		// Generate texture & pass in needed information for cache data
 		if( rAsset->Type == AssetType::Texture || rAsset->Type == AssetType::Material || rAsset->Type == AssetType::StaticMesh )
-			m_GenerationQueue.emplace( timestamp, nullptr, rAsset );
+			m_GenerationQueue.push( { .Time = timestamp, .Texture = nullptr, .Asset = rAsset } );
 
 		return texture;
 	}
@@ -207,7 +207,7 @@ namespace Saturn {
 
 			// Generate texture & pass in needed information for cache data
 			if( asset->Type == AssetType::Texture || asset->Type == AssetType::Material || asset->Type == AssetType::StaticMesh )
-				m_GenerationQueue.emplace( timestamp, nullptr, asset );
+				m_GenerationQueue.push( { .Time = timestamp, .Texture = nullptr, .Asset = asset } );
 		}
 	}
 
@@ -276,8 +276,7 @@ namespace Saturn {
 					ImGui::TableNextColumn();
 					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Sync" ), { 24.0f, 24.0f } ) )
 					{
-						Ref<Asset> asset = AssetManager::Get().FindAsset( rID );
-						Invalidate( asset );
+						Invalidate( AssetManager::Get().FindAsset( rID ) );
 					}
 
 					ImGui::PopID();
@@ -418,7 +417,7 @@ namespace Saturn {
 		Buffer TemporaryBuffer;
 		RawSerialisation::ReadSaturnBuffer( TemporaryBuffer, stream );
 		
-		uint32_t expectedImageSize = width * height * 4;
+		const uint32_t expectedImageSize = width * height * 4;
 		if( TemporaryBuffer.Size != expectedImageSize )
 		{
 			SAT_CORE_ERROR( "Image Size does not match!, Expected: {0}, Got: {1} ( ASSET/{2}, PATH/{3} )", expectedImageSize, TemporaryBuffer.Size, id, newPath.string() );

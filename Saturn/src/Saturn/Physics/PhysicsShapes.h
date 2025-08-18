@@ -43,7 +43,7 @@ namespace Saturn {
 	class PhysicsShape : public RefTarget
 	{
 	public:
-		PhysicsShape( Ref<Entity> entity ) { m_Entity = entity; }
+		PhysicsShape( SharedPtr<Entity> entity ) { m_Entity = entity; }
 		virtual ~PhysicsShape() = default;
 
 		virtual void Create( physx::PxRigidActor& rActor ) = 0;
@@ -59,7 +59,7 @@ namespace Saturn {
 	protected:
 		ShapeType m_Type = ShapeType::Unknown;
 
-		Ref<Entity> m_Entity;
+		SharedPtr<Entity> m_Entity;
 
 		physx::PxShape* m_Shape = nullptr;
 	};
@@ -67,7 +67,7 @@ namespace Saturn {
 	class BoxShape : public PhysicsShape
 	{
 	public:
-		BoxShape( Ref<Entity> entity );
+		BoxShape( SharedPtr<Entity> entity );
 		~BoxShape();
 
 		void Create( physx::PxRigidActor& rActor ) override;
@@ -80,7 +80,7 @@ namespace Saturn {
 	class SphereShape : public PhysicsShape
 	{
 	public:
-		SphereShape( Ref<Entity> entity );
+		SphereShape( SharedPtr<Entity> entity );
 		~SphereShape();
 
 		void Create( physx::PxRigidActor& rActor ) override;
@@ -93,7 +93,7 @@ namespace Saturn {
 	class CapsuleShape : public PhysicsShape
 	{
 	public:
-		CapsuleShape( Ref<Entity> entity );
+		CapsuleShape( SharedPtr<Entity> entity );
 		~CapsuleShape();
 
 		void Create( physx::PxRigidActor& rActor ) override;
@@ -107,7 +107,7 @@ namespace Saturn {
 	class TriangleMeshShape : public PhysicsShape
 	{
 	public:
-		TriangleMeshShape( Ref<Entity> entity );
+		TriangleMeshShape( SharedPtr<Entity> entity );
 		~TriangleMeshShape();
 
 		// This assumes the the mesh collider has already been cooked.
@@ -124,7 +124,7 @@ namespace Saturn {
 	class ConvexMeshShape : public PhysicsShape
 	{
 	public:
-		ConvexMeshShape( Ref<Entity> entity );
+		ConvexMeshShape( SharedPtr<Entity> entity );
 		~ConvexMeshShape();
 
 		// This assumes the the mesh collider has already been cooked.

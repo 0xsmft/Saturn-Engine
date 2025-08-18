@@ -40,7 +40,7 @@ namespace Saturn {
 	{
 		bool Success = false;
 		float Distance = 0.0f;
-		Ref<Entity> Hit = nullptr;
+		SharedPtr<Entity> Hit = nullptr;
 		glm::vec3 Position;
 	};
 
@@ -61,7 +61,7 @@ namespace Saturn {
 
 	private:
 		void AddToScene( physx::PxRigidActor& rBody );
-		void InitialiseNewBody( Ref<Entity>& rEntity, RigidbodyComponent& rRigidbodyComponent );
+		void InitialiseNewBody( SharedPtr<Entity>& rEntity, RigidbodyComponent& rRigidbodyComponent );
 	
 	private:
 		physx::PxScene* m_PhysicsScene;

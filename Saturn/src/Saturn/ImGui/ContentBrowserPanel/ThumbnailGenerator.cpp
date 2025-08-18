@@ -121,7 +121,7 @@ namespace Saturn {
 
 		Ref<SceneRenderer> SceneRenderer;
 		Ref<Scene> Scene;
-		Ref<Entity> SphereEntity;
+		SharedPtr<Entity> SphereEntity;
 
 		EditorCamera Camera;
 
@@ -199,7 +199,7 @@ namespace Saturn {
 
 		// If we already exist then we could be waiting on render or we can get the final image if we are complete
 		// TRANSITION: MAIN THREAD
-		auto itr = s_RendererThumbnailCache.find( rData.Asset->ID );
+		const auto itr = s_RendererThumbnailCache.find( rData.Asset->ID );
 		if( itr != s_RendererThumbnailCache.end() )
 		{
 			auto& rCacheData = itr->second;
@@ -254,7 +254,7 @@ namespace Saturn {
 
 		// If we already exist then we could be waiting on render or we can get the final image if we are complete
 		// We also want to exit if we exist in the cache because we could still be waiting for the mesh to be loaded as meshes may take longer to load.
-		auto itr = s_RendererThumbnailCache.find( rData.Asset->ID );
+		const auto itr = s_RendererThumbnailCache.find( rData.Asset->ID );
 		if( itr != s_RendererThumbnailCache.end() )
 		{
 			auto& rCacheData = itr->second;
@@ -312,7 +312,7 @@ namespace Saturn {
 				auto& rBoundingBox = staticMesh->GetBoundingBox();
 
 				// Set the distance based on the bounding box and make sure that we are not too close so the min is 4.0f
-				const glm::vec3 size = rBoundingBox.Max - rBoundingBox.Min;
+				const glm::vec3 size = rBoundingBox.Extent();
 				const float maxSize = std::max( size.x, std::max( size.y, size.z ) );
 
 				float distance = maxSize * 2.0f;

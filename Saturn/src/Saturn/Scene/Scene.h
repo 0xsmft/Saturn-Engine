@@ -174,7 +174,7 @@ namespace Saturn {
 	{
 		UUID ID;
 		std::string Tag;
-		Ref<Entity> Parent;
+		SharedPtr<Entity> Parent;
 		// TODO: We could use Entity::StaticClass but then we have to include Entity.h, not really ideal
 		SClass* pClass = nullptr;
 
@@ -192,19 +192,19 @@ namespace Saturn {
 		~Scene();
 		
 		// Spawn an entity, this is the most basic function for spawning an Entity
-		[[nodiscard]] Ref<Entity> CreateEntity( const std::string& name = "" );
+		[[nodiscard]] SharedPtr<Entity> CreateEntity( const std::string& name = "" );
 
 		// Spawn an entity, with custom parameters
-		[[nodiscard]] Ref<Entity> CreateEntity( CreateEntityParameters& rParams );
+		[[nodiscard]] SharedPtr<Entity> CreateEntity( CreateEntityParameters& rParams );
 
-		[[nodiscard]] Ref<Entity> CreateEntityWithIDScript( UUID uuid, const std::string& name = "", const std::string& rScriptName = "", bool externalData = true );
+		[[nodiscard]] SharedPtr<Entity> CreateEntityWithIDScript( UUID uuid, const std::string& name = "", const std::string& rScriptName = "", bool externalData = true );
 
 		template<typename Ty>
-		[[nodiscard]] Ref<Ty> CreateEntityFromClass( const std::string& rEntityName = "" )
+		[[nodiscard]] SharedPtr<Ty> CreateEntityFromClass( const std::string& rEntityName = "" )
 		{
-			static_assert( std::is_convertible<Ty, Entity>::value, "Ty must be based from an entity!" );
+			static_assert( std::is_base_of<Entity, Ty>::value, "Ty must be based from an entity!" );
 
-			Ref<Ty> entity = dynamic_cast<Ty*>( ClassMetadataHandler::Get().CreateClassObject( Ty::StaticClass() ) );
+			SharedPtr<Ty> entity = dynamic_cast<Ty*>( ClassMetadataHandler::Get().CreateClassObject( Ty::StaticClass() ) );
 			entity->SetName( rEntityName );
 
 			OnEntityCreated( entity );
@@ -216,23 +216,42 @@ namespace Saturn {
 		void OnRenderEditor( const EditorCamera& rCamera, Timestep ts, SceneRenderer& rSceneRenderer );
 		void OnRenderRuntime( Timestep ts, SceneRenderer& rSceneRenderer );
 
-		Ref<Entity> DuplicateEntity( const Ref<Entity> entity, const Ref<Entity> parent = nullptr );
-		void DeleteEntity( Ref<Entity> entity, bool deleteChildren = true, UUID orphanParentID = 0 );
+		SharedPtr<Entity> DuplicateEntity( const SharedPtr<Entity> entity, const SharedPtr<Entity> parent = nullptr );
+		void DeleteEntity( SharedPtr<Entity> entity, bool deleteChildren = true, UUID orphanParentID = 0 );
 		
+		void DestroyEntity( Entity* entity );
+
+		void OnModifyPrefab( Ref<Prefab> prefabAsset );
+
 		void TravelToScene( AssetID newSceneID );
+
 		void OnUpdate( Timestep ts );
 		void OnUpdatePhysics( Timestep ts );
 		void OnEvent( Event& rEvent );
 
 	public:
 		template<typename T>
-		std::vector<Ref<Entity>> GetAllEntitiesWith( void )
+		std::vector<SharedPtr<Entity>> GetAllEntitiesWith( void )
 		{
-			std::vector<Ref<Entity>> result;
+			std::vector<SharedPtr<Entity>> result;
 
 			for( const auto& [ id, entity ] : m_EntityIDMap )
 			{
 				if( entity->HasComponent<T>() )
+					result.push_back( entity );
+			}
+
+			return result;
+		}
+
+		template<typename T>
+		std::vector<SharedPtr<Entity>> GetAllEntitiesWithClass( void )
+		{
+			std::vector<SharedPtr<Entity>> result;
+
+			for( const auto& [id, entity] : m_EntityIDMap )
+			{
+				if( entity->GetClass() == T::StaticClass() )
 					result.push_back( entity );
 			}
 
@@ -248,21 +267,18 @@ namespace Saturn {
 			}
 		}
 
-		[[nodiscard]] Ref<Entity> GetMainCameraEntity( bool force = false );
-
-		void AddSelectedEntity( Ref<Entity> entity );
-		void DeselectEntity( Ref<Entity> entity );
-		void ClearSelectedEntities();
+		// #ReplaceRawPtrOrRefWithWeakRef
+		[[nodiscard]] WeakRef<Entity> GetMainCameraEntity( bool force = false );
 		
-		[[nodiscard]] Ref<Entity> FindEntityByTag( const std::string& tag );
-		[[nodiscard]] Ref<Entity> FindEntityByID( const UUID& id );
-		[[nodiscard]] Ref<Entity> FindEntityByHandle( entt::entity handle );
+		[[nodiscard]] SharedPtr<Entity> FindEntityByTag( const std::string& tag );
+		[[nodiscard]] SharedPtr<Entity> FindEntityByID( const UUID& id );
+		[[nodiscard]] SharedPtr<Entity> FindEntityByHandle( entt::entity handle );
 
 		// Convert the local space transformation into world space
-		glm::mat4 GetTransformRelativeToParent( const Ref<Entity> entity );
+		glm::mat4 GetTransformRelativeToParent( const SharedPtr<Entity> entity );
 
 		// Convert the local space transformation into world space
-		TransformComponent GetWorldSpaceTransform( const Ref<Entity> entity );
+		TransformComponent GetWorldSpaceTransform( const SharedPtr<Entity> entity );
 
 		[[nodiscard]] bool Raycast( const glm::vec3& Origin, const glm::vec3& Direction, float MaxDistance, RaycastHitResult* pOut );
 
@@ -288,11 +304,11 @@ namespace Saturn {
 		entt::registry& GetRegistry() { return m_Registry; }
 		const entt::registry& GetRegistry() const { return m_Registry; }
 
-		Ref<NavBoundsEntity> GetNavBoundsEntity();
+		SharedPtr<NavBoundsEntity> GetNavBoundsEntity() const;
 
 		// This transfers a prefab to an entity.
 		// The prefabs holds an entity however that entity is local to it's scene and we want that entity to be our scene.
-		[[nodiscard]] Ref<Entity> CreatePrefab( Ref<Prefab> prefabAsset );
+		[[nodiscard]] SharedPtr<Entity> CreatePrefab( Ref<Prefab> prefabAsset );
 
 		[[nodiscard]] entt::entity CreateHandle()
 		{
@@ -318,7 +334,7 @@ namespace Saturn {
 		
 		void UpdateAudioListeners();
 
-#if defined(SAT_DEBUG) || defined(SAT_RELEASE)
+#if !defined(SAT_DIST)
 		void MarkDirty() { m_Dirty = true; }
 		void CleanDirty() { m_Dirty = false; }
 		bool IsDirty() const { return m_Dirty; }
@@ -330,8 +346,8 @@ namespace Saturn {
 
 		void AcknowledgeHotReload();
 
-		void AddController( const Ref<PlayerInputController>& rPlayerInputController );
-		void RemoveController( const Ref<PlayerInputController>& rPlayerInputController );
+		void AddController( Ref<PlayerInputController> playerInputController );
+		void RemoveController( Ref<PlayerInputController> playerInputController );
 		static void   SetActiveScene( Scene* pScene );
 		static Scene* GetActiveScene();
 
@@ -350,12 +366,15 @@ namespace Saturn {
 		template<typename IStream>
 		void DeserialiseInternal( IStream& rStream );
 
-		Ref<Entity> HotReloadReplaceOldEntity( Ref<Entity> source );
+		SharedPtr<Entity> HotReloadReplaceOldEntity( SharedPtr<Entity> source );
 
-		void TransferModifiedProperties( const Ref<Entity>& rSourceEntity, Ref<Entity>& rEntity, const std::string& rMetadataName );
+		void TransferModifiedProperties( const SharedPtr<Entity>& rSourceEntity, SharedPtr<Entity>& rEntity, const std::string& rMetadataName );
+
+		void DestroyPendingEntities();
+		void DeleteEntityChecked( Entity* pEntity );
 
 	protected:
-		void OnEntityCreated( Ref<Entity> entity );
+		void OnEntityCreated( SharedPtr<Entity> entity );
 
 	public:
 
@@ -422,8 +441,9 @@ namespace Saturn {
 		void PrepareForNavMeshBuilding();
 
 		void OnNavMeshBuildCompleted();
-		dtNavMeshQuery* GetNavMeshQuery() { return m_NavMeshQuery; }
-		PhysicsScene* GetPhysicsScene() { return m_PhysicsScene; }
+		dtNavMeshQuery* GetNavMeshQuery() { return nullptr; }
+		std::shared_ptr<PhysicsScene> GetPhysicsScene() const { return m_PhysicsScene; }
+		NavigationSystem& GetNavigationSystem() { return m_NavigationSystem; }
 
 		void DestroyPhysicsScene();
 	private:
@@ -438,22 +458,24 @@ namespace Saturn {
 		void RtBuildSceneRendererCommands( SceneRenderer& rSceneRenderer );
 
 	private:
-		std::map<entt::entity, Ref<Entity>> m_EntityIDMap;
+		std::map<entt::entity, SharedPtr<Entity>> m_EntityIDMap;
 		entt::registry m_Registry;
-
 		entt::entity m_SceneEntity{ entt::null };
 		
 		RuntimeState m_RuntimeState = RuntimeState::NoState;
 
-#if !defined(SAT_DIST)
-		std::vector< Ref<Entity> > m_SelectedEntities;
-#endif
+		std::vector<Ref<PlayerInputController>> m_Controllers;
 
-		std::vector<Ref<PlayerInputController>> m_Controllers{};
+		// For use by Runtime Scene only
+		// Holds a list of the entities that will be destroyed in the next frame
+		std::vector<Entity*> m_EntitiesToDestory;
 
 		Lights m_Lights;
-		Ref<Entity> m_MainCameraEntity = nullptr;
-		Ref<NavBoundsEntity> m_NavBoundsEntity = nullptr;
+
+		// #ReplaceRawPtrOrRefWithWeakRef
+		WeakRef<Entity> m_pMainCameraEntity;
+		
+		SharedPtr<NavBoundsEntity> m_NavBoundsEntity = nullptr;
 
 #if defined( SAT_ENABLE_GAMETHREAD )
 		std::mutex m_Mutex;
@@ -461,13 +483,14 @@ namespace Saturn {
 
 		RendererCamera m_RendererCamera;
 
-		// TODO: Change raw pointer to Ref?
-		PhysicsScene* m_PhysicsScene = nullptr;
+		std::shared_ptr<PhysicsScene> m_PhysicsScene;
 
-		dtNavMeshQuery* m_NavMeshQuery = nullptr;
+		NavigationSystem m_NavigationSystem;
 
 		UUID m_InternalID;
+#if !defined(SAT_DIST)
 		bool m_Dirty = false;
+#endif
 
 	private:
 		friend class PhysXSceneExporter;

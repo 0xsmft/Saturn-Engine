@@ -39,7 +39,7 @@
 
 namespace Saturn {
 
-	class Entity : public SObject
+	class Entity : public SObject, public EnabledSharedFromThis<Entity>
 	{
 		//////////////////////////////////////////////////////////////////////////
 		// Needed for game class.
@@ -141,10 +141,11 @@ namespace Saturn {
 				children.push_back( id );
 			}
 		}
+
 		[[nodiscard]] bool HasParent()   const { return GetComponent<RelationshipComponent>().Parent != 0; }
 		[[nodiscard]] bool HasChildren() const { return GetComponent<RelationshipComponent>().ChildrenID.size() > 0; }
 		
-		[[nodiscard]] inline  bool IsSibling( const Ref<Entity>& rOther ) const
+		[[nodiscard]] inline  bool IsSibling( const SharedPtr<Entity>& rOther ) const
 		{
 			auto& rRc = GetComponent<RelationshipComponent>(); 
 			auto& rOtherRc = rOther->GetComponent<RelationshipComponent>();
@@ -152,7 +153,7 @@ namespace Saturn {
 			return rRc.Parent == rOtherRc.Parent; 
 		}
 
-		[[nodiscard]] inline bool IsDescendant( const Ref<Entity>& rOther ) const
+		[[nodiscard]] inline bool IsDescendant( const SharedPtr<Entity>& rOther ) const
 		{
 			auto& rOtherRc = rOther->GetComponent<RelationshipComponent>();
 
@@ -174,8 +175,8 @@ namespace Saturn {
 		}
 
 	public:
-		static void Serialise( const Ref<Entity>& rObject, std::ofstream& rStream );
-		static void Deserialise( Ref<Entity>& rObject, std::istream& rStream );
+		static void Serialise( const SharedPtr<Entity>& rObject, std::ofstream& rStream );
+		static void Deserialise( SharedPtr<Entity>& rObject, std::istream& rStream );
 
 	protected:
 		entt::entity m_EntityHandle{ entt::null };

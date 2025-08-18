@@ -770,7 +770,7 @@ namespace Saturn {
 		// Invalid skybox, maybe null from loading a new scene? This only happens on the first frames so this is a hack.
 		if( m_RendererData.SceneEnvironment->IrradianceMap == nullptr && m_RendererData.SceneEnvironment->RadianceMap == nullptr )
 		{
-			Ref<Entity> SkylightEntity = nullptr;
+			SharedPtr<Entity> SkylightEntity = nullptr;
 
 			auto view = m_pScene->GetAllEntitiesWith< SkylightComponent >();
 
@@ -1147,7 +1147,7 @@ namespace Saturn {
 		return { newMin, newMax };
 	}
 
-	void SceneRenderer::SubmitStaticMesh( Ref<Entity> entity, Ref< StaticMesh > mesh, Ref<MaterialRegistry> materialRegistry, const glm::mat4& transform )
+	void SceneRenderer::SubmitStaticMesh( SharedPtr<Entity> entity, Ref< StaticMesh > mesh, Ref<MaterialRegistry> materialRegistry, const glm::mat4& transform )
 	{
 		SAT_PF_EVENT();
 
@@ -1193,7 +1193,7 @@ namespace Saturn {
 		}
 	}
 
-	void SceneRenderer::SubmitPhysicsCollider( Ref<Entity> entity, Ref< StaticMesh > mesh, Ref<MaterialRegistry> materialRegistry, const glm::mat4& transform )
+	void SceneRenderer::SubmitPhysicsCollider( SharedPtr<Entity> entity, Ref< StaticMesh > mesh, Ref<MaterialRegistry> materialRegistry, const glm::mat4& transform )
 	{
 		SAT_PF_EVENT();
 
@@ -1711,7 +1711,7 @@ namespace Saturn {
 
 			if( handle != 0 || handle != UINT32_MAX )
 			{
-				Ref<Entity> e = m_pScene->FindEntityByHandle( entt::entity( handle ) );
+				SharedPtr<Entity> e = m_pScene->FindEntityByHandle( entt::entity( handle ) );
 
 				if( e )
 				{

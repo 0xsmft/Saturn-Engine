@@ -38,4 +38,5 @@ namespace Saturn {
 		static void SerialiseEntity( const SharedPtr<Entity>& rEntity, std::ofstream& rStream );
 		static void DeserialiseEntity( SharedPtr<Entity>& rEntity, std::istream& rStream );
 	};
+
 }

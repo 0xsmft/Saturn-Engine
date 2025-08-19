@@ -266,14 +266,17 @@ namespace Saturn {
 		if( data.IsNull() )
 			return false;
 
-		auto entities = data[ "Entities" ];
+		const auto entities = data[ "Entities" ];
 
 		prefabAsset->m_Scene = Ref<Scene>::Create();
 		Scene* CurrentScene = g_ActiveScene;
 
 		Scene::SetActiveScene( prefabAsset->m_Scene.Get() );
 
-		EntitySerialisation::DeserialiseEntities( entities, prefabAsset->m_Scene );
+		for( const auto entityNode : entities )
+		{
+			EntitySerialisation::DeserialiseEntity( entityNode, prefabAsset->m_Scene );
+		}
 
 		const auto view = prefabAsset->m_Scene->GetAllEntitiesWith<RelationshipComponent>();
 

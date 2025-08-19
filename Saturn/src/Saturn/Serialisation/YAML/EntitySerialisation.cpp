@@ -41,13 +41,24 @@
 
 namespace Saturn {
 
+	//////////////////////////////////////////////////////////////////////////
+	// ENTITY SERIALSATION
+
 	void EntitySerialisation::SerialiseEntity( YAML::Emitter& rEmitter, const SharedPtr<Entity> entity )
 	{
 		rEmitter << YAML::BeginMap;
 		rEmitter << YAML::Key << "Entity" << YAML::Value << entity->GetComponent< IdComponent >().ID;
 		rEmitter << YAML::Key << "Class" << YAML::Value << entity->GetClass()->GetName();
 
-		const bool isPrefab = entity->HasComponent<PrefabComponent>();
+		ComponentSerialisation::SerialiseComponents( rEmitter, entity );
+
+		rEmitter << YAML::EndMap;
+	}
+
+	void EntitySerialisation::DeserialiseEntity( const YAML::Node& rNode, Ref<Scene> scene )
+	{
+		ComponentSerialisation::DeserialiseComponents( rNode, scene );
+	}
 
 		// Tag Component
 		if( entity->HasComponent<TagComponent>() )

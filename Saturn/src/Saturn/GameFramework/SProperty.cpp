@@ -37,12 +37,12 @@
 
 namespace Saturn {
 
-	void SProperty::RtCopyFromOther( SObject* pSrcClass, SObject* pClass )
+	void SProperty::RtCopyFromOther( SObject* pSrcObject, SObject* pObject )
 	{
 #define SAT_HANDLE_TYPE( PropertyType ) \
 {\
-typename PropertyTypeTraits<Saturn::SPropertyType::PropertyType>::Type value = Read<Saturn::SPropertyType::PropertyType>( pSrcClass ); \
-SetProperty<typename PropertyTypeTraits<Saturn::SPropertyType::PropertyType>::Type>( pClass, value ); \
+typename PropertyTypeTraits<Saturn::SPropertyType::PropertyType>::Type value = Read<Saturn::SPropertyType::PropertyType>( pSrcObject ); \
+SetProperty<typename PropertyTypeTraits<Saturn::SPropertyType::PropertyType>::Type>( pObject, value ); \
 } break
 
 		switch( m_Type )
@@ -82,26 +82,26 @@ SetProperty<typename PropertyTypeTraits<Saturn::SPropertyType::PropertyType>::Ty
 
 			case Saturn::SPropertyType::Vector2:
 			{
-				const glm::vec2& rValue = Read<Saturn::SPropertyType::Vector2>( pSrcClass );
-				SetProperty<const glm::vec2&>( pClass, rValue );
+				const glm::vec2& rValue = Read<Saturn::SPropertyType::Vector2>( pSrcObject );
+				SetProperty<const glm::vec2&>( pObject, rValue );
 			} break;
 
 			case Saturn::SPropertyType::Vector3:
 			{
-				const glm::vec3& rValue = Read<Saturn::SPropertyType::Vector3>( pSrcClass );
-				SetProperty<const glm::vec3&>( pClass, rValue );
+				const glm::vec3& rValue = Read<Saturn::SPropertyType::Vector3>( pSrcObject );
+				SetProperty<const glm::vec3&>( pObject, rValue );
 			} break;
 
 			case Saturn::SPropertyType::Vector4:
 			{
-				const glm::vec4& rValue = Read<Saturn::SPropertyType::Vector4>( pSrcClass );
-				SetProperty<const glm::vec4&>( pClass, rValue );
+				const glm::vec4& rValue = Read<Saturn::SPropertyType::Vector4>( pSrcObject );
+				SetProperty<const glm::vec4&>( pObject, rValue );
 			} break;
 
 			case Saturn::SPropertyType::Asset:
 			{
-				AssetReference& rValue = Read<Saturn::SPropertyType::Asset>( pSrcClass );
-				SetProperty<AssetID>( pClass, rValue.ID );
+				AssetReference& rValue = Read<Saturn::SPropertyType::Asset>( pSrcObject );
+				SetProperty<AssetID>( pObject, rValue.ID );
 			} break;
 
 			case Saturn::SPropertyType::EntityType:
@@ -113,11 +113,11 @@ SetProperty<typename PropertyTypeTraits<Saturn::SPropertyType::PropertyType>::Ty
 		}
 	}
 
-	void SProperty::Serialise( const SObject* pClass, std::ofstream& rStream ) const
+	void SProperty::Serialise( const SObject* pObject, std::ofstream& rStream ) const
 	{
 #define SAT_SERIALISE_PROPERTY( PropertyType ) \
 { \
-typename PropertyTypeTraits<Saturn::SPropertyType::PropertyType>::Type value = Read<Saturn::SPropertyType::PropertyType>( pClass ); \
+typename PropertyTypeTraits<Saturn::SPropertyType::PropertyType>::Type value = Read<Saturn::SPropertyType::PropertyType>( pObject ); \
 RawSerialisation::WriteObject( value, rStream ); \
 } break
 
@@ -161,32 +161,32 @@ RawSerialisation::WriteObject( value, rStream ); \
 
 			case Saturn::SPropertyType::Vector2: 
 			{
-				const glm::vec2& value = Read<Saturn::SPropertyType::Vector2>( pClass );
+				const glm::vec2& value = Read<Saturn::SPropertyType::Vector2>( pObject );
 				RawSerialisation::WriteVec2( value, rStream );
 			} break;
 
 			case Saturn::SPropertyType::Vector3:
 			{
-				const glm::vec3& value = Read<Saturn::SPropertyType::Vector3>( pClass );
+				const glm::vec3& value = Read<Saturn::SPropertyType::Vector3>( pObject );
 				RawSerialisation::WriteVec3( value, rStream );
 			} break;
 
 			case Saturn::SPropertyType::Vector4:
 			{
-				const glm::vec4& value = Read<Saturn::SPropertyType::Vector4>( pClass );
+				const glm::vec4& value = Read<Saturn::SPropertyType::Vector4>( pObject );
 				RawSerialisation::WriteVec4( value, rStream );
 			} break;
 
 			case Saturn::SPropertyType::String:
 			{
-				const std::string& rValue = Read<Saturn::SPropertyType::String>( pClass );
+				const std::string& rValue = Read<Saturn::SPropertyType::String>( pObject );
 
 				RawSerialisation::WriteString( rValue, rStream );
 			} break;
 
 			case Saturn::SPropertyType::EntityType:
 			{
-				//Ref<Entity>& rEntity = Read<Saturn::SPropertyType::Entity>( pClass );
+				//SharedPtr<Entity>& rEntity = Read<Saturn::SPropertyType::Entity>( pObject );
 
 				//if( rEntity )
 				//{
@@ -196,7 +196,7 @@ RawSerialisation::WriteObject( value, rStream ); \
 
 			case Saturn::SPropertyType::Asset:
 			{
-				AssetReference& rAssetReference = Read<Saturn::SPropertyType::Asset>( pClass );
+				AssetReference& rAssetReference = Read<Saturn::SPropertyType::Asset>( pObject );
 
 				RawSerialisation::WriteObject( rAssetReference.ID, rStream );
 				RawSerialisation::WriteObject( rAssetReference.ExpectedType, rStream );
@@ -209,14 +209,14 @@ RawSerialisation::WriteObject( value, rStream ); \
 		}
 	}
 
-	void SProperty::Deserialise( SObject* pClass, std::istream& rStream )
+	void SProperty::Deserialise( SObject* pObject, std::istream& rStream )
 	{
 #define SAT_DESERIALISE_PROPERTY( PropertyType ) \
 { \
 typename PropertyTypeTraits<Saturn::SPropertyType::PropertyType>::Type value{}; \
 RawSerialisation::ReadObject( value, rStream ); \
 \
-SetProperty( pClass, value );\
+SetProperty( pObject, value );\
 } break
 
 		// Referring to YamlAux -- SProperty (YamlAux.cpp)
@@ -265,7 +265,7 @@ SetProperty( pClass, value );\
 				glm::vec2 rValue{};
 				RawSerialisation::ReadVec2( rValue, rStream );
 				
-				SetProperty<const glm::vec2&>( pClass, rValue );
+				SetProperty<const glm::vec2&>( pObject, rValue );
 			} break;
 
 			case Saturn::SPropertyType::Vector3:
@@ -273,7 +273,7 @@ SetProperty( pClass, value );\
 				glm::vec3 rValue{};
 				RawSerialisation::ReadVec3( rValue, rStream );
 
-				SetProperty<const glm::vec3&>( pClass, rValue );
+				SetProperty<const glm::vec3&>( pObject, rValue );
 			} break;
 
 			case Saturn::SPropertyType::Vector4:
@@ -281,13 +281,13 @@ SetProperty( pClass, value );\
 				glm::vec4 rValue{};
 				RawSerialisation::ReadVec4( rValue, rStream );
 
-				SetProperty<const glm::vec4&>( pClass, rValue );
+				SetProperty<const glm::vec4&>( pObject, rValue );
 			} break;
 
 			case Saturn::SPropertyType::String:
 			{
 				const std::string& rValue = RawSerialisation::ReadString( rStream );
-				SetProperty( pClass, rValue );
+				SetProperty( pObject, rValue );
 			} break;
 
 			case Saturn::SPropertyType::Asset:
@@ -298,7 +298,7 @@ SetProperty( pClass, value );\
 				RawSerialisation::ReadObject( id, rStream );
 				RawSerialisation::ReadObject( expectedType, rStream );
 
-				AssetReference& rAssetReference = Read<SPropertyType::Asset>( pClass );
+				AssetReference& rAssetReference = Read<SPropertyType::Asset>( pObject );
 
 				rAssetReference.ID = id;
 				rAssetReference.ExpectedType = ( AssetType ) expectedType;

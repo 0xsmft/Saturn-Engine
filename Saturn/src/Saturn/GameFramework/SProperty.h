@@ -74,7 +74,7 @@ namespace Saturn {
 		Vector4, /* glm::vec4 */
 		String, /* std::string */
 		Asset,
-		EntityType, // Ref<Entity>
+		EntityType, // SharedPtr<Entity>
 		Class,
 		Unknown
 	};
@@ -158,7 +158,7 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 
 	SAT_CREATE_PROPERTY_TYPE_TRAIT( Asset,  AssetReference, true, false );
 
-	SAT_CREATE_PROPERTY_TYPE_TRAIT( EntityType,  Ref<Entity>, true, false );
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( EntityType,  SharedPtr<Entity>, true, false );
 	SAT_CREATE_PROPERTY_TYPE_TRAIT( Class,   SClass*,     false, false );
 	SAT_CREATE_PROPERTY_TYPE_TRAIT( Unknown, void*,       false, true  );
 
@@ -199,11 +199,11 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 	
 	public:
 		template<typename CppType>
-		void SetProperty( SObject* pClass, CppType value )
+		void SetProperty( SObject* pObject, CppType value )
 		{
 			// SPropertyFlags_ReadOnlyInEditor is only available with the editor
 #if !defined(SAT_DIST)
-			// SPropertyFlags_ReadOnlyInEditor will be defined in Dist builds however will never be set by the Header Tool so there is no need to check.
+			// SPropertyFlags_ReadOnlyInEditor will be defined in Ds
 			if( IsFlagSet( SPropertyFlags_ReadOnlyInEditor ) ) 
 			{
 				// Unable to modify read only property!
@@ -211,32 +211,30 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 			}
 #endif
 
+			OnPropertyModified();
+
 			// Convert cpp type to SPropertyType
 			// TODO: Check if CppType is the same as our current type
-			ModifyPropertyInternal<CppType>( pClass, pSetPropertyFunction, value );
-
-#if !defined(SAT_DIST)
-			m_Modified = true;
-#endif
+			ModifyPropertyInternal<CppType>( pObject, pSetPropertyFunction, value );
 		}
 
 		template<SPropertyType Ty>
-		[[nodiscard]] typename PropertyTypeTraits<Ty>::Type Read( SObject* pClass ) const
+		[[nodiscard]] typename PropertyTypeTraits<Ty>::Type Read( SObject* pObject ) const
 		{
-			return ReadPropertyInternal<typename PropertyTypeTraits<Ty>::Type>( pClass, pGetPropertyFunction );
+			return ReadPropertyInternal<typename PropertyTypeTraits<Ty>::Type>( pObject, pGetPropertyFunction );
 		}
 
 		template<SPropertyType Ty>
-		[[nodiscard]] typename PropertyTypeTraits<Ty>::Type Read( const SObject* pClass ) const
+		[[nodiscard]] typename PropertyTypeTraits<Ty>::Type Read( const SObject* pObject ) const
 		{
-			return ReadPropertyInternal<typename PropertyTypeTraits<Ty>::Type>( pClass, pGetPropertyFunction );
+			return ReadPropertyInternal<typename PropertyTypeTraits<Ty>::Type>( pObject, pGetPropertyFunction );
 		}
 
-		void RtCopyFromOther( SObject* pSrcClass, SObject* pClass );
+		void RtCopyFromOther( SObject* pSrcObject, SObject* pObject );
 
 	public:
-		void Serialise( const SObject* pClass, std::ofstream& rStream ) const;
-		void Deserialise( SObject* pClass, std::istream& rStream );
+		void Serialise( const SObject* pObject, std::ofstream& rStream ) const;
+		void Deserialise( SObject* pObject, std::istream& rStream );
 
 	public:
 		// NOTE: This function HAS to be defined inline as the HeaderTool will call this function
@@ -260,26 +258,16 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 		inline void SetNativeType( const std::string& rNativeType ) { m_NativeType = rNativeType; }
 		inline void SetName( const std::string& rName ) { m_Name = rName; }
 
-#if defined(SAT_DIST)
-		/*[[nodiscard]]*/ bool IsDirty() const { return false; }
-		void MarkClean() {}
-#else
-		[[nodiscard]] bool IsDirty() const { return m_Modified; }
-		void MarkClean() { m_Modified = false; }
-#endif
+	protected:
+		virtual void OnPropertyModified() {}
 
 	protected:
 		std::string m_Name;
-		// HEADER TOOL ONLY!, stores the native C++ type, i.e. float, bool, int, double as a string
+		// HEADER TOOL ONLY!, stores the native C++ type, i.e. float, bool, int, double, as a string
 		std::string m_NativeType;
 
 		SPropertyType m_Type = SPropertyType::Unknown;
 		SPropertyFlags m_Flags = SPropertyFlags_None;
-
-	private:
-#if !defined(SAT_DIST)
-		bool m_Modified = false;
-#endif
 
 	private:
 		const void* pSetPropertyFunction = nullptr;

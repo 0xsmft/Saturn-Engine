@@ -150,13 +150,13 @@ namespace Saturn {
 
 			if( ImGui::BeginPopupContextWindow( 0, ImGuiPopupFlags_MouseButtonRight ) )
 			{
+				PopupContextMenuNormal();
+
 				if( EntitySelectionManager::Get().GetSelectionCount() )
 				{
+					ImGui::Separator();
+
 					SelectedEntityPopup();
-				}
-				else
-				{
-					PopupContextMenuNormal();
 				}
 
 				ImGui::EndPopup();
@@ -608,7 +608,7 @@ namespace Saturn {
 
 	void SceneHierarchyPanel::DrawEntityComponents( SharedPtr<Entity> entity )
 	{
-		ImVec2 contentRegionAvailable = ImGui::GetContentRegionAvail();
+		const ImVec2 contentRegionAvailable = ImGui::GetContentRegionAvail();
 		const bool isPrefab = entity->HasComponent<PrefabComponent>();
 		const auto& id = entity->GetComponent<IdComponent>().ID;
 
@@ -1340,6 +1340,7 @@ namespace Saturn {
 		if( entity->HasComponent<T>() )
 		{
 			bool removeComponent = false;
+			bool removeComponentSelection = false;
 
 			auto& component = entity->GetComponent<T>();
 
@@ -1362,7 +1363,12 @@ namespace Saturn {
 				{
 					if( ImGui::MenuItem( "Remove component" ) )
 						removeComponent = true;
+
+					if( ImGui::MenuItem( "Remove component from selection" ) )
+						removeComponentSelection = true;
 				}
+
+				ImGui::Separator();
 
 				if( ImGui::MenuItem( "Copy component" ) )
 				{
@@ -1399,6 +1405,16 @@ namespace Saturn {
 			{
 				entity->RemoveComponent<T>();
 			}
+
+			if( removeComponentSelection )
+			{
+				auto& rSelection = EntitySelectionManager::Get().GetSelectionContexts();
+				for( auto& rEntity : rSelection )
+				{
+					rEntity->RemoveComponent<T>();
+				}
+			}
 		}
 	}
+
 }

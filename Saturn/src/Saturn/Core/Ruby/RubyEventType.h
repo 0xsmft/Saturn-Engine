@@ -32,6 +32,8 @@ namespace Saturn {
 
 	using KeyCode = uint16_t;
 
+	// RubyKey is layout-independent (in terms of physical key location as this enum is not in any order) and non-Windows specific 
+	// However, the keys that are available are based on the US keyboard.
 	enum RubyKey
 	{
 		//////////////////////////////////////////////////////////////////////////

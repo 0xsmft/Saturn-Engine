@@ -26,20 +26,16 @@
 *********************************************************************************************
 */
 
-#include "Saturn/Core/App.h"
-#include "Saturn/Core/ErrorDialog.h"
-
-#include "Saturn/Core/EngineSettings.h"
-
-#include "Saturn/Runtime/RuntimeLayer.h"
+#include <sppch.h>
 
 #include "EditorLayer.h"
 
-#include "Saturn/Serialisation/EngineSettingsSerialiser.h"
+#include "Saturn/Core/App.h"
+#include "Saturn/Core/ErrorDialog.h"
+#include "Saturn/Core/EngineSettings.h"
 
-#include "Saturn/GameFramework/Core/GameModule.h"
-
-#include "Saturn/Serialisation/ProjectSerialiser.h"
+#include "Saturn/Serialisation/YAML/EngineSettingsSerialiser.h"
+#include "Saturn/Serialisation/YAML/ProjectSerialiser.h"
 
 class EditorApplication final : public Saturn::Application
 {

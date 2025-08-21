@@ -36,6 +36,7 @@
 #include <Saturn/ImGui/MaterialAssetViewer/MaterialAssetViewer.h>
 #include <Saturn/ImGui/PrefabViewer.h>
 #include <Saturn/ImGui/EditorIcons.h>
+#include <Saturn/ImGui/EditorEvents.h>
 #include <Saturn/ImGui/ContentBrowserPanel/ContentBrowserThumbnailCache.h>
 #include <Saturn/ImGui/UndoRedo/EntityUndoRedoActions.h>
 
@@ -180,6 +181,10 @@ namespace Saturn {
 		m_TitleBar.AddOnExitFunction( SAT_BIND_EVENT_FN( OnTitlebarExit ) );
 
 		//////////////////////////////////////////////////////////////////////////
+		// Scene loading and Scene Renderer
+		m_SceneRenderer = Ref<SceneRenderer>::Create( SceneRendererFlag_MasterInstance | SceneRendererFlag_RenderGrid );
+
+		m_SceneRenderer->SetCurrentScene( m_EditorScene.Get() );
 
 		// Now open the startup scene
 		OpenFile( Project::GetActiveProject()->GetConfig().StartupSceneID );
@@ -192,13 +197,13 @@ namespace Saturn {
 			EditorNotification notification{ .Text = "Generating Project Thumbnail", .Lifetime = 5.0f };
 			PushNotification( notification );
 
-			JobSystem::Get().AddJob( []()
+			JobSystem::Get().AddJob( [this]()
 			{
 				std::this_thread::sleep_for( std::chrono::seconds( 2 ) );
 
-				RenderThread::Get().Queue( []()
+				RenderThread::Get().Queue( [this]()
 				{
-					Application::Get().PrimarySceneRenderer().Screenshot( Project::GetActiveProject()->GetThumbnailPath(), glm::vec2( 156.0f, 128.0f ) );
+					m_SceneRenderer->Screenshot( Project::GetActiveProject()->GetThumbnailPath(), glm::vec2( 156.0f, 128.0f ) );
 				} );
 			} );
 		}
@@ -215,7 +220,8 @@ namespace Saturn {
 	{
 		m_ImGuiWindowManager = nullptr;
 
-		Application::Get().PrimarySceneRenderer().SetCurrentScene( nullptr );
+		m_SceneRenderer->SetCurrentScene( nullptr );
+		m_SceneRenderer = nullptr;
 		
 		m_SelectionManager.reset();
 
@@ -272,7 +278,7 @@ namespace Saturn {
 			}
 			else if( !m_RuntimeScene->IsRuntimeActive() ) 
 			{
-				// Because the Runtime Scene it self ended runtime, we must reset the mouse because normally we wouldn't
+				// Because the Runtime Scene self ended runtime, we must reset the mouse because normally we wouldn't
 				// because to end runtime via the Editor requires the mouse.
 				// TODO: A better way to handle runtime, would be to create a OnRuntimeStart, OnRuntimeSuspend, OnRuntimeEnd events
 				Input::Get().SetCursorMode( RubyCursorMode::Normal, true );
@@ -300,11 +306,11 @@ namespace Saturn {
 				m_SuspendedEditorCamera.SetActive( m_AllowCameraEvents );
 				m_SuspendedEditorCamera.OnUpdate( time );
 
-				m_RuntimeScene->OnRenderEditor( m_SuspendedEditorCamera, time, Application::Get().PrimarySceneRenderer() );
+				m_RuntimeScene->OnRenderEditor( m_SuspendedEditorCamera, time, *m_SceneRenderer );
 			}
 			else [[likely]]
 			{
-				m_RuntimeScene->OnRenderRuntime( time, Application::Get().PrimarySceneRenderer() );
+				m_RuntimeScene->OnRenderRuntime( time, *m_SceneRenderer );
 			}
 
 			if( m_ShowCameraFrustum )
@@ -322,7 +328,7 @@ namespace Saturn {
 			m_EditorCamera.OnUpdate( time );
 
 			m_EditorScene->OnUpdate( time );
-			m_EditorScene->OnRenderEditor( m_EditorCamera, time, Application::Get().PrimarySceneRenderer() );
+			m_EditorScene->OnRenderEditor( m_EditorCamera, time, *m_SceneRenderer );
 
 			m_LastAutoSaveTime += time;
 
@@ -349,6 +355,8 @@ namespace Saturn {
 
 		// Render scenes in other asset viewers
 		m_ImGuiWindowManager->OnUpdate( time );
+
+		RenderThread::Get().Queue( [ = ]() { m_SceneRenderer->RenderScene(); } );
 	}
 
 	void EditorLayer::OnImGuiRender()
@@ -394,7 +402,8 @@ namespace Saturn {
 
 	void EditorLayer::OnEvent( Event& rEvent )
 	{
-		// Cameras and ImGui Windows should only receive Ruby events and/or Editor events
+		// Cameras and ImGui Windows should only receive Ruby events and/or Editor events 
+		// not Runtime Events or Scene 
 		if( rEvent.HasCategory( EC_Ruby ) || rEvent.HasCategory( EC_Editor ) )
 		{
 			// If the mouse is over the viewport allow for the scroll event to happen
@@ -430,6 +439,14 @@ namespace Saturn {
 			case EventType::SceneTravel:
 			{
 				HandleSceneTravel( ( SceneTravelEvent& ) rEvent );
+			} break;
+
+			case EventType::SkylightEntityModified:
+			{
+				const SkylightEntityModifiedEvent& rSkylightEvent = ( SkylightEntityModifiedEvent& ) rEvent;
+				const auto& rParams = rSkylightEvent.GetParams();
+
+				m_SceneRenderer->SetDynamicSky( rParams.x, rParams.y, rParams.z );
 			} break;
 		}
 	}
@@ -505,7 +522,7 @@ namespace Saturn {
 		hierarchyPanel->SetContext( m_EditorScene );
 		newScene = nullptr;
 
-		Application::Get().PrimarySceneRenderer().SetCurrentScene( m_EditorScene.Get() );
+		m_SceneRenderer->SetCurrentScene( m_EditorScene.Get() );
 	}
 
 	void EditorLayer::OpenFileInRuntime( AssetID id )
@@ -538,7 +555,7 @@ namespace Saturn {
 		hierarchyPanel->SetContext( m_RuntimeScene );
 		newScene = nullptr;
 
-		Application::Get().PrimarySceneRenderer().SetCurrentScene( m_RuntimeScene.Get() );
+		m_SceneRenderer->SetCurrentScene( m_RuntimeScene.Get() );
 
 		// If we fail to start runtime, terminate it for good.
 		if( !m_RuntimeScene->OnRuntimeStart() )
@@ -575,7 +592,7 @@ namespace Saturn {
 
 		m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>()->SetContext( m_RuntimeScene );
 
-		Application::Get().PrimarySceneRenderer().SetCurrentScene( m_RuntimeScene.Get() );
+		m_SceneRenderer->SetCurrentScene( m_RuntimeScene.Get() );
 
 		m_EditorCamera.SetActive( false );
 
@@ -599,7 +616,7 @@ namespace Saturn {
 		m_SuspendedEditorCamera.SetActive( false );
 		m_RuntimeScene = nullptr;
 
-		Application::Get().PrimarySceneRenderer().SetCurrentScene( m_EditorScene.Get() );
+		m_SceneRenderer->SetCurrentScene( m_EditorScene.Get() );
 
 		const std::string title = std::format( "{0} - Saturn", Project::GetActiveConfig().Name );
 		Application::Get().GetWindow()->ChangeTitle( title );
@@ -1880,7 +1897,7 @@ namespace Saturn {
 	{
 		if( ImGui::Begin( "Scene Renderer", &m_ShowSceneRendererWindow ) )
 		{
-			Application::Get().PrimarySceneRenderer().ImGuiRender();
+			m_SceneRenderer->ImGuiRender();
 
 			if( Auxiliary::TreeNode( "Shaders", false ) )
 			{
@@ -2172,7 +2189,7 @@ namespace Saturn {
 		{
 			m_ViewportSize = ImGui::GetContentRegionAvail();
 
-			Application::Get().PrimarySceneRenderer().SetViewportSize( ( uint32_t ) m_ViewportSize.x, ( uint32_t ) m_ViewportSize.y );
+			m_SceneRenderer->SetViewportSize( ( uint32_t ) m_ViewportSize.x, ( uint32_t ) m_ViewportSize.y );
 			Renderer2D::Get().SetViewportSize( ( uint32_t ) m_ViewportSize.x, ( uint32_t ) m_ViewportSize.y );
 			m_EditorCamera.SetViewportSize( ( uint32_t ) m_ViewportSize.x, ( uint32_t ) m_ViewportSize.y );
 			m_SuspendedEditorCamera.SetViewportSize( ( uint32_t ) m_ViewportSize.x, ( uint32_t ) m_ViewportSize.y );
@@ -2181,7 +2198,7 @@ namespace Saturn {
 		ImGui::PushID( "VIEWPORT_IMAGE" );
 
 		// In the editor we only should flip the image UV, we don't have to flip anything else.
-		Auxiliary::Image( Application::Get().PrimarySceneRenderer().CompositeImage(), m_ViewportSize, { 0, 1 }, { 1, 0 } );
+		Auxiliary::Image( m_SceneRenderer->CompositeImage(), m_ViewportSize, { 0, 1 }, { 1, 0 } );
 
 		if( ImGui::BeginDragDropTarget() )
 		{
@@ -2489,7 +2506,7 @@ namespace Saturn {
 	void EditorLayer::Viewport_DrawGizmo()
 	{
 		const ImVec2 minBound = ImGui::GetWindowPos();
-		Application::Get().PrimarySceneRenderer().SetViewportPosition( minBound.x, minBound.y );
+		m_SceneRenderer->SetViewportPosition( minBound.x, minBound.y );
 
 		const ImVec2 maxBound = { minBound.x + m_ViewportSize.x, minBound.y + m_ViewportSize.y };
 

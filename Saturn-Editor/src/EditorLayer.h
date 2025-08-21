@@ -29,6 +29,7 @@
 #pragma once
 
 #include <Saturn/Core/Layer.h>
+#include <Saturn/Core/Timer.h>
 #include <Saturn/Core/Renderer/SceneFlyCamera.h>
 
 #include <Saturn/ImGui/ImGuiWindowManager.h>
@@ -184,13 +185,6 @@ namespace Saturn {
 		void DrawNotifications();
 
 	private:
-		GameModule* m_GameModule = nullptr;
-		Ref<AssetManager> m_AssetManager;
-
-		Ref<GlobalUndoRedoGroup> m_GlobalUndoRedoGroup = nullptr;
-		std::unique_ptr<EntitySelectionManager> m_SelectionManager;
-
-	private:
 		TitleBar m_TitleBar;
 		
 		Ref< Texture2D > m_CheckerboardTexture = nullptr;
@@ -210,6 +204,13 @@ namespace Saturn {
 
 		// Used to be called BlockingOperation hence the name.
 		Ref<JobProgress> m_BlockingOperation = nullptr;
+
+		GameModule* m_GameModule = nullptr;
+		Ref<AssetManager> m_AssetManager;
+		Ref<SceneRenderer> m_SceneRenderer;
+
+		Ref<GlobalUndoRedoGroup> m_GlobalUndoRedoGroup = nullptr;
+		std::unique_ptr<EntitySelectionManager> m_SelectionManager;
 
 		EditorCamera m_EditorCamera;
 		EditorCamera m_SuspendedEditorCamera;

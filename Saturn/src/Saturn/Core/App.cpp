@@ -33,7 +33,6 @@
 #include "Ruby/RubyMonitor.h"
 #include "Ruby/RubyLibrary.h"
 
-#include "Saturn/Vulkan/SceneRenderer.h"
 #include "Saturn/Vulkan/Renderer2D.h"
 #include "Saturn/Vulkan/VulkanContext.h"
 
@@ -107,13 +106,6 @@ namespace Saturn {
 		// This may not be the best way... but it's better than lazy loading.
 		m_VulkanContext = new VulkanContext();
 		m_VulkanContext->Init();
-
-		// If we are in Dist we don't want to create the Scene Renderer now because it doesn't know where the shaders are. 
-		// So we want to first the shader bundle however that requires the project to be loaded.
-#if !defined( SAT_DIST )
-		constexpr SceneRendererFlags flags = SceneRendererFlag_MasterInstance | SceneRendererFlag_RenderGrid;
-		m_SceneRenderer = new SceneRenderer( flags );
-#endif
 	}
 
 	Application::~Application()
@@ -139,13 +131,7 @@ namespace Saturn {
 			{
 				Renderer::Get().BeginFrame();
 				{
-					RenderThread::Get().Queue( [=] { m_SceneRenderer->RenderScene(); } );
-					RenderThread::Get().Queue( [=] { Renderer2D::Get().Render(); } );
-
-					// Render UI
-					{
-						RenderImGui();
-					}
+					BuildRenderCommands();
 				}
 				// End this frame on render thread.
 				RenderThread::Get().Queue( [=] { Renderer::Get().EndFrame(); } );
@@ -188,7 +174,6 @@ namespace Saturn {
 
 		AudioSystem::Get().Terminate();
 		
-		delete m_SceneRenderer;
 		delete m_VulkanContext;
 
 		delete m_Window;
@@ -199,22 +184,28 @@ namespace Saturn {
 		m_Running = false;
 	}
 
-	void Application::RenderImGui()
+	void Application::BuildRenderCommands()
 	{
 		SAT_PF_EVENT();
 
-#if !defined(SAT_DIST)
-		// Begin on main thread.
-		m_ImGuiLayer->Begin();
-#endif
-
 		// Update on the main thread.
+		// Scene Rendering may happen here depending on if a layer as a SceneRenderer or not.
 		for( auto& rLayer : m_Layers )
 		{
 			rLayer->OnUpdate( m_Timestep );
 		}
+			
+		// Always submit Renderer2D AFTER a potential SceneRenderer has finished because we now may have new 
+		// render commands to draw after OnUpdate was called.
+		RenderThread::Get().Queue( [ = ] { Renderer2D::Get().Render(); } );
+
+		//////////////////////////////////////////////////////////////////////////
+		// Render ImGui.
 
 #if !defined(SAT_DIST)
+		// Begin on main thread.
+		m_ImGuiLayer->Begin();
+
 		RenderThread::Get().Queue( [=]
 			{
 				for( auto& rLayer : m_Layers )

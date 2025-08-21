@@ -79,10 +79,21 @@ namespace Saturn {
 		SAT_CORE_VERIFY( m_RuntimeScene->OnRuntimeStart(), "Initial runtime request failed!" );
 	}
 
+	void RuntimeLayer::OnAttach()
+	{
+		m_SceneRenderer = Ref<SceneRenderer>::Create( SceneRendererFlag_MasterInstance | SceneRendererFlag_SwapchainTarget );
+	}
+
+	void RuntimeLayer::OnDetach()
+	{
+	}
+
 	RuntimeLayer::~RuntimeLayer()
 	{
 		m_RuntimeScene->OnRuntimeEnd();
 		m_RuntimeScene = nullptr;
+
+		m_SceneRenderer = nullptr;
 
 		delete m_GameModule;
 	}
@@ -111,7 +122,7 @@ namespace Saturn {
 
 		newScene = nullptr;
 
-		Application::Get().PrimarySceneRenderer().SetCurrentScene( m_RuntimeScene.Get() );
+		m_SceneRenderer->SetCurrentScene( m_RuntimeScene.Get() );
 	}
 
 	void RuntimeLayer::OpenFileInRuntime( AssetID id )
@@ -138,7 +149,7 @@ namespace Saturn {
 
 		temporaryScene = nullptr;
 
-		Application::Get().PrimarySceneRenderer().SetCurrentScene( m_RuntimeScene.Get() );
+		m_SceneRenderer->SetCurrentScene( m_RuntimeScene.Get() );
 
 		// If we fail to start runtime, terminate it for good.
 		if( !m_RuntimeScene->OnRuntimeStart() )
@@ -163,7 +174,7 @@ namespace Saturn {
 	void RuntimeLayer::OnUpdate( Timestep time )
 	{
 		m_RuntimeScene->OnUpdate( time );
-		m_RuntimeScene->OnRenderRuntime( time, Application::Get().PrimarySceneRenderer() );
+		m_RuntimeScene->OnRenderRuntime( time, *m_SceneRenderer );
 	}
 
 	void RuntimeLayer::OnEvent( Event& rEvent )
@@ -190,7 +201,7 @@ namespace Saturn {
 		if( width == 0 && height == 0 )
 			return;
 
-		Application::Get().PrimarySceneRenderer().SetViewportSize( ( uint32_t ) width, ( uint32_t ) height );
+		m_SceneRenderer->SetViewportSize( ( uint32_t ) width, ( uint32_t ) height );
 		Renderer2D::Get().SetViewportSize( ( uint32_t ) width, ( uint32_t ) height );
 	}
 

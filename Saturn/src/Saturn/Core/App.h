@@ -112,8 +112,7 @@ namespace Saturn {
 		void PushLayer( Layer* pLayer );
 		void PopLayer( Layer* pLayer );
 
-		SceneRenderer& PrimarySceneRenderer() { return *m_SceneRenderer; }
-		RubyWindow* GetWindow() { return m_Window; }
+		RubyWindow* GetWindow() const { return m_Window; }
 
 		void SubmitOnMainThread( std::function<void()>&& rrFunction )
 		{
@@ -176,7 +175,7 @@ namespace Saturn {
 		void ProcessAllEvents();
 		void OnWindowResize( RubyWindowResizeEvent& e );
 		
-		void RenderImGui();
+		void BuildRenderCommands();
 		void InitWindow();
 		void InitGraphics();
 
@@ -204,7 +203,6 @@ namespace Saturn {
 
 	protected:
 		// TODO: This is not great at all, we ideally want the parent layer to own the SceneRenderer and not the main Application class
-		SceneRenderer* m_SceneRenderer = nullptr;
 		RubyWindow* m_Window = nullptr;
 
 	private:

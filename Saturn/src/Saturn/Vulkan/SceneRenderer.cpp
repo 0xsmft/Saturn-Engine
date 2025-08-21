@@ -1139,7 +1139,7 @@ namespace Saturn {
 
 		for( int i = 0; i < 8; i++ )
 		{
-			glm::vec3 transformed = glm::vec3( corners[ i ] );
+			const glm::vec3 transformed = glm::vec3( corners[ i ] );
 			newMin = glm::min( newMin, transformed );
 			newMax = glm::max( newMax, transformed );
 		}
@@ -1865,8 +1865,7 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 	void SceneRenderer::OnShaderReloaded( const std::string& rName )
 	{
-		Ref<Shader> shader = ShaderLibrary::Get().Find( rName );
-
+		const Ref<Shader> shader = ShaderLibrary::Get().Find( rName );
 		auto& rReference = Renderer::Get().FindShaderReference( shader->GetShaderHash() );
 
 		for( auto& rPipeline : rReference.Pipelines )

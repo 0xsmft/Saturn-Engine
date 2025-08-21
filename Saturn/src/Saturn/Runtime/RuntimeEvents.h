@@ -51,4 +51,5 @@ namespace Saturn {
 	private:
 		unsigned long long m_NewSceneID = 0;
 	};
+
 }

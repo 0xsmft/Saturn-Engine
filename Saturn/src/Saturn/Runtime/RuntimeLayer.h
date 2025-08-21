@@ -28,13 +28,14 @@
 
 #pragma once
 
+#include "RuntimeEvents.h"
+
 #include "Saturn/Core/Layer.h"
 #include "Saturn/Scene/Scene.h"
+#include "Saturn/Vulkan/SceneRenderer.h"
 
 #include "Saturn/Physics/PhysicsFoundation.h"
 #include "Saturn/Asset/AssetManager.h"
-
-#include "RuntimeEvents.h"
 
 namespace Saturn {
 
@@ -48,6 +49,9 @@ namespace Saturn {
 
 		void OnUpdate( Timestep time ) override;
 		void OnEvent( Event& rEvent ) override;
+		
+		void OnAttach() override;
+		void OnDetach() override;
 
 	private:
 		void OnWindowResize( RubyWindowResizeEvent& e );
@@ -59,6 +63,7 @@ namespace Saturn {
 	private:
 		GameModule* m_GameModule = nullptr;
 		Ref<Scene> m_RuntimeScene;
+		Ref<SceneRenderer> m_SceneRenderer;
 
 		PhysicsFoundation m_PhysicsFoundation;
 		AssetManager m_AssetManager;

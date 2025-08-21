@@ -118,7 +118,7 @@ namespace Saturn {
 				rCacheData.AssetPath = rData.Asset->Path;
 				rCacheData.ExistsOnFS = true;
 
-				SerialiseSingleThumbnail(  rData.Asset->ID, rCacheData );
+				SerialiseSingleThumbnail( rData.Asset->ID, rCacheData );
 
 				m_PendingManifestWrite = true;
 			}
@@ -131,7 +131,7 @@ namespace Saturn {
 
 	void ContentBrowserThumbnailCache::ClearCache()
 	{
-		std::filesystem::path thumbnailPath = Project::GetActiveProject()->GetFullCachePath() / "PerUser" / "Thumbnails";
+		const std::filesystem::path thumbnailPath = Project::GetActiveProject()->GetFullCachePath() / "PerUser" / "Thumbnails";
 
 		std::filesystem::remove_all( thumbnailPath );
 

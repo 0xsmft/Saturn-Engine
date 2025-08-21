@@ -30,8 +30,9 @@
 #include "SceneHierarchyPanel.h"
 
 #include "ImGuiAuxiliary.h"
-#include "EditorIcons.h"
 #include "EntitySelectionManager.h"
+#include "EditorIcons.h"
+#include "EditorEvents.h"
 
 #include "Saturn/Core/App.h"
 
@@ -240,7 +241,7 @@ namespace Saturn {
 				entity->AddComponent<SkylightComponent>();
 
 				// Defaults
-				Application::Get().PrimarySceneRenderer().SetDynamicSky( 2.0f, 0.0f, 0.0f );
+				Application::Get().DispatchEvent<SkylightEntityModifiedEvent>( glm::vec3{ 2.0f, 0.0f, 0.0f } );
 
 				SetSelected( entity );
 				m_Context->MarkDirty();
@@ -821,7 +822,7 @@ namespace Saturn {
 
 				if( changed ) 
 				{
-					Application::Get().PrimarySceneRenderer().SetDynamicSky( skl.Turbidity, skl.Azimuth, skl.Inclination );
+					Application::Get().DispatchEvent<SkylightEntityModifiedEvent>( glm::vec3{ skl.Turbidity, skl.Azimuth, skl.Inclination } );
 
 					m_Context->MarkDirty();
 				}

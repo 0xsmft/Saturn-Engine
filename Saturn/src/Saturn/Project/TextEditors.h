@@ -28,76 +28,24 @@
 
 #pragma once
 
-namespace Saturn {
+#include <filesystem>
 
-#define SAT_DEFINE_EVENT( Type, Category ) \
-public: \
-static inline EventType GetStaticType()     { return EventType::Type; } \
-static inline EventCategory GetStaticCategory() { return EventCategory::Category; } \
-	   inline EventCategory GetCategory()       { return EventCategory::Category; }
+namespace Saturn::Auxiliary {
 
-	enum class EventType
-	{
-		None,
-
-		//////////////////////////////////////////////////////////////////////////
-		// RubyEventType
-
-		Resize,
-		Close,
-		MouseMoved,
-		MousePressed,
-		MouseReleased,
-		MouseEnterWindow,
-		MouseLeaveWindow,
-		MouseScroll,
-		KeyReleased,
-		KeyPressed,
-		KeyHeld, // Dispatches as KeyPressed
-		InputCharacter,
-		WindowMaximized,
-		WindowMinimized,
-		WindowRestored,
-		WindowMoved,
-		WindowFocus,
-		DisplayChanged,
-
-		//////////////////////////////////////////////////////////////////////////
-		// Editor
-
-		HotReload,
-		SkylightEntityModified,
-
-		//////////////////////////////////////////////////////////////////////////
-		// Runtime
-
-		SceneTravel,
-	};
-
-	enum EventCategory
-	{
-		EC_None    = 1 << 0,
-		EC_Ruby    = 1 << 1, // Window, mouse, keyboard events
-		EC_Editor  = 1 << 2, // Hot Reload, On Runtime Start etc
-		EC_Runtime = 1 << 3, // Scene Travel, events that fire during runtime
-		EC_Scene   = 1 << 4, // Events to do with Scenes, Scene unloaded, if the event happens during runtime it will use the Runtime Category and not the Scene category!
-		EC_Auxiliary = 1 << 5
-	};
-
-	class Event 
+	class TextEditors
 	{
 	public:
-		Event() = default;
-		Event( EventType type, EventCategory eventCategory ) : Type( type ), Category( eventCategory ) {}
-		virtual ~Event() = default;
-
-		[[nodiscard]] inline bool HasCategory( EventCategory ec ) const
+		struct OpenOptions
 		{
-			return Category & ec;
-		}
+			std::filesystem::path TextFilePath;
+			std::filesystem::path ChildArgs;
+		};
 
-		EventType Type = EventType::None;
-		EventCategory Category = EC_None;
-		bool Handled = false;
+	public:
+		static bool OpenVisualStudioLatest( const std::filesystem::path& rPath, const OpenOptions& rOptions = {} );
+		static bool OpenVisualStudio2022( const std::filesystem::path& rPath, const OpenOptions& rOptions = {} );
+		// Not supported unless the user as the 2022+ STL installed!
+		static bool OpenVisualStudio2019( const std::filesystem::path& rPath, const OpenOptions& rOptions = {} );
 	};
+	
 }

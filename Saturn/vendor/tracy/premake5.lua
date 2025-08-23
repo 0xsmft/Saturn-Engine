@@ -9,7 +9,7 @@ project "Tracy"
 	files
 	{
 		"src/**.h",
-		"src/**.cpp"
+		"src/tracy/tracyClient.cpp"
 	}
 
 	defines 

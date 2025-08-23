@@ -98,7 +98,7 @@ namespace Saturn {
 	class VertexBufferLayout : public RefTarget
 	{
 	public:
-		VertexBufferLayout() { }
+		VertexBufferLayout() = default;
 		
 		VertexBufferLayout( const std::initializer_list< VertexBufferElement >& elements )
 			: m_Elements( elements )
@@ -142,13 +142,13 @@ namespace Saturn {
 		}
 		*/
 
-		uint32_t Count() { return (uint32_t)m_Elements.size(); }
+		uint32_t Count() const { return (uint32_t)m_Elements.size(); }
 
 		inline const std::vector< VertexBufferElement >& GetElements() const { return m_Elements; }
 		inline uint32_t GetStride() const { return m_Stride; }
 		
-		// Vector helpers.
-
+	public:
+		// Usage for itr based for loops
 		[[nodiscard]] std::vector< VertexBufferElement >::iterator begin() { return m_Elements.begin(); }
 		[[nodiscard]] std::vector< VertexBufferElement >::iterator end() { return m_Elements.end(); }
 		[[nodiscard]] std::vector< VertexBufferElement >::const_iterator begin() const { return m_Elements.begin(); }

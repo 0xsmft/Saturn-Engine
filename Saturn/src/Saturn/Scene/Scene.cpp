@@ -152,8 +152,9 @@ namespace Saturn {
 
 		m_Controllers.clear();
 		m_NavBoundsEntity = nullptr;
-		dtFreeNavMeshQuery( m_NavMeshQuery );
 
+		// Release weak ref to main camera entity.
+		m_pMainCameraEntity.Reset();
 		// Destroy all entities.
 		for( auto&& [id, entity] : m_EntityIDMap )
 		{
@@ -506,7 +507,7 @@ namespace Saturn {
 
 		OnEntityCreated( entity );
 
-		GActiveScene = ActiveScene;
+		g_ActiveScene = ActiveScene;
 
 		return entity;
 	}
@@ -770,7 +771,6 @@ namespace Saturn {
 		}
 
 		NewScene->m_Lights = m_Lights;
-		NewScene->m_NavMeshQuery = m_NavMeshQuery;
 		
 		// Asset props
 		NewScene->ID = ID;
@@ -810,12 +810,12 @@ namespace Saturn {
 		StartAudioPlayers();
 
 		// Init new scene camera
-		m_MainCameraEntity = GetMainCameraEntity( true );
+		m_pMainCameraEntity = GetMainCameraEntity( true );
 		m_RuntimeState = RuntimeState::Running;
 
 		m_NavigationSystem.Initialise();
 
-		if( !m_MainCameraEntity )
+		if( m_pMainCameraEntity.Expired() )
 		{
 			// Reject runtime, no camera was found after BeginPlay was called
 			OnRuntimeEnd();
@@ -906,7 +906,7 @@ namespace Saturn {
 
 #if !defined(SAT_DIST)
 				// Add reference if a graph sound asset viewer is open
-				std::string name = std::format( "{0}##{1}", soundSpec->Name, ( uint64_t ) soundSpec->ID );
+				const std::string name = std::format( "{0}##{1}", soundSpec->Name, ( uint64_t ) soundSpec->ID );
 				Ref<GraphSoundAssetViewer> window = ImGuiWindowManager::Get().GetWindow<GraphSoundAssetViewer>( name );
 
 				if( window )
@@ -978,11 +978,10 @@ namespace Saturn {
 
 		DestroyAudioPlayers();
 
-		m_MainCameraEntity = nullptr;
+		m_pMainCameraEntity = nullptr;
+		m_NavigationSystem.Terminate();
 
 		m_RuntimeState = RuntimeState::NoState;
-		delete m_NavMeshQuery;
-		m_NavMeshQuery = nullptr;
 	}
 
 	SharedPtr<NavBoundsEntity> Scene::GetNavBoundsEntity() const

@@ -1346,7 +1346,7 @@ namespace Saturn {
 		UBSceneData u_SceneData = {};
 		UBShadowData u_ShadowData = {};
 
-		struct DebugData
+		struct UBDebugData
 		{
 			int TilesCountX;
 		} u_DebugData = {};

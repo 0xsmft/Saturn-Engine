@@ -167,6 +167,8 @@ namespace Saturn {
 
 	void Project::CheckOfflineAssets()
 	{
+		std::vector<AssetID> pendingAssets;
+
 		bool FileChanged = false;
 
 		auto& assetReg = AssetManager::Get().GetAssetRegistry()->GetAssetMap();
@@ -180,6 +182,11 @@ namespace Saturn {
 
 			SAT_CORE_WARN( "Found an asset that is present in the Asset Registry however no longer exists in the filesystem, removing from Asset Registry..." );
 
+			pendingAssets.push_back( id );
+		}
+
+		for( const auto& id : pendingAssets )
+		{
 			AssetManager::Get().RemoveAsset( id );
 		}
 

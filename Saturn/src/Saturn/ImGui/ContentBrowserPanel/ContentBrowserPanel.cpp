@@ -1690,7 +1690,7 @@ namespace Saturn {
 	{
 		if( pItem->IsDirectory() && clicked && !pItem->MultiSelected() ) 
 		{
-			auto newPath = m_CurrentPath / pItem->Path();
+			const auto newPath = m_CurrentPath / pItem->Path();
 			AddQuickAction( m_CurrentPath, newPath );
 
 			m_CurrentPath = newPath;
@@ -1715,6 +1715,7 @@ namespace Saturn {
 				ClearSelection();
 
 				m_SelectedItems.push_back( pItem );
+				pItem->Select();
 			}
 		}
 	}

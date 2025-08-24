@@ -279,7 +279,7 @@ namespace Saturn {
 			else if( !m_RuntimeScene->IsRuntimeActive() ) 
 			{
 				// Because the Runtime Scene self ended runtime, we must reset the mouse because normally we wouldn't
-				// because to end runtime via the Editor requires the mouse.
+				// as to end runtime via the Editor requires the mouse to be in an unlocked state.
 				// TODO: A better way to handle runtime, would be to create a OnRuntimeStart, OnRuntimeSuspend, OnRuntimeEnd events
 				Input::Get().SetCursorMode( RubyCursorMode::Normal, true );
 				m_RequestRuntime = false;
@@ -838,7 +838,7 @@ namespace Saturn {
 
 	bool EditorLayer::OnMousePressed( RubyMouseEvent& rEvent )
 	{
-		if( m_RuntimeScene || !m_MouseOverViewport || rEvent.GetButton() != (int)RubyMouseButton_Left )
+		if( m_RuntimeScene || !m_MouseOverViewport || rEvent.GetButton() != (int)RubyMouseButton_Left || ImGuizmo::IsOver() )
 			return false;
 
 		const auto viewportMouse = ConvertMouseToViewportNDC();
@@ -2035,7 +2035,7 @@ namespace Saturn {
 						for( const MemoryAssetDependencyBase* pBase : rDependency )
 						{
 							ImGui::Text( "ADB/Base" );
-							ImGui::Text( "%p", ( void* ) pBase );
+							ImGui::Text( "0x%p", ( void* ) pBase );
 						}
 
 						Auxiliary::EndTreeNode();

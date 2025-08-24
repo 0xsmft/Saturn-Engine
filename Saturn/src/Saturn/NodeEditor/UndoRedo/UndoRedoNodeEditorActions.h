@@ -60,30 +60,36 @@ namespace Saturn {
 	public:
 		void Undo() override 
 		{
-			if constexpr( Operation == UndoRedoActionNodeEditorLinkOp::Create )
+			if( auto nodeEditor = m_NodeEditor.Access() )
 			{
-				m_NodeEditor->CreateLinkWithID( m_LinkCopy->ID, m_NodeEditor->FindPin( m_LinkCopy->StartPinID ), m_NodeEditor->FindPin( m_LinkCopy->EndPinID ) );
-			}
-			else
-			{
-				m_NodeEditor->DeleteLink( m_LinkCopy->ID, true );
+				if constexpr( Operation == UndoRedoActionNodeEditorLinkOp::Create )
+				{
+					nodeEditor->CreateLinkWithID( m_LinkCopy->ID, nodeEditor->FindPin( m_LinkCopy->StartPinID ), nodeEditor->FindPin( m_LinkCopy->EndPinID ) );
+				}
+				else
+				{
+					nodeEditor->DeleteLink( m_LinkCopy->ID, true );
+				}
 			}
 		}
 
 		void Redo() override
 		{
-			if constexpr( Operation == UndoRedoActionNodeEditorLinkOp::Create )
+			if( auto nodeEditor = m_NodeEditor.Access() )
 			{
-				m_NodeEditor->DeleteLink( m_LinkCopy->ID, true );
-			}
-			else
-			{
-				m_NodeEditor->CreateLinkWithID( m_LinkCopy->ID, m_NodeEditor->FindPin( m_LinkCopy->StartPinID ), m_NodeEditor->FindPin( m_LinkCopy->EndPinID ) );
+				if constexpr( Operation == UndoRedoActionNodeEditorLinkOp::Create )
+				{
+					nodeEditor->DeleteLink( m_LinkCopy->ID, true );
+				}
+				else
+				{
+					nodeEditor->CreateLinkWithID( m_LinkCopy->ID, nodeEditor->FindPin( m_LinkCopy->StartPinID ), nodeEditor->FindPin( m_LinkCopy->EndPinID ) );
+				}
 			}
 		}
 
 	private:
-		SharedPtr<NodeEditor> m_NodeEditor;
+		WeakRef<NodeEditor> m_NodeEditor;
 		Ref<Link> m_LinkCopy;
 	};
 
@@ -105,7 +111,7 @@ namespace Saturn {
 		void Redo() override;
 
 	private:
-		SharedPtr<NodeEditor> m_NodeEditor;
+		WeakRef<NodeEditor> m_NodeEditor;
 		SharedPtr<NodeEditorNodeBase> m_NodeCopy;
 
 		ImVec2 m_OldPosition{};

@@ -172,12 +172,18 @@ namespace Saturn {
 
 	void UndoRedoActionModifyNodePosition::Undo()
 	{
-		m_NodeEditor->SetNodePosition( m_NodeCopy->ID, m_OldPosition );
+		if( auto nodeEditor = m_NodeEditor.Access() )
+		{
+			nodeEditor->SetNodePosition( m_NodeCopy->ID, m_OldPosition );
+		}
 	}
 
 	void UndoRedoActionModifyNodePosition::Redo()
 	{
-		m_NodeEditor->SetNodePosition( m_NodeCopy->ID, m_NewPosition );
+		if( auto nodeEditor = m_NodeEditor.Access() )
+		{
+			nodeEditor->SetNodePosition( m_NodeCopy->ID, m_NewPosition );
+		}
 	}
 
 }

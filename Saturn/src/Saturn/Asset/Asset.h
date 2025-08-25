@@ -50,10 +50,11 @@ namespace Saturn {
 		GraphSound,
 		Scene,
 		Prefab,
-		Script,
+		Skeleton, /* was Script in 0.2.3 below */
 		PhysicsMaterial,
 		BehaviourTree,
 		BehaviourTreeMemory,
+		// ^^^ ADD NEW ASSET TYPES HERE ^^^
 		Unknown,
 		COUNT,
 	};
@@ -80,8 +81,8 @@ namespace Saturn {
 				return "Scene";
 			case Saturn::AssetType::Prefab:
 				return "Prefab";
-			case Saturn::AssetType::Script:
-				return "Script";
+			case Saturn::AssetType::Skeleton:
+				return "Skeleton";
 			case Saturn::AssetType::PhysicsMaterial:
 				return "PhysicsMaterial";
 			case Saturn::AssetType::BehaviourTree:
@@ -126,7 +127,7 @@ namespace Saturn {
 				return COLOR_32( 255, 0, 0, 255 );
 			case Saturn::AssetType::Prefab:
 				return COLOR_32( 255, 0, 255, 255 );
-			case Saturn::AssetType::Script:
+			case Saturn::AssetType::Skeleton:
 				return COLOR_32( 5, 183, 237, 255 );
 			case Saturn::AssetType::PhysicsMaterial:
 				return COLOR_32( 235, 0, 55, 255 );
@@ -160,8 +161,8 @@ namespace Saturn {
 			return AssetType::Scene;
 		else if( str == "Prefab" )
 			return AssetType::Prefab;
-		else if( str == "Script" )
-			return AssetType::Script;
+		else if( str == "Skeleton" )
+			return AssetType::Skeleton;
 		else if( str == "PhysicsMaterial" )
 			return AssetType::PhysicsMaterial;
 		else if( str == "BehaviourTree" )
@@ -184,8 +185,8 @@ namespace Saturn {
 			return AssetType::Scene;
 		else if( str == ".smaterial" )
 			return AssetType::Material;
-		else if( str == ".cpp" || str == ".h" )
-			return AssetType::Script;
+		else if( str == ".skel" )
+			return AssetType::Skeleton;
 		else if( str == ".prefab" )
 			return AssetType::Prefab;
 		else if( str == ".stmesh" )

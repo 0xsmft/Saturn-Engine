@@ -343,8 +343,8 @@ namespace Saturn {
 		//////////////////////////////////////////////////////////////////////////
 		// Read Master
 		// Unable to call MaterialRegistry::Deserialise as Deserialise expects a map with the overrides
-		// and because we are the master we don't care about overrides
-		// So manually read it back.
+		// and because we are the master we don't care about overrides and thus don't have a map with overrides
+		// So, manually read it back.
 	
 		// Read Materials
 		size_t materials = 0;
@@ -426,7 +426,7 @@ namespace Saturn {
 			Ref<MaterialAsset> materialAsset = nullptr;
 
 			// Create a material asset if user wants to.
-			if( ( m_ImportBehaviour & MeshImportBehaviour_NoMaterials ) == 0 )
+			if( ( m_ImportBehaviour & MeshImportBehaviour_CreateNoMaterials ) == 0 )
 			{
 				std::filesystem::path materialPath = m_DstPath;
 				materialPath /= MaterialName;

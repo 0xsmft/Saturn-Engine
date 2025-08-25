@@ -56,6 +56,17 @@ namespace Saturn {
 		glm::vec3 Binormal;
 		glm::vec2 Texcoord;
 	};
+
+	struct DynamicVertex
+	{
+		glm::vec3 Position;
+		glm::vec3 Normal;
+		glm::vec3 Tangent;
+		glm::vec3 Binormal;
+		glm::vec2 Texcoord;
+		glm::ivec4 BoneIndices;
+		glm::vec4 BoneWeights;
+	};
 	
 	struct VertexBufferElement
 	{

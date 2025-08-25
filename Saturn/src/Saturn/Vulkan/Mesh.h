@@ -230,6 +230,38 @@ namespace Saturn {
 #endif
 	};
 
+	// SkeletalMeshAsset
+	class SkeletalMesh : public Asset
+	{
+	public:
+		SkeletalMesh() = default;
+		~SkeletalMesh() = default;
+
+	private:
+		Ref<VertexBuffer> m_VertexBuffer;
+		Ref<IndexBuffer> m_IndexBuffer;
+
+		std::vector<DynamicVertex> m_Vertices;
+		std::vector<Index> m_Indices;
+		std::vector<Submesh> m_Submeshes;
+
+		std::filesystem::path m_FilePath;
+
+		glm::mat4 m_InverseTransform = {};
+		glm::mat4 m_Transform = {};
+
+		uint32_t m_IndicesCount = 0;
+		uint32_t m_VertexCount = 0;
+
+		// Materials
+		Ref<MaterialRegistry> m_MaterialRegistry;
+
+#if !defined(SAT_DIST)
+		std::unique_ptr<Assimp::Importer> m_Importer;
+		const aiScene* m_Scene = nullptr;
+#endif
+	};
+
 	struct MeshInformation
 	{
 		uint32_t TriangleCount = 0; // not used yet.
@@ -242,10 +274,26 @@ namespace Saturn {
 
 	enum MeshImportBehaviour_ : uint32_t
 	{
-		MeshImportBehaviour_NoMaterials = 1,
-		MeshImportBehaviour_ExcludeTextures = 2,
-		MeshImportBehaviour_AllowUnnamedMaterials = 4,
-		MeshImportBehaviour_Default = MeshImportBehaviour_AllowUnnamedMaterials | MeshImportBehaviour_NoMaterials,
+		// Specify whether to import materials from the mesh asset
+		MeshImportBehaviour_CreateNoMaterials     = 1 << 0,
+
+		// Specify whether to not create textures from the mesh asset
+		MeshImportBehaviour_ExcludeTextures       = 1 << 1,
+
+		// If this is enabled then materials that have no names in the mesh file will be automatically generated
+		MeshImportBehaviour_AllowUnnamedMaterials = 1 << 2,
+
+		// Specify whether this mesh is animated, this option is only available if there is animations in the asset
+		// However, if this option is disabled by the user, the Skeletal mesh will become a Static mesh
+		MeshImportBehaviour_SK_AnimatedMesh       = 1 << 3,
+
+		// Skeletal mesh only, used to specify whether to only import an animation or a skeleton without any mesh data.
+		MeshImportBehaviour_SK_NoMesh             = 1 << 4,
+
+		// Default behaviour for Static Meshes
+		MeshImportBehaviour_Default = MeshImportBehaviour_AllowUnnamedMaterials | MeshImportBehaviour_CreateNoMaterials,
+		// Default behaviour for Skeletal Meshes
+		MeshImportBehaviour_SK_Default = MeshImportBehaviour_AllowUnnamedMaterials | MeshImportBehaviour_CreateNoMaterials | MeshImportBehaviour_SK_AnimatedMesh
 	};
 
 	// enum MeshImportBehaviour_

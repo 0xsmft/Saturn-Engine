@@ -115,7 +115,16 @@ namespace Saturn {
 			rObject.MeshName = RawSerialisation::ReadString( rStream );
 		}
 	};
+	
+	// Per bone transformation data
+	struct SkeletalMeshBoneInfo
+	{
+		// The Bones transform in Bone space, i.e. bring the vertices to the bones transform.
+		glm::mat4 BoneOffset;
 
+		// Animated transformation to be applied to the vertices.
+		glm::mat4 FinalTransformation;
+	};
 }
 
 namespace std {
@@ -299,6 +308,32 @@ namespace Saturn {
 	// enum MeshImportBehaviour_
 	typedef uint32_t MeshImportBehaviour;
 
+	enum MeshDeterminerResult_ 
+	{
+		MeshDeterminerResult_Undetermined = 0,
+		MeshDeterminerResult_StaticMesh   = 1 << 0,
+		MeshDeterminerResult_SkeletalMesh = 1 << 1,
+		MeshDeterminerResult_Materials    = 1 << 2,
+		MeshDeterminerResult_Animations   = 1 << 3,
+	};
+
+	// enum MeshDeterminerResult_
+	typedef uint32_t MeshDeterminerResult;
+
+	// Imports a mesh and returns what type it is
+	class MeshDeterminer 
+	{
+	public:
+		void ImportAndDetermine( const std::filesystem::path& rPath );
+
+		[[nodiscard]] bool IsReady() const { return m_Ready.load(); }
+		MeshDeterminerResult GetResult() const { return m_Result; }
+
+	private:
+		MeshDeterminerResult m_Result = MeshDeterminerResult_Undetermined;
+
+		std::atomic_bool m_Ready{ false };
+	};
 	// A mesh cloner class only exists to get information about a mesh, use the mesh class to render meshes.
 	class MeshImporter : public RefTarget
 	{

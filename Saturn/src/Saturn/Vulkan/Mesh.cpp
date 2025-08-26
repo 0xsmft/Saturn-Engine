@@ -87,7 +87,7 @@ namespace Saturn {
 		{
 			if( Assimp::DefaultLogger::isNullLogger() )
 			{
-				Assimp::DefaultLogger::create( "", Assimp::Logger::VERBOSE );
+				Assimp::DefaultLogger::create( "", Assimp::Logger::VERBOSE, aiDefaultLogStream_DEBUGGER );
 				Assimp::DefaultLogger::get()->attachStream( new AssimpLog, Assimp::Logger::Err | Assimp::Logger::Warn );
 			}
 		}
@@ -653,4 +653,54 @@ namespace Saturn {
 		m_Scene = nullptr;
 #endif
 	}
+
+	void MeshDeterminer::ImportAndDetermine( const std::filesystem::path& rPath )
+	{
+#if !defined(SAT_DIST)
+		AssimpLog::Initialize();
+
+		auto importer = std::make_unique<Assimp::Importer>();
+		const aiScene* scene = importer->ReadFile( rPath.string(), s_MeshImportFlags );
+
+		if( scene == nullptr || !scene->HasMeshes() ) 
+		{
+			SAT_CORE_ERROR( "Failed to load mesh file: {0}", rPath.string() );
+			return;
+		}
+
+		if( scene->HasAnimations() )
+			m_Result |= MeshDeterminerResult_Animations;
+
+		if( scene->HasMaterials() )
+			m_Result |= MeshDeterminerResult_Materials;
+
+		for( unsigned int m = 0; m < scene->mNumMeshes; m++ )
+		{
+			aiMesh* pMesh = scene->mMeshes[ m ];
+
+			if( pMesh->HasBones() )
+			{
+				m_Result |= MeshDeterminerResult_SkeletalMesh;
+
+				// A Skeletal mesh can not contain any other meshes
+				break;
+			}
+			else
+			{
+				if( ( m_Result & MeshDeterminerResult_SkeletalMesh ) != 0 )
+				{
+					m_Result = MeshDeterminerResult_Undetermined;
+					SAT_CORE_ERROR( "A Skeletal mesh can not contain a static mesh" );
+				}
+				else
+				{
+					m_Result |= MeshDeterminerResult_StaticMesh;
+				}
+			}
+		}
+
+		m_Ready.store( true );
+#endif
+	}
+
 }

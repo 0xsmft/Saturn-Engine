@@ -56,7 +56,8 @@ namespace Saturn {
 	};
 
 	class Event;
-	
+	class AssetImportPopupBase;
+
 	class ContentBrowserPanel : public ContentBrowserBase
 	{
 	public:
@@ -147,6 +148,8 @@ namespace Saturn {
 		std::string m_NewClassName;
 
 		Ref<ContentBrowserItem> m_ItemToDelete = nullptr;
+
+		std::unique_ptr<AssetImportPopupBase> m_CurrentImportPopup;
 
 		bool m_ShowAssetImportPopup = false;
 		bool m_OpenScriptsPopup = false;

@@ -313,8 +313,8 @@ namespace Saturn {
 		{
 			if( ImGui::MenuItem( "Starter Assets" ) )
 			{
-				auto ActiveProject = Project::GetActiveProject();
-				auto AssetPath = ActiveProject->GetAssetPath();
+				const auto ActiveProject = Project::GetActiveProject();
+				const auto AssetPath = ActiveProject->GetAssetPath();
 
 				std::filesystem::copy_file( "content/Templates/Meshes/Cube.fbx", AssetPath / "Meshes" / "Cube.fbx" );
 				std::filesystem::copy_file( "content/Templates/Meshes/Plane.fbx", AssetPath / "Meshes" / "Plane.fbx" );
@@ -322,7 +322,7 @@ namespace Saturn {
 
 			if( ImGui::MenuItem( "Browse" ) )
 			{
-				std::filesystem::path path = Application::Get().OpenFile( "Supported asset types (*.fbx *.gltf *.glb *.png *.tga *.jpeg *.jpg *wav *.ogg *.mp3)\0*.fbx; *.gltf; *.glb; *.png; *.tga; *.jpeg; *jpg; *.wav; *.ogg; *.mp3\0" );
+				const std::filesystem::path path = Application::Get().OpenFile( "Supported asset types (*.fbx *.gltf *.glb *.png *.tga *.jpeg *.jpg *wav *.ogg *.mp3)\0*.fbx; *.gltf; *.glb; *.png; *.tga; *.jpeg; *jpg; *.wav; *.ogg; *.mp3\0" );
 
 				if( path.extension() == ".png" || path.extension() == ".tga" || path.extension() == ".jpeg" || path.extension() == ".jpg" )
 				{
@@ -338,11 +338,17 @@ namespace Saturn {
 				}
 
 				// Meshes
+				// Even if the mesh we are going to import is animated i.e. has bones and/or animations until we properly confirm that it will default to a StaticMesh import modal
 				if( path.extension() == ".fbx" || path.extension() == ".gltf" )
 				{
+					m_CurrentImportPopup = std::make_unique<MeshImportPopup>( path, m_CurrentPath );
+					m_CurrentImportPopup->Initialise();
+
+					/*
 					m_ShowAssetImportPopup = true;
 					m_ImportAssetPath = path;
 					m_AssetImportType = AssetType::StaticMesh;
+					*/
 				}
 
 				// Audio
@@ -749,6 +755,31 @@ namespace Saturn {
 
 				disabledIfRuntime.Pop();
 				ImGui::EndPopup();
+			}
+
+			if( m_CurrentImportPopup && m_CurrentImportPopup->IsReady() )
+			{
+				m_CurrentImportPopup->OnImGuiRender();
+
+				if( !m_CurrentImportPopup->IsOpen() )
+				{
+					switch( m_CurrentImportPopup->GetModificationState() )
+					{
+						case AssetImportModificationState::Modified:
+						{
+							AssetManagerSerialiser ars;
+							ars.Serialise();
+
+							UpdateFiles( true );
+						} [[fallthrough]];
+
+						default:
+						case AssetImportModificationState::NotModified: 
+						{
+							m_CurrentImportPopup.reset();
+						} break;
+					}
+				}
 			}
 
 			DrawImportSoundPopup();

@@ -310,7 +310,6 @@ namespace Saturn {
 					} break;
 
 					case AssetType::Scene:
-					case AssetType::Script:
 					case AssetType::Unknown:
 					case AssetType::COUNT:
 					default:
@@ -602,11 +601,6 @@ namespace Saturn {
 				case Saturn::AssetType::Prefab:
 				{
 					ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_PREFAB", pData, sizeof( Saturn::UUID ), ImGuiCond_Once );
-				} break;
-
-				case Saturn::AssetType::Script:
-				{
-					ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_SCRIPT", pData, sizeof( Saturn::UUID ), ImGuiCond_Once );
 				} break;
 
 				case Saturn::AssetType::Unknown:

@@ -28,9 +28,69 @@
 
 #pragma once
 
+#include "Saturn/Asset/Asset.h"
+#include "Saturn/Vulkan/Mesh.h"
+
 #include <filesystem>
 
-namespace Saturn::Auxiliary {
+namespace Saturn {
+
+	enum class AssetImportModificationState
+	{
+		NotModified,
+		Modified
+	};
+
+	class AssetImportPopupBase
+	{
+	public:
+		AssetImportPopupBase( const std::filesystem::path& rAssetToImportPath, const std::filesystem::path& rDestinationPath )
+			: m_AssetToImportPath( rAssetToImportPath ), m_DestinationPath( rDestinationPath )
+		{
+		}
+		virtual ~AssetImportPopupBase() = default;
+
+		virtual void Initialise() {}
+		virtual void OnImGuiRender() {}
+
+		void Close() { m_Open = false; }
+
+		[[nodiscard]] bool IsReady() const { return m_IsReady.load(); }
+		[[nodiscard]] bool IsOpen() const { return m_Open; }
+		[[nodiscard]] AssetImportModificationState GetModificationState() const { return m_ModificationState; }
+
+	protected:
+		bool m_Open = false;
+		std::atomic_bool m_IsReady{ false };
+		AssetImportModificationState m_ModificationState = AssetImportModificationState::NotModified;
+
+		std::filesystem::path m_AssetToImportPath;
+		std::filesystem::path m_DestinationPath;
+	};
+
+	class MeshImportPopup : public AssetImportPopupBase
+	{
+	public:
+		MeshImportPopup( const std::filesystem::path& rAssetToImportPath, const std::filesystem::path& rDestinationPath );
+		~MeshImportPopup() = default;
+
+		virtual void Initialise();
+		virtual void OnImGuiRender();
+
+	private:
+		void DrawGLTFOptions();
+		void DrawSkeletalMeshOptions();
+		void DrawAndHandleImportBehaviour();
+		void FullyImportMesh();
+
+	private:
+		std::filesystem::path m_GLTFBinPath;
+		bool m_UseBinFile = false;
+		bool m_IsSkeletal = false;
+
+		MeshImportBehaviour m_ImportBehaviour = MeshImportBehaviour_Default;
+		AssetID m_CurrentAssetIDForMaterial = 0;
+	};
 
 	[[nodiscard]] extern bool DrawImportMeshPopup( bool* pOpen, const std::filesystem::path& rImportTargetPath );
 	[[nodiscard]] extern bool DrawImportSoundPopup( bool* pOpen, const std::filesystem::path& rImportTargetPath, std::filesystem::path& rDefaultPath );

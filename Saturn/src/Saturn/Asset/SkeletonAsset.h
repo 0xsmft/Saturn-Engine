@@ -28,75 +28,46 @@
 
 #pragma once
 
-#include "Saturn/Asset/Asset.h"
-#include "Saturn/Vulkan/Mesh.h"
+#include "Asset.h"
 
-#include <filesystem>
+struct aiMesh;
 
 namespace Saturn {
 
-	enum class AssetImportModificationState
-	{
-		NotModified,
-		Modified
-	};
+	struct SkeletalMeshBoneInfo;
 
-	class AssetImportPopupBase
+	struct SkeletonAssetVertex
 	{
-	public:
-		AssetImportPopupBase( const std::filesystem::path& rAssetToImportPath, const std::filesystem::path& rDestinationPath )
-			: m_AssetToImportPath( rAssetToImportPath ), m_DestinationPath( rDestinationPath )
+		uint32_t BoneIndices[ 4 ] = { 0, 0,0, 0 };
+		float BoneWeights[ 4 ]{ 0.0f, 0.0f, 0.0f, 0.0f };
+
+		inline void AddBoneData( uint32_t id, float weight )
 		{
+			for( size_t i = 0; i < 4; i++ )
+			{
+				if( BoneWeights[ i ] = 0.0f )
+				{
+					BoneIndices[ i ] = id;
+					BoneWeights[ i ] = weight;
+
+					return;
+				}
+			}
 		}
-		virtual ~AssetImportPopupBase() = default;
-
-		virtual void Initialise() {}
-		virtual void OnImGuiRender() {}
-
-		void Close() { m_Open = false; }
-
-		[[nodiscard]] bool IsReady() const { return m_IsReady.load(); }
-		[[nodiscard]] bool IsOpen() const { return m_Open; }
-		[[nodiscard]] AssetImportModificationState GetModificationState() const { return m_ModificationState; }
-
-	protected:
-		bool m_Open = false;
-		std::atomic_bool m_IsReady{ false };
-		AssetImportModificationState m_ModificationState = AssetImportModificationState::NotModified;
-
-		std::filesystem::path m_AssetToImportPath;
-		std::filesystem::path m_DestinationPath;
 	};
 
-	class MeshImportPopup : public AssetImportPopupBase
+	class SkeletonAsset : public Asset
 	{
 	public:
-		MeshImportPopup( const std::filesystem::path& rAssetToImportPath, const std::filesystem::path& rDestinationPath );
-		~MeshImportPopup() = default;
+		SkeletonAsset();
+		virtual ~SkeletonAsset();
 
-		virtual void Initialise();
-		virtual void OnImGuiRender();
-
-	private:
-		void DrawGLTFOptions();
-		void DrawSkeletalMeshOptions();
-		void DrawAndHandleImportBehaviour();
-
-		void FullyImportMesh();
-		void ImportDynamic();
-		void ImportStatic();
+		void CreateFromMesh( const aiMesh* pMesh );
 
 	private:
-		std::filesystem::path m_GLTFBinPath;
-		bool m_UseBinFile = false;
-		bool m_IsSkeletal = false;
-
-		MeshImportBehaviour m_ImportBehaviour = MeshImportBehaviour_Default;
-		AssetID m_CurrentAssetIDForMaterial = 0;
-		AssetID m_CurrentAssetIDForSkeleton = 0;
-	};
-
-	[[nodiscard]] extern bool DrawImportMeshPopup( bool* pOpen, const std::filesystem::path& rImportTargetPath );
-	[[nodiscard]] extern bool DrawImportSoundPopup( bool* pOpen, const std::filesystem::path& rImportTargetPath, std::filesystem::path& rDefaultPath );
+		std::vector<SkeletalMeshBoneInfo> m_BoneInfos;
+		std::vector<SkeletonAssetVertex> m_Vertices;
+		std::unordered_map<std::string, uint32_t> m_BoneMapping;
+	};	
 
 }

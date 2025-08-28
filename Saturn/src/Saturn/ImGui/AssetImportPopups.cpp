@@ -429,6 +429,16 @@ namespace Saturn {
 		// import animations
 
 		ImGui::Text( "DrawSkeletalMeshOptions..." );
+
+		m_CurrentAssetIDForSkeleton == 0 ? ImGui::Text( "NOTE: No Skeleton is selected, a new one will be created!" ) : ImGui::Text( std::to_string( m_CurrentAssetIDForSkeleton ).c_str() );
+
+//		ImGui::Spring();
+
+		bool open = false;
+		if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
+			open = true;
+
+		Auxiliary::DrawAssetFinder( AssetType::Skeleton, &open, m_CurrentAssetIDForSkeleton );
 	}
 
 	void MeshImportPopup::DrawAndHandleImportBehaviour()
@@ -517,32 +527,61 @@ namespace Saturn {
 
 	void MeshImportPopup::FullyImportMesh()
 	{
-		const auto id = AssetManager::Get().CreateAsset( AssetType::StaticMesh );
-		const auto asset = AssetManager::Get().FindAsset( id );
+		if( m_IsSkeletal )
+			ImportDynamic();
+		else
+			ImportStatic();
+	}
 
-		/*
+	void MeshImportPopup::ImportDynamic()
+	{
+		const auto id = AssetManager::Get().CreateAsset( AssetType::SkeletalMesh );
+		auto asset = AssetManager::Get().FindAsset( id );
+
 		// Copy the raw mesh file:
-		std::filesystem::copy_file( m_ImportAssetPath, m_CurrentPath / m_ImportAssetPath.filename(), std::filesystem::copy_options::overwrite_existing );
+		std::filesystem::copy_file( m_AssetToImportPath, m_DestinationPath / m_AssetToImportPath.filename(), std::filesystem::copy_options::overwrite_existing );
 
-		if( s_UseBinFile )
-			std::filesystem::copy_file( s_GLTFBinPath, m_CurrentPath / s_GLTFBinPath.filename(), std::filesystem::copy_options::overwrite_existing );
+		if( m_UseBinFile )
+			std::filesystem::copy_file( m_GLTFBinPath, m_DestinationPath / m_GLTFBinPath.filename(), std::filesystem::copy_options::overwrite_existing );
 
-		auto assetPath = m_CurrentPath / m_ImportAssetPath.filename();
+		auto assetPath = m_DestinationPath / m_AssetToImportPath.filename();
+		assetPath.replace_extension( ".skmesh" );
+
+		asset->SetAbsolutePath( assetPath );
+
+		SkeletalMeshImporter meshImporter( m_AssetToImportPath, m_DestinationPath, m_ImportBehaviour );
+
+		//////////////////////////////////////////////////////////////////////////
+		// Create the Skeletal Mesh
+	}
+
+	void MeshImportPopup::ImportStatic()
+	{
+		const auto id = AssetManager::Get().CreateAsset( AssetType::StaticMesh );
+		auto asset = AssetManager::Get().FindAsset( id );
+
+		// Copy the raw mesh file:
+		std::filesystem::copy_file( m_AssetToImportPath, m_DestinationPath / m_AssetToImportPath.filename(), std::filesystem::copy_options::overwrite_existing );
+
+		if( m_UseBinFile )
+			std::filesystem::copy_file( m_GLTFBinPath, m_DestinationPath / m_GLTFBinPath.filename(), std::filesystem::copy_options::overwrite_existing );
+
+		auto assetPath = m_DestinationPath / m_AssetToImportPath.filename();
 		assetPath.replace_extension( ".stmesh" );
 
 		asset->SetAbsolutePath( assetPath );
-		*/
 
 		StaticMeshImporter meshImporter( m_AssetToImportPath, m_DestinationPath, m_ImportBehaviour );
 
-		/*
+		//////////////////////////////////////////////////////////////////////////
 		// Create the mesh asset.
+		
 		auto staticMesh = asset.As<StaticMesh>();
 		staticMesh = Ref<StaticMesh>::Create();
 		staticMesh->ID = asset->ID;
 		staticMesh->Path = asset->Path;
 
-		auto& meshPath = assetPath.replace_extension( m_ImportAssetPath.extension() );
+		auto& meshPath = assetPath.replace_extension( m_AssetToImportPath.extension() );
 		staticMesh->SetFilepath( meshPath );
 		staticMesh->Import_InitMaterialRegistry();
 
@@ -557,8 +596,6 @@ namespace Saturn {
 		sma.Serialise( staticMesh );
 
 		staticMesh->SetAbsolutePath( assetPath );
-		*/
 	}
 
 }
-

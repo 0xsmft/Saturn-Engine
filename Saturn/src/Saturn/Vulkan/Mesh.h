@@ -297,7 +297,10 @@ namespace Saturn {
 		MeshImportBehaviour_SK_AnimatedMesh       = 1 << 3,
 
 		// Skeletal mesh only, used to specify whether to only import an animation or a skeleton without any mesh data.
-		MeshImportBehaviour_SK_NoMesh             = 1 << 4,
+		MeshImportBehaviour_SK_NoAnimations       = 1 << 4,
+
+		// INTERNAL FLAG! Should we create a skeleton, or try to merge with an existing one?
+		MeshImportBehaviour_SK_MergeWithExistingSK = 1 << 5,
 
 		// Default behaviour for Static Meshes
 		MeshImportBehaviour_Default = MeshImportBehaviour_AllowUnnamedMaterials | MeshImportBehaviour_CreateNoMaterials,
@@ -328,37 +331,69 @@ namespace Saturn {
 
 		[[nodiscard]] bool IsReady() const { return m_Ready.load(); }
 		MeshDeterminerResult GetResult() const { return m_Result; }
+		[[nodiscard]] bool CheckResult( MeshDeterminerResult flag ) const { return ( m_Result & ( uint32_t ) flag ) != 0; }
 
 	private:
 		MeshDeterminerResult m_Result = MeshDeterminerResult_Undetermined;
 
 		std::atomic_bool m_Ready{ false };
 	};
-	// A mesh cloner class only exists to get information about a mesh, use the mesh class to render meshes.
-	class MeshImporter : public RefTarget
+
+	//////////////////////////////////////////////////////////////////////////
+
+	class MeshImporterBase
 	{
 	public:
-		MeshImporter( const std::filesystem::path& rPath, const std::filesystem::path& rDstPath, MeshImportBehaviour importBehaviour );
-		~MeshImporter();
+		MeshImporterBase( const std::filesystem::path& rPath, const std::filesystem::path& rDstPath, MeshImportBehaviour importBehaviour );
+		virtual ~MeshImporterBase();
 
 #if !defined(SAT_DIST)
-		const MeshInformation& GetMeshInformation()       { return m_MeshInformation; }
-		const MeshInformation& GetMeshInformation() const { return m_MeshInformation; }
-
 		MeshImportBehaviour GetImportBehaviour() const { return m_ImportBehaviour; }
 
-	private:
+		virtual bool TryImport() = 0;
+
+	protected:
 		void FindMaterials();
 
-	private:
-		std::unique_ptr<Assimp::Importer> m_Importer;
-		const aiScene* m_Scene;
-#endif
-	private:
+	protected:
 		std::filesystem::path m_SourcePath;
 		std::filesystem::path m_DstPath;
 		MeshImportBehaviour m_ImportBehaviour;
-
 		MeshInformation m_MeshInformation;
+
+		std::unique_ptr<Assimp::Importer> m_Importer;
+		const aiScene* m_Scene = nullptr;
+#endif
 	};
+
+	// A mesh cloner class only exists to get information about a mesh, use the mesh class to render meshes.
+	class StaticMeshImporter : public MeshImporterBase
+	{
+	public:
+		StaticMeshImporter( const std::filesystem::path& rPath, const std::filesystem::path& rDstPath, MeshImportBehaviour importBehaviour );
+		~StaticMeshImporter();
+
+#if !defined(SAT_DIST)
+		virtual bool TryImport() override;
+
+	public:
+		const MeshInformation& GetMeshInformation()       { return m_MeshInformation; }
+		const MeshInformation& GetMeshInformation() const { return m_MeshInformation; }
+#endif
+	};
+
+	class SkeletalMeshImporter : public MeshImporterBase
+	{
+	public:
+		SkeletalMeshImporter( const std::filesystem::path& rPath, const std::filesystem::path& rDstPath, MeshImportBehaviour importBehaviour );
+		~SkeletalMeshImporter();
+
+		virtual bool TryImport() override;
+
+#if !defined(SAT_DIST)
+	private:
+		void CreateSkeletonIfNeeded();
+#endif
+	};
+
 }

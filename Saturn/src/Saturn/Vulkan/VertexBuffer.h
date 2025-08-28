@@ -64,8 +64,23 @@ namespace Saturn {
 		glm::vec3 Tangent;
 		glm::vec3 Binormal;
 		glm::vec2 Texcoord;
-		glm::ivec4 BoneIndices;
-		glm::vec4 BoneWeights;
+		
+		uint32_t BoneIndices[ 4 ] = { 0, 0,0, 0 };
+		float BoneWeights[ 4 ]{ 0.0f, 0.0f, 0.0f, 0.0f };
+
+		inline void AddBoneData( uint32_t id, float weight ) 
+		{
+			for( size_t i = 0; i < 4; i++ )
+			{
+				if( BoneWeights[ i ] = 0.0f )
+				{
+					BoneIndices[ i ] = id;
+					BoneWeights[ i ] = weight;
+
+					return;
+				}
+			}
+		}
 	};
 	
 	struct VertexBufferElement

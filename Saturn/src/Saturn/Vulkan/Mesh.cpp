@@ -60,15 +60,17 @@
 namespace Saturn {
 
 #if !defined(SAT_DIST)
-	static glm::mat4 Mat4FromAssimpMat4( const aiMatrix4x4& matrix )
-	{
-		glm::mat4 result;
-		result[ 0 ][ 0 ] = matrix.a1; result[ 1 ][ 0 ] = matrix.a2; result[ 2 ][ 0 ] = matrix.a3; result[ 3 ][ 0 ] = matrix.a4;
-		result[ 0 ][ 1 ] = matrix.b1; result[ 1 ][ 1 ] = matrix.b2; result[ 2 ][ 1 ] = matrix.b3; result[ 3 ][ 1 ] = matrix.b4;
-		result[ 0 ][ 2 ] = matrix.c1; result[ 1 ][ 2 ] = matrix.c2; result[ 2 ][ 2 ] = matrix.c3; result[ 3 ][ 2 ] = matrix.c4;
-		result[ 0 ][ 3 ] = matrix.d1; result[ 1 ][ 3 ] = matrix.d2; result[ 2 ][ 3 ] = matrix.d3; result[ 3 ][ 3 ] = matrix.d4;
-		return result;
-	}
+namespace Auxiliary {
+		static glm::mat4 Mat4FromAssimpMat4( const aiMatrix4x4& matrix )
+		{
+			glm::mat4 result;
+			result[ 0 ][ 0 ] = matrix.a1; result[ 1 ][ 0 ] = matrix.a2; result[ 2 ][ 0 ] = matrix.a3; result[ 3 ][ 0 ] = matrix.a4;
+			result[ 0 ][ 1 ] = matrix.b1; result[ 1 ][ 1 ] = matrix.b2; result[ 2 ][ 1 ] = matrix.b3; result[ 3 ][ 1 ] = matrix.b4;
+			result[ 0 ][ 2 ] = matrix.c1; result[ 1 ][ 2 ] = matrix.c2; result[ 2 ][ 2 ] = matrix.c3; result[ 3 ][ 2 ] = matrix.c4;
+			result[ 0 ][ 3 ] = matrix.d1; result[ 1 ][ 3 ] = matrix.d2; result[ 2 ][ 3 ] = matrix.d3; result[ 3 ][ 3 ] = matrix.d4;
+			return result;
+		}	
+}
 
 	static constexpr uint32_t s_MeshImportFlags =
 		aiProcess_CalcTangentSpace |        // Create binormals/tangents just in case
@@ -151,8 +153,8 @@ namespace Saturn {
 		}
 
 		m_Scene = scene;
-		m_InverseTransform = glm::inverse( Mat4FromAssimpMat4( m_Scene->mRootNode->mTransformation ) );
-		m_Transform = Mat4FromAssimpMat4( m_Scene->mRootNode->mTransformation );
+		m_InverseTransform = glm::inverse( Auxiliary::Mat4FromAssimpMat4( m_Scene->mRootNode->mTransformation ) );
+		m_Transform = Auxiliary::Mat4FromAssimpMat4( m_Scene->mRootNode->mTransformation );
 
 		m_MaterialRegistry = Ref<MaterialRegistry>::Create();
 
@@ -172,7 +174,7 @@ namespace Saturn {
 		m_MaterialRegistry = nullptr;
 
 #if !defined(SAT_DIST)
-		m_Importer.release();
+		m_Importer.reset();
 #endif
 	}
 
@@ -271,7 +273,7 @@ namespace Saturn {
 
 	void StaticMesh::TraverseNodes( aiNode* node, const glm::mat4& parentTransform /*= glm::mat4( 1.0f )*/, uint32_t level /*= 0 */ )
 	{
-		glm::mat4 transform = parentTransform * Mat4FromAssimpMat4( node->mTransformation );
+		glm::mat4 transform = parentTransform * Auxiliary::Mat4FromAssimpMat4( node->mTransformation );
 
 		for( uint32_t i = 0; i < node->mNumMeshes; i++ )
 		{
@@ -375,29 +377,77 @@ namespace Saturn {
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	// MESH IMPORTER
+	// MESH DETERMINER
 
-	MeshImporter::MeshImporter( const std::filesystem::path& rPath, const std::filesystem::path& rDstPath, MeshImportBehaviour importBehaviour )
-		: m_SourcePath( rPath ), m_DstPath( rDstPath ), m_ImportBehaviour( importBehaviour )
+	void MeshDeterminer::ImportAndDetermine( const std::filesystem::path& rPath )
 	{
 #if !defined(SAT_DIST)
 		AssimpLog::Initialize();
 
-		m_Importer = std::make_unique<Assimp::Importer>();
+		constexpr auto IMPORT_FLAGS = s_MeshImportFlags | aiProcess_PopulateArmatureData;
 
-		const aiScene* scene = m_Importer->ReadFile( rPath.string(), s_MeshImportFlags );
+		auto importer = std::make_unique<Assimp::Importer>();
+		const aiScene* scene = importer->ReadFile( rPath.string(), IMPORT_FLAGS );
 
 		if( scene == nullptr || !scene->HasMeshes() )
+		{
 			SAT_CORE_ERROR( "Failed to load mesh file: {0}", rPath.string() );
+			return;
+		}
 
-		m_Scene = scene;
+		if( scene->HasAnimations() )
+			m_Result |= MeshDeterminerResult_Animations;
 
-		FindMaterials();
+		if( scene->HasMaterials() )
+			m_Result |= MeshDeterminerResult_Materials;
+
+		for( unsigned int m = 0; m < scene->mNumMeshes; m++ )
+		{
+			aiMesh* pMesh = scene->mMeshes[ m ];
+
+			if( pMesh->HasBones() )
+			{
+				m_Result |= MeshDeterminerResult_SkeletalMesh;
+
+				// A Skeletal mesh can not contain any other meshes
+				break;
+			}
+			else
+			{
+				if( ( m_Result & MeshDeterminerResult_SkeletalMesh ) != 0 )
+				{
+					m_Result = MeshDeterminerResult_Undetermined;
+					SAT_CORE_ERROR( "A Skeletal mesh can not contain a static mesh" );
+				}
+				else
+				{
+					m_Result |= MeshDeterminerResult_StaticMesh;
+				}
+			}
+		}
+
+		m_Ready.store( true );
 #endif
 	}
 
+	//////////////////////////////////////////////////////////////////////////
+	// MESH IMPORTER BASE
+	
+	MeshImporterBase::MeshImporterBase( const std::filesystem::path& rPath, const std::filesystem::path& rDstPath, MeshImportBehaviour importBehaviour )
+		: m_SourcePath( rPath ), m_DstPath( rDstPath ), m_ImportBehaviour( importBehaviour )
+	{
+	}
+
+	MeshImporterBase::~MeshImporterBase()
+	{
 #if !defined(SAT_DIST)
-	void MeshImporter::FindMaterials()
+		m_Importer.reset();
+		delete m_Scene;
+		m_Scene = nullptr;
+#endif
+	}
+
+	void MeshImporterBase::FindMaterials()
 	{
 		bool needToSaveAssetReg = false;
 		m_MeshInformation.MaterialAssets.resize( m_Scene->mNumMaterials );
@@ -440,7 +490,7 @@ namespace Saturn {
 
 				needToSaveAssetReg = true;
 
-				m_MeshInformation.MaterialAssets.at( m ) = (uint64_t)asset->ID;
+				m_MeshInformation.MaterialAssets.at( m ) = ( uint64_t ) asset->ID;
 
 				// Write to disk, create file.
 				// TODO: (Asset) Fix this.
@@ -643,64 +693,139 @@ namespace Saturn {
 			AssetManager::Get().Save();
 		}
 	}
-#endif
 
-	MeshImporter::~MeshImporter()
+	//////////////////////////////////////////////////////////////////////////
+	// MESH IMPORTER
+
+	StaticMeshImporter::StaticMeshImporter( const std::filesystem::path& rPath, const std::filesystem::path& rDstPath, MeshImportBehaviour importBehaviour )
+		: MeshImporterBase( rPath, rDstPath, importBehaviour )
 	{
-#if !defined(SAT_DIST)
-		m_Importer.release();
-		delete m_Scene;
-		m_Scene = nullptr;
-#endif
 	}
 
-	void MeshDeterminer::ImportAndDetermine( const std::filesystem::path& rPath )
+	StaticMeshImporter::~StaticMeshImporter()
 	{
+	}
+
 #if !defined(SAT_DIST)
+	bool StaticMeshImporter::TryImport()
+	{
 		AssimpLog::Initialize();
 
-		auto importer = std::make_unique<Assimp::Importer>();
-		const aiScene* scene = importer->ReadFile( rPath.string(), s_MeshImportFlags );
+		m_Importer = std::make_unique<Assimp::Importer>();
 
-		if( scene == nullptr || !scene->HasMeshes() ) 
+		const aiScene* scene = m_Importer->ReadFile( m_SourcePath.string(), s_MeshImportFlags );
+
+		if( scene == nullptr || !scene->HasMeshes() )
 		{
-			SAT_CORE_ERROR( "Failed to load mesh file: {0}", rPath.string() );
-			return;
+			SAT_CORE_ERROR( "Failed to load mesh file: {0}", m_SourcePath.string() );
+			return false;
 		}
 
-		if( scene->HasAnimations() )
-			m_Result |= MeshDeterminerResult_Animations;
+		m_Scene = scene;
+		
+		if( m_Scene->HasAnimations() ) SAT_CORE_WARN( "[StaticMeshImporter] Scene has animations, they will be ignored!" );
 
-		if( scene->HasMaterials() )
-			m_Result |= MeshDeterminerResult_Materials;
+		FindMaterials();
+	}
+#endif
 
-		for( unsigned int m = 0; m < scene->mNumMeshes; m++ )
+	//////////////////////////////////////////////////////////////////////////
+	// SKELETAL MESH IMPORTER
+
+	SkeletalMeshImporter::SkeletalMeshImporter( const std::filesystem::path& rPath, const std::filesystem::path& rDstPath, MeshImportBehaviour importBehaviour )
+		: MeshImporterBase( rPath, rDstPath, importBehaviour )
+	{
+
+	}
+
+	SkeletalMeshImporter::~SkeletalMeshImporter()
+	{
+	}
+
+#if !defined(SAT_DIST)
+	bool SkeletalMeshImporter::TryImport()
+	{
+		AssimpLog::Initialize();
+
+		m_Importer = std::make_unique<Assimp::Importer>();
+
+		const aiScene* scene = m_Importer->ReadFile( m_SourcePath.string(), s_MeshImportFlags );
+
+		if( scene == nullptr || !scene->HasMeshes() )
 		{
-			aiMesh* pMesh = scene->mMeshes[ m ];
+			SAT_CORE_ERROR( "Failed to load mesh file: {0}", m_SourcePath.string() );
+			return false;
+		}
 
-			if( pMesh->HasBones() )
-			{
-				m_Result |= MeshDeterminerResult_SkeletalMesh;
+		m_Scene = scene;
 
-				// A Skeletal mesh can not contain any other meshes
-				break;
-			}
-			else
+		FindMaterials();
+		CreateSkeletonIfNeeded();
+	}
+
+	void SkeletalMeshImporter::CreateSkeletonIfNeeded()
+	{
+		std::vector<DynamicVertex> DynamicVertices;
+		std::vector<SkeletalMeshBoneInfo> boneInfos;
+		std::unordered_map<std::string, uint32_t> boneMapping;
+
+		uint32_t boneCount = 0;
+
+		uint32_t indexCount = 0;
+		uint32_t vertexCount = 0;
+
+		for( unsigned int m = 0; m < m_Scene->mNumMeshes; m++ )
+		{
+			aiMesh* pMesh = m_Scene->mMeshes[ m ];
+			if( !pMesh->HasBones() ) continue;
+
+			Submesh submesh{ .BaseVertex = vertexCount, .BaseIndex = indexCount, .MaterialIndex = 0, .IndexCount = pMesh->mNumFaces * 3, .VertexCount = pMesh->mNumVertices };
+
+			indexCount += submesh.IndexCount;
+			vertexCount += submesh.VertexCount;
+
+			DynamicVertices.resize( pMesh->mNumVertices );
+
+			for( unsigned int b = 0; b < pMesh->mNumBones; b++ )
 			{
-				if( ( m_Result & MeshDeterminerResult_SkeletalMesh ) != 0 )
+				aiBone* pBone = pMesh->mBones[ b ];
+				std::string boneName( pBone->mName.data );
+				int index = 0;
+
+				if( boneMapping.find( boneName ) == boneMapping.end() )
 				{
-					m_Result = MeshDeterminerResult_Undetermined;
-					SAT_CORE_ERROR( "A Skeletal mesh can not contain a static mesh" );
+					// Create new bone
+					index = boneCount;
+					boneCount++;
+
+					SkeletalMeshBoneInfo bi{ .BoneOffset = Auxiliary::Mat4FromAssimpMat4( pBone->mOffsetMatrix ) };
+					boneInfos.push_back( bi );
+					boneMapping[ boneName ] = index;
 				}
 				else
 				{
-					m_Result |= MeshDeterminerResult_StaticMesh;
+					index = boneMapping[ boneName ];
+				}
+
+				// Weight calculation
+				for( size_t w = 0; w < pBone->mNumWeights; w++ )
+				{
+					const int vertID = submesh.BaseVertex + pBone->mWeights[ w ].mVertexId;
+					const float weight = pBone->mWeights[ w ].mWeight;
+
+					//SAT_CORE_INFO( "WEIGHT: {0}", weight );
+
+					// Add..
+					DynamicVertices[ vertID ].AddBoneData( vertID, weight );
 				}
 			}
 		}
 
-		m_Ready.store( true );
-#endif
+		if( ( m_ImportBehaviour & MeshImportBehaviour_SK_MergeWithExistingSK ) == 0 )
+		{
+			// create & save skeleton asset...
+		}
 	}
+#endif
 
 }

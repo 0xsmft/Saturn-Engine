@@ -757,33 +757,40 @@ namespace Saturn {
 				ImGui::EndPopup();
 			}
 
-			if( m_CurrentImportPopup && m_CurrentImportPopup->IsReady() )
+			if( m_CurrentImportPopup )
 			{
-				m_CurrentImportPopup->OnImGuiRender();
-
-				if( !m_CurrentImportPopup->IsOpen() )
+				if( m_CurrentImportPopup->IsReady() )
 				{
-					switch( m_CurrentImportPopup->GetModificationState() )
+					m_CurrentImportPopup->OnImGuiRender();
+
+					if( !m_CurrentImportPopup->IsOpen() )
 					{
-						case AssetImportModificationState::Modified:
+						switch( m_CurrentImportPopup->GetModificationState() )
 						{
-							AssetManagerSerialiser ars;
-							ars.Serialise();
+							case AssetImportModificationState::Modified:
+							{
+								AssetManagerSerialiser ars;
+								ars.Serialise();
 
-							UpdateFiles( true );
-						} [[fallthrough]];
+								UpdateFiles( true );
+							} [[fallthrough]];
 
-						default:
-						case AssetImportModificationState::NotModified: 
-						{
-							m_CurrentImportPopup.reset();
-						} break;
+							default:
+							case AssetImportModificationState::NotModified:
+							{
+								m_CurrentImportPopup.reset();
+							} break;
+						}
 					}
+				}
+				else
+				{
+					DrawNotReadyImportPopup();
 				}
 			}
 
-			DrawImportSoundPopup();
-			DrawImportMeshPopup();
+//			DrawImportSoundPopup();
+//			DrawImportMeshPopup();
 			DrawDeleteAssetPopup();
 
 			if( m_OpenScriptsPopup )
@@ -1091,6 +1098,19 @@ namespace Saturn {
 #endif
 	}
 
+	void ContentBrowserPanel::DrawNotReadyImportPopup()
+	{
+		ImGui::OpenPopup( "Please wait##ASSETINIT" );
+
+		ImGui::SetNextWindowPos( ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Appearing, ImVec2( 0.5f, 0.5f ) );
+		if( ImGui::BeginPopupModal( "Please wait##ASSETINIT", nullptr, ImGuiWindowFlags_NoSavedSettings ) )
+		{
+			ImGui::Text( "Initialising..." );
+
+			ImGui::EndPopup();
+		}
+	}
+
 	void ContentBrowserPanel::DrawDeleteAssetPopup()
 	{
 #if !defined(SAT_DIST)
@@ -1255,7 +1275,7 @@ namespace Saturn {
 	void ContentBrowserPanel::DrawImportMeshPopup()
 	{
 #if !defined(SAT_DIST)
-		if( m_AssetImportType != AssetType::StaticMesh )
+		if( m_AssetImportType != AssetType::StaticMesh /*|| m_AssetImportType != AssetType::SkeletalMesh*/ )
 			return;
 
 		if( m_ShowAssetImportPopup )
@@ -1270,8 +1290,29 @@ namespace Saturn {
 
 			static std::filesystem::path s_GLTFBinPath = "";
 			static bool s_UseBinFile = false;
+			static bool s_HasDeterminant = false;
 			static AssetID s_CurrentAssetID = 0;
 			static MeshImportBehaviour meshImportBehaviour = MeshImportBehaviour_Default;
+
+			if( !s_HasDeterminant )
+			{
+				MeshDeterminer md;
+				md.ImportAndDetermine( m_ImportAssetPath );
+
+				if( md.CheckResult( MeshDeterminerResult_Undetermined ) )
+				{
+					s_HasDeterminant = true;
+					return;
+				}
+
+				if( md.CheckResult( MeshDeterminerResult_StaticMesh ) )
+				{
+					// todo
+					// enable skeletal mesh options
+				}
+
+				s_HasDeterminant = true;
+			}
 
 			ImGui::BeginVertical( "##inputv" );
 
@@ -1373,17 +1414,17 @@ namespace Saturn {
 
 			ImGui::BeginHorizontal( "##importOption_nomat" );
 
-			bool noMaterials = hasFlag( MeshImportBehaviour_NoMaterials );
-			ImGui::Text( "No Materials" );
+			bool noMaterials = hasFlag( MeshImportBehaviour_CreateNoMaterials );
+			ImGui::Text( "Don't Create Materials" );
 			ImGui::Spring();
 
 			ImGui::SetNextItemWidth( 130.0f );
 			if( ImGui::Checkbox( "##NoMaterials", &noMaterials ) )
 			{
-				if( hasFlag( MeshImportBehaviour_NoMaterials ) )
-					meshImportBehaviour &= ~MeshImportBehaviour_NoMaterials;
+				if( hasFlag( MeshImportBehaviour_CreateNoMaterials ) )
+					meshImportBehaviour &= ~MeshImportBehaviour_CreateNoMaterials;
 				else
-					meshImportBehaviour |= MeshImportBehaviour_NoMaterials;
+					meshImportBehaviour |= MeshImportBehaviour_CreateNoMaterials;
 			}
 
 			ImGui::EndHorizontal();
@@ -1416,6 +1457,7 @@ namespace Saturn {
 				auto id = AssetManager::Get().CreateAsset( AssetType::StaticMesh );
 				auto asset = AssetManager::Get().FindAsset( id );
 
+				/*
 				// Copy the raw mesh file:
 				std::filesystem::copy_file( m_ImportAssetPath, m_CurrentPath / m_ImportAssetPath.filename(), std::filesystem::copy_options::overwrite_existing );
 
@@ -1426,9 +1468,11 @@ namespace Saturn {
 				assetPath.replace_extension( ".stmesh" );
 
 				asset->SetAbsolutePath( assetPath );
+				*/
 
-				MeshImporter meshImporter( m_ImportAssetPath, m_CurrentPath, meshImportBehaviour );
+				StaticMeshImporter meshImporter( m_ImportAssetPath, m_CurrentPath, meshImportBehaviour );
 
+				/*
 				// Create the mesh asset.
 				auto staticMesh = asset.As<StaticMesh>();
 				staticMesh = Ref<StaticMesh>::Create();
@@ -1450,6 +1494,7 @@ namespace Saturn {
 				sma.Serialise( staticMesh );
 
 				staticMesh->SetAbsolutePath( assetPath );
+				*/
 
 				PopupModified = true;
 			}

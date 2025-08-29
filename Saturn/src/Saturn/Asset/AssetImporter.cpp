@@ -42,6 +42,7 @@ namespace Saturn {
 		m_AssetSerialisers[ AssetType::Material			   ] = std::make_unique<MaterialAssetSerialiser>();
 		m_AssetSerialisers[ AssetType::Sound			   ] = std::make_unique<SoundSpecificationAssetSerialiser>();
 		m_AssetSerialisers[ AssetType::Prefab			   ] = std::make_unique<PrefabSerialiser>();
+		m_AssetSerialisers[ AssetType::Skeleton            ] = std::make_unique<SkeletonAssetSerialiser>();
 		m_AssetSerialisers[ AssetType::PhysicsMaterial     ] = std::make_unique<PhysicsMaterialAssetSerialiser>();
 		m_AssetSerialisers[ AssetType::BehaviourTreeMemory ] = std::make_unique<BehaviourTreeMemorySpecAssetSerialiser>();
 	}

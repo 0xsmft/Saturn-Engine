@@ -26,74 +26,101 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "SkeletonAsset.h"
 
-#include "Saturn/Asset/Asset.h"
 #include "Saturn/Vulkan/Mesh.h"
 
-#include <filesystem>
+#if !defined(SAT_DIST)
+#include <assimp/scene.h>
+#endif
 
 namespace Saturn {
 
-	enum class AssetImportModificationState
+#if !defined(SAT_DIST)
+namespace Auxiliary {
+	static glm::mat4 Mat4FromAssimpMat4( const aiMatrix4x4& matrix )
 	{
-		NotModified,
-		Modified
-	};
+		glm::mat4 result;
+		result[ 0 ][ 0 ] = matrix.a1; result[ 1 ][ 0 ] = matrix.a2; result[ 2 ][ 0 ] = matrix.a3; result[ 3 ][ 0 ] = matrix.a4;
+		result[ 0 ][ 1 ] = matrix.b1; result[ 1 ][ 1 ] = matrix.b2; result[ 2 ][ 1 ] = matrix.b3; result[ 3 ][ 1 ] = matrix.b4;
+		result[ 0 ][ 2 ] = matrix.c1; result[ 1 ][ 2 ] = matrix.c2; result[ 2 ][ 2 ] = matrix.c3; result[ 3 ][ 2 ] = matrix.c4;
+		result[ 0 ][ 3 ] = matrix.d1; result[ 1 ][ 3 ] = matrix.d2; result[ 2 ][ 3 ] = matrix.d3; result[ 3 ][ 3 ] = matrix.d4;
+		return result;
+	}
+}
+#endif
 
-	class AssetImportPopupBase
+	SkeletonAsset::SkeletonAsset()
 	{
-	public:
-		AssetImportPopupBase( const std::filesystem::path& rAssetToImportPath, const std::filesystem::path& rDestinationPath )
-			: m_AssetToImportPath( rAssetToImportPath ), m_DestinationPath( rDestinationPath )
+	}
+
+	SkeletonAsset::SkeletonAsset( const Ref<Asset>& rBase )
+		: Asset( rBase )
+	{
+	}
+
+	SkeletonAsset::~SkeletonAsset()
+	{
+	}
+
+	void SkeletonAsset::CreateFromMesh( const aiMesh* pMesh, const Submesh& rSubmesh )
+	{
+#if !defined(SAT_DIST)
+		uint32_t boneCount = 0;
+		m_Vertices.resize( pMesh->mNumVertices );
+
+		for( unsigned int b = 0; b < pMesh->mNumBones; b++ )
 		{
+			aiBone* pBone = pMesh->mBones[ b ];
+			std::string boneName( pBone->mName.data );
+			int index = 0;
+
+			if( m_BoneMapping.find( boneName ) == m_BoneMapping.end() )
+			{
+				// Create new bone
+				index = boneCount;
+				boneCount++;
+
+				SkeletalMeshBoneInfo bi{ .BoneName = boneName, .BoneOffset = Auxiliary::Mat4FromAssimpMat4( pBone->mOffsetMatrix ) };
+
+				m_BoneInfos.push_back( bi );
+				m_BoneMapping[ boneName ] = index;
+			}
+			else
+			{
+				index = m_BoneMapping[ boneName ];
+			}
+
+			// Weight calculation
+			for( unsigned int w = 0; w < pBone->mNumWeights; w++ )
+			{
+				const int vertID = rSubmesh.BaseVertex + pBone->mWeights[ w ].mVertexId;
+				const float weight = pBone->mWeights[ w ].mWeight;
+
+				m_Vertices[ vertID ].AddBoneData( boneCount, weight );
+			}
 		}
-		virtual ~AssetImportPopupBase() = default;
+#endif
+	}
 
-		virtual void Initialise() {}
-		virtual void OnImGuiRender() {}
-
-		void Close() { m_Open = false; }
-
-		[[nodiscard]] bool IsReady() const { return m_IsReady.load(); }
-		[[nodiscard]] bool IsOpen() const { return m_Open; }
-		[[nodiscard]] AssetImportModificationState GetModificationState() const { return m_ModificationState; }
-
-	protected:
-		bool m_Open = false;
-		std::atomic_bool m_IsReady{ false };
-		AssetImportModificationState m_ModificationState = AssetImportModificationState::NotModified;
-
-		std::filesystem::path m_AssetToImportPath;
-		std::filesystem::path m_DestinationPath;
-	};
-
-	class MeshImportPopup : public AssetImportPopupBase
+	void SkeletonAsset::BuildHierarchy( const aiNode* pNode, int parentIndex )
 	{
-	public:
-		MeshImportPopup( const std::filesystem::path& rAssetToImportPath, const std::filesystem::path& rDestinationPath );
-		~MeshImportPopup() = default;
+#if !defined(SAT_DIST)
+		const std::string nodeName( pNode->mName.data );
 
-		virtual void Initialise();
-		virtual void OnImGuiRender();
+		int boneIndex = -1;
+		if( m_BoneMapping.find( nodeName ) != m_BoneMapping.end() ) 
+		{
+			boneIndex = m_BoneMapping[ nodeName ];
+			m_BoneInfos[ boneIndex ].ParentIndex = parentIndex;
+		}
 
-	private:
-		void DrawGLTFOptions();
-		void DrawSkeletalMeshOptions();
-		void DrawAndHandleImportBehaviour();
-
-		void FullyImportMesh();
-		void ImportDynamic();
-		void ImportStatic();
-
-	private:
-		std::filesystem::path m_GLTFBinPath;
-		bool m_UseBinFile = false;
-		bool m_IsSkeletal = false;
-
-		MeshImportBehaviour m_ImportBehaviour = MeshImportBehaviour_Default;
-		AssetID m_CurrentAssetIDForMaterial = 0;
-		AssetID m_CurrentAssetIDForSkeleton = 0;
-	};
+		for( unsigned int i = 0; i < pNode->mNumChildren; i++ ) 
+		{
+			BuildHierarchy( pNode->mChildren[ i ], boneIndex );
+		}
+#endif
+	}
 
 }

@@ -31,12 +31,14 @@
 #include "Asset.h"
 
 struct aiMesh;
+struct aiNode;
 
 namespace Saturn {
 
 	struct SkeletalMeshBoneInfo;
+	class Submesh;
 
-	struct SkeletonAssetVertex
+	struct SkeletonAssetVertexSkin
 	{
 		uint32_t BoneIndices[ 4 ] = { 0, 0,0, 0 };
 		float BoneWeights[ 4 ]{ 0.0f, 0.0f, 0.0f, 0.0f };
@@ -45,7 +47,7 @@ namespace Saturn {
 		{
 			for( size_t i = 0; i < 4; i++ )
 			{
-				if( BoneWeights[ i ] = 0.0f )
+				if( BoneWeights[ i ] == 0.0f )
 				{
 					BoneIndices[ i ] = id;
 					BoneWeights[ i ] = weight;
@@ -60,13 +62,20 @@ namespace Saturn {
 	{
 	public:
 		SkeletonAsset();
+		SkeletonAsset( const Ref<Asset>& rBase );
 		virtual ~SkeletonAsset();
 
-		void CreateFromMesh( const aiMesh* pMesh );
+		void CreateFromMesh( const aiMesh* pMesh, const Submesh& rSubmesh );
+		void BuildHierarchy( const aiNode* pNode, int parentIndex );
+
+	public:
+		const std::vector<SkeletalMeshBoneInfo>& GetBoneInfo() const { return m_BoneInfos; }
+		const std::vector<SkeletonAssetVertexSkin>& GetVertices() const { return m_Vertices; }
+		const std::unordered_map<std::string, uint32_t>& GetBoneMapping() const { m_BoneMapping; }
 
 	private:
 		std::vector<SkeletalMeshBoneInfo> m_BoneInfos;
-		std::vector<SkeletonAssetVertex> m_Vertices;
+		std::vector<SkeletonAssetVertexSkin> m_Vertices;
 		std::unordered_map<std::string, uint32_t> m_BoneMapping;
 	};	
 

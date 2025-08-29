@@ -191,6 +191,8 @@ namespace Saturn {
 			return AssetType::Prefab;
 		else if( str == ".stmesh" )
 			return AssetType::StaticMesh;
+		else if( str == ".skmesh" )
+			return AssetType::StaticMesh;
 		else if( str == ".sphymaterial" )
 			return AssetType::PhysicsMaterial;
 		else if( str == ".sbt" )

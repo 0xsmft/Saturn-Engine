@@ -57,7 +57,7 @@ namespace Saturn {
 		Ref<PhysicsMaterialAsset> GetMaterial( const Ref<StaticMesh>& rMesh );
 
 	protected:
-		ShapeType m_Type = ShapeType::Unknown;
+		PhysicsShapeType m_Type = PhysicsShapeType::Unknown;
 
 		SharedPtr<Entity> m_Entity;
 

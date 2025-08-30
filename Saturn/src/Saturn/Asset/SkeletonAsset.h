@@ -67,6 +67,9 @@ namespace Saturn {
 
 		void CreateFromMesh( const aiMesh* pMesh, const Submesh& rSubmesh );
 		void BuildHierarchy( const aiNode* pNode, int parentIndex );
+		
+		void AddBoneInfo( const std::string& rName, int parentIndex, const glm::mat4& rOffsetMatrix, uint32_t boneIndex );
+		void AddVertex( const SkeletonAssetVertexSkin& rSkin ) { m_Vertices.push_back( rSkin ); }
 
 	public:
 		const std::vector<SkeletalMeshBoneInfo>& GetBoneInfo() const { return m_BoneInfos; }

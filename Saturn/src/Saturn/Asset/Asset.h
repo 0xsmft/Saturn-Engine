@@ -54,6 +54,7 @@ namespace Saturn {
 		PhysicsMaterial,
 		BehaviourTree,
 		BehaviourTreeMemory,
+		SkeletalAnimation,
 		// ^^^ ADD NEW ASSET TYPES HERE ^^^
 		Unknown,
 		COUNT,

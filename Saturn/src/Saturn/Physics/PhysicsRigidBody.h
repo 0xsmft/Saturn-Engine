@@ -83,7 +83,7 @@ namespace Saturn {
 
 		void ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
 	private:
-		void AttachPhysicsShape( ShapeType type );
+		void AttachPhysicsShape( PhysicsShapeType type );
 		void Destroy();
 
 	private:

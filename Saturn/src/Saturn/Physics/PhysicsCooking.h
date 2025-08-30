@@ -40,7 +40,7 @@ namespace Saturn {
 		const char pHeader[ 5 ] = "SMC\0";
 		uint64_t ID = 0;
 		size_t Submeshes = 0;
-		ShapeType Type;
+		PhysicsShapeType Type;
 	};
 
 	// Data for each submesh
@@ -63,7 +63,7 @@ namespace Saturn {
 	public:
 		// Cook mesh collider to a triangle mesh, if the collider cache does not exist we will create it if it does exist we will not override it and we will not cook the mesh.
 		// For Static meshes only!
-		bool CookMeshCollider( const Ref<StaticMesh>& rMesh, ShapeType Type );
+		bool CookMeshCollider( const Ref<StaticMesh>& rMesh, PhysicsShapeType Type );
 
 		std::vector<physx::PxShape*> CreateTriangleMesh( const Ref<StaticMesh>& rMesh, physx::PxRigidActor& rActor, glm::vec3 Scale );
 
@@ -71,7 +71,7 @@ namespace Saturn {
 
 	private:
 		void ClearCache();
-		void WriteCache( const Ref<StaticMesh>& rMesh, ShapeType Type );
+		void WriteCache( const Ref<StaticMesh>& rMesh, PhysicsShapeType Type );
 		bool LoadColliderFile( const std::filesystem::path& rPath );
 
 		bool TryCookTriangleMesh( const Ref<StaticMesh>& rMesh );

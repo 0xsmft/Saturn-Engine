@@ -28,35 +28,69 @@
 
 #pragma once
 
-#include <stdint.h>
+#include "Asset.h"
 
 namespace Saturn {
 
-	enum class PhysicsShapeType
+	struct AnimationKeyVec3
 	{
-		Unknown,
-		Box,
-		Sphere,
-		Capusle,
-		ConvexMesh,
-		TriangleMesh
+		AnimationKeyVec3( const glm::vec3& rValue, double ts ) 
+			: Value( rValue ), TimeStamp( ts )
+		{
+		}
+
+		glm::vec3 Value{ 0.0f };
+		// The time stamp when our value should be applied to the armature.
+		double TimeStamp = 0.0;
 	};
 
-	enum class ForceMode
+	struct AnimationKeyQuat
 	{
-		Force,
-		Impulse,
-		VelocityChange,
-		Acceleration
+		AnimationKeyQuat( const glm::quat& rValue, double ts )
+			: Value( rValue ), TimeStamp( ts )
+		{
+		}
+
+		glm::quat Value{ 0.0f, 0.0f, 0.0f, 0.0f };
+		// The time stamp when our value should be applied to the armature.
+		double TimeStamp = 0.0;
 	};
 
-	enum RigidbodyLockFlags : uint32_t
+	struct AnimationBone
 	{
-		RigidbodyLock_PositionX = BIT( 0 ),
-		RigidbodyLock_PositionY = BIT( 1 ),
-		RigidbodyLock_PositionZ = BIT( 2 ),
-		RigidbodyLock_RotationX = BIT( 3 ),
-		RigidbodyLock_RotationY = BIT( 4 ),
-		RigidbodyLock_RotationZ = BIT( 5 )
+		std::string Name;
+		std::vector<AnimationKeyVec3> Positions;
+		std::vector<AnimationKeyQuat> Rotations;
+		std::vector<AnimationKeyVec3> Scale;
 	};
+
+	class SkeletalAnimationAsset : public Asset
+	{
+	public:
+		SkeletalAnimationAsset() = default;
+		SkeletalAnimationAsset( const Ref<Asset>& rBase );
+
+		virtual ~SkeletalAnimationAsset();
+
+		void SetDuration( double duration ) { m_Duration = duration; }
+		void SetTicks( double ticks ) { m_TicksPerSecond = ticks; }
+		void SetSkeletonID( AssetID id ) { m_SkeletonAssetID = id; }
+		void AddAnimBone( AnimationBone bone ) { m_Bones.push_back( bone ); }
+
+		[[nodiscard]] AssetID GetSkeletonID() const { return m_SkeletonAssetID; }
+		[[nodiscard]] double  GetDuration() const   { return m_Duration; }
+		[[nodiscard]] double  GetTicksPerSecond() const { return m_TicksPerSecond; }
+
+		const std::vector<AnimationBone>& GetAnimationBones() const { return m_Bones; }
+
+	private:
+		AssetID m_SkeletonAssetID;
+
+		// The duration of this animation in seconds
+		double m_Duration;
+		double m_TicksPerSecond;
+
+		std::vector<AnimationBone> m_Bones;
+	};
+
 }

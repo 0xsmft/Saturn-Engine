@@ -72,7 +72,7 @@ namespace Saturn {
 		{
 			for( size_t i = 0; i < 4; i++ )
 			{
-				if( BoneWeights[ i ] = 0.0f )
+				if( BoneWeights[ i ] == 0.0f )
 				{
 					BoneIndices[ i ] = id;
 					BoneWeights[ i ] = weight;

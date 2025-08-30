@@ -197,9 +197,13 @@ static Saturn::RubyKey ConvertWinScancodeToRuby( uint32_t scanCode )
 		// ^^[END OF SINGLE BYTE SCANCODES]
 
 		case 0x11C: return RubyKey_NumpadEnter;
+		case 0x11D: return RubyKey_RightCtrl;
 		case 0x135: return RubyKey_NumpadDivide;
 		case 0x145: return RubyKey_NumLock;
-		case 0x11D: return RubyKey_RightCtrl;
+		case 0x148: return RubyKey_UpArrow;
+		case 0x14B: return RubyKey_LeftArrow;
+		case 0x14D: return RubyKey_RightArrow;
+		case 0x150: return RubyKey_DownArrow;
 		case 0x15D: return RubyKey_Menu;
 
 		// NOTE: Clicking the "Alt Gr" key is the same as doing Ctrl+Alt
@@ -466,6 +470,13 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 			const int Modifiers = HandleKeyMods();
 
 			const RubyKey saturnKey = ConvertWinScancodeToRuby( scanCode );
+#if !defined(SAT_DIST)
+			if( saturnKey == RubyKey_UnknownKey )
+			{
+				const std::string hex = std::format( "{:08X}", scanCode );
+				SAT_CORE_WARN( "[Ruby] Unknown Key!, Win32 scan code: WSC/0x{}", hex );
+			}
+#endif
 
 			pThis->GetParent()->IntrnlSetKeyDown( saturnKey, true );
 			pThis->GetParent()->DispatchEvent<RubyKeyEvent>( EventType::KeyPressed, saturnKey, scanCode, Modifiers );

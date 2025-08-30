@@ -371,7 +371,6 @@ namespace Saturn {
 			case Saturn::AssetType::Scene:
 			case Saturn::AssetType::SkeletalMesh:
 			case Saturn::AssetType::MaterialInstance:
-			case Saturn::AssetType::Script:
 			case Saturn::AssetType::Unknown:
 			default:
 				break;

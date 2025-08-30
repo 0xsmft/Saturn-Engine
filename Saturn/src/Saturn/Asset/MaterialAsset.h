@@ -35,6 +35,7 @@
 namespace Saturn {
 
 	class StaticMesh;
+	class SkeletalMesh;
 	class MemoryAssetDependencyNotifier;
 	class Submesh;
 
@@ -45,6 +46,8 @@ namespace Saturn {
 
 		MaterialAsset( Ref<Material> material );
 		virtual ~MaterialAsset();
+
+		void EnabledAnimated();
 
 		// Texture
 		Ref<Texture2D> GetAlbeoMap();
@@ -155,6 +158,7 @@ namespace Saturn {
 	public:
 		MaterialRegistry();
 		MaterialRegistry( const Ref<StaticMesh>& mesh );
+		MaterialRegistry( const Ref<SkeletalMesh>& mesh );
 
 		~MaterialRegistry();
 
@@ -203,6 +207,8 @@ namespace Saturn {
 	private:
 		friend class MaterialAsset;
 		friend class StaticMesh;
+		friend class SkeletalMesh;
 		friend class StaticMeshAssetSerialiser;
+		friend class SkeletalMeshAssetSerialiser;
 	};
 }

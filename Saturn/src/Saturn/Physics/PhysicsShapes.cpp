@@ -80,7 +80,7 @@ namespace Saturn {
 	BoxShape::BoxShape( SharedPtr<Entity> entity )
 		: PhysicsShape( entity )
 	{
-		m_Type = ShapeType::Box;
+		m_Type = PhysicsShapeType::Box;
 	}
 
 	BoxShape::~BoxShape()
@@ -180,7 +180,7 @@ namespace Saturn {
 	SphereShape::SphereShape( SharedPtr<Entity> entity )
 		: PhysicsShape( entity )
 	{
-		m_Type = ShapeType::Sphere;
+		m_Type = PhysicsShapeType::Sphere;
 	}
 
 	SphereShape::~SphereShape()
@@ -391,7 +391,7 @@ namespace Saturn {
 	CapsuleShape::CapsuleShape( SharedPtr<Entity> entity )
 		: PhysicsShape( entity )
 	{
-		m_Type = ShapeType::Capusle;
+		m_Type = PhysicsShapeType::Capusle;
 	}
 
 	CapsuleShape::~CapsuleShape()
@@ -546,7 +546,7 @@ namespace Saturn {
 	TriangleMeshShape::TriangleMeshShape( SharedPtr<Entity> entity )
 		: PhysicsShape( entity )
 	{
-		m_Type = ShapeType::TriangleMesh;
+		m_Type = PhysicsShapeType::TriangleMesh;
 
 		SAT_CORE_ASSERT( m_Entity->HasComponent<StaticMeshComponent>(), "Entity does not have a static mesh component!" );
 
@@ -685,7 +685,7 @@ namespace Saturn {
 	ConvexMeshShape::ConvexMeshShape( SharedPtr<Entity> entity )
 		: PhysicsShape( entity )
 	{
-		m_Type = ShapeType::ConvexMesh;
+		m_Type = PhysicsShapeType::ConvexMesh;
 
 		SAT_CORE_ASSERT( m_Entity->HasComponent<StaticMeshComponent>(), "Entity does not have a static mesh component!" );
 

@@ -59,6 +59,14 @@ namespace Saturn {
 		uint32_t Instances = 0;
 	};
 
+	struct DynamicDrawCommand
+	{
+		Ref<SkeletalMesh> Mesh = nullptr;
+		glm::mat4 Transform;
+		uint32_t SubmeshIndex = 0;
+		uint32_t Instances = 0;
+	};
+
 	struct ShadowCascade
 	{
 		Ref< Framebuffer > Framebuffer = nullptr;
@@ -300,9 +308,15 @@ namespace Saturn {
 		// STATIC MESHES
 
 		// Main geometry for static meshes.
-		Ref<Pipeline> StaticMeshPipeline = nullptr;
+		Ref<Pipeline> StaticMeshPipeline;
 		Ref<Material> StaticMeshMaterial;
 	
+		// DYNAMIC MESHES
+
+		// Main geometry for dynamic meshes.
+		Ref<Pipeline> DynamicMeshPipeline;
+		Ref<Material> DynamicMeshMaterial;
+
 		// GRID
 		Ref<Pipeline> GridPipeline = nullptr;
 		Ref<Material> GridMaterial = nullptr;
@@ -387,6 +401,7 @@ namespace Saturn {
 		Ref< Shader > SkyboxShader = nullptr;
 		Ref< Shader > PreethamShader = nullptr;
 		Ref< Shader > StaticMeshShader = nullptr;
+		Ref< Shader > DynamicMeshShader = nullptr;
 		Ref< Shader > SceneCompositeShader = nullptr;
 		Ref< Shader > TexturePassShader = nullptr;
 		Ref< Shader > DirShadowMapShader = nullptr;
@@ -411,7 +426,9 @@ namespace Saturn {
 
 		void SetCurrentScene( Scene* pScene );
 
-		void SubmitStaticMesh( SharedPtr<Entity> entity, Ref< StaticMesh > mesh, Ref<MaterialRegistry> materialRegistry, const glm::mat4& transform );
+		void SubmitStaticMesh( SharedPtr<Entity> entity, Ref<StaticMesh> mesh, Ref<MaterialRegistry> materialRegistry, const glm::mat4& transform );
+
+		void SubmitDynamicMesh( SharedPtr<Entity> entity, Ref<SkeletalMesh> mesh, Ref<MaterialRegistry> materialRegistry, const glm::mat4& transform );
 		
 		// This will work for now (as atm now we are just gonna render the mesh ).
 		// However, if we have a different collider mesh than the mesh it will not be correct.
@@ -488,7 +505,7 @@ namespace Saturn {
 		void TexturePass();
 
 		void RenderStaticMeshes();
-		//void RenderDynamicMeshes();
+		void RenderDynamicMeshes();
 
 		void AddScheduledFunction( ScheduledFunc&& rrFunc );
 
@@ -507,6 +524,7 @@ namespace Saturn {
 		std::unordered_map< StaticMeshKey, DrawCommand > m_DrawList;
 		std::unordered_map< StaticMeshKey, DrawCommand > m_ShadowMapDrawList;
 		std::unordered_map< StaticMeshKey, DrawCommand > m_PhysicsColliderDrawList;
+		std::unordered_map< StaticMeshKey, DynamicDrawCommand > m_DynamicDrawList;
 
 		std::vector< ScheduledFunc > m_ScheduledFunctions;
 		ScheduledFunc m_LightCullingFunction;

@@ -283,6 +283,8 @@ namespace Saturn {
 		{
 			DrawAddComponents<StaticMeshComponent>( "Static Mesh", rSelections[ 0 ] );
 
+			DrawAddComponents<SkeletalMeshComponent>( "Skeletal Mesh", rSelections[ 0 ] );
+
 			DrawAddComponents<CameraComponent>( "Camera", rSelections[ 0 ] );
 
 			DrawAddComponents<PointLightComponent>( "Point Light", rSelections[ 0 ] );
@@ -776,6 +778,93 @@ namespace Saturn {
 
 			if( modified ) m_Context->MarkDirty();
 		} );
+
+		DrawComponent<SkeletalMeshComponent>( "Skeletal Mesh", entity, [ & ]( SkeletalMeshComponent& mc )
+		{
+			bool modified = false;
+			bool open = false;
+			static uint32_t s_CurrentIndex = 0;
+
+			ImGui::Columns( 3 );
+			ImGui::SetColumnWidth( 0, 100.0f );
+			ImGui::SetColumnWidth( 1, 300.0f );
+			ImGui::SetColumnWidth( 2, 40.0f );
+			ImGui::Text( "File Path" );
+			ImGui::NextColumn();
+			ImGui::PushItemWidth( -1.0f );
+
+			if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
+			{
+				open = !open;
+				m_CurrentFinderType = AssetType::SkeletalMesh;
+
+				if( mc.Mesh )
+					m_CurrentAssetID = mc.Mesh->ID;
+			}
+
+			ImGui::SameLine();
+
+			if( mc.Mesh )
+				Auxiliary::InputText( "##meshfilepath", &mc.Mesh->Name, ImGuiInputTextFlags_ReadOnly );
+			else
+				ImGui::InputText( "##meshfilepath", ( char* ) "", 1, ImGuiInputTextFlags_ReadOnly );
+
+			if( mc.Mesh )
+			{
+				if( Auxiliary::TreeNode( "Materials" ) )
+				{
+					int i = 0;
+					for( auto& rAsset : mc.MaterialRegistry->GetMaterialAssets() )
+					{
+						const std::string name = rAsset->Name.empty() ? rAsset->GetMaterialName() : rAsset->Name;
+						if( ImGui::Button( name.c_str() ) )
+						{
+							m_CurrentFinderType = AssetType::Material;
+							open = !open;
+							s_CurrentIndex = i;
+						}
+
+						if( mc.MaterialRegistry->HasOverrides( i ) )
+						{
+							ImGui::SameLine();
+
+							if( ImGui::SmallButton( "x" ) )
+							{
+								mc.MaterialRegistry->ResetMaterial( i, mc.Mesh->GetMaterialRegistry() );
+								modified |= true;
+							}
+						}
+
+						i++;
+					}
+
+					Auxiliary::EndTreeNode();
+				}
+			}
+
+			if( Auxiliary::DrawAssetFinder( m_CurrentFinderType, &open, m_CurrentAssetID ) )
+			{
+				if( m_CurrentFinderType == AssetType::SkeletalMesh )
+				{
+					mc.Mesh = AssetManager::Get().GetAssetAs<SkeletalMesh>( m_CurrentAssetID );
+
+					mc.MaterialRegistry = Ref<MaterialRegistry>::Create( mc.Mesh );
+				}
+				else if( m_CurrentFinderType == AssetType::Material )
+				{
+					// Don't update pure dependencies here because pure dependencies are only for assets and this change is local to this material registry
+					mc.MaterialRegistry->SetMaterial( s_CurrentIndex, m_CurrentAssetID );
+				}
+
+				modified = true;
+			}
+
+			ImGui::PopItemWidth();
+			ImGui::NextColumn();
+
+			if( modified ) m_Context->MarkDirty();
+		} );
+
 
 		DrawComponent<CameraComponent>( "Camera", entity, [&]( auto& cc )
 		{

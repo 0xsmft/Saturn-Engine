@@ -58,10 +58,17 @@ namespace Saturn {
 	{
 	public:
 		virtual void Serialise   ( const Ref<Asset>& rAsset ) const override;
-		[[nodiscard]] virtual bool TryLoadData (		 Ref<Asset>& rAsset ) const override;
+		[[nodiscard]] virtual bool TryLoadData (	  Ref<Asset>& rAsset ) const override;
 	};
 
 	class StaticMeshAssetSerialiser : public AssetSerialiser
+	{
+	public:
+		virtual void Serialise  ( const Ref<Asset>& rAsset ) const override;
+		[[nodiscard]] virtual bool TryLoadData(       Ref<Asset>& rAsset ) const override;
+	};
+
+	class SkeletalMeshAssetSerialiser : public AssetSerialiser
 	{
 	public:
 		virtual void Serialise  ( const Ref<Asset>& rAsset ) const override;
@@ -85,7 +92,22 @@ namespace Saturn {
 	class BehaviourTreeMemorySpecAssetSerialiser : public AssetSerialiser
 	{
 	public:
-		virtual void Serialise( const Ref<Asset>& rAsset ) const;
-		[[nodiscard]] virtual bool TryLoadData( Ref<Asset>& rAsset ) const override;
+		virtual void Serialise  ( const Ref<Asset>& rAsset ) const override;
+		[[nodiscard]] virtual bool TryLoadData(       Ref<Asset>& rAsset ) const override;
 	};
+
+	class SkeletonAssetSerialiser : public AssetSerialiser
+	{
+	public:
+		virtual void Serialise  ( const Ref<Asset>& rAsset ) const override;
+		[[nodiscard]] virtual bool TryLoadData(       Ref<Asset>& rAsset ) const override;
+	};
+
+	class SkeletalAnimationAssetSerialiser : public AssetSerialiser
+	{
+	public:
+		virtual void Serialise  ( const Ref<Asset>& rAsset ) const override;
+		[[nodiscard]] virtual bool TryLoadData(       Ref<Asset>& rAsset ) const override;
+	};
+
 }

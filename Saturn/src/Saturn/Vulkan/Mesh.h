@@ -116,10 +116,14 @@ namespace Saturn {
 		}
 	};
 	
-	// Per bone transformation data
+	// Bone information, not to be confused with Bone, which is to be used with animations
+	// This is to be used for Skeleton
 	struct SkeletalMeshBoneInfo
 	{
-		// The Bones transform in Bone space, i.e. bring the vertices to the bones transform.
+		std::string BoneName;
+		int ParentIndex = -1;
+
+		// The Bones transform in Bone space, i.e. bring the vertices to the bones transform, bind point.
 		glm::mat4 BoneOffset;
 
 		// Animated transformation to be applied to the vertices.
@@ -142,19 +146,25 @@ namespace std {
 
 namespace Saturn {
 
-	// StaticMeshAsset
-	class StaticMesh : public Asset
+	// This class acts as a base class to StaticMesh and SkeletalMesh, 
+	// The usage of this class is limited because it does not store
+	// vertices as static meshes have a different vertex layout to it's Skeletal counterpart.
+	// This means that generally you want to avoid using this and instead use StaticMesh/SkeletalMesh, only use this class if you know that may deal with both meshes.
+	class Mesh
 	{
 	public:
-		StaticMesh() = default;
-		StaticMesh( const Ref<Asset>& rBase, const std::filesystem::path& rFilepath );
-		StaticMesh( const std::vector<StaticVertex>& rVertices, const std::vector<Index>& rIndices, const glm::mat4& rTransform );
-		
-		virtual ~StaticMesh();
-		
+		Mesh() = default;
+		Mesh( const std::filesystem::path& rFilepath );
+		Mesh( const std::vector<Index>& rIndices, const glm::mat4& rTransform, const glm::mat4& rInverseTransform, uint32_t indicesCount, uint32_t verticesCount );
+
+		virtual ~Mesh();
+
+	public:
+		// Import (Internal functions)
+		void Import_InitMaterialRegistry();
+
+	public:
 		void SetFilepath( const std::filesystem::path& rFilepath ) { m_FilePath = rFilepath; }
-		
-		std::filesystem::path FilePath() { return m_FilePath; }
 		const std::filesystem::path FilePath() const { return m_FilePath; }
 
 		glm::mat4 GetInverseTransform() const { return m_InverseTransform; }
@@ -169,14 +179,11 @@ namespace Saturn {
 		Ref<VertexBuffer> GetVertexBuffer() { return m_VertexBuffer; }
 		Ref<IndexBuffer> GetIndexBuffer() { return m_IndexBuffer; }
 
-		std::vector<StaticVertex>& Vertices() { return m_Vertices; }
-		const std::vector<StaticVertex>& Vertices() const { return m_Vertices; }
-
 		std::vector<Index>& Indices() { return m_Indices; }
 		const std::vector<Index>& Indices() const { return m_Indices; }
 
-		void SetAttachedShape( ShapeType type ) { m_AttachedPhysicsShape = type; }
-		const ShapeType GetAttachedShape() const { return m_AttachedPhysicsShape; }
+		void SetAttachedShape( PhysicsShapeType type ) { m_AttachedPhysicsShape = type; }
+		const PhysicsShapeType GetAttachedShape() const { return m_AttachedPhysicsShape; }
 
 		void SetPhysicsMaterial( AssetID id ) { m_PhysicsMaterial = id; }
 		const AssetID GetPhysicsMaterial() const { return m_PhysicsMaterial; }
@@ -193,27 +200,10 @@ namespace Saturn {
 		// Return the number of faces
 		size_t GetFaceCount() const { return m_Indices.size(); }
 
-	public:
-		// Import (Internal functions)
-		void Import_InitMaterialRegistry();
-		void Import_AddMaterialID( uint64_t index, AssetID assetID );
-
-	public:
-		void SerialiseData( std::ofstream& rStream );
-		void DeserialiseData( std::istream& rStream );
-
-	private:
-#if !defined(SAT_DIST)
-		void Initialise();
-		
-		void TraverseNodes( aiNode* node, const glm::mat4& parentTransform = glm::mat4( 1.0f ), uint32_t level = 0 );
-		void CreateVertices();
-#endif
-	private:
+	protected:
 		Ref<VertexBuffer> m_VertexBuffer;
 		Ref<IndexBuffer> m_IndexBuffer;
 
-		std::vector<StaticVertex> m_Vertices;
 		std::vector<Index> m_Indices;
 		std::vector<Submesh> m_Submeshes;
 
@@ -225,7 +215,7 @@ namespace Saturn {
 		uint32_t m_IndicesCount = 0;
 		uint32_t m_VertexCount = 0;
 
-		ShapeType m_AttachedPhysicsShape = ShapeType::Unknown;
+		PhysicsShapeType m_AttachedPhysicsShape = PhysicsShapeType::Unknown;
 		MemoryAssetDependency<AssetType::PhysicsMaterial> m_PhysicsMaterial;
 
 		// Materials
@@ -239,36 +229,71 @@ namespace Saturn {
 #endif
 	};
 
+	// StaticMeshAsset
+	class StaticMesh : public Asset, public Mesh
+	{
+	public:
+		StaticMesh() = default;
+		StaticMesh( const Ref<Asset>& rBase, const std::filesystem::path& rFilepath );
+		StaticMesh( const std::vector<StaticVertex>& rVertices, const std::vector<Index>& rIndices, const glm::mat4& rTransform );
+		
+		virtual ~StaticMesh();
+		
+	public:
+		std::vector<StaticVertex>& Vertices() { return m_Vertices; }
+		const std::vector<StaticVertex>& Vertices() const { return m_Vertices; }
+
+	public:
+		void SerialiseData( std::ofstream& rStream );
+		void DeserialiseData( std::istream& rStream );
+
+	private:
+#if !defined(SAT_DIST)
+		void Initialise();
+		
+		void TraverseNodes( aiNode* node, const glm::mat4& parentTransform = glm::mat4( 1.0f ), uint32_t level = 0 );
+		void CreateVertices();
+#endif
+	private:
+		std::vector<StaticVertex> m_Vertices;
+	};
+
+	class SkeletonAsset;
+
 	// SkeletalMeshAsset
-	class SkeletalMesh : public Asset
+	class SkeletalMesh : public Asset, public Mesh
 	{
 	public:
 		SkeletalMesh() = default;
+		SkeletalMesh( const Ref<Asset>& rBase, const std::filesystem::path& rFilepath );
 		~SkeletalMesh() = default;
 
+		std::vector<Submesh>& Submeshes() { return m_Submeshes; }
+		const std::vector<Submesh>& Submeshes() const { return m_Submeshes; }
+
+		Ref<SkeletonAsset> GetSkeletonAsset() const;
+
+		const glm::mat4& GetBoneTransform( uint32_t index ) const;
+		const std::vector<SkeletalMeshBoneInfo>& GetBones() const { return m_Bones; }
+
+	public:
+		void Import_InitSkeleton( AssetID id );
+
 	private:
-		Ref<VertexBuffer> m_VertexBuffer;
-		Ref<IndexBuffer> m_IndexBuffer;
-
-		std::vector<DynamicVertex> m_Vertices;
-		std::vector<Index> m_Indices;
-		std::vector<Submesh> m_Submeshes;
-
-		std::filesystem::path m_FilePath;
-
-		glm::mat4 m_InverseTransform = {};
-		glm::mat4 m_Transform = {};
-
-		uint32_t m_IndicesCount = 0;
-		uint32_t m_VertexCount = 0;
-
-		// Materials
-		Ref<MaterialRegistry> m_MaterialRegistry;
-
 #if !defined(SAT_DIST)
-		std::unique_ptr<Assimp::Importer> m_Importer;
-		const aiScene* m_Scene = nullptr;
+		void Initialise();
+
+		void TraverseNodes( aiNode* node, const glm::mat4& parentTransform = glm::mat4( 1.0f ), uint32_t level = 0 );
+		void CreateVertices();
 #endif
+
+	private:
+		std::vector<DynamicVertex> m_Vertices;
+
+		std::vector<SkeletalMeshBoneInfo> m_Bones;
+		std::unordered_map<std::string, int> m_BoneMapping; // BoneName -> BoneIndex
+
+		Ref<SkeletonAsset> m_SkeletonAsset;
 	};
 
 	struct MeshInformation
@@ -289,12 +314,11 @@ namespace Saturn {
 		// Specify whether to not create textures from the mesh asset
 		MeshImportBehaviour_ExcludeTextures       = 1 << 1,
 
-		// If this is enabled then materials that have no names in the mesh file will be automatically generated
+		// If this is enabled then materials that have no names in the mesh file will be automatically generated with a given name
 		MeshImportBehaviour_AllowUnnamedMaterials = 1 << 2,
 
-		// Specify whether this mesh is animated, this option is only available if there is animations in the asset
-		// However, if this option is disabled by the user, the Skeletal mesh will become a Static mesh
-		MeshImportBehaviour_SK_AnimatedMesh       = 1 << 3,
+		// Import mesh
+		MeshImportBehaviour_SK_ImportMesh         = 1 << 3,
 
 		// Skeletal mesh only, used to specify whether to only import an animation or a skeleton without any mesh data.
 		MeshImportBehaviour_SK_NoAnimations       = 1 << 4,
@@ -305,7 +329,7 @@ namespace Saturn {
 		// Default behaviour for Static Meshes
 		MeshImportBehaviour_Default = MeshImportBehaviour_AllowUnnamedMaterials | MeshImportBehaviour_CreateNoMaterials,
 		// Default behaviour for Skeletal Meshes
-		MeshImportBehaviour_SK_Default = MeshImportBehaviour_AllowUnnamedMaterials | MeshImportBehaviour_CreateNoMaterials | MeshImportBehaviour_SK_AnimatedMesh
+		MeshImportBehaviour_SK_Default = MeshImportBehaviour_AllowUnnamedMaterials | MeshImportBehaviour_CreateNoMaterials | MeshImportBehaviour_SK_ImportMesh
 	};
 
 	// enum MeshImportBehaviour_
@@ -348,9 +372,12 @@ namespace Saturn {
 		virtual ~MeshImporterBase();
 
 #if !defined(SAT_DIST)
-		MeshImportBehaviour GetImportBehaviour() const { return m_ImportBehaviour; }
-
 		virtual bool TryImport() = 0;
+
+	public:
+		MeshImportBehaviour GetImportBehaviour() const { return m_ImportBehaviour; }
+		const MeshInformation& GetMeshInformation() { return m_MeshInformation; }
+		const MeshInformation& GetMeshInformation() const { return m_MeshInformation; }
 
 	protected:
 		void FindMaterials();
@@ -375,10 +402,6 @@ namespace Saturn {
 
 #if !defined(SAT_DIST)
 		virtual bool TryImport() override;
-
-	public:
-		const MeshInformation& GetMeshInformation()       { return m_MeshInformation; }
-		const MeshInformation& GetMeshInformation() const { return m_MeshInformation; }
 #endif
 	};
 
@@ -390,10 +413,15 @@ namespace Saturn {
 
 		virtual bool TryImport() override;
 
+		[[nodiscard]] AssetID GetCreatedID() const { return m_SkeletonID; }
+
 #if !defined(SAT_DIST)
 	private:
 		void CreateSkeletonIfNeeded();
+		void ImportAnimations();
 #endif
+	private:
+		AssetID m_SkeletonID = 0llu;
 	};
 
 }

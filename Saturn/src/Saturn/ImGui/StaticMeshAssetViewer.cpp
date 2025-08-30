@@ -126,10 +126,10 @@ namespace Saturn {
 
 		if( Auxiliary::TreeNode( "Physics" ) )
 		{
-			ShapeType type = m_Mesh->GetAttachedShape();
+			PhysicsShapeType type = m_Mesh->GetAttachedShape();
 			
 			constexpr const char* pItems[] = { "None", "Box", "Sphere", "Capsule", "Convex Mesh", "Triangle Mesh" };
-			static ShapeType SelectedEnum = type;
+			static PhysicsShapeType SelectedEnum = type;
 			static const char* Selected = pItems[ (int)SelectedEnum ];
 
 			ImGui::Text( "Select Physics Shape Type:" );
@@ -143,7 +143,7 @@ namespace Saturn {
 
 					if( ImGui::Selectable( pItems[ i ], IsSelected ) ) 
 					{
-						SelectedEnum = (ShapeType)i;
+						SelectedEnum = (PhysicsShapeType)i;
 						Selected = pItems[ i ];
 
 						m_Mesh->SetAttachedShape( SelectedEnum );
@@ -158,7 +158,7 @@ namespace Saturn {
 				ImGui::EndCombo();
 			}
 
-			if( SelectedEnum == ShapeType::TriangleMesh || SelectedEnum == ShapeType::ConvexMesh )
+			if( SelectedEnum == PhysicsShapeType::TriangleMesh || SelectedEnum == PhysicsShapeType::ConvexMesh )
 			{
 				if( ImGui::Button( "Generate Mesh Collider" ) )
 				{

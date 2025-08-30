@@ -375,6 +375,58 @@ namespace Saturn {
 		}
 	}
 
+	void Renderer::SubmitDynamicMesh( VkCommandBuffer CommandBuffer, Ref<Saturn::Pipeline> Pipeline, Ref<SkeletalMesh> mesh, Ref<StorageBufferSet>& rStorageBufferSet, Ref<UniformBufferSet> rUniformBufferSet, Ref< MaterialRegistry > materialRegistry, uint32_t SubmeshIndex, uint32_t count, Ref<VertexBuffer> transformData, uint32_t transformOffset )
+	{
+		SAT_PF_EVENT();
+
+		VkDeviceSize transformOffsets[ 1 ] = { transformOffset };
+
+		mesh->GetVertexBuffer()->Bind( CommandBuffer );
+//		transformData->Bind( CommandBuffer, 1, transformOffsets );
+
+		mesh->GetIndexBuffer()->Bind( CommandBuffer );
+		Pipeline->Bind( CommandBuffer );
+
+		auto frame = Renderer::Get().GetCurrentFrame();
+
+		{
+			Submesh& rSubmesh = mesh->Submeshes()[ SubmeshIndex ];
+			auto& rMaterialAsset = materialRegistry->GetMaterialAssets()[ rSubmesh.MaterialIndex ];
+			Ref<Material> mat = rMaterialAsset->GetMaterial();
+
+			auto wds = GetUniformBufferWriteDescriptors( rUniformBufferSet, mat );
+			if( rStorageBufferSet )
+			{
+				const auto& StorageWriteDescriptors = GetStorageBufferWriteDescriptors( rStorageBufferSet, mat );
+
+				for( size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++ )
+				{
+					// Add StorageWriteDescriptors onto wds
+					wds[ i ].reserve( wds[ i ].size() + StorageWriteDescriptors[ i ].size() );
+					wds[ i ].insert( wds[ i ].end(), StorageWriteDescriptors[ i ].begin(), StorageWriteDescriptors[ i ].end() );
+				}
+			}
+
+			rMaterialAsset->RT_Update( wds );
+
+			VkDescriptorSet Set = rMaterialAsset->GetMaterial()->GetDescriptorSet( m_FrameCount );
+
+			vkCmdPushConstants( CommandBuffer, Pipeline->GetPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, ( uint32_t ) rMaterialAsset->GetPushConstantData().Size, rMaterialAsset->GetPushConstantData().Data );
+
+			// Descriptor set 0, for material texture data.
+			// Descriptor set 1, for environment data.
+			std::array<VkDescriptorSet, 2> DescriptorSets = {
+				Set,
+				m_RendererDescriptorSets[ m_FrameCount ]
+			};
+
+			vkCmdBindDescriptorSets( CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+				Pipeline->GetPipelineLayout(), 0, ( uint32_t ) DescriptorSets.size(), DescriptorSets.data(), 0, nullptr );
+
+			vkCmdDrawIndexed( CommandBuffer, rSubmesh.IndexCount, count, rSubmesh.BaseIndex, rSubmesh.BaseVertex, 0 );
+		}
+	}
+
 	void Renderer::SetSceneEnvironment( Ref<Image2D> ShadowMap, Ref<EnvironmentMap> Environment, Ref<Texture2D> BDRF )
 	{
 		SAT_PF_EVENT();

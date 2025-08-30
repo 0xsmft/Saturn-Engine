@@ -34,6 +34,7 @@
 
 #include "Saturn/Asset/Asset.h"
 #include "Saturn/Asset/AssetManager.h"
+#include "Saturn/Asset/SkeletonAsset.h"
 
 #include "Saturn/Serialisation/YAML/AssetManagerSerialiser.h"
 
@@ -208,6 +209,28 @@ namespace Saturn {
 
 		ImGui::Text( "DrawSkeletalMeshOptions..." );
 
+		ImGui::BeginHorizontal( "##importOption_skim" );
+
+		auto hasFlag = [ this ]( MeshImportBehaviour flag ) -> bool
+		{
+			return ( m_ImportBehaviour & flag ) != 0;
+		};
+
+		bool excludeTextures = hasFlag( MeshImportBehaviour_SK_ImportMesh );
+		ImGui::Text( "Import Mesh" );
+		ImGui::Spring();
+
+		ImGui::SetNextItemWidth( 130.0f );
+		if( ImGui::Checkbox( "##SK_ImportMesh", &excludeTextures ) )
+		{
+			if( hasFlag( MeshImportBehaviour_SK_ImportMesh ) )
+				m_ImportBehaviour &= ~MeshImportBehaviour_SK_ImportMesh;
+			else
+				m_ImportBehaviour |= MeshImportBehaviour_SK_ImportMesh;
+		}
+
+		ImGui::EndHorizontal();
+
 		m_CurrentAssetIDForSkeleton == 0 ? ImGui::Text( "NOTE: No Skeleton is selected, a new one will be created!" ) : ImGui::Text( std::to_string( m_CurrentAssetIDForSkeleton ).c_str() );
 
 //		ImGui::Spring();
@@ -313,24 +336,58 @@ namespace Saturn {
 
 	void MeshImportPopup::ImportDynamic()
 	{
-		const auto id = AssetManager::Get().CreateAsset( AssetType::SkeletalMesh );
-		auto asset = AssetManager::Get().FindAsset( id );
-
-		// Copy the raw mesh file:
-		std::filesystem::copy_file( m_AssetToImportPath, m_DestinationPath / m_AssetToImportPath.filename(), std::filesystem::copy_options::overwrite_existing );
-
-		if( m_UseBinFile )
-			std::filesystem::copy_file( m_GLTFBinPath, m_DestinationPath / m_GLTFBinPath.filename(), std::filesystem::copy_options::overwrite_existing );
-
 		auto assetPath = m_DestinationPath / m_AssetToImportPath.filename();
 		assetPath.replace_extension( ".skmesh" );
 
-		asset->SetAbsolutePath( assetPath );
+		const auto id = AssetManager::Get().CreateAsset( AssetType::SkeletalMesh );
+		auto asset = AssetManager::Get().FindAsset( id );
+
+		if( ( m_ImportBehaviour & MeshImportBehaviour_SK_ImportMesh ) != 0 )
+		{
+			// Copy the raw mesh file:
+			std::filesystem::copy_file( m_AssetToImportPath, m_DestinationPath / m_AssetToImportPath.filename(), std::filesystem::copy_options::overwrite_existing );
+
+			if( m_UseBinFile )
+				std::filesystem::copy_file( m_GLTFBinPath, m_DestinationPath / m_GLTFBinPath.filename(), std::filesystem::copy_options::overwrite_existing );
+
+			asset->SetAbsolutePath( assetPath );
+		}
+
+		if( m_CurrentAssetIDForSkeleton )
+			m_ImportBehaviour |= MeshImportBehaviour_SK_MergeWithExistingSK;
 
 		SkeletalMeshImporter meshImporter( m_AssetToImportPath, m_DestinationPath, m_ImportBehaviour );
+		meshImporter.TryImport();
 
 		//////////////////////////////////////////////////////////////////////////
 		// Create the Skeletal Mesh
+
+		if( ( m_ImportBehaviour & MeshImportBehaviour_SK_ImportMesh ) != 0 )
+		{
+			auto skeletalMesh = asset.As<SkeletalMesh>();
+			skeletalMesh = Ref<SkeletalMesh>::Create();
+			skeletalMesh->ID = asset->ID;
+			skeletalMesh->Path = asset->Path;
+
+			auto& meshPath = assetPath.replace_extension( m_AssetToImportPath.extension() );
+			skeletalMesh->SetFilepath( meshPath );
+			skeletalMesh->Import_InitMaterialRegistry();
+			skeletalMesh->Import_InitSkeleton( m_CurrentAssetIDForSkeleton == 0 ? meshImporter.GetCreatedID() : m_CurrentAssetIDForSkeleton );
+
+			// TOOD: Unload the material assets!! (Textures could be loaded!)
+			for( uint64_t materialID : meshImporter.GetMeshInformation().MaterialAssets )
+			{
+				skeletalMesh->GetMaterialRegistry()->AddAsset( AssetManager::Get().GetAssetAs<MaterialAsset>( materialID ) );
+			}
+
+			// Serialise the mesh asset
+			SkeletalMeshAssetSerialiser sma;
+			sma.Serialise( skeletalMesh );
+
+			skeletalMesh->SetAbsolutePath( assetPath );
+		}
+		else
+			AssetManager::Get().RemoveAsset( id );
 	}
 
 	void MeshImportPopup::ImportStatic()

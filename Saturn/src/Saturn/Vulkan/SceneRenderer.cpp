@@ -95,6 +95,7 @@ namespace Saturn {
 		m_RendererData.UniformBufferSet->CreateBuffer( sizeof( UBShadowData ), 3 );
 		m_RendererData.UniformBufferSet->CreateBuffer( 4, 12 ); // Debug Data
 		m_RendererData.UniformBufferSet->CreateBuffer( sizeof( UBPointLights ), 13 );
+		m_RendererData.UniformBufferSet->CreateBuffer( 64 + 64 * 100, 15 );
 
 		InitPreDepth();
 
@@ -246,6 +247,38 @@ namespace Saturn {
 		PipelineSpec.FrontFace = VK_FRONT_FACE_CLOCKWISE;
 
 		m_RendererData.StaticMeshPipeline = Ref< Pipeline >::Create( PipelineSpec );
+
+		//////////////////////////////////////////////////////////////////////////
+		// DYNAMIC MESHES
+		//////////////////////////////////////////////////////////////////////////
+
+		// Create the static meshes pipeline.
+		// Load the shader
+		if( !m_RendererData.DynamicMeshShader )
+		{
+			m_RendererData.DynamicMeshShader = ShaderLibrary::Get().FindOrLoad( "shader_new_anim", "content/shaders/shader_new_anim.glsl" );
+
+			m_RendererData.DynamicMeshMaterial = Ref<Material>::Create( m_RendererData.DynamicMeshShader, "DynamicMeshMat" );
+		}
+
+		if( m_RendererData.DynamicMeshPipeline )
+			m_RendererData.DynamicMeshPipeline = nullptr;
+
+		PipelineSpec.Name = "Dynamic Meshes";
+		PipelineSpec.Shader = m_RendererData.DynamicMeshShader;
+		PipelineSpec.UseDepthTest = true;
+		PipelineSpec.VertexLayout = {
+			{ ShaderDataType::Float3, "a_Position" },
+			{ ShaderDataType::Float3, "a_Normal"   },
+			{ ShaderDataType::Float3, "a_Tangent"  },
+			{ ShaderDataType::Float3, "a_Binormal" },
+			{ ShaderDataType::Float2, "a_TexCoord" },
+			{ ShaderDataType::Int4,   "a_BoneIndices" },
+			{ ShaderDataType::Float4, "a_BoneWeights" }
+		};
+		PipelineSpec.InstanceLayout = {};
+
+		m_RendererData.DynamicMeshPipeline = Ref< Pipeline >::Create( PipelineSpec );
 	}
 
 	void SceneRenderer::InitDirShadowMap()
@@ -1193,6 +1226,55 @@ namespace Saturn {
 		}
 	}
 
+	void SceneRenderer::SubmitDynamicMesh( SharedPtr<Entity> entity, Ref<SkeletalMesh> mesh, Ref<MaterialRegistry> materialRegistry, const glm::mat4& transform )
+	{
+		SAT_PF_EVENT();
+
+		auto& id = mesh->ID;
+
+		auto& submeshes = mesh->Submeshes();
+		for( size_t i = 0; i < submeshes.size(); i++ )
+		{
+			const glm::mat4 submeshTransform = transform * submeshes[ i ].Transform;
+
+			const AABB submeshAABB = submeshes[ i ].BoundingBox;
+			const AABB transformedAABB = TransformAABB( submeshAABB, submeshTransform );
+
+			if( m_RendererData.CurrentCamera.pCamera->CameraFrustumIntersectsAABB( transformedAABB ) )
+			{
+				StaticMeshKey key = { mesh->ID, materialRegistry, ( uint32_t ) i };
+
+				// Submit for rendering
+				auto& command = m_DynamicDrawList[ key ];
+				command.Mesh = mesh;
+				command.SubmeshIndex = ( uint32_t ) i;
+				command.Instances++;
+				command.Transform = submeshTransform;
+
+				/*
+				auto& shadow = m_ShadowMapDrawList[ key ];
+				shadow.Mesh = nullptr;
+				shadow.SubmeshIndex = ( uint32_t ) i;
+				shadow.Instances++;
+
+				auto& data = m_RendererData.MeshTransforms[ key ].Data.emplace_back();
+				data.TransfromBufferR[ 0 ] = {
+					submeshTransform[ 0 ][ 0 ], submeshTransform[ 1 ][ 0 ], submeshTransform[ 2 ][ 0 ], submeshTransform[ 3 ][ 0 ]
+				};
+				data.TransfromBufferR[ 1 ] = {
+					submeshTransform[ 0 ][ 1 ], submeshTransform[ 1 ][ 1 ], submeshTransform[ 2 ][ 1 ], submeshTransform[ 3 ][ 1 ]
+				};
+				data.TransfromBufferR[ 2 ] = {
+					submeshTransform[ 0 ][ 2 ], submeshTransform[ 1 ][ 2 ], submeshTransform[ 2 ][ 2 ], submeshTransform[ 3 ][ 2 ]
+				};
+				data.TransfromBufferR[ 3 ] = {
+					submeshTransform[ 0 ][ 3 ], submeshTransform[ 1 ][ 3 ], submeshTransform[ 2 ][ 3 ], submeshTransform[ 3 ][ 3 ]
+				};
+				*/
+			}
+		}
+	}
+
 	void SceneRenderer::SubmitPhysicsCollider( SharedPtr<Entity> entity, Ref< StaticMesh > mesh, Ref<MaterialRegistry> materialRegistry, const glm::mat4& transform )
 	{
 		SAT_PF_EVENT();
@@ -1317,6 +1399,12 @@ namespace Saturn {
 
 		CmdEndDebugLabel( m_RendererData.CommandBuffer );
 
+		CmdBeginDebugLabel( m_RendererData.CommandBuffer, "Dynamic meshes" );
+		
+		RenderDynamicMeshes();
+
+		CmdEndDebugLabel( m_RendererData.CommandBuffer );
+
 		//////////////////////////////////////////////////////////////////////////
 
 		// End geometry pass.
@@ -1327,7 +1415,7 @@ namespace Saturn {
 
 	void SceneRenderer::RenderStaticMeshes()
 	{
-		uint32_t frame = Renderer::Get().GetCurrentFrame();
+		const uint32_t frame = Renderer::Get().GetCurrentFrame();
 
 		Ref< Shader > StaticMeshShader = m_RendererData.StaticMeshShader;
 
@@ -1337,7 +1425,8 @@ namespace Saturn {
 		u_Matrices.ViewProjection = m_RendererData.CurrentCamera.pCamera->ProjectionMatrix() * m_RendererData.CurrentCamera.ViewMatrix;
 
 		UBLightData u_LightData = {};
-		UBPointLights u_Lights;
+//		std::unique_ptr<UBPointLights> u_Lights = std::make_unique<UBPointLights>();
+		UBPointLights u_Lights = {};
 
 		u_Lights.nbLights = int( m_pScene->m_Lights.PointLights.size() );
 
@@ -1399,6 +1488,44 @@ namespace Saturn {
 		}
 	}
 
+	void SceneRenderer::RenderDynamicMeshes()
+	{
+		const uint32_t frame = Renderer::Get().GetCurrentFrame();
+		for( auto&& [key, Cmd] : m_DynamicDrawList )
+		{
+//			const auto& rTransformData = m_RendererData.MeshTransforms[ key ];
+
+			struct UBDynamicTransform
+			{
+				glm::mat4 Transform;
+				glm::mat4 BoneTransform[100];
+			} u_Transform;
+
+			u_Transform.Transform = Cmd.Transform;
+
+			const auto& rBones = Cmd.Mesh->GetBones();
+			for( size_t i = 0; i < rBones.size(); i++ )
+			{
+				u_Transform.BoneTransform[ i ] = Cmd.Mesh->GetBoneTransform( i );
+			}
+
+			m_RendererData.UniformBufferSet->Get( 0, 15, frame )->UploadData( &u_Transform, sizeof( UBDynamicTransform ) );
+
+			// Render Submesh
+			Renderer::Get().SubmitDynamicMesh(
+				m_RendererData.CommandBuffer,
+				m_RendererData.DynamicMeshPipeline,
+				Cmd.Mesh,
+				m_RendererData.StorageBufferSet,
+				m_RendererData.UniformBufferSet,
+				key.Registry,
+				Cmd.SubmeshIndex,
+				Cmd.Instances,
+				m_RendererData.SubmeshTransformData[ frame ].VertexBuffer,
+				0 );
+		}
+	}
+
 	void SceneRenderer::DirShadowMapPass()
 	{
 		SAT_PF_EVENT();
@@ -1409,7 +1536,7 @@ namespace Saturn {
 		auto pAllocator = VulkanContext::Get().GetVulkanAllocator();
 		VkExtent2D Extent = { ( uint32_t ) SHADOW_MAP_SIZE, ( uint32_t ) SHADOW_MAP_SIZE };
 		VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
-		uint32_t frame = Renderer::Get().GetCurrentFrame();
+		const uint32_t frame = Renderer::Get().GetCurrentFrame();
 
 		std::array<VkClearValue, 2> ClearColors{};
 		ClearColors[ 0 ].depthStencil = { 1.0f, 0 };
@@ -1491,7 +1618,7 @@ namespace Saturn {
 
 		m_RendererData.PreDepthTimer.Reset();
 
-		uint32_t frame = Renderer::Get().GetCurrentFrame();
+		const uint32_t frame = Renderer::Get().GetCurrentFrame();
 
 		VkExtent2D Extent = { m_RendererData.Width,m_RendererData.Height };
 		VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
@@ -1584,7 +1711,7 @@ namespace Saturn {
 		if( !m_PhysicsColliderDrawList.size() )
 			return;
 
-		uint32_t frame = Renderer::Get().GetCurrentFrame();
+		const uint32_t frame = Renderer::Get().GetCurrentFrame();
 		VkExtent2D Extent = { m_RendererData.Width, m_RendererData.Height };
 		VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
 
@@ -1635,7 +1762,7 @@ namespace Saturn {
 	/*
 	void SceneRenderer::SelectionPass()
 	{
-		uint32_t frame = Renderer::Get().GetCurrentFrame();
+		const uint32_t frame = Renderer::Get().GetCurrentFrame();
 		VkExtent2D Extent = { m_RendererData.Width,m_RendererData.Height };
 		VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
 
@@ -1729,7 +1856,7 @@ namespace Saturn {
 		SAT_PF_EVENT();
 
 		Ref<Pass> pass = VulkanContext::Get().GetDefaultPass();
-		uint32_t frame = Renderer::Get().GetCurrentFrame();
+		const uint32_t frame = Renderer::Get().GetCurrentFrame();
 
 		VkExtent2D Extent = { m_RendererData.Width, m_RendererData.Height };
 		VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
@@ -1942,7 +2069,7 @@ namespace Saturn {
 		SAT_PF_EVENT();
 
 		// Create our buffers for instance data.
-		uint32_t frame = Renderer::Get().GetCurrentFrame();
+		const uint32_t frame = Renderer::Get().GetCurrentFrame();
 
 		uint32_t off = 0;
 		for( auto& [id, buffer] : m_RendererData.MeshTransforms )
@@ -2046,6 +2173,7 @@ namespace Saturn {
 	void SceneRenderer::FlushDrawList()
 	{
 		m_DrawList.clear();
+		m_DynamicDrawList.clear();
 		m_ShadowMapDrawList.clear();
 		m_PhysicsColliderDrawList.clear();
 		m_ScheduledFunctions.clear();

@@ -39,12 +39,14 @@ namespace Saturn {
 	void AssetImporter::Init()
 	{
 		m_AssetSerialisers[ AssetType::StaticMesh		   ] = std::make_unique<StaticMeshAssetSerialiser>();
+		m_AssetSerialisers[ AssetType::SkeletalMesh		   ] = std::make_unique<SkeletalMeshAssetSerialiser>();
 		m_AssetSerialisers[ AssetType::Material			   ] = std::make_unique<MaterialAssetSerialiser>();
 		m_AssetSerialisers[ AssetType::Sound			   ] = std::make_unique<SoundSpecificationAssetSerialiser>();
 		m_AssetSerialisers[ AssetType::Prefab			   ] = std::make_unique<PrefabSerialiser>();
 		m_AssetSerialisers[ AssetType::Skeleton            ] = std::make_unique<SkeletonAssetSerialiser>();
 		m_AssetSerialisers[ AssetType::PhysicsMaterial     ] = std::make_unique<PhysicsMaterialAssetSerialiser>();
 		m_AssetSerialisers[ AssetType::BehaviourTreeMemory ] = std::make_unique<BehaviourTreeMemorySpecAssetSerialiser>();
+		m_AssetSerialisers[ AssetType::SkeletalAnimation ] = std::make_unique<SkeletalAnimationAssetSerialiser>();
 	}
 
 	bool AssetImporter::TryLoadData( Ref<Asset>& rAsset )

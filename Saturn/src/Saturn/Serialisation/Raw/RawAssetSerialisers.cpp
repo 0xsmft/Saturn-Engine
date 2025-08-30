@@ -307,7 +307,7 @@ namespace Saturn {
 
 		/////////////////////////////////////
 
-		ShapeType shapeType = ShapeType::Unknown;
+		PhysicsShapeType shapeType = PhysicsShapeType::Unknown;
 		AssetID physicsMaterial = 0;
 
 		RawSerialisation::ReadObject( shapeType, stream );

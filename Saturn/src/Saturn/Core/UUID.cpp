@@ -45,14 +45,4 @@ namespace Saturn {
 	UUID::UUID( const UUID& other ) : m_UUID( other.m_UUID )
 	{
 	}
-
-	void UUID::Serialise( const UUID& rObject, std::ofstream& rStream )
-	{
-		RawSerialisation::WriteObject( rObject.m_UUID, rStream );
-	}
-
-	void UUID::Deserialise( UUID& rObject, std::istream& rStream )
-	{
-		RawSerialisation::ReadObject( rObject.m_UUID, rStream );
-	}
 }

@@ -39,6 +39,8 @@
 #include "Saturn/Asset/Asset.h"
 #include "Saturn/Asset/MaterialAsset.h"
 #include "Saturn/Asset/AssetImporter.h"
+#include "Saturn/Asset/SkeletonAsset.h"
+#include "Saturn/Asset/SkeletalAnimationAsset.h"
 
 #include "Saturn/Project/Project.h"
 
@@ -61,15 +63,15 @@ namespace Saturn {
 
 #if !defined(SAT_DIST)
 namespace Auxiliary {
-		static glm::mat4 Mat4FromAssimpMat4( const aiMatrix4x4& matrix )
-		{
-			glm::mat4 result;
-			result[ 0 ][ 0 ] = matrix.a1; result[ 1 ][ 0 ] = matrix.a2; result[ 2 ][ 0 ] = matrix.a3; result[ 3 ][ 0 ] = matrix.a4;
-			result[ 0 ][ 1 ] = matrix.b1; result[ 1 ][ 1 ] = matrix.b2; result[ 2 ][ 1 ] = matrix.b3; result[ 3 ][ 1 ] = matrix.b4;
-			result[ 0 ][ 2 ] = matrix.c1; result[ 1 ][ 2 ] = matrix.c2; result[ 2 ][ 2 ] = matrix.c3; result[ 3 ][ 2 ] = matrix.c4;
-			result[ 0 ][ 3 ] = matrix.d1; result[ 1 ][ 3 ] = matrix.d2; result[ 2 ][ 3 ] = matrix.d3; result[ 3 ][ 3 ] = matrix.d4;
-			return result;
-		}	
+	static glm::mat4 Mat4FromAssimpMat4( const aiMatrix4x4& matrix )
+	{
+		glm::mat4 result;
+		result[ 0 ][ 0 ] = matrix.a1; result[ 1 ][ 0 ] = matrix.a2; result[ 2 ][ 0 ] = matrix.a3; result[ 3 ][ 0 ] = matrix.a4;
+		result[ 0 ][ 1 ] = matrix.b1; result[ 1 ][ 1 ] = matrix.b2; result[ 2 ][ 1 ] = matrix.b3; result[ 3 ][ 1 ] = matrix.b4;
+		result[ 0 ][ 2 ] = matrix.c1; result[ 1 ][ 2 ] = matrix.c2; result[ 2 ][ 2 ] = matrix.c3; result[ 3 ][ 2 ] = matrix.c4;
+		result[ 0 ][ 3 ] = matrix.d1; result[ 1 ][ 3 ] = matrix.d2; result[ 2 ][ 3 ] = matrix.d3; result[ 3 ][ 3 ] = matrix.d4;
+		return result;
+	}
 }
 
 	static constexpr uint32_t s_MeshImportFlags =
@@ -102,9 +104,33 @@ namespace Auxiliary {
 #endif
 
 	//////////////////////////////////////////////////////////////////////////
+	// MESH BASE
+
+	Mesh::Mesh( const std::filesystem::path& rFilepath )
+		: m_FilePath( rFilepath )
+	{
+	}
+
+	Mesh::Mesh( const std::vector<Index>& rIndices, const glm::mat4& rTransform, const glm::mat4& rInverseTransform, uint32_t indicesCount, uint32_t verticesCount )
+		: m_Indices( rIndices ), m_Transform( rTransform ), m_InverseTransform( rInverseTransform ), m_IndicesCount( indicesCount ), m_VertexCount( verticesCount )
+	{
+	}
+
+	Mesh::~Mesh()
+	{
+	}
+
+	void Mesh::Import_InitMaterialRegistry()
+	{
+		if( !m_MaterialRegistry )
+			m_MaterialRegistry = Ref<MaterialRegistry>::Create();
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// STATIC MESH
 
 	StaticMesh::StaticMesh( const Ref<Asset>& rBase, const std::filesystem::path& rFilepath )
-		: Asset( rBase ), m_FilePath( rFilepath )
+		: Asset( rBase ), Mesh( rFilepath )
 	{
 #if !defined(SAT_DIST)
 		Initialise();
@@ -112,7 +138,8 @@ namespace Auxiliary {
 	}
 
 	StaticMesh::StaticMesh( const std::vector<StaticVertex>& rVertices, const std::vector<Index>& rIndices, const glm::mat4& rTransform )
-		: m_Vertices( rVertices ), m_Indices( rIndices ), m_Transform( rTransform ), m_InverseTransform( glm::inverse( rTransform ) ), m_IndicesCount( rIndices.size() ), m_VertexCount( rVertices.size() )
+		: m_Vertices( rVertices ), 
+		Mesh( rIndices, rTransform, glm::inverse( rTransform ), rIndices.size(), rVertices.size() )
 	{
 		Submesh submesh{};
 		submesh.BaseVertex = 0;
@@ -288,16 +315,6 @@ namespace Auxiliary {
 	}
 #endif
 
-	void StaticMesh::Import_InitMaterialRegistry()
-	{
-		if( m_MaterialRegistry == nullptr )
-			m_MaterialRegistry = Ref<MaterialRegistry>::Create();
-	}
-
-	void StaticMesh::Import_AddMaterialID( uint64_t index, AssetID assetID )
-	{
-	}
-
 	//////////////////////////////////////////////////////////////////////////
 	// SERIALISATION/DESERIALISATION
 
@@ -377,6 +394,230 @@ namespace Auxiliary {
 	}
 
 	//////////////////////////////////////////////////////////////////////////
+	// SKELETAL MESH
+
+	SkeletalMesh::SkeletalMesh( const Ref<Asset>& rBase, const std::filesystem::path& rFilepath )
+		: Asset( rBase ), Mesh( rFilepath )
+	{
+#if !defined(SAT_DIST)
+		Initialise();
+#endif
+	}
+
+	Ref<SkeletonAsset> SkeletalMesh::GetSkeletonAsset() const
+	{
+		return m_SkeletonAsset;
+	}
+
+	const glm::mat4& SkeletalMesh::GetBoneTransform( uint32_t index ) const
+	{
+		return m_Bones.at( index ).FinalTransformation;
+	}
+
+	void SkeletalMesh::Import_InitSkeleton( AssetID id )
+	{
+		// TODO: Not the best way, a bit screwy
+		if( !m_SkeletonAsset )
+		{
+			m_SkeletonAsset = Ref<SkeletonAsset>::Create( AssetManager::Get().FindAsset( id ) );
+		}
+	}
+
+#if !defined(SAT_DIST)
+	void SkeletalMesh::Initialise()
+	{
+		AssimpLog::Initialize();
+
+		if( !std::filesystem::exists( m_FilePath ) )
+		{
+			SAT_CORE_ERROR( "Failed to load mesh file (file does not exists): {0}", m_FilePath );
+			return;
+		}
+		else
+			SAT_CORE_INFO( "Loading mesh: {0}", m_FilePath.string().c_str() );
+
+		m_Importer = std::make_unique<Assimp::Importer>();
+
+		const aiScene* scene = m_Importer->ReadFile( m_FilePath.string(), s_MeshImportFlags );
+		if( scene == nullptr || !scene->HasMeshes() )
+		{
+			SAT_CORE_ERROR( "Failed to load mesh file (does the file have meshes?): {0}", m_FilePath );
+			return;
+		}
+
+		m_Scene = scene;
+
+		const glm::mat4 transform = Auxiliary::Mat4FromAssimpMat4( m_Scene->mRootNode->mTransformation );
+
+		m_InverseTransform = glm::inverse( transform );
+		m_Transform = transform;
+
+		m_MaterialRegistry = Ref<MaterialRegistry>::Create();
+
+		CreateVertices();
+	}
+
+	void SkeletalMesh::CreateVertices()
+	{
+		m_Submeshes.reserve( m_Scene->mNumMeshes );
+
+		// Iterate over all meshes in the scene.
+		for( unsigned int m = 0; m < m_Scene->mNumMeshes; m++ )
+		{
+			aiMesh* mesh = m_Scene->mMeshes[ m ];
+
+			Submesh& submesh = m_Submeshes.emplace_back();
+			submesh.BaseVertex = m_VertexCount;
+			submesh.BaseIndex = m_IndicesCount;
+			submesh.MaterialIndex = mesh->mMaterialIndex;
+			submesh.VertexCount = mesh->mNumVertices;
+			// Multiply by three because we don't care about the faces we want the number actual indices
+			submesh.IndexCount = mesh->mNumFaces * 3;
+			submesh.MeshName = mesh->mName.C_Str();
+
+			auto& rAABB = submesh.BoundingBox;
+			rAABB.Min = { FLT_MAX, FLT_MAX, FLT_MAX };
+			rAABB.Max = { -FLT_MAX, -FLT_MAX, -FLT_MAX };
+
+			m_VertexCount += mesh->mNumVertices;
+			// Add to the entire mesh index count
+			m_IndicesCount += submesh.IndexCount;
+
+			SAT_CORE_ASSERT( mesh->HasPositions(), "Meshes require positions." );
+			SAT_CORE_ASSERT( mesh->HasNormals(), "Meshes require normals." );
+
+			// Vertices
+			m_Vertices.reserve( mesh->mNumVertices );
+
+			for( unsigned int i = 0; i < mesh->mNumVertices; i++ )
+			{
+				DynamicVertex vertex{};
+				vertex.Position = { mesh->mVertices[ i ].x, mesh->mVertices[ i ].y, mesh->mVertices[ i ].z };
+				vertex.Normal = { mesh->mNormals[ i ].x, mesh->mNormals[ i ].y, mesh->mNormals[ i ].z };
+
+				rAABB.Min.x = glm::min( vertex.Position.x, rAABB.Min.x );
+				rAABB.Min.y = glm::min( vertex.Position.y, rAABB.Min.y );
+				rAABB.Min.z = glm::min( vertex.Position.z, rAABB.Min.z );
+
+				rAABB.Max.x = glm::max( vertex.Position.x, rAABB.Max.x );
+				rAABB.Max.y = glm::max( vertex.Position.y, rAABB.Max.y );
+				rAABB.Max.z = glm::max( vertex.Position.z, rAABB.Max.z );
+
+				if( mesh->HasTangentsAndBitangents() )
+				{
+					vertex.Tangent = { mesh->mTangents[ i ].x, mesh->mTangents[ i ].y, mesh->mTangents[ i ].z };
+					vertex.Binormal = { mesh->mBitangents[ i ].x, mesh->mBitangents[ i ].y, mesh->mBitangents[ i ].z };
+				}
+
+				if( mesh->HasTextureCoords( 0 ) )
+					vertex.Texcoord = { mesh->mTextureCoords[ 0 ][ i ].x, mesh->mTextureCoords[ 0 ][ i ].y };
+
+				m_Vertices.push_back( vertex );
+			}
+
+			// Indices
+			// Reserve for number of faces in the current submesh
+			// We don't need to multiply by three because we are storing faces
+			m_Indices.reserve( mesh->mNumFaces );
+
+			for( unsigned int i = 0; i < mesh->mNumFaces; i++ )
+			{
+				SAT_CORE_ASSERT( mesh->mFaces[ i ].mNumIndices == 3, "Mesh must have 3 indices." );
+
+				m_Indices.emplace_back( mesh->mFaces[ i ].mIndices[ 0 ], mesh->mFaces[ i ].mIndices[ 1 ], mesh->mFaces[ i ].mIndices[ 2 ] );
+			}
+
+			if( mesh->HasBones() )
+			{
+				for( unsigned int i = 0; i < mesh->mNumBones; i++ )
+				{
+					aiBone* aiBone = mesh->mBones[ i ];
+					std::string boneName( aiBone->mName.C_Str() );
+
+					int boneIndex = 0;
+					if( m_BoneMapping.find( boneName ) == m_BoneMapping.end() )
+					{
+						boneIndex = ( int ) m_Bones.size();
+						m_BoneMapping[ boneName ] = boneIndex;
+
+						SkeletalMeshBoneInfo boneInfo;
+						boneInfo.BoneName = boneName;
+						boneInfo.ParentIndex = -1;
+						boneInfo.BoneOffset = Auxiliary::Mat4FromAssimpMat4( aiBone->mOffsetMatrix );
+						boneInfo.FinalTransformation = glm::mat4( 1.0f );
+
+						m_Bones.push_back( boneInfo );
+					}
+					else
+					{
+						boneIndex = m_BoneMapping[ boneName ];
+					}
+
+					// Assign weights to vertices
+					for( unsigned int j = 0; j < aiBone->mNumWeights; j++ )
+					{
+						unsigned int vertexID = submesh.BaseVertex + aiBone->mWeights[ j ].mVertexId;
+						float weight = aiBone->mWeights[ j ].mWeight;
+						m_Vertices[ vertexID ].AddBoneData( boneIndex, weight );
+					}
+				}
+			}
+		}
+
+		m_VertexBuffer = Ref<VertexBuffer>::Create( m_Vertices.data(), ( uint32_t ) ( m_Vertices.size() * sizeof( DynamicVertex ) ) );
+		m_IndexBuffer = Ref<IndexBuffer>::Create( m_Indices.data(), m_Indices.size() * sizeof( Index ) );
+
+		TraverseNodes( m_Scene->mRootNode );
+
+		for( const auto& rSubmesh : m_Submeshes )
+		{
+			const AABB bb = rSubmesh.BoundingBox;
+			const glm::vec3 min = glm::vec3( rSubmesh.Transform * glm::vec4( bb.Min, 1.0f ) );
+			const glm::vec3 max = glm::vec3( rSubmesh.Transform * glm::vec4( bb.Max, 1.0f ) );
+
+			m_BoundingBox.Min.x = glm::min( m_BoundingBox.Min.x, min.x );
+			m_BoundingBox.Min.y = glm::min( m_BoundingBox.Min.y, min.y );
+			m_BoundingBox.Min.z = glm::min( m_BoundingBox.Min.z, min.z );
+
+			m_BoundingBox.Max.x = glm::max( m_BoundingBox.Max.x, max.x );
+			m_BoundingBox.Max.y = glm::max( m_BoundingBox.Max.y, max.y );
+			m_BoundingBox.Max.z = glm::max( m_BoundingBox.Max.z, max.z );
+		}
+	}
+
+	void SkeletalMesh::TraverseNodes( aiNode* node, const glm::mat4& parentTransform /*= glm::mat4( 1.0f )*/, uint32_t level /*= 0 */ )
+	{
+		const glm::mat4 transform = parentTransform * Auxiliary::Mat4FromAssimpMat4( node->mTransformation );
+
+		// If node is a bone, update its parent relation
+		auto it = m_BoneMapping.find( node->mName.C_Str() );
+		if( it != m_BoneMapping.end() )
+		{
+			int boneIndex = it->second;
+			// Find parent bone
+			if( node->mParent )
+			{
+				auto parentIt = m_BoneMapping.find( node->mParent->mName.C_Str() );
+				if( parentIt != m_BoneMapping.end() )
+					m_Bones[ boneIndex ].ParentIndex = parentIt->second;
+			}
+		}
+
+		for( uint32_t i = 0; i < node->mNumMeshes; i++ )
+		{
+			uint32_t mesh = node->mMeshes[ i ];
+			auto& submesh = m_Submeshes[ mesh ];
+			submesh.NodeName = node->mName.C_Str();
+			submesh.Transform = transform;
+		}
+
+		for( uint32_t i = 0; i < node->mNumChildren; i++ )
+			TraverseNodes( node->mChildren[ i ], transform, level + 1 );
+	}
+
+#endif
+
+	//////////////////////////////////////////////////////////////////////////
 	// MESH DETERMINER
 
 	void MeshDeterminer::ImportAndDetermine( const std::filesystem::path& rPath )
@@ -396,7 +637,7 @@ namespace Auxiliary {
 		}
 
 		if( scene->HasAnimations() )
-			m_Result |= MeshDeterminerResult_Animations;
+			m_Result = MeshDeterminerResult_Animations;
 
 		if( scene->HasMaterials() )
 			m_Result |= MeshDeterminerResult_Materials;
@@ -442,8 +683,6 @@ namespace Auxiliary {
 	{
 #if !defined(SAT_DIST)
 		m_Importer.reset();
-		delete m_Scene;
-		m_Scene = nullptr;
 #endif
 	}
 
@@ -726,6 +965,8 @@ namespace Auxiliary {
 		if( m_Scene->HasAnimations() ) SAT_CORE_WARN( "[StaticMeshImporter] Scene has animations, they will be ignored!" );
 
 		FindMaterials();
+
+		return true;
 	}
 #endif
 
@@ -735,7 +976,6 @@ namespace Auxiliary {
 	SkeletalMeshImporter::SkeletalMeshImporter( const std::filesystem::path& rPath, const std::filesystem::path& rDstPath, MeshImportBehaviour importBehaviour )
 		: MeshImporterBase( rPath, rDstPath, importBehaviour )
 	{
-
 	}
 
 	SkeletalMeshImporter::~SkeletalMeshImporter()
@@ -761,71 +1001,109 @@ namespace Auxiliary {
 
 		FindMaterials();
 		CreateSkeletonIfNeeded();
+
+		return true;
 	}
 
 	void SkeletalMeshImporter::CreateSkeletonIfNeeded()
 	{
-		std::vector<DynamicVertex> DynamicVertices;
-		std::vector<SkeletalMeshBoneInfo> boneInfos;
-		std::unordered_map<std::string, uint32_t> boneMapping;
-
-		uint32_t boneCount = 0;
-
-		uint32_t indexCount = 0;
-		uint32_t vertexCount = 0;
-
-		for( unsigned int m = 0; m < m_Scene->mNumMeshes; m++ )
-		{
-			aiMesh* pMesh = m_Scene->mMeshes[ m ];
-			if( !pMesh->HasBones() ) continue;
-
-			Submesh submesh{ .BaseVertex = vertexCount, .BaseIndex = indexCount, .MaterialIndex = 0, .IndexCount = pMesh->mNumFaces * 3, .VertexCount = pMesh->mNumVertices };
-
-			indexCount += submesh.IndexCount;
-			vertexCount += submesh.VertexCount;
-
-			DynamicVertices.resize( pMesh->mNumVertices );
-
-			for( unsigned int b = 0; b < pMesh->mNumBones; b++ )
-			{
-				aiBone* pBone = pMesh->mBones[ b ];
-				std::string boneName( pBone->mName.data );
-				int index = 0;
-
-				if( boneMapping.find( boneName ) == boneMapping.end() )
-				{
-					// Create new bone
-					index = boneCount;
-					boneCount++;
-
-					SkeletalMeshBoneInfo bi{ .BoneOffset = Auxiliary::Mat4FromAssimpMat4( pBone->mOffsetMatrix ) };
-					boneInfos.push_back( bi );
-					boneMapping[ boneName ] = index;
-				}
-				else
-				{
-					index = boneMapping[ boneName ];
-				}
-
-				// Weight calculation
-				for( size_t w = 0; w < pBone->mNumWeights; w++ )
-				{
-					const int vertID = submesh.BaseVertex + pBone->mWeights[ w ].mVertexId;
-					const float weight = pBone->mWeights[ w ].mWeight;
-
-					//SAT_CORE_INFO( "WEIGHT: {0}", weight );
-
-					// Add..
-					DynamicVertices[ vertID ].AddBoneData( vertID, weight );
-				}
-			}
-		}
-
 		if( ( m_ImportBehaviour & MeshImportBehaviour_SK_MergeWithExistingSK ) == 0 )
 		{
-			// create & save skeleton asset...
+			uint32_t indexCount = 0;
+			uint32_t vertexCount = 0;
+
+			auto asset = AssetManager::Get().FindAsset( AssetManager::Get().CreateAsset( AssetType::Skeleton ) );
+			asset->Name = m_SourcePath.stem().string();
+
+			auto path = m_DstPath / asset->Name;
+			path.replace_extension( ".skel" );
+			asset->SetAbsolutePath( path );
+
+			Ref<SkeletonAsset> skelAsset = Ref<SkeletonAsset>::Create( asset );
+			m_SkeletonID = skelAsset->ID;
+
+			for( unsigned int m = 0; m < m_Scene->mNumMeshes; m++ )
+			{
+				aiMesh* pMesh = m_Scene->mMeshes[ m ];
+				if( !pMesh->HasBones() ) continue;
+
+				Submesh submesh{ .BaseVertex = vertexCount, .BaseIndex = indexCount, .MaterialIndex = 0, .IndexCount = pMesh->mNumFaces * 3, .VertexCount = pMesh->mNumVertices };
+
+				indexCount += submesh.IndexCount;
+				vertexCount += submesh.VertexCount;
+
+				if( m == 0 )
+					skelAsset->CreateFromMesh( pMesh, submesh );
+			}
+
+			skelAsset->BuildHierarchy( m_Scene->mRootNode, -1 );
+
+			SkeletonAssetSerialiser sas;
+			sas.Serialise( skelAsset );
+		}
+
+		// Import animations
+		ImportAnimations();
+	}
+
+	void SkeletalMeshImporter::ImportAnimations()
+	{
+		for( unsigned int i = 0; i < m_Scene->mNumAnimations; i++ )
+		{
+			aiAnimation* pAnimation = m_Scene->mAnimations[ i ];
+
+			auto asset = AssetManager::Get().FindAsset( AssetManager::Get().CreateAsset( AssetType::SkeletalAnimation ) );
+			asset->Name = m_DstPath.stem().string();
+
+			auto path = m_DstPath / asset->Name;
+			path.replace_extension( ".skanim" );
+			asset->SetAbsolutePath( path );
+
+			Ref<SkeletalAnimationAsset> animAsset = Ref<SkeletalAnimationAsset>::Create( asset );
+
+			animAsset->SetDuration( pAnimation->mDuration );
+			animAsset->SetTicks( pAnimation->mTicksPerSecond == 0 ? 25.0f : pAnimation->mTicksPerSecond );
+
+			for( unsigned int c = 0; c < pAnimation->mNumChannels; c++ )
+			{
+				aiNodeAnim* pAnimNode = pAnimation->mChannels[ c ];
+
+				AnimationBone animBone;
+				animBone.Name = pAnimNode->mNodeName.C_Str();
+				
+				animBone.Positions.reserve( pAnimNode->mNumPositionKeys );
+				animBone.Rotations.reserve( pAnimNode->mNumRotationKeys );
+				animBone.Scale.reserve( pAnimNode->mNumScalingKeys );
+
+				for( unsigned int p = 0; p < pAnimNode->mNumPositionKeys; p++ )
+				{
+					aiVectorKey key = pAnimNode->mPositionKeys[ p ];
+
+					animBone.Positions.emplace_back( glm::vec3( key.mValue.x, key.mValue.y, key.mValue.z ), key.mTime );
+				}
+
+				for( unsigned int r = 0; r < pAnimNode->mNumRotationKeys; r++ )
+				{
+					aiQuatKey key = pAnimNode->mRotationKeys[ r ];
+
+					animBone.Rotations.emplace_back( glm::quat( key.mValue.w, key.mValue.x, key.mValue.y, key.mValue.z ), key.mTime );
+				}
+
+				for( unsigned int s = 0; s < pAnimNode->mNumScalingKeys; s++ )
+				{
+					aiVectorKey key = pAnimNode->mScalingKeys[ s ];
+
+					animBone.Scale.emplace_back( glm::vec3( key.mValue.x, key.mValue.y, key.mValue.z ), key.mTime );
+				}
+
+				animAsset->AddAnimBone( animBone );
+			}
+
+			SkeletalAnimationAssetSerialiser saa;
+			saa.Serialise( animAsset );
 		}
 	}
+
 #endif
 
 }

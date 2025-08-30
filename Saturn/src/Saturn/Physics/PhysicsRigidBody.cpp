@@ -66,15 +66,15 @@ namespace Saturn {
 		// Normal Collider Component's have more priority over the static mesh.
 		if( m_Entity->HasComponent<BoxColliderComponent>() )
 		{
-			AttachPhysicsShape( ShapeType::Box );
+			AttachPhysicsShape( PhysicsShapeType::Box );
 		}
 		else if( m_Entity->HasComponent<SphereColliderComponent>() )
 		{
-			AttachPhysicsShape( ShapeType::Sphere );
+			AttachPhysicsShape( PhysicsShapeType::Sphere );
 		}
 		else if ( m_Entity->HasComponent<CapsuleColliderComponent>() )
 		{
-			AttachPhysicsShape( ShapeType::Capusle );
+			AttachPhysicsShape( PhysicsShapeType::Capusle );
 		}
 		else if( m_Entity->HasComponent<StaticMeshComponent>() )
 		{
@@ -92,16 +92,16 @@ namespace Saturn {
 		SetMass( rb.Mass );
 	}
 
-	void PhysicsRigidBody::AttachPhysicsShape( ShapeType type )
+	void PhysicsRigidBody::AttachPhysicsShape( PhysicsShapeType type )
 	{
 		switch( type )
 		{
-			case Saturn::ShapeType::ConvexMesh: 
+			case Saturn::PhysicsShapeType::ConvexMesh: 
 			{
 				m_Shape = Ref<ConvexMeshShape>::Create( m_Entity );
 			} break;
 
-			case Saturn::ShapeType::TriangleMesh:
+			case Saturn::PhysicsShapeType::TriangleMesh:
 			{
 				// PhysX requires all non-kinematic dynamic rigid bodies with the flag eSIMULATION_SHAPE to be kinematic.
 				auto& rb = m_Entity->GetComponent<RigidbodyComponent>();
@@ -118,22 +118,22 @@ namespace Saturn {
 				m_Shape = Ref<TriangleMeshShape>::Create( m_Entity );
 			} break;
 
-			case Saturn::ShapeType::Box: 
+			case Saturn::PhysicsShapeType::Box: 
 			{
 				m_Shape = Ref<BoxShape>::Create( m_Entity );
 			} break;
 
-			case Saturn::ShapeType::Sphere:
+			case Saturn::PhysicsShapeType::Sphere:
 			{
 				m_Shape = Ref<SphereShape>::Create( m_Entity );
 			} break;
 
-			case Saturn::ShapeType::Capusle:
+			case Saturn::PhysicsShapeType::Capusle:
 			{
 				m_Shape = Ref<CapsuleShape>::Create( m_Entity );
 			} break;
 
-			case Saturn::ShapeType::Unknown:
+			case Saturn::PhysicsShapeType::Unknown:
 			default:
 				break;
 		}

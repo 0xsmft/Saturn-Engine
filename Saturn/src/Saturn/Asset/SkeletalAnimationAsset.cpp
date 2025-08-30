@@ -26,37 +26,18 @@
 *********************************************************************************************
 */
 
-#pragma once
-
-#include <stdint.h>
+#include "sppch.h"
+#include "SkeletalAnimationAsset.h"
 
 namespace Saturn {
 
-	enum class PhysicsShapeType
+	SkeletalAnimationAsset::SkeletalAnimationAsset( const Ref<Asset>& rBase )
+		: Asset( rBase )
 	{
-		Unknown,
-		Box,
-		Sphere,
-		Capusle,
-		ConvexMesh,
-		TriangleMesh
-	};
+	}
 
-	enum class ForceMode
+	SkeletalAnimationAsset::~SkeletalAnimationAsset()
 	{
-		Force,
-		Impulse,
-		VelocityChange,
-		Acceleration
-	};
+	}
 
-	enum RigidbodyLockFlags : uint32_t
-	{
-		RigidbodyLock_PositionX = BIT( 0 ),
-		RigidbodyLock_PositionY = BIT( 1 ),
-		RigidbodyLock_PositionZ = BIT( 2 ),
-		RigidbodyLock_RotationX = BIT( 3 ),
-		RigidbodyLock_RotationY = BIT( 4 ),
-		RigidbodyLock_RotationZ = BIT( 5 )
-	};
 }

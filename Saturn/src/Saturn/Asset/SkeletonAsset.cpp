@@ -123,4 +123,15 @@ namespace Auxiliary {
 #endif
 	}
 
+	void SkeletonAsset::AddBoneInfo( const std::string& rName, int parentIndex, const glm::mat4& rOffsetMatrix, uint32_t boneIndex )
+	{
+		if( m_BoneMapping.find( rName ) == m_BoneMapping.end() )
+		{
+			SkeletalMeshBoneInfo bi{ .BoneName = rName, .ParentIndex = parentIndex, .BoneOffset = rOffsetMatrix };
+
+			m_BoneInfos.push_back( bi );
+			m_BoneMapping[ rName ] = boneIndex;
+		}
+	}
+
 }

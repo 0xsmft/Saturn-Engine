@@ -35,6 +35,8 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui.h>
 
+#include "Saturn/ImGui/SerialisationAux.h"
+
 namespace Saturn {
 
 	class Link : public RefTarget
@@ -49,21 +51,21 @@ namespace Saturn {
 
 		static void Serialise( const Ref<Link>& rObject, std::ofstream& rStream )
 		{
-			UUID::Serialise( rObject->ID, rStream );
-			UUID::Serialise( rObject->StartPinID, rStream );
-			UUID::Serialise( rObject->EndPinID, rStream );
+			RawSerialisation::WriteUUID( rObject->ID, rStream );
+			RawSerialisation::WriteUUID( rObject->StartPinID, rStream );
+			RawSerialisation::WriteUUID( rObject->EndPinID, rStream );
 
-			RawSerialisation::WriteObject( rObject->Color, rStream );
+			Auxiliary::SerialiseImColor( rObject->Color, rStream );
 		}
 
 		template<typename IStream>
 		static void Deserialise( Ref<Link>& rObject, IStream& rStream )
 		{
-			UUID::Deserialise( rObject->ID, rStream );
-			UUID::Deserialise( rObject->StartPinID, rStream );
-			UUID::Deserialise( rObject->EndPinID, rStream );
+			RawSerialisation::ReadUUID( rObject->ID, rStream );
+			RawSerialisation::ReadUUID( rObject->StartPinID, rStream );
+			RawSerialisation::ReadUUID( rObject->EndPinID, rStream );
 
-			RawSerialisation::ReadObject( rObject->Color, rStream );
+			Auxiliary::DeserialiseImColor( rObject->Color, rStream );
 		}
 
 	public:

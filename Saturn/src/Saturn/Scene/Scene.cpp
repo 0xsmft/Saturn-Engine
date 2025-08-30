@@ -491,6 +491,23 @@ namespace Saturn {
 				rSceneRenderer.SubmitStaticMesh( entity, meshComponent.Mesh, targetMaterialRegistry, transform );
 			}
 		}
+
+		const auto dynamicMeshEntities = GetAllEntitiesWith<SkeletalMeshComponent>();
+		for( const auto& entity : dynamicMeshEntities )
+		{
+			const auto& meshComponent = entity->GetComponent<SkeletalMeshComponent>();
+			const auto transform = GetTransformRelativeToParent( entity );
+
+			if( meshComponent.Mesh )
+			{
+				Ref<MaterialRegistry> targetMaterialRegistry = meshComponent.Mesh->GetMaterialRegistry();
+
+				if( meshComponent.MaterialRegistry && meshComponent.MaterialRegistry->HasAnyOverrides() )
+					targetMaterialRegistry = meshComponent.MaterialRegistry;
+
+				rSceneRenderer.SubmitDynamicMesh( entity, meshComponent.Mesh, targetMaterialRegistry, transform );
+			}
+		}
 	}
 
 	SharedPtr<Entity> Scene::CreateEntityWithIDScript( UUID uuid, const std::string& name /*= "" */, const std::string& rScriptName, bool externalData )

@@ -77,29 +77,29 @@ namespace Saturn {
 	{
 	}
 
-	bool PhysicsCooking::CookMeshCollider( const Ref<StaticMesh>& rMesh, ShapeType Type )
+	bool PhysicsCooking::CookMeshCollider( const Ref<StaticMesh>& rMesh, PhysicsShapeType Type )
 	{
-		if( Type <= ShapeType::Capusle )
+		if( Type <= PhysicsShapeType::Capusle )
 			return false;
 
 		bool Result = false;
 
 		switch( Type )
 		{
-			case Saturn::ShapeType::ConvexMesh: 
+			case Saturn::PhysicsShapeType::ConvexMesh: 
 			{
 				Result = TryCookConvexMesh( rMesh );
 			} break;
 
-			case Saturn::ShapeType::TriangleMesh:
+			case Saturn::PhysicsShapeType::TriangleMesh:
 			{
 				Result = TryCookTriangleMesh( rMesh );
 			} break;
 
-			case Saturn::ShapeType::Unknown:
-			case Saturn::ShapeType::Box:
-			case Saturn::ShapeType::Sphere:
-			case Saturn::ShapeType::Capusle:
+			case Saturn::PhysicsShapeType::Unknown:
+			case Saturn::PhysicsShapeType::Box:
+			case Saturn::PhysicsShapeType::Sphere:
+			case Saturn::PhysicsShapeType::Capusle:
 			default:
 				break;
 		}
@@ -212,7 +212,7 @@ namespace Saturn {
 			return false;
 		}
 
-		if( hd.Type <= ShapeType::Capusle )
+		if( hd.Type <= PhysicsShapeType::Capusle )
 		{
 			SAT_CORE_ASSERT( false, "Invalid mesh collider type! Must be TriangleMesh or ConvexMesh." );
 			return false;
@@ -377,7 +377,7 @@ namespace Saturn {
 		return Shapes;
 	}
 
-	void PhysicsCooking::WriteCache( const Ref<StaticMesh>& rMesh, ShapeType Type )
+	void PhysicsCooking::WriteCache( const Ref<StaticMesh>& rMesh, PhysicsShapeType Type )
 	{
 		std::filesystem::path cachePath = Project::GetActiveProject()->GetFullCachePath();
 

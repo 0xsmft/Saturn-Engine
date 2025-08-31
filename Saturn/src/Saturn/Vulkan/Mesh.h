@@ -116,7 +116,7 @@ namespace Saturn {
 		}
 	};
 	
-	// Bone information, not to be confused with Bone, which is to be used with animations
+	// Bone information, not to be confused with AnimationBone, which is to be used with animations
 	// This is to be used for Skeleton
 	struct SkeletalMeshBoneInfo
 	{
@@ -125,9 +125,6 @@ namespace Saturn {
 
 		// The Bones transform in Bone space, i.e. bring the vertices to the bones transform, bind point.
 		glm::mat4 BoneOffset;
-
-		// Animated transformation to be applied to the vertices.
-		glm::mat4 FinalTransformation;
 	};
 }
 
@@ -265,7 +262,7 @@ namespace Saturn {
 	{
 	public:
 		SkeletalMesh() = default;
-		SkeletalMesh( const Ref<Asset>& rBase, const std::filesystem::path& rFilepath );
+		SkeletalMesh( const Ref<Asset>& rBase, const std::filesystem::path& rFilepath, AssetID skeletonID );
 		~SkeletalMesh() = default;
 
 		std::vector<Submesh>& Submeshes() { return m_Submeshes; }
@@ -274,7 +271,13 @@ namespace Saturn {
 		Ref<SkeletonAsset> GetSkeletonAsset() const;
 
 		const glm::mat4& GetBoneTransform( uint32_t index ) const;
-		const std::vector<SkeletalMeshBoneInfo>& GetBones() const { return m_Bones; }
+		const std::vector<SkeletalMeshBoneInfo>& GetBones() const { return m_BoneInfos; }
+
+		[[nodiscard]] int FindBoneIndex( const std::string& rName )
+		{
+			auto itr = m_BoneMapping.find( rName );
+			return itr == m_BoneMapping.end() ? -1 : itr->second;
+		}
 
 	public:
 		void Import_InitSkeleton( AssetID id );
@@ -289,11 +292,13 @@ namespace Saturn {
 
 	private:
 		std::vector<DynamicVertex> m_Vertices;
-
-		std::vector<SkeletalMeshBoneInfo> m_Bones;
-		std::unordered_map<std::string, int> m_BoneMapping; // BoneName -> BoneIndex
-
+		std::vector<SkeletalMeshBoneInfo> m_BoneInfos;
+		std::unordered_map<std::string, uint32_t> m_BoneMapping;
+		
 		Ref<SkeletonAsset> m_SkeletonAsset;
+
+	private:
+		friend class SkeletalMeshAssetSerialiser;
 	};
 
 	struct MeshInformation

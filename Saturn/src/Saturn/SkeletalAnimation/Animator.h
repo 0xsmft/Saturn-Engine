@@ -26,52 +26,38 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "StorageBuffer.h"
+#pragma once
 
-#include "VulkanContext.h"
+#include "SkeletalAnimationAsset.h"
+#include "Saturn/Vulkan/Mesh.h"
 
 namespace Saturn {
 
-	StorageBuffer::StorageBuffer( uint32_t set, uint32_t binding )
-		: m_Set( set ), m_Binding( binding )
+	class Animator
 	{
-		Create();
-	}
+	public:
+		Animator();
+		~Animator();
 
-	StorageBuffer::~StorageBuffer()
-	{
+		void InitAnimation( AssetID id, Ref<SkeletalMesh> sk );
+		void Play( Timestep ts );
 
-	}
+		const std::vector<glm::mat4>& GetBoneTransforms() const { return m_BoneTransforms; }
+		bool IsReady() const { return m_Init; }
 
-	void StorageBuffer::Create()
-	{
-		// Create the buffer however leave the size at zero.
-		VkBufferCreateInfo BufferInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
-		BufferInfo.size = 1;
-		BufferInfo.usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
-		BufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	private:
+		void ApplyBoneTransformations();
 
-		auto pAllocator = VulkanContext::Get().GetVulkanAllocator();
-		pAllocator->AllocateBuffer( BufferInfo, VMA_MEMORY_USAGE_GPU_ONLY, &m_Buffer );
-	}
+	private:
+		Ref<SkeletalAnimationAsset> m_AnimationAsset;
+		Ref<SkeletalMesh> m_SkeletalMesh;
 
-	void StorageBuffer::Resize( uint32_t newSize )
-	{
-		m_Size = newSize;
+		float m_StartTime = 0.0f;
+		float m_AnimationTime = 0.0f;
 
-		auto pAllocator = VulkanContext::Get().GetVulkanAllocator();
+		bool m_Init = false;
 
-		pAllocator->DestroyBuffer( m_Buffer );
+		std::vector<glm::mat4> m_BoneTransforms;
+	};
 
-		VkBufferCreateInfo BufferCreateInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
-		BufferCreateInfo.size = newSize;
-		BufferCreateInfo.usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
-		BufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-		pAllocator->AllocateBuffer( BufferCreateInfo, VMA_MEMORY_USAGE_CPU_TO_GPU, &m_Buffer );
-
-		m_BufferInfo.buffer = m_Buffer;
-		m_BufferInfo.range = m_Size;
-	}
 }

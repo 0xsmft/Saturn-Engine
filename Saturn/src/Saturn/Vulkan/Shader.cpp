@@ -350,12 +350,33 @@ namespace Saturn {
 
 	std::vector< VkDescriptorSetLayout > Shader::GetSetLayouts()
 	{
-		std::vector< VkDescriptorSetLayout > layouts;
+		std::vector<std::pair<uint32_t, VkDescriptorSetLayout>> temp;
 
+		// Collect into pairs
 		for( auto& [set, descriptorSet] : m_DescriptorSets )
 		{
-			layouts.push_back( descriptorSet.SetLayout );
+			temp.emplace_back( set, descriptorSet.SetLayout );
 		}
+
+		// Sort by set number
+		std::sort( temp.begin(), temp.end(), 
+			[]( auto& a, auto& b ) 
+		{ 
+			return a.first < b.first; 
+		} );
+
+		// Output only layouts in correct order
+		std::vector<VkDescriptorSetLayout> layouts;
+		layouts.reserve( temp.size() );
+
+		for( auto& [set, layout] : temp )
+			layouts.push_back( layout );
+
+		// ^^^ we have to do this because the shader reflection system will discover descriptor sets differently to how Vulkan expects it to.
+		// For example if we have a SSBO in set 2. Set two will always be appended to m_DescriptorSets first because it's a SSBO similarly, if it was UBO then it would be added at position one, 
+		// so you may think that we all we need to do is just to change the order that we discover descriptors in
+		// however, that would not work because in the case where another shader stage has descriptors in set 1 the order would then be 0 <- UBO, 2 <- SSBO (with "fix" applied), 1 <- UB/SBO/Textures, and not 0, 1, 2
+		// So when calling this function we'll sort it so that Vulkan won't get confused.
 
 		return layouts;
 	}
@@ -452,13 +473,13 @@ namespace Saturn {
 		// Sort the descriptors by set and binding.
 		auto Fn = [&]( const auto& a, const auto& b ) -> bool
 		{
-			uint32_t aSet = Compiler.get_decoration( a.id, spv::DecorationDescriptorSet );
-			uint32_t bSet = Compiler.get_decoration( b.id, spv::DecorationDescriptorSet );
+			const uint32_t aSet = Compiler.get_decoration( a.id, spv::DecorationDescriptorSet );
+			const uint32_t bSet = Compiler.get_decoration( b.id, spv::DecorationDescriptorSet );
 
 			if( aSet == bSet )
 			{
-				uint32_t aBinding = Compiler.get_decoration( a.id, spv::DecorationBinding );
-				uint32_t bBinding = Compiler.get_decoration( b.id, spv::DecorationBinding );
+				const uint32_t aBinding = Compiler.get_decoration( a.id, spv::DecorationBinding );
+				const uint32_t bBinding = Compiler.get_decoration( b.id, spv::DecorationBinding );
 
 				return aBinding < bBinding;
 			}
@@ -466,14 +487,11 @@ namespace Saturn {
 			return aSet < bSet;
 		};
 
-		std::sort( Resources.uniform_buffers.begin(), Resources.uniform_buffers.end(), Fn );
-		std::sort( Resources.storage_buffers.begin(), Resources.storage_buffers.end(), Fn );
-
 		for( const auto& sb : Resources.storage_buffers )
 		{
 			const auto& Name = sb.name;
 			auto& BufferType = Compiler.get_type( sb.base_type_id );
-			int MemberCount = (int)BufferType.member_types.size();
+			int MemberCount = ( int ) BufferType.member_types.size();
 			uint32_t Binding = Compiler.get_decoration( sb.id, spv::DecorationBinding );
 			uint32_t Set = Compiler.get_decoration( sb.id, spv::DecorationDescriptorSet );
 
@@ -497,12 +515,12 @@ namespace Saturn {
 
 			// Check if the same element already exists if so the stage "All"
 			// is used to represent all stages.
-			auto It = std::find_if( storageBuffers.begin(), storageBuffers.end(), [&]( const auto& a )
-				{
-					auto&& [k, v] = a;
+			auto It = std::find_if( storageBuffers.begin(), storageBuffers.end(), [ & ]( const auto& a )
+			{
+				auto&& [k, v] = a;
 
-					return v == Storage;
-				} );
+				return v == Storage;
+			} );
 
 			if( It != std::end( storageBuffers ) )
 			{

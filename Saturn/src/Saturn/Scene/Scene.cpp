@@ -205,7 +205,19 @@ namespace Saturn {
 				entity->OnUpdate( ts );
 			}
 
+			const auto dynamicMeshEntities = GetAllEntitiesWith<SkeletalMeshComponent>();
+			for( const auto& entity : dynamicMeshEntities )
+			{
+				auto& meshComponent = entity->GetComponent<SkeletalMeshComponent>();
+				if( meshComponent.Mesh )
+				{
+					meshComponent.LocalAnimator.Play( ts );
+				}
+			}
+
 			UpdateAudioListeners();
+
+			DestroyPendingEntities();
 		}
 	}
 	
@@ -400,6 +412,7 @@ namespace Saturn {
 				{
 					const auto [transformComponent, lightComponent] = points.get<TransformComponent, PointLightComponent>( e );
 
+					/*
 					PointLight pl = {
 						.Position = transformComponent.Position,
 						.Radiance = lightComponent.Radiance,
@@ -408,10 +421,18 @@ namespace Saturn {
 						.Radius = lightComponent.Radius,
 						.MinRadius = lightComponent.MinRadius,
 						.Falloff = lightComponent.Falloff };
+					*/
 
-					m_Lights.PointLights.push_back( pl );
+					m_Lights.PointLights.emplace_back( 
+						transformComponent.Position, 
+						lightComponent.Radiance,
+						lightComponent.Multiplier,
+						lightComponent.LightSize,
+						lightComponent.Radius,
+						lightComponent.MinRadius,
+						lightComponent.Falloff );
 
-					Renderer2D::Get().SubmitBillboardTextured( pl.Position, glm::vec4( 1.0f ), pointLightBillboardTex, glm::vec2( 1.5f ) );
+					Renderer2D::Get().SubmitBillboardTextured( transformComponent.Position, glm::vec4( 1.0f ), pointLightBillboardTex, glm::vec2( 1.5f ) );
 
 					plIndex++;
 				}
@@ -475,8 +496,8 @@ namespace Saturn {
 
 	void Scene::RtBuildSceneRendererCommands( SceneRenderer& rSceneRenderer )
 	{
-		const auto entities = GetAllEntitiesWith<StaticMeshComponent>();
-		for( const auto& entity : entities )
+		const auto staticMeshEntities = GetAllEntitiesWith<StaticMeshComponent>();
+		for( const auto& entity : staticMeshEntities )
 		{
 			const auto& meshComponent = entity->GetComponent<StaticMeshComponent>();
 			const auto transform = GetTransformRelativeToParent( entity );
@@ -495,7 +516,7 @@ namespace Saturn {
 		const auto dynamicMeshEntities = GetAllEntitiesWith<SkeletalMeshComponent>();
 		for( const auto& entity : dynamicMeshEntities )
 		{
-			const auto& meshComponent = entity->GetComponent<SkeletalMeshComponent>();
+			auto& meshComponent = entity->GetComponent<SkeletalMeshComponent>();
 			const auto transform = GetTransformRelativeToParent( entity );
 
 			if( meshComponent.Mesh )
@@ -505,7 +526,13 @@ namespace Saturn {
 				if( meshComponent.MaterialRegistry && meshComponent.MaterialRegistry->HasAnyOverrides() )
 					targetMaterialRegistry = meshComponent.MaterialRegistry;
 
-				rSceneRenderer.SubmitDynamicMesh( entity, meshComponent.Mesh, targetMaterialRegistry, transform );
+				std::vector<glm::mat4> boneTransforms{};
+				if( meshComponent.LocalAnimator.IsReady() )
+				{
+					boneTransforms = meshComponent.LocalAnimator.GetBoneTransforms();
+				}
+
+				rSceneRenderer.SubmitDynamicMesh( entity, meshComponent.Mesh, targetMaterialRegistry, transform, boneTransforms );
 			}
 		}
 	}
@@ -747,7 +774,7 @@ namespace Saturn {
 	}
 	}
 
-	void Scene::TransferModifiedProperties( const Ref<Entity>& rSourceEntity, Ref<Entity>& rEntity, const std::string& rMetadataName )
+	void Scene::TransferModifiedProperties( const SharedPtr<Entity>& rSourceEntity, SharedPtr<Entity>& rEntity, const std::string& rMetadataName )
 	{
 		/*
 		auto& rProperties = ClassMetadataHandler::Get().GetAllProperties( rMetadataName );
@@ -756,14 +783,14 @@ namespace Saturn {
 		{
 			if( rProperty.GetType() == SPropertyType::Entity )
 			{
-				Ref<Entity>& currentEntity = rProperty.Read<SPropertyType::Entity>( const_cast< Entity* >( rSourceEntity.Get() ) );
+				SharedPtr<Entity>& currentEntity = rProperty.Read<SPropertyType::Entity>( const_cast< Entity* >( rSourceEntity.Get() ) );
 
 				if( currentEntity != nullptr )
 				{
 					UUID id = currentEntity->GetUUID();
 
 					// Find the same entity but in our scene
-					Ref<Entity> ourEntity = FindEntityByID( id );
+					SharedPtr<Entity> ourEntity = FindEntityByID( id );
 
 					rProperty.SetProperty( rEntity.Get(), ourEntity );
 				}
@@ -795,9 +822,8 @@ namespace Saturn {
 
 		std::unordered_map< UUID, entt::entity > EntityMap;
 		
-		auto IdComponents = NewScene->GetAllEntitiesWith< IdComponent >();
-
-		for( auto& entity : IdComponents )
+		const auto IdComponents = NewScene->GetAllEntitiesWith< IdComponent >();
+		for( const auto& entity : IdComponents )
 			EntityMap[ entity->GetUUID() ] = entity->GetHandle();
 
 		CopyComponent( AllComponents{}, NewScene->m_Registry, m_Registry, EntityMap );
@@ -813,8 +839,6 @@ namespace Saturn {
 
 	bool Scene::OnRuntimeStart()
 	{
-		DestroyPhysicsScene();
-
 		m_RuntimeState = RuntimeState::Starting;
 
 		CreatePhysicsScene();

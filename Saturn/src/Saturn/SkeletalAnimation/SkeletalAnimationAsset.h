@@ -28,12 +28,14 @@
 
 #pragma once
 
-#include "Asset.h"
+#include "Saturn/Asset/Asset.h"
 
 namespace Saturn {
 
 	struct AnimationKeyVec3
 	{
+		AnimationKeyVec3() = default;
+
 		AnimationKeyVec3( const glm::vec3& rValue, double ts ) 
 			: Value( rValue ), TimeStamp( ts )
 		{
@@ -46,6 +48,8 @@ namespace Saturn {
 
 	struct AnimationKeyQuat
 	{
+		AnimationKeyQuat() = default;
+
 		AnimationKeyQuat( const glm::quat& rValue, double ts )
 			: Value( rValue ), TimeStamp( ts )
 		{

@@ -62,7 +62,6 @@ namespace Saturn {
 	struct DynamicDrawCommand
 	{
 		Ref<SkeletalMesh> Mesh = nullptr;
-		glm::mat4 Transform;
 		uint32_t SubmeshIndex = 0;
 		uint32_t Instances = 0;
 	};
@@ -135,6 +134,13 @@ namespace Saturn {
 	{
 		uint32_t Offset = 0;
 		std::vector<TransformBufferData> Data;
+	};
+
+	// For each mesh, what offset are we and how much transform does it have.
+	struct BoneTransformBuffer
+	{
+		uint32_t Offset = 0;
+		std::vector<glm::mat4> Data;
 	};
 
 	struct SubmeshTransformVB
@@ -263,8 +269,11 @@ namespace Saturn {
 		Timer SceneCompPPTimer;
 
 		//////////////////////////////////////////////////////////////////////////
+		Ref<StorageBufferSet> SBBoneTransforms;
 		Ref<StorageBufferSet> StorageBufferSet;
 		Ref<UniformBufferSet> UniformBufferSet;
+
+		glm::mat4* BoneTransformData = nullptr;
 
 		//////////////////////////////////////////////////////////////////////////
 		// Quad Vertex and Index buffers
@@ -391,6 +400,8 @@ namespace Saturn {
 		// MESH ID -> TRANSFORMS
 		std::unordered_map< StaticMeshKey, TransformBuffer > MeshTransforms;
 
+		std::unordered_map< StaticMeshKey, BoneTransformBuffer > BoneTransformMap;
+
 		// This holds the entire transform data for each submesh, per frame in flight.
 		std::vector< SubmeshTransformVB > SubmeshTransformData;
 
@@ -428,7 +439,7 @@ namespace Saturn {
 
 		void SubmitStaticMesh( SharedPtr<Entity> entity, Ref<StaticMesh> mesh, Ref<MaterialRegistry> materialRegistry, const glm::mat4& transform );
 
-		void SubmitDynamicMesh( SharedPtr<Entity> entity, Ref<SkeletalMesh> mesh, Ref<MaterialRegistry> materialRegistry, const glm::mat4& transform );
+		void SubmitDynamicMesh( SharedPtr<Entity> entity, Ref<SkeletalMesh> mesh, Ref<MaterialRegistry> materialRegistry, const glm::mat4& transform, const std::vector<glm::mat4>& boneTransforms );
 		
 		// This will work for now (as atm now we are just gonna render the mesh ).
 		// However, if we have a different collider mesh than the mesh it will not be correct.

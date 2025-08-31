@@ -37,6 +37,8 @@
 #include "Saturn/Vulkan/EnvironmentMap.h"
 #include "Saturn/Vulkan/Mesh.h"
 
+#include "Saturn/SkeletalAnimation/Animator.h"
+
 #include <string>
 
 #include <glm/glm.hpp>
@@ -145,6 +147,27 @@ namespace Saturn {
 		StaticMeshComponent( const StaticMeshComponent& other ) = default;
 		StaticMeshComponent( Ref<Saturn::StaticMesh>& rMesh )
 			: Mesh( rMesh ) {}
+
+		operator Ref<Saturn::StaticMesh>() { return Mesh; }
+	};
+
+	struct SkeletalMeshComponent
+	{
+		MemoryAssetDependency<AssetType::SkeletalMesh> AssetID;
+
+		// TODO: Change to Asset ID
+		Ref<Saturn::SkeletalMesh> Mesh;
+		// We always want to store our own material registry because there will be one in the asset however that is global for all of the same meshes in the scene and what if we want to just locally change one asset.
+		Ref<Saturn::MaterialRegistry> MaterialRegistry;
+
+		Animator LocalAnimator;
+
+		SkeletalMeshComponent() = default;
+		SkeletalMeshComponent( const SkeletalMeshComponent& other ) = default;
+		SkeletalMeshComponent( Ref<Saturn::SkeletalMesh>& rMesh )
+			: Mesh( rMesh ) 
+		{
+		}
 
 		operator Ref<Saturn::StaticMesh>() { return Mesh; }
 	};
@@ -342,7 +365,7 @@ namespace Saturn {
 	struct ComponentGroup {};
 
 	using AllComponents = ComponentGroup<TransformComponent, TagComponent, IdComponent, RelationshipComponent, PrefabComponent,
-		StaticMeshComponent, 
+		StaticMeshComponent, SkeletalMeshComponent,
 		DirectionalLightComponent, SkylightComponent, PointLightComponent,
 		CameraComponent,
 		BoxColliderComponent, SphereColliderComponent, CapsuleColliderComponent, MeshColliderComponent, RigidbodyComponent,
@@ -353,7 +376,7 @@ namespace Saturn {
 	// Without TagComponent, IdComponent, RelationshipComponent
 	// We could use templates and concepts for this however that will add a new layer of complexity and ambiguity.
 	using AllDuplicatableComponents = ComponentGroup<TransformComponent, PrefabComponent,
-		StaticMeshComponent,
+		StaticMeshComponent, SkeletalMeshComponent,
 		DirectionalLightComponent, SkylightComponent, PointLightComponent,
 		CameraComponent,
 		BoxColliderComponent, SphereColliderComponent, CapsuleColliderComponent, MeshColliderComponent, RigidbodyComponent,

@@ -40,8 +40,8 @@
 
 namespace Saturn {
 
-	Material::Material( const Ref< Saturn::Shader >& rShader, const std::string& rMateralName )
-		: m_Shader( rShader )
+	Material::Material( const Ref< Saturn::Shader >& rShader, const std::string& rMateralName, uint32_t set )
+		: m_Shader( rShader ), m_Set( set )
 	{
 		Initialise( rMateralName );
 	}
@@ -63,7 +63,7 @@ namespace Saturn {
 	{
 		// We are always set 0
 		// Set 1 is owned by the renderer
-		ShaderDescriptorSetTemplate& rMaterialDS = m_Shader->GetShaderDescriptorSetTemplates( 0 );
+		ShaderDescriptorSetTemplate& rMaterialDS = m_Shader->GetShaderDescriptorSetTemplates( m_Set );
 		
 		// Copy for our own use
 		m_DescriptorSetTemplate = ShaderDescriptorSetTemplate( rMaterialDS );
@@ -116,6 +116,15 @@ namespace Saturn {
 	void Material::Bind( VkCommandBuffer CommandBuffer, VkPipelineLayout Layout, const std::vector<std::vector<VkWriteDescriptorSet>>& rExtraWds, VkPipelineBindPoint bindPoint )
 	{
 		uint32_t frame = Renderer::Get().GetCurrentFrame();
+		Update( rExtraWds );
+
+		VkDescriptorSet Set = m_DescriptorSets[ frame ];
+		vkCmdBindDescriptorSets( CommandBuffer, bindPoint, Layout, 0, 1, &Set, 0, nullptr );
+	}
+
+	void Material::Update( const std::vector<std::vector<VkWriteDescriptorSet>>& rExtraWds )
+	{
+		uint32_t frame = Renderer::Get().GetCurrentFrame();
 
 		if( rExtraWds.size() )
 		{
@@ -126,9 +135,6 @@ namespace Saturn {
 		}
 
 		RT_Update();
-
-		VkDescriptorSet Set = m_DescriptorSets[ frame ];
-		vkCmdBindDescriptorSets( CommandBuffer, bindPoint, Layout, 0, 1, &Set, 0, nullptr );
 	}
 
 	void Material::RT_Update()
@@ -137,7 +143,7 @@ namespace Saturn {
 
 		uint32_t frame = Renderer::Get().GetCurrentFrame();
 
-		m_DescriptorSets[ frame ] = m_Shader->AllocateDescriptorSet( 0, true );
+		m_DescriptorSets[ frame ] = m_Shader->AllocateDescriptorSet( m_Set, true );
 
 		std::vector<VkWriteDescriptorSet> pendingWds;
 
@@ -336,7 +342,7 @@ namespace Saturn {
 
 		if( ubs[ frame ] == nullptr )
 		{
-			ubs[ frame ] = Ref<UniformBuffer>::Create( 0, binding, m_DescriptorSetTemplate.UniformBuffers[ binding ].Size );
+			ubs[ frame ] = Ref<UniformBuffer>::Create( m_Set, binding, m_DescriptorSetTemplate.UniformBuffers[ binding ].Size );
 
 			m_DescriptorSetTemplate.WriteDescriptorSets[ binding ].pBufferInfo = &ubs[ frame ]->GetBufferInfo();
 		}

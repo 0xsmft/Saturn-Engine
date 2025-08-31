@@ -107,10 +107,8 @@ namespace Saturn {
 	}
 
 	MaterialOutputNode::MaterialOutputNode( const std::string& rName )
-		: NodeEditorBlueprintNode()
+		: NodeEditorBlueprintNode( rName )
 	{
-		Name = rName;
-
 		CreateNode();
 	}
 

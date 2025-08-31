@@ -163,7 +163,7 @@ namespace Saturn {
 	// NodeEditorBase does not draw anything, it simply provides the logical code for nodes without any rendering
 	// For example, you can setup a NodeEditorBase the same way as a NodeEditor would of been created and use it the same way just without any graphical representation. 
 	// On dist, this class will ALWAYS be used in place of NodeEditor
-	class NodeEditorBase
+	class NodeEditorBase : public EnabledSharedFromThis<NodeEditorBase>
 	{
 	public:
 		NodeEditorBase();

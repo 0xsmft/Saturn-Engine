@@ -482,7 +482,7 @@ namespace Saturn {
 
 								MarkDirty();
 
-								Ref<UndoRedoActionCreateLink> action = Ref<UndoRedoActionCreateLink>::Create( this, m_Links.back() );
+								Ref<UndoRedoActionCreateLink> action = Ref<UndoRedoActionCreateLink>::Create( SharedFromThis(), m_Links.back() );
 								GlobalUndoRedoGroup::Get().AddAction( action, m_AssetID );
 								OnNodeEditorEvent( NodeEditorAction::CreateLink );
 							}
@@ -566,7 +566,7 @@ namespace Saturn {
 									m_Runtime->TerminateEvaluation();
 								}
 
-								Ref<UndoRedoActionDeleteNode> action = Ref<UndoRedoActionDeleteNode>::Create( this, rNode );
+								Ref<UndoRedoActionDeleteNode> action = Ref<UndoRedoActionDeleteNode>::Create( SharedFromThis(), rNode );
 								GlobalUndoRedoGroup::Get().AddAction( action, m_AssetID );
 
 								DeleteDeadLinks( id );
@@ -754,7 +754,7 @@ namespace Saturn {
 			{
 				Ref<Link> link = *Itr;
 
-				Ref<UndoRedoActionDeleteLink> action = Ref<UndoRedoActionDeleteLink>::Create( this, link );
+				Ref<UndoRedoActionDeleteLink> action = Ref<UndoRedoActionDeleteLink>::Create( SharedFromThis(), link );
 				GlobalUndoRedoGroup::Get().AddAction( action, m_AssetID );
 			}
 
@@ -781,7 +781,7 @@ namespace Saturn {
 			{
 				if( !skipUndoRedo )
 				{
-					Ref<UndoRedoActionDeleteNode> action = Ref<UndoRedoActionDeleteNode>::Create( this, rNode );
+					Ref<UndoRedoActionDeleteNode> action = Ref<UndoRedoActionDeleteNode>::Create( SharedFromThis(), rNode );
 					GlobalUndoRedoGroup::Get().AddAction( action, m_AssetID );
 				}
 
@@ -837,7 +837,7 @@ namespace Saturn {
 
 		m_CreateNewNode = false;
 
-		Ref<UndoRedoActionCreateNode> action = Ref<UndoRedoActionCreateNode>::Create( this, node );
+		Ref<UndoRedoActionCreateNode> action = Ref<UndoRedoActionCreateNode>::Create( SharedFromThis(), node );
 		GlobalUndoRedoGroup::Get().AddAction( action, m_AssetID );
 
 		if( auto& startPin = m_NewNodeLinkPin )

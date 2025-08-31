@@ -375,14 +375,14 @@ namespace Saturn {
 		}
 	}
 
-	void Renderer::SubmitDynamicMesh( VkCommandBuffer CommandBuffer, Ref<Saturn::Pipeline> Pipeline, Ref<SkeletalMesh> mesh, Ref<StorageBufferSet>& rStorageBufferSet, Ref<UniformBufferSet> rUniformBufferSet, Ref< MaterialRegistry > materialRegistry, uint32_t SubmeshIndex, uint32_t count, Ref<VertexBuffer> transformData, uint32_t transformOffset )
+	void Renderer::SubmitDynamicMesh( VkCommandBuffer CommandBuffer, Ref<Saturn::Pipeline> Pipeline, Ref<SkeletalMesh> mesh, Ref<StorageBufferSet>& rStorageBufferSet, Ref<UniformBufferSet> rUniformBufferSet, Ref< MaterialRegistry > materialRegistry, uint32_t SubmeshIndex, uint32_t count, Ref<VertexBuffer> transformData, uint32_t transformOffset, uint32_t boneOffset, Ref<Material> dynamicMeshMaterial )
 	{
 		SAT_PF_EVENT();
 
 		VkDeviceSize transformOffsets[ 1 ] = { transformOffset };
 
 		mesh->GetVertexBuffer()->Bind( CommandBuffer );
-//		transformData->Bind( CommandBuffer, 1, transformOffsets );
+		transformData->Bind( CommandBuffer, 1, transformOffsets );
 
 		mesh->GetIndexBuffer()->Bind( CommandBuffer );
 		Pipeline->Bind( CommandBuffer );
@@ -411,13 +411,16 @@ namespace Saturn {
 
 			VkDescriptorSet Set = rMaterialAsset->GetMaterial()->GetDescriptorSet( m_FrameCount );
 
-			vkCmdPushConstants( CommandBuffer, Pipeline->GetPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, ( uint32_t ) rMaterialAsset->GetPushConstantData().Size, rMaterialAsset->GetPushConstantData().Data );
+			vkCmdPushConstants( CommandBuffer, Pipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(uint32_t), &boneOffset );
+
+			vkCmdPushConstants( CommandBuffer, Pipeline->GetPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, sizeof( uint32_t ), ( uint32_t ) rMaterialAsset->GetPushConstantData().Size, rMaterialAsset->GetPushConstantData().Data );
 
 			// Descriptor set 0, for material texture data.
 			// Descriptor set 1, for environment data.
-			std::array<VkDescriptorSet, 2> DescriptorSets = {
+			std::array<VkDescriptorSet, 3> DescriptorSets = {
 				Set,
-				m_RendererDescriptorSets[ m_FrameCount ]
+				m_RendererDescriptorSets[ m_FrameCount ],
+				dynamicMeshMaterial->GetDescriptorSet( m_FrameCount )
 			};
 
 			vkCmdBindDescriptorSets( CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,

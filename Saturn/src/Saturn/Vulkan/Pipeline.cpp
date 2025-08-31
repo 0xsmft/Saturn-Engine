@@ -197,20 +197,20 @@ namespace Saturn {
 		
 		uint32_t i = 0;
 		
-		for ( auto element : m_Specification.VertexLayout )
+		for ( auto& element : m_Specification.VertexLayout )
 		{
 			VertexInputAttributes[ i ].binding = 0;
-			VertexInputAttributes[ i ].location = i;
+			VertexInputAttributes[ i ].location = element.Binding == UINT32_MAX ? i : element.Binding;
 			VertexInputAttributes[ i ].format = ShaderDataTypeToVulkan( element.Type );
 			VertexInputAttributes[ i ].offset = element.Offset;
 			
 			i++;
 		}
 
-		for( auto element : m_Specification.InstanceLayout )
+		for( auto& element : m_Specification.InstanceLayout )
 		{
 			VertexInputAttributes[ i ].binding = 1;
-			VertexInputAttributes[ i ].location = i;
+			VertexInputAttributes[ i ].location = element.Binding == UINT32_MAX ? i : element.Binding;;
 			VertexInputAttributes[ i ].format = ShaderDataTypeToVulkan( element.Type );
 			VertexInputAttributes[ i ].offset = element.Offset;
 

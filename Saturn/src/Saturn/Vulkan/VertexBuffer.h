@@ -89,13 +89,13 @@ namespace Saturn {
 		ShaderDataType Type;
 		uint32_t Size;
 		uint32_t Offset;
+		uint32_t Binding = UINT32_MAX;
 
 		VertexBufferElement() = default;
 
-		VertexBufferElement( ShaderDataType type, const std::string& name )
-			: Name( name ), Type( type ), Size( ShaderDataTypeSize( type ) ), Offset( 0 ) 
+		VertexBufferElement( ShaderDataType type, const std::string& name, uint32_t binding = UINT32_MAX )
+			: Name( name ), Type( type ), Binding( binding ), Size( ShaderDataTypeSize( type ) ), Offset( 0 ) 
 		{
-
 		}
 
 		uint32_t GetComponentCount() const

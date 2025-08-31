@@ -28,7 +28,7 @@
 
 #pragma once
 
-#include "Asset.h"
+#include "Saturn/Asset/Asset.h"
 
 struct aiMesh;
 struct aiNode;
@@ -70,6 +70,12 @@ namespace Saturn {
 		
 		void AddBoneInfo( const std::string& rName, int parentIndex, const glm::mat4& rOffsetMatrix, uint32_t boneIndex );
 		void AddVertex( const SkeletonAssetVertexSkin& rSkin ) { m_Vertices.push_back( rSkin ); }
+
+		[[nodiscard]] int FindBoneIndex( const std::string& rName ) 
+		{
+			auto itr = m_BoneMapping.find( rName );
+			return itr == m_BoneMapping.end() ? -1 : itr->second;
+		}
 
 	public:
 		const std::vector<SkeletalMeshBoneInfo>& GetBoneInfo() const { return m_BoneInfos; }

@@ -90,6 +90,8 @@ namespace Saturn {
 				return "BehaviourTree";
 			case Saturn::AssetType::BehaviourTreeMemory:
 				return "BehaviourTreeMemory";
+			case Saturn::AssetType::SkeletalAnimation:
+				return "SkeletalAnimation";
 			default:
 			case Saturn::AssetType::Unknown:
 				return "Unknown";
@@ -170,6 +172,8 @@ namespace Saturn {
 			return AssetType::BehaviourTree;
 		else if( str == "BehaviourTreeMemory" )
 			return AssetType::BehaviourTreeMemory;
+		else if( str == "SkeletalAnimation" )
+			return AssetType::SkeletalAnimation;
 		else
 			return AssetType::Unknown;
 	}
@@ -200,6 +204,8 @@ namespace Saturn {
 			return AssetType::BehaviourTree;
 		else if( str == ".sbtm" )
 			return AssetType::BehaviourTreeMemory;
+		else if( str == ".skanim" )
+			return AssetType::SkeletalAnimation;
 		else
 			return AssetType::Unknown;
 	}

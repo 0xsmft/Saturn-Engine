@@ -41,7 +41,7 @@ namespace Saturn {
 	class Material : public RefTarget
 	{
 	public:
-		 Material( const Ref<Shader>& rShader, const std::string& rMateralName );
+		 Material( const Ref<Shader>& rShader, const std::string& rMateralName, uint32_t set = 0 );
 		~Material();
 
 		void Initialise( const std::string& rMaterialName );
@@ -50,6 +50,8 @@ namespace Saturn {
 
 		// Bind and update the material descriptor set.
 		void Bind( VkCommandBuffer CommandBuffer, VkPipelineLayout Layout, const std::vector<std::vector<VkWriteDescriptorSet>>& rExtraWds, VkPipelineBindPoint bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS );
+
+		void Update( const std::vector<std::vector<VkWriteDescriptorSet>>& rExtraWds );
 
 		void SetResource( const std::string& Name, const Ref<Texture2D>& Texture );
 		void SetResource( const std::string& Name, const Ref<Texture2D>& Texture, uint32_t Index );
@@ -103,6 +105,8 @@ namespace Saturn {
 
 		Buffer m_PushConstantData;
 		
+		uint32_t m_Set = 0;
+
 		// Binding -> UniformBuffers (per frame in flight)
 		std::unordered_map< uint32_t, std::array< Ref<UniformBuffer>, MAX_FRAMES_IN_FLIGHT > > m_UniformBuffers;
 

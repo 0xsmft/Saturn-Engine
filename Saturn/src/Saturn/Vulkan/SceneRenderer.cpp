@@ -85,6 +85,13 @@ namespace Saturn {
 		m_RendererData.StorageBufferSet = Ref<StorageBufferSet>::Create( 0, 0 );
 		m_RendererData.StorageBufferSet->Create( 0, 14 ); // Create Light culling buffer.
 
+		m_RendererData.SBBoneTransforms = Ref<StorageBufferSet>::Create( 0, 0 );
+		m_RendererData.SBBoneTransforms->Create( 2, 15 ); // Create bone transform buffers.
+		m_RendererData.SBBoneTransforms->Resize( 2, 15, sizeof( glm::mat4 ) * 10240 );
+
+		// 1024 max animated meshes
+		m_RendererData.BoneTransformData = new glm::mat4[ 1 * 1024 ];
+
 		m_RendererData.IsSwapchainTarget = HasFlag( SceneRendererFlag_SwapchainTarget );
 
 		m_RendererData.UniformBufferSet = Ref<UniformBufferSet>::Create();
@@ -95,7 +102,6 @@ namespace Saturn {
 		m_RendererData.UniformBufferSet->CreateBuffer( sizeof( UBShadowData ), 3 );
 		m_RendererData.UniformBufferSet->CreateBuffer( 4, 12 ); // Debug Data
 		m_RendererData.UniformBufferSet->CreateBuffer( sizeof( UBPointLights ), 13 );
-		m_RendererData.UniformBufferSet->CreateBuffer( 64 + 64 * 100, 15 );
 
 		InitPreDepth();
 
@@ -258,7 +264,12 @@ namespace Saturn {
 		{
 			m_RendererData.DynamicMeshShader = ShaderLibrary::Get().FindOrLoad( "shader_new_anim", "content/shaders/shader_new_anim.glsl" );
 
-			m_RendererData.DynamicMeshMaterial = Ref<Material>::Create( m_RendererData.DynamicMeshShader, "DynamicMeshMat" );
+			m_RendererData.DynamicMeshMaterial = Ref<Material>::Create( m_RendererData.DynamicMeshShader, "DynamicMeshMat", 2 );
+
+			for( size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++ )
+			{
+				m_RendererData.DynamicMeshMaterial->SetSB( 15, m_RendererData.SBBoneTransforms->Get( 2, 15, i ) );
+			}
 		}
 
 		if( m_RendererData.DynamicMeshPipeline )
@@ -268,15 +279,20 @@ namespace Saturn {
 		PipelineSpec.Shader = m_RendererData.DynamicMeshShader;
 		PipelineSpec.UseDepthTest = true;
 		PipelineSpec.VertexLayout = {
-			{ ShaderDataType::Float3, "a_Position" },
-			{ ShaderDataType::Float3, "a_Normal"   },
-			{ ShaderDataType::Float3, "a_Tangent"  },
-			{ ShaderDataType::Float3, "a_Binormal" },
-			{ ShaderDataType::Float2, "a_TexCoord" },
-			{ ShaderDataType::Int4,   "a_BoneIndices" },
-			{ ShaderDataType::Float4, "a_BoneWeights" }
+			{ ShaderDataType::Float3, "a_Position", 0 },
+			{ ShaderDataType::Float3, "a_Normal"  , 1 },
+			{ ShaderDataType::Float3, "a_Tangent" , 2 },
+			{ ShaderDataType::Float3, "a_Binormal", 3 },
+			{ ShaderDataType::Float2, "a_TexCoord", 4 },
+			{ ShaderDataType::Int4,   "a_BoneIndices", 9 },
+			{ ShaderDataType::Float4, "a_BoneWeights", 10 }
 		};
-		PipelineSpec.InstanceLayout = {};
+		PipelineSpec.InstanceLayout = {
+			{ ShaderDataType::Float4, "a_TransformBufferR1", 5 },
+			{ ShaderDataType::Float4, "a_TransformBufferR2", 6 },
+			{ ShaderDataType::Float4, "a_TransformBufferR3", 7 },
+			{ ShaderDataType::Float4, "a_TransformBufferR4", 8 },
+		};
 
 		m_RendererData.DynamicMeshPipeline = Ref< Pipeline >::Create( PipelineSpec );
 	}
@@ -1226,7 +1242,7 @@ namespace Saturn {
 		}
 	}
 
-	void SceneRenderer::SubmitDynamicMesh( SharedPtr<Entity> entity, Ref<SkeletalMesh> mesh, Ref<MaterialRegistry> materialRegistry, const glm::mat4& transform )
+	void SceneRenderer::SubmitDynamicMesh( SharedPtr<Entity> entity, Ref<SkeletalMesh> mesh, Ref<MaterialRegistry> materialRegistry, const glm::mat4& transform, const std::vector<glm::mat4>& boneTransforms )
 	{
 		SAT_PF_EVENT();
 
@@ -1240,7 +1256,7 @@ namespace Saturn {
 			const AABB submeshAABB = submeshes[ i ].BoundingBox;
 			const AABB transformedAABB = TransformAABB( submeshAABB, submeshTransform );
 
-			if( m_RendererData.CurrentCamera.pCamera->CameraFrustumIntersectsAABB( transformedAABB ) )
+			if( /*m_RendererData.CurrentCamera.pCamera->CameraFrustumIntersectsAABB( transformedAABB )*/ true )
 			{
 				StaticMeshKey key = { mesh->ID, materialRegistry, ( uint32_t ) i };
 
@@ -1249,13 +1265,22 @@ namespace Saturn {
 				command.Mesh = mesh;
 				command.SubmeshIndex = ( uint32_t ) i;
 				command.Instances++;
-				command.Transform = submeshTransform;
+
+				m_RendererData.BoneTransformMap[ key ].Data.resize( 100 );
+
+				size_t index = 0;
+				for( const auto& transform : boneTransforms )
+				{
+					m_RendererData.BoneTransformMap[ key ].Data[ index ] = transform;
+					index++;
+				}
 
 				/*
 				auto& shadow = m_ShadowMapDrawList[ key ];
 				shadow.Mesh = nullptr;
 				shadow.SubmeshIndex = ( uint32_t ) i;
 				shadow.Instances++;
+				*/
 
 				auto& data = m_RendererData.MeshTransforms[ key ].Data.emplace_back();
 				data.TransfromBufferR[ 0 ] = {
@@ -1270,7 +1295,6 @@ namespace Saturn {
 				data.TransfromBufferR[ 3 ] = {
 					submeshTransform[ 0 ][ 3 ], submeshTransform[ 1 ][ 3 ], submeshTransform[ 2 ][ 3 ], submeshTransform[ 3 ][ 3 ]
 				};
-				*/
 			}
 		}
 	}
@@ -1491,25 +1515,12 @@ namespace Saturn {
 	void SceneRenderer::RenderDynamicMeshes()
 	{
 		const uint32_t frame = Renderer::Get().GetCurrentFrame();
+		m_RendererData.DynamicMeshMaterial->Update( {} );
+
+		uint32_t index = 0;
 		for( auto&& [key, Cmd] : m_DynamicDrawList )
 		{
-//			const auto& rTransformData = m_RendererData.MeshTransforms[ key ];
-
-			struct UBDynamicTransform
-			{
-				glm::mat4 Transform;
-				glm::mat4 BoneTransform[100];
-			} u_Transform;
-
-			u_Transform.Transform = Cmd.Transform;
-
-			const auto& rBones = Cmd.Mesh->GetBones();
-			for( size_t i = 0; i < rBones.size(); i++ )
-			{
-				u_Transform.BoneTransform[ i ] = Cmd.Mesh->GetBoneTransform( i );
-			}
-
-			m_RendererData.UniformBufferSet->Get( 0, 15, frame )->UploadData( &u_Transform, sizeof( UBDynamicTransform ) );
+			const auto& rTransformData = m_RendererData.MeshTransforms[ key ];
 
 			// Render Submesh
 			Renderer::Get().SubmitDynamicMesh(
@@ -1522,7 +1533,9 @@ namespace Saturn {
 				Cmd.SubmeshIndex,
 				Cmd.Instances,
 				m_RendererData.SubmeshTransformData[ frame ].VertexBuffer,
-				0 );
+				rTransformData.Offset, index, m_RendererData.DynamicMeshMaterial );
+
+			index++;
 		}
 	}
 
@@ -2083,6 +2096,25 @@ namespace Saturn {
 		}
 
 		m_RendererData.SubmeshTransformData[ frame ].VertexBuffer->Reallocate( m_RendererData.SubmeshTransformData[ frame ].pData, off * sizeof( TransformBufferData ) );
+	
+		off = 0;
+		for( auto& [id, buffer] : m_RendererData.BoneTransformMap )
+		{
+			buffer.Offset = off;
+			memcpy( &m_RendererData.BoneTransformData[off], buffer.Data.data(), buffer.Data.size() * sizeof( glm::mat4 ) );
+			off += buffer.Data.size();
+		}
+
+		if( off > 0 )
+		{
+			// upload
+			auto pAllocator = VulkanContext::Get().GetVulkanAllocator();
+			auto bufferAloc = pAllocator->GetAllocationFromBuffer( m_RendererData.SBBoneTransforms->Get( 2, 15, frame )->GetBuffer() );
+
+			void* pBufferData = pAllocator->MapMemory<void>( bufferAloc );
+			memcpy( pBufferData, ( const uint8_t* ) m_RendererData.BoneTransformData, ( uint32_t ) off * sizeof( glm::mat4 ) );
+			pAllocator->UnmapMemory( bufferAloc );
+		}
 	}
 
 	class ScopedDebugLabel
@@ -2178,6 +2210,7 @@ namespace Saturn {
 		m_PhysicsColliderDrawList.clear();
 		m_ScheduledFunctions.clear();
 		m_RendererData.MeshTransforms.clear();
+		m_RendererData.BoneTransformMap.clear();
 	}
 
 	void SceneRenderer::SetCamera( const RendererCamera& Camera )

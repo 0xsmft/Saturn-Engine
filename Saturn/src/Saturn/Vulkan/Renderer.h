@@ -73,7 +73,7 @@ namespace Saturn {
 
 		void SubmitDynamicMesh( VkCommandBuffer CommandBuffer, Ref<Saturn::Pipeline> Pipeline, Ref<SkeletalMesh> mesh,
 			Ref<StorageBufferSet>& rStorageBufferSet, Ref<UniformBufferSet> rUniformBufferSet, Ref< MaterialRegistry > materialRegistry, uint32_t SubmeshIndex, uint32_t count,
-			Ref<VertexBuffer> transformData, uint32_t transformOffset );
+			Ref<VertexBuffer> transformData, uint32_t transformOffset, uint32_t boneOffset, Ref<Material> dynamicMeshMaterial );
 
 		const std::vector<std::vector<VkWriteDescriptorSet>>& GetStorageBufferWriteDescriptors( Ref<StorageBufferSet>& rStorageBufferSet, Ref<Material>& rMaterialAsset );
 

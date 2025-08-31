@@ -39,8 +39,9 @@
 #include "Saturn/Asset/Asset.h"
 #include "Saturn/Asset/MaterialAsset.h"
 #include "Saturn/Asset/AssetImporter.h"
-#include "Saturn/Asset/SkeletonAsset.h"
-#include "Saturn/Asset/SkeletalAnimationAsset.h"
+
+#include "Saturn/SkeletalAnimation/SkeletonAsset.h"
+#include "Saturn/SkeletalAnimation/SkeletalAnimationAsset.h"
 
 #include "Saturn/Project/Project.h"
 
@@ -396,10 +397,13 @@ namespace Auxiliary {
 	//////////////////////////////////////////////////////////////////////////
 	// SKELETAL MESH
 
-	SkeletalMesh::SkeletalMesh( const Ref<Asset>& rBase, const std::filesystem::path& rFilepath )
+	SkeletalMesh::SkeletalMesh( const Ref<Asset>& rBase, const std::filesystem::path& rFilepath, AssetID skeletonID )
 		: Asset( rBase ), Mesh( rFilepath )
 	{
 #if !defined(SAT_DIST)
+		m_SkeletonAsset = AssetManager::Get().GetAssetAs<SkeletonAsset>( skeletonID );
+		SAT_CORE_ASSERT( m_SkeletonAsset );
+
 		Initialise();
 #endif
 	}
@@ -411,7 +415,7 @@ namespace Auxiliary {
 
 	const glm::mat4& SkeletalMesh::GetBoneTransform( uint32_t index ) const
 	{
-		return m_Bones.at( index ).FinalTransformation;
+		return m_SkeletonAsset->GetBoneInfo()[ 0 ].BoneOffset;
 	}
 
 	void SkeletalMesh::Import_InitSkeleton( AssetID id )
@@ -527,26 +531,26 @@ namespace Auxiliary {
 				m_Indices.emplace_back( mesh->mFaces[ i ].mIndices[ 0 ], mesh->mFaces[ i ].mIndices[ 1 ], mesh->mFaces[ i ].mIndices[ 2 ] );
 			}
 
+			// TODO: Should be replaced completely by SkeletonAsset.
 			if( mesh->HasBones() )
 			{
 				for( unsigned int i = 0; i < mesh->mNumBones; i++ )
 				{
-					aiBone* aiBone = mesh->mBones[ i ];
-					std::string boneName( aiBone->mName.C_Str() );
+					aiBone* pBone = mesh->mBones[ i ];
+					std::string boneName( pBone->mName.C_Str() );
 
 					int boneIndex = 0;
 					if( m_BoneMapping.find( boneName ) == m_BoneMapping.end() )
 					{
-						boneIndex = ( int ) m_Bones.size();
+						boneIndex = ( int ) m_BoneInfos.size();
 						m_BoneMapping[ boneName ] = boneIndex;
 
 						SkeletalMeshBoneInfo boneInfo;
 						boneInfo.BoneName = boneName;
 						boneInfo.ParentIndex = -1;
-						boneInfo.BoneOffset = Auxiliary::Mat4FromAssimpMat4( aiBone->mOffsetMatrix );
-						boneInfo.FinalTransformation = glm::mat4( 1.0f );
+						boneInfo.BoneOffset = Auxiliary::Mat4FromAssimpMat4( pBone->mOffsetMatrix );
 
-						m_Bones.push_back( boneInfo );
+						m_BoneInfos.push_back( boneInfo );
 					}
 					else
 					{
@@ -554,10 +558,10 @@ namespace Auxiliary {
 					}
 
 					// Assign weights to vertices
-					for( unsigned int j = 0; j < aiBone->mNumWeights; j++ )
+					for( unsigned int j = 0; j < pBone->mNumWeights; j++ )
 					{
-						unsigned int vertexID = submesh.BaseVertex + aiBone->mWeights[ j ].mVertexId;
-						float weight = aiBone->mWeights[ j ].mWeight;
+						unsigned int vertexID = submesh.BaseVertex + pBone->mWeights[ j ].mVertexId;
+						float weight = pBone->mWeights[ j ].mWeight;
 						m_Vertices[ vertexID ].AddBoneData( boneIndex, weight );
 					}
 				}
@@ -599,7 +603,7 @@ namespace Auxiliary {
 			{
 				auto parentIt = m_BoneMapping.find( node->mParent->mName.C_Str() );
 				if( parentIt != m_BoneMapping.end() )
-					m_Bones[ boneIndex ].ParentIndex = parentIt->second;
+					m_BoneInfos[ boneIndex ].ParentIndex = parentIt->second;
 			}
 		}
 
@@ -854,13 +858,12 @@ namespace Auxiliary {
 					auto RoughnessTexturePath = pp.string();
 
 					auto LocalPath = m_DstPath;
-
 					LocalPath /= pp.filename();
 
-					if( !std::filesystem::exists( LocalPath ) )
+					if( !std::filesystem::exists( LocalPath ) && std::filesystem::exists( RoughnessTexturePath ) )
 						std::filesystem::copy_file( RoughnessTexturePath, LocalPath );
 
-					if( materialAsset )
+					if( materialAsset && std::filesystem::exists( LocalPath ) )
 					{
 						auto texture = Ref<Texture2D>::Create( LocalPath, AddressingMode::Repeat, false );
 						materialAsset->SetRoughnessMap( texture );

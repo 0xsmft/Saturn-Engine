@@ -300,8 +300,11 @@ namespace Saturn {
 
 		Ref<Pass> PreDepthPass = nullptr;
 		Ref<Pipeline> PreDepthPipeline = nullptr;
+		Ref<Pipeline> PreDepthDynamicPipeline = nullptr;
 		Ref<Framebuffer> PreDepthFramebuffer = nullptr;
 		Ref<Material> PreDepthMaterial = nullptr;
+		Ref<Material> PreDepthDynamicMaterial = nullptr;
+		Ref<Material> PreDepthDynamicMaterialSet2 = nullptr;
 
 		Ref<ComputePipeline> LightCullingPipeline = nullptr;
 		Ref<Material> LightCullingMaterial = nullptr;
@@ -419,6 +422,7 @@ namespace Saturn {
 		Ref< Shader > SelectedGeometryShader = nullptr;
 		Ref< Shader > AOCompositeShader = nullptr;
 		Ref< Shader > PreDepthShader = nullptr;
+		Ref< Shader > PreDepthDynamicShader = nullptr;
 		Ref< Shader > LightCullingShader = nullptr;
 		Ref< Shader > BloomShader = nullptr;
 		Ref< Shader > PhysicsOutlineShader = nullptr;
@@ -535,6 +539,8 @@ namespace Saturn {
 		std::unordered_map< StaticMeshKey, DrawCommand > m_DrawList;
 		std::unordered_map< StaticMeshKey, DrawCommand > m_ShadowMapDrawList;
 		std::unordered_map< StaticMeshKey, DrawCommand > m_PhysicsColliderDrawList;
+		
+		std::unordered_map< StaticMeshKey, DynamicDrawCommand > m_DynamicShadowMapDrawList;
 		std::unordered_map< StaticMeshKey, DynamicDrawCommand > m_DynamicDrawList;
 
 		std::vector< ScheduledFunc > m_ScheduledFunctions;

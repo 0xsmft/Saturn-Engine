@@ -395,9 +395,13 @@ namespace Saturn {
 		if( !m_RendererData.PreDepthShader )
 		{
 			m_RendererData.PreDepthShader = ShaderLibrary::Get().FindOrLoad( "PreDepth", "content/shaders/PreDepth.glsl" );
+			m_RendererData.PreDepthDynamicShader = ShaderLibrary::Get().FindOrLoad( "PreDepth-Dynamic", "content/shaders/PreDepth-Dynamic.glsl" );
 			m_RendererData.LightCullingShader = ShaderLibrary::Get().FindOrLoad( "LightCulling", "content/shaders/LightCulling.glsl" );
 
 			m_RendererData.PreDepthMaterial = Ref<Material>::Create( m_RendererData.PreDepthShader, "PreDepth" );
+			m_RendererData.PreDepthDynamicMaterial = Ref<Material>::Create( m_RendererData.PreDepthDynamicShader, "PreDepth" );
+			m_RendererData.PreDepthDynamicMaterialSet2 = Ref<Material>::Create( m_RendererData.PreDepthDynamicShader, "PreDepth-S2", 1 );
+
 			m_RendererData.LightCullingMaterial = Ref<Material>::Create( m_RendererData.LightCullingShader, "LightCulling" );
 		}
 
@@ -432,6 +436,35 @@ namespace Saturn {
 		};
 
 		m_RendererData.PreDepthPipeline = Ref<Pipeline>::Create( PipelineSpec );
+
+		//////////////////////////////////////////////////////////////////////////
+		// Dynamic (Animated)
+		//////////////////////////////////////////////////////////////////////////
+
+		PipelineSpec.Name = "PreDepth-Dynamic";
+		PipelineSpec.Shader = m_RendererData.PreDepthDynamicShader;
+		PipelineSpec.VertexLayout = {
+			{ ShaderDataType::Float3, "a_Position", 0 },
+			{ ShaderDataType::Float3, "a_Normal"  , 1 },
+			{ ShaderDataType::Float3, "a_Tangent" , 2 },
+			{ ShaderDataType::Float3, "a_Binormal", 3 },
+			{ ShaderDataType::Float2, "a_TexCoord", 4 },
+			{ ShaderDataType::Int4,   "a_BoneIndices", 9 },
+			{ ShaderDataType::Float4, "a_BoneWeights", 10 }
+		};
+		PipelineSpec.InstanceLayout = {
+			{ ShaderDataType::Float4, "a_TransformBufferR1", 5 },
+			{ ShaderDataType::Float4, "a_TransformBufferR2", 6 },
+			{ ShaderDataType::Float4, "a_TransformBufferR3", 7 },
+			{ ShaderDataType::Float4, "a_TransformBufferR4", 8 },
+		};
+
+		m_RendererData.PreDepthDynamicPipeline = Ref<Pipeline>::Create( PipelineSpec );
+
+		for( size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++ )
+		{
+			m_RendererData.PreDepthDynamicMaterialSet2->SetSB( 15, m_RendererData.SBBoneTransforms->Get( 2, 15, i ) );
+		}
 
 		//////////////////////////////////////////////////////////////////////////
 		// Light culling
@@ -1275,12 +1308,10 @@ namespace Saturn {
 					index++;
 				}
 
-				/*
-				auto& shadow = m_ShadowMapDrawList[ key ];
-				shadow.Mesh = nullptr;
+				auto& shadow = m_DynamicShadowMapDrawList[ key ];
+				shadow.Mesh = mesh;
 				shadow.SubmeshIndex = ( uint32_t ) i;
 				shadow.Instances++;
-				*/
 
 				auto& data = m_RendererData.MeshTransforms[ key ].Data.emplace_back();
 				data.TransfromBufferR[ 0 ] = {
@@ -1662,6 +1693,8 @@ namespace Saturn {
 		// We cannot write to the UniformBufferSet as we don't use the same UB as the other shaders
 		m_RendererData.PreDepthMaterial->UploadDataToUB( 0, &u_Matrices, sizeof( u_Matrices ) );
 
+		m_RendererData.PreDepthDynamicMaterialSet2->Update( {} );
+
 		for( auto&& [key, Cmd] : m_DrawList )
 		{
 			const auto& rTransformData = m_RendererData.MeshTransforms[ key ];
@@ -1676,6 +1709,25 @@ namespace Saturn {
 				m_RendererData.SubmeshTransformData[ frame ].VertexBuffer,
 				rTransformData.Offset,
 				Cmd.SubmeshIndex );
+		}
+
+		uint32_t index = 0;
+		for( auto&& [key, Cmd] : m_DynamicDrawList )
+		{
+			const auto& rTransformData = m_RendererData.MeshTransforms[ key ];
+			Renderer::Get().RenderDynamicMeshWithoutMaterial(
+				CommandBuffer,
+				m_RendererData.PreDepthDynamicPipeline,
+				Cmd.Mesh,
+				m_RendererData.PreDepthDynamicMaterial,
+				m_RendererData.UniformBufferSet,
+				m_RendererData.StorageBufferSet,
+				Cmd.Instances,
+				m_RendererData.SubmeshTransformData[ frame ].VertexBuffer,
+				rTransformData.Offset,
+				Cmd.SubmeshIndex, index, m_RendererData.PreDepthDynamicMaterialSet2 );
+
+			index++;
 		}
 
 		m_RendererData.PreDepthPass->EndPass();

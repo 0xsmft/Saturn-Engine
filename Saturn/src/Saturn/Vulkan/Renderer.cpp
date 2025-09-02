@@ -234,6 +234,78 @@ namespace Saturn {
 		PushConstant.Free();
 	}
 
+	void Renderer::RenderDynamicMeshWithoutMaterial(
+		VkCommandBuffer CommandBuffer,
+		Ref<Saturn::Pipeline> Pipeline,
+		Ref<StaticMesh> mesh,
+		Ref<Material> material,
+		Ref<UniformBufferSet> ubSet,
+		Ref<StorageBufferSet> sbSet,
+		uint32_t count,
+		Ref<VertexBuffer> transformVB, uint32_t TransformOffset,
+		uint32_t SubmeshIndex,
+		uint32_t boneOffset, Ref<Material> set2Material, Buffer additionalData )
+	{
+		SAT_PF_EVENT();
+
+		Buffer PushConstant;
+		PushConstant.Allocate( additionalData.Size + sizeof( uint32_t ) );
+		if( additionalData.Size > 0 )
+			PushConstant.Write( additionalData.Data, additionalData.Size, 0 );
+
+		PushConstant.Write( &boneOffset, sizeof( uint32_t ), additionalData.Size );
+
+		{
+			mesh->GetVertexBuffer()->Bind( CommandBuffer );
+
+			VkDeviceSize offset[ 1 ] = { TransformOffset };
+			transformVB->Bind( CommandBuffer, 1, offset );
+
+			mesh->GetIndexBuffer()->Bind( CommandBuffer );
+
+			Pipeline->Bind( CommandBuffer );
+
+			if( PushConstant.Size > 0 )
+			{
+				vkCmdPushConstants( CommandBuffer, Pipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, ( uint32_t ) PushConstant.Size, PushConstant.Data );
+			}
+
+			std::vector<std::vector<VkWriteDescriptorSet>> externalWds;
+			if( ubSet )
+			{
+				externalWds = GetUniformBufferWriteDescriptors( ubSet, material );
+				if( sbSet )
+				{
+					const auto& StorageWriteDescriptors = GetStorageBufferWriteDescriptors( sbSet, material );
+
+					for( size_t i = 0; i < MAX_FRAMES_IN_FLIGHT && StorageWriteDescriptors.size(); i++ )
+					{
+						// Add StorageWriteDescriptors onto wds
+						externalWds[ i ].reserve( externalWds[ i ].size() + StorageWriteDescriptors[ i ].size() );
+						externalWds[ i ].insert( externalWds[ i ].end(), StorageWriteDescriptors[ i ].begin(), StorageWriteDescriptors[ i ].end() );
+					}
+				}
+			}
+
+			material->Update( externalWds );
+
+			// Descriptor set 0, for material texture data.
+			// Descriptor set 1, for environment data.
+			std::array<VkDescriptorSet, 2> DescriptorSets = {
+				material->GetDescriptorSet( m_FrameCount ),
+				set2Material->GetDescriptorSet( m_FrameCount )
+			};
+
+			vkCmdBindDescriptorSets( CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+				Pipeline->GetPipelineLayout(), 0, ( uint32_t ) DescriptorSets.size(), DescriptorSets.data(), 0, nullptr );
+
+			auto& rSubmesh = mesh->Submeshes()[ SubmeshIndex ];
+			vkCmdDrawIndexed( CommandBuffer, rSubmesh.IndexCount, count, rSubmesh.BaseIndex, rSubmesh.BaseVertex, 0 );
+		}
+
+		PushConstant.Free();
+	}
+
 	const std::vector<std::vector<VkWriteDescriptorSet>>& Renderer::GetStorageBufferWriteDescriptors( Ref<StorageBufferSet>& rStorageBufferSet, Ref<Material>& rMaterial )
 	{
 		SAT_PF_EVENT();

@@ -526,7 +526,7 @@ namespace Saturn {
 				if( meshComponent.MaterialRegistry && meshComponent.MaterialRegistry->HasAnyOverrides() )
 					targetMaterialRegistry = meshComponent.MaterialRegistry;
 
-				std::vector<glm::mat4> boneTransforms{};
+				std::vector<glm::mat4> boneTransforms = meshComponent.Mesh->GetDefaultBoneTransforms();
 				if( meshComponent.LocalAnimator.IsReady() )
 				{
 					boneTransforms = meshComponent.LocalAnimator.GetBoneTransforms();

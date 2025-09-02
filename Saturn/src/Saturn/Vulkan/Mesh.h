@@ -279,6 +279,8 @@ namespace Saturn {
 			return itr == m_BoneMapping.end() ? -1 : itr->second;
 		}
 
+		const std::vector<glm::mat4> GetDefaultBoneTransforms() const { return m_DefaultBoneTransforms; }
+
 	public:
 		void Import_InitSkeleton( AssetID id );
 
@@ -295,6 +297,8 @@ namespace Saturn {
 		std::vector<SkeletalMeshBoneInfo> m_BoneInfos;
 		std::unordered_map<std::string, uint32_t> m_BoneMapping;
 		
+		std::vector<glm::mat4> m_DefaultBoneTransforms;
+
 		Ref<SkeletonAsset> m_SkeletonAsset;
 
 	private:

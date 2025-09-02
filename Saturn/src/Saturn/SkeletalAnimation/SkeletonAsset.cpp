@@ -64,7 +64,7 @@ namespace Auxiliary {
 	{
 	}
 
-	void SkeletonAsset::CreateFromMesh( const aiMesh* pMesh, const Submesh& rSubmesh )
+	void SkeletonAsset::AppendBonesFromMesh( const aiMesh* pMesh, const Submesh& rSubmesh )
 	{
 #if !defined(SAT_DIST)
 		uint32_t boneCount = 0;

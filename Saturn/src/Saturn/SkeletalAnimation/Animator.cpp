@@ -189,13 +189,13 @@ namespace Saturn {
 				continue;
 			}
 
-			glm::vec3 pos = InterpolatePosition( rBone, m_AnimationTime );
-			glm::quat rot = InterpolateRotation( rBone, m_AnimationTime );
-			glm::vec3 scl = InterpolateScale( rBone, m_AnimationTime ); 
+			const glm::vec3 pos = InterpolatePosition( rBone, m_AnimationTime );
+			const glm::quat rot = InterpolateRotation( rBone, m_AnimationTime );
+			const glm::vec3 scl = InterpolateScale( rBone, m_AnimationTime );
 
-			glm::mat4 translation = glm::translate( glm::mat4( 1.0f ), pos );
-			glm::mat4 rotation = glm::toMat4( rot );
-			glm::mat4 scaling = glm::scale( glm::mat4( 1.0f ), scl );
+			const glm::mat4 translation = glm::translate( glm::mat4( 1.0f ), pos );
+			const glm::mat4 rotation = glm::toMat4( rot );
+			const glm::mat4 scaling = glm::scale( glm::mat4( 1.0f ), scl );
 
 			auto final = translation * rotation * scaling;
 

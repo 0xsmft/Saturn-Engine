@@ -67,6 +67,8 @@ namespace Saturn {
 		void RenderMeshWithoutMaterial( VkCommandBuffer CommandBuffer, Ref<Saturn::Pipeline> Pipeline, Ref<StaticMesh> mesh, Ref<Material> material, Ref<UniformBufferSet> ubSet,
 			Ref<StorageBufferSet> sbSet, uint32_t count, Ref<VertexBuffer> transformVB, uint32_t TransformOffset, uint32_t SubmeshIndex, Buffer additionalData = Buffer() );
 
+		void RenderDynamicMeshWithoutMaterial( VkCommandBuffer CommandBuffer, Ref<Saturn::Pipeline> Pipeline, Ref<StaticMesh> mesh, Ref<Material> material, Ref<UniformBufferSet> ubSet, Ref<StorageBufferSet> sbSet, uint32_t count, Ref<VertexBuffer> transformVB, uint32_t TransformOffset, uint32_t SubmeshIndex, uint32_t boneOffset, Ref<Material> set2Material, Buffer additionalData = Buffer() );
+	
 		void SubmitMesh( VkCommandBuffer CommandBuffer, Ref< Saturn::Pipeline > Pipeline, Ref< StaticMesh > mesh,
 			Ref<StorageBufferSet>& rStorageBufferSet, Ref<UniformBufferSet> rUniformBufferSet, Ref< MaterialRegistry > materialRegistry, uint32_t SubmeshIndex, uint32_t count,
 			Ref<VertexBuffer> transformData, uint32_t transformOffset );

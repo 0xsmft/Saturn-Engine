@@ -28,36 +28,50 @@
 
 #pragma once
 
-#include "SkeletalAnimationAsset.h"
-#include "Saturn/Vulkan/Mesh.h"
+#include "Saturn/ImGui/AssetViewer.h"
+#include "Saturn/SkeletalAnimation/SkeletonAsset.h"
+
+struct ImVec2;
 
 namespace Saturn {
 
-	class Animator
+	class SceneRenderer;
+	class EditorCamera;
+
+	struct SkAVBoneNode
 	{
-	public:
-		Animator();
-		~Animator();
-
-		void InitAnimation( AssetID id, Ref<SkeletalMesh> sk );
-		void Play( Timestep ts );
-
-		const std::vector<glm::mat4>& GetBoneTransforms() const { return m_BoneTransforms; }
-		bool IsReady() const { return m_Init && m_AnimationTime > 0.0f; }
-
-	private:
-		void ApplyBoneTransformations();
-
-	private:
-		Ref<SkeletalAnimationAsset> m_AnimationAsset;
-		Ref<SkeletalMesh> m_SkeletalMesh;
-
-		float m_StartTime = 0.0f;
-		float m_AnimationTime = 0.0f;
-
-		bool m_Init = false;
-
-		std::vector<glm::mat4> m_BoneTransforms;
+		SkeletalMeshBoneInfo* pBone = nullptr;
+		std::vector<SkAVBoneNode*> Children;
 	};
 
+	class SkeletonAssetViewer : public AssetViewer
+	{
+	public:
+		SkeletonAssetViewer( AssetID id );
+		~SkeletonAssetViewer();
+
+		virtual void OnImGuiRender() override;
+		virtual void OnUpdate( Timestep ts ) override;
+		virtual void OnEvent( Event& rEvent ) override;
+
+	private:
+		void DisplayBoneHierarchy( SkAVBoneNode* pBoneNode, int level = 0 );
+
+	private:
+		Ref<SkeletonAsset> m_SkeletonAsset;
+		Ref<SceneRenderer> m_SceneRenderer;
+//		Ref<Scene> m_Scene;
+//		EditorCamera m_Camera;
+
+		bool m_AllowCameraEvents = false;
+		bool m_StartedRightClickInViewport = false;
+		bool m_ViewportFocused = false;
+		bool m_MouseOverViewport = false;
+
+//		ImVec2 m_ViewportSize{};
+
+		std::vector<SkAVBoneNode*> m_BoneLinkedList;
+		std::vector<SkAVBoneNode*> m_BoneRoots;
+	};
+	
 }

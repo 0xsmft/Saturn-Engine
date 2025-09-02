@@ -65,7 +65,7 @@ namespace Saturn {
 		SkeletonAsset( const Ref<Asset>& rBase );
 		virtual ~SkeletonAsset();
 
-		void CreateFromMesh( const aiMesh* pMesh, const Submesh& rSubmesh );
+		void AppendBonesFromMesh( const aiMesh* pMesh, const Submesh& rSubmesh );
 		void BuildHierarchy( const aiNode* pNode, int parentIndex );
 		
 		void AddBoneInfo( const std::string& rName, int parentIndex, const glm::mat4& rOffsetMatrix, uint32_t boneIndex );

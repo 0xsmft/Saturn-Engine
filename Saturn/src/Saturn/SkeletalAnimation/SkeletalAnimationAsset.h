@@ -91,8 +91,8 @@ namespace Saturn {
 		AssetID m_SkeletonAssetID;
 
 		// The duration of this animation in seconds
-		double m_Duration;
-		double m_TicksPerSecond;
+		double m_Duration = 0.0;
+		double m_TicksPerSecond = 0.0;
 
 		std::vector<AnimationBone> m_Bones;
 	};

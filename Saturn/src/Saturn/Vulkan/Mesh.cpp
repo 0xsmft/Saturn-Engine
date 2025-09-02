@@ -285,9 +285,9 @@ namespace Auxiliary {
 
 		for( const auto& rSubmesh : m_Submeshes )
 		{
-			AABB bb = rSubmesh.BoundingBox;
-			glm::vec3 min = glm::vec3( rSubmesh.Transform * glm::vec4( bb.Min, 1.0f ) );
-			glm::vec3 max = glm::vec3( rSubmesh.Transform * glm::vec4( bb.Max, 1.0f ) );
+			const AABB bb = rSubmesh.BoundingBox;
+			const glm::vec3 min = glm::vec3( rSubmesh.Transform * glm::vec4( bb.Min, 1.0f ) );
+			const glm::vec3 max = glm::vec3( rSubmesh.Transform * glm::vec4( bb.Max, 1.0f ) );
 
 			m_BoundingBox.Min.x = glm::min( m_BoundingBox.Min.x, min.x );
 			m_BoundingBox.Min.y = glm::min( m_BoundingBox.Min.y, min.y );
@@ -301,7 +301,7 @@ namespace Auxiliary {
 
 	void StaticMesh::TraverseNodes( aiNode* node, const glm::mat4& parentTransform /*= glm::mat4( 1.0f )*/, uint32_t level /*= 0 */ )
 	{
-		glm::mat4 transform = parentTransform * Auxiliary::Mat4FromAssimpMat4( node->mTransformation );
+		const glm::mat4 transform = parentTransform * Auxiliary::Mat4FromAssimpMat4( node->mTransformation );
 
 		for( uint32_t i = 0; i < node->mNumMeshes; i++ )
 		{
@@ -442,7 +442,7 @@ namespace Auxiliary {
 
 		m_Importer = std::make_unique<Assimp::Importer>();
 
-		const aiScene* scene = m_Importer->ReadFile( m_FilePath.string(), s_MeshImportFlags );
+		const aiScene* scene = m_Importer->ReadFile( m_FilePath.string(), s_MeshImportFlags | aiProcess_PopulateArmatureData );
 		if( scene == nullptr || !scene->HasMeshes() )
 		{
 			SAT_CORE_ERROR( "Failed to load mesh file (does the file have meshes?): {0}", m_FilePath );
@@ -587,6 +587,13 @@ namespace Auxiliary {
 			m_BoundingBox.Max.y = glm::max( m_BoundingBox.Max.y, max.y );
 			m_BoundingBox.Max.z = glm::max( m_BoundingBox.Max.z, max.z );
 		}
+
+		m_DefaultBoneTransforms.resize( m_BoneInfos.size() );
+
+		for( size_t i = 0; i < m_BoneInfos.size(); i++ )
+		{
+			m_DefaultBoneTransforms[ i ] = glm::mat4{ 1.0f };
+		}
 	}
 
 	void SkeletalMesh::TraverseNodes( aiNode* node, const glm::mat4& parentTransform /*= glm::mat4( 1.0f )*/, uint32_t level /*= 0 */ )
@@ -655,14 +662,14 @@ namespace Auxiliary {
 				m_Result |= MeshDeterminerResult_SkeletalMesh;
 
 				// A Skeletal mesh can not contain any other meshes
-				break;
+//				break;
 			}
 			else
 			{
 				if( ( m_Result & MeshDeterminerResult_SkeletalMesh ) != 0 )
 				{
 					m_Result = MeshDeterminerResult_Undetermined;
-					SAT_CORE_ERROR( "A Skeletal mesh can not contain a static mesh" );
+					SAT_CORE_ERROR( "A Skeletal mesh can not contain a static mesh, it can, however contain submeshes with the SAME armature!" );
 				}
 				else
 				{
@@ -992,7 +999,7 @@ namespace Auxiliary {
 
 		m_Importer = std::make_unique<Assimp::Importer>();
 
-		const aiScene* scene = m_Importer->ReadFile( m_SourcePath.string(), s_MeshImportFlags );
+		const aiScene* scene = m_Importer->ReadFile( m_SourcePath.string(), aiProcess_Triangulate | aiProcess_ValidateDataStructure | aiProcess_JoinIdenticalVertices );
 
 		if( scene == nullptr || !scene->HasMeshes() )
 		{
@@ -1027,7 +1034,7 @@ namespace Auxiliary {
 
 			for( unsigned int m = 0; m < m_Scene->mNumMeshes; m++ )
 			{
-				aiMesh* pMesh = m_Scene->mMeshes[ m ];
+				const aiMesh* pMesh = m_Scene->mMeshes[ m ];
 				if( !pMesh->HasBones() ) continue;
 
 				Submesh submesh{ .BaseVertex = vertexCount, .BaseIndex = indexCount, .MaterialIndex = 0, .IndexCount = pMesh->mNumFaces * 3, .VertexCount = pMesh->mNumVertices };
@@ -1035,8 +1042,7 @@ namespace Auxiliary {
 				indexCount += submesh.IndexCount;
 				vertexCount += submesh.VertexCount;
 
-				if( m == 0 )
-					skelAsset->CreateFromMesh( pMesh, submesh );
+				skelAsset->AppendBonesFromMesh( pMesh, submesh );
 			}
 
 			skelAsset->BuildHierarchy( m_Scene->mRootNode, -1 );

@@ -78,7 +78,7 @@ namespace Saturn {
 				m_IsReady.store( true );
 			}
 
-			if( md.CheckResult( MeshDeterminerResult_SkeletalMesh ) )
+			if( md.CheckResult( MeshDeterminerResult_SkeletalMesh ) || md.CheckResult( MeshDeterminerResult_Animations ) )
 			{
 				m_IsSkeletal = true;
 				m_IsReady.store( true );

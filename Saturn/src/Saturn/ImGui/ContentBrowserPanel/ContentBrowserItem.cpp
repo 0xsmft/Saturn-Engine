@@ -45,6 +45,8 @@
 #include "Saturn/Audio/SoundNodeEditor/GraphSoundAssetViewer.h"
 #include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeAssetViewer.h"
 #include "Saturn/AI/BehaviourTree/BehaviourTreeMemoryAssetViewer.h"
+#include "Saturn/SkeletalAnimation/AssetViewer/SkeletonAssetViewer.h"
+#include "Saturn/SkeletalAnimation/AssetViewer/SkeletalMeshAssetViewer.h"
 
 #include "Saturn/Project/Project.h"
 
@@ -261,8 +263,11 @@ namespace Saturn {
 						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
 					} break;
 
-					case AssetType::SkeletalMesh:
-						break;
+					case AssetType::SkeletalMesh: 
+					{
+						const auto viewer = Ref<SkeletalMeshAssetViewer>::Create( m_Asset->ID );
+						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+					} break;
 
 					case AssetType::Material:
 					{
@@ -306,6 +311,12 @@ namespace Saturn {
 					case AssetType::BehaviourTreeMemory:
 					{
 						const auto viewer = Ref<BehaviourTreeMemoryAssetViewer>::Create( m_Asset->ID );
+						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+					} break;
+
+					case AssetType::Skeleton: 
+					{
+						const auto viewer = Ref<SkeletonAssetViewer>::Create( m_Asset->ID );
 						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
 					} break;
 

@@ -270,15 +270,6 @@ namespace Saturn {
 
 		Ref<SkeletonAsset> GetSkeletonAsset() const;
 
-		const glm::mat4& GetBoneTransform( uint32_t index ) const;
-		const std::vector<SkeletalMeshBoneInfo>& GetBones() const { return m_BoneInfos; }
-
-		[[nodiscard]] int FindBoneIndex( const std::string& rName )
-		{
-			auto itr = m_BoneMapping.find( rName );
-			return itr == m_BoneMapping.end() ? -1 : itr->second;
-		}
-
 		const std::vector<glm::mat4> GetDefaultBoneTransforms() const { return m_DefaultBoneTransforms; }
 
 	public:

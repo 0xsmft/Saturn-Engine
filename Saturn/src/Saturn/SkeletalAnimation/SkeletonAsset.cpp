@@ -64,23 +64,21 @@ namespace Auxiliary {
 	{
 	}
 
-	void SkeletonAsset::AppendBonesFromMesh( const aiMesh* pMesh, const Submesh& rSubmesh )
+	void SkeletonAsset::AppendBonesFromMesh( const aiMesh* pMesh, uint32_t baseVertex )
 	{
 #if !defined(SAT_DIST)
-		uint32_t boneCount = 0;
-		m_Vertices.resize( pMesh->mNumVertices );
+		m_Vertices.resize( (size_t) ( baseVertex + pMesh->mNumVertices ) );
 
 		for( unsigned int b = 0; b < pMesh->mNumBones; b++ )
 		{
-			aiBone* pBone = pMesh->mBones[ b ];
+			const aiBone* pBone = pMesh->mBones[ b ];
 			std::string boneName( pBone->mName.data );
-			int index = 0;
 
+			int index = 0;
 			if( m_BoneMapping.find( boneName ) == m_BoneMapping.end() )
 			{
 				// Create new bone
-				index = boneCount;
-				boneCount++;
+				index = m_BoneInfos.size();
 
 				SkeletalMeshBoneInfo bi{ .BoneName = boneName, .BoneOffset = Auxiliary::Mat4FromAssimpMat4( pBone->mOffsetMatrix ) };
 
@@ -95,10 +93,10 @@ namespace Auxiliary {
 			// Weight calculation
 			for( unsigned int w = 0; w < pBone->mNumWeights; w++ )
 			{
-				const int vertID = rSubmesh.BaseVertex + pBone->mWeights[ w ].mVertexId;
+				const int vertID = baseVertex + pBone->mWeights[ w ].mVertexId;
 				const float weight = pBone->mWeights[ w ].mWeight;
 
-				m_Vertices[ vertID ].AddBoneData( boneCount, weight );
+				m_Vertices[ vertID ].AddBoneData( index, weight );
 			}
 		}
 #endif

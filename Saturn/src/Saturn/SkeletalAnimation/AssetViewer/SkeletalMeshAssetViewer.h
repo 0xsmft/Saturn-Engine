@@ -28,66 +28,44 @@
 
 #pragma once
 
-#include "Saturn/Asset/Asset.h"
+#include "Saturn/ImGui/AssetViewer.h"
+#include "Saturn/ImGui/TitleBar.h"
+#include "Saturn/ImGui/SceneHierarchyPanel.h"
 
-#include "Saturn/Vulkan/VertexBuffer.h"
+#include "Saturn/Vulkan/SceneRenderer.h"
 
-struct aiMesh;
-struct aiNode;
+#include <imgui.h>
 
 namespace Saturn {
 
-	struct SkeletalMeshBoneInfo;
-	class Submesh;
+	class SceneRenderer;
+	class EditorCamera;
 
-	struct SkeletonAssetVertexSkin
-	{
-		uint32_t BoneIndices[ 4 ] = { 0, 0,0, 0 };
-		float BoneWeights[ 4 ]{ 0.0f, 0.0f, 0.0f, 0.0f };
-
-		inline void AddBoneData( uint32_t id, float weight )
-		{
-			for( size_t i = 0; i < 4; i++ )
-			{
-				if( BoneWeights[ i ] == 0.0f )
-				{
-					BoneIndices[ i ] = id;
-					BoneWeights[ i ] = weight;
-
-					return;
-				}
-			}
-		}
-	};
-
-	class SkeletonAsset : public Asset
+	class SkeletalMeshAssetViewer : public AssetViewer
 	{
 	public:
-		SkeletonAsset();
-		SkeletonAsset( const Ref<Asset>& rBase );
-		virtual ~SkeletonAsset();
+		SkeletalMeshAssetViewer( AssetID id );
+		~SkeletalMeshAssetViewer();
 
-		void AppendBonesFromMesh( const aiMesh* pMesh, uint32_t baseVertex );
-		void BuildHierarchy( const aiNode* pNode, int parentIndex );
-		
-		void AddBoneInfo( const std::string& rName, int parentIndex, const glm::mat4& rOffsetMatrix, uint32_t boneIndex );
-		void AddVertex( const SkeletonAssetVertexSkin& rSkin ) { m_Vertices.push_back( rSkin ); }
-
-		[[nodiscard]] uint32_t FindBoneIndex( const std::string& rName ) 
-		{
-			auto itr = m_BoneMapping.find( rName );
-			return itr == m_BoneMapping.end() ? -1 : itr->second;
-		}
-
-	public:
-		const std::vector<SkeletalMeshBoneInfo>& GetBoneInfo() const { return m_BoneInfos; }
-		const std::vector<SkeletonAssetVertexSkin>& GetVertices() const { return m_Vertices; }
-		const std::unordered_map<std::string, uint32_t>& GetBoneMapping() const { m_BoneMapping; }
+		virtual void OnImGuiRender() override;
+		virtual void OnUpdate( Timestep ts ) override;
+		virtual void OnEvent( Event& rEvent ) override;
 
 	private:
-		std::vector<SkeletalMeshBoneInfo> m_BoneInfos;
-		std::vector<SkeletonAssetVertexSkin> m_Vertices;
-		std::unordered_map<std::string, uint32_t> m_BoneMapping;
-	};	
+		void AddMesh();
+
+	private:
+		Ref<SkeletalMesh> m_Mesh;
+		Ref<SceneRenderer> m_SceneRenderer;
+		Ref<Scene> m_Scene;
+		EditorCamera m_Camera;
+
+		bool m_AllowCameraEvents = false;
+		bool m_StartedRightClickInViewport = false;
+		bool m_ViewportFocused = false;
+		bool m_MouseOverViewport = false;
+
+		ImVec2 m_ViewportSize{};
+	};
 
 }

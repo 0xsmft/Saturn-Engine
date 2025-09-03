@@ -413,11 +413,6 @@ namespace Auxiliary {
 		return m_SkeletonAsset;
 	}
 
-	const glm::mat4& SkeletalMesh::GetBoneTransform( uint32_t index ) const
-	{
-		return m_SkeletonAsset->GetBoneInfo()[ 0 ].BoneOffset;
-	}
-
 	void SkeletalMesh::Import_InitSkeleton( AssetID id )
 	{
 		// TODO: Not the best way, a bit screwy
@@ -539,27 +534,11 @@ namespace Auxiliary {
 					aiBone* pBone = mesh->mBones[ i ];
 					std::string boneName( pBone->mName.C_Str() );
 
-					int boneIndex = 0;
-					if( m_BoneMapping.find( boneName ) == m_BoneMapping.end() )
-					{
-						boneIndex = ( int ) m_BoneInfos.size();
-						m_BoneMapping[ boneName ] = boneIndex;
-
-						SkeletalMeshBoneInfo boneInfo;
-						boneInfo.BoneName = boneName;
-						boneInfo.ParentIndex = -1;
-						boneInfo.BoneOffset = Auxiliary::Mat4FromAssimpMat4( pBone->mOffsetMatrix );
-
-						m_BoneInfos.push_back( boneInfo );
-					}
-					else
-					{
-						boneIndex = m_BoneMapping[ boneName ];
-					}
-
 					// Assign weights to vertices
 					for( unsigned int j = 0; j < pBone->mNumWeights; j++ )
 					{
+						auto boneIndex = m_SkeletonAsset->FindBoneIndex( boneName );
+
 						unsigned int vertexID = submesh.BaseVertex + pBone->mWeights[ j ].mVertexId;
 						float weight = pBone->mWeights[ j ].mWeight;
 						m_Vertices[ vertexID ].AddBoneData( boneIndex, weight );
@@ -588,9 +567,10 @@ namespace Auxiliary {
 			m_BoundingBox.Max.z = glm::max( m_BoundingBox.Max.z, max.z );
 		}
 
-		m_DefaultBoneTransforms.resize( m_BoneInfos.size() );
+		const auto bones = m_SkeletonAsset->GetBoneInfo().size();
 
-		for( size_t i = 0; i < m_BoneInfos.size(); i++ )
+		m_DefaultBoneTransforms.resize( bones );
+		for( size_t i = 0; i < bones; i++ )
 		{
 			m_DefaultBoneTransforms[ i ] = glm::mat4{ 1.0f };
 		}
@@ -641,7 +621,7 @@ namespace Auxiliary {
 		auto importer = std::make_unique<Assimp::Importer>();
 		const aiScene* scene = importer->ReadFile( rPath.string(), IMPORT_FLAGS );
 
-		if( scene == nullptr || !scene->HasMeshes() )
+		if( scene == nullptr )
 		{
 			SAT_CORE_ERROR( "Failed to load mesh file: {0}", rPath.string() );
 			return;
@@ -1001,7 +981,7 @@ namespace Auxiliary {
 
 		const aiScene* scene = m_Importer->ReadFile( m_SourcePath.string(), aiProcess_Triangulate | aiProcess_ValidateDataStructure | aiProcess_JoinIdenticalVertices );
 
-		if( scene == nullptr || !scene->HasMeshes() )
+		if( scene == nullptr )
 		{
 			SAT_CORE_ERROR( "Failed to load mesh file: {0}", m_SourcePath.string() );
 			return false;
@@ -1037,12 +1017,10 @@ namespace Auxiliary {
 				const aiMesh* pMesh = m_Scene->mMeshes[ m ];
 				if( !pMesh->HasBones() ) continue;
 
-				Submesh submesh{ .BaseVertex = vertexCount, .BaseIndex = indexCount, .MaterialIndex = 0, .IndexCount = pMesh->mNumFaces * 3, .VertexCount = pMesh->mNumVertices };
+				skelAsset->AppendBonesFromMesh( pMesh, vertexCount );
 
-				indexCount += submesh.IndexCount;
-				vertexCount += submesh.VertexCount;
-
-				skelAsset->AppendBonesFromMesh( pMesh, submesh );
+				indexCount += pMesh->mNumFaces * 3;
+				vertexCount += pMesh->mNumVertices;
 			}
 
 			skelAsset->BuildHierarchy( m_Scene->mRootNode, -1 );
@@ -1061,8 +1039,13 @@ namespace Auxiliary {
 		{
 			aiAnimation* pAnimation = m_Scene->mAnimations[ i ];
 
+			std::string name( pAnimation->mName.C_Str() );
+
+			// Some artists/websites (mixamo) will add | which is an illegal file name on Windows.
+			std::replace( name.begin(), name.end(), '|', '-' );
+
 			auto asset = AssetManager::Get().FindAsset( AssetManager::Get().CreateAsset( AssetType::SkeletalAnimation ) );
-			asset->Name = m_DstPath.stem().string();
+			asset->Name = name;
 
 			auto path = m_DstPath / asset->Name;
 			path.replace_extension( ".skanim" );

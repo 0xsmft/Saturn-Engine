@@ -171,7 +171,7 @@ namespace Saturn {
 
 	void Animator::ApplyBoneTransformations()
 	{
-		const auto& rMeshBones = m_SkeletalMesh->GetBones();
+		const auto& rMeshBones = m_SkeletalMesh->GetSkeletonAsset()->GetBoneInfo();
 
 		const auto& rBones = m_AnimationAsset->GetAnimationBones();
 		std::vector<glm::mat4> localTransforms( rMeshBones.size() );
@@ -183,7 +183,7 @@ namespace Saturn {
 
 		for( const auto& rBone : rBones )
 		{
-			auto index = m_SkeletalMesh->FindBoneIndex( rBone.Name );
+			auto index = m_SkeletalMesh->GetSkeletonAsset()->FindBoneIndex( rBone.Name );
 			if( index == -1 )
 			{
 				continue;

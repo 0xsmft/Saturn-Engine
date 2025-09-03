@@ -27,26 +27,27 @@
 */
 
 #include "sppch.h"
-#include "StaticMeshAssetViewer.h"
+#include "SkeletalMeshAssetViewer.h"
+
+#include "SkeletonAssetViewer.h"
 
 #include "Saturn/Core/Renderer/RenderThread.h"
 
 #include "Saturn/Asset/AssetManager.h"
 #include "Saturn/Vulkan/SceneRenderer.h"
 
-#include "ImGuiAuxiliary.h"
-#include "EditorIcons.h"
+#include "Saturn/ImGui/ImGuiAuxiliary.h"
+#include "Saturn/ImGui/EditorIcons.h"
+#include "Saturn/ImGui/ImGuiWindowManager.h"
 
 #include "Saturn/Scene/Components.h"
-
-#include "Saturn/Physics/PhysicsFoundation.h"
 
 namespace Saturn {
 
 	static inline bool operator==( const ImVec2& lhs, const ImVec2& rhs ) { return lhs.x == rhs.x && lhs.y == rhs.y; }
 	static inline bool operator!=( const ImVec2& lhs, const ImVec2& rhs ) { return !( lhs == rhs ); }
-
-	StaticMeshAssetViewer::StaticMeshAssetViewer( AssetID id )
+	
+	SkeletalMeshAssetViewer::SkeletalMeshAssetViewer( AssetID id )
 		: AssetViewer( id ), m_Camera( 45.0f, 1280.0f, 720.0f, 0.1f, 1000.0f )
 	{
 		m_Camera.SetActive( true );
@@ -61,24 +62,24 @@ namespace Saturn {
 		AddMesh();
 	}
 
-	StaticMeshAssetViewer::~StaticMeshAssetViewer()
+	SkeletalMeshAssetViewer::~SkeletalMeshAssetViewer()
 	{
 		m_SceneRenderer = nullptr;
 		m_Scene = nullptr;
 	}
 
-	void StaticMeshAssetViewer::OnImGuiRender()
+	void SkeletalMeshAssetViewer::OnImGuiRender()
 	{
 		// Root Window.
 		ImGuiWindowFlags RootWindowFlags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoCollapse;
-		
+
 		ImGui::SetNextWindowPos( ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 350.0f, 350.0f ), ImGuiCond_FirstUseEver );
 
 		ImGui::Begin( m_Mesh->Name.c_str(), &m_Open, RootWindowFlags );
 
 		// Create custom dockspace.
-		ImGuiID dockID = ImGui::GetID( "StaticMeshDckspc" );
+		ImGuiID dockID = ImGui::GetID( "SkMeshDckspc" );
 		ImGui::DockSpace( dockID, ImVec2( 0.0f, 0.0f ), ImGuiDockNodeFlags_None );
 
 		//////////////////////////////////////////////////////////////////////////
@@ -98,7 +99,7 @@ namespace Saturn {
 		ImGui::SetWindowDock( ImGui::GetCurrentWindow(), dockID, ImGuiCond_FirstUseEver );
 
 		ImGui::PushID( static_cast< int >( m_AssetID ) );
-		
+
 		if( m_ViewportSize != ImGui::GetContentRegionAvail() )
 		{
 			m_ViewportSize = ImGui::GetContentRegionAvail();
@@ -122,69 +123,6 @@ namespace Saturn {
 		ImGui::End(); // Viewport
 
 		ImGui::Begin( "Sidebar" );
-
-		if( Auxiliary::TreeNode( "Physics" ) )
-		{
-			PhysicsShapeType type = m_Mesh->GetAttachedShape();
-			
-			constexpr const char* pItems[] = { "None", "Box", "Sphere", "Capsule", "Convex Mesh", "Triangle Mesh" };
-			static PhysicsShapeType SelectedEnum = type;
-			static const char* Selected = pItems[ (int)SelectedEnum ];
-
-			ImGui::Text( "Select Physics Shape Type:" );
-			ImGui::SameLine();
-
-			if( ImGui::BeginCombo( "##setshape", Selected ) )
-			{
-				for( int i = 0; i < IM_ARRAYSIZE( pItems ); i++ )
-				{
-					bool IsSelected = ( Selected == pItems[ i ] );
-
-					if( ImGui::Selectable( pItems[ i ], IsSelected ) ) 
-					{
-						SelectedEnum = (PhysicsShapeType)i;
-						Selected = pItems[ i ];
-
-						m_Mesh->SetAttachedShape( SelectedEnum );
-					}
-
-					if( IsSelected )
-					{
-						ImGui::SetItemDefaultFocus();
-					}
-				}
-
-				ImGui::EndCombo();
-			}
-
-			if( SelectedEnum == PhysicsShapeType::TriangleMesh || SelectedEnum == PhysicsShapeType::ConvexMesh )
-			{
-				if( ImGui::Button( "Generate Mesh Collider" ) )
-				{
-					bool Result = PhysicsFoundation::Get().GetCookingContext().CookMeshCollider( m_Mesh, SelectedEnum );
-
-					// TODO: Show a dialog box of what failed.
-				}
-			}
-
-			ImGui::Text( "Set Physics Material" );
-			ImGui::SameLine();
-			
-			static AssetID id;
-			static bool s_Open = true;
-
-			if( ImGui::Button( "...##openmesh", ImVec2( 50.0f, 20.0f ) ) )
-			{
-				s_Open = !s_Open;
-			}
-			
-			if( Auxiliary::DrawAssetFinder( AssetType::PhysicsMaterial, &s_Open, id, 0 ) ) 
-			{
-				m_Mesh->SetPhysicsMaterial( id );
-			}
-
-			Auxiliary::EndTreeNode();
-		}
 
 		static AssetID s_id;
 
@@ -238,19 +176,40 @@ namespace Saturn {
 			Auxiliary::EndTreeNode();
 		}
 
+		if( Auxiliary::TreeNode( "Preview Animation" ) )
+		{
+
+			Auxiliary::EndTreeNode();
+		}
+
 		ImGui::End();
 
 		ImGui::Begin( "##Toolbar" );
 
-		ImGui::BeginVertical( "##tbv" );
+		ImGui::BeginHorizontal( "##tbv" );
 
-		if( ImGui::Button( "Save", ImVec2( 50.0f, 50.0f ) ) ) 
+		if( ImGui::Button( "Save", ImVec2( 50.0f, 50.0f ) ) )
 		{
-			StaticMeshAssetSerialiser sma;
+			SkeletalMeshAssetSerialiser sma;
 			sma.Serialise( m_Mesh );
 		}
 
-		ImGui::EndVertical();
+		ImGui::Spring();
+
+		if( ImGui::Button( "Open Skeleton", ImVec2( 50.0f, 50.0f ) ) )
+		{
+			const AssetID skeletonID = m_Mesh->GetSkeletonAsset()->ID;
+			const Ref<Asset> asset = AssetManager::Get().FindAsset( skeletonID );
+			if( asset )
+			{
+				const std::string windowName = std::format( "{0}##{1}", asset->Name, ( uint64_t ) skeletonID );
+				ImGuiWindowManager::Get().OpenOrShowWindow<SkeletonAssetViewer>( windowName, skeletonID );
+
+				ImGui::SetWindowFocus( windowName.c_str() );
+			}
+		}
+
+		ImGui::EndHorizontal();
 
 		ImGui::End();
 
@@ -268,7 +227,7 @@ namespace Saturn {
 		}
 	}
 
-	void StaticMeshAssetViewer::OnUpdate( Timestep ts )
+	void SkeletalMeshAssetViewer::OnUpdate( Timestep ts )
 	{
 		// Only true if we are awaiting a shutdown from closing our window.
 		if( !m_SceneRenderer )
@@ -280,7 +239,7 @@ namespace Saturn {
 		// Update Scene for rendering (on main thread).
 		m_Scene->OnRenderEditor( m_Camera, ts, *m_SceneRenderer );
 
-		RenderThread::Get().Queue( [=]()
+		RenderThread::Get().Queue( [ = ]()
 		{
 			m_SceneRenderer->RenderScene();
 		} );
@@ -292,22 +251,22 @@ namespace Saturn {
 			m_StartedRightClickInViewport = false;
 	}
 
-	void StaticMeshAssetViewer::OnEvent( Event& rEvent )
+	void SkeletalMeshAssetViewer::OnEvent( Event& rEvent )
 	{
 		if( m_MouseOverViewport && m_AllowCameraEvents )
 			m_Camera.OnEvent( rEvent );
 	}
 
-	void StaticMeshAssetViewer::AddMesh()
+	void SkeletalMeshAssetViewer::AddMesh()
 	{
-		Ref<StaticMesh> mesh = AssetManager::Get().GetAssetAs<StaticMesh>( m_AssetID );
+		Ref<SkeletalMesh> mesh = AssetManager::Get().GetAssetAs<SkeletalMesh>( m_AssetID );
 
 		m_Mesh = mesh;
 
 		m_Open = true;
 
 		auto e = m_Scene->CreateEntity( "InternalViewerEntity" );
-		e->AddComponent<StaticMeshComponent>().Mesh = mesh;
+		e->AddComponent<SkeletalMeshComponent>().Mesh = mesh;
 	}
 
 }

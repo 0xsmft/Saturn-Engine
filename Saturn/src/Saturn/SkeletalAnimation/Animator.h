@@ -41,6 +41,7 @@ namespace Saturn {
 
 		void InitAnimation( AssetID id, Ref<SkeletalMesh> sk );
 		void Play( Timestep ts );
+		void Clear();
 
 		const std::vector<glm::mat4>& GetBoneTransforms() const { return m_BoneTransforms; }
 		bool IsReady() const { return m_Init && m_AnimationTime > 0.0f; }

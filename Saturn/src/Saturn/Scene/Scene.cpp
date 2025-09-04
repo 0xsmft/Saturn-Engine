@@ -205,15 +205,7 @@ namespace Saturn {
 				entity->OnUpdate( ts );
 			}
 
-			const auto dynamicMeshEntities = GetAllEntitiesWith<SkeletalMeshComponent>();
-			for( const auto& entity : dynamicMeshEntities )
-			{
-				auto& meshComponent = entity->GetComponent<SkeletalMeshComponent>();
-				if( meshComponent.Mesh )
-				{
-					meshComponent.LocalAnimator.Play( ts );
-				}
-			}
+			OnUpdateAnimators( ts );
 
 			UpdateAudioListeners();
 
@@ -243,6 +235,19 @@ namespace Saturn {
 			}
 			
 			rb.Rigidbody->SyncTransfrom();
+		}
+	}
+
+	void Scene::OnUpdateAnimators( Timestep ts )
+	{
+		const auto dynamicMeshEntities = GetAllEntitiesWith<SkeletalMeshComponent>();
+		for( const auto& entity : dynamicMeshEntities )
+		{
+			auto& meshComponent = entity->GetComponent<SkeletalMeshComponent>();
+			if( meshComponent.Mesh )
+			{
+				meshComponent.LocalAnimator.Play( ts );
+			}
 		}
 	}
 

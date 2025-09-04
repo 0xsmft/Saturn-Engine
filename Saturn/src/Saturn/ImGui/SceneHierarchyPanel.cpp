@@ -802,6 +802,12 @@ namespace Saturn {
 					m_CurrentAssetID = mc.Mesh->ID;
 			}
 
+			if( ImGui::Button( "Inspect", ImVec2( 24.0f, 24.0f ) ) )
+			{
+				open = !open;
+				m_CurrentFinderType = AssetType::SkeletalAnimation;
+			}
+
 			ImGui::SameLine();
 
 			if( mc.Mesh )
@@ -849,6 +855,10 @@ namespace Saturn {
 					mc.Mesh = AssetManager::Get().GetAssetAs<SkeletalMesh>( m_CurrentAssetID );
 
 					mc.MaterialRegistry = Ref<MaterialRegistry>::Create( mc.Mesh );
+				}
+				else if( m_CurrentFinderType == AssetType::SkeletalAnimation ) 
+				{
+					mc.LocalAnimator.InitAnimation( m_CurrentAssetID, mc.Mesh );
 				}
 				else if( m_CurrentFinderType == AssetType::Material )
 				{

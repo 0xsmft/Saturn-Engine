@@ -58,7 +58,12 @@ namespace Saturn {
 		Ref<SkeletalMesh> m_Mesh;
 		Ref<SceneRenderer> m_SceneRenderer;
 		Ref<Scene> m_Scene;
+		Ref<SkeletalAnimationAsset> m_PreviewAnimation;
+		SharedPtr<Entity> m_Entity;
+
 		EditorCamera m_Camera;
+
+		AssetID m_AssetFinderOut = 0;
 
 		bool m_AllowCameraEvents = false;
 		bool m_StartedRightClickInViewport = false;

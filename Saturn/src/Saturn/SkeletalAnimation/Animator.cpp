@@ -62,6 +62,14 @@ namespace Saturn {
 		ApplyBoneTransformations();
 	}
 
+	void Animator::Clear()
+	{
+		m_AnimationTime = 0.0f;
+		m_StartTime = 0.0f;
+		m_AnimationAsset = nullptr;
+		m_BoneTransforms.clear();
+	}
+
 	static uint32_t FindPositioning( const AnimationBone& channel, float time )
 	{
 		for( size_t i = 0; i < channel.Positions.size() - 1; i++ )

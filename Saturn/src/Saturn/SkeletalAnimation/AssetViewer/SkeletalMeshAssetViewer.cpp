@@ -64,6 +64,7 @@ namespace Saturn {
 
 	SkeletalMeshAssetViewer::~SkeletalMeshAssetViewer()
 	{
+		m_Entity = nullptr;
 		m_SceneRenderer = nullptr;
 		m_Scene = nullptr;
 	}
@@ -79,7 +80,7 @@ namespace Saturn {
 		ImGui::Begin( m_Mesh->Name.c_str(), &m_Open, RootWindowFlags );
 
 		// Create custom dockspace.
-		ImGuiID dockID = ImGui::GetID( "SkMeshDckspc" );
+		const ImGuiID dockID = ImGui::GetID( "SkMeshDckspc" );
 		ImGui::DockSpace( dockID, ImVec2( 0.0f, 0.0f ), ImGuiDockNodeFlags_None );
 
 		//////////////////////////////////////////////////////////////////////////
@@ -93,9 +94,13 @@ namespace Saturn {
 		}
 
 		// Viewport
-		ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings;
-		std::string Name = "##" + std::to_string( m_AssetID );
-		ImGui::Begin( Name.c_str(), 0, flags );
+		ImGuiWindowClass windowClassNoDock;
+		windowClassNoDock.DockingAlwaysTabBar = false;
+		windowClassNoDock.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_None;
+
+		const std::string Name = "##" + std::to_string( m_AssetID );
+		ImGui::SetNextWindowClass( &windowClassNoDock );
+		ImGui::Begin( Name.c_str(), 0, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings );
 		ImGui::SetWindowDock( ImGui::GetCurrentWindow(), dockID, ImGuiCond_FirstUseEver );
 
 		ImGui::PushID( static_cast< int >( m_AssetID ) );
@@ -112,8 +117,8 @@ namespace Saturn {
 
 		ImGui::PopID();
 
-		ImVec2 minBound = ImGui::GetWindowPos();
-		ImVec2 maxBound = { minBound.x + m_ViewportSize.x, minBound.y + m_ViewportSize.y };
+		const ImVec2 minBound = ImGui::GetWindowPos();
+		const ImVec2 maxBound = { minBound.x + m_ViewportSize.x, minBound.y + m_ViewportSize.y };
 
 		m_ViewportFocused = ImGui::IsWindowFocused();
 		m_MouseOverViewport = ImGui::IsWindowHovered();
@@ -124,18 +129,14 @@ namespace Saturn {
 
 		ImGui::Begin( "Sidebar" );
 
-		static AssetID s_id;
-
 		if( Auxiliary::TreeNode( "Materials" ) )
 		{
-			ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_FramePadding;
-
 			int i = 0;
 			for( auto& rMaterial : m_Mesh->GetMaterialAssets() )
 			{
 				ImGui::PushID( i );
 
-				if( ImGui::TreeNodeEx( rMaterial->Name.c_str(), flags ) )
+				if( ImGui::TreeNodeEx( rMaterial->Name.c_str(), ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_FramePadding ) )
 				{
 					ImGui::BeginHorizontal( i );
 
@@ -152,17 +153,17 @@ namespace Saturn {
 
 					ImGui::EndHorizontal();
 
-					if( Auxiliary::DrawAssetFinder( AssetType::Material, &open, s_id, 0 ) )
+					if( Auxiliary::DrawAssetFinder( AssetType::Material, &open, m_AssetFinderOut, 0 ) )
 					{
-						Ref<MaterialAsset> newAsset = AssetManager::Get().GetAssetAs<MaterialAsset>( s_id );
+						Ref<MaterialAsset> newAsset = AssetManager::Get().GetAssetAs<MaterialAsset>( m_AssetFinderOut );
 						rMaterial->SetMaterial( newAsset->GetMaterial() );
 
 						// Update Pure Dependencies & Update ADN Dependencies
 						AssetManager::Get().UnregisterAssetDependency( m_AssetID, rMaterial->ID );
 
-						m_Mesh->GetMaterialRegistry()->SetMaterial( i, s_id );
+						m_Mesh->GetMaterialRegistry()->SetMaterial( i, m_AssetFinderOut );
 
-						AssetManager::Get().RegisterAssetDependency( m_AssetID, s_id );
+						AssetManager::Get().RegisterAssetDependency( m_AssetID, m_AssetFinderOut );
 					}
 
 					Auxiliary::EndTreeNode();
@@ -178,12 +179,38 @@ namespace Saturn {
 
 		if( Auxiliary::TreeNode( "Preview Animation" ) )
 		{
+			ImGui::TextDisabled( "%s", m_PreviewAnimation == nullptr ? "<NULL>" : m_PreviewAnimation->Name.c_str() );
+
+			bool open = false;
+
+			if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
+			{
+				open = true;
+			}
+
+			if( Auxiliary::DrawAssetFinder( AssetType::SkeletalAnimation, &open, m_AssetFinderOut, 0 ) )
+			{
+				Ref<SkeletalAnimationAsset> newAsset = AssetManager::Get().GetAssetAs<SkeletalAnimationAsset>( m_AssetFinderOut );
+
+				m_PreviewAnimation = newAsset;
+
+				m_Entity->GetComponent<SkeletalMeshComponent>().LocalAnimator.InitAnimation( m_AssetFinderOut, m_Mesh );
+			}
+
+			ImGui::Separator();
+
+			if( ImGui::Button( "Reset" ) )
+			{
+				m_PreviewAnimation = nullptr;
+				m_Entity->GetComponent<SkeletalMeshComponent>().LocalAnimator.Clear();
+			}
 
 			Auxiliary::EndTreeNode();
 		}
 
 		ImGui::End();
 
+		ImGui::SetNextWindowClass( &windowClassNoDock );
 		ImGui::Begin( "##Toolbar" );
 
 		ImGui::BeginHorizontal( "##tbv" );
@@ -236,6 +263,8 @@ namespace Saturn {
 		m_Camera.SetActive( m_AllowCameraEvents );
 		m_Camera.OnUpdate( ts );
 
+		m_Scene->OnUpdateAnimators( ts );
+
 		// Update Scene for rendering (on main thread).
 		m_Scene->OnRenderEditor( m_Camera, ts, *m_SceneRenderer );
 
@@ -265,8 +294,8 @@ namespace Saturn {
 
 		m_Open = true;
 
-		auto e = m_Scene->CreateEntity( "InternalViewerEntity" );
-		e->AddComponent<SkeletalMeshComponent>().Mesh = mesh;
+		m_Entity = m_Scene->CreateEntity( "InternalViewerEntity" );
+		m_Entity->AddComponent<SkeletalMeshComponent>().Mesh = mesh;
 	}
 
 }

@@ -84,7 +84,7 @@ namespace Saturn {
 				m_IsReady.store( true );
 			}
 
-			// TODO: We don't currently use MeshDeterminerResult_Materials or MeshDeterminerResult_Animations
+			// TODO: We don't currently use MeshDeterminerResult_Materials
 			m_Open = true;
 		} );
 

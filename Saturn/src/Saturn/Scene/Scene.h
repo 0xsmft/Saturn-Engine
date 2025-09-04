@@ -228,6 +228,7 @@ namespace Saturn {
 
 		void OnUpdate( Timestep ts );
 		void OnUpdatePhysics( Timestep ts );
+		void OnUpdateAnimators( Timestep ts );
 		void OnEvent( Event& rEvent );
 
 	public:

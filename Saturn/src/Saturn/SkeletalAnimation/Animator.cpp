@@ -48,18 +48,43 @@ namespace Saturn {
 	{
 		m_SkeletalMesh = sk;
 		m_AnimationAsset = AssetManager::Get().GetAssetAs<SkeletalAnimationAsset>( id );
-		m_StartTime = Application::Get().Time().Seconds();
-		m_Init = true;
+	
+		m_State = AnimationState::Inactive;
 	}
 
-	void Animator::Play( Timestep ts )
+	void Animator::TickAnimation( Timestep ts )
 	{
-		if( m_StartTime == 0.0f )
+		switch( m_State )
+		{
+			default:
+			case AnimationState::NotInitialised:
+			case AnimationState::Inactive:
+			case AnimationState::Paused:
+				break;
+
+			case AnimationState::Playing:
+			{
+				m_AnimationTime += ts * m_AnimationAsset->GetTicksPerSecond();
+				m_AnimationTime = fmod( m_AnimationTime, m_AnimationAsset->GetDuration() );
+				ApplyBoneTransformations();
+			} break;
+		}
+	}
+
+	void Animator::Pause()
+	{
+		m_State = AnimationState::Paused;
+	}
+
+	void Animator::Begin()
+	{
+		if( m_State == AnimationState::NotInitialised )
 			return;
 
-		m_AnimationTime += ts * m_AnimationAsset->GetTicksPerSecond();
-		m_AnimationTime = fmod( m_AnimationTime, m_AnimationAsset->GetDuration() );
-		ApplyBoneTransformations();
+		m_StartTime = Application::Get().Time().Seconds();
+		m_State = AnimationState::Playing;
+
+		m_BoneTransforms.resize( m_SkeletalMesh->GetSkeletonAsset()->GetBoneInfo().size() );
 	}
 
 	void Animator::Clear()
@@ -68,35 +93,41 @@ namespace Saturn {
 		m_StartTime = 0.0f;
 		m_AnimationAsset = nullptr;
 		m_BoneTransforms.clear();
+		m_State = AnimationState::Inactive;
 	}
 
-	static uint32_t FindPositioning( const AnimationBone& channel, float time )
+	void Animator::QueueNewAnimation( AssetID id )
 	{
-		for( size_t i = 0; i < channel.Positions.size() - 1; i++ )
+
+	}
+
+	static uint32_t FindPositioning( const AnimationBone& rChannel, float time )
+	{
+		for( size_t i = 0; i < rChannel.Positions.size() - 1; i++ )
 		{
-			if( time < channel.Positions[ i + 1 ].TimeStamp )
+			if( time < rChannel.Positions[ i + 1 ].TimeStamp )
 				return i;
 		}
 
 		return 0;
 	}
 
-	static uint32_t FindRotation( const AnimationBone& channel, float time )
+	static uint32_t FindRotation( const AnimationBone& rChannel, float time )
 	{
-		for( size_t i = 0; i < channel.Rotations.size() - 1; i++ )
+		for( size_t i = 0; i < rChannel.Rotations.size() - 1; i++ )
 		{
-			if( time < channel.Rotations[ i + 1 ].TimeStamp )
+			if( time < rChannel.Rotations[ i + 1 ].TimeStamp )
 				return i;
 		}
 
 		return 0;
 	}
 
-	static uint32_t FindScale( const AnimationBone& channel, float time )
+	static uint32_t FindScale( const AnimationBone& rChannel, float time )
 	{
-		for( size_t i = 0; i < channel.Scale.size() - 1; i++ )
+		for( size_t i = 0; i < rChannel.Scale.size() - 1; i++ )
 		{
-			if( time < channel.Scale[ i + 1 ].TimeStamp )
+			if( time < rChannel.Scale[ i + 1 ].TimeStamp )
 				return i;
 		}
 
@@ -108,23 +139,22 @@ namespace Saturn {
 		if( channel.Positions.size() == 1 )
 			return channel.Positions[ 0 ].Value;
 
-		uint32_t PositionIndex = FindPositioning( channel, time );
-		uint32_t NextPositionIndex = ( PositionIndex + 1 );
+		const uint32_t positionIndex = FindPositioning( channel, time );
+		const uint32_t nextPositionIndex = ( positionIndex + 1 );
 
-		SAT_CORE_ASSERT( NextPositionIndex < channel.Positions.size() );
+		SAT_CORE_ASSERT( nextPositionIndex < channel.Positions.size() );
 
-		float DeltaTime = ( float ) ( channel.Positions[ NextPositionIndex ].TimeStamp - channel.Positions[ PositionIndex ].TimeStamp );
-		float Factor = ( time - ( float ) channel.Positions[ PositionIndex ].TimeStamp ) / DeltaTime;
+		const float deltaTime = ( float ) ( channel.Positions[ nextPositionIndex ].TimeStamp - channel.Positions[ positionIndex ].TimeStamp );
+		float factor = ( time - ( float ) channel.Positions[ positionIndex ].TimeStamp ) / deltaTime;
 
-		SAT_CORE_ASSERT( Factor <= 1.0f, "Factor must be below 1.0f" );
+		SAT_CORE_ASSERT( factor <= 1.0f, "Factor must be below 1.0f" );
 
-		Factor = glm::clamp( Factor, 0.0f, 1.0f );
-		const auto& Start = channel.Positions[ PositionIndex ].Value;
-		const auto& End = channel.Positions[ NextPositionIndex ].Value;
-		auto Delta = End - Start;
-		auto aiVec = Start + Factor * Delta;
+		factor = glm::clamp( factor, 0.0f, 1.0f );
+		const auto& rStart = channel.Positions[ positionIndex ].Value;
+		const auto& rEnd = channel.Positions[ nextPositionIndex ].Value;
 
-		return aiVec;
+		const auto Delta = rEnd - rStart;
+		return rStart + factor * Delta;
 	}
 
 	static glm::quat InterpolateRotation( const AnimationBone& channel, float time )
@@ -132,23 +162,22 @@ namespace Saturn {
 		if( channel.Rotations.size() == 1 )
 			return channel.Rotations[ 0 ].Value;
 
-		uint32_t PositionIndex = FindRotation( channel, time );
-		uint32_t NextPositionIndex = ( PositionIndex + 1 );
+		const uint32_t positionIndex = FindRotation( channel, time );
+		const uint32_t nextPositionIndex = ( positionIndex + 1 );
 
-		SAT_CORE_ASSERT( NextPositionIndex < channel.Rotations.size() );
+		SAT_CORE_ASSERT( nextPositionIndex < channel.Rotations.size() );
 
-		float DeltaTime = ( float ) ( channel.Rotations[ NextPositionIndex ].TimeStamp - channel.Rotations[ PositionIndex ].TimeStamp );
-		float Factor = ( time - ( float ) channel.Rotations[ PositionIndex ].TimeStamp ) / DeltaTime;
+		const float deltaTime = ( float ) ( channel.Rotations[ nextPositionIndex ].TimeStamp - channel.Rotations[ positionIndex ].TimeStamp );
+		float factor = ( time - ( float ) channel.Rotations[ positionIndex ].TimeStamp ) / deltaTime;
 
-		SAT_CORE_ASSERT( Factor <= 1.0f, "Factor must be below 1.0f" );
+		SAT_CORE_ASSERT( factor <= 1.0f, "Factor must be below 1.0f" );
 
-		Factor = glm::clamp( Factor, 0.0f, 1.0f );
-		const auto& Start = channel.Rotations[ PositionIndex ].Value;
-		const auto& End = channel.Rotations[ NextPositionIndex ].Value;
+		factor = glm::clamp( factor, 0.0f, 1.0f );
+		const auto& rStart = channel.Rotations[ positionIndex ].Value;
+		const auto& rEnd = channel.Rotations[ nextPositionIndex ].Value;
 
-		glm::quat q{};
 		// We must use slerp and not mix. mix preforms linear interpolation while slerp does spherical
-		q = glm::slerp( Start, End, Factor );
+		glm::quat q = glm::slerp( rStart, rEnd, factor );
 		
 		return glm::normalize( q );
 	}
@@ -158,23 +187,22 @@ namespace Saturn {
 		if( channel.Scale.size() == 1 )
 			return channel.Scale[ 0 ].Value;
 
-		uint32_t PositionIndex = FindScale( channel, time );
-		uint32_t NextPositionIndex = ( PositionIndex + 1 );
+		const uint32_t positionIndex = FindScale( channel, time );
+		const uint32_t nextPositionIndex = ( positionIndex + 1 );
 
-		SAT_CORE_ASSERT( NextPositionIndex < channel.Scale.size() );
+		SAT_CORE_ASSERT( nextPositionIndex < channel.Scale.size() );
 
-		float DeltaTime = ( float ) ( channel.Scale[ NextPositionIndex ].TimeStamp - channel.Scale[ PositionIndex ].TimeStamp );
-		float Factor = ( time - ( float ) channel.Scale[ PositionIndex ].TimeStamp ) / DeltaTime;
+		const float deltaTime = ( float ) ( channel.Scale[ nextPositionIndex ].TimeStamp - channel.Scale[ positionIndex ].TimeStamp );
+		float factor = ( time - ( float ) channel.Scale[ positionIndex ].TimeStamp ) / deltaTime;
 
-		SAT_CORE_ASSERT( Factor <= 1.0f, "Factor must be below 1.0f" );
+		SAT_CORE_ASSERT( factor <= 1.0f, "Factor must be below 1.0f" );
 
-		Factor = glm::clamp( Factor, 0.0f, 1.0f );
-		const auto& Start = channel.Scale[ PositionIndex ].Value;
-		const auto& End = channel.Scale[ NextPositionIndex ].Value;
-		auto Delta = End - Start;
-		auto aiVec = Start + Factor * Delta;
+		factor = glm::clamp( factor, 0.0f, 1.0f );
+		const auto& rStart = channel.Scale[ positionIndex ].Value;
+		const auto& rEnd = channel.Scale[ nextPositionIndex ].Value;
+		auto delta = rEnd - rStart;
 
-		return aiVec;
+		return rStart + factor * delta;
 	}
 
 	void Animator::ApplyBoneTransformations()
@@ -184,14 +212,9 @@ namespace Saturn {
 		const auto& rBones = m_AnimationAsset->GetAnimationBones();
 		std::vector<glm::mat4> localTransforms( rMeshBones.size() );
 		
-		for( size_t i = 0; i < rMeshBones.size(); i++ )
-		{
-			localTransforms[ i ] = rMeshBones[ i ].BoneOffset;
-		}
-
 		for( const auto& rBone : rBones )
 		{
-			auto index = m_SkeletalMesh->GetSkeletonAsset()->FindBoneIndex( rBone.Name );
+			const auto index = m_SkeletalMesh->GetSkeletonAsset()->FindBoneIndex( rBone.Name );
 			if( index == -1 )
 			{
 				continue;
@@ -205,34 +228,29 @@ namespace Saturn {
 			const glm::mat4 rotation = glm::toMat4( rot );
 			const glm::mat4 scaling = glm::scale( glm::mat4( 1.0f ), scl );
 
-			auto final = translation * rotation * scaling;
-
+			const auto final = translation * rotation * scaling;
 			localTransforms[ ( size_t ) index ] = final;
 		}
-
-		// Now build the global transforms
-		m_BoneTransforms.clear();
-		m_BoneTransforms.resize( localTransforms.size() );
-
-		std::function<void( size_t, const glm::mat4& )> updateBones;
-
-		updateBones = [ & ]( size_t boneIndex, const glm::mat4& rParentTransform )
-		{
-			const glm::mat4 globalTransform = rParentTransform * localTransforms[ boneIndex ];
-
-			m_BoneTransforms[ boneIndex ] = m_SkeletalMesh->GetInverseTransform() * globalTransform * rMeshBones[ boneIndex ].BoneOffset; /* <- bone offset */
-
-			for( size_t i = 0; i < rMeshBones.size(); i++ )
-			{
-				if( rMeshBones[ i ].ParentIndex == boneIndex )
-					updateBones( i, globalTransform );
-			}
-		};
 
 		for( size_t i = 0; i < rMeshBones.size(); i++ )
 		{
 			if( rMeshBones[ i ].ParentIndex == -1 )
-				updateBones( i, glm::mat4( 1.0f ) );
+				UpdateBones( i, glm::mat4( 1.0f ), localTransforms );
+		}
+	}
+
+	void Animator::UpdateBones( size_t boneIndex, const glm::mat4& rParentTransform, const std::vector<glm::mat4>& rLocalTransforms )
+	{
+		const auto& rMeshBones = m_SkeletalMesh->GetSkeletonAsset()->GetBoneInfo();
+
+		const glm::mat4 globalTransform = rParentTransform * rLocalTransforms[ boneIndex ];
+
+		m_BoneTransforms[ boneIndex ] = m_SkeletalMesh->GetInverseTransform() * globalTransform * rMeshBones[ boneIndex ].BoneOffset; /* <- bone offset */
+
+		for( size_t i = 0; i < rMeshBones.size(); i++ )
+		{
+			if( rMeshBones[ i ].ParentIndex == boneIndex )
+				UpdateBones( i, globalTransform, rLocalTransforms );
 		}
 	}
 

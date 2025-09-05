@@ -76,16 +76,17 @@ namespace Saturn {
 
 		virtual ~SkeletalAnimationAsset();
 
+		[[nodiscard]] AssetID GetSkeletonID()     const { return m_SkeletonAssetID; }
+		[[nodiscard]] double  GetDuration()       const { return m_Duration; }
+		[[nodiscard]] double  GetTicksPerSecond() const { return m_TicksPerSecond; }
+
+		const std::vector<AnimationBone>& GetAnimationBones() const { return m_Bones; }
+
+	public:
 		void SetDuration( double duration ) { m_Duration = duration; }
 		void SetTicks( double ticks ) { m_TicksPerSecond = ticks; }
 		void SetSkeletonID( AssetID id ) { m_SkeletonAssetID = id; }
 		void AddAnimBone( AnimationBone bone ) { m_Bones.push_back( bone ); }
-
-		[[nodiscard]] AssetID GetSkeletonID() const { return m_SkeletonAssetID; }
-		[[nodiscard]] double  GetDuration() const   { return m_Duration; }
-		[[nodiscard]] double  GetTicksPerSecond() const { return m_TicksPerSecond; }
-
-		const std::vector<AnimationBone>& GetAnimationBones() const { return m_Bones; }
 
 	private:
 		AssetID m_SkeletonAssetID;

@@ -75,7 +75,7 @@ namespace Saturn {
 
 		[[nodiscard]] uint32_t FindBoneIndex( const std::string& rName ) 
 		{
-			auto itr = m_BoneMapping.find( rName );
+			const auto itr = m_BoneMapping.find( rName );
 			return itr == m_BoneMapping.end() ? -1 : itr->second;
 		}
 

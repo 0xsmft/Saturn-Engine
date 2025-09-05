@@ -28,53 +28,49 @@
 
 #pragma once
 
-#include "SkeletalAnimationAsset.h"
-#include "Saturn/Vulkan/Mesh.h"
+#include "Saturn/ImGui/AssetViewer.h"
+#include "Saturn/ImGui/TitleBar.h"
+#include "Saturn/ImGui/SceneHierarchyPanel.h"
+
+#include "Saturn/Vulkan/SceneRenderer.h"
+
+#include <imgui.h>
 
 namespace Saturn {
 
-	enum class AnimationState 
-	{
-		NotInitialised, // InitAnimation not called
-		Inactive, // InitAnimation called awaiting Play or Pause
-		Playing,
-		Paused
-	};
-
-	class Animator
+	class SkeletalAnimationAssetViewer : public AssetViewer
 	{
 	public:
-		Animator();
-		~Animator();
+		SkeletalAnimationAssetViewer( AssetID id );
+		~SkeletalAnimationAssetViewer();
 
-		void InitAnimation( AssetID id, Ref<SkeletalMesh> sk );
-		void TickAnimation( Timestep ts );
-		void Pause();
-		void Begin();
-		void Clear();
-
-		void QueueNewAnimation( AssetID id );
-
-		const std::vector<glm::mat4>& GetBoneTransforms() const { return m_BoneTransforms; }
-
-		// An animator is consider active if an animation is playing or if it's paused
-		// However, if it not initialised, meaning we've never had an animation, then it's not active
-		bool IsActive() const { return m_State != AnimationState::Inactive && m_State != AnimationState::NotInitialised; }
+		virtual void OnImGuiRender() override;
+		virtual void OnUpdate( Timestep ts ) override;
+		virtual void OnEvent( Event& rEvent ) override;
 
 	private:
-		void ApplyBoneTransformations();
-		void UpdateBones( size_t boneIndex, const glm::mat4& rParentTransform, const std::vector<glm::mat4>& rLocalTransforms );
+		void ImportMeshAndAnimation();
 
 	private:
-		Ref<SkeletalAnimationAsset> m_AnimationAsset;
-		Ref<SkeletalMesh> m_SkeletalMesh;
+		Ref<SkeletalAnimationAsset> m_Asset;
 
-		AnimationState m_State = AnimationState::NotInitialised;
+		Ref<SkeletalMesh> m_Mesh;
+		SharedPtr<Entity> m_Entity;
+		Ref<Scene> m_Scene;
+		Ref<SceneRenderer> m_SceneRenderer;
 
-		float m_StartTime = 0.0f;
-		float m_AnimationTime = 0.0f;
+		AssetID m_AssetFinderOut = 0;
 
-		std::vector<glm::mat4> m_BoneTransforms;
+		EditorCamera m_Camera;
+		std::string m_ViewportWindowName;
+
+		bool m_AllowCameraEvents = false;
+		bool m_StartedRightClickInViewport = false;
+		bool m_ViewportFocused = false;
+		bool m_MouseOverViewport = false;
+
+		ImVec2 m_ViewportSize{};
+
 	};
-
+		
 }

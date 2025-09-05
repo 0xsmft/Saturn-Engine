@@ -27,9 +27,9 @@
 */
 
 #include "sppch.h"
-#include "SkeletalMeshAssetViewer.h"
+#include "SkeletalAnimationAssetViewer.h"
 
-#include "SkeletonAssetViewer.h"
+//#include "SkeletonAssetViewer.h"
 
 #include "Saturn/Core/Renderer/RenderThread.h"
 
@@ -46,11 +46,12 @@ namespace Saturn {
 
 	static inline bool operator==( const ImVec2& lhs, const ImVec2& rhs ) { return lhs.x == rhs.x && lhs.y == rhs.y; }
 	static inline bool operator!=( const ImVec2& lhs, const ImVec2& rhs ) { return !( lhs == rhs ); }
-	
-	SkeletalMeshAssetViewer::SkeletalMeshAssetViewer( AssetID id )
+
+	SkeletalAnimationAssetViewer::SkeletalAnimationAssetViewer( AssetID id )
 		: AssetViewer( id ), m_Camera( 45.0f, 1280.0f, 720.0f, 0.1f, 1000.0f )
 	{
-		m_AssetType = AssetType::SkeletalMesh;
+		m_AssetType = AssetType::SkeletalAnimation;
+
 		m_Camera.SetActive( true );
 
 		m_Scene = Ref<Scene>::Create();
@@ -60,24 +61,25 @@ namespace Saturn {
 		m_SceneRenderer->SetDynamicSky( 2.0f, 0.0f, 0.0f );
 		m_SceneRenderer->SetCurrentScene( m_Scene.Get() );
 
-		AddMesh();
-		m_Name = std::format( "{0}##{1}", m_Mesh->Name, std::to_string( m_AssetID ) );
+		ImportMeshAndAnimation();
+		m_Name = std::format( "{0}##{1}", m_Asset->Name, ( uint64_t ) m_AssetID );
+		m_ViewportWindowName = std::format( "##Vp{0}", ( uint64_t ) m_AssetID );
 	}
 
-	SkeletalMeshAssetViewer::~SkeletalMeshAssetViewer()
+	SkeletalAnimationAssetViewer::~SkeletalAnimationAssetViewer()
 	{
 		m_Entity = nullptr;
 		m_SceneRenderer = nullptr;
 		m_Scene = nullptr;
 	}
 
-	void SkeletalMeshAssetViewer::OnImGuiRender()
+	void SkeletalAnimationAssetViewer::OnImGuiRender()
 	{
 		// Root Window.
 		ImGui::SetNextWindowPos( ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 350.0f, 350.0f ), ImGuiCond_FirstUseEver );
 
-		ImGui::Begin( m_Mesh->Name.c_str(), &m_Open, ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoCollapse );
+		ImGui::Begin( m_Name.c_str(), &m_Open, ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoCollapse );
 
 		// Create custom dockspace.
 		const ImGuiID dockID = ImGui::GetID( "SkMeshDckspc" );
@@ -85,7 +87,7 @@ namespace Saturn {
 
 		//////////////////////////////////////////////////////////////////////////
 
-		ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 0, 0 ) );
+		ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 0.0f, 0.0f ) );
 
 		if( ImGui::IsMouseClicked( ImGuiMouseButton_Left ) || ( ImGui::IsMouseClicked( ImGuiMouseButton_Right ) && !m_StartedRightClickInViewport ) )
 		{
@@ -99,7 +101,7 @@ namespace Saturn {
 		windowClassNoDock.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_None;
 
 		ImGui::SetNextWindowClass( &windowClassNoDock );
-		ImGui::Begin( m_Name.c_str(), 0, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings );
+		ImGui::Begin( m_ViewportWindowName.c_str(), 0, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings );
 		ImGui::SetWindowDock( ImGui::GetCurrentWindow(), dockID, ImGuiCond_FirstUseEver );
 
 		ImGui::PushID( static_cast< int >( m_AssetID ) );
@@ -112,7 +114,7 @@ namespace Saturn {
 			m_Camera.SetViewportSize( ( uint32_t ) m_ViewportSize.x, ( uint32_t ) m_ViewportSize.y );
 		}
 
-		Auxiliary::Image( m_SceneRenderer->CompositeImage(), m_ViewportSize, { 0, 1 }, { 1, 0 } );
+		Auxiliary::Image( m_SceneRenderer->CompositeImage(), m_ViewportSize, { 0.0f, 1.0f }, { 1.0f, 0.0f } );
 
 		ImGui::PopID();
 
@@ -128,119 +130,39 @@ namespace Saturn {
 
 		ImGui::Begin( "Sidebar" );
 
-		if( Auxiliary::TreeNode( "Materials" ) )
+		ImGui::BeginHorizontal( "##setpreviewmesh" );
+
+		ImGui::Text( "Preview Mesh" );
+
+		ImGui::TextDisabled( "%s", m_Mesh == nullptr ? "<NULL>" : m_Mesh->Name.c_str() );
+
+		bool open = false;
+
+		if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
 		{
-			int i = 0;
-			for( auto& rMaterial : m_Mesh->GetMaterialAssets() )
-			{
-				ImGui::PushID( i );
-
-				if( ImGui::TreeNodeEx( rMaterial->Name.c_str(), ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_FramePadding ) )
-				{
-					ImGui::BeginHorizontal( i );
-
-					ImGui::TextDisabled( "%s", rMaterial->Name.empty() ? "<NULL>" : rMaterial->Name.c_str() );
-
-					bool open = false;
-
-					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
-					{
-						open = true;
-					}
-
-					ImGui::Spring();
-
-					ImGui::EndHorizontal();
-
-					if( Auxiliary::DrawAssetFinder( AssetType::Material, &open, m_AssetFinderOut, 0 ) )
-					{
-						Ref<MaterialAsset> newAsset = AssetManager::Get().GetAssetAs<MaterialAsset>( m_AssetFinderOut );
-						rMaterial->SetMaterial( newAsset->GetMaterial() );
-
-						// Update Pure Dependencies & Update ADN Dependencies
-						AssetManager::Get().UnregisterAssetDependency( m_AssetID, rMaterial->ID );
-
-						m_Mesh->GetMaterialRegistry()->SetMaterial( i, m_AssetFinderOut );
-
-						AssetManager::Get().RegisterAssetDependency( m_AssetID, m_AssetFinderOut );
-					}
-
-					Auxiliary::EndTreeNode();
-				}
-
-				ImGui::PopID();
-
-				i++;
-			}
-
-			Auxiliary::EndTreeNode();
-		}
-
-		if( Auxiliary::TreeNode( "Preview Animation" ) )
-		{
-			ImGui::TextDisabled( "%s", m_PreviewAnimation == nullptr ? "<NULL>" : m_PreviewAnimation->Name.c_str() );
-
-			bool open = false;
-
-			if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
-			{
-				open = true;
-			}
-
-			if( Auxiliary::DrawAssetFinder( AssetType::SkeletalAnimation, &open, m_AssetFinderOut, 0 ) )
-			{
-				Ref<SkeletalAnimationAsset> newAsset = AssetManager::Get().GetAssetAs<SkeletalAnimationAsset>( m_AssetFinderOut );
-
-				m_PreviewAnimation = newAsset;
-
-				m_Entity->GetComponent<SkeletalMeshComponent>().LocalAnimator.InitAnimation( m_AssetFinderOut, m_Mesh );
-			}
-
-			ImGui::Separator();
-
-			if( ImGui::Button( "Reset" ) )
-			{
-				m_PreviewAnimation = nullptr;
-				m_Entity->GetComponent<SkeletalMeshComponent>().LocalAnimator.Clear();
-			}
-
-			Auxiliary::EndTreeNode();
-		}
-
-		ImGui::End();
-
-		ImGui::SetNextWindowClass( &windowClassNoDock );
-		ImGui::Begin( "##Toolbar" );
-
-		ImGui::BeginHorizontal( "##tbv" );
-
-		if( ImGui::Button( "Save", ImVec2( 50.0f, 50.0f ) ) )
-		{
-			SkeletalMeshAssetSerialiser sma;
-			sma.Serialise( m_Mesh );
+			open = true;
 		}
 
 		ImGui::Spring();
 
-		if( ImGui::Button( "Open Skeleton", ImVec2( 50.0f, 50.0f ) ) )
-		{
-			const AssetID skeletonID = m_Mesh->GetSkeletonAsset()->ID;
-			const Ref<Asset> asset = AssetManager::Get().FindAsset( skeletonID );
-			if( asset )
-			{
-				const std::string windowName = std::format( "{0}##{1}", asset->Name, ( uint64_t ) skeletonID );
-				ImGuiWindowManager::Get().OpenOrShowWindow<SkeletonAssetViewer>( windowName, skeletonID );
-
-				ImGui::SetWindowFocus( windowName.c_str() );
-			}
-		}
-
 		ImGui::EndHorizontal();
+
+		if( Auxiliary::DrawAssetFinder( AssetType::SkeletalMesh, &open, m_AssetFinderOut, 0 ) )
+		{
+			m_Mesh = AssetManager::Get().GetAssetAs<SkeletalMesh>( m_AssetFinderOut );
+
+			auto& mc = m_Entity->GetComponent<SkeletalMeshComponent>();
+
+			mc.Mesh = m_Mesh;
+			mc.LocalAnimator.InitAnimation( m_Asset->ID, m_Mesh );
+			// Begin playing now
+			mc.LocalAnimator.Begin();
+		}
 
 		ImGui::End();
 
 		ImGui::PopStyleVar(); // ImGuiStyleVar_WindowPadding
-		ImGui::End();
+		ImGui::End(); // Root window
 
 		if( m_Open == false )
 		{
@@ -253,7 +175,7 @@ namespace Saturn {
 		}
 	}
 
-	void SkeletalMeshAssetViewer::OnUpdate( Timestep ts )
+	void SkeletalAnimationAssetViewer::OnUpdate( Timestep ts )
 	{
 		// Only true if we are awaiting a shutdown from closing our window.
 		if( !m_SceneRenderer )
@@ -279,20 +201,21 @@ namespace Saturn {
 			m_StartedRightClickInViewport = false;
 	}
 
-	void SkeletalMeshAssetViewer::OnEvent( Event& rEvent )
+	void SkeletalAnimationAssetViewer::OnEvent( Event& rEvent )
 	{
 		if( m_MouseOverViewport && m_AllowCameraEvents )
 			m_Camera.OnEvent( rEvent );
 	}
 
-	void SkeletalMeshAssetViewer::AddMesh()
+	void SkeletalAnimationAssetViewer::ImportMeshAndAnimation()
 	{
-		Ref<SkeletalMesh> mesh = AssetManager::Get().GetAssetAs<SkeletalMesh>( m_AssetID );
+		Ref<SkeletalAnimationAsset> anim = AssetManager::Get().GetAssetAs<SkeletalAnimationAsset>( m_AssetID );
+		m_Asset = anim;
 
-		m_Mesh = mesh;
+//		m_Mesh = mesh;
 
 		m_Entity = m_Scene->CreateEntity( "InternalViewerEntity" );
-		m_Entity->AddComponent<SkeletalMeshComponent>().Mesh = mesh;
+		m_Entity->AddComponent<SkeletalMeshComponent>();
 
 		m_Open = true;
 	}

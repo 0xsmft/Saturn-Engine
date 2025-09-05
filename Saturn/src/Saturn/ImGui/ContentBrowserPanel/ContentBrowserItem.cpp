@@ -47,6 +47,7 @@
 #include "Saturn/AI/BehaviourTree/BehaviourTreeMemoryAssetViewer.h"
 #include "Saturn/SkeletalAnimation/AssetViewer/SkeletonAssetViewer.h"
 #include "Saturn/SkeletalAnimation/AssetViewer/SkeletalMeshAssetViewer.h"
+#include "Saturn/SkeletalAnimation/AssetViewer/SkeletalAnimationAssetViewer.h"
 
 #include "Saturn/Project/Project.h"
 
@@ -317,6 +318,12 @@ namespace Saturn {
 					case AssetType::Skeleton: 
 					{
 						const auto viewer = Ref<SkeletonAssetViewer>::Create( m_Asset->ID );
+						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+					} break;
+
+					case AssetType::SkeletalAnimation:
+					{
+						const auto viewer = Ref<SkeletalAnimationAssetViewer>::Create( m_Asset->ID );
 						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
 					} break;
 

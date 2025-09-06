@@ -550,7 +550,7 @@ namespace Saturn {
 #endif
 
 		const auto realMeshPath = Project::GetActiveProject()->FilepathAbs( filepath );
-		auto mesh = Ref<SkeletalMesh>::Create( rAsset, realMeshPath.string() );
+		auto mesh = Ref<SkeletalMesh>::Create( rAsset, realMeshPath.string(), skeletonAsset );
 
 		mesh->SetAttachedShape( ( PhysicsShapeType ) shapeType );
 		mesh->SetPhysicsMaterial( physicsMaterial );
@@ -592,14 +592,14 @@ namespace Saturn {
 							auto defAsset = AssetManager::Get().GetAssetAs<MaterialAsset>( defaultProjectAsset->ID );
 							mesh->GetMaterialRegistry()->AddAsset( defAsset );
 
-							defAsset->EnabledAnimated();
+//							defAsset->EnabledAnimated();
 						}
 						else 
 						{
 							auto nullAsset = Ref<MaterialAsset>::Create( nullptr );
 
 							mesh->GetMaterialRegistry()->AddAsset( nullAsset );
-							nullAsset->EnabledAnimated();
+//							nullAsset->EnabledAnimated();
 						}
 					}
 
@@ -607,6 +607,9 @@ namespace Saturn {
 				}
 			}
 		}
+
+		if( mesh->GetSkeletonAsset() )
+			AssetManager::Get().RegisterAssetDependency( mesh->ID, mesh->GetSkeletonAsset()->ID );
 
 		// Set rAsset reference to point to our new SkeletalMesh
 		rAsset = mesh;

@@ -41,24 +41,30 @@ namespace Saturn {
 	{
 		BehaviourTreeSelectorNode* pNode = ( BehaviourTreeSelectorNode* )ClassMetadataHandler::Get().CreateClassObject( BehaviourTreeSelectorNode::StaticClass() );
 
-		nodeEditor->AddNode( pNode );
-		return pNode;
+		SharedPtr<BehaviourTreeSelectorNode> sp = pNode;
+
+		nodeEditor->AddNode( sp );
+		return sp;
 	}
 
 	SharedPtr<BehaviourTreeSequenceNode> BehaviourTreeNodeLibrary::SpawnSequenceNode( SharedPtr<NodeEditorBase> nodeEditor )
 	{
 		BehaviourTreeSequenceNode* pNode = ( BehaviourTreeSequenceNode* ) ClassMetadataHandler::Get().CreateClassObject( BehaviourTreeSequenceNode::StaticClass() );
 
-		nodeEditor->AddNode( pNode );
-		return pNode;
+		SharedPtr<BehaviourTreeSequenceNode> sp = pNode;
+
+		nodeEditor->AddNode( sp );
+		return sp;
 	}
 
 	SharedPtr<BehaviourTreeRootNode> BehaviourTreeNodeLibrary::SpawnRootNode( SharedPtr<NodeEditorBase> nodeEditor )
 	{
 		BehaviourTreeRootNode* pNode = ( BehaviourTreeRootNode* ) ClassMetadataHandler::Get().CreateClassObject( BehaviourTreeRootNode::StaticClass() );
 
-		nodeEditor->AddNode( pNode );
-		return pNode;
+		SharedPtr<BehaviourTreeRootNode> sp = pNode;
+
+		nodeEditor->AddNode( sp );
+		return sp;
 	}
 
 }

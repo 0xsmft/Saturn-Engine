@@ -55,12 +55,12 @@
 namespace Saturn {
 
 	BehaviourTreeNodeEditor::BehaviourTreeNodeEditor()
-		: BehaviourTreeNodeEditorSuper()
+		: FDependentNodeEditorSuper()
 	{
 	}
 
 	BehaviourTreeNodeEditor::BehaviourTreeNodeEditor( AssetID id )
-		: BehaviourTreeNodeEditorSuper( id )
+		: FDependentNodeEditorSuper( id )
 	{
 	}
 
@@ -509,7 +509,7 @@ namespace Saturn {
 
 	void BehaviourTreeNodeEditor::SerialiseData( std::ofstream& rStream, bool isForDist )
 	{
-		BehaviourTreeNodeEditorSuper::SerialiseData( rStream, isForDist );
+		FDependentNodeEditorSuper::SerialiseData( rStream, isForDist );
 		RawSerialisation::WriteVector( m_EvaluationOrder, rStream );
 
 		RawSerialisation::WriteObject( m_BehaviourTreeMemoryAssetID, rStream );
@@ -517,7 +517,7 @@ namespace Saturn {
 
 	void BehaviourTreeNodeEditor::DeserialiseData( FDependentIStream& rStream )
 	{
-		BehaviourTreeNodeEditorSuper::DeserialiseData( rStream );
+		FDependentNodeEditorSuper::DeserialiseData( rStream );
 		RawSerialisation::ReadVector( m_EvaluationOrder, rStream );
 
 		RawSerialisation::ReadObject( m_BehaviourTreeMemoryAssetID, rStream );

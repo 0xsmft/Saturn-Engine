@@ -52,6 +52,12 @@ namespace Saturn {
 		DeselectLink
 	};
 
+#if !defined(SAT_DIST)
+	typedef NodeEditor FDependentNodeEditorSuper;
+#else
+	typedef NodeEditorBase FDependentNodeEditorSuper;
+#endif
+
 	// The NodeEditor class is a graphical representation of NodeEditorBase
 	class NodeEditor : public NodeEditorBase
 	{

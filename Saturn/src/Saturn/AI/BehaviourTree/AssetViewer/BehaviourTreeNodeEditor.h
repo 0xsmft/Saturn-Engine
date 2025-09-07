@@ -36,12 +36,6 @@ namespace Saturn {
 	class BehaviourTreeBaseTask;
 	class AIAgentEntity;
 
-#if !defined(SAT_DIST)
-	typedef NodeEditor BehaviourTreeNodeEditorSuper;
-#else
-	typedef NodeEditorBase BehaviourTreeNodeEditorSuper;
-#endif
-
 	struct BehaviourTreeCompositeOrderInfo
 	{
 		UUID NodeID = 0;
@@ -60,7 +54,7 @@ namespace Saturn {
 		}
 	};
 
-	class BehaviourTreeNodeEditor : public BehaviourTreeNodeEditorSuper
+	class BehaviourTreeNodeEditor : public FDependentNodeEditorSuper
 	{
 	public:
 		BehaviourTreeNodeEditor();

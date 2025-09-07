@@ -188,8 +188,10 @@ namespace Saturn {
 
 					BehaviourTreeTaskNode* pNode = ClassMetadataHandler::Get().CreateClassObject<BehaviourTreeTaskNode>( BehaviourTreeTaskNode::StaticClass(), ( BehaviourTreeBaseTask* ) pNewTaskObject );
 
-					result = pNode;
-					m_NodeEditor->AddNode( result );
+					SharedPtr<BehaviourTreeTaskNode> sp = pNode;
+
+					result = sp;
+					m_NodeEditor->AddNode( sp );
 
 					break;
 				}

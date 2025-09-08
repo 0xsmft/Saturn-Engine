@@ -63,7 +63,8 @@ namespace Saturn {
 		Sound,
 		AssetID,
 		// Internal pin type to allow us to make sure that a composite node can only be linked to the root node.
-		BehaviourTreeCompositeLink 
+		BehaviourTreeCompositeLink,
+		AnimGraphAnimation
 	};
 
 	enum class PinKind

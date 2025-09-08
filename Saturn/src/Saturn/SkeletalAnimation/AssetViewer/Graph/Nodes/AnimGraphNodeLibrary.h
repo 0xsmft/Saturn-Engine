@@ -28,27 +28,23 @@
 
 #pragma once
 
-#include "NodeEditorNodeBase.h"
+#include "Saturn/NodeEditor/NodeEditorBase.h"
 
 namespace Saturn {
 
-	// Base class for all "blueprint" nodes
-	// By blueprint we mean the traditional look of a node
-	SCLASS()
-	class NodeEditorBlueprintNode : public NodeEditorNodeBase
+	class AnimGraphOutputNode;
+	class AnimGraphStateMachinePlayerNode;
+	class AnimGraphStateMachineStateNode;
+
+	class AnimGraphNodeLibrary 
 	{
-		SAT_DECLARE_CLASS( NodeEditorBlueprintNode, NodeEditorNodeBase );
 	public:
-		NodeEditorBlueprintNode() = default;
-		NodeEditorBlueprintNode( const std::string& rName );
-		virtual ~NodeEditorBlueprintNode();
-
-	public:
-		//////////////////////////////////////////////////////////////////////////
-		// NodeEditorNodeBase
+		static NodeEditorType GetStaticType() { return NodeEditorType::AnimationController; }
 		
-		virtual void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder ) override;
-		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override { return NodeEvaluationState::Failed; }
-	};
+		static SharedPtr<AnimGraphStateMachinePlayerNode> SpawnStateMachinePlayerNode( SharedPtr<NodeEditorBase> nodeEditor );
+		static SharedPtr<AnimGraphStateMachineStateNode>  SpawnStateMachineStateNode( SharedPtr<NodeEditorBase> nodeEditor );
 
+		static SharedPtr<AnimGraphOutputNode> SpawnOutputNode( SharedPtr<NodeEditorBase> nodeEditor );
+	};
+	
 }

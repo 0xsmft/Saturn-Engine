@@ -528,6 +528,33 @@ namespace Saturn {
 				FindAndRenameItem( asset->Name );
 			}
 
+			if( ImGui::MenuItem( "New Animation Controller" ) )
+			{
+				const auto id = AssetManager::Get().CreateAsset( AssetType::AnimationController );
+				auto asset = AssetManager::Get().FindAsset( id );
+				auto newPath = m_CurrentPath / "New Animation Controller.sac";
+				const int32_t count = GetFilenameCount( "New Animation Controller.sac" );
+
+				if( count >= 1 )
+					newPath.replace_filename( std::format( "{0} ({1}).sac", "New Animation Controller", count ) );
+
+				asset->SetAbsolutePath( newPath );
+				/*
+				Ref<BehaviourTreeMemorySpecification> spec = Ref<BehaviourTreeMemorySpecification>::Create( asset );
+
+				BehaviourTreeMemorySpecAssetSerialiser btms;
+				btms.Serialise( spec );
+				*/
+
+				std::ofstream fout( newPath );
+				fout.close();
+
+				AssetManager::Get().Save();
+
+				UpdateFiles( true );
+				FindAndRenameItem( asset->Name );
+			}
+
 			if( ImGui::MenuItem( "New Class Instance" ) ) 
 			{
 				m_OpenClassInstancePopup = true;

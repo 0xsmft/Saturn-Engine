@@ -26,29 +26,47 @@
 *********************************************************************************************
 */
 
-#pragma once
-
-#include "NodeEditorNodeBase.h"
+#include "sppch.h"
+#include "AnimGraphStateMachineStateNode.h"
 
 namespace Saturn {
 
-	// Base class for all "blueprint" nodes
-	// By blueprint we mean the traditional look of a node
-	SCLASS()
-	class NodeEditorBlueprintNode : public NodeEditorNodeBase
+	AnimGraphStateMachineStateNode::AnimGraphStateMachineStateNode()
+		: AnimGraphStateMachineNodeBase( "<NULL STATE MACHINE STATE>" )
 	{
-		SAT_DECLARE_CLASS( NodeEditorBlueprintNode, NodeEditorNodeBase );
-	public:
-		NodeEditorBlueprintNode() = default;
-		NodeEditorBlueprintNode( const std::string& rName );
-		virtual ~NodeEditorBlueprintNode();
+		CreateNode();
+	}
 
-	public:
-		//////////////////////////////////////////////////////////////////////////
-		// NodeEditorNodeBase
-		
-		virtual void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder ) override;
-		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override { return NodeEvaluationState::Failed; }
-	};
+	AnimGraphStateMachineStateNode::AnimGraphStateMachineStateNode( const std::string& rName )
+		: AnimGraphStateMachineNodeBase( rName )
+	{
+		CreateNode();
+	}
+
+	void AnimGraphStateMachineStateNode::CreateNode()
+	{
+		ExecutionType = NodeExecutionType::AnimGraphStateMachineStateNode;
+
+#if !defined(SAT_DIST)
+		Color = ImColor( 48, 128, 255, 100 );
+		Type = NodeRenderType::Tree;
+#endif
+
+		Outputs.push_back( Ref<Pin>::Create( "Out", PinType::Flow, PinKind::Output ) );
+
+		for( auto& rOutput : Outputs )
+		{
+			rOutput->RenderType = PinRenderType::Tree;
+		}
+	}
+
+	AnimGraphStateMachineStateNode::~AnimGraphStateMachineStateNode()
+	{
+
+	}
 
 }
+
+#include "Saturn/GameFramework/Core/EngineGenerated.h"
+
+SAT_X31_CREATE_AUTO_REG( AnimGraphStateMachineStateNode );

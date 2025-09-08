@@ -28,27 +28,37 @@
 
 #pragma once
 
-#include "NodeEditorNodeBase.h"
+#include "Saturn/NodeEditor/Pin.h"
 
 namespace Saturn {
 
-	// Base class for all "blueprint" nodes
-	// By blueprint we mean the traditional look of a node
-	SCLASS()
-	class NodeEditorBlueprintNode : public NodeEditorNodeBase
+	enum class AnimGraphAnimationPinFlags 
 	{
-		SAT_DECLARE_CLASS( NodeEditorBlueprintNode, NodeEditorNodeBase );
+		// Does this pin input/output a single animation
+		Animation,
+		// or does it input/output a state machine
+		StateMachine
+	};
+
+	class AnimGraphAnimationPin : public Pin
+	{
 	public:
-		NodeEditorBlueprintNode() = default;
-		NodeEditorBlueprintNode( const std::string& rName );
-		virtual ~NodeEditorBlueprintNode();
+		AnimGraphAnimationPin() = default;
+		AnimGraphAnimationPin( const std::string& rName, PinKind kind, AnimGraphAnimationPinFlags flags );
+		AnimGraphAnimationPin( UUID id, const std::string& rName, PinType type, UUID nodeID );
+		
+		~AnimGraphAnimationPin();
 
 	public:
-		//////////////////////////////////////////////////////////////////////////
-		// NodeEditorNodeBase
-		
-		virtual void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder ) override;
-		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override { return NodeEvaluationState::Failed; }
+		virtual void Serialise( std::ofstream& rStream ) const override;
+		virtual void Deserialise( FDependentIStream& rStream ) override;
+
+	protected:
+		virtual void OnRenderOutput() override;
+		virtual void OnRenderInput() override;
+
+	private:
+		AnimGraphAnimationPinFlags m_Flags = AnimGraphAnimationPinFlags::Animation;
 	};
 
 }

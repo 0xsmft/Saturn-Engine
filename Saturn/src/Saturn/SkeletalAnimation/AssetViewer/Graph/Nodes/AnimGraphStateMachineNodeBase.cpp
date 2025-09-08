@@ -26,29 +26,28 @@
 *********************************************************************************************
 */
 
-#pragma once
-
-#include "NodeEditorNodeBase.h"
+#include "sppch.h"
+#include "AnimGraphStateMachineNodeBase.h"
 
 namespace Saturn {
 
-	// Base class for all "blueprint" nodes
-	// By blueprint we mean the traditional look of a node
-	SCLASS()
-	class NodeEditorBlueprintNode : public NodeEditorNodeBase
+	AnimGraphStateMachineNodeBase::AnimGraphStateMachineNodeBase( const std::string& rName )
+		: NodeEditorNodeBase( rName )
 	{
-		SAT_DECLARE_CLASS( NodeEditorBlueprintNode, NodeEditorNodeBase );
-	public:
-		NodeEditorBlueprintNode() = default;
-		NodeEditorBlueprintNode( const std::string& rName );
-		virtual ~NodeEditorBlueprintNode();
+	}
 
-	public:
-		//////////////////////////////////////////////////////////////////////////
-		// NodeEditorNodeBase
-		
-		virtual void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder ) override;
-		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override { return NodeEvaluationState::Failed; }
-	};
+	AnimGraphStateMachineNodeBase::~AnimGraphStateMachineNodeBase()
+	{
+
+	}
+
+	void AnimGraphStateMachineNodeBase::Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder )
+	{
+
+	}
 
 }
+
+#include "Saturn/GameFramework/Core/EngineGenerated.h"
+
+SAT_X31_CREATE_AUTO_REG( AnimGraphStateMachineNodeBase );

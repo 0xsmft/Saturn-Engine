@@ -26,29 +26,43 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "AnimGraphOutputNode.h"
 
-#include "NodeEditorNodeBase.h"
+#if !defined( SAT_DIST )
+#include "Saturn/NodeEditor/UI/NodeEditor.h"
+#else
+#include "Saturn/NodeEditor/NodeEditorBase.h"
+#endif
 
 namespace Saturn {
 
-	// Base class for all "blueprint" nodes
-	// By blueprint we mean the traditional look of a node
-	SCLASS()
-	class NodeEditorBlueprintNode : public NodeEditorNodeBase
+	AnimGraphOutputNode::AnimGraphOutputNode()
+		: NodeEditorBlueprintNode( "Output Node" )
 	{
-		SAT_DECLARE_CLASS( NodeEditorBlueprintNode, NodeEditorNodeBase );
-	public:
-		NodeEditorBlueprintNode() = default;
-		NodeEditorBlueprintNode( const std::string& rName );
-		virtual ~NodeEditorBlueprintNode();
+		CreateNode();
+	}
 
-	public:
-		//////////////////////////////////////////////////////////////////////////
-		// NodeEditorNodeBase
-		
-		virtual void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder ) override;
-		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override { return NodeEvaluationState::Failed; }
-	};
+	void AnimGraphOutputNode::CreateNode()
+	{
+		ExecutionType = NodeExecutionType::AnimGraphOutputNode;
+
+#if !defined(SAT_DIST)
+		CanBeDeleted = false;
+		Color = ImColor( 48, 128, 255, 100 );
+		Type = NodeRenderType::Blueprint;
+#endif
+
+		Inputs.emplace_back( Ref<Pin>::Create( "Final State", PinType::AnimGraphAnimation, PinKind::Input ) );
+	}
+
+	AnimGraphOutputNode::~AnimGraphOutputNode()
+	{
+
+	}
 
 }
+
+#include "Saturn/GameFramework/Core/EngineGenerated.h"
+
+SAT_X31_CREATE_AUTO_REG( AnimGraphOutputNode );

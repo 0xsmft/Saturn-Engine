@@ -27,67 +27,105 @@
 */
 
 #include "sppch.h"
-#include "SkeletonAssetViewer.h"
+#include "AnimationControllerAssetViewer.h"
 
 #include "Saturn/Asset/AssetManager.h"
-#include "Saturn/Vulkan/SceneRenderer.h"
 
-#include "Saturn/ImGui/ImGuiAuxiliary.h"
-#include "Saturn/ImGui/EditorIcons.h"
+#include "Graph/Nodes/AnimGraphNodeLibrary.h"
+#include "Graph/Nodes/AnimGraphOutputNode.h"
 
-#include "Saturn/Core/Renderer/EditorCamera.h"
+#include "Saturn/NodeEditor/NodeEditorHintNode.h"
 
 #include <imgui.h>
 
 namespace Saturn {
 
-	SkeletonAssetViewer::SkeletonAssetViewer( AssetID id )
+	AnimationControllerAssetViewer::AnimationControllerAssetViewer( AssetID id )
 		: AssetViewer( id )
 	{
-		m_AssetType = AssetType::Skeleton;
-
-		Ref<SkeletonAsset> snd = AssetManager::Get().GetAssetAs<SkeletonAsset>( m_AssetID );
-		m_SkeletonAsset = snd;
-
-		m_Open = true;
-		m_Name = std::format( "{0}##{1}", m_SkeletonAsset->Name, std::to_string( m_SkeletonAsset->ID ) );
-
-		/*
-		m_Scene = Ref<Scene>::Create();
-
-		SceneRendererFlags flags = SceneRendererFlag_RenderGrid;
-		m_SceneRenderer = Ref<SceneRenderer>::Create( flags );
-
-		m_SceneRenderer->SetDynamicSky( 2.0f, 0.0f, 0.0f );
-		m_SceneRenderer->SetCurrentScene( m_Scene.Get() );
-		*/
-
-		m_BoneHierarchyPanel.Initialise( id );
+		m_AssetType = AssetType::AnimationController;
+		AddAsset();
 	}
 
-	SkeletonAssetViewer::~SkeletonAssetViewer()
+	void AnimationControllerAssetViewer::AddAsset()
+	{
+		m_Asset = AssetManager::Get().FindAsset( m_AssetID );
+
+		m_Open = true;
+		m_Name = std::format( "{0}##{1}", m_Asset->Name, std::to_string( m_AssetID ) );
+
+		m_NodeEditor = SharedPtr<AnimationControllerNodeEditor>::Create( m_AssetID );
+
+		SetupNewNodeEditor();
+
+#if !defined(SAT_DIST)
+//		m_NodeEditor->NcSetCustomName( filename );
+		std::string nodeEdWindowName = std::format( "Final Out##{0}", std::to_string( m_AssetID ) );
+
+		m_NodeEditor->SetWindowName( nodeEdWindowName );
+		m_NodeEditor->Open( true );
+#endif
+		m_Open = true;
+
+		SetupNodeEditorCallbacks();
+	}
+
+	AnimationControllerAssetViewer::~AnimationControllerAssetViewer()
 	{
 	}
 
-	void SkeletonAssetViewer::OnImGuiRender()
+	void AnimationControllerAssetViewer::OnImGuiRender()
 	{
 		if( ImGui::Begin( m_Name.c_str(), &m_Open ) )
 		{
-			m_BoneHierarchyPanel.OnImGuiRender();
+			// Draw main
+			if( m_NodeEditor->IsOpen() )
+			{
+				m_NodeEditor->OnImGuiRender();
+			}
+			else
+			{
+				m_NodeEditor->Open( false );
+				m_Open = false;
+			}
 
 			ImGui::End();
 		}
 	}
 
-	void SkeletonAssetViewer::OnUpdate( Timestep ts )
+	void AnimationControllerAssetViewer::OnRuntimeStateChanged( RuntimeState newState, RuntimeState oldState )
 	{
 
 	}
 
-	void SkeletonAssetViewer::OnEvent( Event& rEvent )
+	void AnimationControllerAssetViewer::SetupNewNodeEditor()
 	{
-//		if( m_MouseOverViewport && m_AllowCameraEvents )
-//			m_Camera.OnEvent( rEvent );
+		SharedPtr<AnimGraphOutputNode> outputNode = AnimGraphNodeLibrary::SpawnOutputNode( m_NodeEditor );
+		m_RootNodeID = outputNode->ID;
+	}
+
+	void AnimationControllerAssetViewer::SetupNodeEditorCallbacks()
+	{
+#if !defined(SAT_DIST)
+		m_NodeEditor->SetCreateNewNodeFunction(
+			[ & ]() -> SharedPtr<NodeEditorNodeBase>
+		{
+			SharedPtr<NodeEditorNodeBase> result;
+
+			if( ImGui::MenuItem( "State Machine player" ) )
+				result = ( SharedPtr<NodeEditorNodeBase> )AnimGraphNodeLibrary::SpawnStateMachinePlayerNode( m_NodeEditor );
+			
+			ImGui::SeparatorText( "Auxiliary" );
+
+			if( ImGui::MenuItem( "[DEBUG] CREATE STATE MACHINE STATE NODE" ) )
+				result = ( SharedPtr<NodeEditorNodeBase> )AnimGraphNodeLibrary::SpawnStateMachineStateNode( m_NodeEditor );
+			
+			if( ImGui::MenuItem( "Hint (Comment) Node" ) )
+				result = NodeEditorHintNode::SpawnHintNode( m_NodeEditor );
+
+			return result;
+		} );
+#endif
 	}
 
 }

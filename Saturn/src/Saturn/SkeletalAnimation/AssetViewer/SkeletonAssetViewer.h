@@ -29,7 +29,7 @@
 #pragma once
 
 #include "Saturn/ImGui/AssetViewer.h"
-#include "Saturn/SkeletalAnimation/SkeletonAsset.h"
+#include "SkeletalMeshBoneHierarchyPanel.h"
 
 struct ImVec2;
 
@@ -37,12 +37,6 @@ namespace Saturn {
 
 	class SceneRenderer;
 	class EditorCamera;
-
-	struct SkAVBoneNode
-	{
-		SkeletalMeshBoneInfo* pBone = nullptr;
-		std::vector<SkAVBoneNode*> Children;
-	};
 
 	class SkeletonAssetViewer : public AssetViewer
 	{
@@ -53,9 +47,6 @@ namespace Saturn {
 		virtual void OnImGuiRender() override;
 		virtual void OnUpdate( Timestep ts ) override;
 		virtual void OnEvent( Event& rEvent ) override;
-
-	private:
-		void DisplayBoneHierarchy( SkAVBoneNode* pBoneNode, int level = 0 );
 
 	private:
 		Ref<SkeletonAsset> m_SkeletonAsset;
@@ -70,8 +61,7 @@ namespace Saturn {
 
 //		ImVec2 m_ViewportSize{};
 
-		std::vector<SkAVBoneNode*> m_BoneLinkedList;
-		std::vector<SkAVBoneNode*> m_BoneRoots;
+		SkeletalMeshBoneHierarchyPanel m_BoneHierarchyPanel;
 	};
 	
 }

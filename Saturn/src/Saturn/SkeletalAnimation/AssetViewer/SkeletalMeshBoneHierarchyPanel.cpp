@@ -26,29 +26,99 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "SkeletalMeshBoneHierarchyPanel.h"
 
-#include "NodeEditorNodeBase.h"
+#include "Saturn/Vulkan/Mesh.h"
+
+#include "Saturn/ImGui/ImGuiAuxiliary.h"
+
+#include <imgui.h>
 
 namespace Saturn {
-
-	// Base class for all "blueprint" nodes
-	// By blueprint we mean the traditional look of a node
-	SCLASS()
-	class NodeEditorBlueprintNode : public NodeEditorNodeBase
+	
+	SkeletalMeshBoneHierarchyPanel::SkeletalMeshBoneHierarchyPanel()
+		: ImGuiWindow( "Skeletal Mesh Bone Hierarchy" )
 	{
-		SAT_DECLARE_CLASS( NodeEditorBlueprintNode, NodeEditorNodeBase );
-	public:
-		NodeEditorBlueprintNode() = default;
-		NodeEditorBlueprintNode( const std::string& rName );
-		virtual ~NodeEditorBlueprintNode();
+	}
 
-	public:
-		//////////////////////////////////////////////////////////////////////////
-		// NodeEditorNodeBase
-		
-		virtual void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder ) override;
-		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override { return NodeEvaluationState::Failed; }
-	};
+	void SkeletalMeshBoneHierarchyPanel::Initialise( AssetID id )
+	{
+		// If we already have an asset, make sure to clear the existing linked list.
+		if( m_SkeletonAsset )
+		{
+			ClearLinkedList();
+		}
+
+		m_SkeletonAsset = AssetManager::Get().GetAssetAs<SkeletonAsset>( id );
+
+		m_BoneLinkedList.resize( m_SkeletonAsset->GetBoneInfo().size() );
+
+		// Create nodes
+		for( size_t i = 0; i < m_SkeletonAsset->GetBoneInfo().size(); ++i )
+		{
+			m_BoneLinkedList[ i ] = new BoneNode( ( SkeletalMeshBoneInfo* ) &m_SkeletonAsset->GetBoneInfo()[ i ], {} );
+		}
+
+		for( size_t i = 0; i < m_SkeletonAsset->GetBoneInfo().size(); ++i )
+		{
+			const int parentIndex = m_SkeletonAsset->GetBoneInfo()[ i ].ParentIndex;
+
+			if( parentIndex >= 0 && parentIndex < ( int ) m_BoneLinkedList.size() )
+			{
+				m_BoneLinkedList[ parentIndex ]->Children.push_back( m_BoneLinkedList[ i ] );
+			}
+			else
+			{
+				m_BoneRoots.push_back( m_BoneLinkedList[ i ] );
+			}
+		}
+	}
+
+	void SkeletalMeshBoneHierarchyPanel::ClearLinkedList()
+	{
+		m_BoneRoots.clear();
+
+		for( auto* pNode : m_BoneLinkedList )
+		{
+			delete pNode;
+		}
+	}
+
+	SkeletalMeshBoneHierarchyPanel::~SkeletalMeshBoneHierarchyPanel()
+	{
+		ClearLinkedList();
+	}
+
+	void SkeletalMeshBoneHierarchyPanel::OnImGuiRender()
+	{
+		if( ImGui::Begin( m_Name.c_str(), &m_Open ) )
+		{
+			for( auto* pBone : m_BoneRoots )
+			{
+				DisplayBoneHierarchy( pBone );
+			}
+
+			ImGui::End();
+		}
+	}
+
+	void SkeletalMeshBoneHierarchyPanel::DisplayBoneHierarchy( BoneNode* pBoneNode, int level /*= 0 */ )
+	{
+		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_FramePadding;
+
+		if( level == 0 )
+			flags |= ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed;
+
+		if( ImGui::TreeNodeEx( pBoneNode->pBone->BoneName.c_str(), flags ) )
+		{
+			for( auto* pChildBone : pBoneNode->Children )
+			{
+				DisplayBoneHierarchy( pChildBone, level + 1 );
+			}
+
+			Auxiliary::EndTreeNode();
+		}
+	}
 
 }

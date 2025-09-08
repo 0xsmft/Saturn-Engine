@@ -87,6 +87,9 @@ namespace Saturn {
 		BehaviourTreeSequenceNode,
 		BehaviourTreeGeneralTaskNode,
 		HintNode, // Comment node
+		AnimGraphOutputNode,
+		AnimGraphStateMachinePlayerNode,
+		AnimGraphStateMachineStateNode,
 		//^^^^ add new node types here ^^^^
 		None
 	};
@@ -95,6 +98,7 @@ namespace Saturn {
 	class NodeEditorBase;
 	class NodeEditorRuntime;
 
+	SCLASS()
 	class NodeEditorNodeBase : public SObject, public EnabledSharedFromThis<NodeEditorNodeBase>
 	{
 		// NOTE: SAT_DECLARE_CLASS expanded

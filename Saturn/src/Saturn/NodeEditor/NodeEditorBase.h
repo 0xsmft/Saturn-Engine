@@ -50,7 +50,8 @@ namespace Saturn {
 		Default,
 		Material,
 		Sound,
-		BehaviourTree
+		BehaviourTree,
+		AnimationController
 	};
 
 	enum class NodeEditorState

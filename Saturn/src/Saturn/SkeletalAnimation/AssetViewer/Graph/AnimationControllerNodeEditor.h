@@ -28,27 +28,26 @@
 
 #pragma once
 
-#include "NodeEditorNodeBase.h"
+#include "Saturn/NodeEditor/UI/NodeEditor.h"
 
 namespace Saturn {
 
-	// Base class for all "blueprint" nodes
-	// By blueprint we mean the traditional look of a node
-	SCLASS()
-	class NodeEditorBlueprintNode : public NodeEditorNodeBase
+	class AnimationControllerNodeEditor : public FDependentNodeEditorSuper
 	{
-		SAT_DECLARE_CLASS( NodeEditorBlueprintNode, NodeEditorNodeBase );
 	public:
-		NodeEditorBlueprintNode() = default;
-		NodeEditorBlueprintNode( const std::string& rName );
-		virtual ~NodeEditorBlueprintNode();
+		AnimationControllerNodeEditor();
+		AnimationControllerNodeEditor( AssetID id );
+		virtual ~AnimationControllerNodeEditor();
 
 	public:
 		//////////////////////////////////////////////////////////////////////////
-		// NodeEditorNodeBase
-		
-		virtual void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder ) override;
-		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override { return NodeEvaluationState::Failed; }
+		// NodeEditorBase
+//		virtual void OnImGuiRender() override;
+		virtual void OnUpdate( Timestep ts ) override;
+		virtual void OnEvent( Event& rEvent ) override;
+
+	private:
+
 	};
 
 }

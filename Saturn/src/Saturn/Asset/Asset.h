@@ -55,6 +55,7 @@ namespace Saturn {
 		BehaviourTree,
 		BehaviourTreeMemory,
 		SkeletalAnimation,
+		AnimationController,
 		// ^^^ ADD NEW ASSET TYPES HERE ^^^
 		Unknown,
 		COUNT,
@@ -92,6 +93,8 @@ namespace Saturn {
 				return "BehaviourTreeMemory";
 			case Saturn::AssetType::SkeletalAnimation:
 				return "SkeletalAnimation";
+			case Saturn::AssetType::AnimationController:
+				return "AnimationController";
 			default:
 			case Saturn::AssetType::Unknown:
 				return "Unknown";
@@ -138,6 +141,10 @@ namespace Saturn {
 				return COLOR_32( 50, 168, 82, 255 );
 			case Saturn::AssetType::BehaviourTreeMemory:
 				return COLOR_32( 168, 50, 82, 255 );
+			case Saturn::AssetType::SkeletalAnimation:
+				return COLOR_32( 210, 227, 30, 255 );
+			case Saturn::AssetType::AnimationController:
+				return COLOR_32( 112, 11, 156, 255 );
 			default:
 			case Saturn::AssetType::Unknown:
 				return COLOR_32( 255, 255, 255, 255 );
@@ -174,6 +181,8 @@ namespace Saturn {
 			return AssetType::BehaviourTreeMemory;
 		else if( str == "SkeletalAnimation" )
 			return AssetType::SkeletalAnimation;
+		else if( str == "AnimationController" )
+			return AssetType::AnimationController;
 		else
 			return AssetType::Unknown;
 	}
@@ -206,6 +215,8 @@ namespace Saturn {
 			return AssetType::BehaviourTreeMemory;
 		else if( str == ".skanim" )
 			return AssetType::SkeletalAnimation;
+		else if( str == ".sac" )
+			return AssetType::AnimationController;
 		else
 			return AssetType::Unknown;
 	}

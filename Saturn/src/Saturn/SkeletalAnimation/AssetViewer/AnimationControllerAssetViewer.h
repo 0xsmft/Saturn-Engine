@@ -28,27 +28,40 @@
 
 #pragma once
 
-#include "NodeEditorNodeBase.h"
+#include "Graph/AnimationControllerNodeEditor.h"
+
+#include "Saturn/ImGui/AssetViewer.h"
+#include "Saturn/SkeletalAnimation/Animator.h"
 
 namespace Saturn {
 
-	// Base class for all "blueprint" nodes
-	// By blueprint we mean the traditional look of a node
-	SCLASS()
-	class NodeEditorBlueprintNode : public NodeEditorNodeBase
+	class AnimationControllerAssetViewer : public AssetViewer
 	{
-		SAT_DECLARE_CLASS( NodeEditorBlueprintNode, NodeEditorNodeBase );
 	public:
-		NodeEditorBlueprintNode() = default;
-		NodeEditorBlueprintNode( const std::string& rName );
-		virtual ~NodeEditorBlueprintNode();
+		AnimationControllerAssetViewer( AssetID id );
+		~AnimationControllerAssetViewer();
 
-	public:
-		//////////////////////////////////////////////////////////////////////////
-		// NodeEditorNodeBase
-		
-		virtual void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder ) override;
-		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override { return NodeEvaluationState::Failed; }
+		void OnImGuiRender() override;
+		inline void OnUpdate( Timestep ts ) {}
+		inline void OnEvent( Event& rEvent ) {}
+
+#if !defined(SAT_DIST)
+		void OnRuntimeStateChanged( RuntimeState newState, RuntimeState oldState ) override;
+
+//		void AddBehviourTreeReference( Ref<BehaviourTree> asset );
+#endif
+
+	private:
+		void AddAsset();
+		void SetupNewNodeEditor();
+		void SetupNodeEditorCallbacks();
+
+	private:
+		Ref<Asset> m_Asset = nullptr;
+		SharedPtr<AnimationControllerNodeEditor> m_NodeEditor = nullptr;
+//		Ref<BehaviourTreeEditorEvaluator> m_Runtime = nullptr;
+
+		UUID m_RootNodeID = 0;
 	};
 
 }

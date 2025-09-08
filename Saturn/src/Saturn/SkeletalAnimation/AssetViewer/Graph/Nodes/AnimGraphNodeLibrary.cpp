@@ -26,29 +26,48 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "AnimGraphNodeLibrary.h"
 
-#include "NodeEditorNodeBase.h"
+#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
+
+#include "AnimGraphOutputNode.h"
+#include "AnimGraphStateMachinePlayerNode.h"
+#include "AnimGraphStateMachineStateNode.h"
 
 namespace Saturn {
 
-	// Base class for all "blueprint" nodes
-	// By blueprint we mean the traditional look of a node
-	SCLASS()
-	class NodeEditorBlueprintNode : public NodeEditorNodeBase
+	SharedPtr<AnimGraphStateMachinePlayerNode> AnimGraphNodeLibrary::SpawnStateMachinePlayerNode( SharedPtr<NodeEditorBase> nodeEditor )
 	{
-		SAT_DECLARE_CLASS( NodeEditorBlueprintNode, NodeEditorNodeBase );
-	public:
-		NodeEditorBlueprintNode() = default;
-		NodeEditorBlueprintNode( const std::string& rName );
-		virtual ~NodeEditorBlueprintNode();
+		AnimGraphStateMachinePlayerNode* pNode = ( AnimGraphStateMachinePlayerNode* ) ClassMetadataHandler::Get().CreateClassObject( AnimGraphStateMachinePlayerNode::StaticClass() );
 
-	public:
-		//////////////////////////////////////////////////////////////////////////
-		// NodeEditorNodeBase
-		
-		virtual void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder ) override;
-		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override { return NodeEvaluationState::Failed; }
-	};
+		// Create shared pointer here, to avoid creating a new one when we call AddNode and then another new one when this function returns, would result in two control blocks.
+		SharedPtr<AnimGraphStateMachinePlayerNode> sp = pNode;
+
+		nodeEditor->AddNode( sp );
+		return sp;
+	}
+
+	SharedPtr<AnimGraphStateMachineStateNode> AnimGraphNodeLibrary::SpawnStateMachineStateNode( SharedPtr<NodeEditorBase> nodeEditor )
+	{
+		AnimGraphStateMachineStateNode* pNode = ( AnimGraphStateMachineStateNode* ) ClassMetadataHandler::Get().CreateClassObject( AnimGraphStateMachineStateNode::StaticClass() );
+
+		// Create shared pointer here, to avoid creating a new one when we call AddNode and then another new one when this function returns, would result in two control blocks.
+		SharedPtr<AnimGraphStateMachineStateNode> sp = pNode;
+
+		nodeEditor->AddNode( sp );
+		return sp;
+	}
+
+	SharedPtr<AnimGraphOutputNode> AnimGraphNodeLibrary::SpawnOutputNode( SharedPtr<NodeEditorBase> nodeEditor )
+	{
+		AnimGraphOutputNode* pNode = ( AnimGraphOutputNode* ) ClassMetadataHandler::Get().CreateClassObject( AnimGraphOutputNode::StaticClass() );
+
+		// Create shared pointer here, to avoid creating a new one when we call AddNode and then another new one when this function returns, would result in two control blocks.
+		SharedPtr<AnimGraphOutputNode> sp = pNode;
+
+		nodeEditor->AddNode( sp );
+		return sp;
+	}
 
 }

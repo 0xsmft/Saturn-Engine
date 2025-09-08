@@ -26,29 +26,44 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "AnimGraphStateMachinePlayerNode.h"
 
-#include "NodeEditorNodeBase.h"
+#include "Saturn/SkeletalAnimation/AssetViewer/Graph/AnimGraphAnimationPin.h"
 
 namespace Saturn {
 
-	// Base class for all "blueprint" nodes
-	// By blueprint we mean the traditional look of a node
-	SCLASS()
-	class NodeEditorBlueprintNode : public NodeEditorNodeBase
+	AnimGraphStateMachinePlayerNode::AnimGraphStateMachinePlayerNode()
+		: NodeEditorBlueprintNode( "STATE MACHINE" )
 	{
-		SAT_DECLARE_CLASS( NodeEditorBlueprintNode, NodeEditorNodeBase );
-	public:
-		NodeEditorBlueprintNode() = default;
-		NodeEditorBlueprintNode( const std::string& rName );
-		virtual ~NodeEditorBlueprintNode();
+		CreateNode();
+	}
 
-	public:
-		//////////////////////////////////////////////////////////////////////////
-		// NodeEditorNodeBase
-		
-		virtual void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder ) override;
-		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override { return NodeEvaluationState::Failed; }
-	};
+	AnimGraphStateMachinePlayerNode::AnimGraphStateMachinePlayerNode( const std::string& rName )
+		: NodeEditorBlueprintNode( rName )
+	{
+		CreateNode();
+	}
+
+	void AnimGraphStateMachinePlayerNode::CreateNode()
+	{
+		ExecutionType = NodeExecutionType::AnimGraphStateMachinePlayerNode;
+
+#if !defined(SAT_DIST)
+		CanBeDeleted = false;
+		Color = ImColor( 48, 128, 255, 100 );
+		Type = NodeRenderType::Blueprint;
+#endif
+
+		Outputs.emplace_back( Ref<AnimGraphAnimationPin>::Create( "Out", PinKind::Output, AnimGraphAnimationPinFlags::StateMachine ) );
+	}
+
+	AnimGraphStateMachinePlayerNode::~AnimGraphStateMachinePlayerNode()
+	{
+	}
 
 }
+
+#include "Saturn/GameFramework/Core/EngineGenerated.h"
+
+SAT_X31_CREATE_AUTO_REG( AnimGraphStateMachinePlayerNode );

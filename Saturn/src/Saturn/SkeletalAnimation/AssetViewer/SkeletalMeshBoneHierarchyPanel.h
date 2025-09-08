@@ -28,27 +28,42 @@
 
 #pragma once
 
-#include "NodeEditorNodeBase.h"
+#include "Saturn/ImGui/ImGuiWindow.h"
+#include "Saturn/SkeletalAnimation/SkeletonAsset.h"
 
 namespace Saturn {
 
-	// Base class for all "blueprint" nodes
-	// By blueprint we mean the traditional look of a node
-	SCLASS()
-	class NodeEditorBlueprintNode : public NodeEditorNodeBase
+	class SkeletalMeshBoneHierarchyPanel : public ImGuiWindow
 	{
-		SAT_DECLARE_CLASS( NodeEditorBlueprintNode, NodeEditorNodeBase );
 	public:
-		NodeEditorBlueprintNode() = default;
-		NodeEditorBlueprintNode( const std::string& rName );
-		virtual ~NodeEditorBlueprintNode();
+		struct BoneNode
+		{
+			SkeletalMeshBoneInfo* pBone = nullptr;
+			std::vector<BoneNode*> Children;
+		};
 
 	public:
+		SkeletalMeshBoneHierarchyPanel();
+		~SkeletalMeshBoneHierarchyPanel();
+
+		void Initialise( AssetID id );
+
 		//////////////////////////////////////////////////////////////////////////
-		// NodeEditorNodeBase
-		
-		virtual void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder ) override;
-		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override { return NodeEvaluationState::Failed; }
+		// ImGuiWindow
+
+		virtual void OnImGuiRender() override;
+		virtual void OnEvent( Event& rEvent ) {}
+		virtual void OnUpdate( Timestep ts ) {}
+
+	private:
+		void DisplayBoneHierarchy( BoneNode* pBoneNode, int level = 0 );
+		void ClearLinkedList();
+
+	private:
+		Ref<SkeletonAsset> m_SkeletonAsset;
+
+		std::vector<BoneNode*> m_BoneLinkedList;
+		std::vector<BoneNode*> m_BoneRoots;
 	};
 
 }

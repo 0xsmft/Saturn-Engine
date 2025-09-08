@@ -26,29 +26,60 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "AnimGraphAnimationPin.h"
 
-#include "NodeEditorNodeBase.h"
+#include "Saturn/NodeEditor/NodeEditorNodeBase.h"
+
+#include "Saturn/ImGui/ImGuiAuxiliary.h"
+
+#include "imgui.h"
+#include "imgui_internal.h"
 
 namespace Saturn {
 
-	// Base class for all "blueprint" nodes
-	// By blueprint we mean the traditional look of a node
-	SCLASS()
-	class NodeEditorBlueprintNode : public NodeEditorNodeBase
+	AnimGraphAnimationPin::AnimGraphAnimationPin( const std::string& rName, PinKind kind, AnimGraphAnimationPinFlags flags )
+		: Pin( rName, PinType::AnimGraphAnimation, kind ), m_Flags( flags )
 	{
-		SAT_DECLARE_CLASS( NodeEditorBlueprintNode, NodeEditorNodeBase );
-	public:
-		NodeEditorBlueprintNode() = default;
-		NodeEditorBlueprintNode( const std::string& rName );
-		virtual ~NodeEditorBlueprintNode();
+	}
 
-	public:
-		//////////////////////////////////////////////////////////////////////////
-		// NodeEditorNodeBase
-		
-		virtual void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder ) override;
-		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override { return NodeEvaluationState::Failed; }
-	};
+	AnimGraphAnimationPin::AnimGraphAnimationPin( UUID id, const std::string& rName, PinType type, UUID nodeID )
+		: Pin( id, rName, type, nodeID )
+	{
+	}
+
+	AnimGraphAnimationPin::~AnimGraphAnimationPin()
+	{
+	}
+
+	void AnimGraphAnimationPin::Serialise( std::ofstream& rStream ) const
+	{
+	}
+
+	void AnimGraphAnimationPin::Deserialise( FDependentIStream& rStream )
+	{
+	}
+
+	void AnimGraphAnimationPin::OnRenderOutput()
+	{
+		switch( m_Flags )
+		{
+			case AnimGraphAnimationPinFlags::StateMachine:
+			{
+				if( ImGui::Button( "Open State Machine" ) ) 
+				{
+					// create a new node editor? change view to state machine viewer...
+				}
+			} break;
+
+			case AnimGraphAnimationPinFlags::Animation:
+			default:
+				break;
+		}
+	}
+
+	void AnimGraphAnimationPin::OnRenderInput()
+	{
+	}
 
 }

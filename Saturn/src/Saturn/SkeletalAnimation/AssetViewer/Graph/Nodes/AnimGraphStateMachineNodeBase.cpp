@@ -43,7 +43,50 @@ namespace Saturn {
 
 	void AnimGraphStateMachineNodeBase::Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder )
 	{
+		const auto PADDING = 12.0f;
 
+		ed::PushStyleVar( ed::StyleVar_NodeRounding, 5.0f );
+		ed::PushStyleVar( ed::StyleVar_SourceDirection, ImVec2( 1.0f, 0.0f ) );
+		ed::PushStyleVar( ed::StyleVar_TargetDirection, ImVec2( 1.0f, 0.0f ) );
+		ed::PushStyleVar( ed::StyleVar_LinkStrength, 0.0f );
+		ed::PushStyleVar( ed::StyleVar_PinBorderWidth, 1.0f );
+		ed::PushStyleVar( ed::StyleVar_PinRadius, 5.0f );
+		ed::BeginNode( ed::NodeId( ID ) );
+
+		ed::BeginPin( ed::PinId( Inputs[ 0 ]->ID ), ed::PinKind::Input );
+		ImGui::Dummy( ImVec2( 0.0f, 0.0f ) );
+		ed::EndPin();
+
+		ed::BeginPin( ed::PinId( Outputs[ 0 ]->ID ), ed::PinKind::Output );
+
+		auto* pDrawList = ImGui::GetWindowDrawList();
+
+		ImGui::BeginHorizontal( "ContentFrame" );
+
+		const auto textSize = ImGui::CalcTextSize( Name.c_str() );
+		const auto radius = textSize.y * 0.5f;
+		const auto pos = ImGui::GetCursorScreenPos();
+
+		ImVec2 center = ImVec2( pos.x + radius, pos.y + textSize.y * 0.5f );
+
+		pDrawList->AddCircleFilled( center, radius, IM_COL32( 255, 255, 0, 255 ), 64 );
+
+		ImGui::Dummy( ImVec2( radius * 2.0f + 4.0f, textSize.y ) );
+
+		ImGui::Spring( 1 );
+
+		ImGui::BeginVertical( "main", ImVec2( 0.0F, 0.0F ) );
+
+//		ImGui::Spring( 1 );
+		ImGui::TextUnformatted( Name.c_str() );
+
+//		ImGui::Spring( 1 );
+		ImGui::EndVertical();
+		ImGui::EndHorizontal();
+
+		ed::EndPin();
+		ed::EndNode();
+		ed::PopStyleVar( 6 );
 	}
 
 }

@@ -52,11 +52,17 @@ namespace Saturn {
 		Type = NodeRenderType::Tree;
 #endif
 
-		Outputs.push_back( Ref<Pin>::Create( "Out", PinType::Flow, PinKind::Output ) );
+		Outputs.push_back( Ref<Pin>::Create( "DATA-TO", PinType::Flow, PinKind::Output ) );
+		Inputs.push_back( Ref<Pin>::Create( "DATA-FROM", PinType::Flow, PinKind::Input ) );
 
 		for( auto& rOutput : Outputs )
 		{
 			rOutput->RenderType = PinRenderType::Tree;
+		}
+
+		for( auto& rInput : Inputs )
+		{
+			rInput->RenderType = PinRenderType::Tree;
 		}
 	}
 

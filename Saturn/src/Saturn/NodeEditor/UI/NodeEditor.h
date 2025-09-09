@@ -137,6 +137,7 @@ namespace Saturn {
 		void DeleteDeadLinks( UUID nodeID );
 		void CreateNewEditorIfNeeded();
 		void DrawSimulatingCanvas();
+		void DrawTopBarChildInternal();
 
 	private:
 		std::function<SharedPtr<NodeEditorNodeBase>()> m_CreateNewNodeFunction;

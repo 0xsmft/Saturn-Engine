@@ -300,78 +300,12 @@ namespace Saturn {
 		if( m_ViewportSize != ImGui::GetContentRegionAvail() )
 			m_ViewportSize = ImGui::GetContentRegionAvail();
 
-		ImGui::PushStyleColor( ImGuiCol_ChildBg, ImVec4( 0.0f, 0.0f, 0.0f, 0.0f ) );
-
-		ImGui::BeginChild( "Topbar", ImVec2( 0.0f, 30.0f ), 0, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoTitleBar );
-		ImGui::BeginHorizontal( "##TopbarItems" );
-
-		if( Auxiliary::ImageButton( m_ZoomTexture, { 24, 24 } ) )
-			ed::NavigateToContent( 0.25f );
-
-		if( ImGui::IsItemHovered() )
-		{
-			ImGui::BeginTooltip();
-
-			ImGui::Text( "Zoom in and find the content." );
-
-			ImGui::EndTooltip();
-		}
-
-		Auxiliary::DisabledFlag disabled( !HasPrivilege( NodeEditorUserAuthority::Evaluation ) );
-
-		if( Auxiliary::ImageButton( m_CompileTexture, { 24.0f, 24.0f } ) )
-		{
-			m_OutputWindow.ClearOutput();
-
-			if( m_Runtime )
-			{
-				OnNodeEditorEvent( NodeEditorAction::PreEvaluate );
-
-				NodeEditorCompilationStatus result = m_Runtime->EvaluateEditor();
-				
-				OnNodeEditorEvent( NodeEditorAction::PostEvaluate );
-
-				switch( result )
-				{
-					case NodeEditorCompilationStatus::Success:
-					{
-						m_OutputWindow.PushMessage( { .MessageText = "Successfully compiled and evaluated node editor!", .Type = NodeEditorMessageType::Info } );
-					} break;
-
-					case NodeEditorCompilationStatus::Failed: 
-					{
-						m_OutputWindow.PushMessage( { .MessageText = "Failed to compile node editor.", .Type = NodeEditorMessageType::Error } );
-					} break;
-				}
-			}
-			else
-				m_OutputWindow.PushMessage( { .MessageText = "No active compiler was found!", .Type = NodeEditorMessageType::Error } );
-		}
-
-		if( ImGui::IsItemHovered() )
-		{
-			ImGui::BeginTooltip();
-
-			ImGui::Text( "Compile and evaluate the node editor." );
-
-			ImGui::EndTooltip();
-		}
-
-		disabled.Pop();
-
-		OnTopBarRender();
-
-		if( m_TopbarItemsFunction )
-			m_TopbarItemsFunction();
-
-		ImGui::EndHorizontal();
-		ImGui::EndChild();
-		ImGui::PopStyleColor();
+		DrawTopBarChildInternal();
 
 		// Hand off to imgui_node_editor and draw the actual node editor and nodes
 		ed::Begin( m_InternalEditorID.c_str(), ImGui::GetContentRegionAvail() );
 
-		auto cursorTopLeft = ImGui::GetCursorScreenPos();
+		const auto cursorTopLeft = ImGui::GetCursorScreenPos();
 
 		for( auto& [id, rNode] : m_Nodes )
 		{
@@ -697,7 +631,7 @@ namespace Saturn {
 
 		ImGui::End(); // NODE_EDITOR
 
-		// Window closed but we are dirty, show unsaved changes modal and keep window open
+		// Window closed but we are dirty, show unsaved changes modal and keep window open.
 		if( !m_WindowOpen && m_Dirty )
 		{
 			m_WindowOpen = true;
@@ -827,6 +761,77 @@ namespace Saturn {
 
 		const ImVec2 textPos = ImVec2( canvasRect.Min.x + padding, canvasRect.Min.y + padding );
 		pDrawList->AddText( textPos, IM_COL32( 255, 255, 255, 255 ), canvasName.c_str() );
+	}
+
+	void NodeEditor::DrawTopBarChildInternal()
+	{
+		ImGui::PushStyleColor( ImGuiCol_ChildBg, ImVec4( 0.0f, 0.0f, 0.0f, 0.0f ) );
+
+		ImGui::BeginChild( "Topbar", ImVec2( 0.0f, 30.0f ), 0, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoTitleBar );
+		ImGui::BeginHorizontal( "##TopbarItems" );
+
+		if( Auxiliary::ImageButton( m_ZoomTexture, { 24, 24 } ) )
+			ed::NavigateToContent( 0.25f );
+
+		if( ImGui::IsItemHovered() )
+		{
+			ImGui::BeginTooltip();
+
+			ImGui::Text( "Zoom in and find the content." );
+
+			ImGui::EndTooltip();
+		}
+
+		Auxiliary::DisabledFlag disabled( !HasPrivilege( NodeEditorUserAuthority::Evaluation ) );
+
+		if( Auxiliary::ImageButton( m_CompileTexture, { 24.0f, 24.0f } ) )
+		{
+			m_OutputWindow.ClearOutput();
+
+			if( m_Runtime )
+			{
+				OnNodeEditorEvent( NodeEditorAction::PreEvaluate );
+
+				NodeEditorCompilationStatus result = m_Runtime->EvaluateEditor();
+
+				OnNodeEditorEvent( NodeEditorAction::PostEvaluate );
+
+				switch( result )
+				{
+					case NodeEditorCompilationStatus::Success:
+					{
+						m_OutputWindow.PushMessage( { .MessageText = "Successfully compiled and evaluated node editor!", .Type = NodeEditorMessageType::Info } );
+					} break;
+
+					case NodeEditorCompilationStatus::Failed:
+					{
+						m_OutputWindow.PushMessage( { .MessageText = "Failed to compile node editor.", .Type = NodeEditorMessageType::Error } );
+					} break;
+				}
+			}
+			else
+				m_OutputWindow.PushMessage( { .MessageText = "No active compiler was found!", .Type = NodeEditorMessageType::Error } );
+		}
+
+		if( ImGui::IsItemHovered() )
+		{
+			ImGui::BeginTooltip();
+
+			ImGui::Text( "Compile and evaluate the node editor." );
+
+			ImGui::EndTooltip();
+		}
+
+		disabled.Pop();
+
+		OnTopBarRender();
+
+		if( m_TopbarItemsFunction )
+			m_TopbarItemsFunction();
+
+		ImGui::EndHorizontal();
+		ImGui::EndChild();
+		ImGui::PopStyleColor();
 	}
 
 #if !defined(SAT_DIST)

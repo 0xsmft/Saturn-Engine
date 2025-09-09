@@ -32,6 +32,37 @@
 
 namespace Saturn {
 
+	/*
+	*    Link here							Link here
+	*	  |										|
+	*	  |										|
+	*     v										v
+		 LeftTop-------------------------------RightTop
+		 |                                     |
+   TL	 |                                     |  TR <----- Link here
+		 |                                     |
+		 |                                     |
+		 |                                     |
+		 |                                     |
+   BL    |                                     |  BR <----- Link here
+		 |                                     |
+		 LeftBottom----------------------------RightBottom
+
+	* would also link the same from the Top Left, Bottom Left and Left Bottom and Right Bottom
+	* multiple links can refer to same the anchor point
+	*/
+	enum class AnimGraphLinkAnchorPoint
+	{
+		LeftTop,
+		LeftBottom,
+		RightTop,
+		RightBottom,
+		BottomLeft,
+		BottomRight,
+		TopLeft,
+		TopRight,
+	};
+
 	SCLASS()
 	class AnimGraphStateMachineNodeBase : public NodeEditorNodeBase
 	{

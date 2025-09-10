@@ -28,7 +28,7 @@
 
 #pragma once
 
-#include "Graph/AnimationControllerNodeEditor.h"
+#include "Graph/AnimGraphStateMachineNodeEd.h"
 
 #include "Saturn/ImGui/AssetViewer.h"
 #include "Saturn/SkeletalAnimation/Animator.h"
@@ -58,7 +58,7 @@ namespace Saturn {
 
 	private:
 		Ref<Asset> m_Asset = nullptr;
-		SharedPtr<AnimationControllerNodeEditor> m_NodeEditor = nullptr;
+		SharedPtr<AnimGraphStateMachineNodeEd> m_NodeEditor = nullptr;
 //		Ref<BehaviourTreeEditorEvaluator> m_Runtime = nullptr;
 
 		UUID m_RootNodeID = 0;

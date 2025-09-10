@@ -32,17 +32,17 @@
 
 namespace Saturn {
 
-	class AnimationControllerNodeEditor : public FDependentNodeEditorSuper
+	class AnimGraphStateMachineNodeEd : public FDependentNodeEditorSuper
 	{
 	public:
-		AnimationControllerNodeEditor();
-		AnimationControllerNodeEditor( AssetID id );
-		virtual ~AnimationControllerNodeEditor();
+		AnimGraphStateMachineNodeEd();
+		AnimGraphStateMachineNodeEd( AssetID id );
+		virtual ~AnimGraphStateMachineNodeEd();
 
 	public:
 		//////////////////////////////////////////////////////////////////////////
 		// NodeEditorBase
-//		virtual void OnImGuiRender() override;
+		virtual void OnImGuiRender() override;
 		virtual void OnUpdate( Timestep ts ) override;
 		virtual void OnEvent( Event& rEvent ) override;
 

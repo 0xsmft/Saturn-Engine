@@ -54,7 +54,7 @@ namespace Saturn {
 		m_Open = true;
 		m_Name = std::format( "{0}##{1}", m_Asset->Name, std::to_string( m_AssetID ) );
 
-		m_NodeEditor = SharedPtr<AnimationControllerNodeEditor>::Create( m_AssetID );
+		m_NodeEditor = SharedPtr<AnimGraphStateMachineNodeEd>::Create( m_AssetID );
 
 		SetupNewNodeEditor();
 

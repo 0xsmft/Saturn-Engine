@@ -27,38 +27,57 @@
 */
 
 #include "sppch.h"
-#include "AnimationControllerNodeEditor.h"
+#include "AnimGraphStateMachineNodeEd.h"
 
 namespace Saturn {
 
-	AnimationControllerNodeEditor::AnimationControllerNodeEditor()
+	AnimGraphStateMachineNodeEd::AnimGraphStateMachineNodeEd()
 		: FDependentNodeEditorSuper()
 	{
 	}
 
-	AnimationControllerNodeEditor::AnimationControllerNodeEditor( AssetID id )
+	AnimGraphStateMachineNodeEd::AnimGraphStateMachineNodeEd( AssetID id )
 		: FDependentNodeEditorSuper( id )
 	{
 	}
 
-	AnimationControllerNodeEditor::~AnimationControllerNodeEditor()
+	AnimGraphStateMachineNodeEd::~AnimGraphStateMachineNodeEd()
 	{
 
 	}
 
-	/*
-	void AnimationControllerNodeEditor::OnImGuiRender()
+	void AnimGraphStateMachineNodeEd::OnImGuiRender()
+	{
+#if !defined(SAT_DIST)
+		ed::SetCurrentEditor( m_Editor );
+
+		ImGui::Begin( m_Name.c_str(), &m_WindowOpen );
+
+		// Hand off to imgui_node_editor and draw the actual node editor and nodes
+		ed::Begin( m_InternalEditorID.c_str(), ImGui::GetContentRegionAvail() );
+
+		const auto cursorTopLeft = ImGui::GetCursorScreenPos();
+
+		for( auto& [id, rNode] : m_Nodes )
+		{
+			rNode->Render( m_Builder );
+		}
+
+		for( const auto& rLink : m_Links )
+			ed::Link( ed::LinkId( rLink->ID ), ed::PinId( rLink->StartPinID ), ed::PinId( rLink->EndPinID ), rLink->Color );
+
+		ImGui::SetCursorScreenPos( cursorTopLeft );
+		ed::End();
+		ImGui::End();
+#endif
+	}
+
+	void AnimGraphStateMachineNodeEd::OnUpdate( Timestep ts )
 	{
 
 	}
-	*/
 
-	void AnimationControllerNodeEditor::OnUpdate( Timestep ts )
-	{
-
-	}
-
-	void AnimationControllerNodeEditor::OnEvent( Event& rEvent )
+	void AnimGraphStateMachineNodeEd::OnEvent( Event& rEvent )
 	{
 
 	}

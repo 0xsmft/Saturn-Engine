@@ -31,8 +31,9 @@
 
 #include "Saturn/Asset/AssetManager.h"
 
-#include "Graph/Nodes/AnimGraphNodeLibrary.h"
-#include "Graph/Nodes/AnimGraphOutputNode.h"
+#include "Graph/Animation/AnimGraphNodeLibrary.h"
+#include "Graph/Animation/AnimGraphOutputNode.h"
+#include "Graph/StateMachine/AnimGraphStateMachineStateNode.h"
 
 #include "Saturn/NodeEditor/NodeEditorHintNode.h"
 
@@ -54,24 +55,26 @@ namespace Saturn {
 		m_Open = true;
 		m_Name = std::format( "{0}##{1}", m_Asset->Name, std::to_string( m_AssetID ) );
 
-		m_NodeEditor = SharedPtr<AnimGraphStateMachineNodeEd>::Create( m_AssetID );
+		m_NodeEditor = SharedPtr<AnimGraphStateMachineGraph>::Create( m_AssetID );
 
 		SetupNewNodeEditor();
 
 #if !defined(SAT_DIST)
 //		m_NodeEditor->NcSetCustomName( filename );
-		std::string nodeEdWindowName = std::format( "Final Out##{0}", std::to_string( m_AssetID ) );
+		const std::string nodeEdWindowName = std::format( "Final Out##{0}", std::to_string( m_AssetID ) );
 
 		m_NodeEditor->SetWindowName( nodeEdWindowName );
 		m_NodeEditor->Open( true );
 #endif
 		m_Open = true;
+		m_CurrentGraph = m_NodeEditor;
 
 		SetupNodeEditorCallbacks();
 	}
 
 	AnimationControllerAssetViewer::~AnimationControllerAssetViewer()
 	{
+		m_CurrentGraph = nullptr;
 	}
 
 	void AnimationControllerAssetViewer::OnImGuiRender()
@@ -79,17 +82,44 @@ namespace Saturn {
 		if( ImGui::Begin( m_Name.c_str(), &m_Open ) )
 		{
 			// Draw main
-			if( m_NodeEditor->IsOpen() )
+			if( m_CurrentGraph->IsOpen() )
 			{
-				m_NodeEditor->OnImGuiRender();
+				m_CurrentGraph->OnImGuiRender();
 			}
 			else
 			{
-				m_NodeEditor->Open( false );
+				m_CurrentGraph->Open( false );
 				m_Open = false;
 			}
 
 			ImGui::End();
+		}
+
+		const auto& rSelected = m_NodeEditor->GetSelectedNodes();
+		for( const auto& rNode : rSelected )
+		{
+			if( ImGui::IsMouseDoubleClicked( ImGuiMouseButton_Left ) )
+			{
+				SharedPtr<NodeEditorNodeBase> baseNode = m_NodeEditor->FindNode( rNode );
+				if( baseNode->ExecutionType == NodeExecutionType::AnimGraphStateMachineStateNode )
+				{
+					AnimGraphStateMachineStateNode* pStateNode = dynamic_cast< AnimGraphStateMachineStateNode* >( baseNode.Get() );
+					if( pStateNode )
+					{
+						m_CurrentGraph = ( SharedPtr<NodeEditor> )pStateNode->GetGraph();
+						m_CurrentGraph->Open( true );
+					}
+				}
+			}
+		}
+
+	}
+
+	void AnimationControllerAssetViewer::OnEvent( Event& rEvent )
+	{
+		if( m_NodeEditor )
+		{
+			m_NodeEditor->OnEvent( rEvent );
 		}
 	}
 
@@ -102,6 +132,10 @@ namespace Saturn {
 	{
 		SharedPtr<AnimGraphOutputNode> outputNode = AnimGraphNodeLibrary::SpawnOutputNode( m_NodeEditor );
 		m_RootNodeID = outputNode->ID;
+
+
+		SharedPtr<AnimGraphStateMachineStateNode> sm0 = AnimGraphNodeLibrary::SpawnStateMachineStateNode( m_NodeEditor );
+//		SharedPtr<AnimGraphStateMachineStateNode> sm1 = AnimGraphNodeLibrary::SpawnStateMachineStateNode( m_NodeEditor );
 	}
 
 	void AnimationControllerAssetViewer::SetupNodeEditorCallbacks()

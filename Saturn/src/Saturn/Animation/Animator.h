@@ -26,60 +26,59 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "AnimGraphStateMachineNodeEd.h"
+#pragma once
+
+#include "SkeletalAnimationAsset.h"
+#include "Saturn/Vulkan/Mesh.h"
 
 namespace Saturn {
 
-	AnimGraphStateMachineNodeEd::AnimGraphStateMachineNodeEd()
-		: FDependentNodeEditorSuper()
+	enum class AnimationState 
 	{
-	}
+		NotInitialised, // InitAnimation not called
+		Inactive, // InitAnimation called awaiting Play or Pause
+		Playing,
+		Paused
+	};
 
-	AnimGraphStateMachineNodeEd::AnimGraphStateMachineNodeEd( AssetID id )
-		: FDependentNodeEditorSuper( id )
+	class Animator
 	{
-	}
+	public:
+		Animator();
+		~Animator();
 
-	AnimGraphStateMachineNodeEd::~AnimGraphStateMachineNodeEd()
-	{
+		void InitAnimation( AssetID id, Ref<SkeletalMesh> sk );
+		void TickAnimation( Timestep ts );
+		void Pause();
+		void Begin();
+		void Clear();
 
-	}
+		void QueueNewAnimation( AssetID id );
 
-	void AnimGraphStateMachineNodeEd::OnImGuiRender()
-	{
-#if !defined(SAT_DIST)
-		ed::SetCurrentEditor( m_Editor );
+		AssetID GetCurrentID() const { return m_AnimationAsset != nullptr ? m_AnimationAsset->ID : AssetID( 0 ); }
 
-		ImGui::Begin( m_Name.c_str(), &m_WindowOpen );
+		const std::vector<glm::mat4>& GetBoneTransforms() const { return m_BoneTransforms; }
 
-		// Hand off to imgui_node_editor and draw the actual node editor and nodes
-		ed::Begin( m_InternalEditorID.c_str(), ImGui::GetContentRegionAvail() );
+		// An animator is consider active if an animation is playing or if it's paused
+		// However, if it not initialised, meaning we've never had an animation, then it's not active
+		bool IsActive() const { return m_State != AnimationState::Inactive && m_State != AnimationState::NotInitialised; }
 
-		const auto cursorTopLeft = ImGui::GetCursorScreenPos();
+	private:
+		void ApplyBoneTransformations();
+		void UpdateBones( size_t boneIndex, const glm::mat4& rParentTransform, const std::vector<glm::mat4>& rLocalTransforms );
 
-		for( auto& [id, rNode] : m_Nodes )
-		{
-			rNode->Render( m_Builder );
-		}
+	private:
+		Ref<SkeletalAnimationAsset> m_AnimationAsset;
+		Ref<SkeletalMesh> m_SkeletalMesh;
 
-		for( const auto& rLink : m_Links )
-			ed::Link( ed::LinkId( rLink->ID ), ed::PinId( rLink->StartPinID ), ed::PinId( rLink->EndPinID ), rLink->Color );
+		AnimationState m_State = AnimationState::NotInitialised;
 
-		ImGui::SetCursorScreenPos( cursorTopLeft );
-		ed::End();
-		ImGui::End();
-#endif
-	}
+		float m_StartTime = 0.0f;
+		float m_AnimationTime = 0.0f;
 
-	void AnimGraphStateMachineNodeEd::OnUpdate( Timestep ts )
-	{
+		AssetID m_PendingAsset = 0llu;
 
-	}
-
-	void AnimGraphStateMachineNodeEd::OnEvent( Event& rEvent )
-	{
-
-	}
+		std::vector<glm::mat4> m_BoneTransforms;
+	};
 
 }

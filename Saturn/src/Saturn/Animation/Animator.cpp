@@ -54,6 +54,15 @@ namespace Saturn {
 
 	void Animator::TickAnimation( Timestep ts )
 	{
+		if( m_PendingAsset )
+		{
+			m_AnimationAsset = AssetManager::Get().GetAssetAs<SkeletalAnimationAsset>( m_PendingAsset );
+			m_PendingAsset = 0;
+
+			m_AnimationTime = 0.0f;
+			Begin();
+		}
+
 		switch( m_State )
 		{
 			default:
@@ -98,7 +107,7 @@ namespace Saturn {
 
 	void Animator::QueueNewAnimation( AssetID id )
 	{
-
+		m_PendingAsset = id;
 	}
 
 	static uint32_t FindPositioning( const AnimationBone& rChannel, float time )

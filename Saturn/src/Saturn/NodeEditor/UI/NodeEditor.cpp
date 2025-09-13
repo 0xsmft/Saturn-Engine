@@ -154,7 +154,7 @@ namespace Saturn {
 				pThis->OnNodeEditorEvent( NodeEditorAction::MoveNode );
 
 				Ref<UndoRedoActionModifyNodePosition> action = Ref<UndoRedoActionModifyNodePosition>::Create(
-					pThis,
+					pThis->SharedFromThis(),
 					pNode,
 					ed::GetNodePosition( nodeId ) );
 
@@ -228,7 +228,6 @@ namespace Saturn {
 
 		m_Nodes.clear();
 		m_Links.clear();
-		m_ActiveNodeEditorState = "";
 	}
 
 	bool NodeEditor::CanCreateLink( const Ref<Pin>& a, const Ref<Pin>& b )
@@ -735,6 +734,16 @@ namespace Saturn {
 		VariableGuard<ed::EditorContext*> guard( m_Editor );
 
 		ed::SetNodePosition( ed::NodeId( nodeID ), rNewPosition );
+	}
+
+	void NodeEditor::AddSubGraph( SharedPtr<NodeEditorBase> graph )
+	{
+		m_SubGraphs.push_back( graph );
+	}
+
+	void NodeEditor::RemoveSubGraph( SharedPtr<NodeEditorBase> graph )
+	{
+		m_SubGraphs.erase( std::remove( m_SubGraphs.begin(), m_SubGraphs.end(), graph ), m_SubGraphs.end() );
 	}
 
 	void NodeEditor::CreateNewEditorIfNeeded()

@@ -26,48 +26,44 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "AnimGraphNodeLibrary.h"
+#pragma once
 
-#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
-
-#include "AnimGraphOutputNode.h"
-#include "AnimGraphStateMachinePlayerNode.h"
-#include "AnimGraphStateMachineStateNode.h"
+#include "Saturn/ImGui/ImGuiWindow.h"
+#include "Saturn/Animation/SkeletonAsset.h"
 
 namespace Saturn {
 
-	SharedPtr<AnimGraphStateMachinePlayerNode> AnimGraphNodeLibrary::SpawnStateMachinePlayerNode( SharedPtr<NodeEditorBase> nodeEditor )
+	class SkeletalMeshBoneHierarchyPanel : public ImGuiWindow
 	{
-		AnimGraphStateMachinePlayerNode* pNode = ( AnimGraphStateMachinePlayerNode* ) ClassMetadataHandler::Get().CreateClassObject( AnimGraphStateMachinePlayerNode::StaticClass() );
+	public:
+		struct BoneNode
+		{
+			SkeletalMeshBoneInfo* pBone = nullptr;
+			std::vector<BoneNode*> Children;
+		};
 
-		// Create shared pointer here, to avoid creating a new one when we call AddNode and then another new one when this function returns, would result in two control blocks.
-		SharedPtr<AnimGraphStateMachinePlayerNode> sp = pNode;
+	public:
+		SkeletalMeshBoneHierarchyPanel();
+		~SkeletalMeshBoneHierarchyPanel();
 
-		nodeEditor->AddNode( sp );
-		return sp;
-	}
+		void Initialise( AssetID id );
 
-	SharedPtr<AnimGraphStateMachineStateNode> AnimGraphNodeLibrary::SpawnStateMachineStateNode( SharedPtr<NodeEditorBase> nodeEditor )
-	{
-		AnimGraphStateMachineStateNode* pNode = ( AnimGraphStateMachineStateNode* ) ClassMetadataHandler::Get().CreateClassObject( AnimGraphStateMachineStateNode::StaticClass() );
+		//////////////////////////////////////////////////////////////////////////
+		// ImGuiWindow
 
-		// Create shared pointer here, to avoid creating a new one when we call AddNode and then another new one when this function returns, would result in two control blocks.
-		SharedPtr<AnimGraphStateMachineStateNode> sp = pNode;
+		virtual void OnImGuiRender() override;
+		virtual void OnEvent( Event& rEvent ) {}
+		virtual void OnUpdate( Timestep ts ) {}
 
-		nodeEditor->AddNode( sp );
-		return sp;
-	}
+	private:
+		void DisplayBoneHierarchy( BoneNode* pBoneNode, int level = 0 );
+		void ClearLinkedList();
 
-	SharedPtr<AnimGraphOutputNode> AnimGraphNodeLibrary::SpawnOutputNode( SharedPtr<NodeEditorBase> nodeEditor )
-	{
-		AnimGraphOutputNode* pNode = ( AnimGraphOutputNode* ) ClassMetadataHandler::Get().CreateClassObject( AnimGraphOutputNode::StaticClass() );
+	private:
+		Ref<SkeletonAsset> m_SkeletonAsset;
 
-		// Create shared pointer here, to avoid creating a new one when we call AddNode and then another new one when this function returns, would result in two control blocks.
-		SharedPtr<AnimGraphOutputNode> sp = pNode;
-
-		nodeEditor->AddNode( sp );
-		return sp;
-	}
+		std::vector<BoneNode*> m_BoneLinkedList;
+		std::vector<BoneNode*> m_BoneRoots;
+	};
 
 }

@@ -117,13 +117,17 @@ namespace Saturn {
 
 		void SetNodePosition( UUID nodeID, const ImVec2& rNewPosition );
 
+		void AddSubGraph( SharedPtr<NodeEditorBase> graph );
+		void RemoveSubGraph( SharedPtr<NodeEditorBase> graph );
+		
+		std::vector<UUID> GetSelectedNodes();
+
 	protected:
 		// By default the NodeCache will save this node editor to a file called NCEditor.{ID}.nce OR {AssetID}.{ID}.nce
 		// However, in some cases such as GraphSounds or BehaviourTrees we want a custom name.
 		std::string m_CustomNameNC{};
 
 		void OnChooseNewNode( SharedPtr<NodeEditorNodeBase> node );
-		std::vector<UUID> GetSelectedNodes();
 
 	protected:
 #if !defined(SAT_DIST)
@@ -155,6 +159,8 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		// TODO: Weak ptr #ReplaceRawPtrOrRefWithWeakRef
 		SharedPtr<NodeEditorNodeBase> m_HoveredNode = nullptr;
+
+		std::vector<SharedPtr<NodeEditorBase>> m_SubGraphs;
 #endif
 
 		ImVec2 m_ViewportSize;

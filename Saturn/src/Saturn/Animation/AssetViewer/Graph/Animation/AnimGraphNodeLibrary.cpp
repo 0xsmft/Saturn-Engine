@@ -26,28 +26,50 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "AnimGraphNodeLibrary.h"
 
-#include "Saturn/NodeEditor/UI/NodeEditor.h"
+#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
+
+#include "AnimGraphOutputNode.h"
+#include "Saturn/Animation/AssetViewer/Graph/StateMachine/AnimGraphStateMachinePlayerNode.h"
+#include "Saturn/Animation/AssetViewer/Graph/StateMachine/AnimGraphStateMachineStateNode.h"
 
 namespace Saturn {
 
-	class AnimGraphStateMachineNodeEd : public FDependentNodeEditorSuper
+	SharedPtr<AnimGraphStateMachinePlayerNode> AnimGraphNodeLibrary::SpawnStateMachinePlayerNode( SharedPtr<NodeEditorBase> nodeEditor )
 	{
-	public:
-		AnimGraphStateMachineNodeEd();
-		AnimGraphStateMachineNodeEd( AssetID id );
-		virtual ~AnimGraphStateMachineNodeEd();
+		AnimGraphStateMachinePlayerNode* pNode = ( AnimGraphStateMachinePlayerNode* ) ClassMetadataHandler::Get().CreateClassObject( AnimGraphStateMachinePlayerNode::StaticClass() );
 
-	public:
-		//////////////////////////////////////////////////////////////////////////
-		// NodeEditorBase
-		virtual void OnImGuiRender() override;
-		virtual void OnUpdate( Timestep ts ) override;
-		virtual void OnEvent( Event& rEvent ) override;
+		// Create shared pointer here, to avoid creating a new one when we call AddNode and then another new one when this function returns, would result in two control blocks.
+		SharedPtr<AnimGraphStateMachinePlayerNode> sp = pNode;
 
-	private:
+		nodeEditor->AddNode( sp );
+		return sp;
+	}
 
-	};
+	SharedPtr<AnimGraphStateMachineStateNode> AnimGraphNodeLibrary::SpawnStateMachineStateNode( SharedPtr<NodeEditorBase> nodeEditor )
+	{
+		AnimGraphStateMachineStateNode* pNode = ( AnimGraphStateMachineStateNode* ) ClassMetadataHandler::Get().CreateClassObject( AnimGraphStateMachineStateNode::StaticClass() );
+
+		// Create shared pointer here, to avoid creating a new one when we call AddNode and then another new one when this function returns, would result in two control blocks.
+		SharedPtr<AnimGraphStateMachineStateNode> sp = pNode;
+
+		nodeEditor->AddNode( sp );
+		sp->PostInit();
+
+		return sp;
+	}
+
+	SharedPtr<AnimGraphOutputNode> AnimGraphNodeLibrary::SpawnOutputNode( SharedPtr<NodeEditorBase> nodeEditor )
+	{
+		AnimGraphOutputNode* pNode = ( AnimGraphOutputNode* ) ClassMetadataHandler::Get().CreateClassObject( AnimGraphOutputNode::StaticClass() );
+
+		// Create shared pointer here, to avoid creating a new one when we call AddNode and then another new one when this function returns, would result in two control blocks.
+		SharedPtr<AnimGraphOutputNode> sp = pNode;
+
+		nodeEditor->AddNode( sp );
+		return sp;
+	}
 
 }

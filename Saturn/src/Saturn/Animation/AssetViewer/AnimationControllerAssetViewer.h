@@ -28,10 +28,10 @@
 
 #pragma once
 
-#include "Graph/AnimGraphStateMachineNodeEd.h"
+#include "Graph/StateMachine/AnimGraphStateMachineGraph.h"
 
 #include "Saturn/ImGui/AssetViewer.h"
-#include "Saturn/SkeletalAnimation/Animator.h"
+#include "Saturn/Animation/Animator.h"
 
 namespace Saturn {
 
@@ -43,7 +43,7 @@ namespace Saturn {
 
 		void OnImGuiRender() override;
 		inline void OnUpdate( Timestep ts ) {}
-		inline void OnEvent( Event& rEvent ) {}
+		virtual void OnEvent( Event& rEvent ) override;
 
 #if !defined(SAT_DIST)
 		void OnRuntimeStateChanged( RuntimeState newState, RuntimeState oldState ) override;
@@ -58,7 +58,10 @@ namespace Saturn {
 
 	private:
 		Ref<Asset> m_Asset = nullptr;
-		SharedPtr<AnimGraphStateMachineNodeEd> m_NodeEditor = nullptr;
+		SharedPtr<AnimGraphStateMachineGraph> m_NodeEditor = nullptr;
+		
+		SharedPtr<NodeEditor> m_CurrentGraph = nullptr;
+
 //		Ref<BehaviourTreeEditorEvaluator> m_Runtime = nullptr;
 
 		UUID m_RootNodeID = 0;

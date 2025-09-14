@@ -34,6 +34,11 @@
 
 namespace Saturn::Auxiliary {
 
+	static inline ImVec2& operator/=( ImVec2& lhs, const ImVec2& rhs ) { lhs.x /= rhs.x; lhs.y /= rhs.y; return lhs; }
+	static inline ImVec2  operator/( const ImVec2& lhs, const float rhs ) { return ImVec2( lhs.x / rhs, lhs.y / rhs ); }
+	static inline ImVec2  operator/( const ImVec2& lhs, const ImVec2& rhs ) { return ImVec2( lhs.x / rhs.x, lhs.y / rhs.y ); }
+	static inline ImVec2& operator/=( ImVec2& lhs, const float rhs ) { lhs.x /= rhs; lhs.y /= rhs; return lhs; }
+
 	extern bool DrawVec2Control(const std::string& rLabel, glm::vec2& values, float resetValue /*= 0.0f*/, bool useColumns /*= true*/, float columnWidth /*= 100.0f */)
 {
 		bool modified = false;
@@ -703,6 +708,83 @@ namespace Saturn::Auxiliary {
 		values = glm::clamp( values, ( double ) min, ( double ) max );
 
 		return modified;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+
+	ImVec2 GetClosestPointOnRectBorder( const ImRect& rRect, const ImVec2& rPoint )
+	{
+		ImVec2 const points[ 4 ] =
+		{
+			ImLineClosestPoint( rRect.GetTL(), rRect.GetTR(), rPoint ),
+			ImLineClosestPoint( rRect.GetBL(), rRect.GetBR(), rPoint ),
+			ImLineClosestPoint( rRect.GetTL(), rRect.GetBL(), rPoint ),
+			ImLineClosestPoint( rRect.GetTR(), rRect.GetBR(), rPoint )
+		};
+
+		float distancesSq[ 4 ] =
+		{
+			ImLengthSqr( points[ 0 ] - rPoint ),
+			ImLengthSqr( points[ 1 ] - rPoint ),
+			ImLengthSqr( points[ 2 ] - rPoint ),
+			ImLengthSqr( points[ 3 ] - rPoint )
+		};
+
+		float lowestDistance = FLT_MAX;
+		int32_t closestPointIdx = -1;
+		for( auto i = 0; i < 4; i++ )
+		{
+			if( distancesSq[ i ] < lowestDistance )
+			{
+				closestPointIdx = i;
+				lowestDistance = distancesSq[ i ];
+			}
+		}
+
+		return points[ closestPointIdx ];
+	}
+
+	ImVec2 GetConnectionPointBetweenRectAndPoint( const ImRect& rRect, const ImVec2& rEndPoint )
+	{
+		ImVec2 startPoint = rRect.GetCenter();
+		ImVec2 const midPoint = startPoint + ( ( rEndPoint - startPoint ) / 2 );
+
+		return GetClosestPointOnRectBorder( rRect, midPoint );
+	}
+
+	void GetConnectionPointsBetweenRects( const ImRect& rStartRect, const ImRect& rEndRect, ImVec2& rStartPoint, ImVec2& rEndPoint )
+	{
+		rStartPoint = rStartRect.GetCenter();
+		rEndPoint = rEndRect.GetCenter();
+		ImVec2 const midPoint = rStartPoint + ( ( rEndPoint - rStartPoint ) / 2 );
+
+		rStartPoint = GetClosestPointOnRectBorder( rStartRect, midPoint );
+		rEndPoint = GetClosestPointOnRectBorder( rEndRect, midPoint );
+	}
+
+	void DrawArrow( const ImVec2& rStartPoint, const ImVec2& rEndPoint, ImU32 color, float thinkness, float headSize )
+	{
+		auto* pDrawList = ImGui::GetWindowDrawList();
+
+		ImVec2 arrowDir = ImVec2( rEndPoint - rStartPoint );
+		const float length = glm::sqrt( ImLengthSqr( arrowDir ) );
+
+		if( length > 0.0 )
+		{
+			// Normalise.
+			arrowDir /= length;
+		}
+
+		const ImVec2 ortho = ImVec2( arrowDir.y, -arrowDir.x );
+		const ImVec2 arrowBegin = ImVec2( rEndPoint.x - arrowDir.x * headSize, rEndPoint.y - arrowDir.y * headSize );
+
+		const float headWidthTri = headSize * 0.6f * 0.5f;
+		const ImVec2 l( arrowBegin.x + ortho.x * headWidthTri, arrowBegin.y + ortho.y * headWidthTri );
+		const ImVec2 r( arrowBegin.x - ortho.x * headWidthTri, arrowBegin.y - ortho.y * headWidthTri );
+
+		// Draw shaft
+		pDrawList->AddLine( rStartPoint, arrowBegin, color, thinkness );
+		pDrawList->AddTriangleFilled( rEndPoint, l, r, color );
 	}
 
 	//////////////////////////////////////////////////////////////////////////

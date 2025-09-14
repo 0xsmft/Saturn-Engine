@@ -45,10 +45,10 @@
 #include "Saturn/Audio/SoundNodeEditor/GraphSoundAssetViewer.h"
 #include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeAssetViewer.h"
 #include "Saturn/AI/BehaviourTree/BehaviourTreeMemoryAssetViewer.h"
-#include "Saturn/SkeletalAnimation/AssetViewer/SkeletonAssetViewer.h"
-#include "Saturn/SkeletalAnimation/AssetViewer/SkeletalMeshAssetViewer.h"
-#include "Saturn/SkeletalAnimation/AssetViewer/SkeletalAnimationAssetViewer.h"
-#include "Saturn/SkeletalAnimation/AssetViewer/AnimationControllerAssetViewer.h"
+#include "Saturn/Animation/AssetViewer/SkeletonAssetViewer.h"
+#include "Saturn/Animation/AssetViewer/SkeletalMeshAssetViewer.h"
+#include "Saturn/Animation/AssetViewer/SkeletalAnimationAssetViewer.h"
+#include "Saturn/Animation/AssetViewer/AnimationControllerAssetViewer.h"
 
 #include "Saturn/Project/Project.h"
 

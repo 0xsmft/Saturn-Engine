@@ -90,6 +90,9 @@ namespace Saturn {
 		AnimGraphOutputNode,
 		AnimGraphStateMachinePlayerNode,
 		AnimGraphStateMachineStateNode,
+		AnimGraphStateMachineOutNode,
+		AnimGraphStateMachinePlayAnimNode,
+		AnimGraphStateMachineTransitionNode,
 		//^^^^ add new node types here ^^^^
 		None
 	};
@@ -101,7 +104,7 @@ namespace Saturn {
 	SCLASS()
 	class NodeEditorNodeBase : public SObject, public EnabledSharedFromThis<NodeEditorNodeBase>
 	{
-		// NOTE: SAT_DECLARE_CLASS expanded
+		// NOTE: SAT_DECLARE_CLASS expanded !! ABSTRACT CLASS !! would handled by the HeaderTool normally
 	private: 
 		NodeEditorNodeBase& operator=( NodeEditorNodeBase&& ); 
 		NodeEditorNodeBase& operator=( const NodeEditorNodeBase& ); 
@@ -134,7 +137,6 @@ namespace Saturn {
 
 		ImColor Color;
 		ImVec2 Size;
-		ImVec2 Position;
 
 		bool CanBeDeleted = true;
 #endif

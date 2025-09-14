@@ -519,6 +519,17 @@ void ax::NodeEditor::SelectLink(LinkId linkId, bool append)
 	}
 }
 
+void ax::NodeEditor::SelectPin( PinId pinId, bool append )
+{
+	if( auto pin = s_Editor->FindPin( pinId ) )
+	{
+		if( append )
+			s_Editor->SelectObject( pin );
+		else
+			s_Editor->SetSelectedObject( pin );
+	}
+}
+
 void ax::NodeEditor::DeselectNode(NodeId nodeId)
 {
 	if (auto node = s_Editor->FindNode(nodeId))
@@ -787,4 +798,14 @@ const ImVec2& ax::NodeEditor::GetViewRectMax()
 void ax::NodeEditor::StopFlow()
 {
 	s_Editor->StopFlowAnimation();
+}
+
+void ax::NodeEditor::SuspendUserInput()
+{
+	s_Editor->SuspendUserInput( true );
+}
+
+void ax::NodeEditor::ResumeUserInput()
+{
+	s_Editor->SuspendUserInput( false );
 }

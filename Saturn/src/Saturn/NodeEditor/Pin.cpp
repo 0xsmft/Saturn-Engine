@@ -145,6 +145,13 @@ namespace Saturn {
 			{
 				RenderTreeInput( rBuilder, linked, pinIndex );
 			} break;
+
+			case PinRenderType::Custom:
+			{
+				OnRenderInput();
+			} break;
+
+			default: break;
 		}
 	}
 
@@ -161,6 +168,13 @@ namespace Saturn {
 			{
 				RenderTreeOutput( rBuilder, linked );
 			} break;
+
+			case PinRenderType::Custom:
+			{
+				OnRenderOutput();
+			} break;
+
+			default: break;
 		}
 	}
 

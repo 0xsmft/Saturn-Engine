@@ -111,9 +111,7 @@ namespace Saturn {
 				std::sort( rNeighbours.begin(), rNeighbours.end(),
 					[ this ]( const UUID& a, const UUID& b )
 				{
-					const auto nodeA = FindNode( a );
-					const auto nodeB = FindNode( b );
-					return nodeA->Position.x < nodeB->Position.x;
+					return ed::GetNodePosition( ed::NodeId( a ) ).x < ed::GetNodePosition( ed::NodeId( b ) ).x;
 				} );
 
 				switch( treeNode->ExecutionType )

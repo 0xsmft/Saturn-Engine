@@ -180,6 +180,14 @@ namespace Saturn::Auxiliary {
 
 	extern bool InputText( const char* label, std::string* str, ImGuiInputTextFlags flags = 0, ImGuiInputTextCallback callback = nullptr, void* user_data = nullptr );
 
+	extern ImVec2 GetClosestPointOnRectBorder( const ImRect& rRect, const ImVec2& rPoint );
+
+	extern ImVec2 GetConnectionPointBetweenRectAndPoint( const ImRect& rRect, const ImVec2& rEndPoint );
+
+	extern void GetConnectionPointsBetweenRects( const ImRect& rStartRect, const ImRect& rEndRect, ImVec2& rStartPoint, ImVec2& rEndPoint );
+
+	extern void DrawArrow( const ImVec2& rStartPoint, const ImVec2& rEndPoint, ImU32 color, float thinkness = 2.0f, float headSize = 12.0f );
+
 	template<typename Function>
 	inline bool DrawAssetFinder( AssetType allowedTypes, AssetID lastID, bool* rOpen, Function&& rrFunction )
 	{

@@ -34,7 +34,7 @@
 
 #include "Saturn/Asset/Asset.h"
 #include "Saturn/Asset/AssetManager.h"
-#include "Saturn/SkeletalAnimation/SkeletonAsset.h"
+#include "Saturn/Animation/SkeletonAsset.h"
 
 #include "Saturn/Serialisation/YAML/AssetManagerSerialiser.h"
 

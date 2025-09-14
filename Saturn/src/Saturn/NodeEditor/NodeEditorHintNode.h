@@ -35,7 +35,7 @@ namespace Saturn {
 	class NodeEditorHintNode final : public NodeEditorNodeBase
 	{
 	public:
-		NodeEditorHintNode() = default;
+		NodeEditorHintNode();
 		NodeEditorHintNode( const std::string& rName );
 		virtual ~NodeEditorHintNode();
 

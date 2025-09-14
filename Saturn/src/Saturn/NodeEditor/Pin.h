@@ -76,7 +76,8 @@ namespace Saturn {
 	enum class PinRenderType
 	{
 		Blueprint,
-		Tree
+		Tree,
+		Custom
 	};
 
 	inline std::string_view PinTypeToString( PinType type )

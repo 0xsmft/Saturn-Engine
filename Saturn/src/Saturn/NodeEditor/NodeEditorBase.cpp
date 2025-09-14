@@ -410,8 +410,9 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		VariableGuard<ed::EditorContext*> guard( m_Editor );
 
-		if( node->Position.x != 0.0f && node->Position.y != 0.0f )
-			ed::SetNodePosition( ed::NodeId( node->ID ), node->Position );
+		// TODO: add this back
+//		if( node->Position.x != 0.0f && node->Position.y != 0.0f )
+//			ed::SetNodePosition( ed::NodeId( node->ID ), node->Position );
 #endif
 
 		node->pOuter = this;

@@ -1440,6 +1440,8 @@ struct EditorContext
     
     /* SATURN ENGINE MODIFED */
     void StopFlowAnimation();
+    void SuspendUserInput( bool suspend );
+    /************************/
 
     void SetUserContext(bool globalSpace = false);
 
@@ -1489,6 +1491,7 @@ private:
     bool                m_IsFocused;
     bool                m_IsHovered;
     bool                m_IsHoveredWithoutOverlapp;
+    bool                m_UserInputSuspended;
 
     bool                m_ShortcutsEnabled;
 

@@ -162,7 +162,7 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		m_NodeCopy = originalNode;
 		m_NewPosition = rOldPosition;
-		m_OldPosition = originalNode->Position;
+		m_OldPosition = ed::GetNodePosition( ed::NodeId( originalNode->ID ) );
 #endif
 	}
 

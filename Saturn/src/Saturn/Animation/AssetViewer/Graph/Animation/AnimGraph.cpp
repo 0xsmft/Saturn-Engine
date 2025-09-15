@@ -26,23 +26,24 @@
 *********************************************************************************************
 */
 
-#pragma once
-
-#include "Saturn/NodeEditor/NodeEditorBase.h"
+#include "sppch.h"
+#include "AnimGraph.h"
 
 namespace Saturn {
 
-	class AnimGraphOutputNode;
-	class AnimGraphStateMachinePlayerNode;
-
-	class AnimGraphNodeLibrary 
+	AnimGraph::AnimGraph()
+		: FDependentNodeEditorSuper()
 	{
-	public:
-		static NodeEditorType GetStaticType() { return NodeEditorType::AnimationController; }
-		
-		static SharedPtr<AnimGraphStateMachinePlayerNode> SpawnStateMachinePlayerNode( SharedPtr<NodeEditorBase> nodeEditor );
+	}
 
-		static SharedPtr<AnimGraphOutputNode> SpawnOutputNode( SharedPtr<NodeEditorBase> nodeEditor );
-	};
-	
+	AnimGraph::AnimGraph( AssetID id )
+		: FDependentNodeEditorSuper( id )
+	{
+	}
+
+	AnimGraph::~AnimGraph()
+	{
+
+	}
+
 }

@@ -28,21 +28,19 @@
 
 #pragma once
 
-#include "Saturn/NodeEditor/NodeEditorBase.h"
+#include "Saturn/NodeEditor/UI/NodeEditor.h"
 
 namespace Saturn {
 
-	class AnimGraphOutputNode;
-	class AnimGraphStateMachinePlayerNode;
-
-	class AnimGraphNodeLibrary 
+	class AnimGraph : public FDependentNodeEditorSuper
 	{
 	public:
-		static NodeEditorType GetStaticType() { return NodeEditorType::AnimationController; }
-		
-		static SharedPtr<AnimGraphStateMachinePlayerNode> SpawnStateMachinePlayerNode( SharedPtr<NodeEditorBase> nodeEditor );
+		AnimGraph();
+		AnimGraph( AssetID id );
+		virtual ~AnimGraph();
 
-		static SharedPtr<AnimGraphOutputNode> SpawnOutputNode( SharedPtr<NodeEditorBase> nodeEditor );
+	private:
+
 	};
-	
+
 }

@@ -28,21 +28,31 @@
 
 #pragma once
 
-#include "Saturn/NodeEditor/NodeEditorBase.h"
+#include "Saturn/NodeEditor/NodeEditorBlueprintNode.h"
+#include "Saturn/Animation/AssetViewer/Graph/StateMachine/AnimGraphStateMachineGraph.h"
 
 namespace Saturn {
 
-	class AnimGraphOutputNode;
-	class AnimGraphStateMachinePlayerNode;
-
-	class AnimGraphNodeLibrary 
+	SCLASS()
+	class AnimGraphStateMachinePlayerNode : public NodeEditorBlueprintNode
 	{
+		SAT_DECLARE_CLASS( AnimGraphStateMachinePlayerNode, NodeEditorBlueprintNode );
 	public:
-		static NodeEditorType GetStaticType() { return NodeEditorType::AnimationController; }
-		
-		static SharedPtr<AnimGraphStateMachinePlayerNode> SpawnStateMachinePlayerNode( SharedPtr<NodeEditorBase> nodeEditor );
+		AnimGraphStateMachinePlayerNode();
+		AnimGraphStateMachinePlayerNode( const std::string& rName );
+		virtual ~AnimGraphStateMachinePlayerNode();
 
-		static SharedPtr<AnimGraphOutputNode> SpawnOutputNode( SharedPtr<NodeEditorBase> nodeEditor );
+		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* pEvaluator ) { return NodeEvaluationState::Evaluated; }
+
+		SharedPtr<AnimGraphStateMachineGraph> GetGraph() const { return m_InternalGraph; }
+
+	public:
+		void PostInit();
+
+	private:
+		void CreateNode();
+
+	private:
+		SharedPtr<AnimGraphStateMachineGraph> m_InternalGraph;
 	};
-	
 }

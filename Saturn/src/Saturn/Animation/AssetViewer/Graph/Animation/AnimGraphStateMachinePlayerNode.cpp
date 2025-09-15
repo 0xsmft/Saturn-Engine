@@ -26,23 +26,68 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "AnimGraphStateMachinePlayerNode.h"
 
-#include "Saturn/NodeEditor/NodeEditorBase.h"
+#include "Saturn/Animation/AssetViewer/Graph/Animation/AnimGraphAnimationPin.h"
 
 namespace Saturn {
 
-	class AnimGraphOutputNode;
-	class AnimGraphStateMachinePlayerNode;
-
-	class AnimGraphNodeLibrary 
+	AnimGraphStateMachinePlayerNode::AnimGraphStateMachinePlayerNode()
+		: NodeEditorBlueprintNode( "STATE MACHINE" )
 	{
-	public:
-		static NodeEditorType GetStaticType() { return NodeEditorType::AnimationController; }
-		
-		static SharedPtr<AnimGraphStateMachinePlayerNode> SpawnStateMachinePlayerNode( SharedPtr<NodeEditorBase> nodeEditor );
+		CreateNode();
+	}
 
-		static SharedPtr<AnimGraphOutputNode> SpawnOutputNode( SharedPtr<NodeEditorBase> nodeEditor );
-	};
-	
+	AnimGraphStateMachinePlayerNode::AnimGraphStateMachinePlayerNode( const std::string& rName )
+		: NodeEditorBlueprintNode( rName )
+	{
+		CreateNode();
+	}
+
+	void AnimGraphStateMachinePlayerNode::CreateNode()
+	{
+		ExecutionType = NodeExecutionType::AnimGraphStateMachinePlayerNode;
+
+#if !defined(SAT_DIST)
+		CanBeDeleted = false;
+		Color = ImColor( 48, 128, 255, 100 );
+		Type = NodeRenderType::Blueprint;
+#endif
+
+		Outputs.emplace_back( Ref<AnimGraphAnimationPin>::Create( "Out", PinKind::Output, AnimGraphAnimationPinFlags::StateMachine ) );
+	}
+
+	AnimGraphStateMachinePlayerNode::~AnimGraphStateMachinePlayerNode()
+	{
+	}
+
+	void AnimGraphStateMachinePlayerNode::PostInit()
+	{
+		auto* pCurrentEditor = ed::GetCurrentEditor();
+
+		// Context would be changed here...
+		auto graph = SharedPtr<AnimGraphStateMachineGraph>::Create( pOuter->GetAssetID() );
+
+		const std::string nodeEdWindowName = std::format( "Final Out##{0}", std::to_string( pOuter->GetAssetID() ) );
+		graph->SetWindowName( nodeEdWindowName );
+
+		NodeEditor* pUIOuter = dynamic_cast< NodeEditor* >( pOuter );
+		if( pUIOuter != nullptr )
+		{
+			pUIOuter->AddSubGraph( graph );
+		}
+
+		m_InternalGraph = graph;
+
+		graph->PostPlaceInit();
+
+		// Change back to the original context
+		ed::SetCurrentEditor( pCurrentEditor );
+	}
+
 }
+
+#include "Saturn/GameFramework/Core/EngineGenerated.h"
+
+SAT_X31_CREATE_AUTO_REG( AnimGraphStateMachinePlayerNode );

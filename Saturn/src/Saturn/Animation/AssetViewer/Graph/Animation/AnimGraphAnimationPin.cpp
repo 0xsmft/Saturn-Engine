@@ -29,12 +29,12 @@
 #include "sppch.h"
 #include "AnimGraphAnimationPin.h"
 
+#include "AnimGraph.h"
+#include "AnimGraphStateMachinePlayerNode.h"
+
 #include "Saturn/NodeEditor/NodeEditorNodeBase.h"
 
-#include "Saturn/ImGui/ImGuiAuxiliary.h"
-
 #include "imgui.h"
-#include "imgui_internal.h"
 
 namespace Saturn {
 
@@ -68,7 +68,12 @@ namespace Saturn {
 			{
 				if( ImGui::Button( "Open State Machine" ) ) 
 				{
-					// create a new node editor? change view to state machine viewer...
+					auto AG = dynamic_cast<AnimGraph*>( Node->pOuter );
+					if( AG )
+					{
+						auto playerNode = dynamic_cast< AnimGraphStateMachinePlayerNode* >( Node.Get() );
+						AG->ChangeEditorNextFrame( playerNode->GetGraph() );
+					}
 				}
 			} break;
 

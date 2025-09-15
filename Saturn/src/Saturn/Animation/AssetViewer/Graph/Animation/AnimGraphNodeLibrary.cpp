@@ -32,8 +32,7 @@
 #include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 
 #include "AnimGraphOutputNode.h"
-#include "Saturn/Animation/AssetViewer/Graph/StateMachine/AnimGraphStateMachinePlayerNode.h"
-#include "Saturn/Animation/AssetViewer/Graph/StateMachine/AnimGraphStateMachineStateNode.h"
+#include "Saturn/Animation/AssetViewer/Graph/Animation/AnimGraphStateMachinePlayerNode.h"
 
 namespace Saturn {
 
@@ -43,19 +42,8 @@ namespace Saturn {
 
 		// Create shared pointer here, to avoid creating a new one when we call AddNode and then another new one when this function returns, would result in two control blocks.
 		SharedPtr<AnimGraphStateMachinePlayerNode> sp = pNode;
-
 		nodeEditor->AddNode( sp );
-		return sp;
-	}
 
-	SharedPtr<AnimGraphStateMachineStateNode> AnimGraphNodeLibrary::SpawnStateMachineStateNode( SharedPtr<NodeEditorBase> nodeEditor )
-	{
-		AnimGraphStateMachineStateNode* pNode = ( AnimGraphStateMachineStateNode* ) ClassMetadataHandler::Get().CreateClassObject( AnimGraphStateMachineStateNode::StaticClass() );
-
-		// Create shared pointer here, to avoid creating a new one when we call AddNode and then another new one when this function returns, would result in two control blocks.
-		SharedPtr<AnimGraphStateMachineStateNode> sp = pNode;
-
-		nodeEditor->AddNode( sp );
 		sp->PostInit();
 
 		return sp;

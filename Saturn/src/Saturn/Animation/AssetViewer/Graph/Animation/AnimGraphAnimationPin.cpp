@@ -72,7 +72,7 @@ namespace Saturn {
 					if( AG )
 					{
 						auto playerNode = dynamic_cast< AnimGraphStateMachinePlayerNode* >( Node.Get() );
-						AG->ChangeEditorNextFrame( playerNode->GetGraph() );
+						AG->ChangeViewMode( AnimGraphViewMode::StateMachine );
 					}
 				}
 			} break;

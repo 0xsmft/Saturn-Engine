@@ -43,7 +43,7 @@ namespace Saturn {
 		StorageBufferSet( uint32_t size, uint32_t binding );
 		~StorageBufferSet();
 
-		void Create( uint32_t set, uint32_t binding );
+		void Create( uint32_t set, uint32_t binding, bool gpuOnly = true );
 
 		void Resize( uint32_t set, uint32_t binding, uint32_t frame, size_t newSize );
 		void Resize( uint32_t set, uint32_t binding, size_t newSize );

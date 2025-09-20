@@ -57,6 +57,7 @@ namespace Saturn {
 		Ref< StaticMesh > Mesh = nullptr;
 		uint32_t SubmeshIndex = 0;
 		uint32_t Instances = 0;
+		uint32_t InstanceOffset = 0;
 	};
 
 	struct DynamicDrawCommand
@@ -140,6 +141,7 @@ namespace Saturn {
 	struct BoneTransformBuffer
 	{
 		uint32_t Offset = 0;
+		uint32_t Stride = 0;
 		std::vector<glm::mat4> Data;
 	};
 
@@ -527,6 +529,8 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		void OnShaderReloaded( const std::string& rName );
 #endif
+
+		void SendBoneDataToMap( Ref<SkeletalMesh> mesh, const StaticMeshKey& rKey, const std::vector<glm::mat4>& rBoneTransforms );
 
 		Ref<TextureCube> CreateDymanicSky();
 	private:

@@ -51,9 +51,9 @@ namespace Saturn {
 		m_Buffers.clear();
 	}
 
-	void StorageBufferSet::Create( uint32_t set, uint32_t binding )
+	void StorageBufferSet::Create( uint32_t set, uint32_t binding, bool gpuOnly /*= true*/ )
 	{
-		Ref<StorageBuffer> sb = Ref<StorageBuffer>::Create( set, binding );
+		Ref<StorageBuffer> sb = Ref<StorageBuffer>::Create( set, binding, gpuOnly );
 
 		Set( sb, set, binding );
 	}

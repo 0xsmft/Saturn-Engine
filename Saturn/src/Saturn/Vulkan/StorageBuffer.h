@@ -36,7 +36,7 @@ namespace Saturn {
 	class StorageBuffer : public RefTarget
 	{
 	public:
-		StorageBuffer(uint32_t set, uint32_t binding);
+		StorageBuffer( uint32_t set, uint32_t binding, bool gpuOnly = true );
 		~StorageBuffer();
 
 		void Resize( uint32_t newSize );
@@ -58,5 +58,6 @@ namespace Saturn {
 
 		uint32_t m_Binding;
 		uint32_t m_Set;
+		bool m_GPUOnly = true;
 	};
 }

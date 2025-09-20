@@ -40,8 +40,8 @@
 #include "Saturn/Asset/MaterialAsset.h"
 #include "Saturn/Asset/AssetImporter.h"
 
-#include "Saturn/SkeletalAnimation/SkeletonAsset.h"
-#include "Saturn/SkeletalAnimation/SkeletalAnimationAsset.h"
+#include "Saturn/Animation/SkeletonAsset.h"
+#include "Saturn/Animation/SkeletalAnimationAsset.h"
 
 #include "Saturn/Project/Project.h"
 
@@ -437,7 +437,7 @@ namespace Auxiliary {
 
 		m_Importer = std::make_unique<Assimp::Importer>();
 
-		const aiScene* scene = m_Importer->ReadFile( m_FilePath.string(), s_MeshImportFlags | aiProcess_PopulateArmatureData );
+		const aiScene* scene = m_Importer->ReadFile( m_FilePath.string(), s_MeshImportFlags );
 		if( scene == nullptr || !scene->HasMeshes() )
 		{
 			SAT_CORE_ERROR( "Failed to load mesh file (does the file have meshes?): {0}", m_FilePath );
@@ -447,9 +447,10 @@ namespace Auxiliary {
 		m_Scene = scene;
 
 		const glm::mat4 transform = Auxiliary::Mat4FromAssimpMat4( m_Scene->mRootNode->mTransformation );
+		const auto altYAxis = glm::rotate( glm::mat4( 1.0f ), glm::radians( 90.0f ), glm::vec3( 1.0f, 0.0f, 0.0f ) );
 
-		m_InverseTransform = glm::inverse( transform );
-		m_Transform = transform;
+		m_Transform = altYAxis * transform;
+		m_InverseTransform = glm::inverse( m_Transform );
 
 		m_MaterialRegistry = Ref<MaterialRegistry>::Create();
 

@@ -33,15 +33,14 @@
 
 namespace Saturn {
 
-	StorageBuffer::StorageBuffer( uint32_t set, uint32_t binding )
-		: m_Set( set ), m_Binding( binding )
+	StorageBuffer::StorageBuffer( uint32_t set, uint32_t binding, bool gpuOnly )
+		: m_Set( set ), m_Binding( binding ), m_GPUOnly( gpuOnly )
 	{
 		Create();
 	}
 
 	StorageBuffer::~StorageBuffer()
 	{
-
 	}
 
 	void StorageBuffer::Create()
@@ -53,7 +52,7 @@ namespace Saturn {
 		BufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
 		auto pAllocator = VulkanContext::Get().GetVulkanAllocator();
-		pAllocator->AllocateBuffer( BufferInfo, VMA_MEMORY_USAGE_GPU_ONLY, &m_Buffer );
+		pAllocator->AllocateBuffer( BufferInfo, m_GPUOnly ? VMA_MEMORY_USAGE_GPU_ONLY : VMA_MEMORY_USAGE_CPU_TO_GPU, &m_Buffer );
 	}
 
 	void StorageBuffer::Resize( uint32_t newSize )
@@ -69,7 +68,7 @@ namespace Saturn {
 		BufferCreateInfo.usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
 		BufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-		pAllocator->AllocateBuffer( BufferCreateInfo, VMA_MEMORY_USAGE_CPU_TO_GPU, &m_Buffer );
+		pAllocator->AllocateBuffer( BufferCreateInfo, m_GPUOnly ? VMA_MEMORY_USAGE_GPU_ONLY : VMA_MEMORY_USAGE_CPU_TO_GPU, &m_Buffer );
 
 		m_BufferInfo.buffer = m_Buffer;
 		m_BufferInfo.range = m_Size;

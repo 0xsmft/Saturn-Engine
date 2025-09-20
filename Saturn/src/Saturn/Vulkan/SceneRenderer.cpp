@@ -40,6 +40,8 @@
 #include "Renderer2D.h"
 #include "DefaultMeshes.h"
 
+#include "Saturn/Animation/SkeletonAsset.h"
+
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
 
 #include "Saturn/Core/Buffer.h"
@@ -86,11 +88,16 @@ namespace Saturn {
 		m_RendererData.StorageBufferSet->Create( 0, 14 ); // Create Light culling buffer.
 
 		m_RendererData.SBBoneTransforms = Ref<StorageBufferSet>::Create( 0, 0 );
-		m_RendererData.SBBoneTransforms->Create( 2, 15 ); // Create bone transform buffers.
+		m_RendererData.SBBoneTransforms->Create( 2, 15, false ); // Create bone transform buffers.
 		m_RendererData.SBBoneTransforms->Resize( 2, 15, sizeof( glm::mat4 ) * 10240 );
 
 		// 1024 max animated meshes
-		m_RendererData.BoneTransformData = new glm::mat4[ 1 * 1024 ];
+		m_RendererData.BoneTransformData = new glm::mat4[ 1 * 1024 ]{};
+
+		for( size_t i = 0; i < 1024; i++ )
+		{
+			m_RendererData.BoneTransformData[ i ] = glm::mat4( 1.0f ); // identity
+		}
 
 		m_RendererData.IsSwapchainTarget = HasFlag( SceneRendererFlag_SwapchainTarget );
 
@@ -268,7 +275,7 @@ namespace Saturn {
 
 			for( size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++ )
 			{
-				m_RendererData.DynamicMeshMaterial->SetSB( 15, m_RendererData.SBBoneTransforms->Get( 2, 15, i ) );
+				m_RendererData.DynamicMeshMaterial->SetSB( 15u, m_RendererData.SBBoneTransforms->Get( 2u, 15u, ( uint32_t ) i ) );
 			}
 		}
 
@@ -463,7 +470,7 @@ namespace Saturn {
 
 		for( size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++ )
 		{
-			m_RendererData.PreDepthDynamicMaterialSet2->SetSB( 15, m_RendererData.SBBoneTransforms->Get( 2, 15, i ) );
+			m_RendererData.PreDepthDynamicMaterialSet2->SetSB( 15u, m_RendererData.SBBoneTransforms->Get( 2u, 15u, ( uint32_t ) i ) );
 		}
 
 		//////////////////////////////////////////////////////////////////////////
@@ -1235,6 +1242,8 @@ namespace Saturn {
 
 		auto& id = mesh->ID;
 
+		uint32_t instanceOffset = 0;
+
 		auto& submeshes = mesh->Submeshes();
 		for( size_t i = 0; i < submeshes.size(); i++ )
 		{
@@ -1251,12 +1260,15 @@ namespace Saturn {
 				auto& command = m_DrawList[ key ];
 				command.Mesh = mesh;
 				command.SubmeshIndex = ( uint32_t ) i;
+				instanceOffset = command.Instances;
 				command.Instances++;
+				command.InstanceOffset = instanceOffset;
 
 				auto& shadow = m_ShadowMapDrawList[ key ];
 				shadow.Mesh = mesh;
 				shadow.SubmeshIndex = ( uint32_t ) i;
 				shadow.Instances++;
+				shadow.InstanceOffset = instanceOffset;
 
 				auto& data = m_RendererData.MeshTransforms[ key ].Data.emplace_back();
 				data.TransfromBufferR[ 0 ] = {
@@ -1299,14 +1311,16 @@ namespace Saturn {
 				command.SubmeshIndex = ( uint32_t ) i;
 				command.Instances++;
 
-				m_RendererData.BoneTransformMap[ key ].Data.resize( 100 );
+				SendBoneDataToMap( mesh, key, boneTransforms );
 
+				/*
 				size_t index = 0;
 				for( const auto& transform : boneTransforms )
 				{
 					m_RendererData.BoneTransformMap[ key ].Data[ index ] = transform;
 					index++;
 				}
+				*/
 
 				auto& shadow = m_DynamicShadowMapDrawList[ key ];
 				shadow.Mesh = mesh;
@@ -1472,8 +1486,6 @@ namespace Saturn {
 	{
 		const uint32_t frame = Renderer::Get().GetCurrentFrame();
 
-		Ref< Shader > StaticMeshShader = m_RendererData.StaticMeshShader;
-
 		// u_Matrices
 		UBStaticMeshMatrices u_Matrices = {};
 		u_Matrices.View = m_RendererData.CurrentCamera.ViewMatrix;
@@ -1483,9 +1495,8 @@ namespace Saturn {
 //		std::unique_ptr<UBPointLights> u_Lights = std::make_unique<UBPointLights>();
 		UBPointLights u_Lights = {};
 
-		u_Lights.nbLights = int( m_pScene->m_Lights.PointLights.size() );
-
-		memcpy( u_Lights.Lights, m_pScene->m_Lights.PointLights.data(), m_pScene->m_Lights.GetPointLightSize() );
+		u_Lights.nbLights = ( uint32_t ) m_pScene->m_Lights.PointLights.size();
+		std::memcpy( u_Lights.Lights, m_pScene->m_Lights.PointLights.data(), m_pScene->m_Lights.GetPointLightSize() );
 
 		UBSceneData u_SceneData = {};
 		UBShadowData u_ShadowData = {};
@@ -1497,9 +1508,8 @@ namespace Saturn {
 
 		u_DebugData.TilesCountX = ( int ) m_RendererData.LightCullingWorkGroups.x;
 
-		auto dirLight = m_pScene->m_Lights.DirectionalLights[ 0 ];
-
-		auto invView = glm::inverse( u_Matrices.View );
+		const auto dirLight = m_pScene->m_Lights.DirectionalLights[ 0 ];
+		const auto invView = glm::inverse( u_Matrices.View );
 
 		u_SceneData.CameraPosition = invView[ 3 ];
 		u_SceneData.Lights = { .Direction = dirLight.Direction, .Radiance = dirLight.Radiance, .Multiplier = dirLight.Intensity };
@@ -1566,7 +1576,7 @@ namespace Saturn {
 				m_RendererData.SubmeshTransformData[ frame ].VertexBuffer,
 				rTransformData.Offset, index, m_RendererData.DynamicMeshMaterial );
 
-			index++;
+			index += Cmd.Instances;
 		}
 	}
 
@@ -1577,9 +1587,9 @@ namespace Saturn {
 		if( !m_RendererData.EnableShadows )
 			return;
 
-		auto pAllocator = VulkanContext::Get().GetVulkanAllocator();
-		VkExtent2D Extent = { ( uint32_t ) SHADOW_MAP_SIZE, ( uint32_t ) SHADOW_MAP_SIZE };
-		VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
+		const auto pAllocator = VulkanContext::Get().GetVulkanAllocator();
+		const VkExtent2D Extent = { ( uint32_t ) SHADOW_MAP_SIZE, ( uint32_t ) SHADOW_MAP_SIZE };
+		const VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
 		const uint32_t frame = Renderer::Get().GetCurrentFrame();
 
 		std::array<VkClearValue, 2> ClearColors{};
@@ -1598,7 +1608,7 @@ namespace Saturn {
 		Viewport.minDepth = 0.0f;
 		Viewport.maxDepth = 1.0f;
 
-		VkRect2D Scissor = { .offset = { 0, 0 }, .extent = Extent };
+		const VkRect2D Scissor = { .offset = { 0, 0 }, .extent = Extent };
 
 		//////////////////////////////////////////////////////////////////////////
 
@@ -1664,8 +1674,8 @@ namespace Saturn {
 
 		const uint32_t frame = Renderer::Get().GetCurrentFrame();
 
-		VkExtent2D Extent = { m_RendererData.Width,m_RendererData.Height };
-		VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
+		const VkExtent2D Extent = { m_RendererData.Width,m_RendererData.Height };
+		const VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
 
 		m_RendererData.PreDepthPass->BeginPass( CommandBuffer, m_RendererData.PreDepthFramebuffer->GetVulkanFramebuffer(), Extent );
 
@@ -1677,7 +1687,7 @@ namespace Saturn {
 		Viewport.minDepth = 0.0f;
 		Viewport.maxDepth = 1.0f;
 
-		VkRect2D Scissor = { .offset = { 0, 0 }, .extent = Extent };
+		const VkRect2D Scissor = { .offset = { 0, 0 }, .extent = Extent };
 
 		vkCmdSetViewport( CommandBuffer, 0, 1, &Viewport );
 		vkCmdSetScissor( CommandBuffer, 0, 1, &Scissor );
@@ -1695,6 +1705,8 @@ namespace Saturn {
 
 		m_RendererData.PreDepthDynamicMaterialSet2->Update( {} );
 
+		CmdBeginDebugLabel( CommandBuffer, "PreDepth-Static" );
+
 		for( auto&& [key, Cmd] : m_DrawList )
 		{
 			const auto& rTransformData = m_RendererData.MeshTransforms[ key ];
@@ -1710,6 +1722,10 @@ namespace Saturn {
 				rTransformData.Offset,
 				Cmd.SubmeshIndex );
 		}
+
+		CmdEndDebugLabel( CommandBuffer );
+
+		CmdBeginDebugLabel( CommandBuffer, "PreDepth-Dynamic" );
 
 		uint32_t index = 0;
 		for( auto&& [key, Cmd] : m_DynamicDrawList )
@@ -1727,8 +1743,10 @@ namespace Saturn {
 				rTransformData.Offset,
 				Cmd.SubmeshIndex, index, m_RendererData.PreDepthDynamicMaterialSet2 );
 
-			index++;
+			index += Cmd.Instances;
 		}
+
+		CmdEndDebugLabel( CommandBuffer );
 
 		m_RendererData.PreDepthPass->EndPass();
 		m_RendererData.PreDepthTimer.Stop();
@@ -1740,8 +1758,8 @@ namespace Saturn {
 
 		m_RendererData.SceneCompPPTimer.Reset();
 
-		VkExtent2D Extent = { m_RendererData.Width,m_RendererData.Height };
-		VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
+		const VkExtent2D Extent = { m_RendererData.Width,m_RendererData.Height };
+		const VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
 
 		// Begin scene composite pass.
 		m_RendererData.SceneComposite->BeginPass( CommandBuffer, m_RendererData.SceneCompositeFramebuffer->GetVulkanFramebuffer(), Extent );
@@ -1754,7 +1772,7 @@ namespace Saturn {
 		Viewport.minDepth = 0.0f;
 		Viewport.maxDepth = 1.0f;
 
-		VkRect2D Scissor = { .offset = { 0, 0 }, .extent = Extent };
+		const VkRect2D Scissor = { .offset = { 0, 0 }, .extent = Extent };
 
 		vkCmdSetViewport( CommandBuffer, 0, 1, &Viewport );
 		vkCmdSetScissor( CommandBuffer, 0, 1, &Scissor );
@@ -1777,8 +1795,8 @@ namespace Saturn {
 			return;
 
 		const uint32_t frame = Renderer::Get().GetCurrentFrame();
-		VkExtent2D Extent = { m_RendererData.Width, m_RendererData.Height };
-		VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
+		const VkExtent2D Extent = { m_RendererData.Width, m_RendererData.Height };
+		const VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
 
 		m_RendererData.LateCompositePass->BeginPass( CommandBuffer, m_RendererData.LateCompositeFramebuffer->GetVulkanFramebuffer(), Extent );
 
@@ -1790,7 +1808,7 @@ namespace Saturn {
 		Viewport.minDepth = 0.0f;
 		Viewport.maxDepth = 1.0f;
 
-		VkRect2D Scissor = { .offset = { 0, 0 }, .extent = Extent };
+		const VkRect2D Scissor = { .offset = { 0, 0 }, .extent = Extent };
 
 		vkCmdSetViewport( CommandBuffer, 0, 1, &Viewport );
 		vkCmdSetScissor( CommandBuffer, 0, 1, &Scissor );
@@ -1923,8 +1941,8 @@ namespace Saturn {
 		Ref<Pass> pass = VulkanContext::Get().GetDefaultPass();
 		const uint32_t frame = Renderer::Get().GetCurrentFrame();
 
-		VkExtent2D Extent = { m_RendererData.Width, m_RendererData.Height };
-		VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
+		const VkExtent2D Extent = { m_RendererData.Width, m_RendererData.Height };
+		const VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
 
 		// Begin scene composite pass.
 		pass->BeginPass( CommandBuffer, VulkanContext::Get().GetSwapchain().GetFramebuffers()[ frame ], Extent );
@@ -1937,7 +1955,7 @@ namespace Saturn {
 		Viewport.minDepth = 0.0f;
 		Viewport.maxDepth = 1.0f;
 
-		VkRect2D Scissor = { .offset = { 0, 0 }, .extent = Extent };
+		const VkRect2D Scissor = { .offset = { 0, 0 }, .extent = Extent };
 
 		vkCmdSetViewport( CommandBuffer, 0, 1, &Viewport );
 		vkCmdSetScissor( CommandBuffer, 0, 1, &Scissor );
@@ -1967,7 +1985,7 @@ namespace Saturn {
 
 			m_RendererData.LightCullingWorkGroups = { Size / TILE_SIZE, 1 };
 
-			float size = m_RendererData.LightCullingWorkGroups.x * m_RendererData.LightCullingWorkGroups.y * 4.0f * 1024.0f;
+			const float size = m_RendererData.LightCullingWorkGroups.x * m_RendererData.LightCullingWorkGroups.y * 4.0f * 1024.0f;
 			m_RendererData.StorageBufferSet->Resize( 0, 14, ( size_t ) size );
 		}
 
@@ -2067,6 +2085,43 @@ namespace Saturn {
 	}
 #endif
 
+	void SceneRenderer::SendBoneDataToMap( Ref<SkeletalMesh> mesh, const StaticMeshKey& rKey, const std::vector<glm::mat4>& rBoneTransforms )
+	{
+		// [DRAW CALL 0], 64 bones, 3 instances
+		//  instance 0
+		//  [bone transform data] from 0-63
+		//  fill remaining to 99
+		//  instance 1
+		//  [bone transform data] from 100-199
+		//  fill remaining to 99
+		//  instance 2
+		//  [bone transform data] from 200-299
+		//  fill remaining to 99
+		// [DRAW CALL 1], 64 bones, 3 instances
+		// same as above but start at 300...
+
+		// Every submesh has to have 100 bone transforms
+		// However, not every mesh actually has 100 bones for example, the mesh that this code was debugged with has 64 bones
+		// So, thats why we have to do a workaround to ensure that the bones transforms is correct because if we don't set them (and use the Meshes' bone count) we will end up reading garbage data.
+		// This could be solved if we simply was able to fill the whole buffer with glm::mat4{0.0f} 
+
+		auto& rBoneTransformMap = m_RendererData.BoneTransformMap[ rKey ];
+
+		const size_t boneCount = rBoneTransformMap.Data.size();
+		const size_t stride = 100 + boneCount;
+
+		rBoneTransformMap.Stride = ( uint32_t ) stride;
+		rBoneTransformMap.Data.reserve( 100 );
+
+		for( size_t s = 0; s < 100; s++ )
+		{
+			if( s < rBoneTransforms.size() )
+				rBoneTransformMap.Data.push_back( rBoneTransforms[ s ] );
+			else
+				rBoneTransformMap.Data.push_back( glm::mat4{ 1.0f } );
+		}
+	}
+
 	Ref<TextureCube> SceneRenderer::CreateDymanicSky()
 	{
 		constexpr uint32_t cubemapSize = 512;
@@ -2077,12 +2132,10 @@ namespace Saturn {
 		Ref<Shader> skyShader = ShaderLibrary::Get().Find( "Skybox_Compute" );
 		Ref<ComputePipeline> pipeline = Ref<ComputePipeline>::Create( skyShader );
 
-		glm::vec3 params = { m_RendererData.SceneEnvironment->Turbidity, m_RendererData.SceneEnvironment->Azimuth, m_RendererData.SceneEnvironment->Inclination };
+		const glm::vec3 params = { m_RendererData.SceneEnvironment->Turbidity, m_RendererData.SceneEnvironment->Azimuth, m_RendererData.SceneEnvironment->Inclination };
 
 		m_RendererData.PreethamMaterial->SetResource( "o_CubeMap", Environment );
 		m_RendererData.PreethamMaterial->SetPC( "pc_Params.Params", params );
-
-		auto CommandBuffer = m_RendererData.CommandBuffer;
 
 		pipeline->Bind();
 		pipeline->Execute( m_RendererData.PreethamMaterial, cubemapSize / irradianceMap, cubemapSize / irradianceMap, 6 );
@@ -2140,7 +2193,7 @@ namespace Saturn {
 		for( auto& [id, buffer] : m_RendererData.MeshTransforms )
 		{
 			buffer.Offset = off * sizeof( TransformBufferData );
-			for (const auto& transform : buffer.Data )
+			for( const auto& transform : buffer.Data )
 			{
 				m_RendererData.SubmeshTransformData[ frame ].pData[ off ] = transform;
 				off++;
@@ -2153,8 +2206,9 @@ namespace Saturn {
 		for( auto& [id, buffer] : m_RendererData.BoneTransformMap )
 		{
 			buffer.Offset = off;
-			memcpy( &m_RendererData.BoneTransformData[off], buffer.Data.data(), buffer.Data.size() * sizeof( glm::mat4 ) );
-			off += buffer.Data.size();
+
+			std::memcpy( &m_RendererData.BoneTransformData[ off ], buffer.Data.data(), buffer.Data.size() * sizeof( glm::mat4 ) );
+			off += ( uint32_t ) buffer.Data.size();
 		}
 
 		if( off > 0 )
@@ -2164,7 +2218,7 @@ namespace Saturn {
 			auto bufferAloc = pAllocator->GetAllocationFromBuffer( m_RendererData.SBBoneTransforms->Get( 2, 15, frame )->GetBuffer() );
 
 			void* pBufferData = pAllocator->MapMemory<void>( bufferAloc );
-			memcpy( pBufferData, ( const uint8_t* ) m_RendererData.BoneTransformData, ( uint32_t ) off * sizeof( glm::mat4 ) );
+			std::memcpy( pBufferData, ( const uint8_t* ) m_RendererData.BoneTransformData, ( uint32_t ) off * sizeof( glm::mat4 ) );
 			pAllocator->UnmapMemory( bufferAloc );
 		}
 	}
@@ -2354,6 +2408,8 @@ namespace Saturn {
 
 		for( auto& buffer : SubmeshTransformData )
 			delete[] buffer.pData;
+
+		delete[] BoneTransformData;
 
 		// Storage buffer set
 		StorageBufferSet = nullptr;

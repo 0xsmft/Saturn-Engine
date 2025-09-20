@@ -82,7 +82,7 @@ namespace Saturn {
 			if( pSoundEditorEvaluator->SoundsPlaying.count( index ) > 0 )
 			{
 				rSound->Play();
-				Itr++;
+				++Itr;
 			}
 			else
 			{
@@ -92,7 +92,7 @@ namespace Saturn {
 				Itr = pSoundEditorEvaluator->AliveSounds.erase( Itr );
 			}
 
-			index++;
+			++index;
 		}
 
 #if !defined( SAT_DIST )

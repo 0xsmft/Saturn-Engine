@@ -27,25 +27,25 @@
 */
 
 #include "sppch.h"
-#include "MathNodes.h"
+#include "MathsNodes.h"
 
 #include "Saturn/NodeEditor/Runtime/NodeEditorRuntime.h"
 
 namespace Saturn {
 
-	MathAddFloats::MathAddFloats()
+	MathsAddFloats::MathsAddFloats()
 		: NodeEditorBlueprintNode( "Add Float" )
 	{
 		CreateNode();
 	}
 
-	MathAddFloats::MathAddFloats( const std::string& rName )
+	MathsAddFloats::MathsAddFloats( const std::string& rName )
 		: NodeEditorBlueprintNode( rName )
 	{
 		CreateNode();
 	}
 
-	void MathAddFloats::CreateNode()
+	void MathsAddFloats::CreateNode()
 	{
 		ExecutionType = NodeExecutionType::Add;
 #if !defined(SAT_DIST)
@@ -58,11 +58,11 @@ namespace Saturn {
 		Outputs.push_back( Ref<FloatPin>::Create( "", PinKind::Output ) );
 	}
 
-	MathAddFloats::~MathAddFloats()
+	MathsAddFloats::~MathsAddFloats()
 	{
 	}
 
-	Saturn::NodeEvaluationState MathAddFloats::EvaluateNode( NodeEditorRuntime* evaluator )
+	Saturn::NodeEvaluationState MathsAddFloats::EvaluateNode( NodeEditorRuntime* evaluator )
 	{
 		if( evaluator == nullptr )
 			return NodeEvaluationState::Failed;
@@ -96,23 +96,23 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// MATHS SUBTRACT (FLOAT)
 
-	MathSubFloats::MathSubFloats()
+	MathsSubFloats::MathsSubFloats()
 		: NodeEditorBlueprintNode( "Subtract Float" )
 	{
 		CreateNode();
 	}
 
-	MathSubFloats::MathSubFloats( const std::string& rName )
+	MathsSubFloats::MathsSubFloats( const std::string& rName )
 		: NodeEditorBlueprintNode( rName )
 	{
 		CreateNode();
 	}
 
-	MathSubFloats::~MathSubFloats()
+	MathsSubFloats::~MathsSubFloats()
 	{
 	}
 
-	void MathSubFloats::CreateNode()
+	void MathsSubFloats::CreateNode()
 	{
 		ExecutionType = NodeExecutionType::Subtract;
 #if !defined(SAT_DIST)
@@ -125,7 +125,7 @@ namespace Saturn {
 		Outputs.push_back( Ref<FloatPin>::Create( "", PinKind::Output ) );
 	}
 
-	Saturn::NodeEvaluationState MathSubFloats::EvaluateNode( NodeEditorRuntime* evaluator )
+	Saturn::NodeEvaluationState MathsSubFloats::EvaluateNode( NodeEditorRuntime* evaluator )
 	{
 		if( evaluator == nullptr )
 			return NodeEvaluationState::Failed;
@@ -176,19 +176,19 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// MATHS MULTIPLY (FLOAT)
 
-	MathMulFloats::MathMulFloats()
+	MathsMulFloats::MathsMulFloats()
 		: NodeEditorBlueprintNode( "Multiply Float" )
 	{
 		CreateNode();
 	}
 
-	MathMulFloats::MathMulFloats( const std::string& rName )
+	MathsMulFloats::MathsMulFloats( const std::string& rName )
 		: NodeEditorBlueprintNode( rName )
 	{
 		CreateNode();
 	}
 
-	void MathMulFloats::CreateNode()
+	void MathsMulFloats::CreateNode()
 	{
 		ExecutionType = NodeExecutionType::Multiply;
 #if !defined(SAT_DIST)
@@ -201,11 +201,11 @@ namespace Saturn {
 		Outputs.push_back( Ref<FloatPin>::Create( "", PinKind::Output ) );
 	}
 
-	MathMulFloats::~MathMulFloats()
+	MathsMulFloats::~MathsMulFloats()
 	{
 	}
 
-	Saturn::NodeEvaluationState MathMulFloats::EvaluateNode( NodeEditorRuntime* evaluator )
+	Saturn::NodeEvaluationState MathsMulFloats::EvaluateNode( NodeEditorRuntime* evaluator )
 	{
 		if( evaluator == nullptr )
 			return NodeEvaluationState::Failed;
@@ -238,19 +238,19 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// MATHS DIVIDE (FLOAT)
 
-	MathDivideFloats::MathDivideFloats()
+	MathsDivideFloats::MathsDivideFloats()
 		: NodeEditorBlueprintNode( "Divide Float" )
 	{
 		CreateNode();
 	}
 
-	MathDivideFloats::MathDivideFloats( const std::string& rName )
+	MathsDivideFloats::MathsDivideFloats( const std::string& rName )
 		: NodeEditorBlueprintNode( rName )
 	{
 		CreateNode();
 	}
 
-	void MathDivideFloats::CreateNode()
+	void MathsDivideFloats::CreateNode()
 	{
 		ExecutionType = NodeExecutionType::Divide;
 #if !defined(SAT_DIST)
@@ -263,11 +263,11 @@ namespace Saturn {
 		Outputs.push_back( Ref<FloatPin>::Create( "", PinKind::Output ) );
 	}
 
-	MathDivideFloats::~MathDivideFloats()
+	MathsDivideFloats::~MathsDivideFloats()
 	{
 	}
 
-	Saturn::NodeEvaluationState MathDivideFloats::EvaluateNode( NodeEditorRuntime* evaluator )
+	Saturn::NodeEvaluationState MathsDivideFloats::EvaluateNode( NodeEditorRuntime* evaluator )
 	{
 		if( evaluator == nullptr )
 			return NodeEvaluationState::Failed;

@@ -26,25 +26,43 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "MathsNodeLibrary.h"
 
-#include "Saturn/NodeEditor/NodeEditorBase.h"
+#include "MathsNodes.h"
 
 namespace Saturn {
 
-	class MathAddFloats;
-	class MathSubFloats;
-	class MathMulFloats;
-	class MathDivideFloats;
-
-	class MathNodeLibrary
+	SharedPtr<MathsAddFloats> MathsNodeLibrary::SpawnMathAdd( SharedPtr<NodeEditorBase> rNodeEditor )
 	{
-	public:
-		static NodeEditorType GetStaticType() { return NodeEditorType::Default; }
+		SharedPtr<MathsAddFloats> node = SharedPtr<MathsAddFloats>::Create();
+		rNodeEditor->AddNode( node );
 
-		static SharedPtr<MathAddFloats>    SpawnMathAdd( SharedPtr<NodeEditorBase> rNodeEditor );
-		static SharedPtr<MathSubFloats>    SpawnMathSub( SharedPtr<NodeEditorBase> rNodeEditor );
-		static SharedPtr<MathMulFloats>    SpawnMathMul( SharedPtr<NodeEditorBase> rNodeEditor );
-		static SharedPtr<MathDivideFloats> SpawnMathDiv( SharedPtr<NodeEditorBase> rNodeEditor );
-	};
+		return node;
+	}
+
+	SharedPtr<MathsSubFloats> MathsNodeLibrary::SpawnMathSub( SharedPtr<NodeEditorBase> rNodeEditor )
+	{
+		SharedPtr<MathsSubFloats> node = SharedPtr<MathsSubFloats>::Create();
+		rNodeEditor->AddNode( node );
+
+		return node;
+	}
+
+	SharedPtr<MathsMulFloats> MathsNodeLibrary::SpawnMathMul( SharedPtr<NodeEditorBase> rNodeEditor )
+	{
+		SharedPtr<MathsMulFloats> node = SharedPtr<MathsMulFloats>::Create();
+		rNodeEditor->AddNode( node );
+
+		return node;
+	}
+
+	SharedPtr<MathsDivideFloats> MathsNodeLibrary::SpawnMathDiv( SharedPtr<NodeEditorBase> rNodeEditor )
+	{
+		SharedPtr<MathsDivideFloats> node = SharedPtr<MathsDivideFloats>::Create();
+		rNodeEditor->AddNode( node );
+
+		return node;
+	}
+
 }

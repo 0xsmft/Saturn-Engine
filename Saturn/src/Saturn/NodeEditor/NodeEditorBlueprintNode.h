@@ -33,7 +33,7 @@
 namespace Saturn {
 
 	// Base class for all "blueprint" nodes
-	// By blueprint we mean the traditional look of a node
+	// By blueprint we mean the traditional look of a node with a clear section for the title and a clear area for the input and outputs on the left and right. 
 	SCLASS()
 	class NodeEditorBlueprintNode : public NodeEditorNodeBase
 	{

@@ -60,12 +60,12 @@ namespace Saturn {
 	public:
 		inline void AddRef() const
 		{
-			m_RefCount++;
+			++m_RefCount;
 		}
 
 		inline void RemoveRef() const
 		{
-			m_RefCount--;
+			--m_RefCount;
 		}
 
 		inline uint32_t GetRefCount() const { return m_RefCount; }
@@ -365,6 +365,8 @@ namespace Saturn {
 	class EnabledSharedFromThis
 	{
 	public:
+		using InternalType = EnabledSharedFromThis;
+
 		[[nodiscard]] SharedPtr<Ty> SharedFromThis() 
 		{
 			return m_Weak.Access();
@@ -375,19 +377,29 @@ namespace Saturn {
 			return m_Weak.Access();
 		}
 
-		friend class SharedPtr<Ty>;
+		[[nodiscard]] WeakRef<Ty> WeakFromThis() 
+		{
+			return m_Weak;
+		}
+
+		[[nodiscard]] WeakRef<const Ty> WeakFromThis() const
+		{
+			return m_Weak;
+		}
 
 	protected:
 		mutable WeakRef<Ty> m_Weak;
+
+	private:
+		template<class T2>
+		friend class SharedPtr;
 	};
 
 	template<typename Ty, typename = void>
 	struct IsEnableSharedFromThis : std::false_type {};
 
 	template<typename Ty>
-	struct IsEnableSharedFromThis<
-		Ty, 
-		std::void_t<decltype(std::declval<Ty&>().m_Weak)>> : std::true_type {};
+	struct IsEnableSharedFromThis<Ty, std::void_t<typename Ty::InternalType>> : std::is_convertible<std::remove_cv_t<Ty>*, typename Ty::InternalType*>::type {};
 
 	// SharedPtr is a reference counted, non-intrusive, thread safe and authoritative smart pointer that works very similar to std::shared_ptr.
 	// The size of this class is 16 bytes however, depending on the control block it may become 24 bytes

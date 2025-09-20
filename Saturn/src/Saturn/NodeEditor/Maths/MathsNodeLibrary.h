@@ -29,63 +29,22 @@
 #pragma once
 
 #include "Saturn/NodeEditor/NodeEditorBase.h"
-#include "Saturn/NodeEditor/NodeEditorBlueprintNode.h"
 
 namespace Saturn {
 
-	class MathAddFloats : public NodeEditorBlueprintNode
+	class MathsAddFloats;
+	class MathsSubFloats;
+	class MathsMulFloats;
+	class MathsDivideFloats;
+
+	class MathsNodeLibrary
 	{
 	public:
-		MathAddFloats();
-		MathAddFloats( const std::string& rName );
+		static NodeEditorType GetStaticType() { return NodeEditorType::Default; }
 
-		virtual ~MathAddFloats();
-
-		NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
-
-	private:
-		void CreateNode();
-	};
-
-	class MathSubFloats : public NodeEditorBlueprintNode
-	{
-	public:
-		MathSubFloats();
-		MathSubFloats( const std::string& rName );
-
-		virtual ~MathSubFloats();
-
-		NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
-
-	private:
-		void CreateNode();
-	};
-
-	class MathMulFloats : public NodeEditorBlueprintNode
-	{
-	public:
-		MathMulFloats();
-		MathMulFloats( const std::string& rName );
-
-		virtual ~MathMulFloats();
-
-		NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
-
-	private:
-		void CreateNode();
-	};
-
-	class MathDivideFloats : public NodeEditorBlueprintNode
-	{
-	public:
-		MathDivideFloats();
-		MathDivideFloats( const std::string& rName );
-
-		virtual ~MathDivideFloats();
-
-		NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
-
-	private:
-		void CreateNode();
+		static SharedPtr<MathsAddFloats>    SpawnMathAdd( SharedPtr<NodeEditorBase> rNodeEditor );
+		static SharedPtr<MathsSubFloats>    SpawnMathSub( SharedPtr<NodeEditorBase> rNodeEditor );
+		static SharedPtr<MathsMulFloats>    SpawnMathMul( SharedPtr<NodeEditorBase> rNodeEditor );
+		static SharedPtr<MathsDivideFloats> SpawnMathDiv( SharedPtr<NodeEditorBase> rNodeEditor );
 	};
 }

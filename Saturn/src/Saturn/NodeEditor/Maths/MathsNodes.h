@@ -26,43 +26,70 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "MathNodeLibrary.h"
+#pragma once
 
-#include "MathNodes.h"
+#include "Saturn/NodeEditor/NodeEditorBase.h"
+#include "Saturn/NodeEditor/NodeEditorBlueprintNode.h"
 
 namespace Saturn {
 
-	SharedPtr<MathAddFloats> MathNodeLibrary::SpawnMathAdd( SharedPtr<NodeEditorBase> rNodeEditor )
+	SCLASS()
+	class MathsAddFloats : public NodeEditorBlueprintNode
 	{
-		SharedPtr<MathAddFloats> node = SharedPtr<MathAddFloats>::Create();
-		rNodeEditor->AddNode( node );
+	public:
+		MathsAddFloats();
+		MathsAddFloats( const std::string& rName );
 
-		return node;
-	}
+		virtual ~MathsAddFloats();
 
-	SharedPtr<MathSubFloats> MathNodeLibrary::SpawnMathSub( SharedPtr<NodeEditorBase> rNodeEditor )
+		NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
+
+	private:
+		void CreateNode();
+	};
+
+	SCLASS()
+	class MathsSubFloats : public NodeEditorBlueprintNode
 	{
-		SharedPtr<MathSubFloats> node = SharedPtr<MathSubFloats>::Create();
-		rNodeEditor->AddNode( node );
+	public:
+		MathsSubFloats();
+		MathsSubFloats( const std::string& rName );
 
-		return node;
-	}
+		virtual ~MathsSubFloats();
 
-	SharedPtr<MathMulFloats> MathNodeLibrary::SpawnMathMul( SharedPtr<NodeEditorBase> rNodeEditor )
+		NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
+
+	private:
+		void CreateNode();
+	};
+
+	SCLASS()
+	class MathsMulFloats : public NodeEditorBlueprintNode
 	{
-		SharedPtr<MathMulFloats> node = SharedPtr<MathMulFloats>::Create();
-		rNodeEditor->AddNode( node );
+	public:
+		MathsMulFloats();
+		MathsMulFloats( const std::string& rName );
 
-		return node;
-	}
+		virtual ~MathsMulFloats();
 
-	SharedPtr<MathDivideFloats> MathNodeLibrary::SpawnMathDiv( SharedPtr<NodeEditorBase> rNodeEditor )
+		NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
+
+	private:
+		void CreateNode();
+	};
+
+	SCLASS()
+	class MathsDivideFloats : public NodeEditorBlueprintNode
 	{
-		SharedPtr<MathDivideFloats> node = SharedPtr<MathDivideFloats>::Create();
-		rNodeEditor->AddNode( node );
+	public:
+		MathsDivideFloats();
+		MathsDivideFloats( const std::string& rName );
 
-		return node;
-	}
+		virtual ~MathsDivideFloats();
 
+		NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
+
+	private:
+		void CreateNode();
+	};
 }

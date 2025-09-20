@@ -32,6 +32,7 @@
 
 namespace Saturn {
 
+	SCLASS()
 	class NodeEditorTreeNode : public NodeEditorNodeBase
 	{
 		SAT_DECLARE_CLASS( NodeEditorTreeNode, NodeEditorNodeBase );

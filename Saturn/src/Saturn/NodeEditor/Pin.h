@@ -84,33 +84,31 @@ namespace Saturn {
 	{
 		switch( type )
 		{
-			case Saturn::PinType::Flow:
+			case PinType::Flow:
 				return "Flow";
-			case Saturn::PinType::Bool:
+			case PinType::Bool:
 				return "Bool";
-			case Saturn::PinType::Int:
+			case PinType::Int:
 				return "Int";
-			case Saturn::PinType::Float:
+			case PinType::Float:
 				return "Float";
-			case Saturn::PinType::String:
+			case PinType::String:
 				return "String";
-			case Saturn::PinType::Object:
+			case PinType::Object:
 				return "Object";
-			case Saturn::PinType::Function:
+			case PinType::Function:
 				return "Function";
-			case Saturn::PinType::Delegate:
+			case PinType::Delegate:
 				return "Delegate";
-			case Saturn::PinType::Material_Color:
+			case PinType::Material_Color:
 				return "Material_Color";
-			case Saturn::PinType::Material_TextureColor:
+			case PinType::Material_TextureColor:
 				return "Material_TextureColor";
-			case Saturn::PinType::AssetID:
+			case PinType::AssetID:
 				return "AssetHandle";
-			default:
-				break;
+			
+			default: return "";
 		}
-
-		return "";
 	}
 
 	inline PinType StringToPinType( const std::string& rString )
@@ -153,6 +151,7 @@ namespace Saturn {
 	public:
 		UUID           ID;
 		// TODO: Use weak ref #ReplaceRawPtrOrRefWithWeakRef
+		// The node in which we are a "child" of, it owns us.
 		SharedPtr<NodeEditorNodeBase>      Node;
 		std::string    Name;
 		PinType        Type = PinType::Flow;
@@ -189,6 +188,9 @@ namespace Saturn {
 		bool CanCreateLink( const Ref<Pin>& rOther ) const;
 	};
 
+	// 
+	// FloatPin, carries across a single floating-point number.
+	//
 	class FloatPin : public Pin
 	{
 	public:
@@ -210,6 +212,9 @@ namespace Saturn {
 		float Data = 0.0f;
 	};
 
+	// 
+	// IntPin, carries across a single 32-bit signed integer number.
+	//
 	class IntPin : public Pin
 	{
 	public:
@@ -230,6 +235,9 @@ namespace Saturn {
 		int Data = 0;
 	};
 
+	// 
+	// BoolPin, carries across a single boolean.
+	//
 	class BoolPin : public Pin
 	{
 	public:

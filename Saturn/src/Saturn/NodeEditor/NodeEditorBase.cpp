@@ -69,7 +69,7 @@ namespace Saturn {
 
 	void NodeEditorBase::SaveSettings()
 	{
-		NodeCacheSettings::WriteEditorSettings( this );
+		NodeCacheSettings::WriteEditorSettings( SharedFromThis() );
 	}
 
 	static void BuildNode( SharedPtr<NodeEditorNodeBase>& rNode )
@@ -115,7 +115,7 @@ namespace Saturn {
 	{
 		m_State = NodeEditorState::Loading;
 
-		NodeCacheSettings::ReadEditorSettings( this );
+		NodeCacheSettings::ReadEditorSettings( SharedFromThis() );
 
 		m_Name = RawSerialisation::ReadString( rStream );
 

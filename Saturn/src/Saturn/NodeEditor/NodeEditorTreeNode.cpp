@@ -71,7 +71,7 @@ namespace Saturn {
 		// Evaluation Order
 
 		ImVec2 headerEndPos = ImGui::GetCursorScreenPos();
-		ImVec2 badgePos = headerEndPos + Size;
+		ImVec2 badgePos = headerEndPos + ed::GetNodeSize( ed::NodeId( ID ) );
 		badgePos.y -= 20.0f + ImGui::GetStyle().FramePadding.x;
 
 		ImVec2 badgeSize = ImVec2( 20.0f, 20.0f );

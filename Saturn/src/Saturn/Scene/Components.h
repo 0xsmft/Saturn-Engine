@@ -37,7 +37,7 @@
 #include "Saturn/Vulkan/EnvironmentMap.h"
 #include "Saturn/Vulkan/Mesh.h"
 
-#include "Saturn/SkeletalAnimation/Animator.h"
+#include "Saturn/Animation/Animator.h"
 
 #include <string>
 

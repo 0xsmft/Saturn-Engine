@@ -104,7 +104,7 @@ namespace Saturn {
 	SCLASS()
 	class NodeEditorNodeBase : public SObject, public EnabledSharedFromThis<NodeEditorNodeBase>
 	{
-		// NOTE: SAT_DECLARE_CLASS expanded !! ABSTRACT CLASS !! would handled by the HeaderTool normally
+		// NOTE: SAT_DECLARE_CLASS expanded !! ABSTRACT CLASS !! would handled by the HeaderTool normally!
 	private: 
 		NodeEditorNodeBase& operator=( NodeEditorNodeBase&& ); 
 		NodeEditorNodeBase& operator=( const NodeEditorNodeBase& ); 
@@ -119,26 +119,34 @@ namespace Saturn {
 		typedef NodeEditorNodeBase ThisClass; 
 		typedef SObject Super; 
 
+		// X31_DefConstructor is unable to defined, cannot create an abstract class.
+
 		//////////////////////////////////////////////////////////////////////////
 
 	public:
-		UUID ID;
-		std::string Name;
-		std::vector<Ref<Pin>> Inputs;
-		std::vector<Ref<Pin>> Outputs;
-		NodeRenderType Type = NodeRenderType::Blueprint;
-		NodeExecutionType ExecutionType = NodeExecutionType::None;
-		size_t EvaluationOrder = 0;
-		NodeEditorBase* pOuter = nullptr;
+		UUID					ID;
+		std::string				Name;
+		std::vector<Ref<Pin>>	Inputs;
+		std::vector<Ref<Pin>>	Outputs;
+		NodeRenderType			RenderType = NodeRenderType::Blueprint;
+		// TODO: This should be a local enum and not a global enum, it should be like SoundGraphEditor::NodeExecutionType::Type or equiv.
+		NodeExecutionType		ExecutionType = NodeExecutionType::None;
+		size_t					EvaluationOrder = 0;
+		// The node editor in which we belong to.
+		NodeEditorBase*			pOuter = nullptr;
+		// The node in which be belong to, this is usually going to be nullptr however, if its not
+		// then we know that this node belongs to a sub-graph with that sub-graph being owned by the Node
+		// specified in pParentObject
+		// sub-graph do not exist, there is not hard separation between then, the separation is purely visual.
+		NodeEditorNodeBase*		pParentObject = nullptr;
 
+		// Editor only data
 #if !defined(SAT_DIST)
-		std::string ActiveState;
-		std::string SavedState;
-
-		ImColor Color;
-		ImVec2 Size;
-
-		bool CanBeDeleted = true;
+		std::string				ActiveState;
+		std::string				SavedState;
+		ImColor					Color;
+		ImVec2					Size;
+		bool					CanBeDeleted = true;
 #endif
 
 	public:

@@ -72,6 +72,7 @@ static inline EventCategory GetStaticCategory() { return EventCategory::Category
 		// Runtime
 
 		SceneTravel,
+		RuntimeStateChanged
 	};
 
 	enum EventCategory

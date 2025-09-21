@@ -67,11 +67,11 @@ namespace Saturn {
 	private:
 		// Sound specification asset
 		Ref<Asset> m_Asset = nullptr;
+		// Current graph that we are drawing
 		SharedPtr<NodeEditor> m_NodeEditor = nullptr;
 		Ref<SoundEditorEvaluator> m_Runtime = nullptr;
 
 		bool m_ShowDirtyModal = false;
-
 		UUID m_OutputNodeID = 0;
 
 #if !defined(SAT_DIST)

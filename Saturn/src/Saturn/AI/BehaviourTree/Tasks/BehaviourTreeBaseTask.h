@@ -48,6 +48,7 @@ namespace Saturn {
 		Failed
 	};
 
+	SCLASS()
 	class BehaviourTreeBaseTask : public SObject
 	{
 		SAT_DECLARE_CLASS_MOVE( BehaviourTreeBaseTask, SObject )

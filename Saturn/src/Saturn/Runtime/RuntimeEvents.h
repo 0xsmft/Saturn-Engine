@@ -28,6 +28,7 @@
 
 #pragma once
 
+#include "RuntimeState.h"
 #include "Saturn/Core/Event.h"
 
 namespace Saturn {
@@ -50,6 +51,25 @@ namespace Saturn {
 
 	private:
 		unsigned long long m_NewSceneID = 0;
+	};
+
+	class RuntimeStateChangedEvent : public Event
+	{
+		SAT_DEFINE_EVENT( RuntimeStateChanged, EC_Runtime );
+	public:
+		RuntimeStateChangedEvent( RuntimeState newState, RuntimeState oldState )
+			: Event( EventType::RuntimeStateChanged, EC_Runtime ), m_CurrentState( newState ), m_OldState( oldState )
+		{
+		}
+
+		virtual ~RuntimeStateChangedEvent() = default;
+
+		[[nodiscard]] inline RuntimeState GetNewState() const { return m_CurrentState; }
+		[[nodiscard]] inline RuntimeState GetOldState() const { return m_OldState; }
+
+	private:
+		RuntimeState m_CurrentState = RuntimeState::NoState;
+		RuntimeState m_OldState = RuntimeState::NoState;
 	};
 
 }

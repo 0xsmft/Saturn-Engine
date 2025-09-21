@@ -488,7 +488,7 @@ namespace Saturn {
 		// UUID
 
 		template<typename OStream>
-		static void WriteUUID( const Saturn::UUID& rUUID, OStream& rStream )
+		static void WriteUUID( const Saturn::UUID rUUID, OStream& rStream )
 		{
 			RawSerialisation::WriteObject( (uint64_t)rUUID, rStream );
 		}

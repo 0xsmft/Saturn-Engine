@@ -241,60 +241,17 @@ namespace Saturn {
 	void NodeEditor::OnImGuiRender()
 	{
 #if !defined(SAT_DIST)
-		// Ensure our editor is the current one
-		// We'll use a VariableGuard<ed::EditorContext*> when we can't be sure that we are the current node editor.
-		ed::SetCurrentEditor( m_Editor );
-
 		if( !m_WindowOpen )
 			return;
 
 		// Draw main window
 		ImGui::Begin( m_Name.c_str(), &m_WindowOpen, m_Dirty ? ImGuiWindowFlags_UnsavedDocument : 0 );
 
-		if( m_ShowUnsavedChanges && HasPrivilege( NodeEditorUserAuthority::Editing ) )
-			ImGui::OpenPopup( "Unsaved Changes" );
+		// Ensure our editor is the current one
+		// We'll use a VariableGuard<ed::EditorContext*> when we can't be sure that we are the current node editor.
+		ed::SetCurrentEditor( m_Editor );
 
-		// Unsaved changes modal
-		// TODO: Center window with our main window
-		ImGui::SetNextWindowPos( ImGui::GetWindowViewport()->GetCenter(), ImGuiCond_FirstUseEver );
-		if( ImGui::BeginPopupModal( "Unsaved Changes", &m_ShowUnsavedChanges, ImGuiWindowFlags_NoSavedSettings ) )
-		{
-			ImGui::Text( "You have unsaved changes to this editor." );
-			ImGui::Text( "Would you like to save before closing?" );
-
-			ImGui::BeginHorizontal( "##DirtyModalOpt" );
-
-			if( ImGui::Button( "Save" ) )  
-			{
-				SaveSettings();
-				NodeCacheEditor::WriteNodeEditorCache( this, m_CustomNameNC );
-
-				m_Dirty = false;
-				m_WindowOpen = false;
-
-				m_ShowUnsavedChanges = false;
-				ImGui::CloseCurrentPopup();
-			}
-
-			if( ImGui::Button( "Discard changes" ) ) 
-			{
-				m_Dirty = false;
-				m_WindowOpen = false;
-
-				m_ShowUnsavedChanges = false;
-				ImGui::CloseCurrentPopup();
-			}
-
-			if( ImGui::Button( "Cancel" ) ) 
-			{
-				m_ShowUnsavedChanges = false;
-				ImGui::CloseCurrentPopup();
-			}
-
-			ImGui::EndHorizontal();
-
-			ImGui::EndPopup();
-		}
+		TryDrawUnsavedChangesModal();
 
 		if( m_ViewportSize != ImGui::GetContentRegionAvail() )
 			m_ViewportSize = ImGui::GetContentRegionAvail();
@@ -306,221 +263,7 @@ namespace Saturn {
 
 		const auto cursorTopLeft = ImGui::GetCursorScreenPos();
 
-		for( auto& [id, rNode] : m_Nodes )
-		{
-			rNode->Render( m_Builder );
-		}
-
-		for( const auto& rLink : m_Links )
-			ed::Link( ed::LinkId( rLink->ID ), ed::PinId( rLink->StartPinID ), ed::PinId( rLink->EndPinID ), rLink->Color );
-
-		if( !m_CreateNewNode && HasPrivilege( NodeEditorUserAuthority::Editing ) )
-		{
-			if( ed::BeginCreate( ImColor( 255, 255, 255 ), 2.0f ) )
-			{
-				auto showLabel = []( const char* label, ImColor color )
-					{
-						ImGui::SetCursorPosY( ImGui::GetCursorPosY() - ImGui::GetTextLineHeight() );
-						auto size = ImGui::CalcTextSize( label );
-
-						auto padding = ImGui::GetStyle().FramePadding;
-						auto spacing = ImGui::GetStyle().ItemSpacing;
-
-						ImGui::SetCursorPos( ImGui::GetCursorPos() + ImVec2( spacing.x, -spacing.y ) );
-
-						auto rectMin = ImGui::GetCursorScreenPos() - padding;
-						auto rectMax = ImGui::GetCursorScreenPos() + size + padding;
-
-						auto drawList = ImGui::GetWindowDrawList();
-						drawList->AddRectFilled( rectMin, rectMax, color, size.y * 0.15f );
-						ImGui::TextUnformatted( label );
-					};
-
-				ed::PinId StartPinId = 0;
-				ed::PinId EndPinId = 0;
-
-				if( ed::QueryNewLink( &StartPinId, &EndPinId ) )
-				{
-					Ref<Pin> StartPin = nullptr;
-					Ref<Pin> EndPin = nullptr;
-
-					StartPin = FindPin( UUID( StartPinId.Get() ) );
-					EndPin = FindPin( UUID( EndPinId.Get() ) );
-
-					m_NewLinkPin = StartPin ? StartPin : EndPin;
-
-					// If we started from an input swap the start to the output side
-					if( StartPin->Kind == PinKind::Input )
-					{
-						std::swap( StartPin, EndPin );
-						std::swap( StartPinId, EndPinId );
-					}
-
-					if( StartPin && EndPin )
-					{
-						// Pin is the same, reject.
-						if( EndPin == StartPin )
-						{
-							showLabel( "x Cannot link to self!", ImColor( 45, 32, 32, 180 ) );
-							ed::RejectNewItem( ImColor( 225, 0, 0 ), 2.0f );
-						}
-						else if( EndPin->Kind == StartPin->Kind )  // Same kind, input/output into input/output.
-						{
-							showLabel( "x Incompatible Pin Kind, input/output into input/output", ImColor( 45, 32, 32, 180 ) );
-
-							ed::RejectNewItem( ImColor( 225, 0, 0 ), 2.0f );
-						}
-						else if( EndPin->Type != StartPin->Type )
-						{
-							showLabel( "x Incompatible Pin Type!", ImColor( 45, 32, 32, 180 ) );
-
-							ed::RejectNewItem( ImColor( 225, 128, 128 ), 2.0f );
-						}
-						else // Valid type, accept (create new link)
-						{
-							bool shouldDelete = false;
-
-							if( IsLinked( EndPin->ID ) && !EndPin->AcceptMultipleLinks )
-							{
-								showLabel( "+ Replace old link with current link", ImColor( 32, 45, 32, 180 ) );
-								shouldDelete = true;
-							}
-							else
-							{
-								showLabel( "+ Create Link", ImColor( 32, 45, 32, 180 ) );
-							}
-							
-							if( ed::AcceptNewItem( ImColor( 128, 255, 128 ), 4.0f ) )
-							{
-								if( shouldDelete ) 
-								{
-									if( m_State == NodeEditorState::Simulating )
-									{
-										ed::StopFlow();
-
-										// Terminate simulation
-										m_Runtime->TerminateEvaluation();
-									}
-
-									ed::BreakLinks( EndPinId );
-									DeleteLink( FindLinkByPin( EndPin->ID )->ID );
-
-									OnNodeEditorEvent( NodeEditorAction::BreakLink );
-								}
-								
-								UUID start = UUID( StartPinId.Get() );
-								UUID end = UUID( EndPinId.Get() );
-
-								m_Links.push_back( Ref<Link>::Create( UUID(), start, end, StartPin->GetPinColor() ) );
-
-								MarkDirty();
-
-								Ref<UndoRedoActionCreateLink> action = Ref<UndoRedoActionCreateLink>::Create( SharedFromThis(), m_Links.back() );
-								GlobalUndoRedoGroup::Get().AddAction( action, m_AssetID );
-								OnNodeEditorEvent( NodeEditorAction::CreateLink );
-							}
-						}
-					}
-				}
-
-				// If the link is not connected, user maybe want to create a new node rather than link it.
-				ed::PinId id = 0;
-				if( ed::QueryNewNode( &id ) )
-				{
-					m_NewLinkPin = FindPin( UUID( id.Get() ) );
-
-					if( m_NewLinkPin )
-						showLabel( "+ Create Node", ImColor( 32, 45, 32, 180 ) );
-
-					if( ed::AcceptNewItem() )
-					{
-						m_CreateNewNode = true;
-
-						m_NewNodeLinkPin = FindPin( UUID( id.Get() ) );
-						m_NewLinkPin = nullptr;
-
-						ed::Suspend();
-						ImGui::OpenPopup( "Create New Node" );
-						ed::Resume();
-					}
-				}
-			}
-			else
-				m_NewLinkPin = nullptr;
-			
-			ed::EndCreate();
-
-			if( ed::BeginDelete() )
-			{
-				ed::LinkId linkId = 0;
-				while( ed::QueryDeletedLink( &linkId ) )
-				{
-					if( ed::AcceptDeletedItem() )
-					{
-						if( m_State == NodeEditorState::Simulating )
-						{
-							ed::StopFlow();
-
-							// Terminate simulation
-							m_Runtime->TerminateEvaluation();
-						}
-
-						DeleteLink( linkId.Get() );
-						OnNodeEditorEvent( NodeEditorAction::BreakLink );
-
-						MarkDirty();
-					}
-				}
-
-				ed::NodeId nodeId = 0;
-				while( ed::QueryDeletedNode( &nodeId ) )
-				{
-					UUID id = nodeId.Get();
-
-					const auto itr = std::find_if( m_Nodes.begin(), m_Nodes.end(),
-						[id]( const auto& kv )
-						{
-							return kv.first == id;
-						} );
-
-					if( itr != m_Nodes.end() )
-					{
-						auto& rNode = ( itr->second );
-
-						if( rNode->CanBeDeleted )
-						{
-							if( ed::AcceptDeletedItem() )
-							{
-								if( m_State == NodeEditorState::Simulating )
-								{
-									ed::StopFlow();
-
-									// Terminate simulation
-									m_Runtime->TerminateEvaluation();
-								}
-
-								Ref<UndoRedoActionDeleteNode> action = Ref<UndoRedoActionDeleteNode>::Create( SharedFromThis(), rNode );
-								GlobalUndoRedoGroup::Get().AddAction( action, m_AssetID );
-
-								DeleteDeadLinks( id );
-
-								OnNodeEditorEvent( NodeEditorAction::DestroyNode );
-
-								rNode = nullptr;
-								m_Nodes.erase( itr );
-
-								MarkDirty();
-							}
-						}
-						else
-						{
-							ed::RejectDeletedItem();
-						}
-					}
-				}
-			}
-			ed::EndDelete();
-		}
+		DrawGraph();
 
 		ImGui::SetCursorScreenPos( cursorTopLeft );
 
@@ -585,6 +328,7 @@ namespace Saturn {
 		// Node context window popup
 		if( ImGui::BeginPopup( "NE_NodeAction" ) )
 		{
+			// TODO: #MouseLeavingAGStateMachineNullptr
 			m_HoveredNode->RenderContextWindow();
 
 			Auxiliary::DisabledFlag disabled( true );
@@ -596,35 +340,24 @@ namespace Saturn {
 
 			ImGui::Separator();
 
-			ImGui::Text( "Size X/%f Y/%f", m_HoveredNode->Size.x, m_HoveredNode->Size.y );
-			ImGui::Text( "Pos X/%f Y/%f", m_HoveredNode->Position.x, m_HoveredNode->Position.y );
+			const auto& rPosition = ed::GetNodePosition( ed::NodeId( m_HoveredNode->ID ) );
+			const auto& rSize = ed::GetNodeSize( ed::NodeId( m_HoveredNode->ID ) );
+
+			ImGui::Text( "Size X/%f Y/%f", rSize.x, rSize.y );
+			ImGui::Text( "Pos X/%f Y/%f", rPosition.x, rPosition.y );
 
 			disabled.Pop();
 			ImGui::EndPopup();
 		}
 
 		ed::Resume();
-
+		
 		ed::End();
 
-		switch( m_State )
-		{
-			case NodeEditorState::Loading:
-			case NodeEditorState::Editing:
-			case NodeEditorState::Evaluating:
-			case NodeEditorState::Suspended:
-				break;
+		if( m_BreadCrumbsFunction )
+			m_BreadCrumbsFunction();
 
-			case NodeEditorState::Simulating:
-			{
-				DrawSimulatingCanvas();
-
-				if( m_Runtime )
-				{
-					m_Runtime->TraceEvaluationPath();
-				}
-			} break;
-		}
+		HandleStateCanvasBorders();
 
 		m_OutputWindow.Draw();
 
@@ -638,6 +371,19 @@ namespace Saturn {
 			m_ShowUnsavedChanges = true;
 		}
 #endif
+	}
+
+	void NodeEditor::DrawGraph()
+	{
+		for( auto& [id, rNode] : m_Nodes )
+		{
+			rNode->Render( m_Builder );
+		}
+
+		for( const auto& rLink : m_Links )
+			ed::Link( ed::LinkId( rLink->ID ), ed::PinId( rLink->StartPinID ), ed::PinId( rLink->EndPinID ), rLink->Color );
+
+		HandleCreate();
 	}
 
 	void NodeEditor::OnUpdate( Timestep ts )
@@ -670,6 +416,24 @@ namespace Saturn {
 
 		const auto removeIt = std::remove_if( m_Links.begin(), m_Links.end(), wasConnectedToTheNode );
 		m_Links.erase( removeIt, m_Links.end() );
+	}
+
+	void NodeEditor::SaveAndMarkClean()
+	{
+		SaveSettings();
+		NodeCacheEditor::WriteNodeEditorCache( SharedFromThis(), m_CustomNameNC );
+
+		m_Dirty = false;
+
+		if( m_AssetID )
+		{
+			// Find and bump asset version.
+			Ref<Asset> correspondingAsset = AssetManager::Get().FindAsset( m_AssetID );
+			correspondingAsset->Version = m_Version;
+
+			// #SaveAssetManagerOnJT
+			AssetManager::Get().Save();
+		}
 	}
 
 	void NodeEditor::DeleteLink( UUID id, bool skipUndoRedo )
@@ -736,14 +500,37 @@ namespace Saturn {
 		ed::SetNodePosition( ed::NodeId( nodeID ), rNewPosition );
 	}
 
-	void NodeEditor::AddSubGraph( SharedPtr<NodeEditorBase> graph )
+	void NodeEditor::AddSubGraph( SharedPtr<NodeEditorNodeBase> graph )
 	{
 		m_SubGraphs.push_back( graph );
 	}
 
-	void NodeEditor::RemoveSubGraph( SharedPtr<NodeEditorBase> graph )
+	void NodeEditor::RemoveSubGraph( SharedPtr<NodeEditorNodeBase> graph )
 	{
 		m_SubGraphs.erase( std::remove( m_SubGraphs.begin(), m_SubGraphs.end(), graph ), m_SubGraphs.end() );
+	}
+
+	void NodeEditor::ChangeEditorNextFrame( SharedPtr<NodeEditorNodeBase> graph )
+	{
+		m_ActiveSubGraph = graph;
+	}
+
+	void NodeEditor::ClearSubGraphs()
+	{
+		m_SubGraphs.clear();
+		m_ActiveSubGraph = nullptr;
+	}
+
+	void NodeEditor::PopActiveSubGraphTo( SharedPtr<NodeEditorNodeBase> graph )
+	{
+		m_ActiveSubGraph = graph;
+
+		// Remove everything after the graph.
+		auto itr = std::find( m_SubGraphs.begin(), m_SubGraphs.end(), graph );
+		if( itr != m_SubGraphs.end() )
+		{
+			m_SubGraphs.erase( std::next( itr ), m_SubGraphs.end() );
+		}
 	}
 
 	void NodeEditor::CreateNewEditorIfNeeded()
@@ -770,6 +557,51 @@ namespace Saturn {
 
 		const ImVec2 textPos = ImVec2( canvasRect.Min.x + padding, canvasRect.Min.y + padding );
 		pDrawList->AddText( textPos, IM_COL32( 255, 255, 255, 255 ), canvasName.c_str() );
+	}
+
+	void NodeEditor::TryDrawUnsavedChangesModal()
+	{
+		if( m_ShowUnsavedChanges && HasPrivilege( NodeEditorUserAuthority::Editing ) )
+			ImGui::OpenPopup( "Unsaved Changes" );
+
+		// Unsaved changes modal
+		// TODO: Center window with our main window
+		ImGui::SetNextWindowPos( ImGui::GetWindowViewport()->GetCenter(), ImGuiCond_FirstUseEver );
+		if( ImGui::BeginPopupModal( "Unsaved Changes", &m_ShowUnsavedChanges, ImGuiWindowFlags_NoSavedSettings ) )
+		{
+			ImGui::Text( "You have unsaved changes to this editor." );
+			ImGui::Text( "Would you like to save before closing?" );
+
+			ImGui::BeginHorizontal( "##DirtyModalOpt" );
+
+			if( ImGui::Button( "Save" ) )
+			{
+				SaveAndMarkClean();
+
+				m_WindowOpen = false;
+				m_ShowUnsavedChanges = false;
+				ImGui::CloseCurrentPopup();
+			}
+
+			if( ImGui::Button( "Discard changes" ) )
+			{
+				m_Dirty = false;
+				m_WindowOpen = false;
+
+				m_ShowUnsavedChanges = false;
+				ImGui::CloseCurrentPopup();
+			}
+
+			if( ImGui::Button( "Cancel" ) )
+			{
+				m_ShowUnsavedChanges = false;
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndHorizontal();
+
+			ImGui::EndPopup();
+		}
 	}
 
 	void NodeEditor::DrawTopBarChildInternal()
@@ -843,6 +675,241 @@ namespace Saturn {
 		ImGui::PopStyleColor();
 	}
 
+	void NodeEditor::HandleCreate() 
+	{
+		if( !m_CreateNewNode && HasPrivilege( NodeEditorUserAuthority::Editing ) )
+		{
+			if( ed::BeginCreate( ImColor( 255, 255, 255 ), 2.0f ) )
+			{
+				auto showLabel = []( const char* label, ImColor color )
+				{
+					ImGui::SetCursorPosY( ImGui::GetCursorPosY() - ImGui::GetTextLineHeight() );
+					auto size = ImGui::CalcTextSize( label );
+
+					auto padding = ImGui::GetStyle().FramePadding;
+					auto spacing = ImGui::GetStyle().ItemSpacing;
+
+					ImGui::SetCursorPos( ImGui::GetCursorPos() + ImVec2( spacing.x, -spacing.y ) );
+
+					auto rectMin = ImGui::GetCursorScreenPos() - padding;
+					auto rectMax = ImGui::GetCursorScreenPos() + size + padding;
+
+					auto drawList = ImGui::GetWindowDrawList();
+					drawList->AddRectFilled( rectMin, rectMax, color, size.y * 0.15f );
+					ImGui::TextUnformatted( label );
+				};
+
+				ed::PinId StartPinId = 0;
+				ed::PinId EndPinId = 0;
+
+				if( ed::QueryNewLink( &StartPinId, &EndPinId ) )
+				{
+					Ref<Pin> StartPin = nullptr;
+					Ref<Pin> EndPin = nullptr;
+
+					StartPin = FindPin( UUID( StartPinId.Get() ) );
+					EndPin = FindPin( UUID( EndPinId.Get() ) );
+
+					m_NewLinkPin = StartPin ? StartPin : EndPin;
+
+					// If we started from an input swap the start to the output side
+					if( StartPin->Kind == PinKind::Input )
+					{
+						std::swap( StartPin, EndPin );
+						std::swap( StartPinId, EndPinId );
+					}
+
+					if( StartPin && EndPin )
+					{
+						// Pin is the same, reject.
+						if( EndPin == StartPin )
+						{
+							showLabel( "x Cannot link to self!", ImColor( 45, 32, 32, 180 ) );
+							ed::RejectNewItem( ImColor( 225, 0, 0 ), 2.0f );
+						}
+						else if( EndPin->Kind == StartPin->Kind )  // Same kind, input/output into input/output.
+						{
+							showLabel( "x Incompatible Pin Kind, input/output into input/output", ImColor( 45, 32, 32, 180 ) );
+
+							ed::RejectNewItem( ImColor( 225, 0, 0 ), 2.0f );
+						}
+						else if( EndPin->Type != StartPin->Type )
+						{
+							showLabel( "x Incompatible Pin Type!", ImColor( 45, 32, 32, 180 ) );
+
+							ed::RejectNewItem( ImColor( 225, 128, 128 ), 2.0f );
+						}
+						else // Valid type, accept (create new link)
+						{
+							bool shouldDelete = false;
+
+							if( IsLinked( EndPin->ID ) && !EndPin->AcceptMultipleLinks )
+							{
+								showLabel( "+ Replace old link with current link", ImColor( 32, 45, 32, 180 ) );
+								shouldDelete = true;
+							}
+							else
+							{
+								showLabel( "+ Create Link", ImColor( 32, 45, 32, 180 ) );
+							}
+
+							if( ed::AcceptNewItem( ImColor( 128, 255, 128 ), 4.0f ) )
+							{
+								if( shouldDelete )
+								{
+									if( m_State == NodeEditorState::Simulating )
+									{
+										ed::StopFlow();
+
+										// Terminate simulation
+										m_Runtime->TerminateEvaluation();
+									}
+
+									ed::BreakLinks( EndPinId );
+									DeleteLink( FindLinkByPin( EndPin->ID )->ID );
+
+									OnNodeEditorEvent( NodeEditorAction::BreakLink );
+								}
+
+								UUID start = UUID( StartPinId.Get() );
+								UUID end = UUID( EndPinId.Get() );
+
+								m_Links.push_back( Ref<Link>::Create( UUID(), start, end, StartPin->GetPinColor() ) );
+
+								MarkDirty();
+
+								Ref<UndoRedoActionCreateLink> action = Ref<UndoRedoActionCreateLink>::Create( SharedFromThis(), m_Links.back() );
+								GlobalUndoRedoGroup::Get().AddAction( action, m_AssetID );
+								OnNodeEditorEvent( NodeEditorAction::CreateLink );
+							}
+						}
+					}
+				}
+
+				// If the link is not connected, user maybe want to create a new node rather than link it.
+				ed::PinId id = 0;
+				if( ed::QueryNewNode( &id ) )
+				{
+					m_NewLinkPin = FindPin( UUID( id.Get() ) );
+
+					if( m_NewLinkPin )
+						showLabel( "+ Create Node", ImColor( 32, 45, 32, 180 ) );
+
+					if( ed::AcceptNewItem() )
+					{
+						m_CreateNewNode = true;
+
+						m_NewNodeLinkPin = FindPin( UUID( id.Get() ) );
+						m_NewLinkPin = nullptr;
+
+						ed::Suspend();
+						ImGui::OpenPopup( "Create New Node" );
+						ed::Resume();
+					}
+				}
+			}
+			else
+				m_NewLinkPin = nullptr;
+
+			ed::EndCreate();
+
+			if( ed::BeginDelete() )
+			{
+				ed::LinkId linkId = 0;
+				while( ed::QueryDeletedLink( &linkId ) )
+				{
+					if( ed::AcceptDeletedItem() )
+					{
+						if( m_State == NodeEditorState::Simulating )
+						{
+							ed::StopFlow();
+
+							// Terminate simulation
+							m_Runtime->TerminateEvaluation();
+						}
+
+						DeleteLink( linkId.Get() );
+						OnNodeEditorEvent( NodeEditorAction::BreakLink );
+
+						MarkDirty();
+					}
+				}
+
+				ed::NodeId nodeId = 0;
+				while( ed::QueryDeletedNode( &nodeId ) )
+				{
+					UUID id = nodeId.Get();
+
+					const auto itr = std::find_if( m_Nodes.begin(), m_Nodes.end(),
+						[ id ]( const auto& kv )
+					{
+						return kv.first == id;
+					} );
+
+					if( itr != m_Nodes.end() )
+					{
+						auto& rNode = ( itr->second );
+
+						if( rNode->CanBeDeleted )
+						{
+							if( ed::AcceptDeletedItem() )
+							{
+								if( m_State == NodeEditorState::Simulating )
+								{
+									ed::StopFlow();
+
+									// Terminate simulation
+									m_Runtime->TerminateEvaluation();
+								}
+
+								Ref<UndoRedoActionDeleteNode> action = Ref<UndoRedoActionDeleteNode>::Create( SharedFromThis(), rNode );
+								GlobalUndoRedoGroup::Get().AddAction( action, m_AssetID );
+
+								DeleteDeadLinks( id );
+
+								OnNodeEditorEvent( NodeEditorAction::DestroyNode );
+
+								rNode = nullptr;
+								m_Nodes.erase( itr );
+
+								MarkDirty();
+							}
+						}
+						else
+						{
+							ed::RejectDeletedItem();
+						}
+					}
+				}
+			}
+			ed::EndDelete();
+		}
+	}
+
+	void NodeEditor::HandleStateCanvasBorders()
+	{
+		switch( m_State )
+		{
+			case NodeEditorState::Loading:
+			case NodeEditorState::Editing:
+			case NodeEditorState::Evaluating:
+			case NodeEditorState::Suspended:
+				break;
+
+			case NodeEditorState::Simulating:
+			{
+				DrawSimulatingCanvas();
+
+				// WARNING: TODO: Should sub-graphs be allowed to have their own runtime,
+				//				  or should it be one runtime from the parent that will handle everything including sub-graphs?
+				if( m_Runtime )
+				{
+					m_Runtime->TraceEvaluationPath();
+				}
+			} break;
+		}
+	}
+
 #if !defined(SAT_DIST)
 
 	void NodeEditor::OnChooseNewNode( SharedPtr<NodeEditorNodeBase> node )
@@ -907,13 +974,40 @@ namespace Saturn {
 
 	void NodeEditor::SerialiseData( std::ofstream& rStream, bool isForDist )
 	{
-		NodeEditorBase::SerialiseData( rStream, isForDist );
+		RawSerialisation::WriteString( m_Name, rStream );
+
+		size_t mapSize = m_Nodes.size();
+		rStream.write( reinterpret_cast< char* >( &mapSize ), sizeof( size_t ) );
+
+		for( const auto& [key, value] : m_Nodes )
+		{
+			RawSerialisation::WriteUUID( key, rStream );
+
+			RawSerialisation::WriteObject( value->GetClass()->GetHash(), rStream );
+
+			value->Serialise( rStream, isForDist );
+
+			if( value->pParentObject )
+				RawSerialisation::WriteObjectChecked( value->pParentObject->ID, rStream );
+			else
+				RawSerialisation::WriteObject( 0llu, rStream );
+		}
+
+		mapSize = m_Links.size();
+		RawSerialisation::WriteObject( mapSize, rStream );
+
+		for( auto& rLinks : m_Links )
+		{
+			Link::Serialise( rLinks, rStream );
+		}
 	}
 
 	void NodeEditor::DeserialiseData( std::ifstream& rStream )
 	{
 		m_State = NodeEditorState::Loading;
 
+		// NOTE: using the "this" keyword is fine here, 
+		// ReadEditorSettings takes in a raw ptr
 		NodeCacheSettings::ReadEditorSettings( this );
 
 		m_Name = RawSerialisation::ReadString( rStream );
@@ -922,6 +1016,8 @@ namespace Saturn {
 
 		size_t mapSize = 0;
 		RawSerialisation::ReadObject( mapSize, rStream );
+
+		std::unordered_map<UUID, std::vector<UUID>> parentToChildMap;
 
 		for( size_t i = 0; i < mapSize; i++ )
 		{
@@ -947,8 +1043,25 @@ namespace Saturn {
 			node->pOuter = this;
 			node->Deserialise( rStream );
 
+			UUID parentID = 0;
+			if( m_Version >= SAT_VERSION_A_0_2_3_WIP )
+			{
+				RawSerialisation::ReadObjectChecked( parentID, rStream );
+			}
+
+			parentToChildMap[ parentID ].push_back( key );
+
 			m_Nodes[ key ] = node;
 			BuildNode( node );
+		}
+
+		// Sub-graph parent
+		for( const auto& [parentID, children] : parentToChildMap )
+		{
+			for( const auto& rChild : children )
+			{
+				m_Nodes[ rChild ]->pParentObject = parentID == 0 ? nullptr : m_Nodes[ parentID ].Get();
+			}
 		}
 
 		mapSize = 0;
@@ -968,4 +1081,5 @@ namespace Saturn {
 		m_State = NodeEditorState::Editing;
 	}
 #endif
+
 }

@@ -59,22 +59,16 @@ namespace Saturn {
 	BehaviourTreeAssetViewer::~BehaviourTreeAssetViewer()
 	{
 #if !defined(SAT_DIST)
-		const std::string filename = std::format( "{0}.sbt", m_Asset->Name );
-
-		m_Asset = nullptr;
-
 		if( m_Dirty || m_NodeEditor->IsDirty() )
 		{
-			m_NodeEditor->SaveSettings();
-			NodeCacheEditor::WriteNodeEditorCache( m_NodeEditor, filename );
+			m_NodeEditor->SaveAndMarkClean();
 		}
 
+		m_Asset = nullptr;
 		m_NodeEditor->SetRuntime( nullptr );
 
 		GlobalUndoRedoGroup::Get().RemoveIfActionHasIdentifier( m_AssetID );
 		m_NodeEditor = nullptr;
-
-		AssetManager::Get().Save();
 
 		for( BehaviourTreeBaseTask* pTaskClass : m_ClassCache )
 		{

@@ -31,7 +31,7 @@
 #include "Saturn/Core/Base.h"
 #include "Saturn/Core/Ref.h"
 #include "Saturn/Core/Ruby/RubyEvent.h"
-#include "Saturn/Scene/RuntimeState.h"
+#include "Saturn/Runtime/RuntimeState.h"
 
 namespace Saturn {
 

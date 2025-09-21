@@ -41,7 +41,7 @@ namespace Saturn {
 		Paused
 	};
 
-	class Animator
+	class Animator : public RefTarget
 	{
 	public:
 		Animator();

@@ -67,8 +67,8 @@ namespace Saturn {
 
 #if !defined(SAT_DIST)
 		RawSerialisation::WriteObject( Color, rStream );
-		RawSerialisation::WriteObject( Type, rStream );
-		Auxiliary::SerialiseImVec2( Size, rStream );
+		RawSerialisation::WriteObject( RenderType, rStream );
+		Auxiliary::SerialiseImVec2( ed::GetNodeSize( ed::NodeId( ID ) ), rStream );
 		Auxiliary::SerialiseImVec2( ed::GetNodePosition( ed::NodeId( ID ) ), rStream );
 
 		RawSerialisation::WriteString( ActiveState, rStream );

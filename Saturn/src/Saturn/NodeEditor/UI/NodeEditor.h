@@ -95,6 +95,11 @@ namespace Saturn {
 			m_TopbarItemsFunction = std::move( rrTopbarItemsFunction );
 		}
 
+		void SetBreadCrumbsFunction( std::function<void()>&& rrBreadCrumbsFunction )
+		{
+			m_BreadCrumbsFunction = std::move( rrBreadCrumbsFunction );
+		}
+
 		std::string& GetEditorState() { return m_ActiveNodeEditorState; }
 		const std::string& GetEditorState() const { return m_ActiveNodeEditorState; }
 		
@@ -109,22 +114,33 @@ namespace Saturn {
 		void SetWindowName( const std::string& rName ) { m_Name = rName; }
 		void NcSetCustomName( const std::string& rName ) { m_CustomNameNC = rName; }
 
+		[[nodiscard]] const std::string& GetWindowName() const { return m_Name; }
+
 		void MarkDirty() { m_Dirty = true; }
 		bool IsDirty() const { return m_Dirty; }
+
+		void SaveAndMarkClean();
 
 		void DeleteLink( UUID id, bool skipUndoRedo = false );
 		void DeleteNode( UUID id, bool skipUndoRedo = false );
 
 		void SetNodePosition( UUID nodeID, const ImVec2& rNewPosition );
 
-		void AddSubGraph( SharedPtr<NodeEditorBase> graph );
-		void RemoveSubGraph( SharedPtr<NodeEditorBase> graph );
+		void AddSubGraph( SharedPtr<NodeEditorNodeBase> graph );
+		void RemoveSubGraph( SharedPtr<NodeEditorNodeBase> graph );
+		void ChangeEditorNextFrame( SharedPtr<NodeEditorNodeBase> graph );
+		void ClearSubGraphs();
+		void PopActiveSubGraphTo( SharedPtr<NodeEditorNodeBase> graph );
+		[[nodiscard]] std::vector<SharedPtr<NodeEditorNodeBase>> GetSubGraphs() const { return m_SubGraphs; }
 		
+		SharedPtr<NodeEditorNodeBase> GetActiveSubGraph() { return m_ActiveSubGraph; }
+
 		std::vector<UUID> GetSelectedNodes();
 
 	protected:
+		// Node Cache filename
 		// By default the NodeCache will save this node editor to a file called NCEditor.{ID}.nce OR {AssetID}.{ID}.nce
-		// However, in some cases such as GraphSounds or BehaviourTrees we want a custom name.
+		// However, in some cases such as GraphSounds or BehaviourTrees we want a custom name to match with the Asset filename because in such cases the NodeEditor is the Asset data.
 		std::string m_CustomNameNC{};
 
 		void OnChooseNewNode( SharedPtr<NodeEditorNodeBase> node );
@@ -137,15 +153,23 @@ namespace Saturn {
 
 	private:
 		void CreateEditor();
+
+	protected:
 		void Close();
 		void DeleteDeadLinks( UUID nodeID );
 		void CreateNewEditorIfNeeded();
 		void DrawSimulatingCanvas();
+		void TryDrawUnsavedChangesModal();
 		void DrawTopBarChildInternal();
+		void HandleCreate();
+		void HandleStateCanvasBorders();
 
-	private:
+		virtual void DrawGraph();
+
+	protected:
 		std::function<SharedPtr<NodeEditorNodeBase>()> m_CreateNewNodeFunction;
 		std::function<void()> m_TopbarItemsFunction;
+		std::function<void()> m_BreadCrumbsFunction;
 
 		bool m_CreateNewNode = false;
 		bool m_ShowUnsavedChanges = false;
@@ -160,7 +184,8 @@ namespace Saturn {
 		// TODO: Weak ptr #ReplaceRawPtrOrRefWithWeakRef
 		SharedPtr<NodeEditorNodeBase> m_HoveredNode = nullptr;
 
-		std::vector<SharedPtr<NodeEditorBase>> m_SubGraphs;
+		SharedPtr<NodeEditorNodeBase> m_ActiveSubGraph;
+		std::vector<SharedPtr<NodeEditorNodeBase>> m_SubGraphs;
 #endif
 
 		ImVec2 m_ViewportSize;
@@ -171,6 +196,8 @@ namespace Saturn {
 		util::BlueprintNodeBuilder m_Builder;
 
 		NodeEditorOutput m_OutputWindow;
+
+		// Internal imgui_node_editor ID, NOT to be confused with the Window Name (m_Name)
 		std::string m_InternalEditorID{};
 
 	private:

@@ -64,16 +64,14 @@ namespace Saturn {
 	}
 
 	GraphSoundAssetViewer::~GraphSoundAssetViewer()
-	{
-		std::string filename = std::format( "{0}.gsnd", m_Asset->Name );
-
-		m_Asset = nullptr;
-
+	{		
+		// Rare case, may only happen if this viewer without the user ever saving it.
 		if( m_Dirty || m_NodeEditor->IsDirty() )
 		{
-			m_NodeEditor->SaveSettings();
-			NodeCacheEditor::WriteNodeEditorCache( m_NodeEditor, filename );
+			m_NodeEditor->SaveAndMarkClean();
 		}
+		
+		m_Asset = nullptr;
 
 		m_NodeEditor->SetRuntime( nullptr );
 		m_Runtime = nullptr;
@@ -107,7 +105,7 @@ namespace Saturn {
 
 		m_NodeEditor = SharedPtr<NodeEditor>::Create( m_AssetID );
 
-		std::string filename = std::format( "{0}.gsnd", m_Asset->Name );
+		const std::string filename = std::format( "{0}.gsnd", m_Asset->Name );
 		if( NodeCacheEditor::ReadNodeEditorCache( m_NodeEditor, m_AssetID, filename ) )
 		{
 			m_OutputNodeID = m_NodeEditor->FindNode( "Sound Output" )->ID;
@@ -201,7 +199,7 @@ namespace Saturn {
 				{
 					for( const auto& rAsset : m_ReferencingAssets )
 					{
-						std::string name = std::to_string( rAsset->GetPlayerID() );
+						const std::string name = std::to_string( rAsset->GetPlayerID() );
 						if( ImGui::Selectable( name.c_str() ) )
 						{
 							// TODO: There isn't technically API to support this asset viewer changing its node editor

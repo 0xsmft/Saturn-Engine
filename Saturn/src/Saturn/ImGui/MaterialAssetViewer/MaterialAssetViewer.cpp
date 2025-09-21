@@ -66,9 +66,7 @@ namespace Saturn {
 	{
 		if( m_Dirty || m_NodeEditor->IsDirty() )
 		{
-			// Save settings and all nodes.
-			m_NodeEditor->SaveSettings();
-			NodeCacheEditor::WriteNodeEditorCache( m_NodeEditor );
+			m_NodeEditor->SaveAndMarkClean();
 		}
 
 		m_HostMaterialAsset = nullptr;

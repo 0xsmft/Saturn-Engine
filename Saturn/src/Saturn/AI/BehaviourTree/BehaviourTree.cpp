@@ -55,11 +55,8 @@ namespace Saturn {
 
 	void BehaviourTree::Initialise( SharedPtr<AIAgentEntity> entity )
 	{
-#if defined(SAT_DIST)
 		m_NodeEditor = SharedPtr<BehaviourTreeNodeEditor>::Create( m_BehaviourTreeAsset->ID );
-#else
-		m_NodeEditor = SharedPtr<BehaviourTreeNodeEditor>::Create( m_BehaviourTreeAsset->ID );
-
+#if !defined(SAT_DIST)
 		// Read only...
 		m_NodeEditor->SetPrivileges( NodeEditorUserAuthority::Full, false );
 #endif

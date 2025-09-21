@@ -287,7 +287,7 @@ namespace Saturn {
 
 		std::istream stream( &membuf );
 #else
-		std::filesystem::path cachePathAbs = Project::GetActiveProject()->FilepathAbs( cachePath );
+		const std::filesystem::path cachePathAbs = Project::GetActiveProject()->FilepathAbs( cachePath );
 
 		if( !std::filesystem::exists( cachePathAbs ) )
 			return false;
@@ -323,7 +323,7 @@ namespace Saturn {
 		}
 
 		nodeEditor->m_AssetID = id;
-		nodeEditor->m_Version = header.Version;
+		nodeEditor->m_Version = asset->Version;
 		nodeEditor->DeserialiseData( stream );
 
 #if !defined(SAT_DIST)

@@ -69,7 +69,7 @@ namespace Saturn {
 
 #if !defined(SAT_DIST)
 		Color = ImColor( 48, 128, 255, 100 );
-		Type = NodeRenderType::Tree;
+		RenderType = NodeRenderType::Tree;
 #endif
 
 		Inputs.push_back( Ref<Pin>::Create( "In", PinType::Flow, PinKind::Input ) );

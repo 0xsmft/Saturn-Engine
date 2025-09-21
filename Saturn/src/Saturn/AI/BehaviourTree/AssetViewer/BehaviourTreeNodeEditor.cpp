@@ -263,7 +263,7 @@ namespace Saturn {
 		if( nodes.size() == 1 )
 		{
 			SharedPtr<BehaviourTreeNodeBase> treeNode = FindNode( nodes[ 0 ] ).As<BehaviourTreeNodeBase>();
-			if( treeNode && treeNode->Type == NodeRenderType::Tree )
+			if( treeNode && treeNode->RenderType == NodeRenderType::Tree )
 			{
 				ImGui::Text( "%s/%llu", treeNode->Name.c_str(), treeNode->ID );
 				ImGui::Text( "Order: %i", treeNode->EvaluationOrder );

@@ -50,7 +50,7 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		CanBeDeleted = false;
 		Color = ImColor( 48, 128, 255, 100 );
-		Type = NodeRenderType::Tree;
+		RenderType = NodeRenderType::Tree;
 #endif
 
 		Outputs.emplace_back( Ref<Pin>::Create( "Out", PinType::Flow, PinKind::Output ) );

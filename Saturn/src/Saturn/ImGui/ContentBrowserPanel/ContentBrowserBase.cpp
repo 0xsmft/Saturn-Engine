@@ -110,7 +110,7 @@ namespace Saturn {
 			if( i == 0 && pFolder != name )
 				continue;
 
-			i++;
+			++i;
 
 			if( pFolder != name )
 			{
@@ -119,9 +119,9 @@ namespace Saturn {
 
 			ImGui::SameLine();
 
-			std::string filename = pFolder.string();
+			const std::string filename = pFolder.string();
 
-			float size = strlen( filename.c_str() ) + ImGui::CalcTextSize( filename.c_str() ).x;
+			const float size = strlen( filename.c_str() ) + ImGui::CalcTextSize( filename.c_str() ).x;
 
 			ImGui::Selectable( filename.c_str(), false, 0, ImVec2( size, 22.0f ) );
 
@@ -181,10 +181,9 @@ namespace Saturn {
 			if( directoriesOnly && !rEntry.is_directory() )
 				continue;
 
-			std::string filename = rEntry.path().stem().string();
-
+			const std::string filename = rEntry.path().stem().string();
 			if( filename.find( rName ) != std::string::npos )
-				count++;
+				++count;
 		}
 
 		return count;

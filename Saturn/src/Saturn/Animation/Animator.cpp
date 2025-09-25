@@ -241,7 +241,7 @@ namespace Saturn {
 			localTransforms[ ( size_t ) index ] = final;
 		}
 
-		for( size_t i = 0; i < rMeshBones.size(); i++ )
+		for( size_t i = 0; i < rMeshBones.size(); ++i )
 		{
 			if( rMeshBones[ i ].ParentIndex == -1 )
 				UpdateBones( i, glm::mat4( 1.0f ), localTransforms );
@@ -256,7 +256,7 @@ namespace Saturn {
 
 		m_BoneTransforms[ boneIndex ] = m_SkeletalMesh->GetInverseTransform() * globalTransform * rMeshBones[ boneIndex ].BoneOffset; /* <- bone offset */
 
-		for( size_t i = 0; i < rMeshBones.size(); i++ )
+		for( size_t i = 0; i < rMeshBones.size(); ++i )
 		{
 			if( rMeshBones[ i ].ParentIndex == boneIndex )
 				UpdateBones( i, globalTransform, rLocalTransforms );

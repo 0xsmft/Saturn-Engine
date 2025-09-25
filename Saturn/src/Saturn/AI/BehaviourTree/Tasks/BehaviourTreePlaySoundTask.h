@@ -34,6 +34,7 @@
 
 namespace Saturn {
 
+	SCLASS()
 	class BehaviourTreePlaySoundTask : public BehaviourTreeBaseTask
 	{
 		SAT_DECLARE_CLASS_MOVE( BehaviourTreePlaySoundTask, BehaviourTreeBaseTask )

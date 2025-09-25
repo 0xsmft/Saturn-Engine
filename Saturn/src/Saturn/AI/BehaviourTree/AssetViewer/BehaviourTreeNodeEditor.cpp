@@ -140,9 +140,9 @@ namespace Saturn {
 				}
 
 				// Push right to left so that the left most node is visited first 
-				for( auto it = rNeighbours.rbegin(); it != rNeighbours.rend(); it++ )
+				for( auto itr = rNeighbours.rbegin(); itr != rNeighbours.rend(); ++itr )
 				{
-					temporaryStack.emplace_back( *it, currentLevel + 1 );
+					temporaryStack.emplace_back( *itr, currentLevel + 1 );
 				}
 			}
 		}

@@ -34,6 +34,7 @@
 
 namespace Saturn {
 
+	SCLASS()
 	class BehaviourTreeWaitTask : public BehaviourTreeBaseTask
 	{
 		SAT_DECLARE_CLASS_MOVE( BehaviourTreeWaitTask, BehaviourTreeBaseTask )

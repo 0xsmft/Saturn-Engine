@@ -47,7 +47,7 @@ namespace Saturn {
 
 		inline void AddBoneData( uint32_t id, float weight )
 		{
-			for( size_t i = 0; i < 4; i++ )
+			for( size_t i = 0; i < 4; ++i )
 			{
 				if( BoneWeights[ i ] == 0.0f )
 				{

@@ -57,6 +57,8 @@ namespace Saturn {
 		void GlobalRedoTo( size_t amount = 0 );
 
 		void RemoveIfActionHasIdentifier( UUID identifier );
+
+		void ClearAll();
 		
 	public:
 		// Adds an action to the undo stack.

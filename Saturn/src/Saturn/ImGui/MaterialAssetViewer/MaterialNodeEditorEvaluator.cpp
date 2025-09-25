@@ -178,7 +178,7 @@ namespace Saturn {
 				}
 			}
 
-			i++;
+			++i;
 		}
 
 		return UINT64_MAX;

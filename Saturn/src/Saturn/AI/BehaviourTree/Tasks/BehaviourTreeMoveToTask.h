@@ -36,6 +36,7 @@ namespace Saturn {
 
 	class AIAgentEntity;
 
+	SCLASS()
 	class BehaviourTreeMoveToTask : public BehaviourTreeBaseTask
 	{
 		SAT_DECLARE_CLASS_MOVE( BehaviourTreeMoveToTask, BehaviourTreeBaseTask )

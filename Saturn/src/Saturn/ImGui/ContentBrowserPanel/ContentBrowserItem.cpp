@@ -582,7 +582,22 @@ namespace Saturn {
 			ImGui::BeginHorizontal( "##dndinfo" );
 
 			Auxiliary::Image( Icon, ImVec2( 24.0f, 24.0f ) );
-			ImGui::Text( m_Filename.string().c_str() );
+
+			const auto path = std::filesystem::relative( m_Path, Project::GetActiveProject()->GetRootDir() );
+			const void* pData = &m_Asset->ID;
+
+			if( Input::Get().KeyPressed( RubyKey_LeftCtrl ) || Input::Get().KeyPressed( RubyKey_RightCtrl ) )
+			{
+				Select();
+
+				ImGui::SetDragDropPayload( "CB_ITEM_MOVE", &m_Entry, sizeof( std::filesystem::directory_entry ), ImGuiCond_Once );
+
+				ImGui::Text( "Moving: %s", m_Filename.string().c_str() );
+			}
+			else
+			{
+				ImGui::Text( "Importing: %s", m_Filename.string().c_str() );
+			}
 
 			if( m_MultiSelected )
 			{
@@ -590,17 +605,6 @@ namespace Saturn {
 			}
 
 			ImGui::EndHorizontal();
-
-			const auto path = std::filesystem::relative( m_Path, Project::GetActiveProject()->GetRootDir() );
-			const void* pData = &m_Asset->ID;
-
-			if( Input::Get().KeyPressed( RubyKey_LeftCtrl ) || Input::Get().KeyPressed( RubyKey_RightCtrl ) )
-			{
-				if( m_IsSelected )
-				{
-					ImGui::SetDragDropPayload( "CB_ITEM_MOVE", &m_Entry, sizeof( std::filesystem::directory_entry ), ImGuiCond_Once );
-				}
-			}
 
 			switch( m_Asset->Type )
 			{

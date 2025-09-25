@@ -170,7 +170,7 @@ namespace Saturn {
 
 				ImGui::PopID();
 
-				i++;
+				++i;
 			}
 
 			Auxiliary::EndTreeNode();

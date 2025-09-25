@@ -33,6 +33,7 @@
 
 namespace Saturn {
 
+	SCLASS()
 	class BehaviourTreeCondition : public BehaviourTreeBaseTask
 	{
 		SAT_DECLARE_CLASS_MOVE( BehaviourTreeCondition, BehaviourTreeBaseTask )

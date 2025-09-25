@@ -37,6 +37,7 @@ namespace Saturn {
 	class BehaviourTreeCondition;
 
 	// The base class for all composite tasks
+	SCLASS()
 	class BehaviourTreeCompositeBaseTask : public BehaviourTreeBaseTask
 	{
 		SAT_DECLARE_CLASS_MOVE( BehaviourTreeCompositeBaseTask, BehaviourTreeBaseTask )
@@ -61,6 +62,7 @@ namespace Saturn {
 	// Find the first child that returns Completed, if none are found return Failed.
 	// Could be thought of as a logical OR operator as it finds the branch that does not fail.
 	// Though not atomic tasks, composite nodes like Selectors implement the same API as BehaviourTreeBaseTask.
+	SCLASS()
 	class BehaviourTreeSelectorTask : public BehaviourTreeCompositeBaseTask
 	{
 		SAT_DECLARE_CLASS_MOVE( BehaviourTreeSelectorTask, BehaviourTreeCompositeBaseTask )
@@ -79,6 +81,7 @@ namespace Saturn {
 	// If they all succeed the sequence will return Completed.
 	// Could be thought of as a logical AND operator as it requires all children to succeed.
 	// Though not atomic tasks, composite nodes like Sequence implement the same API as BehaviourTreeBaseTask.
+	SCLASS()
 	class BehaviourTreeSequenceTask : public BehaviourTreeCompositeBaseTask
 	{
 		SAT_DECLARE_CLASS_MOVE( BehaviourTreeSequenceTask, BehaviourTreeCompositeBaseTask )

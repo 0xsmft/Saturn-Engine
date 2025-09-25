@@ -105,10 +105,9 @@ namespace Saturn {
 		void DrawClassHierarchy( const std::string& rKeyName, const SClass* pClass );
 
 		void ClearSearchQuery();
-		void DrawImportSoundPopup();
+
 		void DrawNotReadyImportPopup();
 		void DrawDeleteAssetPopup();
-		void DrawImportMeshPopup();
 
 		void GetContentFiles( bool clear );
 		void GetSourceFiles( bool clear );

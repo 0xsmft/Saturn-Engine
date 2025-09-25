@@ -80,7 +80,7 @@ namespace Saturn {
 				const std::string dataTypeID = std::format( "##DataType/{0}", ( uint64_t ) rData->RenderID );
 				if( ImGui::BeginCombo( dataTypeID.c_str(), currentType.c_str() ) )
 				{
-					for( size_t i = 0; i < std::underlying_type_t<SPropertyType>( SPropertyType::Unknown ); i++ )
+					for( size_t i = 0; i < std::underlying_type_t<SPropertyType>( SPropertyType::Unknown ); ++i )
 					{
 						std::string name = SPropertyTypeToStringInNamespace( ( SPropertyType ) i );
 						if( ImGui::Selectable( name.c_str() ) )
@@ -126,7 +126,7 @@ namespace Saturn {
 				for( const auto& rData : m_SpecAsset->m_SpecificationData )
 				{
 					if( rData->Name.contains( name ) )
-						count++;
+						++count;
 				}
 
 				if( count >= 1 )

@@ -114,7 +114,7 @@ namespace Auxiliary {
 			m_BoneInfos[ boneIndex ].ParentIndex = parentIndex;
 		}
 
-		for( unsigned int i = 0; i < pNode->mNumChildren; i++ ) 
+		for( unsigned int i = 0; i < pNode->mNumChildren; ++i ) 
 		{
 			BuildHierarchy( pNode->mChildren[ i ], boneIndex );
 		}

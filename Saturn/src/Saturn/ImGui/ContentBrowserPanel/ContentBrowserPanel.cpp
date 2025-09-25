@@ -32,6 +32,7 @@
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
 #include "Saturn/ImGui/AssetImportPopups.h"
 #include "Saturn/ImGui/EditorIcons.h"
+#include "Saturn/ImGui/UndoRedo/GlobalUndoRedoGroup.h"
 
 #include "Saturn/Asset/MaterialAsset.h"
 #include "Saturn/Asset/PhysicsMaterialAsset.h"
@@ -132,9 +133,7 @@ namespace Saturn {
 
 					AssetManager::Get().Save();
 
-					// TODO: Change this when we support moving multiple items.
-					m_SelectedItems[ 0 ]->Deselect();
-
+					ClearSelection();
 					UpdateFiles( true );
 				}
 			}
@@ -714,7 +713,7 @@ namespace Saturn {
 			constexpr int thumbnailSizeX = 180;
 			constexpr int thumbnailSizeY = 180;
 			constexpr int cellSize = thumbnailSizeX + static_cast< int >( padding );
-			float panelWidth = ImGui::GetContentRegionAvail().x - 20.0f + ImGui::GetStyle().ScrollbarSize;
+			const float panelWidth = ImGui::GetContentRegionAvail().x - 20.0f + ImGui::GetStyle().ScrollbarSize;
 
 			int columnCount = ( int ) ( panelWidth / cellSize );
 			if( columnCount < 1 ) columnCount = 1;
@@ -1027,104 +1026,6 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// POPUPS
 
-	void ContentBrowserPanel::DrawImportSoundPopup() 
-	{
-#if !defined(SAT_DIST)
-		if( m_AssetImportType != AssetType::Sound )
-			return;
-
-		if( m_ShowAssetImportPopup )
-			ImGui::OpenPopup( "Import Sound##IMPORT_SOUND" );
-		
-		bool PopupModified = false;
-		ImGui::SetNextWindowSize( { 350.0F, 0.0F } );
-		if( ImGui::BeginPopupModal( "Import Sound##IMPORT_SOUND", &m_ShowAssetImportPopup, ImGuiWindowFlags_NoMove ) )
-		{
-			ImGui::BeginVertical( "##inputv" );
-
-			ImGui::Text( "Path:" );
-
-			ImGui::BeginHorizontal( "##inputH" );
-
-			ImGui::InputText( "##path", ( char* ) m_ImportAssetPath.string().c_str(), 1024 );
-
-			if( ImGui::Button( "Browse" ) )
-			{
-				m_ImportAssetPath = Application::Get().OpenFile( "Supported asset types (*.wav *.mp3)\0*.wav; *.mp3\0" );
-			}
-
-			ImGui::EndHorizontal();
-			ImGui::EndVertical();
-
-			ImGui::BeginHorizontal( "##actionsH" );
-
-			if( ImGui::Button( "Create" ) )
-			{
-				auto id = AssetManager::Get().CreateAsset( AssetType::Sound );
-				auto asset = AssetManager::Get().FindAsset( id );
-				auto assetPath = m_CurrentPath / m_ImportAssetPath.filename();
-				
-				// Copy the audio source.
-				std::filesystem::copy_file( m_ImportAssetPath, assetPath );
-
-				// Replace Extension for sound asset
-				assetPath.replace_extension( ".snd" );
-				asset->SetAbsolutePath( assetPath );
-
-				// Create the asset.
-				auto sound = Ref<SoundSpecification>::Create( asset );
-
-				sound->OriginalImportPath = m_ImportAssetPath;
-				sound->SoundSourcePath = m_CurrentPath / m_ImportAssetPath.filename();
-
-				// Currently the date is YYYY-MM-DD HH-MM-SS however all we want is YYYY-MM-DD
-				std::string fullTime = std::format( "{0}", std::filesystem::last_write_time( m_ImportAssetPath ) );
-				auto pos = fullTime.find_first_of( " " );
-				if( pos != std::string::npos )
-					fullTime.resize( fullTime.find_first_of( " " ) );
-
-				sound->LastWriteTime = fullTime;
-
-				// Save the asset
-				SoundSpecificationAssetSerialiser s2d;
-				s2d.Serialise( sound );
-
-				PopupModified = true;
-			}
-
-			auto exitPopup = [&]( ) -> void
-			{
-				m_ImportAssetPath = "";
-				m_ShowAssetImportPopup = false;
-				m_AssetImportType = AssetType::Unknown;
-			};
-
-			if( ImGui::Button( "Cancel" ) )
-			{
-				exitPopup();
-
-				ImGui::CloseCurrentPopup();
-			}
-
-			ImGui::EndHorizontal();
-
-			if( PopupModified )
-			{
-				exitPopup();
-
-				AssetManagerSerialiser ars;
-				ars.Serialise();
-
-				UpdateFiles( true );
-
-				ImGui::CloseCurrentPopup();
-			}
-
-			ImGui::EndPopup();
-		}
-#endif
-	}
-
 	void ContentBrowserPanel::DrawNotReadyImportPopup()
 	{
 		ImGui::OpenPopup( "Please wait##ASSETINIT" );
@@ -1153,7 +1054,7 @@ namespace Saturn {
 
 			ImGui::Text( "Are you sure you want to delete this asset?" );
 
-			auto boldFont = ImGui::GetIO().Fonts->Fonts[ 1 ];
+			const auto boldFont = ImGui::GetIO().Fonts->Fonts[ 1 ];
 			ImGui::PushFont( boldFont );
 			ImGui::Text( "This action can not be undone." );
 			ImGui::PopFont();
@@ -1161,6 +1062,8 @@ namespace Saturn {
 			ImGui::Text( "%s has %i Asset Dependencies and %i memory dependencies.", assetToDelete->Name.c_str(), rPureDependencies.size(), rMemoryDependencies.size() );
 			
 			ImGui::Text( "Deleting the asset cause everything that depends on \"%s\" to be invalid unless a replacement is given.", assetToDelete->Name.c_str() );
+
+			ImGui::Text( "Because this Asset may have memory dependencies the Undo Redo history will be cleared." );
 
 			ImGui::Spacing();
 
@@ -1247,6 +1150,8 @@ namespace Saturn {
 
 					s_ID = 0;
 
+					GlobalUndoRedoGroup::Get().ClearAll();
+
 					m_ItemToDelete->Delete();
 					m_ItemToDelete = nullptr;
 
@@ -1273,6 +1178,8 @@ namespace Saturn {
 
 					AssetManager::Get().UnregisterAllAssetDependencies( assetToDelete->ID );
 
+					GlobalUndoRedoGroup::Get().ClearAll();
+
 					m_ItemToDelete->Delete();
 					m_ItemToDelete = nullptr;
 
@@ -1292,270 +1199,6 @@ namespace Saturn {
 				}
 
 				ImGui::EndTable();
-			}
-
-			ImGui::EndPopup();
-		}
-#endif
-	}
-
-	void ContentBrowserPanel::DrawImportMeshPopup()
-	{
-#if !defined(SAT_DIST)
-		if( m_AssetImportType != AssetType::StaticMesh /*|| m_AssetImportType != AssetType::SkeletalMesh*/ )
-			return;
-
-		if( m_ShowAssetImportPopup )
-			ImGui::OpenPopup( "Import Mesh##IMPORT_MESH" );
-	
-		ImGui::SetNextWindowSize( { 350.0F, 0.0F } );
-		ImGui::SetNextWindowPos( ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Appearing, ImVec2( 0.5f, 0.5f ) );
-
-		if( ImGui::BeginPopupModal( "Import Mesh##IMPORT_MESH", &m_ShowAssetImportPopup, ImGuiWindowFlags_NoSavedSettings ) )
-		{
-			bool PopupModified = false;
-
-			static std::filesystem::path s_GLTFBinPath = "";
-			static bool s_UseBinFile = false;
-			static bool s_HasDeterminant = false;
-			static AssetID s_CurrentAssetID = 0;
-			static MeshImportBehaviour meshImportBehaviour = MeshImportBehaviour_Default;
-
-			if( !s_HasDeterminant )
-			{
-				MeshDeterminer md;
-				md.ImportAndDetermine( m_ImportAssetPath );
-
-				if( md.CheckResult( MeshDeterminerResult_Undetermined ) )
-				{
-					s_HasDeterminant = true;
-					return;
-				}
-
-				if( md.CheckResult( MeshDeterminerResult_StaticMesh ) )
-				{
-					// todo
-					// enable skeletal mesh options
-				}
-
-				s_HasDeterminant = true;
-			}
-
-			ImGui::BeginVertical( "##inputv" );
-
-			ImGui::Text( "Path:" );
-
-			ImGui::BeginHorizontal( "##inputH" );
-
-			ImGui::InputText( "##path", ( char* ) m_ImportAssetPath.string().c_str(), 1024 );
-
-			if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
-			{
-				m_ImportAssetPath = Application::Get().OpenFile( "Supported asset types (*.fbx *.gltf *.glb)\0*.fbx; *.gltf; *.glb\0" );
-			}
-
-			ImGui::EndHorizontal();
-
-			ImGui::EndVertical();
-
-			// If the path a GLTF file then we need to file the bin file.
-			if( m_ImportAssetPath.extension() == ".gltf" || m_ImportAssetPath.extension() == ".glb" )
-			{
-				// We can assume the bin file has the same name as the mesh.
-				if( s_GLTFBinPath.empty() )
-				{
-					s_GLTFBinPath = m_ImportAssetPath;
-					s_GLTFBinPath.replace_extension( ".bin" );
-
-					s_UseBinFile = std::filesystem::exists( s_GLTFBinPath );
-				}
-
-				ImGui::BeginVertical( "##gltfinput" );
-
-				ImGui::Text( "GLTF binary file path:" );
-
-				ImGui::BeginHorizontal( "##gltfinputH" );
-
-				ImGui::InputText( "##binpath", ( char* ) s_GLTFBinPath.string().c_str(), 1024 );
-
-				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
-				{
-					s_GLTFBinPath = Application::Get().OpenFile( "Supported asset types (*.glb *.bin)\0*.glb; *.bin\0" );
-
-					s_UseBinFile = std::filesystem::exists( s_GLTFBinPath );
-				}
-
-				ImGui::EndHorizontal();
-
-				Auxiliary::DrawBoolControl( "Use Binary File", s_UseBinFile );
-
-				ImGui::EndVertical();
-			}
-
-			ImGui::BeginHorizontal( "##defMaterial" );
-			
-			bool open = false;
-
-			ImGui::Text( "Default Material:" );
-			 
-			if( ImGui::BeginItemTooltip() )
-			{
-				ImGui::Text( "todo" );
-				ImGui::EndTooltip();
-			}
-
-			s_CurrentAssetID == 0 ? ImGui::Text( "None -- create new" ) : ImGui::Text( std::to_string( s_CurrentAssetID ).c_str() );
-
-			ImGui::Spring();
-
-			if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
-				open = true;
-
-			Auxiliary::DrawAssetFinder( AssetType::Material, &open, s_CurrentAssetID );
-
-			ImGui::EndHorizontal();
-
-			ImGui::Text( "Import Behaviour:" );
-
-			auto hasFlag = []( MeshImportBehaviour flag ) -> bool
-			{
-				return ( meshImportBehaviour & flag ) != 0;
-			};
-
-			ImGui::BeginHorizontal( "##importOption_aum" );
-			
-			bool allowUnnamedMaterials = hasFlag( MeshImportBehaviour_AllowUnnamedMaterials );
-			ImGui::Text( "Allow Unnamed Materials" );
-			ImGui::Spring();
-
-			ImGui::SetNextItemWidth( 130.0f );
-			if( ImGui::Checkbox( "##AllowUnnamedMaterials", &allowUnnamedMaterials ) )
-			{
-				if( hasFlag( MeshImportBehaviour_AllowUnnamedMaterials ) )
-					meshImportBehaviour &= ~MeshImportBehaviour_AllowUnnamedMaterials;
-				else
-					meshImportBehaviour |= MeshImportBehaviour_AllowUnnamedMaterials;
-			}
-			
-			ImGui::EndHorizontal();
-
-			ImGui::BeginHorizontal( "##importOption_nomat" );
-
-			bool noMaterials = hasFlag( MeshImportBehaviour_CreateNoMaterials );
-			ImGui::Text( "Don't Create Materials" );
-			ImGui::Spring();
-
-			ImGui::SetNextItemWidth( 130.0f );
-			if( ImGui::Checkbox( "##NoMaterials", &noMaterials ) )
-			{
-				if( hasFlag( MeshImportBehaviour_CreateNoMaterials ) )
-					meshImportBehaviour &= ~MeshImportBehaviour_CreateNoMaterials;
-				else
-					meshImportBehaviour |= MeshImportBehaviour_CreateNoMaterials;
-			}
-
-			ImGui::EndHorizontal();
-
-			ImGui::BeginHorizontal( "##importOption_ext" );
-
-			bool excludeTextures = hasFlag( MeshImportBehaviour_ExcludeTextures );
-			ImGui::Text( "Exclude Textures" );
-			ImGui::Spring();
-
-			ImGui::SetNextItemWidth( 130.0f );
-			if( ImGui::Checkbox( "##ExcludeTextures", &excludeTextures ) )
-			{
-				if( hasFlag( MeshImportBehaviour_ExcludeTextures ) )
-					meshImportBehaviour &= ~MeshImportBehaviour_ExcludeTextures;
-				else
-					meshImportBehaviour |= MeshImportBehaviour_ExcludeTextures;
-			}
-
-			ImGui::EndHorizontal();
-
-			ImGui::Separator();
-
-			ImGui::BeginHorizontal( "##actionsH" );
-
-			Auxiliary::DisabledFlag disabledIf( ( s_UseBinFile && s_GLTFBinPath.empty() ) || m_ImportAssetPath.empty() );
-
-			if( ImGui::Button( "Create" ) )
-			{
-				auto id = AssetManager::Get().CreateAsset( AssetType::StaticMesh );
-				auto asset = AssetManager::Get().FindAsset( id );
-
-				/*
-				// Copy the raw mesh file:
-				std::filesystem::copy_file( m_ImportAssetPath, m_CurrentPath / m_ImportAssetPath.filename(), std::filesystem::copy_options::overwrite_existing );
-
-				if( s_UseBinFile )
-					std::filesystem::copy_file( s_GLTFBinPath, m_CurrentPath / s_GLTFBinPath.filename(), std::filesystem::copy_options::overwrite_existing );
-
-				auto assetPath = m_CurrentPath / m_ImportAssetPath.filename();
-				assetPath.replace_extension( ".stmesh" );
-
-				asset->SetAbsolutePath( assetPath );
-				*/
-
-				StaticMeshImporter meshImporter( m_ImportAssetPath, m_CurrentPath, meshImportBehaviour );
-
-				/*
-				// Create the mesh asset.
-				auto staticMesh = asset.As<StaticMesh>();
-				staticMesh = Ref<StaticMesh>::Create();
-				staticMesh->ID = asset->ID;
-				staticMesh->Path = asset->Path;
-
-				auto& meshPath = assetPath.replace_extension( m_ImportAssetPath.extension() );
-				staticMesh->SetFilepath( meshPath );
-				staticMesh->Import_InitMaterialRegistry();
-
-				// TOOD: Unload the material assets!! (Textures could be loaded!)
-				for( uint64_t materialID : meshImporter.GetMeshInformation().MaterialAssets )
-				{
-					staticMesh->GetMaterialRegistry()->AddAsset( AssetManager::Get().GetAssetAs<MaterialAsset>( materialID ) );
-				}
-
-				// Serialise the mesh asset
-				StaticMeshAssetSerialiser sma;
-				sma.Serialise( staticMesh );
-
-				staticMesh->SetAbsolutePath( assetPath );
-				*/
-
-				PopupModified = true;
-			}
-
-			disabledIf.Pop();
-
-			auto exitPopup = [&]() -> void
-			{
-				m_ImportAssetPath = "";
-				m_ShowAssetImportPopup = false;
-				m_AssetImportType = AssetType::Unknown;
-			};
-
-			if( ImGui::Button( "Cancel" ) )
-			{
-				exitPopup();
-				ImGui::CloseCurrentPopup();
-			}
-
-			ImGui::EndHorizontal();
-
-			if( PopupModified )
-			{
-				exitPopup();
-
-				AssetManagerSerialiser ars;
-				ars.Serialise();
-
-				UpdateFiles( true );
-
-				s_GLTFBinPath = "";
-				s_UseBinFile = false;
-
-				ImGui::CloseCurrentPopup();
 			}
 
 			ImGui::EndPopup();
@@ -1853,11 +1496,11 @@ namespace Saturn {
 				std::advance( Itr, std::min( (size_t)clipper.DisplayStart * columnCount, rList.size() ) );
 			}
 
-			for( int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++ )
+			for( int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i )
 			{
 				int c{};
 
-				for( c = 0; c < columnCount && Itr != rList.end(); c++, Itr++ )
+				for( c = 0; c < columnCount && Itr != rList.end(); ++c, ++Itr )
 				{
 					auto& rItem = *Itr;
 					rItem->Draw( size, padding );
@@ -1881,7 +1524,7 @@ namespace Saturn {
 				if( first && c < columnCount )
 				{
 					// Use the extra columns if we didn't use them
-					for( int extra = 0; extra < columnCount - c; extra++ )
+					for( int extra = 0; extra < columnCount - c; ++extra )
 					{
 						ImGui::NextColumn();
 					}

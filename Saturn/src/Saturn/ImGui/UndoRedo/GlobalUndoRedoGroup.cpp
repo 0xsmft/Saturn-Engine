@@ -114,6 +114,12 @@ namespace Saturn {
 		m_RedoActions.erase( itr, m_RedoActions.end() );
 	}
 
+	void GlobalUndoRedoGroup::ClearAll()
+	{
+		m_UndoActions.clear();
+		m_RedoActions.clear();
+	}
+
 	void GlobalUndoRedoGroup::AddAction( Ref<UndoRedoActionBase> action, UUID identifier )
 	{
 		action->SetIdentifier( identifier );
@@ -144,14 +150,14 @@ namespace Saturn {
 
 			// Undo actions
 			ImGui::Text( "Undo Actions:" );
-			for( size_t i = 0; i < m_UndoActions.size(); i++ )
+			for( size_t i = 0; i < m_UndoActions.size(); ++i )
 			{
 				ImGui::Text( "%i: %s", i, m_UndoActions[ i ]->GetName().c_str() );
 			}
 
 			// Redo actions
 			ImGui::Text( "Redo Actions:" );
-			for( size_t i = 0; i < m_RedoActions.size(); i++ )
+			for( size_t i = 0; i < m_RedoActions.size(); ++i )
 			{
 				ImGui::Text( "%i: %s", i, m_RedoActions[ i ]->GetName().c_str() );
 			}

@@ -40,7 +40,7 @@ namespace Saturn {
 
 	class SkylightEntityModifiedEvent : public Event
 	{
-		SAT_DEFINE_EVENT( SceneTravel, EC_Editor );
+		SAT_DEFINE_EVENT( SkylightEntityModified, EC_Editor );
 	public:
 		SkylightEntityModifiedEvent( const glm::vec3& rParams )
 			: Event( EventType::SkylightEntityModified, EC_Editor ), m_Params( rParams )
@@ -54,5 +54,55 @@ namespace Saturn {
 	private:
 		glm::vec3 m_Params;
 	};
-		
+	
+	//
+	// AssetDeletedEvent
+	// Triggers when an Asset is deleted and is NOT replaced
+	//
+	class AssetDeletedEvent : public Event
+	{
+		SAT_DEFINE_EVENT( AssetDeleted, EC_Editor );
+	public:
+		AssetDeletedEvent( AssetID deletedID )
+			: Event( EventType::AssetDeleted, EC_Editor ), m_DeletedAssetID( deletedID )
+		{
+		}
+
+		virtual ~AssetDeletedEvent() = default;
+
+		[[nodiscard]] AssetID GetDeletedAssetID() const { return m_DeletedAssetID; }
+
+	private:
+		AssetID m_DeletedAssetID = 0;
+	};
+
+	//
+	// AssetReplacedEvent
+	// Triggers when an Asset is deleted and is replaced
+	// NOTE: You may think the event chain will be this:
+	//  - AssetDeletedEvent
+	//	- AssetReplacedEvent
+	// 
+	// However, AssetReplacedEvent will fire when as asset is replaced and is exclusive to AssetDeletedEvent meaning that only one can fire at a time!
+	//
+	class AssetReplacedEvent : public Event
+	{
+		SAT_DEFINE_EVENT( AssetReplaced, EC_Editor );
+	public:
+		AssetReplacedEvent( AssetID original, AssetID newID )
+			: Event( EventType::AssetReplaced, EC_Editor ), m_OldAssetID( original ), m_NewAssetID( newID )
+		{
+		}
+
+		virtual ~AssetReplacedEvent() = default;
+
+		// @returns The ID that will replaced by GetNewAssetID()
+		[[nodiscard]] AssetID GetOldAssetID() const { return m_OldAssetID; }
+		[[nodiscard]] AssetID GetNewAssetID() const { return m_NewAssetID; }
+
+	private:
+		AssetID m_OldAssetID = 0;
+		AssetID m_NewAssetID = 0;
+	};
+
 }

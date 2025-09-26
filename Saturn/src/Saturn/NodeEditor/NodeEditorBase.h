@@ -30,6 +30,7 @@
 
 #include "NodeEditorCompilationStatus.h"
 #include "NodeEditorNodeBase.h"
+#include "NodeEditorVariable.h"
 #include "Link.h"
 
 #include "Saturn/Core/VariableGuard.h"
@@ -280,6 +281,8 @@ namespace Saturn {
 		const std::map<UUID, SharedPtr<NodeEditorNodeBase>>& GetNodes() const { return m_Nodes; }
 		std::map<UUID, SharedPtr<NodeEditorNodeBase>>& GetNodes() { return m_Nodes; }
 
+		std::unordered_map<UUID, Ref<NodeEditorVariable>> GetDataHandles() const { return m_DataHandles; }
+
 		const std::vector<Ref<Link>>& GetLinks() const { return m_Links; }
 		std::vector<Ref<Link>>& GetLinks() { return m_Links; }
 
@@ -309,6 +312,7 @@ namespace Saturn {
 		ed::EditorContext* m_Editor = nullptr;
 		std::string m_ActiveNodeEditorState;
 
+		std::unordered_map<UUID, Ref<NodeEditorVariable>> m_DataHandles;
 		std::map<UUID, SharedPtr<NodeEditorNodeBase>> m_Nodes;
 		std::vector<Ref<Link>> m_Links;
 

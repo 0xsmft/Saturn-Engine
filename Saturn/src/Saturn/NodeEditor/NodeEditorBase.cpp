@@ -108,6 +108,15 @@ namespace Saturn {
 		{
 			Link::Serialise( rLinks, rStream );
 		}
+
+		mapSize = m_DataHandles.size();
+		RawSerialisation::WriteObject( mapSize, rStream );
+
+		for( const auto& [id, rHandle] : m_DataHandles )
+		{
+			RawSerialisation::WriteObjectChecked( id, rStream );
+			NodeEditorVariable::Serialise( rHandle, rStream );
+		}
 	}
 
 #if defined(SAT_DIST)

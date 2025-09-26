@@ -295,6 +295,100 @@ namespace Saturn {
 
 		ImGui::End();
 
+		// Variables
+		if( ImGui::Begin( "Data" ) )
+		{
+			Auxiliary::ScopedDisabledFlag disabled( !HasPrivilege( NodeEditorUserAuthority::Editing ) );
+
+			if( Auxiliary::TreeNode( "Variables" ) ) 
+			{
+				for( auto& [id, rVariable] : m_DataHandles )
+				{
+					ImGui::BeginHorizontal( ( uint64_t ) id );
+					if( Auxiliary::InputText( "##editname", &rVariable->m_Name ) ) 
+					{
+						MarkDirty();
+					}
+
+					ImGui::Spring();
+					ImGui::SeparatorEx( ImGuiSeparatorFlags_Vertical, 1.0f );
+					ImGui::Spring();
+
+					const std::string currentType = NodeEditorVariableDataTypeToString( rVariable->GetType() );
+					const std::string dataTypeID = std::format( "##DataType/{0}", ( uint64_t ) id );
+					ImGui::SetNextItemWidth( 164.0f );
+					if( ImGui::BeginCombo( dataTypeID.c_str(), currentType.c_str() ) )
+					{
+						for( size_t i = 0; i < std::underlying_type_t<NodeEditorVariableDataType>( NodeEditorVariableDataType::Unknown ); ++i )
+						{
+							const std::string itemName = NodeEditorVariableDataTypeToString( ( NodeEditorVariableDataType ) i );
+							if( ImGui::Selectable( itemName.c_str() ) )
+							{
+								rVariable->m_DataType = ( NodeEditorVariableDataType ) i;
+								MarkDirty();
+							}
+						}
+
+						ImGui::EndCombo();
+					}
+
+					ImGui::Spring();
+
+					if( ImGui::SmallButton( "-" ) )
+					{
+						m_DataHandles.erase( id );
+						MarkDirty();
+
+						ImGui::EndHorizontal();
+						break;
+					}
+
+					ImGui::EndHorizontal();
+
+					// No new line!
+					if( rVariable->m_Name.empty() )
+					{
+						const std::string text = "The variable name cannot be empty!";
+
+						const ImVec2 padding = ImGui::GetStyle().FramePadding;
+						const ImVec2 textPosition = ImGui::GetCursorScreenPos();
+						const ImVec2 textSize = ImGui::CalcTextSize( text.c_str() );
+
+						const ImVec2 min = ImVec2( textPosition.x - padding.x, textPosition.y - padding.y );
+						const ImVec2 max = ImVec2( textPosition.x + padding.x + textSize.x, textPosition.y + padding.y + textSize.y );
+
+						ImGui::GetWindowDrawList()->AddRectFilled( min, max, IM_COL32( 200, 30, 60, 255 ), 2.0f, ImDrawFlags_RoundCornersAll );
+
+						ImGui::TextUnformatted( text.c_str() );
+					}
+				}
+
+				if( ImGui::SmallButton( "+" ) )
+				{
+					Ref<NodeEditorVariable> var = Ref<NodeEditorVariable>::Create( NodeEditorVariableDataType::Unknown );
+
+					std::string name = "NewVariable";
+
+					const auto count = std::count_if( m_DataHandles.begin(), m_DataHandles.end(), 
+						[name](const auto& rCandidate)
+					{
+						return rCandidate.second->m_Name.contains( name );
+					} );
+
+					if( count >= 1 )
+						name += std::to_string( count );
+
+					var->m_Name = name;
+					m_DataHandles[ var->GetUUID() ] = var;
+					MarkDirty();
+				}
+
+				Auxiliary::EndTreeNode();
+			}
+		}
+
+		ImGui::End();
+
 		// Create new node context popup window
 		ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 8.0f, 8.0f ) );
 		if( ImGui::BeginPopup( "Create New Node" ) )
@@ -1000,6 +1094,15 @@ namespace Saturn {
 		{
 			Link::Serialise( rLinks, rStream );
 		}
+
+		mapSize = m_DataHandles.size();
+		RawSerialisation::WriteObject( mapSize, rStream );
+
+		for( const auto& [id, rHandle] : m_DataHandles )
+		{
+			RawSerialisation::WriteObjectChecked( id, rStream );
+			NodeEditorVariable::Serialise( rHandle, rStream );
+		}
 	}
 
 	void NodeEditor::DeserialiseData( std::ifstream& rStream )
@@ -1019,7 +1122,7 @@ namespace Saturn {
 
 		std::unordered_map<UUID, std::vector<UUID>> parentToChildMap;
 
-		for( size_t i = 0; i < mapSize; i++ )
+		for( size_t i = 0; i < mapSize; ++i )
 		{
 			UUID key = 0;
 			RawSerialisation::ReadUUID( key, rStream );
@@ -1069,13 +1172,29 @@ namespace Saturn {
 
 		m_Links.resize( mapSize );
 
-		for( size_t i = 0; i < mapSize; i++ )
+		for( size_t i = 0; i < mapSize; ++i )
 		{
 			Ref<Link> link = Ref<Link>::Create();
 
 			Link::Deserialise( link, rStream );
 
 			m_Links[ i ] = link;
+		}
+
+		mapSize = 0;
+		RawSerialisation::ReadObject( mapSize, rStream );
+
+		m_DataHandles.reserve( mapSize );
+
+		for( size_t i = 0; i < mapSize; ++i )
+		{
+			UUID id = 0llu;
+			RawSerialisation::ReadObjectChecked( id, rStream );
+
+			Ref<NodeEditorVariable> var = Ref<NodeEditorVariable>::Create();
+			NodeEditorVariable::Deserialise( var, rStream );
+
+			m_DataHandles[ id ] = var;
 		}
 
 		m_State = NodeEditorState::Editing;

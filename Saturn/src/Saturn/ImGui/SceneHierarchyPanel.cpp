@@ -748,7 +748,7 @@ namespace Saturn {
 							}
 						}
 
-						i++;
+						++i;
 					}
 
 					Auxiliary::EndTreeNode();
@@ -802,12 +802,6 @@ namespace Saturn {
 					m_CurrentAssetID = mc.Mesh->ID;
 			}
 
-			if( ImGui::Button( "Inspect", ImVec2( 24.0f, 24.0f ) ) )
-			{
-				open = !open;
-				m_CurrentFinderType = AssetType::SkeletalAnimation;
-			}
-
 			ImGui::SameLine();
 
 			if( mc.Mesh )
@@ -841,8 +835,61 @@ namespace Saturn {
 							}
 						}
 
-						i++;
+						++i;
 					}
+
+					Auxiliary::EndTreeNode();
+				}
+
+				ImGui::Text( "Animation" );
+
+				if( Auxiliary::TreeNode( "Animation" ) )
+				{
+					ImGui::BeginHorizontal( "##animAssetType" );
+
+					ImGui::Text( "Animation Type" );
+
+					ImGui::SetNextItemWidth( 130.0f );
+					
+					const std::string previewStr = mc.AnimatorType == AnimationAssetType::Single ? "Single" : "Animation Controller (AnimGraph)";
+					if( ImGui::BeginCombo( "##setanimtype", previewStr.c_str() ) )
+					{
+						if( ImGui::Selectable( "Single" ) )
+						{
+							mc.AnimatorType = AnimationAssetType::Single;
+						}
+
+						if( ImGui::Selectable( "Use Animation Controller (AnimGraph)" ) )
+						{
+							mc.AnimatorType = AnimationAssetType::AnimationControllerGraph;
+						}
+
+						ImGui::EndCombo();
+					}
+
+					ImGui::EndHorizontal();
+					
+					ImGui::BeginHorizontal( "##animAsset" );
+
+					ImGui::Text( "Asset:" );
+
+					ImGui::Spring();
+
+					ImGui::SetNextItemWidth( 130.0f );
+					if( mc.LocalAnimator && mc.LocalAnimator->GetCurrentAnimation() )
+						Auxiliary::InputText( "##assetname", &mc.LocalAnimator->GetCurrentAnimation()->Name, ImGuiInputTextFlags_ReadOnly );
+					else
+						ImGui::InputText( "##assetname", ( char* ) "", 1, ImGuiInputTextFlags_ReadOnly );
+
+					ImGui::Spring();
+
+					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0F, 24.0F ) ) )
+					{
+						m_CurrentFinderType = mc.AnimatorType == AnimationAssetType::Single ? AssetType::SkeletalAnimation : AssetType::AnimationController;
+						open = !open;
+					}
+
+					ImGui::EndHorizontal();
 
 					Auxiliary::EndTreeNode();
 				}
@@ -856,9 +903,10 @@ namespace Saturn {
 
 					mc.MaterialRegistry = Ref<MaterialRegistry>::Create( mc.Mesh );
 				}
-				else if( m_CurrentFinderType == AssetType::SkeletalAnimation ) 
+				else if( m_CurrentFinderType == AssetType::SkeletalAnimation || m_CurrentFinderType == AssetType::AnimationController ) 
 				{
-					mc.LocalAnimator.InitAnimation( m_CurrentAssetID, mc.Mesh );
+					mc.LocalAnimator = Ref<Animator>::Create();
+					mc.LocalAnimator->InitAnimation( m_CurrentAssetID, mc.Mesh );
 				}
 				else if( m_CurrentFinderType == AssetType::Material )
 				{

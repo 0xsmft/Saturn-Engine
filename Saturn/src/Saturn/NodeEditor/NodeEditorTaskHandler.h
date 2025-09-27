@@ -28,64 +28,30 @@
 
 #pragma once
 
-#include "AnimatorType.h"
-#include "SkeletalAnimationAsset.h"
-#include "AnimationController.h"
+#include "NodeEditorTaskBase.h"
 
-#include "Saturn/Vulkan/Mesh.h"
+#include <map>
 
 namespace Saturn {
 
-	enum class AnimationState 
-	{
-		NotInitialised, // InitAnimation not called
-		Inactive, // InitAnimation called awaiting Play or Pause
-		Playing,
-		Paused
-	};
-
-	class Animator : public RefTarget
+	class NodeEditorTaskHandler : public RefTarget
 	{
 	public:
-		Animator();
-		~Animator();
+		NodeEditorTaskHandler() = default;
+		~NodeEditorTaskHandler() = default;
 
-		void InitAnimation( AssetID id, Ref<SkeletalMesh> sk, AnimatorType type );
-		void TickAnimation( Timestep ts );
-		void Pause();
-		void Begin();
-		void Clear();
-
-		void QueueNewAnimation( AssetID id );
-
-		AssetID GetCurrentID() const { return m_CurrentID; }
-		Ref<Asset> GetCurrentAnimation() const;
-
-		const std::vector<glm::mat4>& GetBoneTransforms() const { return m_BoneTransforms; }
-
-		// An animator is consider active if an animation is playing or if it's paused
-		// However, if it not initialised, meaning we've never had an animation, then it's not active
-		bool IsActive() const { return m_State != AnimationState::Inactive && m_State != AnimationState::NotInitialised; }
+		void Init( SharedPtr<NodeEditorBase> nodeEditor );
+		void Tick( Timestep ts );
 
 	private:
-		void TickSingleAnim( Timestep ts );
-		void ApplyBoneTransformations();
-		void UpdateBones( size_t boneIndex, const glm::mat4& rParentTransform, const std::vector<glm::mat4>& rLocalTransforms );
-
+		void ResetAllTasks();
+	
 	private:
-		float m_StartTime = 0.0f;
-		float m_AnimationTime = 0.0f;
-		AnimationState m_State = AnimationState::NotInitialised;
-		AnimatorType m_AnimatorType = AnimatorType::Single;
-
-		AssetID m_PendingAsset = 0llu;
-		AssetID m_CurrentID = 0llu;
-
-		Ref<SkeletalAnimationAsset> m_SingleAnimationAsset;
-		Ref<AnimationController> m_AnimationControllerAsset;
-		Ref<SkeletalMesh> m_SkeletalMesh;
-
-		std::vector<glm::mat4> m_BoneTransforms;
+		// All tasks in the tree
+		//       NODE ID -> TASK*
+		std::vector<Ref<NodeEditorTaskBase>> m_Tasks;
+		Ref<NodeEditorTaskBase> m_CurrentTask;
+		size_t m_CurrentTaskIndex = 0;
 	};
-
+	
 }

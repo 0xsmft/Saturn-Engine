@@ -159,8 +159,10 @@ namespace Saturn {
 		Ref<Saturn::SkeletalMesh> Mesh;
 		// We always want to store our own material registry because there will be one in the asset however that is global for all of the same meshes in the scene and what if we want to just locally change one asset.
 		Ref<Saturn::MaterialRegistry> MaterialRegistry;
-
-		Animator LocalAnimator;
+		
+		// Animation
+		AnimatorType AnimatorType = AnimatorType::Single;
+		Ref<Animator> LocalAnimator;
 
 		SkeletalMeshComponent() = default;
 		SkeletalMeshComponent( const SkeletalMeshComponent& other ) = default;

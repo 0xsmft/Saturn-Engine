@@ -44,19 +44,34 @@ namespace Saturn {
 	{
 	}
 
-	void Animator::InitAnimation( AssetID id, Ref<SkeletalMesh> sk )
+	void Animator::InitAnimation( AssetID id, Ref<SkeletalMesh> sk, AnimatorType type )
 	{
 		m_SkeletalMesh = sk;
-		m_AnimationAsset = AssetManager::Get().GetAssetAs<SkeletalAnimationAsset>( id );
-	
+		m_CurrentID = id;
+
+		switch( type )
+		{
+			case AnimatorType::Single:
+				m_SingleAnimationAsset = AssetManager::Get().GetAssetAs<SkeletalAnimationAsset>( id );
+				break;
+		
+			case AnimatorType::AnimationControllerGraph:
+				m_AnimationControllerAsset = Ref<AnimationController>::Create( id );
+				break;
+		
+			default: break;
+		}
+
+		m_AnimatorType = type;
 		m_State = AnimationState::Inactive;
 	}
 
-	void Animator::TickAnimation( Timestep ts )
+	void Animator::TickSingleAnim( Timestep ts ) 
 	{
 		if( m_PendingAsset )
 		{
-			m_AnimationAsset = AssetManager::Get().GetAssetAs<SkeletalAnimationAsset>( m_PendingAsset );
+			m_SingleAnimationAsset = AssetManager::Get().GetAssetAs<SkeletalAnimationAsset>( m_PendingAsset );
+			m_CurrentID = m_PendingAsset;
 			m_PendingAsset = 0;
 
 			m_AnimationTime = 0.0f;
@@ -73,10 +88,26 @@ namespace Saturn {
 
 			case AnimationState::Playing:
 			{
-				m_AnimationTime += ts * m_AnimationAsset->GetTicksPerSecond();
-				m_AnimationTime = fmod( m_AnimationTime, m_AnimationAsset->GetDuration() );
+				m_AnimationTime += ts * m_SingleAnimationAsset->GetTicksPerSecond();
+				m_AnimationTime = fmod( m_AnimationTime, m_SingleAnimationAsset->GetDuration() );
 				ApplyBoneTransformations();
 			} break;
+		}
+	}
+
+	void Animator::TickAnimation( Timestep ts )
+	{
+		switch( m_AnimatorType )
+		{
+			case AnimatorType::Single:
+				TickSingleAnim( ts );
+				break;
+
+			case AnimatorType::AnimationControllerGraph:
+				m_AnimationControllerAsset->Tick( ts );
+				break;
+
+			default: break;
 		}
 	}
 
@@ -94,13 +125,18 @@ namespace Saturn {
 		m_State = AnimationState::Playing;
 
 		m_BoneTransforms.resize( m_SkeletalMesh->GetSkeletonAsset()->GetBoneInfo().size() );
+
+		if( m_AnimatorType == AnimatorType::AnimationControllerGraph )
+			m_AnimationControllerAsset->Initialise();
 	}
 
 	void Animator::Clear()
 	{
 		m_AnimationTime = 0.0f;
 		m_StartTime = 0.0f;
-		m_AnimationAsset = nullptr;
+		m_SingleAnimationAsset = nullptr;
+		m_AnimationControllerAsset = nullptr;
+		m_CurrentID = 0llu;
 		m_BoneTransforms.clear();
 		m_State = AnimationState::Inactive;
 	}
@@ -108,6 +144,22 @@ namespace Saturn {
 	void Animator::QueueNewAnimation( AssetID id )
 	{
 		m_PendingAsset = id;
+	}
+
+	Ref<Asset> Animator::GetCurrentAnimation() const
+	{
+		switch( m_AnimatorType )
+		{
+			case AnimatorType::Single:
+				return m_SingleAnimationAsset;
+
+			case AnimatorType::AnimationControllerGraph:
+				return m_AnimationControllerAsset;
+			default:
+				break;
+		}
+
+		return nullptr;
 	}
 
 	static uint32_t FindPositioning( const AnimationBone& rChannel, float time )
@@ -218,7 +270,7 @@ namespace Saturn {
 	{
 		const auto& rMeshBones = m_SkeletalMesh->GetSkeletonAsset()->GetBoneInfo();
 
-		const auto& rBones = m_AnimationAsset->GetAnimationBones();
+		const auto& rBones = m_SingleAnimationAsset->GetAnimationBones();
 		std::vector<glm::mat4> localTransforms( rMeshBones.size() );
 		
 		for( const auto& rBone : rBones )

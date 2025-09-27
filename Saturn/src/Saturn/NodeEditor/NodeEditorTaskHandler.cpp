@@ -26,66 +26,61 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "NodeEditorTaskHandler.h"
 
-#include "AnimatorType.h"
-#include "SkeletalAnimationAsset.h"
-#include "AnimationController.h"
-
-#include "Saturn/Vulkan/Mesh.h"
+#include "NodeEditorBase.h"
 
 namespace Saturn {
 
-	enum class AnimationState 
+	void NodeEditorTaskHandler::Init( SharedPtr<NodeEditorBase> nodeEditor )
 	{
-		NotInitialised, // InitAnimation not called
-		Inactive, // InitAnimation called awaiting Play or Pause
-		Playing,
-		Paused
-	};
+		for( const auto& [id, rNode] : nodeEditor->GetNodes() )
+		{
+			NodeEditorTaskBase* pTask = rNode->ConvertToTask();
+			if( pTask )
+			{
+				pTask->InitialiseTask( nodeEditor.Get(), rNode.Get() );
 
-	class Animator : public RefTarget
+				m_Tasks.push_back( pTask );
+			}
+		}
+	}
+
+	void NodeEditorTaskHandler::ResetAllTasks()
 	{
-	public:
-		Animator();
-		~Animator();
+		for( auto& pTask : m_Tasks )
+		{
+			pTask->Reset();
+		}
 
-		void InitAnimation( AssetID id, Ref<SkeletalMesh> sk, AnimatorType type );
-		void TickAnimation( Timestep ts );
-		void Pause();
-		void Begin();
-		void Clear();
+		m_CurrentTask = nullptr;
+		m_CurrentTaskIndex = 0;
+	}
 
-		void QueueNewAnimation( AssetID id );
+	void NodeEditorTaskHandler::Tick( Timestep ts )
+	{
+		if( m_CurrentTask )
+		{
+			const auto status = m_CurrentTask->Tick( ts );
+			if( status == NodeEditorTaskState::Completed ) 
+			{
+				m_CurrentTask = nullptr;
+			}
+		}
 
-		AssetID GetCurrentID() const { return m_CurrentID; }
-		Ref<Asset> GetCurrentAnimation() const;
-
-		const std::vector<glm::mat4>& GetBoneTransforms() const { return m_BoneTransforms; }
-
-		// An animator is consider active if an animation is playing or if it's paused
-		// However, if it not initialised, meaning we've never had an animation, then it's not active
-		bool IsActive() const { return m_State != AnimationState::Inactive && m_State != AnimationState::NotInitialised; }
-
-	private:
-		void TickSingleAnim( Timestep ts );
-		void ApplyBoneTransformations();
-		void UpdateBones( size_t boneIndex, const glm::mat4& rParentTransform, const std::vector<glm::mat4>& rLocalTransforms );
-
-	private:
-		float m_StartTime = 0.0f;
-		float m_AnimationTime = 0.0f;
-		AnimationState m_State = AnimationState::NotInitialised;
-		AnimatorType m_AnimatorType = AnimatorType::Single;
-
-		AssetID m_PendingAsset = 0llu;
-		AssetID m_CurrentID = 0llu;
-
-		Ref<SkeletalAnimationAsset> m_SingleAnimationAsset;
-		Ref<AnimationController> m_AnimationControllerAsset;
-		Ref<SkeletalMesh> m_SkeletalMesh;
-
-		std::vector<glm::mat4> m_BoneTransforms;
-	};
+		if( m_CurrentTask == nullptr )
+		{
+			if( m_CurrentTaskIndex + 1 > m_Tasks.size() )
+			{
+				// At end, restart from the root.
+				ResetAllTasks();
+			}
+			else
+			{
+				m_CurrentTask = m_Tasks.at( m_CurrentTaskIndex++ );
+			}
+		}
+	}
 
 }

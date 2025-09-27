@@ -28,64 +28,13 @@
 
 #pragma once
 
-#include "AnimatorType.h"
-#include "SkeletalAnimationAsset.h"
-#include "AnimationController.h"
-
-#include "Saturn/Vulkan/Mesh.h"
-
 namespace Saturn {
 
-	enum class AnimationState 
+	// NOTE: This enum is separated because it's best for the animator class not to include Components.h which is where it was defined originally.
+	enum class AnimatorType
 	{
-		NotInitialised, // InitAnimation not called
-		Inactive, // InitAnimation called awaiting Play or Pause
-		Playing,
-		Paused
-	};
-
-	class Animator : public RefTarget
-	{
-	public:
-		Animator();
-		~Animator();
-
-		void InitAnimation( AssetID id, Ref<SkeletalMesh> sk, AnimatorType type );
-		void TickAnimation( Timestep ts );
-		void Pause();
-		void Begin();
-		void Clear();
-
-		void QueueNewAnimation( AssetID id );
-
-		AssetID GetCurrentID() const { return m_CurrentID; }
-		Ref<Asset> GetCurrentAnimation() const;
-
-		const std::vector<glm::mat4>& GetBoneTransforms() const { return m_BoneTransforms; }
-
-		// An animator is consider active if an animation is playing or if it's paused
-		// However, if it not initialised, meaning we've never had an animation, then it's not active
-		bool IsActive() const { return m_State != AnimationState::Inactive && m_State != AnimationState::NotInitialised; }
-
-	private:
-		void TickSingleAnim( Timestep ts );
-		void ApplyBoneTransformations();
-		void UpdateBones( size_t boneIndex, const glm::mat4& rParentTransform, const std::vector<glm::mat4>& rLocalTransforms );
-
-	private:
-		float m_StartTime = 0.0f;
-		float m_AnimationTime = 0.0f;
-		AnimationState m_State = AnimationState::NotInitialised;
-		AnimatorType m_AnimatorType = AnimatorType::Single;
-
-		AssetID m_PendingAsset = 0llu;
-		AssetID m_CurrentID = 0llu;
-
-		Ref<SkeletalAnimationAsset> m_SingleAnimationAsset;
-		Ref<AnimationController> m_AnimationControllerAsset;
-		Ref<SkeletalMesh> m_SkeletalMesh;
-
-		std::vector<glm::mat4> m_BoneTransforms;
-	};
+		Single,
+		AnimationControllerGraph
+	};	
 
 }

@@ -26,66 +26,50 @@
 *********************************************************************************************
 */
 
-#pragma once
-
-#include "AnimatorType.h"
-#include "SkeletalAnimationAsset.h"
+#include "sppch.h"
 #include "AnimationController.h"
 
-#include "Saturn/Vulkan/Mesh.h"
+#include "AssetViewer/Graph/Animation/AnimGraph.h"
+#include "SkeletonAsset.h"
+
+#include "Saturn/Asset/AssetManager.h"
+
+#include "Saturn/NodeEditor/Serialisation/NodeCache.h"
 
 namespace Saturn {
 
-	enum class AnimationState 
+	AnimationController::AnimationController( AssetID id )
+		: m_ControllerAsset( AssetManager::Get().FindAsset( id ) )
 	{
-		NotInitialised, // InitAnimation not called
-		Inactive, // InitAnimation called awaiting Play or Pause
-		Playing,
-		Paused
-	};
+	}
 
-	class Animator : public RefTarget
+	AnimationController::~AnimationController()
 	{
-	public:
-		Animator();
-		~Animator();
+//		if( m_AnimationGraph )
+//			m_AnimationGraph->SetRuntime( nullptr );
+		
+		m_AnimationGraph = nullptr;
+	}
 
-		void InitAnimation( AssetID id, Ref<SkeletalMesh> sk, AnimatorType type );
-		void TickAnimation( Timestep ts );
-		void Pause();
-		void Begin();
-		void Clear();
+	void AnimationController::Initialise()
+	{
+		m_AnimationGraph = SharedPtr<AnimGraph>::Create( m_ControllerAsset->ID );
+		// Read only...
+		m_AnimationGraph->SetPrivileges( NodeEditorUserAuthority::Editing, false );
 
-		void QueueNewAnimation( AssetID id );
+		const std::string filename = std::format( "{0}.sac", m_ControllerAsset->Name );
+		if( NodeCacheEditor::ReadNodeEditorCache( m_AnimationGraph, m_ControllerAsset->ID, filename ) )
+		{
+//			m_EntryPointID = m_AnimationGraph->FindNode( "Root Node" )->ID;
+		}
 
-		AssetID GetCurrentID() const { return m_CurrentID; }
-		Ref<Asset> GetCurrentAnimation() const;
+		m_Order = m_AnimationGraph->TraverseAnimGraph();
+		m_TaskHandler.Init( m_AnimationGraph );
+	}
 
-		const std::vector<glm::mat4>& GetBoneTransforms() const { return m_BoneTransforms; }
-
-		// An animator is consider active if an animation is playing or if it's paused
-		// However, if it not initialised, meaning we've never had an animation, then it's not active
-		bool IsActive() const { return m_State != AnimationState::Inactive && m_State != AnimationState::NotInitialised; }
-
-	private:
-		void TickSingleAnim( Timestep ts );
-		void ApplyBoneTransformations();
-		void UpdateBones( size_t boneIndex, const glm::mat4& rParentTransform, const std::vector<glm::mat4>& rLocalTransforms );
-
-	private:
-		float m_StartTime = 0.0f;
-		float m_AnimationTime = 0.0f;
-		AnimationState m_State = AnimationState::NotInitialised;
-		AnimatorType m_AnimatorType = AnimatorType::Single;
-
-		AssetID m_PendingAsset = 0llu;
-		AssetID m_CurrentID = 0llu;
-
-		Ref<SkeletalAnimationAsset> m_SingleAnimationAsset;
-		Ref<AnimationController> m_AnimationControllerAsset;
-		Ref<SkeletalMesh> m_SkeletalMesh;
-
-		std::vector<glm::mat4> m_BoneTransforms;
-	};
+	void AnimationController::Tick( Timestep ts )
+	{
+		m_TaskHandler.Tick( ts );
+	}
 
 }

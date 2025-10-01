@@ -89,7 +89,7 @@ namespace Saturn {
 		RawSerialisation::ReadVector( m_Children, rStream );
 	}
 
-	BehaviourTreeBaseTask* BehaviourTreeSelectorNode::ConvertToTask()
+	NodeEditorTaskBase* BehaviourTreeSelectorNode::ConvertToTask()
 	{
 		return new BehaviourTreeSelectorTask();
 	}

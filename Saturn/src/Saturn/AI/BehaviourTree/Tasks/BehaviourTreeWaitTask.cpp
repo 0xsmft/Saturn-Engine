@@ -48,7 +48,7 @@ namespace Saturn {
 		m_RTBlackboardVariableID = WaitDurationVarID;
 	}
 
-	void BehaviourTreeWaitTask::InitialiseTask( BehaviourTreeNodeEditor* pEditor, BehaviourTreeNodeBase* pNode )
+	void BehaviourTreeWaitTask::InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
 	{
 		if( pNode )
 			m_NodeID = pNode->ID;
@@ -58,7 +58,7 @@ namespace Saturn {
 	{
 	}
 
-	BehaviourTreeTaskState BehaviourTreeWaitTask::Tick( Timestep ts )
+	NodeEditorTaskState BehaviourTreeWaitTask::Tick( Timestep ts )
 	{
 		if( !m_Started )
 		{
@@ -73,7 +73,7 @@ namespace Saturn {
 
 			SAT_CORE_INFO( "[BehaviourTreeWaitTask] Wait started, will be awaiting for: {0} seconds", m_WaitDuration );
 
-			m_CurrentState = BehaviourTreeTaskState::Starting;
+			m_CurrentState = NodeEditorTaskState::Starting;
 			return m_CurrentState;
 		}
 
@@ -85,12 +85,12 @@ namespace Saturn {
 			m_Started = false;
 			SAT_CORE_INFO( "[BehaviourTreeWaitTask] Wait ended" );
 
-			m_CurrentState = BehaviourTreeTaskState::Completed;
+			m_CurrentState = NodeEditorTaskState::Completed;
 			return m_CurrentState;
 		}
 
 		// Still waiting
-		m_CurrentState = BehaviourTreeTaskState::Running;
+		m_CurrentState = NodeEditorTaskState::Running;
 		return m_CurrentState;
 	}
 

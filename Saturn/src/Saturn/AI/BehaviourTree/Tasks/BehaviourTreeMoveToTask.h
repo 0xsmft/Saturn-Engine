@@ -46,8 +46,8 @@ namespace Saturn {
 		BehaviourTreeMoveToTask( const glm::vec3& rTargetPosition );
 		virtual ~BehaviourTreeMoveToTask();
 
-		virtual void InitialiseTask( BehaviourTreeNodeEditor* pEditor, BehaviourTreeNodeBase* pNode ) override;
-		virtual BehaviourTreeTaskState Tick( Timestep ts ) override;
+		virtual void InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+		virtual NodeEditorTaskState Tick( Timestep ts ) override;
 		virtual void Reset() override;
 
 #if !defined(SAT_DIST)
@@ -63,8 +63,8 @@ namespace Saturn {
 		NavPath m_Path{};
 
 	private:
-		[[nodiscard]] BehaviourTreeTaskState InitPathTo();
-		[[nodiscard]] BehaviourTreeTaskState WalkToNextWaypoint( Timestep ts );
+		[[nodiscard]] NodeEditorTaskState InitPathTo();
+		[[nodiscard]] NodeEditorTaskState WalkToNextWaypoint( Timestep ts );
 	};
 	
 }

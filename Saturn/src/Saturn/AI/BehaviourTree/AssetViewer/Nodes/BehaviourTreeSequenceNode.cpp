@@ -125,7 +125,7 @@ namespace Saturn {
 		}
 	}
 
-	BehaviourTreeBaseTask* BehaviourTreeSequenceNode::ConvertToTask()
+	NodeEditorTaskBase* BehaviourTreeSequenceNode::ConvertToTask()
 	{
 		return new BehaviourTreeSequenceTask();
 	}

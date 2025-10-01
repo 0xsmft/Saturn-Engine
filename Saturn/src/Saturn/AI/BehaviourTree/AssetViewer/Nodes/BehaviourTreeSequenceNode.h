@@ -57,7 +57,7 @@ namespace Saturn {
 		
 		//////////////////////////////////////////////////////////////////////////
 		// BehaviourTreeNodeBase
-		virtual BehaviourTreeBaseTask* ConvertToTask() override;
+		virtual NodeEditorTaskBase* ConvertToTask() override;
 
 #if !defined(SAT_DIST)
 		virtual void PostDeserialise() override;

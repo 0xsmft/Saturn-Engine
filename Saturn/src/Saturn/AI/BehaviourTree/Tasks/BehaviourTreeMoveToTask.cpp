@@ -61,9 +61,11 @@ namespace Saturn {
 	{
 	}
 
-	void BehaviourTreeMoveToTask::InitialiseTask( BehaviourTreeNodeEditor* pEditor, BehaviourTreeNodeBase* pNode )
+	void BehaviourTreeMoveToTask::InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
 	{
-		m_Agent = pEditor->GetTargetAgent();
+		BehaviourTreeNodeEditor* pBehaviourTreeNodeEditor = dynamic_cast< BehaviourTreeNodeEditor* >( pEditor );
+
+		m_Agent = pBehaviourTreeNodeEditor->GetTargetAgent();
 		m_NodeID = pNode->ID;
 	}
 
@@ -73,7 +75,7 @@ namespace Saturn {
 		Reset();
 	}
 
-	BehaviourTreeTaskState BehaviourTreeMoveToTask::Tick( Timestep ts )
+	NodeEditorTaskState BehaviourTreeMoveToTask::Tick( Timestep ts )
 	{
 		if( !m_Path.IsLive() )
 		{
@@ -88,20 +90,20 @@ namespace Saturn {
 	}
 
 	// TODO: This API is will be replaced when we have a proper waypoint system that will be handled by the NavSystem or the NavMeshBounds.
-	BehaviourTreeTaskState BehaviourTreeMoveToTask::InitPathTo()
+	NodeEditorTaskState BehaviourTreeMoveToTask::InitPathTo()
 	{
 		if( m_Path.RetargetPath( m_TargetPosition, m_Agent->GetComponent<TransformComponent>().Position ) )
 		{
-			return BehaviourTreeTaskState::Starting;
+			return NodeEditorTaskState::Starting;
 		}
 
-		return BehaviourTreeTaskState::Failed;
+		return NodeEditorTaskState::Failed;
 	}
 
-	BehaviourTreeTaskState BehaviourTreeMoveToTask::WalkToNextWaypoint( Timestep ts )
+	NodeEditorTaskState BehaviourTreeMoveToTask::WalkToNextWaypoint( Timestep ts )
 	{
 		if( !m_Path.IsLive() )
-			return BehaviourTreeTaskState::Completed;
+			return NodeEditorTaskState::Completed;
 
 		glm::vec3& rCurrentPosition = m_Agent->GetComponent<TransformComponent>().Position;
 		const auto& rCurrentWaypoint = m_Path.GetCurrentWaypoint();
@@ -118,7 +120,7 @@ namespace Saturn {
 			// If its zero after the NextWaypoint call we know that we have reached the end
 			if( m_Path.GetCurrentWaypointIndex() == 0 )
 			{
-				return BehaviourTreeTaskState::Completed;
+				return NodeEditorTaskState::Completed;
 			}
 		}
 		else
@@ -133,7 +135,7 @@ namespace Saturn {
 			rCurrentPosition += movement;
 		}
 
-		return BehaviourTreeTaskState::Running;
+		return NodeEditorTaskState::Running;
 	}
 
 	void BehaviourTreeMoveToTask::Reset()

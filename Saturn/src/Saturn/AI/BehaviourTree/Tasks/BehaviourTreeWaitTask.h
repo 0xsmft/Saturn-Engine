@@ -46,8 +46,8 @@ namespace Saturn {
 
 		virtual ~BehaviourTreeWaitTask();
 
-		virtual void InitialiseTask( BehaviourTreeNodeEditor* pEditor, BehaviourTreeNodeBase* pNode ) override;
-		virtual BehaviourTreeTaskState Tick( Timestep ts ) override;
+		virtual void InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+		virtual NodeEditorTaskState Tick( Timestep ts ) override;
 		virtual void Reset() override;
 
 #if !defined(SAT_DIST)

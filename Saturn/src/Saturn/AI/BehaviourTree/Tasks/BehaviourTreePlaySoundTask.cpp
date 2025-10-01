@@ -49,7 +49,7 @@ namespace Saturn {
 		}
 	}
 
-	void BehaviourTreePlaySoundTask::InitialiseTask( BehaviourTreeNodeEditor* pEditor, BehaviourTreeNodeBase* pNode )
+	void BehaviourTreePlaySoundTask::InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
 	{
 		m_NodeID = pNode->ID;
 	}
@@ -60,17 +60,17 @@ namespace Saturn {
 		m_Sound = nullptr;
 	}
 
-	BehaviourTreeTaskState BehaviourTreePlaySoundTask::Tick( Timestep ts )
+	NodeEditorTaskState BehaviourTreePlaySoundTask::Tick( Timestep ts )
 	{
 		if( m_Sound->IsPlaying() )
 		{
-			m_CurrentState = BehaviourTreeTaskState::Running;
+			m_CurrentState = NodeEditorTaskState::Running;
 			return m_CurrentState;
 		}
 
 		m_Sound->Play( 0 );
 
-		m_CurrentState = BehaviourTreeTaskState::Starting;
+		m_CurrentState = NodeEditorTaskState::Starting;
 		return m_CurrentState;
 	}
 

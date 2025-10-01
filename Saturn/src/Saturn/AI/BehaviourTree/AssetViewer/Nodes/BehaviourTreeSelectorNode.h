@@ -42,7 +42,7 @@ namespace Saturn {
 		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* pEvaluator ) override;
 		virtual void Serialise( std::ofstream& rStream, bool isForDist ) const;
 		virtual void Deserialise( FDependentIStream& rStream );
-		virtual BehaviourTreeBaseTask* ConvertToTask();
+		virtual NodeEditorTaskBase* ConvertToTask();
 
 		void AddChildren( const std::vector<UUID>& rChildrenID );
 		void Reset();

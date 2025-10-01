@@ -50,27 +50,28 @@ namespace Saturn {
 	{
 	}
 
-	void BehaviourTreeMemoryCondition::InitialiseTask( BehaviourTreeNodeEditor* pEditor, BehaviourTreeNodeBase* pNode )
+	void BehaviourTreeMemoryCondition::InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
 	{
-		m_pRTBlackboard = pEditor->GetBlackboard().Get();
+		BehaviourTreeNodeEditor* pBehaviourTreeNodeEditor = dynamic_cast< BehaviourTreeNodeEditor* >( pEditor );
+		m_pRTBlackboard = pBehaviourTreeNodeEditor->GetBlackboard().Get();
 	}
 
-	BehaviourTreeTaskState BehaviourTreeMemoryCondition::Tick( Timestep ts )
+	NodeEditorTaskState BehaviourTreeMemoryCondition::Tick( Timestep ts )
 	{
 		const auto key = m_pRTBlackboard->GetKey( m_RTBlackboardVariableID );
 		if( !key )
-			return BehaviourTreeTaskState::Failed;
+			return NodeEditorTaskState::Failed;
 
 		const bool hasValue = key->HoldsAnyValue();
 		switch( m_QueryType )
 		{
 			case BTMemoryConditionQueryType::Set:
-				return hasValue ? BehaviourTreeTaskState::Completed : BehaviourTreeTaskState::Failed;
+				return hasValue ? NodeEditorTaskState::Completed : NodeEditorTaskState::Failed;
 
 			case BTMemoryConditionQueryType::NotSet:
-				return hasValue ? BehaviourTreeTaskState::Failed : BehaviourTreeTaskState::Completed;
+				return hasValue ? NodeEditorTaskState::Failed : NodeEditorTaskState::Completed;
 
-			default: return BehaviourTreeTaskState::Failed;
+			default: return NodeEditorTaskState::Failed;
 		}
 	}
 

@@ -187,8 +187,8 @@ namespace Saturn {
 					auto* pTask = behaviourTreeNode->ConvertToTask();
 
 					// Found at level one add to list.
-					m_LevelOneTasks[ levelIndex++ ] = pTask;
-					m_Tasks[ id ] = pTask;
+					m_LevelOneTasks[ levelIndex++ ] = ( BehaviourTreeBaseTask* ) pTask;
+					m_Tasks[ id ] = ( BehaviourTreeBaseTask* ) pTask;
 				}
 			}
 		}
@@ -200,7 +200,7 @@ namespace Saturn {
 
 			// NOTE: Use raw ptr because we don't want tasks to stop the destruction of the blackboard
 			pTask->SetBlackboard( m_Blackboard.Get() );
-			pTask->InitialiseTask( this, pNode );
+			pTask->InitialiseTask( nullptr, this, pNode );
 		}
 	}
 
@@ -366,13 +366,13 @@ namespace Saturn {
 		if( m_CurrentTask )
 		{
 			const auto status = m_CurrentTask->Tick( ts );
-			if( status == BehaviourTreeTaskState::Completed )
+			if( status == NodeEditorTaskState::Completed )
 			{
 				// Move on to the next one
 				m_CurrentTask = nullptr;			
 			}
 #if !defined(SAT_DIST)
-			else if( status == BehaviourTreeTaskState::Starting )
+			else if( status == NodeEditorTaskState::Starting )
 			{
 				FindTreeFlow();
 			}
@@ -454,8 +454,8 @@ namespace Saturn {
 							continue;
 
 						// Only recurse into running or starting tasks
-						if( rChildTask->GetState() == BehaviourTreeTaskState::Running ||
-							rChildTask->GetState() == BehaviourTreeTaskState::Starting )
+						if( rChildTask->GetState() == NodeEditorTaskState::Running ||
+							rChildTask->GetState() == NodeEditorTaskState::Starting )
 						{
 							SharedPtr<BehaviourTreeNodeBase> childNode = FindNode( childNodeID ).As<BehaviourTreeNodeBase>();
 							if( childNode )
@@ -484,8 +484,8 @@ namespace Saturn {
 							continue;
 
 						// Only recurse into running or starting tasks
-						if( rChildTask->GetState() == BehaviourTreeTaskState::Running ||
-							rChildTask->GetState() == BehaviourTreeTaskState::Starting )
+						if( rChildTask->GetState() == NodeEditorTaskState::Running ||
+							rChildTask->GetState() == NodeEditorTaskState::Starting )
 						{
 							SharedPtr<BehaviourTreeNodeBase> childNode = FindNode( childNodeID ).As<BehaviourTreeNodeBase>();
 							if( childNode )

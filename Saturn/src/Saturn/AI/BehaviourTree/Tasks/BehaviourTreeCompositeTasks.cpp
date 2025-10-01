@@ -55,7 +55,7 @@ namespace Saturn {
 	{
 	}
 
-	void BehaviourTreeSelectorTask::InitialiseTask( BehaviourTreeNodeEditor* pEditor, BehaviourTreeNodeBase* pNode )
+	void BehaviourTreeSelectorTask::InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
 	{
 		BehaviourTreeNodeEditor* pBehaviourTreeNodeEditor = dynamic_cast< BehaviourTreeNodeEditor* >( pEditor );
 
@@ -72,7 +72,7 @@ namespace Saturn {
 			m_pNodeCondition = pSelectorNode->NodeCondition.Get();
 			if( m_pNodeCondition )
 			{
-				m_pNodeCondition->InitialiseTask( pEditor, pNode );
+				m_pNodeCondition->InitialiseTask( pHandler, pEditor, pNode );
 			}
 		}
 	}
@@ -82,12 +82,12 @@ namespace Saturn {
 		Reset();
 	}
 
-	BehaviourTreeTaskState BehaviourTreeSelectorTask::Tick( Timestep ts )
+	NodeEditorTaskState BehaviourTreeSelectorTask::Tick( Timestep ts )
 	{
 		// Next, check our condition, if any
 		if( m_pNodeCondition )
 		{
-			if( const auto status = m_pNodeCondition->Tick( ts ); status != BehaviourTreeTaskState::Completed )
+			if( const auto status = m_pNodeCondition->Tick( ts ); status != NodeEditorTaskState::Completed )
 				return status;
 		}
 
@@ -96,7 +96,7 @@ namespace Saturn {
 			if( pTask )
 			{
 				const auto status = pTask->Tick( ts );
-				if( status != BehaviourTreeTaskState::Failed )
+				if( status != NodeEditorTaskState::Failed )
 				{
 					m_CurrentState = status;
 					return status;
@@ -104,7 +104,7 @@ namespace Saturn {
 			}
 		}
 
-		m_CurrentState = BehaviourTreeTaskState::Failed;
+		m_CurrentState = NodeEditorTaskState::Failed;
 		return m_CurrentState;
 	}
 
@@ -115,7 +115,7 @@ namespace Saturn {
 	{
 	}
 
-	void BehaviourTreeSequenceTask::InitialiseTask( BehaviourTreeNodeEditor* pEditor, BehaviourTreeNodeBase* pNode )
+	void BehaviourTreeSequenceTask::InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
 	{
 		BehaviourTreeNodeEditor* pBehaviourTreeNodeEditor = dynamic_cast< BehaviourTreeNodeEditor* >( pEditor );
 
@@ -132,7 +132,7 @@ namespace Saturn {
 			m_pNodeCondition = pSequenceNode->NodeCondition.Get();
 			if( m_pNodeCondition )
 			{
-				m_pNodeCondition->InitialiseTask( pEditor, pNode );
+				m_pNodeCondition->InitialiseTask( pHandler, pEditor, pNode );
 			}
 		}
 	}
@@ -142,19 +142,19 @@ namespace Saturn {
 		Reset();
 	}
 
-	BehaviourTreeTaskState BehaviourTreeSequenceTask::Tick( Timestep ts )
+	NodeEditorTaskState BehaviourTreeSequenceTask::Tick( Timestep ts )
 	{
 		// All tasks completed, then this sequence is also completed.
 		if( m_CurrentTaskIndex >= m_Children.size() )
 		{
-			m_CurrentState = BehaviourTreeTaskState::Completed;
+			m_CurrentState = NodeEditorTaskState::Completed;
 			return m_CurrentState;
 		}
 
 		// Next, check our condition, if any
 		if( m_pNodeCondition )
 		{
-			if( const auto status = m_pNodeCondition->Tick( ts ); status != BehaviourTreeTaskState::Completed )
+			if( const auto status = m_pNodeCondition->Tick( ts ); status != NodeEditorTaskState::Completed )
 				return status;
 		}
 
@@ -165,7 +165,7 @@ namespace Saturn {
 			if( !pTask )
 			{
 				Reset();
-				return BehaviourTreeTaskState::Failed;
+				return NodeEditorTaskState::Failed;
 			}
 
 			m_pCurrentTask = pTask;
@@ -175,7 +175,7 @@ namespace Saturn {
 		auto status = m_pCurrentTask->Tick( ts );
 		m_CurrentState = status;
 
-		if( status == BehaviourTreeTaskState::Completed )
+		if( status == NodeEditorTaskState::Completed )
 		{
 			// Try move onto the next task.
 			m_pCurrentTask = nullptr;
@@ -189,10 +189,10 @@ namespace Saturn {
 			else
 			{
 				// If not, then we are still running, we still have more to do.
-				m_CurrentState = BehaviourTreeTaskState::Running;
+				m_CurrentState = NodeEditorTaskState::Running;
 			}
 		}
-		else if( status == BehaviourTreeTaskState::Failed )
+		else if( status == NodeEditorTaskState::Failed )
 		{
 			m_pCurrentTask = nullptr;
 			Reset();

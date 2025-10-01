@@ -70,10 +70,10 @@ namespace Saturn {
 		BehaviourTreeSelectorTask();
 		virtual ~BehaviourTreeSelectorTask();
 
-		virtual void InitialiseTask( BehaviourTreeNodeEditor* pEditor, BehaviourTreeNodeBase* pNode ) override;
+		virtual void InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
 
 	public:
-		virtual BehaviourTreeTaskState Tick( Timestep ts ) override;
+		virtual NodeEditorTaskState Tick( Timestep ts ) override;
 	};
 
 	// Sequence 
@@ -89,10 +89,10 @@ namespace Saturn {
 		BehaviourTreeSequenceTask();
 		virtual ~BehaviourTreeSequenceTask();
 
-		virtual void InitialiseTask( BehaviourTreeNodeEditor* pEditor, BehaviourTreeNodeBase* pNode ) override;
+		virtual void InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
 
 	public:
-		virtual BehaviourTreeTaskState Tick( Timestep ts ) override;
+		virtual NodeEditorTaskState Tick( Timestep ts ) override;
 	};
 
 }

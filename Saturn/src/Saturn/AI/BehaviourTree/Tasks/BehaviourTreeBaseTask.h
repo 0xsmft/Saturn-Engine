@@ -30,47 +30,22 @@
 
 #include "Saturn/AI/BehaviourTree/BehaviourTreeMemory.h"
 
-#include "Saturn/Core/Base.h"
-#include "Saturn/GameFramework/Core/GameScript.h"
-#include "Saturn/Core/UUID.h"
+#include "Saturn/NodeEditor/NodeEditorTaskBase.h"
 
 namespace Saturn {
 
 	class BehaviourTreeNodeBase;
 	class BehaviourTreeNodeEditor;
 
-	enum class BehaviourTreeTaskState 
-	{
-		Unknown,
-		Starting,
-		Running,
-		Completed, // success flag
-		Failed
-	};
-
 	SCLASS()
-	class BehaviourTreeBaseTask : public SObject
+	class BehaviourTreeBaseTask : public NodeEditorTaskBase
 	{
-		SAT_DECLARE_CLASS_MOVE( BehaviourTreeBaseTask, SObject )
+		SAT_DECLARE_CLASS_MOVE( BehaviourTreeBaseTask, NodeEditorTaskBase )
 	public:
 		BehaviourTreeBaseTask() = default;
 		virtual ~BehaviourTreeBaseTask() = default;
 
-		virtual void InitialiseTask( BehaviourTreeNodeEditor* pEditor, BehaviourTreeNodeBase* pNode ) {}
-		virtual BehaviourTreeTaskState Tick( Timestep ts ) { return BehaviourTreeTaskState::Unknown; }
-		virtual void Reset() {}
-
-		Saturn::UUID GetNodeID() const { return m_NodeID; }
-		BehaviourTreeTaskState GetState() const { return m_CurrentState; }
-
 		void SetBlackboard( BehaviourTreeMemory* pBlackboard );
-
-#if !defined(SAT_DIST)
-		virtual const char* GetTaskName() const { return "Base Task"; }
-		[[nodiscard]] virtual bool IsSpawnableNode() const { return false; }
-		virtual void OnRenderExtra() {}
-		virtual void RenderDetails() {}
-#endif
 
 	public:
 		virtual void Serialise( std::ofstream& rStream ) const {}
@@ -86,9 +61,6 @@ namespace Saturn {
 		}
 
 	protected:
-		Saturn::UUID m_NodeID = 0;
-		BehaviourTreeTaskState m_CurrentState = BehaviourTreeTaskState::Unknown;
-
 		// Non owning ptr, owned by BehaviourTreeNodeEditor
 		// Runtime blackboard information
 		BehaviourTreeMemory* m_pRTBlackboard = nullptr;

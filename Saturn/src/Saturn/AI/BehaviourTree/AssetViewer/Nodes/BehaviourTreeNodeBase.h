@@ -65,7 +65,6 @@ namespace Saturn {
 
 		virtual ~BehaviourTreeNodeBase() = default;
 
-		virtual BehaviourTreeBaseTask* ConvertToTask() = 0;
 		virtual void PostDeserialise() {}
 
 #if !defined(SAT_DIST)

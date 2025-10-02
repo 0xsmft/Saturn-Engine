@@ -42,15 +42,12 @@ namespace Saturn {
 
 		virtual ~AnimGraphStateMachineStateNode();
 
-		SharedPtr<NodeEditorBase> GetGraph() const { return m_InternalGraph; }
-
-		void PostInit();
+	public:
+		virtual void Serialise( std::ofstream& rStream, bool isForDist ) const override;
+		virtual void Deserialise( FDependentIStream& rStream ) override;
 
 	private:
 		void CreateNode();
-	
-	private:
-		SharedPtr<NodeEditorBase> m_InternalGraph;
 	};
 
 }

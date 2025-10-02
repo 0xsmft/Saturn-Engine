@@ -27,111 +27,64 @@
 */
 
 #include "sppch.h"
-#include "AnimGraphAnimationPin.h"
+#include "AnimGraphStateMachineNodeBase.h"
 
-#include "AnimGraph.h"
-#include "AnimGraphStateMachinePlayerNode.h"
+#include "Saturn/Animation/AssetViewer/Graph/Animation/AnimGraph.h"
 
-#include "Saturn/NodeEditor/NodeEditorNodeBase.h"
+#include "builders.h"
 
-#include "Saturn/ImGui/ImGuiAuxiliary.h"
+#include "Saturn/NodeEditor/NodeEditorBase.h"
+
+#include <imgui_internal.h>
 
 namespace Saturn {
 
-	AnimGraphAnimationPin::AnimGraphAnimationPin( const std::string& rName, PinKind kind, AnimGraphAnimationPinFlags flags )
-		: Pin( rName, PinType::AnimGraphAnimation, kind ), m_Flags( flags )
+	AnimGraphStateMachineNodeBase::AnimGraphStateMachineNodeBase( const std::string& rName )
+		: NodeEditorNodeBase( rName )
 	{
 	}
 
-	AnimGraphAnimationPin::AnimGraphAnimationPin( UUID id, const std::string& rName, PinType type, UUID nodeID )
-		: Pin( id, rName, type, nodeID )
+	AnimGraphStateMachineNodeBase::~AnimGraphStateMachineNodeBase()
 	{
+
 	}
 
-	AnimGraphAnimationPin::~AnimGraphAnimationPin()
+	void AnimGraphStateMachineNodeBase::Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder )
 	{
-	}
+		ImVec4 normalisedColor = Color;
+		normalisedColor.x /= 2.0f;
+		normalisedColor.y /= 2.0f;
+		normalisedColor.z /= 2.0f;
 
-	void AnimGraphAnimationPin::Serialise( std::ofstream& rStream ) const
-	{
-		Pin::Serialise( rStream );
-		
-		RawSerialisation::WriteObject( m_Flags, rStream );
-		RawSerialisation::WriteUUID( m_AssetID, rStream );
-	}
+		ed::PushStyleColor( ed::StyleColor_NodeBg, normalisedColor );
 
-	void AnimGraphAnimationPin::Deserialise( FDependentIStream& rStream )
-	{
-		Pin::Deserialise( rStream );
+		rBuilder.Begin( ed::NodeId( ID ) );
+		rBuilder.Middle();
 
-		RawSerialisation::ReadObject( m_Flags, rStream );
-		RawSerialisation::ReadUUID( m_AssetID, rStream );
+		ImGui::BeginHorizontal( "##state" );
 
-		Ref<Asset> asset = AssetManager::Get().FindAsset( m_AssetID );
-		if( asset )
+		// TODO: Much better to store the ID rather than the Node itself!
+		auto* AG = dynamic_cast< AnimGraph* >( pOuter );
+		if( ImGui::RadioButton( "##markasentry", AG->GetEntryNode() == SharedFromThis() ) ) 
 		{
-			m_AssetName = asset->Name;
-		}
-		else
-		{
-			m_AssetID = 0llu;
-		}
-	}
-
-	void AnimGraphAnimationPin::OnRenderOutput()
-	{
-		switch( m_Flags )
-		{
-			case AnimGraphAnimationPinFlags::StateMachine:
+			if( AG )
 			{
-				if( ImGui::Button( "Open State Machine" ) ) 
-				{
-					auto AG = dynamic_cast<AnimGraph*>( Node->pOuter );
-					if( AG )
-					{
-						auto playerNode = dynamic_cast< AnimGraphStateMachinePlayerNode* >( Node.Get() );
-						AG->AddSubGraph( Node );
-						AG->ChangeEditorNextFrame( Node );
-					}
-				}
-			} break;
-
-			case AnimGraphAnimationPinFlags::Animation: 
-			{
-#if !defined(SAT_DIST)
-				bool openAssetIDPopup = false;
-
-				const std::string name = m_AssetID == 0 ? "Select Asset" : m_AssetName;
-				if( ImGui::Button( name.c_str() ) )
-				{
-					openAssetIDPopup = true;
-				}
-
-				ed::Suspend();
-
-				UUID tempID = m_AssetID;
-				if( Auxiliary::DrawAssetFinder( AssetType::SkeletalAnimation, &openAssetIDPopup, tempID ) )
-				{
-					AssetManager::Get().UnregisterAssetDependency( Node->pOuter->GetAssetID(), m_AssetID );
-
-					m_AssetName = AssetManager::Get().FindAsset( tempID )->Name;
-					m_AssetID = tempID;
-
-					AssetManager::Get().RegisterAssetDependency( Node->pOuter->GetAssetID(), m_AssetID );
-
-					auto AG = dynamic_cast< AnimGraph* >( Node->pOuter );
-					if( AG )
-					{
-						AG->MarkDirty();
-					}
-				}
-
-				ed::Resume();
-#endif
-			} break;
-
-			default: break;
+				AG->MarkNodeAsEntry( SharedFromThis() );
+			}
 		}
+
+		const ImVec2 textSize = ImGui::CalcTextSize( Name.c_str() );
+		ImGui::SetNextItemWidth( textSize.x );
+		ImGui::TextUnformatted( Name.c_str() );
+
+		ImGui::EndHorizontal();
+		rBuilder.End();
+
+		ed::PopStyleColor();
 	}
 
 }
+
+#include "Saturn/GameFramework/Core/EngineGenerated.h"
+
+SAT_X31_CREATE_AUTO_REG( AnimGraphStateMachineNodeBase );

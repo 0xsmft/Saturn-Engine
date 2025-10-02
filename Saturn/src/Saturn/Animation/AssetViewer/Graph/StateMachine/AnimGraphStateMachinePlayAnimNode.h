@@ -26,68 +26,30 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "AnimGraphStateMachinePlayerNode.h"
+#pragma once
 
-#include "Saturn/Animation/AssetViewer/Graph/Animation/AnimGraphAnimationPin.h"
+#include "Saturn/NodeEditor/NodeEditorBlueprintNode.h"
 
 namespace Saturn {
 
-	AnimGraphStateMachinePlayerNode::AnimGraphStateMachinePlayerNode()
-		: NodeEditorBlueprintNode( "STATE MACHINE" )
+	SCLASS()
+	class AnimGraphStateMachinePlayAnimNode : public NodeEditorBlueprintNode
 	{
-		CreateNode();
-	}
+		SAT_DECLARE_CLASS( AnimGraphStateMachinePlayAnimNode, NodeEditorBlueprintNode );
+	public:
+		AnimGraphStateMachinePlayAnimNode();
+		AnimGraphStateMachinePlayAnimNode( const std::string& rName );
 
-	AnimGraphStateMachinePlayerNode::AnimGraphStateMachinePlayerNode( const std::string& rName )
-		: NodeEditorBlueprintNode( rName )
-	{
-		CreateNode();
-	}
+		virtual ~AnimGraphStateMachinePlayAnimNode();
 
-	void AnimGraphStateMachinePlayerNode::CreateNode()
-	{
-		ExecutionType = NodeExecutionType::AnimGraphStateMachinePlayerNode;
+		virtual NodeEditorTaskBase* ConvertToTask() override;
 
-#if !defined(SAT_DIST)
-		CanBeDeleted = false;
-		Color = ImColor( 48, 128, 255, 100 );
-		RenderType = NodeRenderType::Blueprint;
-#endif
+	public:
+		void Serialise( std::ofstream& rStream, bool isForDist ) const override;
+		void Deserialise( FDependentIStream& rStream ) override;
 
-		Outputs.emplace_back( Ref<AnimGraphAnimationPin>::Create( "Out", PinKind::Output, AnimGraphAnimationPinFlags::StateMachine ) );
-	}
-
-	AnimGraphStateMachinePlayerNode::~AnimGraphStateMachinePlayerNode()
-	{
-	}
-
-	void AnimGraphStateMachinePlayerNode::PostInit()
-	{
-		auto* pCurrentEditor = ed::GetCurrentEditor();
-
-		// Context would be changed here...
-		auto graph = SharedPtr<AnimGraphStateMachineGraph>::Create( pOuter->GetAssetID() );
-
-		const std::string nodeEdWindowName = std::format( "Final Out##{0}", std::to_string( pOuter->GetAssetID() ) );
-		graph->SetWindowName( nodeEdWindowName );
-
-		NodeEditor* pUIOuter = dynamic_cast< NodeEditor* >( pOuter );
-		if( pUIOuter != nullptr )
-		{
-//			pUIOuter->AddSubGraph( graph );
-		}
-
-		m_InternalGraph = graph;
-
-		graph->PostPlaceInit();
-
-		// Change back to the original context
-		ed::SetCurrentEditor( pCurrentEditor );
-	}
+	private:
+		void CreateNode();
+	};
 
 }
-
-#include "Saturn/GameFramework/Core/EngineGenerated.h"
-
-SAT_X31_CREATE_AUTO_REG( AnimGraphStateMachinePlayerNode );

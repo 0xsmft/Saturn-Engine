@@ -27,111 +27,60 @@
 */
 
 #include "sppch.h"
-#include "AnimGraphAnimationPin.h"
+#include "AnimGraphStateMachinePlayAnimNode.h"
 
-#include "AnimGraph.h"
-#include "AnimGraphStateMachinePlayerNode.h"
+#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 
-#include "Saturn/NodeEditor/NodeEditorNodeBase.h"
-
-#include "Saturn/ImGui/ImGuiAuxiliary.h"
+#include "Saturn/Animation/AssetViewer/Graph/Animation/AnimGraphAnimationPin.h"
+#include "Saturn/Animation/AssetViewer/Graph/Tasks/AnimGraphPlayAnimTask.h"
 
 namespace Saturn {
 
-	AnimGraphAnimationPin::AnimGraphAnimationPin( const std::string& rName, PinKind kind, AnimGraphAnimationPinFlags flags )
-		: Pin( rName, PinType::AnimGraphAnimation, kind ), m_Flags( flags )
+	AnimGraphStateMachinePlayAnimNode::AnimGraphStateMachinePlayAnimNode()
+		: NodeEditorBlueprintNode( "Play Animation" )
 	{
+		CreateNode();
 	}
 
-	AnimGraphAnimationPin::AnimGraphAnimationPin( UUID id, const std::string& rName, PinType type, UUID nodeID )
-		: Pin( id, rName, type, nodeID )
+	AnimGraphStateMachinePlayAnimNode::AnimGraphStateMachinePlayAnimNode( const std::string& rName )
+		: NodeEditorBlueprintNode( rName )
 	{
+		CreateNode();
 	}
 
-	AnimGraphAnimationPin::~AnimGraphAnimationPin()
+	void AnimGraphStateMachinePlayAnimNode::CreateNode()
 	{
-	}
+		ExecutionType = NodeExecutionType::AnimGraphStateMachinePlayAnimNode;
 
-	void AnimGraphAnimationPin::Serialise( std::ofstream& rStream ) const
-	{
-		Pin::Serialise( rStream );
-		
-		RawSerialisation::WriteObject( m_Flags, rStream );
-		RawSerialisation::WriteUUID( m_AssetID, rStream );
-	}
-
-	void AnimGraphAnimationPin::Deserialise( FDependentIStream& rStream )
-	{
-		Pin::Deserialise( rStream );
-
-		RawSerialisation::ReadObject( m_Flags, rStream );
-		RawSerialisation::ReadUUID( m_AssetID, rStream );
-
-		Ref<Asset> asset = AssetManager::Get().FindAsset( m_AssetID );
-		if( asset )
-		{
-			m_AssetName = asset->Name;
-		}
-		else
-		{
-			m_AssetID = 0llu;
-		}
-	}
-
-	void AnimGraphAnimationPin::OnRenderOutput()
-	{
-		switch( m_Flags )
-		{
-			case AnimGraphAnimationPinFlags::StateMachine:
-			{
-				if( ImGui::Button( "Open State Machine" ) ) 
-				{
-					auto AG = dynamic_cast<AnimGraph*>( Node->pOuter );
-					if( AG )
-					{
-						auto playerNode = dynamic_cast< AnimGraphStateMachinePlayerNode* >( Node.Get() );
-						AG->AddSubGraph( Node );
-						AG->ChangeEditorNextFrame( Node );
-					}
-				}
-			} break;
-
-			case AnimGraphAnimationPinFlags::Animation: 
-			{
 #if !defined(SAT_DIST)
-				bool openAssetIDPopup = false;
-
-				const std::string name = m_AssetID == 0 ? "Select Asset" : m_AssetName;
-				if( ImGui::Button( name.c_str() ) )
-				{
-					openAssetIDPopup = true;
-				}
-
-				ed::Suspend();
-
-				UUID tempID = m_AssetID;
-				if( Auxiliary::DrawAssetFinder( AssetType::SkeletalAnimation, &openAssetIDPopup, tempID ) )
-				{
-					AssetManager::Get().UnregisterAssetDependency( Node->pOuter->GetAssetID(), m_AssetID );
-
-					m_AssetName = AssetManager::Get().FindAsset( tempID )->Name;
-					m_AssetID = tempID;
-
-					AssetManager::Get().RegisterAssetDependency( Node->pOuter->GetAssetID(), m_AssetID );
-
-					auto AG = dynamic_cast< AnimGraph* >( Node->pOuter );
-					if( AG )
-					{
-						AG->MarkDirty();
-					}
-				}
-
-				ed::Resume();
+		Color = ImColor( 48, 128, 255, 100 );
+		RenderType = NodeRenderType::Blueprint;
 #endif
-			} break;
 
-			default: break;
-		}
+		Outputs.push_back( Ref<AnimGraphAnimationPin>::Create( "Out Animation", PinKind::Output, AnimGraphAnimationPinFlags::Animation ) );
+	}
+
+	AnimGraphStateMachinePlayAnimNode::~AnimGraphStateMachinePlayAnimNode()
+	{
+	}
+
+	NodeEditorTaskBase* AnimGraphStateMachinePlayAnimNode::ConvertToTask()
+	{
+		return NewObject<AnimGraphPlayAnimTask>();
+	}
+
+	void AnimGraphStateMachinePlayAnimNode::Serialise( std::ofstream& rStream, bool isForDist ) const
+	{
+		Super::Serialise( rStream, isForDist );
+	}
+
+	void AnimGraphStateMachinePlayAnimNode::Deserialise( FDependentIStream& rStream )
+	{
+		Super::Deserialise( rStream );
 	}
 
 }
+
+#include "Saturn/GameFramework/Core/EngineGenerated.h"
+
+SAT_X31_CREATE_AUTO_REG( AnimGraphStateMachinePlayAnimNode );

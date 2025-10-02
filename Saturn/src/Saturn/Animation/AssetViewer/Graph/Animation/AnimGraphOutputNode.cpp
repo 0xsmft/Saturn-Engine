@@ -50,7 +50,7 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		CanBeDeleted = false;
 		Color = ImColor( 48, 128, 255, 100 );
-		Type = NodeRenderType::Blueprint;
+		RenderType = NodeRenderType::Blueprint;
 #endif
 
 		Inputs.emplace_back( Ref<Pin>::Create( "Final State", PinType::AnimGraphAnimation, PinKind::Input ) );

@@ -32,13 +32,6 @@
 
 namespace Saturn {
 
-	enum class AnimGraphViewMode
-	{
-		Animation,
-		StateMachine,
-		StateMachineTransition
-	};
-
 	class AnimGraph : public FDependentNodeEditorSuper
 	{
 	public:
@@ -46,17 +39,25 @@ namespace Saturn {
 		AnimGraph( AssetID id );
 		virtual ~AnimGraph();
 
-		inline void ChangeViewMode( AnimGraphViewMode vm ) { m_ViewMode = vm; }
-		AnimGraphViewMode GetViewMode() const { return m_ViewMode; }
+		std::vector<UUID> TraverseAnimGraph();
+
+		void MarkNodeAsEntry( SharedPtr<NodeEditorBase> node ) { m_EntryNode = node; }
+		SharedPtr<NodeEditorBase> GetEntryNode() const { return m_EntryNode; }
+
+#if !defined(SAT_DIST)
+	public:
+		virtual void OnExtraRender() override;
+#endif
 
 	protected:
 		virtual void DrawGraph() override;
 
+	private:
 		void DrawStateMachineNodes();
 
 	private:
-		AnimGraphViewMode m_ViewMode = AnimGraphViewMode::Animation;
 		UUID m_TransitionStartNode = 0;
+		SharedPtr<NodeEditorBase> m_EntryNode;
 	};
 
 }

@@ -31,6 +31,7 @@
 
 #include "StateMachineStateNodeLibrary.h"
 
+#include "Saturn/Animation/AssetViewer/Graph/Animation/AnimGraph.h"
 #include "Saturn/Animation/AssetViewer/Graph/StateMachine/AnimGraphStateMachineGraph.h"
 
 namespace Saturn {
@@ -68,45 +69,31 @@ namespace Saturn {
 
 #if !defined(SAT_DIST)
 		Color = ImColor( 48, 128, 255, 100 );
-		Type = NodeRenderType::Tree;
+		RenderType = NodeRenderType::Tree;
 #endif
 	}
 
 	AnimGraphStateMachineStateNode::~AnimGraphStateMachineStateNode()
 	{
-#if !defined(SAT_DIST)
-		NodeEditor* pUIOuter = dynamic_cast< NodeEditor* >( pOuter );
-		if( pUIOuter != nullptr )
-		{
-			pUIOuter->RemoveSubGraph( m_InternalGraph );
-		}
-
-		m_InternalGraph = nullptr;
-#endif
 	}
 
-	void AnimGraphStateMachineStateNode::PostInit()
+	void AnimGraphStateMachineStateNode::Serialise( std::ofstream& rStream, bool isForDist ) const
 	{
-		auto* pCurrentEditor = ed::GetCurrentEditor();
+		Super::Serialise( rStream, isForDist );
 
-		// Context would be changed here...
-		auto graph = SharedPtr<AnimGraphStateMachineGraph>::Create( pOuter->GetAssetID() );
+		// TODO: Very bad!
+		auto* AG = dynamic_cast< AnimGraph* >( pOuter );
+		const bool isEntry = AG->GetEntryNode() == SharedFromThis();
 
-		const std::string nodeEdWindowName = std::format( "Final Out##{0}", std::to_string( pOuter->GetAssetID() ) );
-		graph->SetWindowName( nodeEdWindowName );
+		RawSerialisation::WriteObject( isEntry, rStream );
+	}
 
-		NodeEditor* pUIOuter = dynamic_cast< NodeEditor* >( pOuter );
-		if( pUIOuter != nullptr )
-		{
-			pUIOuter->AddSubGraph( graph );
-		}
+	void AnimGraphStateMachineStateNode::Deserialise( FDependentIStream& rStream )
+	{
+		Super::Deserialise( rStream );
 
-		graph->AddNode( StateMachineStateNodeLibrary::SpawnOutputNode( graph ) );
-
-		m_InternalGraph = graph.As<NodeEditorBase>();
-		
-		// Change back to the original context
-		ed::SetCurrentEditor( pCurrentEditor );
+		bool isEntry = false;
+		RawSerialisation::ReadObject( isEntry, rStream );
 	}
 
 }

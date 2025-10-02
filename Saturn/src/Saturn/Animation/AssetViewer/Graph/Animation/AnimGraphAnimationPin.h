@@ -29,6 +29,7 @@
 #pragma once
 
 #include "Saturn/NodeEditor/Pin.h"
+#include "Saturn/Asset/Asset.h"
 
 namespace Saturn {
 
@@ -49,16 +50,23 @@ namespace Saturn {
 		
 		~AnimGraphAnimationPin();
 
+		[[nodiscard]] AssetID GetAssetID() const { return m_AssetID; }
+		[[nodiscard]] AnimGraphAnimationPinFlags GetFlags() const { return m_Flags; }
+
 	public:
 		virtual void Serialise( std::ofstream& rStream ) const override;
 		virtual void Deserialise( FDependentIStream& rStream ) override;
 
 	protected:
 		virtual void OnRenderOutput() override;
-		virtual void OnRenderInput() override;
 
 	private:
 		AnimGraphAnimationPinFlags m_Flags = AnimGraphAnimationPinFlags::Animation;
+
+		AssetID m_AssetID = 0;
+#if defined(SAT_DEBUG) || defined(SAT_RELEASE)
+		std::string m_AssetName;
+#endif
 	};
 
 }

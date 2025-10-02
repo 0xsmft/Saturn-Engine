@@ -27,111 +27,72 @@
 */
 
 #include "sppch.h"
-#include "AnimGraphAnimationPin.h"
+#include "AnimGraphStateMachineTransitionNode.h"
 
-#include "AnimGraph.h"
-#include "AnimGraphStateMachinePlayerNode.h"
-
-#include "Saturn/NodeEditor/NodeEditorNodeBase.h"
+#include "Saturn/NodeEditor/NodeEditorBase.h"
 
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
 
 namespace Saturn {
 
-	AnimGraphAnimationPin::AnimGraphAnimationPin( const std::string& rName, PinKind kind, AnimGraphAnimationPinFlags flags )
-		: Pin( rName, PinType::AnimGraphAnimation, kind ), m_Flags( flags )
+	AnimGraphStateMachineTransitionNode::AnimGraphStateMachineTransitionNode()
+		: NodeEditorNodeBase()
 	{
+		CreateNode();
 	}
 
-	AnimGraphAnimationPin::AnimGraphAnimationPin( UUID id, const std::string& rName, PinType type, UUID nodeID )
-		: Pin( id, rName, type, nodeID )
+	void AnimGraphStateMachineTransitionNode::CreateNode()
 	{
-	}
+		ExecutionType = NodeExecutionType::AnimGraphStateMachineTransitionNode;
 
-	AnimGraphAnimationPin::~AnimGraphAnimationPin()
-	{
-	}
-
-	void AnimGraphAnimationPin::Serialise( std::ofstream& rStream ) const
-	{
-		Pin::Serialise( rStream );
-		
-		RawSerialisation::WriteObject( m_Flags, rStream );
-		RawSerialisation::WriteUUID( m_AssetID, rStream );
-	}
-
-	void AnimGraphAnimationPin::Deserialise( FDependentIStream& rStream )
-	{
-		Pin::Deserialise( rStream );
-
-		RawSerialisation::ReadObject( m_Flags, rStream );
-		RawSerialisation::ReadUUID( m_AssetID, rStream );
-
-		Ref<Asset> asset = AssetManager::Get().FindAsset( m_AssetID );
-		if( asset )
-		{
-			m_AssetName = asset->Name;
-		}
-		else
-		{
-			m_AssetID = 0llu;
-		}
-	}
-
-	void AnimGraphAnimationPin::OnRenderOutput()
-	{
-		switch( m_Flags )
-		{
-			case AnimGraphAnimationPinFlags::StateMachine:
-			{
-				if( ImGui::Button( "Open State Machine" ) ) 
-				{
-					auto AG = dynamic_cast<AnimGraph*>( Node->pOuter );
-					if( AG )
-					{
-						auto playerNode = dynamic_cast< AnimGraphStateMachinePlayerNode* >( Node.Get() );
-						AG->AddSubGraph( Node );
-						AG->ChangeEditorNextFrame( Node );
-					}
-				}
-			} break;
-
-			case AnimGraphAnimationPinFlags::Animation: 
-			{
 #if !defined(SAT_DIST)
-				bool openAssetIDPopup = false;
-
-				const std::string name = m_AssetID == 0 ? "Select Asset" : m_AssetName;
-				if( ImGui::Button( name.c_str() ) )
-				{
-					openAssetIDPopup = true;
-				}
-
-				ed::Suspend();
-
-				UUID tempID = m_AssetID;
-				if( Auxiliary::DrawAssetFinder( AssetType::SkeletalAnimation, &openAssetIDPopup, tempID ) )
-				{
-					AssetManager::Get().UnregisterAssetDependency( Node->pOuter->GetAssetID(), m_AssetID );
-
-					m_AssetName = AssetManager::Get().FindAsset( tempID )->Name;
-					m_AssetID = tempID;
-
-					AssetManager::Get().RegisterAssetDependency( Node->pOuter->GetAssetID(), m_AssetID );
-
-					auto AG = dynamic_cast< AnimGraph* >( Node->pOuter );
-					if( AG )
-					{
-						AG->MarkDirty();
-					}
-				}
-
-				ed::Resume();
+		CanBeDeleted = false;
+		Color = ImColor( 48, 128, 255, 100 );
+		RenderType = NodeRenderType::Blueprint;
 #endif
-			} break;
 
-			default: break;
+		Inputs.emplace_back( Ref<Pin>::Create( "In", PinType::AnimGraphAnimation, PinKind::Input ) );
+		Outputs.emplace_back( Ref<Pin>::Create( "Out", PinType::AnimGraphAnimation, PinKind::Output ) );
+	}
+
+	AnimGraphStateMachineTransitionNode::~AnimGraphStateMachineTransitionNode()
+	{
+	}
+
+	void AnimGraphStateMachineTransitionNode::Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder )
+	{
+		if( !pOuter->IsLinked( Inputs[ 0 ]->ID ) )
+			return;
+
+		const auto linksOut = pOuter->FindLinksByPin( Inputs[ 0 ]->ID );
+		const auto linksIn = pOuter->FindLinksByPin( Outputs[ 0 ]->ID );
+
+		const auto startNode = pOuter->FindNodeByPin( linksOut[ 0 ]->StartPinID );
+		const auto endNode = pOuter->FindNodeByPin( linksIn[ 0 ]->EndPinID );
+
+		ImVec2 startPoint;
+		ImVec2 endPoint;
+		const ImVec2 startNodePos = ed::GetNodePosition( ed::NodeId( startNode->ID ) );
+		const ImVec2 startNodeSize = ed::GetNodeSize( ed::NodeId( startNode->ID ) );
+
+		if( endNode )
+		{
+			const ImVec2 endNodePos = ed::GetNodePosition( ed::NodeId( endNode->ID ) );
+			const ImVec2 endNodeSize = ed::GetNodeSize( ed::NodeId( endNode->ID ) );
+
+			Auxiliary::GetConnectionPointsBetweenRects( { startNodePos, startNodePos + startNodeSize }, { endNodePos, endNodePos + endNodeSize }, startPoint, endPoint );
 		}
+
+		Auxiliary::DrawArrow( startPoint, endPoint, IM_COL32( 255, 255, 255, 255 ) );
+	}
+
+	NodeEvaluationState AnimGraphStateMachineTransitionNode::EvaluateNode( NodeEditorRuntime* evaluator )
+	{
+		return NodeEvaluationState::Evaluated;
 	}
 
 }
+
+#include "Saturn/GameFramework/Core/EngineGenerated.h"
+
+SAT_X31_CREATE_AUTO_REG( AnimGraphStateMachineTransitionNode );

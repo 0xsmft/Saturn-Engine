@@ -34,6 +34,9 @@
 #include "Saturn/NodeEditor/NodeEditorBase.h"
 #include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeEditorEvaluator.h"
 
+// #RmIncToCMHForNewObject
+#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
+
 namespace Saturn {
 
 	BehaviourTreeSelectorNode::BehaviourTreeSelectorNode()
@@ -91,7 +94,7 @@ namespace Saturn {
 
 	NodeEditorTaskBase* BehaviourTreeSelectorNode::ConvertToTask()
 	{
-		return new BehaviourTreeSelectorTask();
+		return NewObject<BehaviourTreeSelectorTask>();
 	}
 
 	void BehaviourTreeSelectorNode::AddChildren( const std::vector<UUID>& rChildrenID )

@@ -43,6 +43,9 @@
 #include "Saturn/Animation/AssetViewer/Graph/StateMachine/AnimGraphStateMachinePlayAnimNode.h"
 #include "Saturn/Animation/AssetViewer/Graph/StateMachine/StateMachineStateNodeLibrary.h"
 
+// TRANSITION
+#include "Saturn/Animation/AssetViewer/Graph/StateMachine/AnimGraphTransitionGraphNodes.h"
+
 #include "Saturn/NodeEditor/NodeEditorVariableNode.h"
 #include "Saturn/NodeEditor/NodeEditorHintNode.h"
 
@@ -152,10 +155,12 @@ namespace Saturn {
 		{ NodeEditorHintNode::StaticClass()              },
 
 		//////////////////////////////////////////////////////////////////////////
-		{ MathsAddFloats::StaticClass()                  },
-		{ MathsSubFloats::StaticClass()                  },
-		{ MathsMulFloats::StaticClass()                  },
-		{ MathsDivideFloats::StaticClass()               }
+		{ MathsAddFloats::StaticClass()                    },
+		{ MathsSubFloats::StaticClass()                    },
+		{ MathsMulFloats::StaticClass()                    },
+		{ MathsDivideFloats::StaticClass()                 },
+		{ MathsGreaterThanFloats::StaticClass()			   },
+		{ MathsLessThanFloats::StaticClass()               }
 	};
 
 	static std::vector<SClass*> s_StateMachineAllowedNodes
@@ -181,7 +186,30 @@ namespace Saturn {
 		{ MathsAddFloats::StaticClass()                    },
 		{ MathsSubFloats::StaticClass()                    },
 		{ MathsMulFloats::StaticClass()                    },
-		{ MathsDivideFloats::StaticClass()                 }
+		{ MathsDivideFloats::StaticClass()                 },
+		{ MathsGreaterThanFloats::StaticClass()			   },
+		{ MathsLessThanFloats::StaticClass()               }
+	};
+
+	static std::vector<SClass*> s_TransitionAllowedNodes
+	{
+		//////////////////////////////////////////////////////////////////////////
+		{ AnimGraphTransitionGraphResultNode::StaticClass() },
+
+		//////////////////////////////////////////////////////////////////////////
+		{ NodeEditorHintNode::StaticClass()                },
+
+		//////////////////////////////////////////////////////////////////////////
+		{ NodeEditorVariableNode::StaticClass()          },
+		{ NodeEditorSetVariableNode::StaticClass()       },
+
+		//////////////////////////////////////////////////////////////////////////
+		{ MathsAddFloats::StaticClass()                    },
+		{ MathsSubFloats::StaticClass()                    },
+		{ MathsMulFloats::StaticClass()                    },
+		{ MathsDivideFloats::StaticClass()                 },
+		{ MathsGreaterThanFloats::StaticClass()            },
+		{ MathsLessThanFloats::StaticClass()               }
 	};
 
 	void AnimGraph::DrawGraph()
@@ -248,6 +276,14 @@ namespace Saturn {
 			{
 				// Render State Machine state nodes
 				if( std::find( s_StateMachineStateAllowedNodes.begin(), s_StateMachineStateAllowedNodes.end(), rNode->GetClass() ) != s_StateMachineStateAllowedNodes.end() )
+				{
+					rNode->Render( m_Builder );
+				}
+			}
+			else if( m_ActiveSubGraph->GetClass() == AnimGraphStateMachineTransitionNode::StaticClass() )
+			{
+				// Render transition nodes
+				if( std::find( s_TransitionAllowedNodes.begin(), s_TransitionAllowedNodes.end(), rNode->GetClass() ) != s_TransitionAllowedNodes.end() )
 				{
 					rNode->Render( m_Builder );
 				}
@@ -338,8 +374,8 @@ namespace Saturn {
 					node->pParentObject = m_ActiveSubGraph.Get();
 					AddNode( node );
 
-					CreateLink( startNode->Outputs[ 0 ], node->Inputs[ 0 ] );
-					CreateLink( node->Outputs[ 0 ], m_HoveredNode->Inputs[ 0 ] );
+					CreateLink( startNode->Outputs[ 0 ], node->Inputs[ 0 ], startNode->Outputs[ 0 ]->GetPinColor() );
+					CreateLink( node->Outputs[ 0 ], m_HoveredNode->Inputs[ 0 ], node->Outputs[ 0 ]->GetPinColor() );
 
 					MarkDirty();
 

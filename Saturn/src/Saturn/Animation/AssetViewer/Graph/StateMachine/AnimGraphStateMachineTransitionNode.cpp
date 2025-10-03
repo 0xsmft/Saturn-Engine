@@ -29,6 +29,8 @@
 #include "sppch.h"
 #include "AnimGraphStateMachineTransitionNode.h"
 
+#include "Saturn/Animation/AssetViewer/Graph/Animation/AnimGraph.h"
+
 #include "Saturn/NodeEditor/NodeEditorBase.h"
 
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
@@ -49,6 +51,7 @@ namespace Saturn {
 		CanBeDeleted = false;
 		Color = ImColor( 48, 128, 255, 100 );
 		RenderType = NodeRenderType::Blueprint;
+		Name = "Transition";
 #endif
 
 		Inputs.emplace_back( Ref<Pin>::Create( "In", PinType::AnimGraphAnimation, PinKind::Input ) );
@@ -57,6 +60,37 @@ namespace Saturn {
 
 	AnimGraphStateMachineTransitionNode::~AnimGraphStateMachineTransitionNode()
 	{
+	}
+
+	float PointToOffsetArrowDistanceSquared( const ImVec2& point, ImVec2 startPoint, ImVec2 endPoint, const float offset )
+	{
+		ImVec2 arrowDir = endPoint - startPoint;
+		float arrowLengthSquared = ImLengthSqr( arrowDir );
+		float arrowLength = sqrt( arrowLengthSquared );
+		if( arrowLength > 0.0 )
+		{
+			arrowDir /= arrowLength;
+		}
+		ImVec2 orthogonal = { arrowDir.y, -arrowDir.x };
+		ImVec2 offsetVec = ( orthogonal * offset );
+
+		startPoint += offsetVec;
+		endPoint += offsetVec;
+
+		ImVec2 pointToStart = point - startPoint;
+		ImVec2 pointToEnd = point - endPoint;
+
+		float dot1 = pointToStart.x * arrowDir.x + pointToStart.y * arrowDir.y;
+
+		// return "infinity" if not directly to one side of the line or the other
+		if( dot1 < 0 )
+			return FLT_MAX;
+		else if( ( dot1 * dot1 ) > arrowLengthSquared )
+			return FLT_MAX;
+
+		ImVec2 projection = startPoint + arrowDir * dot1;
+		ImVec2 pointToProjection = point - projection;
+		return ( pointToProjection.x * pointToProjection.x ) + ( pointToProjection.y * pointToProjection.y );
 	}
 
 	void AnimGraphStateMachineTransitionNode::Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder )
@@ -83,7 +117,25 @@ namespace Saturn {
 			Auxiliary::GetConnectionPointsBetweenRects( { startNodePos, startNodePos + startNodeSize }, { endNodePos, endNodePos + endNodeSize }, startPoint, endPoint );
 		}
 
-		Auxiliary::DrawArrow( startPoint, endPoint, IM_COL32( 255, 255, 255, 255 ) );
+		if( PointToOffsetArrowDistanceSquared( ImGui::GetMousePos(), startPoint, endPoint, 5.0f ) < 25.0f )
+		{
+			if( ImGui::IsMouseDoubleClicked( ImGuiMouseButton_Left ) )
+			{
+				auto* AG = dynamic_cast< AnimGraph* >( pOuter );
+				if( AG )
+				{
+					AG->AddSubGraph( SharedFromThis() );
+					AG->ChangeEditorNextFrame( SharedFromThis() );
+				}
+			}
+		
+			const auto color = ed::GetStyle().Colors[ ed::StyleColor_HovLinkBorder ];
+
+			constexpr float sizeOffset = 1.5f;
+			Auxiliary::DrawArrowOffset( startPoint, endPoint, ImColor( color ), 2.0F + sizeOffset, 6.0F, 5.0F );
+		}
+
+		Auxiliary::DrawArrowOffset( startPoint, endPoint, IM_COL32( 255, 255, 255, 255 ), 2.0F, 6.0f, 5.0F );
 	}
 
 	NodeEvaluationState AnimGraphStateMachineTransitionNode::EvaluateNode( NodeEditorRuntime* evaluator )

@@ -27,38 +27,38 @@
 */
 
 #include "sppch.h"
-#include "AnimGraphStateMachinePlayerNode.h"
-
-#include "Saturn/Animation/AssetViewer/Graph/Animation/AnimGraphAnimationPin.h"
+#include "AnimGraphTransitionGraphNodes.h"
 
 namespace Saturn {
 
-	AnimGraphStateMachinePlayerNode::AnimGraphStateMachinePlayerNode()
-		: NodeEditorBlueprintNode( "STATE MACHINE" )
+	//////////////////////////////////////////////////////////////////////////
+	// RESULT NODE
+
+	AnimGraphTransitionGraphResultNode::AnimGraphTransitionGraphResultNode()
+		: NodeEditorBlueprintNode( "Transition Result" )
 	{
 		CreateNode();
 	}
 
-	AnimGraphStateMachinePlayerNode::AnimGraphStateMachinePlayerNode( const std::string& rName )
+	AnimGraphTransitionGraphResultNode::AnimGraphTransitionGraphResultNode( const std::string& rName )
 		: NodeEditorBlueprintNode( rName )
 	{
 		CreateNode();
 	}
 
-	void AnimGraphStateMachinePlayerNode::CreateNode()
+	void AnimGraphTransitionGraphResultNode::CreateNode()
 	{
-		ExecutionType = NodeExecutionType::AnimGraphStateMachinePlayerNode;
+		ExecutionType = NodeExecutionType::AnimGraphStateMachinePlayAnimNode;
 
 #if !defined(SAT_DIST)
-		CanBeDeleted = false;
 		Color = ImColor( 48, 128, 255, 100 );
 		RenderType = NodeRenderType::Blueprint;
 #endif
 
-		Outputs.emplace_back( Ref<AnimGraphAnimationPin>::Create( "Out", PinKind::Output, AnimGraphAnimationPinFlags::StateMachine ) );
+		Inputs.push_back( Ref<BoolPin>::Create( "Out", PinKind::Input ) );
 	}
 
-	AnimGraphStateMachinePlayerNode::~AnimGraphStateMachinePlayerNode()
+	AnimGraphTransitionGraphResultNode::~AnimGraphTransitionGraphResultNode()
 	{
 	}
 
@@ -66,4 +66,4 @@ namespace Saturn {
 
 #include "Saturn/GameFramework/Core/EngineGenerated.h"
 
-SAT_X31_CREATE_AUTO_REG( AnimGraphStateMachinePlayerNode );
+SAT_X31_CREATE_AUTO_REG( AnimGraphTransitionGraphResultNode );

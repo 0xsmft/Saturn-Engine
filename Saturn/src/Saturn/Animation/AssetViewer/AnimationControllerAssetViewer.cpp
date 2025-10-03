@@ -33,11 +33,24 @@
 
 #include "Graph/Animation/AnimGraphNodeLibrary.h"
 #include "Graph/Animation/AnimGraphOutputNode.h"
+#include "Graph/Animation/AnimGraphStateMachinePlayerNode.h"
 #include "Graph/StateMachine/AnimGraphStateMachineStateNode.h"
+#include "Graph/StateMachine/AnimGraphStateMachineTransitionNode.h"
+
+#include "Graph/StateMachine/StateMachineNodeLibrary.h"
+#include "Graph/StateMachine/StateMachineStateNodeLibrary.h"
+#include "Graph/StateMachine/TransitionNodeLibrary.h"
 
 #include "Saturn/NodeEditor/NodeEditorHintNode.h"
+#include "Saturn/NodeEditor/NodeEditorVariableNode.h"
+#include "Saturn/NodeEditor/Serialisation/NodeCache.h"
+
+#include "Saturn/NodeEditor/Maths/MathsNodes.h"
+
+#include "Saturn/ImGui/UndoRedo/GlobalUndoRedoGroup.h"
 
 #include <imgui.h>
+#include <imgui_internal.h>
 
 namespace Saturn {
 
@@ -55,64 +68,64 @@ namespace Saturn {
 		m_Open = true;
 		m_Name = std::format( "{0}##{1}", m_Asset->Name, std::to_string( m_AssetID ) );
 
-		m_NodeEditor = SharedPtr<AnimGraphStateMachineGraph>::Create( m_AssetID );
+		m_NodeEditor = SharedPtr<AnimGraph>::Create( m_AssetID );
+		const std::string filename = std::format( "{0}.sac", m_Asset->Name );
 
-		SetupNewNodeEditor();
+		if( NodeCacheEditor::ReadNodeEditorCache( m_NodeEditor, m_AssetID, filename ) )
+		{
+			m_RootNodeID = m_NodeEditor->FindNode( "Output Node" )->ID;
+		}
+		else
+		{
+			SetupNewNodeEditor();
+		}
 
 #if !defined(SAT_DIST)
-//		m_NodeEditor->NcSetCustomName( filename );
-		const std::string nodeEdWindowName = std::format( "Final Out##{0}", std::to_string( m_AssetID ) );
-
-		m_NodeEditor->SetWindowName( nodeEdWindowName );
+		m_NodeEditor->NcSetCustomName( filename );
+		m_NodeEditor->SetWindowName( m_Name );
 		m_NodeEditor->Open( true );
 #endif
 		m_Open = true;
-		m_CurrentGraph = m_NodeEditor;
 
 		SetupNodeEditorCallbacks();
 	}
 
 	AnimationControllerAssetViewer::~AnimationControllerAssetViewer()
 	{
-		m_CurrentGraph = nullptr;
+#if !defined(SAT_DIST)
+		if( m_Dirty || m_NodeEditor->IsDirty() )
+		{
+			m_NodeEditor->SaveAndMarkClean();
+		}
+
+		GlobalUndoRedoGroup::Get().RemoveIfActionHasIdentifier( m_AssetID );
+
+		m_Asset = nullptr;
+//		m_NodeEditor->SetRuntime( nullptr );
+		m_NodeEditor = nullptr;
+
+		AssetManager::Get().Save();
+#endif
 	}
 
 	void AnimationControllerAssetViewer::OnImGuiRender()
 	{
+		// Main Window
 		if( ImGui::Begin( m_Name.c_str(), &m_Open ) )
 		{
 			// Draw main
-			if( m_CurrentGraph->IsOpen() )
+			if( m_NodeEditor->IsOpen() )
 			{
-				m_CurrentGraph->OnImGuiRender();
+				m_NodeEditor->OnImGuiRender();
 			}
 			else
 			{
-				m_CurrentGraph->Open( false );
+				m_NodeEditor->Open( false );
 				m_Open = false;
 			}
 
 			ImGui::End();
 		}
-
-		const auto& rSelected = m_NodeEditor->GetSelectedNodes();
-		for( const auto& rNode : rSelected )
-		{
-			if( ImGui::IsMouseDoubleClicked( ImGuiMouseButton_Left ) )
-			{
-				SharedPtr<NodeEditorNodeBase> baseNode = m_NodeEditor->FindNode( rNode );
-				if( baseNode->ExecutionType == NodeExecutionType::AnimGraphStateMachineStateNode )
-				{
-					AnimGraphStateMachineStateNode* pStateNode = dynamic_cast< AnimGraphStateMachineStateNode* >( baseNode.Get() );
-					if( pStateNode )
-					{
-						m_CurrentGraph = ( SharedPtr<NodeEditor> )pStateNode->GetGraph();
-						m_CurrentGraph->Open( true );
-					}
-				}
-			}
-		}
-
 	}
 
 	void AnimationControllerAssetViewer::OnEvent( Event& rEvent )
@@ -132,10 +145,103 @@ namespace Saturn {
 	{
 		SharedPtr<AnimGraphOutputNode> outputNode = AnimGraphNodeLibrary::SpawnOutputNode( m_NodeEditor );
 		m_RootNodeID = outputNode->ID;
+	}
 
+	SharedPtr<NodeEditorNodeBase> AnimationControllerAssetViewer::DrawRootGraphNewNodeOptions()
+	{
+		SharedPtr<NodeEditorNodeBase> result;
 
-		SharedPtr<AnimGraphStateMachineStateNode> sm0 = AnimGraphNodeLibrary::SpawnStateMachineStateNode( m_NodeEditor );
-//		SharedPtr<AnimGraphStateMachineStateNode> sm1 = AnimGraphNodeLibrary::SpawnStateMachineStateNode( m_NodeEditor );
+		ImGui::SeparatorText( "Animation Graph" );
+
+		// #FixSharedPtrEquT2Op
+		if( ImGui::MenuItem( "State Machine player" ) )
+			result = ( SharedPtr<NodeEditorNodeBase> )AnimGraphNodeLibrary::SpawnStateMachinePlayerNode( m_NodeEditor );
+
+		ImGui::SeparatorText( "Variables" );
+		for( const auto& [id, rVariable] : m_NodeEditor->GetDataHandles() )
+		{
+			if( ImGui::MenuItem( rVariable->GetName().c_str() ) )
+			{
+				result = ( SharedPtr<NodeEditorVariableNode> )NodeEditorVariableNode::SpawnVariableNode( rVariable, m_NodeEditor );
+			}
+
+			if( ImGui::MenuItem( "Set Variable" ) )
+				result = ( SharedPtr<NodeEditorSetVariableNode> )NodeEditorSetVariableNode::SpawnSetVariableNode( rVariable, m_NodeEditor );
+		}
+
+		ImGui::SeparatorText( "Maths" );
+		if( auto mathResult = MathsNodesAuxiliary::DrawContextMenu( m_NodeEditor ); mathResult )
+		{
+			result = mathResult;
+		}
+
+		return result;
+	}
+
+	SharedPtr<NodeEditorNodeBase> AnimationControllerAssetViewer::DrawStateMachineNewNodeOptions()
+	{
+		SharedPtr<NodeEditorNodeBase> result;
+
+		ImGui::SeparatorText( "State Machine" );
+
+		// #FixSharedPtrEquT2Op
+		if( ImGui::MenuItem( "New State" ) )
+			result = ( SharedPtr<AnimGraphStateMachineNodeBase> )StateMachineNodeLibrary::SpawnStateNode( m_NodeEditor );
+
+		return result;
+	}
+
+	SharedPtr<NodeEditorNodeBase> AnimationControllerAssetViewer::DrawStateMachineStateNewNodeOptions()
+	{
+		SharedPtr<NodeEditorNodeBase> result;
+
+		ImGui::SeparatorText( "State Machine State" );
+
+		// #FixSharedPtrEquT2Op
+		if( ImGui::MenuItem( "Play Animation" ) )
+			result = ( SharedPtr<NodeEditorNodeBase> )StateMachineStateNodeLibrary::SpawnPlayAnimNode( m_NodeEditor );
+
+		if( ImGui::MenuItem( "Out" ) )
+			result = ( SharedPtr<NodeEditorNodeBase> )StateMachineStateNodeLibrary::SpawnOutputNode( m_NodeEditor );
+
+		ImGui::SeparatorText( "Variables" );
+		for( const auto& [id, rVariable] : m_NodeEditor->GetDataHandles() )
+		{
+			if( ImGui::MenuItem( rVariable->GetName().c_str() ) )
+			{
+				result = ( SharedPtr<NodeEditorVariableNode> )NodeEditorVariableNode::SpawnVariableNode( rVariable, m_NodeEditor );
+			}
+		}
+
+		return result;
+	}
+
+	SharedPtr<NodeEditorNodeBase> AnimationControllerAssetViewer::DrawTransitionNewNodeOptions()
+	{
+		SharedPtr<NodeEditorNodeBase> result;
+
+		ImGui::SeparatorText( "Transition Nodes" );
+
+		// #FixSharedPtrEquT2Op
+		if( ImGui::MenuItem( "Final Result" ) )
+			result = ( SharedPtr<NodeEditorNodeBase> )TransitionNodeLibrary::SpawnOutputNode( m_NodeEditor );
+
+		ImGui::SeparatorText( "Variables" );
+		for( const auto& [id, rVariable] : m_NodeEditor->GetDataHandles() )
+		{
+			if( ImGui::MenuItem( rVariable->GetName().c_str() ) )
+			{
+				result = ( SharedPtr<NodeEditorVariableNode> )NodeEditorVariableNode::SpawnVariableNode( rVariable, m_NodeEditor );
+			}
+		}
+
+		ImGui::SeparatorText( "Maths" );
+		if( auto mathResult = MathsNodesAuxiliary::DrawContextMenu( m_NodeEditor ); mathResult )
+		{
+			result = mathResult;
+		}
+
+		return result;
 	}
 
 	void AnimationControllerAssetViewer::SetupNodeEditorCallbacks()
@@ -146,18 +252,74 @@ namespace Saturn {
 		{
 			SharedPtr<NodeEditorNodeBase> result;
 
-			if( ImGui::MenuItem( "State Machine player" ) )
-				result = ( SharedPtr<NodeEditorNodeBase> )AnimGraphNodeLibrary::SpawnStateMachinePlayerNode( m_NodeEditor );
-			
+			// Root graph
+			if( !m_NodeEditor->GetActiveSubGraph() )
+			{
+				result = DrawRootGraphNewNodeOptions();
+			}
+			else if( m_NodeEditor->GetActiveSubGraph()->GetClass() == AnimGraphStateMachinePlayerNode::StaticClass() )
+			{
+				result = DrawStateMachineNewNodeOptions();
+			}
+			else if( m_NodeEditor->GetActiveSubGraph()->GetClass() == AnimGraphStateMachineStateNode::StaticClass() )
+			{
+				result = DrawStateMachineStateNewNodeOptions();
+			}
+			else if( m_NodeEditor->GetActiveSubGraph()->GetClass() == AnimGraphStateMachineTransitionNode::StaticClass() )
+			{
+				result = DrawTransitionNewNodeOptions();
+			}
+
 			ImGui::SeparatorText( "Auxiliary" );
 
-			if( ImGui::MenuItem( "[DEBUG] CREATE STATE MACHINE STATE NODE" ) )
-				result = ( SharedPtr<NodeEditorNodeBase> )AnimGraphNodeLibrary::SpawnStateMachineStateNode( m_NodeEditor );
-			
 			if( ImGui::MenuItem( "Hint (Comment) Node" ) )
 				result = NodeEditorHintNode::SpawnHintNode( m_NodeEditor );
 
+			// Set parent object if needed.
+			if( result && m_NodeEditor->GetActiveSubGraph() )
+			{
+				result->pParentObject = m_NodeEditor->GetActiveSubGraph().Get();
+			}
+
 			return result;
+		} );
+
+		m_NodeEditor->SetBreadCrumbsFunction( 
+			[&]() -> void 
+		{
+			ImGui::SetCursorPos( { ImGui::GetStyle().WindowPadding.x + 2.0f, 64.0f } );
+			ImGui::Text( "%s", m_Asset->Name.c_str() );
+			const ImRect textRect = ImRect( ImGui::GetItemRectMin(), ImGui::GetItemRectMax() );
+			if( ImGui::IsItemHovered() )
+			{
+				ImGui::GetWindowDrawList()->AddRect( textRect.Min, textRect.Max, IM_COL32( 255, 255, 255, 255 ) );
+
+				if( ImGui::IsMouseReleased( ImGuiMouseButton_Left ) )
+				{
+					m_NodeEditor->ClearSubGraphs();
+				}
+			}
+
+			// Draw sub graphs.
+			for( const auto& rGraph : m_NodeEditor->GetSubGraphs() )
+			{
+				ImGui::SameLine();
+				ImGui::TextUnformatted( "\\" );
+				ImGui::SameLine();
+
+				ImGui::Text( "%s", rGraph->Name.c_str() );
+				const ImRect textRect = ImRect( ImGui::GetItemRectMin(), ImGui::GetItemRectMax() );
+				if( ImGui::IsItemHovered() )
+				{
+					ImGui::GetWindowDrawList()->AddRect( textRect.Min, textRect.Max, IM_COL32( 255, 255, 255, 255 ) );
+
+					if( ImGui::IsMouseReleased( ImGuiMouseButton_Left ) )
+					{
+						m_NodeEditor->PopActiveSubGraphTo( rGraph );
+						return;
+					}
+				}
+			}
 		} );
 #endif
 	}

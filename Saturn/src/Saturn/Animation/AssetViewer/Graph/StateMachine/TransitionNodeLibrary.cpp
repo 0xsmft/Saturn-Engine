@@ -26,35 +26,19 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "TransitionNodeLibrary.h"
 
-#include "Saturn/NodeEditor/UI/NodeEditor.h"
+#include "Saturn/Animation/AssetViewer/Graph/StateMachine/AnimGraphTransitionGraphNodes.h"
+#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 
 namespace Saturn {
 
-	class AnimGraphStateMachineGraph : public FDependentNodeEditorSuper
+	SharedPtr<AnimGraphTransitionGraphResultNode> TransitionNodeLibrary::SpawnOutputNode( SharedPtr<NodeEditorBase> nodeEditor )
 	{
-	public:
-		AnimGraphStateMachineGraph();
-		AnimGraphStateMachineGraph( AssetID id );
-		virtual ~AnimGraphStateMachineGraph();
-
-		// Called after the node that owns the Graph was placed.
-		void PostPlaceInit();
-
-	public:
-		//////////////////////////////////////////////////////////////////////////
-		// NodeEditorBase
-		virtual void OnUpdate( Timestep ts ) override;
-		virtual void OnEvent( Event& rEvent ) override;
-
-	protected:
-		virtual void DrawGraph() override;
-
-	private:
-//		std::vector<Ref<AnimGraphTransitionLink>> m_Links;
-
-		UUID m_TransitionStartNode = 0;
-	};
+		SharedPtr<AnimGraphTransitionGraphResultNode> node = NewObject<AnimGraphTransitionGraphResultNode>();
+		nodeEditor->AddNode( node );
+		return node;
+	}
 
 }

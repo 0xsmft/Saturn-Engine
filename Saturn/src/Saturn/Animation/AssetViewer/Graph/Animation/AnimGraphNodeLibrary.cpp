@@ -44,8 +44,6 @@ namespace Saturn {
 		SharedPtr<AnimGraphStateMachinePlayerNode> sp = pNode;
 		nodeEditor->AddNode( sp );
 
-		sp->PostInit();
-
 		return sp;
 	}
 

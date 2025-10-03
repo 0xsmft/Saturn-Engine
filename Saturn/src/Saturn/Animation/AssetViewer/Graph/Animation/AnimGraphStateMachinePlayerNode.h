@@ -29,7 +29,6 @@
 #pragma once
 
 #include "Saturn/NodeEditor/NodeEditorBlueprintNode.h"
-#include "Saturn/Animation/AssetViewer/Graph/StateMachine/AnimGraphStateMachineGraph.h"
 
 namespace Saturn {
 
@@ -44,15 +43,7 @@ namespace Saturn {
 
 		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* pEvaluator ) { return NodeEvaluationState::Evaluated; }
 
-		SharedPtr<AnimGraphStateMachineGraph> GetGraph() const { return m_InternalGraph; }
-
-	public:
-		void PostInit();
-
 	private:
 		void CreateNode();
-
-	private:
-		SharedPtr<AnimGraphStateMachineGraph> m_InternalGraph;
 	};
 }

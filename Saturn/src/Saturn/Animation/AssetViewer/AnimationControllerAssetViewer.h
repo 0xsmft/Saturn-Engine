@@ -28,7 +28,7 @@
 
 #pragma once
 
-#include "Graph/StateMachine/AnimGraphStateMachineGraph.h"
+#include "Graph/Animation/AnimGraph.h"
 
 #include "Saturn/ImGui/AssetViewer.h"
 #include "Saturn/Animation/Animator.h"
@@ -55,12 +55,15 @@ namespace Saturn {
 		void AddAsset();
 		void SetupNewNodeEditor();
 		void SetupNodeEditorCallbacks();
+	
+		SharedPtr<NodeEditorNodeBase> DrawRootGraphNewNodeOptions();
+		SharedPtr<NodeEditorNodeBase> DrawStateMachineNewNodeOptions();
+		SharedPtr<NodeEditorNodeBase> DrawStateMachineStateNewNodeOptions();
+		SharedPtr<NodeEditorNodeBase> DrawTransitionNewNodeOptions();
 
 	private:
 		Ref<Asset> m_Asset = nullptr;
-		SharedPtr<AnimGraphStateMachineGraph> m_NodeEditor = nullptr;
-		
-		SharedPtr<NodeEditor> m_CurrentGraph = nullptr;
+		SharedPtr<AnimGraph> m_NodeEditor = nullptr;
 
 //		Ref<BehaviourTreeEditorEvaluator> m_Runtime = nullptr;
 

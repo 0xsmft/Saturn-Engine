@@ -37,13 +37,9 @@ namespace Saturn {
 
 	SharedPtr<AnimGraphStateMachineStateNode> StateMachineNodeLibrary::SpawnStateNode( SharedPtr<NodeEditorBase> nodeEditor )
 	{
-		AnimGraphStateMachineStateNode* pNode = ( AnimGraphStateMachineStateNode* ) ClassMetadataHandler::Get().CreateClassObject( AnimGraphStateMachineStateNode::StaticClass() );
-
-		SharedPtr<AnimGraphStateMachineStateNode> sp = pNode;
-
-		nodeEditor->AddNode( sp );
-
-		return sp;
+		SharedPtr<AnimGraphStateMachineStateNode> node = NewObject<AnimGraphStateMachineStateNode>();
+		nodeEditor->AddNode( node );
+		return node;
 	}
 
 }

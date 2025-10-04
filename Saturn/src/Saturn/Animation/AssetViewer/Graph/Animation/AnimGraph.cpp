@@ -139,6 +139,29 @@ namespace Saturn {
 			ImGui::EndHorizontal();
 		}
 	}
+	void AnimGraph::SerialiseData( std::ofstream& rStream, bool isForDist )
+	{
+		FDependentNodeEditorSuper::SerialiseData( rStream, isForDist );
+
+		// We may not actually have an entry node yet, this graph might not contain any state machines yet.
+		if( m_EntryNode )
+			RawSerialisation::WriteObjectChecked( m_EntryNode->ID, rStream );
+		else
+			RawSerialisation::WriteObjectChecked( 0llu, rStream );
+	}
+
+	void AnimGraph::DeserialiseData( FDependentIStream& rStream )
+	{
+		FDependentNodeEditorSuper::DeserialiseData( rStream );
+
+		UUID entryID = 0;
+		RawSerialisation::ReadObjectChecked( entryID, rStream );
+
+		// We may not actually have an entry node yet, this graph might not contain any state machines yet.
+		if( entryID )
+			m_EntryNode = m_Nodes[ entryID ];
+	}
+
 #endif
 
 	static std::vector<SClass*> s_AnimGraphAllowedNodes

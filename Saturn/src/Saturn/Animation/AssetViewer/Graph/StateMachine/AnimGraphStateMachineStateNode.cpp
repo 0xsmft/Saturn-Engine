@@ -32,7 +32,6 @@
 #include "StateMachineStateNodeLibrary.h"
 
 #include "Saturn/Animation/AssetViewer/Graph/Animation/AnimGraph.h"
-#include "Saturn/Animation/AssetViewer/Graph/StateMachine/AnimGraphStateMachineGraph.h"
 
 namespace Saturn {
 
@@ -80,20 +79,11 @@ namespace Saturn {
 	void AnimGraphStateMachineStateNode::Serialise( std::ofstream& rStream, bool isForDist ) const
 	{
 		Super::Serialise( rStream, isForDist );
-
-		// TODO: Very bad!
-		auto* AG = dynamic_cast< AnimGraph* >( pOuter );
-		const bool isEntry = AG->GetEntryNode() == SharedFromThis();
-
-		RawSerialisation::WriteObject( isEntry, rStream );
 	}
 
 	void AnimGraphStateMachineStateNode::Deserialise( FDependentIStream& rStream )
 	{
 		Super::Deserialise( rStream );
-
-		bool isEntry = false;
-		RawSerialisation::ReadObject( isEntry, rStream );
 	}
 
 }

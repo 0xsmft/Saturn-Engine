@@ -53,6 +53,7 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		Color = ImColor( 48, 128, 255, 100 );
 		RenderType = NodeRenderType::Blueprint;
+		CanBeDeleted = false;
 #endif
 
 		Inputs.push_back( Ref<BoolPin>::Create( "Out", PinKind::Input ) );

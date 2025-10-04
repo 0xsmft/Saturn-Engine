@@ -38,7 +38,7 @@
 namespace Saturn {
 
 	AnimGraphStateMachineTransitionNode::AnimGraphStateMachineTransitionNode()
-		: NodeEditorNodeBase()
+		: NodeEditorNodeBase( "Transition" )
 	{
 		CreateNode();
 	}
@@ -48,10 +48,9 @@ namespace Saturn {
 		ExecutionType = NodeExecutionType::AnimGraphStateMachineTransitionNode;
 
 #if !defined(SAT_DIST)
-		CanBeDeleted = false;
+		CanBeDeleted = true;
 		Color = ImColor( 48, 128, 255, 100 );
 		RenderType = NodeRenderType::Blueprint;
-		Name = "Transition";
 #endif
 
 		Inputs.emplace_back( Ref<Pin>::Create( "In", PinType::AnimGraphAnimation, PinKind::Input ) );
@@ -62,7 +61,7 @@ namespace Saturn {
 	{
 	}
 
-	float PointToOffsetArrowDistanceSquared( const ImVec2& point, ImVec2 startPoint, ImVec2 endPoint, const float offset )
+	static float PointToOffsetArrowDistanceSquared( const ImVec2& point, ImVec2 startPoint, ImVec2 endPoint, const float offset )
 	{
 		ImVec2 arrowDir = endPoint - startPoint;
 		float arrowLengthSquared = ImLengthSqr( arrowDir );

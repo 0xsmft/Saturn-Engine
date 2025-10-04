@@ -41,13 +41,19 @@ namespace Saturn {
 
 		std::vector<UUID> TraverseAnimGraph();
 
-		void MarkNodeAsEntry( SharedPtr<NodeEditorBase> node ) { m_EntryNode = node; }
-		SharedPtr<NodeEditorBase> GetEntryNode() const { return m_EntryNode; }
+		void MarkNodeAsEntry( SharedPtr<NodeEditorNodeBase> node ) { m_EntryNode = node; }
+		SharedPtr<NodeEditorNodeBase> GetEntryNode() const { return m_EntryNode; }
 
 #if !defined(SAT_DIST)
 	public:
 		virtual void OnExtraRender() override;
+		virtual void OnNodeEditorEvent( NodeEditorAction action ) override;
 #endif
+
+	protected:
+		//////////////////////////////////////////////////////////////////////////
+		void SerialiseData( std::ofstream& rStream, bool isForDist ) override;
+		void DeserialiseData( FDependentIStream& rStream ) override;
 
 	protected:
 		virtual void DrawGraph() override;
@@ -57,7 +63,7 @@ namespace Saturn {
 
 	private:
 		UUID m_TransitionStartNode = 0;
-		SharedPtr<NodeEditorBase> m_EntryNode;
+		SharedPtr<NodeEditorNodeBase> m_EntryNode;
 	};
 
 }

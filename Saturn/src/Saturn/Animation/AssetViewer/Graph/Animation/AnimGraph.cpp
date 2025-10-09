@@ -74,6 +74,8 @@ namespace Saturn {
 
 	std::vector<UUID> AnimGraph::TraverseAnimGraph()
 	{
+#if 0
+		// PARENT ID -> CHILDREN
 		std::map<UUID, std::vector<SharedPtr<NodeEditorNodeBase>>> parentToChildren;
 		for( const auto& [id, node] : m_Nodes )
 		{
@@ -121,8 +123,96 @@ namespace Saturn {
 				}
 			}
 		}
+		return order;
+#else
+		// 1: PARENT ID -> CHILDREN
+		std::map<UUID, std::vector<SharedPtr<NodeEditorNodeBase>>> parentToChildren;
+		for( const auto& [id, node] : m_Nodes )
+		{
+			if( node->pParentObject )
+				parentToChildren[ node->pParentObject->ID ].push_back( node );
+		}
+
+		// 2: Push the final absolute result of the whole graph and work our way backwards.
+		std::deque<UUID> temporaryStack;
+		temporaryStack.emplace_back( FindNode( "Output Node" )->ID );
+
+		std::vector<UUID> order;
+
+		bool searchRight = true;
+
+		while( !temporaryStack.empty() )
+		{
+			const auto currentID = temporaryStack.back();
+			temporaryStack.pop_back();
+
+			// Find node
+			const SharedPtr<NodeEditorNodeBase> treeNode = FindNode( currentID );
+			SAT_CORE_INFO( "Order is: {0}", treeNode->Name );
+			SAT_CORE_INFO( "Searching Right: {0}", searchRight );
+
+			if( treeNode )
+			{
+				const auto rNeighbours = searchRight ? FindNeighborsRight( treeNode ) : FindNeighborsLeft( treeNode );
+
+				for( auto itr = rNeighbours.begin(); itr != rNeighbours.end(); ++itr )
+				{
+					if( std::find( order.begin(), order.end(), *itr ) == order.end() )
+					{
+						temporaryStack.emplace_back( *itr );
+						order.emplace_back( *itr );
+					}
+				}
+
+				// If this graph has children (i.e. sub-graph) root node.
+				if( const auto itr = parentToChildren.find( currentID ); itr != parentToChildren.end() )
+				{
+					// Now go into the sub-graph and find the entry node, or output node
+					UUID nodeToFindFrom = 0;
+					if( treeNode->GetClass() == AnimGraphStateMachineStateNode::StaticClass() )
+					{
+						const auto stateNode = treeNode.As<AnimGraphStateMachineStateNode>();
+						nodeToFindFrom = stateNode->GetOutputNodeID();
+					}
+					else if( treeNode->GetClass() == AnimGraphStateMachineTransitionNode::StaticClass() ) 
+					{
+						const auto stateNode = treeNode.As<AnimGraphStateMachineTransitionNode>();
+						nodeToFindFrom = stateNode->GetOutputNodeID();
+					}
+					else if( treeNode->GetClass() == AnimGraphStateMachinePlayerNode::StaticClass() )
+					{
+						nodeToFindFrom = m_StateMachineEntryNode->ID;
+					}
+					else
+					{
+						SAT_CORE_WARN( "Node has children but was not handled!, SClass is: {0}", treeNode->GetClass()->GetName() );
+					}
+
+					if( nodeToFindFrom )
+					{
+						const auto subGraphNodes = FindNeighborsRight( FindNode( nodeToFindFrom ) );
+
+						for( auto itr = rNeighbours.begin(); itr != rNeighbours.end(); ++itr )
+						{
+							if( std::find( order.begin(), order.end(), *itr ) == order.end() )
+							{
+								order.emplace_back( *itr );
+							}
+						}
+
+						// Then add the final node last.
+						if( std::find( order.begin(), order.end(), nodeToFindFrom ) == order.end() )
+						{
+							temporaryStack.emplace_back( nodeToFindFrom );
+							order.emplace_back( nodeToFindFrom );
+						}
+					}
+				}
+			}
+		}
 
 		return order;
+#endif
 	}
 
 #if !defined(SAT_DIST)
@@ -144,8 +234,8 @@ namespace Saturn {
 		FDependentNodeEditorSuper::SerialiseData( rStream, isForDist );
 
 		// We may not actually have an entry node yet, this graph might not contain any state machines yet.
-		if( m_EntryNode )
-			RawSerialisation::WriteObjectChecked( m_EntryNode->ID, rStream );
+		if( m_StateMachineEntryNode )
+			RawSerialisation::WriteObjectChecked( m_StateMachineEntryNode->ID, rStream );
 		else
 			RawSerialisation::WriteObjectChecked( 0llu, rStream );
 	}
@@ -159,7 +249,7 @@ namespace Saturn {
 
 		// We may not actually have an entry node yet, this graph might not contain any state machines yet.
 		if( entryID )
-			m_EntryNode = m_Nodes[ entryID ];
+			m_StateMachineEntryNode = m_Nodes[ entryID ];
 	}
 
 #endif
@@ -396,6 +486,8 @@ namespace Saturn {
 
 					node->pParentObject = m_ActiveSubGraph.Get();
 					AddNode( node );
+
+					node->PostPlace();
 
 					CreateLink( startNode->Outputs[ 0 ], node->Inputs[ 0 ], startNode->Outputs[ 0 ]->GetPinColor() );
 					CreateLink( node->Outputs[ 0 ], m_HoveredNode->Inputs[ 0 ], node->Outputs[ 0 ]->GetPinColor() );

@@ -41,8 +41,8 @@ namespace Saturn {
 
 		std::vector<UUID> TraverseAnimGraph();
 
-		void MarkNodeAsEntry( SharedPtr<NodeEditorNodeBase> node ) { m_EntryNode = node; }
-		SharedPtr<NodeEditorNodeBase> GetEntryNode() const { return m_EntryNode; }
+		void MarkNodeAsEntry( SharedPtr<NodeEditorNodeBase> node ) { m_StateMachineEntryNode = node; }
+		SharedPtr<NodeEditorNodeBase> GetEntryNode() const { return m_StateMachineEntryNode; }
 
 #if !defined(SAT_DIST)
 	public:
@@ -63,7 +63,7 @@ namespace Saturn {
 
 	private:
 		UUID m_TransitionStartNode = 0;
-		SharedPtr<NodeEditorNodeBase> m_EntryNode;
+		SharedPtr<NodeEditorNodeBase> m_StateMachineEntryNode;
 	};
 
 }

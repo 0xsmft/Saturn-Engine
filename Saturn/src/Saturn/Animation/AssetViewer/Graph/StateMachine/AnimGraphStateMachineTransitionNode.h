@@ -40,12 +40,22 @@ namespace Saturn {
 		AnimGraphStateMachineTransitionNode();
 		~AnimGraphStateMachineTransitionNode();
 
+		void PostPlace();
+	
+	public:
+		[[nodiscard]] UUID GetOutputNodeID() const { return m_OutputNodeID; }
+
+	public:
 		// NodeEditorNodeBase
 		virtual void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder ) override;
 		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
+		virtual void Serialise( std::ofstream& rStream, bool isForDist ) const override;
+		virtual void Deserialise( FDependentIStream& rStream ) override;
+		virtual NodeEditorTaskBase* ConvertToTask() override;
 
 	private:
 		void CreateNode();
+		UUID m_OutputNodeID = 0;
 	};
 
 }

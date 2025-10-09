@@ -43,7 +43,10 @@ namespace Saturn {
 
 		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* pEvaluator ) { return NodeEvaluationState::Evaluated; }
 
+		void PostPlace();
+
 	private:
 		void CreateNode();
 	};
+
 }

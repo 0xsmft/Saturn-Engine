@@ -30,8 +30,12 @@
 #include "AnimGraphStateMachineStateNode.h"
 
 #include "StateMachineStateNodeLibrary.h"
+#include "AnimGraphStateMachineOutNode.h"
+
+#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 
 #include "Saturn/Animation/AssetViewer/Graph/Animation/AnimGraph.h"
+#include "Saturn/Animation/AssetViewer/Graph/Tasks/AnimGraphStateMachineStateTask.h"
 
 namespace Saturn {
 
@@ -79,11 +83,18 @@ namespace Saturn {
 	void AnimGraphStateMachineStateNode::Serialise( std::ofstream& rStream, bool isForDist ) const
 	{
 		Super::Serialise( rStream, isForDist );
+		RawSerialisation::WriteObjectChecked( m_OutputNodeID, rStream );
 	}
 
 	void AnimGraphStateMachineStateNode::Deserialise( FDependentIStream& rStream )
 	{
 		Super::Deserialise( rStream );
+	void AnimGraphStateMachineStateNode::PostPlace()
+	{
+		// Spawn output node
+		auto outNode = StateMachineStateNodeLibrary::SpawnOutputNode( pOuter->SharedFromThis() );
+		outNode->pParentObject = this;
+		m_OutputNodeID = outNode->ID;
 	}
 
 }

@@ -29,7 +29,13 @@
 #include "sppch.h"
 #include "AnimGraphStateMachineTransitionNode.h"
 
+#include "TransitionNodeLibrary.h"
+#include "AnimGraphTransitionGraphNodes.h"
+
+#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
+
 #include "Saturn/Animation/AssetViewer/Graph/Animation/AnimGraph.h"
+#include "Saturn/Animation/AssetViewer/Graph/Tasks/AnimGraphTransitionTasks.h"
 
 #include "Saturn/NodeEditor/NodeEditorBase.h"
 
@@ -134,12 +140,37 @@ namespace Saturn {
 			Auxiliary::DrawArrowOffset( startPoint, endPoint, ImColor( color ), 2.0F + sizeOffset, 6.0F, 5.0F );
 		}
 
-		Auxiliary::DrawArrowOffset( startPoint, endPoint, IM_COL32( 255, 255, 255, 255 ), 2.0F, 6.0f, 5.0F );
+		Auxiliary::DrawArrowOffset( startPoint, endPoint, IM_COL32( 255, 255, 255, 255 ), 2.0F, 6.0F, 5.0F );
 	}
 
 	NodeEvaluationState AnimGraphStateMachineTransitionNode::EvaluateNode( NodeEditorRuntime* evaluator )
 	{
 		return NodeEvaluationState::Evaluated;
+	}
+
+	void AnimGraphStateMachineTransitionNode::PostPlace()
+	{
+		// Create output node for this transition.
+		auto outNode = TransitionNodeLibrary::SpawnOutputNode( pOuter->SharedFromThis() );
+		outNode->pParentObject = this;
+		m_OutputNodeID = outNode->ID;
+	}
+
+	void AnimGraphStateMachineTransitionNode::Serialise( std::ofstream& rStream, bool isForDist ) const
+	{
+		Super::Serialise( rStream, isForDist );
+		RawSerialisation::WriteObjectChecked( m_OutputNodeID, rStream );
+	}
+
+	void AnimGraphStateMachineTransitionNode::Deserialise( FDependentIStream& rStream )
+	{
+		Super::Deserialise( rStream );
+		RawSerialisation::ReadObjectChecked( m_OutputNodeID, rStream );
+	}
+
+	NodeEditorTaskBase* AnimGraphStateMachineTransitionNode::ConvertToTask()
+	{
+		return NewObject<AnimGraphTransitionTask>();
 	}
 
 }

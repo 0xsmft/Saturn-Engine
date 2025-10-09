@@ -29,7 +29,12 @@
 #include "sppch.h"
 #include "AnimGraphStateMachinePlayerNode.h"
 
-#include "Saturn/Animation/AssetViewer/Graph/Animation/AnimGraphAnimationPin.h"
+#include "AnimGraphAnimationPin.h"
+#include "AnimGraph.h"
+
+#include "Saturn/Animation/AssetViewer/Graph/StateMachine/StateMachineNodeLibrary.h"
+#include "Saturn/Animation/AssetViewer/Graph/StateMachine/AnimGraphStateMachineStateNode.h"
+
 
 namespace Saturn {
 
@@ -62,6 +67,20 @@ namespace Saturn {
 	{
 	}
 
+	void AnimGraphStateMachinePlayerNode::PostPlace() 
+	{
+		// Spawn entry node
+		auto entryNode = StateMachineNodeLibrary::SpawnStateNode( pOuter->SharedFromThis() );
+		entryNode->pParentObject = this;
+
+		auto* AG = dynamic_cast< AnimGraph* >( pOuter );
+		if( AG )
+		{
+			AG->MarkNodeAsEntry( entryNode );
+		}
+
+		entryNode->PostPlace();
+	}
 }
 
 #include "Saturn/GameFramework/Core/EngineGenerated.h"

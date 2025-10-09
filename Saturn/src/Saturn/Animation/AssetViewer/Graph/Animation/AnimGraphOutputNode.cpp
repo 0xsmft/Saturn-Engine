@@ -58,7 +58,6 @@ namespace Saturn {
 
 	AnimGraphOutputNode::~AnimGraphOutputNode()
 	{
-
 	}
 
 }

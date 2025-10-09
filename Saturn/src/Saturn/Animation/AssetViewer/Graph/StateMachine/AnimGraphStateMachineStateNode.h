@@ -42,12 +42,19 @@ namespace Saturn {
 
 		virtual ~AnimGraphStateMachineStateNode();
 
+		void PostPlace();
+
 	public:
 		virtual void Serialise( std::ofstream& rStream, bool isForDist ) const override;
 		virtual void Deserialise( FDependentIStream& rStream ) override;
+		virtual NodeEditorTaskBase* ConvertToTask() override;
+
+	public:
+		UUID GetOutputNodeID() const { return m_OutputNodeID; }
 
 	private:
 		void CreateNode();
+		UUID m_OutputNodeID = 0;
 	};
 
 }

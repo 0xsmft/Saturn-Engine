@@ -28,30 +28,11 @@
 
 #pragma once
 
-#if defined( SAT_PLATFORM_WINDOWS )
-#include <Windows.h>
-#endif
-
 #include <string>
 
 namespace Saturn::Core {
 
-	inline int ShowErrorDialogBox( const std::string& rTitle, const std::string& rText ) 
-	{
-#if defined(SAT_PLATFORM_WINDOWS)
-		return MessageBoxA( nullptr, rText.data(), rTitle.data(), MB_ICONSTOP | MB_OK );
-#else
-		return 0;
-#endif
-	}
+	extern int ShowErrorDialogBox( const std::string& rTitle, const std::string& rText );
 
-	[[noreturn]] inline void ShowErrorDialogBoxAndTerminate( const std::string& rTitle, const std::string& rText, bool Terminate )
-	{
-#if defined(SAT_PLATFORM_WINDOWS)
-		MessageBoxA( nullptr, rText.data(), rTitle.data(), MB_ICONSTOP | MB_OK );
-#else
-#endif
-		std::exit( 1 );
-		std::unreachable();
-	}
+	[[noreturn]] extern void ShowErrorDialogBoxAndTerminate( const std::string& rTitle, const std::string& rText, bool Terminate );
 }

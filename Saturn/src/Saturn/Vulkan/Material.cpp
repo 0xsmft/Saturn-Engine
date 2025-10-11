@@ -36,7 +36,7 @@
 #include "VulkanContext.h"
 #include "VulkanDebug.h"
 
-#include "Saturn/Core/OptickProfiler.h"
+#include "Saturn/Core/Profiler.h"
 
 namespace Saturn {
 

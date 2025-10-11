@@ -46,7 +46,7 @@
 #include "Saturn/GameFramework/SClass.h"
 #include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 
-#include "Saturn/Core/OptickProfiler.h"
+#include "Saturn/Core/Profiler.h"
 
 #include <backends/imgui_impl_vulkan.h>
 

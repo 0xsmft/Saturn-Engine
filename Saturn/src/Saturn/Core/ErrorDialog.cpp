@@ -27,129 +27,31 @@
 */
 
 #include "sppch.h"
-#include "RenderThread.h"
+#include "ErrorDialog.h"
 
-#include "Saturn/Core/Profiler.h"
+#if defined( SAT_PLATFORM_WINDOWS )
+#include <Windows.h>
+#endif
 
-namespace Saturn {
+namespace Saturn::Core {
 
-	RenderThread::RenderThread()
-		: Thread()
+	int ShowErrorDialogBox( const std::string& rTitle, const std::string& rText )
 	{
+#if defined(SAT_PLATFORM_WINDOWS)
+		return MessageBoxA( nullptr, rText.data(), rTitle.data(), MB_ICONSTOP | MB_OK );
+#else
+		return 0;
+#endif
 	}
 
-	RenderThread::~RenderThread()
+	[[noreturn]] void ShowErrorDialogBoxAndTerminate( const std::string& rTitle, const std::string& rText, bool Terminate )
 	{
+#if defined(SAT_PLATFORM_WINDOWS)
+		MessageBoxA( nullptr, rText.data(), rTitle.data(), MB_ICONSTOP | MB_OK );
+#else
+#endif
+		std::exit( 1 );
+		std::unreachable();
 	}
-
-	void RenderThread::Start()
-	{
-		if( !m_Enabled )
-			return;
-
-		m_Running->store( m_Enabled );
-		m_Thread = std::thread( &RenderThread::ThreadRun, this );
-	}
-
-	void RenderThread::RequestJoin()
-	{
-		std::lock_guard<std::mutex> Lock( m_Mutex );
-
-		m_Running->store( false );
-		m_SignalCV.notify_one();
-	}
-
-	void RenderThread::WaitAll()
-	{
-		SAT_PF_EVENT();
-
-		m_WaitTime.Reset();
-
-		// If we are not using the render thread, we still need to execute the command buffer. 
-		// So just do it the now and return out.
-		if( !m_Enabled ) 
-		{
-			ExecuteCommands();
-
-			m_WaitTime.Stop();
-
-			return;
-		}
-
-		if( !m_CommandBuffer.empty() )
-		{
-			m_ExecuteAll = true;
-			m_SignalCV.notify_one();
-		}
-
-		WaitCommands();
-
-		m_WaitTime.Stop();
-	}
-
-	void RenderThread::ExecuteOne()
-	{
-		m_ExecuteOne = true;
-		m_SignalCV.notify_one();
-	}
-
-	bool RenderThread::IsRenderThread()
-	{
-		return std::this_thread::get_id() == m_ThreadID;
-	}
-
-	void RenderThread::ThreadRun()
-	{
-		SetThreadDescription( GetCurrentThread(), L"Render Thread" );
-		m_ThreadID = std::this_thread::get_id();
-
-		while (true)
-		{
-			std::unique_lock<std::mutex> Lock( m_Mutex );
-
-			// m_SignalCV = What do we want to do, ExecuteOne, ExecuteAll
-			// m_QueueCV  = What state is the queue in, empty or not empty
-			// Every time one of the two has changed we must notify it
-
-			// Wait for main thread signal
-			m_SignalCV.wait( Lock, [this] 
-				{
-					return !m_Running->load() || m_ExecuteAll || m_ExecuteOne;
-				} );
-
-			// Wait for the queue to not be empty.
-			m_QueueCV.wait( Lock, [this]
-				{
-					return !m_Running->load() || !m_CommandBuffer.empty();
-				} );
-
-			if( !m_Running->load() ) break;
-
-			Lock.unlock();
-
-			if( m_ExecuteOne )
-			{
-				auto& rFunc = m_CommandBuffer.back();
-
-				rFunc();
-
-				m_CommandBuffer.pop_back();
-
-				m_ExecuteOne = false;
-			}
-
-			if( m_ExecuteAll )
-			{
-				ExecuteCommands();
-
-				m_ExecuteAll = false;
-			}
-
-			// Tell the main thread we're done.
-			m_QueueCV.notify_one();
-		}
-
-		m_Running->store( false );
-	}
-
+	
 }

@@ -213,7 +213,7 @@ namespace Saturn {
 			else
 				m_AttachmentImageViews.push_back( image->GetImageView() );
 
-			i++;
+			++i;
 		}
 		
 		// Depth
@@ -221,7 +221,7 @@ namespace Saturn {
 		{
 			m_DepthAttachmentResource = Ref<Image2D>::Create( m_DepthFormat, m_Specification.Width, m_Specification.Height, m_Specification.ArrayLevels, 1, m_Specification.MSAASamples );
 
-			std::string imageDebugName = std::format( "Depth Attachment for FB/{0}", m_Specification.RenderPass->GetName() );
+			const std::string imageDebugName = std::format( "Depth Attachment for FB/{0}", m_Specification.RenderPass->GetName() );
 			SetDebugUtilsObjectName( imageDebugName.c_str(), ( uint64_t ) m_DepthAttachmentResource->GetImage(), VK_OBJECT_TYPE_IMAGE );
 
 			if( m_AttachmentImageViews.size() )

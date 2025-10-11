@@ -33,7 +33,7 @@
 
 #include "Saturn/Asset/AssetManager.h"
 #include "Saturn/Project/Project.h"
-#include "Saturn/Core/OptickProfiler.h"
+#include "Saturn/Core/Profiler.h"
 
 namespace Saturn {
 
@@ -71,8 +71,6 @@ namespace Saturn {
 
 		while( true )
 		{
-			SAT_PF_THRD( "Audio Thread" );
-
 			std::unique_lock<std::mutex> Lock( m_Mutex );
 		
 			// Wait for the queue to not be empty.

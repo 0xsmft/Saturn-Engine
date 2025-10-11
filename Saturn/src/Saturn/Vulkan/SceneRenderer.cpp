@@ -45,7 +45,7 @@
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
 
 #include "Saturn/Core/Buffer.h"
-#include "Saturn/Core/OptickProfiler.h"
+#include "Saturn/Core/Profiler.h"
 
 #include <Saturn/Core/Ruby/RubyWindow.h>
 

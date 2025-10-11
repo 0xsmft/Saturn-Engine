@@ -39,7 +39,7 @@
 #include "Saturn/Asset/Prefab.h"
 #include "Saturn/Asset/AssetManager.h"
 
-#include "Saturn/Core/OptickProfiler.h"
+#include "Saturn/Core/Profiler.h"
 #include "Saturn/Core/VirtualFS.h"
 #include "Saturn/Core/MemoryStream.h"
 #include "Saturn/Core/Renderer/SceneFlyCamera.h"

@@ -44,7 +44,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "OptickProfiler.h"
+#include "Profiler.h"
 
 #if defined( SAT_PLATFORM_WINDOWS )
 #include <ShObjIdl.h>

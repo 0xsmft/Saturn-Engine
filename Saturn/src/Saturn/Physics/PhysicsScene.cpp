@@ -29,7 +29,7 @@
 #include "sppch.h"
 #include "PhysicsScene.h"
 
-#include "Saturn/Core/OptickProfiler.h"
+#include "Saturn/Core/Profiler.h"
 
 #include "Saturn/AI/Navigation/RecastInputGeometry.h"
 

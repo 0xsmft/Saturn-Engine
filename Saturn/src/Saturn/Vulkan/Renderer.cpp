@@ -36,7 +36,7 @@
 #include "Shader.h"
 #include "Framebuffer.h"
 
-#include "Saturn/Core/OptickProfiler.h"
+#include "Saturn/Core/Profiler.h"
 
 namespace Saturn {
 

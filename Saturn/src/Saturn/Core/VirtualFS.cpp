@@ -29,7 +29,7 @@
 #include "sppch.h"
 #include "VirtualFS.h"
 
-#include "OptickProfiler.h"
+#include "Profiler.h"
 
 #include "Saturn/Serialisation/Raw/RawSerialisation.h"
 

@@ -43,6 +43,9 @@ namespace Saturn {
 
 		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* pEvaluator ) { return NodeEvaluationState::Evaluated; }
 
+		// PostPlace is only ever called after the node as been "placed", placed means it was clicked from the right-click options and the created.
+		// This function does not get called when the node deserialises as this information would already exist.
+		// In the case of a state machine player, it will create the entry node and call it's PostPlace.
 		void PostPlace();
 
 	private:

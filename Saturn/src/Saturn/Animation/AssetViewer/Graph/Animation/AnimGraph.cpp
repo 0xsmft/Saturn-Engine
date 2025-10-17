@@ -46,6 +46,9 @@
 // TRANSITION
 #include "Saturn/Animation/AssetViewer/Graph/StateMachine/AnimGraphTransitionGraphNodes.h"
 
+// TASKS
+#include "Saturn/Animation/AssetViewer/Graph/Tasks/GraphTask.h"
+
 #include "Saturn/NodeEditor/NodeEditorVariableNode.h"
 #include "Saturn/NodeEditor/NodeEditorHintNode.h"
 
@@ -72,147 +75,139 @@ namespace Saturn {
 	{
 	}
 
-	std::vector<UUID> AnimGraph::TraverseAnimGraph()
+	std::map<UUID, SGraphTask*> AnimGraph::TraverseAndCreateTasks()
 	{
-#if 0
-		// PARENT ID -> CHILDREN
-		std::map<UUID, std::vector<SharedPtr<NodeEditorNodeBase>>> parentToChildren;
-		for( const auto& [id, node] : m_Nodes )
-		{
-			if( node->pParentObject )
-				parentToChildren[ node->pParentObject->ID ].push_back( node );
-		}
+		// SORTING:
+		// 1. Sort the animation graph first
+		// 2. Then, we go into the state machine graph, and we push the entry state node
+		// 2.5 Sort the state machine state graph
+		// Now from here the sorting order will be wrong, as transitions dictate where to go next, meaning that runtime will not follow the same order,
+		// but we still push everything the same expect we look for neighbours in outputs (left) direction
+		// 3: Push transitions and other state machine states and state machine state graphs
+		// 4. Combine into a map of sub-graph parent ID to tasks for runtime.
 
-		std::vector<UUID> order;
+		std::map<UUID, SGraphTask*> resultToChildren;
 
-		std::stack<UUID> temporaryStack;
-		temporaryStack.push( FindNode( "Output Node" )->ID );
-
-		while( !temporaryStack.empty() )
-		{
-			const auto id = temporaryStack.top();
-			temporaryStack.pop();
-
-			const SharedPtr<NodeEditorNodeBase> treeNode = FindNode( id );
-			if( treeNode )
-			{
-				// Find Links
-				const auto rNeighbours = FindNeighborsRight( treeNode );
-
-				// Push right to left so that the left most node is visited first 
-				for( auto it = rNeighbours.begin(); it != rNeighbours.end(); ++it )
-				{
-					if( std::find( order.begin(), order.end(), *it ) == order.end() )
-					{
-						temporaryStack.push( *it );
-						order.push_back( *it );
-					}
-				}
-
-				// If this graph has children (i.e. sub-graph) push them after.
-				if( const auto itr = parentToChildren.find( id ); itr != parentToChildren.end() )
-				{
-					for( const auto& rChild : itr->second )
-					{
-						if( std::find( order.begin(), order.end(), rChild->ID ) == order.end() )
-						{
-							temporaryStack.push( rChild->ID );
-							order.push_back( rChild->ID );
-						}
-					}
-				}
-			}
-		}
-		return order;
-#else
 		// 1: PARENT ID -> CHILDREN
 		std::map<UUID, std::vector<SharedPtr<NodeEditorNodeBase>>> parentToChildren;
 		for( const auto& [id, node] : m_Nodes )
 		{
-			if( node->pParentObject )
-				parentToChildren[ node->pParentObject->ID ].push_back( node );
-		}
-
-		// 2: Push the final absolute result of the whole graph and work our way backwards.
-		std::deque<UUID> temporaryStack;
-		temporaryStack.emplace_back( FindNode( "Output Node" )->ID );
-
-		std::vector<UUID> order;
-
-		bool searchRight = true;
-
-		while( !temporaryStack.empty() )
-		{
-			const auto currentID = temporaryStack.back();
-			temporaryStack.pop_back();
-
-			// Find node
-			const SharedPtr<NodeEditorNodeBase> treeNode = FindNode( currentID );
-			SAT_CORE_INFO( "Order is: {0}", treeNode->Name );
-			SAT_CORE_INFO( "Searching Right: {0}", searchRight );
-
-			if( treeNode )
+			if( node->pParentObject ) 
 			{
-				const auto rNeighbours = searchRight ? FindNeighborsRight( treeNode ) : FindNeighborsLeft( treeNode );
+				parentToChildren[ node->pParentObject->ID ].push_back( node );
 
-				for( auto itr = rNeighbours.begin(); itr != rNeighbours.end(); ++itr )
+				if( parentToChildren[ node->pParentObject->ID ].size() == 1 )
 				{
-					if( std::find( order.begin(), order.end(), *itr ) == order.end() )
-					{
-						temporaryStack.emplace_back( *itr );
-						order.emplace_back( *itr );
-					}
+					resultToChildren[ node->pParentObject->ID ] = NewObject<SGraphTask>();
 				}
-
-				// If this graph has children (i.e. sub-graph) root node.
-				if( const auto itr = parentToChildren.find( currentID ); itr != parentToChildren.end() )
+			}
+			else 
+			{
+				if( !parentToChildren[ 0llu ].size() )
 				{
-					// Now go into the sub-graph and find the entry node, or output node
-					UUID nodeToFindFrom = 0;
-					if( treeNode->GetClass() == AnimGraphStateMachineStateNode::StaticClass() )
-					{
-						const auto stateNode = treeNode.As<AnimGraphStateMachineStateNode>();
-						nodeToFindFrom = stateNode->GetOutputNodeID();
-					}
-					else if( treeNode->GetClass() == AnimGraphStateMachineTransitionNode::StaticClass() ) 
-					{
-						const auto stateNode = treeNode.As<AnimGraphStateMachineTransitionNode>();
-						nodeToFindFrom = stateNode->GetOutputNodeID();
-					}
-					else if( treeNode->GetClass() == AnimGraphStateMachinePlayerNode::StaticClass() )
-					{
-						nodeToFindFrom = m_StateMachineEntryNode->ID;
-					}
-					else
-					{
-						SAT_CORE_WARN( "Node has children but was not handled!, SClass is: {0}", treeNode->GetClass()->GetName() );
-					}
-
-					if( nodeToFindFrom )
-					{
-						const auto subGraphNodes = FindNeighborsRight( FindNode( nodeToFindFrom ) );
-
-						for( auto itr = rNeighbours.begin(); itr != rNeighbours.end(); ++itr )
-						{
-							if( std::find( order.begin(), order.end(), *itr ) == order.end() )
-							{
-								order.emplace_back( *itr );
-							}
-						}
-
-						// Then add the final node last.
-						if( std::find( order.begin(), order.end(), nodeToFindFrom ) == order.end() )
-						{
-							temporaryStack.emplace_back( nodeToFindFrom );
-							order.emplace_back( nodeToFindFrom );
-						}
-					}
+					resultToChildren[ 0llu ] = NewObject<SGraphTask>();
 				}
 			}
 		}
 
-		return order;
-#endif
+		// Anim Graph
+		SortAnimGraph( resultToChildren );
+		// Entry point of state machine
+		SortStateMachineEntry( resultToChildren );
+
+		return resultToChildren;
+	}
+
+	void AnimGraph::SortAnimGraph( std::map<UUID, SGraphTask*>& rMap )
+	{
+		std::stack<UUID> stack;
+		stack.push( FindNode( "Output Node" )->ID );
+
+		while( !stack.empty() )
+		{
+			const auto currentID = stack.top();
+			stack.pop();
+
+			SharedPtr<NodeEditorNodeBase> currentNode = FindNode( currentID );
+
+			const UUID subGraphID = currentNode->pParentObject ? currentNode->pParentObject->ID : UUID( 0 );
+			rMap[ subGraphID ]->AddTask( currentID, currentNode->ConvertToTask() );
+
+			// Find neighbors from inputs and continue until there is no neighbors
+			for( const auto& rNeighbor : FindNeighborsRight( currentNode ) )
+			{
+				stack.push( rNeighbor );
+			}
+		}
+	}
+
+	void AnimGraph::SortStateMachineEntry( std::map<UUID, SGraphTask*>& rMap )
+	{
+		auto stateNode = m_StateMachineEntryNode.As<AnimGraphStateMachineStateNode>();
+
+		std::vector<UUID> visited;
+		std::queue<UUID> temporaryStack;
+		temporaryStack.push( stateNode->ID );
+
+		while( !temporaryStack.empty() )
+		{
+			const UUID currentID = temporaryStack.front();
+			temporaryStack.pop();
+
+			// BEFORE PUSHING THIS NODE, WE MUST PUSH SUB-GRAPHS
+			SortTransitionNodeOrStateMachineAfterEntryRec( currentID, rMap );
+
+			// Find neighbors from outputs and continue until there is no neighbors
+			SharedPtr<NodeEditorNodeBase> currentNode = FindNode( currentID );
+
+			// Now add this node's task.
+			rMap[ currentNode->pParentObject->ID ]->AddTask( currentID, currentNode->ConvertToTask() );
+
+			const auto& rNeighbours = FindNeighborsLeft( currentNode );
+			for( auto Itr = rNeighbours.rbegin(); Itr != rNeighbours.rend(); Itr++ )
+			{
+				if( std::find( visited.begin(), visited.end(), *Itr ) == visited.end() )
+				{
+					temporaryStack.push( *Itr );
+					visited.push_back( *Itr );
+				}
+			}
+		}
+	}
+
+	void AnimGraph::SortTransitionNodeOrStateMachineAfterEntryRec( UUID id, std::map<UUID, SGraphTask*>& rMap )
+	{
+		SharedPtr<NodeEditorNodeBase> nodeStarting = FindNode( id );
+		UUID startID = 0llu;
+
+		if( nodeStarting->GetClass() == AnimGraphStateMachineTransitionNode::StaticClass() )
+		{
+			startID = nodeStarting.As<AnimGraphStateMachineTransitionNode>()->GetOutputNodeID();
+		}
+		else if( nodeStarting->GetClass() == AnimGraphStateMachineStateNode::StaticClass() )
+		{
+			startID = nodeStarting.As<AnimGraphStateMachineStateNode>()->GetOutputNodeID();
+		}
+
+		// Push sub-graph first
+		std::stack<UUID> stack;
+		stack.push( startID );
+		while( !stack.empty() )
+		{
+			const auto currentID = stack.top();
+			stack.pop();
+
+			SharedPtr<NodeEditorNodeBase> currentNode = FindNode( currentID );
+
+			const UUID subGraphID = currentNode->pParentObject ? currentNode->pParentObject->ID : UUID( 0 );
+			rMap[ subGraphID ]->AddTask( currentID, currentNode->ConvertToTask() );
+
+			// Find neighbors from inputs and continue until there is no neighbors
+			for( const auto& rNeighbor : FindNeighborsRight( currentNode ) )
+			{
+				stack.push( rNeighbor );
+			}
+		}
 	}
 
 #if !defined(SAT_DIST)
@@ -229,6 +224,50 @@ namespace Saturn {
 			ImGui::EndHorizontal();
 		}
 	}
+
+	void AnimGraph::OnNodeEditorEvent( NodeEditorAction action )
+	{
+		std::vector<UUID> nodesToDelete;
+
+		switch( action )
+		{
+			case NodeEditorAction::DestroyNode:
+			{
+				// Find all ill-formatted transition nodes, if a state machine state node was destroyed.
+				for( const auto& [id, node] : m_Nodes )
+				{
+					if( node->GetClass() != AnimGraphStateMachineTransitionNode::StaticClass() )
+						continue;
+
+					// Check inputs and outputs, if any are not linked after destruction, we must delete the transition node.
+					if( !IsLinked( node->Inputs[ 0 ]->ID ) || !IsLinked( node->Outputs[ 0 ]->ID ) )
+					{
+						nodesToDelete.push_back( id );
+					}
+				}
+			} break;
+
+			case NodeEditorAction::CreateLink:
+			case NodeEditorAction::BreakLink:
+			case NodeEditorAction::CreateNode:
+			case NodeEditorAction::MoveNode:
+			case NodeEditorAction::PreEvaluate:
+			case NodeEditorAction::PostEvaluate:
+			case NodeEditorAction::SelectNode:
+			case NodeEditorAction::DeselectNode:
+			case NodeEditorAction::SelectLink:
+			case NodeEditorAction::DeselectLink:
+				break;
+			
+			default: break;
+		}
+
+		for( const auto& id : nodesToDelete )
+		{
+			DeleteNode( id, true );
+		}
+	}
+
 	void AnimGraph::SerialiseData( std::ofstream& rStream, bool isForDist )
 	{
 		FDependentNodeEditorSuper::SerialiseData( rStream, isForDist );
@@ -343,7 +382,7 @@ namespace Saturn {
 			if( rNode->pParentObject != m_ActiveSubGraph.Get() )
 				continue;
 
-			// Determine current view mode from current sub graph
+			// Determine current view mode from current sub-graph
 			if( !m_ActiveSubGraph )
 			{
 				if( std::find( s_AnimGraphAllowedNodes.begin(), s_AnimGraphAllowedNodes.end(), rNode->GetClass() ) != s_AnimGraphAllowedNodes.end() )

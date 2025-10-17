@@ -35,11 +35,10 @@
 #include "Saturn/Animation/AssetViewer/Graph/StateMachine/StateMachineNodeLibrary.h"
 #include "Saturn/Animation/AssetViewer/Graph/StateMachine/AnimGraphStateMachineStateNode.h"
 
-
 namespace Saturn {
 
 	AnimGraphStateMachinePlayerNode::AnimGraphStateMachinePlayerNode()
-		: NodeEditorBlueprintNode( "STATE MACHINE" )
+		: NodeEditorBlueprintNode( "New State Machine" )
 	{
 		CreateNode();
 	}
@@ -55,7 +54,6 @@ namespace Saturn {
 		ExecutionType = NodeExecutionType::AnimGraphStateMachinePlayerNode;
 
 #if !defined(SAT_DIST)
-		CanBeDeleted = false;
 		Color = ImColor( 48, 128, 255, 100 );
 		RenderType = NodeRenderType::Blueprint;
 #endif

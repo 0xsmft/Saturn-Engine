@@ -32,6 +32,14 @@
 
 namespace Saturn {
 
+	struct AnimGraphSortItem
+	{
+		UUID NodeID;
+		NodeEditorTaskBase* pTask = nullptr;
+	};
+
+	class SGraphTask;
+
 	class AnimGraph : public FDependentNodeEditorSuper
 	{
 	public:
@@ -39,7 +47,7 @@ namespace Saturn {
 		AnimGraph( AssetID id );
 		virtual ~AnimGraph();
 
-		std::vector<UUID> TraverseAnimGraph();
+		std::map<UUID, SGraphTask*> TraverseAndCreateTasks();
 
 		void MarkNodeAsEntry( SharedPtr<NodeEditorNodeBase> node ) { m_StateMachineEntryNode = node; }
 		SharedPtr<NodeEditorNodeBase> GetEntryNode() const { return m_StateMachineEntryNode; }
@@ -60,6 +68,12 @@ namespace Saturn {
 
 	private:
 		void DrawStateMachineNodes();
+
+	private:
+		// Sorting
+		void SortAnimGraph( std::map<UUID, SGraphTask*>& rMap );
+		void SortStateMachineEntry( std::map<UUID, SGraphTask*>& rMap );
+		void SortTransitionNodeOrStateMachineAfterEntryRec( UUID id, std::map<UUID, SGraphTask*>& rMap );
 
 	private:
 		UUID m_TransitionStartNode = 0;

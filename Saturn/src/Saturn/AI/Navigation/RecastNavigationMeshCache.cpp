@@ -58,13 +58,13 @@ namespace Saturn {
 		RecastNavMeshCacheFileHeader header;
 		header.Version = SAT_CURRENT_VERSION;
 		
-		for( int i = 0; i < pMesh->getMaxTiles(); i++ )
+		for( int i = 0; i < pMesh->getMaxTiles(); ++i )
 		{
 			const dtMeshTile* pTile = pMesh->getTile( i );
 			if( !pTile || !pTile->header || !pTile->dataSize ) 
 				continue;
 
-			header.TileCount++;
+			++header.TileCount;
 		}
 
 		std::memcpy( &header.NavMeshParams, pMesh->getParams(), sizeof( dtNavMeshParams ) );
@@ -72,7 +72,7 @@ namespace Saturn {
 		RawSerialisation::WriteObject( header, fout );
 
 		// Save tiles
-		for( int i = 0; i < pMesh->getMaxTiles(); i++ )
+		for( int i = 0; i < pMesh->getMaxTiles(); ++i )
 		{
 			const dtMeshTile* pTile = pMesh->getTile( i );
 			if( !pTile || !pTile->header || !pTile->dataSize )

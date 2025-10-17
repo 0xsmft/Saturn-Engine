@@ -179,7 +179,7 @@ namespace Saturn {
 		{
 			// Try move onto the next task.
 			m_pCurrentTask = nullptr;
-			m_CurrentTaskIndex++;
+			++m_CurrentTaskIndex;
 
 			// All tasks completed, then this sequence is also completed.
 			if( m_CurrentTaskIndex >= m_Children.size() ) 

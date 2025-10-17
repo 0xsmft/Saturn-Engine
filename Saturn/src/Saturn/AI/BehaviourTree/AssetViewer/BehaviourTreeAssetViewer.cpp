@@ -88,7 +88,7 @@ namespace Saturn {
 		}
 		else
 		{
-			m_NodeEditor->Open( false );
+			m_NodeEditor->OpenWindow( false );
 			m_Open = false;
 		}
 #endif
@@ -116,7 +116,7 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		m_NodeEditor->NcSetCustomName( filename );
 		m_NodeEditor->SetWindowName( m_Name );
-		m_NodeEditor->Open( true );
+		m_NodeEditor->OpenWindow( true );
 #endif
 		m_Open = true;
 
@@ -180,7 +180,7 @@ namespace Saturn {
 					// NOTE: Raw ptr converted to Ref<> by BehaviourTreeTaskNode
 					SObject* pNewTaskObject = ClassMetadataHandler::Get().CreateClassObject( pClass->GetClass()->GetHash() );
 
-					BehaviourTreeTaskNode* pNode = ClassMetadataHandler::Get().CreateClassObject<BehaviourTreeTaskNode>( BehaviourTreeTaskNode::StaticClass(), ( BehaviourTreeBaseTask* ) pNewTaskObject );
+					BehaviourTreeTaskNode* pNode = NewObject<BehaviourTreeTaskNode>( ( BehaviourTreeBaseTask* ) pNewTaskObject );
 
 					SharedPtr<BehaviourTreeTaskNode> sp = pNode;
 
@@ -190,29 +190,6 @@ namespace Saturn {
 					break;
 				}
 			}
-
-			/*
-			ImGui::SeparatorText( "Basic/Composite" );
-
-			if( ImGui::MenuItem( "Selector" ) )
-				result = BehaviourTreeNodeLibrary::SpawnSelectorNode( m_NodeEditor );
-
-			if( ImGui::MenuItem( "Sequence" ) )
-				result = BehaviourTreeNodeLibrary::SpawnSequenceNode( m_NodeEditor );
-
-			ImGui::SeparatorText( "Tasks" );
-
-			if( ImGui::MenuItem( "Wait" ) )
-				result = BehaviourTreeNodeLibrary::SpawnWaitNode( m_NodeEditor );
-
-			if( ImGui::MenuItem( "Play Sound" ) )
-				result = BehaviourTreeNodeLibrary::SpawnPlaySoundNode( m_NodeEditor );
-
-			if( ImGui::MenuItem( "Move To" ) )
-				result = BehaviourTreeNodeLibrary::SpawnMoveToNode( m_NodeEditor );
-
-			showTooltip( "Move to a predetermined Position in the NavMesh, the Position must be in the NavMesh as if not the task will fail!" );
-			*/
 
 			ImGui::SeparatorText( "Auxiliary" );
 
@@ -242,7 +219,7 @@ namespace Saturn {
 						// TODO: There isn't technically API to support this asset viewer changing its node editor
 						//       however, maybe we should think of a different way to show what the referencing assets are doing
 						m_NodeEditor = rAsset->GetNodeEditor();
-						m_NodeEditor->Open( true );
+						m_NodeEditor->OpenWindow( true );
 						m_NodeEditor->SetState( NodeEditorState::Simulating );
 
 						SetupNodeEditorCallbacks();

@@ -29,6 +29,10 @@
 #include "sppch.h"
 #include "AnimGraphTransitionGraphNodes.h"
 
+#include "../Tasks/AnimGraphTransitionTasks.h"
+
+#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
+
 namespace Saturn {
 
 	//////////////////////////////////////////////////////////////////////////
@@ -61,6 +65,11 @@ namespace Saturn {
 
 	AnimGraphTransitionGraphResultNode::~AnimGraphTransitionGraphResultNode()
 	{
+	}
+
+	NodeEditorTaskBase* AnimGraphTransitionGraphResultNode::ConvertToTask()
+	{
+		return NewObject<AnimGraphTransitionResultTask>();
 	}
 
 }

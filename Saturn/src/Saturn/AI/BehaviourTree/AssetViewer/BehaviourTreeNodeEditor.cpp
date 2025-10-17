@@ -386,7 +386,7 @@ namespace Saturn {
 				m_CurrentTaskIndex = 0;
 				m_CurrentTask = nullptr;
 			
-				// Tree is completed or a node has failed, restart from the root node
+				// Tree is completed or a node has failed, restart from the root node.
 				ResetAllTasks();
 
 #if !defined(SAT_DIST)

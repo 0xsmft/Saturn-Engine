@@ -40,13 +40,13 @@
 namespace Saturn {
 
 	AnimGraphStateMachineStateNode::AnimGraphStateMachineStateNode()
-		: AnimGraphStateMachineNodeBase( "<NULL STATE MACHINE STATE>" )
+		: Super( "New State" )
 	{
 		CreateNode();
 	}
 
 	AnimGraphStateMachineStateNode::AnimGraphStateMachineStateNode( const std::string& rName )
-		: AnimGraphStateMachineNodeBase( rName )
+		: Super( rName )
 	{
 		CreateNode();
 	}
@@ -55,24 +55,23 @@ namespace Saturn {
 	{
 		ExecutionType = NodeExecutionType::AnimGraphStateMachineStateNode;
 
-		Outputs.push_back( Ref<Pin>::Create( "DATA-TO", PinType::Flow, PinKind::Output ) );
-		Inputs.push_back( Ref<Pin>::Create( "DATA-FROM", PinType::Flow, PinKind::Input ) );
+		Outputs.push_back( Ref<Pin>::Create( "Out", PinType::Flow, PinKind::Output ) );
+		Inputs.push_back( Ref<Pin>::Create( "In", PinType::Flow, PinKind::Input ) );
 
 		for( auto& rOutput : Outputs )
 		{
-			rOutput->RenderType = PinRenderType::Tree;
 			rOutput->AcceptMultipleLinks = true;
 		}
 
 		for( auto& rInput : Inputs )
 		{
-			rInput->RenderType = PinRenderType::Tree;
 			rInput->AcceptMultipleLinks = true;
 		}
 
 #if !defined(SAT_DIST)
 		Color = ImColor( 48, 128, 255, 100 );
-		RenderType = NodeRenderType::Tree;
+		// Render type doesn't matter here...
+		RenderType = NodeRenderType::Blueprint;
 #endif
 	}
 
@@ -89,12 +88,62 @@ namespace Saturn {
 	void AnimGraphStateMachineStateNode::Deserialise( FDependentIStream& rStream )
 	{
 		Super::Deserialise( rStream );
+		RawSerialisation::ReadObjectChecked( m_OutputNodeID, rStream );
+	}
+
+	NodeEditorTaskBase* AnimGraphStateMachineStateNode::ConvertToTask()
+	{
+		return NewObject<AnimGraphStateMachineStateTask>();
+	}
+
+	void AnimGraphStateMachineStateNode::Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder )
+	{
+		ImVec4 normalisedColor = Color;
+		normalisedColor.x /= 2.0f;
+		normalisedColor.y /= 2.0f;
+		normalisedColor.z /= 2.0f;
+
+		ed::PushStyleColor( ed::StyleColor_NodeBg, normalisedColor );
+
+		rBuilder.Begin( ed::NodeId( ID ) );
+		rBuilder.Middle();
+
+		ImGui::BeginHorizontal( "##state" );
+
+		// TODO: Much better to store the ID rather than the Node itself!
+		auto* AG = dynamic_cast< AnimGraph* >( pOuter );
+		if( AG )
+		{
+			const auto entryNode = AG->GetEntryNode();
+			if( ImGui::RadioButton( "##markasentry", entryNode == SharedFromThis() ) )
+			{
+				// TODO: Entry node cannot be deleted, if the user wants to delete the entry node they must add new state and mark that as the entry.
+//				CanBeDeleted = false;
+				AG->MarkNodeAsEntry( SharedFromThis() );
+			}
+		}
+
+		const ImVec2 textSize = ImGui::CalcTextSize( Name.c_str() );
+		ImGui::SetNextItemWidth( textSize.x );
+		ImGui::TextUnformatted( Name.c_str() );
+
+		ImGui::EndHorizontal();
+		rBuilder.End();
+
+		ed::PopStyleColor();
+	}
+
 	void AnimGraphStateMachineStateNode::PostPlace()
 	{
 		// Spawn output node
 		auto outNode = StateMachineStateNodeLibrary::SpawnOutputNode( pOuter->SharedFromThis() );
 		outNode->pParentObject = this;
 		m_OutputNodeID = outNode->ID;
+	}
+
+	NodeEvaluationState AnimGraphStateMachineStateNode::EvaluateNode( NodeEditorRuntime* evaluator )
+	{
+		return NodeEvaluationState::Failed;
 	}
 
 }

@@ -54,7 +54,6 @@ namespace Saturn {
 		ExecutionType = NodeExecutionType::AnimGraphStateMachineTransitionNode;
 
 #if !defined(SAT_DIST)
-		CanBeDeleted = true;
 		Color = ImColor( 48, 128, 255, 100 );
 		RenderType = NodeRenderType::Blueprint;
 #endif

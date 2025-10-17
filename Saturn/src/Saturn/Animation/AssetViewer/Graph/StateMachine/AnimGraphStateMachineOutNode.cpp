@@ -31,6 +31,9 @@
 
 namespace Saturn {
 
+	//////////////////////////////////////////////////////////////////////////
+	// RESULT NODE (OUTPUT NODE) FOR STATE MACHINE STATE
+
 	AnimGraphStateMachineOutNode::AnimGraphStateMachineOutNode()
 		: NodeEditorBlueprintNode( "Out" )
 	{
@@ -48,6 +51,7 @@ namespace Saturn {
 		ExecutionType = NodeExecutionType::AnimGraphStateMachineOutNode;
 
 #if !defined(SAT_DIST)
+		CanBeDeleted = false;
 		Color = ImColor( 48, 128, 255, 100 );
 		RenderType = NodeRenderType::Blueprint;
 #endif

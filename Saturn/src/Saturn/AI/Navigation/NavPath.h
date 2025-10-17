@@ -57,7 +57,7 @@ namespace Saturn {
 		// Move onto the next waypoint index
 		inline void NextWaypoint()
 		{
-			m_CurrentWaypoint++;
+			++m_CurrentWaypoint;
 
 			if( m_CurrentWaypoint >= m_PathPoints.size() )
 			{

@@ -137,8 +137,7 @@ namespace Saturn {
 			}
 
 #if defined( SAT_DEBUG )
-			currentNode->EvaluationOrder = index;
-			index++;
+			currentNode->EvaluationOrder = index++;
 #endif
 		}
 

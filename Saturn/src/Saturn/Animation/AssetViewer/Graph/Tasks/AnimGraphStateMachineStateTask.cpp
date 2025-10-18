@@ -26,30 +26,36 @@
 *********************************************************************************************
 */
 
-#pragma once
-
-#include "AssetImporterBase.h"
+#include "sppch.h"
+#include "AnimGraphStateMachineStateTask.h"
 
 namespace Saturn {
 
-	// We have two main AssetImporters.
-	// This one is for importing YAML files, i.e. when we are in the editor, and in development.
-	// The other is for importing assets from the VFS and is used when all of the assets are "cooked" used in distribution.
-	class AssetImporter : public AssetImporterBase
+	AnimGraphStateMachineStateTask::AnimGraphStateMachineStateTask()
 	{
-	public:
-		AssetImporter() { Init(); }
-		~AssetImporter();
+	}
 
-	public:
-		[[nodiscard]] bool TryLoadData(       Ref<Asset>& rAsset ) override;
+	AnimGraphStateMachineStateTask::~AnimGraphStateMachineStateTask()
+	{
+	}
 
-		static AssetImporterType GetStaticType() { return AssetImporterType::YAML; }
+	void AnimGraphStateMachineStateTask::InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
+	{
 
-	private:
-		void Init();
+	}
 
-		// TODO: Maybe change to Ref?
-		std::unordered_map<AssetType, std::unique_ptr<AssetSerialiser>> m_AssetSerialisers;
-	};
+	NodeEditorTaskState AnimGraphStateMachineStateTask::Tick( Timestep ts )
+	{
+		return NodeEditorTaskState::Completed;
+	}
+
+	void AnimGraphStateMachineStateTask::Reset()
+	{
+
+	}
+
 }
+
+#include "Saturn/GameFramework/Core/EngineGenerated.h"
+
+SAT_X31_CREATE_AUTO_REG( AnimGraphStateMachineStateTask );

@@ -69,6 +69,7 @@ namespace Saturn {
 		NodeEditor( AssetID ID );
 		~NodeEditor();
 
+		void OpenWindow( bool open ) { m_WindowOpen = open; }
 		bool CanCreateLink( const Ref<Pin>& a, const Ref<Pin>& b );	
 
 		// NodeEditorBase overrides
@@ -81,8 +82,6 @@ namespace Saturn {
 		// NOTE: The ImGui window has already begun when this function is called.
 		virtual void OnExtraRender() {}
 		virtual void OnNodeEditorEvent( NodeEditorAction action ) {}
-
-		void Open( bool open ) { m_WindowOpen = open; }
 
 		// Happens when the user clicks on the empty space.
 		void SetCreateNewNodeFunction( std::function<SharedPtr<NodeEditorNodeBase>()>&& rrCreateNewNodeFunction )
@@ -102,7 +101,6 @@ namespace Saturn {
 
 		std::string& GetEditorState() { return m_ActiveNodeEditorState; }
 		const std::string& GetEditorState() const { return m_ActiveNodeEditorState; }
-		
 		void SetEditorState( const std::string& rState ) { m_ActiveNodeEditorState = rState; }
 
 		void ThrowError( const std::string& rMessage );
@@ -185,6 +183,7 @@ namespace Saturn {
 		SharedPtr<NodeEditorNodeBase> m_HoveredNode = nullptr;
 
 		SharedPtr<NodeEditorNodeBase> m_ActiveSubGraph;
+		// Sub-graph path
 		std::vector<SharedPtr<NodeEditorNodeBase>> m_SubGraphs;
 #endif
 

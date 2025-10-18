@@ -26,30 +26,65 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "AnimGraphPlayAnimTask.h"
 
-#include "AssetImporterBase.h"
+#include "GraphTask.h"
+
+#include "Saturn/Asset/AssetManager.h"
+
+#include "Saturn/Animation/SkeletalAnimationAsset.h"
+
+#include "Saturn/Animation/AssetViewer/Graph/StateMachine/AnimGraphStateMachinePlayAnimNode.h"
+#include "Saturn/Animation/AssetViewer/Graph/Animation/AnimGraphAnimationPin.h"
+
+#include "AnimGraphTaskHandler.h"
 
 namespace Saturn {
 
-	// We have two main AssetImporters.
-	// This one is for importing YAML files, i.e. when we are in the editor, and in development.
-	// The other is for importing assets from the VFS and is used when all of the assets are "cooked" used in distribution.
-	class AssetImporter : public AssetImporterBase
+	AnimGraphPlayAnimTask::AnimGraphPlayAnimTask()
 	{
-	public:
-		AssetImporter() { Init(); }
-		~AssetImporter();
+	}
 
-	public:
-		[[nodiscard]] bool TryLoadData(       Ref<Asset>& rAsset ) override;
+	AnimGraphPlayAnimTask::~AnimGraphPlayAnimTask()
+	{
+		m_Animator = nullptr;
+	}
 
-		static AssetImporterType GetStaticType() { return AssetImporterType::YAML; }
+	void AnimGraphPlayAnimTask::InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
+	{
+		const AnimGraphStateMachinePlayAnimNode* pAGNode = dynamic_cast< AnimGraphStateMachinePlayAnimNode* >( pNode );
+		const AnimGraphTaskHandler* pAGTaskHandler = dynamic_cast<AnimGraphTaskHandler*>( pHandler );
+		
+		if( pAGTaskHandler )
+		{
+			m_Animator = pAGTaskHandler->GetAnimator();
+		}
 
-	private:
-		void Init();
+		if( pAGNode )
+		{
+			m_AnimationAsset = AssetManager::Get().GetAssetAs<SkeletalAnimationAsset>( pAGNode->Outputs[ 0 ].As<AnimGraphAnimationPin>()->GetAssetID() );
+		}
+	}
 
-		// TODO: Maybe change to Ref?
-		std::unordered_map<AssetType, std::unique_ptr<AssetSerialiser>> m_AssetSerialisers;
-	};
+	NodeEditorTaskState AnimGraphPlayAnimTask::Tick( Timestep ts )
+	{
+		if( m_CurrentState == NodeEditorTaskState::Unknown )
+		{
+			m_Animator->m_SingleAnimationAsset = m_AnimationAsset;
+		}
+
+		m_CurrentState = NodeEditorTaskState::Completed;
+		return m_CurrentState;
+	}
+
+	void AnimGraphPlayAnimTask::Reset()
+	{
+		m_CurrentState = NodeEditorTaskState::Unknown;
+	}
+
 }
+
+#include "Saturn/GameFramework/Core/EngineGenerated.h"
+
+SAT_X31_CREATE_AUTO_REG( AnimGraphPlayAnimTask );

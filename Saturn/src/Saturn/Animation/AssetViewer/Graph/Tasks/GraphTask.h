@@ -32,7 +32,24 @@
 
 namespace Saturn {
 
-	SCLASS( NoExtendedMetadata )
+	struct GraphTaskItem
+	{
+		// The node that we came from
+		UUID NodeID = 0;
+		// The task
+		NodeEditorTaskBase* pTask = nullptr;
+	};
+
+	//
+	// A GraphTask holds all the tasks in one sub-graph for the Animation Graph
+	// As the Animation Graph is built from sub-graphs
+	// TaskHandler
+	//  GraphTask
+	//   Task
+	// A GraphTask will return a state of Running if it's not complete if it is it will then return Completed
+	// However, for a state machine graph it may return Completed if we need to transition out of the graph.
+	//
+	SCLASS( NoExtendedMetadata, NodeEditorNode )
 	class SGraphTask : public NodeEditorTaskBase
 	{
 		SAT_DECLARE_CLASS( SGraphTask, NodeEditorTaskBase );
@@ -40,7 +57,10 @@ namespace Saturn {
 		SGraphTask();
 		~SGraphTask();
 
-		void AddTask( NodeEditorTaskBase* pTask );
+		void AddTask( UUID nodeID, NodeEditorTaskBase* pTask );
+
+	public:
+		NodeEditorTaskHandler* GetParentObject() const { return pParentHandler; }
 
 	public:
 		//////////////////////////////////////////////////////////////////////////
@@ -53,11 +73,16 @@ namespace Saturn {
 #endif
 
 	private:
-		NodeEditorTaskHandler* pParentHandler = nullptr;
+		void ResetTaskData();
 
-		std::vector<NodeEditorTaskBase*> m_Tasks;
-		NodeEditorTaskBase* m_pCurrentTask = nullptr;
+		GraphTaskItem* GetCurrentTask();
+		bool NextTask();
+
+	private:
+		NodeEditorTaskHandler* pParentHandler = nullptr;
 		size_t m_CurrentTaskIndex = 0;
+
+		std::vector<GraphTaskItem> m_Tasks;
 	};
 	
 }

@@ -69,7 +69,7 @@ namespace Auxiliary {
 #if !defined(SAT_DIST)
 		m_Vertices.resize( (size_t) ( baseVertex + pMesh->mNumVertices ) );
 
-		for( unsigned int b = 0; b < pMesh->mNumBones; b++ )
+		for( unsigned int b = 0; b < pMesh->mNumBones; ++b )
 		{
 			const aiBone* pBone = pMesh->mBones[ b ];
 			std::string boneName( pBone->mName.data );
@@ -91,7 +91,7 @@ namespace Auxiliary {
 			}
 
 			// Weight calculation
-			for( unsigned int w = 0; w < pBone->mNumWeights; w++ )
+			for( unsigned int w = 0; w < pBone->mNumWeights; ++w )
 			{
 				const int vertID = baseVertex + pBone->mWeights[ w ].mVertexId;
 				const float weight = pBone->mWeights[ w ].mWeight;

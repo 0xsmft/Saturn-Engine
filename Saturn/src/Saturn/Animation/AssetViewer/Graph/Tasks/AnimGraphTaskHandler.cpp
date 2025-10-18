@@ -26,30 +26,76 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "AnimGraphTaskHandler.h"
 
-#include "AssetImporterBase.h"
+#include "GraphTask.h"
+#include "AnimGraphPlayAnimTask.h"
+
+#include "Saturn/Animation/AssetViewer/Graph/Animation/AnimGraph.h"
+
+#include "Saturn/NodeEditor/NodeEditorNodeBase.h"
+#include "Saturn/NodeEditor/NodeEditorBase.h"
+
+#include "Saturn/Animation/Animator.h"
 
 namespace Saturn {
 
-	// We have two main AssetImporters.
-	// This one is for importing YAML files, i.e. when we are in the editor, and in development.
-	// The other is for importing assets from the VFS and is used when all of the assets are "cooked" used in distribution.
-	class AssetImporter : public AssetImporterBase
+	AnimGraphTaskHandler::AnimGraphTaskHandler( Ref<Animator> animator )
+		: m_Animator( animator )
 	{
-	public:
-		AssetImporter() { Init(); }
-		~AssetImporter();
+	}
 
-	public:
-		[[nodiscard]] bool TryLoadData(       Ref<Asset>& rAsset ) override;
+	void AnimGraphTaskHandler::InitWithCustomOrder2( SharedPtr<NodeEditorBase> nodeEditor, const std::map<UUID, SGraphTask*>& rOrder )
+	{
+		for( auto& [id, pTask] : rOrder )
+		{
+			if( pTask )
+			{
+				pTask->InitialiseTask( this, nodeEditor.Get(), nullptr );
 
-		static AssetImporterType GetStaticType() { return AssetImporterType::YAML; }
+				m_Tasks.push_back( pTask );
+			}
+		}
+	}
 
-	private:
-		void Init();
+	void AnimGraphTaskHandler::Tick( Timestep ts )
+	{
+		if( m_CurrentTask == nullptr )
+		{
+			if( m_CurrentTaskIndex + 1 > m_Tasks.size() )
+			{
+				// At end, restart from the root.
+				ResetAllTasks();
 
-		// TODO: Maybe change to Ref?
-		std::unordered_map<AssetType, std::unique_ptr<AssetSerialiser>> m_AssetSerialisers;
-	};
+				SAT_CORE_INFO( "Task Handler, completed" );
+			}
+			else
+			{
+				m_CurrentTask = m_Tasks.at( m_CurrentTaskIndex++ );
+			}
+		}
+
+		if( m_CurrentTask )
+		{
+			const auto status = m_CurrentTask->Tick( ts );
+			switch( status )
+			{
+				// Completed? move on to the next sub-graph.
+				case NodeEditorTaskState::Completed:
+				{
+					m_CurrentTask = nullptr;
+				} break;
+
+				default:
+					break;
+			}
+		}
+	}
+
+	Ref<Animator> AnimGraphTaskHandler::GetAnimator() const
+	{
+		return m_Animator;
+	}
+
 }

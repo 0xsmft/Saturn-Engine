@@ -28,28 +28,30 @@
 
 #pragma once
 
-#include "AssetImporterBase.h"
+#include "Saturn/NodeEditor/NodeEditorTaskBase.h"
+#include "Saturn/Animation/Animator.h"
 
 namespace Saturn {
 
-	// We have two main AssetImporters.
-	// This one is for importing YAML files, i.e. when we are in the editor, and in development.
-	// The other is for importing assets from the VFS and is used when all of the assets are "cooked" used in distribution.
-	class AssetImporter : public AssetImporterBase
+	class Animator;
+	class SkeletalAnimationAsset;
+
+	SCLASS()
+	class AnimGraphPlayAnimTask : public NodeEditorTaskBase
 	{
+		SAT_DECLARE_CLASS( AnimGraphPlayAnimTask, NodeEditorTaskBase );
 	public:
-		AssetImporter() { Init(); }
-		~AssetImporter();
+		AnimGraphPlayAnimTask();
+		~AnimGraphPlayAnimTask();
 
 	public:
-		[[nodiscard]] bool TryLoadData(       Ref<Asset>& rAsset ) override;
-
-		static AssetImporterType GetStaticType() { return AssetImporterType::YAML; }
+		virtual void InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+		virtual NodeEditorTaskState Tick( Timestep ts ) override;
+		virtual void Reset() override;
 
 	private:
-		void Init();
-
-		// TODO: Maybe change to Ref?
-		std::unordered_map<AssetType, std::unique_ptr<AssetSerialiser>> m_AssetSerialisers;
+		Ref<Animator> m_Animator;
+		Ref<SkeletalAnimationAsset> m_AnimationAsset;
 	};
+
 }

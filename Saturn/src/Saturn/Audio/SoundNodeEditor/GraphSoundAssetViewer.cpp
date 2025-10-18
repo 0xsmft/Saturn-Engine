@@ -48,7 +48,7 @@
 #include "Saturn/ImGui/EditorIcons.h"
 
 #include "Saturn/Asset/AssetManager.h"
-#include "Saturn/Core/OptickProfiler.h"
+#include "Saturn/Core/Profiler.h"
 
 #include "Saturn/Scene/Scene.h"
 
@@ -91,7 +91,7 @@ namespace Saturn {
 		else
 		{
 			AudioSystem::Get().StopPreviewSounds( m_AssetID );
-			m_NodeEditor->Open( false );
+			m_NodeEditor->OpenWindow( false );
 			m_Open = false;
 		}
 	}
@@ -118,7 +118,7 @@ namespace Saturn {
 		m_NodeEditor->NcSetCustomName( filename );
 		m_NodeEditor->SetWindowName( m_Name );
 
-		m_NodeEditor->Open( true );
+		m_NodeEditor->OpenWindow( true );
 		m_Open = true;
 
 		SetupNodeEditorCallbacks();
@@ -205,7 +205,7 @@ namespace Saturn {
 							// TODO: There isn't technically API to support this asset viewer changing its node editor
 							//       however, maybe we should think of a different way to show what the referencing assets are doing
 							m_NodeEditor = rAsset->GetNodeEditor();
-							m_NodeEditor->Open( true );
+							m_NodeEditor->OpenWindow( true );
 
 							SetupNodeEditorCallbacks();
 						}

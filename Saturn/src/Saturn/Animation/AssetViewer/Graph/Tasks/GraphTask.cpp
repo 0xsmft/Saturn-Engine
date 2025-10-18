@@ -29,6 +29,10 @@
 #include "sppch.h"
 #include "GraphTask.h"
 
+#include "AnimGraphTransitionTasks.h"
+
+#include "Saturn/NodeEditor/NodeEditorBase.h"
+
 namespace Saturn {
 
 	SGraphTask::SGraphTask()
@@ -37,54 +41,102 @@ namespace Saturn {
 
 	SGraphTask::~SGraphTask()
 	{
+		for( auto& rItem : m_Tasks )
+		{
+			delete rItem.pTask;
+		}
 	}
 
-	void SGraphTask::AddTask( NodeEditorTaskBase* pTask )
+	void SGraphTask::AddTask( UUID nodeID, NodeEditorTaskBase* pTask )
 	{
-		m_Tasks.push_back( pTask );
+		m_Tasks.emplace_back( nodeID, pTask );
 	}
 
 	void SGraphTask::InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
 	{
 		pParentHandler = pHandler;
+
+		std::reverse( m_Tasks.begin(), m_Tasks.end() );
+
+		for( auto& rItem : m_Tasks )
+		{
+			if( rItem.pTask )
+			{
+				auto node = pEditor->FindNode( rItem.NodeID );
+				rItem.pTask->InitialiseTask( pHandler, pEditor, node.Get() );
+			}
+		}
+	}
+
+	bool SGraphTask::NextTask()
+	{
+		if( m_CurrentTaskIndex + 1 > m_Tasks.size() )
+		{
+			// At end, restart from the root.
+			ResetTaskData();
+			return true;
+		}
+		else
+		{
+			++m_CurrentTaskIndex;
+		}
+
+		return false;
 	}
 
 	NodeEditorTaskState SGraphTask::Tick( Timestep ts )
 	{
-		NodeEditorTaskState activeState = NodeEditorTaskState::Unknown;
-
-		if( m_pCurrentTask )
+		auto* pCurrentTask = GetCurrentTask();
+		if( !pCurrentTask || !pCurrentTask->pTask )
 		{
-			const auto status = m_pCurrentTask->Tick( ts );
+			// If NextTask returns true we are at the end
+			if( NextTask() ) 
+				return NodeEditorTaskState::Completed;
+			else
+				return NodeEditorTaskState::Running;
+		}
+
+		NodeEditorTaskState activeState = NodeEditorTaskState::Unknown;
+		if( pCurrentTask && pCurrentTask->pTask )
+		{
+			const auto status = pCurrentTask->pTask->Tick( ts );
+
 			switch( status )
 			{
 				case NodeEditorTaskState::Completed:
 				{
 					activeState = NodeEditorTaskState::Running;
-					m_pCurrentTask = nullptr;
+					NextTask();
 				} break;
 
 				case NodeEditorTaskState::Running:
 				{
+					// If a task is "running", we must restart this graph so it can update the result of the node that cannot continue.
+					// We don't call ResetTaskData() here because there is no point re-evaulating tasks that have not changed, we just want to start from the first node.
+					Reset();
 					activeState = NodeEditorTaskState::Running;
 				} break;
 
-				default:
-					break;
+				default: break;
 			}
-		}
 
-		if( m_pCurrentTask == nullptr )
-		{
-			if( m_CurrentTaskIndex + 1 > m_Tasks.size() )
+			if( pCurrentTask->pTask->GetClass() == AnimGraphTransitionResultTask::StaticClass() )
 			{
-				// At end, restart from the root.
-				Reset();
-				activeState = NodeEditorTaskState::Completed;
-			}
-			else
-			{
-				m_pCurrentTask = m_Tasks.at( m_CurrentTaskIndex++ );
+				// Check if we should transition out.
+				const AnimGraphTransitionResultTask* pTransitionRT = ( AnimGraphTransitionResultTask* )pCurrentTask->pTask;
+				if( pTransitionRT )
+				{
+					if( pTransitionRT->GetResult() )
+					{
+#if defined(SAT_DEBUG)
+						SAT_CORE_INFO( "Transition says we should change..." );
+#endif
+
+						// Transition says we should change...
+						ResetTaskData();
+						return NodeEditorTaskState::Completed;
+					}
+				}
 			}
 		}
 
@@ -94,7 +146,25 @@ namespace Saturn {
 	void SGraphTask::Reset()
 	{
 		m_CurrentTaskIndex = 0;
-		m_pCurrentTask = nullptr;
+	}
+
+	void SGraphTask::ResetTaskData()
+	{
+		for( auto& rTaskItem : m_Tasks )
+		{
+			if( rTaskItem.pTask )
+				rTaskItem.pTask->Reset();
+		}
+
+		Reset();
+	}
+
+	GraphTaskItem* SGraphTask::GetCurrentTask()
+	{
+		if( m_CurrentTaskIndex < m_Tasks.size() )
+			return &m_Tasks[ m_CurrentTaskIndex ];
+
+		return nullptr;
 	}
 
 }

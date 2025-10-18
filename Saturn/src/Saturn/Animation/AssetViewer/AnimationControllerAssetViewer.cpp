@@ -83,7 +83,7 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		m_NodeEditor->NcSetCustomName( filename );
 		m_NodeEditor->SetWindowName( m_Name );
-		m_NodeEditor->Open( true );
+		m_NodeEditor->OpenWindow( true );
 #endif
 		m_Open = true;
 
@@ -110,21 +110,15 @@ namespace Saturn {
 
 	void AnimationControllerAssetViewer::OnImGuiRender()
 	{
-		// Main Window
-		if( ImGui::Begin( m_Name.c_str(), &m_Open ) )
+		// Draw main
+		if( m_NodeEditor->IsOpen() )
 		{
-			// Draw main
-			if( m_NodeEditor->IsOpen() )
-			{
-				m_NodeEditor->OnImGuiRender();
-			}
-			else
-			{
-				m_NodeEditor->Open( false );
-				m_Open = false;
-			}
-
-			ImGui::End();
+			m_NodeEditor->OnImGuiRender();
+		}
+		else
+		{
+			m_NodeEditor->OpenWindow( false );
+			m_Open = false;
 		}
 	}
 
@@ -154,8 +148,13 @@ namespace Saturn {
 		ImGui::SeparatorText( "Animation Graph" );
 
 		// #FixSharedPtrEquT2Op
-		if( ImGui::MenuItem( "State Machine player" ) )
-			result = ( SharedPtr<NodeEditorNodeBase> )AnimGraphNodeLibrary::SpawnStateMachinePlayerNode( m_NodeEditor );
+		if( ImGui::MenuItem( "State Machine player" ) ) 
+		{
+			auto stateMachinePlayer = AnimGraphNodeLibrary::SpawnStateMachinePlayerNode( m_NodeEditor );
+			stateMachinePlayer->PostPlace();
+
+			result = stateMachinePlayer;
+		}
 
 		ImGui::SeparatorText( "Variables" );
 		for( const auto& [id, rVariable] : m_NodeEditor->GetDataHandles() )
@@ -185,8 +184,13 @@ namespace Saturn {
 		ImGui::SeparatorText( "State Machine" );
 
 		// #FixSharedPtrEquT2Op
-		if( ImGui::MenuItem( "New State" ) )
-			result = ( SharedPtr<AnimGraphStateMachineNodeBase> )StateMachineNodeLibrary::SpawnStateNode( m_NodeEditor );
+		if( ImGui::MenuItem( "New State" ) ) 
+		{
+			auto stateNode = StateMachineNodeLibrary::SpawnStateNode( m_NodeEditor );
+			stateNode->PostPlace();
+
+			result = stateNode;
+		}
 
 		return result;
 	}
@@ -200,9 +204,6 @@ namespace Saturn {
 		// #FixSharedPtrEquT2Op
 		if( ImGui::MenuItem( "Play Animation" ) )
 			result = ( SharedPtr<NodeEditorNodeBase> )StateMachineStateNodeLibrary::SpawnPlayAnimNode( m_NodeEditor );
-
-		if( ImGui::MenuItem( "Out" ) )
-			result = ( SharedPtr<NodeEditorNodeBase> )StateMachineStateNodeLibrary::SpawnOutputNode( m_NodeEditor );
 
 		ImGui::SeparatorText( "Variables" );
 		for( const auto& [id, rVariable] : m_NodeEditor->GetDataHandles() )
@@ -219,12 +220,6 @@ namespace Saturn {
 	SharedPtr<NodeEditorNodeBase> AnimationControllerAssetViewer::DrawTransitionNewNodeOptions()
 	{
 		SharedPtr<NodeEditorNodeBase> result;
-
-		ImGui::SeparatorText( "Transition Nodes" );
-
-		// #FixSharedPtrEquT2Op
-		if( ImGui::MenuItem( "Final Result" ) )
-			result = ( SharedPtr<NodeEditorNodeBase> )TransitionNodeLibrary::SpawnOutputNode( m_NodeEditor );
 
 		ImGui::SeparatorText( "Variables" );
 		for( const auto& [id, rVariable] : m_NodeEditor->GetDataHandles() )

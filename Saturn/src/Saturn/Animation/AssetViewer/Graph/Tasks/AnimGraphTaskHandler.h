@@ -28,28 +28,28 @@
 
 #pragma once
 
-#include "AssetImporterBase.h"
+#include "Saturn/NodeEditor/NodeEditorTaskHandler.h"
 
 namespace Saturn {
 
-	// We have two main AssetImporters.
-	// This one is for importing YAML files, i.e. when we are in the editor, and in development.
-	// The other is for importing assets from the VFS and is used when all of the assets are "cooked" used in distribution.
-	class AssetImporter : public AssetImporterBase
+	class NodeEditorTaskGroup;
+	class SGraphTask;
+
+	class AnimGraphTaskHandler : public NodeEditorTaskHandler
 	{
 	public:
-		AssetImporter() { Init(); }
-		~AssetImporter();
+		AnimGraphTaskHandler( Ref<Animator> animator );
+		virtual ~AnimGraphTaskHandler() = default;
+
+		void InitWithCustomOrder2( SharedPtr<NodeEditorBase> nodeEditor, const std::map<UUID, SGraphTask*>& rOrder );
+
+		virtual void Tick( Timestep ts ) override;
 
 	public:
-		[[nodiscard]] bool TryLoadData(       Ref<Asset>& rAsset ) override;
-
-		static AssetImporterType GetStaticType() { return AssetImporterType::YAML; }
+		Ref<Animator> GetAnimator() const;
 
 	private:
-		void Init();
-
-		// TODO: Maybe change to Ref?
-		std::unordered_map<AssetType, std::unique_ptr<AssetSerialiser>> m_AssetSerialisers;
+		Ref<Animator> m_Animator;
 	};
+	
 }

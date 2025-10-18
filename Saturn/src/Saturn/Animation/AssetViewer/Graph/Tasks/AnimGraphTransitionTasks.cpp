@@ -26,30 +26,91 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "AnimGraphTransitionTasks.h"
 
-#include "AssetImporterBase.h"
+#include "Saturn/NodeEditor/DataLine.h"
+#include "Saturn/NodeEditor/NodeEditorTaskHandler.h"
+
+#include "Saturn/NodeEditor/NodeEditorBase.h"
+#include "Saturn/Animation/AssetViewer/Graph/StateMachine/AnimGraphStateMachineTransitionNode.h"
+#include "Saturn/Animation/AssetViewer/Graph/StateMachine/AnimGraphTransitionGraphNodes.h"
 
 namespace Saturn {
 
-	// We have two main AssetImporters.
-	// This one is for importing YAML files, i.e. when we are in the editor, and in development.
-	// The other is for importing assets from the VFS and is used when all of the assets are "cooked" used in distribution.
-	class AssetImporter : public AssetImporterBase
+	AnimGraphTransitionTask::AnimGraphTransitionTask()
 	{
-	public:
-		AssetImporter() { Init(); }
-		~AssetImporter();
+	}
 
-	public:
-		[[nodiscard]] bool TryLoadData(       Ref<Asset>& rAsset ) override;
+	AnimGraphTransitionTask::~AnimGraphTransitionTask()
+	{
+	}
 
-		static AssetImporterType GetStaticType() { return AssetImporterType::YAML; }
+	void AnimGraphTransitionTask::InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
+	{
+		AnimGraphStateMachineTransitionNode* pTransitionNode = dynamic_cast< AnimGraphStateMachineTransitionNode* >( pNode );
+		if( pTransitionNode )
+		{
+			m_NodeID = pTransitionNode->ID;
+			m_FinalResultNodeID = pTransitionNode->GetOutputNodeID();
+		}
+	}
 
-	private:
-		void Init();
+	NodeEditorTaskState AnimGraphTransitionTask::Tick( Timestep ts )
+	{
+		return NodeEditorTaskState::Completed;
+	}
 
-		// TODO: Maybe change to Ref?
-		std::unordered_map<AssetType, std::unique_ptr<AssetSerialiser>> m_AssetSerialisers;
-	};
+	void AnimGraphTransitionTask::Reset()
+	{
+	}
+	
+	//////////////////////////////////////////////////////////////////////////
+
+	AnimGraphTransitionResultTask::AnimGraphTransitionResultTask()
+	{
+	}
+
+	AnimGraphTransitionResultTask::~AnimGraphTransitionResultTask()
+	{
+	}
+
+	void AnimGraphTransitionResultTask::InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
+	{
+		AnimGraphTransitionGraphResultNode* pResultNode = dynamic_cast< AnimGraphTransitionGraphResultNode* >( pNode );
+		if( pResultNode )
+		{
+			const auto links = pEditor->FindLinksByPin( pResultNode->Inputs[ 0 ]->ID );
+			for( const auto& rLink : links )
+			{
+				// Get the data handle
+				if( pHandler->DoesDataLineExist( rLink->ID ) )
+				{
+					auto* pDataLine = pHandler->GetDataLine( rLink->ID );
+					if( pDataLine )
+					{
+						m_Result = pDataLine->GetIf<bool>();
+					}
+				}
+			}
+
+			m_NodeID = pResultNode->ID;
+			m_pHandler = pHandler;
+		}
+	}
+
+	NodeEditorTaskState AnimGraphTransitionResultTask::Tick( Timestep ts )
+	{
+		return *m_Result ? NodeEditorTaskState::Completed : NodeEditorTaskState::Running;
+	}
+
+	void AnimGraphTransitionResultTask::Reset()
+	{
+	}
+
 }
+
+#include "Saturn/GameFramework/Core/EngineGenerated.h"
+
+SAT_X31_CREATE_AUTO_REG( AnimGraphTransitionTask );
+SAT_X31_CREATE_AUTO_REG( AnimGraphTransitionResultTask );

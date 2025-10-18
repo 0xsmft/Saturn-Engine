@@ -357,12 +357,12 @@ namespace Saturn {
 				size_t soundIndex = 0;
 				for( const AssetID& rAssetID : copyIds )
 				{
-					Ref<Sound> snd = RequestNewSound( rAssetID, copyPlayerIds[soundIndex] );
+					Ref<Sound> snd = RequestNewSound( rAssetID, copyPlayerIds[ soundIndex ] );
 
 					if( rVistor )
 						rVistor( snd );
 
-					soundIndex++;
+					++soundIndex;
 				}
 			};
 

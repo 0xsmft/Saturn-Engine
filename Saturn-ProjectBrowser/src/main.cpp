@@ -30,20 +30,18 @@
 #include <Windows.h>
 #endif // SAT_PLATFORM_WINDOWS
 
-// Saturn client main:
-extern int _main( int, char** );
+#include "Saturn/Entry/General/EntryPoint.h"
 
 int main( int count, char** args )
 {
-	// Hand it off to Saturn:
-	return _main( count, args );
+	return Saturn::SaturnMainAgnostic( count, args );
 }
 
 #if defined ( _WIN32 )
 
 int WINAPI WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nShowCmd )
 {
-	return _main( __argc, __argv );
+	return Saturn::SaturnMainAgnostic( __argc, __argv );
 }
 
-#endif // SAT_PLATFORM_WINDOWS
+#endif // _WIN32

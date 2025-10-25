@@ -26,11 +26,33 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "EntryPoint.h"
+
+#include "SharedGlobals.h"
+#include "Saturn/Core/Memory/BinnedAllocator.h"
+#include "Saturn/Core/App.h"
+
+extern Saturn::Application* Saturn::CreateApplication( int argc, char** argv );
 
 namespace Saturn {
 
-	inline int SaturnMain( int count, char** args );
-}
+	int SaturnMainAgnostic( int count, char** args )
+	{
+		Saturn::Application* pApp = Saturn::CreateApplication( count, args );
+	
+		if( !pApp ) 
+			return 1;
 
-int _main( int count, char** args ) { return Saturn::SaturnMain( count, args ); }
+		pApp->Run();
+		
+		delete pApp;
+
+		// TODO: This is very bad, but we can't avoid having g_BinnedAllocator being on the stack because we need 
+		// it to allocate the SObjects which are also allocated when the program starts up
+		// and because Shared-Storage is never unloaded the ~BinnedAllocator is never called
+		g_BinnedAllocator.~FBinnedAllocator();
+
+		return 0;
+	}
+}

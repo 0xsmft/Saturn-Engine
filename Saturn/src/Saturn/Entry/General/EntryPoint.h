@@ -26,26 +26,8 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "EntryPoint.h"
-
-#include "Core/App.h"
-
-extern Saturn::Application* Saturn::CreateApplication( int argc, char** argv );
+#pragma once
 
 namespace Saturn {
-
-	int SaturnMain( int count, char** args )
-	{
-		Saturn::Application* pApp = Saturn::CreateApplication( count, args );
-	
-		if( !pApp ) 
-			return 1;
-
-		pApp->Run();
-		
-		delete pApp;
-
-		return 0;
-	}
+	[[nodiscard]] extern int SaturnMainAgnostic( int count, char** args );
 }

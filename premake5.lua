@@ -74,6 +74,12 @@ project "Saturn"
 		"%{prj.name}/vendor/ImGuizmo/src/**.h",
 	}
 
+	removefiles 
+	{
+		"%{prj.name}/src/%{prj.name}/Entry/Unix/**.cpp",
+		"%{prj.name}/src/%{prj.name}/Entry/Windows/**.cpp",
+	}
+
 	defines
 	{
 		"_CRT_SECURE_NO_WARNINGS",
@@ -334,7 +340,8 @@ project "Saturn-Editor"
 
 		files 
 		{
-			"Saturn/visualisers/*.natvis"
+			"Saturn/visualisers/*.natvis",
+			"Saturn/src/Saturn/Entry/Windows/**.cpp",
 		}
 
 	filter "configurations:Debug"
@@ -390,14 +397,9 @@ project "Saturn-Editor"
 			"SAT_PLATFORM_LINUX"
 		}
 
-		links 
+		files 
 		{
-			"stdc++fs",
-			"pthread",
-			"dl",
-			"GL",
-			"X11",
-			"ImGui"
+			"Saturn/src/Saturn/Entry/Unix/**.cpp",
 		}
 
 		filter "configurations:Debug"
@@ -485,6 +487,11 @@ project "Saturn-ProjectBrowser"
 		{
 			"SAT_PLATFORM_WINDOWS"
 		}
+		
+		files 
+		{
+			"Saturn/src/Saturn/Entry/Windows/**.cpp",
+		}
 
 		filter "configurations:Debug"
 			defines "SAT_DEBUG"
@@ -531,14 +538,9 @@ project "Saturn-ProjectBrowser"
 			"SAT_PLATFORM_LINUX"
 		}
 
-		links 
+		files 
 		{
-			"stdc++fs",
-			"pthread",
-			"dl",
-			"GL",
-			"X11",
-			"ImGui"
+			"Saturn/src/Saturn/Entry/Unix/**.cpp",
 		}
 
 		filter "configurations:Debug"

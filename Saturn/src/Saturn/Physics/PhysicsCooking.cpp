@@ -143,7 +143,7 @@ namespace Saturn {
 				SAT_CORE_INFO( "Please check the log for more info.", errorCode );
 			}
 
-			i++;
+			++i;
 		}
 
 		return Result;
@@ -303,7 +303,7 @@ namespace Saturn {
 
 			Shapes.push_back( pShape );
 
-			i++;
+			++i;
 		}
 
 		ClearCache();
@@ -369,7 +369,7 @@ namespace Saturn {
 
 			Shapes.push_back( pShape );
 
-			i++;
+			++i;
 		}
 
 		ClearCache();

@@ -32,7 +32,7 @@
 
 namespace Saturn {
 
-	class SystemAllocator
+	class FSystemAllocator
 	{
 	public:
 		[[nodiscard]] static void* Allocate( size_t size ) 

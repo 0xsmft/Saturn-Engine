@@ -39,19 +39,6 @@
 
 namespace Saturn {
 
-	struct ContentBrowserCompare
-	{
-		bool operator()(const std::filesystem::directory_entry& A, const std::filesystem::directory_entry& B)
-		{
-			if( A.is_directory() && !B.is_directory() )
-				return true; // a is a directory sort first.
-			else if( !A.is_directory() && B.is_directory() )
-				return false;
-			else
-				return A.path().filename() < B.path().filename();
-		}
-	};
-
 	class Asset;
 
 	enum class ContentBrowserItemType

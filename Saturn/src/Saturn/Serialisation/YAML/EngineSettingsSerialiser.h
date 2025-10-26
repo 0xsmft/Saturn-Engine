@@ -36,4 +36,5 @@ namespace Saturn {
 		static void Serialise();
 		static void Deserialise();
 	};
+
 }

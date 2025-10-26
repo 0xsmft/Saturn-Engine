@@ -265,8 +265,9 @@ namespace Saturn {
 				}
 				else
 				{
-					vertexIndices.push_back( UINT32_MAX ); // mark as invalid
-					vertexCounter++;
+					// Mark as invalid.
+					vertexIndices.push_back( UINT32_MAX ); 
+					++vertexCounter;
 				}
 
 				// Rings (excluding poles)
@@ -298,7 +299,7 @@ namespace Saturn {
 						else
 						{
 							vertexIndices.push_back( UINT32_MAX );
-							vertexCounter++;
+							++vertexCounter;
 						}
 					}
 				}
@@ -318,7 +319,7 @@ namespace Saturn {
 				else
 				{
 					vertexIndices.push_back( UINT32_MAX );
-					vertexCounter++;
+					++vertexCounter;
 				}
 
 				// Build triangle indices
@@ -327,7 +328,7 @@ namespace Saturn {
 				};
 
 				// Top cap
-				for( int lon = 0; lon < lonSegments; lon++ )
+				for( int lon = 0; lon < lonSegments; ++lon )
 				{
 					uint32_t topIdx = vertexIndices[ 0 ];
 					uint32_t a = vertexIndices[ index( 1, lon ) ];

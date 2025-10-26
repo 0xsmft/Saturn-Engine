@@ -355,7 +355,7 @@ namespace Saturn {
 
 				out << YAML::EndMap;
 
-				i++;
+				++i;
 			}
 		}
 
@@ -442,7 +442,7 @@ namespace Saturn {
 							mesh->GetMaterialRegistry()->AddAsset( Ref<MaterialAsset>::Create( nullptr ) );
 					}
 
-					i++;
+					++i;
 				}
 			}
 		}
@@ -505,7 +505,7 @@ namespace Saturn {
 
 				out << YAML::EndMap;
 
-				i++;
+				++i;
 			}
 		}
 
@@ -591,19 +591,16 @@ namespace Saturn {
 						{
 							auto defAsset = AssetManager::Get().GetAssetAs<MaterialAsset>( defaultProjectAsset->ID );
 							mesh->GetMaterialRegistry()->AddAsset( defAsset );
-
-//							defAsset->EnabledAnimated();
 						}
 						else 
 						{
 							auto nullAsset = Ref<MaterialAsset>::Create( nullptr );
 
 							mesh->GetMaterialRegistry()->AddAsset( nullAsset );
-//							nullAsset->EnabledAnimated();
 						}
 					}
 
-					i++;
+					++i;
 				}
 			}
 		}

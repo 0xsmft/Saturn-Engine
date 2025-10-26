@@ -26,39 +26,21 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "SystemAllocatorForClass.h"
 
-#include "SharedGlobals.h"
-#include "Saturn/GameFramework/SObject.h"
-#include "BinnedAllocator.h"
+#include "SystemAllocator.h"
 
 namespace Saturn {
 
-	class FSObjectAllocator
+	void* FSystemAllocatorForClass::operator new( std::size_t size )
 	{
-	public:
-		template<typename... VaArgs>
-		static SObject* AllocateSObject( VaArgs&&... rrArgs ) 
-		{
-			return new( g_BinnedAllocator.Allocate( sizeof( SObject ) ) ) SObject( std::forward<VaArgs>( rrArgs )... );
-		}
+		return FSystemAllocator::Allocate( size );
+	}
 
-		static void DeallocateSObject( SObject* const pObject ) 
-		{
-			g_BinnedAllocator.Free( pObject, sizeof( pObject ) );
-		}
-
-		template<typename Ty, typename... VaArgs>
-		static Ty* AllocateSObject( VaArgs&&... rrArgs )
-		{
-			return new( g_BinnedAllocator.Allocate( sizeof( Ty ) ) ) Ty( std::forward<VaArgs>( rrArgs )... );
-		}
-
-		template<typename Ty>
-		static void DeallocateSObject( Ty* const pObject )
-		{
-			g_BinnedAllocator.Free( pObject, sizeof( Ty ) );
-		}
-	};
+	void FSystemAllocatorForClass::operator delete( void* pAddr )
+	{
+		return FSystemAllocator::Free( pAddr );
+	}
 
 }

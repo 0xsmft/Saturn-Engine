@@ -33,7 +33,7 @@
 
 namespace Saturn {
 
-	class BinnedAllocator
+	class FBinnedAllocator
 	{
 	public:
 		// 4KIB max page
@@ -42,12 +42,12 @@ namespace Saturn {
 
 		static constexpr std::array<size_t, NUM_BINS> BIN_SIZES = { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096 };
 	public:
-		explicit BinnedAllocator() 
+		explicit FBinnedAllocator() 
 		{
 			m_FreeLists.fill( nullptr );
 		}
 
-		~BinnedAllocator() 
+		~FBinnedAllocator() 
 		{
 			for( void* pPage : m_AllocatedPages )
 			{

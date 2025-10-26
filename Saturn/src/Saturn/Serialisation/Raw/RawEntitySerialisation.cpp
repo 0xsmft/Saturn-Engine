@@ -164,7 +164,7 @@ namespace Saturn {
 							RawSerialisation::WriteObject( matID, rStream );
 						}
 
-						i++;
+						++i;
 					}
 				}
 				//	MaterialRegistry::Serialise( mc.MaterialRegistry, rStream );

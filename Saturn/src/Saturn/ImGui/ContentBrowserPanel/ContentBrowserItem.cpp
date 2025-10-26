@@ -359,7 +359,7 @@ namespace Saturn {
 		const ImVec2 cursor = ImGui::GetCursorPos();
 		ImGui::SetCursorPos( ImVec2( cursor.x + EdgeOffset + 5.0f, cursor.y + EdgeOffset + 5.0f ) );
 
-		std::string Filename = m_Filename.string();
+		const std::string Filename = m_Filename.string();
 
 		if( m_IsDirectory )
 		{
@@ -464,9 +464,9 @@ namespace Saturn {
 		// TODO: Check for invalid characters and follow OS rules
 		// Windows does not allow \ / : ? * <> | "
 		// Linux does not allow /
-		// Windows does not allow files to end in a space or a dot | NF, modifying filename
-		// Windows does not allow files to be called CON, AUX, PRN, NUL, COM1-9, LPT1-9 | NF, modifying filename
-		// Linux does not allow files to be called .., . | NF, modifying filename
+		// Windows does not allow files to end in a space or a dot
+		// Windows does not allow files to be called CON, AUX, PRN, NUL, COM1-9, LPT1-9
+		// Linux does not allow files to be called .., .
 
 		std::regex invalidCharacterRegex( "[\\\\/:?*<>|\\\"]" );
 

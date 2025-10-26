@@ -29,18 +29,14 @@
 #pragma once
 
 #include <string>
-#include <Windows.h>
 
-namespace Saturn {
-	
-	namespace Auxiliary {
+namespace Saturn::Auxiliary {
 
-		extern bool HasEnvironmentVariable( const std::string& rKey );
-		extern std::string GetEnvironmentVariable( const std::string& rKey );
+	extern bool HasEnvironmentVariable( const std::string& rKey );
+	extern std::string GetEnvironmentVariable( const std::string& rKey );
 
-		extern std::wstring GetEnvironmentVariableWs( const std::wstring& rKey );
+	extern std::wstring GetEnvironmentVariableWs( const std::wstring& rKey );
 
-		extern void SetEnvironmentVariable( const std::string& rKey, const std::string& rValue );
-	}
+	extern void SetEnvironmentVariable( const std::string& rKey, const std::string& rValue );
 
 }

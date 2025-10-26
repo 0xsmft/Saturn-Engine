@@ -68,7 +68,7 @@ namespace Saturn {
 		SetMaxThreads( m_MaxThreads );
 		m_Threads.resize( m_MaxThreads );
 
-		for( size_t i = 0; i < m_MaxThreads; i++ )
+		for( size_t i = 0; i < m_MaxThreads; ++i )
 		{
 			m_Threads[ i ] = std::thread( &JobSystem::ThreadRun, this );
 		}
@@ -85,7 +85,7 @@ namespace Saturn {
 			}
 
 			m_Threads.erase( m_Threads.begin() + index );
-			index++;
+			++index;
 		}
 	}
 

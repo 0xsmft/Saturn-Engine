@@ -121,7 +121,7 @@ namespace Saturn {
 	void NodeCacheSettings::OverrideFile( const std::filesystem::path& rFilepath, SharedPtr<NodeEditorBase> rNodeEditor )
 	{
 		SettingsFileHeader fileHeader;
-		fileHeader.SettingsCount++;
+		++fileHeader.SettingsCount;
 
 		std::ofstream fout( rFilepath, std::ios::binary | std::ios::trunc );
 
@@ -159,7 +159,7 @@ namespace Saturn {
 		// New node editor is being cached so update file header
 		if( Itr == stateMap.end() )
 		{
-			fileHeader.SettingsCount++;
+			++fileHeader.SettingsCount;
 
 			stateMap[ rNodeEditor->GetAssetID() ] = rNodeEditor->m_ActiveNodeEditorState;
 		}
@@ -240,12 +240,12 @@ namespace Saturn {
 		RawSerialisation::WriteObject( header, fout );
 
 #if !defined(SAT_DIST)
-		const bool isDist = false;
+		constexpr bool DISTRIBUTION_SERIALSATION = false;
 #else
-		const bool isDist = true;
+		constexpr bool DISTRIBUTION_SERIALSATION = true;
 #endif
 
-		nodeEditor->SerialiseData( fout, isDist );
+		nodeEditor->SerialiseData( fout, DISTRIBUTION_SERIALSATION );
 
 		fout.close();
 	}

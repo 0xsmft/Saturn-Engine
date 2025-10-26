@@ -28,37 +28,15 @@
 
 #pragma once
 
-#include "SharedGlobals.h"
-#include "Saturn/GameFramework/SObject.h"
-#include "BinnedAllocator.h"
+#include <new>
 
 namespace Saturn {
 
-	class FSObjectAllocator
+	class FSystemAllocatorForClass
 	{
 	public:
-		template<typename... VaArgs>
-		static SObject* AllocateSObject( VaArgs&&... rrArgs ) 
-		{
-			return new( g_BinnedAllocator.Allocate( sizeof( SObject ) ) ) SObject( std::forward<VaArgs>( rrArgs )... );
-		}
-
-		static void DeallocateSObject( SObject* const pObject ) 
-		{
-			g_BinnedAllocator.Free( pObject, sizeof( pObject ) );
-		}
-
-		template<typename Ty, typename... VaArgs>
-		static Ty* AllocateSObject( VaArgs&&... rrArgs )
-		{
-			return new( g_BinnedAllocator.Allocate( sizeof( Ty ) ) ) Ty( std::forward<VaArgs>( rrArgs )... );
-		}
-
-		template<typename Ty>
-		static void DeallocateSObject( Ty* const pObject )
-		{
-			g_BinnedAllocator.Free( pObject, sizeof( Ty ) );
-		}
+		void* operator new( std::size_t size );
+		void operator delete( void* pAddr );
 	};
-
+	
 }

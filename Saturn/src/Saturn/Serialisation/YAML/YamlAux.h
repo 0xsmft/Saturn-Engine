@@ -146,6 +146,35 @@ namespace YAML {
 		}
 	};
 
+	template<>
+	struct convert<glm::mat4>
+	{
+		static Node encode( const glm::mat4& rhs )
+		{
+			Node node;
+
+			node.push_back( convert<glm::vec4>::encode( rhs[ 0 ] ) );
+			node.push_back( convert<glm::vec4>::encode( rhs[ 1 ] ) );
+			node.push_back( convert<glm::vec4>::encode( rhs[ 2 ] ) );
+			node.push_back( convert<glm::vec4>::encode( rhs[ 3 ] ) );
+
+			return node;
+		}
+
+		static bool decode( const Node& node, glm::mat4& rhs )
+		{
+			if( !node.IsSequence() || node.size() != 4 )
+				return false;
+
+			rhs[ 0 ] = node[ 0 ].as<glm::vec4>();
+			rhs[ 1 ] = node[ 0 ].as<glm::vec4>();
+			rhs[ 2 ] = node[ 0 ].as<glm::vec4>();
+			rhs[ 3 ] = node[ 0 ].as<glm::vec4>();
+
+			return true;
+		}
+	};
+
 	template <>
 	struct convert<std::filesystem::path>
 	{
@@ -181,6 +210,12 @@ namespace YAML {
 		return out;
 	}
 
+	inline Emitter& operator<<( Emitter& out, const glm::mat4& vec )
+	{
+		out << Flow;
+		out << BeginSeq << vec[ 0 ] << vec[ 1 ] << vec[ 2 ] << vec[ 3 ] << EndSeq;
+		return out;
+	}
 
 	inline Emitter& operator<<( Emitter& out, const glm::vec2& vec )
 	{

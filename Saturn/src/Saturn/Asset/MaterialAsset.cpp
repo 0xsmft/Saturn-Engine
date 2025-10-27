@@ -80,25 +80,6 @@ namespace Saturn {
 		m_PendingMaterialChange = nullptr;
 	}
 
-	void MaterialAsset::EnabledAnimated()
-	{
-		// copy material
-		auto material = m_Material;
-	
-		m_Material = Ref<Material>::Create( ShaderLibrary::Get().Find( "shader_new_anim" ), "New Material" );
-
-		m_Material->SetResource( "u_AlbedoTexture",    material->GetResource( "u_AlbedoTexture" ) );
-		m_Material->SetResource( "u_NormalTexture",    material->GetResource( "u_NormalTexture" ) );
-		m_Material->SetResource( "u_MetallicTexture",  material->GetResource( "u_MetallicTexture" ) );
-		m_Material->SetResource( "u_RoughnessTexture", material->GetResource( "u_RoughnessTexture" ) );
-
-		m_Material->SetPC<glm::vec3>( "u_Materials.AlbedoColor", material->Get<glm::vec3>( "u_Materials.AlbedoColor" ) );
-		m_Material->SetPC<float>( "u_Materials.Metalness", material->Get<float>( "u_Materials.Metalness" ) );
-		m_Material->SetPC<float>( "u_Materials.Roughness", material->Get<float>( "u_Materials.Roughness" ) );
-		m_Material->SetPC<float>( "u_Materials.UseNormalMap", material->Get<float>( "u_Materials.UseNormalMap" ) );
-		m_Material->SetPC<float>( "u_Materials.Emissive", material->Get<float>( "u_Materials.Emissive" ) );
-	}
-
 	void MaterialAsset::Default()
 	{
 		if( m_Material == nullptr )

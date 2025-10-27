@@ -27,7 +27,7 @@
 */
 
 #include "sppch.h"
-#include "SkeletalMeshBoneHierarchyPanel.h"
+#include "SkeletonBoneHierarchyPanel.h"
 
 #include "Saturn/Vulkan/Mesh.h"
 
@@ -37,12 +37,12 @@
 
 namespace Saturn {
 	
-	SkeletalMeshBoneHierarchyPanel::SkeletalMeshBoneHierarchyPanel()
+	SkeletonBoneHierarchyPanel::SkeletonBoneHierarchyPanel()
 		: ImGuiWindow( "Skeletal Mesh Bone Hierarchy" )
 	{
 	}
 
-	void SkeletalMeshBoneHierarchyPanel::Initialise( AssetID id )
+	void SkeletonBoneHierarchyPanel::Initialise( AssetID id )
 	{
 		// If we already have an asset, make sure to clear the existing linked list.
 		if( m_SkeletonAsset )
@@ -75,7 +75,7 @@ namespace Saturn {
 		}
 	}
 
-	void SkeletalMeshBoneHierarchyPanel::ClearLinkedList()
+	void SkeletonBoneHierarchyPanel::ClearLinkedList()
 	{
 		m_BoneRoots.clear();
 
@@ -85,12 +85,12 @@ namespace Saturn {
 		}
 	}
 
-	SkeletalMeshBoneHierarchyPanel::~SkeletalMeshBoneHierarchyPanel()
+	SkeletonBoneHierarchyPanel::~SkeletonBoneHierarchyPanel()
 	{
 		ClearLinkedList();
 	}
 
-	void SkeletalMeshBoneHierarchyPanel::OnImGuiRender()
+	void SkeletonBoneHierarchyPanel::OnImGuiRender()
 	{
 		if( ImGui::Begin( m_Name.c_str(), &m_Open ) )
 		{
@@ -103,7 +103,7 @@ namespace Saturn {
 		}
 	}
 
-	void SkeletalMeshBoneHierarchyPanel::DisplayBoneHierarchy( BoneNode* pBoneNode, int level /*= 0 */ )
+	void SkeletonBoneHierarchyPanel::DisplayBoneHierarchy( BoneNode* pBoneNode, int level /*= 0 */ )
 	{
 		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_FramePadding;
 

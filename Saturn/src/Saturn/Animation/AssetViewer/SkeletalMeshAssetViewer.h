@@ -31,17 +31,11 @@
 #include "Saturn/ImGui/AssetViewer.h"
 #include "Saturn/ImGui/TitleBar.h"
 #include "Saturn/ImGui/SceneHierarchyPanel.h"
-
-#include "Saturn/Vulkan/SceneRenderer.h"
-
-#include <imgui.h>
+#include "Saturn/ImGui/SubSceneRendererWindow.h"
 
 namespace Saturn {
 
-	class SceneRenderer;
-	class EditorCamera;
-
-	class SkeletalMeshAssetViewer : public AssetViewer
+	class SkeletalMeshAssetViewer : public AssetViewer, public SubSceneRendererWindow
 	{
 	public:
 		SkeletalMeshAssetViewer( AssetID id );
@@ -56,21 +50,10 @@ namespace Saturn {
 
 	private:
 		Ref<SkeletalMesh> m_Mesh;
-		Ref<SceneRenderer> m_SceneRenderer;
-		Ref<Scene> m_Scene;
 		Ref<SkeletalAnimationAsset> m_PreviewAnimation;
 		SharedPtr<Entity> m_Entity;
 
-		EditorCamera m_Camera;
-
 		AssetID m_AssetFinderOut = 0;
-
-		bool m_AllowCameraEvents = false;
-		bool m_StartedRightClickInViewport = false;
-		bool m_ViewportFocused = false;
-		bool m_MouseOverViewport = false;
-
-		ImVec2 m_ViewportSize{};
 	};
 
 }

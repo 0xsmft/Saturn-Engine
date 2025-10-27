@@ -67,14 +67,14 @@ namespace Auxiliary {
 	void SkeletonAsset::AppendBonesFromMesh( const aiMesh* pMesh, uint32_t baseVertex )
 	{
 #if !defined(SAT_DIST)
-		m_Vertices.resize( (size_t) ( baseVertex + pMesh->mNumVertices ) );
+		m_Vertices.resize( ( size_t ) ( baseVertex + pMesh->mNumVertices ) );
 
 		for( unsigned int b = 0; b < pMesh->mNumBones; ++b )
 		{
 			const aiBone* pBone = pMesh->mBones[ b ];
 			std::string boneName( pBone->mName.data );
 
-			int index = 0;
+			size_t index = 0llu;
 			if( m_BoneMapping.find( boneName ) == m_BoneMapping.end() )
 			{
 				// Create new bone
@@ -83,7 +83,7 @@ namespace Auxiliary {
 				SkeletalMeshBoneInfo bi{ .BoneName = boneName, .BoneOffset = Auxiliary::Mat4FromAssimpMat4( pBone->mOffsetMatrix ) };
 
 				m_BoneInfos.push_back( bi );
-				m_BoneMapping[ boneName ] = index;
+				m_BoneMapping[ boneName ] = ( uint32_t ) index;
 			}
 			else
 			{
@@ -96,7 +96,7 @@ namespace Auxiliary {
 				const int vertID = baseVertex + pBone->mWeights[ w ].mVertexId;
 				const float weight = pBone->mWeights[ w ].mWeight;
 
-				m_Vertices[ vertID ].AddBoneData( index, weight );
+				m_Vertices[ vertID ].AddBoneData( ( uint32_t )index, weight );
 			}
 		}
 #endif
@@ -121,6 +121,11 @@ namespace Auxiliary {
 #endif
 	}
 
+	void SkeletonAsset::AddCompatibleMesh( UUID id )
+	{
+		m_CompatibleMeshes.push_back( id );
+	}
+
 	void SkeletonAsset::AddBoneInfo( const std::string& rName, int parentIndex, const glm::mat4& rOffsetMatrix, uint32_t boneIndex )
 	{
 		if( m_BoneMapping.find( rName ) == m_BoneMapping.end() )
@@ -130,6 +135,11 @@ namespace Auxiliary {
 			m_BoneInfos.push_back( bi );
 			m_BoneMapping[ rName ] = boneIndex;
 		}
+	}
+
+	void SkeletonAsset::MarkAsUncompatibleMesh( UUID meshID )
+	{
+		m_CompatibleMeshes.erase( std::remove( m_CompatibleMeshes.begin(), m_CompatibleMeshes.end(), meshID ), m_CompatibleMeshes.end() );
 	}
 
 }

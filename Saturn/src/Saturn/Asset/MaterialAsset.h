@@ -47,8 +47,6 @@ namespace Saturn {
 		MaterialAsset( Ref<Material> material );
 		virtual ~MaterialAsset();
 
-		void EnabledAnimated();
-
 		// Texture
 		Ref<Texture2D> GetAlbeoMap();
 		Ref<Texture2D> GetNormalMap();
@@ -180,7 +178,7 @@ namespace Saturn {
 
 		bool HasOverrides( uint32_t index ) const { return m_HasOverridden[ index ]; }
 		bool HasAnyOverrides() const;
-		void SetOverries( uint32_t index, bool val ) { m_HasOverridden[ index ] = val; }
+		void SetOverrides( uint32_t index, bool val ) { m_HasOverridden[ index ] = val; }
 
 	public:
 		static void Serialise( const MaterialRegistry& rRegistry, std::ofstream& rStream );

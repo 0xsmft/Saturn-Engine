@@ -60,6 +60,18 @@ namespace Saturn {
 		}
 	};
 
+	enum class SkeletonAssetVersion 
+	{
+		// Engine version: Alpha 0.2.3
+		BeforeVersionWasAdded,
+		// List of compatible meshes that can use a skeleton, introduced in Alpha 0.2.3
+		CompatibilityInformationForMeshes,
+
+		//^^^ only add new versions above here....
+		Latest,
+		Lowest = BeforeVersionWasAdded
+	};
+
 	class SkeletonAsset : public Asset
 	{
 	public:
@@ -69,7 +81,7 @@ namespace Saturn {
 
 		void AppendBonesFromMesh( const aiMesh* pMesh, uint32_t baseVertex );
 		void BuildHierarchy( const aiNode* pNode, int parentIndex );
-		
+		void AddCompatibleMesh( UUID id );
 		void AddBoneInfo( const std::string& rName, int parentIndex, const glm::mat4& rOffsetMatrix, uint32_t boneIndex );
 		void AddVertex( const SkeletonAssetVertexSkin& rSkin ) { m_Vertices.push_back( rSkin ); }
 
@@ -79,15 +91,31 @@ namespace Saturn {
 			return itr == m_BoneMapping.end() ? -1 : itr->second;
 		}
 
+		[[nodiscard]] SkeletonAssetVersion GetLocalVersion() const { return m_LocalVersion; }
+
+		void MarkAsUncompatibleMesh( UUID meshID );
+
 	public:
 		const std::vector<SkeletalMeshBoneInfo>& GetBoneInfo() const { return m_BoneInfos; }
 		const std::vector<SkeletonAssetVertexSkin>& GetVertices() const { return m_Vertices; }
 		const std::unordered_map<std::string, uint32_t>& GetBoneMapping() const { m_BoneMapping; }
+#if !defined(SAT_DIST)
+		const std::vector<AssetID>& GetCompatibleMeshes() const { return m_CompatibleMeshes; }
+#endif
+
+		// TODO: We don't want to expose this function publicly.
+		void PortToNewestVersion() { m_LocalVersion = SkeletonAssetVersion::Latest; }
 
 	private:
+		SkeletonAssetVersion m_LocalVersion = SkeletonAssetVersion::Lowest;
+
 		std::vector<SkeletalMeshBoneInfo> m_BoneInfos;
 		std::vector<SkeletonAssetVertexSkin> m_Vertices;
 		std::unordered_map<std::string, uint32_t> m_BoneMapping;
+
+#if !defined(SAT_DIST)
+		std::vector<AssetID> m_CompatibleMeshes;
+#endif
 	};	
 
 }

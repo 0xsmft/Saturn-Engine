@@ -33,7 +33,7 @@
 
 namespace Saturn {
 
-	class SkeletalMeshBoneHierarchyPanel : public ImGuiWindow
+	class SkeletonBoneHierarchyPanel : public ImGuiWindow
 	{
 	public:
 		struct BoneNode
@@ -43,8 +43,8 @@ namespace Saturn {
 		};
 
 	public:
-		SkeletalMeshBoneHierarchyPanel();
-		~SkeletalMeshBoneHierarchyPanel();
+		SkeletonBoneHierarchyPanel();
+		~SkeletonBoneHierarchyPanel();
 
 		void Initialise( AssetID id );
 

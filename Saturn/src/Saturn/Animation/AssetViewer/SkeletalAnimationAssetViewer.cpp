@@ -44,11 +44,8 @@
 
 namespace Saturn {
 
-	static inline bool operator==( const ImVec2& lhs, const ImVec2& rhs ) { return lhs.x == rhs.x && lhs.y == rhs.y; }
-	static inline bool operator!=( const ImVec2& lhs, const ImVec2& rhs ) { return !( lhs == rhs ); }
-
 	SkeletalAnimationAssetViewer::SkeletalAnimationAssetViewer( AssetID id )
-		: AssetViewer( id ), m_Camera( 45.0f, 1280.0f, 720.0f, 0.1f, 1000.0f )
+		: AssetViewer( id ), SubSceneRendererWindow()
 	{
 		m_AssetType = AssetType::SkeletalAnimation;
 
@@ -63,14 +60,14 @@ namespace Saturn {
 
 		ImportMeshAndAnimation();
 		m_Name = std::format( "{0}##{1}", m_Asset->Name, ( uint64_t ) m_AssetID );
-		m_ViewportWindowName = std::format( "##Vp{0}", ( uint64_t ) m_AssetID );
+
+		SetViewportWindowID( m_AssetID );
 	}
 
 	SkeletalAnimationAssetViewer::~SkeletalAnimationAssetViewer()
 	{
+		m_Animator = nullptr;
 		m_Entity = nullptr;
-		m_SceneRenderer = nullptr;
-		m_Scene = nullptr;
 	}
 
 	void SkeletalAnimationAssetViewer::OnImGuiRender()
@@ -87,46 +84,7 @@ namespace Saturn {
 
 		//////////////////////////////////////////////////////////////////////////
 
-		ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 0.0f, 0.0f ) );
-
-		if( ImGui::IsMouseClicked( ImGuiMouseButton_Left ) || ( ImGui::IsMouseClicked( ImGuiMouseButton_Right ) && !m_StartedRightClickInViewport ) )
-		{
-			ImGui::FocusWindow( GImGui->HoveredWindow );
-			Input::Get().SetCursorMode( RubyCursorMode::Normal );
-		}
-
-		// Viewport
-		ImGuiWindowClass windowClassNoDock;
-		windowClassNoDock.DockingAlwaysTabBar = false;
-		windowClassNoDock.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_None;
-
-		ImGui::SetNextWindowClass( &windowClassNoDock );
-		ImGui::Begin( m_ViewportWindowName.c_str(), 0, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings );
-		ImGui::SetWindowDock( ImGui::GetCurrentWindow(), dockID, ImGuiCond_FirstUseEver );
-
-		ImGui::PushID( static_cast< int >( m_AssetID ) );
-
-		if( m_ViewportSize != ImGui::GetContentRegionAvail() )
-		{
-			m_ViewportSize = ImGui::GetContentRegionAvail();
-
-			m_SceneRenderer->SetViewportSize( ( uint32_t ) m_ViewportSize.x, ( uint32_t ) m_ViewportSize.y );
-			m_Camera.SetViewportSize( ( uint32_t ) m_ViewportSize.x, ( uint32_t ) m_ViewportSize.y );
-		}
-
-		Auxiliary::Image( m_SceneRenderer->CompositeImage(), m_ViewportSize, { 0.0f, 1.0f }, { 1.0f, 0.0f } );
-
-		ImGui::PopID();
-
-		const ImVec2 minBound = ImGui::GetWindowPos();
-		const ImVec2 maxBound = { minBound.x + m_ViewportSize.x, minBound.y + m_ViewportSize.y };
-
-		m_ViewportFocused = ImGui::IsWindowFocused();
-		m_MouseOverViewport = ImGui::IsWindowHovered();
-
-		m_AllowCameraEvents = ImGui::IsMouseHoveringRect( minBound, maxBound ) && m_ViewportFocused || m_StartedRightClickInViewport;
-
-		ImGui::End(); // Viewport
+		RenderViewport();
 
 		ImGui::Begin( "Sidebar" );
 
@@ -154,9 +112,20 @@ namespace Saturn {
 			auto& mc = m_Entity->GetComponent<SkeletalMeshComponent>();
 
 			mc.Mesh = m_Mesh;
-			mc.LocalAnimator.InitAnimation( m_Asset->ID, m_Mesh );
-			// Begin playing now
-			mc.LocalAnimator.Begin();
+			mc.LocalAnimator = Ref<Animator>::Create();
+			m_Animator = mc.LocalAnimator;
+			mc.LocalAnimator->InitAnimation( m_Asset->ID, m_Mesh, AnimatorType::Single );
+		}
+
+		if( Auxiliary::TreeNode( "Root Motion" ) )
+		{
+			bool value = m_Asset->IsUsingRootMotion();
+			if( Auxiliary::DrawBoolControl( "Use Root Motion", value ) ) 
+			{
+				m_Asset->UseRootMotion( value );
+			}
+
+			Auxiliary::EndTreeNode();
 		}
 
 		ImGui::End();
@@ -177,42 +146,17 @@ namespace Saturn {
 
 	void SkeletalAnimationAssetViewer::OnUpdate( Timestep ts )
 	{
-		// Only true if we are awaiting a shutdown from closing our window.
-		if( !m_SceneRenderer )
-			return;
-
-		m_Camera.SetActive( m_AllowCameraEvents );
-		m_Camera.OnUpdate( ts );
-
-		m_Scene->OnUpdateAnimators( ts );
-
-		// Update Scene for rendering (on main thread).
-		m_Scene->OnRenderEditor( m_Camera, ts, *m_SceneRenderer );
-
-		RenderThread::Get().Queue( [ = ]()
-		{
-			m_SceneRenderer->RenderScene();
-		} );
-
-		if( Input::Get().MouseButtonPressed( RubyMouseButton_Right ) && !m_StartedRightClickInViewport && m_ViewportFocused && m_MouseOverViewport )
-			m_StartedRightClickInViewport = true;
-
-		if( !Input::Get().MouseButtonPressed( RubyMouseButton_Right ) )
-			m_StartedRightClickInViewport = false;
+		OnUpdateRenderer( ts );
 	}
 
 	void SkeletalAnimationAssetViewer::OnEvent( Event& rEvent )
 	{
-		if( m_MouseOverViewport && m_AllowCameraEvents )
-			m_Camera.OnEvent( rEvent );
+		OnCameraEvent( rEvent );
 	}
 
 	void SkeletalAnimationAssetViewer::ImportMeshAndAnimation()
 	{
-		Ref<SkeletalAnimationAsset> anim = AssetManager::Get().GetAssetAs<SkeletalAnimationAsset>( m_AssetID );
-		m_Asset = anim;
-
-//		m_Mesh = mesh;
+		m_Asset = AssetManager::Get().GetAssetAs<SkeletalAnimationAsset>( m_AssetID );
 
 		m_Entity = m_Scene->CreateEntity( "InternalViewerEntity" );
 		m_Entity->AddComponent<SkeletalMeshComponent>();

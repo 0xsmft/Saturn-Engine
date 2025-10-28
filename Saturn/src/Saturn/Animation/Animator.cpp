@@ -27,12 +27,14 @@
 */
 
 #include "sppch.h"
+#include "AnimationController.h"
 #include "Animator.h"
 
 #include "SkeletonAsset.h"
 
 #include "Saturn/Asset/AssetManager.h"
 #include "Saturn/Core/App.h"
+#include "Saturn/Core/Profiler.h"
 
 namespace Saturn {
 
@@ -42,6 +44,15 @@ namespace Saturn {
 
 	Animator::~Animator()
 	{
+		Destory();
+	}
+
+	void Animator::Destory()
+	{
+		m_SkeletalMesh = nullptr;
+		m_SingleAnimationAsset = nullptr;
+		m_AnimationControllerAsset = nullptr;
+		m_BoneTransforms.clear();
 	}
 
 	void Animator::InitAnimation( AssetID id, Ref<SkeletalMesh> sk, AnimatorType type )
@@ -83,13 +94,52 @@ namespace Saturn {
 			default:
 			case AnimationState::NotInitialised:
 			case AnimationState::Inactive:
-			case AnimationState::Paused:
 				break;
+			case AnimationState::Paused: 
+			{
+				if( m_PendingStepTime != -1.0f )
+				{
+					m_AnimationTime = m_PendingStepTime;
+					m_PendingStepTime = -1.0f;
+
+					ApplyBoneTransformations();
+				}
+			} break;
 
 			case AnimationState::Playing:
 			{
 				m_AnimationTime += ts * m_SingleAnimationAsset->GetTicksPerSecond();
-				m_AnimationTime = fmod( m_AnimationTime, m_SingleAnimationAsset->GetDuration() );
+
+				if( m_Looping )
+				{
+					const float dur = ( float ) m_SingleAnimationAsset->GetDuration();
+					if( m_AnimationTime > dur )
+					{
+						// Allow systems to react to when the anim is done
+						m_Completed = true;
+					}
+					else
+						m_Completed = false;
+
+					m_AnimationTime = fmod( m_AnimationTime, dur );
+				}
+				else
+				{
+					const float dur = ( float ) m_SingleAnimationAsset->GetDuration();
+					if( m_AnimationTime > dur )
+					{
+						// Stop at last frame.
+						m_AnimationTime = 0.0f;
+						m_Completed = true;
+					}
+				}
+
+				if( m_PendingStepTime != -1.0f )
+				{
+					m_AnimationTime = m_PendingStepTime;
+					m_PendingStepTime = -1.0f;
+				}
+
 				ApplyBoneTransformations();
 			} break;
 		}
@@ -97,6 +147,8 @@ namespace Saturn {
 
 	void Animator::TickAnimation( Timestep ts )
 	{
+		SAT_PF_EVENT();
+
 		switch( m_AnimatorType )
 		{
 			case AnimatorType::Single:
@@ -105,6 +157,10 @@ namespace Saturn {
 
 			case AnimatorType::AnimationControllerGraph:
 				m_AnimationControllerAsset->Tick( ts );
+				if( m_SingleAnimationAsset )
+				{
+					TickSingleAnim( ts );
+				}
 				break;
 
 			default: break;
@@ -127,11 +183,12 @@ namespace Saturn {
 		m_BoneTransforms.resize( m_SkeletalMesh->GetSkeletonAsset()->GetBoneInfo().size() );
 
 		if( m_AnimatorType == AnimatorType::AnimationControllerGraph )
-			m_AnimationControllerAsset->Initialise();
+			m_AnimationControllerAsset->Initialise( this );
 	}
 
 	void Animator::Clear()
 	{
+		m_PendingStepTime = -1.0f;
 		m_AnimationTime = 0.0f;
 		m_StartTime = 0.0f;
 		m_SingleAnimationAsset = nullptr;
@@ -154,7 +211,7 @@ namespace Saturn {
 				return m_SingleAnimationAsset;
 
 			case AnimatorType::AnimationControllerGraph:
-				return m_AnimationControllerAsset;
+				return m_AnimationControllerAsset->GetAsset();
 			default:
 				break;
 		}
@@ -164,78 +221,78 @@ namespace Saturn {
 
 	static uint32_t FindPositioning( const AnimationBone& rChannel, float time )
 	{
-		for( size_t i = 0; i < rChannel.Positions.size() - 1; i++ )
+		for( size_t i = 0; i < rChannel.Positions.size() - 1; ++i )
 		{
 			if( time < rChannel.Positions[ i + 1 ].TimeStamp )
-				return i;
+				return ( uint32_t ) i;
 		}
 
-		return 0;
+		return 0u;
 	}
 
 	static uint32_t FindRotation( const AnimationBone& rChannel, float time )
 	{
-		for( size_t i = 0; i < rChannel.Rotations.size() - 1; i++ )
+		for( size_t i = 0; i < rChannel.Rotations.size() - 1; ++i )
 		{
 			if( time < rChannel.Rotations[ i + 1 ].TimeStamp )
-				return i;
+				return ( uint32_t ) i;
 		}
 
-		return 0;
+		return 0u;
 	}
 
 	static uint32_t FindScale( const AnimationBone& rChannel, float time )
 	{
-		for( size_t i = 0; i < rChannel.Scale.size() - 1; i++ )
+		for( size_t i = 0; i < rChannel.Scale.size() - 1; ++i )
 		{
 			if( time < rChannel.Scale[ i + 1 ].TimeStamp )
-				return i;
+				return ( uint32_t ) i;
 		}
 
-		return 0;
+		return 0u;
 	}
 
-	static glm::vec3 InterpolatePosition( const AnimationBone& channel, float time )
+	static glm::vec3 InterpolatePosition( const AnimationBone& rChannel, float time )
 	{
-		if( channel.Positions.size() == 1 )
-			return channel.Positions[ 0 ].Value;
+		if( rChannel.Positions.size() == 1 )
+			return rChannel.Positions[ 0 ].Value;
 
-		const uint32_t positionIndex = FindPositioning( channel, time );
+		const uint32_t positionIndex = FindPositioning( rChannel, time );
 		const uint32_t nextPositionIndex = ( positionIndex + 1 );
 
-		SAT_CORE_ASSERT( nextPositionIndex < channel.Positions.size() );
+		SAT_CORE_ASSERT( nextPositionIndex < rChannel.Positions.size() );
 
-		const float deltaTime = ( float ) ( channel.Positions[ nextPositionIndex ].TimeStamp - channel.Positions[ positionIndex ].TimeStamp );
-		float factor = ( time - ( float ) channel.Positions[ positionIndex ].TimeStamp ) / deltaTime;
+		const float deltaTime = ( float ) ( rChannel.Positions[ nextPositionIndex ].TimeStamp - rChannel.Positions[ positionIndex ].TimeStamp );
+		float factor = ( time - ( float ) rChannel.Positions[ positionIndex ].TimeStamp ) / deltaTime;
 
 		SAT_CORE_ASSERT( factor <= 1.0f, "Factor must be below 1.0f" );
 
 		factor = glm::clamp( factor, 0.0f, 1.0f );
-		const auto& rStart = channel.Positions[ positionIndex ].Value;
-		const auto& rEnd = channel.Positions[ nextPositionIndex ].Value;
+		const auto& rStart = rChannel.Positions[ positionIndex ].Value;
+		const auto& rEnd = rChannel.Positions[ nextPositionIndex ].Value;
 
 		const auto Delta = rEnd - rStart;
 		return rStart + factor * Delta;
 	}
 
-	static glm::quat InterpolateRotation( const AnimationBone& channel, float time )
+	static glm::quat InterpolateRotation( const AnimationBone& rChannel, float time )
 	{
-		if( channel.Rotations.size() == 1 )
-			return channel.Rotations[ 0 ].Value;
+		if( rChannel.Rotations.size() == 1 )
+			return rChannel.Rotations[ 0 ].Value;
 
-		const uint32_t positionIndex = FindRotation( channel, time );
+		const uint32_t positionIndex = FindRotation( rChannel, time );
 		const uint32_t nextPositionIndex = ( positionIndex + 1 );
 
-		SAT_CORE_ASSERT( nextPositionIndex < channel.Rotations.size() );
+		SAT_CORE_ASSERT( nextPositionIndex < rChannel.Rotations.size() );
 
-		const float deltaTime = ( float ) ( channel.Rotations[ nextPositionIndex ].TimeStamp - channel.Rotations[ positionIndex ].TimeStamp );
-		float factor = ( time - ( float ) channel.Rotations[ positionIndex ].TimeStamp ) / deltaTime;
+		const float deltaTime = ( float ) ( rChannel.Rotations[ nextPositionIndex ].TimeStamp - rChannel.Rotations[ positionIndex ].TimeStamp );
+		float factor = ( time - ( float ) rChannel.Rotations[ positionIndex ].TimeStamp ) / deltaTime;
 
 		SAT_CORE_ASSERT( factor <= 1.0f, "Factor must be below 1.0f" );
 
 		factor = glm::clamp( factor, 0.0f, 1.0f );
-		const auto& rStart = channel.Rotations[ positionIndex ].Value;
-		const auto& rEnd = channel.Rotations[ nextPositionIndex ].Value;
+		const auto& rStart = rChannel.Rotations[ positionIndex ].Value;
+		const auto& rEnd = rChannel.Rotations[ nextPositionIndex ].Value;
 
 		// We must use slerp and not mix. mix preforms linear interpolation while slerp does spherical
 		glm::quat q = glm::slerp( rStart, rEnd, factor );
@@ -243,24 +300,24 @@ namespace Saturn {
 		return glm::normalize( q );
 	}
 
-	static glm::vec3 InterpolateScale( const AnimationBone& channel, float time )
+	static glm::vec3 InterpolateScale( const AnimationBone& rChannel, float time )
 	{
-		if( channel.Scale.size() == 1 )
-			return channel.Scale[ 0 ].Value;
+		if( rChannel.Scale.size() == 1 )
+			return rChannel.Scale[ 0 ].Value;
 
-		const uint32_t positionIndex = FindScale( channel, time );
+		const uint32_t positionIndex = FindScale( rChannel, time );
 		const uint32_t nextPositionIndex = ( positionIndex + 1 );
 
-		SAT_CORE_ASSERT( nextPositionIndex < channel.Scale.size() );
+		SAT_CORE_ASSERT( nextPositionIndex < rChannel.Scale.size() );
 
-		const float deltaTime = ( float ) ( channel.Scale[ nextPositionIndex ].TimeStamp - channel.Scale[ positionIndex ].TimeStamp );
-		float factor = ( time - ( float ) channel.Scale[ positionIndex ].TimeStamp ) / deltaTime;
+		const float deltaTime = ( float ) ( rChannel.Scale[ nextPositionIndex ].TimeStamp - rChannel.Scale[ positionIndex ].TimeStamp );
+		float factor = ( time - ( float ) rChannel.Scale[ positionIndex ].TimeStamp ) / deltaTime;
 
 		SAT_CORE_ASSERT( factor <= 1.0f, "Factor must be below 1.0f" );
 
 		factor = glm::clamp( factor, 0.0f, 1.0f );
-		const auto& rStart = channel.Scale[ positionIndex ].Value;
-		const auto& rEnd = channel.Scale[ nextPositionIndex ].Value;
+		const auto& rStart = rChannel.Scale[ positionIndex ].Value;
+		const auto& rEnd = rChannel.Scale[ nextPositionIndex ].Value;
 		auto delta = rEnd - rStart;
 
 		return rStart + factor * delta;
@@ -291,6 +348,23 @@ namespace Saturn {
 
 			const auto final = translation * rotation * scaling;
 			localTransforms[ ( size_t ) index ] = final;
+		}
+
+		// Root motion
+		if( m_SingleAnimationAsset->IsUsingRootMotion() )
+		{
+			const auto& rRootTransformation = localTransforms[ 0 ];
+			const auto& rCurrentTranslation = glm::vec3( rRootTransformation[ 3 ] );
+			const auto& rCurrentRotation = glm::quat_cast( rRootTransformation );
+
+			const glm::vec3 deltaPos = rCurrentTranslation - m_LastRootTranslation;
+			const glm::quat deltaRot = glm::conjugate( m_LastRootRotation ) * rCurrentRotation;
+
+			// Temporary, would need to create a "fake" root motion bone if needed
+			localTransforms[ 0 ][ 3 ] = glm::vec4( 0.0f, 0.0f, 0.0f, 1.0f );
+
+			m_LastRootTranslation = rCurrentTranslation;
+			m_LastRootRotation = rCurrentRotation;
 		}
 
 		for( size_t i = 0; i < rMeshBones.size(); ++i )

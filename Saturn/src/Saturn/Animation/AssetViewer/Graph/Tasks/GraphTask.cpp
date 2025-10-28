@@ -97,7 +97,7 @@ namespace Saturn {
 		}
 
 		NodeEditorTaskState activeState = NodeEditorTaskState::Unknown;
-		if( pCurrentTask && pCurrentTask->pTask )
+		if( pCurrentTask->pTask )
 		{
 			const auto status = pCurrentTask->pTask->Tick( ts );
 

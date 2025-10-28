@@ -81,7 +81,7 @@ namespace Saturn {
 
 	Saturn::AABB NavBoundsEntity::GetBoundingBox()
 	{
-		const TransformComponent tc = m_Scene->GetWorldSpaceTransform( SharedFromThis() );
+		const TransformComponent tc = GetScene()->GetWorldSpaceTransform( SharedFromThis() );
 		const auto& comp = tc.Scale;
 		const auto pos = tc.Position;
 
@@ -95,7 +95,7 @@ namespace Saturn {
 	{
 		GetBoundingBox();
 
-		m_Scene->PrepareForNavMeshBuilding();
+		GetScene()->PrepareForNavMeshBuilding();
 
 		RecastInputGeometry input;
 		input.BeginImport();
@@ -118,17 +118,17 @@ namespace Saturn {
 		GetComponent<NavigationMeshSpecificationComponent>().HasBuilt = true;
 	
 		std::filesystem::path path = Project::GetActiveProject()->GetFullCachePath();
-		path /= std::format( "NavMesh{0}.{1}.srnc", m_Scene->Name, ( uint64_t ) GetUUID() );
+		path /= std::format( "NavMesh{0}.{1}.srnc", GetScene()->Name, ( uint64_t ) GetUUID() );
 		RecastNavigationMeshCache::SaveNavMesh( path, m_Builder.GetNavMesh() );
 
 		CleanDirty();
-		m_Scene->DestroyPhysicsScene();
+		GetScene()->DestroyPhysicsScene();
 	}
 
 	void NavBoundsEntity::LoadNavMeshFromDisk()
 	{
 		std::filesystem::path path = Project::GetActiveProject()->GetFullCachePath();
-		path /= std::format( "NavMesh{0}.{1}.srnc", m_Scene->Name, ( uint64_t ) GetUUID() );
+		path /= std::format( "NavMesh{0}.{1}.srnc", GetScene()->Name, ( uint64_t ) GetUUID() );
 
 		GetComponent<NavigationMeshSpecificationComponent>().HasBuilt = m_Builder.TryLoadFromCache( path );
 	}

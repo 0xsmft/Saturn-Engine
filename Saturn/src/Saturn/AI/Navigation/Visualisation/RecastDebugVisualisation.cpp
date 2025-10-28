@@ -64,10 +64,10 @@ namespace Saturn {
 
 	static glm::vec4 UnpackColor( unsigned int color ) 
 	{
-		float r = ( color & 0xFF ) / 255.0f;
-		float g = ( ( color >> 8 ) & 0xFF ) / 255.0f;
-		float b = ( ( color >> 16 ) & 0xFF ) / 255.0f;
-		float a = ( ( color >> 24 ) & 0xFF ) / 255.0f;
+		const float r = ( color & 0xFF ) / 255.0f;
+		const float g = ( ( color >> 8 ) & 0xFF ) / 255.0f;
+		const float b = ( ( color >> 16 ) & 0xFF ) / 255.0f;
+		const float a = ( ( color >> 24 ) & 0xFF ) / 255.0f;
 
 		return glm::vec4( r, g, b, a );
 	}

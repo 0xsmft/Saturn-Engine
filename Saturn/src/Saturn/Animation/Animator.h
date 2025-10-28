@@ -30,7 +30,6 @@
 
 #include "AnimatorType.h"
 #include "SkeletalAnimationAsset.h"
-#include "AnimationController.h"
 
 #include "Saturn/Vulkan/Mesh.h"
 
@@ -44,11 +43,15 @@ namespace Saturn {
 		Paused
 	};
 
+	class AnimationController;
+
 	class Animator : public RefTarget
 	{
 	public:
 		Animator();
 		~Animator();
+
+		void Destory();
 
 		void InitAnimation( AssetID id, Ref<SkeletalMesh> sk, AnimatorType type );
 		void TickAnimation( Timestep ts );
@@ -57,6 +60,8 @@ namespace Saturn {
 		void Clear();
 
 		void QueueNewAnimation( AssetID id );
+
+		void StepTo( float time ) { m_PendingStepTime = time; }
 
 		AssetID GetCurrentID() const { return m_CurrentID; }
 		Ref<Asset> GetCurrentAnimation() const;
@@ -67,6 +72,14 @@ namespace Saturn {
 		// However, if it not initialised, meaning we've never had an animation, then it's not active
 		bool IsActive() const { return m_State != AnimationState::Inactive && m_State != AnimationState::NotInitialised; }
 
+		bool IsCompleted() const { return m_Completed; }
+		bool IsLooping() const { return m_Looping; }
+		bool IsPlaying() const { return m_State == AnimationState::Playing; }
+		bool IsPaused() const { return m_State == AnimationState::Paused; }
+
+		float GetCurrentAnimTime() const { return m_AnimationTime; }
+		AnimationState GetAnimationState() const { return m_State; }
+
 	private:
 		void TickSingleAnim( Timestep ts );
 		void ApplyBoneTransformations();
@@ -75,8 +88,11 @@ namespace Saturn {
 	private:
 		float m_StartTime = 0.0f;
 		float m_AnimationTime = 0.0f;
+		float m_PendingStepTime = -1.0f;
 		AnimationState m_State = AnimationState::NotInitialised;
 		AnimatorType m_AnimatorType = AnimatorType::Single;
+		bool m_Looping = false;
+		bool m_Completed = false;
 
 		AssetID m_PendingAsset = 0llu;
 		AssetID m_CurrentID = 0llu;
@@ -85,7 +101,13 @@ namespace Saturn {
 		Ref<AnimationController> m_AnimationControllerAsset;
 		Ref<SkeletalMesh> m_SkeletalMesh;
 
+		glm::vec3 m_LastRootTranslation{};
+		glm::quat m_LastRootRotation{};
+
 		std::vector<glm::mat4> m_BoneTransforms;
+
+	private:
+		friend class AnimGraphPlayAnimTask;
 	};
 
 }

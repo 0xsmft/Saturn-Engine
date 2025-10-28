@@ -172,7 +172,7 @@ namespace Saturn {
 		}
 
 		// Tick current task.
-		auto status = m_pCurrentTask->Tick( ts );
+		const auto status = m_pCurrentTask->Tick( ts );
 		m_CurrentState = status;
 
 		if( status == NodeEditorTaskState::Completed )

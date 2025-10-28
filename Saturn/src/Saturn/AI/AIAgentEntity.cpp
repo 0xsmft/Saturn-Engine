@@ -63,7 +63,7 @@ namespace Saturn {
 	{
 		Super::BeginPlay();
 
-		auto e = m_Scene->GetAllEntitiesWith<NavigationMeshSpecificationComponent>();
+		auto e = GetScene()->GetAllEntitiesWith<NavigationMeshSpecificationComponent>();
 		m_NavBoundsEntity = e[ 0 ].As<NavBoundsEntity>();
 	}
 

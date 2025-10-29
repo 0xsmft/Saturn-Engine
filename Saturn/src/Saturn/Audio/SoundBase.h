@@ -58,6 +58,9 @@ namespace Saturn {
 		virtual void Reset() = 0;
 		virtual void Unload() = 0;
 		virtual void OnSoundCompleted() = 0;
+		virtual void SetVolume( float volume ) = 0;
+		virtual void SetPitch( float pitch ) = 0;
+		virtual void SetSpatialisation( bool value ) = 0;
 
 	public:
 		ma_sound* GetRawSound() { return m_Sound; }

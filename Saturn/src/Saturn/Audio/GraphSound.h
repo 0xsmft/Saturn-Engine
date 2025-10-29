@@ -47,10 +47,13 @@ namespace Saturn {
 		void Initialise();
 		virtual void Play( int frameOffset = 0 ) override;
 
-		void Stop() override;
-		void Loop( bool loop = true ) override;
-		void Load( uint32_t flags ) override;
-		void Reset() override;
+		virtual void Stop() override;
+		virtual void Loop( bool loop = true ) override;
+		virtual void Load( uint32_t flags ) override;
+		virtual void Reset() override;
+		virtual void SetVolume( float volume ) override;
+		virtual void SetPitch( float pitch ) override;
+		virtual void SetSpatialisation( bool value ) override;
 
 		// Public non-static version of OnSoundEnd
 		// OnSoundCompleted is called by the Audio System
@@ -58,11 +61,7 @@ namespace Saturn {
 
 		void WaitUntilLoaded();
 
-		void SetVolume( float volume );
-		void SetPitch( float pitch );
-
 		void SetPosition( const glm::vec3& rPos );
-		void SetSpatialisation( bool value );
 
 #if !defined(SAT_DIST)
 		SharedPtr<NodeEditor> GetNodeEditor() const;

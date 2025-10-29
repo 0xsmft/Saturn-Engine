@@ -57,7 +57,10 @@ namespace Saturn {
 		// @param frameOffset -- The PCM frame offset which this sound should start from.
 		virtual void Play( int frameOffset = 0 ) override;
 
+		// Stop the sound at the current PCM frame
 		virtual void Stop() override;
+
+		// Enable looping
 		virtual void Loop( bool loop = true ) override;
 
 		// Load the actual sound from a data source
@@ -78,7 +81,17 @@ namespace Saturn {
 		// Set the data source to be at the first PCM frame
 		virtual void Reset() override;
 
+		// Internal function called when the sound is completed.
 		virtual void OnSoundCompleted() override;
+
+		// Set volume
+		virtual void SetVolume( float volume ) override;
+
+		// Set pitch
+		virtual void SetPitch( float pitch ) override;
+
+		// Enable spatialisation
+		virtual void SetSpatialisation( bool value );
 
 	public:
 		bool IsLooping() const;
@@ -88,15 +101,10 @@ namespace Saturn {
 
 		// Set Spatialisation position in world space.
 		void SetPosition( const glm::vec3& rPos );
-
-		void SetSpatialisation( bool value );
 	
 		// Set Spatialisation min or max distance from primary listener.
 		void SetMaxDistance( float dist );
 		void SetMinDistance( float dist );
-
-		void SetVolume( float volume );
-		void SetPitch( float pitch );
 
 		float GetVolume();
 		float GetPitch();

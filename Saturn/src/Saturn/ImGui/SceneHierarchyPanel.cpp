@@ -1330,16 +1330,17 @@ namespace Saturn {
 
 			if( m_Context->IsRuntimeRunning() )
 			{
-				Ref<Sound> sound = AudioSystem::Get().FindSound( ap.UniqueID );
+				Ref<SoundBase> sound = AudioSystem::Get().FindSound( ap.UniqueID );
 				if( sound )
 				{
 					if( Auxiliary::DrawBoolControl( "Loop", ap.Loop ) ) 
 						sound->Loop( ap.Loop );
 
-					Auxiliary::DrawBoolControl( "Mute", ap.Mute );
+					if( Auxiliary::DrawBoolControl( "Mute", ap.Mute ) ) 
+						sound->SetVolume( ap.Mute ? 0.0f : ap.Volume );
 					
-					if( Auxiliary::DrawBoolControl( "Spatialization", ap.Spatialization ) )
-						sound->SetSpatialisation( ap.Spatialization );
+					if( Auxiliary::DrawBoolControl( "Spatialisation", ap.Spatialisation ) )
+						sound->SetSpatialisation( ap.Spatialisation );
 
 					if( Auxiliary::DrawFloatControl( "Volume", ap.Volume, 0.0f, 100.0f ) )
 						sound->SetVolume( ap.Volume );
@@ -1351,12 +1352,6 @@ namespace Saturn {
 				{
 					ImGui::Text( "Sound could not be found in active scene. This should not happen and may indicate a bug in the application." );
 					ImGui::Text( "Looking for: %llu (ASSET/%llu). Was it marked for destruction?", ap.UniqueID, ap.SpecAssetID );
-
-					Auxiliary::DrawDisabledBoolControl( "Loop", ap.Loop );
-					Auxiliary::DrawDisabledBoolControl( "Mute", ap.Mute );
-					Auxiliary::DrawDisabledBoolControl( "Spatialization", ap.Spatialization );
-					Auxiliary::DrawDisabledFloatControl( "Volume", ap.Volume );
-					Auxiliary::DrawDisabledFloatControl( "Pitch", ap.Pitch );
 				}
 			}
 			else

@@ -178,6 +178,14 @@ namespace Saturn {
 		inline void EnableAutoSaves( bool value ) { m_EnableAutoSaves = value; }
 #endif
 
+		//////////////////////////////////////////////////////////////////////////
+		// Information, Editor only
+#if !defined(SAT_DIST)
+		inline std::string GetDeveloperVersion() const { return m_DeveloperProjectVersion; }
+
+		inline void SetDeveloperVersion( const std::string& ver ) { m_DeveloperProjectVersion = ver; }
+#endif
+
 	public:
 		//////////////////////////////////////////////////////////////////////////
 		// Premake, Building & Preparation for Distribution (Used in Editor)
@@ -206,7 +214,7 @@ namespace Saturn {
 		UUID m_DefaultPhysicsMaterialAsset = 0;
 		
 #if !defined(SAT_DIST)
-		// Time in seconds, converted to minutes in the Editor, when changing the time
+		// Time in seconds, converted to minutes or any suitable time to display in the Editor, when changing the time
 		float m_AutoSaveInterval = 300.0f;
 		bool m_EnableAutoSaves = false;
 #endif
@@ -216,6 +224,9 @@ namespace Saturn {
 
 #if !defined(SAT_DIST)
 		std::filesystem::path m_ThumbnailImagePath;
+		// This is the version that is local to the developer, it has nothing to do with Saturn Versions.
+		// It is purely informative.
+		std::string m_DeveloperProjectVersion;
 #endif
 
 	private:

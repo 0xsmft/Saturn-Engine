@@ -68,6 +68,7 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 			out << YAML::Key << "IsAutoSavesEnabled" << YAML::Value << rProject->IsAutoSavesEnabled();
 			out << YAML::Key << "AutoSaveInterval" << YAML::Value << rProject->GetAutoSaveInterval();
+			out << YAML::Key << "DeveloperVersion" << YAML::Value << rProject->GetDeveloperVersion();
 #endif
 
 			out << YAML::Key << "ActionBindings";
@@ -148,6 +149,7 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		newProject->EnableAutoSaves( project[ "IsAutoSavesEnabled" ].as<bool>( false ) );
 		newProject->SetAutoSaveInterval( project[ "AutoSavesInterval" ].as<float>( 300.0f ) );
+		newProject->SetDeveloperVersion( project[ "DeveloperVersion" ].as<std::string>( std::string() ) );
 #endif
 
 		const auto actionBindings = project[ "ActionBindings" ];

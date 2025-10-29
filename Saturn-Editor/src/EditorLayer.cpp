@@ -913,18 +913,41 @@ namespace Saturn {
 
 		ImGuiIO& rIO = ImGui::GetIO();
 
-		auto& userSettings = EngineSettings::Get();
-		Ref<Project> ActiveProject = Project::GetActiveProject();
-
-		auto& rConfig = ActiveProject->GetConfig();
-		auto& startupSceneID = rConfig.StartupSceneID;
-		Ref<Asset> startupSceneAsset = AssetManager::Get().FindAsset( startupSceneID );
-
 		ImGui::SetNextWindowPos( ImVec2( rIO.DisplaySize.x * 0.5f - 150.0f, rIO.DisplaySize.y * 0.5f - 150.0f ), ImGuiCond_Once );
-
-		if( ImGui::Begin( "Project settings", &m_ShowUserSettings ) ) 
+		if( ImGui::Begin( "Project settings", &m_ShowUserSettings ) )
 		{
+			auto& userSettings = EngineSettings::Get();
+			Ref<Project> ActiveProject = Project::GetActiveProject();
+
+			auto& rConfig = ActiveProject->GetConfig();
+			auto& startupSceneID = rConfig.StartupSceneID;
+			Ref<Asset> startupSceneAsset = AssetManager::Get().FindAsset( startupSceneID );
+
 			const auto boldFont = rIO.Fonts->Fonts[ 1 ];
+			ImGui::PushFont( boldFont );
+			ImGui::Text( "Project Information" );
+			ImGui::Separator();
+			ImGui::PopFont();
+
+			ImGui::BeginHorizontal( "##prj_infoname" );
+			ImGui::Text( "Project Name: %s", rConfig.Name.c_str() );
+			ImGui::EndHorizontal();
+
+			ImGui::BeginHorizontal( "##prj_infover" );
+			{
+				ImGui::Text( "Project Version:" );
+
+				ImGui::Spring();
+
+				std::string temporaryVerStr = ActiveProject->GetDeveloperVersion();
+				if( Auxiliary::InputText( "##prjdevver", &temporaryVerStr ) ) 
+				{
+					ActiveProject->SetDeveloperVersion( temporaryVerStr );
+					ShouldSaveProject = true;
+				}
+			}
+			ImGui::EndHorizontal();
+
 			ImGui::PushFont( boldFont );
 			ImGui::Text( "Project Defaults" );
 			ImGui::Separator();
@@ -1140,7 +1163,7 @@ namespace Saturn {
 				ImGui::SetNextItemWidth( 130.0f );
 				if( ImGui::BeginCombo( "##KEYLIST", rBinding.ActionName.data() ) )
 				{
-					for( uint16_t i = 0; i < RubyKey_EnumSize; i++ )
+					for( uint16_t i = 0; i < RubyKey_EnumSize; ++i )
 					{
 						const auto& result = RubyKeyToString( ( RubyKey ) i );
 
@@ -1171,7 +1194,7 @@ namespace Saturn {
 						ImGui::PopID();
 					}
 
-					for( int i = 0; i < 5; i++ )
+					for( int i = 0; i < 5; ++i )
 					{
 						const auto& result = RubyMouseButtonToString( ( RubyMouseButton ) i );
 
@@ -1228,7 +1251,7 @@ namespace Saturn {
 				for( const auto& bindings : ActiveProject->GetActionBindings() )
 				{
 					if( bindings.Name.contains( "Empty Binding" ) )
-						count++;
+						++count;
 				}
 
 				if( count >= 1 )
@@ -1257,6 +1280,7 @@ namespace Saturn {
 
 				ProjectSettings_DrawSoundGroupEdit( rSoundGroup );
 
+				// Disable removing a sound group if we are in runtime
 				Auxiliary::DisabledFlag disabledFlag( m_RequestRuntime );
 
 				if( ImGui::SmallButton( "-" ) )
@@ -1274,6 +1298,8 @@ namespace Saturn {
 				ImGui::EndHorizontal();
 			}
 
+			// We have to push a new one because we still want developers to be able to modify the volume of a sound group but not adding/removing it.
+			Auxiliary::DisabledFlag disabledFlagIfRuntimeForSndGrps( m_RequestRuntime );
 			ImGui::PushID( "##nwSndGrp" );
 
 			if( ImGui::SmallButton( "+" ) )
@@ -1286,7 +1312,7 @@ namespace Saturn {
 				for( const auto& rGroups : ActiveProject->GetSoundGroups() )
 				{
 					if( rGroups->GetName().contains( "New Sound Group" ) )
-						count++;
+						++count;
 				}
 
 				if( count >= 1 )
@@ -1300,6 +1326,7 @@ namespace Saturn {
 			}
 
 			ImGui::PopID();
+			disabledFlagIfRuntimeForSndGrps.Pop();
 
 			// This does not matter because the editor is not designed to run in Dist, however, right now I want to keep this in release builds.
 #if !defined(SAT_DIST)
@@ -1314,7 +1341,6 @@ namespace Saturn {
 				ImGui::TableSetupColumn( "Value" );
 
 				ImGui::TableHeadersRow();
-
 				{
 					auto drawRow = []( const char* pKey, const std::string& value )
 					{
@@ -1335,8 +1361,17 @@ namespace Saturn {
 					drawRow( "Binary Path", ActiveProject->GetBinDir().string() );
 					drawRow( "Cache Path", ActiveProject->GetFullCachePath().string() );
 
-					drawRow( "Module Path", GameModule::Get().GetModulePath().string() );
-					drawRow( "Module Timestamp", std::format( "X{0}", GameModule::Get().GetTimestamp() ) );
+					// The game module may not actually contain a loaded module if this project has ever built for Distribution or it does not contain any C++ classes.
+					if( m_GameModule->HasModule() )
+					{
+						drawRow( "Module Path", m_GameModule->GetModulePath().string() );
+						drawRow( "Module Timestamp", std::format( "X{0}", m_GameModule->GetTimestamp() ) );
+					}
+					else
+					{
+						drawRow( "Module Path", "<NULL>" );
+						drawRow( "Module Timestamp", "X0000000000" );
+					}
 				}
 
 				ImGui::EndTable();

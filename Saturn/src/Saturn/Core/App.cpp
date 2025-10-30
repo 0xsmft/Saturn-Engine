@@ -29,6 +29,8 @@
 #include "sppch.h"
 #include "App.h"
 
+#include "Process.h"
+
 #include "Ruby/RubyWindow.h"
 #include "Ruby/RubyMonitor.h"
 #include "Ruby/RubyLibrary.h"
@@ -189,7 +191,7 @@ namespace Saturn {
 		SAT_PF_EVENT();
 
 		// Update on the main thread.
-		// Scene Rendering may happen here depending on if a layer as a SceneRenderer or not.
+		// Scene Rendering may happen here depending on if a layer has a SceneRenderer or not.
 		for( auto& rLayer : m_Layers )
 		{
 			rLayer->OnUpdate( m_Timestep );
@@ -355,59 +357,177 @@ namespace Saturn {
 		m_BlockCV.notify_all();
 	}
 
-	std::filesystem::path Application::OpenFile( const char* pFilter ) const
+	std::filesystem::path Application::OpenFile( const std::wstring& rFilter ) const
 	{
-#ifdef  SAT_PLATFORM_WINDOWS
-		::OPENFILENAMEA ofn;
-		char szFile[ 260 ] = { 0 };
+		std::filesystem::path path;
 
-		::ZeroMemory( &ofn, sizeof( OPENFILENAME ) );
-		ofn.lStructSize = sizeof( OPENFILENAME );
-		ofn.hwndOwner = ( HWND ) m_Window->GetNativeHandle();
-		ofn.lpstrFile = szFile;
-		ofn.nMaxFile = sizeof( szFile );
-		ofn.lpstrFilter = pFilter;
-		ofn.nFilterIndex = 1;
-		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
+#if defined(SAT_PLATFORM_WINDOWS)
+		::IFileOpenDialog* pFileOpen = nullptr;
+		::PWSTR pszFilePath = 0;
 
-		if( ::GetOpenFileNameA( &ofn ) == TRUE )
+		if( FAILED( ::CoInitialize( nullptr ) ) )
 		{
-			return std::filesystem::path( ofn.lpstrFile );
+			SAT_CORE_ASSERT( "Unable to initialise Windows COM (COM/0/0).", false );
 		}
 
-		return "";
+		// Create the object.
+		::HRESULT hr = ::CoCreateInstance( CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_PPV_ARGS( &pFileOpen ) );
+		if( FAILED( hr ) )
+		{
+			SAT_CORE_ASSERT( "Unable to create Windows COM/CLSID_FileOpenDialog object", false );
+		}
+
+		::DWORD dwOptions;
+		pFileOpen->GetOptions( &dwOptions );
+		pFileOpen->SetOptions( dwOptions | FOS_NOCHANGEDIR | FOS_PATHMUSTEXIST | FOS_FILEMUSTEXIST );
+
+		// Pass in filters.
+		std::vector<COMDLG_FILTERSPEC> filters{};
+		std::wstringstream ss( rFilter );
+		std::wstring item;
+
+		std::vector<std::wstring> tokens;
+
+		// Split by |.
+		while( std::getline( ss, item, L'|' ) )
+		{
+			if( !item.empty() )
+				tokens.push_back( item );
+		}
+
+		// Expecting pairs... (description | exts)
+		for( size_t i = 0; i + 1 < tokens.size(); i += 2 )
+		{
+			filters.push_back( { tokens[ i ].c_str(), tokens[ i + 1 ].c_str() } );
+		}
+
+		// Set file types
+		pFileOpen->SetFileTypes( filters.size(), filters.data() );
+
+		// Show the dialog.
+		hr = pFileOpen->Show( m_Window->GetNativeHandle() );
+
+		// Get the file name from the dialog.
+		if( FAILED( hr ) )
+		{
+			SAT_CORE_ASSERT( "Unable to get the file name from the dialog using COM/CLSID_FileOpenDialog", false );
+		}
+
+		::IShellItem* pItem = nullptr;
+		hr = pFileOpen->GetResult( &pItem );
+
+		if( SUCCEEDED( hr ) )
+		{
+			hr = pItem->GetDisplayName( SIGDN_FILESYSPATH, &pszFilePath );
+
+			path = std::filesystem::path( pszFilePath );
+
+			::CoTaskMemFree( pszFilePath );
+		}
+
+		if( pItem )
+			pItem->Release();
+
+		pFileOpen->Release();
+		pFileOpen = nullptr;
+		::CoUninitialize();
 #endif
 
-#ifdef  SAT_PLATFORM_LINUX
-		return "";
-#endif
+		return path;
 	}
 
-	std::filesystem::path Application::SaveFile( const char* pFilter ) const
+	std::filesystem::path Application::SaveFile( const std::wstring& rFilter ) const
 	{
+		std::filesystem::path path;
+
 #ifdef  SAT_PLATFORM_WINDOWS
-		::OPENFILENAMEA ofn;
-		char szFile[ 260 ] = { 0 };
+		::IFileSaveDialog* pFileSave = nullptr;
+		::PWSTR pszFilePath = 0;
 
-		::ZeroMemory( &ofn, sizeof( OPENFILENAME ) );
-		ofn.lStructSize = sizeof( OPENFILENAME );
-		ofn.hwndOwner = ( HWND ) m_Window->GetNativeHandle();
-		ofn.lpstrFile = szFile;
-		ofn.nMaxFile = sizeof( szFile );
-		ofn.lpstrFilter = pFilter;
-		ofn.nFilterIndex = 1;
-		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
-
-		if( ::GetSaveFileNameA( &ofn ) == TRUE )
+		if( FAILED( ::CoInitialize( nullptr ) ) )
 		{
-			return std::filesystem::path( ofn.lpstrFile );
+			SAT_CORE_ASSERT( "Unable to initialise Windows COM (COM/0/0).", false );
 		}
 
-		return "";
-#endif
+		// Create the object.
+		::HRESULT hr = ::CoCreateInstance( CLSID_FileSaveDialog, nullptr, CLSCTX_ALL, IID_PPV_ARGS( &pFileSave ) );
+		if( FAILED( hr ) )
+		{
+			SAT_CORE_ASSERT( "Unable to create Windows COM/CLSID_FileSaveDialog object", false );
+		}
 
-#ifdef  SAT_PLATFORM_LINUX
-		return "";
+		::DWORD dwOptions;
+		pFileSave->GetOptions( &dwOptions );
+		pFileSave->SetOptions( dwOptions | FOS_NOCHANGEDIR | FOS_PATHMUSTEXIST | FOS_FILEMUSTEXIST );
+
+		// Pass in filters.
+		std::vector<COMDLG_FILTERSPEC> filters{};
+		std::wstringstream ss( rFilter );
+		std::wstring item;
+
+		std::vector<std::wstring> tokens;
+
+		// Split by |.
+		while( std::getline( ss, item, L'|' ) )
+		{
+			if( !item.empty() )
+				tokens.push_back( item );
+		}
+
+		// Expecting pairs... (description | exts)
+		for( size_t i = 0; i + 1 < tokens.size(); i += 2 )
+		{
+			filters.push_back( { tokens[ i ].c_str(), tokens[ i + 1 ].c_str() } );
+		}
+
+		// Set file types
+		pFileSave->SetFileTypes( filters.size(), filters.data() );
+
+		// Show the dialog.
+		hr = pFileSave->Show( m_Window->GetNativeHandle() );
+
+		// Get the file name from the dialog.
+		if( FAILED( hr ) )
+		{
+			SAT_CORE_ASSERT( "Unable to get the file name from the dialog using COM/CLSID_FileOpenDialog", false );
+		}
+
+		::IShellItem* pItem = nullptr;
+		hr = pFileSave->GetResult( &pItem );
+
+		if( SUCCEEDED( hr ) )
+		{
+			hr = pItem->GetDisplayName( SIGDN_FILESYSPATH, &pszFilePath );
+
+			path = std::filesystem::path( pszFilePath );
+
+			::CoTaskMemFree( pszFilePath );
+		}
+
+		if( pItem )
+			pItem->Release();
+
+		pFileSave->Release();
+		pFileSave = nullptr;
+		::CoUninitialize();
+
+#elif   defined(SAT_PLATFORM_LINUX)
+#endif
+		return path;
+	}
+
+	void Application::OpenNativeFileExplorer( const std::filesystem::path& rPath, bool select /*= false */ )
+	{
+#if     defined(SAT_PLATFORM_WINDOWS)
+		std::wstring CommandLine = L"";
+		
+		if( select )
+			CommandLine = std::format( L"explorer.exe /select,\"{0}\"", rPath.wstring() );
+		else
+			CommandLine = std::format( L"explorer.exe \"{0}\"", rPath.wstring() );
+
+		DeatchedProcess dp( CommandLine );
+#elif   defined(SAT_PLATFORM_LINUX)
 #endif
 	}
 
@@ -437,7 +557,7 @@ namespace Saturn {
 		pFileOpen->SetOptions( dwOptions | FOS_PICKFOLDERS );
 
 		// Show the dialog.
-		hr = pFileOpen->Show( NULL );
+		hr = pFileOpen->Show( m_Window->GetNativeHandle() );
 
 		// Get the file name from the dialog.
 		if( FAILED( hr ) )
@@ -457,10 +577,13 @@ namespace Saturn {
 			::CoTaskMemFree( pszFilePath );
 		}
 
-		pItem->Release();
+		if( pItem )
+			pItem->Release();
 
 		pFileOpen->Release();
 		pFileOpen = NULL;
+
+		::CoUninitialize();
 
 		return path;
 #endif
@@ -470,15 +593,7 @@ namespace Saturn {
 
 	const char* Application::GetCurrentPlatformName()
 	{
-#if defined(SAT_PLATFORM_WINDOWS) || _WIN32 || _WIN64
-		return "Windows";
-#elif defined(SAT_LINUX) || __linux__
-		return "Linux";
-#elif defined(SAT_MAC) || __APPLE__
-		return "Mac";
-#else
-		return "Unknown";
-#endif
+		return SAT_PLATFORM_FRIENDLY_NAME;
 	}
 
 	const char* Application::GetCurrentPlatformBinaryName()

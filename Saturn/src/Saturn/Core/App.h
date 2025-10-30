@@ -103,8 +103,19 @@ namespace Saturn {
 	public:
 		Timestep Time() const { return m_Timestep; }
 
-		std::filesystem::path OpenFile( const char* pFilter ) const;
-		std::filesystem::path SaveFile( const char* pFilter ) const;
+		// Calls the OS to show an open file dialog.
+		// @param rFilter Must be "Desc1|*.txt;" with "|" being a seperator
+		std::filesystem::path OpenFile( const std::wstring& rFilter ) const;
+
+		// Calls the OS to show a save file dialog.
+		// @param rFilter Must be "Desc1|*.txt;" with "|" being a seperator
+		std::filesystem::path SaveFile( const std::wstring& pFilter ) const;
+
+		// Calls the OS to open its native file explorer app.
+		// @param rPath Path to open to
+		// @param select Should the application select the file or not, default is false
+		void OpenNativeFileExplorer( const std::filesystem::path& rPath, bool select = false );
+
 		std::filesystem::path OpenFolder() const;
 
 		ApplicationSpecification& GetSpecification() { return m_Specification; }

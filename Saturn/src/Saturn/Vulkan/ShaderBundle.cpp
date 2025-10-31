@@ -70,7 +70,7 @@ namespace Saturn {
 
 			shader->SerialiseShaderData( fout );
 
-			i++;
+			++i;
 		}
 
 		fout.close();

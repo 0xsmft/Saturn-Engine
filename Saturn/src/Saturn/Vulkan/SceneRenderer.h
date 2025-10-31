@@ -29,7 +29,6 @@
 #pragma once
 
 #include "SceneRendererFlags.h"
-#include "Saturn/Scene/Components.h"
 #include "Saturn/Scene/Scene.h"
 #include "Saturn/Scene/Entity.h"
 #include "Mesh.h"

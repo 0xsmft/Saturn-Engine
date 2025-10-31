@@ -28,13 +28,14 @@
 
 #pragma once
 
-#include "Saturn/Core/Base.h"
-#include "Saturn/Core/AABB/AABB.h"
-#include "Saturn/Core/Renderer/EditorCamera.h"
 #include "Shader.h"
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
 #include "Material.h"
+
+#include "Saturn/Core/Base.h"
+#include "Saturn/Core/AABB/AABB.h"
+#include "Saturn/Core/Renderer/EditorCamera.h"
 
 #include "Saturn/Asset/MemoryAssetDependency.h"
 #include "Saturn/Asset/MaterialAsset.h"
@@ -117,14 +118,83 @@ namespace Saturn {
 	};
 	
 	// Bone information, not to be confused with AnimationBone, which is to be used with animations
-	// This is to be used for Skeleton
+	// This is to be used for Skeletons
 	struct SkeletalMeshBoneInfo
 	{
 		std::string BoneName;
 		int ParentIndex = -1;
 
-		// The Bones transform in Bone space, i.e. bring the vertices to the bones transform, bind point.
+		// The bones' transform in Bone space, i.e. bring the vertices to the bones transform, bind point.
 		glm::mat4 BoneOffset;
+
+	public:
+		template<typename OStream>
+		static void Serialise( const SkeletalMeshBoneInfo& rObject, OStream& rStream )
+		{
+			RawSerialisation::WriteString( rObject.BoneName, rStream );
+			RawSerialisation::WriteObjectChecked( rObject.ParentIndex, rStream );
+			RawSerialisation::WriteMatrix4x4( rObject.BoneOffset, rStream );
+		}
+
+		template<typename IStream>
+		static void Deserialise( SkeletalMeshBoneInfo& rObject, IStream& rStream )
+		{
+			rObject.BoneName = RawSerialisation::ReadString( rStream );
+			RawSerialisation::ReadObjectChecked( rObject.ParentIndex, rStream );
+			RawSerialisation::ReadMatrix4x4( rObject.BoneOffset, rStream );
+		}
+	};
+
+	struct SkeletalBoneInfluence
+	{
+		uint32_t BoneIndices[ 4 ] = { 0, 0, 0, 0 };
+		float BoneWeights[ 4 ]{ 0.0f, 0.0f, 0.0f, 0.0f };
+
+		inline void AddBoneData( uint32_t id, float weight )
+		{
+			for( size_t i = 0; i < 4; i++ )
+			{
+				if( BoneWeights[ i ] == 0.0f )
+				{
+					BoneIndices[ i ] = id;
+					BoneWeights[ i ] = weight;
+
+					return;
+				}
+			}
+		}
+	public:
+		template<typename OStream>
+		static void Serialise( const SkeletalBoneInfluence& rObject, OStream& rStream )
+		{
+			// Indices
+			RawSerialisation::WriteObject( rObject.BoneIndices[ 0 ], rStream );
+			RawSerialisation::WriteObject( rObject.BoneIndices[ 1 ], rStream );
+			RawSerialisation::WriteObject( rObject.BoneIndices[ 2 ], rStream );
+			RawSerialisation::WriteObject( rObject.BoneIndices[ 3 ], rStream );
+
+			// Weights
+			RawSerialisation::WriteObject( rObject.BoneWeights[ 0 ], rStream );
+			RawSerialisation::WriteObject( rObject.BoneWeights[ 1 ], rStream );
+			RawSerialisation::WriteObject( rObject.BoneWeights[ 2 ], rStream );
+			RawSerialisation::WriteObject( rObject.BoneWeights[ 3 ], rStream );
+		}
+
+		template<typename IStream>
+		static void Deserialise( SkeletalBoneInfluence& rObject, IStream& rStream )
+		{
+			// Indices
+			RawSerialisation::ReadObject( rObject.BoneIndices[ 0 ], rStream );
+			RawSerialisation::ReadObject( rObject.BoneIndices[ 1 ], rStream );
+			RawSerialisation::ReadObject( rObject.BoneIndices[ 2 ], rStream );
+			RawSerialisation::ReadObject( rObject.BoneIndices[ 3 ], rStream );
+
+			// Weights
+			RawSerialisation::ReadObject( rObject.BoneWeights[ 0 ], rStream );
+			RawSerialisation::ReadObject( rObject.BoneWeights[ 1 ], rStream );
+			RawSerialisation::ReadObject( rObject.BoneWeights[ 2 ], rStream );
+			RawSerialisation::ReadObject( rObject.BoneWeights[ 3 ], rStream );
+		}
 	};
 }
 
@@ -272,6 +342,12 @@ namespace Saturn {
 
 		const std::vector<glm::mat4> GetDefaultBoneTransforms() const { return m_DefaultBoneTransforms; }
 
+		Ref<VertexBuffer> GetBoneVertexBuffer() { return m_BoneVertexBuffer; }
+
+	public:
+		void SerialiseData( std::ofstream& rStream );
+		void DeserialiseData( std::istream& rStream );
+
 	public:
 		void Import_InitSkeleton( AssetID id );
 
@@ -284,13 +360,15 @@ namespace Saturn {
 #endif
 
 	private:
-		std::vector<DynamicVertex> m_Vertices;
+		std::vector<StaticVertex> m_Vertices;
+		std::vector<SkeletalBoneInfluence> m_BoneInfluences;
 		std::vector<SkeletalMeshBoneInfo> m_BoneInfos;
 		std::unordered_map<std::string, uint32_t> m_BoneMapping;
 		
 		std::vector<glm::mat4> m_DefaultBoneTransforms;
 
 		Ref<SkeletonAsset> m_SkeletonAsset;
+		Ref<VertexBuffer> m_BoneVertexBuffer;
 
 	private:
 		friend class SkeletalMeshAssetSerialiser;

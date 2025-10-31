@@ -56,32 +56,6 @@ namespace Saturn {
 		glm::vec3 Binormal;
 		glm::vec2 Texcoord;
 	};
-
-	struct DynamicVertex
-	{
-		glm::vec3 Position;
-		glm::vec3 Normal;
-		glm::vec3 Tangent;
-		glm::vec3 Binormal;
-		glm::vec2 Texcoord;
-		
-		uint32_t BoneIndices[ 4 ] = { 0, 0,0, 0 };
-		float BoneWeights[ 4 ]{ 0.0f, 0.0f, 0.0f, 0.0f };
-
-		inline void AddBoneData( uint32_t id, float weight ) 
-		{
-			for( size_t i = 0; i < 4; i++ )
-			{
-				if( BoneWeights[ i ] == 0.0f )
-				{
-					BoneIndices[ i ] = id;
-					BoneWeights[ i ] = weight;
-
-					return;
-				}
-			}
-		}
-	};
 	
 	struct VertexBufferElement
 	{
@@ -89,12 +63,11 @@ namespace Saturn {
 		ShaderDataType Type;
 		uint32_t Size;
 		uint32_t Offset;
-		uint32_t Binding = UINT32_MAX;
 
 		VertexBufferElement() = default;
 
-		VertexBufferElement( ShaderDataType type, const std::string& name, uint32_t binding = UINT32_MAX )
-			: Name( name ), Type( type ), Binding( binding ), Size( ShaderDataTypeSize( type ) ), Offset( 0 ) 
+		VertexBufferElement( ShaderDataType type, const std::string& name )
+			: Name( name ), Type( type ), Size( ShaderDataTypeSize( type ) ), Offset( 0 ) 
 		{
 		}
 
@@ -197,13 +170,17 @@ namespace Saturn {
 
 		void Destroy();
 	
-		void Bind( VkCommandBuffer CommandBuffer );
+		void Bind( VkCommandBuffer CommandBuffer, uint32_t binding = 0 );
 		void Bind( VkCommandBuffer CommandBuffer, uint32_t binding, VkDeviceSize* Offsets );
 
 		void Reallocate( void* pData, uint32_t size, uint32_t offset = 0 );
 
 		void Draw( VkCommandBuffer CommandBuffer );
 		void BindAndDraw( VkCommandBuffer CommandBuffer );
+
+#if !defined(SAT_DIST)
+		void SetDebugName( const std::string& rName );
+#endif
 
 	private:
 		void CreateBuffer();

@@ -59,10 +59,13 @@ namespace Saturn {
 		std::string Name = "Pipeline";
 		VertexBufferLayout VertexLayout;
 		VertexBufferLayout InstanceLayout;
+		// Layouts that are at the end of both VertexLayouts and Instance Layouts
+		VertexBufferLayout AdditionalLayoutAtEnd;
 		uint32_t Width = 0, Height = 0;
 		bool UseDepthTest = false;
 		bool UseStencilTest = false;
 		bool HasColorAttachment = true;
+		bool UseSpecializationInfo = false;
 		CullMode CullMode = CullMode::Back;
 		VkFrontFace FrontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 		VkPolygonMode PolygonMode = VK_POLYGON_MODE_FILL;
@@ -71,7 +74,6 @@ namespace Saturn {
 
 		// SpecializationInfo
 		VkSpecializationInfo SpecializationInfo = {};
-		bool UseSpecializationInfo = false;
 		ShaderType SpecializationStage = ShaderType::None;
 	};
 

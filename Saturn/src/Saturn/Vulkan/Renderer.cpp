@@ -237,7 +237,7 @@ namespace Saturn {
 	void Renderer::RenderDynamicMeshWithoutMaterial(
 		VkCommandBuffer CommandBuffer,
 		Ref<Saturn::Pipeline> Pipeline,
-		Ref<StaticMesh> mesh,
+		Ref<SkeletalMesh> mesh,
 		Ref<Material> material,
 		Ref<UniformBufferSet> ubSet,
 		Ref<StorageBufferSet> sbSet,
@@ -260,6 +260,8 @@ namespace Saturn {
 
 			VkDeviceSize offset[ 1 ] = { TransformOffset };
 			transformVB->Bind( CommandBuffer, 1, offset );
+
+			mesh->GetBoneVertexBuffer()->Bind( CommandBuffer, 2 );
 
 			mesh->GetIndexBuffer()->Bind( CommandBuffer );
 
@@ -419,7 +421,7 @@ namespace Saturn {
 			{
 				const auto& StorageWriteDescriptors = GetStorageBufferWriteDescriptors( rStorageBufferSet, mat );
 
-				for( size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++ )
+				for( size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
 				{
 					// Add StorageWriteDescriptors onto wds
 					wds[ i ].reserve( wds[ i ].size() + StorageWriteDescriptors[ i ].size() );
@@ -453,8 +455,12 @@ namespace Saturn {
 
 		VkDeviceSize transformOffsets[ 1 ] = { transformOffset };
 
+		// 0 - Mesh Vertex Data
 		mesh->GetVertexBuffer()->Bind( CommandBuffer );
+		// 1 - Transform Instance data
 		transformData->Bind( CommandBuffer, 1, transformOffsets );
+		// 2 - Mesh Bone Data
+		mesh->GetBoneVertexBuffer()->Bind( CommandBuffer, 2 );
 
 		mesh->GetIndexBuffer()->Bind( CommandBuffer );
 		Pipeline->Bind( CommandBuffer );
@@ -595,7 +601,7 @@ namespace Saturn {
 		VK_CHECK( vkResetFences( LogicalDevice, 1, &m_FlightFences[ m_FrameCount ] ) );
 
 		// Acquire next image.
-		uint32_t ImageIndex = -1;
+		uint32_t ImageIndex = UINT32_MAX;
 		VulkanContext::Get().GetSwapchain().AcquireNextImage( UINT32_MAX, m_AcquireSemaphore, VK_NULL_HANDLE, &ImageIndex );
 
 		m_ImageIndex = ImageIndex;
@@ -646,30 +652,40 @@ namespace Saturn {
 		PresentInfo.pWaitSemaphores = &m_SubmitSemaphore;
 		PresentInfo.waitSemaphoreCount = 1;
 		
-		m_QueuePresentTimer.Reset();
-
-		VkResult Result = vkQueuePresentKHR( VulkanContext::Get().GetGraphicsQueue(), &PresentInfo );
-
-		if( Result == VK_ERROR_OUT_OF_DATE_KHR ) 
 		{
-			SAT_CORE_INFO( "Result was VK_ERROR_OUT_OF_DATE_KHR, Swapchain will be re-created!" );
+			SAT_PF_EVENT_N( "Saturn::Renderer::QueuePresent" );
+	
+			m_QueuePresentTimer.Reset();
 
-			VulkanContext::Get().GetSwapchain().Recreate();
+			VkResult Result = vkQueuePresentKHR( VulkanContext::Get().GetGraphicsQueue(), &PresentInfo );
 
-			PresentInfo.pSwapchains = &VulkanContext::Get().GetSwapchain().GetSwapchain();
+			if( Result == VK_ERROR_OUT_OF_DATE_KHR ) 
+			{
+				SAT_CORE_INFO( "Result was VK_ERROR_OUT_OF_DATE_KHR, Swapchain will be re-created!" );
 
-			VK_CHECK( vkQueuePresentKHR( VulkanContext::Get().GetGraphicsQueue(), &PresentInfo ) );
+				VulkanContext::Get().GetSwapchain().Recreate();
+
+				PresentInfo.pSwapchains = &VulkanContext::Get().GetSwapchain().GetSwapchain();
+
+				VK_CHECK( vkQueuePresentKHR( VulkanContext::Get().GetGraphicsQueue(), &PresentInfo ) );
+			}
+
+			m_QueuePresentTime = m_QueuePresentTimer.ElapsedMilliseconds();
 		}
 
-		m_QueuePresentTime = m_QueuePresentTimer.ElapsedMilliseconds();
-
-		VK_CHECK( vkQueueWaitIdle( VulkanContext::Get().GetPresentQueue() ) );
+		{
+			m_QueueWaitTimer.Reset();
+			SAT_PF_EVENT_N( "Saturn::Renderer::QueueWait" );
+			VK_CHECK( vkQueueWaitIdle( VulkanContext::Get().GetPresentQueue() ) );
+			m_QueueWaitTimer.Stop();
+			m_QueueWaitTime = m_QueuePresentTimer.ElapsedMilliseconds();
+		}
 
 		vkFreeCommandBuffers( LogicalDevice, VulkanContext::Get().GetCommandPool(), 1, &m_CommandBuffer );
 
 		m_FrameCount = ( m_FrameCount + 1 ) % MAX_FRAMES_IN_FLIGHT;
 
-		m_EndFrameTime = m_EndFrameTimer.ElapsedMilliseconds() - m_QueuePresentTime;
+		m_EndFrameTime = m_QueueWaitTime + ( m_EndFrameTimer.ElapsedMilliseconds() + m_QueuePresentTime );
 
 		// Clear storage buffer sets. Reallocated next frame.
 		// Not ideal but for now we will do this as in the LightCulling pass we resize the buffer every frame meaning we have to update our cache.
@@ -693,10 +709,10 @@ namespace Saturn {
 			glm::vec2 TexCoord;
 		};
 
-		float x = -1;
-		float y = -1;
+		constexpr float x = -1;
+		constexpr float y = -1;
 
-		float width = 2, height = 2;
+		constexpr float width = 2, height = 2;
 
 		QuadVertex* data = new QuadVertex[ 4 ];
 

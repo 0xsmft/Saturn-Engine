@@ -83,6 +83,7 @@ namespace Auxiliary {
 		aiProcess_GenUVCoords |             // Convert UVs if required 
 		aiProcess_OptimizeMeshes |          // Batch draws where possible
 		aiProcess_JoinIdenticalVertices |
+		aiProcess_LimitBoneWeights |
 		aiProcess_ValidateDataStructure;    // Validation
 	//aiProcess_GlobalScale |             // e.g. convert cm to m for fbx import (and other formats where cm is native)
 
@@ -212,7 +213,7 @@ namespace Auxiliary {
 		m_Submeshes.reserve( m_Scene->mNumMeshes );
 
 		// Iterate over all meshes in the scene.
-		for( unsigned int m = 0; m < m_Scene->mNumMeshes; m++ )
+		for( unsigned int m = 0; m < m_Scene->mNumMeshes; ++m )
 		{
 			aiMesh* mesh = m_Scene->mMeshes[ m ];
 
@@ -239,7 +240,7 @@ namespace Auxiliary {
 			// Vertices
 			m_Vertices.reserve( mesh->mNumVertices );
 
-			for( size_t i = 0; i < mesh->mNumVertices; i++ )
+			for( size_t i = 0; i < mesh->mNumVertices; ++i )
 			{
 				StaticVertex vertex{};
 				vertex.Position = { mesh->mVertices[ i ].x, mesh->mVertices[ i ].y, mesh->mVertices[ i ].z };
@@ -270,7 +271,7 @@ namespace Auxiliary {
 			// We don't need to multiply by three because we are storing faces
 			m_Indices.reserve( mesh->mNumFaces );
 
-			for( size_t i = 0; i < mesh->mNumFaces; i++ )
+			for( size_t i = 0; i < mesh->mNumFaces; ++i )
 			{
 				SAT_CORE_ASSERT( mesh->mFaces[ i ].mNumIndices == 3, "Mesh must have 3 indices." );
 
@@ -303,7 +304,7 @@ namespace Auxiliary {
 	{
 		const glm::mat4 transform = parentTransform * Auxiliary::Mat4FromAssimpMat4( node->mTransformation );
 
-		for( uint32_t i = 0; i < node->mNumMeshes; i++ )
+		for( uint32_t i = 0; i < node->mNumMeshes; ++i )
 		{
 			uint32_t mesh = node->mMeshes[ i ];
 			auto& submesh = m_Submeshes[ mesh ];
@@ -311,7 +312,7 @@ namespace Auxiliary {
 			submesh.Transform = transform;
 		}
 
-		for( uint32_t i = 0; i < node->mNumChildren; i++ )
+		for( uint32_t i = 0; i < node->mNumChildren; ++i )
 			TraverseNodes( node->mChildren[ i ], transform, level + 1 );
 	}
 #endif
@@ -462,7 +463,7 @@ namespace Auxiliary {
 		m_Submeshes.reserve( m_Scene->mNumMeshes );
 
 		// Iterate over all meshes in the scene.
-		for( unsigned int m = 0; m < m_Scene->mNumMeshes; m++ )
+		for( unsigned int m = 0; m < m_Scene->mNumMeshes; ++m )
 		{
 			aiMesh* mesh = m_Scene->mMeshes[ m ];
 
@@ -488,10 +489,11 @@ namespace Auxiliary {
 
 			// Vertices
 			m_Vertices.reserve( mesh->mNumVertices );
+			m_BoneInfluences.resize( m_VertexCount );
 
-			for( unsigned int i = 0; i < mesh->mNumVertices; i++ )
+			for( unsigned int i = 0; i < mesh->mNumVertices; ++i )
 			{
-				DynamicVertex vertex{};
+				StaticVertex vertex{};
 				vertex.Position = { mesh->mVertices[ i ].x, mesh->mVertices[ i ].y, mesh->mVertices[ i ].z };
 				vertex.Normal = { mesh->mNormals[ i ].x, mesh->mNormals[ i ].y, mesh->mNormals[ i ].z };
 
@@ -520,7 +522,7 @@ namespace Auxiliary {
 			// We don't need to multiply by three because we are storing faces
 			m_Indices.reserve( mesh->mNumFaces );
 
-			for( unsigned int i = 0; i < mesh->mNumFaces; i++ )
+			for( unsigned int i = 0; i < mesh->mNumFaces; ++i )
 			{
 				SAT_CORE_ASSERT( mesh->mFaces[ i ].mNumIndices == 3, "Mesh must have 3 indices." );
 
@@ -530,25 +532,27 @@ namespace Auxiliary {
 			// TODO: Should be replaced completely by SkeletonAsset.
 			if( mesh->HasBones() )
 			{
-				for( unsigned int i = 0; i < mesh->mNumBones; i++ )
+				for( unsigned int i = 0; i < mesh->mNumBones; ++i )
 				{
 					aiBone* pBone = mesh->mBones[ i ];
 					std::string boneName( pBone->mName.C_Str() );
 
 					// Assign weights to vertices
-					for( unsigned int j = 0; j < pBone->mNumWeights; j++ )
+					for( unsigned int j = 0; j < pBone->mNumWeights; ++j )
 					{
-						auto boneIndex = m_SkeletonAsset->FindBoneIndex( boneName );
+						const auto boneIndex = m_SkeletonAsset->FindBoneIndex( boneName );
 
-						unsigned int vertexID = submesh.BaseVertex + pBone->mWeights[ j ].mVertexId;
-						float weight = pBone->mWeights[ j ].mWeight;
-						m_Vertices[ vertexID ].AddBoneData( boneIndex, weight );
+						const unsigned int vertexID = submesh.BaseVertex + pBone->mWeights[ j ].mVertexId;
+						const float weight = pBone->mWeights[ j ].mWeight;
+						m_BoneInfluences[ vertexID ].AddBoneData( boneIndex, weight );
+//						m_Vertices[ vertexID ].AddBoneData( boneIndex, weight );
 					}
 				}
 			}
 		}
 
-		m_VertexBuffer = Ref<VertexBuffer>::Create( m_Vertices.data(), ( uint32_t ) ( m_Vertices.size() * sizeof( DynamicVertex ) ) );
+		m_VertexBuffer = Ref<VertexBuffer>::Create( m_Vertices.data(), ( uint32_t ) ( m_Vertices.size() * sizeof( StaticVertex ) ) );
+		m_BoneVertexBuffer = Ref<VertexBuffer>::Create( m_BoneInfluences.data(), m_BoneInfluences.size() * sizeof( SkeletalBoneInfluence ) );
 		m_IndexBuffer = Ref<IndexBuffer>::Create( m_Indices.data(), m_Indices.size() * sizeof( Index ) );
 
 		TraverseNodes( m_Scene->mRootNode );
@@ -571,7 +575,7 @@ namespace Auxiliary {
 		const auto bones = m_SkeletonAsset->GetBoneInfo().size();
 
 		m_DefaultBoneTransforms.resize( bones );
-		for( size_t i = 0; i < bones; i++ )
+		for( size_t i = 0; i < bones; ++i )
 		{
 			m_DefaultBoneTransforms[ i ] = glm::mat4{ 1.0f };
 		}
@@ -609,6 +613,91 @@ namespace Auxiliary {
 
 #endif
 
+	void SkeletalMesh::SerialiseData( std::ofstream& rStream )
+	{
+		RawSerialisation::WriteObject( m_VertexCount, rStream );
+		RawSerialisation::WriteObject( m_IndicesCount, rStream );
+
+		RawSerialisation::WriteVector( m_Indices, rStream );
+		RawSerialisation::WriteVector( m_Vertices, rStream );
+		RawSerialisation::WriteVector( m_Submeshes, rStream );
+		RawSerialisation::WriteVector( m_BoneInfluences, rStream );
+		RawSerialisation::WriteVector( m_BoneInfos, rStream );
+		
+		RawSerialisation::WriteUnorderedMap( m_BoneMapping, rStream );
+
+		RawSerialisation::WriteMatrix4x4( m_Transform, rStream );
+		RawSerialisation::WriteMatrix4x4( m_InverseTransform, rStream );
+
+		// Master material registry
+		// Write asset material IDs
+		// Matches with StaticMeshAssetSerialiser
+		size_t materials = m_MaterialRegistry->GetMaterialAssets().size();
+		rStream.write( reinterpret_cast< char* >( &materials ), sizeof( size_t ) );
+
+		for( const auto& rMaterialAsset : m_MaterialRegistry->GetMaterialAssets() )
+		{
+			RawSerialisation::WriteObject( rMaterialAsset->ID, rStream );
+		}
+	}
+
+	void SkeletalMesh::DeserialiseData( std::istream& rStream )
+	{
+		RawSerialisation::ReadObject( m_VertexCount, rStream );
+		RawSerialisation::ReadObject( m_IndicesCount, rStream );
+
+		RawSerialisation::ReadVector( m_Indices, rStream );
+		RawSerialisation::ReadVector( m_Vertices, rStream );
+		RawSerialisation::ReadVector( m_Submeshes, rStream );
+
+		RawSerialisation::ReadVector( m_BoneInfluences, rStream );
+		RawSerialisation::ReadVector( m_BoneInfos, rStream );
+		
+		RawSerialisation::ReadUnorderedMap( m_BoneMapping, rStream );
+
+		RawSerialisation::ReadMatrix4x4( m_Transform, rStream );
+		RawSerialisation::ReadMatrix4x4( m_InverseTransform, rStream );
+
+		m_VertexBuffer     = Ref<VertexBuffer>::Create( m_Vertices.data(), ( uint32_t ) ( m_Vertices.size() * sizeof( StaticVertex ) ) );
+		m_BoneVertexBuffer = Ref<VertexBuffer>::Create( m_BoneInfluences.data(), ( uint32_t ) ( m_BoneInfluences.size() * sizeof( SkeletalBoneInfluence ) ) );
+		m_IndexBuffer      = Ref<IndexBuffer>::Create( m_Indices.data(), m_Indices.size() * sizeof( Index ) );
+
+		m_MaterialRegistry = Ref<MaterialRegistry>::Create();
+
+		//////////////////////////////////////////////////////////////////////////
+		// Read Master
+		// Unable to call MaterialRegistry::Deserialise as Deserialise expects a map with the overrides
+		// and because we are the master we don't care about overrides and thus don't have a map with overrides
+		// So, manually read it back.
+
+		// Read Materials
+		size_t materials = 0;
+		RawSerialisation::ReadObject( materials, rStream );
+
+		m_MaterialRegistry->GetMaterialAssets().reserve( materials );
+
+		for( size_t i = 0; i < materials; i++ )
+		{
+			UUID materialID = 0;
+			RawSerialisation::ReadObject( materialID, rStream );
+
+			if( materialID )
+				m_MaterialRegistry->AddTargetMaterialAsset( i, materialID );
+
+			// Try load material
+			Ref<MaterialAsset> materialAsset = AssetManager::Get().GetAssetAs<MaterialAsset>( materialID );
+
+			// Failed to load material, create new and default it.
+			if( materialAsset == nullptr )
+			{
+				// Safe to fall back to project defaults because in Dist project defaults must be set in order to package.
+				materialAsset = AssetManager::Get().GetAssetAs<MaterialAsset>( Project::GetActiveProject()->GetDefaultMaterialAsset() );
+			}
+
+			m_MaterialRegistry->AddAsset( materialAsset );
+		}
+	}
+
 	//////////////////////////////////////////////////////////////////////////
 	// MESH DETERMINER
 
@@ -617,7 +706,7 @@ namespace Auxiliary {
 #if !defined(SAT_DIST)
 		AssimpLog::Initialize();
 
-		constexpr auto IMPORT_FLAGS = s_MeshImportFlags | aiProcess_PopulateArmatureData;
+		constexpr auto IMPORT_FLAGS = s_MeshImportFlags;
 
 		auto importer = std::make_unique<Assimp::Importer>();
 		const aiScene* scene = importer->ReadFile( rPath.string(), IMPORT_FLAGS );
@@ -636,7 +725,7 @@ namespace Auxiliary {
 
 		for( unsigned int m = 0; m < scene->mNumMeshes; m++ )
 		{
-			aiMesh* pMesh = scene->mMeshes[ m ];
+			const aiMesh* pMesh = scene->mMeshes[ m ];
 
 			if( pMesh->HasBones() )
 			{
@@ -650,7 +739,7 @@ namespace Auxiliary {
 				if( ( m_Result & MeshDeterminerResult_SkeletalMesh ) != 0 )
 				{
 					m_Result = MeshDeterminerResult_Undetermined;
-					SAT_CORE_ERROR( "A Skeletal mesh can not contain a static mesh, it can, however contain submeshes with the SAME armature!" );
+					SAT_CORE_ERROR( "A Skeletal mesh can not contain a static mesh, it can however, contain submeshes with the SAME armature!" );
 				}
 				else
 				{

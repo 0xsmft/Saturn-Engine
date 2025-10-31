@@ -750,7 +750,7 @@ namespace Saturn {
 		m_pCurrentTriangle->Color = rColor;
 
 		m_pCurrentTriangle++;
-		m_TriangleVextexCount++;
+		++m_TriangleVextexCount;
 	}
 
 	void Renderer2D::SetCamera( const RendererCamera& rRendererCamera )

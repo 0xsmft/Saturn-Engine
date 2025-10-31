@@ -350,33 +350,10 @@ namespace Saturn {
 
 	std::vector< VkDescriptorSetLayout > Shader::GetSetLayouts()
 	{
-		std::vector<std::pair<uint32_t, VkDescriptorSetLayout>> temp;
+		std::vector< VkDescriptorSetLayout > layouts;
 
-		// Collect into pairs
-		for( auto& [set, descriptorSet] : m_DescriptorSets )
-		{
-			temp.emplace_back( set, descriptorSet.SetLayout );
-		}
-
-		// Sort by set number
-		std::sort( temp.begin(), temp.end(), 
-			[]( auto& a, auto& b ) 
-		{ 
-			return a.first < b.first; 
-		} );
-
-		// Output only layouts in correct order
-		std::vector<VkDescriptorSetLayout> layouts;
-		layouts.reserve( temp.size() );
-
-		for( auto& [set, layout] : temp )
-			layouts.push_back( layout );
-
-		// ^^^ we have to do this because the shader reflection system will discover descriptor sets differently to how Vulkan expects it to.
-		// For example if we have a SSBO in set 2. Set two will always be appended to m_DescriptorSets first because it's a SSBO similarly, if it was UBO then it would be added at position one, 
-		// so you may think that we all we need to do is just to change the order that we discover descriptors in
-		// however, that would not work because in the case where another shader stage has descriptors in set 1 the order would then be 0 <- UBO, 2 <- SSBO (with "fix" applied), 1 <- UB/SBO/Textures, and not 0, 1, 2
-		// So when calling this function we'll sort it so that Vulkan won't get confused.
+		for( auto& [set, layout] : m_DescriptorSets )
+			layouts.push_back( layout.SetLayout );
 
 		return layouts;
 	}
@@ -398,24 +375,6 @@ namespace Saturn {
 		stream.seekg( 0 );
 		stream.read( m_FileContents.data(), m_FileSize );
 		stream.close();
-
-		/*
-		* 		if( !std::filesystem::exists( m_Filepath ) )
-			return;
-
-		std::ifstream f( m_Filepath, std::ios::ate | std::ios::binary );
-
-		m_FileSize = static_cast< size_t >( f.tellg() );
-		std::vector<char> Buffer( m_FileSize );
-
-		f.seekg( 0 );
-		f.read( Buffer.data(), m_FileSize );
-
-		f.close();
-
-		m_FileContents = std::string( Buffer.begin(), Buffer.end() );
-*/
-
 #endif
 	}
 
@@ -427,7 +386,7 @@ namespace Saturn {
 		int ComputeShaders = -1;
 
 		const char* TypeToken = "#type";
-		size_t TypeTokenLength = strlen( TypeToken );
+		const size_t TypeTokenLength = strlen( TypeToken );
 		size_t TypeTokenPosition = m_FileContents.find( TypeToken, 0 );
 		
 		while ( TypeTokenPosition != std::string::npos )
@@ -436,27 +395,27 @@ namespace Saturn {
 			
 			std::copy( m_FileContents.begin(), m_FileContents.end(), std::back_inserter( FileCopy ) );
 			
-			size_t TypeTokenEnd = FileCopy.find( "\r\n", TypeTokenPosition );
+			const size_t TypeTokenEnd = FileCopy.find( "\r\n", TypeTokenPosition );
 
-			size_t Begin = TypeTokenPosition + TypeTokenLength + 1;
+			const size_t Begin = TypeTokenPosition + TypeTokenLength + 1;
 
-			std::string Type = FileCopy.substr( Begin, TypeTokenEnd - Begin );
+			const std::string Type = FileCopy.substr( Begin, TypeTokenEnd - Begin );
 			
-			size_t NextLinePos = FileCopy.find_first_not_of( "\r\n", TypeTokenEnd );
+			const size_t NextLinePos = FileCopy.find_first_not_of( "\r\n", TypeTokenEnd );
 			TypeTokenPosition = FileCopy.find( TypeToken, NextLinePos );
 			
-			auto RawShaderCode = FileCopy.substr( NextLinePos, TypeTokenPosition - ( NextLinePos == std::string::npos ? FileCopy.size() - 1 : NextLinePos ) );
+			const auto RawShaderCode = FileCopy.substr( NextLinePos, TypeTokenPosition - ( NextLinePos == std::string::npos ? FileCopy.size() - 1 : NextLinePos ) );
 
-			auto Shader_Type = ShaderTypeFromString( Type );
+			const auto Shader_Type = ShaderTypeFromString( Type );
 
 			if( Shader_Type == ShaderType::Fragment )
-				FragmentShaders++;
+				++FragmentShaders;
 			else if( Shader_Type == ShaderType::Vertex )
-				VertexShaders++;
+				++VertexShaders;
 			else if( Shader_Type == ShaderType::Compute )
-				ComputeShaders++;
+				++ComputeShaders;
 			
-			int Index = Shader_Type == ShaderType::Vertex ? VertexShaders : ( Shader_Type == ShaderType::Fragment ? FragmentShaders : ComputeShaders );
+			const int Index = Shader_Type == ShaderType::Vertex ? VertexShaders : ( Shader_Type == ShaderType::Fragment ? FragmentShaders : ComputeShaders );
 
 			ShaderSource src = ShaderSource( RawShaderCode, Shader_Type, Index );
 			m_ShaderSources[ ShaderSourceKey( Shader_Type, Index ) ] = src;
@@ -533,7 +492,7 @@ namespace Saturn {
 
 			m_DescriptorSets[ Set ].StorageBuffers[ Binding ] = Storage;
 
-			for( int i = 0; i < MemberCount; i++ )
+			for( int i = 0; i < MemberCount; ++i )
 			{
 				auto type = Compiler.get_type( BufferType.member_types[ i ] );
 				const auto& memberName = Compiler.get_member_name( BufferType.self, i );
@@ -597,7 +556,7 @@ namespace Saturn {
 
 			m_DescriptorSets[ Set ].UniformBuffers[ Binding ] = Uniform;
 
-			for( int i = 0; i < MemberCount; i++ )
+			for( int i = 0; i < MemberCount; ++i )
 			{
 				auto& type = Compiler.get_type( BufferType.member_types[i] );
 				const auto& memberName = Compiler.get_member_name( BufferType.self, i );
@@ -968,7 +927,7 @@ namespace Saturn {
 	void Shader::SerialiseShaderData( std::ofstream& rStream ) const
 	{
 		RawSerialisation::WriteUnorderedMap( m_SpvCode, rStream );
-		RawSerialisation::WriteUnorderedMap( m_DescriptorSets, rStream );
+		RawSerialisation::WriteMap( m_DescriptorSets, rStream );
 
 		RawSerialisation::WriteVector( m_PushConstants, rStream );
 		RawSerialisation::WriteVector( m_VulkanRanges, rStream );
@@ -977,7 +936,7 @@ namespace Saturn {
 	void Shader::DeserialiseShaderData( std::ifstream& rStream )
 	{
 		RawSerialisation::ReadUnorderedMap( m_SpvCode, rStream );
-		RawSerialisation::ReadUnorderedMap( m_DescriptorSets, rStream );
+		RawSerialisation::ReadMap( m_DescriptorSets, rStream );
 
 		RawSerialisation::ReadVector( m_PushConstants, rStream );
 		RawSerialisation::ReadVector( m_VulkanRanges, rStream );

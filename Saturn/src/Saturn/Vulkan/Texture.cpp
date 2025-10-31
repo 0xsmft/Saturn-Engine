@@ -243,7 +243,7 @@ namespace Saturn {
 		{
 			width /= 2;
 			height /= 2;
-			mip--;
+			--mip;
 		}
 
 		return { width, height };
@@ -531,7 +531,7 @@ namespace Saturn {
 		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 
-		for( size_t i = 1; i < mips; i++ )
+		for( size_t i = 1; i < mips; ++i )
 		{
 			VkImageBlit imageBlit{};
 
@@ -733,7 +733,7 @@ namespace Saturn {
 
 	Buffer Texture2D::GetMipTextureData( uint32_t w, uint32_t h, uint32_t mip )
 	{
-		VkDeviceSize ImageSize = ( uint64_t ) w * ( uint64_t ) h * 4;
+		const VkDeviceSize ImageSize = ( uint64_t ) w * ( uint64_t ) h * 4;
 
 		// Copy image to vulkan buffer
 		VkBufferCreateInfo BufferCreateInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
@@ -791,9 +791,9 @@ namespace Saturn {
 	{
 		auto pAllocator = VulkanContext::Get().GetVulkanAllocator();
 
-		VkDeviceSize ImageSize = m_Width * m_Height * 4;
+		const VkDeviceSize ImageSize = m_Width * m_Height * 4ull;
 
-		auto MipCount = GetMipMapLevels();
+		const auto MipCount = GetMipMapLevels();
 
 		// Staging Buffer.
 		VkBuffer StagingBuffer = nullptr;
@@ -1029,8 +1029,8 @@ namespace Saturn {
 
 		VkCommandBuffer CommandBuffer = VulkanContext::Get().BeginNewCommandBuffer();
 
-		uint32_t mipLevels = GetMipMapLevels();
-		for( uint32_t face = 0; face < 6; face++ )
+		const uint32_t mipLevels = GetMipMapLevels();
+		for( uint32_t face = 0; face < 6; ++face )
 		{
 			VkImageSubresourceRange mipSubRange = {};
 			mipSubRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -1047,9 +1047,9 @@ namespace Saturn {
 				mipSubRange );
 		}
 
-		for( uint32_t i = 1; i < mipLevels; i++ )
+		for( uint32_t i = 1; i < mipLevels; ++i )
 		{
-			for( uint32_t face = 0; face < 6; face++ )
+			for( uint32_t face = 0; face < 6; ++face )
 			{
 				VkImageBlit imageBlit{};
 

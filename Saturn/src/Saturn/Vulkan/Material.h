@@ -100,13 +100,12 @@ namespace Saturn {
 		Ref<UniformBuffer> GetOrCreateUB( uint32_t binding );
 
 	private:
+		uint32_t m_Set = 0;
 		std::string m_Name = "";
 		Ref<Shader> m_Shader;
 
 		Buffer m_PushConstantData;
 		
-		uint32_t m_Set = 0;
-
 		// Binding -> UniformBuffers (per frame in flight)
 		std::unordered_map< uint32_t, std::array< Ref<UniformBuffer>, MAX_FRAMES_IN_FLIGHT > > m_UniformBuffers;
 

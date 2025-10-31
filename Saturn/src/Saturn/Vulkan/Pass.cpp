@@ -107,7 +107,7 @@ namespace Saturn {
 		m_ClearValues.resize( m_PassSpec.Attachments.size() );
 
 		int i = 0;
-		for ( auto attachment : m_PassSpec.Attachments )
+		for( auto attachment : m_PassSpec.Attachments )
 		{
 			if( IsColorFormat( attachment ) ) 
 			{
@@ -140,7 +140,7 @@ namespace Saturn {
 				m_ClearValues[ i ].depthStencil = { 1.0f, 0 };
 			}
 
-			i++;
+			++i;
 		}
 
 		if ( m_DepthAttachment.layout == VK_IMAGE_LAYOUT_UNDEFINED || m_DepthAttachment.layout == VK_IMAGE_LAYOUT_MAX_ENUM )
@@ -155,38 +155,51 @@ namespace Saturn {
 		if( m_ColorAttachments.size() ) 
 		{
 			DefaultSubpass.pColorAttachments = m_ColorAttachments.data();
-			DefaultSubpass.colorAttachmentCount = (uint32_t)m_ColorAttachments.size();
+			DefaultSubpass.colorAttachmentCount = ( uint32_t ) m_ColorAttachments.size();
 		}
 
 		DefaultSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 
 		// Dependencies
 		std::vector< VkSubpassDependency > Dependencies;
+		if( m_PassSpec.IsSwapchainTarget )
+		{
+			Dependencies.push_back( { 
+				.srcSubpass = VK_SUBPASS_EXTERNAL,
+				.dstSubpass = 0,
+				.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+				.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+				.srcAccessMask = VK_ACCESS_NONE_KHR,
+				.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+				.dependencyFlags = 0 } );
+		}
+		else
+		{
+			Dependencies.push_back( {
+			   .srcSubpass = VK_SUBPASS_EXTERNAL,
+			   .dstSubpass = 0,
+			   .srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+			   .dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+			   .srcAccessMask = VK_ACCESS_SHADER_READ_BIT,
+			   .dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+			   .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+				} );
 
-		Dependencies.push_back( {
-			.srcSubpass = VK_SUBPASS_EXTERNAL,
-			.dstSubpass = 0,
-			.srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-			.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
-			.srcAccessMask = VK_ACCESS_SHADER_READ_BIT,
-			.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-			.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
-		} );
-
-		Dependencies.push_back( {
-			.srcSubpass = 0,
-			.dstSubpass = VK_SUBPASS_EXTERNAL,
-			.srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
-			.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-			.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-			.dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
-			.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
-		} );
+			Dependencies.push_back( {
+				.srcSubpass = 0,
+				.dstSubpass = VK_SUBPASS_EXTERNAL,
+				.srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+				.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+				.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+				.dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+				.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+				} );
+		}
 
 		// Attachment Descriptions
 		std::vector< VkAttachmentDescription > AttachmentDescriptions;
 
-		for ( auto attachment : m_PassSpec.Attachments )
+		for( auto attachment : m_PassSpec.Attachments )
 		{
 			VkAttachmentLoadOp clrOp = m_PassSpec.LoadColor ? VK_ATTACHMENT_LOAD_OP_LOAD : VK_ATTACHMENT_LOAD_OP_CLEAR;
 			VkAttachmentLoadOp dptOp = m_PassSpec.LoadDepth ? VK_ATTACHMENT_LOAD_OP_LOAD : VK_ATTACHMENT_LOAD_OP_CLEAR;

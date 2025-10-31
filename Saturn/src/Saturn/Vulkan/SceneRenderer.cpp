@@ -103,12 +103,12 @@ namespace Saturn {
 
 		m_RendererData.UniformBufferSet = Ref<UniformBufferSet>::Create();
 		// Fill out UBS
-		m_RendererData.UniformBufferSet->CreateBuffer( sizeof( UBStaticMeshMatrices ), 0 );
-		m_RendererData.UniformBufferSet->CreateBuffer( sizeof( UBLightData ), 1 );
-		m_RendererData.UniformBufferSet->CreateBuffer( sizeof( UBSceneData ), 2 );
-		m_RendererData.UniformBufferSet->CreateBuffer( sizeof( UBShadowData ), 3 );
-		m_RendererData.UniformBufferSet->CreateBuffer( 4, 12 ); // Debug Data
-		m_RendererData.UniformBufferSet->CreateBuffer( sizeof( UBPointLights ), 13 );
+		m_RendererData.UniformBufferSet->CreateBuffer( sizeof( UBStaticMeshMatrices ), 0u );
+		m_RendererData.UniformBufferSet->CreateBuffer( sizeof( UBLightData ), 1u );
+		m_RendererData.UniformBufferSet->CreateBuffer( sizeof( UBSceneData ), 2u );
+		m_RendererData.UniformBufferSet->CreateBuffer( sizeof( UBShadowData ), 3u );
+		m_RendererData.UniformBufferSet->CreateBuffer( 4llu, 12u ); // Debug Data
+		m_RendererData.UniformBufferSet->CreateBuffer( sizeof( UBPointLights ), 13u );
 
 		InitPreDepth();
 
@@ -155,7 +155,7 @@ namespace Saturn {
 		constexpr size_t TransformCount = static_cast<size_t>( 1024 ) * 10;
 		m_RendererData.SubmeshTransformData.resize( MAX_FRAMES_IN_FLIGHT );
 		
-		for( uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++ )
+		for( uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
 		{
 			m_RendererData.SubmeshTransformData[ i ].VertexBuffer = Ref<VertexBuffer>::Create( sizeof( TransformBufferData ) * TransformCount );
 			m_RendererData.SubmeshTransformData[ i ].pData = new TransformBufferData[ TransformCount ];
@@ -286,19 +286,21 @@ namespace Saturn {
 		PipelineSpec.Shader = m_RendererData.DynamicMeshShader;
 		PipelineSpec.UseDepthTest = true;
 		PipelineSpec.VertexLayout = {
-			{ ShaderDataType::Float3, "a_Position", 0 },
-			{ ShaderDataType::Float3, "a_Normal"  , 1 },
-			{ ShaderDataType::Float3, "a_Tangent" , 2 },
-			{ ShaderDataType::Float3, "a_Binormal", 3 },
-			{ ShaderDataType::Float2, "a_TexCoord", 4 },
-			{ ShaderDataType::Int4,   "a_BoneIndices", 9 },
-			{ ShaderDataType::Float4, "a_BoneWeights", 10 }
+			{ ShaderDataType::Float3, "a_Position" },
+			{ ShaderDataType::Float3, "a_Normal"   },
+			{ ShaderDataType::Float3, "a_Tangent"  },
+			{ ShaderDataType::Float3, "a_Binormal" },
+			{ ShaderDataType::Float2, "a_TexCoord" },
 		};
 		PipelineSpec.InstanceLayout = {
-			{ ShaderDataType::Float4, "a_TransformBufferR1", 5 },
-			{ ShaderDataType::Float4, "a_TransformBufferR2", 6 },
-			{ ShaderDataType::Float4, "a_TransformBufferR3", 7 },
-			{ ShaderDataType::Float4, "a_TransformBufferR4", 8 },
+			{ ShaderDataType::Float4, "a_TransformBufferR1" },
+			{ ShaderDataType::Float4, "a_TransformBufferR2" },
+			{ ShaderDataType::Float4, "a_TransformBufferR3" },
+			{ ShaderDataType::Float4, "a_TransformBufferR4" },
+		};
+		PipelineSpec.AdditionalLayoutAtEnd = {
+			{ ShaderDataType::Int4,   "a_BoneIndices" },
+			{ ShaderDataType::Float4, "a_BoneWeights" }
 		};
 
 		m_RendererData.DynamicMeshPipeline = Ref< Pipeline >::Create( PipelineSpec );
@@ -451,19 +453,21 @@ namespace Saturn {
 		PipelineSpec.Name = "PreDepth-Dynamic";
 		PipelineSpec.Shader = m_RendererData.PreDepthDynamicShader;
 		PipelineSpec.VertexLayout = {
-			{ ShaderDataType::Float3, "a_Position", 0 },
-			{ ShaderDataType::Float3, "a_Normal"  , 1 },
-			{ ShaderDataType::Float3, "a_Tangent" , 2 },
-			{ ShaderDataType::Float3, "a_Binormal", 3 },
-			{ ShaderDataType::Float2, "a_TexCoord", 4 },
-			{ ShaderDataType::Int4,   "a_BoneIndices", 9 },
-			{ ShaderDataType::Float4, "a_BoneWeights", 10 }
+			{ ShaderDataType::Float3, "a_Position" },
+			{ ShaderDataType::Float3, "a_Normal"   },
+			{ ShaderDataType::Float3, "a_Tangent"  },
+			{ ShaderDataType::Float3, "a_Binormal" },
+			{ ShaderDataType::Float2, "a_TexCoord" },
 		};
 		PipelineSpec.InstanceLayout = {
-			{ ShaderDataType::Float4, "a_TransformBufferR1", 5 },
-			{ ShaderDataType::Float4, "a_TransformBufferR2", 6 },
-			{ ShaderDataType::Float4, "a_TransformBufferR3", 7 },
-			{ ShaderDataType::Float4, "a_TransformBufferR4", 8 },
+			{ ShaderDataType::Float4, "a_TransformBufferR1" },
+			{ ShaderDataType::Float4, "a_TransformBufferR2" },
+			{ ShaderDataType::Float4, "a_TransformBufferR3" },
+			{ ShaderDataType::Float4, "a_TransformBufferR4" },
+		};
+		PipelineSpec.AdditionalLayoutAtEnd = {
+			{ ShaderDataType::Int4,   "a_BoneIndices" },
+			{ ShaderDataType::Float4, "a_BoneWeights" }
 		};
 
 		m_RendererData.PreDepthDynamicPipeline = Ref<Pipeline>::Create( PipelineSpec );
@@ -1085,13 +1089,13 @@ namespace Saturn {
 
 		if( Auxiliary::TreeNode( "Stats", true ) )
 		{
-			auto FrameTimings = Renderer::Get().GetFrameTimings();
+			const auto FrameTimings = Renderer::Get().GetFrameTimings();
 
 			float shadowPassTime = 0.0f;
 
 			if( m_RendererData.EnableShadows )
 			{
-				for( int i = 0; i < SHADOW_CASCADE_COUNT; i++ )
+				for( int i = 0; i < SHADOW_CASCADE_COUNT; ++i )
 				{
 					shadowPassTime += m_RendererData.ShadowMapTimers[ i ].ElapsedMilliseconds();
 				}
@@ -1112,8 +1116,9 @@ namespace Saturn {
 			ImGui::Text( "SceneRenderer::SceneComposite: %.2f ms", m_RendererData.SceneCompPPTimer.ElapsedMilliseconds() );
 
 			ImGui::Text( "Renderer::EndFrame - Queue Present: %.2f ms", Renderer::Get().GetQueuePresentTime() );
+			ImGui::Text( "Renderer::EndFrame - Queue Wait: %.2f ms", Renderer::Get().GetQueueWaitTime() );
 
-			ImGui::Text( "Renderer::EndFrame: %.2f ms", FrameTimings.second );
+			ImGui::Text( "Renderer::EndFrame - Total: %.2f ms", FrameTimings.second );
 
 			ImGui::Text( "Total (RenderThread::Execute): %.2f ms", RenderThread::Get().GetWaitTime() );
 			ImGui::Text( "Total : %.2f ms", Application::Get().Time().Milliseconds() );
@@ -1143,8 +1148,7 @@ namespace Saturn {
 				static int index = 0;
 				auto framebuffer = m_RendererData.ShadowCascades[ index ].Framebuffer->GetDepthAttachmentResource();
 
-				float size = ImGui::GetContentRegionAvail().x;
-
+				const float size = ImGui::GetContentRegionAvail().x;
 				ImGui::SliderInt( "##cascade_dt", &index, 0, 3 );
 
 				Auxiliary::Image( framebuffer, ( uint32_t ) index, { size, size }, { 0, 1 }, { 1, 0 } );
@@ -1161,8 +1165,7 @@ namespace Saturn {
 				ImGui::SliderInt( "##bloom_tex", &index, 0, 2 );
 				ImGui::SliderInt( "##mip", &MipIndex, 0, img->GetMipMapLevels() - 2 );
 
-				float size = ImGui::GetContentRegionAvail().x;
-
+				const float size = ImGui::GetContentRegionAvail().x;
 				Auxiliary::Image( img, MipIndex, { size, size }, { 0, 1 }, { 1, 0 } );
 
 				ImGui::SliderFloat( "##dirtint", &m_RendererData.BloomDirtIntensity, 0, 1000.0f );
@@ -1245,7 +1248,7 @@ namespace Saturn {
 		uint32_t instanceOffset = 0;
 
 		auto& submeshes = mesh->Submeshes();
-		for( size_t i = 0; i < submeshes.size(); i++ )
+		for( size_t i = 0; i < submeshes.size(); ++i )
 		{
 			glm::mat4 submeshTransform = transform * submeshes[ i ].Transform;
 
@@ -1261,13 +1264,13 @@ namespace Saturn {
 				command.Mesh = mesh;
 				command.SubmeshIndex = ( uint32_t ) i;
 				instanceOffset = command.Instances;
-				command.Instances++;
+				++command.Instances;
 				command.InstanceOffset = instanceOffset;
 
 				auto& shadow = m_ShadowMapDrawList[ key ];
 				shadow.Mesh = mesh;
 				shadow.SubmeshIndex = ( uint32_t ) i;
-				shadow.Instances++;
+				++shadow.Instances;
 				shadow.InstanceOffset = instanceOffset;
 
 				auto& data = m_RendererData.MeshTransforms[ key ].Data.emplace_back();
@@ -1309,7 +1312,7 @@ namespace Saturn {
 				auto& command = m_DynamicDrawList[ key ];
 				command.Mesh = mesh;
 				command.SubmeshIndex = ( uint32_t ) i;
-				command.Instances++;
+				++command.Instances;
 
 				SendBoneDataToMap( mesh, key, boneTransforms );
 
@@ -1325,7 +1328,7 @@ namespace Saturn {
 				auto& shadow = m_DynamicShadowMapDrawList[ key ];
 				shadow.Mesh = mesh;
 				shadow.SubmeshIndex = ( uint32_t ) i;
-				shadow.Instances++;
+				++shadow.Instances;
 
 				auto& data = m_RendererData.MeshTransforms[ key ].Data.emplace_back();
 				data.TransfromBufferR[ 0 ] = {
@@ -1357,7 +1360,7 @@ namespace Saturn {
 			auto& command = m_PhysicsColliderDrawList[ key ];
 			command.Mesh = mesh;
 			command.SubmeshIndex = ( uint32_t ) i;
-			command.Instances++;
+			++command.Instances;
 		}
 	}
 
@@ -1516,7 +1519,7 @@ namespace Saturn {
 
 		if( m_RendererData.EnableShadows )
 		{
-			for( int i = 0; i < SHADOW_CASCADE_COUNT; i++ )
+			for( int i = 0; i < SHADOW_CASCADE_COUNT; ++i )
 			{
 				u_ShadowData.CascadeSplits[ i ] = m_RendererData.ShadowCascades[ i ].SplitDepth;
 				u_LightData.LightMatrix[ i ] = m_RendererData.ShadowCascades[ i ].ViewProjection;
@@ -2113,7 +2116,7 @@ namespace Saturn {
 		rBoneTransformMap.Stride = ( uint32_t ) stride;
 		rBoneTransformMap.Data.reserve( 100 );
 
-		for( size_t s = 0; s < 100; s++ )
+		for( size_t s = 0; s < 100; ++s )
 		{
 			if( s < rBoneTransforms.size() )
 				rBoneTransformMap.Data.push_back( rBoneTransforms[ s ] );
@@ -2196,7 +2199,7 @@ namespace Saturn {
 			for( const auto& transform : buffer.Data )
 			{
 				m_RendererData.SubmeshTransformData[ frame ].pData[ off ] = transform;
-				off++;
+				++off;
 			}
 		}
 
@@ -2346,16 +2349,16 @@ namespace Saturn {
 		PreDepthFramebuffer       = nullptr;
 		LateCompositeFramebuffer  = nullptr;
 
-		for( int i = 0; i < 3; i++ )
+		for( int i = 0; i < 3; ++i )
 			BloomTextures[ i ] = nullptr;
 
-		for( int i = 0; i < SHADOW_CASCADE_COUNT; i++ )
+		for( int i = 0; i < SHADOW_CASCADE_COUNT; ++i )
 			ShadowCascades[ i ].Framebuffer = nullptr;
 
 		ShadowCascades.clear();
 
 		// Render Passes
-		for( int i = 0; i < SHADOW_CASCADE_COUNT; i++ )
+		for( int i = 0; i < SHADOW_CASCADE_COUNT; ++i )
 			DirShadowMapPasses[ i ]->Terminate();
 
 		GeometryPass->Terminate();
@@ -2372,7 +2375,7 @@ namespace Saturn {
 		// Pipelines
 		SceneCompositePipeline = nullptr;
 
-		for( int i = 0; i < SHADOW_CASCADE_COUNT; i++ )
+		for( int i = 0; i < SHADOW_CASCADE_COUNT; ++i )
 			DirShadowMapPipelines[ i ] = nullptr;
 
 		StaticMeshPipeline      = nullptr;

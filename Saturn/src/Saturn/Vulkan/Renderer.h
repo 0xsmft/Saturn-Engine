@@ -67,7 +67,7 @@ namespace Saturn {
 		void RenderMeshWithoutMaterial( VkCommandBuffer CommandBuffer, Ref<Saturn::Pipeline> Pipeline, Ref<StaticMesh> mesh, Ref<Material> material, Ref<UniformBufferSet> ubSet,
 			Ref<StorageBufferSet> sbSet, uint32_t count, Ref<VertexBuffer> transformVB, uint32_t TransformOffset, uint32_t SubmeshIndex, Buffer additionalData = Buffer() );
 
-		void RenderDynamicMeshWithoutMaterial( VkCommandBuffer CommandBuffer, Ref<Saturn::Pipeline> Pipeline, Ref<StaticMesh> mesh, Ref<Material> material, Ref<UniformBufferSet> ubSet, Ref<StorageBufferSet> sbSet, uint32_t count, Ref<VertexBuffer> transformVB, uint32_t TransformOffset, uint32_t SubmeshIndex, uint32_t boneOffset, Ref<Material> set2Material, Buffer additionalData = Buffer() );
+		void RenderDynamicMeshWithoutMaterial( VkCommandBuffer CommandBuffer, Ref<Saturn::Pipeline> Pipeline, Ref<SkeletalMesh> mesh, Ref<Material> material, Ref<UniformBufferSet> ubSet, Ref<StorageBufferSet> sbSet, uint32_t count, Ref<VertexBuffer> transformVB, uint32_t TransformOffset, uint32_t SubmeshIndex, uint32_t boneOffset, Ref<Material> set2Material, Buffer additionalData = Buffer() );
 	
 		void SubmitMesh( VkCommandBuffer CommandBuffer, Ref< Saturn::Pipeline > Pipeline, Ref< StaticMesh > mesh,
 			Ref<StorageBufferSet>& rStorageBufferSet, Ref<UniformBufferSet> rUniformBufferSet, Ref< MaterialRegistry > materialRegistry, uint32_t SubmeshIndex, uint32_t count,
@@ -99,6 +99,7 @@ namespace Saturn {
 
 		std::pair< float, float > GetFrameTimings() { return std::make_pair( m_BeginFrameTime, m_EndFrameTime ); }
 		float GetQueuePresentTime() const { return m_QueuePresentTime; }
+		float GetQueueWaitTime() const { return m_QueuePresentTime; }
 
 		void SubmitTerminateResource( std::function<void()>&& rrFunction );
 
@@ -132,13 +133,15 @@ namespace Saturn {
 		uint32_t m_ImageCount = 0;
 		uint32_t m_FrameCount = 0;
 
-		float m_BeginFrameTime = 0.0f;
-		float m_EndFrameTime = 0.0f;
+		float m_BeginFrameTime   = 0.0f;
+		float m_EndFrameTime     = 0.0f;
 		float m_QueuePresentTime = 0.0f;
+		float m_QueueWaitTime    = 0.0f;
 
 		Timer m_BeginFrameTimer;
 		Timer m_EndFrameTimer;
 		Timer m_QueuePresentTimer;
+		Timer m_QueueWaitTimer;
 
 		std::vector<VkFence> m_FlightFences;
 		

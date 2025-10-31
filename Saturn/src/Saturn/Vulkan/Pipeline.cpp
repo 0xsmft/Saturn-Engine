@@ -110,8 +110,8 @@ namespace Saturn {
 		VkShaderModule VertexModule = VK_NULL_HANDLE;
 		VkShaderModule FragmentModule = VK_NULL_HANDLE;
 		
-		std::string VertexName = m_Specification.Shader->GetName() + "/Vertex" + "/0";
-		std::string FragmentName = m_Specification.Shader->GetName() + "/Fragment" + "/0";
+		const std::string VertexName = m_Specification.Shader->GetName() + "/Vertex/0";
+		const std::string FragmentName = m_Specification.Shader->GetName() + "/Fragment/0";
 		
 		// Shader object spirv code.
 		auto& SpvSrc = ShaderLibrary::Get().Find( m_Specification.Shader->GetName() )->GetSpvCode();
@@ -193,30 +193,43 @@ namespace Saturn {
 
 		///// Vertex input state.
 
-		std::vector< VkVertexInputAttributeDescription > VertexInputAttributes( m_Specification.VertexLayout.Count() + m_Specification.InstanceLayout.Count() );
+		std::vector< VkVertexInputAttributeDescription > VertexInputAttributes( m_Specification.VertexLayout.Count() + m_Specification.InstanceLayout.Count() + m_Specification.AdditionalLayoutAtEnd.Count() );
 		
 		uint32_t i = 0;
-		
+
+		// Vertex layouts
 		for ( auto& element : m_Specification.VertexLayout )
 		{
 			VertexInputAttributes[ i ].binding = 0;
-			VertexInputAttributes[ i ].location = element.Binding == UINT32_MAX ? i : element.Binding;
+			VertexInputAttributes[ i ].location = i;
 			VertexInputAttributes[ i ].format = ShaderDataTypeToVulkan( element.Type );
 			VertexInputAttributes[ i ].offset = element.Offset;
 			
-			i++;
+			++i;
 		}
-
+		
+		// Layouts per instance
 		for( auto& element : m_Specification.InstanceLayout )
 		{
 			VertexInputAttributes[ i ].binding = 1;
-			VertexInputAttributes[ i ].location = element.Binding == UINT32_MAX ? i : element.Binding;;
+			VertexInputAttributes[ i ].location = i;
 			VertexInputAttributes[ i ].format = ShaderDataTypeToVulkan( element.Type );
 			VertexInputAttributes[ i ].offset = element.Offset;
 
-			i++;
+			++i;
 		}
-		
+
+		// WARNING: Additional layouts must use a separate vertex buffer.
+		for( auto& element : m_Specification.AdditionalLayoutAtEnd )
+		{
+			VertexInputAttributes[ i ].binding = 2;
+			VertexInputAttributes[ i ].location = i;
+			VertexInputAttributes[ i ].format = ShaderDataTypeToVulkan( element.Type );
+			VertexInputAttributes[ i ].offset = element.Offset;
+
+			++i;
+		}
+
 		std::vector<VkVertexInputBindingDescription> InputBindingDescriptions{};
 
 		auto& rInputBindingDescription = InputBindingDescriptions.emplace_back();
@@ -230,6 +243,14 @@ namespace Saturn {
 			InstanceBindingDescription.binding = 1;
 			InstanceBindingDescription.stride = m_Specification.InstanceLayout.GetStride();
 			InstanceBindingDescription.inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
+		}
+
+		if( m_Specification.AdditionalLayoutAtEnd.Count() > 1 )
+		{
+			auto& InstanceBindingDescription = InputBindingDescriptions.emplace_back();
+			InstanceBindingDescription.binding = 2;
+			InstanceBindingDescription.stride = m_Specification.AdditionalLayoutAtEnd.GetStride();
+			InstanceBindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 		}
 
 		VkPipelineVertexInputStateCreateInfo VertexInputState = { VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO };

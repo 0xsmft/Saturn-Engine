@@ -452,7 +452,7 @@ namespace Saturn {
 		ShaderSourceMap m_ShaderSources;
 #endif
 		// Set -> ShaderDescriptorSet
-		std::unordered_map< uint32_t, ShaderDescriptorSetTemplate > m_DescriptorSets;
+		std::map< uint32_t, ShaderDescriptorSetTemplate > m_DescriptorSets;
 		std::vector<ShaderPushConstantTemplate> m_PushConstants;
 		std::vector<VkPushConstantRange> m_VulkanRanges;
 

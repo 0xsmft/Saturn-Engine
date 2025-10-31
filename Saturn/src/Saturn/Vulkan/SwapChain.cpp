@@ -86,7 +86,7 @@ namespace Saturn {
 			
 		VK_CHECK( vkCreateSwapchainKHR( VulkanContext::Get().GetDevice(), &SwapchainCreateInfo, nullptr, &m_Swapchain ) );
 		
-		SetDebugUtilsObjectName( "Swap chain", ( uint64_t )m_Swapchain, VK_OBJECT_TYPE_SWAPCHAIN_KHR );
+		SetDebugUtilsObjectName( "Swapchain", ( uint64_t )m_Swapchain, VK_OBJECT_TYPE_SWAPCHAIN_KHR );
 
 		CreateImageViews();
 	}

@@ -57,6 +57,8 @@ namespace Saturn {
 		VertexBufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
 
 		m_Allocation = pAllocator->AllocateBuffer( VertexBufferCreateInfo, VMA_MEMORY_USAGE_CPU_TO_GPU, &m_Buffer );
+	
+		// Always set a name regardless if we are dist or not!
 		SetDebugUtilsObjectName( "Vertex Buffer", ( uint64_t ) m_Buffer, VK_OBJECT_TYPE_BUFFER );
 	}
 
@@ -71,12 +73,12 @@ namespace Saturn {
 
 		vkCmdDraw( CommandBuffer, ( uint32_t )m_Size, 1, 0, 0 );
 	}
-
-	void VertexBuffer::Bind( VkCommandBuffer CommandBuffer )
+	
+	void VertexBuffer::Bind( VkCommandBuffer CommandBuffer, uint32_t binding )
 	{
 		VkDeviceSize Offsets[] ={ 0 };
 
-		vkCmdBindVertexBuffers( CommandBuffer, 0, 1, &m_Buffer, Offsets );
+		vkCmdBindVertexBuffers( CommandBuffer, binding, 1, &m_Buffer, Offsets );
 	}
 
 	void VertexBuffer::Bind( VkCommandBuffer CommandBuffer, uint32_t binding, VkDeviceSize* Offsets )
@@ -132,6 +134,8 @@ namespace Saturn {
 		VertexBufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
 		
 		m_Allocation = pAllocator->AllocateBuffer( VertexBufferCreateInfo, VMA_MEMORY_USAGE_GPU_ONLY, &m_Buffer );
+		 
+		// Always set a name regardless if we are dist or not! 
 		SetDebugUtilsObjectName( "Vertex Buffer", ( uint64_t ) m_Buffer, VK_OBJECT_TYPE_BUFFER );
 
 		// Copy buffer
@@ -156,6 +160,13 @@ namespace Saturn {
 		
 		m_Buffer = nullptr;
 	}
+
+#if !defined(SAT_DIST)
+	void VertexBuffer::SetDebugName( const std::string& rName )
+	{
+		SetDebugUtilsObjectName( rName.c_str(), ( uint64_t ) m_Buffer, VK_OBJECT_TYPE_BUFFER );
+	}
+#endif
 
 	//////////////////////////////////////////////////////////////////////////
 }

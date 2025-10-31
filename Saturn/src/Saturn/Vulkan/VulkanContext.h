@@ -152,7 +152,7 @@ namespace Saturn {
 		VulkanDebugMessenger* m_pDebugMessenger;
 		VulkanAllocator* m_pAllocator;
 
-		VkQueue m_GraphicsQueue, m_PresentQueue, m_ComputeQueue;
+		VkQueue m_GraphicsQueue = nullptr, m_PresentQueue = nullptr, m_ComputeQueue = nullptr;
 
 		VkSurfaceFormatKHR m_SurfaceFormat;
 

@@ -55,7 +55,7 @@
 #include <string>
 
 // Define this to force enable validation layers even in dist builds.
-#define SAT_FORCE_ENABLE_VALIDATION_LAYERS
+//#define SAT_FORCE_ENABLE_VALIDATION_LAYERS
 
 namespace Saturn {
 	
@@ -200,10 +200,10 @@ namespace Saturn {
 
 	void VulkanContext::PickPhysicalDevice()
 	{
-		uint32_t DeviceCount = 0;
+		uint32_t DeviceCount = 0U;
 		VK_CHECK( vkEnumeratePhysicalDevices( m_Instance, &DeviceCount, nullptr ) );
 
-		SAT_CORE_ASSERT( DeviceCount != 0, "No device found that supports Vulkan." ); 
+		SAT_CORE_ASSERT( DeviceCount != 0U, "No device found that supports Vulkan." ); 
 
 		// Create a list of the physical devices.
 		std::vector< VkPhysicalDevice > PhysicalDevices( DeviceCount );
@@ -285,7 +285,7 @@ namespace Saturn {
 
 	void VulkanContext::CreateLogicalDevice()
 	{
-		float QueuePriority = 1.0f;
+		const float QueuePriority = 1.0f;
 
 		std::vector<VkDeviceQueueCreateInfo> QueueCreateInfos;
 

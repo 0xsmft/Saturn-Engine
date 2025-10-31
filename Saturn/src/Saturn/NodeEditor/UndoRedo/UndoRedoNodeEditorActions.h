@@ -64,7 +64,8 @@ namespace Saturn {
 			{
 				if constexpr( Operation == UndoRedoActionNodeEditorLinkOp::Create )
 				{
-					nodeEditor->CreateLinkWithID( m_LinkCopy->ID, nodeEditor->FindPin( m_LinkCopy->StartPinID ), nodeEditor->FindPin( m_LinkCopy->EndPinID ) );
+					// TODO: Set Pin color
+					nodeEditor->CreateLinkWithID( m_LinkCopy->ID, nodeEditor->FindPin( m_LinkCopy->StartPinID ), nodeEditor->FindPin( m_LinkCopy->EndPinID ), ImColor( 255, 255, 255 ) );
 				}
 				else
 				{
@@ -83,7 +84,8 @@ namespace Saturn {
 				}
 				else
 				{
-					nodeEditor->CreateLinkWithID( m_LinkCopy->ID, nodeEditor->FindPin( m_LinkCopy->StartPinID ), nodeEditor->FindPin( m_LinkCopy->EndPinID ) );
+					// TODO: Set Pin color
+					nodeEditor->CreateLinkWithID( m_LinkCopy->ID, nodeEditor->FindPin( m_LinkCopy->StartPinID ), nodeEditor->FindPin( m_LinkCopy->EndPinID ), ImColor( 255, 255, 255 ) );
 				}
 			}
 		}
@@ -112,42 +114,10 @@ namespace Saturn {
 
 	private:
 		WeakRef<NodeEditor> m_NodeEditor;
-		SharedPtr<NodeEditorNodeBase> m_NodeCopy;
+		UUID m_NodeID = 0;
 
 		ImVec2 m_OldPosition{};
 		ImVec2 m_NewPosition{};
 	};
 
-	//////////////////////////////////////////////////////////////////////////
-	// CREATE NODE/DELETE NODE
-
-	class UndoRedoActionCreateNode : public UndoRedoActionBase
-	{
-	public:
-		UndoRedoActionCreateNode( SharedPtr<NodeEditor> nodeEditor, SharedPtr<NodeEditorNodeBase> originalNode );
-		~UndoRedoActionCreateNode();
-
-	public:
-		void Undo() override;
-		void Redo() override;
-
-	private:
-		SharedPtr<NodeEditor> m_NodeEditor;
-		SharedPtr<NodeEditorNodeBase> m_NodeCopy;
-	};
-
-	class UndoRedoActionDeleteNode : public UndoRedoActionBase
-	{
-	public:
-		UndoRedoActionDeleteNode( SharedPtr<NodeEditor> nodeEditor, SharedPtr<NodeEditorNodeBase> originalNode );
-		~UndoRedoActionDeleteNode();
-
-	public:
-		void Undo() override;
-		void Redo() override;
-
-	private:
-		SharedPtr<NodeEditor> m_NodeEditor;
-		SharedPtr<NodeEditorNodeBase> m_NodeCopy;
-	};
 }

@@ -62,7 +62,7 @@ namespace Saturn {
 	void MeshImportPopup::Initialise()
 	{
 		// Import on job system.
-		JobSystem::Get().AddJob( [this]() 
+		JobSystem::Get().QueueJob( [this]() 
 		{
 			MeshDeterminer md;
 			md.ImportAndDetermine( m_AssetToImportPath );
@@ -122,7 +122,7 @@ namespace Saturn {
 
 			if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
 			{
-				m_AssetToImportPath = Application::Get().OpenFile( "Supported asset types (*.fbx *.gltf *.glb)\0*.fbx; *.gltf; *.glb\0" );
+				m_AssetToImportPath = Application::Get().OpenFile( L"Supported asset types (*.fbx *.gltf *.glb)|*.fbx; *.gltf; *.glb" );
 			}
 
 			ImGui::EndHorizontal();
@@ -171,7 +171,6 @@ namespace Saturn {
 
 			ImGui::EndPopup();
 		}
-
 	}
 
 	void MeshImportPopup::DrawGLTFOptions()
@@ -189,7 +188,7 @@ namespace Saturn {
 
 			if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
 			{
-				m_GLTFBinPath = Application::Get().OpenFile( "Supported asset types (*.glb *.bin)\0*.glb; *.bin\0" );
+				m_GLTFBinPath = Application::Get().OpenFile( L"Supported asset types (*.glb *.bin)|*.glb; *.bin" );
 
 				m_UseBinFile = std::filesystem::exists( m_GLTFBinPath );
 			}
@@ -431,6 +430,105 @@ namespace Saturn {
 		sma.Serialise( staticMesh );
 
 		staticMesh->SetAbsolutePath( assetPath );
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// SOUND IMPORT POPUP
+
+	SoundImportPopup::SoundImportPopup( const std::filesystem::path& rAssetToImportPath, const std::filesystem::path& rDestinationPath )
+		: AssetImportPopupBase( rAssetToImportPath, rDestinationPath )
+	{
+	}
+
+	void SoundImportPopup::Initialise()
+	{
+		m_Open = true;
+		m_IsReady.store( true );
+	}
+
+	void SoundImportPopup::OnImGuiRender()
+	{
+		if( m_Open )
+			ImGui::OpenPopup( "Import Sound##IMPORT_SOUND" );
+
+		ImGui::SetNextWindowSize( { 350.0F, 0.0F } );
+		ImGui::SetNextWindowPos( ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Appearing, ImVec2( 0.5f, 0.5f ) );
+
+		if( ImGui::BeginPopupModal( "Import Sound##IMPORT_SOUND", &m_Open, ImGuiWindowFlags_NoSavedSettings ) )
+		{
+			bool PopupModified = false;
+
+			ImGui::BeginVertical( "##inputv" );
+
+			ImGui::Text( "Path:" );
+
+			ImGui::BeginHorizontal( "##inputH" );
+
+			ImGui::InputText( "##path", ( char* ) m_AssetToImportPath.string().c_str(), 1024 );
+
+			if( ImGui::Button( "Browse" ) )
+			{
+				m_AssetToImportPath = Application::Get().OpenFile( L"Supported asset types (*.wav *.mp3)|*.wav; *.mp3" );
+			}
+
+			ImGui::EndHorizontal();
+			ImGui::EndVertical();
+
+			ImGui::BeginHorizontal( "##actionsH" );
+
+			if( ImGui::Button( "Create" ) )
+			{
+				const auto id = AssetManager::Get().CreateAsset( AssetType::Sound );
+				auto asset = AssetManager::Get().FindAsset( id );
+				auto assetPath = m_DestinationPath / m_AssetToImportPath.filename();
+
+				// Copy the audio source.
+				std::filesystem::copy_file( m_AssetToImportPath, assetPath );
+
+				// Replace Extension for sound asset
+				assetPath.replace_extension( ".snd" );
+				asset->SetAbsolutePath( assetPath );
+
+				// Create the asset.
+				auto sound = Ref<SoundSpecification>::Create( asset );
+
+				sound->OriginalImportPath = m_AssetToImportPath;
+				sound->SoundSourcePath = m_DestinationPath / m_AssetToImportPath.filename();
+
+				// Currently the date is YYYY-MM-DD HH-MM-SS however all we want is YYYY-MM-DD
+				std::string fullTime = std::format( "{0}", std::filesystem::last_write_time( m_AssetToImportPath ) );
+				auto pos = fullTime.find_first_of( " " );
+				if( pos != std::string::npos )
+					fullTime.resize( fullTime.find_first_of( " " ) );
+
+				sound->LastWriteTime = fullTime;
+
+				// Save the asset
+				SoundSpecificationAssetSerialiser s2d;
+				s2d.Serialise( sound );
+
+				PopupModified = true;
+			}
+
+			if( ImGui::Button( "Cancel" ) )
+			{
+				m_ModificationState = AssetImportModificationState::NotModified;
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndHorizontal();
+
+			if( PopupModified )
+			{
+				AssetManagerSerialiser ars;
+				ars.Serialise();
+
+				m_ModificationState = AssetImportModificationState::Modified;
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndPopup();
+		}
 	}
 
 }

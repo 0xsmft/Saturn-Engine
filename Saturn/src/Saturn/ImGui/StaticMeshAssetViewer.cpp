@@ -29,13 +29,13 @@
 #include "sppch.h"
 #include "StaticMeshAssetViewer.h"
 
+#include "ImGuiAuxiliary.h"
+#include "EditorIcons.h"
+
 #include "Saturn/Core/Renderer/RenderThread.h"
 
 #include "Saturn/Asset/AssetManager.h"
 #include "Saturn/Vulkan/SceneRenderer.h"
-
-#include "ImGuiAuxiliary.h"
-#include "EditorIcons.h"
 
 #include "Saturn/Scene/Components.h"
 
@@ -43,12 +43,10 @@
 
 namespace Saturn {
 
-	static inline bool operator==( const ImVec2& lhs, const ImVec2& rhs ) { return lhs.x == rhs.x && lhs.y == rhs.y; }
-	static inline bool operator!=( const ImVec2& lhs, const ImVec2& rhs ) { return !( lhs == rhs ); }
-
 	StaticMeshAssetViewer::StaticMeshAssetViewer( AssetID id )
-		: AssetViewer( id ), m_Camera( 45.0f, 1280.0f, 720.0f, 0.1f, 1000.0f )
+		: AssetViewer( id ), SubSceneRendererWindow()
 	{
+		m_AssetType = AssetType::StaticMesh;
 		m_Camera.SetActive( true );
 
 		m_Scene = Ref<Scene>::Create();
@@ -59,67 +57,31 @@ namespace Saturn {
 		m_SceneRenderer->SetCurrentScene( m_Scene.Get() );
 
 		AddMesh();
+		m_Name = std::format( "{0}##{1}", m_Mesh->Name, std::to_string( m_AssetID ) );
+
+		SetViewportWindowID( m_AssetID );
 	}
 
 	StaticMeshAssetViewer::~StaticMeshAssetViewer()
 	{
-		m_SceneRenderer = nullptr;
-		m_Scene = nullptr;
+		m_Mesh = nullptr;
 	}
 
 	void StaticMeshAssetViewer::OnImGuiRender()
 	{
 		// Root Window.
-		ImGuiWindowFlags RootWindowFlags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoCollapse;
-		
 		ImGui::SetNextWindowPos( ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 350.0f, 350.0f ), ImGuiCond_FirstUseEver );
 
-		ImGui::Begin( m_Mesh->Name.c_str(), &m_Open, RootWindowFlags );
+		ImGui::Begin( m_Name.c_str(), &m_Open, ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoCollapse );
 
 		// Create custom dockspace.
-		ImGuiID dockID = ImGui::GetID( "StaticMeshDckspc" );
+		const ImGuiID dockID = ImGui::GetID( "StaticMeshDckspc" );
 		ImGui::DockSpace( dockID, ImVec2( 0.0f, 0.0f ), ImGuiDockNodeFlags_None );
 
 		//////////////////////////////////////////////////////////////////////////
 
-		ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 0, 0 ) );
-
-		if( ImGui::IsMouseClicked( ImGuiMouseButton_Left ) || ( ImGui::IsMouseClicked( ImGuiMouseButton_Right ) && !m_StartedRightClickInViewport ) )
-		{
-			ImGui::FocusWindow( GImGui->HoveredWindow );
-			Input::Get().SetCursorMode( RubyCursorMode::Normal );
-		}
-
-		// Viewport
-		ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings;
-		std::string Name = "##" + std::to_string( m_AssetID );
-		ImGui::Begin( Name.c_str(), 0, flags );
-		ImGui::SetWindowDock( ImGui::GetCurrentWindow(), dockID, ImGuiCond_FirstUseEver );
-
-		ImGui::PushID( static_cast< int >( m_AssetID ) );
-		
-		if( m_ViewportSize != ImGui::GetContentRegionAvail() )
-		{
-			m_ViewportSize = ImGui::GetContentRegionAvail();
-
-			m_SceneRenderer->SetViewportSize( ( uint32_t ) m_ViewportSize.x, ( uint32_t ) m_ViewportSize.y );
-			m_Camera.SetViewportSize( ( uint32_t ) m_ViewportSize.x, ( uint32_t ) m_ViewportSize.y );
-		}
-
-		Auxiliary::Image( m_SceneRenderer->CompositeImage(), m_ViewportSize, { 0, 1 }, { 1, 0 } );
-
-		ImGui::PopID();
-
-		ImVec2 minBound = ImGui::GetWindowPos();
-		ImVec2 maxBound = { minBound.x + m_ViewportSize.x, minBound.y + m_ViewportSize.y };
-
-		m_ViewportFocused = ImGui::IsWindowFocused();
-		m_MouseOverViewport = ImGui::IsWindowHovered();
-
-		m_AllowCameraEvents = ImGui::IsMouseHoveringRect( minBound, maxBound ) && m_ViewportFocused || m_StartedRightClickInViewport;
-
-		ImGui::End(); // Viewport
+		RenderViewport();
 
 		ImGui::Begin( "Sidebar" );
 
@@ -142,7 +104,7 @@ namespace Saturn {
 
 					if( ImGui::Selectable( pItems[ i ], IsSelected ) ) 
 					{
-						SelectedEnum = (PhysicsShapeType)i;
+						SelectedEnum = ( PhysicsShapeType ) i;
 						Selected = pItems[ i ];
 
 						m_Mesh->SetAttachedShape( SelectedEnum );
@@ -186,8 +148,6 @@ namespace Saturn {
 			Auxiliary::EndTreeNode();
 		}
 
-		static AssetID s_id;
-
 		if( Auxiliary::TreeNode( "Materials" ) )
 		{
 			ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_FramePadding;
@@ -214,17 +174,17 @@ namespace Saturn {
 
 					ImGui::EndHorizontal();
 
-					if( Auxiliary::DrawAssetFinder( AssetType::Material, &open, s_id, 0 ) )
+					if( Auxiliary::DrawAssetFinder( AssetType::Material, &open, m_AssetFinderOut, 0 ) )
 					{
-						Ref<MaterialAsset> newAsset = AssetManager::Get().GetAssetAs<MaterialAsset>( s_id );
+						Ref<MaterialAsset> newAsset = AssetManager::Get().GetAssetAs<MaterialAsset>( m_AssetFinderOut );
 						rMaterial->SetMaterial( newAsset->GetMaterial() );
 
 						// Update Pure Dependencies & Update ADN Dependencies
 						AssetManager::Get().UnregisterAssetDependency( m_AssetID, rMaterial->ID );
 
-						m_Mesh->GetMaterialRegistry()->SetMaterial( i, s_id );
+						m_Mesh->GetMaterialRegistry()->SetMaterial( i, m_AssetFinderOut );
 
-						AssetManager::Get().RegisterAssetDependency( m_AssetID, s_id );
+						AssetManager::Get().RegisterAssetDependency( m_AssetID, m_AssetFinderOut );
 					}
 
 					Auxiliary::EndTreeNode();
@@ -254,8 +214,7 @@ namespace Saturn {
 
 		ImGui::End();
 
-		ImGui::PopStyleVar(); // ImGuiStyleVar_WindowPadding
-		ImGui::End();
+		ImGui::End(); // Root Window
 
 		if( m_Open == false )
 		{
@@ -270,44 +229,21 @@ namespace Saturn {
 
 	void StaticMeshAssetViewer::OnUpdate( Timestep ts )
 	{
-		// Only true if we are awaiting a shutdown from closing our window.
-		if( !m_SceneRenderer )
-			return;
-
-		m_Camera.SetActive( m_AllowCameraEvents );
-		m_Camera.OnUpdate( ts );
-
-		// Update Scene for rendering (on main thread).
-		m_Scene->OnRenderEditor( m_Camera, ts, *m_SceneRenderer );
-
-		RenderThread::Get().Queue( [=]()
-		{
-			m_SceneRenderer->RenderScene();
-		} );
-
-		if( Input::Get().MouseButtonPressed( RubyMouseButton_Right ) && !m_StartedRightClickInViewport && m_ViewportFocused && m_MouseOverViewport )
-			m_StartedRightClickInViewport = true;
-
-		if( !Input::Get().MouseButtonPressed( RubyMouseButton_Right ) )
-			m_StartedRightClickInViewport = false;
+		OnUpdateRenderer( ts );
 	}
 
 	void StaticMeshAssetViewer::OnEvent( Event& rEvent )
 	{
-		if( m_MouseOverViewport && m_AllowCameraEvents )
-			m_Camera.OnEvent( rEvent );
+		OnCameraEvent( rEvent );
 	}
 
 	void StaticMeshAssetViewer::AddMesh()
 	{
-		Ref<StaticMesh> mesh = AssetManager::Get().GetAssetAs<StaticMesh>( m_AssetID );
-
-		m_Mesh = mesh;
-
+		m_Mesh = AssetManager::Get().GetAssetAs<StaticMesh>( m_AssetID );
 		m_Open = true;
 
 		auto e = m_Scene->CreateEntity( "InternalViewerEntity" );
-		e->AddComponent<StaticMeshComponent>().Mesh = mesh;
+		e->AddComponent<StaticMeshComponent>( m_Mesh );
 	}
 
 }

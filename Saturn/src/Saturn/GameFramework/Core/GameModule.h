@@ -52,6 +52,8 @@ namespace Saturn {
 
 		void Reload();
 
+		bool HasModule() const { return m_ModuleHandle; }
+
 	public:		
 		const std::filesystem::path& GetModulePath() const { return m_ModuleHandle->m_Path; }
 

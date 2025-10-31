@@ -100,7 +100,7 @@ namespace Saturn {
 
 			ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow;
 
-			// I don't know, what happens when we open a folder that is two subfolders down the folder tree will display the assets folder.
+			// I don't know what happens when we open a folder that is two subfolders down the folder tree will display the assets folder.
 			if( m_CurrentPath == entryPath )
 				flags |= ImGuiTreeNodeFlags_DefaultOpen;
 
@@ -231,11 +231,10 @@ namespace Saturn {
 	
 	void ContentBrowserPanel::DrawBaseContextMenu() 
 	{
-		// Theses actions are only going to be used when one item is selected.
 		// SELECTED ITEMS ACTIONS (FOR FOLDERS AND ASSETS)
 		if( m_SelectedItems.size() )
 		{
-			// Common Actions
+			// Common Actions, for every type, we only want to rename the first item.
 			if( ImGui::MenuItem( "Rename" ) )
 			{
 				m_SelectedItems[ 0 ]->Rename();
@@ -246,11 +245,7 @@ namespace Saturn {
 			{
 				if( ImGui::MenuItem( "Show In Explorer" ) )
 				{
-					std::wstring CommandLine = L"";
-					const std::filesystem::path AssetPath = m_SelectedItems[ 0 ]->Path();
-					CommandLine = std::format( L"explorer.exe \"{0}\"", AssetPath.wstring() );
-
-					DeatchedProcess dp( CommandLine );
+					Application::Get().OpenNativeFileExplorer( m_SelectedItems[ 0 ]->Path() );
 				}
 
 				if( ImGui::MenuItem( "Copy Path" ) )
@@ -259,7 +254,7 @@ namespace Saturn {
 					ImGui::SetClipboardText( text.c_str() );
 				}
 			}
-			else
+			else // File actions
 			{
 				if( ImGui::MenuItem( "Delete" ) )
 				{
@@ -299,6 +294,14 @@ namespace Saturn {
 						ContentBrowserThumbnailCache::Get().Invalidate( rItem->GetAsset() );
 					}
 				}
+
+				if( ImGui::MenuItem( "Show In Explorer" ) )
+				{
+					for( auto& rItem : m_SelectedItems )
+					{
+						Application::Get().OpenNativeFileExplorer( rItem->Path(), true );
+					}
+				}
 			}
 		}
 		else
@@ -310,18 +313,10 @@ namespace Saturn {
 		// NON-SELECTED ITEMS ACTIONS (WHEN RIGHT CLICKING ON PANEL, ONLY WHEN VIEWING ASSETS)
 		if( ImGui::BeginMenu( "Import" ) )
 		{
-			if( ImGui::MenuItem( "Starter Assets" ) )
-			{
-				const auto ActiveProject = Project::GetActiveProject();
-				const auto AssetPath = ActiveProject->GetAssetPath();
-
-				std::filesystem::copy_file( "content/Templates/Meshes/Cube.fbx", AssetPath / "Meshes" / "Cube.fbx" );
-				std::filesystem::copy_file( "content/Templates/Meshes/Plane.fbx", AssetPath / "Meshes" / "Plane.fbx" );
-			}
-
+			// Import externally.
 			if( ImGui::MenuItem( "Browse" ) )
 			{
-				const std::filesystem::path path = Application::Get().OpenFile( "Supported asset types (*.fbx *.gltf *.glb *.png *.tga *.jpeg *.jpg *wav *.ogg *.mp3)\0*.fbx; *.gltf; *.glb; *.png; *.tga; *.jpeg; *jpg; *.wav; *.ogg; *.mp3\0" );
+				const std::filesystem::path path = Application::Get().OpenFile( L"Supported asset types (*.fbx *.gltf *.glb *.png *.tga *.jpeg *.jpg *wav *.ogg *.mp3)|*.fbx; *.gltf; *.glb; *.png; *.tga; *.jpeg; *jpg; *.wav; *.ogg; *.mp3\0" );
 
 				if( path.extension() == ".png" || path.extension() == ".tga" || path.extension() == ".jpeg" || path.extension() == ".jpg" )
 				{
@@ -338,24 +333,17 @@ namespace Saturn {
 
 				// Meshes
 				// Even if the mesh we are going to import is animated i.e. has bones and/or animations until we properly confirm that it will default to a StaticMesh import modal
-				if( path.extension() == ".fbx" || path.extension() == ".gltf" )
+				if( path.extension() == ".fbx" || path.extension() == ".gltf" || path.extension() == ".glb" )
 				{
 					m_CurrentImportPopup = std::make_unique<MeshImportPopup>( path, m_CurrentPath );
 					m_CurrentImportPopup->Initialise();
-
-					/*
-					m_ShowAssetImportPopup = true;
-					m_ImportAssetPath = path;
-					m_AssetImportType = AssetType::StaticMesh;
-					*/
 				}
 
 				// Audio
 				if( path.extension() == ".wav" || path.extension() == ".mp3" || path.extension() == ".ogg" )
 				{
-					m_ShowAssetImportPopup = true;
-					m_ImportAssetPath = path;
-					m_AssetImportType = AssetType::Sound;
+					m_CurrentImportPopup = std::make_unique<SoundImportPopup>( path, m_CurrentPath );
+					m_CurrentImportPopup->Initialise();
 				}
 			}
 
@@ -564,10 +552,7 @@ namespace Saturn {
 
 		if( ImGui::MenuItem( "Show folder in explorer" ) )
 		{
-			std::wstring CommandLine = L"";
-			CommandLine = std::format( L"explorer.exe \"{0}\"", m_CurrentPath.wstring() );
-
-			DeatchedProcess dp( CommandLine );
+			Application::Get().OpenNativeFileExplorer( m_CurrentPath );
 		}
 	}
 
@@ -669,8 +654,7 @@ namespace Saturn {
 
 			ImGui::PushStyleColor( ImGuiCol_ChildBg, ImVec4( 0.0f, 0.0f, 0.0f, 0.0f ) );
 
-			ImGuiWindowFlags flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
-			ImGui::BeginChild( "Top Bar", ImVec2( 0, 30 ), false, flags );
+			ImGui::BeginChild( "Top Bar", ImVec2( 0, 30 ), false, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse );
 
 			DrawTopBar();
 
@@ -745,9 +729,8 @@ namespace Saturn {
 
 			if( ImGui::IsMouseDown( 0 ) && ImGui::IsWindowHovered() )
 			{
-				auto& map = m_Searching ? m_ValidSearchFiles : m_Files;
-
-				auto hoveredItems = std::count_if( map.begin(), map.end(),
+				const auto& map = m_Searching ? m_ValidSearchFiles : m_Files;
+				const auto hoveredItems = std::count_if( map.begin(), map.end(),
 					[]( const auto& rItem )
 					{
 						return rItem->IsHovered();
@@ -968,6 +951,8 @@ namespace Saturn {
 			ImGui::EndChild();
 
 			ImGui::PopStyleColor();
+
+			m_WindowFocused = ImGui::IsWindowFocused( ImGuiFocusedFlags_ChildWindows );
 		}
 
 		ImGui::End();
@@ -975,7 +960,7 @@ namespace Saturn {
 
 	void ContentBrowserPanel::OnEvent( Event& rEvent )
 	{
-		if( rEvent.Type == EventType::MousePressed )
+		if( m_WindowFocused && rEvent.Type == EventType::MousePressed )
 		{
 			RubyMouseEvent& mouseEvent = ( RubyMouseEvent& ) rEvent;
 
@@ -1063,7 +1048,7 @@ namespace Saturn {
 			
 			ImGui::Text( "Deleting the asset cause everything that depends on \"%s\" to be invalid unless a replacement is given.", assetToDelete->Name.c_str() );
 
-			ImGui::Text( "Because this Asset may have memory dependencies the Undo Redo history will be cleared." );
+			ImGui::Text( "Because this Asset may have memory dependencies the Undo/Redo history will be cleared." );
 
 			ImGui::Spacing();
 
@@ -1493,7 +1478,7 @@ namespace Saturn {
 			// Go to clipper.DisplayStart
 			if( !first )
 			{
-				std::advance( Itr, std::min( (size_t)clipper.DisplayStart * columnCount, rList.size() ) );
+				std::advance( Itr, std::min( ( size_t ) clipper.DisplayStart * columnCount, rList.size() ) );
 			}
 
 			for( int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i )

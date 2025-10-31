@@ -1045,9 +1045,6 @@ void ed::EditorContext::End()
 	m_BackgroundClickButtonIndex = control.BackgroundClickButtonIndex;
 	m_BackgroundDoubleClickButtonIndex = control.BackgroundDoubleClickButtonIndex;
 
-	if( m_SE_PendingDragPinID != PinId::Invalid )
-		m_HoveredPin = m_SE_PendingDragPinID;
-
 	//if (DoubleClickedNode) LOG_TRACE(0, "DOUBLE CLICK NODE: %d", DoubleClickedNode);
 	//if (DoubleClickedPin)  LOG_TRACE(0, "DOUBLE CLICK PIN:  %d", DoubleClickedPin);
 	//if (DoubleClickedLink) LOG_TRACE(0, "DOUBLE CLICK LINK: %d", DoubleClickedLink);
@@ -1058,12 +1055,12 @@ void ed::EditorContext::End()
 	//const bool isSizing    = CurrentAction && CurrentAction->AsSize()   != nullptr;
 
 	// Draw nodes
-	for( auto node : m_Nodes )
+	for( auto& node : m_Nodes )
 		if( node->m_IsLive && node->IsVisible() )
 			node->Draw( m_DrawList );
 
 	// Draw links
-	for( auto link : m_Links )
+	for( auto& link : m_Links )
 		if( link->m_IsLive && link->IsVisible() )
 			link->Draw( m_DrawList );
 

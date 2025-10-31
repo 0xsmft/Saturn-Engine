@@ -29,7 +29,7 @@
 #include "sppch.h"
 #include "PlayerInputController.h"
 
-#include "Saturn/Core/OptickProfiler.h"
+#include "Saturn/Core/Profiler.h"
 
 #include "Saturn/Project/Project.h"
 

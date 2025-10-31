@@ -47,6 +47,7 @@ namespace Saturn {
 
 	public:
 		ImVec2 GetViewportSize() const { return m_ViewportSize; }
+		void SetViewportWindowID( UUID id ) { m_WindowID = id; }
 
 	protected:
 		void Initialise();
@@ -65,6 +66,7 @@ namespace Saturn {
 
 	private:
 		ImVec2 m_ViewportSize{};
+		UUID m_WindowID = 0llu;
 	};
 	
 }

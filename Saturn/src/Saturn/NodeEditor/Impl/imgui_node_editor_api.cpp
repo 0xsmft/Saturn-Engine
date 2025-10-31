@@ -809,3 +809,5 @@ void ax::NodeEditor::ResumeUserInput()
 {
 	s_Editor->SuspendUserInput( false );
 }
+
+/* [END OF MODIFIED CODE] */

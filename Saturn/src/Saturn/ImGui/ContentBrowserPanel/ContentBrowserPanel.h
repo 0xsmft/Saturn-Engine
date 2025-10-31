@@ -139,10 +139,7 @@ namespace Saturn {
 		std::vector<ContentBrowserQuickAction> m_QuickActionUndo;
 		std::vector<ContentBrowserQuickAction> m_QuickActionRedo;
 
-	private:
-		AssetType m_AssetImportType = AssetType::Unknown;
-		std::filesystem::path m_ImportAssetPath;
-		
+	private:		
 		// Popup data
 		std::string m_ClassInstanceName;
 		std::string m_NewClassName;
@@ -151,12 +148,12 @@ namespace Saturn {
 
 		std::unique_ptr<AssetImportPopupBase> m_CurrentImportPopup;
 
-		bool m_ShowAssetImportPopup = false;
 		bool m_OpenScriptsPopup = false;
 		bool m_OpenClassInstancePopup = false;
 		bool m_ShowDeleteAssetPopup = false;
 		bool m_RenderUnclipped = false;
 		bool m_RenderCreateWindow = false;
 		bool m_ShowFolderPopupMenu = false;
+		bool m_WindowFocused = false;
 	};
 }

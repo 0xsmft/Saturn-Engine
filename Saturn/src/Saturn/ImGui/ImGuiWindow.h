@@ -59,8 +59,8 @@ namespace Saturn {
 		const std::string& GetWindowName() const { return m_Name; }
 
 	protected:
-		std::string m_Name = "";
 		bool m_Open = false;
+		std::string m_Name = "";
 	};
 
 }

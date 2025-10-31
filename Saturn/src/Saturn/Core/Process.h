@@ -28,21 +28,8 @@
 
 #pragma once
 
-#include "Ref.h"
-
-#if defined( SAT_PLATFORM_WINDOWS )
-#include <Windows.h>
-#endif
-
 namespace Saturn {
 
-#if defined( SAT_PLATFORM_WINDOWS )
-	using ProcessHandle = HANDLE;
-	using HandleType = HANDLE;
-#else
-	using ProcessHandle = void*;
-	using HandleType = void*;
-#endif
 
 	enum class ProcessCreateFlags
 	{
@@ -50,7 +37,7 @@ namespace Saturn {
 		RedirectedStreams
 	};
 
-	class Process : public RefTarget
+	class Process
 	{
 	public:
 		Process( const std::wstring& rCommandLine, const std::wstring& rWorkingDir = L"", ProcessCreateFlags flags = ProcessCreateFlags::Normal );
@@ -69,16 +56,16 @@ namespace Saturn {
 	private:
 		std::wstring m_CommandLine;
 
-		ProcessHandle m_Handle = nullptr;
+		void* m_Handle = nullptr;
 		ProcessCreateFlags m_Flags = ProcessCreateFlags::Normal;
 
 		int m_ExitCode = 1;
 	
-		ProcessHandle m_ReadHandle = nullptr;
-		ProcessHandle m_WriteHandle = nullptr;
+		void* m_ReadHandle = nullptr;
+		void* m_WriteHandle = nullptr;
 	};
 
-	class DeatchedProcess : public RefTarget
+	class DeatchedProcess
 	{
 	public:
 		DeatchedProcess( const std::wstring& rCommandLine, const std::wstring& rWorkingDir = L"" );

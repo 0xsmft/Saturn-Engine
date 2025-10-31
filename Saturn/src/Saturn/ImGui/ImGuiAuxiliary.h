@@ -188,6 +188,8 @@ namespace Saturn::Auxiliary {
 
 	extern void DrawArrow( const ImVec2& rStartPoint, const ImVec2& rEndPoint, ImU32 color, float thinkness = 2.0f, float headSize = 12.0f );
 
+	extern void DrawArrowOffset( ImVec2 rStartPoint, ImVec2 rEndPoint, ImU32 color, float thinkness = 2.0f, float headSize = 12.0f, float offset = 5.0f );
+
 	template<typename Function>
 	inline bool DrawAssetFinder( AssetType allowedTypes, AssetID lastID, bool* rOpen, Function&& rrFunction )
 	{

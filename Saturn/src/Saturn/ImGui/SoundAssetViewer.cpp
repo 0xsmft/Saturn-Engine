@@ -35,6 +35,8 @@
 
 #include "Saturn/Project/Project.h"
 
+#include "Saturn/Core/Process.h"
+
 #include "ImGuiAuxiliary.h"
 #include "EditorIcons.h"
 
@@ -64,8 +66,6 @@ namespace Saturn {
 
 	void SoundAssetViewer::OnImGuiRender()
 	{
-		ImGui::PushID( static_cast< int >( m_SoundAsset->ID ) );
-
 		if( ImGui::Begin( m_Name.c_str(), &m_Open ) ) 
 		{
 			ImGui::BeginVertical( "##settings_hor" );
@@ -76,7 +76,7 @@ namespace Saturn {
 
 			if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), { 24.0f, 24.0f } ) )
 			{
-				const std::filesystem::path path = Application::Get().OpenFile( "Supported asset types (*.wav, *.mp3, *.ogg)\0*.wav; *.mp3; *.ogg\0" );
+				const std::filesystem::path path = Application::Get().OpenFile( L"Supported asset types (*.wav, *.mp3, *.ogg)|*.wav; *.mp3; *.ogg" );
 
 				if( !path.empty() )
 				{
@@ -99,6 +99,16 @@ namespace Saturn {
 			ImGui::PushStyleColor( ImGuiCol_Text, ImVec4( 1.0f, 1.0f, 1.0f, 0.5f ) );
 			ImGui::InputText( "##filepath", ( char* ) m_SoundAsset->SoundSourcePath.string().c_str(), 4096, ImGuiInputTextFlags_ReadOnly );
 			ImGui::PopStyleColor();
+
+			if( ImGui::Button( "Open externally" ) )
+			{
+				Application::Get().OpenNativeFileExplorer( m_SoundAsset->SoundSourcePath );
+			}
+
+			if( ImGui::Button( "Show in explorer" ) )
+			{
+				Application::Get().OpenNativeFileExplorer( m_SoundAsset->SoundSourcePath, true );
+			}
 
 			ImGui::EndHorizontal();
 
@@ -220,11 +230,9 @@ namespace Saturn {
 
 				ImGui::EndPopup();
 			}
-
-			ImGui::End();
 		}
 
-		ImGui::PopID();
+		ImGui::End();
 
 		if( !m_Open )
 		{

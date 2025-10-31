@@ -34,10 +34,19 @@
 
 namespace Saturn::Auxiliary {
 
-	static inline ImVec2& operator/=( ImVec2& lhs, const ImVec2& rhs ) { lhs.x /= rhs.x; lhs.y /= rhs.y; return lhs; }
+	static inline ImVec2  operator*( const ImVec2& lhs, const float rhs ) { return ImVec2( lhs.x * rhs, lhs.y * rhs ); }
 	static inline ImVec2  operator/( const ImVec2& lhs, const float rhs ) { return ImVec2( lhs.x / rhs, lhs.y / rhs ); }
+	static inline ImVec2  operator+( const ImVec2& lhs, const ImVec2& rhs ) { return ImVec2( lhs.x + rhs.x, lhs.y + rhs.y ); }
+	static inline ImVec2  operator-( const ImVec2& lhs, const ImVec2& rhs ) { return ImVec2( lhs.x - rhs.x, lhs.y - rhs.y ); }
+	static inline ImVec2  operator*( const ImVec2& lhs, const ImVec2& rhs ) { return ImVec2( lhs.x * rhs.x, lhs.y * rhs.y ); }
 	static inline ImVec2  operator/( const ImVec2& lhs, const ImVec2& rhs ) { return ImVec2( lhs.x / rhs.x, lhs.y / rhs.y ); }
+	static inline ImVec2  operator-( const ImVec2& lhs ) { return ImVec2( -lhs.x, -lhs.y ); }
+	static inline ImVec2& operator*=( ImVec2& lhs, const float rhs ) { lhs.x *= rhs; lhs.y *= rhs; return lhs; }
 	static inline ImVec2& operator/=( ImVec2& lhs, const float rhs ) { lhs.x /= rhs; lhs.y /= rhs; return lhs; }
+	static inline ImVec2& operator+=( ImVec2& lhs, const ImVec2& rhs ) { lhs.x += rhs.x; lhs.y += rhs.y; return lhs; }
+	static inline ImVec2& operator-=( ImVec2& lhs, const ImVec2& rhs ) { lhs.x -= rhs.x; lhs.y -= rhs.y; return lhs; }
+	static inline ImVec2& operator*=( ImVec2& lhs, const ImVec2& rhs ) { lhs.x *= rhs.x; lhs.y *= rhs.y; return lhs; }
+	static inline ImVec2& operator/=( ImVec2& lhs, const ImVec2& rhs ) { lhs.x /= rhs.x; lhs.y /= rhs.y; return lhs; }
 
 	extern bool DrawVec2Control(const std::string& rLabel, glm::vec2& values, float resetValue /*= 0.0f*/, bool useColumns /*= true*/, float columnWidth /*= 100.0f */)
 {
@@ -415,9 +424,6 @@ namespace Saturn::Auxiliary {
 		ImGui::TreePop();
 	}
 
-	static inline ImVec2 operator+( const ImVec2& lhs, const ImVec2& rhs ) { return ImVec2( lhs.x + rhs.x, lhs.y + rhs.y ); }
-	static inline ImVec2 operator-( const ImVec2& lhs, const ImVec2& rhs ) { return ImVec2( lhs.x - rhs.x, lhs.y - rhs.y ); }
-
 	bool ButtonRd( const char* rLabel, const ImRect& bb, bool rounded /*= false */ )
 	{
 		using namespace ImGui;
@@ -785,6 +791,37 @@ namespace Saturn::Auxiliary {
 		// Draw shaft
 		pDrawList->AddLine( rStartPoint, arrowBegin, color, thinkness );
 		pDrawList->AddTriangleFilled( rEndPoint, l, r, color );
+	}
+
+	void DrawArrowOffset( ImVec2 rStartPoint, ImVec2 rEndPoint, ImU32 color, float thinkness, float headSize, float offset )
+	{
+		auto* pDrawList = ImGui::GetWindowDrawList();
+
+		ImVec2 arrowDir = ImVec2( rEndPoint - rStartPoint );
+		float arrowLength = glm::sqrt( ImLengthSqr( arrowDir ) );
+		if( arrowLength <= 1e-6f )
+			return;
+
+		// Normalize direction
+		arrowDir.x /= arrowLength;
+		arrowDir.y /= arrowLength;
+
+		// Perpendicular
+		const ImVec2 orthogonal = { arrowDir.y, -arrowDir.x };
+
+		const ImVec2 offsetVec = orthogonal * offset;
+		rStartPoint += offsetVec;
+		rEndPoint += offsetVec;
+
+		const ImVec2 base = rEndPoint - arrowDir * headSize;
+
+		// Left and right points of arrowhead
+		const ImVec2 left = base + orthogonal * headSize;
+		const ImVec2 right = base - orthogonal * headSize;
+
+		// Draw shaft
+		pDrawList->AddLine( rStartPoint, base, color, thinkness );
+		pDrawList->AddTriangleFilled( rEndPoint, left, right, color );
 	}
 
 	//////////////////////////////////////////////////////////////////////////

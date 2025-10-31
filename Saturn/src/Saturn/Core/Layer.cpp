@@ -47,7 +47,9 @@
 
 #include <Saturn/Core/Ruby/RubyWindow.h>
 
+#if !defined(SAT_DIST)
 #include "Saturn/ImGui/EmbededFonts/NotoSansAll.embed"
+#endif
 
 namespace Saturn {
 	
@@ -79,11 +81,13 @@ namespace Saturn {
 			rStyle.Colors[ ImGuiCol_WindowBg ].w = 1.0f;
 		}
 
+#if !defined(SAT_DIST)
 		rIO.Fonts->AddFontFromMemoryTTF( ( void* ) GNotoSansRegularEmbeded, sizeof( GNotoSansRegularEmbeded ), 18.0f );
 		rIO.FontDefault = rIO.Fonts->Fonts.back();
 		
 		rIO.Fonts->AddFontFromMemoryTTF( ( void* ) GNotoSansBoldEmbeded, sizeof( GNotoSansBoldEmbeded ), 18.0f );
 		rIO.Fonts->AddFontFromMemoryTTF( ( void* ) GNotoSansItalicEmbeded, sizeof( GNotoSansItalicEmbeded ), 18.0f );
+#endif
 
 		Styles::Dark();
 
@@ -93,21 +97,21 @@ namespace Saturn {
 		{
 			std::vector< VkDescriptorPoolSize > PoolSizes;
 
-			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 } );
-			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 } );
-			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 } );
-			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 } );
-			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 } );
-			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 } );
-			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 } );
-			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 } );
-			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 } );
-			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 } );
-			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 } );
+			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_SAMPLER, 1000u } );
+			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000u } );
+			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000u } );
+			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000u } );
+			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000u } );
+			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000u } );
+			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000u } );
+			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000u } );
+			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000u } );
+			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000u } );
+			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000u } );
 
 			VkDescriptorPoolCreateInfo PoolCreateInfo = { VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
 			PoolCreateInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-			PoolCreateInfo.maxSets = 1000;
+			PoolCreateInfo.maxSets = 1000u;
 			PoolCreateInfo.poolSizeCount = ( uint32_t ) PoolSizes.size();
 			PoolCreateInfo.pPoolSizes = PoolSizes.data();
 
@@ -120,7 +124,7 @@ namespace Saturn {
 		ImGuiInitInfo.Device = VulkanContext::Get().GetDevice();
 		ImGuiInitInfo.Queue = VulkanContext::Get().GetGraphicsQueue();
 		ImGuiInitInfo.DescriptorPool = m_DescriptorPool;
-		ImGuiInitInfo.MinImageCount = 2;
+		ImGuiInitInfo.MinImageCount = 2u;
 		ImGuiInitInfo.ImageCount = MAX_FRAMES_IN_FLIGHT;
 		ImGuiInitInfo.MSAASamples = VulkanContext::Get().GetMaxUsableMSAASamples();
 
@@ -162,17 +166,17 @@ namespace Saturn {
 		uint32_t WindowHeight = Application::Get().GetWindow()->GetHeight();
 
 		std::vector<VkClearValue> ClearColor;
+		ClearColor.reserve( 2 );
+
 		ClearColor.push_back( { .color = { { 0.1f, 0.1f, 0.1f, 1.0f } } } );
-		if( VulkanContext::Get().GetMaxUsableMSAASamples() > VK_SAMPLE_COUNT_1_BIT )
-			ClearColor.push_back( { .color = { { 0.1f, 0.1f, 0.1f, 1.0f } } } );
-		ClearColor.push_back( { .depthStencil = { 1.0f, 0 } } );
+		ClearColor.push_back( { .depthStencil = { 1.0f, 0u } } );
 
 		VkRenderPassBeginInfo RenderPassBeginInfo = { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
 		RenderPassBeginInfo.renderPass = VulkanContext::Get().GetDefaultVulkanPass();
 		RenderPassBeginInfo.framebuffer = rSwapchain.GetFramebuffers()[ Renderer::Get().GetImageIndex() ];
 		RenderPassBeginInfo.renderArea.offset = { 0, 0 };
 		RenderPassBeginInfo.renderArea.extent = { WindowWidth, WindowHeight };
-		RenderPassBeginInfo.clearValueCount = (uint32_t)ClearColor.size();
+		RenderPassBeginInfo.clearValueCount = ( uint32_t ) ClearColor.size();
 		RenderPassBeginInfo.pClearValues = ClearColor.data();
 
 		// Begin swap chain pass
@@ -180,8 +184,8 @@ namespace Saturn {
 		vkCmdBeginRenderPass( CommandBuffer, &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
 
 		VkViewport Viewport = {};
-		Viewport.x = 0;
-		Viewport.y = 0;
+		Viewport.x = 0.0f;
+		Viewport.y = 0.0f;
 		Viewport.width = ( float ) WindowWidth;
 		Viewport.height = ( float ) WindowHeight;
 		Viewport.minDepth = 0.0f;
@@ -189,8 +193,8 @@ namespace Saturn {
 
 		VkRect2D Scissor = { { 0, 0 }, { WindowWidth, WindowHeight } };
 
-		vkCmdSetViewport( CommandBuffer, 0, 1, &Viewport );
-		vkCmdSetScissor( CommandBuffer, 0, 1, &Scissor );
+		vkCmdSetViewport( CommandBuffer, 0u, 1u, &Viewport );
+		vkCmdSetScissor( CommandBuffer, 0u, 1u, &Scissor );
 
 		ImGui_ImplVulkan_RenderDrawData( ImGui::GetDrawData(), CommandBuffer );
 

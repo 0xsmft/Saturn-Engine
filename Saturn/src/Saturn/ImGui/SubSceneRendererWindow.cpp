@@ -38,7 +38,6 @@ namespace Saturn {
 	static inline bool operator==( const ImVec2& lhs, const ImVec2& rhs ) { return lhs.x == rhs.x && lhs.y == rhs.y; }
 	static inline bool operator!=( const ImVec2& lhs, const ImVec2& rhs ) { return !( lhs == rhs ); }
 
-
 	SubSceneRendererWindow::SubSceneRendererWindow()
 		: m_Camera( 45.0f, 1280.0f, 720.0f, 0.1f, 1000.0f )
 	{
@@ -77,7 +76,10 @@ namespace Saturn {
 		windowClassNoDock.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_None;
 
 		ImGui::SetNextWindowClass( &windowClassNoDock );
-		ImGui::Begin( "##viewport", 0, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings );
+		const std::string vpName = std::format( "Viewport##{0}", std::to_string( m_WindowID ) );
+
+		ImGui::Begin( vpName.c_str(), 0, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse );
+		ImGui::SetWindowDock( ImGui::GetCurrentWindow(), ImGui::GetID( "AxDckspc" ), ImGuiCond_FirstUseEver );
 
 		if( m_ViewportSize != ImGui::GetContentRegionAvail() )
 		{

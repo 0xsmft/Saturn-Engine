@@ -29,19 +29,14 @@
 #pragma once
 
 #include "AssetViewer.h"
-#include "Saturn/Vulkan/SceneRenderer.h"
-
-#include "TitleBar.h"
-#include "SceneHierarchyPanel.h"
-
-#include <imgui.h>
+#include "SubSceneRendererWindow.h"
 
 namespace Saturn {
 
 	class SceneRenderer;
 	class EditorCamera;
 
-	class StaticMeshAssetViewer : public AssetViewer
+	class StaticMeshAssetViewer : public AssetViewer, public SubSceneRendererWindow
 	{
 	public:
 		StaticMeshAssetViewer( AssetID id );
@@ -53,17 +48,9 @@ namespace Saturn {
 
 	private:
 		void AddMesh();
+
 	private:
 		Ref<StaticMesh> m_Mesh;
-		Ref<SceneRenderer> m_SceneRenderer;
-		Ref<Scene> m_Scene;
-		EditorCamera m_Camera;
-
-		bool m_AllowCameraEvents = false;
-		bool m_StartedRightClickInViewport = false;
-		bool m_ViewportFocused = false;
-		bool m_MouseOverViewport = false;
-
-		ImVec2 m_ViewportSize{};
+		AssetID m_AssetFinderOut = 0;
 	};
 }

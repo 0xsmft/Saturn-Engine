@@ -96,4 +96,14 @@ namespace Saturn {
 		AssetID m_CurrentAssetIDForSkeleton = 0;
 	};
 
+	class SoundImportPopup : public AssetImportPopupBase
+	{
+	public:
+		SoundImportPopup( const std::filesystem::path& rAssetToImportPath, const std::filesystem::path& rDestinationPath );
+		~SoundImportPopup() = default;
+
+		virtual void Initialise();
+		virtual void OnImGuiRender();
+	};
+
 }

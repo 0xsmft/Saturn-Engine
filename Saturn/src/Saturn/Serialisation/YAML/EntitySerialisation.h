@@ -42,4 +42,12 @@ namespace Saturn {
 		static void SerialiseEntity( YAML::Emitter& rEmitter, const SharedPtr<Entity> entity );
 		static void DeserialiseEntity( const YAML::Node& rNode, Ref<Scene> scene );
 	};
+
+	class ComponentSerialisation
+	{
+	public:
+		static void SerialiseComponents( YAML::Emitter& rEmitter, const SharedPtr<Entity> entity );
+		static void DeserialiseComponents( const YAML::Node& rEntityNode, Ref<Scene> scene );
+	};
+
 }

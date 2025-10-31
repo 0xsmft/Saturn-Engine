@@ -37,6 +37,8 @@
 #include "Saturn/Scene/Components.h"
 
 #include "Saturn/Asset/AssetManager.h"
+#include "Saturn/Asset/Prefab2.h"
+
 #include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 
 namespace Saturn {
@@ -60,6 +62,11 @@ namespace Saturn {
 		ComponentSerialisation::DeserialiseComponents( rNode, scene );
 	}
 
+	//////////////////////////////////////////////////////////////////////////
+	// COMPONENT SERIALSATION
+
+	void ComponentSerialisation::SerialiseComponents( YAML::Emitter& rEmitter, const SharedPtr<Entity> entity )
+	{
 		// Tag Component
 		if( entity->HasComponent<TagComponent>() )
 		{
@@ -223,7 +230,7 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 		}
 
 		// Prefab Component
-		if( isPrefab )
+		if( entity->HasComponent<PrefabComponent>() )
 		{
 			rEmitter << YAML::Key << "PrefabComponent";
 			rEmitter << YAML::BeginMap;
@@ -272,7 +279,59 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 
 					rEmitter << YAML::EndMap;
 
-					i++;
+					++i;
+				}
+			}
+
+			rEmitter << YAML::EndSeq;
+
+			rEmitter << YAML::EndMap;
+
+			rEmitter << YAML::EndMap;
+		}
+
+		// Dynamic Mesh Component
+		if( entity->HasComponent<SkeletalMeshComponent>() )
+		{
+			rEmitter << YAML::Key << "SkeletalMeshComponent";
+			rEmitter << YAML::BeginMap;
+
+			const auto& mc = entity->GetComponent< SkeletalMeshComponent >();
+
+			if( mc.Mesh )
+				rEmitter << YAML::Key << "Asset" << YAML::Value << mc.Mesh->ID;
+			else
+				rEmitter << YAML::Key << "Asset" << YAML::Value << 0;
+
+			rEmitter << YAML::Key << "AnimationAssetType" << YAML::Value << ( std::underlying_type_t<AnimatorType> )mc.AnimatorType;
+			rEmitter << YAML::Key << "AnimationAsset" << YAML::Value << mc.AnimationControllerAssetID;
+
+			rEmitter << YAML::Key << "MaterialRegistry";
+			rEmitter << YAML::BeginMap;
+
+			if( mc.MaterialRegistry )
+				rEmitter << YAML::Key << "AnyOverrides" << YAML::Value << mc.MaterialRegistry->HasAnyOverrides();
+			else
+				rEmitter << YAML::Key << "AnyOverrides" << YAML::Value << false;
+
+			rEmitter << YAML::Key << "MaterialOverrides";
+			rEmitter << YAML::BeginSeq;
+
+			if( mc.MaterialRegistry )
+			{
+				int i = 0;
+				for( const auto& material : mc.MaterialRegistry->GetMaterialAssets() )
+				{
+					rEmitter << YAML::BeginMap;
+
+					if( mc.MaterialRegistry->HasOverrides( i ) )
+						rEmitter << YAML::Key << i << YAML::Value << material->ID;
+					else
+						rEmitter << YAML::Key << i << YAML::Value << 0;
+
+					rEmitter << YAML::EndMap;
+
+					++i;
 				}
 			}
 
@@ -430,7 +489,7 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 			rEmitter << YAML::Key << "AssetID" << YAML::Value << spc.SpecAssetID;
 			rEmitter << YAML::Key << "Loop" << YAML::Value << spc.Loop;
 			rEmitter << YAML::Key << "Mute" << YAML::Value << spc.Mute;
-			rEmitter << YAML::Key << "Spatialization" << YAML::Value << spc.Spatialization;
+			rEmitter << YAML::Key << "Spatialization" << YAML::Value << spc.Spatialisation;
 			rEmitter << YAML::Key << "VolumeMultiplier" << YAML::Value << spc.Volume;
 			rEmitter << YAML::Key << "PitchMultiplier" << YAML::Value << spc.Pitch;
 
@@ -468,60 +527,51 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 
 			rEmitter << YAML::EndMap;
 		}
-
-		rEmitter << YAML::EndMap;
 	}
 
-	void EntitySerialisation::DeserialiseEntities( YAML::Node& rNode, Ref<Scene> scene )
+	void ComponentSerialisation::DeserialiseComponents( const YAML::Node& rEntityNode, Ref<Scene> scene )
 	{
-		if( rNode.IsNull() )
-			return;
+		const UUID entityID = rEntityNode[ "Entity" ].as< uint64_t >();
+		// Fall back to entity because this scene may be pre 0.2.1
+		const std::string className = rEntityNode[ "Class" ].as< std::string >( "Entity" );
+		const std::string Tag = rEntityNode[ "TagComponent" ][ "Tag" ].as< std::string >( "Empty Entity" );
 
-		for( const auto entity : rNode )
+		SAT_CORE_INFO( "Deserialised entity with ID: ENTITY/{0}, with name: {1} and class name: {2}", entityID, Tag, className );
+
+		// Pre 0.2.1, this would be an entity
+		SharedPtr<Entity> DeserialisedEntity = scene->CreateEntityWithIDScript( entityID, Tag, className, false );
+
+		const auto classInfo = rEntityNode[ "ClassInformation" ];
+		if( classInfo )
 		{
-			const UUID entityID = entity[ "Entity" ].as< uint64_t >();
+			const auto propertyCount = classInfo[ "LastPropertyCount" ].as<int>();
 
-			// Fall back to entity because this scene may be pre 0.2.1
-			const std::string className = entity[ "Class" ].as< std::string >( "Entity" );
-
-			const std::string Tag = entity[ "TagComponent" ][ "Tag" ].as< std::string >( "Empty Entity" );
-
-			SAT_CORE_INFO( "Deserialised entity with ID: ENTITY/{0}, with name: {1} and class name: {2}", entityID, Tag, className );
-
-			// Pre 0.2.1, this would be an entity
-			SharedPtr<Entity> DeserialisedEntity = scene->CreateEntityWithIDScript( entityID, Tag, className, false );
-
-			const auto classInfo = entity[ "ClassInformation" ];
-			if( classInfo )
+			if( propertyCount != DeserialisedEntity->GetClass()->GetPropertyCount() )
 			{
-				const auto propertyCount = classInfo[ "LastPropertyCount" ].as<int>();
+				SAT_CORE_WARN( "Property count does not match!, Last/{0}, Current/{1}", propertyCount, DeserialisedEntity->GetClass()->GetPropertyCount() );
+			}
 
-				if( propertyCount != DeserialisedEntity->GetClass()->GetPropertyCount() )
-				{
-					SAT_CORE_WARN( "Property count does not match!, Last/{0}, Current/{1}", propertyCount, DeserialisedEntity->GetClass()->GetPropertyCount() );
-				}
+			std::vector<std::string> savedPropertyNames;
 
-				std::vector<std::string> savedPropertyNames;
+			const auto lastProperties = classInfo[ "Properties" ];
+			for( const auto property : lastProperties )
+			{
+				savedPropertyNames.push_back( property[ "Name" ].as<std::string>() );
+			}
 
-				const auto lastProperties = classInfo[ "Properties" ];
-				for( const auto property : lastProperties )
-				{
-					savedPropertyNames.push_back( property[ "Name" ].as<std::string>() );
-				}
+			// Now, we get the current properties from the SClass.
+			const auto SClassPropCount = DeserialisedEntity->GetClass()->GetPropertyCount();
+			auto SClassProps = DeserialisedEntity->GetClass()->GetProperties();
 
-				// Now, we get the current properties from the SClass.
-				const auto SClassPropCount = DeserialisedEntity->GetClass()->GetPropertyCount();
-				auto SClassProps = DeserialisedEntity->GetClass()->GetProperties();
+			std::vector<std::string> compiledInPropertyNames;
+			compiledInPropertyNames.reserve( SClassPropCount );
 
-				std::vector<std::string> compiledInPropertyNames;
-				compiledInPropertyNames.reserve( SClassPropCount );
+			for( size_t i = 0; i < SClassPropCount; i++ )
+			{
+				SProperty* pProperty = ( SProperty* ) SClassProps[ i ];
 
-				for( size_t i = 0; i < SClassPropCount; i++ )
-				{
-					SProperty* pProperty = ( SProperty* ) SClassProps[ i ];
-
-					compiledInPropertyNames.push_back( pProperty->GetName() );
-				}
+				compiledInPropertyNames.push_back( pProperty->GetName() );
+			}
 
 #define SAT_DESERIALISE_PROPERTY_YAML( PropertyType ) \
 { \
@@ -530,141 +580,189 @@ const auto value = property[ "Value" ].as<typename PropertyTypeTraits<Saturn::SP
 pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value ); \
 } break
 
-				// Now, we must make sure we use the compiled in SProperties
-				for( size_t i = 0; i < SClassPropCount; i++ )
+			// Now, we must make sure we use the compiled in SProperties
+			for( size_t i = 0; i < SClassPropCount; i++ )
+			{
+				// Try to find the name at i, in both maps
+				const auto savedNameItr = std::find( savedPropertyNames.begin(), savedPropertyNames.end(), compiledInPropertyNames[ i ] );
+
+				if( savedNameItr != savedPropertyNames.end() )
 				{
-					// Try to find the name at i, in both maps
-					const auto savedNameItr = std::find( savedPropertyNames.begin(), savedPropertyNames.end(), compiledInPropertyNames[ i ] );
+					const auto property = lastProperties[ i ];
 
-					if( savedNameItr != savedPropertyNames.end() )
+					// Property exists
+					const SPropertyType savedType = ( SPropertyType ) property[ "ValueType" ].as<int>( ( int ) SPropertyType::Unknown );
+
+					SPropertyEditor* pCompiledInProperty = ( SPropertyEditor* ) SClassProps[ i ];
+					if( savedType == pCompiledInProperty->GetType() )
 					{
-						const auto property = lastProperties[ i ];
-
-						// Property exists
-						const SPropertyType savedType = ( SPropertyType ) property[ "ValueType" ].as<int>( ( int ) SPropertyType::Unknown );
-
-						SPropertyEditor* pCompiledInProperty = ( SPropertyEditor* ) SClassProps[ i ];
-						if( savedType == pCompiledInProperty->GetType() )
+						// Set current (compiled in) value to saved value.
+						switch( savedType )
 						{
-							// set value to saved value
-							switch( savedType )
+							case SPropertyType::Char:
+								SAT_DESERIALISE_PROPERTY_YAML( Char );
+
+							case SPropertyType::Float:
+								SAT_DESERIALISE_PROPERTY_YAML( Float );
+
+							case SPropertyType::Int:
+								SAT_DESERIALISE_PROPERTY_YAML( Int );
+
+							case SPropertyType::Double:
+								SAT_DESERIALISE_PROPERTY_YAML( Double );
+
+							case SPropertyType::Uint8:
+								SAT_DESERIALISE_PROPERTY_YAML( Uint8 );
+
+							case SPropertyType::Uint16:
+								SAT_DESERIALISE_PROPERTY_YAML( Uint16 );
+
+							case SPropertyType::Uint32:
+								SAT_DESERIALISE_PROPERTY_YAML( Uint32 );
+
+							case SPropertyType::Uint64:
+								SAT_DESERIALISE_PROPERTY_YAML( Uint64 );
+
+							case SPropertyType::Int8:
+								SAT_DESERIALISE_PROPERTY_YAML( Int8 );
+
+							case SPropertyType::Int16:
+								SAT_DESERIALISE_PROPERTY_YAML( Int16 );
+
+							case SPropertyType::Int64:
+								SAT_DESERIALISE_PROPERTY_YAML( Int64 );
+
+							case SPropertyType::Vector2:
 							{
-								case SPropertyType::Char:
-									SAT_DESERIALISE_PROPERTY_YAML( Char );
+								auto value = property[ "Value" ].as<glm::vec2>();
+								pCompiledInProperty->SetProperty<glm::vec2&>( DeserialisedEntity.Get(), value );
+							} break;
 
-								case SPropertyType::Float:
-									SAT_DESERIALISE_PROPERTY_YAML( Float );
+							case SPropertyType::Vector3:
+							{
+								auto value = property[ "Value" ].as<glm::vec3>();
+								pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value );
+							} break;
 
-								case SPropertyType::Int:
-									SAT_DESERIALISE_PROPERTY_YAML( Int );
+							case SPropertyType::Vector4:
+							{
+								auto value = property[ "Value" ].as<glm::vec4>();
+								pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value );
+							} break;
 
-								case SPropertyType::Double:
-									SAT_DESERIALISE_PROPERTY_YAML( Double );
+							case SPropertyType::String:
+							{
+								auto value = property[ "Value" ].as<std::string>();
+								pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value );
+							} break;
 
-								case SPropertyType::Uint8:
-									SAT_DESERIALISE_PROPERTY_YAML( Uint8 );
+							case SPropertyType::Asset:
+							{
+								auto value = property[ "Value" ].as<uint64_t>();
+								auto expectedType = property[ "ExpectedType" ].as<int>();
 
-								case SPropertyType::Uint16:
-									SAT_DESERIALISE_PROPERTY_YAML( Uint16 );
+								AssetReference& rAssetReference = pCompiledInProperty->Read<SPropertyType::Asset>( DeserialisedEntity.Get() );
 
-								case SPropertyType::Uint32:
-									SAT_DESERIALISE_PROPERTY_YAML( Uint32 );
+								rAssetReference.ID = value;
+								rAssetReference.ExpectedType = ( AssetType ) expectedType;
+							} break;
+						}
 
-								case SPropertyType::Uint64:
-									SAT_DESERIALISE_PROPERTY_YAML( Uint64 );
+						//						pCompiledInProperty->MarkClean();
+					}
+				}
+				else
+				{
+					SAT_CORE_WARN( "SProperty \"{0}\" could not be found!", *savedNameItr );
+				}
+			}
+		}
 
-								case SPropertyType::Int8:
-									SAT_DESERIALISE_PROPERTY_YAML( Int8 );
+		const auto pc = rEntityNode[ "PrefabComponent" ];
+		if( pc )
+		{
+			auto& p = DeserialisedEntity->AddComponent< PrefabComponent >();
 
-								case SPropertyType::Int16:
-									SAT_DESERIALISE_PROPERTY_YAML( Int16 );
+			p.AssetID = pc[ "AssetID" ].as< uint64_t >();
+		}
 
-								case SPropertyType::Int64:
-									SAT_DESERIALISE_PROPERTY_YAML( Int64 );
+		auto tc = rEntityNode[ "TransformComponent" ];
+		if( tc )
+		{
+			auto& t = DeserialisedEntity->GetComponent< TransformComponent >();
 
-								case SPropertyType::Vector2:
-								{
-									auto value = property[ "Value" ].as<glm::vec2>();
-									pCompiledInProperty->SetProperty<glm::vec2&>( DeserialisedEntity.Get(), value );
-								} break;
+			t.Position = tc[ "Position" ].as< glm::vec3 >();
 
-								case SPropertyType::Vector3:
-								{
-									auto value = property[ "Value" ].as<glm::vec3>();
-									pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value );
-								} break;
+			t.SetRotation( glm::radians( tc[ "Rotation" ].as< glm::vec3 >() ) );
 
-								case SPropertyType::Vector4:
-								{
-									auto value = property[ "Value" ].as<glm::vec4>();
-									pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value );
-								} break;
+			// This might not be needed.
+			//t.SetRotation( tc[ "Quaternion" ].as< glm::quat >() );
 
-								case SPropertyType::String:
-								{
-									auto value = property[ "Value" ].as<std::string>();
-									pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value );
-								} break;
+			t.Scale = tc[ "Scale" ].as< glm::vec3 >();
+		}
 
-								case SPropertyType::Asset:
-								{
-									auto value = property[ "Value" ].as<uint64_t>();
-									auto expectedType = property[ "ExpectedType" ].as<int>();
+		auto mc = rEntityNode[ "MeshComponent" ];
+		if( mc )
+		{
+			auto& m = DeserialisedEntity->AddComponent< StaticMeshComponent >();
 
-									AssetReference& rAssetReference = pCompiledInProperty->Read<SPropertyType::Asset>( DeserialisedEntity.Get() );
+			auto id = mc[ "Asset" ].as<uint64_t>( 0 );
+			if( id != 0 )
+			{
+				auto mesh = AssetManager::Get().GetAssetAs<StaticMesh>( id );
 
-									rAssetReference.ID = value;
-									rAssetReference.ExpectedType = ( AssetType ) expectedType;
-								} break;
+				m.Mesh = mesh;
+				m.MaterialRegistry = Ref<MaterialRegistry>::Create();
+
+				const auto materialRegistry = mc[ "MaterialRegistry" ];
+				if( materialRegistry )
+				{
+					const bool hasOverrides = materialRegistry[ "AnyOverrides" ].as<bool>();
+
+					if( hasOverrides )
+					{
+						auto materialOverrides = materialRegistry[ "MaterialOverrides" ];
+
+						int i = 0;
+						for( auto override : materialOverrides )
+						{
+							id = override[ i ].as<uint64_t>();
+
+							if( id != 0 )
+							{
+								m.MaterialRegistry->AddAsset( AssetManager::Get().GetAssetAs<MaterialAsset>( id ) );
+								m.MaterialRegistry->SetOverrides( i, true );
 							}
 
-							//							pCompiledInProperty->MarkClean();
+							++i;
 						}
 					}
 					else
 					{
-						SAT_CORE_WARN( "SProperty \"{0}\" could not be found!", *savedNameItr );
+						m.MaterialRegistry->Copy( m.Mesh->GetMaterialRegistry() );
 					}
 				}
 			}
+		}
 
-			const auto pc = entity[ "PrefabComponent" ];
-			if( pc )
+		auto skm = rEntityNode[ "SkeletalMeshComponent" ];
+		if( skm )
+		{
+			auto& m = DeserialisedEntity->AddComponent< SkeletalMeshComponent >();
+
+			auto id = skm[ "Asset" ].as<uint64_t>( 0 );
+			if( id != 0 )
 			{
-				auto& p = DeserialisedEntity->AddComponent< PrefabComponent >();
+				auto mesh = AssetManager::Get().GetAssetAs<SkeletalMesh>( id );
 
-				p.AssetID = pc[ "AssetID" ].as< uint64_t >();
-			}
+				// Ensure that we always have a material registry even if we don't have a mesh
+				m.MaterialRegistry = Ref<MaterialRegistry>::Create();
 
-			auto tc = entity[ "TransformComponent" ];
-			if( tc )
-			{
-				auto& t = DeserialisedEntity->GetComponent< TransformComponent >();
-
-				t.Position = tc[ "Position" ].as< glm::vec3 >();
-
-				t.SetRotation( glm::radians( tc[ "Rotation" ].as< glm::vec3 >() ) );
-
-				// This might not be needed.
-				//t.SetRotation( tc[ "Quaternion" ].as< glm::quat >() );
-
-				t.Scale = tc[ "Scale" ].as< glm::vec3 >();
-			}
-
-			auto mc = entity[ "MeshComponent" ];
-			if( mc )
-			{
-				auto& m = DeserialisedEntity->AddComponent< StaticMeshComponent >();
-
-				auto id = mc[ "Asset" ].as<uint64_t>( 0 );
-				if( id != 0 )
+				if( mesh )
 				{
-					auto mesh = AssetManager::Get().GetAssetAs<StaticMesh>( id );
-
 					m.Mesh = mesh;
-					m.MaterialRegistry = Ref<MaterialRegistry>::Create();
 
-					auto materialRegistry = mc[ "MaterialRegistry" ];
+					const auto materialRegistry = skm[ "MaterialRegistry" ];
 					if( materialRegistry )
 					{
 						const bool hasOverrides = materialRegistry[ "AnyOverrides" ].as<bool>();
@@ -681,10 +779,10 @@ pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value ); \
 								if( id != 0 )
 								{
 									m.MaterialRegistry->AddAsset( AssetManager::Get().GetAssetAs<MaterialAsset>( id ) );
-									m.MaterialRegistry->SetOverries( i, true );
+									m.MaterialRegistry->SetOverrides( i, true );
 								}
 
-								i++;
+								++i;
 							}
 						}
 						else
@@ -695,162 +793,167 @@ pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value ); \
 				}
 			}
 
-			const auto rcNode = entity[ "RelationshipComponent" ];
-			auto& rc = DeserialisedEntity->GetComponent<RelationshipComponent>();
-			rc.Parent = rcNode[ "Parent" ] ? rcNode[ "Parent" ].as<uint64_t>() : 0;
+			const auto animAsset = skm[ "AnimationAsset" ].as<uint64_t>( 0 );
+			const auto animationAssetType = skm[ "AnimationAssetType" ].as<std::underlying_type_t<AnimatorType>>( 0 );
 
-			auto rcChildren = rcNode[ "Children" ];
-			if( rcChildren )
+			m.AnimatorType = ( AnimatorType ) animationAssetType;
+			m.AnimationControllerAssetID = animAsset;
+		}
+
+		const auto rcNode = rEntityNode[ "RelationshipComponent" ];
+		auto& rc = DeserialisedEntity->GetComponent<RelationshipComponent>();
+		rc.Parent = rcNode[ "Parent" ] ? rcNode[ "Parent" ].as<uint64_t>() : 0;
+
+		const auto rcChildren = rcNode[ "Children" ];
+		if( rcChildren )
+		{
+			for( auto child : rcChildren )
 			{
-				for( auto child : rcChildren )
-				{
-					uint64_t id = child[ "ID" ].as<uint64_t>();
-					rc.ChildrenID.push_back( id );
-				}
-			}
-
-			auto slc = entity[ "SkyLightComponent" ];
-			if( slc )
-			{
-				auto& s = DeserialisedEntity->AddComponent< SkylightComponent >();
-
-				s.DynamicSky = slc[ "IsPreetham" ].as< bool >();
-
-				if( s.DynamicSky )
-				{
-					auto PreethamSettings = slc[ "Preetham Settings" ];
-
-					s.Turbidity = PreethamSettings[ "Turbidity" ].as< float >();
-					s.Azimuth = PreethamSettings[ "Azimuth" ].as< float >();
-					s.Inclination = PreethamSettings[ "Inclination" ].as< float >();
-				}
-				else
-				{
-					// TODO...
-				}
-			}
-
-			auto dlc = entity[ "DirectionalLightComponent" ];
-			if( dlc )
-			{
-				auto& d = DeserialisedEntity->AddComponent< DirectionalLightComponent >();
-
-				d.Radiance = dlc[ "Radiance" ].as< glm::vec3 >();
-				d.Intensity = dlc[ "Intensity" ].as< float >();
-				d.CastShadows = dlc[ "CastShadows" ].as< bool >();
-			}
-
-			auto plc = entity[ "PointLightComponent" ];
-			if( plc )
-			{
-				auto& p = DeserialisedEntity->AddComponent< PointLightComponent >();
-
-				p.Radiance = plc[ "Radiance" ].as< glm::vec3 >();
-				p.Intensity = plc[ "Intensity" ].as< float >();
-				p.Multiplier = plc[ "Multiplier" ].as< float >();
-				p.LightSize = plc[ "LightSize" ].as< float >();
-				p.Radius = plc[ "Radius" ].as< float >();
-				p.MinRadius = plc[ "MinRadius" ].as< float >();
-				p.Falloff = plc[ "Falloff" ].as< float >();
-			}
-
-			auto bcc = entity[ "BoxColliderComponent" ];
-			if( bcc )
-			{
-				auto& b = DeserialisedEntity->AddComponent< BoxColliderComponent >();
-
-				b.Extents = bcc[ "Extents" ].as< glm::vec3 >();
-				b.Offset = bcc[ "Offset" ].as< glm::vec3 >();
-				b.IsTrigger = bcc[ "IsTrigger" ].as< bool >();
-				b.AutoAdjustExtent = bcc[ "AutoAdjustExtent" ].as< bool >( false );
-			}
-
-			auto scc = entity[ "SphereColliderComponent" ];
-			if( scc )
-			{
-				auto& s = DeserialisedEntity->AddComponent< SphereColliderComponent >();
-
-				s.Radius = scc[ "Radius" ].as< float >();
-				s.Offset = scc[ "Offset" ].as< glm::vec3 >();
-				s.IsTrigger = scc[ "IsTrigger" ].as< bool >();
-			}
-
-			auto ccc = entity[ "CapsuleColliderComponent" ];
-			if( ccc )
-			{
-				auto& c = DeserialisedEntity->AddComponent< CapsuleColliderComponent >();
-
-				c.Height = ccc[ "Height" ].as< float >();
-				c.Radius = ccc[ "Radius" ].as< float >();
-				c.Offset = ccc[ "Offset" ].as< glm::vec3 >();
-				c.IsTrigger = ccc[ "IsTrigger" ].as< bool >();
-			}
-
-			auto rbc = entity[ "RigidbodyComponent" ];
-			if( rbc )
-			{
-				auto& rb = DeserialisedEntity->AddComponent< RigidbodyComponent >();
-
-				rb.IsKinematic = rbc[ "IsKinematic" ].as< bool >();
-				rb.UseCCD = rbc[ "CCD" ].as< bool >();
-				rb.Mass = rbc[ "Mass" ].as< float >();
-
-				auto lockNode = rbc[ "LockFlags" ];
-
-				if( lockNode )
-				{
-					rb.LockFlags = lockNode.as< int >( 0 );
-				}
-				else
-				{
-					rb.LockFlags = 0;
-				}
-			}
-
-			auto cc = entity[ "CameraComponent" ];
-			if( cc )
-			{
-				auto& c = DeserialisedEntity->AddComponent< CameraComponent >();
-
-				c.MainCamera = cc[ "MainCamera" ].as< bool >();
-			}
-
-			auto spc = entity[ "AudioPlayerComponent" ];
-			if( spc )
-			{
-				auto& sp = DeserialisedEntity->AddComponent< AudioPlayerComponent >();
-
-				sp.SpecAssetID = spc[ "AssetID" ].as< uint64_t >( 0 );
-				sp.Loop = spc[ "Loop" ].as< bool >( false );
-				sp.Mute = spc[ "Mute" ].as< bool >( false );
-				sp.Spatialization = spc[ "Spatialization" ].as<bool>( false );
-				sp.Volume = spc[ "VolumeMultiplier" ].as<float>( 1.0f );
-				sp.Pitch = spc[ "PitchMultiplier" ].as<float>( 1.0f );
-			}
-
-			auto alc = entity[ "AudioListenerComponent" ];
-			if( alc )
-			{
-				auto& al = DeserialisedEntity->AddComponent< AudioListenerComponent >();
-
-				al.Primary = alc[ "Primary" ].as< bool >();
-				al.Direction = alc[ "Direction" ].as< glm::vec3 >();
-				al.ConeInnerAngle = alc[ "ConeInner" ].as< float >( 0.0f );
-				al.ConeOuterAngle = alc[ "ConeOuter" ].as< float >( 0.0f );
-			}
-
-			auto nmsc = entity[ "NavigationMeshSpecificationComponent" ];
-			if( nmsc )
-			{
-				auto& nms = DeserialisedEntity->AddComponent< NavigationMeshSpecificationComponent >();
-				nms.Extent = nmsc[ "Extent" ].as< glm::vec3 >();
-
-				uint8_t bit = nmsc[ "HasBuilt" ].as<uint8_t>();
-				unsigned int externalData = bit ? 1 : 0;
-
-				nms.HasBuilt = externalData;
+				uint64_t id = child[ "ID" ].as<uint64_t>();
+				rc.ChildrenID.push_back( id );
 			}
 		}
-	}
 
+		const auto slc = rEntityNode[ "SkyLightComponent" ];
+		if( slc )
+		{
+			auto& s = DeserialisedEntity->AddComponent< SkylightComponent >();
+
+			s.DynamicSky = slc[ "IsPreetham" ].as< bool >();
+
+			if( s.DynamicSky )
+			{
+				auto PreethamSettings = slc[ "Preetham Settings" ];
+
+				s.Turbidity = PreethamSettings[ "Turbidity" ].as< float >();
+				s.Azimuth = PreethamSettings[ "Azimuth" ].as< float >();
+				s.Inclination = PreethamSettings[ "Inclination" ].as< float >();
+			}
+			else
+			{
+				// TODO...
+			}
+		}
+
+		const auto dlc = rEntityNode[ "DirectionalLightComponent" ];
+		if( dlc )
+		{
+			auto& d = DeserialisedEntity->AddComponent< DirectionalLightComponent >();
+
+			d.Radiance = dlc[ "Radiance" ].as< glm::vec3 >();
+			d.Intensity = dlc[ "Intensity" ].as< float >();
+			d.CastShadows = dlc[ "CastShadows" ].as< bool >();
+		}
+
+		const auto plc = rEntityNode[ "PointLightComponent" ];
+		if( plc )
+		{
+			auto& p = DeserialisedEntity->AddComponent< PointLightComponent >();
+
+			p.Radiance = plc[ "Radiance" ].as< glm::vec3 >();
+			p.Intensity = plc[ "Intensity" ].as< float >();
+			p.Multiplier = plc[ "Multiplier" ].as< float >();
+			p.LightSize = plc[ "LightSize" ].as< float >();
+			p.Radius = plc[ "Radius" ].as< float >();
+			p.MinRadius = plc[ "MinRadius" ].as< float >();
+			p.Falloff = plc[ "Falloff" ].as< float >();
+		}
+
+		const auto bcc = rEntityNode[ "BoxColliderComponent" ];
+		if( bcc )
+		{
+			auto& b = DeserialisedEntity->AddComponent< BoxColliderComponent >();
+
+			b.Extents = bcc[ "Extents" ].as< glm::vec3 >();
+			b.Offset = bcc[ "Offset" ].as< glm::vec3 >();
+			b.IsTrigger = bcc[ "IsTrigger" ].as< bool >();
+			b.AutoAdjustExtent = bcc[ "AutoAdjustExtent" ].as< bool >( false );
+		}
+
+		const auto scc = rEntityNode[ "SphereColliderComponent" ];
+		if( scc )
+		{
+			auto& s = DeserialisedEntity->AddComponent< SphereColliderComponent >();
+
+			s.Radius = scc[ "Radius" ].as< float >();
+			s.Offset = scc[ "Offset" ].as< glm::vec3 >();
+			s.IsTrigger = scc[ "IsTrigger" ].as< bool >();
+		}
+
+		const auto ccc = rEntityNode[ "CapsuleColliderComponent" ];
+		if( ccc )
+		{
+			auto& c = DeserialisedEntity->AddComponent< CapsuleColliderComponent >();
+
+			c.Height = ccc[ "Height" ].as< float >();
+			c.Radius = ccc[ "Radius" ].as< float >();
+			c.Offset = ccc[ "Offset" ].as< glm::vec3 >();
+			c.IsTrigger = ccc[ "IsTrigger" ].as< bool >();
+		}
+
+		const auto rbc = rEntityNode[ "RigidbodyComponent" ];
+		if( rbc )
+		{
+			auto& rb = DeserialisedEntity->AddComponent< RigidbodyComponent >();
+
+			rb.IsKinematic = rbc[ "IsKinematic" ].as< bool >();
+			rb.UseCCD = rbc[ "CCD" ].as< bool >();
+			rb.Mass = rbc[ "Mass" ].as< float >();
+
+			auto lockNode = rbc[ "LockFlags" ];
+
+			if( lockNode )
+			{
+				rb.LockFlags = lockNode.as< int >( 0 );
+			}
+			else
+			{
+				rb.LockFlags = 0;
+			}
+		}
+
+		const auto cc = rEntityNode[ "CameraComponent" ];
+		if( cc )
+		{
+			auto& c = DeserialisedEntity->AddComponent< CameraComponent >();
+
+			c.MainCamera = cc[ "MainCamera" ].as< bool >();
+		}
+
+		const auto spc = rEntityNode[ "AudioPlayerComponent" ];
+		if( spc )
+		{
+			auto& sp = DeserialisedEntity->AddComponent< AudioPlayerComponent >();
+
+			sp.SpecAssetID = spc[ "AssetID" ].as< uint64_t >( 0 );
+			sp.Loop = spc[ "Loop" ].as< bool >( false );
+			sp.Mute = spc[ "Mute" ].as< bool >( false );
+			sp.Spatialisation = spc[ "Spatialization" ].as<bool>( false );
+			sp.Volume = spc[ "VolumeMultiplier" ].as<float>( 1.0f );
+			sp.Pitch = spc[ "PitchMultiplier" ].as<float>( 1.0f );
+		}
+
+		const auto alc = rEntityNode[ "AudioListenerComponent" ];
+		if( alc )
+		{
+			auto& al = DeserialisedEntity->AddComponent< AudioListenerComponent >();
+
+			al.Primary = alc[ "Primary" ].as< bool >();
+			al.Direction = alc[ "Direction" ].as< glm::vec3 >();
+			al.ConeInnerAngle = alc[ "ConeInner" ].as< float >( 0.0f );
+			al.ConeOuterAngle = alc[ "ConeOuter" ].as< float >( 0.0f );
+		}
+
+		const auto nmsc = rEntityNode[ "NavigationMeshSpecificationComponent" ];
+		if( nmsc )
+		{
+			auto& nms = DeserialisedEntity->AddComponent< NavigationMeshSpecificationComponent >();
+			nms.Extent = nmsc[ "Extent" ].as< glm::vec3 >();
+
+			uint8_t bit = nmsc[ "HasBuilt" ].as<uint8_t>();
+			unsigned int externalData = bit ? 1 : 0;
+
+			nms.HasBuilt = externalData;
+		}
+	}
 }

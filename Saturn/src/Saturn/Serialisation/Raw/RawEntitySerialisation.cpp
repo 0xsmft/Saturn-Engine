@@ -290,7 +290,7 @@ namespace Saturn {
 				WriteAssetDependency( spc.SpecAssetID, rStream );
 				RawSerialisation::WriteObject( spc.Loop, rStream );
 				RawSerialisation::WriteObject( spc.Mute, rStream );
-				RawSerialisation::WriteObject( spc.Spatialization, rStream );
+				RawSerialisation::WriteObject( spc.Spatialisation, rStream );
 				RawSerialisation::WriteObject( spc.Volume, rStream );
 				RawSerialisation::WriteObject( spc.Pitch, rStream );
 			} );
@@ -403,7 +403,7 @@ namespace Saturn {
 						if( asset )
 						{
 							mc.MaterialRegistry->AddAsset( asset );
-							mc.MaterialRegistry->SetOverries( ( uint32_t ) i, true );
+							mc.MaterialRegistry->SetOverrides( ( uint32_t ) i, true );
 						}
 					}
 				}
@@ -552,7 +552,7 @@ namespace Saturn {
 				ReadAssetDependency( spc.SpecAssetID, rStream );
 				RawSerialisation::ReadObject( spc.Loop, rStream );
 				RawSerialisation::ReadObject( spc.Mute, rStream );
-				RawSerialisation::ReadObject( spc.Spatialization, rStream );
+				RawSerialisation::ReadObject( spc.Spatialisation, rStream );
 				RawSerialisation::ReadObject( spc.Volume, rStream );
 				RawSerialisation::ReadObject( spc.Pitch, rStream );
 			} );

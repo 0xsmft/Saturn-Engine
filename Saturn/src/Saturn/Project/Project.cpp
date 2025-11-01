@@ -419,7 +419,7 @@ namespace Saturn {
 		BuildFilePath /= m_Config.Name + ".Build.cs";
 
 		if( !std::filesystem::exists( BuildFilePath ) || force )
-			std::filesystem::copy( "content/Templates/%PROJECT_NAME%.Build.cs", BuildFilePath );
+			std::filesystem::copy( "content/Templates/%PROJECT_NAME%.Build.cs", BuildFilePath, std::filesystem::copy_options::overwrite_existing );
 	}
 
 	void Project::PrepForDist() const

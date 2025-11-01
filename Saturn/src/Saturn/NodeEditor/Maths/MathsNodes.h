@@ -32,17 +32,19 @@
 #include "Saturn/NodeEditor/NodeEditorBlueprintNode.h"
 
 namespace Saturn {
+	
+	//////////////////////////////////////////////////////////////////////////
+	// TODO: Not great, we have too much duplication
 
 	SCLASS()
 	class MathsAddFloats : public NodeEditorBlueprintNode
 	{
+		SAT_DECLARE_CLASS( MathsAddFloats, NodeEditorBlueprintNode );
 	public:
 		MathsAddFloats();
 		MathsAddFloats( const std::string& rName );
 
 		virtual ~MathsAddFloats();
-
-		NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
 
 	private:
 		void CreateNode();
@@ -51,13 +53,12 @@ namespace Saturn {
 	SCLASS()
 	class MathsSubFloats : public NodeEditorBlueprintNode
 	{
+		SAT_DECLARE_CLASS( MathsSubFloats, NodeEditorBlueprintNode );
 	public:
 		MathsSubFloats();
 		MathsSubFloats( const std::string& rName );
 
 		virtual ~MathsSubFloats();
-
-		NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
 
 	private:
 		void CreateNode();
@@ -66,13 +67,12 @@ namespace Saturn {
 	SCLASS()
 	class MathsMulFloats : public NodeEditorBlueprintNode
 	{
+		SAT_DECLARE_CLASS( MathsMulFloats, NodeEditorBlueprintNode );
 	public:
 		MathsMulFloats();
 		MathsMulFloats( const std::string& rName );
 
 		virtual ~MathsMulFloats();
-
-		NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
 
 	private:
 		void CreateNode();
@@ -81,15 +81,54 @@ namespace Saturn {
 	SCLASS()
 	class MathsDivideFloats : public NodeEditorBlueprintNode
 	{
+		SAT_DECLARE_CLASS( MathsDivideFloats, NodeEditorBlueprintNode );
 	public:
 		MathsDivideFloats();
 		MathsDivideFloats( const std::string& rName );
 
 		virtual ~MathsDivideFloats();
 
-		NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
+	private:
+		void CreateNode();
+	};
+
+	SCLASS()
+	class MathsGreaterThanFloats : public NodeEditorBlueprintNode
+	{
+		SAT_DECLARE_CLASS( MathsGreaterThanFloats, NodeEditorBlueprintNode );
+	public:
+		MathsGreaterThanFloats();
+		MathsGreaterThanFloats( const std::string& rName );
+
+		virtual ~MathsGreaterThanFloats();
+
+		virtual NodeEditorTaskBase* ConvertToTask() override;
 
 	private:
 		void CreateNode();
+	};
+
+	SCLASS()
+	class MathsLessThanFloats : public NodeEditorBlueprintNode
+	{
+		SAT_DECLARE_CLASS( MathsLessThanFloats, NodeEditorBlueprintNode );
+	public:
+		MathsLessThanFloats();
+		MathsLessThanFloats( const std::string& rName );
+
+		virtual ~MathsLessThanFloats();
+
+		virtual NodeEditorTaskBase* ConvertToTask() override;
+
+	private:
+		void CreateNode();
+	};
+
+	//////////////////////////////////////////////////////////////////////////
+	
+	class MathsNodesAuxiliary
+	{
+	public:
+		static SharedPtr<NodeEditorNodeBase> DrawContextMenu( SharedPtr<NodeEditor> nodeEditor );
 	};
 }

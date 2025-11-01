@@ -114,7 +114,7 @@ namespace Saturn {
 		SetupNodeEditorCallbacks();
 
 		// Maybe in the future we would want to do some stuff here.
-		m_NodeEditor->Open( true );
+		m_NodeEditor->OpenWindow( true );
 		m_Open = true;
 	}
 
@@ -212,8 +212,8 @@ namespace Saturn {
 
 			SharedPtr<NodeEditorNodeBase> OutputNode = m_NodeEditor->FindNode( m_OutputNodeID );
 
-			m_NodeEditor->CreateLink( AssetNode->Outputs[ 0 ], Sampler2DNode->Inputs[ 0 ] );
-			m_NodeEditor->CreateLink( Sampler2DNode->Outputs[ 0 ], OutputNode->Inputs[ slot ] );
+			m_NodeEditor->CreateLink( AssetNode->Outputs[ 0 ], Sampler2DNode->Inputs[ 0 ], AssetNode->Outputs[ 0 ]->GetPinColor() );
+			m_NodeEditor->CreateLink( Sampler2DNode->Outputs[ 0 ], OutputNode->Inputs[ slot ], Sampler2DNode->Outputs[ 0 ]->GetPinColor() );
 		}
 		else if( slot == 0 )
 		{
@@ -223,7 +223,7 @@ namespace Saturn {
 			colorPickerNode->SetColor( albedoColor );
 
 			SharedPtr<NodeEditorNodeBase> outputNode = m_NodeEditor->FindNode( m_OutputNodeID );
-			m_NodeEditor->CreateLink( colorPickerNode->Outputs[ slot ], outputNode->Inputs[ slot ] );
+			m_NodeEditor->CreateLink( colorPickerNode->Outputs[ slot ], outputNode->Inputs[ slot ], colorPickerNode->Outputs[ slot ]->GetPinColor() );
 		}
 	}
 
@@ -235,7 +235,7 @@ namespace Saturn {
 		}
 		else if( m_HostMaterialAsset )
 		{
-			m_NodeEditor->Open( false );
+			m_NodeEditor->OpenWindow( false );
 			m_Open = false;
 		}
 	}

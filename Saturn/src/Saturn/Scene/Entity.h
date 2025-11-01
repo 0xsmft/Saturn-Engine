@@ -93,6 +93,18 @@ namespace Saturn {
 			m_Scene->RemoveComponent<T>( m_EntityHandle );
 		}
 
+		template<typename T>
+		[[nodiscard]] inline T* TryGetComponent() 
+		{
+			return m_Scene->TryGetComponent<T>( m_EntityHandle );
+		}
+
+		template<typename T>
+		[[nodiscard]] inline const T* TryGetComponent() const
+		{
+			return m_Scene->TryGetComponent<T>( m_EntityHandle );
+		}
+
 	public:
 		[[nodiscard]] bool Valid()
 		{

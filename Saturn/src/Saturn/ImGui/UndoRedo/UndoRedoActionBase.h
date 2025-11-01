@@ -55,7 +55,8 @@ namespace Saturn {
 	private:
 		std::string m_Name;
 
-		// Every action should have an identifier that states who it's associated with. For example any entity action should have the entity handle as the identifier, so when the entity is deleted the action can be removed.
+		// Every action should have an identifier that states who it's associated with. 
+		// For example any entity action should have the entity handle as the identifier, so when the entity is deleted the action can be removed.
 		UUID m_Identifier{};
 	};
 
@@ -85,33 +86,61 @@ namespace Saturn {
 		Ty* m_pTarget = nullptr;
 	};
 
-	using UndoRedoActionModifyInt = UndoRedoActionModifyT<int>;
-	using UndoRedoActionModifyFloat = UndoRedoActionModifyT<float>;
-	using UndoRedoActionModifyDouble = UndoRedoActionModifyT<double>;
-	using UndoRedoActionModifyBool = UndoRedoActionModifyT<bool>;
+	using UndoRedoActionModifyInt     = UndoRedoActionModifyT<int>;
+	using UndoRedoActionModifyFloat   = UndoRedoActionModifyT<float>;
+	using UndoRedoActionModifyDouble  = UndoRedoActionModifyT<double>;
+	using UndoRedoActionModifyBool    = UndoRedoActionModifyT<bool>;
 
-	using UndoRedoActionModifyInt8 = UndoRedoActionModifyT<int8_t>;
-	using UndoRedoActionModifyInt16 = UndoRedoActionModifyT<int16_t>;
-	using UndoRedoActionModifyInt32 = UndoRedoActionModifyInt;
-	using UndoRedoActionModifyInt64 = UndoRedoActionModifyT<int64_t>;
-	using UndoRedoActionModifyUInt8 = UndoRedoActionModifyT<uint8_t>;
-	using UndoRedoActionModifyUInt16 = UndoRedoActionModifyT<uint16_t>;
-	using UndoRedoActionModifyUInt32 = UndoRedoActionModifyT<uint32_t>;
-	using UndoRedoActionModifyUInt64 = UndoRedoActionModifyT<uint64_t>;
-	using UndoRedoActionModifySizeT = UndoRedoActionModifyT<size_t>;
+	using UndoRedoActionModifyInt8    = UndoRedoActionModifyT<int8_t>;
+	using UndoRedoActionModifyInt16   = UndoRedoActionModifyT<int16_t>;
+	using UndoRedoActionModifyInt32   = UndoRedoActionModifyInt;
+	using UndoRedoActionModifyInt64   = UndoRedoActionModifyT<int64_t>;
+	using UndoRedoActionModifyUInt8   = UndoRedoActionModifyT<uint8_t>;
+	using UndoRedoActionModifyUInt16  = UndoRedoActionModifyT<uint16_t>;
+	using UndoRedoActionModifyUInt32  = UndoRedoActionModifyT<uint32_t>;
+	using UndoRedoActionModifyUInt64  = UndoRedoActionModifyT<uint64_t>;
+	using UndoRedoActionModifySizeT   = UndoRedoActionModifyT<size_t>;
 
 	// Char types
-	using UndoRedoActionModifyChar = UndoRedoActionModifyT<char>;
-	using UndoRedoActionModifyWChar = UndoRedoActionModifyT<wchar_t>;
+	using UndoRedoActionModifyChar    = UndoRedoActionModifyT<char>;
+	using UndoRedoActionModifyWChar   = UndoRedoActionModifyT<wchar_t>;
 
 	// Maths
-	using UndoRedoActionModifyVec2 = UndoRedoActionModifyT<glm::vec2>;
-	using UndoRedoActionModifyVec3 = UndoRedoActionModifyT<glm::vec3>;
-	using UndoRedoActionModifyVec4 = UndoRedoActionModifyT<glm::vec4>;
-	using UndoRedoActionModifyMat4 = UndoRedoActionModifyT<glm::mat4>;
+	using UndoRedoActionModifyVec2    = UndoRedoActionModifyT<glm::vec2>;
+	using UndoRedoActionModifyVec3    = UndoRedoActionModifyT<glm::vec3>;
+	using UndoRedoActionModifyVec4    = UndoRedoActionModifyT<glm::vec4>;
+	using UndoRedoActionModifyMat4    = UndoRedoActionModifyT<glm::mat4>;
 	
 	// Strings
-	using UndoRedoActionModifyString = UndoRedoActionModifyT<std::string>;
+	using UndoRedoActionModifyString  = UndoRedoActionModifyT<std::string>;
 	using UndoRedoActionModifyWString = UndoRedoActionModifyT<std::wstring>;
+
+#define SAT_UNDO_REDO_MODIFY_INT_NAME     "Modify Int"
+#define SAT_UNDO_REDO_MODIFY_FLOAT_NAME   "Modify Float"
+#define SAT_UNDO_REDO_MODIFY_DOUBLE_NAME  "Modify Double"
+#define SAT_UNDO_REDO_MODIFY_BOOL_NAME    "Modify Bool"
+
+#define SAT_UNDO_REDO_MODIFY_INT8_NAME    "Modify Int8"
+#define SAT_UNDO_REDO_MODIFY_INT16_NAME   "Modify Int16"
+#define SAT_UNDO_REDO_MODIFY_INT32_NAME   SAT_UNDO_REDO_MODIFY_FLOAT_NAME
+#define SAT_UNDO_REDO_MODIFY_INT64_NAME   "Modify Int64"
+
+#define SAT_UNDO_REDO_MODIFY_UINT8_NAME   "Modify UInt8"
+#define SAT_UNDO_REDO_MODIFY_UINT16_NAME  "Modify UInt16"
+#define SAT_UNDO_REDO_MODIFY_UINT32_NAME  "Modify UInt32"
+#define SAT_UNDO_REDO_MODIFY_UINT64_NAME  "Modify UInt64"
+
+#define SAT_UNDO_REDO_MODIFY_SIZE_T_NAME  "Modify Size"
+
+#define SAT_UNDO_REDO_MODIFY_CHAR_NAME    "Modify Character"
+#define SAT_UNDO_REDO_MODIFY_WCHAR_NAME   SAT_UNDO_REDO_MODIFY_CHAR_NAME
+									      
+#define SAT_UNDO_REDO_MODIFY_VEC2_NAME    "Modify Vector2"
+#define SAT_UNDO_REDO_MODIFY_VEC3_NAME    "Modify Vector3"
+#define SAT_UNDO_REDO_MODIFY_VEC4_NAME    "Modify Vector4"
+#define SAT_UNDO_REDO_MODIFY_MAT4_NAME    "Modify Matrix4"
+
+#define SAT_UNDO_REDO_MODIFY_STRING_NAME  "Modify String"
+#define SAT_UNDO_REDO_MODIFY_WSTRING_NAME SAT_UNDO_REDO_MODIFY_STRING_NAME
 
 }

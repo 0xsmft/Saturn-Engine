@@ -31,6 +31,12 @@
 
 #include "Saturn/NodeEditor/Runtime/NodeEditorRuntime.h"
 
+// TODO: Should remove this
+#include "MathsNodeLibrary.h"
+
+#include "MathsTasks.h"
+#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
+
 namespace Saturn {
 
 	MathsAddFloats::MathsAddFloats()
@@ -60,37 +66,6 @@ namespace Saturn {
 
 	MathsAddFloats::~MathsAddFloats()
 	{
-	}
-
-	Saturn::NodeEvaluationState MathsAddFloats::EvaluateNode( NodeEditorRuntime* evaluator )
-	{
-		if( evaluator == nullptr )
-			return NodeEvaluationState::Failed;
-		
-		float Result{};
-
-		for( size_t i = 0; i < Inputs.size(); i++ )
-		{
-			Ref<FloatPin> pin = Inputs[ i ].As<FloatPin>();
-			Result += pin->Data;
-		}
-
-		Outputs[ 0 ].As<FloatPin>()->Data = Result;
-
-		// Write our output to other node input
-		auto links = evaluator->GetTargetEditor()->FindLinksByPin( Outputs[ 0 ]->ID );
-
-		for( const auto& rLink : links )
-		{
-			Ref<Pin> pin = evaluator->GetTargetEditor()->FindPin( rLink->EndPinID );
-			if( pin && pin->Type == PinType::Float )
-			{
-				Ref<FloatPin> fpin = pin.As<FloatPin>();
-				fpin->Data = Result;
-			}
-		}
-
-		return NodeEvaluationState::Evaluated;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -125,54 +100,6 @@ namespace Saturn {
 		Outputs.push_back( Ref<FloatPin>::Create( "", PinKind::Output ) );
 	}
 
-	Saturn::NodeEvaluationState MathsSubFloats::EvaluateNode( NodeEditorRuntime* evaluator )
-	{
-		if( evaluator == nullptr )
-			return NodeEvaluationState::Failed;
-
-		float Result{};
-
-		float maxValue = std::numeric_limits<float>::lowest();
-		size_t maxIndex = 0;
-
-		for( size_t i = 0; i < Inputs.size(); i++ )
-		{
-			Ref<FloatPin> pin = Inputs[ i ].As<FloatPin>();
-			if( pin->Data > maxValue )
-			{
-				maxValue = pin->Data;
-				maxIndex = i;
-			}
-		}
-
-		// Subtract from highest
-		Result = maxValue;
-
-		for( size_t i = 0; i < Inputs.size(); i++ )
-		{
-			if( i == maxIndex ) continue;
-
-			Ref<FloatPin> pin = Inputs[ i ].As<FloatPin>();
-			Result -= pin->Data;
-		}
-
-		Outputs[ 0 ].As<FloatPin>()->Data = Result;
-
-		// Write our output to other node input
-		auto links = evaluator->GetTargetEditor()->FindLinksByPin( Outputs[ 0 ]->ID );
-		for( const auto& rLink : links )
-		{
-			Ref<Pin> pin = evaluator->GetTargetEditor()->FindPin( rLink->EndPinID );
-			if( pin && pin->Type == PinType::Float )
-			{
-				Ref<FloatPin> fpin = pin.As<FloatPin>();
-				fpin->Data = Result;
-			}
-		}
-
-		return NodeEvaluationState::Evaluated;
-	}
-
 	//////////////////////////////////////////////////////////////////////////
 	// MATHS MULTIPLY (FLOAT)
 
@@ -203,36 +130,6 @@ namespace Saturn {
 
 	MathsMulFloats::~MathsMulFloats()
 	{
-	}
-
-	Saturn::NodeEvaluationState MathsMulFloats::EvaluateNode( NodeEditorRuntime* evaluator )
-	{
-		if( evaluator == nullptr )
-			return NodeEvaluationState::Failed;
-
-		float Result{};
-
-		for( size_t i = 0; i < Inputs.size(); i++ )
-		{
-			Ref<FloatPin> pin = Inputs[ i ].As<FloatPin>();
-			Result *= pin->Data;
-		}
-
-		Outputs[ 0 ].As<FloatPin>()->Data = Result;
-
-		// Write our output to other node input
-		auto links = evaluator->GetTargetEditor()->FindLinksByPin( Outputs[ 0 ]->ID );
-		for( const auto& rLink : links )
-		{
-			Ref<Pin> pin = evaluator->GetTargetEditor()->FindPin( rLink->EndPinID );
-			if( pin && pin->Type == PinType::Float )
-			{
-				Ref<FloatPin> fpin = pin.As<FloatPin>();
-				fpin->Data = Result;
-			}
-		}
-
-		return NodeEvaluationState::Evaluated;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -267,51 +164,127 @@ namespace Saturn {
 	{
 	}
 
-	Saturn::NodeEvaluationState MathsDivideFloats::EvaluateNode( NodeEditorRuntime* evaluator )
+	//////////////////////////////////////////////////////////////////////
+	// MATHS NODE AUXILIARY
+
+	SharedPtr<NodeEditorNodeBase> MathsNodesAuxiliary::DrawContextMenu( SharedPtr<NodeEditor> nodeEditor )
 	{
-		if( evaluator == nullptr )
-			return NodeEvaluationState::Failed;
+		SharedPtr<NodeEditorNodeBase> node;
 
-		float Result{};
-
-		float maxValue = std::numeric_limits<float>::lowest();
-		size_t maxIndex = 0;
-
-		for( size_t i = 0; i < Inputs.size(); i++ )
+		if( ImGui::MenuItem( "Add (Float)" ) ) 
 		{
-			Ref<FloatPin> pin = Inputs[ i ].As<FloatPin>();
-			if( pin->Data > maxValue )
-			{
-				maxValue = pin->Data;
-				maxIndex = i;
-			}
+			node = MathsNodeLibrary::SpawnMathAdd( nodeEditor );
 		}
 
-		Result = maxValue;
-
-		for( size_t i = 0; i < Inputs.size(); i++ )
+		if( ImGui::MenuItem( "Subtract (Float)" ) )
 		{
-			if( i == maxIndex ) continue;
-
-			Ref<FloatPin> pin = Inputs[ i ].As<FloatPin>();
-			Result /= pin->Data;
+			node = MathsNodeLibrary::SpawnMathSub( nodeEditor );
 		}
 
-		Outputs[ 0 ].As<FloatPin>()->Data = Result;
-
-		// Write our output to other node input
-		auto links = evaluator->GetTargetEditor()->FindLinksByPin( Outputs[ 0 ]->ID );
-		for( const auto& rLink : links )
+		if( ImGui::MenuItem( "Multiply (Float)" ) )
 		{
-			Ref<Pin> pin = evaluator->GetTargetEditor()->FindPin( rLink->EndPinID );
-			if( pin && pin->Type == PinType::Float )
-			{
-				Ref<FloatPin> fpin = pin.As<FloatPin>();
-				fpin->Data = Result;
-			}
+			node = MathsNodeLibrary::SpawnMathMul( nodeEditor );
 		}
 
-		return NodeEvaluationState::Evaluated;
+		if( ImGui::MenuItem( "Divide (Float)" ) )
+		{
+			node = MathsNodeLibrary::SpawnMathDiv( nodeEditor );
+		}
+
+		if( ImGui::MenuItem( "Greater Than (Float)" ) )
+		{
+			node = MathsNodeLibrary::SpawnMathGT( nodeEditor );
+		}
+
+		if( ImGui::MenuItem( "Less Than (Float)" ) )
+		{
+			node = MathsNodeLibrary::SpawnMathLT( nodeEditor );
+		}
+
+		return node;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// MATHS GREATER THAN (FLOAT)
+
+	MathsGreaterThanFloats::MathsGreaterThanFloats()
+		: NodeEditorBlueprintNode( "Greater Than (Float)" )
+	{
+		CreateNode();
+	}
+
+	MathsGreaterThanFloats::MathsGreaterThanFloats( const std::string& rName )
+		: NodeEditorBlueprintNode( rName )
+	{
+		CreateNode();
+	}
+
+	void MathsGreaterThanFloats::CreateNode()
+	{
+		ExecutionType = NodeExecutionType::GreaterThan;
+#if !defined(SAT_DIST)
+		Color = ImColor( 147, 226, 74 );
+#endif
+
+		Inputs.push_back( Ref<FloatPin>::Create( "In", PinKind::Input ) );
+		Inputs.push_back( Ref<FloatPin>::Create( "Value", PinKind::Input ) );
+
+		Outputs.push_back( Ref<BoolPin>::Create( "Out", PinKind::Output ) );
+	}
+
+	MathsGreaterThanFloats::~MathsGreaterThanFloats()
+	{
+	}
+
+	NodeEditorTaskBase* MathsGreaterThanFloats::ConvertToTask()
+	{
+		return NewObject<SMathsGreaterThanFloatsTask>();
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// MATHS LESS THAN (FLOAT)
+
+	MathsLessThanFloats::MathsLessThanFloats()
+		: NodeEditorBlueprintNode( "Less Than (Float)" )
+	{
+		CreateNode();
+	}
+
+	MathsLessThanFloats::MathsLessThanFloats( const std::string& rName )
+		: NodeEditorBlueprintNode( rName )
+	{
+		CreateNode();
+	}
+
+	void MathsLessThanFloats::CreateNode()
+	{
+		ExecutionType = NodeExecutionType::LessThan;
+#if !defined(SAT_DIST)
+		Color = ImColor( 147, 226, 74 );
+#endif
+
+		Inputs.push_back( Ref<FloatPin>::Create( "In", PinKind::Input ) );
+		Inputs.push_back( Ref<FloatPin>::Create( "Value", PinKind::Input ) );
+
+		Outputs.push_back( Ref<BoolPin>::Create( "Out", PinKind::Output ) );
+	}
+
+	MathsLessThanFloats::~MathsLessThanFloats()
+	{
+	}
+
+	NodeEditorTaskBase* MathsLessThanFloats::ConvertToTask()
+	{
+		return NewObject<SMathsLessThanFloatsTask>();
 	}
 
 }
+
+#include "Saturn/GameFramework/Core/EngineGenerated.h"
+
+SAT_X31_CREATE_AUTO_REG( MathsAddFloats );
+SAT_X31_CREATE_AUTO_REG( MathsSubFloats );
+SAT_X31_CREATE_AUTO_REG( MathsMulFloats );
+SAT_X31_CREATE_AUTO_REG( MathsDivideFloats );
+SAT_X31_CREATE_AUTO_REG( MathsGreaterThanFloats );
+SAT_X31_CREATE_AUTO_REG( MathsLessThanFloats );

@@ -440,6 +440,25 @@ namespace Saturn {
 			return m_Registry.get<Ty>( entity );
 		}
 
+		template<typename Ty>
+		[[nodiscard]] Ty* TryGetComponent( entt::entity entity )
+		{
+#if defined( SAT_ENABLE_GAMETHREAD )
+			std::unique_lock<std::mutex> Lock( m_Mutex, std::try_to_lock );
+#endif
+			return m_Registry.try_get<Ty>( entity );
+		}
+
+		template<typename Ty>
+		[[nodiscard]] const Ty* TryGetComponent( entt::entity entity ) const
+		{
+#if defined( SAT_ENABLE_GAMETHREAD )
+			std::unique_lock<std::mutex> Lock( m_Mutex, std::try_to_lock );
+#endif
+			return m_Registry.try_get<Ty>( entity );
+		}
+
+	public:
 		void PrepareForNavMeshBuilding();
 
 		void OnNavMeshBuildCompleted();

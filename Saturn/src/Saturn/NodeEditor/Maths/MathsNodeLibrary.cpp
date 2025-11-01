@@ -31,11 +31,13 @@
 
 #include "MathsNodes.h"
 
+#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
+
 namespace Saturn {
 
 	SharedPtr<MathsAddFloats> MathsNodeLibrary::SpawnMathAdd( SharedPtr<NodeEditorBase> rNodeEditor )
 	{
-		SharedPtr<MathsAddFloats> node = SharedPtr<MathsAddFloats>::Create();
+		SharedPtr<MathsAddFloats> node = ( MathsAddFloats* )ClassMetadataHandler::Get().CreateClassObject( MathsAddFloats::StaticClass() );
 		rNodeEditor->AddNode( node );
 
 		return node;
@@ -43,7 +45,7 @@ namespace Saturn {
 
 	SharedPtr<MathsSubFloats> MathsNodeLibrary::SpawnMathSub( SharedPtr<NodeEditorBase> rNodeEditor )
 	{
-		SharedPtr<MathsSubFloats> node = SharedPtr<MathsSubFloats>::Create();
+		SharedPtr<MathsSubFloats> node = ( MathsSubFloats* ) ClassMetadataHandler::Get().CreateClassObject( MathsSubFloats::StaticClass() );
 		rNodeEditor->AddNode( node );
 
 		return node;
@@ -51,7 +53,7 @@ namespace Saturn {
 
 	SharedPtr<MathsMulFloats> MathsNodeLibrary::SpawnMathMul( SharedPtr<NodeEditorBase> rNodeEditor )
 	{
-		SharedPtr<MathsMulFloats> node = SharedPtr<MathsMulFloats>::Create();
+		SharedPtr<MathsMulFloats> node = ( MathsMulFloats* ) ClassMetadataHandler::Get().CreateClassObject( MathsMulFloats::StaticClass() );
 		rNodeEditor->AddNode( node );
 
 		return node;
@@ -59,9 +61,25 @@ namespace Saturn {
 
 	SharedPtr<MathsDivideFloats> MathsNodeLibrary::SpawnMathDiv( SharedPtr<NodeEditorBase> rNodeEditor )
 	{
-		SharedPtr<MathsDivideFloats> node = SharedPtr<MathsDivideFloats>::Create();
+		SharedPtr<MathsDivideFloats> node = ( MathsDivideFloats* ) ClassMetadataHandler::Get().CreateClassObject( MathsDivideFloats::StaticClass() );
 		rNodeEditor->AddNode( node );
 
+		return node;
+	}
+
+	SharedPtr<MathsLessThanFloats> MathsNodeLibrary::SpawnMathLT( SharedPtr<NodeEditorBase> rNodeEditor )
+	{
+		SharedPtr<MathsLessThanFloats> node = NewObject<MathsLessThanFloats>();
+
+		rNodeEditor->AddNode( node );
+		return node;
+	}
+
+	SharedPtr<MathsGreaterThanFloats> MathsNodeLibrary::SpawnMathGT( SharedPtr<NodeEditorBase> rNodeEditor )
+	{
+		SharedPtr<MathsGreaterThanFloats> node = NewObject<MathsGreaterThanFloats>();
+
+		rNodeEditor->AddNode( node );
 		return node;
 	}
 

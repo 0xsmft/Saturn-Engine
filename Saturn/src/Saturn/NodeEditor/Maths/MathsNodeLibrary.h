@@ -36,15 +36,19 @@ namespace Saturn {
 	class MathsSubFloats;
 	class MathsMulFloats;
 	class MathsDivideFloats;
+	class MathsLessThanFloats;
+	class MathsGreaterThanFloats;
 
 	class MathsNodeLibrary
 	{
 	public:
 		static NodeEditorType GetStaticType() { return NodeEditorType::Default; }
 
-		static SharedPtr<MathsAddFloats>    SpawnMathAdd( SharedPtr<NodeEditorBase> rNodeEditor );
-		static SharedPtr<MathsSubFloats>    SpawnMathSub( SharedPtr<NodeEditorBase> rNodeEditor );
-		static SharedPtr<MathsMulFloats>    SpawnMathMul( SharedPtr<NodeEditorBase> rNodeEditor );
-		static SharedPtr<MathsDivideFloats> SpawnMathDiv( SharedPtr<NodeEditorBase> rNodeEditor );
+		static SharedPtr<MathsAddFloats>         SpawnMathAdd( SharedPtr<NodeEditorBase> rNodeEditor );
+		static SharedPtr<MathsSubFloats>         SpawnMathSub( SharedPtr<NodeEditorBase> rNodeEditor );
+		static SharedPtr<MathsMulFloats>         SpawnMathMul( SharedPtr<NodeEditorBase> rNodeEditor );
+		static SharedPtr<MathsDivideFloats>      SpawnMathDiv( SharedPtr<NodeEditorBase> rNodeEditor );
+		static SharedPtr<MathsLessThanFloats>    SpawnMathLT ( SharedPtr<NodeEditorBase> rNodeEditor );
+		static SharedPtr<MathsGreaterThanFloats> SpawnMathGT ( SharedPtr<NodeEditorBase> rNodeEditor );
 	};
 }

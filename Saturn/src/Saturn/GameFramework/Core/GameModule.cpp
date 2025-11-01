@@ -33,7 +33,7 @@
 
 #include "Saturn/Scene/Entity.h"
 #include "Saturn/Project/Project.h"
-#include "Saturn/Core/OptickProfiler.h"
+#include "Saturn/Core/Profiler.h"
 
 namespace Saturn {
 

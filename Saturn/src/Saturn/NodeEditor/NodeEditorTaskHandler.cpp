@@ -33,6 +33,13 @@
 
 namespace Saturn {
 
+	NodeEditorTaskHandler::~NodeEditorTaskHandler()
+	{
+		m_CurrentTask = nullptr;
+		m_CurrentTaskIndex = 0;
+		m_Tasks.clear();
+	}
+
 	void NodeEditorTaskHandler::Init( SharedPtr<NodeEditorBase> nodeEditor )
 	{
 		for( const auto& [id, rNode] : nodeEditor->GetNodes() )
@@ -40,7 +47,7 @@ namespace Saturn {
 			NodeEditorTaskBase* pTask = rNode->ConvertToTask();
 			if( pTask )
 			{
-				pTask->InitialiseTask( nodeEditor.Get(), rNode.Get() );
+				pTask->InitialiseTask( this, nodeEditor.Get(), rNode.Get() );
 
 				m_Tasks.push_back( pTask );
 			}
@@ -81,6 +88,31 @@ namespace Saturn {
 				m_CurrentTask = m_Tasks.at( m_CurrentTaskIndex++ );
 			}
 		}
+	}
+
+	void NodeEditorTaskHandler::InsertDataLine( UUID linkID, const DataLine& rLine )
+	{
+		const auto itr = m_Lines.find( linkID );
+		if( itr == m_Lines.end() )
+		{
+			m_Lines.insert( { linkID, rLine } );
+		}
+	}
+
+	DataLine* NodeEditorTaskHandler::GetDataLine( UUID linkID )
+	{
+		const auto itr = m_Lines.find( linkID );
+		if( itr != m_Lines.end() )
+		{
+			return &itr->second;
+		}
+
+		return nullptr;
+	}
+
+	bool NodeEditorTaskHandler::DoesDataLineExist( UUID linkID )
+	{
+		return m_Lines.contains( linkID );
 	}
 
 }

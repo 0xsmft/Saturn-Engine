@@ -93,8 +93,11 @@ namespace Saturn {
 
 #if !defined(SAT_DIST)
 		RawSerialisation::ReadObject( Color, rStream );
-		RawSerialisation::ReadObject( Type, rStream );
-		Auxiliary::DeserialiseImVec2( Size, rStream );
+		RawSerialisation::ReadObject( RenderType, rStream );
+
+		// TODO: Will be removed, kept here for compatibility. 
+		ImVec2 size{};
+		Auxiliary::DeserialiseImVec2( size, rStream );
 
 		ImVec2 position{};
 		Auxiliary::DeserialiseImVec2( position, rStream );
@@ -107,12 +110,12 @@ namespace Saturn {
 
 		// NOTE: Pins are already created at this point hence why we don't write the size of the pins
 		//       All we do is read back the data
-		for( size_t i = 0; i < Inputs.size(); i++ )
+		for( size_t i = 0; i < Inputs.size(); ++i )
 		{
 			Inputs[ i ]->Deserialise( rStream );
 		}
 
-		for( size_t i = 0; i < Outputs.size(); i++ )
+		for( size_t i = 0; i < Outputs.size(); ++i )
 		{
 			Outputs[ i ]->Deserialise( rStream );
 		}

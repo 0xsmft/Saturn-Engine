@@ -26,75 +26,32 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "AssetIDPin.h"
+#pragma once
 
-#include "Saturn/NodeEditor/NodeEditorNodeBase.h"
-
-#include "Saturn/ImGui/ImGuiAuxiliary.h"
+#include "NodeEditorTaskBase.h"
 
 namespace Saturn {
 
-	AssetIDPin::AssetIDPin( const std::string& rName, PinKind kind, AssetType assetType )
-		: Pin( rName, PinType::AssetID, kind ), m_AssetType( assetType )
+	class NodeEditorVariable;
+	class NodeEditorTaskHandler;
+	class Pin;
+
+	SCLASS()
+	class SNodeEditorGetVariableTask : public NodeEditorTaskBase
 	{
-	}
+		SAT_DECLARE_CLASS( SNodeEditorGetVariableTask, NodeEditorTaskBase );
+	public:
+		SNodeEditorGetVariableTask();
+		~SNodeEditorGetVariableTask();
 
-	AssetIDPin::AssetIDPin( UUID ID, const std::string& rName, PinType type, UUID nodeid )
-		: Pin( ID, rName, PinType::AssetID, nodeid )
-	{
-	}
+		virtual void InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+		virtual NodeEditorTaskState Tick( Timestep ts ) override;
+		virtual void Reset() override;
 
-	AssetIDPin::~AssetIDPin()
-	{
-	}
-
-	void AssetIDPin::OnRenderOutput()
-	{
-		RenderInternal();
-	}
-
-	void AssetIDPin::OnRenderInput()
-	{
-		RenderInternal();
-	}
-
-	void AssetIDPin::RenderInternal()
-	{
-		// This function won't be called on Dist anyways
-#if defined(SAT_DEBUG) || defined(SAT_RELEASE)
-		bool openAssetIDPopup = false;
-
-		std::string name = m_AssetID == 0 ? "Select Asset" : m_AssetName;
-		if( ImGui::Button( name.c_str() ) )
-		{
-			openAssetIDPopup = true;
-		}
-
-		ed::Suspend();
-		if( Auxiliary::DrawAssetFinder( m_AssetType, &openAssetIDPopup, m_AssetID ) ) 
-		{
-			m_AssetName = AssetManager::Get().FindAsset( m_AssetID )->Name;
-		}
-		ed::Resume();
-#endif
-	}
-
-	void AssetIDPin::Serialise( std::ofstream& rStream ) const
-	{
-		Pin::Serialise( rStream );
-
-		RawSerialisation::WriteObject( m_AssetID, rStream );
-	}
-
-	void AssetIDPin::Deserialise( FDependentIStream& rStream )
-	{
-		Pin::Deserialise( rStream );
-
-		RawSerialisation::ReadObject( m_AssetID, rStream );
-#if defined(SAT_DEBUG) || defined(SAT_RELEASE)
-		m_AssetName = m_AssetID == 0 ? "No Asset" : AssetManager::Get().FindAsset( m_AssetID )->Name;
-#endif
-	}
-
+	private:
+		NodeEditorTaskHandler* m_pHandler = nullptr;
+		Ref<NodeEditorVariable> m_Variable;
+		std::vector<UUID> Outgoings;
+	};
+	
 }

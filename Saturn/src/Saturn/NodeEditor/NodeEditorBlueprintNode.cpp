@@ -86,11 +86,9 @@ namespace Saturn {
 
 		rBuilder.EndHeader();
 
-		uint32_t pinIndex = 0;
 		for( auto& rInput : Inputs )
 		{
-			rInput->Render( rBuilder, pOuter->IsLinked( rInput->ID ), pinIndex );
-			pinIndex++;
+			rInput->RenderInput( rBuilder, pOuter->IsLinked( rInput->ID ) );
 		}
 
 		for( auto& rOutput : Outputs )
@@ -98,7 +96,7 @@ namespace Saturn {
 			if( rOutput->Type == PinType::Delegate )
 				continue;
 
-			rOutput->Render( rBuilder, pOuter->IsLinked( rOutput->ID ), 0 );
+			rOutput->RenderOutput( rBuilder, pOuter->IsLinked( rOutput->ID ) );
 		}
 
 		rBuilder.End();

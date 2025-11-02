@@ -96,7 +96,6 @@ namespace Saturn {
 		ImGui::Spring( 0, PADDING * 2 );
 
 		ImRect inputRect;
-		uint32_t pinIndex = 0;
 		for( auto& rInput : Inputs )
 		{
 			ImGui::Dummy( ImVec2( 0.0f, PADDING ) );
@@ -104,8 +103,7 @@ namespace Saturn {
 		
 			inputRect = ImRect( ImGui::GetItemRectMin(), ImGui::GetItemRectMax() );
 
-			rInput->Render( rBuilder, pOuter->IsLinked( rInput->ID ), pinIndex );
-			pinIndex++;
+			rInput->RenderInput( rBuilder, pOuter->IsLinked( rInput->ID ) );
 		}
 
 		// Dummy if no inputs
@@ -151,7 +149,7 @@ namespace Saturn {
 
 			outputRect = ImRect( ImGui::GetItemRectMin(), ImGui::GetItemRectMax() );
 
-			rOutput->Render( rBuilder, pOuter->IsLinked( rOutput->ID ), 0 );
+			rOutput->RenderOutput( rBuilder, pOuter->IsLinked( rOutput->ID ) );
 		}
 
 		// Dummy if no outputs

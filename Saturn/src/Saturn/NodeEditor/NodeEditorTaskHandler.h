@@ -29,29 +29,38 @@
 #pragma once
 
 #include "NodeEditorTaskBase.h"
+#include "DataLine.h"
 
 #include <map>
 
 namespace Saturn {
 
+	class Animator;
+
 	class NodeEditorTaskHandler : public RefTarget
 	{
 	public:
 		NodeEditorTaskHandler() = default;
-		~NodeEditorTaskHandler() = default;
+		virtual ~NodeEditorTaskHandler();
 
 		void Init( SharedPtr<NodeEditorBase> nodeEditor );
-		void Tick( Timestep ts );
+		virtual void Tick( Timestep ts );
 
-	private:
+		void InsertDataLine( UUID linkID, const DataLine& rLine );
+		DataLine* GetDataLine( UUID linkID );
+		bool DoesDataLineExist( UUID linkID );
+
+	protected:
 		void ResetAllTasks();
 	
-	private:
+	protected:
 		// All tasks in the tree
 		//       NODE ID -> TASK*
 		std::vector<Ref<NodeEditorTaskBase>> m_Tasks;
 		Ref<NodeEditorTaskBase> m_CurrentTask;
 		size_t m_CurrentTaskIndex = 0;
+
+		std::map<UUID, DataLine> m_Lines;
 	};
 	
 }

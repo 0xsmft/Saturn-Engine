@@ -89,7 +89,18 @@ namespace Saturn {
 	{
 		RawSerialisation::WriteString( m_Name, rStream );
 
-		size_t mapSize = m_Nodes.size();
+		// Data handles
+		size_t mapSize = m_DataHandles.size();
+		RawSerialisation::WriteObject( mapSize, rStream );
+
+		for( const auto& [id, rHandle] : m_DataHandles )
+		{
+			RawSerialisation::WriteObjectChecked( id, rStream );
+			NodeEditorVariable::Serialise( rHandle, rStream );
+		}
+
+		// Nodes and pins
+		mapSize = m_Nodes.size();
 		rStream.write( reinterpret_cast< char* >( &mapSize ), sizeof( size_t ) );
 
 		for( const auto& [key, value] : m_Nodes )
@@ -101,21 +112,13 @@ namespace Saturn {
 			value->Serialise( rStream, isForDist );
 		}
 
+		// Links
 		mapSize = m_Links.size();
 		RawSerialisation::WriteObject( mapSize, rStream );
 
 		for( auto& rLinks : m_Links )
 		{
 			Link::Serialise( rLinks, rStream );
-		}
-
-		mapSize = m_DataHandles.size();
-		RawSerialisation::WriteObject( mapSize, rStream );
-
-		for( const auto& [id, rHandle] : m_DataHandles )
-		{
-			RawSerialisation::WriteObjectChecked( id, rStream );
-			NodeEditorVariable::Serialise( rHandle, rStream );
 		}
 	}
 
@@ -362,14 +365,14 @@ namespace Saturn {
 		return ids;
 	}
 
-	void NodeEditorBase::CreateLink( const Ref<Pin>& rStart, const Ref<Pin>& rEnd )
+	void NodeEditorBase::CreateLink( const Ref<Pin>& rStart, const Ref<Pin>& rEnd, ImColor color )
 	{
-		m_Links.push_back( Ref<Link>::Create( UUID(), rStart->ID, rEnd->ID, rStart->GetPinColor() ) );
+		m_Links.push_back( Ref<Link>::Create( UUID(), rStart->ID, rEnd->ID, color ) );
 	}
 
-	void NodeEditorBase::CreateLinkWithID( UUID linkID, const Ref<Pin>& rStart, const Ref<Pin>& rEnd )
+	void NodeEditorBase::CreateLinkWithID( UUID linkID, const Ref<Pin>& rStart, const Ref<Pin>& rEnd, ImColor color )
 	{
-		m_Links.push_back( Ref<Link>::Create( linkID, rStart->ID, rEnd->ID, rStart->GetPinColor() ) );
+		m_Links.push_back( Ref<Link>::Create( linkID, rStart->ID, rEnd->ID, color ) );
 	}
 
 	void NodeEditorBase::ShowFlow()
@@ -407,6 +410,23 @@ namespace Saturn {
 			m_Privileges = m_Privileges & ~privilege;
 	}
 
+	Ref<NodeEditorVariable> NodeEditorBase::FindDataHandle( UUID id ) const
+	{
+		auto itr = m_DataHandles.find( id );
+		return itr == m_DataHandles.end() ? nullptr : itr->second;
+	}
+
+	Ref<NodeEditorVariable> NodeEditorBase::FindDataHandle( const std::string& rName ) const
+	{
+		for( const auto& [uuid, var] : m_DataHandles )
+		{
+			if( var->GetName() == rName )
+				return var;
+		}
+
+		return nullptr;
+	}
+
 	void NodeEditorBase::AddNode( SharedPtr<NodeEditorNodeBase> node )
 	{
 		if( m_State == NodeEditorState::Loading )
@@ -419,7 +439,9 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		VariableGuard<ed::EditorContext*> guard( m_Editor );
 
-		// TODO: add this back
+//		node->PositionBeforeMove = ed::GetNodePosition( ed::NodeId( node->ID ) );
+
+		// TODO: Currently no way for us to preemptively set a position of a node before the first frame is drawn.
 //		if( node->Position.x != 0.0f && node->Position.y != 0.0f )
 //			ed::SetNodePosition( ed::NodeId( node->ID ), node->Position );
 #endif

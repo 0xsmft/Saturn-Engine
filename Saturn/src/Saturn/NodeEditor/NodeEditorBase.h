@@ -254,8 +254,8 @@ namespace Saturn {
 			}
 		}
 
-		void CreateLink( const Ref<Pin>& rStart, const Ref<Pin>& rEnd );
-		void CreateLinkWithID( UUID linkID, const Ref<Pin>& rStart, const Ref<Pin>& rEnd );
+		void CreateLink( const Ref<Pin>& rStart, const Ref<Pin>& rEnd, ImColor color );
+		void CreateLinkWithID( UUID linkID, const Ref<Pin>& rStart, const Ref<Pin>& rEnd, ImColor color );
 
 		void ShowFlow();
 		void ShowFlow( const std::vector<Ref<Link>>& rLinks );
@@ -282,6 +282,9 @@ namespace Saturn {
 		std::map<UUID, SharedPtr<NodeEditorNodeBase>>& GetNodes() { return m_Nodes; }
 
 		std::unordered_map<UUID, Ref<NodeEditorVariable>> GetDataHandles() const { return m_DataHandles; }
+
+		[[nodiscard]] Ref<NodeEditorVariable> FindDataHandle( UUID id ) const;
+		[[nodiscard]] Ref<NodeEditorVariable> FindDataHandle( const std::string& rName ) const;
 
 		const std::vector<Ref<Link>>& GetLinks() const { return m_Links; }
 		std::vector<Ref<Link>>& GetLinks() { return m_Links; }

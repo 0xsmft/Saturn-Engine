@@ -31,6 +31,7 @@
 #include "Saturn/GameFramework/SObject.h"
 
 #include "Pin.h"
+#include "NodeEditorTaskBase.h"
 #include "NodeEditorCompilationStatus.h"
 
 #include "Saturn/Core/Buffer.h"
@@ -90,9 +91,12 @@ namespace Saturn {
 		AnimGraphOutputNode,
 		AnimGraphStateMachinePlayerNode,
 		AnimGraphStateMachineStateNode,
+		AnimGraphStateMachineTransitionNode,
+		AnimGraphStateMachineEntryNode,
 		AnimGraphStateMachineOutNode,
 		AnimGraphStateMachinePlayAnimNode,
-		AnimGraphStateMachineTransitionNode,
+		VariableNode, // Data handle node
+		VariableSetNode, // Data handle node
 		//^^^^ add new node types here ^^^^
 		None
 	};
@@ -137,7 +141,7 @@ namespace Saturn {
 		// The node in which be belong to, this is usually going to be nullptr however, if its not
 		// then we know that this node belongs to a sub-graph with that sub-graph being owned by the Node
 		// specified in pParentObject
-		// sub-graph do not exist, there is not hard separation between then, the separation is purely visual.
+		// sub-graph do not exist, there is not hard separation between them, the separation is purely visual.
 		NodeEditorNodeBase*		pParentObject = nullptr;
 
 		// Editor only data
@@ -146,6 +150,8 @@ namespace Saturn {
 		std::string				SavedState;
 		ImColor					Color;
 		ImVec2					Size;
+		// For Undo/Redo, the position of the node before it was moved by the user, not serialised.
+		ImVec2					PositionBeforeMove;
 		bool					CanBeDeleted = true;
 #endif
 
@@ -165,6 +171,8 @@ namespace Saturn {
 		// The same rule applies for OnRenderOutput, OnRenderInput, OnSerialise, OnDeserialise
 		virtual void RenderContextWindow() {}
 #endif
+
+		virtual NodeEditorTaskBase* ConvertToTask() { return nullptr; }
 
 	public:
 		// Serialise/Deserialise NodeCache (NC)

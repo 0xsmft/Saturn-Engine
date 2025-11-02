@@ -39,7 +39,7 @@ namespace Saturn {
 
 	enum class NodeEditorVariableDataType
 	{
-		Float, Int, Double, Bool, Vec2, Vec3, Vec4, Class, String, Unknown
+		Float, Int, ID, Bool, Vec2, Vec3, Vec4, Class, String, Unknown
 	};
 
 	inline std::string NodeEditorVariableDataTypeToString( NodeEditorVariableDataType type )
@@ -50,8 +50,8 @@ namespace Saturn {
 				return "Float";
 			case NodeEditorVariableDataType::Int:
 				return "Int32";
-			case NodeEditorVariableDataType::Double:
-				return "Double";
+			case NodeEditorVariableDataType::ID:
+				return "ID";
 			case NodeEditorVariableDataType::Bool:
 				return "Bool";
 			case NodeEditorVariableDataType::Vec2:
@@ -75,7 +75,7 @@ namespace Saturn {
 		std::monostate, // null state!
 		float,
 		int,
-		double, 
+		uint64_t, // ID (UUID, AssetID, etc)
 		bool, 
 		glm::vec2,
 		glm::vec3,
@@ -138,7 +138,7 @@ m_Value = val;															\
 
 	SAT_NODE_EDITOR_VAR_CREATE_SET_FN( float );
 	SAT_NODE_EDITOR_VAR_CREATE_SET_FN( int );
-	SAT_NODE_EDITOR_VAR_CREATE_SET_FN( double );
+	SAT_NODE_EDITOR_VAR_CREATE_SET_FN( uint64_t );
 	SAT_NODE_EDITOR_VAR_CREATE_SET_FN( bool );
 	SAT_NODE_EDITOR_VAR_CREATE_SET_FN( glm::vec2 );
 	SAT_NODE_EDITOR_VAR_CREATE_SET_FN( glm::vec3 );

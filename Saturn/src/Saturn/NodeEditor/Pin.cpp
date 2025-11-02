@@ -60,7 +60,7 @@ namespace Saturn {
 			case PinType::Int:				  
 			case PinType::Float:			  
 			case PinType::String:			  
-			case PinType::Object:			  
+			case PinType::Class:			  
 			case PinType::Function:			  
 			case PinType::Material_Color:
 			case PinType::Material_TextureColor:
@@ -75,17 +75,22 @@ namespace Saturn {
 		switch( Type )
 		{
 			default:
-			case PinType::Flow:                  return ImColor( 255, 255, 255 );
-			case PinType::Bool:                  return ImColor( 220, 48, 48 );
-			case PinType::Int:                   return ImColor( 68, 201, 156 );
-			case PinType::Float:                 return ImColor( 147, 226, 74 );
-			case PinType::String:                return ImColor( 124, 21, 153 );
-			case PinType::Object:                return ImColor( 51, 150, 215 );
-			case PinType::Function:              return ImColor( 218, 0, 183 );
-			case PinType::Delegate:              return ImColor( 255, 48, 48 );
-			case PinType::AssetID:               return ImColor( 0, 0, 255 );
-			case PinType::Material_Color:        return ImColor( 142, 61, 186 );
-			case PinType::Material_TextureColor: return ImColor( 142, 61, 186 );
+			case PinType::AnimGraphAnimation:
+			case PinType::Flow:                  return ImColor( 255, 255, 255 ); // Pure White
+			case PinType::Bool:                  return ImColor( 220, 48, 48 );   // Red, not fully
+			case PinType::Int:                   return ImColor( 68, 201, 156 );  // Light Green
+			case PinType::Float:                 return ImColor( 147, 226, 74 );  // Slightly darker green
+			case PinType::String:                return ImColor( 124, 21, 153 );  // Purple
+			case PinType::Class:                 return ImColor( 51, 150, 215 );  // Light Blue
+			case PinType::Function:              return ImColor( 218, 0, 183 );   // Pink
+			case PinType::Delegate:              return ImColor( 255, 48, 48 );   // Red, slightly darker than Bool
+			case PinType::AssetID:               return ImColor( 0, 0, 255 );     // Pure Blue
+			case PinType::Material_Color:        return ImColor( 142, 61, 186 );  // Purple-ish
+			case PinType::Material_TextureColor: return ImColor( 142, 61, 186 );  // Purple-ish
+			case PinType::Vec2:					 return ImColor( 237, 120, 9 );   // Orange
+			case PinType::Vec3:					 return ImColor( 230, 147, 69 );  // Light Orange
+			case PinType::Vec4:					 return ImColor( 255, 124, 0 );   // Lighter Orange
+			case PinType::Sound:				 return ImColor( 173, 18, 128 );  // Dark pink
 		}
 
 		return ImColor( 0, 0, 255 );
@@ -116,34 +121,18 @@ namespace Saturn {
 		ImGui::Dummy( size );
 	}
 
-	void Pin::Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked, uint32_t pinIndex )
-	{
-		switch( Kind )
-		{
-			case PinKind::Output: 
-			{
-				RenderOutput( rBuilder, linked );
-			} break;
-
-			case PinKind::Input:
-			{
-				RenderInput( rBuilder, linked, pinIndex );
-			} break;
-		}
-	}
-
-	void Pin::RenderInput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked, uint32_t pinIndex )
+	void Pin::RenderInput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked )
 	{
 		switch( RenderType )
 		{
 			case PinRenderType::Blueprint:
 			{
-				RenderBlueprintInput( rBuilder, linked, pinIndex );
+				RenderBlueprintInput( rBuilder, linked );
 			} break;
 
 			case PinRenderType::Tree:
 			{
-				RenderTreeInput( rBuilder, linked, pinIndex );
+				RenderTreeInput( rBuilder, linked );
 			} break;
 
 			case PinRenderType::Custom:
@@ -217,7 +206,7 @@ namespace Saturn {
 		ed::PopStyleVar();
 	}
 
-	void Pin::RenderBlueprintInput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked, uint32_t pinIndex )
+	void Pin::RenderBlueprintInput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked )
 	{
 		const auto alpha = ImGui::GetStyle().Alpha;
 
@@ -248,7 +237,7 @@ namespace Saturn {
 		rBuilder.EndInput();
 	}
 
-	void Pin::RenderTreeInput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked, uint32_t pinIndex )
+	void Pin::RenderTreeInput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked )
 	{
 		const auto alpha = ImGui::GetStyle().Alpha;
 		const ImRect itemRect( ImGui::GetItemRectMin(), ImGui::GetItemRectMax() );
@@ -426,6 +415,75 @@ namespace Saturn {
 		Pin::Deserialise( rStream );
 
 		RawSerialisation::ReadObject( Data, rStream );
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// VEC2 PIN
+
+	Vec2Pin::Vec2Pin( const std::string& rName, PinKind kind )
+		: Pin( rName, PinType::Vec2, kind )
+	{
+	}
+
+	Vec2Pin::Vec2Pin( UUID id, const std::string& rName, PinType type, UUID nodeID )
+		: Pin( id, rName, type, nodeID )
+	{
+	}
+
+	void Vec2Pin::Serialise( std::ofstream& rStream ) const
+	{
+
+	}
+
+	void Vec2Pin::Deserialise( FDependentIStream& rStream )
+	{
+
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// VEC3 PIN
+
+	Vec3Pin::Vec3Pin( const std::string& rName, PinKind kind )
+		: Pin( rName, PinType::Vec3, kind )
+	{
+	}
+
+	Vec3Pin::Vec3Pin( UUID id, const std::string& rName, PinType type, UUID nodeID )
+		: Pin( id, rName, type, nodeID )
+	{
+	}
+
+	void Vec3Pin::Serialise( std::ofstream& rStream ) const
+	{
+
+	}
+
+	void Vec3Pin::Deserialise( FDependentIStream& rStream )
+	{
+
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// VEC4 PIN
+
+	Vec4Pin::Vec4Pin( const std::string& rName, PinKind kind )
+		: Pin( rName, PinType::Vec4, kind )
+	{
+	}
+
+	Vec4Pin::Vec4Pin( UUID id, const std::string& rName, PinType type, UUID nodeID )
+		: Pin( id, rName, type, nodeID )
+	{
+	}
+
+	void Vec4Pin::Serialise( std::ofstream& rStream ) const
+	{
+
+	}
+
+	void Vec4Pin::Deserialise( FDependentIStream& rStream )
+	{
+
 	}
 
 }

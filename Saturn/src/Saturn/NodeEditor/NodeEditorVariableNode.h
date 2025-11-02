@@ -42,12 +42,20 @@ namespace Saturn {
 		NodeEditorVariableNode( const std::string& rName, Ref<NodeEditorVariable> var );
 		~NodeEditorVariableNode();
 
+		void InitPinsForVariable();
+
+		Ref<NodeEditorVariable> GetVariable() const { return m_Variable; }
+
 	public:
 		//////////////////////////////////////////////////////////////////////////
 		// NodeEditorNodeBase
 
+		virtual void Serialise( std::ofstream& rStream, bool isForDist ) const override;
+		virtual void Deserialise( FDependentIStream& rStream ) override;
+
 		virtual void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder ) override;
 		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
+		virtual NodeEditorTaskBase* ConvertToTask() override;
 
 	public:
 		static SharedPtr<NodeEditorVariableNode> SpawnVariableNode( Ref<NodeEditorVariable> var, SharedPtr<NodeEditorBase> nodeEditor );
@@ -58,5 +66,26 @@ namespace Saturn {
 	private:
 		Ref<NodeEditorVariable> m_Variable;
 	};
-	
+
+	SCLASS()
+	class NodeEditorSetVariableNode : public NodeEditorBlueprintNode
+	{
+		SAT_DECLARE_CLASS( NodeEditorSetVariableNode, NodeEditorBlueprintNode );
+	public:
+		NodeEditorSetVariableNode();
+		NodeEditorSetVariableNode( const std::string& rName, Ref<NodeEditorVariable> var );
+		~NodeEditorSetVariableNode();
+
+	public:
+		static SharedPtr<NodeEditorSetVariableNode> SpawnSetVariableNode( Ref<NodeEditorVariable> var, SharedPtr<NodeEditorBase> nodeEditor );
+
+	public:
+		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
+
+	private:
+		void CreateNode();
+
+	private:
+		Ref<NodeEditorVariable> m_Variable;
+	};
 }

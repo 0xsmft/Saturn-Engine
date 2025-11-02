@@ -35,6 +35,7 @@
 
 #include <string>
 #include <imgui_node_editor.h>
+#include <glm/glm.hpp>
 
 namespace ed = ax::NodeEditor;
 
@@ -55,7 +56,7 @@ namespace Saturn {
 		Int,
 		Float,
 		String,
-		Object,
+		Class,
 		Function,
 		Delegate,
 		Material_Color,
@@ -64,7 +65,10 @@ namespace Saturn {
 		AssetID,
 		// Internal pin type to allow us to make sure that a composite node can only be linked to the root node.
 		BehaviourTreeCompositeLink,
-		AnimGraphAnimation
+		AnimGraphAnimation,
+		Vec2,
+		Vec3,
+		Vec4
 	};
 
 	enum class PinKind
@@ -94,8 +98,8 @@ namespace Saturn {
 				return "Float";
 			case PinType::String:
 				return "String";
-			case PinType::Object:
-				return "Object";
+			case PinType::Class:
+				return "Class";
 			case PinType::Function:
 				return "Function";
 			case PinType::Delegate:
@@ -123,8 +127,8 @@ namespace Saturn {
 			return PinType::Float;
 		else if( rString == "String" )
 			return PinType::String;
-		else if( rString == "Object" )
-			return PinType::Object;
+		else if( rString == "Class" )
+			return PinType::Class;
 		else if( rString == "Function" )
 			return PinType::Function;
 		else if( rString == "Material_Color" )
@@ -134,7 +138,7 @@ namespace Saturn {
 		else if( rString == "AssetHandle" )
 			return PinType::AssetID;
 		else
-			return PinType::Object;
+			return PinType::Class;
 	}
 
 	class NodeEditorNodeBase;
@@ -163,7 +167,8 @@ namespace Saturn {
 		PinIconType GetIconType() const;
 		ImColor GetPinColor() const;
 
-		void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked, uint32_t pinIndex );
+		void RenderInput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked );
+		void RenderOutput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked );
 
 	public:
 		virtual void Serialise( std::ofstream& rStream ) const;
@@ -176,14 +181,11 @@ namespace Saturn {
 		void DrawIcon( bool connected, int alpha ) const;
 
 	private:
-		void RenderInput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked, uint32_t pinIndex );
-		void RenderOutput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked );
-
 		void RenderBlueprintOutput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked );
 		void RenderTreeOutput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked );
 
-		void RenderBlueprintInput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked, uint32_t pinIndex );
-		void RenderTreeInput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked, uint32_t pinIndex );
+		void RenderBlueprintInput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked );
+		void RenderTreeInput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked );
 
 		bool CanCreateLink( const Ref<Pin>& rOther ) const;
 	};
@@ -257,4 +259,65 @@ namespace Saturn {
 	public:
 		bool Data = false;
 	};
+
+	// 
+	// Vec2Pin, carries across a single vector2 value.
+	//
+	class Vec2Pin : public Pin
+	{
+	public:
+		Vec2Pin() = default;
+		Vec2Pin( const std::string& rName, PinKind kind );
+		Vec2Pin( UUID id, const std::string& rName, PinType type, UUID nodeID );
+
+		~Vec2Pin() = default;
+
+	public:
+		void Serialise( std::ofstream& rStream ) const override;
+		void Deserialise( FDependentIStream& rStream ) override;
+
+	public:
+		glm::vec2 Data{};
+	};
+
+	// 
+	// Vec3Pin, carries across a single vector3 value.
+	//
+	class Vec3Pin : public Pin
+	{
+	public:
+		Vec3Pin() = default;
+		Vec3Pin( const std::string& rName, PinKind kind );
+		Vec3Pin( UUID id, const std::string& rName, PinType type, UUID nodeID );
+
+		~Vec3Pin() = default;
+
+	public:
+		void Serialise( std::ofstream& rStream ) const override;
+		void Deserialise( FDependentIStream& rStream ) override;
+
+	public:
+		glm::vec3 Data{};
+	};
+
+	// 
+	// Vec4Pin, carries across a single vector4 value.
+	//
+	class Vec4Pin : public Pin
+	{
+	public:
+		Vec4Pin() = default;
+		Vec4Pin( const std::string& rName, PinKind kind );
+		Vec4Pin( UUID id, const std::string& rName, PinType type, UUID nodeID );
+
+		~Vec4Pin() = default;
+
+	public:
+		void Serialise( std::ofstream& rStream ) const override;
+		void Deserialise( FDependentIStream& rStream ) override;
+
+	public:
+		glm::vec4 Data{};
+	};
+
 }

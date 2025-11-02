@@ -156,7 +156,9 @@ namespace Saturn {
 				Ref<UndoRedoActionModifyNodePosition> action = Ref<UndoRedoActionModifyNodePosition>::Create(
 					pThis->SharedFromThis(),
 					pNode,
-					ed::GetNodePosition( nodeId ) );
+					pNode->PositionBeforeMove );
+
+				pNode->PositionBeforeMove = ed::GetNodePosition( nodeId );
 
 				GlobalUndoRedoGroup::Get().AddAction( action, pThis->GetAssetID() );
 			}
@@ -168,8 +170,6 @@ namespace Saturn {
 
 #if !defined(SAT_DIST)
 			pNode->ActiveState.assign( pData, size );
-			pNode->Position = ed::GetNodePosition( nodeId );
-			pNode->Size = ed::GetNodeSize( nodeId );
 #endif
 
 			// Only mark dirty if we are not loading
@@ -389,6 +389,74 @@ namespace Saturn {
 
 		ImGui::End();
 
+		if( ImGui::Begin( "Debug Information" ) )
+		{
+			if( Auxiliary::TreeNode( "Editor Information" ) )
+			{
+				ImGui::Text( "Name: %s", m_Name.c_str() );
+				ImGui::Text( "Custom Name (NC): %s", m_CustomNameNC.c_str() );
+				ImGui::Text( "Internal Editor ID: %s", m_InternalEditorID.c_str() );
+
+				ImGui::Text( "Internal Node Count (Live): %i", ed::GetNodeCount() );
+
+				Auxiliary::EndTreeNode();
+			}
+
+			if( Auxiliary::TreeNode( "Nodes" ) )
+			{
+				ImGui::Text( "Node Count %llu", m_Nodes.size() );
+				ImGui::Separator();
+
+				for( const auto& [id, rNode] : m_Nodes )
+				{
+					ImGui::PushID( ( int ) id );
+
+					ImGui::Text( "%s", rNode->Name.c_str() );
+					ImGui::Text( "ID/%llu", id );
+					ImGui::Text( "Parent Object Name (if any) %s", rNode->pParentObject ? rNode->pParentObject->Name.c_str() : "<null>" );
+					ImGui::Text( "SClass: %s", rNode->GetClass()->GetName().c_str() );
+					
+					if( Auxiliary::TreeNode( "Pins", false ) )
+					{
+						if( ImGui::TreeNode( "Outputs" ) ) 
+						{
+							for( const auto& rOutput : rNode->Outputs )
+							{
+								ImGui::Text( "%s", rOutput->Name.c_str() );
+								ImGui::Text( "ID/%llu", rOutput->ID );
+								ImGui::Text( "Accepts Multiple Links %i", rOutput->AcceptMultipleLinks );
+							}
+
+							Auxiliary::EndTreeNode();
+							ImGui::Separator();
+						}
+
+						if( ImGui::TreeNode( "Inputs" ) )
+						{
+							for( const auto& rInput : rNode->Inputs )
+							{
+								ImGui::Text( "%s", rInput->Name.c_str() );
+								ImGui::Text( "ID/%llu", rInput->ID );
+								ImGui::Text( "Accepts Multiple Links %i", rInput->AcceptMultipleLinks );
+							}
+
+							Auxiliary::EndTreeNode();
+							ImGui::Separator();
+						}
+
+						Auxiliary::EndTreeNode();
+					}
+				
+					ImGui::PopID();
+					ImGui::Separator();
+				}
+	
+				Auxiliary::EndTreeNode();
+			}
+
+			ImGui::End();
+		}
+
 		// Create new node context popup window
 		ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 8.0f, 8.0f ) );
 		if( ImGui::BeginPopup( "Create New Node" ) )
@@ -558,28 +626,66 @@ namespace Saturn {
 	void NodeEditor::DeleteNode( UUID id, bool skipUndoRedo /*= false */ )
 	{
 #if !defined(SAT_DIST)
-		const auto Itr = std::find_if( m_Nodes.begin(), m_Nodes.end(),
+		auto isDescendantOf = [](NodeEditorNodeBase* pTarget, const auto& rNode) -> bool
+		{
+			if( !pTarget ) return false;
+
+			NodeEditorNodeBase* pCurrentParent = rNode->pParentObject;
+			while( pCurrentParent )
+			{
+				if( pCurrentParent == pTarget )
+				{
+					return true;
+				}
+
+				pCurrentParent = pCurrentParent->pParentObject;
+			}
+			
+			return false;
+		};
+
+		const auto itr = std::find_if( m_Nodes.begin(), m_Nodes.end(),
 			[ id ]( const auto& rNode )
 		{
 			return rNode.first == id;
 		} );
-
-		if( Itr != m_Nodes.end() )
+		if( itr != m_Nodes.end() )
 		{
-			auto& rNode = ( Itr->second );
-
+			auto& rNode = ( itr->second );
 			if( rNode->CanBeDeleted )
 			{
-				if( !skipUndoRedo )
+				std::vector<NodeEditorNodeBase*> children;
+				for( const auto& [id, rCandidate] : m_Nodes )
 				{
-					Ref<UndoRedoActionDeleteNode> action = Ref<UndoRedoActionDeleteNode>::Create( SharedFromThis(), rNode );
-					GlobalUndoRedoGroup::Get().AddAction( action, m_AssetID );
+					if( isDescendantOf( rNode.Get(), rCandidate ) && rCandidate != rNode )
+						children.push_back( rCandidate.Get() );
 				}
 
+				// If this node has children (making it a sub-graph) we need to create a different undo/redo action
+				if( children.size() )
+				{
+					for( const auto pChild : children )
+					{
+						pChild->Destroy();
+
+						DeleteDeadLinks( pChild->ID );
+						m_Nodes.erase( pChild->ID );
+					}
+
+					children.clear();
+				}
+				
+				if( !skipUndoRedo )
+				{
+//					Ref<UndoRedoActionDeleteNode> action = Ref<UndoRedoActionDeleteNode>::Create( SharedFromThis(), rNode );
+//					GlobalUndoRedoGroup::Get().AddAction( action, m_AssetID );
+				}
+
+				rNode->Destroy();
 				DeleteDeadLinks( id );
 
 				rNode = nullptr;
-				m_Nodes.erase( Itr );
+				m_Nodes.erase( itr );
 
 				OnNodeEditorEvent( NodeEditorAction::DestroyNode );
 			}
@@ -596,7 +702,8 @@ namespace Saturn {
 
 	void NodeEditor::AddSubGraph( SharedPtr<NodeEditorNodeBase> graph )
 	{
-		m_SubGraphs.push_back( graph );
+		if( std::find( m_SubGraphs.begin(), m_SubGraphs.end(), graph ) == m_SubGraphs.end() )
+			m_SubGraphs.push_back( graph );
 	}
 
 	void NodeEditor::RemoveSubGraph( SharedPtr<NodeEditorNodeBase> graph )
@@ -929,6 +1036,7 @@ namespace Saturn {
 					}
 				}
 
+				// If the user is deleting a node from the editor handle it here.
 				ed::NodeId nodeId = 0;
 				while( ed::QueryDeletedNode( &nodeId ) )
 				{
@@ -956,16 +1064,9 @@ namespace Saturn {
 									m_Runtime->TerminateEvaluation();
 								}
 
-								Ref<UndoRedoActionDeleteNode> action = Ref<UndoRedoActionDeleteNode>::Create( SharedFromThis(), rNode );
-								GlobalUndoRedoGroup::Get().AddAction( action, m_AssetID );
-
-								DeleteDeadLinks( id );
-
-								OnNodeEditorEvent( NodeEditorAction::DestroyNode );
-
-								rNode = nullptr;
-								m_Nodes.erase( itr );
-
+								// TODO: Not the best way, 
+								// because DeleteNode finds the node and checks if it can be deleted, we've already done that...
+								DeleteNode( id );
 								MarkDirty();
 							}
 						}
@@ -1012,8 +1113,8 @@ namespace Saturn {
 
 		m_CreateNewNode = false;
 
-		Ref<UndoRedoActionCreateNode> action = Ref<UndoRedoActionCreateNode>::Create( SharedFromThis(), node );
-		GlobalUndoRedoGroup::Get().AddAction( action, m_AssetID );
+//		Ref<UndoRedoActionCreateNode> action = Ref<UndoRedoActionCreateNode>::Create( SharedFromThis(), node );
+//		GlobalUndoRedoGroup::Get().AddAction( action, m_AssetID );
 
 		if( auto& startPin = m_NewNodeLinkPin )
 		{
@@ -1070,7 +1171,16 @@ namespace Saturn {
 	{
 		RawSerialisation::WriteString( m_Name, rStream );
 
-		size_t mapSize = m_Nodes.size();
+		size_t mapSize = m_DataHandles.size();
+		RawSerialisation::WriteObject( mapSize, rStream );
+
+		for( const auto& [id, rHandle] : m_DataHandles )
+		{
+			RawSerialisation::WriteObjectChecked( id, rStream );
+			NodeEditorVariable::Serialise( rHandle, rStream );
+		}
+
+		mapSize = m_Nodes.size();
 		rStream.write( reinterpret_cast< char* >( &mapSize ), sizeof( size_t ) );
 
 		for( const auto& [key, value] : m_Nodes )
@@ -1094,15 +1204,6 @@ namespace Saturn {
 		{
 			Link::Serialise( rLinks, rStream );
 		}
-
-		mapSize = m_DataHandles.size();
-		RawSerialisation::WriteObject( mapSize, rStream );
-
-		for( const auto& [id, rHandle] : m_DataHandles )
-		{
-			RawSerialisation::WriteObjectChecked( id, rStream );
-			NodeEditorVariable::Serialise( rHandle, rStream );
-		}
 	}
 
 	void NodeEditor::DeserialiseData( std::ifstream& rStream )
@@ -1120,6 +1221,22 @@ namespace Saturn {
 		size_t mapSize = 0;
 		RawSerialisation::ReadObject( mapSize, rStream );
 
+		m_DataHandles.reserve( mapSize );
+
+		for( size_t i = 0; i < mapSize; ++i )
+		{
+			UUID id = 0llu;
+			RawSerialisation::ReadObjectChecked( id, rStream );
+
+			Ref<NodeEditorVariable> var = Ref<NodeEditorVariable>::Create();
+			NodeEditorVariable::Deserialise( var, rStream );
+
+			m_DataHandles[ id ] = var;
+		}
+
+		mapSize = 0;
+		RawSerialisation::ReadObject( mapSize, rStream );
+
 		std::unordered_map<UUID, std::vector<UUID>> parentToChildMap;
 
 		for( size_t i = 0; i < mapSize; ++i )
@@ -1132,19 +1249,23 @@ namespace Saturn {
 
 			NodeEditorNodeBase* pNode = dynamic_cast< NodeEditorNodeBase* >( ClassMetadataHandler::Get().CreateClassObject( targetClassHash ) );
 
-			SharedPtr<NodeEditorNodeBase> node = pNode;
-			if( node )
+			SharedPtr<NodeEditorNodeBase> node;
+			if( pNode )
 			{
-				AddNode( node );
+				node = pNode;
 			}
 			else
 			{
-				node = SharedPtr<NodeEditorBlueprintNode>::Create();
+				node = NewObject<NodeEditorBlueprintNode>();
+				SAT_CORE_WARN( "Could not find node editor node class hash {0}, so using NodeEditorBlueprintNode instead.", targetClassHash );
 			}
+
+//			AddNode( node );
 
 			// NOTE: Although AddNode sets the pOuter, we want to override it to point to us (a NodeEditor), instead of NodeEditorBase
 			node->pOuter = this;
 			node->Deserialise( rStream );
+			node->PositionBeforeMove = ed::GetNodePosition( ed::NodeId( node->ID ) );
 
 			UUID parentID = 0;
 			if( m_Version >= SAT_VERSION_A_0_2_3_WIP )
@@ -1179,22 +1300,6 @@ namespace Saturn {
 			Link::Deserialise( link, rStream );
 
 			m_Links[ i ] = link;
-		}
-
-		mapSize = 0;
-		RawSerialisation::ReadObject( mapSize, rStream );
-
-		m_DataHandles.reserve( mapSize );
-
-		for( size_t i = 0; i < mapSize; ++i )
-		{
-			UUID id = 0llu;
-			RawSerialisation::ReadObjectChecked( id, rStream );
-
-			Ref<NodeEditorVariable> var = Ref<NodeEditorVariable>::Create();
-			NodeEditorVariable::Deserialise( var, rStream );
-
-			m_DataHandles[ id ] = var;
 		}
 
 		m_State = NodeEditorState::Editing;

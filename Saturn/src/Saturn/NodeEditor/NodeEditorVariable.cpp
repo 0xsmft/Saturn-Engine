@@ -53,12 +53,6 @@ namespace Saturn {
 				RawSerialisation::WriteObjectChecked( value, rStream );
 			} break;
 
-			case NodeEditorVariableDataType::Double:
-			{
-				const auto value = rObject->Get<double>();
-				RawSerialisation::WriteObjectChecked( value, rStream );
-			} break;
-
 			case NodeEditorVariableDataType::Bool:
 			{
 				const auto value = rObject->Get<bool>();
@@ -121,14 +115,6 @@ namespace Saturn {
 			case NodeEditorVariableDataType::Int:
 			{
 				int value = 0u;
-				RawSerialisation::ReadObjectChecked( value, rStream );
-
-				rObject->m_Value = value;
-			} break;
-
-			case NodeEditorVariableDataType::Double:
-			{
-				double value = 0.0;
 				RawSerialisation::ReadObjectChecked( value, rStream );
 
 				rObject->m_Value = value;

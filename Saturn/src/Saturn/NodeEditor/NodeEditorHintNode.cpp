@@ -30,14 +30,23 @@
 #include "NodeEditorHintNode.h"
 
 #include "UI/NodeEditor.h"
+
+#include "Saturn/ImGui/ImGuiAuxiliary.h"
+
+#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
+
 #include <imgui_internal.h>
 
 namespace Saturn {
 
+	NodeEditorHintNode::NodeEditorHintNode()
+	{
+	}
+
 	NodeEditorHintNode::NodeEditorHintNode( const std::string& rName )
 		: NodeEditorNodeBase( rName )
 	{
-		Type = NodeRenderType::Comment;
+		RenderType = NodeRenderType::Comment;
 		ExecutionType = NodeExecutionType::HintNode;
 	}
 
@@ -61,13 +70,24 @@ namespace Saturn {
 		ImGui::BeginVertical( "content" );
 		ImGui::BeginHorizontal( "horizontal" );
 
+		/*
 		ImGui::Spring( 1 );
 		ImGui::TextUnformatted( Name.c_str() );
 		ImGui::Spring( 1 );
+		*/
+
+		const auto size = ed::GetNodeSize( ed::NodeId( ID ) );
+
+		auto textWidth = ImGui::CalcTextSize( ( Name + "00" ).c_str() ).x;
+		textWidth = glm::min( textWidth, size.x - 16.0f );
+
+		ImGui::PushItemWidth( textWidth );
+		Auxiliary::InputText( "##necomedit", &Name, ImGuiInputTextFlags_AutoSelectAll );
+		ImGui::PopItemWidth();
 
 		ImGui::EndHorizontal();
 		
-		ed::Group( Size );
+		ed::Group( size );
 		ImGui::EndVertical();
 		ImGui::PopID();
 
@@ -78,8 +98,8 @@ namespace Saturn {
 
 		if( ed::BeginGroupHint( ed::NodeId( ID ) ) )
 		{
-			auto bgAlpha = static_cast< int >( ImGui::GetStyle().Alpha * 255 );
-			auto min = ed::GetGroupMin();
+			const auto bgAlpha = static_cast< int >( ImGui::GetStyle().Alpha * 255 );
+			const auto min = ed::GetGroupMin();
 
 			ImGui::SetCursorScreenPos( min - ImVec2( -8.0f, ImGui::GetTextLineHeightWithSpacing() + 4.0f ) );
 			ImGui::BeginGroup();
@@ -111,10 +131,15 @@ namespace Saturn {
 
 	SharedPtr<NodeEditorHintNode> NodeEditorHintNode::SpawnHintNode( SharedPtr<NodeEditorBase> nodeEditor )
 	{
-		SharedPtr<NodeEditorHintNode> node = SharedPtr<NodeEditorHintNode>::Create();
+		SharedPtr<NodeEditorHintNode> node = ( NodeEditorHintNode* ) ClassMetadataHandler::Get().CreateClassObject( NodeEditorHintNode::StaticClass() );
+
 		nodeEditor->AddNode( node );
 
 		return node;
 	}
 
 }
+
+#include "Saturn/GameFramework/Core/EngineGenerated.h"
+
+SAT_X31_CREATE_AUTO_REG( NodeEditorHintNode );

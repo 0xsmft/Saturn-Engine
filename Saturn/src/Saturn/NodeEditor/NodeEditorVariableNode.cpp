@@ -29,6 +29,8 @@
 #include "sppch.h"
 #include "NodeEditorVariableNode.h"
 
+#include "NodeEditorVariableTasks.h"
+
 #include "NodeEditorBase.h"
 #include "builders.h"
 
@@ -55,7 +57,64 @@ namespace Saturn {
 		Color = ImColor( 147, 226, 74 );
 #endif
 
-		Outputs.push_back( Ref<FloatPin>::Create( "", PinKind::Output ) );
+		if( m_Variable )
+		{
+			InitPinsForVariable();
+		}
+	}
+
+	void NodeEditorVariableNode::InitPinsForVariable()
+	{
+		switch( m_Variable->GetType() )
+		{
+			case NodeEditorVariableDataType::Float:
+			{
+				Outputs.push_back( Ref<FloatPin>::Create( "", PinKind::Output ) );
+			} break;
+
+			case NodeEditorVariableDataType::Int:
+			{
+				Outputs.push_back( Ref<IntPin>::Create( "", PinKind::Output ) );
+			} break;
+
+			case NodeEditorVariableDataType::Bool:
+			{
+				Outputs.push_back( Ref<BoolPin>::Create( "", PinKind::Output ) );
+			} break;
+
+			default:
+			{
+				SAT_CORE_WARN( "Unhandled variable data type to pin!, using default pin..." );
+				Outputs.push_back( Ref<Pin>::Create( "", PinType::Class, PinKind::Output ) );
+			} break;
+		}
+	}
+
+	void NodeEditorVariableNode::Serialise( std::ofstream& rStream, bool isForDist ) const
+	{
+		// We must write the ID first, so when we deserailise we know what pin type to load back from.
+		if( m_Variable )
+		{
+			RawSerialisation::WriteObjectChecked( m_Variable->GetUUID(), rStream );
+		}
+		else
+			RawSerialisation::WriteObjectChecked( 0llu, rStream );
+
+		Super::Serialise( rStream, isForDist );
+	}
+
+	void NodeEditorVariableNode::Deserialise( FDependentIStream& rStream )
+	{
+		UUID dataHandleID = 0llu;
+		RawSerialisation::ReadObjectChecked( dataHandleID, rStream );
+
+		if( dataHandleID )
+		{
+			m_Variable = pOuter->FindDataHandle( dataHandleID );
+			InitPinsForVariable();
+		}
+
+		Super::Deserialise( rStream );
 	}
 
 	NodeEditorVariableNode::~NodeEditorVariableNode()
@@ -78,7 +137,7 @@ namespace Saturn {
 			if( rOutput->Type == PinType::Delegate )
 				continue;
 
-			rOutput->Render( rBuilder, pOuter->IsLinked( rOutput->ID ), 0 );
+			rOutput->RenderOutput( rBuilder, pOuter->IsLinked( rOutput->ID ) );
 		}
 
 		rBuilder.End();
@@ -87,6 +146,11 @@ namespace Saturn {
 	NodeEvaluationState NodeEditorVariableNode::EvaluateNode( NodeEditorRuntime* evaluator )
 	{
 		return NodeEvaluationState::NeverEvaluated;
+	}
+
+	NodeEditorTaskBase* NodeEditorVariableNode::ConvertToTask()
+	{
+		return NewObject<SNodeEditorGetVariableTask>();
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -103,8 +167,89 @@ namespace Saturn {
 		return sp;
 	}
 
+	//////////////////////////////////////////////////////////////////////////
+	// SET VARIABLE NODE
+
+	NodeEditorSetVariableNode::NodeEditorSetVariableNode()
+		: Super()
+	{
+		CreateNode();
+	}
+
+	NodeEditorSetVariableNode::NodeEditorSetVariableNode( const std::string& rName, Ref<NodeEditorVariable> var )
+		: Super( rName ), m_Variable( var )
+	{
+		CreateNode();
+	}
+
+	void NodeEditorSetVariableNode::CreateNode()
+	{
+		ExecutionType = NodeExecutionType::VariableSetNode;
+#if !defined(SAT_DIST)
+		Color = ImColor( 147, 226, 74 );
+#endif
+
+		switch( m_Variable->GetType() )
+		{
+			case NodeEditorVariableDataType::Float:
+			{
+				Outputs.push_back( Ref<FloatPin>::Create( "", PinKind::Output ) );
+
+				Inputs.push_back( Ref<FloatPin>::Create( "In Variable", PinKind::Input ) );
+				Inputs.push_back( Ref<FloatPin>::Create( "In Value", PinKind::Input ) );
+			} break;
+
+			case NodeEditorVariableDataType::Int:
+			{
+				Outputs.push_back( Ref<IntPin>::Create( "", PinKind::Output ) );
+
+				Inputs.push_back( Ref<IntPin>::Create( "In Variable", PinKind::Input ) );
+				Inputs.push_back( Ref<IntPin>::Create( "In Value", PinKind::Input ) );
+			} break;
+
+			case NodeEditorVariableDataType::Bool:
+			{
+				Outputs.push_back( Ref<BoolPin>::Create( "", PinKind::Output ) );
+
+				Inputs.push_back( Ref<BoolPin>::Create( "In Variable", PinKind::Input ) );
+				Inputs.push_back( Ref<BoolPin>::Create( "In Value", PinKind::Input ) );
+			} break;
+
+			default:
+			{
+				Outputs.push_back( Ref<Pin>::Create( "", PinType::Class, PinKind::Output ) );
+
+				Inputs.push_back( Ref<Pin>::Create( "In Variable", PinType::Class, PinKind::Input ) );
+				Inputs.push_back( Ref<Pin>::Create( "In Value", PinType::Class, PinKind::Input ) );
+			} break;
+		}
+	}
+
+	NodeEditorSetVariableNode::~NodeEditorSetVariableNode()
+	{
+	}
+
+	NodeEvaluationState NodeEditorSetVariableNode::EvaluateNode( NodeEditorRuntime* evaluator )
+	{
+		return NodeEvaluationState::Evaluated;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// Spawners
+
+	SharedPtr<NodeEditorSetVariableNode> NodeEditorSetVariableNode::SpawnSetVariableNode( Ref<NodeEditorVariable> var, SharedPtr<NodeEditorBase> nodeEditor )
+	{
+		NodeEditorSetVariableNode* pNode = NewObject<NodeEditorSetVariableNode>( var->GetName(), var );
+
+		SharedPtr<NodeEditorSetVariableNode> sp = pNode;
+		nodeEditor->AddNode( sp );
+		return sp;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
 }
 
 #include "Saturn/GameFramework/Core/EngineGenerated.h"
 
 SAT_X31_CREATE_AUTO_REG( NodeEditorVariableNode );
+SAT_X31_CREATE_AUTO_REG( NodeEditorSetVariableNode );

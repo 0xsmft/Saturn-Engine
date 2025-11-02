@@ -26,75 +26,48 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "AssetIDPin.h"
+#pragma once
 
-#include "Saturn/NodeEditor/NodeEditorNodeBase.h"
-
-#include "Saturn/ImGui/ImGuiAuxiliary.h"
+#include "NodeEditorVariable.h"
 
 namespace Saturn {
 
-	AssetIDPin::AssetIDPin( const std::string& rName, PinKind kind, AssetType assetType )
-		: Pin( rName, PinType::AssetID, kind ), m_AssetType( assetType )
+	class DataLine
 	{
-	}
+	public:
+		DataLine() = default;
+		~DataLine() = default;
 
-	AssetIDPin::AssetIDPin( UUID ID, const std::string& rName, PinType type, UUID nodeid )
-		: Pin( ID, rName, PinType::AssetID, nodeid )
-	{
-	}
-
-	AssetIDPin::~AssetIDPin()
-	{
-	}
-
-	void AssetIDPin::OnRenderOutput()
-	{
-		RenderInternal();
-	}
-
-	void AssetIDPin::OnRenderInput()
-	{
-		RenderInternal();
-	}
-
-	void AssetIDPin::RenderInternal()
-	{
-		// This function won't be called on Dist anyways
-#if defined(SAT_DEBUG) || defined(SAT_RELEASE)
-		bool openAssetIDPopup = false;
-
-		std::string name = m_AssetID == 0 ? "Select Asset" : m_AssetName;
-		if( ImGui::Button( name.c_str() ) )
+		template<typename TCppType>
+		typename const TCppType Get() const
 		{
-			openAssetIDPopup = true;
+			if( !std::holds_alternative<std::monostate>( m_Value ) )
+			{
+				return std::get<TCppType>( m_Value );
+			}
+
+			return TCppType{};
 		}
 
-		ed::Suspend();
-		if( Auxiliary::DrawAssetFinder( m_AssetType, &openAssetIDPopup, m_AssetID ) ) 
+		template<typename TCppType>
+		typename TCppType* GetIf()
 		{
-			m_AssetName = AssetManager::Get().FindAsset( m_AssetID )->Name;
+			if( !std::holds_alternative<std::monostate>( m_Value ) )
+			{
+				return std::get_if<TCppType>( &m_Value );
+			}
+
+			return nullptr;
 		}
-		ed::Resume();
-#endif
-	}
 
-	void AssetIDPin::Serialise( std::ofstream& rStream ) const
-	{
-		Pin::Serialise( rStream );
+		template<typename TCppType>
+		void WriteValue( TCppType value )
+		{
+			m_Value = value;
+		}
 
-		RawSerialisation::WriteObject( m_AssetID, rStream );
-	}
-
-	void AssetIDPin::Deserialise( FDependentIStream& rStream )
-	{
-		Pin::Deserialise( rStream );
-
-		RawSerialisation::ReadObject( m_AssetID, rStream );
-#if defined(SAT_DEBUG) || defined(SAT_RELEASE)
-		m_AssetName = m_AssetID == 0 ? "No Asset" : AssetManager::Get().FindAsset( m_AssetID )->Name;
-#endif
-	}
-
+	private:
+		NodeEditorVariableTypes m_Value;
+	};
+	
 }

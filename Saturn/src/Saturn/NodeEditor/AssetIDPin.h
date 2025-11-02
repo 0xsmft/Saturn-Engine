@@ -53,15 +53,15 @@ namespace Saturn {
 		void SetAssetType( AssetType type ) { m_AssetType = type; }
 
 	protected:
-		void OnRenderInput() override final;
-		void OnRenderOutput() override final;
+		virtual void OnRenderOutput() override;
+		virtual void OnRenderInput() override;
 
 	protected:
 		void Serialise( std::ofstream& rStream ) const override;
 		void Deserialise( FDependentIStream& rStream ) override;
 
 	private:
-		void Render();
+		void RenderInternal();
 
 	private:
 		AssetID m_AssetID = 0;

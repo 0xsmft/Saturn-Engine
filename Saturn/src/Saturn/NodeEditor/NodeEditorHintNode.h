@@ -32,8 +32,10 @@
 
 namespace Saturn {
 
+	SCLASS()
 	class NodeEditorHintNode final : public NodeEditorNodeBase
 	{
+		SAT_DECLARE_CLASS( NodeEditorHintNode, NodeEditorNodeBase )
 	public:
 		NodeEditorHintNode();
 		NodeEditorHintNode( const std::string& rName );

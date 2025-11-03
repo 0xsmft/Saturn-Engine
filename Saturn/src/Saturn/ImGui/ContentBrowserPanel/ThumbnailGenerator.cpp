@@ -229,7 +229,7 @@ namespace Saturn {
 
 		// Load and prepare SceneRenderer on JobSystem
 		// TRANSITION: JOB SYSTEM THREAD
-		JobSystem::Get().AddJob( [&]() 
+		JobSystem::Get().QueueJob( [&]() 
 		{
 			// Load material
 			Ref<MaterialAsset> materialAsset = AssetManager::Get().GetAssetAs<MaterialAsset>( rData.Asset->ID );
@@ -286,7 +286,7 @@ namespace Saturn {
 		}
 
 		// Execute init on JobSystem Thread
-		JobSystem::Get().AddJob( [&]() 
+		JobSystem::Get().QueueJob( [&]() 
 		{
 			RenderThread::Get().Queue( [ rData ]()
 			{

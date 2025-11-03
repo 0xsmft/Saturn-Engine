@@ -50,7 +50,7 @@ namespace Saturn {
 		void SetMaxThreads( size_t maxThreads );
 
 		template<typename Func>
-		Ref<Job> AddJob( Func&& rrFunc )
+		Ref<Job> QueueJob( Func&& rrFunc )
 		{
 			std::unique_lock<std::mutex>( m_Mutex );
 

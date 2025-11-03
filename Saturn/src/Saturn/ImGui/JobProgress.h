@@ -52,7 +52,7 @@ namespace Saturn {
 		template<typename Func>
 		inline void SetJobFunc( Func&& rrFunc ) 
 		{
-			JobSystem::Get().AddJob( rrFunc );
+			JobSystem::Get().QueueJob( rrFunc );
 		}
 
 		void SetStatus( const std::string& rStatus ) { m_Status = rStatus; }

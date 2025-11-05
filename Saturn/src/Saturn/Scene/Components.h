@@ -28,15 +28,16 @@
 
 #pragma once
 
-#include "Saturn/Asset/MemoryAssetDependency.h"
-
 #include "Saturn/Core/Maths.h"
 #include "Saturn/Core/UUID.h"
 #include "Saturn/Core/Renderer/SceneCamera.h"
 
+#include "Saturn/Asset/MemoryAssetDependency.h"
+
 #include "Saturn/Vulkan/EnvironmentMap.h"
 #include "Saturn/Vulkan/Mesh.h"
 
+// TODO: Should not be included...
 #include "Saturn/Animation/Animator.h"
 
 #include <string>
@@ -161,7 +162,10 @@ namespace Saturn {
 		Ref<Saturn::MaterialRegistry> MaterialRegistry;
 		
 		// Animation
+		MemoryAssetDependency<AssetType::AnimationController> AnimationControllerAssetID;
+
 		AnimatorType AnimatorType = AnimatorType::Single;
+		// LocalAnimator is only valid for runtime objects
 		Ref<Animator> LocalAnimator;
 
 		SkeletalMeshComponent() = default;
@@ -171,7 +175,7 @@ namespace Saturn {
 		{
 		}
 
-		operator Ref<Saturn::StaticMesh>() { return Mesh; }
+		operator Ref<Saturn::SkeletalMesh>() { return Mesh; }
 	};
 
 	struct DirectionalLightComponent
@@ -210,7 +214,9 @@ namespace Saturn {
 		glm::vec3 Offset = { 0.0f, 0.0f, 0.0f };
 
 		bool IsTrigger = false;
+#if !defined(SAT_DIST) /* SAT_WITH_EDITOR */
 		bool AutoAdjustExtent = false;
+#endif
 
 		BoxColliderComponent() = default;
 		BoxColliderComponent( const glm::vec3& extents ) : Extents( extents ) { }
@@ -238,11 +244,6 @@ namespace Saturn {
 
 		CapsuleColliderComponent() = default;
 		CapsuleColliderComponent( float radius, float height ) : Radius( radius ), Height( height ) { }
-	};
-
-	struct MeshColliderComponent
-	{
-		bool IsTrigger = false;
 	};
 
 	// TODO: Do we really want to store the rigid body here?
@@ -329,7 +330,7 @@ namespace Saturn {
 		UUID UniqueID;
 		bool Loop = false;
 		bool Mute = false;
-		bool Spatialization = false;
+		bool Spatialisation = false;
 		float Volume = 1.0f;
 		float Pitch = 1.0f;
 		Ref<SoundGroup> SoundGroup = nullptr;
@@ -370,7 +371,7 @@ namespace Saturn {
 		StaticMeshComponent, SkeletalMeshComponent,
 		DirectionalLightComponent, SkylightComponent, PointLightComponent,
 		CameraComponent,
-		BoxColliderComponent, SphereColliderComponent, CapsuleColliderComponent, MeshColliderComponent, RigidbodyComponent,
+		BoxColliderComponent, SphereColliderComponent, CapsuleColliderComponent, RigidbodyComponent,
 		AudioPlayerComponent, AudioListenerComponent,
 		BillboardComponent,
 		NavigationMeshSpecificationComponent>;
@@ -381,7 +382,7 @@ namespace Saturn {
 		StaticMeshComponent, SkeletalMeshComponent,
 		DirectionalLightComponent, SkylightComponent, PointLightComponent,
 		CameraComponent,
-		BoxColliderComponent, SphereColliderComponent, CapsuleColliderComponent, MeshColliderComponent, RigidbodyComponent,
+		BoxColliderComponent, SphereColliderComponent, CapsuleColliderComponent, RigidbodyComponent,
 		AudioPlayerComponent, AudioListenerComponent,
 		BillboardComponent,
 		NavigationMeshSpecificationComponent>;

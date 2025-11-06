@@ -34,8 +34,9 @@
 #include "Saturn/Asset/PhysicsMaterialAsset.h"
 #include "Saturn/Asset/TextureSourceAsset.h"
 #include "Saturn/Asset/MaterialAsset.h"
-#include "Saturn/Asset/SkeletonAsset.h"
-#include "Saturn/Asset/SkeletalAnimationAsset.h"
+
+#include "Saturn/Animation/SkeletonAsset.h"
+#include "Saturn/Animation/SkeletalAnimationAsset.h"
 
 #include "Saturn/Audio/SoundSpecification.h"
 #include "Saturn/Audio/GraphSound.h"
@@ -48,6 +49,8 @@
 
 #include "YamlAux.h"
 #include "EntitySerialisation.h"
+
+#include "Saturn/Serialisation/Raw/RawSerialisation.h"
 
 #include <glm/gtc/type_ptr.hpp>
 #include <yaml-cpp/yaml.h>
@@ -829,137 +832,108 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// SkeletonAssetSerialiser
 
+	struct SkeletonAssetFileHeader
+	{
+		const char Magic[ 5 ] = ".SK\0";
+	};
+	
 	void SkeletonAssetSerialiser::Serialise( const Ref<Asset>& rAsset ) const
 	{
 		const auto skelAsset = rAsset.As<SkeletonAsset>();
 
-		YAML::Emitter out;
-
-		// Root
-		out << YAML::BeginMap; 
-		{
-			// Header
-			out << YAML::Key << "Skeleton" << YAML::Value; 
-			// Header map
-			out << YAML::BeginMap;
-			{
-				//////////////////////////////////////////////////////////////////////////
-				out << YAML::Key << "BoneInfo" << YAML::Value;
-				out << YAML::BeginSeq;
-
-				for( const auto& rBoneInfo : skelAsset->GetBoneInfo() )
-				{
-					out << YAML::BeginMap;
-
-					out << YAML::Key << "Name" << YAML::Value << rBoneInfo.BoneName;
-					out << YAML::Key << "ParentIndex" << YAML::Value << rBoneInfo.ParentIndex;
-
-					// Flatten mat4
-					const float* pData = glm::value_ptr( rBoneInfo.BoneOffset );
-
-					out << YAML::Key << "BoneOffset" << YAML::Value;
-					out << YAML::Flow << YAML::BeginSeq;
-					// 4 rows 4 columns = 16 total numbers
-					for( unsigned int i = 0; i < 16; i++ )
-					{
-						out << pData[ i ];
-					}
-					out << YAML::EndSeq;
-
-					out << YAML::EndMap;
-				}
-
-				out << YAML::EndSeq;
-
-				//////////////////////////////////////////////////////////////////////////
-				out << YAML::Key << "Vertices" << YAML::Value;
-				out << YAML::BeginSeq;
-
-				for( const auto& rVertex : skelAsset->GetVertices() )
-				{
-					out << YAML::BeginMap;
-
-					out << YAML::Key << "Indices" << YAML::Flow << YAML::BeginSeq << rVertex.BoneIndices[ 0 ] << rVertex.BoneIndices[ 1 ] << rVertex.BoneIndices[ 2 ] << rVertex.BoneIndices[ 3 ] << YAML::EndSeq;
-					out << YAML::Key << "Weights" << YAML::Flow << YAML::BeginSeq << rVertex.BoneWeights[ 0 ] << rVertex.BoneWeights[ 1 ] << rVertex.BoneWeights[ 2 ] << rVertex.BoneWeights[ 3 ] << YAML::EndSeq;
-
-					out << YAML::EndMap;
-				}
-
-				out << YAML::EndSeq;
-			}
-
-			// Header map
-			out << YAML::EndMap;
-		}
-
-		//////////////////////////////////////////////////////////////////////////
-		// Root
-		out << YAML::EndMap;
-
 		auto& basePath = rAsset->Path;
 		auto fullPath = GetFilepathAbs( basePath );
+		std::ofstream fout( fullPath, std::ios::binary | std::ios::trunc );
 
-		std::ofstream fout( fullPath );
-		fout << out.c_str();
+		SkeletonAssetFileHeader header;
+		RawSerialisation::WriteObject( header, fout );
+		
+		RawSerialisation::WriteObject( skelAsset->GetLocalVersion(), fout );
+		RawSerialisation::WriteObject( skelAsset->GetBoneInfo().size(), fout );
+
+		for( const auto& rBoneInfo : skelAsset->GetBoneInfo() )
+		{
+			RawSerialisation::WriteString( rBoneInfo.BoneName, fout );
+			RawSerialisation::WriteObject( rBoneInfo.ParentIndex, fout );
+
+			RawSerialisation::WriteMatrix4x4( rBoneInfo.BoneOffset, fout );
+		}
+
+		RawSerialisation::WriteObject( skelAsset->GetVertices().size(), fout );
+
+		for( const auto& rBoneInfo : skelAsset->GetVertices() )
+		{
+			for( unsigned int i = 0; i < 4; ++i )
+			{
+				RawSerialisation::WriteObject( rBoneInfo.BoneIndices[ i ], fout );
+				RawSerialisation::WriteObject( rBoneInfo.BoneWeights[ i ], fout );
+			}
+		}
+
+		RawSerialisation::WriteVector( skelAsset->GetCompatibleMeshes(), fout );
+
+		fout.close();
 	}
 
 	bool SkeletonAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
 	{
 		const auto absolutePath = GetFilepathAbs( rAsset->Path );
-		std::ifstream FileIn( absolutePath );
+		std::ifstream FileIn( absolutePath, std::ios::binary | std::ios::in );
 
-		std::stringstream ss;
-		ss << FileIn.rdbuf();
+		SkeletonAssetFileHeader header;
+		RawSerialisation::ReadObject( header, FileIn );
 
-		YAML::Node data = YAML::Load( ss.str() );
-
-		if( data.IsNull() )
-			return false;
-
-		const auto skeletonData = data[ "Skeleton" ];
-		if( skeletonData.IsNull() )
-			return false;
-
-		const auto boneInfo = skeletonData[ "BoneInfo" ];
+		SkeletonAssetVersion skVersion = SkeletonAssetVersion::Lowest;
+		RawSerialisation::ReadObject( skVersion, FileIn );
 
 		auto skeletonAsset = Ref<SkeletonAsset>::Create( rAsset );
 
-		uint32_t index = 0;
-		for( const auto bone : boneInfo )
+		size_t mapSize = 0;
+		RawSerialisation::ReadObject( mapSize, FileIn );
+
+		// TODO: Reserve space...
+		for( size_t i = 0; i < mapSize; ++i )
 		{
-			const auto name = bone[ "Name" ].as<std::string>();
-			const auto parentIndex = bone[ "ParentIndex" ].as<int>();
+			std::string name = RawSerialisation::ReadString( FileIn );
 
-			const auto boneOffsetMatrix = bone[ "BoneOffset" ];
+			int parentIndex = -1;
+			RawSerialisation::ReadObject( parentIndex, FileIn );
 
-			skeletonAsset->AddBoneInfo( name, parentIndex, glm::mat4{ 1.0f }, index );
-		
-			index++;
+			glm::mat4 boneOffset{};
+			RawSerialisation::ReadMatrix4x4( boneOffset, FileIn );
+
+			skeletonAsset->AddBoneInfo( name, parentIndex, boneOffset, ( uint32_t ) i );
 		}
 
-		const auto vertices = skeletonData[ "Vertices" ];
-		for( const auto vertex : vertices )
+		// TODO: Reserve space...
+		RawSerialisation::ReadObject( mapSize, FileIn );
+		for( size_t i = 0; i < mapSize; ++i )
 		{
-			SkeletonAssetVertexSkin vert;
+			SkeletonAssetVertexSkin skin;
 
-			const auto indices = vertex[ "Indices" ];
-			uint32_t i = 0;
-			for( const auto index : indices )
+			for( unsigned int j = 0u; j < 4; ++j )
 			{
-				vert.BoneIndices[ i ] = index.as<uint32_t>();
-				i++;
+				RawSerialisation::ReadObject( skin.BoneIndices[ j ], FileIn );
+				RawSerialisation::ReadObject( skin.BoneWeights[ j ], FileIn );
 			}
 
-			const auto weights = vertex[ "Weights" ];
-			i = 0;
-			for( const auto weight : weights )
-			{
-				vert.BoneWeights[ i ] = weight.as<float>();
-				i++;
-			}
-
-			skeletonAsset->AddVertex( vert );
+			skeletonAsset->AddVertex( skin );
 		}
+
+		if( skVersion >= SkeletonAssetVersion::CompatibilityInformationForMeshes )
+		{
+			// TODO: Reserve space...
+			RawSerialisation::ReadObject( mapSize, FileIn );
+			for( size_t i = 0; i < mapSize; ++i )
+			{
+				UUID id = 0llu;
+				RawSerialisation::ReadObject( id, FileIn );
+				
+				skeletonAsset->AddCompatibleMesh( id );
+			}
+		}
+
+		FileIn.close();
 
 		// Set rAsset reference to point to our new Skeleton
 		rAsset = skeletonAsset;
@@ -974,147 +948,145 @@ namespace Saturn {
 	{
 		const auto animAsset = rAsset.As<SkeletalAnimationAsset>();
 
-		YAML::Emitter out;
-
-		// Root
-		out << YAML::BeginMap;
-		{
-			// Header
-			out << YAML::Key << "SkeletalAnimation" << YAML::Value;
-			// Header map
-			out << YAML::BeginMap;
-			{
-				//////////////////////////////////////////////////////////////////////////
-				out << YAML::Key << "SkeletonID" << YAML::Value << animAsset->GetSkeletonID();
-				out << YAML::Key << "Duration" << YAML::Value << animAsset->GetDuration();
-				out << YAML::Key << "TicksPerSecond" << YAML::Value << animAsset->GetTicksPerSecond();
-
-				out << YAML::Key << "AnimationBones" << YAML::Value;
-				out << YAML::BeginSeq;
-
-				for( const auto& rBoneInfo : animAsset->GetAnimationBones() )
-				{
-					out << YAML::BeginMap;
-
-					out << YAML::Key << "Name" << YAML::Value << rBoneInfo.Name;
-					
-					out << YAML::Key << "Positions" << YAML::Value;
-					out << YAML::BeginSeq;
-					for( const auto& rKey : rBoneInfo.Positions )
-					{
-						out << YAML::BeginMap;
-						out << YAML::Key << "Value" << YAML::Value << rKey.Value;
-						out << YAML::Key << "Timestamp" << YAML::Value << rKey.TimeStamp;
-						out << YAML::EndMap;
-					}
-					out << YAML::EndSeq;
-
-					out << YAML::Key << "Rotations" << YAML::Value;
-					out << YAML::BeginSeq;
-					for( const auto& rKey : rBoneInfo.Rotations )
-					{
-						out << YAML::BeginMap;
-						out << YAML::Key << "Value" << YAML::Value << rKey.Value;
-						out << YAML::Key << "Timestamp" << YAML::Value << rKey.TimeStamp;
-						out << YAML::EndMap;
-					}
-					out << YAML::EndSeq;
-
-					out << YAML::Key << "Scale" << YAML::Value;
-					out << YAML::BeginSeq;
-					for( const auto& rKey : rBoneInfo.Scale )
-					{
-						out << YAML::BeginMap;
-						out << YAML::Key << "Value" << YAML::Value << rKey.Value;
-						out << YAML::Key << "Timestamp" << YAML::Value << rKey.TimeStamp;
-						out << YAML::EndMap;
-					}
-					out << YAML::EndSeq;
-
-					out << YAML::EndMap;
-				}
-
-				out << YAML::EndSeq;
-			}
-
-			// Header map
-			out << YAML::EndMap;
-		}
-
-		//////////////////////////////////////////////////////////////////////////
-		// Root
-		out << YAML::EndMap;
-
 		auto& basePath = rAsset->Path;
 		auto fullPath = GetFilepathAbs( basePath );
+		std::ofstream fout( fullPath, std::ios::binary | std::ios::trunc );
 
-		std::ofstream fout( fullPath );
-		fout << out.c_str();
+		SkeletonAssetFileHeader header;
+		RawSerialisation::WriteObject( header, fout );
+
+		RawSerialisation::WriteObject( animAsset->GetLocalAssetVersion(), fout );
+		RawSerialisation::WriteObject( animAsset->GetSkeletonID(), fout );
+		RawSerialisation::WriteObject( animAsset->GetDuration(), fout );
+		RawSerialisation::WriteObject( animAsset->GetTicksPerSecond(), fout );
+		RawSerialisation::WriteObject( animAsset->IsUsingRootMotion(), fout );
+
+		RawSerialisation::WriteObject( animAsset->GetAnimationBones().size(), fout );
+		for( const auto& rBoneInfo : animAsset->GetAnimationBones() )
+		{
+			RawSerialisation::WriteString( rBoneInfo.Name, fout );
+
+			RawSerialisation::WriteObject( rBoneInfo.Positions.size(), fout );
+			for( const auto& rPosition : rBoneInfo.Positions )
+			{
+				RawSerialisation::WriteObject( rPosition.Value.x, fout );
+				RawSerialisation::WriteObject( rPosition.Value.y, fout );
+				RawSerialisation::WriteObject( rPosition.Value.z, fout );
+				RawSerialisation::WriteObject( rPosition.TimeStamp, fout );
+			}
+
+			RawSerialisation::WriteObject( rBoneInfo.Rotations.size(), fout );
+			for( const auto& rRotation : rBoneInfo.Rotations )
+			{
+				RawSerialisation::WriteObject( rRotation.Value.w, fout );
+				RawSerialisation::WriteObject( rRotation.Value.x, fout );
+				RawSerialisation::WriteObject( rRotation.Value.y, fout );
+				RawSerialisation::WriteObject( rRotation.Value.z, fout );
+				RawSerialisation::WriteObject( rRotation.TimeStamp, fout );
+			}
+
+			RawSerialisation::WriteObject( rBoneInfo.Scale.size(), fout );
+			for( const auto& rScale : rBoneInfo.Scale )
+			{
+				RawSerialisation::WriteObject( rScale.Value.x, fout );
+				RawSerialisation::WriteObject( rScale.Value.y, fout );
+				RawSerialisation::WriteObject( rScale.Value.z, fout );
+				RawSerialisation::WriteObject( rScale.TimeStamp, fout );
+			}
+		}
+
+		fout.close();
 	}
 
 	bool SkeletalAnimationAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
 	{
 		const auto absolutePath = GetFilepathAbs( rAsset->Path );
-		std::ifstream FileIn( absolutePath );
+		std::ifstream FileIn( absolutePath, std::ios::binary | std::ios::in );
 
-		std::stringstream ss;
-		ss << FileIn.rdbuf();
+		SkeletonAssetFileHeader header{};
+		RawSerialisation::ReadObject( header, FileIn );
 
-		YAML::Node data = YAML::Load( ss.str() );
+		AssetID skeletonID = 0;
+		double duration = 0.0, ticksPerSecond = 0.0;
+		SkeletalAnimationAssetVersion skAnimVer = SkeletalAnimationAssetVersion::BeforeVersionWasAdded;
 
-		if( data.IsNull() )
-			return false;
+		RawSerialisation::ReadObject( skAnimVer, FileIn );
+		RawSerialisation::ReadObject( skeletonID, FileIn );
+		RawSerialisation::ReadObject( duration, FileIn );
+		RawSerialisation::ReadObject( ticksPerSecond, FileIn );
 
-		const auto skeletalAnimationData = data[ "SkeletalAnimation" ];
-		if( skeletalAnimationData.IsNull() )
-			return false;
-
-		const auto skeletonID     = skeletalAnimationData[ "SkeletonID" ].as<uint64_t>();
-		const auto duration       = skeletalAnimationData[ "Duration" ].as<double>();
-		const auto ticksPerSecond = skeletalAnimationData[ "TicksPerSecond" ].as<double>();
-		const auto animationBones = skeletalAnimationData[ "AnimationBones" ];
+		bool hadRootMotion = false;
+		if( skAnimVer >= SkeletalAnimationAssetVersion::RootMotion )
+		{
+			RawSerialisation::ReadObject( hadRootMotion, FileIn );
+		}
 
 		auto animAsset = Ref<SkeletalAnimationAsset>::Create( rAsset );
 		animAsset->SetSkeletonID( skeletonID );
 		animAsset->SetDuration( duration );
 		animAsset->SetTicks( ticksPerSecond );
-		
-		for( const auto boneNode : animationBones )
+		animAsset->UseRootMotion( hadRootMotion );
+
+		size_t mapSize = 0;
+		RawSerialisation::ReadObject( mapSize, FileIn );
+
+		for( size_t i = 0; i < mapSize; i++ )
 		{
-			const auto name = boneNode[ "Name" ].as<std::string>();
+			AnimationBone ab;
+			ab.Name = RawSerialisation::ReadString( FileIn );
 
-			AnimationBone bone;
-			bone.Name = name;
-
-			const auto positions = boneNode[ "Positions" ];
-			for( const auto position : positions )
+			size_t positions = 0;
+			RawSerialisation::ReadObject( positions, FileIn );
+			for( size_t j = 0; j < positions; j++ )
 			{
-				glm::vec3 value = position[ "Value" ].as<glm::vec3>();
-				double ts = position[ "Timestamp" ].as<double>();
+				glm::vec3 value{};
+				double ts = 0.0;
 
-				bone.Positions.emplace_back( value, ts );
+				RawSerialisation::ReadObject( value.x, FileIn );
+				RawSerialisation::ReadObject( value.y, FileIn );
+				RawSerialisation::ReadObject( value.z, FileIn );
+				RawSerialisation::ReadObject( ts, FileIn );
+
+				ab.Positions.emplace_back( value, ts );
 			}
 
-			const auto rotations = boneNode[ "Rotations" ];
-			for( const auto rotation : rotations )
+			size_t rotations = 0;
+			RawSerialisation::ReadObject( rotations, FileIn );
+			for( size_t j = 0; j < rotations; j++ )
 			{
-				glm::quat value = rotation[ "Value" ].as<glm::quat>();
-				double ts = rotation[ "Timestamp" ].as<double>();
+				glm::quat q{};
+				double ts = 0.0;
 
-				bone.Rotations.emplace_back( value, ts );
+				RawSerialisation::ReadObject( q.w, FileIn );
+				RawSerialisation::ReadObject( q.x, FileIn );
+				RawSerialisation::ReadObject( q.y, FileIn );
+				RawSerialisation::ReadObject( q.z, FileIn );
+				RawSerialisation::ReadObject( ts, FileIn );
+
+				ab.Rotations.emplace_back( q, ts );
 			}
 
-			const auto scales = boneNode[ "Scale" ];
-			for( const auto scale : scales )
+			size_t scales = 0;
+			RawSerialisation::ReadObject( scales, FileIn );
+			for( size_t j = 0; j < scales; j++ )
 			{
-				glm::vec3 value = scale[ "Value" ].as<glm::vec3>();
-				double ts = scale[ "Timestamp" ].as<double>();
+				glm::vec3 value{};
+				double ts = 0.0;
 
-				bone.Scale.emplace_back( value, ts );
+				RawSerialisation::ReadObject( value.x, FileIn );
+				RawSerialisation::ReadObject( value.y, FileIn );
+				RawSerialisation::ReadObject( value.z, FileIn );
+
+				RawSerialisation::ReadObject( ts, FileIn );
+
+				ab.Scale.emplace_back( value, ts );
 			}
 
-			animAsset->AddAnimBone( bone );
+			animAsset->AddAnimBone( ab );
 		}
+
+		if( skeletonID )
+			AssetManager::Get().RegisterAssetDependency( animAsset->ID, skeletonID );
 
 		// Set rAsset reference to point to our new SkeletalAnimation
 		rAsset = animAsset;

@@ -124,7 +124,10 @@ namespace Saturn {
 			stream.close();
 		}
 
-		EntitySerialisation::DeserialiseEntities( entities, m_Scene );
+		for( const auto entityNode : entities )
+		{
+			EntitySerialisation::DeserialiseEntity( entityNode, m_Scene );
+		}
 
 		m_Scene->PostDeserialise();
 

@@ -28,8 +28,10 @@
 
 #pragma once
 
+#include "Animator.h"
+#include "Saturn/Animation/AssetViewer/Graph/Tasks/AnimGraphTaskHandler.h"
+
 #include "Saturn/Asset/Asset.h"
-#include "Saturn/NodeEditor/NodeEditorTaskHandler.h"
 
 namespace Saturn {
 
@@ -44,24 +46,18 @@ namespace Saturn {
 		AnimationController( AssetID id );
 		~AnimationController();
 
-		void Initialise();
+		void Initialise( Ref<Animator> animator );
 		void Tick( Timestep ts );
 
 		[[nodiscard]] Ref<Asset> GetAsset() const { return m_ControllerAsset; }
 		[[nodiscard]] SharedPtr<AnimGraph> GetAnimationGraph() const { return m_AnimationGraph; }
 
 	private:
-		NodeEditorTaskHandler m_TaskHandler;
+		Ref<AnimGraphTaskHandler> m_TaskHandler;
 
 		Ref<Asset> m_ControllerAsset;
 		Ref<SkeletonAsset> m_Skeleton;
 		SharedPtr<AnimGraph> m_AnimationGraph;
-
-		SharedPtr<NodeEditorNodeBase> m_CurrentNode;
-
-		std::vector<UUID> m_Order;
-
-		UUID m_EntryPointID = 0;
 	};
 	
 }

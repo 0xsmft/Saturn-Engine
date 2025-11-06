@@ -44,14 +44,12 @@ namespace Saturn {
 	}
 
 	AnimationController::~AnimationController()
-	{
-//		if( m_AnimationGraph )
-//			m_AnimationGraph->SetRuntime( nullptr );
-		
+	{		
+		m_TaskHandler = nullptr;
 		m_AnimationGraph = nullptr;
 	}
 
-	void AnimationController::Initialise()
+	void AnimationController::Initialise( Ref<Animator> animator )
 	{
 		m_AnimationGraph = SharedPtr<AnimGraph>::Create( m_ControllerAsset->ID );
 		// Read only...
@@ -60,11 +58,10 @@ namespace Saturn {
 		const std::string filename = std::format( "{0}.sac", m_ControllerAsset->Name );
 		if( NodeCacheEditor::ReadNodeEditorCache( m_AnimationGraph, m_ControllerAsset->ID, filename ) )
 		{
-//			m_EntryPointID = m_AnimationGraph->FindNode( "Root Node" )->ID;
+			const auto order2 = m_AnimationGraph->TraverseAndCreateTasks();
+			m_TaskHandler = Ref<AnimGraphTaskHandler>::Create( animator );
+			m_TaskHandler->InitWithCustomOrder2( m_AnimationGraph, order2 );
 		}
-
-		m_Order = m_AnimationGraph->TraverseAnimGraph();
-		m_TaskHandler.Init( m_AnimationGraph );
 	}
 
 	void AnimationController::Tick( Timestep ts )

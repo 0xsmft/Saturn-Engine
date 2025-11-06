@@ -48,7 +48,7 @@ namespace Saturn {
 		bool result = false;
 
 #if defined(_WIN32)
-		m_Handle = LoadLibraryW( rPath.wstring().data() );
+		m_Handle = ::LoadLibraryW( rPath.wstring().data() );
 		result = ( bool ) m_Handle;
 #else
 		m_Handle = dlopen( rPath.data(), RTLD_LAZY );
@@ -64,7 +64,7 @@ namespace Saturn {
 			return;
 
 #if defined(_WIN32)
-		FreeLibrary( m_Handle );
+		::FreeLibrary( m_Handle );
 		m_Handle = nullptr;
 #else
 		dlclose( m_Handle );
@@ -75,7 +75,7 @@ namespace Saturn {
 #if defined(_WIN32)
 	FARPROC DynamicLinkLibrary::GetSymbol( const char* pName ) const
 	{
-		return GetProcAddress( m_Handle, pName );
+		return ::GetProcAddress( m_Handle, pName );
 	}
 #else
 	void* DynamicLinkLibrary::GetSymbol( const char* pName )

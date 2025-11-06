@@ -29,9 +29,7 @@
 #pragma once
 
 #include "Saturn/ImGui/AssetViewer.h"
-#include "SkeletalMeshBoneHierarchyPanel.h"
-
-struct ImVec2;
+#include "SkeletonBoneHierarchyPanel.h"
 
 namespace Saturn {
 
@@ -49,19 +47,12 @@ namespace Saturn {
 		virtual void OnEvent( Event& rEvent ) override;
 
 	private:
+		bool m_ShowFinderModal = false;
+		UUID m_TemporaryCompatibleMeshID = 0;
 		Ref<SkeletonAsset> m_SkeletonAsset;
 		Ref<SceneRenderer> m_SceneRenderer;
-//		Ref<Scene> m_Scene;
-//		EditorCamera m_Camera;
 
-		bool m_AllowCameraEvents = false;
-		bool m_StartedRightClickInViewport = false;
-		bool m_ViewportFocused = false;
-		bool m_MouseOverViewport = false;
-
-//		ImVec2 m_ViewportSize{};
-
-		SkeletalMeshBoneHierarchyPanel m_BoneHierarchyPanel;
+		SkeletonBoneHierarchyPanel m_BoneHierarchyPanel;
 	};
 	
 }

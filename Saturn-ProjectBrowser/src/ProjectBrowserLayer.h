@@ -82,10 +82,10 @@ namespace Saturn {
 
 		bool m_ShowNewProjectPopup = false;
 		bool m_ShouldThreadTerminate = false;
+		bool m_CreateHelpfulFolders = true;
+		bool m_HasSaturnDir = false;
 
 		std::vector<ProjectInformation> m_RecentProjects;
 		std::thread m_RecentProjectThread;
-
-		bool m_HasSaturnDir = false;
 	};
 }

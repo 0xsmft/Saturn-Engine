@@ -603,7 +603,7 @@ namespace Saturn {
 				break;
 
 			case Saturn::ApplicationConfigKind::Dist:
-				SaturnBinDir /= "Release-windows-x86_64"; // Use editor release dlls -- same as release ones
+				SaturnBinDir /= "Release-windows-x86_64"; // Use editor release DLLs -- same as release ones
 				binDir /= "Dist-windows-x86_64";
 				break;
 		}

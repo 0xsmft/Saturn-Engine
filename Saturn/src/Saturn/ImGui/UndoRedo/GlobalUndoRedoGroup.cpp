@@ -81,7 +81,7 @@ namespace Saturn {
 
 	void GlobalUndoRedoGroup::GlobalUndoTo( size_t amount /*= 0 */ )
 	{
-		for( size_t i = 0; i < amount; i++ )
+		for( size_t i = 0; i < amount; ++i )
 		{
 			GlobalUndoRecent();
 		}
@@ -89,7 +89,7 @@ namespace Saturn {
 
 	void GlobalUndoRedoGroup::GlobalRedoTo( size_t amount /*= 0 */ )
 	{
-		for( size_t i = 0; i < amount; i++ )
+		for( size_t i = 0; i < amount; ++i )
 		{
 			GlobalRedoRecent();
 		}

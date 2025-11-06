@@ -128,7 +128,7 @@ namespace Saturn {
 	{
 		Camera* pCamera = nullptr;
 
-		// Stored separately to as some camera don't have a view matrix such as the SceneCamera whose view matrix is calculated in the Active Scene and is relative to the entity who owns it.
+		// Stored separately as some camera don't have a view matrix such as the SceneCamera whose view matrix is calculated in the Active Scene and is relative to the entity who owns it.
 		glm::mat4 ViewMatrix{};
 	};
 }

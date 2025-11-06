@@ -1620,14 +1620,14 @@ namespace Saturn {
 		// u_LightData
 		UBLightData u_LightData{};
 
-		for( size_t i = 0; i < SHADOW_CASCADE_COUNT; i++ )
+		for( size_t i = 0; i < SHADOW_CASCADE_COUNT; ++i )
 		{
 			u_LightData.LightMatrix[ i ] = m_RendererData.ShadowCascades[ i ].ViewProjection;
 		}
 
 		m_RendererData.UniformBufferSet->Get( 0, 1, frame )->UploadData( &u_LightData, sizeof( u_LightData ) );
 
-		for( int i = 0; i < SHADOW_CASCADE_COUNT; i++ )
+		for( int i = 0; i < SHADOW_CASCADE_COUNT; ++i )
 		{
 			m_RendererData.ShadowMapTimers[ i ].Reset();
 

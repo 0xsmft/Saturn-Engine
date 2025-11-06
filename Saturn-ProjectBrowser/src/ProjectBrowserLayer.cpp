@@ -38,10 +38,10 @@
 #include <Saturn/Core/EnvironmentVariables.h>
 #include <Saturn/Core/Process.h>
 #include <Saturn/Core/JobSystem.h>
-#include <Saturn/Core/OptickProfiler.h>
+#include <Saturn/Core/Profiler.h>
 
-#include <Saturn/Serialisation/ProjectSerialiser.h>
-#include <Saturn/Serialisation/EngineSettingsSerialiser.h>
+#include <Saturn/Serialisation/YAML/ProjectSerialiser.h>
+#include <Saturn/Serialisation/YAML/EngineSettingsSerialiser.h>
 
 #include <glm/gtc/type_ptr.hpp>
 
@@ -272,7 +272,7 @@ namespace Saturn {
 
 		if( ImGui::Button( "Browse", ImVec2( bottomBarHeight, bottomBarHeight ) ) ) 
 		{
-			auto filePath = Application::Get().OpenFile( "Saturn Project files (*.sproject)\0 *.sproject\0" );
+			auto filePath = Application::Get().OpenFile( L"Saturn Project file (*.sproject)|*.sproject" );
 
 			ImportExternalProject( filePath );
 		}
@@ -290,7 +290,7 @@ namespace Saturn {
 			m_ShowNewProjectPopup = false;
 		}
 
-		auto center = pViewport->GetCenter();
+		const auto center = pViewport->GetCenter();
 		ImGui::SetNextWindowPos( center, ImGuiCond_FirstUseEver, ImVec2( 0.5f, 0.5f ) );
 
 		if( ImGui::BeginPopupModal( "New project", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove ) )
@@ -306,6 +306,14 @@ namespace Saturn {
 			if( ImGui::SmallButton( "...##location" ) )
 			{
 				m_ProjectFilePath = Application::Get().OpenFolder();
+			}
+
+			ImGui::Checkbox( "Create helpful folders", &m_CreateHelpfulFolders );
+
+			if( ImGui::BeginItemTooltip() )
+			{
+				ImGui::Text( "If this option is enabled, the project will start with some helpful folders in the Assets directory, such as \"Scenes\" and \"Meshes\"" );
+				ImGui::EndTooltip();
 			}
 
 			ImGui::Separator();
@@ -456,8 +464,8 @@ namespace Saturn {
 
 	void ProjectBrowserLayer::CreateProject( const std::filesystem::path& rPath )
 	{
-		std::string ProjectName = rPath.filename().string();
-		std::string ProjectNameNoExt = rPath.stem().string();
+		const std::string ProjectName = rPath.filename().string();
+		const std::string ProjectNameNoExt = rPath.stem().string();
 
 		// parent_path to get rid of the file
 		std::filesystem::path ProjectFolderPath = rPath.parent_path();
@@ -466,12 +474,19 @@ namespace Saturn {
 			std::filesystem::create_directories( ProjectFolderPath );
 
 		// Copy files.
-		std::filesystem::path targetPath = m_SaturnDir;
-		targetPath /= "Saturn-Editor";
-		targetPath /= "content";
-		targetPath /= "Templates";
+		std::filesystem::path templatesPath = m_SaturnDir;
+		templatesPath /= "Saturn-Editor";
+		templatesPath /= "content";
+		templatesPath /= "Templates";
 
-		std::filesystem::copy( targetPath, ProjectFolderPath, std::filesystem::copy_options::recursive );
+		{
+			const auto projectFilepath = templatesPath / "Project.sproject";
+			std::filesystem::copy( projectFilepath, ProjectFolderPath / "Project.sproject" );
+		}
+		{
+			const auto premakeBuildFile = templatesPath / "premake5.lua";
+			std::filesystem::copy( premakeBuildFile, ProjectFolderPath / "premake5.lua" );
+		}
 
 		// New Project ref
 		Ref<Project> newProject = Ref<Project>::Create();
@@ -498,14 +513,17 @@ namespace Saturn {
 
 		std::filesystem::create_directory( ProjectFolderPath / "Assets" );
 
-		std::filesystem::create_directories( ProjectFolderPath / "Assets" / "Shaders" );
-		std::filesystem::create_directories( ProjectFolderPath / "Assets" / "Textures" );
-		std::filesystem::create_directories( ProjectFolderPath / "Assets" / "Meshes" );
-		std::filesystem::create_directories( ProjectFolderPath / "Assets" / "Materials" );
-		std::filesystem::create_directories( ProjectFolderPath / "Assets" / "Scenes" );
-		std::filesystem::create_directories( ProjectFolderPath / "Assets" / "Sound" );
-		std::filesystem::create_directories( ProjectFolderPath / "Assets" / "Sound" / "Source" );
-		
+		if( m_CreateHelpfulFolders )
+		{
+			std::filesystem::create_directories( ProjectFolderPath / "Assets" / "Shaders" );
+			std::filesystem::create_directories( ProjectFolderPath / "Assets" / "Textures" );
+			std::filesystem::create_directories( ProjectFolderPath / "Assets" / "Meshes" );
+			std::filesystem::create_directories( ProjectFolderPath / "Assets" / "Materials" );
+			std::filesystem::create_directories( ProjectFolderPath / "Assets" / "Scenes" );
+			std::filesystem::create_directories( ProjectFolderPath / "Assets" / "Sound" );
+			std::filesystem::create_directories( ProjectFolderPath / "Assets" / "Sound" / "Source" );
+		}
+
 		std::filesystem::create_directory( ProjectFolderPath / "Source" );
 		std::filesystem::create_directory( ProjectFolderPath / "Build" );
 		std::filesystem::create_directory( ProjectFolderPath / "Cache" );

@@ -30,9 +30,9 @@
 
 #if !defined(SAT_DIST)
 
+#include <sppch.h>
 #include <Saturn/Project/Project.h>
-#include <Saturn/Core/Module.h>
-#include <Saturn/Core/OptickProfiler.h>
+#include <Saturn/Core/Profiler.h>
 
 extern "C" {
 

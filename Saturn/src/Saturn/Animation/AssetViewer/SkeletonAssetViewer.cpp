@@ -52,16 +52,6 @@ namespace Saturn {
 		m_Open = true;
 		m_Name = std::format( "{0}##{1}", m_SkeletonAsset->Name, std::to_string( m_SkeletonAsset->ID ) );
 
-		/*
-		m_Scene = Ref<Scene>::Create();
-
-		SceneRendererFlags flags = SceneRendererFlag_RenderGrid;
-		m_SceneRenderer = Ref<SceneRenderer>::Create( flags );
-
-		m_SceneRenderer->SetDynamicSky( 2.0f, 0.0f, 0.0f );
-		m_SceneRenderer->SetCurrentScene( m_Scene.Get() );
-		*/
-
 		m_BoneHierarchyPanel.Initialise( id );
 	}
 
@@ -75,19 +65,92 @@ namespace Saturn {
 		{
 			m_BoneHierarchyPanel.OnImGuiRender();
 
+			// Compatibility Information
+			ImGui::Begin( "Compatible Meshes" );
+			for( const auto& rMeshID : m_SkeletonAsset->GetCompatibleMeshes() )
+			{
+				ImGui::BeginHorizontal( ( int ) rMeshID );
+
+				ImGui::Text( "%llu", rMeshID );
+				if( ImGui::SmallButton( "-" ) ) 
+				{
+					m_SkeletonAsset->MarkAsUncompatibleMesh( rMeshID );
+				
+					// Not great having this here, but will be fine for the time being.
+					ImGui::EndHorizontal();
+					break;
+				}
+
+				ImGui::EndHorizontal();
+			}
+
+			if( ImGui::SmallButton( "+" ) )
+			{
+				m_ShowFinderModal = true;
+				ImGui::OpenPopup( "PickMesh##CompSk" );
+			}
+
+			ImGui::SetNextWindowSize( { 350.0F, 0.0F } );
+			if( ImGui::BeginPopupModal( "PickMesh##CompSk", &m_ShowFinderModal, ImGuiWindowFlags_NoSavedSettings ) )
+			{
+				ImGui::Text( "Please pick the mesh that you'd like to mark as compatible with this skeleton." );
+				
+				ImGui::BeginHorizontal( "##meshinfohz" );
+
+				std::string inputTextData = m_TemporaryCompatibleMeshID == 0 ? "No Mesh" : std::to_string( m_TemporaryCompatibleMeshID );
+				Auxiliary::InputText( "##name", &inputTextData, ImGuiInputTextFlags_ReadOnly );
+
+				bool open = false;
+				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
+				{
+					open ^= 1;
+				}
+				Auxiliary::DrawAssetFinder( AssetType::SkeletalMesh, &open, m_TemporaryCompatibleMeshID );
+
+				ImGui::EndHorizontal();
+
+				ImGui::Separator();
+				ImGui::BeginHorizontal( "##options" );
+				
+				if( ImGui::Button( "Confirm" ) )
+				{
+					m_SkeletonAsset->AddCompatibleMesh( m_TemporaryCompatibleMeshID );
+
+					m_TemporaryCompatibleMeshID = 0;
+					m_ShowFinderModal = false;
+					ImGui::CloseCurrentPopup();
+				}
+
+				if( ImGui::Button( "Cancel" ) )
+				{
+					m_TemporaryCompatibleMeshID = 0;
+					m_ShowFinderModal = false;
+					ImGui::CloseCurrentPopup();
+				}
+
+				ImGui::EndHorizontal();
+
+				ImGui::EndPopup();
+			}
 			ImGui::End();
+
+			ImGui::End();
+		}
+
+		if( m_Open == false )
+		{
+			m_SkeletonAsset->PortToNewestVersion();
+			SkeletonAssetSerialiser sas;
+			sas.Serialise( m_SkeletonAsset );
 		}
 	}
 
 	void SkeletonAssetViewer::OnUpdate( Timestep ts )
 	{
-
 	}
 
 	void SkeletonAssetViewer::OnEvent( Event& rEvent )
 	{
-//		if( m_MouseOverViewport && m_AllowCameraEvents )
-//			m_Camera.OnEvent( rEvent );
 	}
 
 }

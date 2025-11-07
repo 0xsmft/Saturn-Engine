@@ -53,6 +53,8 @@ namespace Saturn {
 		float Distance = 0.0F;
 	};
 
+	class Renderer2D;
+
 	class Camera
 	{
 	public:
@@ -95,7 +97,7 @@ namespace Saturn {
 		void SetActive( bool active ) { m_IsActive = active; }
 	
 		bool CameraFrustumIntersectsAABB( const AABB& rBoundingBox );
-		void RenderDebugFrustum() const;
+		void RenderDebugFrustum( Ref<Renderer2D>& sceneRenderer ) const;
 		std::array<glm::vec3, 8> GetFrustumCorners() const;
 
 	protected:

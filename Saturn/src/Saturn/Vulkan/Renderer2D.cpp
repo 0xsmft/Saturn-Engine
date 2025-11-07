@@ -51,6 +51,16 @@ namespace Saturn {
 	static constexpr uint32_t s_MaxSolidLineVertices = s_MaxSolidLines * 2;
 	static constexpr uint32_t s_MaxSolidLineIndices = s_MaxSolidLines * 6;
 
+	Renderer2D::Renderer2D()
+	{
+		Init();
+	}
+
+	Renderer2D::~Renderer2D()
+	{
+		Terminate();
+	}
+
 	void Renderer2D::Init()
 	{
 		if( Application::Get().HasFlag( ApplicationFlag_UIOnly ) )
@@ -402,13 +412,13 @@ namespace Saturn {
 		// One quad has 4 vertices so we need to submit them one by one.
 		glm::vec2 TexCoord[] = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f } };
 
-		for( size_t i = 0; i < 4; i++ )
+		for( size_t i = 0; i < 4; ++i )
 		{
 			m_pCurrentQuad->Position = transform * m_QuadVertexPositions[ i ];
 			m_pCurrentQuad->Color = color;
 			m_pCurrentQuad->TexCoord = TexCoord[ i ];
 
-			m_pCurrentQuad++;
+			++m_pCurrentQuad;
 		}
 
 		m_QuadIndexCount += 6;
@@ -421,14 +431,14 @@ namespace Saturn {
 		glm::mat4 transform = glm::translate( glm::mat4( 1.0f ), position )
 			* glm::scale( glm::mat4( 1.0f ), { size.x, size.y, 1.0f } );
 
-		for( size_t i = 0; i < 4; i++ )
+		for( size_t i = 0; i < 4; ++i )
 		{
 			m_pCurrentQuad->Position = transform * m_QuadVertexPositions[ i ];
 			m_pCurrentQuad->Color = color;
 			m_pCurrentQuad->TexCoord = TexCoord[ i ];
 			m_pCurrentQuad->TextureIndex = 0;
 
-			m_pCurrentQuad++;
+			++m_pCurrentQuad;
 		}
 
 		m_QuadIndexCount += 6;
@@ -440,7 +450,7 @@ namespace Saturn {
 		glm::vec2 TexCoord[] = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f } };
 
 		int textureID = 0;
-		for( uint32_t i = 1; i < m_CurrentTextureSlot; i++ )
+		for( uint32_t i = 1; i < m_CurrentTextureSlot; ++i )
 		{
 			if( m_Textures[ i ] == rTexture ) 
 			{
@@ -456,17 +466,17 @@ namespace Saturn {
 
 			textureID = m_CurrentTextureSlot;
 			m_Textures[ textureID ] = rTexture;
-			m_CurrentTextureSlot++;
+			++m_CurrentTextureSlot;
 		}
 
-		for( size_t i = 0; i < 4; i++ )
+		for( size_t i = 0; i < 4; ++i )
 		{
 			m_pCurrentQuad->Position = transform * m_QuadVertexPositions[ i ];
 			m_pCurrentQuad->Color = color;
 			m_pCurrentQuad->TexCoord = TexCoord[ i ];
 			m_pCurrentQuad->TextureIndex = (float)textureID;
 
-			m_pCurrentQuad++;
+			++m_pCurrentQuad;
 		}
 
 		m_QuadIndexCount += 6;
@@ -479,14 +489,14 @@ namespace Saturn {
 		glm::vec3 CamRight = { m_CameraView[ 0 ][ 0 ], m_CameraView[ 1 ][ 0 ], m_CameraView[ 2 ][ 0 ] };
 		glm::vec3 CamUp = { m_CameraView[ 0 ][ 1 ], m_CameraView[ 1 ][ 1 ], m_CameraView[ 2 ][ 1 ] };
 
-		for( size_t i = 0; i < 4; i++ )
+		for( size_t i = 0; i < 4; ++i )
 		{
 			m_pCurrentQuad->Position = position + CamRight * ( m_QuadVertexPositions[ i ].x ) * rSize.x + CamUp * m_QuadVertexPositions[ i ].y * rSize.y;
 			m_pCurrentQuad->Color = color;
 			m_pCurrentQuad->TexCoord = TexCoord[ i ];
 			m_pCurrentQuad->TextureIndex = 1;
 
-			m_pCurrentQuad++;
+			++m_pCurrentQuad;
 		}
 
 		m_QuadIndexCount += 6;
@@ -500,7 +510,7 @@ namespace Saturn {
 		glm::vec3 CamUp = { m_CameraView[ 0 ][ 1 ], m_CameraView[ 1 ][ 1 ], m_CameraView[ 2 ][ 1 ] };
 
 		int textureID = 0;
-		for( uint32_t i = 1; i < m_CurrentTextureSlot; i++ )
+		for( uint32_t i = 1; i < m_CurrentTextureSlot; ++i )
 		{
 			if( m_Textures[ i ] == rTexture )
 			{
@@ -516,17 +526,17 @@ namespace Saturn {
 
 			textureID = m_CurrentTextureSlot;
 			m_Textures[ textureID ] = rTexture;
-			m_CurrentTextureSlot++;
+			++m_CurrentTextureSlot;
 		}
 
-		for( size_t i = 0; i < 4; i++ )
+		for( size_t i = 0; i < 4; ++i )
 		{
 			m_pCurrentQuad->Position = position + CamRight * ( m_QuadVertexPositions[ i ].x ) * rSize.x + CamUp * m_QuadVertexPositions[ i ].y * rSize.y;
 			m_pCurrentQuad->Color = color;
 			m_pCurrentQuad->TexCoord = TexCoord[ i ];
 			m_pCurrentQuad->TextureIndex = (float)textureID;
 
-			m_pCurrentQuad++;
+			++m_pCurrentQuad;
 		}
 
 		m_QuadIndexCount += 6;
@@ -540,12 +550,12 @@ namespace Saturn {
 		m_pCurrentLine->Position = rStart;
 		m_pCurrentLine->Color = rColor;
 	
-		m_pCurrentLine++;
+		++m_pCurrentLine;
 	
 		m_pCurrentLine->Position = rEnd;
 		m_pCurrentLine->Color = rColor;
 
-		m_pCurrentLine++;
+		++m_pCurrentLine;
 
 		m_LineVertexCount += 2;
 	}
@@ -558,12 +568,12 @@ namespace Saturn {
 		m_pCurrentLine->Position = rStart;
 		m_pCurrentLine->Color = rColor;
 
-		m_pCurrentLine++;
+		++m_pCurrentLine;
 
 		m_pCurrentLine->Position = rEnd;
 		m_pCurrentLine->Color = rColor;
 
-		m_pCurrentLine++;
+		++m_pCurrentLine;
 
 		m_LineVertexCount += 2;
 	}
@@ -576,8 +586,8 @@ namespace Saturn {
 		m_pCurrentLine->Position = rStart;
 		m_pCurrentLine->Color = rColor;
 
-		m_pCurrentLine++;
-		m_LineVertexCount++;
+		++m_pCurrentLine;
+		++m_LineVertexCount;
 	}
 
 	void Renderer2D::SubmitArrow( const glm::vec3& rStart, const glm::vec3& rEnd, const glm::vec4& rColor, float headLength /*= 10.0f*/, float headAngle /*= 0.5f */ )
@@ -749,7 +759,7 @@ namespace Saturn {
 		m_pCurrentTriangle->Position = rV0;
 		m_pCurrentTriangle->Color = rColor;
 
-		m_pCurrentTriangle++;
+		++m_pCurrentTriangle;
 		++m_TriangleVextexCount;
 	}
 

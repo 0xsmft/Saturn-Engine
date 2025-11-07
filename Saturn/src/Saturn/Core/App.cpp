@@ -35,7 +35,7 @@
 #include "Ruby/RubyMonitor.h"
 #include "Ruby/RubyLibrary.h"
 
-#include "Saturn/Vulkan/Renderer2D.h"
+#include "Saturn/Vulkan/Renderer.h"
 #include "Saturn/Vulkan/VulkanContext.h"
 
 #include "Renderer/RenderThread.h"
@@ -196,10 +196,6 @@ namespace Saturn {
 		{
 			rLayer->OnUpdate( m_Timestep );
 		}
-			
-		// Always submit Renderer2D AFTER a potential SceneRenderer has finished because we now may have new 
-		// render commands to draw after OnUpdate was called.
-		RenderThread::Get().Queue( [ = ] { Renderer2D::Get().Render(); } );
 
 		//////////////////////////////////////////////////////////////////////////
 		// Render ImGui.

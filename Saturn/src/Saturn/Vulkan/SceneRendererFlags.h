@@ -36,7 +36,8 @@ namespace Saturn {
 		SceneRendererFlag_NoFlags = BIT( 0 ),
 		SceneRendererFlag_MasterInstance = BIT( 1 ),
 		SceneRendererFlag_SwapchainTarget = BIT( 2 ),
-		SceneRendererFlag_RenderGrid = BIT( 3 )
+		SceneRendererFlag_RenderGrid = BIT( 3 ),
+		SceneRendererFlag_NoRenderer2D = BIT( 4 )
 	};
 
 	// enum SceneRendererFlags_

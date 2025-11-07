@@ -118,9 +118,6 @@ namespace Saturn {
 
 		VkSampleCountFlagBits GetMaxUsableMSAASamples();
 
-		VkImageView GetDepthImageView() { return m_DepthImage->GetImageView(); }
-		VkImage GetDepthImage() { return m_DepthImage->GetImage(); }
-
 	private:
 		void Terminate();
 
@@ -130,7 +127,6 @@ namespace Saturn {
 		void CreateLogicalDevice();
 		void CreateSwapChain();
 		void CreateCommandPool();
-		void CreateDepthResources();
 
 		bool CheckValidationLayerSupport();
 
@@ -145,9 +141,6 @@ namespace Saturn {
 		VkCommandPool m_CommandPool = nullptr;
 		VkCommandPool m_ComputeCommandPool = nullptr;
 		VkCommandBuffer m_CommandBuffer = nullptr;
-	
-		// Depth resources.
-		Ref<Image2D> m_DepthImage = nullptr;
 
 		VulkanDebugMessenger* m_pDebugMessenger;
 		VulkanAllocator* m_pAllocator;

@@ -37,7 +37,6 @@
 #include "Saturn/Core/App.h"
 
 #include "Saturn/Vulkan/Mesh.h"
-#include "Saturn/Vulkan/SceneRenderer.h"
 #include "Saturn/Vulkan/VulkanContext.h"
 
 #include "Saturn/Scene/Entity.h"

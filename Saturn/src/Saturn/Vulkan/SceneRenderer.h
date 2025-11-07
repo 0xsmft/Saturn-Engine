@@ -430,6 +430,8 @@ namespace Saturn {
 		Ref< Shader > SelectionShader = nullptr;
 	};
 
+	class Renderer2D;
+
 	class SceneRenderer : public RefTarget
 	{
 		using ScheduledFunc = std::function<void()>;
@@ -482,6 +484,8 @@ namespace Saturn {
 
 		void RenderSelectionNextFrame() { /*m_RendererData.PendingSelectionPass = true;*/ }
 
+		Ref<Renderer2D> GetRenderer2D() const;
+
 	private:
 		void Init();
 		void Terminate();
@@ -509,6 +513,7 @@ namespace Saturn {
 //		void InitSelection();
 
 		void InitBuffers();
+		void InitRenderer2D();
 
 		void DirShadowMapPass();
 		void PreDepthPass();
@@ -538,6 +543,7 @@ namespace Saturn {
 
 		RendererData m_RendererData{};
 		Scene* m_pScene = nullptr;
+		Ref<Renderer2D> m_Renderer2D;
 
 		std::unordered_map< StaticMeshKey, DrawCommand > m_DrawList;
 		std::unordered_map< StaticMeshKey, DrawCommand > m_ShadowMapDrawList;

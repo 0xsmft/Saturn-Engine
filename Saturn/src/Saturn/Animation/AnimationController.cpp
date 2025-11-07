@@ -66,7 +66,8 @@ namespace Saturn {
 
 	void AnimationController::Tick( Timestep ts )
 	{
-		m_TaskHandler.Tick( ts );
+
+		m_TaskHandler->Tick( ts );
 	}
 
 }

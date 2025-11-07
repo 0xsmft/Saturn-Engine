@@ -70,7 +70,6 @@ namespace Saturn {
 		PickPhysicalDevice();
 		CreateLogicalDevice();
 		CreateSwapChain();
-		CreateDepthResources();
 		CreateCommandPool();
 
 		m_pAllocator = new VulkanAllocator();
@@ -90,12 +89,6 @@ namespace Saturn {
 		
 		Renderer* pRenderer = new Renderer();
 		pRenderer->Init();
-
-		// Only initialise Renderer2D if we are not in Dist.
-		// If we are in dist then the application will initialise when the shader bundle is loaded.
-#if !defined(SAT_DIST)
-		Renderer2D::Get().Init();
-#endif
 	}
 
 	void VulkanContext::Terminate()
@@ -117,12 +110,9 @@ namespace Saturn {
 		for( auto& rFunc : m_TerminateResourceFuncs )
 			rFunc();
 
-		Renderer2D::Get().Terminate();
 		Renderer::Get().Terminate();
 
 		ShaderLibrary::Get().Shutdown();
-
-		m_DepthImage = nullptr;
 		
 		delete m_pAllocator;
 
@@ -420,11 +410,7 @@ namespace Saturn {
 	void VulkanContext::ResizeEvent()
 	{
 		GetSwapchainCreationData();
-
-		CreateDepthResources();
-
 		m_SwapChain.Recreate();
-
 		m_DefaultPass->Recreate();
 	}
 
@@ -603,16 +589,6 @@ namespace Saturn {
 
 		SetDebugUtilsObjectName( "Context Command Pool", (uint64_t)m_CommandPool, VK_OBJECT_TYPE_COMMAND_POOL );
 		SetDebugUtilsObjectName( "Context Compute Command Pool", (uint64_t)m_CommandPool, VK_OBJECT_TYPE_COMMAND_POOL );
-	}
-
-	void VulkanContext::CreateDepthResources()
-	{
-		if( m_DepthImage )
-			m_DepthImage = nullptr;
-
-		m_DepthImage = Ref<Image2D>::Create( ImageFormat::Depth,
-			Application::Get().GetWindow()->GetWidth(), 
-			Application::Get().GetWindow()->GetHeight(), 1, 1, GetMaxUsableMSAASamples() );
 	}
 
 }

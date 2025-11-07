@@ -163,11 +163,7 @@ namespace Saturn {
 
 		//////////////////////////////////////////////////////////////////////////
 
-		// TODO: We don't support multiple Renderer2Ds atm, so we only want the master scene renderer to set the Renderer2D passes.
-		if( HasFlag( SceneRendererFlag_MasterInstance ) )
-		{
-			Renderer2D::Get().SetInitialRenderPass( m_RendererData.LateCompositePass, m_RendererData.LateCompositeFramebuffer );
-		}
+		InitRenderer2D();
 	
 #if !defined(SAT_DIST)
 		Renderer::Get().AddShaderReloadCB( SAT_BIND_EVENT_FN( OnShaderReloaded ) );
@@ -188,6 +184,7 @@ namespace Saturn {
 
 		FlushDrawList();
 
+		m_Renderer2D = nullptr;
 		m_RendererData.Terminate();
 	}
 
@@ -273,7 +270,7 @@ namespace Saturn {
 
 			m_RendererData.DynamicMeshMaterial = Ref<Material>::Create( m_RendererData.DynamicMeshShader, "DynamicMeshMat", 2 );
 
-			for( size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++ )
+			for( size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
 			{
 				m_RendererData.DynamicMeshMaterial->SetSB( 15u, m_RendererData.SBBoneTransforms->Get( 2u, 15u, ( uint32_t ) i ) );
 			}
@@ -1372,6 +1369,9 @@ namespace Saturn {
 			m_RendererData.Height = h;
 			m_RendererData.Resized = true;
 		}
+
+		if( m_Renderer2D )
+			m_Renderer2D->SetViewportSize( w, h );
 	}
 
 	void SceneRenderer::Recreate()
@@ -1412,9 +1412,9 @@ namespace Saturn {
 		CreateSkyboxComponents();
 		CreateGridComponents();
 
-		if( HasFlag( SceneRendererFlag_MasterInstance ) )
+		if( /*HasFlag( SceneRendererFlag_MasterInstance )*/ !HasFlag( SceneRendererFlag_NoRenderer2D ) )
 		{
-			Renderer2D::Get().SetInitialRenderPass( m_RendererData.LateCompositePass, m_RendererData.LateCompositeFramebuffer );
+			m_Renderer2D->SetInitialRenderPass( m_RendererData.LateCompositePass, m_RendererData.LateCompositeFramebuffer );
 		}
 	}
 
@@ -2185,6 +2185,11 @@ namespace Saturn {
 	//	m_RendererData.SceneCompositeFramebuffer->Capture( rPath, 0, rSize );
 	}
 
+	Ref<Renderer2D> SceneRenderer::GetRenderer2D() const
+	{
+		return m_Renderer2D;
+	}
+
 	void SceneRenderer::InitBuffers()
 	{
 		SAT_PF_EVENT();
@@ -2223,6 +2228,16 @@ namespace Saturn {
 			void* pBufferData = pAllocator->MapMemory<void>( bufferAloc );
 			std::memcpy( pBufferData, ( const uint8_t* ) m_RendererData.BoneTransformData, ( uint32_t ) off * sizeof( glm::mat4 ) );
 			pAllocator->UnmapMemory( bufferAloc );
+		}
+	}
+
+	void SceneRenderer::InitRenderer2D()
+	{
+		// TODO: We don't support multiple Renderer2Ds atm, so we only want the master scene renderer to set the Renderer2D passes.
+		if( /*HasFlag( SceneRendererFlag_MasterInstance )*/ !HasFlag( SceneRendererFlag_NoRenderer2D ) )
+		{
+			m_Renderer2D = Ref<Renderer2D>::Create();
+			m_Renderer2D->SetInitialRenderPass( m_RendererData.LateCompositePass, m_RendererData.LateCompositeFramebuffer );
 		}
 	}
 
@@ -2325,6 +2340,9 @@ namespace Saturn {
 	void SceneRenderer::SetCamera( const RendererCamera& Camera )
 	{
 		m_RendererData.CurrentCamera = Camera;
+
+		if( m_Renderer2D )
+			m_Renderer2D->SetCamera( Camera );
 	}
 
 	//////////////////////////////////////////////////////////////////////////

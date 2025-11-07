@@ -82,7 +82,7 @@ namespace Saturn {
 		return true;
 	}
 
-	void Camera::RenderDebugFrustum() const
+	void Camera::RenderDebugFrustum( Ref<Renderer2D>& renderer2d ) const
 	{
 		// Get the 8 corners of the frustum
 		std::array<glm::vec3, 8> corners = GetFrustumCorners();
@@ -92,22 +92,22 @@ namespace Saturn {
 		const glm::vec4 CONNECT_COLOR = glm::vec4( 0.0F, 0.0f, 1.0f, 1.0f );
 
 		// Near plane
-		Renderer2D::Get().SubmitLine( corners[ 0 ], corners[ 1 ], NEAR_COLOR );
-		Renderer2D::Get().SubmitLine( corners[ 1 ], corners[ 2 ], NEAR_COLOR );
-		Renderer2D::Get().SubmitLine( corners[ 2 ], corners[ 3 ], NEAR_COLOR );
-		Renderer2D::Get().SubmitLine( corners[ 3 ], corners[ 0 ], NEAR_COLOR );
+		renderer2d->SubmitLine( corners[ 0 ], corners[ 1 ], NEAR_COLOR );
+		renderer2d->SubmitLine( corners[ 1 ], corners[ 2 ], NEAR_COLOR );
+		renderer2d->SubmitLine( corners[ 2 ], corners[ 3 ], NEAR_COLOR );
+		renderer2d->SubmitLine( corners[ 3 ], corners[ 0 ], NEAR_COLOR );
 
 		// Far plane
-		Renderer2D::Get().SubmitLine( corners[ 4 ], corners[ 5 ], FAR_COLOR );
-		Renderer2D::Get().SubmitLine( corners[ 5 ], corners[ 6 ], FAR_COLOR );
-		Renderer2D::Get().SubmitLine( corners[ 6 ], corners[ 7 ], FAR_COLOR );
-		Renderer2D::Get().SubmitLine( corners[ 7 ], corners[ 4 ], FAR_COLOR );
+		renderer2d->SubmitLine( corners[ 4 ], corners[ 5 ], FAR_COLOR );
+		renderer2d->SubmitLine( corners[ 5 ], corners[ 6 ], FAR_COLOR );
+		renderer2d->SubmitLine( corners[ 6 ], corners[ 7 ], FAR_COLOR );
+		renderer2d->SubmitLine( corners[ 7 ], corners[ 4 ], FAR_COLOR );
 
 		// Connection corner plane
-		Renderer2D::Get().SubmitLine( corners[ 0 ], corners[ 4 ], CONNECT_COLOR );
-		Renderer2D::Get().SubmitLine( corners[ 1 ], corners[ 5 ], CONNECT_COLOR );
-		Renderer2D::Get().SubmitLine( corners[ 2 ], corners[ 6 ], CONNECT_COLOR );
-		Renderer2D::Get().SubmitLine( corners[ 3 ], corners[ 7 ], CONNECT_COLOR );
+		renderer2d->SubmitLine( corners[ 0 ], corners[ 4 ], CONNECT_COLOR );
+		renderer2d->SubmitLine( corners[ 1 ], corners[ 5 ], CONNECT_COLOR );
+		renderer2d->SubmitLine( corners[ 2 ], corners[ 6 ], CONNECT_COLOR );
+		renderer2d->SubmitLine( corners[ 3 ], corners[ 7 ], CONNECT_COLOR );
 	}
 
 	std::array<glm::vec3, 8> Camera::GetFrustumCorners() const

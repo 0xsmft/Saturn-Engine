@@ -132,6 +132,7 @@ namespace Saturn {
 		if( !m_IsLive )
 			return;
 
+		/*
 		const glm::vec4 pathColor  = glm::vec4( 1.0f, 1.0f, 0.0f, 1.0f );
 
 		for( size_t i = 0; i < m_PathPoints.size() - 1; i++ )
@@ -142,6 +143,7 @@ namespace Saturn {
 			Renderer2D::Get().SubmitLine( rPathA, rPathB, pathColor );
 			Renderer2D::Get().SubmitDiamond( rPathB, 0.75f, pathColor );
 		}
+		*/
 	}
 
 	//////////////////////////////////////////////////////////////////////////

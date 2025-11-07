@@ -29,6 +29,8 @@
 #include "sppch.h"
 #include "SubSceneRendererWindow.h"
 
+#include "Saturn/Vulkan/Renderer2D.h"
+
 #include "Saturn/Core/Renderer/RenderThread.h"
 
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
@@ -48,7 +50,7 @@ namespace Saturn {
 		m_Camera.SetActive( true );
 		m_Scene = Ref<Scene>::Create();
 
-		m_SceneRenderer = Ref<SceneRenderer>::Create( SceneRendererFlag_RenderGrid );
+		m_SceneRenderer = Ref<SceneRenderer>::Create( SceneRendererFlag_RenderGrid | SceneRendererFlag_NoRenderer2D );
 
 		m_SceneRenderer->SetDynamicSky( 2.0f, 0.0f, 0.0f );
 		m_SceneRenderer->SetCurrentScene( m_Scene.Get() );
@@ -115,7 +117,7 @@ namespace Saturn {
 		m_Scene->OnUpdateAnimators( ts );
 
 		// Update Scene for rendering (on main thread).
-		m_Scene->OnRenderEditor( m_Camera, ts, *m_SceneRenderer );
+		m_Scene->OnRenderEditor( &m_Camera, m_Camera.ViewMatrix(), m_SceneRenderer, ts );
 
 		RenderThread::Get().Queue( [ = ]()
 		{

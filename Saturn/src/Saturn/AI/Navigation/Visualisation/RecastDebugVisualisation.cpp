@@ -105,6 +105,8 @@ namespace Saturn {
 
 	void RecastDebugVisualisation::DrawInternal( const glm::vec3& rPosition, const glm::vec4& rColor )
 	{
+		/*
+		* 
 		switch( m_CurrentPolygonMode )
 		{
 			case DU_DRAW_POINTS:
@@ -122,6 +124,7 @@ namespace Saturn {
 				Renderer2D::Get().SubmitTriangle1( rPosition, rColor );
 				break;
 		}
+		*/
 	}
 
 }

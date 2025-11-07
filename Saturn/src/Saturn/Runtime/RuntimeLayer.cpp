@@ -202,7 +202,6 @@ namespace Saturn {
 			return;
 
 		m_SceneRenderer->SetViewportSize( ( uint32_t ) width, ( uint32_t ) height );
-		Renderer2D::Get().SetViewportSize( ( uint32_t ) width, ( uint32_t ) height );
 	}
 
 }

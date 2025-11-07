@@ -30,6 +30,7 @@
 #include "SkeletonAssetViewer.h"
 
 #include "Saturn/Asset/AssetManager.h"
+#include "Saturn/Vulkan/Renderer2D.h"
 #include "Saturn/Vulkan/SceneRenderer.h"
 
 #include "Saturn/ImGui/ImGuiAuxiliary.h"

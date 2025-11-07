@@ -35,8 +35,6 @@
 #include "Framebuffer.h"
 #include "VertexBuffer.h"
 
-#include "Saturn/Scene/Scene.h"
-
 namespace Saturn {
 
 	struct QuadDrawCommand
@@ -58,11 +56,8 @@ namespace Saturn {
 	class Renderer2D : public RefTarget
 	{
 	public:
-		SAT_SINGLETON_LAZY( Renderer2D )
-
-	public:
-		Renderer2D() = default;
-		~Renderer2D() = default;
+		Renderer2D();
+		~Renderer2D();
 
 		void SetInitialRenderPass( Ref<Pass> pass, Ref<Framebuffer> targetFramebuffer );
 		Ref<Pass> GetTargetRenderPass() { return m_TargetRenderPass; }

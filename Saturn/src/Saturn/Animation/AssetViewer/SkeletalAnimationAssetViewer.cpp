@@ -35,7 +35,6 @@
 
 #include "Saturn/Asset/AssetManager.h"
 #include "Saturn/Vulkan/Renderer2D.h"
-#include "Saturn/Vulkan/SceneRenderer.h"
 
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
 #include "Saturn/ImGui/EditorIcons.h"
@@ -50,18 +49,10 @@ namespace Saturn {
 	{
 		m_AssetType = AssetType::SkeletalAnimation;
 
-		m_Camera.SetActive( true );
-
-		m_Scene = Ref<Scene>::Create();
-
-		m_SceneRenderer = Ref<SceneRenderer>::Create( SceneRendererFlag_RenderGrid );
-
-		m_SceneRenderer->SetDynamicSky( 2.0f, 0.0f, 0.0f );
-		m_SceneRenderer->SetCurrentScene( m_Scene.Get() );
-
 		ImportMeshAndAnimation();
 		m_Name = std::format( "{0}##{1}", m_Asset->Name, ( uint64_t ) m_AssetID );
 
+		Initialise();
 		SetViewportWindowID( m_AssetID );
 	}
 

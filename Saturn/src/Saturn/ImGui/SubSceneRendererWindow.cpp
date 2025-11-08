@@ -50,7 +50,7 @@ namespace Saturn {
 		m_Camera.SetActive( true );
 		m_Scene = Ref<Scene>::Create();
 
-		m_SceneRenderer = Ref<SceneRenderer>::Create( SceneRendererFlag_RenderGrid | SceneRendererFlag_NoRenderer2D );
+		m_SceneRenderer = Ref<SceneRenderer>::Create( SceneRendererFlag_RenderGrid );
 
 		m_SceneRenderer->SetDynamicSky( 2.0f, 0.0f, 0.0f );
 		m_SceneRenderer->SetCurrentScene( m_Scene.Get() );

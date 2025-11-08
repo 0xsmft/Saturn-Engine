@@ -43,7 +43,7 @@
 namespace Saturn {
 
 	SkeletonAssetViewer::SkeletonAssetViewer( AssetID id )
-		: AssetViewer( id )
+		: AssetViewer( id ), SubSceneRendererWindow()
 	{
 		m_AssetType = AssetType::Skeleton;
 
@@ -54,6 +54,10 @@ namespace Saturn {
 		m_Name = std::format( "{0}##{1}", m_SkeletonAsset->Name, std::to_string( m_SkeletonAsset->ID ) );
 
 		m_BoneHierarchyPanel.Initialise( id );
+	
+		Initialise();
+		SetViewportWindowID( m_AssetID );
+		PickBestMesh();
 	}
 
 	SkeletonAssetViewer::~SkeletonAssetViewer()
@@ -64,6 +68,16 @@ namespace Saturn {
 	{
 		if( ImGui::Begin( m_Name.c_str(), &m_Open ) )
 		{
+			// Create custom dockspace.
+			const ImGuiID dockID = ImGui::GetID( "SkMeshDckspc" );
+			ImGui::DockSpace( dockID, ImVec2( 0.0f, 0.0f ), ImGuiDockNodeFlags_None );
+
+			//////////////////////////////////////////////////////////////////////////
+
+			RenderViewport();
+
+			//////////////////////////////////////////////////////////////////////////
+
 			m_BoneHierarchyPanel.OnImGuiRender();
 
 			// Compatibility Information
@@ -148,10 +162,24 @@ namespace Saturn {
 
 	void SkeletonAssetViewer::OnUpdate( Timestep ts )
 	{
+		OnUpdateRenderer( ts );
 	}
 
 	void SkeletonAssetViewer::OnEvent( Event& rEvent )
 	{
+		OnCameraEvent( rEvent );
+	}
+
+	void SkeletonAssetViewer::PickBestMesh()
+	{
+		for( const auto& rMeshID : m_SkeletonAsset->GetCompatibleMeshes() )
+		{
+			// Pick the first one
+			auto& skComp = m_Scene->CreateEntity()->AddComponent<SkeletalMeshComponent>();
+			skComp.Mesh = AssetManager::Get().GetAssetAs<SkeletalMesh>( rMeshID );
+			skComp.MaterialRegistry = Ref<MaterialRegistry>::Create();
+			break;
+		}
 	}
 
 }

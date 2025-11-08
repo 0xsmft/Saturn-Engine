@@ -30,13 +30,14 @@
 
 #include "Saturn/ImGui/AssetViewer.h"
 #include "SkeletonBoneHierarchyPanel.h"
+#include "Saturn/ImGui/SubSceneRendererWindow.h"
 
 namespace Saturn {
 
 	class SceneRenderer;
 	class EditorCamera;
 
-	class SkeletonAssetViewer : public AssetViewer
+	class SkeletonAssetViewer : public AssetViewer, public SubSceneRendererWindow
 	{
 	public:
 		SkeletonAssetViewer( AssetID id );
@@ -45,6 +46,9 @@ namespace Saturn {
 		virtual void OnImGuiRender() override;
 		virtual void OnUpdate( Timestep ts ) override;
 		virtual void OnEvent( Event& rEvent ) override;
+
+	private:
+		void PickBestMesh();
 
 	private:
 		bool m_ShowFinderModal = false;

@@ -35,7 +35,6 @@
 
 #include "Saturn/Asset/AssetManager.h"
 #include "Saturn/Vulkan/Renderer2D.h"
-#include "Saturn/Vulkan/SceneRenderer.h"
 
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
 #include "Saturn/ImGui/EditorIcons.h"
@@ -52,18 +51,11 @@ namespace Saturn {
 		: AssetViewer( id )
 	{
 		m_AssetType = AssetType::SkeletalMesh;
-		m_Camera.SetActive( true );
-
-		m_Scene = Ref<Scene>::Create();
-
-		m_SceneRenderer = Ref<SceneRenderer>::Create( SceneRendererFlag_RenderGrid );
-
-		m_SceneRenderer->SetDynamicSky( 2.0f, 0.0f, 0.0f );
-		m_SceneRenderer->SetCurrentScene( m_Scene.Get() );
 
 		AddMesh();
 		m_Name = std::format( "{0}##{1}", m_Mesh->Name, std::to_string( m_AssetID ) );
 	
+		Initialise();
 		SetViewportWindowID( m_AssetID );
 	}
 
@@ -87,6 +79,8 @@ namespace Saturn {
 		//////////////////////////////////////////////////////////////////////////
 
 		RenderViewport();
+
+		//////////////////////////////////////////////////////////////////////////
 
 		ImGui::Begin( "Sidebar" );
 

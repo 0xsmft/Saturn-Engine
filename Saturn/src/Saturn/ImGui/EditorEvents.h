@@ -105,4 +105,55 @@ namespace Saturn {
 		AssetID m_NewAssetID = 0;
 	};
 
+	//
+	// EntitySelectedEvent
+	// 
+	// Triggers when an entity is selected, this event will trigger regardless of the fact if it was selected/deselected from UI or not.
+	//
+	class EntitySelectedEvent : public Event
+	{
+		SAT_DEFINE_EVENT( EntitySelected, EC_Editor );
+	public:
+		EntitySelectedEvent( UUID id )
+			: Event( EventType::EntitySelected, EC_Editor ), m_EntityID( id )
+		{
+		}
+
+		virtual ~EntitySelectedEvent() = default;
+
+		const UUID GetID() const { return m_EntityID; }
+
+	private:
+		UUID m_EntityID = 0llu;
+	};
+
+	//
+	// EntitiesSelectionChangedEvent
+	// 
+	// Triggers when multiple entities are selected/deselected, this event will trigger regardless of the fact if it was selected/deselected from UI or not.
+	//
+	// Warning: Calls to GetStaticType() are invalid, as this event can have multiple types
+	//          it can either be EntitySelected/EntityDeselected!
+	//
+	class EntityDeselectedEvent : public Event
+	{
+		SAT_DEFINE_EVENT( EntityDeselected, EC_Editor );
+	public:
+		EntityDeselectedEvent( std::vector<UUID>&& ids )
+			: Event( EventType::EntityDeselected, EC_Editor ), m_EntityIDs( std::move( ids ) )
+		{
+		}
+
+		EntityDeselectedEvent( const std::vector<UUID>& ids, bool selected = true )
+			: Event( EventType::EntityDeselected, EC_Editor ), m_EntityIDs( ids )
+		{
+		}
+
+		virtual ~EntityDeselectedEvent() = default;
+	
+		const std::vector<UUID>& GetIDs() const { return m_EntityIDs; }
+
+	private:
+		std::vector<UUID> m_EntityIDs;
+	};
 }

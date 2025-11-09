@@ -56,7 +56,7 @@ namespace Saturn {
 		void Select( const SharedPtr<Entity> entity );
 		void Remove( const SharedPtr<Entity> entity );
 
-		void ClearSelection();
+		void ClearSelection( bool skipEvent = false );
 
 		[[nodiscard]] SharedPtr<Entity> GetSelectionContextAt( uint32_t index = 0 )
 		{

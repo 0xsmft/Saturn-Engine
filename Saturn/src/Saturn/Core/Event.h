@@ -69,6 +69,8 @@ static inline EventCategory GetStaticCategory() { return EventCategory::Category
 		SkylightEntityModified,
 		AssetDeleted,
 		AssetReplaced,
+		EntitySelected,
+		EntityDeselected,
 
 		//////////////////////////////////////////////////////////////////////////
 		// Runtime

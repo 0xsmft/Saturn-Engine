@@ -36,6 +36,13 @@
 
 namespace Saturn {
 
+	// TODO: Upcoming API for text editor registration.
+	struct TextEditorApplication
+	{
+		std::string FriendlyName;
+		std::filesystem::path Path;
+	};
+
 	class EngineSettings
 	{
 	public:

@@ -28,8 +28,9 @@
 
 #pragma once
 
-#include "Saturn/Asset/Asset.h"
+#include "BoneJoint.h"
 
+#include "Saturn/Asset/Asset.h"
 #include "Saturn/Vulkan/VertexBuffer.h"
 
 struct aiMesh;
@@ -39,6 +40,7 @@ namespace Saturn {
 
 	struct SkeletalMeshBoneInfo;
 	class Submesh;
+	class BoneJoint;
 
 	struct SkeletonAssetVertexSkin
 	{
@@ -79,12 +81,17 @@ namespace Saturn {
 		SkeletonAsset( const Ref<Asset>& rBase );
 		virtual ~SkeletonAsset();
 
+	public:
 		void AppendBonesFromMesh( const aiMesh* pMesh, uint32_t baseVertex );
 		void BuildHierarchy( const aiNode* pNode, int parentIndex );
 		void AddCompatibleMesh( UUID id );
 		void AddBoneInfo( const std::string& rName, int parentIndex, const glm::mat4& rOffsetMatrix, uint32_t boneIndex );
 		void AddVertex( const SkeletonAssetVertexSkin& rSkin ) { m_Vertices.push_back( rSkin ); }
+		void MarkAsUncompatibleMesh( UUID meshID );
 
+		BoneJoint& AddNewBoneJoint( const std::string& rBoneName, const std::string& rName );
+
+	public:
 		[[nodiscard]] uint32_t FindBoneIndex( const std::string& rName ) 
 		{
 			const auto itr = m_BoneMapping.find( rName );
@@ -93,7 +100,8 @@ namespace Saturn {
 
 		[[nodiscard]] SkeletonAssetVersion GetLocalVersion() const { return m_LocalVersion; }
 
-		void MarkAsUncompatibleMesh( UUID meshID );
+		BoneJoint& FindBoneJoint( const std::string& rBoneName );
+		const BoneJoint& FindBoneJoint( const std::string& rBoneName ) const;
 
 	public:
 		const std::vector<SkeletalMeshBoneInfo>& GetBoneInfo() const { return m_BoneInfos; }
@@ -103,6 +111,8 @@ namespace Saturn {
 		const std::vector<AssetID>& GetCompatibleMeshes() const { return m_CompatibleMeshes; }
 #endif
 
+		const std::vector<BoneJoint>& GetBoneJoints() const { return m_BoneJoints; }
+
 		// TODO: We don't want to expose this function publicly.
 		void PortToNewestVersion() { m_LocalVersion = SkeletonAssetVersion::Latest; }
 
@@ -111,11 +121,13 @@ namespace Saturn {
 
 		std::vector<SkeletalMeshBoneInfo> m_BoneInfos;
 		std::vector<SkeletonAssetVertexSkin> m_Vertices;
+		//					NAME	-> INDEX
 		std::unordered_map<std::string, uint32_t> m_BoneMapping;
 
 #if !defined(SAT_DIST)
 		std::vector<AssetID> m_CompatibleMeshes;
 #endif
+		std::vector<BoneJoint> m_BoneJoints;
 	};	
 
 }

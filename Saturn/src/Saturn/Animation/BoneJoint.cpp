@@ -26,86 +26,43 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "BoneJoint.h"
 
-#include "Saturn/ImGui/ImGuiWindow.h"
-#include "Saturn/Animation/SkeletonAsset.h"
+#include "Animator.h"
+#include "SkeletonAsset.h"
+
+#include "Saturn/Vulkan/Mesh.h"
 
 namespace Saturn {
 
-	enum class SkelItemType
+	BoneJoint::BoneJoint()
 	{
-		Unknown,
-		Bone,
-		AttachmentPoint
-	};
+	}
 
-	class SkelItem
+	BoneJoint::BoneJoint( const std::string& rBoneName, const std::string& rName )
+		: m_BoneName( rBoneName ), m_Name( rName )
 	{
-	public:
-		virtual ~SkelItem() = default;
+	}
 
-		SkelItemType Type = SkelItemType::Unknown;
-	};
-
-	class SkelBoneItem : public SkelItem
+	BoneJoint::~BoneJoint()
 	{
-	public:
-		virtual ~SkelBoneItem() = default;
+	}
 
-		SkeletalMeshBoneInfo* pBone = nullptr;
-	};
-
-	class SkelAttachmentPoint : public SkelItem
+	glm::mat4 BoneJoint::GetBoneMatrix( Ref<Animator> mesh ) const
 	{
-	public:
-		virtual ~SkelAttachmentPoint() = default;
-
-		BoneJoint* pBoneJoint = nullptr;
-	};
-
-	class SkeletonBoneHierarchyPanel : public ImGuiWindow
-	{
-	public:
-		struct SkelItemNode
+		int boneIndex = mesh->GetSkeletalMesh()->GetSkeletonAsset()->FindBoneIndex( m_BoneName );
+		if( boneIndex != -1 )
 		{
-			~SkelItemNode() 
-			{
-				delete pItem;
-			}
+			const auto& boneTransform = mesh->GetBoneTransforms().at( boneIndex );
+			const auto ts = glm::translate( glm::mat4( 1.0f ), m_Position )
+				* glm::toMat4( m_Rotation )
+				* glm::scale( glm::mat4( 1.0f ), m_Scale );
 
-			SkelItem* pItem = nullptr;
-			std::vector<SkelItemNode*> Children;
-		};
+			return ts * boneTransform;
+		}
 
-	public:
-		SkeletonBoneHierarchyPanel();
-		~SkeletonBoneHierarchyPanel();
-
-		void Initialise( AssetID id );
-
-		//////////////////////////////////////////////////////////////////////////
-		// ImGuiWindow
-
-		virtual void OnImGuiRender() override;
-		virtual void OnEvent( Event& rEvent ) {}
-		virtual void OnUpdate( Timestep ts ) {}
-
-	private:
-		void DisplayBoneHierarchy( SkelItemNode* pBoneNode, int level = 0 );
-		void ClearLinkedList();
-
-		void DrawInspector();
-		void DrawInspectorForAP();
-		void DrawInspectorForBone();
-
-	private:
-		Ref<SkeletonAsset> m_SkeletonAsset;
-
-		SkelItemNode* m_pSelectedBone = nullptr;
-
-		std::vector<SkelItemNode*> m_BoneLinkedList;
-		std::vector<SkelItemNode*> m_BoneRoots;
-	};
+		return glm::one<glm::mat4>();
+	}
 
 }

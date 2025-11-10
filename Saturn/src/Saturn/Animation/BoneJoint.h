@@ -28,84 +28,40 @@
 
 #pragma once
 
-#include "Saturn/ImGui/ImGuiWindow.h"
-#include "Saturn/Animation/SkeletonAsset.h"
+#include "Saturn/Core/Ref.h"
+
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <string>
 
 namespace Saturn {
 
-	enum class SkelItemType
-	{
-		Unknown,
-		Bone,
-		AttachmentPoint
-	};
+//	class SkeletalMesh;
 
-	class SkelItem
+	class BoneJoint : public RefTarget
 	{
 	public:
-		virtual ~SkelItem() = default;
-
-		SkelItemType Type = SkelItemType::Unknown;
-	};
-
-	class SkelBoneItem : public SkelItem
-	{
-	public:
-		virtual ~SkelBoneItem() = default;
-
-		SkeletalMeshBoneInfo* pBone = nullptr;
-	};
-
-	class SkelAttachmentPoint : public SkelItem
-	{
-	public:
-		virtual ~SkelAttachmentPoint() = default;
-
-		BoneJoint* pBoneJoint = nullptr;
-	};
-
-	class SkeletonBoneHierarchyPanel : public ImGuiWindow
-	{
-	public:
-		struct SkelItemNode
-		{
-			~SkelItemNode() 
-			{
-				delete pItem;
-			}
-
-			SkelItem* pItem = nullptr;
-			std::vector<SkelItemNode*> Children;
-		};
+		BoneJoint();
+		BoneJoint( const std::string& rBoneName, const std::string& rName );
+		virtual ~BoneJoint();
 
 	public:
-		SkeletonBoneHierarchyPanel();
-		~SkeletonBoneHierarchyPanel();
-
-		void Initialise( AssetID id );
-
-		//////////////////////////////////////////////////////////////////////////
-		// ImGuiWindow
-
-		virtual void OnImGuiRender() override;
-		virtual void OnEvent( Event& rEvent ) {}
-		virtual void OnUpdate( Timestep ts ) {}
+		[[nodiscard]] const glm::vec3 GetRelativePosition() const { return m_Position; }
+		[[nodiscard]] const glm::quat GetRelativeRotation() const { return m_Rotation; }
+		[[nodiscard]] const glm::vec3 GetRelativeScale()    const { return m_Scale; }
+		[[nodiscard]] const std::string& GetBoneName()      const { return m_BoneName; }
+		[[nodiscard]] const std::string& GetName()          const { return m_Name; }
 
 	private:
-		void DisplayBoneHierarchy( SkelItemNode* pBoneNode, int level = 0 );
-		void ClearLinkedList();
-
-		void DrawInspector();
-		void DrawInspectorForAP();
-		void DrawInspectorForBone();
+		glm::mat4 GetBoneMatrix( Ref<class Animator> mesh ) const;
 
 	private:
-		Ref<SkeletonAsset> m_SkeletonAsset;
+		std::string m_BoneName;
+		std::string m_Name;
 
-		SkelItemNode* m_pSelectedBone = nullptr;
-
-		std::vector<SkelItemNode*> m_BoneLinkedList;
-		std::vector<SkelItemNode*> m_BoneRoots;
+		glm::vec3 m_Position{};
+		glm::quat m_Rotation{};
+		glm::vec3 m_Scale{ 1.0f, 1.0f, 1.0f };
 	};
-
+	
 }

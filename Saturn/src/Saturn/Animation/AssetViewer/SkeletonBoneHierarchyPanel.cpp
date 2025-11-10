@@ -57,7 +57,21 @@ namespace Saturn {
 		// Create nodes
 		for( size_t i = 0; i < m_SkeletonAsset->GetBoneInfo().size(); ++i )
 		{
-			m_BoneLinkedList[ i ] = new BoneNode( ( SkeletalMeshBoneInfo* ) &m_SkeletonAsset->GetBoneInfo()[ i ], {} );
+			SkelBoneItem* pBoneItem = new SkelBoneItem();
+			pBoneItem->pBone = ( SkeletalMeshBoneInfo* ) &m_SkeletonAsset->GetBoneInfo()[ i ];
+			pBoneItem->Type = SkelItemType::Bone;
+
+			m_BoneLinkedList[ i ] = new SkelItemNode( pBoneItem );
+
+			// TODO: Fix, should not be calling empty to check if a bone is valid
+			if( auto& rBone = m_SkeletonAsset->FindBoneJoint( pBoneItem->pBone->BoneName ); !rBone.GetBoneName().empty() )
+			{
+				SkelAttachmentPoint* pAttachmentPoint = new SkelAttachmentPoint();
+				pAttachmentPoint->Type = SkelItemType::Bone;
+				pAttachmentPoint->pBoneJoint = &rBone;
+
+				m_BoneLinkedList[ i ]->Children.push_back( new SkelItemNode( pAttachmentPoint ) );
+			}
 		}
 
 		for( size_t i = 0; i < m_SkeletonAsset->GetBoneInfo().size(); ++i )
@@ -85,6 +99,50 @@ namespace Saturn {
 		}
 	}
 
+	void SkeletonBoneHierarchyPanel::DrawInspector()
+	{
+		ImGui::Begin( "Inspector##skel", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse );
+		if( m_pSelectedBone )
+		{
+			switch( m_pSelectedBone->pItem->Type )
+			{
+				case SkelItemType::Bone:
+					DrawInspectorForBone();
+					break;
+
+				case SkelItemType::AttachmentPoint:
+					DrawInspectorForAP();
+					break;
+
+				default:
+					break;
+			}
+
+		}
+		ImGui::End();
+	}
+	
+	void SkeletonBoneHierarchyPanel::DrawInspectorForBone() 
+	{
+		SkelBoneItem* pBoneItem = dynamic_cast< SkelBoneItem* >( m_pSelectedBone->pItem );
+		if( pBoneItem )
+		{
+			ImGui::BeginHorizontal( ( void* ) pBoneItem );
+			ImGui::Text( "Bone Name" );
+			Auxiliary::InputText( "##boneName", &pBoneItem->pBone->BoneName, ImGuiInputTextFlags_ReadOnly );
+			ImGui::EndHorizontal();
+		}
+	}
+
+	void SkeletonBoneHierarchyPanel::DrawInspectorForAP()
+	{
+		SkelAttachmentPoint* pAttachmentPoint = dynamic_cast< SkelAttachmentPoint* >( m_pSelectedBone->pItem );
+		if( pAttachmentPoint )
+		{
+			ImGui::Text( "Bone Name: %s", pAttachmentPoint->pBoneJoint->GetBoneName().c_str() );
+		}
+	}
+
 	SkeletonBoneHierarchyPanel::~SkeletonBoneHierarchyPanel()
 	{
 		ClearLinkedList();
@@ -99,18 +157,93 @@ namespace Saturn {
 				DisplayBoneHierarchy( pBone );
 			}
 
+			if( ImGui::IsMouseDown( 0 ) && ImGui::IsWindowHovered() )
+			{
+				m_pSelectedBone = nullptr;
+			}
+
+			if( ImGui::BeginPopupContextWindow( 0, ImGuiPopupFlags_MouseButtonRight ) )
+			{
+				if( m_pSelectedBone )
+				{
+					switch( m_pSelectedBone->pItem->Type )
+					{
+						case SkelItemType::Bone:
+						{
+							ImGui::SeparatorText( "BONE OPTIONS" );
+							if( ImGui::MenuItem( "Create new attachment point" ) )
+							{
+								const SkelBoneItem* pBoneItem = dynamic_cast< const SkelBoneItem* >( m_pSelectedBone->pItem );
+								if( pBoneItem )
+								{
+									auto& rBone = m_SkeletonAsset->AddNewBoneJoint( pBoneItem->pBone->BoneName, "New Attachment" );
+
+									SkelAttachmentPoint* pAttachmentPoint = new SkelAttachmentPoint();
+									pAttachmentPoint->Type = SkelItemType::AttachmentPoint;
+									pAttachmentPoint->pBoneJoint = &rBone;
+
+									m_pSelectedBone->Children.push_back( new SkelItemNode( pAttachmentPoint ) );
+								}
+							}
+						} break;
+
+						case SkelItemType::AttachmentPoint: 
+						{
+							ImGui::SeparatorText( "ATTACHMENT POINT OPTIONS" );
+						} break;
+
+						default:
+							break;
+					}
+				}
+
+				ImGui::EndPopup();
+			}
+
+			DrawInspector();
+
 			ImGui::End();
 		}
 	}
 
-	void SkeletonBoneHierarchyPanel::DisplayBoneHierarchy( BoneNode* pBoneNode, int level /*= 0 */ )
+	void SkeletonBoneHierarchyPanel::DisplayBoneHierarchy( SkelItemNode* pBoneNode, int level /*= 0 */ )
 	{
-		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_FramePadding;
+		ImGuiTreeNodeFlags flags = ( m_pSelectedBone == pBoneNode ? ImGuiTreeNodeFlags_Selected : 0 ) | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_FramePadding;
 
 		if( level == 0 )
 			flags |= ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed;
 
-		if( ImGui::TreeNodeEx( pBoneNode->pBone->BoneName.c_str(), flags ) )
+		bool clicked = false;
+		switch( pBoneNode->pItem->Type )
+		{
+			case SkelItemType::Bone:
+			{
+				SkelBoneItem* pBoneItem = dynamic_cast< SkelBoneItem* >( pBoneNode->pItem );
+				if( pBoneItem )
+				{
+					clicked = ImGui::TreeNodeEx( ( void* ) &pBoneNode->pItem, flags, pBoneItem->pBone->BoneName.c_str() );
+				}
+			} break;
+
+			case SkelItemType::AttachmentPoint:
+			{
+				SkelAttachmentPoint* pAttachmentPoint = dynamic_cast< SkelAttachmentPoint* >( pBoneNode->pItem );
+				if( pAttachmentPoint )
+				{
+					clicked = ImGui::TreeNodeEx( ( void* ) &pBoneNode->pItem, flags, pAttachmentPoint->pBoneJoint->GetName().c_str() );
+				}
+			} break;
+
+			default:
+				break;
+		}
+
+		if( ImGui::IsItemClicked( ImGuiMouseButton_Left ) || ImGui::IsMouseDoubleClicked( ImGuiMouseButton_Left ) )
+		{
+			m_pSelectedBone = pBoneNode;
+		}
+
+		if( clicked )
 		{
 			for( auto* pChildBone : pBoneNode->Children )
 			{

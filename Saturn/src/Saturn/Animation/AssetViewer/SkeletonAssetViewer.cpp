@@ -148,9 +148,9 @@ namespace Saturn {
 				ImGui::EndPopup();
 			}
 			ImGui::End();
-
-			ImGui::End();
 		}
+
+		ImGui::End();
 
 		if( m_Open == false )
 		{

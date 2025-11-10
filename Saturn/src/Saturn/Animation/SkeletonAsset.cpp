@@ -142,4 +142,43 @@ namespace Auxiliary {
 		m_CompatibleMeshes.erase( std::remove( m_CompatibleMeshes.begin(), m_CompatibleMeshes.end(), meshID ), m_CompatibleMeshes.end() );
 	}
 
+	BoneJoint& SkeletonAsset::AddNewBoneJoint( const std::string& rBoneName, const std::string& rName )
+	{
+		return m_BoneJoints.emplace_back( rBoneName, rName );
+	}
+
+	BoneJoint& SkeletonAsset::FindBoneJoint( const std::string& rBoneName )
+	{
+		auto itr = std::find_if( m_BoneJoints.begin(), m_BoneJoints.end(), 
+			[rBoneName](const auto& rItem) 
+		{
+			return rItem.GetBoneName() == rBoneName;
+		} );
+
+		if( itr == m_BoneJoints.end() )
+		{
+			static BoneJoint s_NullJoint;
+			return s_NullJoint;
+		}
+
+		return *itr;
+	}
+
+	const BoneJoint& SkeletonAsset::FindBoneJoint( const std::string& rBoneName ) const
+	{
+		const auto itr = std::find_if( m_BoneJoints.begin(), m_BoneJoints.end(),
+			[ rBoneName ]( const auto& rItem )
+		{
+			return rItem.GetBoneName() == rBoneName;
+		} );
+
+		if( itr == m_BoneJoints.end() )
+		{
+			static BoneJoint s_NullJoint;
+			return s_NullJoint;
+		}
+
+		return *itr;
+	}
+
 }

@@ -47,30 +47,33 @@ namespace Saturn {
 		// If we already have an asset, make sure to clear the existing linked list.
 		if( m_SkeletonAsset )
 		{
-			ClearLinkedList();
+			ClearTree();
 		}
 
 		m_SkeletonAsset = AssetManager::Get().GetAssetAs<SkeletonAsset>( id );
 
-		m_BoneLinkedList.resize( m_SkeletonAsset->GetBoneInfo().size() );
+		m_BoneTree.resize( m_SkeletonAsset->GetBoneInfo().size() );
 
-		// Create nodes
+		// Create tree from the bones
 		for( size_t i = 0; i < m_SkeletonAsset->GetBoneInfo().size(); ++i )
 		{
 			SkelBoneItem* pBoneItem = new SkelBoneItem();
 			pBoneItem->pBone = ( SkeletalMeshBoneInfo* ) &m_SkeletonAsset->GetBoneInfo()[ i ];
 			pBoneItem->Type = SkelItemType::Bone;
 
-			m_BoneLinkedList[ i ] = new SkelItemNode( pBoneItem );
+			m_BoneTree[ i ] = new SkelItemNode( pBoneItem );
 
-			// TODO: Fix, should not be calling empty to check if a bone is valid
-			if( auto& rBone = m_SkeletonAsset->FindBoneJoint( pBoneItem->pBone->BoneName ); !rBone.GetBoneName().empty() )
+			// Add bone joint if the bone has one.
+			if( auto* pBone = m_SkeletonAsset->FindBoneJoint( pBoneItem->pBone->BoneName ) )
 			{
 				SkelAttachmentPoint* pAttachmentPoint = new SkelAttachmentPoint();
-				pAttachmentPoint->Type = SkelItemType::Bone;
-				pAttachmentPoint->pBoneJoint = &rBone;
+				pAttachmentPoint->Type = SkelItemType::AttachmentPoint;
+				pAttachmentPoint->pBoneJoint = pBone;
 
-				m_BoneLinkedList[ i ]->Children.push_back( new SkelItemNode( pAttachmentPoint ) );
+				SkelItemNode* pNode = new SkelItemNode( pAttachmentPoint );
+				pNode->pParent = m_BoneTree[ i ];
+
+				m_BoneTree[ i ]->Children.push_back( pNode );
 			}
 		}
 
@@ -78,25 +81,32 @@ namespace Saturn {
 		{
 			const int parentIndex = m_SkeletonAsset->GetBoneInfo()[ i ].ParentIndex;
 
-			if( parentIndex >= 0 && parentIndex < ( int ) m_BoneLinkedList.size() )
+			if( parentIndex >= 0 && parentIndex < ( int ) m_BoneTree.size() )
 			{
-				m_BoneLinkedList[ parentIndex ]->Children.push_back( m_BoneLinkedList[ i ] );
+				m_BoneTree[ parentIndex ]->Children.push_back( m_BoneTree[ i ] );
+				m_BoneTree[ i ]->pParent = m_BoneTree[ parentIndex ];
 			}
 			else
 			{
-				m_BoneRoots.push_back( m_BoneLinkedList[ i ] );
+				m_BoneTreeRoots.push_back( m_BoneTree[ i ] );
 			}
 		}
 	}
 
-	void SkeletonBoneHierarchyPanel::ClearLinkedList()
+	void SkeletonBoneHierarchyPanel::ClearTree()
 	{
-		m_BoneRoots.clear();
-
-		for( auto* pNode : m_BoneLinkedList )
+		for( auto* pBoneRoots : m_BoneTreeRoots )
 		{
-			delete pNode;
+			delete pBoneRoots;
 		}
+
+		m_BoneTreeRoots.clear();
+		m_BoneTree.clear();
+	}
+
+	SkeletonBoneHierarchyPanel::~SkeletonBoneHierarchyPanel()
+	{
+		ClearTree();
 	}
 
 	void SkeletonBoneHierarchyPanel::DrawInspector()
@@ -121,15 +131,18 @@ namespace Saturn {
 		}
 		ImGui::End();
 	}
-	
-	void SkeletonBoneHierarchyPanel::DrawInspectorForBone() 
+
+	void SkeletonBoneHierarchyPanel::DrawInspectorForBone()
 	{
 		SkelBoneItem* pBoneItem = dynamic_cast< SkelBoneItem* >( m_pSelectedBone->pItem );
 		if( pBoneItem )
 		{
 			ImGui::BeginHorizontal( ( void* ) pBoneItem );
 			ImGui::Text( "Bone Name" );
-			Auxiliary::InputText( "##boneName", &pBoneItem->pBone->BoneName, ImGuiInputTextFlags_ReadOnly );
+			{
+				Auxiliary::ScopedDisabledFlag disabled( true );
+				Auxiliary::InputText( "##boneName", &pBoneItem->pBone->BoneName, ImGuiInputTextFlags_ReadOnly );
+			}
 			ImGui::EndHorizontal();
 		}
 	}
@@ -139,20 +152,82 @@ namespace Saturn {
 		SkelAttachmentPoint* pAttachmentPoint = dynamic_cast< SkelAttachmentPoint* >( m_pSelectedBone->pItem );
 		if( pAttachmentPoint )
 		{
-			ImGui::Text( "Bone Name: %s", pAttachmentPoint->pBoneJoint->GetBoneName().c_str() );
+			BoneJoint* pBoneJoint = pAttachmentPoint->pBoneJoint;
+
+			ImGui::Text( "Bone Name: %s", pBoneJoint->GetBoneName().c_str() );
+
+			ImGui::BeginHorizontal( "##nameinput" );
+			ImGui::Text( "Name" );
+			Auxiliary::InputText( "##setname", &pBoneJoint->m_Name );
+			ImGui::EndHorizontal();
+
+			ImGui::Separator();
+
+			Auxiliary::DrawVec3Control( "Position", pBoneJoint->m_Position );
+
+			glm::vec3 rotationDeg = glm::degrees( glm::eulerAngles( pBoneJoint->m_Rotation ) );
+			if( Auxiliary::DrawVec3Control( "Rotation", rotationDeg ) )
+			{
+				pBoneJoint->m_Rotation = glm::quat( glm::radians( rotationDeg ) );
+			}
+
+			Auxiliary::DrawVec3Control( "Scale", pBoneJoint->m_Scale, 1.0f );
 		}
 	}
 
-	SkeletonBoneHierarchyPanel::~SkeletonBoneHierarchyPanel()
+	void SkeletonBoneHierarchyPanel::DrawContextOptionsBone()
 	{
-		ClearLinkedList();
+		ImGui::SeparatorText( "BONE OPTIONS" );
+		if( ImGui::MenuItem( "Create new attachment point" ) )
+		{
+			const SkelBoneItem* pBoneItem = dynamic_cast< const SkelBoneItem* >( m_pSelectedBone->pItem );
+			if( pBoneItem )
+			{
+				auto& rBone = m_SkeletonAsset->AddNewBoneJoint( pBoneItem->pBone->BoneName, "New Attachment" );
+
+				SkelAttachmentPoint* pAttachmentPoint = new SkelAttachmentPoint();
+				pAttachmentPoint->Type = SkelItemType::AttachmentPoint;
+				pAttachmentPoint->pBoneJoint = &rBone;
+
+				SkelItemNode* pNode = new SkelItemNode( pAttachmentPoint );
+				pNode->pParent = m_pSelectedBone;
+
+				m_pSelectedBone->Children.push_back( pNode );
+			}
+		}
+	}
+
+	void SkeletonBoneHierarchyPanel::DrawContextOptionsAP()
+	{
+		ImGui::SeparatorText( "ATTACHMENT POINT OPTIONS" );
+		if( ImGui::MenuItem( "Delete" ) )
+		{
+			SkelAttachmentPoint* pAttachmentPoint = dynamic_cast< SkelAttachmentPoint* >( m_pSelectedBone->pItem );
+			if( pAttachmentPoint )
+			{
+				m_BoneTree.erase( std::remove( m_BoneTree.begin(), m_BoneTree.end(), m_pSelectedBone ), m_BoneTree.end() );
+
+				m_pSelectedBone->pParent->Children.erase( 
+					std::remove( 
+						m_pSelectedBone->pParent->Children.begin(),
+						m_pSelectedBone->pParent->Children.end(),
+						m_pSelectedBone ), 
+					m_pSelectedBone->pParent->Children.end()
+				);
+
+				auto* pOldSelected = m_pSelectedBone;
+				m_pSelectedBone = m_pSelectedBone->pParent;
+
+				delete pOldSelected;
+			}
+		}
 	}
 
 	void SkeletonBoneHierarchyPanel::OnImGuiRender()
 	{
 		if( ImGui::Begin( m_Name.c_str(), &m_Open ) )
 		{
-			for( auto* pBone : m_BoneRoots )
+			for( auto* pBone : m_BoneTreeRoots )
 			{
 				DisplayBoneHierarchy( pBone );
 			}
@@ -170,26 +245,12 @@ namespace Saturn {
 					{
 						case SkelItemType::Bone:
 						{
-							ImGui::SeparatorText( "BONE OPTIONS" );
-							if( ImGui::MenuItem( "Create new attachment point" ) )
-							{
-								const SkelBoneItem* pBoneItem = dynamic_cast< const SkelBoneItem* >( m_pSelectedBone->pItem );
-								if( pBoneItem )
-								{
-									auto& rBone = m_SkeletonAsset->AddNewBoneJoint( pBoneItem->pBone->BoneName, "New Attachment" );
-
-									SkelAttachmentPoint* pAttachmentPoint = new SkelAttachmentPoint();
-									pAttachmentPoint->Type = SkelItemType::AttachmentPoint;
-									pAttachmentPoint->pBoneJoint = &rBone;
-
-									m_pSelectedBone->Children.push_back( new SkelItemNode( pAttachmentPoint ) );
-								}
-							}
+							DrawContextOptionsBone();
 						} break;
 
 						case SkelItemType::AttachmentPoint: 
 						{
-							ImGui::SeparatorText( "ATTACHMENT POINT OPTIONS" );
+							DrawContextOptionsAP();
 						} break;
 
 						default:

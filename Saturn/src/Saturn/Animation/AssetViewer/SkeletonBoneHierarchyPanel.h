@@ -71,10 +71,27 @@ namespace Saturn {
 		{
 			~SkelItemNode() 
 			{
-				delete pItem;
+				Clear();
 			}
 
+			void Clear() 
+			{
+//				delete pItem;
+				for( auto* pChild : Children )
+				{
+					pChild->Clear();
+					delete pChild;
+				}
+
+				Children.clear();
+			}
+
+			// The item we represent, can be a bone or a joint.
 			SkelItem* pItem = nullptr;
+
+			// Parent item.
+			SkelItemNode* pParent = nullptr;
+
 			std::vector<SkelItemNode*> Children;
 		};
 
@@ -91,21 +108,27 @@ namespace Saturn {
 		virtual void OnEvent( Event& rEvent ) {}
 		virtual void OnUpdate( Timestep ts ) {}
 
+	public:
+		SkelItemNode* GetSelectedItem() const { return m_pSelectedBone; }
+
 	private:
 		void DisplayBoneHierarchy( SkelItemNode* pBoneNode, int level = 0 );
-		void ClearLinkedList();
+		void ClearTree();
 
 		void DrawInspector();
 		void DrawInspectorForAP();
 		void DrawInspectorForBone();
+
+		void DrawContextOptionsBone();
+		void DrawContextOptionsAP();
 
 	private:
 		Ref<SkeletonAsset> m_SkeletonAsset;
 
 		SkelItemNode* m_pSelectedBone = nullptr;
 
-		std::vector<SkelItemNode*> m_BoneLinkedList;
-		std::vector<SkelItemNode*> m_BoneRoots;
+		std::vector<SkelItemNode*> m_BoneTree;
+		std::vector<SkelItemNode*> m_BoneTreeRoots;
 	};
 
 }

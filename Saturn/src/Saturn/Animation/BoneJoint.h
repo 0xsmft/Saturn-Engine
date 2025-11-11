@@ -52,6 +52,10 @@ namespace Saturn {
 		[[nodiscard]] const std::string& GetBoneName()      const { return m_BoneName; }
 		[[nodiscard]] const std::string& GetName()          const { return m_Name; }
 
+		void SetRelativePosition( const glm::vec3& rPosition )    { m_Position = rPosition; }
+		void SetRelativeRotation( const glm::vec3& rEulerAngles ) { m_Rotation = glm::quat( rEulerAngles ); }
+		void SetRelativeScale( const glm::vec3& rScale )         { m_Scale = rScale; }
+
 	private:
 		glm::mat4 GetBoneMatrix( Ref<class Animator> mesh ) const;
 
@@ -62,6 +66,9 @@ namespace Saturn {
 		glm::vec3 m_Position{};
 		glm::quat m_Rotation{};
 		glm::vec3 m_Scale{ 1.0f, 1.0f, 1.0f };
+	
+	private:
+		friend class SkeletonBoneHierarchyPanel;
 	};
 	
 }

@@ -147,7 +147,7 @@ namespace Auxiliary {
 		return m_BoneJoints.emplace_back( rBoneName, rName );
 	}
 
-	BoneJoint& SkeletonAsset::FindBoneJoint( const std::string& rBoneName )
+	BoneJoint* SkeletonAsset::FindBoneJoint( const std::string& rBoneName )
 	{
 		auto itr = std::find_if( m_BoneJoints.begin(), m_BoneJoints.end(), 
 			[rBoneName](const auto& rItem) 
@@ -157,14 +157,13 @@ namespace Auxiliary {
 
 		if( itr == m_BoneJoints.end() )
 		{
-			static BoneJoint s_NullJoint;
-			return s_NullJoint;
+			return nullptr;
 		}
 
-		return *itr;
+		return &*itr;
 	}
 
-	const BoneJoint& SkeletonAsset::FindBoneJoint( const std::string& rBoneName ) const
+	const BoneJoint* SkeletonAsset::FindBoneJoint( const std::string& rBoneName ) const
 	{
 		const auto itr = std::find_if( m_BoneJoints.begin(), m_BoneJoints.end(),
 			[ rBoneName ]( const auto& rItem )
@@ -174,11 +173,10 @@ namespace Auxiliary {
 
 		if( itr == m_BoneJoints.end() )
 		{
-			static BoneJoint s_NullJoint;
-			return s_NullJoint;
+			return nullptr;
 		}
 
-		return *itr;
+		return &*itr;
 	}
 
 }

@@ -68,6 +68,7 @@ namespace Saturn {
 		BeforeVersionWasAdded,
 		// List of compatible meshes that can use a skeleton, introduced in Alpha 0.2.3
 		CompatibilityInformationForMeshes,
+		AttachmentPoints,
 
 		//^^^ only add new versions above here....
 		Latest,
@@ -100,8 +101,8 @@ namespace Saturn {
 
 		[[nodiscard]] SkeletonAssetVersion GetLocalVersion() const { return m_LocalVersion; }
 
-		BoneJoint& FindBoneJoint( const std::string& rBoneName );
-		const BoneJoint& FindBoneJoint( const std::string& rBoneName ) const;
+		BoneJoint* FindBoneJoint( const std::string& rBoneName );
+		const BoneJoint* FindBoneJoint( const std::string& rBoneName ) const;
 
 	public:
 		const std::vector<SkeletalMeshBoneInfo>& GetBoneInfo() const { return m_BoneInfos; }

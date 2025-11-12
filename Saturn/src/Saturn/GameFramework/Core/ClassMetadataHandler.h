@@ -108,6 +108,18 @@ namespace Saturn {
 	private:		
 		// All of the classes that have reflection data tied to them.
 		//                 HASH    -> CLASS*
+		// TODO: Convert to a linked listed
 		std::unordered_map<uint64_t, SClass*> m_Classes;
 	};
+
+	//////////////////////////////////////////////////////////////////////////
+	// Create an SObject with it's SClass
+	// TODO: This should be moved into the SObject file and this function should maybe defined inline,
+	//		 The goal is to not have to include ClassMetadataHandler
+	template<typename TObject, typename... VaArgs>
+	[[nodiscard]] inline TObject* NewObject( VaArgs&&... rrArgs ) 
+	{
+		return ClassMetadataHandler::Get().CreateClassObject<TObject>( TObject::StaticClass(), std::forward<VaArgs>( rrArgs )... );
+	}
+
 }

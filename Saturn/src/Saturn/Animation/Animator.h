@@ -66,6 +66,8 @@ namespace Saturn {
 		AssetID GetCurrentID() const { return m_CurrentID; }
 		Ref<Asset> GetCurrentAnimation() const;
 
+		Ref<SkeletalMesh> GetSkeletalMesh() const { return m_SkeletalMesh; }
+
 		const std::vector<glm::mat4>& GetBoneTransforms() const { return m_BoneTransforms; }
 
 		// An animator is consider active if an animation is playing or if it's paused

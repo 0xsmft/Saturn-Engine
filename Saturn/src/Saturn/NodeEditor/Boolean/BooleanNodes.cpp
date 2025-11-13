@@ -26,37 +26,41 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "BooleanNodes.h"
 
-#include "Saturn/Core/Ref.h"
-#include "Core/GameScript.h"
+#include "BooleanNodeTasks.h"
+#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 
 namespace Saturn {
 
-	// The base class for all Game Objects, TODO: This will be moved into /Core/SObject.h as it will become the base class for objects in the engine as well.
-	class SClass;
-	class SObject : public RefTarget
+	SNotNode::SNotNode()
+		: Super()
 	{
-		// NOTE: RefTarget is outwith the Reflection system so it does not count as a viable base class
-		// Declare class with no base class and no internal class
-		SAT_DECLARE_CLASS_EXTERNAL_BASE_NO_INT( SObject );
-	public:
-		SObject() = default;
-		virtual ~SObject() = default;
+		CreateNode();
+	}
 
-	public:
-		[[nodiscard]] inline const SClass* GetClass() const { return m_pClass; }
-//		[[nodiscard]] inline const SObject* GetParentObject() const { return m_ParentObject; }
+	void SNotNode::CreateNode()
+	{
+#if !defined(SAT_DIST)
+		Color = ImColor( 147, 226, 74 );
+#endif
 
-	private:
-		// The class that we are an instance of
-		SClass* m_pClass = nullptr;
+		Inputs.push_back( Ref<BoolPin>::Create( "In", PinKind::Input ) );
+		Outputs.push_back( Ref<BoolPin>::Create( "Result", PinKind::Output ) );
+	}
 
-		// The object that we reside in, typically a SModule
-//		SObject* m_ParentObject = nullptr;
+	SNotNode::~SNotNode()
+	{
+	}
 
-	private:
-		friend class ClassMetadataHandler;
-	};
+	NodeEditorTaskBase* SNotNode::ConvertToTask()
+	{
+		return NewObject<SNotBoolTask>();
+	}
 
 }
+
+#include "Saturn/GameFramework/Core/EngineGenerated.h"
+
+SAT_X31_CREATE_AUTO_REG( SNotNode );

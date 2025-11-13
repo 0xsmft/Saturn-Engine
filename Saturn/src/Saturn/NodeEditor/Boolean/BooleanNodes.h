@@ -28,35 +28,21 @@
 
 #pragma once
 
-#include "Saturn/Core/Ref.h"
-#include "Core/GameScript.h"
+#include "Saturn/NodeEditor/NodeEditorBlueprintNode.h"
 
 namespace Saturn {
 
-	// The base class for all Game Objects, TODO: This will be moved into /Core/SObject.h as it will become the base class for objects in the engine as well.
-	class SClass;
-	class SObject : public RefTarget
+	class SNotNode : public NodeEditorBlueprintNode
 	{
-		// NOTE: RefTarget is outwith the Reflection system so it does not count as a viable base class
-		// Declare class with no base class and no internal class
-		SAT_DECLARE_CLASS_EXTERNAL_BASE_NO_INT( SObject );
+		SAT_DECLARE_CLASS( SNotNode, NodeEditorBlueprintNode );
 	public:
-		SObject() = default;
-		virtual ~SObject() = default;
+		SNotNode();
+		virtual ~SNotNode();
 
-	public:
-		[[nodiscard]] inline const SClass* GetClass() const { return m_pClass; }
-//		[[nodiscard]] inline const SObject* GetParentObject() const { return m_ParentObject; }
+		virtual NodeEditorTaskBase* ConvertToTask() override;
 
 	private:
-		// The class that we are an instance of
-		SClass* m_pClass = nullptr;
-
-		// The object that we reside in, typically a SModule
-//		SObject* m_ParentObject = nullptr;
-
-	private:
-		friend class ClassMetadataHandler;
+		void CreateNode();
 	};
-
+	
 }

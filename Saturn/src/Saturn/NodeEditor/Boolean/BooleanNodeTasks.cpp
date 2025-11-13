@@ -26,37 +26,94 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "BooleanNodeTasks.h"
 
-#include "Saturn/Core/Ref.h"
-#include "Core/GameScript.h"
+#include "BooleanNodes.h"
+
+#include "Saturn/NodeEditor/DataLine.h"
+#include "Saturn/NodeEditor/NodeEditorTaskHandler.h"
+#include "Saturn/NodeEditor/NodeEditorBase.h"
 
 namespace Saturn {
 
-	// The base class for all Game Objects, TODO: This will be moved into /Core/SObject.h as it will become the base class for objects in the engine as well.
-	class SClass;
-	class SObject : public RefTarget
+	SNotBoolTask::SNotBoolTask()
 	{
-		// NOTE: RefTarget is outwith the Reflection system so it does not count as a viable base class
-		// Declare class with no base class and no internal class
-		SAT_DECLARE_CLASS_EXTERNAL_BASE_NO_INT( SObject );
-	public:
-		SObject() = default;
-		virtual ~SObject() = default;
+	}
 
-	public:
-		[[nodiscard]] inline const SClass* GetClass() const { return m_pClass; }
-//		[[nodiscard]] inline const SObject* GetParentObject() const { return m_ParentObject; }
+	void SNotBoolTask::InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pBase, NodeEditorNodeBase* pNode )
+	{
+		m_pHandler = pHandler;
 
-	private:
-		// The class that we are an instance of
-		SClass* m_pClass = nullptr;
+		SNotNode* pNotNode = dynamic_cast< SNotNode* >( pNode );
+		if( pNotNode )
+		{
+			auto links = pBase->FindLinksByPin( pNotNode->Inputs[ 0 ]->ID );
+			for( const auto& rLink : links )
+			{
+				// Get data line
+				if( m_pHandler->DoesDataLineExist( rLink->ID ) )
+				{
+					auto* pInputData = m_pHandler->GetDataLine( rLink->ID );
+					if( pInputData )
+					{
+						m_ValueToTest = pInputData->GetIf<bool>();
+					}
+				}
+			}
 
-		// The object that we reside in, typically a SModule
-//		SObject* m_ParentObject = nullptr;
+			links = pBase->FindLinksByPin( pNotNode->Outputs[ 0 ]->ID );
+			Outgoings.reserve( links.size() );
 
-	private:
-		friend class ClassMetadataHandler;
-	};
+			// We output a bool.
+			for( const auto& rLink : links )
+			{
+				DataLine dl;
+				dl.WriteValue<bool>( false );
+				m_pHandler->InsertDataLine( rLink->ID, dl );
+
+				Outgoings.push_back( rLink->ID );
+			}
+
+			m_NodeID = pNode->ID;
+		}
+	}
+
+	SNotBoolTask::~SNotBoolTask()
+	{
+	}
+
+	NodeEditorTaskState SNotBoolTask::Tick( Timestep ts )
+	{
+		m_Result = !*m_ValueToTest;
+
+		for( const auto& rID : Outgoings )
+		{
+			auto* pLine = m_pHandler->GetDataLine( rID );
+			if( pLine )
+			{
+				pLine->WriteValue<bool>( m_Result );
+			}
+		}
+
+		return NodeEditorTaskState::Completed;
+	}
+
+	void SNotBoolTask::Reset()
+	{
+		m_Result = false;
+		for( const auto& rID : Outgoings )
+		{
+			auto* pLine = m_pHandler->GetDataLine( rID );
+			if( pLine )
+			{
+				pLine->WriteValue<bool>( m_Result );
+			}
+		}
+	}
 
 }
+
+#include "Saturn/GameFramework/Core/EngineGenerated.h"
+
+SAT_X31_CREATE_AUTO_REG( SNotBoolTask );

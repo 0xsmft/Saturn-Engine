@@ -28,35 +28,28 @@
 
 #pragma once
 
-#include "Saturn/Core/Ref.h"
-#include "Core/GameScript.h"
+#include "Saturn/NodeEditor/NodeEditorTaskBase.h"
 
 namespace Saturn {
 
-	// The base class for all Game Objects, TODO: This will be moved into /Core/SObject.h as it will become the base class for objects in the engine as well.
-	class SClass;
-	class SObject : public RefTarget
+	class SNotBoolTask : public NodeEditorTaskBase
 	{
-		// NOTE: RefTarget is outwith the Reflection system so it does not count as a viable base class
-		// Declare class with no base class and no internal class
-		SAT_DECLARE_CLASS_EXTERNAL_BASE_NO_INT( SObject );
+		SAT_DECLARE_CLASS( SNotBoolTask, NodeEditorTaskBase );
 	public:
-		SObject() = default;
-		virtual ~SObject() = default;
+		SNotBoolTask();
+		virtual ~SNotBoolTask();
 
-	public:
-		[[nodiscard]] inline const SClass* GetClass() const { return m_pClass; }
-//		[[nodiscard]] inline const SObject* GetParentObject() const { return m_ParentObject; }
+		virtual void InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pBase, NodeEditorNodeBase* pNode ) override;
+		virtual NodeEditorTaskState Tick( Timestep ts ) override;
+		virtual void Reset() override;
 
 	private:
-		// The class that we are an instance of
-		SClass* m_pClass = nullptr;
+		// TODO: #FixTasksOutgoings
+		NodeEditorTaskHandler* m_pHandler = nullptr;
+		std::vector<UUID> Outgoings;
 
-		// The object that we reside in, typically a SModule
-//		SObject* m_ParentObject = nullptr;
-
-	private:
-		friend class ClassMetadataHandler;
+		bool* m_ValueToTest = nullptr;
+		bool m_Result = false;
 	};
-
+	
 }

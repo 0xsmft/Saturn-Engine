@@ -46,6 +46,8 @@
 
 #include "Saturn/Asset/Prefab.h"
 
+#include "Saturn/Animation/SkeletonAsset.h"
+
 #include "Saturn/Physics/PhysicsRigidBody.h"
 
 #include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
@@ -352,7 +354,8 @@ namespace Saturn {
 			{
 				ImGui::Text( rTag.c_str() );
 
-				ImGui::SetDragDropPayload( "ENTITY_PARENT_SCHPANEL", entity.Get(), sizeof( uintptr_t ), ImGuiCond_Once );
+				const void* pData = entity.Get();
+				ImGui::SetDragDropPayload( "ENTITY_PARENT_SCHPANEL", &pData, sizeof( uintptr_t ), ImGuiCond_Once );
 
 				ImGui::EndDragDropSource();
 			}
@@ -362,13 +365,16 @@ namespace Saturn {
 				const ImGuiPayload* pPayload = ImGui::AcceptDragDropPayload( "ENTITY_PARENT_SCHPANEL" );
 				if( pPayload )
 				{
-					SharedPtr<Entity> e = (Entity*)pPayload->Data;
-					SharedPtr<Entity> previousParent = m_Context->FindEntityByID( e->GetParent() );
+					Entity* pTargetEntity = *(Entity**)pPayload->Data;
+					SharedPtr<Entity> previousParent = m_Context->FindEntityByID( pTargetEntity->GetParent() );
 
-					// If a child is trying to parent it's parent.
 					bool ParentToParent = false;
-					for( const auto& child : e->GetChildren() )
+					for( const auto& child : pTargetEntity->GetChildren() )
 					{
+						// If the user is trying to make an entity a child of one of it's own children
+						// we must prevent it to stop a cyclic relationship being formed.
+						// 
+						// basically, in the editor if we try to move the parent to it's child it will create a cyclic relationship, in the future we should handle this case properly!
 						if( child == entity->GetUUID() )
 						{
 							ParentToParent = true;
@@ -378,17 +384,17 @@ namespace Saturn {
 
 					if( !ParentToParent )
 					{
+						// Remove target entity from it's parent, replaced with new parent.
 						if( previousParent )
 						{
-							// Remove target entity from it's parent, replaced with new parent
-							auto& children = previousParent->GetChildren();
-							children.erase( std::remove( children.begin(), children.end(), e->GetComponent<IdComponent>().ID ), children.end() );
+							auto& rChildren = previousParent->GetChildren();
+							rChildren.erase( std::remove( rChildren.begin(), rChildren.end(), pTargetEntity->GetComponent<IdComponent>().ID ), rChildren.end() );
 						}
 
-						e->SetParent( entity->GetComponent<IdComponent>().ID );
+						pTargetEntity->SetParent( entity->GetComponent<IdComponent>().ID );
 
-						auto& children = entity->GetChildren();
-						children.push_back( e->GetComponent<IdComponent>().ID );
+						auto& rChildren = entity->GetChildren();
+						rChildren.push_back( pTargetEntity->GetComponent<IdComponent>().ID );
 					}
 				}
 
@@ -840,8 +846,6 @@ namespace Saturn {
 					Auxiliary::EndTreeNode();
 				}
 
-				ImGui::Text( "Animation" );
-
 				if( Auxiliary::TreeNode( "Animation" ) )
 				{
 					ImGui::BeginHorizontal( "##animAssetType" );
@@ -850,17 +854,17 @@ namespace Saturn {
 
 					ImGui::SetNextItemWidth( 130.0f );
 					
-					const std::string previewStr = mc.AnimatorType == AnimationAssetType::Single ? "Single" : "Animation Controller (AnimGraph)";
+					const std::string previewStr = mc.AnimatorType == AnimatorType::Single ? "Single" : "Animation Controller (AnimGraph)";
 					if( ImGui::BeginCombo( "##setanimtype", previewStr.c_str() ) )
 					{
 						if( ImGui::Selectable( "Single" ) )
 						{
-							mc.AnimatorType = AnimationAssetType::Single;
+							mc.AnimatorType = AnimatorType::Single;
 						}
 
 						if( ImGui::Selectable( "Use Animation Controller (AnimGraph)" ) )
 						{
-							mc.AnimatorType = AnimationAssetType::AnimationControllerGraph;
+							mc.AnimatorType = AnimatorType::AnimationControllerGraph;
 						}
 
 						ImGui::EndCombo();
@@ -875,8 +879,11 @@ namespace Saturn {
 					ImGui::Spring();
 
 					ImGui::SetNextItemWidth( 130.0f );
-					if( mc.LocalAnimator && mc.LocalAnimator->GetCurrentAnimation() )
-						Auxiliary::InputText( "##assetname", &mc.LocalAnimator->GetCurrentAnimation()->Name, ImGuiInputTextFlags_ReadOnly );
+					if( mc.AnimationControllerAssetID )
+					{
+						std::string assetName = std::to_string( mc.AnimationControllerAssetID );
+						Auxiliary::InputText( "##assetname", &assetName, ImGuiInputTextFlags_ReadOnly );
+					}
 					else
 						ImGui::InputText( "##assetname", ( char* ) "", 1, ImGuiInputTextFlags_ReadOnly );
 
@@ -884,7 +891,7 @@ namespace Saturn {
 
 					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0F, 24.0F ) ) )
 					{
-						m_CurrentFinderType = mc.AnimatorType == AnimationAssetType::Single ? AssetType::SkeletalAnimation : AssetType::AnimationController;
+						m_CurrentFinderType = mc.AnimatorType == AnimatorType::Single ? AssetType::SkeletalAnimation : AssetType::AnimationController;
 						open = !open;
 					}
 
@@ -899,13 +906,11 @@ namespace Saturn {
 				if( m_CurrentFinderType == AssetType::SkeletalMesh )
 				{
 					mc.Mesh = AssetManager::Get().GetAssetAs<SkeletalMesh>( m_CurrentAssetID );
-
 					mc.MaterialRegistry = Ref<MaterialRegistry>::Create( mc.Mesh );
 				}
 				else if( m_CurrentFinderType == AssetType::SkeletalAnimation || m_CurrentFinderType == AssetType::AnimationController ) 
 				{
-					mc.LocalAnimator = Ref<Animator>::Create();
-					mc.LocalAnimator->InitAnimation( m_CurrentAssetID, mc.Mesh );
+					mc.AnimationControllerAssetID = m_CurrentAssetID;
 				}
 				else if( m_CurrentFinderType == AssetType::Material )
 				{
@@ -1359,7 +1364,7 @@ namespace Saturn {
 
 				modified |= Auxiliary::DrawBoolControl( "Loop", ap.Loop );
 				modified |= Auxiliary::DrawBoolControl( "Mute", ap.Mute );
-				modified |= Auxiliary::DrawBoolControl( "Spatialization", ap.Spatialization );
+				modified |= Auxiliary::DrawBoolControl( "Spatialization", ap.Spatialisation );
 
 				modified |= Auxiliary::DrawFloatControl( "Volume", ap.Volume, 0.0f, 100.0f );
 				modified |= Auxiliary::DrawFloatControl( "Pitch", ap.Pitch, 0.0f, 100.0f );

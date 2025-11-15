@@ -462,6 +462,7 @@ namespace Saturn {
 		void RenderScene();
 
 		void SetCamera( const RendererCamera& Camera );
+		const RendererCamera& GetRendererCamera() const { return m_RendererData.CurrentCamera; }
 
 		Ref<Pass> GetGeometryPass() { return m_RendererData.GeometryPass; }
 		const Ref<Pass> GetGeometryPass() const { return m_RendererData.GeometryPass; }

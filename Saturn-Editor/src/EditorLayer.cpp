@@ -2586,8 +2586,8 @@ namespace Saturn {
 			ImGuizmo::SetDrawlist();
 			ImGuizmo::SetRect( minBound.x, minBound.y, m_ViewportSize.x, m_ViewportSize.y );
 
-			const glm::mat4 Projection = m_EditorCamera.ProjectionMatrix();
-			const glm::mat4 View = m_EditorCamera.ViewMatrix();
+			const glm::mat4 Projection = m_SceneRenderer->GetRendererCamera().pCamera->ProjectionMatrix();
+			const glm::mat4 View = m_SceneRenderer->GetRendererCamera().ViewMatrix;
 
 			ImGuizmo::Manipulate( glm::value_ptr( View ), glm::value_ptr( Projection ), ( ImGuizmo::OPERATION ) m_GizmoOperation, ImGuizmo::LOCAL, glm::value_ptr( centerPoint ), glm::value_ptr( offsetTransform ) );
 

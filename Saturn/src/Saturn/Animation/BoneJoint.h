@@ -56,8 +56,8 @@ namespace Saturn {
 		void SetRelativeRotation( const glm::vec3& rEulerAngles ) { m_Rotation = glm::quat( rEulerAngles ); }
 		void SetRelativeScale( const glm::vec3& rScale )         { m_Scale = rScale; }
 
-	private:
-		glm::mat4 GetBoneMatrix( Ref<class Animator> mesh ) const;
+		glm::mat4 GetBoneMatrix( Ref<class Animator> animator ) const;
+		glm::mat4 GetBoneMatrixPreview( Ref<class SkeletalMesh> animator ) const;
 
 	private:
 		std::string m_BoneName;

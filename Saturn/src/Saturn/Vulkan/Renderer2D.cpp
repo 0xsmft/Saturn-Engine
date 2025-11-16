@@ -38,22 +38,21 @@
 
 namespace Saturn {
 
-	static constexpr uint32_t s_MaxQuads = 20000;
-	static constexpr uint32_t s_MaxVertices = s_MaxQuads * 4;
-	static constexpr uint32_t s_MaxIndices = s_MaxQuads * 6;
+	static constexpr uint32_t s_MaxQuads = 20000u;
+	static constexpr uint32_t s_MaxVertices = s_MaxQuads * 4u;
+	static constexpr uint32_t s_MaxIndices = s_MaxQuads * 6u;
 	static constexpr uint32_t s_MaxTextureSlots = 32;
 
-	static constexpr uint32_t s_MaxLines = 1024 + 1024;
-	static constexpr uint32_t s_MaxLineVertices = s_MaxLines * 2;
-	static constexpr uint32_t s_MaxLineIndices = s_MaxLines * 6;
+	static constexpr uint32_t s_MaxLines = 1024u + 1024u;
+	static constexpr uint32_t s_MaxLineVertices = s_MaxLines * 2u;
+	static constexpr uint32_t s_MaxLineIndices = s_MaxLines * 6u;
 
-	static constexpr uint32_t s_MaxSolidLines = 1024 + 1024 + 1024;
-	static constexpr uint32_t s_MaxSolidLineVertices = s_MaxSolidLines * 2;
-	static constexpr uint32_t s_MaxSolidLineIndices = s_MaxSolidLines * 6;
+	static constexpr uint32_t s_MaxSolidLines = 1024u + 1024u + 1024u;
+	static constexpr uint32_t s_MaxSolidLineVertices = s_MaxSolidLines * 2u;
+	static constexpr uint32_t s_MaxSolidLineIndices = s_MaxSolidLines * 6u;
 
 	Renderer2D::Renderer2D()
 	{
-		Init();
 	}
 
 	Renderer2D::~Renderer2D()
@@ -61,7 +60,7 @@ namespace Saturn {
 		Terminate();
 	}
 
-	void Renderer2D::Init()
+	void Renderer2D::Init( Ref<Pass> targetPass /*= nullptr */, Ref<Framebuffer> targetFramebuffer /*= nullptr*/ )
 	{
 		if( Application::Get().HasFlag( ApplicationFlag_UIOnly ) )
 			return;
@@ -120,14 +119,14 @@ namespace Saturn {
 		delete[] quadBuffer;
 
 		uint32_t* pLineBuffer = new uint32_t[ s_MaxLineIndices ];
-		for( uint32_t i = 0; i < s_MaxLineIndices; i++ )
+		for( uint32_t i = 0; i < s_MaxLineIndices; ++i )
 			pLineBuffer[ i ] = i;
 
 		m_LineIndexBuffer = Ref<IndexBuffer>::Create( pLineBuffer, s_MaxLineIndices );
 		delete[] pLineBuffer;
 
 		pLineBuffer = new uint32_t[ s_MaxSolidLineIndices ];
-		for( uint32_t i = 0; i < s_MaxSolidLineIndices; i++ )
+		for( uint32_t i = 0; i < s_MaxSolidLineIndices; ++i )
 			pLineBuffer[ i ] = i;
 
 		m_TriangleIndexBuffer = Ref<IndexBuffer>::Create( pLineBuffer, s_MaxSolidLineIndices );
@@ -137,6 +136,7 @@ namespace Saturn {
 		// Setup Textures
 		m_Textures[ 0 ] = Renderer::Get().GetPinkTexture();
 
+		/*
 		// Construct a temporary render pass this is to be changed when the scene renderer is ready.
 		PassSpecification PassSpec;
 		PassSpec.Name = "Renderer2D-TemporaryRP";
@@ -144,15 +144,15 @@ namespace Saturn {
 
 		m_TempRenderPass = Ref<Pass>::Create( PassSpec );
 		m_TargetRenderPass = m_TempRenderPass;
+		*/
 
-		LateInit();
+		m_TargetRenderPass = targetPass;
+		m_TargetFramebuffer = targetFramebuffer;
+		LateInit( targetPass, targetFramebuffer );
 	}
 
 	void Renderer2D::LateInit( Ref<Pass> targetPass /*= nullptr */, Ref<Framebuffer> targetFramebuffer /*= nullptr*/ )
 	{
-		if( Application::Get().HasFlag( ApplicationFlag_UIOnly ) )
-			return;
-
 		if( !targetFramebuffer )
 		{
 			FramebufferSpecification FBSpec = {};

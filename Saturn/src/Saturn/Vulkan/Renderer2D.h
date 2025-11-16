@@ -90,12 +90,12 @@ namespace Saturn {
 
 		void PreRender();
 
-		void Init();
+		void Init( Ref<Pass> targetPass, Ref<Framebuffer> targetFramebuffer );
 		void Terminate();
 		void SetViewportSize( uint32_t w, uint32_t h );
 
 	private:
-		void LateInit( Ref<Pass> targetPass = nullptr, Ref<Framebuffer> framebuffer = nullptr);
+		void LateInit( Ref<Pass> targetPass = nullptr, Ref<Framebuffer> framebuffer = nullptr );
 		void Reset();
 
 		void RenderAll();

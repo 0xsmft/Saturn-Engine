@@ -47,6 +47,7 @@ namespace Saturn {
 
 	private:
 		void AddMesh();
+		void RenderSidebar();
 
 	private:
 		Ref<SkeletalMesh> m_Mesh;

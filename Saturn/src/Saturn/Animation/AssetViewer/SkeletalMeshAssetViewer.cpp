@@ -43,20 +43,17 @@
 #include "Saturn/Scene/Components.h"
 
 namespace Saturn {
-
-	static inline bool operator==( const ImVec2& lhs, const ImVec2& rhs ) { return lhs.x == rhs.x && lhs.y == rhs.y; }
-	static inline bool operator!=( const ImVec2& lhs, const ImVec2& rhs ) { return !( lhs == rhs ); }
 	
 	SkeletalMeshAssetViewer::SkeletalMeshAssetViewer( AssetID id )
 		: AssetViewer( id )
 	{
 		m_AssetType = AssetType::SkeletalMesh;
 
-		AddMesh();
-		m_Name = std::format( "{0}##{1}", m_Mesh->Name, std::to_string( m_AssetID ) );
-	
 		Initialise();
 		SetViewportWindowID( m_AssetID );
+	
+		AddMesh();
+		m_Name = std::format( "{0}##{1}", m_Mesh->Name, std::to_string( m_AssetID ) );
 	}
 
 	SkeletalMeshAssetViewer::~SkeletalMeshAssetViewer()
@@ -70,7 +67,7 @@ namespace Saturn {
 		ImGui::SetNextWindowPos( ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 350.0f, 350.0f ), ImGuiCond_FirstUseEver );
 
-		ImGui::Begin( m_Name.c_str(), &m_Open, ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoCollapse );
+		ImGui::Begin( m_Name.c_str(), &m_Open, ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_MenuBar );
 
 		// Create custom dockspace.
 		const ImGuiID dockID = ImGui::GetID( "AxDckspc" );
@@ -78,10 +75,70 @@ namespace Saturn {
 
 		//////////////////////////////////////////////////////////////////////////
 
+		if( ImGui::BeginMenuBar() )
+		{
+			if( ImGui::BeginMenu( "File" ) )
+			{
+				if( ImGui::MenuItem( "Close" ) )
+				{
+					m_Open = false;
+				}
+
+				if( ImGui::MenuItem( "Save" ) )
+				{
+					SkeletalMeshAssetSerialiser sma;
+					sma.Serialise( m_Mesh );
+				}
+
+				ImGui::EndMenu();
+			}
+
+			if( ImGui::BeginMenu( "View" ) )
+			{
+				if( ImGui::MenuItem( "Open Skeleton Asset Viewer" ) )
+				{
+					const AssetID skeletonID = m_Mesh->GetSkeletonAsset()->ID;
+					const Ref<Asset> asset = AssetManager::Get().FindAsset( skeletonID );
+					if( asset )
+					{
+						const std::string windowName = std::format( "{0}##{1}", asset->Name, ( uint64_t ) skeletonID );
+						ImGuiWindowManager::Get().OpenOrShowWindow<SkeletonAssetViewer>( windowName, skeletonID );
+
+						ImGui::SetWindowFocus( windowName.c_str() );
+					}
+				}
+
+				ImGui::EndMenu();
+			}
+
+			ImGui::EndMenuBar();
+		}
+
+		//////////////////////////////////////////////////////////////////////////
+
 		RenderViewport();
 
 		//////////////////////////////////////////////////////////////////////////
 
+		RenderSidebar();
+
+		//////////////////////////////////////////////////////////////////////////
+
+		ImGui::End();
+
+		if( m_Open == false )
+		{
+			m_Open = false;
+
+			RenderThread::Get().Queue( [ = ]()
+			{
+				m_SceneRenderer = nullptr;
+			} );
+		}
+	}
+
+	void SkeletalMeshAssetViewer::RenderSidebar() 
+	{
 		ImGui::Begin( "Sidebar" );
 
 		if( Auxiliary::TreeNode( "Materials" ) )
@@ -164,47 +221,6 @@ namespace Saturn {
 		}
 
 		ImGui::End();
-
-		ImGui::Begin( "##Toolbar" );
-
-		ImGui::BeginHorizontal( "##tbv" );
-
-		if( ImGui::Button( "Save", ImVec2( 50.0f, 50.0f ) ) )
-		{
-			SkeletalMeshAssetSerialiser sma;
-			sma.Serialise( m_Mesh );
-		}
-
-		ImGui::Spring();
-
-		if( ImGui::Button( "Open Skeleton", ImVec2( 50.0f, 50.0f ) ) )
-		{
-			const AssetID skeletonID = m_Mesh->GetSkeletonAsset()->ID;
-			const Ref<Asset> asset = AssetManager::Get().FindAsset( skeletonID );
-			if( asset )
-			{
-				const std::string windowName = std::format( "{0}##{1}", asset->Name, ( uint64_t ) skeletonID );
-				ImGuiWindowManager::Get().OpenOrShowWindow<SkeletonAssetViewer>( windowName, skeletonID );
-
-				ImGui::SetWindowFocus( windowName.c_str() );
-			}
-		}
-
-		ImGui::EndHorizontal();
-
-		ImGui::End();
-
-		ImGui::End();
-
-		if( m_Open == false )
-		{
-			m_Open = false;
-
-			RenderThread::Get().Queue( [ = ]()
-			{
-				m_SceneRenderer = nullptr;
-			} );
-		}
 	}
 
 	void SkeletalMeshAssetViewer::OnUpdate( Timestep ts )

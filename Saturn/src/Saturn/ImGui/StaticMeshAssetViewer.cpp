@@ -34,9 +34,9 @@
 
 #include "Saturn/Core/Renderer/RenderThread.h"
 
-#include "Saturn/Asset/AssetManager.h"
 #include "Saturn/Vulkan/Renderer2D.h"
-#include "Saturn/Vulkan/SceneRenderer.h"
+
+#include "Saturn/Asset/AssetManager.h"
 
 #include "Saturn/Scene/Components.h"
 
@@ -48,19 +48,13 @@ namespace Saturn {
 		: AssetViewer( id ), SubSceneRendererWindow()
 	{
 		m_AssetType = AssetType::StaticMesh;
-		m_Camera.SetActive( true );
 
-		m_Scene = Ref<Scene>::Create();
-
-		m_SceneRenderer = Ref<SceneRenderer>::Create( SceneRendererFlag_RenderGrid );
-
-		m_SceneRenderer->SetDynamicSky( 2.0f, 0.0f, 0.0f );
-		m_SceneRenderer->SetCurrentScene( m_Scene.Get() );
+		Initialise();
+		SetViewportWindowID( m_AssetID );
 
 		AddMesh();
 		m_Name = std::format( "{0}##{1}", m_Mesh->Name, std::to_string( m_AssetID ) );
 
-		SetViewportWindowID( m_AssetID );
 	}
 
 	StaticMeshAssetViewer::~StaticMeshAssetViewer()
@@ -74,7 +68,7 @@ namespace Saturn {
 		ImGui::SetNextWindowPos( ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 350.0f, 350.0f ), ImGuiCond_FirstUseEver );
 
-		ImGui::Begin( m_Name.c_str(), &m_Open, ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoCollapse );
+		ImGui::Begin( m_Name.c_str(), &m_Open, ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_MenuBar );
 
 		// Create custom dockspace.
 		const ImGuiID dockID = ImGui::GetID( "StaticMeshDckspc" );
@@ -82,7 +76,32 @@ namespace Saturn {
 
 		//////////////////////////////////////////////////////////////////////////
 
+		if( ImGui::BeginMenuBar() )
+		{
+			if( ImGui::BeginMenu( "File" ) )
+			{
+				if( ImGui::MenuItem( "Close" ) )
+				{
+					m_Open = false;
+				}
+
+				if( ImGui::MenuItem( "Save" ) )
+				{
+					StaticMeshAssetSerialiser sma;
+					sma.Serialise( m_Mesh );
+				}
+
+				ImGui::EndMenu();
+			}
+
+			ImGui::EndMenuBar();
+		}
+
+		//////////////////////////////////////////////////////////////////////////
+
 		RenderViewport();
+
+		//////////////////////////////////////////////////////////////////////////
 
 		ImGui::Begin( "Sidebar" );
 
@@ -92,7 +111,7 @@ namespace Saturn {
 			
 			constexpr const char* pItems[] = { "None", "Box", "Sphere", "Capsule", "Convex Mesh", "Triangle Mesh" };
 			static PhysicsShapeType SelectedEnum = type;
-			static const char* Selected = pItems[ (int)SelectedEnum ];
+			static const char* Selected = pItems[ ( int ) SelectedEnum ];
 
 			ImGui::Text( "Select Physics Shape Type:" );
 			ImGui::SameLine();
@@ -133,17 +152,16 @@ namespace Saturn {
 			ImGui::Text( "Set Physics Material" );
 			ImGui::SameLine();
 			
-			static AssetID id;
-			static bool s_Open = true;
+			bool s_Open = false;
 
 			if( ImGui::Button( "...##openmesh", ImVec2( 50.0f, 20.0f ) ) )
 			{
 				s_Open = !s_Open;
 			}
 			
-			if( Auxiliary::DrawAssetFinder( AssetType::PhysicsMaterial, &s_Open, id, 0 ) ) 
+			if( Auxiliary::DrawAssetFinder( AssetType::PhysicsMaterial, &s_Open, m_AssetFinderOutPhys, 0 ) )
 			{
-				m_Mesh->SetPhysicsMaterial( id );
+				m_Mesh->SetPhysicsMaterial( m_AssetFinderOutPhys );
 			}
 
 			Auxiliary::EndTreeNode();
@@ -151,14 +169,12 @@ namespace Saturn {
 
 		if( Auxiliary::TreeNode( "Materials" ) )
 		{
-			ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_FramePadding;
-
 			int i = 0;
 			for( auto& rMaterial : m_Mesh->GetMaterialAssets() )
 			{
 				ImGui::PushID( i );
 
-				if( ImGui::TreeNodeEx( rMaterial->Name.c_str(), flags ) )
+				if( ImGui::TreeNodeEx( rMaterial->Name.c_str(), ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_FramePadding ) )
 				{
 					ImGui::BeginHorizontal( i );
 
@@ -200,21 +216,6 @@ namespace Saturn {
 		}
 
 		ImGui::End();
-
-		ImGui::Begin( "##Toolbar" );
-
-		ImGui::BeginVertical( "##tbv" );
-
-		if( ImGui::Button( "Save", ImVec2( 50.0f, 50.0f ) ) ) 
-		{
-			StaticMeshAssetSerialiser sma;
-			sma.Serialise( m_Mesh );
-		}
-
-		ImGui::EndVertical();
-
-		ImGui::End();
-
 		ImGui::End(); // Root Window
 
 		if( m_Open == false )

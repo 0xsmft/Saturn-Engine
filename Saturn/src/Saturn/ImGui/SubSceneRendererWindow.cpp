@@ -62,15 +62,15 @@ namespace Saturn {
 		m_Scene = nullptr;
 	}
 
-	void SubSceneRendererWindow::RenderViewport()
+	void SubSceneRendererWindow::RenderViewport( bool end /*=true*/ )
 	{
+		/*
 		if( ImGui::IsMouseClicked( ImGuiMouseButton_Left ) || ( ImGui::IsMouseClicked( ImGuiMouseButton_Right ) && !m_StartedRightClickInViewport ) )
 		{
 			ImGui::FocusWindow( GImGui->HoveredWindow );
 			Input::Get().SetCursorMode( RubyCursorMode::Normal );
 		}
-
-		ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 0.0f, 0.0f ) );
+		*/
 
 		// Viewport
 		ImGuiWindowClass windowClassNoDock;
@@ -78,10 +78,16 @@ namespace Saturn {
 		windowClassNoDock.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_None;
 
 		ImGui::SetNextWindowClass( &windowClassNoDock );
+
+		ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 0.0f, 0.0f ) );
+
 		const std::string vpName = std::format( "Viewport##{0}", std::to_string( m_WindowID ) );
 
-		ImGui::Begin( vpName.c_str(), 0, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse );
-		ImGui::SetWindowDock( ImGui::GetCurrentWindow(), ImGui::GetID( "AxDckspc" ), ImGuiCond_FirstUseEver );
+		ImGuiWindowFlags vpFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse;
+		if( m_DisableViewportMovement )
+			vpFlags |= ImGuiWindowFlags_NoMove;
+
+		ImGui::Begin( vpName.c_str(), 0, vpFlags );
 
 		if( m_ViewportSize != ImGui::GetContentRegionAvail() )
 		{
@@ -94,6 +100,7 @@ namespace Saturn {
 		Auxiliary::Image( m_SceneRenderer->CompositeImage(), m_ViewportSize, { 0, 1 }, { 1, 0 } );
 
 		const ImVec2 minBound = ImGui::GetWindowPos();
+		m_ViewportPosition = minBound;
 		const ImVec2 maxBound = { minBound.x + m_ViewportSize.x, minBound.y + m_ViewportSize.y };
 
 		m_ViewportFocused = ImGui::IsWindowFocused();
@@ -101,6 +108,11 @@ namespace Saturn {
 
 		m_AllowCameraEvents = ImGui::IsMouseHoveringRect( minBound, maxBound ) && m_ViewportFocused || m_StartedRightClickInViewport;
 
+		if( end ) End();
+	}
+
+	void SubSceneRendererWindow::End()
+	{
 		ImGui::End();
 		ImGui::PopStyleVar(); // ImGuiStyleVar_WindowPadding
 	}

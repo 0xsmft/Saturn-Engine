@@ -43,11 +43,13 @@ namespace Saturn {
 		SubSceneRendererWindow();
 		virtual ~SubSceneRendererWindow();
 
-		void RenderViewport();
+		void RenderViewport( bool end = true );
 
 	public:
 		ImVec2 GetViewportSize() const { return m_ViewportSize; }
+		ImVec2 GetViewportPosition() const { return m_ViewportPosition; }
 		void SetViewportWindowID( UUID id ) { m_WindowID = id; }
+		void End();
 
 	protected:
 		void Initialise();
@@ -63,9 +65,11 @@ namespace Saturn {
 		bool m_StartedRightClickInViewport = false;
 		bool m_ViewportFocused = false;
 		bool m_MouseOverViewport = false;
+		bool m_DisableViewportMovement = false;
 
 	private:
 		ImVec2 m_ViewportSize{};
+		ImVec2 m_ViewportPosition{};
 		UUID m_WindowID = 0llu;
 	};
 	

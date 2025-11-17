@@ -52,5 +52,6 @@ namespace Saturn {
 	private:
 		Ref<StaticMesh> m_Mesh;
 		AssetID m_AssetFinderOut = 0;
+		AssetID m_AssetFinderOutPhys = 0;
 	};
 }

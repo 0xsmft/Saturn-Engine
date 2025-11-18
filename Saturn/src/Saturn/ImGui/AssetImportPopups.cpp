@@ -50,6 +50,56 @@
 #include <imgui.h>
 
 namespace Saturn {
+	
+	//////////////////////////////////////////////////////////////////////////
+	// UNKNWON POPUP
+
+	UnknownImportPopup::UnknownImportPopup( const std::filesystem::path& rAssetToImportPath )
+		: AssetImportPopupBase( rAssetToImportPath, rAssetToImportPath )
+	{
+	}
+
+	void UnknownImportPopup::Initialise()
+	{
+		m_Open = true;
+		m_IsReady.store( true );
+	}
+
+	void UnknownImportPopup::OnImGuiRender()
+	{
+		if( m_Open )
+			ImGui::OpenPopup( "Failed to find a suitable importer##IMPORTX" );
+
+		ImGui::SetNextWindowPos( ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Appearing, ImVec2( 0.5f, 0.5f ) );
+		if( ImGui::BeginPopupModal( "Failed to find a suitable importer##IMPORTX", &m_Open, ImGuiWindowFlags_NoSavedSettings ) )
+		{
+			bool PopupModified = false;
+
+			const std::string originPath = m_AssetToImportPath.string();
+
+			ImGui::Text( "Saturn is unable to import %s as it was unable to find a suitable importer!", originPath.c_str() );
+			ImGui::Text( "Importers are found based on the file extension!" );
+
+			ImGui::Separator();
+			ImGui::BeginHorizontal( "##actionsH" );
+
+			if( ImGui::Button( "OK" ) )
+			{
+				PopupModified = true;
+			}
+
+			ImGui::EndHorizontal();
+
+			if( PopupModified )
+			{
+				Close();
+				m_ModificationState = AssetImportModificationState::NotModified;
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndPopup();
+		}
+	}
 
 	//////////////////////////////////////////////////////////////////////////
 	// MESH IMPORT POPUP
@@ -497,7 +547,7 @@ namespace Saturn {
 
 				// Currently the date is YYYY-MM-DD HH-MM-SS however all we want is YYYY-MM-DD
 				std::string fullTime = std::format( "{0}", std::filesystem::last_write_time( m_AssetToImportPath ) );
-				auto pos = fullTime.find_first_of( " " );
+				const auto pos = fullTime.find_first_of( " " );
 				if( pos != std::string::npos )
 					fullTime.resize( fullTime.find_first_of( " " ) );
 
@@ -512,6 +562,7 @@ namespace Saturn {
 
 			if( ImGui::Button( "Cancel" ) )
 			{
+				Close();
 				m_ModificationState = AssetImportModificationState::NotModified;
 				ImGui::CloseCurrentPopup();
 			}
@@ -523,6 +574,7 @@ namespace Saturn {
 				AssetManagerSerialiser ars;
 				ars.Serialise();
 
+				Close();
 				m_ModificationState = AssetImportModificationState::Modified;
 				ImGui::CloseCurrentPopup();
 			}

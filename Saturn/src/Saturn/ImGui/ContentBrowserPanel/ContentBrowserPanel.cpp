@@ -318,7 +318,10 @@ namespace Saturn {
 			{
 				const std::filesystem::path path = Application::Get().OpenFile( L"Supported asset types (*.fbx *.gltf *.glb *.png *.tga *.jpeg *.jpg *wav *.ogg *.mp3)|*.fbx; *.gltf; *.glb; *.png; *.tga; *.jpeg; *jpg; *.wav; *.ogg; *.mp3\0" );
 
-				if( path.extension() == ".png" || path.extension() == ".tga" || path.extension() == ".jpeg" || path.extension() == ".jpg" )
+				std::string extensionLower = path.extension().string();;
+				std::transform( extensionLower.begin(), extensionLower.end(), extensionLower.begin(), ::tolower );
+
+				if( extensionLower == ".png" || extensionLower == ".tga" || extensionLower == ".jpeg" || extensionLower == ".jpg" )
 				{
 					auto id = AssetManager::Get().CreateAsset( AssetType::Texture );
 					auto asset = AssetManager::Get().FindAsset( id );
@@ -333,16 +336,23 @@ namespace Saturn {
 
 				// Meshes
 				// Even if the mesh we are going to import is animated i.e. has bones and/or animations until we properly confirm that it will default to a StaticMesh import modal
-				if( path.extension() == ".fbx" || path.extension() == ".gltf" || path.extension() == ".glb" )
+				if( extensionLower == ".fbx" || extensionLower == ".gltf" || extensionLower == ".glb" )
 				{
 					m_CurrentImportPopup = std::make_unique<MeshImportPopup>( path, m_CurrentPath );
 					m_CurrentImportPopup->Initialise();
 				}
 
 				// Audio
-				if( path.extension() == ".wav" || path.extension() == ".mp3" || path.extension() == ".ogg" )
+				if( extensionLower == ".wav" || extensionLower == ".mp3" || extensionLower == ".ogg" )
 				{
 					m_CurrentImportPopup = std::make_unique<SoundImportPopup>( path, m_CurrentPath );
+					m_CurrentImportPopup->Initialise();
+				}
+
+				// Still no import popup? means that we have an unknown extension (file type).
+				if( !m_CurrentImportPopup )
+				{
+					m_CurrentImportPopup = std::make_unique<UnknownImportPopup>( path );
 					m_CurrentImportPopup->Initialise();
 				}
 			}

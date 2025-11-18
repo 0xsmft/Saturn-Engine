@@ -68,6 +68,16 @@ namespace Saturn {
 		std::filesystem::path m_DestinationPath;
 	};
 
+	class UnknownImportPopup : public AssetImportPopupBase 
+	{
+	public:
+		UnknownImportPopup( const std::filesystem::path& rAssetToImportPath );
+		~UnknownImportPopup() = default;
+
+		virtual void Initialise() override;
+		virtual void OnImGuiRender() override;
+	};
+
 	class MeshImportPopup : public AssetImportPopupBase
 	{
 	public:

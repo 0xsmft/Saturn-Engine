@@ -42,26 +42,6 @@ namespace Saturn {
 	class Submesh;
 	class BoneJoint;
 
-	struct SkeletonAssetVertexSkin
-	{
-		uint32_t BoneIndices[ 4 ] = { 0, 0,0, 0 };
-		float BoneWeights[ 4 ]{ 0.0f, 0.0f, 0.0f, 0.0f };
-
-		inline void AddBoneData( uint32_t id, float weight )
-		{
-			for( size_t i = 0; i < 4; ++i )
-			{
-				if( BoneWeights[ i ] == 0.0f )
-				{
-					BoneIndices[ i ] = id;
-					BoneWeights[ i ] = weight;
-
-					return;
-				}
-			}
-		}
-	};
-
 	enum class SkeletonAssetVersion 
 	{
 		// Engine version: Alpha 0.2.3
@@ -84,10 +64,9 @@ namespace Saturn {
 
 	public:
 		void AppendBonesFromMesh( const aiMesh* pMesh, uint32_t baseVertex );
-		void BuildHierarchy( const aiNode* pNode, int parentIndex );
+		void BuildHierarchy( const aiNode* pNode, int parentIndex, const glm::mat4& rTransform = glm::mat4{ 1.0f } );
 		void AddCompatibleMesh( UUID id );
 		void AddBoneInfo( const std::string& rName, int parentIndex, const glm::mat4& rOffsetMatrix, uint32_t boneIndex );
-		void AddVertex( const SkeletonAssetVertexSkin& rSkin ) { m_Vertices.push_back( rSkin ); }
 		void MarkAsUncompatibleMesh( UUID meshID );
 
 		BoneJoint& AddNewBoneJoint( const std::string& rBoneName, const std::string& rName );
@@ -106,13 +85,18 @@ namespace Saturn {
 
 	public:
 		const std::vector<SkeletalMeshBoneInfo>& GetBoneInfo() const { return m_BoneInfos; }
-		const std::vector<SkeletonAssetVertexSkin>& GetVertices() const { return m_Vertices; }
-		const std::unordered_map<std::string, uint32_t>& GetBoneMapping() const { m_BoneMapping; }
 #if !defined(SAT_DIST)
 		const std::vector<AssetID>& GetCompatibleMeshes() const { return m_CompatibleMeshes; }
 #endif
 
 		const std::vector<BoneJoint>& GetBoneJoints() const { return m_BoneJoints; }
+		std::vector<BoneJoint>& GetBoneJoints() { return m_BoneJoints; }
+
+		std::vector<glm::vec3>& GetBonePositions() { return m_BonePositions; }
+		std::vector<glm::quat>& GetBoneRotations() { return m_BoneRotations; }
+		std::vector<glm::vec3>& GetBoneScales() { return m_BoneScales; }
+
+		const glm::mat4& GetTransform() const { return m_Transform; }
 
 		// TODO: We don't want to expose this function publicly.
 		void PortToNewestVersion() { m_LocalVersion = SkeletonAssetVersion::Latest; }
@@ -121,14 +105,18 @@ namespace Saturn {
 		SkeletonAssetVersion m_LocalVersion = SkeletonAssetVersion::Lowest;
 
 		std::vector<SkeletalMeshBoneInfo> m_BoneInfos;
-		std::vector<SkeletonAssetVertexSkin> m_Vertices;
-		//					NAME	-> INDEX
-		std::unordered_map<std::string, uint32_t> m_BoneMapping;
+		std::vector<std::string> m_BoneNames;
+
+		glm::mat4 m_Transform{};
 
 #if !defined(SAT_DIST)
 		std::vector<AssetID> m_CompatibleMeshes;
 #endif
 		std::vector<BoneJoint> m_BoneJoints;
+		
+		std::vector<glm::vec3> m_BonePositions;
+		std::vector<glm::quat> m_BoneRotations;
+		std::vector<glm::vec3> m_BoneScales;
 	};	
 
 }

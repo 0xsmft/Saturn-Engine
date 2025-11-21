@@ -101,12 +101,22 @@ namespace Auxiliary {
 
 		if( const auto itr = std::find( m_BoneNames.begin(), m_BoneNames.end(), nodeName ); itr != m_BoneNames.end() )
 		{
+			if( parentIndex == -1 )
+				m_Transform = rTransform;
+
 			const auto ts = rTransform * Auxiliary::Mat4FromAssimpMat4( pNode->mTransformation );
 			for( unsigned int i = 0; i < pNode->mNumChildren; ++i )
 			{
 				const auto index = std::distance( m_BoneNames.begin(), itr );
 
-				m_BoneInfos[ (uint64_t)index ].ParentIndex = parentIndex;
+				m_BoneInfos[ ( uint64_t ) index ].ParentIndex = parentIndex;
+
+				m_BonePositions.emplace_back();
+				m_BoneRotations.emplace_back();
+				m_BoneScales.emplace_back();
+
+				Maths::DecomposeTransform( ts, m_BonePositions.back(), m_BoneRotations.back(), m_BoneScales.back() );
+
 				BuildHierarchy( pNode->mChildren[ i ], parentIndex + 1, ts );
 			}
 		}
@@ -118,36 +128,6 @@ namespace Auxiliary {
 				BuildHierarchy( pNode->mChildren[ i ], parentIndex, ts );
 			}
 		}
-
-
-		/*
-		const int thisBoneIndex = parentIndex;
-		if( const auto itr = m_BoneMapping.find( nodeName ); itr != m_BoneMapping.end() ) 
-		{
-			m_Transform = rTransform;
-
-			parentIndex = itr->second;
-			m_BoneInfos[ thisBoneIndex ].ParentIndex = parentIndex;
-
-			/*
-			aiNode* pParent = pNode->mParent;
-			while( pParent )
-			{
-				pParent->mTransformation = aiMatrix4x4();
-				pParent = pParent->mParent;
-			}
-
-			XHAddBone( pNode, -1 );
-		}
-		else
-		{
-			const auto ts = rTransform * Auxiliary::Mat4FromAssimpMat4( pNode->mTransformation );
-			for( unsigned int i = 0; i < pNode->mNumChildren; ++i ) 
-			{
-				BuildHierarchy( pNode->mChildren[ i ], thisBoneIndex, ts );
-			}
-		}
-		*/
 #endif
 	}
 

@@ -84,8 +84,8 @@ namespace Auxiliary {
 		aiProcess_OptimizeMeshes |          // Batch draws where possible
 		aiProcess_JoinIdenticalVertices |
 		aiProcess_LimitBoneWeights |
-		aiProcess_ValidateDataStructure;    // Validation
-	//aiProcess_GlobalScale |             // e.g. convert cm to m for fbx import (and other formats where cm is native)
+		aiProcess_ValidateDataStructure |    // Validation
+		aiProcess_GlobalScale;             // e.g. convert cm to m for fbx import (and other formats where cm is native)
 
 	struct AssimpLog : public Assimp::LogStream
 	{
@@ -113,8 +113,8 @@ namespace Auxiliary {
 	{
 	}
 
-	Mesh::Mesh( const std::vector<Index>& rIndices, const glm::mat4& rTransform, const glm::mat4& rInverseTransform, uint32_t indicesCount, uint32_t verticesCount )
-		: m_Indices( rIndices ), m_Transform( rTransform ), m_InverseTransform( rInverseTransform ), m_IndicesCount( indicesCount ), m_VertexCount( verticesCount )
+	Mesh::Mesh( const std::vector<StaticVertex>& rVertices, const std::vector<Index>& rIndices, const glm::mat4& rTransform, const glm::mat4& rInverseTransform, uint32_t indicesCount, uint32_t verticesCount )
+		: m_Vertices( rVertices ), m_Indices( rIndices ), m_Transform( rTransform ), m_InverseTransform( rInverseTransform ), m_IndicesCount( indicesCount ), m_VertexCount( verticesCount )
 	{
 	}
 
@@ -140,8 +140,7 @@ namespace Auxiliary {
 	}
 
 	StaticMesh::StaticMesh( const std::vector<StaticVertex>& rVertices, const std::vector<Index>& rIndices, const glm::mat4& rTransform )
-		: m_Vertices( rVertices ), 
-		Mesh( rIndices, rTransform, glm::inverse( rTransform ), rIndices.size(), rVertices.size() )
+		: Mesh( rVertices, rIndices, rTransform, glm::inverse( rTransform ), rIndices.size(), rVertices.size() )
 	{
 		Submesh submesh{};
 		submesh.BaseVertex = 0;
@@ -172,9 +171,9 @@ namespace Auxiliary {
 		else
 			SAT_CORE_INFO( "Loading mesh: {0}", m_FilePath.string().c_str() );
 
-		m_Importer = std::make_unique<Assimp::Importer>();
+		Assimp::Importer importer;
 
-		const aiScene* scene = m_Importer->ReadFile( m_FilePath.string(), s_MeshImportFlags );
+		const aiScene* scene = importer.ReadFile( m_FilePath.string(), s_MeshImportFlags );
 		if( scene == nullptr || !scene->HasMeshes() )
 		{
 			SAT_CORE_ERROR( "Failed to load mesh file (does the file have meshes?): {0}", m_FilePath );
@@ -201,10 +200,6 @@ namespace Auxiliary {
 		m_Submeshes.clear();
 
 		m_MaterialRegistry = nullptr;
-
-#if !defined(SAT_DIST)
-		m_Importer.reset();
-#endif
 	}
 
 #if !defined(SAT_DIST)
@@ -436,9 +431,10 @@ namespace Auxiliary {
 		else
 			SAT_CORE_INFO( "Loading mesh: {0}", m_FilePath.string().c_str() );
 
-		m_Importer = std::make_unique<Assimp::Importer>();
+		Assimp::Importer importer;
+		importer.SetPropertyBool( AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false );
 
-		const aiScene* scene = m_Importer->ReadFile( m_FilePath.string(), s_MeshImportFlags );
+		const aiScene* scene = importer.ReadFile( m_FilePath.string(), s_MeshImportFlags );
 		if( scene == nullptr || !scene->HasMeshes() )
 		{
 			SAT_CORE_ERROR( "Failed to load mesh file (does the file have meshes?): {0}", m_FilePath );
@@ -450,7 +446,7 @@ namespace Auxiliary {
 		const glm::mat4 transform = Auxiliary::Mat4FromAssimpMat4( m_Scene->mRootNode->mTransformation );
 		const auto altYAxis = glm::rotate( glm::mat4( 1.0f ), glm::radians( 90.0f ), glm::vec3( 1.0f, 0.0f, 0.0f ) );
 
-		m_Transform = altYAxis * transform;
+		m_Transform = transform;
 		m_InverseTransform = glm::inverse( m_Transform );
 
 		m_MaterialRegistry = Ref<MaterialRegistry>::Create();
@@ -461,6 +457,7 @@ namespace Auxiliary {
 	void SkeletalMesh::CreateVertices()
 	{
 		m_Submeshes.reserve( m_Scene->mNumMeshes );
+		m_SkeletonAsset->ClearAll();
 
 		// Iterate over all meshes in the scene.
 		for( unsigned int m = 0; m < m_Scene->mNumMeshes; ++m )
@@ -486,6 +483,8 @@ namespace Auxiliary {
 
 			SAT_CORE_ASSERT( mesh->HasPositions(), "Meshes require positions." );
 			SAT_CORE_ASSERT( mesh->HasNormals(), "Meshes require normals." );
+
+			m_SkeletonAsset->AppendBonesFromMesh( mesh, submesh.BaseVertex );
 
 			// Vertices
 			m_Vertices.reserve( mesh->mNumVertices );
@@ -537,7 +536,7 @@ namespace Auxiliary {
 					aiBone* pBone = mesh->mBones[ i ];
 					std::string boneName( pBone->mName.C_Str() );
 
-					// Assign weights to vertices
+					// Assign weights to vertices.
 					for( unsigned int j = 0; j < pBone->mNumWeights; ++j )
 					{
 						const auto boneIndex = m_SkeletonAsset->FindBoneIndex( boneName );
@@ -545,7 +544,7 @@ namespace Auxiliary {
 						const unsigned int vertexID = submesh.BaseVertex + pBone->mWeights[ j ].mVertexId;
 						const float weight = pBone->mWeights[ j ].mWeight;
 						m_BoneInfluences[ vertexID ].AddBoneData( boneIndex, weight );
-//						m_Vertices[ vertexID ].AddBoneData( boneIndex, weight );
+						m_BoneInfluences[ vertexID ].NormaliseWeights();
 					}
 				}
 			}
@@ -555,6 +554,10 @@ namespace Auxiliary {
 		m_BoneVertexBuffer = Ref<VertexBuffer>::Create( m_BoneInfluences.data(), m_BoneInfluences.size() * sizeof( SkeletalBoneInfluence ) );
 		m_IndexBuffer = Ref<IndexBuffer>::Create( m_Indices.data(), m_Indices.size() * sizeof( Index ) );
 
+		m_SkeletonAsset->BuildHierarchy( m_Scene->mRootNode, -1 );
+
+		const auto bones = m_SkeletonAsset->GetBoneInfo().size();
+		m_DefaultBoneTransforms.resize( bones );
 		TraverseNodes( m_Scene->mRootNode );
 
 		for( const auto& rSubmesh : m_Submeshes )
@@ -572,18 +575,25 @@ namespace Auxiliary {
 			m_BoundingBox.Max.z = glm::max( m_BoundingBox.Max.z, max.z );
 		}
 
-		const auto bones = m_SkeletonAsset->GetBoneInfo().size();
-
-		m_DefaultBoneTransforms.resize( bones );
 		for( size_t i = 0; i < bones; ++i )
 		{
-			m_DefaultBoneTransforms[ i ] = glm::mat4{ 1.0f };
+			m_DefaultBoneTransforms[ i ] = glm::translate( glm::mat4( 1.0f ), glm::zero<glm::vec3>() ) * glm::toMat4( glm::quat{} ) * glm::scale( glm::mat4( 1.0f ), glm::one<glm::vec3>() );
 		}
 	}
 
 	void SkeletalMesh::TraverseNodes( aiNode* node, const glm::mat4& parentTransform /*= glm::mat4( 1.0f )*/, uint32_t level /*= 0 */ )
 	{
 		const glm::mat4 transform = parentTransform * Auxiliary::Mat4FromAssimpMat4( node->mTransformation );
+
+		/*
+		if( const auto index = m_SkeletonAsset->FindBoneIndex( node->mName.C_Str() ); index != -1 ) 
+		{
+			// Find parent bone
+			if( node->mParent )
+			{
+				m_DefaultBoneTransforms[ index ] = transform;
+			}
+		}
 
 		// If node is a bone, update its parent relation
 		auto it = m_BoneMapping.find( node->mName.C_Str() );
@@ -596,10 +606,13 @@ namespace Auxiliary {
 				auto parentIt = m_BoneMapping.find( node->mParent->mName.C_Str() );
 				if( parentIt != m_BoneMapping.end() )
 					m_BoneInfos[ boneIndex ].ParentIndex = parentIt->second;
+
+				m_DefaultBoneTransforms[ boneIndex ] = transform;
 			}
 		}
+		*/
 
-		for( uint32_t i = 0; i < node->mNumMeshes; i++ )
+		for( uint32_t i = 0; i < node->mNumMeshes; ++i )
 		{
 			uint32_t mesh = node->mMeshes[ i ];
 			auto& submesh = m_Submeshes[ mesh ];
@@ -607,7 +620,7 @@ namespace Auxiliary {
 			submesh.Transform = transform;
 		}
 
-		for( uint32_t i = 0; i < node->mNumChildren; i++ )
+		for( uint32_t i = 0; i < node->mNumChildren; ++i )
 			TraverseNodes( node->mChildren[ i ], transform, level + 1 );
 	}
 
@@ -622,18 +635,15 @@ namespace Auxiliary {
 		RawSerialisation::WriteVector( m_Vertices, rStream );
 		RawSerialisation::WriteVector( m_Submeshes, rStream );
 		RawSerialisation::WriteVector( m_BoneInfluences, rStream );
-		RawSerialisation::WriteVector( m_BoneInfos, rStream );
 		
-		RawSerialisation::WriteUnorderedMap( m_BoneMapping, rStream );
-
 		RawSerialisation::WriteMatrix4x4( m_Transform, rStream );
 		RawSerialisation::WriteMatrix4x4( m_InverseTransform, rStream );
 
 		// Master material registry
 		// Write asset material IDs
 		// Matches with StaticMeshAssetSerialiser
-		size_t materials = m_MaterialRegistry->GetMaterialAssets().size();
-		rStream.write( reinterpret_cast< char* >( &materials ), sizeof( size_t ) );
+		const size_t materials = m_MaterialRegistry->GetMaterialAssets().size();
+		rStream.write( reinterpret_cast< const char* >( &materials ), sizeof( size_t ) );
 
 		for( const auto& rMaterialAsset : m_MaterialRegistry->GetMaterialAssets() )
 		{
@@ -651,10 +661,7 @@ namespace Auxiliary {
 		RawSerialisation::ReadVector( m_Submeshes, rStream );
 
 		RawSerialisation::ReadVector( m_BoneInfluences, rStream );
-		RawSerialisation::ReadVector( m_BoneInfos, rStream );
 		
-		RawSerialisation::ReadUnorderedMap( m_BoneMapping, rStream );
-
 		RawSerialisation::ReadMatrix4x4( m_Transform, rStream );
 		RawSerialisation::ReadMatrix4x4( m_InverseTransform, rStream );
 
@@ -860,12 +867,11 @@ namespace Auxiliary {
 			// Albedo Texture
 			{
 				aiString AlbedoTexturePath;
-				bool HasAlbedoTexture = material->GetTexture( aiTextureType_DIFFUSE, 0, &AlbedoTexturePath ) == AI_SUCCESS;
+				const bool HasAlbedoTexture = material->GetTexture( aiTextureType_DIFFUSE, 0, &AlbedoTexturePath ) == AI_SUCCESS;
 
 				if( HasAlbedoTexture && ( m_ImportBehaviour & MeshImportBehaviour_ExcludeTextures ) == 0 )
 				{
 					auto pp = m_SourcePath.parent_path();
-
 					pp /= std::string( AlbedoTexturePath.data );
 
 					auto AlbedoTexturePath = pp.string();
@@ -873,17 +879,20 @@ namespace Auxiliary {
 
 					LocalPath /= pp.filename();
 
-					if( !std::filesystem::exists( LocalPath ) )
-						std::filesystem::copy_file( AlbedoTexturePath, LocalPath );
+					bool fileCopied = false;
+					if( !std::filesystem::exists( LocalPath ) && std::filesystem::exists( AlbedoTexturePath ) )
+						fileCopied = std::filesystem::copy_file( AlbedoTexturePath, LocalPath );
 
 					if( materialAsset )
 					{
-						auto texture = Ref<Texture2D>::Create( LocalPath, AddressingMode::Repeat, false );
-						materialAsset->SetAlbeoMap( texture );
-
-						Ref<Asset> asset = AssetManager::Get().FindAsset( AssetManager::Get().CreateAsset( AssetType::Texture ) );
-						asset->SetAbsolutePath( LocalPath );
-						needToSaveAssetReg = true;
+						if( fileCopied )
+						{
+							auto texture = Ref<Texture2D>::Create( LocalPath, AddressingMode::Repeat, false );
+							materialAsset->SetAlbeoMap( texture );
+							Ref<Asset> asset = AssetManager::Get().FindAsset( AssetManager::Get().CreateAsset( AssetType::Texture ) );
+							asset->SetAbsolutePath( LocalPath );
+							needToSaveAssetReg = true;
+						}
 					}
 				}
 			}
@@ -1069,7 +1078,7 @@ namespace Auxiliary {
 
 		m_Importer = std::make_unique<Assimp::Importer>();
 
-		const aiScene* scene = m_Importer->ReadFile( m_SourcePath.string(), aiProcess_Triangulate | aiProcess_ValidateDataStructure | aiProcess_JoinIdenticalVertices );
+		const aiScene* scene = m_Importer->ReadFile( m_SourcePath.string(), s_MeshImportFlags );
 
 		if( scene == nullptr )
 		{
@@ -1150,7 +1159,7 @@ namespace Auxiliary {
 			{
 				aiNodeAnim* pAnimNode = pAnimation->mChannels[ c ];
 
-				AnimationBone animBone;
+				AnimationChannel animBone;
 				animBone.Name = pAnimNode->mNodeName.C_Str();
 				
 				animBone.Positions.reserve( pAnimNode->mNumPositionKeys );

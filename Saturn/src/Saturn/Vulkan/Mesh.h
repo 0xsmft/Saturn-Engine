@@ -65,14 +65,14 @@ namespace Saturn {
 	class Submesh
 	{
 	public:
-		uint32_t BaseVertex;
-		uint32_t BaseIndex;
-		uint32_t MaterialIndex;
-		uint32_t IndexCount; // NOT face count, for face count divide by 3 (number of ints)
-		uint32_t VertexCount;
+		uint32_t BaseVertex = 0;
+		uint32_t BaseIndex = 0;
+		uint32_t MaterialIndex = 0;
+		uint32_t IndexCount = 0; // NOT face count, for face count divide by 3 (number of ints)
+		uint32_t VertexCount = 0;
 
 		// Mesh-Space
-		glm::mat4 Transform;
+		glm::mat4 Transform{};
 		// Mesh-Space
 		AABB BoundingBox;
 
@@ -117,31 +117,29 @@ namespace Saturn {
 		}
 	};
 	
-	// Bone information, not to be confused with AnimationBone, which is to be used with animations
-	// This is to be used for Skeletons
 	struct SkeletalMeshBoneInfo
 	{
-		std::string BoneName;
+		uint64_t BoneIndex = ~0u;
 		int ParentIndex = -1;
 
 		// The bones' transform in Bone space, i.e. bring the vertices to the bones transform, bind point.
-		glm::mat4 BoneOffset;
+		glm::mat4 InverseBindPose{};
 
 	public:
 		template<typename OStream>
 		static void Serialise( const SkeletalMeshBoneInfo& rObject, OStream& rStream )
 		{
-			RawSerialisation::WriteString( rObject.BoneName, rStream );
+			RawSerialisation::WriteObjectChecked( rObject.BoneIndex, rStream );
 			RawSerialisation::WriteObjectChecked( rObject.ParentIndex, rStream );
-			RawSerialisation::WriteMatrix4x4( rObject.BoneOffset, rStream );
+			RawSerialisation::WriteMatrix4x4( rObject.InverseBindPose, rStream );
 		}
 
 		template<typename IStream>
 		static void Deserialise( SkeletalMeshBoneInfo& rObject, IStream& rStream )
 		{
-			rObject.BoneName = RawSerialisation::ReadString( rStream );
+			RawSerialisation::ReadObjectChecked( rObject.BoneIndex, rStream );
 			RawSerialisation::ReadObjectChecked( rObject.ParentIndex, rStream );
-			RawSerialisation::ReadMatrix4x4( rObject.BoneOffset, rStream );
+			RawSerialisation::ReadMatrix4x4( rObject.InverseBindPose, rStream );
 		}
 	};
 
@@ -163,6 +161,23 @@ namespace Saturn {
 				}
 			}
 		}
+
+		inline void NormaliseWeights()
+		{
+			float sumWeights = 0.0f;
+			for( size_t i = 0; i < 4; ++i )
+			{
+				sumWeights += BoneWeights[ i ];
+			}
+			if( sumWeights > 0.0f )
+			{
+				for( size_t i = 0; i < 4; ++i )
+				{
+					BoneWeights[ i ] /= sumWeights;
+				}
+			}
+		}
+
 	public:
 		template<typename OStream>
 		static void Serialise( const SkeletalBoneInfluence& rObject, OStream& rStream )
@@ -222,7 +237,7 @@ namespace Saturn {
 	public:
 		Mesh() = default;
 		Mesh( const std::filesystem::path& rFilepath );
-		Mesh( const std::vector<Index>& rIndices, const glm::mat4& rTransform, const glm::mat4& rInverseTransform, uint32_t indicesCount, uint32_t verticesCount );
+		Mesh( const std::vector<StaticVertex>& rVertices, const std::vector<Index>& rIndices, const glm::mat4& rTransform, const glm::mat4& rInverseTransform, uint32_t indicesCount, uint32_t verticesCount );
 
 		virtual ~Mesh();
 
@@ -271,6 +286,7 @@ namespace Saturn {
 		Ref<VertexBuffer> m_VertexBuffer;
 		Ref<IndexBuffer> m_IndexBuffer;
 
+		std::vector<StaticVertex> m_Vertices;
 		std::vector<Index> m_Indices;
 		std::vector<Submesh> m_Submeshes;
 
@@ -291,7 +307,6 @@ namespace Saturn {
 		AABB m_BoundingBox{};
 
 #if !defined(SAT_DIST)
-		std::unique_ptr<Assimp::Importer> m_Importer;
 		const aiScene* m_Scene = nullptr;
 #endif
 	};
@@ -321,8 +336,6 @@ namespace Saturn {
 		void TraverseNodes( aiNode* node, const glm::mat4& parentTransform = glm::mat4( 1.0f ), uint32_t level = 0 );
 		void CreateVertices();
 #endif
-	private:
-		std::vector<StaticVertex> m_Vertices;
 	};
 
 	class SkeletonAsset;
@@ -360,10 +373,7 @@ namespace Saturn {
 #endif
 
 	private:
-		std::vector<StaticVertex> m_Vertices;
 		std::vector<SkeletalBoneInfluence> m_BoneInfluences;
-		std::vector<SkeletalMeshBoneInfo> m_BoneInfos;
-		std::unordered_map<std::string, uint32_t> m_BoneMapping;
 		
 		std::vector<glm::mat4> m_DefaultBoneTransforms;
 

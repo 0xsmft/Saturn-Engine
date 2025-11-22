@@ -33,8 +33,11 @@
 #include "Saturn/Asset/Asset.h"
 #include "Saturn/Vulkan/VertexBuffer.h"
 
+#include <set>
+
 struct aiMesh;
 struct aiNode;
+struct aiScene;
 
 namespace Saturn {
 
@@ -53,6 +56,24 @@ namespace Saturn {
 		//^^^ only add new versions above here....
 		Latest,
 		Lowest = BeforeVersionWasAdded
+	};
+
+	class SkeletonAsset;
+	class SkeletonBoneHierarchy 
+	{
+	public:
+		SkeletonBoneHierarchy( const aiScene* pScene, SkeletonAsset* pSk );
+
+		void InitSkeleton();
+
+	private:
+		void BuildHierarchy( const aiNode* pNode, const glm::mat4& rTransform = glm::mat4{ 1.0f } );
+		void BuildHierarchyBone( const aiNode* pNode, int parentIndex );
+
+	private:
+		std::set<std::string> m_Names;
+		const aiScene* m_pScene = nullptr;
+		SkeletonAsset* m_pSkeleton = nullptr;
 	};
 
 	class SkeletonAsset : public Asset

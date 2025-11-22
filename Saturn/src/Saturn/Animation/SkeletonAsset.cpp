@@ -53,6 +53,71 @@ namespace Auxiliary {
 }
 #endif
 
+	//////////////////////////////////////////////////////////////////////////
+
+	SkeletonBoneHierarchy::SkeletonBoneHierarchy( const aiScene* pScene, SkeletonAsset* pSk )
+		: m_pScene( pScene ), m_pSkeleton( pSk )
+	{
+	}
+
+	void SkeletonBoneHierarchy::InitSkeleton()
+	{
+		m_pSkeleton->ClearAll();
+
+		for( uint32_t i = 0; i < m_pScene->mNumMeshes; ++i )
+		{
+			const aiMesh* pMesh = m_pScene->mMeshes[ i ];
+			for( uint32_t j = 0; j < pMesh->mNumBones; ++j )
+			{
+				m_Names.emplace( pMesh->mBones[ j ]->mName.C_Str() );
+			}
+		}
+
+		for( uint32_t i = 0; i < m_pScene->mNumAnimations; ++i )
+		{
+			const aiAnimation* pMesh = m_pScene->mAnimations[ i ];
+			for( uint32_t j = 0; j < pMesh->mNumChannels; ++j )
+			{
+				const aiNodeAnim* pAnimNode = pMesh->mChannels[ j ];
+				m_Names.emplace( pAnimNode->mNodeName.C_Str() );
+			}
+		}
+
+		BuildHierarchy( m_pScene->mRootNode );
+	}
+
+	void SkeletonBoneHierarchy::BuildHierarchy( const aiNode* pNode, const glm::mat4& rTransform )
+	{
+		const std::string boneName( pNode->mName.C_Str() );
+		if( m_Names.find( boneName ) != m_Names.end() )
+		{
+			m_pSkeleton->SetTransform( rTransform );
+			BuildHierarchyBone( pNode, ~0 );
+		}
+		else
+		{
+			for( uint32_t i = 0; i < pNode->mNumChildren; ++i )
+			{
+				const auto ts = rTransform * Auxiliary::Mat4FromAssimpMat4( pNode->mTransformation );
+				BuildHierarchy( pNode->mChildren[ i ], ts );
+			}
+		}
+	}
+
+	void SkeletonBoneHierarchy::BuildHierarchyBone( const aiNode* pNode, int parentIndex )
+	{
+		const auto index = m_pSkeleton->SkAddBone( pNode->mName.C_Str(), parentIndex, Auxiliary::Mat4FromAssimpMat4( pNode->mTransformation ) );
+		for( uint32_t i = 0; i < pNode->mNumChildren; i++ )
+		{
+			if( m_Names.find( pNode->mChildren[ i ]->mName.C_Str() ) != m_Names.end() )
+			{
+				BuildHierarchyBone( pNode->mChildren[ i ], index );
+			}
+		}
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+
 	SkeletonAsset::SkeletonAsset()
 	{
 	}

@@ -161,7 +161,7 @@ namespace Saturn {
 #endif
 
 	public:
-		static void RConstructClass( SClass** ppClass, const SClassSpecification& rSpec );
+		static void RConstructClass( SClass*& outClass, const SClassSpecification& rSpec );
 
 	public:
 		SProperty& GetProperty( const std::string& rPropertyName ) const;

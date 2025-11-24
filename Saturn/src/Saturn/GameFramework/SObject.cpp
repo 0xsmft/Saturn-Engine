@@ -46,7 +46,7 @@ static Saturn::SClass* RStaticLnkSObject()
 			nullptr, Saturn::RInternalConstructor<Saturn::SObject>, RStaticLnkSObject, nullptr
 		}; 
 		
-		Saturn::SClass::RConstructClass( &pClass, spec );
+		Saturn::SClass::RConstructClass( pClass, spec );
 	} 
 	
 	return pClass;

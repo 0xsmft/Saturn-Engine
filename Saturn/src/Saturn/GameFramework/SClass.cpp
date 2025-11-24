@@ -34,9 +34,9 @@
 
 namespace Saturn {
 
-	void SClass::RConstructClass( SClass** ppClass, const SClassSpecification& rSpec )
+	void SClass::RConstructClass( SClass*& outClass, const SClassSpecification& rSpec )
 	{
-		if( *ppClass != nullptr && ( ( *ppClass )->GetFlags() & SC_Initialised ) == 0 )
+		if( outClass != nullptr && ( outClass ->GetFlags() & SC_Initialised ) == 0 )
 		{
 			return;
 		}
@@ -44,7 +44,10 @@ namespace Saturn {
 		SClass* pFoundClass = ClassMetadataHandler::Get().RFastCheckClass( rSpec.Hash );
 		if( pFoundClass )
 		{
-			*ppClass = pFoundClass;
+#if defined(SAT_VERBOSE_SCLASS_REG)
+			SAT_CORE_WARN( "[SC] An exisiting class with the same name ({0}) already exists!", rSpec.Name );
+#endif
+			outClass = pFoundClass;
 			return;
 		}
 
@@ -53,14 +56,14 @@ namespace Saturn {
 		SClass* pNewClass = new SClass( rSpec );
 		*ppClass = pNewClass;
 
-		( *ppClass )->SetFlag( SC_Initialised );
+		outClass->SetFlag( SC_Initialised );
 
-		ClassMetadataHandler::Get().RegisterSClass( *ppClass, "" );
+		ClassMetadataHandler::Get().RegisterSClass( outClass, "" );
 	}
 
 	SProperty& SClass::GetProperty( const std::string& rPropertyName ) const
 	{
-		for( int i = 0; i < m_PropertyCount; i++ )
+		for( int i = 0; i < m_PropertyCount; ++i )
 		{
 			const SProperty* pProp = m_Properties[ i ];
 			

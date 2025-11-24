@@ -107,7 +107,7 @@ static Saturn::SClass* RStaticLnkBehaviourTreeNodeBase()
 			Saturn::BehaviourTreeNodeBase::Super::StaticClass(), nullptr, RStaticLnkBehaviourTreeNodeBase, nullptr, {}
 		}; 
 		
-		Saturn::SClass::RConstructClass( &pClass, spec );
+		Saturn::SClass::RConstructClass( pClass, spec );
 	} 
 	
 	return pClass;

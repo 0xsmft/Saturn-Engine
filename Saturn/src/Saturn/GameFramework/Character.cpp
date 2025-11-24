@@ -49,7 +49,7 @@ namespace Saturn {
 
 	Character::~Character()
 	{
-		m_Scene->RemoveController( m_PlayerInputController );
+		GetScene()->RemoveController( m_PlayerInputController );
 
 		m_PlayerInputController = nullptr;
 		m_CameraEntity = nullptr;
@@ -60,12 +60,12 @@ namespace Saturn {
 		Super::BeginPlay();
 
 		m_PlayerInputController = Ref<PlayerInputController>::Create();
-		m_Scene->AddController( m_PlayerInputController );
+		GetScene()->AddController( m_PlayerInputController );
 
 		SetupInputBindings();
 
 		// If the scene already has a camera, we can take ownership of it, if not we create our own camera as a child.
-		auto wTemporaryCameraEntity = m_Scene->GetMainCameraEntity();
+		auto wTemporaryCameraEntity = GetScene()->GetMainCameraEntity();
 		if( wTemporaryCameraEntity.Expired() )
 		{
 			// Create the main camera.
@@ -74,7 +74,7 @@ namespace Saturn {
 			params.Tag = "Camera";
 			params.pClass = Entity::StaticClass();
 
-			m_CameraEntity = m_Scene->CreateEntity( params );
+			m_CameraEntity = GetScene()->CreateEntity( params );
 			m_CameraEntity->AddComponent<CameraComponent>().MainCamera = true;
 		}
 		else

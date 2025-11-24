@@ -140,7 +140,7 @@ static Saturn::SClass* RStaticLnkNodeEditorNodeBase()
 			Saturn::NodeEditorNodeBase::Super::StaticClass(), nullptr, RStaticLnkNodeEditorNodeBase, nullptr, {}
 		}; 
 		
-		Saturn::SClass::RConstructClass( &pClass, spec );
+		Saturn::SClass::RConstructClass( pClass, spec );
 	} 
 	
 	return pClass;

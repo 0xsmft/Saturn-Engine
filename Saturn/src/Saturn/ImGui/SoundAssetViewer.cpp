@@ -159,6 +159,11 @@ namespace Saturn {
 
 			if( m_PreviewSound )
 			{
+				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "FastForward" ), { 24.0f, 24.0f }, { 1, 0 }, { 0, 1 } ) )
+				{
+					m_PreviewSound->SeekTo( 0 );
+				}
+
 				ImGui::Text( "%s", m_PreviewSound->FormatSeconds( m_PreviewSound->GetCursorInSeconds() ).c_str() );
 
 				const uint64_t totalFrames = m_PreviewSound->GetDurationInPCM();
@@ -186,6 +191,11 @@ namespace Saturn {
 				}
 
 				ImGui::Text( "%s", m_PreviewSound->FormatSeconds( m_PreviewSound->GetDurationInSeconds() ).c_str() );
+
+				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "FastForward" ), { 24.0f, 24.0f } ) )
+				{
+					m_PreviewSound->SeekTo( m_PreviewSound->GetCursorInPCM() );
+				}
 
 				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Settings" ), { 24.0f, 24.0f } ) )
 				{

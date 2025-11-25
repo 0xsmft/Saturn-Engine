@@ -1068,7 +1068,10 @@ namespace Saturn {
 				for( AssetID id : rPureDependencies )
 				{
 					Ref<Asset> dependant = AssetManager::Get().FindAsset( id );
-					ImGui::Selectable( dependant->Name.c_str() );
+					if( !dependant )
+						ImGui::Selectable( "<NULL DEPENDANT>" );
+					else
+						ImGui::Selectable( dependant->Name.c_str() );
 				}
 
 				ImGui::EndListBox();

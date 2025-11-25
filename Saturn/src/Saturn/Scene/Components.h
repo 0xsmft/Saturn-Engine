@@ -53,9 +53,9 @@ namespace Saturn {
 	private:
 		friend class SceneSerialiser;
 	private:
-		// Quat's in GLM are W,X,Y,Z
-		// I want to change it X,Y,Z,W
-		// I don't want to use quat's however quat's are just better for rotations than a Vector3
+		// NOTE: Quaternions in GLM are WXYZ!
+		// It would be better to have them as XYZW, however, this causes many issues
+		// such as issues with physics even though PhysX uses XYZW and other issues with transform decomposition.
 		glm::quat  RotationQuat ={ 1.0f, 0.0f, 0.0f, 0.0f };
 		glm::vec3  Rotation = { 0.0f, 0.0f, 0.0f };
 	public:

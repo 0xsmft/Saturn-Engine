@@ -55,14 +55,15 @@ namespace Auxiliary {
 
 	//////////////////////////////////////////////////////////////////////////
 
-	SkeletonBoneHierarchy::SkeletonBoneHierarchy( const aiScene* pScene, SkeletonAsset* pSk )
-		: m_pScene( pScene ), m_pSkeleton( pSk )
+	SkeletonBoneHierarchy::SkeletonBoneHierarchy( const aiScene* pScene, SkeletonAsset* pSk, bool append /*=false*/ )
+		: m_pScene( pScene ), m_pSkeleton( pSk ), m_Append( append )
 	{
 	}
 
-	void SkeletonBoneHierarchy::InitSkeleton()
+	void SkeletonBoneHierarchy::Build()
 	{
-		m_pSkeleton->ClearAll();
+		if( !m_Append )
+			m_pSkeleton->ClearAll();
 
 		for( uint32_t i = 0; i < m_pScene->mNumMeshes; ++i )
 		{
@@ -106,7 +107,7 @@ namespace Auxiliary {
 
 	void SkeletonBoneHierarchy::BuildHierarchyBone( const aiNode* pNode, int parentIndex )
 	{
-		const auto index = m_pSkeleton->SkAddBone( pNode->mName.C_Str(), parentIndex, Auxiliary::Mat4FromAssimpMat4( pNode->mTransformation ) );
+		const auto index = m_pSkeleton->SkAddBone( pNode->mName.C_Str(), parentIndex, Auxiliary::Mat4FromAssimpMat4( pNode->mTransformation ), m_Append );
 		for( uint32_t i = 0; i < pNode->mNumChildren; i++ )
 		{
 			if( m_Names.find( pNode->mChildren[ i ]->mName.C_Str() ) != m_Names.end() )
@@ -131,7 +132,7 @@ namespace Auxiliary {
 	{
 	}
 
-	void SkeletonAsset::AppendBonesFromMesh( const aiMesh* pMesh, uint32_t baseVertex )
+	void SkeletonAsset::AppendBonesFromMesh( const aiMesh* pMesh )
 	{
 #if !defined(SAT_DIST)
 		for( unsigned int b = 0; b < pMesh->mNumBones; ++b )
@@ -140,7 +141,7 @@ namespace Auxiliary {
 			std::string boneName( pBone->mName.data );
 
 			bool hasNonZeroWeight = false;
-			for( size_t j = 0; j < pBone->mNumWeights; j++ )
+			for( size_t j = 0; j < pBone->mNumWeights; ++j )
 			{
 				if( pBone->mWeights[ j ].mWeight > 0.000001f )
 				{
@@ -150,72 +151,52 @@ namespace Auxiliary {
 			if( !hasNonZeroWeight )
 				continue;
 
-			auto index = m_BoneNames.size();
+			uint32_t boneSkelIndex = FindBoneIndex( boneName );
 
-			SkeletalMeshBoneInfo bi{ .BoneIndex = index, .InverseBindPose = Auxiliary::Mat4FromAssimpMat4( pBone->mOffsetMatrix ) };
-			m_BoneInfos.push_back( bi );
-			m_BoneNames.push_back( boneName );
-		}
-#endif
-	}
-
-	void SkeletonAsset::BuildHierarchy( const aiNode* pNode, int parentIndex, const glm::mat4& rTransform )
-	{
-#if !defined(SAT_DIST)
-		const std::string nodeName( pNode->mName.data );
-
-		if( const auto itr = std::find( m_BoneNames.begin(), m_BoneNames.end(), nodeName ); itr != m_BoneNames.end() )
-		{
-			if( parentIndex == -1 )
-				m_Transform = rTransform;
-
-			const auto ts = rTransform * Auxiliary::Mat4FromAssimpMat4( pNode->mTransformation );
-			for( unsigned int i = 0; i < pNode->mNumChildren; ++i )
+			uint32_t boneIndex = ~0;
+			for( size_t i = 0; i < m_BoneInfos.size(); ++i )
 			{
-				const auto index = std::distance( m_BoneNames.begin(), itr );
-
-				m_BoneInfos[ ( uint64_t ) index ].ParentIndex = parentIndex;
-
-				m_BonePositions.emplace_back();
-				m_BoneRotations.emplace_back();
-				m_BoneScales.emplace_back();
-
-				Maths::DecomposeTransform( ts, m_BonePositions.back(), m_BoneRotations.back(), m_BoneScales.back() );
-
-				BuildHierarchy( pNode->mChildren[ i ], parentIndex + 1, ts );
+				if( m_BoneInfos[ i ].BoneIndex == boneSkelIndex )
+				{
+					boneIndex = i;
+					break;
+				}
 			}
-		}
-		else
-		{
-			const auto ts = rTransform * Auxiliary::Mat4FromAssimpMat4( pNode->mTransformation );
-			for( unsigned int i = 0; i < pNode->mNumChildren; ++i )
+			
+			if( boneIndex == ~0 )
 			{
-				BuildHierarchy( pNode->mChildren[ i ], parentIndex, ts );
+				boneIndex = m_BoneInfos.size();
+
+				SkeletalMeshBoneInfo bi{ .BoneIndex = boneSkelIndex, .InverseBindPose = Auxiliary::Mat4FromAssimpMat4( pBone->mOffsetMatrix ) };
+				m_BoneInfos.push_back( bi );
 			}
+
+			/*
+			for( unsigned int w = 0; w < pBone->mNumWeights; ++w )
+			{
+				const int vertID = rSubmesh.BaseVertex + pBone->mWeights[ w ].mVertexId;
+				const float weight = pBone->mWeights[ w ].mWeight;
+
+				rInfluences[ vertID ].AddBoneData( boneIndex, weight );
+			}
+			*/
 		}
 #endif
 	}
 
 	void SkeletonAsset::ClearAll()
 	{
-		m_BoneInfos.clear();
-	}
-
-
-		for( unsigned int i = 0; i < pNode->mNumChildren; ++i ) 
-		{
-			BuildHierarchy( pNode->mChildren[ i ], boneIndex );
-		}
-#endif
+//		m_BoneInfos.clear();
+		m_BoneNames.clear();
+		m_ParentBoneIndices.clear();
+		m_BonePositions.clear();
+		m_BoneRotations.clear();
+		m_BoneScales.clear();
 	}
 
 	void SkeletonAsset::AddCompatibleMesh( UUID id )
 	{
 		m_CompatibleMeshes.push_back( id );
-	}
-
-	void SkeletonAsset::AddBoneInfo( const std::string& rName, int parentIndex, const glm::mat4& rOffsetMatrix, uint32_t boneIndex )
-	{
 	}
 
 	void SkeletonAsset::MarkAsUncompatibleMesh( UUID meshID )
@@ -226,6 +207,39 @@ namespace Auxiliary {
 	BoneJoint& SkeletonAsset::AddNewBoneJoint( const std::string& rBoneName, const std::string& rName )
 	{
 		return m_BoneJoints.emplace_back( rBoneName, rName );
+	}
+
+	uint64_t SkeletonAsset::SkAddBone( const std::string& rName, uint32_t parentIndex, const glm::mat4& rTransform, bool append )
+	{
+		if( append )
+		{
+			const auto itr = std::find( m_BoneNames.begin(), m_BoneNames.end(), rName );
+			if( itr != m_BoneNames.end() )
+			{
+				return std::distance( m_BoneNames.begin(), itr );
+			}
+		}
+
+		const auto index = m_BoneNames.size();
+		m_BoneNames.emplace_back( rName );
+		m_ParentBoneIndices.push_back( parentIndex );
+
+		Maths::DecomposeTransform( rTransform, m_BonePositions.emplace_back(), m_BoneRotations.emplace_back(), m_BoneScales.emplace_back() );
+
+		return index;
+	}
+
+	uint32_t SkeletonAsset::FindBoneIndex( const std::string& rName )
+	{
+		for( size_t i = 0; i < m_BoneNames.size(); i++ )
+		{
+			if( m_BoneNames[ i ] == rName )
+			{
+				return ( uint32_t ) i;
+			}
+		}
+
+		return ~0;
 	}
 
 	BoneJoint* SkeletonAsset::FindBoneJoint( const std::string& rBoneName )

@@ -62,9 +62,9 @@ namespace Saturn {
 	class SkeletonBoneHierarchy 
 	{
 	public:
-		SkeletonBoneHierarchy( const aiScene* pScene, SkeletonAsset* pSk );
+		SkeletonBoneHierarchy( const aiScene* pScene, SkeletonAsset* pSk, bool append = false );
 
-		void InitSkeleton();
+		void Build();
 
 	private:
 		void BuildHierarchy( const aiNode* pNode, const glm::mat4& rTransform = glm::mat4{ 1.0f } );
@@ -72,6 +72,7 @@ namespace Saturn {
 
 	private:
 		std::set<std::string> m_Names;
+		bool m_Append = false;
 		const aiScene* m_pScene = nullptr;
 		SkeletonAsset* m_pSkeleton = nullptr;
 	};
@@ -84,19 +85,23 @@ namespace Saturn {
 		virtual ~SkeletonAsset();
 
 	public:
-		void AppendBonesFromMesh( const aiMesh* pMesh, uint32_t baseVertex );
-		void BuildHierarchy( const aiNode* pNode, int parentIndex, const glm::mat4& rTransform = glm::mat4{ 1.0f } );
+		void AppendBonesFromMesh( const aiMesh* pMesh );
 		void AddCompatibleMesh( UUID id );
-		void AddBoneInfo( const std::string& rName, int parentIndex, const glm::mat4& rOffsetMatrix, uint32_t boneIndex );
 		void MarkAsUncompatibleMesh( UUID meshID );
+
+		void SetTransform( const glm::mat4& rTransform ) { m_Transform = rTransform; }
 
 		BoneJoint& AddNewBoneJoint( const std::string& rBoneName, const std::string& rName );
 
+		uint64_t SkAddBone( const std::string& rName, uint32_t parentIndex, const glm::mat4& rTransform, bool append = false );
+
 	public:
-		[[nodiscard]] uint32_t FindBoneIndex( const std::string& rName ) 
+		[[nodiscard]] uint32_t FindBoneIndex( const std::string& rName );
+
+		const std::string& GetBoneName( uint64_t index ) 
 		{
-			const auto itr = m_BoneMapping.find( rName );
-			return itr == m_BoneMapping.end() ? -1 : itr->second;
+			SAT_CORE_ASSERT( index < m_BoneNames.size() );
+			return m_BoneNames[ index ];
 		}
 
 		[[nodiscard]] SkeletonAssetVersion GetLocalVersion() const { return m_LocalVersion; }
@@ -110,6 +115,10 @@ namespace Saturn {
 		const std::vector<AssetID>& GetCompatibleMeshes() const { return m_CompatibleMeshes; }
 #endif
 
+		std::vector<uint64_t>& GetParentIndices() { return m_ParentBoneIndices; }
+
+		uint64_t GetParentIndex( uint32_t index ) { SAT_CORE_ASSERT( index < m_ParentBoneIndices.size() ); return m_ParentBoneIndices[ index ]; }
+
 		const std::vector<BoneJoint>& GetBoneJoints() const { return m_BoneJoints; }
 		std::vector<BoneJoint>& GetBoneJoints() { return m_BoneJoints; }
 
@@ -122,10 +131,14 @@ namespace Saturn {
 		// TODO: We don't want to expose this function publicly.
 		void PortToNewestVersion() { m_LocalVersion = SkeletonAssetVersion::Latest; }
 
+		void ClearAll();
+
 	private:
 		SkeletonAssetVersion m_LocalVersion = SkeletonAssetVersion::Lowest;
 
 		std::vector<SkeletalMeshBoneInfo> m_BoneInfos;
+
+		std::vector<uint64_t> m_ParentBoneIndices;
 		std::vector<std::string> m_BoneNames;
 
 		glm::mat4 m_Transform{};
@@ -138,6 +151,10 @@ namespace Saturn {
 		std::vector<glm::vec3> m_BonePositions;
 		std::vector<glm::quat> m_BoneRotations;
 		std::vector<glm::vec3> m_BoneScales;
+
+	private:
+		friend class SkeletonAssetSerialiser;
+		friend class SkeletalMesh;
 	};	
 
 }

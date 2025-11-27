@@ -2,7 +2,7 @@
 Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2020, assimp team
+Copyright (c) 2006-2025, assimp team
 
 All rights reserved.
 
@@ -51,10 +51,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Exceptional.h"
 
-#include <assimp/ai_assert.h>
 #include <assimp/types.h>
 #include <assimp/ProgressHandler.hpp>
-#include <map>
+#include <exception>
 #include <set>
 #include <vector>
 #include <memory>
@@ -64,15 +63,20 @@ struct aiImporterDesc;
 
 namespace Assimp {
 
+// Forward declarations
 class Importer;
 class IOSystem;
 class BaseProcess;
 class SharedPostProcessInfo;
 class IOStream;
 
-// utility to do char4 to uint32 in a portable manner
+/// @def   AI_MAKE_MAGIC
+/// @brief Utility to do char4 to uint32 in a portable manner
 #define AI_MAKE_MAGIC(string) ((uint32_t)((string[0] << 24) + \
                                           (string[1] << 16) + (string[2] << 8) + string[3]))
+
+using UByteBuffer = std::vector<uint8_t>;
+using ByteBuffer = std::vector<int8_t>;
 
 // ---------------------------------------------------------------------------
 /** FOR IMPORTER PLUGINS ONLY: The BaseImporter defines a common interface
@@ -92,25 +96,20 @@ public:
     BaseImporter() AI_NO_EXCEPT;
 
     /** Destructor, private as well */
-    virtual ~BaseImporter();
+    virtual ~BaseImporter() = default;
 
     // -------------------------------------------------------------------
     /** Returns whether the class can handle the format of the given file.
      *
-     * The implementation should be as quick as possible. A check for
-     * the file extension is enough. If no suitable loader is found with
-     * this strategy, CanRead() is called again, the 'checkSig' parameter
-     * set to true this time. Now the implementation is expected to
-     * perform a full check of the file structure, possibly searching the
-     * first bytes of the file for magic identifiers or keywords.
+     * The implementation is expected to perform a full check of the file
+     * structure, possibly searching the first bytes of the file for magic
+     * identifiers or keywords.
      *
      * @param pFile Path and file name of the file to be examined.
      * @param pIOHandler The IO handler to use for accessing any file.
-     * @param checkSig Set to true if this method is called a second time.
-     *   This time, the implementation may take more time to examine the
-     *   contents of the file to be loaded for magic bytes, keywords, etc
-     *   to be able to load files with unknown/not existent file extensions.
-     * @return true if the class can read this file, false if not.
+     * @param checkSig Legacy; do not use.
+     * @return true if the class can read this file, false if not or if
+     * unsure.
      */
     virtual bool CanRead(
             const std::string &pFile,
@@ -143,11 +142,23 @@ public:
 
     // -------------------------------------------------------------------
     /** Returns the error description of the last error that occurred.
+     * If the error is due to a std::exception, this will return the message.
+     * Exceptions can also be accessed with GetException().
      * @return A description of the last error that occurred. An empty
      * string if there was no error.
      */
     const std::string &GetErrorText() const {
         return m_ErrorText;
+    }
+
+    // -------------------------------------------------------------------
+    /** Returns the exception of the last exception that occurred.
+     * Note: Exceptions are not the only source of error details, so GetErrorText
+     * should be consulted too.
+     * @return The last exception that occurred.
+     */
+    const std::exception_ptr& GetException() const {
+        return m_Exception;
     }
 
     // -------------------------------------------------------------------
@@ -167,40 +178,8 @@ public:
     /**
      * Will be called only by scale process when scaling is requested.
      */
-    virtual void SetFileScale(double scale) {
+    void SetFileScale(double scale) {
         fileScale = scale;
-    }
-
-    virtual double GetFileScale() const {
-        return fileScale;
-    }
-
-    enum ImporterUnits {
-        M,
-        MM,
-        CM,
-        INCHES,
-        FEET
-    };
-
-    /**
-     * Assimp Importer
-     * unit conversions available 
-     * NOTE: Valid options are initialised in the
-     * constructor in the implementation file to
-     * work around a VS2013 compiler bug if support
-     * for that compiler is dropped in the future
-     * initialisation can be moved back here
-     * */
-    std::map<ImporterUnits, double> importerUnits;
-
-    virtual void SetApplicationUnits(const ImporterUnits &unit) {
-        importerScale = importerUnits[unit];
-        applicationUnits = unit;
-    }
-
-    virtual const ImporterUnits &GetApplicationUnits() {
-        return applicationUnits;
     }
 
     // -------------------------------------------------------------------
@@ -210,61 +189,7 @@ public:
      *  @param extension set to collect file extensions in*/
     void GetExtensionList(std::set<std::string> &extensions);
 
-protected:
-    ImporterUnits applicationUnits = ImporterUnits::M;
-    double importerScale = 1.0;
-    double fileScale = 1.0;
-
-    // -------------------------------------------------------------------
-    /** Imports the given file into the given scene structure. The
-     * function is expected to throw an ImportErrorException if there is
-     * an error. If it terminates normally, the data in aiScene is
-     * expected to be correct. Override this function to implement the
-     * actual importing.
-     * <br>
-     *  The output scene must meet the following requirements:<br>
-     * <ul>
-     * <li>At least a root node must be there, even if its only purpose
-     *     is to reference one mesh.</li>
-     * <li>aiMesh::mPrimitiveTypes may be 0. The types of primitives
-     *   in the mesh are determined automatically in this case.</li>
-     * <li>the vertex data is stored in a pseudo-indexed "verbose" format.
-     *   In fact this means that every vertex that is referenced by
-     *   a face is unique. Or the other way round: a vertex index may
-     *   not occur twice in a single aiMesh.</li>
-     * <li>aiAnimation::mDuration may be -1. Assimp determines the length
-     *   of the animation automatically in this case as the length of
-     *   the longest animation channel.</li>
-     * <li>aiMesh::mBitangents may be nullptr if tangents and normals are
-     *   given. In this case bitangents are computed as the cross product
-     *   between normal and tangent.</li>
-     * <li>There needn't be a material. If none is there a default material
-     *   is generated. However, it is recommended practice for loaders
-     *   to generate a default material for yourself that matches the
-     *   default material setting for the file format better than Assimp's
-     *   generic default material. Note that default materials *should*
-     *   be named AI_DEFAULT_MATERIAL_NAME if they're just color-shaded
-     *   or AI_DEFAULT_TEXTURED_MATERIAL_NAME if they define a (dummy)
-     *   texture. </li>
-     * </ul>
-     * If the AI_SCENE_FLAGS_INCOMPLETE-Flag is <b>not</b> set:<ul>
-     * <li> at least one mesh must be there</li>
-     * <li> there may be no meshes with 0 vertices or faces</li>
-     * </ul>
-     * This won't be checked (except by the validation step): Assimp will
-     * crash if one of the conditions is not met!
-     *
-     * @param pFile Path of the file to be imported.
-     * @param pScene The scene object to hold the imported data.
-     * nullptr is not a valid parameter.
-     * @param pIOHandler The IO handler to use for any file access.
-     * nullptr is not a valid parameter. */
-    virtual void InternReadFile(
-            const std::string &pFile,
-            aiScene *pScene,
-            IOSystem *pIOHandler) = 0;
-
-public: // static utilities
+    // static utilities
     // -------------------------------------------------------------------
     /** A utility for CanRead().
      *
@@ -283,10 +208,10 @@ public: // static utilities
             IOSystem *pIOSystem,
             const std::string &file,
             const char **tokens,
-            unsigned int numTokens,
+            std::size_t numTokens,
             unsigned int searchBytes = 200,
             bool tokensSol = false,
-            bool noAlphaBeforeTokens = false);
+            bool noGraphBeforeTokens = false);
 
     // -------------------------------------------------------------------
     /** @brief Check whether a file has a specific file extension
@@ -300,7 +225,18 @@ public: // static utilities
             const std::string &pFile,
             const char *ext0,
             const char *ext1 = nullptr,
-            const char *ext2 = nullptr);
+            const char *ext2 = nullptr,
+            const char *ext3 = nullptr);
+
+    // -------------------------------------------------------------------
+    /** @brief Check whether a file has one of the passed file extensions
+     *  @param pFile Input file
+     *  @param extensions Extensions to check for. Lowercase characters only, no dot!
+     *  @note Case-insensitive
+     */
+    static bool HasExtension(
+            const std::string &pFile,
+            const std::set<std::string> &extensions);
 
     // -------------------------------------------------------------------
     /** @brief Extract file extension from a string
@@ -328,7 +264,7 @@ public: // static utilities
             IOSystem *pIOHandler,
             const std::string &pFile,
             const void *magic,
-            unsigned int num,
+            std::size_t num,
             unsigned int offset = 0,
             unsigned int size = 4);
 
@@ -406,13 +342,68 @@ public: // static utilities
         }
     }
 
+protected:
+    double importerScale = 1.0;
+    double fileScale = 1.0;
+
+    // -------------------------------------------------------------------
+    /** Imports the given file into the given scene structure. The
+     * function is expected to throw an ImportErrorException if there is
+     * an error. If it terminates normally, the data in aiScene is
+     * expected to be correct. Override this function to implement the
+     * actual importing.
+     * <br>
+     *  The output scene must meet the following requirements:<br>
+     * <ul>
+     * <li>At least a root node must be there, even if its only purpose
+     *     is to reference one mesh.</li>
+     * <li>aiMesh::mPrimitiveTypes may be 0. The types of primitives
+     *   in the mesh are determined automatically in this case.</li>
+     * <li>the vertex data is stored in a pseudo-indexed "verbose" format.
+     *   In fact this means that every vertex that is referenced by
+     *   a face is unique. Or the other way round: a vertex index may
+     *   not occur twice in a single aiMesh.</li>
+     * <li>aiAnimation::mDuration may be -1. Assimp determines the length
+     *   of the animation automatically in this case as the length of
+     *   the longest animation channel.</li>
+     * <li>aiMesh::mBitangents may be nullptr if tangents and normals are
+     *   given. In this case bitangents are computed as the cross product
+     *   between normal and tangent.</li>
+     * <li>There needn't be a material. If none is there a default material
+     *   is generated. However, it is recommended practice for loaders
+     *   to generate a default material for yourself that matches the
+     *   default material setting for the file format better than Assimp's
+     *   generic default material. Note that default materials *should*
+     *   be named AI_DEFAULT_MATERIAL_NAME if they're just color-shaded
+     *   or AI_DEFAULT_TEXTURED_MATERIAL_NAME if they define a (dummy)
+     *   texture. </li>
+     * </ul>
+     * If the AI_SCENE_FLAGS_INCOMPLETE-Flag is <b>not</b> set:<ul>
+     * <li> at least one mesh must be there</li>
+     * <li> there may be no meshes with 0 vertices or faces</li>
+     * </ul>
+     * This won't be checked (except by the validation step): Assimp will
+     * crash if one of the conditions is not met!
+     *
+     * @param pFile Path of the file to be imported.
+     * @param pScene The scene object to hold the imported data.
+     * nullptr is not a valid parameter.
+     * @param pIOHandler The IO handler to use for any file access.
+     * nullptr is not a valid parameter. */
+    virtual void InternReadFile(
+            const std::string &pFile,
+            aiScene *pScene,
+            IOSystem *pIOHandler) = 0;
+
 private:
     /* Pushes state into importer for the importer scale */
-    virtual void UpdateImporterScale(Importer *pImp);
+    void UpdateImporterScale(Importer *pImp);
 
-    protected:
+protected:
     /// Error description in case there was one.
     std::string m_ErrorText;
+    /// The exception, in case there was one.
+    std::exception_ptr m_Exception;
     /// Currently set progress handler.
     ProgressHandler *m_progress;
 };

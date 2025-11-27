@@ -3,7 +3,7 @@
 Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2020, assimp team
+Copyright (c) 2006-2025, assimp team
 
 All rights reserved.
 
@@ -44,36 +44,32 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define AI_AABB_H_INC
 
 #ifdef __GNUC__
-#   pragma GCC system_header
+#pragma GCC system_header
 #endif
 
 #include <assimp/vector3.h>
 
+// ---------------------------------------------------------------------------
+/**
+ *  An axis-aligned bounding box.
+ */
 struct aiAABB {
     C_STRUCT aiVector3D mMin;
     C_STRUCT aiVector3D mMax;
 
 #ifdef __cplusplus
+    /// @brief The default class constructor.
+    aiAABB() = default;
 
-    aiAABB()
-    : mMin()
-    , mMax() {
-        // empty
-    }
+    /// @brief The class constructor with the minimum and maximum.
+    /// @param min  The minimum dimension.
+    /// @param max  The maximum dimension.
+    aiAABB(const aiVector3D &min, const aiVector3D &max) : mMin(min), mMax(max) {}
 
-    aiAABB(const aiVector3D &min, const aiVector3D &max )
-    : mMin(min)
-    , mMax(max) {
-        // empty
-    }
-
-    ~aiAABB() {
-        // empty
-    }
+    ///	@brief  The class destructor.
+    ~aiAABB() = default;
 
 #endif // __cplusplus
-
 };
-
 
 #endif // AI_AABB_H_INC

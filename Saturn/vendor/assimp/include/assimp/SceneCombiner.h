@@ -2,8 +2,7 @@
 Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2020, assimp team
-
+Copyright (c) 2006-2025, assimp team
 
 All rights reserved.
 
@@ -51,12 +50,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma GCC system_header
 #endif
 
-#include <assimp/Defines.h>
 #include <assimp/ai_assert.h>
 #include <assimp/types.h>
 
-#include <stddef.h>
-#include <stdint.h>
+#include <cstddef>
+#include <cstdint>
 #include <list>
 #include <set>
 #include <vector>
@@ -83,32 +81,30 @@ namespace Assimp {
  *  Describes to which node a scene must be attached to.
  */
 struct AttachmentInfo {
-    AttachmentInfo() :
-            scene(nullptr),
-            attachToNode(nullptr) {}
+    AttachmentInfo() = default;
+    AttachmentInfo(aiScene *_scene, aiNode *_attachToNode) : scene(_scene), attachToNode(_attachToNode) {
+        // empty
+    }
+    ~AttachmentInfo() = default;
 
-    AttachmentInfo(aiScene *_scene, aiNode *_attachToNode) :
-            scene(_scene), attachToNode(_attachToNode) {}
-
-    aiScene *scene;
-    aiNode *attachToNode;
+    aiScene *scene{nullptr};
+    aiNode *attachToNode{nullptr};
 };
 
 // ---------------------------------------------------------------------------
+/// @brief Helper data structure for SceneCombiner.
 struct NodeAttachmentInfo {
-    NodeAttachmentInfo() :
-            node(nullptr),
-            attachToNode(nullptr),
-            resolved(false),
-            src_idx(SIZE_MAX) {}
-
+    NodeAttachmentInfo() = default;
+    ~NodeAttachmentInfo() = default;
     NodeAttachmentInfo(aiNode *_scene, aiNode *_attachToNode, size_t idx) :
-            node(_scene), attachToNode(_attachToNode), resolved(false), src_idx(idx) {}
+            node(_scene), attachToNode(_attachToNode), src_idx(idx) {
+        // empty
+    }
 
-    aiNode *node;
-    aiNode *attachToNode;
-    bool resolved;
-    size_t src_idx;
+    aiNode *node{nullptr};
+    aiNode *attachToNode{nullptr};
+    bool resolved{false};
+    size_t src_idx{SIZE_MAX};
 };
 
 // ---------------------------------------------------------------------------
@@ -141,7 +137,7 @@ struct NodeAttachmentInfo {
  */
 #define AI_INT_MERGE_SCENE_GEN_UNIQUE_NAMES_IF_NECESSARY 0x10
 
-typedef std::pair<aiBone *, unsigned int> BoneSrcIndex;
+using BoneSrcIndex = std::pair<aiBone *, unsigned int> ;
 
 // ---------------------------------------------------------------------------
 /** @brief Helper data structure for SceneCombiner::MergeBones.
@@ -191,16 +187,11 @@ struct SceneHelper {
  * and loaders (ie. LWS).
  */
 class ASSIMP_API SceneCombiner {
-    // class cannot be instanced
-    SceneCombiner() {
-        // empty
-    }
-
-    ~SceneCombiner() {
-        // empty
-    }
-
 public:
+    // class cannot be instanced
+    SceneCombiner() = delete;
+    ~SceneCombiner() = delete;
+
     // -------------------------------------------------------------------
     /** Merges two or more scenes.
      *
@@ -280,8 +271,8 @@ public:
     /** Builds a list of uniquely named bones in a mesh list
      *
      *  @param asBones Receives the output list
-     *  @param it First mesh to be processed
-     *  @param end Last mesh to be processed
+     *  @param it      First mesh to be processed
+     *  @param end     Last mesh to be processed
      */
     static void BuildUniqueBoneList(std::list<BoneWithHash> &asBones,
             std::vector<aiMesh *>::const_iterator it,
@@ -290,9 +281,9 @@ public:
     // -------------------------------------------------------------------
     /** Add a name prefix to all nodes in a scene.
      *
-     *  @param Current node. This function is called recursively.
+     *  @param node   Current node. This function is called recursively.
      *  @param prefix Prefix to be added to all nodes
-     *  @param len STring length
+     *  @param len    String length
      */
     static void AddNodePrefixes(aiNode *node, const char *prefix,
             unsigned int len);
@@ -300,7 +291,7 @@ public:
     // -------------------------------------------------------------------
     /** Add an offset to all mesh indices in a node graph
      *
-     *  @param Current node. This function is called recursively.
+     *  @param node   Current node. This function is called recursively.
      *  @param offset Offset to be added to all mesh indices
      */
     static void OffsetNodeMeshIndices(aiNode *node, unsigned int offset);
@@ -315,7 +306,7 @@ public:
      *    the master graph), a scene is attached to the root of the master
      *    graph (as an additional child node)
      *  @duplicates List of duplicates. If elem[n] == n the scene is not
-     *    a duplicate. Otherwise elem[n] links scene n to its first occurrence.
+     *    a duplicate. Otherwise, elem[n] links scene n to its first occurrence.
      */
     static void AttachToGraph(aiScene *master,
             std::vector<NodeAttachmentInfo> &srcList);
@@ -326,8 +317,9 @@ public:
     // -------------------------------------------------------------------
     /** Get a deep copy of a scene
      *
-     *  @param dest Receives a pointer to the destination scene
-     *  @param src Source scene - remains unmodified.
+     *  @param dest     Receives a pointer to the destination scene
+     *  @param source   Source scene - remains unmodified.
+     *  @param allocate true for allocation a new scene
      */
     static void CopyScene(aiScene **dest, const aiScene *source, bool allocate = true);
 
@@ -362,6 +354,7 @@ public:
     static void Copy(aiNodeAnim **dest, const aiNodeAnim *src);
     static void Copy(aiMeshMorphAnim **dest, const aiMeshMorphAnim *src);
     static void Copy(aiMetadata **dest, const aiMetadata *src);
+    static void Copy(aiString **dest, const aiString *src);
 
     // recursive, of course
     static void Copy(aiNode **dest, const aiNode *src);

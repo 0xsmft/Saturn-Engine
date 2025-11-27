@@ -2,8 +2,7 @@
 Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2020, assimp team
-
+Copyright (c) 2006-2025, assimp team
 
 All rights reserved.
 
@@ -43,8 +42,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /** @file LogStream.hpp
  *  @brief Abstract base class 'LogStream', representing an output log stream.
  */
+#pragma once
 #ifndef INCLUDED_AI_LOGSTREAM_H
 #define INCLUDED_AI_LOGSTREAM_H
+
+#ifdef __GNUC__
+#pragma GCC system_header
+#endif
 
 #include "types.h"
 
@@ -65,11 +69,11 @@ class ASSIMP_API LogStream
 {
 protected:
     /** @brief  Default constructor */
-    LogStream() AI_NO_EXCEPT;
+    LogStream() AI_NO_EXCEPT = default;
 
 public:
     /** @brief  Virtual destructor  */
-    virtual ~LogStream();
+    virtual ~LogStream() = default;
 
     // -------------------------------------------------------------------
     /** @brief  Overwrite this for your own output methods
@@ -95,15 +99,6 @@ public:
 
 }; // !class LogStream
 
-inline LogStream::LogStream() AI_NO_EXCEPT {
-    // empty
-}
-
-inline LogStream::~LogStream() {
-    // empty
-}
-
-// ------------------------------------------------------------------------------------
 } // Namespace Assimp
 
-#endif
+#endif // INCLUDED_AI_LOGSTREAM_H

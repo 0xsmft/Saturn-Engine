@@ -3,7 +3,7 @@
 Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2020, assimp team
+Copyright (c) 2006-2025, assimp team
 
 All rights reserved.
 
@@ -92,22 +92,19 @@ struct aiTexel {
 
 #ifdef __cplusplus
     //! Comparison operator
-    bool operator== (const aiTexel& other) const
-    {
+    bool operator== (const aiTexel& other) const {
         return b == other.b && r == other.r &&
                g == other.g && a == other.a;
     }
 
     //! Inverse comparison operator
-    bool operator!= (const aiTexel& other) const
-    {
+    bool operator!= (const aiTexel& other) const {
         return b != other.b || r != other.r ||
                g != other.g || a != other.a;
     }
 
     //! Conversion to a floating-point 4d color
-    operator aiColor4D() const
-    {
+    operator aiColor4D() const {
         return aiColor4D(r/255.f,g/255.f,b/255.f,a/255.f);
     }
 #endif // __cplusplus
@@ -172,7 +169,8 @@ struct aiTexture {
     /** Data of the texture.
      *
      * Points to an array of mWidth * mHeight aiTexel's.
-     * The format of the texture data is always ARGB8888 to
+     * The format of the texture data shall always be ARGB8888 if the texture-hint of the type is empty.
+     * If the hint is not empty you can interpret the format by looking into this hint.
      * make the implementation for user of the library as easy
      * as possible. If mHeight = 0 this is a pointer to a memory
      * buffer of size mWidth containing the compressed texture
@@ -202,11 +200,11 @@ struct aiTexture {
     }
 
     // Construction
-    aiTexture() AI_NO_EXCEPT
-    : mWidth(0)
-    , mHeight(0)
-    , pcData(nullptr)
-    , mFilename() {
+    aiTexture() AI_NO_EXCEPT :
+            mWidth(0),
+            mHeight(0),
+            pcData(nullptr),
+            mFilename() {
         memset(achFormatHint, 0, sizeof(achFormatHint));
     }
 

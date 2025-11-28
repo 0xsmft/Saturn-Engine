@@ -139,6 +139,7 @@ namespace Saturn {
 
 	void SkeletalMeshAssetViewer::RenderSidebar() 
 	{
+		ImGui::PushID( ( int ) m_AssetID );
 		ImGui::Begin( "Sidebar" );
 
 		if( Auxiliary::TreeNode( "Materials" ) )
@@ -221,6 +222,7 @@ namespace Saturn {
 		}
 
 		ImGui::End();
+		ImGui::PopID();
 	}
 
 	void SkeletalMeshAssetViewer::OnUpdate( Timestep ts )

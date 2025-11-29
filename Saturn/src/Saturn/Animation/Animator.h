@@ -33,6 +33,10 @@
 
 #include "Saturn/Vulkan/Mesh.h"
 
+#include "PoseWriter.h"
+
+#include <acl/decompression/decompress.h>
+
 namespace Saturn {
 
 	enum class AnimationState 
@@ -61,14 +65,14 @@ namespace Saturn {
 
 		void QueueNewAnimation( AssetID id );
 
-		void StepTo( float time ) { m_PendingStepTime = time; }
+		void StepTo( float time ) { time; }
 
 		AssetID GetCurrentID() const { return m_CurrentID; }
 		Ref<Asset> GetCurrentAnimation() const;
 
 		Ref<SkeletalMesh> GetSkeletalMesh() const { return m_SkeletalMesh; }
 
-		const std::vector<glm::mat4>& GetBoneTransforms() const { return m_BoneTransforms; }
+		std::vector<glm::mat4> GetBoneTransforms();
 
 		// An animator is consider active if an animation is playing or if it's paused
 		// However, if it not initialised, meaning we've never had an animation, then it's not active
@@ -85,12 +89,10 @@ namespace Saturn {
 	private:
 		void TickSingleAnim( Timestep ts );
 		void ApplyBoneTransformations();
-		void UpdateBones( size_t boneIndex, const glm::mat4& rParentTransform, const std::vector<glm::mat4>& rLocalTransforms );
 
 	private:
 		float m_StartTime = 0.0f;
 		float m_AnimationTime = 0.0f;
-		float m_PendingStepTime = -1.0f;
 		AnimationState m_State = AnimationState::NotInitialised;
 		AnimatorType m_AnimatorType = AnimatorType::Single;
 		bool m_Looping = false;
@@ -103,10 +105,12 @@ namespace Saturn {
 		Ref<AnimationController> m_AnimationControllerAsset;
 		Ref<SkeletalMesh> m_SkeletalMesh;
 
+		Pose* m_pOutPose = nullptr;
+		PoseWriter m_Writer;
+		acl::decompression_context<acl::default_transform_decompression_settings> m_Context;
+
 		glm::vec3 m_LastRootTranslation{};
 		glm::quat m_LastRootRotation{};
-
-		std::vector<glm::mat4> m_BoneTransforms;
 
 	private:
 		friend class AnimGraphPlayAnimTask;

@@ -120,7 +120,6 @@ namespace Saturn {
 	struct SkeletalMeshBoneInfo
 	{
 		uint64_t BoneIndex = ~0u;
-		int ParentIndex = -1;
 
 		// The bones' transform in Bone space, i.e. bring the vertices to the bones transform, bind point.
 		glm::mat4 InverseBindPose{};
@@ -130,7 +129,6 @@ namespace Saturn {
 		static void Serialise( const SkeletalMeshBoneInfo& rObject, OStream& rStream )
 		{
 			RawSerialisation::WriteObjectChecked( rObject.BoneIndex, rStream );
-			RawSerialisation::WriteObjectChecked( rObject.ParentIndex, rStream );
 			RawSerialisation::WriteMatrix4x4( rObject.InverseBindPose, rStream );
 		}
 
@@ -138,27 +136,39 @@ namespace Saturn {
 		static void Deserialise( SkeletalMeshBoneInfo& rObject, IStream& rStream )
 		{
 			RawSerialisation::ReadObjectChecked( rObject.BoneIndex, rStream );
-			RawSerialisation::ReadObjectChecked( rObject.ParentIndex, rStream );
 			RawSerialisation::ReadMatrix4x4( rObject.InverseBindPose, rStream );
 		}
 	};
 
 	struct SkeletalBoneInfluence
 	{
+		// Relative to the m_BoneInfos map
 		uint32_t BoneIndices[ 4 ] = { 0, 0, 0, 0 };
 		float BoneWeights[ 4 ]{ 0.0f, 0.0f, 0.0f, 0.0f };
 
 		inline void AddBoneData( uint32_t id, float weight )
 		{
-			for( size_t i = 0; i < 4; i++ )
+			if( weight < 0.0f || weight > 1.0f )
 			{
-				if( BoneWeights[ i ] == 0.0f )
+				SAT_CORE_WARN( "Vertex bone weight is out of range. We will clamp it to [0, 1] (BoneID={0}, Weight={1})", id, weight );
+				weight = std::clamp( weight, 0.0f, 1.0f );
+			}
+			if( weight > 0.0f )
+			{
+				for( size_t i = 0; i < 4; i++ )
 				{
-					BoneIndices[ i ] = id;
-					BoneWeights[ i ] = weight;
-
-					return;
+					if( BoneWeights[ i ] == 0.0f )
+					{
+						BoneIndices[ i ] = id;
+						BoneWeights[ i ] = weight;
+						return;
+					}
 				}
+
+				// Note: when importing from assimp we are passing aiProcess_LimitBoneWeights which automatically keeps only the top N (where N defaults to 4)
+				//       bone weights (and normalizes the sum to 1), which is exactly what we want.
+				//       So, we should never get here.
+				SAT_CORE_WARN( "Vertex has more than four bones affecting it, extra bone influences will be discarded (BoneID={0}, Weight={1})", id, weight );
 			}
 		}
 
@@ -210,6 +220,18 @@ namespace Saturn {
 			RawSerialisation::ReadObject( rObject.BoneWeights[ 2 ], rStream );
 			RawSerialisation::ReadObject( rObject.BoneWeights[ 3 ], rStream );
 		}
+	};
+
+	struct MeshNode
+	{
+		uint32_t Parent = 0xFFFFFFFF;
+		std::vector<uint32_t> Children;
+		std::vector<uint32_t> Submeshes;
+
+		std::string Name;
+		glm::mat4 LocalTransform;
+
+		inline bool IsRoot() const { return Parent == 0xFFFFFFFF; }
 	};
 }
 
@@ -283,12 +305,16 @@ namespace Saturn {
 		size_t GetFaceCount() const { return m_Indices.size(); }
 
 	protected:
+		void DeleteSourceModel();
+
+	protected:
 		Ref<VertexBuffer> m_VertexBuffer;
 		Ref<IndexBuffer> m_IndexBuffer;
 
 		std::vector<StaticVertex> m_Vertices;
 		std::vector<Index> m_Indices;
 		std::vector<Submesh> m_Submeshes;
+		std::vector<MeshNode> m_Nodes;
 
 		std::filesystem::path m_FilePath;
 
@@ -322,6 +348,10 @@ namespace Saturn {
 		virtual ~StaticMesh();
 		
 	public:
+		// Asset
+		virtual void OnDelete() override;
+
+	public:
 		std::vector<StaticVertex>& Vertices() { return m_Vertices; }
 		const std::vector<StaticVertex>& Vertices() const { return m_Vertices; }
 
@@ -353,9 +383,13 @@ namespace Saturn {
 
 		Ref<SkeletonAsset> GetSkeletonAsset() const;
 
-		const std::vector<glm::mat4> GetDefaultBoneTransforms() const { return m_DefaultBoneTransforms; }
+		const std::vector<glm::mat4> GetDefaultBoneTransforms();
 
 		Ref<VertexBuffer> GetBoneVertexBuffer() { return m_BoneVertexBuffer; }
+
+	public:
+		// Asset
+		virtual void OnDelete() override;
 
 	public:
 		void SerialiseData( std::ofstream& rStream );
@@ -368,7 +402,7 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		void Initialise();
 
-		void TraverseNodes( aiNode* node, const glm::mat4& parentTransform = glm::mat4( 1.0f ), uint32_t level = 0 );
+		void TraverseNodes( aiNode* node, uint32_t index, const glm::mat4& parentTransform = glm::mat4( 1.0f ), uint32_t level = 0 );
 		void CreateVertices();
 #endif
 
@@ -496,17 +530,17 @@ namespace Saturn {
 	class SkeletalMeshImporter : public MeshImporterBase
 	{
 	public:
-		SkeletalMeshImporter( const std::filesystem::path& rPath, const std::filesystem::path& rDstPath, MeshImportBehaviour importBehaviour );
+		SkeletalMeshImporter( const std::filesystem::path& rPath, const std::filesystem::path& rDstPath, MeshImportBehaviour importBehaviour, AssetID existingSkeletonID = 0llu );
 		~SkeletalMeshImporter();
 
 		virtual bool TryImport() override;
 
-		[[nodiscard]] AssetID GetCreatedID() const { return m_SkeletonID; }
+		[[nodiscard]] AssetID GetCreatedSkeletonID() const { return m_SkeletonID; }
 
 #if !defined(SAT_DIST)
 	private:
 		void CreateSkeletonIfNeeded();
-		void ImportAnimations();
+		void ImportAnimations( Ref<SkeletonAsset> sk );
 #endif
 	private:
 		AssetID m_SkeletonID = 0llu;

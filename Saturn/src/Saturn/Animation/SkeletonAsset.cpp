@@ -93,7 +93,7 @@ namespace Auxiliary {
 		if( m_Names.find( boneName ) != m_Names.end() )
 		{
 			m_pSkeleton->SetTransform( rTransform );
-			BuildHierarchyBone( pNode, ~0 );
+			BuildHierarchyBone( pNode, ~0u );
 		}
 		else
 		{
@@ -105,9 +105,9 @@ namespace Auxiliary {
 		}
 	}
 
-	void SkeletonBoneHierarchy::BuildHierarchyBone( const aiNode* pNode, int parentIndex )
+	void SkeletonBoneHierarchy::BuildHierarchyBone( const aiNode* pNode, uint32_t parentIndex )
 	{
-		const auto index = m_pSkeleton->SkAddBone( pNode->mName.C_Str(), parentIndex, Auxiliary::Mat4FromAssimpMat4( pNode->mTransformation ), m_Append );
+		const auto index = m_pSkeleton->SkAddBone( pNode->mName.C_Str(), parentIndex, Auxiliary::Mat4FromAssimpMat4( pNode->mTransformation )  );
 		for( uint32_t i = 0; i < pNode->mNumChildren; i++ )
 		{
 			if( m_Names.find( pNode->mChildren[ i ]->mName.C_Str() ) != m_Names.end() )
@@ -209,22 +209,23 @@ namespace Auxiliary {
 		return m_BoneJoints.emplace_back( rBoneName, rName );
 	}
 
-	uint64_t SkeletonAsset::SkAddBone( const std::string& rName, uint32_t parentIndex, const glm::mat4& rTransform, bool append )
+	uint64_t SkeletonAsset::SkAddBone( const std::string& rName, uint32_t parentIndex, const glm::mat4& rTransform )
 	{
-		if( append )
+		const auto itr = std::find( m_BoneNames.begin(), m_BoneNames.end(), rName );
+		if( itr != m_BoneNames.end() )
 		{
-			const auto itr = std::find( m_BoneNames.begin(), m_BoneNames.end(), rName );
-			if( itr != m_BoneNames.end() )
-			{
-				return std::distance( m_BoneNames.begin(), itr );
-			}
+			return std::distance( m_BoneNames.begin(), itr );
 		}
 
 		const auto index = m_BoneNames.size();
 		m_BoneNames.emplace_back( rName );
 		m_ParentBoneIndices.push_back( parentIndex );
 
-		Maths::DecomposeTransform( rTransform, m_BonePositions.emplace_back(), m_BoneRotations.emplace_back(), m_BoneScales.emplace_back() );
+		m_BonePositions.emplace_back();
+		m_BoneRotations.emplace_back();
+		m_BoneScales.emplace_back();
+
+		Maths::DecomposeTransform( rTransform, m_BonePositions.back(), m_BoneRotations.back(), m_BoneScales.back() );
 
 		return index;
 	}

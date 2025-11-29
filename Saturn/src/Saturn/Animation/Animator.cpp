@@ -36,6 +36,8 @@
 #include "Saturn/Core/App.h"
 #include "Saturn/Core/Profiler.h"
 
+#include <acl/decompression/decompress.h>
+
 namespace Saturn {
 
 	Animator::Animator()
@@ -52,7 +54,7 @@ namespace Saturn {
 		m_SkeletalMesh = nullptr;
 		m_SingleAnimationAsset = nullptr;
 		m_AnimationControllerAsset = nullptr;
-		m_BoneTransforms.clear();
+		delete m_pOutPose;
 	}
 
 	void Animator::InitAnimation( AssetID id, Ref<SkeletalMesh> sk, AnimatorType type )
@@ -79,68 +81,44 @@ namespace Saturn {
 
 	void Animator::TickSingleAnim( Timestep ts ) 
 	{
-		if( m_PendingAsset )
-		{
-			m_SingleAnimationAsset = AssetManager::Get().GetAssetAs<SkeletalAnimationAsset>( m_PendingAsset );
-			m_CurrentID = m_PendingAsset;
-			m_PendingAsset = 0;
-
-			m_AnimationTime = 0.0f;
-			Begin();
-		}
+		if( !m_SingleAnimationAsset )
+			return;
 
 		switch( m_State )
 		{
 			default:
 			case AnimationState::NotInitialised:
 			case AnimationState::Inactive:
-				break;
 			case AnimationState::Paused: 
-			{
-				if( m_PendingStepTime != -1.0f )
-				{
-					m_AnimationTime = m_PendingStepTime;
-					m_PendingStepTime = -1.0f;
-
-					ApplyBoneTransformations();
-				}
-			} break;
+				break;
 
 			case AnimationState::Playing:
 			{
-				m_AnimationTime += ts * m_SingleAnimationAsset->GetTicksPerSecond();
-
-				if( m_Looping )
+				if( !m_Completed )
 				{
-					const float dur = ( float ) m_SingleAnimationAsset->GetDuration();
-					if( m_AnimationTime > dur )
-					{
-						// Allow systems to react to when the anim is done
-						m_Completed = true;
-					}
-					else
-						m_Completed = false;
+					m_AnimationTime -= floorf( m_AnimationTime );
+					m_AnimationTime += ts * 1.0f / m_SingleAnimationAsset->GetDuration();
 
-					m_AnimationTime = fmod( m_AnimationTime, dur );
-				}
-				else
-				{
-					const float dur = ( float ) m_SingleAnimationAsset->GetDuration();
-					if( m_AnimationTime > dur )
+					while( m_AnimationTime > 1.0f )
 					{
-						// Stop at last frame.
-						m_AnimationTime = 0.0f;
-						m_Completed = true;
+						if( m_Looping )
+						{
+							m_AnimationTime -= 1.0f;
+						}
+						else
+						{
+							m_AnimationTime = 1.0f;
+							m_Completed = true;
+						}
 					}
 				}
 
-				if( m_PendingStepTime != -1.0f )
-				{
-					m_AnimationTime = m_PendingStepTime;
-					m_PendingStepTime = -1.0f;
-				}
+				const float sampleTiming = m_AnimationTime * m_SingleAnimationAsset->GetDuration();
+				m_Context.seek( sampleTiming, acl::sample_rounding_policy::none );
+				m_Context.decompress_tracks( m_Writer );
 
-				ApplyBoneTransformations();
+				m_pOutPose->Length = m_SingleAnimationAsset->GetDuration();
+				m_pOutPose->Duration = m_AnimationTime;
 			} break;
 		}
 	}
@@ -180,21 +158,25 @@ namespace Saturn {
 		m_StartTime = Application::Get().Time().Seconds();
 		m_State = AnimationState::Playing;
 
-		m_BoneTransforms.resize( m_SkeletalMesh->GetSkeletonAsset()->GetBoneInfo().size() );
-
 		if( m_AnimatorType == AnimatorType::AnimationControllerGraph )
 			m_AnimationControllerAsset->Initialise( this );
+
+		m_pOutPose = new Pose();
+		m_pOutPose->BonesUsed = m_SingleAnimationAsset->GetAnimationBones().size();
+
+		m_Writer = PoseWriter( m_pOutPose );
+		m_Context.initialize( *static_cast<const acl::compressed_tracks*>( m_SingleAnimationAsset->GetData() ) );
+
+		TickSingleAnim( 0.0f );
 	}
 
 	void Animator::Clear()
 	{
-		m_PendingStepTime = -1.0f;
 		m_AnimationTime = 0.0f;
 		m_StartTime = 0.0f;
 		m_SingleAnimationAsset = nullptr;
 		m_AnimationControllerAsset = nullptr;
 		m_CurrentID = 0llu;
-		m_BoneTransforms.clear();
 		m_State = AnimationState::Inactive;
 	}
 
@@ -219,112 +201,38 @@ namespace Saturn {
 		return nullptr;
 	}
 
-	static uint32_t FindPositioning( const AnimationBone& rChannel, float time )
+	std::vector<glm::mat4> Animator::GetBoneTransforms()
 	{
-		for( size_t i = 0; i < rChannel.Positions.size() - 1; ++i )
+		const size_t count = m_SingleAnimationAsset->GetAnimationBones().size();
+		std::vector<glm::mat4> ts( count );
+
+		for( size_t i = 0; i < count; ++i )
 		{
-			if( time < rChannel.Positions[ i + 1 ].TimeStamp )
-				return ( uint32_t ) i;
+			const auto& lts = m_pOutPose->LocalTransforms[ i ];
+			const glm::mat4 local = glm::translate( glm::mat4( 1.0f ), lts.Position ) 
+				* glm::toMat4( lts.Rotation ) 
+				* glm::scale( glm::mat4( 1.0f ), lts.Scale );
+
+			/*
+			SAT_CORE_INFO( "BONE TRS: {0}", i );
+			SAT_CORE_INFO( " T:{0}", lts.Position );
+			SAT_CORE_INFO( " R:{0}", glm::degrees( glm::eulerAngles( lts.Rotation ) ) );
+			SAT_CORE_INFO( " S:{0}", lts.Scale );
+			*/
+
+			const uint32_t parent = m_SkeletalMesh->GetSkeletonAsset()->GetParentIndex( i );
+			ts[ i ] = ( parent == ~0u ) ? local : ts[ parent ] * local;
 		}
 
-		return 0u;
-	}
-
-	static uint32_t FindRotation( const AnimationBone& rChannel, float time )
-	{
-		for( size_t i = 0; i < rChannel.Rotations.size() - 1; ++i )
-		{
-			if( time < rChannel.Rotations[ i + 1 ].TimeStamp )
-				return ( uint32_t ) i;
-		}
-
-		return 0u;
-	}
-
-	static uint32_t FindScale( const AnimationBone& rChannel, float time )
-	{
-		for( size_t i = 0; i < rChannel.Scale.size() - 1; ++i )
-		{
-			if( time < rChannel.Scale[ i + 1 ].TimeStamp )
-				return ( uint32_t ) i;
-		}
-
-		return 0u;
-	}
-
-	static glm::vec3 InterpolatePosition( const AnimationBone& rChannel, float time )
-	{
-		if( rChannel.Positions.size() == 1 )
-			return rChannel.Positions[ 0 ].Value;
-
-		const uint32_t positionIndex = FindPositioning( rChannel, time );
-		const uint32_t nextPositionIndex = ( positionIndex + 1 );
-
-		SAT_CORE_ASSERT( nextPositionIndex < rChannel.Positions.size() );
-
-		const float deltaTime = ( float ) ( rChannel.Positions[ nextPositionIndex ].TimeStamp - rChannel.Positions[ positionIndex ].TimeStamp );
-		float factor = ( time - ( float ) rChannel.Positions[ positionIndex ].TimeStamp ) / deltaTime;
-
-		SAT_CORE_ASSERT( factor <= 1.0f, "Factor must be below 1.0f" );
-
-		factor = glm::clamp( factor, 0.0f, 1.0f );
-		const auto& rStart = rChannel.Positions[ positionIndex ].Value;
-		const auto& rEnd = rChannel.Positions[ nextPositionIndex ].Value;
-
-		const auto Delta = rEnd - rStart;
-		return rStart + factor * Delta;
-	}
-
-	static glm::quat InterpolateRotation( const AnimationBone& rChannel, float time )
-	{
-		if( rChannel.Rotations.size() == 1 )
-			return rChannel.Rotations[ 0 ].Value;
-
-		const uint32_t positionIndex = FindRotation( rChannel, time );
-		const uint32_t nextPositionIndex = ( positionIndex + 1 );
-
-		SAT_CORE_ASSERT( nextPositionIndex < rChannel.Rotations.size() );
-
-		const float deltaTime = ( float ) ( rChannel.Rotations[ nextPositionIndex ].TimeStamp - rChannel.Rotations[ positionIndex ].TimeStamp );
-		float factor = ( time - ( float ) rChannel.Rotations[ positionIndex ].TimeStamp ) / deltaTime;
-
-		SAT_CORE_ASSERT( factor <= 1.0f, "Factor must be below 1.0f" );
-
-		factor = glm::clamp( factor, 0.0f, 1.0f );
-		const auto& rStart = rChannel.Rotations[ positionIndex ].Value;
-		const auto& rEnd = rChannel.Rotations[ nextPositionIndex ].Value;
-
-		// We must use slerp and not mix. mix preforms linear interpolation while slerp does spherical
-		glm::quat q = glm::slerp( rStart, rEnd, factor );
-		
-		return glm::normalize( q );
-	}
-
-	static glm::vec3 InterpolateScale( const AnimationBone& rChannel, float time )
-	{
-		if( rChannel.Scale.size() == 1 )
-			return rChannel.Scale[ 0 ].Value;
-
-		const uint32_t positionIndex = FindScale( rChannel, time );
-		const uint32_t nextPositionIndex = ( positionIndex + 1 );
-
-		SAT_CORE_ASSERT( nextPositionIndex < rChannel.Scale.size() );
-
-		const float deltaTime = ( float ) ( rChannel.Scale[ nextPositionIndex ].TimeStamp - rChannel.Scale[ positionIndex ].TimeStamp );
-		float factor = ( time - ( float ) rChannel.Scale[ positionIndex ].TimeStamp ) / deltaTime;
-
-		SAT_CORE_ASSERT( factor <= 1.0f, "Factor must be below 1.0f" );
-
-		factor = glm::clamp( factor, 0.0f, 1.0f );
-		const auto& rStart = rChannel.Scale[ positionIndex ].Value;
-		const auto& rEnd = rChannel.Scale[ nextPositionIndex ].Value;
-		auto delta = rEnd - rStart;
-
-		return rStart + factor * delta;
+		return ts;
 	}
 
 	void Animator::ApplyBoneTransformations()
 	{
+		m_Context.seek( m_AnimationTime * m_SingleAnimationAsset->GetDuration(), acl::sample_rounding_policy::none );
+		m_Context.decompress_tracks( m_Writer );
+
+		/*
 		const auto& rMeshBones = m_SkeletalMesh->GetSkeletonAsset()->GetBoneInfo();
 
 		const auto& rBones = m_SingleAnimationAsset->GetAnimationBones();
@@ -332,8 +240,7 @@ namespace Saturn {
 		
 		for( const auto& rBone : rBones )
 		{
-			const auto index = m_SkeletalMesh->GetSkeletonAsset()->FindBoneIndex( rBone.Name );
-			if( index == -1 )
+			if( rBone.Index == -1 )
 			{
 				continue;
 			}
@@ -347,10 +254,10 @@ namespace Saturn {
 			const glm::mat4 scaling = glm::scale( glm::mat4( 1.0f ), scl );
 
 			const auto final = translation * rotation * scaling;
-			localTransforms[ ( size_t ) index ] = final;
+			localTransforms[ ( size_t ) rBone.Index ] = final;
 		}
 
-		// Root motion
+		// Root motion.
 		if( m_SingleAnimationAsset->IsUsingRootMotion() )
 		{
 			const auto& rRootTransformation = localTransforms[ 0 ];
@@ -360,7 +267,7 @@ namespace Saturn {
 			const glm::vec3 deltaPos = rCurrentTranslation - m_LastRootTranslation;
 			const glm::quat deltaRot = glm::conjugate( m_LastRootRotation ) * rCurrentRotation;
 
-			// Temporary, would need to create a "fake" root motion bone if needed
+			// Temporary, would need to create a "fake" root motion bone if needed.
 			localTransforms[ 0 ][ 3 ] = glm::vec4( 0.0f, 0.0f, 0.0f, 1.0f );
 
 			m_LastRootTranslation = rCurrentTranslation;
@@ -372,21 +279,7 @@ namespace Saturn {
 			if( rMeshBones[ i ].ParentIndex == -1 )
 				UpdateBones( i, glm::mat4( 1.0f ), localTransforms );
 		}
-	}
-
-	void Animator::UpdateBones( size_t boneIndex, const glm::mat4& rParentTransform, const std::vector<glm::mat4>& rLocalTransforms )
-	{
-		const auto& rMeshBones = m_SkeletalMesh->GetSkeletonAsset()->GetBoneInfo();
-
-		const glm::mat4 globalTransform = rParentTransform * rLocalTransforms[ boneIndex ];
-
-		m_BoneTransforms[ boneIndex ] = m_SkeletalMesh->GetInverseTransform() * globalTransform * rMeshBones[ boneIndex ].BoneOffset; /* <- bone offset */
-
-		for( size_t i = 0; i < rMeshBones.size(); ++i )
-		{
-			if( rMeshBones[ i ].ParentIndex == boneIndex )
-				UpdateBones( i, globalTransform, rLocalTransforms );
-		}
+		*/
 	}
 
 }

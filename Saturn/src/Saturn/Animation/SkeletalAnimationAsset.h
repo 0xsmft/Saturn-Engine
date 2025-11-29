@@ -30,6 +30,8 @@
 
 #include "Saturn/Asset/Asset.h"
 
+struct aiAnimation;
+
 namespace Saturn {
 
 	template<typename Ty>
@@ -37,19 +39,20 @@ namespace Saturn {
 	{
 		AnimationKey() = default;
 
-		AnimationKey( const Ty& rValue, double ts )
+		AnimationKey( const Ty& rValue, float ts )
 			: Value( rValue ), Timestamp( ts )
 		{
 		}
 
 		Ty Value = Ty{};
 		// The time stamp when our value should be applied to the armature.
-		double TimeStamp = 0.0;
+		float Timestamp = 0.0f;
 	};
 
-	struct AnimationBone
+	// NOTE: This used to be called AnimationBone, hence why you may see "ab" or animBone in the codebase.
+	struct AnimationChannel
 	{
-		std::string Name;
+		uint32_t Index = ~0u;
 		std::vector<AnimationKey<glm::vec3>> Positions;
 		std::vector<AnimationKey<glm::quat>> Rotations;
 		std::vector<AnimationKey<glm::vec3>> Scale;
@@ -76,32 +79,48 @@ namespace Saturn {
 		virtual ~SkeletalAnimationAsset();
 
 		[[nodiscard]] AssetID GetSkeletonID()     const { return m_SkeletonAssetID; }
-		[[nodiscard]] double  GetDuration()       const { return m_Duration; }
-		[[nodiscard]] double  GetTicksPerSecond() const { return m_TicksPerSecond; }
+		[[nodiscard]] float   GetDuration()       const { return m_Duration; }
+		[[nodiscard]] float   GetTicksPerSecond() const { return m_TicksPerSecond; }
 		[[nodiscard]] bool    IsUsingRootMotion() const { return m_UseRootMotion; }
 		[[nodiscard]] SkeletalAnimationAssetVersion GetLocalAssetVersion() const { return m_LocalVersion; }
+		[[nodiscard]] void*   GetData()           const { return m_pData; }
 
-		const std::vector<AnimationBone>& GetAnimationBones() const { return m_Bones; }
+		const std::vector<AnimationChannel>& GetAnimationBones() const { return m_Bones; }
+		std::vector<AnimationChannel>& GetAnimationBones() { return m_Bones; }
 
 	public:
-		void SetDuration( double duration ) { m_Duration = duration; }
-		void SetTicks( double ticks ) { m_TicksPerSecond = ticks; }
-		void SetSkeletonID( AssetID id ) { m_SkeletonAssetID = id; }
-		void UseRootMotion( bool val ) { m_UseRootMotion = val; }
-		void AddAnimBone( const AnimationBone& bone ) { m_Bones.push_back( bone ); }
-		void PortToNewestVersion() { m_LocalVersion = SkeletalAnimationAssetVersion::Latest; }
+		void SetDuration( float duration )               { m_Duration = duration; }
+		void SetTicks( float ticks )                     { m_TicksPerSecond = ticks; }
+		void SetSkeletonID( AssetID id )                 { m_SkeletonAssetID = id; }
+		void UseRootMotion( bool val )                   { m_UseRootMotion = val; }
+		void SetUncompressedDuration( float duration )   { m_UncompressedDuration = duration; }
+		void SetUncompressedTicks( float ticks )         { m_UncompressedTPS = ticks; }
+		void AddAnimBone( const AnimationChannel& bone ) { m_Bones.push_back( bone ); }
+		void PortToNewestVersion()                       { m_LocalVersion = SkeletalAnimationAssetVersion::Latest; }
+
+		void MakeUniformAndCompress( aiAnimation* pAnimation );
+		void SetACLData( void* pData );
+		void Compress();
 
 	private:
 		SkeletalAnimationAssetVersion m_LocalVersion = SkeletalAnimationAssetVersion::Lowest;
 		bool m_UseRootMotion = false;
 
-		AssetID m_SkeletonAssetID;
+		void* m_pData = nullptr;
+
+		AssetID m_SkeletonAssetID = 0llu;
 
 		// The duration of this animation in seconds
-		double m_Duration = 0.0;
-		double m_TicksPerSecond = 0.0;
+		float m_Duration = 0.0f;
+		float m_TicksPerSecond = 0.0f;
 
-		std::vector<AnimationBone> m_Bones;
+		float m_UncompressedDuration = 0.0f;
+		float m_UncompressedTPS = 0.0f;
+
+		std::vector<AnimationChannel> m_Bones;
+
+	private:
+		friend class SkeletalAnimationAssetSerialiser;
 	};
 
 }

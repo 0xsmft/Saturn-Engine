@@ -66,6 +66,13 @@ layout( location = 1 ) out VertexOutput vs_Output;
 
 void main()
 {
+	// Index of the current mesh + instance index * MAX BONES + Indices.x/y/z
+	// Explaination:
+	//  - Because s_AnimationBoneData is just a buffer with transform data in order for us to get the correct data, we need to cacluate
+	//    the correct offset so, imagine that this mesh was MeshIndex 1 and InstanceIndex 1
+	//    we'd access the data at ( 1 + 1 ) * 100 + [index.x] = 200 + [index.x], this would place us at the correct index.
+	//
+	//
 	mat4 skinMatrix = s_AnimationBoneData.Transforms[ ( u_MeshIndex.Index + gl_InstanceIndex ) * 100 + a_BoneIndices.x ] * a_BoneWeights.x;
 	skinMatrix += s_AnimationBoneData.Transforms[ ( u_MeshIndex.Index + gl_InstanceIndex ) * 100 + a_BoneIndices.y ] * a_BoneWeights.y; 
 	skinMatrix += s_AnimationBoneData.Transforms[ ( u_MeshIndex.Index + gl_InstanceIndex ) * 100 + a_BoneIndices.z ] * a_BoneWeights.z;
@@ -82,9 +89,9 @@ void main()
 
 	vs_Output.Position   = WorldPos.xyz;
 	vs_Output.TexCoord   = vec2( a_TexCoord.x, 1.0 - a_TexCoord.y );
-	vs_Output.Normal     = mat3( transform * skinMatrix ) * a_Normal;
+	vs_Output.Normal     = mat3( transform ) * mat3( skinMatrix ) * a_Normal;
 
-	vs_Output.WorldNormals = mat3( transform * skinMatrix ) * mat3( a_Tangent, a_Binormal, a_Normal );
+	vs_Output.WorldNormals = mat3( transform ) * mat3( skinMatrix ) * mat3( a_Tangent, a_Binormal, a_Normal );
 
 	vs_Output.Bionormal = a_Binormal;
 
@@ -98,7 +105,7 @@ void main()
 
 	vs_Output.ViewPosition = vec3( u_Matrices.View * vec4( vs_Output.Position, 1.0 ) );
 
-	gl_Position = u_Matrices.ViewProjection * transform * localPos;
+	gl_Position = u_Matrices.ViewProjection * WorldPos;
 }
 
 #type fragment

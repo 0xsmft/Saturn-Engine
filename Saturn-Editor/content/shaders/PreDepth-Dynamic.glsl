@@ -46,6 +46,7 @@ void main()
 		a_TransformBufferR1.z, a_TransformBufferR2.z, a_TransformBufferR3.z, 0.0, 
 		a_TransformBufferR1.w, a_TransformBufferR2.w, a_TransformBufferR3.w, 1.0);
 
-	vec4 localPos = skinMatrix * vec4( a_Position, 1.0 );
-	gl_Position = u_Matrices.ViewProjection * transform * localPos;
+	vec4 worldPos = transform * skinMatrix * vec4( a_Position, 1.0 );
+
+	gl_Position = u_Matrices.ViewProjection * worldPos;
 }

@@ -68,7 +68,7 @@ namespace Saturn {
 
 	private:
 		void BuildHierarchy( const aiNode* pNode, const glm::mat4& rTransform = glm::mat4{ 1.0f } );
-		void BuildHierarchyBone( const aiNode* pNode, int parentIndex );
+		void BuildHierarchyBone( const aiNode* pNode, uint32_t parentIndex );
 
 	private:
 		std::set<std::string> m_Names;
@@ -93,7 +93,7 @@ namespace Saturn {
 
 		BoneJoint& AddNewBoneJoint( const std::string& rBoneName, const std::string& rName );
 
-		uint64_t SkAddBone( const std::string& rName, uint32_t parentIndex, const glm::mat4& rTransform, bool append = false );
+		uint64_t SkAddBone( const std::string& rName, uint32_t parentIndex, const glm::mat4& rTransform );
 
 	public:
 		[[nodiscard]] uint32_t FindBoneIndex( const std::string& rName );
@@ -122,6 +122,7 @@ namespace Saturn {
 		const std::vector<BoneJoint>& GetBoneJoints() const { return m_BoneJoints; }
 		std::vector<BoneJoint>& GetBoneJoints() { return m_BoneJoints; }
 
+		std::vector<std::string>& GetBoneNames() { return m_BoneNames; }
 		std::vector<glm::vec3>& GetBonePositions() { return m_BonePositions; }
 		std::vector<glm::quat>& GetBoneRotations() { return m_BoneRotations; }
 		std::vector<glm::vec3>& GetBoneScales() { return m_BoneScales; }

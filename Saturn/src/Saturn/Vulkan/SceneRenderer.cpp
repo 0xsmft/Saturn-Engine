@@ -912,10 +912,10 @@ namespace Saturn {
 		// Based on method presented in https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch10.html
 		for( uint32_t i = 0; i < SHADOW_CASCADE_COUNT; i++ )
 		{
-			float p = ( i + 1 ) / static_cast< float >( SHADOW_CASCADE_COUNT );
-			float log = minZ * std::pow( RATIO, p );
-			float uniform = minZ + RANGE * p;
-			float d = m_RendererData.CascadeSplitLambda * ( log - uniform ) + uniform;
+			const float p = ( i + 1 ) / static_cast< float >( SHADOW_CASCADE_COUNT );
+			const float log = minZ * std::pow( RATIO, p );
+			const float uniform = minZ + RANGE * p;
+			const float d = m_RendererData.CascadeSplitLambda * ( log - uniform ) + uniform;
 			cascadeSplits[ i ] = ( d - NEAR_CLIP ) / CLIP_RANGE;
 		}
 
@@ -941,13 +941,13 @@ namespace Saturn {
 
 			// Project frustum corners into world space
 			glm::mat4 invCam = glm::inverse( viewProjection );
-			for( uint32_t i = 0; i < 8; i++ )
+			for( uint32_t i = 0; i < 8; ++i )
 			{
 				glm::vec4 invCorner = invCam * glm::vec4( frustumCorners[ i ], 1.0f );
 				frustumCorners[ i ] = invCorner / invCorner.w;
 			}
 
-			for( uint32_t i = 0; i < 4; i++ )
+			for( uint32_t i = 0; i < 4; ++i )
 			{
 				glm::vec3 dist = frustumCorners[ i + 4 ] - frustumCorners[ i ];
 				frustumCorners[ i + 4 ] = frustumCorners[ i ] + ( dist * splitDist );
@@ -956,7 +956,7 @@ namespace Saturn {
 
 			// Get frustum center
 			glm::vec3 frustumCenter = glm::vec3( 0.0f );
-			for( uint32_t i = 0; i < 8; i++ )
+			for( uint32_t i = 0; i < 8; ++i )
 				frustumCenter += frustumCorners[ i ];
 
 			frustumCenter /= 8.0f;
@@ -964,7 +964,7 @@ namespace Saturn {
 			//frustumCenter *= 0.01f;
 
 			float radius = 0.0f;
-			for( uint32_t i = 0; i < 8; i++ )
+			for( uint32_t i = 0; i < 8; ++i )
 			{
 				float distance = glm::length( frustumCorners[ i ] - frustumCenter );
 				radius = glm::max( radius, distance );
@@ -2114,14 +2114,16 @@ namespace Saturn {
 		const size_t stride = 100 + boneCount;
 
 		rBoneTransformMap.Stride = ( uint32_t ) stride;
-		rBoneTransformMap.Data.reserve( 100 );
 
-		for( size_t s = 0; s < 100; ++s )
+		if( rBoneTransformMap.Data.empty() )
 		{
-			if( s < rBoneTransforms.size() )
-				rBoneTransformMap.Data.push_back( rBoneTransforms[ s ] );
-			else
-				rBoneTransformMap.Data.push_back( glm::mat4{ 1.0f } );
+			rBoneTransformMap.Data.resize( 100 );
+		}
+
+		auto skeleton = mesh->GetSkeletonAsset();
+		for( size_t s = 0; s < skeleton->GetBoneInfo().size(); ++s )
+		{
+			rBoneTransformMap.Data[ s ] = skeleton->GetTransform() * rBoneTransforms[ skeleton->GetBoneInfo().at( s ).BoneIndex ] * skeleton->GetBoneInfo().at( s ).InverseBindPose;
 		}
 	}
 
@@ -2237,7 +2239,7 @@ namespace Saturn {
 		if( /*HasFlag( SceneRendererFlag_MasterInstance )*/ !HasFlag( SceneRendererFlag_NoRenderer2D ) )
 		{
 			m_Renderer2D = Ref<Renderer2D>::Create();
-			m_Renderer2D->SetInitialRenderPass( m_RendererData.LateCompositePass, m_RendererData.LateCompositeFramebuffer );
+			m_Renderer2D->Init( m_RendererData.LateCompositePass, m_RendererData.LateCompositeFramebuffer );
 		}
 	}
 

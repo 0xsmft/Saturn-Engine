@@ -244,9 +244,9 @@ namespace Saturn {
 		for( const auto& entity : dynamicMeshEntities )
 		{
 			auto& meshComponent = entity->GetComponent<SkeletalMeshComponent>();
-			if( meshComponent.Mesh )
+			if( meshComponent.Mesh && meshComponent.LocalAnimator )
 			{
-				meshComponent.LocalAnimator.Play( ts );
+				meshComponent.LocalAnimator->TickAnimation( ts );
 			}
 		}
 	}
@@ -532,12 +532,12 @@ namespace Saturn {
 					targetMaterialRegistry = meshComponent.MaterialRegistry;
 
 				std::vector<glm::mat4> boneTransforms = meshComponent.Mesh->GetDefaultBoneTransforms();
-				if( meshComponent.LocalAnimator.IsReady() )
+				if( meshComponent.LocalAnimator && meshComponent.LocalAnimator->IsPlaying() )
 				{
-					boneTransforms = meshComponent.LocalAnimator.GetBoneTransforms();
+					boneTransforms = meshComponent.LocalAnimator->GetBoneTransforms();
 				}
 
-				rSceneRenderer.SubmitDynamicMesh( entity, meshComponent.Mesh, targetMaterialRegistry, transform, boneTransforms );
+				sceneRenderer->SubmitDynamicMesh( entity, meshComponent.Mesh, targetMaterialRegistry, transform, boneTransforms );
 			}
 		}
 	}

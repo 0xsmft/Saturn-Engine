@@ -389,9 +389,9 @@ namespace Saturn {
 		if( data.IsNull() )
 			return false;
 
-		auto meshData = data[ "StaticMesh" ];
-		auto shapeType = meshData[ "Attached Shape" ].as<int>( 0 );
-		auto physicsMaterial = meshData[ "Physics Material ID" ].as<uint64_t>( 0 );
+		const auto meshData = data[ "StaticMesh" ];
+		const auto shapeType = meshData[ "Attached Shape" ].as<int>( 0 );
+		const auto physicsMaterial = meshData[ "Physics Material ID" ].as<uint64_t>( 0 );
 
 		std::filesystem::path filepath = meshData[ "Filepath" ].as<std::string>();
 
@@ -401,7 +401,7 @@ namespace Saturn {
 		filepath = windowsPath;
 #endif
 
-		auto realMeshPath = Project::GetActiveProject()->FilepathAbs( filepath );
+		const auto realMeshPath = Project::GetActiveProject()->FilepathAbs( filepath );
 		auto mesh = Ref<StaticMesh>::Create( rAsset, realMeshPath.string() );
 
 		mesh->SetAttachedShape( (PhysicsShapeType)shapeType );
@@ -849,28 +849,15 @@ namespace Saturn {
 		RawSerialisation::WriteObject( header, fout );
 		
 		RawSerialisation::WriteObject( skelAsset->GetLocalVersion(), fout );
-		RawSerialisation::WriteObject( skelAsset->GetBoneInfo().size(), fout );
 
-		for( const auto& rBoneInfo : skelAsset->GetBoneInfo() )
-		{
-			RawSerialisation::WriteString( rBoneInfo.BoneName, fout );
-			RawSerialisation::WriteObject( rBoneInfo.ParentIndex, fout );
-
-			RawSerialisation::WriteMatrix4x4( rBoneInfo.BoneOffset, fout );
-		}
-
-		RawSerialisation::WriteObject( skelAsset->GetVertices().size(), fout );
-
-		for( const auto& rBoneInfo : skelAsset->GetVertices() )
-		{
-			for( unsigned int i = 0; i < 4; ++i )
-			{
-				RawSerialisation::WriteObject( rBoneInfo.BoneIndices[ i ], fout );
-				RawSerialisation::WriteObject( rBoneInfo.BoneWeights[ i ], fout );
-			}
-		}
-
-		RawSerialisation::WriteVector( skelAsset->GetCompatibleMeshes(), fout );
+		RawSerialisation::WriteVector( skelAsset->m_BoneInfos, fout );
+		RawSerialisation::WriteVector( skelAsset->m_ParentBoneIndices, fout );
+		RawSerialisation::WriteVector( skelAsset->m_BoneNames, fout );
+		RawSerialisation::WriteObject( skelAsset->m_Transform, fout );
+		RawSerialisation::WriteVector( skelAsset->m_CompatibleMeshes, fout );
+		RawSerialisation::WriteVector( skelAsset->m_BonePositions, fout );
+		RawSerialisation::WriteVector( skelAsset->m_BoneRotations, fout );
+		RawSerialisation::WriteVector( skelAsset->m_BoneScales, fout );
 
 		fout.close();
 	}
@@ -888,36 +875,30 @@ namespace Saturn {
 
 		auto skeletonAsset = Ref<SkeletonAsset>::Create( rAsset );
 
+		RawSerialisation::ReadVector( skeletonAsset->m_BoneInfos, FileIn );
+		RawSerialisation::ReadVector( skeletonAsset->m_ParentBoneIndices, FileIn );
+		RawSerialisation::ReadVector( skeletonAsset->m_BoneNames, FileIn );
+		RawSerialisation::ReadObject( skeletonAsset->m_Transform, FileIn );
+		RawSerialisation::ReadVector( skeletonAsset->m_CompatibleMeshes, FileIn );
+		RawSerialisation::ReadVector( skeletonAsset->m_BonePositions, FileIn );
+		RawSerialisation::ReadVector( skeletonAsset->m_BoneRotations, FileIn );
+		RawSerialisation::ReadVector( skeletonAsset->m_BoneScales, FileIn );
+
+		/*
 		size_t mapSize = 0;
 		RawSerialisation::ReadObject( mapSize, FileIn );
 
 		// TODO: Reserve space...
 		for( size_t i = 0; i < mapSize; ++i )
 		{
-			std::string name = RawSerialisation::ReadString( FileIn );
+			uint64_t index = 0;
+			RawSerialisation::ReadObject( index, FileIn );
 
 			int parentIndex = -1;
 			RawSerialisation::ReadObject( parentIndex, FileIn );
 
 			glm::mat4 boneOffset{};
 			RawSerialisation::ReadMatrix4x4( boneOffset, FileIn );
-
-			skeletonAsset->AddBoneInfo( name, parentIndex, boneOffset, ( uint32_t ) i );
-		}
-
-		// TODO: Reserve space...
-		RawSerialisation::ReadObject( mapSize, FileIn );
-		for( size_t i = 0; i < mapSize; ++i )
-		{
-			SkeletonAssetVertexSkin skin;
-
-			for( unsigned int j = 0u; j < 4; ++j )
-			{
-				RawSerialisation::ReadObject( skin.BoneIndices[ j ], FileIn );
-				RawSerialisation::ReadObject( skin.BoneWeights[ j ], FileIn );
-			}
-
-			skeletonAsset->AddVertex( skin );
 		}
 
 		if( skVersion >= SkeletonAssetVersion::CompatibilityInformationForMeshes )
@@ -932,6 +913,29 @@ namespace Saturn {
 				skeletonAsset->AddCompatibleMesh( id );
 			}
 		}
+
+		if( skVersion >= SkeletonAssetVersion::AttachmentPoints )
+		{
+			// TODO: Reserve space...
+			RawSerialisation::ReadObject( mapSize, FileIn );
+			for( size_t i = 0; i < mapSize; ++i )
+			{
+				const std::string boneName = RawSerialisation::ReadString( FileIn );
+				const std::string name = RawSerialisation::ReadString( FileIn );
+
+				auto& rBoneJoint = skeletonAsset->AddNewBoneJoint( boneName, name.empty() ? "Unnamed Attachment" : name );
+
+				glm::vec3 pos{}, rot{}, scl{};
+				RawSerialisation::ReadVec3( pos, FileIn );
+				RawSerialisation::ReadVec3( rot, FileIn );
+				RawSerialisation::ReadVec3( scl, FileIn );
+
+				rBoneJoint.SetRelativePosition( pos );
+				rBoneJoint.SetRelativeRotation( rot );
+				rBoneJoint.SetRelativeScale( scl );
+			}
+		}
+		*/
 
 		FileIn.close();
 
@@ -959,12 +963,14 @@ namespace Saturn {
 		RawSerialisation::WriteObject( animAsset->GetSkeletonID(), fout );
 		RawSerialisation::WriteObject( animAsset->GetDuration(), fout );
 		RawSerialisation::WriteObject( animAsset->GetTicksPerSecond(), fout );
+		RawSerialisation::WriteObject( animAsset->m_UncompressedDuration, fout );
+		RawSerialisation::WriteObject( animAsset->m_UncompressedTPS, fout );
 		RawSerialisation::WriteObject( animAsset->IsUsingRootMotion(), fout );
 
 		RawSerialisation::WriteObject( animAsset->GetAnimationBones().size(), fout );
 		for( const auto& rBoneInfo : animAsset->GetAnimationBones() )
 		{
-			RawSerialisation::WriteString( rBoneInfo.Name, fout );
+			RawSerialisation::WriteObject( rBoneInfo.Index, fout );
 
 			RawSerialisation::WriteObject( rBoneInfo.Positions.size(), fout );
 			for( const auto& rPosition : rBoneInfo.Positions )
@@ -972,7 +978,7 @@ namespace Saturn {
 				RawSerialisation::WriteObject( rPosition.Value.x, fout );
 				RawSerialisation::WriteObject( rPosition.Value.y, fout );
 				RawSerialisation::WriteObject( rPosition.Value.z, fout );
-				RawSerialisation::WriteObject( rPosition.TimeStamp, fout );
+				RawSerialisation::WriteObject( rPosition.Timestamp, fout );
 			}
 
 			RawSerialisation::WriteObject( rBoneInfo.Rotations.size(), fout );
@@ -982,7 +988,7 @@ namespace Saturn {
 				RawSerialisation::WriteObject( rRotation.Value.x, fout );
 				RawSerialisation::WriteObject( rRotation.Value.y, fout );
 				RawSerialisation::WriteObject( rRotation.Value.z, fout );
-				RawSerialisation::WriteObject( rRotation.TimeStamp, fout );
+				RawSerialisation::WriteObject( rRotation.Timestamp, fout );
 			}
 
 			RawSerialisation::WriteObject( rBoneInfo.Scale.size(), fout );
@@ -991,7 +997,7 @@ namespace Saturn {
 				RawSerialisation::WriteObject( rScale.Value.x, fout );
 				RawSerialisation::WriteObject( rScale.Value.y, fout );
 				RawSerialisation::WriteObject( rScale.Value.z, fout );
-				RawSerialisation::WriteObject( rScale.TimeStamp, fout );
+				RawSerialisation::WriteObject( rScale.Timestamp, fout );
 			}
 		}
 
@@ -1007,7 +1013,7 @@ namespace Saturn {
 		RawSerialisation::ReadObject( header, FileIn );
 
 		AssetID skeletonID = 0;
-		double duration = 0.0, ticksPerSecond = 0.0;
+		float duration = 0.0f, ticksPerSecond = 0.0f, uncompDur = 0.0f, uncompTps = 0.0f;
 		SkeletalAnimationAssetVersion skAnimVer = SkeletalAnimationAssetVersion::BeforeVersionWasAdded;
 
 		RawSerialisation::ReadObject( skAnimVer, FileIn );
@@ -1015,8 +1021,11 @@ namespace Saturn {
 		RawSerialisation::ReadObject( duration, FileIn );
 		RawSerialisation::ReadObject( ticksPerSecond, FileIn );
 
+		RawSerialisation::ReadObject( uncompDur, FileIn );
+		RawSerialisation::ReadObject( uncompTps, FileIn );
+
 		bool hadRootMotion = false;
-		if( skAnimVer >= SkeletalAnimationAssetVersion::RootMotion )
+//		if( skAnimVer >= SkeletalAnimationAssetVersion::RootMotion )
 		{
 			RawSerialisation::ReadObject( hadRootMotion, FileIn );
 		}
@@ -1025,22 +1034,28 @@ namespace Saturn {
 		animAsset->SetSkeletonID( skeletonID );
 		animAsset->SetDuration( duration );
 		animAsset->SetTicks( ticksPerSecond );
+		animAsset->SetUncompressedDuration( uncompDur );
+		animAsset->SetUncompressedTicks( uncompTps );
 		animAsset->UseRootMotion( hadRootMotion );
 
 		size_t mapSize = 0;
 		RawSerialisation::ReadObject( mapSize, FileIn );
 
+		animAsset->m_Bones.reserve( mapSize );
+
 		for( size_t i = 0; i < mapSize; i++ )
 		{
-			AnimationBone ab;
-			ab.Name = RawSerialisation::ReadString( FileIn );
+			AnimationChannel ab;
+			RawSerialisation::ReadObject( ab.Index, FileIn );
 
 			size_t positions = 0;
 			RawSerialisation::ReadObject( positions, FileIn );
+			ab.Positions.reserve( positions );
+
 			for( size_t j = 0; j < positions; j++ )
 			{
 				glm::vec3 value{};
-				double ts = 0.0;
+				float ts = 0.0f;
 
 				RawSerialisation::ReadObject( value.x, FileIn );
 				RawSerialisation::ReadObject( value.y, FileIn );
@@ -1052,10 +1067,12 @@ namespace Saturn {
 
 			size_t rotations = 0;
 			RawSerialisation::ReadObject( rotations, FileIn );
+			ab.Rotations.reserve( rotations );
+
 			for( size_t j = 0; j < rotations; j++ )
 			{
 				glm::quat q{};
-				double ts = 0.0;
+				float ts = 0.0f;
 
 				RawSerialisation::ReadObject( q.w, FileIn );
 				RawSerialisation::ReadObject( q.x, FileIn );
@@ -1068,10 +1085,12 @@ namespace Saturn {
 
 			size_t scales = 0;
 			RawSerialisation::ReadObject( scales, FileIn );
+			ab.Scale.reserve( scales );
+
 			for( size_t j = 0; j < scales; j++ )
 			{
 				glm::vec3 value{};
-				double ts = 0.0;
+				float ts = 0.0f;
 
 				RawSerialisation::ReadObject( value.x, FileIn );
 				RawSerialisation::ReadObject( value.y, FileIn );
@@ -1084,6 +1103,8 @@ namespace Saturn {
 
 			animAsset->AddAnimBone( ab );
 		}
+
+		animAsset->Compress();
 
 		if( skeletonID )
 			AssetManager::Get().RegisterAssetDependency( animAsset->ID, skeletonID );

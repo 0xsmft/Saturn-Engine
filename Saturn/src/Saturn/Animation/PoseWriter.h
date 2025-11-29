@@ -46,19 +46,21 @@ namespace Saturn {
 
 		void RTM_SIMD_CALL write_rotation( uint32_t index, rtm::quatf_arg0 value )
 		{
-			SAT_CORE_ASSERT( index < 100 );
-			rtm::quat_store( value, glm::value_ptr( m_pPose->LocalTransforms[ index ].Rotation ) );
+			m_pPose->LocalTransforms[ index ].Rotation = glm::quat(
+				rtm::quat_get_w( value ),
+				rtm::quat_get_x( value ),
+				rtm::quat_get_y( value ),
+				rtm::quat_get_z( value )
+			);
 		}
 
 		void RTM_SIMD_CALL write_translation( uint32_t index, rtm::vector4f_arg0 value )
 		{
-			SAT_CORE_ASSERT( index < 100 );
 			rtm::vector_store3( value, glm::value_ptr( m_pPose->LocalTransforms[ index ].Position ) );
 		}
 
 		void RTM_SIMD_CALL write_scale( uint32_t index, rtm::vector4f_arg0 value ) 
 		{
-			SAT_CORE_ASSERT( index < 100 );
 			rtm::vector_store3( value, glm::value_ptr( m_pPose->LocalTransforms[ index ].Scale ) );
 		}
 

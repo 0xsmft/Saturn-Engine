@@ -38,6 +38,11 @@ namespace Saturn {
 	public:
 		struct FileCacheTime
 		{
+			FileCacheTime( int64_t ticks, int64_t time )
+				: Ticks( ticks ), Time( time )
+			{
+			}
+
 			// C# DateTime.Ticks
 			int64_t Ticks;
 

@@ -29,9 +29,10 @@
 #include "sppch.h"
 #include "FileCache.h"
 
-#include "Saturn/Serialisation/RawSerialisation.h"
+#include "Saturn/Serialisation/Raw/RawSerialisation.h"
 
 #include <glm/glm.hpp>
+#include <iostream>
 
 namespace Saturn {
 
@@ -47,8 +48,11 @@ namespace Saturn {
 
 	void FileCache::Load()
 	{
-		if( !std::filesystem::exists( m_Location ) )
+		if( !std::filesystem::exists( m_Location ) ) 
+		{
+			std::cout << "Filecache at location: " << m_Location << " does not exist!\n";
 			return;
+		}
 
 		std::ifstream stream( m_Location, std::ios::binary | std::ios::in );
 
@@ -74,14 +78,8 @@ namespace Saturn {
 			std::string key;
 			key = RawSerialisation::ReadString( stream );
 
-			int64_t ticks = 0;
-			RawSerialisation::ReadObject( ticks, stream );
-		
-			int64_t time = 0;
-			RawSerialisation::ReadObject( time, stream );
-
-			FileCacheTime fileCacheTime{ .Ticks = ticks, .Time = time };
-			m_FilesInCache.emplace( key, fileCacheTime );
+			FileCacheTime time{ 0ll, 0ll };
+			m_FilesInCache.emplace( key, time );
 		}
 
 		stream.close();
@@ -122,38 +120,36 @@ namespace Saturn {
 
 			if( IsSourceFile( rFile ) )
 			{
-				auto fsLastWriteTime = std::filesystem::last_write_time( rFile );
+				const auto fsLastWriteTime = std::filesystem::last_write_time( rFile );
 
-				auto systemClock = std::chrono::clock_cast< std::chrono::system_clock >( fsLastWriteTime );
-				auto systemTime = std::chrono::duration_cast<std::chrono::milliseconds>( systemClock.time_since_epoch() ).count();
+				const auto systemClock = std::chrono::clock_cast< std::chrono::system_clock >( fsLastWriteTime );
+				const auto systemTime = std::chrono::duration_cast< std::chrono::milliseconds >( systemClock.time_since_epoch() ).count();
 
 				if( time.Time != systemTime )
 				{
 					std::filesystem::path headerPath = rFile;
 					headerPath.replace_extension( ".h" );
 
-					auto Itr = std::find( files.begin(), files.end(), headerPath );
-
+					const auto Itr = std::find( files.begin(), files.end(), headerPath );
 					if( Itr == files.end() )
 					{
 						files.push_back( headerPath );
 					}
 				}
 			}
-			else if( IsCppFile(rFile) )
+			else if( IsCppFile( rFile ) )
 			{
 				// If its a still a cpp file then its most likely a header file
 				// So try to find the source counterpart and add it to the cache
 	
-				auto fsLastWriteTime = std::filesystem::last_write_time( rFile );
+				const auto fsLastWriteTime = std::filesystem::last_write_time( rFile );
 
-				auto systemClock = std::chrono::clock_cast< std::chrono::system_clock >( fsLastWriteTime );
-				auto systemTime = std::chrono::duration_cast< std::chrono::milliseconds >( systemClock.time_since_epoch() ).count();
+				const auto systemClock = std::chrono::clock_cast< std::chrono::system_clock >( fsLastWriteTime );
+				const auto systemTime = std::chrono::duration_cast< std::chrono::milliseconds >( systemClock.time_since_epoch() ).count();
 
 				if( time.Time != systemTime )
 				{
-					auto Itr = std::find( files.begin(), files.end(), rFile );
-
+					const auto Itr = std::find( files.begin(), files.end(), rFile );
 					if( Itr == files.end() )
 					{
 						files.push_back( rFile );

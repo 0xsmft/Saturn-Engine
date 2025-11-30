@@ -41,5 +41,5 @@ namespace Saturn {
 	SS_API Scene* g_ActiveScene = nullptr;
 	SS_API Scene* g_TemporaryScene = nullptr;
 
-	SS_API BinnedAllocator g_BinnedAllocator;
+	SS_API FBinnedAllocator g_BinnedAllocator;
 }

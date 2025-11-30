@@ -223,6 +223,30 @@ namespace Saturn {
 						}
 					}
 				}
+				else
+				{
+					SkelBoneItem* pBoneItem = dynamic_cast< SkelBoneItem* >( pSelectedNode->pItem );
+					if( pBoneItem )
+					{
+						const auto& rBoneTransform = m_SkeletalMesh->GetDefaultBoneTransforms()[ pBoneItem->BoneIndex ];
+
+						glm::mat4 offsetTransform = glm::mat4( 1.0f );
+						glm::mat4 ts = rBoneTransform;
+
+						ImGuizmo::SetOrthographic( false );
+						ImGuizmo::SetDrawlist();
+						ImGuizmo::SetRect( viewportPosition.x, viewportPosition.y, viewportSize.x, viewportSize.y );
+
+						ImGuizmo::Manipulate(
+							glm::value_ptr( m_Camera.ViewMatrix() ),
+							glm::value_ptr( m_Camera.ProjectionMatrix() ),
+							ImGuizmo::TRANSLATE,
+							ImGuizmo::LOCAL,
+							glm::value_ptr( ts ),
+							glm::value_ptr( offsetTransform )
+						);
+					}
+				}
 			}
 
 			ImGui::PopStyleVar();

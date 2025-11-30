@@ -52,18 +52,19 @@ namespace Saturn {
 
 		m_SkeletonAsset = AssetManager::Get().GetAssetAs<SkeletonAsset>( id );
 
-		m_BoneTree.resize( m_SkeletonAsset->GetBoneInfo().size() );
+		m_BoneTree.resize( m_SkeletonAsset->GetBoneNames().size() );
 
 		// Create tree from the bones
-		for( size_t i = 0; i < m_SkeletonAsset->GetBoneInfo().size(); ++i )
+		for( size_t i = 0; i < m_SkeletonAsset->GetBoneNames().size(); ++i )
 		{
 			SkelBoneItem* pBoneItem = new SkelBoneItem();
-			pBoneItem->pBone = ( SkeletalMeshBoneInfo* ) &m_SkeletonAsset->GetBoneInfo()[ i ];
+			pBoneItem->BoneIndex = i;
 			pBoneItem->Type = SkelItemType::Bone;
 
 			m_BoneTree[ i ] = new SkelItemNode( pBoneItem );
 
 			// Add bone joint if the bone has one.
+			/*
 			if( auto* pBone = m_SkeletonAsset->FindBoneJoint( pBoneItem->pBone->BoneName ) )
 			{
 				SkelAttachmentPoint* pAttachmentPoint = new SkelAttachmentPoint();
@@ -75,20 +76,20 @@ namespace Saturn {
 
 				m_BoneTree[ i ]->Children.push_back( pNode );
 			}
+			*/
 		}
 
-		for( size_t i = 0; i < m_SkeletonAsset->GetBoneInfo().size(); ++i )
+		for( size_t i = 0; i < m_SkeletonAsset->GetBoneNames().size(); ++i )
 		{
-			const int parentIndex = m_SkeletonAsset->GetBoneInfo()[ i ].ParentIndex;
-
-			if( parentIndex >= 0 && parentIndex < ( int ) m_BoneTree.size() )
+			const int parentIndex = m_SkeletonAsset->GetParentIndex( i );
+			if( parentIndex == ~0u )
 			{
-				m_BoneTree[ parentIndex ]->Children.push_back( m_BoneTree[ i ] );
-				m_BoneTree[ i ]->pParent = m_BoneTree[ parentIndex ];
+				m_BoneTreeRoots.push_back( m_BoneTree[ i ] );
 			}
 			else
 			{
-				m_BoneTreeRoots.push_back( m_BoneTree[ i ] );
+				m_BoneTree[ parentIndex ]->Children.push_back( m_BoneTree[ i ] );
+				m_BoneTree[ i ]->pParent = m_BoneTree[ parentIndex ];
 			}
 		}
 	}
@@ -107,6 +108,50 @@ namespace Saturn {
 	SkeletonBoneHierarchyPanel::~SkeletonBoneHierarchyPanel()
 	{
 		ClearTree();
+	}
+
+	void SkeletonBoneHierarchyPanel::OnImGuiRender()
+	{
+		if( ImGui::Begin( m_Name.c_str(), &m_Open ) )
+		{
+			for( auto* pBone : m_BoneTreeRoots )
+			{
+				DisplayBoneHierarchy( pBone );
+			}
+
+			if( ImGui::IsMouseDown( 0 ) && ImGui::IsWindowHovered() )
+			{
+				m_pSelectedBone = nullptr;
+			}
+
+			if( ImGui::BeginPopupContextWindow( 0, ImGuiPopupFlags_MouseButtonRight ) )
+			{
+				if( m_pSelectedBone )
+				{
+					switch( m_pSelectedBone->pItem->Type )
+					{
+						case SkelItemType::Bone:
+						{
+							DrawContextOptionsBone();
+						} break;
+
+						case SkelItemType::AttachmentPoint:
+						{
+							DrawContextOptionsAP();
+						} break;
+
+						default:
+							break;
+					}
+				}
+
+				ImGui::EndPopup();
+			}
+
+			DrawInspector();
+
+			ImGui::End();
+		}
 	}
 
 	void SkeletonBoneHierarchyPanel::DrawInspector()
@@ -138,11 +183,7 @@ namespace Saturn {
 		if( pBoneItem )
 		{
 			ImGui::BeginHorizontal( ( void* ) pBoneItem );
-			ImGui::Text( "Bone Name" );
-			{
-				Auxiliary::ScopedDisabledFlag disabled( true );
-				Auxiliary::InputText( "##boneName", &pBoneItem->pBone->BoneName, ImGuiInputTextFlags_ReadOnly );
-			}
+			ImGui::Text( "Bone Name: %s", m_SkeletonAsset->GetBoneName( pBoneItem->BoneIndex ) );
 			ImGui::EndHorizontal();
 		}
 	}
@@ -183,6 +224,7 @@ namespace Saturn {
 			const SkelBoneItem* pBoneItem = dynamic_cast< const SkelBoneItem* >( m_pSelectedBone->pItem );
 			if( pBoneItem )
 			{
+				/*
 				auto& rBone = m_SkeletonAsset->AddNewBoneJoint( pBoneItem->pBone->BoneName, "New Attachment" );
 
 				SkelAttachmentPoint* pAttachmentPoint = new SkelAttachmentPoint();
@@ -193,6 +235,7 @@ namespace Saturn {
 				pNode->pParent = m_pSelectedBone;
 
 				m_pSelectedBone->Children.push_back( pNode );
+				*/
 			}
 		}
 	}
@@ -223,53 +266,9 @@ namespace Saturn {
 		}
 	}
 
-	void SkeletonBoneHierarchyPanel::OnImGuiRender()
-	{
-		if( ImGui::Begin( m_Name.c_str(), &m_Open ) )
-		{
-			for( auto* pBone : m_BoneTreeRoots )
-			{
-				DisplayBoneHierarchy( pBone );
-			}
-
-			if( ImGui::IsMouseDown( 0 ) && ImGui::IsWindowHovered() )
-			{
-				m_pSelectedBone = nullptr;
-			}
-
-			if( ImGui::BeginPopupContextWindow( 0, ImGuiPopupFlags_MouseButtonRight ) )
-			{
-				if( m_pSelectedBone )
-				{
-					switch( m_pSelectedBone->pItem->Type )
-					{
-						case SkelItemType::Bone:
-						{
-							DrawContextOptionsBone();
-						} break;
-
-						case SkelItemType::AttachmentPoint: 
-						{
-							DrawContextOptionsAP();
-						} break;
-
-						default:
-							break;
-					}
-				}
-
-				ImGui::EndPopup();
-			}
-
-			DrawInspector();
-
-			ImGui::End();
-		}
-	}
-
 	void SkeletonBoneHierarchyPanel::DisplayBoneHierarchy( SkelItemNode* pBoneNode, int level /*= 0 */ )
 	{
-		ImGuiTreeNodeFlags flags = ( m_pSelectedBone == pBoneNode ? ImGuiTreeNodeFlags_Selected : 0 ) | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_FramePadding;
+		ImGuiTreeNodeFlags flags = ( m_pSelectedBone == pBoneNode ? ImGuiTreeNodeFlags_Selected : 0 ) | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_OpenOnArrow;
 
 		if( level == 0 )
 			flags |= ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed;
@@ -282,7 +281,8 @@ namespace Saturn {
 				SkelBoneItem* pBoneItem = dynamic_cast< SkelBoneItem* >( pBoneNode->pItem );
 				if( pBoneItem )
 				{
-					clicked = ImGui::TreeNodeEx( ( void* ) &pBoneNode->pItem, flags, pBoneItem->pBone->BoneName.c_str() );
+					const auto& rBoneName = m_SkeletonAsset->GetBoneName( pBoneItem->BoneIndex );
+					clicked = ImGui::TreeNodeEx( ( void* ) &pBoneNode->pItem, flags, rBoneName.c_str() );
 				}
 			} break;
 

@@ -54,6 +54,9 @@ namespace Saturn {
 		m_SkeletalMesh = nullptr;
 		m_SingleAnimationAsset = nullptr;
 		m_AnimationControllerAsset = nullptr;
+
+		m_Context.reset();
+
 		delete m_pOutPose;
 	}
 
@@ -117,7 +120,7 @@ namespace Saturn {
 				m_Context.seek( sampleTiming, acl::sample_rounding_policy::none );
 				m_Context.decompress_tracks( m_Writer );
 
-				m_pOutPose->Length = m_SingleAnimationAsset->GetDuration();
+				m_pOutPose->Timestamp = m_SingleAnimationAsset->GetDuration();
 				m_pOutPose->Duration = m_AnimationTime;
 			} break;
 		}

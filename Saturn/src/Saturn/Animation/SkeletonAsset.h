@@ -41,24 +41,11 @@ struct aiScene;
 
 namespace Saturn {
 
-	struct SkeletalMeshBoneInfo;
-	class Submesh;
-	class BoneJoint;
-
-	enum class SkeletonAssetVersion 
-	{
-		// Engine version: Alpha 0.2.3
-		BeforeVersionWasAdded,
-		// List of compatible meshes that can use a skeleton, introduced in Alpha 0.2.3
-		CompatibilityInformationForMeshes,
-		AttachmentPoints,
-
-		//^^^ only add new versions above here....
-		Latest,
-		Lowest = BeforeVersionWasAdded
-	};
-
 	class SkeletonAsset;
+
+	//
+	// Helper class to build the hierarchy of a skeleton.
+	//
 	class SkeletonBoneHierarchy 
 	{
 	public:
@@ -73,9 +60,32 @@ namespace Saturn {
 	private:
 		std::set<std::string> m_Names;
 		bool m_Append = false;
+
 		const aiScene* m_pScene = nullptr;
+
+		// Use raw pointer here, no need for us to really hold a smart pointer reference.
 		SkeletonAsset* m_pSkeleton = nullptr;
 	};
+
+	enum class SkeletonAssetVersion
+	{
+		// Engine version: Alpha 0.2.3
+		BeforeVersionWasAdded,
+		
+		// List of compatible meshes that can use a skeleton, introduced in Alpha 0.2.3
+		CompatibilityInformationForMeshes,
+
+		// AttachmentPoints (BoneJoints)
+		AttachmentPoints,
+
+		//^^^ only add new versions above here....
+		Latest,
+		Lowest = BeforeVersionWasAdded
+	};
+
+	struct SkeletalMeshBoneInfo;
+	class Submesh;
+	class BoneJoint;
 
 	class SkeletonAsset : public Asset
 	{
@@ -93,18 +103,22 @@ namespace Saturn {
 
 		BoneJoint& AddNewBoneJoint( const std::string& rBoneName, const std::string& rName );
 
+		// INTERNAL, Adds a bone to the skeleton.
 		uint64_t SkAddBone( const std::string& rName, uint32_t parentIndex, const glm::mat4& rTransform );
 
 	public:
 		[[nodiscard]] uint32_t FindBoneIndex( const std::string& rName );
 
+		// 
+		// @brief Returns the bone name of the specified bone at an index.
+		// 
+		// @note Asserts on invalid index.
+		// 
 		const std::string& GetBoneName( uint64_t index ) 
 		{
 			SAT_CORE_ASSERT( index < m_BoneNames.size() );
 			return m_BoneNames[ index ];
 		}
-
-		[[nodiscard]] SkeletonAssetVersion GetLocalVersion() const { return m_LocalVersion; }
 
 		BoneJoint* FindBoneJoint( const std::string& rBoneName );
 		const BoneJoint* FindBoneJoint( const std::string& rBoneName ) const;
@@ -114,31 +128,60 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		const std::vector<AssetID>& GetCompatibleMeshes() const { return m_CompatibleMeshes; }
 #endif
+		[[nodiscard]] SkeletonAssetVersion GetLocalVersion() const { return m_LocalVersion; }
 
 		std::vector<uint64_t>& GetParentIndices() { return m_ParentBoneIndices; }
 
+		// 
+		// @brief Returns the parent index of the specified bone at an index.
+		// 
+		// @note Asserts on invalid index.
+		// 
 		uint64_t GetParentIndex( uint32_t index ) { SAT_CORE_ASSERT( index < m_ParentBoneIndices.size() ); return m_ParentBoneIndices[ index ]; }
 
 		const std::vector<BoneJoint>& GetBoneJoints() const { return m_BoneJoints; }
 		std::vector<BoneJoint>& GetBoneJoints() { return m_BoneJoints; }
 
 		std::vector<std::string>& GetBoneNames() { return m_BoneNames; }
+
+		// 
+		// All bone positions are in bone space.
+		// 
 		std::vector<glm::vec3>& GetBonePositions() { return m_BonePositions; }
+
+		// 
+		// All bone rotations are in bone space. Rotations are returned as a quaternion.
+		// 
 		std::vector<glm::quat>& GetBoneRotations() { return m_BoneRotations; }
+		
+		// 
+		// All bone scales are in bone space.
+		// 
 		std::vector<glm::vec3>& GetBoneScales() { return m_BoneScales; }
 
+		//
+		// The global transform for this skeleton.
+		//
 		const glm::mat4& GetTransform() const { return m_Transform; }
 
+		void ClearAll();
+		
+	public:
 		// TODO: We don't want to expose this function publicly.
 		void PortToNewestVersion() { m_LocalVersion = SkeletonAssetVersion::Latest; }
-
-		void ClearAll();
 
 	private:
 		SkeletonAssetVersion m_LocalVersion = SkeletonAssetVersion::Lowest;
 
 		std::vector<SkeletalMeshBoneInfo> m_BoneInfos;
 
+		// Linear map of bone parent indices
+		// Will look like
+		// 0 : ~0u
+		// 1 : 0
+		// 2 : 0
+		// 3 : 1
+		// ...
 		std::vector<uint64_t> m_ParentBoneIndices;
 		std::vector<std::string> m_BoneNames;
 
@@ -147,8 +190,10 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		std::vector<AssetID> m_CompatibleMeshes;
 #endif
+
 		std::vector<BoneJoint> m_BoneJoints;
 		
+		// In bone space, each local to the bone it self.
 		std::vector<glm::vec3> m_BonePositions;
 		std::vector<glm::quat> m_BoneRotations;
 		std::vector<glm::vec3> m_BoneScales;

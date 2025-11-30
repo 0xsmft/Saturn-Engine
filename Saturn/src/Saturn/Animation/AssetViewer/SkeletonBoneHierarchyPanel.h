@@ -53,7 +53,7 @@ namespace Saturn {
 	public:
 		virtual ~SkelBoneItem() = default;
 
-		SkeletalMeshBoneInfo* pBone = nullptr;
+		uint32_t BoneIndex = ~0u;
 	};
 
 	class SkelAttachmentPoint : public SkelItem

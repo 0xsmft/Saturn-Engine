@@ -58,7 +58,7 @@ namespace Saturn {
 		bool m_ShowCompatibleMeshes = true;
 		// NOTE: This is different from m_DisableViewportMovement
 		// We have a separate bool because our main window is not usually docked, 
-		// so when we use our gimzo, we want to disable movement from our main window.
+		// so when we use our gizmo, we want to disable movement from our main window.
 		// We need m_DisableViewportMovement because in a rare case our main window may be docked or the viewport window may be undocked from the main window, we'd want to do the same with our viewport window.
 		bool m_DisableWindowMovement = false;
 		UUID m_TemporaryCompatibleMeshID = 0;

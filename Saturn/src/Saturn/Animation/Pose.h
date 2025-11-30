@@ -51,7 +51,7 @@ namespace Saturn {
 		AnimatorLocalTransfrom RootMotion;
 		std::array<AnimatorLocalTransfrom, 100 /*SK_MAX_BONES*/> LocalTransforms;
 		float Duration = 0.0f;
-		float Length = 0.0f;
+		float Timestamp = 0.0f;
 		// Number of bones
 		uint32_t BonesUsed = 0u;
 	};

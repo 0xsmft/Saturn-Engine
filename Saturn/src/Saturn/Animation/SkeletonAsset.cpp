@@ -92,6 +92,15 @@ namespace Auxiliary {
 		const std::string boneName( pNode->mName.C_Str() );
 		if( m_Names.find( boneName ) != m_Names.end() )
 		{
+			/*
+			aiNode* pParent = pNode->mParent;
+			while( pParent != nullptr )
+			{
+				pParent->mTransformation = aiMatrix4x4();
+				pParent = pParent->mParent;
+			}
+			*/
+
 			m_pSkeleton->SetTransform( rTransform );
 			BuildHierarchyBone( pNode, ~0u );
 		}
@@ -232,7 +241,7 @@ namespace Auxiliary {
 
 	uint32_t SkeletonAsset::FindBoneIndex( const std::string& rName )
 	{
-		for( size_t i = 0; i < m_BoneNames.size(); i++ )
+		for( size_t i = 0; i < m_BoneNames.size(); ++i )
 		{
 			if( m_BoneNames[ i ] == rName )
 			{
@@ -240,7 +249,7 @@ namespace Auxiliary {
 			}
 		}
 
-		return ~0;
+		return ~0u;
 	}
 
 	BoneJoint* SkeletonAsset::FindBoneJoint( const std::string& rBoneName )

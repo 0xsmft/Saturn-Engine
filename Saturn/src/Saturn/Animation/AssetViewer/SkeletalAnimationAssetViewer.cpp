@@ -49,11 +49,11 @@ namespace Saturn {
 	{
 		m_AssetType = AssetType::SkeletalAnimation;
 
-		ImportMeshAndAnimation();
-		m_Name = std::format( "{0}##{1}", m_Asset->Name, ( uint64_t ) m_AssetID );
-
 		Initialise();
 		SetViewportWindowID( m_AssetID );
+
+		ImportMeshAndAnimation();
+		m_Name = std::format( "{0}##{1}", m_Asset->Name, ( uint64_t ) m_AssetID );
 	}
 
 	SkeletalAnimationAssetViewer::~SkeletalAnimationAssetViewer()
@@ -127,7 +127,9 @@ namespace Saturn {
 
 		if( m_Open == false )
 		{
-			m_Open = false;
+			m_Asset->PortToNewestVersion();
+			SkeletalAnimationAssetSerialiser skAnimSerialiser;
+			skAnimSerialiser.Serialise( m_Asset );
 
 			RenderThread::Get().Queue( [ = ]()
 			{

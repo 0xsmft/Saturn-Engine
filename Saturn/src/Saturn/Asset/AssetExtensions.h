@@ -28,45 +28,27 @@
 
 #pragma once
 
-#include "Saturn/Asset/Asset.h"
+#include <string>
 
 namespace Saturn {
 
-	struct SoundDecodedInformation
-	{
-		// Audio Format, see: ma_format
-		int Format = 0;
-		uint32_t Channels = 0;
-		uint32_t SampleRate = 0;
-		uint64_t BytesPerFrame = 0;
-		uint64_t PCMFrameCount = 0;
-
-		Buffer PCMFrames;
-	};
-
-	class SoundSpecification : public Asset
+	class AssetExtensions
 	{
 	public:
-		SoundSpecification() = default;
-		SoundSpecification( const Ref<Asset>& rBase ) 
-			: Asset( rBase )
+		static bool IsTexture( const std::string& rPathExt ) 
 		{
+			return rPathExt == ".png" || rPathExt == ".tga" || rPathExt == ".jpeg" || rPathExt == ".jpg";
 		}
 
-		virtual void OnDelete() 
+		static bool IsAudio( const std::string& rPathExt )
 		{
-			if( std::filesystem::exists( SoundSourcePath ) )
-				std::filesystem::remove( SoundSourcePath );
+			return rPathExt == ".mp3" || rPathExt == ".wav" || rPathExt == ".ogg";
 		}
 
-		std::filesystem::path SoundSourcePath;
-		std::filesystem::path OriginalImportPath;
-
-#if defined(SAT_DIST)
-		SoundDecodedInformation DecodedInformation;
-#else
-		// Stored as YYYY-MM-DD
-		std::string LastWriteTime;
-#endif
+		static bool IsModel( const std::string& rPathExt )
+		{
+			return rPathExt == ".fbx" || rPathExt == ".obj" || rPathExt == ".gltf";
+		}
 	};
+	
 }

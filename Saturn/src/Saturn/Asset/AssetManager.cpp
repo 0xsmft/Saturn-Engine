@@ -79,6 +79,9 @@ namespace Saturn {
 
 	void AssetManager::RemoveAsset( AssetID id )
 	{
+		if( IsAssetLoaded( id ) )
+			m_Assets->m_LoadedAssets[ id ]->OnDelete();
+
 		m_Assets->RemoveAsset( id );
 		Save();
 	}

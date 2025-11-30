@@ -248,6 +248,11 @@ namespace Saturn {
 		// If you want to set a relative path just modify the 'Path' variable directly and update the name accordingly.
 		void SetAbsolutePath( const std::filesystem::path& rPath );
 
+		// Called when this asset is about to be deleted,
+		// use this if this asset needs to clean up before its deleted,
+		// for example, any type of mesh needs to also delete its source file or for sounds they need to do the same.
+		virtual void OnDelete() {}
+
 	public:
 		//////////////////////////////////////////////////////////////////////////
 		// #WARNING This should not be confused with AssetSerialisers. This is for raw binary serialisation! (see: AssetBundle)

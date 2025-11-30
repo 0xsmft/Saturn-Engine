@@ -402,7 +402,7 @@ namespace Saturn {
 	void Sound::SetPitchByPercent( float percent )
 	{
 		// If percent was 3.5 multiplier should be 1.035 and if percent was -3.5 then multiplier should be 0.965
-		float multiplier = ( percent >= 0.0f ) 
+		const float multiplier = ( percent >= 0.0f ) 
 			? 1.0f + ( glm::abs( percent ) / 100.0f ) 
 			: 1.0f - ( glm::abs( percent ) / 100.0f );
 

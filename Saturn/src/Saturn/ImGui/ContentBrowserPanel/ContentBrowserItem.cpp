@@ -550,18 +550,18 @@ namespace Saturn {
 		}
 		else
 		{
+			/*
 			if( AssetManager::Get().DoesAssetHaveDependencies( m_Asset ) )
 			{
 				return false;
 			}
+			*/
 
-			const auto relativePath = std::filesystem::relative( m_Path, Project::GetActiveProject()->GetRootDir() );
-			Ref<Asset> asset = AssetManager::Get().FindAsset( relativePath );
-
-			if( asset )
-				AssetManager::Get().RemoveAsset( asset->ID );
+			CloseAssetViewersBeforeDeletion();
+			AssetManager::Get().RemoveAsset( m_Asset->ID );
 		}
 
+		// Delete the file.
 		std::filesystem::remove( m_Path );
 
 		return true;
@@ -664,7 +664,7 @@ namespace Saturn {
 
 				// Align to the bottom of the item
 				const ImVec2 modifiedTopLeft = ImVec2( rTopLeft.x, rTopLeft.y + ( rThumbnailSize.y - scaledSize.y ) );
-				DrawIconInternal( modifiedTopLeft, rBottomRight, 256 );
+				DrawIconInternal( modifiedTopLeft, rBottomRight, 256 /* <- ImDrawFlags_RoundCornersNone */ );
 			}
 			else
 			{
@@ -685,6 +685,16 @@ namespace Saturn {
 			rTopLeft,
 			rBottomRight,
 			{ 0, 1 }, { 1, 0 }, IM_COL32_WHITE, 5.0f, drawFlags );
+	}
+
+	void ContentBrowserItem::CloseAssetViewersBeforeDeletion()
+	{
+		const std::string windowName = std::format( "{0}##{1}", m_Asset->Name, ( uint64_t ) m_Asset->ID );
+		Ref<ImGuiWindow> window = ImGuiWindowManager::Get().GetWindow<ImGuiWindow>( windowName );
+		if( window )
+		{
+			window->CloseWindow();
+		}
 	}
 
 }

@@ -260,10 +260,14 @@ namespace Saturn {
 				{
 					for( auto& rItem : m_SelectedItems )
 					{
-						if( !rItem->Delete() ) 
+						if( AssetManager::Get().DoesAssetHaveDependencies( rItem->GetAsset() ) )
 						{
 							m_ItemToDelete = rItem;
 							m_ShowDeleteAssetPopup = true;
+						}
+						else
+						{
+							rItem->Delete();
 						}
 					}
 				}

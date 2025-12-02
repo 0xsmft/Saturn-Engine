@@ -448,6 +448,12 @@ namespace Saturn {
 				HandleSceneTravel( ( SceneTravelEvent& ) rEvent );
 			} break;
 
+			case EventType::CBOpenFile:
+			{
+				const auto& event = ( CBOpenFileEvent& ) rEvent;
+				HandleOpenFileCB( event.GetID() );
+			} break;
+
 			case EventType::SkylightEntityModified:
 			{
 				const SkylightEntityModifiedEvent& rSkylightEvent = ( SkylightEntityModifiedEvent& ) rEvent;
@@ -911,6 +917,29 @@ namespace Saturn {
 		OpenFileInRuntime( destinationID );
 	}
 
+	void EditorLayer::HandleOpenFileCB( UUID newSceneID )
+	{
+		if( g_ActiveScene->GetRuntimeState() == RuntimeState::Running || g_ActiveScene->GetRuntimeState() == RuntimeState::Suspended )
+		{
+			EndRuntime();
+
+			// Because the Runtime Scene self ended runtime, we must reset the mouse because normally we wouldn't
+			// as to end runtime via the Editor requires the mouse to be in an unlocked state.
+			// TODO: A better way to handle runtime, would be to create a OnRuntimeStart, OnRuntimeSuspend, OnRuntimeEnd events
+			Input::Get().SetCursorMode( RubyCursorMode::Normal, true );
+			m_RequestRuntime = false;
+		}
+
+		if( m_EditorScene->IsDirty() )
+		{
+			m_ShowSceneDirtyModal = true;
+			m_EventAfterPopup = [this, copyID = newSceneID]() { OpenFile( copyID ); };
+		}
+		else
+		{
+			OpenFile( newSceneID );
+		}
+	}
 	static bool s_OpenAssetFinderPopup = false;
 
 	void EditorLayer::DrawProjectSettingsWindow()
@@ -1744,7 +1773,7 @@ namespace Saturn {
 
 				if( ImGui::BeginItemTooltip() )
 				{
-					ImGui::Text( "Attempts to compile all shaders and bundles them all into one file.\nYou do not need to do this if your intent is to prepare the project for distribution as that option will build it for you.\nOnly build the Shader Bundle if there is a problem with your shaders." );
+					ImGui::Text( "Attempts to compile all shaders and bundles them all into one file.\nYou do not need to do this if you intend to prepare the project for distribution as that option will build it for you.\nOnly build the Shader Bundle if there is a problem with your shaders." );
 					ImGui::EndTooltip();
 				}
 
@@ -1838,7 +1867,7 @@ namespace Saturn {
 		{
 			if( ImGui::BeginMenu( "Runtime" ) )
 			{
-				auto runtimeState = m_RuntimeScene->GetRuntimeState();
+				const auto runtimeState = m_RuntimeScene->GetRuntimeState();
 
 				// Play
 				{
@@ -1847,7 +1876,7 @@ namespace Saturn {
 
 					if( ImGui::BeginItemTooltip() )
 					{
-						ImGui::Text( "Can not start a new runtime while the scene is already in runtime." );
+						ImGui::Text( "Cannot start a new runtime while the scene is already in runtime." );
 #if defined(SAT_DEBUG)
 						ImGui::Text( "%s", m_RequestRuntime ? "RUNTIME RUNNING" : "RUNTIME NOT RUNNING" );
 #endif
@@ -1856,7 +1885,7 @@ namespace Saturn {
 				}
 
 				// Stop
-				if( ImGui::MenuItem( "Stop" ) ) m_RequestRuntime = false;
+				if( ImGui::MenuItem( "Stop", "F5" ) ) m_RequestRuntime = false;
 
 				if( ImGui::BeginItemTooltip() )
 				{
@@ -2075,8 +2104,7 @@ namespace Saturn {
 					{
 						for( const MemoryAssetDependencyBase* pBase : rDependency )
 						{
-							ImGui::Text( "ADB/Base" );
-							ImGui::Text( "0x%p", ( void* ) pBase );
+							ImGui::Text( "Address 0x%p", ( void* ) pBase );
 						}
 
 						Auxiliary::EndTreeNode();
@@ -2146,7 +2174,8 @@ namespace Saturn {
 				m_ShowSceneDirtyModal = false;
 				ImGui::CloseCurrentPopup();
 
-				Application::Get().Close();
+				if( m_EventAfterPopup )
+					m_EventAfterPopup();
 			}
 
 			ImGui::Spring();
@@ -2156,7 +2185,8 @@ namespace Saturn {
 				m_ShowSceneDirtyModal = false;
 				ImGui::CloseCurrentPopup();
 
-				Application::Get().Close();
+				if( m_EventAfterPopup )
+					m_EventAfterPopup();
 			}
 
 			ImGui::Spring();
@@ -2198,7 +2228,7 @@ namespace Saturn {
 
 			ImGui::BeginHorizontal( "##ItemsH" );
 
-			ImSpinner::SpinnerAng( "##OPERATION_SPINNER", 25.0f / 2.0f, 2.0f, ImSpinner::white, ImSpinner::half_white, 8.6F );
+			ImSpinner::SpinnerAng( "##OPERATION_SPINNER", 25.0f * 0.5F, 2.0f, ImSpinner::white, ImSpinner::half_white, 8.6F );
 
 			ImGui::Spring();
 
@@ -2231,7 +2261,6 @@ namespace Saturn {
 			m_ViewportSize = ImGui::GetContentRegionAvail();
 
 			m_SceneRenderer->SetViewportSize( ( uint32_t ) m_ViewportSize.x, ( uint32_t ) m_ViewportSize.y );
-			Renderer2D::Get().SetViewportSize( ( uint32_t ) m_ViewportSize.x, ( uint32_t ) m_ViewportSize.y );
 			m_EditorCamera.SetViewportSize( ( uint32_t ) m_ViewportSize.x, ( uint32_t ) m_ViewportSize.y );
 			m_SuspendedEditorCamera.SetViewportSize( ( uint32_t ) m_ViewportSize.x, ( uint32_t ) m_ViewportSize.y );
 		}
@@ -2246,7 +2275,7 @@ namespace Saturn {
 			if( auto payload = ImGui::AcceptDragDropPayload( "CONTENT_BROWSER_ITEM_SCENE" ) )
 			{
 				const UUID* pUUID = ( const UUID* ) payload->Data;
-				OpenFile( *pUUID );
+				HandleOpenFileCB( *pUUID );
 			}
 
 			if( auto payload = ImGui::AcceptDragDropPayload( "CONTENT_BROWSER_ITEM_PREFAB" ) )
@@ -2703,6 +2732,8 @@ namespace Saturn {
 		if( m_EditorScene->IsDirty() )
 		{
 			m_ShowSceneDirtyModal = true;
+			m_EventAfterPopup = []() { Application::Get().Close(); };
+
 			ImGui::OpenPopup( "SceneDirtyPopup" );
 
 			Application::Get().GetWindow()->FlashAttention();
@@ -2745,7 +2776,7 @@ namespace Saturn {
 
 			if( ( rInfo.Buttons & ( uint32_t )MessageBoxButtons_Ok ) != 0 )
 			{
-				if( buttonIndex > 0 ) { ImGui::Spring(); buttonIndex++; }
+				if( buttonIndex > 0 ) { ImGui::Spring(); ++buttonIndex; }
 
 				if( ImGui::Button( "OK" ) )
 				{
@@ -2756,7 +2787,7 @@ namespace Saturn {
 
 			if( ( rInfo.Buttons & ( uint32_t ) MessageBoxButtons_Cancel ) != 0 )
 			{
-				if( buttonIndex > 0 ) { ImGui::Spring(); buttonIndex++; }
+				if( buttonIndex > 0 ) { ImGui::Spring(); ++buttonIndex; }
 
 				if( ImGui::Button( "Cancel" ) )
 				{
@@ -2767,7 +2798,7 @@ namespace Saturn {
 			
 			if( ( rInfo.Buttons & ( uint32_t ) MessageBoxButtons_Exit ) != 0 )
 			{
-				if( buttonIndex > 0 ) { ImGui::Spring(); buttonIndex++; }
+				if( buttonIndex > 0 ) { ImGui::Spring(); ++buttonIndex; }
 
 				if( ImGui::Button( "Exit" ) )
 				{
@@ -2778,7 +2809,7 @@ namespace Saturn {
 
 			if( ( rInfo.Buttons & ( uint32_t ) MessageBoxButtons_Yes ) != 0 )
 			{
-				if( buttonIndex > 0 ) { ImGui::Spring(); buttonIndex++; }
+				if( buttonIndex > 0 ) { ImGui::Spring(); ++buttonIndex; }
 
 				if( ImGui::Button( "Yes" ) )
 				{
@@ -2789,7 +2820,7 @@ namespace Saturn {
 
 			if( ( rInfo.Buttons & ( uint32_t ) MessageBoxButtons_No ) != 0 )
 			{
-				if( buttonIndex > 0 ) { ImGui::Spring(); buttonIndex++; }
+				if( buttonIndex > 0 ) { ImGui::Spring(); ++buttonIndex; }
 
 				if( ImGui::Button( "No" ) )
 				{
@@ -2825,7 +2856,7 @@ namespace Saturn {
 				ImGui::SameLine();
 				if( ImGui::Button( "..." ) )
 				{
-					path = Application::Get().OpenFile( L"Application|*.exe;" );
+					path = Application::Get().OpenFile( L"Application|*.exe" );
 				}
 
 				if( !path.empty() )

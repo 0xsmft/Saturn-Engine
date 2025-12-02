@@ -86,8 +86,10 @@ namespace Saturn {
 			return ImportAssetAs<Ty>( m_Assets, id );
 		}
 
-		// WARNING: THIS WILL PERMANENTLY REMOVE THE ASSET FROM THE REGISTRY!
+		// WARNING: THIS WILL PERMANENTLY REMOVE THE ASSET FROM THE REGISTRY REGARDLESS OF ASSET DEPENDENCIES!
 		void RemoveAsset( AssetID id );
+
+		void UpdateAssetDependency( AssetID assetID, AssetID oldDepID, AssetID newDepID );
 
 		void UnloadAsset( AssetID id )
 		{
@@ -149,6 +151,10 @@ namespace Saturn {
 		void UnregisterAllAssetDependencies( AssetID assetID );
 		bool CheckPureAssetDependencies( Ref<Asset> asset );
 
+		// Works on Pure dependencies (asset interdependence) only!
+		// Checks if the asset that this dependency needs/is, still exists in the Registry.
+		void SanitiseAssetDependencies();
+
 		const std::unordered_map<AssetID, std::unordered_set<AssetID>> GetPureAssetDependencies() const;
 		const std::unordered_set<AssetID> GetPureAssetDependenciesForAsset( const Ref<Asset> asset ) const;
 
@@ -184,7 +190,7 @@ namespace Saturn {
 		//                 AssetID                     WhatDependsOnMe
 		std::unordered_map<AssetID, std::unordered_set<MemoryAssetDependencyBase*>> m_MemoryAssetDependencies;
 
-		// Asset Dependency
+		// Asset Dependency (asset interdependence)
 		//                 AssetID                     WhatIDependOn
 		std::unordered_map<AssetID, std::unordered_set<AssetID>> m_AssetDependencies;
 

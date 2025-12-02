@@ -28,7 +28,7 @@
 
 // Game client main.
 /* Generated code, DO NOT modify! */
-// This files supports Saturn version 0.2.2 (8194)
+// This file supports Saturn version 0.2.2 (8194)
 
 #if defined(_WIN32)
 #include <Windows.h>
@@ -89,9 +89,6 @@ public:
 		}
 
 		Saturn::Renderer2D::Get().Init();
-
-		Saturn::SceneRendererFlags flags = Saturn::SceneRendererFlag_MasterInstance | Saturn::SceneRendererFlag_SwapchainTarget;
-		m_SceneRenderer = new Saturn::SceneRenderer( flags );
 	}
 
 	virtual void OnInit() override

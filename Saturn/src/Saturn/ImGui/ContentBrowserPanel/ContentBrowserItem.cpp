@@ -37,6 +37,8 @@
 
 #include "Saturn/Serialisation/YAML/AssetSerialisers.h"
 
+#include "Saturn/ImGui/EditorEvents.h"
+
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
 #include "Saturn/ImGui/ImGuiWindowManager.h"
 #include "Saturn/ImGui/PrefabViewer.h"
@@ -338,6 +340,11 @@ namespace Saturn {
 					} break;
 
 					case AssetType::Scene:
+					{
+						// Scenes have to handled via an event because this class does not have the ability to switch scenes.
+						Application::Get().DispatchEvent<CBOpenFileEvent>( m_Asset->ID );
+					} break;
+
 					case AssetType::Unknown:
 					case AssetType::COUNT:
 					default:

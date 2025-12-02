@@ -71,6 +71,7 @@ static inline EventCategory GetStaticCategory() { return EventCategory::Category
 		AssetReplaced,
 		EntitySelected,
 		EntityDeselected,
+		CBOpenFile,
 
 		//////////////////////////////////////////////////////////////////////////
 		// Runtime

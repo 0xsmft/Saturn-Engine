@@ -86,6 +86,15 @@ namespace Saturn {
 		Save();
 	}
 
+	void AssetManager::UpdateAssetDependency( AssetID assetID, AssetID oldDepID, AssetID newDepID )
+	{
+		if( IsAssetLoaded( assetID ) )
+		{
+			m_Assets->m_LoadedAssets[ assetID ]->OnAssetDependencyReplace( oldDepID, newDepID );
+			Save();
+		}
+	}
+
 	AssetID AssetManager::CreateAsset( AssetType type )
 	{
 		return m_Assets->CreateAsset( type );
@@ -157,6 +166,31 @@ namespace Saturn {
 		}
 
 		return false;
+	}
+
+	void AssetManager::SanitiseAssetDependencies()
+	{
+		for( auto& [assetID, deps] : m_AssetDependencies )
+		{
+			if( !AssetManager::Get().DoesAssetIDExist( assetID ) )
+			{
+				m_AssetDependencies.erase( assetID );
+			}
+			else
+			{
+				for( const auto& dependant : deps )
+				{
+					if( !AssetManager::Get().DoesAssetIDExist( dependant ) )
+					{
+						deps.erase( dependant );
+					}
+				}
+
+				// Remove from asset dependencies map if we no longer have dependencies.
+				if( deps.empty() )
+					m_AssetDependencies.erase( assetID );
+			}
+		}
 	}
 
 	void AssetManager::RegisterAssetDependency( AssetID assetID, AssetID dependencyID )

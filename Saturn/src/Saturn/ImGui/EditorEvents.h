@@ -156,4 +156,29 @@ namespace Saturn {
 	private:
 		std::vector<UUID> m_EntityIDs;
 	};
+
+	//
+	// CBOpenFileEvent (OpenSceneFile)
+	//
+	// This class is called OpenFile, as a nod to EditorLayer::OpenFile, in this case OpenFile will ALWAYS mean a Scene.
+	// 
+	// Triggers when a user double clicks on a Scene, in the content browser panel.
+	//
+	class CBOpenFileEvent : public Event
+	{
+		SAT_DEFINE_EVENT( CBOpenFile, EC_Editor );
+	public:
+		CBOpenFileEvent( UUID id )
+			: Event( EventType::CBOpenFile, EC_Editor ), m_AssetID( id )
+		{
+		}
+
+		virtual ~CBOpenFileEvent() = default;
+
+		const UUID GetID() const { return m_AssetID; }
+
+	private:
+		UUID m_AssetID;
+	};
+
 }

@@ -119,6 +119,11 @@ namespace Saturn {
 	
 	struct SkeletalMeshBoneInfo
 	{
+		// The real index of this bone.
+		// Bone Infos may be added to the skeleton in a different order than they should be from the DCC,
+		// This may happen because if we have sub-meshes a bone that would come before another bone now may be added after.
+		// To solve this BoneIndex provides the correct bone index into the Bone T,R,S and names map.
+		// So, this must be used when getting the bone transforms!
 		uint64_t BoneIndex = ~0u;
 
 		// The bones' transform in Bone space, i.e. bring the vertices to the bones transform, bind point.

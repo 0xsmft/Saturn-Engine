@@ -39,6 +39,7 @@
 #include "Saturn/Asset/AssetImporter.h"
 #include "Saturn/Asset/Prefab.h"
 #include "Saturn/Asset/AssetManager.h"
+#include "Saturn/Asset/AssetExtensions.h"
 
 #include "Saturn/AI/BehaviourTree/BehaviourTreeMemorySpecification.h"
 
@@ -169,12 +170,9 @@ namespace Saturn {
 		{
 			case CBViewMode::Assets: 
 			{
-				ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow;
-				flags |= ImGuiTreeNodeFlags_DefaultOpen;
-
 				ImGui::PushID( "PrjAssets" );
 
-				bool opened = ImGui::TreeNodeEx( "Assets##PrjAssets", flags );
+				bool opened = ImGui::TreeNodeEx( "Assets##PrjAssets", ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_DefaultOpen );
 
 				if( ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked( ImGuiMouseButton_Left ) )
 				{
@@ -197,13 +195,9 @@ namespace Saturn {
 
 			case CBViewMode::Scripts: 
 			{
-				ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow;
-
-				flags |= ImGuiTreeNodeFlags_DefaultOpen;
-
 				ImGui::PushID( "PrjScripts" );
 
-				bool opened = ImGui::TreeNodeEx( "Source##PrjScripts", flags );
+				bool opened = ImGui::TreeNodeEx( "Source##PrjScripts", ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_DefaultOpen );
 
 				if( ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked( ImGuiMouseButton_Left ) )
 				{
@@ -262,11 +256,14 @@ namespace Saturn {
 					{
 						if( AssetManager::Get().DoesAssetHaveDependencies( rItem->GetAsset() ) )
 						{
+							// Show popup...
 							m_ItemToDelete = rItem;
 							m_ShowDeleteAssetPopup = true;
 						}
 						else
 						{
+							// TODO: We may want to use an "Are you sure you want to delete this Asset?" popup, but maybe not
+							//       could be controlled from Engine Settings.
 							rItem->Delete();
 						}
 					}
@@ -320,44 +317,49 @@ namespace Saturn {
 			// Import externally.
 			if( ImGui::MenuItem( "Browse" ) )
 			{
-				const std::filesystem::path path = Application::Get().OpenFile( L"Supported asset types (*.fbx *.gltf *.glb *.png *.tga *.jpeg *.jpg *wav *.ogg *.mp3)|*.fbx; *.gltf; *.glb; *.png; *.tga; *.jpeg; *jpg; *.wav; *.ogg; *.mp3\0" );
+				const std::filesystem::path path = Application::Get().OpenFile( L"Supported asset types (*.fbx *.gltf *.glb *.png *.tga *.jpeg *.jpg *wav *.ogg *.mp3)|*.fbx; *.gltf; *.glb; *.png; *.tga; *.jpeg; *jpg; *.wav; *.ogg; *.mp3" );
 
-				std::string extensionLower = path.extension().string();;
-				std::transform( extensionLower.begin(), extensionLower.end(), extensionLower.begin(), ::tolower );
-
-				if( extensionLower == ".png" || extensionLower == ".tga" || extensionLower == ".jpeg" || extensionLower == ".jpg" )
+				if( !path.empty() )
 				{
-					auto id = AssetManager::Get().CreateAsset( AssetType::Texture );
-					auto asset = AssetManager::Get().FindAsset( id );
+					std::string extensionLower = path.extension().string();
+					std::transform( extensionLower.begin(), extensionLower.end(), extensionLower.begin(), ::tolower );
 
-					std::filesystem::copy_file( path, m_CurrentPath / path.filename() );
+					bool textureAssetImported = false;
+					if( AssetExtensions::IsTexture( extensionLower ) )
+					{
+						auto id = AssetManager::Get().CreateAsset( AssetType::Texture );
+						auto asset = AssetManager::Get().FindAsset( id );
 
-					asset->SetAbsolutePath( m_CurrentPath / path.filename() );
+						std::filesystem::copy_file( path, m_CurrentPath / path.filename() );
 
-					AssetManagerSerialiser ars;
-					ars.Serialise();
-				}
+						asset->SetAbsolutePath( m_CurrentPath / path.filename() );
 
-				// Meshes
-				// Even if the mesh we are going to import is animated i.e. has bones and/or animations until we properly confirm that it will default to a StaticMesh import modal
-				if( extensionLower == ".fbx" || extensionLower == ".gltf" || extensionLower == ".glb" )
-				{
-					m_CurrentImportPopup = std::make_unique<MeshImportPopup>( path, m_CurrentPath );
-					m_CurrentImportPopup->Initialise();
-				}
+						AssetManagerSerialiser ars;
+						ars.Serialise();
 
-				// Audio
-				if( extensionLower == ".wav" || extensionLower == ".mp3" || extensionLower == ".ogg" )
-				{
-					m_CurrentImportPopup = std::make_unique<SoundImportPopup>( path, m_CurrentPath );
-					m_CurrentImportPopup->Initialise();
-				}
+						textureAssetImported = true;
+					}
 
-				// Still no import popup? means that we have an unknown extension (file type).
-				if( !m_CurrentImportPopup )
-				{
-					m_CurrentImportPopup = std::make_unique<UnknownImportPopup>( path );
-					m_CurrentImportPopup->Initialise();
+					// Meshes
+					if( AssetExtensions::IsModel( extensionLower ) )
+					{
+						m_CurrentImportPopup = std::make_unique<MeshImportPopup>( path, m_CurrentPath );
+						m_CurrentImportPopup->Initialise();
+					}
+
+					// Audio
+					if( AssetExtensions::IsAudio( extensionLower ) )
+					{
+						m_CurrentImportPopup = std::make_unique<SoundImportPopup>( path, m_CurrentPath );
+						m_CurrentImportPopup->Initialise();
+					}
+
+					// Still no import popup? means that we have an unknown extension (file type).
+					if( !m_CurrentImportPopup && !textureAssetImported )
+					{
+						m_CurrentImportPopup = std::make_unique<UnknownImportPopup>( path );
+						m_CurrentImportPopup->Initialise();
+					}
 				}
 			}
 
@@ -1147,7 +1149,7 @@ namespace Saturn {
 					// Update asset (TODO)
 					for( AssetID assetID : rPureDependencies )
 					{
-
+						AssetManager::Get().UpdateAssetDependency( m_ItemToDelete->GetAssetID(), assetID, s_ID );
 					}
 
 					s_ID = 0;

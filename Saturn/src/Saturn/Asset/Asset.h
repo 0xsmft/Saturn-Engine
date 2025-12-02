@@ -225,7 +225,8 @@ namespace Saturn {
 	class Asset : public SObject
 	{
 	public:
-		// The relative path to this Asset
+		// The relative path to this Asset.
+		// Relative to the project root path, e.g. Assets/Textures/Floor.png
 		std::filesystem::path Path;
 		std::string Name;
 
@@ -252,6 +253,9 @@ namespace Saturn {
 		// use this if this asset needs to clean up before its deleted,
 		// for example, any type of mesh needs to also delete its source file or for sounds they need to do the same.
 		virtual void OnDelete() {}
+
+		// Called when an Asset Dependency needs to be replaced with a new ID.
+		virtual void OnAssetDependencyReplace( AssetID oldID, AssetID newID ) {}
 
 	public:
 		//////////////////////////////////////////////////////////////////////////

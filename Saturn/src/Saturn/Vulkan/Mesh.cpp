@@ -190,6 +190,10 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 		if( scene == nullptr || !scene->HasMeshes() )
 		{
 			SAT_CORE_ERROR( "Failed to load mesh file (does the file have meshes?): {0}", m_FilePath );
+			SAT_CORE_ERROR( "=== Debug Info ===" );
+			const std::string hex = std::format( "{:08X}", ( uintptr_t ) scene );
+			SAT_CORE_ERROR( " Scene Ptr=0x{0}", hex );
+			SAT_CORE_ERROR( "=== [END] ===" );
 			return;
 		}
 
@@ -475,14 +479,16 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 		if( scene == nullptr || !scene->HasMeshes() )
 		{
 			SAT_CORE_ERROR( "Failed to load mesh file (does the file have meshes?): {0}", m_FilePath );
+			SAT_CORE_ERROR( "=== Debug Info ===" );
+			const std::string hex = std::format( "{:08X}", ( uintptr_t ) scene );
+			SAT_CORE_ERROR( " Scene Ptr=0x{0}", hex );
+			SAT_CORE_ERROR( "=== [END] ===" );
 			return;
 		}
 
 		m_Scene = scene;
 
 		const glm::mat4 transform = Auxiliary::Mat4FromAssimpMat4( m_Scene->mRootNode->mTransformation );
-		const auto altYAxis = glm::rotate( glm::mat4( 1.0f ), glm::radians( 90.0f ), glm::vec3( 1.0f, 0.0f, 0.0f ) );
-
 		m_Transform = transform;
 		m_InverseTransform = glm::inverse( m_Transform );
 
@@ -1260,7 +1266,7 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 			}
 
 			double firstFrameDelta = DBL_MAX;
-			for( uint32_t boneIndex = 1; boneIndex < pAnimation->mNumChannels; ++boneIndex )
+			for( uint32_t boneIndex = 0; boneIndex < pAnimation->mNumChannels; ++boneIndex )
 			{
 				if( auto validChannel = validChannels.find( boneIndex ); validChannel != validChannels.end() )
 				{

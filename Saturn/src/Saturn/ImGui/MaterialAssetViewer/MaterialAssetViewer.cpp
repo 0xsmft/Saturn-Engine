@@ -46,6 +46,8 @@
 
 #include "Saturn/Project/Project.h"
 
+#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
+
 #include <imgui.h>
 #include <imgui_node_editor.h>
 #include <stack>
@@ -163,7 +165,7 @@ namespace Saturn {
 	void MaterialAssetViewer::SetupNewNodeEditor()
 	{
 		// Add material output node.
-		SharedPtr<MaterialOutputNode> OutputNode = SharedPtr<MaterialOutputNode>::Create();
+		SharedPtr<MaterialOutputNode> OutputNode = NewObject<MaterialOutputNode>();
 		m_NodeEditor->AddNode( OutputNode );
 
 		m_OutputNodeID = OutputNode->ID;

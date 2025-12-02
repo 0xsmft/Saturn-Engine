@@ -147,7 +147,7 @@ namespace Saturn {
 		if( assets.IsNull() )
 			return;
 
-		Ref<AssetRegistry>& rAssetRegistry = AssetManager::Get().GetAssetRegistry();
+		Ref<AssetRegistry> assetRegistry = AssetManager::Get().GetAssetRegistry();
 
 		bool differingAssetVersions = false;
 		for( auto asset : assets )
@@ -160,9 +160,9 @@ namespace Saturn {
 			// Fallback to newest version if no version is present.
 			auto version = asset[ "Version" ].as< uint32_t >( SAT_CURRENT_VERSION );
 
-			rAssetRegistry->AddAsset( assetID );
+			assetRegistry->AddAsset( assetID );
 
-			Ref<Asset> DeserialisedAsset = rAssetRegistry->FindAsset( assetID );
+			Ref<Asset> DeserialisedAsset = assetRegistry->FindAsset( assetID );
 
 #if defined(SAT_PLATFORM_WINDOWS)
 			std::wstring windowsPath = path.wstring();
@@ -196,23 +196,23 @@ namespace Saturn {
 			SAT_CORE_WARN( "In order to fix differing versions go to \"Project->Upgrade Assets\" in the editor title bar." );
 		}
 
-		auto assetDependencies = data[ "Asset Dependencies" ];
+		const auto assetDependencies = data[ "Asset Dependencies" ];
 		if( !assetDependencies.IsNull() )
 		{
-			for( auto assetDep : assetDependencies )
+			for( const auto assetDep : assetDependencies )
 			{
-				UUID depID = assetDep[ "AssetID" ].as< uint64_t >();
+				const UUID depID = assetDep[ "AssetID" ].as< uint64_t >();
 
-				auto deps = assetDep[ "Dependencies" ];
-
-				for( auto assetDep : deps )
+				const auto deps = assetDep[ "Dependencies" ];
+				for( const auto assetDep : deps )
 				{
-					UUID dependsOn = assetDep[ "Dependency" ].as< uint64_t >();
-
+					const UUID dependsOn = assetDep[ "Dependency" ].as< uint64_t >();
 					AssetManager::Get().RegisterAssetDependency( depID, dependsOn );
 				}
 			}
 		}
+
+		AssetManager::Get().SanitiseAssetDependencies();
 	}
 
 }

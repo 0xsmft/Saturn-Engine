@@ -255,9 +255,6 @@ namespace Saturn {
 	{
 		// use skeleton asset
 		// import animations
-
-		ImGui::Text( "DrawSkeletalMeshOptions..." );
-
 		ImGui::BeginHorizontal( "##importOption_skim" );
 
 		auto hasFlag = [ this ]( MeshImportBehaviour flag ) -> bool
@@ -405,7 +402,7 @@ namespace Saturn {
 		if( m_CurrentAssetIDForSkeleton )
 			m_ImportBehaviour |= MeshImportBehaviour_SK_MergeWithExistingSK;
 
-		SkeletalMeshImporter meshImporter( m_AssetToImportPath, m_DestinationPath, m_ImportBehaviour );
+		SkeletalMeshImporter meshImporter( m_AssetToImportPath, m_DestinationPath, m_ImportBehaviour, m_CurrentAssetIDForSkeleton );
 		meshImporter.TryImport();
 
 		//////////////////////////////////////////////////////////////////////////
@@ -421,7 +418,7 @@ namespace Saturn {
 			auto& meshPath = assetPath.replace_extension( m_AssetToImportPath.extension() );
 			skeletalMesh->SetFilepath( meshPath );
 			skeletalMesh->Import_InitMaterialRegistry();
-			skeletalMesh->Import_InitSkeleton( m_CurrentAssetIDForSkeleton == 0 ? meshImporter.GetCreatedID() : m_CurrentAssetIDForSkeleton );
+			skeletalMesh->Import_InitSkeleton( m_CurrentAssetIDForSkeleton == 0 ? meshImporter.GetCreatedSkeletonID() : m_CurrentAssetIDForSkeleton );
 
 			// TOOD: Unload the material assets!! (Textures could be loaded!)
 			for( uint64_t materialID : meshImporter.GetMeshInformation().MaterialAssets )
@@ -533,7 +530,7 @@ namespace Saturn {
 				auto assetPath = m_DestinationPath / m_AssetToImportPath.filename();
 
 				// Copy the audio source.
-				std::filesystem::copy_file( m_AssetToImportPath, assetPath );
+				std::filesystem::copy_file( m_AssetToImportPath, assetPath, std::filesystem::copy_options::overwrite_existing );
 
 				// Replace Extension for sound asset
 				assetPath.replace_extension( ".snd" );

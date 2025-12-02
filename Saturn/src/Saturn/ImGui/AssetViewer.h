@@ -45,6 +45,8 @@ namespace Saturn {
 		void MarkDirty() { m_Dirty = true; }
 		void MarkClean() { m_Dirty = false; }
 
+		AssetID GetAssetID() const { return m_AssetID; }
+
 	protected:
 		AssetID m_AssetID = 0;
 		AssetType m_AssetType = AssetType::Unknown;

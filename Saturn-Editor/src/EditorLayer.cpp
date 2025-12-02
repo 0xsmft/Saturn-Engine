@@ -56,13 +56,14 @@
 #include <Saturn/Core/Maths.h>
 #include <Saturn/Core/StringAuxiliary.h>
 #include <Saturn/Core/EngineSettings.h>
-#include <Saturn/Core/OptickProfiler.h>
+#include <Saturn/Core/Profiler.h>
 #include <Saturn/Core/Ruby/RubyWindow.h>
 #include <Saturn/Core/Ruby/RubyAuxiliary.h>
 #include <Saturn/Core/Process.h>
 #include <Saturn/Core/Renderer/RenderThread.h>
 #include <Saturn/Core/VirtualFS.h>
 #include <Saturn/Core/EnvironmentVariables.h>
+#include <Saturn/Core/AABB/Ray.h>
 
 #include <Saturn/Asset/AssetRegistry.h>
 #include <Saturn/Asset/AssetManager.h>
@@ -382,27 +383,31 @@ namespace Saturn {
 			}
 		}
 
-		m_TitleBar.OnImGuiRender();
+		if( !m_FullscreenViewport )
+		{
+			m_TitleBar.OnImGuiRender();
 
-		m_ImGuiWindowManager->DrawAll();
+			m_ImGuiWindowManager->DrawAll();
 		
-		if( m_ShowImGuiDemoWindow )     ImGui::ShowDemoWindow( &m_ShowImGuiDemoWindow );
-		if( m_ShowUserSettings )        DrawProjectSettingsWindow();
-		if( m_OpenAssetRegistryDebug )  DrawAssetRegistryDebug();
-		if( m_OpenLoadedAssetDebug )    DrawLoadedAssetsDebug();
-		if( m_OpenEditorSettings )      DrawEditorSettings();
-		if( m_ShowVFSDebug )            DrawVFSDebug();
-		if( m_OpenAboutWindow )         DrawAboutWindow();
-		if( m_MessageBoxes.size() )     HandleMessageBoxes();
-		if( m_Notifications.size() )    DrawNotifications();
-		if( m_ShowSceneRendererWindow ) DrawSceneRendererWindow();
-		if( m_ShowRendererWindow )		DrawRendererWindow();
-		if( m_ShowMetadataDebug )       DrawMetadataDebug();
-		if( m_ShowAssetDependencies )   DrawAssetDependencies();
-		if( m_ShowSceneDirtyModal )     DrawSceneDirtyPopup();
-		if( m_JobModalOpen )            DrawBlockingActionModal();
-		if( m_ShowCBThumbnailDebug )    ContentBrowserThumbnailCache::Get().OnImGuiRender( &m_ShowCBThumbnailDebug );
-		if( m_ShowUndoRedoDebug )       GlobalUndoRedoGroup::Get().OnImGuiRender( &m_ShowUndoRedoDebug );
+			if( m_ShowImGuiDemoWindow )     ImGui::ShowDemoWindow( &m_ShowImGuiDemoWindow );
+			if( m_ShowUserSettings )        DrawProjectSettingsWindow();
+			if( m_OpenAssetRegistryDebug )  DrawAssetRegistryDebug();
+			if( m_OpenLoadedAssetDebug )    DrawLoadedAssetsDebug();
+			if( m_OpenEditorSettings )      DrawEditorSettings();
+			if( m_ShowVFSDebug )            DrawVFSDebug();
+			if( m_OpenAboutWindow )         DrawAboutWindow();
+			if( m_MessageBoxes.size() )     HandleMessageBoxes();
+			if( m_Notifications.size() )    DrawNotifications();
+			if( m_ShowSceneRendererWindow ) DrawSceneRendererWindow();
+			if( m_ShowRendererWindow )		DrawRendererWindow();
+			if( m_ShowMetadataDebug )       DrawMetadataDebug();
+			if( m_ShowAssetDependencies )   DrawAssetDependencies();
+			if( m_ShowSceneDirtyModal )     DrawSceneDirtyPopup();
+			if( m_JobModalOpen )            DrawBlockingActionModal();
+			if( m_ShowAutoSaveNewerPopup )  DrawAutoSaveNewerModal();
+			if( m_ShowCBThumbnailDebug )    ContentBrowserThumbnailCache::Get().OnImGuiRender( &m_ShowCBThumbnailDebug );
+			if( m_ShowUndoRedoDebug )       GlobalUndoRedoGroup::Get().OnImGuiRender( &m_ShowUndoRedoDebug );
+		}
 		
 		DrawViewport();
 	}
@@ -702,6 +707,14 @@ namespace Saturn {
 				if( m_MouseOverViewport || m_ViewportFocused )
 					m_RequestRuntime ^= 1;
 			} break;
+
+			case RubyKey_F11: 
+			{
+				if( m_MouseOverViewport || m_ViewportFocused )
+				{
+					m_PendingFullscreenChange ^= 1;
+				}
+			} break;
 		}
 
 		if( Input::Get().KeyPressed( RubyKey_LeftCtrl ) && !m_RuntimeScene )
@@ -787,66 +800,6 @@ namespace Saturn {
 
 		return true;
 	}
-
-	struct Ray
-	{
-		glm::vec3 Origin;
-		glm::vec3 Direction;
-
-		inline bool IntersectsAABB( const AABB& rBB, float& t ) const
-		{
-			glm::vec3 dirfrac{};
-			// r.dir is unit direction vector of ray
-			dirfrac.x = 1.0f / Direction.x;
-			dirfrac.y = 1.0f / Direction.y;
-			dirfrac.z = 1.0f / Direction.z;
-			// lb is the corner of AABB with minimal coordinates - left bottom, rt is maximal corner
-			// r.org is origin of ray
-			const glm::vec3& lb = rBB.Min;
-			const glm::vec3& rt = rBB.Max;
-			const float t1 = ( lb.x - Origin.x ) * dirfrac.x;
-			const float t2 = ( rt.x - Origin.x ) * dirfrac.x;
-			const float t3 = ( lb.y - Origin.y ) * dirfrac.y;
-			const float t4 = ( rt.y - Origin.y ) * dirfrac.y;
-			const float t5 = ( lb.z - Origin.z ) * dirfrac.z;
-			const float t6 = ( rt.z - Origin.z ) * dirfrac.z;
-
-			const float tmin = glm::max( glm::max( glm::min( t1, t2 ), glm::min( t3, t4 ) ), glm::min( t5, t6 ) );
-			const float tmax = glm::min( glm::min( glm::max( t1, t2 ), glm::max( t3, t4 ) ), glm::max( t5, t6 ) );
-
-			// if tmax < 0, ray (line) is intersecting AABB, but the whole AABB is behind us
-			if( tmax < 0 )
-			{
-				t = tmax;
-				return false;
-			}
-
-			// if tmin > tmax, ray doesn't intersect AABB
-			if( tmin > tmax )
-			{
-				t = tmax;
-				return false;
-			}
-
-			t = tmin;
-			return true;
-		}
-
-		bool IntersectsTri( const glm::vec3& a, const glm::vec3& b, const glm::vec3& c, float& t ) const
-		{
-			const glm::vec3 E1 = b - a;
-			const glm::vec3 E2 = c - a;
-			const glm::vec3 N = cross( E1, E2 );
-			const float det = -glm::dot( Direction, N );
-			const float invdet = 1.f / det;
-			const glm::vec3 AO = Origin - a;
-			const glm::vec3 DAO = glm::cross( AO, Direction );
-			const float u = glm::dot( E2, DAO ) * invdet;
-			const float v = -glm::dot( E1, DAO ) * invdet;
-			t = glm::dot( AO, N ) * invdet;
-			return ( det >= 1e-6f && t >= 0.0f && u >= 0.0f && v >= 0.0f && ( u + v ) <= 1.0f );
-		}
-	};
 
 	bool EditorLayer::OnMousePressed( RubyMouseEvent& rEvent )
 	{
@@ -1830,8 +1783,8 @@ namespace Saturn {
 
 		if( ImGui::BeginMenu( "Settings" ) )
 		{
-			if( ImGui::MenuItem( "Project settings", "" ) )           m_ShowUserSettings       ^= 1;
-			if( ImGui::MenuItem( "Editor Settings", "" ) )            m_OpenEditorSettings     ^= 1;
+			if( ImGui::MenuItem( "Project settings" ) )           m_ShowUserSettings       ^= 1;
+			if( ImGui::MenuItem( "Editor Settings" ) )            m_OpenEditorSettings     ^= 1;
 
 			ImGui::EndMenu();
 		}
@@ -1839,26 +1792,34 @@ namespace Saturn {
 		if( ImGui::BeginMenu( "Auxiliary" ) )
 		{
 			ImGui::SeparatorText( "Asset Registry" );
-			if( ImGui::MenuItem( "Asset Registry Debug", "" ) )       m_OpenAssetRegistryDebug ^= 1;
-			if( ImGui::MenuItem( "Loaded Assets Debug", "" ) )        m_OpenLoadedAssetDebug   ^= 1;
-			if( ImGui::MenuItem( "Metadata Debug", "" ) )             m_ShowMetadataDebug      ^= 1;
-			if( ImGui::MenuItem( "Asset Dependencies", "" ) )         m_ShowAssetDependencies  ^= 1;
+			if( ImGui::MenuItem( "Asset Registry Debug" ) )       m_OpenAssetRegistryDebug ^= 1;
+			if( ImGui::MenuItem( "Loaded Assets Debug" ) )        m_OpenLoadedAssetDebug   ^= 1;
+			if( ImGui::MenuItem( "Metadata Debug" ) )             m_ShowMetadataDebug      ^= 1;
+			if( ImGui::MenuItem( "Asset Dependencies" ) )         m_ShowAssetDependencies  ^= 1;
 
 			ImGui::SeparatorText( "Demo Window" );
-			if( ImGui::MenuItem( "Show demo window", "" ) )           m_ShowImGuiDemoWindow    ^= 1;
+			if( ImGui::MenuItem( "Show demo window" ) )           m_ShowImGuiDemoWindow    ^= 1;
 
 			ImGui::SeparatorText( "Virtual Filesystem (VFS)" );
-			if( ImGui::MenuItem( "Virtual Filesystem Debug", "" ) )   m_ShowVFSDebug           ^= 1;
+			if( ImGui::MenuItem( "Virtual Filesystem Debug" ) )   m_ShowVFSDebug           ^= 1;
 
 			ImGui::SeparatorText( "Scene Renderer" );
-			if( ImGui::MenuItem( "Render Mesh AABB", "" ) )           m_ShowMeshAABB           ^= 1;
-			if( ImGui::MenuItem( "Show Camera Frustum", "" ) )        m_ShowCameraFrustum      ^= 1;
+			if( ImGui::MenuItem( "Render Mesh AABB" ) )           m_ShowMeshAABB           ^= 1;
+			if( ImGui::MenuItem( "Show Camera Frustum" ) )        m_ShowCameraFrustum      ^= 1;
 
 			ImGui::SeparatorText( "Content Browser" );
-			if( ImGui::MenuItem( "Show Thumbnail Cache", "" ) )       m_ShowCBThumbnailDebug   ^= 1;
+			if( ImGui::MenuItem( "Show Thumbnail Cache" ) )       m_ShowCBThumbnailDebug   ^= 1;
 
 			ImGui::SeparatorText( "Undo Redo" );
-			if( ImGui::MenuItem( "Show Undo Redo Stack", "" ) )       m_ShowUndoRedoDebug      ^= 1;
+			if( ImGui::MenuItem( "Show Undo Redo Stack" ) )       m_ShowUndoRedoDebug      ^= 1;
+
+			{
+				Auxiliary::ScopedDisabledFlag disabled( m_RequestRuntime );
+
+				ImGui::SeparatorText( "Auto Saves" );
+				if( ImGui::MenuItem( "Clear all auto saves" ) )           ClearAllAutoSaves();
+				if( ImGui::MenuItem( "Clear all for the active scene") )  ClearAutoSavesForActiveScene();
+			}
 
 			ImGui::EndMenu();
 		}
@@ -1906,7 +1867,44 @@ namespace Saturn {
 				}
 
 				ImGui::EndMenu();
-			}
+			} 
+		}
+
+		// Draw Project name text and box.
+		ImGui::SeparatorEx( ImGuiSeparatorFlags_Vertical );
+
+#if defined(SAT_DEBUG) || 1
+		const std::string prjName = Project::GetActiveConfig().Name;
+		const auto devVer = Project::GetActiveProject()->GetDeveloperVersion();
+		
+		std::string text = prjName;
+		if( !devVer.empty() )
+			text = std::format( "{0}-{1}", prjName, devVer );
+#else
+		const std::string text = Project::GetActiveConfig().Name;
+#endif
+
+		const ImVec2 textSize   = ImGui::CalcTextSize( text.c_str() );
+		ImDrawList* pDrawList   = ImGui::GetWindowDrawList();
+		const float frameHeight = ImGui::GetFrameHeight();
+
+		const ImVec2 min = ImGui::GetWindowPos() + ImGui::GetCursorPos();
+		const ImVec2 max = min + ImVec2( textSize.x + frameHeight, frameHeight );
+		const ImRect buttonRect( min, max );
+
+		const ImU32 color = ImGui::GetColorU32( ImGuiCol_ButtonHovered );
+		pDrawList->AddRectFilled( buttonRect.Min, buttonRect.Max, color );
+
+		// Text centered in the rect.
+		const float textY = min.y + ( frameHeight - textSize.y ) * 0.5f;
+		pDrawList->AddText( ImVec2( min.x + frameHeight * 0.5f, textY ), IM_COL32( 255, 255, 255, 255 ), text.c_str() );
+
+		ImGui::Dummy( buttonRect.GetSize() );
+		if( ImGui::BeginItemTooltip() )
+		{
+			const std::string pathStr = Project::GetActiveConfig().Path.string();
+			ImGui::Text( pathStr.c_str() );
+			ImGui::EndTooltip();
 		}
 	}
 
@@ -2253,8 +2251,44 @@ namespace Saturn {
 	{
 		// Viewport Image & Drag and drop handling
 		ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 0.0f, 0.0f ) );
+		
+		if( m_PendingFullscreenChange )
+		{
+			m_FullscreenViewport ^= 1;
 
-		ImGui::Begin( "Viewport", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove );
+			if( m_FullscreenViewport )
+			{
+				m_PreVPFullscreenSize = m_ViewportSize;
+				m_PreVPFullscreenPosition = m_ViewportBounds.Min;
+				m_PreVPDockedNodeID = ImGui::GetWindowDockID();
+
+				const ImVec2 size = ImVec2( Application::Get().GetWindow()->GetWidth(), Application::Get().GetWindow()->GetHeight() );
+				
+				const auto windowPosition = Application::Get().GetWindow()->GetPosition();
+				const ImVec2 viewportPos = ImVec2( windowPosition.x, windowPosition.y );
+
+				ImGui::SetNextWindowDockID( 0, ImGuiCond_Always );
+				ImGui::SetNextWindowPos( ImVec2( windowPosition.x, windowPosition.y ) );
+				ImGui::SetNextWindowSize( size );
+			}
+			else
+			{
+				ImGui::SetNextWindowDockID( m_PreVPDockedNodeID, ImGuiCond_Always );
+				ImGui::SetNextWindowPos( m_PreVPFullscreenPosition );
+				ImGui::SetNextWindowSize( m_PreVPFullscreenSize );
+			}
+
+			m_PendingFullscreenChange = false;
+		}
+
+		ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse;
+		if( m_FullscreenViewport )
+			flags |= ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoSavedSettings;
+
+		if( m_DisableViewportMovement )
+			flags |= ImGuiWindowFlags_NoMove;
+
+		ImGui::Begin( "Viewport", nullptr, flags );
 
 		if( m_ViewportSize != ImGui::GetContentRegionAvail() )
 		{
@@ -2620,6 +2654,15 @@ namespace Saturn {
 
 			ImGuizmo::Manipulate( glm::value_ptr( View ), glm::value_ptr( Projection ), ( ImGuizmo::OPERATION ) m_GizmoOperation, ImGuizmo::LOCAL, glm::value_ptr( centerPoint ), glm::value_ptr( offsetTransform ) );
 
+			if( !ImGui::IsWindowDocked() && ImGuizmo::IsOver() )
+			{
+				m_DisableViewportMovement = true;
+			}
+			else if( m_DisableViewportMovement && !ImGuizmo::IsOver() )
+			{
+				m_DisableViewportMovement = false;
+			}
+
 			if( ImGuizmo::IsUsing() )
 			{
 				for( SharedPtr<Entity>& rEntity : rSelectedEntities )
@@ -2655,6 +2698,11 @@ namespace Saturn {
 			else if( m_WasGizmoUsed ) // Stopped using
 			{
 				m_EditorScene->MarkDirty();
+
+				if( !ImGui::IsWindowDocked() || m_DisableViewportMovement )
+				{
+					m_DisableViewportMovement = false;
+				}
 
 				for( const auto& [handle, transform] : m_GizmoOrignalTransforms )
 				{

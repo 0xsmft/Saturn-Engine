@@ -48,11 +48,6 @@ namespace Saturn {
 		
 		delete pApp;
 
-		// TODO: This is very bad, but we can't avoid having g_BinnedAllocator being on the stack because we need 
-		// it to allocate the SObjects which are also allocated when the program starts up
-		// and because Shared-Storage is never unloaded the ~BinnedAllocator is never called
-		g_BinnedAllocator.~FBinnedAllocator();
-
 		return 0;
 	}
 }

@@ -32,6 +32,8 @@
 
 #include "Core/ClassMetadataHandler.h"
 
+#include "Saturn/Core/Memory/SObjectAllocator.h"
+
 namespace Saturn {
 
 	void SClass::RConstructClass( SClass*& outClass, const SClassSpecification& rSpec )
@@ -53,8 +55,13 @@ namespace Saturn {
 
 		// TODO: Objects will have their own names and Classes will have a different name
 //		std::string configName = std::format( "^{0}", rSpec.Name );
-		SClass* pNewClass = new SClass( rSpec );
-		*ppClass = pNewClass;
+#if defined(SAT_VERBOSE_SCLASS_REG)
+		SAT_CORE_INFO( "[SC] Registering SClass SC/{0}", rSpec.Name );
+#endif
+
+		// Allocate the object....
+		SClass* pNewClass = FSObjectAllocator::AllocateSObject<SClass>( rSpec );
+		outClass = pNewClass;
 
 		outClass->SetFlag( SC_Initialised );
 
@@ -73,7 +80,11 @@ namespace Saturn {
 			}
 		}
 
+#if !defined(SAT_DIST)
+		static SPropertyEditor s_Empty;
+#else
 		static SProperty s_Empty;
+#endif
 		return s_Empty;
 	}
 
@@ -95,12 +106,30 @@ namespace Saturn {
 		return false;
 	}
 
+	typedef SClass* ( __stdcall* RClassFunc )();
+
+	/* TODO: Pre-alloc */
+	// WARNING: Module local..., game module will have it's own copy of this, which is not great
+	static std::vector<RClassFunc> s_RClassQueue;
+
+	void SClass::ProcessNewlyLoadedSClasses()
+	{
+		for( const auto& rFunc : s_RClassQueue )
+		{
+			( rFunc ) ( );
+		}
+
+		s_RClassQueue.clear();
+	}
+
 	//////////////////////////////////////////////////////////////////////////
 	// RClass Static link
 
 	void RClassCompiledIn( SClass* ( *pStaticLinkFunction )( ) )
 	{
-		( pStaticLinkFunction ) ( );
+		s_RClassQueue.push_back( pStaticLinkFunction );
+
+//		( pStaticLinkFunction ) ( );
 	}
 
 }

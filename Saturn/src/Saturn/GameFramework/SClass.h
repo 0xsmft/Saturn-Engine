@@ -162,6 +162,7 @@ namespace Saturn {
 
 	public:
 		static void RConstructClass( SClass*& outClass, const SClassSpecification& rSpec );
+		static void ProcessNewlyLoadedSClasses();
 
 	public:
 		SProperty& GetProperty( const std::string& rPropertyName ) const;

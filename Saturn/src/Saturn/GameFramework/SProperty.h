@@ -274,4 +274,7 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 		const void* pGetPropertyFunction = nullptr;
 	};
 
+
+	using SPropertyEditor = SProperty;
+
 }

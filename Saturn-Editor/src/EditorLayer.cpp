@@ -117,6 +117,8 @@ namespace Saturn {
 		Project::GetActiveProject()->CheckMissingAssetRefs();
 
 		m_GameModule = new GameModule();
+		SClass::ProcessNewlyLoadedSClasses();
+
 	}
 
 	void EditorLayer::OnAttach()

@@ -122,7 +122,117 @@ namespace Saturn {
 
 		ImGui::End();
 
-		ImGui::PopStyleVar(); // ImGuiStyleVar_WindowPadding
+		if( ImGui::Begin( "Dopesheet" ) )
+		{
+			if( !m_Animator )
+			{
+				ImGui::Text( "<no animation is currenly playing...>" );
+			}
+			else
+			{
+				ImGui::PushStyleColor( ImGuiCol_ChildBg, ImVec4( 0.0f, 0.0f, 0.0f, 0.0f ) );
+
+				ImGui::BeginChild( "Top Bar", ImVec2( 0.0f, 30.0f ), false, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoSavedSettings );
+
+				ImGui::BeginHorizontal( "##tbvert" );
+
+				ImGui::PushID( "##back" );
+				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "FastForward" ), { 24.0f, 24.0f }, { 1, 0 }, { 0, 1 } ) )
+				{
+					m_Animator->StepTo( 0 );
+				}
+				ImGui::PopID();
+
+				ImGui::PushID( "##backone" );
+				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "NextMultiMedia" ), { 24.0f, 24.0f }, { 1, 0 }, { 0, 1 } ) )
+				{
+					const float frameStep = 1.0f / m_Asset->GetTicksPerSecond();
+					const float t = glm::max( 0.0f, m_Animator->GetCurrentAnimTime() - frameStep );
+					m_Animator->StepTo( t );
+				}
+				ImGui::PopID();
+
+				Ref<Texture2D> texture = m_Animator->IsPlaying() ? EditorIcons::GetIcon( "Stop" ) : EditorIcons::GetIcon( "Play" );
+				if( Auxiliary::ImageButton( texture, { 24.0f, 24.0f } ) )
+				{
+					if( !m_Animator->IsPlaying() )
+					{
+						m_Animator->Begin();
+					}
+					else
+					{
+						m_Animator->Pause();
+					}
+				}
+
+				ImGui::PushID( "##fwdone" );
+				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "NextMultiMedia" ), { 24.0f, 24.0f } ) )
+				{
+					const float frameStep = 1.0f / m_Asset->GetTicksPerSecond();
+					const float t = glm::min( ( float ) m_Asset->GetDuration(), m_Animator->GetCurrentAnimTime() + frameStep );
+					m_Animator->StepTo( t );
+				}
+				ImGui::PopID();
+
+				ImGui::PushID( "##ff" );
+				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "FastForward" ), { 24.0f, 24.0f } ) )
+				{
+					m_Animator->StepTo( m_Asset->GetDuration() );
+				}
+				ImGui::PopID();
+
+				ImGui::EndHorizontal();
+
+				ImGui::EndChild();
+				ImGui::PopStyleColor();
+
+				ImVec2 size = ImGui::GetContentRegionAvail();
+				ImDrawList* pDrawList = ImGui::GetWindowDrawList();
+
+				ImVec2 cursor = ImGui::GetCursorScreenPos();
+				ImVec2 end = ImVec2( cursor.x + size.x, cursor.y + size.y );
+
+				ImGui::InvisibleButton( "scrubber", size );
+				if( ImGui::IsItemHovered() && ImGui::IsMouseDown( ImGuiMouseButton_Left ) )
+				{
+					const float mouseX = ImGui::GetIO().MousePos.x;
+					float t = ( mouseX - cursor.x ) / ( size.x );
+					t = std::clamp( t, 0.0f, 1.0f );
+
+					m_Animator->StepTo( t * m_Asset->GetDuration() );
+					m_Animator->Pause();
+				}
+
+				// Draw background
+				pDrawList->AddRectFilled( cursor, end, IM_COL32( 40, 40, 40, 255 ), 4.0f );
+
+				// Draw ticks
+				constexpr int SRUB_NUM_TICKS = 10;
+				for( int i = 0; i <= SRUB_NUM_TICKS; ++i )
+				{
+					const float t = i / ( float ) SRUB_NUM_TICKS;
+					const float x = cursor.x + t * size.x;
+					pDrawList->AddLine( ImVec2( x, cursor.y ), ImVec2( x, cursor.y + size.y ), IM_COL32( 80, 80, 80, 255 ) );
+				}
+
+				// Draw scrubber line
+				const float srubberX = cursor.x + ( m_Animator->GetCurrentAnimTime() / m_Asset->GetDuration() ) * size.x;
+				pDrawList->AddLine( ImVec2( srubberX, cursor.y ),
+					ImVec2( srubberX, cursor.y + size.y ),
+					IM_COL32( 255, 200, 0, 255 ), 2.0f );
+
+				// Draw playhead triangle
+				pDrawList->AddTriangleFilled(
+					ImVec2( srubberX - 5.0F, cursor.y - 8.0F ),
+					ImVec2( srubberX + 5.0F, cursor.y - 8.0F ),
+					ImVec2( srubberX, cursor.y ),
+					IM_COL32( 255, 200, 0, 255 )
+				);
+			}
+
+			ImGui::End();
+		}
+
 		ImGui::End(); // Root window
 
 		if( m_Open == false )

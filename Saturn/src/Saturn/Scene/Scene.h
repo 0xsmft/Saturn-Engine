@@ -214,8 +214,8 @@ namespace Saturn {
 		}
 
 	public:
-		void OnRenderEditor( const EditorCamera& rCamera, Timestep ts, SceneRenderer& rSceneRenderer );
-		void OnRenderRuntime( Timestep ts, SceneRenderer& rSceneRenderer );
+		void OnRenderEditor( Camera* pCamera, const glm::mat4& rViewMartix, Ref<SceneRenderer> sceneRenderer, Timestep ts );
+		void OnRenderRuntime( Timestep ts, Ref<SceneRenderer> sceneRenderer );
 
 		SharedPtr<Entity> DuplicateEntity( const SharedPtr<Entity> entity, const SharedPtr<Entity> parent = nullptr );
 		void DeleteEntity( SharedPtr<Entity> entity, bool deleteChildren = true, UUID orphanParentID = 0 );
@@ -325,6 +325,8 @@ namespace Saturn {
 			}
 		}
 
+		void RemoveRigidBody( PhysicsRigidBody* pBody );
+
 		// Start NEW audio players
 		void StartAudioPlayers();
 
@@ -335,6 +337,8 @@ namespace Saturn {
 		void DestroyAudioPlayers();
 		
 		void UpdateAudioListeners();
+
+		void StartAnimations();
 
 #if !defined(SAT_DIST)
 		void MarkDirty() { m_Dirty = true; }
@@ -474,9 +478,9 @@ namespace Saturn {
 		void OnNavMeshBuildCompRemoved( entt::registry& reg, entt::entity entity );
 
 	private:
-		void RtSetupLights();
-		void RtBuildRenderer2DCommands();
-		void RtBuildSceneRendererCommands( SceneRenderer& rSceneRenderer );
+		void RtSetupLights( Ref<SceneRenderer> sceneRenderer );
+		void RtBuildRenderer2DCommands( Ref<SceneRenderer> sceneRenderer );
+		void RtBuildSceneRendererCommands( Ref<SceneRenderer> sceneRenderer );
 
 	private:
 		std::map<entt::entity, SharedPtr<Entity>> m_EntityIDMap;

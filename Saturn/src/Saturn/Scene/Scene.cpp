@@ -280,67 +280,29 @@ namespace Saturn {
 		}
 	}
 
-	void Scene::OnRenderEditor( const EditorCamera& rCamera, Timestep ts, SceneRenderer& rSceneRenderer )
+	void Scene::OnRenderEditor( Camera* pCamera, const glm::mat4& rViewMartix, Ref<SceneRenderer> sceneRenderer, Timestep ts )
 	{
 		SAT_PF_EVENT();
 
-		m_RendererCamera.pCamera = (Camera*)&rCamera;
-		m_RendererCamera.ViewMatrix = rCamera.ViewMatrix();
+		m_RendererCamera.pCamera = pCamera;
+		m_RendererCamera.ViewMatrix = rViewMartix;
 
-		Renderer2D::Get().SetCamera( m_RendererCamera );
-		Renderer2D::Get().PreRender();
-
-		rSceneRenderer.SetCamera( m_RendererCamera );
+		sceneRenderer->SetCamera( m_RendererCamera );
+		sceneRenderer->GetRenderer2D()->PreRender();
 
 		//////////////////////////////////////////////////////////////////////////
 
 		// Lights
-		RtSetupLights();
+		RtSetupLights( sceneRenderer );
 
 		// Renderer2D 
-		RtBuildRenderer2DCommands();
+		RtBuildRenderer2DCommands( sceneRenderer );
 
-#if !defined(SAT_DIST)
-		// Selected Meshes and Physics Colliders
-		{
-			for( const auto& rSelectedEntity : EntitySelectionManager::Get().GetSelectionContexts() )
-			{
-				if( rSelectedEntity->HasComponent<StaticMeshComponent>() )
-				{
-					const auto& meshComponent = rSelectedEntity->GetComponent<StaticMeshComponent>();
-					const auto transform = GetTransformRelativeToParent( rSelectedEntity );
-
-					if( meshComponent.Mesh ) 
-					{
-						Ref<MaterialRegistry> targetMaterialRegistry = meshComponent.Mesh->GetMaterialRegistry();
-
-						if( meshComponent.MaterialRegistry && meshComponent.MaterialRegistry->HasAnyOverrides() )
-							targetMaterialRegistry = meshComponent.MaterialRegistry;
-
-						// Submit to SceneRenderer as a selected mesh
-						if( rSelectedEntity->HasComponent<RigidbodyComponent>() )
-						{
-							rSceneRenderer.SubmitPhysicsCollider( rSelectedEntity, meshComponent.Mesh, targetMaterialRegistry, transform );
-						}
-					}
-				}
-				
-				if( rSelectedEntity->GetClass() == NavBoundsEntity::StaticClass() ) 
-				{
-					if( SharedPtr<NavBoundsEntity> boundsEntity = rSelectedEntity.As<NavBoundsEntity>() )
-					{
-						Renderer2D::Get().SubmitAABB( boundsEntity->GetBoundingBox(), glm::vec4( 0.0f, 1.0f, 0.0, 1.0f ) );
-						boundsEntity->DebugDraw();
-					}
-				}
-			}
-		}
-#endif
-
-		RtBuildSceneRendererCommands( rSceneRenderer );
+		// Scene Renderer (main geometry)
+		RtBuildSceneRendererCommands( sceneRenderer );
 	}
 
-	void Scene::OnRenderRuntime( Timestep ts, SceneRenderer& rSceneRenderer )
+	void Scene::OnRenderRuntime( Timestep ts, Ref<SceneRenderer> sceneRenderer )
 	{
 		SAT_PF_EVENT();
 
@@ -358,7 +320,7 @@ namespace Saturn {
 			const auto view = glm::inverse( tc.GetTransform() );
 
 			auto& rCamera = entity->GetComponent<CameraComponent>().Camera;
-			rCamera.SetViewportSize( rSceneRenderer.Width(), rSceneRenderer.Height() );
+			rCamera.SetViewportSize( sceneRenderer->Width(), sceneRenderer->Height() );
 			//rCamera.SetViewMatrix( view );
 			rCamera.SetPosition( tc.Position );
 
@@ -373,19 +335,18 @@ namespace Saturn {
 			m_RuntimeState = RuntimeState::Ending;
 		}
 
-		rSceneRenderer.SetCamera( m_RendererCamera );
-		Renderer2D::Get().SetCamera( m_RendererCamera );
+		sceneRenderer->SetCamera( m_RendererCamera );
 
 		//////////////////////////////////////////////////////////////////////////
 
 		// Lights
-		RtSetupLights();
+		RtSetupLights( sceneRenderer );
 
 		// Scene Renderer
-		RtBuildSceneRendererCommands( rSceneRenderer );
+		RtBuildSceneRendererCommands( sceneRenderer );
 	}
 
-	void Scene::RtSetupLights()
+	void Scene::RtSetupLights( Ref<SceneRenderer> sceneRenderer )
 	{
 		m_Lights = Lights();
 
@@ -412,7 +373,6 @@ namespace Saturn {
 
 				m_Lights.PointLights.reserve( points.size() );
 
-				uint32_t plIndex = 0;
 				for( const auto& e : points )
 				{
 					const auto [transformComponent, lightComponent] = points.get<TransformComponent, PointLightComponent>( e );
@@ -437,15 +397,15 @@ namespace Saturn {
 						lightComponent.MinRadius,
 						lightComponent.Falloff );
 
-					Renderer2D::Get().SubmitBillboardTextured( transformComponent.Position, glm::vec4( 1.0f ), pointLightBillboardTex, glm::vec2( 1.5f ) );
-
-					plIndex++;
+#if !defined(SAT_DIST)
+					sceneRenderer->GetRenderer2D()->SubmitBillboardTextured( transformComponent.Position, glm::vec4( 1.0f ), pointLightBillboardTex, glm::vec2( 1.5f ) );
+#endif
 				}
 			}
 		}
 	}
 
-	void Scene::RtBuildRenderer2DCommands()
+	void Scene::RtBuildRenderer2DCommands( Ref<SceneRenderer> sceneRenderer )
 	{
 		// Audio Billboards
 		const auto players = m_Registry.group<AudioPlayerComponent>( entt::get<TransformComponent> );
@@ -466,7 +426,7 @@ namespace Saturn {
 				else if( playerComponent.Mute )
 					submissionTexture = audioMuted;
 
-				Renderer2D::Get().SubmitBillboardTextured(
+				sceneRenderer->GetRenderer2D()->SubmitBillboardTextured(
 					transformComponent.Position,
 					glm::vec4( 1.0f ),
 					submissionTexture, glm::vec2( 1.0f ) );
@@ -485,7 +445,7 @@ namespace Saturn {
 
 				const auto pos = glm::vec3( transformComponent.Position.x, transformComponent.Position.y + 2.5f, transformComponent.Position.z );
 
-				Renderer2D::Get().SubmitBillboardTextured(
+				sceneRenderer->GetRenderer2D()->SubmitBillboardTextured(
 					pos,
 					glm::vec4( 1.0f ),
 					listenTexture, glm::vec2( 1.0f ) );
@@ -494,12 +454,29 @@ namespace Saturn {
 				const auto start = pos;
 				const auto end = start + glm::normalize( comp.Direction ) * 2.0f;
 
-				Renderer2D::Get().SubmitLine( start, end, glm::vec4( 1.0f ) );
+				sceneRenderer->GetRenderer2D()->SubmitLine( start, end, glm::vec4( 1.0f ) );
+			}
+		}
+
+		const auto aiAgents = GetAllEntitiesWithClass<AIAgentEntity>();
+		if( aiAgents.size() )
+		{
+			const auto aiAgentTexture = EditorIcons::GetIcon( "Billboard_AIAgent" );
+
+			for( const auto& rEntity : aiAgents )
+			{
+				const TransformComponent& rTc = rEntity->GetComponent<TransformComponent>();
+				const glm::vec3 position( rTc.Position.x, rTc.Position.y + 2.5f, rTc.Position.z );
+
+				sceneRenderer->GetRenderer2D()->SubmitBillboardTextured(
+					position,
+					glm::vec4( 1.0f ),
+					aiAgentTexture, glm::vec2( 1.0f ) );
 			}
 		}
 	}
 
-	void Scene::RtBuildSceneRendererCommands( SceneRenderer& rSceneRenderer )
+	void Scene::RtBuildSceneRendererCommands( Ref<SceneRenderer> sceneRenderer )
 	{
 		const auto staticMeshEntities = GetAllEntitiesWith<StaticMeshComponent>();
 		for( const auto& entity : staticMeshEntities )
@@ -514,7 +491,7 @@ namespace Saturn {
 				if( meshComponent.MaterialRegistry && meshComponent.MaterialRegistry->HasAnyOverrides() )
 					targetMaterialRegistry = meshComponent.MaterialRegistry;
 
-				rSceneRenderer.SubmitStaticMesh( entity, meshComponent.Mesh, targetMaterialRegistry, transform );
+				sceneRenderer->SubmitStaticMesh( entity, meshComponent.Mesh, targetMaterialRegistry, transform );
 			}
 		}
 
@@ -854,6 +831,7 @@ namespace Saturn {
 		}
 
 		StartAudioPlayers();
+		StartAnimations();
 
 		// Init new scene camera
 		m_pMainCameraEntity = GetMainCameraEntity( true );
@@ -909,7 +887,6 @@ namespace Saturn {
 	void Scene::UpdateAudioListeners()
 	{
 		const auto listeners = GetAllEntitiesWith< AudioListenerComponent >();
-
 		for( auto& entity : listeners )
 		{
 			auto& rComp = entity->GetComponent<AudioListenerComponent>();
@@ -922,10 +899,28 @@ namespace Saturn {
 		}
 	}
 
+	void Scene::StartAnimations()
+	{
+		const auto anims = GetAllEntitiesWith< SkeletalMeshComponent >();
+		for( auto& entity : anims )
+		{
+			auto& rComp = entity->GetComponent<SkeletalMeshComponent>();
+
+			rComp.LocalAnimator = Ref<Animator>::Create();
+
+			rComp.LocalAnimator->InitAnimation( rComp.AnimationControllerAssetID, rComp.Mesh, rComp.AnimatorType );
+			rComp.LocalAnimator->Begin();
+		}
+	}
+
+	void Scene::RemoveRigidBody( PhysicsRigidBody* pBody )
+	{
+		delete pBody;
+	}
+
 	void Scene::StartAudioPlayers()
 	{
-		auto sndPlayers = GetAllEntitiesWith< AudioPlayerComponent >();
-
+		const auto sndPlayers = GetAllEntitiesWith< AudioPlayerComponent >();
 		for( auto& entity : sndPlayers )
 		{
 			auto& rComp = entity->GetComponent<AudioPlayerComponent>();
@@ -940,13 +935,13 @@ namespace Saturn {
 
 				sound->WaitUntilLoaded();
 
-				if( rComp.Spatialization )
+				if( rComp.Spatialisation )
 				{
 					sound->SetSpatialisation( true );
 					sound->SetPosition( entity->GetComponent<TransformComponent>().Position );
 				}
 
-				sound->SetVolume( rComp.Volume );
+				sound->SetVolume( rComp.Mute ? 0.0f : rComp.Volume );
 //				sound->SetPitch( rComp.Pitch );
 				sound->Loop( rComp.Loop );
 
@@ -965,7 +960,7 @@ namespace Saturn {
 			{
 				Ref<Sound> sound = nullptr;
 
-				if( rComp.Spatialization )
+				if( rComp.Spatialisation )
 				{
 					sound = AudioSystem::Get().PlaySoundAtLocation( rComp.SpecAssetID, rComp.UniqueID, entity->GetComponent<TransformComponent>().Position, true, rComp.SoundGroup );
 				}
@@ -985,8 +980,7 @@ namespace Saturn {
 
 	void Scene::StopAudioPlayers() 
 	{
-		auto sndPlayers = GetAllEntitiesWith< AudioPlayerComponent >();
-
+		const auto sndPlayers = GetAllEntitiesWith< AudioPlayerComponent >();
 		for( auto& entity : sndPlayers )
 		{
 			auto& rComp = entity->GetComponent<AudioPlayerComponent>();
@@ -999,8 +993,7 @@ namespace Saturn {
 
 	void Scene::DestroyAudioPlayers()
 	{
-		auto sndPlayers = GetAllEntitiesWith< AudioPlayerComponent >();
-
+		const auto sndPlayers = GetAllEntitiesWith< AudioPlayerComponent >();
 		for( auto& entity : sndPlayers )
 		{
 			auto& rComp = entity->GetComponent<AudioPlayerComponent>();
@@ -1023,6 +1016,18 @@ namespace Saturn {
 		m_Controllers.clear();
 
 		DestroyAudioPlayers();
+
+		const auto animators = GetAllEntitiesWith<SkeletalMeshComponent>();
+		for( auto& entity : animators )
+		{
+			auto& rAnimator = entity->GetComponent<SkeletalMeshComponent>().LocalAnimator;
+			if( rAnimator )
+			{
+				rAnimator->Destory();
+			}
+
+			rAnimator = nullptr;
+		}
 
 		m_pMainCameraEntity = nullptr;
 		m_NavigationSystem.Terminate();
@@ -1200,8 +1205,8 @@ namespace Saturn {
 			// K (entt::entity) is always trivial
 			RawSerialisation::WriteObject( k, rStream );
 
-			const std::string className = v->GetClass()->GetName();
-			RawSerialisation::WriteString( className, rStream );
+			const uint64_t classHash = v->GetClass()->GetHash();
+			RawSerialisation::WriteObject( classHash, rStream );
 
 			// V (Entity) is not trivial
 			Entity::Serialise( v, rStream );
@@ -1236,17 +1241,18 @@ namespace Saturn {
 
 		VariableGuard<Scene*> activeScene( g_ActiveScene, this );
 
-		for( size_t i = 0; i < mapSize; i++ )
+		for( size_t i = 0; i < mapSize; ++i )
 		{
 			entt::entity K{};
 
 			// K is always trivial
 			RawSerialisation::ReadObject( K, rStream );
 
-			std::string className = RawSerialisation::ReadString( rStream );
+			uint64_t classHash = 0llu;
+			RawSerialisation::ReadObject( classHash, rStream );
 
 			SharedPtr<Entity> V = nullptr;
-			V = (Entity*)ClassMetadataHandler::Get().CreateClassObject( className );
+			V = (Entity*)ClassMetadataHandler::Get().CreateClassObject( classHash );
 
 			// V is always non-trivial
 			Entity::Deserialise( V, rStream );

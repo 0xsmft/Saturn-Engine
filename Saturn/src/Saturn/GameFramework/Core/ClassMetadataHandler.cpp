@@ -29,17 +29,25 @@
 #include "sppch.h"
 #include "ClassMetadataHandler.h"
 
+#include "Saturn/Core/Memory/SObjectAllocator.h"
+
 namespace Saturn {
 
 	ClassMetadataHandler::ClassMetadataHandler()
-	{	
-#if !defined(SAT_DIST)
-		SingletonStorage::AddSingleton( this );
-#endif
+	{
 	}
-
+	
 	ClassMetadataHandler::~ClassMetadataHandler()
 	{
+	}
+
+	void ClassMetadataHandler::DestroyAndFreeAllSClasses()
+	{
+		for( auto& [hash, pClass] : m_Classes )
+		{
+			FSObjectAllocator::DeallocateSObject<SClass>( pClass );
+		}
+
 		m_Classes.clear();
 	}
 

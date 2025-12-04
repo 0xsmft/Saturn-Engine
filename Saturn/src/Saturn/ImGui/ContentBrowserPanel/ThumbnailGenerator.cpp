@@ -172,7 +172,7 @@ namespace Saturn {
 	{
 		// Start the render
 		rCacheData.Camera.OnUpdate( Application::Get().Time() );
-		rCacheData.Scene->OnRenderEditor( rCacheData.Camera, Application::Get().Time(), *rCacheData.SceneRenderer );
+		rCacheData.Scene->OnRenderEditor( &rCacheData.Camera, rCacheData.Camera.ViewMatrix(), rCacheData.SceneRenderer, Application::Get().Time() );
 		
 		rCacheData.AwaitingRender = false;
 

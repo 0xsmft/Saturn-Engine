@@ -30,7 +30,7 @@
 
 #include "SharedGlobals.h"
 #include "Saturn/GameFramework/SObject.h"
-#include "BinnedAllocator.h"
+#include "SystemAllocator.h"
 
 namespace Saturn {
 
@@ -40,24 +40,24 @@ namespace Saturn {
 		template<typename... VaArgs>
 		static SObject* AllocateSObject( VaArgs&&... rrArgs ) 
 		{
-			return new( g_BinnedAllocator.Allocate( sizeof( SObject ) ) ) SObject( std::forward<VaArgs>( rrArgs )... );
+			return new( FSystemAllocator::Allocate( sizeof( SObject ) ) ) SObject( std::forward<VaArgs>( rrArgs )... );
 		}
 
 		static void DeallocateSObject( SObject* const pObject ) 
 		{
-			g_BinnedAllocator.Free( pObject, sizeof( pObject ) );
+			FSystemAllocator::Free( pObject );
 		}
 
 		template<typename Ty, typename... VaArgs>
 		static Ty* AllocateSObject( VaArgs&&... rrArgs )
 		{
-			return new( g_BinnedAllocator.Allocate( sizeof( Ty ) ) ) Ty( std::forward<VaArgs>( rrArgs )... );
+			return new( FSystemAllocator::Allocate( sizeof( Ty ) ) ) Ty( std::forward<VaArgs>( rrArgs )... );
 		}
 
 		template<typename Ty>
 		static void DeallocateSObject( Ty* const pObject )
 		{
-			g_BinnedAllocator.Free( pObject, sizeof( Ty ) );
+			FSystemAllocator::Free( pObject );
 		}
 	};
 

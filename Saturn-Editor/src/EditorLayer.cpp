@@ -63,6 +63,7 @@
 #include <Saturn/Core/Renderer/RenderThread.h>
 #include <Saturn/Core/VirtualFS.h>
 #include <Saturn/Core/EnvironmentVariables.h>
+#include <Saturn/Core/Memory/SObjectAllocator.h>
 #include <Saturn/Core/AABB/Ray.h>
 
 #include <Saturn/Asset/AssetRegistry.h>
@@ -116,9 +117,9 @@ namespace Saturn {
 
 		Project::GetActiveProject()->CheckMissingAssetRefs();
 
-		m_GameModule = new GameModule();
 		SClass::ProcessNewlyLoadedSClasses();
 
+		m_GameModule = FSObjectAllocator::AllocateSObject<GameModule>();
 	}
 
 	void EditorLayer::OnAttach()
@@ -309,11 +310,11 @@ namespace Saturn {
 				m_SuspendedEditorCamera.SetActive( m_AllowCameraEvents );
 				m_SuspendedEditorCamera.OnUpdate( time );
 
-				m_RuntimeScene->OnRenderEditor( m_SuspendedEditorCamera, time, *m_SceneRenderer );
+				m_RuntimeScene->OnRenderEditor( &m_SuspendedEditorCamera, m_SuspendedEditorCamera.ViewMatrix(), m_SceneRenderer, time );
 			}
 			else [[likely]]
 			{
-				m_RuntimeScene->OnRenderRuntime( time, *m_SceneRenderer );
+				m_RuntimeScene->OnRenderRuntime( time, m_SceneRenderer );
 			}
 
 			if( m_ShowCameraFrustum )
@@ -322,8 +323,8 @@ namespace Saturn {
 				{
 					const auto& cc = entity->GetComponent<CameraComponent>().Camera;
 					
-//					auto& rRenderer = m_SceneRenderer->GetRenderer2D();
-//					cc.RenderDebugFrustum( rRenderer );
+					auto renderer2D = m_SceneRenderer->GetRenderer2D();
+					cc.RenderDebugFrustum( renderer2D );
 				}
 			}
 		}
@@ -367,6 +368,14 @@ namespace Saturn {
 		m_ImGuiWindowManager->OnUpdate( time );
 
 		RenderThread::Get().Queue( [ = ]() { m_SceneRenderer->RenderScene(); } );
+		RenderThread::Get().Queue( [ = ]() 
+		{ 
+			m_SceneRenderer->RenderScene(); 
+
+			// Always submit Renderer2D AFTER a potential SceneRenderer has finished because we now may have new 
+			// render commands to draw after OnUpdate was called.
+			m_SceneRenderer->GetRenderer2D()->Render();
+		} );
 	}
 
 	void EditorLayer::OnImGuiRender()

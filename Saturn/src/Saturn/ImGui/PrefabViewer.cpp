@@ -32,6 +32,7 @@
 #include "Saturn/Core/Renderer/RenderThread.h"
 
 #include "Saturn/Asset/AssetRegistry.h"
+#include "Saturn/Vulkan/Renderer2D.h"
 #include "Saturn/Vulkan/SceneRenderer.h"
 
 #include "ImGuiAuxiliary.h"
@@ -182,7 +183,7 @@ namespace Saturn {
 		m_Camera.OnUpdate( ts );
 
 		// Update Scene for rendering (on main thread).
-		m_Prefab->GetScene()->OnRenderEditor( m_Camera, ts, *m_SceneRenderer );
+		m_Prefab->GetScene()->OnRenderEditor( &m_Camera, m_Camera.ViewMatrix(), m_SceneRenderer, ts );
 
 		RenderThread::Get().Queue( [=]()
 			{

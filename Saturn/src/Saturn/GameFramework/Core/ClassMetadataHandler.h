@@ -47,6 +47,8 @@ namespace Saturn {
 		ClassMetadataHandler();
 		~ClassMetadataHandler();
 
+		void DestroyAndFreeAllSClasses();
+
 		template<typename Fn>
 		SAT_ClassMetadataHandler_EachTreeNode_Deprecated void EachTreeNode( Fn Function )
 		{

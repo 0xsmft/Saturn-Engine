@@ -174,7 +174,7 @@ namespace Saturn {
 	void RuntimeLayer::OnUpdate( Timestep time )
 	{
 		m_RuntimeScene->OnUpdate( time );
-		m_RuntimeScene->OnRenderRuntime( time, *m_SceneRenderer );
+		m_RuntimeScene->OnRenderRuntime( time, m_SceneRenderer );
 	}
 
 	void RuntimeLayer::OnEvent( Event& rEvent )

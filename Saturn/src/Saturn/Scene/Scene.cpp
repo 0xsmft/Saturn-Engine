@@ -115,7 +115,7 @@ namespace Saturn {
 
 	void Scene::Empty()
 	{
-		EntitySelectionManager::Get().ClearSelection();
+		EntitySelectionManager::Get().ClearSelection( true );
 
 		{
 /*
@@ -130,11 +130,11 @@ namespace Saturn {
 				if( rMeshComponent.MaterialRegistry )
 					rMeshComponent.MaterialRegistry = nullptr;
 			}
+*/
 
 			// TODO: Is really needed? As the physics scene will destroy all of this.
 
 			auto rigidBodies = GetAllEntitiesWith<RigidbodyComponent>();
-
 			for( auto& entity : rigidBodies )
 			{
 				if( entity->GetComponent<RigidbodyComponent>().Rigidbody ) 
@@ -155,13 +155,21 @@ namespace Saturn {
 
 		// Release weak ref to main camera entity.
 		m_pMainCameraEntity.Reset();
+
+		/*
 		// Destroy all entities.
 		for( auto&& [id, entity] : m_EntityIDMap )
 		{
-			entity = nullptr;
-		}
+//			const size_t classSize = entity->GetClass()->GetSize() == 0 ? sizeof( SClass ) : entity->GetClass()->GetSize();
 
-		m_EntityIDMap.clear();
+//			entity->~Entity();
+//			g_BinnedAllocator.Free( entity.Get(), classSize );
+
+//			entity = nullptr;
+		}
+		*/
+
+//		m_EntityIDMap.clear();
 		m_Registry.clear();
 	}
 

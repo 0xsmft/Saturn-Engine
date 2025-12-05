@@ -3,7 +3,7 @@
 Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2025, assimp team
+Copyright (c) 2006-2024, assimp team
 
 All rights reserved.
 
@@ -113,19 +113,19 @@ struct aiMetadata;
   */
 // -------------------------------------------------------------------------------
 
-inline aiMetadataType GetAiType(const bool &) {
+inline aiMetadataType GetAiType(bool) {
     return AI_BOOL;
 }
 inline aiMetadataType GetAiType(int32_t) {
     return AI_INT32;
 }
-inline aiMetadataType GetAiType(const uint64_t &) {
+inline aiMetadataType GetAiType(uint64_t) {
     return AI_UINT64;
 }
-inline aiMetadataType GetAiType(const float &) {
+inline aiMetadataType GetAiType(float) {
     return AI_FLOAT;
 }
-inline aiMetadataType GetAiType(const double &) {
+inline aiMetadataType GetAiType(double) {
     return AI_DOUBLE;
 }
 inline aiMetadataType GetAiType(const aiString &) {
@@ -137,10 +137,10 @@ inline aiMetadataType GetAiType(const aiVector3D &) {
 inline aiMetadataType GetAiType(const aiMetadata &) {
     return AI_AIMETADATA;
 }
-inline aiMetadataType GetAiType(const int64_t &) {
+inline aiMetadataType GetAiType(int64_t) {
     return AI_INT64;
 }
-inline aiMetadataType GetAiType(const uint32_t &) {
+inline aiMetadataType GetAiType(uint32_t) {
     return AI_UINT32;
 }
 

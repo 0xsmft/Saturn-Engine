@@ -35,7 +35,7 @@
 
 namespace Saturn {
 
-	enum class NodeEditorMessageType 
+	enum class NodeEditorMessageSeverity 
 	{
 		Info,
 		Warning,
@@ -45,7 +45,7 @@ namespace Saturn {
 	struct NodeEditorMessage
 	{
 		std::string MessageText;
-		NodeEditorMessageType Type;
+		NodeEditorMessageSeverity Type;
 		UUID ID;
 	};
 
@@ -61,13 +61,20 @@ namespace Saturn {
 
 		void SetWindowID( UUID id ) { m_OutputWindowID = id; }
 
+		[[nodiscard]] bool IsOpen() const { return m_ShowWindow; }
+
+		inline void ShowOrHide() { m_ShowWindow ^= 1; }
+		inline void Hide() { m_ShowWindow = false; }
+		inline void Show() { m_ShowWindow = true; }
+
 	private:
 		void DrawMessage( const NodeEditorMessage& rMessage );
 		void ClearMessage( UUID messageID );
 
 	private:
-		std::vector<NodeEditorMessage> m_Messages;
 		UUID m_SelectedMessageID = 0;
 		UUID m_OutputWindowID;
+		bool m_ShowWindow = true;
+		std::vector<NodeEditorMessage> m_Messages;
 	};
 }

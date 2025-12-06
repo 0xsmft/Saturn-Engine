@@ -48,7 +48,7 @@ namespace Saturn {
 
 	void NodeEditorOutput::Draw()
 	{
-		ImGui::Begin( "Node Editor Output" );
+		ImGui::Begin( "Node Editor Output", &m_ShowWindow );
 
 		ImGui::BeginVertical( "##MessageRegionVert" );
 
@@ -115,15 +115,15 @@ namespace Saturn {
 
 		switch( rMessage.Type )
 		{
-			case NodeEditorMessageType::Error:
+			case NodeEditorMessageSeverity::Error:
 				Auxiliary::Image( EditorIcons::GetIcon( "Error_Small" ), { height, height } );
 				break;
 
-			case NodeEditorMessageType::Info:
+			case NodeEditorMessageSeverity::Info:
 				Auxiliary::Image( EditorIcons::GetIcon( "Information_Small" ), { height, height } );
 				break;
 
-			case NodeEditorMessageType::Warning:
+			case NodeEditorMessageSeverity::Warning:
 				Auxiliary::Image( EditorIcons::GetIcon( "Exclamation_Small" ), { height, height } );
 				break;
 		}

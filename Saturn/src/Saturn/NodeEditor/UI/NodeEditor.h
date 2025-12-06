@@ -161,6 +161,10 @@ namespace Saturn {
 		void DrawTopBarChildInternal();
 		void HandleCreate();
 		void HandleStateCanvasBorders();
+		void EdEvaluateEditor();
+		void DrawDetailsWindow();
+		void DrawDataWindow();
+		void DrawDebugWindow();
 
 		virtual void DrawGraph();
 
@@ -186,6 +190,10 @@ namespace Saturn {
 		// Sub-graph path
 		std::vector<SharedPtr<NodeEditorNodeBase>> m_SubGraphs;
 #endif
+
+		bool m_ShowDebugInformation = false;
+		bool m_ShowDetailsInformation = false;
+		bool m_ShowDataWindow = false;
 
 		ImVec2 m_ViewportSize;
 

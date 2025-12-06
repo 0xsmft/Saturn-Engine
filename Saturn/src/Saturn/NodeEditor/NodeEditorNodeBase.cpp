@@ -75,6 +75,9 @@ namespace Saturn {
 		RawSerialisation::WriteString( SavedState, rStream );
 #endif
 
+		RawSerialisation::WriteObject( Inputs.size(), rStream );
+		RawSerialisation::WriteObject( Outputs.size(), rStream );
+
 		for( const auto& rInput : Inputs )
 		{
 			rInput->Serialise( rStream );
@@ -108,14 +111,22 @@ namespace Saturn {
 		SavedState = RawSerialisation::ReadString( rStream );
 #endif
 
+		// We make sure to read the last saved pin count and not the real pin size from the Node it self,
+		// This is to make sure that if a pin was added in a newer version but has not been serialised yet, 
+		// we only read pins that we'd had before to stop us over reading data.
+
+		size_t inputSize = 0llu, outputSize = 0llu;
+		RawSerialisation::ReadObject( inputSize, rStream );
+		RawSerialisation::ReadObject( outputSize, rStream );
+
 		// NOTE: Pins are already created at this point hence why we don't write the size of the pins
 		//       All we do is read back the data
-		for( size_t i = 0; i < Inputs.size(); ++i )
+		for( size_t i = 0; i < inputSize; ++i )
 		{
 			Inputs[ i ]->Deserialise( rStream );
 		}
 
-		for( size_t i = 0; i < Outputs.size(); ++i )
+		for( size_t i = 0; i < outputSize; ++i )
 		{
 			Outputs[ i ]->Deserialise( rStream );
 		}

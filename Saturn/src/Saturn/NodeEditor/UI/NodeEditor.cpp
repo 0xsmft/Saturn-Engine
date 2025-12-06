@@ -192,7 +192,7 @@ namespace Saturn {
 		m_Builder = util::BlueprintNodeBuilder( ( ImTextureID ) texture->GetDescriptorSet(), texture->Width(), texture->Height() );
 
 		m_OutputWindow.SetWindowID( m_AssetID );
-		m_OutputWindow.PushMessage( { .MessageText = "Initialised new editor!", .Type = NodeEditorMessageType::Info } );
+		m_OutputWindow.PushMessage( { .MessageText = "Initialised new editor!", .Type = NodeEditorMessageSeverity::Info } );
 
 		m_InternalEditorID = std::format( "Nc##{0}", (uint64_t)m_AssetID );
 	}
@@ -244,8 +244,77 @@ namespace Saturn {
 		if( !m_WindowOpen )
 			return;
 
+		ImGuiWindowFlags mainWindowFlags = ImGuiWindowFlags_MenuBar;
+		if( m_Dirty )
+			mainWindowFlags |= ImGuiWindowFlags_UnsavedDocument;
+
 		// Draw main window
-		ImGui::Begin( m_Name.c_str(), &m_WindowOpen, m_Dirty ? ImGuiWindowFlags_UnsavedDocument : 0 );
+		ImGui::Begin( m_Name.c_str(), &m_WindowOpen, mainWindowFlags );
+
+		if( ImGui::BeginMenuBar() )
+		{
+			if( ImGui::BeginMenu( "File" ) )
+			{
+				if( ImGui::MenuItem( "Save" ) )
+				{
+					SaveAndMarkClean();
+				}
+
+				if( ImGui::MenuItem( "Close" ) )
+				{
+					m_WindowOpen = false;
+				}
+
+				ImGui::EndMenu();
+			}
+
+			if( ImGui::BeginMenu( "Test" ) )
+			{
+				if( ImGui::MenuItem( "Evaluate" ) )
+				{
+					EdEvaluateEditor();
+				}
+
+				ImGui::EndMenu();
+			}
+
+			if( ImGui::BeginMenu( "View" ) )
+			{
+				if( ImGui::MenuItem( "Zoom to Content" ) )
+				{
+					ed::NavigateToContent( 0.25f );
+				}
+
+				ImGui::EndMenu();
+			}
+
+			if( ImGui::BeginMenu( "Window" ) )
+			{
+				if( ImGui::MenuItem( "Show Output Windows" ) )
+				{
+					m_OutputWindow.ShowOrHide();
+				}
+
+				if( ImGui::MenuItem( "Show Debug Information" ) )
+				{
+					m_ShowDebugInformation ^= 1;
+				}
+
+				if( ImGui::MenuItem( "Show Details Windows" ) )
+				{
+					m_ShowDetailsInformation ^= 1;
+				}
+
+				if( ImGui::MenuItem( "Show Variables Windows" ) )
+				{
+					m_ShowDataWindow ^= 1;
+				}
+
+				ImGui::EndMenu();
+			}
+
+			ImGui::EndMenuBar();
+		}
 
 		// Ensure our editor is the current one
 		// We'll use a VariableGuard<ed::EditorContext*> when we can't be sure that we are the current node editor.
@@ -285,177 +354,9 @@ namespace Saturn {
 
 		ed::Suspend();
 
-		// Extra information window
-		if( ImGui::Begin( "Details" ) )
-		{
-			Auxiliary::ScopedDisabledFlag disabled( !HasPrivilege( NodeEditorUserAuthority::Editing ) );
-
-			OnExtraRender();
-		}
-
-		ImGui::End();
-
-		// Variables
-		if( ImGui::Begin( "Data" ) )
-		{
-			Auxiliary::ScopedDisabledFlag disabled( !HasPrivilege( NodeEditorUserAuthority::Editing ) );
-
-			if( Auxiliary::TreeNode( "Variables" ) ) 
-			{
-				for( auto& [id, rVariable] : m_DataHandles )
-				{
-					ImGui::BeginHorizontal( ( uint64_t ) id );
-					if( Auxiliary::InputText( "##editname", &rVariable->m_Name ) ) 
-					{
-						MarkDirty();
-					}
-
-					ImGui::Spring();
-					ImGui::SeparatorEx( ImGuiSeparatorFlags_Vertical, 1.0f );
-					ImGui::Spring();
-
-					const std::string currentType = NodeEditorVariableDataTypeToString( rVariable->GetType() );
-					const std::string dataTypeID = std::format( "##DataType/{0}", ( uint64_t ) id );
-					ImGui::SetNextItemWidth( 164.0f );
-					if( ImGui::BeginCombo( dataTypeID.c_str(), currentType.c_str() ) )
-					{
-						for( size_t i = 0; i < std::underlying_type_t<NodeEditorVariableDataType>( NodeEditorVariableDataType::Unknown ); ++i )
-						{
-							const std::string itemName = NodeEditorVariableDataTypeToString( ( NodeEditorVariableDataType ) i );
-							if( ImGui::Selectable( itemName.c_str() ) )
-							{
-								rVariable->m_DataType = ( NodeEditorVariableDataType ) i;
-								MarkDirty();
-							}
-						}
-
-						ImGui::EndCombo();
-					}
-
-					ImGui::Spring();
-
-					if( ImGui::SmallButton( "-" ) )
-					{
-						m_DataHandles.erase( id );
-						MarkDirty();
-
-						ImGui::EndHorizontal();
-						break;
-					}
-
-					ImGui::EndHorizontal();
-
-					// No new line!
-					if( rVariable->m_Name.empty() )
-					{
-						const std::string text = "The variable name cannot be empty!";
-
-						const ImVec2 padding = ImGui::GetStyle().FramePadding;
-						const ImVec2 textPosition = ImGui::GetCursorScreenPos();
-						const ImVec2 textSize = ImGui::CalcTextSize( text.c_str() );
-
-						const ImVec2 min = ImVec2( textPosition.x - padding.x, textPosition.y - padding.y );
-						const ImVec2 max = ImVec2( textPosition.x + padding.x + textSize.x, textPosition.y + padding.y + textSize.y );
-
-						ImGui::GetWindowDrawList()->AddRectFilled( min, max, IM_COL32( 200, 30, 60, 255 ), 2.0f, ImDrawFlags_RoundCornersAll );
-
-						ImGui::TextUnformatted( text.c_str() );
-					}
-				}
-
-				if( ImGui::SmallButton( "+" ) )
-				{
-					Ref<NodeEditorVariable> var = Ref<NodeEditorVariable>::Create( NodeEditorVariableDataType::Unknown );
-
-					std::string name = "NewVariable";
-
-					const auto count = std::count_if( m_DataHandles.begin(), m_DataHandles.end(), 
-						[name](const auto& rCandidate)
-					{
-						return rCandidate.second->m_Name.contains( name );
-					} );
-
-					if( count >= 1 )
-						name += std::to_string( count );
-
-					var->m_Name = name;
-					m_DataHandles[ var->GetUUID() ] = var;
-					MarkDirty();
-				}
-
-				Auxiliary::EndTreeNode();
-			}
-		}
-
-		ImGui::End();
-
-		if( ImGui::Begin( "Debug Information" ) )
-		{
-			if( Auxiliary::TreeNode( "Editor Information" ) )
-			{
-				ImGui::Text( "Name: %s", m_Name.c_str() );
-				ImGui::Text( "Custom Name (NC): %s", m_CustomNameNC.c_str() );
-				ImGui::Text( "Internal Editor ID: %s", m_InternalEditorID.c_str() );
-
-				ImGui::Text( "Internal Node Count (Live): %i", ed::GetNodeCount() );
-
-				Auxiliary::EndTreeNode();
-			}
-
-			if( Auxiliary::TreeNode( "Nodes" ) )
-			{
-				ImGui::Text( "Node Count %llu", m_Nodes.size() );
-				ImGui::Separator();
-
-				for( const auto& [id, rNode] : m_Nodes )
-				{
-					ImGui::PushID( ( int ) id );
-
-					ImGui::Text( "%s", rNode->Name.c_str() );
-					ImGui::Text( "ID/%llu", id );
-					ImGui::Text( "Parent Object Name (if any) %s", rNode->pParentObject ? rNode->pParentObject->Name.c_str() : "<null>" );
-					ImGui::Text( "SClass: %s", rNode->GetClass()->GetName().c_str() );
-					
-					if( Auxiliary::TreeNode( "Pins", false ) )
-					{
-						if( ImGui::TreeNode( "Outputs" ) ) 
-						{
-							for( const auto& rOutput : rNode->Outputs )
-							{
-								ImGui::Text( "%s", rOutput->Name.c_str() );
-								ImGui::Text( "ID/%llu", rOutput->ID );
-								ImGui::Text( "Accepts Multiple Links %i", rOutput->AcceptMultipleLinks );
-							}
-
-							Auxiliary::EndTreeNode();
-							ImGui::Separator();
-						}
-
-						if( ImGui::TreeNode( "Inputs" ) )
-						{
-							for( const auto& rInput : rNode->Inputs )
-							{
-								ImGui::Text( "%s", rInput->Name.c_str() );
-								ImGui::Text( "ID/%llu", rInput->ID );
-								ImGui::Text( "Accepts Multiple Links %i", rInput->AcceptMultipleLinks );
-							}
-
-							Auxiliary::EndTreeNode();
-							ImGui::Separator();
-						}
-
-						Auxiliary::EndTreeNode();
-					}
-				
-					ImGui::PopID();
-					ImGui::Separator();
-				}
-	
-				Auxiliary::EndTreeNode();
-			}
-
-			ImGui::End();
-		}
+		if( m_ShowDetailsInformation ) DrawDetailsWindow();
+		if( m_ShowDataWindow )         DrawDataWindow();
+		if( m_ShowDebugInformation )   DrawDebugWindow();
 
 		// Create new node context popup window
 		ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 8.0f, 8.0f ) );
@@ -521,7 +422,7 @@ namespace Saturn {
 
 		HandleStateCanvasBorders();
 
-		m_OutputWindow.Draw();
+		if( m_OutputWindow.IsOpen() ) m_OutputWindow.Draw();
 
 		ImGui::End(); // NODE_EDITOR
 
@@ -554,17 +455,17 @@ namespace Saturn {
 
 	void NodeEditor::ThrowError( const std::string& rMessage )
 	{
-		m_OutputWindow.PushMessage( { .MessageText = rMessage, .Type = NodeEditorMessageType::Error } );
+		m_OutputWindow.PushMessage( { .MessageText = rMessage, .Type = NodeEditorMessageSeverity::Error } );
 	}
 
 	void NodeEditor::ThrowWarning( const std::string& rMessage )
 	{
-		m_OutputWindow.PushMessage( { .MessageText = rMessage, .Type = NodeEditorMessageType::Warning } );
+		m_OutputWindow.PushMessage( { .MessageText = rMessage, .Type = NodeEditorMessageSeverity::Warning } );
 	}
 
 	void NodeEditor::PushInfoMessage( const std::string& rMessage )
 	{
-		m_OutputWindow.PushMessage( { .MessageText = rMessage, .Type = NodeEditorMessageType::Info } );
+		m_OutputWindow.PushMessage( { .MessageText = rMessage, .Type = NodeEditorMessageSeverity::Info } );
 	}
 
 	void NodeEditor::DeleteDeadLinks( UUID nodeID )
@@ -828,31 +729,7 @@ namespace Saturn {
 
 		if( Auxiliary::ImageButton( m_CompileTexture, { 24.0f, 24.0f } ) )
 		{
-			m_OutputWindow.ClearOutput();
-
-			if( m_Runtime )
-			{
-				OnNodeEditorEvent( NodeEditorAction::PreEvaluate );
-
-				NodeEditorCompilationStatus result = m_Runtime->EvaluateEditor();
-
-				OnNodeEditorEvent( NodeEditorAction::PostEvaluate );
-
-				switch( result )
-				{
-					case NodeEditorCompilationStatus::Success:
-					{
-						m_OutputWindow.PushMessage( { .MessageText = "Successfully compiled and evaluated node editor!", .Type = NodeEditorMessageType::Info } );
-					} break;
-
-					case NodeEditorCompilationStatus::Failed:
-					{
-						m_OutputWindow.PushMessage( { .MessageText = "Failed to compile node editor.", .Type = NodeEditorMessageType::Error } );
-					} break;
-				}
-			}
-			else
-				m_OutputWindow.PushMessage( { .MessageText = "No active compiler was found!", .Type = NodeEditorMessageType::Error } );
+			EdEvaluateEditor();
 		}
 
 		if( ImGui::IsItemHovered() )
@@ -1103,6 +980,215 @@ namespace Saturn {
 				}
 			} break;
 		}
+	}
+
+	void NodeEditor::EdEvaluateEditor()
+	{
+		m_OutputWindow.ClearOutput();
+
+		if( m_Runtime )
+		{
+			OnNodeEditorEvent( NodeEditorAction::PreEvaluate );
+
+			NodeEditorCompilationStatus result = m_Runtime->EvaluateEditor();
+
+			OnNodeEditorEvent( NodeEditorAction::PostEvaluate );
+
+			switch( result )
+			{
+				case NodeEditorCompilationStatus::Success:
+				{
+					m_OutputWindow.PushMessage( { .MessageText = "Successfully compiled and evaluated node editor!", .Type = NodeEditorMessageSeverity::Info } );
+				} break;
+
+				case NodeEditorCompilationStatus::Failed:
+				{
+					m_OutputWindow.PushMessage( { .MessageText = "Failed to compile node editor.", .Type = NodeEditorMessageSeverity::Error } );
+				} break;
+			}
+		}
+		else
+			m_OutputWindow.PushMessage( { .MessageText = "No active compiler was found!", .Type = NodeEditorMessageSeverity::Error } );
+	}
+
+	void NodeEditor::DrawDetailsWindow()
+	{
+		// Extra information window
+		if( ImGui::Begin( "Details", &m_ShowDetailsInformation ) )
+		{
+			Auxiliary::ScopedDisabledFlag disabled( !HasPrivilege( NodeEditorUserAuthority::Editing ) );
+
+			OnExtraRender();
+		}
+
+		ImGui::End();
+	}
+
+	void NodeEditor::DrawDataWindow()
+	{
+		if( ImGui::Begin( "Data", &m_ShowDataWindow ) )
+		{
+			Auxiliary::ScopedDisabledFlag disabled( !HasPrivilege( NodeEditorUserAuthority::Editing ) );
+
+			if( Auxiliary::TreeNode( "Variables" ) )
+			{
+				for( auto& [id, rVariable] : m_DataHandles )
+				{
+					ImGui::BeginHorizontal( ( int ) id );
+					if( Auxiliary::InputText( "##editname", &rVariable->m_Name ) )
+					{
+						MarkDirty();
+					}
+
+					ImGui::Spring();
+					ImGui::SeparatorEx( ImGuiSeparatorFlags_Vertical, 1.0f );
+					ImGui::Spring();
+
+					const std::string currentType = NodeEditorVariableDataTypeToString( rVariable->GetType() );
+					const std::string dataTypeID = std::format( "##DataType/{0}", ( uint64_t ) id );
+					ImGui::SetNextItemWidth( 164.0f );
+					if( ImGui::BeginCombo( dataTypeID.c_str(), currentType.c_str() ) )
+					{
+						for( size_t i = 0; i < std::underlying_type_t<NodeEditorVariableDataType>( NodeEditorVariableDataType::Unknown ); ++i )
+						{
+							const std::string itemName = NodeEditorVariableDataTypeToString( ( NodeEditorVariableDataType ) i );
+							if( ImGui::Selectable( itemName.c_str() ) )
+							{
+								rVariable->m_DataType = ( NodeEditorVariableDataType ) i;
+								MarkDirty();
+							}
+						}
+
+						ImGui::EndCombo();
+					}
+
+					ImGui::Spring();
+
+					if( ImGui::SmallButton( "-" ) )
+					{
+						m_DataHandles.erase( id );
+						MarkDirty();
+
+						ImGui::EndHorizontal();
+						break;
+					}
+
+					ImGui::EndHorizontal();
+
+					// No new line!
+					if( rVariable->m_Name.empty() )
+					{
+						const std::string text = "The variable name cannot be empty!";
+
+						const ImVec2 padding = ImGui::GetStyle().FramePadding;
+						const ImVec2 textPosition = ImGui::GetCursorScreenPos();
+						const ImVec2 textSize = ImGui::CalcTextSize( text.c_str() );
+
+						const ImVec2 min = ImVec2( textPosition.x - padding.x, textPosition.y - padding.y );
+						const ImVec2 max = ImVec2( textPosition.x + padding.x + textSize.x, textPosition.y + padding.y + textSize.y );
+
+						ImGui::GetWindowDrawList()->AddRectFilled( min, max, IM_COL32( 200, 30, 60, 255 ), 2.0f, ImDrawFlags_RoundCornersAll );
+
+						ImGui::TextUnformatted( text.c_str() );
+					}
+				}
+
+				if( ImGui::SmallButton( "+" ) )
+				{
+					Ref<NodeEditorVariable> var = Ref<NodeEditorVariable>::Create( NodeEditorVariableDataType::Unknown );
+
+					std::string name = "NewVariable";
+
+					const auto count = std::count_if( m_DataHandles.begin(), m_DataHandles.end(),
+						[ name ]( const auto& rCandidate )
+					{
+						return rCandidate.second->m_Name.contains( name );
+					} );
+
+					if( count >= 1 )
+						name += std::to_string( count );
+
+					var->m_Name = name;
+					m_DataHandles[ var->GetUUID() ] = var;
+					MarkDirty();
+				}
+
+				Auxiliary::EndTreeNode();
+			}
+		}
+
+		ImGui::End();
+	}
+
+	void NodeEditor::DrawDebugWindow()
+	{
+		if( ImGui::Begin( "Debug Information", &m_ShowDebugInformation ) )
+		{
+			if( Auxiliary::TreeNode( "Editor Information" ) )
+			{
+				ImGui::Text( "Name: %s", m_Name.c_str() );
+				ImGui::Text( "Custom Name (NC): %s", m_CustomNameNC.c_str() );
+				ImGui::Text( "Internal Editor ID: %s", m_InternalEditorID.c_str() );
+
+				ImGui::Text( "Internal Node Count (Live): %i", ed::GetNodeCount() );
+
+				Auxiliary::EndTreeNode();
+			}
+
+			if( Auxiliary::TreeNode( "Nodes" ) )
+			{
+				ImGui::Text( "Node Count %llu", m_Nodes.size() );
+				ImGui::Separator();
+
+				for( const auto& [id, rNode] : m_Nodes )
+				{
+					ImGui::PushID( ( int ) id );
+
+					ImGui::Text( "%s", rNode->Name.c_str() );
+					ImGui::Text( "ID/%llu", id );
+					ImGui::Text( "Parent Object Name (if any) %s", rNode->pParentObject ? rNode->pParentObject->Name.c_str() : "<null>" );
+					ImGui::Text( "SClass: %s", rNode->GetClass()->GetName().c_str() );
+
+					if( Auxiliary::TreeNode( "Pins", false ) )
+					{
+						if( ImGui::TreeNode( "Outputs" ) )
+						{
+							for( const auto& rOutput : rNode->Outputs )
+							{
+								ImGui::Text( "%s", rOutput->Name.c_str() );
+								ImGui::Text( "ID/%llu", rOutput->ID );
+								ImGui::Text( "Accepts Multiple Links %i", rOutput->AcceptMultipleLinks );
+							}
+
+							Auxiliary::EndTreeNode();
+							ImGui::Separator();
+						}
+
+						if( ImGui::TreeNode( "Inputs" ) )
+						{
+							for( const auto& rInput : rNode->Inputs )
+							{
+								ImGui::Text( "%s", rInput->Name.c_str() );
+								ImGui::Text( "ID/%llu", rInput->ID );
+								ImGui::Text( "Accepts Multiple Links %i", rInput->AcceptMultipleLinks );
+							}
+
+							Auxiliary::EndTreeNode();
+							ImGui::Separator();
+						}
+
+						Auxiliary::EndTreeNode();
+					}
+
+					ImGui::PopID();
+					ImGui::Separator();
+				}
+
+				Auxiliary::EndTreeNode();
+			}
+		}
+
+		ImGui::End();
 	}
 
 #if !defined(SAT_DIST)

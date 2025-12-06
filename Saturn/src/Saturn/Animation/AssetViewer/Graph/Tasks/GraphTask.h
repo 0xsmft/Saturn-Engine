@@ -61,6 +61,7 @@ namespace Saturn {
 
 	public:
 		NodeEditorTaskHandler* GetParentObject() const { return pParentHandler; }
+		const std::vector<GraphTaskItem>& GetTasks() const { return m_Tasks; }
 
 	public:
 		//////////////////////////////////////////////////////////////////////////

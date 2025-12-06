@@ -63,7 +63,6 @@ namespace Saturn {
 	void Animator::InitAnimation( AssetID id, Ref<SkeletalMesh> sk, AnimatorType type )
 	{
 		m_SkeletalMesh = sk;
-		m_CurrentID = id;
 
 		switch( type )
 		{
@@ -100,7 +99,7 @@ namespace Saturn {
 				if( !m_Completed )
 				{
 					m_AnimationTime -= floorf( m_AnimationTime );
-					m_AnimationTime += ts * 1.0f / m_SingleAnimationAsset->GetDuration();
+					m_AnimationTime += ts * m_PlaybackSpeed / m_SingleAnimationAsset->GetDuration();
 
 					while( m_AnimationTime > 1.0f )
 					{
@@ -121,7 +120,6 @@ namespace Saturn {
 				m_Context.decompress_tracks( m_Writer );
 
 				m_pOutPose->Timestamp = m_SingleAnimationAsset->GetDuration();
-				m_pOutPose->Duration = m_AnimationTime;
 			} break;
 		}
 	}
@@ -158,34 +156,40 @@ namespace Saturn {
 		if( m_State == AnimationState::NotInitialised )
 			return;
 
-		m_StartTime = Application::Get().Time().Seconds();
 		m_State = AnimationState::Playing;
 
-		if( m_AnimatorType == AnimatorType::AnimationControllerGraph )
-			m_AnimationControllerAsset->Initialise( this );
-
 		m_pOutPose = new Pose();
-		m_pOutPose->BonesUsed = m_SingleAnimationAsset->GetAnimationBones().size();
+		m_pOutPose->Duration = m_AnimationTime;
 
 		m_Writer = PoseWriter( m_pOutPose );
-		m_Context.initialize( *static_cast<const acl::compressed_tracks*>( m_SingleAnimationAsset->GetData() ) );
 
-		TickSingleAnim( 0.0f );
+		switch( m_AnimatorType )
+		{
+			case AnimatorType::Single:
+			{
+				if( m_SingleAnimationAsset )
+				{
+					m_pOutPose->BonesUsed = m_SingleAnimationAsset->GetAnimationBones().size();
+					m_Context.initialize( *static_cast< const acl::compressed_tracks* >( m_SingleAnimationAsset->GetData() ) );
+
+					TickSingleAnim( 0.0f );
+				}
+			} break;
+
+			case AnimatorType::AnimationControllerGraph:
+				m_AnimationControllerAsset->Initialise( this );
+				break;
+			
+			default: break;
+		}
 	}
 
 	void Animator::Clear()
 	{
 		m_AnimationTime = 0.0f;
-		m_StartTime = 0.0f;
 		m_SingleAnimationAsset = nullptr;
 		m_AnimationControllerAsset = nullptr;
-		m_CurrentID = 0llu;
 		m_State = AnimationState::Inactive;
-	}
-
-	void Animator::QueueNewAnimation( AssetID id )
-	{
-		m_PendingAsset = id;
 	}
 
 	Ref<Asset> Animator::GetCurrentAnimation() const
@@ -228,61 +232,6 @@ namespace Saturn {
 		}
 
 		return ts;
-	}
-
-	void Animator::ApplyBoneTransformations()
-	{
-		m_Context.seek( m_AnimationTime * m_SingleAnimationAsset->GetDuration(), acl::sample_rounding_policy::none );
-		m_Context.decompress_tracks( m_Writer );
-
-		/*
-		const auto& rMeshBones = m_SkeletalMesh->GetSkeletonAsset()->GetBoneInfo();
-
-		const auto& rBones = m_SingleAnimationAsset->GetAnimationBones();
-		std::vector<glm::mat4> localTransforms( rMeshBones.size() );
-		
-		for( const auto& rBone : rBones )
-		{
-			if( rBone.Index == -1 )
-			{
-				continue;
-			}
-
-			const glm::vec3 pos = InterpolatePosition( rBone, m_AnimationTime );
-			const glm::quat rot = InterpolateRotation( rBone, m_AnimationTime );
-			const glm::vec3 scl = InterpolateScale( rBone, m_AnimationTime );
-
-			const glm::mat4 translation = glm::translate( glm::mat4( 1.0f ), pos );
-			const glm::mat4 rotation = glm::toMat4( rot );
-			const glm::mat4 scaling = glm::scale( glm::mat4( 1.0f ), scl );
-
-			const auto final = translation * rotation * scaling;
-			localTransforms[ ( size_t ) rBone.Index ] = final;
-		}
-
-		// Root motion.
-		if( m_SingleAnimationAsset->IsUsingRootMotion() )
-		{
-			const auto& rRootTransformation = localTransforms[ 0 ];
-			const auto& rCurrentTranslation = glm::vec3( rRootTransformation[ 3 ] );
-			const auto& rCurrentRotation = glm::quat_cast( rRootTransformation );
-
-			const glm::vec3 deltaPos = rCurrentTranslation - m_LastRootTranslation;
-			const glm::quat deltaRot = glm::conjugate( m_LastRootRotation ) * rCurrentRotation;
-
-			// Temporary, would need to create a "fake" root motion bone if needed.
-			localTransforms[ 0 ][ 3 ] = glm::vec4( 0.0f, 0.0f, 0.0f, 1.0f );
-
-			m_LastRootTranslation = rCurrentTranslation;
-			m_LastRootRotation = rCurrentRotation;
-		}
-
-		for( size_t i = 0; i < rMeshBones.size(); ++i )
-		{
-			if( rMeshBones[ i ].ParentIndex == -1 )
-				UpdateBones( i, glm::mat4( 1.0f ), localTransforms );
-		}
-		*/
 	}
 
 }

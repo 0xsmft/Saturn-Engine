@@ -47,7 +47,7 @@ namespace Saturn {
 
 		static bool IsModel( const std::string& rPathExt )
 		{
-			return rPathExt == ".fbx" || rPathExt == ".obj" || rPathExt == ".gltf";
+			return rPathExt == ".fbx" || rPathExt == ".obj" || rPathExt == ".gltf" || rPathExt == ".glb";
 		}
 	};
 	

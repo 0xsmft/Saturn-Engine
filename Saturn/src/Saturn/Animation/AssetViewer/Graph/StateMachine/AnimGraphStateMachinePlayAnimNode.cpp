@@ -57,6 +57,12 @@ namespace Saturn {
 		RenderType = NodeRenderType::Blueprint;
 #endif
 
+		auto fpin = Ref<FloatPin>::Create( "Playback Speed", PinKind::Input );
+		fpin->Data = 1.0f;
+		Inputs.push_back( fpin );
+
+		Inputs.emplace_back( Ref<BoolPin>::Create( "Loop", PinKind::Input ) );
+
 		Outputs.push_back( Ref<AnimGraphAnimationPin>::Create( "Out Animation", PinKind::Output, AnimGraphAnimationPinFlags::Animation ) );
 	}
 
@@ -67,6 +73,16 @@ namespace Saturn {
 	NodeEditorTaskBase* AnimGraphStateMachinePlayAnimNode::ConvertToTask()
 	{
 		return NewObject<AnimGraphPlayAnimTask>();
+	}
+
+	bool AnimGraphStateMachinePlayAnimNode::IsLooping() const
+	{
+		return Inputs[ 0 ].As<BoolPin>()->Data;
+	}
+
+	float AnimGraphStateMachinePlayAnimNode::GetPlaybackSpeed() const
+	{
+		return Inputs[ 1 ].As<FloatPin>()->Data;
 	}
 
 	void AnimGraphStateMachinePlayAnimNode::Serialise( std::ofstream& rStream, bool isForDist ) const

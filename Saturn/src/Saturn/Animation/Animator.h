@@ -56,18 +56,17 @@ namespace Saturn {
 		~Animator();
 
 		void Destory();
-
 		void InitAnimation( AssetID id, Ref<SkeletalMesh> sk, AnimatorType type );
 		void TickAnimation( Timestep ts );
 		void Pause();
 		void Begin();
 		void Clear();
-
-		void QueueNewAnimation( AssetID id );
-
 		void StepTo( float time ) { time; }
 
-		AssetID GetCurrentID() const { return m_CurrentID; }
+		void SetPlaybackSpeed( float playbackSpeed ) { m_PlaybackSpeed = playbackSpeed; }
+		void Loop( bool shouldLoop ) { m_Looping = shouldLoop; }
+
+	public:
 		Ref<Asset> GetCurrentAnimation() const;
 
 		Ref<SkeletalMesh> GetSkeletalMesh() const { return m_SkeletalMesh; }
@@ -83,23 +82,22 @@ namespace Saturn {
 		bool IsPlaying() const { return m_State == AnimationState::Playing; }
 		bool IsPaused() const { return m_State == AnimationState::Paused; }
 
+		Pose* GetFinalOutPose() { return m_pOutPose; }
+
+		float GetPlaybackSpeed() const { return m_PlaybackSpeed; }
 		float GetCurrentAnimTime() const { return m_AnimationTime; }
 		AnimationState GetAnimationState() const { return m_State; }
 
 	private:
 		void TickSingleAnim( Timestep ts );
-		void ApplyBoneTransformations();
 
 	private:
-		float m_StartTime = 0.0f;
 		float m_AnimationTime = 0.0f;
+		float m_PlaybackSpeed = 1.0f;
 		AnimationState m_State = AnimationState::NotInitialised;
 		AnimatorType m_AnimatorType = AnimatorType::Single;
 		bool m_Looping = false;
 		bool m_Completed = false;
-
-		AssetID m_PendingAsset = 0llu;
-		AssetID m_CurrentID = 0llu;
 
 		Ref<SkeletalAnimationAsset> m_SingleAnimationAsset;
 		Ref<AnimationController> m_AnimationControllerAsset;
@@ -108,9 +106,6 @@ namespace Saturn {
 		Pose* m_pOutPose = nullptr;
 		PoseWriter m_Writer;
 		acl::decompression_context<acl::default_transform_decompression_settings> m_Context;
-
-		glm::vec3 m_LastRootTranslation{};
-		glm::quat m_LastRootRotation{};
 
 	private:
 		friend class AnimGraphPlayAnimTask;

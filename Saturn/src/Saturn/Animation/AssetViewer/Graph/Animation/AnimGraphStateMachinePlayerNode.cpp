@@ -57,7 +57,6 @@ namespace Saturn {
 		Color = ImColor( 48, 128, 255, 100 );
 		RenderType = NodeRenderType::Blueprint;
 #endif
-
 		Outputs.emplace_back( Ref<AnimGraphAnimationPin>::Create( "Out", PinKind::Output, AnimGraphAnimationPinFlags::StateMachine ) );
 	}
 

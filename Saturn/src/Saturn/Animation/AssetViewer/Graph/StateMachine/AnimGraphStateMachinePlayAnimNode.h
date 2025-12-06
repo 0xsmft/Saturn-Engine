@@ -45,6 +45,10 @@ namespace Saturn {
 		virtual NodeEditorTaskBase* ConvertToTask() override;
 
 	public:
+		[[nodiscard]] bool IsLooping() const;
+		[[nodiscard]] float GetPlaybackSpeed() const;
+
+	public:
 		void Serialise( std::ofstream& rStream, bool isForDist ) const override;
 		void Deserialise( FDependentIStream& rStream ) override;
 

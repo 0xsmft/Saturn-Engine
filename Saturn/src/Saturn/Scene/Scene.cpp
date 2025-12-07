@@ -762,6 +762,12 @@ namespace Saturn {
 		m_EntityIDMap.erase( handle );
 		m_Registry.destroy( handle );
 	}
+
+	void Scene::DestroyEntity( Entity* entity )
+	{
+		m_EntitiesToDestory.push_back( entity );
+	}
+
 	}
 
 	void Scene::TransferModifiedProperties( const SharedPtr<Entity>& rSourceEntity, SharedPtr<Entity>& rEntity, const std::string& rMetadataName )
@@ -791,6 +797,58 @@ namespace Saturn {
 			}
 		}
 		*/
+	}
+
+	void Scene::DestroyPendingEntities()
+	{
+		while( !m_EntitiesToDestory.empty() )
+		{
+			Entity* pEntity = m_EntitiesToDestory.back();
+			DeleteEntityChecked( pEntity );
+
+			m_EntitiesToDestory.pop_back();
+		}
+	}
+
+	void Scene::DeleteEntityChecked( Entity* pEntity )
+	{
+		// Could use GetClass()
+		if( m_NavBoundsEntity->GetUUID() == pEntity->GetUUID() )
+			m_NavBoundsEntity = nullptr;
+
+//		if( pEntity == m_pMainCameraEntity )
+//			m_pMainCameraEntity = nullptr;
+
+		if( pEntity->HasComponent<StaticMeshComponent>() )
+		{
+			auto& mc = pEntity->GetComponent<StaticMeshComponent>();
+			if( mc.Mesh )
+			{
+				mc.Mesh.Reset();
+				mc.MaterialRegistry.Reset();
+			}
+		}
+
+		if( pEntity->HasComponent<RigidbodyComponent>() )
+		{
+			auto& rb = pEntity->GetComponent<RigidbodyComponent>();
+			if( rb.Rigidbody )
+			{
+				delete rb.Rigidbody;
+			}
+		}
+
+		for( auto& rChild : pEntity->GetChildren() )
+		{
+			auto child = FindEntityByID( rChild );
+			if( child )
+			{
+				DeleteEntityChecked( child.Get() );
+			}
+		}
+
+		m_Registry.destroy( pEntity->GetHandle() );
+		m_EntityIDMap.erase( pEntity->GetHandle() );
 	}
 
 	void Scene::CopyScene( Ref<Scene>& NewScene )

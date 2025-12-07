@@ -83,4 +83,20 @@ namespace Saturn {
 		return node;
 	}
 
+	SharedPtr<MathsNot> MathsNodeLibrary::SpawnNotBool( SharedPtr<NodeEditorBase> rNodeEditor )
+	{
+		SharedPtr<MathsNot> node = NewObject<MathsNot>();
+
+		rNodeEditor->AddNode( node );
+		return node;
+	}
+
+	SharedPtr<MathsOr> MathsNodeLibrary::SpawnOrBool( SharedPtr<NodeEditorBase> rNodeEditor )
+	{
+		SharedPtr<MathsOr> node = NewObject<MathsOr>();
+
+		rNodeEditor->AddNode( node );
+		return node;
+	}
+
 }

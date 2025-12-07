@@ -33,9 +33,6 @@
 
 namespace Saturn {
 	
-	//////////////////////////////////////////////////////////////////////////
-	// TODO: Not great, we have too much duplication
-
 	SCLASS()
 	class MathsAddFloats : public NodeEditorBlueprintNode
 	{
@@ -117,6 +114,38 @@ namespace Saturn {
 		MathsLessThanFloats( const std::string& rName );
 
 		virtual ~MathsLessThanFloats();
+
+		virtual NodeEditorTaskBase* ConvertToTask() override;
+
+	private:
+		void CreateNode();
+	};
+
+	SCLASS()
+	class MathsNot : public NodeEditorBlueprintNode
+	{
+		SAT_DECLARE_CLASS( MathsNot, NodeEditorBlueprintNode );
+	public:
+		MathsNot();
+		MathsNot( const std::string& rName );
+
+		virtual ~MathsNot();
+
+		virtual NodeEditorTaskBase* ConvertToTask() override;
+
+	private:
+		void CreateNode();
+	};
+
+	SCLASS()
+	class MathsOr : public NodeEditorBlueprintNode
+	{
+		SAT_DECLARE_CLASS( MathsOr, NodeEditorBlueprintNode );
+	public:
+		MathsOr();
+		MathsOr( const std::string& rName );
+
+		virtual ~MathsOr();
 
 		virtual NodeEditorTaskBase* ConvertToTask() override;
 

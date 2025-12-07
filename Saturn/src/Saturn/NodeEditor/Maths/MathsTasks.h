@@ -32,6 +32,9 @@
 
 namespace Saturn {
 
+	//
+	// Runtime operation of two floats added together.
+	//
 	SCLASS()
 	class SMathsAddFloatsTask :	public NodeEditorTaskBase
 	{
@@ -58,6 +61,9 @@ namespace Saturn {
 	class BoolPin;
 	class FloatPin;
 
+	//
+	// Runtime operation of a logical greater than (A > B).
+	//
 	SCLASS()
 	class SMathsGreaterThanFloatsTask : public NodeEditorTaskBase
 	{
@@ -85,6 +91,9 @@ namespace Saturn {
 
 	//////////////////////////////////////////////////////////////////////////
 
+	//
+	// Runtime operation of a logical less than (A < B).
+	//
 	SCLASS()
 	class SMathsLessThanFloatsTask : public NodeEditorTaskBase
 	{
@@ -107,6 +116,57 @@ namespace Saturn {
 
 		float* m_ValueToTest = nullptr;
 		float* m_Threshold = nullptr;
+		bool m_Result = false;
+	};
+
+	//////////////////////////////////////////////////////////////////////////
+
+	//
+	// Runtime operation of a NOT gate.
+	//
+	SCLASS()
+	class SMathsNotTask : public NodeEditorTaskBase
+	{
+		SAT_DECLARE_CLASS( SMathsNotTask, NodeEditorTaskBase );
+	public:
+		SMathsNotTask();
+		virtual ~SMathsNotTask();
+
+		virtual void InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pBase, NodeEditorNodeBase* pNode ) override;
+		virtual NodeEditorTaskState Tick( Timestep ts ) override;
+		virtual void Reset() override;
+
+	private:
+		// TODO: #FixTasksOutgoings
+		NodeEditorTaskHandler* m_pHandler = nullptr;
+		std::vector<UUID> Outgoings;
+
+		bool* m_pValueToTest = nullptr;
+		bool m_Result = false;
+	};
+
+	//
+	// Runtime operation of a logical OR gate.
+	//
+	SCLASS()
+	class SMathsOrTask : public NodeEditorTaskBase
+	{
+		SAT_DECLARE_CLASS( SMathsOrTask, NodeEditorTaskBase );
+	public:
+		SMathsOrTask();
+		virtual ~SMathsOrTask();
+
+		virtual void InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pBase, NodeEditorNodeBase* pNode ) override;
+		virtual NodeEditorTaskState Tick( Timestep ts ) override;
+		virtual void Reset() override;
+
+	private:
+		// TODO: #FixTasksOutgoings
+		NodeEditorTaskHandler* m_pHandler = nullptr;
+		std::vector<UUID> Outgoings;
+
+		bool* m_pA = nullptr;
+		bool* m_pB = nullptr;
 		bool m_Result = false;
 	};
 }

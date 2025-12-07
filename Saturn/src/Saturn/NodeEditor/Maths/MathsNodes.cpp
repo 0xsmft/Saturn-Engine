@@ -201,6 +201,16 @@ namespace Saturn {
 			node = MathsNodeLibrary::SpawnMathLT( nodeEditor );
 		}
 
+		if( ImGui::MenuItem( "Not" ) )
+		{
+			node = MathsNodeLibrary::SpawnNotBool( nodeEditor );
+		}
+
+		if( ImGui::MenuItem( "Or" ) )
+		{
+			node = MathsNodeLibrary::SpawnOrBool( nodeEditor );
+		}
+
 		return node;
 	}
 
@@ -278,6 +288,75 @@ namespace Saturn {
 		return NewObject<SMathsLessThanFloatsTask>();
 	}
 
+	//////////////////////////////////////////////////////////////////////////
+	// MATHS NOT
+
+	MathsNot::MathsNot()
+		: Super( "Not" )
+	{
+		CreateNode();
+	}
+
+	MathsNot::MathsNot( const std::string& rName )
+		: Super( rName )
+	{
+		CreateNode();
+	}
+
+	void MathsNot::CreateNode()
+	{
+#if !defined(SAT_DIST)
+		Color = ImColor( 147, 226, 74 );
+#endif
+
+		Inputs.push_back( Ref<BoolPin>::Create( "In", PinKind::Input ) );
+		Outputs.push_back( Ref<BoolPin>::Create( "Result", PinKind::Output ) );
+	}
+
+	MathsNot::~MathsNot()
+	{
+	}
+
+	NodeEditorTaskBase* MathsNot::ConvertToTask()
+	{
+		return NewObject<SMathsNotTask>();
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+
+	MathsOr::MathsOr()
+		: Super()
+	{
+		CreateNode();
+	}
+
+	MathsOr::MathsOr( const std::string& rName )
+		: Super()
+	{
+		CreateNode();
+	}
+
+	void MathsOr::CreateNode()
+	{
+#if !defined(SAT_DIST)
+		Color = ImColor( 147, 226, 74 );
+#endif
+
+		Inputs.push_back( Ref<BoolPin>::Create( "A", PinKind::Input ) );
+		Inputs.push_back( Ref<BoolPin>::Create( "B", PinKind::Input ) );
+
+		Outputs.push_back( Ref<BoolPin>::Create( "Result", PinKind::Output ) );
+	}
+
+	MathsOr::~MathsOr()
+	{
+	}
+
+	NodeEditorTaskBase* MathsOr::ConvertToTask()
+	{
+		return NewObject<SMathsOrTask>();
+	}
+
 }
 
 #include "Saturn/GameFramework/Core/EngineGenerated.h"
@@ -288,3 +367,5 @@ SAT_X31_CREATE_AUTO_REG( MathsMulFloats );
 SAT_X31_CREATE_AUTO_REG( MathsDivideFloats );
 SAT_X31_CREATE_AUTO_REG( MathsGreaterThanFloats );
 SAT_X31_CREATE_AUTO_REG( MathsLessThanFloats );
+SAT_X31_CREATE_AUTO_REG( MathsNot );
+SAT_X31_CREATE_AUTO_REG( MathsOr );

@@ -288,6 +288,177 @@ namespace Saturn {
 		}
 	}
 
+	//////////////////////////////////////////////////////////////////////////
+
+	SMathsNotTask::SMathsNotTask()
+		: Super()
+	{
+
+	}
+
+	SMathsNotTask::~SMathsNotTask()
+	{
+	}
+
+	void SMathsNotTask::InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pBase, NodeEditorNodeBase* pNode )
+	{
+		m_pHandler = pHandler;
+
+		MathsNot* pNotNode = dynamic_cast< MathsNot* >( pNode );
+		if( pNotNode )
+		{
+			auto links = pBase->FindLinksByPin( pNotNode->Inputs[ 0 ]->ID );
+			for( const auto& rLink : links )
+			{
+				// Get data line
+				if( m_pHandler->DoesDataLineExist( rLink->ID ) )
+				{
+					auto* pInputData = m_pHandler->GetDataLine( rLink->ID );
+					if( pInputData )
+					{
+						m_pValueToTest = pInputData->GetIf<bool>();
+					}
+				}
+			}
+
+			links = pBase->FindLinksByPin( pNotNode->Outputs[ 0 ]->ID );
+			Outgoings.reserve( links.size() );
+
+			// We output a bool.
+			for( const auto& rLink : links )
+			{
+				DataLine dl;
+				dl.WriteValue<bool>( false );
+				m_pHandler->InsertDataLine( rLink->ID, dl );
+
+				Outgoings.push_back( rLink->ID );
+			}
+
+			m_NodeID = pNode->ID;
+		}
+	}
+
+	NodeEditorTaskState SMathsNotTask::Tick( Timestep ts )
+	{
+		m_Result = !*m_pValueToTest;
+
+		for( const auto& rID : Outgoings )
+		{
+			auto* pLine = m_pHandler->GetDataLine( rID );
+			if( pLine )
+			{
+				pLine->WriteValue<bool>( m_Result );
+			}
+		}
+
+		return NodeEditorTaskState::Completed;
+	}
+
+	void SMathsNotTask::Reset()
+	{
+		m_Result = false;
+		for( const auto& rID : Outgoings )
+		{
+			auto* pLine = m_pHandler->GetDataLine( rID );
+			if( pLine )
+			{
+				pLine->WriteValue<bool>( m_Result );
+			}
+		}
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+
+	SMathsOrTask::SMathsOrTask()
+		: Super()
+	{
+	}
+
+	SMathsOrTask::~SMathsOrTask()
+	{
+	}
+
+	void SMathsOrTask::InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pBase, NodeEditorNodeBase* pNode )
+	{
+		m_pHandler = pHandler;
+
+		MathsNot* pNotNode = dynamic_cast< MathsNot* >( pNode );
+		if( pNotNode )
+		{
+			auto links = pBase->FindLinksByPin( pNotNode->Inputs[ 0 ]->ID );
+			for( const auto& rLink : links )
+			{
+				// Get data line
+				if( m_pHandler->DoesDataLineExist( rLink->ID ) )
+				{
+					auto* pInputData = m_pHandler->GetDataLine( rLink->ID );
+					if( pInputData )
+					{
+						m_pA = pInputData->GetIf<bool>();
+					}
+				}
+			}
+
+			links = pBase->FindLinksByPin( pNotNode->Inputs[ 1 ]->ID );
+			for( const auto& rLink : links )
+			{
+				// Get data line
+				if( m_pHandler->DoesDataLineExist( rLink->ID ) )
+				{
+					auto* pInputData = m_pHandler->GetDataLine( rLink->ID );
+					if( pInputData )
+					{
+						m_pB = pInputData->GetIf<bool>();
+					}
+				}
+			}
+
+			links = pBase->FindLinksByPin( pNotNode->Outputs[ 0 ]->ID );
+			Outgoings.reserve( links.size() );
+
+			// We output a bool.
+			for( const auto& rLink : links )
+			{
+				DataLine dl;
+				dl.WriteValue<bool>( false );
+				m_pHandler->InsertDataLine( rLink->ID, dl );
+
+				Outgoings.push_back( rLink->ID );
+			}
+
+			m_NodeID = pNode->ID;
+		}
+	}
+
+	NodeEditorTaskState SMathsOrTask::Tick( Timestep ts )
+	{
+		m_Result = ( *m_pA ) || ( *m_pB );
+
+		for( const auto& rID : Outgoings )
+		{
+			auto* pLine = m_pHandler->GetDataLine( rID );
+			if( pLine )
+			{
+				pLine->WriteValue<bool>( m_Result );
+			}
+		}
+
+		return NodeEditorTaskState::Completed;
+	}
+
+	void SMathsOrTask::Reset()
+	{
+		m_Result = false;
+		for( const auto& rID : Outgoings )
+		{
+			auto* pLine = m_pHandler->GetDataLine( rID );
+			if( pLine )
+			{
+				pLine->WriteValue<bool>( m_Result );
+			}
+		}
+	}
+
 }
 
 #include "Saturn/GameFramework/Core/EngineGenerated.h"
@@ -295,3 +466,5 @@ namespace Saturn {
 SAT_X31_CREATE_AUTO_REG( SMathsAddFloatsTask );
 SAT_X31_CREATE_AUTO_REG( SMathsGreaterThanFloatsTask );
 SAT_X31_CREATE_AUTO_REG( SMathsLessThanFloatsTask );
+SAT_X31_CREATE_AUTO_REG( SMathsNotTask );
+SAT_X31_CREATE_AUTO_REG( SMathsOrTask );

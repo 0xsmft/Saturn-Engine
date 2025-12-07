@@ -38,6 +38,8 @@ namespace Saturn {
 	class MathsDivideFloats;
 	class MathsLessThanFloats;
 	class MathsGreaterThanFloats;
+	class MathsNot;
+	class MathsOr;
 
 	class MathsNodeLibrary
 	{
@@ -50,5 +52,7 @@ namespace Saturn {
 		static SharedPtr<MathsDivideFloats>      SpawnMathDiv( SharedPtr<NodeEditorBase> rNodeEditor );
 		static SharedPtr<MathsLessThanFloats>    SpawnMathLT ( SharedPtr<NodeEditorBase> rNodeEditor );
 		static SharedPtr<MathsGreaterThanFloats> SpawnMathGT ( SharedPtr<NodeEditorBase> rNodeEditor );
+		static SharedPtr<MathsNot>               SpawnNotBool( SharedPtr<NodeEditorBase> rNodeEditor );
+		static SharedPtr<MathsOr>				 SpawnOrBool ( SharedPtr<NodeEditorBase> rNodeEditor );
 	};
 }

@@ -54,7 +54,7 @@ namespace Saturn {
 	void AnimGraphPlayAnimTask::InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
 	{
 		const AnimGraphStateMachinePlayAnimNode* pAGNode = dynamic_cast< AnimGraphStateMachinePlayAnimNode* >( pNode );
-		const AnimGraphTaskHandler* pAGTaskHandler = dynamic_cast<AnimGraphTaskHandler*>( pHandler );
+		const AnimGraphTaskHandler* pAGTaskHandler = dynamic_cast< AnimGraphTaskHandler* >( pHandler );
 		
 		if( pAGTaskHandler )
 		{
@@ -65,16 +65,39 @@ namespace Saturn {
 		{
 			m_AnimationAsset = AssetManager::Get().GetAssetAs<SkeletalAnimationAsset>( pAGNode->Outputs[ 0 ].As<AnimGraphAnimationPin>()->GetAssetID() );
 		}
+
+		/*
+		if( m_AnimationAsset && m_Animator )
+		{
+			m_Animator->Loop( true );
+//			m_Animator->SetPlaybackSpeed( pAGNode->GetPlaybackSpeed() );
+
+			m_Animator->m_SingleAnimationAsset = m_AnimationAsset;
+			m_Animator->m_Context.initialize( *static_cast< const acl::compressed_tracks* >( m_AnimationAsset->GetData() ) );
+			m_Animator->TickSingleAnim( 0.0f );
+		}
+		*/
 	}
 
 	NodeEditorTaskState AnimGraphPlayAnimTask::Tick( Timestep ts )
 	{
-		if( m_CurrentState == NodeEditorTaskState::Unknown )
+		SAT_CORE_INFO( "AnimGraphPlayAnimTask::Tick" );
+
+		if( m_AnimationAsset && m_Animator )
 		{
+			m_Animator->Loop( true );
+//			m_Animator->SetPlaybackSpeed( pAGNode->GetPlaybackSpeed() );
+
 			m_Animator->m_SingleAnimationAsset = m_AnimationAsset;
+			m_Animator->m_Context.initialize( *static_cast< const acl::compressed_tracks* >( m_AnimationAsset->GetData() ) );
+			m_Animator->TickSingleAnim( 0.0f );
 		}
 
 		m_CurrentState = NodeEditorTaskState::Completed;
+//		if( m_Animator->IsCompleted() )
+//		else
+//			m_CurrentState = NodeEditorTaskState::Running;
+
 		return m_CurrentState;
 	}
 

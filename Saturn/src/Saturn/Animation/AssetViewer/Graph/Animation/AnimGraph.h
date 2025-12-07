@@ -29,6 +29,7 @@
 #pragma once
 
 #include "Saturn/NodeEditor/UI/NodeEditor.h"
+#include "Saturn/Core/IndexedMap.h"
 
 namespace Saturn {
 
@@ -47,7 +48,7 @@ namespace Saturn {
 		AnimGraph( AssetID id );
 		virtual ~AnimGraph();
 
-		std::map<UUID, SGraphTask*> TraverseAndCreateTasks();
+		IndexedMap<UUID, SGraphTask*> TraverseAndCreateTasks();
 
 		void MarkNodeAsEntry( SharedPtr<NodeEditorNodeBase> node ) { m_StateMachineEntryNode = node; }
 		SharedPtr<NodeEditorNodeBase> GetEntryNode() const { return m_StateMachineEntryNode; }
@@ -71,9 +72,9 @@ namespace Saturn {
 
 	private:
 		// Sorting
-		void SortAnimGraph( std::map<UUID, SGraphTask*>& rMap );
-		void SortStateMachineEntry( std::map<UUID, SGraphTask*>& rMap );
-		void SortTransitionNodeOrStateMachineAfterEntryRec( UUID id, std::map<UUID, SGraphTask*>& rMap );
+		void SortAnimGraph( IndexedMap<UUID, SGraphTask*>& rMap );
+		void SortStateMachineEntry( IndexedMap<UUID, SGraphTask*>& rMap );
+		void SortTransitionNodeOrStateMachineAfterEntryRec( UUID id, IndexedMap<UUID, SGraphTask*>& rMap );
 
 	private:
 		UUID m_TransitionStartNode = 0;

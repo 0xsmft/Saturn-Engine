@@ -93,7 +93,8 @@ namespace Saturn {
 
 	NodeEditorTaskBase* AnimGraphStateMachineStateNode::ConvertToTask()
 	{
-		return NewObject<AnimGraphStateMachineStateTask>();
+//		return NewObject<AnimGraphStateMachineStateTask>();
+		return nullptr;
 	}
 
 	void AnimGraphStateMachineStateNode::Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder )

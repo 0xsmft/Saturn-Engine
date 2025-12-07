@@ -169,7 +169,8 @@ namespace Saturn {
 
 	NodeEditorTaskBase* AnimGraphStateMachineTransitionNode::ConvertToTask()
 	{
-		return NewObject<AnimGraphTransitionTask>();
+//		return NewObject<AnimGraphTransitionTask>();
+		return nullptr;
 	}
 
 }

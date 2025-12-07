@@ -75,7 +75,7 @@ namespace Saturn {
 	{
 	}
 
-	std::map<UUID, SGraphTask*> AnimGraph::TraverseAndCreateTasks()
+	IndexedMap<UUID, SGraphTask*> AnimGraph::TraverseAndCreateTasks()
 	{
 		// SORTING:
 		// 1. Sort the animation graph first
@@ -86,20 +86,22 @@ namespace Saturn {
 		// 3: Push transitions and other state machine states and state machine state graphs
 		// 4. Combine into a map of sub-graph parent ID to tasks for runtime.
 
-		std::map<UUID, SGraphTask*> resultToChildren;
+		IndexedMap<UUID, SGraphTask*> resultToChildren;
 
 		// 1: PARENT ID -> CHILDREN
-		std::map<UUID, std::vector<SharedPtr<NodeEditorNodeBase>>> parentToChildren;
+		std::unordered_map<UUID, std::vector<SharedPtr<NodeEditorNodeBase>>> parentToChildren;
 		for( const auto& [id, node] : m_Nodes )
 		{
 			if( node->pParentObject ) 
 			{
+				/*
 				parentToChildren[ node->pParentObject->ID ].push_back( node );
 
 				if( parentToChildren[ node->pParentObject->ID ].size() == 1 )
 				{
 					resultToChildren[ node->pParentObject->ID ] = NewObject<SGraphTask>();
 				}
+				*/
 			}
 			else 
 			{
@@ -118,7 +120,7 @@ namespace Saturn {
 		return resultToChildren;
 	}
 
-	void AnimGraph::SortAnimGraph( std::map<UUID, SGraphTask*>& rMap )
+	void AnimGraph::SortAnimGraph( IndexedMap<UUID, SGraphTask*>& rMap )
 	{
 		std::stack<UUID> stack;
 		stack.push( FindNode( "Output Node" )->ID );
@@ -141,30 +143,41 @@ namespace Saturn {
 		}
 	}
 
-	void AnimGraph::SortStateMachineEntry( std::map<UUID, SGraphTask*>& rMap )
+	void AnimGraph::SortStateMachineEntry( IndexedMap<UUID, SGraphTask*>& rMap )
 	{
 		auto stateNode = m_StateMachineEntryNode.As<AnimGraphStateMachineStateNode>();
 
 		std::vector<UUID> visited;
 		std::queue<UUID> temporaryStack;
 		temporaryStack.push( stateNode->ID );
+		visited.push_back( stateNode->ID );
 
 		while( !temporaryStack.empty() )
 		{
 			const UUID currentID = temporaryStack.front();
 			temporaryStack.pop();
 
-			// BEFORE PUSHING THIS NODE, WE MUST PUSH SUB-GRAPHS
-			SortTransitionNodeOrStateMachineAfterEntryRec( currentID, rMap );
-
-			// Find neighbors from outputs and continue until there is no neighbors
+			// Find neighbors from outputs and continue until there is no neighbors.
 			SharedPtr<NodeEditorNodeBase> currentNode = FindNode( currentID );
 
+#if defined(SAT_DEBUG)
+			SAT_CORE_INFO( "{0}", currentNode->Name );
+#endif
+			// Push its sub graphs before the node it self.
+			// So imagine, we want to push a state machine, we must first push its node in the sub-graph first then the node.
+			SortTransitionNodeOrStateMachineAfterEntryRec( currentID, rMap );
+
 			// Now add this node's task.
-			rMap[ currentNode->pParentObject->ID ]->AddTask( currentID, currentNode->ConvertToTask() );
+			auto& rGraphTask = rMap[ currentNode->pParentObject->ID ];
+			if( !rGraphTask )
+			{
+				rGraphTask = NewObject<SGraphTask>();
+			}
+
+			rGraphTask->AddTask( currentID, currentNode->ConvertToTask() );
 
 			const auto& rNeighbours = FindNeighborsLeft( currentNode );
-			for( auto Itr = rNeighbours.rbegin(); Itr != rNeighbours.rend(); Itr++ )
+			for( auto Itr = rNeighbours.rbegin(); Itr != rNeighbours.rend(); ++Itr )
 			{
 				if( std::find( visited.begin(), visited.end(), *Itr ) == visited.end() )
 				{
@@ -175,7 +188,7 @@ namespace Saturn {
 		}
 	}
 
-	void AnimGraph::SortTransitionNodeOrStateMachineAfterEntryRec( UUID id, std::map<UUID, SGraphTask*>& rMap )
+	void AnimGraph::SortTransitionNodeOrStateMachineAfterEntryRec( UUID id, IndexedMap<UUID, SGraphTask*>& rMap )
 	{
 		SharedPtr<NodeEditorNodeBase> nodeStarting = FindNode( id );
 		UUID startID = 0llu;
@@ -199,8 +212,16 @@ namespace Saturn {
 
 			SharedPtr<NodeEditorNodeBase> currentNode = FindNode( currentID );
 
+			// Now add this node's task.
 			const UUID subGraphID = currentNode->pParentObject ? currentNode->pParentObject->ID : UUID( 0 );
-			rMap[ subGraphID ]->AddTask( currentID, currentNode->ConvertToTask() );
+			auto& rGraphTask = rMap[ subGraphID ];
+
+			if( !rGraphTask )
+			{
+				rGraphTask = NewObject<SGraphTask>();
+			}
+
+			rGraphTask->AddTask( currentID, currentNode->ConvertToTask() );
 
 			// Find neighbors from inputs and continue until there is no neighbors
 			for( const auto& rNeighbor : FindNeighborsRight( currentNode ) )

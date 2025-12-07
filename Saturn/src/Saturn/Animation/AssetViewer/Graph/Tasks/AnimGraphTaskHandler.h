@@ -29,6 +29,7 @@
 #pragma once
 
 #include "Saturn/NodeEditor/NodeEditorTaskHandler.h"
+#include "Saturn/Core/IndexedMap.h"
 
 namespace Saturn {
 
@@ -41,7 +42,7 @@ namespace Saturn {
 		AnimGraphTaskHandler( Ref<Animator> animator );
 		virtual ~AnimGraphTaskHandler() = default;
 
-		void InitWithCustomOrder2( SharedPtr<NodeEditorBase> nodeEditor, const std::map<UUID, SGraphTask*>& rOrder );
+		void InitWithCustomOrder2( SharedPtr<NodeEditorBase> nodeEditor, const IndexedMap<UUID, SGraphTask*>& rOrder );
 
 		virtual void Tick( Timestep ts ) override;
 

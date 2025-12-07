@@ -28,87 +28,43 @@
 
 #pragma once
 
-#include "AnimatorType.h"
-#include "SkeletalAnimationAsset.h"
-
-#include "Saturn/Vulkan/Mesh.h"
-
-#include "PoseWriter.h"
-
-#include <acl/decompression/decompress.h>
+#include <vector>
 
 namespace Saturn {
 
-	enum class AnimationState 
-	{
-		NotInitialised, // InitAnimation not called
-		Inactive, // InitAnimation called awaiting Play or Pause
-		Playing,
-		Paused
-	};
-
-	class AnimationController;
-
-	class Animator : public RefTarget
+	template<typename Key, typename Value>
+	class IndexedMap 
 	{
 	public:
-		Animator();
-		~Animator();
+		using PairType = std::pair<Key, Value>;
+		using Container = std::vector<PairType, std::allocator<PairType>>;
 
-		void Destory();
-		void InitAnimation( AssetID id, Ref<SkeletalMesh> sk, AnimatorType type );
-		void TickAnimation( Timestep ts );
-		void Pause();
-		void Begin();
-		void Clear();
-		void StepTo( float time ) { time; }
+		[[nodiscard]] Value Find( const Key& rKey ) const
+		{
+			for( auto& rPair : m_Container )
+				if( rPair.first == rKey )
+					return rPair.second;
 
-		void SetPlaybackSpeed( float playbackSpeed ) { m_PlaybackSpeed = playbackSpeed; }
-		void Loop( bool shouldLoop ) { m_Looping = shouldLoop; }
+			return nullptr;
+		}
 
-	public:
-		Ref<Asset> GetCurrentAnimation() const;
+		[[nodiscard]] Value& operator[](const Key& rKey)
+		{
+			for( auto& rPair : m_Container )
+				if( rPair.first == rKey )
+					return rPair.second;
 
-		Ref<SkeletalMesh> GetSkeletalMesh() const { return m_SkeletalMesh; }
+			auto& rPairKV = m_Container.emplace_back( rKey, Value{} );
+			return rPairKV.second;
+		}
 
-		std::vector<glm::mat4> GetBoneTransforms();
-
-		// An animator is consider active if an animation is playing or if it's paused
-		// However, if it not initialised, meaning we've never had an animation, then it's not active
-		bool IsActive() const { return m_State != AnimationState::Inactive && m_State != AnimationState::NotInitialised; }
-
-		bool IsCompleted() const { return m_Completed; }
-		bool IsLooping() const { return m_Looping; }
-		bool IsPlaying() const { return m_State == AnimationState::Playing && m_SingleAnimationAsset; }
-		bool IsPaused() const { return m_State == AnimationState::Paused; }
-
-		Pose* GetFinalOutPose() { return m_pOutPose; }
-
-		float GetPlaybackSpeed() const { return m_PlaybackSpeed; }
-		float GetCurrentAnimTime() const { return m_AnimationTime; }
-		AnimationState GetAnimationState() const { return m_State; }
+		[[nodiscard]] auto begin() noexcept       { return m_Container.begin(); }
+		[[nodiscard]] auto end()   noexcept       { return m_Container.end(); }
+		[[nodiscard]] auto begin() const noexcept { return m_Container.begin(); }
+		[[nodiscard]] auto end()   const noexcept { return m_Container.end(); }
 
 	private:
-		void TickSingleAnim( Timestep ts );
-
-	private:
-		float m_AnimationTime = 0.0f;
-		float m_PlaybackSpeed = 1.0f;
-		AnimationState m_State = AnimationState::NotInitialised;
-		AnimatorType m_AnimatorType = AnimatorType::Single;
-		bool m_Looping = false;
-		bool m_Completed = false;
-
-		Ref<SkeletalAnimationAsset> m_SingleAnimationAsset;
-		Ref<AnimationController> m_AnimationControllerAsset;
-		Ref<SkeletalMesh> m_SkeletalMesh;
-
-		Pose* m_pOutPose = nullptr;
-		PoseWriter m_Writer;
-		acl::decompression_context<acl::default_transform_decompression_settings> m_Context;
-
-	private:
-		friend class AnimGraphPlayAnimTask;
-	};
-
+		Container m_Container;
+	};	
+	
 }

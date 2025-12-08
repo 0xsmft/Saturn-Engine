@@ -82,11 +82,14 @@ namespace Saturn {
 		[[nodiscard]] float   GetDuration()       const { return m_Duration; }
 		[[nodiscard]] float   GetTicksPerSecond() const { return m_TicksPerSecond; }
 		[[nodiscard]] bool    IsUsingRootMotion() const { return m_UseRootMotion; }
+		[[nodiscard]] size_t  GetBoneCount()      const { return m_BoneCount; }
 		[[nodiscard]] SkeletalAnimationAssetVersion GetLocalAssetVersion() const { return m_LocalVersion; }
 		[[nodiscard]] void*   GetData()           const { return m_pData; }
 
+#if !defined(SAT_DIST)
 		const std::vector<AnimationChannel>& GetAnimationBones() const { return m_Bones; }
 		std::vector<AnimationChannel>& GetAnimationBones() { return m_Bones; }
+#endif
 
 	public:
 		void SetDuration( float duration )               { m_Duration = duration; }
@@ -95,12 +98,18 @@ namespace Saturn {
 		void UseRootMotion( bool val )                   { m_UseRootMotion = val; }
 		void SetUncompressedDuration( float duration )   { m_UncompressedDuration = duration; }
 		void SetUncompressedTicks( float ticks )         { m_UncompressedTPS = ticks; }
+		void SetBoneCount( size_t boneCount )			 { m_BoneCount = boneCount; }
 		void AddAnimBone( const AnimationChannel& bone ) { m_Bones.push_back( bone ); }
 		void PortToNewestVersion()                       { m_LocalVersion = SkeletalAnimationAssetVersion::Latest; }
 
+#if !defined(SAT_DIST)
 		void MakeUniformAndCompress( aiAnimation* pAnimation );
 		void SetACLData( void* pData );
 		void Compress();
+
+		void SerialiseAclData( std::ofstream& rStream ) const;
+#endif
+		void DeserialiseAclData( std::ifstream& rStream );
 
 	private:
 		SkeletalAnimationAssetVersion m_LocalVersion = SkeletalAnimationAssetVersion::Lowest;
@@ -110,6 +119,8 @@ namespace Saturn {
 
 		AssetID m_SkeletonAssetID = 0llu;
 
+		size_t m_BoneCount = 0;
+
 		// The duration of this animation in seconds
 		float m_Duration = 0.0f;
 		float m_TicksPerSecond = 0.0f;
@@ -117,7 +128,9 @@ namespace Saturn {
 		float m_UncompressedDuration = 0.0f;
 		float m_UncompressedTPS = 0.0f;
 
+#if !defined(SAT_DIST)
 		std::vector<AnimationChannel> m_Bones;
+#endif
 
 	private:
 		friend class SkeletalAnimationAssetSerialiser;

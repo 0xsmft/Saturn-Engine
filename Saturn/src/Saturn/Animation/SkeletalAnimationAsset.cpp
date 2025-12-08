@@ -217,7 +217,43 @@ namespace Saturn {
 
 		SetACLData( pTracks );
 	}
+
+	void SkeletalAnimationAsset::SerialiseAclData( std::ofstream& rStream ) const
+	{
+		// Write header.
+		acl::compressed_tracks* pTracks = reinterpret_cast< acl::compressed_tracks* >( m_pData );
+		rStream.write( reinterpret_cast< const char* >( pTracks ), sizeof( acl::compressed_tracks ) );
+
+		// Now write the actual compressed data
+		const uint8_t* pData = reinterpret_cast<const uint8_t*>( pTracks ) + sizeof( acl::compressed_tracks );
+		
+		// Note according to Acl get_size() includes the acl::compressed_tracks size (so 16 bytes).
+		rStream.write( reinterpret_cast< const char* >( pData ), pTracks->get_size() - sizeof( acl::compressed_tracks ) );
+	}
+
 #endif
+
+	void SkeletalAnimationAsset::DeserialiseAclData( std::ifstream& rStream )
+	{
+		uint8_t headerBuffer[ sizeof( acl::compressed_tracks ) ];
+		rStream.read( reinterpret_cast<char*>( headerBuffer ), sizeof( headerBuffer ) );
+
+		const acl::compressed_tracks* pHeaderView = reinterpret_cast< const acl::compressed_tracks* >( headerBuffer );
+
+		const uint32_t headerSize = pHeaderView->get_size();
+		const uint32_t animDataSize = headerSize - sizeof( acl::compressed_tracks );
+
+		acl::iallocator& rAllocator = ACLCore::GetAllocator();
+		uint8_t* pBuffer = reinterpret_cast< uint8_t* >( rAllocator.allocate( headerSize ) );
+
+		memcpy( pBuffer, headerBuffer, sizeof( headerBuffer ) );
+
+		rStream.read( reinterpret_cast< char* >( pBuffer + sizeof( acl::compressed_tracks ) ), animDataSize );
+
+		SetACLData( acl::make_compressed_tracks( pBuffer ) );
+
+		SetDuration( m_UncompressedDuration / m_UncompressedTPS );
+	}
 
 	void SkeletalAnimationAsset::SetACLData( void* pData )
 	{

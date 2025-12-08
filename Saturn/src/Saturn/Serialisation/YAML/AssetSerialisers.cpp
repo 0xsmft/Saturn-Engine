@@ -966,7 +966,9 @@ namespace Saturn {
 		RawSerialisation::WriteObject( animAsset->m_UncompressedDuration, fout );
 		RawSerialisation::WriteObject( animAsset->m_UncompressedTPS, fout );
 		RawSerialisation::WriteObject( animAsset->IsUsingRootMotion(), fout );
+		RawSerialisation::WriteObject( animAsset->GetBoneCount(), fout );
 
+		/*
 		RawSerialisation::WriteObject( animAsset->GetAnimationBones().size(), fout );
 		for( const auto& rBoneInfo : animAsset->GetAnimationBones() )
 		{
@@ -1000,6 +1002,9 @@ namespace Saturn {
 				RawSerialisation::WriteObject( rScale.Timestamp, fout );
 			}
 		}
+		*/
+
+		animAsset->SerialiseAclData( fout );
 
 		fout.close();
 	}
@@ -1014,6 +1019,7 @@ namespace Saturn {
 
 		AssetID skeletonID = 0;
 		float duration = 0.0f, ticksPerSecond = 0.0f, uncompDur = 0.0f, uncompTps = 0.0f;
+		size_t boneCount = 0;
 		SkeletalAnimationAssetVersion skAnimVer = SkeletalAnimationAssetVersion::BeforeVersionWasAdded;
 
 		RawSerialisation::ReadObject( skAnimVer, FileIn );
@@ -1029,6 +1035,8 @@ namespace Saturn {
 		{
 			RawSerialisation::ReadObject( hadRootMotion, FileIn );
 		}
+		
+		RawSerialisation::ReadObject( boneCount, FileIn );
 
 		auto animAsset = Ref<SkeletalAnimationAsset>::Create( rAsset );
 		animAsset->SetSkeletonID( skeletonID );
@@ -1037,7 +1045,9 @@ namespace Saturn {
 		animAsset->SetUncompressedDuration( uncompDur );
 		animAsset->SetUncompressedTicks( uncompTps );
 		animAsset->UseRootMotion( hadRootMotion );
+		animAsset->SetBoneCount( boneCount );
 
+		/*
 		size_t mapSize = 0;
 		RawSerialisation::ReadObject( mapSize, FileIn );
 
@@ -1103,8 +1113,11 @@ namespace Saturn {
 
 			animAsset->AddAnimBone( ab );
 		}
+		*/
 
-		animAsset->Compress();
+		animAsset->DeserialiseAclData( FileIn );
+
+//		animAsset->Compress();
 
 		if( skeletonID )
 			AssetManager::Get().RegisterAssetDependency( animAsset->ID, skeletonID );

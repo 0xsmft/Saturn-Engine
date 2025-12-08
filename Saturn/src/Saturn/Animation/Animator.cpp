@@ -169,7 +169,7 @@ namespace Saturn {
 			{
 				if( m_SingleAnimationAsset )
 				{
-					m_pOutPose->BonesUsed = m_SingleAnimationAsset->GetAnimationBones().size();
+					m_pOutPose->BonesUsed = m_SingleAnimationAsset->GetBoneCount();
 					m_Context.initialize( *static_cast< const acl::compressed_tracks* >( m_SingleAnimationAsset->GetData() ) );
 
 					TickSingleAnim( 0.0f );
@@ -210,7 +210,7 @@ namespace Saturn {
 
 	std::vector<glm::mat4> Animator::GetBoneTransforms()
 	{
-		const size_t count = m_SingleAnimationAsset->GetAnimationBones().size();
+		const size_t count = m_SingleAnimationAsset->GetBoneCount();
 		std::vector<glm::mat4> ts( count );
 
 		for( size_t i = 0; i < count; ++i )

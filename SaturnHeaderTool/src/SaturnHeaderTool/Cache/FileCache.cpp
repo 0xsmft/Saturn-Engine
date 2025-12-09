@@ -50,7 +50,7 @@ namespace Saturn {
 	{
 		if( !std::filesystem::exists( m_Location ) ) 
 		{
-			std::cout << "Filecache at location: " << m_Location << " does not exist!\n";
+			std::cout << "Filecache at location: " << m_Location << " does not exist! You may need to run the Build Tool before running the header tool!\n";
 			return;
 		}
 
@@ -123,7 +123,7 @@ namespace Saturn {
 				const auto fsLastWriteTime = std::filesystem::last_write_time( rFile );
 
 				const auto systemClock = std::chrono::clock_cast< std::chrono::system_clock >( fsLastWriteTime );
-				const auto systemTime = std::chrono::duration_cast< std::chrono::milliseconds >( systemClock.time_since_epoch() ).count();
+				const auto systemTime = std::chrono::duration_cast<std::chrono::milliseconds>( systemClock.time_since_epoch() ).count();
 
 				if( time.Time != systemTime )
 				{
@@ -137,7 +137,7 @@ namespace Saturn {
 					}
 				}
 			}
-			else if( IsCppFile( rFile ) )
+			else if( IsCppFile(rFile) )
 			{
 				// If its a still a cpp file then its most likely a header file
 				// So try to find the source counterpart and add it to the cache

@@ -35,22 +35,35 @@
 
 namespace Saturn {
 
+	enum class HeaderToolParseResult
+	{
+		ParseSkipped = 1 << 0, // No SClass/GENERATED_BODY
+		NoSClass = 1 << 1, // GENERATED_BODY was implied however no GENERATED_BODY
+		NoGeneratedBody = 1 << 2, // SCLASS was implied but no GENERATED_BODY 
+		FailedToParse = 1 << 3, // General error -- more detailed one would of been outputted
+		Success = 1 << 4
+	};
+
 	class HeaderTool 
 	{
 	public:
 		HeaderTool();
 		~HeaderTool();
 
+		void SetPCHPath( const std::filesystem::path& rPath ) { m_PCHPath = rPath; }
 		void SetWorkingDir( const std::filesystem::path& rPath );
-		void SubmitWorkList( const std::vector<std::filesystem::path>& rCommands );
+		void SubmitWorkList( const std::vector<std::filesystem::path>& rCommands, HeaderToolConfigKind config );
 		[[nodiscard]] bool StartGeneration();
 
 	private:
-		bool GenerateHeader( HeaderToolCommand& rCommand ) const;
-		bool GenerateSource( HeaderToolCommand& rCommand );
+		HeaderToolParseResult GenerateHeader( HeaderToolCommand& rCommand );
+		HeaderToolParseResult ParseHeaderFile( HeaderToolCommand& rCommand );
 
+		bool GenerateSource( HeaderToolCommand& rCommand );
+	
 	private:
 		std::vector<HeaderToolCommand> m_Commands;
 		std::filesystem::path m_WorkingDir;
+		std::filesystem::path m_PCHPath;
 	};
 }

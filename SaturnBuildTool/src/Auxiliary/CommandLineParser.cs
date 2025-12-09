@@ -9,7 +9,7 @@ namespace SaturnBuildTool.Auxiliary
         public static readonly CommandLineParser Instance = new CommandLineParser();
 
         private readonly Dictionary<string, string> ParsedMap = new Dictionary<string, string>();
-        
+
         public void Parse( List<string> args )
         {
             CultureInfo culture = CultureInfo.InvariantCulture;
@@ -44,9 +44,9 @@ namespace SaturnBuildTool.Auxiliary
             return ParsedMap.ContainsKey( key.ToUpper( CultureInfo.InvariantCulture ) );
         }
 
-        public string FindValueFromKey( string key ) 
+        public string FindValueFromKey( string key )
         {
-            if( ParsedMap.ContainsKey( key.ToUpper( CultureInfo.InvariantCulture ) ) ) 
+            if( ParsedMap.ContainsKey( key.ToUpper( CultureInfo.InvariantCulture ) ) )
             {
                 return ParsedMap[ key.ToUpper( CultureInfo.InvariantCulture ) ];
             }
@@ -54,14 +54,41 @@ namespace SaturnBuildTool.Auxiliary
             return null;
         }
 
-        public bool HasArgument( string key ) 
+        public bool HasArgument( string key )
         {
             return ParsedMap.ContainsKey( key.ToUpper( CultureInfo.InvariantCulture ) );
         }
 
-        public int GetComamndCount() 
+        public int GetComamndCount()
         {
             return ParsedMap.Count;
         }
+
+        public void PrintAllArgs()
+        {
+            Console.WriteLine( "==== Using arguments: ====" );
+
+            foreach( KeyValuePair<string, string> arg in ParsedMap )
+            {
+                Console.WriteLine( $" {arg.Key} : {arg.Value}" );
+            }
+
+            Console.WriteLine( "==== [END OF ARGUMEMTS] ====" );
+        }
+
+        public string FindPlatformCmd()
+        {
+            if( HasArgument( "WIN64" ) )
+            {
+                return "WIN64";
+            }
+            else if( HasArgument( "LINUX64" ) )
+            {
+                return "LINUX64";
+            }
+
+            return null;
+        }
+
     }
 }

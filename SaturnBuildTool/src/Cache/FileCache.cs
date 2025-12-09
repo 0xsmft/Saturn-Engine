@@ -1,30 +1,36 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
-using System.Net;
+using System.Security.Cryptography;
 using System.Text;
-using SaturnBuildTool.Auxiliary;
 
 namespace SaturnBuildTool.Cache
 {
-    internal class FileCache
+    public class FileCache
     {
-        public struct FileCacheTime
+        public class FileCacheTime : IEquatable<FileCacheTime>
         {
+            public static readonly FileCacheTime Zero = new FileCacheTime();
+
             // C# Ticks
             public long Time;
 
             // For C++ (unix time, system time)
             public long UnixTime;
 
+            public string Hash;
+
+            public List<string> ImmediatesIncludes = new List<string>();
+
             public static bool operator !=( FileCacheTime t1, FileCacheTime t2 )
             {
-                return t1.Time != t2.Time;
+                return !t1.Equals( t2 );
             }
 
             public static bool operator ==( FileCacheTime t1, FileCacheTime t2 )
             {
-                return t1.Time == t2.Time;
+                return t1.Equals( t2 );
             }
 
             public static bool operator !=( FileCacheTime t1, DateTime d1 )
@@ -37,13 +43,14 @@ namespace SaturnBuildTool.Cache
                 return t1.Time == d1.Ticks;
             }
 
+            public bool Equals( FileCacheTime other )
+            {
+                return Time == other.Time;
+            }
+
             public override bool Equals( object obj )
             {
-                if( obj is FileCacheTime other )
-                {
-                    return this.Time == other.Time;
-                }
-                return false;
+                return obj is FileCacheTime other && Equals( other );
             }
 
             public override int GetHashCode()
@@ -52,44 +59,61 @@ namespace SaturnBuildTool.Cache
             }
         }
 
-        public IDictionary<string, FileCacheTime> FilesToCache { get; }
-        public IDictionary<string, FileCacheTime> FilesInCache { get; }
+        public ConcurrentDictionary<string, FileCacheTime> PendingFilesToCache { get; } = new ConcurrentDictionary<string, FileCacheTime>();
+        public ConcurrentDictionary<string, FileCacheTime> ResidentFilesInCache { get; } = new ConcurrentDictionary<string, FileCacheTime>();
 
-        private string Filepath;
-
-        public FileCache( string CacheLocation )
-        {
-            FilesToCache = new Dictionary<string, FileCacheTime>();
-            FilesInCache = new Dictionary<string, FileCacheTime>();
-
-            Filepath = CacheLocation;
-        }
+        private readonly HashSet<string> VisitedFiles = new HashSet<string>( StringComparer.OrdinalIgnoreCase );
 
         public FileCache()
         {
-            FilesToCache = new Dictionary<string, FileCacheTime>();
-            FilesInCache = new Dictionary<string, FileCacheTime>();
-
-            Filepath = "";
         }
 
-        public void CacheFile(string Filepath)
+        public void CacheFile( string filePath )
         {
-            if (IsCppFile(Filepath)) 
+            if( !IsCppFile( filePath ) )
+                return;
+
+            // Prevent processing the same file multiple times.
+            if( !VisitedFiles.Add( filePath ) )
+                return;
+
+            if( !File.Exists( filePath ) )
+                return;
+
+            DateTime lastWriteTime = File.GetLastWriteTime( filePath );
+            string hash = ComputeHash( filePath );
+            List<string> incs = CppIncludes.ParseImmediateIncludes( filePath );
+
+            var fct = new FileCacheTime
             {
-                DateTime lastWriteTime = File.GetLastWriteTime(Filepath);
+                Time = lastWriteTime.Ticks,
+                UnixTime = ( long ) lastWriteTime.Subtract( new DateTime( 1970, 1, 1 ) ).TotalMilliseconds,
+                Hash = hash,
+                ImmediatesIncludes = incs
+            };
 
-                FileCacheTime fct = new FileCacheTime();
-                fct.Time = lastWriteTime.Ticks;
-                fct.UnixTime = (long)lastWriteTime.Subtract(new DateTime(1970, 1, 1)).TotalMilliseconds;
+            PendingFilesToCache[ filePath ] = fct;
 
-                FilesToCache.Add(Filepath, fct);
+            foreach( var inc in incs )
+            {
+                // Recursively get includes.
+                CacheFile( inc );
             }
+        }
+
+        private string ComputeHash( string filepath )
+        {
+            FileStream stream = File.OpenRead( filepath );
+            SHA256 sha = SHA256.Create();
+            byte[] hash = sha.ComputeHash( stream );
+
+            return BitConverter.ToString( hash ).Replace( "-", string.Empty );
         }
 
         public bool IsCppFile( string Filepath )
         {
-            return Path.GetExtension( Filepath ) == ".cpp" || Path.GetExtension( Filepath ) == ".h" || Path.GetExtension( Filepath ) == ".hpp";
+            string ext = Path.GetExtension( Filepath );
+            return ext == ".cpp" || ext == ".h" || ext == ".hpp";
         }
 
         public bool IsSourceFile( string Filepath )
@@ -99,84 +123,81 @@ namespace SaturnBuildTool.Cache
 
         public bool IsFileInCache( string Filepath )
         {
-            return FilesToCache.ContainsKey( Filepath );
+            return PendingFilesToCache.ContainsKey( Filepath );
         }
 
         public void Clean()
         {
-            FilesToCache.Clear();
-            FilesInCache.Clear();
+            PendingFilesToCache.Clear();
+            ResidentFilesInCache.Clear();
         }
 
-        public bool HasSourceFileBeenModified( string path, bool includeHeaderFile = false )
+        public bool HasSourceFileBeenModified( string path )
         {
-            // Get cached value
-            FilesInCache.TryGetValue( path, out FileCacheTime sourceLastTime );
-            DateTime fsLastWriteTime = File.GetLastWriteTime( path );
+            // return true to force the file to be compiled.
+            if( !ResidentFilesInCache.TryGetValue( path, out var cacheTime ) )
+                return true;
 
-            bool sourceModifed = ( sourceLastTime != fsLastWriteTime );
+            DateTime currentWriteTime = File.GetLastWriteTime( path );
+            long currentTicks = currentWriteTime.Ticks;
 
-            bool headerModifed = false;
-            if( includeHeaderFile && Path.GetExtension( path ) != ".h" )
+            // Allow for minor timestamp drift, sometimes the times are off ever so slightly but the files haven't changed at all.
+            long deltaTicks = Math.Abs( currentTicks - cacheTime.Time );
+            const long toleranceTicks = TimeSpan.TicksPerMillisecond;
+
+            if( deltaTicks > toleranceTicks )
             {
-                string headerPath = Path.ChangeExtension( path, ".h" );
-                if( FilesInCache.TryGetValue( headerPath, out FileCacheTime headerLastTime ) )
-                {
-                    DateTime headerFsLastWriteTime = File.GetLastWriteTime( headerPath );
-                    headerModifed = ( headerLastTime != headerFsLastWriteTime );
-                }
+                // Timestamp changed enough so try double check with the hash.
+                string currentHash = ComputeHash( path );
+                if( currentHash != cacheTime.Hash )
+                    return true;
             }
 
-            return sourceModifed || headerModifed;
+            return false;
         }
 
         public static void RT_WriteCache( FileCache fileCache )
         {
-            foreach( KeyValuePair<string, FileCacheTime> kv in fileCache.FilesToCache )
+            foreach( KeyValuePair<string, FileCacheTime> kv in fileCache.PendingFilesToCache )
             {
-                FileCacheTime time;
-                fileCache.FilesInCache.TryGetValue( kv.Key, out time );
-
-                // Has the file been updated?
-                if( time != kv.Value )
-                {
-                    // Yes, lets try to add it in the cache
-                    if( fileCache.FilesInCache.ContainsKey( kv.Key ) )
-                    {
-                        if( File.Exists( kv.Key ) )
-                        {
-                            fileCache.FilesInCache[ kv.Key ] = kv.Value;
-                        }
-                    }
-                    else
-                    {
-                        fileCache.FilesInCache.Add( kv );
-                    }
-                }
+                fileCache.ResidentFilesInCache.AddOrUpdate( kv.Key, kv.Value, ( key, oldValue ) => kv.Value );
             }
 
-            fileCache.FilesToCache.Clear();
+            fileCache.PendingFilesToCache.Clear();
 
             // --- Begin write 
             // We have to write this in a way that when the header tool reads this it can understand it
             // So this has to be C++ compatible.
             // See, FileCache.cpp (SaturnBuildTool)
 
-            FileStream fs = new FileStream( fileCache.Filepath, FileMode.Truncate, FileAccess.Write, FileShare.ReadWrite );
+            FileStream fs = new FileStream( Shared.ProjectInfo.FileCacheLocation, FileMode.Truncate, FileAccess.Write, FileShare.ReadWrite );
             BinaryWriter writer = new BinaryWriter( fs, Encoding.UTF8, false );
 
-            writer.Write( fileCache.FilesInCache.Count );
+            writer.Write( fileCache.ResidentFilesInCache.Count );
 
-            foreach( KeyValuePair<string, FileCacheTime> kv in fileCache.FilesInCache )
+            foreach( KeyValuePair<string, FileCacheTime> kv in fileCache.ResidentFilesInCache )
             {
+                byte[] strBytes = Encoding.UTF8.GetBytes( kv.Key );
                 writer.Write( ( ulong ) kv.Key.Length );
-                writer.Write( Encoding.UTF8.GetBytes( kv.Key ) );
+                writer.Write( strBytes );
 
-                // Write Ticks for us
-                writer.Write( kv.Value.Time );
+                var fct = kv.Value;
+
+                // Write Ticks for Build Tool
+                writer.Write( fct.Time );
 
                 // Write unix time for Header Tool
-                writer.Write( kv.Value.UnixTime );
+                writer.Write( fct.UnixTime );
+
+                writer.Write( fct.Hash ?? string.Empty );
+
+                writer.Write( fct.ImmediatesIncludes.Count );
+                foreach( var inc in fct.ImmediatesIncludes )
+                {
+                    byte[] bytes = Encoding.UTF8.GetBytes( inc );
+                    writer.Write( ( ulong ) inc.Length );
+                    writer.Write( bytes );
+                }
             }
 
             writer.Close();
@@ -185,8 +206,8 @@ namespace SaturnBuildTool.Cache
 
         public static void RT_WriteCacheHumanReadable( FileCache fileCache )
         {
-            string filepath = fileCache.Filepath.Replace( ".fc", ".txt" );
-            if( !File.Exists( filepath ) ) 
+            string filepath = Shared.ProjectInfo.FileCacheLocation.Replace( ".fc", ".txt" );
+            if( !File.Exists( filepath ) )
                 File.Create( filepath ).Close();
 
             // --- Begin write 
@@ -197,18 +218,25 @@ namespace SaturnBuildTool.Cache
             FileStream fs = new FileStream( filepath, FileMode.Truncate, FileAccess.Write, FileShare.ReadWrite );
             StreamWriter writer = new StreamWriter( fs, Encoding.UTF8 );
 
-            writer.WriteLine( $"FilesInCache.Count {fileCache.FilesInCache.Count}" );
-            
+            writer.WriteLine( $"FilesInCache.Count {fileCache.ResidentFilesInCache.Count}" );
+
             writer.WriteLine( "{" );
-            foreach( KeyValuePair<string, FileCacheTime> kv in fileCache.FilesInCache )
+            foreach( KeyValuePair<string, FileCacheTime> kv in fileCache.ResidentFilesInCache )
             {
                 writer.WriteLine( string.Format( "\t{0}:", kv.Key ) );
- 
-                // Write Ticks for us
+
+                // Write Ticks for Build Tool
                 writer.WriteLine( string.Format( "\t\tC# Ticks: {0}", kv.Value.Time ) );
 
                 // Write unix time for Header Tool
                 writer.WriteLine( string.Format( "\t\tUnix Timestamp: {0}", kv.Value.UnixTime ) );
+
+                writer.WriteLine( string.Format( "\t\tHash: {0}", kv.Value.Hash ) );
+
+                foreach( string inc in kv.Value.ImmediatesIncludes )
+                {
+                    writer.WriteLine( string.Format( "\t\tINC: {0}", inc ) );
+                }
             }
             writer.WriteLine( "}" );
 
@@ -217,14 +245,12 @@ namespace SaturnBuildTool.Cache
             writer.Close();
             fs.Close();
         }
+
         public static FileCache Load( string cachePath = null )
         {
-            string FileCachePath =  cachePath ?? ProjectInfo.Instance.FileCacheLocation;
+            string FileCachePath = cachePath ?? Shared.ProjectInfo.FileCacheLocation;
 
-            FileCache fc = new FileCache( FileCachePath )
-            {
-                Filepath = FileCachePath
-            };
+            FileCache fc = new FileCache();
 
             FileStream fs;
             if( !File.Exists( FileCachePath ) )
@@ -239,7 +265,7 @@ namespace SaturnBuildTool.Cache
                 }
                 catch( Exception e )
                 {
-                    Console.WriteLine( "Error when trying open filecache: {0}", e.Message );
+                    Console.WriteLine( "Error when trying open FileCache: {0}", e.Message );
                     Console.WriteLine( "Filecache is empty, creating new cache..." );
 
                     return fc;
@@ -270,20 +296,62 @@ namespace SaturnBuildTool.Cache
 
                 long ticks = reader.ReadInt64();
                 long unixTime = reader.ReadInt64();
+                string hash = reader.ReadString();
+
+                int includeCount = reader.ReadInt32();
+
+                var includeList = new List<string>();
+                for( int j = 0; j < includeCount; j++ )
+                {
+                    ulong len = reader.ReadUInt64();
+                    includeList.Add( Encoding.UTF8.GetString( reader.ReadBytes( ( int ) len ) ) );
+                }
 
                 FileCacheTime time = new FileCacheTime
                 {
                     UnixTime = unixTime,
-                    Time = ticks
+                    Time = ticks,
+                    Hash = hash,
+                    ImmediatesIncludes = includeList
                 };
 
-                fc.FilesInCache.Add( key, time );
+                fc.ResidentFilesInCache.TryAdd( key, time );
             }
 
             reader.Close();
             fs.Close();
 
             return fc;
+        }
+
+        public List<string> Analyse( List<string> allKnownFiles )
+        {
+            List<string> result = new List<string>();
+
+            // Search the source dir for any new/removed files from the last build
+            foreach( string file in allKnownFiles )
+            {
+                if( ResidentFilesInCache.ContainsKey( file ) )
+                {
+                    if( HasSourceFileBeenModified( file ) )
+                    {
+                        Console.WriteLine( $"{file} has been modified!" );
+
+                        Shared.TaskCache.RemoveTask( file );
+                        result.Add( file );
+                    }
+                }
+                else
+                {
+                    Console.WriteLine( $"{file} is not in the File Cache!" );
+                    Shared.TaskCache.RemoveTask( file );
+
+                    CacheFile( file );
+                    result.Add( file );
+                }
+            }
+
+            return result;
         }
     }
 }

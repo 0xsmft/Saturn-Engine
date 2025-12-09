@@ -1,45 +1,84 @@
 ﻿using System;
+using System.Diagnostics;
+using SaturnBuildTool.Tools;
 
 namespace SaturnBuildTool
 {
     internal class MSVCToolchain : ToolchainBase
     {
-        public MSVCToolchain( UserTarget target )
+        public string VCToolsPath { get; }
+
+        public MSVCToolchain()
         {
-            TargetToBuild = target;
+            VCToolsPath = VSWhere.FindMSVCToolsDir();
         }
 
-        public override int Compile(string InputFile)
+        public override int Compile( string InputFile, CompileSettings settings )
         {
-            MSVCCompileTask compileTask = new MSVCCompileTask( InputFile, TargetToBuild );
+            MSVCCompileTask compileTask = new MSVCCompileTask( InputFile, settings );
 
             int result = -1;
 
             try
             {
-                result = compileTask.Execute();
+                result = compileTask.Execute( this );
             }
-            catch(System.Exception excpt)
+            catch( System.Exception excpt )
             {
-                Console.WriteLine(excpt.Message);
+                Console.WriteLine( excpt.Message );
+                Debugger.Break();
             }
 
             return result;
         }
 
-        public override int Link()
+        public override int Link( LinkSettings linkSettings )
         {
-            MSVCLinkTask link = new MSVCLinkTask( TargetToBuild );
+            switch( linkSettings.OutputType )
+            {
+                default:
+                case LinkerOutput.SharedLibrary:
+                case LinkerOutput.Executable:
+                    return LinkInternal( linkSettings );
+
+                case LinkerOutput.StaticLibrary:
+                    return LinkWithLib( linkSettings );
+            }
+        }
+
+        private int LinkInternal( LinkSettings linkSettings )
+        {
+            MSVCLinkTask link = new MSVCLinkTask( linkSettings );
 
             int result = -1;
 
             try
             {
-                result = link.Execute();
+                result = link.Execute( this );
             }
-            catch (System.Exception excpt)
+            catch( System.Exception excpt )
             {
-                Console.WriteLine(excpt.Message);
+                Console.WriteLine( excpt.Message );
+                Debugger.Break();
+            }
+
+            return result;
+        }
+
+        private int LinkWithLib( LinkSettings linkSettings )
+        {
+            MSVCLibrarianTask lib = new MSVCLibrarianTask( linkSettings );
+
+            int result = -1;
+
+            try
+            {
+                result = lib.Execute( this );
+            }
+            catch( System.Exception excpt )
+            {
+                Console.WriteLine( excpt.Message );
+                Debugger.Break();
             }
 
             return result;

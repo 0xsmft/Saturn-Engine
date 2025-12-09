@@ -2,20 +2,17 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Runtime.InteropServices.ComTypes;
-using System.Security.Cryptography;
-using System.Security.Permissions;
-using System.Text;
+
 using SaturnBuildTool.Auxiliary;
 using SaturnBuildTool.Tools;
 
 namespace SaturnBuildTool
 {
-    internal class MSVCLinkTask : TaskBase
+    internal class MSVCLibrarianTask : TaskBase
     {
         private readonly LinkSettings LinkSettings;
 
-        public MSVCLinkTask( LinkSettings linkSettings )
+        public MSVCLibrarianTask( LinkSettings linkSettings )
         {
             LinkSettings = linkSettings;
         }
@@ -33,8 +30,7 @@ namespace SaturnBuildTool
                 CreateNoWindow = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
-                UseShellExecute = false,
-                WorkingDirectory = Shared.ProjectInfo.RootDirectory
+                UseShellExecute = false
             };
 
             switch( Shared.ProjectInfo.TargetPlatformKind )
@@ -42,13 +38,13 @@ namespace SaturnBuildTool
                 default:
                 case ArchitectureKind.x64:
                     {
-                        processStart.FileName = Path.Combine( toolsDir, "bin", "Hostx64", "x64", "link.exe" );
+                        processStart.FileName = Path.Combine( toolsDir, "bin", "Hostx64", "x64", "lib.exe" );
                     }
                     break;
 
                 case ArchitectureKind.x86:
                     {
-                        processStart.FileName = Path.Combine( toolsDir, "bin", "Hostx86", "x86", "link.exe" );
+                        processStart.FileName = Path.Combine( toolsDir, "bin", "Hostx86", "x86", "lib.exe" );
                     }
                     break;
             }
@@ -56,33 +52,27 @@ namespace SaturnBuildTool
             Process clProcess = new Process
             {
                 StartInfo = processStart
-
             };
-
-            Args.Add( " /NOLOGO /MACHINE:x64" );
 
             switch( LinkSettings.OutputType )
             {
-                case LinkerOutput.Executable:
+                default:
                     {
-                        if( Shared.ProjectInfo.CurrentConfigKind == ConfigKind.Dist && !CommandLineParser.Instance.FindFlag( "showconsole" ) )
-                        {
-                            Args.Add( string.Format( " /SUBSYSTEM:WINDOWS /OUT:\"{0}\"", LinkSettings.OutputPath ) );
-                        }
-                        else
-                        {
-                            Args.Add( string.Format( " /SUBSYSTEM:CONSOLE /OUT:\"{0}\"", LinkSettings.OutputPath ) );
-                        }
+                        Console.WriteLine( "Invalid output type for librarian task." );
                     }
-                    break;
+                    return 0;
 
-                case LinkerOutput.SharedLibrary:
+                case LinkerOutput.StaticLibrary:
                     {
-                        Args.Add( string.Format( " /DLL /OUT:\"{0}\"", LinkSettings.OutputPath ) );
+                        Args.Add( string.Format( " /OUT:\"{0}\"", LinkSettings.OutputPath ) );
                     }
                     break;
             }
 
+            Args.Add( " /NOLOGO" );
+            Args.Add( " /MACHINE:x64" );
+
+            // std libraries
             string sdkLibPath = WindowsSDK.GetLibraryPaths();
             string msvcLibPath = GetMSVCLibraryPath( vcToolchain );
 
@@ -95,47 +85,8 @@ namespace SaturnBuildTool
 
             foreach( string links in LinkSettings.LibraryPaths )
             {
-                Args.Add( string.Format( " /LIBPATH:\"{0}\" ", links ) );
+                Args.Add( string.Format( " /LIBPATH:\"{0}\"", links ) );
             }
-
-            Args.Add( $" /LIBPATH:\"{LinkSettings.IntermediateDirectory}\"" );
-
-            // Options from Linker Settings
-            if( LinkSettings.RemoveUnreferncedFunctions )
-            {
-                Args.Add( " /OPT:NOREF" );
-            }
-            else
-            {
-                Args.Add( " /OPT:REF" );
-            }
-
-            if( LinkSettings.IncrementalLink )
-            {
-                Args.Add( " /INCREMENTAL" );
-            }
-            else
-            {
-                Args.Add( " /INCREMENTAL:NO" );
-            }
-
-            bool debugLinkDueToConfigOrCmd = Shared.ProjectInfo.CurrentConfigKind != ConfigKind.Dist || CommandLineParser.Instance.FindFlag( "DISTASDBG" );
-            if( LinkSettings.IncrementalLink || debugLinkDueToConfigOrCmd )
-            {
-                Args.Add( " /DEBUG:FULL /PDBALTPATH:%_PDB%" );
-
-                string pdbFile = LinkSettings.GetFullDebugDatabasePath();
-                Args.Add( $" /PDB:\"{pdbFile}\"" );
-            }
-            else
-            {
-                Args.Add( " /DEBUG:NO" );
-            }
-
-            string ilkPath = LinkSettings.OutputPath;
-            ilkPath = Path.ChangeExtension( ilkPath, ".ilk" );
-
-            Args.Add( string.Format( " /ILK:\"{0}\"", ilkPath ) );
 
             foreach( string links in LinkSettings.Links )
             {
@@ -146,6 +97,7 @@ namespace SaturnBuildTool
             if( LinkSettings.DynamicBases.Count > 0 )
             {
                 List<string> bases = new List<string>();
+
                 foreach( string file in LinkSettings.DynamicBases )
                 {
                     bases.Add( string.Format( " \"{0}\"", file ) );
@@ -155,22 +107,13 @@ namespace SaturnBuildTool
             }
 
             // Object files
-            foreach( string file in LinkSettings.ObjectFiles )
+            foreach( string file in vcToolchain.ProducedItems )
             {
                 Args.Add( string.Format( " \"{0}\"", file ) );
             }
 
-            /*
-            string pchOutFile = Path.ChangeExtension( Shared.TargetToBuild.PCH.HeaderFile, ".obj" );
-            string pchOutPath = Path.Combine( Shared.CurrentBuildTarget.IntermediateOutputPath, pchOutFile );
-            if( !vcToolchain.ProducedItems.Contains( pchOutPath ) )
-            {
-                Args.Add( $" \"{pchOutPath}\"" );
-            }
-            */
-
             // Start the link...
-            Console.WriteLine( "Linking" );
+            Console.WriteLine( "Linking as static library" );
 
             clProcess.EnableRaisingEvents = true;
 
@@ -204,16 +147,12 @@ namespace SaturnBuildTool
 
             if( clProcess.ExitCode == 0 )
             {
-                // For final link outputs, we hash key instead of storing a folder.
-                // TODO: Not great...
-                SHA256 sha = SHA256.Create();
-                byte[] hash = sha.ComputeHash( Encoding.UTF8.GetBytes( LinkSettings.Name ) );
-
-                Shared.TaskCache.CacheTask( BitConverter.ToString( hash ).Replace( "-", string.Empty ), LinkSettings.OutputPath );
+                // Not ideal
+                //              Shared.TaskCache.CacheTask( TargetToBuild.GetFullBinPath(), TargetToBuild.GetFullBinPath() );
             }
             else
             {
-                Shared.TaskCache.RemoveTask( LinkSettings.OutputDirectory );
+                //              Shared.TaskCache.RemoveTask( TargetToBuild.GetFullBinPath() );
             }
 
             return clProcess.ExitCode;

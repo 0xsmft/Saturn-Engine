@@ -4,12 +4,11 @@ namespace SaturnBuildTool
 {
     internal class LinuxToolchain : ToolchainBase
     {
-        public LinuxToolchain(UserTarget target)
+        public LinuxToolchain()
         {
-            TargetToBuild = target;
         }
 
-        public override int Compile(string InputFile)
+        public override int Compile( string InputFile, CompileSettings compileSettings )
         {
             //MSVCCompileTask compileTask = new MSVCCompileTask(InputFile, TargetToBuild);
 
@@ -19,15 +18,15 @@ namespace SaturnBuildTool
             {
                 //result = compileTask.Execute();
             }
-            catch (System.Exception excpt)
+            catch( System.Exception excpt )
             {
-                Console.WriteLine(excpt.Message);
+                Console.WriteLine( excpt.Message );
             }
 
             return result;
         }
 
-        public override int Link()
+        public override int Link( LinkSettings linkSettings )
         {
             //MSVCLinkTask link = new MSVCLinkTask(TargetToBuild);
 
@@ -37,9 +36,9 @@ namespace SaturnBuildTool
             {
                 //result = link.Execute();
             }
-            catch (System.Exception excpt)
+            catch( System.Exception excpt )
             {
-                Console.WriteLine(excpt.Message);
+                Console.WriteLine( excpt.Message );
             }
 
             return result;

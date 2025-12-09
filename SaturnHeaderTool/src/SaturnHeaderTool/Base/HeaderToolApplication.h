@@ -54,5 +54,7 @@ namespace Saturn {
 
 		std::filesystem::path m_SourcePath;
 		std::filesystem::path m_OutputPath;
+
+		HeaderToolConfigKind m_HeaderToolConfigKind = HeaderToolConfigKind::Unknown;
 	};
 }

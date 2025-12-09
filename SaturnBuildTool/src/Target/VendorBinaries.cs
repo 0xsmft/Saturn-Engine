@@ -2,7 +2,7 @@
 
 namespace SaturnBuildTool
 {
-    enum VendorProject 
+    public enum VendorProject
     {
         PHYSX,
         YAML_CPP,
@@ -14,26 +14,27 @@ namespace SaturnBuildTool
         RECAST, // ...and detour
     }
 
-    internal class VendorBinaries
+    public class VendorBinaries
     {
-        private static string GetRootBinPath(string path, UserTarget target) 
+        public static string GetRootBinPath( string path )
         {
-            switch (target.CurrentConfig) 
+            switch( Shared.ProjectInfo.CurrentConfigKind )
             {
-                case ConfigKind.Debug: 
+                case ConfigKind.Debug:
                     {
-                        path = Path.Combine(path, "Debug-windows-x86_64");
-                    } break;
+                        path = Path.Combine( path, "Debug-windows-x86_64" );
+                    }
+                    break;
 
                 case ConfigKind.Release:
                     {
-                        path = Path.Combine(path, "Release-windows-x86_64");
+                        path = Path.Combine( path, "Release-windows-x86_64" );
                     }
                     break;
 
                 case ConfigKind.Dist:
                     {
-                        path = Path.Combine(path, "Dist-windows-x86_64");
+                        path = Path.Combine( path, "Dist-windows-x86_64" );
                     }
                     break;
             }
@@ -43,24 +44,24 @@ namespace SaturnBuildTool
 
         // TODO
         // TEMP: There is 1000% a better way of doing this.
-        public static string GetBinPath(VendorProject project, UserTarget target) 
+        public static string GetBinPath( VendorProject project )
         {
-            string saturnDir = ProjectInfo.Instance.SaturnDir;
-            string binPath = Path.Combine(saturnDir, "Saturn", "vendor");
+            string saturnDir = Shared.ProjectInfo.SaturnDir;
+            string binPath = Path.Combine( saturnDir, "Saturn", "vendor" );
 
-            switch ( project ) 
+            switch( project )
             {
                 case VendorProject.PHYSX:
                     {
-                        binPath = Path.Combine(binPath, "phsyx", "bin");
+                        binPath = Path.Combine( binPath, "phsyx", "bin" );
 
-                        if (target.CurrentConfig == ConfigKind.Debug)
+                        if( Shared.ProjectInfo.CurrentConfigKind == ConfigKind.Debug )
                         {
-                            binPath = Path.Combine(binPath, "Debug");
+                            binPath = Path.Combine( binPath, "Debug" );
                         }
-                        else 
+                        else
                         {
-                            binPath = Path.Combine(binPath, "Release");
+                            binPath = Path.Combine( binPath, "Release" );
                         }
                     }
                     break;
@@ -68,69 +69,69 @@ namespace SaturnBuildTool
 
                 case VendorProject.YAML_CPP:
                     {
-                        binPath = Path.Combine(binPath, "yaml-cpp", "bin");
+                        binPath = Path.Combine( binPath, "yaml-cpp", "bin" );
 
-                        binPath = GetRootBinPath(binPath, target);
+                        binPath = GetRootBinPath( binPath );
 
-                        binPath = Path.Combine(binPath, "yaml-cpp");
+                        binPath = Path.Combine( binPath, "yaml-cpp" );
                     }
                     break;
 
 
                 case VendorProject.IMGUI:
                     {
-                        binPath = Path.Combine(binPath, "imgui", "bin");
+                        binPath = Path.Combine( binPath, "imgui", "bin" );
 
-                        binPath = GetRootBinPath(binPath, target);
+                        binPath = GetRootBinPath( binPath );
 
-                        binPath = Path.Combine(binPath, "ImGui");
+                        binPath = Path.Combine( binPath, "ImGui" );
                     }
                     break;
 
 
                 case VendorProject.SPIRVCROSS:
                     {
-                        binPath = Path.Combine(binPath, "SPIRV-Cross", "bin");
+                        binPath = Path.Combine( binPath, "SPIRV-Cross", "bin" );
 
-                        binPath = GetRootBinPath(binPath, target);
+                        binPath = GetRootBinPath( binPath );
 
-                        binPath = Path.Combine(binPath, "SPIRV-Cross");
+                        binPath = Path.Combine( binPath, "SPIRV-Cross" );
                     }
                     break;
 
 
                 case VendorProject.SHADERC:
                     {
-                        binPath = Path.Combine(binPath, "shaderc", "bin");
+                        binPath = Path.Combine( binPath, "shaderc", "bin" );
 
-                        if (target.CurrentConfig == ConfigKind.Debug)
+                        if( Shared.ProjectInfo.CurrentConfigKind == ConfigKind.Debug )
                         {
-                            binPath = Path.Combine(binPath, "Debug-Windows");
+                            binPath = Path.Combine( binPath, "Debug-Windows" );
                         }
-                        else 
+                        else
                         {
-                            binPath = Path.Combine(binPath, "Release-Windows");
+                            binPath = Path.Combine( binPath, "Release-Windows" );
                         }
                     }
                     break;
 
                 case VendorProject.TRACY:
                     {
-                        binPath = Path.Combine(binPath, "tracy", "bin");
+                        binPath = Path.Combine( binPath, "tracy", "bin" );
 
-                        binPath = GetRootBinPath(binPath, target);
+                        binPath = GetRootBinPath( binPath );
 
-                        binPath = Path.Combine(binPath, "Tracy");
+                        binPath = Path.Combine( binPath, "Tracy" );
                     }
                     break;
 
                 case VendorProject.ZLIB:
                     {
-                        binPath = Path.Combine(binPath, "zlib", "bin");
+                        binPath = Path.Combine( binPath, "zlib", "bin" );
 
-                        binPath = GetRootBinPath(binPath, target);
+                        binPath = GetRootBinPath( binPath );
 
-                        binPath = Path.Combine(binPath, "zlib");
+                        binPath = Path.Combine( binPath, "zlib" );
                     }
                     break;
 
@@ -138,7 +139,7 @@ namespace SaturnBuildTool
                     {
                         binPath = Path.Combine( binPath, "Recast", "bin" );
 
-                        binPath = GetRootBinPath( binPath, target );
+                        binPath = GetRootBinPath( binPath );
 
                         binPath = Path.Combine( binPath, "Recast" );
                     }

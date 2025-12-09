@@ -35,13 +35,38 @@
 
 namespace Saturn {
 
+	enum class HeaderToolConfigKind
+	{
+		Debug,
+		Release,
+		Dist,
+		Unknown
+	};
+
+	struct GClass
+	{
+		std::string ClassName;
+		std::string BaseClass;
+		uint32_t ClassFlags = 0 /* SClassFlags::None */;
+		uint32_t LineNumberForGeneratedBody = 0;
+
+		std::map<uint32_t, SProperty> Properties;
+	};
+
 	struct HeaderToolCommand
 	{
+		HeaderToolCommand( const std::filesystem::path& rFilepath, HeaderToolConfigKind config ) 
+			: Filepath( rFilepath ), ConfigKind( config )
+		{
+		}
+
 		std::filesystem::path Filepath;
 
 		std::string ClassName;
 		std::string BaseClass;
 		uint32_t ClassFlags = 0 /* SClassFlags::None */;
+		uint32_t LineNumberForGeneratedBody = 0;
+		HeaderToolConfigKind ConfigKind;
 
 		std::map<uint32_t, SProperty> Properties;
 	};

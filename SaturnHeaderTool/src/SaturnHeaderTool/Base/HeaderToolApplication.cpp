@@ -123,10 +123,40 @@ namespace Saturn {
 		}
 
 		{
+			const auto itr = ParsedMap.find( "/PCH" );
+			if( itr != ParsedMap.end() )
+			{
+				m_HeaderTool.SetPCHPath( itr->second );
+			}
+		}
+
+		// Get current config kind
+		{
+			auto itr = ParsedMap.find( "/DEBUG" );
+			if( itr != ParsedMap.end() )
+			{
+				m_HeaderToolConfigKind = HeaderToolConfigKind::Debug;
+			}
+			else if( itr = ParsedMap.find( "/RELEASE" ); itr != ParsedMap.end() )
+			{
+				m_HeaderToolConfigKind = HeaderToolConfigKind::Release;
+			}
+			else if( itr = ParsedMap.find( "/DIST" ); itr != ParsedMap.end() )
+			{
+				m_HeaderToolConfigKind = HeaderToolConfigKind::Dist;
+			}
+			else
+			{
+				result |= false;
+				std::cout << s_ErrorsMaps[ HeaderToolError::TR004 ] << "\n";
+			}
+		}
+
+		{
 			const auto itr = ParsedMap.find( "/NOMSG" );
 			if( itr == ParsedMap.end() )
 			{
-				std::cout << "=== Saturn Header Tool X" << SAT_CURRENT_VERSION_STRING << " ===\n";
+				std::cout << "=== Saturn Header Tool X" << SAT_CURRENT_VERSION_STRING << " (SBT: 5.1)===\n";
 			}
 		}
 
@@ -141,7 +171,7 @@ namespace Saturn {
 
 		const std::vector<std::filesystem::path> headerFiles = m_FileCache.Analyse();
 
-		m_HeaderTool.SubmitWorkList( headerFiles );
+		m_HeaderTool.SubmitWorkList( headerFiles, m_HeaderToolConfigKind );
 		return m_HeaderTool.StartGeneration();
 	}
 

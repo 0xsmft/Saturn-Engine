@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+
 using SaturnBuildTool.Auxiliary;
 using SaturnBuildTool.Tools;
 
@@ -10,26 +11,24 @@ namespace SaturnBuildTool
     internal class MSVCCompileTask : TaskBase
     {
         private readonly string InputFile;
-        private readonly UserTarget TargetToBuild;
+        private readonly CompileSettings CompileSettings;
 
-        public MSVCCompileTask( string inputFile, UserTarget target )
+        public MSVCCompileTask( string inputFile, CompileSettings compileSettings )
         {
             InputFile = inputFile;
-            TargetToBuild = target;
+            CompileSettings = compileSettings;
         }
 
-        public override int Execute()
+        public override int Execute( ToolchainBase toolchainBase )
         {
-            if( Path.GetExtension( InputFile ) != ".cpp" )
-                return 0;
-
-            string CLLocation = VSWhere.FindMSVCToolsDir();
+            MSVCToolchain vcToolchain = toolchainBase as MSVCToolchain;
+            string CLLocation = vcToolchain.VCToolsPath;
 
             var Args = new List<string>();
 
             ProcessStartInfo processStart = new ProcessStartInfo();
 
-            switch( ProjectInfo.Instance.TargetPlatformKind )
+            switch( Shared.ProjectInfo.TargetPlatformKind )
             {
                 case ArchitectureKind.x64:
                     {
@@ -48,98 +47,194 @@ namespace SaturnBuildTool
             processStart.RedirectStandardOutput = true;
             processStart.RedirectStandardError = true;
             processStart.UseShellExecute = false;
+            processStart.WorkingDirectory = Shared.ProjectInfo.RootDirectory;
 
             Process clProcess = new Process
             {
                 StartInfo = processStart
             };
 
-            // Parse Args
-            Args.Add( " /nologo" );
+            // nologo: Suppress startup banner,
+            // C: Compile,
+            // errorreport:prompt: prompt to report edits,
+            // Gy: Function level linking,
+            // GS: Buffer Security Check,
+            // MP: Build with multiple processes,
+            // GF: Eliminate Duplicate Strings,
+            // EHsc: Exception handling (EH) -- Unwind stack (s) extern "C" function can't throw a C++ exception (c).
+            Args.Add( " /nologo /c /errorreport:prompt /Gy /GS /MP /GF /EHsc" );
 
-            // Compile (without linking)
-            Args.Add( " /c" );
+            // Most important arg here is /Zc:wchar_t, enforce that a wchar_t is a native type and not a typedef!
+            Args.Add( " /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline" );
 
-            Args.Add( " /errorreport:prompt" );
+            switch( CompileSettings.Version )
+            {
+                default:
+                case CompileSettings.CppVersion.Minimum:
+                    {
+                        Args.Add( " /std:c++20" );
+                    }
+                    break;
 
-            // Compile for C++ with C++23 working draft
-            Args.Add( " /std:c++latest" );
+                case CompileSettings.CppVersion.Cpp23:
+                    {
+                        // NOTE: Would be /std:c++23preview and then /std:c++23
+                        // My version of MSVC doesn't have that yet...
+                        Args.Add( " /std:c++latest" );
+                    }
+                    break;
 
-            // Exception handling (EH) -- Unwind stack (s) extern "C" function can't throw a C++ exception (c).
-            Args.Add( " /EHsc" );
+                // NOTE: C++26 support for MSVC would be under c++latest,
+                //       this is here when C++26 will become fully supported.
+                case CompileSettings.CppVersion.Cpp26:
+                    {
+                        // await c++26, c++latest for now...
+                        //                      Args.Add( " /std:c++26" );
+                        Args.Add( " /std:c++latest" );
+                    }
+                    break;
 
-            // Eliminate Duplicate Strings
-            Args.Add( " /GF" );
+                case CompileSettings.CppVersion.Latest:
+                    {
+                        Args.Add( " /std:c++latest" );
+                    }
+                    break;
+            }
 
-            // Build with multiple processes
-            Args.Add( " /MP" );
-
-            // Buffer Security Check
-            Args.Add( " /GS" );
-
-            if( CommandLineParser.Instance.FindFlag( "includestree" ) ) 
+            if( CommandLineParser.Instance.FindFlag( "includestree" ) )
             {
                 Args.Add( " /showIncludes" );
             }
 
+            if( CommandLineParser.Instance.FindFlag( "xw+" ) )
+            {
+                // Treat warnings as errors
+                Args.Add( " /WX" );
+            }
+
+            // Warning level
+            Args.Add( ConvertWarningLevel() );
+
+            // Precompiled headers
+            // PCHs are set from the target and NOT the module.
+            if( CompileSettings.PCHInfo.Valid() )
+            {
+                switch( CompileSettings.PCHAction )
+                {
+                    default:
+                    case CompileSettings.PrecompiledHeaderAction.NoAction: Debugger.Break(); break;
+
+                    case CompileSettings.PrecompiledHeaderAction.Create: 
+                        {
+                            Args.Add( $" /Yc\"{CompileSettings.PCHInfo.HeaderFile}\"" );
+                        } break;
+
+                    case CompileSettings.PrecompiledHeaderAction.Use: 
+                        {
+                            Args.Add( $" /Yu\"{CompileSettings.PCHInfo.HeaderFile}\"" );
+                        } break;
+                }
+
+                // PCHs are global, so we need to use the Targets output path not the module's
+                string pchOutFile = Path.GetFileName( Path.ChangeExtension( Shared.ProjectInfo.Name, ".pch" ) );
+                Args.Add( string.Format( " /Fp\"{0}\"", Path.Combine( Shared.CurrentBuildTarget.IntermediateOutputPath, pchOutFile ) ) );
+
+                Args.Add( $" /FI{CompileSettings.PCHInfo.HeaderFile}" );
+            }
+
+            // Options set from CompileSettings
+            if( CompileSettings.ExperimentalFeatures )
+                Args.Add( " /experimental" );
+
+            if( CompileSettings.JustMyCodeDebugging )
+                Args.Add( " /JMC" );
+
+            if( CompileSettings.X31ShowConsole || CommandLineParser.Instance.FindFlag( "showconsole" ) )
+                Args.Add( " /D\"__X31_SHOWCONSOLE__\"" );
+
+            if( CompileSettings.OptimiseGlobalData )
+                Args.Add( " /Gw" );
+
+            if( !CompileSettings.EnableEditAndContinue )
+                Args.Add( " /Zo" );
+
+            switch( CompileSettings.Optimisation )
+            {
+                default:
+                case CompileSettings.CppOptimisation.Off:
+                    {
+                        Args.Add( " /Od" );
+                    }
+                    break;
+
+                case CompileSettings.CppOptimisation.Debug:
+                    {
+                        Args.Add( " /Od" );
+                    }
+                    break;
+
+                case CompileSettings.CppOptimisation.Size:
+                    {
+                        Args.Add( " /O1" );
+                    }
+                    break;
+
+                case CompileSettings.CppOptimisation.Speed:
+                    {
+                        Args.Add( " /O2" );
+                    }
+                    break;
+
+                case CompileSettings.CppOptimisation.Full:
+                    {
+                        Args.Add( " /Ox" );
+                    }
+                    break;
+            }
+
             // Configuration specific
-            switch( TargetToBuild.CurrentConfig )
+            switch( Shared.ProjectInfo.CurrentConfigKind )
             {
                 case ConfigKind.Debug:
                 case ConfigKind.Release:
                     {
-                        if( TargetToBuild.CurrentConfig == ConfigKind.Debug )
+                        if( Shared.ProjectInfo.CurrentConfigKind == ConfigKind.Debug )
                         {
-                            Args.Add( " /D \"SAT_DEBUG\"" );
+                            Args.Add( " /D\"SAT_DEBUG\"" );
                             Args.Add( " /MTd" ); // Multithreaded debug RT
                         }
                         else
                         {
-                            Args.Add( " /D \"SAT_RELEASE\"" );
+                            Args.Add( " /D\"SAT_RELEASE\"" );
                             Args.Add( " /MT" ); // Multithreaded RT
                         }
 
-                        Args.Add( " /Z7" ); // Build with Z7 debug pdbs
-                        Args.Add( " /Od" ); // No optimisation.
+                        Args.Add( " /Z7" ); // Build with C7 debug pdbs
                         Args.Add( " /FS" ); // Force Synchronous PDB Writes
-                        Args.Add( " /Gw" ); // Optimize Global Data
                     }
                     break;
 
                 case ConfigKind.Dist:
                     {
-                        Args.Add( " /D \"SAT_DIST\"" );
+                        Args.Add( " /D\"SAT_DIST\"" );
                         Args.Add( " /MT" ); // Multithreaded RT
-                        Args.Add( " /Ox" ); // Favour speed (optimisation)
                     }
                     break;
             }
 
-            if( CommandLineParser.Instance.FindFlag( "DISTASDBG" ) ) 
-            {
-                Args.Add( " /Z7" );
-            }
+            // Suppress warning:
+            // 'type': 'type1' needs to have dll-interface to be used by clients of 'type2'
+            // See: https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4251
+            Args.Add( " /wd4251" );
 
-            // Out
-            string outFile = Path.GetFileName( Path.ChangeExtension( InputFile, ".obj" ) );
-            Args.Add( string.Format( " /Fo\"{0}\"", Path.Combine( TargetToBuild.OutputPath, outFile ) ) );
-
-            // Marcos
-            List<string> marcos = TargetToBuild.PreprocessorDefines;
-
-            foreach( string name in marcos )
+            // Preprocessor defines
+            foreach( string name in CompileSettings.PreprocessorDefines )
             {
                 Args.Add( string.Format( " /D\"{0}\"", name ) );
             }
 
-            if( CommandLineParser.Instance.FindFlag( "showconsole" ) )
-            {
-                Args.Add( " /D\"__X31_SHOWCONSOLE__\"" );
-            }
-
             // Includes
-            List<string> incs = TargetToBuild.Includes;
-            foreach( string include in incs )
+            foreach( string include in CompileSettings.Includes )
             {
                 Args.Add( string.Format( " /I\"{0}\"", include ) );
             }
@@ -153,6 +248,10 @@ namespace SaturnBuildTool
             Args.Add( string.Format( " /I\"{0}\"", Path.Combine( includeSDKFolder, "um" ) ) );
             Args.Add( string.Format( " /I\"{0}\"", Path.Combine( includeSDKFolder, "shared" ) ) );
 
+            // Out
+            string outFile = Path.GetFileName( Path.ChangeExtension( InputFile, ".obj" ) );
+            Args.Add( string.Format( " /Fo\"{0}\"", Path.Combine( CompileSettings.OutputPath, outFile ) ) );
+
             // In
             Args.Add( string.Format( " /Tp\"{0}\"", InputFile ) );
 
@@ -165,7 +264,7 @@ namespace SaturnBuildTool
             clProcess.EnableRaisingEvents = true;
 
             if( CommandLineParser.Instance.FindFlag( "args+" ) )
-            { 
+            {
                 Console.WriteLine( "Command Line: {0}", processStart.Arguments );
             }
 
@@ -196,7 +295,57 @@ namespace SaturnBuildTool
             // Write error output (disable this when using synchronous output)
             //Console.WriteLine(clProcess.StandardOutput.ReadToEnd().Trim());
 
+            if( clProcess.ExitCode == 0 )
+            {
+                vcToolchain.ProducedItems.Add( outFile );
+                Shared.TaskCache.CacheTask( InputFile, Path.Combine( CompileSettings.OutputPath, outFile ) );
+            }
+            else
+            {
+                Shared.TaskCache.RemoveTask( InputFile );
+            }
+
             return clProcess.ExitCode;
+        }
+
+        private string ConvertWarningLevel()
+        {
+            if( CommandLineParser.Instance.FindFlag( "/XW+" ) )
+            {
+                return " /WX";
+            }
+
+            if( CommandLineParser.Instance.FindFlag( "/XW-" ) )
+            {
+                return " /w";
+            }
+
+            if( CommandLineParser.Instance.FindFlag( "/XW1" ) )
+            {
+                return " /W1";
+            }
+
+            if( CommandLineParser.Instance.FindFlag( "/XW2" ) )
+            {
+                return " /W2";
+            }
+
+            if( CommandLineParser.Instance.FindFlag( "/XW3" ) )
+            {
+                return " /W3";
+            }
+
+            if( CommandLineParser.Instance.FindFlag( "/XW4" ) )
+            {
+                return " /W4";
+            }
+
+            if( CommandLineParser.Instance.FindFlag( "/XWAx" ) )
+            {
+                return " /Wall";
+            }
+
+            return " /W3";
         }
     }
 }

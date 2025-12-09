@@ -33,6 +33,7 @@
 
 #include <regex>
 #include <fstream>
+#include <execution>
 #include <iostream>
 
 namespace Saturn {
@@ -51,32 +52,72 @@ namespace Saturn {
 		m_WorkingDir = rPath;
 	}
 
-	void HeaderTool::SubmitWorkList( const std::vector<std::filesystem::path>& rCommands )
+	void HeaderTool::SubmitWorkList( const std::vector<std::filesystem::path>& rCommands, HeaderToolConfigKind config )
 	{
 		m_Commands.reserve( rCommands.size() );
 
 		for( const auto& rCommand : rCommands )
 		{
-			m_Commands.emplace_back( rCommand );
+			m_Commands.emplace_back( rCommand, config );
 		}
 	}
 
 	bool HeaderTool::StartGeneration()
 	{
-		int tasksFailed = 0;
+#if defined(SAT_HEADERTOOL_MT)
+		std::atomic_uint tasksFailed = 0;
+
+		std::for_each( std::execution::par, m_Commands.begin(), m_Commands.end(), 
+			[ & ](auto& rCommand)
+		{
+			const auto result = GenerateHeader( rCommand );
+
+			switch( result )
+			{
+				case HeaderToolParseResult::Success:
+				{
+					if( !GenerateSource( rCommand ) )
+						tasksFailed++;
+				} break;
+
+				case HeaderToolParseResult::ParseSkipped:
+					break;
+
+					// Anything else, count as an error.
+				default:
+					tasksFailed++;
+					break;
+			}
+		} );
+
+		return tasksFailed.load() == 0;
+#else
+		uint32_t tasksFailed = 0;
 
 		for( auto& rCommand : m_Commands )
 		{
-			if( !GenerateHeader( rCommand ) )
-			{
-				tasksFailed++;
-				continue;
-			}
+			const auto result = GenerateHeader( rCommand );
 
-			if( !GenerateSource( rCommand ) ) tasksFailed++;
+			switch( result )
+			{
+				case HeaderToolParseResult::Success:
+				{
+					if( !GenerateSource( rCommand ) ) 
+						++tasksFailed;
+				} break;
+
+				case HeaderToolParseResult::ParseSkipped:
+					break;
+
+				// Anything else, count as an error.
+				default:
+					++tasksFailed;
+					break;
+			}
 		}
 
 		return tasksFailed == 0;
+#endif
 	}
 
 	[[nodiscard]] static bool LineIsComment( const std::string& rLine )
@@ -85,14 +126,19 @@ namespace Saturn {
 		return std::regex_match( rLine, regex );
 	}
 
+	[[nodiscard]] static bool LineIsPreprocessor( const std::string& rLine )
+	{
+		std::regex regex( R"(^\s*#)" );
+		return std::regex_search( rLine, regex );
+	}
+
 	static std::pair<std::string, std::string> GetClassNameAndBaseClass( const std::string& rLine )
 	{
-		if( LineIsComment( rLine ) )
-			return {};
-
 		std::regex classPattern( R"(class\s+(\w+)\s*:\s*public\s+(\w+))" );
+//		std::regex fullClassPattern( R"(\bclass\s+(\w+)(\s*:\s*public\s+(\w+))?\s*\{)" );
 		std::smatch match;
 
+		// NOTE: Returns the first base class
 		if( std::regex_search( rLine, match, classPattern ) )
 		{
 			return std::make_pair( match[ 1 ].str(), match[ 2 ].str() );
@@ -101,7 +147,7 @@ namespace Saturn {
 		return {};
 	}
 
-	static bool IsValidPointer( const std::string& rString ) 
+	static bool IsValidPointer( const std::string& rString )
 	{
 		std::regex pattern( R"(^\s*[a-zA-Z_][a-zA-Z0-9_]*(::[a-zA-Z_][a-zA-Z0-9_]*)*\s*\*\s*$)" );
 		return std::regex_match( rString, pattern );
@@ -135,26 +181,26 @@ namespace Saturn {
 		}
 		else
 		{
-			if( str == "char" )                 return SPropertyType::Char;
-			else if( str == "float" )           return SPropertyType::Float;
-			else if( str == "int" )             return SPropertyType::Int;
-			else if( str == "double" )          return SPropertyType::Double;
-			else if( str == "uint8_t" )         return SPropertyType::Uint8;
-			else if( str == "uint16_t" )        return SPropertyType::Uint16;
-			else if( str == "uint32_t" )        return SPropertyType::Uint32;
-			else if( str == "uint64_t" )        return SPropertyType::Uint64;
-			else if( str == "int8_t" )          return SPropertyType::Int8;
-			else if( str == "int16_t" )         return SPropertyType::Int16;
-			else if( str == "int64_t" )         return SPropertyType::Int64;
-			else if( str == "glm::vec2" )       return SPropertyType::Vector2;
-			else if( str == "glm::vec3" )       return SPropertyType::Vector3;
-			else if( str == "glm::vec4" )       return SPropertyType::Vector4;
-			else if( str == "std::string" )     return SPropertyType::String;
-			else if( str == "Saturn::AssetID" ) return SPropertyType::Uint64;
-			else if( str == "Saturn::UUID" )    return SPropertyType::Uint64;
-			else if( str == "Saturn::AssetReference" ) return SPropertyType::Asset;
-			else if( IsValidPointer( str ) )    return SPropertyType::Class;
-			else if( "Saturn::Ref<Saturn::Entity>" ) return SPropertyType::EntityType;
+			if( str == "char" )							return SPropertyType::Char;
+			else if( str == "float" )					return SPropertyType::Float;
+			else if( str == "int" )						return SPropertyType::Int;
+			else if( str == "double" )					return SPropertyType::Double;
+			else if( str == "uint8_t" )					return SPropertyType::Uint8;
+			else if( str == "uint16_t" )				return SPropertyType::Uint16;
+			else if( str == "uint32_t" )				return SPropertyType::Uint32;
+			else if( str == "uint64_t" )				return SPropertyType::Uint64;
+			else if( str == "int8_t" )					return SPropertyType::Int8;
+			else if( str == "int16_t" )					return SPropertyType::Int16;
+			else if( str == "int64_t" )					return SPropertyType::Int64;
+			else if( str == "glm::vec2" )				return SPropertyType::Vector2;
+			else if( str == "glm::vec3" )				return SPropertyType::Vector3;
+			else if( str == "glm::vec4" )				return SPropertyType::Vector4;
+			else if( str == "std::string" )				return SPropertyType::String;
+			else if( str == "Saturn::AssetID" )			return SPropertyType::Uint64;
+			else if( str == "Saturn::UUID" )			return SPropertyType::Uint64;
+			else if( str == "Saturn::AssetReference" )  return SPropertyType::Asset;
+			else if( IsValidPointer( str ) )            return SPropertyType::Class;
+			else if( "Saturn::Ref<Saturn::Entity>" )    return SPropertyType::EntityType;
 			else /*if( str == "Saturn::SPropertyType::Unknown" )*/ return SPropertyType::Unknown;
 		}
 	}
@@ -223,12 +269,12 @@ namespace Saturn {
 		fout << "\n";
 	}
 
-	static void WriteGeneratedBody( std::ofstream& fout, const std::string& line, HeaderToolCommand& rCommand, uint32_t lineNumber ) 
+	static void WriteGeneratedBody( std::ofstream& fout, HeaderToolCommand& rCommand )
 	{
 		// Parse generated header
 		fout << std::format( "#undef CURRENT_FILE_ID\n#define CURRENT_FILE_ID FID_{0}_h\n\n", rCommand.ClassName );
 
-		const std::string baseFileId = std::format( "FID_{0}_h_{1}", rCommand.ClassName, lineNumber );
+		const std::string baseFileId = std::format( "FID_{0}_h_{1}", rCommand.ClassName, rCommand.LineNumberForGeneratedBody );
 
 		// Could result in #define FID_MyClass_24_GENERATED_BODY FID_MyClass_24_CLASSDECLS
 		const std::string idGeneratedBody = std::format( "#define {0}_GENERATED_BODY {0}_CLASSDECLS\n", baseFileId );
@@ -239,19 +285,52 @@ namespace Saturn {
 		fout << idGeneratedBody;
 	}
 
-	bool HeaderTool::GenerateHeader( HeaderToolCommand& rCommand ) const
+	static void WriteSClassSpecification( std::ofstream& fout, HeaderToolCommand& rCommand, const std::string& rPropPointersName )
 	{
-		bool result = true;
-		
-		std::filesystem::path outputPath = m_WorkingDir;
-		outputPath /= rCommand.Filepath.stem();
-		outputPath += ".Gen.h";
+		const uint64_t classHash = FNV1A64( rCommand.ClassName.c_str() );
 
-		std::ofstream fout( outputPath );
+		const int propSize = ( int ) rCommand.Properties.size();
 
-		fout << "/* Generated code, DO NOT modify! */\n";
-		fout << "#pragma once\n";
-		fout << "#include \"Saturn/GameFramework/Core/GameScript.h\"\n\n";
+#if defined(SAT_PLATFORM_WINDOWS)
+		std::string realPath = rCommand.Filepath.string();
+
+		if( ( rCommand.ClassFlags & SC_NoExtendedMetadata ) == 0 )
+		{
+			// Convert the path from C:\MyPath to C:\\MyPath
+			// Because it we don't it will output it as the string literal
+			size_t pos = 0;
+			while( ( pos = realPath.find( '\\', pos ) ) != std::string::npos )
+			{
+				realPath.replace( pos, 1, "\\\\" );
+				pos += 2;
+			}
+		}
+#else
+		const std::string realPath = rCommand.Filepath.string();
+#endif
+
+		switch( rCommand.ConfigKind )
+		{
+			default:
+			case HeaderToolConfigKind::Unknown:
+			case HeaderToolConfigKind::Debug:
+			case HeaderToolConfigKind::Release: 
+			{
+				fout << std::vformat( "\t\tconst SClassSpecification spec{{ \"{0}\", ( SClassFlags ) {1}, {2}, sizeof( {0} ), alignof( {0} ), {5}llu, {0}::Super::StaticClass(), Saturn::RInternalConstructor<{0}>, RStaticLnk{0}, {4}, Saturn::SClassExtendedMetadata{{ \"{3}\" }} }};\n",
+					std::make_format_args( rCommand.ClassName, rCommand.ClassFlags, propSize, realPath, rPropPointersName, classHash ) );
+			} break;
+
+			case HeaderToolConfigKind::Dist:
+			{
+				fout << std::vformat( "\t\tconst SClassSpecification spec{{ \"{0}\", ( SClassFlags ) {1}, {2}, sizeof( {0} ), alignof( {0} ), {4}llu, {0}::Super::StaticClass(), Saturn::RInternalConstructor<{0}>, RStaticLnk{0}, {3}, Saturn::SClassExtendedMetadata{{ }} }};\n",
+					std::make_format_args( rCommand.ClassName, rCommand.ClassFlags, propSize, rPropPointersName, classHash ) );
+			} break;
+		}
+	}
+
+	HeaderToolParseResult HeaderTool::ParseHeaderFile( HeaderToolCommand& rCommand )
+	{
+		HeaderToolParseResult result = HeaderToolParseResult::Success;
 
 		// Read the header file
 		std::ifstream headerFile( rCommand.Filepath );
@@ -265,6 +344,7 @@ namespace Saturn {
 			lineNumber++;
 			if( line.empty() ) continue;
 			if( LineIsComment( line ) ) continue;
+			if( LineIsPreprocessor( line ) ) continue;
 
 			if( rCommand.ClassName.empty() || rCommand.BaseClass.empty() )
 			{
@@ -279,9 +359,9 @@ namespace Saturn {
 				// Use qualified names
 				UsingSaturnNamespace = true;
 			}
-			
+
 			std::smatch match;
-			
+
 			if( LastLineHadSP )
 			{
 				std::regex typeRegex( R"(([\w:]+(?:<[^<>]+>)?(?:\s*[*&]+)*)\s+(\w+))" );
@@ -301,7 +381,7 @@ namespace Saturn {
 				else
 				{
 					std::cout << rCommand.Filepath.string() << s_ErrorsMaps[ HeaderToolError::CG003 ] << "\n";
-					result = false;
+					result = HeaderToolParseResult::FailedToParse;
 				}
 
 				LastLineHadSP = false;
@@ -340,7 +420,7 @@ namespace Saturn {
 					{
 						// Expected variable definition after SPROPERTY macro.
 						std::cout << rCommand.Filepath.string() << s_ErrorsMaps[ HeaderToolError::CG003 ] << "\n";
-						result = false;
+						result = HeaderToolParseResult::FailedToParse;
 					}
 				}
 
@@ -397,32 +477,56 @@ namespace Saturn {
 						std::cout << rCommand.Filepath.string() << s_WarningMaps[ HeaderToolWarning::CG002A ] << "\n";
 					}
 
-					WriteGeneratedBody( fout, line, rCommand, lineNumber );
+					rCommand.LineNumberForGeneratedBody = lineNumber;
 					GeneratedBodyFound = true;
 				}
 			}
 		}
 
-		fout << "\n// [END OF GENERATED FILE]\n";
-
 		headerFile.close();
-		fout.close();
 
-		if( !GeneratedBodyFound )
+		if( SClassFound && !GeneratedBodyFound )
 		{
 			std::cout << rCommand.Filepath.string() << s_ErrorsMaps[ HeaderToolError::CG002 ] << "\n";
-			result = false;
-		
+			result = HeaderToolParseResult::NoGeneratedBody;
+
 			if( rCommand.BaseClass.empty() )
 			{
 				std::cout << rCommand.Filepath.string() << s_ErrorsMaps[ HeaderToolError::CG004 ] << "\n";
 			}
 		}
-
-		if( !SClassFound )
+		else if( !SClassFound && GeneratedBodyFound )
 		{
 			std::cout << rCommand.Filepath.string() << s_ErrorsMaps[ HeaderToolError::CG001 ] << "\n";
-			return false;
+			result = HeaderToolParseResult::NoSClass;
+		}
+		else if( !SClassFound && !GeneratedBodyFound )
+		{
+			result = HeaderToolParseResult::ParseSkipped;
+		}
+
+		return ( HeaderToolParseResult ) result;
+	}
+
+	HeaderToolParseResult HeaderTool::GenerateHeader( HeaderToolCommand& rCommand )
+	{
+		HeaderToolParseResult result = ParseHeaderFile( rCommand );
+		
+		if( result == HeaderToolParseResult::Success )
+		{
+			std::filesystem::path outputPath = m_WorkingDir;
+			outputPath /= rCommand.Filepath.stem();
+			outputPath += ".Gen.h";
+
+			std::ofstream fout( outputPath );
+
+			fout << "/* Generated code, DO NOT modify! */\n";
+			fout << "#pragma once\n";
+			fout << "#include \"Saturn/GameFramework/Core/GameScript.h\"\n\n";
+
+			WriteGeneratedBody( fout, rCommand );
+
+			fout.close();
 		}
 
 		return result;
@@ -445,6 +549,10 @@ namespace Saturn {
 		std::ofstream fout( outputPath );
 
 		fout << "/* Generated code, DO NOT modify! */\n";
+		if( !m_PCHPath.empty() )
+		{
+			fout << "#include \"sppch.h\"\n";
+		}
 		fout << "#include \"Saturn/GameFramework/Core/GameScript.h\"\n";
 		fout << "#include \"Saturn/GameFramework/SClass.h\"\n";
 		fout << "#include \"Saturn/GameFramework/Core/ClassMetadataHandler.h\"\n";
@@ -461,6 +569,7 @@ namespace Saturn {
 
 		const auto& rClassName = rCommand.ClassName;
 
+		fout << "using namespace Saturn;\n";
 		fout << std::format( "void LinkSymbol{0}() {{}}\n", rClassName );
 		fout << std::format( "__declspec(dllexport) Saturn::SClass* RStaticLnk{0}();\n\n", rClassName );
 
@@ -504,7 +613,8 @@ namespace Saturn {
 			fout << "\n";
 		}
 
-		fout << "};\n\n";
+		fout << "};\n";
+		fout << "//^^^ [END INTERNAL CLASS]\n\n";
 		// ^^^ [END INTERNAL CLASS]
 
 		if( classHasSProps )
@@ -527,35 +637,14 @@ namespace Saturn {
 		}
 
 		// Class Auto-Registration
-		const int propSize = ( int ) rCommand.Properties.size();
-
-#if defined(SAT_PLATFORM_WINDOWS)
-		std::string realPath = rCommand.Filepath.string();
-
-		if( ( rCommand.ClassFlags & SC_NoExtendedMetadata ) == 0 )
-		{
-			// Convert the path from C:\MyPath to C:\\MyPath
-			// Because it we don't it will output it as the string literal
-			size_t pos = 0;
-			while( ( pos = realPath.find( '\\', pos ) ) != std::string::npos )
-			{
-				realPath.replace( pos, 1, "\\\\" );
-				pos += 2;
-			}
-		}
-#else
-		const std::string realPath = rCommand.Filepath.string();
-#endif
-
 		fout << std::format( "Saturn::SClass* RStaticLnk{0}()\n", rClassName );
 		fout << "{\n";
 		fout << "\tstatic Saturn::SClass* pClass = nullptr;\n";
 		fout << "\tif( !pClass )\n";
 		fout << "\t{\n";
-		const std::string propertyPointersFieldName = classHasSProps ? "PropertyPointers" : "nullptr";
-		const uint64_t classHash = FNV1A64( rClassName.c_str() );
 
-		fout << std::vformat( "\t\tconst SClassSpecification spec{{ \"{0}\", ( SClassFlags ) {1}, {2}, sizeof( {0} ), alignof( {0} ), {5}llu, {0}::Super::StaticClass(), Saturn::RInternalConstructor<{0}>, RStaticLnk{0}, {4}, Saturn::SClassExtendedMetadata{{ \"{3}\" }} }};\n", std::make_format_args( rClassName, rCommand.ClassFlags, propSize, realPath, propertyPointersFieldName, classHash ) );
+		const std::string propertyPointersFieldName = classHasSProps ? "PropertyPointers" : "nullptr";
+		WriteSClassSpecification( fout, rCommand, propertyPointersFieldName );
 	
 		fout << "\t\tSClass::RConstructClass( &pClass, spec );\n";
 		fout << "\t}\n\n";

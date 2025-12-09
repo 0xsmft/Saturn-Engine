@@ -47,6 +47,7 @@ namespace Saturn {
 		TR001,
 		TR002,
 		TR003,
+		TR004,
 	};
 
 	enum class HeaderToolWarning
@@ -63,11 +64,12 @@ namespace Saturn {
 		{ HeaderToolError::CG004,  ":error (CG004) | GENERATED_BODY/SCLASS was used, however no base class was specified. You must specifiy a base class driving from Saturn::SObject" },
 
 		// Header tool errors must have "ERROR:" so that VS picks it up as an error can will actually display it in error list, using ":error" sometimes works, however "ERROR:" will flag it as an execution error.
+		{ HeaderToolError::TR000,  "ERROR: (TR000) | Internal Error." },
 		{ HeaderToolError::TR000A, "ERROR: (TR000A) | Code generation terminated." },
 		{ HeaderToolError::TR001,  "ERROR: (TR001) | Missing /SRC Argument. Valid usage is /SRC=<path_to_src>" },
 		{ HeaderToolError::TR002,  "ERROR: (TR002) | Missing /OUT Argument. Valid usage is /OUT=<path_to_output>" },
 		{ HeaderToolError::TR003,  "ERROR: (TR003) | Missing /FC Argument. Valid usage is /FC=<path_to_filecache>." },
-		{ HeaderToolError::TR000,  "ERROR: (TR000) | Internal Error." },
+		{ HeaderToolError::TR004,  "ERROR: (TR003) | Missing configuration argument. Valid usage is /DEBUG or /RELEASE or /DIST" },
 	};
 
 	static std::map<HeaderToolWarning, std::string> s_WarningMaps

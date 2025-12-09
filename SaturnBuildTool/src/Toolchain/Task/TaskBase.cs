@@ -2,6 +2,6 @@
 {
     abstract class TaskBase
     {
-        public abstract int Execute();
+        public abstract int Execute( ToolchainBase toolchainBase );
     }
 }

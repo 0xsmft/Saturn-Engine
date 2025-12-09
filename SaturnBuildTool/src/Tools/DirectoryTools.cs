@@ -1,12 +1,13 @@
 ﻿using System;
-using System.IO;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 
 namespace SaturnBuildTool.Tools
 {
     internal static class DirectoryTools
     {
-        public static List<string> DirSearch(string sDir)
+        public static List<string> DirSearch( string sDir )
         {
             List<string> strings = new List<string>();
 
@@ -30,23 +31,23 @@ namespace SaturnBuildTool.Tools
             return strings;
         }
 
-        public static List<string> DirSearch(string sDir, string ext)
+        public static List<string> DirSearch( string sDir, string ext )
         {
             List<string> strings = new List<string>();
 
             try
             {
-                foreach (string f in Directory.GetFiles(sDir))
+                foreach( string f in Directory.GetFiles( sDir ) )
                 {
-                    if (Path.GetExtension(f) != ext)
+                    if( Path.GetExtension( f ) != ext )
                         continue;
 
-                    strings.Add(f);
+                    strings.Add( f );
                 }
             }
-            catch (System.Exception excpt)
+            catch( System.Exception excpt )
             {
-                Console.WriteLine(excpt.Message);
+                Console.WriteLine( excpt.Message );
             }
 
             return strings;
@@ -74,7 +75,7 @@ namespace SaturnBuildTool.Tools
             return strings;
         }
 
-        public static List<string> SourceSearch( string sDir, bool isSourceOnly )
+        public static List<string> CppSourceSearch( string sDir, bool isSourceOnly )
         {
             List<string> files = new List<string>();
 
@@ -93,13 +94,71 @@ namespace SaturnBuildTool.Tools
                 foreach( string dir in Directory.GetDirectories( sDir ) )
                 {
                     string dirName = Path.GetFileName( dir );
+                    files.AddRange( CppSourceSearch( dir, isSourceOnly ) );
+                }
+            }
+            catch( Exception ex )
+            {
+                Console.WriteLine( $"Error reading directory '{sDir}': {ex.Message}" );
+            }
 
-                    if( isSourceOnly && !( dirName.Equals( "src", StringComparison.OrdinalIgnoreCase ) || dirName.Equals( "source", StringComparison.OrdinalIgnoreCase ) ) )
+            return files;
+        }
+
+        [Flags]
+        public enum CSharpSearchOptions
+        {
+            Targets = 0x1,
+            Modules = 0x2,
+            All = Targets | Modules
+        }
+
+        public static List<string> CsSourceSearch( string sDir, CSharpSearchOptions options )
+        {
+            List<string> files = new List<string>();
+
+            try
+            {
+                // Process current directory's files.
+                foreach( string f in Directory.GetFiles( sDir ) )
+                {
+                    string fileName = Path.GetFileName( f ).ToLowerInvariant();
+
+                    if( ( options & CSharpSearchOptions.Targets ) != 0 )
                     {
-                        continue;
+                        string[] patten = new string[] { ".development.cs", ".dist.cs" };
+
+                        if( patten.Any( p => fileName.EndsWith( p, StringComparison.InvariantCultureIgnoreCase ) ) )
+                        {
+                            files.Add( f );
+                        }
                     }
 
-                    files.AddRange( DirSearch( dir, isSourceOnly ) );
+                    if( ( options & CSharpSearchOptions.Modules ) != 0 )
+                    {
+                        string[] patten = new string[] { ".module.cs" };
+
+                        if( patten.Any( p => fileName.EndsWith( p, StringComparison.InvariantCultureIgnoreCase ) ) )
+                        {
+                            files.Add( f );
+                        }
+                    }
+                    else
+                    {
+                        string[] patten = new string[] { ".development.cs", ".dist.cs", ".module.cs" };
+
+                        if( patten.Any( p => fileName.EndsWith( p, StringComparison.InvariantCultureIgnoreCase ) ) )
+                        {
+                            files.Add( f );
+                        }
+                    }
+                }
+
+                // Recurse into subdirectories.
+                foreach( string dir in Directory.GetDirectories( sDir ) )
+                {
+                    string dirName = Path.GetFileName( dir );
+                    files.AddRange( CsSourceSearch( dir, options ) );
                 }
             }
             catch( Exception ex )
@@ -116,38 +175,38 @@ namespace SaturnBuildTool.Tools
             return ext == ".cpp" || ext == ".cc" || ext == ".c";
         }
 
-        public static List<string> DirSearch(string sDir, bool isSourceOnly)
+        public static List<string> DirSearch( string sDir, bool isSourceOnly )
         {
             List<string> strings = new List<string>();
 
             try
             {
-                foreach (string d in Directory.GetDirectories(sDir))
+                foreach( string d in Directory.GetDirectories( sDir ) )
                 {
-                    if (isSourceOnly) 
+                    if( isSourceOnly )
                     {
-                        if (!d.EndsWith("src") || d.EndsWith("Source")) 
+                        if( !d.EndsWith( "src" ) || d.EndsWith( "Source" ) )
                         {
                             continue;
                         }
                     }
 
-                    foreach (string f in Directory.GetFiles(d))
+                    foreach( string f in Directory.GetFiles( d ) )
                     {
-                        strings.Add(f);
+                        strings.Add( f );
                     }
 
-                    strings.AddRange( DirSearch(d, isSourceOnly) );
+                    strings.AddRange( DirSearch( d, isSourceOnly ) );
                 }
 
-                foreach (string f in Directory.GetFiles(sDir))
+                foreach( string f in Directory.GetFiles( sDir ) )
                 {
-                    strings.Add(f);
+                    strings.Add( f );
                 }
             }
-            catch (System.Exception excpt)
+            catch( System.Exception excpt )
             {
-                Console.WriteLine(excpt.Message);
+                Console.WriteLine( excpt.Message );
             }
 
             return strings;

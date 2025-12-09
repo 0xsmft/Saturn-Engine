@@ -1,9 +1,15 @@
-﻿namespace SaturnBuildTool
+﻿using System.Collections.Generic;
+
+namespace SaturnBuildTool
 {
-    internal class ToolchainBase
+    public class ToolchainBase
     {
-        protected UserTarget TargetToBuild;
-        public virtual int Compile(string InputFile) { return 0; }
-        public virtual int Link() { return 0; }
+        /// <summary>
+        /// The list of items that this toolchain has created.
+        /// </summary>
+        public List<string> ProducedItems = new List<string>();
+
+        public virtual int Compile( string InputFile, CompileSettings compileSettings ) { return 0; }
+        public virtual int Link( LinkSettings linkSettings ) { return 0; }
     }
 }

@@ -21,10 +21,8 @@ namespace SaturnBuildTool
 
     // This class holds all of our needed information about the current project that is being built.
     // There should only ever be one of these created in the Build Tool.
-    internal class ProjectInfo
+    public class ProjectInfo
     {
-        public static readonly ProjectInfo Instance = new ProjectInfo();
-
         public string Name { get; set; }
 
         public string RootDirectory { get; set; }
@@ -33,6 +31,9 @@ namespace SaturnBuildTool
 
         // The directory where the "Build" folder are located.
         public string BuildDir { get; set; }
+
+        // The directory where the ".Gen.cpp/.h" files are located, created by the HeaderTool
+        public string HeaderToolGeneratedRootPath { get; set; }
 
         // The directory where the ".Build.cs" files are located.
         public string TargetDir { get; set; }
@@ -43,7 +44,7 @@ namespace SaturnBuildTool
 
         public string FileCacheLocation { get; set; }
 
-        // The current "*.Build.cs" file path.
+        // The current "*.{config}.cs" file path.
         public string BuildRuleFile { get; set; }
 
         // Path to header tool exe
@@ -68,10 +69,25 @@ namespace SaturnBuildTool
             Name = CommandLineParser.Instance.FindValueFromKey( "NAME" );
 
             // Source
-            SourceDir = Path.Combine( RootDirectory, "Source" );
-            SourceDir = Path.Combine( SourceDir, Name );
+            // Default to "Source" unless specified, /SRC={...}
 
-            if( !Directory.Exists( SourceDir ) ) 
+            if( CommandLineParser.Instance.HasArgument( "SRC" ) )
+            {
+                // Source dir passed in from the CLI is relative to the .sln file / .sproject file
+                SourceDir = Path.Combine( RootDirectory, CommandLineParser.Instance.FindValueFromKey( "SRC" ) );
+
+                if( Shared.Platform.PlatformType == PlatformType.Windows ) 
+                {
+                    SourceDir = SourceDir.Replace( "/", "\\" );
+                }
+            }
+            else
+            {
+                SourceDir = Path.Combine( RootDirectory, "Source" );
+                SourceDir = Path.Combine( SourceDir, Name );
+            }
+
+            if( !Directory.Exists( SourceDir ) )
             {
                 Console.WriteLine( $"Source directory \"{SourceDir}\" does not exist!" );
                 return false;
@@ -79,43 +95,43 @@ namespace SaturnBuildTool
 
             // Target config file
             // So if we had a project it would be:
-            // RootDirectory = C:\Projects\Example\
+            // RootDirectory = C:\Projects\Example
             // TargetDir = C:\Projects\Example\Source
             // As the source folder contains a folder with all of the source of the project
-            // And then a file with the build rules.
-            TargetDir = Path.Combine( RootDirectory, "Source" );
+            TargetDir = RootDirectory;
 
             // Build folder
             BuildDir = Path.Combine( RootDirectory, "Build" );
+            HeaderToolGeneratedRootPath = Path.Combine( BuildDir, "Generated" );
 
             if( !Directory.Exists( BuildDir ) )
             {
-                Console.WriteLine( $"Build directory \"{SourceDir}\" does not exist!" );
-                return false;
+                Console.WriteLine( $"WARN: Build directory \"{BuildDir}\" does not exist!" );
+                Directory.CreateDirectory( BuildDir );
             }
 
+            GetTargetPlatform();
+            GetConfigKind();
+
             // Filecache
-            FileCacheLocation = Path.Combine( RootDirectory, "Filecache.fc" );
+            FileCacheLocation = Path.Combine( BuildDir, $"Filecache-{CurrentConfigKind}.fc" );
 
             if( !File.Exists( FileCacheLocation ) )
             {
                 Console.WriteLine( $"File cache does not exist looking for \"{SourceDir}\" Resulting in a new FileCache being used." );
             }
 
-            GetTargetPlatform();
-            GetConfigKind();
-
             FindBuildRuleFile();
 
             // Find Header tool location
             SaturnDir = CommandLineParser.Instance.FindValueFromKey( "SATURNDIR" );
 
-            if( SaturnDir == null || SaturnDir == string.Empty ) 
+            if( SaturnDir == null || SaturnDir == string.Empty )
             {
                 Console.WriteLine( "No override Saturn directory was suggested, using location from \"SATURN_DIR\" Environment Variable." );
                 SaturnDir = Environment.GetEnvironmentVariable( "SATURN_DIR" );
             }
-            
+
             switch( CurrentConfigKind )
             {
                 case ConfigKind.Debug:
@@ -136,7 +152,7 @@ namespace SaturnBuildTool
             return true;
         }
 
-        private bool CheckAllArgs() 
+        private bool CheckAllArgs()
         {
             bool result = true;
 
@@ -208,7 +224,7 @@ namespace SaturnBuildTool
             {
                 TargetPlatformKind = ArchitectureKind.x64;
             }
-            else if( CommandLineParser.Instance.FindFlag( "Win86" ) ) 
+            else if( CommandLineParser.Instance.FindFlag( "Win86" ) )
             {
                 TargetPlatformKind = ArchitectureKind.x86;
             }
@@ -221,13 +237,12 @@ namespace SaturnBuildTool
                 case ConfigKind.Debug:
                 case ConfigKind.Release:
                     {
-                        BuildRuleFile = Path.Combine( TargetDir, string.Format( "{0}.Build.cs", Name ) );
+                        BuildRuleFile = Path.Combine( SourceDir, $"{Name}.Development.cs" );
                     }
                     break;
-
                 case ConfigKind.Dist:
                     {
-                        BuildRuleFile = Path.Combine( TargetDir, string.Format( "{0}.RT_Build.cs", Name ) );
+                        BuildRuleFile = Path.Combine( SourceDir, $"{Name}.Dist.cs" );
                     }
                     break;
             }

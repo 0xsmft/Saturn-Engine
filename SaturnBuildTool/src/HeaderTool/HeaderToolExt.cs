@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 
 namespace SaturnBuildTool
 {
     internal static class HeaderToolExt
     {
-        public static bool RunHeaderTool() 
+        public static bool RunHeaderTool()
         {
             var Args = new List<string>();
 
@@ -17,7 +17,7 @@ namespace SaturnBuildTool
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
-                FileName = ProjectInfo.Instance.HeaderToolExePath
+                FileName = Shared.ProjectInfo.HeaderToolExePath
             };
 
             Process headerToolProcess = new Process
@@ -25,41 +25,65 @@ namespace SaturnBuildTool
                 StartInfo = processStart,
                 EnableRaisingEvents = true,
             };
-            headerToolProcess.OutputDataReceived += new DataReceivedEventHandler((_, e) =>
-            {
-                if (e.Data != null)
-                {
-                    Console.WriteLine(e.Data);
-                }
-            });
 
-            headerToolProcess.ErrorDataReceived += new DataReceivedEventHandler((_, e) =>
+            headerToolProcess.OutputDataReceived += new DataReceivedEventHandler( ( _, e ) =>
             {
-                if (e.Data != null)
+                if( e.Data != null )
                 {
-                    Console.WriteLine(e.Data);
+                    Console.WriteLine( e.Data );
                 }
-            });
+            } );
+
+            headerToolProcess.ErrorDataReceived += new DataReceivedEventHandler( ( _, e ) =>
+            {
+                if( e.Data != null )
+                {
+                    Console.WriteLine( e.Data );
+                }
+            } );
 
             // Args
-            Args.Add(" /NOMSG ");
-            Args.Add(string.Format(" /SRC={0}", ProjectInfo.Instance.SourceDir));
-            Args.Add(string.Format(" /OUT={0}", ProjectInfo.Instance.BuildDir));
-            Args.Add(string.Format(" /FC={0}", ProjectInfo.Instance.FileCacheLocation));
+            Args.Add( " /NOMSG " );
+            Args.Add( string.Concat( " /SRC=", Shared.ProjectInfo.SourceDir ) );
+            Args.Add( string.Concat( " /OUT=", Shared.ProjectInfo.HeaderToolGeneratedRootPath ) );
+            Args.Add( string.Concat( " /FC=", Path.Combine( Shared.ProjectInfo.BuildDir, $"{Shared.ProjectInfo.Name}-{Shared.ProjectInfo.CurrentConfigKind}.recipe" ) ) );
 
-            processStart.Arguments = string.Join("", Args);
+            switch( Shared.ProjectInfo.CurrentConfigKind )
+            {
+                default: break;
+
+                case ConfigKind.Debug:
+                    {
+                        Args.Add( " /DEBUG" );
+                    }
+                    break;
+
+                case ConfigKind.Release:
+                    {
+                        Args.Add( " /RELEASE" );
+                    }
+                    break;
+
+                case ConfigKind.Dist:
+                    {
+                        Args.Add( " /DIST" );
+                    }
+                    break;
+            }
+
+            processStart.Arguments = string.Join( "", Args );
 
             Console.WriteLine( "Generating Code..." );
             Stopwatch sw = Stopwatch.StartNew();
 
-            try 
+            try
             {
                 headerToolProcess.Start();
-            } 
-            catch (Exception ex) 
+            }
+            catch( Exception ex )
             {
-                Console.WriteLine($"Failed to start header tool process: {ex.Message}");
-                Console.WriteLine("FAILED");
+                Console.WriteLine( $"Failed to start header tool process: {ex.Message}" );
+                Console.WriteLine( "FAILED" );
 
                 return false;
             }

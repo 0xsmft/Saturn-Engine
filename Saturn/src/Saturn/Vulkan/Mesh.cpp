@@ -1332,6 +1332,8 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 				animAsset->AddAnimBone( animBone );
 			}
 
+			animAsset->SetBoneCount( animAsset->GetAnimationBones().size() );
+
 			animAsset->MakeUniformAndCompress( pAnimation );
 
 			SkeletalAnimationAssetSerialiser saa;

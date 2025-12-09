@@ -333,7 +333,9 @@ namespace Saturn {
 		{ MathsMulFloats::StaticClass()                    },
 		{ MathsDivideFloats::StaticClass()                 },
 		{ MathsGreaterThanFloats::StaticClass()			   },
-		{ MathsLessThanFloats::StaticClass()               }
+		{ MathsLessThanFloats::StaticClass()               },
+		{ MathsNot::StaticClass()						   },
+		{ MathsOr::StaticClass()						   }
 	};
 
 	static std::vector<SClass*> s_StateMachineAllowedNodes
@@ -361,7 +363,9 @@ namespace Saturn {
 		{ MathsMulFloats::StaticClass()                    },
 		{ MathsDivideFloats::StaticClass()                 },
 		{ MathsGreaterThanFloats::StaticClass()			   },
-		{ MathsLessThanFloats::StaticClass()               }
+		{ MathsLessThanFloats::StaticClass()               },
+		{ MathsNot::StaticClass()						   },
+		{ MathsOr::StaticClass()						   },
 	};
 
 	static std::vector<SClass*> s_TransitionAllowedNodes
@@ -382,7 +386,9 @@ namespace Saturn {
 		{ MathsMulFloats::StaticClass()                    },
 		{ MathsDivideFloats::StaticClass()                 },
 		{ MathsGreaterThanFloats::StaticClass()            },
-		{ MathsLessThanFloats::StaticClass()               }
+		{ MathsLessThanFloats::StaticClass()               },
+		{ MathsNot::StaticClass()						   },
+		{ MathsOr::StaticClass()						   },
 	};
 
 	void AnimGraph::DrawGraph()

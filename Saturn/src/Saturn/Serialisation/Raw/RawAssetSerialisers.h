@@ -60,6 +60,13 @@ namespace Saturn {
 		[[nodiscard]] virtual bool TryLoadData( Ref<Asset>& rAsset ) const override;
 	};
 
+	class RawSkeletalMeshAssetSerialiser : public RawAssetSerialiser
+	{
+	public:
+		virtual bool DumpAndWriteToVFS( const Ref<Asset>& rAsset ) const override;
+		[[nodiscard]] virtual bool TryLoadData( Ref<Asset>& rAsset ) const override;
+	};
+
 	class RawPhysicsMaterialAssetSerialiser : public RawAssetSerialiser
 	{
 	public:
@@ -80,4 +87,13 @@ namespace Saturn {
 		virtual bool DumpAndWriteToVFS( const Ref<Asset>& rAsset ) const override;	
 		[[nodiscard]] virtual bool TryLoadData( Ref<Asset>& rAsset ) const override;
 	};
+
+	class RawBehaviourTreeMemorySpecSerialiser : public RawAssetSerialiser
+	{
+	public:
+		virtual bool DumpAndWriteToVFS( const Ref<Asset>& rAsset ) const override;
+		[[nodiscard]] virtual bool TryLoadData( Ref<Asset>& rAsset ) const override;
+	};
+
 }
+

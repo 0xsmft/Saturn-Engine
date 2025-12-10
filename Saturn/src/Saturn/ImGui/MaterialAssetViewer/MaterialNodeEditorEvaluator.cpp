@@ -147,9 +147,9 @@ namespace Saturn {
 #endif
 		}
 
+#if !defined(SAT_DIST)
 		m_Info.HostMaterial->RT_ApplyChanges();
 
-#if !defined(SAT_DIST)
 		uiEditor->ShowFlow();
 #endif
 

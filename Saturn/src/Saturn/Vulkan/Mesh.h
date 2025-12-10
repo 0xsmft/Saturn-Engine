@@ -361,7 +361,7 @@ namespace Saturn {
 		const std::vector<StaticVertex>& Vertices() const { return m_Vertices; }
 
 	public:
-		void SerialiseData( std::ofstream& rStream );
+		void SerialiseData( std::ofstream& rStream ) const;
 		void DeserialiseData( std::istream& rStream );
 
 	private:
@@ -392,12 +392,17 @@ namespace Saturn {
 
 		Ref<VertexBuffer> GetBoneVertexBuffer() { return m_BoneVertexBuffer; }
 
+#if defined(SAT_DIST)
+	public:
+		void DistLoadSkeleton( AssetID skeletonID );
+#endif
+
 	public:
 		// Asset
 		virtual void OnDelete() override;
 
 	public:
-		void SerialiseData( std::ofstream& rStream );
+		void SerialiseData( std::ofstream& rStream ) const;
 		void DeserialiseData( std::istream& rStream );
 
 	public:

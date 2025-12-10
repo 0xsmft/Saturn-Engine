@@ -83,6 +83,7 @@ namespace Saturn {
 	private:
 		friend class BehaviourTreeMemoryAssetViewer;
 		friend class BehaviourTreeMemorySpecAssetSerialiser;
+		friend class RawBehaviourTreeMemorySpecSerialiser;
 	};
 	
 }

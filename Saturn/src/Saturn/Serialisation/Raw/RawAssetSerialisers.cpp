@@ -38,6 +38,8 @@
 #include "Saturn/Audio/SoundSpecification.h"
 #include "Saturn/Audio/AudioSystem.h"
 
+#include "Saturn/AI/BehaviourTree/BehaviourTreeMemorySpecification.h"
+
 #include "Saturn/Core/VirtualFS.h"
 #include "Saturn/Core/MemoryStream.h"
 
@@ -71,7 +73,7 @@ namespace Saturn {
 
 		/////////////////////////////////////
 
-		Ref<MaterialAsset> materialAsset = Ref<MaterialAsset>::Create( nullptr );
+		Ref<MaterialAsset> materialAsset = Ref<MaterialAsset>::Create( rAsset, nullptr );
 		AssetID currentTextureID = 0;
 
 		// ALBEO COLOR
@@ -126,28 +128,8 @@ namespace Saturn {
 
 		materialAsset->ForceUpdate();
 
-		// TODO: (Asset) Fix this.
-		struct
-		{
-			UUID ID;
-			AssetType Type;
-			uint32_t Flags;
-			std::filesystem::path Path;
-			std::string Name;
-		} OldAssetData = {};
-
-		OldAssetData.ID = rAsset->ID;
-		OldAssetData.Type = rAsset->Type;
-		OldAssetData.Flags = rAsset->Flags;
-		OldAssetData.Path = rAsset->Path;
-		OldAssetData.Name = rAsset->Name;
-
+		// Set rAsset reference to point to our new MaterialAsset.
 		rAsset = materialAsset;
-		rAsset->ID = OldAssetData.ID;
-		rAsset->Type = OldAssetData.Type;
-		rAsset->Flags = OldAssetData.Flags;
-		rAsset->Path = OldAssetData.Path;
-		rAsset->Name = OldAssetData.Name;
 
 		return true;
 	}
@@ -223,27 +205,7 @@ namespace Saturn {
 //		prefabAsset->DeserialisePrefab();
 
 		// TODO: (Asset) Fix this.
-		struct
-		{
-			UUID ID;
-			AssetType Type;
-			uint32_t Flags;
-			std::filesystem::path Path;
-			std::string Name;
-		} OldAssetData = {};
-
-		OldAssetData.ID = rAsset->ID;
-		OldAssetData.Type = rAsset->Type;
-		OldAssetData.Flags = rAsset->Flags;
-		OldAssetData.Path = rAsset->Path;
-		OldAssetData.Name = rAsset->Name;
-
 		rAsset = prefabAsset;
-		rAsset->ID = OldAssetData.ID;
-		rAsset->Type = OldAssetData.Type;
-		rAsset->Flags = OldAssetData.Flags;
-		rAsset->Path = OldAssetData.Path;
-		rAsset->Name = OldAssetData.Name;
 
 		return true;
 	}
@@ -272,7 +234,7 @@ namespace Saturn {
 
 	bool RawStaticMeshAssetSerialiser::DumpAndWriteToVFS( const Ref<Asset>& rAsset ) const
 	{
-		auto staticMeshAsset = rAsset.As<StaticMesh>();
+		const auto staticMeshAsset = rAsset.As<StaticMesh>();
 
 		std::filesystem::path out = Project::GetActiveProject()->GetTempDir();
 		out /= std::to_string( rAsset->ID );
@@ -294,8 +256,6 @@ namespace Saturn {
 
 	bool RawStaticMeshAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
 	{
-		auto staticMeshAsset = Ref<StaticMesh>::Create();
-
 		const std::string& rMountBase = Project::GetActiveConfig().Name;
 		Ref<VFile> file = VirtualFS::Get().FindFile( rMountBase, rAsset->Path );
 
@@ -306,6 +266,7 @@ namespace Saturn {
 		std::istream stream( &membuf );
 
 		/////////////////////////////////////
+		auto staticMeshAsset = Ref<StaticMesh>::Create( rAsset );
 
 		PhysicsShapeType shapeType = PhysicsShapeType::Unknown;
 		AssetID physicsMaterial = 0;
@@ -318,28 +279,69 @@ namespace Saturn {
 
 		staticMeshAsset->DeserialiseData( stream );
 
-		// TODO: (Asset) Fix this.
-		struct
-		{
-			UUID ID;
-			AssetType Type;
-			uint32_t Flags;
-			std::filesystem::path Path;
-			std::string Name;
-		} OldAssetData = {};
-
-		OldAssetData.ID = rAsset->ID;
-		OldAssetData.Type = rAsset->Type;
-		OldAssetData.Flags = rAsset->Flags;
-		OldAssetData.Path = rAsset->Path;
-		OldAssetData.Name = rAsset->Name;
-
+		// Set rAsset reference to point to our new StaticMesh.
 		rAsset = staticMeshAsset;
-		rAsset->ID = OldAssetData.ID;
-		rAsset->Type = OldAssetData.Type;
-		rAsset->Flags = OldAssetData.Flags;
-		rAsset->Path = OldAssetData.Path;
-		rAsset->Name = OldAssetData.Name;
+
+		return true;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// SKELETAL MESH
+
+	bool RawSkeletalMeshAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
+	{
+		const std::string& rMountBase = Project::GetActiveConfig().Name;
+		Ref<VFile> file = VirtualFS::Get().FindFile( rMountBase, rAsset->Path );
+
+		if( !file )
+			return false;
+
+		PakFileMemoryBuffer membuf( file->FileContent );
+		std::istream stream( &membuf );
+
+		/////////////////////////////////////
+		auto skeletalMeshAsset = Ref<SkeletalMesh>::Create( rAsset );
+
+		PhysicsShapeType shapeType = PhysicsShapeType::Unknown;
+		AssetID physicsMaterial = 0, skeletonID = 0;
+
+		RawSerialisation::ReadObject( skeletonID, stream );
+		RawSerialisation::ReadObject( shapeType, stream );
+		RawSerialisation::ReadObject( physicsMaterial, stream );
+
+#if defined(SAT_DIST)
+		skeletalMeshAsset->DistLoadSkeleton( skeletonID );
+#endif
+		skeletalMeshAsset->SetAttachedShape( shapeType );
+		skeletalMeshAsset->SetPhysicsMaterial( physicsMaterial );
+
+		skeletalMeshAsset->DeserialiseData( stream );
+
+		// Set rAsset reference to point to our new SkeletalMesh.
+		rAsset = skeletalMeshAsset;
+
+		return true;
+	}
+
+	bool RawSkeletalMeshAssetSerialiser::DumpAndWriteToVFS( const Ref<Asset>& rAsset ) const
+	{
+		auto skMeshAsset = rAsset.As<SkeletalMesh>();
+
+		std::filesystem::path out = Project::GetActiveProject()->GetTempDir();
+		out /= std::to_string( rAsset->ID );
+		out.replace_extension( ".vfs" );
+
+		std::ofstream fout( out, std::ios::binary | std::ios::trunc );
+
+		/////////////////////////////////////
+
+		RawSerialisation::WriteObject( skMeshAsset->GetSkeletonAsset(), fout );
+		RawSerialisation::WriteObject( skMeshAsset->GetAttachedShape(), fout );
+		RawSerialisation::WriteObject( skMeshAsset->GetPhysicsMaterial(), fout );
+
+		skMeshAsset->SerialiseData( fout );
+
+		fout.close();
 
 		return true;
 	}
@@ -368,42 +370,22 @@ namespace Saturn {
 
 		RawSerialisation::ReadObject( assetFlags, stream );
 
-		auto physMaterialAsset = Ref<PhysicsMaterialAsset>::Create( 
+		auto physMaterialAsset = Ref<PhysicsMaterialAsset>::Create( rAsset, 
 			StaticDynamicFrictionRestitution.x,
 			StaticDynamicFrictionRestitution.y,
 			StaticDynamicFrictionRestitution.z );
 		
 		physMaterialAsset->SetFlag( (PhysicsMaterialFlags)assetFlags, true );
 
-		// TODO: (Asset) Fix this.
-		struct
-		{
-			UUID ID;
-			AssetType Type;
-			uint32_t Flags;
-			std::filesystem::path Path;
-			std::string Name;
-		} OldAssetData = {};
-
-		OldAssetData.ID = rAsset->ID;
-		OldAssetData.Type = rAsset->Type;
-		OldAssetData.Flags = rAsset->Flags;
-		OldAssetData.Path = rAsset->Path;
-		OldAssetData.Name = rAsset->Name;
-
+		// Set rAsset reference to point to our new PhysicsMaterial.
 		rAsset = physMaterialAsset;
-		rAsset->ID = OldAssetData.ID;
-		rAsset->Type = OldAssetData.Type;
-		rAsset->Flags = OldAssetData.Flags;
-		rAsset->Path = OldAssetData.Path;
-		rAsset->Name = OldAssetData.Name;
 
 		return true;
 	}
 
 	bool RawPhysicsMaterialAssetSerialiser::DumpAndWriteToVFS( const Ref<Asset>& rAsset ) const
 	{
-		auto physMaterialAsset = rAsset.As<PhysicsMaterialAsset>();
+		const auto physMaterialAsset = rAsset.As<PhysicsMaterialAsset>();
 
 		std::filesystem::path out = Project::GetActiveProject()->GetTempDir();
 		out /= std::to_string( rAsset->ID );
@@ -481,33 +463,13 @@ namespace Saturn {
 
 		std::string sourcePath = RawSerialisation::ReadString( stream );
 
-		auto soundSpec = Ref<SoundSpecification>::Create();
+		auto soundSpec = Ref<SoundSpecification>::Create( rAsset );
 		soundSpec->SoundSourcePath = sourcePath;
 
 		DeserialiseSoundDecodedInformation( soundSpec->DecodedInformation, stream );
 
-		// TODO: (Asset) Fix this.
-		struct
-		{
-			UUID ID;
-			AssetType Type;
-			uint32_t Flags;
-			std::filesystem::path Path;
-			std::string Name;
-		} OldAssetData = {};
-
-		OldAssetData.ID = rAsset->ID;
-		OldAssetData.Type = rAsset->Type;
-		OldAssetData.Flags = rAsset->Flags;
-		OldAssetData.Path = rAsset->Path;
-		OldAssetData.Name = rAsset->Name;
-
+		// Set rAsset reference to point to our new SoundSpecification. 
 		rAsset = soundSpec;
-		rAsset->ID = OldAssetData.ID;
-		rAsset->Type = OldAssetData.Type;
-		rAsset->Flags = OldAssetData.Flags;
-		rAsset->Path = OldAssetData.Path;
-		rAsset->Name = OldAssetData.Name;
 
 		return true;
 #else
@@ -538,6 +500,70 @@ namespace Saturn {
 	bool RawTextureSourceAssetSerialiser::DumpAndWriteToVFS( const Ref<Asset>& rAsset ) const
 	{
 		return false;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// BEHAVIOUR TREE MEMORY SPECIFICATION SERIALISER
+
+	bool RawBehaviourTreeMemorySpecSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
+	{
+		const std::string& rMountBase = Project::GetActiveConfig().Name;
+		Ref<VFile> file = VirtualFS::Get().FindFile( rMountBase, rAsset->Path );
+
+		if( !file )
+			return false;
+
+		/////////////////////////////////////
+
+		PakFileMemoryBuffer membuf( file->FileContent );
+		std::istream stream( &membuf );
+
+		auto btMemSpecAsset = Ref<BehaviourTreeMemorySpecification>::Create( rAsset );
+
+		size_t mapSize = 0llu;
+		RawSerialisation::ReadObject( mapSize, stream );
+
+		btMemSpecAsset->m_SpecificationData.reserve( mapSize );
+
+		for( size_t i = 0; i < mapSize; ++i )
+		{
+			SPropertyType dataType = SPropertyType::Unknown;
+			UUID variableID = 0;
+
+			RawSerialisation::ReadObject( dataType, stream );
+			RawSerialisation::ReadObject( variableID, stream );
+
+			btMemSpecAsset->AddNew( "", dataType, variableID );
+		}
+
+		rAsset = btMemSpecAsset;
+
+		return true;
+	}
+
+	bool RawBehaviourTreeMemorySpecSerialiser::DumpAndWriteToVFS( const Ref<Asset>& rAsset ) const
+	{
+		const auto behaviourTreeMemSpec = rAsset.As<BehaviourTreeMemorySpecification>();
+
+		std::filesystem::path out = Project::GetActiveProject()->GetTempDir();
+		out /= std::to_string( rAsset->ID );
+		out.replace_extension( ".vfs" );
+
+		std::ofstream stream( out, std::ios::binary | std::ios::trunc );
+
+		const auto& rKeySpecs = behaviourTreeMemSpec->GetKeySpecs();
+
+		RawSerialisation::WriteObject( rKeySpecs.size(), stream );
+		
+		for( const auto& rData : rKeySpecs )
+		{
+			RawSerialisation::WriteObject( ( const std::underlying_type_t<SPropertyType> )rData->DataType, stream );
+			RawSerialisation::WriteObject( ( uint64_t )rData->VariableID, stream );
+		}
+
+		stream.close();
+
+		return true;
 	}
 
 }

@@ -216,7 +216,7 @@ namespace Saturn {
 		if( m_PendingTextureChanges.size() )
 			m_PendingTextureChanges.clear();
 
-		auto frame = Renderer::Get().GetCurrentFrame();
+		const auto frame = Renderer::Get().GetCurrentFrame();
 		for( const auto& rWds : rExtraWds[ frame ] )
 		{
 			m_Material->PushExternalWds( rWds );

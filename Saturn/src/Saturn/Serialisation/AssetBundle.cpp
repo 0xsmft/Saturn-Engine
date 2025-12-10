@@ -46,6 +46,8 @@
 #include "Saturn/Audio/SoundSpecification.h"
 #include "Saturn/Audio/GraphSound.h"
 
+#include "Saturn/AI/BehaviourTree/BehaviourTreeMemorySpecification.h"
+
 #include "Saturn/Asset/PhysicsMaterialAsset.h"
 
 #include "Saturn/Serialisation/YAML/SceneSerialiser.h"
@@ -224,7 +226,7 @@ namespace Saturn {
 			// Compression, allow for files under 500KB (0.5MB) to not be compressed.
 			if( fileSize > 500llu * 1024llu && path.extension() != ".vfsn" )
 			{
-				SAT_CORE_WARN( "Compressing file: {0} because file is {1} KB", path.string(), fileSize / 1024 );
+				SAT_CORE_WARN( "Compressing file: {0} because file is {1} KiB", path.string(), fileSize / 1024 );
 				
 				jobProgress->SetStatus( std::format( "Compressing file: {0}", path.string() ) );
 
@@ -261,8 +263,8 @@ namespace Saturn {
 			{
 				dfh.CompressedSize = dfh.OrginalSize;
 
-				SAT_CORE_WARN( "Not compressing file: {0} because file size is less than 500 KB", path.string() );
-				jobProgress->SetStatus( std::format( "Not Compressing file because file size is less than 500 KB: {0}", path.string() ) );
+				SAT_CORE_WARN( "Not compressing file: {0} because file size is less than 500 KiB", path.string() );
+				jobProgress->SetStatus( std::format( "Not Compressing file because file size is less than 500 KiB: {0}", path.string() ) );
 
 				RawSerialisation::WriteObject( dfh, fout );
 				RawSerialisation::WriteSaturnBuffer( fileBuffer, fout );
@@ -316,15 +318,26 @@ namespace Saturn {
 			case Saturn::AssetType::StaticMesh:
 			{
 				Ref<StaticMesh> mesh = rAssetManager.ImportAssetAs<StaticMesh>( AssetBundleRegistry, id );
+				if( mesh )
+				{
+					RawStaticMeshAssetSerialiser serialiser;
+					serialiser.DumpAndWriteToVFS( mesh );
+				}
+			} break;
 
-				RawStaticMeshAssetSerialiser serialiser;
-				serialiser.DumpAndWriteToVFS( mesh );
+			case Saturn::AssetType::SkeletalMesh: 
+			{
+				Ref<SkeletalMesh> skMesh = rAssetManager.ImportAssetAs<SkeletalMesh>( AssetBundleRegistry, id );
+				if( skMesh )
+				{
+					RawStaticMeshAssetSerialiser serialiser;
+					serialiser.DumpAndWriteToVFS( skMesh );
+				}
 			} break;
 
 			case Saturn::AssetType::Material:
 			{
 				Ref<MaterialAsset> materialAsset = rAssetManager.ImportAssetAs<MaterialAsset>( AssetBundleRegistry, id );
-
 				if( materialAsset )
 				{
 					RawMaterialAssetSerialiser serialiser;
@@ -332,29 +345,9 @@ namespace Saturn {
 				}
 			} break;
 
-			case Saturn::AssetType::PhysicsMaterial:
-			{
-				Ref<PhysicsMaterialAsset> physAsset = rAssetManager.ImportAssetAs<PhysicsMaterialAsset>( AssetBundleRegistry, id );
-
-				RawPhysicsMaterialAssetSerialiser serialiser;
-				serialiser.DumpAndWriteToVFS( physAsset );
-			} break;
-
-			case Saturn::AssetType::Prefab:
-			{
-				Ref<Prefab> prefabAsset = rAssetManager.ImportAssetAs<Prefab>( AssetBundleRegistry, id );
-
-				if( prefabAsset )
-				{
-					RawPrefabSerialiser serialiser;
-					serialiser.DumpAndWriteToVFS( prefabAsset );
-				}
-			} break;
-
 			case Saturn::AssetType::Sound:
 			{
 				Ref<SoundSpecification> sndSpec = rAssetManager.ImportAssetAs<SoundSpecification>( AssetBundleRegistry, id );
-
 				if( sndSpec )
 				{
 					RawSoundSpecAssetSerialiser serialiser;
@@ -368,11 +361,52 @@ namespace Saturn {
 				NodeCacheEditor::ConvertToDistNC( id, rAsset->Path.filename().string() );
 			} break;
 
+			case Saturn::AssetType::Prefab:
+			{
+				Ref<Prefab> prefabAsset = rAssetManager.ImportAssetAs<Prefab>( AssetBundleRegistry, id );
+				if( prefabAsset )
+				{
+					RawPrefabSerialiser serialiser;
+					serialiser.DumpAndWriteToVFS( prefabAsset );
+				}
+			} break;
+			
+			case Saturn::AssetType::Skeleton: 
+			{
+				Ref<SkeletonAsset> skeletonAsset = rAssetManager.ImportAssetAs<SkeletonAsset>( AssetBundleRegistry, id );
+				if( skeletonAsset )
+				{
+					RawPrefabSerialiser serialiser;
+					serialiser.DumpAndWriteToVFS( skeletonAsset );
+				}
+			} break;
+
+			case Saturn::AssetType::PhysicsMaterial:
+			{
+				Ref<PhysicsMaterialAsset> physAsset = rAssetManager.ImportAssetAs<PhysicsMaterialAsset>( AssetBundleRegistry, id );
+				if( physAsset )
+				{
+					RawPhysicsMaterialAssetSerialiser serialiser;
+					serialiser.DumpAndWriteToVFS( physAsset );
+				}
+			} break;
+
+			case Saturn::AssetType::BehaviourTreeMemory: 
+			{
+				Ref<BehaviourTreeMemorySpecification> btMemAsset = rAssetManager.ImportAssetAs<BehaviourTreeMemorySpecification>( AssetBundleRegistry, id );
+				if( btMemAsset )
+				{
+					RawBehaviourTreeMemorySpecSerialiser serialiser;
+					serialiser.DumpAndWriteToVFS( btMemAsset );
+				}
+			} break;
+
 			case Saturn::AssetType::Scene:
-			case Saturn::AssetType::SkeletalMesh:
 			case Saturn::AssetType::MaterialInstance:
-			case Saturn::AssetType::Unknown:
+			case Saturn::AssetType::Unknown: break;
 			default:
+				SAT_CORE_WARN( "Unhandled AssetType!" );
+				Core::BreakDebug();
 				break;
 		}
 	}
@@ -419,7 +453,7 @@ namespace Saturn {
 		rAssetRegistry->m_Assets.reserve( header.Assets );
 
 		// Read header information
-		for( size_t i = 0; i < header.Assets; i++ )
+		for( size_t i = 0; i < header.Assets; ++i )
 		{
 			Ref<Asset> asset = Ref<Asset>::Create();
 			asset->DeserialiseData( stream );
@@ -435,7 +469,7 @@ namespace Saturn {
 		std::vector<DumpFileHeader> FileEntries( header.Assets );
 
 		// Iterate over all of the assets again. But this time read compressed file.
-		for( size_t i = 0; i < header.Assets; i++ )
+		for( size_t i = 0; i < header.Assets; ++i )
 		{
 			DumpFileHeader dfh;
 			RawSerialisation::ReadObject( dfh, stream );

@@ -337,7 +337,7 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 	//////////////////////////////////////////////////////////////////////////
 	// SERIALISATION/DESERIALISATION
 
-	void StaticMesh::SerialiseData( std::ofstream& rStream )
+	void StaticMesh::SerialiseData( std::ofstream& rStream ) const
 	{
 		RawSerialisation::WriteObject( m_VertexCount, rStream );
 		RawSerialisation::WriteObject( m_IndicesCount, rStream );
@@ -433,20 +433,6 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 
 	const std::vector<glm::mat4> SkeletalMesh::GetDefaultBoneTransforms()
 	{
-/*
-		std::vector<glm::mat4> transforms( m_DefaultBoneTransforms.size() );
-
-		for( size_t i = 0; i < m_DefaultBoneTransforms.size(); i++ )
-		{
-			glm::mat4 local = m_DefaultBoneTransforms[ i ];
-			const auto parent = m_SkeletonAsset->GetParentIndex( i );
-
-			transforms[ i ] = ( parent == ~0u ) ? local : transforms[ parent ] * local;
-		}
-
-		return transforms;
-		*/
-
 		return m_DefaultBoneTransforms;
 	}
 
@@ -702,12 +688,20 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 
 #endif
 
+#if defined(SAT_DIST)
+	void SkeletalMesh::DistLoadSkeleton( AssetID skeletonID )
+	{
+		m_SkeletonAsset = AssetManager::GetAssetAs<SkeletonAsset>( skeletonID );
+		SAT_CORE_VERIFY( m_SkeletonAsset, "Unable to load skeleton for this Skeletal Mesh!" );
+	}
+#endif
+
 	void SkeletalMesh::OnDelete()
 	{
 		DeleteSourceModel();
 	}
 
-	void SkeletalMesh::SerialiseData( std::ofstream& rStream )
+	void SkeletalMesh::SerialiseData( std::ofstream& rStream ) const
 	{
 		RawSerialisation::WriteObject( m_VertexCount, rStream );
 		RawSerialisation::WriteObject( m_IndicesCount, rStream );
@@ -716,6 +710,7 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 		RawSerialisation::WriteVector( m_Vertices, rStream );
 		RawSerialisation::WriteVector( m_Submeshes, rStream );
 		RawSerialisation::WriteVector( m_BoneInfluences, rStream );
+		RawSerialisation::WriteVector( m_DefaultBoneTransforms, rStream );
 		
 		RawSerialisation::WriteMatrix4x4( m_Transform, rStream );
 		RawSerialisation::WriteMatrix4x4( m_InverseTransform, rStream );
@@ -742,6 +737,7 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 		RawSerialisation::ReadVector( m_Submeshes, rStream );
 
 		RawSerialisation::ReadVector( m_BoneInfluences, rStream );
+		RawSerialisation::ReadVector( m_DefaultBoneTransforms, rStream );
 		
 		RawSerialisation::ReadMatrix4x4( m_Transform, rStream );
 		RawSerialisation::ReadMatrix4x4( m_InverseTransform, rStream );

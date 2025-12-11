@@ -63,10 +63,14 @@ namespace Saturn {
 				Itr->second->OnImGuiRender();
 				++Itr;
 			}
-			else
+			else if( Itr->second->GetHideFlags() == ImGuiHideWindowFlags::Destroy )
 			{
 				Itr->second = nullptr;
 				Itr = m_Panels.erase( Itr );
+			}
+			else
+			{
+				++Itr;
 			}
 		}
 	}

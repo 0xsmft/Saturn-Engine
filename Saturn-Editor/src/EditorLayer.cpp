@@ -168,14 +168,13 @@ namespace Saturn {
 		// Create Panel Manager.
 		m_ImGuiWindowManager = Ref<ImGuiWindowManager>::Create();
 
-		m_ImGuiWindowManager->AddWindow<SceneHierarchyPanel>();
-		m_ImGuiWindowManager->AddWindow<ContentBrowserPanel>();
-
-		Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
+		Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->AddWindow<SceneHierarchyPanel>();
+		hierarchyPanel->SetHideFlags( ImGuiHideWindowFlags::Hide );
 		hierarchyPanel->SetContext( m_EditorScene );
 		hierarchyPanel->OpenWindow();
 
-		Ref<ContentBrowserPanel> contentBrowserPanel = m_ImGuiWindowManager->GetPanel<ContentBrowserPanel>();
+		Ref<ContentBrowserPanel> contentBrowserPanel = m_ImGuiWindowManager->AddWindow<ContentBrowserPanel>();
+		contentBrowserPanel->SetHideFlags( ImGuiHideWindowFlags::Hide );
 		contentBrowserPanel->OpenWindow();
 
 		// Setup content browser panel at project dir.

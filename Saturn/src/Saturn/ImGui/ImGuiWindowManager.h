@@ -53,11 +53,13 @@ namespace Saturn {
 		void OnUpdate( Timestep ts );
 		
 		template<typename Ty, typename... VaArgs>
-		void AddWindow( VaArgs&&... rrArgs )
+		Ref<Ty> AddWindow( VaArgs&&... rrArgs )
 		{
 			static_assert( std::is_base_of<ImGuiWindow, Ty>::value, "Ty must be a child class of Panel!" );
 
-			m_Panels[ Ty::GetStaticName() ] = Ref<Ty>::Create( std::forward<VaArgs>( rrArgs )... );
+			auto panel = Ref<Ty>::Create( std::forward<VaArgs>( rrArgs )... );
+			m_Panels[ Ty::GetStaticName() ] = panel;
+			return panel;
 		}
 
 		void AddWindow( Ref<ImGuiWindow> window, const std::string& rCustomName );

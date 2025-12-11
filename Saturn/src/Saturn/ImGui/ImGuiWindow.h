@@ -35,6 +35,15 @@
 
 namespace Saturn {
 
+	enum class ImGuiHideWindowFlags
+	{
+		// Destroy the window when its closed
+		Destroy,
+
+		// The the window alive but do not render it.
+		Hide,
+	};
+
 	class ImGuiWindow : public RefTarget
 	{
 	public:
@@ -53,12 +62,25 @@ namespace Saturn {
 		bool IsOpen() const { return m_Open; }
 		inline void OpenWindow() { m_Open = true; }
 		inline void CloseWindow() { m_Open = false; }
-		inline void ShowOrHide() { if( m_Open ) CloseWindow(); else OpenWindow(); }
+		inline void SetHideFlags( ImGuiHideWindowFlags flags ) { m_HideFlags = flags; }
 
+		inline void ShowOrHide( ImGuiHideWindowFlags flags = ImGuiHideWindowFlags::Destroy )
+		{ 
+			if( m_Open ) 
+				CloseWindow(); 
+			else
+				OpenWindow();
+
+			if( m_HideFlags != flags )
+				m_HideFlags = flags;
+		}
+
+		ImGuiHideWindowFlags GetHideFlags() const { return m_HideFlags; }
 		const std::string& GetWindowName() { return m_Name; }
 		const std::string& GetWindowName() const { return m_Name; }
 
 	protected:
+		ImGuiHideWindowFlags m_HideFlags = ImGuiHideWindowFlags::Destroy;
 		bool m_Open = false;
 		std::string m_Name = "";
 	};

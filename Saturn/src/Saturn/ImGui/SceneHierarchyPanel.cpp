@@ -927,7 +927,6 @@ namespace Saturn {
 			if( modified ) m_Context->MarkDirty();
 		} );
 
-
 		DrawComponent<CameraComponent>( "Camera", entity, [&]( auto& cc )
 		{
 			bool modified = false;

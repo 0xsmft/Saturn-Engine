@@ -233,10 +233,14 @@ namespace Saturn {
 
 #endif
 
+#if !defined( SAT_DIST )
 	void SkeletalAnimationAsset::DeserialiseAclData( std::ifstream& rStream )
+#else	
+	void SkeletalAnimationAsset::DeserialiseAclData( std::istream& rStream )
+#endif
 	{
 		uint8_t headerBuffer[ sizeof( acl::compressed_tracks ) ];
-		rStream.read( reinterpret_cast<char*>( headerBuffer ), sizeof( headerBuffer ) );
+		rStream.read( reinterpret_cast< char* >( headerBuffer ), sizeof( headerBuffer ) );
 
 		const acl::compressed_tracks* pHeaderView = reinterpret_cast< const acl::compressed_tracks* >( headerBuffer );
 

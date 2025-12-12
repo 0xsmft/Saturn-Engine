@@ -55,8 +55,6 @@ namespace Saturn {
 		m_SingleAnimationAsset = nullptr;
 		m_AnimationControllerAsset = nullptr;
 
-		m_Context.reset();
-
 		delete m_pOutPose;
 	}
 

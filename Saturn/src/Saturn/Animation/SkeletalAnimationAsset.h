@@ -108,8 +108,11 @@ namespace Saturn {
 		void Compress();
 
 		void SerialiseAclData( std::ofstream& rStream ) const;
-#endif
+
 		void DeserialiseAclData( std::ifstream& rStream );
+#else
+		void DeserialiseAclData( std::istream& rStream );
+#endif
 
 	private:
 		SkeletalAnimationAssetVersion m_LocalVersion = SkeletalAnimationAssetVersion::Lowest;

@@ -67,6 +67,7 @@ namespace Saturn {
 		RawSerialisation::ReadObject( m_Flags, rStream );
 		RawSerialisation::ReadUUID( m_AssetID, rStream );
 
+#if !defined(SAT_DIST)
 		Ref<Asset> asset = AssetManager::Get().FindAsset( m_AssetID );
 		if( asset )
 		{
@@ -76,10 +77,12 @@ namespace Saturn {
 		{
 			m_AssetID = 0llu;
 		}
+#endif
 	}
 
 	void AnimGraphAnimationPin::OnRenderOutput()
 	{
+#if !defined(SAT_DIST)
 		switch( m_Flags )
 		{
 			case AnimGraphAnimationPinFlags::StateMachine:
@@ -98,7 +101,6 @@ namespace Saturn {
 
 			case AnimGraphAnimationPinFlags::Animation: 
 			{
-#if !defined(SAT_DIST)
 				bool openAssetIDPopup = false;
 
 				const std::string name = m_AssetID == 0 ? "Select Asset" : m_AssetName;
@@ -127,11 +129,11 @@ namespace Saturn {
 				}
 
 				ed::Resume();
-#endif
 			} break;
 
 			default: break;
 		}
+#endif
 	}
 
 }

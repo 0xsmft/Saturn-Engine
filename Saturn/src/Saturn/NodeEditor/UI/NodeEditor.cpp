@@ -153,6 +153,7 @@ namespace Saturn {
 			{
 				pThis->OnNodeEditorEvent( NodeEditorAction::MoveNode );
 
+#if !defined(SAT_DIST)
 				Ref<UndoRedoActionModifyNodePosition> action = Ref<UndoRedoActionModifyNodePosition>::Create(
 					pThis->SharedFromThis(),
 					pNode,
@@ -161,6 +162,7 @@ namespace Saturn {
 				pNode->PositionBeforeMove = ed::GetNodePosition( nodeId );
 
 				GlobalUndoRedoGroup::Get().AddAction( action, pThis->GetAssetID() );
+#endif
 			}
 
 			if( ( reason & ed::SaveReasonFlags::Selection ) == ed::SaveReasonFlags::Selection )
@@ -391,7 +393,6 @@ namespace Saturn {
 		// Node context window popup
 		if( ImGui::BeginPopup( "NE_NodeAction" ) )
 		{
-			// TODO: #MouseLeavingAGStateMachineNullptr
 			m_HoveredNode->RenderContextWindow();
 
 			Auxiliary::DisabledFlag disabled( true );
@@ -601,6 +602,7 @@ namespace Saturn {
 		ed::SetNodePosition( ed::NodeId( nodeID ), rNewPosition );
 	}
 
+#if !defined(SAT_DIST)
 	void NodeEditor::AddSubGraph( SharedPtr<NodeEditorNodeBase> graph )
 	{
 		if( std::find( m_SubGraphs.begin(), m_SubGraphs.end(), graph ) == m_SubGraphs.end() )
@@ -634,6 +636,7 @@ namespace Saturn {
 			m_SubGraphs.erase( std::next( itr ), m_SubGraphs.end() );
 		}
 	}
+#endif
 
 	void NodeEditor::CreateNewEditorIfNeeded()
 	{
@@ -755,6 +758,7 @@ namespace Saturn {
 
 	void NodeEditor::HandleCreate() 
 	{
+#if !defined(SAT_DIST)
 		if( !m_CreateNewNode && HasPrivilege( NodeEditorUserAuthority::Editing ) )
 		{
 			if( ed::BeginCreate( ImColor( 255, 255, 255 ), 2.0f ) )
@@ -956,6 +960,7 @@ namespace Saturn {
 			}
 			ed::EndDelete();
 		}
+#endif
 	}
 
 	void NodeEditor::HandleStateCanvasBorders()

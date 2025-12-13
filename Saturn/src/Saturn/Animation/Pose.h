@@ -53,7 +53,7 @@ namespace Saturn {
 		float Duration = 0.0f;
 		float Timestamp = 0.0f;
 		// Number of bones
-		uint32_t BonesUsed = 0u;
+		uint64_t BonesUsed = 0llu;
 	};
 	
 }

@@ -124,6 +124,7 @@ namespace Saturn {
 
 		void SetNodePosition( UUID nodeID, const ImVec2& rNewPosition );
 
+#if !defined(SAT_DIST)
 		void AddSubGraph( SharedPtr<NodeEditorNodeBase> graph );
 		void RemoveSubGraph( SharedPtr<NodeEditorNodeBase> graph );
 		void ChangeEditorNextFrame( SharedPtr<NodeEditorNodeBase> graph );
@@ -132,6 +133,7 @@ namespace Saturn {
 		[[nodiscard]] std::vector<SharedPtr<NodeEditorNodeBase>> GetSubGraphs() const { return m_SubGraphs; }
 		
 		SharedPtr<NodeEditorNodeBase> GetActiveSubGraph() { return m_ActiveSubGraph; }
+#endif
 
 		std::vector<UUID> GetSelectedNodes();
 

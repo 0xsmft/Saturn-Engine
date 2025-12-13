@@ -43,6 +43,7 @@ namespace Saturn {
 
 	class SkeletonAsset;
 
+#if !defined(SAT_DIST)
 	//
 	// Helper class to build the hierarchy of a skeleton.
 	//
@@ -66,6 +67,7 @@ namespace Saturn {
 		// Use raw pointer here, no need for us to really hold a smart pointer reference.
 		SkeletonAsset* m_pSkeleton = nullptr;
 	};
+#endif
 
 	enum class SkeletonAssetVersion
 	{
@@ -95,11 +97,13 @@ namespace Saturn {
 		virtual ~SkeletonAsset();
 
 	public:
+#if !defined(SAT_DIST)
 		void AppendBonesFromMesh( const aiMesh* pMesh );
 		void AddCompatibleMesh( UUID id );
 		void MarkAsUncompatibleMesh( UUID meshID );
 
 		void SetTransform( const glm::mat4& rTransform ) { m_Transform = rTransform; }
+#endif
 
 		BoneJoint& AddNewBoneJoint( const std::string& rBoneName, const std::string& rName );
 
@@ -200,6 +204,7 @@ namespace Saturn {
 
 	private:
 		friend class SkeletonAssetSerialiser;
+		friend class RawSkeletonAssetSerialiser;
 		friend class SkeletalMesh;
 	};	
 

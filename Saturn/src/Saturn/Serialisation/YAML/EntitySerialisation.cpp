@@ -412,7 +412,10 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 			rEmitter << YAML::Key << "Extents" << YAML::Value << bcc.Extents;
 			rEmitter << YAML::Key << "Offset" << YAML::Value << bcc.Offset;
 			rEmitter << YAML::Key << "IsTrigger" << YAML::Value << bcc.IsTrigger;
+// Annoying. This will never be called on Dist.
+#if !defined(SAT_DIST)
 			rEmitter << YAML::Key << "AutoAdjustExtent" << YAML::Value << bcc.AutoAdjustExtent;
+#endif
 
 			rEmitter << YAML::EndMap;
 		}
@@ -867,7 +870,9 @@ pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value ); \
 			b.Extents = bcc[ "Extents" ].as< glm::vec3 >();
 			b.Offset = bcc[ "Offset" ].as< glm::vec3 >();
 			b.IsTrigger = bcc[ "IsTrigger" ].as< bool >();
+#if !defined(SAT_DIST)
 			b.AutoAdjustExtent = bcc[ "AutoAdjustExtent" ].as< bool >( false );
+#endif
 		}
 
 		const auto scc = rEntityNode[ "SphereColliderComponent" ];

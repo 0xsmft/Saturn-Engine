@@ -97,7 +97,11 @@ namespace Saturn {
 		glm::vec3 size = bcc.Extents;
 
 		// Very rare path, only happens if something else modifies the scale.
+#if !defined(SAT_DIST)
 		if( bcc.AutoAdjustExtent && size != transform.Scale )
+#else
+		if( size != transform.Scale )
+#endif
 			size = transform.Scale;
 
 		glm::vec3 halfSize = size / 2.0f;

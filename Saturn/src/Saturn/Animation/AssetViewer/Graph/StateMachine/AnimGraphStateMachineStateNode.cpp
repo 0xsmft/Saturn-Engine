@@ -99,6 +99,7 @@ namespace Saturn {
 
 	void AnimGraphStateMachineStateNode::Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder )
 	{
+#if !defined(SAT_DIST)
 		ImVec4 normalisedColor = Color;
 		normalisedColor.x /= 2.0f;
 		normalisedColor.y /= 2.0f;
@@ -132,6 +133,7 @@ namespace Saturn {
 		rBuilder.End();
 
 		ed::PopStyleColor();
+#endif
 	}
 
 	void AnimGraphStateMachineStateNode::PostPlace()

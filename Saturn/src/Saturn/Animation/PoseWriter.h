@@ -36,6 +36,9 @@
 
 namespace Saturn {
 
+	//
+	// A pose writer allows acl to write it's data from the current animation into our Pose structure.
+	//
 	class PoseWriter : public acl::track_writer
 	{
 	public:
@@ -46,6 +49,7 @@ namespace Saturn {
 
 		void RTM_SIMD_CALL write_rotation( uint32_t index, rtm::quatf_arg0 value )
 		{
+			// rtm quats are XYZW and glm is WXYZ, hence why we have to do it this way.
 			m_pPose->LocalTransforms[ index ].Rotation = glm::quat(
 				rtm::quat_get_w( value ),
 				rtm::quat_get_x( value ),

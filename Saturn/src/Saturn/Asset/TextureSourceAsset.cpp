@@ -82,8 +82,7 @@ namespace Saturn {
 		m_Height = Height;
 		m_Channels = Channels;
 
-		uint32_t ImageSize = m_Width * m_Height * 4;
-
+		const uint32_t ImageSize = m_Width * m_Height * 4;
 		m_TextureBuffer = Buffer::Copy( pTextureData, static_cast<size_t>( ImageSize ) );
 
 		stbi_image_free( pTextureData );

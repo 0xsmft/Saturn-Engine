@@ -212,7 +212,9 @@ namespace Saturn {
 			}
 		}
 
+#if !defined(SAT_DIST)
 		AssetManager::Get().SanitiseAssetDependencies();
+#endif
 	}
 
 }

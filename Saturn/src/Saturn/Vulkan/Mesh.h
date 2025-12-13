@@ -522,6 +522,9 @@ namespace Saturn {
 
 		std::unique_ptr<Assimp::Importer> m_Importer;
 		const aiScene* m_Scene = nullptr;
+#else
+	protected:
+		MeshImporterBase() = default;
 #endif
 	};
 
@@ -543,17 +546,17 @@ namespace Saturn {
 		SkeletalMeshImporter( const std::filesystem::path& rPath, const std::filesystem::path& rDstPath, MeshImportBehaviour importBehaviour, AssetID existingSkeletonID = 0llu );
 		~SkeletalMeshImporter();
 
+#if !defined(SAT_DIST)
 		virtual bool TryImport() override;
 
 		[[nodiscard]] AssetID GetCreatedSkeletonID() const { return m_SkeletonID; }
 
-#if !defined(SAT_DIST)
 	private:
 		void CreateSkeletonIfNeeded();
 		void ImportAnimations( Ref<SkeletonAsset> sk );
-#endif
 	private:
 		AssetID m_SkeletonID = 0llu;
+#endif
 	};
 
 }

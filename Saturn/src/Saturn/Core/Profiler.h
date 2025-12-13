@@ -39,8 +39,7 @@
 #define SAT_PF_EVENT_N(x)    ZoneScopedN(x)
 #define SAT_PF_FRAME(x)		 FrameMarkNamed(x)
 #else 
-#define SAT_PF_EVENT(...)
-#define SAT_PF_FRAME(...)
-#define SAT_PF_SCOPE(x, ...)
-#define SAT_PF_THRD(x, ...)
+#define SAT_PF_EVENT(...)       
+#define SAT_PF_EVENT_N(x, ...)  
+#define SAT_PF_FRAME(x, ...)	
 #endif

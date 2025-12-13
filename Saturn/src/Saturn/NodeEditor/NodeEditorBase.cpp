@@ -127,40 +127,61 @@ namespace Saturn {
 	{
 		m_State = NodeEditorState::Loading;
 
-		NodeCacheSettings::ReadEditorSettings( SharedFromThis() );
+		NodeCacheSettings::ReadEditorSettings( this );
 
 		m_Name = RawSerialisation::ReadString( rStream );
 
 		size_t mapSize = 0;
 		RawSerialisation::ReadObject( mapSize, rStream );
 
+		m_DataHandles.reserve( mapSize );
+
+		for( size_t i = 0; i < mapSize; ++i )
+		{
+			UUID id = 0llu;
+			RawSerialisation::ReadObjectChecked( id, rStream );
+
+			Ref<NodeEditorVariable> var = Ref<NodeEditorVariable>::Create();
+			NodeEditorVariable::Deserialise( var, rStream );
+
+			m_DataHandles[ id ] = var;
+		}
+
+		RawSerialisation::ReadObject( mapSize, rStream );
+
 		for( size_t i = 0; i < mapSize; i++ )
 		{
-			UUID key = 0;
-			UUID::Deserialise( key, rStream );
+			UUID key = 0llu;
+			RawSerialisation::ReadObjectChecked( key, rStream );
 
 			uint64_t targetClassHash = 0;
 			RawSerialisation::ReadObject( targetClassHash, rStream );
 
 			NodeEditorNodeBase* pNode = dynamic_cast< NodeEditorNodeBase* >( ClassMetadataHandler::Get().CreateClassObject( targetClassHash ) );
 
-			SharedPtr<NodeEditorNodeBase> node = pNode;
+			SharedPtr<NodeEditorNodeBase> node;
 			if( node )
 			{
-				AddNode( node );
+				node = pNode;
 			}
 			else
 			{
-				node = SharedPtr<NodeEditorBlueprintNode>::Create();
+				node = NewObject<NodeEditorBlueprintNode>();
 			}
 
+			node->pOuter = this;
 			node->Deserialise( rStream );
+
+			UUID parentID = 0;
+			if( m_Version >= SAT_VERSION_A_0_2_3_WIP )
+			{
+				RawSerialisation::ReadObjectChecked( parentID, rStream );
+			}
 
 			m_Nodes[ key ] = node;
 			BuildNode( node );
 		}
 
-		mapSize = 0;
 		RawSerialisation::ReadObject( mapSize, rStream );
 
 		m_Links.resize( mapSize );

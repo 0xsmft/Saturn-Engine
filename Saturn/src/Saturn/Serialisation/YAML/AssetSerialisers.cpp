@@ -854,7 +854,9 @@ namespace Saturn {
 		RawSerialisation::WriteVector( skelAsset->m_ParentBoneIndices, fout );
 		RawSerialisation::WriteVector( skelAsset->m_BoneNames, fout );
 		RawSerialisation::WriteObject( skelAsset->m_Transform, fout );
+#if !defined(SAT_DIST)
 		RawSerialisation::WriteVector( skelAsset->m_CompatibleMeshes, fout );
+#endif
 		RawSerialisation::WriteVector( skelAsset->m_BonePositions, fout );
 		RawSerialisation::WriteVector( skelAsset->m_BoneRotations, fout );
 		RawSerialisation::WriteVector( skelAsset->m_BoneScales, fout );
@@ -879,7 +881,9 @@ namespace Saturn {
 		RawSerialisation::ReadVector( skeletonAsset->m_ParentBoneIndices, FileIn );
 		RawSerialisation::ReadVector( skeletonAsset->m_BoneNames, FileIn );
 		RawSerialisation::ReadObject( skeletonAsset->m_Transform, FileIn );
+#if !defined(SAT_DIST)
 		RawSerialisation::ReadVector( skeletonAsset->m_CompatibleMeshes, FileIn );
+#endif
 		RawSerialisation::ReadVector( skeletonAsset->m_BonePositions, FileIn );
 		RawSerialisation::ReadVector( skeletonAsset->m_BoneRotations, FileIn );
 		RawSerialisation::ReadVector( skeletonAsset->m_BoneScales, FileIn );
@@ -1004,8 +1008,9 @@ namespace Saturn {
 		}
 		*/
 
+#if !defined(SAT_DIST)
 		animAsset->SerialiseAclData( fout );
-
+#endif
 		fout.close();
 	}
 

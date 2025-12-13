@@ -190,7 +190,7 @@ namespace Saturn {
 		static void Serialise( const SharedPtr<Entity>& rObject, std::ofstream& rStream );
 		static void Deserialise( SharedPtr<Entity>& rObject, std::istream& rStream );
 
-	protected:
+	private:
 		entt::entity m_EntityHandle{ entt::null };
 		Scene* m_Scene = nullptr;
 

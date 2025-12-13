@@ -55,6 +55,7 @@ namespace Auxiliary {
 
 	//////////////////////////////////////////////////////////////////////////
 
+#if !defined(SAT_DIST)
 	SkeletonBoneHierarchy::SkeletonBoneHierarchy( const aiScene* pScene, SkeletonAsset* pSk, bool append /*=false*/ )
 		: m_pScene( pScene ), m_pSkeleton( pSk ), m_Append( append )
 	{
@@ -125,6 +126,7 @@ namespace Auxiliary {
 			}
 		}
 	}
+#endif
 
 	//////////////////////////////////////////////////////////////////////////
 
@@ -141,9 +143,9 @@ namespace Auxiliary {
 	{
 	}
 
+#if !defined(SAT_DIST)
 	void SkeletonAsset::AppendBonesFromMesh( const aiMesh* pMesh )
 	{
-#if !defined(SAT_DIST)
 		for( unsigned int b = 0; b < pMesh->mNumBones; ++b )
 		{
 			const aiBone* pBone = pMesh->mBones[ b ];
@@ -190,8 +192,8 @@ namespace Auxiliary {
 			}
 			*/
 		}
-#endif
 	}
+#endif
 
 	void SkeletonAsset::ClearAll()
 	{
@@ -203,6 +205,7 @@ namespace Auxiliary {
 		m_BoneScales.clear();
 	}
 
+#if !defined(SAT_DIST)
 	void SkeletonAsset::AddCompatibleMesh( UUID id )
 	{
 		m_CompatibleMeshes.push_back( id );
@@ -212,6 +215,7 @@ namespace Auxiliary {
 	{
 		m_CompatibleMeshes.erase( std::remove( m_CompatibleMeshes.begin(), m_CompatibleMeshes.end(), meshID ), m_CompatibleMeshes.end() );
 	}
+#endif
 
 	BoneJoint& SkeletonAsset::AddNewBoneJoint( const std::string& rBoneName, const std::string& rName )
 	{

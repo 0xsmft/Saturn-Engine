@@ -138,8 +138,6 @@ namespace Saturn {
 				if( mc.Mesh )
 					ID = mc.Mesh->ID;
 
-				SAT_CORE_INFO( "WriteComponent<StaticMeshComponent> ID/{0}", ID );
-
 				RawSerialisation::WriteObject( ID, rStream );
 
 				bool HasRegistry = mc.MaterialRegistry != nullptr;
@@ -167,6 +165,50 @@ namespace Saturn {
 						++i;
 					}
 				}
+				//	MaterialRegistry::Serialise( mc.MaterialRegistry, rStream );
+			} );
+
+		// Dynamic Mesh Component
+		WriteComponent<SkeletalMeshComponent>( rEntity, rStream, [ & ]()
+			{
+				auto& mc = rEntity->GetComponent< SkeletalMeshComponent >();
+
+				AssetID ID = 0;
+
+				if( mc.Mesh )
+					ID = mc.Mesh->ID;
+
+				RawSerialisation::WriteObject( ID, rStream );
+
+				bool HasRegistry = mc.MaterialRegistry != nullptr;
+				RawSerialisation::WriteObject( HasRegistry, rStream );
+
+				// Write local material registry
+				// So only write what material have been overridden
+				if( HasRegistry )
+				{
+					RawSerialisation::WriteObject( mc.MaterialRegistry->GetMaterialAssets().size(), rStream );
+
+					int i = 0;
+					for( const auto& rMaterial : mc.MaterialRegistry->GetMaterialAssets() )
+					{
+						if( mc.MaterialRegistry->HasOverrides( i ) )
+						{
+							RawSerialisation::WriteObject( rMaterial->ID, rStream );
+						}
+						else
+						{
+							const AssetID matID = 0;
+							RawSerialisation::WriteObject( matID, rStream );
+						}
+
+						++i;
+					}
+				}
+
+				RawSerialisation::WriteObject( mc.AnimationControllerAssetID, rStream );
+				RawSerialisation::WriteObject( ( std::underlying_type_t<AnimatorType> ) mc.AnimatorType, rStream );
+
 				//	MaterialRegistry::Serialise( mc.MaterialRegistry, rStream );
 			} );
 
@@ -414,6 +456,59 @@ namespace Saturn {
 					mc.MaterialRegistry->Copy( mc.Mesh->GetMaterialRegistry() );
 				}
 			} );
+
+		// Dynamic Mesh Component
+		ReadComponent<SkeletalMeshComponent>( rEntity, rStream, [ & ]()
+			{
+				auto& mc = rEntity->GetComponent< SkeletalMeshComponent >();
+
+				AssetID ID = 0;
+				RawSerialisation::ReadObject( ID, rStream );
+
+				bool HasRegistry = false;
+				RawSerialisation::ReadObject( HasRegistry, rStream );
+
+				mc.MaterialRegistry = Ref<MaterialRegistry>::Create();
+
+				// Load the mesh before materials
+				if( ID != 0 )
+				{
+					// Load Mesh 
+					// Hand off to RawSkeletalMeshAssetSerialiser
+					auto mesh = AssetManager::Get().GetAssetAs<SkeletalMesh>( ID );
+					mc.Mesh = mesh;
+				}
+
+				// Now, build local material registry
+				if( HasRegistry )
+				{
+					size_t materials = 0;
+					RawSerialisation::ReadObject( materials, rStream );
+
+					for( size_t i = 0; i < materials; i++ )
+					{
+						AssetID materialID = 0;
+						RawSerialisation::ReadObject( materialID, rStream );
+
+						// Load material asset
+						// Will call RawMaterialAssetSerialiser
+						Ref<MaterialAsset> asset = AssetManager::Get().GetAssetAs<MaterialAsset>( materialID );
+
+						if( asset )
+						{
+							mc.MaterialRegistry->AddAsset( asset );
+							mc.MaterialRegistry->SetOverrides( ( uint32_t ) i, true );
+						}
+					}
+				}
+
+				// If no overrides then copy the master registry
+				if( !mc.MaterialRegistry->HasAnyOverrides() )
+				{
+					mc.MaterialRegistry->Copy( mc.Mesh->GetMaterialRegistry() );
+				}
+			} );
+
 
 		// Script Component
 		/*

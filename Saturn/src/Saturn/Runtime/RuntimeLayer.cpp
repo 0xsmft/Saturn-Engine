@@ -46,6 +46,7 @@
 
 #include "Saturn/Vulkan/SceneRenderer.h"
 #include "Saturn/Vulkan/Renderer2D.h"
+#include "Saturn/Core/Renderer/RenderThread.h"
 
 #include "Saturn/Asset/AssetManager.h"
 #include "Saturn/Asset/Prefab.h"
@@ -72,6 +73,8 @@ namespace Saturn {
 		// "Load" the Game Module
 		m_GameModule = new GameModule();
 
+		m_SceneRenderer = Ref<SceneRenderer>::Create( SceneRendererFlag_MasterInstance | SceneRendererFlag_SwapchainTarget );
+
 		OpenFile( Project::GetActiveProject()->GetConfig().StartupSceneID );
 
 		Application::Get().GetWindow()->Show();
@@ -81,7 +84,6 @@ namespace Saturn {
 
 	void RuntimeLayer::OnAttach()
 	{
-		m_SceneRenderer = Ref<SceneRenderer>::Create( SceneRendererFlag_MasterInstance | SceneRendererFlag_SwapchainTarget );
 	}
 
 	void RuntimeLayer::OnDetach()
@@ -173,8 +175,15 @@ namespace Saturn {
 
 	void RuntimeLayer::OnUpdate( Timestep time )
 	{
+		m_SceneRenderer->GetRenderer2D()->PreRender();
+
 		m_RuntimeScene->OnUpdate( time );
 		m_RuntimeScene->OnRenderRuntime( time, m_SceneRenderer );
+
+		RenderThread::Get().Queue( [ = ]()
+		{
+			m_SceneRenderer->RenderScene();
+		} );
 	}
 
 	void RuntimeLayer::OnEvent( Event& rEvent )

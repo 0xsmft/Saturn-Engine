@@ -249,6 +249,8 @@ namespace Saturn {
 	void AnimGraph::OnNodeEditorEvent( NodeEditorAction action )
 	{
 		std::vector<UUID> nodesToDelete;
+		// Worse case we need to delete more than 5 nodes, we reallocate the vector.
+		nodesToDelete.reserve( 5 );
 
 		switch( action )
 		{
@@ -314,6 +316,7 @@ namespace Saturn {
 
 #endif
 
+#if !defined(SAT_DIST)
 	static std::vector<SClass*> s_AnimGraphAllowedNodes
 	{ 
 		//////////////////////////////////////////////////////////////////////////
@@ -403,7 +406,12 @@ namespace Saturn {
 			ed::ResumeUserInput();
 		}
 
-		m_HoveredNode = nullptr;
+		if( m_CanResetHoveredNode )
+		{
+			m_HoveredNode = nullptr;
+			m_CanResetHoveredNode = false;
+		}
+
 		for( auto& [id, rNode] : m_Nodes )
 		{
 			if( rNode->pParentObject != m_ActiveSubGraph.Get() )
@@ -432,21 +440,30 @@ namespace Saturn {
 
 						if( nodeRectangle.Contains( ImGui::GetMousePos() ) )
 						{
+							m_StateNodeHovered = true;
 							m_HoveredNode = rNode;
 
 							if( ImGui::IsMouseDown( ImGuiMouseButton_Left ) && ImGui::IsKeyDown( ImGuiKey_LeftCtrl ) )
 							{
+								// Set the starting point of a new transition to be the hovered state node.
 								if( m_TransitionStartNode == 0 )
 								{
 									m_TransitionStartNode = id;
 								}
 							}
 
+							// If we double click, go into the state node.
 							if( rNode->ExecutionType == NodeExecutionType::AnimGraphStateMachineStateNode && ImGui::IsMouseDoubleClicked( ImGuiMouseButton_Left ) )
 							{
 								AddSubGraph( rNode );
 								ChangeEditorNextFrame( rNode );
 							}
+						}
+						else if( m_StateNodeHovered && !m_CanResetHoveredNode )
+						{
+							// We can only reset the hovered node after we've moved away from it, if the
+							// right click popup is not open.
+							m_CanResetHoveredNode = !ImGui::IsPopupOpen( "NE_NodeAction" );
 						}
 					}
 				}
@@ -566,5 +583,6 @@ namespace Saturn {
 			}
 		}
 	}
+#endif
 
 }

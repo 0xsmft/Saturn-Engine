@@ -127,9 +127,9 @@ namespace Saturn {
 
 	void RClassCompiledIn( SClass* ( *pStaticLinkFunction )( ) )
 	{
-		s_RClassQueue.push_back( pStaticLinkFunction );
+//		s_RClassQueue.push_back( pStaticLinkFunction );
 
-//		( pStaticLinkFunction ) ( );
+		( pStaticLinkFunction ) ( );
 	}
 
 }

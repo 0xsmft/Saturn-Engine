@@ -403,11 +403,14 @@ namespace Saturn {
 			m_ImportBehaviour |= MeshImportBehaviour_SK_MergeWithExistingSK;
 
 		SkeletalMeshImporter meshImporter( m_AssetToImportPath, m_DestinationPath, m_ImportBehaviour, m_CurrentAssetIDForSkeleton );
+#if !defined(SAT_DIST)
 		meshImporter.TryImport();
+#endif
 
 		//////////////////////////////////////////////////////////////////////////
 		// Create the Skeletal Mesh
 
+#if !defined(SAT_DIST)
 		if( ( m_ImportBehaviour & MeshImportBehaviour_SK_ImportMesh ) != 0 )
 		{
 			auto skeletalMesh = asset.As<SkeletalMesh>();
@@ -434,6 +437,7 @@ namespace Saturn {
 		}
 		else
 			AssetManager::Get().RemoveAsset( id );
+#endif
 	}
 
 	void MeshImportPopup::ImportStatic()
@@ -466,11 +470,13 @@ namespace Saturn {
 		staticMesh->SetFilepath( meshPath );
 		staticMesh->Import_InitMaterialRegistry();
 
+#if !defined(SAT_DIST)
 		// TOOD: Unload the material assets!! (Textures could be loaded!)
 		for( uint64_t materialID : meshImporter.GetMeshInformation().MaterialAssets )
 		{
 			staticMesh->GetMaterialRegistry()->AddAsset( AssetManager::Get().GetAssetAs<MaterialAsset>( materialID ) );
 		}
+#endif
 
 		// Serialise the mesh asset
 		StaticMeshAssetSerialiser sma;
@@ -548,7 +554,9 @@ namespace Saturn {
 				if( pos != std::string::npos )
 					fullTime.resize( fullTime.find_first_of( " " ) );
 
+#if !defined(SAT_DIST)
 				sound->LastWriteTime = fullTime;
+#endif
 
 				// Save the asset
 				SoundSpecificationAssetSerialiser s2d;

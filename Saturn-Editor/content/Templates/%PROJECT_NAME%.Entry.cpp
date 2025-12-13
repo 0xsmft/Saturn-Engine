@@ -28,30 +28,29 @@
 
 // Game client main.
 /* Generated code, DO NOT modify! */
-// This file supports Saturn version 0.2.2 (8194)
+// This file supports Saturn version 0.2.3 (8195)
 
 #if defined(_WIN32)
 #include <Windows.h>
 #endif
 
+#include <Saturn/Core/Timer.h>
 #include <Saturn/Core/App.h>
 #include <Saturn/Core/ErrorDialog.h>
+
 #include <Saturn/Runtime/RuntimeLayer.h>
+
 #include <Saturn/Project/Project.h>
 #include <Saturn/Vulkan/ShaderBundle.h>
-#include <Saturn/Core/Timer.h>
-#include <Saturn/Vulkan/Renderer2D.h>
-#include <Saturn/Vulkan/SceneRenderer.h>
 #include <Saturn/Serialisation/AssetBundle.h>
 
-// Saturn client main:
-extern int _main( int, char** );
+#include <Saturn/Entry/General/EntryPoint.h>
 
 #if !defined(SAT_DIST) || defined( __X31_SHOWCONSOLE__ )
 int main( int count, char** args )
 {
 	// Hand it off to Saturn:
-	return _main( count, args );
+	return Saturn::SaturnMainAgnostic( count, args );
 }
 #endif
 
@@ -59,19 +58,19 @@ int main( int count, char** args )
 
 int WINAPI WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nShowCmd )
 {
-	return _main( __argc, __argv );
+	return Saturn::SaturnMainAgnostic( __argc, __argv );
 }
 
 #endif // _WIN32
 
 // Client default app.
-class __GameApplication final : public Saturn::Application
+class FBootstrapDistApplication final : public Saturn::Application
 {
 public:
-	explicit __GameApplication( const Saturn::ApplicationSpecification& spec )
+	explicit FBootstrapDistApplication( const Saturn::ApplicationSpecification& spec )
 		: Saturn::Application( spec )
 	{
-		std::filesystem::path workingDir = std::filesystem::current_path();
+		const std::filesystem::path workingDir = std::filesystem::current_path();
 
 		if( const auto result = Saturn::AssetBundle::ReadMinimal(); result != Saturn::AssetBundleResult::Success ) 
 		{
@@ -87,8 +86,6 @@ public:
 			std::string errorMessage = std::format( "Failed to load shader bundle! Error Code: {0}", ( int ) result );
 			SAT_CORE_VERIFY( false, errorMessage );
 		}
-
-		Saturn::Renderer2D::Get().Init();
 	}
 
 	virtual void OnInit() override
@@ -115,5 +112,5 @@ Saturn::Application* Saturn::CreateApplication( int argc, char** argv )
 	Saturn::ApplicationSpecification spec{};
 	spec.Flags = Saturn::ApplicationFlag_CreateSceneRenderer | Saturn::ApplicationFlag_UseVFS | Saturn::ApplicationFlag_UseGameThread;
 
-	return new __GameApplication( spec );
+	return new FBootstrapDistApplication( spec );
 }

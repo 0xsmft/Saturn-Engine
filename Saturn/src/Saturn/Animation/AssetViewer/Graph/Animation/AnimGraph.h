@@ -57,18 +57,17 @@ namespace Saturn {
 	public:
 		virtual void OnExtraRender() override;
 		virtual void OnNodeEditorEvent( NodeEditorAction action ) override;
-#endif
 
 	protected:
 		//////////////////////////////////////////////////////////////////////////
 		void SerialiseData( std::ofstream& rStream, bool isForDist ) override;
 		void DeserialiseData( FDependentIStream& rStream ) override;
-
 	protected:
 		virtual void DrawGraph() override;
 
 	private:
 		void DrawStateMachineNodes();
+#endif
 
 	private:
 		// Sorting
@@ -79,6 +78,9 @@ namespace Saturn {
 	private:
 		UUID m_TransitionStartNode = 0;
 		SharedPtr<NodeEditorNodeBase> m_StateMachineEntryNode;
+
+		bool m_StateNodeHovered = false;
+		bool m_CanResetHoveredNode = false;
 	};
 
 }

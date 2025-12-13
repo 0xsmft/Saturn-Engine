@@ -45,9 +45,9 @@
 #include "Saturn/Asset/MaterialAsset.h"
 #include "Saturn/Audio/SoundSpecification.h"
 #include "Saturn/Audio/GraphSound.h"
-
 #include "Saturn/AI/BehaviourTree/BehaviourTreeMemorySpecification.h"
-
+#include "Saturn/Animation/SkeletonAsset.h"
+#include "Saturn/Animation/SkeletalAnimationAsset.h"
 #include "Saturn/Asset/PhysicsMaterialAsset.h"
 
 #include "Saturn/Serialisation/YAML/SceneSerialiser.h"
@@ -356,6 +356,8 @@ namespace Saturn {
 			} break;
 
 			// TODO: GraphSound
+			case Saturn::AssetType::BehaviourTree:
+			case Saturn::AssetType::AnimationController:
 			case Saturn::AssetType::GraphSound: 
 			{
 				NodeCacheEditor::ConvertToDistNC( id, rAsset->Path.filename().string() );
@@ -376,7 +378,7 @@ namespace Saturn {
 				Ref<SkeletonAsset> skeletonAsset = rAssetManager.ImportAssetAs<SkeletonAsset>( AssetBundleRegistry, id );
 				if( skeletonAsset )
 				{
-					RawPrefabSerialiser serialiser;
+					RawSkeletonAssetSerialiser serialiser;
 					serialiser.DumpAndWriteToVFS( skeletonAsset );
 				}
 			} break;
@@ -398,6 +400,16 @@ namespace Saturn {
 				{
 					RawBehaviourTreeMemorySpecSerialiser serialiser;
 					serialiser.DumpAndWriteToVFS( btMemAsset );
+				}
+			} break;
+
+			case Saturn::AssetType::SkeletalAnimation: 
+			{
+				Ref<SkeletalAnimationAsset> animAsset = rAssetManager.ImportAssetAs<SkeletalAnimationAsset>( AssetBundleRegistry, id );
+				if( animAsset )
+				{
+					RawSkeletalAnimationSerialiser serialiser;
+					serialiser.DumpAndWriteToVFS( animAsset );
 				}
 			} break;
 
@@ -519,9 +531,9 @@ namespace Saturn {
 
 				uLongf uncompSize = (uLongf)uncompressedData.Size;
 
-				int result = uncompress( 
+				const int result = uncompress( 
 					( Bytef* ) uncompressedData.Data, &uncompSize, 
-					( Bytef* ) compressedData.Data, static_cast<uLong>( compressedData.Size ) );
+					( Bytef* ) compressedData.Data, static_cast<const uLong>( compressedData.Size ) );
 
 				if( result != Z_OK )
 				{

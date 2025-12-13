@@ -30,12 +30,13 @@
 #include "SkeletalAnimationAsset.h"
 
 #if !defined(SAT_DIST)
+#include <assimp/anim.h>
+#endif
+
 #include "ACLCore.h"
 #include "SkeletonAsset.h"
 
 #include "Saturn/Asset/AssetManager.h"
-
-#include <assimp/anim.h>
 
 #include <acl/compression/compress.h>
 #include <acl/compression/pre_process.h>
@@ -43,7 +44,6 @@
 #include <acl/core/ansi_allocator.h>
 #include <rtm/quatf.h>
 #include <rtm/vector4f.h>
-#endif
 
 namespace Saturn {
 

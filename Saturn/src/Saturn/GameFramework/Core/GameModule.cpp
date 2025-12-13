@@ -90,10 +90,10 @@ namespace Saturn {
 			std::string dllFilename;
 			if( wasHotReloaded )
 			{
-				dllFilename = std::format( "{0}_{1}.dll", Project::GetActiveConfig().Name, m_LastTimestamp );
+				dllFilename = std::format( "Saturn-{0}_{1}.dll", Project::GetActiveConfig().Name, m_LastTimestamp );
 			}
 			else
-				dllFilename = std::format( "{0}.dll", Project::GetActiveConfig().Name );
+				dllFilename = std::format( "Saturn-{0}.dll", Project::GetActiveConfig().Name );
 
 			const auto DllPath = binDir / dllFilename;
 

@@ -691,7 +691,7 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 #if defined(SAT_DIST)
 	void SkeletalMesh::DistLoadSkeleton( AssetID skeletonID )
 	{
-		m_SkeletonAsset = AssetManager::GetAssetAs<SkeletonAsset>( skeletonID );
+		m_SkeletonAsset = AssetManager::Get().GetAssetAs<SkeletonAsset>( skeletonID );
 		SAT_CORE_VERIFY( m_SkeletonAsset, "Unable to load skeleton for this Skeletal Mesh!" );
 	}
 #endif
@@ -842,7 +842,9 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 	// MESH IMPORTER BASE
 	
 	MeshImporterBase::MeshImporterBase( const std::filesystem::path& rPath, const std::filesystem::path& rDstPath, MeshImportBehaviour importBehaviour )
+#if !defined(SAT_DIST)
 		: m_SourcePath( rPath ), m_DstPath( rDstPath ), m_ImportBehaviour( importBehaviour )
+#endif
 	{
 	}
 
@@ -853,6 +855,7 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 #endif
 	}
 
+#if !defined(SAT_DIST)
 	void MeshImporterBase::FindMaterials()
 	{
 		bool needToSaveAssetReg = false;
@@ -1100,12 +1103,15 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 			AssetManager::Get().Save();
 		}
 	}
+#endif
 
 	//////////////////////////////////////////////////////////////////////////
 	// MESH IMPORTER
 
 	StaticMeshImporter::StaticMeshImporter( const std::filesystem::path& rPath, const std::filesystem::path& rDstPath, MeshImportBehaviour importBehaviour )
+#if !defined(SAT_DIST)
 		: MeshImporterBase( rPath, rDstPath, importBehaviour )
+#endif
 	{
 	}
 
@@ -1143,7 +1149,9 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 	// SKELETAL MESH IMPORTER
 
 	SkeletalMeshImporter::SkeletalMeshImporter( const std::filesystem::path& rPath, const std::filesystem::path& rDstPath, MeshImportBehaviour importBehaviour, AssetID existingSkeletonID )
+#if !defined(SAT_DIST)
 		: MeshImporterBase( rPath, rDstPath, importBehaviour ), m_SkeletonID( existingSkeletonID )
+#endif
 	{
 	}
 
@@ -1295,7 +1303,22 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 						const aiVectorKey key = pAnimNode->mPositionKeys[ p ];
 						const float time = std::clamp( static_cast<float>( ( key.mTime - firstFrameDelta ) / pAnimation->mDuration ), 0.0f, 1.0f );
 
+						if( ( p == 0 ) && ( time > 0.0f ) )
+						{
+							animBone.Positions.emplace_back( glm::vec3( ( float ) key.mValue.x, ( float ) key.mValue.y, ( float ) key.mValue.z ), 0.0f );
+						}
+
 						animBone.Positions.emplace_back( glm::vec3( key.mValue.x, key.mValue.y, key.mValue.z ), time );
+					}
+					
+					if( animBone.Positions.empty() )
+					{
+						animBone.Positions.emplace_back( glm::vec3( 0.0f ), 0.0f );
+						animBone.Positions.emplace_back( glm::vec3( 0.0f ), 1.0f );
+					}
+					else if( animBone.Positions.back().Timestamp < 1.0f )
+					{
+						animBone.Positions.emplace_back( animBone.Positions.back().Value, 1.0f );
 					}
 
 					for( unsigned int r = 0; r < pAnimNode->mNumRotationKeys; ++r )
@@ -1303,7 +1326,22 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 						const aiQuatKey key = pAnimNode->mRotationKeys[ r ];
 						const float time = std::clamp( static_cast< float >( ( key.mTime - firstFrameDelta ) / pAnimation->mDuration ), 0.0f, 1.0f );
 
+						if( ( r == 0 ) && ( time > 0.0f ) )
+						{
+							animBone.Rotations.emplace_back( glm::vec3( ( float ) key.mValue.x, ( float ) key.mValue.y, ( float ) key.mValue.z ), 0.0f );
+						}
+
 						animBone.Rotations.emplace_back( glm::quat( key.mValue.w, key.mValue.x, key.mValue.y, key.mValue.z ), time );
+					}
+
+					if( animBone.Rotations.empty() )
+					{
+						animBone.Rotations.emplace_back( glm::quat( 1.0f, 0.0f, 0.0f, 0.0f ), 0.0f );
+						animBone.Rotations.emplace_back( glm::quat( 1.0f, 0.0f, 0.0f, 0.0f ), 1.0f );
+					}
+					else if( animBone.Rotations.back().Timestamp < 1.0f )
+					{
+						animBone.Rotations.emplace_back( animBone.Rotations.back().Value, 1.0f );
 					}
 
 					for( unsigned int s = 0; s < pAnimNode->mNumScalingKeys; ++s )
@@ -1311,7 +1349,22 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 						const aiVectorKey key = pAnimNode->mScalingKeys[ s ];
 						const float time = std::clamp( static_cast< float >( ( key.mTime - firstFrameDelta ) / pAnimation->mDuration ), 0.0f, 1.0f );
 
+						if( ( s == 0 ) && ( time > 0.0f ) )
+						{
+							animBone.Scale.emplace_back( glm::vec3( ( float ) key.mValue.x, ( float ) key.mValue.y, ( float ) key.mValue.z ), 0.0f );
+						}
+
 						animBone.Scale.emplace_back( glm::vec3( key.mValue.x, key.mValue.y, key.mValue.z ), time );
+					}
+
+					if( animBone.Scale.empty() )
+					{
+						animBone.Scale.emplace_back( glm::vec3( 1.0f ), 0.0f );
+						animBone.Scale.emplace_back( glm::vec3( 1.0f ), 1.0f );
+					}
+					else if( animBone.Scale.back().Timestamp < 1.0f )
+					{
+						animBone.Scale.emplace_back( animBone.Scale.back().Value, 1.0f );
 					}
 				}
 				else

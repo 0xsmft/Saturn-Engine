@@ -99,12 +99,14 @@ namespace Saturn {
 		void SetUncompressedDuration( float duration )   { m_UncompressedDuration = duration; }
 		void SetUncompressedTicks( float ticks )         { m_UncompressedTPS = ticks; }
 		void SetBoneCount( size_t boneCount )			 { m_BoneCount = boneCount; }
-		void AddAnimBone( const AnimationChannel& bone ) { m_Bones.push_back( bone ); }
 		void PortToNewestVersion()                       { m_LocalVersion = SkeletalAnimationAssetVersion::Latest; }
 
-#if !defined(SAT_DIST)
-		void MakeUniformAndCompress( aiAnimation* pAnimation );
 		void SetACLData( void* pData );
+
+#if !defined(SAT_DIST)
+		void AddAnimBone( const AnimationChannel& bone ) { m_Bones.push_back( bone ); }
+
+		void MakeUniformAndCompress( aiAnimation* pAnimation );
 		void Compress();
 
 		void SerialiseAclData( std::ofstream& rStream ) const;

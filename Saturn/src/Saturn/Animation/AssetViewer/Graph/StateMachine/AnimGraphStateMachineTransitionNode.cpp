@@ -99,6 +99,7 @@ namespace Saturn {
 
 	void AnimGraphStateMachineTransitionNode::Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder )
 	{
+#if !defined(SAT_DIST)
 		if( !pOuter->IsLinked( Inputs[ 0 ]->ID ) )
 			return;
 
@@ -140,6 +141,7 @@ namespace Saturn {
 		}
 
 		Auxiliary::DrawArrowOffset( startPoint, endPoint, IM_COL32( 255, 255, 255, 255 ), 2.0F, 6.0F, 5.0F );
+#endif
 	}
 
 	NodeEvaluationState AnimGraphStateMachineTransitionNode::EvaluateNode( NodeEditorRuntime* evaluator )

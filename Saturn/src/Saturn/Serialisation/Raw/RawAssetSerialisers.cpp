@@ -34,11 +34,11 @@
 #include "Saturn/Asset/PhysicsMaterialAsset.h"
 #include "Saturn/Asset/TextureSourceAsset.h"
 #include "Saturn/Asset/MaterialAsset.h"
-
 #include "Saturn/Audio/SoundSpecification.h"
-#include "Saturn/Audio/AudioSystem.h"
-
 #include "Saturn/AI/BehaviourTree/BehaviourTreeMemorySpecification.h"
+#include "Saturn/Animation/SkeletonAsset.h"
+
+#include "Saturn/Audio/AudioSystem.h"
 
 #include "Saturn/Core/VirtualFS.h"
 #include "Saturn/Core/MemoryStream.h"
@@ -230,6 +230,77 @@ namespace Saturn {
 	}
 
 	//////////////////////////////////////////////////////////////////////////
+	// SKELETON ASSET
+
+	struct SkeletonAssetFileHeader
+	{
+		const char Magic[ 5 ] = ".SK\0";
+	};
+
+	bool RawSkeletonAssetSerialiser::DumpAndWriteToVFS( const Ref<Asset>& rAsset ) const
+	{
+		const auto skelAsset = rAsset.As<SkeletonAsset>();
+
+		std::filesystem::path out = Project::GetActiveProject()->GetTempDir();
+		out /= std::to_string( rAsset->ID );
+		out.replace_extension( ".vfs" );
+
+		std::ofstream fout( out, std::ios::binary | std::ios::trunc );
+
+		SkeletonAssetFileHeader header;
+		RawSerialisation::WriteObject( header, fout );
+
+		RawSerialisation::WriteObject( skelAsset->GetLocalVersion(), fout );
+
+		RawSerialisation::WriteVector( skelAsset->m_BoneInfos, fout );
+		RawSerialisation::WriteVector( skelAsset->m_ParentBoneIndices, fout );
+		RawSerialisation::WriteVector( skelAsset->m_BoneNames, fout );
+		RawSerialisation::WriteObject( skelAsset->m_Transform, fout );
+		RawSerialisation::WriteVector( skelAsset->m_BonePositions, fout );
+		RawSerialisation::WriteVector( skelAsset->m_BoneRotations, fout );
+		RawSerialisation::WriteVector( skelAsset->m_BoneScales, fout );
+
+		fout.close();
+
+		return true;
+	}
+
+	bool RawSkeletonAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
+	{
+		const std::string& rMountBase = Project::GetActiveConfig().Name;
+		Ref<VFile> file = VirtualFS::Get().FindFile( rMountBase, rAsset->Path );
+
+		if( !file )
+			return false;
+
+		PakFileMemoryBuffer membuf( file->FileContent );
+		std::istream stream( &membuf );
+
+		/////////////////////////////////////
+
+		SkeletonAssetFileHeader header;
+		RawSerialisation::ReadObject( header, stream );
+
+		SkeletonAssetVersion skVersion = SkeletonAssetVersion::Lowest;
+		RawSerialisation::ReadObject( skVersion, stream );
+
+		auto skeletonAsset = Ref<SkeletonAsset>::Create( rAsset );
+
+		RawSerialisation::ReadVector( skeletonAsset->m_BoneInfos, stream );
+		RawSerialisation::ReadVector( skeletonAsset->m_ParentBoneIndices, stream );
+		RawSerialisation::ReadVector( skeletonAsset->m_BoneNames, stream );
+		RawSerialisation::ReadObject( skeletonAsset->m_Transform, stream );
+		RawSerialisation::ReadVector( skeletonAsset->m_BonePositions, stream );
+		RawSerialisation::ReadVector( skeletonAsset->m_BoneRotations, stream );
+		RawSerialisation::ReadVector( skeletonAsset->m_BoneScales, stream );
+
+		// Set rAsset reference to point to our new SkeletonAsset.
+		rAsset = skeletonAsset;
+
+		return true;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
 	// STATIC MESH
 
 	bool RawStaticMeshAssetSerialiser::DumpAndWriteToVFS( const Ref<Asset>& rAsset ) const
@@ -266,7 +337,7 @@ namespace Saturn {
 		std::istream stream( &membuf );
 
 		/////////////////////////////////////
-		auto staticMeshAsset = Ref<StaticMesh>::Create( rAsset );
+		auto staticMeshAsset = Ref<StaticMesh>::Create( rAsset, "" );
 
 		PhysicsShapeType shapeType = PhysicsShapeType::Unknown;
 		AssetID physicsMaterial = 0;
@@ -300,7 +371,7 @@ namespace Saturn {
 		std::istream stream( &membuf );
 
 		/////////////////////////////////////
-		auto skeletalMeshAsset = Ref<SkeletalMesh>::Create( rAsset );
+		auto skeletalMeshAsset = Ref<SkeletalMesh>::Create( rAsset, "", 0llu );
 
 		PhysicsShapeType shapeType = PhysicsShapeType::Unknown;
 		AssetID physicsMaterial = 0, skeletonID = 0;
@@ -335,7 +406,7 @@ namespace Saturn {
 
 		/////////////////////////////////////
 
-		RawSerialisation::WriteObject( skMeshAsset->GetSkeletonAsset(), fout );
+		RawSerialisation::WriteObject( skMeshAsset->GetSkeletonAsset()->ID, fout );
 		RawSerialisation::WriteObject( skMeshAsset->GetAttachedShape(), fout );
 		RawSerialisation::WriteObject( skMeshAsset->GetPhysicsMaterial(), fout );
 
@@ -564,6 +635,56 @@ namespace Saturn {
 		stream.close();
 
 		return true;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+
+	bool RawSkeletalAnimationSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
+	{
+#if defined(SAT_DIST)
+		const std::string& rMountBase = Project::GetActiveConfig().Name;
+		Ref<VFile> file = VirtualFS::Get().FindFile( rMountBase, rAsset->Path );
+
+		if( !file )
+			return false;
+
+		/////////////////////////////////////
+
+		PakFileMemoryBuffer membuf( file->FileContent );
+		std::istream stream( &membuf );
+
+		auto animAsset = Ref<SkeletalAnimationAsset>::Create( rAsset );
+		animAsset->DeserialiseAclData( stream );
+
+		// Set rAsset reference to point to our new SkeletalAnimation. 
+		rAsset = animAsset;
+
+		return true;
+#else
+		return false;
+#endif
+	}
+
+	bool RawSkeletalAnimationSerialiser::DumpAndWriteToVFS( const Ref<Asset>& rAsset ) const
+	{
+#if !defined(SAT_DIST)
+		const auto animAsset = rAsset.As<SkeletalAnimationAsset>();
+
+		std::filesystem::path out = Project::GetActiveProject()->GetTempDir();
+		out /= std::to_string( rAsset->ID );
+		out.replace_extension( ".vfs" );
+
+		std::ofstream stream( out, std::ios::binary | std::ios::trunc );
+
+		animAsset->SerialiseAclData( stream );
+
+		stream.close();
+
+		// We don't actually write anything for animations, they are already compressed by ACL.
+		return true;
+#else
+		return false;
+#endif
 	}
 
 }

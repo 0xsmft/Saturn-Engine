@@ -296,6 +296,7 @@ namespace Saturn {
 
 	void SkeletonAssetViewer::DrawCompatibleMeshes()
 	{
+#if !defined(SAT_DIST)
 		// Compatibility Information
 		ImGui::Begin( "Compatible Meshes" );
 		for( const auto& rMeshID : m_SkeletonAsset->GetCompatibleMeshes() )
@@ -363,6 +364,7 @@ namespace Saturn {
 			ImGui::EndPopup();
 		}
 		ImGui::End();
+#endif
 	}
 
 	void SkeletonAssetViewer::OnUpdate( Timestep ts )
@@ -377,6 +379,7 @@ namespace Saturn {
 
 	void SkeletonAssetViewer::PickBestMesh()
 	{
+#if !defined(SAT_DIST)
 		for( const auto& rMeshID : m_SkeletonAsset->GetCompatibleMeshes() )
 		{
 			// Pick the first one
@@ -388,6 +391,7 @@ namespace Saturn {
 			m_SkeletalMesh = skComp.Mesh;
 			break;
 		}
+#endif
 	}
 
 }

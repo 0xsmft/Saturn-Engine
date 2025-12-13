@@ -110,6 +110,7 @@ namespace Saturn {
 
 	void AnimationControllerAssetViewer::OnImGuiRender()
 	{
+#if !defined(SAT_DIST)
 		// Draw main
 		if( m_NodeEditor->IsOpen() )
 		{
@@ -120,6 +121,7 @@ namespace Saturn {
 			m_NodeEditor->OpenWindow( false );
 			m_Open = false;
 		}
+#endif
 	}
 
 	void AnimationControllerAssetViewer::OnEvent( Event& rEvent )
@@ -130,10 +132,12 @@ namespace Saturn {
 		}
 	}
 
+#if !defined(SAT_DIST)
 	void AnimationControllerAssetViewer::OnRuntimeStateChanged( RuntimeState newState, RuntimeState oldState )
 	{
 
 	}
+#endif
 
 	void AnimationControllerAssetViewer::SetupNewNodeEditor()
 	{
@@ -282,7 +286,7 @@ namespace Saturn {
 		m_NodeEditor->SetBreadCrumbsFunction( 
 			[&]() -> void 
 		{
-			ImGui::SetCursorPos( { ImGui::GetStyle().WindowPadding.x + 2.0f, 18.0f + 64.0f } );
+			ImGui::SetCursorPos( { ImGui::GetStyle().WindowPadding.x + 2.0f, 20.0f + 64.0f } );
 			ImGui::Text( "%s", m_Asset->Name.c_str() );
 			const ImRect textRect = ImRect( ImGui::GetItemRectMin(), ImGui::GetItemRectMax() );
 			if( ImGui::IsItemHovered() )

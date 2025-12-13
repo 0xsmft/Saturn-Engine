@@ -32,6 +32,7 @@
 
 #include "Saturn/Core/Layer.h"
 #include "Saturn/Scene/Scene.h"
+#include "Saturn/Vulkan/Renderer2D.h"
 #include "Saturn/Vulkan/SceneRenderer.h"
 
 #include "Saturn/Physics/PhysicsFoundation.h"

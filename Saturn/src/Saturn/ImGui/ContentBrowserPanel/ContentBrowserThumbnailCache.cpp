@@ -87,7 +87,7 @@ namespace Saturn {
 		{
 			auto& rData = m_GenerationQueue.front();
 
-			if( rData.Asset->Type == AssetType::Texture || rData.Asset->Type == AssetType::Material || rData.Asset->Type == AssetType::StaticMesh )
+			if( rData.Asset->Type == AssetType::Texture || rData.Asset->Type == AssetType::Material || rData.Asset->Type == AssetType::StaticMesh || rData.Asset->Type == AssetType::SkeletalMesh )
 			{
 				// If it's somehow already in the cache pop it and move on to the next thumbnail
 				const auto Itr = m_Cache.find( rData.Asset->ID );
@@ -179,7 +179,7 @@ namespace Saturn {
 		}
 
 		// Generate texture & pass in needed information for cache data
-		if( rAsset->Type == AssetType::Texture || rAsset->Type == AssetType::Material || rAsset->Type == AssetType::StaticMesh )
+		if( rAsset->Type == AssetType::Texture || rAsset->Type == AssetType::Material || rAsset->Type == AssetType::StaticMesh || rAsset->Type == AssetType::SkeletalMesh )
 			m_GenerationQueue.push( { .Time = timestamp, .Texture = nullptr, .Asset = rAsset } );
 
 		return texture;
@@ -206,7 +206,7 @@ namespace Saturn {
 			rData.ExistsOnFS = false;
 
 			// Generate texture & pass in needed information for cache data
-			if( asset->Type == AssetType::Texture || asset->Type == AssetType::Material || asset->Type == AssetType::StaticMesh )
+			if( asset->Type == AssetType::Texture || asset->Type == AssetType::Material || asset->Type == AssetType::StaticMesh || asset->Type == AssetType::SkeletalMesh )
 				m_GenerationQueue.push( { .Time = timestamp, .Texture = nullptr, .Asset = asset } );
 		}
 	}

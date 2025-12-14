@@ -61,6 +61,7 @@ namespace Saturn {
 		m_Generators[ AssetType::Texture    ] = std::make_unique<TextureAssetThumbnailGenerator>();
 		m_Generators[ AssetType::Material   ] = std::make_unique<MaterialAssetThumbnailGenerator>();
 		m_Generators[ AssetType::StaticMesh ] = std::make_unique<StaticMeshAssetThumbnailGenerator>();
+		m_Generators[ AssetType::SkeletalMesh ] = std::make_unique<SkeletalMeshAssetThumbnailGenerator>();
 	}
 
 	Ref<Texture2D> ContentBrowserThumbnailGenerator::GenerateForAssetType( ThumbnailCacheQueueData& rData )
@@ -90,7 +91,7 @@ namespace Saturn {
 		const uint32_t textureHeight = newTexture->Height();
 
 		uint32_t mipWidth = textureWidth, mipHeight = textureHeight, mip{};
-		for( uint32_t i = 0; i < newTexture->GetMipMapLevels(); i++ )
+		for( uint32_t i = 0; i < newTexture->GetMipMapLevels(); ++i )
 		{
 			mipWidth = glm::max( 1u, textureWidth >> i );
 			mipHeight = glm::max( 1u, textureHeight >> i );
@@ -336,6 +337,105 @@ namespace Saturn {
 			// Ready to render next frame by the MainThread (RenderThread)
 			rData.State = ThumbnailState::Generating;
 			rData.Asset = staticMesh;
+		} );
+
+		// Return no texture as it has not been generated.
+		return nullptr;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// Skeletal Mesh
+
+	Ref<Texture2D> SkeletalMeshAssetThumbnailGenerator::Generate( ThumbnailCacheQueueData& rData )
+	{
+		// Invalid type
+		if( rData.Asset->Type != AssetType::SkeletalMesh )
+			return nullptr;
+
+		// If we already exist then we could be waiting on render or we can get the final image if we are complete
+		// We also want to exit if we exist in the cache because we could still be waiting for the mesh to be loaded as meshes may take longer to load.
+		const auto itr = s_RendererThumbnailCache.find( rData.Asset->ID );
+		if( itr != s_RendererThumbnailCache.end() )
+		{
+			auto& rCacheData = itr->second;
+
+			if( rCacheData.AwaitingRender )
+			{
+				StartFirstRender( rCacheData );
+
+				// Return no texture as it has not been generated.
+				return nullptr;
+			}
+
+			if( rCacheData.RenderComplete )
+			{
+				rData.State = ThumbnailState::Generated;
+
+				// Destroy on render thread
+				RenderThread::Get().Queue( [ rData ]()
+				{
+					s_RendererThumbnailCache.erase( rData.Asset->ID );
+				} );
+
+				return CreateTextureFromFBImage( rCacheData.SceneRenderer->CompositeImage() );
+			}
+
+			// Awaiting init
+			// Return no texture as it has not been generated.
+			return nullptr;
+		}
+
+		// Execute init on JobSystem Thread
+		JobSystem::Get().QueueJob( [ & ]()
+		{
+			RenderThread::Get().Queue( [ rData ]()
+			{
+				Ref<SkeletalMesh> skelMesh = AssetManager::Get().GetAssetAs<SkeletalMesh>( rData.Asset->ID );
+
+				auto& cacheData = s_RendererThumbnailCache[ rData.Asset->ID ];
+				cacheData.SceneRenderer = Ref<SceneRenderer>::Create( SceneRendererFlag_NoFlags );
+				cacheData.SceneRenderer->SetDynamicSky( 2.0f, 0.0f, 0.0f );
+				cacheData.Camera.SetActive( true );
+
+				cacheData.Scene = Ref<Scene>::Create();
+				cacheData.SceneRenderer->SetCurrentScene( cacheData.Scene.Get() );
+
+				// Create entity with the static mesh
+				cacheData.SphereEntity = cacheData.Scene->CreateEntity();
+				auto& mc = cacheData.SphereEntity->AddComponent<SkeletalMeshComponent>();
+				mc.Mesh = skelMesh;
+
+				cacheData.SceneRenderer->SetViewportSize( ( uint32_t ) THUMBNAIL_SIZE, ( uint32_t ) THUMBNAIL_SIZE );
+				cacheData.Camera.SetViewportSize( ( uint32_t ) THUMBNAIL_SIZE, ( uint32_t ) THUMBNAIL_SIZE );
+
+				// Move the camera back to contain the whole mesh.
+				auto& rBoundingBox = skelMesh->GetBoundingBox();
+
+				// Set the distance based on the bounding box and make sure that we are not too close so the min is 4.0f
+				const glm::vec3 size = rBoundingBox.Extent();
+				const float maxSize = std::max( size.x, std::max( size.y, size.z ) );
+
+				float distance = maxSize * 2.0f;
+				distance = std::max( distance + 4.0f, 4.0f );
+
+				cacheData.Camera.SetDistance( distance );
+
+				// Greater than the far clip
+				if( distance > 1000.0f )
+				{
+					cacheData.Camera.SetProjectionMatrix( 45.0f, THUMBNAIL_SIZE, THUMBNAIL_SIZE, 0.1f, distance * 10.0f );
+				}
+
+				// Update to change the distance
+				cacheData.Camera.OnUpdate( Application::Get().Time() );
+				cacheData.AwaitingRender = true;
+			} );
+
+
+			Ref<SkeletalMesh> skeletalMesh = AssetManager::Get().GetAssetAs<SkeletalMesh>( rData.Asset->ID );
+			// Ready to render next frame by the MainThread (RenderThread)
+			rData.State = ThumbnailState::Generating;
+			rData.Asset = skeletalMesh;
 		} );
 
 		// Return no texture as it has not been generated.

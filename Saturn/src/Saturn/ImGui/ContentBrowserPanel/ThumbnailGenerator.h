@@ -59,7 +59,15 @@ namespace Saturn {
 	public:
 		Ref<Texture2D> Generate( ThumbnailCacheQueueData& rData ) override;
 
-		static inline AssetType GetStaticType() { return AssetType::Material; }
+		static inline AssetType GetStaticType() { return AssetType::StaticMesh; }
+	};
+
+	class SkeletalMeshAssetThumbnailGenerator : public ContentBrowserThumbnailGeneratorBase
+	{
+	public:
+		Ref<Texture2D> Generate( ThumbnailCacheQueueData& rData ) override;
+
+		static inline AssetType GetStaticType() { return AssetType::SkeletalMesh; }
 	};
 
 	//////////////////////////////////////////////////////////////////////////

@@ -26,9 +26,6 @@
 *********************************************************************************************
 */
 
-// !!DO NOT INCLUDE!!
-// NOTE: Although this file is defined as a header file, it will be included as part of a source file.
-
 #include "Saturn/Entry/General/EntryPoint.h"
 
 int main( int count, char** args )

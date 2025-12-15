@@ -83,8 +83,8 @@ namespace Saturn {
 		void SubmitAABB( const AABB& rAABB, const glm::mat4& rTransform, const glm::vec4& rColor );
 		void SubmitAABB( const AABB& rAABB, const glm::vec4& rColor );
 
-		void SubmitTriangle3( const glm::vec3& rV0, const glm::vec3& rV1, const glm::vec3& rV2, const glm::vec4& rColor );
-		void SubmitTriangle1( const glm::vec3& rV0, const glm::vec4& rColor );
+		void SubmitTriangle( const glm::vec3& rV0, const glm::vec3& rV1, const glm::vec3& rV2, const glm::vec4& rColor );
+		void SubmitVertex( const glm::vec3& rV0, const glm::vec4& rColor );
 
 		void SetCamera( const RendererCamera& rRendererCamera );
 

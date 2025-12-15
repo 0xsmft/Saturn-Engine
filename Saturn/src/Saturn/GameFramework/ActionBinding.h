@@ -50,7 +50,8 @@ namespace Saturn {
 
 	// @class ActionBindingData
 	//
-	// @breif This struct can be thought of as a specification for the real ActionBindings it contains the name, type, Key, MouseButton, ActionBindingData are owned and created by the current Project.
+	// @breif This struct can be thought of as a specification for the real ActionBindings it contains the name, type, Key, MouseButton. 
+	// ActionBindingData are owned and created by the current Project.
 	//
 	// In Development configurations:
 	// - This struct will hold a special RenderID, and an ActionName

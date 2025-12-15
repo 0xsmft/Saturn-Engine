@@ -115,7 +115,9 @@ namespace Saturn {
 
 	void Scene::Empty()
 	{
+#if !defined(SAT_DIST)
 		EntitySelectionManager::Get().ClearSelection( true );
+#endif
 
 		{
 /*
@@ -768,6 +770,8 @@ namespace Saturn {
 		m_EntitiesToDestory.push_back( entity );
 	}
 
+	void Scene::OnModifyPrefab( Ref<Prefab> prefabAsset )
+	{
 	}
 
 	void Scene::TransferModifiedProperties( const SharedPtr<Entity>& rSourceEntity, SharedPtr<Entity>& rEntity, const std::string& rMetadataName )

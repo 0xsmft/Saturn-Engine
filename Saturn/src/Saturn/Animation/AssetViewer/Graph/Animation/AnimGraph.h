@@ -33,12 +33,6 @@
 
 namespace Saturn {
 
-	struct AnimGraphSortItem
-	{
-		UUID NodeID;
-		NodeEditorTaskBase* pTask = nullptr;
-	};
-
 	class SGraphTask;
 
 	class AnimGraph : public FDependentNodeEditorSuper

@@ -744,14 +744,14 @@ namespace Saturn {
 			SubmitLine( corners[ i ], corners[ i + 4 ], rColor );
 	}
 
-	void Renderer2D::SubmitTriangle3( const glm::vec3& rV0, const glm::vec3& rV1, const glm::vec3& rV2, const glm::vec4& rColor )
+	void Renderer2D::SubmitTriangle( const glm::vec3& rV0, const glm::vec3& rV1, const glm::vec3& rV2, const glm::vec4& rColor )
 	{
-		SubmitTriangle1( rV0, rColor );
-		SubmitTriangle1( rV1, rColor );
-		SubmitTriangle1( rV2, rColor );
+		SubmitVertex( rV0, rColor );
+		SubmitVertex( rV1, rColor );
+		SubmitVertex( rV2, rColor );
 	}
 
-	void Renderer2D::SubmitTriangle1( const glm::vec3& rV0, const glm::vec4& rColor )
+	void Renderer2D::SubmitVertex( const glm::vec3& rV0, const glm::vec4& rColor )
 	{
 		if( m_TriangleVextexCount >= s_MaxSolidLineVertices )
 			Reset();

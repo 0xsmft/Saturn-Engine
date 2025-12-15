@@ -86,6 +86,8 @@ namespace Saturn {
 		bool OnMousePressed( RubyMouseEvent& rEvent );
 		void HandleSceneTravel( SceneTravelEvent& rEvent );
 
+		void SubmitSelectedMeshes();
+
 		// UI Functions.
 		void DrawProjectSettingsWindow();
 		void HotReloadGame();

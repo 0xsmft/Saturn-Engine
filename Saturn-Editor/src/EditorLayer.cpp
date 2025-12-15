@@ -333,7 +333,10 @@ namespace Saturn {
 			m_EditorCamera.OnUpdate( time );
 
 			m_EditorScene->OnUpdate( time );
-			m_EditorScene->OnRenderEditor( m_EditorCamera, time, *m_SceneRenderer );
+
+			SubmitSelectedMeshes();
+
+			m_EditorScene->OnRenderEditor( &m_EditorCamera, m_EditorCamera.ViewMatrix(), m_SceneRenderer, time );
 
 			m_LastAutoSaveTime += time;
 
@@ -560,7 +563,7 @@ namespace Saturn {
 		Ref<Scene> newScene = Ref<Scene>::Create();
 		g_ActiveScene = newScene.Get();
 
-		EntitySelectionManager::Get().ClearSelection();
+		EntitySelectionManager::Get().ClearSelection( true );
 		hierarchyPanel->SetContext( nullptr );
 
 		m_RuntimeScene->OnRuntimeEnd();
@@ -685,7 +688,7 @@ namespace Saturn {
 					}
 
 					// The entities will be freed here!
-					EntitySelectionManager::Get().ClearSelection();
+					EntitySelectionManager::Get().ClearSelection( true );
 
 					g_ActiveScene->MarkDirty();
 				}
@@ -819,6 +822,7 @@ namespace Saturn {
 		const auto viewportMouse = ConvertMouseToViewportNDC();
 		if( viewportMouse.x > -1.0f && viewportMouse.x < 1.0f && viewportMouse.y > -1.0f && viewportMouse.y < 1.0f )
 		{
+			bool hitAny = false;
 			const auto [origin, dir] = RayCast( viewportMouse.x, viewportMouse.y );
 
 			const auto staticMeshes = g_ActiveScene->GetAllEntitiesWith<StaticMeshComponent>();
@@ -840,6 +844,8 @@ namespace Saturn {
 					const bool hit = ray.IntersectsAABB( rSubmesh.BoundingBox, t );
 					if( hit )
 					{
+						hitAny = hit;
+
 						const auto& rIndices = comp.Mesh->Indices();
 						const auto& rVertices = comp.Mesh->Vertices();
 
@@ -860,6 +866,11 @@ namespace Saturn {
 						}
 					}
 				}
+			}
+
+			if( !hitAny && EntitySelectionManager::Get().GetSelectionCount() )
+			{
+				EntitySelectionManager::Get().ClearSelection();
 			}
 		}
 
@@ -903,6 +914,46 @@ namespace Saturn {
 			OpenFile( newSceneID );
 		}
 	}
+
+	void EditorLayer::SubmitSelectedMeshes()
+	{
+		// Selected Meshes and Physics Colliders
+		{
+			for( const auto& rSelectedEntity : EntitySelectionManager::Get().GetSelectionContexts() )
+			{
+				if( rSelectedEntity->HasComponent<StaticMeshComponent>() )
+				{
+					const auto& meshComponent = rSelectedEntity->GetComponent<StaticMeshComponent>();
+					const auto transform = g_ActiveScene->GetTransformRelativeToParent( rSelectedEntity );
+
+					if( meshComponent.Mesh )
+					{
+						Ref<MaterialRegistry> targetMaterialRegistry = meshComponent.Mesh->GetMaterialRegistry();
+
+						if( meshComponent.MaterialRegistry && meshComponent.MaterialRegistry->HasAnyOverrides() )
+							targetMaterialRegistry = meshComponent.MaterialRegistry;
+
+						// Submit to SceneRenderer as a selected mesh
+						if( rSelectedEntity->HasComponent<RigidbodyComponent>() )
+						{
+							m_SceneRenderer->SubmitPhysicsCollider( rSelectedEntity, meshComponent.Mesh, targetMaterialRegistry, transform );
+						}
+					}
+				}
+
+				if( rSelectedEntity->GetClass() == NavBoundsEntity::StaticClass() )
+				{
+					if( SharedPtr<NavBoundsEntity> boundsEntity = rSelectedEntity.As<NavBoundsEntity>() )
+					{
+						m_SceneRenderer->GetRenderer2D()->SubmitAABB( boundsEntity->GetBoundingBox(), glm::vec4( 0.0f, 1.0f, 0.0, 1.0f ) );
+						// TODO: #ScRendererOwnsRenderer2D
+						boundsEntity->DebugDraw();
+					}
+				}
+			}
+		}
+	}
+
 	static bool s_OpenAssetFinderPopup = false;
 
 	void EditorLayer::DrawProjectSettingsWindow()

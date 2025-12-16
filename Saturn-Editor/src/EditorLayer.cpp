@@ -201,11 +201,11 @@ namespace Saturn {
 			EditorNotification notification{ .Text = "Generating Project Thumbnail", .Lifetime = 5.0f };
 			PushNotification( notification );
 
-			JobSystem::Get().AddJob( [this]()
+			JobSystem::Get().QueueJob( [ this ]()
 			{
 				std::this_thread::sleep_for( std::chrono::seconds( 2 ) );
 
-				RenderThread::Get().Queue( [this]()
+				RenderThread::Get().Queue( [ this ]()
 				{
 					m_SceneRenderer->Screenshot( Project::GetActiveProject()->GetThumbnailPath(), glm::vec2( 156.0f, 128.0f ) );
 				} );
@@ -419,7 +419,7 @@ namespace Saturn {
 			if( m_ShowAssetDependencies )   DrawAssetDependencies();
 			if( m_ShowSceneDirtyModal )     DrawSceneDirtyPopup();
 			if( m_JobModalOpen )            DrawBlockingActionModal();
-			if( m_ShowAutoSaveNewerPopup )  DrawAutoSaveNewerModal();
+			if( m_ShowDistBuildOptions )    DrawDistOptionsModal();
 			if( m_ShowCBThumbnailDebug )    ContentBrowserThumbnailCache::Get().OnImGuiRender( &m_ShowCBThumbnailDebug );
 			if( m_ShowUndoRedoDebug )       GlobalUndoRedoGroup::Get().OnImGuiRender( &m_ShowUndoRedoDebug );
 		}
@@ -605,6 +605,42 @@ namespace Saturn {
 
 		AssetManagerSerialiser ars;
 		ars.Serialise();
+	}
+
+	void EditorLayer::ClearAllAutoSaves()
+	{
+		for( const auto& rEntry : std::filesystem::directory_iterator( Project::GetActiveProject()->GetFullCachePath() ) )
+		{
+			if( rEntry.is_directory() )
+				continue;
+
+			const auto& rPath = rEntry.path();
+
+			if( rPath.has_extension() && rPath.extension() == ".autoscene" )
+			{
+				std::filesystem::remove( rPath );
+				SAT_CORE_INFO( "Cleared auto saved file: {0}", rPath.stem().string() );
+			}
+		}
+	}
+
+	void EditorLayer::ClearAutoSavesForActiveScene()
+	{
+		// Editor scenes only have autosaves, Runtime scene does not.
+		std::regex autosaveRegex( "^" + m_EditorScene->Name + R"(\.(\d+)\.autoscene$)" );
+		for( const auto& rEntry : std::filesystem::directory_iterator( Project::GetActiveProject()->GetFullCachePath() ) )
+		{
+			if( rEntry.is_directory() )
+				continue;
+
+			const auto& rPath = rEntry.path();
+			const auto& rFilename = rPath.filename().string();
+			if( std::regex_match( rFilename, autosaveRegex ) )
+			{
+				std::filesystem::remove( rPath );
+				SAT_CORE_INFO( "Cleared auto saved file: {0}", rPath.stem().string() );
+			}
+		}
 	}
 
 	void EditorLayer::PreInitRuntime()

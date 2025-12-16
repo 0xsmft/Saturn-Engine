@@ -76,6 +76,9 @@ namespace Saturn {
 
 		void SaveProject();
 
+		void ClearAllAutoSaves();
+		void ClearAutoSavesForActiveScene();
+
 		// Runtime
 		void PreInitRuntime();
 		void PostInitRuntime();

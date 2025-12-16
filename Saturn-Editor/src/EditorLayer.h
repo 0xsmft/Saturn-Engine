@@ -246,6 +246,8 @@ namespace Saturn {
 
 		bool m_WasGizmoUsed = false;
 		bool m_LastRuntimeAttemptFailed = false;
+		bool m_FullscreenViewport = false;
+		bool m_PendingFullscreenChange = false;
 
 		// JobProgress
 		float m_OperationPercent = 0.0f;
@@ -257,6 +259,11 @@ namespace Saturn {
 
 		ImVec2 m_ViewportSize;
 		ImRect m_ViewportBounds;
+
+		// Used for a fullscreen viewport
+		ImVec2 m_PreVPFullscreenPosition;
+		ImVec2 m_PreVPFullscreenSize;
+		ImGuiID m_PreVPDockedNodeID = 0;
 
 		std::queue<MessageBoxInfo> m_MessageBoxes;
 		std::vector<EditorNotification> m_Notifications;

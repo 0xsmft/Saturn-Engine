@@ -195,6 +195,7 @@ namespace Saturn {
 		const std::string title = std::format( "{0} - Saturn", Project::GetActiveConfig().Name );
 		Application::Get().GetWindow()->ChangeTitle( title );
 
+		/*
 		if( !Project::GetActiveProject()->HasThumbnail() )
 		{
 			EditorNotification notification{ .Text = "Generating Project Thumbnail", .Lifetime = 5.0f };
@@ -210,6 +211,7 @@ namespace Saturn {
 				} );
 			} );
 		}
+		*/
 	}
 
 	void EditorLayer::OnDetach()
@@ -1529,8 +1531,7 @@ namespace Saturn {
 			ImGui::SameLine();
 			Filter.Draw( "##search" );
 
-			ImGuiTableFlags TableFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollX | ImGuiTableFlags_NoBordersInBody;
-			if( ImGui::BeginTable( "##FileTable", 6, TableFlags, ImVec2( ImGui::GetWindowSize().x, ImGui::GetWindowSize().y ) ) )
+			if( ImGui::BeginTable( "##FileTable", 6, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollX | ImGuiTableFlags_NoBordersInBody, ImVec2( ImGui::GetWindowSize().x, ImGui::GetWindowSize().y ) ) )
 			{
 				ImGui::TableSetupColumn( "Asset Name" );
 				ImGui::TableSetupColumn( "ID" );
@@ -1642,11 +1643,12 @@ namespace Saturn {
 
 	void EditorLayer::DrawEditorSettings()
 	{
-		auto& rIO = ImGui::GetIO();
+		static bool ShouldSaveEngSettings = false;
 
 		ImGui::SetNextWindowSize( ImVec2( 750.0f, 750.0f ), ImGuiCond_Appearing );
 		if( ImGui::Begin( "Editor Settings", &m_OpenEditorSettings ) )
 		{
+			auto& rIO = ImGui::GetIO();
 			const auto boldFont = rIO.Fonts->Fonts[ 1 ];
 			const auto italicsFont = rIO.Fonts->Fonts[ 2 ];
 
@@ -1664,8 +1666,51 @@ namespace Saturn {
 			ImGui::Separator();
 			ImGui::PopStyleColor();
 
-			ImGui::End();
+			auto& rEngineSettings = EngineSettings::Get();
+
+			ImGui::Text( "Recent Projects" );
+			for( const auto& rPath : rEngineSettings.RecentProjects )
+			{
+				ImGui::BulletText( rPath.string().c_str() );
+			}
+
+			ImGui::BeginHorizontal( "##eng_startprj" );
+			{
+				ImGui::Text( "Startup Project: %s", rEngineSettings.StartupProject.string().c_str() );
+
+				ImGui::Spring();
+
+				Auxiliary::DisabledFlag inspectDisabledFlag( m_RequestRuntime );
+
+				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), { 24.0f, 24.0f } ) )
+				{
+					const auto filePath = Application::Get().OpenFile( L"Saturn Project file (*.sproject)|*.sproject" );
+					if( !filePath.empty() )
+					{
+						rEngineSettings.StartupProject = filePath;
+						ShouldSaveEngSettings = true;
+					}
+				}
+
+				inspectDisabledFlag.Pop();
+
+				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "NoIcon" ), { 24.0f, 24.0f } ) )
+				{
+					Application::Get().OpenNativeFileExplorer( rEngineSettings.StartupProject, true );
+				}
+			}
+			ImGui::EndHorizontal();
 		}
+
+		if( ShouldSaveEngSettings )
+		{
+			EngineSettingsSerialiser ess;
+			ess.Serialise();
+
+			ShouldSaveEngSettings = false;
+		}
+
+		ImGui::End();
 	}
 
 	void EditorLayer::DrawVFSDebug()
@@ -1742,7 +1787,7 @@ namespace Saturn {
 				{
 					m_HasPremakePath = Auxiliary::HasEnvironmentVariable( "SATURN_PREMAKE_PATH" );
 
-					JobSystem::Get().AddJob( []()
+					JobSystem::Get().QueueJob( []()
 					{
 						if( !Project::GetActiveProject()->HasPremakeFile() )
 							Project::GetActiveProject()->CreatePremakeFile();
@@ -1761,16 +1806,7 @@ namespace Saturn {
 				{
 					if( ValidateProjectDefaults() )
 					{
-						if( !m_BlockingOperation )
-							m_BlockingOperation = Ref<JobProgress>::Create();
-
-						CreateShaderBundleJob();
-
-						// TODO: Think of a better way for this... checking the sizes of the message boxes is not a good thing.
-						if( m_MessageBoxes.size() == 0 )
-						{
-							CreateAssetBundleJob();
-						}
+						m_ShowDistBuildOptions ^= 1;
 					}
 				}
 
@@ -1799,7 +1835,7 @@ namespace Saturn {
 					if( !m_BlockingOperation )
 						m_BlockingOperation = Ref<JobProgress>::Create();
 
-					JobSystem::Get().AddJob( [this]()
+					JobSystem::Get().QueueJob( [this]()
 						{
 							m_JobModalOpen = true;
 							m_BlockingOperation->SetTitle( "Distributing Project" );
@@ -1998,6 +2034,7 @@ namespace Saturn {
 				ImGui::Text( "entt" );
 				ImGui::Text( "vma" );
 				ImGui::Text( "miniaudio" );
+				ImGui::Text( "acl & rtm" );
 
 				Auxiliary::EndTreeNode();
 			}

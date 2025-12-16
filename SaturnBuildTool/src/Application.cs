@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 using SaturnBuildTool.Auxiliary;
 using SaturnBuildTool.Cache;
 using SaturnBuildTool.Tools;
@@ -38,6 +40,8 @@ namespace SaturnBuildTool
 
         // The files that will be compiled.
         private List<string> SourceFiles = null;
+
+        private List<string> RecipeFiles = new List<string>();
 
         private Dictionary<string, List<string>> ModuleToFiles = new Dictionary<string, List<string>>();
 
@@ -403,18 +407,27 @@ namespace SaturnBuildTool
                         } break;
                 }
 
-                List<string> sourceFilesModule = new List<string>();
+                List<string> allCppFilesModule = new List<string>();
                 foreach( var path in searchPaths )
                 {
-                    sourceFilesModule.AddRange( DirectoryTools.CppSourceSearch( Path.Combine( Shared.ProjectInfo.RootDirectory, path ), true ) );
+                    allCppFilesModule.AddRange( DirectoryTools.CppSourceSearch( Path.Combine( Shared.ProjectInfo.RootDirectory, path ), true ) );
                 }
 
                 ModuleToToolchain.Add( kv.Key, new MSVCToolchain() );
+
+                string[] sourceFileExts = { ".cpp", ".cc", ".cxx", ".c" };
+                string[] headerFileExts = { ".h", ".hpp" };
+
+                // Now filter the files
+                List<string> sourceFilesModule = allCppFilesModule.Where( f => sourceFileExts.Any( ext => f.EndsWith( ext, StringComparison.OrdinalIgnoreCase ) ) ).ToList();
+
+                List<string> headerFiles = allCppFilesModule.Where( f => headerFileExts.Any( ext => f.EndsWith( ext, StringComparison.OrdinalIgnoreCase ) ) ).ToList();
 
                 if( Action == ActionType.Build )
                     sourceFilesModule = Shared.FileCache.Analyse( sourceFilesModule );
 
                 ModuleToFiles.Add( kv.Key, sourceFilesModule );
+                RecipeFiles.AddRange( headerFiles );
             }
 
             /*
@@ -458,20 +471,27 @@ namespace SaturnBuildTool
             FileStream fs = new FileStream( recipeFilepath, FileMode.Truncate, FileAccess.Write, FileShare.ReadWrite );
             BinaryWriter writer = new BinaryWriter( fs, Encoding.UTF8 );
 
-            writer.Write( ModuleToFiles.Count );
-            foreach( var kv in ModuleToFiles )
+            writer.Write( (ulong) RecipeFiles.Count );
+            foreach( var kv in RecipeFiles )
             {
-                writer.Write( kv.Key );
+                // Key string buffer.
+                // C++: RawSerialisation::WriteString
+                byte[] keyStrBuffer = Encoding.UTF8.GetBytes( kv );
+                writer.Write( ( ulong ) keyStrBuffer.Length );
+                writer.Write( keyStrBuffer );
+
+                /*
                 foreach( var item in kv.Value )
                 {
                     if( item.Contains( ".Load.cpp" ) || item.Contains( ".Entry.cpp" ) )
                         continue;
 
+                    // C++: RawSerialisation::WriteString
                     byte[] strBuffer = Encoding.UTF8.GetBytes( item );
-
                     writer.Write( ( ulong ) item.Length );
                     writer.Write( strBuffer );
                 }
+                */
             }
 
             writer.Close();
@@ -680,20 +700,37 @@ namespace SaturnBuildTool
             }
         }
 
+        private void AppendGeneratedFiles() 
+        {
+            foreach( var kv in Shared.CurrentBuildTarget.Modules )
+            {
+                List<string> filePath = new List<string>();
+                filePath.AddRange( DirectoryTools.CppSourceSearch( Shared.ProjectInfo.HeaderToolGeneratedRootPath, true ) );
+
+                // Now filter the files
+                filePath = Shared.FileCache.Analyse( filePath );
+                
+                string[] sourceFileExts = { ".cpp", ".cc", ".cxx", ".c" };
+                List<string> sourceFilesModule = filePath.Where( f => sourceFileExts.Any( ext => f.EndsWith( ext, StringComparison.OrdinalIgnoreCase ) ) ).ToList();
+
+                ModuleToFiles[ kv.Key ].AddRange( sourceFilesModule );
+            }
+        }
+
         private void ActionBuild()
         {
             Stopwatch time = Stopwatch.StartNew();
 
             SearchForFiles();
 
-            /*
             if( !ExecuteHeaderTool() )
             {
                 Console.WriteLine( "ERROR: Stopping compilation, header tool failed -- FAILED" );
                 ExitCode = 1;
                 return;
             }
-            */
+
+            AppendGeneratedFiles();
 
             // Compile all source files.
             //CompileSourceFiles();
@@ -723,7 +760,7 @@ namespace SaturnBuildTool
 
             Console.WriteLine( $"{NumTasksFailed} task(s) failed." );
 
-            if( LinkFinal() )
+//            if( LinkFinal() )
             {
                 CreateTimestampFile();
             }

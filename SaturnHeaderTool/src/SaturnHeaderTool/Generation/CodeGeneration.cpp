@@ -646,7 +646,7 @@ namespace Saturn {
 		const std::string propertyPointersFieldName = classHasSProps ? "PropertyPointers" : "nullptr";
 		WriteSClassSpecification( fout, rCommand, propertyPointersFieldName );
 	
-		fout << "\t\tSClass::RConstructClass( &pClass, spec );\n";
+		fout << "\t\tSClass::RConstructClass( pClass, spec );\n";
 		fout << "\t}\n\n";
 		fout << "\treturn pClass;\n";
 		fout << "}\n\n";

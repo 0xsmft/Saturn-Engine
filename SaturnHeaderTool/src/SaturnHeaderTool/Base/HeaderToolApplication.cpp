@@ -161,6 +161,10 @@ namespace Saturn {
 		}
 
 		m_HeaderTool.SetWorkingDir( m_OutputPath );
+		if( !std::filesystem::exists( m_OutputPath ) )
+		{
+			std::filesystem::create_directories( m_OutputPath );
+		}
 
 		return result;
 	}

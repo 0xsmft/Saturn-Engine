@@ -172,7 +172,7 @@ namespace SaturnBuildTool.Tools
         private static bool IsCppSourceFile( string path )
         {
             string ext = Path.GetExtension( path ).ToLowerInvariant();
-            return ext == ".cpp" || ext == ".cc" || ext == ".c";
+            return ext == ".cpp" || ext == ".cc" || ext == ".c" || ext == ".h" || ext == ".hpp";
         }
 
         public static List<string> DirSearch( string sDir, bool isSourceOnly )

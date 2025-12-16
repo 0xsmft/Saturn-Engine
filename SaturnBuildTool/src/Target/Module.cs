@@ -33,12 +33,15 @@ namespace SaturnBuildTool
                 HeaderFile = headerPath;
                 SourceFile = sourcePath;
 
-                if( Shared.Platform.PlatformType == PlatformType.Windows )
-                {
-                    SourceFile = SourceFile.Replace( "/", "\\" );
-                }
+                if( Valid() )
+                { 
+                    if( Shared.Platform.PlatformType == PlatformType.Windows )
+                    {
+                        SourceFile = SourceFile.Replace( "/", "\\" );
+                    }
 
-                SourceFile = Path.Combine( Shared.ProjectInfo.RootDirectory, SourceFile );
+                    SourceFile = Path.Combine( Shared.ProjectInfo.RootDirectory, SourceFile );
+                }
             }
 
             public bool Valid()

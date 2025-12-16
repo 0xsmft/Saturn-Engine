@@ -29,7 +29,7 @@
 #pragma once
 
 #include "SaturnHeaderTool/Generation/CodeGeneration.h"
-#include "SaturnHeaderTool/Cache/FileCache.h"
+#include "SaturnHeaderTool/Cache/GenerationRecipe.h"
 
 #include <span>
 #include <filesystem>
@@ -47,7 +47,7 @@ namespace Saturn {
 
 	private:
 		HeaderTool m_HeaderTool;
-		FileCache m_FileCache;
+		FGenerationRecipe m_FileCache;
 
 	private:
 		std::span<char*> m_Args;

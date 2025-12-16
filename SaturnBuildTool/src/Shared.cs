@@ -4,20 +4,20 @@ namespace SaturnBuildTool
 {
     public static class Shared
     {
-        public static Target TargetToBuild = null;
+        public static Target TargetToBuild;
 
-        public static BuildTarget CurrentBuildTarget = null;
+        public static BuildTarget CurrentBuildTarget;
 
-        public static ToolchainBase Toolchain = null;
+        public static ToolchainBase Toolchain;
 
-        public static FileCache FileCache = null;
+        public static FileCache FileCache;
 
-        public static TaskCache TaskCache = null;
+        public static TaskCache TaskCache;
 
-        public static ProjectInfo ProjectInfo = null;
+        public static ProjectInfo ProjectInfo;
 
-        public static Platform Platform = null;
+        public static Platform Platform;
 
-        public static RulesAssembly RulesAssembly = null;
+        public static RulesAssembly RulesAssembly;
     }
 }

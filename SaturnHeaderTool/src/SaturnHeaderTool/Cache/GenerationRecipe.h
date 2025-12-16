@@ -33,12 +33,12 @@
 
 namespace Saturn {
 
-	class FFileCache
+	class FGenerationRecipe
 	{
 	public:
-		FFileCache() = default;
-		FFileCache( const std::filesystem::path& rCacheLocation );
-		~FFileCache();
+		FGenerationRecipe() = default;
+		FGenerationRecipe( const std::filesystem::path& rCacheLocation );
+		~FGenerationRecipe();
 
 		void Load();
 		void SetLocation( const std::filesystem::path& rCacheLocation );
@@ -47,12 +47,12 @@ namespace Saturn {
 		bool IsCppFile( const std::filesystem::path& rFile );
 		bool IsSourceFile( const std::filesystem::path& rFile );
 		bool HasFileBeenModifed( const std::filesystem::path& rFile );
-
+		
 		std::vector<std::filesystem::path> Analyse();
 
 	private:
 		std::filesystem::path m_Location;
-		std::unordered_map<std::string, std::vector<std::filesystem::path>> m_FilesInCache;
+		std::vector<std::filesystem::path> m_FilesInCache;
 	};
 
 }

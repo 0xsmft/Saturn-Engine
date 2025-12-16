@@ -165,6 +165,10 @@ namespace SaturnBuildTool
 
         private void InitLinkSettings( BuildTarget parent )
         {
+            List<string> fullLinks = new List<string>();
+            fullLinks.AddRange( parent.TargetRules.Links );
+            fullLinks.AddRange( ModuleRules.Links );
+
             ModuleLinkSettings = new LinkSettings(
                 true,
                 true,
@@ -175,7 +179,7 @@ namespace SaturnBuildTool
                 OutputPath,
                 ModuleRules.OutputType,
                 ModuleRules.LibraryPaths,
-                ModuleRules.Links,
+                fullLinks,
                 ModuleRules.DynamicBase
             );
         }

@@ -27,7 +27,7 @@
 */
 
 #include "sppch.h"
-#include "FileCache.h"
+#include "GenerationRecipe.h"
 
 #include "Saturn/Serialisation/Raw/RawSerialisation.h"
 
@@ -36,17 +36,17 @@
 
 namespace Saturn {
 
-	FileCache::FileCache( const std::filesystem::path& rCacheLocation )
+	FGenerationRecipe::FGenerationRecipe( const std::filesystem::path& rCacheLocation )
 		: m_Location( rCacheLocation )
 	{
 	}
 
-	FileCache::~FileCache()
+	FGenerationRecipe::~FGenerationRecipe()
 	{
 		m_FilesInCache.clear();
 	}
 
-	void FileCache::Load()
+	void FGenerationRecipe::Load()
 	{
 		if( !std::filesystem::exists( m_Location ) ) 
 		{
@@ -68,97 +68,47 @@ namespace Saturn {
 
 		stream.seekg( 0 );
 
-		int count = 0;
-		RawSerialisation::ReadObject( count, stream );
+		size_t modules = 0;
+		RawSerialisation::ReadObject( modules, stream );
 
-		m_FilesInCache.reserve( count );
+		m_FilesInCache.reserve( modules );
 
-		for( int i = 0; i < count; i++ )
+		for( int i = 0; i < modules; ++i )
 		{
 			std::string key;
 			key = RawSerialisation::ReadString( stream );
 
-			FileCacheTime time{ 0ll, 0ll };
-			m_FilesInCache.emplace( key, time );
+			m_FilesInCache.push_back( key );
 		}
 
 		stream.close();
 	}
 
-	void FileCache::SetLocation( const std::filesystem::path& rCacheLocation )
+	void FGenerationRecipe::SetLocation( const std::filesystem::path& rCacheLocation )
 	{
 		m_Location = rCacheLocation;
 	}
 
-	bool FileCache::IsCppFile( const std::filesystem::path& rFile )
+	bool FGenerationRecipe::IsCppFile( const std::filesystem::path& rFile )
 	{
 		const auto ext = rFile.extension();
 		return ext == ".cpp" || ext == ".h" || ext == ".hpp";
 	}
 
-	bool FileCache::IsSourceFile( const std::filesystem::path& rFile )
+	bool FGenerationRecipe::IsSourceFile( const std::filesystem::path& rFile )
 	{
 		const auto ext = rFile.extension();
 		return ext == ".cpp";
 	}
 
-	bool FileCache::HasFileBeenModifed( const std::filesystem::path& rFile )
+	bool FGenerationRecipe::HasFileBeenModifed( const std::filesystem::path& rFile )
 	{
 		return false;
 	}
 
-	std::vector<std::filesystem::path> FileCache::Analyse()
+	std::vector<std::filesystem::path> FGenerationRecipe::Analyse()
 	{
-		std::vector<std::filesystem::path> files;
-
-		for( const auto& [rFile, time] : m_FilesInCache )
-		{
-			if( rFile.filename().string().contains( ".Entry.cpp" ) ) continue;
-			if( rFile.filename().string().contains( ".Load.cpp" ) ) continue;
-			if( rFile.filename().string().contains( ".Gen.cpp" ) ) continue;
-			if( rFile.filename().string().contains( ".Gen.h" ) ) continue;
-
-			if( IsSourceFile( rFile ) )
-			{
-				const auto fsLastWriteTime = std::filesystem::last_write_time( rFile );
-
-				const auto systemClock = std::chrono::clock_cast< std::chrono::system_clock >( fsLastWriteTime );
-				const auto systemTime = std::chrono::duration_cast<std::chrono::milliseconds>( systemClock.time_since_epoch() ).count();
-
-				if( time.Time != systemTime )
-				{
-					std::filesystem::path headerPath = rFile;
-					headerPath.replace_extension( ".h" );
-
-					const auto Itr = std::find( files.begin(), files.end(), headerPath );
-					if( Itr == files.end() )
-					{
-						files.push_back( headerPath );
-					}
-				}
-			}
-			else if( IsCppFile(rFile) )
-			{
-				// If its a still a cpp file then its most likely a header file
-				// So try to find the source counterpart and add it to the cache
-	
-				const auto fsLastWriteTime = std::filesystem::last_write_time( rFile );
-
-				const auto systemClock = std::chrono::clock_cast< std::chrono::system_clock >( fsLastWriteTime );
-				const auto systemTime = std::chrono::duration_cast< std::chrono::milliseconds >( systemClock.time_since_epoch() ).count();
-
-				if( time.Time != systemTime )
-				{
-					const auto Itr = std::find( files.begin(), files.end(), rFile );
-					if( Itr == files.end() )
-					{
-						files.push_back( rFile );
-					}
-				}
-			}
-		}
-
-		return files;
+		return m_FilesInCache;
 	}
 
 	/*

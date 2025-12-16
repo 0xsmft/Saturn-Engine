@@ -132,7 +132,7 @@ namespace SaturnBuildTool.Cache
             ResidentFilesInCache.Clear();
         }
 
-        public bool HasSourceFileBeenModified( string path )
+        public bool HasFileBeenModified( string path )
         {
             // return true to force the file to be compiled.
             if( !ResidentFilesInCache.TryGetValue( path, out var cacheTime ) )
@@ -324,16 +324,16 @@ namespace SaturnBuildTool.Cache
             return fc;
         }
 
-        public List<string> Analyse( List<string> allKnownFiles )
+        public List<string> Analyse( List<string> allKnownSrcFiles )
         {
             List<string> result = new List<string>();
 
             // Search the source dir for any new/removed files from the last build
-            foreach( string file in allKnownFiles )
+            foreach( string file in allKnownSrcFiles )
             {
                 if( ResidentFilesInCache.ContainsKey( file ) )
                 {
-                    if( HasSourceFileBeenModified( file ) )
+                    if( HasFileBeenModified( file ) )
                     {
                         Console.WriteLine( $"{file} has been modified!" );
 
@@ -353,5 +353,23 @@ namespace SaturnBuildTool.Cache
 
             return result;
         }
+
+        /*
+        public List<string> FindHeaderAltOfFiles( List<string> files ) 
+        {
+            List<string> result = new List<string>();
+
+            foreach( var sourceFile in files )
+            {
+                // Would result in D:\MyProject\Source\MyProject\MyFile
+                string filePath = Path.Combine( Path.GetDirectoryName( sourceFile ), Path.GetFileNameWithoutExtension( sourceFile ) );
+
+                result.Add( filePath );
+            }
+
+            return result;
+        }
+        */
     }
+
 }

@@ -25,7 +25,13 @@
         /// The output directory will be combined with the targets output and the modules name.
         /// So a path could look like: C:\MyProject\bin-int\{config}\MyTarget\MyModule
         /// </summary>
-        Default, 
+        Default,
+
+        /// <summary>
+        /// A custom path for the intermediate binary files
+        /// NOTE: When using this it must be relative to the root directory of the solution
+        /// </summary>
+        Custom,
 
         /// <summary>
         /// The output items will be placed in the targets path.

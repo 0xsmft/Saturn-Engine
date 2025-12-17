@@ -30,10 +30,10 @@
 
 namespace Saturn {
 
-
 	enum class ProcessCreateFlags
 	{
 		Normal,
+		DelayedStart,
 		RedirectedStreams
 	};
 
@@ -46,6 +46,13 @@ namespace Saturn {
 		void WaitForExit();
 		[[nodiscard]] int ResultOfProcess();
 		[[nodiscard]] std::wstring GetCurrentOutput( bool closeHandle = false );
+		[[nodiscard]] std::wstring StartAndGetOutput( const std::wstring& rWorkingDir );
+
+		inline const std::wstring GetCurrentLine() 
+		{
+			// Create temporary copy.
+			return m_OutputText;
+		}
 
 	private:
 		void Create( const std::wstring& rWorkingDir );
@@ -55,6 +62,7 @@ namespace Saturn {
 
 	private:
 		std::wstring m_CommandLine;
+		std::wstring m_OutputText;
 
 		void* m_Handle = nullptr;
 		ProcessCreateFlags m_Flags = ProcessCreateFlags::Normal;

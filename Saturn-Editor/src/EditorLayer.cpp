@@ -1787,6 +1787,20 @@ namespace Saturn {
 			ImGui::EndMenu();
 		}
 
+		if( ImGui::BeginMenu( "Edit" ) )
+		{
+			{
+				Auxiliary::ScopedDisabledFlag disabledIfRuntime( m_RequestRuntime );
+
+				// TODO: Disable if there's nothing to undo/redo.
+				if( ImGui::MenuItem( "Undo", "Ctrl+Z" ) )           GlobalUndoRedoGroup::Get().GlobalUndoRecent();
+				if( ImGui::MenuItem( "Redo", "Ctrl+Y" ) )           GlobalUndoRedoGroup::Get().GlobalRedoRecent();
+				if( ImGui::MenuItem( "Clear all action history" ) ) GlobalUndoRedoGroup::Get().ClearAll();
+			}
+
+			ImGui::EndMenu();
+		}
+
 		if( ImGui::BeginMenu( "Saturn" ) )
 		{
 			if( ImGui::MenuItem( "About" ) )        m_OpenAboutWindow ^= 1;
@@ -2376,6 +2390,53 @@ namespace Saturn {
 				m_JobModalOpen = false;
 				m_BlockingOperation->Reset();
 			}
+
+			ImGui::EndPopup();
+		}
+	}
+
+	void EditorLayer::DrawDistOptionsModal()
+	{
+		ImGui::OpenPopup( "Specify build options" );
+
+		if( ImGui::BeginPopupModal( "Specify build options", &m_ShowDistBuildOptions, ImGuiWindowFlags_NoSavedSettings ) )
+		{
+			ImGui::Text( "What would you like to do?" );
+
+			// NOTE: We aren't going to reset these values, which means that the next time the developer wants to build, the options that were selected will still be there.
+			Auxiliary::DrawBoolControl( "Copy build files", m_ShouldCopyBuildFiles );
+			Auxiliary::DrawBoolControl( "Build Shader Bundle", m_ShouldBuildShaderBundle );
+			Auxiliary::DrawBoolControl( "Build Asset Bundle", m_ShouldBuildAssetBundle );
+
+			ImGui::Separator();
+
+			ImGui::BeginHorizontal( "##SboOptions" );
+
+			if( ImGui::Button( "Build" ) )
+			{
+				if( !m_BlockingOperation )
+					m_BlockingOperation = Ref<JobProgress>::Create();
+
+				if( m_ShouldBuildShaderBundle )
+					CreateShaderBundleJob();
+
+				// TODO: Think of a better way for this... checking the sizes of the message boxes is not a good thing.
+				if( m_MessageBoxes.size() == 0 && m_ShouldBuildAssetBundle )
+				{
+					CreateAssetBundleJob();
+				}
+
+				m_ShowDistBuildOptions = false;
+				ImGui::CloseCurrentPopup();
+			}
+
+			if( ImGui::Button( "Cancel" ) )
+			{
+				m_ShowDistBuildOptions = false;
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndHorizontal();
 
 			ImGui::EndPopup();
 		}
@@ -3155,7 +3216,10 @@ namespace Saturn {
 				SaveFile();
 				SaveProject();
 
-				Project::GetActiveProject()->PrepForDist();
+				if( m_ShouldCopyBuildFiles )
+				{
+					Project::GetActiveProject()->PrepForDist();
+				}
 
 				m_BlockingOperation->SetStatus( "Building Shader bundle..." );
 				BuildShaderBundle();

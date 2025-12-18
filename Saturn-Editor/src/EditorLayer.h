@@ -107,6 +107,7 @@ namespace Saturn {
 		void DrawAssetDependencies();
 		void DrawSceneDirtyPopup();
 		void DrawBlockingActionModal();
+		void DrawDistOptionsModal();
 
 		// Viewport
 		void DrawViewport();
@@ -247,10 +248,16 @@ namespace Saturn {
 		// JobProgress
 		bool m_ShowOperation = false;
 
+		bool m_ShowDistBuildOptions = false;
+		bool m_ShouldBuildShaderBundle = false;
+		bool m_ShouldBuildAssetBundle = false;
+		bool m_ShouldCopyBuildFiles = false;
 		bool m_WasGizmoUsed = false;
 		bool m_LastRuntimeAttemptFailed = false;
 		bool m_FullscreenViewport = false;
 		bool m_PendingFullscreenChange = false;
+		bool m_ShouldRenderCameraPreview = false;
+		bool m_DisableViewportMovement = false;
 
 		// JobProgress
 		float m_OperationPercent = 0.0f;
@@ -272,6 +279,8 @@ namespace Saturn {
 		std::vector<EditorNotification> m_Notifications;
 		std::unordered_map<entt::entity, glm::mat4> m_GizmoOrignalTransforms;
 		std::unordered_map<entt::entity, std::tuple<glm::vec3, glm::vec3, glm::vec3>> m_GizmoModifiedTransforms;
+
+		std::function<void()> m_EventAfterPopup;
 
 		Ref<Scene> m_EditorScene = nullptr;
 		Ref<Scene> m_RuntimeScene = nullptr;

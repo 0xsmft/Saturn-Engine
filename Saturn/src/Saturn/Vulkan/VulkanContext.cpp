@@ -37,8 +37,7 @@
 #include "VulkanAllocator.h"
 
 #include "Saturn/Core/Timer.h"
-#include "SceneRenderer.h"
-#include "Renderer2D.h"
+#include "Renderer.h"
 #include "Helpers.h"
 
 // ImGui

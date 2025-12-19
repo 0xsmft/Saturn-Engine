@@ -139,6 +139,7 @@ namespace Saturn {
 		m_SyncTexture = Ref< Texture2D >::Create( "content/textures/editor/Sync.png", AddressingMode::ClampToEdge );
 		m_PointLightTexture = Ref< Texture2D >::Create( "content/textures/editor/Billboard_PointLight.png", AddressingMode::ClampToEdge, false );
 		m_ExclamationTexture = Ref< Texture2D >::Create( "content/textures/editor/Exclamation.png", AddressingMode::ClampToEdge );
+		m_StartErrorRuntimeTexture = Ref< Texture2D >::Create( "content/textures/editor/Play-Error.png", AddressingMode::ClampToEdge );
 
 		// Add all of our icons to the editor icons list so that we have use this anywhere else in the engine/editor.
 		EditorIcons::AddIcon( m_CheckerboardTexture );
@@ -150,6 +151,7 @@ namespace Saturn {
 		EditorIcons::AddIcon( m_SyncTexture );
 		EditorIcons::AddIcon( m_PointLightTexture );
 		EditorIcons::AddIcon( m_ExclamationTexture );
+		EditorIcons::AddIcon( m_StartErrorRuntimeTexture );
 
 		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Billboard_Audio.png", AddressingMode::Repeat, false ) );
 		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Billboard_AudioLooping.png", AddressingMode::Repeat, false ) );
@@ -164,7 +166,10 @@ namespace Saturn {
 		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Information_Small.png", AddressingMode::Repeat, true ) );
 		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Settings.png", AddressingMode::Repeat, true ) );
 		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/EditIcon.png", AddressingMode::Repeat, false ) );
-		
+		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Billboard_AIAgent.png", AddressingMode::Repeat, false ) );
+		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/FastForward.png", AddressingMode::Repeat, false ) );
+		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/NextMultiMedia.png", AddressingMode::Repeat, false ) );
+
 		// Create Panel Manager.
 		m_ImGuiWindowManager = Ref<ImGuiWindowManager>::Create();
 

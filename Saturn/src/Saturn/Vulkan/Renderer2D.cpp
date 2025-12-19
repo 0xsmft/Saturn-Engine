@@ -72,9 +72,9 @@ namespace Saturn {
 		m_QuadVertexPositions.reserve( 4 );
 
 		m_QuadVertexPositions.emplace_back( -0.5f, -0.5f, 0.0f, 1.0f );
-		m_QuadVertexPositions.emplace_back( -0.5f,  0.5f, 0.0f, 1.0f );
-		m_QuadVertexPositions.emplace_back( 0.5f,  0.5f, 0.0f, 1.0f  );
-		m_QuadVertexPositions.emplace_back( 0.5f, -0.5f, 0.0f, 1.0f  );
+		m_QuadVertexPositions.emplace_back( -0.5f, 0.5f, 0.0f, 1.0f );
+		m_QuadVertexPositions.emplace_back( 0.5f, 0.5f, 0.0f, 1.0f );
+		m_QuadVertexPositions.emplace_back( 0.5f, -0.5f, 0.0f, 1.0f );
 
 		// Setup vertex buffer
 		m_QuadVertexBuffers.resize( MAX_FRAMES_IN_FLIGHT );
@@ -216,7 +216,7 @@ namespace Saturn {
 
 	void Renderer2D::Reset()
 	{
-		uint32_t frame = Renderer::Get().GetCurrentFrame();
+		const uint32_t frame = Renderer::Get().GetCurrentFrame();
 
 		m_pCurrentQuad = m_CurrentQuadBase[ frame ];
 		m_QuadIndexCount = 0;
@@ -270,7 +270,7 @@ namespace Saturn {
 
 	void Renderer2D::SetViewportSize( uint32_t w, uint32_t h )
 	{
-		if( m_Width != w && m_Height != h )
+		if( m_Width != w || m_Height != h )
 		{
 			m_Width = w;
 			m_Height = h;

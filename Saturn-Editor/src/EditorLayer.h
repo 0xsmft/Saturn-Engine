@@ -88,6 +88,7 @@ namespace Saturn {
 		bool OnKeyPressed( RubyKeyEvent& rEvent );
 		bool OnMousePressed( RubyMouseEvent& rEvent );
 		void HandleSceneTravel( SceneTravelEvent& rEvent );
+		void HandleOpenFileCB( UUID newSceneID );
 
 		void SubmitSelectedMeshes();
 

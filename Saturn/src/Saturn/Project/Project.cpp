@@ -268,7 +268,7 @@ namespace Saturn {
 
 #endif
 
-		rootDir /= m_Config.Name;
+		rootDir /= "Saturn";
 
 		return rootDir;
 	}

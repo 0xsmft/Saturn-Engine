@@ -34,7 +34,10 @@
 #include "Saturn/Core/Renderer/RenderThread.h"
 
 #include "Saturn/Asset/AssetManager.h"
+
+// TOOD: #FixSceneRendererIncludes
 #include "Saturn/Vulkan/Renderer2D.h"
+#include "Saturn/Vulkan/AluraRenderer.h"
 
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
 #include "Saturn/ImGui/EditorIcons.h"

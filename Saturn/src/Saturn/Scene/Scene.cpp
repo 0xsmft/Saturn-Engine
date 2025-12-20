@@ -32,8 +32,10 @@
 #include "Entity.h"
 #include "Components.h"
 
-#include "Saturn/Vulkan/SceneRenderer.h"
+// TOOD: #FixSceneRendererIncludes
+#include "Saturn/Vulkan/AluraRenderer.h"
 #include "Saturn/Vulkan/Renderer2D.h"
+#include "Saturn/Vulkan/SceneRenderer.h"
 #include "Saturn/Vulkan/VulkanContext.h"
 
 #include "Saturn/Asset/Prefab.h"
@@ -57,6 +59,8 @@
 #include "Saturn/Serialisation/YAML/SceneSerialiser.h"
 
 #include "Saturn/Audio/AudioSystem.h"
+
+#include "Saturn/Animation/BoneJoint.h"
 
 #include "Saturn/ImGui/EditorIcons.h"
 #include "Saturn/ImGui/EntitySelectionManager.h"
@@ -299,6 +303,8 @@ namespace Saturn {
 
 		sceneRenderer->SetCamera( m_RendererCamera );
 		sceneRenderer->GetRenderer2D()->PreRender();
+		if( sceneRenderer->GetAluraRenderer() )
+			sceneRenderer->GetAluraRenderer()->PreRender();
 
 		//////////////////////////////////////////////////////////////////////////
 
@@ -627,10 +633,20 @@ namespace Saturn {
 		{
 			SharedPtr<Entity> parent = FindEntityByID( rParentID );
 			if( parent )
+			{
 				transform = GetTransformRelativeToParent( parent );
+				
+				if( auto* pAttachmentComp = entity->TryGetComponent<AttachmentPointComponent>(); pAttachmentComp && pAttachmentComp->pBoneJoint ) 
+				{
+					if( const auto& anim = parent->GetComponent<SkeletalMeshComponent>().LocalAnimator ) 
+					{
+						transform *= pAttachmentComp->pBoneJoint->GetBoneMatrix( anim );
+					}
+				}
+			}
 		}
 
-		return transform * entity->GetComponent<TransformComponent>().GetTransform();
+		return transform * entity->GetComponent<TransformComponent>().GetTransform(); /* <- entity local ts */
 	}
 
 	TransformComponent Scene::GetWorldSpaceTransform( const SharedPtr<Entity> entity )
@@ -772,6 +788,40 @@ namespace Saturn {
 
 	void Scene::OnModifyPrefab( Ref<Prefab> prefabAsset )
 	{
+		std::unordered_map<entt::entity, SharedPtr<Entity>> replace;
+
+		auto entities = GetAllEntitiesWith<PrefabComponent>();
+		for( auto& rEntity : entities )
+		{
+			const auto& rPrefabComp = rEntity->GetComponent<PrefabComponent>();
+
+			if( rPrefabComp.AssetID != prefabAsset->ID )
+				continue;
+
+			if( rPrefabComp.Modified )
+			{
+				// merge
+			}
+			else
+			{
+				replace[ rEntity->GetHandle() ] = CreatePrefab( prefabAsset );
+			}
+		}
+
+		for( auto& [id, rEntity] : replace )
+		{
+			auto& rOldEntity = m_EntityIDMap[ id ];
+
+			// Copy over core data
+			CopyComponentIfExists<RelationshipComponent>( rEntity->GetHandle(), rOldEntity->GetHandle(), m_Registry );
+			CopyComponentIfExists<IdComponent>( rEntity->GetHandle(), rOldEntity->GetHandle(), m_Registry );
+			CopyComponentIfExists<TagComponent>( rEntity->GetHandle(), rOldEntity->GetHandle(), m_Registry );
+			CopyComponentIfExists<TransformComponent>( rEntity->GetHandle(), rOldEntity->GetHandle(), m_Registry );
+
+			SAT_CORE_WARN( "Rebasing prefab entity {0}! (ASSET/{1})", rEntity->GetName(), prefabAsset->Name );
+
+			DeleteEntity( rOldEntity, false, rEntity->GetUUID() );
+		}
 	}
 
 	void Scene::TransferModifiedProperties( const SharedPtr<Entity>& rSourceEntity, SharedPtr<Entity>& rEntity, const std::string& rMetadataName )

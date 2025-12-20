@@ -431,6 +431,7 @@ namespace Saturn {
 	};
 
 	class Renderer2D;
+	class AluraRenderer;
 
 	class SceneRenderer : public RefTarget
 	{
@@ -467,6 +468,12 @@ namespace Saturn {
 		Ref<Pass> GetGeometryPass() { return m_RendererData.GeometryPass; }
 		const Ref<Pass> GetGeometryPass() const { return m_RendererData.GeometryPass; }
 
+		Ref<Pass> GetLateComposite() { return m_RendererData.LateCompositePass; }
+		const Ref<Pass> GetLateComposite() const { return m_RendererData.LateCompositePass; }
+
+		Ref<Framebuffer> GetLateCompositeFramebuffer() { return m_RendererData.LateCompositeFramebuffer; }
+		const Ref<Framebuffer> GetLateCompositeFramebuffer() const { return m_RendererData.LateCompositeFramebuffer; }
+
 		Ref<Image2D> CompositeImage();
 
 		void SetDynamicSky( float Turbidity, float Azimuth, float Inclination );
@@ -486,6 +493,7 @@ namespace Saturn {
 		void RenderSelectionNextFrame() { /*m_RendererData.PendingSelectionPass = true;*/ }
 
 		Ref<Renderer2D> GetRenderer2D() const;
+		Ref<AluraRenderer> GetAluraRenderer() const;
 
 	private:
 		void Init();
@@ -515,6 +523,7 @@ namespace Saturn {
 
 		void InitBuffers();
 		void InitRenderer2D();
+		void InitAlura();
 
 		void DirShadowMapPass();
 		void PreDepthPass();
@@ -545,6 +554,7 @@ namespace Saturn {
 		RendererData m_RendererData{};
 		Scene* m_pScene = nullptr;
 		Ref<Renderer2D> m_Renderer2D;
+		Ref<AluraRenderer> m_AluraRenderer;
 
 		std::unordered_map< StaticMeshKey, DrawCommand > m_DrawList;
 		std::unordered_map< StaticMeshKey, DrawCommand > m_ShadowMapDrawList;

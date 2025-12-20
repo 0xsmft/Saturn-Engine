@@ -39,6 +39,7 @@
 #include "ComputePipeline.h"
 #include "Renderer2D.h"
 #include "DefaultMeshes.h"
+#include "AluraRenderer.h"
 
 #include "Saturn/Animation/SkeletonAsset.h"
 
@@ -162,8 +163,9 @@ namespace Saturn {
 		}
 
 		//////////////////////////////////////////////////////////////////////////
-
+		// Subrenderers
 		InitRenderer2D();
+		InitAlura();
 	
 #if !defined(SAT_DIST)
 		Renderer::Get().AddShaderReloadCB( SAT_BIND_EVENT_FN( OnShaderReloaded ) );
@@ -1372,6 +1374,9 @@ namespace Saturn {
 
 		if( m_Renderer2D )
 			m_Renderer2D->SetViewportSize( w, h );
+
+		if( m_AluraRenderer )
+			m_AluraRenderer->SetViewportSize( w, h );
 	}
 
 	void SceneRenderer::Recreate()
@@ -2192,6 +2197,11 @@ namespace Saturn {
 		return m_Renderer2D;
 	}
 
+	Ref<AluraRenderer> SceneRenderer::GetAluraRenderer() const
+	{
+		return m_AluraRenderer;
+	}
+
 	void SceneRenderer::InitBuffers()
 	{
 		SAT_PF_EVENT();
@@ -2240,6 +2250,15 @@ namespace Saturn {
 		{
 			m_Renderer2D = Ref<Renderer2D>::Create();
 			m_Renderer2D->Init( m_RendererData.LateCompositePass, m_RendererData.LateCompositeFramebuffer );
+		}
+	}
+
+	void SceneRenderer::InitAlura()
+	{
+		if( !HasFlag( SceneRendererFlag_NoAlura ) )
+		{
+			m_AluraRenderer = Ref<AluraRenderer>::Create();
+			m_AluraRenderer->Init( m_RendererData.LateCompositePass, m_RendererData.LateCompositeFramebuffer );
 		}
 	}
 

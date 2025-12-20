@@ -29,7 +29,9 @@
 #include "sppch.h"
 #include "SubSceneRendererWindow.h"
 
+// TOOD: #FixSceneRendererIncludes
 #include "Saturn/Vulkan/Renderer2D.h"
+#include "Saturn/Vulkan/AluraRenderer.h"
 
 #include "Saturn/Core/Renderer/RenderThread.h"
 

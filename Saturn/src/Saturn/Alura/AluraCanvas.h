@@ -33,6 +33,7 @@
 
 #include "Saturn/Core/Base.h"
 #include "Saturn/Core/UUID.h"
+#include "Saturn/Core/Ruby/RubyEventType.h"
 
 #include <glm/glm.hpp>
 
@@ -61,14 +62,20 @@ namespace Saturn {
 		AluraCanvas( const std::string& rName, const glm::vec2& rSize, const glm::vec2& rPosition );
 		~AluraCanvas();
 
+		// Init
 		void Begin();
-		void Draw( Timestep ts );
+		void End( Timestep ts );
 		void Destory();
 
 		void SetContext( Ref<AluraRenderer> context );
 
 	public:
+		[[nodiscard]] AluraElement* GetLastElement();
+
+		// Drawing and widgets
 		AluraElement& AddRect( const glm::vec2& rSize, const glm::vec4& rColor );
+		
+		[[nodiscard]] bool AddButton( const glm::vec2& rSize, const glm::vec4& rColor );
 
 		void SetNextItemSize( const glm::vec2& rSize );
 		void SetNextItemPosition( const glm::vec2& rPosition );
@@ -78,6 +85,7 @@ namespace Saturn {
 
 		[[nodiscard]] bool IsItemHovered();
 		[[nodiscard]] bool IsItemClicked( RubyMouseButton mouseBtn );
+		void AlignItemCenterXY();
 
 	public:
 		glm::vec2 GetPosition() const { return m_Position; }
@@ -104,6 +112,10 @@ namespace Saturn {
 	private:
 		void AdvanceCursor( const glm::vec2& rSize );
 		bool IsMouseHoveringRect( const glm::vec2& rMin, const glm::vec2& rMax ) const;
+
+
+	private:
+		void InitStyle();
 
 	private:
 		std::string m_Name;

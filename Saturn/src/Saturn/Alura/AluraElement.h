@@ -99,15 +99,6 @@ namespace Saturn {
 			return *this;
 		}
 
-		AluraElement& CentreAlignX() { return *this; }
-		AluraElement& CentreAlignY() { return *this; }
-		
-		AluraElement& CentreAlign() 
-		{
-			CentreAlignX().CentreAlignY();
-			return *this;
-		}
-
 	public:
 		UUID GetID() const { return m_ElementID; }
 

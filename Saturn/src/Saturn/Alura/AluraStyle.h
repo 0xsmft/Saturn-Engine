@@ -42,6 +42,15 @@ namespace Saturn {
 		Count,
 	};
 
+	enum AluraColor
+	{
+		AluraColor_Text,
+		AluraColor_TextDisabled,
+		AluraColor_Button,
+		AluraColor_ButtonHovered,
+		AluraColor_Count,
+	};
+
 	struct AluraStyle
 	{
 		float Alpha;
@@ -50,6 +59,8 @@ namespace Saturn {
 		glm::vec2 ItemSpacing;
 		float IndentSpacing;
 		float WindowBorderSize;
+
+		std::array<glm::vec4, ( std::underlying_type_t<AluraColor> )AluraColor_Count> Colors;
 
 		AluraStyle() 
 		{

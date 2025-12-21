@@ -38,6 +38,17 @@ namespace Saturn {
 	AluraCanvas::AluraCanvas( const std::string& rName, const glm::vec2& rSize, const glm::vec2& rPosition )
 		: m_Name( rName ), m_Size( rSize ), m_Position( rPosition )
 	{
+		InitStyle();
+	}
+
+	void AluraCanvas::InitStyle()
+	{
+		m_Style.Colors.fill( glm::one<glm::vec4>() );
+
+		m_Style.Colors[ AluraColor_Text          ] = glm::one<glm::vec4>();
+		m_Style.Colors[ AluraColor_TextDisabled  ] = glm::vec4( 0.5f, 0.5f, 0.5f, 1.0f );
+		m_Style.Colors[ AluraColor_Button        ] = glm::vec4( 0.26f, 0.59f, 0.98f, 0.40f );
+		m_Style.Colors[ AluraColor_ButtonHovered ] = glm::vec4( 0.26f, 0.59f, 0.98f, 1.00f );
 	}
 
 	AluraCanvas::~AluraCanvas()
@@ -55,7 +66,7 @@ namespace Saturn {
 //		m_Renderer->SubmitRect( m_MousePosition, { m_MousePosition + glm::vec2{ 10.0f, 10.0f } }, { 1.0f, 0.0f, 0.0f, 1.0f } );
 	}
 
-	void AluraCanvas::Draw( Timestep ts )
+	void AluraCanvas::End( Timestep ts )
 	{
 		for( auto& rElement : m_Elements )
 		{
@@ -82,6 +93,11 @@ namespace Saturn {
 		m_Renderer = context;
 	}
 
+	AluraElement* AluraCanvas::GetLastElement()
+	{
+		return m_Elements.size() ? &m_Elements.back() : nullptr;
+	}
+
 	AluraElement& AluraCanvas::AddRect( const glm::vec2& rSize, const glm::vec4& rColor )
 	{
 		// Handle SetNextItemSize & SetNextItemPosition
@@ -104,6 +120,36 @@ namespace Saturn {
 		AdvanceCursor( rSize );
 
 		return m_Elements.back();
+	}
+
+	bool AluraCanvas::AddButton( const glm::vec2& rSize, const glm::vec4& rColor )
+	{
+		// Handle SetNextItemSize & SetNextItemPosition
+		glm::vec2 sizeDependingLastCall = rSize;
+		glm::vec2 posDependingLastCall = m_Layout.CursorPos;
+
+		if( m_WantToSetItemSize )
+		{
+			sizeDependingLastCall = m_PendingNextItemSize;
+			m_WantToSetItemSize = false;
+		}
+
+		if( m_WantToSetItemPosition )
+		{
+			posDependingLastCall = m_PendingNextItemPosition;
+			m_WantToSetItemPosition = false;
+		}
+
+		auto& rElement = m_Elements.emplace_back( "##noname", posDependingLastCall, sizeDependingLastCall, rColor );
+		AdvanceCursor( rSize );
+
+		// Hit tests
+		if( IsItemHovered() )
+		{
+			rElement.m_Color = m_Style.Colors[ AluraColor_ButtonHovered ];
+		}
+
+		return IsItemClicked( RubyMouseButton_Left );
 	}
 
 	void AluraCanvas::SetNextItemSize( const glm::vec2& rSize )
@@ -142,6 +188,16 @@ namespace Saturn {
 	bool AluraCanvas::IsItemClicked( RubyMouseButton mouseBtn )
 	{
 		return Input::Get().MouseButtonPressed( mouseBtn ) && IsItemHovered();
+	}
+
+	void AluraCanvas::AlignItemCenterXY()
+	{
+		auto* pElement = GetLastElement();
+		if( pElement )
+		{
+			pElement->m_Position.x = ( m_Size.x - pElement->m_Size.x ) * 0.5f;
+			pElement->m_Position.y = ( m_Size.y - pElement->m_Size.y ) * 0.5f;
+		}
 	}
 
 	void AluraCanvas::AdvanceCursor( const glm::vec2& rSize )

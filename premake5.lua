@@ -37,6 +37,9 @@ IncludeDir["KTX_Software"] = "Saturn/vendor/KTX-Software/include"
 IncludeDir["Recast"] = "Saturn/vendor/Recast/RecastAndDetour/Include"
 IncludeDir["acl"] = "Saturn/vendor/acl/include"
 IncludeDir["rtm"] = "Saturn/vendor/acl/rtm/include"
+IncludeDir["Freetype"] = "Saturn/vendor/freetype/include"
+IncludeDir["MSDF"] = "Saturn/vendor/msdf-atlas-gen/msdfgen"
+IncludeDir["MSDFAG"] = "Saturn/vendor/msdf-atlas-gen"
 
 group "Dependencies"
 	include "Saturn/vendor/imgui"
@@ -45,6 +48,8 @@ group "Dependencies"
 	include "Saturn/vendor/tracy"
 	include "Saturn/vendor/zlib"
 	include "Saturn/vendor/Recast"
+	include "Saturn/vendor/Freetype"
+	include "Saturn/vendor/msdf-atlas-gen"
 
 group "Engine"
 project "Saturn"
@@ -130,6 +135,9 @@ project "Saturn"
 		"%{IncludeDir.Recast}",
 		"%{IncludeDir.acl}",
 		"%{IncludeDir.rtm}",
+		"%{IncludeDir.freetype}",
+		"%{IncludeDir.MSDF}",
+		"%{IncludeDir.MSDFAG}",
 
 		"%{IncludeDir.SharedStorage}"
 	}
@@ -142,6 +150,9 @@ project "Saturn"
 		"Tracy",
 		"zlib",
 		"Recast",
+		"Freetype",
+		"MSDFGen",
+		"MSDF-Atlas-Gen",
 
 		"Saturn-SharedStorage"
 	}
@@ -326,6 +337,9 @@ project "Saturn-Editor"
 		"%{IncludeDir.Recast}",
 		"%{IncludeDir.acl}",
 		"%{IncludeDir.rtm}",
+		"%{IncludeDir.freetype}",
+		"%{IncludeDir.MSDF}",
+		"%{IncludeDir.MSDFAG}",
 
 		"%{IncludeDir.SharedStorage}"
 	}
@@ -477,6 +491,11 @@ project "Saturn-ProjectBrowser"
 		"%{IncludeDir.Tracy}",
 		"%{IncludeDir.KTX_Software}",
 		"%{IncludeDir.Recast}",
+		"%{IncludeDir.freetype}",
+		"%{IncludeDir.MSDF}",
+		"%{IncludeDir.MSDFAG}",
+		"%{IncludeDir.acl}",
+		"%{IncludeDir.rtm}",
 
 		"%{IncludeDir.SharedStorage}"
 	}

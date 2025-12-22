@@ -40,6 +40,8 @@
 // TODO: Should not be included...
 #include "Saturn/Animation/Animator.h"
 
+#include "Saturn/Animation/BoneJoint.h"
+
 #include <string>
 
 #include <glm/glm.hpp>
@@ -177,7 +179,7 @@ namespace Saturn {
 
 		operator Ref<Saturn::SkeletalMesh>() { return Mesh; }
 	};
-
+	
 	struct DirectionalLightComponent
 	{
 		glm::vec3 Radiance = { 1.0f, 1.0f, 1.0f };
@@ -364,6 +366,11 @@ namespace Saturn {
 		NavigationMeshSpecificationComponent( const NavigationMeshSpecificationComponent& other ) = default;
 	};
 
+	struct AttachmentPointComponent
+	{
+		BoneJoint* pBoneJoint = nullptr;
+	};
+
 	template<typename... V>
 	struct ComponentGroup {};
 
@@ -374,7 +381,8 @@ namespace Saturn {
 		BoxColliderComponent, SphereColliderComponent, CapsuleColliderComponent, RigidbodyComponent,
 		AudioPlayerComponent, AudioListenerComponent,
 		BillboardComponent,
-		NavigationMeshSpecificationComponent>;
+		NavigationMeshSpecificationComponent,
+		AttachmentPointComponent>;
 
 	// Without TagComponent, IdComponent, RelationshipComponent
 	// We could use templates and concepts for this however that will add a new layer of complexity and ambiguity.
@@ -385,5 +393,6 @@ namespace Saturn {
 		BoxColliderComponent, SphereColliderComponent, CapsuleColliderComponent, RigidbodyComponent,
 		AudioPlayerComponent, AudioListenerComponent,
 		BillboardComponent,
-		NavigationMeshSpecificationComponent>;
+		NavigationMeshSpecificationComponent,
+		AttachmentPointComponent>;
 }

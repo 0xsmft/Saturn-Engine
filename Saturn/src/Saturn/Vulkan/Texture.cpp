@@ -439,6 +439,38 @@ namespace Saturn {
 		VulkanContext::Get().EndSingleTimeCommands( CommandBuffer );
 	}
 
+	static size_t GetImageMemorySize( ImageFormat format, uint32_t width, uint32_t height ) 
+	{
+		switch( format )
+		{
+			default:
+			case Saturn::ImageFormat::DEPTH32F:
+			case Saturn::ImageFormat::DEPTH24STENCIL8:
+			case Saturn::ImageFormat::None: break;
+
+			case Saturn::ImageFormat::RGBA8:
+				return width * height * 4;
+
+			case Saturn::ImageFormat::RGBA16F:
+				return width * height * 4 * sizeof( uint16_t );
+
+			case Saturn::ImageFormat::RGBA32F:
+				return width * height * 4 * sizeof( float );
+
+			case Saturn::ImageFormat::RGB32F:
+				return width * height * 3 * sizeof( float );
+
+			case Saturn::ImageFormat::BGRA8:
+				return width * height * 4;
+
+			case Saturn::ImageFormat::RED8:
+				return width * height;
+		}
+
+		SAT_CORE_ASSERT( false );
+		return 0;
+	}
+
 	//////////////////////////////////////////////////////////////////////////
 	// TEXTURE 2D
 
@@ -677,7 +709,7 @@ namespace Saturn {
 
 	Buffer Texture2D::X31CopyToBuffer()
 	{
-		VkDeviceSize ImageSize = ( uint64_t ) m_Width * ( uint64_t ) m_Height * 4;
+		VkDeviceSize ImageSize = GetImageMemorySize( SaturnFormat( m_ImageFormat ), m_Width, m_Height );
 
 		// Copy image to vulkan buffer
 		VkBufferCreateInfo BufferCreateInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
@@ -733,7 +765,7 @@ namespace Saturn {
 
 	Buffer Texture2D::GetMipTextureData( uint32_t w, uint32_t h, uint32_t mip )
 	{
-		const VkDeviceSize ImageSize = ( uint64_t ) w * ( uint64_t ) h * 4;
+		const VkDeviceSize ImageSize = GetImageMemorySize( SaturnFormat( m_ImageFormat ), m_Width, m_Height );
 
 		// Copy image to vulkan buffer
 		VkBufferCreateInfo BufferCreateInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
@@ -791,7 +823,7 @@ namespace Saturn {
 	{
 		auto pAllocator = VulkanContext::Get().GetVulkanAllocator();
 
-		const VkDeviceSize ImageSize = m_Width * m_Height * 4ull;
+		const VkDeviceSize ImageSize = GetImageMemorySize( SaturnFormat( m_ImageFormat ), m_Width, m_Height );
 
 		const auto MipCount = GetMipMapLevels();
 

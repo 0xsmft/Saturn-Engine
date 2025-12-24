@@ -44,6 +44,8 @@
 
 #include "Saturn/Project/Project.h"
 
+#include "Saturn/Alura/AluraFont.h"
+
 #include "ImGuiAuxiliary.h"
 #include "EditorIcons.h"
 
@@ -568,6 +570,87 @@ namespace Saturn {
 			if( ImGui::Button( "Cancel" ) )
 			{
 				Close();
+				m_ModificationState = AssetImportModificationState::NotModified;
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndHorizontal();
+
+			if( PopupModified )
+			{
+				AssetManagerSerialiser ars;
+				ars.Serialise();
+
+				Close();
+				m_ModificationState = AssetImportModificationState::Modified;
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndPopup();
+		}
+	}
+	
+	//////////////////////////////////////////////////////////////////////////
+	// FONT IMPORT POPUP
+
+	FontImportPopup::FontImportPopup( const std::filesystem::path& rAssetToImportPath, const std::filesystem::path& rDestinationPath )
+		: AssetImportPopupBase( rAssetToImportPath, rDestinationPath )
+	{
+	}
+
+	void FontImportPopup::Initialise()
+	{
+		m_Open = true;
+		m_IsReady.store( true );
+	}
+
+	void FontImportPopup::OnImGuiRender()
+	{
+		if( m_Open )
+			ImGui::OpenPopup( "Import Font##IMPORT_FONT" );
+
+		ImGui::SetNextWindowSize( { 350.0F, 0.0F } );
+		ImGui::SetNextWindowPos( ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Appearing, ImVec2( 0.5f, 0.5f ) );
+
+		if( ImGui::BeginPopupModal( "Import Font##IMPORT_FONT", &m_Open, ImGuiWindowFlags_NoSavedSettings ) )
+		{
+			bool PopupModified = false;
+
+			ImGui::Text( "Path:" );
+			ImGui::BeginHorizontal( "##inputH" );
+
+			auto pathStr = m_AssetToImportPath.string();
+			ImGui::InputText( "##path", ( char* ) pathStr.c_str(), pathStr.size(), ImGuiInputTextFlags_ReadOnly );
+
+			if( ImGui::Button( "Change" ) )
+			{
+				m_AssetToImportPath = Application::Get().OpenFile( L"Supported asset types (*.ttf)|*.ttf" );
+			}
+
+			ImGui::EndHorizontal();
+
+			ImGui::BeginHorizontal( "##actionsH" );
+
+			if( ImGui::Button( "Create" ) )
+			{
+				const auto id = AssetManager::Get().CreateAsset( AssetType::Font );
+				auto asset = AssetManager::Get().FindAsset( id );
+				auto assetPath = m_DestinationPath / m_AssetToImportPath.filename();
+
+				// Replace Extension for font asset
+				assetPath.replace_extension( ".saf" );
+				asset->SetAbsolutePath( assetPath );
+
+				// Create the asset.
+				auto font = Ref<AluraFont>::Create( m_AssetToImportPath, asset );
+
+				PopupModified = true;
+			}
+
+			if( ImGui::Button( "Cancel" ) )
+			{
+				Close();
+				PopupModified = false;
 				m_ModificationState = AssetImportModificationState::NotModified;
 				ImGui::CloseCurrentPopup();
 			}

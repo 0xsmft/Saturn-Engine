@@ -64,11 +64,22 @@ namespace Saturn {
 	{
 		m_VertexBuffers.resize( MAX_FRAMES_IN_FLIGHT );
 		m_VertexBase.resize( MAX_FRAMES_IN_FLIGHT );
+		
+		m_TextVertexBase.resize( MAX_FRAMES_IN_FLIGHT );
+		m_TextVertexBuffers.resize( MAX_FRAMES_IN_FLIGHT );
 
 		for( size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
 		{
 			m_VertexBuffers[ i ] = Ref<VertexBuffer>::Create( s_MaxVertices * sizeof( AluraVertex ) );
 			m_VertexBase[ i ] = new AluraVertex[ s_MaxVertices ];
+
+			m_TextVertexBuffers[ i ] = Ref<VertexBuffer>::Create( s_MaxVertices * sizeof( AluraTextVertex ) );
+			m_TextVertexBase[ i ] = new AluraTextVertex[ s_MaxVertices ];
+
+#if !defined(SAT_DIST)
+			m_VertexBuffers[ i ]->SetDebugName( std::format( "AluraQuadVB/{0}", i ) );
+			m_TextVertexBuffers[ i ]->SetDebugName( std::format( "AluraTxtVB/{0}", i ) );
+#endif
 		}
 
 		uint32_t* pQuadBuffer = new uint32_t[ s_MaxIndices ];
@@ -87,7 +98,10 @@ namespace Saturn {
 		}
 
 		m_IndexBuffer = Ref<IndexBuffer>::Create( pQuadBuffer, s_MaxIndices );
+		m_TextIndexBuffer = Ref<IndexBuffer>::Create( pQuadBuffer, s_MaxIndices );
 		delete[] pQuadBuffer;
+
+		m_Textures[ 0 ] = Renderer::Get().GetPinkTexture();
 	}
 
 	void AluraRenderer::InitPhase2()
@@ -96,6 +110,12 @@ namespace Saturn {
 		{
 			m_Shader = ShaderLibrary::Get().FindOrLoad( "Primitives2D", "content/shaders/Primitives2D.glsl" );
 			m_Material = Ref<Material>::Create( m_Shader, "Primitives2DMaterial" );
+		}
+
+		if( !m_TextShader )
+		{
+			m_TextShader = ShaderLibrary::Get().FindOrLoad( "MsdfText", "content/shaders/MsdfText.glsl" );
+			m_TextMaterial = Ref<Material>::Create( m_TextShader, "MsdfTextMaterial" );
 		}
 
 		PipelineSpecification PipelineSpec{};
@@ -114,6 +134,18 @@ namespace Saturn {
 		};
 
 		m_Pipeline = Ref<Pipeline>::Create( PipelineSpec );
+
+		// Text pipeline
+		PipelineSpec.Name = "Alura/Text";
+		PipelineSpec.Shader = m_TextShader;
+		PipelineSpec.VertexLayout = {
+			{ ShaderDataType::Float2, "a_Position" },
+			{ ShaderDataType::Float2, "a_TexCoord" },
+			{ ShaderDataType::Float4, "a_Color" },
+			{ ShaderDataType::Float, "a_TexIndex" },
+		};
+
+		m_TextPipeline = Ref<Pipeline>::Create( PipelineSpec );
 	}
 
 	void AluraRenderer::Terminate()
@@ -122,6 +154,17 @@ namespace Saturn {
 		for( auto buffer : m_VertexBase )
 		{
 			delete[] buffer;
+		}
+
+		m_TextVertexBuffers.clear();
+		for( auto buffer : m_TextVertexBase )
+		{
+			delete[] buffer;
+		}
+
+		for( auto& texture : m_Textures )
+		{
+			texture.Reset();
 		}
 	}
 
@@ -138,10 +181,15 @@ namespace Saturn {
 	void AluraRenderer::PreRender()
 	{
 		const uint32_t frame = Renderer::Get().GetCurrentFrame();
-		m_VertexCount = 0;
+		
+		m_QuadVertexCount = 0;
+		m_QuadIndexCount = 0;
 		m_pVertexPtr = m_VertexBase[ frame ];
 
-		m_IndexCount = 0;
+		m_TextIndexCount = 0;
+		m_pTextVertexPtr = m_TextVertexBase[ frame ];
+
+		m_CurrentTextureSlot = 1;
 	}
 
 	void AluraRenderer::Render()
@@ -179,9 +227,9 @@ namespace Saturn {
 		// Flip vulkan viewport so that we render at top-left origin.
 		VkViewport Viewport = {};
 		Viewport.x = 0;
-		Viewport.y = ( float ) m_Height;
+		Viewport.y = 0;
 		Viewport.width = ( float ) m_Width;
-		Viewport.height = -( float ) m_Height;
+		Viewport.height = ( float ) m_Height;
 		Viewport.minDepth = 0.0f;
 		Viewport.maxDepth = 1.0f;
 
@@ -192,8 +240,7 @@ namespace Saturn {
 
 		const uint32_t frame = Renderer::Get().GetCurrentFrame();
 
-		const glm::vec2 scale{ 2.0f / m_Width, 2.0f / m_Height };
-		const glm::vec2 translation{ -1.0f - m_Position.x * scale.x, -1.0f - m_Position.y * scale.y };
+		const auto projection = glm::ortho( 0.0f, ( float ) m_Width, ( float ) m_Height, 0.0f );
 
 		const uint32_t dataSize = ( uint32_t ) ( ( uint8_t* ) m_pVertexPtr - ( uint8_t* ) m_VertexBase[ frame ] );
 		if( dataSize >= 1 )
@@ -204,15 +251,39 @@ namespace Saturn {
 
 			m_Pipeline->Bind( m_CommandBuffer );
 
-			m_Material->SetPC( "u_Transform.Scale", scale );
-			m_Material->SetPC( "u_Transform.Translate", translation );
+			m_Material->SetPC( "u_Transform.Projection", projection );
 			m_Material->SetResource( "u_InputTexture", Renderer::Get().GetPinkTexture() );
 
 			m_Material->Bind( m_CommandBuffer, m_Pipeline->GetPipelineLayout(), {} );
 
 			vkCmdPushConstants( m_CommandBuffer, m_Pipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, ( uint32_t ) m_Material->GetPushConstantData().Size, m_Material->GetPushConstantData().Data );
 
-			vkCmdDrawIndexed( m_CommandBuffer, m_IndexCount, 1, 0, 0, 0 );
+			vkCmdDrawIndexed( m_CommandBuffer, m_QuadIndexCount, 1, 0, 0, 0 );
+		}
+
+		const uint32_t textDataSize = ( uint32_t ) ( ( uint8_t* ) m_pTextVertexPtr - ( uint8_t* ) m_TextVertexBase[ frame ] );
+		if( textDataSize >= 1 )
+		{
+			m_TextVertexBuffers[ frame ]->Reallocate( m_TextVertexBase[ frame ], textDataSize );
+			m_TextVertexBuffers[ frame ]->Bind( m_CommandBuffer );
+			m_TextIndexBuffer->Bind( m_CommandBuffer );
+
+			for( uint32_t i = 0; i < m_Textures.size(); i++ )
+			{
+				if( m_Textures[ i ] )
+					m_TextMaterial->SetResource( "u_FontAtlases", m_Textures[ i ], i );
+				else
+					m_TextMaterial->SetResource( "u_FontAtlases", Renderer::Get().GetPinkTexture(), i );
+			}
+			
+			m_TextMaterial->SetPC( "u_Transform.Projection", projection );
+
+			m_TextMaterial->Bind( m_CommandBuffer, m_TextPipeline->GetPipelineLayout(), {} );
+			m_TextPipeline->Bind( m_CommandBuffer );
+
+			vkCmdPushConstants( m_CommandBuffer, m_TextPipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, ( uint32_t ) m_TextMaterial->GetPushConstantData().Size, m_TextMaterial->GetPushConstantData().Data );
+
+			vkCmdDrawIndexed( m_CommandBuffer, m_TextIndexCount, 1, 0, 0, 0 );
 		}
 
 		m_TargetRenderPass->EndPass();
@@ -240,8 +311,54 @@ namespace Saturn {
 		m_pVertexPtr->TexCoord = glm::vec2{ 0.0f, 1.0f };
 		++m_pVertexPtr;
 
-		m_VertexCount += 4;
-		m_IndexCount += 6;
+		m_QuadVertexCount += 4;
+		m_QuadIndexCount += 6;
+	}
+
+	void AluraRenderer::SubmitText( const glm::vec2& rMin, const glm::vec2& rMax, const glm::vec2& rTexCoordMin, const glm::vec2& rTexCoordMax, const glm::vec4& rColor, Ref<Texture2D> atlasTexture, const glm::vec2& rCursorPos )
+	{
+		int textureID = 0;
+		for( uint32_t i = 1; i < m_CurrentTextureSlot; ++i )
+		{
+			if( m_Textures[ i ] == atlasTexture )
+			{
+				textureID = i;
+				break;
+			}
+		}
+
+		if( textureID == 0 )
+		{
+			textureID = m_CurrentTextureSlot;
+			m_Textures[ textureID ] = atlasTexture;
+			++m_CurrentTextureSlot;
+		}
+
+		m_pTextVertexPtr->Position = rMin;
+		m_pTextVertexPtr->Color = rColor;
+		m_pTextVertexPtr->TexCoord = rTexCoordMin;
+		m_pTextVertexPtr->TextureIndex = textureID;
+		++m_pTextVertexPtr;
+		
+		m_pTextVertexPtr->Position = glm::vec2{ rMin.x, rMax.y };
+		m_pTextVertexPtr->Color = rColor;
+		m_pTextVertexPtr->TexCoord = { rTexCoordMin.x, rTexCoordMax.y };
+		m_pTextVertexPtr->TextureIndex = textureID;
+		++m_pTextVertexPtr;
+
+		m_pTextVertexPtr->Position = rMax;
+		m_pTextVertexPtr->Color = rColor;
+		m_pTextVertexPtr->TexCoord = rTexCoordMax;
+		m_pTextVertexPtr->TextureIndex = textureID;
+		++m_pTextVertexPtr;
+
+		m_pTextVertexPtr->Position = glm::vec2{ rMax.x, rMin.y };
+		m_pTextVertexPtr->Color = rColor;
+		m_pTextVertexPtr->TexCoord = { rTexCoordMax.x, rTexCoordMin.y };
+		m_pTextVertexPtr->TextureIndex = textureID;
+		++m_pTextVertexPtr;
+
+		m_TextIndexCount += 6;
 	}
 
 }

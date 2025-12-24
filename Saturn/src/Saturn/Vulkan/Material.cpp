@@ -145,7 +145,10 @@ namespace Saturn {
 
 		m_DescriptorSets[ frame ] = m_Shader->AllocateDescriptorSet( m_Set, true );
 
+		const size_t reservedSize = m_DescriptorSetTemplate.SampledImages.size() + m_DescriptorSetTemplate.StorageImages.size() + m_DescriptorSetTemplate.UniformBuffers.size() + m_DescriptorSetTemplate.StorageBuffers.size();
+
 		std::vector<VkWriteDescriptorSet> pendingWds;
+		pendingWds.reserve( reservedSize );
 
 		// Sampled images
 		for( auto& texture : m_DescriptorSetTemplate.SampledImages )
@@ -187,14 +190,16 @@ namespace Saturn {
 		// Texture Arrays
 		for( auto& [name, textures] : m_TextureArrays )
 		{
-			std::vector<VkDescriptorImageInfo> ImageInfos;
+			std::vector<VkDescriptorImageInfo> ImageInfos( textures.size() );
 
+			size_t index = 0;
 			for( auto& texture : textures )
 			{
-				ImageInfos.push_back( texture->GetDescriptorInfo() );
+				ImageInfos[ index ] = texture->GetDescriptorInfo();
+				++index;
 			}
 
-			auto Itr = std::find_if( m_DescriptorSetTemplate.SampledImages.begin(), m_DescriptorSetTemplate.SampledImages.end(),
+			const auto Itr = std::find_if( m_DescriptorSetTemplate.SampledImages.begin(), m_DescriptorSetTemplate.SampledImages.end(),
 				[ name ]( const ShaderSampledImage& rImage )
 			{
 				return rImage.Name == name;

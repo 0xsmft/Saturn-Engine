@@ -52,6 +52,7 @@
 #include <Saturn/Vulkan/Renderer2D.h>
 #include <Saturn/Vulkan/VulkanImageAux.h>
 #include <Saturn/Vulkan/DefaultMeshes.h>
+#include <Saturn/Vulkan/AluraRenderer.h>
 
 #include <Saturn/Core/Maths.h>
 #include <Saturn/Core/StringAuxiliary.h>
@@ -70,6 +71,8 @@
 #include <Saturn/Asset/AssetManager.h>
 #include <Saturn/Asset/Prefab.h>
 
+#include <Saturn/Animation/SkeletonAsset.h>
+
 #include <Saturn/GameFramework/Core/GameModule.h>
 #include <Saturn/GameFramework/Core/ClassMetadataHandler.h>
 
@@ -81,6 +84,8 @@
 #include <Saturn/Project/Premake.h>
 
 #include <Saturn/Runtime/RuntimeEvents.h>
+
+#include <Saturn/Alura/AluraCanvas.h>
 
 #include <ImGuizmo/ImGuizmo.h>
 

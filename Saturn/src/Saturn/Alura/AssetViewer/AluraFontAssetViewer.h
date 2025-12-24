@@ -26,32 +26,30 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "AssetImporter.h"
+#pragma once
+
+#include "Saturn/ImGui/AssetViewer.h"
+
+#include "Saturn/Alura/AluraFont.h"
+
+struct ImFont;
 
 namespace Saturn {
 
-	AssetImporter::~AssetImporter()
+	class AluraFontAssetViewer : public AssetViewer
 	{
-		m_AssetSerialisers.clear();
-	}
+	public:
+		AluraFontAssetViewer( AssetID id );
+		virtual ~AluraFontAssetViewer();
 
-	void AssetImporter::Init()
-	{
-		m_AssetSerialisers[ AssetType::StaticMesh		   ] = std::make_unique<StaticMeshAssetSerialiser>();
-		m_AssetSerialisers[ AssetType::SkeletalMesh		   ] = std::make_unique<SkeletalMeshAssetSerialiser>();
-		m_AssetSerialisers[ AssetType::Material			   ] = std::make_unique<MaterialAssetSerialiser>();
-		m_AssetSerialisers[ AssetType::Sound			   ] = std::make_unique<SoundSpecificationAssetSerialiser>();
-		m_AssetSerialisers[ AssetType::Prefab			   ] = std::make_unique<PrefabSerialiser>();
-		m_AssetSerialisers[ AssetType::Skeleton            ] = std::make_unique<SkeletonAssetSerialiser>();
-		m_AssetSerialisers[ AssetType::PhysicsMaterial     ] = std::make_unique<PhysicsMaterialAssetSerialiser>();
-		m_AssetSerialisers[ AssetType::BehaviourTreeMemory ] = std::make_unique<BehaviourTreeMemorySpecAssetSerialiser>();
-		m_AssetSerialisers[ AssetType::SkeletalAnimation ] = std::make_unique<SkeletalAnimationAssetSerialiser>();
-		m_AssetSerialisers[ AssetType::Font ]              = std::make_unique<AluraFontAssetSerialiser>();
-	}
+		void OnImGuiRender() override;
+		void OnUpdate( Timestep ts ) override;
+		void OnEvent( Event& rEvent ) override;
 
-	bool AssetImporter::TryLoadData( Ref<Asset>& rAsset )
-	{
-		return m_AssetSerialisers[ rAsset->Type ]->TryLoadData( rAsset );
-	}
+	private:
+		Ref<AluraFont> m_Font;
+		ImFont* m_pLoadedImGuiFont = nullptr;
+		bool m_AttemptedToLoadFont = false;
+	};
+
 }

@@ -27,31 +27,91 @@
 */
 
 #include "sppch.h"
-#include "AssetImporter.h"
+#include "AluraFontAssetViewer.h"
+
+#include "Saturn/Asset/AssetManager.h"
+
+#include "Saturn/ImGui/ImGuiAuxiliary.h"
+
+#include <imgui.h>
 
 namespace Saturn {
 
-	AssetImporter::~AssetImporter()
+	AluraFontAssetViewer::AluraFontAssetViewer( AssetID id )
+		: AssetViewer( id )
 	{
-		m_AssetSerialisers.clear();
+		m_AssetType = AssetType::Font;
+		m_Open = true;
+
+		m_Font = AssetManager::Get().GetAssetAs<AluraFont>( m_AssetID );
+		m_Name = std::format( "Alura Font - {0}##{1}", m_Font->Name, ( uint64_t ) m_Font->ID );
 	}
 
-	void AssetImporter::Init()
+	AluraFontAssetViewer::~AluraFontAssetViewer()
 	{
-		m_AssetSerialisers[ AssetType::StaticMesh		   ] = std::make_unique<StaticMeshAssetSerialiser>();
-		m_AssetSerialisers[ AssetType::SkeletalMesh		   ] = std::make_unique<SkeletalMeshAssetSerialiser>();
-		m_AssetSerialisers[ AssetType::Material			   ] = std::make_unique<MaterialAssetSerialiser>();
-		m_AssetSerialisers[ AssetType::Sound			   ] = std::make_unique<SoundSpecificationAssetSerialiser>();
-		m_AssetSerialisers[ AssetType::Prefab			   ] = std::make_unique<PrefabSerialiser>();
-		m_AssetSerialisers[ AssetType::Skeleton            ] = std::make_unique<SkeletonAssetSerialiser>();
-		m_AssetSerialisers[ AssetType::PhysicsMaterial     ] = std::make_unique<PhysicsMaterialAssetSerialiser>();
-		m_AssetSerialisers[ AssetType::BehaviourTreeMemory ] = std::make_unique<BehaviourTreeMemorySpecAssetSerialiser>();
-		m_AssetSerialisers[ AssetType::SkeletalAnimation ] = std::make_unique<SkeletalAnimationAssetSerialiser>();
-		m_AssetSerialisers[ AssetType::Font ]              = std::make_unique<AluraFontAssetSerialiser>();
 	}
 
-	bool AssetImporter::TryLoadData( Ref<Asset>& rAsset )
+	void AluraFontAssetViewer::OnImGuiRender()
 	{
-		return m_AssetSerialisers[ rAsset->Type ]->TryLoadData( rAsset );
+		if( ImGui::Begin( m_Name.c_str(), &m_Open ) )
+		{
+			ImGui::Text( "Alura Font" );
+			ImGui::Text( "Font name: %s", m_Font->GetFontName().c_str() );
+			ImGui::Separator();
+
+			const auto texture = m_Font->GetTexture();
+			Auxiliary::Image( texture, ImVec2{ ( float ) texture->Width(), ( float ) texture->Height() } );
+
+			if( ImGui::BeginItemTooltip() )
+			{
+				ImGui::Text( "%s - Multi-Channel True Signed Distance Field (MTSDF), %ix%i", m_Font->GetFontName().c_str(), texture->Width(), texture->Height() );
+				ImGui::EndTooltip();
+			}
+
+			if( m_pLoadedImGuiFont )
+			{
+				ImGui::Separator();
+				ImGui::PushFont( m_pLoadedImGuiFont );
+
+				ImGui::Text( "abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ 1234567890-=_[]{};:'@#~,.<>/?|\\`!$%^&*()\"\'" );
+
+				ImGui::Separator();
+				
+				ImGui::Text( "18" );
+				ImGui::SameLine();
+				ImGui::Text( "The quick brown fox jumps over the lazy dog. 1234567890" );
+
+				ImGui::PopFont();
+			}
+			else
+			{
+				ImGui::TextColored( { 1.0f, 0.0f, 0.0f, 1.0f }, "ImGui was unable to load the font..." );
+			}
+		}
+
+		ImGui::End();
+
+		/* TODO: In ImGui version 1.92, dynamic fonts will be supported, meaning that we can unload the font at anytime.
+		if( !m_Open )
+		{
+			ImGuiIO& rIO = ImGui::GetIO();
+			rIO.Fonts->PopFont( m_pLoadedImGuiFont );
+		}
+		*/
 	}
+
+	void AluraFontAssetViewer::OnUpdate( Timestep ts )
+	{
+		if( !m_AttemptedToLoadFont && !m_pLoadedImGuiFont )
+		{
+			ImGuiIO& rIO = ImGui::GetIO();
+			m_pLoadedImGuiFont = rIO.Fonts->AddFontFromFileTTF( m_Font->GetFontFilepath().string().c_str(), 18.0f );
+			m_AttemptedToLoadFont = true;
+		}
+	}
+
+	void AluraFontAssetViewer::OnEvent( Event& rEvent )
+	{
+	}
+
 }

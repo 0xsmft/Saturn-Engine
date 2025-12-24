@@ -30,6 +30,7 @@
 
 #include "AluraElement.h"
 #include "AluraStyle.h"
+#include "AluraFont.h"
 
 #include "Saturn/Core/Base.h"
 #include "Saturn/Core/UUID.h"
@@ -74,6 +75,8 @@ namespace Saturn {
 
 		// Drawing and widgets
 		AluraElement& AddRect( const glm::vec2& rSize, const glm::vec4& rColor );
+
+		AluraElement& AddText( const std::string& rText, Ref<AluraFont> font, const glm::vec4& rColor );
 		
 		[[nodiscard]] bool AddButton( const glm::vec2& rSize, const glm::vec4& rColor );
 

@@ -44,6 +44,14 @@ namespace Saturn {
 		glm::vec4 Color;
 	};
 
+	struct AluraTextVertex
+	{
+		glm::vec2 Position;
+		glm::vec2 TexCoord;
+		glm::vec4 Color;
+		float TextureIndex;
+	};
+
 	class AluraRenderer : public RefTarget
 	{
 	public:
@@ -59,6 +67,8 @@ namespace Saturn {
 		void EndFrame();
 
 		void SubmitRect( const glm::vec2& rMin, const glm::vec2& rMax, const glm::vec4& rColor );
+		
+		void SubmitText( const glm::vec2& rMin, const glm::vec2& rMax, const glm::vec2& rTexCoordMin, const glm::vec2& rTexCoordMax, const glm::vec4& rColor, Ref<Texture2D> atlasTexture, const glm::vec2& rCursorPos );
 
 	public:
 		[[nodiscard]] uint32_t Width() const { return m_Width; }
@@ -83,20 +93,41 @@ namespace Saturn {
 		std::vector< AluraVertex* > m_VertexBase;
 		AluraVertex* m_pVertexPtr = nullptr;
 
-		uint32_t m_VertexCount = 0;
-		uint32_t m_IndexCount = 0;
+		uint32_t m_QuadVertexCount = 0;
+		uint32_t m_QuadIndexCount = 0;
+
+		uint32_t m_TextIndexCount = 0;
+		std::vector< AluraTextVertex* > m_TextVertexBase;
+		AluraTextVertex* m_pTextVertexPtr = nullptr;
 
 		// Per flight in frame
 		std::vector< Ref<VertexBuffer> > m_VertexBuffers;
+		std::vector< Ref<VertexBuffer> > m_TextVertexBuffers;
+
+		// Textures
+		// We could have 64 textures.
+		// Where the lower half is for quads and upper half for font atlases
+		std::array<Ref<Texture2D>, 16> m_Textures;
+		uint32_t m_DefaultTextureSlot = 1;
+		uint32_t m_CurrentTextureSlot = 0;
 
 		//////////////////////////////////////////////////////////////////////////
 		// VULKAN RESOURCES
 		Ref<Pass> m_TargetRenderPass = nullptr;
 		Ref<Framebuffer> m_TargetFramebuffer = nullptr;
-		Ref<Pipeline> m_Pipeline = nullptr;
+
 		Ref<IndexBuffer> m_IndexBuffer = nullptr;
+		Ref<IndexBuffer> m_TextIndexBuffer = nullptr;
+
+		// Quad
 		Ref<Shader> m_Shader = nullptr;
 		Ref<Material> m_Material = nullptr;
+		Ref<Pipeline> m_Pipeline = nullptr;
+
+		// Text
+		Ref<Shader> m_TextShader = nullptr;
+		Ref<Material> m_TextMaterial = nullptr;
+		Ref<Pipeline> m_TextPipeline = nullptr;
 	};
 
 }

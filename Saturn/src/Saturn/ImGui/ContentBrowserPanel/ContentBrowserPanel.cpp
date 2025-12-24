@@ -317,7 +317,7 @@ namespace Saturn {
 			// Import externally.
 			if( ImGui::MenuItem( "Browse" ) )
 			{
-				const std::filesystem::path path = Application::Get().OpenFile( L"Supported asset types (*.fbx *.gltf *.glb *.png *.tga *.jpeg *.jpg *wav *.ogg *.mp3)|*.fbx; *.gltf; *.glb; *.png; *.tga; *.jpeg; *jpg; *.wav; *.ogg; *.mp3" );
+				const std::filesystem::path path = Application::Get().OpenFile( L"Supported asset types (*.fbx *.gltf *.glb *.png *.tga *.jpeg *.jpg *wav *.ogg *.mp3 *.ttf)|*.fbx; *.gltf; *.glb; *.png; *.tga; *.jpeg; *jpg; *.wav; *.ogg; *.mp3; *.ttf" );
 
 				if( !path.empty() )
 				{
@@ -351,6 +351,13 @@ namespace Saturn {
 					if( AssetExtensions::IsAudio( extensionLower ) )
 					{
 						m_CurrentImportPopup = std::make_unique<SoundImportPopup>( path, m_CurrentPath );
+						m_CurrentImportPopup->Initialise();
+					}
+
+					// Font
+					if( AssetExtensions::IsFont( extensionLower ) )
+					{
+						m_CurrentImportPopup = std::make_unique<FontImportPopup>( path, m_CurrentPath );
 						m_CurrentImportPopup->Initialise();
 					}
 

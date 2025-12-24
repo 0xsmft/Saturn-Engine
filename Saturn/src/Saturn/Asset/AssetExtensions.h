@@ -49,6 +49,11 @@ namespace Saturn {
 		{
 			return rPathExt == ".fbx" || rPathExt == ".obj" || rPathExt == ".gltf" || rPathExt == ".glb";
 		}
+
+		static bool IsFont( const std::string& rPathExt )
+		{
+			return rPathExt == ".ttf";
+		}
 	};
 	
 }

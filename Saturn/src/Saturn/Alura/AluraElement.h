@@ -42,7 +42,8 @@ namespace Saturn {
 	{
 		Quad,
 		Circle,
-		Line
+		Line,
+		Text
 	};
 
 	class AluraElement

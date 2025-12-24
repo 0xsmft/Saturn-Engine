@@ -29,101 +29,41 @@
 #pragma once
 
 #include "Saturn/Asset/Asset.h"
-#include "Saturn/Vulkan/Mesh.h"
+#include "Saturn/Vulkan/Texture.h"
 
 #include <filesystem>
 
 namespace Saturn {
 
-	enum class AssetImportModificationState
-	{
-		NotModified,
-		Modified
-	};
+	struct AluraMSDFData;
 
-	class AssetImportPopupBase
+	class AluraFont : public Asset
 	{
 	public:
-		AssetImportPopupBase( const std::filesystem::path& rAssetToImportPath, const std::filesystem::path& rDestinationPath )
-			: m_AssetToImportPath( rAssetToImportPath ), m_DestinationPath( rDestinationPath )
-		{
-		}
-		virtual ~AssetImportPopupBase() = default;
+		AluraFont( const std::filesystem::path& rFontPath, const Ref<Asset>& rBase );
+		AluraFont( const Ref<Asset>& rBase );
+		virtual ~AluraFont();
 
-		virtual void Initialise() {}
-		virtual void OnImGuiRender() {}
+		void Serialise( int width, int height, const std::filesystem::path& rPath );
+		void LoadFromCache();
+		void Deserialise();
 
-		void Close() { m_Open = false; }
+		Ref<Texture2D> GetTexture() const { return m_TextureAtlas; }
+		AluraMSDFData* GetMSDFData() const { return m_pMSDFData; }
 
-		[[nodiscard]] bool IsReady() const { return m_IsReady.load(); }
-		[[nodiscard]] bool IsOpen() const { return m_Open; }
-		[[nodiscard]] AssetImportModificationState GetModificationState() const { return m_ModificationState; }
+		glm::vec2 CalcTextSize( float fontSize, const std::string& rText );
 
-	protected:
-		bool m_Open = false;
-		std::atomic_bool m_IsReady{ false };
-		AssetImportModificationState m_ModificationState = AssetImportModificationState::NotModified;
-
-		std::filesystem::path m_AssetToImportPath;
-		std::filesystem::path m_DestinationPath;
-	};
-
-	class UnknownImportPopup : public AssetImportPopupBase 
-	{
-	public:
-		UnknownImportPopup( const std::filesystem::path& rAssetToImportPath );
-		~UnknownImportPopup() = default;
-
-		virtual void Initialise() override;
-		virtual void OnImGuiRender() override;
-	};
-
-	class MeshImportPopup : public AssetImportPopupBase
-	{
-	public:
-		MeshImportPopup( const std::filesystem::path& rAssetToImportPath, const std::filesystem::path& rDestinationPath );
-		~MeshImportPopup() = default;
-
-		virtual void Initialise();
-		virtual void OnImGuiRender();
+		std::filesystem::path GetFontFilepath() const { return m_Filepath; }
+		std::string GetFontName() const { return m_Name; }
 
 	private:
-		void DrawGLTFOptions();
-		void DrawSkeletalMeshOptions();
-		void DrawAndHandleImportBehaviour();
-
-		void FullyImportMesh();
-		void ImportDynamic();
-		void ImportStatic();
+		void CreateAtlas( bool overrideCache = false );
 
 	private:
-		std::filesystem::path m_GLTFBinPath;
-		bool m_UseBinFile = false;
-		bool m_IsSkeletal = false;
-
-		MeshImportBehaviour m_ImportBehaviour = MeshImportBehaviour_Default;
-		AssetID m_CurrentAssetIDForMaterial = 0;
-		AssetID m_CurrentAssetIDForSkeleton = 0;
-	};
-
-	class SoundImportPopup : public AssetImportPopupBase
-	{
-	public:
-		SoundImportPopup( const std::filesystem::path& rAssetToImportPath, const std::filesystem::path& rDestinationPath );
-		~SoundImportPopup() = default;
-
-		virtual void Initialise();
-		virtual void OnImGuiRender();
-	};
-
-	class FontImportPopup : public AssetImportPopupBase 
-	{
-	public:
-		FontImportPopup( const std::filesystem::path& rAssetToImportPath, const std::filesystem::path& rDestinationPath );
-		~FontImportPopup() = default;
-
-		virtual void Initialise();
-		virtual void OnImGuiRender();
-	};
-
+		std::string m_Name;
+		std::filesystem::path m_Filepath;
+		AluraMSDFData* m_pMSDFData = nullptr;
+		Ref<Texture2D> m_TextureAtlas;
+	};	
+	
 }

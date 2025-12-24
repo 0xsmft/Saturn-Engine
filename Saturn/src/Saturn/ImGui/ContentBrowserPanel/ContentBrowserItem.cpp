@@ -56,6 +56,7 @@
 #include "Saturn/Animation/AssetViewer/SkeletalMeshAssetViewer.h"
 #include "Saturn/Animation/AssetViewer/SkeletalAnimationAssetViewer.h"
 #include "Saturn/Animation/AssetViewer/AnimationControllerAssetViewer.h"
+#include "Saturn/Alura/AssetViewer/AluraFontAssetViewer.h"
 
 #include "Saturn/Project/Project.h"
 
@@ -345,6 +346,12 @@ namespace Saturn {
 					{
 						// Scenes have to handled via an event because this class does not have the ability to switch scenes.
 						Application::Get().DispatchEvent<CBOpenFileEvent>( m_Asset->ID );
+					} break;
+
+					case AssetType::Font: 
+					{
+						const auto viewer = Ref<AluraFontAssetViewer>::Create( m_Asset->ID );
+						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
 					} break;
 
 					case AssetType::Unknown:

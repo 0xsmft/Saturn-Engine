@@ -31,6 +31,8 @@
 
 #include "AluraRect.h"
 
+#include "AluraMSDFData.h"
+
 #include "Saturn/Vulkan/AluraRenderer.h"
 
 namespace Saturn {
@@ -81,11 +83,14 @@ namespace Saturn {
 			}
 		}
 
+		m_Renderer->SubmitRect( m_Layout.CursorPos, { m_Layout.CursorPos + glm::vec2{ 10.0f, 10.0f } }, { 1.0f, 0.0f, 0.0f, 1.0f } );
+
 		m_Elements.clear();
 	}
 
 	void AluraCanvas::Destory()
 	{
+		m_Renderer = nullptr;
 	}
 
 	void AluraCanvas::SetContext( Ref<AluraRenderer> context )
@@ -120,6 +125,89 @@ namespace Saturn {
 		AdvanceCursor( rSize );
 
 		return m_Elements.back();
+	}
+
+	AluraElement& AluraCanvas::AddText( const std::string& rText, Ref<AluraFont> font, const glm::vec4& rColor )
+	{
+		const auto& rFontGeo = font->GetMSDFData()->FontGeometry;
+		const auto& rMetrics = rFontGeo.getMetrics();
+
+		double x = 0.0;
+		double fsScale = 64.0f / ( rMetrics.ascenderY - rMetrics.descenderY );
+		double y = fsScale * rMetrics.ascenderY;
+
+		const auto textSize = font->CalcTextSize( 64.0f, rText );
+		AdvanceCursor( textSize );
+
+		for( size_t i = 0; i < rText.size(); i++ )
+		{
+			const char character = rText[ i ];
+			if( character == '\r' ) continue;
+
+			if( character == '\n' )
+			{
+				x = 0;
+				y -= fsScale * rMetrics.lineHeight;
+				continue;
+			}
+
+			auto glyph = rFontGeo.getGlyph( character );
+			if( character == ' ' )
+			{
+				double advance = glyph->getAdvance();
+				x += fsScale * advance;
+				continue;
+			}
+			// TOOD: Add a font setting or a style setting to determinate how many spaces a tab should be
+			// Right now we'll do 4 spaces.
+			else if( character == '\t' )
+			{
+				glyph = rFontGeo.getGlyph( ' ' );
+				double advance = glyph->getAdvance() * 4 /* NUMBER_OF_SPACES_PER_TAB*/;
+				x += fsScale * advance;
+				continue;
+			}
+
+			if( !glyph ) glyph = rFontGeo.getGlyph( '?' );
+
+			double atlasLeft, atlasBottom, atlasRight, atlasTop;
+			glyph->getQuadAtlasBounds( atlasLeft, atlasBottom, atlasRight, atlasTop );
+
+			// NOTE: Vulkan: We have to flip the atlasTop and atlasBottom because in the Editor the UI origin is the bottom-left
+			// the reason why it's the bottom right is because when this image gets flipped in the viewport, the elements at the bottom-left
+			// will be at the top-left, which is correct as the real origin is actually at the top-left.
+			glm::vec2 texCoordMin( atlasLeft, atlasTop );
+			glm::vec2 texCoordMax( atlasRight, atlasBottom );
+
+			double planeLeft, planeBottom, planeRight, planeTop;
+			glyph->getQuadPlaneBounds( planeLeft, planeBottom, planeRight, planeTop );
+
+			// NOTE: Vulkan: Same as above.
+			glm::vec2 quadMin( x + planeLeft * fsScale, y - planeTop * fsScale );
+			glm::vec2 quadMax( x + planeRight * fsScale, y - planeBottom * fsScale );
+
+			const float texelWidth = 1.0f / font->GetTexture()->Width();
+			const float texelHeight = 1.0f / font->GetTexture()->Height();
+
+			texCoordMin *= glm::vec2( texelWidth, texelHeight );
+			texCoordMax *= glm::vec2( texelWidth, texelHeight );
+
+			m_Renderer->SubmitText( quadMin, quadMax, texCoordMin, texCoordMax, rColor, font->GetTexture(), m_Layout.CursorPos );
+
+			// Next character spacing
+			if( i < rText.size() - 1 )
+			{
+				double advance = glyph->getAdvance();
+				char next = rText[ i + 1 ];
+				rFontGeo.getAdvance( advance, character, next );
+
+				x += fsScale * advance + 0.0f;
+			}
+		}
+
+		auto& rElement = m_Elements.emplace_back( "##noname", m_Layout.CursorPos, textSize, rColor );
+		rElement.m_RenderType = AluraRenderType::Text;
+		return rElement;
 	}
 
 	bool AluraCanvas::AddButton( const glm::vec2& rSize, const glm::vec4& rColor )

@@ -41,6 +41,8 @@
 #include "Saturn/Audio/SoundSpecification.h"
 #include "Saturn/Audio/GraphSound.h"
 
+#include "Saturn/Alura/AluraFont.h"
+
 #include "Saturn/Project/Project.h"
 
 #include "Saturn/AI/BehaviourTree/BehaviourTreeMemorySpecification.h"
@@ -972,42 +974,6 @@ namespace Saturn {
 		RawSerialisation::WriteObject( animAsset->IsUsingRootMotion(), fout );
 		RawSerialisation::WriteObject( animAsset->GetBoneCount(), fout );
 
-		/*
-		RawSerialisation::WriteObject( animAsset->GetAnimationBones().size(), fout );
-		for( const auto& rBoneInfo : animAsset->GetAnimationBones() )
-		{
-			RawSerialisation::WriteObject( rBoneInfo.Index, fout );
-
-			RawSerialisation::WriteObject( rBoneInfo.Positions.size(), fout );
-			for( const auto& rPosition : rBoneInfo.Positions )
-			{
-				RawSerialisation::WriteObject( rPosition.Value.x, fout );
-				RawSerialisation::WriteObject( rPosition.Value.y, fout );
-				RawSerialisation::WriteObject( rPosition.Value.z, fout );
-				RawSerialisation::WriteObject( rPosition.Timestamp, fout );
-			}
-
-			RawSerialisation::WriteObject( rBoneInfo.Rotations.size(), fout );
-			for( const auto& rRotation : rBoneInfo.Rotations )
-			{
-				RawSerialisation::WriteObject( rRotation.Value.w, fout );
-				RawSerialisation::WriteObject( rRotation.Value.x, fout );
-				RawSerialisation::WriteObject( rRotation.Value.y, fout );
-				RawSerialisation::WriteObject( rRotation.Value.z, fout );
-				RawSerialisation::WriteObject( rRotation.Timestamp, fout );
-			}
-
-			RawSerialisation::WriteObject( rBoneInfo.Scale.size(), fout );
-			for( const auto& rScale : rBoneInfo.Scale )
-			{
-				RawSerialisation::WriteObject( rScale.Value.x, fout );
-				RawSerialisation::WriteObject( rScale.Value.y, fout );
-				RawSerialisation::WriteObject( rScale.Value.z, fout );
-				RawSerialisation::WriteObject( rScale.Timestamp, fout );
-			}
-		}
-		*/
-
 #if !defined(SAT_DIST)
 		animAsset->SerialiseAclData( fout );
 #endif
@@ -1052,83 +1018,33 @@ namespace Saturn {
 		animAsset->UseRootMotion( hadRootMotion );
 		animAsset->SetBoneCount( boneCount );
 
-		/*
-		size_t mapSize = 0;
-		RawSerialisation::ReadObject( mapSize, FileIn );
-
-		animAsset->m_Bones.reserve( mapSize );
-
-		for( size_t i = 0; i < mapSize; i++ )
-		{
-			AnimationChannel ab;
-			RawSerialisation::ReadObject( ab.Index, FileIn );
-
-			size_t positions = 0;
-			RawSerialisation::ReadObject( positions, FileIn );
-			ab.Positions.reserve( positions );
-
-			for( size_t j = 0; j < positions; j++ )
-			{
-				glm::vec3 value{};
-				float ts = 0.0f;
-
-				RawSerialisation::ReadObject( value.x, FileIn );
-				RawSerialisation::ReadObject( value.y, FileIn );
-				RawSerialisation::ReadObject( value.z, FileIn );
-				RawSerialisation::ReadObject( ts, FileIn );
-
-				ab.Positions.emplace_back( value, ts );
-			}
-
-			size_t rotations = 0;
-			RawSerialisation::ReadObject( rotations, FileIn );
-			ab.Rotations.reserve( rotations );
-
-			for( size_t j = 0; j < rotations; j++ )
-			{
-				glm::quat q{};
-				float ts = 0.0f;
-
-				RawSerialisation::ReadObject( q.w, FileIn );
-				RawSerialisation::ReadObject( q.x, FileIn );
-				RawSerialisation::ReadObject( q.y, FileIn );
-				RawSerialisation::ReadObject( q.z, FileIn );
-				RawSerialisation::ReadObject( ts, FileIn );
-
-				ab.Rotations.emplace_back( q, ts );
-			}
-
-			size_t scales = 0;
-			RawSerialisation::ReadObject( scales, FileIn );
-			ab.Scale.reserve( scales );
-
-			for( size_t j = 0; j < scales; j++ )
-			{
-				glm::vec3 value{};
-				float ts = 0.0f;
-
-				RawSerialisation::ReadObject( value.x, FileIn );
-				RawSerialisation::ReadObject( value.y, FileIn );
-				RawSerialisation::ReadObject( value.z, FileIn );
-
-				RawSerialisation::ReadObject( ts, FileIn );
-
-				ab.Scale.emplace_back( value, ts );
-			}
-
-			animAsset->AddAnimBone( ab );
-		}
-		*/
-
 		animAsset->DeserialiseAclData( FileIn );
-
-//		animAsset->Compress();
 
 		if( skeletonID )
 			AssetManager::Get().RegisterAssetDependency( animAsset->ID, skeletonID );
 
 		// Set rAsset reference to point to our new SkeletalAnimation
 		rAsset = animAsset;
+
+		return true;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// AluraFontAssetSerialiser
+
+	void AluraFontAssetSerialiser::Serialise( const Ref<Asset>& rAsset ) const
+	{
+		SAT_CORE_ASSERT( false, "AluraFontAssetSerialiser::Serialise is not to be called!, use the Serialse function on the object itself" );
+	}
+
+	bool AluraFontAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
+	{
+		auto fontAsset = Ref<AluraFont>::Create( rAsset );
+
+		fontAsset->Deserialise();
+
+		// Set rAsset reference to point to our new AluraFont
+		rAsset = fontAsset;
 
 		return true;
 	}

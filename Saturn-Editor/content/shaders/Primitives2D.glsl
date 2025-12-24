@@ -1,3 +1,5 @@
+// Alura 2D quad shader
+
 #type vertex
 #version 450
 
@@ -8,8 +10,7 @@ layout(location = 2) in vec4 a_Color;
 
 layout(push_constant) uniform pc_ScalingAndTransfrom
 {
-	vec2 Scale;
-	vec2 Translate;
+	mat4 Projection;
 } u_Transform; 
 
 struct VertOut 
@@ -25,7 +26,7 @@ void main()
 	o_OutputData.Color = a_Color;
 	o_OutputData.TexCoord = a_TexCoord;
 
-	gl_Position = vec4( a_Position * u_Transform.Scale + u_Transform.Translate, 0.0, 1.0 );
+	gl_Position = u_Transform.Projection * vec4( a_Position /* u_Transform.Scale + u_Transform.Translate*/, 0.0, 1.0 );
 }
 
 #type fragment

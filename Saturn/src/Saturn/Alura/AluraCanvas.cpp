@@ -31,8 +31,6 @@
 
 #include "AluraRect.h"
 
-#include "AluraMSDFData.h"
-
 #include "Saturn/Vulkan/AluraRenderer.h"
 
 namespace Saturn {
@@ -45,8 +43,6 @@ namespace Saturn {
 
 	void AluraCanvas::InitStyle()
 	{
-		m_Style.Colors.fill( glm::one<glm::vec4>() );
-
 		m_Style.Colors[ AluraColor_Text          ] = glm::one<glm::vec4>();
 		m_Style.Colors[ AluraColor_TextDisabled  ] = glm::vec4( 0.5f, 0.5f, 0.5f, 1.0f );
 		m_Style.Colors[ AluraColor_Button        ] = glm::vec4( 0.26f, 0.59f, 0.98f, 0.40f );
@@ -60,32 +56,15 @@ namespace Saturn {
 
 	void AluraCanvas::Begin()
 	{
+		// Font is null! Must have an active font
+		SAT_CORE_ASSERT( m_ActiveFont );
+
 		m_Layout = {};
 
 		// Calculate mouse position relative to this canvas' position.
 		m_MousePosition = Input::Get().MousePosition() - m_Position;
 
 //		m_Renderer->SubmitRect( m_MousePosition, { m_MousePosition + glm::vec2{ 10.0f, 10.0f } }, { 1.0f, 0.0f, 0.0f, 1.0f } );
-	}
-
-	void AluraCanvas::End( Timestep ts )
-	{
-		for( auto& rElement : m_Elements )
-		{
-			switch( rElement.m_RenderType )
-			{
-				default: break;
-			
-				case AluraRenderType::Quad:
-				{
-					m_Renderer->SubmitRect( { rElement.m_Position }, { rElement.m_Position + rElement.m_Size }, rElement.m_Color );
-				} break;
-			}
-		}
-
-		m_Renderer->SubmitRect( m_Layout.CursorPos, { m_Layout.CursorPos + glm::vec2{ 10.0f, 10.0f } }, { 1.0f, 0.0f, 0.0f, 1.0f } );
-
-		m_Elements.clear();
 	}
 
 	void AluraCanvas::Destory()
@@ -98,6 +77,29 @@ namespace Saturn {
 		m_Renderer = context;
 	}
 
+	void AluraCanvas::PushFontAndSetActive( Ref<AluraFont> font )
+	{
+		m_Fonts.push_back( font );
+		m_ActiveFont = font;
+	}
+
+	void AluraCanvas::PopFont()
+	{
+		if( m_Fonts.size() == 1 )
+		{
+			SAT_CORE_ERROR( "Fonts left after this one is popped: {0}", m_Fonts.size() - 1 );
+			SAT_CORE_ASSERT( false, "No font can be selected after this font is popped!" );
+		}
+		else
+		{
+			m_Fonts.pop_back();
+			m_ActiveFont = m_Fonts.back();
+
+			// Font is null! Must have an active font
+			SAT_CORE_ASSERT( m_ActiveFont );
+		}
+	}
+
 	AluraElement* AluraCanvas::GetLastElement()
 	{
 		return m_Elements.size() ? &m_Elements.back() : nullptr;
@@ -105,15 +107,8 @@ namespace Saturn {
 
 	AluraElement& AluraCanvas::AddRect( const glm::vec2& rSize, const glm::vec4& rColor )
 	{
-		// Handle SetNextItemSize & SetNextItemPosition
-		glm::vec2 sizeDependingLastCall = rSize;
+		// Handle SetNextItemPosition
 		glm::vec2 posDependingLastCall = m_Layout.CursorPos;
-
-		if( m_WantToSetItemSize ) 
-		{
-			sizeDependingLastCall = m_PendingNextItemSize;
-			m_WantToSetItemSize = false;
-		}
 
 		if( m_WantToSetItemPosition )
 		{
@@ -121,106 +116,83 @@ namespace Saturn {
 			m_WantToSetItemPosition = false;
 		}
 
-		m_Elements.emplace_back( "##noname", posDependingLastCall, sizeDependingLastCall, rColor );
+		auto& rElement = m_Elements.emplace_back( "##noname", posDependingLastCall, rSize, rColor );
+		m_Renderer->SubmitRect( { rElement.m_Position }, { rElement.m_Position + rElement.m_Size }, rElement.m_Color );
+
 		AdvanceCursor( rSize );
 
-		return m_Elements.back();
+		return rElement;
 	}
 
-	AluraElement& AluraCanvas::AddText( const std::string& rText, Ref<AluraFont> font, const glm::vec4& rColor )
+	AluraElement& AluraCanvas::AddImage( const glm::vec2& rSize, Ref<Texture2D> image, const glm::vec4& rColor, const glm::vec2& rUV1, const glm::vec2& rUV2 )
 	{
-		const auto& rFontGeo = font->GetMSDFData()->FontGeometry;
-		const auto& rMetrics = rFontGeo.getMetrics();
+		// Handle SetNextItemPosition
+		glm::vec2 posDependingLastCall = m_Layout.CursorPos;
 
-		double x = 0.0;
-		double fsScale = 64.0f / ( rMetrics.ascenderY - rMetrics.descenderY );
-		double y = fsScale * rMetrics.ascenderY;
-
-		const auto textSize = font->CalcTextSize( 64.0f, rText );
-		AdvanceCursor( textSize );
-
-		for( size_t i = 0; i < rText.size(); i++ )
+		if( m_WantToSetItemPosition )
 		{
-			const char character = rText[ i ];
-			if( character == '\r' ) continue;
-
-			if( character == '\n' )
-			{
-				x = 0;
-				y -= fsScale * rMetrics.lineHeight;
-				continue;
-			}
-
-			auto glyph = rFontGeo.getGlyph( character );
-			if( character == ' ' )
-			{
-				double advance = glyph->getAdvance();
-				x += fsScale * advance;
-				continue;
-			}
-			// TOOD: Add a font setting or a style setting to determinate how many spaces a tab should be
-			// Right now we'll do 4 spaces.
-			else if( character == '\t' )
-			{
-				glyph = rFontGeo.getGlyph( ' ' );
-				double advance = glyph->getAdvance() * 4 /* NUMBER_OF_SPACES_PER_TAB*/;
-				x += fsScale * advance;
-				continue;
-			}
-
-			if( !glyph ) glyph = rFontGeo.getGlyph( '?' );
-
-			double atlasLeft, atlasBottom, atlasRight, atlasTop;
-			glyph->getQuadAtlasBounds( atlasLeft, atlasBottom, atlasRight, atlasTop );
-
-			// NOTE: Vulkan: We have to flip the atlasTop and atlasBottom because in the Editor the UI origin is the bottom-left
-			// the reason why it's the bottom right is because when this image gets flipped in the viewport, the elements at the bottom-left
-			// will be at the top-left, which is correct as the real origin is actually at the top-left.
-			glm::vec2 texCoordMin( atlasLeft, atlasTop );
-			glm::vec2 texCoordMax( atlasRight, atlasBottom );
-
-			double planeLeft, planeBottom, planeRight, planeTop;
-			glyph->getQuadPlaneBounds( planeLeft, planeBottom, planeRight, planeTop );
-
-			// NOTE: Vulkan: Same as above.
-			glm::vec2 quadMin( x + planeLeft * fsScale, y - planeTop * fsScale );
-			glm::vec2 quadMax( x + planeRight * fsScale, y - planeBottom * fsScale );
-
-			const float texelWidth = 1.0f / font->GetTexture()->Width();
-			const float texelHeight = 1.0f / font->GetTexture()->Height();
-
-			texCoordMin *= glm::vec2( texelWidth, texelHeight );
-			texCoordMax *= glm::vec2( texelWidth, texelHeight );
-
-			m_Renderer->SubmitText( quadMin, quadMax, texCoordMin, texCoordMax, rColor, font->GetTexture(), m_Layout.CursorPos );
-
-			// Next character spacing
-			if( i < rText.size() - 1 )
-			{
-				double advance = glyph->getAdvance();
-				char next = rText[ i + 1 ];
-				rFontGeo.getAdvance( advance, character, next );
-
-				x += fsScale * advance + 0.0f;
-			}
+			posDependingLastCall = m_PendingNextItemPosition;
+			m_WantToSetItemPosition = false;
 		}
 
+		auto& rElement = m_Elements.emplace_back( "##noname", posDependingLastCall, rSize, rColor );
+		AdvanceCursor( rSize );
+		
+		m_Renderer->SubmitRect( { rElement.m_Position }, { rElement.m_Position + rElement.m_Size }, image, rColor, rUV1, rUV2 );
+
+		return rElement;
+	}
+
+	bool AluraCanvas::AddImageButton( const glm::vec2& rSize, Ref<Texture2D> image, const glm::vec4& rColor /*= glm::one<glm::vec4>()*/, const glm::vec2& rUV1 /*= { 0.0F, 1.0F }*/, const glm::vec2& rUV2 /*= { 1.0F, 0.0F } */ )
+	{
+		// Handle SetNextItemPosition
+		glm::vec2 posDependingLastCall = m_Layout.CursorPos;
+
+		if( m_WantToSetItemPosition )
+		{
+			posDependingLastCall = m_PendingNextItemPosition;
+			m_WantToSetItemPosition = false;
+		}
+
+		const glm::vec2 frameThickness = glm::vec2{ 10.0f };
+		auto& rElement = m_Elements.emplace_back( "##noname", posDependingLastCall - frameThickness, rSize + frameThickness, rColor );
+
+		glm::vec4 frameColor = rColor;
+
+		// Hit test on the frame
+		if( IsItemHovered() )
+		{
+			frameColor = m_Style.Colors[ AluraColor_ButtonHovered ];
+		}
+
+		// Submit frame
+		m_Renderer->SubmitRect( { rElement.m_Position - frameThickness }, { rElement.m_Position + rElement.m_Size + frameThickness }, frameColor );
+
+		// Submit image
+		m_Renderer->SubmitRect( { rElement.m_Position }, { rElement.m_Position + rElement.m_Size }, image, rElement.m_Color, rUV1, rUV2 );
+
+		// Move on
+		AdvanceCursor( rElement.m_Size );
+		
+		return IsItemClicked( RubyMouseButton_Left );
+	}
+
+	AluraElement& AluraCanvas::AddText( const std::string& rText, const glm::vec4& rColor )
+	{
+		m_Renderer->SubmitString( rText, m_ActiveFont, m_Style.CurrentFontSize, m_Layout.CursorPos, rColor );
+		
+		const auto textSize = m_ActiveFont->CalcTextSize( m_Style.CurrentFontSize, rText );
 		auto& rElement = m_Elements.emplace_back( "##noname", m_Layout.CursorPos, textSize, rColor );
-		rElement.m_RenderType = AluraRenderType::Text;
+
+		AdvanceCursor( textSize );
+
 		return rElement;
 	}
 
 	bool AluraCanvas::AddButton( const glm::vec2& rSize, const glm::vec4& rColor )
 	{
-		// Handle SetNextItemSize & SetNextItemPosition
-		glm::vec2 sizeDependingLastCall = rSize;
+		// Handle NextItemPosition
 		glm::vec2 posDependingLastCall = m_Layout.CursorPos;
-
-		if( m_WantToSetItemSize )
-		{
-			sizeDependingLastCall = m_PendingNextItemSize;
-			m_WantToSetItemSize = false;
-		}
 
 		if( m_WantToSetItemPosition )
 		{
@@ -228,8 +200,11 @@ namespace Saturn {
 			m_WantToSetItemPosition = false;
 		}
 
-		auto& rElement = m_Elements.emplace_back( "##noname", posDependingLastCall, sizeDependingLastCall, rColor );
-		AdvanceCursor( rSize );
+		auto& rElement = m_Elements.emplace_back( "##noname", posDependingLastCall, rSize, rColor );
+		
+		m_Renderer->SubmitRect( { rElement.m_Position }, { rElement.m_Position + rElement.m_Size }, rColor );
+		
+		AdvanceCursor( rElement.m_Size );
 
 		// Hit tests
 		if( IsItemHovered() )
@@ -240,10 +215,39 @@ namespace Saturn {
 		return IsItemClicked( RubyMouseButton_Left );
 	}
 
-	void AluraCanvas::SetNextItemSize( const glm::vec2& rSize )
+	bool AluraCanvas::AddButton( const std::string& rText )
 	{
-		m_WantToSetItemSize = true;
-		m_PendingNextItemSize = rSize;
+		// Handle NextItemPosition
+		glm::vec2 posDependingLastCall = m_Layout.CursorPos;
+
+		if( m_WantToSetItemPosition )
+		{
+			posDependingLastCall = m_PendingNextItemPosition;
+			m_WantToSetItemPosition = false;
+		}
+
+		const auto textSize = m_ActiveFont->CalcTextSize( m_Style.CurrentFontSize, rText );
+
+		const glm::vec2 frameThickness = glm::vec2{ 10.0f };
+		auto& rElement = m_Elements.emplace_back( "##noname", posDependingLastCall - frameThickness, textSize + frameThickness, m_Style.Colors[ AluraColor_Text ] );
+
+		// Hit tests
+		if( IsItemHovered() )
+		{
+			rElement.m_Color = m_Style.Colors[ AluraColor_ButtonHovered ];
+		}
+
+		// Button Rect
+		m_Renderer->SubmitRect( { rElement.m_Position }, { rElement.m_Position + rElement.m_Size },  m_Style.Colors[ AluraColor_Button ] );
+
+		// Submit Text centred inside the button.
+		const glm::vec2 position = rElement.m_Position + ( rElement.m_Size - textSize ) * 0.5f;
+		m_Renderer->SubmitString( rText, m_ActiveFont, m_Style.CurrentFontSize, position, m_Style.Colors[ AluraColor_Text ] );
+
+		// Move on
+		AdvanceCursor( rElement.m_Size );
+
+		return IsItemClicked( RubyMouseButton_Left );
 	}
 
 	void AluraCanvas::SetNextItemPosition( const glm::vec2& rPosition )
@@ -278,14 +282,10 @@ namespace Saturn {
 		return Input::Get().MouseButtonPressed( mouseBtn ) && IsItemHovered();
 	}
 
-	void AluraCanvas::AlignItemCenterXY()
+	void AluraCanvas::AlignNextItemCenterXY( const glm::vec2& rSize )
 	{
-		auto* pElement = GetLastElement();
-		if( pElement )
-		{
-			pElement->m_Position.x = ( m_Size.x - pElement->m_Size.x ) * 0.5f;
-			pElement->m_Position.y = ( m_Size.y - pElement->m_Size.y ) * 0.5f;
-		}
+		glm::vec2 position = { ( m_Size.x - rSize.x ) * 0.5f, ( m_Size.y - rSize.y ) * 0.5f };
+		SetNextItemPosition( position );
 	}
 
 	void AluraCanvas::AdvanceCursor( const glm::vec2& rSize )

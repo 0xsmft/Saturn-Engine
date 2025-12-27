@@ -44,7 +44,7 @@ namespace Saturn {
 		m_Open = true;
 
 		m_Font = AssetManager::Get().GetAssetAs<AluraFont>( m_AssetID );
-		m_Name = std::format( "Alura Font - {0}##{1}", m_Font->Name, ( uint64_t ) m_Font->ID );
+		m_Name = std::format( "{0} - Alura Font##{1}", m_Font->Name, ( uint64_t ) m_Font->ID );
 	}
 
 	AluraFontAssetViewer::~AluraFontAssetViewer()
@@ -55,7 +55,7 @@ namespace Saturn {
 	{
 		if( ImGui::Begin( m_Name.c_str(), &m_Open ) )
 		{
-			ImGui::Text( "Alura Font" );
+			ImGui::Text( "Alura Compatible Font" );
 			ImGui::Text( "Font name: %s", m_Font->GetFontName().c_str() );
 			ImGui::Separator();
 

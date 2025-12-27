@@ -196,7 +196,7 @@ namespace Saturn {
 		msdfag::ImmediateAtlasGenerator<S, N, Func, msdfag::BitmapAtlasStorage<Ty, N>> generator( width, height );
 		generator.setThreadCount( 4 );
 		generator.setAttributes( attributes );
-		generator.generate( pThis->Glyphs.data(), pThis->Glyphs.size() );
+		generator.generate( pThis->Glyphs.data(), ( int ) pThis->Glyphs.size() );
 
 		msdf::BitmapConstRef<Ty, N> bitmap = generator.atlasStorage();
 

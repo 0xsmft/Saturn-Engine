@@ -42,6 +42,7 @@ namespace Saturn {
 		glm::vec2 Position;
 		glm::vec2 TexCoord;
 		glm::vec4 Color;
+		float TextureIndex;
 	};
 
 	struct AluraTextVertex
@@ -51,6 +52,8 @@ namespace Saturn {
 		glm::vec4 Color;
 		float TextureIndex;
 	};
+
+	class AluraFont;
 
 	class AluraRenderer : public RefTarget
 	{
@@ -67,8 +70,11 @@ namespace Saturn {
 		void EndFrame();
 
 		void SubmitRect( const glm::vec2& rMin, const glm::vec2& rMax, const glm::vec4& rColor );
-		
-		void SubmitText( const glm::vec2& rMin, const glm::vec2& rMax, const glm::vec2& rTexCoordMin, const glm::vec2& rTexCoordMax, const glm::vec4& rColor, Ref<Texture2D> atlasTexture, const glm::vec2& rCursorPos );
+		void SubmitRect( const glm::vec2& rMin, const glm::vec2& rMax, Ref<Texture2D> texture, const glm::vec4& rColor, const glm::vec2& rUV1 = { 0.0f, 1.0f }, const glm::vec2& rUV2 = { 1.0f, 1.0f } );
+	
+		void SubmitString( const std::string& rText, Ref<AluraFont> font, float fontScale, const glm::vec2& rCursorPos, const glm::vec4& rColor );
+
+		void SubmitTextGlyph( const glm::vec2& rMin, const glm::vec2& rMax, const glm::vec2& rTexCoordMin, const glm::vec2& rTexCoordMax, const glm::vec4& rColor, Ref<Texture2D> atlasTexture, const glm::vec2& rCursorPos );
 
 	public:
 		[[nodiscard]] uint32_t Width() const { return m_Width; }
@@ -85,6 +91,7 @@ namespace Saturn {
 		uint32_t m_Height = 0;
 		// The position that we currently are at, changes if we need to change canvas.
 		glm::vec2 m_Position{ 0.0f, 0.0f };
+		glm::mat4 m_Projection{};
 
 		bool m_Resized = false;
 
@@ -95,8 +102,13 @@ namespace Saturn {
 
 		uint32_t m_QuadVertexCount = 0;
 		uint32_t m_QuadIndexCount = 0;
-
+		
 		uint32_t m_TextIndexCount = 0;
+
+		uint32_t m_FallbackTextureSlot = 1;
+		uint32_t m_CurrentTextureSlot = 0;
+		uint32_t m_CurrentTextureAtlasSlot = 0;
+
 		std::vector< AluraTextVertex* > m_TextVertexBase;
 		AluraTextVertex* m_pTextVertexPtr = nullptr;
 
@@ -104,20 +116,18 @@ namespace Saturn {
 		std::vector< Ref<VertexBuffer> > m_VertexBuffers;
 		std::vector< Ref<VertexBuffer> > m_TextVertexBuffers;
 
-		// Textures
-		// We could have 64 textures.
-		// Where the lower half is for quads and upper half for font atlases
-		std::array<Ref<Texture2D>, 16> m_Textures;
-		uint32_t m_DefaultTextureSlot = 1;
-		uint32_t m_CurrentTextureSlot = 0;
-
+		// Textures, 32 writable textures in total, 1 for the default fall back
+		// 16 for quads
+		// 16 for texture atlases
+		// 1 for fallback texture
+		std::array<Ref<Texture2D>, 16 + 16 + 1> m_Textures;
+		
 		//////////////////////////////////////////////////////////////////////////
 		// VULKAN RESOURCES
 		Ref<Pass> m_TargetRenderPass = nullptr;
 		Ref<Framebuffer> m_TargetFramebuffer = nullptr;
 
 		Ref<IndexBuffer> m_IndexBuffer = nullptr;
-		Ref<IndexBuffer> m_TextIndexBuffer = nullptr;
 
 		// Quad
 		Ref<Shader> m_Shader = nullptr;

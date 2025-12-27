@@ -38,14 +38,6 @@ namespace Saturn {
 	class AluraRenderer;
 	class AluraCanvas;
 
-	enum class AluraRenderType
-	{
-		Quad,
-		Circle,
-		Line,
-		Text
-	};
-
 	class AluraElement
 	{
 	public:
@@ -111,7 +103,6 @@ namespace Saturn {
 		glm::vec2 m_Position{};
 		glm::vec2 m_Size{};
 		glm::vec4 m_Color{};
-		AluraRenderType m_RenderType = AluraRenderType::Quad;
 		bool m_WantToSetPosition = false;
 
 	private:

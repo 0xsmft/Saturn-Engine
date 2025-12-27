@@ -65,22 +65,33 @@ namespace Saturn {
 
 		// Init
 		void Begin();
-		void End( Timestep ts );
 		void Destory();
 
 		void SetContext( Ref<AluraRenderer> context );
+		void PushFontAndSetActive( Ref<AluraFont> font );
+		void PopFont();
 
 	public:
 		[[nodiscard]] AluraElement* GetLastElement();
 
 		// Drawing and widgets
-		AluraElement& AddRect( const glm::vec2& rSize, const glm::vec4& rColor );
+		AluraElement& AddRect( const glm::vec2& rSize, const glm::vec4& rColor = glm::one<glm::vec4>() );
 
-		AluraElement& AddText( const std::string& rText, Ref<AluraFont> font, const glm::vec4& rColor );
+#if !defined(SAT_DIST)
+		AluraElement& AddImage( const glm::vec2& rSize, Ref<Texture2D> image, const glm::vec4& rColor = glm::one<glm::vec4>(), const glm::vec2& rUV1 = { 0.0F, 1.0F }, const glm::vec2& rUV2 = { 1.0F, 0.0F } );
 		
-		[[nodiscard]] bool AddButton( const glm::vec2& rSize, const glm::vec4& rColor );
+		[[nodiscard]] bool AddImageButton( const glm::vec2& rSize, Ref<Texture2D> image, const glm::vec4& rColor = glm::one<glm::vec4>(), const glm::vec2& rUV1 = { 0.0F, 1.0F }, const glm::vec2& rUV2 = { 1.0F, 0.0F } );
+#else
+		AluraElement& AddImage( const glm::vec2& rSize, Ref<Texture2D> image, const glm::vec4& rColor = glm::one<glm::vec4>(), const glm::vec2& rUV1 = { 1.0F, 0.0F }, const glm::vec2& rUV2 = { 0.0F, 1.0F } );
+		[[nodiscard]] bool AddImageButton( const glm::vec2& rSize, Ref<Texture2D> image, const glm::vec4& rColor = glm::one<glm::vec4>(), const glm::vec2& rUV1 = { 1.0F, 0.0F }, const glm::vec2& rUV2 = { 0.0F, 1.0F } );
+#endif
 
-		void SetNextItemSize( const glm::vec2& rSize );
+		AluraElement& AddText( const std::string& rText, const glm::vec4& rColor = glm::one<glm::vec4>() );
+		
+		[[nodiscard]] bool AddButton( const glm::vec2& rSize, const glm::vec4& rColor = glm::one<glm::vec4>() );
+		
+		[[nodiscard]] bool AddButton( const std::string& rText );
+
 		void SetNextItemPosition( const glm::vec2& rPosition );
 
 		void Indent( float width = 0.0f );
@@ -88,7 +99,7 @@ namespace Saturn {
 
 		[[nodiscard]] bool IsItemHovered();
 		[[nodiscard]] bool IsItemClicked( RubyMouseButton mouseBtn );
-		void AlignItemCenterXY();
+		void AlignNextItemCenterXY( const glm::vec2& rSize );
 
 	public:
 		glm::vec2 GetPosition() const { return m_Position; }
@@ -126,9 +137,8 @@ namespace Saturn {
 		glm::vec2 m_Size;
 		glm::vec2 m_Position;
 
-		glm::vec2 m_PendingNextItemSize{};
 		glm::vec2 m_PendingNextItemPosition{};
-		bool m_WantToSetItemSize = false, m_WantToSetItemPosition = false;
+		bool m_WantToSetItemPosition = false;
 
 		// The mouse position relative to this canvas' positions.
 		glm::vec2 m_MousePosition{};
@@ -136,6 +146,8 @@ namespace Saturn {
 		Ref<AluraRenderer> m_Renderer;
 
 		std::vector<AluraElement> m_Elements;
+		std::vector<Ref<AluraFont>> m_Fonts;
+		Ref<AluraFont> m_ActiveFont = nullptr;
 
 		AluraStyle m_Style{};
 		AluraLayout m_Layout{};

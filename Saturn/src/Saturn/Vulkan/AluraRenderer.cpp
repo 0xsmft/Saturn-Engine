@@ -34,6 +34,9 @@
 
 #include "Saturn/Core/Ruby/RubyWindow.h"
 
+#include "Saturn/Alura/AluraMSDFData.h"
+#include "Saturn/Alura/AluraFont.h"
+
 namespace Saturn {
 
 	static constexpr uint32_t s_MaxQuads = 20000u;
@@ -98,7 +101,6 @@ namespace Saturn {
 		}
 
 		m_IndexBuffer = Ref<IndexBuffer>::Create( pQuadBuffer, s_MaxIndices );
-		m_TextIndexBuffer = Ref<IndexBuffer>::Create( pQuadBuffer, s_MaxIndices );
 		delete[] pQuadBuffer;
 
 		m_Textures[ 0 ] = Renderer::Get().GetPinkTexture();
@@ -131,6 +133,7 @@ namespace Saturn {
 			{ ShaderDataType::Float2, "a_Position" },
 			{ ShaderDataType::Float2, "a_TexCoord" },
 			{ ShaderDataType::Float4, "a_Color" },
+			{ ShaderDataType::Float, "a_TextureIndex" },
 		};
 
 		m_Pipeline = Ref<Pipeline>::Create( PipelineSpec );
@@ -146,6 +149,8 @@ namespace Saturn {
 		};
 
 		m_TextPipeline = Ref<Pipeline>::Create( PipelineSpec );
+
+		m_Projection = glm::ortho( 0.0f, ( float ) m_Width, ( float ) m_Height, 0.0f );
 	}
 
 	void AluraRenderer::Terminate()
@@ -174,6 +179,9 @@ namespace Saturn {
 		{
 			m_Width = w;
 			m_Height = h;
+
+			m_Projection = glm::ortho( 0.0f, ( float ) m_Width, ( float ) m_Height, 0.0f );
+
 			m_Resized = true;
 		}
 	}
@@ -190,6 +198,9 @@ namespace Saturn {
 		m_pTextVertexPtr = m_TextVertexBase[ frame ];
 
 		m_CurrentTextureSlot = 1;
+		
+		// Zero because its local to its 16 texture array
+		m_CurrentTextureAtlasSlot = 0;
 	}
 
 	void AluraRenderer::Render()
@@ -224,7 +235,6 @@ namespace Saturn {
 		
 		m_TargetRenderPass->BeginPass( m_CommandBuffer, m_TargetFramebuffer->GetVulkanFramebuffer(), Extent );
 
-		// Flip vulkan viewport so that we render at top-left origin.
 		VkViewport Viewport = {};
 		Viewport.x = 0;
 		Viewport.y = 0;
@@ -240,8 +250,6 @@ namespace Saturn {
 
 		const uint32_t frame = Renderer::Get().GetCurrentFrame();
 
-		const auto projection = glm::ortho( 0.0f, ( float ) m_Width, ( float ) m_Height, 0.0f );
-
 		const uint32_t dataSize = ( uint32_t ) ( ( uint8_t* ) m_pVertexPtr - ( uint8_t* ) m_VertexBase[ frame ] );
 		if( dataSize >= 1 )
 		{
@@ -249,9 +257,17 @@ namespace Saturn {
 			m_VertexBuffers[ frame ]->Bind( m_CommandBuffer );
 			m_IndexBuffer->Bind( m_CommandBuffer );
 
+			for( uint32_t i = 0; i < 16; i++ )
+			{
+				if( m_Textures[ i ] )
+					m_Material->SetResource( "u_InputTexture", m_Textures[ i ], i );
+				else
+					m_Material->SetResource( "u_InputTexture", Renderer::Get().GetPinkTexture(), i );
+			}
+
 			m_Pipeline->Bind( m_CommandBuffer );
 
-			m_Material->SetPC( "u_Transform.Projection", projection );
+			m_Material->SetPC( "u_Transform.Projection", m_Projection );
 			m_Material->SetResource( "u_InputTexture", Renderer::Get().GetPinkTexture() );
 
 			m_Material->Bind( m_CommandBuffer, m_Pipeline->GetPipelineLayout(), {} );
@@ -266,17 +282,16 @@ namespace Saturn {
 		{
 			m_TextVertexBuffers[ frame ]->Reallocate( m_TextVertexBase[ frame ], textDataSize );
 			m_TextVertexBuffers[ frame ]->Bind( m_CommandBuffer );
-			m_TextIndexBuffer->Bind( m_CommandBuffer );
 
-			for( uint32_t i = 0; i < m_Textures.size(); i++ )
+			for( uint32_t textureIndex = 17, i = 0; textureIndex < m_Textures.size(); i++, textureIndex++ )
 			{
-				if( m_Textures[ i ] )
-					m_TextMaterial->SetResource( "u_FontAtlases", m_Textures[ i ], i );
+				if( m_Textures[ textureIndex ] )
+					m_TextMaterial->SetResource( "u_FontAtlases", m_Textures[ textureIndex ], i );
 				else
 					m_TextMaterial->SetResource( "u_FontAtlases", Renderer::Get().GetPinkTexture(), i );
 			}
 			
-			m_TextMaterial->SetPC( "u_Transform.Projection", projection );
+			m_TextMaterial->SetPC( "u_Transform.Projection", m_Projection );
 
 			m_TextMaterial->Bind( m_CommandBuffer, m_TextPipeline->GetPipelineLayout(), {} );
 			m_TextPipeline->Bind( m_CommandBuffer );
@@ -294,33 +309,37 @@ namespace Saturn {
 		m_pVertexPtr->Position = { rMin.x, rMin.y };
 		m_pVertexPtr->Color = rColor;
 		m_pVertexPtr->TexCoord = glm::vec2{ 0.0f, 0.0f };		
+		m_pVertexPtr->TextureIndex = 0.0f;
 		++m_pVertexPtr;
 
 		m_pVertexPtr->Position = { rMax.x, rMin.y };
 		m_pVertexPtr->Color = rColor;
 		m_pVertexPtr->TexCoord = glm::vec2{ 1.0f, 0.0f };
+		m_pVertexPtr->TextureIndex = 0.0f;
 		++m_pVertexPtr;
 
 		m_pVertexPtr->Position = { rMax.x, rMax.y };
 		m_pVertexPtr->Color = rColor;
 		m_pVertexPtr->TexCoord = glm::vec2{ 1.0f, 1.0f };
+		m_pVertexPtr->TextureIndex = 0.0f;
 		++m_pVertexPtr;
 
 		m_pVertexPtr->Position = { rMin.x, rMax.y };
 		m_pVertexPtr->Color = rColor;
 		m_pVertexPtr->TexCoord = glm::vec2{ 0.0f, 1.0f };
+		m_pVertexPtr->TextureIndex = 0.0f;
 		++m_pVertexPtr;
 
 		m_QuadVertexCount += 4;
 		m_QuadIndexCount += 6;
 	}
 
-	void AluraRenderer::SubmitText( const glm::vec2& rMin, const glm::vec2& rMax, const glm::vec2& rTexCoordMin, const glm::vec2& rTexCoordMax, const glm::vec4& rColor, Ref<Texture2D> atlasTexture, const glm::vec2& rCursorPos )
+	void AluraRenderer::SubmitRect( const glm::vec2& rMin, const glm::vec2& rMax, Ref<Texture2D> texture, const glm::vec4& rColor, const glm::vec2& rUV1, const glm::vec2& rUV2 )
 	{
 		int textureID = 0;
 		for( uint32_t i = 1; i < m_CurrentTextureSlot; ++i )
 		{
-			if( m_Textures[ i ] == atlasTexture )
+			if( m_Textures[ i ] == texture )
 			{
 				textureID = i;
 				break;
@@ -330,32 +349,178 @@ namespace Saturn {
 		if( textureID == 0 )
 		{
 			textureID = m_CurrentTextureSlot;
-			m_Textures[ textureID ] = atlasTexture;
+			m_Textures[ textureID ] = texture;
 			++m_CurrentTextureSlot;
 		}
 
-		m_pTextVertexPtr->Position = rMin;
+		m_pVertexPtr->Position = { rMin.x, rMin.y };
+		m_pVertexPtr->Color = rColor;
+		m_pVertexPtr->TexCoord = glm::vec2{ rUV1.x, rUV1.y };
+		m_pVertexPtr->TextureIndex = ( float ) textureID;
+		++m_pVertexPtr;
+
+		m_pVertexPtr->Position = { rMax.x, rMin.y };
+		m_pVertexPtr->Color = rColor;
+		m_pVertexPtr->TexCoord = glm::vec2{ rUV2.x, rUV1.y };
+		m_pVertexPtr->TextureIndex = ( float ) textureID;
+		++m_pVertexPtr;
+
+		m_pVertexPtr->Position = { rMax.x, rMax.y };
+		m_pVertexPtr->Color = rColor;
+		m_pVertexPtr->TexCoord = glm::vec2{ rUV2.x, rUV2.y };
+		m_pVertexPtr->TextureIndex = ( float ) textureID;
+		++m_pVertexPtr;
+
+		m_pVertexPtr->Position = { rMin.x, rMax.y };
+		m_pVertexPtr->Color = rColor;
+		m_pVertexPtr->TexCoord = glm::vec2{ rUV1.x, rUV2.y };
+		m_pVertexPtr->TextureIndex = ( float ) textureID;
+		++m_pVertexPtr;
+
+		m_QuadVertexCount += 4;
+		m_QuadIndexCount += 6;
+	}
+
+	void AluraRenderer::SubmitString( const std::string& rText, Ref<AluraFont> font, float fontScale, const glm::vec2& rCursorPos, const glm::vec4& rColor )
+	{
+		const auto& rFontGeo = font->GetMSDFData()->FontGeometry;
+		const auto& rMetrics = rFontGeo.getMetrics();
+
+		double x = 0.0;
+		const double fsScale = fontScale / ( rMetrics.ascenderY - rMetrics.descenderY );
+
+#if !defined(SAT_DIST)
+		double y = fsScale * rMetrics.ascenderY;
+#else
+		double y = -fsScale * rMetrics.ascenderY;
+#endif
+
+		for( size_t i = 0; i < rText.size(); i++ )
+		{
+			const char character = rText[ i ];
+			if( character == '\r' ) continue;
+
+			if( character == '\n' )
+			{
+				x = 0;
+#if !defined(SAT_DIST)
+				y += fsScale * rMetrics.lineHeight;
+#else
+				y -= fsScale * rMetrics.lineHeight;
+#endif
+				continue;
+			}
+
+			auto glyph = rFontGeo.getGlyph( character );
+			if( character == ' ' )
+			{
+				double advance = glyph->getAdvance();
+				x += fsScale * advance;
+				continue;
+			}
+			// TOOD: Add a font setting or a style setting to determinate how many spaces a tab should be
+			// right now we'll do 4 spaces.
+			// AluraCanvas::PushStyleVar( AluraStyleVar_FontSize, 18.0f )? or passing it into every AddText call?
+			else if( character == '\t' )
+			{
+				glyph = rFontGeo.getGlyph( ' ' );
+				double advance = glyph->getAdvance() * 4 /* NUMBER_OF_SPACES_PER_TAB */;
+				x += fsScale * advance;
+				continue;
+			}
+
+			if( !glyph ) glyph = rFontGeo.getGlyph( '?' );
+
+			double atlasLeft, atlasBottom, atlasRight, atlasTop;
+			glyph->getQuadAtlasBounds( atlasLeft, atlasBottom, atlasRight, atlasTop );
+
+			// NOTE: Vulkan: We have to flip the atlasTop and atlasBottom because in the Editor the UI origin is the bottom-left
+			// the reason why it's the bottom-left is because when this image gets flipped in the viewport, the elements at the bottom-left
+			// will be at the top-left, which is correct as the real origin is actually at the top-left.
+#if !defined(SAT_DIST)
+			glm::vec2 texCoordMin( atlasLeft, atlasTop );
+			glm::vec2 texCoordMax( atlasRight, atlasBottom );
+#else
+			glm::vec2 texCoordMin( atlasLeft, atlasBottom );
+			glm::vec2 texCoordMax( atlasRight, atlasTop );
+#endif
+
+			double planeLeft, planeBottom, planeRight, planeTop;
+			glyph->getQuadPlaneBounds( planeLeft, planeBottom, planeRight, planeTop );
+
+			// NOTE: Vulkan: Same as above.
+#if !defined(SAT_DIST)
+			glm::vec2 quadMin( x + planeLeft * fsScale, y - planeTop * fsScale );
+			glm::vec2 quadMax( x + planeRight * fsScale, y - planeBottom * fsScale );
+#else
+			glm::vec2 quadMin( x + planeLeft * fsScale, y + planeBottom * fsScale );
+			glm::vec2 quadMax( x + planeRight * fsScale, y + planeTop * fsScale );
+#endif
+
+			const float texelWidth = 1.0f / font->GetTexture()->Width();
+			const float texelHeight = 1.0f / font->GetTexture()->Height();
+
+			texCoordMin *= glm::vec2( texelWidth, texelHeight );
+			texCoordMax *= glm::vec2( texelWidth, texelHeight );
+
+			SubmitTextGlyph( quadMin, quadMax, texCoordMin, texCoordMax, rColor, font->GetTexture(), rCursorPos );
+
+			// Next character spacing
+			if( i < rText.size() - 1 )
+			{
+				double advance = glyph->getAdvance();
+				char next = rText[ i + 1 ];
+				rFontGeo.getAdvance( advance, character, next );
+
+				x += fsScale * advance + 0.0f;
+			}
+		}
+	}
+
+	void AluraRenderer::SubmitTextGlyph( const glm::vec2& rMin, const glm::vec2& rMax, const glm::vec2& rTexCoordMin, const glm::vec2& rTexCoordMax, const glm::vec4& rColor, Ref<Texture2D> atlasTexture, const glm::vec2& rCursorPos )
+	{
+		uint32_t textureID = 0u;
+		uint32_t fullTextureIndex = 0u;
+
+		for( uint32_t textureIndex = 17u, i = 0u; i < m_CurrentTextureAtlasSlot; ++i, ++textureIndex )
+		{
+			if( m_Textures[ textureIndex ] == atlasTexture )
+			{
+				textureID = i;
+				fullTextureIndex = textureIndex;
+				break;
+			}
+		}
+
+		if( fullTextureIndex == 0 )
+		{
+			textureID = m_CurrentTextureAtlasSlot;
+			m_Textures[ textureID + 17u ] = atlasTexture;
+			++m_CurrentTextureAtlasSlot;
+		}
+
+		m_pTextVertexPtr->Position = rCursorPos + rMin;
 		m_pTextVertexPtr->Color = rColor;
 		m_pTextVertexPtr->TexCoord = rTexCoordMin;
-		m_pTextVertexPtr->TextureIndex = textureID;
+		m_pTextVertexPtr->TextureIndex = ( float ) textureID;
 		++m_pTextVertexPtr;
 		
-		m_pTextVertexPtr->Position = glm::vec2{ rMin.x, rMax.y };
+		m_pTextVertexPtr->Position = rCursorPos + glm::vec2{ rMin.x, rMax.y };
 		m_pTextVertexPtr->Color = rColor;
 		m_pTextVertexPtr->TexCoord = { rTexCoordMin.x, rTexCoordMax.y };
-		m_pTextVertexPtr->TextureIndex = textureID;
+		m_pTextVertexPtr->TextureIndex = ( float ) textureID;
 		++m_pTextVertexPtr;
 
-		m_pTextVertexPtr->Position = rMax;
+		m_pTextVertexPtr->Position = rCursorPos + rMax;
 		m_pTextVertexPtr->Color = rColor;
 		m_pTextVertexPtr->TexCoord = rTexCoordMax;
-		m_pTextVertexPtr->TextureIndex = textureID;
+		m_pTextVertexPtr->TextureIndex = ( float ) textureID;
 		++m_pTextVertexPtr;
 
-		m_pTextVertexPtr->Position = glm::vec2{ rMax.x, rMin.y };
+		m_pTextVertexPtr->Position = rCursorPos + glm::vec2{ rMax.x, rMin.y };
 		m_pTextVertexPtr->Color = rColor;
 		m_pTextVertexPtr->TexCoord = { rTexCoordMax.x, rTexCoordMin.y };
-		m_pTextVertexPtr->TextureIndex = textureID;
+		m_pTextVertexPtr->TextureIndex = ( float ) textureID;
 		++m_pTextVertexPtr;
 
 		m_TextIndexCount += 6;

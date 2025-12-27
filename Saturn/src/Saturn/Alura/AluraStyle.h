@@ -51,18 +51,28 @@ namespace Saturn {
 		AluraColor_Count,
 	};
 
-	struct AluraStyle
+	class AluraStyle
 	{
+	public:
 		float Alpha;
 		float DisabledAlpha;
 		glm::vec2 WindowPadding;
 		glm::vec2 ItemSpacing;
 		float IndentSpacing;
 		float WindowBorderSize;
+		float CurrentFontSize;
 
 		std::array<glm::vec4, ( std::underlying_type_t<AluraColor> )AluraColor_Count> Colors;
 
+	public:
 		AluraStyle() 
+		{
+			Colors.fill( glm::one<glm::vec4>() );
+			Default();
+		}
+
+	public:
+		void Default() 
 		{
 			Alpha = 1.0f;
 			DisabledAlpha = 0.5f;
@@ -70,6 +80,7 @@ namespace Saturn {
 			ItemSpacing = glm::vec2( 8.0f, 4.0f );
 			IndentSpacing = 21.0f;
 			WindowBorderSize = 1.0f;
+			CurrentFontSize = 18.0f;
 		}
 	};
 	

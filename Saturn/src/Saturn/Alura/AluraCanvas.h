@@ -42,6 +42,12 @@ namespace Saturn {
 
 	class AluraRenderer;
 
+	//
+	// AluraLayout
+	//
+	// This struct holds the current layout information which is then used to calculate where to place elements.
+	// This struct is volatile meaning that at the beginning of every frame the information in the layout is reset.
+	//
 	struct AluraLayout
 	{
 		// Current emitting position.
@@ -57,10 +63,20 @@ namespace Saturn {
 		bool IsSameLine = false;
 	};
 
+	//
+	// AluraCanvas
+	//
+	// AluraCanvas acts as the current "viewport" per se, it acts as a bridge between the lower level AluraRenderer
+	// Use this class to draw elements directly on to the screen.
+	//
+	// NOTE: All position parameters in drawing functions are relative to the canvas, meaning that an element placed at 
+	// 0,0 will be the top-left of the canvas even if the the canvas is moved.
+	//
 	class AluraCanvas : public RefTarget
 	{
 	public:
-		AluraCanvas( const std::string& rName, const glm::vec2& rSize, const glm::vec2& rPosition );
+		// NOTE: The position must be relative to the window's position!
+		AluraCanvas( const glm::vec2& rSize, const glm::vec2& rPosition );
 		~AluraCanvas();
 
 		// Init
@@ -68,7 +84,11 @@ namespace Saturn {
 		void Destory();
 
 		void SetContext( Ref<AluraRenderer> context );
+
 		void PushFontAndSetActive( Ref<AluraFont> font );
+		
+		// Pops the newest font in the fonts list.s
+		// NOTE: There must always be an active font, so if you pop the last remaining font, Saturn will assert.
 		void PopFont();
 
 	public:
@@ -106,21 +126,14 @@ namespace Saturn {
 		glm::vec2 GetSize() const { return m_Size; }
 
 	public:
-		AluraCanvas& SetPosition( const glm::vec2& rPosition ) 
-		{
-			m_Position = rPosition;
-			return *this;
-		}
-
-		void NrSetPosition( const glm::vec2& rPosition ) 
+		inline void SetPosition( const glm::vec2& rPosition ) 
 		{
 			m_Position = rPosition;
 		}
 
-		AluraCanvas& SetSize( const glm::vec2& rSize )
+		inline void SetSize( const glm::vec2& rSize )
 		{
 			m_Size = rSize;
-			return *this;
 		}
 
 	private:
@@ -132,7 +145,6 @@ namespace Saturn {
 		void InitStyle();
 
 	private:
-		std::string m_Name;
 		UUID m_ID;
 		glm::vec2 m_Size;
 		glm::vec2 m_Position;

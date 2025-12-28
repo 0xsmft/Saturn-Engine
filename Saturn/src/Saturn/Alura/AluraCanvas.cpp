@@ -35,8 +35,8 @@
 
 namespace Saturn {
 
-	AluraCanvas::AluraCanvas( const std::string& rName, const glm::vec2& rSize, const glm::vec2& rPosition )
-		: m_Name( rName ), m_Size( rSize ), m_Position( rPosition )
+	AluraCanvas::AluraCanvas( const glm::vec2& rSize, const glm::vec2& rPosition )
+		: m_Size( rSize ), m_Position( rPosition )
 	{
 		InitStyle();
 	}
@@ -56,7 +56,7 @@ namespace Saturn {
 
 	void AluraCanvas::Begin()
 	{
-		// Font is null! Must have an active font
+		// Font is null! Must have an active font.
 		SAT_CORE_ASSERT( m_ActiveFont );
 
 		m_Layout = {};
@@ -70,6 +70,8 @@ namespace Saturn {
 	void AluraCanvas::Destory()
 	{
 		m_Renderer = nullptr;
+		m_ActiveFont = nullptr;
+		m_Fonts.clear();
 	}
 
 	void AluraCanvas::SetContext( Ref<AluraRenderer> context )
@@ -158,7 +160,7 @@ namespace Saturn {
 		auto& rElement = m_Elements.emplace_back( "##noname", posDependingLastCall - frameThickness, rSize + frameThickness, rColor );
 
 		glm::vec4 frameColor = rColor;
-
+		
 		// Hit test on the frame
 		if( IsItemHovered() )
 		{

@@ -174,7 +174,10 @@ namespace Saturn {
 
 	AluraFont::~AluraFont()
 	{
-		delete m_pMSDFData;
+		if( m_pMSDFData )
+			delete m_pMSDFData;
+
+		m_TextureAtlas = nullptr;
 	}
 	
 	struct AluraAtlasHeader

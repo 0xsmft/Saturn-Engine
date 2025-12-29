@@ -119,7 +119,7 @@ namespace Saturn {
 		}
 
 		auto& rElement = m_Elements.emplace_back( "##noname", posDependingLastCall, rSize, rColor );
-		m_Renderer->SubmitRect( { rElement.m_Position }, { rElement.m_Position + rElement.m_Size }, rElement.m_Color );
+		m_Renderer->SubmitRect( rElement.m_Position, { rElement.m_Position + rElement.m_Size }, rElement.m_Color );
 
 		AdvanceCursor( rSize );
 
@@ -140,7 +140,7 @@ namespace Saturn {
 		auto& rElement = m_Elements.emplace_back( "##noname", posDependingLastCall, rSize, rColor );
 		AdvanceCursor( rSize );
 		
-		m_Renderer->SubmitRect( { rElement.m_Position }, { rElement.m_Position + rElement.m_Size }, image, rColor, rUV1, rUV2 );
+		m_Renderer->SubmitRect( rElement.m_Position, { rElement.m_Position + rElement.m_Size }, image, rColor, rUV1, rUV2 );
 
 		return rElement;
 	}
@@ -171,7 +171,7 @@ namespace Saturn {
 		m_Renderer->SubmitRect( { rElement.m_Position - frameThickness }, { rElement.m_Position + rElement.m_Size + frameThickness }, frameColor );
 
 		// Submit image
-		m_Renderer->SubmitRect( { rElement.m_Position }, { rElement.m_Position + rElement.m_Size }, image, rElement.m_Color, rUV1, rUV2 );
+		m_Renderer->SubmitRect( rElement.m_Position, { rElement.m_Position + rElement.m_Size }, image, rElement.m_Color, rUV1, rUV2 );
 
 		// Move on
 		AdvanceCursor( rElement.m_Size );
@@ -204,7 +204,7 @@ namespace Saturn {
 
 		auto& rElement = m_Elements.emplace_back( "##noname", posDependingLastCall, rSize, rColor );
 		
-		m_Renderer->SubmitRect( { rElement.m_Position }, { rElement.m_Position + rElement.m_Size }, rColor );
+		m_Renderer->SubmitRect( rElement.m_Position, { rElement.m_Position + rElement.m_Size }, rColor );
 		
 		AdvanceCursor( rElement.m_Size );
 
@@ -231,16 +231,17 @@ namespace Saturn {
 		const auto textSize = m_ActiveFont->CalcTextSize( m_Style.CurrentFontSize, rText );
 
 		const glm::vec2 frameThickness = glm::vec2{ 10.0f };
-		auto& rElement = m_Elements.emplace_back( "##noname", posDependingLastCall - frameThickness, textSize + frameThickness, m_Style.Colors[ AluraColor_Text ] );
-
+		auto& rElement = m_Elements.emplace_back( "##noname", posDependingLastCall, textSize + frameThickness, m_Style.Colors[ AluraColor_Text ] );
+		
 		// Hit tests
+		glm::vec4 buttonColor = m_Style.Colors[ AluraColor_Button ];
 		if( IsItemHovered() )
 		{
-			rElement.m_Color = m_Style.Colors[ AluraColor_ButtonHovered ];
+			buttonColor = m_Style.Colors[ AluraColor_ButtonHovered ];
 		}
 
 		// Button Rect
-		m_Renderer->SubmitRect( { rElement.m_Position }, { rElement.m_Position + rElement.m_Size },  m_Style.Colors[ AluraColor_Button ] );
+		m_Renderer->SubmitRect( rElement.m_Position, { rElement.m_Position + rElement.m_Size }, buttonColor );
 
 		// Submit Text centred inside the button.
 		const glm::vec2 position = rElement.m_Position + ( rElement.m_Size - textSize ) * 0.5f;

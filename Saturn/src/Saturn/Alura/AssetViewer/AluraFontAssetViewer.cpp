@@ -105,6 +105,7 @@ namespace Saturn {
 		if( !m_AttemptedToLoadFont && !m_pLoadedImGuiFont )
 		{
 			ImGuiIO& rIO = ImGui::GetIO();
+			rIO.PendingFontBuild = true;
 			m_pLoadedImGuiFont = rIO.Fonts->AddFontFromFileTTF( m_Font->GetFontFilepath().string().c_str(), 18.0f );
 			m_AttemptedToLoadFont = true;
 		}

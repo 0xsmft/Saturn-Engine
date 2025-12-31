@@ -140,7 +140,6 @@ namespace Saturn {
 			if( std::find( s_AllowedAssetExtentions.begin(), s_AllowedAssetExtentions.end(), filepathString ) == s_AllowedAssetExtentions.end() )
 				continue; // Extension is forbidden.
 
-			const auto& assetReg = AssetManager::Get().GetAssetRegistry()->GetAssetMap();
 			if( asset == nullptr )
 			{
 				SAT_CORE_INFO( "Found an asset that exists in the system filesystem, however not in the asset registry, creating new asset." );
@@ -255,19 +254,7 @@ namespace Saturn {
 		auto rootDir = GetRootDir();
 		rootDir /= "bin";
 
-#if defined(SAT_PLATFORM_WINDOWS)
-
-# if defined( SAT_DEBUG )
-		rootDir /= "Debug-windows-x86_64";
-#  elif defined( SAT_RELEASE )
-		rootDir /= "Release-windows-x86_64";
-#  else // SAT_DIST
-		rootDir /= "Dist-windows-x86_64";
-# endif
-#else // SAT_PLATFORM_WINDOWS
-
-#endif
-
+		rootDir /= std::format( "{0}-{1}", Application::Get().GetCurrentConfigName(), SAT_PLATFORM_BINARY_FOLDER );
 		rootDir /= "Saturn";
 
 		return rootDir;
@@ -359,17 +346,13 @@ namespace Saturn {
 			std::filesystem::path rootDir = Auxiliary::GetEnvironmentVariable( "SATURN_DIR" );
 			rootDir /= "bin/";
 
-#if defined( SAT_DEBUG )
-			rootDir /= "Debug-windows-x86_64/Saturn";
-#elif defined( SAT_RELEASE )
-			rootDir /= "Release-windows-x86_64/Saturn";
-#else
-			rootDir /= "Dist-windows-x86_64/Saturn";
-#endif
+			rootDir /= std::format( "{0}-{1}", Application::Get().GetCurrentConfigName(), SAT_PLATFORM_BINARY_FOLDER );
 
 			auto rootDirString = rootDir.string();
 
+#if defined(SAT_PLATFORM_WINDOWS)
 			std::replace( rootDirString.begin(), rootDirString.end(), '\\', '/' );
+#endif
 
 			fileData.replace( pos, 18, rootDirString );
 
@@ -392,17 +375,15 @@ namespace Saturn {
 		while( pos != std::string::npos )
 		{
 			std::filesystem::path rootDir = Auxiliary::GetEnvironmentVariable( "SATURN_DIR" );
-			rootDir /= "bin/";
+			rootDir /= "bin";
+			rootDir /= std::format( "{0}-{1}", Application::Get().GetCurrentConfigName(), SAT_PLATFORM_BINARY_FOLDER );
+			rootDir /= "SaturnBuildTool";
 
-#if defined( SAT_DEBUG )
-			rootDir /= "Debug-windows-x86_64/SaturnBuildTool";
-#elif defined( SAT_RELEASE )
-			rootDir /= "Release-windows-x86_64/SaturnBuildTool";
-#else
-			rootDir /= "Dist-windows-x86_64/SaturnBuildTool";
-#endif
 			auto rootDirString = rootDir.string();
+			
+#if defined(SAT_PLATFORM_WINDOWS)
 			std::replace( rootDirString.begin(), rootDirString.end(), '\\', '/' );
+#endif
 
 			fileData.replace( pos, 17, rootDirString );
 
@@ -478,21 +459,15 @@ namespace Saturn {
 		std::filesystem::path BuildToolDir = SaturnRootDir;
 
 		BuildToolDir /= "bin";
-
-		// Should we make this be our current config OR should we set this to the target project config?
-#if defined( SAT_DEBUG )
-		BuildToolDir /= "Debug-windows-x86_64";
-#elif defined( SAT_RELEASE )
-		BuildToolDir /= "Release-windows-x86_64";
-#else
-		BuildToolDir /= "Dist-windows-x86_64";
-#endif
+		BuildToolDir /= std::format( "{0}-{1}", Application::Get().GetCurrentConfigName(), SAT_PLATFORM_BINARY_FOLDER );
 		BuildToolDir /= "SaturnBuildTool";
 
 #if defined( SAT_PLATFORM_WINDOWS )
 		BuildToolDir /= "SaturnBuildTool.exe";
-#else
+#elif defined( SAT_PLATFORM_LINUX )
 		BuildToolDir /= "SaturnBuildTool";
+#else
+		BuildToolDir /= "SaturnBuildTool.app";
 #endif
 
 		return BuildToolDir;
@@ -593,18 +568,15 @@ namespace Saturn {
 		switch( kind )
 		{
 			case Saturn::ApplicationConfigKind::Debug:
-				SaturnBinDir /= "Debug-windows-x86_64";
-				binDir /= "Debug-windows-x86_64";
+				SaturnBinDir /= std::format( "Debug-{0}", SAT_PLATFORM_BINARY_FOLDER );
+				binDir /= std::format( "Debug-{0}", SAT_PLATFORM_BINARY_FOLDER );
 				break;
 
-			case Saturn::ApplicationConfigKind::Release:
-				SaturnBinDir /= "Release-windows-x86_64";
-				binDir /= "Release-windows-x86_64";
-				break;
-
+				// Use editor release DLLs -- same as release ones
 			case Saturn::ApplicationConfigKind::Dist:
-				SaturnBinDir /= "Release-windows-x86_64"; // Use editor release DLLs -- same as release ones
-				binDir /= "Dist-windows-x86_64";
+			case Saturn::ApplicationConfigKind::Release:
+				SaturnBinDir /= std::format( "Release-{0}", SAT_PLATFORM_BINARY_FOLDER );
+				binDir /= std::format( "Release-{0}", SAT_PLATFORM_BINARY_FOLDER );
 				break;
 		}
 

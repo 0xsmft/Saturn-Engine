@@ -187,7 +187,7 @@ namespace Saturn {
 		m_MasterSoundGroup = nullptr;
 
 		// Stop audio thread
-		SAT_CORE_INFO( "Stoping Audio Thread..." );
+		SAT_CORE_INFO( "Stopping Audio Thread..." );
 		m_AudioThread->RequestJoin();
 
 		MA_CHECK( ma_device_stop( &m_Device ) );

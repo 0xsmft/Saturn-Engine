@@ -28,7 +28,7 @@
 
 #pragma once
 
-#if defined( SAT_PLATFORM_WINDOWS )
+#if defined( SAT_PLATFORM_WINDOWS ) || defined(_WIN32)
 #include "WindowsPlatform.h"
 #else
 #include "NullPlatform.h"

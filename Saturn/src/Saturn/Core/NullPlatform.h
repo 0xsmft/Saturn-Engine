@@ -32,7 +32,7 @@
 // NULL PLATFORM, NOTE: This header does NOT define SAT_PLATFORM_HEADER_DEFINED on purpose because if we get a Null Platform then we don't support that platform.
 
 #if defined(SAT_PLATFORM_HEADER_DEFINED)
-#error "SAT_PLATFORM_HEADER_DEFINED was defined before WindowsPlatform.h was included, make sure there is not any other platform header included before the WindowsPlatform header!"
+#error "SAT_PLATFORM_HEADER_DEFINED was defined before NullPlatform.h was included, make sure there is not any other platform header included before the NullPlatform header!"
 #endif
 
 //////////////////////////////////////////////////////////////////////////

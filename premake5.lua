@@ -48,7 +48,7 @@ group "Dependencies"
 	include "Saturn/vendor/tracy"
 	include "Saturn/vendor/zlib"
 	include "Saturn/vendor/Recast"
-	include "Saturn/vendor/Freetype"
+	include "Saturn/vendor/freetype"
 	include "Saturn/vendor/msdf-atlas-gen"
 
 group "Engine"
@@ -89,8 +89,6 @@ project "Saturn"
 
 	defines
 	{
-		"_CRT_SECURE_NO_WARNINGS",
-
 		"PX_PHYSX_STATIC_LIB",
 		"PX_GENERATE_STATIC_LIBRARIES",
 		
@@ -162,11 +160,9 @@ project "Saturn"
 
 	filter "system:not windows"
 		systemversion "latest"
-		cppdialect "C++2a"
 		
 	filter "system:linux"
 		systemversion "latest"
-		cppdialect "C++2a"
 
 		links 
 		{
@@ -196,7 +192,8 @@ project "Saturn"
 
 		defines
 		{
-			"SAT_PLATFORM_WINDOWS"
+			"SAT_PLATFORM_WINDOWS",
+			"_CRT_SECURE_NO_WARNINGS"
 		}
 
 		files 
@@ -295,7 +292,6 @@ project "Saturn-Editor"
 
 	defines
 	{
-		"_CRT_SECURE_NO_WARNINGS",
 		"SAT_HAS_EDITOR",
 		"TRACY_ENABLE",
 		"TRACY_DELAYED_INIT",
@@ -355,7 +351,8 @@ project "Saturn-Editor"
 		defines
 		{
 			"SAT_PLATFORM_WINDOWS",
-			"SATURN_SS_IMPORT"
+			"SATURN_SS_IMPORT",
+			"_CRT_SECURE_NO_WARNINGS",
 		}
 
 		files 
@@ -364,50 +361,50 @@ project "Saturn-Editor"
 			"Saturn/src/Saturn/Entry/Windows/**.cpp",
 		}
 
-	filter "configurations:Debug"
-		defines "SAT_DEBUG"
-		runtime "Debug"
-		symbols "on"
+		filter "configurations:Debug"
+			defines "SAT_DEBUG"
+			runtime "Debug"
+			symbols "on"
 
-		postbuildcommands 
-		{ 
-			'{COPYFILE} "../Saturn/vendor/assimp/bin/Debug/assimp-vc143-mtd.dll" "%{cfg.targetdir}"',
-			'{COPYFILE} "../bin/Debug-windows-x86_64/Saturn-SharedStorage/Saturn-SharedStorage.dll" "%{cfg.targetdir}"',
-			'{COPYFILE} "../Saturn/vendor/physx/bin/Debug/PhysXCommon_64.dll" "%{cfg.targetdir}"',
-			'{COPYFILE} "../Saturn/vendor/physx/bin/Debug/PhysXFoundation_64.dll" "%{cfg.targetdir}"',
-			'{COPYFILE} "../Saturn/vendor/physx/bin/Debug/PhysXCooking_64.dll" "%{cfg.targetdir}"',
-			'{COPYFILE} "../Saturn/vendor/physx/bin/Debug/PhysX_64.dll" "%{cfg.targetdir}"',
-		}
+			postbuildcommands 
+			{ 
+				'{COPYFILE} "../Saturn/vendor/assimp/bin/Debug/assimp-vc143-mtd.dll" "%{cfg.targetdir}"',
+				'{COPYFILE} "../bin/Debug-windows-x86_64/Saturn-SharedStorage/Saturn-SharedStorage.dll" "%{cfg.targetdir}"',
+				'{COPYFILE} "../Saturn/vendor/physx/bin/Debug/PhysXCommon_64.dll" "%{cfg.targetdir}"',
+				'{COPYFILE} "../Saturn/vendor/physx/bin/Debug/PhysXFoundation_64.dll" "%{cfg.targetdir}"',
+				'{COPYFILE} "../Saturn/vendor/physx/bin/Debug/PhysXCooking_64.dll" "%{cfg.targetdir}"',
+				'{COPYFILE} "../Saturn/vendor/physx/bin/Debug/PhysX_64.dll" "%{cfg.targetdir}"',
+			}
 
-	filter "configurations:Release"
-		defines "SAT_RELEASE"
-		runtime "Release"
-	--	optimize "on"
+		filter "configurations:Release"
+			defines "SAT_RELEASE"
+			runtime "Release"
+		--	optimize "on"
 
-		postbuildcommands 
-		{ 
-			'{COPYFILE} "../bin/Release-windows-x86_64/Saturn-SharedStorage/Saturn-SharedStorage.dll" "%{cfg.targetdir}"',
-		}
+			postbuildcommands 
+			{ 
+				'{COPYFILE} "../bin/Release-windows-x86_64/Saturn-SharedStorage/Saturn-SharedStorage.dll" "%{cfg.targetdir}"',
+			}
 
-	filter "configurations:Dist"
-		defines "SAT_DIST"
-		runtime "Release"
-		optimize "on"
-		symbols "Off"
-		kind "WindowedApp"
+		filter "configurations:Dist"
+			defines "SAT_DIST"
+			runtime "Release"
+			optimize "on"
+			symbols "Off"
+			kind "WindowedApp"
 
-		removedefines { "SATURN_SS_IMPORT" }
-		defines { "SATURN_SS_STATIC" }
+			removedefines { "SATURN_SS_IMPORT" }
+			defines { "SATURN_SS_STATIC" }
 
-	filter "configurations:Dist or configurations:Release"
-		postbuildcommands 
-		{ 
-			'{COPYFILE} "../Saturn/vendor/assimp/bin/Release/assimp-vc143-mt.dll" "%{cfg.targetdir}"',
-			'{COPYFILE} "../Saturn/vendor/physx/bin/Release/PhysXCommon_64.dll" "%{cfg.targetdir}"',
-			'{COPYFILE} "../Saturn/vendor/physx/bin/Release/PhysXFoundation_64.dll" "%{cfg.targetdir}"',
-			'{COPYFILE} "../Saturn/vendor/physx/bin/Release/PhysXCooking_64.dll" "%{cfg.targetdir}"',
-			'{COPYFILE} "../Saturn/vendor/physx/bin/Release/PhysX_64.dll" "%{cfg.targetdir}"',
-		}
+		filter "configurations:Dist or configurations:Release"
+			postbuildcommands 
+			{ 
+				'{COPYFILE} "../Saturn/vendor/assimp/bin/Release/assimp-vc143-mt.dll" "%{cfg.targetdir}"',
+				'{COPYFILE} "../Saturn/vendor/physx/bin/Release/PhysXCommon_64.dll" "%{cfg.targetdir}"',
+				'{COPYFILE} "../Saturn/vendor/physx/bin/Release/PhysXFoundation_64.dll" "%{cfg.targetdir}"',
+				'{COPYFILE} "../Saturn/vendor/physx/bin/Release/PhysXCooking_64.dll" "%{cfg.targetdir}"',
+				'{COPYFILE} "../Saturn/vendor/physx/bin/Release/PhysX_64.dll" "%{cfg.targetdir}"',
+			}
 
 	filter "system:linux"
 		systemversion "latest"
@@ -420,6 +417,33 @@ project "Saturn-Editor"
 		files 
 		{
 			"Saturn/src/Saturn/Entry/Unix/**.cpp",
+		}
+
+		filter "configurations:Debug"
+			defines "SAT_DEBUG"
+			runtime "Debug"
+			symbols "on"
+
+		filter "configurations:Release"
+			defines "SAT_RELEASE"
+			runtime "Release"
+			optimize "on"
+
+		filter "configurations:Dist"
+			defines "SAT_DIST"
+			runtime "Release"
+			optimize "on"
+
+	filter "system:Mac"
+		systemversion "latest"
+
+		defines
+		{
+			"SAT_PLATFORM_MACOS"
+		}
+
+		files 
+		{
 		}
 
 		filter "configurations:Debug"
@@ -452,7 +476,6 @@ project "Saturn-ProjectBrowser"
 
 	defines
 	{
-		"_CRT_SECURE_NO_WARNINGS",
 		"SATURN_SS_IMPORT",
 		"TRACY_ENABLE",
 		"TRACY_DELAYED_INIT",
@@ -510,7 +533,8 @@ project "Saturn-ProjectBrowser"
 
 		defines
 		{
-			"SAT_PLATFORM_WINDOWS"
+			"SAT_PLATFORM_WINDOWS",
+			"_CRT_SECURE_NO_WARNINGS"
 		}
 		
 		files 
@@ -583,6 +607,34 @@ project "Saturn-ProjectBrowser"
 			runtime "Release"
 			optimize "on"
 
+	filter "system:Mac"
+		systemversion "latest"
+
+		defines
+		{
+			"SAT_PLATFORM_MACOS"
+		}
+
+		files 
+		{
+			"Saturn/src/Saturn/Entry/Unix/**.cpp",
+		}
+
+		filter "configurations:Debug"
+			defines "SAT_DEBUG"
+			runtime "Debug"
+			symbols "on"
+
+		filter "configurations:Release"
+			defines "SAT_RELEASE"
+			runtime "Release"
+			optimize "on"
+
+		filter "configurations:Dist"
+			defines "SAT_DIST"
+			runtime "Release"
+			optimize "on"
+
 group "Tools"
 project "Saturn-SharedStorage"
 	location "Saturn-SharedStorage"
@@ -607,7 +659,7 @@ project "Saturn-SharedStorage"
 		"Saturn/src",
 	}
 	
-	filter "system:windows"
+	filter "system:windows or system:linux or system:Mac"
 		systemversion "latest"
 		
 		filter "configurations:Debug"
@@ -703,17 +755,28 @@ project "SaturnHeaderTool"
 		"%{IncludeDir.SharedStorage}"
 	}
 
-	links
-	{
-	--	"Saturn"
-	}
-
 	filter "system:windows"
 		systemversion "latest"
 
 		defines
 		{
 			"SAT_PLATFORM_WINDOWS"
+		}
+
+	filter "system:linux"
+		systemversion "latest"
+
+		defines
+		{
+			"SAT_PLATFORM_LINUX"
+		}
+
+	filter "system:Mac"
+		systemversion "latest"
+
+		defines
+		{
+			"SAT_PLATFORM_MACOS"
 		}
 
 	filter "configurations:Debug"

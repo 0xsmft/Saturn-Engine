@@ -28,6 +28,7 @@
 
 #pragma once
 
+#include "Platform.h"
 #include <type_traits>
 #include <atomic>
 
@@ -244,7 +245,7 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// NON-INTRUSIVE REFERENCE COUNTED OBJECTS
 
-	class __declspec(novtable) ReferenceControlBlockBase
+	class SAT_NOVTABLE ReferenceControlBlockBase
 	{
 	protected:
 		constexpr ReferenceControlBlockBase() noexcept = default;
@@ -256,17 +257,17 @@ namespace Saturn {
 
 		void AddRef() 
 		{
-			_MT_INCR( m_RefCount );
+			m_RefCount.fetch_add( 1 );
 		}
 
 		void AddWeakRef()
 		{
-			_MT_INCR( m_WeakCount );
+			m_WeakCount.fetch_add( 1 );
 		}
 
 		void DecRef() 
 		{
-			if( _MT_DECR( m_RefCount ) == 0 )
+			if( m_RefCount.fetch_sub( 1, std::memory_order_seq_cst ) == 0 )
 			{
 				Destroy();
 				// Check if we can delete this
@@ -276,18 +277,18 @@ namespace Saturn {
 
 		void DecWeakRef()
 		{
-			if( _MT_DECR( m_WeakCount ) == 0 )
+			if( m_WeakCount.fetch_sub( 1, std::memory_order_seq_cst ) == 0 )
 			{
 				delete this;
 			}
 		}
 
-		[[nodiscard]] long GetRefCount() const { return (long)m_RefCount; }
-		[[nodiscard]] long GetWeakCount() const { return (long)m_WeakCount; }
+		[[nodiscard]] long GetRefCount() const { return (long)m_RefCount.load(); }
+		[[nodiscard]] long GetWeakCount() const { return (long)m_WeakCount.load(); }
 
 	private:
-		unsigned long m_RefCount{ 1 };
-		unsigned long m_WeakCount{ 1 };
+		std::atomic< unsigned long > m_RefCount{ 1 };
+		std::atomic< unsigned long > m_WeakCount{ 1 };
 	};
 	
 	template<typename Ty>

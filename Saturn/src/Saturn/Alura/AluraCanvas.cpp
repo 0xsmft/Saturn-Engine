@@ -32,12 +32,22 @@
 #include "AluraRect.h"
 
 #include "Saturn/Vulkan/AluraRenderer.h"
+#include "Saturn/Asset/AssetManager.h"
 
 namespace Saturn {
 
-	AluraCanvas::AluraCanvas( const glm::vec2& rSize, const glm::vec2& rPosition )
-		: m_Size( rSize ), m_Position( rPosition )
+	AluraCanvas::AluraCanvas( const AluraCanvasSpecification& rSpecification )
+		: m_Size( rSpecification.Size ), m_Position( rSpecification.Position )
 	{
+		m_ActiveFont = AssetManager::Get().GetAssetAs<AluraFont>( rSpecification.MasterFontAssetID );
+
+		// Font is null! Must have an active font.
+		SAT_CORE_ASSERT( m_ActiveFont );
+
+		// Reserve some space for fonts so assume, regular, bold, italics...
+		m_Fonts.reserve( 3 );
+		m_Fonts.push_back( m_ActiveFont );
+
 		InitStyle();
 	}
 
@@ -57,7 +67,7 @@ namespace Saturn {
 	void AluraCanvas::Begin()
 	{
 		// Font is null! Must have an active font.
-		SAT_CORE_ASSERT( m_ActiveFont );
+//		SAT_CORE_ASSERT( m_ActiveFont );
 
 		m_Layout = {};
 
@@ -181,10 +191,19 @@ namespace Saturn {
 
 	AluraElement& AluraCanvas::AddText( const std::string& rText, const glm::vec4& rColor )
 	{
-		m_Renderer->SubmitString( rText, m_ActiveFont, m_Style.CurrentFontSize, m_Layout.CursorPos, rColor );
+		// Handle SetNextItemPosition
+		glm::vec2 posDependingLastCall = m_Layout.CursorPos;
+
+		if( m_WantToSetItemPosition )
+		{
+			posDependingLastCall = m_PendingNextItemPosition;
+			m_WantToSetItemPosition = false;
+		}
+
+		m_Renderer->SubmitString( rText, m_ActiveFont, m_Style.CurrentFontSize, posDependingLastCall, rColor );
 		
 		const auto textSize = m_ActiveFont->CalcTextSize( m_Style.CurrentFontSize, rText );
-		auto& rElement = m_Elements.emplace_back( "##noname", m_Layout.CursorPos, textSize, rColor );
+		auto& rElement = m_Elements.emplace_back( "##noname", posDependingLastCall, textSize, rColor );
 
 		AdvanceCursor( textSize );
 
@@ -290,9 +309,15 @@ namespace Saturn {
 		glm::vec2 position = { ( m_Size.x - rSize.x ) * 0.5f, ( m_Size.y - rSize.y ) * 0.5f };
 		SetNextItemPosition( position );
 	}
-
+	
 	void AluraCanvas::AdvanceCursor( const glm::vec2& rSize )
 	{
+		//
+		// TODO: Y layout only!
+		// Meaning we move down a "line" every time we advance the cursor.
+		//
+		// Adding support for X layout would be very simple, we'd just need to check if out current layout type is horizontal and if so move along the Y coord instead of the X
+		//
 		const float offsetInlineWithBaselineY = glm::max( 0.0f, m_Layout.CurrLineTextBaseOffset );
 		const float lineY = m_Layout.IsSameLine ? m_Layout.CursorPosPrevLine.y : m_Layout.CursorPos.y;
 		const float lineHeight = glm::max( m_Layout.CurrLineSize.y, m_Layout.CursorPos.y - lineY + rSize.y + offsetInlineWithBaselineY );

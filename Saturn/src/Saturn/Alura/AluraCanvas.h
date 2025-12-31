@@ -62,6 +62,18 @@ namespace Saturn {
 
 		bool IsSameLine = false;
 	};
+	
+	struct AluraCanvasSpecification
+	{
+		glm::vec2 Size{};
+	
+		// Position should be relative to the main window's position.
+		glm::vec2 Position{};
+		
+		// TODO: Be a bit nicer to the user and have an embedded default font.
+		// Specify the main font for this canvas to use, you *must* have a font in order for the canvas to be created.
+		AssetID   MasterFontAssetID = 0;
+	};
 
 	//
 	// AluraCanvas
@@ -76,7 +88,7 @@ namespace Saturn {
 	{
 	public:
 		// NOTE: The position must be relative to the window's position!
-		AluraCanvas( const glm::vec2& rSize, const glm::vec2& rPosition );
+		AluraCanvas( const AluraCanvasSpecification& rSpecification );
 		~AluraCanvas();
 
 		// Init
@@ -87,7 +99,7 @@ namespace Saturn {
 
 		void PushFontAndSetActive( Ref<AluraFont> font );
 		
-		// Pops the newest font in the fonts list.s
+		// Pops the newest font in the fonts list.
 		// NOTE: There must always be an active font, so if you pop the last remaining font, Saturn will assert.
 		void PopFont();
 
@@ -124,6 +136,11 @@ namespace Saturn {
 	public:
 		glm::vec2 GetPosition() const { return m_Position; }
 		glm::vec2 GetSize() const { return m_Size; }
+		
+		float GetWidth() const { return m_Size.x; }
+		float GetHeight() const { return m_Size.y; }
+
+		const AluraStyle& GetStyle() const { return m_Style; }
 
 	public:
 		inline void SetPosition( const glm::vec2& rPosition ) 

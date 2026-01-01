@@ -1359,7 +1359,7 @@ namespace Saturn {
 			node->PositionBeforeMove = ed::GetNodePosition( ed::NodeId( node->ID ) );
 
 			UUID parentID = 0;
-			if( m_Version >= SAT_VERSION_A_0_2_3_WIP )
+			if( m_Version >= SAT_VERSION_A_0_2_3 )
 			{
 				RawSerialisation::ReadObjectChecked( parentID, rStream );
 			}

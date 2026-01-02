@@ -70,6 +70,7 @@ namespace Saturn {
 		void EndFrame();
 
 		void SubmitRect( const glm::vec2& rMin, const glm::vec2& rMax, const glm::vec4& rColor );
+		void SubmitRectFrame( const glm::vec2& rMin, const glm::vec2& rMax, float thinkness, const glm::vec4& rColor );
 		void SubmitRect( const glm::vec2& rMin, const glm::vec2& rMax, Ref<Texture2D> texture, const glm::vec4& rColor, const glm::vec2& rUV1 = { 0.0f, 1.0f }, const glm::vec2& rUV2 = { 1.0f, 1.0f } );
 	
 		void SubmitString( const std::string& rText, Ref<AluraFont> font, float fontScale, const glm::vec2& rCursorPos, const glm::vec4& rColor );

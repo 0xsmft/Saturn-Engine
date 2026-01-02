@@ -62,6 +62,12 @@ namespace Saturn {
 
 		bool IsSameLine = false;
 	};
+
+	struct AluraColorTemp
+	{
+		glm::vec4 OldValue{};
+		std::underlying_type_t<AluraColor> Index;
+	};
 	
 	struct AluraCanvasSpecification
 	{
@@ -117,6 +123,9 @@ namespace Saturn {
 		AluraElement& AddImage( const glm::vec2& rSize, Ref<Texture2D> image, const glm::vec4& rColor = glm::one<glm::vec4>(), const glm::vec2& rUV1 = { 1.0F, 0.0F }, const glm::vec2& rUV2 = { 0.0F, 1.0F } );
 		[[nodiscard]] bool AddImageButton( const glm::vec2& rSize, Ref<Texture2D> image, const glm::vec4& rColor = glm::one<glm::vec4>(), const glm::vec2& rUV1 = { 1.0F, 0.0F }, const glm::vec2& rUV2 = { 0.0F, 1.0F } );
 #endif
+
+		// NOTE: fraction is a normalised value between 0.0 - 1.0, because we are working with the percent in decimal from.
+		AluraElement& AddProgressBar( float fraction, const glm::vec2& rSize  );
 
 		AluraElement& AddText( const std::string& rText, const glm::vec4& rColor = glm::one<glm::vec4>() );
 		

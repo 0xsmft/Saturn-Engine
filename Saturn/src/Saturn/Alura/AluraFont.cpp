@@ -132,11 +132,6 @@ namespace Saturn {
 			auto missingIndex = charset.size() - glyhsLoaded;
 
 			SAT_CORE_WARN( "[Alura] Font is missing {0} glyhs", missingIndex );
-
-			for( size_t i = glyhsLoaded; i < charset.size(); i++ )
-			{
-				SAT_CORE_WARN( " Missing: {0}", (char)i );
-			}
 		}
 
 		msdfag::TightAtlasPacker packer;
@@ -186,7 +181,6 @@ namespace Saturn {
 		static constexpr char Magic[4] = { '.', 'S', 'A', 'F' };
 		uint32_t Width;
 		uint32_t Height;
-		uint32_t Type;
 	};
 
 	template<typename Ty, typename S, int N, msdfag::GeneratorFunction<S, N> Func>
@@ -211,7 +205,7 @@ namespace Saturn {
 
 		RawSerialisation::WriteObject( ".SAF", fout );
 
-		AluraAtlasHeader header{ .Width = ( uint32_t ) bitmap.width, .Height = ( uint32_t ) bitmap.height, .Type = 0 /*AluraFont_Unicode*/ };
+		AluraAtlasHeader header{ .Width = ( uint32_t ) bitmap.width, .Height = ( uint32_t ) bitmap.height };
 
 		RawSerialisation::WriteObject( header, fout );
 

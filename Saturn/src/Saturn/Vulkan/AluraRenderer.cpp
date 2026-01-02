@@ -179,9 +179,6 @@ namespace Saturn {
 		{
 			m_Width = w;
 			m_Height = h;
-
-			m_Projection = glm::ortho( 0.0f, ( float ) m_Width, ( float ) m_Height, 0.0f );
-
 			m_Resized = true;
 		}
 	}
@@ -250,12 +247,13 @@ namespace Saturn {
 
 		const uint32_t frame = Renderer::Get().GetCurrentFrame();
 
+		m_IndexBuffer->Bind( m_CommandBuffer );
+
 		const uint32_t dataSize = ( uint32_t ) ( ( uint8_t* ) m_pVertexPtr - ( uint8_t* ) m_VertexBase[ frame ] );
 		if( dataSize >= 1 )
 		{
 			m_VertexBuffers[ frame ]->Reallocate( m_VertexBase[ frame ], dataSize );
 			m_VertexBuffers[ frame ]->Bind( m_CommandBuffer );
-			m_IndexBuffer->Bind( m_CommandBuffer );
 
 			for( uint32_t i = 0; i < 16; i++ )
 			{
@@ -381,6 +379,21 @@ namespace Saturn {
 		m_QuadIndexCount += 6;
 	}
 
+	void AluraRenderer::SubmitRectFrame( const glm::vec2& rMin, const glm::vec2& rMax, float thinkness, const glm::vec4& rColor )
+	{
+		// Top
+		SubmitRect( rMin, { rMax.x, rMin.y + thinkness }, rColor );
+
+		// Bottom
+		SubmitRect( { rMin.x, rMax.y - thinkness }, rMax, rColor );
+
+		// Left
+		SubmitRect( { rMin.x, rMin.y + thinkness }, { rMin.x + thinkness, rMax.y - thinkness }, rColor );
+		
+		// Right
+		SubmitRect( { rMax.x - thinkness, rMin.y + thinkness }, { rMax.x, rMax.y - thinkness }, rColor );
+	}
+
 	void AluraRenderer::SubmitString( const std::string& rText, Ref<AluraFont> font, float fontScale, const glm::vec2& rCursorPos, const glm::vec4& rColor )
 	{
 		const auto& rFontGeo = font->GetMSDFData()->FontGeometry;
@@ -411,10 +424,10 @@ namespace Saturn {
 				continue;
 			}
 
-			auto glyph = rFontGeo.getGlyph( character );
+			auto pGlyph = rFontGeo.getGlyph( character );
 			if( character == ' ' )
 			{
-				double advance = glyph->getAdvance();
+				double advance = pGlyph->getAdvance();
 				x += fsScale * advance;
 				continue;
 			}
@@ -423,16 +436,16 @@ namespace Saturn {
 			// AluraCanvas::PushStyleVar( AluraStyleVar_FontSize, 18.0f )? or passing it into every AddText call?
 			else if( character == '\t' )
 			{
-				glyph = rFontGeo.getGlyph( ' ' );
-				double advance = glyph->getAdvance() * 4 /* NUMBER_OF_SPACES_PER_TAB */;
+				pGlyph = rFontGeo.getGlyph( ' ' );
+				double advance = pGlyph->getAdvance() * 4 /* NUMBER_OF_SPACES_PER_TAB */;
 				x += fsScale * advance;
 				continue;
 			}
 
-			if( !glyph ) glyph = rFontGeo.getGlyph( '?' );
+			if( !pGlyph ) pGlyph = rFontGeo.getGlyph( '?' );
 
 			double atlasLeft, atlasBottom, atlasRight, atlasTop;
-			glyph->getQuadAtlasBounds( atlasLeft, atlasBottom, atlasRight, atlasTop );
+			pGlyph->getQuadAtlasBounds( atlasLeft, atlasBottom, atlasRight, atlasTop );
 
 			// NOTE: Vulkan: We have to flip the atlasTop and atlasBottom because in the Editor the UI origin is the bottom-left
 			// the reason why it's the bottom-left is because when this image gets flipped in the viewport, the elements at the bottom-left
@@ -446,7 +459,7 @@ namespace Saturn {
 #endif
 
 			double planeLeft, planeBottom, planeRight, planeTop;
-			glyph->getQuadPlaneBounds( planeLeft, planeBottom, planeRight, planeTop );
+			pGlyph->getQuadPlaneBounds( planeLeft, planeBottom, planeRight, planeTop );
 
 			// NOTE: Vulkan: Same as above.
 #if !defined(SAT_DIST)
@@ -468,7 +481,7 @@ namespace Saturn {
 			// Next character spacing
 			if( i < rText.size() - 1 )
 			{
-				double advance = glyph->getAdvance();
+				double advance = pGlyph->getAdvance();
 				char next = rText[ i + 1 ];
 				rFontGeo.getAdvance( advance, character, next );
 

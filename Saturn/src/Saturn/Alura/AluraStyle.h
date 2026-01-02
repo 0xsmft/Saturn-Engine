@@ -48,6 +48,7 @@ namespace Saturn {
 		AluraColor_TextDisabled,
 		AluraColor_Button,
 		AluraColor_ButtonHovered,
+		AluraColor_FrameBackground,
 		AluraColor_Count,
 	};
 

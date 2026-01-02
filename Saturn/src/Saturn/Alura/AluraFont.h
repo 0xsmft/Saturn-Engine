@@ -64,6 +64,9 @@ namespace Saturn {
 		std::filesystem::path m_Filepath;
 		AluraMSDFData* m_pMSDFData = nullptr;
 		Ref<Texture2D> m_TextureAtlas;
+		
+	private:
+		friend class AluraFontAssetViewer;
 	};	
 	
 }

@@ -41,9 +41,6 @@ namespace Saturn {
 	{
 		m_ActiveFont = AssetManager::Get().GetAssetAs<AluraFont>( rSpecification.MasterFontAssetID );
 
-		// Font is null! Must have an active font.
-		SAT_CORE_ASSERT( m_ActiveFont );
-
 		// Reserve some space for fonts so assume, regular, bold, italics...
 		m_Fonts.reserve( 3 );
 		m_Fonts.push_back( m_ActiveFont );
@@ -57,6 +54,7 @@ namespace Saturn {
 		m_Style.Colors[ AluraColor_TextDisabled  ] = glm::vec4( 0.5f, 0.5f, 0.5f, 1.0f );
 		m_Style.Colors[ AluraColor_Button        ] = glm::vec4( 0.26f, 0.59f, 0.98f, 0.40f );
 		m_Style.Colors[ AluraColor_ButtonHovered ] = glm::vec4( 0.26f, 0.59f, 0.98f, 1.00f );
+		m_Style.Colors[ AluraColor_FrameBackground ] = glm::vec4( 0.200f, 0.200f, 0.200f, 1.000f );
 	}
 
 	AluraCanvas::~AluraCanvas()
@@ -67,7 +65,7 @@ namespace Saturn {
 	void AluraCanvas::Begin()
 	{
 		// Font is null! Must have an active font.
-//		SAT_CORE_ASSERT( m_ActiveFont );
+		SAT_CORE_ASSERT( m_ActiveFont );
 
 		m_Layout = {};
 
@@ -187,6 +185,34 @@ namespace Saturn {
 		AdvanceCursor( rElement.m_Size );
 		
 		return IsItemClicked( RubyMouseButton_Left );
+	}
+
+	AluraElement& AluraCanvas::AddProgressBar( float fraction, const glm::vec2& rSize )
+	{
+		// Handle SetNextItemPosition
+		glm::vec2 posDependingLastCall = m_Layout.CursorPos;
+
+		if( m_WantToSetItemPosition )
+		{
+			posDependingLastCall = m_PendingNextItemPosition;
+			m_WantToSetItemPosition = false;
+		}
+
+		AluraRect boundingBox( posDependingLastCall, posDependingLastCall + rSize );
+
+		fraction = glm::clamp( fraction, 0.0f, 1.0f );
+		
+		glm::vec2 fillMax( std::lerp( boundingBox.Min.x, boundingBox.Max.x, fraction ), boundingBox.Max.y );
+
+		m_Renderer->SubmitRect( boundingBox.Min, boundingBox.Max, m_Style.Colors[ AluraColor_FrameBackground ] );
+		m_Renderer->SubmitRect( boundingBox.Min, fillMax, { 1.0f, 1.0f, 1.0f, 1.0f } );
+		m_Renderer->SubmitRectFrame( boundingBox.Min, boundingBox.Max, 1.0f, { 0.0f, 0.0f, 0.0f, 1.0f } );
+		
+		// Move on.
+		AdvanceCursor( boundingBox.GetSize() );
+
+		auto& rElement = m_Elements.emplace_back( "##noname", posDependingLastCall, rSize, glm::vec4{ 1.0f } );
+		return rElement;
 	}
 
 	AluraElement& AluraCanvas::AddText( const std::string& rText, const glm::vec4& rColor )

@@ -50,11 +50,6 @@ namespace Saturn {
 
 	void AluraCanvas::InitStyle()
 	{
-		m_Style.Colors[ AluraColor_Text          ] = glm::one<glm::vec4>();
-		m_Style.Colors[ AluraColor_TextDisabled  ] = glm::vec4( 0.5f, 0.5f, 0.5f, 1.0f );
-		m_Style.Colors[ AluraColor_Button        ] = glm::vec4( 0.26f, 0.59f, 0.98f, 0.40f );
-		m_Style.Colors[ AluraColor_ButtonHovered ] = glm::vec4( 0.26f, 0.59f, 0.98f, 1.00f );
-		m_Style.Colors[ AluraColor_FrameBackground ] = glm::vec4( 0.200f, 0.200f, 0.200f, 1.000f );
 	}
 
 	AluraCanvas::~AluraCanvas()
@@ -66,6 +61,9 @@ namespace Saturn {
 	{
 		// Font is null! Must have an active font.
 		SAT_CORE_ASSERT( m_ActiveFont );
+
+		// Forgot to call PopStyle()
+		SAT_CORE_ASSERT( m_ColorStack.size() == 0 );
 
 		m_Layout = {};
 
@@ -205,7 +203,7 @@ namespace Saturn {
 		glm::vec2 fillMax( std::lerp( boundingBox.Min.x, boundingBox.Max.x, fraction ), boundingBox.Max.y );
 
 		m_Renderer->SubmitRect( boundingBox.Min, boundingBox.Max, m_Style.Colors[ AluraColor_FrameBackground ] );
-		m_Renderer->SubmitRect( boundingBox.Min, fillMax, { 1.0f, 1.0f, 1.0f, 1.0f } );
+		m_Renderer->SubmitRect( boundingBox.Min, fillMax, m_Style.Colors[ AluraColor_ProgressColor ] );
 		m_Renderer->SubmitRectFrame( boundingBox.Min, boundingBox.Max, 1.0f, { 0.0f, 0.0f, 0.0f, 1.0f } );
 		
 		// Move on.
@@ -336,6 +334,19 @@ namespace Saturn {
 		SetNextItemPosition( position );
 	}
 	
+	void AluraCanvas::PushStyle( std::underlying_type_t<AluraColor> index, const glm::vec4& rNewValue )
+	{
+		m_ColorStack.emplace( m_Style.Colors[ index ], index );
+		m_Style.Colors[ index ] = rNewValue;
+	}
+
+	void AluraCanvas::PopStyle()
+	{
+		const auto& rBackupData = m_ColorStack.top();
+		m_Style.Colors[ rBackupData.Index ] = rBackupData.OldValue;
+		m_ColorStack.pop();
+	}
+
 	void AluraCanvas::AdvanceCursor( const glm::vec2& rSize )
 	{
 		//

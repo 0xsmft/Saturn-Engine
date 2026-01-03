@@ -40,8 +40,8 @@
 #include "Saturn/Asset/Prefab.h"
 #include "Saturn/Asset/AssetManager.h"
 #include "Saturn/Asset/AssetExtensions.h"
-
 #include "Saturn/AI/BehaviourTree/BehaviourTreeMemorySpecification.h"
+#include "Saturn/Alura/AluraStylingProfile.h"
 
 #include "Saturn/Serialisation/YAML/AssetSerialisers.h"
 #include "Saturn/Serialisation/YAML/SceneSerialiser.h"
@@ -558,6 +558,28 @@ namespace Saturn {
 
 				std::ofstream fout( newPath );
 				fout.close();
+
+				AssetManager::Get().Save();
+
+				UpdateFiles( true );
+				FindAndRenameItem( asset->Name );
+			}
+
+			if( ImGui::MenuItem( "New Styling Profile" ) )
+			{
+				const auto id = AssetManager::Get().CreateAsset( AssetType::StyleProfile );
+				auto asset = AssetManager::Get().FindAsset( id );
+				auto newPath = m_CurrentPath / "New Style Profile.ssp";
+				int32_t count = GetFilenameCount( "New Style Profile.ssp" );
+
+				if( count >= 1 )
+					newPath.replace_filename( std::format( "{0} ({1}).ssp", "New Style Profile", count ) );
+
+				asset->SetAbsolutePath( newPath );
+				Ref<AluraStylingProfile> styleProf = Ref<AluraStylingProfile>::Create( asset );
+
+				AluraStylingProfileAssetSerialiser ssp;
+				ssp.Serialise( styleProf );
 
 				AssetManager::Get().Save();
 

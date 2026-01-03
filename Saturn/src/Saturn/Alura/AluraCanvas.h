@@ -37,6 +37,7 @@
 #include "Saturn/Core/Ruby/RubyEventType.h"
 
 #include <glm/glm.hpp>
+#include <stack>
 
 namespace Saturn {
 
@@ -133,6 +134,8 @@ namespace Saturn {
 		
 		[[nodiscard]] bool AddButton( const std::string& rText );
 
+	public:
+		// Widget control and hit testing
 		void SetNextItemPosition( const glm::vec2& rPosition );
 
 		void Indent( float width = 0.0f );
@@ -141,6 +144,9 @@ namespace Saturn {
 		[[nodiscard]] bool IsItemHovered();
 		[[nodiscard]] bool IsItemClicked( RubyMouseButton mouseBtn );
 		void AlignNextItemCenterXY( const glm::vec2& rSize );
+
+		void PushStyle( std::underlying_type_t<AluraColor> index, const glm::vec4& rNewValue );
+		void PopStyle();
 
 	public:
 		glm::vec2 GetPosition() const { return m_Position; }
@@ -185,6 +191,8 @@ namespace Saturn {
 
 		std::vector<AluraElement> m_Elements;
 		std::vector<Ref<AluraFont>> m_Fonts;
+		std::stack<AluraColorTemp> m_ColorStack;
+
 		Ref<AluraFont> m_ActiveFont = nullptr;
 
 		AluraStyle m_Style{};

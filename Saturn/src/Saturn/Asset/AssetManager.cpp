@@ -32,7 +32,10 @@
 #include "MemoryAssetDependency.h"
 
 #include "Saturn/Core/App.h"
+
+#if !defined(SAT_DIST)
 #include "Saturn/Serialisation/YAML/AssetManagerSerialiser.h"
+#endif
 
 #include "Saturn/Project/Project.h"
 
@@ -79,6 +82,8 @@ namespace Saturn {
 
 	void AssetManager::RemoveAsset( AssetID id )
 	{
+		Project::GetActiveProject()->RemoveAssetFromDefaults( id );
+
 		if( IsAssetLoaded( id ) )
 			m_Assets->m_LoadedAssets[ id ]->OnDelete();
 
@@ -112,8 +117,11 @@ namespace Saturn {
 
 	void AssetManager::Save() const
 	{
+		// In distribution builds we are in a Read Only state!
+#if !defined(SAT_DIST)
 		AssetManagerSerialiser ars;
 		ars.Serialise();
+#endif
 	}
 
 #if !defined(SAT_DIST)

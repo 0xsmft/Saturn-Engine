@@ -34,20 +34,17 @@
 #include "Saturn/Asset/PhysicsMaterialAsset.h"
 #include "Saturn/Asset/TextureSourceAsset.h"
 #include "Saturn/Asset/MaterialAsset.h"
-
 #include "Saturn/Animation/SkeletonAsset.h"
 #include "Saturn/Animation/SkeletalAnimationAsset.h"
-
 #include "Saturn/Audio/SoundSpecification.h"
 #include "Saturn/Audio/GraphSound.h"
-
-#include "Saturn/Alura/AluraFont.h"
-
-#include "Saturn/Project/Project.h"
-
 #include "Saturn/AI/BehaviourTree/BehaviourTreeMemorySpecification.h"
+#include "Saturn/Alura/AluraFont.h"
+#include "Saturn/Alura/AluraStylingProfile.h"
 
 #include "Saturn/Vulkan/Renderer.h"
+
+#include "Saturn/Project/Project.h"
 
 #include "YamlAux.h"
 #include "EntitySerialisation.h"
@@ -1045,6 +1042,100 @@ namespace Saturn {
 
 		// Set rAsset reference to point to our new AluraFont
 		rAsset = fontAsset;
+
+		return true;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// AluraStylingProfileAssetSerialiser
+
+	void AluraStylingProfileAssetSerialiser::Serialise( const Ref<Asset>& rAsset ) const
+	{
+		const auto stylingProf = rAsset.As<AluraStylingProfile>();
+
+		YAML::Emitter out;
+
+		out << YAML::BeginMap;
+
+		out << YAML::Key << "AluraStylingProfile" << YAML::Value;
+		out << YAML::BeginMap;
+
+		out << YAML::Key << "Alpha" << YAML::Value << stylingProf->GetStyle().Alpha;
+		out << YAML::Key << "DisabledAlpha" << YAML::Value << stylingProf->GetStyle().DisabledAlpha;
+		out << YAML::Key << "WindowPadding" << YAML::Value << stylingProf->GetStyle().WindowPadding;
+		out << YAML::Key << "ItemSpacing" << YAML::Value << stylingProf->GetStyle().ItemSpacing;
+		out << YAML::Key << "IndentSpacing" << YAML::Value << stylingProf->GetStyle().IndentSpacing;
+		out << YAML::Key << "WindowBorderSize" << YAML::Value << stylingProf->GetStyle().WindowBorderSize;
+		out << YAML::Key << "CurrentFontSize" << YAML::Value << stylingProf->GetStyle().CurrentFontSize;
+
+		out << YAML::Key << "Styles" << YAML::Value;
+		out << YAML::BeginSeq;
+
+		uint32_t index = 0;
+		for( const auto& rColorVar : stylingProf->GetStyle().Colors )
+		{
+			out << YAML::BeginMap;
+
+			out << YAML::Key << "Index" << YAML::Value << index;
+			out << YAML::Key << "Value" << YAML::Value << rColorVar;
+
+			out << YAML::EndMap; // StyleVar
+			++index;
+		}
+
+		out << YAML::EndSeq; // Styles
+
+		out << YAML::EndMap; // Asset
+
+		out << YAML::EndMap; // Root
+
+		auto& basePath = rAsset->Path;
+		auto fullPath = GetFilepathAbs( basePath );
+
+		std::ofstream fout( fullPath );
+		fout << out.c_str();
+	}
+
+	bool AluraStylingProfileAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
+	{
+		const auto absolutePath = GetFilepathAbs( rAsset->Path );
+		std::ifstream FileIn( absolutePath );
+
+		std::stringstream ss;
+		ss << FileIn.rdbuf();
+
+		YAML::Node data = YAML::Load( ss.str() );
+
+		if( data.IsNull() )
+			return false;
+
+		const auto stylingData = data[ "AluraStylingProfile" ];
+
+		if( stylingData.IsNull() )
+			return false;
+
+		auto stylingProfAsset = Ref<AluraStylingProfile>::Create( rAsset );
+
+		auto& rStyle = stylingProfAsset->GetStyle();
+		rStyle.Alpha = stylingData[ "Alpha" ].as<float>( 1.0f );
+		rStyle.DisabledAlpha = stylingData[ "DisabledAlpha" ].as<float>( 1.0f );
+		rStyle.WindowPadding = stylingData[ "WindowPadding" ].as<glm::vec2>( glm::one<glm::vec2>() );
+		rStyle.ItemSpacing = stylingData[ "ItemSpacing" ].as<glm::vec2>( glm::one<glm::vec2>() );
+		rStyle.IndentSpacing = stylingData[ "IndentSpacing" ].as<float>( 1.0f );
+		rStyle.WindowBorderSize = stylingData[ "WindowBorderSize" ].as<float>( 1.0f );
+		rStyle.CurrentFontSize = stylingData[ "CurrentFontSize" ].as<float>( 1.0f );
+
+		const auto colors = stylingData[ "Styles" ];
+		for( const auto color : colors )
+		{
+			const auto index = color[ "Index" ].as<uint64_t>();
+			const auto value = color[ "Value" ].as<glm::vec4>();
+
+			rStyle.Colors[ index ] = value;
+		}
+
+		// Set rAsset reference to point to our new AluraStylingProfile
+		rAsset = stylingProfAsset;
 
 		return true;
 	}

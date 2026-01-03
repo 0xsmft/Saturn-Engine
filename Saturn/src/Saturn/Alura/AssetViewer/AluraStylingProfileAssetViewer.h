@@ -28,70 +28,24 @@
 
 #pragma once
 
-#include <glm/glm.hpp>
+#include "Saturn/ImGui/AssetViewer.h"
+
+#include "Saturn/Alura/AluraStylingProfile.h"
 
 namespace Saturn {
 
-	enum class AluraStyleVar 
-	{
-		Alpha,
-		DisabledAlpha,
-		WindowPadding,
-		IndentSpacing,
-		WindowBorderSize,
-		Count,
-	};
-
-	enum AluraColor
-	{
-		AluraColor_Text,
-		AluraColor_TextDisabled,
-		AluraColor_Button,
-		AluraColor_ButtonHovered,
-		AluraColor_FrameBackground,
-		AluraColor_ProgressColor,
-		AluraColor_Count,
-	};
-
-	class AluraStyle
+	class AluraStylingProfileAssetViewer : public AssetViewer
 	{
 	public:
-		// Note when adding new styling options ditto to the serialiser as well!
-		float Alpha;
-		float DisabledAlpha;
-		glm::vec2 WindowPadding;
-		glm::vec2 ItemSpacing;
-		float IndentSpacing;
-		float WindowBorderSize;
-		float CurrentFontSize;
+		AluraStylingProfileAssetViewer( AssetID id );
+		virtual ~AluraStylingProfileAssetViewer();
 
-		std::array<glm::vec4, ( std::underlying_type_t<AluraColor> )AluraColor_Count> Colors;
+		virtual void OnImGuiRender() override;
+		virtual void OnUpdate( Timestep ts ) {}
+		virtual void OnEvent( Event& rEvent ) {}
 
-	public:
-		AluraStyle() 
-		{
-			Colors.fill( glm::one<glm::vec4>() );
-			Default();
-		}
-
-	public:
-		void Default() 
-		{
-			Alpha = 1.0f;
-			DisabledAlpha = 0.5f;
-			WindowPadding = glm::vec2( 8.0f, 8.0f );
-			ItemSpacing = glm::vec2( 8.0f, 4.0f );
-			IndentSpacing = 21.0f;
-			WindowBorderSize = 1.0f;
-			CurrentFontSize = 18.0f;
-
-			Colors[ AluraColor_Text ] = glm::one<glm::vec4>();
-			Colors[ AluraColor_TextDisabled ] = glm::vec4( 0.5f, 0.5f, 0.5f, 1.0f );
-			Colors[ AluraColor_Button ] = glm::vec4( 0.26f, 0.59f, 0.98f, 0.40f );
-			Colors[ AluraColor_ButtonHovered ] = glm::vec4( 0.26f, 0.59f, 0.98f, 1.00f );
-			Colors[ AluraColor_FrameBackground ] = glm::vec4( 0.200f, 0.200f, 0.200f, 1.000f );
-			Colors[ AluraColor_ProgressColor ] = glm::vec4( 0.0f, 1.0f, 0.0f, 1.000f );
-		}
+	private:
+		Ref<AluraStylingProfile> m_StylingProfile;
 	};
-	
+
 }

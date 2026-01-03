@@ -57,6 +57,7 @@ namespace Saturn {
 		SkeletalAnimation,
 		AnimationController,
 		Font, // Alura
+		StyleProfile, // Alura
 		// ^^^ ADD NEW ASSET TYPES HERE ^^^
 		Unknown,
 		COUNT,
@@ -98,6 +99,8 @@ namespace Saturn {
 				return "AnimationController";
 			case Saturn::AssetType::Font:
 				return "Font";
+			case Saturn::AssetType::StyleProfile:
+				return "StyleProfile";
 			default:
 			case Saturn::AssetType::Unknown:
 				return "Unknown";
@@ -150,6 +153,8 @@ namespace Saturn {
 				return COLOR_32( 112, 11, 156, 255 );
 			case Saturn::AssetType::Font:
 				return COLOR_32( 92, 100, 112, 255 );
+			case Saturn::AssetType::StyleProfile:
+				return COLOR_32( 22, 74, 12, 255 );
 			default:
 			case Saturn::AssetType::Unknown:
 				return COLOR_32( 255, 255, 255, 255 );
@@ -190,6 +195,8 @@ namespace Saturn {
 			return AssetType::AnimationController;
 		else if( str == "Font" )
 			return AssetType::Font;
+		else if( str == "StyleProfile" )
+			return AssetType::StyleProfile;
 		else
 			return AssetType::Unknown;
 	}
@@ -226,6 +233,8 @@ namespace Saturn {
 			return AssetType::AnimationController;
 		else if( str == ".saf" )
 			return AssetType::Font;
+		else if( str == ".ssp" )
+			return AssetType::StyleProfile;
 		else
 			return AssetType::Unknown;
 	}

@@ -90,8 +90,6 @@ namespace Saturn {
 	private:
 		uint32_t m_Width = 0;
 		uint32_t m_Height = 0;
-		// The position that we currently are at, changes if we need to change canvas.
-		glm::vec2 m_Position{ 0.0f, 0.0f };
 		glm::mat4 m_Projection{};
 
 		bool m_Resized = false;

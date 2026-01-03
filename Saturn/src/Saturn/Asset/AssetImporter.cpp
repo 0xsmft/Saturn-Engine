@@ -48,6 +48,7 @@ namespace Saturn {
 		m_AssetSerialisers[ AssetType::BehaviourTreeMemory ] = std::make_unique<BehaviourTreeMemorySpecAssetSerialiser>();
 		m_AssetSerialisers[ AssetType::SkeletalAnimation ] = std::make_unique<SkeletalAnimationAssetSerialiser>();
 		m_AssetSerialisers[ AssetType::Font ]              = std::make_unique<AluraFontAssetSerialiser>();
+		m_AssetSerialisers[ AssetType::StyleProfile ]    = std::make_unique<AluraStylingProfileAssetSerialiser>();
 	}
 
 	bool AssetImporter::TryLoadData( Ref<Asset>& rAsset )

@@ -57,6 +57,7 @@
 #include "Saturn/Animation/AssetViewer/SkeletalAnimationAssetViewer.h"
 #include "Saturn/Animation/AssetViewer/AnimationControllerAssetViewer.h"
 #include "Saturn/Alura/AssetViewer/AluraFontAssetViewer.h"
+#include "Saturn/Alura/AssetViewer/AluraStylingProfileAssetViewer.h"
 
 #include "Saturn/Project/Project.h"
 
@@ -354,9 +355,16 @@ namespace Saturn {
 						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
 					} break;
 
+					case AssetType::StyleProfile:
+					{
+						const auto viewer = Ref<AluraStylingProfileAssetViewer>::Create( m_Asset->ID );
+						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+					} break;
+
 					case AssetType::Unknown:
 					case AssetType::COUNT:
 					default:
+						SAT_CORE_WARN( "Unhandled type for double click on Content Browser Item!" );
 						break;
 				}
 			}

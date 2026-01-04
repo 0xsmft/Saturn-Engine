@@ -83,7 +83,7 @@ namespace Saturn {
 			ItemSpacing = glm::vec2( 8.0f, 4.0f );
 			IndentSpacing = 21.0f;
 			WindowBorderSize = 1.0f;
-			CurrentFontSize = 18.0f;
+			CurrentFontSize = 16.0f; // == 1 em
 
 			Colors[ AluraColor_Text ] = glm::one<glm::vec4>();
 			Colors[ AluraColor_TextDisabled ] = glm::vec4( 0.5f, 0.5f, 0.5f, 1.0f );

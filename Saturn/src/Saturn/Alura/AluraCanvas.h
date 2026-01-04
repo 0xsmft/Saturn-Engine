@@ -64,6 +64,7 @@ namespace Saturn {
 		bool IsSameLine = false;
 	};
 
+	// Backup data when PushStyle is called
 	struct AluraColorTemp
 	{
 		glm::vec4 OldValue{};
@@ -80,6 +81,9 @@ namespace Saturn {
 		// TODO: Be a bit nicer to the user and have an embedded default font.
 		// Specify the main font for this canvas to use, you *must* have a font in order for the canvas to be created.
 		AssetID   MasterFontAssetID = 0;
+
+		// Specify the main styling profile to be used, you don't need to have a styling profile asset as Alura will automatically default the style if no profile is specified.
+		AssetID  StylingProfile = 0;
 	};
 
 	//
@@ -145,6 +149,8 @@ namespace Saturn {
 		[[nodiscard]] bool IsItemClicked( RubyMouseButton mouseBtn );
 		void AlignNextItemCenterXY( const glm::vec2& rSize );
 
+		void SameLine( float offset = 0.0f, float spacing = -1.0f );
+
 		void PushStyle( std::underlying_type_t<AluraColor> index, const glm::vec4& rNewValue );
 		void PopStyle();
 
@@ -171,10 +177,6 @@ namespace Saturn {
 	private:
 		void AdvanceCursor( const glm::vec2& rSize );
 		bool IsMouseHoveringRect( const glm::vec2& rMin, const glm::vec2& rMax ) const;
-
-
-	private:
-		void InitStyle();
 
 	private:
 		UUID m_ID;

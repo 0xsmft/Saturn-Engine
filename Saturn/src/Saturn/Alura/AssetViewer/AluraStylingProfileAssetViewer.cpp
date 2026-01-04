@@ -90,23 +90,25 @@ namespace Saturn {
 			ImGui::Text( "Alura Styling Profile" );
 
 			ImGui::SeparatorText( "General Style" );
-			Auxiliary::DrawFloatControl( "Alpha", m_StylingProfile->GetStyle().Alpha );
-			Auxiliary::DrawFloatControl( "Disabled Alpha", m_StylingProfile->GetStyle().DisabledAlpha );
+			auto& rStyle = m_StylingProfile->GetStyle();
 
-			Auxiliary::DrawVec2Control( "Window Padding", m_StylingProfile->GetStyle().WindowPadding );
-			Auxiliary::DrawVec2Control( "Item Spacing", m_StylingProfile->GetStyle().ItemSpacing );
+			Auxiliary::DrawFloatControl( "Alpha", rStyle.Alpha );
+			Auxiliary::DrawFloatControl( "Disabled Alpha", rStyle.DisabledAlpha );
 
-			Auxiliary::DrawFloatControl( "Indent Spacing", m_StylingProfile->GetStyle().IndentSpacing );
-			Auxiliary::DrawFloatControl( "Window Border Size", m_StylingProfile->GetStyle().WindowBorderSize );
-			Auxiliary::DrawFloatControl( "Current Font Size", m_StylingProfile->GetStyle().CurrentFontSize );
+			Auxiliary::DrawVec2Control( "Window Padding", rStyle.WindowPadding );
+			Auxiliary::DrawVec2Control( "Item Spacing", rStyle.ItemSpacing );
+
+			Auxiliary::DrawFloatControl( "Indent Spacing", rStyle.IndentSpacing );
+			Auxiliary::DrawFloatControl( "Window Border Size", rStyle.WindowBorderSize );
+			Auxiliary::DrawFloatControl( "Font Size", rStyle.CurrentFontSize );
 
 			ImGui::SeparatorText( "Colors" );
-			ImGui::ColorEdit4( "Text", glm::value_ptr( m_StylingProfile->GetStyle().Colors[ 0 ] ) );
-			ImGui::ColorEdit4( "Text Disabled", glm::value_ptr( m_StylingProfile->GetStyle().Colors[ 1 ] ) );
-			ImGui::ColorEdit4( "Button", glm::value_ptr( m_StylingProfile->GetStyle().Colors[ 2 ] ) );
-			ImGui::ColorEdit4( "Button Hovered", glm::value_ptr( m_StylingProfile->GetStyle().Colors[ 3 ] ) );
-			ImGui::ColorEdit4( "Frame Background", glm::value_ptr( m_StylingProfile->GetStyle().Colors[ 4 ] ) );
-			ImGui::ColorEdit4( "Progress bar Color", glm::value_ptr( m_StylingProfile->GetStyle().Colors[ 5 ] ) );
+			ImGui::ColorEdit4( "Text", glm::value_ptr( rStyle.Colors[ 0 ] ) );
+			ImGui::ColorEdit4( "Text Disabled", glm::value_ptr( rStyle.Colors[ 1 ] ) );
+			ImGui::ColorEdit4( "Button", glm::value_ptr( rStyle.Colors[ 2 ] ) );
+			ImGui::ColorEdit4( "Button Hovered", glm::value_ptr( rStyle.Colors[ 3 ] ) );
+			ImGui::ColorEdit4( "Frame Background", glm::value_ptr( rStyle.Colors[ 4 ] ) );
+			ImGui::ColorEdit4( "Progress bar Color", glm::value_ptr( rStyle.Colors[ 5 ] ) );
 		}
 
 		ImGui::End();

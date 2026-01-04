@@ -30,6 +30,7 @@
 #include "AluraCanvas.h"
 
 #include "AluraRect.h"
+#include "AluraStylingProfile.h"
 
 #include "Saturn/Vulkan/AluraRenderer.h"
 #include "Saturn/Asset/AssetManager.h"
@@ -45,11 +46,11 @@ namespace Saturn {
 		m_Fonts.reserve( 3 );
 		m_Fonts.push_back( m_ActiveFont );
 
-		InitStyle();
-	}
-
-	void AluraCanvas::InitStyle()
-	{
+		Ref<AluraStylingProfile> stylingProf = AssetManager::Get().GetAssetAs<AluraStylingProfile>( rSpecification.StylingProfile );
+		if( stylingProf )
+		{
+			m_Style = stylingProf->GetStyle();
+		}
 	}
 
 	AluraCanvas::~AluraCanvas()
@@ -334,6 +335,29 @@ namespace Saturn {
 		SetNextItemPosition( position );
 	}
 	
+	void AluraCanvas::SameLine( float offset /*= 0.0f*/, float spacing /*= -1.0f */ )
+	{
+		if( offset != 0.0f )
+		{
+			if( spacing < 0.0f )
+				spacing = 0.0f;
+
+			// TODO
+		}
+		else
+		{
+			if( spacing < 0.0f )
+				spacing = m_Style.ItemSpacing.x;
+
+			m_Layout.CursorPos.x = m_Layout.CursorPosPrevLine.x + spacing;
+			m_Layout.CursorPos.y = m_Layout.CursorPosPrevLine.y;
+		}
+
+		m_Layout.CurrLineSize = m_Layout.PrevLineSize;
+		m_Layout.CurrLineTextBaseOffset = m_Layout.PrevLineTextBaseOffset;
+		m_Layout.IsSameLine = true;
+	}
+
 	void AluraCanvas::PushStyle( std::underlying_type_t<AluraColor> index, const glm::vec4& rNewValue )
 	{
 		m_ColorStack.emplace( m_Style.Colors[ index ], index );
@@ -353,7 +377,7 @@ namespace Saturn {
 		// TODO: Y layout only!
 		// Meaning we move down a "line" every time we advance the cursor.
 		//
-		// Adding support for X layout would be very simple, we'd just need to check if out current layout type is horizontal and if so move along the Y coord instead of the X
+		// Adding support for X layout would be very simple, we'd just need to check if out current layout type is horizontal and if so move along the X coord instead of the Y
 		//
 		const float offsetInlineWithBaselineY = glm::max( 0.0f, m_Layout.CurrLineTextBaseOffset );
 		const float lineY = m_Layout.IsSameLine ? m_Layout.CursorPosPrevLine.y : m_Layout.CursorPos.y;

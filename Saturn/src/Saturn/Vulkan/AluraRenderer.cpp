@@ -36,6 +36,7 @@
 
 #include "Saturn/Alura/AluraMSDFData.h"
 #include "Saturn/Alura/AluraFont.h"
+#include "Saturn/Alura/AluraRect.h"
 
 namespace Saturn {
 
@@ -65,19 +66,19 @@ namespace Saturn {
 
 	void AluraRenderer::InitBuffers()
 	{
-		m_VertexBuffers.resize( MAX_FRAMES_IN_FLIGHT );
-		m_VertexBase.resize( MAX_FRAMES_IN_FLIGHT );
-		
+		m_QuadVertexBase.resize( MAX_FRAMES_IN_FLIGHT );
 		m_TextVertexBase.resize( MAX_FRAMES_IN_FLIGHT );
+
+		m_VertexBuffers.resize( MAX_FRAMES_IN_FLIGHT );
 		m_TextVertexBuffers.resize( MAX_FRAMES_IN_FLIGHT );
 
 		for( size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
 		{
 			m_VertexBuffers[ i ] = Ref<VertexBuffer>::Create( s_MaxVertices * sizeof( AluraVertex ) );
-			m_VertexBase[ i ] = new AluraVertex[ s_MaxVertices ];
+			m_QuadVertexBase[ i ] = new AluraVertex[ s_MaxVertices ];
 
-			m_TextVertexBuffers[ i ] = Ref<VertexBuffer>::Create( s_MaxVertices * sizeof( AluraTextVertex ) );
-			m_TextVertexBase[ i ] = new AluraTextVertex[ s_MaxVertices ];
+			m_TextVertexBuffers[ i ] = Ref<VertexBuffer>::Create( s_MaxVertices * sizeof( AluraVertex ) );
+			m_TextVertexBase[ i ] = new AluraVertex[ s_MaxVertices ];
 
 #if !defined(SAT_DIST)
 			m_VertexBuffers[ i ]->SetDebugName( std::format( "AluraQuadVB/{0}", i ) );
@@ -156,7 +157,7 @@ namespace Saturn {
 	void AluraRenderer::Terminate()
 	{
 		m_VertexBuffers.clear();
-		for( auto buffer : m_VertexBase )
+		for( auto buffer : m_QuadVertexBase )
 		{
 			delete[] buffer;
 		}
@@ -189,7 +190,7 @@ namespace Saturn {
 		
 		m_QuadVertexCount = 0;
 		m_QuadIndexCount = 0;
-		m_pVertexPtr = m_VertexBase[ frame ];
+		m_pQuadVertexPtr = m_QuadVertexBase[ frame ];
 
 		m_TextIndexCount = 0;
 		m_pTextVertexPtr = m_TextVertexBase[ frame ];
@@ -249,10 +250,10 @@ namespace Saturn {
 
 		m_IndexBuffer->Bind( m_CommandBuffer );
 
-		const uint32_t dataSize = ( uint32_t ) ( ( uint8_t* ) m_pVertexPtr - ( uint8_t* ) m_VertexBase[ frame ] );
+		const uint32_t dataSize = ( uint32_t ) ( ( uint8_t* ) m_pQuadVertexPtr - ( uint8_t* ) m_QuadVertexBase[ frame ] );
 		if( dataSize >= 1 )
 		{
-			m_VertexBuffers[ frame ]->Reallocate( m_VertexBase[ frame ], dataSize );
+			m_VertexBuffers[ frame ]->Reallocate( m_QuadVertexBase[ frame ], dataSize );
 			m_VertexBuffers[ frame ]->Bind( m_CommandBuffer );
 
 			for( uint32_t i = 0; i < 16; i++ )
@@ -304,29 +305,29 @@ namespace Saturn {
 
 	void AluraRenderer::SubmitRect( const glm::vec2& rMin, const glm::vec2& rMax, const glm::vec4& rColor )
 	{
-		m_pVertexPtr->Position = { rMin.x, rMin.y };
-		m_pVertexPtr->Color = rColor;
-		m_pVertexPtr->TexCoord = glm::vec2{ 0.0f, 0.0f };		
-		m_pVertexPtr->TextureIndex = 0.0f;
-		++m_pVertexPtr;
+		m_pQuadVertexPtr->Position = { rMin.x, rMin.y };
+		m_pQuadVertexPtr->Color = rColor;
+		m_pQuadVertexPtr->TexCoord = glm::vec2{ 0.0f, 0.0f };		
+		m_pQuadVertexPtr->TextureIndex = 0.0f;
+		++m_pQuadVertexPtr;
 
-		m_pVertexPtr->Position = { rMax.x, rMin.y };
-		m_pVertexPtr->Color = rColor;
-		m_pVertexPtr->TexCoord = glm::vec2{ 1.0f, 0.0f };
-		m_pVertexPtr->TextureIndex = 0.0f;
-		++m_pVertexPtr;
+		m_pQuadVertexPtr->Position = { rMax.x, rMin.y };
+		m_pQuadVertexPtr->Color = rColor;
+		m_pQuadVertexPtr->TexCoord = glm::vec2{ 1.0f, 0.0f };
+		m_pQuadVertexPtr->TextureIndex = 0.0f;
+		++m_pQuadVertexPtr;
 
-		m_pVertexPtr->Position = { rMax.x, rMax.y };
-		m_pVertexPtr->Color = rColor;
-		m_pVertexPtr->TexCoord = glm::vec2{ 1.0f, 1.0f };
-		m_pVertexPtr->TextureIndex = 0.0f;
-		++m_pVertexPtr;
+		m_pQuadVertexPtr->Position = { rMax.x, rMax.y };
+		m_pQuadVertexPtr->Color = rColor;
+		m_pQuadVertexPtr->TexCoord = glm::vec2{ 1.0f, 1.0f };
+		m_pQuadVertexPtr->TextureIndex = 0.0f;
+		++m_pQuadVertexPtr;
 
-		m_pVertexPtr->Position = { rMin.x, rMax.y };
-		m_pVertexPtr->Color = rColor;
-		m_pVertexPtr->TexCoord = glm::vec2{ 0.0f, 1.0f };
-		m_pVertexPtr->TextureIndex = 0.0f;
-		++m_pVertexPtr;
+		m_pQuadVertexPtr->Position = { rMin.x, rMax.y };
+		m_pQuadVertexPtr->Color = rColor;
+		m_pQuadVertexPtr->TexCoord = glm::vec2{ 0.0f, 1.0f };
+		m_pQuadVertexPtr->TextureIndex = 0.0f;
+		++m_pQuadVertexPtr;
 
 		m_QuadVertexCount += 4;
 		m_QuadIndexCount += 6;
@@ -351,56 +352,59 @@ namespace Saturn {
 			++m_CurrentTextureSlot;
 		}
 
-		m_pVertexPtr->Position = { rMin.x, rMin.y };
-		m_pVertexPtr->Color = rColor;
-		m_pVertexPtr->TexCoord = glm::vec2{ rUV1.x, rUV1.y };
-		m_pVertexPtr->TextureIndex = ( float ) textureID;
-		++m_pVertexPtr;
+		m_pQuadVertexPtr->Position = { rMin.x, rMin.y };
+		m_pQuadVertexPtr->Color = rColor;
+		m_pQuadVertexPtr->TexCoord = glm::vec2{ rUV1.x, rUV1.y };
+		m_pQuadVertexPtr->TextureIndex = ( float ) textureID;
+		++m_pQuadVertexPtr;
 
-		m_pVertexPtr->Position = { rMax.x, rMin.y };
-		m_pVertexPtr->Color = rColor;
-		m_pVertexPtr->TexCoord = glm::vec2{ rUV2.x, rUV1.y };
-		m_pVertexPtr->TextureIndex = ( float ) textureID;
-		++m_pVertexPtr;
+		m_pQuadVertexPtr->Position = { rMax.x, rMin.y };
+		m_pQuadVertexPtr->Color = rColor;
+		m_pQuadVertexPtr->TexCoord = glm::vec2{ rUV2.x, rUV1.y };
+		m_pQuadVertexPtr->TextureIndex = ( float ) textureID;
+		++m_pQuadVertexPtr;
 
-		m_pVertexPtr->Position = { rMax.x, rMax.y };
-		m_pVertexPtr->Color = rColor;
-		m_pVertexPtr->TexCoord = glm::vec2{ rUV2.x, rUV2.y };
-		m_pVertexPtr->TextureIndex = ( float ) textureID;
-		++m_pVertexPtr;
+		m_pQuadVertexPtr->Position = { rMax.x, rMax.y };
+		m_pQuadVertexPtr->Color = rColor;
+		m_pQuadVertexPtr->TexCoord = glm::vec2{ rUV2.x, rUV2.y };
+		m_pQuadVertexPtr->TextureIndex = ( float ) textureID;
+		++m_pQuadVertexPtr;
 
-		m_pVertexPtr->Position = { rMin.x, rMax.y };
-		m_pVertexPtr->Color = rColor;
-		m_pVertexPtr->TexCoord = glm::vec2{ rUV1.x, rUV2.y };
-		m_pVertexPtr->TextureIndex = ( float ) textureID;
-		++m_pVertexPtr;
+		m_pQuadVertexPtr->Position = { rMin.x, rMax.y };
+		m_pQuadVertexPtr->Color = rColor;
+		m_pQuadVertexPtr->TexCoord = glm::vec2{ rUV1.x, rUV2.y };
+		m_pQuadVertexPtr->TextureIndex = ( float ) textureID;
+		++m_pQuadVertexPtr;
 
 		m_QuadVertexCount += 4;
 		m_QuadIndexCount += 6;
 	}
 
-	void AluraRenderer::SubmitRectFrame( const glm::vec2& rMin, const glm::vec2& rMax, float thinkness, const glm::vec4& rColor )
+	void AluraRenderer::SubmitRectFrame( const glm::vec2& rMin, const glm::vec2& rMax, float thickness, const glm::vec4& rColor )
 	{
 		// Top
-		SubmitRect( rMin, { rMax.x, rMin.y + thinkness }, rColor );
+		SubmitRect( rMin, { rMax.x, rMin.y + thickness }, rColor );
 
 		// Bottom
-		SubmitRect( { rMin.x, rMax.y - thinkness }, rMax, rColor );
+		SubmitRect( { rMin.x, rMax.y - thickness }, rMax, rColor );
 
 		// Left
-		SubmitRect( { rMin.x, rMin.y + thinkness }, { rMin.x + thinkness, rMax.y - thinkness }, rColor );
+		SubmitRect( { rMin.x, rMin.y + thickness }, { rMin.x + thickness, rMax.y - thickness }, rColor );
 		
 		// Right
-		SubmitRect( { rMax.x - thinkness, rMin.y + thinkness }, { rMax.x, rMax.y - thinkness }, rColor );
+		SubmitRect( { rMax.x - thickness, rMin.y + thickness }, { rMax.x, rMax.y - thickness }, rColor );
 	}
 
-	void AluraRenderer::SubmitString( const std::string& rText, Ref<AluraFont> font, float fontScale, const glm::vec2& rCursorPos, const glm::vec4& rColor )
+	void AluraRenderer::SubmitString( const std::string& rText, Ref<AluraFont> font, float fontSizePx, const glm::vec2& rCursorPos, const glm::vec4& rColor )
 	{
 		const auto& rFontGeo = font->GetMSDFData()->FontGeometry;
 		const auto& rMetrics = rFontGeo.getMetrics();
 
 		double x = 0.0;
-		const double fsScale = fontScale / ( rMetrics.ascenderY - rMetrics.descenderY );
+
+		// One EM is equivalent to 16px, so 0.5 em is 8px 2 em is 24px
+		// By default most fonts use emSize = 1 (16px)
+		const double fsScale = fontSizePx / rMetrics.emSize;
 
 #if !defined(SAT_DIST)
 		double y = fsScale * rMetrics.ascenderY;
@@ -437,7 +441,7 @@ namespace Saturn {
 			else if( character == '\t' )
 			{
 				pGlyph = rFontGeo.getGlyph( ' ' );
-				double advance = pGlyph->getAdvance() * 4 /* NUMBER_OF_SPACES_PER_TAB */;
+				double advance = pGlyph->getAdvance() * 4.0 /* NUMBER_OF_SPACES_PER_TAB */;
 				x += fsScale * advance;
 				continue;
 			}
@@ -538,5 +542,61 @@ namespace Saturn {
 
 		m_TextIndexCount += 6;
 	}
+
+	void AluraRenderer::SubmitCircleFilled( const glm::vec2& rPosition, float size, float thickness, const glm::vec4& rColor )
+	{
+
+	}
+
+	void AluraRenderer::SubmitCircle( const glm::vec2& rCentre, float radius, float thickness, const glm::vec4& rColor )
+	{
+		const int segments = 64.0f;
+		const float step = 2.0f * glm::pi<float>() / segments;
+
+		for( int i = 0; i < segments; i++ )
+		{
+			const float a0 = i * step;
+			const float a1 = ( i + 1 ) * step;
+
+			const glm::vec2 p0 = rCentre + glm::vec2( glm::cos( a0 ), glm::sin( a0 ) ) * radius;
+			const glm::vec2 p1 = rCentre + glm::vec2( glm::cos( a1 ), glm::sin( a1 ) ) * radius;
+			const glm::vec2 p2 = rCentre + glm::vec2( glm::cos( a1 ), glm::sin( a1 ) ) * ( radius + thickness );
+			const glm::vec2 p3 = rCentre + glm::vec2( glm::cos( a0 ), glm::sin( a0 ) ) * ( radius + thickness );
+
+			m_pQuadVertexPtr->Position = p0; 
+			m_pQuadVertexPtr->Color = rColor; 
+			m_pQuadVertexPtr->TexCoord = { 0,0 };
+			m_pQuadVertexPtr->TextureIndex = 0.0f; 
+			++m_pQuadVertexPtr;
+			
+			m_pQuadVertexPtr->Position = p1;
+			m_pQuadVertexPtr->Color = rColor; 
+			m_pQuadVertexPtr->TexCoord = { 1,0 };
+			m_pQuadVertexPtr->TextureIndex = 0.0f; 
+			++m_pQuadVertexPtr;
+			
+			m_pQuadVertexPtr->Position = p2; 
+			m_pQuadVertexPtr->Color = rColor; 
+			m_pQuadVertexPtr->TexCoord = { 1,1 }; 
+			m_pQuadVertexPtr->TextureIndex = 0.0f; 
+			++m_pQuadVertexPtr;
+			
+			m_pQuadVertexPtr->Position = p3; 
+			m_pQuadVertexPtr->Color = rColor; 
+			m_pQuadVertexPtr->TexCoord = { 0,1 }; 
+			m_pQuadVertexPtr->TextureIndex = 0.0f; 
+			++m_pQuadVertexPtr;
+
+			m_QuadVertexCount += 4;
+			m_QuadIndexCount += 6;
+		}
+	}
+
+#if !defined(SAT_DIST)
+	void AluraRenderer::EdClearCommands()
+	{
+		PreRender();
+	}
+#endif
 
 }

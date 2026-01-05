@@ -45,14 +45,6 @@ namespace Saturn {
 		float TextureIndex;
 	};
 
-	struct AluraTextVertex
-	{
-		glm::vec2 Position;
-		glm::vec2 TexCoord;
-		glm::vec4 Color;
-		float TextureIndex;
-	};
-
 	class AluraFont;
 
 	class AluraRenderer : public RefTarget
@@ -70,12 +62,20 @@ namespace Saturn {
 		void EndFrame();
 
 		void SubmitRect( const glm::vec2& rMin, const glm::vec2& rMax, const glm::vec4& rColor );
-		void SubmitRectFrame( const glm::vec2& rMin, const glm::vec2& rMax, float thinkness, const glm::vec4& rColor );
+		void SubmitRectFrame( const glm::vec2& rMin, const glm::vec2& rMax, float thickness, const glm::vec4& rColor );
 		void SubmitRect( const glm::vec2& rMin, const glm::vec2& rMax, Ref<Texture2D> texture, const glm::vec4& rColor, const glm::vec2& rUV1 = { 0.0f, 1.0f }, const glm::vec2& rUV2 = { 1.0f, 1.0f } );
 	
-		void SubmitString( const std::string& rText, Ref<AluraFont> font, float fontScale, const glm::vec2& rCursorPos, const glm::vec4& rColor );
+		void SubmitString( const std::string& rText, Ref<AluraFont> font, float fontSizePx, const glm::vec2& rCursorPos, const glm::vec4& rColor );
 
 		void SubmitTextGlyph( const glm::vec2& rMin, const glm::vec2& rMax, const glm::vec2& rTexCoordMin, const glm::vec2& rTexCoordMax, const glm::vec4& rColor, Ref<Texture2D> atlasTexture, const glm::vec2& rCursorPos );
+
+		void SubmitCircleFilled( const glm::vec2& rPosition, float size, float thickness, const glm::vec4& rColor );
+		void SubmitCircle( const glm::vec2& rCentre, float radius, float thickness, const glm::vec4& rColor );
+
+#if !defined(SAT_DIST)
+		// Editor only function, clears the users drawing commands to allow us to draw on top of it.
+		void EdClearCommands();
+#endif
 
 	public:
 		[[nodiscard]] uint32_t Width() const { return m_Width; }
@@ -96,8 +96,11 @@ namespace Saturn {
 
 		VkCommandBuffer m_CommandBuffer = nullptr;
 
-		std::vector< AluraVertex* > m_VertexBase;
-		AluraVertex* m_pVertexPtr = nullptr;
+		std::vector< AluraVertex* > m_QuadVertexBase;
+		AluraVertex* m_pQuadVertexPtr = nullptr;
+
+		std::vector< AluraVertex* > m_TextVertexBase;
+		AluraVertex* m_pTextVertexPtr = nullptr;
 
 		uint32_t m_QuadVertexCount = 0;
 		uint32_t m_QuadIndexCount = 0;
@@ -107,9 +110,6 @@ namespace Saturn {
 		uint32_t m_FallbackTextureSlot = 1;
 		uint32_t m_CurrentTextureSlot = 0;
 		uint32_t m_CurrentTextureAtlasSlot = 0;
-
-		std::vector< AluraTextVertex* > m_TextVertexBase;
-		AluraTextVertex* m_pTextVertexPtr = nullptr;
 
 		// Per flight in frame
 		std::vector< Ref<VertexBuffer> > m_VertexBuffers;

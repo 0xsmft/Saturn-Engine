@@ -62,6 +62,8 @@
 
 #include "Saturn/Animation/BoneJoint.h"
 
+#include "Saturn/Alura/AluraCanvas.h"
+
 #include "Saturn/ImGui/EditorIcons.h"
 #include "Saturn/ImGui/EntitySelectionManager.h"
 #if !defined(SAT_DIST)
@@ -352,8 +354,12 @@ namespace Saturn {
 		}
 
 		sceneRenderer->SetCamera( m_RendererCamera );
+		if( sceneRenderer->GetAluraRenderer() )
+			sceneRenderer->GetAluraRenderer()->PreRender();
 
 		//////////////////////////////////////////////////////////////////////////
+
+		g_AluraCanvas->Begin();
 
 		// Lights
 		RtSetupLights( sceneRenderer );

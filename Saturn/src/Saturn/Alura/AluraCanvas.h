@@ -130,13 +130,15 @@ namespace Saturn {
 #endif
 
 		// NOTE: fraction is a normalised value between 0.0 - 1.0, because we are working with the percent in decimal from.
-		AluraElement& AddProgressBar( float fraction, const glm::vec2& rSize  );
+		AluraElement& AddProgressBar( float fraction, const glm::vec2& rSize );
 
 		AluraElement& AddText( const std::string& rText, const glm::vec4& rColor = glm::one<glm::vec4>() );
 		
 		[[nodiscard]] bool AddButton( const glm::vec2& rSize, const glm::vec4& rColor = glm::one<glm::vec4>() );
 		
 		[[nodiscard]] bool AddButton( const std::string& rText );
+
+		AluraElement& AddCircle( float radius, float thinkness = 1.0f, bool filled = false, const glm::vec4& rColor = glm::one<glm::vec4>() );
 
 	public:
 		// Widget control and hit testing
@@ -153,6 +155,12 @@ namespace Saturn {
 
 		void PushStyle( std::underlying_type_t<AluraColor> index, const glm::vec4& rNewValue );
 		void PopStyle();
+
+	public:
+#if !defined(SAT_DIST)
+		// Editor only function, clears the users drawing commands to allow us to draw on top of it.
+		void EdClearCanvas();
+#endif
 
 	public:
 		glm::vec2 GetPosition() const { return m_Position; }

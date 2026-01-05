@@ -297,6 +297,22 @@ namespace Saturn {
 		return IsItemClicked( RubyMouseButton_Left );
 	}
 
+	AluraElement& AluraCanvas::AddCircle( float radius, float thinkness, bool filled /*= false*/, const glm::vec4& rColor /*= glm::one<glm::vec4>() */ )
+	{
+		// Handle NextItemPosition
+		glm::vec2 posDependingLastCall = m_Layout.CursorPos;
+
+		if( m_WantToSetItemPosition )
+		{
+			posDependingLastCall = m_PendingNextItemPosition;
+			m_WantToSetItemPosition = false;
+		}
+
+		m_Renderer->SubmitCircle( posDependingLastCall + radius * 2.0f, radius, thinkness, rColor );
+
+		return m_Elements.emplace_back( "##noname", posDependingLastCall, glm::vec2{ radius * 2.0f }, rColor );
+	}
+
 	void AluraCanvas::SetNextItemPosition( const glm::vec2& rPosition )
 	{
 		m_WantToSetItemPosition = true;
@@ -370,6 +386,13 @@ namespace Saturn {
 		m_Style.Colors[ rBackupData.Index ] = rBackupData.OldValue;
 		m_ColorStack.pop();
 	}
+
+#if !defined(SAT_DIST)
+	void AluraCanvas::EdClearCanvas()
+	{
+		m_Renderer->EdClearCommands();
+	}
+#endif
 
 	void AluraCanvas::AdvanceCursor( const glm::vec2& rSize )
 	{

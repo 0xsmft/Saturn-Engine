@@ -306,6 +306,12 @@ namespace Saturn {
 			
 			DrawAddComponents<AudioListenerComponent>( "Audio Listener", rSelections[ 0 ] );
 
+			// Kept in place just in case the user removes this component by accident.
+			if( entity->GetClass() == AIAgentEntity::StaticClass() )
+			{
+				DrawAddComponents<BehaviourTreeComponent>( "Behaviour Tree", rSelections[ 0 ] );
+			}
+
 			ImGui::EndPopup();
 		}
 	}
@@ -1479,6 +1485,46 @@ namespace Saturn {
 				ImGui::TextUnformatted( text.c_str() );
 			}
 		} );
+
+		DrawComponent<BehaviourTreeComponent>( "Behaviour Tree", entity, [ & ]( auto& btc ) 
+		{
+			bool modified = false;
+
+			{
+				bool open = false;
+
+				// Push disabled flag if runtime running
+				Auxiliary::ScopedDisabledFlag disabledFlag( m_Context->IsRuntimeRunning() );
+
+				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
+				{
+					m_CurrentFinderType = AssetType::BehaviourTree;
+					open = true;
+
+					if( btc.BehaviourTreeAssetID != 0 )
+						m_CurrentAssetID = btc.BehaviourTreeAssetID;
+				}
+
+				ImGui::SameLine();
+
+				if( Auxiliary::DrawAssetFinder( m_CurrentFinderType, &open, m_CurrentAssetID ) )
+				{
+					btc.BehaviourTreeAssetID = m_CurrentAssetID;
+					modified = true;
+				}
+
+				ImGui::PushID( ( void* ) &btc );
+
+				if( btc.BehaviourTreeAssetID != 0 )
+					ImGui::InputText( "##btcAstID", ( char* ) std::to_string( btc.BehaviourTreeAssetID ).c_str(), 256, ImGuiInputTextFlags_ReadOnly );
+				else
+					ImGui::InputText( "##btcAstID", ( char* ) "", 256, ImGuiInputTextFlags_ReadOnly );
+
+				ImGui::PopID();
+			}
+
+			if( modified ) m_Context->MarkDirty();
+		} );
 	}
 
 	template<typename T, typename UIFunction>
@@ -1514,9 +1560,9 @@ namespace Saturn {
 
 					if( ImGui::MenuItem( "Remove component from selection" ) )
 						removeComponentSelection = true;
-				}
 
-				ImGui::Separator();
+					ImGui::Separator();
+				}
 
 				if( ImGui::MenuItem( "Copy component" ) )
 				{

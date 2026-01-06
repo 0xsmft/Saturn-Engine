@@ -358,6 +358,14 @@ namespace Saturn {
 				uint8_t bit = nmsc.HasBuilt;
 				rStream.write( reinterpret_cast< const char* >( &bit ), sizeof( bit ) );
 			} );
+
+		// Behaviour Tree Component
+		WriteComponent<BehaviourTreeComponent>( rEntity, rStream, [ & ]()
+			{
+				auto& btc = rEntity->GetComponent< BehaviourTreeComponent >();
+
+				WriteAssetDependency( btc.BehaviourTreeAssetID, rStream );
+			} );
 	}
 
 	void RawEntitySerialisation::DeserialiseEntity( SharedPtr<Entity>& rEntity, std::istream& rStream )
@@ -672,6 +680,13 @@ namespace Saturn {
 				uint8_t bit = 0;
 				rStream.read( reinterpret_cast< char* >( &bit ), sizeof( bit ) );
 				nmsc.HasBuilt = bit ? true : false;
+			} );
+
+		// Behaviour Tree Component
+		ReadComponent<BehaviourTreeComponent>( rEntity, rStream, [ & ]()
+			{
+				auto& btc = rEntity->GetComponent< BehaviourTreeComponent>();
+				ReadAssetDependency( btc.BehaviourTreeAssetID, rStream );
 			} );
 	}
 

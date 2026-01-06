@@ -371,6 +371,15 @@ namespace Saturn {
 		BoneJoint* pBoneJoint = nullptr;
 	};
 
+	struct BehaviourTreeComponent
+	{
+		MemoryAssetDependency<AssetType::BehaviourTree> BehaviourTreeAssetID;
+
+		BehaviourTreeComponent() = default;
+		BehaviourTreeComponent( const BehaviourTreeComponent& other ) = default;
+		BehaviourTreeComponent( AssetID assetID ) : BehaviourTreeAssetID( assetID ) {}
+	};
+
 	template<typename... V>
 	struct ComponentGroup {};
 
@@ -382,7 +391,8 @@ namespace Saturn {
 		AudioPlayerComponent, AudioListenerComponent,
 		BillboardComponent,
 		NavigationMeshSpecificationComponent,
-		AttachmentPointComponent>;
+		AttachmentPointComponent, 
+		BehaviourTreeComponent>;
 
 	// Without TagComponent, IdComponent, RelationshipComponent
 	// We could use templates and concepts for this however that will add a new layer of complexity and ambiguity.
@@ -394,5 +404,6 @@ namespace Saturn {
 		AudioPlayerComponent, AudioListenerComponent,
 		BillboardComponent,
 		NavigationMeshSpecificationComponent,
-		AttachmentPointComponent>;
+		AttachmentPointComponent, 
+		BehaviourTreeComponent>;
 }

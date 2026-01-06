@@ -39,6 +39,7 @@ class dtNavMeshQuery;
 namespace Saturn {
 
 	class NavBoundsEntity;
+	class Renderer2D;
 
 	class NavigationSystem
 	{
@@ -49,8 +50,11 @@ namespace Saturn {
 		void Initialise();
 		void Terminate();
 
+		void DebugDraw( Renderer2D* pRenderer2D );
+
 	public:
 		dtNavMeshQuery* GetNavMeshQuery() const { return m_pNavMeshQuery; }
+		void RegisterPath( NavPath* pPath ) { m_Paths.push_back( pPath ); }
 
 	public:
 		std::expected<glm::vec3, unsigned int> GetRandomPointInNavMesh( const glm::vec3& rOrigin, float maxRadius ) const;
@@ -63,6 +67,6 @@ namespace Saturn {
 
 		dtNavMeshQuery* m_pNavMeshQuery = nullptr;
 
-		std::vector<NavPath> m_Paths;
+		std::vector<NavPath*> m_Paths;
 	};
 }

@@ -37,6 +37,8 @@
 
 #include "RecastCore.h"
 
+#include "Saturn/Vulkan/Renderer2D.h"
+
 #include <Detour/DetourNavMeshQuery.h>
 #include <glm/gtc/type_ptr.hpp>
 
@@ -65,6 +67,25 @@ namespace Saturn {
 
 	NavigationSystem::~NavigationSystem()
 	{
+	}
+
+	void NavigationSystem::DebugDraw( Renderer2D* pRenderer2D )
+	{
+		for( const auto& rPath : m_Paths )
+		{
+			const glm::vec4 pathColor = glm::vec4( 1.0f, 1.0f, 0.0f, 1.0f );
+
+			const auto pathPoints = rPath->GetPoints();
+
+			for( size_t i = 0; i < pathPoints.size() - 1; i++ )
+			{
+				const glm::vec3& rThisPoint = pathPoints[ i ];
+				const glm::vec3& rNextPoint = pathPoints[ i + 1 ];
+
+				pRenderer2D->SubmitLine( rThisPoint, rNextPoint, pathColor );
+				pRenderer2D->SubmitDiamond( rNextPoint, 0.75f, pathColor );
+			}
+		}
 	}
 
 	//////////////////////////////////////////////////////////////////////////

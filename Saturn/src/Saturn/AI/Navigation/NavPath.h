@@ -53,6 +53,9 @@ namespace Saturn {
 		[[nodiscard]] bool IsLive() const { return m_IsLive; }
 		[[nodiscard]] bool IsCompleted() const { return m_CurrentWaypoint == m_PathPoints.size(); }
 		[[nodiscard]] glm::vec3 GetCurrentWaypoint();
+		[[nodiscard]] const std::vector<glm::vec3> GetPoints() const { return m_PathPoints; }
+		[[nodiscard]] glm::vec3 GetStartingPoint() const { return m_From; }
+		[[nodiscard]] glm::vec3 GetEndPoint() const { return m_To; }
 
 		// Move onto the next waypoint index
 		inline void NextWaypoint()

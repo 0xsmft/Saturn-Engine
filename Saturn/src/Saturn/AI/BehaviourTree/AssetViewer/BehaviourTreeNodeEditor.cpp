@@ -52,6 +52,8 @@
 #include "Saturn/ImGui/EditorIcons.h"
 #endif
 
+#include "Saturn/Core/Profiler.h"
+
 namespace Saturn {
 
 	BehaviourTreeNodeEditor::BehaviourTreeNodeEditor()
@@ -300,7 +302,7 @@ namespace Saturn {
 
 					AssetManager::Get().RegisterAssetDependency( m_AssetID, m_BehaviourTreeMemoryAssetID );
 
-					m_BlackboardSpec = AssetManager::Get().GetAssetAs< BehaviourTreeMemorySpecification>( m_BehaviourTreeMemoryAssetID );
+					m_BlackboardSpec = AssetManager::Get().GetAssetAs< BehaviourTreeMemorySpecification >( m_BehaviourTreeMemoryAssetID );
 				}
 
 				if( m_BehaviourTreeMemoryAssetID != 0 )
@@ -363,6 +365,8 @@ namespace Saturn {
 
 	void BehaviourTreeNodeEditor::Tick( Timestep ts )
 	{
+		SAT_PF_EVENT();
+
 		if( m_CurrentTask )
 		{
 			const auto status = m_CurrentTask->Tick( ts );

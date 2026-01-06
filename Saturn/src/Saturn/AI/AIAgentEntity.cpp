@@ -52,6 +52,7 @@ namespace Saturn {
 	{
 		AddComponent<StaticMeshComponent>();
 		AddComponent<CapsuleColliderComponent>();
+		AddComponent<BehaviourTreeComponent>();
 //		AddComponent<RigidbodyComponent>().LockFlags = RigidbodyLockFlags::RigidbodyLock_RotationX | RigidbodyLockFlags::RigidbodyLock_RotationY | RigidbodyLockFlags::RigidbodyLock_RotationZ;
 	}
 
@@ -64,7 +65,10 @@ namespace Saturn {
 		Super::BeginPlay();
 
 		auto e = GetScene()->GetAllEntitiesWith<NavigationMeshSpecificationComponent>();
-		m_NavBoundsEntity = e[ 0 ].As<NavBoundsEntity>();
+		if( e.size() )
+		{
+			m_NavBoundsEntity = e[ 0 ].As<NavBoundsEntity>();
+		}
 	}
 
 	void AIAgentEntity::OnUpdate( Saturn::Timestep ts )

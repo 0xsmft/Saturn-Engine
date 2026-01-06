@@ -530,6 +530,19 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 
 			rEmitter << YAML::EndMap;
 		}
+
+		// Behaviour Tree Component
+		if( entity->HasComponent<BehaviourTreeComponent>() )
+		{
+			rEmitter << YAML::Key << "BehaviourTreeComponent";
+			rEmitter << YAML::BeginMap;
+
+			const auto& btc = entity->GetComponent< BehaviourTreeComponent >();
+
+			rEmitter << YAML::Key << "AssetID" << YAML::Value << btc.BehaviourTreeAssetID;
+
+			rEmitter << YAML::EndMap;
+		}
 	}
 
 	void ComponentSerialisation::DeserialiseComponents( const YAML::Node& rEntityNode, Ref<Scene> scene )
@@ -959,6 +972,13 @@ pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value ); \
 			unsigned int externalData = bit ? 1 : 0;
 
 			nms.HasBuilt = externalData;
+		}
+
+		const auto btc = rEntityNode[ "BehaviourTreeComponent" ];
+		if( btc )
+		{
+			auto& bt = DeserialisedEntity->AddComponent< BehaviourTreeComponent >();
+			bt.BehaviourTreeAssetID = btc[ "AssetID" ].as< uint64_t >();
 		}
 	}
 }

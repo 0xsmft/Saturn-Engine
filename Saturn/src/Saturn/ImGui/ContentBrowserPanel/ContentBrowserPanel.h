@@ -119,6 +119,8 @@ namespace Saturn {
 		void ClearQuickActions();
 		void AddQuickAction( const std::filesystem::path& rOldPath, const std::filesystem::path& rNewPath );
 
+		void DuplicateAsset( Ref<Asset> asset );
+
 	private:
 		std::filesystem::path m_ScriptPath;
 

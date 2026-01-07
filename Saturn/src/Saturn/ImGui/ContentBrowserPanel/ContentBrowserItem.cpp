@@ -406,8 +406,8 @@ namespace Saturn {
 			{
 				if( m_StartingRename )
 				{
-					memset( s_RenameBuffer, 0, 1024 );
-					memcpy( s_RenameBuffer, Filename.c_str(), Filename.size() );
+					std::memset( s_RenameBuffer, 0, 1024 );
+					std::memcpy( s_RenameBuffer, Filename.c_str(), Filename.size() );
 
 					ImGui::SetKeyboardFocusHere( 0 );
 
@@ -419,7 +419,7 @@ namespace Saturn {
 					m_IsRenaming = false;
 					OnRenameCommittedFolder( s_RenameBuffer );
 
-					memset( s_RenameBuffer, 0, 1024 );
+					std::memset( s_RenameBuffer, 0, 1024 );
 				}
 			}
 			else
@@ -448,8 +448,8 @@ namespace Saturn {
 			{
 				if( m_StartingRename )
 				{
-					memset( s_RenameBuffer, 0, 1024 );
-					memcpy( s_RenameBuffer, m_Filename.string().c_str(), m_Filename.string().size() );
+					std::memset( s_RenameBuffer, 0, 1024 );
+					std::memcpy( s_RenameBuffer, m_Filename.string().c_str(), m_Filename.string().size() );
 
 					ImGui::SetKeyboardFocusHere( 0 );
 
@@ -461,7 +461,8 @@ namespace Saturn {
 					m_IsRenaming = false;
 					OnRenameCommitted( s_RenameBuffer );
 
-					memset( s_RenameBuffer, 0, 1024 );
+					std::memset( s_RenameBuffer, 0, 1024 );
+				}
 				}
 			}
 			else

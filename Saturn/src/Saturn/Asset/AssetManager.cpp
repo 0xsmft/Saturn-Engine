@@ -100,6 +100,15 @@ namespace Saturn {
 		}
 	}
 
+	AssetID AssetManager::DuplicateAsset( Ref<Asset> asset )
+	{
+		Ref<Asset> dupedAsset = m_Assets->m_Assets[ m_Assets->CreateAsset( asset->Type ) ];
+		dupedAsset->Path = asset->Path;
+		dupedAsset->Name = asset->Name;
+
+		return dupedAsset->ID;
+	}
+
 	AssetID AssetManager::CreateAsset( AssetType type )
 	{
 		return m_Assets->CreateAsset( type );

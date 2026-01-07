@@ -96,6 +96,8 @@ namespace Saturn {
 			m_Assets->DestroyAsset( id );
 		}
 
+		AssetID DuplicateAsset( Ref<Asset> asset );
+
 		[[deprecated( "Saturn::AssetManager::GetCombinedAssetMap is deprecated and will be removed. Consider using \"AssetManager::GetAssetRegistry::GetAssetMap\" instead." )]]
 		inline UnorderedAssetMap GetCombinedAssetMap() { return m_Assets->GetAssetMap(); }
 

@@ -288,6 +288,11 @@ namespace Saturn {
 					ImGui::SetClipboardText( text.c_str() );
 				}
 
+				if( ImGui::MenuItem( "Duplicate Asset" ) )
+				{
+					DuplicateAsset( m_SelectedItems[ 0 ]->GetAsset() );
+				}
+
 				if( ImGui::MenuItem( "Regenerate Thumbnail" ) )
 				{
 					for( auto& rItem : m_SelectedItems )
@@ -1112,7 +1117,7 @@ namespace Saturn {
 				ImGui::EndListBox();
 			}
 
-			ImGui::Text( "Plus %i memory dependencies (entities, components)", rMemoryDependencies.size() );
+			ImGui::Text( "Plus %i memory dependencies (entities, components other places in memory)", rMemoryDependencies.size() );
 
 			ImGui::Separator();
 
@@ -1147,8 +1152,8 @@ namespace Saturn {
 
 				// Second column
 				ImGui::TableSetColumnIndex( 1 );
-				ImGui::Text( "Force delete the asset only replacing memory dependencies to 0." );
-				ImGui::Text( "This will cause issues when loading assets." );
+				ImGui::Text( "Force delete the asset." );
+				ImGui::Text( "This will cause issues when loading assets. Only use this as a last resort!" );
 
 				// Third column
 				ImGui::TableSetColumnIndex( 2 );
@@ -1207,6 +1212,11 @@ namespace Saturn {
 					for( MemoryAssetDependencyBase* pDependant : rMemoryDependencies )
 					{
 						pDependant->OnUpdate( 0 );
+					}
+
+					for( AssetID assetID : rPureDependencies )
+					{
+						AssetManager::Get().UpdateAssetDependency( m_ItemToDelete->GetAssetID(), assetID, 0 );
 					}
 
 					AssetManager::Get().UnregisterAllAssetDependencies( assetToDelete->ID );
@@ -1434,6 +1444,27 @@ namespace Saturn {
 		m_QuickActionUndo.push_back( { .OldPath = rOldPath, .NewPath = rNewPath } );
 	}
 
+	void ContentBrowserPanel::DuplicateAsset( Ref<Asset> asset )
+	{
+		auto dupedAsset = AssetManager::Get().FindAsset( AssetManager::Get().DuplicateAsset( asset ) );
+
+		// Set a temporary name
+		const std::string fileExt = asset->Path.extension().string();
+		const auto count = GetFilenameCount( asset->Name );
+		const std::string newName = std::format( "{0} ({1}){2}", asset->Name, count, fileExt );
+		
+		std::filesystem::path absPath = Project::GetActiveProject()->FilepathAbs( dupedAsset->Path.parent_path() / newName );
+		dupedAsset->SetAbsolutePath( absPath );
+
+		// Preform real filesystem copy
+		// TODO: We may want to actually reserialise the asset again and not just do a copy.
+		std::filesystem::copy_file( Project::GetActiveProject()->FilepathAbs( asset->Path ), absPath );
+
+		// Find and rename
+		UpdateFiles( true );
+		FindAndRenameItem( dupedAsset->Name );
+	}
+
 	void ContentBrowserPanel::UpdateFiles( bool clear /*= false */ )
 	{
 		// Use a mutex here because when we add a new file filewatch (m_Watcher) will always get to this function first so, allow filewatch it update files then when the main thread enters this function try to lock and wait.
@@ -1443,7 +1474,7 @@ namespace Saturn {
 
 		if( !lock.try_lock() )
 		{
-			// Wait until the other thread is completed
+			// Wait until the other thread is completed.
 			std::unique_lock<std::mutex> waitLock( s_UpdateFilesMutex );
 			return;
 		}
@@ -1456,6 +1487,7 @@ namespace Saturn {
 			case CBViewMode::Assets:
 				GetContentFiles( clear );
 				break;
+
 			case CBViewMode::Scripts:
 				GetSourceFiles( clear );
 				break;

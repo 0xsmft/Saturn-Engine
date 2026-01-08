@@ -129,9 +129,8 @@ namespace Saturn {
 
 		if( glyhsLoaded < charset.size() )
 		{
-			auto missingIndex = charset.size() - glyhsLoaded;
-
-			SAT_CORE_WARN( "[Alura] Font is missing {0} glyhs", missingIndex );
+			const auto missingCount = charset.size() - glyhsLoaded;
+			SAT_CORE_WARN( "[Alura] Font is missing {0} glyhs", missingCount );
 		}
 
 		msdfag::TightAtlasPacker packer;

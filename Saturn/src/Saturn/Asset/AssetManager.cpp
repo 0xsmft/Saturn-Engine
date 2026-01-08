@@ -187,11 +187,13 @@ namespace Saturn {
 
 	void AssetManager::SanitiseAssetDependencies()
 	{
+		std::vector<AssetID> pendingIDsToRemove;
+
 		for( auto& [assetID, deps] : m_AssetDependencies )
 		{
 			if( !AssetManager::Get().DoesAssetIDExist( assetID ) )
 			{
-				m_AssetDependencies.erase( assetID );
+				pendingIDsToRemove.emplace_back( assetID );
 			}
 			else
 			{
@@ -202,8 +204,14 @@ namespace Saturn {
 
 				// Remove from asset dependencies map if we no longer have dependencies.
 				if( deps.empty() )
-					m_AssetDependencies.erase( assetID );
+					pendingIDsToRemove.emplace_back( assetID );
 			}
+		}
+
+		for( auto& rAssetID : pendingIDsToRemove )
+		{
+			SAT_CORE_WARN( "Removing useless Asset Dependency: {0}", rAssetID );
+			m_AssetDependencies.erase( rAssetID );
 		}
 	}
 

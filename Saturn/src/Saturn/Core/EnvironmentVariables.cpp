@@ -37,35 +37,40 @@ namespace Saturn::Auxiliary {
 
 	bool HasEnvironmentVariable( const std::string& rKey )
 	{
+#if defined( SAT_PLATFORM_WINDOWS )
 		HKEY hKey;
-		LONG lResult = RegOpenKeyExA( HKEY_CURRENT_USER, "Environment", 0, KEY_READ, &hKey );
+		LONG lResult = ::RegOpenKeyExA( HKEY_CURRENT_USER, "Environment", 0, KEY_READ, &hKey );
 
 		if( lResult == ERROR_SUCCESS )
 		{
 			DWORD dwType = REG_SZ;
 			DWORD dwSize = 0;
-			lResult = RegQueryValueExA( hKey, rKey.c_str(), NULL, &dwType, NULL, &dwSize );
-			RegCloseKey( hKey );
+			lResult = ::RegQueryValueExA( hKey, rKey.c_str(), NULL, &dwType, NULL, &dwSize );
+			::RegCloseKey( hKey );
 			return lResult == ERROR_SUCCESS;
 		}
 
 		return lResult == ERROR_SUCCESS;
+#else
+		return false;
+#endif
 	}
 
 	std::string GetEnvironmentVariable( const std::string& rKey )
 	{
+#if defined( SAT_PLATFORM_WINDOWS )
 		HKEY hKey;
 		LPCSTR keyPath = "Environment";
 		DWORD dwKeyWasCreated;
-		LSTATUS lResult = RegCreateKeyExA( HKEY_CURRENT_USER, keyPath, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKey, &dwKeyWasCreated );
+		LSTATUS lResult = ::RegCreateKeyExA( HKEY_CURRENT_USER, keyPath, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKey, &dwKeyWasCreated );
 
 		if( lResult == ERROR_SUCCESS )
 		{
 			DWORD dwType;
 			char* pBuffer = new char[ 512 ];
 			DWORD dwSize = 512;
-				
-			lResult = RegGetValueA( hKey, NULL, rKey.c_str(), RRF_RT_ANY, &dwType, ( PBYTE ) pBuffer, &dwSize );
+
+			lResult = ::RegGetValueA( hKey, NULL, rKey.c_str(), RRF_RT_ANY, &dwType, ( PBYTE ) pBuffer, &dwSize );
 
 			RegCloseKey( hKey );
 
@@ -79,10 +84,10 @@ namespace Saturn::Auxiliary {
 			}
 			else
 			{
-				DWORD ErrorCode = GetLastError();
+				DWORD ErrorCode = ::GetLastError();
 				LPTSTR Error = NULL;
 
-				FormatMessage(
+				::FormatMessage(
 					FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS,
 					NULL,
 					lResult,
@@ -94,20 +99,21 @@ namespace Saturn::Auxiliary {
 
 				SAT_CORE_ASSERT( false, "HResult failed." );
 
-				LocalFree( Error );
+				::LocalFree( Error );
 				Error = NULL;
 			}
 		}
-
+#endif
 		return "";
 	}
 
 	std::wstring GetEnvironmentVariableWs( const std::wstring& rKey )
 	{
+#if defined( SAT_PLATFORM_WINDOWS )
 		HKEY hKey;
 		LPCSTR keyPath = "Environment";
 		DWORD dwKeyWasCreated;
-		LSTATUS lResult = RegCreateKeyExA( HKEY_CURRENT_USER, keyPath, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKey, &dwKeyWasCreated );
+		LSTATUS lResult = ::RegCreateKeyExA( HKEY_CURRENT_USER, keyPath, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKey, &dwKeyWasCreated );
 
 		if( lResult == ERROR_SUCCESS )
 		{
@@ -115,7 +121,7 @@ namespace Saturn::Auxiliary {
 			wchar_t* pBuffer = new wchar_t[ 512 ];
 			DWORD dwSize = 512;
 
-			lResult = RegGetValueW( hKey, NULL, rKey.c_str(), RRF_RT_ANY, &dwType, ( PBYTE ) pBuffer, &dwSize );
+			lResult = ::RegGetValueW( hKey, NULL, rKey.c_str(), RRF_RT_ANY, &dwType, ( PBYTE ) pBuffer, &dwSize );
 
 			RegCloseKey( hKey );
 
@@ -129,10 +135,10 @@ namespace Saturn::Auxiliary {
 			}
 			else
 			{
-				DWORD ErrorCode = GetLastError();
+				DWORD ErrorCode = ::GetLastError();
 				LPTSTR Error = NULL;
 
-				FormatMessage(
+				::FormatMessage(
 					FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS,
 					NULL,
 					lResult,
@@ -144,37 +150,41 @@ namespace Saturn::Auxiliary {
 
 				SAT_CORE_ASSERT( false, "HResult failed." );
 
-				LocalFree( Error );
+				::LocalFree( Error );
 				Error = NULL;
 			}
 		}
 
 		return L"";
+#else
+		return "";
+#endif
 	}
 
 	void SetEnvironmentVariable( const std::string& rKey, const std::string& rValue )
 	{
+#if defined( SAT_PLATFORM_WINDOWS )
 		HKEY hKey;
 		DWORD dwKeyWasCreated;
-		LONG lResult = RegCreateKeyExA( HKEY_CURRENT_USER, "Environment", 0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKey, &dwKeyWasCreated );
+		LONG lResult = ::RegCreateKeyExA( HKEY_CURRENT_USER, "Environment", 0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKey, &dwKeyWasCreated );
 
 		if( lResult == ERROR_SUCCESS )
 		{
-			lResult = RegSetValueExA( hKey, rKey.c_str(), 0, REG_SZ, ( PBYTE ) rValue.c_str(), (DWORD) rValue.size() + 1 );
-			RegCloseKey( hKey );
+			lResult = ::RegSetValueExA( hKey, rKey.c_str(), 0, REG_SZ, ( PBYTE ) rValue.c_str(), ( DWORD ) rValue.size() + 1 );
+			::RegCloseKey( hKey );
 
 			if( lResult == ERROR_SUCCESS )
 			{
-				SendMessageTimeoutA( HWND_BROADCAST, WM_SETTINGCHANGE, 0, ( LPARAM ) "Environment", SMTO_BLOCK, 100, NULL );
+				::SendMessageTimeoutA( HWND_BROADCAST, WM_SETTINGCHANGE, 0, ( LPARAM ) "Environment", SMTO_BLOCK, 100, NULL );
 
 				return;
 			}
 			else
 			{
-				DWORD ErrorCode = GetLastError();
+				DWORD ErrorCode = ::GetLastError();
 				LPTSTR Error = NULL;
 
-				FormatMessage(
+				::FormatMessage(
 					FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS,
 					NULL,
 					lResult,
@@ -186,16 +196,16 @@ namespace Saturn::Auxiliary {
 
 				SAT_CORE_ASSERT( false, "HResult failed." );
 
-				LocalFree( Error );
+				::LocalFree( Error );
 				Error = NULL;
 			}
 		}
 		else
 		{
-			DWORD ErrorCode = GetLastError();
+			DWORD ErrorCode = ::GetLastError();
 			LPTSTR Error = NULL;
 
-			FormatMessage(
+			::FormatMessage(
 				FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS,
 				NULL,
 				lResult,
@@ -207,9 +217,10 @@ namespace Saturn::Auxiliary {
 
 			SAT_CORE_ASSERT( false, "HResult failed." );
 
-			LocalFree( Error );
+			::LocalFree( Error );
 			Error = NULL;
 		}
+#endif
 	}
 
 }

@@ -77,12 +77,10 @@ namespace Saturn {
 		RenderThread::Get().EnableIf( HasFlag( ApplicationFlag_UseGameThread ) );
 		RenderThread::Get().Start();
 
-		// ImGui is only used if we have the editor, and ImGui should not be used when building the game.
-		m_ImGuiLayer = new ImGuiLayer();
-
 #if defined( SAT_DIST )
 		m_Window->Show( RubyWindowShowCmd::Fullscreen );
 #else
+		m_ImGuiLayer = new ImGuiLayer();
 		m_ImGuiLayer->OnAttach();
 		m_Window->Show();
 #endif
@@ -167,11 +165,9 @@ namespace Saturn {
 
 #if !defined( SAT_DIST )
 			m_ImGuiLayer->OnDetach();
-#endif
-
 			delete m_ImGuiLayer;
-
 			m_ImGuiLayer = nullptr;
+#endif
 		} );
 
 		AudioSystem::Get().Terminate();
@@ -320,7 +316,7 @@ namespace Saturn {
 
 		::CoTaskMemFree( nativePath );
 #elif defined(SAT_PLATFORM_LINUX)
-
+		Core::BreakDebug();
 #endif
 
 		if( !std::filesystem::exists( path ) )
@@ -398,7 +394,7 @@ namespace Saturn {
 		}
 
 		// Set file types
-		pFileOpen->SetFileTypes( filters.size(), filters.data() );
+		pFileOpen->SetFileTypes( ( uint32_t ) filters.size(), filters.data() );
 
 		// Show the dialog.
 		hr = pFileOpen->Show( m_Window->GetNativeHandle() );
@@ -427,6 +423,8 @@ namespace Saturn {
 		pFileOpen->Release();
 		pFileOpen = nullptr;
 		::CoUninitialize();
+#elif defined(SAT_PLATFORM_LINUX) || defined(SAT_PLATFORM_MACOS)
+		Core::BreakDebug();
 #endif
 
 		return path;
@@ -477,7 +475,7 @@ namespace Saturn {
 		}
 
 		// Set file types
-		pFileSave->SetFileTypes( filters.size(), filters.data() );
+		pFileSave->SetFileTypes( ( uint32_t ) filters.size(), filters.data() );
 
 		// Show the dialog.
 		hr = pFileSave->Show( m_Window->GetNativeHandle() );
@@ -507,7 +505,8 @@ namespace Saturn {
 		pFileSave = nullptr;
 		::CoUninitialize();
 
-#elif   defined(SAT_PLATFORM_LINUX)
+#elif   defined(SAT_PLATFORM_LINUX) || defined(SAT_PLATFORM_MACOS)
+		SAT_CORE_ASSERT( false, "Application::SaveFile not implemented on Linux!" );
 #endif
 		return path;
 	}
@@ -523,7 +522,8 @@ namespace Saturn {
 			CommandLine = std::format( L"explorer.exe \"{0}\"", rPath.wstring() );
 
 		DeatchedProcess dp( CommandLine );
-#elif   defined(SAT_PLATFORM_LINUX)
+#elif   defined(SAT_PLATFORM_LINUX) || defined(SAT_PLATFORM_MACOS)
+		SAT_CORE_ASSERT( false, "Application::OpenNativeFileExplorer not implemented on Linux!" );
 #endif
 	}
 
@@ -582,6 +582,8 @@ namespace Saturn {
 		::CoUninitialize();
 
 		return path;
+#elif defined(SAT_PLATFORM_LINUX) || defined(SAT_PLATFORM_MACOS)
+		SAT_CORE_ASSERT( false, "Application::OpenFolder not implemented on Linux!" );
 #endif
 
 		return "";
@@ -596,9 +598,9 @@ namespace Saturn {
 	{
 #if defined(SAT_PLATFORM_WINDOWS) || _WIN32 || _WIN64
 		return "windows";
-#elif defined(SAT_LINUX) || __linux__
+#elif defined(SAT_PLATFORM_LINUX) || __linux__
 		return "linux";
-#elif defined(SAT_MAC) || __APPLE__
+#elif defined(SAT_PLATFORM_MACOS) || __APPLE__
 		return "mac";
 #else
 		return "Unknown";

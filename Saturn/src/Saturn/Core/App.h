@@ -207,13 +207,14 @@ namespace Saturn {
 
 		ApplicationSpecification m_Specification;
 		
+#if !defined(SAT_DIST)
 		ImGuiLayer* m_ImGuiLayer = nullptr;
+#endif
 
 		// TODO: This is not great at all, we ideally want the parent layer to own the Vulkan Context and not the main Application class
 		VulkanContext* m_VulkanContext = nullptr;
 
 	protected:
-		// TODO: This is not great at all, we ideally want the parent layer to own the SceneRenderer and not the main Application class
 		RubyWindow* m_Window = nullptr;
 
 	private:

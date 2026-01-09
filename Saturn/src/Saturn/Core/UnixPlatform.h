@@ -26,108 +26,35 @@
 *********************************************************************************************
 */
 
-// This Job System is based from Geno IDE's system:
-// Thank You: https://github.com/Geno-IDE/Geno/blob/master/src/Common/Async/JobSystem.cpp
+#pragma once
 
-#include "sppch.h"
-#include "JobSystem.h"
-
-constexpr size_t MAX_THREADS_COUNT = 2;
-
-namespace Saturn {
-
-	JobSystem::JobSystem()
-	{
-		SetMaxThreads( MAX_THREADS_COUNT );
-		CreateThreads();
-	}
-
-	JobSystem::~JobSystem()
-	{
-		Stop();
-	}
-
-	void JobSystem::Stop()
-	{
-		m_Running = false;
-		TerminateThreads();
-	}
-
-	void JobSystem::SetMaxThreads( size_t maxThreads )
-	{
-		m_MaxThreads = glm::clamp( ( size_t ) maxThreads, ( size_t ) 1, ( size_t )std::thread::hardware_concurrency() );
-	}
-
-	void JobSystem::CreateThreads()
-	{
-		// Clear last threads if any.
-		TerminateThreads();
-
-		m_Running = true;
-
-		SetMaxThreads( m_MaxThreads );
-		m_Threads.resize( m_MaxThreads );
-
-		for( size_t i = 0; i < m_MaxThreads; ++i )
-		{
-			m_Threads[ i ] = std::thread( &JobSystem::ThreadRun, this );
-		}
-	}
-
-	void JobSystem::TerminateThreads()
-	{
-		size_t index = 0;
-		for( auto& rThread : m_Threads )
-		{
-			if( rThread.joinable() )
-			{
-				rThread.join();
-			}
-
-			m_Threads.erase( m_Threads.begin() + index );
-			++index;
-		}
-	}
-
-	void JobSystem::ThreadRun()
-	{
-#if defined(SAT_PLATFORM_WINDOWS)
-		::SetThreadDescription( ::GetCurrentThread(), L"JobSystemThread" );
+#if defined(SAT_PLATFORM_HEADER_DEFINED)
+#error "SAT_PLATFORM_HEADER_DEFINED was defined before UnixPlatform.h was included, make sure there is not any other platform header included before the UnixPlatform header!"
 #endif
 
-		while( m_Running )
-		{
-			while( !m_Jobs.empty() )
-			{
-				Ref<Job> currentJob;
+//////////////////////////////////////////////////////////////////////////
 
-				m_Mutex.lock();
+#define SAT_PLATFORM_HEADER_DEFINED 1
 
-				// Find any jobs that have not yet been done.
-				for( auto Itr = m_Jobs.begin(); Itr != m_Jobs.end(); ++Itr )
-				{
-					auto& rJob = *Itr;
+// Standard defines
+#define SAT_NOVTABLE  
+#define SAT_DLLEXPORT __attribute__((visibility("default")))
+#define SAT_DLLIMPORT 
+#define SAT_NOINLINE  __attribute__(("noinline"))
+// Windows only defines, however defined on all platforms for compatibility 
+#define SAT_ALLOCATOR_ATTR __attribute__(("malloc"))
+#define SAT_PLATFORM_FRIENDLY_NAME "Unix"
 
-					if( rJob && rJob->CanRun() )
-					{
-						currentJob = rJob;
-						
-						// Make sure we remove it so that it cannot be executed again.
-						m_Jobs.erase( Itr );
-						break;
-					}
-				}
+// The vulkan surface extension name.
+#define SAT_PLATFORM_VULKAN_SURFACE_NAME "VK_KHR_xcb_surface"
 
-				m_Mutex.unlock();
+// We only support x86_64
+#if defined(_MSC_VER) && defined(_M_X64)
+#define SAT_PLATFORM_BINARY_FOLDER "Unix-x86_64"
+#elif defined(_MSC_VER) && defined(_M_ARM64)
+#define SAT_PLATFORM_BINARY_FOLDER "Unix-ARM64"
+#else
+#define SAT_PLATFORM_BINARY_FOLDER "Unix-ArchUnk"
+#endif
 
-				if( currentJob )
-				{
-					currentJob->ExecuteJob();
-				}
-			}
-
-			std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
-		}
-	}
-
-}
+// SAT_PLATFORM_LINUX is defined from CLI

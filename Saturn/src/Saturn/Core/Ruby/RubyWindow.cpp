@@ -297,12 +297,8 @@ namespace Saturn {
 	{
 		std::vector<const char*> Extensions;
 		Extensions.reserve( 2 );
-
-		Extensions.push_back( "VK_KHR_surface" );
-
-#if defined(_WIN32)
-		Extensions.push_back( "VK_KHR_win32_surface" );
-#endif
+		Extensions.emplace_back( "VK_KHR_surface" );
+		Extensions.emplace_back( SAT_PLATFORM_VULKAN_SURFACE_NAME );
 
 		return Extensions;
 	}

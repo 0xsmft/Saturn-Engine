@@ -38,6 +38,7 @@ namespace Saturn {
 
 		inline std::wstring ConvertString( const std::string& str )
 		{
+#if defined(SAT_PLAFORM_WINDOWS) || defined(SAT_WINDOWS) || defined(_WIN32)
 			int len = MultiByteToWideChar( CP_UTF8, 0, str.c_str(), -1, NULL, 0 );
 
 			std::wstring result( len, L'\0' );
@@ -45,10 +46,15 @@ namespace Saturn {
 			MultiByteToWideChar( CP_UTF8, 0, str.c_str(), -1, &result[ 0 ], len );
 
 			return result;
+#else
+#error "ConvertString not implemented on other platforms yet!"
+			return {};
+#endif
 		}
 
 		inline std::string ConvertWString( const std::wstring& str ) 
 		{
+#if defined(SAT_PLAFORM_WINDOWS) || defined(SAT_WINDOWS) || defined(_WIN32)
 			int len = WideCharToMultiByte( CP_UTF8, 0, str.c_str(), -1, NULL, 0, NULL, NULL );
 
 			std::string result( len, '\0' );
@@ -56,6 +62,10 @@ namespace Saturn {
 			WideCharToMultiByte( CP_UTF8, 0, str.c_str(), -1, &result[ 0 ], len, NULL, NULL );
 
 			return result;
+#else
+#error "ConvertWString not implemented on other platforms yet!"
+			return {};
+#endif
 		}
 	}
 }

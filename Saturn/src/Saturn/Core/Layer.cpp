@@ -38,12 +38,12 @@
 
 #if !defined(SAT_DIST)
 #include "ImGuizmo/ImGuizmo.h"
-#endif
 
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <backends/imgui_impl_vulkan.h>
 #include <backends/imgui_impl_ruby.h>
+#endif
 
 #include <Saturn/Core/Ruby/RubyWindow.h>
 
@@ -65,6 +65,7 @@ namespace Saturn {
 
 	void ImGuiLayer::OnAttach( void )
 	{
+#if !defined(SAT_DIST)
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
 
@@ -81,13 +82,11 @@ namespace Saturn {
 			rStyle.Colors[ ImGuiCol_WindowBg ].w = 1.0f;
 		}
 
-#if !defined(SAT_DIST)
 		rIO.Fonts->AddFontFromMemoryTTF( ( void* ) GNotoSansRegularEmbeded, sizeof( GNotoSansRegularEmbeded ), 18.0f );
 		rIO.FontDefault = rIO.Fonts->Fonts.back();
 		
 		rIO.Fonts->AddFontFromMemoryTTF( ( void* ) GNotoSansBoldEmbeded, sizeof( GNotoSansBoldEmbeded ), 18.0f );
 		rIO.Fonts->AddFontFromMemoryTTF( ( void* ) GNotoSansItalicEmbeded, sizeof( GNotoSansItalicEmbeded ), 18.0f );
-#endif
 
 		Styles::Dark();
 
@@ -131,10 +130,12 @@ namespace Saturn {
 		ImGuiInitInfo.CheckVkResultFn = _VkCheckResult;
 
 		ImGui_ImplVulkan_Init( &ImGuiInitInfo, VulkanContext::Get().GetDefaultVulkanPass() );
+#endif
 	}
 
 	void ImGuiLayer::OnDetach( void )
 	{
+#if !defined(SAT_DIST)
 		ImGui_ImplVulkan_Shutdown();
 		ImGui_ImplRuby_Shutdown();
 
@@ -143,21 +144,23 @@ namespace Saturn {
 
 		m_DescriptorPool = nullptr;
 		m_DescriptorLayout = nullptr;
+#endif
 	}
 
 	void ImGuiLayer::Begin()
 	{
+#if !defined(SAT_DIST)
 		ImGui_ImplVulkan_NewFrame();
 		ImGui_ImplRuby_NewFrame();
 
 		ImGui::NewFrame();
-#if !defined(SAT_DIST)
 		ImGuizmo::BeginFrame();
 #endif
 	}
 
 	void ImGuiLayer::End( VkCommandBuffer CommandBuffer )
 	{
+#if !defined(SAT_DIST)
 		Swapchain& rSwapchain = VulkanContext::Get().GetSwapchain();
 
 		ImGui::Render();
@@ -203,5 +206,6 @@ namespace Saturn {
 
 		vkCmdEndRenderPass( CommandBuffer );
 		CmdEndDebugLabel( CommandBuffer );
+#endif
 	}
 }

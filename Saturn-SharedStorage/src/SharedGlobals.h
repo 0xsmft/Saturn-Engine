@@ -35,10 +35,13 @@
 
 namespace Saturn {
 	class Scene;
+	class AluraCanvas;
 	class FBinnedAllocator;
 
 	extern SS_API Scene* g_ActiveScene;
 	extern SS_API Scene* g_TemporaryScene;
+	
+	extern SS_API AluraCanvas* g_AluraCanvas;
 
 	extern SS_API FBinnedAllocator g_BinnedAllocator;
 }

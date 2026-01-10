@@ -40,6 +40,7 @@
 namespace Saturn {
 	SS_API Scene* g_ActiveScene = nullptr;
 	SS_API Scene* g_TemporaryScene = nullptr;
+	SS_API AluraCanvas* g_AluraCanvas = nullptr;
 
 	SS_API FBinnedAllocator g_BinnedAllocator;
 }

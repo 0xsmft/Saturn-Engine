@@ -283,7 +283,6 @@ namespace Saturn {
 			m_LockFlags &= ~flags;
 
 		physx::PxRigidDynamic* pBody = ( physx::PxRigidDynamic* ) m_Actor;
-
 		pBody->setRigidDynamicLockFlag( ( physx::PxRigidDynamicLockFlag::Enum ) flags, value );
 	}
 
@@ -294,6 +293,8 @@ namespace Saturn {
 
 	void PhysicsRigidBody::SyncTransfrom()
 	{
+		if( m_Kinematic ) return;
+
 		TransformComponent& tc = m_Entity->GetComponent<TransformComponent>();
 
 		physx::PxTransform actorPose = m_Actor->getGlobalPose();

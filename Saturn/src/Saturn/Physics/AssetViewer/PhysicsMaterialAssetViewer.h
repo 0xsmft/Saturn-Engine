@@ -28,8 +28,8 @@
 
 #pragma once
 
-#include "AssetViewer.h"
-#include "Saturn/Asset/PhysicsMaterialAsset.h"
+#include "Saturn/ImGui/AssetViewer.h"
+#include "Saturn/Physics/PhysicsMaterialAsset.h"
 
 namespace Saturn {
 

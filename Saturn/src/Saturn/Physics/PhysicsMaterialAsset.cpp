@@ -29,8 +29,8 @@
 #include "sppch.h"
 #include "PhysicsMaterialAsset.h"
 
-#include "Saturn/Physics/PhysicsAuxiliary.h"
-#include "Saturn/Physics/PhysicsFoundation.h"
+#include "PhysicsAuxiliary.h"
+#include "PhysicsFoundation.h"
 
 namespace Saturn {
 

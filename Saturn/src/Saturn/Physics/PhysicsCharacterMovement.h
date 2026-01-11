@@ -28,52 +28,41 @@
 
 #pragma once
 
-#include "Asset.h"
-
+#include "Saturn/Asset/Asset.h"
 #include "PxPhysicsAPI.h"
 
 namespace Saturn {
 
-	enum class PhysicsMaterialFlags
-	{
-		None = 0,
-		DisableFriction = BIT( 0 ),
-		DisableHighFriction = BIT( 1 ),
-		ImprovedPatchFriction = BIT( 2 )
-	};
+	class PhysicsScene;
 
-	class PhysicsMaterialAsset : public Asset
+	enum PhysicsControllerCollisionFlag
+	{
+		PhysControllerCollision_Sides = BIT( 0 ),
+		PhysControllerCollision_Up    = BIT( 1 ),
+		PhysControllerCollision_Down  = BIT( 2 )
+	};
+	
+	class PhysicsCharacterMovement
 	{
 	public:
-		PhysicsMaterialAsset( float StaticFriction, float DynamicFriction, float Restitution, PhysicsMaterialFlags flags = PhysicsMaterialFlags::None );
-		PhysicsMaterialAsset( const Ref<Asset>& rBase, float StaticFriction, float DynamicFriction, float Restitution, PhysicsMaterialFlags flags = PhysicsMaterialFlags::None );
-		virtual ~PhysicsMaterialAsset();
+		PhysicsCharacterMovement( AssetID materialAsset, float height, float radius );
+		~PhysicsCharacterMovement();
 
-		void SetStaticFriction( float val );
-		void SetDynamicFriction( float val );
-		void SetRestitution( float val );
-		 
-		float GetStaticFriction()  const { return m_StaticFriction; }
-		float GetDynamicFriction() const { return m_DynamicFriction; }
-		float GetRestitution()     const { return m_Restitution; }
+		void CreateController( PhysicsScene* pScene, const glm::vec3& rOriginPosition );
 
-		void SetFlag( PhysicsMaterialFlags flag, bool value );
-		[[nodiscard]] bool IsFlagSet( PhysicsMaterialFlags flag ) const { return ( m_Flags & (uint32_t)flag ) != 0; }
-		uint32_t GetFlags() const { return m_Flags; }
+		PhysicsControllerCollisionFlag Move( const glm::vec3& rDisplacement, float minDistance, float ts );
+		void Teleport( const glm::vec3& rPosition );
 
-		physx::PxMaterial& GetMaterial() { return *m_Material; }
-		const physx::PxMaterial& GetMaterial() const { return *m_Material; }
+	public:
+		physx::PxController* GetController() { return m_pController; }
+		const physx::PxController* GetController() const { return m_pController; }
+
+		glm::vec3 GetPosition() const;
 
 	private:
-		float m_StaticFriction = 0.6f;
-		float m_DynamicFriction = 0.6f;
-		float m_Restitution = 0.0f;
-
-		uint32_t m_Flags = -1;
-		physx::PxMaterial* m_Material = nullptr;
-
-	private:
-		friend class PhysicsMaterialAssetViewer;
+		AssetID m_MaterialID = 0;
+		float m_Height = 0.0f, m_Radius = 0.0f;
+		physx::PxController* m_pController = nullptr;
 	};
 
 }

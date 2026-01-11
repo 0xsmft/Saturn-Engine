@@ -26,92 +26,54 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "NavigationSystem.h"
+#pragma once
 
-#include "NavBoundsEntity.h"
+#include "Saturn/Asset/Asset.h"
 
-#include "Saturn/Core/Random.h"
-
-#include "Saturn/Scene/Scene.h"
-
-#include "RecastCore.h"
-
-#include "Saturn/Vulkan/Renderer2D.h"
-
-#include <Detour/DetourNavMeshQuery.h>
-#include <glm/gtc/type_ptr.hpp>
+#include "PxPhysicsAPI.h"
 
 namespace Saturn {
 
-	void NavigationSystem::Initialise()
+	enum class PhysicsMaterialFlags
 	{
-		m_NavBoundsEntity = g_ActiveScene->GetNavBoundsEntity();
+		None = 0,
+		DisableFriction = BIT( 0 ),
+		DisableHighFriction = BIT( 1 ),
+		ImprovedPatchFriction = BIT( 2 )
+	};
 
-		if( SharedPtr<NavBoundsEntity> entity = m_NavBoundsEntity.Access() ) 
-		{	
-			const dtNavMesh* pNavMesh = entity->GetBuilder().GetNavMesh();
-
-			m_pNavMeshQuery = dtAllocNavMeshQuery();
-			m_pNavMeshQuery->init( pNavMesh, 1048 );
-
-			m_Initialised = true;
-		}
-	}
-
-	void NavigationSystem::Terminate()
+	class PhysicsMaterialAsset : public Asset
 	{
-		dtFreeNavMeshQuery( m_pNavMeshQuery );
-		m_pNavMeshQuery = nullptr;
-	}
+	public:
+		PhysicsMaterialAsset( float StaticFriction, float DynamicFriction, float Restitution, PhysicsMaterialFlags flags = PhysicsMaterialFlags::None );
+		PhysicsMaterialAsset( const Ref<Asset>& rBase, float StaticFriction, float DynamicFriction, float Restitution, PhysicsMaterialFlags flags = PhysicsMaterialFlags::None );
+		virtual ~PhysicsMaterialAsset();
 
-	NavigationSystem::~NavigationSystem()
-	{
-	}
+		void SetStaticFriction( float val );
+		void SetDynamicFriction( float val );
+		void SetRestitution( float val );
+		 
+		float GetStaticFriction()  const { return m_StaticFriction; }
+		float GetDynamicFriction() const { return m_DynamicFriction; }
+		float GetRestitution()     const { return m_Restitution; }
 
-	void NavigationSystem::DebugDraw( Renderer2D* pRenderer2D )
-	{
-		for( const auto& rPath : m_Paths )
-		{
-			const glm::vec4 pathColor = glm::vec4( 1.0f, 1.0f, 0.0f, 1.0f );
+		void SetFlag( PhysicsMaterialFlags flag, bool value );
+		[[nodiscard]] bool IsFlagSet( PhysicsMaterialFlags flag ) const { return ( m_Flags & (uint32_t)flag ) != 0; }
+		uint32_t GetFlags() const { return m_Flags; }
 
-			const auto pathPoints = rPath->GetPoints();
+		physx::PxMaterial& GetMaterial() { return *m_Material; }
+		const physx::PxMaterial& GetMaterial() const { return *m_Material; }
 
-			// Origin point.
-			pRenderer2D->SubmitDiamond( pathPoints[ 0 ], 0.75f, glm::vec4( 1.0f, 0.0f, 0.0f, 1.0f ) );
+	private:
+		float m_StaticFriction = 0.6f;
+		float m_DynamicFriction = 0.6f;
+		float m_Restitution = 0.0f;
 
-			for( size_t i = 0; i < pathPoints.size() - 1; i++ )
-			{
-				const glm::vec3& rThisPoint = pathPoints[ i ];
-				const glm::vec3& rNextPoint = pathPoints[ i + 1 ];
+		uint32_t m_Flags = -1;
+		physx::PxMaterial* m_Material = nullptr;
 
-				pRenderer2D->SubmitLine( rThisPoint, rNextPoint, pathColor );
-				pRenderer2D->SubmitDiamond( rNextPoint, 0.75f, pathColor );
-			}
-		}
-	}
-
-	//////////////////////////////////////////////////////////////////////////
-
-	static float RcRandom()
-	{
-		return Random::RandomFloatInRange( 0.0f, 1.0f );
-	}
-
-	std::expected<glm::vec3, dtStatus> NavigationSystem::GetRandomPointInNavMesh( const glm::vec3& rOrigin, float maxRadius ) const
-	{
-		glm::vec3 dest{};
-
-		dtQueryFilter filter;
-		dtPolyRef randomRef;
-
-		const auto status = m_pNavMeshQuery->findRandomPoint( &filter, RcRandom, &randomRef, glm::value_ptr( dest ) );
-		if( status != DT_SUCCESS )
-		{
-			return std::unexpected( status );
-		}
-
-		return dest;
-	}
+	private:
+		friend class PhysicsMaterialAssetViewer;
+	};
 
 }

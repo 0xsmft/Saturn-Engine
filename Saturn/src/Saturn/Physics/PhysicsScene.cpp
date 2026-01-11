@@ -38,6 +38,7 @@
 
 #include "PhysicsFoundation.h"
 #include "PhysicsRigidBody.h"
+#include "PhysicsCharacterMovement.h"
 #include "PhysicsAuxiliary.h"
 
 namespace Saturn {
@@ -52,9 +53,8 @@ namespace Saturn {
 	{
 		PhysicsFoundation::Get().DisconnectPVD();
 
-		auto rView = m_Scene->GetAllEntitiesWith<RigidbodyComponent>();
-
-		for( auto& rEntity : rView )
+		const auto view = m_Scene->GetAllEntitiesWith<RigidbodyComponent>();
+		for( auto& rEntity : view )
 		{
 			auto& rb = rEntity->GetComponent<RigidbodyComponent>();
 
@@ -64,6 +64,9 @@ namespace Saturn {
 
 		m_Scene = nullptr;
 
+		m_ControllerManager->purgeControllers();
+
+		PHYSX_TERMINATE_ITEM( m_ControllerManager );
 		PHYSX_TERMINATE_ITEM( m_PhysicsScene );
 	}
 
@@ -112,19 +115,29 @@ namespace Saturn {
 		m_PhysicsScene->setVisualizationParameter( physx::PxVisualizationParameter::eSCALE, 1.0f );
 		m_PhysicsScene->setVisualizationParameter( physx::PxVisualizationParameter::eCOLLISION_SHAPES, 1.0f );
 
+		m_ControllerManager = PxCreateControllerManager( *m_PhysicsScene );
+
 		// Add all current bodies to the scene.
-
-		auto rView = m_Scene->GetAllEntitiesWith<RigidbodyComponent>();
-
-		for( auto& rEntity : rView )
+		const auto rigidbodyView = m_Scene->GetAllEntitiesWith<RigidbodyComponent>();
+		for( auto& rEntity : rigidbodyView )
 		{
 			auto& rb = rEntity->GetComponent<RigidbodyComponent>();
 
 			rb.Rigidbody = new PhysicsRigidBody( rEntity );
 			rb.Rigidbody->CreateShape();
 
-			// Maybe we could use addActors?
 			AddToScene( rb.Rigidbody->GetActor() );
+		}
+
+		// Add controllers.
+		const auto controllerView = m_Scene->GetAllEntitiesWith<CharacterMovementComponent>();
+		for( auto& rEntity : controllerView )
+		{
+			auto& rb = rEntity->GetComponent<RigidbodyComponent>();
+			auto& movementComp = rEntity->GetComponent<CharacterMovementComponent>();
+
+			movementComp.CharacterMovement = new PhysicsCharacterMovement( rb.MaterialAssetID, movementComp.Height, movementComp.Radius );
+			movementComp.CharacterMovement->CreateController( this, rEntity->GetLocalPosition() );
 		}
 	}
 

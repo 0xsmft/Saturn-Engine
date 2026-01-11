@@ -468,6 +468,21 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 			rEmitter << YAML::EndMap;
 		}
 
+		// Character Movement Component
+		if( entity->HasComponent<CharacterMovementComponent>() )
+		{
+			rEmitter << YAML::Key << "CharacterMovementComponent";
+			rEmitter << YAML::BeginMap;
+
+			const auto& cmc = entity->GetComponent< CharacterMovementComponent >();
+
+			rEmitter << YAML::Key << "StepOffset" << YAML::Value << cmc.StepOffset;
+			rEmitter << YAML::Key << "Height" << YAML::Value << cmc.Height;
+			rEmitter << YAML::Key << "Radius" << YAML::Value << cmc.Radius;
+
+			rEmitter << YAML::EndMap;
+		}
+
 		// Camera Component
 		if( entity->HasComponent<CameraComponent>() )
 		{
@@ -928,6 +943,16 @@ pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value ); \
 			{
 				rb.LockFlags = 0;
 			}
+		}
+
+		const auto cmc = rEntityNode[ "CharacterMovementComponent" ];
+		if( cmc )
+		{
+			auto& cm = DeserialisedEntity->AddComponent< CharacterMovementComponent >();
+
+			cm.StepOffset = cmc[ "StepOffset" ].as< float >();
+			cm.Height     = cmc[ "Height" ].as< float >();
+			cm.Radius     = cmc[ "Radius" ].as< float >();
 		}
 
 		const auto cc = rEntityNode[ "CameraComponent" ];

@@ -48,7 +48,7 @@
 #include "Saturn/AI/BehaviourTree/BehaviourTreeMemorySpecification.h"
 #include "Saturn/Animation/SkeletonAsset.h"
 #include "Saturn/Animation/SkeletalAnimationAsset.h"
-#include "Saturn/Asset/PhysicsMaterialAsset.h"
+#include "Saturn/Physics/PhysicsMaterialAsset.h"
 
 #include "Saturn/Serialisation/YAML/SceneSerialiser.h"
 

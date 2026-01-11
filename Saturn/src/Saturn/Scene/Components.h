@@ -248,6 +248,19 @@ namespace Saturn {
 		CapsuleColliderComponent( float radius, float height ) : Radius( radius ), Height( height ) { }
 	};
 
+	class PhysicsCharacterMovement;
+	struct CharacterMovementComponent
+	{
+		PhysicsCharacterMovement* CharacterMovement = nullptr;
+
+		float StepOffset = 0.3f;
+		float Height = 1.0f;
+		float Radius = 1.0f;
+
+		CharacterMovementComponent() = default;
+		CharacterMovementComponent( float stepOffset, float height, float radius ) : StepOffset( stepOffset ), Height( height ), Radius( radius ) {}
+	};
+
 	// TODO: Do we really want to store the rigid body here?
 	class PhysicsRigidBody;
 	struct RigidbodyComponent
@@ -387,7 +400,7 @@ namespace Saturn {
 		StaticMeshComponent, SkeletalMeshComponent,
 		DirectionalLightComponent, SkylightComponent, PointLightComponent,
 		CameraComponent,
-		BoxColliderComponent, SphereColliderComponent, CapsuleColliderComponent, RigidbodyComponent,
+		BoxColliderComponent, SphereColliderComponent, CapsuleColliderComponent, RigidbodyComponent, CharacterMovementComponent,
 		AudioPlayerComponent, AudioListenerComponent,
 		BillboardComponent,
 		NavigationMeshSpecificationComponent,
@@ -400,7 +413,7 @@ namespace Saturn {
 		StaticMeshComponent, SkeletalMeshComponent,
 		DirectionalLightComponent, SkylightComponent, PointLightComponent,
 		CameraComponent,
-		BoxColliderComponent, SphereColliderComponent, CapsuleColliderComponent, RigidbodyComponent,
+		BoxColliderComponent, SphereColliderComponent, CapsuleColliderComponent, RigidbodyComponent, CharacterMovementComponent,
 		AudioPlayerComponent, AudioListenerComponent,
 		BillboardComponent,
 		NavigationMeshSpecificationComponent,

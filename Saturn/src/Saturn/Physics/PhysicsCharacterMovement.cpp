@@ -27,91 +27,81 @@
 */
 
 #include "sppch.h"
-#include "NavigationSystem.h"
+#include "PhysicsCharacterMovement.h"
 
-#include "NavBoundsEntity.h"
+#include "PhysicsMaterialAsset.h"
+#include "PhysicsFoundation.h"
+#include "PhysicsScene.h"
+#include "PhysicsAuxiliary.h"
 
-#include "Saturn/Core/Random.h"
+#include "Saturn/Project/Project.h"
 
-#include "Saturn/Scene/Scene.h"
-
-#include "RecastCore.h"
-
-#include "Saturn/Vulkan/Renderer2D.h"
-
-#include <Detour/DetourNavMeshQuery.h>
-#include <glm/gtc/type_ptr.hpp>
+#include "Saturn/Asset/AssetManager.h"
 
 namespace Saturn {
 
-	void NavigationSystem::Initialise()
-	{
-		m_NavBoundsEntity = g_ActiveScene->GetNavBoundsEntity();
-
-		if( SharedPtr<NavBoundsEntity> entity = m_NavBoundsEntity.Access() ) 
-		{	
-			const dtNavMesh* pNavMesh = entity->GetBuilder().GetNavMesh();
-
-			m_pNavMeshQuery = dtAllocNavMeshQuery();
-			m_pNavMeshQuery->init( pNavMesh, 1048 );
-
-			m_Initialised = true;
-		}
-	}
-
-	void NavigationSystem::Terminate()
-	{
-		dtFreeNavMeshQuery( m_pNavMeshQuery );
-		m_pNavMeshQuery = nullptr;
-	}
-
-	NavigationSystem::~NavigationSystem()
+	PhysicsCharacterMovement::PhysicsCharacterMovement( AssetID materialAsset, float height, float radius )
+		: m_MaterialID( materialAsset ), m_Height( height ), m_Radius( radius )
 	{
 	}
 
-	void NavigationSystem::DebugDraw( Renderer2D* pRenderer2D )
+	PhysicsCharacterMovement::~PhysicsCharacterMovement()
 	{
-		for( const auto& rPath : m_Paths )
+	}
+
+	static Ref<PhysicsMaterialAsset> GetMaterial( AssetID materialID )
+	{
+		Ref<PhysicsMaterialAsset> materialAsset;
+
+		Ref<Project> activeProject = Project::GetActiveProject();
+		if( materialID == 0 || materialID == activeProject->GetDefaultPhysicsMaterialAsset() )
 		{
-			const glm::vec4 pathColor = glm::vec4( 1.0f, 1.0f, 0.0f, 1.0f );
-
-			const auto pathPoints = rPath->GetPoints();
-
-			// Origin point.
-			pRenderer2D->SubmitDiamond( pathPoints[ 0 ], 0.75f, glm::vec4( 1.0f, 0.0f, 0.0f, 1.0f ) );
-
-			for( size_t i = 0; i < pathPoints.size() - 1; i++ )
-			{
-				const glm::vec3& rThisPoint = pathPoints[ i ];
-				const glm::vec3& rNextPoint = pathPoints[ i + 1 ];
-
-				pRenderer2D->SubmitLine( rThisPoint, rNextPoint, pathColor );
-				pRenderer2D->SubmitDiamond( rNextPoint, 0.75f, pathColor );
-			}
+			materialAsset = AssetManager::Get().GetAssetAs<PhysicsMaterialAsset>( activeProject->GetDefaultPhysicsMaterialAsset() );
 		}
-	}
-
-	//////////////////////////////////////////////////////////////////////////
-
-	static float RcRandom()
-	{
-		return Random::RandomFloatInRange( 0.0f, 1.0f );
-	}
-
-	std::expected<glm::vec3, dtStatus> NavigationSystem::GetRandomPointInNavMesh( const glm::vec3& rOrigin, float maxRadius ) const
-	{
-		glm::vec3 dest{};
-
-		dtQueryFilter filter;
-		dtPolyRef randomRef;
-
-		const auto status = m_pNavMeshQuery->findRandomPoint( &filter, RcRandom, &randomRef, glm::value_ptr( dest ) );
-		if( status != DT_SUCCESS )
+		else
 		{
-			return std::unexpected( status );
+			materialAsset = AssetManager::Get().GetAssetAs<PhysicsMaterialAsset>( materialID );
 		}
 
-		return dest;
+		return materialAsset;
 	}
 
+	void PhysicsCharacterMovement::CreateController( PhysicsScene* pScene, const glm::vec3& rOriginPosition )
+	{
+		Ref<PhysicsMaterialAsset> materialAsset = GetMaterial( m_MaterialID );
+
+		physx::PxCapsuleControllerDesc desc;
+		desc.height = m_Height;
+		desc.radius = m_Radius;
+		desc.stepOffset = 0.3f;
+		desc.slopeLimit = glm::cos( physx::PxPiDivFour );
+		desc.contactOffset = 0.02f;
+		desc.material = &materialAsset->GetMaterial();
+		desc.position = physx::PxExtendedVec3( rOriginPosition.x, rOriginPosition.y, rOriginPosition.z );
+		desc.upDirection = physx::PxVec3{ 0.0f, 1.0f, 0.0f };
+		desc.climbingMode = physx::PxCapsuleClimbingMode::eCONSTRAINED;
+
+		m_pController = pScene->GetControllerManager()->createController( desc );
+	}
+
+	PhysicsControllerCollisionFlag PhysicsCharacterMovement::Move( const glm::vec3& rDisplacement, float minDistance, float ts )
+	{
+		physx::PxControllerFilters filters;
+		const auto flags = m_pController->move( Auxiliary::GLMToPx( rDisplacement ), minDistance, ts, filters );
+		
+		
+		PhysicsControllerCollisionFlag sflags = ( PhysicsControllerCollisionFlag ) ( physx::PxU8 ) flags;
+		return sflags;
+	}
+
+	void PhysicsCharacterMovement::Teleport( const glm::vec3& rPosition )
+	{
+		m_pController->setPosition( physx::PxExtendedVec3( rPosition.x, rPosition.y, rPosition.z ) );
+	}
+
+	glm::vec3 PhysicsCharacterMovement::GetPosition() const
+	{
+		const auto& pos = m_pController->getPosition();
+		return glm::vec3( pos.x, pos.y, pos.z );
+	}
 }

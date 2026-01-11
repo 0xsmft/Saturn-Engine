@@ -51,9 +51,13 @@ namespace Saturn {
 	AIAgentEntity::AIAgentEntity()
 	{
 		AddComponent<StaticMeshComponent>();
-		AddComponent<CapsuleColliderComponent>();
 		AddComponent<BehaviourTreeComponent>();
-//		AddComponent<RigidbodyComponent>().LockFlags = RigidbodyLockFlags::RigidbodyLock_RotationX | RigidbodyLockFlags::RigidbodyLock_RotationY | RigidbodyLockFlags::RigidbodyLock_RotationZ;
+
+		auto& rRigidbodyComponent = AddComponent<RigidbodyComponent>();
+		rRigidbodyComponent.LockFlags = RigidbodyLockFlags::RigidbodyLock_RotationX | RigidbodyLockFlags::RigidbodyLock_RotationY | RigidbodyLockFlags::RigidbodyLock_RotationZ;
+		rRigidbodyComponent.IsKinematic = true;
+
+		AddComponent<CharacterMovementComponent>();
 	}
 
 	AIAgentEntity::~AIAgentEntity()

@@ -121,6 +121,10 @@ namespace Saturn {
 
 		glm::mat4 Transform() const { return m_Scene->m_Registry.get<TransformComponent>( m_EntityHandle ).GetTransform(); }
 		
+		glm::vec3 GetLocalPosition() const { return m_Scene->m_Registry.get<TransformComponent>( m_EntityHandle ).Position; }
+		glm::quat GetLocalRotation() const { return m_Scene->m_Registry.get<TransformComponent>( m_EntityHandle ).GetRotationEuler(); }
+		glm::vec3 GetLocalScale() const { return m_Scene->m_Registry.get<TransformComponent>( m_EntityHandle ).Scale; }
+
 		void SetName( const std::string& rName );
 
 		const entt::entity GetHandle()       { return m_EntityHandle; }

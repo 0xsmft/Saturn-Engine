@@ -35,6 +35,7 @@
 #include "Saturn/AI/BehaviourTree/AssetViewer/Nodes/BehaviourTreeNodeBase.h"
 
 #include "Saturn/Physics/PhysicsRigidBody.h"
+#include "Saturn/Physics/PhysicsCharacterMovement.h"
 
 #include "Saturn/AI/Navigation/RecastCore.h"
 #include <Detour/DetourNavMeshQuery.h>
@@ -132,7 +133,7 @@ namespace Saturn {
 			if( glm::length( movement ) > distance )
 				movement = diff;
 
-			rCurrentPosition += movement;
+			m_Agent->GetComponent<CharacterMovementComponent>().CharacterMovement->Move( movement, 0.001f, ts.Seconds() );
 		}
 
 		return NodeEditorTaskState::Running;

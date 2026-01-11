@@ -49,6 +49,7 @@
 
 #include "Saturn/Physics/PhysicsScene.h"
 #include "Saturn/Physics/PhysicsRigidBody.h"
+#include "Saturn/Physics/PhysicsCharacterMovement.h"
 
 #include "Saturn/Project/Project.h"
 
@@ -233,14 +234,13 @@ namespace Saturn {
 	{
 		SAT_PF_EVENT();
 
-		auto rigidBodies = GetAllEntitiesWith<RigidbodyComponent>();
-		
 		constexpr float FixedTimestep = 1.0f / 100.0f;
 		for( auto&& [id, entity] : m_EntityIDMap )
 		{
 			entity->OnPhysicsUpdate( FixedTimestep );
 		}
 
+		auto rigidBodies = GetAllEntitiesWith<RigidbodyComponent>();
 		for( auto& entity : rigidBodies )
 		{
 			auto& rb = entity->GetComponent<RigidbodyComponent>();
@@ -354,8 +354,6 @@ namespace Saturn {
 		}
 
 		sceneRenderer->SetCamera( m_RendererCamera );
-		if( sceneRenderer->GetAluraRenderer() )
-			sceneRenderer->GetAluraRenderer()->PreRender();
 
 		//////////////////////////////////////////////////////////////////////////
 
@@ -480,6 +478,7 @@ namespace Saturn {
 			}
 		}
 
+		// Agent billboards
 		const auto aiAgents = GetAllEntitiesWithClass<AIAgentEntity>();
 		if( aiAgents.size() )
 		{
@@ -956,14 +955,8 @@ namespace Saturn {
 			entity->BeginPlay();
 		}
 
-		StartAudioPlayers();
-		StartAnimations();
-
 		// Init new scene camera
 		m_pMainCameraEntity = GetMainCameraEntity( true );
-		m_RuntimeState = RuntimeState::Running;
-
-		m_NavigationSystem.Initialise();
 
 		if( m_pMainCameraEntity.Expired() )
 		{
@@ -974,6 +967,14 @@ namespace Saturn {
 		
 			return false;
 		}
+
+		m_NavigationSystem.Initialise();
+
+		StartAudioPlayers();
+		StartAnimations();
+		StartBehaviourTrees();
+
+		m_RuntimeState = RuntimeState::Running;
 
 		return true;
 	}
@@ -1036,6 +1037,21 @@ namespace Saturn {
 
 			rComp.LocalAnimator->InitAnimation( rComp.AnimationControllerAssetID, rComp.Mesh, rComp.AnimatorType );
 			rComp.LocalAnimator->Begin();
+		}
+	}
+
+	void Scene::StartBehaviourTrees()
+	{
+		const auto anims = GetAllEntitiesWith<BehaviourTreeComponent>();
+		for( auto& entity : anims )
+		{
+			auto& rComp = entity->GetComponent<BehaviourTreeComponent>();
+			if( rComp.BehaviourTreeAssetID == 0 ) continue;
+
+			SAT_CORE_ASSERT( entity->GetClass() == AIAgentEntity::StaticClass(), "Wrong class type for an entity with a behaviour tree component!" );
+
+			auto agent = entity.As<AIAgentEntity>();
+			agent->StartBehaviourTree( rComp.BehaviourTreeAssetID );
 		}
 	}
 

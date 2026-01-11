@@ -31,8 +31,8 @@
 
 #include "PhysicsAuxiliary.h"
 #include "PhysicsFoundation.h"
+#include "PhysicsMaterialAsset.h"
 
-#include "Saturn/Asset/PhysicsMaterialAsset.h"
 #include "Saturn/Asset/AssetManager.h"
 
 #include "Saturn/Project/Project.h"

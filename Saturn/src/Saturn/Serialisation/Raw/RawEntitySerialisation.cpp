@@ -316,6 +316,16 @@ namespace Saturn {
 				RawSerialisation::WriteObject( rbc.LockFlags, rStream );
 			} );
 
+		// Character Movement Component
+		WriteComponent<CharacterMovementComponent>( rEntity, rStream, [ & ]()
+			{
+				auto& cmc = rEntity->GetComponent< CharacterMovementComponent >();
+
+				RawSerialisation::WriteObject( cmc.StepOffset, rStream );
+				RawSerialisation::WriteObject( cmc.Height, rStream );
+				RawSerialisation::WriteObject( cmc.Radius, rStream );
+			} );
+
 		// Camera Component
 		WriteComponent<CameraComponent>( rEntity, rStream, [&]()
 			{
@@ -639,6 +649,16 @@ namespace Saturn {
 				RawSerialisation::ReadObject( rbc.LockFlags, rStream );
 			} );
 		
+		// Character Movement Component
+		ReadComponent<CharacterMovementComponent>( rEntity, rStream, [&]()
+			{
+				auto& cmc = rEntity->GetComponent< CharacterMovementComponent >();
+
+				RawSerialisation::ReadObject( cmc.StepOffset, rStream );
+				RawSerialisation::ReadObject( cmc.Height, rStream );
+				RawSerialisation::ReadObject( cmc.Radius, rStream );
+			} );
+
 		// Camera Component
 		ReadComponent<CameraComponent>( rEntity, rStream, [&]()
 			{

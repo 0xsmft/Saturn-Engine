@@ -339,6 +339,7 @@ namespace Saturn {
 		void UpdateAudioListeners();
 
 		void StartAnimations();
+		void StartBehaviourTrees();
 
 #if !defined(SAT_DIST)
 		void MarkDirty() { m_Dirty = true; }

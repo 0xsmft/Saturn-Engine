@@ -115,33 +115,31 @@ namespace Saturn {
 		void PopFont();
 
 	public:
-		[[nodiscard]] AluraElement* GetLastElement();
-
 		// Drawing and widgets
-		AluraElement& AddRect( const glm::vec2& rSize, const glm::vec4& rColor = glm::one<glm::vec4>() );
+		void AddRect( const glm::vec2& rSize, const glm::vec4& rColor = glm::one<glm::vec4>() );
 
 #if !defined(SAT_DIST)
-		AluraElement& AddImage( const glm::vec2& rSize, Ref<Texture2D> image, const glm::vec4& rColor = glm::one<glm::vec4>(), const glm::vec2& rUV1 = { 0.0F, 1.0F }, const glm::vec2& rUV2 = { 1.0F, 0.0F } );
+		void AddImage( const glm::vec2& rSize, Ref<Texture2D> image, const glm::vec4& rColor = glm::one<glm::vec4>(), const glm::vec2& rUV1 = { 0.0F, 1.0F }, const glm::vec2& rUV2 = { 1.0F, 0.0F } );
 		
 		[[nodiscard]] bool AddImageButton( const glm::vec2& rSize, Ref<Texture2D> image, const glm::vec4& rColor = glm::one<glm::vec4>(), const glm::vec2& rUV1 = { 0.0F, 1.0F }, const glm::vec2& rUV2 = { 1.0F, 0.0F } );
 #else
-		AluraElement& AddImage( const glm::vec2& rSize, Ref<Texture2D> image, const glm::vec4& rColor = glm::one<glm::vec4>(), const glm::vec2& rUV1 = { 1.0F, 0.0F }, const glm::vec2& rUV2 = { 0.0F, 1.0F } );
+		void AddImage( const glm::vec2& rSize, Ref<Texture2D> image, const glm::vec4& rColor = glm::one<glm::vec4>(), const glm::vec2& rUV1 = { 1.0F, 0.0F }, const glm::vec2& rUV2 = { 0.0F, 1.0F } );
 		[[nodiscard]] bool AddImageButton( const glm::vec2& rSize, Ref<Texture2D> image, const glm::vec4& rColor = glm::one<glm::vec4>(), const glm::vec2& rUV1 = { 1.0F, 0.0F }, const glm::vec2& rUV2 = { 0.0F, 1.0F } );
 #endif
 
 		// NOTE: fraction is a normalised value between 0.0 - 1.0, because we are working with the percent in decimal from.
-		AluraElement& AddProgressBar( float fraction, const glm::vec2& rSize );
+		void AddProgressBar( float fraction, const glm::vec2& rSize );
 
-		AluraElement& AddText( const std::string& rText, const glm::vec4& rColor = glm::one<glm::vec4>() );
+		void AddText( const std::string& rText, const glm::vec4& rColor = glm::one<glm::vec4>() );
 		
 		[[nodiscard]] bool AddButton( const glm::vec2& rSize, const glm::vec4& rColor = glm::one<glm::vec4>() );
 		
 		[[nodiscard]] bool AddButton( const std::string& rText );
 
-		AluraElement& AddCircle( float radius, float thinkness = 1.0f, bool filled = false, const glm::vec4& rColor = glm::one<glm::vec4>() );
+		void AddCircle( float radius, float thinkness = 1.0f, bool filled = false, const glm::vec4& rColor = glm::one<glm::vec4>() );
 
 	public:
-		// Widget control and hit testing
+		// Widget control, style control and hit testing
 		void SetNextItemPosition( const glm::vec2& rPosition );
 
 		void Indent( float width = 0.0f );
@@ -155,6 +153,11 @@ namespace Saturn {
 
 		void PushStyle( std::underlying_type_t<AluraColor> index, const glm::vec4& rNewValue );
 		void PopStyle();
+
+		void PushFontSize( float newSize );
+		void PopFontSize();
+
+		[[nodiscard]] glm::vec2 CalcTextSize( const std::string& rText );
 
 	public:
 #if !defined(SAT_DIST)
@@ -170,6 +173,7 @@ namespace Saturn {
 		float GetHeight() const { return m_Size.y; }
 
 		const AluraStyle& GetStyle() const { return m_Style; }
+		Ref<AluraFont> GetActiveFont() const { return m_ActiveFont; }
 
 	public:
 		inline void SetPosition( const glm::vec2& rPosition ) 
@@ -192,6 +196,7 @@ namespace Saturn {
 		glm::vec2 m_Position;
 
 		glm::vec2 m_PendingNextItemPosition{};
+		float m_PushedFontSize = 0.0f;
 		bool m_WantToSetItemPosition = false;
 
 		// The mouse position relative to this canvas' positions.
@@ -199,7 +204,6 @@ namespace Saturn {
 
 		Ref<AluraRenderer> m_Renderer;
 
-		std::vector<AluraElement> m_Elements;
 		std::vector<Ref<AluraFont>> m_Fonts;
 		std::stack<AluraColorTemp> m_ColorStack;
 

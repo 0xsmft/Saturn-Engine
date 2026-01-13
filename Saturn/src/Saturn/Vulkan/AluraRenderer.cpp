@@ -437,7 +437,6 @@ namespace Saturn {
 			}
 			// TOOD: Add a font setting or a style setting to determinate how many spaces a tab should be
 			// right now we'll do 4 spaces.
-			// AluraCanvas::PushStyleVar( AluraStyleVar_FontSize, 18.0f )? or passing it into every AddText call?
 			else if( character == '\t' )
 			{
 				pGlyph = rFontGeo.getGlyph( ' ' );
@@ -550,7 +549,7 @@ namespace Saturn {
 
 	void AluraRenderer::SubmitCircle( const glm::vec2& rCentre, float radius, float thickness, const glm::vec4& rColor )
 	{
-		const int segments = 64.0f;
+		const int segments = 64;
 		const float step = 2.0f * glm::pi<float>() / segments;
 
 		for( int i = 0; i < segments; i++ )

@@ -1365,7 +1365,7 @@ namespace Saturn {
 
 	void SceneRenderer::SetViewportSize( uint32_t w, uint32_t h )
 	{
-		if( m_RendererData.Width != w && m_RendererData.Height != h )
+		if( m_RendererData.Width != w || m_RendererData.Height != h )
 		{
 			m_RendererData.Width = w;
 			m_RendererData.Height = h;
@@ -1422,7 +1422,7 @@ namespace Saturn {
 			m_Renderer2D->SetInitialRenderPass( m_RendererData.LateCompositePass, m_RendererData.LateCompositeFramebuffer );
 		}
 	}
-
+	
 	//////////////////////////////////////////////////////////////////////////
 	// RENDERER SHADER 
 	//////////////////////////////////////////////////////////////////////////
@@ -2280,6 +2280,16 @@ namespace Saturn {
 		VkCommandBuffer CommandBuffer;
 	};
 
+	// Pre Render phase 1
+	void SceneRenderer::PreRender()
+	{
+		if( m_Renderer2D )
+			m_Renderer2D->PreRender();
+
+		if( m_AluraRenderer )
+			m_AluraRenderer->PreRender();
+	}
+
 	void SceneRenderer::RenderScene()
 	{
 		SAT_PF_EVENT();
@@ -2302,6 +2312,7 @@ namespace Saturn {
 		for( auto&& func : m_ScheduledFunctions )
 			func();
 
+		// Pre Render phase 2
 		InitBuffers();
 
 		// Passes

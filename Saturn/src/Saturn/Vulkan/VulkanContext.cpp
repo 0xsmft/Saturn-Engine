@@ -36,22 +36,11 @@
 #include "VulkanDebug.h"
 #include "VulkanAllocator.h"
 
-#include "Saturn/Core/Timer.h"
 #include "Renderer.h"
 #include "Helpers.h"
 
-// ImGui
-#include <imgui.h>
-#include <backends/imgui_impl_vulkan.h>
-#include <backends/imgui_impl_glfw.h>
-
-#include <glm/gtx/matrix_decompose.hpp>
-
 #include <vulkan.h>
-#include <cassert>
 #include <set>
-#include <iostream>
-#include <string>
 
 // Define this to force enable validation layers even in dist builds.
 //#define SAT_FORCE_ENABLE_VALIDATION_LAYERS

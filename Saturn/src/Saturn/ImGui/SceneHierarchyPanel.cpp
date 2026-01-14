@@ -121,6 +121,19 @@ namespace Saturn {
 			{
 				rSelections[ 0 ]->AddComponent<Ty>();
 
+				if constexpr( std::is_same<Ty, CharacterMovementComponent>() )
+				{
+					if( rSelections[ 0 ]->HasComponents<BoxColliderComponent, CapsuleColliderComponent, SphereColliderComponent>() )
+					{
+						rSelections[ 0 ]->RemoveComponents<BoxColliderComponent, CapsuleColliderComponent, SphereColliderComponent>();
+					}
+
+					if( rSelections[ 0 ]->HasComponent<RigidbodyComponent>() )
+					{
+						rSelections[ 0 ]->GetComponent< RigidbodyComponent >().IsKinematic = true;
+					}
+				}
+
 				Ref<UndoRedoActionAddComponent<Ty>> action = Ref<UndoRedoActionAddComponent<Ty>>::Create( entity );
 				GlobalUndoRedoGroup::Get().AddAction( action, ( uint64_t ) entity->GetHandle() );
 
@@ -292,13 +305,17 @@ namespace Saturn {
 
 			DrawAddComponents<DirectionalLightComponent>( "Directional Light", rSelections[ 0 ] );
 
-			DrawAddComponents<BoxColliderComponent>( "Box Collider", rSelections[ 0 ] );
-
-			DrawAddComponents<SphereColliderComponent>( "Sphere Collider", rSelections[ 0 ] );
-
-			DrawAddComponents<CapsuleColliderComponent>( "Capsule Collider", rSelections[ 0 ] );
+			const bool entityHasMovementComponent = rSelections[ 0 ]->HasComponent<CharacterMovementComponent>();
+			if( !entityHasMovementComponent )
+			{
+				DrawAddComponents<BoxColliderComponent>( "Box Collider", rSelections[ 0 ] );
+				DrawAddComponents<SphereColliderComponent>( "Sphere Collider", rSelections[ 0 ] );
+				DrawAddComponents<CapsuleColliderComponent>( "Capsule Collider", rSelections[ 0 ] );
+			}
 
 			DrawAddComponents<RigidbodyComponent>( "Rigidbody", rSelections[ 0 ] );
+
+			DrawAddComponents<CharacterMovementComponent>( "Character Movement", rSelections[ 0 ] );
 
 			DrawAddComponents<BillboardComponent>( "Billboard", rSelections[ 0 ] );
 
@@ -307,6 +324,7 @@ namespace Saturn {
 			DrawAddComponents<AudioListenerComponent>( "Audio Listener", rSelections[ 0 ] );
 
 			// Kept in place just in case the user removes this component by accident.
+			// TODO: This component could be made non removable.
 			if( entity->GetClass() == AIAgentEntity::StaticClass() )
 			{
 				DrawAddComponents<BehaviourTreeComponent>( "Behaviour Tree", rSelections[ 0 ] );
@@ -635,8 +653,8 @@ namespace Saturn {
 		{
 			auto& tag = entity->GetComponent<TagComponent>().Tag;
 			char buffer[ 256 ];
-			memset( buffer, 0, 256 );
-			memcpy( buffer, tag.c_str(), tag.length() );
+			std::memset( buffer, 0, 256 );
+			std::memcpy( buffer, tag.c_str(), tag.length() );
 
 			ImGui::PushItemWidth( contentRegionAvailable.x - ImGui::GetStyle().FramePadding.x );
 			if( ImGui::InputText( "##Tag", buffer, 256 ) )
@@ -1045,10 +1063,22 @@ namespace Saturn {
 		DrawComponent<RigidbodyComponent>( "Rigidbody", entity, [&]( auto& rb )
 		{
 			bool modified = false;
+			const bool hasMovementComponent = entity->HasComponent<CharacterMovementComponent>();
 
 			if( !m_Context->IsRuntimeRunning() )
 			{
-				modified = Auxiliary::DrawBoolControl( "Kinematic Body", rb.IsKinematic );
+				{
+					Auxiliary::ScopedDisabledFlag disabled( hasMovementComponent );
+
+					modified = Auxiliary::DrawBoolControl( "Kinematic Body", rb.IsKinematic );
+				
+					if( hasMovementComponent && ImGui::BeginItemTooltip() )
+					{
+						ImGui::Text( "This Rigidbody has to be kinematic due to the entity having a Character Movement Controller." );
+						ImGui::EndTooltip();
+					}
+				}
+
 				modified |= Auxiliary::DrawBoolControl( "Use CCD", rb.UseCCD );
 
 				modified |= Auxiliary::DrawFloatControl( "Mass", rb.Mass );
@@ -1084,6 +1114,11 @@ namespace Saturn {
 					ImGui::Text( "This will override the meshes physics material to an asset of your choice." );
 					ImGui::Text( "If there is no mesh then the engine will automatically use the project default physics material. If there is no project default then it will create a internal material for it." );
 					ImGui::Text( "You do not need to change this if you wish to keep using the meshes physics material." );
+
+					if( hasMovementComponent )
+					{
+						ImGui::Text( "Due to this entity having a Character Movement Component change this material will also change the material in the Controller as well." );
+					}
 
 					ImGui::EndTooltip();
 				}
@@ -1276,6 +1311,16 @@ namespace Saturn {
 
 			ImGui::PopID();
 			
+			if( modified ) m_Context->MarkDirty();
+		} );
+
+		DrawComponent<CharacterMovementComponent>( "Character Movement", entity, [ & ]( auto& cm )
+		{
+			bool modified = false;
+			modified =  Auxiliary::DrawFloatControl( "Step Offset", cm.StepOffset );
+			modified |= Auxiliary::DrawFloatControl( "Radius", cm.Radius );
+			modified |= Auxiliary::DrawFloatControl( "Height", cm.Height );
+
 			if( modified ) m_Context->MarkDirty();
 		} );
 

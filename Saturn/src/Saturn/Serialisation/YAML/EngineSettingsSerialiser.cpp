@@ -78,7 +78,7 @@ namespace Saturn {
 		
 		out << YAML::BeginSeq;
 		
-		for( auto& rPath : rSettings.RecentProjects )
+		for( auto& rPath : rSettings.m_RecentProjects )
 		{
 			out << YAML::Key << YAML::Value << rPath;
 		}
@@ -94,9 +94,8 @@ namespace Saturn {
 
 	void EngineSettingsSerialiser::Deserialise()
 	{
-		auto AppDataPath = Application::Get().GetAppDataFolder();
-		
-		auto userSettingsPath = AppDataPath / "EngineSettings.yaml";
+		const auto AppDataPath = Application::Get().GetAppDataFolder();
+		const auto userSettingsPath = AppDataPath / "EngineSettings.yaml";
 
 		std::ifstream FileIn( userSettingsPath );
 		std::stringstream ss;
@@ -109,11 +108,10 @@ namespace Saturn {
 
 		auto& rSettings = EngineSettings::Get();
 		
-		auto startup = data[ "Startup Project" ];
+		const auto startup = data[ "Startup Project" ];
 		if( !startup.IsNull() )
 		{
-			std::filesystem::path startupPath = startup.as<std::filesystem::path>();
-		
+			const std::filesystem::path startupPath = startup.as<std::filesystem::path>();
 			if( !startupPath.empty() )
 			{
 				rSettings.StartupProjectName = startupPath.stem().string();
@@ -121,13 +119,13 @@ namespace Saturn {
 			}
 		}
 
-		auto recentProjects = data[ "Recent Projects" ];
-		for( auto project : recentProjects )
+		const auto recentProjects = data[ "Recent Projects" ];
+		for( const auto project : recentProjects )
 		{
-			auto path = project.as<std::filesystem::path>();
+			const auto path = project.as<std::filesystem::path>();
 			
 			if( std::filesystem::exists( path ) )
-				rSettings.RecentProjects.push_back( path );
+				rSettings.m_RecentProjects.push_back( path );
 		}
 	}
 

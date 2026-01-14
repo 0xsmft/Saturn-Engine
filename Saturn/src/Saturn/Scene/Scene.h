@@ -411,6 +411,15 @@ namespace Saturn {
 			return m_Registry.any_of<Ty>( entity );
 		}
 
+		template<typename... Ty>
+		[[nodiscard]] bool HasComponents( entt::entity entity ) const
+		{
+#if defined( SAT_ENABLE_GAMETHREAD )
+			std::unique_lock<std::mutex> Lock( m_Mutex, std::try_to_lock );
+#endif
+			return m_Registry.any_of<Ty...>( entity );
+		}
+
 		template<typename Ty>
 		void RemoveComponent( entt::entity entity )
 		{
@@ -420,6 +429,18 @@ namespace Saturn {
 			if( HasComponent<Ty>( entity ) )
 			{
 				m_Registry.remove<Ty>( entity );
+			}
+		}
+
+		template<typename... Ty>
+		void RemoveComponents( entt::entity entity )
+		{
+#if defined( SAT_ENABLE_GAMETHREAD )
+			std::unique_lock<std::mutex> Lock( m_Mutex, std::try_to_lock );
+#endif
+			if( HasComponents<Ty...>( entity ) )
+			{
+				m_Registry.remove<Ty...>( entity );
 			}
 		}
 

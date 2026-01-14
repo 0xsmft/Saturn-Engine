@@ -36,6 +36,11 @@ class dtNavMeshQuery;
 
 namespace Saturn {
 
+	//
+	// The NavBoundsEntity a special type of entity that owns the RecastNavigationMesh,
+	// if a navmesh present then there is only ever one of these entity in the Scene. 
+	//
+	SCLASS()
 	class NavBoundsEntity : public Entity
 	{
 		//////////////////////////////////////////////////////////////////////////
@@ -80,6 +85,8 @@ namespace Saturn {
 		// The max bounds that the nav mesh can possibly extend to.
 		// The actual bounding volume of the Recast nav mesh may be smaller because our max bounds may extend beyond any geometry.
 		AABB m_MaxBounds;
+
+		// The navigation mesh.
 		RecastNavigationMeshBuilder m_Builder;
 
 #if defined(SAT_DEBUG) || defined(SAT_RELEASE)

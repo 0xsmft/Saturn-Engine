@@ -60,10 +60,10 @@ public:
 			if( m_ProjectPath.empty() )
 			{
 				// Try get first recent project if there is no startup project
-				if( Saturn::EngineSettings::Get().RecentProjects.size() )
+				if( Saturn::EngineSettings::Get().GetAllRecentProjects().size() )
 				{
 					// Path to .sproject
-					m_ProjectPath = Saturn::EngineSettings::Get().RecentProjects.at( 0 );
+					m_ProjectPath = Saturn::EngineSettings::Get().GetAllRecentProjects().at( 0 );
 
 					SAT_CORE_INFO( "No startup project, initialising from most recent project" );
 				}

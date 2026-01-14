@@ -61,7 +61,6 @@ namespace Saturn {
 
 		{
 			out << YAML::Key << "Name" << YAML::Value << rProject->GetConfig().Name;
-			out << YAML::Key << "AssetPath" << YAML::Value << rProject->GetAssetPath();
 			out << YAML::Key << "StartupScene" << YAML::Value << rProject->GetConfig().StartupSceneID;
 			out << YAML::Key << "DefaultMaterialAsset" << YAML::Value << rProject->GetDefaultMaterialAsset();
 			out << YAML::Key << "DefaultPhyMaterialAsset" << YAML::Value << rProject->GetDefaultPhysicsMaterialAsset();
@@ -136,7 +135,6 @@ namespace Saturn {
 		ProjectConfig newConfig{};
 
 		newConfig.Name = project[ "Name" ].as<std::string>();
-		newConfig.AssetPath = project[ "AssetPath" ].as<std::string>();
 		newConfig.StartupSceneID = project[ "StartupScene" ].as<uint64_t>( 0 );
 		newConfig.Path = rFilePath;
 

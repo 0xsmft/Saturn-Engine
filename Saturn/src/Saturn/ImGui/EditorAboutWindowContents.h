@@ -28,67 +28,16 @@
 
 #pragma once
 
-#include <Saturn/ImGui/TitleBar.h>
-
-#include <Saturn/Vulkan/Texture.h>
-#include <Saturn/Core/Layer.h>
-
 namespace Saturn {
-
-	struct ProjectInformation
-	{
-		std::string Name;
-		std::filesystem::path Filepath;
-		std::filesystem::path AssetPath;
-		std::filesystem::path ThumbnailPath;
-		Ref<Texture2D> ThumbnailTexture = nullptr;
-
-		std::string LastWriteTime;
 	
-		uint64_t Version = SAT_CURRENT_VERSION;
-	};
-
-	class ProjectBrowserLayer : public Layer
+	// NOTE: This is not the window! This is just the information that will show in the window,
+	//		 This class exists to allow the project browser and the Editor to display the same about information
+	//		 without us having to edit the same information twice.
+	//       It only draws the content to allow us control the window name and when it should show.
+	class EditorAboutWindowContents
 	{
 	public:
-		ProjectBrowserLayer();
-		~ProjectBrowserLayer();
-
-		void OnUpdate( Timestep time ) override;
-		void OnImGuiRender() override;
-		void OnEvent( Event& rEvent ) override;
-		void OnAttach() override;
-		void OnDetach() override;
-
-	private:
-		void ShowAboutWindow();
-
-		bool OnKeyPressed( RubyKeyEvent& rEvent );
-
-		void OpenEditorWithProject( const ProjectInformation& rProject );
-		void CreateProject( const std::filesystem::path& rPath );
-		void DrawRecentProject( const ProjectInformation& rProject );
-
-		void ImportExternalProject( const std::filesystem::path& rPath );
-
-	private:
-		TitleBar m_TitleBar;
-
-		Ref<Texture2D> m_NoIconTexture = nullptr;
-
-		char* m_SaturnDirBuffer = new char[ 1024 ];
-		std::filesystem::path m_SaturnDir;
-
-		char* m_ProjectNameBuffer = new char[ 1024 ];
-		std::filesystem::path m_ProjectFilePath;
-
-		bool m_ShowNewProjectPopup = false;
-		bool m_ShouldThreadTerminate = false;
-		bool m_CreateHelpfulFolders = true;
-		bool m_HasSaturnDir = false;
-		bool m_OpenAboutWindow = false;
-
-		std::vector<ProjectInformation> m_RecentProjects;
-		std::thread m_RecentProjectThread;
+		static void DrawContents();
 	};
+
 }

@@ -32,6 +32,7 @@
 #include <Saturn/ImGui/ImGuiWindow.h>
 #include <Saturn/ImGui/ImGuiWindowManager.h>
 #include <Saturn/ImGui/ImGuiAuxiliary.h>
+#include <Saturn/ImGui/EditorAboutWindowContents.h>
 
 #include <Saturn/Core/Ruby/RubyWindow.h>
 #include <Saturn/Core/StringAuxiliary.h>
@@ -77,23 +78,23 @@ namespace Saturn {
 		if( m_HasSaturnDir )
 			m_SaturnDir = Auxiliary::GetEnvironmentVariable( "SATURN_DIR" );
 
-		memset( m_SaturnDirBuffer, 0, 1024 );
-		memset( m_ProjectNameBuffer, 0, 1024 );
+		std::memset( m_SaturnDirBuffer, 0, 1024 );
+		std::memset( m_ProjectNameBuffer, 0, 1024 );
 
 		EngineSettingsSerialiser::Deserialise();
-		
-		Application::Get().GetWindow()->Show();
 
 		m_RecentProjectThread = std::thread( [this]() 
 		{
-			SetThreadDescription( GetCurrentThread(), L"RecentProjectThread" );
-			auto& userSettings = EngineSettings::Get();
+#if defined(SAT_PLATFORM_WINDOWS)
+			::SetThreadDescription( ::GetCurrentThread(), L"RecentProjectThread" );
+#endif
+			auto& rUserSettings = EngineSettings::Get();
 
 			bool projectsNeedSorting = false;
 
 			while( !m_ShouldThreadTerminate )
 			{
-				for( auto& path : userSettings.RecentProjects )
+				for( auto& path : rUserSettings.GetAllRecentProjects() )
 				{
 					auto Itr = std::find_if( m_RecentProjects.begin(), m_RecentProjects.end(), 
 						[path](const auto& rInfo)
@@ -150,11 +151,32 @@ namespace Saturn {
 					}
 				}
 
+				// Sleep to avoid exhausting this thread.
 				std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
 			}
 		} );
 
+		m_TitleBar.AddMenuBarFunction( [this]() 
+		{
+			if( ImGui::BeginMenu( "File" ) )
+			{
+				if( ImGui::MenuItem( "Close", "Alt+F4" ) ) Application::Get().Close();
+
+				if( ImGui::MenuItem( "About" ) ) m_OpenAboutWindow ^= 1;
+
+				ImGui::EndMenu();
+			}
+
+			if( ImGui::BeginMenu( "Projects" ) )
+			{
+				if( ImGui::MenuItem( "Clear All" ) ) EngineSettings::Get().ClearAllRecentProjects();
+
+				ImGui::EndMenu();
+			}
+		} );
+
 		Application::Get().GetWindow()->ChangeTitle( "Saturn Project Browser" );
+		Application::Get().GetWindow()->Show();
 	}
 
 	void ProjectBrowserLayer::OnAttach()
@@ -211,9 +233,10 @@ namespace Saturn {
 		// --- Check if Saturn directory is set, if not show prompt to set it
 		if( !m_HasSaturnDir )
 		{
-			if( ImGui::BeginPopupModal( "Saturn directory not set", NULL, ImGuiWindowFlags_AlwaysAutoResize ) ) 
+			if( ImGui::BeginPopupModal( "Saturn directory not set", nullptr, ImGuiWindowFlags_AlwaysAutoResize ) ) 
 			{
 				ImGui::Text( "No Saturn directory set. Please set the SATURN_DIR environment variable." );
+				ImGui::Text( "The directory that you pick must point to the root directory of Saturn, it should contain /bin, /Saturn, /Saturn-Editor etc" );
 				
 				ImGui::InputText( "", ( char* )m_SaturnDir.c_str(), 1024, ImGuiInputTextFlags_ReadOnly );
 				ImGui::SameLine();
@@ -239,6 +262,8 @@ namespace Saturn {
 
 			ImGui::OpenPopup( "Saturn directory not set" );
 		}
+
+		if( m_OpenAboutWindow ) ShowAboutWindow();
 
 		ImGui::Begin( "##project_browser", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollbar );
 		ImGui::SetWindowDock( ImGui::GetCurrentWindow(), dockspaceID, ImGuiCond_FirstUseEver );
@@ -350,7 +375,7 @@ namespace Saturn {
 							CreateProject( fullPath );
 
 							auto& us = EngineSettings::Get();
-							us.RecentProjects.push_back( fullPath );
+							us.GetAllRecentProjects().push_back( fullPath );
 
 							EngineSettingsSerialiser uss;
 							uss.Serialise();
@@ -410,7 +435,7 @@ namespace Saturn {
 
 			if( ImGui::IsMouseDoubleClicked( ImGuiMouseButton_Left ) )
 			{
-				OpenProject( rProject );
+				OpenEditorWithProject( rProject );
 			}
 		}
 
@@ -424,10 +449,10 @@ namespace Saturn {
 		pDrawList->AddImage( 
 			rProject.ThumbnailTexture->GetDescriptorSet(), 
 			imagePos, 
-			ImVec2( imagePos.x + imageSize.x, imagePos.y + imageSize.y ), { 0, 1 }, { 1,0 } );
+			ImVec2( imagePos.x + imageSize.x, imagePos.y + imageSize.y ), { 0, 1 }, { 1, 0 } );
 
 		float availableHeight = buttonSize.y - imageSize.y - ImGui::GetStyle().FramePadding.y * 2;
-		float lineHeight = availableHeight / 2;
+		float lineHeight = availableHeight * 0.5f;
 
 		ImVec2 projectNameTextPos = ImVec2(
 			buttonBoundingBox.Min.x + ( buttonSize.x - projectNameTextSize.x ) * 0.5f,
@@ -556,27 +581,43 @@ namespace Saturn {
 		Project::SetActiveProject( nullptr );
 	}
 
-	void ProjectBrowserLayer::OpenProject( const ProjectInformation& rProject )
+	void ProjectBrowserLayer::OpenEditorWithProject( const ProjectInformation& rProject )
 	{
 		std::filesystem::path commandLine = m_SaturnDir;
+		const std::filesystem::path workingDir = commandLine / "Saturn-Editor";
 
-		std::filesystem::path workingDir = commandLine / "Saturn-Editor";
-#if defined( SAT_DEBUG )
-		commandLine += "\\bin\\Debug-windows-x86_64\\Saturn-Editor\\Saturn-Editor.exe";
+		commandLine /= "bin";
+		commandLine /= std::format( "{0}-{1}", Application::Get().GetCurrentConfigName(), SAT_PLATFORM_BINARY_FOLDER );
+		commandLine /= "Saturn-Editor";
+			
+#if defined( SAT_PLATFORM_WINDOWS )
+		commandLine /= "Saturn-Editor.exe";
+#elif defined(SAT_PLATFORM_MACOS)
+		commandLine /= "Saturn-Editor.app";
 #else
-		commandLine += "\\bin\\Release-windows-x86_64\\Saturn-Editor\\Saturn-Editor.exe";
+		commandLine /= "Saturn-Editor";
 #endif
 		commandLine += " " + rProject.Filepath.string();
 
 		DeatchedProcess dp( commandLine, workingDir );
 
-		EngineSettings::Get().RecentProjects.push_back( rProject.Filepath );
+		EngineSettings::Get().AddRecentProject( rProject.Filepath );
 
 		Application::Get().Close();
 	}
 
 	void ProjectBrowserLayer::OnEvent( Event& rEvent )
 	{
+	}
+
+	void ProjectBrowserLayer::ShowAboutWindow()
+	{
+		if( ImGui::Begin( "About", &m_OpenAboutWindow ) )
+		{
+			EditorAboutWindowContents::DrawContents();
+			
+			ImGui::End();
+		}
 	}
 
 	bool ProjectBrowserLayer::OnKeyPressed( RubyKeyEvent& rEvent )

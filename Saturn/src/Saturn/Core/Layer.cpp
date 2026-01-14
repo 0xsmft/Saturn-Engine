@@ -76,8 +76,8 @@ namespace Saturn {
 		rIO.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
 		// When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
-		ImGuiStyle& rStyle = ImGui::GetStyle();
 		{
+			ImGuiStyle& rStyle = ImGui::GetStyle();
 			rStyle.WindowRounding = 0.0f;
 			rStyle.Colors[ ImGuiCol_WindowBg ].w = 1.0f;
 		}

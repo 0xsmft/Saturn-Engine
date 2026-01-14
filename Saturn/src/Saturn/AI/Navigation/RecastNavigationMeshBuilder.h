@@ -81,6 +81,12 @@ namespace Saturn {
 #endif
 	};
 
+	//
+	// RecastNavigationMeshBuilder
+	// This class is responsible for building tiles into the navmesh, it is owned by the navmesh it self.
+	// 
+	// Furthermore, it owns the the dtNavMesh, which is the pointer to detour's navmesh. 
+	//
 	class RecastNavigationMeshBuilder
 	{
 	public:
@@ -111,6 +117,10 @@ namespace Saturn {
 		bool KeepResults = false;
 	};
 
+	//
+	// RecastNavigationTileBuilder
+	// This class is responsible for building a single tile into a navmesh.
+	//
 	class RecastNavigationTileBuilder
 	{
 	public:

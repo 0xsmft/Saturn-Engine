@@ -26,69 +26,67 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "EditorAboutWindowContents.h"
 
-#include <Saturn/ImGui/TitleBar.h>
+#include "ImGuiAuxiliary.h"
 
-#include <Saturn/Vulkan/Texture.h>
-#include <Saturn/Core/Layer.h>
+#include "Saturn/Core/App.h"
+
+#include <imgui.h>
 
 namespace Saturn {
 
-	struct ProjectInformation
+	void EditorAboutWindowContents::DrawContents()
 	{
-		std::string Name;
-		std::filesystem::path Filepath;
-		std::filesystem::path AssetPath;
-		std::filesystem::path ThumbnailPath;
-		Ref<Texture2D> ThumbnailTexture = nullptr;
+		ImGui::Text( "Saturn Engine x64 %s (%s build)", Application::GetCurrentPlatformName(), Application::GetCurrentConfigName() );
 
-		std::string LastWriteTime;
-	
-		uint64_t Version = SAT_CURRENT_VERSION;
-	};
+		ImGui::Text( "Built on: %s %s (EditorLayer.cpp)", __DATE__, __TIME__ );
 
-	class ProjectBrowserLayer : public Layer
-	{
-	public:
-		ProjectBrowserLayer();
-		~ProjectBrowserLayer();
+		ImGui::Text( "Saturn Engine Version: %s (Internal Number: %i)", SAT_CURRENT_VERSION_STRING, SAT_CURRENT_VERSION );
 
-		void OnUpdate( Timestep time ) override;
-		void OnImGuiRender() override;
-		void OnEvent( Event& rEvent ) override;
-		void OnAttach() override;
-		void OnDetach() override;
+		ImGui::Separator();
 
-	private:
-		void ShowAboutWindow();
+		ImGui::Text( "All icons in the engine are provided by icons8 via https://icons8.com/\nUsing the Tanah Basah set (https://icons8.com/icons/authors/v03BjHji0KTr/tanah-basah)" );
 
-		bool OnKeyPressed( RubyKeyEvent& rEvent );
+		ImGui::Separator();
 
-		void OpenEditorWithProject( const ProjectInformation& rProject );
-		void CreateProject( const std::filesystem::path& rPath );
-		void DrawRecentProject( const ProjectInformation& rProject );
+		if( Auxiliary::TreeNode( "Third Party libraries" ) )
+		{
+			ImGui::Text( "dear imgui: %s (%d)", IMGUI_VERSION, IMGUI_VERSION_NUM );
+			ImGui::Text( "SPIRV-Cross" );
+			ImGui::Text( "Tracy" );
+			ImGui::Text( "yaml-cpp" );
+			ImGui::Text( "zlib: Version 1.3.1, January 22nd, 2024" );
+			ImGui::Text( "PhysX: Version 4.1.1, Copyright NVIDIA Corporation" );
+			ImGui::Text( "Recast & Detour" );
+			ImGui::Text( "glm" );
+			ImGui::Text( "entt" );
+			ImGui::Text( "vma" );
+			ImGui::Text( "miniaudio" );
+			ImGui::Text( "acl & rtm" );
+			ImGui::Text( "Freetype" );
+			ImGui::Text( "Msdfgen & Msdf Atlas Gen" );
 
-		void ImportExternalProject( const std::filesystem::path& rPath );
+			Auxiliary::EndTreeNode();
+		}
 
-	private:
-		TitleBar m_TitleBar;
+		ImGui::Separator();
 
-		Ref<Texture2D> m_NoIconTexture = nullptr;
+		if( Auxiliary::TreeNode( "Past version numbers" ) )
+		{
+			ImGui::Text( "Saturn version 0.1.0 (%llu)", SAT_VERSION_A_0_1_0 );
+			ImGui::Text( "Saturn version 0.1.1 (%llu)", SAT_VERSION_A_0_1_1 );
+			ImGui::Text( "Saturn version 0.1.2 (%llu)", SAT_VERSION_A_0_1_2 );
+			ImGui::Text( "Saturn version 0.1.3 (%llu)", SAT_VERSION_A_0_1_3 );
+			ImGui::Text( "Saturn version 0.1.4 (%llu)", SAT_VERSION_A_0_1_4 );
+			ImGui::Text( "Saturn version 0.2.0 (%llu)", SAT_VERSION_A_0_2_0 );
+			ImGui::Text( "Saturn version 0.2.1 (%llu)", SAT_VERSION_A_0_2_1 );
+			ImGui::Text( "Saturn version 0.2.2 (%llu)", SAT_VERSION_A_0_2_2 );
+			ImGui::Text( "Saturn version 0.2.3 (%llu)", SAT_VERSION_A_0_2_3 );
 
-		char* m_SaturnDirBuffer = new char[ 1024 ];
-		std::filesystem::path m_SaturnDir;
+			Auxiliary::EndTreeNode();
+		}
+	}
 
-		char* m_ProjectNameBuffer = new char[ 1024 ];
-		std::filesystem::path m_ProjectFilePath;
-
-		bool m_ShowNewProjectPopup = false;
-		bool m_ShouldThreadTerminate = false;
-		bool m_CreateHelpfulFolders = true;
-		bool m_HasSaturnDir = false;
-		bool m_OpenAboutWindow = false;
-
-		std::vector<ProjectInformation> m_RecentProjects;
-		std::thread m_RecentProjectThread;
-	};
 }

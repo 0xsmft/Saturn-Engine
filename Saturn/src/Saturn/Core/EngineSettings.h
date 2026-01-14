@@ -31,8 +31,8 @@
 #include "SingletonStorage.h"
 
 #include <string>
-#include <vector>
 #include <filesystem>
+#include <deque>
 
 namespace Saturn {
 
@@ -52,6 +52,12 @@ namespace Saturn {
 		EngineSettings() = default;
 		~EngineSettings() = default;
 
+		void AddRecentProject( const std::filesystem::path& rPath );
+		void ClearAllRecentProjects();
+
+		std::deque<std::filesystem::path> GetAllRecentProjects() { return m_RecentProjects; }
+		const std::deque<std::filesystem::path> GetAllRecentProjects() const { return m_RecentProjects; }
+
 	public:
 		// The startup project name i.e. (MyProject)
 		std::string StartupProjectName;
@@ -59,6 +65,10 @@ namespace Saturn {
 		// The project file dir i.e. (D:\Projects\MyProject\MyProject.sproject) [Serialised]
 		std::filesystem::path StartupProject;
 
-		std::vector< std::filesystem::path > RecentProjects; // [Serialised]
+	private:
+		std::deque< std::filesystem::path > m_RecentProjects; // [Serialised]
+
+	private:
+		friend class EngineSettingsSerialiser;
 	};
 }

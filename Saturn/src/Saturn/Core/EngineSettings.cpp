@@ -26,69 +26,32 @@
 *********************************************************************************************
 */
 
-#pragma once
-
-#include <Saturn/ImGui/TitleBar.h>
-
-#include <Saturn/Vulkan/Texture.h>
-#include <Saturn/Core/Layer.h>
+#include "sppch.h"
+#include "EngineSettings.h"
 
 namespace Saturn {
 
-	struct ProjectInformation
+	void EngineSettings::AddRecentProject( const std::filesystem::path& rPath )
 	{
-		std::string Name;
-		std::filesystem::path Filepath;
-		std::filesystem::path AssetPath;
-		std::filesystem::path ThumbnailPath;
-		Ref<Texture2D> ThumbnailTexture = nullptr;
+		// If it already exists, we need to remove it.
+		if( const auto Itr = std::find( m_RecentProjects.begin(), m_RecentProjects.end(), rPath ); Itr != m_RecentProjects.end() )
+		{
+			m_RecentProjects.erase( Itr );
+		}
 
-		std::string LastWriteTime;
-	
-		uint64_t Version = SAT_CURRENT_VERSION;
-	};
+		// Push to the top of recent projects
+		m_RecentProjects.push_front( rPath );
 
-	class ProjectBrowserLayer : public Layer
+		// TODO: MAX_NUMBER_OF_RECENT_PROJECTS: Should be set via this class...
+		if( m_RecentProjects.size() > 10 /* MAX_NUMBER_OF_RECENT_PROJECTS */ )
+		{
+			m_RecentProjects.pop_back();
+		}
+	}
+
+	void EngineSettings::ClearAllRecentProjects()
 	{
-	public:
-		ProjectBrowserLayer();
-		~ProjectBrowserLayer();
+		m_RecentProjects.clear();
+	}
 
-		void OnUpdate( Timestep time ) override;
-		void OnImGuiRender() override;
-		void OnEvent( Event& rEvent ) override;
-		void OnAttach() override;
-		void OnDetach() override;
-
-	private:
-		void ShowAboutWindow();
-
-		bool OnKeyPressed( RubyKeyEvent& rEvent );
-
-		void OpenEditorWithProject( const ProjectInformation& rProject );
-		void CreateProject( const std::filesystem::path& rPath );
-		void DrawRecentProject( const ProjectInformation& rProject );
-
-		void ImportExternalProject( const std::filesystem::path& rPath );
-
-	private:
-		TitleBar m_TitleBar;
-
-		Ref<Texture2D> m_NoIconTexture = nullptr;
-
-		char* m_SaturnDirBuffer = new char[ 1024 ];
-		std::filesystem::path m_SaturnDir;
-
-		char* m_ProjectNameBuffer = new char[ 1024 ];
-		std::filesystem::path m_ProjectFilePath;
-
-		bool m_ShowNewProjectPopup = false;
-		bool m_ShouldThreadTerminate = false;
-		bool m_CreateHelpfulFolders = true;
-		bool m_HasSaturnDir = false;
-		bool m_OpenAboutWindow = false;
-
-		std::vector<ProjectInformation> m_RecentProjects;
-		std::thread m_RecentProjectThread;
-	};
 }

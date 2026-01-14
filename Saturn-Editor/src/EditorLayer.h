@@ -109,6 +109,7 @@ namespace Saturn {
 		void DrawSceneDirtyPopup();
 		void DrawBlockingActionModal();
 		void DrawDistOptionsModal();
+		void DrawDeleteNavMeshModal();
 
 		// Viewport
 		void DrawViewport();
@@ -259,6 +260,7 @@ namespace Saturn {
 		bool m_PendingFullscreenChange = false;
 		bool m_ShouldRenderCameraPreview = false;
 		bool m_DisableViewportMovement = false;
+		bool m_ShowDeleteNavMeshCachePopup = false;
 
 		// JobProgress
 		float m_OperationPercent = 0.0f;
@@ -282,6 +284,8 @@ namespace Saturn {
 		std::unordered_map<entt::entity, std::tuple<glm::vec3, glm::vec3, glm::vec3>> m_GizmoModifiedTransforms;
 
 		std::function<void()> m_EventAfterPopup;
+
+		entt::entity m_NavMeshEntityToDelete{ entt::null };
 
 		Ref<Scene> m_EditorScene = nullptr;
 		Ref<Scene> m_RuntimeScene = nullptr;

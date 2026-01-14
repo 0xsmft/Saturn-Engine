@@ -87,10 +87,22 @@ namespace Saturn {
 			return m_Scene->HasComponent<T>( m_EntityHandle );
 		}
 
+		template<typename... T>
+		[[nodiscard]] inline bool HasComponents() const
+		{
+			return m_Scene->template HasComponents<T...>( m_EntityHandle );
+		}
+
 		template<typename T>
 		inline void RemoveComponent()
 		{
 			m_Scene->RemoveComponent<T>( m_EntityHandle );
+		}
+
+		template<typename... T>
+		inline void RemoveComponents()
+		{
+			m_Scene->template RemoveComponents<T...>( m_EntityHandle );
 		}
 
 		template<typename T>

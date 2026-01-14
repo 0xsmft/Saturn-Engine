@@ -39,6 +39,7 @@
 #include <Saturn/ImGui/EditorEvents.h>
 #include <Saturn/ImGui/ContentBrowserPanel/ContentBrowserThumbnailCache.h>
 #include <Saturn/ImGui/UndoRedo/EntityUndoRedoActions.h>
+#include <Saturn/ImGui/EditorAboutWindowContents.h>
 
 #include <Saturn/Serialisation/YAML/SceneSerialiser.h>
 #include <Saturn/Serialisation/YAML/ProjectSerialiser.h>
@@ -341,14 +342,16 @@ namespace Saturn {
 		}
 		else 
 		{
+			// Update camera
 			m_EditorCamera.SetActive( m_AllowCameraEvents );
 			m_EditorCamera.OnUpdate( time );
 
+			// Update scene
 			m_EditorScene->OnUpdate( time );
 
+			m_EditorScene->OnRenderEditor( &m_EditorCamera, m_EditorCamera.ViewMatrix(), m_SceneRenderer, time );
 			SubmitSelectedMeshes();
 
-			m_EditorScene->OnRenderEditor( &m_EditorCamera, m_EditorCamera.ViewMatrix(), m_SceneRenderer, time );
 
 			m_LastAutoSaveTime += time;
 
@@ -430,6 +433,7 @@ namespace Saturn {
 			if( m_ShowSceneDirtyModal )     DrawSceneDirtyPopup();
 			if( m_JobModalOpen )            DrawBlockingActionModal();
 			if( m_ShowDistBuildOptions )    DrawDistOptionsModal();
+			if( m_ShowDeleteNavMeshCachePopup ) DrawDeleteNavMeshModal();
 			if( m_ShowCBThumbnailDebug )    ContentBrowserThumbnailCache::Get().OnImGuiRender( &m_ShowCBThumbnailDebug );
 			if( m_ShowUndoRedoDebug )       GlobalUndoRedoGroup::Get().OnImGuiRender( &m_ShowUndoRedoDebug );
 		}
@@ -497,7 +501,7 @@ namespace Saturn {
 	void EditorLayer::SaveFileAs()
 	{
 		// TODO: Support Saving scene as!
-		const auto res = Application::Get().SaveFile( L"Saturn Scene file (*.scene, *.sc)|*.scene; *.sc" );
+		const auto res = Application::Get().SaveFile( L"Modern Saturn scene file (*.scene)|*.scene" );
 
 		SceneSerialiser serialiser( m_EditorScene );
 		serialiser.Serialise( res );
@@ -726,13 +730,24 @@ namespace Saturn {
 			{
 				if( !m_RuntimeScene )
 				{
+					bool deletedNavMesh = false;
+
 					// Because of our ref system, the entity will be deleted when we clear the selections.
 					// What we are really doing here is freeing it from the registry and removing the children.
 					for( auto& rEntity : EntitySelectionManager::Get().GetSelectionContexts() )
 					{
-						GlobalUndoRedoGroup::Get().RemoveIfActionHasIdentifier( (uint64_t)rEntity->GetHandle() );
+						GlobalUndoRedoGroup::Get().RemoveIfActionHasIdentifier( ( uint64_t ) rEntity->GetHandle() );
 						
-						g_ActiveScene->DeleteEntity( rEntity );
+						if( rEntity->GetClass() == NavBoundsEntity::StaticClass() )
+						{
+							deletedNavMesh = true;
+							m_NavMeshEntityToDelete = rEntity->GetHandle();
+							m_ShowDeleteNavMeshCachePopup = true;
+						}
+						else
+						{
+							g_ActiveScene->DeleteEntity( rEntity );
+						}
 					}
 
 					// The entities will be freed here!
@@ -1006,7 +1021,7 @@ namespace Saturn {
 
 	void EditorLayer::DrawProjectSettingsWindow()
 	{
-		static bool ShouldSaveProject = false;
+		bool shouldSaveProject = false;
 
 		ImGuiIO& rIO = ImGui::GetIO();
 
@@ -1040,7 +1055,7 @@ namespace Saturn {
 				if( Auxiliary::InputText( "##prjdevver", &temporaryVerStr ) ) 
 				{
 					ActiveProject->SetDeveloperVersion( temporaryVerStr );
-					ShouldSaveProject = true;
+					shouldSaveProject = true;
 				}
 			}
 			ImGui::EndHorizontal();
@@ -1067,7 +1082,7 @@ namespace Saturn {
 
 				if( Auxiliary::DrawAssetFinder( AssetType::Scene, &s_OpenAssetFinderPopup, rConfig.StartupSceneID ) )
 				{
-					ShouldSaveProject = true;
+					shouldSaveProject = true;
 				}
 
 				inspectDisabledFlag.Pop();
@@ -1108,7 +1123,7 @@ namespace Saturn {
 				if( Auxiliary::DrawAssetFinder( AssetType::Material, &s_OpenAssetFinderPopup, defaultMaterialID ) )
 				{
 					ActiveProject->SetDefaultMaterialAsset( defaultMaterialID );
-					ShouldSaveProject = true;
+					shouldSaveProject = true;
 				}
 
 				inspectDisabledFlag.Pop();
@@ -1147,7 +1162,7 @@ namespace Saturn {
 				if( Auxiliary::DrawAssetFinder( AssetType::PhysicsMaterial, &s_OpenAssetFinderPopup, defaultMaterialID ) )
 				{
 					ActiveProject->SetDefaultPhysicsMaterialAsset( defaultMaterialID );
-					ShouldSaveProject = true;
+					shouldSaveProject = true;
 				}
 
 				inspectDisabledFlag.Pop();
@@ -1176,7 +1191,7 @@ namespace Saturn {
 				if( Auxiliary::DrawBoolControl( "Enable Auto Saves", enableAutoSaves ) ) 
 				{
 					ActiveProject->EnableAutoSaves( enableAutoSaves );
-					ShouldSaveProject = true;
+					shouldSaveProject = true;
 				}
 
 				Auxiliary::DisabledFlag disabledIfNoAutoSaves( !ActiveProject->IsAutoSavesEnabled() );
@@ -1218,7 +1233,7 @@ namespace Saturn {
 						intervalSeconds = displayValue * 3600.0f;
 					}
 
-					ShouldSaveProject = true;
+					shouldSaveProject = true;
 					ActiveProject->SetAutoSaveInterval( intervalSeconds );
 
 					// Reset timer because this value is incremented even when auto saves are disabled.
@@ -1282,7 +1297,7 @@ namespace Saturn {
 							rBinding.Type = ActionBindingType::Key;
 							rBinding.ActionName = result;
 
-							ShouldSaveProject = true;
+							shouldSaveProject = true;
 						}
 
 						if( IsSelected )
@@ -1313,7 +1328,7 @@ namespace Saturn {
 							rBinding.Type = ActionBindingType::Mouse;
 							rBinding.ActionName = result;
 
-							ShouldSaveProject = true;
+							shouldSaveProject = true;
 						}
 
 						if( IsSelected )
@@ -1328,7 +1343,7 @@ namespace Saturn {
 				if( ImGui::SmallButton( "-" ) )
 				{
 					rIt = ActiveProject->GetActionBindings().erase( rIt );
-					ShouldSaveProject = true;
+					shouldSaveProject = true;
 				}
 				else
 				{
@@ -1358,7 +1373,7 @@ namespace Saturn {
 				}
 
 				ActiveProject->AddActionBinding( ab );
-				ShouldSaveProject = true;
+				shouldSaveProject = true;
 			}
 
 			disabledFlagIfRuntime.Pop();
@@ -1383,7 +1398,7 @@ namespace Saturn {
 				if( ImGui::SmallButton( "-" ) )
 				{
 					rIt = ActiveProject->GetSoundGroups().erase( rIt );
-					ShouldSaveProject = true;
+					shouldSaveProject = true;
 				}
 				else
 				{
@@ -1419,7 +1434,7 @@ namespace Saturn {
 				}
 
 				ActiveProject->AddSoundGroup( group );
-				ShouldSaveProject = true;
+				shouldSaveProject = true;
 			}
 
 			ImGui::PopID();
@@ -1479,12 +1494,10 @@ namespace Saturn {
 		ImGui::End();
 
 		// Only save project if the window has been closed.
-		if( ShouldSaveProject && !m_ShowUserSettings )
+		if( shouldSaveProject && !m_ShowUserSettings )
 		{
 			ProjectSerialiser ps;
 			ps.Serialise( Project::GetActiveProject()->GetRootDir().string() );
-
-			ShouldSaveProject = false;
 		}
 	}
 
@@ -1568,8 +1581,7 @@ namespace Saturn {
 
 	void EditorLayer::DrawAssetRegistryDebug()
 	{
-		ImGuiWindowFlags flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
-		if( ImGui::Begin( "Asset Manager", &m_OpenAssetRegistryDebug, flags ) )
+		if( ImGui::Begin( "Asset Manager", &m_OpenAssetRegistryDebug, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse ) )
 		{
 			static ImGuiTextFilter Filter;
 
@@ -1629,9 +1641,9 @@ namespace Saturn {
 
 				ImGui::EndTable();
 			}
-
-			ImGui::End();
 		}
+
+		ImGui::End();
 	}
 
 	void EditorLayer::DrawLoadedAssetsDebug()
@@ -1682,14 +1694,14 @@ namespace Saturn {
 
 				ImGui::EndTable();
 			}
-
-			ImGui::End();
 		}
+
+		ImGui::End();
 	}
 
 	void EditorLayer::DrawEditorSettings()
 	{
-		static bool ShouldSaveEngSettings = false;
+		bool shouldSaveEngSettings = false;
 
 		ImGui::SetNextWindowSize( ImVec2( 750.0f, 750.0f ), ImGuiCond_Appearing );
 		if( ImGui::Begin( "Editor Settings", &m_OpenEditorSettings ) )
@@ -1715,7 +1727,7 @@ namespace Saturn {
 			auto& rEngineSettings = EngineSettings::Get();
 
 			ImGui::Text( "Recent Projects" );
-			for( const auto& rPath : rEngineSettings.RecentProjects )
+			for( const auto& rPath : rEngineSettings.GetAllRecentProjects() )
 			{
 				ImGui::BulletText( rPath.string().c_str() );
 			}
@@ -1734,7 +1746,7 @@ namespace Saturn {
 					if( !filePath.empty() )
 					{
 						rEngineSettings.StartupProject = filePath;
-						ShouldSaveEngSettings = true;
+						shouldSaveEngSettings = true;
 					}
 				}
 
@@ -1746,14 +1758,12 @@ namespace Saturn {
 				}
 			}
 			ImGui::EndHorizontal();
-		}
-
-		if( ShouldSaveEngSettings )
-		{
-			EngineSettingsSerialiser ess;
-			ess.Serialise();
-
-			ShouldSaveEngSettings = false;
+		
+			if( shouldSaveEngSettings )
+			{
+				EngineSettingsSerialiser ess;
+				ess.Serialise();
+			}
 		}
 
 		ImGui::End();
@@ -1887,7 +1897,6 @@ namespace Saturn {
 					ImGui::EndTooltip();
 				}
 
-
 				if( ImGui::MenuItem( "Distribute project" ) )
 				{
 					m_HasPremakePath = Auxiliary::HasEnvironmentVariable( "SATURN_PREMAKE_PATH" );
@@ -1922,13 +1931,6 @@ namespace Saturn {
 
 #if defined( SAT_DEBUG )
 			ImGui::SeparatorText( "DEBUG" );
-
-			if( ImGui::MenuItem( "DEBUG: Read Asset Bundle" ) )
-			{
-				Application::Get().GetSpecification().Flags |= ApplicationFlag_UseVFS;
-				auto res = AssetBundle::ReadBundle();
-			}
-
 			if( ImGui::MenuItem( "DEBUG: Build Asset Bundle (no shaders)" ) )
 			{
 				CreateAssetBundleJob();
@@ -1948,11 +1950,13 @@ namespace Saturn {
 
 		if( ImGui::BeginMenu( "Auxiliary" ) )
 		{
-			ImGui::SeparatorText( "Asset Registry" );
+			ImGui::SeparatorText( "Asset Manager" );
 			if( ImGui::MenuItem( "Asset Registry Debug" ) )       m_OpenAssetRegistryDebug ^= 1;
 			if( ImGui::MenuItem( "Loaded Assets Debug" ) )        m_OpenLoadedAssetDebug   ^= 1;
-			if( ImGui::MenuItem( "Metadata Debug" ) )             m_ShowMetadataDebug      ^= 1;
 			if( ImGui::MenuItem( "Asset Dependencies" ) )         m_ShowAssetDependencies  ^= 1;
+
+			ImGui::SeparatorText( "SClass" );
+			if( ImGui::MenuItem( "Metadata Debug" ) )             m_ShowMetadataDebug ^= 1;
 
 			ImGui::SeparatorText( "Demo Window" );
 			if( ImGui::MenuItem( "Show demo window" ) )           m_ShowImGuiDemoWindow    ^= 1;
@@ -2038,8 +2042,10 @@ namespace Saturn {
 		if( !devVer.empty() )
 			text = std::format( "{0}-{1}", prjName, devVer );
 #else
-		const std::string text = Project::GetActiveConfig().Name;
+		std::string text = Project::GetActiveConfig().Name;
 #endif
+
+		text += std::format( " | {0}", g_ActiveScene->Name.empty() ? "<New Scene>" : g_ActiveScene->Name );
 
 		const ImVec2 textSize   = ImGui::CalcTextSize( text.c_str() );
 		ImDrawList* pDrawList   = ImGui::GetWindowDrawList();
@@ -2069,51 +2075,7 @@ namespace Saturn {
 	{
 		if( ImGui::Begin( "About", &m_OpenAboutWindow ) )
 		{
-			ImGui::Text( "Saturn Engine x64 %s (%s build)", Application::GetCurrentPlatformName(), Application::GetCurrentConfigName() );
-
-			ImGui::Text( "Built on: %s %s (EditorLayer.cpp)", __DATE__, __TIME__ );
-
-			ImGui::Text( "Saturn Engine Version: %s (Internal Number: %i)", SAT_CURRENT_VERSION_STRING, SAT_CURRENT_VERSION );
-
-			ImGui::Separator();
-
-			ImGui::Text( "All icons in the engine are provided by icons8 via https://icons8.com/\nUsing the Tanah Basah set (https://icons8.com/icons/authors/v03BjHji0KTr/tanah-basah)" );
-
-			ImGui::Separator();
-
-			if( Auxiliary::TreeNode( "Third Party libraries" ) )
-			{
-				ImGui::Text( "dear imgui: %s (%d)", IMGUI_VERSION, IMGUI_VERSION_NUM );
-				ImGui::Text( "SPIRV-Cross" );
-				ImGui::Text( "Tracy" );
-				ImGui::Text( "yaml-cpp" );
-				ImGui::Text( "zlib: Version 1.3.1, January 22nd, 2024" );
-				ImGui::Text( "PhysX: Version 4.1.1, Copyright NVIDIA Corporation" );
-				ImGui::Text( "Recast & Detour" );
-				ImGui::Text( "glm" );
-				ImGui::Text( "entt" );
-				ImGui::Text( "vma" );
-				ImGui::Text( "miniaudio" );
-				ImGui::Text( "acl & rtm" );
-
-				Auxiliary::EndTreeNode();
-			}
-
-			ImGui::Separator();
-
-			if( Auxiliary::TreeNode( "Past version numbers" ) )
-			{
-				ImGui::Text( "Saturn version 0.1.0 (%llu)", SAT_VERSION_A_0_1_0 );
-				ImGui::Text( "Saturn version 0.1.1 (%llu)", SAT_VERSION_A_0_1_1 );
-				ImGui::Text( "Saturn version 0.1.2 (%llu)", SAT_VERSION_A_0_1_2 );
-				ImGui::Text( "Saturn version 0.1.3 (%llu)", SAT_VERSION_A_0_1_3 );
-				ImGui::Text( "Saturn version 0.1.4 (%llu)", SAT_VERSION_A_0_1_4 );
-				ImGui::Text( "Saturn version 0.2.0 (%llu)", SAT_VERSION_A_0_2_0 );
-				ImGui::Text( "Saturn version 0.2.1 (%llu)", SAT_VERSION_A_0_2_1 );
-				ImGui::Text( "Saturn version 0.2.2 (%llu)", SAT_VERSION_A_0_2_2 );
-
-				Auxiliary::EndTreeNode();
-			}
+			EditorAboutWindowContents::DrawContents();
 
 			ImGui::End();
 		}
@@ -2452,6 +2414,59 @@ namespace Saturn {
 		}
 	}
 
+	void EditorLayer::DrawDeleteNavMeshModal()
+	{
+		ImGui::OpenPopup( "Purge Navigation Cache" );
+
+		if( ImGui::BeginPopupModal( "Purge Navigation Cache", &m_ShowDeleteNavMeshCachePopup, ImGuiWindowFlags_NoSavedSettings ) )
+		{
+			ImGui::Text( "Would you like to also delete the Navigation Cache associated with the NavBounds entity?" );
+
+			ImGui::Separator();
+
+			ImGui::BeginHorizontal( "##pncOptions" );
+
+			if( ImGui::Button( "Yes, delete now" ) )
+			{
+				SharedPtr<Entity> ent = g_ActiveScene->FindEntityByHandle( m_NavMeshEntityToDelete );
+				if( ent )
+				{
+					const std::string filename = std::format( "{0}{1}.{2}.srnc", g_ActiveScene->Name, ent->GetName(), (uint64_t)ent->GetUUID() );
+					std::filesystem::remove( Project::GetActiveProject()->GetFullCachePath() / filename );
+				}
+
+				g_ActiveScene->DeleteEntity( ent );
+
+				m_NavMeshEntityToDelete = entt::null;
+				m_ShowDeleteNavMeshCachePopup = false;
+				ImGui::CloseCurrentPopup();
+			}
+
+			if( ImGui::Button( "No, I'll do it later" ) )
+			{
+				{
+					SharedPtr<Entity> ent = g_ActiveScene->FindEntityByHandle( m_NavMeshEntityToDelete );
+					g_ActiveScene->DeleteEntity( ent );
+				}
+
+				m_NavMeshEntityToDelete = entt::null;
+				m_ShowDeleteNavMeshCachePopup = false;
+				ImGui::CloseCurrentPopup();
+			}
+
+			if( ImGui::Button( "Cancel" ) )
+			{
+				m_NavMeshEntityToDelete = entt::null;
+				m_ShowDeleteNavMeshCachePopup = false;
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndHorizontal();
+
+			ImGui::EndPopup();
+		}
+	}
+
 	void EditorLayer::DrawViewport()
 	{
 		// Viewport Image & Drag and drop handling
@@ -2502,6 +2517,7 @@ namespace Saturn {
 			m_SceneRenderer->SetViewportSize( ( uint32_t ) m_ViewportSize.x, ( uint32_t ) m_ViewportSize.y );
 			m_EditorCamera.SetViewportSize( ( uint32_t ) m_ViewportSize.x, ( uint32_t ) m_ViewportSize.y );
 			m_SuspendedEditorCamera.SetViewportSize( ( uint32_t ) m_ViewportSize.x, ( uint32_t ) m_ViewportSize.y );
+			g_AluraCanvas->SetSize( glm::vec2{ m_ViewportSize.x, m_ViewportSize.y } );
 		}
 
 		ImGui::PushID( "VIEWPORT_IMAGE" );
@@ -2816,7 +2832,8 @@ namespace Saturn {
 	{
 		const ImVec2 minBound = ImGui::GetWindowPos();
 		m_SceneRenderer->SetViewportPosition( minBound.x, minBound.y );
-
+		g_AluraCanvas->SetPosition( { minBound.x, minBound.y } );
+		
 		const ImVec2 maxBound = { minBound.x + m_ViewportSize.x, minBound.y + m_ViewportSize.y };
 
 		m_ViewportFocused = ImGui::IsWindowFocused();

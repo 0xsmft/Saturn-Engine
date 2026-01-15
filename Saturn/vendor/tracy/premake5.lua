@@ -9,12 +9,7 @@ project "Tracy"
 	files
 	{
 		"src/**.h",
-		"src/tracy/tracyClient.cpp"
-	}
-
-	defines 
-	{
-		"_CRT_SECURE_NO_WARNINGS"
+		"src/tracy/TracyClient.cpp"
 	}
 
 	links 
@@ -27,11 +22,20 @@ project "Tracy"
 		systemversion "latest"
 		staticruntime "On"
 
+		defines 
+		{
+			"_CRT_SECURE_NO_WARNINGS"
+		}
+
 	filter "system:linux"
 		pic "On"
 		systemversion "latest"
-		cppdialect "C++2a"
 		staticruntime "On"
+
+		defines 
+		{
+			"TRACY_NO_CRASH_HANDLER"
+		}
 
 	filter "configurations:Debug"
 		runtime "Debug"

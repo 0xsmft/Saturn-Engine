@@ -35,6 +35,14 @@ namespace Saturn {
 
 	class Entity;
 
+	enum class EntitySelectionReason
+	{
+		SceneHierarchyPanel,
+		Viewport,
+		Other
+	};
+	
+	//
 	// EntitySelectionManager
 	// This class holds the global list for the currently selected entities, 
 	// selections mainly change from the Scene Hierarchy Panel however, the list is always stored in this class
@@ -53,7 +61,7 @@ namespace Saturn {
 		EntitySelectionManager();
 		~EntitySelectionManager();
 
-		void Select( const SharedPtr<Entity> entity );
+		void Select( const SharedPtr<Entity> entity, EntitySelectionReason reason );
 		void Remove( const SharedPtr<Entity> entity );
 
 		void ClearSelection( bool skipEvent = false );
@@ -84,8 +92,10 @@ namespace Saturn {
 		[[nodiscard]] const std::vector<SharedPtr<Entity>>& GetSelectionContexts() const { return m_SelectedEntities; }
 
 		[[nodiscard]] size_t GetSelectionCount() const { return m_SelectedEntities.size(); }
+		[[nodiscard]] EntitySelectionReason GetLastSelectionReason() const { return m_LastReason; }
 
 	private:
+		EntitySelectionReason m_LastReason = EntitySelectionReason::Other;
 		std::vector<SharedPtr<Entity>> m_SelectedEntities;
 	};
 }

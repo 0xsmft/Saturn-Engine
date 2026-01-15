@@ -64,7 +64,7 @@ namespace Saturn {
 	// } u_Matrices;
 	// Our C++ information would be 
 	// u_Matrices, 0, 128, ShaderType::Vertex
-	// NOTE: ShaderUniformBuffer do not allocate a Vulkan Buffer. That is done via the Uniform Buffer class
+	// NOTE: ShaderUniformBuffer do not allocate a Vulkan Buffer. That is done via the Uniform Buffer class!
 	struct ShaderUniformBuffer
 	{
 		std::string Name;
@@ -106,8 +106,8 @@ namespace Saturn {
 	// } s_VisiblePointLightIndicesBuffer;
 	// 
 	// Our C++ information would be:
-	// s_VisiblePointLightIndicesBuffer, 14, -, ShaderType::Fragment/Compute
-	// NOTE: ShaderStorageBuffer do not allocate a Vulkan Buffer. That is done via the Storage Buffer class
+	// s_VisiblePointLightIndicesBuffer, 14, ShaderType::Fragment/Compute
+	// NOTE: ShaderStorageBuffer do not allocate a Vulkan Buffer. That is done via the Storage Buffer class!
 	struct ShaderStorageBuffer
 	{
 		std::string Name;
@@ -152,6 +152,11 @@ namespace Saturn {
 		ShaderType Stage = ShaderType::None;
 		uint32_t Set;
 		uint32_t Binding;
+
+		// The number of elements that this image as, for example in GLSL
+		// layout(set = 0, binding = 1) uniform sampler2D u_Textures[16];
+		// ArraySize would be 16, it will default to 1 if no array is specified, 
+		// because you cannot have zero elements in an image descriptor.
 		uint32_t ArraySize;
 
 		static void Serialise( const ShaderSampledImage& rObject, std::ofstream& rStream )
@@ -239,7 +244,7 @@ namespace Saturn {
 	// 
 	// ShaderDescriptorSetTemplate do not own or create a Vulkan DescriptorSet it is simply used for information about the descriptor set. 
 	// To allocate a descriptor set with such information you'd need to use the shader to create it with the correct set.
-	// ShaderDescriptorSetTemplate does contain the Vulkan Descriptor Set Layout
+	// ShaderDescriptorSetTemplate does however, contain the Vulkan Descriptor Set Layout, it is created and destroyed by the shader.
 	class ShaderDescriptorSetTemplate
 	{
 	public:
@@ -256,6 +261,18 @@ namespace Saturn {
 			StorageImages       = rOther.StorageImages;
 			UniformBuffers      = rOther.UniformBuffers;
 			StorageBuffers      = rOther.StorageBuffers;
+		}
+
+		ShaderDescriptorSetTemplate( const ShaderDescriptorSetTemplate* pOther )
+		{
+			Set = pOther->Set;
+			SetLayout = pOther->SetLayout;
+
+			WriteDescriptorSets = pOther->WriteDescriptorSets;
+			SampledImages = pOther->SampledImages;
+			StorageImages = pOther->StorageImages;
+			UniformBuffers = pOther->UniformBuffers;
+			StorageBuffers = pOther->StorageBuffers;
 		}
 
 		~ShaderDescriptorSetTemplate() = default;
@@ -415,7 +432,13 @@ namespace Saturn {
 		Ref<DescriptorSet> CreateDescriptorSet( uint32_t set, bool UseRendererPool = false );
 		VkDescriptorSet AllocateDescriptorSet( uint32_t set, bool UseRendererPool = false );
 
-		ShaderDescriptorSetTemplate& GetShaderDescriptorSetTemplates( uint32_t set ) { return m_DescriptorSets[ set ]; }
+		ShaderDescriptorSetTemplate* GetShaderDescriptorSetTemplates( uint32_t set ) 
+		{
+			if( m_DescriptorSets.size() == 0 && set == 0 || set > m_DescriptorSets.size() )
+				return nullptr;
+
+			return &m_DescriptorSets[ set ]; 
+		}
 
 		std::vector< VkDescriptorSetLayout > GetSetLayouts();
 		inline VkDescriptorSetLayout GetSetLayout( uint32_t set = 0 ) { return m_DescriptorSets[ set ].SetLayout; }
@@ -490,4 +513,5 @@ namespace Saturn {
 	private:
 		std::unordered_map<std::string, Ref<Shader>> m_Shaders;
 	};
+
 }

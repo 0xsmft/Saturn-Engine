@@ -107,6 +107,7 @@ namespace Saturn {
 		void ClearSearchQuery();
 
 		void DrawNotReadyImportPopup();
+		void DrawErrorImportPopup();
 		void DrawDeleteAssetPopup();
 
 		void GetContentFiles( bool clear );

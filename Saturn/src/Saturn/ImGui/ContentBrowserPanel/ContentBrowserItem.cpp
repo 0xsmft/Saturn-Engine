@@ -46,7 +46,6 @@
 #include "Saturn/ImGui/PrefabViewer.h"
 #include "Saturn/ImGui/StaticMeshAssetViewer.h"
 #include "Saturn/ImGui/MaterialAssetViewer/MaterialAssetViewer.h"
-#include "Saturn/ImGui/PhysicsMaterialAssetViewer.h"
 #include "Saturn/ImGui/TextureViewer.h"
 #include "Saturn/ImGui/SoundAssetViewer.h"
 #include "Saturn/Audio/SoundNodeEditor/GraphSoundAssetViewer.h"
@@ -58,6 +57,7 @@
 #include "Saturn/Animation/AssetViewer/AnimationControllerAssetViewer.h"
 #include "Saturn/Alura/AssetViewer/AluraFontAssetViewer.h"
 #include "Saturn/Alura/AssetViewer/AluraStylingProfileAssetViewer.h"
+#include "Saturn/Physics/AssetViewer/PhysicsMaterialAssetViewer.h"
 
 #include "Saturn/Project/Project.h"
 

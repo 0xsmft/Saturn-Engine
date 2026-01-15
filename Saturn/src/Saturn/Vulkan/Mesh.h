@@ -44,6 +44,10 @@
 
 #include "Saturn/Serialisation/Raw/RawSerialisation.h"
 
+#if !defined(SAT_DIST)
+#include "Saturn/ImGui/AssetImportPopupErrors.h"
+#endif
+
 #include <vector>
 #include <string>
 #include <utility>
@@ -504,7 +508,7 @@ namespace Saturn {
 		virtual ~MeshImporterBase();
 
 #if !defined(SAT_DIST)
-		virtual bool TryImport() = 0;
+		virtual AssetImportPopupError TryImport() = 0;
 
 	public:
 		MeshImportBehaviour GetImportBehaviour() const { return m_ImportBehaviour; }
@@ -512,7 +516,7 @@ namespace Saturn {
 		const MeshInformation& GetMeshInformation() const { return m_MeshInformation; }
 
 	protected:
-		void FindMaterials();
+		[[nodiscard]] bool FindMaterials();
 
 	protected:
 		std::filesystem::path m_SourcePath;
@@ -536,7 +540,7 @@ namespace Saturn {
 		~StaticMeshImporter();
 
 #if !defined(SAT_DIST)
-		virtual bool TryImport() override;
+		virtual AssetImportPopupError TryImport() override;
 #endif
 	};
 
@@ -547,7 +551,7 @@ namespace Saturn {
 		~SkeletalMeshImporter();
 
 #if !defined(SAT_DIST)
-		virtual bool TryImport() override;
+		virtual AssetImportPopupError TryImport() override;
 
 		[[nodiscard]] AssetID GetCreatedSkeletonID() const { return m_SkeletonID; }
 

@@ -153,7 +153,7 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 	}
 
 	StaticMesh::StaticMesh( const std::vector<StaticVertex>& rVertices, const std::vector<Index>& rIndices, const glm::mat4& rTransform )
-		: Mesh( rVertices, rIndices, rTransform, glm::inverse( rTransform ), rIndices.size(), rVertices.size() )
+		: Mesh( rVertices, rIndices, rTransform, glm::inverse( rTransform ), ( uint32_t ) rIndices.size(), ( uint32_t ) rVertices.size() )
 	{
 		Submesh submesh{};
 		submesh.BaseVertex = 0;
@@ -396,7 +396,7 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 			RawSerialisation::ReadObject( materialID, rStream );
 
 			if( materialID )
-				m_MaterialRegistry->AddTargetMaterialAsset( i, materialID );
+				m_MaterialRegistry->AddTargetMaterialAsset( ( uint32_t ) i, materialID );
 
 			// Try load material
 			Ref<MaterialAsset> materialAsset = AssetManager::Get().GetAssetAs<MaterialAsset>( materialID );
@@ -577,14 +577,14 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 				{
 					if( m_SkeletonAsset->m_BoneInfos[ i ].BoneIndex == boneSkelIndex )
 					{
-						boneIndex = i;
+						boneIndex = ( uint32_t ) i;
 						break;
 					}
 				}
 
 				if( boneIndex == ~0 )
 				{
-					boneIndex = m_SkeletonAsset->m_BoneInfos.size();
+					boneIndex = ( uint32_t ) m_SkeletonAsset->m_BoneInfos.size();
 
 					SkeletalMeshBoneInfo bi{ .BoneIndex = boneSkelIndex, .InverseBindPose = Auxiliary::Mat4FromAssimpMat4( pBone->mOffsetMatrix ) };
 					m_SkeletonAsset->m_BoneInfos.push_back( bi );
@@ -651,8 +651,8 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 				* glm::toMat4( m_SkeletonAsset->GetBoneRotations().at( i ) )
 				* glm::scale( glm::mat4( 1.0f ), m_SkeletonAsset->GetBoneScales().at( i ) );
 
-			const uint32_t parent = m_SkeletonAsset->GetParentIndex( i );
-			m_DefaultBoneTransforms[ i ] = ( parent == ~0 ) ? local : m_DefaultBoneTransforms[ parent ] * local;
+			const uint32_t parent = ( uint32_t ) m_SkeletonAsset->GetParentIndex( ( uint32_t ) i );
+			m_DefaultBoneTransforms[ i ] = ( parent == ~0u ) ? local : m_DefaultBoneTransforms[ parent ] * local;
 		}
 	}
 
@@ -673,12 +673,12 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 			rNode.Submeshes.push_back( mesh );
 		}
 
-		uint32_t parentIndex = m_Nodes.size() - 1;
+		uint32_t parentIndex = ( uint32_t ) ( m_Nodes.size() - 1 );
 		rNode.Children.resize( node->mNumChildren );
 		for( uint32_t i = 0; i < node->mNumChildren; ++i ) 
 		{
 			MeshNode& rChild = m_Nodes.emplace_back();
-			uint32_t chiIndex = m_Nodes.size() - 1;
+			uint32_t chiIndex = ( uint32_t ) ( m_Nodes.size() - 1 );
 			rChild.Parent = parentIndex;
 			m_Nodes[ index ].Children[ i ] = chiIndex;
 
@@ -766,7 +766,7 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 			RawSerialisation::ReadObject( materialID, rStream );
 
 			if( materialID )
-				m_MaterialRegistry->AddTargetMaterialAsset( i, materialID );
+				m_MaterialRegistry->AddTargetMaterialAsset( ( uint32_t ) i, materialID );
 
 			// Try load material
 			Ref<MaterialAsset> materialAsset = AssetManager::Get().GetAssetAs<MaterialAsset>( materialID );
@@ -856,10 +856,16 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 	}
 
 #if !defined(SAT_DIST)
-	void MeshImporterBase::FindMaterials()
+	bool MeshImporterBase::FindMaterials()
 	{
 		bool needToSaveAssetReg = false;
 		m_MeshInformation.MaterialAssets.resize( m_Scene->mNumMaterials );
+
+		if( m_Scene->mNumMaterials == 0 )
+		{
+			SAT_CORE_ERROR( "[MeshImporterBase] No materials exist in the Mesh. A mesh cannot have no materials but it can have no MaterialAssets. In your DCC tool ensure that you have created at least one material slot in the scene!" );
+			return false;
+		}
 
 		for( size_t m = 0; m < m_Scene->mNumMaterials; m++ )
 		{
@@ -1102,6 +1108,8 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 		{
 			AssetManager::Get().Save();
 		}
+
+		return true;
 	}
 #endif
 
@@ -1120,7 +1128,7 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 	}
 
 #if !defined(SAT_DIST)
-	bool StaticMeshImporter::TryImport()
+	AssetImportPopupError StaticMeshImporter::TryImport()
 	{
 		AssimpLog::Initialize();
 
@@ -1132,16 +1140,14 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 		if( scene == nullptr || !scene->HasMeshes() )
 		{
 			SAT_CORE_ERROR( "Failed to load mesh file: {0}", m_SourcePath.string() );
-			return false;
+			return AssetImportPopupError::MeshAssimpInternalError;
 		}
 
 		m_Scene = scene;
 		
 		if( m_Scene->HasAnimations() ) SAT_CORE_WARN( "[StaticMeshImporter] Scene has animations, they will be ignored!" );
 
-		FindMaterials();
-
-		return true;
+		return FindMaterials() ? AssetImportPopupError::None : AssetImportPopupError::MeshNoMaterials;
 	}
 #endif
 
@@ -1160,7 +1166,7 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 	}
 
 #if !defined(SAT_DIST)
-	bool SkeletalMeshImporter::TryImport()
+	AssetImportPopupError SkeletalMeshImporter::TryImport()
 	{
 		AssimpLog::Initialize();
 
@@ -1172,15 +1178,15 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 		if( scene == nullptr )
 		{
 			SAT_CORE_ERROR( "Failed to load mesh file: {0}", m_SourcePath.string() );
-			return false;
+			return AssetImportPopupError::MeshAssimpInternalError;
 		}
 
 		m_Scene = scene;
 
-		FindMaterials();
+		bool anyMaterialsFound = FindMaterials();
 		CreateSkeletonIfNeeded();
 
-		return true;
+		return anyMaterialsFound ? AssetImportPopupError::None : AssetImportPopupError::MeshNoMaterials;
 	}
 
 	void SkeletalMeshImporter::CreateSkeletonIfNeeded()
@@ -1250,8 +1256,8 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 			Ref<SkeletalAnimationAsset> animAsset = Ref<SkeletalAnimationAsset>::Create( asset );
 
 			animAsset->SetSkeletonID( m_SkeletonID );
-			animAsset->SetDuration( pAnimation->mDuration );
-			animAsset->SetTicks( pAnimation->mTicksPerSecond == 0 ? 25.0f : pAnimation->mTicksPerSecond );
+			animAsset->SetDuration( ( float ) pAnimation->mDuration );
+			animAsset->SetTicks( ( float ) ( pAnimation->mTicksPerSecond == 0 ? 25.0f : pAnimation->mTicksPerSecond ) );
 
 			std::unordered_map<std::string_view, uint32_t> boneIndices;
 			for( uint32_t i = 0; i < sk->GetBonePositions().size(); i++ )

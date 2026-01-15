@@ -99,7 +99,7 @@ namespace Saturn {
 		if( !m_IsMultiSelecting )
 			EntitySelectionManager::Get().ClearSelection();
 
-		EntitySelectionManager::Get().Select( entity );
+		EntitySelectionManager::Get().Select( entity, EntitySelectionReason::SceneHierarchyPanel );
 	}
 
 	void SceneHierarchyPanel::DrawEntities()
@@ -149,6 +149,8 @@ namespace Saturn {
 		if( !m_IsPrefabScene )
 			ImGui::Begin( m_Name.c_str(), &m_Open );
 
+		m_WindowFocused = ImGui::IsWindowFocused();
+
 		if( m_Context )
 		{	
 			if( m_EntityTextFilter.DrawWithHint( "##schpanelfinder", "Search...", ImGui::GetContentRegionAvail().x ) )
@@ -157,6 +159,15 @@ namespace Saturn {
 			ImGui::Separator();
 
 			DrawEntities();
+
+			if( m_Context->IsEmptyScene() )
+			{
+				Auxiliary::ScopedStyleColor col( ImGuiCol_Text, ImGui::GetColorU32( ImGuiCol_TextDisabled ) );
+				const ImVec2 textSize = ImGui::CalcTextSize( "Right click to add new a new entity." );
+
+				ImGui::SetCursorPosX( ( ImGui::GetWindowWidth() - textSize.x ) * 0.5f );
+				ImGui::Text( "Right click to add new a new entity." );
+			}
 
 			if( ImGui::IsMouseDown( 0 ) && ImGui::IsWindowHovered() && !m_IsMultiSelecting )
 			{

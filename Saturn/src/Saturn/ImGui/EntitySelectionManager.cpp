@@ -50,11 +50,12 @@ namespace Saturn {
 		ClearSelection();
 	}
 
-	void EntitySelectionManager::Select( const SharedPtr<Entity> entity )
+	void EntitySelectionManager::Select( const SharedPtr<Entity> entity, EntitySelectionReason reason )
 	{
 		if( !IsSelected( entity ) ) 
 		{
 			m_SelectedEntities.push_back( entity );
+			m_LastReason = reason;
 
 			Application::Get().DispatchEvent<EntitySelectedEvent>( entity->GetUUID() );
 		}
@@ -74,6 +75,8 @@ namespace Saturn {
 		{
 			std::vector<UUID> ids;
 			ids.reserve( size );
+
+			m_LastReason = EntitySelectionReason::Other;
 
 			std::ranges::transform( m_SelectedEntities, std::back_inserter( ids ), &Entity::GetUUID );
 			Application::Get().DispatchEvent<EntityDeselectedEvent>( ids );

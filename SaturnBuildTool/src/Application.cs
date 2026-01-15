@@ -36,9 +36,6 @@ namespace SaturnBuildTool
 
         private ActionType Action = ActionType.Build;
 
-        // The files that will be compiled.
-        private List<string> SourceFiles = null;
-
         private List<string> RecipeFiles = new List<string>();
 
         private Dictionary<string, List<string>> ModuleToFiles = new Dictionary<string, List<string>>();
@@ -276,105 +273,9 @@ namespace SaturnBuildTool
                 HasCompiledAnyFile = true;
             }
             else
+            { 
                 ++NumTasksFailed;
-        }
-
-        private void CompileFiles_ForThread( object index )
-        {
-            int ThreadIndex = ( int ) index;
-            List<string> Files;
-
-            lock( new object() )
-            {
-                Files = FilesPerThread[ ThreadIndex ];
-            }
-
-            foreach( string file in Files )
-            {
-                if( Action == ActionType.Rebuild )
-                {
-                    // Build ignoring file cache and task cache.
-                    int exitCode = 0;
-                    Shared.FileCache.CacheFile( file );
-
-                    if( exitCode == 0 )
-                    {
-                        HasCompiledAnyFile = true;
-                    }
-                    else
-                        NumTasksFailed++;
-                }
-                // Only build if the output was not created, we already know that the file is modified
-                else if( !Shared.TaskCache.TaskOutputExists( file ) )
-                {
-                    int exitCode = 0;
-                    Shared.FileCache.CacheFile( file );
-
-                    if( exitCode == 0 )
-                    {
-                        HasCompiledAnyFile = true;
-                    }
-                    else
-                        NumTasksFailed++;
-                }
-            }
-
-            ThreadsCompleted[ ThreadIndex ] = true;
-        }
-
-        private void CompileSourceFiles()
-        {
-            if( SourceFiles.Count == 0 )
-                return;
-
-            // if file count < thrd count -> one thread per file
-            // however, if file count > thrd count
-            // divide file count by thread count to roughly split them up to worker threads
-
-            // OLD FORMULA:
-            // ( int ) Math.Ceiling( ( double ) SourceFiles.Count * 2 / ( Environment.ProcessorCount ) );
-            int threadCount = Math.Max( 1, Math.Min( SourceFiles.Count, Environment.ProcessorCount ) );
-
-            if( threadCount > 1 )
-            {
-                Console.WriteLine( String.Format( "Building with {0} threads", threadCount ) );
-
-                /*
-                Parallel.For( 0, threadCount, i => 
-                {
-                    int cc = SourceFiles.Count / threadCount;
-                    int start = i * cc;
-                    int end = (i == threadCount - 1) ? SourceFiles.Count : start + cc;
-
-                    for( int j = start; j < end; j++ )
-                    {
-                        if( Thread.CurrentThread.Name == null )
-                        {
-                            Thread.CurrentThread.Name = $"Worker-{Thread.CurrentThread.ManagedThreadId}";
-                        }
-
-                        Console.WriteLine( $"Running on thread: {Thread.CurrentThread.Name}" );
-
-                        CompileFiles_Single( SourceFiles[ j ] );
-                    }
-                } );
-                */
-
-                // Pass all the files for the one thread.
-                FilesPerThread.Add( SourceFiles );
-                ThreadsCompleted.Add( false );
-
-                //             CompileFiles_ForThread( 0 );
-            }
-            else
-            {
-                Console.WriteLine( "Compiling single threaded." );
-
-                // Pass all the files for the one thread.
-                FilesPerThread.Add( SourceFiles );
-                ThreadsCompleted.Add( false );
-
-                //                CompileFiles_ForThread( 0 );
+                Console.WriteLine( $"SBT: ERR: UNABLE TO COMPILE FILE: CL {file}" );
             }
         }
 

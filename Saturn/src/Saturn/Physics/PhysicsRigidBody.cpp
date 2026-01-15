@@ -78,7 +78,12 @@ namespace Saturn {
 		}
 		else if( m_Entity->HasComponent<StaticMeshComponent>() )
 		{
-			AttachPhysicsShape( m_Entity->GetComponent<StaticMeshComponent>().Mesh->GetAttachedShape() );
+			// No point in creating a mesh collider when the CharacterMovementComponent will create
+			// a capsule for us...
+			if( !m_Entity->HasComponent<CharacterMovementComponent>() )
+			{
+				AttachPhysicsShape( m_Entity->GetComponent<StaticMeshComponent>().Mesh->GetAttachedShape() );
+			}
 		}
 		else
 		{

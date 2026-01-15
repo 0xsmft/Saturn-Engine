@@ -27,7 +27,7 @@ project "MSDFGen"
     {
         "core",
         "include",
-        "../../Freetype/include"
+        "../../freetype/include"
     }
 
     links 

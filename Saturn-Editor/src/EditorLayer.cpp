@@ -505,12 +505,14 @@ namespace Saturn {
 
 		SceneSerialiser serialiser( m_EditorScene );
 		serialiser.Serialise( res );
+
+		m_EditorScene->SetAbsolutePath( res );
 	}
 
 	void EditorLayer::SaveFile()
 	{
 		const auto fullPath = Project::GetActiveProject()->FilepathAbs( m_EditorScene->Path );
-		if( std::filesystem::exists( fullPath ) )
+		if( fullPath.has_extension() && fullPath.has_filename() && std::filesystem::exists( fullPath ) )
 		{
 			SceneSerialiser ss( m_EditorScene );
 			ss.Serialise();
@@ -1021,7 +1023,7 @@ namespace Saturn {
 
 	void EditorLayer::DrawProjectSettingsWindow()
 	{
-		bool shouldSaveProject = false;
+		static bool shouldSaveProject = false;
 
 		ImGuiIO& rIO = ImGui::GetIO();
 
@@ -1498,6 +1500,8 @@ namespace Saturn {
 		{
 			ProjectSerialiser ps;
 			ps.Serialise( Project::GetActiveProject()->GetRootDir().string() );
+
+			shouldSaveProject = false;
 		}
 	}
 
@@ -1755,6 +1759,22 @@ namespace Saturn {
 				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "NoIcon" ), { 24.0f, 24.0f } ) )
 				{
 					Application::Get().OpenNativeFileExplorer( rEngineSettings.StartupProject, true );
+				}
+
+				ImGui::SetNextItemWidth( 130.0f );
+				if( ImGui::BeginCombo( "##recentprojects", rEngineSettings.StartupProjectName.data() ) )
+				{
+					for( const auto& rProject : rEngineSettings.GetAllRecentProjects() )
+					{
+						const bool selected = rEngineSettings.StartupProject == rProject;
+						if( ImGui::Selectable( rProject.string().data(), selected ) )
+						{
+							rEngineSettings.StartupProject = rProject;
+							rEngineSettings.StartupProjectName = rProject.stem().string();
+						}
+					}
+
+					ImGui::EndCombo();
 				}
 			}
 			ImGui::EndHorizontal();

@@ -35,7 +35,7 @@
 #include "Saturn/ImGui/UndoRedo/GlobalUndoRedoGroup.h"
 
 #include "Saturn/Asset/MaterialAsset.h"
-#include "Saturn/Asset/PhysicsMaterialAsset.h"
+#include "Saturn/Physics/PhysicsMaterialAsset.h"
 #include "Saturn/Asset/AssetImporter.h"
 #include "Saturn/Asset/Prefab.h"
 #include "Saturn/Asset/AssetManager.h"
@@ -69,6 +69,8 @@
 namespace Saturn {
 	
 	static inline ImVec2 operator+( const ImVec2& lhs, const ImVec2& rhs ) { return ImVec2( lhs.x + rhs.x, lhs.y + rhs.y ); }
+	static inline ImVec2 operator-( const ImVec2& lhs, const ImVec2& rhs ) { return ImVec2( lhs.x - rhs.x, lhs.y - rhs.y ); }
+	static inline ImVec2 operator*( const ImVec2& lhs, float rhs ) { return ImVec2( lhs.x * rhs, lhs.y * rhs ); }
 
 	static std::mutex s_UpdateFilesMutex;
 
@@ -247,6 +249,8 @@ namespace Saturn {
 					const std::string text = m_SelectedItems[ 0 ]->Path().string();
 					ImGui::SetClipboardText( text.c_str() );
 				}
+
+				// TODO: Delete folders
 			}
 			else // File actions
 			{
@@ -743,6 +747,23 @@ namespace Saturn {
 			ImGui::PushStyleColor( ImGuiCol_Button, ImVec4( 0.0f, 0.0f, 0.0f, 0.0f ) );
 			ImGui::PushStyleColor( ImGuiCol_ButtonHovered, ImVec4( 0.3f, 0.3f, 0.3f, 0.35f ) );
 
+			auto drawTextCentredForNoAssets = [](const char* pText) 
+			{
+				Auxiliary::ScopedStyleColor col( ImGuiCol_Text, ImGui::GetColorU32( ImGuiCol_TextDisabled ) );
+				const ImVec2 textSize = ImGui::CalcTextSize( pText );
+				ImGui::SetCursorPos( ImVec2( ( ImGui::GetWindowSize() - textSize ) * 0.5f ) );
+				ImGui::Text( pText );
+			};
+
+			if( !m_Searching && m_Files.empty() )
+			{
+				drawTextCentredForNoAssets( "Right click to create/import assets." );
+			}
+			else if( m_Searching && m_ValidSearchFiles.empty() )
+			{
+				drawTextCentredForNoAssets( "No assets could be found matching that search criteria." );
+			}
+
 			constexpr float padding = 16.0f;
 			constexpr int thumbnailSizeX = 180;
 			constexpr int thumbnailSizeY = 180;
@@ -826,8 +847,11 @@ namespace Saturn {
 					{
 						switch( m_CurrentImportPopup->GetModificationState() )
 						{
+							case AssetImportModificationState::Failed: break;
+
 							case AssetImportModificationState::Modified:
 							{
+								// Asset import popups do not save the asset manager.
 								AssetManagerSerialiser ars;
 								ars.Serialise();
 
@@ -837,10 +861,18 @@ namespace Saturn {
 							default:
 							case AssetImportModificationState::NotModified:
 							{
+								// Check for errors (dbg)
+								// If there is an error make sure you set the modified state to Failed.
+								SAT_CORE_ASSERT( m_CurrentImportPopup->GetError() == AssetImportPopupError::None );
+
 								m_CurrentImportPopup.reset();
 							} break;
 						}
 					}
+				}
+				else if( m_CurrentImportPopup->HasError() ) 
+				{
+					DrawErrorImportPopup();
 				}
 				else
 				{
@@ -897,7 +929,7 @@ namespace Saturn {
 					Project::GetActiveProject()->CreateBuildFile();
 
 					// Update or create the project files.
-					Premake::Launch( Project::GetActiveProject()->GetRootDir().wstring() );
+					Premake::Launch( Project::GetActiveProject()->GetRootDir().wstring(), PremakeAction::VisualStudio2022 );
 
 					ClassTemplateFileHelper::CreateAndAmendTemplateFile( m_SelectedMetadata, m_CurrentPath, m_NewClassName.c_str() );
 
@@ -1069,6 +1101,35 @@ namespace Saturn {
 		if( ImGui::BeginPopupModal( "Please wait##ASSETINIT", nullptr, ImGuiWindowFlags_NoSavedSettings ) )
 		{
 			ImGui::Text( "Initialising..." );
+
+			ImGui::EndPopup();
+		}
+	}
+
+	void ContentBrowserPanel::DrawErrorImportPopup()
+	{
+		ImGui::OpenPopup( "Error when importing##ASSERROR" );
+
+		ImGui::SetNextWindowPos( ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Appearing, ImVec2( 0.5f, 0.5f ) );
+		if( ImGui::BeginPopupModal( "Error when importing##ASSERROR", nullptr, ImGuiWindowFlags_NoSavedSettings ) )
+		{
+			if( m_CurrentImportPopup == nullptr )
+			{
+				ImGui::Text( "Error while displaying the error!" );
+				ImGui::EndPopup();
+
+				return;
+			}
+
+			m_CurrentImportPopup->DrawErrorTextAndDescription();
+
+			ImGui::Separator();
+
+			if( ImGui::Button( "Okay" ) )
+			{
+				m_CurrentImportPopup.reset();
+				ImGui::CloseCurrentPopup();
+			}
 
 			ImGui::EndPopup();
 		}

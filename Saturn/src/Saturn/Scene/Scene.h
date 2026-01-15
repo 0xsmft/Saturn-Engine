@@ -269,6 +269,8 @@ namespace Saturn {
 			}
 		}
 
+		[[nodiscard]] bool IsEmptyScene() const { return m_EntityIDMap.empty(); }
+
 		// #ReplaceRawPtrOrRefWithWeakRef
 		[[nodiscard]] WeakRef<Entity> GetMainCameraEntity( bool force = false );
 		

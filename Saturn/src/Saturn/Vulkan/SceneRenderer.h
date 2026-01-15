@@ -460,6 +460,7 @@ namespace Saturn {
 
 		void Recreate();
 
+		void PreRender();
 		void RenderScene();
 
 		void SetCamera( const RendererCamera& Camera );

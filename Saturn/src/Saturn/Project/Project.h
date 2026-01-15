@@ -46,10 +46,6 @@ namespace Saturn {
 		std::string Name;
 		UUID StartupSceneID;
 
-		// Relative path
-		// "Assets"
-		std::string AssetPath; 
-		
 		// Path to the .sproject file
 		std::filesystem::path Path;
 	};
@@ -100,9 +96,6 @@ namespace Saturn {
 
 		std::filesystem::path FilepathAbs( const std::filesystem::path& rPath ) const;
 
-		// Relative Asset Path
-		std::filesystem::path GetAssetPath() const;
-		
 		// Absolute Asset Path
 		std::filesystem::path GetFullAssetPath() const;
 		std::filesystem::path GetAbsoluteAssetPath() const { return GetFullAssetPath(); }

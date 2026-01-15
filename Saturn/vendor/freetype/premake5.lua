@@ -77,7 +77,6 @@ project "Freetype"
 	filter "system:linux"
 		pic "On"
 		systemversion "latest"
-		cppdialect "C++2a"
 		staticruntime "On"
 
 	filter "configurations:Debug"

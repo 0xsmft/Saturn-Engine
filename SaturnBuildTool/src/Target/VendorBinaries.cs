@@ -12,6 +12,9 @@ namespace SaturnBuildTool
         TRACY,
         ZLIB,
         RECAST, // ...and detour
+        FREETYPE,
+        MSDF,
+        MSDFGEN
     }
 
     public class VendorBinaries
@@ -142,6 +145,36 @@ namespace SaturnBuildTool
                         binPath = GetRootBinPath( binPath );
 
                         binPath = Path.Combine( binPath, "Recast" );
+                    }
+                    break;
+
+                case VendorProject.FREETYPE:
+                    {
+                        binPath = Path.Combine( binPath, "freetype", "bin" );
+
+                        binPath = GetRootBinPath( binPath );
+
+                        binPath = Path.Combine( binPath, "Freetype" );
+                    }
+                    break;
+
+                case VendorProject.MSDF:
+                    {
+                        binPath = Path.Combine( binPath, "msdf-atlas-gen", "msdfgen", "bin" );
+
+                        binPath = GetRootBinPath( binPath );
+
+                        binPath = Path.Combine( binPath, "MSDFGen" );
+                    }
+                    break;
+
+                case VendorProject.MSDFGEN:
+                    {
+                        binPath = Path.Combine( binPath, "msdf-atlas-gen", "bin" );
+
+                        binPath = GetRootBinPath( binPath );
+
+                        binPath = Path.Combine( binPath, "MSDF-Atlas-Gen" );
                     }
                     break;
             }

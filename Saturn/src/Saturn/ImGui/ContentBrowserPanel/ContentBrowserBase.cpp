@@ -121,8 +121,7 @@ namespace Saturn {
 
 			const std::string filename = pFolder.string();
 
-			const float size = strlen( filename.c_str() ) + ImGui::CalcTextSize( filename.c_str() ).x;
-
+			const float size = ImGui::CalcTextSize( filename.c_str() ).x;
 			ImGui::Selectable( filename.c_str(), false, 0, ImVec2( size, 22.0f ) );
 
 			ImGui::SameLine();

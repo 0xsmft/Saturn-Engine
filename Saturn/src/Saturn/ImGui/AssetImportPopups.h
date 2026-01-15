@@ -28,6 +28,8 @@
 
 #pragma once
 
+#include "AssetImportPopupErrors.h"
+
 #include "Saturn/Asset/Asset.h"
 #include "Saturn/Vulkan/Mesh.h"
 
@@ -37,10 +39,20 @@ namespace Saturn {
 
 	enum class AssetImportModificationState
 	{
-		NotModified,
-		Modified
+		// Failed, popup may of modified but m_Error in the popup will be set to the correct error.
+		Failed, 
+
+		// Operation was canceled
+		NotModified, 
+		
+		// Succeeded
+		Modified 
 	};
 
+	//
+	// AssetImportPopupBase is the base class for all asset popups,
+	// every popup does not save the asset manager, you must save it after the popup has been modified.
+	//
 	class AssetImportPopupBase
 	{
 	public:
@@ -55,14 +67,19 @@ namespace Saturn {
 
 		void Close() { m_Open = false; }
 
+		void DrawErrorTextAndDescription();
+
 		[[nodiscard]] bool IsReady() const { return m_IsReady.load(); }
 		[[nodiscard]] bool IsOpen() const { return m_Open; }
 		[[nodiscard]] AssetImportModificationState GetModificationState() const { return m_ModificationState; }
+		[[nodiscard]] AssetImportPopupError GetError() const { return m_Error; }
+		[[nodiscard]] bool HasError() const { return m_Error != AssetImportPopupError::None; }
 
 	protected:
+		AssetImportModificationState m_ModificationState = AssetImportModificationState::NotModified;
+		AssetImportPopupError m_Error = AssetImportPopupError::None;
 		bool m_Open = false;
 		std::atomic_bool m_IsReady{ false };
-		AssetImportModificationState m_ModificationState = AssetImportModificationState::NotModified;
 
 		std::filesystem::path m_AssetToImportPath;
 		std::filesystem::path m_DestinationPath;
@@ -92,13 +109,14 @@ namespace Saturn {
 		void DrawSkeletalMeshOptions();
 		void DrawAndHandleImportBehaviour();
 
-		void FullyImportMesh();
-		void ImportDynamic();
-		void ImportStatic();
+		AssetImportPopupError FullyImportMesh();
+		AssetImportPopupError ImportDynamic();
+		AssetImportPopupError ImportStatic();
 
 	private:
 		std::filesystem::path m_GLTFBinPath;
 		bool m_UseBinFile = false;
+		bool m_GLTFBinFileExists = false;
 		bool m_IsSkeletal = false;
 
 		MeshImportBehaviour m_ImportBehaviour = MeshImportBehaviour_Default;

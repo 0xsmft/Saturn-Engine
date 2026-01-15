@@ -1160,6 +1160,7 @@ TRACY_API void ShutdownProfiler()
     RpInitDone.store( 0, std::memory_order_release );
 }
 
+/* SATURN ENGINE MODIFIED */
 TRACY_API void* GetProfilerDataPtr()
 {
 	assert( s_profilerData );
@@ -1173,6 +1174,7 @@ TRACY_API void InitializeModule( const void* pData )
     if( s_profilerData != pProfilerData )
         s_profilerData = pProfilerData;
 }
+/* [END OF MODIFIED CODE] */
 
 #  else
 static std::atomic<int> profilerDataLock { 0 };

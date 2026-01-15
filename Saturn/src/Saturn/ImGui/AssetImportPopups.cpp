@@ -54,6 +54,31 @@
 namespace Saturn {
 	
 	//////////////////////////////////////////////////////////////////////////
+	// BASE
+
+	void AssetImportPopupBase::DrawErrorTextAndDescription()
+	{
+		switch( m_Error )
+		{
+			default:
+			case AssetImportPopupError::None:
+				break;
+	
+			case AssetImportPopupError::MeshNoMaterials:
+			{
+				ImGui::Text( "Error: MeshNoMaterials (0x%08x)", m_Error );
+				ImGui::Text( "No materials exist in the Mesh. A mesh cannot have no materials but it can have no MaterialAssets. In your DCC tool ensure that you have created at least one material slot in the scene!" );
+			} break;
+		
+			case AssetImportPopupError::MeshAssimpInternalError:
+			{
+				ImGui::Text( "Error: MeshNoMaterials (0x%08x)", m_Error );
+				ImGui::Text( "An internal Assimp error occured while importing the mesh." );
+			} break;			
+		}
+	}
+
+	//////////////////////////////////////////////////////////////////////////
 	// UNKNWON POPUP
 
 	UnknownImportPopup::UnknownImportPopup( const std::filesystem::path& rAssetToImportPath )
@@ -147,8 +172,8 @@ namespace Saturn {
 			m_GLTFBinPath = m_AssetToImportPath;
 			// Default to .bin, user can change it
 			m_GLTFBinPath.replace_extension( ".bin" );
-			
-			m_UseBinFile = std::filesystem::exists( m_GLTFBinPath );
+
+			m_UseBinFile = m_GLTFBinFileExists = std::filesystem::exists( m_GLTFBinPath );
 		}
 	}
 
@@ -196,9 +221,16 @@ namespace Saturn {
 
 			if( ImGui::Button( "Create" ) )
 			{
-				FullyImportMesh();
-
-				PopupModified = true;
+				if( const auto error = FullyImportMesh(); error != AssetImportPopupError::None ) 
+				{
+					m_Error = error;
+					m_ModificationState = AssetImportModificationState::Failed;
+					ImGui::CloseCurrentPopup();
+				}
+				else
+				{
+					PopupModified = true;
+				}
 			}
 
 			disabledIf.Pop();
@@ -242,12 +274,15 @@ namespace Saturn {
 			{
 				m_GLTFBinPath = Application::Get().OpenFile( L"Supported asset types (*.glb *.bin)|*.glb; *.bin" );
 
-				m_UseBinFile = std::filesystem::exists( m_GLTFBinPath );
+				m_UseBinFile = m_GLTFBinFileExists = std::filesystem::exists( m_GLTFBinPath );
 			}
 
 			ImGui::EndHorizontal();
 
-			Auxiliary::DrawBoolControl( "Use binary file (check file ext!)", m_UseBinFile );
+			{
+				Auxiliary::ScopedDisabledFlag disabled( !m_GLTFBinFileExists );
+				Auxiliary::DrawBoolControl( "Use binary file (check file ext!)", m_UseBinFile );
+			}
 
 			ImGui::EndVertical();
 		}
@@ -374,15 +409,12 @@ namespace Saturn {
 		ImGui::EndHorizontal();
 	}
 
-	void MeshImportPopup::FullyImportMesh()
+	AssetImportPopupError MeshImportPopup::FullyImportMesh()
 	{
-		if( m_IsSkeletal )
-			ImportDynamic();
-		else
-			ImportStatic();
+		return ( m_IsSkeletal ? ImportDynamic() : ImportStatic() );
 	}
 
-	void MeshImportPopup::ImportDynamic()
+	AssetImportPopupError MeshImportPopup::ImportDynamic()
 	{
 		auto assetPath = m_DestinationPath / m_AssetToImportPath.filename();
 		assetPath.replace_extension( ".skmesh" );
@@ -406,7 +438,11 @@ namespace Saturn {
 
 		SkeletalMeshImporter meshImporter( m_AssetToImportPath, m_DestinationPath, m_ImportBehaviour, m_CurrentAssetIDForSkeleton );
 #if !defined(SAT_DIST)
-		meshImporter.TryImport();
+		if( const auto err = meshImporter.TryImport(); err != AssetImportPopupError::None )
+		{
+			SAT_CORE_ERROR( "Unable to import dynamic mesh!" );
+			return err;
+		}
 #endif
 
 		//////////////////////////////////////////////////////////////////////////
@@ -440,9 +476,11 @@ namespace Saturn {
 		else
 			AssetManager::Get().RemoveAsset( id );
 #endif
+
+		return AssetImportPopupError::None;
 	}
 
-	void MeshImportPopup::ImportStatic()
+	AssetImportPopupError MeshImportPopup::ImportStatic()
 	{
 		const auto id = AssetManager::Get().CreateAsset( AssetType::StaticMesh );
 		auto asset = AssetManager::Get().FindAsset( id );
@@ -459,7 +497,13 @@ namespace Saturn {
 		asset->SetAbsolutePath( assetPath );
 
 		StaticMeshImporter meshImporter( m_AssetToImportPath, m_DestinationPath, m_ImportBehaviour );
-
+#if !defined(SAT_DIST)
+		if( const auto err = meshImporter.TryImport(); err != AssetImportPopupError::None ) 
+		{
+			SAT_CORE_ERROR( "Unable to import mesh!" );
+			return err;
+		}
+#endif
 		//////////////////////////////////////////////////////////////////////////
 		// Create the mesh asset.
 		
@@ -485,6 +529,8 @@ namespace Saturn {
 		sma.Serialise( staticMesh );
 
 		staticMesh->SetAbsolutePath( assetPath );
+
+		return AssetImportPopupError::None;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -578,9 +624,6 @@ namespace Saturn {
 
 			if( PopupModified )
 			{
-				AssetManagerSerialiser ars;
-				ars.Serialise();
-
 				Close();
 				m_ModificationState = AssetImportModificationState::Modified;
 				ImGui::CloseCurrentPopup();
@@ -659,9 +702,6 @@ namespace Saturn {
 
 			if( PopupModified )
 			{
-				AssetManagerSerialiser ars;
-				ars.Serialise();
-
 				Close();
 				m_ModificationState = AssetImportModificationState::Modified;
 				ImGui::CloseCurrentPopup();

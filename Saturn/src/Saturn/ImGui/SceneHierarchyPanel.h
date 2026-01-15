@@ -61,6 +61,8 @@ namespace Saturn {
 		inline void SetIsPrefabScene( bool value ) { m_IsPrefabScene = value; }
 		inline void SetCustomID( UUID ID ) { m_CustomID = ID; }
 
+		[[nodiscard]] bool IsFocused() const { return m_WindowFocused; }
+
 	public:
 		//////////////////////////////////////////////////////////////////////////
 		// ImGuiWindow
@@ -101,6 +103,7 @@ namespace Saturn {
 		bool m_IsPrefabScene = false;
 		bool m_Searching = false;
 		bool m_IsMultiSelecting = false;
+		bool m_WindowFocused = false;
 
 		struct CopyComponentData
 		{

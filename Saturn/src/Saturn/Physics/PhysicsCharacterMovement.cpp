@@ -47,6 +47,7 @@ namespace Saturn {
 
 	PhysicsCharacterMovement::~PhysicsCharacterMovement()
 	{
+		PHYSX_TERMINATE_ITEM( m_pController );
 	}
 
 	static Ref<PhysicsMaterialAsset> GetMaterial( AssetID materialID )
@@ -89,9 +90,7 @@ namespace Saturn {
 		physx::PxControllerFilters filters;
 		const auto flags = m_pController->move( Auxiliary::GLMToPx( rDisplacement ), minDistance, ts, filters );
 		
-		
-		PhysicsControllerCollisionFlag sflags = ( PhysicsControllerCollisionFlag ) ( physx::PxU8 ) flags;
-		return sflags;
+		return ( PhysicsControllerCollisionFlag ) ( physx::PxU8 ) flags;
 	}
 
 	void PhysicsCharacterMovement::Teleport( const glm::vec3& rPosition )

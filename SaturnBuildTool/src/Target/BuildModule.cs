@@ -48,7 +48,7 @@ namespace SaturnBuildTool
         {
             ModuleRules = module;
             ApiName = $"{ModuleRules.Name.ToUpperInvariant()}_API";
-            OutputName = $"{parent.TargetRules.Name}-{module.Name}";
+            OutputName = $"{module.Name}-{parent.TargetRules.Name}";
 
             switch( module.OutputDirectoryOptions )
             {

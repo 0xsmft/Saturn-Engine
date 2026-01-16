@@ -28,7 +28,7 @@
 
 // Game client main.
 /* Generated code, DO NOT modify! */
-// This file supports Saturn version 0.2.3 (8195)
+// This file supports Saturn version 0.2.4 (8196)
 
 #if defined(_WIN32)
 #include <Windows.h>
@@ -38,6 +38,7 @@
 #include <Saturn/Core/App.h>
 #include <Saturn/Core/ErrorDialog.h>
 
+#include <Saturn/Vulkan/AluraRenderer.h>
 #include <Saturn/Runtime/RuntimeLayer.h>
 
 #include <Saturn/Project/Project.h>

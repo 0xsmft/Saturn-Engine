@@ -94,6 +94,8 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
+#include "Editor/TextEditors.h"
+
 namespace Saturn {
 
 	static constexpr inline bool operator==( const ImVec2& lhs, const ImVec2& rhs ) { return lhs.x == rhs.x && lhs.y == rhs.y; }
@@ -495,6 +497,19 @@ namespace Saturn {
 
 				m_SceneRenderer->SetDynamicSky( rParams.x, rParams.y, rParams.z );
 			} break;
+
+			case EventType::RqOpenIDE: 
+			{
+				const RequestOpenIDEEvent& rIDEEvent = ( RequestOpenIDEEvent& ) rEvent;
+
+#if defined(SAT_PLATFORM_WINDOWS) || defined(SAT_PLATFORM_MACOS)
+				std::filesystem::path solutionPath = Project::GetActiveProject()->GetRootDir();
+				solutionPath /= std::format( "{0}.sln", Project::GetActiveConfig().Name );
+
+				Auxiliary::TextEditors::OpenOptions openOptions{ .TextFilePath = rIDEEvent.GetPath() };
+				Auxiliary::TextEditors::OpenVisualStudioLatest( solutionPath, openOptions );
+#endif
+			} break;
 		}
 	}
 
@@ -730,7 +745,10 @@ namespace Saturn {
 		{
 			case RubyKey_Delete:
 			{
-				if( !m_RuntimeScene )
+				Ref<SceneHierarchyPanel> schPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
+
+				const bool windowFocused = EntitySelectionManager::Get().GetLastSelectionReason() == EntitySelectionReason::SceneHierarchyPanel ? schPanel->IsFocused() : ( m_MouseOverViewport || m_ViewportFocused );
+				if( !m_RuntimeScene && windowFocused )
 				{
 					bool deletedNavMesh = false;
 
@@ -1857,6 +1875,21 @@ namespace Saturn {
 
 		if( ImGui::BeginMenu( "Project" ) )
 		{
+			if( ImGui::BeginMenu( "Open Project in" ) )
+			{
+#if defined(SAT_PLATFORM_WINDOWS) || defined(SAT_PLAFORM_MACOS)
+				if( ImGui::MenuItem( "Visual Studio Latest" ) ) 
+				{
+					std::filesystem::path solutionPath = Project::GetActiveProject()->GetRootDir();
+					solutionPath /= std::format( "{0}.sln", Project::GetActiveConfig().Name );
+
+					Auxiliary::TextEditors::OpenVisualStudioLatest( solutionPath );
+				}
+#endif
+
+				ImGui::EndMenu();
+			}
+			
 			ImGui::SeparatorText( "Settings" );
 
 			if( ImGui::MenuItem( "Project settings" ) ) m_ShowUserSettings ^= 1;

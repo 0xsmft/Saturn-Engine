@@ -20,7 +20,7 @@ namespace SaturnBuildTool
             RulesAssembly ra = new RulesAssembly();
 
             // Search for all C# files
-            var csFiles = DirectoryTools.CsSourceSearch( Shared.ProjectInfo.SourceDir, DirectoryTools.CSharpSearchOptions.All );
+            var csFiles = DirectoryTools.CsSourceSearch( Shared.ProjectInfo.SourceRootDir, DirectoryTools.CSharpSearchOptions.All );
 
             ra.Assembly = CSharpCompiler.CompileCSharpFiles( csFiles.ToArray() );
 

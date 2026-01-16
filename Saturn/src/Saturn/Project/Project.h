@@ -185,7 +185,7 @@ namespace Saturn {
 
 		bool HasPremakeFile() const;
 		void CreatePremakeFile( bool force = false ) const;
-		void CreateBuildFile( bool force = false ) const;
+		void CopyCSharpTargetFiles( bool force = false ) const;
 
 		std::filesystem::path FindBuildTool() const;
 
@@ -198,6 +198,7 @@ namespace Saturn {
 	private:
 		void CheckNewAssets();
 		void CheckOfflineAssets();
+		void ReplaceProjectNameTokens( const std::filesystem::path& rPath ) const;
 
 	private:
 		ProjectConfig m_Config;

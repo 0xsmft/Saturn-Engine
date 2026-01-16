@@ -30,6 +30,8 @@
 #include "Character.h"
 
 #include "Saturn/Physics/PhysicsRigidBody.h"
+#include "Saturn/Physics/PhysicsCharacterMovement.h"
+
 #include "Core/ClassMetadataHandler.h"
 
 #include "Saturn/Audio/AudioSystem.h"
@@ -42,8 +44,12 @@ namespace Saturn {
 		m_MouseUpMovement = 0.0f;
 
 		AddComponent<StaticMeshComponent>();
-		AddComponent<RigidbodyComponent>().LockFlags = RigidbodyLockFlags::RigidbodyLock_RotationX | RigidbodyLockFlags::RigidbodyLock_RotationY | RigidbodyLockFlags::RigidbodyLock_RotationZ;
-		AddComponent<CapsuleColliderComponent>();
+
+		auto& rRigidbodyComponent = AddComponent<RigidbodyComponent>();
+		rRigidbodyComponent.LockFlags = RigidbodyLockFlags::RigidbodyLock_RotationX | RigidbodyLockFlags::RigidbodyLock_RotationY | RigidbodyLockFlags::RigidbodyLock_RotationZ;
+		rRigidbodyComponent.IsKinematic = true;
+
+		AddComponent<CharacterMovementComponent>();
 		AddComponent<AudioListenerComponent>();
 	}
 
@@ -115,43 +121,50 @@ namespace Saturn {
 
 			m_LastMousePos = Input::Get().MousePosition();
 		}
-
-		HandleRotation( ts );
-		HandleMovement();
 	}
 
 	void Character::OnPhysicsUpdate( Timestep ts )
 	{
 		Super::OnPhysicsUpdate( ts );
 
-		if( Input::Get().GetCursorMode() != RubyCursorMode::Locked )
-			return;
+		////
 
 		TransformComponent& tc = GetComponent<TransformComponent>();
-
-		auto& up = TransformComponent::Up;
-
-		tc.SetRotation( tc.GetRotationEuler() + glm::vec3( up * m_MouseUpMovement * 0.05f ) );
 
 		glm::vec3 right, forward;
 		right = CalculateRight();
 		forward = CalculateForward();
 
-		glm::vec3 Direction = right * m_MovementDirection.x + forward * m_MovementDirection.y;
-		Direction.y = 0.0f;
+		glm::vec3 direction = right * m_MovementDirection.x + forward * m_MovementDirection.y;
+		direction.y = 0.0f;
 
-		if( glm::length( Direction ) > 0.0f )
+		if( glm::length( direction ) > 0.0f )
 		{
-			glm::vec3 normalMove = glm::normalize( Direction );
-			normalMove *= 20.0f;
-			normalMove.y = -2.0f;
-
-			m_RigidBody->ApplyForce( normalMove, ForceMode::Force );
+			direction = glm::normalize( direction );
 		}
+
+		m_Velocity.y += -9.81f * ts.Seconds();
+
+		const glm::vec3 displacement = ( direction * 5.0f + m_Velocity ) * ts.Seconds();
+		
+		auto& rComp = GetComponent<CharacterMovementComponent>();
+		const PhysicsControllerCollisionFlag flags = rComp.CharacterMovement->Move( displacement, 0.001f, ts.Seconds() );
+
+		tc.Position = rComp.CharacterMovement->GetPosition();
+
+		const bool grounded = flags & PhysControllerCollision_Down;
+		if( grounded && m_Velocity.y < 0.0f )
+			m_Velocity.y = 0.0f;
 
 		if( GetComponent<AudioListenerComponent>().Primary )
 		{
 			AudioSystem::Get().SetPrimaryListenerDirection( forward );
+		}
+
+		if( Input::Get().GetCursorMode() == RubyCursorMode::Locked )
+		{
+			const auto& up = TransformComponent::Up;
+			tc.SetRotation( tc.GetRotationEuler() + glm::vec3( up * m_MouseUpMovement * 0.05f ) );
 		}
 	}
 
@@ -173,37 +186,6 @@ namespace Saturn {
 	glm::vec3 Character::CalculateForward()
 	{
 		return m_CameraEntity->GetComponent<CameraComponent>().Camera.GetForwardDirection();
-	}
-
-	void Character::HandleRotation( Timestep ts )
-	{
-		if( Input::Get().GetCursorMode() != RubyCursorMode::Locked )
-			return;
-
-		/*
-		TransformComponent& tc = m_CameraEntity->GetComponent<TransformComponent>();
-
-		glm::vec2 currentMousePos = Input::Get().MousePosition();
-		glm::vec2 delta = m_LastMousePos - currentMousePos;
-
-		if( m_LastMousePos == currentMousePos ) 
-		{
-			m_MouseUpMovement = 0.0f;
-			return;
-		}
-
-		if( delta.x != 0.0f )
-			m_MouseUpMovement = delta.x * m_MouseSensitivity * ts.Seconds();
-
-		float xRotation = delta.y * ( m_MouseSensitivity * 0.05f ) * ts.Seconds();
-
-		if( xRotation != 0.0f )
-			tc.SetRotation( glm::vec3( tc.GetRotationEuler().x + xRotation, 0.0f, 0.0f ) );
-
-		tc.SetRotation( glm::radians( glm::vec3( glm::clamp( glm::degrees( tc.GetRotationEuler().x ), -88.0f, 88.0f ), 0.0f, 0.0f ) ) );
-
-		m_LastMousePos = currentMousePos;
-		*/
 	}
 
 	void Character::MoveForward()

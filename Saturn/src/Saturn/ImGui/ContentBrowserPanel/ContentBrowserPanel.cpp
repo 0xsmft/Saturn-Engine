@@ -61,6 +61,10 @@
 #include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 #include "Saturn/GameFramework/Core/GameModule.h"
 
+#if !defined(SAT_DIST)
+#include "Saturn/ImGui/EditorEvents.h"
+#endif
+
 #include "ContentBrowserThumbnailCache.h"
 
 #include <imgui_internal.h>
@@ -757,7 +761,19 @@ namespace Saturn {
 
 			if( !m_Searching && m_Files.empty() )
 			{
-				drawTextCentredForNoAssets( "Right click to create/import assets." );
+				switch( m_ViewMode )
+				{
+					case Saturn::CBViewMode::Scripts:
+						drawTextCentredForNoAssets( "You may need to compile the game in order for classes to show up in the Content Browser Panel." );
+						break;
+				
+					case CBViewMode::Assets:
+						drawTextCentredForNoAssets( "Right click to create/import assets." );
+						break;
+	
+					default:
+						break;
+				}
 			}
 			else if( m_Searching && m_ValidSearchFiles.empty() )
 			{
@@ -896,7 +912,7 @@ namespace Saturn {
 				ImGui::BeginHorizontal( "##inputh" );
 
 				ImGui::Text( "Name:" );
-				Auxiliary::InputText( "##newclassname", &m_Name );
+				Auxiliary::InputText( "##newclassname", &m_NewClassName );
 
 				ImGui::EndHorizontal();
 
@@ -919,6 +935,14 @@ namespace Saturn {
 
 				Auxiliary::DisabledFlag disabled( m_NewClassName.empty() || m_SelectedMetadata == nullptr );
 
+				ImGui::Separator();
+
+				ImGui::Checkbox( "Open IDE after creation", &m_OpenIDEAfterNewClass );
+
+				ImGui::Separator();
+
+				ImGui::BeginHorizontal( "##cncoptions" );
+
 				if( ImGui::Button( "Create" ) )
 				{
 					if( !Project::GetActiveProject()->HasPremakeFile() )
@@ -926,27 +950,42 @@ namespace Saturn {
 						Project::GetActiveProject()->CreatePremakeFile();
 					}
 
-					Project::GetActiveProject()->CreateBuildFile();
+					Project::GetActiveProject()->CopyCSharpTargetFiles();
 
 					// Update or create the project files.
 					Premake::Launch( Project::GetActiveProject()->GetRootDir().wstring(), PremakeAction::VisualStudio2022 );
 
 					ClassTemplateFileHelper::CreateAndAmendTemplateFile( m_SelectedMetadata, m_CurrentPath, m_NewClassName.c_str() );
 
-					AssetManagerSerialiser ars;
-					ars.Serialise();
+					if( m_OpenIDEAfterNewClass )
+					{
+#if !defined(SAT_DIST)
+						std::filesystem::path headerPath = m_CurrentPath / m_NewClassName;
+						headerPath.replace_extension( ".h" );
+						Application::Get().DispatchEvent<RequestOpenIDEEvent>( headerPath );
+#endif
+					}
 
 					PopupModified = true;
-
 					UpdateFiles( true );
 				}
 
 				disabled.Pop();
 
+				if( ImGui::Button( "Cancel" ) )
+				{
+					PopupModified = true;
+				}
+
+				ImGui::EndHorizontal();
+
 				if( PopupModified )
 				{
+					m_NewClassName = "";
+					m_SelectedMetadata = nullptr;
+					// I like the idea of saving what the last choice was so for now we wont reset it.
+//					m_OpenIDEAfterNewClass = false;
 					m_OpenScriptsPopup = false;
-
 					ImGui::CloseCurrentPopup();
 				}
 
@@ -1011,7 +1050,7 @@ namespace Saturn {
 					PrefabSerialiser ps;
 					ps.Serialise( prefab );
 
-					prefabAsset = prefab;
+					prefabAsset->SetAbsolutePath( path );
 					AssetManager::Get().Save();
 
 					PopupModified = true;

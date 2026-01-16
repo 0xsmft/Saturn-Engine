@@ -72,6 +72,7 @@ static inline EventCategory GetStaticCategory() { return EventCategory::Category
 		EntitySelected,
 		EntityDeselected,
 		CBOpenFile,
+		RqOpenIDE,
 
 		//////////////////////////////////////////////////////////////////////////
 		// Runtime

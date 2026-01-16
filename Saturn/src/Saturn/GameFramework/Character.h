@@ -92,11 +92,9 @@ namespace Saturn {
 		glm::vec3 CalculateForward();
 
 	private:
-		void HandleMovement() {}
-		void HandleRotation( Timestep ts );
-
 		glm::vec2 m_MovementDirection{};
 		glm::vec2 m_LastMousePos{};
+		glm::vec3 m_Velocity{};
 
 		float m_MouseUpMovement = 0.0f;
 		float m_MouseSensitivity = 0.0f;

@@ -18,6 +18,9 @@ namespace SaturnBuildTool
         // The name of this Target
         public string Name = null;
 
+        // The name of the parent, use null to show that it has no parent.
+        public string ParentName = null;
+
         public List<string> SourcePaths = new List<string>();
 
         // Should this module be compiled in directly to the Target.

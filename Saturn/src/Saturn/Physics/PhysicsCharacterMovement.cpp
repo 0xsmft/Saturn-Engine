@@ -70,6 +70,11 @@ namespace Saturn {
 	void PhysicsCharacterMovement::CreateController( PhysicsScene* pScene, const glm::vec3& rOriginPosition )
 	{
 		Ref<PhysicsMaterialAsset> materialAsset = GetMaterial( m_MaterialID );
+		if( materialAsset == nullptr )
+		{
+			// Memory only asset
+			materialAsset = Ref<PhysicsMaterialAsset>::Create( 1.0f, 1.0f, 0.5f );
+		}
 
 		physx::PxCapsuleControllerDesc desc;
 		desc.height = m_Height;

@@ -28,6 +28,8 @@ namespace SaturnBuildTool
         public string RootDirectory { get; set; }
 
         public string SourceDir { get; set; }
+        
+        public string SourceRootDir { get; set; }
 
         // The directory where the "Build" folder are located.
         public string BuildDir { get; set; }
@@ -74,7 +76,7 @@ namespace SaturnBuildTool
             if( CommandLineParser.Instance.HasArgument( "SRC" ) )
             {
                 // Source dir passed in from the CLI is relative to the .sln file / .sproject file
-                SourceDir = Path.Combine( RootDirectory, CommandLineParser.Instance.FindValueFromKey( "SRC" ) );
+                SourceRootDir = SourceDir = Path.Combine( RootDirectory, CommandLineParser.Instance.FindValueFromKey( "SRC" ) );
 
                 if( Shared.Platform.PlatformType == PlatformType.Windows ) 
                 {
@@ -83,7 +85,7 @@ namespace SaturnBuildTool
             }
             else
             {
-                SourceDir = Path.Combine( RootDirectory, "Source" );
+                SourceRootDir = SourceDir = Path.Combine( RootDirectory, "Source" );
                 SourceDir = Path.Combine( SourceDir, Name );
             }
 

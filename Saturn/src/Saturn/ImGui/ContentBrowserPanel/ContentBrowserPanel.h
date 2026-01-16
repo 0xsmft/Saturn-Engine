@@ -158,5 +158,6 @@ namespace Saturn {
 		bool m_RenderCreateWindow = false;
 		bool m_ShowFolderPopupMenu = false;
 		bool m_WindowFocused = false;
+		bool m_OpenIDEAfterNewClass = false;
 	};
 }

@@ -108,7 +108,10 @@ namespace Saturn {
 
 	SharedPtr<Entity> Prefab::CreateFromEntity( SharedPtr<Entity> srcEntity )
 	{
-		SharedPtr<Entity> result = g_ActiveScene->CreateEntity();
+		CreateEntityParameters params{};
+		params.pClass = ( SClass* ) srcEntity->GetClass();
+
+		SharedPtr<Entity> result = g_ActiveScene->CreateEntity( params );
 		result->AddComponent<PrefabComponent>().AssetID = ID;
 		
 		auto& rc = srcEntity->GetComponent<RelationshipComponent>();
@@ -155,7 +158,10 @@ namespace Saturn {
 
 	SharedPtr<Entity> Prefab::PrefabToEntity( Ref<Scene> Scene )
 	{
-		SharedPtr<Entity> result = Scene->CreateEntity();
+		CreateEntityParameters params{};
+		params.pClass = ( SClass* ) m_Entity->GetClass();
+
+		SharedPtr<Entity> result = Scene->CreateEntity( params );
 		result->AddComponent<PrefabComponent>().AssetID = ID;
 
 		// Now we need to find the root entity of the prefab.

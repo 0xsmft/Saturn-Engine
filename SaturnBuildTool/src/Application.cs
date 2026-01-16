@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -327,6 +328,15 @@ namespace SaturnBuildTool
 
                 ModuleToFiles.Add( kv.Key, sourceFilesModule );
                 RecipeFiles.AddRange( headerFiles );
+            }
+
+            // Add {project-name}.Load.cpp file
+            string loadFilePath = Path.Combine( Shared.ProjectInfo.BuildDir, $"{Shared.ProjectInfo.Name}.Load.cpp" );
+            if( File.Exists( loadFilePath ) )
+            {
+                // Add it to the first module, a bit screwy!
+                var first = ModuleToFiles.Keys.First();
+                ModuleToFiles[ first ].Add( loadFilePath );
             }
 
             /*

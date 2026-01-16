@@ -108,13 +108,13 @@ namespace Saturn {
 			}
 
 			// TODO:
-			pos = fileData.find( "__SUPER_CLASS_H_PATH__" );
-			while( pos != std::string::npos )
-			{
+//			pos = fileData.find( "__SUPER_CLASS_H_PATH__" );
+//			while( pos != std::string::npos )
+//			{
 //				fileData.replace( pos, 22, pSelectedClass->GetHeaderPath().string() );
 
-				pos = fileData.find( "__SUPER_CLASS_H_PATH__" );
-			}
+//				pos = fileData.find( "__SUPER_CLASS_H_PATH__" );
+//			}
 
 			std::ofstream fout( rFile );
 			fout << fileData;

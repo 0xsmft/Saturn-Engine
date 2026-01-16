@@ -100,7 +100,7 @@ namespace SaturnBuildTool
             Args.Add( $" /LIBPATH:\"{LinkSettings.IntermediateDirectory}\"" );
 
             // Options from Linker Settings
-            if( LinkSettings.RemoveUnreferncedFunctions )
+            if( LinkSettings.RemoveUnreferencedFunctions )
             {
                 Args.Add( " /OPT:NOREF" );
             }

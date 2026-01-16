@@ -1,4 +1,5 @@
 -- Game Project premake template.
+-- __PROJECT_NAME__
 
 workspace "__PROJECT_NAME__"
 	architecture "x64"
@@ -12,15 +13,17 @@ IncludeDir = {}
 
 -- NOTE SATURN_DIR environment variable always points to the root dir of Saturn
 local SaturnDir = os.getenv('SATURN_DIR')
+-- Now, replace the "//" with "/"
 SaturnDir = SaturnDir:gsub( "\\", "/" )
 
--- Engine
+-- NOTE: This acts as the Saturn Engine module!
 group "Engine"
 project "Saturn"
 	kind "Makefile"
 	language "C++"
 	cppdialect "C++23"
 	staticruntime "on"
+	location "Build"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
@@ -44,21 +47,22 @@ project "__PROJECT_NAME__"
 	language "C++"
 	cppdialect "C++23"
 	staticruntime "on"
-
+	location "Build"
+	
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
 
 	files
 	{
-		"Source/**.h",
-		"Source/**.cpp",
-		"Source/**.cs"
+		"%{wks.location}/Source/**.h",
+		"%{wks.location}/Source/**.cpp",
+		"%{wks.location}/Source/**.cs"
 	}
 
 	removefiles 
 	{ 
-		"**.Gen.cpp", 
-		"**.Gen.h" 
+		"Generated/**.Gen.cpp", 
+		"Generated/**.Gen.h" 
 	}
 	
 	filter "system:windows"
@@ -68,23 +72,23 @@ project "__PROJECT_NAME__"
 			runtime "Debug"
 			symbols "on"
 
-			debugcommand ( SaturnDir .. "/bin/Release-windows-x86_64/Saturn-Editor/Saturn-Editor.exe" )
-			debugargs { "%{prj.location}/%{prj.name}.sproject" }
+			debugcommand ( SaturnDir .. "/bin/Debug-windows-x86_64/Saturn-Editor/Saturn-Editor.exe" )
+			debugargs { "%{wks.location}/%{prj.name}.sproject" }
 			debugdir ( SaturnDir .. "/Saturn-Editor" )
 
 			buildcommands
 			{
-				"__SATURN_BT_DIR__Debug/RT/Run.bat /BUILD /NAME:%{prj.name} /Win64 /Debug /PROJECT:%{prj.location}"
+				SaturnDir .. "/bin/Debug-windows-x86_64/SaturnBuildTool/SaturnBuildTool.exe /BUILD /NAME:%{prj.name} /Win64 /Debug /PROJECT:%{wks.location}"
 			}
 
 			rebuildcommands 
 			{
-				"__SATURN_BT_DIR__Debug/RT/Run.bat /REBUILD /NAME:%{prj.name} /Win64 /Debug /PROJECT:%{prj.location}"
+				SaturnDir .. "/bin/Debug-windows-x86_64/SaturnBuildTool/SaturnBuildTool.exe /REBUILD /NAME:%{prj.name} /Win64 /Debug /PROJECT:%{wks.location}"
 			}
 
 			cleancommands
 			{
-				"__SATURN_BT_DIR__Debug/RT/Run.bat /CLEAN /NAME:%{prj.name} /Win64 /Debug /PROJECT:%{prj.location}"
+				SaturnDir .. "/bin/Debug-windows-x86_64/SaturnBuildTool/SaturnBuildTool.exe /CLEAN /NAME:%{prj.name} /Win64 /Debug /PROJECT:%{wks.location}"
 			}
 
 		filter "configurations:Release"
@@ -92,22 +96,22 @@ project "__PROJECT_NAME__"
 			optimize "on"
 
 			debugcommand ( SaturnDir .. "/bin/Release-windows-x86_64/Saturn-Editor/Saturn-Editor.exe" )
-			debugargs    { "%{prj.location}/%{prj.name}.sproject" }
+			debugargs    { "%{wks.location}/%{prj.name}.sproject" }
 			debugdir     ( SaturnDir .. "/Saturn-Editor" )
 
 			buildcommands
 			{
-				"__SATURN_BT_DIR__/SaturnBuildTool/RT/Run.bat /BUILD /NAME:%{prj.name} /Win64 /Release /PROJECT:%{prj.location}"
+				SaturnDir .. "/bin/Release-windows-x86_64/SaturnBuildTool/SaturnBuildTool.exe /BUILD /NAME:%{prj.name} /Win64 /Release /PROJECT:%{wks.location}"
 			}
 
 			rebuildcommands 
 			{
-				"__SATURN_BT_DIR__/RT/Run.bat /REBUILD /NAME:%{prj.name} /Win64 /Release /PROJECT:%{prj.location}"
+				SaturnDir .. "/bin/Release-windows-x86_64/SaturnBuildTool/SaturnBuildTool.exe /REBUILD /NAME:%{prj.name} /Win64 /Release /PROJECT:%{wks.location}"
 			}
 
 			cleancommands
 			{
-				"__SATURN_BT_DIR__/RT/Run.bat /CLEAN /NAME:%{prj.name} /Win64 /Release /PROJECT:%{prj.location}"
+				SaturnDir .. "/bin/Release-windows-x86_64/SaturnBuildTool/SaturnBuildTool.exe /CLEAN /NAME:%{prj.name} /Win64 /Release /PROJECT:%{wks.location}"
 			}
 
 		filter "configurations:Dist"
@@ -116,15 +120,15 @@ project "__PROJECT_NAME__"
 
 			buildcommands
 			{
-				"__SATURN_BT_DIR__RT/Run.bat /BUILD /NAME:%{prj.name} /Win64 /Dist /PROJECT:%{prj.location}"
+				SaturnDir .. "/bin/Dist-windows-x86_64/SaturnBuildTool/SaturnBuildTool.exe /BUILD /NAME:%{prj.name} /Win64 /Dist /PROJECT:%{wks.location}"
 			}
 
 			rebuildcommands 
 			{
-				"__SATURN_BT_DIR__RT/Run.bat /REBUILD /NAME:%{prj.name} /Win64 /Dist /PROJECT:%{prj.location}"
+				SaturnDir .. "/bin/Dist-windows-x86_64/SaturnBuildTool/SaturnBuildTool.exe /REBUILD /NAME:%{prj.name} /Win64 /Dist /PROJECT:%{wks.location}"
 			}
 
 			cleancommands
 			{
-				"__SATURN_BT_DIR__RT/Run.bat /CLEAN /NAME:%{prj.name} /Win64 /Dist /PROJECT:%{prj.location}"
+				SaturnDir .. "/bin/Dist-windows-x86_64/SaturnBuildTool/SaturnBuildTool.exe /CLEAN /NAME:%{prj.name} /Win64 /Dist /PROJECT:%{wks.location}"
 			}

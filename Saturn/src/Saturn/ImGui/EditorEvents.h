@@ -181,4 +181,27 @@ namespace Saturn {
 		UUID m_AssetID;
 	};
 
+	//
+	// RequestOpenIDE
+	// 
+	// This event is triggered when some class wants to open the default IDE/text editor. It is an event because we don't want to introduce the TextEditors API into the Engine as there is no need to.
+	//
+	class RequestOpenIDEEvent : public Event
+	{
+		SAT_DEFINE_EVENT( RqOpenIDE, EC_Editor );
+	public:
+		// NOTE: COPY: We want to copy the path because it is assumed that by the time the Application gets to this event the original path has been destroyed.
+		RequestOpenIDEEvent( const std::filesystem::path path )
+			: Event( EventType::RqOpenIDE, EC_Editor ), m_Path( path )
+		{
+		}
+
+		virtual ~RequestOpenIDEEvent() = default;
+
+		const std::filesystem::path& GetPath() const { return m_Path; }
+
+	private:
+		std::filesystem::path m_Path;
+	};
+
 }

@@ -15,7 +15,7 @@ namespace SaturnBuildTool
         /// <summary>
         /// If true: Adds /OPT:REF else /OPT:NOREF
         /// </summary>
-        public bool RemoveUnreferncedFunctions = false;
+        public bool RemoveUnreferencedFunctions = false;
 
         /// <summary>
         /// Adds /INCREMENTAL
@@ -83,7 +83,7 @@ namespace SaturnBuildTool
         }
 
         public LinkSettings(
-            bool removeUnreferncedFunctions,
+            bool removeUnreferencedFunctions,
             bool incrementalLink,
             bool debugLink,
             string outputPath,
@@ -95,7 +95,7 @@ namespace SaturnBuildTool
             List<string> links,
             List<string> dynamicBases )
         {
-            RemoveUnreferncedFunctions = removeUnreferncedFunctions;
+            RemoveUnreferencedFunctions = removeUnreferencedFunctions;
             IncrementalLink = incrementalLink;
             DebugLink = debugLink;
             OutputPath = outputPath;

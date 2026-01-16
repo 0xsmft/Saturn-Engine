@@ -249,7 +249,7 @@ namespace Saturn {
 		rootDir /= "bin";
 
 		rootDir /= std::format( "{0}-{1}", Application::Get().GetCurrentConfigName(), SAT_PLATFORM_BINARY_FOLDER );
-		rootDir /= "Saturn";
+		rootDir /= m_Config.Name;
 
 		return rootDir;
 	}
@@ -314,7 +314,7 @@ namespace Saturn {
 	{
 		const auto PremakePath = m_RootPath / "premake5.lua";
 
-		if( std::filesystem::exists( PremakePath ) || !force )
+		if( std::filesystem::exists( PremakePath ) && !force )
 			return;
 
 		std::filesystem::copy( "content/Templates/premake5.lua", PremakePath, std::filesystem::copy_options::overwrite_existing );
@@ -322,7 +322,6 @@ namespace Saturn {
 		std::ifstream ifs( PremakePath );
 
 		std::string fileData;
-
 		if( ifs )
 		{
 			ifs.seekg( 0, std::ios_base::end );
@@ -333,68 +332,74 @@ namespace Saturn {
 			fileData.assign( std::istreambuf_iterator<char>( ifs ), std::istreambuf_iterator<char>() );
 		}
 
-		size_t pos = fileData.find( "__SATURN_BIN_DIR__" );
-
+		size_t pos = fileData.find( "__PROJECT_NAME__" );
 		while( pos != std::string::npos )
 		{
-			std::filesystem::path rootDir = Auxiliary::GetEnvironmentVariable( "SATURN_DIR" );
-			rootDir /= "bin/";
-
-			rootDir /= std::format( "{0}-{1}", Application::Get().GetCurrentConfigName(), SAT_PLATFORM_BINARY_FOLDER );
-
-			auto rootDirString = rootDir.string();
-
-#if defined(SAT_PLATFORM_WINDOWS)
-			std::replace( rootDirString.begin(), rootDirString.end(), '\\', '/' );
-#endif
-
-			fileData.replace( pos, 18, rootDirString );
-
-			pos = fileData.find( "__SATURN_BIN_DIR__" );
-		}
-
-		pos = 0;
-		pos = fileData.find( "__PROJECT_NAME__" );
-
-		while( pos != std::string::npos )
-		{
-			fileData.replace( pos, 16, m_Config.Name.c_str() );
+			fileData.replace( pos, std::strlen( "__PROJECT_NAME__" ), m_Config.Name.c_str() );
 
 			pos = fileData.find( "__PROJECT_NAME__" );
-		}
-
-		pos = 0;
-		pos = fileData.find( "__SATURN_BT_DIR__" );
-
-		while( pos != std::string::npos )
-		{
-			std::filesystem::path rootDir = Auxiliary::GetEnvironmentVariable( "SATURN_DIR" );
-			rootDir /= "bin";
-			rootDir /= std::format( "{0}-{1}", Application::Get().GetCurrentConfigName(), SAT_PLATFORM_BINARY_FOLDER );
-			rootDir /= "SaturnBuildTool";
-
-			auto rootDirString = rootDir.string();
-			
-#if defined(SAT_PLATFORM_WINDOWS)
-			std::replace( rootDirString.begin(), rootDirString.end(), '\\', '/' );
-#endif
-
-			fileData.replace( pos, 17, rootDirString );
-
-			pos = fileData.find( "__SATURN_BT_DIR__" );
 		}
 
 		std::ofstream fout( PremakePath );
 		fout << fileData;
 	}
 
-	void Project::CreateBuildFile( bool force ) const
+	void Project::CopyCSharpTargetFiles( bool force ) const
 	{
+		// Copy over the development target file.
 		auto BuildFilePath = GetRootDir() / "Source";
-		BuildFilePath /= m_Config.Name + ".Build.cs";
+		BuildFilePath /= m_Config.Name + ".Development.cs";
 
 		if( !std::filesystem::exists( BuildFilePath ) || force )
-			std::filesystem::copy( "content/Templates/%PROJECT_NAME%.Build.cs", BuildFilePath, std::filesystem::copy_options::overwrite_existing );
+			std::filesystem::copy( "content/Templates/%PROJECT_NAME%.Development.cs", BuildFilePath, std::filesystem::copy_options::overwrite_existing );
+
+		ReplaceProjectNameTokens( BuildFilePath );
+
+		// Copy over the distribution target file.
+		BuildFilePath = GetRootDir() / "Source";
+		BuildFilePath /= m_Config.Name + ".Dist.cs";
+
+		if( !std::filesystem::exists( BuildFilePath ) || force )
+			std::filesystem::copy( "content/Templates/%PROJECT_NAME%.Dist.cs", BuildFilePath, std::filesystem::copy_options::overwrite_existing );
+
+		ReplaceProjectNameTokens( BuildFilePath );
+
+		// Copy over the module file.
+		BuildFilePath = GetRootDir() / "Source";
+		BuildFilePath /= m_Config.Name + ".Module.cs";
+
+		if( !std::filesystem::exists( BuildFilePath ) || force )
+			std::filesystem::copy( "content/Templates/%PROJECT_NAME%.Module.cs", BuildFilePath, std::filesystem::copy_options::overwrite_existing );
+		
+		ReplaceProjectNameTokens( BuildFilePath );
+	}
+
+	void Project::ReplaceProjectNameTokens( const std::filesystem::path& rPath ) const
+	{
+		std::ifstream ifs( rPath );
+
+		std::string fileData;
+		if( ifs )
+		{
+			ifs.seekg( 0, std::ios_base::end );
+			auto size = static_cast< size_t >( ifs.tellg() );
+			ifs.seekg( 0, std::ios_base::beg );
+
+			fileData.reserve( size );
+			fileData.assign( std::istreambuf_iterator<char>( ifs ), std::istreambuf_iterator<char>() );
+		}
+
+		const std::string projectName = m_Config.Name;
+
+		size_t pos = fileData.find( "%PROJECT_NAME%" );
+		while( pos != std::string::npos )
+		{
+			fileData.replace( pos, std::strlen( "%PROJECT_NAME%" ), projectName );
+			pos = fileData.find( "%PROJECT_NAME%" );
+		}
+
+		std::ofstream fout( rPath );
+		fout << fileData;
 	}
 
 	void Project::PrepForDist() const

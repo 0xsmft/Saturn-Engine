@@ -122,12 +122,6 @@ namespace Saturn {
 
 		ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 0.0f, 0.0f ) );
 
-		if( ImGui::IsMouseClicked( ImGuiMouseButton_Left ) || ( ImGui::IsMouseClicked( ImGuiMouseButton_Right ) && !m_StartedRightClickInViewport ) )
-		{
-			ImGui::FocusWindow( GImGui->HoveredWindow );
-			Input::Get().SetCursorMode( RubyCursorMode::Normal );
-		}
-
 		// Viewport
 		const ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse;
 

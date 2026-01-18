@@ -43,11 +43,29 @@ namespace Saturn {
 	PhysicsCharacterMovement::PhysicsCharacterMovement( AssetID materialAsset, float height, float radius )
 		: m_MaterialID( materialAsset ), m_Height( height ), m_Radius( radius )
 	{
+		m_Gravity = glm::length( glm::vec3{ 0.0f, -9.81f, 0.0f } );
 	}
 
 	PhysicsCharacterMovement::~PhysicsCharacterMovement()
 	{
 		PHYSX_TERMINATE_ITEM( m_pController );
+	}
+
+	void PhysicsCharacterMovement::OnUpdate( Timestep ts )
+	{
+		glm::vec3 displacement = m_Displacement - Auxiliary::PxToGLM( m_pController->getUpDirection() ) * m_DownSpeed * ts.Seconds();
+
+		m_DownSpeed += m_Gravity * ts.Seconds();
+
+		physx::PxControllerFilters filters;
+		const auto flags = m_pController->move( Auxiliary::GLMToPx( displacement ), 0.0, ts.Seconds(), filters );
+
+		m_CollisionFlags = ( PhysicsControllerCollisionFlag ) ( physx::PxU8 ) flags;
+
+		if( IsGrounded() )
+			m_DownSpeed = m_Gravity * 0.01f;
+
+		m_Displacement = {};
 	}
 
 	static Ref<PhysicsMaterialAsset> GetMaterial( AssetID materialID )
@@ -90,12 +108,14 @@ namespace Saturn {
 		m_pController = pScene->GetControllerManager()->createController( desc );
 	}
 
-	PhysicsControllerCollisionFlag PhysicsCharacterMovement::Move( const glm::vec3& rDisplacement, float minDistance, float ts )
+	void PhysicsCharacterMovement::Move( const glm::vec3& rDisplacement )
 	{
-		physx::PxControllerFilters filters;
-		const auto flags = m_pController->move( Auxiliary::GLMToPx( rDisplacement ), minDistance, ts, filters );
-		
-		return ( PhysicsControllerCollisionFlag ) ( physx::PxU8 ) flags;
+		m_Displacement += rDisplacement;
+	}
+
+	void PhysicsCharacterMovement::Jump( float pwr )
+	{
+		m_DownSpeed = -1.0f * pwr;
 	}
 
 	void PhysicsCharacterMovement::Teleport( const glm::vec3& rPosition )
@@ -103,9 +123,15 @@ namespace Saturn {
 		m_pController->setPosition( physx::PxExtendedVec3( rPosition.x, rPosition.y, rPosition.z ) );
 	}
 
+	bool PhysicsCharacterMovement::IsGrounded() const
+	{
+		return m_CollisionFlags & PhysControllerCollision_Down;
+	}
+
 	glm::vec3 PhysicsCharacterMovement::GetPosition() const
 	{
 		const auto& pos = m_pController->getPosition();
 		return glm::vec3( pos.x, pos.y, pos.z );
 	}
+
 }

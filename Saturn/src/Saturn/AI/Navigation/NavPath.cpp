@@ -91,6 +91,8 @@ namespace Saturn {
 
 		if( dtStatusSucceed( status ) && straightPathCount > 0 )
 		{
+			m_PathPoints.clear();
+
 			m_PathPoints.reserve( straightPathCount );
 
 			for( size_t i = 0; i < straightPathCount; i++ )
@@ -126,25 +128,6 @@ namespace Saturn {
 
 		InvalidatePath();
 		return CreatePath();
-	}
-
-	void NavPath::DebugDraw()
-	{
-		if( !m_IsLive )
-			return;
-
-		/*
-		const glm::vec4 pathColor  = glm::vec4( 1.0f, 1.0f, 0.0f, 1.0f );
-
-		for( size_t i = 0; i < m_PathPoints.size() - 1; i++ )
-		{
-			const glm::vec3& rPathA = m_PathPoints[ i ];
-			const glm::vec3& rPathB = m_PathPoints[ i + 1 ];
-
-			Renderer2D::Get().SubmitLine( rPathA, rPathB, pathColor );
-			Renderer2D::Get().SubmitDiamond( rPathB, 0.75f, pathColor );
-		}
-		*/
 	}
 
 	//////////////////////////////////////////////////////////////////////////

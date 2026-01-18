@@ -71,8 +71,6 @@ namespace Saturn {
 		// Change the path to a completely different start and end point.
 		[[nodiscard]] bool RetargetPath( const glm::vec3& rTo, const glm::vec3& rFrom );
 
-		void DebugDraw();
-
 	public:
 		static void Serialise( const NavPath& rObject, std::ofstream& rStream );
 		static void Deserialise(     NavPath& rObject, std::istream& rStream );

@@ -130,35 +130,36 @@ namespace Saturn {
 		////
 
 		TransformComponent& tc = GetComponent<TransformComponent>();
+		CharacterMovementComponent& rMovementComp = GetComponent<CharacterMovementComponent>();
+		auto* pController = rMovementComp.CharacterMovement;
 
-		glm::vec3 right, forward;
-		right = CalculateRight();
-		forward = CalculateForward();
-
-		glm::vec3 direction = right * m_MovementDirection.x + forward * m_MovementDirection.y;
-		direction.y = 0.0f;
-
-		if( glm::length( direction ) > 0.0f )
+		if( pController->IsGrounded() )
 		{
-			direction = glm::normalize( direction );
+			glm::vec3 right, forward;
+			right = CalculateRight();
+			forward = CalculateForward();
+
+			glm::vec3 direction = right * m_MovementDirection.x + forward * m_MovementDirection.y;
+			direction.y = 0.0f;
+
+			if( glm::length( direction ) > 0.0f )
+			{
+				direction = glm::normalize( direction );
+			}
+
+			const glm::vec3 displacement = ( direction * 5.0f ) * ts.Seconds();
+			pController->Move( displacement );
+
+			m_LastMovement = displacement / ts.Seconds();
+
+			if( GetComponent<AudioListenerComponent>().Primary )
+			{
+				AudioSystem::Get().SetPrimaryListenerDirection( forward );
+			}
 		}
-
-		m_Velocity.y += -9.81f * ts.Seconds();
-
-		const glm::vec3 displacement = ( direction * 5.0f + m_Velocity ) * ts.Seconds();
-		
-		auto& rComp = GetComponent<CharacterMovementComponent>();
-		const PhysicsControllerCollisionFlag flags = rComp.CharacterMovement->Move( displacement, 0.001f, ts.Seconds() );
-
-		tc.Position = rComp.CharacterMovement->GetPosition();
-
-		const bool grounded = flags & PhysControllerCollision_Down;
-		if( grounded && m_Velocity.y < 0.0f )
-			m_Velocity.y = 0.0f;
-
-		if( GetComponent<AudioListenerComponent>().Primary )
+		else
 		{
-			AudioSystem::Get().SetPrimaryListenerDirection( forward );
+			pController->Move( m_LastMovement * ts.Seconds() );
 		}
 
 		if( Input::Get().GetCursorMode() == RubyCursorMode::Locked )

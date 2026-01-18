@@ -214,7 +214,7 @@ namespace Saturn {
 		if( IsRuntimeRunning() ) 
 		{
 			// Simulate the physics scene.
-			m_PhysicsScene->Update( ts );
+			m_PhysicsScene->Simulate( ts );
 			OnUpdatePhysics( ts );
 
 			for( auto&& [id, entity] : m_EntityIDMap )
@@ -241,16 +241,29 @@ namespace Saturn {
 		}
 
 		auto rigidBodies = GetAllEntitiesWith<RigidbodyComponent>();
-		for( auto& entity : rigidBodies )
+		for( auto& rEntity : rigidBodies )
 		{
-			auto& rb = entity->GetComponent<RigidbodyComponent>();
+			auto& rb = rEntity->GetComponent<RigidbodyComponent>();
 		
 			if( !rb.Rigidbody )
 			{
-				m_PhysicsScene->InitialiseNewBody( entity, rb );
+				m_PhysicsScene->InitialiseNewBody( rEntity, rb );
 			}
 			
 			rb.Rigidbody->SyncTransfrom();
+		}
+
+		auto charControllers = GetAllEntitiesWith<CharacterMovementComponent>();
+		for( auto& rEntity : charControllers )
+		{
+			auto* pController = rEntity->GetComponent<CharacterMovementComponent>().CharacterMovement;
+			if( pController )
+			{
+				pController->OnUpdate( ts );
+
+				// SyncTransform
+				rEntity->GetComponent<TransformComponent>().Position = pController->GetPosition();
+			}
 		}
 	}
 
@@ -1048,10 +1061,11 @@ namespace Saturn {
 			auto& rComp = entity->GetComponent<BehaviourTreeComponent>();
 			if( rComp.BehaviourTreeAssetID == 0 ) continue;
 
-			SAT_CORE_ASSERT( entity->GetClass() == AIAgentEntity::StaticClass(), "Wrong class type for an entity with a behaviour tree component!" );
-
-			auto agent = entity.As<AIAgentEntity>();
-			agent->StartBehaviourTree( rComp.BehaviourTreeAssetID );
+			if( entity->GetClass()->IsChildOf( AIAgentEntity::StaticClass() ) )
+			{
+				auto agent = entity.As<AIAgentEntity>();
+				agent->StartBehaviourTree( rComp.BehaviourTreeAssetID );
+			}
 		}
 	}
 

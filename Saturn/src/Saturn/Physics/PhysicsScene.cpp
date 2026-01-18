@@ -141,7 +141,7 @@ namespace Saturn {
 		}
 	}
 
-	void PhysicsScene::Update( Timestep ts )
+	void PhysicsScene::Simulate( Timestep ts )
 	{
 		SAT_PF_EVENT();
 

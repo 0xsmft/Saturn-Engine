@@ -118,7 +118,12 @@ namespace Saturn {
 		SAT_CORE_INFO( "=====================================" );
 
 		dtNavMesh* pNavMesh = dtAllocNavMesh();
-		DT_CHECK( pNavMesh->init( &header.NavMeshParams ) );
+		if( const auto result = pNavMesh->init( &header.NavMeshParams ); result != DT_SUCCESS ) 
+		{
+			std::string errorCode = Auxiliary::DetourErrorToString( result );
+			SAT_CORE_INFO( "[Detour] Detour status check failed! STATUS/{0}", errorCode );
+			return nullptr;
+		}
 
 		// Read tiles
 		for( int i = 0; i < header.TileCount; i++ )

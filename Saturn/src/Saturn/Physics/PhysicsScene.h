@@ -53,7 +53,7 @@ namespace Saturn {
 		~PhysicsScene();
 
 		void CreateScene();
-		void Update( Timestep ts );
+		void Simulate( Timestep ts );
 
 		[[nodiscard]] bool Raycast( const glm::vec3& rOrigin, const glm::vec3& rDirection, float maxDistance, RaycastHitResult* pOut );
 

@@ -37,6 +37,7 @@ namespace Saturn {
 
 	enum PhysicsControllerCollisionFlag
 	{
+		PhysControllerCollision_None  = 0,
 		PhysControllerCollision_Sides = BIT( 0 ),
 		PhysControllerCollision_Up    = BIT( 1 ),
 		PhysControllerCollision_Down  = BIT( 2 )
@@ -50,19 +51,33 @@ namespace Saturn {
 
 		void CreateController( PhysicsScene* pScene, const glm::vec3& rOriginPosition );
 
-		PhysicsControllerCollisionFlag Move( const glm::vec3& rDisplacement, float minDistance, float ts );
+		void OnUpdate( Timestep ts );
+
+	public:
 		void Teleport( const glm::vec3& rPosition );
+		void Move( const glm::vec3& rDisplacement );
+		void Jump( float pwr );
 
 	public:
 		physx::PxController* GetController() { return m_pController; }
 		const physx::PxController* GetController() const { return m_pController; }
 
+		PhysicsControllerCollisionFlag GetFlags() const { return m_CollisionFlags; }
+
+		[[nodiscard]] bool IsGrounded() const;
+
 		glm::vec3 GetPosition() const;
 
 	private:
-		AssetID m_MaterialID = 0;
-		float m_Height = 0.0f, m_Radius = 0.0f;
 		physx::PxController* m_pController = nullptr;
+		AssetID m_MaterialID = 0;
+
+		glm::vec3 m_Displacement{};
+		float m_Height = 0.0f, m_Radius = 0.0f;
+		PhysicsControllerCollisionFlag m_CollisionFlags = PhysControllerCollision_None;
+
+		float m_DownSpeed = 0.0f;
+		float m_Gravity = {};
 	};
 
 }

@@ -77,16 +77,20 @@ namespace Saturn {
 
 			const auto pathPoints = rPath->GetPoints();
 
-			// Origin point.
-			pRenderer2D->SubmitDiamond( pathPoints[ 0 ], 0.75f, glm::vec4( 1.0f, 0.0f, 0.0f, 1.0f ) );
-
-			for( size_t i = 0; i < pathPoints.size() - 1; i++ )
+			if( pathPoints.size() )
 			{
-				const glm::vec3& rThisPoint = pathPoints[ i ];
-				const glm::vec3& rNextPoint = pathPoints[ i + 1 ];
+				// Origin point.
+				pRenderer2D->SubmitDiamond( pathPoints[ 0 ], 0.75f, glm::vec4( 1.0f, 0.0f, 0.0f, 1.0f ) );
 
-				pRenderer2D->SubmitLine( rThisPoint, rNextPoint, pathColor );
-				pRenderer2D->SubmitDiamond( rNextPoint, 0.75f, pathColor );
+				for( size_t i = 0; i < pathPoints.size() - 1; i++ )
+				{
+					const glm::vec3& rThisPoint = pathPoints[ i ];
+					const glm::vec3& rNextPoint = pathPoints[ i + 1 ];
+
+					pRenderer2D->SubmitLine( rThisPoint, rNextPoint, pathColor );
+					pRenderer2D->SubmitDiamond( rNextPoint, 0.75f, pathColor );
+				}
+
 			}
 		}
 	}

@@ -94,7 +94,7 @@ namespace Saturn {
 	private:
 		glm::vec2 m_MovementDirection{};
 		glm::vec2 m_LastMousePos{};
-		glm::vec3 m_Velocity{};
+		glm::vec3 m_LastMovement{};
 
 		float m_MouseUpMovement = 0.0f;
 		float m_MouseSensitivity = 0.0f;

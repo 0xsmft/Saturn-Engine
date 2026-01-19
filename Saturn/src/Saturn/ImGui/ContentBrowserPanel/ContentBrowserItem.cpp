@@ -258,113 +258,22 @@ namespace Saturn {
 
 			HandleDragDrop();
 
-			if( Open && m_Asset )
+			if( Open )
 			{
-				switch( m_Asset->Type )
+				switch( m_Type )
 				{
-					case AssetType::Texture:
+					case ContentBrowserItemType::Asset:
 					{
-						const auto viewer = Ref<TextureViewer>::Create( m_Asset->ID );
-						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+						HandleOpenAsset();
 					} break;
 
-					case AssetType::StaticMesh:
+					case ContentBrowserItemType::SourceItem:
 					{
-						const auto viewer = Ref<StaticMeshAssetViewer>::Create( m_Asset->ID );
-						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+						HandleOpenSourceItem();
 					} break;
 
-					case AssetType::SkeletalMesh: 
-					{
-						const auto viewer = Ref<SkeletalMeshAssetViewer>::Create( m_Asset->ID );
-						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
-					} break;
-
-					case AssetType::Material:
-					{
-						// Importing the asset will happen in this function.
-						const auto viewer = Ref<MaterialAssetViewer>::Create( m_Asset->ID );
-						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
-					} break;
-					case AssetType::MaterialInstance:
-						break;
-
-					case AssetType::Prefab:
-					{
-						const auto viewer = Ref<PrefabViewer>::Create( m_Asset->ID );
-						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
-					} break;
-
-					case AssetType::PhysicsMaterial:
-					{
-						const auto viewer = Ref<PhysicsMaterialAssetViewer>::Create( m_Asset->ID );
-						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
-					} break;
-
-					case AssetType::Sound:
-					{
-						const auto viewer = Ref<SoundAssetViewer>::Create( m_Asset->ID );
-						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
-					} break;
-
-					case AssetType::GraphSound: 
-					{
-						const auto viewer = Ref<GraphSoundAssetViewer>::Create( m_Asset->ID );
-						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
-					} break;
-
-					case AssetType::BehaviourTree:
-					{
-						const auto viewer = Ref<BehaviourTreeAssetViewer>::Create( m_Asset->ID );
-						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
-					} break;
-
-					case AssetType::BehaviourTreeMemory:
-					{
-						const auto viewer = Ref<BehaviourTreeMemoryAssetViewer>::Create( m_Asset->ID );
-						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
-					} break;
-
-					case AssetType::Skeleton: 
-					{
-						const auto viewer = Ref<SkeletonAssetViewer>::Create( m_Asset->ID );
-						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
-					} break;
-
-					case AssetType::SkeletalAnimation:
-					{
-						const auto viewer = Ref<SkeletalAnimationAssetViewer>::Create( m_Asset->ID );
-						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
-					} break;
-
-					case AssetType::AnimationController:
-					{
-						const auto viewer = Ref<AnimationControllerAssetViewer>::Create( m_Asset->ID );
-						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
-					} break;
-
-					case AssetType::Scene:
-					{
-						// Scenes have to handled via an event because this class does not have the ability to switch scenes.
-						Application::Get().DispatchEvent<CBOpenFileEvent>( m_Asset->ID );
-					} break;
-
-					case AssetType::Font: 
-					{
-						const auto viewer = Ref<AluraFontAssetViewer>::Create( m_Asset->ID );
-						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
-					} break;
-
-					case AssetType::StyleProfile:
-					{
-						const auto viewer = Ref<AluraStylingProfileAssetViewer>::Create( m_Asset->ID );
-						ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
-					} break;
-
-					case AssetType::Unknown:
-					case AssetType::COUNT:
+					case ContentBrowserItemType::Directory:
 					default:
-						SAT_CORE_WARN( "Unhandled type for double click on Content Browser Item!" );
 						break;
 				}
 			}
@@ -595,6 +504,127 @@ namespace Saturn {
 	void ContentBrowserItem::ScrollTo()
 	{
 		m_PendingScrollTo = true;
+	}
+
+	void ContentBrowserItem::HandleOpenAsset()
+	{
+		if( !m_Asset )
+			return;
+
+		switch( m_Asset->Type )
+		{
+			case AssetType::Texture:
+			{
+				const auto viewer = Ref<TextureViewer>::Create( m_Asset->ID );
+				ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+			} break;
+
+			case AssetType::StaticMesh:
+			{
+				const auto viewer = Ref<StaticMeshAssetViewer>::Create( m_Asset->ID );
+				ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+			} break;
+
+			case AssetType::SkeletalMesh:
+			{
+				const auto viewer = Ref<SkeletalMeshAssetViewer>::Create( m_Asset->ID );
+				ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+			} break;
+
+			case AssetType::Material:
+			{
+				// Importing the asset will happen in this function.
+				const auto viewer = Ref<MaterialAssetViewer>::Create( m_Asset->ID );
+				ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+			} break;
+			case AssetType::MaterialInstance:
+				break;
+
+			case AssetType::Prefab:
+			{
+				const auto viewer = Ref<PrefabViewer>::Create( m_Asset->ID );
+				ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+			} break;
+
+			case AssetType::PhysicsMaterial:
+			{
+				const auto viewer = Ref<PhysicsMaterialAssetViewer>::Create( m_Asset->ID );
+				ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+			} break;
+
+			case AssetType::Sound:
+			{
+				const auto viewer = Ref<SoundAssetViewer>::Create( m_Asset->ID );
+				ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+			} break;
+
+			case AssetType::GraphSound:
+			{
+				const auto viewer = Ref<GraphSoundAssetViewer>::Create( m_Asset->ID );
+				ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+			} break;
+
+			case AssetType::BehaviourTree:
+			{
+				const auto viewer = Ref<BehaviourTreeAssetViewer>::Create( m_Asset->ID );
+				ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+			} break;
+
+			case AssetType::BehaviourTreeMemory:
+			{
+				const auto viewer = Ref<BehaviourTreeMemoryAssetViewer>::Create( m_Asset->ID );
+				ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+			} break;
+
+			case AssetType::Skeleton:
+			{
+				const auto viewer = Ref<SkeletonAssetViewer>::Create( m_Asset->ID );
+				ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+			} break;
+
+			case AssetType::SkeletalAnimation:
+			{
+				const auto viewer = Ref<SkeletalAnimationAssetViewer>::Create( m_Asset->ID );
+				ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+			} break;
+
+			case AssetType::AnimationController:
+			{
+				const auto viewer = Ref<AnimationControllerAssetViewer>::Create( m_Asset->ID );
+				ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+			} break;
+
+			case AssetType::Scene:
+			{
+				// Scenes have to handled via an event because this class does not have the ability to switch scenes.
+				Application::Get().DispatchEvent<CBOpenFileEvent>( m_Asset->ID );
+			} break;
+
+			case AssetType::Font:
+			{
+				const auto viewer = Ref<AluraFontAssetViewer>::Create( m_Asset->ID );
+				ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+			} break;
+
+			case AssetType::StyleProfile:
+			{
+				const auto viewer = Ref<AluraStylingProfileAssetViewer>::Create( m_Asset->ID );
+				ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+			} break;
+
+			case AssetType::Unknown:
+			case AssetType::COUNT:
+			default:
+				SAT_CORE_WARN( "Unhandled type for double click on Content Browser Item!" );
+				break;
+		}
+	}
+
+	void ContentBrowserItem::HandleOpenSourceItem()
+	{
+#if !defined(SAT_DIST)
+		Application::Get().DispatchEvent<RequestOpenIDEEvent>( m_Path );
+#endif
 	}
 
 	void ContentBrowserItem::HandleDragDrop()

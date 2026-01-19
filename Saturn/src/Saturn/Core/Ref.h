@@ -59,6 +59,9 @@ namespace Saturn {
 	class RefTarget
 	{
 	public:
+		// Ensure this object has a vtable so all child object also do.
+		virtual ~RefTarget() = default;
+
 		inline void AddRef() const
 		{
 			++m_RefCount;

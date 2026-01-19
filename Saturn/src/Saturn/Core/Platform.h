@@ -30,7 +30,7 @@
 
 #if defined( SAT_PLATFORM_WINDOWS ) || defined(_WIN32)
 #include "WindowsPlatform.h"
-#elif defined( SAT_PLATFORM_LINUX ) || defined(__GNUC__) || defined(__linux)
+#elif defined( SAT_PLATFORM_LINUX ) || defined(__linux)
 #include "LinuxPlatform.h"
 #elif defined( SAT_PLATFORM_MACOS ) || defined( __APPLE__ ) || defined( __MACH__ ) // __darwin__ check?
 #include "MacOSPlatform.h"

@@ -29,7 +29,7 @@
 #pragma once
 
 #if defined(SAT_PLATFORM_HEADER_DEFINED)
-#error "SAT_PLATFORM_HEADER_DEFINED was defined before UnixPlatform.h was included, make sure there is not any other platform header included before the UnixPlatform header!"
+#error "SAT_PLATFORM_HEADER_DEFINED was defined before LinuxPlatform.h was included, make sure there is not any other platform header included before the LinuxPlatform header!"
 #endif
 
 //////////////////////////////////////////////////////////////////////////
@@ -37,24 +37,24 @@
 #define SAT_PLATFORM_HEADER_DEFINED 1
 
 // Standard defines
-#define SAT_NOVTABLE  
+#define SAT_NOVTABLE
 #define SAT_DLLEXPORT __attribute__((visibility("default")))
-#define SAT_DLLIMPORT 
+#define SAT_DLLIMPORT
 #define SAT_NOINLINE  __attribute__(("noinline"))
-// Windows only defines, however defined on all platforms for compatibility 
+// Windows only defines, however defined on all platforms for compatibility
 #define SAT_ALLOCATOR_ATTR __attribute__(("malloc"))
-#define SAT_PLATFORM_FRIENDLY_NAME "Unix"
+#define SAT_PLATFORM_FRIENDLY_NAME "Linux"
 
 // The vulkan surface extension name.
 #define SAT_PLATFORM_VULKAN_SURFACE_NAME "VK_KHR_xcb_surface"
 
 // We only support x86_64
 #if defined(_MSC_VER) && defined(_M_X64)
-#define SAT_PLATFORM_BINARY_FOLDER "Unix-x86_64"
+#define SAT_PLATFORM_BINARY_FOLDER "linux-x86_64"
 #elif defined(_MSC_VER) && defined(_M_ARM64)
-#define SAT_PLATFORM_BINARY_FOLDER "Unix-ARM64"
+#define SAT_PLATFORM_BINARY_FOLDER "linux-ARM64"
 #else
-#define SAT_PLATFORM_BINARY_FOLDER "Unix-ArchUnk"
+#define SAT_PLATFORM_BINARY_FOLDER "linux-ArchUnk"
 #endif
 
 // SAT_PLATFORM_LINUX is defined from CLI

@@ -61,6 +61,13 @@ namespace Saturn {
 
 	void NavigationSystem::Terminate()
 	{
+		for( auto* pPath : m_Paths )
+		{
+			delete pPath;
+		}
+
+		m_Paths.clear();
+
 		dtFreeNavMeshQuery( m_pNavMeshQuery );
 		m_pNavMeshQuery = nullptr;
 	}
@@ -95,24 +102,64 @@ namespace Saturn {
 		}
 	}
 
+	StraightNavPath* NavigationSystem::CreateStraightPath( const glm::vec3& rStart, const glm::vec3& rEnd, uint32_t maxPaths /*= 256 */ )
+	{
+		StraightNavPath* pPath = new StraightNavPath( rStart, rEnd, maxPaths );
+		return m_Paths.emplace_back( pPath );
+	}
+
+	void NavigationSystem::DestoryStraightPath( StraightNavPath* pPath )
+	{
+		if( std::find( m_Paths.begin(), m_Paths.end(), pPath ) != m_Paths.end() )
+		{
+			delete pPath;
+			pPath = nullptr;
+		}
+		else
+		{
+			// If you get this then you've either not registered the path with the Navigation system
+			// or you have not called CreateStraightPath...
+			SAT_CORE_ASSERT( false, "Path is unknown to the Navigation system!" );
+		}
+	}
+
 	//////////////////////////////////////////////////////////////////////////
+
+	uint32_t NavigationSystem::FindNearestPoly( const glm::vec3& rPosition, float* pNearestPoint )
+	{
+		dtQueryFilter filter;
+		filter.setIncludeFlags( NavigationMeshPolyFlag_All ^ NavigationMeshPolyFlag_Disabled );
+		filter.setExcludeFlags( 0 );
+		float polyPickExt[ 3 ] = { 2.0f, 4.0f, 2.0f };
+
+		dtPolyRef nearestPoly = DETOUR_NULLNAVNODE;
+		m_pNavMeshQuery->findNearestPoly( glm::value_ptr( rPosition ), polyPickExt, &filter, &nearestPoly, pNearestPoint );
+
+		return nearestPoly;
+	}
 
 	static float RcRandom()
 	{
 		return Random::RandomFloatInRange( 0.0f, 1.0f );
 	}
 
-	std::expected<glm::vec3, dtStatus> NavigationSystem::GetRandomPointInNavMesh( const glm::vec3& rOrigin, float maxRadius ) const
+	std::expected<glm::vec3, dtStatus> NavigationSystem::GetRandomPointInNavMesh( float maxRadius ) const
 	{
 		glm::vec3 dest{};
 
 		dtQueryFilter filter;
-		dtPolyRef randomRef;
+		dtPolyRef randomRef = DETOUR_NULLNAVNODE;
 
 		const auto status = m_pNavMeshQuery->findRandomPoint( &filter, RcRandom, &randomRef, glm::value_ptr( dest ) );
 		if( status != DT_SUCCESS )
 		{
 			return std::unexpected( status );
+		}
+
+		if( randomRef == DETOUR_NULLNAVNODE )
+		{
+			SAT_CORE_WARN( "[NavigationSystem/GetRandomPointInNavMesh] Random poly is outside of the NavMesh!" );
+			return std::unexpected( DT_FAILURE );
 		}
 
 		return dest;

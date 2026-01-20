@@ -29,7 +29,7 @@
 #pragma once
 
 #include "Saturn/Core/Ref.h"
-#include "NavPath.h"
+#include "StraightNavPath.h"
 
 #include <vector>
 #include <expected>
@@ -52,12 +52,18 @@ namespace Saturn {
 
 		void DebugDraw( Renderer2D* pRenderer2D );
 
-	public:
-		dtNavMeshQuery* GetNavMeshQuery() const { return m_pNavMeshQuery; }
-		void RegisterPath( NavPath* pPath ) { m_Paths.push_back( pPath ); }
+		// TODO: Use raw ptrs for now however change to Ref<> and return raw ptr.
+		StraightNavPath* CreateStraightPath( const glm::vec3& rStart, const glm::vec3& rEnd, uint32_t maxPaths = 256 );
+		void DestoryStraightPath( StraightNavPath* pPath );
 
 	public:
-		std::expected<glm::vec3, unsigned int> GetRandomPointInNavMesh( const glm::vec3& rOrigin, float maxRadius ) const;
+		dtNavMeshQuery* GetNavMeshQuery() const { return m_pNavMeshQuery; }
+		void RegisterPath( StraightNavPath* pPath ) { m_Paths.push_back( pPath ); }
+
+		uint32_t FindNearestPoly( const glm::vec3& rPosition, float* pNearestPoint );
+
+	public:
+		std::expected<glm::vec3, unsigned int> GetRandomPointInNavMesh( float maxRadius ) const;
 
 	private:
 		bool m_Initialised = false;
@@ -67,6 +73,6 @@ namespace Saturn {
 
 		dtNavMeshQuery* m_pNavMeshQuery = nullptr;
 
-		std::vector<NavPath*> m_Paths;
+		std::vector<StraightNavPath*> m_Paths;
 	};
 }

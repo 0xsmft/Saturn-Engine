@@ -33,6 +33,8 @@
 #define RC_CHECK( x ) Saturn::_rcCheckResult(x)
 #define DT_CHECK( x ) Saturn::_dtCheckResult(x)
 
+#define DETOUR_NULLNAVNODE 0
+
 namespace Saturn {
 
 	inline void _rcCheckResult( bool Result )

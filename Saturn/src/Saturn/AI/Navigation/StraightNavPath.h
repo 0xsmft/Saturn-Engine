@@ -33,17 +33,25 @@
 
 namespace Saturn {
 
-	// A navigation path from one poly to another
-	// The NavPath class does not preform any modification of a position
+	//
+	// StraightNavPath - A navigation path from one poly to another
+	// 
+	// In order to create a path call CreateStraightPath from the navigation system.
+	// To destroy a path make sure to call DestoryStraightPath
+	// You must you use the functions listed above because Path objects are owned by the navigation system.
+	// 
+	// The class does not preform any modifications to positions!
 	// It simply creates the path, and provides a way to get the current point and move onto the next path
-	// NavPath essentially wraps a detour straight path
-	// NavPaths have the ability to be Serialised, allowing for pre-baked paths
-	class NavPath
+	//
+	// StraightNavPath essentially wraps a detour straight path
+	// StraightNavPaths have the ability to be Serialised, allowing for pre-baked paths.
+	//
+	class StraightNavPath
 	{
 	public:
-		NavPath() = default;
-		NavPath( const glm::vec3& rTo, const glm::vec3& rFrom );
-		~NavPath();
+		StraightNavPath() = default;
+		StraightNavPath( const glm::vec3& rStart, const glm::vec3& rEnd, uint32_t maxPaths = 256 );
+		~StraightNavPath();
 
 		[[nodiscard]] bool CreatePath();
 		void InvalidatePath();
@@ -54,10 +62,10 @@ namespace Saturn {
 		[[nodiscard]] bool IsCompleted() const { return m_CurrentWaypoint == m_PathPoints.size(); }
 		[[nodiscard]] glm::vec3 GetCurrentWaypoint();
 		[[nodiscard]] const std::vector<glm::vec3> GetPoints() const { return m_PathPoints; }
-		[[nodiscard]] glm::vec3 GetStartingPoint() const { return m_From; }
-		[[nodiscard]] glm::vec3 GetEndPoint() const { return m_To; }
+		[[nodiscard]] glm::vec3 GetStartingPoint() const { return m_StartingCoord; }
+		[[nodiscard]] glm::vec3 GetEndPoint() const { return m_EndCoord; }
 
-		// Move onto the next waypoint index
+		// Move onto the next waypoint index.
 		inline void NextWaypoint()
 		{
 			++m_CurrentWaypoint;
@@ -69,18 +77,19 @@ namespace Saturn {
 		}
 
 		// Change the path to a completely different start and end point.
-		[[nodiscard]] bool RetargetPath( const glm::vec3& rTo, const glm::vec3& rFrom );
+		[[nodiscard]] bool RetargetPath( const glm::vec3& rStart, const glm::vec3& rEnd );
 
 	public:
-		static void Serialise( const NavPath& rObject, std::ofstream& rStream );
-		static void Deserialise(     NavPath& rObject, std::istream& rStream );
+		static void Serialise( const StraightNavPath& rObject, std::ofstream& rStream );
+		static void Deserialise(     StraightNavPath& rObject, std::istream& rStream );
 
 	private:
-		glm::vec3 m_To{};
-		glm::vec3 m_From{};
+		glm::vec3 m_StartingCoord{};
+		glm::vec3 m_EndCoord{};
 		
 		uint32_t m_CurrentWaypoint = 0;
 		bool m_IsLive = false;
+		uint32_t m_MaxPaths = 256;
 
 		std::vector<glm::vec3> m_PathPoints;
 	};

@@ -27,7 +27,7 @@
 */
 
 #include "sppch.h"
-#include "NavPath.h"
+#include "StraightNavPath.h"
 
 #include "Saturn/Scene/Scene.h"
 
@@ -35,96 +35,110 @@
 
 #include "Saturn/Vulkan/Renderer2D.h"
 
+#include <Detour/DetourCommon.h>
 #include <Detour/DetourNavMeshQuery.h>
 #include <glm/gtc/type_ptr.hpp>
 
 #include "RecastCore.h"
-
-#define DT_CHECK_AND_RETURN( x ) \
-{\
-unsigned int result = x; \
-if( dtStatusFailed( (result) ) ) \
-{ \
-	const std::string errorText = Auxiliary::DetourErrorToString( result ); \
-	SAT_CORE_INFO( "[NavPath] Detour operation failed! Error code was DETOUR ERROR/{0}", errorText ); \
-	return false; \
-}\
-}
+#include "RecastNavigationMeshBuilder.h"
 
 namespace Saturn {
 
-	NavPath::NavPath( const glm::vec3& rTo, const glm::vec3& rFrom )
-		: m_To( rTo ), m_From( rFrom )
+	StraightNavPath::StraightNavPath( const glm::vec3& rStart, const glm::vec3& rEnd, uint32_t maxPaths )
+		: m_StartingCoord( rStart ), m_EndCoord( rEnd ), m_MaxPaths( maxPaths )
 	{
 	}
 
-	NavPath::~NavPath()
+	StraightNavPath::~StraightNavPath()
 	{
 	}
 
-	bool NavPath::CreatePath()
+	bool StraightNavPath::CreatePath()
 	{
+		auto& rNavSystem = g_ActiveScene->GetNavigationSystem();
 		auto* pNavMeshQuery = g_ActiveScene->GetNavigationSystem().GetNavMeshQuery();
-		g_ActiveScene->GetNavigationSystem().RegisterPath( this );
 
-		dtQueryFilter filter;
-		dtPolyRef startPoly, endPoly;
-		float polyPickExt[ 3 ] = { 2.0f, 2.0f, 2.0f }; // Extent of the poly pick.
+		float outStartNearest[ 3 ];
+		dtPolyRef startPoly = startPoly = rNavSystem.FindNearestPoly( m_StartingCoord, outStartNearest );
+		if( startPoly == DETOUR_NULLNAVNODE )
+		{
+			SAT_CORE_WARN( "[NavPath] Starting poly is not on the nav mesh!" );
+			return false;
+		}
 
-		float outStartNearest[ 3 ], outEndNearest[ 3 ];
-		DT_CHECK_AND_RETURN( pNavMeshQuery->findNearestPoly( glm::value_ptr( m_From ), polyPickExt, &filter, &startPoly, outStartNearest ) );
-
-		DT_CHECK_AND_RETURN( pNavMeshQuery->findNearestPoly( glm::value_ptr( m_To ), polyPickExt, &filter, &endPoly, outEndNearest ) );
+		float outEndNearest[ 3 ];
+		dtPolyRef endPoly = rNavSystem.FindNearestPoly( m_EndCoord, outEndNearest );
+		if( endPoly == DETOUR_NULLNAVNODE )
+		{
+			SAT_CORE_WARN( "[NavPath] Ending poly is not on the nav mesh!" );
+			return false;
+		}
 
 		// Found the polys, build the actual path
 		dtPolyRef pathRefs[ 256 ];
 		int pathCount = 0;
 
-		DT_CHECK_AND_RETURN( pNavMeshQuery->findPath( startPoly, endPoly, outStartNearest, outEndNearest, &filter, pathRefs, &pathCount, 256 ) );
+		// TEMP: filter
+		dtQueryFilter filter;
+		filter.setIncludeFlags( NavigationMeshPolyFlag_All ^ NavigationMeshPolyFlag_Disabled );
+		filter.setExcludeFlags( 0 );
+		pNavMeshQuery->findPath( startPoly, endPoly, outStartNearest, outEndNearest, &filter, pathRefs, &pathCount, 256 );
 
-		float straightPath[ 256 * 3 ];
-		unsigned char straightPathFlags[ 256 ];
-		dtPolyRef straightPathPolys[ 256 ];
-		int straightPathCount = 0;
-
-		auto status = pNavMeshQuery->findStraightPath( outStartNearest, outEndNearest, pathRefs, pathCount, straightPath, straightPathFlags, straightPathPolys, &straightPathCount, 256 );
-
-		if( dtStatusSucceed( status ) && straightPathCount > 0 )
+		if( pathCount != 0 )
 		{
-			m_PathPoints.clear();
+			float straightPath[ 256 * 3 ];
+			unsigned char straightPathFlags[ 256 ];
+			dtPolyRef straightPathPolys[ 256 ];
+			int straightPathCount = 0;
 
-			m_PathPoints.reserve( straightPathCount );
-
-			for( size_t i = 0; i < straightPathCount; i++ )
+			float epos[ 3 ];
+			dtVcopy( epos, outEndNearest );
+			if( pathRefs[ 255 ] != endPoly )
 			{
-				float* pPath = &straightPath[ i * 3 ];
-				m_PathPoints.emplace_back( pPath[ 0 ], pPath[ 1 ], pPath[ 2 ] );
+				pNavMeshQuery->closestPointOnPoly( pathRefs[ 255 ], outEndNearest, epos, 0 );
 			}
-	
-			m_IsLive = true;
+
+			auto status = pNavMeshQuery->findStraightPath( outStartNearest, epos, pathRefs, pathCount, straightPath, straightPathFlags, straightPathPolys, &straightPathCount, 256, DT_STRAIGHTPATH_AREA_CROSSINGS );
+
+			if( dtStatusSucceed( status ) && straightPathCount > 0 )
+			{
+				m_PathPoints.clear();
+
+				m_PathPoints.reserve( straightPathCount );
+
+				for( size_t i = 0; i < straightPathCount; i++ )
+				{
+					float* pPath = &straightPath[ i * 3 ];
+					m_PathPoints.emplace_back( pPath[ 0 ], pPath[ 1 ], pPath[ 2 ] );
+				}
+
+				m_IsLive = true;
+			}
+			else
+				return false;
 		}
-		else
+		else 
 			return false;
 
 		return true;
 	}
 
-	void NavPath::InvalidatePath()
+	void StraightNavPath::InvalidatePath()
 	{
 		m_IsLive = false;
 		m_PathPoints.clear();
 		m_CurrentWaypoint = 0;
 	}
 
-	glm::vec3 NavPath::GetCurrentWaypoint()
+	glm::vec3 StraightNavPath::GetCurrentWaypoint()
 	{
 		return m_PathPoints.at( m_CurrentWaypoint );
 	}
 
-	bool NavPath::RetargetPath( const glm::vec3& rTo, const glm::vec3& rFrom )
+	bool StraightNavPath::RetargetPath( const glm::vec3& rStart, const glm::vec3& rEnd )
 	{
-		m_To = rTo;
-		m_From = rFrom;
+		m_StartingCoord = rStart;
+		m_EndCoord = rEnd;
 
 		InvalidatePath();
 		return CreatePath();
@@ -132,18 +146,18 @@ namespace Saturn {
 
 	//////////////////////////////////////////////////////////////////////////
 
-	void NavPath::Serialise( const NavPath& rObject, std::ofstream& rStream )
+	void StraightNavPath::Serialise( const StraightNavPath& rObject, std::ofstream& rStream )
 	{
-		RawSerialisation::WriteVec3( rObject.m_To, rStream );
-		RawSerialisation::WriteVec3( rObject.m_From, rStream );
+		RawSerialisation::WriteVec3( rObject.m_StartingCoord, rStream );
+		RawSerialisation::WriteVec3( rObject.m_EndCoord, rStream );
 
 		RawSerialisation::WriteVector( rObject.m_PathPoints, rStream );
 	}
 
-	void NavPath::Deserialise( NavPath& rObject, std::istream& rStream )
+	void StraightNavPath::Deserialise( StraightNavPath& rObject, std::istream& rStream )
 	{
-		RawSerialisation::ReadVec3( rObject.m_To, rStream );
-		RawSerialisation::ReadVec3( rObject.m_From, rStream );
+		RawSerialisation::ReadVec3( rObject.m_StartingCoord, rStream );
+		RawSerialisation::ReadVec3( rObject.m_EndCoord, rStream );
 
 		RawSerialisation::ReadVector( rObject.m_PathPoints, rStream );
 	}

@@ -97,7 +97,9 @@ namespace Saturn {
 		void Build( const RecastInputGeometry& rInputGeometry );
 		bool TryLoadFromCache( const std::filesystem::path& rPath );
 
-		void DebugDrawNavMesh();
+#if !defined(SAT_DIST)
+		void DebugDrawNavMesh( Renderer2D* pRenderer2D );
+#endif
 
 		dtNavMesh* GetNavMesh() const { return m_pNavMesh; }
 

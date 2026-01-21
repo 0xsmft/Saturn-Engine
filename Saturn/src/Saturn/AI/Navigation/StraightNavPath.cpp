@@ -60,7 +60,7 @@ namespace Saturn {
 
 		float outStartNearest[ 3 ];
 		dtPolyRef startPoly = startPoly = rNavSystem.FindNearestPoly( m_StartingCoord, outStartNearest );
-		if( startPoly == DETOUR_NULLNAVNODE )
+		if( startPoly == SAT_DETOUR_NULLNAVNODE )
 		{
 			SAT_CORE_WARN( "[NavPath] Starting poly is not on the nav mesh!" );
 			return false;
@@ -68,7 +68,7 @@ namespace Saturn {
 
 		float outEndNearest[ 3 ];
 		dtPolyRef endPoly = rNavSystem.FindNearestPoly( m_EndCoord, outEndNearest );
-		if( endPoly == DETOUR_NULLNAVNODE )
+		if( endPoly == SAT_DETOUR_NULLNAVNODE )
 		{
 			SAT_CORE_WARN( "[NavPath] Ending poly is not on the nav mesh!" );
 			return false;

@@ -41,6 +41,10 @@
 #include "Saturn/Vulkan/VertexBuffer.h"
 #include "Saturn/Vulkan/IndexBuffer.h"
 
+#if !defined(SAT_DIST)
+#include "Saturn/Vulkan/Renderer2D.h"
+#endif
+
 namespace Saturn {
 
 	NavBoundsEntity::NavBoundsEntity()
@@ -134,9 +138,9 @@ namespace Saturn {
 	}
 
 #if !defined(SAT_DIST)
-	void NavBoundsEntity::DebugDraw()
+	void NavBoundsEntity::DebugDraw( Renderer2D* pRenderer2D )
 	{
-		m_Builder.DebugDrawNavMesh();
+		m_Builder.DebugDrawNavMesh( pRenderer2D );
 	}
 #endif
 

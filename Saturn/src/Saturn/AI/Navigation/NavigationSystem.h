@@ -58,6 +58,7 @@ namespace Saturn {
 
 	public:
 		dtNavMeshQuery* GetNavMeshQuery() const { return m_pNavMeshQuery; }
+
 		void RegisterPath( StraightNavPath* pPath ) { m_Paths.push_back( pPath ); }
 
 		uint32_t FindNearestPoly( const glm::vec3& rPosition, float* pNearestPoint );

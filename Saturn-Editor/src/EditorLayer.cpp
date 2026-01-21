@@ -329,6 +329,11 @@ namespace Saturn {
 			else [[likely]]
 			{
 				m_RuntimeScene->OnRenderRuntime( time, m_SceneRenderer );
+
+				if( m_ShowNavMeshDebugRT )
+				{
+					m_RuntimeScene->GetNavigationSystem().DebugDraw( m_SceneRenderer->GetRenderer2D().Get() );
+				}
 			}
 
 			if( m_ShowCameraFrustum )
@@ -1029,8 +1034,9 @@ namespace Saturn {
 					if( SharedPtr<NavBoundsEntity> boundsEntity = rSelectedEntity.As<NavBoundsEntity>() )
 					{
 						m_SceneRenderer->GetRenderer2D()->SubmitAABB( boundsEntity->GetBoundingBox(), glm::vec4( 0.0f, 1.0f, 0.0, 1.0f ) );
+
 						// TODO: #ScRendererOwnsRenderer2D
-						boundsEntity->DebugDraw();
+						boundsEntity->DebugDraw( m_SceneRenderer->GetRenderer2D().Get() );
 					}
 				}
 			}
@@ -2020,6 +2026,7 @@ namespace Saturn {
 			ImGui::SeparatorText( "Scene Renderer" );
 			if( ImGui::MenuItem( "Render Mesh AABB" ) )           m_ShowMeshAABB           ^= 1;
 			if( ImGui::MenuItem( "Show Camera Frustum" ) )        m_ShowCameraFrustum      ^= 1;
+			if( ImGui::MenuItem( "Show NavMesh Debug" ) )		  m_ShowNavMeshDebugRT	   ^= 1;
 
 			ImGui::SeparatorText( "Content Browser" );
 			if( ImGui::MenuItem( "Show Thumbnail Cache" ) )       m_ShowCBThumbnailDebug   ^= 1;

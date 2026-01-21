@@ -207,13 +207,17 @@ namespace Saturn {
 		return m_pNavMesh != nullptr;
 	}
 
-	void RecastNavigationMeshBuilder::DebugDrawNavMesh()
-	{
 #if !defined(SAT_DIST)
+	void RecastNavigationMeshBuilder::DebugDrawNavMesh( Renderer2D* pRenderer2D )
+	{
 		if( m_pNavMesh ) 
+		{
+			m_DebugDrawer.BeginRender( pRenderer2D );
 			duDebugDrawNavMesh( &m_DebugDrawer, *m_pNavMesh, 0 );
-#endif
+			m_DebugDrawer.EndRender();
+		}
 	}
+#endif
 
 	//////////////////////////////////////////////////////////////////////////
 	// RecastNavigationTileBuilder

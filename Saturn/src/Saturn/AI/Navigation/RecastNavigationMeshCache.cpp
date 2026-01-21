@@ -93,7 +93,10 @@ namespace Saturn {
 	dtNavMesh* RecastNavigationMeshCache::ReadNavMeshCache( const std::filesystem::path& rPath )
 	{
 		if( !std::filesystem::exists( rPath ) )
+		{
+			SAT_CORE_ERROR( "[RecastNavigationMeshCache] Navigation cache: {0} does not exist!", rPath.string() );
 			return nullptr;
+		}
 
 		std::ifstream stream( rPath, std::ios::binary | std::ios::in );
 

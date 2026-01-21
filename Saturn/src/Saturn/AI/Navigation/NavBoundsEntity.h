@@ -36,6 +36,8 @@ class dtNavMeshQuery;
 
 namespace Saturn {
 
+	class Renderer2D;
+
 	//
 	// The NavBoundsEntity a special type of entity that owns the RecastNavigationMesh,
 	// if a navmesh present then there is only ever one of these entity in the Scene. 
@@ -62,13 +64,14 @@ namespace Saturn {
 		void GatherGeometryAndBuild();
 
 		RecastNavigationMeshBuilder& GetBuilder() { return m_Builder; }
+		const RecastNavigationMeshBuilder& GetBuilder() const { return m_Builder; }
 
 #if defined(SAT_DEBUG) || defined(SAT_RELEASE)
 		[[nodiscard]] bool NeedsRebuilding() const { return m_NeedsRebuilding; }
 		void CleanDirty() { m_NeedsRebuilding = false; }
 		void MarkDirty() { m_NeedsRebuilding = true; }
 
-		void DebugDraw();
+		void DebugDraw( Renderer2D* pRenderer2D );
 #else
 		bool NeedsRebuilding() const { return false; }
 		void CleanDirty() { }

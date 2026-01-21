@@ -47,6 +47,16 @@ namespace Saturn {
 
 	}
 
+	void RecastDebugVisualisation::BeginRender( Renderer2D* pRenderer2D )
+	{
+		m_pRenderer2D = pRenderer2D;
+	}
+
+	void RecastDebugVisualisation::EndRender()
+	{
+		m_pRenderer2D = nullptr;
+	}
+
 	void RecastDebugVisualisation::depthMask( bool state )
 	{
 		// we only support drawing lines
@@ -58,6 +68,8 @@ namespace Saturn {
 
 	void RecastDebugVisualisation::begin( duDebugDrawPrimitives prim, float size /*= 1.0f */ )
 	{
+		SAT_CORE_ASSERT( m_pRenderer2D, "[RecastDebugVisualisation] BeginRender must be called before Recast's begin funcition!" );
+
 		m_CurrentPolygonMode = prim;
 		m_Scale = size;
 	}
@@ -105,26 +117,23 @@ namespace Saturn {
 
 	void RecastDebugVisualisation::DrawInternal( const glm::vec3& rPosition, const glm::vec4& rColor )
 	{
-		/*
-		* 
 		switch( m_CurrentPolygonMode )
 		{
 			case DU_DRAW_POINTS:
 				break;
 
 			case DU_DRAW_LINES:
-				Renderer2D::Get().SubmitSingleLine( rPosition, rColor );
+				m_pRenderer2D->SubmitSingleLine( rPosition, rColor );
 				break;
 
 			case DU_DRAW_QUADS:
-				Renderer2D::Get().SubmitQuad( rPosition, rColor, glm::vec2{ m_Scale } );
+				m_pRenderer2D->SubmitQuad( rPosition, rColor, glm::vec2{ m_Scale } );
 				break;
 
 			case DU_DRAW_TRIS:
-				Renderer2D::Get().SubmitTriangle1( rPosition, rColor );
+				m_pRenderer2D->SubmitVertex( rPosition, rColor );
 				break;
 		}
-		*/
 	}
 
 }

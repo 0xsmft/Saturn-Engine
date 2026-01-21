@@ -110,10 +110,10 @@ namespace Saturn {
 
 	void NavigationSystem::DestoryStraightPath( StraightNavPath* pPath )
 	{
-		if( std::find( m_Paths.begin(), m_Paths.end(), pPath ) != m_Paths.end() )
+		if( const auto itr = std::find( m_Paths.begin(), m_Paths.end(), pPath ); itr != m_Paths.end() )
 		{
 			delete pPath;
-			pPath = nullptr;
+			m_Paths.erase( itr );
 		}
 		else
 		{
@@ -127,12 +127,21 @@ namespace Saturn {
 
 	uint32_t NavigationSystem::FindNearestPoly( const glm::vec3& rPosition, float* pNearestPoint )
 	{
+		if( const auto bounds = m_NavBoundsEntity.Access(); bounds ) 
+		{
+			if( !bounds->GetBuilder().GetNavMesh() ) 
+			{
+				SAT_CORE_ERROR( "No navmesh to find a nearest poly in! (m_pNavMesh == nullptr)" );
+				return SAT_DETOUR_NULLNAVNODE;
+			}
+		}
+
 		dtQueryFilter filter;
 		filter.setIncludeFlags( NavigationMeshPolyFlag_All ^ NavigationMeshPolyFlag_Disabled );
 		filter.setExcludeFlags( 0 );
 		float polyPickExt[ 3 ] = { 2.0f, 4.0f, 2.0f };
 
-		dtPolyRef nearestPoly = DETOUR_NULLNAVNODE;
+		dtPolyRef nearestPoly = SAT_DETOUR_NULLNAVNODE;
 		m_pNavMeshQuery->findNearestPoly( glm::value_ptr( rPosition ), polyPickExt, &filter, &nearestPoly, pNearestPoint );
 
 		return nearestPoly;
@@ -148,7 +157,7 @@ namespace Saturn {
 		glm::vec3 dest{};
 
 		dtQueryFilter filter;
-		dtPolyRef randomRef = DETOUR_NULLNAVNODE;
+		dtPolyRef randomRef = SAT_DETOUR_NULLNAVNODE;
 
 		const auto status = m_pNavMeshQuery->findRandomPoint( &filter, RcRandom, &randomRef, glm::value_ptr( dest ) );
 		if( status != DT_SUCCESS )
@@ -156,7 +165,7 @@ namespace Saturn {
 			return std::unexpected( status );
 		}
 
-		if( randomRef == DETOUR_NULLNAVNODE )
+		if( randomRef == SAT_DETOUR_NULLNAVNODE )
 		{
 			SAT_CORE_WARN( "[NavigationSystem/GetRandomPointInNavMesh] Random poly is outside of the NavMesh!" );
 			return std::unexpected( DT_FAILURE );

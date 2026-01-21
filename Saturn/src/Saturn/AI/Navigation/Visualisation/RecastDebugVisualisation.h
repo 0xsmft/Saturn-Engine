@@ -32,12 +32,17 @@
 
 namespace Saturn {
 
+	class Renderer2D;
+
 	// Recast and detour debug drawing
 	class RecastDebugVisualisation : public duDebugDraw
 	{
 	public:
 		RecastDebugVisualisation();
 		virtual ~RecastDebugVisualisation();
+
+		void BeginRender( Renderer2D* pRenderer2D );
+		void EndRender();
 
 	public:
 		void depthMask( bool state ) override;
@@ -56,6 +61,7 @@ namespace Saturn {
 		void DrawInternal( const glm::vec3& rPosition, const glm::vec4& rColor );
 
 	private:
+		Renderer2D* m_pRenderer2D = nullptr;
 		duDebugDrawPrimitives m_CurrentPolygonMode = DU_DRAW_LINES;
 		float m_Scale = 1.0f;
 	};

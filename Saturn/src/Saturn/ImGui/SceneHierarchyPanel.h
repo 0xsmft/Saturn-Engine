@@ -102,7 +102,6 @@ namespace Saturn {
 		bool m_OpenEntityFinderPopup = false;
 		bool m_IsPrefabScene = false;
 		bool m_Searching = false;
-		bool m_IsMultiSelecting = false;
 		bool m_WindowFocused = false;
 
 		struct CopyComponentData

@@ -54,6 +54,9 @@ namespace Saturn {
 	{
 		if( !IsSelected( entity ) ) 
 		{
+			if( !m_IsMultiSelecting )
+				ClearSelection( true );
+
 			m_SelectedEntities.push_back( entity );
 			m_LastReason = reason;
 

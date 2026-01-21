@@ -96,9 +96,6 @@ namespace Saturn {
 
 	void SceneHierarchyPanel::SetSelected( SharedPtr<Entity> entity )
 	{
-		if( !m_IsMultiSelecting )
-			EntitySelectionManager::Get().ClearSelection();
-
 		EntitySelectionManager::Get().Select( entity, EntitySelectionReason::SceneHierarchyPanel );
 	}
 
@@ -169,7 +166,7 @@ namespace Saturn {
 				ImGui::Text( "Right click to add new a new entity." );
 			}
 
-			if( ImGui::IsMouseDown( 0 ) && ImGui::IsWindowHovered() && !m_IsMultiSelecting )
+			if( ImGui::IsMouseDown( 0 ) && ImGui::IsWindowHovered() && !EntitySelectionManager::Get().IsMultiSelecting() )
 			{
 				EntitySelectionManager::Get().ClearSelection();
 			}
@@ -204,11 +201,11 @@ namespace Saturn {
 
 		if( Input::Get().KeyPressed( RubyKey_LeftCtrl ) || Input::Get().KeyPressed( RubyKey_RightCtrl ) )
 		{
-			m_IsMultiSelecting = true;
+			EntitySelectionManager::Get().EnableMultiSelection();
 		}
 		else
 		{
-			m_IsMultiSelecting = false;
+			EntitySelectionManager::Get().DisableMultiSelection();
 		}
 
 		ImGui::PopID();

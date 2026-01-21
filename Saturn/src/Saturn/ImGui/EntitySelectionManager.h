@@ -61,6 +61,9 @@ namespace Saturn {
 		EntitySelectionManager();
 		~EntitySelectionManager();
 
+		void EnableMultiSelection() { m_IsMultiSelecting = true; }
+		void DisableMultiSelection() { m_IsMultiSelecting = false; }
+
 		void Select( const SharedPtr<Entity> entity, EntitySelectionReason reason );
 		void Remove( const SharedPtr<Entity> entity );
 
@@ -93,8 +96,10 @@ namespace Saturn {
 
 		[[nodiscard]] size_t GetSelectionCount() const { return m_SelectedEntities.size(); }
 		[[nodiscard]] EntitySelectionReason GetLastSelectionReason() const { return m_LastReason; }
+		[[nodiscard]] bool IsMultiSelecting() const { return m_IsMultiSelecting; }
 
 	private:
+		bool m_IsMultiSelecting = false;
 		EntitySelectionReason m_LastReason = EntitySelectionReason::Other;
 		std::vector<SharedPtr<Entity>> m_SelectedEntities;
 	};

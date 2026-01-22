@@ -11,7 +11,7 @@
 //    contributors may be used to endorse or promote products derived
 //    from this software without specific prior written permission.
 //
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ``AS IS'' AND ANY
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ''AS IS'' AND ANY
 // EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 // PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
@@ -23,7 +23,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// Copyright (c) 2008-2019 NVIDIA Corporation. All rights reserved.
+// Copyright (c) 2008-2021 NVIDIA Corporation. All rights reserved.
 // Copyright (c) 2004-2008 AGEIA Technologies, Inc. All rights reserved.
 // Copyright (c) 2001-2004 NovodeX AG. All rights reserved.  
 
@@ -41,285 +41,286 @@
 #include "common/PxBase.h"
 
 #if !PX_DOXYGEN
-namespace physx {
+namespace physx
+{
 #endif
 
-	class PxRigidActor;
-	class PxRigidBody;
-	class PxRigidStatic;
-	class PxRigidDynamic;
-	class PxArticulation;
-	class PxArticulationLink;
+class PxRigidActor;
+class PxRigidBody;
+class PxRigidStatic;
+class PxRigidDynamic;
+class PxArticulation;
+class PxArticulationLink;
 
 
-	/** Group index which allows to specify 1- or 2-way interaction */
-	typedef PxU8 PxDominanceGroup;		// Must be < 32, PxU8.
+/** Group index which allows to specify 1- or 2-way interaction */
+typedef PxU8 PxDominanceGroup;		// Must be < 32, PxU8.
+
+/**
+\brief Flags which control the behavior of an actor.
+
+@see PxActorFlags PxActor PxActor.setActorFlag() PxActor.getActorFlags()
+*/
+struct PxActorFlag
+{
+	enum Enum
+	{
+		/**
+		\brief Enable debug renderer for this actor
+
+		@see PxScene.getRenderBuffer() PxRenderBuffer PxVisualizationParameter
+		*/
+		eVISUALIZATION					= (1<<0),
+
+		/**
+		\brief Disables scene gravity for this actor
+		*/
+		eDISABLE_GRAVITY				= (1<<1),
+
+		/**
+		\brief Enables the sending of PxSimulationEventCallback::onWake() and PxSimulationEventCallback::onSleep() notify events
+
+		@see PxSimulationEventCallback::onWake() PxSimulationEventCallback::onSleep()
+		*/
+		eSEND_SLEEP_NOTIFIES			= (1<<2),
+
+		/**
+		\brief Disables simulation for the actor.
+		
+		\note This is only supported by PxRigidStatic and PxRigidDynamic actors and can be used to reduce the memory footprint when rigid actors are
+		used for scene queries only.
+
+		\note Setting this flag will remove all constraints attached to the actor from the scene.
+
+		\note If this flag is set, the following calls are forbidden:
+		\li PxRigidBody: setLinearVelocity(), setAngularVelocity(), addForce(), addTorque(), clearForce(), clearTorque()
+		\li PxRigidDynamic: setKinematicTarget(), setWakeCounter(), wakeUp(), putToSleep()
+
+		\par <b>Sleeping:</b>
+		Raising this flag will set all velocities and the wake counter to 0, clear all forces, clear the kinematic target, put the actor
+		to sleep and wake up all touching actors from the previous frame.
+		*/
+		eDISABLE_SIMULATION				= (1<<3)
+	};
+};
+
+/**
+\brief collection of set bits defined in PxActorFlag.
+
+@see PxActorFlag
+*/
+typedef PxFlags<PxActorFlag::Enum,PxU8> PxActorFlags;
+PX_FLAGS_OPERATORS(PxActorFlag::Enum,PxU8)
+
+/**
+\brief Identifies each type of actor.
+@see PxActor 
+*/
+struct PxActorType
+{
+	enum Enum
+	{
+		/**
+		\brief A static rigid body
+		@see PxRigidStatic
+		*/
+		eRIGID_STATIC,
+
+		/**
+		\brief A dynamic rigid body
+		@see PxRigidDynamic
+		*/
+		eRIGID_DYNAMIC,
+		
+		/**
+		\brief An articulation link
+		@see PxArticulationLink
+		*/
+		eARTICULATION_LINK,
+
+		//brief internal use only!
+		eACTOR_COUNT,
+
+		eACTOR_FORCE_DWORD = 0x7fffffff
+	};
+};
+
+/**
+\brief PxActor is the base class for the main simulation objects in the physics SDK.
+
+The actor is owned by and contained in a PxScene.
+
+*/
+class PxActor : public PxBase
+{
+public:
+	/**
+	\brief Deletes the actor.
+	
+	Do not keep a reference to the deleted instance.
+
+	If the actor belongs to a #PxAggregate object, it is automatically removed from the aggregate.
+
+	@see PxBase.release(), PxAggregate
+	*/
+	virtual		void			release() = 0;
 
 	/**
-	\brief Flags which control the behavior of an actor.
+	\brief Retrieves the type of actor.
 
-	@see PxActorFlags PxActor PxActor.setActorFlag() PxActor.getActorFlags()
+	\return The actor type of the actor.
+
+	@see PxActorType
 	*/
-	struct PxActorFlag
-	{
-		enum Enum
-		{
-			/**
-			\brief Enable debug renderer for this actor
-
-			@see PxScene.getRenderBuffer() PxRenderBuffer PxVisualizationParameter
-			*/
-			eVISUALIZATION					= ( 1 << 0 ),
-
-			/**
-			\brief Disables scene gravity for this actor
-			*/
-			eDISABLE_GRAVITY				= ( 1 << 1 ),
-
-			/**
-			\brief Enables the sending of PxSimulationEventCallback::onWake() and PxSimulationEventCallback::onSleep() notify events
-
-			@see PxSimulationEventCallback::onWake() PxSimulationEventCallback::onSleep()
-			*/
-			eSEND_SLEEP_NOTIFIES			= ( 1 << 2 ),
-
-			/**
-			\brief Disables simulation for the actor.
-
-			\note This is only supported by PxRigidStatic and PxRigidDynamic actors and can be used to reduce the memory footprint when rigid actors are
-			used for scene queries only.
-
-			\note Setting this flag will remove all constraints attached to the actor from the scene.
-
-			\note If this flag is set, the following calls are forbidden:
-			\li PxRigidBody: setLinearVelocity(), setAngularVelocity(), addForce(), addTorque(), clearForce(), clearTorque()
-			\li PxRigidDynamic: setKinematicTarget(), setWakeCounter(), wakeUp(), putToSleep()
-
-			\par <b>Sleeping:</b>
-			Raising this flag will set all velocities and the wake counter to 0, clear all forces, clear the kinematic target, put the actor
-			to sleep and wake up all touching actors from the previous frame.
-			*/
-			eDISABLE_SIMULATION				= ( 1 << 3 )
-		};
-	};
+	virtual		PxActorType::Enum	getType()	const = 0;
 
 	/**
-	\brief collection of set bits defined in PxActorFlag.
+	\brief Retrieves the scene which this actor belongs to.
 
-	@see PxActorFlag
+	\return Owner Scene. NULL if not part of a scene.
+
+	@see PxScene
 	*/
-	typedef PxFlags<PxActorFlag::Enum, PxU8> PxActorFlags;
-	PX_FLAGS_OPERATORS( PxActorFlag::Enum, PxU8 )
+	virtual		PxScene*		getScene()	const = 0;
 
-		/**
-		\brief Identifies each type of actor.
-		@see PxActor
-		*/
-		struct PxActorType
-	{
-		enum Enum
-		{
-			/**
-			\brief A static rigid body
-			@see PxRigidStatic
-			*/
-			eRIGID_STATIC,
-
-			/**
-			\brief A dynamic rigid body
-			@see PxRigidDynamic
-			*/
-			eRIGID_DYNAMIC,
-
-			/**
-			\brief An articulation link
-			@see PxArticulationLink
-			*/
-			eARTICULATION_LINK,
-
-			//brief internal use only!
-			eACTOR_COUNT,
-
-			eACTOR_FORCE_DWORD = 0x7fffffff
-		};
-	};
+	// Runtime modifications
 
 	/**
-	\brief PxActor is the base class for the main simulation objects in the physics SDK.
+	\brief Sets a name string for the object that can be retrieved with getName().
+	
+	This is for debugging and is not used by the SDK. The string is not copied by the SDK, 
+	only the pointer is stored.
 
-	The actor is owned by and contained in a PxScene.
+	\param[in] name String to set the objects name to.
 
+	<b>Default:</b> NULL
+
+	@see getName()
 	*/
-	class PxActor : public PxBase
-	{
-	public:
-		/**
-		\brief Deletes the actor.
+	virtual		void			setName(const char* name)		= 0;
 
-		Do not keep a reference to the deleted instance.
+	/**
+	\brief Retrieves the name string set with setName().
 
-		If the actor belongs to a #PxAggregate object, it is automatically removed from the aggregate.
+	\return Name string associated with object.
 
-		@see PxBase.release(), PxAggregate
-		*/
-		virtual		void			release() = 0;
+	@see setName()
+	*/
+	virtual		const char*		getName()			const	= 0;
 
-		/**
-		\brief Retrieves the type of actor.
+	/**
+	\brief Retrieves the axis aligned bounding box enclosing the actor.
 
-		\return The actor type of the actor.
+	\param[in] inflation  Scale factor for computed world bounds. Box extents are multiplied by this value.
 
-		@see PxActorType
-		*/
-		virtual		PxActorType::Enum	getType()	const = 0;
+	\return The actor's bounding box.
 
-		/**
-		\brief Retrieves the scene which this actor belongs to.
+	@see PxBounds3
+	*/
+	virtual		PxBounds3		getWorldBounds(float inflation=1.01f) const = 0;
 
-		\return Owner Scene. NULL if not part of a scene.
+	/**
+	\brief Raises or clears a particular actor flag.
+	
+	See the list of flags #PxActorFlag
 
-		@see PxScene
-		*/
-		virtual		PxScene* getScene()	const = 0;
+	<b>Sleeping:</b> Does <b>NOT</b> wake the actor up automatically.
 
-		// Runtime modifications
+	\param[in] flag  The PxActor flag to raise(set) or clear. See #PxActorFlag.
+	\param[in] value The boolean value to assign to the flag.
 
-		/**
-		\brief Sets a name string for the object that can be retrieved with getName().
+	<b>Default:</b> PxActorFlag::eVISUALIZATION
 
-		This is for debugging and is not used by the SDK. The string is not copied by the SDK,
-		only the pointer is stored.
+	@see PxActorFlag getActorFlags() 
+	*/
+	virtual		void			setActorFlag(PxActorFlag::Enum flag, bool value) = 0;
+	/**
+	\brief sets the actor flags
+	
+	See the list of flags #PxActorFlag
+	@see PxActorFlag setActorFlag() 
+	*/
+	virtual		void			setActorFlags( PxActorFlags inFlags ) = 0;
 
-		\param[in] name String to set the objects name to.
+	/**
+	\brief Reads the PxActor flags.
+	
+	See the list of flags #PxActorFlag
 
-		<b>Default:</b> NULL
+	\return The values of the PxActor flags.
 
-		@see getName()
-		*/
-		virtual		void			setName( const char* name )		= 0;
+	@see PxActorFlag setActorFlag() 
+	*/
+	virtual		PxActorFlags	getActorFlags()	const = 0;
 
-		/**
-		\brief Retrieves the name string set with setName().
+	/**
+	\brief Assigns dynamic actors a dominance group identifier.
+	
+	PxDominanceGroup is a 5 bit group identifier (legal range from 0 to 31).
+	
+	The PxScene::setDominanceGroupPair() lets you set certain behaviors for pairs of dominance groups.
+	By default every dynamic actor is created in group 0.
 
-		\return Name string associated with object.
+	<b>Default:</b> 0
 
-		@see setName()
-		*/
-		virtual		const char* getName()			const	= 0;
+	<b>Sleeping:</b> Changing the dominance group does <b>NOT</b> wake the actor up automatically.
 
-		/**
-		\brief Retrieves the axis aligned bounding box enclosing the actor.
+	\param[in] dominanceGroup The dominance group identifier. <b>Range:</b> [0..31]
 
-		\param[in] inflation  Scale factor for computed world bounds. Box extents are multiplied by this value.
+	@see getDominanceGroup() PxDominanceGroup PxScene::setDominanceGroupPair()
+	*/
+	virtual		void			setDominanceGroup(PxDominanceGroup dominanceGroup)		 = 0;
+	
+	/**
+	\brief Retrieves the value set with setDominanceGroup().
 
-		\return The actor's bounding box.
+	\return The dominance group of this actor.
 
-		@see PxBounds3
-		*/
-		virtual		PxBounds3		getWorldBounds( float inflation=1.01f ) const = 0;
+	@see setDominanceGroup() PxDominanceGroup PxScene::setDominanceGroupPair()
+	*/
+	virtual		PxDominanceGroup	getDominanceGroup() const = 0;
 
-		/**
-		\brief Raises or clears a particular actor flag.
+	
+	/**
+	\brief Sets the owner client of an actor.
 
-		See the list of flags #PxActorFlag
+	This cannot be done once the actor has been placed into a scene.
 
-		<b>Sleeping:</b> Does <b>NOT</b> wake the actor up automatically.
+	<b>Default:</b> PX_DEFAULT_CLIENT
 
-		\param[in] flag  The PxActor flag to raise(set) or clear. See #PxActorFlag.
-		\param[in] value The boolean value to assign to the flag.
+	@see PxClientID PxScene::createClient() 
+	*/
+	virtual		void			setOwnerClient( PxClientID inClient ) = 0;
 
-		<b>Default:</b> PxActorFlag::eVISUALIZATION
+	/**
+	\brief Returns the owner client that was specified with at creation time.
 
-		@see PxActorFlag getActorFlags()
-		*/
-		virtual		void			setActorFlag( PxActorFlag::Enum flag, bool value ) = 0;
-		/**
-		\brief sets the actor flags
+	This value cannot be changed once the object is placed into the scene.
 
-		See the list of flags #PxActorFlag
-		@see PxActorFlag setActorFlag()
-		*/
-		virtual		void			setActorFlags( PxActorFlags inFlags ) = 0;
+	@see PxClientID PxScene::createClient()
+	*/
+	virtual		PxClientID		getOwnerClient() const = 0;
 
-		/**
-		\brief Reads the PxActor flags.
+	/**
+	\brief Retrieves the aggregate the actor might be a part of.
 
-		See the list of flags #PxActorFlag
+	\return The aggregate the actor is a part of, or NULL if the actor does not belong to an aggregate.
 
-		\return The values of the PxActor flags.
+	@see PxAggregate
+	*/
+	virtual		PxAggregate*	getAggregate()	const = 0;
 
-		@see PxActorFlag setActorFlag()
-		*/
-		virtual		PxActorFlags	getActorFlags()	const = 0;
+	//public variables:
+				void*			userData;	//!< user can assign this to whatever, usually to create a 1:1 relationship with a user object.
 
-		/**
-		\brief Assigns dynamic actors a dominance group identifier.
-
-		PxDominanceGroup is a 5 bit group identifier (legal range from 0 to 31).
-
-		The PxScene::setDominanceGroupPair() lets you set certain behaviors for pairs of dominance groups.
-		By default every dynamic actor is created in group 0.
-
-		<b>Default:</b> 0
-
-		<b>Sleeping:</b> Changing the dominance group does <b>NOT</b> wake the actor up automatically.
-
-		\param[in] dominanceGroup The dominance group identifier. <b>Range:</b> [0..31]
-
-		@see getDominanceGroup() PxDominanceGroup PxScene::setDominanceGroupPair()
-		*/
-		virtual		void			setDominanceGroup( PxDominanceGroup dominanceGroup )		 = 0;
-
-		/**
-		\brief Retrieves the value set with setDominanceGroup().
-
-		\return The dominance group of this actor.
-
-		@see setDominanceGroup() PxDominanceGroup PxScene::setDominanceGroupPair()
-		*/
-		virtual		PxDominanceGroup	getDominanceGroup() const = 0;
+protected:
+	PX_INLINE					PxActor(PxType concreteType, PxBaseFlags baseFlags) : PxBase(concreteType, baseFlags), userData(NULL) {}
+	PX_INLINE					PxActor(PxBaseFlags baseFlags) : PxBase(baseFlags) {}
+	virtual						~PxActor()	{}
+	virtual		bool			isKindOf(const char* name)	const		{	return !::strcmp("PxActor", name) || PxBase::isKindOf(name); }
 
 
-		/**
-		\brief Sets the owner client of an actor.
-
-		This cannot be done once the actor has been placed into a scene.
-
-		<b>Default:</b> PX_DEFAULT_CLIENT
-
-		@see PxClientID PxScene::createClient()
-		*/
-		virtual		void			setOwnerClient( PxClientID inClient ) = 0;
-
-		/**
-		\brief Returns the owner client that was specified with at creation time.
-
-		This value cannot be changed once the object is placed into the scene.
-
-		@see PxClientID PxScene::createClient()
-		*/
-		virtual		PxClientID		getOwnerClient() const = 0;
-
-		/**
-		\brief Retrieves the aggregate the actor might be a part of.
-
-		\return The aggregate the actor is a part of, or NULL if the actor does not belong to an aggregate.
-
-		@see PxAggregate
-		*/
-		virtual		PxAggregate* getAggregate()	const = 0;
-
-		//public variables:
-		void* userData;	//!< user can assign this to whatever, usually to create a 1:1 relationship with a user object.
-
-	protected:
-		PX_INLINE					PxActor( PxType concreteType, PxBaseFlags baseFlags ) : PxBase( concreteType, baseFlags ), userData( NULL ) { }
-		PX_INLINE					PxActor( PxBaseFlags baseFlags ) : PxBase( baseFlags ) { }
-		virtual						~PxActor() { }
-		virtual		bool			isKindOf( const char* name )	const { return !::strcmp( "PxActor", name ) || PxBase::isKindOf( name ); }
-
-
-	};
+};
 
 #if !PX_DOXYGEN
 } // namespace physx

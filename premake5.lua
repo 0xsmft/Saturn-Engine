@@ -57,7 +57,7 @@ project "Saturn"
 	kind "StaticLib"
 	language "C++"
 	cppdialect "C++23"
-	staticruntime "on"
+	staticruntime "off"
 	warnings "Default"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
@@ -83,6 +83,7 @@ project "Saturn"
 
 	removefiles 
 	{
+		"%{prj.name}/src/%{prj.name}/Entry/macOS/**.cpp",
 		"%{prj.name}/src/%{prj.name}/Entry/Unix/**.cpp",
 		"%{prj.name}/src/%{prj.name}/Entry/Windows/**.cpp",
 	}
@@ -209,11 +210,11 @@ project "Saturn"
 			links 
 			{
 				"Saturn/vendor/assimp/bin/Debug/assimp-vc143-mtd.lib",
+
 				"Saturn/vendor/shaderc/bin/Debug-Windows/shaderc.lib",
 				"Saturn/vendor/shaderc/bin/Debug-Windows/shaderc_util.lib",
 				"Saturn/vendor/shaderc/bin/Debug-Windows/glslangd.lib",
 				"Saturn/vendor/shaderc/bin/Debug-Windows/SPIRV-Tools.lib",
-				"Saturn/vendor/shaderc/bin/Debug-Windows/glslc.lib",
 
 				-- PhysX
 				"Saturn/vendor/physx/bin/Debug/LowLevel_static_64.lib",
@@ -283,7 +284,7 @@ project "Saturn-Editor"
 	location "Saturn-Editor"
 	language "C++"
 	cppdialect "C++23"
-	staticruntime "on"
+	staticruntime "off"
 	warnings "Default"
 	kind "ConsoleApp"
 
@@ -467,7 +468,7 @@ project "Saturn-ProjectBrowser"
 	location "Saturn-ProjectBrowser"
 	language "C++"
 	cppdialect "C++23"
-	staticruntime "on"
+	staticruntime "off"
 	warnings "Default"
 	kind "ConsoleApp"
 
@@ -641,7 +642,7 @@ project "Saturn-SharedStorage"
 	kind "SharedLib"
 	language "C++"
 	cppdialect "C++23"
-	staticruntime "on"
+	staticruntime "off"
 	warnings "Default"
 		
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
@@ -712,7 +713,7 @@ project "SaturnHeaderTool"
 	language "C++"
 	kind "ConsoleApp"
 	cppdialect "C++23"
-	staticruntime "on"
+	staticruntime "off"
 	warnings "Default"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")

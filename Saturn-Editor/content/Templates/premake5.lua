@@ -22,7 +22,7 @@ project "Saturn"
 	kind "Makefile"
 	language "C++"
 	cppdialect "C++23"
-	staticruntime "on"
+	staticruntime "off"
 	location "Build"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
@@ -46,7 +46,7 @@ project "__PROJECT_NAME__"
 	kind "Makefile"
 	language "C++"
 	cppdialect "C++23"
-	staticruntime "on"
+	staticruntime "off"
 	location "Build"
 	
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")

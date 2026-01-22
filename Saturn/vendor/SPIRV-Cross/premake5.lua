@@ -22,11 +22,11 @@ project "SPIRV-Cross"
 		pic "On"
 
 		systemversion "latest"
-		staticruntime "On"
+		staticruntime "off"
 
 	filter "system:windows"
 		systemversion "latest"
-		staticruntime "On"
+		staticruntime "off"
 
 	filter "configurations:Debug"
 		runtime "Debug"

@@ -21,13 +21,13 @@ project "Recast"
 
 	filter "system:windows"
 		systemversion "latest"
-		staticruntime "On"
+		staticruntime "off"
 
 	filter "system:linux"
 		pic "On"
 		systemversion "latest"
 		cppdialect "C++2a"
-		staticruntime "On"
+		staticruntime "off"
 
 	filter "configurations:Debug"
 		runtime "Debug"

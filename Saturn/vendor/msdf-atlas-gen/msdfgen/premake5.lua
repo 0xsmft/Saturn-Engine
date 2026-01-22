@@ -37,7 +37,7 @@ project "MSDFGen"
 
 	filter "system:windows"
 		systemversion "latest"
-		staticruntime "On"
+		staticruntime "off"
 
         defines
 	    {
@@ -48,7 +48,7 @@ project "MSDFGen"
 		pic "On"
 		systemversion "latest"
 		cppdialect "C++2a"
-		staticruntime "On"
+		staticruntime "off"
 
 	filter "configurations:Debug"
 		runtime "Debug"

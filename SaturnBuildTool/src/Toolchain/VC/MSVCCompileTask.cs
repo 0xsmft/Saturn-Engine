@@ -201,12 +201,12 @@ namespace SaturnBuildTool
                         if( Shared.ProjectInfo.CurrentConfigKind == ConfigKind.Debug )
                         {
                             Args.Add( " /D\"SAT_DEBUG\"" );
-                            Args.Add( " /MTd" ); // Multithreaded debug RT
+                            Args.Add( " /MDd" ); // Multithreaded debug RT
                         }
                         else
                         {
                             Args.Add( " /D\"SAT_RELEASE\"" );
-                            Args.Add( " /MT" ); // Multithreaded RT
+                            Args.Add( " /MD" ); // Multithreaded RT
                         }
 
                         Args.Add( " /Z7" ); // Build with C7 debug pdbs
@@ -217,7 +217,7 @@ namespace SaturnBuildTool
                 case ConfigKind.Dist:
                     {
                         Args.Add( " /D\"SAT_DIST\"" );
-                        Args.Add( " /MT" ); // Multithreaded RT
+                        Args.Add( " /MD" ); // Multithreaded RT
                     }
                     break;
             }

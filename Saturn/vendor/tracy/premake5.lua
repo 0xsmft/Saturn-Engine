@@ -20,7 +20,7 @@ project "Tracy"
 
 	filter "system:windows"
 		systemversion "latest"
-		staticruntime "On"
+		staticruntime "off"
 
 		defines 
 		{
@@ -30,7 +30,7 @@ project "Tracy"
 	filter "system:linux"
 		pic "On"
 		systemversion "latest"
-		staticruntime "On"
+		staticruntime "off"
 
 		defines 
 		{

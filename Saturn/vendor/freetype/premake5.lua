@@ -66,7 +66,7 @@ project "Freetype"
 
 	filter "system:windows"
 		systemversion "latest"
-		staticruntime "On"
+		staticruntime "off"
 
         defines
 	    {

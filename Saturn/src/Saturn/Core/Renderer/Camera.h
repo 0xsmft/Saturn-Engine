@@ -93,6 +93,9 @@ namespace Saturn {
 		float GetFarPlane()  const { return m_FarPlane; }
 		float GetFov()       const { return m_Fov; }
 
+		float GetYaw()		 const { return m_Yaw; }
+		float GetPitch()	 const { return m_Pitch; }
+
 		bool IsActive() const { return m_IsActive; }
 		void SetActive( bool active ) { m_IsActive = active; }
 	

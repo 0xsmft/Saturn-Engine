@@ -55,13 +55,16 @@ namespace Saturn::Auxiliary {
 				const float sinPhi = glm::sin( phi );
 				const float cosPhi = glm::cos( phi );
 
-				float x = cosPhi * sinTheta;
-				float y = cosTheta;
-				float z = sinPhi * sinTheta;
+				const float x = cosPhi * sinTheta;
+				const float y = cosTheta;
+				const float z = sinPhi * sinTheta;
 
 				StaticVertex vertex{};
 				vertex.Position = { x * radius, y * radius, z * radius };
 				vertex.Normal = { x, y, z };
+				
+				// Map the longitude and latitude values to 0,1.
+				vertex.Texcoord = { longNumber / longitudeBands, latNumber / latitudeBands };
 
 				vertices.push_back( vertex );
 			}
@@ -87,14 +90,14 @@ namespace Saturn::Auxiliary {
 		std::vector<StaticVertex> vertices;
 		vertices.resize( 8 );
 
-		vertices[ 0 ].Position = { -size.x / 2.0f, -size.y / 2.0f,  size.z / 2.0f };
-		vertices[ 1 ].Position = { size.x / 2.0f, -size.y / 2.0f,  size.z / 2.0f };
-		vertices[ 2 ].Position = { size.x / 2.0f,  size.y / 2.0f,  size.z / 2.0f };
-		vertices[ 3 ].Position = { -size.x / 2.0f,  size.y / 2.0f,  size.z / 2.0f };
-		vertices[ 4 ].Position = { -size.x / 2.0f, -size.y / 2.0f, -size.z / 2.0f };
-		vertices[ 5 ].Position = { size.x / 2.0f, -size.y / 2.0f, -size.z / 2.0f };
-		vertices[ 6 ].Position = { size.x / 2.0f,  size.y / 2.0f, -size.z / 2.0f };
-		vertices[ 7 ].Position = { -size.x / 2.0f,  size.y / 2.0f, -size.z / 2.0f };
+		vertices[ 0 ].Position = { -size.x * 0.5f, -size.y * 0.5f,  size.z * 0.5f };
+		vertices[ 1 ].Position = { size.x * 0.5f, -size.y * 0.5f,  size.z * 0.5f };
+		vertices[ 2 ].Position = { size.x * 0.5f,  size.y * 0.5f,  size.z * 0.5f };
+		vertices[ 3 ].Position = { -size.x * 0.5f,  size.y * 0.5f,  size.z * 0.5f };
+		vertices[ 4 ].Position = { -size.x * 0.5f, -size.y * 0.5f, -size.z * 0.5f };
+		vertices[ 5 ].Position = { size.x * 0.5f, -size.y * 0.5f, -size.z * 0.5f };
+		vertices[ 6 ].Position = { size.x * 0.5f,  size.y * 0.5f, -size.z * 0.5f };
+		vertices[ 7 ].Position = { -size.x * 0.5f,  size.y * 0.5f, -size.z * 0.5f };
 
 		vertices[ 0 ].Normal = { -1.0f, -1.0f,  1.0f };
 		vertices[ 1 ].Normal = { 1.0f, -1.0f,  1.0f };
@@ -104,6 +107,15 @@ namespace Saturn::Auxiliary {
 		vertices[ 5 ].Normal = { 1.0f, -1.0f, -1.0f };
 		vertices[ 6 ].Normal = { 1.0f,  1.0f, -1.0f };
 		vertices[ 7 ].Normal = { -1.0f,  1.0f, -1.0f };
+
+		vertices[ 0 ].Texcoord = { 0.0f, 0.0f };
+		vertices[ 1 ].Texcoord = { 1.0f, 0.0f };
+		vertices[ 2 ].Texcoord = { 1.0f, 1.0f };
+		vertices[ 3 ].Texcoord = { 0.0f, 1.0f };
+		vertices[ 4 ].Texcoord = { 0.0f, 0.0f };
+		vertices[ 5 ].Texcoord = { 1.0f, 0.0f };
+		vertices[ 6 ].Texcoord = { 1.0f, 1.0f };
+		vertices[ 7 ].Texcoord = { 0.0f, 1.0f };
 
 		std::vector<Index> indices = {
 			{ 0, 1, 2 }, { 2, 3, 0 },

@@ -343,9 +343,17 @@ namespace Saturn {
 						auto id = AssetManager::Get().CreateAsset( AssetType::Texture );
 						auto asset = AssetManager::Get().FindAsset( id );
 
-						std::filesystem::copy_file( path, m_CurrentPath / path.filename() );
+						std::filesystem::path newPath = m_CurrentPath / path.filename();
 
-						asset->SetAbsolutePath( m_CurrentPath / path.filename() );
+						int32_t count = GetFilenameCount( path.filename().string(), false );
+						if( count >= 1 )
+						{
+							newPath.replace_filename( std::format( "{0} ({1})", path.filename().string(), count ) );
+						}
+
+						std::filesystem::copy_file( path, newPath );
+
+						asset->SetAbsolutePath( newPath );
 
 						AssetManagerSerialiser ars;
 						ars.Serialise();
@@ -442,8 +450,7 @@ namespace Saturn {
 				}
 
 				asset->SetAbsolutePath( newPath );
-
-				auto materialAsset = asset.As<PhysicsMaterialAsset>();
+				auto materialAsset = Ref<PhysicsMaterialAsset>::Create( asset, 1.0f, 1.0f, 0.5f );
 
 				PhysicsMaterialAssetSerialiser mas;
 				mas.Serialise( materialAsset );

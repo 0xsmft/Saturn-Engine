@@ -217,6 +217,59 @@ namespace Auxiliary {
 	}
 #endif
 
+	struct SkeletonAssetFileHeader
+	{
+		const char Magic[ 5 ] = ".SK\0";
+	};
+
+	void SkeletonAsset::Serialise( const std::filesystem::path& rPath ) const
+	{
+		std::ofstream fout( rPath, std::ios::binary | std::ios::trunc );
+
+		SkeletonAssetFileHeader header;
+		RawSerialisation::WriteObject( header, fout );
+
+		RawSerialisation::WriteObject( GetLocalVersion(), fout );
+
+		RawSerialisation::WriteVector( m_BoneInfos, fout );
+		RawSerialisation::WriteVector( m_ParentBoneIndices, fout );
+		RawSerialisation::WriteVector( m_BoneNames, fout );
+		RawSerialisation::WriteObject( m_Transform, fout );
+#if !defined(SAT_DIST)
+		RawSerialisation::WriteVector( m_CompatibleMeshes, fout );
+#endif
+		RawSerialisation::WriteVector( m_BonePositions, fout );
+		RawSerialisation::WriteVector( m_BoneRotations, fout );
+		RawSerialisation::WriteVector( m_BoneScales, fout );
+
+		fout.close();
+	}
+
+	void SkeletonAsset::Deserialise( std::filesystem::path& rPath )
+	{
+		std::ifstream FileIn( rPath, std::ios::binary | std::ios::in );
+
+		SkeletonAssetFileHeader header;
+		RawSerialisation::ReadObject( header, FileIn );
+
+		SkeletonAssetVersion skVersion = SkeletonAssetVersion::Lowest;
+		RawSerialisation::ReadObject( skVersion, FileIn );
+
+		RawSerialisation::ReadVector( m_BoneInfos, FileIn );
+		RawSerialisation::ReadVector( m_ParentBoneIndices, FileIn );
+		RawSerialisation::ReadVector( m_BoneNames, FileIn );
+		RawSerialisation::ReadObject( m_Transform, FileIn );
+#if !defined(SAT_DIST)
+		RawSerialisation::ReadVector( m_CompatibleMeshes, FileIn );
+#endif
+		RawSerialisation::ReadVector( m_BonePositions, FileIn );
+		RawSerialisation::ReadVector( m_BoneRotations, FileIn );
+		RawSerialisation::ReadVector( m_BoneScales, FileIn );
+
+		FileIn.close();
+
+	}
+
 	BoneJoint& SkeletonAsset::AddNewBoneJoint( const std::string& rBoneName, const std::string& rName )
 	{
 		return m_BoneJoints.emplace_back( rBoneName, rName );

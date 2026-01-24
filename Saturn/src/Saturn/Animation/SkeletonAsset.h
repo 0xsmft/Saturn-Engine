@@ -104,7 +104,11 @@ namespace Saturn {
 
 		void SetTransform( const glm::mat4& rTransform ) { m_Transform = rTransform; }
 #endif
+	public:
+		void Serialise( const std::filesystem::path& rPath ) const;
+		void Deserialise( std::filesystem::path& rPath );
 
+	public:
 		BoneJoint& AddNewBoneJoint( const std::string& rBoneName, const std::string& rName );
 
 		// INTERNAL, Adds a bone to the skeleton.

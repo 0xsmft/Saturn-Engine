@@ -56,6 +56,11 @@ namespace Saturn {
 	{
 	}
 
+	struct SkeletonAssetFileHeader
+	{
+		const char Magic[ 5 ] = ".SK\0";
+	};
+
 #if !defined(SAT_DIST)
 	static acl::error_result AclCompress(
 		Ref<SkeletonAsset> sk,
@@ -218,6 +223,23 @@ namespace Saturn {
 		SetACLData( pTracks );
 	}
 
+	void SkeletalAnimationAsset::Serialise( std::ofstream& rStream ) const
+	{
+		SkeletonAssetFileHeader header;
+		RawSerialisation::WriteObject( header, rStream );
+
+		RawSerialisation::WriteObject( GetLocalAssetVersion(), rStream );
+		RawSerialisation::WriteObject( GetSkeletonID(), rStream );
+		RawSerialisation::WriteObject( GetDuration(), rStream );
+		RawSerialisation::WriteObject( GetTicksPerSecond(), rStream );
+		RawSerialisation::WriteObject( m_UncompressedDuration, rStream );
+		RawSerialisation::WriteObject( m_UncompressedTPS, rStream );
+		RawSerialisation::WriteObject( IsUsingRootMotion(), rStream );
+		RawSerialisation::WriteObject( GetBoneCount(), rStream );
+
+		SerialiseAclData( rStream );
+	}
+
 	void SkeletalAnimationAsset::SerialiseAclData( std::ofstream& rStream ) const
 	{
 		// Write header.
@@ -227,11 +249,53 @@ namespace Saturn {
 		// Now write the actual compressed data
 		const uint8_t* pData = reinterpret_cast<const uint8_t*>( pTracks ) + sizeof( acl::compressed_tracks );
 		
-		// Note according to Acl get_size() includes the acl::compressed_tracks size (so 16 bytes).
+		// Note: according to Acl get_size() includes the acl::compressed_tracks size (so 16 bytes).
 		rStream.write( reinterpret_cast< const char* >( pData ), pTracks->get_size() - sizeof( acl::compressed_tracks ) );
 	}
 
 #endif
+
+	void SkeletalAnimationAsset::Deserialise( std::ifstream& rStream )
+	{
+		SkeletonAssetFileHeader header{};
+		RawSerialisation::ReadObject( header, rStream );
+
+		AssetID skeletonID = 0;
+		float duration = 0.0f, ticksPerSecond = 0.0f, uncompDur = 0.0f, uncompTps = 0.0f;
+		size_t boneCount = 0;
+		SkeletalAnimationAssetVersion skAnimVer = SkeletalAnimationAssetVersion::BeforeVersionWasAdded;
+
+		RawSerialisation::ReadObject( skAnimVer, rStream );
+		RawSerialisation::ReadObject( skeletonID, rStream );
+		RawSerialisation::ReadObject( duration, rStream );
+		RawSerialisation::ReadObject( ticksPerSecond, rStream );
+
+		RawSerialisation::ReadObject( uncompDur, rStream );
+		RawSerialisation::ReadObject( uncompTps, rStream );
+
+		bool hadRootMotion = false;
+		//		if( skAnimVer >= SkeletalAnimationAssetVersion::RootMotion )
+		{
+			RawSerialisation::ReadObject( hadRootMotion, rStream );
+		}
+
+		RawSerialisation::ReadObject( boneCount, rStream );
+
+		SetSkeletonID( skeletonID );
+		SetDuration( duration );
+		SetTicks( ticksPerSecond );
+		SetUncompressedDuration( uncompDur );
+		SetUncompressedTicks( uncompTps );
+		UseRootMotion( hadRootMotion );
+		SetBoneCount( boneCount );
+
+		DeserialiseAclData( rStream );
+
+#if !defined( SAT_DIST )
+		if( skeletonID )
+			AssetManager::Get().RegisterAssetDependency( ID, skeletonID );
+#endif
+	}
 
 #if !defined( SAT_DIST )
 	void SkeletalAnimationAsset::DeserialiseAclData( std::ifstream& rStream )

@@ -109,8 +109,13 @@ namespace Saturn {
 		void MakeUniformAndCompress( aiAnimation* pAnimation );
 		void Compress();
 
-		void SerialiseAclData( std::ofstream& rStream ) const;
+		void Serialise( std::ofstream& rStream ) const;
+		void Deserialise( std::ifstream& rStream );
+#endif
 
+	private:
+#if !defined(SAT_DIST)
+		void SerialiseAclData( std::ofstream& rStream ) const;
 		void DeserialiseAclData( std::ifstream& rStream );
 #else
 		void DeserialiseAclData( std::istream& rStream );
@@ -138,7 +143,7 @@ namespace Saturn {
 #endif
 
 	private:
-		friend class SkeletalAnimationAssetSerialiser;
+		friend class RawSkeletalAnimationSerialiser;
 	};
 
 }

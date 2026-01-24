@@ -49,8 +49,6 @@
 #include "YamlAux.h"
 #include "EntitySerialisation.h"
 
-#include "Saturn/Serialisation/Raw/RawSerialisation.h"
-
 #include <glm/gtc/type_ptr.hpp>
 #include <yaml-cpp/yaml.h>
 #include <fstream>
@@ -731,16 +729,15 @@ namespace Saturn {
 		if( data.IsNull() )
 			return false;
 
-		auto materialData = data[ "PhysicsMaterial" ];
+		const auto materialData = data[ "PhysicsMaterial" ];
 
 		if( materialData.IsNull() )
 			return false;
 
-		auto staticFriction = materialData[ "Static Friction" ].as<float>( 0.0f );
-		auto dynamicFriction = materialData[ "Dynamic Friction" ].as<float>( 0.0f );
-		auto restitution = materialData[ "Restitution" ].as<float>( 0.0f );
-
-		auto flags = materialData[ "Flags" ].as<uint32_t>();
+		const auto staticFriction = materialData[ "Static Friction" ].as<float>( 0.0f );
+		const auto dynamicFriction = materialData[ "Dynamic Friction" ].as<float>( 0.0f );
+		const auto restitution = materialData[ "Restitution" ].as<float>( 0.0f );
+		const auto flags = materialData[ "Flags" ].as<uint32_t>();
 
 		auto material = Ref<PhysicsMaterialAsset>::Create( rAsset, staticFriction, dynamicFriction, restitution, (PhysicsMaterialFlags)flags );
 
@@ -831,116 +828,25 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// SkeletonAssetSerialiser
 
-	struct SkeletonAssetFileHeader
-	{
-		const char Magic[ 5 ] = ".SK\0";
-	};
-	
 	void SkeletonAssetSerialiser::Serialise( const Ref<Asset>& rAsset ) const
 	{
 		const auto skelAsset = rAsset.As<SkeletonAsset>();
 
 		auto& basePath = rAsset->Path;
 		auto fullPath = GetFilepathAbs( basePath );
-		std::ofstream fout( fullPath, std::ios::binary | std::ios::trunc );
 
-		SkeletonAssetFileHeader header;
-		RawSerialisation::WriteObject( header, fout );
-		
-		RawSerialisation::WriteObject( skelAsset->GetLocalVersion(), fout );
-
-		RawSerialisation::WriteVector( skelAsset->m_BoneInfos, fout );
-		RawSerialisation::WriteVector( skelAsset->m_ParentBoneIndices, fout );
-		RawSerialisation::WriteVector( skelAsset->m_BoneNames, fout );
-		RawSerialisation::WriteObject( skelAsset->m_Transform, fout );
-#if !defined(SAT_DIST)
-		RawSerialisation::WriteVector( skelAsset->m_CompatibleMeshes, fout );
-#endif
-		RawSerialisation::WriteVector( skelAsset->m_BonePositions, fout );
-		RawSerialisation::WriteVector( skelAsset->m_BoneRotations, fout );
-		RawSerialisation::WriteVector( skelAsset->m_BoneScales, fout );
-
-		fout.close();
+		// TRANSITION: Binary
+		skelAsset->Serialise( fullPath );
 	}
 
 	bool SkeletonAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
 	{
-		const auto absolutePath = GetFilepathAbs( rAsset->Path );
-		std::ifstream FileIn( absolutePath, std::ios::binary | std::ios::in );
-
-		SkeletonAssetFileHeader header;
-		RawSerialisation::ReadObject( header, FileIn );
-
-		SkeletonAssetVersion skVersion = SkeletonAssetVersion::Lowest;
-		RawSerialisation::ReadObject( skVersion, FileIn );
-
 		auto skeletonAsset = Ref<SkeletonAsset>::Create( rAsset );
 
-		RawSerialisation::ReadVector( skeletonAsset->m_BoneInfos, FileIn );
-		RawSerialisation::ReadVector( skeletonAsset->m_ParentBoneIndices, FileIn );
-		RawSerialisation::ReadVector( skeletonAsset->m_BoneNames, FileIn );
-		RawSerialisation::ReadObject( skeletonAsset->m_Transform, FileIn );
-#if !defined(SAT_DIST)
-		RawSerialisation::ReadVector( skeletonAsset->m_CompatibleMeshes, FileIn );
-#endif
-		RawSerialisation::ReadVector( skeletonAsset->m_BonePositions, FileIn );
-		RawSerialisation::ReadVector( skeletonAsset->m_BoneRotations, FileIn );
-		RawSerialisation::ReadVector( skeletonAsset->m_BoneScales, FileIn );
+		auto absolutePath = GetFilepathAbs( rAsset->Path );
 
-		/*
-		size_t mapSize = 0;
-		RawSerialisation::ReadObject( mapSize, FileIn );
-
-		// TODO: Reserve space...
-		for( size_t i = 0; i < mapSize; ++i )
-		{
-			uint64_t index = 0;
-			RawSerialisation::ReadObject( index, FileIn );
-
-			int parentIndex = -1;
-			RawSerialisation::ReadObject( parentIndex, FileIn );
-
-			glm::mat4 boneOffset{};
-			RawSerialisation::ReadMatrix4x4( boneOffset, FileIn );
-		}
-
-		if( skVersion >= SkeletonAssetVersion::CompatibilityInformationForMeshes )
-		{
-			// TODO: Reserve space...
-			RawSerialisation::ReadObject( mapSize, FileIn );
-			for( size_t i = 0; i < mapSize; ++i )
-			{
-				UUID id = 0llu;
-				RawSerialisation::ReadObject( id, FileIn );
-				
-				skeletonAsset->AddCompatibleMesh( id );
-			}
-		}
-
-		if( skVersion >= SkeletonAssetVersion::AttachmentPoints )
-		{
-			// TODO: Reserve space...
-			RawSerialisation::ReadObject( mapSize, FileIn );
-			for( size_t i = 0; i < mapSize; ++i )
-			{
-				const std::string boneName = RawSerialisation::ReadString( FileIn );
-				const std::string name = RawSerialisation::ReadString( FileIn );
-
-				auto& rBoneJoint = skeletonAsset->AddNewBoneJoint( boneName, name.empty() ? "Unnamed Attachment" : name );
-
-				glm::vec3 pos{}, rot{}, scl{};
-				RawSerialisation::ReadVec3( pos, FileIn );
-				RawSerialisation::ReadVec3( rot, FileIn );
-				RawSerialisation::ReadVec3( scl, FileIn );
-
-				rBoneJoint.SetRelativePosition( pos );
-				rBoneJoint.SetRelativeRotation( rot );
-				rBoneJoint.SetRelativeScale( scl );
-			}
-		}
-		*/
-
-		FileIn.close();
+		// TRANSITION: Binary
+		skeletonAsset->Deserialise( absolutePath );
 
 		// Set rAsset reference to point to our new Skeleton
 		rAsset = skeletonAsset;
@@ -959,66 +865,21 @@ namespace Saturn {
 		auto fullPath = GetFilepathAbs( basePath );
 		std::ofstream fout( fullPath, std::ios::binary | std::ios::trunc );
 
-		SkeletonAssetFileHeader header;
-		RawSerialisation::WriteObject( header, fout );
+		// TRANSITION: Binary
+		animAsset->Serialise( fout );
 
-		RawSerialisation::WriteObject( animAsset->GetLocalAssetVersion(), fout );
-		RawSerialisation::WriteObject( animAsset->GetSkeletonID(), fout );
-		RawSerialisation::WriteObject( animAsset->GetDuration(), fout );
-		RawSerialisation::WriteObject( animAsset->GetTicksPerSecond(), fout );
-		RawSerialisation::WriteObject( animAsset->m_UncompressedDuration, fout );
-		RawSerialisation::WriteObject( animAsset->m_UncompressedTPS, fout );
-		RawSerialisation::WriteObject( animAsset->IsUsingRootMotion(), fout );
-		RawSerialisation::WriteObject( animAsset->GetBoneCount(), fout );
-
-#if !defined(SAT_DIST)
-		animAsset->SerialiseAclData( fout );
-#endif
 		fout.close();
 	}
 
 	bool SkeletalAnimationAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
 	{
 		const auto absolutePath = GetFilepathAbs( rAsset->Path );
-		std::ifstream FileIn( absolutePath, std::ios::binary | std::ios::in );
-
-		SkeletonAssetFileHeader header{};
-		RawSerialisation::ReadObject( header, FileIn );
-
-		AssetID skeletonID = 0;
-		float duration = 0.0f, ticksPerSecond = 0.0f, uncompDur = 0.0f, uncompTps = 0.0f;
-		size_t boneCount = 0;
-		SkeletalAnimationAssetVersion skAnimVer = SkeletalAnimationAssetVersion::BeforeVersionWasAdded;
-
-		RawSerialisation::ReadObject( skAnimVer, FileIn );
-		RawSerialisation::ReadObject( skeletonID, FileIn );
-		RawSerialisation::ReadObject( duration, FileIn );
-		RawSerialisation::ReadObject( ticksPerSecond, FileIn );
-
-		RawSerialisation::ReadObject( uncompDur, FileIn );
-		RawSerialisation::ReadObject( uncompTps, FileIn );
-
-		bool hadRootMotion = false;
-//		if( skAnimVer >= SkeletalAnimationAssetVersion::RootMotion )
-		{
-			RawSerialisation::ReadObject( hadRootMotion, FileIn );
-		}
-		
-		RawSerialisation::ReadObject( boneCount, FileIn );
-
 		auto animAsset = Ref<SkeletalAnimationAsset>::Create( rAsset );
-		animAsset->SetSkeletonID( skeletonID );
-		animAsset->SetDuration( duration );
-		animAsset->SetTicks( ticksPerSecond );
-		animAsset->SetUncompressedDuration( uncompDur );
-		animAsset->SetUncompressedTicks( uncompTps );
-		animAsset->UseRootMotion( hadRootMotion );
-		animAsset->SetBoneCount( boneCount );
 
-		animAsset->DeserialiseAclData( FileIn );
-
-		if( skeletonID )
-			AssetManager::Get().RegisterAssetDependency( animAsset->ID, skeletonID );
+		std::ifstream FileIn( absolutePath, std::ios::binary | std::ios::in );
+		// TRANSITION: Binary
+		animAsset->Deserialise( FileIn );
+		FileIn.close();
 
 		// Set rAsset reference to point to our new SkeletalAnimation
 		rAsset = animAsset;

@@ -97,7 +97,6 @@ namespace Saturn {
 					pRenderer2D->SubmitLine( rThisPoint, rNextPoint, pathColor );
 					pRenderer2D->SubmitDiamond( rNextPoint, 0.75f, pathColor );
 				}
-
 			}
 		}
 	}

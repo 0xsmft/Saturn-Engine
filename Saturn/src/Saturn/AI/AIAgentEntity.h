@@ -45,7 +45,7 @@ namespace Saturn {
 		SAT_DECLARE_CLASS( AIAgentEntity, Entity );
 	public:
 		AIAgentEntity();
-		~AIAgentEntity();
+		virtual ~AIAgentEntity();
 
 		virtual void BeginPlay() override;
 		virtual void OnUpdate( Saturn::Timestep ts ) override;

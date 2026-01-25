@@ -83,7 +83,7 @@ namespace Saturn {
 		//  This function uses the Audio Thread
 		//  This function will return the sound however, it may not be loaded as soon as it returns!
 		//  Use WaitUntilLoaded for safety.
-		Ref<Sound> RequestNewSound( AssetID ID, UUID UniquePlayerID, bool PlayNow = true, Ref<SoundGroup> soundGroup = nullptr );
+		Ref<Sound> RequestNewSound( AssetID ID, UUID UniquePlayerID = Saturn::UUID(), bool PlayNow = true, Ref<SoundGroup> soundGroup = nullptr );
 		Ref<Sound> PlaySoundAtLocation( AssetID ID, UUID UniquePlayerID, const glm::vec3& rPos, bool PlayNow = true, Ref<SoundGroup> soundGroup = nullptr );
 	
 		Ref<Sound> RequestPreviewSound( AssetID AssetID, UUID Identifier, bool allowMultiple = false );

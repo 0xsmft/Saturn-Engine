@@ -123,6 +123,10 @@ namespace Saturn {
 		// Set the data source to a PCM frame
 		void SeekTo( uint64_t pcmFrame );
 
+		// If the sound is already playing it will restart, if not it will play from the frame specified in pcmFrame
+		// @param pcmFrame -- the frame to start at, default 0
+		void PlayOrRestart( uint64_t pcmFrame = 0u );
+
 		void AddOnCompleteFunction( std::function<void(UUID)>&& rrFunc ) { m_CompletionFunctions.emplace_back( rrFunc ); }
 
 	private:

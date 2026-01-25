@@ -31,6 +31,12 @@
 
 #include "AudioSystem.h"
 
+#if !defined(SAT_DIST)
+#define SAT_SND_VERBOSE_INFO(...) SAT_CORE_INFO(__VA_ARGS__)
+#else
+#define SAT_SND_VERBOSE_INFO(...)
+#endif
+
 namespace Saturn {
 
 	Sound::Sound( const Ref<SoundSpecification>& rSpec, Ref<SoundGroup> soundGroup )
@@ -44,7 +50,7 @@ namespace Saturn {
 	{
 		if( !HasDataSource() )
 		{	
-			SAT_CORE_INFO( "Loading sound: {0}", m_Specification->Name );
+			SAT_SND_VERBOSE_INFO( "Loading sound: {0}", m_Specification->Name );
 
 			// Use master sound group if no group was specified
 			//if( m_SoundGroup == nullptr ) 
@@ -144,7 +150,7 @@ namespace Saturn {
 		{
 			if( frameOffset != 0 )
 			{
-				SAT_CORE_INFO( "Trying to start sound \"{0}\" in {1} frames", m_Specification->Name, frameOffset );
+				SAT_SND_VERBOSE_INFO( "Trying to start sound \"{0}\" in {1} frames", m_Specification->Name, frameOffset );
 				ma_sound_set_start_time_in_pcm_frames( m_Sound,
 					ma_engine_get_time_in_pcm_frames( &AudioSystem::Get().GetAudioEngine() )
 					+ ( ma_engine_get_sample_rate( &AudioSystem::Get().GetAudioEngine() ) * frameOffset ) );
@@ -172,14 +178,14 @@ namespace Saturn {
 				{
 					playFunc();
 		
-					SAT_CORE_INFO( "Sound has data source playing now" );
+					SAT_SND_VERBOSE_INFO( "Sound has data source playing now" );
 				}
 			} break;
 
 			// Play on audio thread if we are waiting on a data source.
 			case SoundState::Initialising:
 			{
-				SAT_CORE_INFO( "Sound is initialising awaiting data source loading" );
+				SAT_SND_VERBOSE_INFO( "Sound is initialising awaiting data source loading" );
 
 				AudioSystem::Get().GetThread()->Queue( playFunc );
 			} break;
@@ -455,6 +461,18 @@ namespace Saturn {
 	void Sound::SeekTo( uint64_t pcmFrame )
 	{
 		ma_sound_seek_to_pcm_frame( m_Sound, pcmFrame );
+	}
+
+	void Sound::PlayOrRestart( uint64_t pcmFrame /*= 0u */ )
+	{
+		if( m_Playing )
+		{
+			SeekTo( 0 );
+		}
+		else
+		{
+			Play( pcmFrame );
+		}
 	}
 
 	void Sound::OnSoundEnd( void* pUserData, ma_sound* pSound )

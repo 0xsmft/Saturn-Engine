@@ -180,8 +180,8 @@ namespace Saturn {
 		SClass* pClass = nullptr;
 
 		// TODO: We could use TransformComponent but then we have to include Components.h, not really ideal
-		glm::vec3 Position;
-		glm::vec3 Rotation;
+		glm::vec3 Position = { 0.0f, 0.0f, 0.0f };
+		glm::vec3 Rotation = { 0.0f, 0.0f, 0.0f };
 		glm::vec3 Scale = { 1.0F, 1.0F, 1.0F };
 	};
 
@@ -247,14 +247,14 @@ namespace Saturn {
 		}
 
 		template<typename T>
-		std::vector<SharedPtr<Entity>> GetAllEntitiesWithClass( void )
+		std::vector<SharedPtr<T>> GetAllEntitiesWithClass( void )
 		{
-			std::vector<SharedPtr<Entity>> result;
+			std::vector<SharedPtr<T>> result;
 
 			for( const auto& [id, entity] : m_EntityIDMap )
 			{
 				if( entity->GetClass() == T::StaticClass() )
-					result.push_back( entity );
+					result.push_back( entity.As<T>() );
 			}
 
 			return result;
@@ -310,9 +310,8 @@ namespace Saturn {
 
 		SharedPtr<NavBoundsEntity> GetNavBoundsEntity() const;
 
-		// This transfers a prefab to an entity.
-		// The prefabs holds an entity however that entity is local to it's scene and we want that entity to be our scene.
-		[[nodiscard]] SharedPtr<Entity> CreatePrefab( Ref<Prefab> prefabAsset );
+		// Covert a prefab asset into an entity within the Scene.
+		[[nodiscard]] SharedPtr<Entity> CreatePrefab( Ref<Prefab> prefabAsset, CreateEntityParameters& rEntityParameters );
 
 		[[nodiscard]] entt::entity CreateHandle()
 		{

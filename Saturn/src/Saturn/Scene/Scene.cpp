@@ -65,11 +65,13 @@
 
 #include "Saturn/Alura/AluraCanvas.h"
 
+#if !defined(SAT_DIST)
 #include "Saturn/ImGui/EditorIcons.h"
 #include "Saturn/ImGui/EntitySelectionManager.h"
-#if !defined(SAT_DIST)
 #include "Saturn/ImGui/ImGuiWindow.h"
+#include "Saturn/ImGui/EditorEvents.h"
 #include "Saturn/ImGui/ImGuiWindowManager.h"
+
 #include "Saturn/Audio/SoundNodeEditor/GraphSoundAssetViewer.h"
 #endif
 
@@ -245,6 +247,7 @@ namespace Saturn {
 		{
 			auto& rb = rEntity->GetComponent<RigidbodyComponent>();
 		
+			// rb.Rigidbody will be null if it's just been spawned into the world.
 			if( !rb.Rigidbody )
 			{
 				m_PhysicsScene->InitialiseNewBody( rEntity, rb );
@@ -263,6 +266,11 @@ namespace Saturn {
 
 				// SyncTransform
 				rEntity->GetComponent<TransformComponent>().Position = pController->GetPosition();
+			}
+			else
+			{
+				// pController will be null if it's just been spawned into the world.
+				m_PhysicsScene->AddNewController( rEntity );
 			}
 		}
 	}
@@ -402,7 +410,9 @@ namespace Saturn {
 			const auto points = m_Registry.group<PointLightComponent>( entt::get<TransformComponent> );
 			if( points.size() )
 			{
+#if !defined(SAT_DIST)
 				const Ref<Texture2D> pointLightBillboardTex = EditorIcons::GetIcon( "Billboard_PointLight" );
+#endif
 
 				m_Lights.PointLights.reserve( points.size() );
 
@@ -440,6 +450,7 @@ namespace Saturn {
 
 	void Scene::RtBuildRenderer2DCommands( Ref<SceneRenderer> sceneRenderer )
 	{
+#if !defined(SAT_DIST)
 		// Audio Billboards
 		const auto players = m_Registry.group<AudioPlayerComponent>( entt::get<TransformComponent> );
 		if( players.size() )
@@ -508,6 +519,7 @@ namespace Saturn {
 					aiAgentTexture, glm::vec2( 1.0f ) );
 			}
 		}
+#endif
 	}
 
 	void Scene::RtBuildSceneRendererCommands( Ref<SceneRenderer> sceneRenderer )
@@ -574,7 +586,7 @@ namespace Saturn {
 
 	SharedPtr<Entity> Scene::CreateEntity( const std::string& name /*= "" */ )
 	{
-		SharedPtr<Entity> entity = ClassMetadataHandler::Get().CreateClassObject<Entity>( Entity::StaticClass(), this );
+		SharedPtr<Entity> entity = NewObject<Entity>( this );
 		entity->SetName( name );
 
 		OnEntityCreated( entity );
@@ -822,7 +834,8 @@ namespace Saturn {
 			}
 			else
 			{
-				replace[ rEntity->GetHandle() ] = CreatePrefab( prefabAsset );
+				CreateEntityParameters cep;
+				replace[ rEntity->GetHandle() ] = CreatePrefab( prefabAsset, cep );
 			}
 		}
 
@@ -910,6 +923,15 @@ namespace Saturn {
 			}
 		}
 
+		if( pEntity->HasComponent<CharacterMovementComponent>() )
+		{
+			auto& movementComponent = pEntity->GetComponent<CharacterMovementComponent>();
+			if( movementComponent.CharacterMovement )
+			{
+				delete movementComponent.CharacterMovement;
+			}
+		}
+
 		for( auto& rChild : pEntity->GetChildren() )
 		{
 			auto child = FindEntityByID( rChild );
@@ -921,6 +943,12 @@ namespace Saturn {
 
 		m_Registry.destroy( pEntity->GetHandle() );
 		m_EntityIDMap.erase( pEntity->GetHandle() );
+
+		// Attempted to delete an entity while something still holds a reference to it!
+		SAT_CORE_ASSERT( pEntity->GetRefCount() == 0 );
+
+		// Screwy, but because we want to avoid using Ref's here we must delete the entity like this.
+		delete pEntity;
 	}
 
 	void Scene::CopyScene( Ref<Scene>& NewScene )
@@ -1098,7 +1126,6 @@ namespace Saturn {
 				}
 
 				sound->SetVolume( rComp.Mute ? 0.0f : rComp.Volume );
-//				sound->SetPitch( rComp.Pitch );
 				sound->Loop( rComp.Loop );
 
 #if !defined(SAT_DIST)
@@ -1196,9 +1223,34 @@ namespace Saturn {
 		return m_NavBoundsEntity;
 	}
 
-	SharedPtr<Entity> Scene::CreatePrefab( Ref<Prefab> prefabAsset )
+	SharedPtr<Entity> Scene::CreatePrefab( Ref<Prefab> prefabAsset, CreateEntityParameters& rEntityParameters )
 	{
 		SharedPtr<Entity> prefabEntity = prefabAsset->PrefabToEntity( this );
+
+		SAT_CORE_ASSERT( !rEntityParameters.pClass, "It is invalid for the creation parameters to have a valid SClass, you must not change the SClass as that is controlled by the Prefab asset!" );
+
+		if( !rEntityParameters.Tag.empty() )
+		{
+			prefabEntity->GetComponent<TagComponent>().Tag = rEntityParameters.Tag;
+		}
+
+		prefabEntity->GetComponent<TransformComponent>().SetPositionRotationScale( rEntityParameters.Position, rEntityParameters.Rotation, rEntityParameters.Scale );
+		
+		if( rEntityParameters.Parent )
+		{
+			rEntityParameters.Parent->AddChild( prefabEntity->GetUUID() );
+			prefabEntity->SetParent( rEntityParameters.Parent->GetUUID() );
+		}
+
+		// TODO: Temp! should create somesort of OnEntitySpawned() function so we can start animations, behaviour trees etc.
+		if( prefabEntity->GetClass()->IsChildOf( AIAgentEntity::StaticClass() ) )
+		{
+			if( const auto* pComp = prefabEntity->TryGetComponent<BehaviourTreeComponent>(); pComp )
+			{
+				auto agent = prefabEntity.As<AIAgentEntity>();
+				agent->StartBehaviourTree( pComp->BehaviourTreeAssetID );
+			}
+		}
 
 		return prefabEntity;
 	}
@@ -1276,6 +1328,13 @@ namespace Saturn {
 			boundsEntity->LoadNavMeshFromDisk();
 
 			m_NavBoundsEntity = boundsEntity;
+
+#if !defined(SAT_DIST)
+			if( !m_NavBoundsEntity->GetComponent<NavigationMeshSpecificationComponent>().HasBuilt )
+			{
+				Application::Get().DispatchEvent<SendEditorNotificationEvent>( "The navigation mesh was unable to be loaded from disk or it was never built! Please check the output for more information." );
+			}
+#endif
 
 //			OnNavMeshBuildCompleted();
 		}

@@ -259,7 +259,6 @@ project "Saturn"
 				"Saturn/vendor/shaderc/bin/Release-Windows/shaderc_util.lib",
 				"Saturn/vendor/shaderc/bin/Release-Windows/glslang.lib",
 				"Saturn/vendor/shaderc/bin/Release-Windows/SPIRV-Tools.lib",
-				"Saturn/vendor/shaderc/bin/Release-Windows/glslc.lib",
 
 				"Saturn/vendor/physx/bin/Release/LowLevel_static_64.lib",
 				"Saturn/vendor/physx/bin/Release/LowLevelAABB_static_64.lib",

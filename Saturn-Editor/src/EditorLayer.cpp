@@ -132,6 +132,9 @@ namespace Saturn {
 
 	void EditorLayer::OnAttach()
 	{
+		// oooo lazily loading such an important system oooo
+		AudioSystem::Get();
+
 		m_SelectionManager = std::make_unique<EntitySelectionManager>();
 		m_GlobalUndoRedoGroup = Ref<GlobalUndoRedoGroup>::Create();
 
@@ -250,6 +253,10 @@ namespace Saturn {
 		}
 
 		m_EditorScene = nullptr;
+
+		// Now terminate the audio system, before the asset man and the GameModule is unloaded.
+		AudioSystem::Get().Terminate();
+
 		m_AssetManager = nullptr;
 
 		VirtualFS::Get().UnmountBase( Project::GetActiveConfig().Name );
@@ -258,7 +265,7 @@ namespace Saturn {
 		tracy::ShutdownProfiler();
 #endif
 
-		delete m_GameModule;
+		FSObjectAllocator::DeallocateSObject<GameModule>( m_GameModule );
 		m_GameModule = nullptr;
 	}
 

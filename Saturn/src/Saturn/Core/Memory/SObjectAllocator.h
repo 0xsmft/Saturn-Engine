@@ -28,7 +28,6 @@
 
 #pragma once
 
-#include "SharedGlobals.h"
 #include "Saturn/GameFramework/SObject.h"
 #include "SystemAllocator.h"
 
@@ -45,6 +44,7 @@ namespace Saturn {
 
 		static void DeallocateSObject( SObject* const pObject ) 
 		{
+			pObject->~SObject();
 			FSystemAllocator::Free( pObject );
 		}
 
@@ -57,6 +57,7 @@ namespace Saturn {
 		template<typename Ty>
 		static void DeallocateSObject( Ty* const pObject )
 		{
+			pObject->~Ty();
 			FSystemAllocator::Free( pObject );
 		}
 	};

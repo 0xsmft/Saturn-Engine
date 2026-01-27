@@ -40,8 +40,6 @@
 
 #include "Renderer/RenderThread.h"
 
-#include "Saturn/Audio/AudioSystem.h"
-
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -73,7 +71,6 @@ namespace Saturn {
 		m_MainThreadID = std::this_thread::get_id();
 
 		// Lazy load.
-		AudioSystem::Get();
 		RenderThread::Get().EnableIf( HasFlag( ApplicationFlag_UseGameThread ) );
 		RenderThread::Get().Start();
 
@@ -169,8 +166,6 @@ namespace Saturn {
 			m_ImGuiLayer = nullptr;
 #endif
 		} );
-
-		AudioSystem::Get().Terminate();
 		
 		delete m_VulkanContext;
 

@@ -134,6 +134,53 @@ namespace Saturn {
 	}
 
 #if !defined(SAT_DIST)
+
+	void AssetManager::RenameAsset( AssetID id, const std::string& rName )
+	{
+		Ref<Asset> asset = m_Assets->FindAsset( id );
+		if( asset )
+		{
+			const std::wstring& rExt = asset->Path.extension();
+
+			asset->Name = rName;
+			asset->Path.replace_filename( rName );
+			asset->Path.replace_extension( rExt );
+
+			if( IsAssetLoaded( id ) )
+			{
+				m_Assets->m_LoadedAssets[ id ]->Name = rName;
+				m_Assets->m_LoadedAssets[ id ]->Path = asset->Path;
+			}
+
+			Save();
+		}
+	}
+
+	void AssetManager::UpdateAssetPathsOnRename( const std::filesystem::path& rOldPath, const std::filesystem::path& rNewPath )
+	{
+		bool assetRegistryModified = false;
+
+		for( auto& [id, rAsset] : m_Assets->m_Assets )
+		{
+			const std::filesystem::path pathStem = rAsset->Path.parent_path();
+			if( pathStem == rOldPath )
+			{
+				rAsset->Path = rNewPath / rAsset->Name;
+			
+				if( IsAssetLoaded( id ) )
+				{
+					// Okay to use rAsset->Name...
+					m_Assets->m_LoadedAssets[ id ]->Path = rNewPath / rAsset->Name;
+				}
+
+				assetRegistryModified = true;
+			}
+		}
+
+		if( assetRegistryModified )
+			AssetManager::Get().Save();
+	}
+
 	void AssetManager::RegisterMemoryAssetDependency( AssetID dependencyID, MemoryAssetDependencyBase* pBase )
 	{
 		if( dependencyID != 0 )

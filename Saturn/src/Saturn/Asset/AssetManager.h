@@ -135,6 +135,12 @@ namespace Saturn {
 			}
 		}
 
+		// NOTE: Automatically saves the Asset Registry
+		void RenameAsset( AssetID id, const std::string& rName );
+		
+		// NOTE: Automatically saves the Asset Registry
+		void UpdateAssetPathsOnRename( const std::filesystem::path& rOldPath, const std::filesystem::path& rNewPath );
+
 		size_t GetAssetRegistrySize() const { return m_Assets->GetSize(); }
 
 	public:

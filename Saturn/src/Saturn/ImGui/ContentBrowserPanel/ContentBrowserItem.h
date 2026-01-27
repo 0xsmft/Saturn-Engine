@@ -89,6 +89,8 @@ namespace Saturn {
 		void ScrollTo();
 
 	private:
+		void HandleOpenAsset();
+		void HandleOpenSourceItem();
 		void HandleDragDrop();
 
 		void DrawIcon( const ImVec2& rThumbnailSize, const ImVec2& rTopLeft, const ImVec2& rBottomRight );
@@ -98,7 +100,11 @@ namespace Saturn {
 
 	private:
 		std::filesystem::directory_entry m_Entry;
+		
+		// The filename without the extension.
 		std::filesystem::path m_Filename;
+
+		// The absolute filepath of the asset/folder/source item.
 		std::filesystem::path m_Path;
 
 		Ref<Texture2D> m_Icon;

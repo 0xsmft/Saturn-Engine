@@ -406,7 +406,6 @@ namespace Saturn {
 		// Linux does not allow files to be called .., .
 
 		std::regex invalidCharacterRegex( "[\\\\/:?*<>|\\\"]" );
-
 		if( std::regex_search( rName, invalidCharacterRegex ) )
 		{
 			SAT_CORE_INFO( "Invalid chars" );
@@ -415,40 +414,38 @@ namespace Saturn {
 
 		m_Filename = rName;
 
-		const std::filesystem::path oldPath = m_Path;
-		const std::string extension = oldPath.extension().string();
+		const std::string extension = m_Path.extension().string();
 
-		const std::filesystem::path newPath = std::format( "{0}\\{1}{2}", oldPath.parent_path().string(), rName, extension );
+		std::filesystem::path newPath = m_Path.parent_path();
+		newPath /= rName;
+		newPath.replace_extension( extension );
 
 		// Rename the file on the filesystem
-		std::filesystem::rename( oldPath, newPath );
+		std::filesystem::rename( m_Path, newPath );
+
+		if( m_Asset )
+		{
+			AssetManager::Get().RenameAsset( m_Asset->ID, rName );
+		}
 
 		// Update our Entry.
 		m_Entry = std::filesystem::directory_entry( newPath );
 		m_Path = m_Entry.path();
-
-		// Find our asset.
-		const auto relative = std::filesystem::relative( oldPath, Project::GetActiveProject()->GetRootDir() );
-
-		Ref<Asset> asset = AssetManager::Get().FindAsset( relative );
-		if( asset )
-		{
-			asset->Name = rName;
-			asset->SetAbsolutePath( m_Path );
-
-			AssetManager::Get().Save();
-		}
 	}
 
 	void ContentBrowserItem::OnRenameCommittedFolder( const std::string& rName )
 	{
 		m_Filename = rName;
 
-		std::filesystem::path oldPath = m_Path;
-		std::filesystem::path newPath = std::format( "{0}\\{1}", oldPath.parent_path().string(), rName );
+		std::filesystem::path newPath = m_Path.parent_path();
+		newPath /= rName; 
 
-		std::filesystem::rename( oldPath, newPath );
+		std::filesystem::rename( m_Path, newPath );
 
+		// After the call to the FS, tell the Asset Manager to update any assets in this folder.
+		AssetManager::Get().UpdateAssetPathsOnRename( m_Path, newPath );
+
+		// And finally update our path.
 		m_Entry = std::filesystem::directory_entry( newPath );
 		m_Path = m_Entry.path();
 	}
@@ -670,24 +667,24 @@ namespace Saturn {
 					break;
 				case Saturn::AssetType::StaticMesh:
 				{
-					ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_MODEL", pData, sizeof( Saturn::UUID ), ImGuiCond_Once );
+					ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_MODEL", pData, sizeof( uintptr_t ), ImGuiCond_Once );
 				}	break;
 				case Saturn::AssetType::SkeletalMesh:
 				case Saturn::AssetType::Material:
 				{
-					ImGui::SetDragDropPayload( "asset_payload", pData, sizeof( Saturn::UUID ), ImGuiCond_Once );
+					ImGui::SetDragDropPayload( "asset_payload", pData, sizeof( uintptr_t ), ImGuiCond_Once );
 				}	break;
 				case Saturn::AssetType::MaterialInstance:
 				case Saturn::AssetType::Sound:
 					break;
 				case Saturn::AssetType::Scene:
 				{
-					ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_SCENE", pData, sizeof( Saturn::UUID ), ImGuiCond_Once );
+					ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_SCENE", pData, sizeof( uintptr_t ), ImGuiCond_Once );
 				} break;
 
 				case Saturn::AssetType::Prefab:
 				{
-					ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_PREFAB", pData, sizeof( Saturn::UUID ), ImGuiCond_Once );
+					ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_PREFAB", pData, sizeof( uintptr_t ), ImGuiCond_Once );
 				} break;
 
 				case Saturn::AssetType::Unknown:

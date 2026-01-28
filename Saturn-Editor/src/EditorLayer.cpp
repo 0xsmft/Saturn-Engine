@@ -208,6 +208,11 @@ namespace Saturn {
 		// Now open the startup scene
 		OpenFile( Project::GetActiveProject()->GetConfig().StartupSceneID );
 
+		// Create camera preview scene renderer
+		// NOTE: We have to create a Renderer2D due to us rendering this scene as an Editor Scene, not really ideal.
+		m_CameraPreviewSceneRenderer = Ref<SceneRenderer>::Create( /*SceneRendererFlag_NoRenderer2D*/ SceneRendererFlag_NoFlags );
+		m_CameraPreviewSceneRenderer->SetCurrentScene( m_EditorScene.Get() );
+		m_CameraPreviewSceneRenderer->SetViewportSize( 512, 512 );
 		const std::string title = std::format( "{0} - Saturn", Project::GetActiveConfig().Name );
 		Application::Get().GetWindow()->ChangeTitle( title );
 
@@ -241,8 +246,14 @@ namespace Saturn {
 	{
 		m_ImGuiWindowManager = nullptr;
 
+		delete g_AluraCanvas;
+		g_AluraCanvas = nullptr;
+
 		m_SceneRenderer->SetCurrentScene( nullptr );
 		m_SceneRenderer = nullptr;
+
+		m_CameraPreviewSceneRenderer->SetCurrentScene( nullptr );
+		m_CameraPreviewSceneRenderer = nullptr;
 		
 		m_SelectionManager.reset();
 
@@ -366,6 +377,19 @@ namespace Saturn {
 			m_EditorScene->OnRenderEditor( &m_EditorCamera, m_EditorCamera.ViewMatrix(), m_SceneRenderer, time );
 			SubmitSelectedMeshes();
 
+			if( m_ShouldRenderCameraPreview && m_pSelectedCamera )
+			{
+				SceneCamera* pSceneCamera = dynamic_cast< SceneCamera* >( m_pSelectedCamera );
+				if( pSceneCamera )
+				{
+					const auto entity = m_EditorScene->FindEntityByHandle( m_SelectedCameraEntityID );
+
+					pSceneCamera->SetPosition( entity->GetComponent<TransformComponent>().Position );
+
+					pSceneCamera->OnUpdate( time );
+					m_EditorScene->OnRenderEditor( pSceneCamera, pSceneCamera->ViewMatrix(), m_CameraPreviewSceneRenderer, time );
+				}
+			}
 
 			m_LastAutoSaveTime += time;
 
@@ -398,10 +422,11 @@ namespace Saturn {
 		// Render scenes in other asset viewers
 		m_ImGuiWindowManager->OnUpdate( time );
 
-		RenderThread::Get().Queue( [ = ]() { m_SceneRenderer->RenderScene(); } );
 		RenderThread::Get().Queue( [ = ]() 
 		{ 
 			m_SceneRenderer->RenderScene(); 
+			if( m_ShouldRenderCameraPreview )
+				m_CameraPreviewSceneRenderer->RenderScene();
 
 			// Always submit Renderer2D AFTER a potential SceneRenderer has finished because we now may have new 
 			// render commands to draw after OnUpdate was called.
@@ -508,6 +533,40 @@ namespace Saturn {
 				const auto& rParams = rSkylightEvent.GetParams();
 
 				m_SceneRenderer->SetDynamicSky( rParams.x, rParams.y, rParams.z );
+			} break;
+
+			case EventType::EntitySelected:
+			{
+				const EntitySelectedEvent& rSelectionEvent = ( EntitySelectedEvent& ) rEvent;
+				if( const auto entity = m_EditorScene->FindEntityByID( rSelectionEvent.GetID() ) )
+				{
+					if( const auto cc = entity->TryGetComponent<CameraComponent>(); cc )
+					{
+						m_ShouldRenderCameraPreview = true;
+						cc->Camera->SetViewportSize( 400.0f, 225.0f );
+
+						m_pSelectedCamera = cc->Camera.Get();
+						m_SelectedCameraEntityID = entity->GetHandle();
+					}
+				}
+			} break;
+
+			case EventType::EntityDeselected:
+			{
+				const EntityDeselectedEvent& rSelectionEvent = ( EntityDeselectedEvent& ) rEvent;
+				for( const auto& ID : rSelectionEvent.GetIDs() )
+				{
+					if( const auto entity = m_EditorScene->FindEntityByID( ID ) )
+					{
+						if( const auto cc = entity->TryGetComponent<CameraComponent>(); cc )
+						{
+							m_ShouldRenderCameraPreview = false;
+							m_pSelectedCamera = nullptr;
+
+							m_SelectedCameraEntityID = entity->GetHandle();
+						}
+					}
+				}
 			} break;
 
 			case EventType::RqOpenIDE: 
@@ -2644,7 +2703,11 @@ namespace Saturn {
 		//// Render the real gizmo
 		Viewport_DrawGizmo();
 
+		if( m_ShouldRenderCameraPreview )
+			Viewport_CameraPreview();
+		
 		ImGui::PopStyleVar();
+
 		ImGui::End();
 	}
 
@@ -2778,6 +2841,27 @@ namespace Saturn {
 
 			ImGui::EndTooltip();
 		}
+	}
+
+	void EditorLayer::Viewport_CameraPreview()
+	{
+		const ImVec2 minBound = ImGui::GetWindowPos();
+		const ImVec2 maxBound = { minBound.x + m_ViewportSize.x, minBound.y + m_ViewportSize.y };
+
+		constexpr ImVec2 size = ImVec2( 400.0f, 225.0f );
+		ImGui::SetNextWindowPos( ImVec2( maxBound.x - size.x - 10.0f, maxBound.y - size.y - 10.0f ) );
+
+		ImGui::SetNextWindowSize( size, ImGuiCond_FirstUseEver );
+		ImGui::Begin( "CameraPreview##vp_camerapreview", nullptr, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoFocusOnAppearing );
+
+		const std::string text = "Camera Preview";
+		const ImVec2 textSize = ImGui::CalcTextSize( text.data() );
+
+		ImGui::SetCursorPosX( ( size.x - textSize.x ) * 0.5f );
+		ImGui::Text( text.data() );
+
+		Auxiliary::Image( m_CameraPreviewSceneRenderer->CompositeImage(), ImGui::GetContentRegionAvail(), { 0, 1 }, { 1, 0 } );
+		ImGui::End();
 	}
 
 	void EditorLayer::Viewport_RTControls_Running()

@@ -121,6 +121,8 @@ namespace Saturn {
 		void Viewport_RTControls_Running();
 		void Viewport_RTControls_Default();
 
+		void Viewport_CameraPreview();
+
 		void ProjectSettings_DrawSoundGroupEdit( Ref<SoundGroup>& rSoundGroup );
 
 		// Close editor and open the project browser.
@@ -216,6 +218,7 @@ namespace Saturn {
 		GameModule* m_GameModule = nullptr;
 		Ref<AssetManager> m_AssetManager;
 		Ref<SceneRenderer> m_SceneRenderer;
+		Ref<SceneRenderer> m_CameraPreviewSceneRenderer;
 
 		Ref<GlobalUndoRedoGroup> m_GlobalUndoRedoGroup = nullptr;
 		std::unique_ptr<EntitySelectionManager> m_SelectionManager;
@@ -223,6 +226,7 @@ namespace Saturn {
 		EditorCamera m_EditorCamera;
 		EditorCamera m_SuspendedEditorCamera;
 		Camera* m_pRuntimeCamera = nullptr;
+		Camera* m_pSelectedCamera = nullptr;
 
 		bool m_AllowCameraEvents = false;
 		bool m_StartedRightClickInViewport = false;
@@ -269,6 +273,8 @@ namespace Saturn {
 
 		float m_LastAutoSaveTime = 0.0f;
 		uint32_t m_AutoSaveCount = 0u;
+
+		entt::entity m_SelectedCameraEntityID{ entt::null };
 
 		ImVec2 m_ViewportSize;
 		ImRect m_ViewportBounds;

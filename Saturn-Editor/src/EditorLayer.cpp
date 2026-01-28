@@ -350,7 +350,7 @@ namespace Saturn {
 					const auto& cc = entity->GetComponent<CameraComponent>().Camera;
 					
 					auto renderer2D = m_SceneRenderer->GetRenderer2D();
-					cc.RenderDebugFrustum( renderer2D );
+					cc->RenderDebugFrustum( renderer2D );
 				}
 			}
 		}

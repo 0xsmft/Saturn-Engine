@@ -29,6 +29,7 @@
 #pragma once
 
 #include "Saturn/Core/AABB/AABB.h"
+#include "Saturn/Core/Ref.h"
 
 #include <stdint.h>
 
@@ -55,7 +56,7 @@ namespace Saturn {
 
 	class Renderer2D;
 
-	class Camera
+	class Camera : public RefTarget
 	{
 	public:
 		Camera() = default;

@@ -190,9 +190,14 @@ namespace Saturn {
 
 	struct CameraComponent
 	{
-		SceneCamera Camera;
+		Ref<SceneCamera> Camera;
 		bool MainCamera = false;
 		float Fov = 45.0f;
+
+		CameraComponent() 
+		{
+			Camera = Ref<SceneCamera>::Create( Fov, 1280.0f, 720.0f );
+		}
 	};
 
 	// Preetham sky

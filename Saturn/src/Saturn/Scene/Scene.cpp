@@ -290,6 +290,11 @@ namespace Saturn {
 
 	void Scene::OnEvent( Event& rEvent )
 	{
+		// Other states do not need to be handled because anything other than Running or Suspended should get through here.
+		// TODO: Handle this better.
+		if( m_RuntimeState == RuntimeState::Suspended )
+			return;
+
 		switch( rEvent.Type )
 		{
 			default: break;
@@ -359,14 +364,13 @@ namespace Saturn {
 			const auto view = glm::inverse( tc.GetTransform() );
 
 			auto& rCamera = entity->GetComponent<CameraComponent>().Camera;
-			rCamera.SetViewportSize( sceneRenderer->Width(), sceneRenderer->Height() );
-			//rCamera.SetViewMatrix( view );
-			rCamera.SetPosition( tc.Position );
+			rCamera->SetViewportSize( sceneRenderer->Width(), sceneRenderer->Height() );
+			rCamera->SetPosition( tc.Position );
 
-			rCamera.OnUpdate( ts );
+			rCamera->OnUpdate( ts );
 
-			m_RendererCamera.pCamera = ( Camera* ) &rCamera;
-			m_RendererCamera.ViewMatrix = rCamera.ViewMatrix();
+			m_RendererCamera.pCamera = ( Camera* ) rCamera.Get();
+			m_RendererCamera.ViewMatrix = rCamera->ViewMatrix();
 		}
 		else
 		{

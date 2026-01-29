@@ -1012,8 +1012,7 @@ namespace Saturn {
 							float t;
 							if( ray.IntersectsTri( rV0, rV1, rV2, t ) )
 							{
-								auto hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
-								hierarchyPanel->SetSelected( rEntity );
+								EntitySelectionManager::Get().Select( rEntity, EntitySelectionReason::Viewport );
 
 								break;
 							}

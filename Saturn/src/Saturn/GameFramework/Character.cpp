@@ -89,13 +89,6 @@ namespace Saturn {
 		}
 
 		m_RigidBody = GetComponent<RigidbodyComponent>().Rigidbody;
-
-		if( m_RigidBody )
-		{
-			m_RigidBody->SetOnCollisionHit( SAT_BIND_EVENT_FN( OnMeshHit ) );
-			m_RigidBody->SetOnCollisionExit( SAT_BIND_EVENT_FN( OnMeshExit ) );
-		}
-
 		Input::Get().SetCursorMode( RubyCursorMode::Locked );
 	}
 
@@ -108,7 +101,7 @@ namespace Saturn {
 		if( Input::Get().KeyPressed( RubyKey_Esc ) && Input::Get().GetCursorMode() == RubyCursorMode::Locked )
 		{
 			Input::Get().SetCursorMode( RubyCursorMode::Normal, true );
-			m_CameraEntity->GetComponent<CameraComponent>().Camera.SetActive( false );
+			m_CameraEntity->GetComponent<CameraComponent>().Camera->SetActive( false );
 		}
 		else if( Input::Get().MouseButtonPressed( RubyMouseButton_Left ) && Input::Get().GetCursorMode() != RubyCursorMode::Locked ) 
 		{
@@ -117,7 +110,7 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 			if( Input::Get().CanSetCursorMode() )
 #endif
-				m_CameraEntity->GetComponent<CameraComponent>().Camera.SetActive( true );
+				m_CameraEntity->GetComponent<CameraComponent>().Camera->SetActive( true );
 
 			m_LastMousePos = Input::Get().MousePosition();
 		}
@@ -169,24 +162,14 @@ namespace Saturn {
 		}
 	}
 
-	void Character::OnMeshHit( SharedPtr<Entity> Other )
-	{
-
-	}
-
-	void Character::OnMeshExit( SharedPtr<Entity> Other )
-	{
-
-	}
-
 	glm::vec3 Character::CalculateRight()
 	{
-		return m_CameraEntity->GetComponent<CameraComponent>().Camera.GetRightDirection();
+		return m_CameraEntity->GetComponent<CameraComponent>().Camera->GetRightDirection();
 	}
 
 	glm::vec3 Character::CalculateForward()
 	{
-		return m_CameraEntity->GetComponent<CameraComponent>().Camera.GetForwardDirection();
+		return m_CameraEntity->GetComponent<CameraComponent>().Camera->GetForwardDirection();
 	}
 
 	void Character::MoveForward()

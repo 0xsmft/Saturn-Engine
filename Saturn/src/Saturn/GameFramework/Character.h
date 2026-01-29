@@ -60,12 +60,6 @@ namespace Saturn {
 		const Ref<StaticMesh>& GetMesh() const { return m_Mesh; }
 		
 	protected:
-		//////////////////////////////////////////////////////////////////////////
-		// Physics
-
-		void OnMeshHit( SharedPtr<Entity> Other );
-		void OnMeshExit( SharedPtr<Entity> Other );
-		
 		virtual void SetupInputBindings() {};
 
 		void MoveForward();
@@ -83,6 +77,8 @@ namespace Saturn {
 
 		SharedPtr<Entity>& GetCameraEntity() { return m_CameraEntity; }
 		const SharedPtr<Entity>& GetCameraEntity() const { return m_CameraEntity; }
+
+		PhysicsRigidBody* GetRigidBody() { return m_RigidBody; }
 
 	protected:
 		//////////////////////////////////////////////////////////////////////////

@@ -481,13 +481,6 @@ namespace Saturn {
 		}
 		else
 		{
-			/*
-			if( AssetManager::Get().DoesAssetHaveDependencies( m_Asset ) )
-			{
-				return false;
-			}
-			*/
-
 			CloseAssetViewersBeforeDeletion();
 			AssetManager::Get().RemoveAsset( m_Asset->ID );
 		}

@@ -275,6 +275,8 @@ namespace Saturn {
 							rItem->Delete();
 						}
 					}
+
+					m_SelectedItems.clear();
 				}
 
 				if( ImGui::MenuItem( "Copy Asset ID" ) )

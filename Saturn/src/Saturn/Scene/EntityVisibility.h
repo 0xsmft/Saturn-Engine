@@ -26,106 +26,15 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "Entity.h"
 
-#include "Saturn/Serialisation/Raw/RawEntitySerialisation.h"
+#pragma once
 
 namespace Saturn {
 
-	Entity::Entity()
+	enum class EntityVisibility 
 	{
-		m_Scene = g_ActiveScene;
-		m_EntityHandle = m_Scene->CreateHandle();
-		
-		AddComponent<IdComponent>();
-		AddComponent<RelationshipComponent>();
-		AddComponent<TransformComponent>();
-		AddComponent<TagComponent>().Tag = "Unnamed Entity";
-	}
-
-	Entity::Entity( const std::string& rName, UUID Id )
-	{
-		m_Scene = g_ActiveScene;
-		m_EntityHandle = m_Scene->CreateHandle();
-
-		AddComponent<IdComponent>().ID = Id;
-		AddComponent<RelationshipComponent>();
-		AddComponent<TransformComponent>();
-		AddComponent<TagComponent>().Tag = rName;
-	}
-
-	Entity::Entity( const Entity& other )
-	{
-		this->m_Scene = other.m_Scene;
-		this->m_EntityHandle = other.m_EntityHandle;
-	}
-
-	Entity::Entity( Scene* scene )
-	{
-		m_Scene = scene;
-		m_EntityHandle = m_Scene->CreateHandle();
-
-		AddComponent<IdComponent>();
-		AddComponent<RelationshipComponent>();
-		AddComponent<TransformComponent>();
-		AddComponent<TagComponent>().Tag = "Unnamed Entity";
-	}
-
-	Entity::~Entity()
-	{
-		m_Scene->RemoveHandle( m_EntityHandle );
-		m_EntityHandle = entt::null;
-
-		m_Scene = nullptr;
-	}
-
-	void Entity::SetName( const std::string& rName )
-	{
-		GetComponent<TagComponent>().Tag = rName;
-	}
-
-	void Entity::Show()
-	{
-		m_VisibilityFlag = EntityVisibility::Visible;
+		Visible = 0,
+		Hidden = 1
+	};
 	
-		// Propagate down to children.
-		for( auto& rChildID : GetChildren() )
-		{
-			auto child = m_Scene->FindEntityByID( rChildID );
-			if( child )
-			{
-				child->Show();
-			}
-		}
-	}
-
-	void Entity::Hide()
-	{
-		m_VisibilityFlag = EntityVisibility::Hidden;
-
-		// Propagate down to children.
-		for( auto& rChildID : GetChildren() )
-		{
-			auto child = m_Scene->FindEntityByID( rChildID );
-			if( child )
-			{
-				child->Hide();
-			}
-		}
-	}
-
-	void Entity::Serialise( const SharedPtr<Entity>& rObject, std::ofstream& rStream )
-	{
-		RawEntitySerialisation::SerialiseEntity( rObject, rStream );
-	}
-
-	void Entity::Deserialise( SharedPtr<Entity>& rObject, std::istream& rStream )
-	{
-		RawEntitySerialisation::DeserialiseEntity( rObject, rStream );
-	}
 }
-
-#include "Saturn/GameFramework/Core/EngineGenerated.h"
-
-SAT_X31_CREATE_AUTO_REG_SPWN( Entity );

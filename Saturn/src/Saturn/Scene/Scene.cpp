@@ -531,6 +531,9 @@ namespace Saturn {
 		const auto staticMeshEntities = GetAllEntitiesWith<StaticMeshComponent>();
 		for( const auto& entity : staticMeshEntities )
 		{
+			if( !entity->IsVisible() )
+				continue;
+
 			const auto& meshComponent = entity->GetComponent<StaticMeshComponent>();
 			const auto transform = GetTransformRelativeToParent( entity );
 
@@ -548,6 +551,9 @@ namespace Saturn {
 		const auto dynamicMeshEntities = GetAllEntitiesWith<SkeletalMeshComponent>();
 		for( const auto& entity : dynamicMeshEntities )
 		{
+			if( !entity->IsVisible() )
+				continue;
+
 			auto& meshComponent = entity->GetComponent<SkeletalMeshComponent>();
 			const auto transform = GetTransformRelativeToParent( entity );
 

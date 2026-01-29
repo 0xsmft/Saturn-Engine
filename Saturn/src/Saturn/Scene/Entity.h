@@ -30,6 +30,7 @@
 
 #include "Components.h"
 #include "Scene.h"
+#include "EntityVisibility.h"
 
 #include "Saturn/GameFramework/SObject.h"
 #include "Saturn/GameFramework/Core/GameScript.h"
@@ -134,13 +135,39 @@ namespace Saturn {
 		glm::mat4 Transform() const { return m_Scene->m_Registry.get<TransformComponent>( m_EntityHandle ).GetTransform(); }
 		
 		glm::vec3 GetLocalPosition() const { return m_Scene->m_Registry.get<TransformComponent>( m_EntityHandle ).Position; }
-		glm::quat GetLocalRotation() const { return m_Scene->m_Registry.get<TransformComponent>( m_EntityHandle ).GetRotationEuler(); }
+		glm::vec3 GetLocalRotation() const { return m_Scene->m_Registry.get<TransformComponent>( m_EntityHandle ).GetRotationEuler(); }
+		glm::quat GetLocalRotationQuat() const { return m_Scene->m_Registry.get<TransformComponent>( m_EntityHandle ).GetRotation(); }
 		glm::vec3 GetLocalScale() const { return m_Scene->m_Registry.get<TransformComponent>( m_EntityHandle ).Scale; }
+
+		void SetPosition( const glm::vec3& rPosition ) { m_Scene->m_Registry.get<TransformComponent>( m_EntityHandle ).Position = rPosition; }
+		void SetRotation( const glm::vec3& rRotatonEuler ) { m_Scene->m_Registry.get<TransformComponent>( m_EntityHandle ).SetRotation( rRotatonEuler ); }
+		void SetScale( const glm::vec3& rScale ) { m_Scene->m_Registry.get<TransformComponent>( m_EntityHandle ).Scale = rScale; }
 
 		void SetName( const std::string& rName );
 
 		const entt::entity GetHandle()       { return m_EntityHandle; }
 		const entt::entity GetHandle() const { return m_EntityHandle; }
+
+		// Show this entity and it's children.
+		void Show();
+
+		// Hide this entity and it's children.
+		void Hide();
+		
+		// Show/Hide this entity and it's children.
+		inline void ShowOrHide() 
+		{ 
+			if( IsVisible() )
+				Hide();
+			else 
+				Show(); 
+		}
+
+		// Set the visibility of _only_ this entity!
+		void SetVisibility( EntityVisibility flag ) { m_VisibilityFlag = flag; }
+
+		// Is this entity visible
+		[[nodiscard]] bool IsVisible() const { return m_VisibilityFlag == EntityVisibility::Visible; }
 
 		UUID GetUUID() const { return GetComponent<IdComponent>().ID; }
 		[[nodiscard]] const std::string& GetName() const { return GetComponent<TagComponent>().Tag; }
@@ -207,7 +234,14 @@ namespace Saturn {
 		static void Deserialise( SharedPtr<Entity>& rObject, std::istream& rStream );
 
 	private:
+		// EnTT internal handle.
 		entt::entity m_EntityHandle{ entt::null };
+
+		// Deciding weather this should be in a component (e.g. VisibilityComponent) or the entity doesn't matter right now...
+		// I just want the fucking visibility of the Entity.
+		EntityVisibility m_VisibilityFlag = EntityVisibility::Visible;
+
+		// Pointer to the Scene who owns us.
 		Scene* m_Scene = nullptr;
 
 	private:
@@ -220,4 +254,5 @@ namespace Saturn {
 		friend class Scene;
 		friend class Prefab;
 	};
+
 }

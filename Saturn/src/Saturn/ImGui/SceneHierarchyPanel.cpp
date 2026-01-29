@@ -166,7 +166,10 @@ namespace Saturn {
 				ImGui::Text( "Right click to add new a new entity." );
 			}
 
-			if( ImGui::IsMouseDown( 0 ) && ImGui::IsWindowHovered() && !EntitySelectionManager::Get().IsMultiSelecting() )
+			if( 
+				ImGui::IsMouseDown( ImGuiMouseButton_Left ) && 
+				ImGui::IsWindowHovered() && 
+				!EntitySelectionManager::Get().IsMultiSelecting() )
 			{
 				EntitySelectionManager::Get().ClearSelection();
 			}
@@ -228,6 +231,22 @@ namespace Saturn {
 			SetSelected( child );
 
 			m_Context->MarkDirty();
+		}
+
+		if( ImGui::MenuItem( "Hide" ) )
+		{
+			for( auto& rEntity : EntitySelectionManager::Get().GetSelectionContexts() )
+			{
+				rEntity->Hide();
+			}
+		}
+
+		if( ImGui::MenuItem( "Show" ) )
+		{
+			for( auto& rEntity : EntitySelectionManager::Get().GetSelectionContexts() )
+			{
+				rEntity->Show();
+			}
 		}
 	}
 
@@ -648,15 +667,22 @@ namespace Saturn {
 
 	void SceneHierarchyPanel::DrawEntityComponents( SharedPtr<Entity> entity )
 	{
-		const ImVec2 contentRegionAvailable = ImGui::GetContentRegionAvail();
 		const bool isPrefab = entity->HasComponent<PrefabComponent>();
 		const auto& id = entity->GetComponent<IdComponent>().ID;
 
-		ImGui::Image( m_EditIcon->GetDescriptorSet(), ImVec2( 30.0f, 30.0f ) );
+		ImGui::Image( m_EditIcon->GetDescriptorSet(), ImVec2( 24.0f, 24.0f ) );
+
+		ImGui::SameLine();
+		
+		if( Auxiliary::ImageButton( entity->IsVisible() ? EditorIcons::GetIcon( "Visible" ) : EditorIcons::GetIcon( "Hidden" ), ImVec2( 24.0f, 24.0f ) ) ) 
+		{
+			entity->ShowOrHide();
+		}
 
 		ImGui::SameLine();
 
 		// TODO: We really don't need to check this as entities will always have a tag.
+		const ImVec2 contentRegionAvailable = ImGui::GetContentRegionAvail();
 		if( entity->HasComponent<TagComponent>() )
 		{
 			auto& tag = entity->GetComponent<TagComponent>().Tag;
@@ -850,7 +876,7 @@ namespace Saturn {
 			{
 				if( Auxiliary::TreeNode( "Materials" ) )
 				{
-					int i = 0;
+					uint32_t i = 0;
 					for( auto& rAsset : mc.MaterialRegistry->GetMaterialAssets() )
 					{
 						const std::string name = rAsset->Name.empty() ? rAsset->GetMaterialName() : rAsset->Name;

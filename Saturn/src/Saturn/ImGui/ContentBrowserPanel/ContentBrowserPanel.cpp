@@ -975,6 +975,10 @@ namespace Saturn {
 #endif
 					}
 
+#if !defined(SAT_DIST)
+					Application::Get().DispatchEvent<SendEditorNotificationEvent>( "A hot reload or a recompile is needed for the class to be registered within the Game!" );
+#endif
+
 					PopupModified = true;
 					UpdateFiles( true );
 				}

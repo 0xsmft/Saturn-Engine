@@ -204,4 +204,26 @@ namespace Saturn {
 		std::filesystem::path m_Path;
 	};
 
+	//
+	// SendEditorNotification
+	//
+	// Send a message to show up as an Editor Notification.
+	//
+	class SendEditorNotificationEvent : public Event
+	{
+		SAT_DEFINE_EVENT( SendEditorNotification, EC_Editor );
+	public:
+		SendEditorNotificationEvent( const std::string& rText )
+			: Event( EventType::SendEditorNotification, EC_Editor ), m_Text( rText )
+		{
+		}
+
+		virtual ~SendEditorNotificationEvent() = default;
+
+		const std::string& GetText() const { return m_Text; }
+
+	private:
+		std::string m_Text{};
+	};
+
 }

@@ -581,6 +581,14 @@ namespace Saturn {
 				Auxiliary::TextEditors::OpenVisualStudioLatest( solutionPath, openOptions );
 #endif
 			} break;
+
+			case EventType::SendEditorNotification:
+			{
+				const SendEditorNotificationEvent& rNotificationEvent = ( SendEditorNotificationEvent& ) rEvent;
+
+				EditorNotification notification{ .Text = rNotificationEvent.GetText(), .Lifetime = 10.0f };
+				PushNotification( notification );
+			} break;
 		}
 	}
 

@@ -763,6 +763,8 @@ namespace Saturn {
 		SharedPtr<Entity> newEntity = dynamic_cast<Entity*>( ClassMetadataHandler::Get().CreateClassObject( (SClass*)entity->GetClass() ) );
 		newEntity->SetName( entity->GetComponent<TagComponent>().Tag );
 
+		OnEntityCreated( newEntity );
+
 		CopyComponentIfExists( AllDuplicatableComponents{}, newEntity->GetHandle(), entity->GetHandle(), m_Registry );
 
 		auto& relationshipComponent = newEntity->GetComponent<RelationshipComponent>();

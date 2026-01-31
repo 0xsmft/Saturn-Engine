@@ -311,6 +311,10 @@ namespace Saturn {
 			UseNormalMap( m_Material->GetResource( "u_NormalTexture" ) != Renderer::Get().GetPinkTexture() );
 
 			m_ValuesChanged = false;
+
+			// Save the material
+			MaterialAssetSerialiser mas;
+			mas.Serialise( this );
 		} );
 	}
 

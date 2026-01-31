@@ -152,11 +152,6 @@ namespace Saturn {
 
 		uiEditor->ShowFlow();
 #endif
-
-		// Save the material
-		MaterialAssetSerialiser mas;
-		mas.Serialise( m_Info.HostMaterial );
-
 		return NodeEditorCompilationStatus::Success;
 	}
 

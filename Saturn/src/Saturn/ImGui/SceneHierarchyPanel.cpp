@@ -792,6 +792,8 @@ namespace Saturn {
 					int i = 0;
 					for( auto& rAsset : mc.MaterialRegistry->GetMaterialAssets() )
 					{
+						ImGui::PushID( i );
+
 						const std::string name = rAsset->Name.empty() ? rAsset->GetMaterialName() : rAsset->Name;
 						if( ImGui::Button( name.c_str() ) )
 						{
@@ -811,6 +813,7 @@ namespace Saturn {
 							}
 						}
 
+						ImGui::PopID();
 						++i;
 					}
 

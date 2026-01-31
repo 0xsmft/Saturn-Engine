@@ -30,6 +30,7 @@
 #include "SceneRenderer.h"
 
 #include "Saturn/Core/Renderer/RenderThread.h"
+#include "Saturn/Core/Random.h"
 
 #include "VulkanContext.h"
 #include "VulkanDebug.h"
@@ -43,17 +44,15 @@
 
 #include "Saturn/Animation/SkeletonAsset.h"
 
-#include "Saturn/ImGui/ImGuiAuxiliary.h"
-
 #include "Saturn/Core/Buffer.h"
 #include "Saturn/Core/Profiler.h"
+#include "Saturn/Core/Ruby/RubyWindow.h"
 
-#include <Saturn/Core/Ruby/RubyWindow.h>
+#if !defined(SAT_DIST)
+#include "Saturn/ImGui/ImGuiAuxiliary.h"
+#endif
 
 #include <glm/gtx/matrix_decompose.hpp>
-#include <backends/imgui_impl_vulkan.h>
-
-#include <random>
 
 constexpr auto M_PI = 3.14159265358979323846;
 constexpr auto SHADOW_MAP_SIZE = 4096.0f;

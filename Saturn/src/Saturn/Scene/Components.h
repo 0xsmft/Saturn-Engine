@@ -88,6 +88,22 @@ namespace Saturn {
 			Rotation = glm::eulerAngles( RotationQuat );
 		}
 
+		// NOTE: Rotation should be specified in euler angles.
+		void SetPositionRotationScale( const glm::vec3& rPosition, const glm::vec3& rRotation, const glm::vec3& rScale )
+		{
+			Position = rPosition;
+			SetRotation( Rotation );
+			Scale = rScale;
+		}
+
+		// NOTE: Rotation should be specified in quaternion form.
+		void SetPositionRotationScale( const glm::vec3& rPosition, const glm::quat& rRotation, const glm::vec3& rScale )
+		{
+			Position = rPosition;
+			SetRotation( Rotation );
+			Scale = rScale;
+		}
+
 		// Where rotation is a euler angle.
 		// Rotational values must be radians.
 		void SetRotation( const glm::vec3& rotation ) 

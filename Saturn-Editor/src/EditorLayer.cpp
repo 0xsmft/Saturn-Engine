@@ -180,6 +180,8 @@ namespace Saturn {
 		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Billboard_AIAgent.png", AddressingMode::Repeat, false ) );
 		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/FastForward.png", AddressingMode::Repeat, false ) );
 		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/NextMultiMedia.png", AddressingMode::Repeat, false ) );
+		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Visible.png", AddressingMode::Repeat, false ) );
+		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Hidden.png", AddressingMode::Repeat, false ) );
 
 		// Create Panel Manager.
 		m_ImGuiWindowManager = Ref<ImGuiWindowManager>::Create();

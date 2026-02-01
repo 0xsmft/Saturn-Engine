@@ -172,6 +172,8 @@ namespace Saturn {
 		float GetWidth() const { return m_Size.x; }
 		float GetHeight() const { return m_Size.y; }
 
+		glm::vec2 GetCursorPosition() const { return m_Layout.CursorPos; }
+
 		const AluraStyle& GetStyle() const { return m_Style; }
 		Ref<AluraFont> GetActiveFont() const { return m_ActiveFont; }
 

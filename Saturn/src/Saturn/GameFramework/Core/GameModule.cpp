@@ -86,7 +86,7 @@ namespace Saturn {
 			m_LastTimestamp = buffer.str();
 
 			// If /HOTRELOAD was suggested when this module was compiled, the Build Tool will output
-			// {ProjectName}_{BuildTimestamp}.dll instead of {ProjectName}.dll
+			// {ModuleName}-{ProjectName}_{BuildTimestamp}.dll instead of {ModuleName}-{ProjectName}.dll
 			std::string dllFilename;
 			if( wasHotReloaded )
 			{

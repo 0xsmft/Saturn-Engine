@@ -277,6 +277,7 @@ namespace Saturn {
 #if defined( SAT_PROFILER_ENABLE )
 		tracy::ShutdownProfiler();
 #endif
+		ClassMetadataHandler::Get().DestroyAndFreeAllSClasses();
 
 		FSObjectAllocator::DeallocateSObject<GameModule>( m_GameModule );
 		m_GameModule = nullptr;

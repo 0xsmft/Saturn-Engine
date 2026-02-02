@@ -37,7 +37,7 @@ int main( int count, char** args )
 	return Saturn::SaturnMainAgnostic( count, args );
 }
 
-#if defined ( _WIN32 )
+#if defined ( _WIN32 ) && defined( SAT_DIST )
 
 int WINAPI WinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nShowCmd )
 {

@@ -34,6 +34,8 @@
 		// See github.com/skypjack/entt/wiki/Frequently-Asked-Questions#warning-c4003-the-min-the-max-and-the-macro
 		#define NOMINMAX
 	#endif
+#elif defined(SAT_PLATFORM_LINUX)
+	#include <signal.h>
 #endif
 
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE

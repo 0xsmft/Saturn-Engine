@@ -29,6 +29,7 @@
 #pragma once
 
 #include "SingletonStorage.h"
+
 #include "Saturn/GameFramework/SClass.h"
 #include "Saturn/GameFramework/SProperty.h"
 
@@ -37,6 +38,12 @@
 namespace Saturn {
 
 #define SAT_ClassMetadataHandler_EachTreeNode_Deprecated [[deprecated( "Saturn::ClassMetadataHandler::EachTreeNode is deprecated and will be removed. Consider using \"ClassMetadataHandler::EachClassNode\" instead." )]]
+
+	struct ClassLinkedListNode
+	{
+		const SClass* pClassPtr;
+		std::vector<std::unique_ptr<ClassLinkedListNode>> Children;
+	};
 
 	class ClassMetadataHandler
 	{
@@ -78,17 +85,18 @@ namespace Saturn {
 		}
 
 	public:
-		[[nodiscard]] SObject* CreateClassObject( const std::string& rScriptName );
-		[[nodiscard]] SObject* CreateClassObject( uint64_t classHash );
-		[[nodiscard]] SObject* CreateClassObject( SClass* pClass );
+		[[nodiscard]] SObject* CreateClassObject( const std::string& rScriptName, SObject* pParentObject = nullptr );
+		[[nodiscard]] SObject* CreateClassObject( uint64_t classHash, SObject* pParentObject = nullptr );
+		[[nodiscard]] SObject* CreateClassObject( SClass* pClass, SObject* pParentObject = nullptr );
 
 		template<typename Ty, typename... VaArgs>
-		[[nodiscard]] Ty* CreateClassObject( SClass* pClass, VaArgs&&... args ) 
+		[[nodiscard]] Ty* CreateClassObject( SClass* pClass, SObject* pOuter, VaArgs&&... args ) 
 		{
 			static_assert( std::is_base_of<SObject, Ty>::value, "Ty must be a child of SObject class!" );
 
 			Ty* pObject = new Ty( std::forward<VaArgs>( args )... );
 			pObject->m_pClass = pClass;
+			pObject->m_pParentObject = pOuter;
 
 			return pObject;
 		}
@@ -119,9 +127,9 @@ namespace Saturn {
 	// TODO: This should be moved into the SObject file and this function should maybe defined inline,
 	//		 The goal is to not have to include ClassMetadataHandler
 	template<typename TObject, typename... VaArgs>
-	[[nodiscard]] inline TObject* NewObject( VaArgs&&... rrArgs ) 
+	[[nodiscard]] inline TObject* NewObject( SObject* pOuter, VaArgs&&... rrArgs ) 
 	{
-		return ClassMetadataHandler::Get().CreateClassObject<TObject>( TObject::StaticClass(), std::forward<VaArgs>( rrArgs )... );
+		return ClassMetadataHandler::Get().CreateClassObject<TObject>( TObject::StaticClass(), pOuter, std::forward<VaArgs>( rrArgs )... );
 	}
 
 }

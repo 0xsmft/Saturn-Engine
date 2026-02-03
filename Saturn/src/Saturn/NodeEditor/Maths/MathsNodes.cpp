@@ -248,7 +248,7 @@ namespace Saturn {
 
 	NodeEditorTaskBase* MathsGreaterThanFloats::ConvertToTask()
 	{
-		return NewObject<SMathsGreaterThanFloatsTask>();
+		return NewObject<SMathsGreaterThanFloatsTask>( GetParentObject() );
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -285,7 +285,7 @@ namespace Saturn {
 
 	NodeEditorTaskBase* MathsLessThanFloats::ConvertToTask()
 	{
-		return NewObject<SMathsLessThanFloatsTask>();
+		return NewObject<SMathsLessThanFloatsTask>( GetParentObject() );
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -319,7 +319,7 @@ namespace Saturn {
 
 	NodeEditorTaskBase* MathsNot::ConvertToTask()
 	{
-		return NewObject<SMathsNotTask>();
+		return NewObject<SMathsNotTask>( GetParentObject() );
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -354,7 +354,7 @@ namespace Saturn {
 
 	NodeEditorTaskBase* MathsOr::ConvertToTask()
 	{
-		return NewObject<SMathsOrTask>();
+		return NewObject<SMathsOrTask>( GetParentObject() );
 	}
 
 }

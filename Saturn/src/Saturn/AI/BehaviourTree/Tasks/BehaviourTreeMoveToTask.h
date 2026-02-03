@@ -30,7 +30,7 @@
 
 #include "BehaviourTreeBaseTask.h"
 
-#include "Saturn/AI/Navigation/NavPath.h"
+#include "Saturn/AI/Navigation/StraightNavPath.h"
 
 namespace Saturn {
 
@@ -60,7 +60,7 @@ namespace Saturn {
 		AIAgentEntity* m_Agent = nullptr;
 
 		glm::vec3 m_TargetPosition{};
-		NavPath m_Path{};
+		StraightNavPath m_Path{};
 
 	private:
 		[[nodiscard]] NodeEditorTaskState InitPathTo();

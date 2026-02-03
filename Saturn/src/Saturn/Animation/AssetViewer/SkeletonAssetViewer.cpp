@@ -177,7 +177,6 @@ namespace Saturn {
 						//  2) The main window is docked but the viewport isn't     -> freeze viewport window
 						//  3) No windows are docked                                -> freeze viewport window
 						//  4) All windows are docked								-> nothing to do
-
 						// Outcome 1
 						if( !mainWindowDocked && ImGui::IsWindowDocked() && ImGuizmo::IsOver() )
 						{

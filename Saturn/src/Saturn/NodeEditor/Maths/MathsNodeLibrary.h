@@ -46,13 +46,13 @@ namespace Saturn {
 	public:
 		static NodeEditorType GetStaticType() { return NodeEditorType::Default; }
 
-		static SharedPtr<MathsAddFloats>         SpawnMathAdd( SharedPtr<NodeEditorBase> rNodeEditor );
-		static SharedPtr<MathsSubFloats>         SpawnMathSub( SharedPtr<NodeEditorBase> rNodeEditor );
-		static SharedPtr<MathsMulFloats>         SpawnMathMul( SharedPtr<NodeEditorBase> rNodeEditor );
-		static SharedPtr<MathsDivideFloats>      SpawnMathDiv( SharedPtr<NodeEditorBase> rNodeEditor );
-		static SharedPtr<MathsLessThanFloats>    SpawnMathLT ( SharedPtr<NodeEditorBase> rNodeEditor );
-		static SharedPtr<MathsGreaterThanFloats> SpawnMathGT ( SharedPtr<NodeEditorBase> rNodeEditor );
-		static SharedPtr<MathsNot>               SpawnNotBool( SharedPtr<NodeEditorBase> rNodeEditor );
-		static SharedPtr<MathsOr>				 SpawnOrBool ( SharedPtr<NodeEditorBase> rNodeEditor );
+		static SharedPtr<MathsAddFloats>         SpawnMathAdd( SharedPtr<NodeEditorBase> nodeEditor );
+		static SharedPtr<MathsSubFloats>         SpawnMathSub( SharedPtr<NodeEditorBase> nodeEditor );
+		static SharedPtr<MathsMulFloats>         SpawnMathMul( SharedPtr<NodeEditorBase> nodeEditor );
+		static SharedPtr<MathsDivideFloats>      SpawnMathDiv( SharedPtr<NodeEditorBase> nodeEditor );
+		static SharedPtr<MathsLessThanFloats>    SpawnMathLT ( SharedPtr<NodeEditorBase> nodeEditor );
+		static SharedPtr<MathsGreaterThanFloats> SpawnMathGT ( SharedPtr<NodeEditorBase> nodeEditor );
+		static SharedPtr<MathsNot>               SpawnNotBool( SharedPtr<NodeEditorBase> nodeEditor );
+		static SharedPtr<MathsOr>				 SpawnOrBool ( SharedPtr<NodeEditorBase> nodeEditor );
 	};
 }

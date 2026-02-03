@@ -30,6 +30,7 @@
 #include "AssetIDPin.h"
 
 #include "Saturn/NodeEditor/NodeEditorNodeBase.h"
+#include "Saturn/NodeEditor/NodeEditorBase.h"
 
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
 
@@ -75,6 +76,17 @@ namespace Saturn {
 		if( Auxiliary::DrawAssetFinder( m_AssetType, &openAssetIDPopup, m_AssetID ) ) 
 		{
 			m_AssetName = AssetManager::Get().FindAsset( m_AssetID )->Name;
+
+			NodeEditorBase* pOuter = dynamic_cast< NodeEditorBase* >( Node->GetParentObject() );
+
+			if( pOuter && pOuter->GetAssetID() != 0 )
+			{
+				// NOTE: MaterialOutputNode::EvaluateNode does actaully do this as well but we keep this here for two reasons
+				// One: AssetIDPin class is used by other classes that may not do what MaterialOutputNode::EvaluateNode does
+				// Two: MaterialOutputNode only sets the dependencies if we evaluate.
+				SAT_CORE_INFO( "[AssetIDPin] Registering Asset Dependency via AssetIDPin!" );
+				AssetManager::Get().RegisterAssetDependency( pOuter->GetAssetID(), m_AssetID );
+			}
 		}
 		ed::Resume();
 #endif
@@ -93,7 +105,8 @@ namespace Saturn {
 
 		RawSerialisation::ReadObject( m_AssetID, rStream );
 #if defined(SAT_DEBUG) || defined(SAT_RELEASE)
-		m_AssetName = m_AssetID == 0 ? "No Asset" : AssetManager::Get().FindAsset( m_AssetID )->Name;
+		Ref<Asset> foundAsset = AssetManager::Get().FindAsset( m_AssetID );
+		m_AssetName = foundAsset == nullptr ? "No Asset" : foundAsset->Name;
 #endif
 	}
 

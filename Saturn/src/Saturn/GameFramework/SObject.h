@@ -33,8 +33,10 @@
 
 namespace Saturn {
 
-	// The base class for all Game Objects, TODO: This will be moved into /Core/SObject.h as it will become the base class for objects in the engine as well.
 	class SClass;
+
+	// The base class for all Game Objects, TODO: This will be moved into /Core/SObject.h as it will become the base class for gameplay objects in the engine as well.
+	// TODO: Remove RefTarget, SObjects should be allocated with their own special allocator!
 	class SObject : public RefTarget
 	{
 		// NOTE: RefTarget is outwith the Reflection system so it does not count as a viable base class
@@ -46,14 +48,14 @@ namespace Saturn {
 
 	public:
 		[[nodiscard]] inline const SClass* GetClass() const { return m_pClass; }
-//		[[nodiscard]] inline const SObject* GetParentObject() const { return m_ParentObject; }
+		[[nodiscard]] inline SObject* GetParentObject() const { return m_pParentObject; }
 
 	private:
-		// The class that we are an instance of
+		// The class that we are an instance of.
 		SClass* m_pClass = nullptr;
 
-		// The object that we reside in, typically a SModule
-//		SObject* m_ParentObject = nullptr;
+		// The object that we reside in.
+ 		SObject* m_pParentObject = nullptr;
 
 	private:
 		friend class ClassMetadataHandler;

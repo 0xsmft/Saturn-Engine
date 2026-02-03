@@ -44,7 +44,7 @@ namespace Saturn {
 	public:
 		BehaviourTree() = default;
 		BehaviourTree( AssetID id );
-		~BehaviourTree();
+		virtual ~BehaviourTree();
 
 		void Initialise( SharedPtr<AIAgentEntity> entity );
 		void FirstEvaluate();

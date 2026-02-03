@@ -113,7 +113,7 @@ namespace Saturn {
 		ImGui::BeginHorizontal( "##state" );
 
 		// TODO: Much better to store the ID rather than the Node itself!
-		auto* AG = dynamic_cast< AnimGraph* >( pOuter );
+		auto* AG = dynamic_cast< AnimGraph* >( GetParentObject() );
 		if( AG )
 		{
 			const auto entryNode = AG->GetEntryNode();
@@ -139,9 +139,13 @@ namespace Saturn {
 	void AnimGraphStateMachineStateNode::PostPlace()
 	{
 		// Spawn output node
-		auto outNode = StateMachineStateNodeLibrary::SpawnOutputNode( pOuter->SharedFromThis() );
-		outNode->pParentObject = this;
-		m_OutputNodeID = outNode->ID;
+		auto* AG = dynamic_cast< AnimGraph* >( GetParentObject() );
+		if( AG )
+		{
+			auto outNode = StateMachineStateNodeLibrary::SpawnOutputNode( AG->SharedFromThis() );
+			outNode->pParentObject = this;
+			m_OutputNodeID = outNode->ID;
+		}
 	}
 
 	NodeEvaluationState AnimGraphStateMachineStateNode::EvaluateNode( NodeEditorRuntime* evaluator )

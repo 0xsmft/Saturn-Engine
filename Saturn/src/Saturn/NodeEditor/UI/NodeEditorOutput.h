@@ -52,14 +52,12 @@ namespace Saturn {
 	class NodeEditorOutput
 	{
 	public:
-		NodeEditorOutput();
+		NodeEditorOutput( UUID outputWindowID );
 		~NodeEditorOutput();
 
 		void Draw();
 		void ClearOutput();
 		void PushMessage( const NodeEditorMessage& rMessageData );
-
-		void SetWindowID( UUID id ) { m_OutputWindowID = id; }
 
 		[[nodiscard]] bool IsOpen() const { return m_ShowWindow; }
 
@@ -72,9 +70,10 @@ namespace Saturn {
 		void ClearMessage( UUID messageID );
 
 	private:
+		std::string m_WindowName{};
+		std::vector<NodeEditorMessage> m_Messages;
 		UUID m_SelectedMessageID = 0;
 		UUID m_OutputWindowID;
 		bool m_ShowWindow = true;
-		std::vector<NodeEditorMessage> m_Messages;
 	};
 }

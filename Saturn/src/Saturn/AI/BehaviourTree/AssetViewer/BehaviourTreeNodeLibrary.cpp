@@ -39,8 +39,7 @@ namespace Saturn {
 
 	SharedPtr<BehaviourTreeSelectorNode> BehaviourTreeNodeLibrary::SpawnSelectorNode( SharedPtr<NodeEditorBase> nodeEditor )
 	{
-		BehaviourTreeSelectorNode* pNode = ( BehaviourTreeSelectorNode* )ClassMetadataHandler::Get().CreateClassObject( BehaviourTreeSelectorNode::StaticClass() );
-
+		BehaviourTreeSelectorNode* pNode = NewObject<BehaviourTreeSelectorNode>( nodeEditor.Get() );
 		SharedPtr<BehaviourTreeSelectorNode> sp = pNode;
 
 		nodeEditor->AddNode( sp );
@@ -49,8 +48,7 @@ namespace Saturn {
 
 	SharedPtr<BehaviourTreeSequenceNode> BehaviourTreeNodeLibrary::SpawnSequenceNode( SharedPtr<NodeEditorBase> nodeEditor )
 	{
-		BehaviourTreeSequenceNode* pNode = ( BehaviourTreeSequenceNode* ) ClassMetadataHandler::Get().CreateClassObject( BehaviourTreeSequenceNode::StaticClass() );
-
+		BehaviourTreeSequenceNode* pNode = NewObject<BehaviourTreeSequenceNode>( nodeEditor.Get() );
 		SharedPtr<BehaviourTreeSequenceNode> sp = pNode;
 
 		nodeEditor->AddNode( sp );
@@ -59,8 +57,7 @@ namespace Saturn {
 
 	SharedPtr<BehaviourTreeRootNode> BehaviourTreeNodeLibrary::SpawnRootNode( SharedPtr<NodeEditorBase> nodeEditor )
 	{
-		BehaviourTreeRootNode* pNode = ( BehaviourTreeRootNode* ) ClassMetadataHandler::Get().CreateClassObject( BehaviourTreeRootNode::StaticClass() );
-
+		BehaviourTreeRootNode* pNode = NewObject<BehaviourTreeRootNode>( nodeEditor.Get() );
 		SharedPtr<BehaviourTreeRootNode> sp = pNode;
 
 		nodeEditor->AddNode( sp );

@@ -133,7 +133,7 @@ namespace Saturn::Auxiliary {
 
 				if( !filled )
 				{
-					const auto r = 0.5f * rect_w / 2.0f - 0.5f;
+					const auto r = 0.5f * rect_w * 0.5f - 0.5f;
 
 					if( innerColor & 0xFF000000 )
 						pDrawList->AddCircleFilled( c, r, innerColor, 12 + extra_segments );
@@ -141,7 +141,7 @@ namespace Saturn::Auxiliary {
 				}
 				else
 				{
-					pDrawList->AddCircleFilled( c, 0.5f * rect_w / 2.0f, color, 12 + extra_segments );
+					pDrawList->AddCircleFilled( c, 0.5f * rect_w * 0.5f, color, 12 + extra_segments );
 				}
 			}
 
@@ -149,7 +149,7 @@ namespace Saturn::Auxiliary {
 			{
 				if( filled )
 				{
-					const auto r = 0.5f * rect_w / 2.0f;
+					const auto r = 0.5f * rect_w * 0.5f;
 					const auto p0 = rect_center - ImVec2( r, r );
 					const auto p1 = rect_center + ImVec2( r, r );
 
@@ -161,7 +161,7 @@ namespace Saturn::Auxiliary {
 				}
 				else
 				{
-					const auto r = 0.5f * rect_w / 2.0f - 0.5f;
+					const auto r = 0.5f * rect_w * 0.5f - 0.5f;
 					const auto p0 = rect_center - ImVec2( r, r );
 					const auto p1 = rect_center + ImVec2( r, r );
 
@@ -184,7 +184,7 @@ namespace Saturn::Auxiliary {
 
 			if( type == PinIconType::Grid )
 			{
-				const auto r = 0.5f * rect_w / 2.0f;
+				const auto r = 0.5f * rect_w * 0.5f;
 				const auto w = ceilf( r / 3.0f );
 
 				const auto baseTl = ImVec2( floorf( rect_center_x - w * 2.5f ), floorf( rect_center_y - w * 2.5f ) );
@@ -216,7 +216,7 @@ namespace Saturn::Auxiliary {
 			{
 				if( filled )
 				{
-					const auto r = 0.5f * rect_w / 2.0f;
+					const auto r = 0.5f * rect_w * 0.5f;
 					const auto cr = r * 0.5f;
 					const auto p0 = rect_center - ImVec2( r, r );
 					const auto p1 = rect_center + ImVec2( r, r );
@@ -229,7 +229,7 @@ namespace Saturn::Auxiliary {
 				}
 				else
 				{
-					const auto r = 0.5f * rect_w / 2.0f - 0.5f;
+					const auto r = 0.5f * rect_w * 0.5f - 0.5f;
 					const auto cr = r * 0.5f;
 					const auto p0 = rect_center - ImVec2( r, r );
 					const auto p1 = rect_center + ImVec2( r, r );
@@ -254,7 +254,7 @@ namespace Saturn::Auxiliary {
 			{
 				if( filled )
 				{
-					const auto r = 0.607f * rect_w / 2.0f;
+					const auto r = 0.607f * rect_w * 0.5f;
 					const auto c = rect_center;
 
 					pDrawList->PathLineTo( c + ImVec2( 0, -r ) );
@@ -265,7 +265,7 @@ namespace Saturn::Auxiliary {
 				}
 				else
 				{
-					const auto r = 0.607f * rect_w / 2.0f - 0.5f;
+					const auto r = 0.607f * rect_w * 0.5f - 0.5f;
 					const auto c = rect_center;
 
 					pDrawList->PathLineTo( c + ImVec2( 0, -r ) );

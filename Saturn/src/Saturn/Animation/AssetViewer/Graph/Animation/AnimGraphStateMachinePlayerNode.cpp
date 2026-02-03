@@ -66,17 +66,16 @@ namespace Saturn {
 
 	void AnimGraphStateMachinePlayerNode::PostPlace() 
 	{
-		// Spawn entry node
-		auto entryNode = StateMachineNodeLibrary::SpawnStateNode( pOuter->SharedFromThis() );
-		entryNode->pParentObject = this;
-
-		auto* AG = dynamic_cast< AnimGraph* >( pOuter );
+		auto* AG = dynamic_cast< AnimGraph* >( GetParentObject() );
 		if( AG )
 		{
-			AG->MarkNodeAsEntry( entryNode );
-		}
+			// Spawn entry node
+			auto entryNode = StateMachineNodeLibrary::SpawnStateNode( AG->SharedFromThis() );
+			entryNode->pParentObject = this;
 
-		entryNode->PostPlace();
+			AG->MarkNodeAsEntry( entryNode );
+			entryNode->PostPlace();
+		}
 	}
 }
 

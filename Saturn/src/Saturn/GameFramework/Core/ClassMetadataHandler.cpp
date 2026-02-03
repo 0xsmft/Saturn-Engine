@@ -59,9 +59,9 @@ namespace Saturn {
 	{
 	}
 
-	Saturn::SObject* ClassMetadataHandler::CreateClassObject( const std::string& rScriptName )
+	Saturn::SObject* ClassMetadataHandler::CreateClassObject( const std::string& rScriptName, SObject* pParentObject )
 	{
-		SObject* pObject = CreateClassObject( FNV1A64( rScriptName.c_str() ) );
+		SObject* pObject = CreateClassObject( FNV1A64( rScriptName.c_str() ), pParentObject );
 
 		if( !pObject )
 		{
@@ -72,21 +72,23 @@ namespace Saturn {
 		return pObject;
 	}
 
-	Saturn::SObject* ClassMetadataHandler::CreateClassObject( SClass* pClass )
+	Saturn::SObject* ClassMetadataHandler::CreateClassObject( SClass* pClass, SObject* pParentObject )
 	{
 		SObject* pObject = pClass->CreateDefaultObject();
 		pObject->m_pClass = pClass;
+		pObject->m_pParentObject = pParentObject;
 
 		return pObject;
 	}
 
-	Saturn::SObject* ClassMetadataHandler::CreateClassObject( uint64_t classHash )
+	Saturn::SObject* ClassMetadataHandler::CreateClassObject( uint64_t classHash, SObject* pParentObject )
 	{
 		const auto Itr = m_Classes.find( classHash );
 		if( Itr != m_Classes.end() )
 		{
 			SObject* pObject = Itr->second->CreateDefaultObject();
 			pObject->m_pClass = Itr->second;
+			pObject->m_pParentObject = pParentObject;
 
 			return pObject;
 		}

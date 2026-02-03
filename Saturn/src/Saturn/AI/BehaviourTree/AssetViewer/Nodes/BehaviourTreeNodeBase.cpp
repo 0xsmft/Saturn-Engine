@@ -81,9 +81,9 @@ namespace Saturn {
 	}
 #endif
 
-	BehaviourTreeNodeEditor* BehaviourTreeNodeBase::GetParent()
+	BehaviourTreeNodeEditor* BehaviourTreeNodeBase::GetParentAsBTNodeEditor()
 	{
-		return dynamic_cast<BehaviourTreeNodeEditor*>( pOuter );
+		return dynamic_cast<BehaviourTreeNodeEditor*>( GetParentObject() );
 	}
 
 }

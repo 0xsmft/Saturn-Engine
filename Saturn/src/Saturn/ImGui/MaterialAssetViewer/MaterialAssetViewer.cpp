@@ -165,7 +165,7 @@ namespace Saturn {
 	void MaterialAssetViewer::SetupNewNodeEditor()
 	{
 		// Add material output node.
-		SharedPtr<MaterialOutputNode> OutputNode = NewObject<MaterialOutputNode>();
+		SharedPtr<MaterialOutputNode> OutputNode = NewObject<MaterialOutputNode>( m_NodeEditor.Get() );
 		m_NodeEditor->AddNode( OutputNode );
 
 		m_OutputNodeID = OutputNode->ID;

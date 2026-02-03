@@ -69,7 +69,7 @@ namespace Saturn {
 
 	NodeEditorTaskBase* AnimGraphTransitionGraphResultNode::ConvertToTask()
 	{
-		return NewObject<AnimGraphTransitionResultTask>();
+		return NewObject<AnimGraphTransitionResultTask>( GetParentObject() );
 	}
 
 }

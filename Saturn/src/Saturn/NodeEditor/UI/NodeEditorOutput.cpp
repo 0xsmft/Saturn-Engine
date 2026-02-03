@@ -37,8 +37,10 @@
 
 namespace Saturn {
 
-	NodeEditorOutput::NodeEditorOutput()
+	NodeEditorOutput::NodeEditorOutput( UUID outputWindowID )
+		: m_OutputWindowID( outputWindowID )
 	{
+		m_WindowName = std::format( "Node Editor Output##{0}", ( uint64_t ) outputWindowID );
 	}
 
 	NodeEditorOutput::~NodeEditorOutput()
@@ -48,7 +50,7 @@ namespace Saturn {
 
 	void NodeEditorOutput::Draw()
 	{
-		ImGui::Begin( "Node Editor Output", &m_ShowWindow );
+		ImGui::Begin( m_WindowName.data(), &m_ShowWindow );
 
 		ImGui::BeginVertical( "##MessageRegionVert" );
 
@@ -109,7 +111,7 @@ namespace Saturn {
 	{
 		const float height = ImGui::GetTextLineHeightWithSpacing();
 
-		ImGui::BeginHorizontal( (int)rMessage.ID );
+		ImGui::BeginHorizontal( ( int ) rMessage.ID );
 
 		ImGui::Spring( 1.0f, 1.0f );
 
@@ -132,7 +134,7 @@ namespace Saturn {
 
 		const float width = ImGui::GetContentRegionAvail().x;
 		// Leave space for the bin icon
-		const ImVec2 size( width - ( height * 2 ), height );
+		const ImVec2 size( width - ( height * 2.0f ), height );
 		
 		if( ImGui::Selectable( rMessage.MessageText.c_str(), rMessage.ID == m_SelectedMessageID, 0, size ) )
 		{

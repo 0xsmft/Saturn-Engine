@@ -95,6 +95,8 @@ namespace Saturn {
 		ImGui::BeginHorizontal( "Inputs" );
 		ImGui::Spring( 0, PADDING * 2 );
 
+		NodeEditorBase* pOuter = dynamic_cast< NodeEditorBase* >( GetParentObject() );
+
 		ImRect inputRect;
 		for( auto& rInput : Inputs )
 		{

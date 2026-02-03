@@ -100,6 +100,8 @@ namespace Saturn {
 	void AnimGraphStateMachineTransitionNode::Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder )
 	{
 #if !defined(SAT_DIST)
+		AnimGraph* pOuter = dynamic_cast< AnimGraph* >( GetParentObject() );
+
 		if( !pOuter->IsLinked( Inputs[ 0 ]->ID ) )
 			return;
 
@@ -152,6 +154,7 @@ namespace Saturn {
 	void AnimGraphStateMachineTransitionNode::PostPlace()
 	{
 		// Create output node for this transition.
+		AnimGraph* pOuter = dynamic_cast< AnimGraph* >( GetParentObject() );
 		auto outNode = TransitionNodeLibrary::SpawnOutputNode( pOuter->SharedFromThis() );
 		outNode->pParentObject = this;
 		m_OutputNodeID = outNode->ID;

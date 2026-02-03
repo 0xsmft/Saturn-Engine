@@ -35,67 +35,67 @@
 
 namespace Saturn {
 
-	SharedPtr<MathsAddFloats> MathsNodeLibrary::SpawnMathAdd( SharedPtr<NodeEditorBase> rNodeEditor )
+	SharedPtr<MathsAddFloats> MathsNodeLibrary::SpawnMathAdd( SharedPtr<NodeEditorBase> nodeEditor )
 	{
-		SharedPtr<MathsAddFloats> node = ( MathsAddFloats* )ClassMetadataHandler::Get().CreateClassObject( MathsAddFloats::StaticClass() );
-		rNodeEditor->AddNode( node );
+		SharedPtr<MathsAddFloats> node = NewObject<MathsAddFloats>( nodeEditor.Get() );
+		nodeEditor->AddNode( node );
 
 		return node;
 	}
 
-	SharedPtr<MathsSubFloats> MathsNodeLibrary::SpawnMathSub( SharedPtr<NodeEditorBase> rNodeEditor )
+	SharedPtr<MathsSubFloats> MathsNodeLibrary::SpawnMathSub( SharedPtr<NodeEditorBase> nodeEditor )
 	{
-		SharedPtr<MathsSubFloats> node = ( MathsSubFloats* ) ClassMetadataHandler::Get().CreateClassObject( MathsSubFloats::StaticClass() );
-		rNodeEditor->AddNode( node );
+		SharedPtr<MathsSubFloats> node = NewObject<MathsSubFloats>( nodeEditor.Get() );
+		nodeEditor->AddNode( node );
 
 		return node;
 	}
 
-	SharedPtr<MathsMulFloats> MathsNodeLibrary::SpawnMathMul( SharedPtr<NodeEditorBase> rNodeEditor )
+	SharedPtr<MathsMulFloats> MathsNodeLibrary::SpawnMathMul( SharedPtr<NodeEditorBase> nodeEditor )
 	{
-		SharedPtr<MathsMulFloats> node = ( MathsMulFloats* ) ClassMetadataHandler::Get().CreateClassObject( MathsMulFloats::StaticClass() );
-		rNodeEditor->AddNode( node );
+		SharedPtr<MathsMulFloats> node = NewObject<MathsMulFloats>( nodeEditor.Get() );
+		nodeEditor->AddNode( node );
 
 		return node;
 	}
 
-	SharedPtr<MathsDivideFloats> MathsNodeLibrary::SpawnMathDiv( SharedPtr<NodeEditorBase> rNodeEditor )
+	SharedPtr<MathsDivideFloats> MathsNodeLibrary::SpawnMathDiv( SharedPtr<NodeEditorBase> nodeEditor )
 	{
-		SharedPtr<MathsDivideFloats> node = ( MathsDivideFloats* ) ClassMetadataHandler::Get().CreateClassObject( MathsDivideFloats::StaticClass() );
-		rNodeEditor->AddNode( node );
+		SharedPtr<MathsDivideFloats> node = NewObject<MathsDivideFloats>( nodeEditor.Get() );
+		nodeEditor->AddNode( node );
 
 		return node;
 	}
 
-	SharedPtr<MathsLessThanFloats> MathsNodeLibrary::SpawnMathLT( SharedPtr<NodeEditorBase> rNodeEditor )
+	SharedPtr<MathsLessThanFloats> MathsNodeLibrary::SpawnMathLT( SharedPtr<NodeEditorBase> nodeEditor )
 	{
-		SharedPtr<MathsLessThanFloats> node = NewObject<MathsLessThanFloats>();
+		SharedPtr<MathsLessThanFloats> node = NewObject<MathsLessThanFloats>( nodeEditor.Get() );
+		nodeEditor->AddNode( node );
 
-		rNodeEditor->AddNode( node );
 		return node;
 	}
 
-	SharedPtr<MathsGreaterThanFloats> MathsNodeLibrary::SpawnMathGT( SharedPtr<NodeEditorBase> rNodeEditor )
+	SharedPtr<MathsGreaterThanFloats> MathsNodeLibrary::SpawnMathGT( SharedPtr<NodeEditorBase> nodeEditor )
 	{
-		SharedPtr<MathsGreaterThanFloats> node = NewObject<MathsGreaterThanFloats>();
+		SharedPtr<MathsGreaterThanFloats> node = NewObject<MathsGreaterThanFloats>( nodeEditor.Get() );
+		nodeEditor->AddNode( node );
 
-		rNodeEditor->AddNode( node );
 		return node;
 	}
 
-	SharedPtr<MathsNot> MathsNodeLibrary::SpawnNotBool( SharedPtr<NodeEditorBase> rNodeEditor )
+	SharedPtr<MathsNot> MathsNodeLibrary::SpawnNotBool( SharedPtr<NodeEditorBase> nodeEditor )
 	{
-		SharedPtr<MathsNot> node = NewObject<MathsNot>();
+		SharedPtr<MathsNot> node = NewObject<MathsNot>( nodeEditor.Get() );
+		nodeEditor->AddNode( node );
 
-		rNodeEditor->AddNode( node );
 		return node;
 	}
 
-	SharedPtr<MathsOr> MathsNodeLibrary::SpawnOrBool( SharedPtr<NodeEditorBase> rNodeEditor )
+	SharedPtr<MathsOr> MathsNodeLibrary::SpawnOrBool( SharedPtr<NodeEditorBase> nodeEditor )
 	{
-		SharedPtr<MathsOr> node = NewObject<MathsOr>();
+		SharedPtr<MathsOr> node = NewObject<MathsOr>( nodeEditor.Get() );
+		nodeEditor->AddNode( node );
 
-		rNodeEditor->AddNode( node );
 		return node;
 	}
 

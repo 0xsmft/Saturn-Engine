@@ -133,7 +133,7 @@ namespace Saturn {
 			if( glm::length( movement ) > distance )
 				movement = diff;
 
-			m_Agent->GetComponent<CharacterMovementComponent>().CharacterMovement->Move( movement, 0.001f, ts.Seconds() );
+			m_Agent->GetComponent<CharacterMovementComponent>().CharacterMovement->Move( movement );
 		}
 
 		return NodeEditorTaskState::Running;

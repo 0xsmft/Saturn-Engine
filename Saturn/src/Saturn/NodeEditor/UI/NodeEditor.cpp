@@ -93,7 +93,7 @@ namespace Saturn {
 	// NODE EDITOR
 
 	NodeEditor::NodeEditor( AssetID ID )
-		: NodeEditorBase( ID )
+		: NodeEditorBase( ID ), m_OutputWindow( ID )
 	{
 		m_AssetID = ID;
 
@@ -101,7 +101,7 @@ namespace Saturn {
 	}
 
 	NodeEditor::NodeEditor()
-		: NodeEditorBase()
+		: NodeEditorBase(), m_OutputWindow( 0llu )
 	{
 		m_Editor = nullptr;
 
@@ -193,7 +193,6 @@ namespace Saturn {
 		const auto texture = GetBlueprintBackground();
 		m_Builder = util::BlueprintNodeBuilder( ( ImTextureID ) texture->GetDescriptorSet(), texture->Width(), texture->Height() );
 
-		m_OutputWindow.SetWindowID( m_AssetID );
 		m_OutputWindow.PushMessage( { .MessageText = "Initialised new editor!", .Type = NodeEditorMessageSeverity::Info } );
 
 		m_InternalEditorID = std::format( "Nc##{0}", (uint64_t)m_AssetID );
@@ -1338,7 +1337,7 @@ namespace Saturn {
 			uint64_t targetClassHash = 0;
 			RawSerialisation::ReadObject( targetClassHash, rStream );
 
-			NodeEditorNodeBase* pNode = dynamic_cast< NodeEditorNodeBase* >( ClassMetadataHandler::Get().CreateClassObject( targetClassHash ) );
+			NodeEditorNodeBase* pNode = dynamic_cast< NodeEditorNodeBase* >( ClassMetadataHandler::Get().CreateClassObject( targetClassHash, this ) );
 
 			SharedPtr<NodeEditorNodeBase> node;
 			if( pNode )
@@ -1347,14 +1346,13 @@ namespace Saturn {
 			}
 			else
 			{
-				node = NewObject<NodeEditorBlueprintNode>();
+				node = NewObject<NodeEditorBlueprintNode>( this );
 				SAT_CORE_WARN( "Could not find node editor node class hash {0}, so using NodeEditorBlueprintNode instead.", targetClassHash );
 			}
 
 //			AddNode( node );
 
 			// NOTE: Although AddNode sets the pOuter, we want to override it to point to us (a NodeEditor), instead of NodeEditorBase
-			node->pOuter = this;
 			node->Deserialise( rStream );
 			node->PositionBeforeMove = ed::GetNodePosition( ed::NodeId( node->ID ) );
 

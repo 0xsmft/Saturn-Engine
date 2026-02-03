@@ -107,7 +107,7 @@ namespace Saturn {
 			{
 				if( !parentToChildren[ 0llu ].size() )
 				{
-					resultToChildren[ 0llu ] = NewObject<SGraphTask>();
+					resultToChildren[ 0llu ] = NewObject<SGraphTask>( this );
 				}
 			}
 		}
@@ -171,7 +171,7 @@ namespace Saturn {
 			auto& rGraphTask = rMap[ currentNode->pParentObject->ID ];
 			if( !rGraphTask )
 			{
-				rGraphTask = NewObject<SGraphTask>();
+				rGraphTask = NewObject<SGraphTask>( this );
 			}
 
 			rGraphTask->AddTask( currentID, currentNode->ConvertToTask() );
@@ -218,7 +218,7 @@ namespace Saturn {
 
 			if( !rGraphTask )
 			{
-				rGraphTask = NewObject<SGraphTask>();
+				rGraphTask = NewObject<SGraphTask>( this );
 			}
 
 			rGraphTask->AddTask( currentID, currentNode->ConvertToTask() );
@@ -565,7 +565,7 @@ namespace Saturn {
 					auto startNode = FindNode( m_TransitionStartNode );
 
 					// Create transition node
-					SharedPtr<AnimGraphStateMachineTransitionNode> node = NewObject<AnimGraphStateMachineTransitionNode>();
+					SharedPtr<AnimGraphStateMachineTransitionNode> node = NewObject<AnimGraphStateMachineTransitionNode>( this );
 
 					node->pParentObject = m_ActiveSubGraph.Get();
 					AddNode( node );

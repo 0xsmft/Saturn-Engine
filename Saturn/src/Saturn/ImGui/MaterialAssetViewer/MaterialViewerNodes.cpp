@@ -192,9 +192,9 @@ namespace Saturn {
 
 		// Inputs
 		Inputs.push_back( Ref<MaterialViewerColorPin>::Create( "Albedo Map",    PinKind::Input ) );
-		Inputs.push_back( Ref<MaterialViewerColorPin>::Create( "Normal Map",    PinKind::Input, false, true ) );
-		Inputs.push_back( Ref<MaterialViewerColorPin>::Create( "Metallic Map",  PinKind::Input, false, true ) );
-		Inputs.push_back( Ref<MaterialViewerColorPin>::Create( "Roughness Map", PinKind::Input, false, true ) );
+		Inputs.push_back( Ref<MaterialViewerColorPin>::Create( "Normal Map",    PinKind::Input, false, false ) );
+		Inputs.push_back( Ref<MaterialViewerColorPin>::Create( "Metallic Map",  PinKind::Input, false, false ) );
+		Inputs.push_back( Ref<MaterialViewerColorPin>::Create( "Roughness Map", PinKind::Input, false, false ) );
 
 		// Float inputs
 		Inputs.push_back( Ref<FloatPin>::Create( "Emission", PinKind::Input ) );

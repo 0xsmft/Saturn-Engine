@@ -123,11 +123,17 @@ namespace Saturn {
 		//       All we do is read back the data
 		for( size_t i = 0; i < inputSize; ++i )
 		{
+			if( i >= Inputs.size() )
+				break;
+
 			Inputs[ i ]->Deserialise( rStream );
 		}
 
 		for( size_t i = 0; i < outputSize; ++i )
 		{
+			if( i >= Outputs.size() )
+				break;
+
 			Outputs[ i ]->Deserialise( rStream );
 		}
 	}

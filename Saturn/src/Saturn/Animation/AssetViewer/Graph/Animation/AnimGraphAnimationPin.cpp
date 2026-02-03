@@ -89,7 +89,7 @@ namespace Saturn {
 			{
 				if( ImGui::Button( "Open State Machine" ) ) 
 				{
-					auto AG = dynamic_cast<AnimGraph*>( Node->pOuter );
+					auto AG = dynamic_cast<AnimGraph*>( Node->GetParentObject() );
 					if( AG )
 					{
 						auto playerNode = dynamic_cast< AnimGraphStateMachinePlayerNode* >( Node.Get() );
@@ -114,14 +114,15 @@ namespace Saturn {
 				UUID tempID = m_AssetID;
 				if( Auxiliary::DrawAssetFinder( AssetType::SkeletalAnimation, &openAssetIDPopup, tempID ) )
 				{
-					AssetManager::Get().UnregisterAssetDependency( Node->pOuter->GetAssetID(), m_AssetID );
+					auto AG = dynamic_cast< AnimGraph* >( Node->GetParentObject() );
+
+					AssetManager::Get().UnregisterAssetDependency( AG->GetAssetID(), m_AssetID );
 
 					m_AssetName = AssetManager::Get().FindAsset( tempID )->Name;
 					m_AssetID = tempID;
 
-					AssetManager::Get().RegisterAssetDependency( Node->pOuter->GetAssetID(), m_AssetID );
+					AssetManager::Get().RegisterAssetDependency( AG->GetAssetID(), m_AssetID );
 
-					auto AG = dynamic_cast< AnimGraph* >( Node->pOuter );
 					if( AG )
 					{
 						AG->MarkDirty();

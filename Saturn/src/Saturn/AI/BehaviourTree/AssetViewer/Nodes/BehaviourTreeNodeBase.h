@@ -78,7 +78,7 @@ namespace Saturn {
 		Ref<BehaviourTreeCondition> NodeCondition;
 
 	protected:
-		[[nodiscard]] BehaviourTreeNodeEditor* GetParent();
+		[[nodiscard]] BehaviourTreeNodeEditor* GetParentAsBTNodeEditor();
 	};
 	
 }

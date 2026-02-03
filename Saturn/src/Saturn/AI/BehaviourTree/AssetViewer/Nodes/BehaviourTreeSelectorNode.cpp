@@ -94,7 +94,7 @@ namespace Saturn {
 
 	NodeEditorTaskBase* BehaviourTreeSelectorNode::ConvertToTask()
 	{
-		return NewObject<BehaviourTreeSelectorTask>();
+		return NewObject<BehaviourTreeSelectorTask>( GetParentObject() );
 	}
 
 	void BehaviourTreeSelectorNode::AddChildren( const std::vector<UUID>& rChildrenID )

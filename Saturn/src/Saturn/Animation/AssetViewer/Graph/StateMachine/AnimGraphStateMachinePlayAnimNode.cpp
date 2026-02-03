@@ -72,7 +72,7 @@ namespace Saturn {
 
 	NodeEditorTaskBase* AnimGraphStateMachinePlayAnimNode::ConvertToTask()
 	{
-		return NewObject<AnimGraphPlayAnimTask>();
+		return NewObject<AnimGraphPlayAnimTask>( GetParentObject() );
 	}
 
 	bool AnimGraphStateMachinePlayAnimNode::IsLooping() const

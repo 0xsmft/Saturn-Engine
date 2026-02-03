@@ -110,6 +110,7 @@ namespace Saturn {
 
 		if( dataHandleID )
 		{
+			auto* pOuter = dynamic_cast< NodeEditorBase* >( GetParentObject() );
 			m_Variable = pOuter->FindDataHandle( dataHandleID );
 			InitPinsForVariable();
 		}
@@ -132,6 +133,8 @@ namespace Saturn {
 		ImGui::TextUnformatted( Name.c_str() );
 		ImGui::EndHorizontal();
 
+		auto* pOuter = dynamic_cast< NodeEditorBase* >( GetParentObject() );
+
 		for( auto& rOutput : Outputs )
 		{
 			if( rOutput->Type == PinType::Delegate )
@@ -150,7 +153,7 @@ namespace Saturn {
 
 	NodeEditorTaskBase* NodeEditorVariableNode::ConvertToTask()
 	{
-		return NewObject<SNodeEditorGetVariableTask>();
+		return NewObject<SNodeEditorGetVariableTask>( GetParentObject() );
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -158,11 +161,9 @@ namespace Saturn {
 
 	SharedPtr<NodeEditorVariableNode> NodeEditorVariableNode::SpawnVariableNode( Ref<NodeEditorVariable> var, SharedPtr<NodeEditorBase> nodeEditor )
 	{
-		SClass* pClass = NodeEditorVariableNode::StaticClass();
-
-		NodeEditorVariableNode* pNode = ClassMetadataHandler::Get().CreateClassObject<NodeEditorVariableNode>( pClass, var->GetName(), var );
-
+		NodeEditorVariableNode* pNode = NewObject<NodeEditorVariableNode>( nodeEditor.Get(), var->GetName(), var );
 		SharedPtr<NodeEditorVariableNode> sp = pNode;
+
 		nodeEditor->AddNode( sp );
 		return sp;
 	}
@@ -239,7 +240,7 @@ namespace Saturn {
 
 	SharedPtr<NodeEditorSetVariableNode> NodeEditorSetVariableNode::SpawnSetVariableNode( Ref<NodeEditorVariable> var, SharedPtr<NodeEditorBase> nodeEditor )
 	{
-		NodeEditorSetVariableNode* pNode = NewObject<NodeEditorSetVariableNode>( var->GetName(), var );
+		NodeEditorSetVariableNode* pNode = NewObject<NodeEditorSetVariableNode>( nodeEditor.Get(), var->GetName(), var );
 
 		SharedPtr<NodeEditorSetVariableNode> sp = pNode;
 		nodeEditor->AddNode( sp );

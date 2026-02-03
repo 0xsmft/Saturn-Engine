@@ -467,7 +467,7 @@ namespace Saturn {
 //			ed::SetNodePosition( ed::NodeId( node->ID ), node->Position );
 #endif
 
-		node->pOuter = this;
+//		node->pOuter = this;
 	}
 
 }

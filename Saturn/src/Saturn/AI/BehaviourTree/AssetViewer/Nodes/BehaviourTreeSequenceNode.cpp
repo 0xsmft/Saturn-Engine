@@ -133,9 +133,9 @@ namespace Saturn {
 #if !defined( SAT_DIST )
 	void BehaviourTreeSequenceNode::PostDeserialise()
 	{
-		if( NodeCondition && GetParent()->GetBlackboardSpec() )
+		if( NodeCondition && GetParentAsBTNodeEditor()->GetBlackboardSpec() )
 		{
-			NodeCondition->SetupMemVariable( GetParent()->GetBlackboardSpec()->ID );
+			NodeCondition->SetupMemVariable( GetParentAsBTNodeEditor()->GetBlackboardSpec()->ID );
 		}
 	}
 #endif
@@ -164,9 +164,9 @@ namespace Saturn {
 			{
 				auto* pCond = ( BehaviourTreeMemoryCondition* )ClassMetadataHandler::Get().CreateClassObject( BehaviourTreeMemoryCondition::StaticClass() );
 				
-				if( GetParent()->GetBlackboardSpec() )
+				if( GetParentAsBTNodeEditor()->GetBlackboardSpec() )
 				{
-					pCond->SetupMemVariable( GetParent()->GetBlackboardSpec()->ID );
+					pCond->SetupMemVariable( GetParentAsBTNodeEditor()->GetBlackboardSpec()->ID );
 				}
 
 				NodeCondition = pCond;

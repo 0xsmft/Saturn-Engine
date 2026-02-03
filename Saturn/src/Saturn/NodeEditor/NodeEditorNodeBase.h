@@ -136,8 +136,7 @@ namespace Saturn {
 		// TODO: This should be a local enum and not a global enum, it should be like SoundGraphEditor::NodeExecutionType::Type or equiv.
 		NodeExecutionType		ExecutionType = NodeExecutionType::None;
 		size_t					EvaluationOrder = 0;
-		// The node editor in which we belong to.
-		NodeEditorBase*			pOuter = nullptr;
+
 		// The node in which be belong to, this is usually going to be nullptr however, if its not
 		// then we know that this node belongs to a sub-graph with that sub-graph being owned by the Node
 		// specified in pParentObject

@@ -859,6 +859,7 @@ namespace Saturn {
 
 	void SkeletalAnimationAssetSerialiser::Serialise( const Ref<Asset>& rAsset ) const
 	{
+#if !defined(SAT_DIST)
 		const auto animAsset = rAsset.As<SkeletalAnimationAsset>();
 
 		auto& basePath = rAsset->Path;
@@ -869,10 +870,12 @@ namespace Saturn {
 		animAsset->Serialise( fout );
 
 		fout.close();
+#endif
 	}
 
 	bool SkeletalAnimationAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
 	{
+#if !defined(SAT_DIST)
 		const auto absolutePath = GetFilepathAbs( rAsset->Path );
 		auto animAsset = Ref<SkeletalAnimationAsset>::Create( rAsset );
 
@@ -885,6 +888,9 @@ namespace Saturn {
 		rAsset = animAsset;
 
 		return true;
+#else
+		return false;
+#endif
 	}
 
 	//////////////////////////////////////////////////////////////////////////

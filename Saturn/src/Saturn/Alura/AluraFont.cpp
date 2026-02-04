@@ -46,7 +46,9 @@ namespace Saturn {
 	AluraFont::AluraFont( const std::filesystem::path& rFontPath, const Ref<Asset>& rBase )
 		: Asset( rBase ), m_Filepath( rFontPath ), m_pMSDFData( new AluraMSDFData() )
 	{
+#if !defined(SAT_DIST)
 		CreateAtlas( true );
+#endif
 	}
 
 	AluraFont::AluraFont( const Ref<Asset>& rBase )
@@ -114,7 +116,7 @@ namespace Saturn {
 			charset.add( c );
 
 		m_pMSDFData->FontGeometry = msdfag::FontGeometry( &m_pMSDFData->Glyphs );
-		const int glyhsLoaded = m_pMSDFData->FontGeometry.loadCharset( font, 1.0, charset );
+		const int glyphsLoaded = m_pMSDFData->FontGeometry.loadCharset( font, 1.0, charset );
 
 		if( m_pMSDFData->FontGeometry.getName() != nullptr )
 		{
@@ -125,11 +127,11 @@ namespace Saturn {
 			m_Name = m_Filepath.stem().string();
 		}
 
-		SAT_CORE_INFO( "[Alura] Loaded {0} glyhs out of {1}", glyhsLoaded, charset.size() );
+		SAT_CORE_INFO( "[Alura] Loaded {0} glyhs out of {1}", glyphsLoaded, charset.size() );
 
-		if( glyhsLoaded < charset.size() )
+		if( glyphsLoaded < charset.size() )
 		{
-			const auto missingCount = charset.size() - glyhsLoaded;
+			const auto missingCount = charset.size() - glyphsLoaded;
 			SAT_CORE_WARN( "[Alura] Font is missing {0} glyhs", missingCount );
 		}
 
@@ -260,6 +262,72 @@ namespace Saturn {
 	{
 		LoadFromCache();
 		CreateAtlas();
+	}
+
+	struct AluraSerialiedFont
+	{
+		uint32_t Magic = 0x53415446;
+		uint32_t Version = SAT_CURRENT_VERSION;
+	};
+
+	void AluraFont::SerialiseForDist( const std::filesystem::path& rPath ) const
+	{
+		std::vector<AluraSerialisedGlyph> aluraGlyphs;
+		aluraGlyphs.reserve( m_pMSDFData->Glyphs.size() );
+
+		for( const auto& rGlyphGeometry : m_pMSDFData->Glyphs )
+		{
+			auto codepoint = rGlyphGeometry.getCodepoint();
+			auto adv = rGlyphGeometry.getAdvance();
+			
+			double pl, pb, pr, pt;
+			rGlyphGeometry.getQuadPlaneBounds( pl, pb, pr, pt );
+
+			double al, ab, ar, at;
+			rGlyphGeometry.getQuadAtlasBounds( al, ab, ar, at );
+
+			aluraGlyphs.emplace_back( codepoint, ( float ) adv,
+				( float ) pl, ( float ) pb, ( float ) pr, ( float ) pt, 
+				( float ) al, ( float ) ab, ( float ) ar, ( float ) at );
+		}
+
+		// --- Begin write
+		std::ofstream fout( rPath, std::ios::binary | std::ios::trunc );
+
+		AluraSerialiedFont header;
+		RawSerialisation::WriteObject( header, fout );
+
+		// Write glyph geometry.
+		// Write the map manually
+		size_t mapSize = aluraGlyphs.size();
+		RawSerialisation::WriteObject( mapSize, fout );
+
+		for( size_t i = 0; i < mapSize; i++ )
+		{
+			AluraSerialisedGlyph asg = aluraGlyphs[ i ];
+			RawSerialisation::WriteObject( asg.Codepoint, fout );
+			RawSerialisation::WriteObject( asg.Advance, fout );
+			
+			RawSerialisation::WriteObject( asg.PlaneLeft, fout );
+			RawSerialisation::WriteObject( asg.PlaneBottom, fout );
+			RawSerialisation::WriteObject( asg.PlaneRight, fout );
+			RawSerialisation::WriteObject( asg.PlaneTop, fout );
+
+			RawSerialisation::WriteObject( asg.AtlasLeft, fout );
+			RawSerialisation::WriteObject( asg.AtlasBottom, fout );
+			RawSerialisation::WriteObject( asg.AtlasRight, fout );
+			RawSerialisation::WriteObject( asg.AtlasTop, fout );
+		}
+
+		// Now write the texture atlas image
+		RawSerialisation::WriteObject( m_TextureAtlas->Width(), fout );
+		RawSerialisation::WriteObject( m_TextureAtlas->Height(), fout );
+
+		Buffer imageData = m_TextureAtlas->X31CopyToBuffer();
+		RawSerialisation::WriteSaturnBuffer( imageData, fout );
+		imageData.Free();
+
+		fout.close();
 	}
 
 	glm::vec2 AluraFont::CalcTextSize( float fontSize, const std::string& rText )

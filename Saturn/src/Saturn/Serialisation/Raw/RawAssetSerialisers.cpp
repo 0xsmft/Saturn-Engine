@@ -37,6 +37,8 @@
 #include "Saturn/Audio/SoundSpecification.h"
 #include "Saturn/AI/BehaviourTree/BehaviourTreeMemorySpecification.h"
 #include "Saturn/Animation/SkeletonAsset.h"
+#include "Saturn/Alura/AluraStylingProfile.h"
+#include "Saturn/Alura/AluraFont.h"
 
 #include "Saturn/Audio/AudioSystem.h"
 
@@ -685,6 +687,119 @@ namespace Saturn {
 #else
 		return false;
 #endif
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// ALURA FONT
+
+	bool RawFontSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
+	{
+		return false;
+	}
+
+	bool RawFontSerialiser::DumpAndWriteToVFS( const Ref<Asset>& rAsset ) const
+	{
+		const auto aluraFont = rAsset.As<AluraFont>();
+
+		std::filesystem::path out = Project::GetActiveProject()->GetTempDir();
+		out /= std::to_string( rAsset->ID );
+		out.replace_extension( ".vfs" );
+
+		aluraFont->SerialiseForDist( out );
+
+		return true;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// ALURA STYLING PROFILE
+
+	bool RawAluraStylingProfileSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
+	{
+		const std::string& rMountBase = Project::GetActiveConfig().Name;
+		Ref<VFile> file = VirtualFS::Get().FindFile( rMountBase, rAsset->Path );
+
+		if( !file )
+			return false;
+
+		/////////////////////////////////////
+
+		PakFileMemoryBuffer membuf( file->FileContent );
+		std::istream stream( &membuf );
+
+		auto stylingProf = Ref<AluraStylingProfile>::Create( rAsset );
+		auto& rStyle = stylingProf->GetStyle();
+
+		RawSerialisation::ReadObject( rStyle.Alpha, stream );
+		RawSerialisation::ReadObject( rStyle.DisabledAlpha, stream );
+		RawSerialisation::ReadVec2( rStyle.WindowPadding, stream );
+		RawSerialisation::ReadVec2( rStyle.ItemSpacing, stream );
+		RawSerialisation::ReadObject( rStyle.IndentSpacing, stream );
+		RawSerialisation::ReadObject( rStyle.WindowBorderSize, stream );
+		RawSerialisation::ReadObject( rStyle.CurrentFontSize, stream );
+
+		int numberOfColors = 0;
+		RawSerialisation::ReadObject( numberOfColors, stream );
+
+		// If the styling profile is old and it had a larger amount of colors than the AluraColor enum has now
+		// We must only read the amount of colors we currently have now.
+		// TODO: This method is not great, what if we remove a color but then colors below it never get read...
+		if( numberOfColors > AluraColor_Count )
+		{
+			// Set to the current number of colors not the older, larger value.
+			numberOfColors = AluraColor_Count;
+		}
+//		else if( numberOfColors < AluraColor_Count )
+//			SAT_CORE_WARN( "[RawAluraStylingProfileSerialiser] Styling profile has less colors than the AluraColor enum itself!" );
+
+		for( size_t i = 0; i < numberOfColors; ++i )
+		{
+			glm::vec4 color = glm::one<glm::vec4>();
+			RawSerialisation::ReadVec4( color, stream );
+
+			rStyle.Colors[ i ] = color;
+		}
+
+		rAsset = stylingProf;
+
+		return true;
+	}
+	
+	bool RawAluraStylingProfileSerialiser::DumpAndWriteToVFS( const Ref<Asset>& rAsset ) const
+	{
+		const auto stylingProf = rAsset.As<AluraStylingProfile>();
+
+		std::filesystem::path out = Project::GetActiveProject()->GetTempDir();
+		out /= std::to_string( rAsset->ID );
+		out.replace_extension( ".vfs" );
+
+		std::ofstream stream( out, std::ios::binary | std::ios::trunc );
+
+		const auto& rStyle = stylingProf->GetStyle();
+
+		RawSerialisation::WriteObject( rStyle.Alpha, stream );
+		RawSerialisation::WriteObject( rStyle.DisabledAlpha, stream );
+		RawSerialisation::WriteVec2( rStyle.WindowPadding, stream );
+		RawSerialisation::WriteVec2( rStyle.ItemSpacing, stream );
+		RawSerialisation::WriteObject( rStyle.IndentSpacing, stream );
+		RawSerialisation::WriteObject( rStyle.WindowBorderSize, stream );
+		RawSerialisation::WriteObject( rStyle.CurrentFontSize, stream );
+
+		// TODO: The idea of saving the number of colors is so that we know if the AlruaColor enum is different from when it was last serialised
+		// If so, we can still load as long as the order of the colors has not changed
+		// If a new color was added we can load just fine
+		// However, if the styling profile has more colors than the current AluraColor enum does then we have a problem and we need to make sure we read using the current AluraColor_Count value.
+		// If the structure of the enum was changed then we have the worse case and the AssetBundle would need to rebuilt.
+		const int numberOfColors = AluraColor_Count;
+		RawSerialisation::WriteObject( numberOfColors, stream );
+
+		for( const auto& rColor : rStyle.Colors )
+		{
+			RawSerialisation::WriteVec4( rColor, stream );
+		}
+
+		stream.close();
+
+		return true;
 	}
 
 }

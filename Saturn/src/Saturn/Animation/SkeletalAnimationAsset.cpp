@@ -253,7 +253,6 @@ namespace Saturn {
 		rStream.write( reinterpret_cast< const char* >( pData ), pTracks->get_size() - sizeof( acl::compressed_tracks ) );
 	}
 
-#endif
 
 	void SkeletalAnimationAsset::Deserialise( std::ifstream& rStream )
 	{
@@ -291,11 +290,10 @@ namespace Saturn {
 
 		DeserialiseAclData( rStream );
 
-#if !defined( SAT_DIST )
 		if( skeletonID )
 			AssetManager::Get().RegisterAssetDependency( ID, skeletonID );
-#endif
 	}
+#endif
 
 #if !defined( SAT_DIST )
 	void SkeletalAnimationAsset::DeserialiseAclData( std::ifstream& rStream )
@@ -314,7 +312,7 @@ namespace Saturn {
 		acl::iallocator& rAllocator = ACLCore::GetAllocator();
 		uint8_t* pBuffer = reinterpret_cast< uint8_t* >( rAllocator.allocate( headerSize ) );
 
-		memcpy( pBuffer, headerBuffer, sizeof( headerBuffer ) );
+		std::memcpy( pBuffer, headerBuffer, sizeof( headerBuffer ) );
 
 		rStream.read( reinterpret_cast< char* >( pBuffer + sizeof( acl::compressed_tracks ) ), animDataSize );
 

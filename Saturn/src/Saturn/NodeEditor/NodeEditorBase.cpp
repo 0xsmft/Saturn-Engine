@@ -157,7 +157,7 @@ namespace Saturn {
 			uint64_t targetClassHash = 0;
 			RawSerialisation::ReadObject( targetClassHash, rStream );
 
-			NodeEditorNodeBase* pNode = dynamic_cast< NodeEditorNodeBase* >( ClassMetadataHandler::Get().CreateClassObject( targetClassHash ) );
+			NodeEditorNodeBase* pNode = dynamic_cast< NodeEditorNodeBase* >( ClassMetadataHandler::Get().CreateClassObject( targetClassHash, this ) );
 
 			SharedPtr<NodeEditorNodeBase> node;
 			if( node )
@@ -166,10 +166,9 @@ namespace Saturn {
 			}
 			else
 			{
-				node = NewObject<NodeEditorBlueprintNode>();
+				node = NewObject<NodeEditorBlueprintNode>( this );
 			}
 
-			node->pOuter = this;
 			node->Deserialise( rStream );
 
 			UUID parentID = 0;

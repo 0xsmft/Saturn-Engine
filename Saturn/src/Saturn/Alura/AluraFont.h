@@ -37,6 +37,66 @@ namespace Saturn {
 
 	struct AluraMSDFData;
 
+	class AluraSerialisedGlyph
+	{
+	public:
+		uint32_t Codepoint = 0u;
+
+		float Advance = 0.0f;
+
+		float PlaneLeft = 0.0f;
+		float PlaneBottom = 0.0f;
+		float PlaneRight = 0.0f;
+		float PlaneTop = 0.0f;
+
+		float AtlasLeft = 0.0f;
+		float AtlasBottom = 0.0f;
+		float AtlasRight = 0.0f;
+		float AtlasTop = 0.0f;
+
+	public:
+		AluraSerialisedGlyph() = default;
+		
+		AluraSerialisedGlyph( 
+			uint32_t codepoint, 
+			float adv, 
+			float pl, float pb, float pr, float pt, 
+			float al, float ab, float ar, float at 
+		) 
+			: Codepoint( codepoint ), 
+			Advance( adv ),
+			PlaneLeft( pl ), PlaneBottom( pb ), PlaneRight( pr ), PlaneTop( pt ),
+			AtlasLeft( pl ), AtlasBottom( pb ), AtlasRight( pr ), AtlasTop( pt )
+		{
+		}
+
+		~AluraSerialisedGlyph() = default;
+
+		// NOTE: This function is written with camelCase instead of PacelCase to keep inline with msdf's
+		// names.
+		[[nodiscard]] inline float getAdvance() const { return Advance; }
+
+		// NOTE: This function is written with camelCase instead of PacelCase to keep inline with msdf's
+		// names
+		void getQuadPlaneBounds( float& rLeft, float& rBottom, float& rRight, float& rTop ) const
+		{
+			rLeft   = PlaneLeft;
+			rBottom = PlaneBottom;
+			rRight  = PlaneRight;
+			rTop    = PlaneTop;
+		}
+		
+		// NOTE: This function is written with camelCase instead of PacelCase to keep inline with msdf's
+		// names.
+		void getQuadAtlasBounds( float& rLeft, float& rBottom, float& rRight, float& rTop ) const
+		{
+			rLeft = AtlasLeft;
+			rBottom = AtlasBottom;
+			rRight = AtlasRight;
+			rTop = AtlasTop;
+		}
+	};
+
 	class AluraFont : public Asset
 	{
 	public:
@@ -47,6 +107,8 @@ namespace Saturn {
 		void Serialise( int width, int height, const std::filesystem::path& rPath );
 		void LoadFromCache();
 		void Deserialise();
+
+		void SerialiseForDist( const std::filesystem::path& rPath ) const;
 
 		Ref<Texture2D> GetTexture() const { return m_TextureAtlas; }
 		AluraMSDFData* GetMSDFData() const { return m_pMSDFData; }

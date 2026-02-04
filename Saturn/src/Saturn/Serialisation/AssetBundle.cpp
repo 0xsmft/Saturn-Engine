@@ -49,6 +49,8 @@
 #include "Saturn/Animation/SkeletonAsset.h"
 #include "Saturn/Animation/SkeletalAnimationAsset.h"
 #include "Saturn/Physics/PhysicsMaterialAsset.h"
+#include "Saturn/Alura/AluraStylingProfile.h"
+#include "Saturn/Alura/AluraFont.h"
 
 #include "Saturn/Serialisation/YAML/SceneSerialiser.h"
 
@@ -325,7 +327,7 @@ namespace Saturn {
 				}
 			} break;
 
-			case Saturn::AssetType::SkeletalMesh: 
+			case Saturn::AssetType::SkeletalMesh:
 			{
 				Ref<SkeletalMesh> skMesh = rAssetManager.ImportAssetAs<SkeletalMesh>( AssetBundleRegistry, id );
 				if( skMesh )
@@ -358,7 +360,7 @@ namespace Saturn {
 			// TODO: GraphSound
 			case Saturn::AssetType::BehaviourTree:
 			case Saturn::AssetType::AnimationController:
-			case Saturn::AssetType::GraphSound: 
+			case Saturn::AssetType::GraphSound:
 			{
 				NodeCacheEditor::ConvertToDistNC( id, rAsset->Path.filename().string() );
 			} break;
@@ -372,8 +374,8 @@ namespace Saturn {
 					serialiser.DumpAndWriteToVFS( prefabAsset );
 				}
 			} break;
-			
-			case Saturn::AssetType::Skeleton: 
+
+			case Saturn::AssetType::Skeleton:
 			{
 				Ref<SkeletonAsset> skeletonAsset = rAssetManager.ImportAssetAs<SkeletonAsset>( AssetBundleRegistry, id );
 				if( skeletonAsset )
@@ -393,7 +395,7 @@ namespace Saturn {
 				}
 			} break;
 
-			case Saturn::AssetType::BehaviourTreeMemory: 
+			case Saturn::AssetType::BehaviourTreeMemory:
 			{
 				Ref<BehaviourTreeMemorySpecification> btMemAsset = rAssetManager.ImportAssetAs<BehaviourTreeMemorySpecification>( AssetBundleRegistry, id );
 				if( btMemAsset )
@@ -403,7 +405,7 @@ namespace Saturn {
 				}
 			} break;
 
-			case Saturn::AssetType::SkeletalAnimation: 
+			case Saturn::AssetType::SkeletalAnimation:
 			{
 				Ref<SkeletalAnimationAsset> animAsset = rAssetManager.ImportAssetAs<SkeletalAnimationAsset>( AssetBundleRegistry, id );
 				if( animAsset )
@@ -413,11 +415,31 @@ namespace Saturn {
 				}
 			} break;
 
+			case Saturn::AssetType::Font:
+			{
+				Ref<AluraFont> fontAsset = rAssetManager.ImportAssetAs<AluraFont>( AssetBundleRegistry, id );
+				if( fontAsset )
+				{
+					RawFontSerialiser serialiser;
+					serialiser.DumpAndWriteToVFS( fontAsset );
+				}
+			} break;
+
+			case Saturn::AssetType::StyleProfile: 
+			{
+				Ref<AluraStylingProfile> styleProf = rAssetManager.ImportAssetAs<AluraStylingProfile>( AssetBundleRegistry, id );
+				if( styleProf )
+				{
+					RawSkeletalAnimationSerialiser serialiser;
+					serialiser.DumpAndWriteToVFS( styleProf );
+				}
+			} break;
+
 			case Saturn::AssetType::Scene:
 			case Saturn::AssetType::MaterialInstance:
 			case Saturn::AssetType::Unknown: break;
 			default:
-				SAT_CORE_WARN( "Unhandled AssetType!" );
+				SAT_CORE_WARN( "Unhandled AssetType! {0}", AssetTypeToString( rAsset->Type ) );
 				Core::BreakDebug();
 				break;
 		}

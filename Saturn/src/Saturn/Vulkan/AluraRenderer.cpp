@@ -34,7 +34,7 @@
 
 #include "Saturn/Core/Ruby/RubyWindow.h"
 
-#include "Saturn/Alura/AluraMSDFData.h"
+#include "Saturn/Alura/AluraMSDFGenerationData.h"
 #include "Saturn/Alura/AluraFont.h"
 #include "Saturn/Alura/AluraRect.h"
 
@@ -397,21 +397,16 @@ namespace Saturn {
 
 	void AluraRenderer::SubmitString( const std::string& rText, Ref<AluraFont> font, float fontSizePx, const glm::vec2& rCursorPos, const glm::vec4& rColor )
 	{
-		const auto& rFontGeo = font->GetMSDFData()->FontGeometry;
-		const auto& rMetrics = rFontGeo.getMetrics();
+		auto& rFontGeo = font->GetFontData();
+		const auto& rMetrics = font->GetFontData().GetMetrics();
 
 		double x = 0.0;
 
 		// One EM is equivalent to 16px, so 0.5 em is 8px 2 em is 24px
 		// By default most fonts use emSize = 1 (16px)
-		const double fsScale = fontSizePx / rMetrics.emSize;
+		const double fsScale = fontSizePx / rMetrics.EmSize;
 
-#if !defined(SAT_DIST)
-		double y = fsScale * rMetrics.ascenderY;
-#else
-		double y = -fsScale * rMetrics.ascenderY;
-#endif
-
+		double y = fsScale * rMetrics.AscenderY;
 		for( size_t i = 0; i < rText.size(); i++ )
 		{
 			const char character = rText[ i ];
@@ -420,18 +415,14 @@ namespace Saturn {
 			if( character == '\n' )
 			{
 				x = 0;
-#if !defined(SAT_DIST)
-				y += fsScale * rMetrics.lineHeight;
-#else
-				y -= fsScale * rMetrics.lineHeight;
-#endif
+				y += fsScale * rMetrics.LineHeight;
 				continue;
 			}
 
-			auto pGlyph = rFontGeo.getGlyph( character );
+			auto pGlyph = rFontGeo.GetGlyph( character );
 			if( character == ' ' )
 			{
-				double advance = pGlyph->getAdvance();
+				double advance = pGlyph->GetAdvance();
 				x += fsScale * advance;
 				continue;
 			}
@@ -439,39 +430,29 @@ namespace Saturn {
 			// right now we'll do 4 spaces.
 			else if( character == '\t' )
 			{
-				pGlyph = rFontGeo.getGlyph( ' ' );
-				double advance = pGlyph->getAdvance() * 4.0 /* NUMBER_OF_SPACES_PER_TAB */;
+				pGlyph = rFontGeo.GetGlyph( ' ' );
+				double advance = pGlyph->GetAdvance() * 4.0 /* NUMBER_OF_SPACES_PER_TAB */;
 				x += fsScale * advance;
 				continue;
 			}
 
-			if( !pGlyph ) pGlyph = rFontGeo.getGlyph( '?' );
+			if( !pGlyph ) pGlyph = rFontGeo.GetGlyph( '?' );
 
-			double atlasLeft, atlasBottom, atlasRight, atlasTop;
-			pGlyph->getQuadAtlasBounds( atlasLeft, atlasBottom, atlasRight, atlasTop );
+			float atlasLeft, atlasBottom, atlasRight, atlasTop;
+			pGlyph->GetQuadAtlasBounds( atlasLeft, atlasBottom, atlasRight, atlasTop );
 
 			// NOTE: Vulkan: We have to flip the atlasTop and atlasBottom because in the Editor the UI origin is the bottom-left
 			// the reason why it's the bottom-left is because when this image gets flipped in the viewport, the elements at the bottom-left
 			// will be at the top-left, which is correct as the real origin is actually at the top-left.
-#if !defined(SAT_DIST)
 			glm::vec2 texCoordMin( atlasLeft, atlasTop );
 			glm::vec2 texCoordMax( atlasRight, atlasBottom );
-#else
-			glm::vec2 texCoordMin( atlasLeft, atlasBottom );
-			glm::vec2 texCoordMax( atlasRight, atlasTop );
-#endif
 
-			double planeLeft, planeBottom, planeRight, planeTop;
-			pGlyph->getQuadPlaneBounds( planeLeft, planeBottom, planeRight, planeTop );
+			float planeLeft, planeBottom, planeRight, planeTop;
+			pGlyph->GetQuadPlaneBounds( planeLeft, planeBottom, planeRight, planeTop );
 
 			// NOTE: Vulkan: Same as above.
-#if !defined(SAT_DIST)
 			glm::vec2 quadMin( x + planeLeft * fsScale, y - planeTop * fsScale );
 			glm::vec2 quadMax( x + planeRight * fsScale, y - planeBottom * fsScale );
-#else
-			glm::vec2 quadMin( x + planeLeft * fsScale, y + planeBottom * fsScale );
-			glm::vec2 quadMax( x + planeRight * fsScale, y + planeTop * fsScale );
-#endif
 
 			const float texelWidth = 1.0f / font->GetTexture()->Width();
 			const float texelHeight = 1.0f / font->GetTexture()->Height();
@@ -484,9 +465,9 @@ namespace Saturn {
 			// Next character spacing
 			if( i < rText.size() - 1 )
 			{
-				double advance = pGlyph->getAdvance();
+				double advance = pGlyph->GetAdvance();
 				char next = rText[ i + 1 ];
-				rFontGeo.getAdvance( advance, character, next );
+				rFontGeo.GetAdvance( advance, character, next );
 
 				x += fsScale * advance + 0.0f;
 			}

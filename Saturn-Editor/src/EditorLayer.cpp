@@ -336,7 +336,7 @@ namespace Saturn {
 
 		if( m_RuntimeScene ) 
 		{
-			m_SceneRenderer->GetRenderer2D()->PreRender();
+			m_SceneRenderer->PreRender();
 
 			m_RuntimeScene->OnUpdate( time );
 

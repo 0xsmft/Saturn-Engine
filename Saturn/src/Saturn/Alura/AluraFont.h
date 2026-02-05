@@ -35,8 +35,6 @@
 
 namespace Saturn {
 
-	struct AluraMSDFData;
-
 	class AluraSerialisedGlyph
 	{
 	public:
@@ -66,19 +64,15 @@ namespace Saturn {
 			: Codepoint( codepoint ), 
 			Advance( adv ),
 			PlaneLeft( pl ), PlaneBottom( pb ), PlaneRight( pr ), PlaneTop( pt ),
-			AtlasLeft( pl ), AtlasBottom( pb ), AtlasRight( pr ), AtlasTop( pt )
+			AtlasLeft( al ), AtlasBottom( ab ), AtlasRight( ar ), AtlasTop( at )
 		{
 		}
 
 		~AluraSerialisedGlyph() = default;
 
-		// NOTE: This function is written with camelCase instead of PacelCase to keep inline with msdf's
-		// names.
-		[[nodiscard]] inline float getAdvance() const { return Advance; }
+		[[nodiscard]] inline float GetAdvance() const { return Advance; }
 
-		// NOTE: This function is written with camelCase instead of PacelCase to keep inline with msdf's
-		// names
-		void getQuadPlaneBounds( float& rLeft, float& rBottom, float& rRight, float& rTop ) const
+		void GetQuadPlaneBounds( float& rLeft, float& rBottom, float& rRight, float& rTop ) const
 		{
 			rLeft   = PlaneLeft;
 			rBottom = PlaneBottom;
@@ -86,9 +80,7 @@ namespace Saturn {
 			rTop    = PlaneTop;
 		}
 		
-		// NOTE: This function is written with camelCase instead of PacelCase to keep inline with msdf's
-		// names.
-		void getQuadAtlasBounds( float& rLeft, float& rBottom, float& rRight, float& rTop ) const
+		void GetQuadAtlasBounds( float& rLeft, float& rBottom, float& rRight, float& rTop ) const
 		{
 			rLeft = AtlasLeft;
 			rBottom = AtlasBottom;
@@ -97,6 +89,60 @@ namespace Saturn {
 		}
 	};
 
+	struct AluraFontMetrics
+	{
+		// The size of one EM.
+		double EmSize;
+
+		// The vertical position of the ascender and descender relative to the baseline.
+		double AscenderY, DescenderY;
+
+		// The vertical difference between consecutive baselines.
+		double LineHeight;
+
+		// The vertical position and thickness of the underline.
+		double UnderlineY, UnderlineThickness;
+	};
+
+	static_assert( std::is_trivially_copyable_v<AluraFontMetrics>, "AluraFontMetrics must be a POD type!" );
+
+	class AluraFontData
+	{
+	public:
+		AluraFontData() = default;
+		~AluraFontData() = default;
+
+		void AddCodepointToGlyph( uint32_t codepoint );
+		void SetKerning( const std::map<std::pair<int, int>, double>& rMap );
+
+		AluraSerialisedGlyph* GetGlyph( uint32_t codepoint );
+		bool GetAdvance( double& adv, uint32_t a, uint32_t b );
+
+	public:
+		std::vector<AluraSerialisedGlyph>& GetGlyphs() { return m_AluraGlyphs; }
+		const std::vector<AluraSerialisedGlyph>& GetGlyphs() const { return m_AluraGlyphs; }
+
+		std::map<uint32_t, size_t>& GetCodepointToGlyph() { return m_CodepointToGlyph; }
+		const std::map<uint32_t, size_t>& GetCodepointToGlyph() const { return m_CodepointToGlyph; }
+		
+		std::map<std::pair<int, int>, double>& GetKerning() { return m_Kerning; }
+		const std::map<std::pair<int, int>, double>& GetKerning() const { return m_Kerning; }
+
+		AluraFontMetrics& GetMetrics() { return m_Metrics; }
+		const AluraFontMetrics& GetMetrics() const { return m_Metrics; }
+
+	private:
+		AluraFontMetrics m_Metrics{};
+		std::vector<AluraSerialisedGlyph> m_AluraGlyphs;
+		//      CODEPOINT -> INDEX
+		std::map<uint32_t, size_t> m_CodepointToGlyph;
+
+		//      {A, B} -> KERNING AMOUNT
+		std::map<std::pair<int, int>, double> m_Kerning;
+	};
+
+	struct AluraMSDFGenerationData;
+
 	class AluraFont : public Asset
 	{
 	public:
@@ -104,14 +150,13 @@ namespace Saturn {
 		AluraFont( const Ref<Asset>& rBase );
 		virtual ~AluraFont();
 
-		void Serialise( int width, int height, const std::filesystem::path& rPath );
-		void LoadFromCache();
-		void Deserialise();
-
-		void SerialiseForDist( const std::filesystem::path& rPath ) const;
+		void Serialise( const std::filesystem::path& rPath ) const;
+		void Deserialise( FDependentIStream& rStream );
 
 		Ref<Texture2D> GetTexture() const { return m_TextureAtlas; }
-		AluraMSDFData* GetMSDFData() const { return m_pMSDFData; }
+
+		AluraFontData& GetFontData() { return m_AluraFontData; }
+		const AluraFontData& GetFontData() const { return m_AluraFontData; }
 
 		glm::vec2 CalcTextSize( float fontSize, const std::string& rText );
 
@@ -119,12 +164,15 @@ namespace Saturn {
 		std::string GetFontName() const { return m_Name; }
 
 	private:
-		void CreateAtlas( bool overrideCache = false );
+		void CreateOrLoadAtlas( bool overrideCache = false );
+#if !defined(SAT_DIST)
+		void CreateAtlasTexture( AluraMSDFGenerationData& rGenerationData, int width, int height );
+#endif
 
 	private:
 		std::string m_Name;
 		std::filesystem::path m_Filepath;
-		AluraMSDFData* m_pMSDFData = nullptr;
+		AluraFontData m_AluraFontData{};
 		Ref<Texture2D> m_TextureAtlas;
 		
 	private:

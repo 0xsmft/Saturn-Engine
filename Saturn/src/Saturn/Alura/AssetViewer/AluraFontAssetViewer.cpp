@@ -53,8 +53,39 @@ namespace Saturn {
 
 	void AluraFontAssetViewer::OnImGuiRender()
 	{
-		if( ImGui::Begin( m_Name.c_str(), &m_Open ) )
+		if( ImGui::Begin( m_Name.c_str(), &m_Open, ImGuiWindowFlags_MenuBar ) )
 		{
+			if( ImGui::BeginMenuBar() )
+			{
+				if( ImGui::BeginMenu( "File" ) )
+				{
+					if( ImGui::MenuItem( "Close" ) )
+					{
+						m_Open = false;
+					}
+
+					if( ImGui::MenuItem( "Save" ) )
+					{
+//						m_Font->Serialise();
+					}
+
+					ImGui::EndMenu();
+				}
+
+				if( ImGui::BeginMenu( "Font" ) )
+				{
+					if( ImGui::MenuItem( "Regenerate" ) )
+					{
+						m_pLoadedImGuiFont = nullptr;
+						m_Font->CreateOrLoadAtlas( true );
+					}
+
+					ImGui::EndMenu();
+				}
+
+				ImGui::EndMenuBar();
+			}
+
 			ImGui::Text( "Alura Compatible Font" );
 			ImGui::Text( "Font name: %s", m_Font->GetFontName().c_str() );
 			ImGui::Separator();

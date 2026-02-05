@@ -54,6 +54,8 @@ namespace Saturn {
 		m_AssetSerialisers[ AssetType::SkeletalMesh      ] = std::make_unique<RawSkeletalMeshAssetSerialiser>();
 		m_AssetSerialisers[ AssetType::Skeleton          ] = std::make_unique<RawSkeletonAssetSerialiser>();
 		m_AssetSerialisers[ AssetType::BehaviourTreeMemory ] = std::make_unique<RawBehaviourTreeMemorySpecSerialiser>();
+		m_AssetSerialisers[ AssetType::Font ]                = std::make_unique<RawFontSerialiser>();
+		m_AssetSerialisers[ AssetType::StyleProfile ]        = std::make_unique<RawAluraStylingProfileSerialiser>();
 	}
 
 	bool VFSAssetImporter::TryLoadData( Ref<Asset>& rAsset )

@@ -28,14 +28,16 @@
 
 #pragma once
 
+#if !defined(SAT_DIST)
 #include <msdf-atlas-gen/msdf-atlas-gen.h>
 
 namespace Saturn {
 
-	struct AluraMSDFData
+	struct AluraMSDFGenerationData
 	{
 		msdf_atlas::FontGeometry FontGeometry;
 		std::vector<msdf_atlas::GlyphGeometry> Glyphs;
 	};
 	
 }
+#endif

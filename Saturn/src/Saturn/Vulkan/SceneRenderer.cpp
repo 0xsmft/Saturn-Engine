@@ -2348,6 +2348,11 @@ namespace Saturn {
 			LateCompPhysicsOutline();
 		}
 
+		if( m_AluraRenderer )
+		{
+			m_AluraRenderer->Render();
+		}
+
 		if( m_RendererData.IsSwapchainTarget )
 		{
 			ScopedDebugLabel label( m_RendererData.CommandBuffer, "Scene Composite/Texture Pass" );

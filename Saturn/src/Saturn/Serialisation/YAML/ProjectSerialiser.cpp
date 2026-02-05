@@ -64,6 +64,7 @@ namespace Saturn {
 			out << YAML::Key << "StartupScene" << YAML::Value << rProject->GetConfig().StartupSceneID;
 			out << YAML::Key << "DefaultMaterialAsset" << YAML::Value << rProject->GetDefaultMaterialAsset();
 			out << YAML::Key << "DefaultPhyMaterialAsset" << YAML::Value << rProject->GetDefaultPhysicsMaterialAsset();
+			out << YAML::Key << "DefaultFontAsset" << YAML::Value << rProject->GetDefaultFontAsset();
 #if !defined(SAT_DIST)
 			out << YAML::Key << "IsAutoSavesEnabled" << YAML::Value << rProject->IsAutoSavesEnabled();
 			out << YAML::Key << "AutoSaveInterval" << YAML::Value << rProject->GetAutoSaveInterval();
@@ -143,6 +144,7 @@ namespace Saturn {
 
 		newProject->SetDefaultMaterialAsset( project[ "DefaultMaterialAsset" ].as<uint64_t>( 0 ) );
 		newProject->SetDefaultPhysicsMaterialAsset( project[ "DefaultPhyMaterialAsset" ].as<uint64_t>( 0 ) );
+		newProject->SetDefaultFontAsset( project[ "DefaultFontAsset" ].as<uint64_t>( 0 ) );
 
 #if !defined(SAT_DIST)
 		newProject->EnableAutoSaves( project[ "IsAutoSavesEnabled" ].as<bool>( false ) );

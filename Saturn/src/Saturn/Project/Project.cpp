@@ -305,6 +305,21 @@ namespace Saturn {
 		ars.Serialise();
 	}
 
+	void Project::RemoveAssetFromDefaults(/*AssetID*/ UUID assetID )
+	{
+		if( m_Config.StartupSceneID == assetID )
+			m_Config.StartupSceneID = 0llu;
+
+		if( m_DefaultMaterialAsset == assetID )
+			m_DefaultMaterialAsset = 0llu;
+
+		if( m_DefaultPhysicsMaterialAsset == assetID )
+			m_DefaultPhysicsMaterialAsset = 0llu;
+
+		if( m_DefaultFontAsset == assetID )
+			m_DefaultFontAsset = 0llu;
+	}
+
 	bool Project::HasPremakeFile() const
 	{
 		return std::filesystem::exists( m_RootPath / "premake5.lua" );

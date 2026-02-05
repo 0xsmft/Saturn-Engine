@@ -1286,6 +1286,51 @@ namespace Saturn {
 			}
 			ImGui::EndHorizontal();
 
+			ImGui::BeginHorizontal( "##prj_defalurafont" );
+			{
+				auto defaultFontAsset = ActiveProject->GetDefaultFontAsset();
+
+				ImGui::Text( "Default Font Asset:" );
+				defaultFontAsset == 0 ? ImGui::TextColored( ImVec4( 1.0f, 0.0f, 0.0f, 1.0f ), "None" ) : ImGui::Text( "%llu", defaultFontAsset );
+
+				ImGui::Spring();
+
+				Auxiliary::DisabledFlag inspectDisabledFlag( m_RequestRuntime );
+
+				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), { 24.0f, 24.0f } ) )
+					s_OpenAssetFinderPopup = true;
+
+				if( Auxiliary::DrawAssetFinder( AssetType::Font, &s_OpenAssetFinderPopup, defaultFontAsset ) )
+				{
+					ActiveProject->SetDefaultFontAsset( defaultFontAsset );
+					shouldSaveProject = true;
+				}
+
+				inspectDisabledFlag.Pop();
+
+				{
+					Auxiliary::ScopedDisabledFlag disabledFlag( defaultFontAsset == 0 );
+
+					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "NoIcon" ), { 24.0f, 24.0f } ) )
+					{
+						const Ref<Asset> target = AssetManager::Get().FindAsset( defaultFontAsset );
+
+						if( target )
+						{
+							Ref<ContentBrowserPanel> contentBrowserPanel = m_ImGuiWindowManager->GetPanel<ContentBrowserPanel>();
+							contentBrowserPanel->BrowseToItem( target->Path, defaultFontAsset );
+						}
+					}
+				}
+			}
+			ImGui::EndHorizontal();
+
+			ImGui::PushFont( boldFont );
+			ImGui::Text( "Autosaves" );
+			ImGui::Separator();
+
+			ImGui::PopFont();
+
 //			ImGui::BeginHorizontal( "##prj_autosaves" );
 			{
 				bool enableAutoSaves = ActiveProject->IsAutoSavesEnabled();

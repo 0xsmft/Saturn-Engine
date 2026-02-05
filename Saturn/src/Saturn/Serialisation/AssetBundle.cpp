@@ -623,6 +623,7 @@ namespace Saturn {
 		RawSerialisation::WriteObject( rConfig.StartupSceneID, fout );
 		RawSerialisation::WriteObject( ActiveProject->GetDefaultMaterialAsset(), fout );
 		RawSerialisation::WriteObject( ActiveProject->GetDefaultPhysicsMaterialAsset(), fout );
+		RawSerialisation::WriteObject( ActiveProject->GetDefaultFontAsset(), fout );
 
 		// Action Bindings
 		// Write manually, avoid using our T::Serialise functions
@@ -691,6 +692,9 @@ namespace Saturn {
 
 		RawSerialisation::ReadObject( defMatAsset, stream );
 		newProject->SetDefaultPhysicsMaterialAsset( defMatAsset );
+
+		RawSerialisation::ReadObject( defMatAsset, stream );
+		newProject->SetDefaultFontAsset( defMatAsset );
 
 		size_t actionBindings = 0;
 		RawSerialisation::ReadObject( actionBindings, stream );

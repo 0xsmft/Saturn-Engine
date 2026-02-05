@@ -161,6 +161,11 @@ namespace Saturn {
 		const UUID GetDefaultPhysicsMaterialAsset() const { return m_DefaultPhysicsMaterialAsset; }
 		void SetDefaultPhysicsMaterialAsset( UUID newID ) { m_DefaultPhysicsMaterialAsset = newID; }
 
+		const UUID GetDefaultFontAsset() const { return m_DefaultFontAsset; }
+		void SetDefaultFontAsset( UUID newID ) { m_DefaultFontAsset = newID; }
+
+		void RemoveAssetFromDefaults( /*AssetID*/ UUID assetID );
+
 		//////////////////////////////////////////////////////////////////////////
 		// Auto Saves, Editor only
 #if !defined(SAT_DIST)
@@ -206,6 +211,7 @@ namespace Saturn {
 		std::vector<Ref<SoundGroup>> m_SoundGroups;
 		UUID m_DefaultMaterialAsset = 0;
 		UUID m_DefaultPhysicsMaterialAsset = 0;
+		UUID m_DefaultFontAsset = 0;
 		
 #if !defined(SAT_DIST)
 		// Time in seconds, converted to minutes or any suitable time to display in the Editor, when changing the time

@@ -898,19 +898,29 @@ namespace Saturn {
 
 	void AluraFontAssetSerialiser::Serialise( const Ref<Asset>& rAsset ) const
 	{
-		SAT_CORE_ASSERT( false, "AluraFontAssetSerialiser::Serialise is not to be called!, use the Serialse function on the object itself" );
+		SAT_CORE_ASSERT( false, "AluraFontAssetSerialiser::Serialise is not to be called!, use the Serialise function on the object itself" );
 	}
 
 	bool AluraFontAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
 	{
+#if !defined(SAT_DIST)
 		auto fontAsset = Ref<AluraFont>::Create( rAsset );
 
-		fontAsset->Deserialise();
+		const auto absolutePath = GetFilepathAbs( rAsset->Path );
+		std::ifstream FileIn( absolutePath, std::ios::binary | std::ios::in );
+
+		// TRANSITION: Binary
+		fontAsset->Deserialise( FileIn );
+
+		FileIn.close();
 
 		// Set rAsset reference to point to our new AluraFont
 		rAsset = fontAsset;
 
 		return true;
+#else
+		return false;
+#endif
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -927,19 +937,21 @@ namespace Saturn {
 		out << YAML::Key << "AluraStylingProfile" << YAML::Value;
 		out << YAML::BeginMap;
 
-		out << YAML::Key << "Alpha" << YAML::Value << stylingProf->GetStyle().Alpha;
-		out << YAML::Key << "DisabledAlpha" << YAML::Value << stylingProf->GetStyle().DisabledAlpha;
-		out << YAML::Key << "WindowPadding" << YAML::Value << stylingProf->GetStyle().WindowPadding;
-		out << YAML::Key << "ItemSpacing" << YAML::Value << stylingProf->GetStyle().ItemSpacing;
-		out << YAML::Key << "IndentSpacing" << YAML::Value << stylingProf->GetStyle().IndentSpacing;
-		out << YAML::Key << "WindowBorderSize" << YAML::Value << stylingProf->GetStyle().WindowBorderSize;
-		out << YAML::Key << "CurrentFontSize" << YAML::Value << stylingProf->GetStyle().CurrentFontSize;
+		const auto& rStyle = stylingProf->GetStyle();
+
+		out << YAML::Key << "Alpha" << YAML::Value << rStyle.Alpha;
+		out << YAML::Key << "DisabledAlpha" << YAML::Value << rStyle.DisabledAlpha;
+		out << YAML::Key << "WindowPadding" << YAML::Value << rStyle.WindowPadding;
+		out << YAML::Key << "ItemSpacing" << YAML::Value << rStyle.ItemSpacing;
+		out << YAML::Key << "IndentSpacing" << YAML::Value << rStyle.IndentSpacing;
+		out << YAML::Key << "WindowBorderSize" << YAML::Value << rStyle.WindowBorderSize;
+		out << YAML::Key << "CurrentFontSize" << YAML::Value << rStyle.CurrentFontSize;
 
 		out << YAML::Key << "Styles" << YAML::Value;
 		out << YAML::BeginSeq;
 
 		uint32_t index = 0;
-		for( const auto& rColorVar : stylingProf->GetStyle().Colors )
+		for( const auto& rColorVar : rStyle.Colors )
 		{
 			out << YAML::BeginMap;
 

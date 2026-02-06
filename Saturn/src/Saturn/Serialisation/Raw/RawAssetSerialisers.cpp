@@ -703,7 +703,28 @@ namespace Saturn {
 
 	bool RawFontSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
 	{
+#if defined(SAT_DIST)
+		const std::string& rMountBase = Project::GetActiveConfig().Name;
+		Ref<VFile> file = VirtualFS::Get().FindFile( rMountBase, rAsset->Path );
+
+		if( !file )
+			return false;
+
+		/////////////////////////////////////
+
+		PakFileMemoryBuffer membuf( file->FileContent );
+		std::istream stream( &membuf );
+
+		auto font = Ref<AluraFont>::Create( rAsset );
+
+		font->Deserialise( stream );
+
+		rAsset = font;
+
+		return true;
+#else
 		return false;
+#endif
 	}
 
 	bool RawFontSerialiser::DumpAndWriteToVFS( const Ref<Asset>& rAsset ) const
@@ -714,7 +735,7 @@ namespace Saturn {
 		out /= std::to_string( rAsset->ID );
 		out.replace_extension( ".vfs" );
 
-		aluraFont->SerialiseForDist( out );
+		aluraFont->Serialise( out );
 
 		return true;
 	}

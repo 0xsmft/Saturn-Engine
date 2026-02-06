@@ -582,7 +582,7 @@ namespace Saturn {
 			g_ActiveScene = this;
 
 		// UNSAFE! We just assume that rScriptName will be a subclass of an entity, could lead to UB
-		SharedPtr<Entity> entity = (Entity*)ClassMetadataHandler::Get().CreateClassObject( rScriptName );
+		SharedPtr<Entity> entity = (Entity*)ClassMetadataHandler::Get().CreateClassObject( rScriptName, this );
 
 		entity->SetName( name );
 		entity->GetComponent<IdComponent>().ID = uuid;
@@ -1429,9 +1429,7 @@ namespace Saturn {
 
 		for( auto& [k, v] : m_EntityIDMap )
 		{
-			// K (entt::entity) is always trivial
-			RawSerialisation::WriteObject( k, rStream );
-
+			// Write SClass hash
 			const uint64_t classHash = v->GetClass()->GetHash();
 			RawSerialisation::WriteObject( classHash, rStream );
 
@@ -1460,32 +1458,33 @@ namespace Saturn {
 	template<typename IStream>
 	void Scene::DeserialiseInternal( IStream& rStream )
 	{
+//		VariableGuard<Scene*> activeScene( g_ActiveScene, this );
+		auto* pOldScene = g_ActiveScene;
+		g_ActiveScene = this;
+
 		Lights::Deserialise( m_Lights, rStream );
 
 		// Read the map manually.
 		size_t mapSize = 0;
 		rStream.read( reinterpret_cast< char* >( &mapSize ), sizeof( size_t ) );
-
-		VariableGuard<Scene*> activeScene( g_ActiveScene, this );
-
 		for( size_t i = 0; i < mapSize; ++i )
 		{
-			entt::entity K{};
-
-			// K is always trivial
-			RawSerialisation::ReadObject( K, rStream );
-
 			uint64_t classHash = 0llu;
 			RawSerialisation::ReadObject( classHash, rStream );
 
 			SharedPtr<Entity> V = nullptr;
-			V = (Entity*)ClassMetadataHandler::Get().CreateClassObject( classHash );
+			V = ( Entity* ) ClassMetadataHandler::Get().CreateClassObject( classHash );
 
 			// V is always non-trivial
 			Entity::Deserialise( V, rStream );
 
-			m_EntityIDMap[ K ] = V;
+			m_EntityIDMap[ V->GetHandle() ] = V;
 		}
+
+		Name = Path.stem().string();
+		PostDeserialise();
+
+		g_ActiveScene = pOldScene;
 	}
 
 }

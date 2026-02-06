@@ -202,9 +202,18 @@ namespace Saturn {
 
 	bool RawPrefabSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
 	{
-		auto prefabAsset = Ref<Prefab>::Create();
+		const std::string& rMountBase = Project::GetActiveConfig().Name;
+		Ref<VFile> file = VirtualFS::Get().FindFile( rMountBase, rAsset->Path );
 
-//		prefabAsset->DeserialisePrefab();
+		if( !file )
+			return false;
+
+		PakFileMemoryBuffer membuf( file->FileContent );
+		std::istream stream( &membuf );
+
+		/////////////////////////////////////
+		auto prefabAsset = Ref<Prefab>::Create( rAsset );
+		prefabAsset->DeserialisePrefab( stream );
 
 		// TODO: (Asset) Fix this.
 		rAsset = prefabAsset;

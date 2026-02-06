@@ -82,6 +82,7 @@ namespace Saturn {
 	Prefab::Prefab( const Ref<Asset>& rBase )
 		: Asset( rBase )
 	{
+		m_Scene = Ref<Scene>::Create();
 	}
 
 	Prefab::~Prefab()
@@ -156,12 +157,13 @@ namespace Saturn {
 		return child;
 	}
 
-	SharedPtr<Entity> Prefab::PrefabToEntity( Ref<Scene> Scene )
+
+	SharedPtr<Entity> Prefab::PrefabToEntity( Ref<Scene> SceneToSpawnIn )
 	{
 		CreateEntityParameters params{};
 		params.pClass = ( SClass* ) m_Entity->GetClass();
 
-		SharedPtr<Entity> result = Scene->CreateEntity( params );
+		SharedPtr<Entity> result = SceneToSpawnIn->CreateEntity( params );
 		result->AddComponent<PrefabComponent>().AssetID = ID;
 
 		// Now we need to find the root entity of the prefab.
@@ -183,14 +185,14 @@ namespace Saturn {
 
 		CopyComponentIfExists( AllComponents{},
 			result->m_EntityHandle, RootEntity->m_EntityHandle,
-			m_Scene->m_Registry, Scene->m_Registry );
+			m_Scene->m_Registry, SceneToSpawnIn->m_Registry );
 
 		// We don't want the same id, what if we spawn this prefab and it has the same id?
 		result->GetComponent<IdComponent>().ID = {};
 
 		for( auto& childId : RootEntity->GetChildren() )
 		{
-			SharedPtr<Entity> child = CreateChildren( m_Scene->FindEntityByID( childId ), Scene );
+			SharedPtr<Entity> child = CreateChildren( m_Scene->FindEntityByID( childId ), SceneToSpawnIn );
 
 			child->SetParent( result->GetComponent<IdComponent>().ID );
 		}
@@ -206,5 +208,21 @@ namespace Saturn {
 	void Prefab::DeserialisePrefab( std::istream& rStream )
 	{
 		m_Scene->DeserialiseInternal( rStream );
+		
+		// Find root entity
+		SharedPtr<Entity> RootEntity = nullptr;
+
+		for( const auto& entity : m_Scene->GetAllEntitiesWith<RelationshipComponent>() )
+		{
+			if( entity->GetComponent<RelationshipComponent>().Parent != 0 )
+				continue;
+
+			if( entity->GetChildren().size() > 0 )
+				continue;
+
+			RootEntity = entity;
+		}
+
+		m_Entity = RootEntity;
 	}
 }

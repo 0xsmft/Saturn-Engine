@@ -53,7 +53,7 @@ namespace Saturn {
 		// Convert an entity into a prefab
 		void InitPrefab( const SharedPtr<Entity>& srcEntity );
 		
-		SharedPtr<Entity> PrefabToEntity( Ref<Scene> Scene );
+		SharedPtr<Entity> PrefabToEntity( Ref<Scene> SceneToSpawnIn );
 
 		Ref<Scene> GetScene() { return m_Scene; }
 		const Ref<Scene> GetScene() const { return m_Scene; }
@@ -73,7 +73,6 @@ namespace Saturn {
 
 	private:
 		SharedPtr<Entity> m_Entity;
-		SharedPtr<Entity> m_RootEntity;
 
 		Ref<Scene> m_Scene;
 

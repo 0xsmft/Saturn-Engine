@@ -90,8 +90,6 @@ namespace Saturn {
 		void HandleSceneTravel( SceneTravelEvent& rEvent );
 		void HandleOpenFileCB( UUID newSceneID );
 
-		void SubmitSelectedMeshes();
-
 		// UI Functions.
 		void DrawProjectSettingsWindow();
 		void HotReloadGame();

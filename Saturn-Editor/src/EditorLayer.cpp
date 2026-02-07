@@ -378,7 +378,6 @@ namespace Saturn {
 			m_EditorScene->OnUpdate( time );
 
 			m_EditorScene->OnRenderEditor( &m_EditorCamera, m_EditorCamera.ViewMatrix(), m_SceneRenderer, time );
-			SubmitSelectedMeshes();
 
 			if( m_ShouldRenderCameraPreview && m_pSelectedCamera )
 			{
@@ -1076,46 +1075,6 @@ namespace Saturn {
 		else
 		{
 			OpenFile( newSceneID );
-		}
-	}
-
-	void EditorLayer::SubmitSelectedMeshes()
-	{
-		// Selected Meshes and Physics Colliders
-		{
-			for( const auto& rSelectedEntity : EntitySelectionManager::Get().GetSelectionContexts() )
-			{
-				if( rSelectedEntity->HasComponent<StaticMeshComponent>() )
-				{
-					const auto& meshComponent = rSelectedEntity->GetComponent<StaticMeshComponent>();
-					const auto transform = g_ActiveScene->GetTransformRelativeToParent( rSelectedEntity );
-
-					if( meshComponent.Mesh )
-					{
-						Ref<MaterialRegistry> targetMaterialRegistry = meshComponent.Mesh->GetMaterialRegistry();
-
-						if( meshComponent.MaterialRegistry && meshComponent.MaterialRegistry->HasAnyOverrides() )
-							targetMaterialRegistry = meshComponent.MaterialRegistry;
-
-						// Submit to SceneRenderer as a selected mesh
-						if( rSelectedEntity->HasComponent<RigidbodyComponent>() )
-						{
-							m_SceneRenderer->SubmitPhysicsCollider( rSelectedEntity, meshComponent.Mesh, targetMaterialRegistry, transform );
-						}
-					}
-				}
-
-				if( rSelectedEntity->GetClass() == NavBoundsEntity::StaticClass() )
-				{
-					if( SharedPtr<NavBoundsEntity> boundsEntity = rSelectedEntity.As<NavBoundsEntity>() )
-					{
-						m_SceneRenderer->GetRenderer2D()->SubmitAABB( boundsEntity->GetBoundingBox(), glm::vec4( 0.0f, 1.0f, 0.0, 1.0f ) );
-
-						// TODO: #ScRendererOwnsRenderer2D
-						boundsEntity->DebugDraw( m_SceneRenderer->GetRenderer2D().Get() );
-					}
-				}
-			}
 		}
 	}
 

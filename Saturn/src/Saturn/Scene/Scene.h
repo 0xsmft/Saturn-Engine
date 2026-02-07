@@ -28,6 +28,8 @@
 
 #pragma once
 
+#include "SceneVisualisationOptions.h"
+
 #include "Saturn/Core/Base.h"
 #include "Saturn/Core/Log.h"
 
@@ -493,6 +495,11 @@ namespace Saturn {
 		std::shared_ptr<PhysicsScene> GetPhysicsScene() const { return m_PhysicsScene; }
 		NavigationSystem& GetNavigationSystem() { return m_NavigationSystem; }
 
+#if !defined(SAT_DIST)
+		SceneVisualisationOptions& GetVisualisationOptions() { return m_VisualisationOptions; }
+		const SceneVisualisationOptions& GetVisualisationOptions() const { return m_VisualisationOptions; }
+#endif
+
 		void DestroyPhysicsScene();
 	private:
 		void CreatePhysicsScene();
@@ -504,6 +511,7 @@ namespace Saturn {
 		void RtSetupLights( Ref<SceneRenderer> sceneRenderer );
 		void RtBuildRenderer2DCommands( Ref<SceneRenderer> sceneRenderer );
 		void RtBuildSceneRendererCommands( Ref<SceneRenderer> sceneRenderer );
+		void RtRenderColliderDebug( Ref<SceneRenderer> sceneRenderer );
 
 	private:
 		std::map<entt::entity, SharedPtr<Entity>> m_EntityIDMap;
@@ -538,6 +546,7 @@ namespace Saturn {
 		UUID m_InternalID;
 #if !defined(SAT_DIST)
 		bool m_Dirty = false;
+		SceneVisualisationOptions m_VisualisationOptions{};
 #endif
 
 	private:

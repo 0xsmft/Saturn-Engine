@@ -982,7 +982,7 @@ namespace Saturn {
 			// Offset to texel space to avoid shimmering (from https://stackoverflow.com/questions/33499053/cascaded-shadow-map-shimmering)
 			glm::mat4 shadowMatrix = lightOrthoMatrix * lightViewMatrix;
 			float ShadowMapResolution = SHADOW_MAP_SIZE;
-			glm::vec4 shadowOrigin = ( shadowMatrix * glm::vec4( 0.0f, 0.0f, 0.0f, 1.0f ) ) * ShadowMapResolution / 2.0f;
+			glm::vec4 shadowOrigin = ( shadowMatrix * glm::vec4( 0.0f, 0.0f, 0.0f, 1.0f ) ) * ShadowMapResolution * 0.5f;
 			glm::vec4 roundedOrigin = glm::round( shadowOrigin );
 			glm::vec4 roundOffset = roundedOrigin - shadowOrigin;
 			roundOffset = roundOffset * 2.0f / ShadowMapResolution;
@@ -1079,6 +1079,7 @@ namespace Saturn {
 
 	void SceneRenderer::ImGuiRender()
 	{
+#if !defined(SAT_DIST)
 		SAT_PF_EVENT();
 
 		ImGui::Text( "Viewport size, %i, %i", ( int ) m_RendererData.Width, ( int ) m_RendererData.Height );
@@ -1173,6 +1174,7 @@ namespace Saturn {
 
 			Auxiliary::EndTreeNode();
 		}
+#endif
 	}
 
 	void SceneRenderer::SetCurrentScene( Scene* pScene )
@@ -1359,6 +1361,20 @@ namespace Saturn {
 			command.Mesh = mesh;
 			command.SubmeshIndex = ( uint32_t ) i;
 			++command.Instances;
+
+			auto& data = m_RendererData.MeshTransforms[ key ].Data.emplace_back();
+			data.TransfromBufferR[ 0 ] = {
+				transform[ 0 ][ 0 ], transform[ 1 ][ 0 ], transform[ 2 ][ 0 ], transform[ 3 ][ 0 ]
+			};
+			data.TransfromBufferR[ 1 ] = {
+				transform[ 0 ][ 1 ], transform[ 1 ][ 1 ], transform[ 2 ][ 1 ], transform[ 3 ][ 1 ]
+			};
+			data.TransfromBufferR[ 2 ] = {
+				transform[ 0 ][ 2 ], transform[ 1 ][ 2 ], transform[ 2 ][ 2 ], transform[ 3 ][ 2 ]
+			};
+			data.TransfromBufferR[ 3 ] = {
+				transform[ 0 ][ 3 ], transform[ 1 ][ 3 ], transform[ 2 ][ 3 ], transform[ 3 ][ 3 ]
+			};
 		}
 	}
 

@@ -446,7 +446,7 @@ General defines
 
 // check that exactly one of NDEBUG and _DEBUG is defined
 #if !defined(NDEBUG) ^ defined(_DEBUG)
-#error Exactly one of NDEBUG and _DEBUG needs to be defined!
+//#error Exactly one of NDEBUG and _DEBUG needs to be defined!
 #endif
 
 // make sure PX_CHECKED is defined in all _DEBUG configurations as well

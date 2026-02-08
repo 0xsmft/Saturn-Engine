@@ -20,9 +20,9 @@
 #    endif
 #  elif defined __linux
 #    if defined _GNU_SOURCE && defined __GLIBC__
-#      define TRACY_HAS_CALLSTACK 3
+#      define TRACY_HAS_CALLSTACK 0
 #    else
-#      define TRACY_HAS_CALLSTACK 2
+#      define TRACY_HAS_CALLSTACK 0
 #    endif
 #  elif defined __APPLE__
 #    define TRACY_HAS_CALLSTACK 4

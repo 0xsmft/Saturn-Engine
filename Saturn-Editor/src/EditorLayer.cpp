@@ -80,6 +80,8 @@
 #include <Saturn/Audio/AudioSystem.h>
 #include <Saturn/Audio/SoundGroup.h>
 
+#include <Saturn/Physics/PhysicsDebugMeshes.h>
+
 #include <Saturn/AI/Navigation/NavBoundsEntity.h>
 
 #include <Saturn/Project/Premake.h>
@@ -215,6 +217,12 @@ namespace Saturn {
 		m_CameraPreviewSceneRenderer = Ref<SceneRenderer>::Create( /*SceneRendererFlag_NoRenderer2D*/ SceneRendererFlag_NoFlags );
 		m_CameraPreviewSceneRenderer->SetCurrentScene( m_EditorScene.Get() );
 		m_CameraPreviewSceneRenderer->SetViewportSize( 512, 512 );
+
+		// Force init debug meshes, would be better if we didn't lazy load :(
+		// and this kinda beats the whole purpose of this class being lazy loaded.
+		PhysicsDebugMeshes::Get();
+
+		// Final step, set title
 		const std::string title = std::format( "{0} - Saturn", Project::GetActiveConfig().Name );
 		Application::Get().GetWindow()->ChangeTitle( title );
 
@@ -239,6 +247,8 @@ namespace Saturn {
 
 	void EditorLayer::OnDetach()
 	{
+		PhysicsDebugMeshes::Get().Terminate();
+
 		EditorIcons::Clear();
 		m_CheckerboardTexture = nullptr;
 		m_PointLightTexture = nullptr;

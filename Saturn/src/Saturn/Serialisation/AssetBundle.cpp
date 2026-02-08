@@ -60,25 +60,42 @@ namespace Saturn {
 
 	struct AssetBundleHeader
 	{
-		const char Magic[ 5 ] = ".AB\0";
-		size_t Assets;
-		uint32_t Version;
+		// .AB + null
+		const unsigned char Magic[ 4 ] = { 0x2E, 0x41, 0x42, 0x00 };
+		size_t Assets = 0llu;
+		uint32_t Version = 0u;
 	};
 
 	struct AssetBundleMinimalHeader
 	{
-		const char Magic[ 5 ] = ".AB\0";
-		uint32_t Version;
+		// .AB + null
+		const unsigned char Magic[ 4 ] = { 0x2E, 0x41, 0x42, 0x00 };
+		uint32_t Version = 0u;
 	};
 
 	struct DumpFileHeader
 	{
-		char Magic[ 5 ] = { '.', 'P', 'A', 'K' };
+		// .PAK
+		const unsigned char Magic[ 4 ] = { 0x2E, 0x50, 0x41, 0x4B };
 		AssetID Asset = 0;
 		uint64_t OrginalSize = 0;
 		uint64_t CompressedSize = 0;
 		uint64_t Offset = 0;
 		uint32_t Version = 0;
+
+		DumpFileHeader& operator=( const DumpFileHeader& rOther ) noexcept 
+		{
+			if( &rOther == this )
+				return *this;
+
+			Asset = rOther.Asset;
+			OrginalSize = rOther.OrginalSize;
+			CompressedSize = rOther.CompressedSize;
+			Offset = rOther.Offset;
+			Version = rOther.Version;
+
+			return *this;
+		}
 	};
 
 	static void CreateTempDirIfNeeded()
@@ -460,7 +477,7 @@ namespace Saturn {
 		AssetBundleHeader header{};
 		RawSerialisation::ReadObject( header, stream );
 
-		if( strcmp( header.Magic, ".AB\0" ) )
+		if( std::memcmp( header.Magic, ".AB", 4 ) != 0 )
 		{
 			SAT_CORE_ERROR( "Invalid asset bundle file header or corrupt asset bundle file!" );
 			return AssetBundleResult::InvalidFileHeader;
@@ -513,7 +530,7 @@ namespace Saturn {
 
 			Ref<Asset>& rAsset = rAssetRegistry->m_Assets[ dfh.Asset ];
 
-			if( strcmp( dfh.Magic, ".PAK\0" ) )
+			if( std::memcmp( dfh.Magic, ".PAK", 4 ) != 0 )
 			{
 				SAT_CORE_ERROR( "Invalid pack file header!" );
 
@@ -669,7 +686,7 @@ namespace Saturn {
 		AssetBundleMinimalHeader header;
 		RawSerialisation::ReadObject( header, stream );
 
-		if( strcmp( header.Magic, ".AB\0" ) )
+		if( std::memcmp( header.Magic, ".AB", 4 ) != 0 )
 		{
 			SAT_CORE_ERROR( "Invalid AB-Minimal file header or corrupt asset bundle file!" );
 			return AssetBundleResult::InvalidFileHeader;

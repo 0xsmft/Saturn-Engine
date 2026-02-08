@@ -300,7 +300,8 @@ namespace Saturn {
 
 	struct CacheManifestHeader
 	{
-		const char Magic[ 6 ] = ".STM\0";
+		// .STM
+		const unsigned char Magic[ 4 ] = { 0x2E, 0x53, 0x54, 0x4D };
 		size_t Thumbnails = 0;
 		uint32_t Version = SAT_CURRENT_VERSION;
 	};
@@ -375,7 +376,7 @@ namespace Saturn {
 		CacheManifestHeader header{};
 		RawSerialisation::ReadObject( header, stream );
 
-		if( strcmp( header.Magic, ".STM\0" ) )
+		if( std::memcmp( header.Magic, ".STM", 4 ) )
 		{
 			SAT_CORE_ERROR( "Invalid CB Thumbnail Manifest file header!" );
 			return;
@@ -424,7 +425,7 @@ namespace Saturn {
 			return false;
 		}
 
-		rData.Texture = Ref<Texture2D>::Create( ImageFormat::RGBA8, width, height, TemporaryBuffer.Data, TemporaryBuffer.Size );
+		rData.Texture = Ref<Texture2D>::Create( ImageFormat::RGBA8, width, height, TemporaryBuffer.Data, false );
 		
 		TemporaryBuffer.Free();
 

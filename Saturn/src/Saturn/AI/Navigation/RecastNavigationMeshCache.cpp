@@ -35,15 +35,14 @@
 
 namespace Saturn {
 
-	// .SR[N]C (SaturnRecast[Navigation]Cache)
-	constexpr char SRNC_HEADER_MAGIC[ 4 ] = { '.', 'S', 'R', 'C' };
-
 	struct RecastNavMeshCacheFileHeader
 	{
-		const char Magic[ 5 ] = ".SRC";
+		// .SR[N]C (SaturnRecast[Navigation]Cache)
+		const unsigned char Magic[ 4 ] = { 0x2E, 0x53, 0x52, 0x43 };
+
 		uint32_t Version = 0;
 		int TileCount = 0;
-		dtNavMeshParams NavMeshParams;
+		dtNavMeshParams NavMeshParams{};
 	};
 
 	struct RecastNavMeshTileCacheFileHeader
@@ -141,7 +140,7 @@ namespace Saturn {
 			RawSerialisation::ReadSaturnBuffer( TemporaryBuffer, stream );
 
 			// Pass on the data to Recast to assume ownership of.
-			pNavMesh->addTile( TemporaryBuffer.Data, (int)TemporaryBuffer.Size, DT_TILE_FREE_DATA, tileHeader.TileReference, nullptr );
+			pNavMesh->addTile( TemporaryBuffer.Data, ( int ) TemporaryBuffer.Size, DT_TILE_FREE_DATA, tileHeader.TileReference, nullptr );
 		}
 
 		stream.close();

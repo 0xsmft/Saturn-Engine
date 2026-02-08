@@ -206,7 +206,7 @@ namespace Saturn {
 
 		MeshCacheHeader hd = *( MeshCacheHeader* ) fileBuffer.Data;
 
-		if( strcmp( hd.pHeader, "SMC\0" ) )
+		if( std::memcmp( hd.Magic, "SMC", 4 ) != 0 )
 		{
 			SAT_CORE_ASSERT( false, "Invalid file header!" );
 			return false;

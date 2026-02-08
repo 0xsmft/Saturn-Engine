@@ -38,7 +38,8 @@ namespace Saturn {
 
 	struct ShaderBundleHeader
 	{
-		const char Magic[5] = ".SB\0";
+		// .SB
+		const unsigned char Magic[ 4 ] = { 0x2E, 0x53, 0x42, 0x00 };
 		size_t Shaders;
 	};
 
@@ -91,7 +92,7 @@ namespace Saturn {
 		ShaderBundleHeader header{};
 		stream.read( reinterpret_cast< char* >( &header ), sizeof( ShaderBundleHeader ) );
 
-		if( strcmp( header.Magic, ".SB\0" ) )
+		if( std::memcmp( header.Magic, ".SB", 4 ) != 0 )
 		{
 			SAT_CORE_ERROR( "Invalid shader bundle file header!" );
 			return ShaderBundleResult::InvalidShaderHeader;

@@ -58,7 +58,7 @@ namespace Saturn {
 
 	struct SkeletonAssetFileHeader
 	{
-		const char Magic[ 5 ] = ".SK\0";
+		const unsigned char Magic[ 3 ] = { 0x2E, 0x53, 0x4B };
 	};
 
 #if !defined(SAT_DIST)
@@ -252,7 +252,6 @@ namespace Saturn {
 		// Note: according to Acl get_size() includes the acl::compressed_tracks size (so 16 bytes).
 		rStream.write( reinterpret_cast< const char* >( pData ), pTracks->get_size() - sizeof( acl::compressed_tracks ) );
 	}
-
 
 	void SkeletalAnimationAsset::Deserialise( std::ifstream& rStream )
 	{

@@ -569,7 +569,7 @@ namespace Saturn {
 		decodedInformation.BytesPerFrame = bpf;
 		decodedInformation.Channels = decoder.outputChannels;
 		decodedInformation.SampleRate = decoder.outputSampleRate;
-		decodedInformation.Format = (int)decoder.outputFormat;
+		decodedInformation.Format = ( int ) decoder.outputFormat;
 
 		Buffer TemporaryBuffer;
 		TemporaryBuffer.Allocate( bufferSize );

@@ -45,7 +45,8 @@ namespace Saturn {
 
 	struct SettingsFileHeader
 	{
-		char Magic[ 5 ] = { '.', 'N', 'C', 'S', '\0' };
+		// .NCS
+		const unsigned char Magic[ 4 ] = { 0x2E, 0x4E, 0x43, 0x53 };
 		size_t SettingsCount = 0;
 		uint64_t Version = SAT_CURRENT_VERSION;
 	};
@@ -83,7 +84,7 @@ namespace Saturn {
 		SettingsFileHeader fileHeader{};
 		RawSerialisation::ReadObject( fileHeader, stream );
 
-		if( strcmp( fileHeader.Magic, ".NCS\0" ) )
+		if( std::memcmp( fileHeader.Magic, ".NCS", 4 ) != 0 )
 		{
 			return;
 		}
@@ -141,7 +142,7 @@ namespace Saturn {
 		SettingsFileHeader fileHeader{};
 		RawSerialisation::ReadObject( fileHeader, stream );
 
-		if( strcmp( fileHeader.Magic, ".NCS\0" ) )
+		if( std::memcmp( fileHeader.Magic, ".NCS", 4 ) != 0 )
 		{
 			OverrideFile( rFilepath, rNodeEditor );
 			return;
@@ -182,7 +183,8 @@ namespace Saturn {
 
 	struct NodeCacheEditorHeader
 	{
-		const char Magic[ 6 ] = ".NCE\0";
+		// .NCE
+		const unsigned char Magic[ 4 ] = { 0x2E, 0x43, 0x43, 0x45 };
 		AssetID AssetID = 0;
 		uint32_t Version = SAT_CURRENT_VERSION;
 	};
@@ -298,7 +300,7 @@ namespace Saturn {
 		NodeCacheEditorHeader header;
 		RawSerialisation::ReadObject( header, stream );
 
-		if( strcmp( header.Magic, ".NCE\0" ) )
+		if( std::memcmp( header.Magic, ".NCE", 4 ) != 0 )
 		{
 			SAT_CORE_ERROR( "Invalid node editor cache file header or corrupt cache file!" );
 			return false;

@@ -300,8 +300,8 @@ namespace Saturn {
 
 	struct AluraSerialiedFontHeader
 	{
-		// TODO: Big/little Endian
-		uint32_t Magic = 0x4641532E;
+		// .SAF
+		unsigned char Magic[ 4 ] = { 0x46, 0x41, 0x53, 0x2E };
 		uint32_t Version = SAT_CURRENT_VERSION;
 	};
 

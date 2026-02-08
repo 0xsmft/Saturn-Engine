@@ -219,7 +219,8 @@ namespace Auxiliary {
 
 	struct SkeletonAssetFileHeader
 	{
-		const char Magic[ 5 ] = ".SK\0";
+		// .SK
+		const unsigned char Magic[ 3 ] = { 0x2E, 0x53, 0x4B };
 	};
 
 	void SkeletonAsset::Serialise( const std::filesystem::path& rPath ) const

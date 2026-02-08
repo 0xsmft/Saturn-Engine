@@ -37,7 +37,8 @@ namespace Saturn {
 	// File header
 	struct MeshCacheHeader
 	{
-		const char pHeader[ 5 ] = "SMC\0";
+		// .SMC / SMCS
+		const unsigned char Magic[ 4 ] = { 0x53, 0x4D, 0x43, 0x00 };
 		uint64_t ID = 0;
 		size_t Submeshes = 0;
 		PhysicsShapeType Type;

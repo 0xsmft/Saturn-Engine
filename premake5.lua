@@ -236,8 +236,14 @@ project "Saturn"
 		filter "configurations:Release"
 			defines "SAT_RELEASE"
 			runtime "Release"
-		--	optimize "on"
-			links { "Saturn/vendor/assimp/bin/Release/assimp-vc143-mt.lib" }
+			links
+			{
+				"Saturn/vendor/assimp/bin/Release/assimp-vc143-mt.lib",
+				"Saturn/vendor/shaderc/bin/Release-Windows/shaderc.lib",
+				"Saturn/vendor/shaderc/bin/Release-Windows/shaderc_util.lib",
+				"Saturn/vendor/shaderc/bin/Release-Windows/glslang.lib",
+				"Saturn/vendor/shaderc/bin/Release-Windows/SPIRV-Tools.lib"
+			}
 
 		filter "configurations:Dist"
 			defines "SAT_DIST"
@@ -245,7 +251,7 @@ project "Saturn"
 			optimize "on"
 			symbols "off"
 
-			removelinks { "Tracy" }
+			removelinks { "Tracy", "Freetype", "MSDFGen", "MSDF-Atlas-Gen", "SPIRV-Cross" }
 			removedefines { "TRACY_ENABLE", "TRACY_DELAYED_INIT", "TRACY_MANUAL_LIFETIME", "SATURN_SS_IMPORT" }
 			removefiles { "%{prj.name}/vendor/ImGuizmo/src/**.cpp", "%{prj.name}/vendor/ImGuizmo/src/**.h" }
 
@@ -255,11 +261,6 @@ project "Saturn"
 		filter "configurations:Release or configurations:Dist"
 			links 
 			{
-				"Saturn/vendor/shaderc/bin/Release-Windows/shaderc.lib",
-				"Saturn/vendor/shaderc/bin/Release-Windows/shaderc_util.lib",
-				"Saturn/vendor/shaderc/bin/Release-Windows/glslang.lib",
-				"Saturn/vendor/shaderc/bin/Release-Windows/SPIRV-Tools.lib",
-
 				"Saturn/vendor/physx/bin/Release/LowLevel_static_64.lib",
 				"Saturn/vendor/physx/bin/Release/LowLevelAABB_static_64.lib",
 				"Saturn/vendor/physx/bin/Release/LowLevelDynamics_static_64.lib",
@@ -273,7 +274,7 @@ project "Saturn"
 				"Saturn/vendor/physx/bin/Release/PhysXTask_static_64.lib",
 				"Saturn/vendor/physx/bin/Release/PhysXVehicle_static_64.lib",
 				"Saturn/vendor/physx/bin/Release/SceneQuery_static_64.lib",
-				"Saturn/vendor/physx/bin/Release/SimulationController_static_64.lib",
+				"Saturn/vendor/physx/bin/Release/SimulationController_static_64.lib"
 			}
 
 ---------------------------------------------------------------------------------------------------------------------------
@@ -657,6 +658,32 @@ project "Saturn-SharedStorage"
 	{
 		"%{prj.name}/src",
 		"Saturn/src",
+		"%{IncludeDir.ImGui}",
+		"%{IncludeDir.glm}",
+		"%{IncludeDir.entt}",
+		"%{IncludeDir.assimp}",
+		"%{IncludeDir.glslc}",
+		"%{IncludeDir.shaderc}",
+		"%{IncludeDir.SPIRV_Cross}",
+		"%{IncludeDir.vma}",
+		"%{IncludeDir.yaml_cpp}",
+		"%{IncludeDir.ImGuizmo}",
+		"%{IncludeDir.ImguiNodeEditor}",
+		"%{IncludeDir.ImSpinner}",
+		"%{IncludeDir.Tracy}",
+		"%{IncludeDir.MiniAudio}",
+		"%{IncludeDir.Filewatch}",
+		"%{IncludeDir.zlib}",
+		"%{IncludeDir.PhysX}",
+		"%{IncludeDir.PhysX}/pxshared",
+		"%{IncludeDir.PhysX}/physx",
+		"%{IncludeDir.KTX_Software}",
+		"%{IncludeDir.Recast}",
+		"%{IncludeDir.acl}",
+		"%{IncludeDir.rtm}",
+		"%{IncludeDir.freetype}",
+		"%{IncludeDir.MSDF}",
+		"%{IncludeDir.MSDFAG}",
 	}
 	
 	filter "system:windows or system:linux or system:Mac"

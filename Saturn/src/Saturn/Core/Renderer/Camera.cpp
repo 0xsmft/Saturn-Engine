@@ -114,80 +114,38 @@ namespace Saturn {
 	{
 		std::array<glm::vec3, 8> corners{};
 
-		float fovRad = glm::radians( m_Fov );
+		const float fovRad = glm::radians( m_Fov );
 
 		// Calculate the height and width of the near and far planes
-		float tanFov = std::tan( fovRad * 0.5f );
+		const float tanFov = std::tan( fovRad * 0.5f );
 
-		float nearHeight = 2.0f * tanFov * m_NearPlane;
-		float nearWidth = nearHeight * GetAspectRatio();
+		const float nearHeight = 2.0f * tanFov * m_NearPlane;
+		const float nearWidth = nearHeight * GetAspectRatio();
 
-		float farHeight = 2.0f * tanFov * m_FarPlane;
-		float farWidth = farHeight * GetAspectRatio();
-
-//		const glm::vec3 forward = glm::normalize( Forward );
-//		const glm::vec3 right = glm::normalize( glm::cross( forward, Up ) );
-//		const glm::vec3 up = glm::normalize( glm::cross( right, forward ) );
+		const float farHeight = 2.0f * tanFov * m_FarPlane;
+		const float farWidth = farHeight * GetAspectRatio();
 
 		// Calculate the center positions of the near and far planes
-		glm::vec3 nearCenter = m_Position + m_Rotation * m_NearPlane;
-		glm::vec3 farCenter = m_Position + m_Rotation * m_FarPlane;
+		const glm::vec3 nearCenter = m_Position + m_Rotation * m_NearPlane;
+		const glm::vec3 farCenter = m_Position + m_Rotation * m_FarPlane;
 
-		glm::vec3 up = GetUpDirection();
+		const glm::vec3 up = GetUpDirection();
 
-		corners[ 0 ] = nearCenter + up * ( nearHeight / 2.0f ) - m_RightDirection * ( nearWidth / 2.0f );
-		corners[ 1 ] = nearCenter + up * ( nearHeight / 2.0f ) + m_RightDirection * ( nearWidth / 2.0f );
-		corners[ 2 ] = nearCenter - up * ( nearHeight / 2.0f ) + m_RightDirection * ( nearWidth / 2.0f );
-		corners[ 3 ] = nearCenter - up * ( nearHeight / 2.0f ) - m_RightDirection * ( nearWidth / 2.0f );
+		corners[ 0 ] = nearCenter + up * ( nearHeight * 0.5f ) - m_RightDirection * ( nearWidth * 0.5f );
+		corners[ 1 ] = nearCenter + up * ( nearHeight * 0.5f ) + m_RightDirection * ( nearWidth * 0.5f );
+		corners[ 2 ] = nearCenter - up * ( nearHeight * 0.5f ) + m_RightDirection * ( nearWidth * 0.5f );
+		corners[ 3 ] = nearCenter - up * ( nearHeight * 0.5f ) - m_RightDirection * ( nearWidth * 0.5f );
 
-		corners[ 4 ] = farCenter + up * ( farHeight / 2.0f ) - m_RightDirection * ( farWidth / 2.0f );
-		corners[ 5 ] = farCenter + up * ( farHeight / 2.0f ) + m_RightDirection * ( farWidth / 2.0f );
-		corners[ 6 ] = farCenter - up * ( farHeight / 2.0f ) + m_RightDirection * ( farWidth / 2.0f );
-		corners[ 7 ] = farCenter - up * ( farHeight / 2.0f ) - m_RightDirection * ( farWidth / 2.0f );
+		corners[ 4 ] = farCenter + up * ( farHeight * 0.5f ) - m_RightDirection * ( farWidth * 0.5f );
+		corners[ 5 ] = farCenter + up * ( farHeight * 0.5f ) + m_RightDirection * ( farWidth * 0.5f );
+		corners[ 6 ] = farCenter - up * ( farHeight * 0.5f ) + m_RightDirection * ( farWidth * 0.5f );
+		corners[ 7 ] = farCenter - up * ( farHeight * 0.5f ) - m_RightDirection * ( farWidth * 0.5f );
 
 		return corners;
 	}
 
 	void Camera::UpdateFrustum( const glm::mat4& rViewProjection )
 	{
-		/*
-		m_CameraFrustumPlanes[ 0 ] = { 
-			rViewProjection[ 3 ][ 0 ] - rViewProjection[ 2 ][ 0 ], 
-			rViewProjection[ 3 ][ 1 ] - rViewProjection[ 2 ][ 1 ], 
-			rViewProjection[ 3 ][ 2 ] - rViewProjection[ 2 ][ 2 ], 
-			rViewProjection[ 3 ][ 3 ] - rViewProjection[ 2 ][ 3 ] };
-
-		m_CameraFrustumPlanes[ 1 ] = { 
-			rViewProjection[ 3 ][ 0 ] + rViewProjection[ 2 ][ 0 ], 
-			rViewProjection[ 3 ][ 1 ] + rViewProjection[ 2 ][ 1 ], 
-			rViewProjection[ 3 ][ 2 ] + rViewProjection[ 2 ][ 2 ], 
-			rViewProjection[ 3 ][ 3 ] + rViewProjection[ 2 ][ 3 ] };
-
-		m_CameraFrustumPlanes[ 2 ] = { 
-			rViewProjection[ 3 ][ 0 ] + rViewProjection[ 0 ][ 0 ], 
-			rViewProjection[ 3 ][ 1 ] + rViewProjection[ 0 ][ 1 ], 
-			rViewProjection[ 3 ][ 2 ] + rViewProjection[ 0 ][ 2 ], 
-			rViewProjection[ 3 ][ 3 ] + rViewProjection[ 0 ][ 3 ] };
-		
-		m_CameraFrustumPlanes[ 3 ] = { 
-			rViewProjection[ 3 ][ 0 ] - rViewProjection[ 0 ][ 0 ], 
-			rViewProjection[ 3 ][ 1 ] - rViewProjection[ 0 ][ 1 ], 
-			rViewProjection[ 3 ][ 2 ] - rViewProjection[ 0 ][ 2 ], 
-			rViewProjection[ 3 ][ 3 ] - rViewProjection[ 0 ][ 3 ] };
-		
-		m_CameraFrustumPlanes[ 4 ] = { 
-			rViewProjection[ 3 ][ 0 ] + rViewProjection[ 1 ][ 0 ], 
-			rViewProjection[ 3 ][ 1 ] + rViewProjection[ 1 ][ 1 ], 
-			rViewProjection[ 3 ][ 2 ] + rViewProjection[ 1 ][ 2 ], 
-			rViewProjection[ 3 ][ 3 ] + rViewProjection[ 1 ][ 3 ] };
-		
-		m_CameraFrustumPlanes[ 5 ] = { 
-			rViewProjection[ 3 ][ 0 ] - rViewProjection[ 1 ][ 0 ], 
-			rViewProjection[ 3 ][ 1 ] - rViewProjection[ 1 ][ 1 ], 
-			rViewProjection[ 3 ][ 2 ] - rViewProjection[ 1 ][ 2 ], 
-			rViewProjection[ 3 ][ 3 ] - rViewProjection[ 1 ][ 3 ] };
-			*/
-
 		// Left
 		m_CameraFrustumPlanes[ 0 ].Normal.x = rViewProjection[ 0 ][ 3 ] + rViewProjection[ 0 ][ 0 ];
 		m_CameraFrustumPlanes[ 0 ].Normal.y = rViewProjection[ 1 ][ 3 ] + rViewProjection[ 1 ][ 0 ];

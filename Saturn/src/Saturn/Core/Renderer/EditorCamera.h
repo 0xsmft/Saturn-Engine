@@ -64,7 +64,7 @@ namespace Saturn {
 			if( m_ViewportWidth == width || m_ViewportHeight == height )
 				return;
 			
-			SetProjectionMatrix( 45.0f, ( float ) m_ViewportWidth, ( float ) m_ViewportHeight, 0.1f, 1000.0f );
+			SetProjectionMatrix( 45.0f, ( float ) width, ( float ) height, 0.1f, 1000.0f );
 		}
 
 		const glm::mat4& ViewMatrix() const { return m_ViewMatrix; }

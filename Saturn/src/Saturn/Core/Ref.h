@@ -270,7 +270,7 @@ namespace Saturn {
 
 		void DecRef() 
 		{
-			if( m_RefCount.fetch_sub( 1, std::memory_order_seq_cst ) == 0 )
+			if( m_RefCount.fetch_sub( 1, std::memory_order_seq_cst ) == 1 )
 			{
 				Destroy();
 				// Check if we can delete this
@@ -280,7 +280,7 @@ namespace Saturn {
 
 		void DecWeakRef()
 		{
-			if( m_WeakCount.fetch_sub( 1, std::memory_order_seq_cst ) == 0 )
+			if( m_WeakCount.fetch_sub( 1, std::memory_order_seq_cst ) == 1 )
 			{
 				delete this;
 			}

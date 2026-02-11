@@ -49,6 +49,8 @@ namespace Saturn {
 
 	void JobSystem::Stop()
 	{
+		SAT_CORE_INFO( "[JobSystem] Stopping threads..." );
+
 		m_Running = false;
 		TerminateThreads();
 	}
@@ -79,14 +81,17 @@ namespace Saturn {
 		size_t index = 0;
 		for( auto& rThread : m_Threads )
 		{
+			SAT_CORE_INFO( "[JobSystem] Attempt join of thread {0}...", index );
+
 			if( rThread.joinable() )
 			{
 				rThread.join();
 			}
 
-			m_Threads.erase( m_Threads.begin() + index );
 			++index;
 		}
+
+		m_Threads.clear();
 	}
 
 	void JobSystem::ThreadRun()

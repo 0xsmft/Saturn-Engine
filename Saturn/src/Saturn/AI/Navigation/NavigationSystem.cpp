@@ -59,13 +59,13 @@ namespace Saturn {
 		}
 	}
 
+	void NavigationSystem::ReleaseReferenceToNavBounds()
+	{
+		m_NavBoundsEntity.Reset();
+	}
+
 	void NavigationSystem::Terminate()
 	{
-		for( auto* pPath : m_Paths )
-		{
-			delete pPath;
-		}
-
 		m_Paths.clear();
 
 		dtFreeNavMeshQuery( m_pNavMeshQuery );
@@ -103,21 +103,23 @@ namespace Saturn {
 
 	StraightNavPath* NavigationSystem::CreateStraightPath( const glm::vec3& rStart, const glm::vec3& rEnd, uint32_t maxPaths /*= 256 */ )
 	{
-		StraightNavPath* pPath = new StraightNavPath( rStart, rEnd, maxPaths );
-		return m_Paths.emplace_back( pPath );
+		Ref<StraightNavPath> path = Ref<StraightNavPath>::Create( rStart, rEnd, maxPaths );
+		m_Paths.emplace_back( path );
+	
+		return path.Get();
 	}
 
 	void NavigationSystem::DestoryStraightPath( StraightNavPath* pPath )
 	{
 		if( const auto itr = std::find( m_Paths.begin(), m_Paths.end(), pPath ); itr != m_Paths.end() )
 		{
-			delete pPath;
 			m_Paths.erase( itr );
 		}
 		else
 		{
 			// If you get this then you've either not registered the path with the Navigation system
 			// or you have not called CreateStraightPath...
+			// or the scene that you originally made it in has switched, i.e. using g_ActiveScene
 			SAT_CORE_ASSERT( false, "Path is unknown to the Navigation system!" );
 		}
 	}

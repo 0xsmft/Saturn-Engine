@@ -48,20 +48,32 @@ namespace Saturn {
 		~NavigationSystem();
 
 		void Initialise();
+		
+		// RUNTIME ONLY! Call this BEFORE Scene::Empty,
+		// the scene calls it in OnRuntimeEnd(), so really there should be 
+		// no need to call this yourself outside of that function.
+		void ReleaseReferenceToNavBounds();
+
+		// Clear all paths and destroy the detour nav query object.
 		void Terminate();
 
 		void DebugDraw( Renderer2D* pRenderer2D );
-
-		// TODO: Use raw ptrs for now however change to Ref<> and return raw ptr.
+	
+	public:
+		// Note that the pointer that gets returned is a Ref<> so this means that you do not
+		// have to worry about the lifetime of this object
+		// do NOT call delete on it though! shit WILL break!
 		StraightNavPath* CreateStraightPath( const glm::vec3& rStart, const glm::vec3& rEnd, uint32_t maxPaths = 256 );
+
+		// Destory a navpath, you do not need to do this as all paths will get cleared when the
+		// NavigationSystem cleanups, but if you need to destroy a path then do so with this
+		// function.
 		void DestoryStraightPath( StraightNavPath* pPath );
+
+		uint32_t FindNearestPoly( const glm::vec3& rPosition, float* pNearestPoint );
 
 	public:
 		dtNavMeshQuery* GetNavMeshQuery() const { return m_pNavMeshQuery; }
-
-		void RegisterPath( StraightNavPath* pPath ) { m_Paths.push_back( pPath ); }
-
-		uint32_t FindNearestPoly( const glm::vec3& rPosition, float* pNearestPoint );
 
 	public:
 		std::expected<glm::vec3, unsigned int> GetRandomPointInNavMesh( float maxRadius ) const;
@@ -74,6 +86,6 @@ namespace Saturn {
 
 		dtNavMeshQuery* m_pNavMeshQuery = nullptr;
 
-		std::vector<StraightNavPath*> m_Paths;
+		std::vector<Ref<StraightNavPath>> m_Paths;
 	};
 }

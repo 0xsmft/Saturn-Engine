@@ -28,6 +28,8 @@
 
 #pragma once
 
+#include "Saturn/Core/Ref.h"
+
 #include <glm/glm.hpp>
 #include <vector>
 
@@ -46,7 +48,7 @@ namespace Saturn {
 	// StraightNavPath essentially wraps a detour straight path
 	// StraightNavPaths have the ability to be Serialised, allowing for pre-baked paths.
 	//
-	class StraightNavPath
+	class StraightNavPath : public RefTarget
 	{
 	public:
 		StraightNavPath() = default;

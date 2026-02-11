@@ -129,24 +129,9 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		EntitySelectionManager::Get().ClearSelection( true );
 #endif
-
 		{
-/*
-			auto staticMeshes = GetAllEntitiesWith<StaticMeshComponent>();
-			for( auto& entity : staticMeshes )
-			{
-				auto& rMeshComponent = entity->GetComponent<StaticMeshComponent>();
-
-				if( rMeshComponent.Mesh )
-					rMeshComponent.Mesh = nullptr;
-
-				if( rMeshComponent.MaterialRegistry )
-					rMeshComponent.MaterialRegistry = nullptr;
-			}
-*/
 
 			// TODO: Is really needed? As the physics scene will destroy all of this.
-
 			auto rigidBodies = GetAllEntitiesWith<RigidbodyComponent>();
 			for( auto& entity : rigidBodies )
 			{
@@ -169,21 +154,10 @@ namespace Saturn {
 		// Release weak ref to main camera entity.
 		m_pMainCameraEntity.Reset();
 
-		/*
-		// Destroy all entities.
-		for( auto&& [id, entity] : m_EntityIDMap )
-		{
-//			const size_t classSize = entity->GetClass()->GetSize() == 0 ? sizeof( SClass ) : entity->GetClass()->GetSize();
-
-//			entity->~Entity();
-//			g_BinnedAllocator.Free( entity.Get(), classSize );
-
-//			entity = nullptr;
-		}
-		*/
-
-//		m_EntityIDMap.clear();
+		m_EntityIDMap.clear();
 		m_Registry.clear();
+
+		m_NavigationSystem.Terminate();
 	}
 
 	WeakRef<Entity> Scene::GetMainCameraEntity( bool force )
@@ -268,6 +242,14 @@ namespace Saturn {
 
 				// SyncTransform
 				rEntity->GetComponent<TransformComponent>().Position = pController->GetPosition();
+
+				auto& rb = rEntity->GetComponent<RigidbodyComponent>();
+
+				// rb.Rigidbody will be null if it's just been spawned into the world.
+				if( rb.Rigidbody )
+				{
+					rb.Rigidbody->SetPosition( pController->GetPosition() );
+				}
 			}
 			else
 			{
@@ -526,6 +508,11 @@ namespace Saturn {
 			}
 		}
 #endif
+
+		if( m_RuntimeState == RuntimeState::Suspended )
+		{
+			m_NavigationSystem.DebugDraw( sceneRenderer->GetRenderer2D().Get() );
+		}
 	}
 
 	void Scene::RtBuildSceneRendererCommands( Ref<SceneRenderer> sceneRenderer )
@@ -1043,13 +1030,8 @@ namespace Saturn {
 		}
 
 		m_Registry.destroy( pEntity->GetHandle() );
+		// Destory via the shared ptr
 		m_EntityIDMap.erase( pEntity->GetHandle() );
-
-		// Attempted to delete an entity while something still holds a reference to it!
-		SAT_CORE_ASSERT( pEntity->GetRefCount() == 0 );
-
-		// Screwy, but because we want to avoid using Ref's here we must delete the entity like this.
-		delete pEntity;
 	}
 
 	void Scene::CopyScene( Ref<Scene>& NewScene )
@@ -1314,8 +1296,8 @@ namespace Saturn {
 		}
 
 		m_pMainCameraEntity = nullptr;
-		m_NavigationSystem.Terminate();
 
+		m_NavigationSystem.ReleaseReferenceToNavBounds();
 		m_RuntimeState = RuntimeState::NoState;
 	}
 

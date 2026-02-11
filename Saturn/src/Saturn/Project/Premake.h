@@ -30,13 +30,25 @@
 
 #include "Saturn/Core/Base.h"
 
-#include <string>
+#include <filesystem>
 
 namespace Saturn {
+
+	enum class PremakeAction
+	{
+		Other, // other specified elsewhere
+		Clean,
+		VisualStudio2022,
+		VisualStudio2026,
+		Makefile, // gmake
+		Xcode,
+		Codelite,
+	};
 
 	class Premake
 	{
 	public:
-		static bool Launch( const std::wstring& rWorkingDir );
+		static bool Launch( const std::filesystem::path& rWorkingDir, const std::wstring& rPremakeFilename, PremakeAction action );
 	};
+
 }

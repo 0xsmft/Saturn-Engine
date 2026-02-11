@@ -190,7 +190,7 @@ namespace Saturn {
 
 		bool HasPremakeFile() const;
 		void CreatePremakeFile( bool force = false ) const;
-		void CopyCSharpTargetFiles( bool force = false ) const;
+		void TryCopyCSharpTargetFiles( bool force = false ) const;
 
 		std::filesystem::path FindBuildTool() const;
 

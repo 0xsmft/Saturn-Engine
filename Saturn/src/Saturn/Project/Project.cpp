@@ -359,34 +359,40 @@ namespace Saturn {
 		fout << fileData;
 	}
 
-	void Project::CopyCSharpTargetFiles( bool force ) const
+	void Project::TryCopyCSharpTargetFiles( bool force ) const
 	{
 		// Copy over the development target file.
 		auto BuildFilePath = GetRootDir() / "Source";
 		BuildFilePath /= m_Config.Name + ".Development.cs";
 
-		if( !std::filesystem::exists( BuildFilePath ) || force )
+		if( !std::filesystem::exists( BuildFilePath ) || force ) 
+		{
 			std::filesystem::copy( "content/Templates/%PROJECT_NAME%.Development.cs", BuildFilePath, std::filesystem::copy_options::overwrite_existing );
 
-		ReplaceProjectNameTokens( BuildFilePath );
+			ReplaceProjectNameTokens( BuildFilePath );
+		}
 
 		// Copy over the distribution target file.
 		BuildFilePath = GetRootDir() / "Source";
 		BuildFilePath /= m_Config.Name + ".Dist.cs";
 
 		if( !std::filesystem::exists( BuildFilePath ) || force )
+		{
 			std::filesystem::copy( "content/Templates/%PROJECT_NAME%.Dist.cs", BuildFilePath, std::filesystem::copy_options::overwrite_existing );
 
-		ReplaceProjectNameTokens( BuildFilePath );
+			ReplaceProjectNameTokens( BuildFilePath );
+		}
 
 		// Copy over the module file.
 		BuildFilePath = GetRootDir() / "Source";
 		BuildFilePath /= m_Config.Name + ".Module.cs";
 
 		if( !std::filesystem::exists( BuildFilePath ) || force )
+		{
 			std::filesystem::copy( "content/Templates/%PROJECT_NAME%.Module.cs", BuildFilePath, std::filesystem::copy_options::overwrite_existing );
-		
-		ReplaceProjectNameTokens( BuildFilePath );
+
+			ReplaceProjectNameTokens( BuildFilePath );
+		}
 	}
 
 	void Project::ReplaceProjectNameTokens( const std::filesystem::path& rPath ) const

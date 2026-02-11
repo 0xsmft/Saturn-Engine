@@ -954,18 +954,33 @@ namespace Saturn {
 
 				if( ImGui::Button( "Create" ) )
 				{
+					// Step 0: Create premake file if needed
 					if( !Project::GetActiveProject()->HasPremakeFile() )
 					{
 						Project::GetActiveProject()->CreatePremakeFile();
 					}
 
-					Project::GetActiveProject()->CopyCSharpTargetFiles();
+					// Step 0.5: Copy over C# files if needed
+					Project::GetActiveProject()->TryCopyCSharpTargetFiles();
 
-					// Update or create the project files.
-					Premake::Launch( Project::GetActiveProject()->GetRootDir().wstring(), PremakeAction::VisualStudio2022 );
-
+					// Step 1: Copy over the actual .cpp and .h files and amend the content.
 					ClassTemplateFileHelper::CreateAndAmendTemplateFile( m_SelectedMetadata, m_CurrentPath, m_NewClassName.c_str() );
 
+					// Step 2: Update or create the project files.
+					if( Premake::Launch( Project::GetActiveProject()->GetRootDir(), L"premake5.lua", PremakeAction::VisualStudio2022 ) )
+					{
+#if !defined(SAT_DIST)
+						Application::Get().DispatchEvent<SendEditorNotificationEvent>( "Updated project files with new source files." );
+#endif
+					}
+					else
+					{
+#if !defined(SAT_DIST)
+						Application::Get().DispatchEvent<SendEditorNotificationEvent>( "Unable to generate project files using Premake, you may manfully have to generate them!" );
+#endif
+					}
+
+					// Step 3: Open IDE if needed.
 					if( m_OpenIDEAfterNewClass )
 					{
 #if !defined(SAT_DIST)
@@ -975,6 +990,8 @@ namespace Saturn {
 #endif
 					}
 
+					// Step 4: TODO: Temp, when I port hot reloading over to use the new BuildTool and the new /MD it will work properly.
+					// and this would no longer need to be here.
 #if !defined(SAT_DIST)
 					Application::Get().DispatchEvent<SendEditorNotificationEvent>( "A hot reload or a recompile is needed for the class to be registered within the Game!" );
 #endif

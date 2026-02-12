@@ -33,6 +33,9 @@
 
 namespace Saturn {
 
+	//////////////////////////////////////////////////////////////////////////
+	// CLASS METADATA HANDLER
+
 	ClassMetadataHandler::ClassMetadataHandler()
 	{
 	}

@@ -94,8 +94,9 @@ namespace Saturn {
 		RawSerialisation::ReadUUID( ID, rStream );
 		Name = RawSerialisation::ReadString( rStream );
 
-#if !defined(SAT_DIST)
-		RawSerialisation::ReadObject( Color, rStream );
+//#if !defined(SAT_DIST)
+		ImColor col;
+		RawSerialisation::ReadObject( col, rStream );
 		RawSerialisation::ReadObject( RenderType, rStream );
 
 		// TODO: Will be removed, kept here for compatibility. 
@@ -105,11 +106,11 @@ namespace Saturn {
 		ImVec2 position{};
 		Auxiliary::DeserialiseImVec2( position, rStream );
 	
-		ed::SetNodePosition( ed::NodeId( ID ), position );
+//		ed::SetNodePosition( ed::NodeId( ID ), position );
 
-		ActiveState = RawSerialisation::ReadString( rStream );
-		SavedState = RawSerialisation::ReadString( rStream );
-#endif
+		RawSerialisation::ReadString( rStream );
+		RawSerialisation::ReadString( rStream );
+//#endif
 
 		// We make sure to read the last saved pin count and not the real pin size from the Node it self,
 		// This is to make sure that if a pin was added in a newer version but has not been serialised yet, 

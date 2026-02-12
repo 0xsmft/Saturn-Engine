@@ -49,8 +49,6 @@ namespace Saturn {
 	{
 		if( m_NodeEditor )
 			m_NodeEditor->SetRuntime( nullptr );
-
-		m_NodeEditor = nullptr;
 	}
 
 	void BehaviourTree::Initialise( SharedPtr<AIAgentEntity> entity )

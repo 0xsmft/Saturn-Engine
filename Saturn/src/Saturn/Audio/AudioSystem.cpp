@@ -530,22 +530,28 @@ namespace Saturn {
 
 	void AudioSystem::StartSoundGroups()
 	{
-		m_MasterSoundGroup->Start();
+		/*
+		if( m_MasterSoundGroup )
+			m_MasterSoundGroup->Start();
 
 		for( auto& rSoundGroup : Project::GetActiveProject()->GetSoundGroups() )
 		{
 			rSoundGroup->Start();
 		}
+		*/
 	}
 
 	void AudioSystem::StopSoundGroups()
 	{
+		/*
 		for( auto& rSoundGroup : Project::GetActiveProject()->GetSoundGroups() )
 		{
 			rSoundGroup->Stop();
 		}
 
-		m_MasterSoundGroup->Stop();
+		if( m_MasterSoundGroup )
+			m_MasterSoundGroup->Stop();
+		*/
 	}
 
 	SoundDecodedInformation AudioSystem::DecodeSound( const Ref<SoundSpecification>& rSpec )

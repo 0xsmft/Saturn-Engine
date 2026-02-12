@@ -30,11 +30,11 @@
 
 namespace Saturn {
 
-	template<typename Ty>
+	template<typename RefTy, typename AssignedTy>
 	class VariableGuard
 	{
 	public:
-		VariableGuard( Ty& rVariable, Ty temporaryValue ) 
+		VariableGuard( RefTy& rVariable, const AssignedTy& temporaryValue )
 			: m_Variable( temporaryValue ), m_OldValue( rVariable )
 		{
 		}
@@ -49,8 +49,8 @@ namespace Saturn {
 		VariableGuard& operator=( const VariableGuard& ) = delete;
 
 	private:
-		Ty& m_Variable;
-		Ty m_OldValue;
+		RefTy& m_Variable;
+		AssignedTy m_OldValue;
 	};
 	
 }

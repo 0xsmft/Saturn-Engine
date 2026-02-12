@@ -596,7 +596,7 @@ namespace Saturn {
 
 	void NodeEditor::SetNodePosition( UUID nodeID, const ImVec2& rNewPosition )
 	{
-		VariableGuard<ed::EditorContext*> guard( m_Editor );
+		VariableGuard<ed::EditorContext*, ed::EditorContext*> guard( m_Editor );
 
 		ed::SetNodePosition( ed::NodeId( nodeID ), rNewPosition );
 	}

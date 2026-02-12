@@ -65,32 +65,32 @@ static int HandleKeyMods()
 {
 	int Modifiers = Saturn::RubyKey_UnknownKey;
 
-	if( GetKeyState( VK_LSHIFT ) & 0x8000 )
+	if( ::GetKeyState( VK_LSHIFT ) & 0x8000 )
 	{
 		Modifiers |= Saturn::RubyKey_LeftShift;
 	}
 
-	if( GetKeyState( VK_RSHIFT ) & 0x8000 )
+	if( ::GetKeyState( VK_RSHIFT ) & 0x8000 )
 	{
 		Modifiers |= Saturn::RubyKey_RightShift;
 	}
 
-	if( GetKeyState( VK_LMENU ) & 0x8000 )
+	if( ::GetKeyState( VK_LMENU ) & 0x8000 )
 	{
 		Modifiers |= Saturn::RubyKey_LeftAlt;
 	}
 
-	if( GetKeyState( VK_RMENU ) & 0x8000 )
+	if( ::GetKeyState( VK_RMENU ) & 0x8000 )
 	{
 		Modifiers |= Saturn::RubyKey_RightAlt;
 	}
 
-	if( GetKeyState( VK_LCONTROL ) & 0x8000 )
+	if( ::GetKeyState( VK_LCONTROL ) & 0x8000 )
 	{
 		Modifiers |= Saturn::RubyKey_LeftCtrl;
 	}
 
-	if( GetKeyState( VK_RCONTROL ) & 0x8000 )
+	if( ::GetKeyState( VK_RCONTROL ) & 0x8000 )
 	{
 		Modifiers |= Saturn::RubyKey_RightCtrl;
 	}
@@ -200,10 +200,16 @@ static Saturn::RubyKey ConvertWinScancodeToRuby( uint32_t scanCode )
 		case 0x11D: return RubyKey_RightCtrl;
 		case 0x135: return RubyKey_NumpadDivide;
 		case 0x145: return RubyKey_NumLock;
+		case 0x147: return RubyKey_Home;
 		case 0x148: return RubyKey_UpArrow;
+		case 0x149: return RubyKey_PageUp;
 		case 0x14B: return RubyKey_LeftArrow;
 		case 0x14D: return RubyKey_RightArrow;
+		case 0x14F: return RubyKey_End;
 		case 0x150: return RubyKey_DownArrow;
+		case 0x151: return RubyKey_PageUp;
+		case 0x152: return RubyKey_Insert;
+		case 0x15B: return RubyKey_OSKey;
 		case 0x15D: return RubyKey_Menu;
 
 		// NOTE: Clicking the "Alt Gr" key is the same as doing Ctrl+Alt

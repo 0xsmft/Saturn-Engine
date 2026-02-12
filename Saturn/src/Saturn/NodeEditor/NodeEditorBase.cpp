@@ -160,7 +160,7 @@ namespace Saturn {
 			NodeEditorNodeBase* pNode = dynamic_cast< NodeEditorNodeBase* >( ClassMetadataHandler::Get().CreateClassObject( targetClassHash, this ) );
 
 			SharedPtr<NodeEditorNodeBase> node;
-			if( node )
+			if( pNode )
 			{
 				node = pNode;
 			}
@@ -457,8 +457,7 @@ namespace Saturn {
 		BuildNode( node );
 
 #if !defined(SAT_DIST)
-		VariableGuard<ed::EditorContext*> guard( m_Editor );
-
+		VariableGuard<ed::EditorContext*, ed::EditorContext*> guard( m_Editor );
 //		node->PositionBeforeMove = ed::GetNodePosition( ed::NodeId( node->ID ) );
 
 		// TODO: Currently no way for us to preemptively set a position of a node before the first frame is drawn.

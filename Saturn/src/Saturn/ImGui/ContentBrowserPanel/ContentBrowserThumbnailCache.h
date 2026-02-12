@@ -51,7 +51,8 @@ namespace Saturn {
 	class ContentBrowserThumbnailCache
 	{
 	public:
-		static inline ContentBrowserThumbnailCache& Get() { return *SingletonStorage::GetOrCreateSingleton<ContentBrowserThumbnailCache>(); }
+		SAT_SINGLETON_LAZY( ContentBrowserThumbnailCache );
+	
 	public:
 		void Init();
 		void Terminate();

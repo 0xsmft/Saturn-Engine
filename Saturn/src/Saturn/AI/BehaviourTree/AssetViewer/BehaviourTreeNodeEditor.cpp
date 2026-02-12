@@ -394,7 +394,10 @@ namespace Saturn {
 				ResetAllTasks();
 
 #if !defined(SAT_DIST)
-				ed::StopFlow();
+				{
+					VariableGuard<ed::EditorContext*, ed::EditorContext*> guard( m_Editor );
+					ed::StopFlow();
+				}
 
 				SAT_CORE_INFO( "Tree completed, restarting..." );
 #endif
@@ -413,7 +416,7 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 	void BehaviourTreeNodeEditor::ShowTreeFlow()
 	{
-		VariableGuard<ed::EditorContext*> guard( m_Editor );
+		VariableGuard<ed::EditorContext*, ed::EditorContext*> guard( m_Editor );
 
 		ShowFlow( m_EditorLinkPath );
 	}

@@ -139,9 +139,9 @@ namespace Saturn {
 	class NodeEditorRuntime;
 	class Texture2D;
 	
-	// VariableGuard template specialization for ed::EditorContext*
+	// VariableGuard template specialisation for ed::EditorContext*
 	template<>
-	class VariableGuard<ed::EditorContext*>
+	class VariableGuard<ed::EditorContext*, ed::EditorContext*>
 	{
 	public:
 		VariableGuard( ed::EditorContext* pTemporaryValue ) 

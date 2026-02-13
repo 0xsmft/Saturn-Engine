@@ -200,7 +200,7 @@ namespace Saturn {
 
 	void PrefabViewer::AddPrefab()
 	{
-		Ref<Prefab> prefab = AssetManager::Get().GetAssetAs<Prefab>( m_AssetID );
+		Ref<Prefab> prefab = AssetManager::Get()->GetAssetAs<Prefab>( m_AssetID );
 
 		m_SceneHierarchyPanel->SetContext( prefab->GetScene() );
 

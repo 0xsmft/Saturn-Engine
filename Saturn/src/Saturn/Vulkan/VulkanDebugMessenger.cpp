@@ -40,8 +40,8 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL vkDebugCB(
 		SAT_CORE_ERROR( "{0}", pCallbackData->pMessage );
 	else if( ( MessageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT ) != 0 )
 		SAT_CORE_WARN( "{0}", pCallbackData->pMessage );
-//	else if( ( MessageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT ) != 0 )
-//		SAT_CORE_INFO( "Vulkan Information: {0}", pCallbackData->pMessage );
+	else if( ( MessageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT ) != 0 )
+		SAT_CORE_INFO( "Vulkan Information: {0}", pCallbackData->pMessage );
 
 	return VK_FALSE;
 }
@@ -62,7 +62,7 @@ namespace Saturn {
 
 	VulkanDebugMessenger::~VulkanDebugMessenger()
 	{
-		X31_vkDestroyDebugUtilsMessenger( VulkanContext::Get().GetInstance(), m_DebugMessenger, nullptr );
+		X31_vkDestroyDebugUtilsMessenger( VulkanContext::Get()->GetInstance(), m_DebugMessenger, nullptr );
 
 		m_pCreateFunc = nullptr;
 		m_pDestroyFunc = nullptr;

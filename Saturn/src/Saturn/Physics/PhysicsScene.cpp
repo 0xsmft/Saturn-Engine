@@ -51,7 +51,7 @@ namespace Saturn {
 
 	PhysicsScene::~PhysicsScene()
 	{
-		PhysicsFoundation::Get().DisconnectPVD();
+		PhysicsFoundation::Get()->DisconnectPVD();
 
 		const auto view = m_Scene->GetAllEntitiesWith<RigidbodyComponent>();
 		for( auto& rEntity : view )

@@ -65,7 +65,7 @@ namespace Saturn {
 	// So, we will always prefer to use the OS preferred separator
 	void EngineSettingsSerialiser::Serialise()
 	{
-		auto AppDataPath = Application::Get().GetAppDataFolder();
+		auto AppDataPath = Application::Get()->GetAppDataFolder();
 		auto& rSettings = EngineSettings::Get();
 
 		YAML::Emitter out;
@@ -94,7 +94,7 @@ namespace Saturn {
 
 	void EngineSettingsSerialiser::Deserialise()
 	{
-		const auto AppDataPath = Application::Get().GetAppDataFolder();
+		const auto AppDataPath = Application::Get()->GetAppDataFolder();
 		const auto userSettingsPath = AppDataPath / "EngineSettings.yaml";
 
 		std::ifstream FileIn( userSettingsPath );

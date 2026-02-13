@@ -98,7 +98,7 @@ namespace Saturn {
 		for( auto& rFunc : m_TerminateResourceFuncs )
 			rFunc();
 
-		Renderer::Get().Terminate();
+		Renderer::Get()->Terminate();
 
 		ShaderLibrary::Get().Shutdown();
 		
@@ -132,7 +132,7 @@ namespace Saturn {
 		AppInfo.engineVersion      = VK_MAKE_VERSION( 0, 0, 1 );
 		AppInfo.apiVersion         = VK_API_VERSION_1_2;
 		
-		auto Extensions = Application::Get().GetWindow()->GetVulkanRequiredExtensions();
+		auto Extensions = Application::Get()->GetWindow()->GetVulkanRequiredExtensions();
 		Extensions.push_back( VK_EXT_DEBUG_UTILS_EXTENSION_NAME );
 
 		VkInstanceCreateInfo InstanceInfo ={ VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO };
@@ -173,7 +173,7 @@ namespace Saturn {
 
 	void VulkanContext::CreateSurface()
 	{
-		VK_CHECK( Application::Get().GetWindow()->CreateVulkanWindowSurface( m_Instance, &m_Surface ) );
+		VK_CHECK( Application::Get()->GetWindow()->CreateVulkanWindowSurface( m_Instance, &m_Surface ) );
 	}
 
 	void VulkanContext::PickPhysicalDevice()

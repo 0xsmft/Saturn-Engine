@@ -276,7 +276,7 @@ namespace Saturn {
 					ImGui::TableNextColumn();
 					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Sync" ), { 24.0f, 24.0f } ) )
 					{
-						Invalidate( AssetManager::Get().FindAsset( rID ) );
+						Invalidate( AssetManager::Get()->FindAsset( rID ) );
 					}
 
 					ImGui::PopID();

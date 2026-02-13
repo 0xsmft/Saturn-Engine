@@ -90,7 +90,7 @@ namespace Saturn {
 
 		Styles::Dark();
 
-		ImGui_ImplRuby_InitForVulkan( Application::Get().GetWindow() );
+		ImGui_ImplRuby_InitForVulkan( Application::Get()->GetWindow() );
 
 		// Create ImGui Descriptor Pool
 		{
@@ -114,22 +114,22 @@ namespace Saturn {
 			PoolCreateInfo.poolSizeCount = ( uint32_t ) PoolSizes.size();
 			PoolCreateInfo.pPoolSizes = PoolSizes.data();
 
-			VK_CHECK( vkCreateDescriptorPool( VulkanContext::Get().GetDevice(), &PoolCreateInfo, nullptr, &m_DescriptorPool ) );
+			VK_CHECK( vkCreateDescriptorPool( VulkanContext::Get()->GetDevice(), &PoolCreateInfo, nullptr, &m_DescriptorPool ) );
 		}
 		
 		ImGui_ImplVulkan_InitInfo ImGuiInitInfo = {};
-		ImGuiInitInfo.Instance = VulkanContext::Get().GetInstance();
-		ImGuiInitInfo.PhysicalDevice = VulkanContext::Get().GetPhysicalDevice();
-		ImGuiInitInfo.Device = VulkanContext::Get().GetDevice();
-		ImGuiInitInfo.Queue = VulkanContext::Get().GetGraphicsQueue();
+		ImGuiInitInfo.Instance = VulkanContext::Get()->GetInstance();
+		ImGuiInitInfo.PhysicalDevice = VulkanContext::Get()->GetPhysicalDevice();
+		ImGuiInitInfo.Device = VulkanContext::Get()->GetDevice();
+		ImGuiInitInfo.Queue = VulkanContext::Get()->GetGraphicsQueue();
 		ImGuiInitInfo.DescriptorPool = m_DescriptorPool;
 		ImGuiInitInfo.MinImageCount = 2u;
 		ImGuiInitInfo.ImageCount = MAX_FRAMES_IN_FLIGHT;
-		ImGuiInitInfo.MSAASamples = VulkanContext::Get().GetMaxUsableMSAASamples();
+		ImGuiInitInfo.MSAASamples = VulkanContext::Get()->GetMaxUsableMSAASamples();
 
 		ImGuiInitInfo.CheckVkResultFn = _VkCheckResult;
 
-		ImGui_ImplVulkan_Init( &ImGuiInitInfo, VulkanContext::Get().GetDefaultVulkanPass() );
+		ImGui_ImplVulkan_Init( &ImGuiInitInfo, VulkanContext::Get()->GetDefaultVulkanPass() );
 #endif
 	}
 
@@ -139,8 +139,8 @@ namespace Saturn {
 		ImGui_ImplVulkan_Shutdown();
 		ImGui_ImplRuby_Shutdown();
 
-		vkDestroyDescriptorPool( VulkanContext::Get().GetDevice(), m_DescriptorPool, nullptr );
-		vkDestroyDescriptorSetLayout( VulkanContext::Get().GetDevice(), m_DescriptorLayout, nullptr );
+		vkDestroyDescriptorPool( VulkanContext::Get()->GetDevice(), m_DescriptorPool, nullptr );
+		vkDestroyDescriptorSetLayout( VulkanContext::Get()->GetDevice(), m_DescriptorLayout, nullptr );
 
 		m_DescriptorPool = nullptr;
 		m_DescriptorLayout = nullptr;
@@ -161,12 +161,12 @@ namespace Saturn {
 	void ImGuiLayer::End( VkCommandBuffer CommandBuffer )
 	{
 #if !defined(SAT_DIST)
-		Swapchain& rSwapchain = VulkanContext::Get().GetSwapchain();
+		Swapchain& rSwapchain = VulkanContext::Get()->GetSwapchain();
 
 		ImGui::Render();
 
-		uint32_t WindowWidth = Application::Get().GetWindow()->GetWidth();
-		uint32_t WindowHeight = Application::Get().GetWindow()->GetHeight();
+		uint32_t WindowWidth = Application::Get()->GetWindow()->GetWidth();
+		uint32_t WindowHeight = Application::Get()->GetWindow()->GetHeight();
 
 		std::vector<VkClearValue> ClearColor;
 		ClearColor.reserve( 2 );
@@ -175,8 +175,8 @@ namespace Saturn {
 		ClearColor.push_back( { .depthStencil = { 1.0f, 0u } } );
 
 		VkRenderPassBeginInfo RenderPassBeginInfo = { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
-		RenderPassBeginInfo.renderPass = VulkanContext::Get().GetDefaultVulkanPass();
-		RenderPassBeginInfo.framebuffer = rSwapchain.GetFramebuffers()[ Renderer::Get().GetImageIndex() ];
+		RenderPassBeginInfo.renderPass = VulkanContext::Get()->GetDefaultVulkanPass();
+		RenderPassBeginInfo.framebuffer = rSwapchain.GetFramebuffers()[ Renderer::Get()->GetImageIndex() ];
 		RenderPassBeginInfo.renderArea.offset = { 0, 0 };
 		RenderPassBeginInfo.renderArea.extent = { WindowWidth, WindowHeight };
 		RenderPassBeginInfo.clearValueCount = ( uint32_t ) ClearColor.size();

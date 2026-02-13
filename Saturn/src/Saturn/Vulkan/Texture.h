@@ -90,7 +90,11 @@ namespace Saturn {
 		VkSampler GetSampler()					   const { return m_Sampler; }
 		VkImageView GetImageView()                 const { return m_ImageView; }
 		VkImage GetImage()                         const { return m_Image; }
+#if !defined(SAT_DIST)
 		VkDescriptorSet GetDescriptorSet()         const { return m_DescriptorSet; }
+#else
+		VkDescriptorSet GetDescriptorSet()         const { return nullptr; }
+#endif
 		VkDescriptorImageInfo& GetDescriptorInfo()       { return m_DescriptorImageInfo; }
 
 		const VkDescriptorImageInfo& GetDescriptorInfo() const { return m_DescriptorImageInfo; }
@@ -126,7 +130,9 @@ namespace Saturn {
 		VkDeviceMemory m_ImageMemory = VK_NULL_HANDLE;
 		VkImageView m_ImageView = VK_NULL_HANDLE;
 		VkSampler m_Sampler = VK_NULL_HANDLE;
+#if !defined(SAT_DIST)
 		VkDescriptorSet m_DescriptorSet = VK_NULL_HANDLE;
+#endif
 		VkDescriptorImageInfo m_DescriptorImageInfo = {};
 		VkFormat m_ImageFormat = VK_FORMAT_UNDEFINED;
 
@@ -161,8 +167,8 @@ namespace Saturn {
 
 		void SetDebugName( const std::string& rName );
 
-		Buffer X31CopyToBuffer();
-		Buffer GetMipTextureData( uint32_t w, uint32_t h, uint32_t mip );
+		Buffer X31CopyToBuffer() const;
+		Buffer GetMipTextureData( uint32_t w, uint32_t h, uint32_t mip ) const;
 
 	private:
 		void CreateTextureImage( bool flip ) override;

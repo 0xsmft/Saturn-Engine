@@ -208,7 +208,7 @@ namespace Saturn::Auxiliary {
 
 			if( ImGui::BeginListBox( "##ASSETLIST", ImVec2( -FLT_MIN, 0.0f ) ) )
 			{
-				for( const auto& [assetID, rAsset] : AssetManager::Get().GetAssetRegistry()->GetAssetMap() )
+				for( const auto& [assetID, rAsset] : AssetManager::Get()->GetAssetRegistry()->GetAssetMap() )
 				{
 					bool Selected = ( lastID == assetID );
 
@@ -259,7 +259,7 @@ namespace Saturn::Auxiliary {
 
 		std::string ButtonName = "";
 
-		if( auto asset = AssetManager::Get().FindAsset( returnID ) )
+		if( auto asset = AssetManager::Get()->FindAsset( returnID ) )
 			ButtonName = asset->Name;
 		else
 			ButtonName = "Unknown";
@@ -274,7 +274,7 @@ namespace Saturn::Auxiliary {
 			{
 				const wchar_t* path = ( const wchar_t* ) data->Data;
 
-				Ref<Asset> asset = AssetManager::Get().GetAssetAs<Asset>( AssetManager::Get().PathToID( path ) );
+				Ref<Asset> asset = AssetManager::Get()->GetAssetAs<Asset>( AssetManager::Get()->PathToID( path ) );
 
 				if( asset )
 				{

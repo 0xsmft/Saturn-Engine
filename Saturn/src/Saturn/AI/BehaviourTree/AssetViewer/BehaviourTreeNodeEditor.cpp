@@ -248,11 +248,11 @@ namespace Saturn {
 
 		if( ImGui::Button( "Open Tree Memory" ) )
 		{
-			const Ref<Asset> asset = AssetManager::Get().FindAsset( m_BehaviourTreeMemoryAssetID );
+			const Ref<Asset> asset = AssetManager::Get()->FindAsset( m_BehaviourTreeMemoryAssetID );
 			if( asset )
 			{
 				const std::string windowName = std::format( "{0}##{1}", asset->Name, ( uint64_t ) m_BehaviourTreeMemoryAssetID );
-				ImGuiWindowManager::Get().OpenOrShowWindow<BehaviourTreeMemoryAssetViewer>( windowName, m_BehaviourTreeMemoryAssetID );
+				ImGuiWindowManager::Get()->OpenOrShowWindow<BehaviourTreeMemoryAssetViewer>( windowName, m_BehaviourTreeMemoryAssetID );
 
 				ImGui::SetWindowFocus( windowName.c_str() );
 			}
@@ -295,14 +295,14 @@ namespace Saturn {
 				UUID tempID = m_BehaviourTreeMemoryAssetID;
 				if( Auxiliary::DrawAssetFinder( AssetType::BehaviourTreeMemory, &open, tempID ) )
 				{
-					AssetManager::Get().UnregisterAssetDependency( m_AssetID, m_BehaviourTreeMemoryAssetID );
+					AssetManager::Get()->UnregisterAssetDependency( m_AssetID, m_BehaviourTreeMemoryAssetID );
 					
 					MarkDirty();
 					m_BehaviourTreeMemoryAssetID = tempID;
 
-					AssetManager::Get().RegisterAssetDependency( m_AssetID, m_BehaviourTreeMemoryAssetID );
+					AssetManager::Get()->RegisterAssetDependency( m_AssetID, m_BehaviourTreeMemoryAssetID );
 
-					m_BlackboardSpec = AssetManager::Get().GetAssetAs< BehaviourTreeMemorySpecification >( m_BehaviourTreeMemoryAssetID );
+					m_BlackboardSpec = AssetManager::Get()->GetAssetAs< BehaviourTreeMemorySpecification >( m_BehaviourTreeMemoryAssetID );
 				}
 
 				if( m_BehaviourTreeMemoryAssetID != 0 )
@@ -528,7 +528,7 @@ namespace Saturn {
 		RawSerialisation::ReadObject( m_BehaviourTreeMemoryAssetID, rStream );
 
 #if !defined(SAT_DIST)
-		m_BlackboardSpec = AssetManager::Get().GetAssetAs< BehaviourTreeMemorySpecification>( m_BehaviourTreeMemoryAssetID );
+		m_BlackboardSpec = AssetManager::Get()->GetAssetAs< BehaviourTreeMemorySpecification>( m_BehaviourTreeMemoryAssetID );
 
 		if( m_BlackboardSpec )
 		{

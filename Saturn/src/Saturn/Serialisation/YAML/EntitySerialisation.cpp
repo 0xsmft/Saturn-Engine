@@ -740,7 +740,7 @@ pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value ); \
 			auto id = mc[ "Asset" ].as<uint64_t>( 0 );
 			if( id != 0 )
 			{
-				auto mesh = AssetManager::Get().GetAssetAs<StaticMesh>( id );
+				auto mesh = AssetManager::Get()->GetAssetAs<StaticMesh>( id );
 
 				m.Mesh = mesh;
 				m.MaterialRegistry = Ref<MaterialRegistry>::Create();
@@ -761,7 +761,7 @@ pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value ); \
 
 							if( id != 0 )
 							{
-								m.MaterialRegistry->AddAsset( AssetManager::Get().GetAssetAs<MaterialAsset>( id ) );
+								m.MaterialRegistry->AddAsset( AssetManager::Get()->GetAssetAs<MaterialAsset>( id ) );
 								m.MaterialRegistry->SetOverrides( i, true );
 							}
 
@@ -784,7 +784,7 @@ pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value ); \
 			auto id = skm[ "Asset" ].as<uint64_t>( 0 );
 			if( id != 0 )
 			{
-				auto mesh = AssetManager::Get().GetAssetAs<SkeletalMesh>( id );
+				auto mesh = AssetManager::Get()->GetAssetAs<SkeletalMesh>( id );
 
 				// Ensure that we always have a material registry even if we don't have a mesh
 				m.MaterialRegistry = Ref<MaterialRegistry>::Create();
@@ -809,7 +809,7 @@ pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value ); \
 
 								if( id != 0 )
 								{
-									m.MaterialRegistry->AddAsset( AssetManager::Get().GetAssetAs<MaterialAsset>( id ) );
+									m.MaterialRegistry->AddAsset( AssetManager::Get()->GetAssetAs<MaterialAsset>( id ) );
 									m.MaterialRegistry->SetOverrides( i, true );
 								}
 

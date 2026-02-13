@@ -49,7 +49,7 @@ namespace Saturn {
 		m_Size = Size;
 		m_pData = nullptr;
 
-		auto pAllocator = VulkanContext::Get().GetVulkanAllocator();
+		auto pAllocator = VulkanContext::Get()->GetVulkanAllocator();
 
 		// Create the vertex buffer.
 		VkBufferCreateInfo VertexBufferCreateInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
@@ -88,7 +88,7 @@ namespace Saturn {
 
 	void VertexBuffer::Reallocate( void* pData, uint32_t size, uint32_t offset /*= 0 */ )
 	{
-		auto pAllocator = VulkanContext::Get().GetVulkanAllocator();
+		auto pAllocator = VulkanContext::Get()->GetVulkanAllocator();
 
 		void* dstData = pAllocator->MapMemory< void >( m_Allocation );
 
@@ -111,7 +111,7 @@ namespace Saturn {
 
 		VkBuffer StagingBuffer;
 		
-		auto pAllocator = VulkanContext::Get().GetVulkanAllocator();
+		auto pAllocator = VulkanContext::Get()->GetVulkanAllocator();
 		
 		VkBufferCreateInfo BufferCreateInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
 		BufferCreateInfo.size = BufferSize;
@@ -140,14 +140,14 @@ namespace Saturn {
 
 		// Copy buffer
 		{
-			auto CommandBuffer = VulkanContext::Get().BeginSingleTimeCommands();
+			auto CommandBuffer = VulkanContext::Get()->BeginSingleTimeCommands();
 
 			VkBufferCopy CopyRegion{};
 			CopyRegion.size = BufferSize;
 
 			vkCmdCopyBuffer( CommandBuffer, StagingBuffer, m_Buffer, 1, &CopyRegion );
 
-			VulkanContext::Get().EndSingleTimeCommands( CommandBuffer );
+			VulkanContext::Get()->EndSingleTimeCommands( CommandBuffer );
 		}
 
 		pAllocator->DestroyBuffer( StagingBuffer );
@@ -156,7 +156,7 @@ namespace Saturn {
 	void VertexBuffer::Destroy()
 	{
 		if ( m_Buffer != nullptr )
-			VulkanContext::Get().GetVulkanAllocator()->DestroyBuffer( m_Buffer );
+			VulkanContext::Get()->GetVulkanAllocator()->DestroyBuffer( m_Buffer );
 		
 		m_Buffer = nullptr;
 	}

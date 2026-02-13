@@ -36,10 +36,12 @@
 
 #include "Saturn/Serialisation/Raw/RawSerialisation.h"
 
+#if !defined( SAT_DIST )
 #include <shaderc/shaderc.hpp>
 #include <shaderc/shaderc.h>
 
 #include <spirv/spirv_glsl.hpp>
+#endif
 
 #if !defined( SAT_DIST )
 #define SHADER_INFO(...) SAT_CORE_INFO(__VA_ARGS__)
@@ -87,6 +89,7 @@ namespace Saturn {
 		return VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM;
 	}
 
+#if !defined(SAT_DIST)
 	static ShaderDataType SpvToSaturn( spirv_cross::SPIRType type )
 	{
 		switch( type.basetype )
@@ -110,6 +113,7 @@ namespace Saturn {
 
 		return ShaderDataType::None;
 	}
+#endif
 
 	static ShaderType ShaderTypeFromString( const std::string& Str )
 	{
@@ -271,7 +275,7 @@ namespace Saturn {
 
 		CreateDescriptors();
 	
-		Renderer::Get().AddShaderReference( m_ShaderHash );
+		Renderer::Get()->AddShaderReference( m_ShaderHash );
 	}
 #else
 	{
@@ -286,13 +290,13 @@ namespace Saturn {
 #endif
 		for( auto& [ set, descriptorSet ] : m_DescriptorSets )
 		{
-			vkDestroyDescriptorSetLayout( VulkanContext::Get().GetDevice(), descriptorSet.SetLayout, nullptr );
+			vkDestroyDescriptorSetLayout( VulkanContext::Get()->GetDevice(), descriptorSet.SetLayout, nullptr );
 		}
 
 		m_SetPool = nullptr;
 
 #if !defined(SAT_DIST)
-		Renderer::Get().RemoveShaderReference( m_ShaderHash );
+		Renderer::Get()->RemoveShaderReference( m_ShaderHash );
 #endif
 	}
 
@@ -307,7 +311,7 @@ namespace Saturn {
 					descriptorSet.WriteDescriptorSets[ texture.Binding ].pImageInfo = &rImageInfo;
 					descriptorSet.WriteDescriptorSets[ texture.Binding ].dstSet = desSet;
 
-					vkUpdateDescriptorSets( VulkanContext::Get().GetDevice(), 1, &descriptorSet.WriteDescriptorSets[ texture.Binding ], 0, nullptr );
+					vkUpdateDescriptorSets( VulkanContext::Get()->GetDevice(), 1, &descriptorSet.WriteDescriptorSets[ texture.Binding ], 0, nullptr );
 				}
 			}
 
@@ -318,7 +322,7 @@ namespace Saturn {
 					descriptorSet.WriteDescriptorSets[ texture.Binding ].pImageInfo = &rImageInfo;
 					descriptorSet.WriteDescriptorSets[ texture.Binding ].dstSet = desSet;
 
-					vkUpdateDescriptorSets( VulkanContext::Get().GetDevice(), 1, &descriptorSet.WriteDescriptorSets[ texture.Binding ], 0, nullptr );
+					vkUpdateDescriptorSets( VulkanContext::Get()->GetDevice(), 1, &descriptorSet.WriteDescriptorSets[ texture.Binding ], 0, nullptr );
 				}
 			}
 		}
@@ -328,7 +332,7 @@ namespace Saturn {
 	{
 		DescriptorSetSpecification Specification;
 		Specification.Layout = m_DescriptorSets[ set ].SetLayout;
-		Specification.Pool = UseRendererPool ? Renderer::Get().GetDescriptorPool() : m_SetPool;
+		Specification.Pool = UseRendererPool ? Renderer::Get()->GetDescriptorPool() : m_SetPool;
 		Specification.SetIndex = set;
 
 		return Ref<DescriptorSet>::Create( Specification );
@@ -339,11 +343,11 @@ namespace Saturn {
 		VkDescriptorSet Set = VK_NULL_HANDLE;
 
 		VkDescriptorSetAllocateInfo AllocateInfo = { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
-		AllocateInfo.descriptorPool = UseRendererPool ? Renderer::Get().GetDescriptorPool()->GetVulkanPool() : m_SetPool->GetVulkanPool();
+		AllocateInfo.descriptorPool = UseRendererPool ? Renderer::Get()->GetDescriptorPool()->GetVulkanPool() : m_SetPool->GetVulkanPool();
 		AllocateInfo.descriptorSetCount = 1;
 		AllocateInfo.pSetLayouts = &m_DescriptorSets[ set ].SetLayout;
 
-		VK_CHECK( vkAllocateDescriptorSets( VulkanContext::Get().GetDevice(), &AllocateInfo, &Set ) );
+		VK_CHECK( vkAllocateDescriptorSets( VulkanContext::Get()->GetDevice(), &AllocateInfo, &Set ) );
 
 		return Set;
 	}
@@ -684,7 +688,7 @@ namespace Saturn {
 		// Create the descriptor set layout.
 		std::vector< VkDescriptorPoolSize > PoolSizes;
 
-		auto pAllocator = VulkanContext::Get().GetVulkanAllocator();
+		auto pAllocator = VulkanContext::Get()->GetVulkanAllocator();
 
 		// Iterate over descriptor sets
 		for( auto& [ set, descriptorSet ] : m_DescriptorSets )
@@ -811,7 +815,7 @@ namespace Saturn {
 			LayoutInfo.bindingCount = ( uint32_t ) Bindings.size();
 			LayoutInfo.pBindings = Bindings.data();
 
-			VK_CHECK( vkCreateDescriptorSetLayout( VulkanContext::Get().GetDevice(), &LayoutInfo, nullptr, &descriptorSet.SetLayout ) );
+			VK_CHECK( vkCreateDescriptorSetLayout( VulkanContext::Get()->GetDevice(), &LayoutInfo, nullptr, &descriptorSet.SetLayout ) );
 		}
 
 		m_SetPool = Ref< DescriptorPool >::Create( PoolSizes, 10000 );
@@ -908,7 +912,7 @@ namespace Saturn {
 
 		CreateDescriptors();
 
-		Renderer::Get().OnShaderReloaded( m_Name );
+		Renderer::Get()->OnShaderReloaded( m_Name );
 
 		return true;
 #else

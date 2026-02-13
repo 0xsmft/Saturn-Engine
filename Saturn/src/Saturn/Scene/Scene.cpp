@@ -127,7 +127,8 @@ namespace Saturn {
 	void Scene::Empty()
 	{
 #if !defined(SAT_DIST)
-		EntitySelectionManager::Get().ClearSelection( true );
+		if( auto* rESM = EntitySelectionManager::Get(); rESM )
+			rESM->ClearSelection( this, true );
 #endif
 		{
 
@@ -1065,7 +1066,7 @@ namespace Saturn {
 	void Scene::TravelToScene( AssetID newSceneID )
 	{
 		// There isn't much we can do, we must let the parent layer handle a scene travel.
-		Application::Get().DispatchEvent<SceneTravelEvent>( newSceneID );
+		Application::Get()->DispatchEvent<SceneTravelEvent>( newSceneID );
 	}
 
 	bool Scene::OnRuntimeStart()
@@ -1191,7 +1192,7 @@ namespace Saturn {
 		for( auto& entity : sndPlayers )
 		{
 			auto& rComp = entity->GetComponent<AudioPlayerComponent>();
-			Ref<Asset> soundSpec = AssetManager::Get().FindAsset( rComp.SpecAssetID );
+			Ref<Asset> soundSpec = AssetManager::Get()->FindAsset( rComp.SpecAssetID );
 
 			if( !soundSpec )
 				continue;
@@ -1214,7 +1215,7 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 				// Add reference if a graph sound asset viewer is open
 				const std::string name = std::format( "{0}##{1}", soundSpec->Name, ( uint64_t ) soundSpec->ID );
-				Ref<GraphSoundAssetViewer> window = ImGuiWindowManager::Get().GetWindow<GraphSoundAssetViewer>( name );
+				Ref<GraphSoundAssetViewer> window = ImGuiWindowManager::Get()->GetWindow<GraphSoundAssetViewer>( name );
 
 				if( window )
 				{
@@ -1415,7 +1416,7 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 			if( !m_NavBoundsEntity->GetComponent<NavigationMeshSpecificationComponent>().HasBuilt )
 			{
-				Application::Get().DispatchEvent<SendEditorNotificationEvent>( "The navigation mesh was unable to be loaded from disk or it was never built! Please check the output for more information." );
+				Application::Get()->DispatchEvent<SendEditorNotificationEvent>( "The navigation mesh was unable to be loaded from disk or it was never built! Please check the output for more information." );
 			}
 #endif
 

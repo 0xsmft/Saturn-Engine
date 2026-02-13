@@ -41,7 +41,7 @@ namespace Saturn {
 	class Material : public RefTarget
 	{
 	public:
-		 Material( const Ref<Shader>& rShader, const std::string& rMateralName, uint32_t set = 0 );
+		 Material( const Ref<Shader>& rShader, const std::string& rMaterialName, uint32_t set = 0 );
 		~Material();
 
 		void Initialise( const std::string& rMaterialName );
@@ -90,8 +90,8 @@ namespace Saturn {
 		Buffer GetPushConstantData() const { return m_PushConstantData; }
 
 	private:
-		std::unordered_map< std::string, Ref<Texture2D> >& GetTextures() { return m_Textures; }
-		const std::unordered_map< std::string, Ref<Texture2D> >& GetTextures() const { return m_Textures; }
+		std::unordered_map< std::string, Ref<Texture2D> >& GetTexturesMap() { return m_Textures; }
+		const std::unordered_map< std::string, Ref<Texture2D> >& GetTexturesMap() const { return m_Textures; }
 
 		// Internal Update function without binding the descriptor set.
 		void RT_Update();

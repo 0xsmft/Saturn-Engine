@@ -38,9 +38,9 @@ namespace Saturn {
 	{
 		// Create Allocator.
 		VmaAllocatorCreateInfo AllocatorInfo = {};
-		AllocatorInfo.physicalDevice = VulkanContext::Get().GetPhysicalDevice();
-		AllocatorInfo.device = VulkanContext::Get().GetDevice();
-		AllocatorInfo.instance = VulkanContext::Get().GetInstance();
+		AllocatorInfo.physicalDevice = VulkanContext::Get()->GetPhysicalDevice();
+		AllocatorInfo.device = VulkanContext::Get()->GetDevice();
+		AllocatorInfo.instance = VulkanContext::Get()->GetInstance();
 		AllocatorInfo.vulkanApiVersion = VK_API_VERSION_1_2;
 
 		VK_CHECK( vmaCreateAllocator( &AllocatorInfo, &m_Allocator ) );

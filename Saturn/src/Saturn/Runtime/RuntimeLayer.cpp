@@ -80,7 +80,7 @@ namespace Saturn {
 
 		OpenFile( Project::GetActiveProject()->GetConfig().StartupSceneID );
 
-		Application::Get().GetWindow()->Show();
+		Application::Get()->GetWindow()->Show();
 
 		SAT_CORE_VERIFY( m_RuntimeScene->OnRuntimeStart(), "Initial runtime request failed!" );
 	}
@@ -105,7 +105,7 @@ namespace Saturn {
 
 	void RuntimeLayer::OpenFile( AssetID id )
 	{
-		const Ref<Asset> asset = AssetManager::Get().FindAsset( id );
+		const Ref<Asset> asset = AssetManager::Get()->FindAsset( id );
 
 		Ref<Scene> newScene = Ref<Scene>::Create();
 		newScene->Path = asset->Path;
@@ -137,7 +137,7 @@ namespace Saturn {
 
 		m_RuntimeScene->OnRuntimeEnd();
 
-		const Ref<Asset> asset = AssetManager::Get().FindAsset( id );
+		const Ref<Asset> asset = AssetManager::Get()->FindAsset( id );
 
 		SceneSerialiser serialiser( temporaryScene );
 		serialiser.Deserialise( asset );
@@ -166,7 +166,7 @@ namespace Saturn {
 	void RuntimeLayer::HandleSceneTravel( SceneTravelEvent& rEvent )
 	{
 		AssetID destinationID = rEvent.GetID();
-		Ref<Asset> sceneAsset = AssetManager::Get().FindAsset( destinationID );
+		Ref<Asset> sceneAsset = AssetManager::Get()->FindAsset( destinationID );
 
 		if( !sceneAsset )
 		{

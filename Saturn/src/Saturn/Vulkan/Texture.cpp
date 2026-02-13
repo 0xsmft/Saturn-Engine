@@ -34,7 +34,10 @@
 #include "VulkanImageAux.h"
 
 #include <stb_image.h>
+
+#if !defined(SAT_DIST)
 #include <backends/imgui_impl_vulkan.h>
+#endif
 
 namespace Saturn {
 
@@ -90,16 +93,16 @@ namespace Saturn {
 	void Texture::Terminate()
 	{
 		if( m_Image )
-			vkDestroyImage( VulkanContext::Get().GetDevice(), m_Image, nullptr );
+			vkDestroyImage( VulkanContext::Get()->GetDevice(), m_Image, nullptr );
 
 		if( m_ImageMemory )
-			vkFreeMemory( VulkanContext::Get().GetDevice(), m_ImageMemory, nullptr );
+			vkFreeMemory( VulkanContext::Get()->GetDevice(), m_ImageMemory, nullptr );
 
 		if( m_ImageView )
-			vkDestroyImageView( VulkanContext::Get().GetDevice(), m_ImageView, nullptr );
+			vkDestroyImageView( VulkanContext::Get()->GetDevice(), m_ImageView, nullptr );
 
 		if( m_Sampler )
-			vkDestroySampler( VulkanContext::Get().GetDevice(), m_Sampler, nullptr );
+			vkDestroySampler( VulkanContext::Get()->GetDevice(), m_Sampler, nullptr );
 
 		m_Image = nullptr;
 		m_ImageMemory = nullptr;
@@ -107,14 +110,14 @@ namespace Saturn {
 		m_Sampler = nullptr;
 
 		for ( auto&& [mip, view] : m_MipToImageViewMap )
-			vkDestroyImageView( VulkanContext::Get().GetDevice(), view, nullptr );
+			vkDestroyImageView( VulkanContext::Get()->GetDevice(), view, nullptr );
 
 		m_MipToImageViewMap.clear();
 	}
 
 	void Texture::TransitionImageLayout( VkFormat Format, VkImageLayout OldLayout, VkImageLayout NewLayout )
 	{
-		VkCommandBuffer CommandBuffer = VulkanContext::Get().BeginSingleTimeCommands();
+		VkCommandBuffer CommandBuffer = VulkanContext::Get()->BeginSingleTimeCommands();
 
 		VkPipelineStageFlags SrcStage = VK_PIPELINE_STAGE_FLAG_BITS_MAX_ENUM;
 		VkPipelineStageFlags DstStage = VK_PIPELINE_STAGE_FLAG_BITS_MAX_ENUM;
@@ -182,12 +185,12 @@ namespace Saturn {
 
 		vkCmdPipelineBarrier( CommandBuffer, SrcStage, DstStage, 0, 0, nullptr, 0, nullptr, 1, &ImageBarrier );
 
-		VulkanContext::Get().EndSingleTimeCommands( CommandBuffer );
+		VulkanContext::Get()->EndSingleTimeCommands( CommandBuffer );
 	}
 
 	void Texture::TransitionImageLayout( VkImageSubresourceRange& rCommand, VkImageLayout OldLayout, VkImageLayout NewLayout )
 	{
-		VkCommandBuffer CommandBuffer = VulkanContext::Get().BeginSingleTimeCommands();
+		VkCommandBuffer CommandBuffer = VulkanContext::Get()->BeginSingleTimeCommands();
 
 		VkPipelineStageFlags SrcStage = VK_PIPELINE_STAGE_FLAG_BITS_MAX_ENUM;
 		VkPipelineStageFlags DstStage = VK_PIPELINE_STAGE_FLAG_BITS_MAX_ENUM;
@@ -226,7 +229,7 @@ namespace Saturn {
 
 		vkCmdPipelineBarrier( CommandBuffer, SrcStage, DstStage, 0, 0, nullptr, 0, nullptr, 1, &ImageBarrier );
 
-		VulkanContext::Get().EndSingleTimeCommands( CommandBuffer );
+		VulkanContext::Get()->EndSingleTimeCommands( CommandBuffer );
 	}
 
 	uint32_t Texture::GetMipMapLevels() const
@@ -251,7 +254,7 @@ namespace Saturn {
 
 	void Texture::CopyBufferToImage( VkBuffer Buffer )
 	{
-		VkCommandBuffer CommandBuffer = VulkanContext::Get().BeginSingleTimeCommands();
+		VkCommandBuffer CommandBuffer = VulkanContext::Get()->BeginSingleTimeCommands();
 
 		VkBufferImageCopy Region = {};
 		Region.bufferOffset = 0;
@@ -268,7 +271,7 @@ namespace Saturn {
 
 		vkCmdCopyBufferToImage( CommandBuffer, Buffer, m_Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &Region );
 
-		VulkanContext::Get().EndSingleTimeCommands( CommandBuffer );
+		VulkanContext::Get()->EndSingleTimeCommands( CommandBuffer );
 	}
 
 	void Texture::SetIsRendererTexture( bool RendererTexture )
@@ -312,7 +315,7 @@ namespace Saturn {
 		ImageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 		ImageCreateInfo.flags = Flags;
 
-		VK_CHECK( vkCreateImage( VulkanContext::Get().GetDevice(), &ImageCreateInfo, nullptr, &rImage ) );
+		VK_CHECK( vkCreateImage( VulkanContext::Get()->GetDevice(), &ImageCreateInfo, nullptr, &rImage ) );
 #if defined(SAT_DEBUG)
 		SetDebugUtilsObjectName( "Texture Image (FN/CreateImage)", ( uint64_t ) rImage, VK_OBJECT_TYPE_IMAGE );
 #else
@@ -320,15 +323,15 @@ namespace Saturn {
 #endif
 
 		VkMemoryRequirements MemReq;
-		vkGetImageMemoryRequirements( VulkanContext::Get().GetDevice(), rImage, &MemReq );
+		vkGetImageMemoryRequirements( VulkanContext::Get()->GetDevice(), rImage, &MemReq );
 
 		VkMemoryAllocateInfo AllocInfo = { VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO };
 		AllocInfo.allocationSize = MemReq.size;
-		AllocInfo.memoryTypeIndex = VulkanContext::Get().GetMemoryType( MemReq.memoryTypeBits, MemProps );
+		AllocInfo.memoryTypeIndex = VulkanContext::Get()->GetMemoryType( MemReq.memoryTypeBits, MemProps );
 
-		VK_CHECK( vkAllocateMemory( VulkanContext::Get().GetDevice(), &AllocInfo, nullptr, &rDeviceMemory ) );
+		VK_CHECK( vkAllocateMemory( VulkanContext::Get()->GetDevice(), &AllocInfo, nullptr, &rDeviceMemory ) );
 
-		vkBindImageMemory( VulkanContext::Get().GetDevice(), rImage, rDeviceMemory, 0 );
+		vkBindImageMemory( VulkanContext::Get()->GetDevice(), rImage, rDeviceMemory, 0 );
 	}
 
 	VkImageView CreateImageView( VkImage Image, VkFormat Format )
@@ -345,7 +348,7 @@ namespace Saturn {
 		ImageViewCreateInfo.components = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
 
 		VkImageView ImageView;
-		VK_CHECK( vkCreateImageView( VulkanContext::Get().GetDevice(), &ImageViewCreateInfo, nullptr, &ImageView ) );
+		VK_CHECK( vkCreateImageView( VulkanContext::Get()->GetDevice(), &ImageViewCreateInfo, nullptr, &ImageView ) );
 #if defined(SAT_DEBUG)
 		SetDebugUtilsObjectName( "Texture Image View (FN/CreateImageView)", ( uint64_t ) ImageView, VK_OBJECT_TYPE_IMAGE_VIEW );
 #else
@@ -365,7 +368,7 @@ namespace Saturn {
 		ImageViewCreateInfo.components = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
 
 		VkImageView ImageView;
-		VK_CHECK( vkCreateImageView( VulkanContext::Get().GetDevice(), &ImageViewCreateInfo, nullptr, &ImageView ) );
+		VK_CHECK( vkCreateImageView( VulkanContext::Get()->GetDevice(), &ImageViewCreateInfo, nullptr, &ImageView ) );
 #if defined(SAT_DEBUG)
 		SetDebugUtilsObjectName( "Texture Image View (FN/CreateImageView(VkImageSubresourceRange)", ( uint64_t ) ImageView, VK_OBJECT_TYPE_IMAGE_VIEW );
 #else
@@ -388,7 +391,7 @@ namespace Saturn {
 		ImageViewCreateInfo.subresourceRange.layerCount = 1;
 
 		VkImageView ImageView;
-		VK_CHECK( vkCreateImageView( VulkanContext::Get().GetDevice(), &ImageViewCreateInfo, nullptr, &ImageView ) );
+		VK_CHECK( vkCreateImageView( VulkanContext::Get()->GetDevice(), &ImageViewCreateInfo, nullptr, &ImageView ) );
 #if defined(SAT_DEBUG)
 		SetDebugUtilsObjectName( "Texture Image View (FN/CreateImageView(VkImageAspectFlags)", ( uint64_t ) ImageView, VK_OBJECT_TYPE_IMAGE_VIEW );
 #else
@@ -400,7 +403,7 @@ namespace Saturn {
 
 	void TransitionImageLayout( VkImage Image, VkFormat Format, VkImageLayout OldLayout, VkImageLayout NewLayout )
 	{
-		VkCommandBuffer CommandBuffer = VulkanContext::Get().BeginSingleTimeCommands();
+		VkCommandBuffer CommandBuffer = VulkanContext::Get()->BeginSingleTimeCommands();
 
 		VkPipelineStageFlags SrcStage = VK_PIPELINE_STAGE_FLAG_BITS_MAX_ENUM;
 		VkPipelineStageFlags DstStage = VK_PIPELINE_STAGE_FLAG_BITS_MAX_ENUM;
@@ -436,7 +439,7 @@ namespace Saturn {
 
 		vkCmdPipelineBarrier( CommandBuffer, SrcStage, DstStage, 0, 0, nullptr, 0, nullptr, 1, &ImageBarrier );
 
-		VulkanContext::Get().EndSingleTimeCommands( CommandBuffer );
+		VulkanContext::Get()->EndSingleTimeCommands( CommandBuffer );
 	}
 
 	static size_t GetImageMemorySize( ImageFormat format, uint32_t width, uint32_t height ) 
@@ -508,7 +511,9 @@ namespace Saturn {
 
 		m_Path = rOther->m_Path;
 
+#if !defined(SAT_DIST)
 		m_DescriptorSet = rOther->m_DescriptorSet;
+#endif
 	}
 
 	// Load and create a texture 2D for a file path.
@@ -554,7 +559,7 @@ namespace Saturn {
 
 	void Texture2D::CreateMips()
 	{
-		VkCommandBuffer CommandBuffer = VulkanContext::Get().BeginSingleTimeCommands();
+		VkCommandBuffer CommandBuffer = VulkanContext::Get()->BeginSingleTimeCommands();
 
 		uint32_t mips = GetMipMapLevels();
 
@@ -614,7 +619,7 @@ namespace Saturn {
 			ImagePipelineBarrier( CommandBuffer, m_Image, VK_ACCESS_TRANSFER_READ_BIT, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, range );
 		}
 
-		VulkanContext::Get().EndSingleTimeCommands( CommandBuffer );
+		VulkanContext::Get()->EndSingleTimeCommands( CommandBuffer );
 
 		m_MipsCreated = true;
 	}
@@ -707,7 +712,7 @@ namespace Saturn {
 			1, &ImageBarrier );
 	}
 
-	Buffer Texture2D::X31CopyToBuffer()
+	Buffer Texture2D::X31CopyToBuffer() const
 	{
 		VkDeviceSize ImageSize = GetImageMemorySize( SaturnFormat( m_ImageFormat ), m_Width, m_Height );
 
@@ -719,10 +724,10 @@ namespace Saturn {
 
 		VkBuffer ImgBuffer;
 
-		auto pAllocator = VulkanContext::Get().GetVulkanAllocator();
+		auto pAllocator = VulkanContext::Get()->GetVulkanAllocator();
 		auto BufferAlloc = pAllocator->AllocateBuffer( BufferCreateInfo, VMA_MEMORY_USAGE_CPU_ONLY, &ImgBuffer );
 
-		VkCommandBuffer CommandBuffer = VulkanContext::Get().BeginSingleTimeCommands();
+		VkCommandBuffer CommandBuffer = VulkanContext::Get()->BeginSingleTimeCommands();
 
 		// TRANSITION: DescriptorImageInfo layout to VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
 		X31TransitionImageLayout(
@@ -751,7 +756,7 @@ namespace Saturn {
 			m_DescriptorImageInfo.imageLayout,
 			VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, m_ImageFormat, m_Image );
 
-		VulkanContext::Get().EndSingleTimeCommands( CommandBuffer );
+		VulkanContext::Get()->EndSingleTimeCommands( CommandBuffer );
 
 		void* pMappedData = pAllocator->MapMemory<void*>( BufferAlloc );
 
@@ -763,7 +768,7 @@ namespace Saturn {
 		return buf;
 	}
 
-	Buffer Texture2D::GetMipTextureData( uint32_t w, uint32_t h, uint32_t mip )
+	Buffer Texture2D::GetMipTextureData( uint32_t w, uint32_t h, uint32_t mip ) const
 	{
 		const VkDeviceSize ImageSize = GetImageMemorySize( SaturnFormat( m_ImageFormat ), m_Width, m_Height );
 
@@ -775,10 +780,10 @@ namespace Saturn {
 
 		VkBuffer ImgBuffer;
 
-		auto pAllocator = VulkanContext::Get().GetVulkanAllocator();
+		auto pAllocator = VulkanContext::Get()->GetVulkanAllocator();
 		auto BufferAlloc = pAllocator->AllocateBuffer( BufferCreateInfo, VMA_MEMORY_USAGE_CPU_ONLY, &ImgBuffer );
 
-		VkCommandBuffer CommandBuffer = VulkanContext::Get().BeginSingleTimeCommands();
+		VkCommandBuffer CommandBuffer = VulkanContext::Get()->BeginSingleTimeCommands();
 
 		// TRANSITION: DescriptorImageInfo layout to VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
 		X31MipTransitionImageLayout(
@@ -807,7 +812,7 @@ namespace Saturn {
 			m_DescriptorImageInfo.imageLayout,
 			VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, m_ImageFormat, m_Image, mip );
 
-		VulkanContext::Get().EndSingleTimeCommands( CommandBuffer );
+		VulkanContext::Get()->EndSingleTimeCommands( CommandBuffer );
 
 		void* pMappedData = pAllocator->MapMemory<void*>( BufferAlloc );
 
@@ -821,7 +826,7 @@ namespace Saturn {
 
 	void Texture2D::SetData( const void* pData )
 	{
-		auto pAllocator = VulkanContext::Get().GetVulkanAllocator();
+		auto pAllocator = VulkanContext::Get()->GetVulkanAllocator();
 
 		const VkDeviceSize ImageSize = GetImageMemorySize( SaturnFormat( m_ImageFormat ), m_Width, m_Height );
 
@@ -848,10 +853,10 @@ namespace Saturn {
 
 		// Create the image.
 		if( m_ImageMemory )
-			vkFreeMemory( VulkanContext::Get().GetDevice(), m_ImageMemory, nullptr );
+			vkFreeMemory( VulkanContext::Get()->GetDevice(), m_ImageMemory, nullptr );
 
 		if( m_Image )
-			vkDestroyImage( VulkanContext::Get().GetDevice(), m_Image, nullptr );
+			vkDestroyImage( VulkanContext::Get()->GetDevice(), m_Image, nullptr );
 
 		VkImageUsageFlags usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 
@@ -881,7 +886,7 @@ namespace Saturn {
 
 		// Create image views
 		if( m_ImageView )
-			vkDestroyImageView( VulkanContext::Get().GetDevice(), m_ImageView, nullptr );
+			vkDestroyImageView( VulkanContext::Get()->GetDevice(), m_ImageView, nullptr );
 
 		VkImageSubresourceRange range = {};
 		range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -907,7 +912,7 @@ namespace Saturn {
 		// We don't know the max anisotropy level, so we'll need to get it from the properties of the physical device.
 		// We do this as this is the best way to get the max anisotropy level as it can be different on other devices.
 		VkPhysicalDeviceProperties Properties = {};
-		vkGetPhysicalDeviceProperties( VulkanContext::Get().GetPhysicalDevice(), &Properties );
+		vkGetPhysicalDeviceProperties( VulkanContext::Get()->GetPhysicalDevice(), &Properties );
 
 		SamplerCreateInfo.maxAnisotropy = 1;
 
@@ -921,9 +926,9 @@ namespace Saturn {
 		SamplerCreateInfo.maxLod = ( float ) MipCount;
 
 		if( m_Sampler )
-			vkDestroySampler( VulkanContext::Get().GetDevice(), m_Sampler, nullptr );
+			vkDestroySampler( VulkanContext::Get()->GetDevice(), m_Sampler, nullptr );
 
-		VK_CHECK( vkCreateSampler( VulkanContext::Get().GetDevice(), &SamplerCreateInfo, nullptr, &m_Sampler ) );
+		VK_CHECK( vkCreateSampler( VulkanContext::Get()->GetDevice(), &SamplerCreateInfo, nullptr, &m_Sampler ) );
 #if defined(SAT_DEBUG)
 		SetDebugUtilsObjectName( std::format( "Texture Sampler (FN/SetData) PATH/{0} PINK/{1}", m_Path.stem().string(), m_IsRendererTexture ), ( uint64_t ) m_Sampler, VK_OBJECT_TYPE_SAMPLER );
 #else
@@ -935,7 +940,9 @@ namespace Saturn {
 		m_DescriptorImageInfo.imageView = m_ImageView;
 		m_DescriptorImageInfo.sampler = m_Sampler;
 
+#if !defined(SAT_DIST)
 		m_DescriptorSet = ( VkDescriptorSet ) ImGui_ImplVulkan_AddTexture( m_Sampler, m_ImageView, m_Storage ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL );
+#endif
 
 		if( MipCount > 1 )
 			CreateMips();
@@ -989,18 +996,18 @@ namespace Saturn {
 
 		m_DescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 
-		VK_CHECK( vkCreateImage( VulkanContext::Get().GetDevice(), &ImageCreateInfo, nullptr, &m_Image ) );
+		VK_CHECK( vkCreateImage( VulkanContext::Get()->GetDevice(), &ImageCreateInfo, nullptr, &m_Image ) );
 
 		VkMemoryRequirements MemReq;
-		vkGetImageMemoryRequirements( VulkanContext::Get().GetDevice(), m_Image, &MemReq );
+		vkGetImageMemoryRequirements( VulkanContext::Get()->GetDevice(), m_Image, &MemReq );
 
 		VkMemoryAllocateInfo AllocInfo = { VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO };
 		AllocInfo.allocationSize = MemReq.size;
-		AllocInfo.memoryTypeIndex = VulkanContext::Get().GetMemoryType( MemReq.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT );
+		AllocInfo.memoryTypeIndex = VulkanContext::Get()->GetMemoryType( MemReq.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT );
 
-		VK_CHECK( vkAllocateMemory( VulkanContext::Get().GetDevice(), &AllocInfo, nullptr, &m_ImageMemory ) );
+		VK_CHECK( vkAllocateMemory( VulkanContext::Get()->GetDevice(), &AllocInfo, nullptr, &m_ImageMemory ) );
 
-		vkBindImageMemory( VulkanContext::Get().GetDevice(), m_Image, m_ImageMemory, 0 );
+		vkBindImageMemory( VulkanContext::Get()->GetDevice(), m_Image, m_ImageMemory, 0 );
 
 		//////////////////////////////////////////////////////////////////////////
 
@@ -1030,7 +1037,7 @@ namespace Saturn {
 		SamplerCreateInfo.anisotropyEnable = VK_FALSE;
 		SamplerCreateInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 
-		VK_CHECK( vkCreateSampler( VulkanContext::Get().GetDevice(), &SamplerCreateInfo, nullptr, &m_Sampler ) );
+		VK_CHECK( vkCreateSampler( VulkanContext::Get()->GetDevice(), &SamplerCreateInfo, nullptr, &m_Sampler ) );
 
 		// Create image view
 
@@ -1048,7 +1055,7 @@ namespace Saturn {
 		ImageViewCreateInfo.components = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
 		ImageViewCreateInfo.subresourceRange = range;
 
-		VK_CHECK( vkCreateImageView( VulkanContext::Get().GetDevice(), &ImageViewCreateInfo, nullptr, &m_ImageView ) );
+		VK_CHECK( vkCreateImageView( VulkanContext::Get()->GetDevice(), &ImageViewCreateInfo, nullptr, &m_ImageView ) );
 
 		m_DescriptorImageInfo.sampler = m_Sampler;
 		m_DescriptorImageInfo.imageView = m_ImageView;
@@ -1059,7 +1066,7 @@ namespace Saturn {
 		if( m_MipsCreated )
 			return;
 
-		VkCommandBuffer CommandBuffer = VulkanContext::Get().BeginNewCommandBuffer();
+		VkCommandBuffer CommandBuffer = VulkanContext::Get()->BeginNewCommandBuffer();
 
 		const uint32_t mipLevels = GetMipMapLevels();
 		for( uint32_t face = 0; face < 6; ++face )
@@ -1149,7 +1156,7 @@ namespace Saturn {
 
 		m_DescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 
-		VulkanContext::Get().EndSingleTimeCommands( CommandBuffer );
+		VulkanContext::Get()->EndSingleTimeCommands( CommandBuffer );
 
 		m_MipsCreated = true;
 	}

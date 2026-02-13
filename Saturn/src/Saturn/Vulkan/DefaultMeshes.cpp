@@ -134,11 +134,11 @@ namespace Saturn::Auxiliary {
 		float segIncr = 1.0f / ( float ) ( seg - 1 );
 		for( size_t s = 0; s < seg; s++ )
 		{
-			float x = r * glm::cos( 2 * M_PI * s * segIncr );
-			float z = r * glm::sin( 2 * M_PI * s * segIncr );
+			float x = glm::cos( float( M_PI * 2 ) * s * segIncr ) * r;
+			float z = glm::sin( float( M_PI * 2 ) * s * segIncr ) * r;
 			
 			StaticVertex& vertex = rVertices.emplace_back();
-			vertex.Position = { x, y, z };
+			vertex.Position = { actual * x, actual * y, actual * z };
 		}
 	}
 
@@ -160,27 +160,13 @@ namespace Saturn::Auxiliary {
 		constexpr float ringIncr = 1.0f / ( float ) subdivisionHeight - 1;
 
 		for( int r = 0; r < subdivisionHeight / 2; r++ )
-		{
-			float rad = glm::sin( float( M_PI ) * r * ringIncr );
-			float y = glm::sin( float( M_PI ) * ( r * ringIncr - 0.5f ) );
-
-			CalcRing( numSegments, rad, y, -0.5f, height, radius + radiusMod, vertices );
-		}
+			CalcRing( numSegments, glm::sin( float( M_PI ) * r * ringIncr ), glm::sin( float( M_PI ) * ( r * ringIncr - 0.5f ) ), -0.5f, height, radius + radiusMod, vertices );
 
 		for( int r = 0; r < ringsBody; r++ )
-		{
-			float y = glm::sin( float( M_PI ) * ( r * ringIncr - 0.5f ) );
-
-			CalcRing( numSegments, 1.0f, 0.0f, y, height, height + radiusMod, vertices );
-		}
+			CalcRing( numSegments, 1.0f, 0.0f, r * bodyIncr - 0.5f, height, radius + radiusMod, vertices );
 
 		for( int r = subdivisionHeight / 2; r < subdivisionHeight; r++ )
-		{
-			float rad = glm::sin( float( M_PI ) * r * ringIncr );
-			float y = glm::sin( float( M_PI ) * ( r * ringIncr - 0.5f ) );
-
-			CalcRing( numSegments, rad, y, 0.5f, height, rad + radiusMod, vertices );
-		}
+			CalcRing( numSegments, glm::sin( float( M_PI ) * r * ringIncr ), glm::sin( float( M_PI ) * ( r * ringIncr - 0.5f ) ), 0.5f, height, radius + radiusMod, vertices );
 
 		for( int r = 0; r < ringsTotal - 1; r++ )
 		{

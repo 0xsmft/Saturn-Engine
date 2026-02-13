@@ -145,7 +145,7 @@ namespace Saturn {
 			{
 				if( ImGui::Button( "Generate Mesh Collider" ) )
 				{
-					bool Result = PhysicsFoundation::Get().GetCookingContext().CookMeshCollider( m_Mesh, SelectedEnum );
+					bool Result = PhysicsFoundation::Get()->GetCookingContext().CookMeshCollider( m_Mesh, SelectedEnum );
 
 					// TODO: Show a dialog box of what failed.
 				}
@@ -195,15 +195,15 @@ namespace Saturn {
 
 					if( Auxiliary::DrawAssetFinder( AssetType::Material, &open, m_AssetFinderOut, 0 ) )
 					{
-						Ref<MaterialAsset> newAsset = AssetManager::Get().GetAssetAs<MaterialAsset>( m_AssetFinderOut );
+						Ref<MaterialAsset> newAsset = AssetManager::Get()->GetAssetAs<MaterialAsset>( m_AssetFinderOut );
 						rMaterial->SetMaterial( newAsset->GetMaterial() );
 
 						// Update Pure Dependencies & Update ADN Dependencies
-						AssetManager::Get().UnregisterAssetDependency( m_AssetID, rMaterial->ID );
+						AssetManager::Get()->UnregisterAssetDependency( m_AssetID, rMaterial->ID );
 
 						m_Mesh->GetMaterialRegistry()->SetMaterial( i, m_AssetFinderOut );
 
-						AssetManager::Get().RegisterAssetDependency( m_AssetID, m_AssetFinderOut );
+						AssetManager::Get()->RegisterAssetDependency( m_AssetID, m_AssetFinderOut );
 					}
 
 					Auxiliary::EndTreeNode();
@@ -243,7 +243,7 @@ namespace Saturn {
 
 	void StaticMeshAssetViewer::AddMesh()
 	{
-		m_Mesh = AssetManager::Get().GetAssetAs<StaticMesh>( m_AssetID );
+		m_Mesh = AssetManager::Get()->GetAssetAs<StaticMesh>( m_AssetID );
 		m_Open = true;
 
 		auto e = m_Scene->CreateEntity( "InternalViewerEntity" );

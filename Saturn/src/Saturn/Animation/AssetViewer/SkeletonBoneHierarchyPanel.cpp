@@ -50,7 +50,7 @@ namespace Saturn {
 			ClearTree();
 		}
 
-		m_SkeletonAsset = AssetManager::Get().GetAssetAs<SkeletonAsset>( id );
+		m_SkeletonAsset = AssetManager::Get()->GetAssetAs<SkeletonAsset>( id );
 
 		m_BoneTree.resize( m_SkeletonAsset->GetBoneNames().size() );
 

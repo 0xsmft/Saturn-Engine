@@ -52,7 +52,7 @@ namespace Saturn {
 	{
 		m_AssetType = AssetType::Skeleton;
 
-		Ref<SkeletonAsset> snd = AssetManager::Get().GetAssetAs<SkeletonAsset>( m_AssetID );
+		Ref<SkeletonAsset> snd = AssetManager::Get()->GetAssetAs<SkeletonAsset>( m_AssetID );
 		m_SkeletonAsset = snd;
 
 		m_Open = true;
@@ -386,7 +386,7 @@ namespace Saturn {
 		{
 			// Pick the first one
 			auto& skComp = m_Scene->CreateEntity()->AddComponent<SkeletalMeshComponent>();
-			skComp.Mesh = AssetManager::Get().GetAssetAs<SkeletalMesh>( rMeshID );
+			skComp.Mesh = AssetManager::Get()->GetAssetAs<SkeletalMesh>( rMeshID );
 			skComp.MaterialRegistry = Ref<MaterialRegistry>::Create();
 			skComp.LocalAnimator = Ref<Animator>::Create();
 

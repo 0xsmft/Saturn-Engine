@@ -62,11 +62,11 @@ namespace Saturn {
 
 	void Renderer2D::Init( Ref<Pass> targetPass /*= nullptr */, Ref<Framebuffer> targetFramebuffer /*= nullptr*/ )
 	{
-		if( Application::Get().HasFlag( ApplicationFlag_UIOnly ) )
+		if( Application::Get()->HasFlag( ApplicationFlag_UIOnly ) )
 			return;
 
-		m_Width = Application::Get().GetWindow()->GetWidth();
-		m_Height = Application::Get().GetWindow()->GetHeight();
+		m_Width = Application::Get()->GetWindow()->GetWidth();
+		m_Height = Application::Get()->GetWindow()->GetHeight();
 
 		// Setup Quads
 		m_QuadVertexPositions.reserve( 4 );
@@ -134,7 +134,7 @@ namespace Saturn {
 		delete[] pLineBuffer;
 
 		// Setup Textures
-		m_Textures[ 0 ] = Renderer::Get().GetPinkTexture();
+		m_Textures[ 0 ] = Renderer::Get()->GetPinkTexture();
 
 		/*
 		// Construct a temporary render pass this is to be changed when the scene renderer is ready.
@@ -216,7 +216,7 @@ namespace Saturn {
 
 	void Renderer2D::Reset()
 	{
-		const uint32_t frame = Renderer::Get().GetCurrentFrame();
+		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
 
 		m_pCurrentQuad = m_CurrentQuadBase[ frame ];
 		m_QuadIndexCount = 0;
@@ -321,7 +321,7 @@ namespace Saturn {
 
 	void Renderer2D::RenderAllQuads()
 	{
-		uint32_t frame = Renderer::Get().GetCurrentFrame();
+		uint32_t frame = Renderer::Get()->GetCurrentFrame();
 
 		struct QuadMatricesObject
 		{
@@ -342,7 +342,7 @@ namespace Saturn {
 				if( m_Textures[ i ] )
 					m_QuadMaterial->SetResource( "u_InputTexture", m_Textures[ i ], i );
 				else
-					m_QuadMaterial->SetResource( "u_InputTexture", Renderer::Get().GetPinkTexture(), i );
+					m_QuadMaterial->SetResource( "u_InputTexture", Renderer::Get()->GetPinkTexture(), i );
 			}
 
 			m_QuadMaterial->Bind( m_CommandBuffer, m_QuadPipeline->GetPipelineLayout(), {} );
@@ -362,7 +362,7 @@ namespace Saturn {
 
 	void Renderer2D::RenderAllLines()
 	{
-		uint32_t frame = Renderer::Get().GetCurrentFrame();
+		uint32_t frame = Renderer::Get()->GetCurrentFrame();
 
 		struct QuadMatricesObject
 		{
@@ -771,7 +771,7 @@ namespace Saturn {
 
 	void Renderer2D::PreRender()
 	{
-		uint32_t frame = Renderer::Get().GetCurrentFrame();
+		uint32_t frame = Renderer::Get()->GetCurrentFrame();
 		
 		m_QuadIndexCount = 0;
 		m_pCurrentQuad = m_CurrentQuadBase[ frame ];
@@ -785,7 +785,7 @@ namespace Saturn {
 
 	void Renderer2D::Render()
 	{
-		m_CommandBuffer = Renderer::Get().ActiveCommandBuffer();
+		m_CommandBuffer = Renderer::Get()->ActiveCommandBuffer();
 
 		// First, check if we have a render pass.
 		if( !m_TargetRenderPass || !m_pCurrentQuad || !m_pCurrentLine )

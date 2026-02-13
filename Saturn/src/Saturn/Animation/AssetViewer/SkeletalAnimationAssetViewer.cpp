@@ -102,7 +102,7 @@ namespace Saturn {
 
 		if( Auxiliary::DrawAssetFinder( AssetType::SkeletalMesh, &open, m_AssetFinderOut, 0 ) )
 		{
-			m_Mesh = AssetManager::Get().GetAssetAs<SkeletalMesh>( m_AssetFinderOut );
+			m_Mesh = AssetManager::Get()->GetAssetAs<SkeletalMesh>( m_AssetFinderOut );
 
 			auto& mc = m_Entity->GetComponent<SkeletalMeshComponent>();
 
@@ -263,7 +263,7 @@ namespace Saturn {
 
 	void SkeletalAnimationAssetViewer::ImportMeshAndAnimation()
 	{
-		m_Asset = AssetManager::Get().GetAssetAs<SkeletalAnimationAsset>( m_AssetID );
+		m_Asset = AssetManager::Get()->GetAssetAs<SkeletalAnimationAsset>( m_AssetID );
 
 		m_Entity = m_Scene->CreateEntity( "InternalViewerEntity" );
 		m_Entity->AddComponent<SkeletalMeshComponent>();

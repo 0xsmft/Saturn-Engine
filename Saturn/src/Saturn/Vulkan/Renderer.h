@@ -53,7 +53,7 @@ namespace Saturn {
 	class Renderer : public RefTarget
 	{
 	public:
-		static inline Renderer& Get() { return *SingletonStorage::GetSingleton<Renderer>(); }
+		static inline Renderer* Get() { return SingletonStorage::GetSingleton<Renderer>(); }
 	public:
 		Renderer();
 		~Renderer();
@@ -81,7 +81,7 @@ namespace Saturn {
 
 		const std::vector<std::vector<VkWriteDescriptorSet>>& GetUniformBufferWriteDescriptors( Ref<UniformBufferSet>& rUniformBufferSet, Ref<Material>& rMaterialAsset );
 
-		void SetSceneEnvironment( Ref<Image2D> ShadowMap, Ref<EnvironmentMap> Environment, Ref<Texture2D> BDRF );
+		void SetSceneEnvironment( Ref<Image2D> ShadowMap, Ref<EnvironmentMap> Environment, Ref<Texture2D> BRDF );
 
 		// Allocate command buffer.
 		VkCommandBuffer AllocateCommandBuffer( VkCommandPool CommandPool );

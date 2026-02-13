@@ -76,7 +76,7 @@ namespace Saturn {
 		m_NodeEditor->SetRuntime( nullptr );
 		m_Runtime = nullptr;
 
-		GlobalUndoRedoGroup::Get().RemoveIfActionHasIdentifier( m_AssetID );
+		GlobalUndoRedoGroup::Get()->RemoveIfActionHasIdentifier( m_AssetID );
 		m_NodeEditor = nullptr;
 	}
 
@@ -98,7 +98,7 @@ namespace Saturn {
 
 	void GraphSoundAssetViewer::AddSoundAsset()
 	{
-		Ref<Asset> asset = AssetManager::Get().FindAsset( m_AssetID );
+		Ref<Asset> asset = AssetManager::Get()->FindAsset( m_AssetID );
 		m_Asset = asset;
 
 		m_Name = std::format( "{0}##{1}", m_Asset->Name, ( uint64_t ) m_AssetID );

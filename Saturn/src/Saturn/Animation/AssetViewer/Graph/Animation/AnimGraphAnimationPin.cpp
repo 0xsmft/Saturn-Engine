@@ -68,7 +68,7 @@ namespace Saturn {
 		RawSerialisation::ReadUUID( m_AssetID, rStream );
 
 #if !defined(SAT_DIST)
-		Ref<Asset> asset = AssetManager::Get().FindAsset( m_AssetID );
+		Ref<Asset> asset = AssetManager::Get()->FindAsset( m_AssetID );
 		if( asset )
 		{
 			m_AssetName = asset->Name;
@@ -116,12 +116,12 @@ namespace Saturn {
 				{
 					auto AG = dynamic_cast< AnimGraph* >( Node->GetParentObject() );
 
-					AssetManager::Get().UnregisterAssetDependency( AG->GetAssetID(), m_AssetID );
+					AssetManager::Get()->UnregisterAssetDependency( AG->GetAssetID(), m_AssetID );
 
-					m_AssetName = AssetManager::Get().FindAsset( tempID )->Name;
+					m_AssetName = AssetManager::Get()->FindAsset( tempID )->Name;
 					m_AssetID = tempID;
 
-					AssetManager::Get().RegisterAssetDependency( AG->GetAssetID(), m_AssetID );
+					AssetManager::Get()->RegisterAssetDependency( AG->GetAssetID(), m_AssetID );
 
 					if( AG )
 					{

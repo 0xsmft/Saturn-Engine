@@ -135,10 +135,10 @@ namespace Saturn {
 					std::filesystem::remove( entry );
 
 					// Find and update the asset that is linked to this path.
-					Ref<Asset> target = AssetManager::Get().FindAsset( assetPath );
+					Ref<Asset> target = AssetManager::Get()->FindAsset( assetPath );
 					target->SetAbsolutePath( dstPath );
 
-					AssetManager::Get().Save();
+					AssetManager::Get()->Save();
 
 					ClearSelection();
 					UpdateFiles( true );
@@ -245,7 +245,7 @@ namespace Saturn {
 			{
 				if( ImGui::MenuItem( "Show In Explorer" ) )
 				{
-					Application::Get().OpenNativeFileExplorer( m_SelectedItems[ 0 ]->Path() );
+					Application::Get()->OpenNativeFileExplorer( m_SelectedItems[ 0 ]->Path() );
 				}
 
 				if( ImGui::MenuItem( "Copy Path" ) )
@@ -262,7 +262,7 @@ namespace Saturn {
 				{
 					for( auto& rItem : m_SelectedItems )
 					{
-						if( AssetManager::Get().DoesAssetHaveDependencies( rItem->GetAsset() ) )
+						if( AssetManager::Get()->DoesAssetHaveDependencies( rItem->GetAsset() ) )
 						{
 							// Show popup...
 							m_ItemToDelete = rItem;
@@ -315,7 +315,7 @@ namespace Saturn {
 				{
 					for( auto& rItem : m_SelectedItems )
 					{
-						Application::Get().OpenNativeFileExplorer( rItem->Path(), true );
+						Application::Get()->OpenNativeFileExplorer( rItem->Path(), true );
 					}
 				}
 			}
@@ -332,7 +332,7 @@ namespace Saturn {
 			// Import externally.
 			if( ImGui::MenuItem( "Browse" ) )
 			{
-				const std::filesystem::path path = Application::Get().OpenFile( L"Supported asset types (*.fbx *.gltf *.glb *.png *.tga *.jpeg *.jpg *wav *.ogg *.mp3 *.ttf)|*.fbx; *.gltf; *.glb; *.png; *.tga; *.jpeg; *jpg; *.wav; *.ogg; *.mp3; *.ttf" );
+				const std::filesystem::path path = Application::Get()->OpenFile( L"Supported asset types (*.fbx *.gltf *.glb *.png *.tga *.jpeg *.jpg *wav *.ogg *.mp3 *.ttf)|*.fbx; *.gltf; *.glb; *.png; *.tga; *.jpeg; *jpg; *.wav; *.ogg; *.mp3; *.ttf" );
 
 				if( !path.empty() )
 				{
@@ -342,8 +342,8 @@ namespace Saturn {
 					bool textureAssetImported = false;
 					if( AssetExtensions::IsTexture( extensionLower ) )
 					{
-						auto id = AssetManager::Get().CreateAsset( AssetType::Texture );
-						auto asset = AssetManager::Get().FindAsset( id );
+						auto id = AssetManager::Get()->CreateAsset( AssetType::Texture );
+						auto asset = AssetManager::Get()->FindAsset( id );
 
 						std::filesystem::path newPath = m_CurrentPath / path.filename();
 
@@ -416,8 +416,8 @@ namespace Saturn {
 
 			if( ImGui::MenuItem( "New Material" ) )
 			{
-				auto id = AssetManager::Get().CreateAsset( AssetType::Material );
-				auto asset = AssetManager::Get().FindAsset( id );
+				auto id = AssetManager::Get()->CreateAsset( AssetType::Material );
+				auto asset = AssetManager::Get()->FindAsset( id );
 				auto newPath = m_CurrentPath / "Untitled Material.smaterial";
 				int32_t count = GetFilenameCount( "Untitled Material.smaterial" );
 
@@ -432,7 +432,7 @@ namespace Saturn {
 				MaterialAssetSerialiser mas;
 				mas.Serialise( material );
 
-				AssetManager::Get().Save();
+				AssetManager::Get()->Save();
 
 				UpdateFiles( true );
 				FindAndRenameItem( asset->Name );
@@ -440,8 +440,8 @@ namespace Saturn {
 
 			if( ImGui::MenuItem( "New Physics Material" ) )
 			{
-				auto id = AssetManager::Get().CreateAsset( AssetType::PhysicsMaterial );
-				auto asset = AssetManager::Get().FindAsset( id );
+				auto id = AssetManager::Get()->CreateAsset( AssetType::PhysicsMaterial );
+				auto asset = AssetManager::Get()->FindAsset( id );
 				auto newPath = m_CurrentPath / "Untitled Physics Material.sphymaterial";
 
 				int32_t count = GetFilenameCount( "Untitled Physics Material.sphymaterial" );
@@ -457,7 +457,7 @@ namespace Saturn {
 				PhysicsMaterialAssetSerialiser mas;
 				mas.Serialise( materialAsset );
 
-				AssetManager::Get().Save();
+				AssetManager::Get()->Save();
 
 				UpdateFiles( true );
 				FindAndRenameItem( asset->Name );
@@ -465,8 +465,8 @@ namespace Saturn {
 
 			if( ImGui::MenuItem( "New Scene" ) )
 			{
-				auto id = AssetManager::Get().CreateAsset( AssetType::Scene );
-				auto asset = AssetManager::Get().FindAsset( id );
+				auto id = AssetManager::Get()->CreateAsset( AssetType::Scene );
+				auto asset = AssetManager::Get()->FindAsset( id );
 				auto newPath = m_CurrentPath / "Empty Scene.scene";
 				int32_t count = GetFilenameCount( "Empty Scene.scene" );
 
@@ -490,7 +490,7 @@ namespace Saturn {
 
 				Scene::SetActiveScene( CurrentScene );
 
-				AssetManager::Get().Save();
+				AssetManager::Get()->Save();
 
 				UpdateFiles( true );
 				FindAndRenameItem( newScene->Name );
@@ -498,8 +498,8 @@ namespace Saturn {
 
 			if( ImGui::MenuItem( "New Graph Sound" ) )
 			{
-				auto id = AssetManager::Get().CreateAsset( AssetType::GraphSound );
-				auto asset = AssetManager::Get().FindAsset( id );
+				auto id = AssetManager::Get()->CreateAsset( AssetType::GraphSound );
+				auto asset = AssetManager::Get()->FindAsset( id );
 				auto newPath = m_CurrentPath / "New Sound Editor.gsnd";
 				int32_t count = GetFilenameCount( "New Sound Editor.gsnd" );
 
@@ -511,7 +511,7 @@ namespace Saturn {
 				std::ofstream fout( newPath );
 				fout.close();
 
-				AssetManager::Get().Save();
+				AssetManager::Get()->Save();
 
 				UpdateFiles( true );
 				FindAndRenameItem( asset->Name );
@@ -519,8 +519,8 @@ namespace Saturn {
 
 			if( ImGui::MenuItem( "New Behaviour Tree" ) )
 			{
-				auto id = AssetManager::Get().CreateAsset( AssetType::BehaviourTree );
-				auto asset = AssetManager::Get().FindAsset( id );
+				auto id = AssetManager::Get()->CreateAsset( AssetType::BehaviourTree );
+				auto asset = AssetManager::Get()->FindAsset( id );
 				auto newPath = m_CurrentPath / "New Behaviour Tree.sbt";
 				int32_t count = GetFilenameCount( "New Behaviour Tree.sbt" );
 
@@ -532,7 +532,7 @@ namespace Saturn {
 				std::ofstream fout( newPath );
 				fout.close();
 
-				AssetManager::Get().Save();
+				AssetManager::Get()->Save();
 
 				UpdateFiles( true );
 				FindAndRenameItem( asset->Name );
@@ -540,8 +540,8 @@ namespace Saturn {
 
 			if( ImGui::MenuItem( "New Behaviour Tree Memory (Blackboard)" ) )
 			{
-				auto id = AssetManager::Get().CreateAsset( AssetType::BehaviourTreeMemory );
-				auto asset = AssetManager::Get().FindAsset( id );
+				auto id = AssetManager::Get()->CreateAsset( AssetType::BehaviourTreeMemory );
+				auto asset = AssetManager::Get()->FindAsset( id );
 				auto newPath = m_CurrentPath / "New Behaviour Tree Memory.sbtm";
 				int32_t count = GetFilenameCount( "New Behaviour Tree Memory.sbtm" );
 
@@ -554,7 +554,7 @@ namespace Saturn {
 				BehaviourTreeMemorySpecAssetSerialiser btms;
 				btms.Serialise( spec );
 
-				AssetManager::Get().Save();
+				AssetManager::Get()->Save();
 
 				UpdateFiles( true );
 				FindAndRenameItem( asset->Name );
@@ -562,8 +562,8 @@ namespace Saturn {
 
 			if( ImGui::MenuItem( "New Animation Controller" ) )
 			{
-				const auto id = AssetManager::Get().CreateAsset( AssetType::AnimationController );
-				auto asset = AssetManager::Get().FindAsset( id );
+				const auto id = AssetManager::Get()->CreateAsset( AssetType::AnimationController );
+				auto asset = AssetManager::Get()->FindAsset( id );
 				auto newPath = m_CurrentPath / "New Animation Controller.sac";
 				const int32_t count = GetFilenameCount( "New Animation Controller.sac" );
 
@@ -581,7 +581,7 @@ namespace Saturn {
 				std::ofstream fout( newPath );
 				fout.close();
 
-				AssetManager::Get().Save();
+				AssetManager::Get()->Save();
 
 				UpdateFiles( true );
 				FindAndRenameItem( asset->Name );
@@ -589,8 +589,8 @@ namespace Saturn {
 
 			if( ImGui::MenuItem( "New Styling Profile" ) )
 			{
-				const auto id = AssetManager::Get().CreateAsset( AssetType::StyleProfile );
-				auto asset = AssetManager::Get().FindAsset( id );
+				const auto id = AssetManager::Get()->CreateAsset( AssetType::StyleProfile );
+				auto asset = AssetManager::Get()->FindAsset( id );
 				auto newPath = m_CurrentPath / "New Style Profile.ssp";
 				int32_t count = GetFilenameCount( "New Style Profile.ssp" );
 
@@ -603,7 +603,7 @@ namespace Saturn {
 				AluraStylingProfileAssetSerialiser ssp;
 				ssp.Serialise( styleProf );
 
-				AssetManager::Get().Save();
+				AssetManager::Get()->Save();
 
 				UpdateFiles( true );
 				FindAndRenameItem( asset->Name );
@@ -619,7 +619,7 @@ namespace Saturn {
 
 		if( ImGui::MenuItem( "Show folder in explorer" ) )
 		{
-			Application::Get().OpenNativeFileExplorer( m_CurrentPath );
+			Application::Get()->OpenNativeFileExplorer( m_CurrentPath );
 		}
 	}
 
@@ -970,13 +970,13 @@ namespace Saturn {
 					if( Premake::Launch( Project::GetActiveProject()->GetRootDir(), L"premake5.lua", PremakeAction::VisualStudio2022 ) )
 					{
 #if !defined(SAT_DIST)
-						Application::Get().DispatchEvent<SendEditorNotificationEvent>( "Updated project files with new source files." );
+						Application::Get()->DispatchEvent<SendEditorNotificationEvent>( "Updated project files with new source files." );
 #endif
 					}
 					else
 					{
 #if !defined(SAT_DIST)
-						Application::Get().DispatchEvent<SendEditorNotificationEvent>( "Unable to generate project files using Premake, you may manfully have to generate them!" );
+						Application::Get()->DispatchEvent<SendEditorNotificationEvent>( "Unable to generate project files using Premake, you may manfully have to generate them!" );
 #endif
 					}
 
@@ -986,14 +986,14 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 						std::filesystem::path headerPath = m_CurrentPath / m_NewClassName;
 						headerPath.replace_extension( ".h" );
-						Application::Get().DispatchEvent<RequestOpenIDEEvent>( headerPath );
+						Application::Get()->DispatchEvent<RequestOpenIDEEvent>( headerPath );
 #endif
 					}
 
 					// Step 4: TODO: Temp, when I port hot reloading over to use the new BuildTool and the new /MD it will work properly.
 					// and this would no longer need to be here.
 #if !defined(SAT_DIST)
-					Application::Get().DispatchEvent<SendEditorNotificationEvent>( "A hot reload or a recompile is needed for the class to be registered within the Game!" );
+					Application::Get()->DispatchEvent<SendEditorNotificationEvent>( "A hot reload or a recompile is needed for the class to be registered within the Game!" );
 #endif
 
 					PopupModified = true;
@@ -1052,7 +1052,7 @@ namespace Saturn {
 				if( ImGui::Button( "Create" ) )
 				{
 					// First, create the asset.
-					Ref<Asset> prefabAsset = AssetManager::Get().FindAsset( AssetManager::Get().CreateAsset( AssetType::Prefab ) );
+					Ref<Asset> prefabAsset = AssetManager::Get()->FindAsset( AssetManager::Get()->CreateAsset( AssetType::Prefab ) );
 					Ref<Prefab> prefab = prefabAsset.As<Prefab>();
 					prefab = Ref<Prefab>::Create();
 
@@ -1081,7 +1081,7 @@ namespace Saturn {
 					ps.Serialise( prefab );
 
 					prefabAsset->SetAbsolutePath( path );
-					AssetManager::Get().Save();
+					AssetManager::Get()->Save();
 
 					PopupModified = true;
 				}
@@ -1214,8 +1214,8 @@ namespace Saturn {
 		if( ImGui::BeginPopupModal( "Delete Asset##DELETEASSET", &m_ShowDeleteAssetPopup, ImGuiWindowFlags_NoSavedSettings ) )
 		{
 			Ref<Asset> assetToDelete = m_ItemToDelete->GetAsset();
-			auto& rMemoryDependencies = AssetManager::Get().GetAssetDependenciesForAsset( assetToDelete );
-			auto& rPureDependencies = AssetManager::Get().GetPureAssetDependenciesForAsset( assetToDelete );
+			auto& rMemoryDependencies = AssetManager::Get()->GetAssetDependenciesForAsset( assetToDelete );
+			auto& rPureDependencies = AssetManager::Get()->GetPureAssetDependenciesForAsset( assetToDelete );
 
 			ImGui::Text( "Are you sure you want to delete this asset?" );
 
@@ -1237,7 +1237,7 @@ namespace Saturn {
 			{
 				for( AssetID id : rPureDependencies )
 				{
-					Ref<Asset> dependant = AssetManager::Get().FindAsset( id );
+					Ref<Asset> dependant = AssetManager::Get()->FindAsset( id );
 					if( !dependant )
 						ImGui::Selectable( "<NULL DEPENDANT>" );
 					else
@@ -1313,12 +1313,12 @@ namespace Saturn {
 					// Update asset (TODO)
 					for( AssetID assetID : rPureDependencies )
 					{
-						AssetManager::Get().UpdateAssetDependency( m_ItemToDelete->GetAssetID(), assetID, s_ID );
+						AssetManager::Get()->UpdateAssetDependency( m_ItemToDelete->GetAssetID(), assetID, s_ID );
 					}
 
 					s_ID = 0;
 
-					GlobalUndoRedoGroup::Get().ClearAll();
+					GlobalUndoRedoGroup::Get()->ClearAll();
 
 					m_ItemToDelete->Delete();
 					m_ItemToDelete = nullptr;
@@ -1346,12 +1346,12 @@ namespace Saturn {
 
 					for( AssetID assetID : rPureDependencies )
 					{
-						AssetManager::Get().UpdateAssetDependency( m_ItemToDelete->GetAssetID(), assetID, 0 );
+						AssetManager::Get()->UpdateAssetDependency( m_ItemToDelete->GetAssetID(), assetID, 0 );
 					}
 
-					AssetManager::Get().UnregisterAllAssetDependencies( assetToDelete->ID );
+					AssetManager::Get()->UnregisterAllAssetDependencies( assetToDelete->ID );
 
-					GlobalUndoRedoGroup::Get().ClearAll();
+					GlobalUndoRedoGroup::Get()->ClearAll();
 
 					m_ItemToDelete->Delete();
 					m_ItemToDelete = nullptr;
@@ -1576,7 +1576,7 @@ namespace Saturn {
 
 	void ContentBrowserPanel::DuplicateAsset( Ref<Asset> asset )
 	{
-		auto dupedAsset = AssetManager::Get().FindAsset( AssetManager::Get().DuplicateAsset( asset ) );
+		auto dupedAsset = AssetManager::Get()->FindAsset( AssetManager::Get()->DuplicateAsset( asset ) );
 
 		// Set a temporary name
 		const std::string fileExt = asset->Path.extension().string();

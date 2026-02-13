@@ -65,7 +65,7 @@ namespace Saturn {
 		switch( type )
 		{
 			case AnimatorType::Single:
-				m_SingleAnimationAsset = AssetManager::Get().GetAssetAs<SkeletalAnimationAsset>( id );
+				m_SingleAnimationAsset = AssetManager::Get()->GetAssetAs<SkeletalAnimationAsset>( id );
 				break;
 		
 			case AnimatorType::AnimationControllerGraph:

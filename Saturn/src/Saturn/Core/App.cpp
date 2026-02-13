@@ -126,12 +126,12 @@ namespace Saturn {
 
 			if( !m_Window->Minimized() )
 			{
-				Renderer::Get().BeginFrame();
+				Renderer::Get()->BeginFrame();
 				{
 					BuildRenderCommands();
 				}
 				// End this frame on render thread.
-				RenderThread::Get().Queue( [=] { Renderer::Get().EndFrame(); } );
+				RenderThread::Get().Queue( [=] { Renderer::Get()->EndFrame(); } );
 			}
 			else
 				std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
@@ -205,7 +205,7 @@ namespace Saturn {
 
 		RenderThread::Get().Queue( [=]
 			{
-				m_ImGuiLayer->End( Renderer::Get().ActiveCommandBuffer() );
+				m_ImGuiLayer->End( Renderer::Get()->ActiveCommandBuffer() );
 			} );
 #endif
 	}
@@ -282,7 +282,7 @@ namespace Saturn {
 		if( width == 0 && height == 0 )
 			return;
 
-		VulkanContext::Get().ResizeEvent();
+		VulkanContext::Get()->ResizeEvent();
 	}
 
 	void Application::OnCustomEvent( Event& rEvent )

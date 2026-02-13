@@ -43,7 +43,7 @@ namespace Saturn {
 	class AssetManager : public RefTarget
 	{
 	public:
-		static inline AssetManager& Get() { return *SingletonStorage::GetSingleton<AssetManager>(); }
+		static inline AssetManager* Get() { return SingletonStorage::GetSingleton<AssetManager>(); }
 	public:
 		AssetManager();
 		~AssetManager() { Terminate(); }

@@ -101,11 +101,11 @@ namespace Saturn {
 				if( ImGui::MenuItem( "Open Skeleton Asset Viewer" ) )
 				{
 					const AssetID skeletonID = m_Mesh->GetSkeletonAsset()->ID;
-					const Ref<Asset> asset = AssetManager::Get().FindAsset( skeletonID );
+					const Ref<Asset> asset = AssetManager::Get()->FindAsset( skeletonID );
 					if( asset )
 					{
 						const std::string windowName = std::format( "{0}##{1}", asset->Name, ( uint64_t ) skeletonID );
-						ImGuiWindowManager::Get().OpenOrShowWindow<SkeletonAssetViewer>( windowName, skeletonID );
+						ImGuiWindowManager::Get()->OpenOrShowWindow<SkeletonAssetViewer>( windowName, skeletonID );
 
 						ImGui::SetWindowFocus( windowName.c_str() );
 					}
@@ -171,15 +171,15 @@ namespace Saturn {
 
 					if( Auxiliary::DrawAssetFinder( AssetType::Material, &open, m_AssetFinderOut, 0 ) )
 					{
-						Ref<MaterialAsset> newAsset = AssetManager::Get().GetAssetAs<MaterialAsset>( m_AssetFinderOut );
+						Ref<MaterialAsset> newAsset = AssetManager::Get()->GetAssetAs<MaterialAsset>( m_AssetFinderOut );
 						rMaterial->SetMaterial( newAsset->GetMaterial() );
 
 						// Update Pure Dependencies & Update ADN Dependencies
-						AssetManager::Get().UnregisterAssetDependency( m_AssetID, rMaterial->ID );
+						AssetManager::Get()->UnregisterAssetDependency( m_AssetID, rMaterial->ID );
 
 						m_Mesh->GetMaterialRegistry()->SetMaterial( i, m_AssetFinderOut );
 
-						AssetManager::Get().RegisterAssetDependency( m_AssetID, m_AssetFinderOut );
+						AssetManager::Get()->RegisterAssetDependency( m_AssetID, m_AssetFinderOut );
 					}
 
 					Auxiliary::EndTreeNode();
@@ -206,7 +206,7 @@ namespace Saturn {
 
 			if( Auxiliary::DrawAssetFinder( AssetType::SkeletalAnimation, &open, m_AssetFinderOut, 0 ) )
 			{
-				Ref<SkeletalAnimationAsset> newAsset = AssetManager::Get().GetAssetAs<SkeletalAnimationAsset>( m_AssetFinderOut );
+				Ref<SkeletalAnimationAsset> newAsset = AssetManager::Get()->GetAssetAs<SkeletalAnimationAsset>( m_AssetFinderOut );
 
 				m_PreviewAnimation = newAsset;
 
@@ -240,7 +240,7 @@ namespace Saturn {
 
 	void SkeletalMeshAssetViewer::AddMesh()
 	{
-		Ref<SkeletalMesh> mesh = AssetManager::Get().GetAssetAs<SkeletalMesh>( m_AssetID );
+		Ref<SkeletalMesh> mesh = AssetManager::Get()->GetAssetAs<SkeletalMesh>( m_AssetID );
 
 		m_Mesh = mesh;
 

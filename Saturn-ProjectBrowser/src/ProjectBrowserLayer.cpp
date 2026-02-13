@@ -160,7 +160,7 @@ namespace Saturn {
 		{
 			if( ImGui::BeginMenu( "File" ) )
 			{
-				if( ImGui::MenuItem( "Close", "Alt+F4" ) ) Application::Get().Close();
+				if( ImGui::MenuItem( "Close", "Alt+F4" ) ) Application::Get()->Close();
 
 				if( ImGui::MenuItem( "About" ) ) m_OpenAboutWindow ^= 1;
 
@@ -175,8 +175,8 @@ namespace Saturn {
 			}
 		} );
 
-		Application::Get().GetWindow()->ChangeTitle( "Saturn Project Browser" );
-		Application::Get().GetWindow()->Show();
+		Application::Get()->GetWindow()->ChangeTitle( "Saturn Project Browser" );
+		Application::Get()->GetWindow()->Show();
 	}
 
 	void ProjectBrowserLayer::OnAttach()
@@ -242,7 +242,7 @@ namespace Saturn {
 				ImGui::SameLine();
 				if( ImGui::Button( "...##dir" ) )
 				{
-					auto res = Application::Get().OpenFolder();
+					auto res = Application::Get()->OpenFolder();
 					m_SaturnDir = res;
 				}
 				
@@ -297,7 +297,7 @@ namespace Saturn {
 
 		if( ImGui::Button( "Browse", ImVec2( bottomBarHeight, bottomBarHeight ) ) ) 
 		{
-			auto filePath = Application::Get().OpenFile( L"Saturn Project file (*.sproject)|*.sproject" );
+			auto filePath = Application::Get()->OpenFile( L"Saturn Project file (*.sproject)|*.sproject" );
 
 			ImportExternalProject( filePath );
 		}
@@ -330,7 +330,7 @@ namespace Saturn {
 
 			if( ImGui::SmallButton( "...##location" ) )
 			{
-				m_ProjectFilePath = Application::Get().OpenFolder();
+				m_ProjectFilePath = Application::Get()->OpenFolder();
 			}
 
 			ImGui::Checkbox( "Create helpful folders", &m_CreateHelpfulFolders );
@@ -587,7 +587,7 @@ namespace Saturn {
 		const std::filesystem::path workingDir = commandLine / "Saturn-Editor";
 
 		commandLine /= "bin";
-		commandLine /= std::format( "{0}-{1}", Application::Get().GetCurrentConfigName(), SAT_PLATFORM_BINARY_FOLDER );
+		commandLine /= std::format( "{0}-{1}", Application::Get()->GetCurrentConfigName(), SAT_PLATFORM_BINARY_FOLDER );
 		commandLine /= "Saturn-Editor";
 			
 #if defined( SAT_PLATFORM_WINDOWS )
@@ -603,7 +603,7 @@ namespace Saturn {
 
 		EngineSettings::Get().AddRecentProject( rProject.Filepath );
 
-		Application::Get().Close();
+		Application::Get()->Close();
 	}
 
 	void ProjectBrowserLayer::OnEvent( Event& rEvent )

@@ -123,13 +123,13 @@ namespace Saturn {
 
 		Timer timer;
 
-		AssetManager& rAssetManager = AssetManager::Get();
+		AssetManager* pAssetManager = AssetManager::Get();
 		Ref<Project> ActiveProject = Project::GetActiveProject();
 
 		const std::string& rMountBase = Project::GetActiveConfig().Name;
 
 		Ref<AssetRegistry> AssetBundleRegistry = Ref<AssetRegistry>::Create();
-		AssetBundleRegistry->CopyFrom( rAssetManager.GetAssetRegistry() );
+		AssetBundleRegistry->CopyFrom( pAssetManager->GetAssetRegistry() );
 
 		auto& rVFS = VirtualFS::Get();
 
@@ -141,7 +141,7 @@ namespace Saturn {
 		jobProgress->SetTitle( "Loading assets..." );
 
 		// THREAD-TRANSTION, Block main thread
-		Application::Get().SuspendMainThreadCV();
+		Application::Get()->SuspendMainThreadCV();
 
 		for( auto& [id, asset] : AssetBundleRegistry->GetAssetMap() )
 		{
@@ -172,9 +172,9 @@ namespace Saturn {
 		}
 
 		// THREAD-TRANSTION, Resume main thread
-		Application::Get().ResumeMainThreadCV();
+		Application::Get()->ResumeMainThreadCV();
 
-		SAT_CORE_INFO( "Dumped {0} asset(s)", rAssetManager.GetAssetRegistrySize() );
+		SAT_CORE_INFO( "Dumped {0} asset(s)", pAssetManager->GetAssetRegistrySize() );
 				
 		jobProgress->SetProgress( 10.0f );
 		jobProgress->SetTitle( "Building AssetBundle" );
@@ -184,7 +184,7 @@ namespace Saturn {
 		std::ofstream fout( cachePath, std::ios::binary | std::ios::trunc );
 	
 		AssetBundleHeader header{};
-		header.Assets = rAssetManager.GetAssetRegistrySize();
+		header.Assets = pAssetManager->GetAssetRegistrySize();
 		header.Version = SAT_CURRENT_VERSION;
 
 		RawSerialisation::WriteObject( header, fout );
@@ -292,7 +292,7 @@ namespace Saturn {
 			jobProgress->AddProgress( ( 1.0f + jobProgress->GetProgress() ) / DumpFileToAssetID.size() );
 		}
 
-		SAT_CORE_INFO( "Packaged {0} asset(s)", rAssetManager.GetAssetRegistrySize() );
+		SAT_CORE_INFO( "Packaged {0} asset(s)", pAssetManager->GetAssetRegistrySize() );
 		SAT_CORE_INFO( "Asset bundle built in {0}s", timer.Elapsed() / 1000 );
 
 		fout.close();
@@ -315,7 +315,7 @@ namespace Saturn {
 	void AssetBundle::RTDumpAsset( const Ref<Asset>& rAsset, Ref<AssetRegistry>& AssetBundleRegistry )
 	{
 		UUID id = rAsset->ID;
-		AssetManager& rAssetManager = AssetManager::Get();
+		AssetManager* pAssetManager = AssetManager::Get();
 
 		// Load the asset and dump memory into it's temporary file.
 		// NOTE: We use the asset manager but ask it to load the asset into our asset registry.
@@ -336,7 +336,7 @@ namespace Saturn {
 
 			case Saturn::AssetType::StaticMesh:
 			{
-				Ref<StaticMesh> mesh = rAssetManager.ImportAssetAs<StaticMesh>( AssetBundleRegistry, id );
+				Ref<StaticMesh> mesh = pAssetManager->ImportAssetAs<StaticMesh>( AssetBundleRegistry, id );
 				if( mesh )
 				{
 					RawStaticMeshAssetSerialiser serialiser;
@@ -346,7 +346,7 @@ namespace Saturn {
 
 			case Saturn::AssetType::SkeletalMesh:
 			{
-				Ref<SkeletalMesh> skMesh = rAssetManager.ImportAssetAs<SkeletalMesh>( AssetBundleRegistry, id );
+				Ref<SkeletalMesh> skMesh = pAssetManager->ImportAssetAs<SkeletalMesh>( AssetBundleRegistry, id );
 				if( skMesh )
 				{
 					RawStaticMeshAssetSerialiser serialiser;
@@ -356,7 +356,7 @@ namespace Saturn {
 
 			case Saturn::AssetType::Material:
 			{
-				Ref<MaterialAsset> materialAsset = rAssetManager.ImportAssetAs<MaterialAsset>( AssetBundleRegistry, id );
+				Ref<MaterialAsset> materialAsset = pAssetManager->ImportAssetAs<MaterialAsset>( AssetBundleRegistry, id );
 				if( materialAsset )
 				{
 					RawMaterialAssetSerialiser serialiser;
@@ -366,7 +366,7 @@ namespace Saturn {
 
 			case Saturn::AssetType::Sound:
 			{
-				Ref<SoundSpecification> sndSpec = rAssetManager.ImportAssetAs<SoundSpecification>( AssetBundleRegistry, id );
+				Ref<SoundSpecification> sndSpec = pAssetManager->ImportAssetAs<SoundSpecification>( AssetBundleRegistry, id );
 				if( sndSpec )
 				{
 					RawSoundSpecAssetSerialiser serialiser;
@@ -384,7 +384,7 @@ namespace Saturn {
 
 			case Saturn::AssetType::Prefab:
 			{
-				Ref<Prefab> prefabAsset = rAssetManager.ImportAssetAs<Prefab>( AssetBundleRegistry, id );
+				Ref<Prefab> prefabAsset = pAssetManager->ImportAssetAs<Prefab>( AssetBundleRegistry, id );
 				if( prefabAsset )
 				{
 					RawPrefabSerialiser serialiser;
@@ -394,7 +394,7 @@ namespace Saturn {
 
 			case Saturn::AssetType::Skeleton:
 			{
-				Ref<SkeletonAsset> skeletonAsset = rAssetManager.ImportAssetAs<SkeletonAsset>( AssetBundleRegistry, id );
+				Ref<SkeletonAsset> skeletonAsset = pAssetManager->ImportAssetAs<SkeletonAsset>( AssetBundleRegistry, id );
 				if( skeletonAsset )
 				{
 					RawSkeletonAssetSerialiser serialiser;
@@ -404,7 +404,7 @@ namespace Saturn {
 
 			case Saturn::AssetType::PhysicsMaterial:
 			{
-				Ref<PhysicsMaterialAsset> physAsset = rAssetManager.ImportAssetAs<PhysicsMaterialAsset>( AssetBundleRegistry, id );
+				Ref<PhysicsMaterialAsset> physAsset = pAssetManager->ImportAssetAs<PhysicsMaterialAsset>( AssetBundleRegistry, id );
 				if( physAsset )
 				{
 					RawPhysicsMaterialAssetSerialiser serialiser;
@@ -414,7 +414,7 @@ namespace Saturn {
 
 			case Saturn::AssetType::BehaviourTreeMemory:
 			{
-				Ref<BehaviourTreeMemorySpecification> btMemAsset = rAssetManager.ImportAssetAs<BehaviourTreeMemorySpecification>( AssetBundleRegistry, id );
+				Ref<BehaviourTreeMemorySpecification> btMemAsset = pAssetManager->ImportAssetAs<BehaviourTreeMemorySpecification>( AssetBundleRegistry, id );
 				if( btMemAsset )
 				{
 					RawBehaviourTreeMemorySpecSerialiser serialiser;
@@ -424,7 +424,7 @@ namespace Saturn {
 
 			case Saturn::AssetType::SkeletalAnimation:
 			{
-				Ref<SkeletalAnimationAsset> animAsset = rAssetManager.ImportAssetAs<SkeletalAnimationAsset>( AssetBundleRegistry, id );
+				Ref<SkeletalAnimationAsset> animAsset = pAssetManager->ImportAssetAs<SkeletalAnimationAsset>( AssetBundleRegistry, id );
 				if( animAsset )
 				{
 					RawSkeletalAnimationSerialiser serialiser;
@@ -434,7 +434,7 @@ namespace Saturn {
 
 			case Saturn::AssetType::Font:
 			{
-				Ref<AluraFont> fontAsset = rAssetManager.ImportAssetAs<AluraFont>( AssetBundleRegistry, id );
+				Ref<AluraFont> fontAsset = pAssetManager->ImportAssetAs<AluraFont>( AssetBundleRegistry, id );
 				if( fontAsset )
 				{
 					RawFontSerialiser serialiser;
@@ -444,7 +444,7 @@ namespace Saturn {
 
 			case Saturn::AssetType::StyleProfile: 
 			{
-				Ref<AluraStylingProfile> styleProf = rAssetManager.ImportAssetAs<AluraStylingProfile>( AssetBundleRegistry, id );
+				Ref<AluraStylingProfile> styleProf = pAssetManager->ImportAssetAs<AluraStylingProfile>( AssetBundleRegistry, id );
 				if( styleProf )
 				{
 					RawSkeletalAnimationSerialiser serialiser;
@@ -495,8 +495,8 @@ namespace Saturn {
 			return AssetBundleResult::FileVersionMismatch;
 		}
 
-		AssetManager& rAssetManager = AssetManager::Get();
-		Ref<AssetRegistry> rAssetRegistry = rAssetManager.GetAssetRegistry();
+		AssetManager* pAssetManager = AssetManager::Get();
+		Ref<AssetRegistry> rAssetRegistry = pAssetManager->GetAssetRegistry();
 		VirtualFS& rVFS = VirtualFS::Get();
 
 		const std::string& rMountBase = Project::GetActiveConfig().Name;
@@ -650,9 +650,9 @@ namespace Saturn {
 		{
 			RawSerialisation::WriteString( rBinding.Name, fout );
 
-			RawSerialisation::WriteObject( (int)rBinding.Key, fout );
-			RawSerialisation::WriteObject( (int)rBinding.MouseButton, fout );
-			RawSerialisation::WriteObject( (int)rBinding.Type, fout );
+			RawSerialisation::WriteObject( ( int ) rBinding.Key, fout );
+			RawSerialisation::WriteObject( ( int ) rBinding.MouseButton, fout );
+			RawSerialisation::WriteObject( ( int ) rBinding.Type, fout );
 		}
 
 		// Sound Groups

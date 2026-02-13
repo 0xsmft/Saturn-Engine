@@ -164,7 +164,7 @@ namespace Saturn {
 			cacheData.Camera.SetDistance( 4.0f );
 
 			// Update to change the distance
-			cacheData.Camera.OnUpdate( Application::Get().Time() );
+			cacheData.Camera.OnUpdate( Application::Get()->Time() );
 
 			cacheData.AwaitingRender = true;
 
@@ -175,8 +175,8 @@ namespace Saturn {
 	static void StartFirstRender( RendererThumbnailCacheData& rCacheData )
 	{
 		// Start the render
-		rCacheData.Camera.OnUpdate( Application::Get().Time() );
-		rCacheData.Scene->OnRenderEditor( &rCacheData.Camera, rCacheData.Camera.ViewMatrix(), rCacheData.SceneRenderer, Application::Get().Time() );
+		rCacheData.Camera.OnUpdate( Application::Get()->Time() );
+		rCacheData.Scene->OnRenderEditor( &rCacheData.Camera, rCacheData.Camera.ViewMatrix(), rCacheData.SceneRenderer, Application::Get()->Time() );
 		
 		rCacheData.AwaitingRender = false;
 
@@ -237,7 +237,7 @@ namespace Saturn {
 		JobSystem::Get().QueueJob( [&]() 
 		{
 			// Load material
-			Ref<MaterialAsset> materialAsset = AssetManager::Get().GetAssetAs<MaterialAsset>( rData.Asset->ID );
+			Ref<MaterialAsset> materialAsset = AssetManager::Get()->GetAssetAs<MaterialAsset>( rData.Asset->ID );
 
 			InitNewRenderThumbnail( rData, materialAsset );
 			rData.State = ThumbnailState::Generating;
@@ -295,7 +295,7 @@ namespace Saturn {
 		{
 			RenderThread::Get().Queue( [ rData ]()
 			{
-				Ref<StaticMesh> staticMesh = AssetManager::Get().GetAssetAs<StaticMesh>( rData.Asset->ID );
+				Ref<StaticMesh> staticMesh = AssetManager::Get()->GetAssetAs<StaticMesh>( rData.Asset->ID );
 
 				auto& cacheData = s_RendererThumbnailCache[ rData.Asset->ID ];
 				cacheData.SceneRenderer = Ref<SceneRenderer>::Create( SceneRendererFlag_NoFlags );
@@ -332,11 +332,11 @@ namespace Saturn {
 				}
 
 				// Update to change the distance
-				cacheData.Camera.OnUpdate( Application::Get().Time() );
+				cacheData.Camera.OnUpdate( Application::Get()->Time() );
 				cacheData.AwaitingRender = true;
 			} );
 
-			Ref<StaticMesh> staticMesh = AssetManager::Get().GetAssetAs<StaticMesh>( rData.Asset->ID );
+			Ref<StaticMesh> staticMesh = AssetManager::Get()->GetAssetAs<StaticMesh>( rData.Asset->ID );
 			// Ready to render next frame by the MainThread (RenderThread)
 			rData.State = ThumbnailState::Generating;
 			rData.Asset = staticMesh;
@@ -393,7 +393,7 @@ namespace Saturn {
 		{
 			RenderThread::Get().Queue( [ rData ]()
 			{
-				Ref<SkeletalMesh> skelMesh = AssetManager::Get().GetAssetAs<SkeletalMesh>( rData.Asset->ID );
+				Ref<SkeletalMesh> skelMesh = AssetManager::Get()->GetAssetAs<SkeletalMesh>( rData.Asset->ID );
 
 				auto& cacheData = s_RendererThumbnailCache[ rData.Asset->ID ];
 				cacheData.SceneRenderer = Ref<SceneRenderer>::Create( SceneRendererFlag_NoFlags );
@@ -430,12 +430,12 @@ namespace Saturn {
 				}
 
 				// Update to change the distance
-				cacheData.Camera.OnUpdate( Application::Get().Time() );
+				cacheData.Camera.OnUpdate( Application::Get()->Time() );
 				cacheData.AwaitingRender = true;
 			} );
 
 
-			Ref<SkeletalMesh> skeletalMesh = AssetManager::Get().GetAssetAs<SkeletalMesh>( rData.Asset->ID );
+			Ref<SkeletalMesh> skeletalMesh = AssetManager::Get()->GetAssetAs<SkeletalMesh>( rData.Asset->ID );
 			// Ready to render next frame by the MainThread (RenderThread)
 			rData.State = ThumbnailState::Generating;
 			rData.Asset = skeletalMesh;

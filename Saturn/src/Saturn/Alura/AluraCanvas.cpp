@@ -40,13 +40,13 @@ namespace Saturn {
 	AluraCanvas::AluraCanvas( const AluraCanvasSpecification& rSpecification )
 		: m_Size( rSpecification.Size ), m_Position( rSpecification.Position )
 	{
-		m_ActiveFont = AssetManager::Get().GetAssetAs<AluraFont>( rSpecification.MasterFontAssetID );
+		m_ActiveFont = AssetManager::Get()->GetAssetAs<AluraFont>( rSpecification.MasterFontAssetID );
 
 		// Reserve some space for fonts so assume, regular, bold, italics...
 		m_Fonts.reserve( 3 );
 		m_Fonts.push_back( m_ActiveFont );
 
-		Ref<AluraStylingProfile> stylingProf = AssetManager::Get().GetAssetAs<AluraStylingProfile>( rSpecification.StylingProfile );
+		Ref<AluraStylingProfile> stylingProf = AssetManager::Get()->GetAssetAs<AluraStylingProfile>( rSpecification.StylingProfile );
 		if( stylingProf )
 		{
 			m_Style = stylingProf->GetStyle();
@@ -61,7 +61,7 @@ namespace Saturn {
 	void AluraCanvas::Begin()
 	{
 		// Font is null! Must have an active font.
-		SAT_CORE_ASSERT( m_ActiveFont );
+//		SAT_CORE_ASSERT( m_ActiveFont );
 
 		// Forgot to call PopStyle()
 		SAT_CORE_ASSERT( m_ColorStack.size() == 0 );

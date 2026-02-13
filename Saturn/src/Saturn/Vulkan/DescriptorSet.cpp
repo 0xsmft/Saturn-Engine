@@ -41,7 +41,7 @@ namespace Saturn {
 		PoolCreateInfo.maxSets = MaxSets;
 		PoolCreateInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 
-		VK_CHECK( vkCreateDescriptorPool( VulkanContext::Get().GetDevice(), &PoolCreateInfo, nullptr, &m_Pool ) );
+		VK_CHECK( vkCreateDescriptorPool( VulkanContext::Get()->GetDevice(), &PoolCreateInfo, nullptr, &m_Pool ) );
 	}
 
 	DescriptorPool::~DescriptorPool()
@@ -52,7 +52,7 @@ namespace Saturn {
 	void DescriptorPool::Terminate()
 	{
 		if( m_Pool )
-			vkDestroyDescriptorPool( VulkanContext::Get().GetDevice(), m_Pool, nullptr );
+			vkDestroyDescriptorPool( VulkanContext::Get()->GetDevice(), m_Pool, nullptr );
 
 		m_Pool = nullptr;
 	}
@@ -73,7 +73,7 @@ namespace Saturn {
 	void DescriptorSet::Terminate()
 	{
 		if( m_Set )
-			vkFreeDescriptorSets( VulkanContext::Get().GetDevice(), *m_Specification.Pool.Get(), 1, &m_Set );
+			vkFreeDescriptorSets( VulkanContext::Get()->GetDevice(), *m_Specification.Pool.Get(), 1, &m_Set );
 
 		m_Set = nullptr;
 		m_Specification = {};
@@ -98,12 +98,12 @@ namespace Saturn {
 		else
 			WriteDescriptorSet.pImageInfo = nullptr;
 
-		vkUpdateDescriptorSets( VulkanContext::Get().GetDevice(), 1, &WriteDescriptorSet, 0, nullptr );
+		vkUpdateDescriptorSets( VulkanContext::Get()->GetDevice(), 1, &WriteDescriptorSet, 0, nullptr );
 	}
 
 	void DescriptorSet::Write( std::vector< VkWriteDescriptorSet > WriteDescriptorSets )
 	{
-		vkUpdateDescriptorSets( VulkanContext::Get().GetDevice(), (uint32_t)WriteDescriptorSets.size(), WriteDescriptorSets.data(), 0, nullptr );
+		vkUpdateDescriptorSets( VulkanContext::Get()->GetDevice(), (uint32_t)WriteDescriptorSets.size(), WriteDescriptorSets.data(), 0, nullptr );
 	}
 
 	void DescriptorSet::Bind( VkCommandBuffer CommandBuffer, VkPipelineLayout PipelineLayout )
@@ -118,6 +118,6 @@ namespace Saturn {
 		AllocateInfo.descriptorSetCount = 1;
 		AllocateInfo.pSetLayouts = &m_Specification.Layout;
 		
-		VK_CHECK( vkAllocateDescriptorSets( VulkanContext::Get().GetDevice(), &AllocateInfo, &m_Set ) );
+		VK_CHECK( vkAllocateDescriptorSets( VulkanContext::Get()->GetDevice(), &AllocateInfo, &m_Set ) );
 	}
 }

@@ -135,7 +135,7 @@ namespace Saturn {
 			if( filepath.extension() == ".sreg" )
 				continue;
 
-			Ref<Asset> asset = AssetManager::Get().FindAsset( filepath );
+			Ref<Asset> asset = AssetManager::Get()->FindAsset( filepath );
 
 			if( std::find( s_AllowedAssetExtentions.begin(), s_AllowedAssetExtentions.end(), filepathString ) == s_AllowedAssetExtentions.end() )
 				continue; // Extension is forbidden.
@@ -148,8 +148,8 @@ namespace Saturn {
 				// Editor will show dialog and handle the rest.
 
 				auto type = ExtensionToAssetType( filepathString );
-				auto id = AssetManager::Get().CreateAsset( type );
-				asset = AssetManager::Get().FindAsset( id );
+				auto id = AssetManager::Get()->CreateAsset( type );
+				asset = AssetManager::Get()->FindAsset( id );
 
 				asset->SetAbsolutePath( rEntry.path() );
 
@@ -170,7 +170,7 @@ namespace Saturn {
 
 		bool FileChanged = false;
 
-		auto& assetReg = AssetManager::Get().GetAssetRegistry()->GetAssetMap();
+		auto& assetReg = AssetManager::Get()->GetAssetRegistry()->GetAssetMap();
 		for( auto& [id, rAsset] : assetReg )
 		{
 			if( !rAsset )
@@ -186,7 +186,7 @@ namespace Saturn {
 
 		for( const auto& id : pendingAssets )
 		{
-			AssetManager::Get().RemoveAsset( id );
+			AssetManager::Get()->RemoveAsset( id );
 		}
 
 		if( FileChanged )
@@ -248,7 +248,7 @@ namespace Saturn {
 		auto rootDir = GetRootDir();
 		rootDir /= "bin";
 
-		rootDir /= std::format( "{0}-{1}", Application::Get().GetCurrentConfigName(), SAT_PLATFORM_BINARY_FOLDER );
+		rootDir /= std::format( "{0}-{1}", Application::Get()->GetCurrentConfigName(), SAT_PLATFORM_BINARY_FOLDER );
 		rootDir /= m_Config.Name;
 
 		return rootDir;
@@ -274,7 +274,7 @@ namespace Saturn {
 
 	std::filesystem::path Project::GetAppDataFolder() const
 	{
-		std::filesystem::path appData = Application::Get().GetAppDataFolder();
+		std::filesystem::path appData = Application::Get()->GetAppDataFolder();
 
 		return appData /= m_Config.Name;
 	}
@@ -299,7 +299,7 @@ namespace Saturn {
 		// TODO: For now this function will just update the "Version" variable in the asset
 		//       In the future we will want to actually upgrade the asset.
 
-		AssetManager::Get().BumpAssetVersion( SAT_CURRENT_VERSION );
+		AssetManager::Get()->BumpAssetVersion( SAT_CURRENT_VERSION );
 		
 		AssetManagerSerialiser ars;
 		ars.Serialise();
@@ -479,7 +479,7 @@ namespace Saturn {
 		std::filesystem::path BuildToolDir = SaturnRootDir;
 
 		BuildToolDir /= "bin";
-		BuildToolDir /= std::format( "{0}-{1}", Application::Get().GetCurrentConfigName(), SAT_PLATFORM_BINARY_FOLDER );
+		BuildToolDir /= std::format( "{0}-{1}", Application::Get()->GetCurrentConfigName(), SAT_PLATFORM_BINARY_FOLDER );
 		BuildToolDir /= "SaturnBuildTool";
 
 #if defined( SAT_PLATFORM_WINDOWS )
@@ -636,7 +636,7 @@ namespace Saturn {
 		std::filesystem::copy_file( m_Config.Path, projectFilePathBin );
 		
 		// TEMP: Copy over the editor assets
-		std::filesystem::path contentDir = Application::Get().GetRootContentDir();
+		std::filesystem::path contentDir = Application::Get()->GetRootContentDir();
 		
 		if( std::filesystem::exists( binDir / "content" ) )
 			std::filesystem::remove_all( binDir / "content" );

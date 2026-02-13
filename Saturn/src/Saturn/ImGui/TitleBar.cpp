@@ -54,7 +54,7 @@ namespace Saturn {
 
 		if( ImGui::BeginMainMenuBar() )
 		{
-			RubyWindow* pWindow = Application::Get().GetWindow();
+			RubyWindow* pWindow = Application::Get()->GetWindow();
 			float height = ImGui::GetWindowHeight();
 
 			if( m_Height != height )
@@ -109,11 +109,11 @@ namespace Saturn {
 							{
 								// If the exit request was accepted, the close app.
 								// It may not be accepted because we might have unsaved changes.
-								Application::Get().Close();
+								Application::Get()->Close();
 							}
 						}
 						else
-							Application::Get().Close();
+							Application::Get()->Close();
 					}
 
 					if( hovered )
@@ -148,7 +148,7 @@ namespace Saturn {
 					}
 
 					if( pressed )
-						Application::Get().GetWindow()->Maximize();
+						Application::Get()->GetWindow()->Maximize();
 
 					if( hovered )
 					{
@@ -178,11 +178,11 @@ namespace Saturn {
 					// Render the Line
 					{
 						const ImU32 Color = ImGui::GetColorU32( ImGuiCol_Text );
-						drawList->AddLine( buttonRect.Min + ImVec2( iconMargin, buttonRect.GetHeight() / 2 ), buttonRect.Max - ImVec2( iconMargin, buttonRect.GetHeight() / 2 ), Color, 1.0f );
+						drawList->AddLine( buttonRect.Min + ImVec2( iconMargin, buttonRect.GetHeight() * 0.5f ), buttonRect.Max - ImVec2( iconMargin, buttonRect.GetHeight() * 0.5f ), Color, 1.0f );
 					}
 
 					if( pressed )
-						Application::Get().GetWindow()->Minimize();
+						Application::Get()->GetWindow()->Minimize();
 
 					buttonRect.Min.x -= buttonSize;
 					buttonRect.Max.x -= buttonSize;

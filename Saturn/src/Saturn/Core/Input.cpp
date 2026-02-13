@@ -42,12 +42,12 @@ namespace Saturn {
 
 	bool Input::KeyPressed( RubyKey key )
 	{
-		return Application::Get().GetWindow()->IsKeyDown( key );
+		return Application::Get()->GetWindow()->IsKeyDown( key );
 	}
 
 	bool Input::MouseButtonPressed( RubyMouseButton button )
 	{
-		return Application::Get().GetWindow()->IsMouseButtonDown( button );
+		return Application::Get()->GetWindow()->IsMouseButtonDown( button );
 	}
 
 	float Input::MouseX()
@@ -62,7 +62,7 @@ namespace Saturn {
 
 	glm::vec2 Input::MousePosition()
 	{
-		RubyVec2 pos = Application::Get().GetWindow()->GetMousePos();
+		RubyVec2 pos = Application::Get()->GetWindow()->GetMousePos();
 		return { pos.x, pos.y };
 	}
 
@@ -71,12 +71,12 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		if( m_CanSetCursorMode || bypassGuard )
 #endif
-			Application::Get().GetWindow()->SetMouseCursorMode( mode );
+			Application::Get()->GetWindow()->SetMouseCursorMode( mode );
 	}
 
 	RubyCursorMode Input::GetCursorMode()
 	{
-		return Application::Get().GetWindow()->GetCursorMode();
+		return Application::Get()->GetWindow()->GetCursorMode();
 	}
 
 }

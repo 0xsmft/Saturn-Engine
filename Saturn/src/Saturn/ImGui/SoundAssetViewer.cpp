@@ -49,7 +49,7 @@ namespace Saturn {
 	{
 		m_AssetType = AssetType::Sound;
 		
-		Ref<SoundSpecification> snd = AssetManager::Get().GetAssetAs<SoundSpecification>( m_AssetID );
+		Ref<SoundSpecification> snd = AssetManager::Get()->GetAssetAs<SoundSpecification>( m_AssetID );
 		m_SoundAsset = snd;
 
 		m_Open = true;
@@ -76,7 +76,7 @@ namespace Saturn {
 
 			if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), { 24.0f, 24.0f } ) )
 			{
-				const std::filesystem::path path = Application::Get().OpenFile( L"Supported asset types (*.wav, *.mp3, *.ogg)|*.wav; *.mp3; *.ogg" );
+				const std::filesystem::path path = Application::Get()->OpenFile( L"Supported asset types (*.wav, *.mp3, *.ogg)|*.wav; *.mp3; *.ogg" );
 
 				if( !path.empty() )
 				{
@@ -102,12 +102,12 @@ namespace Saturn {
 
 			if( ImGui::Button( "Open externally" ) )
 			{
-				Application::Get().OpenNativeFileExplorer( m_SoundAsset->SoundSourcePath );
+				Application::Get()->OpenNativeFileExplorer( m_SoundAsset->SoundSourcePath );
 			}
 
 			if( ImGui::Button( "Show in explorer" ) )
 			{
-				Application::Get().OpenNativeFileExplorer( m_SoundAsset->SoundSourcePath, true );
+				Application::Get()->OpenNativeFileExplorer( m_SoundAsset->SoundSourcePath, true );
 			}
 
 			ImGui::EndHorizontal();

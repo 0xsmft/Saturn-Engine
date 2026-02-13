@@ -57,7 +57,7 @@ namespace Saturn::Auxiliary {
 		ImageCreateInfo.tiling = Tiling;
 		ImageCreateInfo.usage = Usage;
 
-		VK_CHECK( vkCreateImage( VulkanContext::Get().GetDevice(), &ImageCreateInfo, nullptr, pImage ) );
+		VK_CHECK( vkCreateImage( VulkanContext::Get()->GetDevice(), &ImageCreateInfo, nullptr, pImage ) );
 #if defined(SAT_DEBUG)
 		SetDebugUtilsObjectName( "Image (Saturn::Auxiliary)", ( uint64_t ) *pImage, VK_OBJECT_TYPE_IMAGE );
 #else
@@ -65,13 +65,13 @@ namespace Saturn::Auxiliary {
 #endif
 
 		VkMemoryRequirements MemoryRequirements;
-		vkGetImageMemoryRequirements( VulkanContext::Get().GetDevice(), *pImage, &MemoryRequirements );
+		vkGetImageMemoryRequirements( VulkanContext::Get()->GetDevice(), *pImage, &MemoryRequirements );
 
 		VkMemoryAllocateInfo MemoryAllocateInfo = { VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO };
 		MemoryAllocateInfo.allocationSize = MemoryRequirements.size;
-		MemoryAllocateInfo.memoryTypeIndex = VulkanContext::Get().GetMemoryType( MemoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT );
+		MemoryAllocateInfo.memoryTypeIndex = VulkanContext::Get()->GetMemoryType( MemoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT );
 
-		VK_CHECK( vkAllocateMemory( VulkanContext::Get().GetDevice(), &MemoryAllocateInfo, nullptr, pMemory ) );
-		VK_CHECK( vkBindImageMemory( VulkanContext::Get().GetDevice(), *pImage, *pMemory, 0 ) );
+		VK_CHECK( vkAllocateMemory( VulkanContext::Get()->GetDevice(), &MemoryAllocateInfo, nullptr, pMemory ) );
+		VK_CHECK( vkBindImageMemory( VulkanContext::Get()->GetDevice(), *pImage, *pMemory, 0 ) );
 	}
 }

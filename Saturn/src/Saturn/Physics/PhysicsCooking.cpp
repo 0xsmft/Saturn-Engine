@@ -48,11 +48,11 @@ namespace Saturn {
 		Ref<Project> activeProject = Project::GetActiveProject();
 		if( mesh->GetPhysicsMaterial() == 0 || mesh->GetPhysicsMaterial() == activeProject->GetDefaultPhysicsMaterialAsset() )
 		{
-			materialAsset = AssetManager::Get().GetAssetAs<PhysicsMaterialAsset>( activeProject->GetDefaultPhysicsMaterialAsset() );
+			materialAsset = AssetManager::Get()->GetAssetAs<PhysicsMaterialAsset>( activeProject->GetDefaultPhysicsMaterialAsset() );
 		}
 		else
 		{
-			materialAsset = AssetManager::Get().GetAssetAs<PhysicsMaterialAsset>( mesh->GetPhysicsMaterial() );
+			materialAsset = AssetManager::Get()->GetAssetAs<PhysicsMaterialAsset>( mesh->GetPhysicsMaterial() );
 		}
 
 		return materialAsset;
@@ -64,8 +64,8 @@ namespace Saturn {
 
 	void PhysicsCooking::Init()
 	{
-		physx::PxCookingParams Params( PhysicsFoundation::Get().m_Physics->getTolerancesScale() );
-		m_Cooking = PxCreateCooking( PX_PHYSICS_VERSION, *PhysicsFoundation::Get().m_Foundation, Params );
+		physx::PxCookingParams Params( PhysicsFoundation::Get()->m_Physics->getTolerancesScale() );
+		m_Cooking = PxCreateCooking( PX_PHYSICS_VERSION, *PhysicsFoundation::Get()->m_Foundation, Params );
 	}
 
 	void PhysicsCooking::Terminate()
@@ -278,7 +278,7 @@ namespace Saturn {
 
 			// Read the cooked data.
 			physx::PxDefaultMemoryInputData readBuffer( rCookedData.Stream.Data, static_cast< physx::PxU32 >( rCookedData.Stream.Size ) );
-			physx::PxTriangleMesh* mesh = PhysicsFoundation::Get().GetPhysics().createTriangleMesh( readBuffer );
+			physx::PxTriangleMesh* mesh = PhysicsFoundation::Get()->GetPhysics().createTriangleMesh( readBuffer );
 
 			// Create the shape.
 			glm::vec3 submeshPosition, submeshRotation, submeshScale;
@@ -289,7 +289,7 @@ namespace Saturn {
 
 			physx::PxTriangleMeshGeometry MeshGeometry( mesh, ShapeScale );
 
-			physx::PxShape* pShape = PhysicsFoundation::Get().GetPhysics().createShape( MeshGeometry, *pMaterial, true );
+			physx::PxShape* pShape = PhysicsFoundation::Get()->GetPhysics().createShape( MeshGeometry, *pMaterial, true );
 			
 			// We will always set it to be part of the simulation.
 			pShape->setFlag( physx::PxShapeFlag::eSIMULATION_SHAPE, true ); 
@@ -344,7 +344,7 @@ namespace Saturn {
 			const Submesh& rSubmesh = rMesh->Submeshes()[ i ];
 
 			physx::PxDefaultMemoryInputData InputBuffer( rCookedData.Stream.Data, static_cast< physx::PxU32 >( rCookedData.Stream.Size ) );
-			physx::PxConvexMesh* pMesh = PhysicsFoundation::Get().GetPhysics().createConvexMesh( InputBuffer );
+			physx::PxConvexMesh* pMesh = PhysicsFoundation::Get()->GetPhysics().createConvexMesh( InputBuffer );
 
 			glm::vec3 submeshPosition, submeshRotation, submeshScale;
 			Maths::DecomposeTransform( rSubmesh.Transform, submeshPosition, submeshRotation, submeshScale );
@@ -354,7 +354,7 @@ namespace Saturn {
 
 			physx::PxConvexMeshGeometry MeshGeometry( pMesh, ShapeScale );
 
-			physx::PxShape* pShape = PhysicsFoundation::Get().GetPhysics().createShape( MeshGeometry, *pMaterial, true );
+			physx::PxShape* pShape = PhysicsFoundation::Get()->GetPhysics().createShape( MeshGeometry, *pMaterial, true );
 
 			// TODO: I think convex meshes don't have to be kinematic meaning they don't have to part of simulation.
 			// We will always set it to be part of the simulation.

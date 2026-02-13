@@ -67,7 +67,7 @@ namespace Saturn {
 		m_Asset = nullptr;
 		m_NodeEditor->SetRuntime( nullptr );
 
-		GlobalUndoRedoGroup::Get().RemoveIfActionHasIdentifier( m_AssetID );
+		GlobalUndoRedoGroup::Get()->RemoveIfActionHasIdentifier( m_AssetID );
 		m_NodeEditor = nullptr;
 
 		for( BehaviourTreeBaseTask* pTaskClass : m_ClassCache )
@@ -96,7 +96,7 @@ namespace Saturn {
 
 	void BehaviourTreeAssetViewer::AddBehaviourTree()
 	{
-		const Ref<Asset> asset = AssetManager::Get().FindAsset( m_AssetID );
+		const Ref<Asset> asset = AssetManager::Get()->FindAsset( m_AssetID );
 		m_Asset = asset;
 
 		m_Name = std::format( "{0}##{1}", m_Asset->Name, ( uint64_t ) m_AssetID );

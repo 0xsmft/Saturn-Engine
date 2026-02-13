@@ -37,18 +37,18 @@ namespace Saturn {
 	Saturn::MemoryAssetDependency<Types...>::MemoryAssetDependency( Saturn::AssetID id )
 		: AssetID( id )
 	{
-		AssetManager::Get().RegisterMemoryAssetDependency( AssetID, this );
+		AssetManager::Get()->RegisterMemoryAssetDependency( AssetID, this );
 	}
 
 #if !defined(SAT_DIST)
 	void MemoryAssetDependencyBase::UnregisterAssetDependency( AssetID id )
 	{
-		AssetManager::Get().UnregisterMemoryAssetDependency( id, this );
+		AssetManager::Get()->UnregisterMemoryAssetDependency( id, this );
 	}
 
 	void MemoryAssetDependencyBase::RegisterAssetDependency( AssetID id )
 	{
-		AssetManager::Get().RegisterMemoryAssetDependency( id, this );
+		AssetManager::Get()->RegisterMemoryAssetDependency( id, this );
 	}
 #endif
 }

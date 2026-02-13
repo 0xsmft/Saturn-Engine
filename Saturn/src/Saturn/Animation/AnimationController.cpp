@@ -39,7 +39,7 @@
 namespace Saturn {
 
 	AnimationController::AnimationController( AssetID id )
-		: m_ControllerAsset( AssetManager::Get().FindAsset( id ) )
+		: m_ControllerAsset( AssetManager::Get()->FindAsset( id ) )
 	{
 	}
 

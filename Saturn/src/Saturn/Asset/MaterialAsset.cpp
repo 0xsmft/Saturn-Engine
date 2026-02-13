@@ -85,10 +85,10 @@ namespace Saturn {
 		if( m_Material == nullptr )
 			return;
 
-		m_Material->SetResource( "u_AlbedoTexture", Renderer::Get().GetPinkTexture() );
-		m_Material->SetResource( "u_NormalTexture", Renderer::Get().GetPinkTexture() );
-		m_Material->SetResource( "u_MetallicTexture", Renderer::Get().GetPinkTexture() );
-		m_Material->SetResource( "u_RoughnessTexture", Renderer::Get().GetPinkTexture() );
+		m_Material->SetResource( "u_AlbedoTexture", Renderer::Get()->GetPinkTexture() );
+		m_Material->SetResource( "u_NormalTexture", Renderer::Get()->GetPinkTexture() );
+		m_Material->SetResource( "u_MetallicTexture", Renderer::Get()->GetPinkTexture() );
+		m_Material->SetResource( "u_RoughnessTexture", Renderer::Get()->GetPinkTexture() );
 
 		m_Material->SetPC<glm::vec3>( "u_Materials.AlbedoColor", { 1.0f, 1.0f, 1.0f } );
 		m_Material->SetPC<float>( "u_Materials.Metalness", 1.0f );
@@ -183,10 +183,10 @@ namespace Saturn {
 
 		RenderThread::Get().Queue( [ this ]()
 		{
-			m_Material->SetResource( "u_AlbedoTexture", Renderer::Get().GetPinkTexture() );
-			m_Material->SetResource( "u_NormalTexture", Renderer::Get().GetPinkTexture() );
-			m_Material->SetResource( "u_MetallicTexture", Renderer::Get().GetPinkTexture() );
-			m_Material->SetResource( "u_RoughnessTexture", Renderer::Get().GetPinkTexture() );
+			m_Material->SetResource( "u_AlbedoTexture", Renderer::Get()->GetPinkTexture() );
+			m_Material->SetResource( "u_NormalTexture", Renderer::Get()->GetPinkTexture() );
+			m_Material->SetResource( "u_MetallicTexture", Renderer::Get()->GetPinkTexture() );
+			m_Material->SetResource( "u_RoughnessTexture", Renderer::Get()->GetPinkTexture() );
 		} );
 	}
 
@@ -216,66 +216,13 @@ namespace Saturn {
 		if( m_PendingTextureChanges.size() )
 			m_PendingTextureChanges.clear();
 
-		const auto frame = Renderer::Get().GetCurrentFrame();
+		const auto frame = Renderer::Get()->GetCurrentFrame();
 		for( const auto& rWds : rExtraWds[ frame ] )
 		{
 			m_Material->PushExternalWds( rWds );
 		}
 
 		m_Material->RT_Update();
-
-		/*
-		uint32_t frame = Renderer::Get().GetCurrentFrame();
-
-		VkDescriptorSet CurrentSet = m_Material->GetDescriptorSet( frame );
-
-		// Update material textures.
-		auto& textures = m_Material->GetTextures();
-		for( auto& [name, texture] : textures )
-		{
-			// Check if the texture even exists in the cache.
-			if( m_TextureCache.find( name ) == m_TextureCache.end() )
-			{
-				m_TextureCache[ name ] = texture->GetDescriptorInfo();
-			}
-			else
-			{
-				VkDescriptorImageInfo ImageInfo = m_TextureCache.at( name );
-
-				if( m_TextureCache.at( name ).imageView == ImageInfo.imageView || m_TextureCache.at( name ).sampler == ImageInfo.sampler )
-				{
-					// No need to update the descriptor set -- its the same.
-					continue;
-				}
-				else // If the image view has changed, update the cache.
-				{
-					m_TextureCache[ name ] = texture->GetDescriptorInfo();
-					m_Material->WriteDescriptor( name, ImageInfo );
-
-					continue;
-				}
-			}
-
-			// Fallback, just write the descriptor.
-			VkDescriptorImageInfo ImageInfo = {};
-			ImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-			if( textures[ name ] )
-			{
-				ImageInfo.imageView = textures[ name ]->GetImageView();
-				ImageInfo.sampler = textures[ name ]->GetSampler();
-			}
-			else
-			{
-				auto PinkTexture = Renderer::Get().GetPinkTexture();
-
-				ImageInfo.imageView = PinkTexture->GetImageView();
-				ImageInfo.sampler = PinkTexture->GetSampler();
-			}
-
-			m_Material->WriteDescriptor( name, ImageInfo );
-		}
-		*/
 
 #if !defined( SAT_DIST )
 		if( m_ValuesChanged ) 
@@ -308,7 +255,7 @@ namespace Saturn {
 				m_Material->SetResource( IndexToTextureIndex[ index ], texture );
 			}
 
-			UseNormalMap( m_Material->GetResource( "u_NormalTexture" ) != Renderer::Get().GetPinkTexture() );
+			UseNormalMap( m_Material->GetResource( "u_NormalTexture" ) != Renderer::Get()->GetPinkTexture() );
 
 			m_ValuesChanged = false;
 
@@ -410,14 +357,14 @@ namespace Saturn {
 	{
 		if( AssetID == 0 )
 		{
-			m_PendingTextureChanges[ "u_AlbedoTexture" ] = Renderer::Get().GetPinkTexture();
+			m_PendingTextureChanges[ "u_AlbedoTexture" ] = Renderer::Get()->GetPinkTexture();
 		}
 		else
 		{
 #if defined( SAT_DIST )
-			Ref<TextureSourceAsset> sourceAsset = AssetManager::Get().GetAssetAs<TextureSourceAsset>( AssetID );
+			Ref<TextureSourceAsset> sourceAsset = AssetManager::Get()->GetAssetAs<TextureSourceAsset>( AssetID );
 #else
-			Ref<TextureSourceAsset> sourceAsset = Ref<TextureSourceAsset>::Create( AssetManager::Get().FindAsset( AssetID )->Path );
+			Ref<TextureSourceAsset> sourceAsset = Ref<TextureSourceAsset>::Create( AssetManager::Get()->FindAsset( AssetID )->Path );
 
 			m_TextureAssetDependencies[ "u_AlbedoTexture" ] = AssetID;
 #endif
@@ -437,14 +384,14 @@ namespace Saturn {
 	{
 		if( AssetID == 0 )
 		{
-			m_PendingTextureChanges[ "u_NormalTexture" ] = Renderer::Get().GetPinkTexture();
+			m_PendingTextureChanges[ "u_NormalTexture" ] = Renderer::Get()->GetPinkTexture();
 		}
 		else
 		{
 #if defined( SAT_DIST )
-			Ref<TextureSourceAsset> sourceAsset = AssetManager::Get().GetAssetAs<TextureSourceAsset>( AssetID );
+			Ref<TextureSourceAsset> sourceAsset = AssetManager::Get()->GetAssetAs<TextureSourceAsset>( AssetID );
 #else
-			Ref<TextureSourceAsset> sourceAsset = Ref<TextureSourceAsset>::Create( AssetManager::Get().FindAsset( AssetID )->Path );
+			Ref<TextureSourceAsset> sourceAsset = Ref<TextureSourceAsset>::Create( AssetManager::Get()->FindAsset( AssetID )->Path );
 
 			m_TextureAssetDependencies[ "u_NormalTexture" ] = AssetID;
 #endif
@@ -464,14 +411,14 @@ namespace Saturn {
 	{
 		if( AssetID == 0 )
 		{
-			m_PendingTextureChanges[ "u_MetalnessTexture" ] = Renderer::Get().GetPinkTexture();
+			m_PendingTextureChanges[ "u_MetalnessTexture" ] = Renderer::Get()->GetPinkTexture();
 		}
 		else
 		{
 #if defined( SAT_DIST )
-			Ref<TextureSourceAsset> sourceAsset = AssetManager::Get().GetAssetAs<TextureSourceAsset>( AssetID );
+			Ref<TextureSourceAsset> sourceAsset = AssetManager::Get()->GetAssetAs<TextureSourceAsset>( AssetID );
 #else
-			Ref<TextureSourceAsset> sourceAsset = Ref<TextureSourceAsset>::Create( AssetManager::Get().FindAsset( AssetID )->Path );
+			Ref<TextureSourceAsset> sourceAsset = Ref<TextureSourceAsset>::Create( AssetManager::Get()->FindAsset( AssetID )->Path );
 
 			m_TextureAssetDependencies[ "u_MetalnessTexture" ] = AssetID;
 #endif
@@ -491,14 +438,14 @@ namespace Saturn {
 	{
 		if( AssetID == 0 )
 		{
-			m_PendingTextureChanges[ "u_RoughnessTexture" ] = Renderer::Get().GetPinkTexture();
+			m_PendingTextureChanges[ "u_RoughnessTexture" ] = Renderer::Get()->GetPinkTexture();
 		}
 		else
 		{
 #if defined( SAT_DIST )
-			Ref<TextureSourceAsset> sourceAsset = AssetManager::Get().GetAssetAs<TextureSourceAsset>( AssetID );
+			Ref<TextureSourceAsset> sourceAsset = AssetManager::Get()->GetAssetAs<TextureSourceAsset>( AssetID );
 #else
-			Ref<TextureSourceAsset> sourceAsset = Ref<TextureSourceAsset>::Create( AssetManager::Get().FindAsset( AssetID )->Path );
+			Ref<TextureSourceAsset> sourceAsset = Ref<TextureSourceAsset>::Create( AssetManager::Get()->FindAsset( AssetID )->Path );
 
 			m_TextureAssetDependencies[ "u_RoughnessTexture" ] = AssetID;
 #endif
@@ -566,7 +513,7 @@ namespace Saturn {
 		AddTargetMaterialAsset( index, id );
 
 		m_HasOverridden[ index ] = true;
-		m_Materials[ index ] = AssetManager::Get().GetAssetAs<MaterialAsset>( id );
+		m_Materials[ index ] = AssetManager::Get()->GetAssetAs<MaterialAsset>( id );
 	}
 
 	void MaterialRegistry::SetMaterial( uint32_t index, Ref<MaterialAsset> material )
@@ -664,7 +611,7 @@ namespace Saturn {
 
 			// Load material asset
 			// Will call RawMaterialAssetSerialiser
-			Ref<MaterialAsset> asset = AssetManager::Get().GetAssetAs<MaterialAsset>( MaterialID );
+			Ref<MaterialAsset> asset = AssetManager::Get()->GetAssetAs<MaterialAsset>( MaterialID );
 			
 			if( MaterialID != 0 ) 
 			{
@@ -677,7 +624,7 @@ namespace Saturn {
 			}
 			else // Fallback to default
 			{
-				const auto defaultProjectAsset = AssetManager::Get().FindAsset( Project::GetActiveProject()->GetDefaultMaterialAsset() );
+				const auto defaultProjectAsset = AssetManager::Get()->FindAsset( Project::GetActiveProject()->GetDefaultMaterialAsset() );
 
 				rRegistry->AddAsset( Ref<MaterialAsset>::Create( nullptr ) );
 			}

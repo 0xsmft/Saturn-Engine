@@ -178,7 +178,7 @@ namespace Saturn {
 		}
 
 		if( assetRegistryModified )
-			AssetManager::Get().Save();
+			AssetManager::Get()->Save();
 	}
 
 	void AssetManager::RegisterMemoryAssetDependency( AssetID dependencyID, MemoryAssetDependencyBase* pBase )
@@ -238,7 +238,7 @@ namespace Saturn {
 
 		for( auto& [assetID, deps] : m_AssetDependencies )
 		{
-			if( !AssetManager::Get().DoesAssetIDExist( assetID ) )
+			if( !AssetManager::Get()->DoesAssetIDExist( assetID ) )
 			{
 				pendingIDsToRemove.emplace_back( assetID );
 			}
@@ -246,7 +246,7 @@ namespace Saturn {
 			{
 				std::erase_if( deps, []( const auto& rDependant ) -> bool
 				{
-					return !AssetManager::Get().DoesAssetIDExist( rDependant );
+					return !AssetManager::Get()->DoesAssetIDExist( rDependant );
 				} );
 
 				// Remove from asset dependencies map if we no longer have dependencies.

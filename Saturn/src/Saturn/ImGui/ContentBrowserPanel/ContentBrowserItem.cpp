@@ -82,7 +82,7 @@ namespace Saturn {
 		else if( m_Type == ContentBrowserItemType::Asset )
 		{
 			const auto path = std::filesystem::relative( m_Path, Project::GetActiveProject()->GetRootDir() );
-			const auto asset = AssetManager::Get().FindAsset( path );
+			const auto asset = AssetManager::Get()->FindAsset( path );
 
 			if( asset )
 			{
@@ -425,7 +425,7 @@ namespace Saturn {
 
 		if( m_Asset )
 		{
-			AssetManager::Get().RenameAsset( m_Asset->ID, rName );
+			AssetManager::Get()->RenameAsset( m_Asset->ID, rName );
 		}
 
 		// Update our Entry.
@@ -443,7 +443,7 @@ namespace Saturn {
 		std::filesystem::rename( m_Path, newPath );
 
 		// After the call to the FS, tell the Asset Manager to update any assets in this folder.
-		AssetManager::Get().UpdateAssetPathsOnRename( m_Path, newPath );
+		AssetManager::Get()->UpdateAssetPathsOnRename( m_Path, newPath );
 
 		// And finally update our path.
 		m_Entry = std::filesystem::directory_entry( newPath );
@@ -471,18 +471,18 @@ namespace Saturn {
 	{
 		if( m_IsDirectory )
 		{
-			AssetManager::Get().Each( [&]( Ref<Asset> asset ) 
+			AssetManager::Get()->Each( [&]( Ref<Asset> asset ) 
 				{
 					if( asset->Path.string().contains( m_Path.string() ) ) 
 					{
-						AssetManager::Get().RemoveAsset( asset->ID );
+						AssetManager::Get()->RemoveAsset( asset->ID );
 					}
 				} );
 		}
 		else
 		{
 			CloseAssetViewersBeforeDeletion();
-			AssetManager::Get().RemoveAsset( m_Asset->ID );
+			AssetManager::Get()->RemoveAsset( m_Asset->ID );
 		}
 
 		// Delete the file.
@@ -506,26 +506,26 @@ namespace Saturn {
 			case AssetType::Texture:
 			{
 				const auto viewer = Ref<TextureViewer>::Create( m_Asset->ID );
-				ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+				ImGuiWindowManager::Get()->AddWindow( viewer, viewer->GetWindowName() );
 			} break;
 
 			case AssetType::StaticMesh:
 			{
 				const auto viewer = Ref<StaticMeshAssetViewer>::Create( m_Asset->ID );
-				ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+				ImGuiWindowManager::Get()->AddWindow( viewer, viewer->GetWindowName() );
 			} break;
 
 			case AssetType::SkeletalMesh:
 			{
 				const auto viewer = Ref<SkeletalMeshAssetViewer>::Create( m_Asset->ID );
-				ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+				ImGuiWindowManager::Get()->AddWindow( viewer, viewer->GetWindowName() );
 			} break;
 
 			case AssetType::Material:
 			{
 				// Importing the asset will happen in this function.
 				const auto viewer = Ref<MaterialAssetViewer>::Create( m_Asset->ID );
-				ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+				ImGuiWindowManager::Get()->AddWindow( viewer, viewer->GetWindowName() );
 			} break;
 			case AssetType::MaterialInstance:
 				break;
@@ -533,73 +533,73 @@ namespace Saturn {
 			case AssetType::Prefab:
 			{
 				const auto viewer = Ref<PrefabViewer>::Create( m_Asset->ID );
-				ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+				ImGuiWindowManager::Get()->AddWindow( viewer, viewer->GetWindowName() );
 			} break;
 
 			case AssetType::PhysicsMaterial:
 			{
 				const auto viewer = Ref<PhysicsMaterialAssetViewer>::Create( m_Asset->ID );
-				ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+				ImGuiWindowManager::Get()->AddWindow( viewer, viewer->GetWindowName() );
 			} break;
 
 			case AssetType::Sound:
 			{
 				const auto viewer = Ref<SoundAssetViewer>::Create( m_Asset->ID );
-				ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+				ImGuiWindowManager::Get()->AddWindow( viewer, viewer->GetWindowName() );
 			} break;
 
 			case AssetType::GraphSound:
 			{
 				const auto viewer = Ref<GraphSoundAssetViewer>::Create( m_Asset->ID );
-				ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+				ImGuiWindowManager::Get()->AddWindow( viewer, viewer->GetWindowName() );
 			} break;
 
 			case AssetType::BehaviourTree:
 			{
 				const auto viewer = Ref<BehaviourTreeAssetViewer>::Create( m_Asset->ID );
-				ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+				ImGuiWindowManager::Get()->AddWindow( viewer, viewer->GetWindowName() );
 			} break;
 
 			case AssetType::BehaviourTreeMemory:
 			{
 				const auto viewer = Ref<BehaviourTreeMemoryAssetViewer>::Create( m_Asset->ID );
-				ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+				ImGuiWindowManager::Get()->AddWindow( viewer, viewer->GetWindowName() );
 			} break;
 
 			case AssetType::Skeleton:
 			{
 				const auto viewer = Ref<SkeletonAssetViewer>::Create( m_Asset->ID );
-				ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+				ImGuiWindowManager::Get()->AddWindow( viewer, viewer->GetWindowName() );
 			} break;
 
 			case AssetType::SkeletalAnimation:
 			{
 				const auto viewer = Ref<SkeletalAnimationAssetViewer>::Create( m_Asset->ID );
-				ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+				ImGuiWindowManager::Get()->AddWindow( viewer, viewer->GetWindowName() );
 			} break;
 
 			case AssetType::AnimationController:
 			{
 				const auto viewer = Ref<AnimationControllerAssetViewer>::Create( m_Asset->ID );
-				ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+				ImGuiWindowManager::Get()->AddWindow( viewer, viewer->GetWindowName() );
 			} break;
 
 			case AssetType::Scene:
 			{
 				// Scenes have to handled via an event because this class does not have the ability to switch scenes.
-				Application::Get().DispatchEvent<CBOpenFileEvent>( m_Asset->ID );
+				Application::Get()->DispatchEvent<CBOpenFileEvent>( m_Asset->ID );
 			} break;
 
 			case AssetType::Font:
 			{
 				const auto viewer = Ref<AluraFontAssetViewer>::Create( m_Asset->ID );
-				ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+				ImGuiWindowManager::Get()->AddWindow( viewer, viewer->GetWindowName() );
 			} break;
 
 			case AssetType::StyleProfile:
 			{
 				const auto viewer = Ref<AluraStylingProfileAssetViewer>::Create( m_Asset->ID );
-				ImGuiWindowManager::Get().AddWindow( viewer, viewer->GetWindowName() );
+				ImGuiWindowManager::Get()->AddWindow( viewer, viewer->GetWindowName() );
 			} break;
 
 			case AssetType::Unknown:
@@ -613,7 +613,7 @@ namespace Saturn {
 	void ContentBrowserItem::HandleOpenSourceItem()
 	{
 #if !defined(SAT_DIST)
-		Application::Get().DispatchEvent<RequestOpenIDEEvent>( m_Path );
+		Application::Get()->DispatchEvent<RequestOpenIDEEvent>( m_Path );
 #endif
 	}
 
@@ -735,7 +735,7 @@ namespace Saturn {
 	void ContentBrowserItem::CloseAssetViewersBeforeDeletion()
 	{
 		const std::string windowName = std::format( "{0}##{1}", m_Asset->Name, ( uint64_t ) m_Asset->ID );
-		Ref<ImGuiWindow> window = ImGuiWindowManager::Get().GetWindow<ImGuiWindow>( windowName );
+		Ref<ImGuiWindow> window = ImGuiWindowManager::Get()->GetWindow<ImGuiWindow>( windowName );
 		if( window )
 		{
 			window->CloseWindow();

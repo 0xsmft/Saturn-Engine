@@ -223,7 +223,7 @@ namespace Saturn {
 	Ref<Sound> AudioSystem::RequestNewSound( AssetID ID, UUID UniquePlayerID, bool PlayNow /*= true */, Ref<SoundGroup> soundGroup /*= nullptr*/ )
 	{
 		// Load the sound spec.
-		Ref<SoundSpecification> spec = AssetManager::Get().GetAssetAs<SoundSpecification>( ID );
+		Ref<SoundSpecification> spec = AssetManager::Get()->GetAssetAs<SoundSpecification>( ID );
 
 		Ref<Sound> newSound = Ref<Sound>::Create( spec, soundGroup );
 		m_AliveSounds[ UniquePlayerID ] = newSound;
@@ -252,7 +252,7 @@ namespace Saturn {
 	Ref<Sound> AudioSystem::PlaySoundAtLocation( AssetID ID, UUID UniquePlayerID, const glm::vec3& rPos, bool PlayNow /*= true */, Ref<SoundGroup> soundGroup /* = nullptr */ )
 	{
 		// Load the sound spec.
-		Ref<SoundSpecification> spec = AssetManager::Get().GetAssetAs<SoundSpecification>( ID );
+		Ref<SoundSpecification> spec = AssetManager::Get()->GetAssetAs<SoundSpecification>( ID );
 
 		Ref<Sound> newSound = Ref<Sound>::Create( spec, soundGroup );
 		m_AliveSounds[ UniquePlayerID ] = newSound;
@@ -300,7 +300,7 @@ namespace Saturn {
 			}
 		}
 		
-		Ref<SoundSpecification> soundSpec = AssetManager::Get().GetAssetAs<SoundSpecification>( AssetID );
+		Ref<SoundSpecification> soundSpec = AssetManager::Get()->GetAssetAs<SoundSpecification>( AssetID );
 
 		Ref<Sound> snd = Ref<Sound>::Create( soundSpec, nullptr );
 		m_PreviewSounds[ Identifier ][ AssetID ] = snd;

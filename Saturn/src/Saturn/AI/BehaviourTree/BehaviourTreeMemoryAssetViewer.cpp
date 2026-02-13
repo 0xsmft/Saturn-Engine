@@ -43,7 +43,7 @@ namespace Saturn {
 	{
 		m_AssetType = AssetType::BehaviourTreeMemory;
 
-		Ref<BehaviourTreeMemorySpecification> snd = AssetManager::Get().GetAssetAs<BehaviourTreeMemorySpecification>( m_AssetID );
+		Ref<BehaviourTreeMemorySpecification> snd = AssetManager::Get()->GetAssetAs<BehaviourTreeMemorySpecification>( m_AssetID );
 		m_SpecAsset = snd;
 
 		m_Open = true;

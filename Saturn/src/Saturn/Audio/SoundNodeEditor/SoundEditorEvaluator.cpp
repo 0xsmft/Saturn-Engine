@@ -90,7 +90,7 @@ namespace Saturn {
 		}
 
 		// Clear pure dependencies
-		AssetManager::Get().UnregisterAllAssetDependencies( uiEditor->GetAssetID() );
+		AssetManager::Get()->UnregisterAllAssetDependencies( uiEditor->GetAssetID() );
 #endif
 
 		DestroyAliveSounds();
@@ -185,7 +185,7 @@ namespace Saturn {
 		AliveSounds.push_back( snd );
 
 #if !defined( SAT_DIST )
-		AssetManager::Get().RegisterAssetDependency( m_NodeEditor->GetAssetID(), id );
+		AssetManager::Get()->RegisterAssetDependency( m_NodeEditor->GetAssetID(), id );
 #endif
 	}
 

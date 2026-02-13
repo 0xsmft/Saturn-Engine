@@ -41,7 +41,7 @@
 namespace Saturn {
 
 	BehaviourTree::BehaviourTree( AssetID id )
-		: m_BehaviourTreeAsset( AssetManager::Get().FindAsset( id ) )
+		: m_BehaviourTreeAsset( AssetManager::Get()->FindAsset( id ) )
 	{
 	}
 

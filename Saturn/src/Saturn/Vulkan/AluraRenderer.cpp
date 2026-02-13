@@ -46,8 +46,8 @@ namespace Saturn {
 
 	AluraRenderer::AluraRenderer()
 	{
-		m_Width = Application::Get().GetWindow()->GetWidth();
-		m_Height = Application::Get().GetWindow()->GetHeight();
+		m_Width = Application::Get()->GetWindow()->GetWidth();
+		m_Height = Application::Get()->GetWindow()->GetHeight();
 	}
 
 	AluraRenderer::~AluraRenderer()
@@ -104,7 +104,7 @@ namespace Saturn {
 		m_IndexBuffer = Ref<IndexBuffer>::Create( pQuadBuffer, s_MaxIndices );
 		delete[] pQuadBuffer;
 
-		m_Textures[ 0 ] = Renderer::Get().GetPinkTexture();
+		m_Textures[ 0 ] = Renderer::Get()->GetPinkTexture();
 	}
 
 	void AluraRenderer::InitPhase2()
@@ -186,7 +186,7 @@ namespace Saturn {
 
 	void AluraRenderer::PreRender()
 	{
-		const uint32_t frame = Renderer::Get().GetCurrentFrame();
+		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
 		
 		m_QuadVertexCount = 0;
 		m_QuadIndexCount = 0;
@@ -209,7 +209,7 @@ namespace Saturn {
 			m_Resized = false;
 		}
 
-		m_CommandBuffer = Renderer::Get().ActiveCommandBuffer();
+		m_CommandBuffer = Renderer::Get()->ActiveCommandBuffer();
 		
 		CmdBeginDebugLabel( m_CommandBuffer, "Late Composite/Alura Pass" );
 		{
@@ -246,7 +246,7 @@ namespace Saturn {
 		vkCmdSetScissor( m_CommandBuffer, 0, 1, &Scissor );
 		vkCmdSetViewport( m_CommandBuffer, 0, 1, &Viewport );
 
-		const uint32_t frame = Renderer::Get().GetCurrentFrame();
+		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
 
 		m_IndexBuffer->Bind( m_CommandBuffer );
 
@@ -261,13 +261,13 @@ namespace Saturn {
 				if( m_Textures[ i ] )
 					m_Material->SetResource( "u_InputTexture", m_Textures[ i ], i );
 				else
-					m_Material->SetResource( "u_InputTexture", Renderer::Get().GetPinkTexture(), i );
+					m_Material->SetResource( "u_InputTexture", Renderer::Get()->GetPinkTexture(), i );
 			}
 
 			m_Pipeline->Bind( m_CommandBuffer );
 
 			m_Material->SetPC( "u_Transform.Projection", m_Projection );
-			m_Material->SetResource( "u_InputTexture", Renderer::Get().GetPinkTexture() );
+			m_Material->SetResource( "u_InputTexture", Renderer::Get()->GetPinkTexture() );
 
 			m_Material->Bind( m_CommandBuffer, m_Pipeline->GetPipelineLayout(), {} );
 
@@ -287,7 +287,7 @@ namespace Saturn {
 				if( m_Textures[ textureIndex ] )
 					m_TextMaterial->SetResource( "u_FontAtlases", m_Textures[ textureIndex ], i );
 				else
-					m_TextMaterial->SetResource( "u_FontAtlases", Renderer::Get().GetPinkTexture(), i );
+					m_TextMaterial->SetResource( "u_FontAtlases", Renderer::Get()->GetPinkTexture(), i );
 			}
 			
 			m_TextMaterial->SetPC( "u_Transform.Projection", m_Projection );

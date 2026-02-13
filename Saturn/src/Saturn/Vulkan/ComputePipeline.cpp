@@ -45,13 +45,13 @@ namespace Saturn {
 
 	ComputePipeline::~ComputePipeline()
 	{
-		vkDestroyPipeline( VulkanContext::Get().GetDevice(), m_Pipeline, nullptr );
-		vkDestroyPipelineLayout( VulkanContext::Get().GetDevice(), m_PipelineLayout, nullptr );
+		vkDestroyPipeline( VulkanContext::Get()->GetDevice(), m_Pipeline, nullptr );
+		vkDestroyPipelineLayout( VulkanContext::Get()->GetDevice(), m_PipelineLayout, nullptr );
 	}
 
 	void ComputePipeline::Bind()
 	{
-		m_CommandBuffer = VulkanContext::Get().CreateComputeCommandBuffer();
+		m_CommandBuffer = VulkanContext::Get()->CreateComputeCommandBuffer();
 		m_UseGraphicsQueue = false;
 
 		vkCmdBindPipeline( m_CommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, m_Pipeline );
@@ -83,9 +83,9 @@ namespace Saturn {
 
 	void ComputePipeline::Unbind()
 	{
-		auto LogicalDevice = VulkanContext::Get().GetDevice();
+		auto LogicalDevice = VulkanContext::Get()->GetDevice();
 
-		auto ComputeQueue = VulkanContext::Get().GetComputeQueue();
+		auto ComputeQueue = VulkanContext::Get()->GetComputeQueue();
 
 		if( m_UseGraphicsQueue )
 			return;
@@ -114,7 +114,7 @@ namespace Saturn {
 
 		m_CommandBuffer = nullptr;
 
-		vkDestroyFence( VulkanContext::Get().GetDevice(), s_ComputeFence, nullptr );
+		vkDestroyFence( VulkanContext::Get()->GetDevice(), s_ComputeFence, nullptr );
 		s_ComputeFence = nullptr;
 	}
 
@@ -132,7 +132,7 @@ namespace Saturn {
 		PipelineLayoutCreateInfo.setLayoutCount = (uint32_t) layouts.size();
 		PipelineLayoutCreateInfo.pSetLayouts = layouts.data();
 
-		VK_CHECK( vkCreatePipelineLayout( VulkanContext::Get().GetDevice(), &PipelineLayoutCreateInfo, nullptr, &m_PipelineLayout ) );
+		VK_CHECK( vkCreatePipelineLayout( VulkanContext::Get()->GetDevice(), &PipelineLayoutCreateInfo, nullptr, &m_PipelineLayout ) );
 
 		// Create the shader module.
 		auto& SpvSrc = ShaderLibrary::Get().Find( m_ComputeShader->GetName() )->GetSpvCode();
@@ -144,7 +144,7 @@ namespace Saturn {
 
 		VkShaderModule ShaderModule = VK_NULL_HANDLE;
 
-		VK_CHECK( vkCreateShaderModule( VulkanContext::Get().GetDevice(), &ShaderModuleCreateInfo, nullptr, &ShaderModule ) );
+		VK_CHECK( vkCreateShaderModule( VulkanContext::Get()->GetDevice(), &ShaderModuleCreateInfo, nullptr, &ShaderModule ) );
 
 		std::string debugName = m_ComputeShader->GetName() + "/Compute/X0";
 		SetDebugUtilsObjectName( debugName.c_str(), ( uint64_t ) ShaderModule, VK_OBJECT_TYPE_SHADER_MODULE );
@@ -162,9 +162,9 @@ namespace Saturn {
 		ComputePipelineCreateInfo.layout = m_PipelineLayout;
 		ComputePipelineCreateInfo.stage = ShaderStage;
 
-		VK_CHECK( vkCreateComputePipelines( VulkanContext::Get().GetDevice(), nullptr, 1, &ComputePipelineCreateInfo, nullptr, &m_Pipeline ) );
+		VK_CHECK( vkCreateComputePipelines( VulkanContext::Get()->GetDevice(), nullptr, 1, &ComputePipelineCreateInfo, nullptr, &m_Pipeline ) );
 
-		vkDestroyShaderModule( VulkanContext::Get().GetDevice(), ShaderModule, nullptr );
+		vkDestroyShaderModule( VulkanContext::Get()->GetDevice(), ShaderModule, nullptr );
 
 		std::string pipelineName = m_ComputeShader->GetName() + "/ComputePipeline";
 		SetDebugUtilsObjectName( pipelineName.c_str(), ( uint64_t ) m_Pipeline, VK_OBJECT_TYPE_PIPELINE );

@@ -128,7 +128,7 @@ namespace Saturn {
 
 		RuntimeData.MaterialAsset->SetAlbeoColor( Inputs[ 0 ].As<MaterialViewerColorPin>()->Data );
 
-		AssetManager::Get().UnregisterAllAssetDependencies( RuntimeData.MaterialAsset->ID );
+		AssetManager::Get()->UnregisterAllAssetDependencies( RuntimeData.MaterialAsset->ID );
 
 		// Textures
 		while( !TextureStack.empty() )
@@ -154,7 +154,7 @@ namespace Saturn {
 			}
 
 			if( tv.TextureAssetID != 0 )
-				AssetManager::Get().RegisterAssetDependency( RuntimeData.MaterialAsset->ID, tv.TextureAssetID );
+				AssetManager::Get()->RegisterAssetDependency( RuntimeData.MaterialAsset->ID, tv.TextureAssetID );
 		}
 
 		// Emission
@@ -207,7 +207,7 @@ namespace Saturn {
 		if( rTextureValue.TextureAssetID != 0 )
 		{
 			Ref<Asset> TextureAsset = nullptr;
-			TextureAsset = AssetManager::Get().FindAsset( rTextureValue.TextureAssetID );
+			TextureAsset = AssetManager::Get()->FindAsset( rTextureValue.TextureAssetID );
 
 			RuntimeData.MaterialAsset->SetAlbeoColor( glm::vec3( 1.0f ) );
 

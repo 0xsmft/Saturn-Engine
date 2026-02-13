@@ -40,10 +40,10 @@
 
 namespace Saturn {
 
-	Material::Material( const Ref< Saturn::Shader >& rShader, const std::string& rMateralName, uint32_t set )
+	Material::Material( const Ref< Saturn::Shader >& rShader, const std::string& rMaterialName, uint32_t set )
 		: m_Shader( rShader ), m_Set( set )
 	{
-		Initialise( rMateralName );
+		Initialise( rMaterialName );
 	}
 
 	void Material::Initialise( const std::string& rMaterialName )
@@ -63,10 +63,12 @@ namespace Saturn {
 	{
 		// We are always set 0
 		// Set 1 is owned by the renderer
-		ShaderDescriptorSetTemplate& rMaterialDS = m_Shader->GetShaderDescriptorSetTemplates( m_Set );
-		
-		// Copy for our own use
-		m_DescriptorSetTemplate = ShaderDescriptorSetTemplate( rMaterialDS );
+		ShaderDescriptorSetTemplate* pMaterialDS = m_Shader->GetShaderDescriptorSetTemplates( m_Set );
+		if( pMaterialDS )
+		{
+			// Copy for our own use
+			m_DescriptorSetTemplate = ShaderDescriptorSetTemplate( pMaterialDS );
+		}
 
 		size_t totalPCSizes = 0;
 		for( const auto& rPushConstantBuffers : m_Shader->GetPushConstantBuffer() )
@@ -115,7 +117,7 @@ namespace Saturn {
 
 	void Material::Bind( VkCommandBuffer CommandBuffer, VkPipelineLayout Layout, const std::vector<std::vector<VkWriteDescriptorSet>>& rExtraWds, VkPipelineBindPoint bindPoint )
 	{
-		uint32_t frame = Renderer::Get().GetCurrentFrame();
+		uint32_t frame = Renderer::Get()->GetCurrentFrame();
 		Update( rExtraWds );
 
 		VkDescriptorSet Set = m_DescriptorSets[ frame ];
@@ -124,7 +126,7 @@ namespace Saturn {
 
 	void Material::Update( const std::vector<std::vector<VkWriteDescriptorSet>>& rExtraWds )
 	{
-		uint32_t frame = Renderer::Get().GetCurrentFrame();
+		uint32_t frame = Renderer::Get()->GetCurrentFrame();
 
 		if( rExtraWds.size() )
 		{
@@ -141,7 +143,10 @@ namespace Saturn {
 	{
 		SAT_PF_EVENT();
 
-		uint32_t frame = Renderer::Get().GetCurrentFrame();
+		// This material has no descriptor sets
+		if( m_DescriptorSetTemplate.Set == UINT32_MAX ) return;
+
+		uint32_t frame = Renderer::Get()->GetCurrentFrame();
 
 		m_DescriptorSets[ frame ] = m_Shader->AllocateDescriptorSet( m_Set, true );
 
@@ -212,13 +217,13 @@ namespace Saturn {
 				rWds.dstSet = m_DescriptorSets[ frame ];
 				rWds.descriptorCount = ( uint32_t ) ImageInfos.size();
 
-				vkUpdateDescriptorSets( VulkanContext::Get().GetDevice(), 1, &rWds, 0, nullptr );
+				vkUpdateDescriptorSets( VulkanContext::Get()->GetDevice(), 1, &rWds, 0, nullptr );
 			}
 		}
 
 		if( pendingWds.size() )
 		{
-			vkUpdateDescriptorSets( VulkanContext::Get().GetDevice(), (uint32_t)pendingWds.size(), pendingWds.data(), 0, nullptr );
+			vkUpdateDescriptorSets( VulkanContext::Get()->GetDevice(), (uint32_t)pendingWds.size(), pendingWds.data(), 0, nullptr );
 		}
 	}
 
@@ -341,7 +346,7 @@ namespace Saturn {
 	{
 		SAT_PF_EVENT();
 
-		uint32_t frame = Renderer::Get().GetCurrentFrame();
+		uint32_t frame = Renderer::Get()->GetCurrentFrame();
 
 		auto& ubs = m_UniformBuffers[ binding ];
 

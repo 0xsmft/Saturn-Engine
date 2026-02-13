@@ -210,7 +210,7 @@ namespace Saturn {
 
 	void SkeletalAnimationAsset::Compress()
 	{
-		Ref<SkeletonAsset> sk = AssetManager::Get().GetAssetAs<SkeletonAsset>( m_SkeletonAssetID );
+		Ref<SkeletonAsset> sk = AssetManager::Get()->GetAssetAs<SkeletonAsset>( m_SkeletonAssetID );
 
 		acl::compressed_tracks* pTracks = nullptr;
 		const auto error = AclCompress( sk, this, m_Bones, m_UncompressedDuration, m_UncompressedTPS, pTracks );
@@ -290,7 +290,7 @@ namespace Saturn {
 		DeserialiseAclData( rStream );
 
 		if( skeletonID )
-			AssetManager::Get().RegisterAssetDependency( ID, skeletonID );
+			AssetManager::Get()->RegisterAssetDependency( ID, skeletonID );
 	}
 #endif
 

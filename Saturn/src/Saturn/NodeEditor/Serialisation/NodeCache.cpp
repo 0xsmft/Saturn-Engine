@@ -210,7 +210,7 @@ namespace Saturn {
 
 	void NodeCacheEditor::WriteNodeEditorCache( SharedPtr<NodeEditorBase> nodeEditor, const std::string& rCustomName )
 	{
-		Ref<Asset> asset = AssetManager::Get().FindAsset( nodeEditor->GetAssetID() );
+		Ref<Asset> asset = AssetManager::Get()->FindAsset( nodeEditor->GetAssetID() );
 		std::string filename;
 		std::filesystem::path assetPath;
 
@@ -218,7 +218,7 @@ namespace Saturn {
 		{
 			filename = std::format( "{0}.{1}.nce", asset->Name, ( uint64_t ) nodeEditor->GetAssetID() );
 			
-			assetPath = AssetManager::Get().FindAsset( nodeEditor->GetAssetID() )->Path;
+			assetPath = AssetManager::Get()->FindAsset( nodeEditor->GetAssetID() )->Path;
 			assetPath = assetPath.parent_path();
 			assetPath = Project::GetActiveProject()->FilepathAbs( assetPath );
 		}
@@ -256,7 +256,7 @@ namespace Saturn {
 	{
 		std::string filename;
 		
-		Ref<Asset> asset = AssetManager::Get().FindAsset( id );
+		Ref<Asset> asset = AssetManager::Get()->FindAsset( id );
 		std::filesystem::path cachePath;
 
 		if( asset )
@@ -339,7 +339,7 @@ namespace Saturn {
 	{
 		std::string filename;
 
-		const Ref<Asset> asset = AssetManager::Get().FindAsset( id );
+		const Ref<Asset> asset = AssetManager::Get()->FindAsset( id );
 		std::filesystem::path cachePath;
 
 		if( asset )

@@ -89,14 +89,20 @@ namespace Saturn {
 	{
 		// Clear global selections if we change
 		// make sure to do this before changing scene just in case the m_Context's ref count is one
-		EntitySelectionManager::Get().ClearSelection();
+		EntitySelectionManager::Get()->ClearSelection( m_Context.Get() );
 
 		m_Context = scene;
 	}
 
 	void SceneHierarchyPanel::SetSelected( SharedPtr<Entity> entity )
 	{
-		EntitySelectionManager::Get().Select( entity, EntitySelectionReason::SceneHierarchyPanel );
+		EntitySelectionManager::Get()->Select( entity );
+
+		// Set reason if we are the main SceneHierarchyPanel.
+		if( !m_IsPrefabScene )
+		{
+			EntitySelectionManager::Get()->SetSelectionReason( ESR_SceneHierarchyPanel );
+		}
 	}
 
 	void SceneHierarchyPanel::DrawEntities()
@@ -132,7 +138,7 @@ namespace Saturn {
 				}
 
 				Ref<UndoRedoActionAddComponent<Ty>> action = Ref<UndoRedoActionAddComponent<Ty>>::Create( entity );
-				GlobalUndoRedoGroup::Get().AddAction( action, ( uint64_t ) entity->GetHandle() );
+				GlobalUndoRedoGroup::Get()->AddAction( action, ( uint64_t ) entity->GetHandle() );
 
 				ImGui::CloseCurrentPopup();
 			}
@@ -282,7 +288,7 @@ namespace Saturn {
 				entity->AddComponent<SkylightComponent>();
 
 				// Defaults
-				Application::Get().DispatchEvent<SkylightEntityModifiedEvent>( glm::vec3{ 2.0f, 0.0f, 0.0f } );
+				Application::Get()->DispatchEvent<SkylightEntityModifiedEvent>( glm::vec3{ 2.0f, 0.0f, 0.0f } );
 
 				SetSelected( entity );
 				m_Context->MarkDirty();
@@ -372,7 +378,7 @@ namespace Saturn {
 				return;
 
 			ImGuiTreeNodeFlags Flags = /*ImGuiTreeNodeFlags_OpenOnArrow |*/ ImGuiTreeNodeFlags_SpanAvailWidth;
-			EntitySelectionManager::Get().IsSelected( entity ) ? Flags |= ImGuiTreeNodeFlags_Selected : 0;
+			EntitySelectionManager::Get()->IsSelected( entity ) ? Flags |= ImGuiTreeNodeFlags_Selected : 0;
 
 			bool Clicked;
 
@@ -631,7 +637,7 @@ namespace Saturn {
 
 							if( rRef.ID != 0 )
 							{
-								if( Ref<Asset> asset = AssetManager::Get().FindAsset( rRef.ID ); asset )
+								if( Ref<Asset> asset = AssetManager::Get()->FindAsset( rRef.ID ); asset )
 								{
 									assetName = " " + asset->Name;
 								}
@@ -698,7 +704,7 @@ namespace Saturn {
 
 				Ref<UndoRedoActionModifyString> action = Ref<UndoRedoActionModifyString>::Create( "Modify Entity Tag", &tag, tag, newChar );
 
-				GlobalUndoRedoGroup::Get().AddAction( action, ( uint64_t ) entity->GetHandle() );
+				GlobalUndoRedoGroup::Get()->AddAction( action, ( uint64_t ) entity->GetHandle() );
 				m_Context->MarkDirty();
 			}
 			ImGui::PopItemWidth();
@@ -825,7 +831,7 @@ namespace Saturn {
 			{
 				if( m_CurrentFinderType == AssetType::StaticMesh )
 				{
-					mc.Mesh = AssetManager::Get().GetAssetAs<StaticMesh>( m_CurrentAssetID );
+					mc.Mesh = AssetManager::Get()->GetAssetAs<StaticMesh>( m_CurrentAssetID );
 
 					mc.MaterialRegistry = nullptr;
 					mc.MaterialRegistry = Ref<MaterialRegistry>::Create( mc.Mesh );
@@ -966,7 +972,7 @@ namespace Saturn {
 			{
 				if( m_CurrentFinderType == AssetType::SkeletalMesh )
 				{
-					mc.Mesh = AssetManager::Get().GetAssetAs<SkeletalMesh>( m_CurrentAssetID );
+					mc.Mesh = AssetManager::Get()->GetAssetAs<SkeletalMesh>( m_CurrentAssetID );
 					mc.MaterialRegistry = Ref<MaterialRegistry>::Create( mc.Mesh );
 				}
 				else if( m_CurrentFinderType == AssetType::SkeletalAnimation || m_CurrentFinderType == AssetType::AnimationController ) 
@@ -1033,7 +1039,7 @@ namespace Saturn {
 
 				if( changed ) 
 				{
-					Application::Get().DispatchEvent<SkylightEntityModifiedEvent>( glm::vec3{ skl.Turbidity, skl.Azimuth, skl.Inclination } );
+					Application::Get()->DispatchEvent<SkylightEntityModifiedEvent>( glm::vec3{ skl.Turbidity, skl.Azimuth, skl.Inclination } );
 
 					m_Context->MarkDirty();
 				}

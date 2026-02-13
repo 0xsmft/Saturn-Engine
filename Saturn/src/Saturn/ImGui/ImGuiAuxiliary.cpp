@@ -522,7 +522,7 @@ namespace Saturn::Auxiliary {
 			if( ImGui::BeginListBox( "##ASSETLIST", ImVec2( -FLT_MIN, 0.0f ) ) )
 			{
 				// TODO: Change with editor.
-				for( const auto& [assetID, rAsset] : AssetManager::Get().GetCombinedAssetMap() )
+				for( const auto& [assetID, rAsset] : AssetManager::Get()->GetCombinedAssetMap() )
 				{
 					bool Selected = ( rOut == assetID );
 
@@ -579,7 +579,7 @@ namespace Saturn::Auxiliary {
 			if( ImGui::BeginListBox( "##ASSETLIST", ImVec2( -FLT_MIN, 0.0f ) ) )
 			{
 				// TODO: Change with editor.
-				for( const auto& [assetID, rAsset] : AssetManager::Get().GetCombinedAssetMap() )
+				for( const auto& [assetID, rAsset] : AssetManager::Get()->GetCombinedAssetMap() )
 				{
 					bool Selected = ( rOut == assetID );
 
@@ -753,7 +753,7 @@ namespace Saturn::Auxiliary {
 	ImVec2 GetConnectionPointBetweenRectAndPoint( const ImRect& rRect, const ImVec2& rEndPoint )
 	{
 		ImVec2 startPoint = rRect.GetCenter();
-		ImVec2 const midPoint = startPoint + ( ( rEndPoint - startPoint ) / 2 );
+		ImVec2 const midPoint = startPoint + ( ( rEndPoint - startPoint ) * 0.5f );
 
 		return GetClosestPointOnRectBorder( rRect, midPoint );
 	}
@@ -762,7 +762,7 @@ namespace Saturn::Auxiliary {
 	{
 		rStartPoint = rStartRect.GetCenter();
 		rEndPoint = rEndRect.GetCenter();
-		ImVec2 const midPoint = rStartPoint + ( ( rEndPoint - rStartPoint ) / 2 );
+		ImVec2 const midPoint = rStartPoint + ( ( rEndPoint - rStartPoint ) * 0.5f );
 
 		rStartPoint = GetClosestPointOnRectBorder( rStartRect, midPoint );
 		rEndPoint = GetClosestPointOnRectBorder( rEndRect, midPoint );

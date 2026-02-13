@@ -44,7 +44,7 @@ namespace Saturn {
 		m_AssetType = AssetType::StyleProfile;
 		m_Open = true;
 
-		m_StylingProfile = AssetManager::Get().GetAssetAs<AluraStylingProfile>( m_AssetID );
+		m_StylingProfile = AssetManager::Get()->GetAssetAs<AluraStylingProfile>( m_AssetID );
 		m_Name = std::format( "{0} - Alura Styling Profile##{1}", m_StylingProfile->Name, ( uint64_t ) m_AssetID );
 	}
 

@@ -40,7 +40,7 @@ namespace Saturn {
 	class GlobalUndoRedoGroup : public RefTarget
 	{
 	public:
-		static inline GlobalUndoRedoGroup& Get() { return *SingletonStorage::GetSingleton<GlobalUndoRedoGroup>(); }
+		static inline GlobalUndoRedoGroup* Get() { return SingletonStorage::GetSingleton<GlobalUndoRedoGroup>(); }
 
 	public:
 		GlobalUndoRedoGroup();

@@ -43,7 +43,7 @@ namespace Saturn {
 		m_AssetType = AssetType::Font;
 		m_Open = true;
 
-		m_Font = AssetManager::Get().GetAssetAs<AluraFont>( m_AssetID );
+		m_Font = AssetManager::Get()->GetAssetAs<AluraFont>( m_AssetID );
 		m_Name = std::format( "{0} - Alura Font##{1}", m_Font->Name, ( uint64_t ) m_Font->ID );
 	}
 

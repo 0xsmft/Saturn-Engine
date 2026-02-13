@@ -85,7 +85,7 @@ namespace Saturn {
 
 	void MaterialAssetViewer::AddMaterialAsset()
 	{
-		Ref<MaterialAsset> materialAsset = AssetManager::Get().GetAssetAs<MaterialAsset>( m_AssetID );
+		Ref<MaterialAsset> materialAsset = AssetManager::Get()->GetAssetAs<MaterialAsset>( m_AssetID );
 
 		m_HostMaterialAsset = materialAsset;
 		m_EditingMaterial = Ref<Material>( m_HostMaterialAsset->GetMaterial() );
@@ -195,14 +195,14 @@ namespace Saturn {
 	void MaterialAssetViewer::CreateNodesFromTexture( const Ref<Texture2D>& rTexture, int slot )
 	{
 		const auto& rPath = rTexture->GetPath();
-		const bool HasTexture = rTexture != Renderer::Get().GetPinkTexture();
+		const bool HasTexture = rTexture != Renderer::Get()->GetPinkTexture();
 
 		if( HasTexture )
 		{
 			// Find the texture asset.
 			const auto relativePath = std::filesystem::relative( rPath, Project::GetActiveProject()->GetRootDir() );
 
-			Ref<Asset> TextureAsset = AssetManager::Get().FindAsset( relativePath );
+			Ref<Asset> TextureAsset = AssetManager::Get()->FindAsset( relativePath );
 			AssetID TextureAssetID = TextureAsset->ID;
 
 			SharedPtr<MaterialSampler2DNode> Sampler2DNode;

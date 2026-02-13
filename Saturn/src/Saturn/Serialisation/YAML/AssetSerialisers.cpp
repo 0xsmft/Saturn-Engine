@@ -80,7 +80,7 @@ namespace Saturn {
 		auto writeTexture = [&](const char* key, Ref<Texture2D> texture ) 
 		{
 			std::filesystem::path relativePath = std::filesystem::relative( texture->GetPath(), Project::GetActiveProjectRootPath() );
-			auto asset = AssetManager::Get().FindAsset( relativePath );
+			auto asset = AssetManager::Get()->FindAsset( relativePath );
 
 			if( asset )
 				out << YAML::Key << key << YAML::Value << asset->ID;
@@ -137,13 +137,13 @@ namespace Saturn {
 
 		Ref<Texture2D> texture = nullptr;
 
-		if( AssetManager::Get().DoesAssetIDExist( albedoID ) )
+		if( AssetManager::Get()->DoesAssetIDExist( albedoID ) )
 		{
-			Ref<Asset> rAsset = AssetManager::Get().FindAsset( albedoID );
+			Ref<Asset> rAsset = AssetManager::Get()->FindAsset( albedoID );
 			texture = Ref<Texture2D>::Create( Project::GetActiveProject()->FilepathAbs( rAsset->Path ), AddressingMode::Repeat );
 
 			materialAsset->SetAlbeoMap( texture );
-			AssetManager::Get().RegisterAssetDependency( rAsset->ID, albedoID );
+			AssetManager::Get()->RegisterAssetDependency( rAsset->ID, albedoID );
 		}
 
 		auto useNormal = materialData[ "UseNormal" ].as<float>();
@@ -151,13 +151,13 @@ namespace Saturn {
 
 		materialAsset->UseNormalMap( useNormal );
 
-		if( AssetManager::Get().DoesAssetIDExist( normalID ) )
+		if( AssetManager::Get()->DoesAssetIDExist( normalID ) )
 		{
-			Ref<Asset> rAsset = AssetManager::Get().FindAsset( normalID );
+			Ref<Asset> rAsset = AssetManager::Get()->FindAsset( normalID );
 			texture = Ref<Texture2D>::Create( Project::GetActiveProject()->FilepathAbs( rAsset->Path ), AddressingMode::Repeat );
 
 			materialAsset->SetNormalMap( texture );
-			AssetManager::Get().RegisterAssetDependency( rAsset->ID, normalID );
+			AssetManager::Get()->RegisterAssetDependency( rAsset->ID, normalID );
 		}
 
 		auto metalness = materialData[ "Metalness" ].as<float>();
@@ -165,13 +165,13 @@ namespace Saturn {
 
 		materialAsset->SetMetalness( metalness );
 
-		if( AssetManager::Get().DoesAssetIDExist( metallicID ) )
+		if( AssetManager::Get()->DoesAssetIDExist( metallicID ) )
 		{
-			Ref<Asset> rAsset = AssetManager::Get().FindAsset( metallicID );
+			Ref<Asset> rAsset = AssetManager::Get()->FindAsset( metallicID );
 			texture = Ref<Texture2D>::Create( Project::GetActiveProject()->FilepathAbs( rAsset->Path ), AddressingMode::Repeat );
 
 			materialAsset->SetMetallicMap( texture );
-			AssetManager::Get().RegisterAssetDependency( rAsset->ID, metallicID );
+			AssetManager::Get()->RegisterAssetDependency( rAsset->ID, metallicID );
 		}
 
 		auto val = materialData[ "Roughness" ].as<float>();
@@ -179,13 +179,13 @@ namespace Saturn {
 
 		materialAsset->SetRoughness( val );
 
-		if( AssetManager::Get().DoesAssetIDExist( roughnessID ) )
+		if( AssetManager::Get()->DoesAssetIDExist( roughnessID ) )
 		{
-			Ref<Asset> rAsset = AssetManager::Get().FindAsset( roughnessID );
+			Ref<Asset> rAsset = AssetManager::Get()->FindAsset( roughnessID );
 			texture = Ref<Texture2D>::Create( Project::GetActiveProject()->FilepathAbs( rAsset->Path ), AddressingMode::Repeat );
 
 			materialAsset->SetRoughnessMap( texture );
-			AssetManager::Get().RegisterAssetDependency( rAsset->ID, roughnessID );
+			AssetManager::Get()->RegisterAssetDependency( rAsset->ID, roughnessID );
 		}
 
 		auto emissive = materialData[ "Emissive" ].as<float>( 0.0f );
@@ -405,7 +405,7 @@ namespace Saturn {
 		mesh->SetPhysicsMaterial( physicsMaterial );
 
 		if( physicsMaterial )
-			AssetManager::Get().RegisterAssetDependency( rAsset->ID, physicsMaterial );
+			AssetManager::Get()->RegisterAssetDependency( rAsset->ID, physicsMaterial );
 
 		// Build master material registry
 		auto materialRegistry = meshData[ "MaterialRegistry" ];
@@ -419,13 +419,13 @@ namespace Saturn {
 				{
 					auto id = materialNode[ i ].as<uint64_t>();
 
-					Ref<MaterialAsset> asset = AssetManager::Get().GetAssetAs<MaterialAsset>( id );
+					Ref<MaterialAsset> asset = AssetManager::Get()->GetAssetAs<MaterialAsset>( id );
 
 					if( id != 0 )
 					{
 						mesh->GetMaterialRegistry()->AddTargetMaterialAsset( i, id );
 
-						AssetManager::Get().RegisterAssetDependency( rAsset->ID, id );
+						AssetManager::Get()->RegisterAssetDependency( rAsset->ID, id );
 					}
 
 					if( asset != nullptr )
@@ -434,10 +434,10 @@ namespace Saturn {
 					}
 					else
 					{
-						auto defaultProjectAsset = AssetManager::Get().FindAsset( Project::GetActiveProject()->GetDefaultMaterialAsset() );
+						auto defaultProjectAsset = AssetManager::Get()->FindAsset( Project::GetActiveProject()->GetDefaultMaterialAsset() );
 
 						if( defaultProjectAsset )
-							mesh->GetMaterialRegistry()->AddAsset( AssetManager::Get().GetAssetAs<MaterialAsset>( defaultProjectAsset->ID ) );
+							mesh->GetMaterialRegistry()->AddAsset( AssetManager::Get()->GetAssetAs<MaterialAsset>( defaultProjectAsset->ID ) );
 						else
 							mesh->GetMaterialRegistry()->AddAsset( Ref<MaterialAsset>::Create( nullptr ) );
 					}
@@ -556,7 +556,7 @@ namespace Saturn {
 		mesh->SetPhysicsMaterial( physicsMaterial );
 
 		if( physicsMaterial )
-			AssetManager::Get().RegisterAssetDependency( rAsset->ID, physicsMaterial );
+			AssetManager::Get()->RegisterAssetDependency( rAsset->ID, physicsMaterial );
 
 		// Build master material registry
 		const auto materialRegistry = meshData[ "MaterialRegistry" ];
@@ -570,13 +570,13 @@ namespace Saturn {
 				{
 					auto id = materialNode[ i ].as<uint64_t>();
 
-					Ref<MaterialAsset> asset = AssetManager::Get().GetAssetAs<MaterialAsset>( id );
+					Ref<MaterialAsset> asset = AssetManager::Get()->GetAssetAs<MaterialAsset>( id );
 
 					if( id != 0 )
 					{
 						mesh->GetMaterialRegistry()->AddTargetMaterialAsset( i, id );
 
-						AssetManager::Get().RegisterAssetDependency( rAsset->ID, id );
+						AssetManager::Get()->RegisterAssetDependency( rAsset->ID, id );
 					}
 
 					if( asset != nullptr )
@@ -585,11 +585,11 @@ namespace Saturn {
 					}
 					else
 					{
-						const auto defaultProjectAsset = AssetManager::Get().FindAsset( Project::GetActiveProject()->GetDefaultMaterialAsset() );
+						const auto defaultProjectAsset = AssetManager::Get()->FindAsset( Project::GetActiveProject()->GetDefaultMaterialAsset() );
 
 						if( defaultProjectAsset ) 
 						{
-							auto defAsset = AssetManager::Get().GetAssetAs<MaterialAsset>( defaultProjectAsset->ID );
+							auto defAsset = AssetManager::Get()->GetAssetAs<MaterialAsset>( defaultProjectAsset->ID );
 							mesh->GetMaterialRegistry()->AddAsset( defAsset );
 						}
 						else 
@@ -606,7 +606,7 @@ namespace Saturn {
 		}
 
 		if( mesh->GetSkeletonAsset() )
-			AssetManager::Get().RegisterAssetDependency( mesh->ID, mesh->GetSkeletonAsset()->ID );
+			AssetManager::Get()->RegisterAssetDependency( mesh->ID, mesh->GetSkeletonAsset()->ID );
 
 		// Set rAsset reference to point to our new SkeletalMesh
 		rAsset = mesh;

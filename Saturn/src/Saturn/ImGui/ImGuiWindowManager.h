@@ -42,7 +42,7 @@ namespace Saturn {
 	class ImGuiWindowManager : public RefTarget
 	{
 	public:
-		static inline ImGuiWindowManager& Get() { return *SingletonStorage::GetSingleton<ImGuiWindowManager>(); }
+		static inline ImGuiWindowManager* Get() { return SingletonStorage::GetSingleton<ImGuiWindowManager>(); }
 
 	public:
 		ImGuiWindowManager();

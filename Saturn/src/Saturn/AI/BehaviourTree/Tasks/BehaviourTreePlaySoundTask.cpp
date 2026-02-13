@@ -38,7 +38,7 @@ namespace Saturn {
 
 	BehaviourTreePlaySoundTask::BehaviourTreePlaySoundTask( AssetID assetID )
 	{
-		Ref<Asset> asset = AssetManager::Get().FindAsset( assetID );
+		Ref<Asset> asset = AssetManager::Get()->FindAsset( assetID );
 		if( asset->Type == AssetType::GraphSound )
 		{
 			m_Sound = AudioSystem::Get().PlayGraphSound( assetID, UUID() );

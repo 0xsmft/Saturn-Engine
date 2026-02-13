@@ -79,7 +79,7 @@ namespace Saturn {
 
 		ImGui::EndHorizontal();
 
-		Auxiliary::Image( m_Texture, { (float)m_Texture->Width() / 2, ( float ) m_Texture->Height() / 2 } );
+		Auxiliary::Image( m_Texture, { (float)m_Texture->Width() * 0.5f, ( float ) m_Texture->Height() * 0.5f } );
 
 		ImGui::EndChild();
 
@@ -90,7 +90,7 @@ namespace Saturn {
 
 	void TextureViewer::AddTexture()
 	{
-		Ref<Asset> textureAsset = AssetManager::Get().FindAsset( m_AssetID );
+		Ref<Asset> textureAsset = AssetManager::Get()->FindAsset( m_AssetID );
 		m_Asset = textureAsset;
 
 		// Load the real texture.

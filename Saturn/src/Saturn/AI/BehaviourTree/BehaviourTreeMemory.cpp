@@ -49,7 +49,7 @@ namespace Saturn {
 
 	void BehaviourTreeMemory::InitialiseVariables( AssetID id )
 	{
-		const auto specification = AssetManager::Get().GetAssetAs<BehaviourTreeMemorySpecification>( id );
+		const auto specification = AssetManager::Get()->GetAssetAs<BehaviourTreeMemorySpecification>( id );
 
 		for( const auto& rVariable : specification->GetKeySpecs() )
 		{

@@ -441,7 +441,7 @@ namespace Saturn {
 				{
 					// Load Mesh 
 					// Hand off to RawStaticMeshAssetSerialiser
-					auto mesh = AssetManager::Get().GetAssetAs<StaticMesh>( ID );
+					auto mesh = AssetManager::Get()->GetAssetAs<StaticMesh>( ID );
 					mc.Mesh = mesh;
 				}
 
@@ -458,7 +458,7 @@ namespace Saturn {
 
 						// Load material asset
 						// Will call RawMaterialAssetSerialiser
-						Ref<MaterialAsset> asset = AssetManager::Get().GetAssetAs<MaterialAsset>( materialID );
+						Ref<MaterialAsset> asset = AssetManager::Get()->GetAssetAs<MaterialAsset>( materialID );
 
 						if( asset )
 						{
@@ -493,7 +493,7 @@ namespace Saturn {
 				{
 					// Load Mesh 
 					// Hand off to RawSkeletalMeshAssetSerialiser
-					auto mesh = AssetManager::Get().GetAssetAs<SkeletalMesh>( ID );
+					auto mesh = AssetManager::Get()->GetAssetAs<SkeletalMesh>( ID );
 					mc.Mesh = mesh;
 				}
 
@@ -510,7 +510,7 @@ namespace Saturn {
 
 						// Load material asset
 						// Will call RawMaterialAssetSerialiser
-						Ref<MaterialAsset> asset = AssetManager::Get().GetAssetAs<MaterialAsset>( materialID );
+						Ref<MaterialAsset> asset = AssetManager::Get()->GetAssetAs<MaterialAsset>( materialID );
 
 						if( asset )
 						{

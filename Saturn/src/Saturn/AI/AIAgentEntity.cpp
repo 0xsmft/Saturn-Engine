@@ -97,7 +97,7 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		// Add reference if asset viewer is open
 		const std::string name = std::format( "{0}##{1}", m_BehaviourTree->GetAsset()->Name, ( uint64_t ) id );
-		if( Ref<BehaviourTreeAssetViewer> window = ImGuiWindowManager::Get().GetWindow<BehaviourTreeAssetViewer>( name ); window )
+		if( Ref<BehaviourTreeAssetViewer> window = ImGuiWindowManager::Get()->GetWindow<BehaviourTreeAssetViewer>( name ); window )
 		{
 			window->AddBehviourTreeReference( m_BehaviourTree );
 		}

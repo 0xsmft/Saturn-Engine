@@ -47,10 +47,10 @@ namespace Saturn {
 
 	void Swapchain::Create()
 	{
-		SwapchainCreationData SwapchainData = VulkanContext::Get().GetSwapchainCreationData();
+		SwapchainCreationData SwapchainData = VulkanContext::Get()->GetSwapchainCreationData();
 
 		VkSwapchainCreateInfoKHR SwapchainCreateInfo ={ VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR };
-		SwapchainCreateInfo.surface          = VulkanContext::Get().GetSurface();
+		SwapchainCreateInfo.surface          = VulkanContext::Get()->GetSurface();
 		SwapchainCreateInfo.minImageCount    = SwapchainData.ImageCount;
 		SwapchainCreateInfo.imageFormat      = SwapchainData.CurrentFormat.format;
 		SwapchainCreateInfo.imageColorSpace  = SwapchainData.CurrentFormat.colorSpace;
@@ -58,7 +58,7 @@ namespace Saturn {
 		SwapchainCreateInfo.imageArrayLayers = 1;
 		SwapchainCreateInfo.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-		auto& rQueueFamilyIndices = VulkanContext::Get().GetQueueFamilyIndices();
+		auto& rQueueFamilyIndices = VulkanContext::Get()->GetQueueFamilyIndices();
 		uint32_t _QueueFamilyIndices[] ={ rQueueFamilyIndices.GraphicsFamily.value(), rQueueFamilyIndices.PresentFamily.value() };
 
 		if( rQueueFamilyIndices.GraphicsFamily != rQueueFamilyIndices.PresentFamily )
@@ -84,7 +84,7 @@ namespace Saturn {
 		else
 			SwapchainCreateInfo.oldSwapchain = VK_NULL_HANDLE;
 			
-		VK_CHECK( vkCreateSwapchainKHR( VulkanContext::Get().GetDevice(), &SwapchainCreateInfo, nullptr, &m_Swapchain ) );
+		VK_CHECK( vkCreateSwapchainKHR( VulkanContext::Get()->GetDevice(), &SwapchainCreateInfo, nullptr, &m_Swapchain ) );
 		
 		SetDebugUtilsObjectName( "Swapchain", ( uint64_t )m_Swapchain, VK_OBJECT_TYPE_SWAPCHAIN_KHR );
 
@@ -93,7 +93,7 @@ namespace Saturn {
 
 	void Swapchain::CreateFramebuffers()
 	{
-		SwapchainCreationData SwapchainData = VulkanContext::Get().GetSwapchainCreationData();
+		SwapchainCreationData SwapchainData = VulkanContext::Get()->GetSwapchainCreationData();
 
 		m_Framebuffers.resize( m_ImageViews.size() );
 		
@@ -106,12 +106,12 @@ namespace Saturn {
 			FramebufferCreateInfo.width = SwapchainData.SurfaceCaps.currentExtent.width;
 			FramebufferCreateInfo.height = SwapchainData.SurfaceCaps.currentExtent.height;
 
-			FramebufferCreateInfo.renderPass = VulkanContext::Get().GetDefaultVulkanPass(); // Swap chain render pass
+			FramebufferCreateInfo.renderPass = VulkanContext::Get()->GetDefaultVulkanPass(); // Swap chain render pass
 			FramebufferCreateInfo.layers = 1;
 			FramebufferCreateInfo.pAttachments = Attachments.data();
 			FramebufferCreateInfo.attachmentCount = ( uint32_t ) Attachments.size();
 
-			VK_CHECK( vkCreateFramebuffer( VulkanContext::Get().GetDevice(), &FramebufferCreateInfo, nullptr, &m_Framebuffers[ i ] ) );
+			VK_CHECK( vkCreateFramebuffer( VulkanContext::Get()->GetDevice(), &FramebufferCreateInfo, nullptr, &m_Framebuffers[ i ] ) );
 
 			SetDebugUtilsObjectName( "Swapchain framebuffer", ( uint64_t )m_Framebuffers[ i ], VK_OBJECT_TYPE_FRAMEBUFFER );
 		}
@@ -122,12 +122,12 @@ namespace Saturn {
 		// Destroy old framebuffers and image views that are going to be linked to old swapchain.
 		for( auto& rFramebuffer : m_Framebuffers )
 		{
-			vkDestroyFramebuffer( VulkanContext::Get().GetDevice(), rFramebuffer, nullptr );
+			vkDestroyFramebuffer( VulkanContext::Get()->GetDevice(), rFramebuffer, nullptr );
 		}
 
 		for( auto& rImageView : m_ImageViews )
 		{
-			vkDestroyImageView( VulkanContext::Get().GetDevice(), rImageView, nullptr );
+			vkDestroyImageView( VulkanContext::Get()->GetDevice(), rImageView, nullptr );
 		}
 
 		// Don't destroy Swapchain as we'll pass it into the SwapchainCreateInfo.oldSwapchain
@@ -144,12 +144,12 @@ namespace Saturn {
 	{
 		for( auto& rFramebuffer : m_Framebuffers )
 		{
-			vkDestroyFramebuffer( VulkanContext::Get().GetDevice(), rFramebuffer, nullptr );
+			vkDestroyFramebuffer( VulkanContext::Get()->GetDevice(), rFramebuffer, nullptr );
 		}
 
 		for( auto& rImageView : m_ImageViews )
 		{
-			vkDestroyImageView( VulkanContext::Get().GetDevice(), rImageView, nullptr );
+			vkDestroyImageView( VulkanContext::Get()->GetDevice(), rImageView, nullptr );
 		}
 
 		m_Framebuffers.clear();
@@ -157,7 +157,7 @@ namespace Saturn {
 
 		if( m_Swapchain )
 		{
-			vkDestroySwapchainKHR( VulkanContext::Get().GetDevice(), m_Swapchain, nullptr );
+			vkDestroySwapchainKHR( VulkanContext::Get()->GetDevice(), m_Swapchain, nullptr );
 		}
 		
 		m_Swapchain = nullptr;
@@ -167,14 +167,14 @@ namespace Saturn {
 	{
 		VkResult Result;
 
-		Result = vkAcquireNextImageKHR( VulkanContext::Get().GetDevice(), m_Swapchain, Timeout, Semaphore, Fence, pImageIndex );
+		Result = vkAcquireNextImageKHR( VulkanContext::Get()->GetDevice(), m_Swapchain, Timeout, Semaphore, Fence, pImageIndex );
 
 		if( Result == VK_ERROR_OUT_OF_DATE_KHR )
 		{
 			SAT_CORE_WARN( "Swap chain was out of date! recreating..." );
 
 			Recreate();
-			Result = vkAcquireNextImageKHR( VulkanContext::Get().GetDevice(), m_Swapchain, Timeout, Semaphore, Fence, pImageIndex );
+			Result = vkAcquireNextImageKHR( VulkanContext::Get()->GetDevice(), m_Swapchain, Timeout, Semaphore, Fence, pImageIndex );
 			if( Result == VK_ERROR_OUT_OF_DATE_KHR )
 				return false;
 		}
@@ -186,14 +186,14 @@ namespace Saturn {
 
 	void Swapchain::CreateImageViews()
 	{
-		SwapchainCreationData SwapchainData = VulkanContext::Get().GetSwapchainCreationData();
+		SwapchainCreationData SwapchainData = VulkanContext::Get()->GetSwapchainCreationData();
 
-		VK_CHECK( vkGetSwapchainImagesKHR( VulkanContext::Get().GetDevice(), m_Swapchain, &SwapchainData.ImageCount, nullptr ) );
+		VK_CHECK( vkGetSwapchainImagesKHR( VulkanContext::Get()->GetDevice(), m_Swapchain, &SwapchainData.ImageCount, nullptr ) );
 
 		m_Images.clear();
 		m_Images.resize( SwapchainData.ImageCount );
 
-		VK_CHECK( vkGetSwapchainImagesKHR( VulkanContext::Get().GetDevice(), m_Swapchain, &SwapchainData.ImageCount, m_Images.data() ) );
+		VK_CHECK( vkGetSwapchainImagesKHR( VulkanContext::Get()->GetDevice(), m_Swapchain, &SwapchainData.ImageCount, m_Images.data() ) );
 
 		// self note: We can't use a VkImage, we need something called a VkImageView. A VkImageView is a view into a VkImage, as a VkImage is just memory in the physical device (GPU).
 
@@ -210,7 +210,7 @@ namespace Saturn {
 		{
 			ImageViewCreateInfo.image = m_Images[ i ];
 
-			VK_CHECK( vkCreateImageView( VulkanContext::Get().GetDevice(), &ImageViewCreateInfo, nullptr, &m_ImageViews[ i ] ) );
+			VK_CHECK( vkCreateImageView( VulkanContext::Get()->GetDevice(), &ImageViewCreateInfo, nullptr, &m_ImageViews[ i ] ) );
 			SetDebugUtilsObjectName( "Image view", ( uint64_t )m_ImageViews[ i ], VK_OBJECT_TYPE_IMAGE_VIEW );
 		}
 	}

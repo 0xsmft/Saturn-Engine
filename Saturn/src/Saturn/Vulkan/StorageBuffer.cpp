@@ -51,7 +51,7 @@ namespace Saturn {
 		BufferInfo.usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
 		BufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-		auto pAllocator = VulkanContext::Get().GetVulkanAllocator();
+		auto pAllocator = VulkanContext::Get()->GetVulkanAllocator();
 		pAllocator->AllocateBuffer( BufferInfo, m_GPUOnly ? VMA_MEMORY_USAGE_GPU_ONLY : VMA_MEMORY_USAGE_CPU_TO_GPU, &m_Buffer );
 	}
 
@@ -59,7 +59,7 @@ namespace Saturn {
 	{
 		m_Size = newSize;
 
-		auto pAllocator = VulkanContext::Get().GetVulkanAllocator();
+		auto pAllocator = VulkanContext::Get()->GetVulkanAllocator();
 
 		pAllocator->DestroyBuffer( m_Buffer );
 

@@ -138,7 +138,8 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 
 	void Mesh::DeleteSourceModel()
 	{
-		std::filesystem::remove( m_FilePath );
+		if( std::filesystem::exists( m_FilePath ) )
+			std::filesystem::remove( m_FilePath );
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -399,13 +400,13 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 				m_MaterialRegistry->AddTargetMaterialAsset( ( uint32_t ) i, materialID );
 
 			// Try load material
-			Ref<MaterialAsset> materialAsset = AssetManager::Get().GetAssetAs<MaterialAsset>( materialID );
+			Ref<MaterialAsset> materialAsset = AssetManager::Get()->GetAssetAs<MaterialAsset>( materialID );
 
 			// Failed to load material, create new and default it.
 			if( materialAsset == nullptr )
 			{
 				// Safe to fall back to project defaults because in Dist project defaults must be set in order to package.
-				materialAsset = AssetManager::Get().GetAssetAs<MaterialAsset>( Project::GetActiveProject()->GetDefaultMaterialAsset() );
+				materialAsset = AssetManager::Get()->GetAssetAs<MaterialAsset>( Project::GetActiveProject()->GetDefaultMaterialAsset() );
 			}
 
 			m_MaterialRegistry->AddAsset( materialAsset );
@@ -419,7 +420,7 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 		: Asset( rBase ), Mesh( rFilepath )
 	{
 #if !defined(SAT_DIST)
-		m_SkeletonAsset = AssetManager::Get().GetAssetAs<SkeletonAsset>( skeletonID );
+		m_SkeletonAsset = AssetManager::Get()->GetAssetAs<SkeletonAsset>( skeletonID );
 		SAT_CORE_ASSERT( m_SkeletonAsset );
 
 		Initialise();
@@ -441,7 +442,7 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 		// TODO: Not the best way, a bit screwy
 		if( !m_SkeletonAsset )
 		{
-			m_SkeletonAsset = Ref<SkeletonAsset>::Create( AssetManager::Get().FindAsset( id ) );
+			m_SkeletonAsset = Ref<SkeletonAsset>::Create( AssetManager::Get()->FindAsset( id ) );
 		}
 	}
 
@@ -691,7 +692,7 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 #if defined(SAT_DIST)
 	void SkeletalMesh::DistLoadSkeleton( AssetID skeletonID )
 	{
-		m_SkeletonAsset = AssetManager::Get().GetAssetAs<SkeletonAsset>( skeletonID );
+		m_SkeletonAsset = AssetManager::Get()->GetAssetAs<SkeletonAsset>( skeletonID );
 		SAT_CORE_VERIFY( m_SkeletonAsset, "Unable to load skeleton for this Skeletal Mesh!" );
 	}
 #endif
@@ -769,13 +770,13 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 				m_MaterialRegistry->AddTargetMaterialAsset( ( uint32_t ) i, materialID );
 
 			// Try load material
-			Ref<MaterialAsset> materialAsset = AssetManager::Get().GetAssetAs<MaterialAsset>( materialID );
+			Ref<MaterialAsset> materialAsset = AssetManager::Get()->GetAssetAs<MaterialAsset>( materialID );
 
 			// Failed to load material, create new and default it.
 			if( materialAsset == nullptr )
 			{
 				// Safe to fall back to project defaults because in Dist project defaults must be set in order to package.
-				materialAsset = AssetManager::Get().GetAssetAs<MaterialAsset>( Project::GetActiveProject()->GetDefaultMaterialAsset() );
+				materialAsset = AssetManager::Get()->GetAssetAs<MaterialAsset>( Project::GetActiveProject()->GetDefaultMaterialAsset() );
 			}
 
 			m_MaterialRegistry->AddAsset( materialAsset );
@@ -897,7 +898,7 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 				materialPath /= MaterialName;
 				materialPath.replace_extension( ".smaterial" );
 
-				Ref<Asset> asset = AssetManager::Get().FindAsset( AssetManager::Get().CreateAsset( AssetType::Material ) );
+				Ref<Asset> asset = AssetManager::Get()->FindAsset( AssetManager::Get()->CreateAsset( AssetType::Material ) );
 				asset->SetAbsolutePath( materialPath );
 
 				materialAsset = Ref<MaterialAsset>::Create( nullptr );
@@ -977,7 +978,7 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 						{
 							auto texture = Ref<Texture2D>::Create( LocalPath, AddressingMode::Repeat, false );
 							materialAsset->SetAlbeoMap( texture );
-							Ref<Asset> asset = AssetManager::Get().FindAsset( AssetManager::Get().CreateAsset( AssetType::Texture ) );
+							Ref<Asset> asset = AssetManager::Get()->FindAsset( AssetManager::Get()->CreateAsset( AssetType::Texture ) );
 							asset->SetAbsolutePath( LocalPath );
 							needToSaveAssetReg = true;
 						}
@@ -1011,7 +1012,7 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 						materialAsset->SetNormalMap( texture );
 						materialAsset->UseNormalMap( true );
 
-						Ref<Asset> asset = AssetManager::Get().FindAsset( AssetManager::Get().CreateAsset( AssetType::Texture ) );
+						Ref<Asset> asset = AssetManager::Get()->FindAsset( AssetManager::Get()->CreateAsset( AssetType::Texture ) );
 						asset->SetAbsolutePath( LocalPath );
 						needToSaveAssetReg = true;
 					}
@@ -1042,7 +1043,7 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 						auto texture = Ref<Texture2D>::Create( LocalPath, AddressingMode::Repeat, false );
 						materialAsset->SetRoughnessMap( texture );
 
-						Ref<Asset> asset = AssetManager::Get().FindAsset( AssetManager::Get().CreateAsset( AssetType::Texture ) );
+						Ref<Asset> asset = AssetManager::Get()->FindAsset( AssetManager::Get()->CreateAsset( AssetType::Texture ) );
 						asset->SetAbsolutePath( LocalPath );
 						needToSaveAssetReg = true;
 					}
@@ -1085,7 +1086,7 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 								auto texture = Ref<Texture2D>::Create( localTexturePath, AddressingMode::Repeat, false );
 								materialAsset->SetMetallicMap( texture );
 
-								Ref<Asset> asset = AssetManager::Get().FindAsset( AssetManager::Get().CreateAsset( AssetType::Texture ) );
+								Ref<Asset> asset = AssetManager::Get()->FindAsset( AssetManager::Get()->CreateAsset( AssetType::Texture ) );
 								asset->SetAbsolutePath( localTexturePath );
 
 								needToSaveAssetReg = true;
@@ -1106,7 +1107,7 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 
 		if( needToSaveAssetReg )
 		{
-			AssetManager::Get().Save();
+			AssetManager::Get()->Save();
 		}
 
 		return true;
@@ -1194,7 +1195,7 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 		Ref<SkeletonAsset> skelAsset = nullptr;
 		if( ( m_ImportBehaviour & MeshImportBehaviour_SK_MergeWithExistingSK ) == 0 )
 		{
-			auto asset = AssetManager::Get().FindAsset( AssetManager::Get().CreateAsset( AssetType::Skeleton ) );
+			auto asset = AssetManager::Get()->FindAsset( AssetManager::Get()->CreateAsset( AssetType::Skeleton ) );
 			asset->Name = m_SourcePath.stem().string();
 
 			auto path = m_DstPath / asset->Name;
@@ -1213,7 +1214,7 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 		}
 		else
 		{
-			skelAsset = AssetManager::Get().GetAssetAs<SkeletonAsset>( m_SkeletonID );
+			skelAsset = AssetManager::Get()->GetAssetAs<SkeletonAsset>( m_SkeletonID );
 			SAT_CORE_ASSERT( skelAsset );
 		}
 
@@ -1246,7 +1247,7 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 			// Some artists/websites (mixamo) will add | which is an illegal file name on Windows.
 			std::replace( name.begin(), name.end(), '|', '-' );
 
-			auto asset = AssetManager::Get().FindAsset( AssetManager::Get().CreateAsset( AssetType::SkeletalAnimation ) );
+			auto asset = AssetManager::Get()->FindAsset( AssetManager::Get()->CreateAsset( AssetType::SkeletalAnimation ) );
 			asset->Name = name;
 
 			auto path = m_DstPath / asset->Name;

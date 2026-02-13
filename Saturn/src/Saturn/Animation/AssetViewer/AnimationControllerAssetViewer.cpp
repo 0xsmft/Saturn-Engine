@@ -63,7 +63,7 @@ namespace Saturn {
 
 	void AnimationControllerAssetViewer::AddAsset()
 	{
-		m_Asset = AssetManager::Get().FindAsset( m_AssetID );
+		m_Asset = AssetManager::Get()->FindAsset( m_AssetID );
 
 		m_Open = true;
 		m_Name = std::format( "{0}##{1}", m_Asset->Name, std::to_string( m_AssetID ) );
@@ -98,13 +98,13 @@ namespace Saturn {
 			m_NodeEditor->SaveAndMarkClean();
 		}
 
-		GlobalUndoRedoGroup::Get().RemoveIfActionHasIdentifier( m_AssetID );
+		GlobalUndoRedoGroup::Get()->RemoveIfActionHasIdentifier( m_AssetID );
 
 		m_Asset = nullptr;
 //		m_NodeEditor->SetRuntime( nullptr );
 		m_NodeEditor = nullptr;
 
-		AssetManager::Get().Save();
+		AssetManager::Get()->Save();
 #endif
 	}
 

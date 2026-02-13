@@ -199,7 +199,7 @@ namespace Saturn {
 
 			if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
 			{
-				m_AssetToImportPath = Application::Get().OpenFile( L"Supported asset types (*.fbx *.gltf *.glb)|*.fbx; *.gltf; *.glb" );
+				m_AssetToImportPath = Application::Get()->OpenFile( L"Supported asset types (*.fbx *.gltf *.glb)|*.fbx; *.gltf; *.glb" );
 			}
 
 			ImGui::EndHorizontal();
@@ -272,7 +272,7 @@ namespace Saturn {
 
 			if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
 			{
-				m_GLTFBinPath = Application::Get().OpenFile( L"Supported asset types (*.glb *.bin)|*.glb; *.bin" );
+				m_GLTFBinPath = Application::Get()->OpenFile( L"Supported asset types (*.glb *.bin)|*.glb; *.bin" );
 
 				m_UseBinFile = m_GLTFBinFileExists = std::filesystem::exists( m_GLTFBinPath );
 			}
@@ -335,7 +335,7 @@ namespace Saturn {
 
 		if( ImGui::BeginItemTooltip() )
 		{
-			ImGui::Text( "todo" );
+			ImGui::Text( "todo | MeshImportPopup::DrawAndHandleImportBehaviour" );
 			ImGui::EndTooltip();
 		}
 
@@ -419,8 +419,8 @@ namespace Saturn {
 		auto assetPath = m_DestinationPath / m_AssetToImportPath.filename();
 		assetPath.replace_extension( ".skmesh" );
 
-		const auto id = AssetManager::Get().CreateAsset( AssetType::SkeletalMesh );
-		auto asset = AssetManager::Get().FindAsset( id );
+		const auto id = AssetManager::Get()->CreateAsset( AssetType::SkeletalMesh );
+		auto asset = AssetManager::Get()->FindAsset( id );
 
 		if( ( m_ImportBehaviour & MeshImportBehaviour_SK_ImportMesh ) != 0 )
 		{
@@ -464,7 +464,7 @@ namespace Saturn {
 			// TOOD: Unload the material assets!! (Textures could be loaded!)
 			for( uint64_t materialID : meshImporter.GetMeshInformation().MaterialAssets )
 			{
-				skeletalMesh->GetMaterialRegistry()->AddAsset( AssetManager::Get().GetAssetAs<MaterialAsset>( materialID ) );
+				skeletalMesh->GetMaterialRegistry()->AddAsset( AssetManager::Get()->GetAssetAs<MaterialAsset>( materialID ) );
 			}
 
 			// Serialise the mesh asset
@@ -474,7 +474,7 @@ namespace Saturn {
 			skeletalMesh->SetAbsolutePath( assetPath );
 		}
 		else
-			AssetManager::Get().RemoveAsset( id );
+			AssetManager::Get()->RemoveAsset( id );
 #endif
 
 		return AssetImportPopupError::None;
@@ -482,8 +482,8 @@ namespace Saturn {
 
 	AssetImportPopupError MeshImportPopup::ImportStatic()
 	{
-		const auto id = AssetManager::Get().CreateAsset( AssetType::StaticMesh );
-		auto asset = AssetManager::Get().FindAsset( id );
+		const auto id = AssetManager::Get()->CreateAsset( AssetType::StaticMesh );
+		auto asset = AssetManager::Get()->FindAsset( id );
 
 		// Copy the raw mesh file:
 		std::filesystem::copy_file( m_AssetToImportPath, m_DestinationPath / m_AssetToImportPath.filename(), std::filesystem::copy_options::overwrite_existing );
@@ -520,7 +520,7 @@ namespace Saturn {
 		// TOOD: Unload the material assets!! (Textures could be loaded!)
 		for( uint64_t materialID : meshImporter.GetMeshInformation().MaterialAssets )
 		{
-			staticMesh->GetMaterialRegistry()->AddAsset( AssetManager::Get().GetAssetAs<MaterialAsset>( materialID ) );
+			staticMesh->GetMaterialRegistry()->AddAsset( AssetManager::Get()->GetAssetAs<MaterialAsset>( materialID ) );
 		}
 #endif
 
@@ -569,7 +569,7 @@ namespace Saturn {
 
 			if( ImGui::Button( "Browse" ) )
 			{
-				m_AssetToImportPath = Application::Get().OpenFile( L"Supported asset types (*.wav *.mp3)|*.wav; *.mp3" );
+				m_AssetToImportPath = Application::Get()->OpenFile( L"Supported asset types (*.wav *.mp3)|*.wav; *.mp3" );
 			}
 
 			ImGui::EndHorizontal();
@@ -579,8 +579,8 @@ namespace Saturn {
 
 			if( ImGui::Button( "Create" ) )
 			{
-				const auto id = AssetManager::Get().CreateAsset( AssetType::Sound );
-				auto asset = AssetManager::Get().FindAsset( id );
+				const auto id = AssetManager::Get()->CreateAsset( AssetType::Sound );
+				auto asset = AssetManager::Get()->FindAsset( id );
 				auto assetPath = m_DestinationPath / m_AssetToImportPath.filename();
 
 				// Copy the audio source.
@@ -667,7 +667,7 @@ namespace Saturn {
 
 			if( ImGui::Button( "Change" ) )
 			{
-				m_AssetToImportPath = Application::Get().OpenFile( L"Supported asset types (*.ttf)|*.ttf" );
+				m_AssetToImportPath = Application::Get()->OpenFile( L"Supported asset types (*.ttf)|*.ttf" );
 			}
 
 			ImGui::EndHorizontal();
@@ -676,8 +676,8 @@ namespace Saturn {
 
 			if( ImGui::Button( "Create" ) )
 			{
-				const auto id = AssetManager::Get().CreateAsset( AssetType::Font );
-				auto asset = AssetManager::Get().FindAsset( id );
+				const auto id = AssetManager::Get()->CreateAsset( AssetType::Font );
+				auto asset = AssetManager::Get()->FindAsset( id );
 				auto assetPath = m_DestinationPath / m_AssetToImportPath.filename();
 
 				// Replace Extension for font asset

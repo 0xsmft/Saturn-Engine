@@ -224,7 +224,7 @@ namespace Saturn {
 
 		// Final step, set title
 		const std::string title = std::format( "{0} - Saturn", Project::GetActiveConfig().Name );
-		Application::Get().GetWindow()->ChangeTitle( title );
+		Application::Get()->GetWindow()->ChangeTitle( title );
 
 		/*
 		if( !Project::GetActiveProject()->HasThumbnail() )
@@ -486,7 +486,7 @@ namespace Saturn {
 			if( m_ShowDistBuildOptions )    DrawDistOptionsModal();
 			if( m_ShowDeleteNavMeshCachePopup ) DrawDeleteNavMeshModal();
 			if( m_ShowCBThumbnailDebug )    ContentBrowserThumbnailCache::Get().OnImGuiRender( &m_ShowCBThumbnailDebug );
-			if( m_ShowUndoRedoDebug )       GlobalUndoRedoGroup::Get().OnImGuiRender( &m_ShowUndoRedoDebug );
+			if( m_ShowUndoRedoDebug )       m_GlobalUndoRedoGroup->OnImGuiRender( &m_ShowUndoRedoDebug );
 		}
 		
 		DrawViewport();
@@ -607,7 +607,7 @@ namespace Saturn {
 	void EditorLayer::SaveFileAs()
 	{
 		// TODO: Support Saving scene as!
-		const auto res = Application::Get().SaveFile( L"Modern Saturn scene file (*.scene)|*.scene" );
+		const auto res = Application::Get()->SaveFile( L"Modern Saturn scene file (*.scene)|*.scene" );
 
 		SceneSerialiser serialiser( m_EditorScene );
 		serialiser.Serialise( res );
@@ -692,7 +692,7 @@ namespace Saturn {
 
 		m_RuntimeScene->OnRuntimeEnd();
 
-		const Ref<Asset> asset = AssetManager::Get().FindAsset( id );
+		const Ref<Asset> asset = m_AssetManager->FindAsset( id );
 
 		SceneSerialiser serialiser( newScene );
 		serialiser.Deserialise( asset );
@@ -788,7 +788,7 @@ namespace Saturn {
 		m_EditorCamera.SetActive( false );
 
 		const std::string title = std::format( "{0} (Running) - Saturn", Project::GetActiveConfig().Name );
-		Application::Get().GetWindow()->ChangeTitle( title );
+		Application::Get()->GetWindow()->ChangeTitle( title );
 
 		m_ImGuiWindowManager->OnRuntimeStateChanged( RuntimeState::Running, RuntimeState::Starting );
 	}
@@ -810,7 +810,7 @@ namespace Saturn {
 		m_SceneRenderer->SetCurrentScene( m_EditorScene.Get() );
 
 		const std::string title = std::format( "{0} - Saturn", Project::GetActiveConfig().Name );
-		Application::Get().GetWindow()->ChangeTitle( title );
+		Application::Get()->GetWindow()->ChangeTitle( title );
 
 		m_ImGuiWindowManager->OnRuntimeStateChanged( RuntimeState::NoState, RuntimeState::Ending );
 	}
@@ -1053,7 +1053,7 @@ namespace Saturn {
 	void EditorLayer::HandleSceneTravel( SceneTravelEvent& rEvent )
 	{
 		const AssetID destinationID = rEvent.GetID();
-		const Ref<Asset> sceneAsset = AssetManager::Get().FindAsset( destinationID );
+		const Ref<Asset> sceneAsset = m_AssetManager->FindAsset( destinationID );
 		
 		if( !sceneAsset )
 		{
@@ -1104,7 +1104,7 @@ namespace Saturn {
 
 			auto& rConfig = ActiveProject->GetConfig();
 			auto& startupSceneID = rConfig.StartupSceneID;
-			Ref<Asset> startupSceneAsset = AssetManager::Get().FindAsset( startupSceneID );
+			Ref<Asset> startupSceneAsset = m_AssetManager->FindAsset( startupSceneID );
 
 			const auto boldFont = rIO.Fonts->Fonts[ 1 ];
 			ImGui::PushFont( boldFont );
@@ -1163,7 +1163,7 @@ namespace Saturn {
 
 					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "NoIcon" ), { 24.0f, 24.0f } ) )
 					{
-						Ref<Asset> target = AssetManager::Get().FindAsset( rConfig.StartupSceneID );
+						Ref<Asset> target = m_AssetManager->FindAsset( rConfig.StartupSceneID );
 
 						if( target )
 						{
@@ -1204,7 +1204,7 @@ namespace Saturn {
 
 					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "NoIcon" ), { 24.0f, 24.0f } ) )
 					{
-						const Ref<Asset> target = AssetManager::Get().FindAsset( defaultMaterialID );
+						const Ref<Asset> target = m_AssetManager->FindAsset( defaultMaterialID );
 
 						if( target )
 						{
@@ -1243,7 +1243,7 @@ namespace Saturn {
 
 					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "NoIcon" ), { 24.0f, 24.0f } ) )
 					{
-						const Ref<Asset> target = AssetManager::Get().FindAsset( defaultMaterialID );
+						const Ref<Asset> target = m_AssetManager->FindAsset( defaultMaterialID );
 
 						if( target )
 						{
@@ -1282,7 +1282,7 @@ namespace Saturn {
 
 					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "NoIcon" ), { 24.0f, 24.0f } ) )
 					{
-						const Ref<Asset> target = AssetManager::Get().FindAsset( defaultFontAsset );
+						const Ref<Asset> target = m_AssetManager->FindAsset( defaultFontAsset );
 
 						if( target )
 						{
@@ -1718,7 +1718,7 @@ namespace Saturn {
 
 				ImGui::TableHeadersRow();
 
-				for( auto&& [id, asset] : AssetManager::Get().GetCombinedAssetMap() )
+				for( auto&& [id, asset] : m_AssetManager->GetCombinedAssetMap() )
 				{
 					if( !Filter.PassFilter( asset->Name.c_str() ) )
 						continue;
@@ -1783,7 +1783,7 @@ namespace Saturn {
 
 				ImGui::TableHeadersRow();
 
-				for( auto&& [id, asset] : AssetManager::Get().GetCombinedLoadedAssetMap() )
+				for( auto&& [id, asset] : m_AssetManager->GetCombinedLoadedAssetMap() )
 				{
 					if( !Filter.PassFilter( asset->Name.c_str() ) )
 						continue;
@@ -1860,7 +1860,7 @@ namespace Saturn {
 
 				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), { 24.0f, 24.0f } ) )
 				{
-					const auto filePath = Application::Get().OpenFile( L"Saturn Project file (*.sproject)|*.sproject" );
+					const auto filePath = Application::Get()->OpenFile( L"Saturn Project file (*.sproject)|*.sproject" );
 					if( !filePath.empty() )
 					{
 						rEngineSettings.StartupProject = filePath;
@@ -1872,7 +1872,7 @@ namespace Saturn {
 
 				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "NoIcon" ), { 24.0f, 24.0f } ) )
 				{
-					Application::Get().OpenNativeFileExplorer( rEngineSettings.StartupProject, true );
+					Application::Get()->OpenNativeFileExplorer( rEngineSettings.StartupProject, true );
 				}
 
 				ImGui::SetNextItemWidth( 130.0f );
@@ -1936,7 +1936,7 @@ namespace Saturn {
 
 			disabledIfRuntime.Pop();
 
-			if( ImGui::MenuItem( "Exit", "Alt+F4" ) )                if( OnTitlebarExit() ) Application::Get().Close();
+			if( ImGui::MenuItem( "Exit", "Alt+F4" ) )                if( OnTitlebarExit() ) Application::Get()->Close();
 
 			ImGui::EndMenu();
 		}
@@ -1947,9 +1947,9 @@ namespace Saturn {
 				Auxiliary::ScopedDisabledFlag disabledIfRuntime( m_RequestRuntime );
 
 				// TODO: Disable if there's nothing to undo/redo.
-				if( ImGui::MenuItem( "Undo", "Ctrl+Z" ) )           GlobalUndoRedoGroup::Get().GlobalUndoRecent();
-				if( ImGui::MenuItem( "Redo", "Ctrl+Y" ) )           GlobalUndoRedoGroup::Get().GlobalRedoRecent();
-				if( ImGui::MenuItem( "Clear all action history" ) ) GlobalUndoRedoGroup::Get().ClearAll();
+				if( ImGui::MenuItem( "Undo", "Ctrl+Z" ) )           m_GlobalUndoRedoGroup->GlobalUndoRecent();
+				if( ImGui::MenuItem( "Redo", "Ctrl+Y" ) )           m_GlobalUndoRedoGroup->GlobalRedoRecent();
+				if( ImGui::MenuItem( "Clear all action history" ) ) m_GlobalUndoRedoGroup->ClearAll();
 			}
 
 			ImGui::EndMenu();
@@ -2011,7 +2011,7 @@ namespace Saturn {
 						if( !Project::GetActiveProject()->HasPremakeFile() )
 							Project::GetActiveProject()->CreatePremakeFile();
 
-						Premake::Launch( Project::GetActiveProject()->GetRootDir().wstring() );
+						Premake::Launch( Project::GetActiveProject()->GetRootDir().wstring(), L"premake5.lua", PremakeAction::VisualStudio2022 );
 					} );
 				}
 
@@ -2259,7 +2259,7 @@ namespace Saturn {
 					{
 						if( !shader->TryRecompile() )
 						{
-							Application::Get().GetWindow()->FlashAttention();
+							Application::Get()->GetWindow()->FlashAttention();
 
 							MessageBoxInfo msgBox = { .Title = "Error", .Text = std::format( "Shader '{0}' failed to recompile. Defaulting back to last successful build.", shader->GetName() ) };
 							PushMessageBox( msgBox );
@@ -2286,9 +2286,9 @@ namespace Saturn {
 	{
 		if( ImGui::Begin( "Renderer", &m_ShowRendererWindow ) )
 		{
-			ImGui::Text( "Frame Time: %.2f ms", Application::Get().Time().Milliseconds() );
+			ImGui::Text( "Frame Time: %.2f ms", Application::Get()->Time().Milliseconds() );
 
-			for( const auto& devices : VulkanContext::Get().GetPhysicalDeviceProperties() )
+			for( const auto& devices : VulkanContext::Get()->GetPhysicalDeviceProperties() )
 			{
 				ImGui::Text( "Device Name: %s", devices.DeviceProps.deviceName );
 				ImGui::Text( "API Version: %i", devices.DeviceProps.apiVersion );
@@ -2366,7 +2366,7 @@ namespace Saturn {
 		{
 			if( Auxiliary::TreeNode( "Asset Dependencies (Memory)", false ) )
 			{
-				for( const auto& [assetID, rDependency] : AssetManager::Get().GetAssetDependencies() )
+				for( const auto& [assetID, rDependency] : m_AssetManager->GetAssetDependencies() )
 				{
 					if( Auxiliary::TreeNode( std::to_string( assetID ), false ) )
 					{
@@ -2384,14 +2384,14 @@ namespace Saturn {
 
 			if( Auxiliary::TreeNode( "Asset Dependencies", true ) )
 			{
-				for( const auto& [assetID, rDependencies] : AssetManager::Get().GetPureAssetDependencies() )
+				for( const auto& [assetID, rDependencies] : m_AssetManager->GetPureAssetDependencies() )
 				{
-					const Ref<Asset> asset = AssetManager::Get().FindAsset( assetID );
+					const Ref<Asset> asset = m_AssetManager->FindAsset( assetID );
 					if( Auxiliary::TreeNode( asset->Name, false ) )
 					{
 						for( const AssetID id : rDependencies )
 						{
-							const Ref<Asset> dependency = AssetManager::Get().FindAsset( id );
+							const Ref<Asset> dependency = m_AssetManager->FindAsset( id );
 							if( dependency )
 							{
 								ImGui::Text( dependency->Name.data() );
@@ -2632,9 +2632,9 @@ namespace Saturn {
 				m_PreVPFullscreenPosition = m_ViewportBounds.Min;
 				m_PreVPDockedNodeID = ImGui::GetWindowDockID();
 
-				const ImVec2 size = ImVec2( Application::Get().GetWindow()->GetWidth(), Application::Get().GetWindow()->GetHeight() );
+				const ImVec2 size = ImVec2( Application::Get()->GetWindow()->GetWidth(), Application::Get()->GetWindow()->GetHeight() );
 				
-				const auto windowPosition = Application::Get().GetWindow()->GetPosition();
+				const auto windowPosition = Application::Get()->GetWindow()->GetPosition();
 				const ImVec2 viewportPos = ImVec2( windowPosition.x, windowPosition.y );
 
 				ImGui::SetNextWindowDockID( 0, ImGuiCond_Always );
@@ -2687,10 +2687,11 @@ namespace Saturn {
 			{
 				const UUID* pUUID = ( const UUID* ) payload->Data;
 
-				Ref<Asset> asset = AssetManager::Get().FindAsset( *pUUID );
-				Ref<Prefab> prefabAsset = AssetManager::Get().GetAssetAs<Prefab>( asset->ID );
+				Ref<Asset> asset = m_AssetManager->FindAsset( *pUUID );
+				Ref<Prefab> prefabAsset = m_AssetManager->GetAssetAs<Prefab>( asset->ID );
 
-				m_EditorScene->CreatePrefab( prefabAsset );
+				CreateEntityParameters createEntityParameters;
+				m_EditorScene->CreatePrefab( prefabAsset, createEntityParameters );
 				m_EditorScene->MarkDirty();
 			}
 
@@ -2698,8 +2699,8 @@ namespace Saturn {
 			{
 				const UUID* pUUID = ( const UUID* ) payload->Data;
 
-				Ref<Asset> asset = AssetManager::Get().FindAsset( *pUUID );
-				Ref<StaticMesh> meshAsset = AssetManager::Get().GetAssetAs<StaticMesh>( asset->ID );
+				Ref<Asset> asset = m_AssetManager->FindAsset( *pUUID );
+				Ref<StaticMesh> meshAsset = m_AssetManager->GetAssetAs<StaticMesh>( asset->ID );
 
 				SharedPtr<Entity> entity = m_EditorScene->CreateEntity( asset->Name );
 
@@ -2901,7 +2902,7 @@ namespace Saturn {
 				m_RuntimeScene->ResumeRuntime();
 
 				const std::string title = std::format( "{0} (Running) - Saturn", Project::GetActiveConfig().Name );
-				Application::Get().GetWindow()->ChangeTitle( title );
+				Application::Get()->GetWindow()->ChangeTitle( title );
 			}
 
 			if( ImGui::BeginItemTooltip() )
@@ -2934,7 +2935,7 @@ namespace Saturn {
 			m_RuntimeScene->SuspendRuntime();
 
 			const std::string title = std::format( "{0} (RT Suspended) - Saturn", Project::GetActiveConfig().Name );
-			Application::Get().GetWindow()->ChangeTitle( title );
+			Application::Get()->GetWindow()->ChangeTitle( title );
 		}
 
 		if( ImGui::BeginItemTooltip() )
@@ -3113,7 +3114,7 @@ namespace Saturn {
 						* glm::scale( glm::mat4( 1.0f ), newScale );
 
 					Ref<UndoRedoActionModifyTransformation> action = Ref<UndoRedoActionModifyTransformation>::Create( entity, transform, newTransform );
-					GlobalUndoRedoGroup::Get().AddAction( action, ( uint64_t ) entity->GetHandle() );
+					m_GlobalUndoRedoGroup->AddAction( action, ( uint64_t ) entity->GetHandle() );
 
 					if( entity->HasComponent<NavigationMeshSpecificationComponent>() )
 					{
@@ -3151,7 +3152,7 @@ namespace Saturn {
 		SaturnDir /= L"ProjectBrowser.exe";
 #endif
 		DeatchedProcess dp( SaturnDir.wstring(), WorkingDir );
-		Application::Get().Close();
+		Application::Get()->Close();
 	}
 
 	bool EditorLayer::OnTitlebarExit()
@@ -3177,11 +3178,11 @@ namespace Saturn {
 		if( m_EditorScene->IsDirty() )
 		{
 			m_ShowSceneDirtyModal = true;
-			m_EventAfterPopup = []() { Application::Get().Close(); };
+			m_EventAfterPopup = []() { Application::Get()->Close(); };
 
 			ImGui::OpenPopup( "SceneDirtyPopup" );
 
-			Application::Get().GetWindow()->FlashAttention();
+			Application::Get()->GetWindow()->FlashAttention();
 		}
 
 		// Otherwise, accept exit request if scene is not dirty.
@@ -3301,7 +3302,7 @@ namespace Saturn {
 				ImGui::SameLine();
 				if( ImGui::Button( "..." ) )
 				{
-					path = Application::Get().OpenFile( L"Application|*.exe" );
+					path = Application::Get()->OpenFile( L"Application|*.exe" );
 				}
 
 				if( !path.empty() )
@@ -3344,7 +3345,7 @@ namespace Saturn {
 			PushMessageBox( msgBox );
 		}
 
-		Application::Get().GetWindow()->FlashAttention();
+		Application::Get()->GetWindow()->FlashAttention();
 
 		ShaderLibrary::Get().Remove( TexturePass );
 		TexturePass = nullptr;
@@ -3434,7 +3435,7 @@ namespace Saturn {
 			{
 				if( const auto result = AssetBundle::BundleAssets( m_BlockingOperation ); result != AssetBundleResult::Success )
 				{
-					Application::Get().GetWindow()->FlashAttention();
+					Application::Get()->GetWindow()->FlashAttention();
 
 					MessageBoxInfo msgBox
 					{

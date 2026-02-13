@@ -69,10 +69,10 @@ namespace Saturn {
 	void Pipeline::Terminate()
 	{
 		if( m_PipelineLayout )
-			vkDestroyPipelineLayout( VulkanContext::Get().GetDevice(), m_PipelineLayout, nullptr );
+			vkDestroyPipelineLayout( VulkanContext::Get()->GetDevice(), m_PipelineLayout, nullptr );
 
 		if( m_Pipeline )
-			vkDestroyPipeline( VulkanContext::Get().GetDevice(), m_Pipeline, nullptr );
+			vkDestroyPipeline( VulkanContext::Get()->GetDevice(), m_Pipeline, nullptr );
 
 		m_Pipeline = nullptr;
 		m_PipelineLayout = nullptr;
@@ -104,7 +104,7 @@ namespace Saturn {
 		PipelineLayoutCreateInfo.setLayoutCount = ( uint32_t ) layouts.size();
 		PipelineLayoutCreateInfo.pSetLayouts = layouts.data();
 		
-		VK_CHECK( vkCreatePipelineLayout( VulkanContext::Get().GetDevice(), &PipelineLayoutCreateInfo, nullptr, &m_PipelineLayout ) );
+		VK_CHECK( vkCreatePipelineLayout( VulkanContext::Get()->GetDevice(), &PipelineLayoutCreateInfo, nullptr, &m_PipelineLayout ) );
 
 		// Create shader modules
 		VkShaderModule VertexModule = VK_NULL_HANDLE;
@@ -123,7 +123,7 @@ namespace Saturn {
 			CreateInfo.codeSize = 4 * VertexCode.size();
 			CreateInfo.pCode = ( uint32_t* ) VertexCode.data();
 
-			VK_CHECK( vkCreateShaderModule( VulkanContext::Get().GetDevice(), &CreateInfo, nullptr, &VertexModule ) );
+			VK_CHECK( vkCreateShaderModule( VulkanContext::Get()->GetDevice(), &CreateInfo, nullptr, &VertexModule ) );
 		}
 
 		if( SpvSrc.size() > 1 )
@@ -134,7 +134,7 @@ namespace Saturn {
 				FCreateInfo.codeSize = 4 * FragmentCode.size();
 				FCreateInfo.pCode = ( uint32_t* ) FragmentCode.data();
 
-				VK_CHECK( vkCreateShaderModule( VulkanContext::Get().GetDevice(), &FCreateInfo, nullptr, &FragmentModule ) );
+				VK_CHECK( vkCreateShaderModule( VulkanContext::Get()->GetDevice(), &FCreateInfo, nullptr, &FragmentModule ) );
 			}
 
 			SetDebugUtilsObjectName( std::string( m_Specification.Name + "/" + FragmentName ), ( uint64_t )FragmentModule, VK_OBJECT_TYPE_SHADER_MODULE );
@@ -362,7 +362,7 @@ namespace Saturn {
 		PipelineCreateInfo.pStages             = ShaderStages.data();
 		PipelineCreateInfo.stageCount          = ( uint32_t ) ShaderStages.size();
 		
-		VK_CHECK( vkCreateGraphicsPipelines( VulkanContext::Get().GetDevice(), 0, 1, &PipelineCreateInfo, nullptr, &m_Pipeline ) );
+		VK_CHECK( vkCreateGraphicsPipelines( VulkanContext::Get()->GetDevice(), 0, 1, &PipelineCreateInfo, nullptr, &m_Pipeline ) );
 
 		SetDebugUtilsObjectName( m_Specification.Name, ( uint64_t )m_Pipeline, VK_OBJECT_TYPE_PIPELINE );
 
@@ -371,11 +371,11 @@ namespace Saturn {
 		else				
 			SAT_CORE_WARN( "Created pipeline: {0}!", ( uint64_t )m_Pipeline );
 
-		vkDestroyShaderModule( VulkanContext::Get().GetDevice(), VertexModule, nullptr );
-		vkDestroyShaderModule( VulkanContext::Get().GetDevice(), FragmentModule, nullptr );
+		vkDestroyShaderModule( VulkanContext::Get()->GetDevice(), VertexModule, nullptr );
+		vkDestroyShaderModule( VulkanContext::Get()->GetDevice(), FragmentModule, nullptr );
 
 #if !defined(SAT_DIST)
-		Renderer::Get().FindShaderReference( m_Specification.Shader->GetShaderHash() ).Pipelines.push_back( this );
+		Renderer::Get()->FindShaderReference( m_Specification.Shader->GetShaderHash() ).Pipelines.push_back( this );
 #endif
 	}
 }

@@ -244,14 +244,14 @@ namespace Saturn {
 		RenderPassCreateInfo.pDependencies = Dependencies.data();
 		RenderPassCreateInfo.dependencyCount = ( uint32_t ) Dependencies.size();
 
-		VK_CHECK( vkCreateRenderPass( VulkanContext::Get().GetDevice(), &RenderPassCreateInfo, nullptr, &m_Pass ) );
+		VK_CHECK( vkCreateRenderPass( VulkanContext::Get()->GetDevice(), &RenderPassCreateInfo, nullptr, &m_Pass ) );
 		SetDebugUtilsObjectName( m_PassSpec.Name, ( uint64_t ) m_Pass, VK_OBJECT_TYPE_RENDER_PASS );
 	}
 
 	void Pass::Terminate()
 	{
 		if( m_Pass )
-			vkDestroyRenderPass( VulkanContext::Get().GetDevice(), m_Pass, nullptr );
+			vkDestroyRenderPass( VulkanContext::Get()->GetDevice(), m_Pass, nullptr );
 
 		m_ColorAttachments.clear();
 

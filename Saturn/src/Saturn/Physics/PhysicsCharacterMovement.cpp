@@ -75,11 +75,11 @@ namespace Saturn {
 		Ref<Project> activeProject = Project::GetActiveProject();
 		if( materialID == 0 || materialID == activeProject->GetDefaultPhysicsMaterialAsset() )
 		{
-			materialAsset = AssetManager::Get().GetAssetAs<PhysicsMaterialAsset>( activeProject->GetDefaultPhysicsMaterialAsset() );
+			materialAsset = AssetManager::Get()->GetAssetAs<PhysicsMaterialAsset>( activeProject->GetDefaultPhysicsMaterialAsset() );
 		}
 		else
 		{
-			materialAsset = AssetManager::Get().GetAssetAs<PhysicsMaterialAsset>( materialID );
+			materialAsset = AssetManager::Get()->GetAssetAs<PhysicsMaterialAsset>( materialID );
 		}
 
 		return materialAsset;

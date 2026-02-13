@@ -73,15 +73,15 @@ namespace Saturn {
 	{
 		if( m_RendererData.Width == 0 && m_RendererData.Height == 0 )
 		{
-			m_RendererData.Width = Application::Get().GetWindow()->GetWidth();
-			m_RendererData.Height = Application::Get().GetWindow()->GetHeight();
+			m_RendererData.Width = Application::Get()->GetWindow()->GetWidth();
+			m_RendererData.Height = Application::Get()->GetWindow()->GetHeight();
 		}
 
 		//////////////////////////////////////////////////////////////////////////
 		// Geometry 
 		//////////////////////////////////////////////////////////////////////////
 
-		if( !Application::Get().HasFlag( ApplicationFlag_CreateSceneRenderer ) )
+		if( !Application::Get()->HasFlag( ApplicationFlag_CreateSceneRenderer ) )
 			return;
 
 		m_RendererData.StorageBufferSet = Ref<StorageBufferSet>::Create( 0, 0 );
@@ -167,7 +167,7 @@ namespace Saturn {
 		InitAlura();
 	
 #if !defined(SAT_DIST)
-		Renderer::Get().AddShaderReloadCB( SAT_BIND_EVENT_FN( OnShaderReloaded ) );
+		Renderer::Get()->AddShaderReloadCB( SAT_BIND_EVENT_FN( OnShaderReloaded ) );
 #endif
 	}
 
@@ -179,7 +179,7 @@ namespace Saturn {
 	void SceneRenderer::Terminate()
 	{
 #if !defined(SAT_DIST)
-		Renderer::Get().ClearShaderReferences();
+		Renderer::Get()->ClearShaderReferences();
 #endif
 		m_pScene = nullptr;
 
@@ -654,7 +654,7 @@ namespace Saturn {
 			m_RendererData.BloomTextures[ i ]->SetDebugName( "Bloom Texture: " + std::to_string( i ) );
 		}
 
-		m_RendererData.BloomDirtTexture = Renderer::Get().GetPinkTexture();
+		m_RendererData.BloomDirtTexture = Renderer::Get()->GetPinkTexture();
 
 		m_RendererData.BloomDS = m_RendererData.BloomShader->CreateDescriptorSet( 0 );
 
@@ -683,7 +683,7 @@ namespace Saturn {
 		PipelineSpec.Height = m_RendererData.Height;
 		PipelineSpec.Name = "Texture Pass";
 		PipelineSpec.Shader = m_RendererData.TexturePassShader;
-		PipelineSpec.RenderPass = VulkanContext::Get().GetDefaultPass();
+		PipelineSpec.RenderPass = VulkanContext::Get()->GetDefaultPass();
 		PipelineSpec.UseDepthTest = true;
 		PipelineSpec.CullMode = CullMode::None;
 		PipelineSpec.FrontFace = VK_FRONT_FACE_CLOCKWISE;
@@ -793,7 +793,7 @@ namespace Saturn {
 
 		m_RendererData.GridMaterial->UploadDataToUB( 0, &GridMatricesObject, sizeof( GridMatricesObject ) );
 
-		Renderer::Get().SubmitFullscreenQuad(
+		Renderer::Get()->SubmitFullscreenQuad(
 			m_RendererData.CommandBuffer, m_RendererData.GridPipeline, m_RendererData.GridMaterial, m_RendererData.UniformBufferSet, m_RendererData.QuadIndexBuffer, m_RendererData.QuadVertexBuffer );
 	}
 
@@ -845,7 +845,7 @@ namespace Saturn {
 		m_RendererData.SkyboxMaterial->UploadDataToUB( 0, &SkyboxMatricesObject, sizeof( SkyboxMatricesObject ) );
 		m_RendererData.SkyboxMaterial->UploadDataToUB( 2, &u_Data, sizeof( u_Data ) );
 
-		Renderer::Get().SubmitFullscreenQuad( CommandBuffer, 
+		Renderer::Get()->SubmitFullscreenQuad( CommandBuffer, 
 			m_RendererData.SkyboxPipeline, 
 			m_RendererData.SkyboxMaterial,
 			m_RendererData.UniformBufferSet,
@@ -1001,10 +1001,10 @@ namespace Saturn {
 
 	void SceneRenderer::CreateGridComponents()
 	{
-		auto pAllocator = VulkanContext::Get().GetVulkanAllocator();
+		auto pAllocator = VulkanContext::Get()->GetVulkanAllocator();
 
 		// Create fullscreen quad.
-		auto [vertex, index] = Renderer::Get().CreateFullscreenQuad();
+		auto [vertex, index] = Renderer::Get()->CreateFullscreenQuad();
 		
 		m_RendererData.QuadIndexBuffer = index;
 		m_RendererData.QuadVertexBuffer = vertex;
@@ -1043,7 +1043,7 @@ namespace Saturn {
 
 	void SceneRenderer::CreateSkyboxComponents()
 	{
-		auto pAllocator = VulkanContext::Get().GetVulkanAllocator();
+		auto pAllocator = VulkanContext::Get()->GetVulkanAllocator();
 
 		// Create skybox shader.
 
@@ -1088,7 +1088,7 @@ namespace Saturn {
 
 		if( Auxiliary::TreeNode( "Stats", true ) )
 		{
-			const auto FrameTimings = Renderer::Get().GetFrameTimings();
+			const auto FrameTimings = Renderer::Get()->GetFrameTimings();
 
 			float shadowPassTime = 0.0f;
 
@@ -1114,13 +1114,13 @@ namespace Saturn {
 
 			ImGui::Text( "SceneRenderer::SceneComposite: %.2f ms", m_RendererData.SceneCompPPTimer.ElapsedMilliseconds() );
 
-			ImGui::Text( "Renderer::EndFrame - Queue Present: %.2f ms", Renderer::Get().GetQueuePresentTime() );
-			ImGui::Text( "Renderer::EndFrame - Queue Wait: %.2f ms", Renderer::Get().GetQueueWaitTime() );
+			ImGui::Text( "Renderer::EndFrame - Queue Present: %.2f ms", Renderer::Get()->GetQueuePresentTime() );
+			ImGui::Text( "Renderer::EndFrame - Queue Wait: %.2f ms", Renderer::Get()->GetQueueWaitTime() );
 
 			ImGui::Text( "Renderer::EndFrame - Total: %.2f ms", FrameTimings.second );
 
 			ImGui::Text( "Total (RenderThread::Execute): %.2f ms", RenderThread::Get().GetWaitTime() );
-			ImGui::Text( "Total : %.2f ms", Application::Get().Time().Milliseconds() );
+			ImGui::Text( "Total : %.2f ms", Application::Get()->Time().Milliseconds() );
 
 			Auxiliary::EndTreeNode();
 		}
@@ -1485,7 +1485,7 @@ namespace Saturn {
 		CmdBeginDebugLabel( m_RendererData.CommandBuffer, "Static meshes" );
 		
 		// Set environment resource.
-		Renderer::Get().SetSceneEnvironment( m_RendererData.ShadowCascades[ 0 ].Framebuffer->GetDepthAttachmentResource(), m_RendererData.SceneEnvironment, m_RendererData.BRDFLUT_Texture );
+		Renderer::Get()->SetSceneEnvironment( m_RendererData.ShadowCascades[ 0 ].Framebuffer->GetDepthAttachmentResource(), m_RendererData.SceneEnvironment, m_RendererData.BRDFLUT_Texture );
 
 		RenderStaticMeshes();
 
@@ -1507,7 +1507,7 @@ namespace Saturn {
 
 	void SceneRenderer::RenderStaticMeshes()
 	{
-		const uint32_t frame = Renderer::Get().GetCurrentFrame();
+		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
 
 		// u_Matrices
 		UBStaticMeshMatrices u_Matrices = {};
@@ -1562,7 +1562,7 @@ namespace Saturn {
 			const auto& rTransformData = m_RendererData.MeshTransforms[ key ];
 
 			// Render Submesh
-			Renderer::Get().SubmitMesh(
+			Renderer::Get()->SubmitMesh(
 				m_RendererData.CommandBuffer,
 				m_RendererData.StaticMeshPipeline,
 				Cmd.Mesh,
@@ -1578,7 +1578,7 @@ namespace Saturn {
 
 	void SceneRenderer::RenderDynamicMeshes()
 	{
-		const uint32_t frame = Renderer::Get().GetCurrentFrame();
+		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
 		m_RendererData.DynamicMeshMaterial->Update( {} );
 
 		uint32_t index = 0;
@@ -1587,7 +1587,7 @@ namespace Saturn {
 			const auto& rTransformData = m_RendererData.MeshTransforms[ key ];
 
 			// Render Submesh
-			Renderer::Get().SubmitDynamicMesh(
+			Renderer::Get()->SubmitDynamicMesh(
 				m_RendererData.CommandBuffer,
 				m_RendererData.DynamicMeshPipeline,
 				Cmd.Mesh,
@@ -1610,10 +1610,10 @@ namespace Saturn {
 		if( !m_RendererData.EnableShadows )
 			return;
 
-		const auto pAllocator = VulkanContext::Get().GetVulkanAllocator();
+		const auto pAllocator = VulkanContext::Get()->GetVulkanAllocator();
 		const VkExtent2D Extent = { ( uint32_t ) SHADOW_MAP_SIZE, ( uint32_t ) SHADOW_MAP_SIZE };
 		const VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
-		const uint32_t frame = Renderer::Get().GetCurrentFrame();
+		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
 
 		std::array<VkClearValue, 2> ClearColors{};
 		ClearColors[ 0 ].depthStencil = { 1.0f, 0 };
@@ -1668,7 +1668,7 @@ namespace Saturn {
 
 				const auto& rTransformData = m_RendererData.MeshTransforms[ key ];
 
-				Renderer::Get().RenderMeshWithoutMaterial( 
+				Renderer::Get()->RenderMeshWithoutMaterial( 
 					CommandBuffer, 
 					m_RendererData.DirShadowMapPipelines[ i ],
 					Cmd.Mesh, 
@@ -1695,7 +1695,7 @@ namespace Saturn {
 
 		m_RendererData.PreDepthTimer.Reset();
 
-		const uint32_t frame = Renderer::Get().GetCurrentFrame();
+		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
 
 		const VkExtent2D Extent = { m_RendererData.Width,m_RendererData.Height };
 		const VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
@@ -1733,7 +1733,7 @@ namespace Saturn {
 		for( auto&& [key, Cmd] : m_DrawList )
 		{
 			const auto& rTransformData = m_RendererData.MeshTransforms[ key ];
-			Renderer::Get().RenderMeshWithoutMaterial(
+			Renderer::Get()->RenderMeshWithoutMaterial(
 				CommandBuffer,
 				m_RendererData.PreDepthPipeline,
 				Cmd.Mesh,
@@ -1754,7 +1754,7 @@ namespace Saturn {
 		for( auto&& [key, Cmd] : m_DynamicDrawList )
 		{
 			const auto& rTransformData = m_RendererData.MeshTransforms[ key ];
-			Renderer::Get().RenderDynamicMeshWithoutMaterial(
+			Renderer::Get()->RenderDynamicMeshWithoutMaterial(
 				CommandBuffer,
 				m_RendererData.PreDepthDynamicPipeline,
 				Cmd.Mesh,
@@ -1801,7 +1801,7 @@ namespace Saturn {
 		vkCmdSetScissor( CommandBuffer, 0, 1, &Scissor );
 
 		// Actual scene composite pass.
-		Renderer::Get().SubmitFullscreenQuad(
+		Renderer::Get()->SubmitFullscreenQuad(
 			CommandBuffer, m_RendererData.SceneCompositePipeline,
 			m_RendererData.SceneCompositeMaterial, m_RendererData.UniformBufferSet,
 			m_RendererData.QuadIndexBuffer, m_RendererData.QuadVertexBuffer );
@@ -1817,7 +1817,7 @@ namespace Saturn {
 		if( !m_PhysicsColliderDrawList.size() )
 			return;
 
-		const uint32_t frame = Renderer::Get().GetCurrentFrame();
+		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
 		const VkExtent2D Extent = { m_RendererData.Width, m_RendererData.Height };
 		const VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
 
@@ -1849,7 +1849,7 @@ namespace Saturn {
 		{
 			const auto& rTransformData = m_RendererData.MeshTransforms[ key ];
 
-			Renderer::Get().RenderMeshWithoutMaterial(
+			Renderer::Get()->RenderMeshWithoutMaterial(
 				CommandBuffer,
 				m_RendererData.PhysicsOutlinePipeline,
 				Cmd.Mesh,
@@ -1916,7 +1916,7 @@ namespace Saturn {
 
 			Buffer transformBufer( sizeof( glm::mat4 ), &transform );
 
-			Renderer::Get().RenderMeshWithoutMaterial(
+			Renderer::Get()->RenderMeshWithoutMaterial(
 				CommandBuffer,
 				m_RendererData.SelectionPipeline,
 				rCommand.Mesh,
@@ -1961,14 +1961,14 @@ namespace Saturn {
 	{
 		SAT_PF_EVENT();
 
-		Ref<Pass> pass = VulkanContext::Get().GetDefaultPass();
-		const uint32_t frame = Renderer::Get().GetCurrentFrame();
+		Ref<Pass> pass = VulkanContext::Get()->GetDefaultPass();
+		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
 
 		const VkExtent2D Extent = { m_RendererData.Width, m_RendererData.Height };
 		const VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
 
 		// Begin scene composite pass.
-		pass->BeginPass( CommandBuffer, VulkanContext::Get().GetSwapchain().GetFramebuffers()[ frame ], Extent );
+		pass->BeginPass( CommandBuffer, VulkanContext::Get()->GetSwapchain().GetFramebuffers()[ frame ], Extent );
 
 		VkViewport Viewport = {};
 		Viewport.x = 0;
@@ -1984,7 +1984,7 @@ namespace Saturn {
 		vkCmdSetScissor( CommandBuffer, 0, 1, &Scissor );
 
 		// Actual scene composite pass.
-		Renderer::Get().SubmitFullscreenQuad(
+		Renderer::Get()->SubmitFullscreenQuad(
 			CommandBuffer, m_RendererData.TexturePassPipeline,
 			m_RendererData.TexturePassMaterial, m_RendererData.UniformBufferSet,
 			m_RendererData.QuadIndexBuffer, m_RendererData.QuadVertexBuffer );
@@ -2044,7 +2044,7 @@ namespace Saturn {
 		m_RendererData.LightCullingMaterial->UploadDataToUB( 4, &u_Matrices, sizeof( u_Matrices ) );
 
 		// Write storage buffer
-		Ref<StorageBuffer> SB = m_RendererData.StorageBufferSet->Get( 0, 14, Renderer::Get().GetCurrentFrame() );
+		Ref<StorageBuffer> SB = m_RendererData.StorageBufferSet->Get( 0, 14, Renderer::Get()->GetCurrentFrame() );
 
 		// Light culling here
 		auto& CullingPipeline = m_RendererData.LightCullingPipeline;
@@ -2099,7 +2099,7 @@ namespace Saturn {
 	void SceneRenderer::OnShaderReloaded( const std::string& rName )
 	{
 		const Ref<Shader> shader = ShaderLibrary::Get().Find( rName );
-		auto& rReference = Renderer::Get().FindShaderReference( shader->GetShaderHash() );
+		auto& rReference = Renderer::Get()->FindShaderReference( shader->GetShaderHash() );
 
 		for( auto& rPipeline : rReference.Pipelines )
 		{
@@ -2222,7 +2222,7 @@ namespace Saturn {
 		SAT_PF_EVENT();
 
 		// Create our buffers for instance data.
-		const uint32_t frame = Renderer::Get().GetCurrentFrame();
+		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
 
 		uint32_t off = 0;
 		for( auto& [id, buffer] : m_RendererData.MeshTransforms )
@@ -2249,7 +2249,7 @@ namespace Saturn {
 		if( off > 0 )
 		{
 			// upload
-			auto pAllocator = VulkanContext::Get().GetVulkanAllocator();
+			auto pAllocator = VulkanContext::Get()->GetVulkanAllocator();
 			auto bufferAloc = pAllocator->GetAllocationFromBuffer( m_RendererData.SBBoneTransforms->Get( 2, 15, frame )->GetBuffer() );
 
 			void* pBufferData = pAllocator->MapMemory<void>( bufferAloc );
@@ -2322,7 +2322,7 @@ namespace Saturn {
 			m_RendererData.Resized = false;
 		}
 
-		m_RendererData.CommandBuffer = Renderer::Get().ActiveCommandBuffer();
+		m_RendererData.CommandBuffer = Renderer::Get()->ActiveCommandBuffer();
 
 		for( auto&& func : m_ScheduledFunctions )
 			func();
@@ -2403,7 +2403,7 @@ namespace Saturn {
 
 	void RendererData::Terminate()
 	{
-		if( !Application::Get().HasFlag( ApplicationFlag_CreateSceneRenderer ) )
+		if( !Application::Get()->HasFlag( ApplicationFlag_CreateSceneRenderer ) )
 			return;
 
 		// DescriptorSets

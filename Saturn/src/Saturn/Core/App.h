@@ -87,7 +87,7 @@ namespace Saturn {
 	class Application : public RubyEventTarget
 	{
 	public:
-		static inline Application& Get() { return *SingletonStorage::GetSingleton<Application>(); }
+		static inline Application* Get() { return SingletonStorage::GetSingleton<Application>(); }
 	public:
 		Application( const ApplicationSpecification& spec );
 		virtual ~Application();

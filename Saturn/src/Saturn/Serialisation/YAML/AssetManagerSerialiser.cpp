@@ -66,7 +66,7 @@ namespace Saturn {
 	{
 		YAML::Emitter out;
 
-		auto& rAssetMap = AssetManager::Get().GetAssetRegistry()->GetAssetMap();
+		auto& rAssetMap = AssetManager::Get()->GetAssetRegistry()->GetAssetMap();
 
 		out << YAML::BeginMap;
 
@@ -104,7 +104,7 @@ namespace Saturn {
 
 		out << YAML::BeginSeq;
 
-		for( const auto& [id, dependencies] : AssetManager::Get().GetPureAssetDependencies() )
+		for( const auto& [id, dependencies] : AssetManager::Get()->GetPureAssetDependencies() )
 		{
 			out << YAML::BeginMap;
 
@@ -130,13 +130,13 @@ namespace Saturn {
 
 		out << YAML::EndMap;
 
-		std::ofstream stream( AssetManager::Get().GetAssetRegistry()->GetPath() );
+		std::ofstream stream( AssetManager::Get()->GetAssetRegistry()->GetPath() );
 		stream << out.c_str();
 	}
 
 	void AssetManagerSerialiser::Deserialise()
 	{
-		std::ifstream FileIn( AssetManager::Get().GetAssetRegistry()->GetPath() );
+		std::ifstream FileIn( AssetManager::Get()->GetAssetRegistry()->GetPath() );
 		std::stringstream ss;
 		ss << FileIn.rdbuf();
 
@@ -147,7 +147,7 @@ namespace Saturn {
 		if( assets.IsNull() )
 			return;
 
-		Ref<AssetRegistry> assetRegistry = AssetManager::Get().GetAssetRegistry();
+		Ref<AssetRegistry> assetRegistry = AssetManager::Get()->GetAssetRegistry();
 
 		bool differingAssetVersions = false;
 		for( auto asset : assets )
@@ -207,13 +207,13 @@ namespace Saturn {
 				for( const auto assetDep : deps )
 				{
 					const UUID dependsOn = assetDep[ "Dependency" ].as< uint64_t >();
-					AssetManager::Get().RegisterAssetDependency( depID, dependsOn );
+					AssetManager::Get()->RegisterAssetDependency( depID, dependsOn );
 				}
 			}
 		}
 
 #if !defined(SAT_DIST)
-		AssetManager::Get().SanitiseAssetDependencies();
+		AssetManager::Get()->SanitiseAssetDependencies();
 #endif
 	}
 

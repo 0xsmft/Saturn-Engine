@@ -63,7 +63,7 @@ namespace Saturn {
 
 		if( pAGNode )
 		{
-			m_AnimationAsset = AssetManager::Get().GetAssetAs<SkeletalAnimationAsset>( pAGNode->Outputs[ 0 ].As<AnimGraphAnimationPin>()->GetAssetID() );
+			m_AnimationAsset = AssetManager::Get()->GetAssetAs<SkeletalAnimationAsset>( pAGNode->Outputs[ 0 ].As<AnimGraphAnimationPin>()->GetAssetID() );
 		}
 
 		/*

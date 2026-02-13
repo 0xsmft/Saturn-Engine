@@ -55,7 +55,7 @@ namespace Saturn {
 
 	void PhysicsMaterialAssetViewer::AddPhysicsMaterialAsset()
 	{
-		Ref<PhysicsMaterialAsset> physMaterialAsset = AssetManager::Get().GetAssetAs<PhysicsMaterialAsset>( m_AssetID );
+		Ref<PhysicsMaterialAsset> physMaterialAsset = AssetManager::Get()->GetAssetAs<PhysicsMaterialAsset>( m_AssetID );
 		m_MaterialAsset = physMaterialAsset;
 
 		m_Open = true;

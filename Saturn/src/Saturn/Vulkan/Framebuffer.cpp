@@ -108,7 +108,7 @@ namespace Saturn {
 	void Framebuffer::Terminate()
 	{
 		if( m_Framebuffer )
-			vkDestroyFramebuffer( VulkanContext::Get().GetDevice(), m_Framebuffer, nullptr );
+			vkDestroyFramebuffer( VulkanContext::Get()->GetDevice(), m_Framebuffer, nullptr );
 
 		for( auto& resource : m_ColorAttachmentsResources )
 		{
@@ -241,7 +241,7 @@ namespace Saturn {
 		FramebufferCreateInfo.height = m_Specification.Height;
 		FramebufferCreateInfo.layers = 1;
 
-		VK_CHECK( vkCreateFramebuffer( VulkanContext::Get().GetDevice(), &FramebufferCreateInfo, nullptr, &m_Framebuffer ) );
+		VK_CHECK( vkCreateFramebuffer( VulkanContext::Get()->GetDevice(), &FramebufferCreateInfo, nullptr, &m_Framebuffer ) );
 	}
 
 	void Framebuffer::Capture( const std::filesystem::path& rPath, uint32_t ColorAttachmentIndex /*= 0 */, const glm::vec2& rResize )
@@ -252,15 +252,15 @@ namespace Saturn {
 		bool SrcBlitSuppored = false;
 		if( SrcImage->GetTiling() == ImageTiling::Linear )
 		{
-			SrcBlitSuppored = VulkanContext::Get().FormatLinearBlitSupported( VulkanFormatSrc, true );
+			SrcBlitSuppored = VulkanContext::Get()->FormatLinearBlitSupported( VulkanFormatSrc, true );
 		}
 		else
 		{
-			SrcBlitSuppored = VulkanContext::Get().FormatOptimalBlitSupported( VulkanFormatSrc, true );
+			SrcBlitSuppored = VulkanContext::Get()->FormatOptimalBlitSupported( VulkanFormatSrc, true );
 		}
 
 		// Check if dist supports Blit
-		bool BlitSupported = VulkanContext::Get().FormatLinearBlitSupported( VK_FORMAT_BC1_RGBA_UNORM_BLOCK, false ) && SrcBlitSuppored;
+		bool BlitSupported = VulkanContext::Get()->FormatLinearBlitSupported( VK_FORMAT_BC1_RGBA_UNORM_BLOCK, false ) && SrcBlitSuppored;
 
 		VkFormat textureFormat = VulkanFormatSrc;
 		if( !BlitSupported )
@@ -268,11 +268,11 @@ namespace Saturn {
 			// If not, check if the Source Image's format supports dst blitting and use that format
 			if( SrcImage->GetTiling() == ImageTiling::Linear )
 			{
-				BlitSupported = VulkanContext::Get().FormatLinearBlitSupported( VulkanFormatSrc, false );
+				BlitSupported = VulkanContext::Get()->FormatLinearBlitSupported( VulkanFormatSrc, false );
 			}
 			else
 			{
-				BlitSupported = VulkanContext::Get().FormatOptimalBlitSupported( VulkanFormatSrc, false );
+				BlitSupported = VulkanContext::Get()->FormatOptimalBlitSupported( VulkanFormatSrc, false );
 			}
 		}
 
@@ -288,7 +288,7 @@ namespace Saturn {
 
 		//////////////////////////////////////////////////////////////////////////
 
-		VkCommandBuffer CommandBuffer = VulkanContext::Get().BeginSingleTimeCommands();
+		VkCommandBuffer CommandBuffer = VulkanContext::Get()->BeginSingleTimeCommands();
 		
 		//////////////////////////////////////////////////////////////////////////
 
@@ -368,15 +368,15 @@ namespace Saturn {
 			VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT );
 
 		// Execute command buffer.
-		VulkanContext::Get().EndSingleTimeCommands( CommandBuffer );
+		VulkanContext::Get()->EndSingleTimeCommands( CommandBuffer );
 
 		//////////////////////////////////////////////////////////////////////////
 		VkImageSubresource Subresource{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 0 };
 		VkSubresourceLayout SubresourceLayout;
-		vkGetImageSubresourceLayout( VulkanContext::Get().GetDevice(), DstImage, &Subresource, &SubresourceLayout );
+		vkGetImageSubresourceLayout( VulkanContext::Get()->GetDevice(), DstImage, &Subresource, &SubresourceLayout );
 
 		const char* pData = nullptr;
-		VK_CHECK( vkMapMemory( VulkanContext::Get().GetDevice(), ImageMemory, 0, VK_WHOLE_SIZE, 0, ( void** ) &pData ) );
+		VK_CHECK( vkMapMemory( VulkanContext::Get()->GetDevice(), ImageMemory, 0, VK_WHOLE_SIZE, 0, ( void** ) &pData ) );
 		pData += SubresourceLayout.offset;
 
 		VkExtent3D extent = { m_Specification.Width, m_Specification.Height, 1 };
@@ -409,9 +409,9 @@ namespace Saturn {
 
 		Auxiliary::WriteImageFile( rPath, Auxiliary::ImageFileType::PNG, extent.width, extent.height, 4, pData, ( int ) SubresourceLayout.rowPitch );
 
-		vkUnmapMemory( VulkanContext::Get().GetDevice(), ImageMemory );
-		vkFreeMemory( VulkanContext::Get().GetDevice(), ImageMemory, nullptr );
-		vkDestroyImage( VulkanContext::Get().GetDevice(), DstImage, nullptr );
+		vkUnmapMemory( VulkanContext::Get()->GetDevice(), ImageMemory );
+		vkFreeMemory( VulkanContext::Get()->GetDevice(), ImageMemory, nullptr );
+		vkDestroyImage( VulkanContext::Get()->GetDevice(), DstImage, nullptr );
 	}
 
 }

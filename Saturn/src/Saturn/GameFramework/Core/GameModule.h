@@ -44,7 +44,7 @@ namespace Saturn {
 		SAT_DECLARE_CLASS( GameModule, SObject );
 	public:
 		// NOTE: GameModule owned by parent application layer, EditorLayer if editor and RuntimeLayer when in Dist
-		static GameModule& Get() { return *SingletonStorage::GetSingleton<GameModule>(); }
+		static GameModule* Get() { return SingletonStorage::GetSingleton<GameModule>(); }
 
 	public:
 		GameModule();

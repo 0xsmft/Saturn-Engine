@@ -869,6 +869,8 @@ namespace Saturn {
 				if( !Focused() )
 					break;
 
+				GetParent()->IntrnlSetLockedMousePos( GetMousePos().To<RubyIVec2>() );
+
 				DisableCursor();
 			} break;
 

@@ -36,6 +36,13 @@
 
 #include "Saturn/Scene/Entity.h"
 
+// define this if you want to see the callstack and why selections are getting removed/added quickly,
+// this was used during debugging of the Camera Preview...
+//#define SAT_ESM_STACKTRACE_ONCHANGE
+#if defined(SAT_ESM_STACKTRACE_ONCHANGE)
+#include <stacktrace>
+#endif
+
 namespace Saturn {
 
 	EntitySelectionManager::EntitySelectionManager()
@@ -47,42 +54,94 @@ namespace Saturn {
 
 	EntitySelectionManager::~EntitySelectionManager()
 	{
-		ClearSelection();
+		ClearAllSections( true );
 	}
 
-	void EntitySelectionManager::Select( const SharedPtr<Entity> entity, EntitySelectionReason reason )
+	void EntitySelectionManager::Select( const SharedPtr<Entity> entity )
 	{
 		if( !IsSelected( entity ) ) 
 		{
 			if( !m_IsMultiSelecting )
-				ClearSelection( true );
+				ClearSelection( entity->GetScene() );
 
-			m_SelectedEntities.push_back( entity );
-			m_LastReason = reason;
+			m_SelectedEntities[ entity->GetScene()->GetInternalID() ].push_back( entity );
 
-			Application::Get().DispatchEvent<EntitySelectedEvent>( entity->GetUUID() );
+#if defined(SAT_ESM_STACKTRACE_ONCHANGE)
+			SAT_CORE_INFO( std::stacktrace::current() );
+#endif
+			Application::Get()->DispatchEvent<EntitySelectedEvent>( entity->GetUUID() );
 		}
 	}
 
 	void EntitySelectionManager::Remove( const SharedPtr<Entity> entity )
 	{
-		m_SelectedEntities.erase( std::remove( m_SelectedEntities.begin(), m_SelectedEntities.end(), entity ) );
-		
+		for( auto& [sceneID, rSelections] : m_SelectedEntities )
+		{
+			if( sceneID != entity->GetScene()->GetInternalID() )
+				continue;
+
+			for( const auto& rEntity : rSelections )
+			{
+				if( rEntity != entity )
+					continue;
+
+				rSelections.erase( std::remove( rSelections.begin(), rSelections.end(), rEntity ), rSelections.end() );
+
+				break;
+			}
+		}
+
+#if defined(SAT_ESM_STACKTRACE_ONCHANGE)
+		SAT_CORE_INFO( std::stacktrace::current() );
+#endif
 		std::vector<UUID> ids( entity->GetUUID() );
-		Application::Get().DispatchEvent<EntityDeselectedEvent>( ids );
+		Application::Get()->DispatchEvent<EntityDeselectedEvent>( ids );
 	}
 
-	void EntitySelectionManager::ClearSelection( bool skipEvent )
+	void EntitySelectionManager::ClearSelection( Scene* pScene, bool skipEvent )
 	{
 		if( const auto size = m_SelectedEntities.size(); size && !skipEvent )
 		{
 			std::vector<UUID> ids;
 			ids.reserve( size );
 
-			m_LastReason = EntitySelectionReason::Other;
+#if defined(SAT_ESM_STACKTRACE_ONCHANGE)
+			SAT_CORE_INFO( std::stacktrace::current() );
+#endif
+			for( const auto& [sceneID, rSelections] : m_SelectedEntities )
+			{
+				for( const auto& rEntity : rSelections )
+				{
+					if( rEntity->GetScene() == pScene )
+					{
+						ids.push_back( rEntity->GetUUID() );
+					}
+				}
+			}
 
-			std::ranges::transform( m_SelectedEntities, std::back_inserter( ids ), &Entity::GetUUID );
-			Application::Get().DispatchEvent<EntityDeselectedEvent>( ids );
+			Application::Get()->DispatchEvent<EntityDeselectedEvent>( ids );
+		}
+
+		if( pScene )
+			m_SelectedEntities.erase( pScene->GetInternalID() );
+	}
+
+	void EntitySelectionManager::ClearAllSections( bool skipEvent /*= false */ )
+	{
+		if( const auto size = m_SelectedEntities.size(); size && !skipEvent )
+		{
+			std::vector<UUID> ids;
+			ids.reserve( size );
+
+			for( const auto& [sceneID, rSelections] : m_SelectedEntities )
+			{
+				for( const auto& rEntity : rSelections )
+				{
+					ids.push_back( rEntity->GetUUID() );
+				}
+			}
+
+			Application::Get()->DispatchEvent<EntityDeselectedEvent>( ids );
 		}
 
 		m_SelectedEntities.clear();
@@ -90,7 +149,50 @@ namespace Saturn {
 
 	bool EntitySelectionManager::IsSelected( const SharedPtr<Entity> entity ) const
 	{
-		return std::find( m_SelectedEntities.begin(), m_SelectedEntities.end(), entity ) != m_SelectedEntities.end();
+		for( const auto& [sceneID, rSelection] : m_SelectedEntities )
+		{
+			if( sceneID != entity->GetScene()->GetInternalID() )
+				continue;
+
+			for( const auto& rEntity : rSelection )
+			{
+				if( rEntity == entity )
+					return true;
+			}
+		}
+
+		return false;
+	}
+
+	std::vector<SharedPtr<Entity>> EntitySelectionManager::GetSelectionContexts( Scene* pScene )
+	{
+		std::vector<SharedPtr<Entity>> selections;
+
+		for( const auto& [sceneID, rSelections] : m_SelectedEntities )
+		{
+			if( sceneID != pScene->GetInternalID() )
+				continue;
+
+			for( const auto& rEntity : rSelections )
+			{
+				selections.push_back( rEntity );
+			}
+		}
+
+		return selections;
+	}
+
+	size_t EntitySelectionManager::GetSelectionCount( Scene* pScene )
+	{
+		for( const auto& [sceneID, rSelections] : m_SelectedEntities )
+		{
+			if( sceneID != pScene->GetInternalID() )
+				continue;
+
+			return rSelections.size();
+		}
+
+		return 0;
 	}
 
 }

@@ -310,6 +310,8 @@ namespace Saturn {
 		entt::registry& GetRegistry() { return m_Registry; }
 		const entt::registry& GetRegistry() const { return m_Registry; }
 
+		const UUID GetInternalID() const { return m_InternalID; }
+
 		SharedPtr<NavBoundsEntity> GetNavBoundsEntity() const;
 
 		// Covert a prefab asset into an entity within the Scene.

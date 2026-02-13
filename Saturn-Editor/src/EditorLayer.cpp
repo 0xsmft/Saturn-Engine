@@ -267,6 +267,7 @@ namespace Saturn {
 		m_CameraPreviewSceneRenderer->SetCurrentScene( nullptr );
 		m_CameraPreviewSceneRenderer = nullptr;
 		
+		SingletonStorage::RemoveSingleton<EntitySelectionManager>( m_SelectionManager.get() );
 		m_SelectionManager.reset();
 
 		if( m_RuntimeScene ) 
@@ -415,7 +416,7 @@ namespace Saturn {
 
 		if( m_ShowMeshAABB )
 		{
-			for( const auto& rEntity : EntitySelectionManager::Get().GetSelectionContexts() )
+			for( const auto& rEntity : m_SelectionManager->GetSelectionContexts( g_ActiveScene ) )
 			{
 				const glm::mat4 transform = g_ActiveScene->GetTransformRelativeToParent( rEntity );
 				if( rEntity->HasComponent<StaticMeshComponent>() )
@@ -650,10 +651,13 @@ namespace Saturn {
 		Ref<Scene> newScene = Ref<Scene>::Create();
 		g_ActiveScene = newScene.Get();
 
-		EntitySelectionManager::Get().ClearSelection();
+		m_SelectionManager->ClearSelection( g_ActiveScene );
 		hierarchyPanel->SetContext( nullptr );
 
-		const Ref<Asset> asset = id == 0 ? nullptr : AssetManager::Get().FindAsset( id );
+		// Clear old notifications from the old scene.
+		m_Notifications.clear();
+
+		const Ref<Asset> asset = id == 0 ? nullptr : m_AssetManager->FindAsset( id );
 		
 		if( asset )
 		{
@@ -687,7 +691,7 @@ namespace Saturn {
 		Ref<Scene> newScene = Ref<Scene>::Create();
 		g_ActiveScene = newScene.Get();
 
-		EntitySelectionManager::Get().ClearSelection( true );
+		m_SelectionManager->ClearSelection( g_ActiveScene, true );
 		hierarchyPanel->SetContext( nullptr );
 
 		m_RuntimeScene->OnRuntimeEnd();
@@ -838,20 +842,17 @@ namespace Saturn {
 			{
 				Ref<SceneHierarchyPanel> schPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
 
-				const bool windowFocused = EntitySelectionManager::Get().GetLastSelectionReason() == EntitySelectionReason::SceneHierarchyPanel ? schPanel->IsFocused() : ( m_MouseOverViewport || m_ViewportFocused );
+				const bool windowFocused = m_SelectionManager->GetSelectionReason() & ESR_SceneHierarchyPanel ? schPanel->IsFocused() : ( m_MouseOverViewport || m_ViewportFocused );
 				if( !m_RuntimeScene && windowFocused )
 				{
-					bool deletedNavMesh = false;
-
 					// Because of our ref system, the entity will be deleted when we clear the selections.
 					// What we are really doing here is freeing it from the registry and removing the children.
-					for( auto& rEntity : EntitySelectionManager::Get().GetSelectionContexts() )
+					for( auto& rEntity : m_SelectionManager->GetSelectionContexts( g_ActiveScene ) )
 					{
-						GlobalUndoRedoGroup::Get().RemoveIfActionHasIdentifier( ( uint64_t ) rEntity->GetHandle() );
+						m_GlobalUndoRedoGroup->RemoveIfActionHasIdentifier( ( uint64_t ) rEntity->GetHandle() );
 						
 						if( rEntity->GetClass() == NavBoundsEntity::StaticClass() )
 						{
-							deletedNavMesh = true;
 							m_NavMeshEntityToDelete = rEntity->GetHandle();
 							m_ShowDeleteNavMeshCachePopup = true;
 						}
@@ -862,7 +863,7 @@ namespace Saturn {
 					}
 
 					// The entities will be freed here!
-					EntitySelectionManager::Get().ClearSelection( true );
+					m_SelectionManager->ClearSelection( g_ActiveScene, true );
 
 					g_ActiveScene->MarkDirty();
 				}
@@ -910,7 +911,7 @@ namespace Saturn {
 			{
 				case RubyKey_D:
 				{					
-					for( const auto& rEntity : EntitySelectionManager::Get().GetSelectionContexts() )
+					for( const auto& rEntity : m_SelectionManager->GetSelectionContexts( g_ActiveScene ) )
 					{
 						g_ActiveScene->DuplicateEntity( rEntity );
 					}
@@ -920,16 +921,16 @@ namespace Saturn {
 
 				case RubyKey_F:
 				{
-					auto& rSelectedEntities = EntitySelectionManager::Get().GetSelectionContexts();
+					auto selectedEntities = m_SelectionManager->GetSelectionContexts( g_ActiveScene );
 
 					glm::vec3 Positions = {};
-					for( auto& rEntity : rSelectedEntities )
+					for( auto& rEntity : selectedEntities )
 					{
 						TransformComponent worldSpace = g_ActiveScene->GetWorldSpaceTransform( rEntity );
 						Positions += worldSpace.Position;
 					}
 
-					Positions /= rSelectedEntities.size();
+					Positions /= selectedEntities.size();
 
 					m_EditorCamera.Focus( Positions );
 				} break;
@@ -1032,7 +1033,8 @@ namespace Saturn {
 							float t;
 							if( ray.IntersectsTri( rV0, rV1, rV2, t ) )
 							{
-								EntitySelectionManager::Get().Select( rEntity, EntitySelectionReason::Viewport );
+								m_SelectionManager->Select( rEntity );
+								m_SelectionManager->SetSelectionReason( ESR_Viewport );
 
 								break;
 							}
@@ -1041,9 +1043,9 @@ namespace Saturn {
 				}
 			}
 
-			if( !hitAny && EntitySelectionManager::Get().GetSelectionCount() )
+			if( !hitAny && m_SelectionManager->GetSelectionCount( g_ActiveScene ) )
 			{
-				EntitySelectionManager::Get().ClearSelection();
+				m_SelectionManager->ClearSelection( g_ActiveScene );
 			}
 		}
 
@@ -3017,14 +3019,14 @@ namespace Saturn {
 		m_AllowCameraEvents = ImGui::IsMouseHoveringRect( minBound, maxBound ) && m_ViewportFocused || m_StartedRightClickInViewport;
 		m_ViewportBounds = ImRect( minBound, maxBound );
 
-		std::vector<SharedPtr<Entity>>& rSelectedEntities = EntitySelectionManager::Get().GetSelectionContexts();
+		std::vector<SharedPtr<Entity>> selectedEntities = m_SelectionManager->GetSelectionContexts( g_ActiveScene );
 
 		// Calc center of transform.
 		glm::vec3 Positions = {};
 		glm::quat Rotations = {};
 		glm::vec3 Scales = {};
 
-		for( const auto& rEntity : rSelectedEntities )
+		for( const auto& rEntity : selectedEntities )
 		{
 			TransformComponent worldSpace = g_ActiveScene->GetWorldSpaceTransform( rEntity );
 			Positions += worldSpace.Position;
@@ -3032,16 +3034,15 @@ namespace Saturn {
 			Scales += worldSpace.Scale;
 		}
 
-		Positions /= rSelectedEntities.size();
-		Rotations /= static_cast< float >( rSelectedEntities.size() );
-		Scales /= rSelectedEntities.size();
+		Positions /= selectedEntities.size();
+		Rotations /= static_cast< float >( selectedEntities.size() );
+		Scales /= selectedEntities.size();
 
 		glm::mat4 centerPoint = glm::translate( glm::mat4( 1.0f ), Positions ) * glm::toMat4( Rotations ) * glm::scale( glm::mat4( 1.0f ), Scales );
-		glm::mat4 offsetTransform( 1.0f );
 
 		///////////////////
 
-		if( rSelectedEntities.size() && m_GizmoOperation != 0 )
+		if( selectedEntities.size() && m_GizmoOperation != 0 )
 		{
 			ImGuizmo::SetOrthographic( false );
 			ImGuizmo::SetDrawlist();
@@ -3050,7 +3051,7 @@ namespace Saturn {
 			const glm::mat4 Projection = m_SceneRenderer->GetRendererCamera().pCamera->ProjectionMatrix();
 			const glm::mat4 View = m_SceneRenderer->GetRendererCamera().ViewMatrix;
 
-			ImGuizmo::Manipulate( glm::value_ptr( View ), glm::value_ptr( Projection ), ( ImGuizmo::OPERATION ) m_GizmoOperation, ImGuizmo::LOCAL, glm::value_ptr( centerPoint ), glm::value_ptr( offsetTransform ) );
+			ImGuizmo::Manipulate( glm::value_ptr( View ), glm::value_ptr( Projection ), ( ImGuizmo::OPERATION ) m_GizmoOperation, ImGuizmo::LOCAL, glm::value_ptr( centerPoint ), nullptr );
 
 			if( !ImGui::IsWindowDocked() && ImGuizmo::IsOver() )
 			{
@@ -3063,7 +3064,7 @@ namespace Saturn {
 
 			if( ImGuizmo::IsUsing() )
 			{
-				for( SharedPtr<Entity>& rEntity : rSelectedEntities )
+				for( SharedPtr<Entity>& rEntity : selectedEntities )
 				{
 					auto& tc = rEntity->GetComponent<TransformComponent>();
 
@@ -3079,16 +3080,43 @@ namespace Saturn {
 					glm::vec3 translation;
 					glm::vec3 rotation;
 					glm::vec3 scale;
-					Maths::DecomposeTransform( transform * offsetTransform, translation, rotation, scale );
+					Maths::DecomposeTransform( centerPoint, translation, rotation, scale );
 
-					glm::vec3 DeltaRotation = rotation - tc.GetRotationEuler();
+					switch( m_GizmoOperation )
+					{
+						case ImGuizmo::TRANSLATE:
+						{
+							tc.Position = translation;
+						} break;
 
-					tc.Position = translation;
-					tc.SetRotation( tc.GetRotationEuler() += DeltaRotation );
-					tc.Scale = scale;
+						case ImGuizmo::ROTATE:
+						{
+							glm::vec3 rotationEuler = tc.GetRotationEuler();
 
+							// Normalise the angle to [-180 to 180]
+							rotationEuler.x = fmodf( rotationEuler.x + glm::pi<float>(), glm::two_pi<float>() ) - glm::pi<float>();
+							rotationEuler.y = fmodf( rotationEuler.y + glm::pi<float>(), glm::two_pi<float>() ) - glm::pi<float>();
+							rotationEuler.z = fmodf( rotationEuler.z + glm::pi<float>(), glm::two_pi<float>() ) - glm::pi<float>();
+
+							glm::vec3 delta = rotation - rotationEuler;
+
+							if( fabs( delta.x ) < 0.001F ) delta.x = 0.0F;
+							if( fabs( delta.y ) < 0.001F ) delta.y = 0.0F;
+							if( fabs( delta.z ) < 0.001F ) delta.z = 0.0F;
+
+							tc.SetRotation( tc.GetRotationEuler() += delta );
+						} break;
+
+						case ImGuizmo::SCALE:
+						{
+							tc.Scale = scale;
+						} break;
+					}
+
+					/*
 					// Store modified transform for undo/redo
 					m_GizmoModifiedTransforms[ rEntity->GetHandle() ] = std::make_tuple( tc.Position, tc.GetRotationEuler(), tc.Scale );
+					*/
 				}
 
 				m_WasGizmoUsed = true;
@@ -3102,6 +3130,7 @@ namespace Saturn {
 					m_DisableViewportMovement = false;
 				}
 
+				/*
 				for( const auto& [handle, transform] : m_GizmoOrignalTransforms )
 				{
 					const auto& [newPosition, newRotation, newScale] = m_GizmoModifiedTransforms[ handle ];
@@ -3122,6 +3151,7 @@ namespace Saturn {
 						bounds->GatherGeometryAndBuild();
 					}
 				}
+				*/
 
 				m_GizmoOrignalTransforms.clear();
 				m_GizmoModifiedTransforms.clear();

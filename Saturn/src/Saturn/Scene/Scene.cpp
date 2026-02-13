@@ -578,16 +578,9 @@ namespace Saturn {
 			glm::mat4 finalTransform = glm::one<glm::mat4>();
 			const auto& rComponent = entity->GetComponent<BoxColliderComponent>();
 
-			if( rComponent.AutoAdjustExtent )
-			{
-				auto colliderTransform = glm::translate( glm::mat4( 1.0f ), rTransform.Position + rComponent.Offset ) * glm::scale( glm::mat4( 1.0f ), rComponent.HalfExtents * 2.0f );
-				finalTransform = rTransform.GetTransform() * colliderTransform;
-			}
-			else
-			{
-				// If we do not have auto adjust enabled then the scale is not the same as the entity scale.
-				finalTransform = glm::translate( glm::mat4( 1.0f ), rTransform.Position + rComponent.Offset ) * glm::toMat4( rTransform.GetRotation() ) * glm::scale( glm::mat4( 1.0f ), rComponent.HalfExtents * 2.0f );
-			}
+			finalTransform = glm::translate( glm::mat4( 1.0f ), rTransform.Position + rComponent.Offset ) 
+				* glm::toMat4( rTransform.GetRotation() ) 
+				* glm::scale( glm::mat4( 1.0f ), rComponent.HalfExtents * 2.0f );
 
 			sceneRenderer->SubmitPhysicsCollider( entity, dbgMesh, materialRegistry, finalTransform );
 		};
@@ -615,6 +608,34 @@ namespace Saturn {
 			case PhysicsColliderVisualisationOptions::Disabled:
 			default:
 				break;
+
+			case PhysicsColliderVisualisationOptions::SelectedOnly:
+			{
+				for( const auto& rEntity : EntitySelectionManager::Get()->GetSelectionContexts( this ) )
+				{
+					if( auto* pBoxColliderComponent = rEntity->TryGetComponent<BoxColliderComponent>(); pBoxColliderComponent )
+					{
+						auto mesh = PhysicsDebugMeshes::Get().GetBoxMesh();
+
+						const auto& rComponent = rEntity->GetComponent<BoxColliderComponent>();
+						submitBoxCollider( rEntity, mesh, mesh->GetMaterialRegistry() );
+					}
+					else if( auto* pSphereColliderComponent = rEntity->TryGetComponent<SphereColliderComponent>(); pSphereColliderComponent )
+					{
+						auto mesh = PhysicsDebugMeshes::Get().GetSphereMesh();
+
+						const auto& rComponent = rEntity->GetComponent<SphereColliderComponent>();
+						submitSphereCollider( rEntity, mesh, mesh->GetMaterialRegistry() );
+					}
+					else if( auto* pCapsuleColliderComponent = rEntity->TryGetComponent<CapsuleColliderComponent>(); pCapsuleColliderComponent )
+					{
+						auto mesh = PhysicsDebugMeshes::Get().GetCapsuleMesh();
+
+						const auto& rComponent = rEntity->GetComponent<CapsuleColliderComponent>();
+						submitCapsuleCollider( rEntity, mesh, mesh->GetMaterialRegistry() );
+					} 
+				}
+			} break;
 
 			case PhysicsColliderVisualisationOptions::All: 
 			{

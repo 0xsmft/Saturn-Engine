@@ -29,18 +29,16 @@
 #pragma once
 
 #include "Saturn/Core/Ref.h"
+#include "Saturn/Core/UUID.h"
+
 #include "SingletonStorage.h"
+
+#include "EntitySelectionReason.h"
 
 namespace Saturn {
 
-	class Entity;
-
-	enum class EntitySelectionReason
-	{
-		SceneHierarchyPanel,
-		Viewport,
-		Other
-	};
+	class Entity;	
+	class Scene;
 	
 	//
 	// EntitySelectionManager
@@ -56,7 +54,7 @@ namespace Saturn {
 	class EntitySelectionManager
 	{
 	public:
-		static inline EntitySelectionManager& Get() { return *SingletonStorage::GetSingleton<EntitySelectionManager>(); }
+		static inline EntitySelectionManager* Get() { return SingletonStorage::GetSingleton<EntitySelectionManager>(); }
 	public:
 		EntitySelectionManager();
 		~EntitySelectionManager();
@@ -64,43 +62,37 @@ namespace Saturn {
 		void EnableMultiSelection() { m_IsMultiSelecting = true; }
 		void DisableMultiSelection() { m_IsMultiSelecting = false; }
 
-		void Select( const SharedPtr<Entity> entity, EntitySelectionReason reason );
+		void Select( const SharedPtr<Entity> entity );
 		void Remove( const SharedPtr<Entity> entity );
 
-		void ClearSelection( bool skipEvent = false );
-
-		[[nodiscard]] SharedPtr<Entity> GetSelectionContextAt( uint32_t index = 0 )
-		{
-			if( m_SelectedEntities.size() < index || !m_SelectedEntities.size() )
-			{
-				return nullptr;
-			}
-
-			return m_SelectedEntities[ index ];
-		}
-
-		[[nodiscard]] SharedPtr<Entity> GetSelectionContextAt( uint32_t index = 0 ) const
-		{
-			if( m_SelectedEntities.size() < index || !m_SelectedEntities.size() )
-			{
-				return nullptr;
-			}
-
-			return m_SelectedEntities[ index ];
-		}
+		void ClearSelection( Scene* pScene, bool skipEvent = false );
+		void ClearAllSections( bool skipEvent = false );
 
 		[[nodiscard]] bool IsSelected( const SharedPtr<Entity> entity ) const;
-
-		[[nodiscard]] std::vector<SharedPtr<Entity>>& GetSelectionContexts() { return m_SelectedEntities; }
-		[[nodiscard]] const std::vector<SharedPtr<Entity>>& GetSelectionContexts() const { return m_SelectedEntities; }
-
-		[[nodiscard]] size_t GetSelectionCount() const { return m_SelectedEntities.size(); }
-		[[nodiscard]] EntitySelectionReason GetLastSelectionReason() const { return m_LastReason; }
 		[[nodiscard]] bool IsMultiSelecting() const { return m_IsMultiSelecting; }
+
+		[[nodiscard]] std::vector<SharedPtr<Entity>> GetSelectionContexts( Scene* pScene );
+
+		[[nodiscard]] size_t GetSelectionCount( Scene* pScene );
+
+	public:
+		[[nodiscard]] std::unordered_map<UUID, std::vector<SharedPtr<Entity>>>& GetAllSelectionContexts() { return m_SelectedEntities; }
+		[[nodiscard]] const std::unordered_map<UUID, std::vector<SharedPtr<Entity>>>& GetAllSelectionContexts() const { return m_SelectedEntities; }
+
+	public:
+		EntitySelectionReason GetSelectionReason() const { return m_LastSelectionReason; }
+
+		// NOTE: The reason will ONLY be modified by the _main_ viewport and the _main_ SceneHierarchyPanel.
+		void SetSelectionReason( EntitySelectionReason reason ) { m_LastSelectionReason = reason; }
 
 	private:
 		bool m_IsMultiSelecting = false;
-		EntitySelectionReason m_LastReason = EntitySelectionReason::Other;
-		std::vector<SharedPtr<Entity>> m_SelectedEntities;
+
+		// NOTE: The reason will ONLY be modified by the _main_ viewport and the _main_ SceneHierarchyPanel.
+		// Please do not modify this reason from anything other than the above.
+		EntitySelectionReason m_LastSelectionReason = ESR_Other;
+
+		//					SCENE ID -> ENTITES
+		std::unordered_map<UUID, std::vector<SharedPtr<Entity>>> m_SelectedEntities;
 	};
 }

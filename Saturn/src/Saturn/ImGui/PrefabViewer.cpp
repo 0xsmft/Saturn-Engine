@@ -38,7 +38,13 @@
 
 #include "ImGuiAuxiliary.h"
 
+#include "EntitySelectionReason.h"
+#include "EntitySelectionManager.h"
+
 #include "ContentBrowserPanel/ContentBrowserThumbnailCache.h"
+
+#include <ImGuizmo/ImGuizmo.h>
+#include <glm/gtc/type_ptr.hpp>
 
 namespace Saturn {
 

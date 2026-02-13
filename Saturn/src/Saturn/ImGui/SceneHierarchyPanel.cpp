@@ -117,23 +117,23 @@ namespace Saturn {
 	template<typename Ty>
 	void SceneHierarchyPanel::DrawAddComponents( const char* pName, SharedPtr<Entity> entity )
 	{
-		auto& rSelections = EntitySelectionManager::Get().GetSelectionContexts();
-		if( !rSelections[ 0 ]->HasComponent<Ty>() )
+		auto selections = EntitySelectionManager::Get()->GetSelectionContexts( m_Context.Get() );
+		if( !selections[ 0 ]->HasComponent<Ty>() )
 		{
 			if( ImGui::Button( pName ) )
 			{
-				rSelections[ 0 ]->AddComponent<Ty>();
+				selections[ 0 ]->AddComponent<Ty>();
 
 				if constexpr( std::is_same<Ty, CharacterMovementComponent>() )
 				{
-					if( rSelections[ 0 ]->HasComponents<BoxColliderComponent, CapsuleColliderComponent, SphereColliderComponent>() )
+					if( selections[ 0 ]->HasComponents<BoxColliderComponent, CapsuleColliderComponent, SphereColliderComponent>() )
 					{
-						rSelections[ 0 ]->RemoveComponents<BoxColliderComponent, CapsuleColliderComponent, SphereColliderComponent>();
+						selections[ 0 ]->RemoveComponents<BoxColliderComponent, CapsuleColliderComponent, SphereColliderComponent>();
 					}
 
-					if( rSelections[ 0 ]->HasComponent<RigidbodyComponent>() )
+					if( selections[ 0 ]->HasComponent<RigidbodyComponent>() )
 					{
-						rSelections[ 0 ]->GetComponent< RigidbodyComponent >().IsKinematic = true;
+						selections[ 0 ]->GetComponent< RigidbodyComponent >().IsKinematic = true;
 					}
 				}
 
@@ -175,16 +175,18 @@ namespace Saturn {
 			if( 
 				ImGui::IsMouseDown( ImGuiMouseButton_Left ) && 
 				ImGui::IsWindowHovered() && 
-				!EntitySelectionManager::Get().IsMultiSelecting() )
+				!EntitySelectionManager::Get()->IsMultiSelecting() )
 			{
-				EntitySelectionManager::Get().ClearSelection();
+				EntitySelectionManager::Get()->ClearSelection( m_Context.Get() );
 			}
+
+			auto selections = EntitySelectionManager::Get()->GetSelectionContexts( m_Context.Get() );
 
 			if( ImGui::BeginPopupContextWindow( 0, ImGuiPopupFlags_MouseButtonRight ) )
 			{
 				PopupContextMenuNormal();
 
-				if( EntitySelectionManager::Get().GetSelectionCount() )
+				if( selections.size() )
 				{
 					ImGui::Separator();
 
@@ -197,9 +199,9 @@ namespace Saturn {
 			const std::string name = "Inspector##" + m_Name;
 			ImGui::Begin( name.c_str(), nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse );
 
-			if( EntitySelectionManager::Get().GetSelectionCount() )
+			if( selections.size() )
 			{
-				DrawComponents( EntitySelectionManager::Get().GetSelectionContexts().front() );
+				DrawComponents( selections.back() );
 			}
 
 			ImGui::End();
@@ -210,11 +212,11 @@ namespace Saturn {
 
 		if( Input::Get().KeyPressed( RubyKey_LeftCtrl ) || Input::Get().KeyPressed( RubyKey_RightCtrl ) )
 		{
-			EntitySelectionManager::Get().EnableMultiSelection();
+			EntitySelectionManager::Get()->EnableMultiSelection();
 		}
 		else
 		{
-			EntitySelectionManager::Get().DisableMultiSelection();
+			EntitySelectionManager::Get()->DisableMultiSelection();
 		}
 
 		ImGui::PopID();
@@ -227,7 +229,7 @@ namespace Saturn {
 			SharedPtr<Entity> child = m_Context->CreateEntity( "Unnamed Entity" );
 			
 			// Only add to most recent selection.
-			SharedPtr<Entity> parent = EntitySelectionManager::Get().GetSelectionContexts().back();
+			SharedPtr<Entity> parent = EntitySelectionManager::Get()->GetSelectionContexts( m_Context.Get() ).back();
 			if( parent )
 			{
 				parent->GetComponent<RelationshipComponent>().ChildrenID.push_back( child->GetUUID() );
@@ -241,7 +243,7 @@ namespace Saturn {
 
 		if( ImGui::MenuItem( "Hide" ) )
 		{
-			for( auto& rEntity : EntitySelectionManager::Get().GetSelectionContexts() )
+			for( auto& rEntity : EntitySelectionManager::Get()->GetSelectionContexts( m_Context.Get() ) )
 			{
 				rEntity->Hide();
 			}
@@ -249,7 +251,7 @@ namespace Saturn {
 
 		if( ImGui::MenuItem( "Show" ) )
 		{
-			for( auto& rEntity : EntitySelectionManager::Get().GetSelectionContexts() )
+			for( auto& rEntity : EntitySelectionManager::Get()->GetSelectionContexts( m_Context.Get() ) )
 			{
 				rEntity->Show();
 			}
@@ -319,48 +321,49 @@ namespace Saturn {
 
 	void SceneHierarchyPanel::DrawComponents( SharedPtr<Entity> entity )
 	{
-		DrawEntityComponents( EntitySelectionManager::Get().GetSelectionContexts()[ 0 ] );
+		auto selections = EntitySelectionManager::Get()->GetSelectionContexts( m_Context.Get() );
+
+		DrawEntityComponents( selections[ 0 ] );
 
 		if( ImGui::Button( "Add Component" ) )
 			ImGui::OpenPopup( "AddComponentPanel" );
 
-		auto& rSelections = EntitySelectionManager::Get().GetSelectionContexts();
 
 		if( ImGui::BeginPopup( "AddComponentPanel" ) )
 		{
-			DrawAddComponents<StaticMeshComponent>( "Static Mesh", rSelections[ 0 ] );
+			DrawAddComponents<StaticMeshComponent>( "Static Mesh", selections[ 0 ] );
 
-			DrawAddComponents<SkeletalMeshComponent>( "Skeletal Mesh", rSelections[ 0 ] );
+			DrawAddComponents<SkeletalMeshComponent>( "Skeletal Mesh", selections[ 0 ] );
 
-			DrawAddComponents<CameraComponent>( "Camera", rSelections[ 0 ] );
+			DrawAddComponents<CameraComponent>( "Camera", selections[ 0 ] );
 
-			DrawAddComponents<PointLightComponent>( "Point Light", rSelections[ 0 ] );
+			DrawAddComponents<PointLightComponent>( "Point Light", selections[ 0 ] );
 
-			DrawAddComponents<DirectionalLightComponent>( "Directional Light", rSelections[ 0 ] );
+			DrawAddComponents<DirectionalLightComponent>( "Directional Light", selections[ 0 ] );
 
-			const bool entityHasMovementComponent = rSelections[ 0 ]->HasComponent<CharacterMovementComponent>();
+			const bool entityHasMovementComponent = selections[ 0 ]->HasComponent<CharacterMovementComponent>();
 			if( !entityHasMovementComponent )
 			{
-				DrawAddComponents<BoxColliderComponent>( "Box Collider", rSelections[ 0 ] );
-				DrawAddComponents<SphereColliderComponent>( "Sphere Collider", rSelections[ 0 ] );
-				DrawAddComponents<CapsuleColliderComponent>( "Capsule Collider", rSelections[ 0 ] );
+				DrawAddComponents<BoxColliderComponent>( "Box Collider", selections[ 0 ] );
+				DrawAddComponents<SphereColliderComponent>( "Sphere Collider", selections[ 0 ] );
+				DrawAddComponents<CapsuleColliderComponent>( "Capsule Collider", selections[ 0 ] );
 			}
 
-			DrawAddComponents<RigidbodyComponent>( "Rigidbody", rSelections[ 0 ] );
+			DrawAddComponents<RigidbodyComponent>( "Rigidbody", selections[ 0 ] );
 
-			DrawAddComponents<CharacterMovementComponent>( "Character Movement", rSelections[ 0 ] );
+			DrawAddComponents<CharacterMovementComponent>( "Character Movement", selections[ 0 ] );
 
-			DrawAddComponents<BillboardComponent>( "Billboard", rSelections[ 0 ] );
+			DrawAddComponents<BillboardComponent>( "Billboard", selections[ 0 ] );
 
-			DrawAddComponents<AudioPlayerComponent>( "Audio Player", rSelections[ 0 ] );
+			DrawAddComponents<AudioPlayerComponent>( "Audio Player", selections[ 0 ] );
 			
-			DrawAddComponents<AudioListenerComponent>( "Audio Listener", rSelections[ 0 ] );
+			DrawAddComponents<AudioListenerComponent>( "Audio Listener", selections[ 0 ] );
 
 			// Kept in place just in case the user removes this component by accident.
 			// TODO: This component could be made non removable.
 			if( entity->GetClass() == AIAgentEntity::StaticClass() )
 			{
-				DrawAddComponents<BehaviourTreeComponent>( "Behaviour Tree", rSelections[ 0 ] );
+				DrawAddComponents<BehaviourTreeComponent>( "Behaviour Tree", selections[ 0 ] );
 			}
 
 			ImGui::EndPopup();
@@ -768,6 +771,7 @@ namespace Saturn {
 			static uint32_t s_CurrentIndex = 0;
 
 			ImGui::Columns( 3 );
+			// Arbitrary numbers...
 			ImGui::SetColumnWidth( 0, 100.0f );
 			ImGui::SetColumnWidth( 1, 300.0f );
 			ImGui::SetColumnWidth( 2, 40.0f );
@@ -1690,8 +1694,8 @@ namespace Saturn {
 
 			if( removeComponentSelection )
 			{
-				auto& rSelection = EntitySelectionManager::Get().GetSelectionContexts();
-				for( auto& rEntity : rSelection )
+				auto selection = EntitySelectionManager::Get()->GetSelectionContexts( m_Context.Get() );
+				for( auto& rEntity : selection )
 				{
 					rEntity->RemoveComponent<T>();
 				}

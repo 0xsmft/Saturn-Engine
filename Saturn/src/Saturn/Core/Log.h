@@ -89,6 +89,12 @@ namespace Saturn {
 }
 
 template<typename OStream>
+OStream& operator<<( OStream& os, const glm::vec2& vec )
+{
+	return os << '(' << vec.x << ", " << vec.y << ')';
+}
+
+template<typename OStream>
 OStream& operator<<( OStream& os, const glm::vec3& vec )
 {
 	return os << '(' << vec.x << ", " << vec.y << ", " << vec.z << ')';

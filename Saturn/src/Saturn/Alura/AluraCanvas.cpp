@@ -232,14 +232,15 @@ namespace Saturn {
 		AdvanceCursor( rSize );
 
 		// Hit tests
-		if( IsMouseHoveringRect( posDependingLastCall, { posDependingLastCall + rSize } ) )
+		const bool hovered = IsMouseHoveringRect( posDependingLastCall, { posDependingLastCall + rSize } );
+		if( hovered )
 		{
 			color = m_Style.Colors[ AluraColor_ButtonHovered ];
 		}
 
 		m_Renderer->SubmitRect( posDependingLastCall, { posDependingLastCall + rSize }, color );
 
-		return IsItemClicked( RubyMouseButton_Left );
+		return Input::Get().MouseButtonPressed( RubyMouseButton_Left ) && hovered;
 	}
 
 	bool AluraCanvas::AddButton( const std::string& rText )
@@ -259,7 +260,8 @@ namespace Saturn {
 		
 		// Hit tests
 		glm::vec4 buttonColor = m_Style.Colors[ AluraColor_Button ];
-		if( IsItemHovered() )
+		const bool hovered = IsMouseHoveringRect( posDependingLastCall, { posDependingLastCall + textSize } );
+		if( hovered )
 		{
 			buttonColor = m_Style.Colors[ AluraColor_ButtonHovered ];
 		}
@@ -274,7 +276,7 @@ namespace Saturn {
 		// Move on
 		AdvanceCursor( textSize );
 
-		return IsItemClicked( RubyMouseButton_Left );
+		return Input::Get().MouseButtonPressed(  RubyMouseButton_Left ) && hovered;
 	}
 
 	void AluraCanvas::AddCircle( float radius, float thinkness, bool filled /*= false*/, const glm::vec4& rColor /*= glm::one<glm::vec4>() */ )

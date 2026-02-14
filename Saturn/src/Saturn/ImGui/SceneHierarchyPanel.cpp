@@ -126,11 +126,6 @@ namespace Saturn {
 
 				if constexpr( std::is_same<Ty, CharacterMovementComponent>() )
 				{
-					if( selections[ 0 ]->HasComponents<BoxColliderComponent, CapsuleColliderComponent, SphereColliderComponent>() )
-					{
-						selections[ 0 ]->RemoveComponents<BoxColliderComponent, CapsuleColliderComponent, SphereColliderComponent>();
-					}
-
 					if( selections[ 0 ]->HasComponent<RigidbodyComponent>() )
 					{
 						selections[ 0 ]->GetComponent< RigidbodyComponent >().IsKinematic = true;
@@ -341,13 +336,9 @@ namespace Saturn {
 
 			DrawAddComponents<DirectionalLightComponent>( "Directional Light", selections[ 0 ] );
 
-			const bool entityHasMovementComponent = selections[ 0 ]->HasComponent<CharacterMovementComponent>();
-			if( !entityHasMovementComponent )
-			{
-				DrawAddComponents<BoxColliderComponent>( "Box Collider", selections[ 0 ] );
-				DrawAddComponents<SphereColliderComponent>( "Sphere Collider", selections[ 0 ] );
-				DrawAddComponents<CapsuleColliderComponent>( "Capsule Collider", selections[ 0 ] );
-			}
+			DrawAddComponents<BoxColliderComponent>( "Box Collider", selections[ 0 ] );
+			DrawAddComponents<SphereColliderComponent>( "Sphere Collider", selections[ 0 ] );
+			DrawAddComponents<CapsuleColliderComponent>( "Capsule Collider", selections[ 0 ] );
 
 			DrawAddComponents<RigidbodyComponent>( "Rigidbody", selections[ 0 ] );
 

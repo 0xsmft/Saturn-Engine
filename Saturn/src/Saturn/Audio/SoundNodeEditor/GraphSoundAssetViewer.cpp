@@ -230,6 +230,7 @@ namespace Saturn {
 	{
 		switch( newState )
 		{
+			default:
 			case RuntimeState::Starting:
 			case RuntimeState::NoState:
 			case RuntimeState::Suspended:

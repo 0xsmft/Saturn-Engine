@@ -71,6 +71,14 @@ namespace Saturn {
 
 		out << YAML::Key << "Scene" << YAML::Value << "Untitled Scene";
 
+		const auto& rVisualisation = m_Scene->GetVisualisationOptions();
+		out << YAML::Key << "Visualisation" << YAML::Value;
+		out << YAML::BeginMap;
+		out << YAML::Key << "ShowGrid" << rVisualisation.ShowGrid;
+		out << YAML::Key << "ShowGridRT" << rVisualisation.ShowGridOnRuntime;
+		out << YAML::Key << "PhysCollider" << ( std::underlying_type_t<PhysicsColliderVisualisationOptions> )rVisualisation.PhysColliderOptions;
+		out << YAML::EndMap;
+
 		out << YAML::Key << "Entities";
 
 		out << YAML::BeginSeq;
@@ -114,6 +122,18 @@ namespace Saturn {
 		m_Scene->Type = asset->Type;
 		m_Scene->Flags = asset->Flags;
 		m_Scene->Version = asset->Version;
+
+		const auto visualisationNode = data[ "Visualisation" ];
+		if( !visualisationNode.IsNull() )
+		{
+			auto& rVisualisation = m_Scene->GetVisualisationOptions();
+
+			using U = std::underlying_type_t<PhysicsColliderVisualisationOptions>;
+
+			rVisualisation.ShowGrid          = visualisationNode[ "ShowGrid" ].as<bool>( true );
+			rVisualisation.ShowGridOnRuntime = visualisationNode[ "ShowGridRT" ].as<bool>( false );
+			rVisualisation.PhysColliderOptions = ( PhysicsColliderVisualisationOptions )visualisationNode[ "PhysCollider" ].as<U>();
+		}
 
 		SAT_CORE_INFO( "Deserialising scene SCENE/0/{0}", asset->Path.stem().string() );
 		

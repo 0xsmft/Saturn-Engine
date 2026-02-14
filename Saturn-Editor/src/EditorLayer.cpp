@@ -2119,6 +2119,57 @@ namespace Saturn {
 			if( ImGui::MenuItem( "Render Mesh AABB" ) )           m_ShowMeshAABB           ^= 1;
 			if( ImGui::MenuItem( "Show Camera Frustum" ) )        m_ShowCameraFrustum      ^= 1;
 			if( ImGui::MenuItem( "Show NavMesh Debug" ) )		  m_ShowNavMeshDebugRT	   ^= 1;
+			
+			if( ImGui::BeginMenu( "Scene Visualisation Options" ) )
+			{
+				auto& rVisualisationOptions = g_ActiveScene->GetVisualisationOptions();
+
+				if( ImGui::Checkbox( "Show Grid", &rVisualisationOptions.ShowGrid ) )
+					g_ActiveScene->MarkDirty();
+
+				if( ImGui::Checkbox( "Show Grid (Runtime)", &rVisualisationOptions.ShowGridOnRuntime ) )
+					g_ActiveScene->MarkDirty();
+
+				if( ImGui::BeginMenu( "Physics Colliders Options" ) )
+				{
+					bool showNone = rVisualisationOptions.PhysColliderOptions == PhysicsColliderVisualisationOptions::Disabled;
+					if( ImGui::Checkbox( "No Visualisation", &showNone ) )
+					{
+						if( showNone )
+							rVisualisationOptions.PhysColliderOptions = PhysicsColliderVisualisationOptions::Disabled;
+						else
+							rVisualisationOptions.PhysColliderOptions = PhysicsColliderVisualisationOptions::SelectedOnly;
+					
+						g_ActiveScene->MarkDirty();
+					}
+
+					bool showAll = rVisualisationOptions.PhysColliderOptions == PhysicsColliderVisualisationOptions::All;
+					if( ImGui::Checkbox( "All", &showAll ) )
+					{
+						if( showAll )
+							rVisualisationOptions.PhysColliderOptions = PhysicsColliderVisualisationOptions::All;
+						else
+							rVisualisationOptions.PhysColliderOptions = PhysicsColliderVisualisationOptions::Disabled;
+
+						g_ActiveScene->MarkDirty();
+					}
+
+					bool showSelected = rVisualisationOptions.PhysColliderOptions == PhysicsColliderVisualisationOptions::SelectedOnly;
+					if( ImGui::Checkbox( "Selected Only", &showSelected ) )
+					{
+						if( showSelected )
+							rVisualisationOptions.PhysColliderOptions = PhysicsColliderVisualisationOptions::SelectedOnly;
+						else
+							rVisualisationOptions.PhysColliderOptions = PhysicsColliderVisualisationOptions::Disabled;
+
+						g_ActiveScene->MarkDirty();
+					}
+
+					ImGui::EndMenu();
+				}
+
+				ImGui::EndMenu();
+			}
 
 			ImGui::SeparatorText( "Content Browser" );
 			if( ImGui::MenuItem( "Show Thumbnail Cache" ) )       m_ShowCBThumbnailDebug   ^= 1;

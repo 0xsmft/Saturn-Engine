@@ -44,6 +44,8 @@
 
 #include "Saturn/GameFramework/Core/GameModule.h"
 
+#include "Saturn/Alura/AluraCanvas.h"
+
 // TOOD: #FixSceneRendererIncludes
 #include "Saturn/Vulkan/Renderer2D.h"
 #include "Saturn/Vulkan/AluraRenderer.h"
@@ -87,10 +89,26 @@ namespace Saturn {
 
 	void RuntimeLayer::OnAttach()
 	{
+		// Create canvas
+		AluraCanvasSpecification canvasSpecification{};
+		canvasSpecification.Size = glm::vec2{ Application::Get()->GetWindow()->GetWidth(), Application::Get()->GetWindow()->GetHeight() };
+		canvasSpecification.Position = glm::vec2{ 0.0f };
+		canvasSpecification.MasterFontAssetID = Project::GetActiveProject()->GetDefaultFontAsset();
+
+		if( g_AluraCanvas )
+			delete g_AluraCanvas;
+
+		g_AluraCanvas = new AluraCanvas( canvasSpecification );
+		g_AluraCanvas->SetContext( m_SceneRenderer->GetAluraRenderer() );
 	}
 
 	void RuntimeLayer::OnDetach()
 	{
+		if( g_AluraCanvas ) 
+		{
+			delete g_AluraCanvas;
+			g_AluraCanvas = nullptr;
+		}
 	}
 
 	RuntimeLayer::~RuntimeLayer()
@@ -178,7 +196,7 @@ namespace Saturn {
 
 	void RuntimeLayer::OnUpdate( Timestep time )
 	{
-		m_SceneRenderer->GetRenderer2D()->PreRender();
+		m_SceneRenderer->PreRender();
 
 		m_RuntimeScene->OnUpdate( time );
 		m_RuntimeScene->OnRenderRuntime( time, m_SceneRenderer );
@@ -214,6 +232,9 @@ namespace Saturn {
 			return;
 
 		m_SceneRenderer->SetViewportSize( ( uint32_t ) width, ( uint32_t ) height );
+
+		if( g_AluraCanvas )
+			g_AluraCanvas->SetSize( { width, height } );
 	}
 
 }

@@ -263,6 +263,8 @@ namespace Saturn {
 		bool m_ShouldRenderCameraPreview = false;
 		bool m_DisableViewportMovement = false;
 		bool m_ShowDeleteNavMeshCachePopup = false;
+		// Show the navmesh debug while in runtime instead of while suspended.
+		bool m_ShowNavMeshDebugRT = false;
 
 		// JobProgress
 		float m_OperationPercent = 0.0f;

@@ -353,23 +353,6 @@ namespace SaturnBuildTool.Cache
 
             return result;
         }
-
-        /*
-        public List<string> FindHeaderAltOfFiles( List<string> files ) 
-        {
-            List<string> result = new List<string>();
-
-            foreach( var sourceFile in files )
-            {
-                // Would result in D:\MyProject\Source\MyProject\MyFile
-                string filePath = Path.Combine( Path.GetDirectoryName( sourceFile ), Path.GetFileNameWithoutExtension( sourceFile ) );
-
-                result.Add( filePath );
-            }
-
-            return result;
-        }
-        */
     }
 
 }

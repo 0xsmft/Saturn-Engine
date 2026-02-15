@@ -688,8 +688,6 @@ namespace Saturn {
 		// Create the descriptor set layout.
 		std::vector< VkDescriptorPoolSize > PoolSizes;
 
-		auto pAllocator = VulkanContext::Get()->GetVulkanAllocator();
-
 		// Iterate over descriptor sets
 		for( auto& [ set, descriptorSet ] : m_DescriptorSets )
 		{

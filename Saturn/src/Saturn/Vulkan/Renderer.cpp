@@ -410,8 +410,6 @@ namespace Saturn {
 		mesh->GetIndexBuffer()->Bind( CommandBuffer );
 		Pipeline->Bind( CommandBuffer );
 
-		auto frame = Renderer::Get()->GetCurrentFrame();
-
 		{
 			Submesh& rSubmesh = mesh->Submeshes()[ SubmeshIndex ];
 			auto& rMaterialAsset = materialRegistry->GetMaterialAssets()[ rSubmesh.MaterialIndex ];

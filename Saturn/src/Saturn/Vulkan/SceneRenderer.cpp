@@ -524,8 +524,8 @@ namespace Saturn {
 
 		m_RendererData.SceneCompositeMaterial->SetResource( "u_GeometryPassTexture", m_RendererData.GeometryFramebuffer->GetColorAttachmentsResources()[ 0 ] );
 
-		m_RendererData.SceneCompositeMaterial->SetResource( "u_BloomTexture", Renderer::Get().GetPinkTexture());
-		m_RendererData.SceneCompositeMaterial->SetResource( "u_BloomDirtTexture", Renderer::Get().GetPinkTexture() );
+		m_RendererData.SceneCompositeMaterial->SetResource( "u_BloomTexture", Renderer::Get()->GetPinkTexture());
+		m_RendererData.SceneCompositeMaterial->SetResource( "u_BloomDirtTexture", Renderer::Get()->GetPinkTexture() );
 		
 		m_RendererData.SceneCompositeMaterial->SetResource( "u_DepthTexture", m_RendererData.GeometryFramebuffer->GetDepthAttachmentResource() );
 
@@ -1304,6 +1304,7 @@ namespace Saturn {
 			const AABB submeshAABB = submeshes[ i ].BoundingBox;
 			const AABB transformedAABB = TransformAABB( submeshAABB, submeshTransform );
 
+			// TODO: Need to work out why the fuck the AABB is fucked for Skeletal Meshes.
 			if( /*m_RendererData.CurrentCamera.pCamera->CameraFrustumIntersectsAABB( transformedAABB )*/ true )
 			{
 				StaticMeshKey key = { mesh->ID, materialRegistry, ( uint32_t ) i };
@@ -1315,15 +1316,6 @@ namespace Saturn {
 				++command.Instances;
 
 				SendBoneDataToMap( mesh, key, boneTransforms );
-
-				/*
-				size_t index = 0;
-				for( const auto& transform : boneTransforms )
-				{
-					m_RendererData.BoneTransformMap[ key ].Data[ index ] = transform;
-					index++;
-				}
-				*/
 
 				auto& shadow = m_DynamicShadowMapDrawList[ key ];
 				shadow.Mesh = mesh;
@@ -1516,6 +1508,8 @@ namespace Saturn {
 
 		UBLightData u_LightData = {};
 //		std::unique_ptr<UBPointLights> u_Lights = std::make_unique<UBPointLights>();
+
+		// This uses 24,592 bytes of stack... oh well...
 		UBPointLights u_Lights = {};
 
 		u_Lights.nbLights = ( uint32_t ) m_pScene->m_Lights.PointLights.size();
@@ -1868,7 +1862,7 @@ namespace Saturn {
 	/*
 	void SceneRenderer::SelectionPass()
 	{
-		const uint32_t frame = Renderer::Get().GetCurrentFrame();
+		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
 		VkExtent2D Extent = { m_RendererData.Width,m_RendererData.Height };
 		VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
 
@@ -2013,6 +2007,7 @@ namespace Saturn {
 		}
 
 		// UBs
+		// Heres the big fucker again, 24,592 bytes of stack.
 		UBPointLights u_Lights;
 
 		struct
@@ -2260,8 +2255,7 @@ namespace Saturn {
 
 	void SceneRenderer::InitRenderer2D()
 	{
-		// TODO: We don't support multiple Renderer2Ds atm, so we only want the master scene renderer to set the Renderer2D passes.
-		if( /*HasFlag( SceneRendererFlag_MasterInstance )*/ !HasFlag( SceneRendererFlag_NoRenderer2D ) )
+		if( !HasFlag( SceneRendererFlag_NoRenderer2D ) )
 		{
 			m_Renderer2D = Ref<Renderer2D>::Create();
 			m_Renderer2D->Init( m_RendererData.LateCompositePass, m_RendererData.LateCompositeFramebuffer );

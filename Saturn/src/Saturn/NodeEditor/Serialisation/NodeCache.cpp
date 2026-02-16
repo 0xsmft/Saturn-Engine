@@ -184,7 +184,7 @@ namespace Saturn {
 	struct NodeCacheEditorHeader
 	{
 		// .NCE
-		const unsigned char Magic[ 4 ] = { 0x2E, 0x43, 0x43, 0x45 };
+		const unsigned char Magic[ 4 ] = { 0x2E, 0x4E, 0x43, 0x45 };
 		AssetID AssetID = 0;
 		uint32_t Version = SAT_CURRENT_VERSION;
 	};

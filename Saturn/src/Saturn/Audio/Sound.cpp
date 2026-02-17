@@ -130,8 +130,6 @@ namespace Saturn {
 			ma_audio_buffer_uninit( &m_AudioBuffer );
 #endif
 			m_Loaded = false;
-			m_Playing = false;
-
 			m_SoundState = SoundState::NoDataSource;
 		}
 	}
@@ -159,8 +157,10 @@ namespace Saturn {
 
 			MA_CHECK( ma_sound_start( m_Sound ) );
 
-			m_Playing = true;
 			m_SoundState = SoundState::Playing;
+
+			// TEMP
+			AudioSystem::Get().ReportSoundPlayingIfNeeded( m_PlayerID );
 		};
 
 		// Play sound if have a data source and we are not already playing
@@ -465,7 +465,7 @@ namespace Saturn {
 
 	void Sound::PlayOrRestart( uint64_t pcmFrame /*= 0u */ )
 	{
-		if( m_Playing )
+		if( m_SoundState == SoundState::Playing )
 		{
 			SeekTo( 0 );
 		}
@@ -477,6 +477,7 @@ namespace Saturn {
 
 	void Sound::OnSoundEnd( void* pUserData, ma_sound* pSound )
 	{
+		// We must tell the AudioSystem that we are done playing.
 		UUID ID = static_cast< uint64_t >( reinterpret_cast< intptr_t >( pUserData ) );
 		AudioSystem::Get().ReportSoundCompleted( ID );
 	}

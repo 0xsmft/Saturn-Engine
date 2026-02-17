@@ -76,12 +76,15 @@ namespace Saturn {
 		// Actual SoundSpecification asset
 		Ref<SoundSpecification> m_Specification;
 
+		// Unique player ID
+		// NOTE: The AudioSystem will generate this for us.
+		//		 The ID will does _not_ change when you call Play(), 
+		//		 it is generated when the sound is created and thats it.
 		UUID m_PlayerID = 0;
 
 		SoundState m_SoundState = SoundState::NoDataSource;
 
 		bool m_Loaded = false;
-		bool m_Playing = false;
 		bool m_Looping = false;
 		bool m_MarkedForDestroy = false;
 

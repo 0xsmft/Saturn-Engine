@@ -218,6 +218,7 @@ namespace Saturn {
 	{
 		// TODO: Check if we are on the audio thread.
 		soundAsset->Play();
+		m_AliveSounds[ soundAsset->GetPlayerID() ] = soundAsset;
 	}
 
 	Ref<Sound> AudioSystem::RequestNewSound( AssetID ID, UUID UniquePlayerID, bool PlayNow /*= true */, Ref<SoundGroup> soundGroup /*= nullptr*/ )
@@ -400,6 +401,15 @@ namespace Saturn {
 			rSnd->OnSoundCompleted();
 
 			m_AliveSounds.erase( Itr );
+		}
+	}
+
+	void AudioSystem::ReportSoundPlayingIfNeeded( UUID UniquePlayerID )
+	{
+		const auto Itr = m_AliveSounds.find( UniquePlayerID );
+		if( Itr == m_AliveSounds.end() )
+		{
+			m_AliveSounds[ UniquePlayerID ] = m_LoadedSounds[ UniquePlayerID ];
 		}
 	}
 

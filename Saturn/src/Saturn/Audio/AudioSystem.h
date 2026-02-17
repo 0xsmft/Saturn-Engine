@@ -93,6 +93,7 @@ namespace Saturn {
 		void RequestNewSounds( std::vector<AssetID> Ids, std::vector<UUID> PlayerIds, std::function<void(Ref<Sound>)>&& rVistor );
 
 		void ReportSoundCompleted( UUID UniquePlayerID );
+		void ReportSoundPlayingIfNeeded( UUID UniquePlayerID );
 
 		void Suspend();
 		void Resume();

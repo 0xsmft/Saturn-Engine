@@ -279,7 +279,7 @@ namespace Saturn {
 			{
 				auto& bcc = rEntity->GetComponent< BoxColliderComponent >();
 
-				RawSerialisation::WriteVec3( bcc.Extents, rStream );
+				RawSerialisation::WriteVec3( bcc.HalfExtents, rStream );
 				RawSerialisation::WriteVec3( bcc.Offset, rStream );
 				RawSerialisation::WriteObject( bcc.IsTrigger, rStream );
 			} );
@@ -299,7 +299,7 @@ namespace Saturn {
 			{
 				auto& ccc = rEntity->GetComponent< CapsuleColliderComponent >();
 
-				RawSerialisation::WriteObject( ccc.Height, rStream );
+				RawSerialisation::WriteObject( ccc.HalfHeight, rStream );
 				RawSerialisation::WriteObject( ccc.Radius, rStream );
 				RawSerialisation::WriteVec3( ccc.Offset, rStream );
 				RawSerialisation::WriteObject( ccc.IsTrigger, rStream );
@@ -373,7 +373,6 @@ namespace Saturn {
 		WriteComponent<BehaviourTreeComponent>( rEntity, rStream, [ & ]()
 			{
 				auto& btc = rEntity->GetComponent< BehaviourTreeComponent >();
-
 				WriteAssetDependency( btc.BehaviourTreeAssetID, rStream );
 			} );
 	}
@@ -612,7 +611,7 @@ namespace Saturn {
 			{
 				auto& bcc = rEntity->GetComponent< BoxColliderComponent >();
 
-				RawSerialisation::ReadVec3( bcc.Extents, rStream );
+				RawSerialisation::ReadVec3( bcc.HalfExtents, rStream );
 				RawSerialisation::ReadVec3( bcc.Offset, rStream );
 				RawSerialisation::ReadObject( bcc.IsTrigger, rStream );
 			} );
@@ -632,7 +631,7 @@ namespace Saturn {
 			{
 				auto& ccc = rEntity->GetComponent< CapsuleColliderComponent >();
 
-				RawSerialisation::ReadObject( ccc.Height, rStream );
+				RawSerialisation::ReadObject( ccc.HalfHeight, rStream );
 				RawSerialisation::ReadObject( ccc.Radius, rStream );
 				RawSerialisation::ReadVec3( ccc.Offset, rStream );
 				RawSerialisation::ReadObject( ccc.IsTrigger, rStream );

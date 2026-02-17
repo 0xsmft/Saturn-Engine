@@ -1050,16 +1050,16 @@ namespace Saturn {
 				Auxiliary::ScopedItemFlag disabledFlag( ImGuiItemFlags_Disabled, bc.AutoAdjustExtent );
 				Auxiliary::ScopedStyleVar<float> styleVar( ImGuiStyleVar_Alpha, bc.AutoAdjustExtent ? 0.5f : 1.0f );
 
-				modified = Auxiliary::DrawVec3Control( "Extent", bc.Extents );
+				modified = Auxiliary::DrawVec3Control( "Half Extent", bc.HalfExtents, 0.5f );
 			}
 			
-			modified |= Auxiliary::DrawVec3Control( "Offset", bc.Offset );
+			modified |= Auxiliary::DrawVec3Control( "Offset", bc.Offset, 0.0f );
 			modified |= Auxiliary::DrawBoolControl( "Is Trigger", bc.IsTrigger );
 
 			if( Auxiliary::DrawBoolControl( "Auto Adjust Extent", bc.AutoAdjustExtent ) || bc.AutoAdjustExtent )
 			{
 				auto& transform = entity->GetComponent<TransformComponent>();
-				bc.Extents = transform.Scale;
+				bc.HalfExtents = transform.Scale;
 
 				modified |= true;
 			}
@@ -1072,7 +1072,7 @@ namespace Saturn {
 		{
 			bool modified = false;
 
-			modified =  Auxiliary::DrawFloatControl( "Radius", sc.Radius );
+			modified =  Auxiliary::DrawFloatControl( "Half Radius", sc.Radius );
 			modified |= Auxiliary::DrawVec3Control( "Offset", sc.Offset );
 			modified |= Auxiliary::DrawBoolControl( "Is Trigger", sc.IsTrigger );
 
@@ -1083,8 +1083,8 @@ namespace Saturn {
 		{
 			bool modified = false;
 
-			modified =  Auxiliary::DrawFloatControl( "Radius", cc.Radius );
-			modified |= Auxiliary::DrawFloatControl( "Height", cc.Height );
+			modified = Auxiliary::DrawFloatControl( "Radius", cc.Radius );
+			modified |= Auxiliary::DrawFloatControl( "Half Height", cc.HalfHeight );
 			modified |= Auxiliary::DrawVec3Control( "Offset", cc.Offset );
 			modified |= Auxiliary::DrawBoolControl( "Is Trigger", cc.IsTrigger );
 
@@ -1357,7 +1357,7 @@ namespace Saturn {
 			bool modified = false;
 			modified =  Auxiliary::DrawFloatControl( "Step Offset", cm.StepOffset );
 			modified |= Auxiliary::DrawFloatControl( "Radius", cm.Radius );
-			modified |= Auxiliary::DrawFloatControl( "Height", cm.Height );
+			modified |= Auxiliary::DrawFloatControl( "Half Height", cm.Height );
 
 			if( modified ) m_Context->MarkDirty();
 		} );

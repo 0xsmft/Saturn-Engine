@@ -62,13 +62,17 @@ namespace Saturn {
 		Ref<PhysicsMaterialAsset> materialAsset;
 
 		Ref<Project> activeProject = Project::GetActiveProject();
-		if( rMesh->GetPhysicsMaterial() == 0 || rMesh->GetPhysicsMaterial() == activeProject->GetDefaultPhysicsMaterialAsset() )
+		if( !rMesh )
 		{
-			materialAsset = AssetManager::Get().GetAssetAs<PhysicsMaterialAsset>( activeProject->GetDefaultPhysicsMaterialAsset() );
+			materialAsset = AssetManager::Get()->GetAssetAs<PhysicsMaterialAsset>( activeProject->GetDefaultPhysicsMaterialAsset() );
+		}
+		else if( rMesh->GetPhysicsMaterial() == 0 || rMesh->GetPhysicsMaterial() == activeProject->GetDefaultPhysicsMaterialAsset() )
+		{
+			materialAsset = AssetManager::Get()->GetAssetAs<PhysicsMaterialAsset>( activeProject->GetDefaultPhysicsMaterialAsset() );
 		}
 		else
 		{
-			materialAsset = AssetManager::Get().GetAssetAs<PhysicsMaterialAsset>( rMesh->GetPhysicsMaterial() );
+			materialAsset = AssetManager::Get()->GetAssetAs<PhysicsMaterialAsset>( rMesh->GetPhysicsMaterial() );
 		}
 
 		return materialAsset;
@@ -91,20 +95,17 @@ namespace Saturn {
 	{
 		BoxColliderComponent& bcc = m_Entity->GetComponent<BoxColliderComponent>();
 		TransformComponent& transform = m_Entity->GetComponent<TransformComponent>();
+		const Ref<StaticMesh> mesh = m_Entity->GetComponent<StaticMeshComponent>().Mesh;
 
-		const Ref<StaticMesh>& mesh = m_Entity->GetComponent<StaticMeshComponent>().Mesh;
-
-		glm::vec3 size = bcc.Extents;
+		glm::vec3 halfSize = bcc.HalfExtents;
 
 		// Very rare path, only happens if something else modifies the scale.
 #if !defined(SAT_DIST)
-		if( bcc.AutoAdjustExtent && size != transform.Scale )
+		if( bcc.AutoAdjustExtent && halfSize != transform.Scale )
 #else
 		if( size != transform.Scale )
 #endif
-			size = transform.Scale;
-
-		glm::vec3 halfSize = size / 2.0f;
+			halfSize = transform.Scale * 0.5f;
 
 		Ref<PhysicsMaterialAsset> materialAsset = GetMaterial( mesh );
 		physx::PxMaterial* mat = nullptr;
@@ -198,13 +199,11 @@ namespace Saturn {
 
 		const Ref<StaticMesh>& mesh = m_Entity->GetComponent<StaticMeshComponent>().Mesh;
 
-		float size = scc.Radius;
+		float radius = scc.Radius;
 		glm::vec scale = transform.Scale;
 
 		if( scale.x != 0.0f )
-			size *= scale.x;
-
-		float halfSize = size / 2.0f;
+			radius *= scale.x;
 
 		Ref<PhysicsMaterialAsset> materialAsset = GetMaterial( mesh );
 		physx::PxMaterial* mat = nullptr;
@@ -217,7 +216,7 @@ namespace Saturn {
 
 		mat = &materialAsset->GetMaterial();
 
-		physx::PxSphereGeometry SphereGoemetry( halfSize );
+		physx::PxSphereGeometry SphereGoemetry( radius );
 
 		physx::PxShape* pShape = physx::PxRigidActorExt::createExclusiveShape( rActor, SphereGoemetry, *mat );
 
@@ -410,13 +409,13 @@ namespace Saturn {
 
 		const Ref<StaticMesh>& mesh = m_Entity->GetComponent<StaticMeshComponent>().Mesh;
 
-		float size = cap.Radius;
-		float height = cap.Height;
+		float radius = cap.Radius;
+		float height = cap.HalfHeight;
 
 		glm::vec3 scale = transform.Scale;
 
 		if( scale.x != 0.0f && height == 0.0f )
-			size *= scale.x;
+			radius *= scale.x;
 
 		if( scale.y != 0.0f && height == 0.0f )
 			height *= scale.y;
@@ -432,8 +431,7 @@ namespace Saturn {
 
 		mat = &materialAsset->GetMaterial();
 
-		float halfHeight = height / 2.0f;
-		physx::PxCapsuleGeometry CapsuleGemetry( size, halfHeight );
+		physx::PxCapsuleGeometry CapsuleGemetry( radius, height );
 
 		physx::PxShape* pShape = physx::PxRigidActorExt::createExclusiveShape( rActor, CapsuleGemetry, *mat );
 		pShape->setFlag( physx::PxShapeFlag::eSIMULATION_SHAPE, !cap.IsTrigger );
@@ -567,7 +565,7 @@ namespace Saturn {
 		TransformComponent& transform = m_Entity->GetComponent<TransformComponent>();
 		physx::PxTransform PxTrans = Auxiliary::GLMTransformToPx( transform.GetTransform() );
 
-		const std::vector<physx::PxShape*>& rShapes = PhysicsFoundation::Get().GetCookingContext().CreateTriangleMesh( m_Mesh, rActor, transform.Scale );
+		const std::vector<physx::PxShape*>& rShapes = PhysicsFoundation::Get()->GetCookingContext().CreateTriangleMesh( m_Mesh, rActor, transform.Scale );
 
 		if( rShapes.size() )
 		{
@@ -706,7 +704,7 @@ namespace Saturn {
 		TransformComponent& transform = m_Entity->GetComponent<TransformComponent>();
 		physx::PxTransform PxTrans = Auxiliary::GLMTransformToPx( transform.GetTransform() );
 
-		const std::vector<physx::PxShape*>& rShapes = PhysicsFoundation::Get().GetCookingContext().CreateConvexMesh( m_Mesh, rActor, transform.Scale );
+		const std::vector<physx::PxShape*>& rShapes = PhysicsFoundation::Get()->GetCookingContext().CreateConvexMesh( m_Mesh, rActor, transform.Scale );
 
 		if( rShapes.size() )
 		{

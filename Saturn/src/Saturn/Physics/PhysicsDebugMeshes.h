@@ -35,7 +35,7 @@ namespace Saturn {
 	class PhysicsDebugMeshes
 	{
 	public:
-		static inline PhysicsDebugMeshes& Get() { return *SingletonStorage::GetOrCreateSingleton<PhysicsDebugMeshes>(); }
+		SAT_SINGLETON_LAZY( PhysicsDebugMeshes );
 
 	public:
 		PhysicsDebugMeshes();

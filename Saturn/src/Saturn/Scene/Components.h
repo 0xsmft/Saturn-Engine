@@ -233,7 +233,7 @@ namespace Saturn {
 
 	struct BoxColliderComponent
 	{
-		glm::vec3 Extents = { 1.0f, 1.0f, 1.0f };
+		glm::vec3 HalfExtents = { 0.5f, 0.5f, 0.5f };
 		glm::vec3 Offset = { 0.0f, 0.0f, 0.0f };
 
 		bool IsTrigger = false;
@@ -242,7 +242,7 @@ namespace Saturn {
 #endif
 
 		BoxColliderComponent() = default;
-		BoxColliderComponent( const glm::vec3& extents ) : Extents( extents ) { }
+		BoxColliderComponent( const glm::vec3& extents ) : HalfExtents( extents ) { }
 	};
 
 	struct SphereColliderComponent
@@ -261,12 +261,12 @@ namespace Saturn {
 		glm::vec3 Offset = { 0.0f, 0.0f, 0.0f };
 
 		float Radius = 1.0f;
-		float Height = 1.0f;
+		float HalfHeight = 1.0f;
 
 		bool IsTrigger = false;
 
 		CapsuleColliderComponent() = default;
-		CapsuleColliderComponent( float radius, float height ) : Radius( radius ), Height( height ) { }
+		CapsuleColliderComponent( float radius, float height ) : Radius( radius ), HalfHeight( height ) { }
 	};
 
 	class PhysicsCharacterMovement;

@@ -409,7 +409,7 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 
 			const auto& bcc = entity->GetComponent< BoxColliderComponent >();
 
-			rEmitter << YAML::Key << "Extents" << YAML::Value << bcc.Extents;
+			rEmitter << YAML::Key << "Extents" << YAML::Value << bcc.HalfExtents;
 			rEmitter << YAML::Key << "Offset" << YAML::Value << bcc.Offset;
 			rEmitter << YAML::Key << "IsTrigger" << YAML::Value << bcc.IsTrigger;
 // Annoying. This will never be called on Dist.
@@ -443,7 +443,7 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 
 			const auto& ccc = entity->GetComponent< CapsuleColliderComponent >();
 
-			rEmitter << YAML::Key << "Height" << YAML::Value << ccc.Height;
+			rEmitter << YAML::Key << "Height" << YAML::Value << ccc.HalfHeight;
 			rEmitter << YAML::Key << "Radius" << YAML::Value << ccc.Radius;
 			rEmitter << YAML::Key << "Offset" << YAML::Value << ccc.Offset;
 			rEmitter << YAML::Key << "IsTrigger" << YAML::Value << ccc.IsTrigger;
@@ -745,32 +745,35 @@ pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value ); \
 				m.Mesh = mesh;
 				m.MaterialRegistry = Ref<MaterialRegistry>::Create();
 
-				const auto materialRegistry = mc[ "MaterialRegistry" ];
-				if( materialRegistry )
+				if( m.Mesh )
 				{
-					const bool hasOverrides = materialRegistry[ "AnyOverrides" ].as<bool>();
-
-					if( hasOverrides )
+					const auto materialRegistry = mc[ "MaterialRegistry" ];
+					if( materialRegistry )
 					{
-						auto materialOverrides = materialRegistry[ "MaterialOverrides" ];
+						const bool hasOverrides = materialRegistry[ "AnyOverrides" ].as<bool>();
 
-						int i = 0;
-						for( auto override : materialOverrides )
+						if( hasOverrides )
 						{
-							id = override[ i ].as<uint64_t>();
+							auto materialOverrides = materialRegistry[ "MaterialOverrides" ];
 
-							if( id != 0 )
+							int i = 0;
+							for( auto override : materialOverrides )
 							{
-								m.MaterialRegistry->AddAsset( AssetManager::Get()->GetAssetAs<MaterialAsset>( id ) );
-								m.MaterialRegistry->SetOverrides( i, true );
-							}
+								id = override[ i ].as<uint64_t>();
 
-							++i;
+								if( id != 0 )
+								{
+									m.MaterialRegistry->AddAsset( AssetManager::Get()->GetAssetAs<MaterialAsset>( id ) );
+									m.MaterialRegistry->SetOverrides( i, true );
+								}
+
+								++i;
+							}
 						}
-					}
-					else
-					{
-						m.MaterialRegistry->Copy( m.Mesh->GetMaterialRegistry() );
+						else
+						{
+							m.MaterialRegistry->Copy( m.Mesh->GetMaterialRegistry() );
+						}
 					}
 				}
 			}
@@ -895,7 +898,7 @@ pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value ); \
 		{
 			auto& b = DeserialisedEntity->AddComponent< BoxColliderComponent >();
 
-			b.Extents = bcc[ "Extents" ].as< glm::vec3 >();
+			b.HalfExtents = bcc[ "Extents" ].as< glm::vec3 >( glm::vec3( 0.5f ) );
 			b.Offset = bcc[ "Offset" ].as< glm::vec3 >();
 			b.IsTrigger = bcc[ "IsTrigger" ].as< bool >();
 #if !defined(SAT_DIST)
@@ -918,7 +921,7 @@ pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value ); \
 		{
 			auto& c = DeserialisedEntity->AddComponent< CapsuleColliderComponent >();
 
-			c.Height = ccc[ "Height" ].as< float >();
+			c.HalfHeight = ccc[ "Height" ].as< float >();
 			c.Radius = ccc[ "Radius" ].as< float >();
 			c.Offset = ccc[ "Offset" ].as< glm::vec3 >();
 			c.IsTrigger = ccc[ "IsTrigger" ].as< bool >();

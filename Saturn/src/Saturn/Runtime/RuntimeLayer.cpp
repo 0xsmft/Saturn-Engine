@@ -4,7 +4,7 @@
 *                                                                                           *
 * MIT License                                                                               *
 *                                                                                           *
-* Copyright (c) 2020 - 2025 BEAST                                                           *
+* Copyright (c) 2020 - 2026 BEAST                                                           *
 *                                                                                           *
 * Permission is hereby granted, free of charge, to any person obtaining a copy              *
 * of this software and associated documentation files (the "Software"), to deal             *
@@ -56,6 +56,10 @@
 #include "Saturn/Asset/AssetManager.h"
 #include "Saturn/Asset/Prefab.h"
 
+#if defined(SAT_DIST)
+#include "Saturn/GameFramework/Core/SClassDistReference.h"
+#endif
+
 namespace Saturn {
 
 	RuntimeLayer::RuntimeLayer()
@@ -85,6 +89,10 @@ namespace Saturn {
 		Application::Get()->GetWindow()->Show();
 
 		SAT_CORE_VERIFY( m_RuntimeScene->OnRuntimeStart(), "Initial runtime request failed!" );
+
+#if defined(SAT_DIST)
+		SClassDistReferencer::Reference();
+#endif
 	}
 
 	void RuntimeLayer::OnAttach()

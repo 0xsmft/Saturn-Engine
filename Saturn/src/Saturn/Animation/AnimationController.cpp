@@ -4,7 +4,7 @@
 *                                                                                           *
 * MIT License                                                                               *
 *                                                                                           *
-* Copyright (c) 2020 - 2025 BEAST                                                           *
+* Copyright (c) 2020 - 2026 BEAST                                                           *
 *                                                                                           *
 * Permission is hereby granted, free of charge, to any person obtaining a copy              *
 * of this software and associated documentation files (the "Software"), to deal             *
@@ -66,6 +66,15 @@ namespace Saturn {
 
 	void AnimationController::Tick( Timestep ts )
 	{
+		if( Input::Get().KeyPressed( RubyKey_C ) )
+		{
+			m_AnimationGraph->FindDataHandle( "Speed" )->Set<float>( 67.0f );
+		}
+		
+		if( Input::Get().KeyPressed( RubyKey_V ) )
+		{
+			m_AnimationGraph->FindDataHandle( "Speed" )->Set<float>( 21.0f );
+		}
 
 		m_TaskHandler->Tick( ts );
 	}

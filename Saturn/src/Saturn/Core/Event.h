@@ -4,7 +4,7 @@
 *                                                                                           *
 * MIT License                                                                               *
 *                                                                                           *
-* Copyright (c) 2020 - 2025 BEAST                                                           *
+* Copyright (c) 2020 - 2026 BEAST                                                           *
 *                                                                                           *
 * Permission is hereby granted, free of charge, to any person obtaining a copy              *
 * of this software and associated documentation files (the "Software"), to deal             *
@@ -74,6 +74,8 @@ static inline EventCategory GetStaticCategory() { return EventCategory::Category
 		CBOpenFile,
 		RqOpenIDE,
 		SendEditorNotification,
+		AddComponent,
+		RemoveComponent,
 
 		//////////////////////////////////////////////////////////////////////////
 		// Runtime

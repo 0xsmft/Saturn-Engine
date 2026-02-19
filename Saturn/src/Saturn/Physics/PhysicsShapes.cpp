@@ -611,18 +611,23 @@ namespace Saturn {
 					rData.VertexBuffer.reserve( vertCount * 3 );
 					rData.IndexBuffer.reserve( triCount * 3 );
 
+					physx::PxMeshScale meshScale = geometry.scale;
+					physx::PxMat33 scaleRotation( meshScale.rotation );
+					physx::PxVec3 scale = meshScale.scale;
+
 					physx::PxU8 flags = pMesh->getTriangleMeshFlags();
 					if( ( flags & physx::PxTriangleMeshFlag::e16_BIT_INDICES ) != 0 )
 					{
 						const physx::PxU16* tris = ( const physx::PxU16* ) pMesh->getTriangles();
-						
+
 						for( physx::PxU32 i = 0; i < triCount; i++ )
 						{
 							bool inBounds = false;
 							for( auto vert = 0; vert < 3; vert++ )
 							{
 								physx::PxVec3 vertexPos = verts[ tris[ vert ] ];
-								physx::PxVec3 worldSpace = localActorTransform.transform( vertexPos );
+								physx::PxVec3 scaledVertex = scaleRotation * ( vertexPos.multiply( scale ) );
+								physx::PxVec3 worldSpace = localActorTransform.transform( scaledVertex );
 
 								if( rData.Bounds.Contains( Auxiliary::PxToGLM( worldSpace ) ) )
 								{
@@ -670,9 +675,9 @@ namespace Saturn {
 							}
 							tris += 3;
 
-							rData.IndexBuffer.push_back( offset );
-							rData.IndexBuffer.push_back( offset );
-							rData.IndexBuffer.push_back( offset );
+							rData.IndexBuffer.push_back( offset /*+0*/ );
+							rData.IndexBuffer.push_back( offset + 1 );
+							rData.IndexBuffer.push_back( offset + 2 );
 
 							offset += 3;
 						}
@@ -738,7 +743,7 @@ namespace Saturn {
 				{
 					physx::PxConvexMesh* pMesh = geometry.convexMesh;
 
-					auto triCount = pMesh->getNbPolygons();
+					const auto triCount = pMesh->getNbPolygons();
 
 					auto* pVertexBuffer = pMesh->getVertices();
 					auto* pIndexBuffer = pMesh->getIndexBuffer();
@@ -747,17 +752,17 @@ namespace Saturn {
 					{
 						physx::PxHullPolygon poly{};
 						if( pMesh->getPolygonData( i, poly ) ) continue;
-					
-						uint32_t vertexCount = poly.mNbVerts;
+
+						const uint32_t vertexCount = poly.mNbVerts;
 						const physx::PxU8* pPolyIndices = pIndexBuffer + poly.mIndexBase;
 
-						for( int j = 1; j < vertexCount -1; j++ )
+						for( int j = 1; j < vertexCount - 1; j++ )
 						{
 							glm::vec3 v0 = glm::vec3( actorTransform * glm::vec4( Auxiliary::PxToGLM( pVertexBuffer[ pPolyIndices[ 0 ] ] ), 1.0f ) );
 							glm::vec3 v1 = glm::vec3( actorTransform * glm::vec4( Auxiliary::PxToGLM( pVertexBuffer[ pPolyIndices[ j ] ] ), 1.0f ) );
 							glm::vec3 v2 = glm::vec3( actorTransform * glm::vec4( Auxiliary::PxToGLM( pVertexBuffer[ pPolyIndices[ i + 1 ] ] ), 1.0f ) );
 
-							uint32_t baseIndex = ( uint32_t ) rData.VertexBuffer.size();
+							const uint32_t baseIndex = ( uint32_t ) rData.VertexBuffer.size();
 							rData.VertexBuffer.push_back( v0.x );
 							rData.VertexBuffer.push_back( v0.y );
 							rData.VertexBuffer.push_back( v0.z );
@@ -765,7 +770,7 @@ namespace Saturn {
 							rData.VertexBuffer.push_back( v1.x );
 							rData.VertexBuffer.push_back( v1.y );
 							rData.VertexBuffer.push_back( v1.z );
-							
+
 							rData.VertexBuffer.push_back( v2.x );
 							rData.VertexBuffer.push_back( v2.y );
 							rData.VertexBuffer.push_back( v2.z );

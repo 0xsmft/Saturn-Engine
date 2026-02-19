@@ -339,16 +339,25 @@ namespace Saturn {
 			const int* pTris = &pChunkyTriMesh->tris[ rNode.i * 3 ];
 			const int nTri = rNode.n;
 
-			memset( m_AreaFlags, 0, nTri * sizeof( unsigned char ) );
+			std::memset( m_AreaFlags, 0, nTri * sizeof( unsigned char ) );
+			
+			rcClearUnwalkableTriangles( &rContext, config.walkableSlopeAngle,
+				vb.data(), ( int ) ( vb.size() / 3 ), 
+				pTris, nTri, 
+				m_AreaFlags 
+			);
+
 			rcMarkWalkableTriangles(
 				&rContext, config.walkableSlopeAngle,
 				vb.data(), ( int ) vb.size() / 3u,
 				pTris, nTri,
-				m_AreaFlags );
+				m_AreaFlags 
+			);
 
 			RC_CHECK( rcRasterizeTriangles( &rContext,
 				vb.data(), ( int ) vb.size() / 3u,
-				pTris, m_AreaFlags, nTri, *m_pSolidHeightfield, config.walkableClimb ) );
+				pTris, m_AreaFlags, nTri, *m_pSolidHeightfield, config.walkableClimb ) 
+			);
 
 			rContext.log( RC_LOG_PROGRESS, "Rasterised %d triangles into heightfield", nTri );
 		}

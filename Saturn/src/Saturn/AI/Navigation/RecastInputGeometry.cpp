@@ -77,12 +77,6 @@ namespace Saturn {
 
 	void RecastInputGeometry::EndImport( const AABB& rAABB )
 	{
-//		float min[ 3 ], max[ 3 ];
-//		rcCalcBounds( m_ExportData.VertexBuffer.data(), m_ExportData.VertexBuffer.size() / 3, min, max );
-
-//		m_MinBounds = glm::vec3( min[ 0 ], min[ 1 ], min[ 2 ] );
-//		m_MaxBounds = glm::vec3( max[ 0 ], max[ 1 ], max[ 2 ] );
-
 		m_MinBounds = rAABB.Min;
 		m_MaxBounds = rAABB.Max;
 

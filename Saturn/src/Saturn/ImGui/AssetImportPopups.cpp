@@ -72,7 +72,7 @@ namespace Saturn {
 		
 			case AssetImportPopupError::MeshAssimpInternalError:
 			{
-				ImGui::Text( "Error: MeshNoMaterials (0x%08x)", m_Error );
+				ImGui::Text( "Error: MeshAssimpInternalError (0x%08x)", m_Error );
 				ImGui::Text( "An internal Assimp error occured while importing the mesh." );
 			} break;			
 		}

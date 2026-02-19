@@ -27,17 +27,18 @@
 */
 
 #include "SharedGlobals.h"
-#include "Saturn/Core/Memory/BinnedAllocator.h"
-
-// SATURN_SS_STATIC is true if we are building monolithically
-#if defined(SATURN_SS_STATIC)
-// Internal linkage...
-#define SAT_SHARED_STORAGE_STATIC
-#else
-#define SAT_SHARED_STORAGE_STATIC static
-#endif
 
 namespace Saturn {
 	SS_API Scene* g_ActiveScene = nullptr;
 	SS_API AluraCanvas* g_AluraCanvas = nullptr;
 }
+
+#if !defined(SAT_DIST)
+// I hate this....
+// this is because I do NOT want to include imgui_node_editor_internal.h
+// TODO: FIX THIS SHIT CODE IMMEDIATELY!
+#include <imgui_node_editor_internal.h>
+namespace ax::NodeEditor::Detail {
+	SS_API EditorContext* s_Editor = nullptr;
+}
+#endif

@@ -40,3 +40,8 @@ namespace Saturn {
 	extern SS_API Scene* g_ActiveScene;
 	extern SS_API AluraCanvas* g_AluraCanvas;
 }
+
+namespace ax::NodeEditor::Detail {
+	struct EditorContext;
+	extern SS_API EditorContext* s_Editor;
+}

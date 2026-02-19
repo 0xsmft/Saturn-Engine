@@ -10,13 +10,15 @@
 //   Written by Michal Cichon
 //------------------------------------------------------------------------------
 # include "sppch.h"
+# include "SharedGlobals.h"
 # include "imgui_node_editor_internal.h"
 # include <algorithm>
 
 
 //------------------------------------------------------------------------------
-static ax::NodeEditor::Detail::EditorContext* s_Editor = nullptr;
+//static ax::NodeEditor::Detail::EditorContext* s_Editor = nullptr;
 
+using namespace ax::NodeEditor::Detail;
 
 //------------------------------------------------------------------------------
 template <typename C, typename I, typename F>

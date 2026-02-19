@@ -28,10 +28,12 @@
 
 #pragma once
 
+#include "Saturn/Core/Platform.h"
+
 #if defined( SATURN_SS_IMPORT )
-#define SS_API __declspec(dllimport)
+#define SS_API SAT_DLLIMPORT
 #elif !defined( SATURN_SS_STATIC )
-#define SS_API __declspec(dllexport)
+#define SS_API SAT_DLLEXPORT
 #else
 #define SS_API
 #endif

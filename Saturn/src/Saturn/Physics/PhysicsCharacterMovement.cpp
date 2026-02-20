@@ -34,6 +34,8 @@
 #include "PhysicsScene.h"
 #include "PhysicsAuxiliary.h"
 
+#include "Saturn/Scene/Entity.h"
+
 #include "Saturn/Project/Project.h"
 
 #include "Saturn/Asset/AssetManager.h"
@@ -85,13 +87,15 @@ namespace Saturn {
 		return materialAsset;
 	}
 
-	void PhysicsCharacterMovement::CreateController( PhysicsScene* pScene, const glm::vec3& rOriginPosition )
+	void PhysicsCharacterMovement::CreateController( PhysicsScene* pScene, SharedPtr<Entity> entity, const glm::vec3& rOriginPosition )
 	{
 		Ref<PhysicsMaterialAsset> materialAsset = GetMaterial( m_MaterialID );
 		if( materialAsset == nullptr )
 		{
 			// Memory only asset
 			materialAsset = Ref<PhysicsMaterialAsset>::Create( 1.0f, 1.0f, 0.5f );
+
+			SAT_CORE_WARN( "[PhysicsCharacterMovement] Unable to find physics material with ID/{0}", ( uint64_t ) m_MaterialID );
 		}
 
 		physx::PxCapsuleControllerDesc desc;
@@ -100,12 +104,36 @@ namespace Saturn {
 		desc.stepOffset = 0.3f;
 		desc.slopeLimit = glm::cos( physx::PxPiDivFour );
 		desc.contactOffset = 0.02f;
-		desc.material = &materialAsset->GetMaterial();
+		desc.material = materialAsset->GetMaterial();
 		desc.position = physx::PxExtendedVec3( rOriginPosition.x, rOriginPosition.y, rOriginPosition.z );
 		desc.upDirection = physx::PxVec3{ 0.0f, 1.0f, 0.0f };
 		desc.climbingMode = physx::PxCapsuleClimbingMode::eCONSTRAINED;
+		desc.userData = entity->GetComponent<RigidbodyComponent>().Rigidbody;
+		desc.reportCallback = PhysicsFoundation::Get()->GetControllerContactCallback();
 
 		m_pController = pScene->GetControllerManager()->createController( desc );
+
+		physx::PxRigidDynamic* pBody = ( physx::PxRigidDynamic* ) m_pController->getActor();
+		if( pBody )
+		{
+			if( pBody->getNbShapes() )
+			{
+				physx::PxShape* pCapsuleShape;
+				pBody->getShapes( &pCapsuleShape, 1 );
+
+				if( pCapsuleShape )
+				{
+					pCapsuleShape->setFlag( physx::PxShapeFlag::eSIMULATION_SHAPE, true );
+					pCapsuleShape->setFlag( physx::PxShapeFlag::eTRIGGER_SHAPE, false );
+
+					physx::PxFilterData data;
+					data.word0 = BIT( 0 );
+					data.word1 = BIT( 0 );
+
+					pCapsuleShape->setSimulationFilterData( data );
+				}
+			}
+		}
 	}
 
 	void PhysicsCharacterMovement::Move( const glm::vec3& rDisplacement )

@@ -53,8 +53,13 @@ namespace Saturn {
 		// Only use this for basic shapes as this only works for one shape.
 		void SetFilterData();
 
+		void SetUserData( void* pData );
+
+		// Runtime only!
+		virtual void SetTrigger( bool isTrigger );
+
 	protected:
-		Ref<PhysicsMaterialAsset> GetMaterial( const Ref<StaticMesh>& rMesh );
+		Ref<PhysicsMaterialAsset> GetMaterial( Ref<StaticMesh> mesh );
 
 	protected:
 		PhysicsShapeType m_Type = PhysicsShapeType::Unknown;
@@ -73,6 +78,9 @@ namespace Saturn {
 		void Create( physx::PxRigidActor& rActor ) override;
 		void ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
 
+		// Runtime only!
+		virtual void SetTrigger( bool isTrigger ) override;
+
 	private:
 		float m_Extent = 0.0f;
 	};
@@ -86,6 +94,9 @@ namespace Saturn {
 		void Create( physx::PxRigidActor& rActor ) override;
 		void ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
 
+		// Runtime only!
+		virtual void SetTrigger( bool isTrigger ) override;
+
 	private:
 		float m_Radius = 0.0f;
 	};
@@ -97,7 +108,14 @@ namespace Saturn {
 		~CapsuleShape();
 
 		void Create( physx::PxRigidActor& rActor ) override;
+
+		// Internal use only!
+		void Create( physx::PxRigidActor& rActor, float radius, float height, const glm::vec3& rScale );
+
 		void ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
+
+		// Runtime only!
+		virtual void SetTrigger( bool isTrigger ) override;
 
 	private:
 		float m_Height = 0.0f;

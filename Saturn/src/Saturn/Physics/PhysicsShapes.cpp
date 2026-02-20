@@ -57,22 +57,54 @@ namespace Saturn {
 		m_Shape->setSimulationFilterData( data );
 	}
 
-	Ref<PhysicsMaterialAsset> PhysicsShape::GetMaterial( const Ref<StaticMesh>& rMesh )
+	void PhysicsShape::SetUserData( void* pData )
+	{
+		m_Shape->userData = pData;
+	}
+
+	void PhysicsShape::SetTrigger( bool isTrigger )
+	{
+		if( m_Shape )
+		{
+			m_Shape->setFlag( physx::PxShapeFlag::eSIMULATION_SHAPE, !isTrigger );
+//			m_Shape->setFlag( physx::PxShapeFlag::eSCENE_QUERY_SHAPE, !isTrigger );
+			m_Shape->setFlag( physx::PxShapeFlag::eTRIGGER_SHAPE, isTrigger );
+		}
+	}
+
+	Ref<PhysicsMaterialAsset> PhysicsShape::GetMaterial( Ref<StaticMesh> mesh )
 	{
 		Ref<PhysicsMaterialAsset> materialAsset;
 
 		Ref<Project> activeProject = Project::GetActiveProject();
-		if( !rMesh )
+		const UUID fallbackID = activeProject->GetDefaultPhysicsMaterialAsset();
+
+		// Check if no mesh?
+		if( !mesh )
 		{
-			materialAsset = AssetManager::Get()->GetAssetAs<PhysicsMaterialAsset>( activeProject->GetDefaultPhysicsMaterialAsset() );
+			// No mesh? Use prj default
+			if( fallbackID != 0 )
+			{
+				materialAsset = AssetManager::Get()->GetAssetAs<PhysicsMaterialAsset>( fallbackID );
+			}
 		}
-		else if( rMesh->GetPhysicsMaterial() == 0 || rMesh->GetPhysicsMaterial() == activeProject->GetDefaultPhysicsMaterialAsset() )
+		// Hooray, we have a mesh
+		// However, we must make sure that it's ID is not zero
+		else if( mesh->GetPhysicsMaterial() == 0 || mesh->GetPhysicsMaterial() == fallbackID )
 		{
-			materialAsset = AssetManager::Get()->GetAssetAs<PhysicsMaterialAsset>( activeProject->GetDefaultPhysicsMaterialAsset() );
+			materialAsset = AssetManager::Get()->GetAssetAs<PhysicsMaterialAsset>( fallbackID );
 		}
+		// We have a mesh and it has a unique ID
 		else
 		{
-			materialAsset = AssetManager::Get()->GetAssetAs<PhysicsMaterialAsset>( rMesh->GetPhysicsMaterial() );
+			materialAsset = AssetManager::Get()->GetAssetAs<PhysicsMaterialAsset>( mesh->GetPhysicsMaterial() );
+		}
+
+		// If we get here, then we had no mesh and no fallback ID OR the specified ID could not be found.
+		// So create memory only asset
+		if( !materialAsset )
+		{
+			materialAsset = Ref<PhysicsMaterialAsset>::Create( 1.0f, 1.0f, 0.5f );
 		}
 
 		return materialAsset;
@@ -95,7 +127,10 @@ namespace Saturn {
 	{
 		BoxColliderComponent& bcc = m_Entity->GetComponent<BoxColliderComponent>();
 		TransformComponent& transform = m_Entity->GetComponent<TransformComponent>();
-		const Ref<StaticMesh> mesh = m_Entity->GetComponent<StaticMeshComponent>().Mesh;
+
+		Ref<StaticMesh> mesh = nullptr;
+		if( auto* pSM = m_Entity->TryGetComponent<StaticMeshComponent>(); pSM )
+			mesh = pSM->Mesh;
 
 		glm::vec3 halfSize = bcc.HalfExtents;
 
@@ -108,18 +143,10 @@ namespace Saturn {
 			halfSize = transform.Scale * 0.5f;
 
 		Ref<PhysicsMaterialAsset> materialAsset = GetMaterial( mesh );
-		physx::PxMaterial* mat = nullptr;
-
-		// No material was found, so this means two things, one the project has no default material or (two) the mesh/project has a material asset but it can't be found.
-		if( !materialAsset )
-		{
-			materialAsset = Ref<PhysicsMaterialAsset>::Create( 1.0f, 1.0f, 1.0f );
-		}
-
-		mat = &materialAsset->GetMaterial();
+		physx::PxMaterial* pPxMaterial = materialAsset->GetMaterial();
 
 		physx::PxBoxGeometry BoxGeometry = physx::PxBoxGeometry( halfSize.x, halfSize.y, halfSize.z );
-		physx::PxShape* pShape = physx::PxRigidActorExt::createExclusiveShape( rActor, BoxGeometry, *mat );
+		physx::PxShape* pShape = physx::PxRigidActorExt::createExclusiveShape( rActor, BoxGeometry, *pPxMaterial );
 
 		pShape->setFlag( physx::PxShapeFlag::eSIMULATION_SHAPE, !bcc.IsTrigger );
 		pShape->setFlag( physx::PxShapeFlag::eTRIGGER_SHAPE, bcc.IsTrigger );
@@ -179,6 +206,12 @@ namespace Saturn {
 		}
 	}
 
+	void BoxShape::SetTrigger( bool isTrigger )
+	{
+		PhysicsShape::SetTrigger( isTrigger );
+		m_Entity->GetComponent<BoxColliderComponent>().IsTrigger = isTrigger;
+	}
+
 	//////////////////////////////////////////////////////////////////////////
 	// Sphere
 
@@ -197,28 +230,22 @@ namespace Saturn {
 		SphereColliderComponent& scc = m_Entity->GetComponent<SphereColliderComponent>();
 		TransformComponent& transform = m_Entity->GetComponent<TransformComponent>();
 
-		const Ref<StaticMesh>& mesh = m_Entity->GetComponent<StaticMeshComponent>().Mesh;
+		Ref<StaticMesh> mesh = nullptr;
+		if( auto* pSM = m_Entity->TryGetComponent<StaticMeshComponent>(); pSM )
+			mesh = pSM->Mesh;
 
 		float radius = scc.Radius;
-		glm::vec scale = transform.Scale;
+		glm::vec3 scale = transform.Scale;
 
 		if( scale.x != 0.0f )
 			radius *= scale.x;
 
 		Ref<PhysicsMaterialAsset> materialAsset = GetMaterial( mesh );
-		physx::PxMaterial* mat = nullptr;
-
-		// No material was found, so this means two things, one the project has no default material or (two) the mesh/project has a material asset but it can't be found.
-		if( !materialAsset )
-		{
-			materialAsset = Ref<PhysicsMaterialAsset>::Create( 1.0f, 1.0f, 1.0f );
-		}
-
-		mat = &materialAsset->GetMaterial();
+		physx::PxMaterial* pPxMaterial = materialAsset->GetMaterial();
 
 		physx::PxSphereGeometry SphereGoemetry( radius );
 
-		physx::PxShape* pShape = physx::PxRigidActorExt::createExclusiveShape( rActor, SphereGoemetry, *mat );
+		physx::PxShape* pShape = physx::PxRigidActorExt::createExclusiveShape( rActor, SphereGoemetry, *pPxMaterial );
 
 		pShape->setFlag( physx::PxShapeFlag::eSIMULATION_SHAPE, !scc.IsTrigger );
 		pShape->setFlag( physx::PxShapeFlag::eTRIGGER_SHAPE, scc.IsTrigger );
@@ -245,11 +272,11 @@ namespace Saturn {
 				// Sphere tessellation resolution
 				// vertical slices
 				constexpr int latSegments = 6;
-				
-				// horizontal rings
-				constexpr int lonSegments = 12;  
 
-				uint32_t baseIndex = (size_t)rData.VertexBuffer.size() / 3;
+				// horizontal rings
+				constexpr int lonSegments = 12;
+
+				uint32_t baseIndex = ( size_t ) rData.VertexBuffer.size() / 3;
 				uint32_t vertexCounter = baseIndex;
 
 				std::vector<uint32_t> vertexIndices;
@@ -269,7 +296,7 @@ namespace Saturn {
 				else
 				{
 					// Mark as invalid.
-					vertexIndices.push_back( UINT32_MAX ); 
+					vertexIndices.push_back( UINT32_MAX );
 					++vertexCounter;
 				}
 
@@ -389,6 +416,12 @@ namespace Saturn {
 		}
 	}
 
+	void SphereShape::SetTrigger( bool isTrigger )
+	{
+		PhysicsShape::SetTrigger( isTrigger );
+		m_Entity->GetComponent<SphereColliderComponent>().IsTrigger = isTrigger;
+	}
+
 	//////////////////////////////////////////////////////////////////////////
 	// Capsule
 
@@ -407,7 +440,9 @@ namespace Saturn {
 		CapsuleColliderComponent& cap = m_Entity->GetComponent<CapsuleColliderComponent>();
 		TransformComponent& transform = m_Entity->GetComponent<TransformComponent>();
 
-		const Ref<StaticMesh>& mesh = m_Entity->GetComponent<StaticMeshComponent>().Mesh;
+		Ref<StaticMesh> mesh = nullptr;
+		if( auto* pSM = m_Entity->TryGetComponent<StaticMeshComponent>(); pSM )
+			mesh = pSM->Mesh;
 
 		float radius = cap.Radius;
 		float height = cap.HalfHeight;
@@ -421,21 +456,40 @@ namespace Saturn {
 			height *= scale.y;
 
 		Ref<PhysicsMaterialAsset> materialAsset = GetMaterial( mesh );
-		physx::PxMaterial* mat = nullptr;
-
-		// No material was found, so this means two things, one the project has no default material or (two) the mesh/project has a material asset but it can't be found.
-		if( !materialAsset )
-		{
-			materialAsset = Ref<PhysicsMaterialAsset>::Create( 1.0f, 1.0f, 1.0f );
-		}
-
-		mat = &materialAsset->GetMaterial();
+		physx::PxMaterial* pPxMaterial = materialAsset->GetMaterial();
 
 		physx::PxCapsuleGeometry CapsuleGemetry( radius, height );
 
-		physx::PxShape* pShape = physx::PxRigidActorExt::createExclusiveShape( rActor, CapsuleGemetry, *mat );
+		physx::PxShape* pShape = physx::PxRigidActorExt::createExclusiveShape( rActor, CapsuleGemetry, *pPxMaterial );
 		pShape->setFlag( physx::PxShapeFlag::eSIMULATION_SHAPE, !cap.IsTrigger );
 		pShape->setFlag( physx::PxShapeFlag::eTRIGGER_SHAPE, cap.IsTrigger );
+
+		pShape->setLocalPose( physx::PxTransform( physx::PxQuat( physx::PxHalfPi, physx::PxVec3( 0, 0, 1 ) ) ) );
+
+		m_Shape = pShape;
+		rActor.attachShape( *pShape );
+
+		SetFilterData();
+	}
+
+	void CapsuleShape::Create(
+		physx::PxRigidActor& rActor,
+		float radius, float height,
+		const glm::vec3& rScale )
+	{
+		Ref<StaticMesh> mesh = nullptr;
+		if( auto* pSM = m_Entity->TryGetComponent<StaticMeshComponent>(); pSM )
+			mesh = pSM->Mesh;
+
+		Ref<PhysicsMaterialAsset> materialAsset = GetMaterial( mesh );
+		physx::PxMaterial* pPxMaterial = materialAsset->GetMaterial();
+
+		const float halfHeight = height * 0.5f;
+		physx::PxCapsuleGeometry CapsuleGemetry( radius, halfHeight );
+
+		physx::PxShape* pShape = physx::PxRigidActorExt::createExclusiveShape( rActor, CapsuleGemetry, *pPxMaterial );
+		pShape->setFlag( physx::PxShapeFlag::eSIMULATION_SHAPE, true );
+		pShape->setFlag( physx::PxShapeFlag::eTRIGGER_SHAPE, false );
 
 		pShape->setLocalPose( physx::PxTransform( physx::PxQuat( physx::PxHalfPi, physx::PxVec3( 0, 0, 1 ) ) ) );
 
@@ -541,6 +595,12 @@ namespace Saturn {
 				}
 			}
 		}
+	}
+
+	void CapsuleShape::SetTrigger( bool isTrigger )
+	{
+		PhysicsShape::SetTrigger( isTrigger );
+		m_Entity->GetComponent<CapsuleColliderComponent>().IsTrigger = isTrigger;
 	}
 
 	//////////////////////////////////////////////////////////////////////////

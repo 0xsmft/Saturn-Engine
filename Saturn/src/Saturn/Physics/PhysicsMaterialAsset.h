@@ -58,18 +58,18 @@ namespace Saturn {
 		float GetRestitution()     const { return m_Restitution; }
 
 		void SetFlag( PhysicsMaterialFlags flag, bool value );
-		[[nodiscard]] bool IsFlagSet( PhysicsMaterialFlags flag ) const { return ( m_Flags & (uint32_t)flag ) != 0; }
+		[[nodiscard]] bool IsFlagSet( PhysicsMaterialFlags flag ) const { return ( m_Flags & ( uint32_t ) flag ) != 0; }
 		uint32_t GetFlags() const { return m_Flags; }
 
-		physx::PxMaterial& GetMaterial() { return *m_Material; }
-		const physx::PxMaterial& GetMaterial() const { return *m_Material; }
+		physx::PxMaterial* GetMaterial() { return m_Material; }
+		const physx::PxMaterial* GetMaterial() const { return m_Material; }
 
 	private:
 		float m_StaticFriction = 0.6f;
 		float m_DynamicFriction = 0.6f;
 		float m_Restitution = 0.0f;
 
-		uint32_t m_Flags = -1;
+		uint32_t m_Flags = 0;
 		physx::PxMaterial* m_Material = nullptr;
 
 	private:

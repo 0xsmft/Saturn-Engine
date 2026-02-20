@@ -264,7 +264,7 @@ namespace Saturn {
 			materialAsset = Ref<PhysicsMaterialAsset>::Create( 1.0f, 1.0f, 1.0f );
 		}
 
-		physx::PxMaterial* pMaterial = &materialAsset->GetMaterial();
+		physx::PxMaterial* pMaterial = materialAsset->GetMaterial();
 
 		// TEMP: We might want to change the filter data.
 		physx::PxFilterData data;
@@ -331,7 +331,7 @@ namespace Saturn {
 			materialAsset = Ref<PhysicsMaterialAsset>::Create( 1.0f, 1.0f, 1.0f );
 		}
 
-		physx::PxMaterial* pMaterial = &materialAsset->GetMaterial();
+		physx::PxMaterial* pMaterial = materialAsset->GetMaterial();
 
 		// TEMP: We might want to change the filter data.
 		physx::PxFilterData data;

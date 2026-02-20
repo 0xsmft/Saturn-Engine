@@ -45,6 +45,9 @@ namespace Saturn {
 
 		void CreateShape();
 
+		// Runtime only!
+		void SetShapeTrigger( bool trigger );
+
 		void SetKinematic( bool val );
 		void SetMass( float val );
 		void SetLinearDrag( float value );
@@ -53,10 +56,11 @@ namespace Saturn {
 		void ApplyForce( glm::vec3 ForceAmount, ForceMode Type );
 		void Rotate( const glm::vec3& rRotation );
 		void Rotate( const glm::quat& rRotation );
+		void SetPosition( const glm::vec3& rPosition );
 
 		void SyncTransfrom();
 
-		bool IsKiniematic() const { return m_Kinematic; }
+		bool IsKinematic() const { return m_Kinematic; }
 
 		glm::vec3 GetPosition();
 		glm::vec3 GetRotation();
@@ -87,13 +91,17 @@ namespace Saturn {
 		void Destroy();
 
 	private:
+		// The actor that we currently represent.
+		// This actor could be owned and created by us however it could also be created by PhysX if the entity has a CharacterMovementController.
 		physx::PxRigidActor* m_Actor = nullptr;
+
 		SharedPtr<Entity> m_Entity;
 
 		Ref<PhysicsShape> m_Shape;
 
+		bool m_ActorOwned = true;
 		bool m_Kinematic = false;
-		uint32_t m_LockFlags;
+		uint32_t m_LockFlags = 0u;
 
 		std::function<void( SharedPtr<Entity> rOther )> m_OnMeshHit;
 		std::function<void( SharedPtr<Entity> rOther )> m_OnMeshExit;
@@ -101,6 +109,7 @@ namespace Saturn {
 		friend class PhysicsShape;
 		friend class PhysicsFoundation;
 		friend class PhysicsContact;
+		friend class PhysicsControllerContact;
 	};
 
 }

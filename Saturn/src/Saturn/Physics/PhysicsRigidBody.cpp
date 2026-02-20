@@ -31,6 +31,7 @@
 
 #include "PhysicsFoundation.h"
 #include "PhysicsAuxiliary.h"
+#include "PhysicsCharacterMovement.h"
 
 #include "Saturn/AI/Navigation/RecastInputGeometry.h"
 
@@ -41,17 +42,18 @@ namespace Saturn {
 	{
 		const TransformComponent& tc = entity->GetComponent<TransformComponent>();
 		const RigidbodyComponent& rb = entity->GetComponent<RigidbodyComponent>();
-
-		physx::PxRigidDynamic* pBody = PhysicsFoundation::Get().GetPhysics().createRigidDynamic( Auxiliary::GLMTransformToPx( tc.GetTransform() ) );
-		
+	
+		// Create dynamic body.
+		physx::PxRigidDynamic* pBody = PhysicsFoundation::Get()->GetPhysics().createRigidDynamic( Auxiliary::GLMTransformToPx( tc.GetTransform() ) );
 		m_Actor = pBody;
-		m_Actor->setActorFlag( physx::PxActorFlag::eVISUALIZATION, true );
 
 		SetKinematic( rb.IsKinematic );
 		SetMass( rb.Mass );
-		SetLockFlags( (RigidbodyLockFlags)rb.LockFlags, true );
+		SetLockFlags( ( RigidbodyLockFlags ) rb.LockFlags, true );
 
-		physx::PxRigidBodyExt::updateMassAndInertia( *pBody, (physx::PxReal)rb.Mass );
+		physx::PxRigidBodyExt::updateMassAndInertia( *pBody, ( physx::PxReal ) rb.Mass );
+
+		m_Actor->setActorFlag( physx::PxActorFlag::eVISUALIZATION, true );
 	}
 
 	PhysicsRigidBody::~PhysicsRigidBody()
@@ -63,6 +65,13 @@ namespace Saturn {
 	{
 		RigidbodyComponent& rb = m_Entity->GetComponent<RigidbodyComponent>();
 		
+		// No shape is created when we have a CharacterMovementComponent, a DynamicRigidBody is created by PhysX.
+		if( m_Entity->HasComponent<CharacterMovementComponent>() )
+		{
+			auto* pController = m_Entity->GetComponent<CharacterMovementComponent>().CharacterMovement;
+			m_Actor = pController->GetController()->getActor();
+			m_ActorOwned = false;
+		}
 		// Normal Collider Component's have more priority over the static mesh.
 		if( m_Entity->HasComponent<BoxColliderComponent>() )
 		{
@@ -78,12 +87,7 @@ namespace Saturn {
 		}
 		else if( m_Entity->HasComponent<StaticMeshComponent>() )
 		{
-			// No point in creating a mesh collider when the CharacterMovementComponent will create
-			// a capsule for us...
-			if( !m_Entity->HasComponent<CharacterMovementComponent>() )
-			{
-				AttachPhysicsShape( m_Entity->GetComponent<StaticMeshComponent>().Mesh->GetAttachedShape() );
-			}
+			AttachPhysicsShape( m_Entity->GetComponent<StaticMeshComponent>().Mesh->GetAttachedShape() );
 		}
 		else
 		{
@@ -91,10 +95,19 @@ namespace Saturn {
 		}
 
 		m_Actor->userData = this;
+#if !defined( SAT_DIST )
+		m_Actor->setName( m_Entity->GetName().c_str() );
+#endif
 
-		// The settings might of changed.
+		// The settings might of changed, so update in case.
 		SetKinematic( rb.IsKinematic );
 		SetMass( rb.Mass );
+	}
+
+	void PhysicsRigidBody::SetShapeTrigger( bool trigger )
+	{
+		if( m_Shape )
+			m_Shape->SetTrigger( trigger );
 	}
 
 	void PhysicsRigidBody::AttachPhysicsShape( PhysicsShapeType type )
@@ -143,8 +156,11 @@ namespace Saturn {
 				break;
 		}
 
-		if( m_Shape )
+		if( m_Shape ) 
+		{
 			m_Shape->Create( *m_Actor );
+			m_Shape->SetUserData( this );
+		}
 	}
 
 	void PhysicsRigidBody::Destroy()
@@ -156,7 +172,14 @@ namespace Saturn {
 
 		m_Shape = nullptr;
 
-		PHYSX_TERMINATE_ITEM( m_Actor );
+		if( m_ActorOwned )
+		{
+			PHYSX_TERMINATE_ITEM( m_Actor );
+		}
+		else
+		{
+			m_Actor = nullptr;
+		}
 
 		m_Entity = nullptr;
 	}
@@ -226,6 +249,13 @@ namespace Saturn {
 		m_Actor->setGlobalPose( trans );
 	}
 
+	void PhysicsRigidBody::SetPosition( const glm::vec3& rPosition )
+	{
+		physx::PxTransform trans = m_Actor->getGlobalPose();
+		trans.p = Auxiliary::GLMToPx( rPosition );
+		m_Actor->setGlobalPose( trans );
+	}
+
 	glm::vec3 PhysicsRigidBody::GetPosition()
 	{
 		float xpos = m_Actor->getGlobalPose().p.x;
@@ -246,7 +276,6 @@ namespace Saturn {
 		auto xq = m_Actor->getGlobalPose().q.x;
 		auto yq = m_Actor->getGlobalPose().q.y;
 		auto zq = m_Actor->getGlobalPose().q.z;
-		auto wq = m_Actor->getGlobalPose().q.w;
 
 		glm::vec3 q = {};
 		q.x = xq;

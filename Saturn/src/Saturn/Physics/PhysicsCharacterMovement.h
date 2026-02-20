@@ -34,6 +34,7 @@
 namespace Saturn {
 
 	class PhysicsScene;
+	class Entity;
 
 	enum PhysicsControllerCollisionFlag
 	{
@@ -49,7 +50,7 @@ namespace Saturn {
 		PhysicsCharacterMovement( AssetID materialAsset, float height, float radius );
 		~PhysicsCharacterMovement();
 
-		void CreateController( PhysicsScene* pScene, const glm::vec3& rOriginPosition );
+		void CreateController( PhysicsScene* pScene, SharedPtr<Entity> entity, const glm::vec3& rOriginPosition );
 
 		void OnUpdate( Timestep ts );
 

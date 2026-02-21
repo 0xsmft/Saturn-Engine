@@ -72,40 +72,52 @@ namespace Saturn {
 		}
 	}
 
-	Ref<PhysicsMaterialAsset> PhysicsShape::GetMaterial( Ref<StaticMesh> mesh )
+	Ref<PhysicsMaterialAsset> PhysicsShape::GetMaterial( Ref<StaticMesh> mesh, UUID physMaterialAssetID )
 	{
 		Ref<PhysicsMaterialAsset> materialAsset;
 
 		Ref<Project> activeProject = Project::GetActiveProject();
 		const UUID fallbackID = activeProject->GetDefaultPhysicsMaterialAsset();
 
-		// Check if no mesh?
-		if( !mesh )
+		// The PhysMat ID from the rigidbody takes priority over the mesh and the project fallback.
+		if( physMaterialAssetID )
 		{
-			// No mesh? Use prj default
-			if( fallbackID != 0 )
+			materialAsset = AssetManager::Get()->GetAssetAs<PhysicsMaterialAsset>( physMaterialAssetID );
+		}
+
+		// Still null then we go to the mesh and see what its material is.
+		if( !materialAsset )
+		{
+			// Check if no mesh?
+			if( !mesh )
+			{
+				// No mesh? Use prj default
+				if( fallbackID != 0 )
+				{
+					materialAsset = AssetManager::Get()->GetAssetAs<PhysicsMaterialAsset>( fallbackID );
+				}
+			}
+			// Hooray, we have a mesh
+			// However, we must make sure that it's ID is not zero
+			else if( mesh->GetPhysicsMaterial() == 0 || mesh->GetPhysicsMaterial() == fallbackID )
 			{
 				materialAsset = AssetManager::Get()->GetAssetAs<PhysicsMaterialAsset>( fallbackID );
 			}
-		}
-		// Hooray, we have a mesh
-		// However, we must make sure that it's ID is not zero
-		else if( mesh->GetPhysicsMaterial() == 0 || mesh->GetPhysicsMaterial() == fallbackID )
-		{
-			materialAsset = AssetManager::Get()->GetAssetAs<PhysicsMaterialAsset>( fallbackID );
-		}
-		// We have a mesh and it has a unique ID
-		else
-		{
-			materialAsset = AssetManager::Get()->GetAssetAs<PhysicsMaterialAsset>( mesh->GetPhysicsMaterial() );
+			// We have a mesh and it has a unique ID
+			else
+			{
+				materialAsset = AssetManager::Get()->GetAssetAs<PhysicsMaterialAsset>( mesh->GetPhysicsMaterial() );
+			}
+
+			// If we get here, then we had no mesh and no fallback ID OR the specified ID could not be found.
+			// So create memory only asset
+			if( !materialAsset )
+			{
+				materialAsset = Ref<PhysicsMaterialAsset>::Create( 1.0f, 1.0f, 0.5f );
+			}
 		}
 
-		// If we get here, then we had no mesh and no fallback ID OR the specified ID could not be found.
-		// So create memory only asset
-		if( !materialAsset )
-		{
-			materialAsset = Ref<PhysicsMaterialAsset>::Create( 1.0f, 1.0f, 0.5f );
-		}
+		SAT_CORE_ASSERT( materialAsset, "Material cannot be null at this stage!, All possible ways have failed, Rigibody PhysMat could not be loaded and/ mesh PhysMat could not be loaded and/or project fallback could not be loaded and somehow the memeory only asset has failed as well." );
 
 		return materialAsset;
 	}
@@ -127,6 +139,7 @@ namespace Saturn {
 	{
 		BoxColliderComponent& bcc = m_Entity->GetComponent<BoxColliderComponent>();
 		TransformComponent& transform = m_Entity->GetComponent<TransformComponent>();
+		auto& rPhysMaterialAssetID = m_Entity->GetComponent<RigidbodyComponent>().MaterialAssetID;
 
 		Ref<StaticMesh> mesh = nullptr;
 		if( auto* pSM = m_Entity->TryGetComponent<StaticMeshComponent>(); pSM )
@@ -142,7 +155,7 @@ namespace Saturn {
 #endif
 			halfSize = transform.Scale * 0.5f;
 
-		Ref<PhysicsMaterialAsset> materialAsset = GetMaterial( mesh );
+		Ref<PhysicsMaterialAsset> materialAsset = GetMaterial( mesh, rPhysMaterialAssetID );
 		physx::PxMaterial* pPxMaterial = materialAsset->GetMaterial();
 
 		physx::PxBoxGeometry BoxGeometry = physx::PxBoxGeometry( halfSize.x, halfSize.y, halfSize.z );
@@ -229,6 +242,7 @@ namespace Saturn {
 	{
 		SphereColliderComponent& scc = m_Entity->GetComponent<SphereColliderComponent>();
 		TransformComponent& transform = m_Entity->GetComponent<TransformComponent>();
+		auto& rPhysMaterialAssetID = m_Entity->GetComponent<RigidbodyComponent>().MaterialAssetID;
 
 		Ref<StaticMesh> mesh = nullptr;
 		if( auto* pSM = m_Entity->TryGetComponent<StaticMeshComponent>(); pSM )
@@ -240,7 +254,7 @@ namespace Saturn {
 		if( scale.x != 0.0f )
 			radius *= scale.x;
 
-		Ref<PhysicsMaterialAsset> materialAsset = GetMaterial( mesh );
+		Ref<PhysicsMaterialAsset> materialAsset = GetMaterial( mesh, rPhysMaterialAssetID );
 		physx::PxMaterial* pPxMaterial = materialAsset->GetMaterial();
 
 		physx::PxSphereGeometry SphereGoemetry( radius );
@@ -439,6 +453,7 @@ namespace Saturn {
 	{
 		CapsuleColliderComponent& cap = m_Entity->GetComponent<CapsuleColliderComponent>();
 		TransformComponent& transform = m_Entity->GetComponent<TransformComponent>();
+		auto& rPhysMaterialAssetID = m_Entity->GetComponent<RigidbodyComponent>().MaterialAssetID;
 
 		Ref<StaticMesh> mesh = nullptr;
 		if( auto* pSM = m_Entity->TryGetComponent<StaticMeshComponent>(); pSM )
@@ -455,7 +470,7 @@ namespace Saturn {
 		if( scale.y != 0.0f && height == 0.0f )
 			height *= scale.y;
 
-		Ref<PhysicsMaterialAsset> materialAsset = GetMaterial( mesh );
+		Ref<PhysicsMaterialAsset> materialAsset = GetMaterial( mesh, rPhysMaterialAssetID );
 		physx::PxMaterial* pPxMaterial = materialAsset->GetMaterial();
 
 		physx::PxCapsuleGeometry CapsuleGemetry( radius, height );
@@ -463,33 +478,6 @@ namespace Saturn {
 		physx::PxShape* pShape = physx::PxRigidActorExt::createExclusiveShape( rActor, CapsuleGemetry, *pPxMaterial );
 		pShape->setFlag( physx::PxShapeFlag::eSIMULATION_SHAPE, !cap.IsTrigger );
 		pShape->setFlag( physx::PxShapeFlag::eTRIGGER_SHAPE, cap.IsTrigger );
-
-		pShape->setLocalPose( physx::PxTransform( physx::PxQuat( physx::PxHalfPi, physx::PxVec3( 0, 0, 1 ) ) ) );
-
-		m_Shape = pShape;
-		rActor.attachShape( *pShape );
-
-		SetFilterData();
-	}
-
-	void CapsuleShape::Create(
-		physx::PxRigidActor& rActor,
-		float radius, float height,
-		const glm::vec3& rScale )
-	{
-		Ref<StaticMesh> mesh = nullptr;
-		if( auto* pSM = m_Entity->TryGetComponent<StaticMeshComponent>(); pSM )
-			mesh = pSM->Mesh;
-
-		Ref<PhysicsMaterialAsset> materialAsset = GetMaterial( mesh );
-		physx::PxMaterial* pPxMaterial = materialAsset->GetMaterial();
-
-		const float halfHeight = height * 0.5f;
-		physx::PxCapsuleGeometry CapsuleGemetry( radius, halfHeight );
-
-		physx::PxShape* pShape = physx::PxRigidActorExt::createExclusiveShape( rActor, CapsuleGemetry, *pPxMaterial );
-		pShape->setFlag( physx::PxShapeFlag::eSIMULATION_SHAPE, true );
-		pShape->setFlag( physx::PxShapeFlag::eTRIGGER_SHAPE, false );
 
 		pShape->setLocalPose( physx::PxTransform( physx::PxQuat( physx::PxHalfPi, physx::PxVec3( 0, 0, 1 ) ) ) );
 

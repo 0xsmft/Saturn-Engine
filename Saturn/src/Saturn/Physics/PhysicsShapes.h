@@ -59,7 +59,7 @@ namespace Saturn {
 		virtual void SetTrigger( bool isTrigger );
 
 	protected:
-		Ref<PhysicsMaterialAsset> GetMaterial( Ref<StaticMesh> mesh );
+		Ref<PhysicsMaterialAsset> GetMaterial( Ref<StaticMesh> mesh, UUID physMaterialAssetID );
 
 	protected:
 		PhysicsShapeType m_Type = PhysicsShapeType::Unknown;
@@ -108,10 +108,6 @@ namespace Saturn {
 		~CapsuleShape();
 
 		void Create( physx::PxRigidActor& rActor ) override;
-
-		// Internal use only!
-		void Create( physx::PxRigidActor& rActor, float radius, float height, const glm::vec3& rScale );
-
 		void ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
 
 		// Runtime only!

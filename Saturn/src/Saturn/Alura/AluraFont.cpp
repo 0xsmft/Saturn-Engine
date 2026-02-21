@@ -440,9 +440,10 @@ namespace Saturn {
 
 		const float scale = fontSize / 1.0F;
 
-		glm::vec2 textSize{};
-		float minY = FLT_MAX, maxY = -FLT_MAX, x = 0.0F;
+		float minX = FLT_MAX, maxX = -FLT_MAX;
+		float minY = FLT_MAX, maxY = -FLT_MAX;
 
+		float cursorX = 0.0f;
 		for( char character : rText )
 		{
 			const auto glyph = m_AluraFontData.GetGlyph( character );
@@ -451,15 +452,18 @@ namespace Saturn {
 			float pl, pb, pr, pt;
 			glyph->GetQuadPlaneBounds( pl, pb, pr, pt );
 
+			// Horizontal bounds.
+			minX = glm::min( minX, cursorX + pl );
+			maxX = glm::max( maxX, cursorX + pr );
+
+			// Vertical bounds.
 			minY = glm::min( minY, pb );
 			maxY = glm::max( maxY, pt );
 
-			x += glyph->GetAdvance();
+			cursorX += glyph->GetAdvance();
 		}
 
-		textSize.x = ( x * scale );
-		textSize.y = ( ( maxY - minY ) * scale );
-		return textSize;
+		return { ( maxX - minX ) * scale, ( maxY - minY ) * scale };
 	}
 
 }

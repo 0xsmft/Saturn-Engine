@@ -254,9 +254,9 @@ namespace Saturn {
 			m_WantToSetItemPosition = false;
 		}
 
-		const auto textSize = m_ActiveFont->CalcTextSize( m_Style.CurrentFontSize, rText );
+		//////////////////////////////////////////////////////////////////////////
 
-		const glm::vec2 frameThickness = glm::vec2{ 10.0f };
+		const auto textSize = m_ActiveFont->CalcTextSize( m_Style.CurrentFontSize, rText );
 		
 		// Hit tests
 		glm::vec4 buttonColor = m_Style.Colors[ AluraColor_Button ];
@@ -270,7 +270,7 @@ namespace Saturn {
 		m_Renderer->SubmitRect( posDependingLastCall, { posDependingLastCall + textSize }, buttonColor );
 
 		// Submit Text centred inside the button.
-		const glm::vec2 position = posDependingLastCall * 0.5f;
+		const glm::vec2 position = posDependingLastCall;
 		m_Renderer->SubmitString( rText, m_ActiveFont, m_Style.CurrentFontSize, position, m_Style.Colors[ AluraColor_Text ] );
 
 		// Move on

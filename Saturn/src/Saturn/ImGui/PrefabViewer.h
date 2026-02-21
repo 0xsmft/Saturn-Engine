@@ -36,6 +36,7 @@
 #include "SceneHierarchyPanel.h"
 
 #include <imgui.h>
+#include <imgui_internal.h>
 
 namespace Saturn {
 
@@ -57,18 +58,34 @@ namespace Saturn {
 	private:
 		void SetupDockspace();
 		void ResetDockspace();
+		void OnKeyPressed( RubyKeyEvent& rEvent );
+		bool OnMousePressed( RubyMouseEvent& rEvent );
+	
+		glm::vec2 ConvertMouseToViewportNDC();
+		std::pair<glm::vec3, glm::vec3> RayCast( float mx, float my );
 
 	private:
 		Ref<Prefab> m_Prefab;
 		Ref<SceneRenderer> m_SceneRenderer;
 		EditorCamera m_Camera;
 
+		// Translate as default
+		int m_GizmoOperation = 7 /* ImGuizmo::OPERATION::TRANSLATE */;
+
 		bool m_AllowCameraEvents = false;
 		bool m_StartedRightClickInViewport = false;
 		bool m_ViewportFocused = false;
 		bool m_MouseOverViewport = false;
 
+		// NOTE: This is different from m_DisableViewportMovement
+		// We have a separate bool because our main window is not usually docked, 
+		// so when we use our gizmo, we want to disable movement from our main window.
+		// We need m_DisableViewportMovement because in a rare case our main window may be docked or the viewport window may be undocked from the main window, we'd want to do the same with our viewport window.
+		bool m_DisableWindowMovement = false;
+		bool m_DisableViewportMovement = false;
+
 		ImVec2 m_ViewportSize{};
+		ImRect m_ViewportBounds;
 
 		Ref<SceneHierarchyPanel> m_SceneHierarchyPanel;
 	};

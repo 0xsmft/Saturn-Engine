@@ -91,12 +91,28 @@ namespace Saturn {
 		Save();
 	}
 
-	void AssetManager::UpdateAssetDependency( AssetID assetID, AssetID oldDepID, AssetID newDepID )
+	void AssetManager::UpdateAssetDependency( AssetID assetDeleted, AssetID depID, AssetID replacementID )
 	{
-		if( IsAssetLoaded( assetID ) )
+		Ref<Asset> asset = m_Assets->FindAsset( depID );
+		bool assetWasLoadedBefore = IsAssetLoaded( depID );
+
+		if( !assetWasLoadedBefore )
 		{
-			m_Assets->m_LoadedAssets[ assetID ]->OnAssetDependencyReplace( oldDepID, newDepID );
+			bool loaded = m_Importer.TryLoadData( asset );
+			if( !loaded )
+				return;
+
+			m_Assets->m_LoadedAssets[ depID ] = asset;
+		}
+
+		{
+			m_Assets->m_LoadedAssets[ depID ]->OnAssetDependencyReplace( assetDeleted, replacementID );
 			Save();
+		}
+
+		if( !assetWasLoadedBefore )
+		{
+			m_Assets->m_LoadedAssets.erase( depID );
 		}
 	}
 
@@ -264,6 +280,9 @@ namespace Saturn {
 
 	void AssetManager::RegisterAssetDependency( AssetID assetID, AssetID dependencyID )
 	{
+		// dependencyID == assetID not valid an asset cannot depend on itself.
+		SAT_CORE_ASSERT( dependencyID != assetID );
+
 		if( assetID != 0 && dependencyID != 0 )
 			m_AssetDependencies[ assetID ].insert( dependencyID );
 	}

@@ -47,6 +47,9 @@ namespace Saturn {
 		MaterialAsset( Ref<Material> material );
 		virtual ~MaterialAsset();
 
+		virtual void OnAssetDependencyReplace( AssetID oldID, AssetID newID ) override;
+
+	public:
 		// Texture
 		Ref<Texture2D> GetAlbeoMap();
 		Ref<Texture2D> GetNormalMap();

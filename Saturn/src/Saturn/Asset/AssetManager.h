@@ -89,7 +89,7 @@ namespace Saturn {
 		// WARNING: THIS WILL PERMANENTLY REMOVE THE ASSET FROM THE REGISTRY REGARDLESS OF ASSET DEPENDENCIES!
 		void RemoveAsset( AssetID id );
 
-		void UpdateAssetDependency( AssetID assetID, AssetID oldDepID, AssetID newDepID );
+		void UpdateAssetDependency( AssetID assetDeleted, AssetID depID, AssetID replacementID );
 
 		void UnloadAsset( AssetID id )
 		{

@@ -80,6 +80,10 @@ namespace Saturn {
 		m_PendingMaterialChange = nullptr;
 	}
 
+	void MaterialAsset::OnAssetDependencyReplace( AssetID oldID, AssetID newID )
+	{
+	}
+
 	void MaterialAsset::Default()
 	{
 		if( m_Material == nullptr )

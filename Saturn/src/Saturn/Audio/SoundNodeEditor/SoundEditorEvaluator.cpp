@@ -176,9 +176,18 @@ namespace Saturn {
 #endif
 	}
 
-	void SoundEditorEvaluator::AddNewSound( UUID id )
+	void SoundEditorEvaluator::AddNewSound( UUID id, bool spatialisation )
 	{
-		Ref<Sound> snd = AudioSystem::Get().RequestNewSound( id, UUID(), false, nullptr );
+		Ref<Sound> snd;
+		if( spatialisation )
+		{
+			snd = AudioSystem::Get().PlaySoundAtLocation( id, UUID(), { 0.0f, 0.0f, 0.0f }, false, nullptr );
+		}
+		else
+		{
+			snd = AudioSystem::Get().RequestNewSound( id, UUID(), false, nullptr );
+		}
+
 		snd->AddOnCompleteFunction( SAT_BIND_EVENT_FN( SoundEditorEvaluator::OnSoundCompleted ) );
 		snd->WaitUntilLoaded();
 

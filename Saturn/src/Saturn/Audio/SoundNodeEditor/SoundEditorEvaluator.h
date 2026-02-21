@@ -65,7 +65,7 @@ namespace Saturn {
 
 		[[nodiscard]] virtual NodeEditorCompilationStatus EvaluateEditor() override;
 
-		void AddNewSound( UUID id );
+		void AddNewSound( UUID id, bool spatialisation = false );
 		void RegisterSound( size_t id );
 		void UnregisterSound( size_t id );
 

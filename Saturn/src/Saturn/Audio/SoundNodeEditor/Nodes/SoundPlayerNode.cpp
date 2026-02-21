@@ -65,6 +65,8 @@ namespace Saturn {
 
 		Outputs.push_back( Ref<AssetIDPin>::Create( "Sound Player", PinKind::Output, AssetType::Sound ) );
 		Outputs[ 0 ]->Type = PinType::Sound;
+
+		Inputs.push_back( Ref<BoolPin>::Create( "Spatialisation", PinKind::Input ) );
 	}
 
 	SoundPlayerNode::~SoundPlayerNode()
@@ -103,7 +105,7 @@ namespace Saturn {
 				pSoundEditorEvaluator->EvaluatedPath[ link->ID ] = NodeEvaluationState::Evaluated;
 #endif
 
-				inputPin.As<SoundPin>()->Data = (int)pSoundEditorEvaluator->AliveSounds.size() - 1;
+				inputPin.As<SoundPin>()->Data = ( int ) pSoundEditorEvaluator->AliveSounds.size() - 1;
 			}
 		}
 

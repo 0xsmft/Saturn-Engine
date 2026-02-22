@@ -136,7 +136,12 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 			m_MaterialRegistry = Ref<MaterialRegistry>::Create();
 	}
 
-	void Mesh::DeleteSourceModel()
+	void Mesh::SetPhysicsMaterial( AssetID id )
+	{
+		m_PhysicsMaterial = id;
+	}
+
+	void Mesh::DeleteSourceModel() const
 	{
 		if( std::filesystem::exists( m_FilePath ) )
 			std::filesystem::remove( m_FilePath );
@@ -223,6 +228,45 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 	void StaticMesh::OnDelete()
 	{
 		DeleteSourceModel();
+	}
+
+	void StaticMesh::OnAssetDependencyReplace( AssetID oldID, AssetID newID )
+	{
+		// Possible Assets that can be changed:
+		// Material Assets
+		// Physics Material Assets.
+
+		Ref<Asset> oldAsset = AssetManager::Get()->FindAsset( oldID );
+		switch( oldAsset->Type )
+		{
+			case AssetType::Material:
+			{
+				uint32_t index = 0u;
+				for( auto& rMaterialAsset : m_MaterialRegistry->GetMaterialAssets() )
+				{
+					if( rMaterialAsset->ID == oldID )
+					{
+						m_MaterialRegistry->SetMaterialNoOvr( index, newID );
+					}
+
+					++index;
+				}
+			} break;
+
+			case AssetType::PhysicsMaterial:
+			{
+				m_PhysicsMaterial = newID;
+
+				// Register new dependency.
+				if( m_PhysicsMaterial )
+					AssetManager::Get()->RegisterAssetDependency( ID, newID );
+			} break;
+
+			default:
+				break;
+		}
+
+		AssetManager::Get()->Save();
 	}
 
 #if !defined(SAT_DIST)
@@ -702,6 +746,51 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 		DeleteSourceModel();
 	}
 
+	void SkeletalMesh::OnAssetDependencyReplace( AssetID oldID, AssetID newID )
+	{
+		// Possible Assets that can be changed:
+		// Material Assets
+		// Skeleton Assets
+		// Physics Material Assets
+
+		Ref<Asset> oldAsset = AssetManager::Get()->FindAsset( oldID );
+		switch( oldAsset->Type )
+		{
+			case AssetType::Material:
+			{
+				uint32_t index = 0u;
+				for( auto& rMaterialAsset : m_MaterialRegistry->GetMaterialAssets() )
+				{
+					if( rMaterialAsset->ID == oldID )
+					{
+						m_MaterialRegistry->SetMaterialNoOvr( index, newID );
+					}
+
+					++index;
+				}
+			} break;
+
+			case AssetType::PhysicsMaterial:
+			{
+				m_PhysicsMaterial = newID;
+
+				// Register new dependency.
+				if( m_PhysicsMaterial )
+					AssetManager::Get()->RegisterAssetDependency( ID, newID );
+			} break;
+
+			case AssetType::Skeleton:
+			{
+				SAT_CORE_ASSERT( false, "SkeletalMesh::OnAssetDependencyReplace - AssetType::Skeleton - not implmented yet." );
+			} break;
+
+			default:
+				break;
+		}
+
+		AssetManager::Get()->Save();
+	}
+
 	void SkeletalMesh::SerialiseData( std::ofstream& rStream ) const
 	{
 		RawSerialisation::WriteObject( m_VertexCount, rStream );
@@ -972,16 +1061,13 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 					if( !std::filesystem::exists( LocalPath ) && std::filesystem::exists( AlbedoTexturePath ) )
 						fileCopied = std::filesystem::copy_file( AlbedoTexturePath, LocalPath );
 
-					if( materialAsset )
+					if( materialAsset && fileCopied )
 					{
-						if( fileCopied )
-						{
-							auto texture = Ref<Texture2D>::Create( LocalPath, AddressingMode::Repeat, false );
-							materialAsset->SetAlbeoMap( texture );
-							Ref<Asset> asset = AssetManager::Get()->FindAsset( AssetManager::Get()->CreateAsset( AssetType::Texture ) );
-							asset->SetAbsolutePath( LocalPath );
-							needToSaveAssetReg = true;
-						}
+						auto texture = Ref<Texture2D>::Create( LocalPath, AddressingMode::Repeat, false );
+						materialAsset->SetAlbeoMap( texture );
+						Ref<Asset> asset = AssetManager::Get()->FindAsset( AssetManager::Get()->CreateAsset( AssetType::Texture ) );
+						asset->SetAbsolutePath( LocalPath );
+						needToSaveAssetReg = true;
 					}
 				}
 			}

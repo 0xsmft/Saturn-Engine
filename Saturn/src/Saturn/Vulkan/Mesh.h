@@ -259,10 +259,8 @@ namespace std {
 
 namespace Saturn {
 
-	// This class acts as a base class to StaticMesh and SkeletalMesh, 
-	// The usage of this class is limited because it does not store
-	// vertices as static meshes have a different vertex layout to it's Skeletal counterpart.
-	// This means that generally you want to avoid using this and instead use StaticMesh/SkeletalMesh, only use this class if you know that may deal with both meshes.
+	// This class acts as a base class to StaticMesh and SkeletalMesh
+	// Storing vertices, indices, submeshs and the MaterialRegistry
 	class Mesh
 	{
 	public:
@@ -298,7 +296,7 @@ namespace Saturn {
 		void SetAttachedShape( PhysicsShapeType type ) { m_AttachedPhysicsShape = type; }
 		const PhysicsShapeType GetAttachedShape() const { return m_AttachedPhysicsShape; }
 
-		void SetPhysicsMaterial( AssetID id ) { m_PhysicsMaterial = id; }
+		void SetPhysicsMaterial( AssetID id );
 		const AssetID GetPhysicsMaterial() const { return m_PhysicsMaterial; }
 
 		Ref<MaterialRegistry>& GetMaterialRegistry() { return m_MaterialRegistry; }
@@ -314,7 +312,7 @@ namespace Saturn {
 		size_t GetFaceCount() const { return m_Indices.size(); }
 
 	protected:
-		void DeleteSourceModel();
+		void DeleteSourceModel() const;
 
 	protected:
 		Ref<VertexBuffer> m_VertexBuffer;
@@ -334,7 +332,10 @@ namespace Saturn {
 		uint32_t m_VertexCount = 0;
 
 		PhysicsShapeType m_AttachedPhysicsShape = PhysicsShapeType::Unknown;
-		MemoryAssetDependency<AssetType::PhysicsMaterial> m_PhysicsMaterial;
+
+		// This is not a MemoryAssetDependency because we are able to be pure asset dependency
+		// due to us being an asset and depending on another asset.
+		UUID m_PhysicsMaterial = 0;
 
 		// Materials
 		Ref<MaterialRegistry> m_MaterialRegistry;
@@ -359,6 +360,7 @@ namespace Saturn {
 	public:
 		// Asset
 		virtual void OnDelete() override;
+		virtual void OnAssetDependencyReplace( AssetID oldID, AssetID newID ) override;
 
 	public:
 		std::vector<StaticVertex>& Vertices() { return m_Vertices; }
@@ -404,6 +406,7 @@ namespace Saturn {
 	public:
 		// Asset
 		virtual void OnDelete() override;
+		virtual void OnAssetDependencyReplace( AssetID oldID, AssetID newID ) override;
 
 	public:
 		void SerialiseData( std::ofstream& rStream ) const;

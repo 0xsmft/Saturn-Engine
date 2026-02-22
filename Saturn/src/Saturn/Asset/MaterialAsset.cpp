@@ -528,6 +528,14 @@ namespace Saturn {
 		m_Materials[ index ] = material;
 	}
 
+	void MaterialRegistry::SetMaterialNoOvr( uint32_t index, AssetID id )
+	{
+//		AddTargetMaterialAsset( index, id );
+
+		m_HasOverridden[ index ] = false;
+		m_Materials[ index ] = AssetManager::Get()->GetAssetAs<MaterialAsset>( id );
+	}
+
 	void MaterialRegistry::AddTargetMaterialAsset( uint32_t index, AssetID materialID )
 	{
 #if !defined(SAT_DIST)

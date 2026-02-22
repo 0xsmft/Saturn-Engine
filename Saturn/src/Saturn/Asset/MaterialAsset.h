@@ -171,6 +171,8 @@ namespace Saturn {
 		Ref<MaterialAsset> GetAsset( AssetID id );
 
 		void SetMaterial( uint32_t index, AssetID id );
+		void SetMaterialNoOvr( uint32_t index, AssetID id );
+
 		void ResetMaterial( uint32_t index, Ref<MaterialRegistry> srcRegistry );
 	
 		std::vector< Ref<MaterialAsset> >& GetMaterialAssets() { return m_Materials; }

@@ -35,7 +35,7 @@
 
 namespace Saturn {
 
-	class PhysicsContact : public physx::PxSimulationEventCallback, public RefTarget
+	class PhysicsContact : public physx::PxSimulationEventCallback
 	{
 	public:
 		void onConstraintBreak( physx::PxConstraintInfo* pConstraints, physx::PxU32 Count ) override;
@@ -44,6 +44,14 @@ namespace Saturn {
 		void onContact( const physx::PxContactPairHeader& rPairHeader, const physx::PxContactPair* pPairs, physx::PxU32 Pairs ) override;
 		void onTrigger( physx::PxTriggerPair* pPairs, physx::PxU32 Count ) override;
 		void onAdvance( const physx::PxRigidBody* const* pBodyBuffer, const physx::PxTransform* PoseBuffer, const physx::PxU32 Count ) override;
+	};
+
+	class PhysicsControllerContact : public physx::PxUserControllerHitReport 
+	{
+	public:
+		virtual void onShapeHit( const physx::PxControllerShapeHit& hit ) override;
+		virtual void onControllerHit( const physx::PxControllersHit& hit ) override;
+		virtual void onObstacleHit( const physx::PxControllerObstacleHit& hit ) override;
 	};
 
 	class PhysicsFoundation
@@ -72,6 +80,9 @@ namespace Saturn {
 		[[nodiscard]] PhysicsCooking& GetCookingContext() { return m_CookingContext; }
 		[[nodiscard]] const PhysicsCooking& GetCookingContext() const { return m_CookingContext; }
 
+		[[nodiscard]] PhysicsControllerContact* GetControllerContactCallback() { return &m_ControllerContactCallback; }
+		[[nodiscard]] const PhysicsControllerContact* GetControllerContactCallback() const { return &m_ControllerContactCallback; }
+
 	private:
 		physx::PxFoundation*		   m_Foundation = nullptr;
 		physx::PxPhysics*			   m_Physics = nullptr;
@@ -83,6 +94,7 @@ namespace Saturn {
 		PhysicsErrorCallback m_ErrorCallback;
 		PhysicsAssertCallback m_AssertCallback;
 		PhysicsContact m_ContactCallback;
+		PhysicsControllerContact m_ControllerContactCallback;
 		PhysicsCooking m_CookingContext;
 	private:
 		friend class PhysicsScene;

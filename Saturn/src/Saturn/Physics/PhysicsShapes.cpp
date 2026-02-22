@@ -151,7 +151,7 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		if( bcc.AutoAdjustExtent && halfSize != transform.Scale )
 #else
-		if( size != transform.Scale )
+		if( halfSize != ( transform.Scale * 0.5f ) )
 #endif
 			halfSize = transform.Scale * 0.5f;
 

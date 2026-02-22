@@ -48,6 +48,41 @@ namespace Saturn {
 
 	void PhysicsContact::onTrigger( physx::PxTriggerPair* pPairs, physx::PxU32 Count )
 	{
+		if( Count < 1 )
+			return;
+
+		PhysicsRigidBody* A = ( PhysicsRigidBody* ) pPairs->triggerActor->userData;
+		PhysicsRigidBody* B = ( PhysicsRigidBody* ) pPairs->otherActor->userData;
+
+		if( !A || !B )
+			return;
+
+		auto callCollisonBeginMethod = []( PhysicsRigidBody* A, PhysicsRigidBody* B )
+		{
+			if( A->m_OnMeshHit )
+				A->OnCollisionHit( B->GetEntity() );
+
+			if( B->m_OnMeshHit )
+				B->OnCollisionHit( A->GetEntity() );
+		};
+
+		auto callCollisonExitMethod = []( PhysicsRigidBody* A, PhysicsRigidBody* B )
+		{
+			if( A->m_OnMeshExit )
+				A->OnCollisionExit( B->GetEntity() );
+
+			if( B->m_OnMeshExit )
+				B->OnCollisionExit( A->GetEntity() );
+		};
+
+		if( pPairs->status == physx::PxContactPairFlag::eACTOR_PAIR_HAS_FIRST_TOUCH )
+		{
+			callCollisonBeginMethod( A, B );
+		}
+		else if( pPairs->status == physx::PxContactPairFlag::eACTOR_PAIR_LOST_TOUCH )
+		{
+			callCollisonExitMethod( A, B );
+		}
 	}
 
 	void PhysicsContact::onAdvance( const physx::PxRigidBody* const* pBodyBuffer, const physx::PxTransform* PoseBuffer, const physx::PxU32 Count )
@@ -61,7 +96,7 @@ namespace Saturn {
 
 		if( !A || !B )
 			return;
-
+		
 		auto callCollisonBeginMethod = []( PhysicsRigidBody* A, PhysicsRigidBody* B )
 		{
 			if( A->m_OnMeshHit )
@@ -88,6 +123,70 @@ namespace Saturn {
 		{
 			callCollisonExitMethod( A, B );
 		}
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	
+	void PhysicsControllerContact::onShapeHit( const physx::PxControllerShapeHit& hit )
+	{
+		PhysicsRigidBody* A = reinterpret_cast< PhysicsRigidBody* >( hit.controller->getUserData() );
+		PhysicsRigidBody* B = reinterpret_cast< PhysicsRigidBody* >( hit.actor->userData );
+
+		if( !A || !B )
+			return;
+
+		auto callCollisonBeginMethod = []( PhysicsRigidBody* A, PhysicsRigidBody* B )
+		{
+			if( A->m_OnMeshHit )
+				A->OnCollisionHit( B->GetEntity() );
+
+			if( B->m_OnMeshHit )
+				B->OnCollisionHit( A->GetEntity() );
+		};
+
+		auto callCollisonExitMethod = []( PhysicsRigidBody* A, PhysicsRigidBody* B )
+		{
+			if( A->m_OnMeshExit )
+				A->OnCollisionExit( B->GetEntity() );
+
+			if( B->m_OnMeshExit )
+				B->OnCollisionExit( A->GetEntity() );
+		};
+
+		callCollisonBeginMethod( A, B );
+	}
+
+	void PhysicsControllerContact::onControllerHit( const physx::PxControllersHit& hit )
+	{
+		PhysicsRigidBody* A = reinterpret_cast< PhysicsRigidBody* >( hit.controller->getUserData() );
+		PhysicsRigidBody* B = reinterpret_cast< PhysicsRigidBody* >( hit.other->getUserData() );
+
+		if( !A || !B )
+			return;
+
+		auto callCollisonBeginMethod = []( PhysicsRigidBody* A, PhysicsRigidBody* B )
+		{
+			if( A->m_OnMeshHit )
+				A->OnCollisionHit( B->GetEntity() );
+
+			if( B->m_OnMeshHit )
+				B->OnCollisionHit( A->GetEntity() );
+		};
+
+		auto callCollisonExitMethod = []( PhysicsRigidBody* A, PhysicsRigidBody* B )
+		{
+			if( A->m_OnMeshExit )
+				A->OnCollisionExit( B->GetEntity() );
+
+			if( B->m_OnMeshExit )
+				B->OnCollisionExit( A->GetEntity() );
+		};
+
+		callCollisonBeginMethod( A, B );
+	}
+
+	void PhysicsControllerContact::onObstacleHit( const physx::PxControllerObstacleHit& hit )
+	{
 	}
 
 	//////////////////////////////////////////////////////////////////////////

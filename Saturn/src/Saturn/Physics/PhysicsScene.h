@@ -46,7 +46,7 @@ namespace Saturn {
 
 	struct RecastInputGeometryExpData;
 
-	class PhysicsScene : public RefTarget
+	class PhysicsScene
 	{
 	public:
 		PhysicsScene( Ref<Scene> scene );
@@ -65,6 +65,7 @@ namespace Saturn {
 	private:
 		void AddToScene( physx::PxRigidActor& rBody );
 		void InitialiseNewBody( SharedPtr<Entity>& rEntity, RigidbodyComponent& rRigidbodyComponent );
+		void AddNewController( SharedPtr<Entity>& rEntity );
 
 	private:
 		physx::PxScene* m_PhysicsScene = nullptr;

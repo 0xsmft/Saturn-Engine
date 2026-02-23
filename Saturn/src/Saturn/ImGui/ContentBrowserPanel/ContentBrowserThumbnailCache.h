@@ -70,7 +70,7 @@ namespace Saturn {
 #endif
 
 		[[nodiscard]] Ref<Texture2D> GetDefault( int Identifier );
-		[[nodiscard]] Ref<Texture2D> GetFor( const Ref<Asset>& rAsset );
+		[[nodiscard]] Ref<Texture2D> GetFor( Ref<Asset> asset );
 		
 	public:
 		void SerialiseManifest();

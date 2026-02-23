@@ -37,6 +37,7 @@
 #include "Saturn/Core/Renderer/EditorCamera.h"
 
 #include "Saturn/Asset/Prefab.h"
+#include "Saturn/Asset/TextureSourceAsset.h"
 #include "Saturn/Asset/AssetManager.h"
 
 #include "Saturn/Vulkan/DefaultMeshes.h"
@@ -81,20 +82,18 @@ namespace Saturn {
 
 	Ref<Texture2D> TextureAssetThumbnailGenerator::Generate( ThumbnailCacheQueueData& rData )
 	{
-		Ref<Asset> textureAsset = rData.Asset;
+		// Load texture source asset
+		Ref<TextureSourceAsset> textureAsset = AssetManager::Get()->GetAssetAs<TextureSourceAsset>( rData.Asset->ID );
 
 		if( textureAsset->Type != AssetType::Texture )
 			return nullptr;
 
-		// Load the texture
-		const auto fullPath = Project::GetActiveProject()->FilepathAbs( textureAsset->Path );
-		Ref<Texture2D> newTexture = Ref<Texture2D>::Create( fullPath );
-
-		const uint32_t textureWidth = newTexture->Width();
-		const uint32_t textureHeight = newTexture->Height();
+		Ref<Texture2D> texture = textureAsset->GetTexture();
+		const uint32_t textureWidth = texture->Width();
+		const uint32_t textureHeight = texture->Height();
 
 		uint32_t mipWidth = textureWidth, mipHeight = textureHeight, mip{};
-		for( uint32_t i = 0; i < newTexture->GetMipMapLevels(); ++i )
+		for( uint32_t i = 0; i < texture->GetMipMapLevels(); ++i )
 		{
 			mipWidth = glm::max( 1u, textureWidth >> i );
 			mipHeight = glm::max( 1u, textureHeight >> i );
@@ -107,10 +106,13 @@ namespace Saturn {
 			}
 		}
 
-		Buffer TemporaryBuffer = newTexture->GetMipTextureData( mipWidth, mipHeight, mip );
+		// Get that mip as a separate image.
+		Buffer TemporaryBuffer = texture->GetMipTextureData( mipWidth, mipHeight, mip );
+		
+		// TODO: We probably shouldn't generate mips for this texture.
+		// Create mipped texture
 		Ref<Texture2D> mippedImage = Ref<Texture2D>::Create( ImageFormat::RGBA8, mipWidth, mipHeight, TemporaryBuffer.Data, false );
 
-		newTexture = nullptr;
 		TemporaryBuffer.Free();
 
 		rData.State = ThumbnailState::Generated;
@@ -149,6 +151,9 @@ namespace Saturn {
 			cacheData.Camera.SetActive( true );
 
 			cacheData.Scene = Ref<Scene>::Create();
+#if !defined(SAT_DIST)
+			cacheData.Scene->GetVisualisationOptions().ShowGrid = false;
+#endif
 			cacheData.SceneRenderer->SetCurrentScene( cacheData.Scene.Get() );
 
 			// Create entity
@@ -202,7 +207,9 @@ namespace Saturn {
 		if( rData.Asset->Type != AssetType::Material )
 			return nullptr;
 
-		// If we already exist then we could be waiting on render or we can get the final image if we are complete
+		// If we already exist then we could be waiting the render to start 
+		// or we can get the final image if we are complete.
+		// 
 		// TRANSITION: MAIN THREAD
 		const auto itr = s_RendererThumbnailCache.find( rData.Asset->ID );
 		if( itr != s_RendererThumbnailCache.end() )
@@ -232,13 +239,14 @@ namespace Saturn {
 			}
 		}
 
-		// Load and prepare SceneRenderer on JobSystem
+		// However, if not, we prepare on the JobSystem
 		// TRANSITION: JOB SYSTEM THREAD
 		JobSystem::Get().QueueJob( [&]() 
 		{
-			// Load material
+			// Load material.
 			Ref<MaterialAsset> materialAsset = AssetManager::Get()->GetAssetAs<MaterialAsset>( rData.Asset->ID );
 
+			// Init
 			InitNewRenderThumbnail( rData, materialAsset );
 			rData.State = ThumbnailState::Generating;
 			rData.Asset = materialAsset;
@@ -303,6 +311,9 @@ namespace Saturn {
 				cacheData.Camera.SetActive( true );
 
 				cacheData.Scene = Ref<Scene>::Create();
+#if !defined(SAT_DIST)
+				cacheData.Scene->GetVisualisationOptions().ShowGrid = false;
+#endif
 				cacheData.SceneRenderer->SetCurrentScene( cacheData.Scene.Get() );
 
 				// Create entity with the static mesh
@@ -401,6 +412,9 @@ namespace Saturn {
 				cacheData.Camera.SetActive( true );
 
 				cacheData.Scene = Ref<Scene>::Create();
+#if !defined(SAT_DIST)
+				cacheData.Scene->GetVisualisationOptions().ShowGrid = false;
+#endif
 				cacheData.SceneRenderer->SetCurrentScene( cacheData.Scene.Get() );
 
 				// Create entity with the static mesh

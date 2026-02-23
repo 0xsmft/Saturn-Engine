@@ -143,16 +143,16 @@ namespace Saturn {
 		return Identifier == 0 ? m_FolderIcon : m_FileIcon;
 	}
 
-	Ref<Texture2D> ContentBrowserThumbnailCache::GetFor( const Ref<Asset>& rAsset )
+	Ref<Texture2D> ContentBrowserThumbnailCache::GetFor( Ref<Asset> asset )
 	{
-		if( !rAsset )
+		if( !asset )
 			return GetDefault( 1 );
 
 		Ref<Texture2D> texture = m_FileIcon;
-		const auto Itr = m_Cache.find( rAsset->ID );
+		const auto Itr = m_Cache.find( asset->ID );
 		
 		// TODO: Don't get the last_write_time every frame and instead check once and use FileWatch
-		const auto fullPath = Project::GetActiveProject()->FilepathAbs( rAsset->Path );
+		const auto fullPath = Project::GetActiveProject()->FilepathAbs( asset->Path );
 		const auto lastWriteTimePoint = std::filesystem::last_write_time( fullPath );
 		const auto timestamp = std::chrono::duration_cast< std::chrono::milliseconds >( lastWriteTimePoint.time_since_epoch() ).count();
 
@@ -179,8 +179,8 @@ namespace Saturn {
 		}
 
 		// Generate texture & pass in needed information for cache data
-		if( rAsset->Type == AssetType::Texture || rAsset->Type == AssetType::Material || rAsset->Type == AssetType::StaticMesh || rAsset->Type == AssetType::SkeletalMesh )
-			m_GenerationQueue.push( { .Time = timestamp, .Texture = nullptr, .Asset = rAsset } );
+		if( asset->Type == AssetType::Texture || asset->Type == AssetType::Material || asset->Type == AssetType::StaticMesh || asset->Type == AssetType::SkeletalMesh )
+			m_GenerationQueue.push( { .Time = timestamp, .Texture = nullptr, .Asset = asset } );
 
 		return texture;
 	}
@@ -196,7 +196,6 @@ namespace Saturn {
 		{
 			auto& rData = Itr->second;
 		
-			// TODO: Don't get the last_write_time every frame and instead check once and use FileWatch
 			const auto fullPath = Project::GetActiveProject()->FilepathAbs( asset->Path );
 			const auto lastWriteTimePoint = std::filesystem::last_write_time( fullPath );
 			const auto timestamp = std::chrono::duration_cast< std::chrono::milliseconds >( lastWriteTimePoint.time_since_epoch() ).count();
@@ -204,6 +203,11 @@ namespace Saturn {
 			rData.Time = timestamp;
 			rData.Texture = nullptr;
 			rData.ExistsOnFS = false;
+
+			// Remove from cache.
+			m_Cache.erase( asset->ID );
+
+			// No need to remove from manifest because we will rewrite it again when its generated.
 
 			// Generate texture & pass in needed information for cache data
 			if( asset->Type == AssetType::Texture || asset->Type == AssetType::Material || asset->Type == AssetType::StaticMesh || asset->Type == AssetType::SkeletalMesh )

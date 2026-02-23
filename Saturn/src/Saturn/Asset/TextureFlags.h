@@ -4,7 +4,7 @@
 *                                                                                           *
 * MIT License                                                                               *
 *                                                                                           *
-* Copyright (c) 2020 - 2026 BEAST                                                           *
+* Copyright (c) 2020 - 2025 BEAST                                                           *
 *                                                                                           *
 * Permission is hereby granted, free of charge, to any person obtaining a copy              *
 * of this software and associated documentation files (the "Software"), to deal             *
@@ -28,31 +28,12 @@
 
 #pragma once
 
-#include "AssetViewer.h"
-
-#include "Saturn/Asset/TextureSourceAsset.h"
-
-#include "Saturn/Vulkan/Texture.h"
-
 namespace Saturn {
 
-	class TextureViewer : public AssetViewer
+	enum class TextureFlags
 	{
-	public:
-		TextureViewer( AssetID ID );
-		~TextureViewer();
-
-		virtual void OnImGuiRender() override;
-		virtual void OnUpdate( Timestep ts ) override {}
-		virtual void OnEvent( Event& rEvent ) override {}
-
-	private:
-		void AddTexture();
-
-	private:
-		Ref<TextureSourceAsset> m_Asset = nullptr;
-
-		// TODO: Support texture cubes?
-		Ref<Texture2D> m_Texture = nullptr;
+		None,
+		FlipVertically,
 	};
+
 }

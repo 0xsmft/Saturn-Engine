@@ -35,6 +35,8 @@
 
 #include "ImGuiAuxiliary.h"
 
+#include "Saturn/Asset/TextureSourceAsset.h"
+
 #include <imgui.h>
 
 namespace Saturn {
@@ -43,19 +45,20 @@ namespace Saturn {
 		: AssetViewer( ID )
 	{
 		m_AssetType = AssetType::Texture;
-
+		m_Asset = AssetManager::Get()->GetAssetAs<TextureSourceAsset>( m_AssetID );
+	
 		AddTexture();
 	}
 
 	TextureViewer::~TextureViewer()
 	{
-		m_Asset = nullptr;
 		m_Texture = nullptr;
+		m_Asset = nullptr;
 	}
 
 	void TextureViewer::OnImGuiRender()
 	{
-		ImGui::PushID( (int)m_Asset->ID );
+		ImGui::PushID( ( int ) m_Asset->ID );
 
 		ImGui::Begin( m_Name.c_str(), &m_Open );
 
@@ -68,7 +71,7 @@ namespace Saturn {
 		ImGui::Text( "Texture Path" );
 		const std::string texturePath = m_Asset->Path.string();
 
-		ImGui::InputText( "##texturepath", (char*) texturePath.c_str(), texturePath.size(), ImGuiInputTextFlags_ReadOnly );
+		ImGui::InputText( "##texturepath", ( char* ) texturePath.c_str(), texturePath.size(), ImGuiInputTextFlags_ReadOnly );
 
 		ImGui::Spring();
 
@@ -79,7 +82,7 @@ namespace Saturn {
 
 		ImGui::EndHorizontal();
 
-		Auxiliary::Image( m_Texture, { (float)m_Texture->Width() * 0.5f, ( float ) m_Texture->Height() * 0.5f } );
+		Auxiliary::Image( m_Texture, { ( float ) m_Texture->Width() * 0.5f, ( float ) m_Texture->Height() * 0.5f } );
 
 		ImGui::EndChild();
 
@@ -90,17 +93,10 @@ namespace Saturn {
 
 	void TextureViewer::AddTexture()
 	{
-		Ref<Asset> textureAsset = AssetManager::Get()->FindAsset( m_AssetID );
-		m_Asset = textureAsset;
-
-		// Load the real texture.
-		// TODO: Check if we have already loaded the texture somewhere else in the engine!
-
-		m_Texture = Ref<Texture2D>::Create( Project::GetActiveProject()->FilepathAbs( m_Asset->Path ), AddressingMode::Repeat );
+		m_Texture = m_Asset->GetTexture();
 
 		m_Open = true;
-
-		m_Name = std::format( "{0}##TextureViewer", m_Asset->Name );
+		m_Name = std::format( "{0}##{1}", m_Asset->Name, ( uint64_t ) m_Asset->ID );
 	}
 
 }

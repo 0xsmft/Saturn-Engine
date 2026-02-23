@@ -47,6 +47,13 @@ namespace Saturn {
 		[[nodiscard]] virtual bool TryLoadData (       Ref<Asset>& rAsset ) const = 0;
 	};
 
+	class TextureSourceAssetSerialiser : public AssetSerialiser
+	{
+	public:
+		virtual void Serialise  ( const Ref<Asset>& rAsset ) const override;
+		[[nodiscard]] virtual bool TryLoadData(       Ref<Asset>& rAsset ) const override;
+	};
+
 	class MaterialAssetSerialiser : public AssetSerialiser
 	{
 	public:

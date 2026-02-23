@@ -58,6 +58,95 @@ namespace Saturn {
 #define GetFilepathAbs( rPath ) Project::GetActiveProject()->FilepathAbs( rPath )
 
 	//////////////////////////////////////////////////////////////////////////
+	// TEXTURE
+
+	void TextureSourceAssetSerialiser::Serialise( const Ref<Asset>& rAsset ) const
+	{
+		const auto& basePath = rAsset->Path;
+		const auto fullPath = GetFilepathAbs( basePath );
+
+		auto textureSource = rAsset.As<TextureSourceAsset>();
+
+		YAML::Emitter out;
+
+		out << YAML::BeginMap;
+
+		out << YAML::Key << "Texture" << YAML::Value;
+
+		out << YAML::BeginMap;
+
+		out << YAML::Key << "Width"    << YAML::Value <<			  textureSource->Width();
+		out << YAML::Key << "Height"   << YAML::Value <<			  textureSource->Height();
+		out << YAML::Key << "Channels" << YAML::Value <<			  textureSource->Channels();
+		out << YAML::Key << "Hdr"      << YAML::Value <<			  textureSource->IsHdr();
+		out << YAML::Key << "Flags"    << YAML::Value << ( uint32_t ) textureSource->GetFlags();
+
+		auto path = std::filesystem::relative( textureSource->GetTextureAbsolutePath(), Project::GetActiveProjectRootPath() );
+
+		// On Windows we serialise the path as a Linux path for Linux support 
+#if defined(SAT_PLATFORM_WINDOWS)
+		auto wstr = path.wstring();
+		std::replace( wstr.begin(), wstr.end(), L'\\', L'/' );
+		out << YAML::Key << "Source Path" << YAML::Value << wstr;
+#else
+		out << YAML::Key << "Source Path" << YAML::Value << path;
+#endif
+
+		out << YAML::EndMap;
+
+		out << YAML::EndMap;
+
+		std::ofstream file( fullPath );
+		file << out.c_str();
+	}
+
+	bool TextureSourceAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
+	{
+		const auto absolutePath = GetFilepathAbs( rAsset->Path );
+		std::ifstream FileIn( absolutePath );
+
+		std::stringstream ss;
+		ss << FileIn.rdbuf();
+
+		YAML::Node data = YAML::Load( ss.str() );
+
+		if( data.IsNull() )
+			return false;
+
+		// Create new Material Asset with rAsset being the base Asset
+		auto textureSrcAsset = Ref<TextureSourceAsset>::Create( rAsset );
+
+		const auto textureData = data[ "Texture" ];
+
+		auto width = textureData[ "Width" ].as<uint32_t>();
+		auto height = textureData[ "Height" ].as<uint32_t>();
+		auto channel = textureData[ "Channels" ].as<uint32_t>();
+		auto hdr = textureData[ "Hdr" ].as<bool>();
+		auto flags = textureData[ "Flags" ].as<uint32_t>();
+		auto path = textureData[ "Source Path" ].as<std::filesystem::path>();
+
+#if defined(SAT_PLATFORM_WINDOWS)
+		std::wstring wstr = path.wstring();
+		std::replace( wstr.begin(), wstr.end(), L'/', L'\\' );
+		path = wstr;
+#endif
+
+		textureSrcAsset->m_Width = width;
+		textureSrcAsset->m_Height = height;
+		textureSrcAsset->m_Channels = channel;
+		textureSrcAsset->m_HDR = hdr;
+		textureSrcAsset->m_Flags = ( TextureFlags ) flags;
+		textureSrcAsset->m_AbsolutePath = GetFilepathAbs( path );
+
+		textureSrcAsset->LoadRawTexture();
+
+		// Set rAsset reference to point to our new MaterialAsset
+		rAsset = textureSrcAsset;
+
+		return true;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
 	// MATERIAL
 
 	void MaterialAssetSerialiser::Serialise( const Ref<Asset>& rAsset ) const
@@ -139,8 +228,8 @@ namespace Saturn {
 
 		if( AssetManager::Get()->DoesAssetIDExist( albedoID ) )
 		{
-			Ref<Asset> rAsset = AssetManager::Get()->FindAsset( albedoID );
-			texture = Ref<Texture2D>::Create( Project::GetActiveProject()->FilepathAbs( rAsset->Path ), AddressingMode::Repeat );
+			Ref<TextureSourceAsset> textureAsset = AssetManager::Get()->GetAssetAs<TextureSourceAsset>( albedoID );
+			texture = textureAsset->GetTexture();
 
 			materialAsset->SetAlbeoMap( texture );
 			AssetManager::Get()->RegisterAssetDependency( rAsset->ID, albedoID );
@@ -153,8 +242,8 @@ namespace Saturn {
 
 		if( AssetManager::Get()->DoesAssetIDExist( normalID ) )
 		{
-			Ref<Asset> rAsset = AssetManager::Get()->FindAsset( normalID );
-			texture = Ref<Texture2D>::Create( Project::GetActiveProject()->FilepathAbs( rAsset->Path ), AddressingMode::Repeat );
+			Ref<TextureSourceAsset> textureAsset = AssetManager::Get()->GetAssetAs<TextureSourceAsset>( normalID );
+			texture = textureAsset->GetTexture();
 
 			materialAsset->SetNormalMap( texture );
 			AssetManager::Get()->RegisterAssetDependency( rAsset->ID, normalID );
@@ -167,8 +256,9 @@ namespace Saturn {
 
 		if( AssetManager::Get()->DoesAssetIDExist( metallicID ) )
 		{
-			Ref<Asset> rAsset = AssetManager::Get()->FindAsset( metallicID );
-			texture = Ref<Texture2D>::Create( Project::GetActiveProject()->FilepathAbs( rAsset->Path ), AddressingMode::Repeat );
+			Ref<TextureSourceAsset> textureAsset = AssetManager::Get()->GetAssetAs<TextureSourceAsset>( metallicID );
+			texture = textureAsset->GetTexture();
+
 
 			materialAsset->SetMetallicMap( texture );
 			AssetManager::Get()->RegisterAssetDependency( rAsset->ID, metallicID );
@@ -181,8 +271,8 @@ namespace Saturn {
 
 		if( AssetManager::Get()->DoesAssetIDExist( roughnessID ) )
 		{
-			Ref<Asset> rAsset = AssetManager::Get()->FindAsset( roughnessID );
-			texture = Ref<Texture2D>::Create( Project::GetActiveProject()->FilepathAbs( rAsset->Path ), AddressingMode::Repeat );
+			Ref<TextureSourceAsset> textureAsset = AssetManager::Get()->GetAssetAs<TextureSourceAsset>( roughnessID );
+			texture = textureAsset->GetTexture();
 
 			materialAsset->SetRoughnessMap( texture );
 			AssetManager::Get()->RegisterAssetDependency( rAsset->ID, roughnessID );

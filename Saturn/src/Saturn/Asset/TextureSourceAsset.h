@@ -29,19 +29,24 @@
 #pragma once
 
 #include "Asset.h"
+#include "TextureFlags.h"
+
 #include "Saturn/Serialisation/Raw/RawSerialisation.h"
 
 namespace Saturn {
 
 	class Texture;
+	class Texture2D;
 
 	class TextureSourceAsset : public Asset
 	{
 	public:
 		TextureSourceAsset();
-		TextureSourceAsset( std::filesystem::path AbsolutePath, bool Flip = false );
+		TextureSourceAsset( const Ref<Asset>& rBase );
+		TextureSourceAsset( const Ref<Asset>& rBase, std::filesystem::path AbsolutePath, bool Flip = false );
 
 		~TextureSourceAsset();
+
 
 		void WriteToVFS();
 		void ReadFromVFS();
@@ -49,17 +54,23 @@ namespace Saturn {
 	public:
 		uint32_t Width()  const { return m_Width; }
 		uint32_t Height() const { return m_Height; }
-
 		uint32_t Channels() const { return m_Channels; }
+		bool IsHdr() const { return m_HDR; }
+		TextureFlags GetFlags() const { return m_Flags; }
+		void SetFlags( TextureFlags flags ) { m_Flags = flags; }
 
 		Buffer TextureData() const { return m_TextureBuffer; }
+
+		Ref<Texture2D> GetTexture() const { return m_Texture; }
+
+		const std::filesystem::path& GetTextureAbsolutePath() const { return m_AbsolutePath; }
 
 	public:
 		//////////////////////////////////////////////////////////////////////////
 		// Raw binary serialisation.
 
 		void SerialiseData( std::ofstream& rStream )
-		{
+		{ 
 			RawSerialisation::WriteString( m_AbsolutePath.string(), rStream );
 
 			RawSerialisation::WriteObject( m_Width, rStream );
@@ -88,6 +99,7 @@ namespace Saturn {
 		}
 
 	private:
+		void Load();
 		void LoadRawTexture();
 
 	private:
@@ -96,11 +108,17 @@ namespace Saturn {
 		uint32_t m_Width = 0;
 		uint32_t m_Height = 0;
 		uint32_t m_Channels = 0;
+		TextureFlags m_Flags = TextureFlags::FlipVertically;
 
 		bool m_Flipped = false;
 		bool m_HDR = false;
 		bool m_FullyLoaded = false;
 
 		Buffer m_TextureBuffer;
+
+		Ref<Texture2D> m_Texture;
+
+	private:
+		friend class TextureSourceAssetSerialiser;
 	};
 }

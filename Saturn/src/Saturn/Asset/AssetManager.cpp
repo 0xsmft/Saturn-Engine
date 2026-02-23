@@ -107,9 +107,9 @@ namespace Saturn {
 
 		{
 			m_Assets->m_LoadedAssets[ depID ]->OnAssetDependencyReplace( assetDeleted, replacementID );
-			Save();
 		}
 
+		// Unload asset because we haven't actually loaded it properly.
 		if( !assetWasLoadedBefore )
 		{
 			m_Assets->m_LoadedAssets.erase( depID );

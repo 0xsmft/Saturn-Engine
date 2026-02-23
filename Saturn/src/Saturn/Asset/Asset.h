@@ -203,7 +203,7 @@ namespace Saturn {
 
 	inline AssetType ExtensionToAssetType( const std::string& str )
 	{
-		if( str == ".png" || str == ".tga" || str == ".jpg" || str == ".jpeg" || str == ".hdr" || str == ".ico" )
+		if( str == ".stx" )
 			return AssetType::Texture;
 		else if( str == ".snd" )
 			return AssetType::Sound;

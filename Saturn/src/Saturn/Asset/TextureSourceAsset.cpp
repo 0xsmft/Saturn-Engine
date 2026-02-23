@@ -44,15 +44,64 @@ namespace Saturn {
 	{
 	}
 
-	TextureSourceAsset::TextureSourceAsset( std::filesystem::path AbsolutePath, bool Flip )
-		: m_AbsolutePath( std::move( AbsolutePath ) ), m_Flipped( Flip )
+	TextureSourceAsset::TextureSourceAsset( const Ref<Asset>& rBase, std::filesystem::path AbsolutePath, bool Flip )
+		: Asset( rBase ), m_AbsolutePath( std::move( AbsolutePath ) ), m_Flipped( Flip )
 	{
 		LoadRawTexture();
+	}
+
+	TextureSourceAsset::TextureSourceAsset( const Ref<Asset>& rBase )
+		: Asset( rBase )
+	{
 	}
 
 	TextureSourceAsset::~TextureSourceAsset()
 	{
 		m_TextureBuffer.Free();
+	}
+
+	void TextureSourceAsset::Load()
+	{
+#if !defined(SAT_DIST)
+		SAT_CORE_ASSERT( std::filesystem::exists( m_AbsolutePath ), "Path does not exist!" );
+
+		int Width, Height, Channels;
+		bool hdr = false;
+		stbi_uc* pTextureData;
+
+		stbi_set_flip_vertically_on_load( m_Flags == TextureFlags::FlipVertically );
+
+		hdr = stbi_is_hdr( m_AbsolutePath.string().c_str() );
+		SAT_CORE_ASSERT( m_HDR != hdr, "Image hdr types don't match!" );
+
+		if( hdr )
+		{
+			SAT_CORE_INFO( "Loading HDR texture {0}", m_AbsolutePath.string() );
+			pTextureData = ( uint8_t* ) stbi_loadf( m_AbsolutePath.string().c_str(), &Width, &Height, &Channels, 4 );
+		}
+		else
+		{
+			SAT_CORE_INFO( "Loading texture {0}", m_AbsolutePath.string() );
+
+			pTextureData = stbi_load( m_AbsolutePath.string().c_str(), &Width, &Height, &Channels, 4 );
+		}
+
+		SAT_CORE_ASSERT( m_Width != Width, "Image width does not match!" );
+		SAT_CORE_ASSERT( m_Height != Height, "Image height does not match!" );
+		SAT_CORE_ASSERT( m_Channels != Channels, "Image channels does not match!" );
+
+		// NOTE: We should use the proper channel count
+		//		 and stop assuming that all textures have
+		//		 an alpha channel.
+		const uint32_t ImageSize = m_Width * m_Height * 4;
+
+		m_TextureBuffer = Buffer::Copy( pTextureData, static_cast< size_t >( ImageSize ) );
+		stbi_image_free( pTextureData );
+
+		m_Texture = Ref<Texture2D>::Create( ImageFormat::RGBA8, m_Width, m_Height, m_TextureBuffer.Data );
+
+		m_TextureBuffer.Free();
+#endif
 	}
 
 	void TextureSourceAsset::LoadRawTexture()
@@ -63,6 +112,8 @@ namespace Saturn {
 		int Width, Height, Channels;
 
 		stbi_uc* pTextureData;
+
+		stbi_set_flip_vertically_on_load( m_Flags == TextureFlags::FlipVertically );
 
 		m_HDR = stbi_is_hdr( m_AbsolutePath.string().c_str() );
 
@@ -82,10 +133,16 @@ namespace Saturn {
 		m_Height = Height;
 		m_Channels = Channels;
 
+		// NOTE: We should use the proper channel count
+		//		 and stop assuming that all textures have
+		//		 an alpha channel.
 		const uint32_t ImageSize = m_Width * m_Height * 4;
 		m_TextureBuffer = Buffer::Copy( pTextureData, static_cast<size_t>( ImageSize ) );
-
 		stbi_image_free( pTextureData );
+
+		m_Texture = Ref<Texture2D>::Create( ImageFormat::RGBA8, m_Width, m_Height, m_TextureBuffer.Data );
+
+		m_TextureBuffer.Free();
 #endif
 	}
 
@@ -106,7 +163,10 @@ namespace Saturn {
 		RawSerialisation::WriteObject( m_HDR, stream );
 
 		// Buffer
-		RawSerialisation::WriteSaturnBuffer( m_TextureBuffer, stream );
+		Buffer TemporaryBuffer = m_Texture->X31CopyToBuffer();
+		RawSerialisation::WriteSaturnBuffer( TemporaryBuffer, stream );
+
+		TemporaryBuffer.Free();
 	}
 
 	void TextureSourceAsset::ReadFromVFS()

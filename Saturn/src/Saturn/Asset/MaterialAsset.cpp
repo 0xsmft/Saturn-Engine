@@ -82,6 +82,38 @@ namespace Saturn {
 
 	void MaterialAsset::OnAssetDependencyReplace( AssetID oldID, AssetID newID )
 	{
+		// Asset IDs can only be in resources, so we'll check which one was modified
+		if( !m_Material )
+			return;
+
+		std::unordered_map<uint32_t, std::string> IndexToTextureIndex =
+		{
+			{ 0, "u_AlbedoTexture" },
+			{ 1, "u_NormalTexture" },
+			{ 2, "u_MetallicTexture" },
+			{ 3, "u_RoughnessTexture" }
+		};
+
+		for( uint32_t i = 0u; i < 4u; i++ )
+		{
+			if( auto texture = m_Material->GetResource( IndexToTextureIndex[ i ] ); texture )
+			{
+				Ref<Asset> oldAsset = AssetManager::Get()->FindAsset( oldID );
+				
+				// Screwy... textures need a rework on the asset side.
+				if( oldAsset )
+				{
+					if( texture->GetPath() == Project::GetActiveProject()->FilepathAbs( oldAsset->Path ) )
+					{
+						Ref<TextureSourceAsset> sourceAsset = AssetManager::Get()->GetAssetAs<TextureSourceAsset>( newID );
+						m_PendingTextureChanges[ IndexToTextureIndex[ i ] ] = sourceAsset->GetTexture();
+					
+						// We cannot break here because the same texture may be used in different resource slots.
+						//break;
+					}
+				}
+			}
+		}
 	}
 
 	void MaterialAsset::Default()
@@ -365,22 +397,8 @@ namespace Saturn {
 		}
 		else
 		{
-#if defined( SAT_DIST )
 			Ref<TextureSourceAsset> sourceAsset = AssetManager::Get()->GetAssetAs<TextureSourceAsset>( AssetID );
-#else
-			Ref<TextureSourceAsset> sourceAsset = Ref<TextureSourceAsset>::Create( AssetManager::Get()->FindAsset( AssetID )->Path );
-
-			m_TextureAssetDependencies[ "u_AlbedoTexture" ] = AssetID;
-#endif
-
-			Ref<Texture2D> albedo = Ref<Texture2D>::Create(
-				ImageFormat::RGBA8,
-				sourceAsset->Width(),
-				sourceAsset->Height(),
-				sourceAsset->TextureData().Data,
-				false );
-
-			m_PendingTextureChanges[ "u_AlbedoTexture" ] = albedo;
+			m_PendingTextureChanges[ "u_AlbedoTexture" ] = sourceAsset->GetTexture();
 		}
 	}
 
@@ -392,22 +410,8 @@ namespace Saturn {
 		}
 		else
 		{
-#if defined( SAT_DIST )
 			Ref<TextureSourceAsset> sourceAsset = AssetManager::Get()->GetAssetAs<TextureSourceAsset>( AssetID );
-#else
-			Ref<TextureSourceAsset> sourceAsset = Ref<TextureSourceAsset>::Create( AssetManager::Get()->FindAsset( AssetID )->Path );
-
-			m_TextureAssetDependencies[ "u_NormalTexture" ] = AssetID;
-#endif
-
-			Ref<Texture2D> normalMap = Ref<Texture2D>::Create(
-				ImageFormat::RGBA8,
-				sourceAsset->Width(),
-				sourceAsset->Height(),
-				sourceAsset->TextureData().Data,
-				false );
-
-			m_PendingTextureChanges[ "u_NormalTexture" ] = normalMap;
+			m_PendingTextureChanges[ "u_NormalTexture" ] = sourceAsset->GetTexture();
 		}
 	}
 
@@ -419,22 +423,8 @@ namespace Saturn {
 		}
 		else
 		{
-#if defined( SAT_DIST )
 			Ref<TextureSourceAsset> sourceAsset = AssetManager::Get()->GetAssetAs<TextureSourceAsset>( AssetID );
-#else
-			Ref<TextureSourceAsset> sourceAsset = Ref<TextureSourceAsset>::Create( AssetManager::Get()->FindAsset( AssetID )->Path );
-
-			m_TextureAssetDependencies[ "u_MetalnessTexture" ] = AssetID;
-#endif
-
-			Ref<Texture2D> metalness = Ref<Texture2D>::Create(
-				ImageFormat::RGBA8,
-				sourceAsset->Width(),
-				sourceAsset->Height(),
-				sourceAsset->TextureData().Data,
-				false );
-
-			m_PendingTextureChanges[ "u_MetalnessTexture" ] = metalness;
+			m_PendingTextureChanges[ "u_MetalnessTexture" ] = sourceAsset->GetTexture();
 		}
 	}
 
@@ -446,22 +436,9 @@ namespace Saturn {
 		}
 		else
 		{
-#if defined( SAT_DIST )
 			Ref<TextureSourceAsset> sourceAsset = AssetManager::Get()->GetAssetAs<TextureSourceAsset>( AssetID );
-#else
-			Ref<TextureSourceAsset> sourceAsset = Ref<TextureSourceAsset>::Create( AssetManager::Get()->FindAsset( AssetID )->Path );
 
-			m_TextureAssetDependencies[ "u_RoughnessTexture" ] = AssetID;
-#endif
-
-			Ref<Texture2D> roughness = Ref<Texture2D>::Create(
-				ImageFormat::RGBA8,
-				sourceAsset->Width(),
-				sourceAsset->Height(),
-				sourceAsset->TextureData().Data,
-				false );
-
-			m_PendingTextureChanges[ "u_RoughnessTexture" ] = roughness;
+			m_PendingTextureChanges[ "u_RoughnessTexture" ] = sourceAsset->GetTexture();
 		}
 	}
 

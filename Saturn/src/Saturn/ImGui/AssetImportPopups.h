@@ -31,6 +31,8 @@
 #include "AssetImportPopupErrors.h"
 
 #include "Saturn/Asset/Asset.h"
+#include "Saturn/Asset/TextureFlags.h"
+
 #include "Saturn/Vulkan/Mesh.h"
 
 #include <filesystem>
@@ -93,6 +95,21 @@ namespace Saturn {
 
 		virtual void Initialise() override;
 		virtual void OnImGuiRender() override;
+	};
+
+	class Texture2D;
+
+	class TextureSourceAssetImportPopup : public AssetImportPopupBase
+	{
+	public:
+		TextureSourceAssetImportPopup( const std::filesystem::path& rAssetToImportPath, const std::filesystem::path& rDestinationPath );
+		virtual ~TextureSourceAssetImportPopup();
+
+		virtual void Initialise() override;
+		virtual void OnImGuiRender() override;
+	private:
+		TextureFlags m_ImportBehaviour = TextureFlags::None;
+		Ref<Texture2D> m_PreviewTexture = nullptr;
 	};
 
 	class MeshImportPopup : public AssetImportPopupBase

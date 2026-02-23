@@ -38,6 +38,7 @@ namespace Saturn {
 
 	void AssetImporter::Init()
 	{
+		m_AssetSerialisers[ AssetType::Texture		       ] = std::make_unique<TextureSourceAssetSerialiser>();
 		m_AssetSerialisers[ AssetType::StaticMesh		   ] = std::make_unique<StaticMeshAssetSerialiser>();
 		m_AssetSerialisers[ AssetType::SkeletalMesh		   ] = std::make_unique<SkeletalMeshAssetSerialiser>();
 		m_AssetSerialisers[ AssetType::Material			   ] = std::make_unique<MaterialAssetSerialiser>();

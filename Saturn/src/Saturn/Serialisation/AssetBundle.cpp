@@ -324,14 +324,11 @@ namespace Saturn {
 		{
 			case Saturn::AssetType::Texture:
 			{
-				// Read the raw texture file into the virtual FS.
-				// To do this we can use our TextureSourceAsset class.
-				auto AbsolutePath = Project::GetActiveProject()->FilepathAbs( rAsset->Path );
-				Ref<TextureSourceAsset> sourceAsset = Ref<TextureSourceAsset>::Create( AbsolutePath );
-				sourceAsset->Path = rAsset->Path;
-				sourceAsset->ID = rAsset->ID;
-
-				sourceAsset->WriteToVFS();
+				Ref<TextureSourceAsset> textureSourceAsset = pAssetManager->ImportAssetAs<TextureSourceAsset>( AssetBundleRegistry, id );
+				if( textureSourceAsset )
+				{
+					textureSourceAsset->WriteToVFS();
+				}
 			} break;
 
 			case Saturn::AssetType::StaticMesh:
@@ -496,12 +493,12 @@ namespace Saturn {
 		}
 
 		AssetManager* pAssetManager = AssetManager::Get();
-		Ref<AssetRegistry> rAssetRegistry = pAssetManager->GetAssetRegistry();
+		Ref<AssetRegistry> assetRegistry = pAssetManager->GetAssetRegistry();
 		VirtualFS& rVFS = VirtualFS::Get();
 
 		const std::string& rMountBase = Project::GetActiveConfig().Name;
 
-		rAssetRegistry->m_Assets.reserve( header.Assets );
+		assetRegistry->m_Assets.reserve( header.Assets );
 
 		// Read header information
 		for( size_t i = 0; i < header.Assets; ++i )
@@ -509,7 +506,7 @@ namespace Saturn {
 			Ref<Asset> asset = Ref<Asset>::Create();
 			asset->DeserialiseData( stream );
 
-			rAssetRegistry->m_Assets[ asset->ID ] = asset;
+			assetRegistry->m_Assets[ asset->ID ] = asset;
 
 			SAT_CORE_INFO( "Read asset header info: ASSET/{0} ({1})", asset->ID, asset->Name );
 		}
@@ -525,10 +522,10 @@ namespace Saturn {
 			DumpFileHeader dfh;
 			RawSerialisation::ReadObject( dfh, stream );
 
-			if( !rAssetRegistry->DoesIDExists( dfh.Asset ) )
+			if( !assetRegistry->DoesIDExists( dfh.Asset ) )
 				continue;
 
-			Ref<Asset>& rAsset = rAssetRegistry->m_Assets[ dfh.Asset ];
+			Ref<Asset>& rAsset = assetRegistry->m_Assets[ dfh.Asset ];
 
 			if( std::memcmp( dfh.Magic, ".PAK", 4 ) != 0 )
 			{

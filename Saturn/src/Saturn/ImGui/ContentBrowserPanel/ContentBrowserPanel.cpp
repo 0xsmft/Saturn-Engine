@@ -342,6 +342,10 @@ namespace Saturn {
 					bool textureAssetImported = false;
 					if( AssetExtensions::IsTexture( extensionLower ) )
 					{
+						m_CurrentImportPopup = std::make_unique<TextureSourceAssetImportPopup>( path, m_CurrentPath );
+						m_CurrentImportPopup->Initialise();
+
+						/*
 						auto id = AssetManager::Get()->CreateAsset( AssetType::Texture );
 						auto asset = AssetManager::Get()->FindAsset( id );
 
@@ -360,7 +364,10 @@ namespace Saturn {
 						AssetManagerSerialiser ars;
 						ars.Serialise();
 
+						UpdateFiles( true );
+
 						textureAssetImported = true;
+						*/
 					}
 
 					// Meshes
@@ -1457,8 +1464,7 @@ namespace Saturn {
 			{
 				rItem->Select();
 
-				// TODO: This does not work because the clipper may clip the item causing it to never be rendered and meaning that it will never get to set the scroll
-				// We could skip the clipper for one frame to allow the item to render and set it's scroll as then next time the will be visible.
+				// We skip the clipper for one frame to allow the item to render and set it's scroll as then next time the will be visible.
 				rItem->ScrollTo();
 
 				m_RenderUnclipped = true;

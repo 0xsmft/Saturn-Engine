@@ -35,6 +35,7 @@
 #include "Saturn/Asset/Asset.h"
 #include "Saturn/Asset/AssetManager.h"
 #include "Saturn/Animation/SkeletonAsset.h"
+#include "Saturn/Asset/TextureSourceAsset.h"
 
 #include "Saturn/Serialisation/YAML/AssetManagerSerialiser.h"
 
@@ -45,6 +46,8 @@
 #include "Saturn/Project/Project.h"
 
 #include "Saturn/Alura/AluraFont.h"
+
+#include "Saturn/Core/Renderer/RenderThread.h"
 
 #include "ImGuiAuxiliary.h"
 #include "EditorIcons.h"
@@ -123,6 +126,138 @@ namespace Saturn {
 				m_ModificationState = AssetImportModificationState::NotModified;
 				ImGui::CloseCurrentPopup();
 			}
+
+			ImGui::EndPopup();
+		}
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// TEXTURE SOURCE IMPORT POPUP
+
+	TextureSourceAssetImportPopup::TextureSourceAssetImportPopup( const std::filesystem::path& rAssetToImportPath, const std::filesystem::path& rDestinationPath )
+		: AssetImportPopupBase( rAssetToImportPath, rDestinationPath )
+	{
+	}
+
+	TextureSourceAssetImportPopup::~TextureSourceAssetImportPopup()
+	{
+	}
+
+	void TextureSourceAssetImportPopup::Initialise()
+	{
+		// TODO: In order to show a preview we need to ensure that we destory the texture
+		//       after the frame is done...
+		// I'll work on that later...
+
+		// Load preview texture on job system.
+//		JobSystem::Get().QueueJob( [ this ]()
+		{
+//			m_PreviewTexture = Ref<Texture2D>::Create( m_AssetToImportPath, AddressingMode::Repeat );
+
+			// By default textures are flipped.
+			m_ImportBehaviour = TextureFlags::FlipVertically;
+
+			m_Open = true;
+			m_IsReady.store( true );
+		}
+//			);
+	}
+
+	void TextureSourceAssetImportPopup::OnImGuiRender()
+	{
+		if( m_Open )
+			ImGui::OpenPopup( "Import Texture##IMPORT_Texture" );
+
+		ImGui::SetNextWindowSize( { 350.0F, 0.0F } );
+		ImGui::SetNextWindowPos( ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Appearing, ImVec2( 0.5f, 0.5f ) );
+
+		if( ImGui::BeginPopupModal( "Import Texture##IMPORT_Texture", &m_Open, ImGuiWindowFlags_NoSavedSettings ) )
+		{
+			bool PopupModified = false;
+
+			ImGui::BeginVertical( "##inputv" );
+
+			ImGui::Text( "Path:" );
+
+			ImGui::BeginHorizontal( "##inputH" );
+
+			ImGui::InputText( "##path", ( char* ) m_AssetToImportPath.string().c_str(), 1024 );
+
+			if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
+			{
+				m_AssetToImportPath = Application::Get()->OpenFile( L"Supported asset types (*.png *.jpg *.jpeg)|*.png; *.jpg; *.jpeg" );
+			}
+
+			ImGui::EndHorizontal();
+
+			ImGui::EndVertical();
+
+			ImGui::SeparatorText( "Flags" );
+
+			auto hasFlag = [ this ]( TextureFlags flag ) -> bool
+			{
+				return m_ImportBehaviour == flag;
+			};
+
+			ImGui::BeginHorizontal( "##importOption_flip" );
+
+			bool flip = hasFlag( TextureFlags::FlipVertically );
+			ImGui::Text( "Flip Vertically on load" );
+			ImGui::Spring();
+
+			ImGui::SetNextItemWidth( 130.0f );
+			if( ImGui::Checkbox( "##FlipVert", &flip ) )
+			{
+				if( hasFlag( TextureFlags::FlipVertically ) )
+					m_ImportBehaviour = TextureFlags::None;
+				else
+					m_ImportBehaviour = TextureFlags::FlipVertically;
+			}
+
+			ImGui::EndHorizontal();
+
+#if PREVIEW_TEXTURE_FIXED
+			ImGui::SeparatorText( "Preview Image" );
+
+			ImVec2 UV0 = ( m_ImportBehaviour == TextureFlags::FlipVertically ? ImVec2( 0.0F, 1.0F ) : ImVec2( 0.0F, 0.0F ) );
+			ImVec2 UV1 = ( m_ImportBehaviour == TextureFlags::FlipVertically ? ImVec2( 1.0F, 0.0F ) : ImVec2( 1.0F, 1.0F ) );
+			Auxiliary::Image( m_PreviewTexture, { 64.0f, 64.0f }, UV0, UV1 );
+#endif
+
+			ImGui::BeginHorizontal( "##actionsH" );
+
+			if( ImGui::Button( "Import" ) )
+			{
+				const auto id = AssetManager::Get()->CreateAsset( AssetType::Texture );
+				auto asset = AssetManager::Get()->FindAsset( id );
+				auto assetPath = m_DestinationPath / m_AssetToImportPath.filename();
+
+				// Copy the source.
+				std::filesystem::copy_file( m_AssetToImportPath, assetPath, std::filesystem::copy_options::overwrite_existing );
+
+				// Replace Extension for texture asset
+				assetPath.replace_extension( ".stx" );
+				asset->SetAbsolutePath( assetPath );
+
+				// Create the asset.
+				auto texAsset = Ref<TextureSourceAsset>::Create( asset, m_AssetToImportPath, m_ImportBehaviour == TextureFlags::FlipVertically );
+
+				// Save the asset
+				TextureSourceAssetSerialiser tsas;
+				tsas.Serialise( texAsset );
+
+				PopupModified = true;
+			}
+
+			if( ImGui::Button( "Cancel" ) )
+			{
+				Close();
+
+				m_ModificationState = AssetImportModificationState::NotModified;
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndHorizontal();
 
 			ImGui::EndPopup();
 		}

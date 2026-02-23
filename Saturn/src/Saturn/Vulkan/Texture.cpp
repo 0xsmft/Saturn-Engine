@@ -521,6 +521,7 @@ namespace Saturn {
 	void Texture2D::CreateTextureImage( bool flip )
 	{
 		SAT_CORE_ASSERT( std::filesystem::exists( m_Path ), "Path does not exist!" );
+		SAT_CORE_ASSERT( m_Path.extension().string() != ".stx", "You cannot load a Saturn Texture Source Asset (.stx) you must use the Texture Source Asset to load it's raw image file, you've passed in the path of the Asset not the image file." );
 
 		int Width, Height, Channels;
 

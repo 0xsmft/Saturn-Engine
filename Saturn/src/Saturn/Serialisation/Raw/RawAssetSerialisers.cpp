@@ -154,22 +154,10 @@ namespace Saturn {
 		RawSerialisation::WriteVec3( materialAsset->GetAlbeoColor(), fout );
 		
 		auto writeTextureID = []( const Ref<Texture2D> targetTexture, std::ofstream& rStream ) 
-			{
-				AssetID textureID = 0;
-				if( targetTexture ) 
-				{
-					auto path = std::filesystem::relative( targetTexture->GetPath(), Project::GetActiveProject()->GetRootDir() );
-
-					SAT_CORE_INFO( "texture relative path: {0} for texture: {1}", path, targetTexture->GetPath() );
-
-					// We are fine to use the main asset registry here, we are only looking for an asset.
-					const Ref<Asset> textureSourceAsset = AssetManager::Get()->FindAsset( path );
-					if( textureSourceAsset )
-						textureID = textureSourceAsset->ID;
-				}
-
-				RawSerialisation::WriteObject( textureID, rStream );
-			};
+		{
+			AssetID textureID = targetTexture->GetSourceAssetID();
+			RawSerialisation::WriteObject( textureID, rStream );
+		};
 
 		// ALBEO
 		writeTextureID( materialAsset->GetAlbeoMap(), fout );

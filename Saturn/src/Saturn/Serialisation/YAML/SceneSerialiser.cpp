@@ -71,6 +71,7 @@ namespace Saturn {
 
 		out << YAML::Key << "Scene" << YAML::Value << "Untitled Scene";
 
+#if !defined(SAT_DIST)
 		const auto& rVisualisation = m_Scene->GetVisualisationOptions();
 		out << YAML::Key << "Visualisation" << YAML::Value;
 		out << YAML::BeginMap;
@@ -78,6 +79,7 @@ namespace Saturn {
 		out << YAML::Key << "ShowGridRT" << rVisualisation.ShowGridOnRuntime;
 		out << YAML::Key << "PhysCollider" << ( std::underlying_type_t<PhysicsColliderVisualisationOptions> )rVisualisation.PhysColliderOptions;
 		out << YAML::EndMap;
+#endif
 
 		out << YAML::Key << "Entities";
 
@@ -107,7 +109,7 @@ namespace Saturn {
 		std::stringstream ss;
 		ss << stream.rdbuf();
 
-		YAML::Node data = YAML::Load( ss.str() );
+		const YAML::Node data = YAML::Load( ss.str() );
 
 		if( data.IsNull() )
 			return;
@@ -123,6 +125,7 @@ namespace Saturn {
 		m_Scene->Flags = asset->Flags;
 		m_Scene->Version = asset->Version;
 
+#if !defined(SAT_DIST)
 		const auto visualisationNode = data[ "Visualisation" ];
 		if( !visualisationNode.IsNull() )
 		{
@@ -134,10 +137,11 @@ namespace Saturn {
 			rVisualisation.ShowGridOnRuntime = visualisationNode[ "ShowGridRT" ].as<bool>( false );
 			rVisualisation.PhysColliderOptions = ( PhysicsColliderVisualisationOptions )visualisationNode[ "PhysCollider" ].as<U>();
 		}
+#endif
 
 		SAT_CORE_INFO( "Deserialising scene SCENE/0/{0}", asset->Path.stem().string() );
 		
-		auto entities = data[ "Entities" ];
+		const auto entities = data[ "Entities" ];
 		if( entities.IsNull() )
 		{
 			SAT_CORE_ERROR( "Missing YAML Node \"Entities\"!" );

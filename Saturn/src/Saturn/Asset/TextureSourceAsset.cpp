@@ -99,6 +99,7 @@ namespace Saturn {
 		stbi_image_free( pTextureData );
 
 		m_Texture = Ref<Texture2D>::Create( ImageFormat::RGBA8, m_Width, m_Height, m_TextureBuffer.Data );
+		m_Texture->SetSourceID( ID );
 
 		m_TextureBuffer.Free();
 #endif
@@ -141,6 +142,7 @@ namespace Saturn {
 		stbi_image_free( pTextureData );
 
 		m_Texture = Ref<Texture2D>::Create( ImageFormat::RGBA8, m_Width, m_Height, m_TextureBuffer.Data );
+		m_Texture->SetSourceID( ID );
 
 		m_TextureBuffer.Free();
 #endif
@@ -192,6 +194,11 @@ namespace Saturn {
 
 		// Buffer
 		RawSerialisation::ReadSaturnBuffer( m_TextureBuffer, stream );
+
+		m_Texture = Ref<Texture2D>::Create( ImageFormat::RGBA8, m_Width, m_Height, m_TextureBuffer.Data, false );
+		m_Texture->SetSourceID( ID );
+
+		m_TextureBuffer.Free();
 #endif
 	}
 }

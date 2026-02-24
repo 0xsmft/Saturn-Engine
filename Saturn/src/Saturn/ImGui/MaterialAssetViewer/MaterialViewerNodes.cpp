@@ -37,6 +37,7 @@
 
 #include "MaterialAssetViewer.h"
 #include "Saturn/Asset/AssetManager.h"
+#include "Saturn/Asset/TextureSourceAsset.h"
 
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
 
@@ -206,14 +207,13 @@ namespace Saturn {
 	{
 		if( rTextureValue.TextureAssetID != 0 )
 		{
-			Ref<Asset> TextureAsset = nullptr;
-			TextureAsset = AssetManager::Get()->FindAsset( rTextureValue.TextureAssetID );
+			Ref<TextureSourceAsset> TextureAsset = AssetManager::Get()->GetAssetAs<TextureSourceAsset>( rTextureValue.TextureAssetID );
 
 			RuntimeData.MaterialAsset->SetAlbeoColor( glm::vec3( 1.0f ) );
 
 			if( TextureAsset )
 			{
-				RuntimeData.MaterialAsset->SetAlbeoMap( TextureAsset->Path );
+				RuntimeData.MaterialAsset->SetAlbeoMap( TextureAsset->ID );
 			}
 		}
 	}

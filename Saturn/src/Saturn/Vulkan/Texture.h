@@ -30,6 +30,8 @@
 
 #include "VulkanError.h"
 #include "Image2D.h"
+
+#include "Saturn/Core/UUID.h"
 #include "Saturn/Core/Buffer.h"
 
 #include <filesystem>
@@ -102,21 +104,23 @@ namespace Saturn {
 		std::filesystem::path GetPath() { return m_Path; }
 		const std::filesystem::path& GetPath() const { return m_Path; }
 
-		int Width() const { return m_Width; }
-		int Height() const { return m_Height; }
+		void SetIsRendererTexture( bool RendererTexture );
+
+		uint32_t Width() const { return m_Width; }
+		uint32_t Height() const { return m_Height; }
 
 		void* GetData() const { return m_pData; }
+
+		// We may want to place this in the constructor and a function.
+		void SetSourceID( UUID id ) { m_SourceAssetID = id; }
+		UUID GetSourceAssetID() const { return m_SourceAssetID; /*UUID( 0 );*/ }
 
 	public:
 		virtual void CreateTextureImage( bool flip ) = 0;
 		virtual void SetData( const void* pData ) = 0;
-		void SetIsRendererTexture( bool RendererTexture );
 		virtual void SetForceTerminate( bool ForceTerminate ) { m_ForceTerminate = ForceTerminate; }
-
 		virtual bool IsRendererTexture() { return m_IsRendererTexture; }
-
 		virtual void CreateMips() = 0;
-
 		virtual VkImageView GetOrCreateMipImageView( uint32_t mip ) = 0;
 
 	protected:
@@ -148,10 +152,15 @@ namespace Saturn {
 
 		std::unordered_map<uint32_t, VkImageView> m_MipToImageViewMap;
 
-		int m_Width = 0;
-		int m_Height = 0;
+		uint32_t m_Width = 0u;
+		uint32_t m_Height = 0u;
+
+		// The asset that this texture comes from.
+		// The ID can be zero because not all textures come from an asset.
+		// Windows is shit so we have to do Saturn::UUID so MSVC doesn't think this is a Win32 UUID.
+		Saturn::UUID m_SourceAssetID = 0;
 	};
-	
+
 	class Texture2D : public Texture
 	{
 	public:

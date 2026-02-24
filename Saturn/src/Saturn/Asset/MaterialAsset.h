@@ -115,13 +115,7 @@ namespace Saturn {
 		void Default();
 
 	private:
-		// Used by MaterialAssetSerialiser & Material asset viewer (node editor)
-		void SetAlbeoMap( const std::filesystem::path& rPath );
-		void SetNormalMap( const std::filesystem::path& rPath );
-		void SetMetallicMap( const std::filesystem::path& rPath );
-		void SetRoughnessMap( const std::filesystem::path& rPath );
-
-		// Used by RawMaterialAssetSerialiser
+		// Used by RawMaterialAssetSerialiser & Material asset viewer (node editor)
 		void SetAlbeoMap( UUID AssetID );
 		void SetNormalMap( UUID AssetID );
 		void SetMetallicMap( UUID AssetID );
@@ -133,9 +127,7 @@ namespace Saturn {
 
 	private:
 		std::unordered_map< std::string, VkDescriptorImageInfo > m_TextureCache;
-
 		std::unordered_map< std::string, Ref<Texture2D> > m_PendingTextureChanges;
-		std::unordered_map< uint32_t, std::filesystem::path > m_VPendingTextureChanges;
 
 #if !defined(SAT_DIST)
 		std::unordered_map< std::string, MemoryAssetDependencyNotifier > m_TextureAssetDependencies;

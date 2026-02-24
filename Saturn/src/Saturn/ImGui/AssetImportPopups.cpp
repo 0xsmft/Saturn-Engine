@@ -236,11 +236,12 @@ namespace Saturn {
 				std::filesystem::copy_file( m_AssetToImportPath, assetPath, std::filesystem::copy_options::overwrite_existing );
 
 				// Replace Extension for texture asset
-				assetPath.replace_extension( ".stx" );
-				asset->SetAbsolutePath( assetPath );
+				auto stxPath = assetPath;
+				stxPath.replace_extension( ".stx" );
+				asset->SetAbsolutePath( stxPath );
 
 				// Create the asset.
-				auto texAsset = Ref<TextureSourceAsset>::Create( asset, m_AssetToImportPath, m_ImportBehaviour == TextureFlags::FlipVertically );
+				auto texAsset = Ref<TextureSourceAsset>::Create( asset, assetPath, m_ImportBehaviour == TextureFlags::FlipVertically );
 
 				// Save the asset
 				TextureSourceAssetSerialiser tsas;
@@ -258,6 +259,14 @@ namespace Saturn {
 			}
 
 			ImGui::EndHorizontal();
+
+			if( PopupModified )
+			{
+				Close();
+				m_ModificationState = AssetImportModificationState::Modified;
+
+				ImGui::CloseCurrentPopup();
+			}
 
 			ImGui::EndPopup();
 		}

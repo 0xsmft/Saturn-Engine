@@ -70,7 +70,6 @@ namespace Saturn {
 	MaterialAsset::~MaterialAsset()
 	{
 		m_TextureCache.clear();
-		m_VPendingTextureChanges.clear();
 		m_PendingTextureChanges.clear();
 #if !defined(SAT_DIST)
 		m_TextureAssetDependencies.clear();
@@ -214,7 +213,6 @@ namespace Saturn {
 	{
 		// We don't want to default the texture because what if the user has only changed the normal map. And we'd be reseting all of the textures.
 		m_TextureCache.clear();
-		m_VPendingTextureChanges.clear();
 		m_PendingTextureChanges.clear();
 
 		RenderThread::Get().Queue( [ this ]()
@@ -272,6 +270,7 @@ namespace Saturn {
 	{
 		RenderThread::Get().Queue( [ this ]()
 		{
+			/*
 			// Load texture (auto assume we have not loaded them).
 			Ref<Texture2D> texture = nullptr;
 
@@ -290,6 +289,7 @@ namespace Saturn {
 
 				m_Material->SetResource( IndexToTextureIndex[ index ], texture );
 			}
+			*/
 
 			UseNormalMap( m_Material->GetResource( "u_NormalTexture" ) != Renderer::Get()->GetPinkTexture() );
 
@@ -333,21 +333,11 @@ namespace Saturn {
 		m_PendingTextureChanges[ "u_AlbedoTexture" ] = rTexture;
 	}
 
-	void MaterialAsset::SetAlbeoMap( const std::filesystem::path& rPath )
-	{
-		m_VPendingTextureChanges[ 0 ] = rPath;
-	}
-
 	void MaterialAsset::SetNormalMap( Ref<Texture2D>& rTexture )
 	{
 		MarkDirty();
 
 		m_PendingTextureChanges[ "u_NormalTexture" ] = rTexture;
-	}
-
-	void MaterialAsset::SetNormalMap( const std::filesystem::path& rPath )
-	{
-		m_VPendingTextureChanges[ 1 ] = rPath;
 	}
 
 	void MaterialAsset::SetMetallicMap( Ref<Texture2D>& rTexture )
@@ -357,21 +347,11 @@ namespace Saturn {
 		m_PendingTextureChanges[ "u_MetallicTexture" ] = rTexture;
 	}
 
-	void MaterialAsset::SetMetallicMap( const std::filesystem::path& rPath )
-	{
-		m_VPendingTextureChanges[ 2 ] = rPath;
-	}
-
 	void MaterialAsset::SetRoughnessMap( Ref<Texture2D>& rTexture )
 	{
 		MarkDirty();
 
 		m_PendingTextureChanges[ "u_RoughnessTexture" ] = rTexture;
-	}
-
-	void MaterialAsset::SetRoughnessMap( const std::filesystem::path& rPath )
-	{
-		m_VPendingTextureChanges[ 3 ] = rPath;
 	}
 
 	void MaterialAsset::ForceUpdate()

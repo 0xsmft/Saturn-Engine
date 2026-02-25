@@ -86,6 +86,13 @@ namespace Saturn {
 		return true;
 	}
 
+	void AluraFontData::ClearData()
+	{
+		m_AluraGlyphs.clear();
+		m_CodepointToGlyph.clear();
+		m_Kerning.clear();
+	}
+
 	//////////////////////////////////////////////////////////////////////////
 
 	AluraFont::AluraFont( const std::filesystem::path& rFontPath, const Ref<Asset>& rBase )
@@ -154,9 +161,7 @@ namespace Saturn {
 	void AluraFont::CreateOrLoadAtlas( bool overrideCache /*= false*/ )
 	{
 #if !defined(SAT_DIST)
-		m_AluraFontData.GetGlyphs().clear();
-		m_AluraFontData.GetKerning().clear();
-		m_AluraFontData.GetCodepointToGlyph().clear();
+		m_AluraFontData.ClearData();
 
 		FMsdfFont font;
 		if( !font.Load( m_Filepath.string().c_str() ) )

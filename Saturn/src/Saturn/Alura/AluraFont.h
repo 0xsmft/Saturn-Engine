@@ -118,6 +118,8 @@ namespace Saturn {
 		AluraSerialisedGlyph* GetGlyph( uint32_t codepoint );
 		bool GetAdvance( double& adv, uint32_t a, uint32_t b );
 
+		void ClearData();
+
 	public:
 		std::vector<AluraSerialisedGlyph>& GetGlyphs() { return m_AluraGlyphs; }
 		const std::vector<AluraSerialisedGlyph>& GetGlyphs() const { return m_AluraGlyphs; }

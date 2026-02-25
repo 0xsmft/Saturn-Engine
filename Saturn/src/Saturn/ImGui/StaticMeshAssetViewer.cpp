@@ -57,6 +57,7 @@ namespace Saturn {
 		AddMesh();
 		m_Name = std::format( "{0}##{1}", m_Mesh->Name, std::to_string( m_AssetID ) );
 
+		m_AssetFinderOutPhys = m_Mesh->GetPhysicsMaterial();
 	}
 
 	StaticMeshAssetViewer::~StaticMeshAssetViewer()
@@ -163,7 +164,12 @@ namespace Saturn {
 			
 			if( Auxiliary::DrawAssetFinder( AssetType::PhysicsMaterial, &s_Open, m_AssetFinderOutPhys, 0 ) )
 			{
+				AssetManager::Get()->UnregisterAssetDependency( m_AssetID, m_Mesh->GetPhysicsMaterial() );
+
 				m_Mesh->SetPhysicsMaterial( m_AssetFinderOutPhys );
+
+				if( m_AssetFinderOutPhys )
+					AssetManager::Get()->RegisterAssetDependency( m_AssetID, m_AssetFinderOutPhys );
 			}
 
 			Auxiliary::EndTreeNode();

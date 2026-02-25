@@ -35,12 +35,24 @@
 
 namespace Saturn {
 
+	/*
+	+----------+------------------+
+	| PREFIX   | MEANING          |
+	+----------+------------------+
+	| Ipt	   | Input            |
+	| As       | Audio Sys.       |
+	| Am       | Asset Mgr.       |
+	| Rc       | Runtime Ctrl.    |
+	+---------------+-------------+
+	*/
+
 	[[nodiscard]] extern bool IptIsMouseLocked();
 	[[nodiscard]] extern bool IptIsMouseButtonPressed( RubyMouseButton btn );
 	[[nodiscard]] extern bool IptIsKeyPressed( RubyKey key );
 	[[nodiscard]] extern glm::vec2 IptGetMousePosition();
 
-	extern Ref<Sound> AsPlaySound2D( AssetID ID, bool PlayNow = true );
+	extern Ref<Sound> AsRequestSound2D( AssetID ID );
+	extern Ref<Sound> AsPlaySound2D( AssetID ID );
 	extern Ref<Sound> AsPlaySoundAtLocation( AssetID ID, const glm::vec3& rPosition, bool PlayNow = true );
 	extern Ref<GraphSound> AsPlayGraphSound( AssetID ID );
 

@@ -29,6 +29,7 @@
 #include "sppch.h"
 #include "GameFramework.h"
 
+#include "Saturn/Core/App.h"
 #include "Saturn/Core/Input.h"
 
 #include "Saturn/Audio/AudioSystem.h"
@@ -59,9 +60,14 @@ namespace Saturn {
 		return Input::Get().MousePosition();
 	}
 
-	Ref<Sound> AsPlaySound2D( AssetID ID, bool PlayNow /*= true */ )
+	Ref<Sound> AsRequestSound2D( AssetID ID )
 	{
-		return AudioSystem::Get().RequestNewSound( ID, UUID(), PlayNow );
+		return AudioSystem::Get().RequestNewSound( ID, UUID(), false );
+	}
+
+	Ref<Sound> AsPlaySound2D( AssetID ID )
+	{
+		return AudioSystem::Get().RequestNewSound( ID, UUID() );
 	}
 
 	Ref<Sound> AsPlaySoundAtLocation( AssetID ID, const glm::vec3& rPosition, bool PlayNow /*= true */ )

@@ -521,7 +521,6 @@ namespace Saturn::Auxiliary {
 
 			if( ImGui::BeginListBox( "##ASSETLIST", ImVec2( -FLT_MIN, 0.0f ) ) )
 			{
-				// TODO: Change with editor.
 				for( const auto& [assetID, rAsset] : AssetManager::Get()->GetCombinedAssetMap() )
 				{
 					bool Selected = ( rOut == assetID );

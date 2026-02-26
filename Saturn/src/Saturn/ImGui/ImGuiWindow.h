@@ -37,11 +37,11 @@ namespace Saturn {
 
 	enum class ImGuiHideWindowFlags
 	{
-		// Destroy the window when its closed
+		// Destroy the window when its closed.
 		Destroy,
 
-		// The the window alive but do not render it.
-		Hide,
+		// The window is alive but do not render it.
+		Hide
 	};
 
 	class ImGuiWindow : public RefTarget

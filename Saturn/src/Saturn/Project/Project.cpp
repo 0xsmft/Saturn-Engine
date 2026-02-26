@@ -46,11 +46,7 @@ namespace Saturn {
 	
 	static const std::vector<std::string> s_AllowedAssetExtentions
 	{
-		{ ".png"          },
-		{ ".tga"          },
-		{ ".jpg"          },
-		{ ".jpeg"         },
-		{ ".hdr"          },
+		{ ".stx"          },
 		{ ".snd"          },
 		{ ".gsnd"         },
 		{ ".scene"        },

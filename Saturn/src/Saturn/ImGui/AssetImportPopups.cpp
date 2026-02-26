@@ -155,7 +155,7 @@ namespace Saturn {
 //			m_PreviewTexture = Ref<Texture2D>::Create( m_AssetToImportPath, AddressingMode::Repeat );
 
 			// By default textures are flipped.
-			m_ImportBehaviour = TextureFlags::FlipVertically;
+			m_ImportBehaviour = TextureLoadFlags_FlipVertically;
 
 			m_Open = true;
 			m_IsReady.store( true );
@@ -194,24 +194,24 @@ namespace Saturn {
 
 			ImGui::SeparatorText( "Flags" );
 
-			auto hasFlag = [ this ]( TextureFlags flag ) -> bool
+			auto hasFlag = [ this ]( TextureLoadFlags flag ) -> bool
 			{
-				return m_ImportBehaviour == flag;
+				return ( m_ImportBehaviour & flag ) != 0;
 			};
 
 			ImGui::BeginHorizontal( "##importOption_flip" );
 
-			bool flip = hasFlag( TextureFlags::FlipVertically );
+			bool flip = hasFlag( TextureLoadFlags_FlipVertically );
 			ImGui::Text( "Flip Vertically on load" );
 			ImGui::Spring();
 
 			ImGui::SetNextItemWidth( 130.0f );
 			if( ImGui::Checkbox( "##FlipVert", &flip ) )
 			{
-				if( hasFlag( TextureFlags::FlipVertically ) )
-					m_ImportBehaviour = TextureFlags::None;
+				if( hasFlag( TextureLoadFlags_FlipVertically ) )
+					m_ImportBehaviour = TextureLoadFlags_None;
 				else
-					m_ImportBehaviour = TextureFlags::FlipVertically;
+					m_ImportBehaviour = TextureLoadFlags_FlipVertically;
 			}
 
 			ImGui::EndHorizontal();
@@ -219,8 +219,8 @@ namespace Saturn {
 #if PREVIEW_TEXTURE_FIXED
 			ImGui::SeparatorText( "Preview Image" );
 
-			ImVec2 UV0 = ( m_ImportBehaviour == TextureFlags::FlipVertically ? ImVec2( 0.0F, 1.0F ) : ImVec2( 0.0F, 0.0F ) );
-			ImVec2 UV1 = ( m_ImportBehaviour == TextureFlags::FlipVertically ? ImVec2( 1.0F, 0.0F ) : ImVec2( 1.0F, 1.0F ) );
+			const ImVec2 UV0 = ( flip ? ImVec2( 0.0F, 1.0F ) : ImVec2( 0.0F, 0.0F ) );
+			const ImVec2 UV1 = ( flip ? ImVec2( 1.0F, 0.0F ) : ImVec2( 1.0F, 1.0F ) );
 			Auxiliary::Image( m_PreviewTexture, { 64.0f, 64.0f }, UV0, UV1 );
 #endif
 
@@ -241,7 +241,7 @@ namespace Saturn {
 				asset->SetAbsolutePath( stxPath );
 
 				// Create the asset.
-				auto texAsset = Ref<TextureSourceAsset>::Create( asset, assetPath, m_ImportBehaviour == TextureFlags::FlipVertically );
+				auto texAsset = Ref<TextureSourceAsset>::Create( asset, assetPath, ( TextureLoadFlags ) m_ImportBehaviour );
 
 				// Save the asset
 				TextureSourceAssetSerialiser tsas;

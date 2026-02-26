@@ -31,7 +31,7 @@
 #include "AssetImportPopupErrors.h"
 
 #include "Saturn/Asset/Asset.h"
-#include "Saturn/Asset/TextureFlags.h"
+#include "Saturn/Asset/TextureLoadFlags.h"
 
 #include "Saturn/Vulkan/Mesh.h"
 
@@ -108,7 +108,7 @@ namespace Saturn {
 		virtual void Initialise() override;
 		virtual void OnImGuiRender() override;
 	private:
-		TextureFlags m_ImportBehaviour = TextureFlags::None;
+		std::underlying_type_t<TextureLoadFlags> m_ImportBehaviour = TextureLoadFlags_None;
 		Ref<Texture2D> m_PreviewTexture = nullptr;
 	};
 

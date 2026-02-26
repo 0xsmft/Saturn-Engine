@@ -58,45 +58,72 @@ namespace Saturn {
 
 	void TextureViewer::OnImGuiRender()
 	{
-		ImGui::PushID( ( int ) m_Asset->ID );
+		if( ImGui::Begin( m_Name.c_str(), &m_Open ) ) 
+		{
+			ImGui::BeginChild( "Texture Information" );
 
-		ImGui::Begin( m_Name.c_str(), &m_Open );
+			ImGui::Text( "Filtering flags" );
 
-		ImGui::BeginChild( "Texture Information" );
+			constexpr const char* pItems[] = { "Linear", "Optimal" };
+			static TextureFilteringFlags SelectedEnum = m_Asset->GetFilteringFlags();
+			static const char* Selected = pItems[ ( int ) SelectedEnum ];
+			if( ImGui::BeginCombo( "##setsamplerfilter", Selected ) )
+			{
+				for( unsigned int i = 0; i < IM_ARRAYSIZE( pItems ); i++ )
+				{
+					bool IsSelected = ( Selected == pItems[ i ] );
 
-		ImGui::BeginHorizontal( "##textureInfoH" );
+					if( ImGui::Selectable( pItems[ i ], IsSelected ) )
+					{
+						SelectedEnum = ( TextureFilteringFlags ) i;
+						Selected = pItems[ i ];
 
-		ImGui::BeginVertical( "##textureInfoV" );
+						m_Asset->SetFilteringFlags( SelectedEnum );
+					}
 
-		ImGui::Text( "Texture Path" );
-		const std::string texturePath = m_Asset->Path.string();
+					if( IsSelected )
+					{
+						ImGui::SetItemDefaultFocus();
+					}
+				}
 
-		ImGui::InputText( "##texturepath", ( char* ) texturePath.c_str(), texturePath.size(), ImGuiInputTextFlags_ReadOnly );
+				ImGui::EndCombo();
+			}
 
-		ImGui::Spring();
+			ImGui::BeginHorizontal( "##textureInfoH" );
 
-		const std::string sizeText = std::format( "{0}x{1}", m_Texture->Width(), m_Texture->Height() );
-		ImGui::Text( "Texture Size: %s", sizeText.c_str() );
+			ImGui::BeginVertical( "##textureInfoV" );
 
-		ImGui::EndVertical();
+			ImGui::Text( "Texture Path" );
+			{
+				Auxiliary::ScopedDisabledFlag dis( true );
+			
+				const std::string texturePath = m_Asset->GetTextureAbsolutePath().string();
+				ImGui::InputText( "##texturepath", ( char* ) texturePath.c_str(), texturePath.size(), ImGuiInputTextFlags_ReadOnly );
+			}
+			ImGui::Spring();
 
-		ImGui::EndHorizontal();
+			const std::string sizeText = std::format( "{0}x{1}", m_Texture->Width(), m_Texture->Height() );
+			ImGui::Text( "Texture Size: %s", sizeText.c_str() );
 
-		Auxiliary::Image( m_Texture, { ( float ) m_Texture->Width() * 0.5f, ( float ) m_Texture->Height() * 0.5f } );
+			ImGui::EndVertical();
 
-		ImGui::EndChild();
+			ImGui::EndHorizontal();
+
+			Auxiliary::Image( m_Texture, { ( float ) m_Texture->Width() * 0.5f, ( float ) m_Texture->Height() * 0.5f } );
+
+			ImGui::EndChild();
+		}
 
 		ImGui::End();
-
-		ImGui::PopID();
 	}
 
 	void TextureViewer::AddTexture()
 	{
 		m_Texture = m_Asset->GetTexture();
 
-		m_Open = true;
 		m_Name = std::format( "{0}##{1}", m_Asset->Name, ( uint64_t ) m_Asset->ID );
+		m_Open = true;
 	}
 
 }

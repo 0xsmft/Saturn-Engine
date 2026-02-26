@@ -29,7 +29,7 @@
 #pragma once
 
 #include "Asset.h"
-#include "TextureFlags.h"
+#include "TextureLoadFlags.h"
 
 #include "Saturn/Serialisation/Raw/RawSerialisation.h"
 
@@ -43,10 +43,9 @@ namespace Saturn {
 	public:
 		TextureSourceAsset();
 		TextureSourceAsset( const Ref<Asset>& rBase );
-		TextureSourceAsset( const Ref<Asset>& rBase, std::filesystem::path AbsolutePath, bool Flip = false );
+		TextureSourceAsset( const Ref<Asset>& rBase, std::filesystem::path AbsolutePath, TextureLoadFlags flags = TextureLoadFlags_FlipVertically );
 
 		~TextureSourceAsset();
-
 
 		void WriteToVFS();
 		void ReadFromVFS();
@@ -56,65 +55,40 @@ namespace Saturn {
 		uint32_t Height() const { return m_Height; }
 		uint32_t Channels() const { return m_Channels; }
 		bool IsHdr() const { return m_HDR; }
-		TextureFlags GetFlags() const { return m_Flags; }
-		void SetFlags( TextureFlags flags ) { m_Flags = flags; }
-
-		Buffer TextureData() const { return m_TextureBuffer; }
-
 		Ref<Texture2D> GetTexture() const { return m_Texture; }
-
 		const std::filesystem::path& GetTextureAbsolutePath() const { return m_AbsolutePath; }
 
-	public:
-		//////////////////////////////////////////////////////////////////////////
-		// Raw binary serialisation.
-
-		void SerialiseData( std::ofstream& rStream )
-		{ 
-			RawSerialisation::WriteString( m_AbsolutePath.string(), rStream );
-
-			RawSerialisation::WriteObject( m_Width, rStream );
-			RawSerialisation::WriteObject( m_Height, rStream );
-			RawSerialisation::WriteObject( m_Channels, rStream );
-			RawSerialisation::WriteObject( m_Flipped, rStream );
-			RawSerialisation::WriteObject( m_HDR, rStream );
-
-			// Buffer
-			RawSerialisation::WriteSaturnBuffer( m_TextureBuffer, rStream );
-		}
-
-		void DeserialiseData( std::ifstream& rStream )
+		TextureLoadFlags GetFlags() const { return ( TextureLoadFlags ) m_LoadFlags; }
+		bool IsFlagSet( TextureLoadFlags flag ) const { return ( m_LoadFlags & flag ) != 0; }
+		void SetFlag( TextureLoadFlags flag, bool val ) 
 		{
-			m_AbsolutePath = RawSerialisation::ReadString( rStream );
-
-			RawSerialisation::ReadObject( m_Width, rStream );
-			RawSerialisation::ReadObject( m_Height, rStream );
-			RawSerialisation::ReadObject( m_Channels, rStream );
-			RawSerialisation::ReadObject( m_Flipped, rStream );
-			RawSerialisation::ReadObject( m_HDR, rStream );
-
-			// Buffer
-			// Don't read the buffer just yet.
-			//RawSerialisation::ReadSaturnBuffer( m_TextureBuffer, rStream );
+			if( val )
+				m_LoadFlags |= flag;
+			else
+				m_LoadFlags &= ~flag;
 		}
+
+		TextureFilteringFlags GetFilteringFlags() const { return m_SamplerFliteringFlags; }
+		void SetFilteringFlags( TextureFilteringFlags flags ) { m_SamplerFliteringFlags = flags; }
 
 	private:
 		void Load();
 		void LoadRawTexture();
 
 	private:
+#if !defined(SAT_DIST)
+		// Path to the real .png/.jpg file
+		// The path is not needed on Dist as we don't load from the raw file
+		// we load from the image data that is already part of this asset in the AssetBundle.
 		std::filesystem::path m_AbsolutePath;
+#endif
 
 		uint32_t m_Width = 0;
 		uint32_t m_Height = 0;
 		uint32_t m_Channels = 0;
-		TextureFlags m_Flags = TextureFlags::FlipVertically;
-
-		bool m_Flipped = false;
+		std::underlying_type_t<TextureLoadFlags> m_LoadFlags = TextureLoadFlags_FlipVertically;
+		TextureFilteringFlags m_SamplerFliteringFlags = TextureFilteringFlags::Linear;
 		bool m_HDR = false;
-		bool m_FullyLoaded = false;
-
-		Buffer m_TextureBuffer;
 
 		Ref<Texture2D> m_Texture;
 

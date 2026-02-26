@@ -44,8 +44,8 @@ namespace Saturn {
 	{
 	}
 
-	TextureSourceAsset::TextureSourceAsset( const Ref<Asset>& rBase, std::filesystem::path AbsolutePath, bool Flip )
-		: Asset( rBase ), m_AbsolutePath( std::move( AbsolutePath ) ), m_Flipped( Flip )
+	TextureSourceAsset::TextureSourceAsset( const Ref<Asset>& rBase, std::filesystem::path AbsolutePath, TextureLoadFlags flags )
+		: Asset( rBase ), m_AbsolutePath( std::move( AbsolutePath ) ), m_LoadFlags( flags )
 	{
 		LoadRawTexture();
 	}
@@ -57,7 +57,6 @@ namespace Saturn {
 
 	TextureSourceAsset::~TextureSourceAsset()
 	{
-		m_TextureBuffer.Free();
 	}
 
 	void TextureSourceAsset::Load()
@@ -69,7 +68,7 @@ namespace Saturn {
 		bool hdr = false;
 		stbi_uc* pTextureData;
 
-		stbi_set_flip_vertically_on_load( m_Flags == TextureFlags::FlipVertically );
+		stbi_set_flip_vertically_on_load( IsFlagSet( TextureLoadFlags_FlipVertically ) );
 
 		hdr = stbi_is_hdr( m_AbsolutePath.string().c_str() );
 		SAT_CORE_ASSERT( m_HDR != hdr, "Image hdr types don't match!" );
@@ -95,13 +94,13 @@ namespace Saturn {
 		//		 an alpha channel.
 		const uint32_t ImageSize = m_Width * m_Height * 4;
 
-		m_TextureBuffer = Buffer::Copy( pTextureData, static_cast< size_t >( ImageSize ) );
+		Buffer textureBuffer = Buffer::Copy( pTextureData, static_cast< size_t >( ImageSize ) );
 		stbi_image_free( pTextureData );
 
-		m_Texture = Ref<Texture2D>::Create( ImageFormat::RGBA8, m_Width, m_Height, m_TextureBuffer.Data );
+		m_Texture = Ref<Texture2D>::Create( ImageFormat::RGBA8, m_Width, m_Height, textureBuffer.Data );
 		m_Texture->SetSourceID( ID );
 
-		m_TextureBuffer.Free();
+		textureBuffer.Free();
 #endif
 	}
 
@@ -114,7 +113,7 @@ namespace Saturn {
 
 		stbi_uc* pTextureData;
 
-		stbi_set_flip_vertically_on_load( m_Flags == TextureFlags::FlipVertically );
+		stbi_set_flip_vertically_on_load( IsFlagSet( TextureLoadFlags_FlipVertically ) );
 
 		m_HDR = stbi_is_hdr( m_AbsolutePath.string().c_str() );
 
@@ -138,13 +137,13 @@ namespace Saturn {
 		//		 and stop assuming that all textures have
 		//		 an alpha channel.
 		const uint32_t ImageSize = m_Width * m_Height * 4;
-		m_TextureBuffer = Buffer::Copy( pTextureData, static_cast<size_t>( ImageSize ) );
+		Buffer textureBuffer = Buffer::Copy( pTextureData, static_cast<size_t>( ImageSize ) );
 		stbi_image_free( pTextureData );
 
-		m_Texture = Ref<Texture2D>::Create( ImageFormat::RGBA8, m_Width, m_Height, m_TextureBuffer.Data );
+		m_Texture = Ref<Texture2D>::Create( ImageFormat::RGBA8, m_Width, m_Height, textureBuffer.Data );
 		m_Texture->SetSourceID( ID );
 
-		m_TextureBuffer.Free();
+		textureBuffer.Free();
 #endif
 	}
 
@@ -156,12 +155,9 @@ namespace Saturn {
 
 		std::ofstream stream( out, std::ios::binary | std::ios::trunc );
 
-//		RawSerialisation::WriteString( m_AbsolutePath.string(), stream );
-
 		RawSerialisation::WriteObject( m_Width, stream );
 		RawSerialisation::WriteObject( m_Height, stream );
 		RawSerialisation::WriteObject( m_Channels, stream );
-		RawSerialisation::WriteObject( m_Flipped, stream );
 		RawSerialisation::WriteObject( m_HDR, stream );
 
 		// Buffer
@@ -185,20 +181,19 @@ namespace Saturn {
 
 		/////////////////////////////////////
 
-//		m_AbsolutePath = RawSerialisation::ReadString( stream );
 		RawSerialisation::ReadObject( m_Width, stream );
 		RawSerialisation::ReadObject( m_Height, stream );
 		RawSerialisation::ReadObject( m_Channels, stream );
-		RawSerialisation::ReadObject( m_Flipped, stream );
 		RawSerialisation::ReadObject( m_HDR, stream );
 
 		// Buffer
-		RawSerialisation::ReadSaturnBuffer( m_TextureBuffer, stream );
+		Buffer TemporaryBuffer;
+		RawSerialisation::ReadSaturnBuffer( TemporaryBuffer, stream );
 
-		m_Texture = Ref<Texture2D>::Create( ImageFormat::RGBA8, m_Width, m_Height, m_TextureBuffer.Data, false );
+		m_Texture = Ref<Texture2D>::Create( ImageFormat::RGBA8, m_Width, m_Height, TemporaryBuffer.Data, false );
 		m_Texture->SetSourceID( ID );
 
-		m_TextureBuffer.Free();
+		TemporaryBuffer.Free();
 #endif
 	}
 }

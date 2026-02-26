@@ -48,6 +48,9 @@ namespace Saturn {
 		virtual void OnUpdate( Timestep ts ) override {}
 		virtual void OnEvent( Event& rEvent ) override {}
 
+	public:
+		void HandleAssetDependencyReplace( AssetID oldID, AssetID newID );
+
 	private:
 		void AddMaterialAsset();
 		void DrawInternal();

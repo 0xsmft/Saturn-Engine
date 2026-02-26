@@ -52,6 +52,10 @@
 #include <imgui_node_editor.h>
 #include <stack>
 
+#if !defined(SAT_DIST)
+#include "Saturn/ImGui/EditorEvents.h"
+#endif
+
 namespace ed = ax::NodeEditor;
 
 namespace Saturn {
@@ -81,6 +85,36 @@ namespace Saturn {
 	void MaterialAssetViewer::OnImGuiRender()
 	{
 		DrawInternal();
+	}
+
+	void MaterialAssetViewer::HandleAssetDependencyReplace( AssetID oldID, AssetID newID )
+	{
+#if !defined(SAT_DIST)
+		// Discover all nodes that are based from MaterialGetAssetNode and set new the ID if needed.
+		for( auto& [Id, pNode] : m_NodeEditor->GetNodes() )
+		{
+			if( !pNode->GetClass()->IsChildOf( MaterialGetAssetNode::StaticClass() )
+				|| pNode->GetClass() != MaterialGetAssetNode::StaticClass() )
+			{
+				continue;
+			}
+
+			// Get the GetAsset node and check if this ID is the one that needs replaced.
+			SharedPtr<MaterialGetAssetNode> getAssetNode = pNode.As<MaterialGetAssetNode>();
+			if( getAssetNode->GetAssetID() == oldID )
+			{
+				getAssetNode->SetAssetID( newID );
+				SAT_CORE_INFO( "[MaterialAssetViewer] HandleAssetDependencyReplace - Changed DependencyID from {0} to  {1}", oldID, newID );
+			}
+		}
+
+		if( m_NodeEditor->Evaluate() != NodeEditorCompilationStatus::Success ) 
+		{
+			Application::Get()->DispatchEvent<SendEditorNotificationEvent>( "The node editor failed to evaluate." );
+		}
+
+		m_NodeEditor->SaveAndMarkClean();
+#endif
 	}
 
 	void MaterialAssetViewer::AddMaterialAsset()

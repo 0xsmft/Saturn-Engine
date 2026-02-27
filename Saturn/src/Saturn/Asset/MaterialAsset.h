@@ -185,13 +185,9 @@ namespace Saturn {
 
 	private:
 		void SetMaterial( uint32_t index, Ref<MaterialAsset> material );
-		void AddTargetMaterialAsset( uint32_t index, AssetID materialID );
-		void OnAssetDependencyChanged( AssetID oldID, AssetID newID );
 
 	private:
 		std::vector< Ref<MaterialAsset> > m_Materials;
-
-		std::unordered_map<size_t, MemoryAssetDependencyNotifier> m_MaterialAssetsIDs;
 
 		// This may not be the best way.
 		std::vector<bool> m_HasOverridden;

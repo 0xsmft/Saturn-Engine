@@ -449,16 +449,12 @@ namespace Saturn {
 
 	void MaterialRegistry::SetMaterial( uint32_t index, AssetID id )
 	{
-		AddTargetMaterialAsset( index, id );
-
 		m_HasOverridden[ index ] = true;
 		m_Materials[ index ] = AssetManager::Get()->GetAssetAs<MaterialAsset>( id );
 	}
 
 	void MaterialRegistry::SetMaterial( uint32_t index, Ref<MaterialAsset> material )
 	{
-		AddTargetMaterialAsset( index, material->ID );
-
 		m_HasOverridden[ index ] = false;
 		m_Materials[ index ] = material;
 	}
@@ -471,38 +467,10 @@ namespace Saturn {
 		m_Materials[ index ] = AssetManager::Get()->GetAssetAs<MaterialAsset>( id );
 	}
 
-	void MaterialRegistry::AddTargetMaterialAsset( uint32_t index, AssetID materialID )
-	{
-#if !defined(SAT_DIST)
-		if( materialID == 0 )
-			return;
-
-		const auto Itr = m_MaterialAssetsIDs.find( index );
-		if( Itr != m_MaterialAssetsIDs.end() )
-		{
-			Itr->second = materialID;
-		}
-		else
-		{
-			MemoryAssetDependencyNotifier notifier( SAT_BIND_EVENT_FN( OnAssetDependencyChanged ) );
-			notifier = materialID;
-
-			m_MaterialAssetsIDs[ index ] = notifier;
-		}
-#endif
-	}
-
-	void MaterialRegistry::OnAssetDependencyChanged( AssetID oldID, AssetID newID )
-	{
-		SAT_CORE_INFO( "OnAssetDependencyChanged: {0}, {1}", oldID, newID );
-	}
-
 	void MaterialRegistry::ResetMaterial( uint32_t index, Ref<MaterialRegistry> srcRegistry )
 	{
 		m_HasOverridden[ index ] = false;
 		m_Materials[ index ] = srcRegistry->GetMaterialAssets()[ index ];
-
-		m_MaterialAssetsIDs[ index ] = srcRegistry->GetMaterialAssets()[ index ]->ID;
 	}
 
 	bool MaterialRegistry::HasAnyOverrides() const
@@ -560,11 +528,6 @@ namespace Saturn {
 			// Will call RawMaterialAssetSerialiser
 			Ref<MaterialAsset> asset = AssetManager::Get()->GetAssetAs<MaterialAsset>( MaterialID );
 			
-			if( MaterialID != 0 ) 
-			{
-				rRegistry->AddTargetMaterialAsset( (uint32_t)i, MaterialID );
-			}
-
 			if( asset )
 			{
 				rRegistry->AddAsset( asset );

@@ -14,6 +14,8 @@ namespace SaturnBuildTool
 
         public static TaskCache TaskCache;
 
+        public static LinkCache LinkCache;
+
         public static ProjectInfo ProjectInfo;
 
         public static Platform Platform;

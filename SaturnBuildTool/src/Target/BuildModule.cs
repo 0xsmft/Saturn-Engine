@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.Linq.Expressions;
 using SaturnBuildTool.Tools;
 
 namespace SaturnBuildTool
@@ -20,7 +21,7 @@ namespace SaturnBuildTool
 
         /// <summary>
         /// The output name for this module.
-        /// Most of the time the name is similar to the Target, it may look like {TargetName}-{ModuleName}
+        /// Most of the time the name is similar to the Target, it may look like {ModuleName}-{TargetName}
         /// </summary>
         public string OutputName { get; set; }
 
@@ -44,11 +45,20 @@ namespace SaturnBuildTool
         /// </summary>
         public LinkSettings ModuleLinkSettings { get; set; }
 
+        /// <summary>
+        /// Decides if this modules needs to be linked or not if any source file was compiled successfully.
+        /// 
+        /// NOTE: The module may be forced to be linked for external reasons such as a dependant .lib file being modified, 
+        /// if thats thats case then this variable will NOT become true.
+        /// </summary>
+        public bool ShouldLink { get; set; }
+
         public BuildModule( BuildTarget parent, Module module )
         {
             ModuleRules = module;
             ApiName = $"{ModuleRules.Name.ToUpperInvariant()}_API";
             OutputName = $"{module.Name}-{parent.TargetRules.Name}";
+            ShouldLink = false;
 
             switch( module.OutputDirectoryOptions )
             {
@@ -194,9 +204,32 @@ namespace SaturnBuildTool
             return Path.Combine( Shared.ProjectInfo.RootDirectory, "bin", Shared.Platform.GetOutputFolderName( Shared.ProjectInfo.CurrentConfigKind ), Shared.TargetToBuild.Name );
         }
 
-        public List<string> GetIntermediateFilesFromOutDir()
+        public string GetFullBinaryPathWithFilename() 
         {
-            return DirectoryTools.DirSearch( OutputPath, Shared.Platform.ObjectFileExtension );
+            string basePath = GetFullBinaryPath();
+            switch( ModuleRules.OutputType ) 
+            {
+                case LinkerOutput.StaticLibrary:
+                    {
+                        basePath = Path.Combine( basePath, OutputName + Shared.Platform.StaticLibraryExtension );
+                    } break;
+
+                case LinkerOutput.SharedLibrary:
+                    {
+                        basePath = Path.Combine( basePath, OutputName + Shared.Platform.SharedLibraryExtension );
+                    }
+                    break;
+
+                case LinkerOutput.Executable:
+                    {
+                        basePath = Path.Combine( basePath, OutputName + Shared.Platform.ExecutableExtension );
+                    }
+                    break;
+
+                default: break;
+            }
+
+            return basePath;
         }
 
         public void AppendOutputs() 
@@ -211,7 +244,7 @@ namespace SaturnBuildTool
                 list = ModuleLinkSettings.ObjectFiles;
             }
 
-            // First, search the TaskCache
+            // Search the TaskCache as well
             var filesCreatedFromThisBuild = Shared.TaskCache.GetOutputItemFromSource( OutputPath );
             list.AddRange( filesCreatedFromThisBuild );
         }

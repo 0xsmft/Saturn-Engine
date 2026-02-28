@@ -39,13 +39,13 @@ namespace SaturnBuildTool
             switch( Shared.ProjectInfo.TargetPlatformKind )
             {
                 default:
-                case ArchitectureKind.x64:
+                case ArchitectureKind.x86_64:
                     {
                         processStart.FileName = Path.Combine( toolsDir, "bin", "Hostx64", "x64", "link.exe" );
                     }
                     break;
 
-                case ArchitectureKind.x86:
+                case ArchitectureKind.x86_32:
                     {
                         processStart.FileName = Path.Combine( toolsDir, "bin", "Hostx86", "x86", "link.exe" );
                     }
@@ -136,9 +136,9 @@ namespace SaturnBuildTool
 
             Args.Add( string.Format( " /ILK:\"{0}\"", ilkPath ) );
 
-            foreach( string links in LinkSettings.Links )
+            foreach( string link in LinkSettings.Links )
             {
-                Args.Add( string.Format( " \"{0}\"", links ) );
+                Args.Add( string.Format( " \"{0}\"", link ) );
             }
 
             // Dynamic base
@@ -147,7 +147,7 @@ namespace SaturnBuildTool
                 List<string> bases = new List<string>();
                 foreach( string file in LinkSettings.DynamicBases )
                 {
-                    bases.Add( string.Format( " \"{0}\"", file ) );
+                    Shared.LinkCache.CacheFile( file );
                 }
 
                 Args.Add( string.Format( " /DYNAMICBASE{0}", string.Join( "", bases ) ) );
@@ -224,13 +224,13 @@ namespace SaturnBuildTool
 
             switch( Shared.ProjectInfo.TargetPlatformKind )
             {
-                case ArchitectureKind.x64:
+                case ArchitectureKind.x86_64:
                     {
                         CLLocation = Path.Combine( CLLocation, "lib", "x64" );
                     }
                     break;
 
-                case ArchitectureKind.x86:
+                case ArchitectureKind.x86_32:
                     {
                         CLLocation = Path.Combine( CLLocation, "lib", "x86" );
                     }

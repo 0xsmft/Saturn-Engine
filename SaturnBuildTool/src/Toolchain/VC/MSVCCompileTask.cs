@@ -30,13 +30,13 @@ namespace SaturnBuildTool
 
             switch( Shared.ProjectInfo.TargetPlatformKind )
             {
-                case ArchitectureKind.x64:
+                case ArchitectureKind.x86_64:
                     {
                         processStart.FileName = Path.Combine( CLLocation, "bin", "Hostx64", "x64", "cl.exe" );
                     }
                     break;
 
-                case ArchitectureKind.x86:
+                case ArchitectureKind.x86_32:
                     {
                         processStart.FileName = Path.Combine( CLLocation, "bin", "Hostx86", "x86", "cl.exe" );
                     }
@@ -218,6 +218,11 @@ namespace SaturnBuildTool
                     {
                         Args.Add( " /D\"SAT_DIST\"" );
                         Args.Add( " /MD" ); // Multithreaded RT
+
+                        if( CommandLineParser.Instance.FindFlag( "DISTASDBG" ) ) 
+                        {
+                            Args.Add( " /FS /Z7" );
+                        }
                     }
                     break;
             }

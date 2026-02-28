@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Xml;
 
 namespace SaturnBuildTool
 {
@@ -37,6 +39,11 @@ namespace SaturnBuildTool
         /// The link settings for this target
         /// </summary>
         public LinkSettings TargetLinkSettings { get; set; }
+
+        /// <summary>
+        /// Hot reloading only, the time at which this target was built.
+        /// </summary>
+        public int Timestamp { get; } = ( int ) DateTime.UtcNow.Subtract( new DateTime( 1970, 1, 1 ) ).TotalSeconds;
 
         public BuildTarget( Target target )
         {

@@ -36,13 +36,13 @@ namespace SaturnBuildTool
             switch( Shared.ProjectInfo.TargetPlatformKind )
             {
                 default:
-                case ArchitectureKind.x64:
+                case ArchitectureKind.x86_64:
                     {
                         processStart.FileName = Path.Combine( toolsDir, "bin", "Hostx64", "x64", "lib.exe" );
                     }
                     break;
 
-                case ArchitectureKind.x86:
+                case ArchitectureKind.x86_32:
                     {
                         processStart.FileName = Path.Combine( toolsDir, "bin", "Hostx86", "x86", "lib.exe" );
                     }
@@ -164,13 +164,13 @@ namespace SaturnBuildTool
 
             switch( Shared.ProjectInfo.TargetPlatformKind )
             {
-                case ArchitectureKind.x64:
+                case ArchitectureKind.x86_64:
                     {
                         CLLocation = Path.Combine( CLLocation, "lib", "x64" );
                     }
                     break;
 
-                case ArchitectureKind.x86:
+                case ArchitectureKind.x86_32:
                     {
                         CLLocation = Path.Combine( CLLocation, "lib", "x86" );
                     }

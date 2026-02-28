@@ -26,10 +26,6 @@ namespace SaturnBuildTool
         public int ExitCode = 0;
         private readonly List<string> Args;
 
-        private bool HasCompiledAnyFile = false;
-
-        private bool TargetPendingLink = false;
-
         private uint NumTasksFailed = 0;
 
         private readonly List<List<string>> FilesPerThread = new List<List<string>>();
@@ -225,8 +221,8 @@ namespace SaturnBuildTool
             // TODO: We only support building for Windows
             switch( Shared.ProjectInfo.TargetPlatformKind )
             {
-                case ArchitectureKind.x86:
-                case ArchitectureKind.x64:
+                case ArchitectureKind.x86_32:
+                case ArchitectureKind.x86_64:
                     {
                         Shared.Toolchain = new MSVCToolchain();
                     }
@@ -238,6 +234,7 @@ namespace SaturnBuildTool
 
             Shared.FileCache = FileCache.Load();
             Shared.TaskCache = TaskCache.Load();
+            Shared.LinkCache = LinkCache.Load();
 
             return true;
         }
@@ -264,19 +261,19 @@ namespace SaturnBuildTool
             return true;
         }
 
-        private void CompileSingeFileUnchecked( CompileSettings compileSettings, ToolchainBase toolchain, string file )
+        private void CompileSingeFileUnchecked( CompileSettings compileSettings, BuildModule buildModule, ToolchainBase toolchain, string file )
         {
             int exitCode = toolchain.Compile( file, compileSettings );
             Shared.FileCache.CacheFile( file );
 
-            if( exitCode == 0 )
+            if( exitCode != 0 )
             {
-                HasCompiledAnyFile = true;
-            }
-            else
-            { 
                 ++NumTasksFailed;
                 Console.WriteLine( $"SBT: ERR: UNABLE TO COMPILE FILE: CL {file}" );
+            }
+            else
+            {
+                buildModule.ShouldLink = true;
             }
         }
 
@@ -332,11 +329,29 @@ namespace SaturnBuildTool
 
             // Add {project-name}.Load.cpp file
             string loadFilePath = Path.Combine( Shared.ProjectInfo.BuildDir, $"{Shared.ProjectInfo.Name}.Load.cpp" );
-            if( File.Exists( loadFilePath ) )
+            bool modified = Shared.FileCache.HasFileBeenModified( loadFilePath );
+            if( File.Exists( loadFilePath ) && ( modified || Action == ActionType.Rebuild ) )
             {
                 // Add it to the first module, a bit screwy!
                 var first = ModuleToFiles.Keys.First();
                 ModuleToFiles[ first ].Add( loadFilePath );
+
+                Shared.FileCache.CacheFile( loadFilePath );
+            }
+
+            if( Shared.ProjectInfo.CurrentConfigKind == ConfigKind.Dist )
+            {
+                // Add {project-name}.Entry.cpp file
+                string entryFilePath = Path.Combine( Shared.ProjectInfo.BuildDir, $"{Shared.ProjectInfo.Name}.Entry.cpp" );
+                bool entryModified = Shared.FileCache.HasFileBeenModified( entryFilePath );
+                if( File.Exists( entryFilePath ) && ( entryModified || Action == ActionType.Rebuild ) )
+                {
+                    // Add it to the first module, a bit screwy!
+                    var first = ModuleToFiles.Keys.First();
+                    ModuleToFiles[ first ].Add( entryFilePath );
+
+                    Shared.FileCache.CacheFile( entryFilePath );
+                }
             }
 
             /*
@@ -350,19 +365,7 @@ namespace SaturnBuildTool
                 sourceFiles.Add( EntryFilepath );
             }
 
-            // Add {project-name}.Load.cpp file
-            string path = Path.Combine( Shared.ProjectInfo.BuildDir, $"{Shared.ProjectInfo.Name}.Load.cpp" );
-            if( File.Exists( path ) )
-            {
-                sourceFiles.Add( path );
-            }
-
             sourceFiles.AddRange( DirectoryTools.SourceSearch( Shared.ProjectInfo.HeaderToolGeneratedPath, true ) );
-
-            if( Action == ActionType.Build )
-                SourceFiles = Shared.FileCache.Analyse( sourceFiles );
-            else
-                SourceFiles = sourceFiles;
             */
 
             WriteRecipe();
@@ -388,19 +391,6 @@ namespace SaturnBuildTool
                 byte[] keyStrBuffer = Encoding.UTF8.GetBytes( kv );
                 writer.Write( ( ulong ) keyStrBuffer.Length );
                 writer.Write( keyStrBuffer );
-
-                /*
-                foreach( var item in kv.Value )
-                {
-                    if( item.Contains( ".Load.cpp" ) || item.Contains( ".Entry.cpp" ) )
-                        continue;
-
-                    // C++: RawSerialisation::WriteString
-                    byte[] strBuffer = Encoding.UTF8.GetBytes( item );
-                    writer.Write( ( ulong ) item.Length );
-                    writer.Write( strBuffer );
-                }
-                */
             }
 
             writer.Close();
@@ -423,7 +413,7 @@ namespace SaturnBuildTool
             FileStream fs = File.Create( outputPath );
             StreamWriter sw = new StreamWriter( fs );
 
-//            sw.Write( Shared.TargetToBuild.Timestamp );
+            sw.Write( Shared.CurrentBuildTarget.Timestamp );
 
             sw.Close();
             fs.Close();
@@ -483,37 +473,31 @@ namespace SaturnBuildTool
             return result;
         }
 
-        private bool LinkFinal()
-        {
-            bool itemExisted = Shared.TaskCache.LnkFinalOutputExists( Shared.CurrentBuildTarget.TargetLinkSettings.OutputPath );
-            if( TargetPendingLink || CheckIfLastRunWasHotReload() )
-            {
-                return Shared.Toolchain.Link( Shared.CurrentBuildTarget.TargetLinkSettings ) == 0;
-            }
-            else if( !itemExisted && !HasCompiledAnyFile )
-            {
-                Console.WriteLine( "Linking, as it does not exist in the TaskCache" );
-                return Shared.Toolchain.Link( Shared.CurrentBuildTarget.TargetLinkSettings ) == 0;
-            }
-
-            return false;
-        }
-
         private void CompileModule()
         {
             foreach( var name in SortedModules )
             {
                 if( ModuleToFiles.TryGetValue( name, out var files ) )
                 {
+                    if( files.Count == 0 )
+                        continue;
+
                     ModuleToToolchain.TryGetValue( name, out var toolchain );
                     if( Shared.CurrentBuildTarget.Modules.TryGetValue( name, out var buildModule ) )
                     {
                         // Compile module PCH first
                         if( buildModule.ModuleRules.PCH.Valid() ) 
                         {
-                            CompileSingeFileUnchecked( buildModule.PCHCompileSettings, toolchain, buildModule.ModuleRules.PCH.SourceFile );
+                            bool modified = Shared.FileCache.HasFileBeenModified( buildModule.ModuleRules.PCH.SourceFile );
+                            if( modified || Action == ActionType.Rebuild )
+                            {
+                                // Compile PCH with PCH settings.
+                                CompileSingeFileUnchecked( buildModule.PCHCompileSettings, buildModule, toolchain, buildModule.ModuleRules.PCH.SourceFile );
 
-                            files.Remove( buildModule.ModuleRules.PCH.SourceFile );
+                                files.Remove( buildModule.ModuleRules.PCH.SourceFile );
+
+                                Shared.FileCache.CacheFile( buildModule.ModuleRules.PCH.SourceFile );
+                            }
                         }
 
                         int threadCount = Math.Max( 1, Math.Min( files.Count, Environment.ProcessorCount ) );
@@ -534,32 +518,56 @@ namespace SaturnBuildTool
 
                                 if( buildModule.ModuleRules.CompiledInDirectly )
                                 {
-                                    CompileSingeFileUnchecked( buildModule.ModuleCompileSettings, Shared.Toolchain, files[ j ] );
-                                    TargetPendingLink = true;
+                                    CompileSingeFileUnchecked( buildModule.ModuleCompileSettings, buildModule, Shared.Toolchain, files[ j ] );
                                 }
                                 else
                                 {
-                                    CompileSingeFileUnchecked( buildModule.ModuleCompileSettings, toolchain, files[ j ] );
+                                    CompileSingeFileUnchecked( buildModule.ModuleCompileSettings, buildModule, toolchain, files[ j ] );
                                 }
                             }
                         } );
+                    }
+                }
+            }
+        }
 
-                        /*
-                        foreach( var file in files )
+        private void BuildLinkCacheForModules() 
+        {
+            foreach( var name in SortedModules )
+            {
+                if( Shared.CurrentBuildTarget.Modules.TryGetValue( name, out var buildModule ) )
+                {
+                    // Append outputs
+                    buildModule.AppendOutputs();
+
+                    foreach( var link in buildModule.ModuleLinkSettings.Links )
+                    {
+                        string path = link;
+
+                        // If there is not parent i.e. "MyLink.lib" then we need to resolve the link path to this lib...
+                        if( !Path.IsPathRooted( link ) )
                         {
-                            if( buildModule.ModuleRules.CompiledInDirectly )
+                            // Only if it does not exist.
+                            if( !File.Exists( link ) )
                             {
-                                CompileSingeFileUnchecked( buildModule.ModuleCompileSettings, Shared.Toolchain, file );
-                                TargetPendingLink = true;
-                            }
-                            else
-                            {
-                                CompileSingeFileUnchecked( buildModule.ModuleCompileSettings, toolchain, file );
+                                foreach( var linkPath in buildModule.ModuleLinkSettings.LibraryPaths )
+                                {
+                                    string resolvedPath = Path.Combine( linkPath, link );
+                                    if( File.Exists( resolvedPath ) )
+                                    {
+                                        path = resolvedPath;
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        path = null;
+                                    }
+                                }
                             }
                         }
-                        */
 
-                        buildModule.AppendOutputs();
+                        if( path != null )
+                            Shared.LinkCache.CacheFile( path );
                     }
                 }
             }
@@ -567,6 +575,9 @@ namespace SaturnBuildTool
 
         private void LinkModules()
         {
+            if( NumTasksFailed != 0 )
+                return;
+
             foreach( var name in SortedModules )
             {
                 ModuleToToolchain.TryGetValue( name, out var toolchain );
@@ -575,7 +586,41 @@ namespace SaturnBuildTool
                     if( buildModule.ModuleRules.CompiledInDirectly )
                         continue;
 
-                    toolchain.Link( buildModule.ModuleLinkSettings );
+                    string fullPath = buildModule.GetFullBinaryPathWithFilename();
+                    bool shouldLink = !Shared.TaskCache.LnkFinalOutputExists( fullPath );
+
+                    // If any .lib file has changed and we need it, then we must link as well
+                    foreach( var link in buildModule.ModuleLinkSettings.Links )
+                    {
+                        string searchPath = link;
+
+                        // If there is not parent i.e. "MyLink.lib" then we need to resolve the link path to this lib...
+                        if( !Path.IsPathRooted( link ) ) 
+                        {
+                            // Only if it does not exist...
+                            if( !File.Exists( link ) )
+                            {
+                                foreach( var linkPath in buildModule.ModuleLinkSettings.LibraryPaths )
+                                {
+                                    string path = Path.Combine( linkPath, link );
+                                    if( File.Exists( path ) )
+                                    {
+                                        searchPath = path;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        shouldLink |= Shared.LinkCache.HasFileBeenModified( searchPath );
+                    }
+
+                    shouldLink |= buildModule.ShouldLink;
+
+                    if( shouldLink ) 
+                    {
+                        toolchain.Link( buildModule.ModuleLinkSettings );
+                    }
                 }
             }
         }
@@ -617,7 +662,8 @@ namespace SaturnBuildTool
                 filePath.AddRange( DirectoryTools.CppSourceSearch( Shared.ProjectInfo.HeaderToolGeneratedRootPath, true ) );
 
                 // Now filter the files
-                filePath = Shared.FileCache.Analyse( filePath );
+                if( Action == ActionType.Build )
+                    filePath = Shared.FileCache.Analyse( filePath );
                 
                 string[] sourceFileExts = { ".cpp", ".cc", ".cxx", ".c" };
                 List<string> sourceFilesModule = filePath.Where( f => sourceFileExts.Any( ext => f.EndsWith( ext, StringComparison.OrdinalIgnoreCase ) ) ).ToList();
@@ -665,6 +711,7 @@ namespace SaturnBuildTool
 
             SortModules();
             CompileModule();
+            BuildLinkCacheForModules();
             LinkModules();
 
             Console.WriteLine( $"{NumTasksFailed} task(s) failed." );
@@ -675,6 +722,7 @@ namespace SaturnBuildTool
             }
 
             Shared.TaskCache.RT_WriteCache();
+            Shared.LinkCache.RT_WriteCache();
 
             FileCache.RT_WriteCache( Shared.FileCache );
 

@@ -7,8 +7,8 @@ namespace SaturnBuildTool
 {
     public enum ArchitectureKind
     {
-        x64,
-        x86,
+        x86_64,
+        x86_32,
         Unknown
     }
 
@@ -45,6 +45,8 @@ namespace SaturnBuildTool
         public ConfigKind CurrentConfigKind;
 
         public string FileCacheLocation { get; set; }
+
+        public string LinkCacheLocation { get; set; }
 
         // The current "*.{config}.cs" file path.
         public string BuildRuleFile { get; set; }
@@ -117,10 +119,16 @@ namespace SaturnBuildTool
 
             // Filecache
             FileCacheLocation = Path.Combine( BuildDir, $"Filecache-{CurrentConfigKind}.fc" );
-
             if( !File.Exists( FileCacheLocation ) )
             {
                 Console.WriteLine( $"File cache does not exist looking for \"{SourceDir}\" Resulting in a new FileCache being used." );
+            }
+
+            // Link cache
+            LinkCacheLocation = Path.Combine( BuildDir, $"Linkcache-{CurrentConfigKind}.fc" );
+            if( !File.Exists( LinkCacheLocation ) )
+            {
+                Console.WriteLine( $"Link cache does not exist looking for \"{SourceDir}\" Resulting in a new FileCache being used." );
             }
 
             FindBuildRuleFile();
@@ -224,11 +232,11 @@ namespace SaturnBuildTool
         {
             if( CommandLineParser.Instance.FindFlag( "Win64" ) )
             {
-                TargetPlatformKind = ArchitectureKind.x64;
+                TargetPlatformKind = ArchitectureKind.x86_64;
             }
             else if( CommandLineParser.Instance.FindFlag( "Win86" ) )
             {
-                TargetPlatformKind = ArchitectureKind.x86;
+                TargetPlatformKind = ArchitectureKind.x86_32;
             }
         }
 

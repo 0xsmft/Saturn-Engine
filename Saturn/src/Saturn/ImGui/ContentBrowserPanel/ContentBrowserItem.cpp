@@ -157,12 +157,15 @@ namespace Saturn {
 
 					m_OnSelected( this, false );
 				}
+			}
 
+			if( ImGui::IsItemHovered( ImGuiHoveredFlags_Stationary | ImGuiHoveredFlags_DelayNormal ) )
+			{
 				if( ImGui::BeginTooltip() )
 				{
 					ImGui::Text( "Folder" );
 					ImGui::Separator();
-					
+
 					ImGui::Text( "%s", m_Path.string().c_str() );
 
 					ImGui::EndTooltip();
@@ -226,14 +229,17 @@ namespace Saturn {
 
 					m_OnSelected( this, false );
 				}
+			}
 
+			if( ImGui::IsItemHovered( ImGuiHoveredFlags_Stationary | ImGuiHoveredFlags_DelayNormal ) )
+			{
 				if( ImGui::BeginTooltip() )
 				{
 					ImGui::Text( "Asset" );
 					ImGui::Separator();
 
 					ImGui::Text( "%s", m_Path.string().c_str() );
-					
+
 					if( m_Asset )
 					{
 						ImGui::Text( "Asset: %llu", m_Asset->ID );

@@ -75,9 +75,6 @@ namespace Saturn {
 	{
 		m_TextureCache.clear();
 		m_PendingTextureChanges.clear();
-#if !defined(SAT_DIST)
-		m_TextureAssetDependencies.clear();
-#endif
 
 		m_Material = nullptr;
 		m_PendingMaterialChange = nullptr;

@@ -129,10 +129,6 @@ namespace Saturn {
 		std::unordered_map< std::string, VkDescriptorImageInfo > m_TextureCache;
 		std::unordered_map< std::string, Ref<Texture2D> > m_PendingTextureChanges;
 
-#if !defined(SAT_DIST)
-		std::unordered_map< std::string, MemoryAssetDependencyNotifier > m_TextureAssetDependencies;
-#endif
-
 		Ref<Material> m_Material = nullptr;
 		Ref<Material> m_PendingMaterialChange = nullptr;
 

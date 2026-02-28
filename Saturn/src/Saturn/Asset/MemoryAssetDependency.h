@@ -116,6 +116,7 @@ namespace Saturn {
 #endif
 	};
 
+#if MEMORY_ASSET_DEPENDENCY_NOTIFIER
 	// MemoryAssetDependencyNotifier
 	// This class is a wrapper for an AssetID with additional support for registering asset dependencies
 	// This class is very similar to AssetDependency<> however, it does not give compile time asset types.
@@ -185,5 +186,6 @@ namespace Saturn {
 		std::function<void( Saturn::AssetID, Saturn::AssetID )> m_CallbackFunction;
 #endif
 	};
+#endif
 
 }

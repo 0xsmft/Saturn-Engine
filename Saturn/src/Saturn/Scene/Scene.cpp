@@ -508,6 +508,43 @@ namespace Saturn {
 					aiAgentTexture, glm::vec2( 1.0f ) );
 			}
 		}
+
+		const auto billboards = GetAllEntitiesWith<BillboardComponent>();
+		for( const auto& rEntity : billboards )
+		{
+			const BillboardComponent& bc = rEntity->GetComponent<BillboardComponent>();
+			const TransformComponent& rTc = rEntity->GetComponent<TransformComponent>();
+
+			// TODO: We might want to load this texture on the JobSystem.
+			Ref<TextureSourceAsset> textureAsset = AssetManager::Get()->GetAssetAs<TextureSourceAsset>( bc.AssetID );
+			Ref<Texture2D> textureToSubmit = EditorIcons::GetIcon( "Billboard_Circle" );
+			bool flip = false;
+
+			if( textureAsset ) 
+			{
+				textureToSubmit = textureAsset->GetTexture();
+				flip = textureAsset->IsFlagSet( TextureLoadFlags_FlipVertically );
+			}
+			
+			if( flip )
+			{
+				sceneRenderer->GetRenderer2D()->SubmitBillboardTexturedFlipped(
+					rTc.Position,
+					glm::vec4( 1.0f ),
+					textureToSubmit,
+					glm::vec2( 1.0f )
+				);
+			}
+			else
+			{
+				sceneRenderer->GetRenderer2D()->SubmitBillboardTextured(
+					rTc.Position,
+					glm::vec4( 1.0f ),
+					textureToSubmit,
+					glm::vec2( 1.0f )
+				);
+			}
+		}
 #endif
 
 		if( m_RuntimeState == RuntimeState::Suspended )

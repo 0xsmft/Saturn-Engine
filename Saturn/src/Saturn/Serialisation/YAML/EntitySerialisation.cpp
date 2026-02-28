@@ -530,6 +530,19 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 			rEmitter << YAML::EndMap;
 		}
 
+		// Billboard Component
+		if( entity->HasComponent<BillboardComponent>() )
+		{
+			rEmitter << YAML::Key << "BillboardComponent";
+			rEmitter << YAML::BeginMap;
+
+			const auto& bbc = entity->GetComponent< BillboardComponent >();
+
+			rEmitter << YAML::Key << "TextureID" << YAML::Value << bbc.AssetID;
+
+			rEmitter << YAML::EndMap;
+		}
+
 		// Navigation Mesh Specification Component
 		if( entity->HasComponent<NavigationMeshSpecificationComponent>() )
 		{
@@ -988,6 +1001,14 @@ pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value ); \
 			al.Direction = alc[ "Direction" ].as< glm::vec3 >();
 			al.ConeInnerAngle = alc[ "ConeInner" ].as< float >( 0.0f );
 			al.ConeOuterAngle = alc[ "ConeOuter" ].as< float >( 0.0f );
+		}
+
+		const auto bbc = rEntityNode[ "BillboardComponent" ];
+		if( bbc	)
+		{
+			auto& bc = DeserialisedEntity->AddComponent<BillboardComponent>();
+
+			bc.AssetID = bbc[ "TextureID" ].as<uint64_t>( 0 );
 		}
 
 		const auto nmsc = rEntityNode[ "NavigationMeshSpecificationComponent" ];

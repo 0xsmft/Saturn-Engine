@@ -440,9 +440,6 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 			UUID materialID = 0;
 			RawSerialisation::ReadObject( materialID, rStream );
 
-			if( materialID )
-				m_MaterialRegistry->AddTargetMaterialAsset( ( uint32_t ) i, materialID );
-
 			// Try load material
 			Ref<MaterialAsset> materialAsset = AssetManager::Get()->GetAssetAs<MaterialAsset>( materialID );
 
@@ -854,9 +851,6 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 		{
 			UUID materialID = 0;
 			RawSerialisation::ReadObject( materialID, rStream );
-
-			if( materialID )
-				m_MaterialRegistry->AddTargetMaterialAsset( ( uint32_t ) i, materialID );
 
 			// Try load material
 			Ref<MaterialAsset> materialAsset = AssetManager::Get()->GetAssetAs<MaterialAsset>( materialID );

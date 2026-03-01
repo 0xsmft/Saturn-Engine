@@ -71,7 +71,7 @@ namespace Saturn {
 		stbi_set_flip_vertically_on_load( IsFlagSet( TextureLoadFlags_FlipVertically ) );
 
 		hdr = stbi_is_hdr( m_AbsolutePath.string().c_str() );
-		SAT_CORE_ASSERT( m_HDR != hdr, "Image hdr types don't match!" );
+		SAT_CORE_ASSERT( m_HDR == hdr, "Image hdr types don't match!" );
 
 		if( hdr )
 		{
@@ -85,9 +85,9 @@ namespace Saturn {
 			pTextureData = stbi_load( m_AbsolutePath.string().c_str(), &Width, &Height, &Channels, 4 );
 		}
 
-		SAT_CORE_ASSERT( m_Width != Width, "Image width does not match!" );
-		SAT_CORE_ASSERT( m_Height != Height, "Image height does not match!" );
-		SAT_CORE_ASSERT( m_Channels != Channels, "Image channels does not match!" );
+		SAT_CORE_ASSERT( m_Width == Width, "Image width does not match!" );
+		SAT_CORE_ASSERT( m_Height == Height, "Image height does not match!" );
+		SAT_CORE_ASSERT( m_Channels == Channels, "Image channels does not match!" );
 
 		// NOTE: We should use the proper channel count
 		//		 and stop assuming that all textures have

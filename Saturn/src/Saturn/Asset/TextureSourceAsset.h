@@ -94,5 +94,6 @@ namespace Saturn {
 
 	private:
 		friend class TextureSourceAssetSerialiser;
+		friend class TextureViewer;
 	};
 }

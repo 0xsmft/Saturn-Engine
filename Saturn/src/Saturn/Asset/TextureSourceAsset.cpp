@@ -36,7 +36,11 @@
 
 #include "Saturn/Project/Project.h"
 
+#include "Saturn/Serialisation/Raw/RawSerialisation.h"
+
+#if !defined(SAT_DIST)
 #include <stb_image.h>
+#endif
 
 namespace Saturn {
 

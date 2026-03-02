@@ -31,13 +31,21 @@
 #include "Asset.h"
 #include "TextureLoadFlags.h"
 
-#include "Saturn/Serialisation/Raw/RawSerialisation.h"
-
 namespace Saturn {
 
 	class Texture;
 	class Texture2D;
 
+	// A texture source asset is an asset that holds a texture,
+	// I recommended that you do NOT hold a reference to the texture that this asset holds,
+	// instead you should hold a reference to this asset it self.
+	//
+	// This is because the texture that is held by this asset can change entirely or it's flags could change causing
+	// the texture to be reloaded from disk (if load flags changed) or recreated internally (if filtering flags changed).
+	//
+	// If you must hold a reference to the texture it self then do so, but you've be warned...
+	// It is perfectly fine to hold a reference to the texture it self on Dist because the texture is immutable.
+	//
 	class TextureSourceAsset : public Asset
 	{
 	public:
@@ -95,5 +103,6 @@ namespace Saturn {
 	private:
 		friend class TextureSourceAssetSerialiser;
 		friend class TextureViewer;
+		friend class Renderer;
 	};
 }

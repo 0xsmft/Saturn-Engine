@@ -80,6 +80,7 @@ namespace Saturn {
 		out << YAML::Key << "Channels" << YAML::Value <<			  textureSource->Channels();
 		out << YAML::Key << "Hdr"      << YAML::Value <<			  textureSource->IsHdr();
 		out << YAML::Key << "Flags"    << YAML::Value << ( uint32_t ) textureSource->GetFlags();
+		out << YAML::Key << "FilteringFlags" << YAML::Value << ( uint32_t ) textureSource->GetFilteringFlags();
 
 		auto path = std::filesystem::relative( textureSource->GetTextureAbsolutePath(), Project::GetActiveProjectRootPath() );
 
@@ -123,6 +124,7 @@ namespace Saturn {
 		auto channel = textureData[ "Channels" ].as<uint32_t>();
 		auto hdr = textureData[ "Hdr" ].as<bool>();
 		auto flags = textureData[ "Flags" ].as<uint32_t>();
+		auto filteringFlags = textureData[ "FilteringFlags" ].as<uint32_t>( 0 );
 		auto path = textureData[ "Source Path" ].as<std::filesystem::path>();
 
 #if defined(SAT_PLATFORM_WINDOWS)
@@ -135,7 +137,8 @@ namespace Saturn {
 		textureSrcAsset->m_Height = height;
 		textureSrcAsset->m_Channels = channel;
 		textureSrcAsset->m_HDR = hdr;
-		textureSrcAsset->m_Flags = ( TextureFlags ) flags;
+		textureSrcAsset->m_LoadFlags = ( TextureLoadFlags ) flags;
+		textureSrcAsset->m_SamplerFliteringFlags = ( TextureFilteringFlags ) filteringFlags;
 		textureSrcAsset->m_AbsolutePath = GetFilepathAbs( path );
 
 		textureSrcAsset->LoadRawTexture();

@@ -168,8 +168,7 @@ namespace Saturn {
 
 		auto writeTexture = [&](const char* key, Ref<Texture2D> texture ) 
 		{
-			std::filesystem::path relativePath = std::filesystem::relative( texture->GetPath(), Project::GetActiveProjectRootPath() );
-			auto asset = AssetManager::Get()->FindAsset( relativePath );
+			auto asset = AssetManager::Get()->FindAsset( texture->GetSourceAssetID() );
 
 			if( asset )
 				out << YAML::Key << key << YAML::Value << asset->ID;
@@ -513,8 +512,6 @@ namespace Saturn {
 
 					if( id != 0 )
 					{
-						mesh->GetMaterialRegistry()->AddTargetMaterialAsset( i, id );
-
 						AssetManager::Get()->RegisterAssetDependency( rAsset->ID, id );
 					}
 
@@ -655,7 +652,7 @@ namespace Saturn {
 			auto materials = materialRegistry[ "Materials" ];
 			if( materials )
 			{
-				int i = 0;
+				size_t i = 0llu;
 				for( auto materialNode : materials )
 				{
 					auto id = materialNode[ i ].as<uint64_t>();
@@ -664,8 +661,6 @@ namespace Saturn {
 
 					if( id != 0 )
 					{
-						mesh->GetMaterialRegistry()->AddTargetMaterialAsset( i, id );
-
 						AssetManager::Get()->RegisterAssetDependency( rAsset->ID, id );
 					}
 

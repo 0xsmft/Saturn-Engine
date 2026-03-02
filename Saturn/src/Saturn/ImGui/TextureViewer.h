@@ -43,16 +43,18 @@ namespace Saturn {
 		~TextureViewer();
 
 		virtual void OnImGuiRender() override;
-		virtual void OnUpdate( Timestep ts ) override {}
+		virtual void OnUpdate( Timestep ts ) override;
 		virtual void OnEvent( Event& rEvent ) override {}
 
 	private:
 		void AddTexture();
+		void DrawDirtyPopup();
 
 	private:
 		Ref<TextureSourceAsset> m_Asset = nullptr;
-
-		// TODO: Support texture cubes?
-		Ref<Texture2D> m_Texture = nullptr;
+		glm::vec2 m_TextureDisplaySize{};
+		bool m_PendingTextureReload = false;
+		bool m_Dirty = false;
+		bool m_ShowDirtyPopup = false;
 	};
 }

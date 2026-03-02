@@ -77,7 +77,6 @@ namespace Saturn {
 		m_PendingTextureChanges.clear();
 
 		m_Material = nullptr;
-		m_PendingMaterialChange = nullptr;
 	}
 
 	void MaterialAsset::OnAssetDependencyReplace( AssetID oldID, AssetID newID )
@@ -201,15 +200,7 @@ namespace Saturn {
 
 	void MaterialAsset::RT_Update( const std::vector<std::vector<VkWriteDescriptorSet>>& rExtraWds )
 	{
-		if( m_PendingMaterialChange )
-		{
-			m_Material = nullptr;
-
-			m_Material = m_PendingMaterialChange;
-
-			m_PendingMaterialChange = nullptr;
-		}
-
+		// Update textures.
 		for( auto& [name, texture] : m_PendingTextureChanges )
 		{
 			if( m_TextureCache[ name ].imageView == texture->GetDescriptorInfo().imageView )
@@ -217,7 +208,7 @@ namespace Saturn {
 				continue;
 			}
 
-			// Does not exists, add and update
+			// Does not exists, add and update.
 			m_TextureCache[ name ] = texture->GetDescriptorInfo();
 			m_Material->SetResource( name, texture );
 		}
@@ -243,9 +234,9 @@ namespace Saturn {
 
 	void MaterialAsset::RT_ApplyChanges()
 	{
+		/*
 		RenderThread::Get().Queue( [ this ]()
 		{
-			/*
 			// Load texture (auto assume we have not loaded them).
 			Ref<Texture2D> texture = nullptr;
 
@@ -264,7 +255,6 @@ namespace Saturn {
 
 				m_Material->SetResource( IndexToTextureIndex[ index ], texture );
 			}
-			*/
 
 			UseNormalMap( m_Material->GetResource( "u_NormalTexture" ) != Renderer::Get()->GetPinkTexture() );
 
@@ -274,11 +264,7 @@ namespace Saturn {
 			MaterialAssetSerialiser mas;
 			mas.Serialise( this );
 		} );
-	}
-
-	void MaterialAsset::SetMaterial( const Ref<Material> material )
-	{
-		m_PendingMaterialChange = material;
+		*/
 	}
 
 	float MaterialAsset::IsUsingNormalMap()

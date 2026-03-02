@@ -107,8 +107,6 @@ namespace Saturn {
 		Ref<Material> GetMaterial() const { return m_Material; }
 
 		void RT_ApplyChanges();
-		void SetMaterial( const Ref<Material> material );
-
 		void SetName( const std::string& rName ) { return m_Material->SetName( rName ); }
 
 	private:
@@ -130,7 +128,6 @@ namespace Saturn {
 		std::unordered_map< std::string, Ref<Texture2D> > m_PendingTextureChanges;
 
 		Ref<Material> m_Material = nullptr;
-		Ref<Material> m_PendingMaterialChange = nullptr;
 
 		bool m_ValuesChanged = false;
 

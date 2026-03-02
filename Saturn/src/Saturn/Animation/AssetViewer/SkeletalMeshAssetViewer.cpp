@@ -171,9 +171,6 @@ namespace Saturn {
 
 					if( Auxiliary::DrawAssetFinder( AssetType::Material, &open, m_AssetFinderOut, 0 ) )
 					{
-						Ref<MaterialAsset> newAsset = AssetManager::Get()->GetAssetAs<MaterialAsset>( m_AssetFinderOut );
-						rMaterial->SetMaterial( newAsset->GetMaterial() );
-
 						// Update Pure Dependencies & Update ADN Dependencies
 						AssetManager::Get()->UnregisterAssetDependency( m_AssetID, rMaterial->ID );
 

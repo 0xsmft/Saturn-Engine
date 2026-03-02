@@ -610,11 +610,13 @@ namespace Saturn {
 	{
 		// TODO: Support Saving scene as!
 		const auto res = Application::Get()->SaveFile( L"Modern Saturn scene file (*.scene)|*.scene" );
+		if( !res.empty() )
+		{
+			SceneSerialiser serialiser( m_EditorScene );
+			serialiser.Serialise( res );
 
-		SceneSerialiser serialiser( m_EditorScene );
-		serialiser.Serialise( res );
-
-		m_EditorScene->SetAbsolutePath( res );
+			m_EditorScene->SetAbsolutePath( res );
+		}
 	}
 
 	void EditorLayer::SaveFile()
@@ -652,7 +654,7 @@ namespace Saturn {
 		Ref<Scene> newScene = Ref<Scene>::Create();
 		g_ActiveScene = newScene.Get();
 
-		m_SelectionManager->ClearSelection( g_ActiveScene );
+		m_SelectionManager->ClearSelection( g_ActiveScene, true );
 		hierarchyPanel->SetContext( nullptr );
 
 		// Clear old notifications from the old scene.

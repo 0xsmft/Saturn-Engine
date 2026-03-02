@@ -1038,13 +1038,13 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 
 			// Albedo Texture
 			{
-				aiString AlbedoTexturePath;
-				const bool HasAlbedoTexture = material->GetTexture( aiTextureType_DIFFUSE, 0, &AlbedoTexturePath ) == AI_SUCCESS;
+				aiString assimpAlbedoTexturePath;
+				const bool HasAlbedoTexture = material->GetTexture( aiTextureType_DIFFUSE, 0, &assimpAlbedoTexturePath ) == AI_SUCCESS;
 
 				if( HasAlbedoTexture && ( m_ImportBehaviour & MeshImportBehaviour_ExcludeTextures ) == 0 )
 				{
 					auto pp = m_SourcePath.parent_path();
-					pp /= std::string( AlbedoTexturePath.data );
+					pp /= std::string( assimpAlbedoTexturePath.data );
 
 					auto AlbedoTexturePath = pp.string();
 					auto LocalPath = m_DstPath;
@@ -1057,10 +1057,22 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 
 					if( materialAsset && fileCopied )
 					{
-						auto texture = Ref<Texture2D>::Create( LocalPath, AddressingMode::Repeat, false );
-						materialAsset->SetAlbeoMap( texture );
 						Ref<Asset> asset = AssetManager::Get()->FindAsset( AssetManager::Get()->CreateAsset( AssetType::Texture ) );
+
+						auto stxPath = LocalPath;
+						stxPath.replace_extension( ".stx" );
+						
+						asset->SetAbsolutePath( stxPath );
+
+						Ref<TextureSourceAsset> srcAsset = Ref<TextureSourceAsset>::Create( asset, LocalPath );
+
+						TextureSourceAssetSerialiser tsas;
+						tsas.Serialise( srcAsset );
+
+						auto texture = srcAsset->GetTexture();
+						materialAsset->SetAlbeoMap( texture );
 						asset->SetAbsolutePath( LocalPath );
+
 						needToSaveAssetReg = true;
 					}
 				}
@@ -1088,12 +1100,23 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 
 					if( materialAsset )
 					{
-						auto texture = Ref<Texture2D>::Create( LocalPath, AddressingMode::Repeat, false );
+						Ref<Asset> asset = AssetManager::Get()->FindAsset( AssetManager::Get()->CreateAsset( AssetType::Texture ) );
+
+						auto stxPath = LocalPath;
+						stxPath.replace_extension( ".stx" );
+
+						asset->SetAbsolutePath( stxPath );
+
+						Ref<TextureSourceAsset> srcAsset = Ref<TextureSourceAsset>::Create( asset, LocalPath );
+
+						TextureSourceAssetSerialiser tsas;
+						tsas.Serialise( srcAsset );
+
+						auto texture = srcAsset->GetTexture();
+
 						materialAsset->SetNormalMap( texture );
 						materialAsset->UseNormalMap( true );
 
-						Ref<Asset> asset = AssetManager::Get()->FindAsset( AssetManager::Get()->CreateAsset( AssetType::Texture ) );
-						asset->SetAbsolutePath( LocalPath );
 						needToSaveAssetReg = true;
 					}
 				}
@@ -1120,11 +1143,21 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 
 					if( materialAsset && std::filesystem::exists( LocalPath ) )
 					{
-						auto texture = Ref<Texture2D>::Create( LocalPath, AddressingMode::Repeat, false );
+						Ref<Asset> asset = AssetManager::Get()->FindAsset( AssetManager::Get()->CreateAsset( AssetType::Texture ) );
+
+						auto stxPath = LocalPath;
+						stxPath.replace_extension( ".stx" );
+
+						asset->SetAbsolutePath( stxPath );
+
+						Ref<TextureSourceAsset> srcAsset = Ref<TextureSourceAsset>::Create( asset, LocalPath );
+
+						TextureSourceAssetSerialiser tsas;
+						tsas.Serialise( srcAsset );
+
+						auto texture = srcAsset->GetTexture();
 						materialAsset->SetRoughnessMap( texture );
 
-						Ref<Asset> asset = AssetManager::Get()->FindAsset( AssetManager::Get()->CreateAsset( AssetType::Texture ) );
-						asset->SetAbsolutePath( LocalPath );
 						needToSaveAssetReg = true;
 					}
 				}
@@ -1163,11 +1196,20 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 
 							if( materialAsset )
 							{
-								auto texture = Ref<Texture2D>::Create( localTexturePath, AddressingMode::Repeat, false );
-								materialAsset->SetMetallicMap( texture );
-
 								Ref<Asset> asset = AssetManager::Get()->FindAsset( AssetManager::Get()->CreateAsset( AssetType::Texture ) );
-								asset->SetAbsolutePath( localTexturePath );
+
+								auto stxPath = localTexturePath;
+								stxPath.replace_extension( ".stx" );
+
+								asset->SetAbsolutePath( stxPath );
+
+								Ref<TextureSourceAsset> srcAsset = Ref<TextureSourceAsset>::Create( asset, localTexturePath );
+
+								TextureSourceAssetSerialiser tsas;
+								tsas.Serialise( srcAsset );
+
+								auto texture = srcAsset->GetTexture();
+								materialAsset->SetMetallicMap( texture );
 
 								needToSaveAssetReg = true;
 							}

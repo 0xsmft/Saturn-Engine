@@ -285,8 +285,7 @@ namespace Saturn {
 		attributes.scanlinePass = true;
 
 		msdfag::ImmediateAtlasGenerator<S, N, Func, msdfag::BitmapAtlasStorage<Ty, N>> generator( width, height );
-		// TODO: What if the CPU doesn't have 4 threads or only has 4 threads
-		generator.setThreadCount( 4 );
+		generator.setThreadCount( std::thread::hardware_concurrency() / 2 );
 		generator.setAttributes( attributes );
 		generator.generate( rThis.Glyphs.data(), ( int ) rThis.Glyphs.size() );
 

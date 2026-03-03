@@ -48,10 +48,18 @@ namespace Saturn {
 
 	private:
 		void AddMesh();
+		void DrawNoFallbackPopup();
 
 	private:
 		Ref<StaticMesh> m_Mesh;
 		AssetID m_AssetFinderOut = 0;
 		AssetID m_AssetFinderOutPhys = 0;
+
+		// The following variables are for the Popup that comes up when
+		// the user tries to reset a material but we don't know what to
+		// fall back on.
+		bool m_ShowNoFallbackPopup = false;
+		UUID m_FallbackID = 0;
+		std::queue<uint64_t> m_ResetIndices;
 	};
 }

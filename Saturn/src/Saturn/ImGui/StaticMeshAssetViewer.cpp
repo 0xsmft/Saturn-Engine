@@ -40,6 +40,8 @@
 
 #include "Saturn/Asset/AssetManager.h"
 
+#include "Saturn/Project/Project.h"
+
 #include "Saturn/Scene/Components.h"
 
 #include "Saturn/Physics/PhysicsFoundation.h"
@@ -106,6 +108,10 @@ namespace Saturn {
 
 		//////////////////////////////////////////////////////////////////////////
 
+		if( m_ShowNoFallbackPopup ) DrawNoFallbackPopup();
+
+		//////////////////////////////////////////////////////////////////////////
+
 		ImGui::Begin( "Sidebar" );
 
 		if( Auxiliary::TreeNode( "Physics" ) )
@@ -121,7 +127,7 @@ namespace Saturn {
 
 			if( ImGui::BeginCombo( "##setshape", Selected ) )
 			{
-				for( int i = 0; i < IM_ARRAYSIZE( pItems ); i++ )
+				for( unsigned int i = 0u; i < IM_ARRAYSIZE( pItems ); i++ )
 				{
 					bool IsSelected = ( Selected == pItems[ i ] );
 
@@ -177,6 +183,34 @@ namespace Saturn {
 
 		if( Auxiliary::TreeNode( "Materials" ) )
 		{
+			const bool canResetMaterialsNow = ( Project::GetActiveProject()->GetDefaultMaterialAsset() != 0 && AssetManager::Get()->FindAsset( Project::GetActiveProject()->GetDefaultMaterialAsset() ) );
+
+			if( ImGui::Button( "Reset All" ) )
+			{
+				if( canResetMaterialsNow )
+				{
+					uint32_t idx = 0u;
+					for( auto& rMaterial : m_Mesh->GetMaterialAssets() )
+					{
+						m_Mesh->GetMaterialRegistry()->SetMaterial( idx, Project::GetActiveProject()->GetDefaultMaterialAsset() );
+						++idx;
+					}
+				}
+				else
+				{
+					uint32_t idx = 0u;
+					for( auto& rMaterial : m_Mesh->GetMaterialAssets() )
+					{
+						m_ResetIndices.push( idx );
+						++idx;
+					}
+					
+					m_ShowNoFallbackPopup = true;
+				}
+			}
+
+			ImGui::Separator();
+
 			int i = 0;
 			for( auto& rMaterial : m_Mesh->GetMaterialAssets() )
 			{
@@ -197,17 +231,27 @@ namespace Saturn {
 
 					ImGui::Spring();
 
+					if( ImGui::Button( "Reset" ) ) 
+					{
+						if( canResetMaterialsNow )
+						{
+							m_Mesh->GetMaterialRegistry()->SetMaterial( i, Project::GetActiveProject()->GetDefaultMaterialAsset() );
+						}
+						else
+						{
+							m_ResetIndices.push( i );
+							m_ShowNoFallbackPopup = true;
+						}
+					}
+
 					ImGui::EndHorizontal();
 
 					if( Auxiliary::DrawAssetFinder( AssetType::Material, &open, m_AssetFinderOut, 0 ) )
 					{
-						Ref<MaterialAsset> newAsset = AssetManager::Get()->GetAssetAs<MaterialAsset>( m_AssetFinderOut );
-						rMaterial->SetMaterial( newAsset->GetMaterial() );
-
 						// Update Pure Dependencies & Update ADN Dependencies
 						AssetManager::Get()->UnregisterAssetDependency( m_AssetID, rMaterial->ID );
 
-						m_Mesh->GetMaterialRegistry()->SetMaterial( i, m_AssetFinderOut );
+						m_Mesh->GetMaterialRegistry()->SetMaterial( ( uint32_t ) i, m_AssetFinderOut );
 
 						AssetManager::Get()->RegisterAssetDependency( m_AssetID, m_AssetFinderOut );
 					}
@@ -230,7 +274,7 @@ namespace Saturn {
 		{
 			m_Open = false;
 
-			RenderThread::Get().Queue( [ = ]()
+			RenderThread::Get().Queue( [=]()
 			{
 				m_SceneRenderer = nullptr;
 			} );
@@ -254,6 +298,79 @@ namespace Saturn {
 
 		auto e = m_Scene->CreateEntity( "InternalViewerEntity" );
 		e->AddComponent<StaticMeshComponent>( m_Mesh );
+	}
+
+	void StaticMeshAssetViewer::DrawNoFallbackPopup()
+	{
+		ImGui::OpenPopup( "No default asset can be found!##nfsmas" );
+
+		if( ImGui::BeginPopupModal( "No default asset can be found!##nfsmas", &m_ShowNoFallbackPopup, ImGuiWindowFlags_NoSavedSettings ) )
+		{
+			ImGui::Text( "No default asset can be found to reset to!" );
+			ImGui::Text( "So, select an MaterialAsset that will be used as the replacement." );
+			
+			const UUID prjDefAsset = Project::GetActiveProject()->GetDefaultMaterialAsset();
+			const bool noIdInProject = prjDefAsset == 0;
+			const bool idNotFound = AssetManager::Get()->DoesAssetIDExist( prjDefAsset );
+
+			if( noIdInProject || idNotFound )
+			{
+				ImGui::Text( "Why did this happen?" );
+			
+				if( noIdInProject )
+					ImGui::BulletText( "Because there was no ID set in the Project." );
+
+				if( noIdInProject )
+					ImGui::BulletText( "Because the ID could not be found in the AssetRegistry looking for: %llu", ( uint64_t ) prjDefAsset );
+			}
+
+			ImGui::Separator();
+
+			if( m_FallbackID == 0 )
+				ImGui::TextDisabled( "<NULL>" );
+			else
+				ImGui::TextDisabled( "%llu", ( uint64_t ) m_FallbackID );
+
+			ImGui::SameLine();
+
+			bool open = false;
+			if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
+			{
+				open = true;
+			}
+
+			Auxiliary::DrawAssetFinder( AssetType::Material, &open, m_FallbackID, 0 );
+
+			// Options
+			ImGui::BeginHorizontal( "##hznsfsams" );
+
+			if( ImGui::Button( "Confirm" ) ) 
+			{
+				while( !m_ResetIndices.empty() )
+				{
+					const auto index = m_ResetIndices.front();
+					m_ResetIndices.pop();
+
+					m_Mesh->GetMaterialRegistry()->SetMaterial( index, m_FallbackID );
+				}
+
+				m_ShowNoFallbackPopup = false;
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::Spring();
+
+			if( ImGui::Button( "Cancel" ) )
+			{
+				m_ResetIndices = {};
+				m_ShowNoFallbackPopup = false;
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndHorizontal();
+
+			ImGui::EndPopup();
+		}
 	}
 
 }

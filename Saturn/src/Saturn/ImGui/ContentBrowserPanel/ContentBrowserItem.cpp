@@ -726,6 +726,10 @@ namespace Saturn {
 				DrawIconInternal( rTopLeft, rBottomRight );
 			}
 		}
+		else
+		{
+			DrawIconInternal( rTopLeft, rBottomRight );
+		}
 	}
 
 	void ContentBrowserItem::DrawIconInternal( const ImVec2& rTopLeft, const ImVec2& rBottomRight, ImDrawFlags drawFlags )

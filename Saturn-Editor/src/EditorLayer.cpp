@@ -782,6 +782,18 @@ namespace Saturn {
 		m_EditorScene->CopyScene( m_RuntimeScene );
 
 		Input::Get().SetCanSetCursorMode( true );
+
+		// Create canvas
+		AluraCanvasSpecification canvasSpecification{};
+		canvasSpecification.Size = glm::vec2{ m_ViewportSize.x, m_ViewportSize.y };
+		canvasSpecification.Position = glm::vec2{ 0.0f };
+		canvasSpecification.MasterFontAssetID = Project::GetActiveProject()->GetDefaultFontAsset();
+
+		if( g_AluraCanvas ) 
+			delete g_AluraCanvas;
+
+		g_AluraCanvas = new AluraCanvas( canvasSpecification );
+		g_AluraCanvas->SetContext( m_SceneRenderer->GetAluraRenderer() );
 	}
 
 	void EditorLayer::PostInitRuntime()
@@ -803,6 +815,9 @@ namespace Saturn {
 	void EditorLayer::EndRuntime()
 	{
 		m_ImGuiWindowManager->OnRuntimeStateChanged( RuntimeState::Ending, g_ActiveScene->GetRuntimeState() );
+
+		delete g_AluraCanvas;
+		g_AluraCanvas = nullptr;
 
 		Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
 
@@ -994,7 +1009,7 @@ namespace Saturn {
 
 	bool EditorLayer::OnMousePressed( RubyMouseEvent& rEvent )
 	{
-		if( m_RuntimeScene || !m_MouseOverViewport || rEvent.GetButton() != (int)RubyMouseButton_Left || ImGuizmo::IsOver() )
+		if( m_RuntimeScene || !m_MouseOverViewport || rEvent.GetButton() != ( int ) RubyMouseButton_Left || ImGuizmo::IsOver() )
 			return false;
 
 		const auto viewportMouse = ConvertMouseToViewportNDC();
@@ -2723,7 +2738,9 @@ namespace Saturn {
 			m_SceneRenderer->SetViewportSize( ( uint32_t ) m_ViewportSize.x, ( uint32_t ) m_ViewportSize.y );
 			m_EditorCamera.SetViewportSize( ( uint32_t ) m_ViewportSize.x, ( uint32_t ) m_ViewportSize.y );
 			m_SuspendedEditorCamera.SetViewportSize( ( uint32_t ) m_ViewportSize.x, ( uint32_t ) m_ViewportSize.y );
-			g_AluraCanvas->SetSize( glm::vec2{ m_ViewportSize.x, m_ViewportSize.y } );
+			
+			if( g_AluraCanvas )
+				g_AluraCanvas->SetSize( glm::vec2{ m_ViewportSize.x, m_ViewportSize.y } );
 		}
 
 		ImGui::PushID( "VIEWPORT_IMAGE" );
@@ -3064,7 +3081,9 @@ namespace Saturn {
 	{
 		const ImVec2 minBound = ImGui::GetWindowPos();
 		m_SceneRenderer->SetViewportPosition( minBound.x, minBound.y );
-		g_AluraCanvas->SetPosition( { minBound.x, minBound.y } );
+		
+		if( g_AluraCanvas )
+			g_AluraCanvas->SetPosition( { minBound.x, minBound.y } );
 		
 		const ImVec2 maxBound = { minBound.x + m_ViewportSize.x, minBound.y + m_ViewportSize.y };
 

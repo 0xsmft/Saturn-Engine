@@ -70,6 +70,10 @@ namespace Saturn {
 
 	MaterialAssetViewer::~MaterialAssetViewer()
 	{
+		// TEMP
+		MaterialAssetSerialiser mas;
+		mas.Serialise( m_HostMaterialAsset );
+
 		if( m_Dirty || m_NodeEditor->IsDirty() )
 		{
 			m_NodeEditor->SaveAndMarkClean();

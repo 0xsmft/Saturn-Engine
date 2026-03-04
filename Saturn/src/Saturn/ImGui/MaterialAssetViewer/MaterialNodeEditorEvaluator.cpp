@@ -67,10 +67,10 @@ namespace Saturn {
 		}
 #endif
 
-		UUID AlbedoPinID = OutputNode->Inputs[ 0 ]->ID;
-		UUID NormalPinID = OutputNode->Inputs[ 1 ]->ID;
-		UUID MetallicPinID = OutputNode->Inputs[ 2 ]->ID;
-		UUID RoughnessPinID = OutputNode->Inputs[ 3 ]->ID;
+		const UUID AlbedoPinID = OutputNode->Inputs[ 0 ]->ID;
+		const UUID NormalPinID = OutputNode->Inputs[ 1 ]->ID;
+		const UUID MetallicPinID = OutputNode->Inputs[ 2 ]->ID;
+		const UUID RoughnessPinID = OutputNode->Inputs[ 3 ]->ID;
 
 		// Stacks are last in first out, so our output node will be evaluated last which is what we want.
 		std::stack<UUID> order;

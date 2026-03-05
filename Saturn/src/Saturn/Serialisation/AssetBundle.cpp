@@ -62,8 +62,8 @@ namespace Saturn {
 	{
 		// .AB + null
 		const unsigned char Magic[ 4 ] = { 0x2E, 0x41, 0x42, 0x00 };
-		size_t Assets = 0llu;
 		uint32_t Version = 0u;
+		size_t Assets = 0llu;
 	};
 
 	struct AssetBundleMinimalHeader
@@ -77,11 +77,11 @@ namespace Saturn {
 	{
 		// .PAK
 		const unsigned char Magic[ 4 ] = { 0x2E, 0x50, 0x41, 0x4B };
+		uint32_t Version = 0;
 		AssetID Asset = 0;
 		uint64_t OrginalSize = 0;
 		uint64_t CompressedSize = 0;
 		uint64_t Offset = 0;
-		uint32_t Version = 0;
 
 		DumpFileHeader& operator=( const DumpFileHeader& rOther ) noexcept 
 		{

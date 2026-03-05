@@ -38,16 +38,16 @@
 
 namespace Saturn {
 
-	static constexpr uint32_t s_MaxQuads = 20000u;
+	static constexpr uint32_t s_MaxQuads = 5000u;
 	static constexpr uint32_t s_MaxVertices = s_MaxQuads * 4u;
 	static constexpr uint32_t s_MaxIndices = s_MaxQuads * 6u;
 	static constexpr uint32_t s_MaxTextureSlots = 32;
 
-	static constexpr uint32_t s_MaxLines = 1024u + 1024u;
+	static constexpr uint32_t s_MaxLines = 1000u;
 	static constexpr uint32_t s_MaxLineVertices = s_MaxLines * 2u;
 	static constexpr uint32_t s_MaxLineIndices = s_MaxLines * 6u;
 
-	static constexpr uint32_t s_MaxSolidLines = 1024u + 1024u + 1024u;
+	static constexpr uint32_t s_MaxSolidLines = 1000u;
 	static constexpr uint32_t s_MaxSolidLineVertices = s_MaxSolidLines * 2u;
 	static constexpr uint32_t s_MaxSolidLineIndices = s_MaxSolidLines * 6u;
 
@@ -77,24 +77,40 @@ namespace Saturn {
 		m_QuadVertexPositions.emplace_back( 0.5f, -0.5f, 0.0f, 1.0f );
 
 		// Setup vertex buffer
-		m_QuadVertexBuffers.resize( MAX_FRAMES_IN_FLIGHT );
-		m_LineVertexBuffers.resize( MAX_FRAMES_IN_FLIGHT );
-		m_TriangleVertexBuffers.resize( MAX_FRAMES_IN_FLIGHT );
+		m_QuadVertexBuffers.resize( 1 );
+		m_QuadVertexBuffers[ 0 ].resize( MAX_FRAMES_IN_FLIGHT );
 
-		m_CurrentQuadBase.resize( MAX_FRAMES_IN_FLIGHT );
-		m_CurrentLineBase.resize( MAX_FRAMES_IN_FLIGHT );
-		m_CurrentTriangleBase.resize( MAX_FRAMES_IN_FLIGHT );
+		m_CurrentQuadBases.resize( 1 );
+		m_CurrentQuadBases[ 0 ].resize( MAX_FRAMES_IN_FLIGHT );
+
+		m_pCurrentQuadPtr.resize( 1 );
+
+		// Lines
+		m_LineVertexBuffers.resize( 1 );
+		m_LineVertexBuffers[ 0 ].resize( MAX_FRAMES_IN_FLIGHT );
+
+		m_CurrentLineBases.resize( 1 );
+		m_CurrentLineBases[ 0 ].resize( MAX_FRAMES_IN_FLIGHT );
+
+		m_CurrentLinePtr.resize( 1 );
+		
+		m_TriangleVertexBuffers.resize( 1 );
+		m_TriangleVertexBuffers[ 0 ].resize( MAX_FRAMES_IN_FLIGHT );
+
+		m_CurrentTriangleBases.resize( 1 );
+		m_CurrentTriangleBases[ 0 ].resize( MAX_FRAMES_IN_FLIGHT );
+		m_CurrentTrianglePtr.resize( 1 );
 
 		for( int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++ )
 		{
-			m_QuadVertexBuffers[ i ] = Ref<VertexBuffer>::Create( s_MaxVertices * sizeof( QuadDrawCommand ) );
-			m_CurrentQuadBase[ i ] = new QuadDrawCommand[ s_MaxVertices ];
+			m_QuadVertexBuffers[ 0 ][ i ] = Ref<VertexBuffer>::Create( s_MaxVertices * sizeof( QuadVertex ) );
+			m_CurrentQuadBases[ 0 ][ i ] = new QuadVertex[ s_MaxVertices ];
 
-			m_LineVertexBuffers[ i ] = Ref<VertexBuffer>::Create( s_MaxLineVertices * sizeof( LineDrawCommand ) );
-			m_CurrentLineBase[ i ] = new LineDrawCommand[ s_MaxLineVertices ];
+			m_LineVertexBuffers[ 0 ][ i ] = Ref<VertexBuffer>::Create( s_MaxLineVertices * sizeof( LineDrawCommand ) );
+			m_CurrentLineBases[ 0 ][ i ] = new LineDrawCommand[ s_MaxLineVertices ];
 
-			m_TriangleVertexBuffers[ i ] = Ref<VertexBuffer>::Create( s_MaxSolidLineVertices * sizeof( LineDrawCommand ) );
-			m_CurrentTriangleBase[ i ] = new LineDrawCommand[ s_MaxSolidLineVertices ];
+			m_TriangleVertexBuffers[ 0 ][ i ] = Ref<VertexBuffer>::Create( s_MaxSolidLineVertices * sizeof( LineDrawCommand ) );
+			m_CurrentTriangleBases[ 0 ][ i ] = new LineDrawCommand[ s_MaxSolidLineVertices ];
 		}
 
 		// Setup Index Buffer
@@ -115,36 +131,26 @@ namespace Saturn {
 			offset += 4;
 		}
 
-		m_QuadIndexBuffer = Ref<IndexBuffer>::Create( quadBuffer, s_MaxIndices );
+		m_QuadIndexBuffer = Ref<IndexBuffer>::Create( quadBuffer, s_MaxIndices * sizeof( uint32_t ) );
 		delete[] quadBuffer;
 
 		uint32_t* pLineBuffer = new uint32_t[ s_MaxLineIndices ];
 		for( uint32_t i = 0; i < s_MaxLineIndices; ++i )
 			pLineBuffer[ i ] = i;
 
-		m_LineIndexBuffer = Ref<IndexBuffer>::Create( pLineBuffer, s_MaxLineIndices );
+		m_LineIndexBuffer = Ref<IndexBuffer>::Create( pLineBuffer, s_MaxLineIndices * sizeof( uint32_t ) );
 		delete[] pLineBuffer;
 
 		pLineBuffer = new uint32_t[ s_MaxSolidLineIndices ];
 		for( uint32_t i = 0; i < s_MaxSolidLineIndices; ++i )
 			pLineBuffer[ i ] = i;
 
-		m_TriangleIndexBuffer = Ref<IndexBuffer>::Create( pLineBuffer, s_MaxSolidLineIndices );
+		m_TriangleIndexBuffer = Ref<IndexBuffer>::Create( pLineBuffer, s_MaxSolidLineIndices * sizeof( uint32_t ) );
 
 		delete[] pLineBuffer;
 
 		// Setup Textures
 		m_Textures[ 0 ] = Renderer::Get()->GetPinkTexture();
-
-		/*
-		// Construct a temporary render pass this is to be changed when the scene renderer is ready.
-		PassSpecification PassSpec;
-		PassSpec.Name = "Renderer2D-TemporaryRP";
-		PassSpec.Attachments = { ImageFormat::RGBA32F, ImageFormat::Depth };
-
-		m_TempRenderPass = Ref<Pass>::Create( PassSpec );
-		m_TargetRenderPass = m_TempRenderPass;
-		*/
 
 		m_TargetRenderPass = targetPass;
 		m_TargetFramebuffer = targetFramebuffer;
@@ -214,22 +220,6 @@ namespace Saturn {
 		m_TrianglePipeline = Ref<Pipeline>::Create( PipelineSpec );
 	}
 
-	void Renderer2D::Reset()
-	{
-		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
-
-		m_pCurrentQuad = m_CurrentQuadBase[ frame ];
-		m_QuadIndexCount = 0;
-
-		m_pCurrentLine = m_CurrentLineBase[ frame ];
-		m_LineVertexCount = 0;
-
-		m_pCurrentTriangle = m_CurrentTriangleBase[ frame ];
-		m_TriangleVextexCount = 0;
-
-		m_CurrentTextureSlot = 1;
-	}
-
 	void Renderer2D::Terminate()
 	{
 		if( m_TempRenderPass )
@@ -242,12 +232,12 @@ namespace Saturn {
 		m_QuadIndexBuffer = nullptr;
 		m_QuadShader = nullptr;
 		m_QuadMaterial = nullptr;
-		
+
 		m_LinePipeline = nullptr;
 		m_LineShader = nullptr;
 		m_LineMaterial = nullptr;
 		m_LineIndexBuffer = nullptr;
-		
+
 		m_TriangleIndexBuffer = nullptr;
 		m_TrianglePipeline = nullptr;
 
@@ -258,14 +248,17 @@ namespace Saturn {
 		for( auto& texture : m_Textures )
 			texture = nullptr;
 
-		for( auto buffer : m_CurrentQuadBase )
-			delete[] buffer;
+		for( auto& rBuffers : m_CurrentQuadBases )
+			for( auto buffer : rBuffers )
+				delete[] buffer;
 
-		for( auto buffer : m_CurrentLineBase )
-			delete[] buffer;
+		for( auto& rBuffers : m_CurrentLineBases )
+			for( auto buffer : rBuffers )
+				delete[] buffer;
 
-		for( auto buffer : m_CurrentTriangleBase )
-			delete[] buffer;
+		for( auto& rBuffers : m_CurrentTriangleBases )
+			for( auto buffer : rBuffers )
+				delete[] buffer;
 	}
 
 	void Renderer2D::SetViewportSize( uint32_t w, uint32_t h )
@@ -275,6 +268,15 @@ namespace Saturn {
 			m_Width = w;
 			m_Height = h;
 			m_Resized = true;
+		}
+	}
+
+	void Renderer2D::ReplaceTexture( Ref<Texture2D> old, Ref<Texture2D> newTexture )
+	{
+		for( size_t i = 0; i < m_Textures.size(); i++ )
+		{
+			if( m_Textures[ i ] == old )
+				m_Textures[ i ] = newTexture;
 		}
 	}
 
@@ -294,131 +296,125 @@ namespace Saturn {
 		}
 	}
 
-	void Renderer2D::RenderAll()
+	void Renderer2D::AddQuadBuffer()
 	{
-		VkExtent2D Extent = { m_Width, m_Height };
+		std::vector< Ref<VertexBuffer> >& rNewVB = m_QuadVertexBuffers.emplace_back();
+		std::vector< QuadVertex* >& rNewBase = m_CurrentQuadBases.emplace_back();
 
-		m_TargetRenderPass->BeginPass( m_CommandBuffer, m_TargetFramebuffer->GetVulkanFramebuffer(), Extent );
-
-		VkViewport Viewport = {};
-		Viewport.x = 0;
-		Viewport.y = 0;
-		Viewport.width = ( float ) m_Width;
-		Viewport.height = ( float ) m_Height;
-		Viewport.minDepth = 0.0f;
-		Viewport.maxDepth = 1.0f;
-
-		VkRect2D Scissor = { .offset = { 0,0 }, .extent = Extent };
-
-		vkCmdSetScissor( m_CommandBuffer, 0, 1, &Scissor );
-		vkCmdSetViewport( m_CommandBuffer, 0, 1, &Viewport );
-
-		RenderAllQuads();
-		RenderAllLines();
-
-		m_TargetRenderPass->EndPass();
-	}
-
-	void Renderer2D::RenderAllQuads()
-	{
-		uint32_t frame = Renderer::Get()->GetCurrentFrame();
-
-		struct QuadMatricesObject
+		rNewVB.resize( MAX_FRAMES_IN_FLIGHT );
+		rNewBase.resize( MAX_FRAMES_IN_FLIGHT );
+	
+		for( auto i = 0; i < MAX_FRAMES_IN_FLIGHT; i++ )
 		{
-			glm::mat4 ViewProjection = glm::mat4( 1.0f );
-		} u_Matrices;
-
-		u_Matrices.ViewProjection = m_CameraViewProjection;
-
-		m_QuadMaterial->UploadDataToUB( 0, &u_Matrices, sizeof( u_Matrices ) );
-
-		uint32_t dataSize = ( uint32_t ) ( ( uint8_t* ) m_pCurrentQuad - ( uint8_t* ) m_CurrentQuadBase[ frame ] );
-		if( dataSize )
-		{
-			m_QuadVertexBuffers[ frame ]->Reallocate( m_CurrentQuadBase[ frame ], dataSize );
-
-			for( uint32_t i = 0; i < m_Textures.size(); i++ )
-			{
-				if( m_Textures[ i ] )
-					m_QuadMaterial->SetResource( "u_InputTexture", m_Textures[ i ], i );
-				else
-					m_QuadMaterial->SetResource( "u_InputTexture", Renderer::Get()->GetPinkTexture(), i );
-			}
-
-			m_QuadMaterial->Bind( m_CommandBuffer, m_QuadPipeline->GetPipelineLayout(), {} );
-
-			m_QuadPipeline->Bind( m_CommandBuffer );
-
-			m_QuadIndexBuffer->Bind( m_CommandBuffer );
-
-			m_QuadVertexBuffers[ frame ]->Bind( m_CommandBuffer );
-
-			glm::mat4 transform = glm::mat4( 1.0f );
-			vkCmdPushConstants( m_CommandBuffer, m_QuadPipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof( glm::mat4 ), &transform );
-
-			vkCmdDrawIndexed( m_CommandBuffer, m_QuadIndexCount, 1, 0, 0, 0 );
+			const uint64_t allocSize = s_MaxVertices * sizeof( QuadVertex );
+			rNewVB[ i ] = Ref<VertexBuffer>::Create( allocSize );
+			rNewBase[ i ] = new QuadVertex[ s_MaxVertices ];
 		}
 	}
 
-	void Renderer2D::RenderAllLines()
+	void Renderer2D::AddLineBuffer()
 	{
-		uint32_t frame = Renderer::Get()->GetCurrentFrame();
+		SAT_CORE_INFO( "AddLineBuffer, VBs:{0}, Bases:{1}", m_LineVertexBuffers.size(), m_CurrentLineBases.size() );
 
-		struct QuadMatricesObject
+		std::vector< Ref<VertexBuffer> >& rNewVB = m_LineVertexBuffers.emplace_back();
+		std::vector< LineDrawCommand* >& rNewBase = m_CurrentLineBases.emplace_back();
+
+		rNewVB.resize( MAX_FRAMES_IN_FLIGHT );
+		rNewBase.resize( MAX_FRAMES_IN_FLIGHT );
+
+		for( auto i = 0; i < MAX_FRAMES_IN_FLIGHT; i++ )
 		{
-			glm::mat4 ViewProjection = glm::mat4( 1.0f );
-		} u_Matrices;
+			const uint64_t allocSize = s_MaxLineVertices * sizeof( LineDrawCommand );
+			rNewVB[ i ] = Ref<VertexBuffer>::Create( allocSize );
+			rNewBase[ i ] = new LineDrawCommand[ s_MaxLineVertices ];
+		}
+	}
 
-		u_Matrices.ViewProjection = m_CameraViewProjection;
+	void Renderer2D::AddTriangleLineBuffer()
+	{
+		SAT_CORE_INFO( "AddTriangleLineBuffer, VBs:{0}, Bases:{1}", m_TriangleVertexBuffers.size(), m_CurrentTriangleBases.size() );
 
-		m_LineMaterial->UploadDataToUB( 0, &u_Matrices, sizeof( u_Matrices ) );
+		std::vector< Ref<VertexBuffer> >& rNewVB = m_TriangleVertexBuffers.emplace_back();
+		std::vector< LineDrawCommand* >& rNewBase = m_CurrentTriangleBases.emplace_back();
 
-		uint32_t dataSize = ( uint32_t ) ( ( uint8_t* ) m_pCurrentLine - ( uint8_t* ) m_CurrentLineBase[ frame ] );
-		if( dataSize )
+		rNewVB.resize( MAX_FRAMES_IN_FLIGHT );
+		rNewBase.resize( MAX_FRAMES_IN_FLIGHT );
+
+		for( auto i = 0; i < MAX_FRAMES_IN_FLIGHT; i++ )
 		{
-			m_LineVertexBuffers[ frame ]->Reallocate( m_CurrentLineBase[ frame ], dataSize );
+			const uint64_t allocSize = s_MaxSolidLineVertices * sizeof( LineDrawCommand );
+			rNewVB[ i ] = Ref<VertexBuffer>::Create( allocSize );
+			rNewBase[ i ] = new LineDrawCommand[ s_MaxSolidLineVertices ];
+		}
+	}
 
-			m_LineMaterial->Bind( m_CommandBuffer, m_LinePipeline->GetPipelineLayout(), {} );
+	QuadVertex*& Renderer2D::GetQuadBuffer()
+	{
+		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
 
-			m_LinePipeline->Bind( m_CommandBuffer );
-
-			m_LineIndexBuffer->Bind( m_CommandBuffer );
-
-			m_LineVertexBuffers[ frame ]->Bind( m_CommandBuffer );
-
-			vkCmdDrawIndexed( m_CommandBuffer, m_LineVertexCount, 1, 0, 0, 0 );
+		m_QuadBufferIndex = m_QuadIndexCount / s_MaxIndices;
+		if( m_QuadBufferIndex >= m_QuadVertexBuffers.size() )
+		{
+			AddQuadBuffer();
+			m_pCurrentQuadPtr.emplace_back();
+			m_pCurrentQuadPtr[ m_QuadBufferIndex ] = m_CurrentQuadBases[ m_QuadBufferIndex ][ frame ];
 		}
 
-		// solid
-		dataSize = ( uint32_t ) ( ( uint8_t* ) m_pCurrentTriangle - ( uint8_t* ) m_CurrentTriangleBase[ frame ] );
-		if( dataSize )
+		return m_pCurrentQuadPtr[ m_QuadBufferIndex ];
+	}
+
+	LineDrawCommand*& Renderer2D::GetLineBuffer()
+	{
+		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
+		
+		const uint32_t indicesPerBuffer = s_MaxLineIndices;
+		const uint32_t linesPerBuffer = indicesPerBuffer / 2u;
+
+		m_LineBufferIndex = m_LineIndexCount / s_MaxLineIndices;
+
+		if( m_LineBufferIndex >= m_LineVertexBuffers.size() )
 		{
-			m_TriangleVertexBuffers[ frame ]->Reallocate( m_CurrentTriangleBase[ frame ], dataSize );
-
-			m_LineMaterial->Bind( m_CommandBuffer, m_TrianglePipeline->GetPipelineLayout(), {} );
-
-			m_TrianglePipeline->Bind( m_CommandBuffer );
-
-			m_TriangleIndexBuffer->Bind( m_CommandBuffer );
-
-			m_TriangleVertexBuffers[ frame ]->Bind( m_CommandBuffer );
-
-			vkCmdDrawIndexed( m_CommandBuffer, m_TriangleVextexCount, 1, 0, 0, 0 );
+			AddLineBuffer();
+			m_CurrentLinePtr.emplace_back();
+			m_CurrentLinePtr[ m_LineBufferIndex ] = m_CurrentLineBases[ m_LineBufferIndex ][ frame ];
 		}
+
+		return m_CurrentLinePtr[ m_LineBufferIndex ];
+	}
+
+	LineDrawCommand*& Renderer2D::GetTriangleLineBuffer()
+	{
+		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
+
+		const uint32_t indicesPerBuffer = s_MaxLineIndices;
+		const uint32_t linesPerBuffer = indicesPerBuffer / 2u;
+
+		m_LineTriangleBufferIndex = m_TriangleIndexCount / s_MaxLineIndices;
+		
+		if( m_LineTriangleBufferIndex >= m_TriangleVertexBuffers.size() )
+		{
+			AddTriangleLineBuffer();
+			m_CurrentTrianglePtr.emplace_back();
+			m_CurrentTrianglePtr[ m_LineTriangleBufferIndex ] = m_CurrentTriangleBases[ m_LineTriangleBufferIndex ][ frame ];
+		}
+
+		return m_CurrentTrianglePtr[ m_LineTriangleBufferIndex ];
 	}
 
 	void Renderer2D::SubmitQuad( const glm::mat4& transform, const glm::vec4& color )
 	{
 		// One quad has 4 vertices so we need to submit them one by one.
-		glm::vec2 TexCoord[] = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f } };
+		const glm::vec2 TexCoord[] = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f } };
 
+		auto& prCurrentQuad = GetQuadBuffer();
 		for( size_t i = 0; i < 4; ++i )
 		{
-			m_pCurrentQuad->Position = transform * m_QuadVertexPositions[ i ];
-			m_pCurrentQuad->Color = color;
-			m_pCurrentQuad->TexCoord = TexCoord[ i ];
+			prCurrentQuad->Position = transform * m_QuadVertexPositions[ i ];
+			prCurrentQuad->Color = color;
+			prCurrentQuad->TexCoord = TexCoord[ i ];
+			prCurrentQuad->TextureIndex = 0;
 
-			++m_pCurrentQuad;
+			++prCurrentQuad;
 		}
 
 		m_QuadIndexCount += 6;
@@ -426,19 +422,20 @@ namespace Saturn {
 
 	void Renderer2D::SubmitQuad( const glm::vec3& position, const glm::vec4& color, const glm::vec2& size )
 	{
-		glm::vec2 TexCoord[] = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f } };
+		const glm::vec2 TexCoord[] = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f } };
 
-		glm::mat4 transform = glm::translate( glm::mat4( 1.0f ), position )
+		const glm::mat4 transform = glm::translate( glm::mat4( 1.0f ), position )
 			* glm::scale( glm::mat4( 1.0f ), { size.x, size.y, 1.0f } );
 
+		auto& prCurrentQuad = GetQuadBuffer();
 		for( size_t i = 0; i < 4; ++i )
 		{
-			m_pCurrentQuad->Position = transform * m_QuadVertexPositions[ i ];
-			m_pCurrentQuad->Color = color;
-			m_pCurrentQuad->TexCoord = TexCoord[ i ];
-			m_pCurrentQuad->TextureIndex = 0;
+			prCurrentQuad->Position = transform * m_QuadVertexPositions[ i ];
+			prCurrentQuad->Color = color;
+			prCurrentQuad->TexCoord = TexCoord[ i ];
+			prCurrentQuad->TextureIndex = 0;
 
-			++m_pCurrentQuad;
+			++prCurrentQuad;
 		}
 
 		m_QuadIndexCount += 6;
@@ -447,7 +444,7 @@ namespace Saturn {
 	void Renderer2D::SubmitQuadTextured( const glm::mat4& transform, const glm::vec4& color, const Ref<Texture2D>& rTexture )
 	{
 		// One quad has 4 vertexes so we need to submit them one by one.
-		glm::vec2 TexCoord[] = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f } };
+		const glm::vec2 TexCoord[] = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f } };
 
 		int textureID = 0;
 		for( uint32_t i = 1; i < m_CurrentTextureSlot; ++i )
@@ -461,22 +458,25 @@ namespace Saturn {
 
 		if( textureID == 0 )
 		{
-			if( m_CurrentTextureSlot >= s_MaxTextureSlots )
-				Reset();
+			if( m_CurrentTextureSlot >= s_MaxTextureSlots ) 
+			{
+				SAT_CORE_ASSERT( false, "Remind me to implement this again..." );
+			}
 
 			textureID = m_CurrentTextureSlot;
 			m_Textures[ textureID ] = rTexture;
 			++m_CurrentTextureSlot;
 		}
 
+		auto& prCurrentQuad = GetQuadBuffer();
 		for( size_t i = 0; i < 4; ++i )
 		{
-			m_pCurrentQuad->Position = transform * m_QuadVertexPositions[ i ];
-			m_pCurrentQuad->Color = color;
-			m_pCurrentQuad->TexCoord = TexCoord[ i ];
-			m_pCurrentQuad->TextureIndex = (float)textureID;
+			prCurrentQuad->Position = transform * m_QuadVertexPositions[ i ];
+			prCurrentQuad->Color = color;
+			prCurrentQuad->TexCoord = TexCoord[ i ];
+			prCurrentQuad->TextureIndex = (float)textureID;
 
-			++m_pCurrentQuad;
+			++prCurrentQuad;
 		}
 
 		m_QuadIndexCount += 6;
@@ -484,19 +484,20 @@ namespace Saturn {
 
 	void Renderer2D::SubmitBillboard( const glm::vec3& position, const glm::vec4& color, const glm::vec2& rSize )
 	{
-		glm::vec2 TexCoord[] = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f } };
+		const glm::vec2 TexCoord[] = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f } };
 
-		glm::vec3 CamRight = { m_CameraView[ 0 ][ 0 ], m_CameraView[ 1 ][ 0 ], m_CameraView[ 2 ][ 0 ] };
-		glm::vec3 CamUp = { m_CameraView[ 0 ][ 1 ], m_CameraView[ 1 ][ 1 ], m_CameraView[ 2 ][ 1 ] };
+		const glm::vec3 CamRight = { m_CameraView[ 0 ][ 0 ], m_CameraView[ 1 ][ 0 ], m_CameraView[ 2 ][ 0 ] };
+		const glm::vec3 CamUp = { m_CameraView[ 0 ][ 1 ], m_CameraView[ 1 ][ 1 ], m_CameraView[ 2 ][ 1 ] };
 
+		auto& prCurrentQuad = GetQuadBuffer();
 		for( size_t i = 0; i < 4; ++i )
 		{
-			m_pCurrentQuad->Position = position + CamRight * ( m_QuadVertexPositions[ i ].x ) * rSize.x + CamUp * m_QuadVertexPositions[ i ].y * rSize.y;
-			m_pCurrentQuad->Color = color;
-			m_pCurrentQuad->TexCoord = TexCoord[ i ];
-			m_pCurrentQuad->TextureIndex = 1;
+			prCurrentQuad->Position = position + CamRight * ( m_QuadVertexPositions[ i ].x ) * rSize.x + CamUp * m_QuadVertexPositions[ i ].y * rSize.y;
+			prCurrentQuad->Color = color;
+			prCurrentQuad->TexCoord = TexCoord[ i ];
+			prCurrentQuad->TextureIndex = 1;
 
-			++m_pCurrentQuad;
+			++prCurrentQuad;
 		}
 
 		m_QuadIndexCount += 6;
@@ -506,8 +507,51 @@ namespace Saturn {
 	{
 		constexpr glm::vec2 TexCoord[] = { { 0.0f, 1.0f }, { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f } };
 
-		glm::vec3 CamRight = { m_CameraView[ 0 ][ 0 ], m_CameraView[ 1 ][ 0 ], m_CameraView[ 2 ][ 0 ] };
-		glm::vec3 CamUp = { m_CameraView[ 0 ][ 1 ], m_CameraView[ 1 ][ 1 ], m_CameraView[ 2 ][ 1 ] };
+		const glm::vec3 CamRight = { m_CameraView[ 0 ][ 0 ], m_CameraView[ 1 ][ 0 ], m_CameraView[ 2 ][ 0 ] };
+		const glm::vec3 CamUp = { m_CameraView[ 0 ][ 1 ], m_CameraView[ 1 ][ 1 ], m_CameraView[ 2 ][ 1 ] };
+
+		int textureID = 0;
+		for( uint32_t i = 1; i < m_CurrentTextureSlot; ++i )
+		{
+			if( m_Textures[ i ] == rTexture )
+			{
+				textureID = i;
+				break;
+			}
+		}
+
+		if( textureID == 0 )
+		{
+			if( m_CurrentTextureSlot >= s_MaxTextureSlots ) 
+			{
+				SAT_CORE_ASSERT( false, "Remind me to implement this again..." );
+			}
+
+			textureID = m_CurrentTextureSlot;
+			m_Textures[ textureID ] = rTexture;
+			++m_CurrentTextureSlot;
+		}
+
+		auto& prCurrentQuad = GetQuadBuffer();
+		for( size_t i = 0; i < 4; ++i )
+		{
+			prCurrentQuad->Position = position + CamRight * ( m_QuadVertexPositions[ i ].x ) * rSize.x + CamUp * m_QuadVertexPositions[ i ].y * rSize.y;
+			prCurrentQuad->Color = color;
+			prCurrentQuad->TexCoord = TexCoord[ i ];
+			prCurrentQuad->TextureIndex = (float)textureID;
+
+			++prCurrentQuad;
+		}
+
+		m_QuadIndexCount += 6;
+	}
+
+	void Renderer2D::SubmitBillboardTexturedFlipped( const glm::vec3& position, const glm::vec4& color, const Ref<Texture2D>& rTexture, const glm::vec2& rSize )
+	{
+		constexpr glm::vec2 TexCoord[] = { { 0.0f, 0.0f }, { 0.0f, 1.0f }, { 1.0f, 1.0f }, { 1.0f, 0.0f } };
+
+		const glm::vec3 CamRight = { m_CameraView[ 0 ][ 0 ], m_CameraView[ 1 ][ 0 ], m_CameraView[ 2 ][ 0 ] };
+		const glm::vec3 CamUp = { m_CameraView[ 0 ][ 1 ], m_CameraView[ 1 ][ 1 ], m_CameraView[ 2 ][ 1 ] };
 
 		int textureID = 0;
 		for( uint32_t i = 1; i < m_CurrentTextureSlot; ++i )
@@ -522,21 +566,24 @@ namespace Saturn {
 		if( textureID == 0 )
 		{
 			if( m_CurrentTextureSlot >= s_MaxTextureSlots )
-				Reset();
+			{
+				SAT_CORE_ASSERT( false, "Remind me to implement this again..." );
+			}
 
 			textureID = m_CurrentTextureSlot;
 			m_Textures[ textureID ] = rTexture;
 			++m_CurrentTextureSlot;
 		}
 
+		auto& prCurrentQuad = GetQuadBuffer();
 		for( size_t i = 0; i < 4; ++i )
 		{
-			m_pCurrentQuad->Position = position + CamRight * ( m_QuadVertexPositions[ i ].x ) * rSize.x + CamUp * m_QuadVertexPositions[ i ].y * rSize.y;
-			m_pCurrentQuad->Color = color;
-			m_pCurrentQuad->TexCoord = TexCoord[ i ];
-			m_pCurrentQuad->TextureIndex = (float)textureID;
+			prCurrentQuad->Position = position + CamRight * ( m_QuadVertexPositions[ i ].x ) * rSize.x + CamUp * m_QuadVertexPositions[ i ].y * rSize.y;
+			prCurrentQuad->Color = color;
+			prCurrentQuad->TexCoord = TexCoord[ i ];
+			prCurrentQuad->TextureIndex = ( float ) textureID;
 
-			++m_pCurrentQuad;
+			++prCurrentQuad;
 		}
 
 		m_QuadIndexCount += 6;
@@ -544,50 +591,46 @@ namespace Saturn {
 
 	void Renderer2D::SubmitLine( const glm::vec3& rStart, const glm::vec3& rEnd, const glm::vec4& rColor )
 	{
-		if( m_LineVertexCount >= s_MaxLineVertices )
-			Reset();
+		auto& prCurrentLinePtr = GetLineBuffer();
 
-		m_pCurrentLine->Position = rStart;
-		m_pCurrentLine->Color = rColor;
+		prCurrentLinePtr->Position = rStart;
+		prCurrentLinePtr->Color = rColor;
 	
-		++m_pCurrentLine;
+		++prCurrentLinePtr;
 	
-		m_pCurrentLine->Position = rEnd;
-		m_pCurrentLine->Color = rColor;
+		prCurrentLinePtr->Position = rEnd;
+		prCurrentLinePtr->Color = rColor;
 
-		++m_pCurrentLine;
+		++prCurrentLinePtr;
 
-		m_LineVertexCount += 2;
+		m_LineIndexCount += 2;
 	}
 
 	void Renderer2D::SubmitLine( const glm::vec3& rStart, const glm::vec3& rEnd, const glm::vec4& rColor, float Thinkness )
 	{
-		if( m_LineVertexCount >= s_MaxLineVertices )
-			Reset();
+		auto& prCurrentLinePtr = GetLineBuffer();
 
-		m_pCurrentLine->Position = rStart;
-		m_pCurrentLine->Color = rColor;
+		prCurrentLinePtr->Position = rStart;
+		prCurrentLinePtr->Color = rColor;
 
-		++m_pCurrentLine;
+		++prCurrentLinePtr;
 
-		m_pCurrentLine->Position = rEnd;
-		m_pCurrentLine->Color = rColor;
+		prCurrentLinePtr->Position = rEnd;
+		prCurrentLinePtr->Color = rColor;
 
-		++m_pCurrentLine;
+		++prCurrentLinePtr;
 
-		m_LineVertexCount += 2;
+		m_LineIndexCount += 2;
 	}
 
 	void Renderer2D::SubmitSingleLine( const glm::vec3& rStart, const glm::vec4& rColor )
 	{
-		if( m_LineVertexCount >= s_MaxLineVertices )
-			Reset();
+		auto& prCurrentLinePtr = GetLineBuffer();
+		prCurrentLinePtr->Position = rStart;
+		prCurrentLinePtr->Color = rColor;
 
-		m_pCurrentLine->Position = rStart;
-		m_pCurrentLine->Color = rColor;
-
-		++m_pCurrentLine;
-		++m_LineVertexCount;
+		++prCurrentLinePtr;
+		++m_LineIndexCount;
 	}
 
 	void Renderer2D::SubmitArrow( const glm::vec3& rStart, const glm::vec3& rEnd, const glm::vec4& rColor, float headLength /*= 10.0f*/, float headAngle /*= 0.5f */ )
@@ -753,14 +796,15 @@ namespace Saturn {
 
 	void Renderer2D::SubmitVertex( const glm::vec3& rV0, const glm::vec4& rColor )
 	{
-		if( m_TriangleVextexCount >= s_MaxSolidLineVertices )
-			Reset();
+		SAT_CORE_ASSERT( m_TriangleIndexCount < s_MaxLineIndices );
 
-		m_pCurrentTriangle->Position = rV0;
-		m_pCurrentTriangle->Color = rColor;
+		auto& prCurrentTrianglePtr = GetTriangleLineBuffer();
 
-		++m_pCurrentTriangle;
-		++m_TriangleVextexCount;
+		prCurrentTrianglePtr->Position = rV0;
+		prCurrentTrianglePtr->Color = rColor;
+
+		++prCurrentTrianglePtr;
+		++m_TriangleIndexCount;
 	}
 
 	void Renderer2D::SetCamera( const RendererCamera& rRendererCamera )
@@ -771,16 +815,165 @@ namespace Saturn {
 
 	void Renderer2D::PreRender()
 	{
-		uint32_t frame = Renderer::Get()->GetCurrentFrame();
+		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
 		
 		m_QuadIndexCount = 0;
-		m_pCurrentQuad = m_CurrentQuadBase[ frame ];
+		for( size_t i = 0; i < m_pCurrentQuadPtr.size(); i++ )
+			m_pCurrentQuadPtr[ i ] = m_CurrentQuadBases[ i ][ frame ];
 
-		m_LineVertexCount = 0;
-		m_pCurrentLine = m_CurrentLineBase[ frame ];
+		m_LineIndexCount = 0;
+		for( size_t i = 0; i < m_CurrentLinePtr.size(); i++ )
+			m_CurrentLinePtr[ i ] = m_CurrentLineBases[ i ][ frame ];
 
-		m_TriangleVextexCount = 0;
-		m_pCurrentTriangle = m_CurrentTriangleBase[ frame ];
+		m_TriangleIndexCount = 0;
+		for( size_t i = 0; i < m_CurrentTrianglePtr.size(); i++ )
+			m_CurrentTrianglePtr[ i ] = m_CurrentTriangleBases[ i ][ frame ];
+	
+		// Not great... but, we want to clear the textures and reset the slot.
+		// So works for now.
+		// TODO: Fix (later)
+		m_Textures.fill( nullptr );
+		m_Textures[ 0 ] = Renderer::Get()->GetPinkTexture();
+		m_CurrentTextureSlot = 1;
+	}
+
+	void Renderer2D::RenderAll()
+	{
+		VkExtent2D Extent = { m_Width, m_Height };
+
+		m_TargetRenderPass->BeginPass( m_CommandBuffer, m_TargetFramebuffer->GetVulkanFramebuffer(), Extent );
+
+		VkViewport Viewport = {};
+		Viewport.x = 0;
+		Viewport.y = 0;
+		Viewport.width = ( float ) m_Width;
+		Viewport.height = ( float ) m_Height;
+		Viewport.minDepth = 0.0f;
+		Viewport.maxDepth = 1.0f;
+
+		VkRect2D Scissor = { .offset = { 0,0 }, .extent = Extent };
+
+		vkCmdSetScissor( m_CommandBuffer, 0, 1, &Scissor );
+		vkCmdSetViewport( m_CommandBuffer, 0, 1, &Viewport );
+
+		RenderAllQuads();
+		RenderAllLines();
+
+		m_TargetRenderPass->EndPass();
+	}
+
+	void Renderer2D::RenderAllQuads()
+	{
+		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
+
+		struct QuadMatricesObject
+		{
+			glm::mat4 ViewProjection = glm::mat4( 1.0f );
+		} u_Matrices;
+
+		u_Matrices.ViewProjection = m_CameraViewProjection;
+
+		m_QuadMaterial->UploadDataToUB( 0, &u_Matrices, sizeof( u_Matrices ) );
+
+		for( size_t i = 0; i <= m_QuadBufferIndex; i++ )
+		{
+			const uint32_t dataSize = ( uint32_t ) ( ( uint8_t* ) m_pCurrentQuadPtr[ i ] - ( uint8_t* ) m_CurrentQuadBases[ i ][ frame ] );
+
+			if( dataSize )
+			{
+				m_QuadVertexBuffers[ i ][ frame ]->Reallocate( m_CurrentQuadBases[ i ][ frame ], dataSize );
+
+				for( uint32_t j = 0; j < m_Textures.size(); j++ )
+				{
+					if( m_Textures[ j ] )
+						m_QuadMaterial->SetResource( "u_InputTexture", m_Textures[ j ], j );
+					else
+						m_QuadMaterial->SetResource( "u_InputTexture", Renderer::Get()->GetPinkTexture(), j );
+				}
+
+				m_QuadMaterial->Bind( m_CommandBuffer, m_QuadPipeline->GetPipelineLayout(), {} );
+
+				m_QuadPipeline->Bind( m_CommandBuffer );
+
+				m_QuadIndexBuffer->Bind( m_CommandBuffer );
+
+				m_QuadVertexBuffers[ i ][ frame ]->Bind( m_CommandBuffer );
+
+				const glm::mat4 transform = glm::mat4( 1.0f );
+				vkCmdPushConstants( m_CommandBuffer, m_QuadPipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof( glm::mat4 ), &transform );
+
+				const uint32_t indexCount = i == m_QuadBufferIndex ? m_QuadIndexCount - ( s_MaxIndices * ( uint32_t ) i ) : s_MaxIndices;
+				vkCmdDrawIndexed( m_CommandBuffer, indexCount, 1, 0, 0, 0 );
+			}
+		}
+	}
+
+	void Renderer2D::RenderAllLines()
+	{
+		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
+
+		struct QuadMatricesObject
+		{
+			glm::mat4 ViewProjection = glm::mat4( 1.0f );
+		} u_Matrices;
+
+		u_Matrices.ViewProjection = m_CameraViewProjection;
+
+		m_LineMaterial->UploadDataToUB( 0, &u_Matrices, sizeof( u_Matrices ) );
+
+		for( size_t i = 0; i <= m_LineBufferIndex; i++ )
+		{
+			const uint32_t dataSize = ( uint32_t ) ( ( uint8_t* ) m_CurrentLinePtr[ i ] - ( uint8_t* ) m_CurrentLineBases[ i ][ frame ] );
+			if( dataSize )
+			{
+				m_LineVertexBuffers[ i ][ frame ]->Reallocate( m_CurrentLineBases[ i ][ frame ], dataSize );
+
+				m_LineMaterial->Bind( m_CommandBuffer, m_LinePipeline->GetPipelineLayout(), {} );
+
+				m_LinePipeline->Bind( m_CommandBuffer );
+
+				m_LineIndexBuffer->Bind( m_CommandBuffer );
+
+				m_LineVertexBuffers[ i ][ frame ]->Bind( m_CommandBuffer );
+
+				uint32_t indexCount = 0;
+				if( i == m_LineBufferIndex )
+				{
+					uint32_t base = s_MaxLineIndices * ( uint32_t ) i;
+
+					SAT_CORE_ASSERT( m_LineIndexCount >= base );
+
+					indexCount = m_LineIndexCount - base;
+				}
+				else
+				{
+					indexCount = s_MaxLineIndices;
+				}
+				
+				vkCmdDrawIndexed( m_CommandBuffer, indexCount, 1, 0, 0, 0 );
+			}
+		}
+
+		for( size_t i = 0; i <= m_LineTriangleBufferIndex; i++ )
+		{
+			// solid
+			const uint32_t dataSize = ( uint32_t ) ( ( uint8_t* ) m_CurrentTrianglePtr[ i ] - ( uint8_t* ) m_CurrentTriangleBases[ i ][ frame ] );
+			if( dataSize )
+			{
+				m_TriangleVertexBuffers[ i ][ frame ]->Reallocate( m_CurrentTriangleBases[ i ][ frame ], dataSize );
+
+				m_LineMaterial->Bind( m_CommandBuffer, m_TrianglePipeline->GetPipelineLayout(), {} );
+
+				m_TrianglePipeline->Bind( m_CommandBuffer );
+
+				m_TriangleIndexBuffer->Bind( m_CommandBuffer );
+
+				m_TriangleVertexBuffers[ i ][ frame ]->Bind( m_CommandBuffer );
+
+				const uint32_t indexCount = i == m_LineTriangleBufferIndex ? m_TriangleIndexCount - ( s_MaxLineIndices * ( uint32_t ) i ) : s_MaxLineIndices;
+				vkCmdDrawIndexed( m_CommandBuffer, indexCount, 1, 0, 0, 0 );
+			}
+		}
 	}
 
 	void Renderer2D::Render()
@@ -788,7 +981,7 @@ namespace Saturn {
 		m_CommandBuffer = Renderer::Get()->ActiveCommandBuffer();
 
 		// First, check if we have a render pass.
-		if( !m_TargetRenderPass || !m_pCurrentQuad || !m_pCurrentLine )
+		if( !m_TargetRenderPass )
 		{
 			return;
 		}

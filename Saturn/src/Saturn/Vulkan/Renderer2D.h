@@ -37,12 +37,12 @@
 
 namespace Saturn {
 
-	struct QuadDrawCommand
+	struct QuadVertex
 	{
 		glm::vec3 Position;
 		glm::vec4 Color;
 		
-		// TexCoord is calculated before we render.
+		// TexCoord is calculated before we render but after we submit.
 		glm::vec2 TexCoord;
 		float TextureIndex;
 	};
@@ -70,6 +70,7 @@ namespace Saturn {
 		
 		void SubmitBillboard( const glm::vec3& position, const glm::vec4& color, const glm::vec2& rSize );
 		void SubmitBillboardTextured( const glm::vec3& position, const glm::vec4& color, const Ref<Texture2D>& rTexture, const glm::vec2& rSize );
+		void SubmitBillboardTexturedFlipped( const glm::vec3& position, const glm::vec4& color, const Ref<Texture2D>& rTexture, const glm::vec2& rSize );
 
 		void SubmitLine( const glm::vec3& rStart, const glm::vec3& rEnd, const glm::vec4& rColor );
 		void SubmitLine( const glm::vec3& rStart, const glm::vec3& rEnd, const glm::vec4& rColor, float Thinkness );
@@ -94,50 +95,66 @@ namespace Saturn {
 		void Terminate();
 		void SetViewportSize( uint32_t w, uint32_t h );
 
+		void ReplaceTexture( Ref<Texture2D> old, Ref<Texture2D> newTexture );
+
 	private:
 		void LateInit( Ref<Pass> targetPass = nullptr, Ref<Framebuffer> framebuffer = nullptr );
-		void Reset();
 
 		void RenderAll();
 		void RenderAllQuads();
 		void RenderAllLines();
 
+		void AddQuadBuffer();
+		void AddLineBuffer();
+		void AddTriangleLineBuffer();
+
+		QuadVertex*& GetQuadBuffer();
+		LineDrawCommand*& GetLineBuffer();
+		LineDrawCommand*& GetTriangleLineBuffer();
+
 	private:
 		Ref<Pass> m_TargetRenderPass = nullptr;
 		Ref<Pass> m_TempRenderPass = nullptr;
 
+		using VertexBufferPerFrame = std::vector< Ref<VertexBuffer> >;
+
 		//////////////////////////////////////////////////////////////////////////
 		// QUADS
 		std::vector<glm::vec4> m_QuadVertexPositions;
-		std::vector< Ref<VertexBuffer> > m_QuadVertexBuffers;
-		std::vector< QuadDrawCommand* > m_CurrentQuadBase;
+		// Per frame vertex buffer
+		std::vector< VertexBufferPerFrame > m_QuadVertexBuffers;
+		std::vector< std::vector< QuadVertex* > > m_CurrentQuadBases;
 		
-		QuadDrawCommand* m_pCurrentQuad = nullptr;
+		std::vector< QuadVertex* > m_pCurrentQuadPtr;
+
+		size_t m_QuadBufferIndex = 0llu;
 
 		//////////////////////////////////////////////////////////////////////////
 		// LINES
-		std::vector< Ref<VertexBuffer> > m_LineVertexBuffers;
-		std::vector< LineDrawCommand* > m_CurrentLineBase;
-		
-		LineDrawCommand* m_pCurrentLine = nullptr;
+		std::vector< VertexBufferPerFrame > m_LineVertexBuffers;
+		std::vector< std::vector< LineDrawCommand* > > m_CurrentLineBases;
+		std::vector<LineDrawCommand*> m_CurrentLinePtr;
+
+		size_t m_LineBufferIndex = 0llu;
 
 		// Triangle (part of the lines)
-		std::vector< Ref<VertexBuffer> > m_TriangleVertexBuffers;
-		std::vector< LineDrawCommand* > m_CurrentTriangleBase;
+		std::vector< VertexBufferPerFrame > m_TriangleVertexBuffers;
+		std::vector< std::vector<LineDrawCommand*> > m_CurrentTriangleBases;
+		std::vector<LineDrawCommand*> m_CurrentTrianglePtr;
 
-		LineDrawCommand* m_pCurrentTriangle = nullptr;
+		size_t m_LineTriangleBufferIndex = 0llu;
 
 		//////////////////////////////////////////////////////////////////////////
 		// Counts
 		uint32_t m_QuadIndexCount = 0;
-		uint32_t m_LineVertexCount = 0;
-		uint32_t m_TriangleVextexCount = 0;
+		uint32_t m_LineIndexCount = 0;
+		uint32_t m_TriangleIndexCount = 0;
 
 		//////////////////////////////////////////////////////////////////////////
 		
 		std::array<Ref<Texture2D>, 32> m_Textures;
-		uint32_t m_DefaultTextureSlot = 1;
-		uint32_t m_CurrentTextureSlot = 0;
+		uint32_t m_DefaultTextureSlot = 0;
+		uint32_t m_CurrentTextureSlot = 1;
 
 		glm::mat4 m_CameraView = glm::mat4( 1.0f );
 		glm::mat4 m_CameraViewProjection = glm::mat4( 1.0f );

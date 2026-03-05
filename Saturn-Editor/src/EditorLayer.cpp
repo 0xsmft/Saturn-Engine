@@ -2308,6 +2308,16 @@ namespace Saturn {
 		{
 			m_SceneRenderer->ImGuiRender();
 
+			if( Auxiliary::TreeNode( "Editor Camera" ) )
+			{
+				ImGui::Text( "Width %i, Height %i, Ratio %i", m_EditorCamera.GetViewportWidth(), m_EditorCamera.GetViewportHeight(), m_EditorCamera.GetAspectRatio() );
+
+				const auto& rPosition = m_EditorCamera.GetPosition();
+				ImGui::Text( "Position X: %f, Y: %f, Z: %f", rPosition.x, rPosition.y, rPosition.z );
+
+				Auxiliary::EndTreeNode();
+			}
+
 			if( Auxiliary::TreeNode( "Shaders", false ) )
 			{
 				ImGui::BeginVertical( "shadersV" );
@@ -2652,8 +2662,14 @@ namespace Saturn {
 				SharedPtr<Entity> ent = g_ActiveScene->FindEntityByHandle( m_NavMeshEntityToDelete );
 				if( ent )
 				{
-					const std::string filename = std::format( "{0}{1}.{2}.srnc", g_ActiveScene->Name, ent->GetName(), (uint64_t)ent->GetUUID() );
-					std::filesystem::remove( Project::GetActiveProject()->GetFullCachePath() / filename );
+					const std::string filename = std::format( "NavMesh{0}.{1}.srnc", g_ActiveScene->Name, (uint64_t)ent->GetUUID() );
+
+					// Rare case, if the user deletes the file manually the deletes the entity this would crash here.
+					const std::filesystem::path path = Project::GetActiveProject()->GetFullCachePath() / filename;
+					if( std::filesystem::exists( path ) )
+					{
+						std::filesystem::remove( path );
+					}
 				}
 
 				g_ActiveScene->DeleteEntity( ent );
@@ -3466,6 +3482,7 @@ namespace Saturn {
 		const auto& startupScene = rConfig.StartupSceneID;
 		const auto defaultMaterialID = ActiveProject->GetDefaultMaterialAsset();
 		const auto defaultPhysMaterialID = ActiveProject->GetDefaultPhysicsMaterialAsset();
+		const auto defaultFontID = ActiveProject->GetDefaultFontAsset();
 
 		if( startupScene == 0 )
 		{
@@ -3509,6 +3526,18 @@ namespace Saturn {
 			result = false;
 		}
 
+		if( defaultFontID == 0 )
+		{
+			MessageBoxInfo msgBox
+			{
+				.Title = "Warning",
+				.Text = "No font default font asset was selected in the Project Defaults, you can still build only if this project does not contain any UI!, if the project does use Alura and no font is selected the Distribution application will verify.",
+				.Buttons = MessageBoxButtons_Ok
+			};
+
+			PushMessageBox( msgBox );
+		}
+
 		return result;
 	}
 
@@ -3516,12 +3545,6 @@ namespace Saturn {
 	{
 		JobSystem::Get().QueueJob( [ this ]()
 			{
-				m_JobModalOpen = true;
-				m_BlockingOperation->SetStatus( "Initialising..." );
-
-				SaveFile();
-				SaveProject();
-
 				if( m_ShouldCopyBuildFiles )
 				{
 					Project::GetActiveProject()->PrepForDist();

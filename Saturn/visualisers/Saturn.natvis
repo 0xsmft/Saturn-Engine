@@ -20,6 +20,16 @@
     </Expand>
   </Type>
 
+  <Type Name="Saturn::AluraRect">
+    <DisplayString>{{Min=({Min.x,g}, {Min.y,g}) Max=({Max.x,g}, {Max.y,g}) Size=({Max.x-Min.x,g}x{Max.y-Min.y,g})}}</DisplayString>
+    <Expand>
+      <Item Name="Min">Min</Item>
+      <Item Name="Max">Max</Item>
+      <Item Name="[Width]">Max.x - Min.x</Item>
+      <Item Name="[Height]">Max.y - Min.y</Item>
+    </Expand>
+  </Type>
+  
   <Type Name="ImVector&lt;*&gt;">
     <DisplayString>{{Size={Size} Capacity={Capacity}}}</DisplayString>
     <Expand>

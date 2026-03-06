@@ -10,3 +10,6 @@
 [submodule "Saturn/vendor/zlib"]
 	path = Saturn/vendor/zlib
 	url = https://github.com/BEASTSM96/fork-zlib
+[submodule "Saturn/vendor/JoltPhysics"]
+	path = Saturn/vendor/JoltPhysics
+	url = https://github.com/0xsmft/fork-JoltPhysics

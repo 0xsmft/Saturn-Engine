@@ -47,7 +47,7 @@ namespace Saturn {
 	{
 		std::string ClassName;
 		std::string BaseClass;
-		uint32_t ClassFlags = 0 /* SClassFlags::None */;
+		uint64_t ClassFlags = 0 /* SClassFlags::None */;
 		uint32_t LineNumberForGeneratedBody = 0;
 
 		std::map<uint32_t, SProperty> Properties;
@@ -61,13 +61,18 @@ namespace Saturn {
 		}
 
 		std::filesystem::path Filepath;
+		HeaderToolConfigKind ConfigKind;
 
+#if SAT_HT_VER > 5
 		std::string ClassName;
 		std::string BaseClass;
 		uint32_t ClassFlags = 0 /* SClassFlags::None */;
 		uint32_t LineNumberForGeneratedBody = 0;
-		HeaderToolConfigKind ConfigKind;
 
 		std::map<uint32_t, SProperty> Properties;
+#else
+		//				HASH ->		CLASS
+		std::unordered_map<uint64_t, GClass> GClassInfos;
+#endif
 	};
 }

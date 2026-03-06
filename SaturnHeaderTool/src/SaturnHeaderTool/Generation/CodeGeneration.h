@@ -41,7 +41,10 @@ namespace Saturn {
 		NoSClass = 1 << 1, // GENERATED_BODY was implied however no GENERATED_BODY
 		NoGeneratedBody = 1 << 2, // SCLASS was implied but no GENERATED_BODY 
 		FailedToParse = 1 << 3, // General error -- more detailed one would of been outputted
-		Success = 1 << 4
+		ClassAlreadyExists = 1 << 4, // A class with the same name was already found in the current file.
+		SPropertyFieldNotInClass = 1 << 5, // SPROPERTY() macro defined outside of the class.
+		GeneratedBodyNotInClass = 1 << 6, // GENERATED_BODY macro defined outside of the class.
+		Success = 1 << 7
 	};
 
 	class HeaderTool 

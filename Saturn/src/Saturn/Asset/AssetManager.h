@@ -144,6 +144,29 @@ namespace Saturn {
 		size_t GetAssetRegistrySize() const { return m_Assets->GetSize(); }
 
 	public:
+		//////////////////////////////////////////////////////////////////////////
+		// Asset Dependencies
+		// 
+		// In Saturn we have two different types of Asset Dependencies:
+		// - Memory
+		// - Pure
+		//
+		// Memory dependencies, as the name suggests, only exist in memory and are not saved.
+		// For example, when an entity needs a mesh it becomes a MemoryAssetDependency.
+		//
+		// Pure dependencies, are when an Asset needs an Asset, (asset interdependence), these are also called Pure Dependencies.
+		// So for example, when a MaterialAssets needs a TextureSourceAsset, the material, the "dependant" will hold a depednecy that texture asset.
+		// 
+		// NOTE: Dependency IDs are stored in the dependee's list NOT the dependant's list.
+		// So in the AssetRegistry.sreg file it would look like this:
+		//
+		// - AssetID: 17156012918794846394 (The dependee)
+		//    Dependencies:
+		// 	    -Dependency: 11350410678480156004 (Dependencies - Texture A)
+		// 		-Dependency: 5915327659435897251 (Dependencies - Texture B)
+		//
+		//////////////////////////////////////////////////////////////////////////
+		
 		// Memory Asset Dependencies
 		void RegisterMemoryAssetDependency( AssetID dependencyID, MemoryAssetDependencyBase* pBase );
 		void UnregisterMemoryAssetDependency( AssetID dependencyID, MemoryAssetDependencyBase* pBase );
@@ -154,9 +177,33 @@ namespace Saturn {
 		[[nodiscard]] bool DoesAssetHaveDependencies( Ref<Asset> asset );
 
 		// Asset Dependencies, i.e. asset interdependence, known as "Pure Dependencies" in the Engine.
+
+		// 
+		// Register an Asset Dependency
+		//
+		// @param assetID the asset that will depend on dependencyID (the dependee)
+		// @param dependencyID the dependency ID
+		// 
 		void RegisterAssetDependency( AssetID assetID, AssetID dependencyID );
+
+		// 
+		// Unregister an Asset Dependency
+		//
+		// @param assetID the asset that will no longer depend on dependencyID (the dependee)
+		// @param dependencyID the dependency ID
+		// 
 		void UnregisterAssetDependency( AssetID assetID, AssetID dependencyID );
+	
+		// 
+		// Unregister all Asset Dependencies
+		//
+		// @param assetID the asset that will it's dependencies cleared (the dependee)
+		// 
 		void UnregisterAllAssetDependencies( AssetID assetID );
+
+		// 
+		// Check is an Asset has any dependencies
+		//
 		bool CheckPureAssetDependencies( Ref<Asset> asset );
 
 		// Works on Pure dependencies (asset interdependence) only!

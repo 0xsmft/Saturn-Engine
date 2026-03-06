@@ -168,19 +168,19 @@ namespace Saturn {
 			} );
 
 		if( Itr != m_Files.end() )
-			return (*Itr)->Rename();
+			return ( *Itr )->Rename();
 	}
 
-	int ContentBrowserBase::GetFilenameCount( const std::string& rName, bool directoriesOnly )
+	uint32_t ContentBrowserBase::GetFilenameCount( const std::string& rName, bool directoriesOnly )
 	{
-		int count = 0;
+		uint32_t count = 0;
 
 		for( const auto& rEntry : std::filesystem::directory_iterator( m_CurrentPath ) )
 		{
 			if( directoriesOnly && !rEntry.is_directory() )
 				continue;
 
-			const std::string filename = rEntry.path().stem().string();
+			const std::string filename = rEntry.path().filename().string();
 			if( filename.find( rName ) != std::string::npos )
 				++count;
 		}

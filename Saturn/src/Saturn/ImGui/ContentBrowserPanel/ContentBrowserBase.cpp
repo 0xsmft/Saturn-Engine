@@ -188,6 +188,12 @@ namespace Saturn {
 		return count;
 	}
 
+	void ContentBrowserBase::AddSelected( Ref<ContentBrowserItem> item )
+	{
+		item->Select();
+		m_SelectedItems.push_back( item );
+	}
+
 	void ContentBrowserBase::ClearSelection()
 	{
 		for( auto&& rrItem : m_SelectedItems )

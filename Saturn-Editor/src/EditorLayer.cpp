@@ -1007,6 +1007,58 @@ namespace Saturn {
 		return true;
 	}
 
+	static bool RayIntersectsBillboard( const glm::vec3& rayOrigin, const glm::vec3& rayDirection, float rayDistance, const glm::vec3& billboardPos, float sideLength )
+	{
+		const float epsilon = 1e-6f;
+		float half_S = sideLength * 0.5f;
+		glm::vec3 worldUp( 0.0f, 1.0f, 0.0f );
+
+		glm::vec3 vecToOrigin = rayOrigin - billboardPos;
+		float vecLength = glm::length( vecToOrigin );
+		if( vecLength < epsilon )
+		{
+			return false;
+		}
+		glm::vec3 N = vecToOrigin / vecLength;
+
+		glm::vec3 crossUp = glm::cross( N, worldUp );
+		float crossLength = glm::length( crossUp );
+		if( crossLength < epsilon )
+		{
+			crossUp = glm::cross( N, glm::vec3( 1.0f, 0.0f, 0.0f ) );
+			crossLength = glm::length( crossUp );
+			if( crossLength < epsilon )
+			{
+				return false;
+			}
+		}
+		glm::vec3 U = crossUp / crossLength;
+		glm::vec3 V = glm::cross( N, U );
+
+		float denom = glm::dot( rayDirection, N );
+		if( std::fabs( denom ) < epsilon )
+		{
+			return false;
+		}
+
+		float t = glm::dot( billboardPos - rayOrigin, N ) / denom;
+		if( t < 0.0f || t > rayDistance )
+		{
+			return false;
+		}
+
+		glm::vec3 h = rayOrigin + t * rayDirection;
+
+		glm::vec3 offset = h - billboardPos;
+		float localU = glm::dot( offset, U );
+		float localV = glm::dot( offset, V );
+		if( std::fabs( localU ) <= half_S && std::fabs( localV ) <= half_S )
+		{
+			return true;
+		}
+		return false;
+	}
+
 	bool EditorLayer::OnMousePressed( RubyMouseEvent& rEvent )
 	{
 		if( m_RuntimeScene || !m_MouseOverViewport || rEvent.GetButton() != ( int ) RubyMouseButton_Left || ImGuizmo::IsOver() )
@@ -1058,6 +1110,18 @@ namespace Saturn {
 							}
 						}
 					}
+				}
+			}
+
+			const auto billboards = g_ActiveScene->GetAllEntitiesWith<BillboardComponent>();
+			for( const auto& rEntity : billboards )
+			{
+				const TransformComponent& rTc = g_ActiveScene->GetWorldSpaceTransform( rEntity );
+
+				if( RayIntersectsBillboard( origin, dir, std::numeric_limits<float>::max(), rTc.Position, rTc.Scale.x ) )
+				{
+					m_SelectionManager->Select( rEntity );
+					m_SelectionManager->SetSelectionReason( ESR_Viewport );
 				}
 			}
 

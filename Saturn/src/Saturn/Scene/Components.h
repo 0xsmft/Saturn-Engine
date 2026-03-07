@@ -382,6 +382,7 @@ namespace Saturn {
 		float ConeOuterAngle = 0.0f;
 	};
 
+	// NOTE: This component only exists in the Editor.
 	struct BillboardComponent
 	{
 		MemoryAssetDependency<AssetType::Texture> AssetID;

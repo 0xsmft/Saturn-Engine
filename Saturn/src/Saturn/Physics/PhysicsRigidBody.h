@@ -37,6 +37,12 @@ namespace Saturn {
 
 	struct RecastInputGeometryExpData;
 
+	enum class PhysicsRigidBodyType
+	{
+		Dynamic,
+		Static
+	};
+
 	class PhysicsRigidBody : public RefTarget
 	{
 	public:

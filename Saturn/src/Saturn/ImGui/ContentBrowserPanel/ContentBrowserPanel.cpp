@@ -1118,18 +1118,32 @@ namespace Saturn {
 
 	void ContentBrowserPanel::OnEvent( Event& rEvent )
 	{
-		if( m_WindowFocused && rEvent.Type == EventType::MousePressed )
-		{
-			RubyMouseEvent& mouseEvent = ( RubyMouseEvent& ) rEvent;
+		if( !m_WindowFocused )
+			return;
 
-			if( mouseEvent.GetButton() == ( int ) RubyMouseButton_Extra1 )
+		switch( rEvent.Type )
+		{
+			case EventType::KeyPressed:
 			{
-				UndoQuickAction();
-			}
-			else if( mouseEvent.GetButton() == ( int ) RubyMouseButton_Extra2 )
+				OnKeyPressed( ( RubyKeyEvent& ) rEvent );
+			} break;
+
+			case EventType::MousePressed: 
 			{
-				RedoQuickAction();
-			}
+				RubyMouseEvent& mouseEvent = ( RubyMouseEvent& ) rEvent;
+
+				if( mouseEvent.GetButton() == ( int ) RubyMouseButton_Extra1 )
+				{
+					UndoQuickAction();
+				}
+				else if( mouseEvent.GetButton() == ( int ) RubyMouseButton_Extra2 )
+				{
+					RedoQuickAction();
+				}
+			} break;
+
+			default:
+				break;
 		}
 	}
 
@@ -1733,6 +1747,38 @@ namespace Saturn {
 			}
 
 			first = false;
+		}
+	}
+
+	void ContentBrowserPanel::OnKeyPressed( RubyKeyEvent& rEvent )
+	{
+		// TODO: Not the best way, the ContentBrowserPanel should know if any items are being renamed or not. 
+		const auto numberOfItemsBeingRenamed = std::count_if( m_SelectedItems.begin(), m_SelectedItems.end(),
+			[]( const auto& rItem )
+		{
+			return rItem->IsRenaming();
+		} );
+
+		switch( rEvent.GetKeycode() )
+		{
+			// Select all items.
+			case RubyKey_A:
+			{
+				if( ( rEvent.GetModifers() == RubyKey_LeftCtrl || rEvent.GetModifers() == RubyKey_RightCtrl ) && numberOfItemsBeingRenamed == 0 )
+				{
+					if( m_SelectedItems.capacity() < m_Files.size() )
+						m_SelectedItems.reserve( m_Files.size() );
+
+					for( auto& rItem : m_Files )
+					{
+						rItem->Select( true );
+						m_SelectedItems.push_back( rItem );
+					}
+				}
+			} break;
+
+			default:
+				break;
 		}
 	}
 

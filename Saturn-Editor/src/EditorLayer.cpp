@@ -2844,8 +2844,10 @@ namespace Saturn {
 				Ref<Prefab> prefabAsset = m_AssetManager->GetAssetAs<Prefab>( asset->ID );
 
 				CreateEntityParameters createEntityParameters;
-				m_EditorScene->CreatePrefab( prefabAsset, createEntityParameters );
+				auto entity = m_EditorScene->CreatePrefab( prefabAsset, createEntityParameters );
 				m_EditorScene->MarkDirty();
+
+				PlaceEntityRelativeToMousePos( entity );
 			}
 
 			if( auto payload = ImGui::AcceptDragDropPayload( "CONTENT_BROWSER_ITEM_MODEL" ) )
@@ -2860,6 +2862,26 @@ namespace Saturn {
 				auto& rMeshComponent = entity->AddComponent<StaticMeshComponent>();
 				rMeshComponent.Mesh = meshAsset;
 				rMeshComponent.MaterialRegistry = Ref<MaterialRegistry>::Create( meshAsset );
+
+				PlaceEntityRelativeToMousePos( entity );
+
+				m_EditorScene->MarkDirty();
+			}
+
+			if( auto payload = ImGui::AcceptDragDropPayload( "CONTENT_BROWSER_ITEM_SKMODEL" ) )
+			{
+				const UUID* pUUID = ( const UUID* ) payload->Data;
+
+				Ref<Asset> asset = m_AssetManager->FindAsset( *pUUID );
+				Ref<SkeletalMesh> meshAsset = m_AssetManager->GetAssetAs<SkeletalMesh>( asset->ID );
+
+				SharedPtr<Entity> entity = m_EditorScene->CreateEntity( asset->Name );
+
+				auto& rMeshComponent = entity->AddComponent<SkeletalMeshComponent>();
+				rMeshComponent.Mesh = meshAsset;
+				rMeshComponent.MaterialRegistry = Ref<MaterialRegistry>::Create( meshAsset );
+
+				PlaceEntityRelativeToMousePos( entity );
 
 				m_EditorScene->MarkDirty();
 			}
@@ -3685,6 +3707,30 @@ namespace Saturn {
 		const glm::vec3 rayDir = inverseView * glm::vec3( ray );
 
 		return { rayPos, rayDir };
+	}
+
+	void EditorLayer::PlaceEntityRelativeToMousePos( SharedPtr<Entity> entity )
+	{
+		// TODO: We will want to do a raycast so the Z axis is relative to where the mouse hits
+		//		 for example, if we have an object that is +10 meters away, with this current method it will
+		//		 not place it there and will only place from where cameras clip is.
+		//		 If we did a raycast we could detect where the mouse was, shoot a ray, and see what it hits, if it
+		//		 hits something get the Z coord and set it, if not we use the cameras clip.
+		//
+		const auto viewportMouse = ConvertMouseToViewportNDC();
+		if( viewportMouse.x > -1.0f && viewportMouse.x < 1.0f && viewportMouse.y > -1.0f && viewportMouse.y < 1.0f )
+		{
+			const glm::vec4 rayClip = glm::vec4( viewportMouse.x, viewportMouse.y, -1.0f, 1.0f );
+			glm::vec4 rayEye = glm::inverse( m_EditorCamera.m_Projection ) * rayClip;
+			rayEye = glm::vec4( rayEye.x, rayEye.y, -1.0f, 0.0f );
+
+			const glm::vec3 rayWorld = glm::normalize(
+				glm::vec3( glm::inverse( m_EditorCamera.m_ViewMatrix ) * rayEye )
+			);
+
+			const glm::vec3 rayOrigin = m_EditorCamera.GetPosition();
+			entity->SetPosition( rayOrigin + rayWorld * 10.0f );
+		}
 	}
 
 	void EditorLayer::PushMessageBox( MessageBoxInfo& rInfo )

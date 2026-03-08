@@ -29,7 +29,6 @@
 #pragma once
 
 #include "Saturn/Asset/Asset.h"
-#include "PxPhysicsAPI.h"
 
 namespace Saturn {
 
@@ -60,9 +59,6 @@ namespace Saturn {
 		void Jump( float pwr );
 
 	public:
-		physx::PxController* GetController() { return m_pController; }
-		const physx::PxController* GetController() const { return m_pController; }
-
 		PhysicsControllerCollisionFlag GetFlags() const { return m_CollisionFlags; }
 
 		[[nodiscard]] bool IsGrounded() const;
@@ -70,7 +66,6 @@ namespace Saturn {
 		glm::vec3 GetPosition() const;
 
 	private:
-		physx::PxController* m_pController = nullptr;
 		AssetID m_MaterialID = 0;
 
 		glm::vec3 m_Displacement{};

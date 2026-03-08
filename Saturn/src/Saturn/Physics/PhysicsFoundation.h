@@ -31,27 +31,72 @@
 #include "PhysicsCooking.h"
 #include "PhysicsErrorCallbacks.h"
 
-#include "PxPhysicsAPI.h"
+#include <Jolt/Jolt.h>
+#include <Jolt/Physics/PhysicsSystem.h>
+#include <Jolt/Physics/Body/BodyActivationListener.h>
 
 namespace Saturn {
 
-	class PhysicsContact : public physx::PxSimulationEventCallback
+	class PhysicsContact : public JPH::ContactListener
 	{
 	public:
-		void onConstraintBreak( physx::PxConstraintInfo* pConstraints, physx::PxU32 Count ) override;
-		void onWake( physx::PxActor** ppActors, physx::PxU32 Count ) override;
-		void onSleep( physx::PxActor** ppActors, physx::PxU32 Count ) override;
-		void onContact( const physx::PxContactPairHeader& rPairHeader, const physx::PxContactPair* pPairs, physx::PxU32 Pairs ) override;
-		void onTrigger( physx::PxTriggerPair* pPairs, physx::PxU32 Count ) override;
-		void onAdvance( const physx::PxRigidBody* const* pBodyBuffer, const physx::PxTransform* PoseBuffer, const physx::PxU32 Count ) override;
+		virtual JPH::ValidateResult OnContactValidate( const JPH::Body& inBody1, const JPH::Body& inBody2, JPH::RVec3Arg inBaseOffset, const JPH::CollideShapeResult& inCollisionResult ) override;
+
+		void OnContactAdded( const JPH::Body& inBody1, const JPH::Body& inBody2, const JPH::ContactManifold& inManifold, JPH::ContactSettings& ioSettings ) override;
+		
+		void OnContactPersisted( const JPH::Body& inBody1, const JPH::Body& inBody2, const JPH::ContactManifold& inManifold, JPH::ContactSettings& ioSettings ) override;
+		
+		virtual void OnContactRemoved( const JPH::SubShapeIDPair& inSubShapePair ) override;
 	};
 
-	class PhysicsControllerContact : public physx::PxUserControllerHitReport 
+	class JoltBodyActivationListener : public JPH::BodyActivationListener
 	{
 	public:
-		virtual void onShapeHit( const physx::PxControllerShapeHit& hit ) override;
-		virtual void onControllerHit( const physx::PxControllersHit& hit ) override;
-		virtual void onObstacleHit( const physx::PxControllerObstacleHit& hit ) override;
+		virtual void OnBodyActivated( const JPH::BodyID& inBodyID, uint64_t inBodyUserData ) override;
+		virtual void OnBodyDeactivated( const JPH::BodyID& inBodyID, uint64_t inBodyUserData ) override;
+	};
+
+	class JoltObjectVsBroadPhaseLayerFilter : public JPH::ObjectVsBroadPhaseLayerFilter
+	{
+	public:
+		virtual bool ShouldCollide( JPH::ObjectLayer layer1, JPH::BroadPhaseLayer layer2 ) const override;
+	};
+
+	class JoltObjectLayerPairFilter : public JPH::ObjectLayerPairFilter
+	{
+	public:
+		virtual bool ShouldCollide( JPH::ObjectLayer inLayer1, JPH::ObjectLayer inLayer2 ) const override;
+	};
+
+	enum PhysicsBroadPhaseLayer
+	{
+		PhysBPL_NotMoving,
+		PhysBPL_Moving,
+
+		PhysBPL_COUNT,
+	};
+
+	static constexpr JPH::BroadPhaseLayer PhysBPLayerNotMoving( 0 );
+	static constexpr JPH::BroadPhaseLayer PhysBPLayerMoving( 1 );
+
+	static constexpr JPH::ObjectLayer PhysLayerNotMoving( 0 );
+	static constexpr JPH::ObjectLayer PhysLayerMoving( 1 );
+
+	class JoltBPLayerInterface : public JPH::BroadPhaseLayerInterface
+	{
+	public:
+		JoltBPLayerInterface();
+		~JoltBPLayerInterface();
+
+		uint32_t GetNumBroadPhaseLayers() const override;
+		JPH::BroadPhaseLayer GetBroadPhaseLayer( JPH::ObjectLayer inLayer ) const override;
+
+#if defined(JPH_EXTERNAL_PROFILE) || defined(JPH_PROFILE_ENABLED)
+		const char* GetBroadPhaseLayerName( JPH::BroadPhaseLayer inLayer ) const override;
+#endif
+
+	private:
+		JPH::BroadPhaseLayer m_ObjectToBroadPhase[ PhysicsBroadPhaseLayer::PhysBPL_COUNT ];
 	};
 
 	class PhysicsFoundation
@@ -65,37 +110,23 @@ namespace Saturn {
 		void Init();
 		void Terminate();
 
-		bool ConnectPVD();
-		void DisconnectPVD();
-
-		physx::PxPhysics& GetPhysics() { return *m_Physics; }
-		const physx::PxPhysics& GetPhysics() const { return *m_Physics; }
-
-		physx::PxFoundation& GetFoundation() { return *m_Foundation; }
-		const physx::PxFoundation& GetFoundation() const { return *m_Foundation; }
-
-		physx::PxDefaultAllocator& GetAllocator() { return m_AllocatorCallback; }
-		const physx::PxDefaultAllocator& GetAllocator() const { return m_AllocatorCallback; }
-
-		[[nodiscard]] PhysicsCooking& GetCookingContext() { return m_CookingContext; }
-		[[nodiscard]] const PhysicsCooking& GetCookingContext() const { return m_CookingContext; }
-
-		[[nodiscard]] PhysicsControllerContact* GetControllerContactCallback() { return &m_ControllerContactCallback; }
-		[[nodiscard]] const PhysicsControllerContact* GetControllerContactCallback() const { return &m_ControllerContactCallback; }
+		JPH::JobSystem*		GetJobSystem()     { return m_pJobSystem; }
+		JPH::PhysicsSystem* GetPhysicsSystem() { return m_pPhysicsSystem; }
+		JPH::BodyInterface* GetBodyInterface() { return m_pBodyInterface; }
+		JPH::TempAllocator* GetTempAllocator() { return m_pTempAllocator; }
 
 	private:
-		physx::PxFoundation*		   m_Foundation = nullptr;
-		physx::PxPhysics*			   m_Physics = nullptr;
-		physx::PxPvd*				   m_Pvd = nullptr;
-		physx::PxDefaultCpuDispatcher* m_Dispatcher = nullptr;
+		JPH::JobSystem* m_pJobSystem = nullptr;
+		JPH::PhysicsSystem* m_pPhysicsSystem = nullptr;
+		JPH::BodyInterface* m_pBodyInterface = nullptr;
+		JPH::TempAllocator* m_pTempAllocator = nullptr;
 
-		physx::PxDefaultAllocator m_AllocatorCallback;
+		PhysicsContact m_ContactHandler;
+		JoltBodyActivationListener m_BodyActivationListener;
+		JoltObjectVsBroadPhaseLayerFilter m_ObjectVsBPLayerFilter{};
+		JoltObjectLayerPairFilter m_ObjectVsObjectLayerFilter{};
+		JoltBPLayerInterface m_BPLayerInterface{};
 
-		PhysicsErrorCallback m_ErrorCallback;
-		PhysicsAssertCallback m_AssertCallback;
-		PhysicsContact m_ContactCallback;
-		PhysicsControllerContact m_ControllerContactCallback;
-		PhysicsCooking m_CookingContext;
 	private:
 		friend class PhysicsScene;
 		friend class PhysicsCooking;

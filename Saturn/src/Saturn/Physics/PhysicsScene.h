@@ -30,8 +30,6 @@
 
 #include "Saturn/Scene/Scene.h"
 
-#include "PxPhysicsAPI.h"
-
 namespace Saturn {
 
 	struct RigidbodyComponent;
@@ -59,17 +57,11 @@ namespace Saturn {
 
 		void ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
 
-		physx::PxControllerManager* GetControllerManager() { return m_ControllerManager; }
-		const physx::PxControllerManager* GetControllerManager() const { return m_ControllerManager; }
-
 	private:
-		void AddToScene( physx::PxRigidActor& rBody );
 		void InitialiseNewBody( SharedPtr<Entity>& rEntity, RigidbodyComponent& rRigidbodyComponent );
 		void AddNewController( SharedPtr<Entity>& rEntity );
 
 	private:
-		physx::PxScene* m_PhysicsScene = nullptr;
-		physx::PxControllerManager* m_ControllerManager = nullptr;
 		Ref<Scene> m_Scene;
 
 	private:

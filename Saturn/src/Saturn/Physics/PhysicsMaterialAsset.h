@@ -30,8 +30,6 @@
 
 #include "Saturn/Asset/Asset.h"
 
-#include "PxPhysicsAPI.h"
-
 namespace Saturn {
 
 	enum class PhysicsMaterialFlags
@@ -61,16 +59,12 @@ namespace Saturn {
 		[[nodiscard]] bool IsFlagSet( PhysicsMaterialFlags flag ) const { return ( m_Flags & ( uint32_t ) flag ) != 0; }
 		uint32_t GetFlags() const { return m_Flags; }
 
-		physx::PxMaterial* GetMaterial() { return m_Material; }
-		const physx::PxMaterial* GetMaterial() const { return m_Material; }
-
 	private:
 		float m_StaticFriction = 0.6f;
 		float m_DynamicFriction = 0.6f;
 		float m_Restitution = 0.0f;
 
 		uint32_t m_Flags = 0;
-		physx::PxMaterial* m_Material = nullptr;
 
 	private:
 		friend class PhysicsMaterialAssetViewer;

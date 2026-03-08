@@ -30,8 +30,10 @@
 
 #include "Saturn/Scene/Entity.h"
 #include "PhysicsShapes.h"
+#include "PhysicsBodyType.h"
 
-#include "PxPhysicsAPI.h"
+#include <Jolt/Jolt.h>
+#include <Jolt/Physics/Body/BodyCreationSettings.h>
 
 namespace Saturn {
 
@@ -68,9 +70,6 @@ namespace Saturn {
 
 		glm::vec3 GetLinearVelocity() const;
 
-		physx::PxRigidActor& GetActor() { return *m_Actor; }
-		const physx::PxRigidActor& GetActor() const { return *m_Actor; }
-
 		void SetLockFlags( RigidbodyLockFlags flags, bool value );
 		bool IsFlagSet( RigidbodyLockFlags flags ) const { return ( m_LockFlags & flags ) != 0; }
 		RigidbodyLockFlags GetFlags() const { return ( RigidbodyLockFlags )m_LockFlags; }
@@ -91,9 +90,7 @@ namespace Saturn {
 		void Destroy();
 
 	private:
-		// The actor that we currently represent.
-		// This actor could be owned and created by us however it could also be created by PhysX if the entity has a CharacterMovementController.
-		physx::PxRigidActor* m_Actor = nullptr;
+		JPH::Body* m_pBody = nullptr;
 
 		SharedPtr<Entity> m_Entity;
 
@@ -101,6 +98,7 @@ namespace Saturn {
 
 		bool m_ActorOwned = true;
 		bool m_Kinematic = false;
+		PhysicsRigidBodyType m_Type = PhysicsRigidBodyType::Dynamic;
 		uint32_t m_LockFlags = 0u;
 
 		std::function<void( SharedPtr<Entity> rOther )> m_OnMeshHit;

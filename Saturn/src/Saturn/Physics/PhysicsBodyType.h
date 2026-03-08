@@ -4,7 +4,7 @@
 *                                                                                           *
 * MIT License                                                                               *
 *                                                                                           *
-* Copyright (c) 2020 - 2026 BEAST                                                           *
+* Copyright (c) 2020 - 2025 BEAST                                                           *
 *                                                                                           *
 * Permission is hereby granted, free of charge, to any person obtaining a copy              *
 * of this software and associated documentation files (the "Software"), to deal             *
@@ -28,52 +28,14 @@
 
 #pragma once
 
-#include "Saturn/Vulkan/Mesh.h"
-
 namespace Saturn {
 
-	// File header
-	struct MeshCacheHeader
+	enum class PhysicsRigidBodyType
 	{
-		// .SMC / SMCS
-		const unsigned char Magic[ 4 ] = { 0x53, 0x4D, 0x43, 0x00 };
-		PhysicsShapeType Type;
-		uint64_t ID = 0;
-		size_t Submeshes = 0;
+		// Taken from the Jolt documentation....
+		Static,						///< Non movable
+		Kinematic,					///< Movable using velocities only, does not respond to forces
+		Dynamic,					///< Responds to forces as a normal physics object
 	};
 
-	// Data for each submesh
-	struct SubmeshColliderData
-	{
-		uint32_t Index;
-		Buffer Stream;
-	};
-
-	class PhysicsCooking
-	{
-	public:
-		PhysicsCooking();
-		~PhysicsCooking();
-
-		void Init();
-		void Terminate();
-
-	public:
-		// Cook mesh collider to a triangle mesh, if the collider cache does not exist we will create it if it does exist we will not override it and we will not cook the mesh.
-		// For Static meshes only!
-		bool CookMeshCollider( const Ref<StaticMesh>& rMesh, PhysicsShapeType Type );
-
-	private:
-		void ClearCache();
-		void WriteCache( const Ref<StaticMesh>& rMesh, PhysicsShapeType Type );
-		bool LoadColliderFile( const std::filesystem::path& rPath );
-
-		bool TryCookTriangleMesh( const Ref<StaticMesh>& rMesh );
-		bool TryCookConvexMesh( const Ref<StaticMesh>& rMesh );
-
-	private:
-		std::vector<SubmeshColliderData> m_SubmeshData;
-
-	private:
-	};
 }

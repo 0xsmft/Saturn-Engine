@@ -64,13 +64,10 @@ namespace Saturn {
 
 	void PhysicsCooking::Init()
 	{
-		physx::PxCookingParams Params( PhysicsFoundation::Get()->m_Physics->getTolerancesScale() );
-		m_Cooking = PxCreateCooking( PX_PHYSICS_VERSION, *PhysicsFoundation::Get()->m_Foundation, Params );
 	}
 
 	void PhysicsCooking::Terminate()
 	{
-		PHYSX_TERMINATE_ITEM( m_Cooking );
 	}
 
 	PhysicsCooking::~PhysicsCooking()
@@ -113,77 +110,12 @@ namespace Saturn {
 	bool PhysicsCooking::TryCookTriangleMesh( const Ref<StaticMesh>& rMesh )
 	{
 		bool Result = false;
-
-		int i = 0;
-		for( auto& rSubmesh : rMesh->Submeshes() )
-		{
-			physx::PxTriangleMeshDesc MeshDesc;
-			MeshDesc.points.data = &rMesh->Vertices()[ rSubmesh.BaseVertex ];
-			MeshDesc.points.count = rSubmesh.VertexCount;
-			MeshDesc.points.stride = sizeof( StaticVertex );
-
-			MeshDesc.triangles.data = &rMesh->Indices()[ rSubmesh.BaseIndex / 3 ];
-			MeshDesc.triangles.count = rSubmesh.IndexCount / 3;
-			MeshDesc.triangles.stride = sizeof( Index );
-
-			physx::PxDefaultMemoryOutputStream stream;
-			physx::PxTriangleMeshCookingResult::Enum errorCode;
-
-			if( Result = m_Cooking->cookTriangleMesh( MeshDesc, stream, &errorCode ) )
-			{
-				SubmeshColliderData data{};
-				data.Index = i;
-				data.Stream = Buffer::Copy( stream.getData(), stream.getSize() );
-
-				m_SubmeshData.push_back( data );
-			}
-			else
-			{ 
-				SAT_CORE_ERROR( "PhysX Cooking error code was: {0}", errorCode );
-				SAT_CORE_INFO( "Please check the log for more info.", errorCode );
-			}
-
-			++i;
-		}
-
 		return Result;
 	}
 
 	bool PhysicsCooking::TryCookConvexMesh( const Ref<StaticMesh>& rMesh )
 	{
 		bool Result = false;
-
-		for( auto& rSubmesh : rMesh->Submeshes() )
-		{
-			physx::PxConvexMeshDesc MeshDesc;
-			MeshDesc.points.data = &rMesh->Vertices()[ rSubmesh.BaseVertex ];
-			MeshDesc.points.count = rSubmesh.VertexCount;
-			MeshDesc.points.stride = sizeof( StaticVertex );
-
-			MeshDesc.indices.data = &rMesh->Indices()[ rSubmesh.BaseIndex / 3 ];
-			MeshDesc.indices.count = rSubmesh.IndexCount / 3;
-			MeshDesc.indices.stride = sizeof( Index );
-
-			MeshDesc.flags = physx::PxConvexFlag::Enum::eCOMPUTE_CONVEX | physx::PxConvexFlag::eSHIFT_VERTICES;
-
-			physx::PxDefaultMemoryOutputStream stream;
-			physx::PxConvexMeshCookingResult::Enum errorCode;
-
-			if( Result = m_Cooking->cookConvexMesh( MeshDesc, stream, &errorCode ) )
-			{
-				SubmeshColliderData data{};
-				data.Index = 0;
-				data.Stream = Buffer::Copy( stream.getData(), stream.getSize() );
-
-				m_SubmeshData.push_back( data );
-			}
-			else
-			{
-				SAT_CORE_ERROR( "PhysX Cooking error code was: {0}", errorCode );
-				SAT_CORE_INFO( "Please check the log for more info.", errorCode );
-			}
-		}
-
 		return Result;
 	}
 
@@ -243,138 +175,6 @@ namespace Saturn {
 		fileBuffer.Free();
 
 		return true;
-	}
-
-	std::vector<physx::PxShape*> PhysicsCooking::CreateTriangleMesh( const Ref<StaticMesh>& rMesh, physx::PxRigidActor& rActor, glm::vec3 Scale )
-	{
-		std::vector<physx::PxShape*> Shapes;
-
-		std::filesystem::path cachePath = Project::GetActiveProject()->GetFullCachePath();
-		cachePath /= rMesh->Name;
-		cachePath.replace_extension( ".smcs" );
-
-		if( !LoadColliderFile( cachePath ) )
-			return Shapes;
-
-		Ref<PhysicsMaterialAsset> materialAsset = GetPhysicsMaterial( rMesh );
-
-		// No material was found, so this means two things, one the project has no default material or (two) the mesh/project has a material asset but it can't be found.
-		if( !materialAsset )
-		{
-			materialAsset = Ref<PhysicsMaterialAsset>::Create( 1.0f, 1.0f, 1.0f );
-		}
-
-		physx::PxMaterial* pMaterial = materialAsset->GetMaterial();
-
-		// TEMP: We might want to change the filter data.
-		physx::PxFilterData data;
-		data.word0 = BIT( 0 );
-		data.word1 = BIT( 0 );
-
-		int i = 0;
-		for( const auto& rCookedData : m_SubmeshData )
-		{
-			const Submesh& rSubmesh = rMesh->Submeshes()[ i ];
-
-			// Read the cooked data.
-			physx::PxDefaultMemoryInputData readBuffer( rCookedData.Stream.Data, static_cast< physx::PxU32 >( rCookedData.Stream.Size ) );
-			physx::PxTriangleMesh* mesh = PhysicsFoundation::Get()->GetPhysics().createTriangleMesh( readBuffer );
-
-			// Create the shape.
-			glm::vec3 submeshPosition, submeshRotation, submeshScale;
-			Maths::DecomposeTransform( rSubmesh.Transform, submeshPosition, submeshRotation, submeshScale );
-
-			physx::PxVec3 ShapeScale = Auxiliary::GLMToPx( submeshScale * Scale );
-			physx::PxMeshScale MeshScale( ShapeScale );
-
-			physx::PxTriangleMeshGeometry MeshGeometry( mesh, ShapeScale );
-
-			physx::PxShape* pShape = PhysicsFoundation::Get()->GetPhysics().createShape( MeshGeometry, *pMaterial, true );
-			
-			// We will always set it to be part of the simulation.
-			pShape->setFlag( physx::PxShapeFlag::eSIMULATION_SHAPE, true ); 
-			pShape->setFlag( physx::PxShapeFlag::eTRIGGER_SHAPE, false );
-			pShape->setLocalPose( Auxiliary::GLMTransformToPx( submeshPosition, submeshRotation ) );
-			pShape->setSimulationFilterData( data );
-
-			mesh->release();
-
-			rActor.attachShape( *pShape );
-
-			Shapes.push_back( pShape );
-
-			++i;
-		}
-
-		ClearCache();
-
-		return Shapes;
-	}
-
-	std::vector<physx::PxShape*> PhysicsCooking::CreateConvexMesh( const Ref<StaticMesh>& rMesh, physx::PxRigidActor& rActor, glm::vec3 Scale )
-	{
-		std::vector<physx::PxShape*> Shapes;
-
-		// Load the cache.
-		std::filesystem::path cachePath = Project::GetActiveProject()->GetFullCachePath();
-		cachePath /= rMesh->Name;
-		cachePath.replace_extension( ".smcs" );
-
-		if( !LoadColliderFile( cachePath ) )
-			return Shapes;
-
-		Ref<PhysicsMaterialAsset> materialAsset = GetPhysicsMaterial( rMesh );
-
-		// No material was found, so this means two things, one the project has no default material or (two) the mesh/project has a material asset but it can't be found.
-		if( !materialAsset )
-		{
-			materialAsset = Ref<PhysicsMaterialAsset>::Create( 1.0f, 1.0f, 1.0f );
-		}
-
-		physx::PxMaterial* pMaterial = materialAsset->GetMaterial();
-
-		// TEMP: We might want to change the filter data.
-		physx::PxFilterData data;
-		data.word0 = BIT( 0 );
-		data.word1 = BIT( 0 );
-
-		int i = 0;
-		for( const auto& rCookedData : m_SubmeshData )
-		{
-			const Submesh& rSubmesh = rMesh->Submeshes()[ i ];
-
-			physx::PxDefaultMemoryInputData InputBuffer( rCookedData.Stream.Data, static_cast< physx::PxU32 >( rCookedData.Stream.Size ) );
-			physx::PxConvexMesh* pMesh = PhysicsFoundation::Get()->GetPhysics().createConvexMesh( InputBuffer );
-
-			glm::vec3 submeshPosition, submeshRotation, submeshScale;
-			Maths::DecomposeTransform( rSubmesh.Transform, submeshPosition, submeshRotation, submeshScale );
-
-			physx::PxVec3 ShapeScale = Auxiliary::GLMToPx( submeshScale * Scale );
-			physx::PxMeshScale MeshScale( ShapeScale );
-
-			physx::PxConvexMeshGeometry MeshGeometry( pMesh, ShapeScale );
-
-			physx::PxShape* pShape = PhysicsFoundation::Get()->GetPhysics().createShape( MeshGeometry, *pMaterial, true );
-
-			// TODO: I think convex meshes don't have to be kinematic meaning they don't have to part of simulation.
-			// We will always set it to be part of the simulation.
-			pShape->setFlag( physx::PxShapeFlag::eSIMULATION_SHAPE, true ); 
-			pShape->setFlag( physx::PxShapeFlag::eTRIGGER_SHAPE, false );
-			pShape->setLocalPose( Auxiliary::GLMTransformToPx( submeshPosition, submeshRotation ) );
-			pShape->setSimulationFilterData( data );
-
-			pMesh->release();
-
-			rActor.attachShape( *pShape );
-
-			Shapes.push_back( pShape );
-
-			++i;
-		}
-
-		ClearCache();
-
-		return Shapes;
 	}
 
 	void PhysicsCooking::WriteCache( const Ref<StaticMesh>& rMesh, PhysicsShapeType Type )

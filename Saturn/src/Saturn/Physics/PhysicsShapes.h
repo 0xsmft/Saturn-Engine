@@ -31,9 +31,10 @@
 #include "Saturn/Core/Base.h"
 #include "Saturn/Scene/Entity.h"
 
-#include "PxPhysicsAPI.h"
-
 #include "PhysicsShapeTypes.h"
+
+#include <Jolt/Jolt.h>
+#include <Jolt/Physics/Collision/Shape/Shape.h>
 
 namespace Saturn {
 
@@ -46,9 +47,9 @@ namespace Saturn {
 		PhysicsShape( SharedPtr<Entity> entity ) { m_Entity = entity; }
 		virtual ~PhysicsShape() = default;
 
-		virtual void Create( physx::PxRigidActor& rActor ) = 0;
-		virtual void Detach( physx::PxRigidActor& rActor );
-		virtual void ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds ) = 0;
+		virtual void Create() = 0;
+
+//		virtual void ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds ) = 0;
 
 		// Only use this for basic shapes as this only works for one shape.
 		void SetFilterData();
@@ -58,6 +59,9 @@ namespace Saturn {
 		// Runtime only!
 		virtual void SetTrigger( bool isTrigger );
 
+	public:
+		JPH::ShapeRefC GetShape() const { return m_Shape; }
+
 	protected:
 		Ref<PhysicsMaterialAsset> GetMaterial( Ref<StaticMesh> mesh, UUID physMaterialAssetID );
 
@@ -66,7 +70,7 @@ namespace Saturn {
 
 		SharedPtr<Entity> m_Entity;
 
-		physx::PxShape* m_Shape = nullptr;
+		JPH::ShapeRefC m_Shape = nullptr;
 	};
 
 	class BoxShape : public PhysicsShape
@@ -75,8 +79,9 @@ namespace Saturn {
 		BoxShape( SharedPtr<Entity> entity );
 		~BoxShape();
 
-		void Create( physx::PxRigidActor& rActor ) override;
-		void ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
+		void Create() override;
+
+//		void ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
 
 		// Runtime only!
 		virtual void SetTrigger( bool isTrigger ) override;
@@ -91,8 +96,8 @@ namespace Saturn {
 		SphereShape( SharedPtr<Entity> entity );
 		~SphereShape();
 
-		void Create( physx::PxRigidActor& rActor ) override;
-		void ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
+		void Create() override;
+//		void ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
 
 		// Runtime only!
 		virtual void SetTrigger( bool isTrigger ) override;
@@ -107,8 +112,8 @@ namespace Saturn {
 		CapsuleShape( SharedPtr<Entity> entity );
 		~CapsuleShape();
 
-		void Create( physx::PxRigidActor& rActor ) override;
-		void ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
+		void Create() override;
+//		void ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
 
 		// Runtime only!
 		virtual void SetTrigger( bool isTrigger ) override;
@@ -118,6 +123,7 @@ namespace Saturn {
 		float m_Radius = 0.0f;
 	};
 
+#if SAT_WITH_PHYSX
 	class TriangleMeshShape : public PhysicsShape
 	{
 	public:
@@ -128,7 +134,7 @@ namespace Saturn {
 		void Create( physx::PxRigidActor& rActor ) override;
 		virtual void Detach( physx::PxRigidActor& rActor ) override;
 
-		void ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
+//		void ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
 
 	private:
 		Ref<StaticMesh> m_Mesh;
@@ -145,10 +151,11 @@ namespace Saturn {
 		void Create( physx::PxRigidActor& rActor ) override;
 		virtual void Detach( physx::PxRigidActor& rActor ) override;
 
-		void ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
+//		void ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
 
 	private:
 		Ref<StaticMesh> m_Mesh;
 		std::vector<physx::PxShape*> m_Shapes;
 	};
+#endif
 }

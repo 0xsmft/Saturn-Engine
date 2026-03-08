@@ -39,37 +39,24 @@
 
 #include "Saturn/AI/Navigation/RecastInputGeometry.h"
 
+#include <Jolt/Physics/Collision/Shape/BoxShape.h>
+#include <Jolt/Physics/Collision/Shape/SphereShape.h>
+#include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
+
 namespace Saturn {
 
 	//////////////////////////////////////////////////////////////////////////
-
-	void PhysicsShape::Detach( physx::PxRigidActor& rActor )
-	{
-		rActor.detachShape( *m_Shape );
-	}
-
+	
 	void PhysicsShape::SetFilterData()
 	{
-		physx::PxFilterData data;
-		data.word0 = BIT( 0 );
-		data.word1 = BIT( 0 );
-
-		m_Shape->setSimulationFilterData( data );
 	}
 
 	void PhysicsShape::SetUserData( void* pData )
 	{
-		m_Shape->userData = pData;
 	}
 
 	void PhysicsShape::SetTrigger( bool isTrigger )
 	{
-		if( m_Shape )
-		{
-			m_Shape->setFlag( physx::PxShapeFlag::eSIMULATION_SHAPE, !isTrigger );
-//			m_Shape->setFlag( physx::PxShapeFlag::eSCENE_QUERY_SHAPE, !isTrigger );
-			m_Shape->setFlag( physx::PxShapeFlag::eTRIGGER_SHAPE, isTrigger );
-		}
 	}
 
 	Ref<PhysicsMaterialAsset> PhysicsShape::GetMaterial( Ref<StaticMesh> mesh, UUID physMaterialAssetID )
@@ -135,7 +122,7 @@ namespace Saturn {
 	{
 	}
 
-	void BoxShape::Create( physx::PxRigidActor& rActor )
+	void BoxShape::Create()
 	{
 		BoxColliderComponent& bcc = m_Entity->GetComponent<BoxColliderComponent>();
 		TransformComponent& transform = m_Entity->GetComponent<TransformComponent>();
@@ -156,23 +143,12 @@ namespace Saturn {
 			halfSize = transform.Scale * 0.5f;
 
 		Ref<PhysicsMaterialAsset> materialAsset = GetMaterial( mesh, rPhysMaterialAssetID );
-		physx::PxMaterial* pPxMaterial = materialAsset->GetMaterial();
 
-		physx::PxBoxGeometry BoxGeometry = physx::PxBoxGeometry( halfSize.x, halfSize.y, halfSize.z );
-		physx::PxShape* pShape = physx::PxRigidActorExt::createExclusiveShape( rActor, BoxGeometry, *pPxMaterial );
-
-		pShape->setFlag( physx::PxShapeFlag::eSIMULATION_SHAPE, !bcc.IsTrigger );
-		pShape->setFlag( physx::PxShapeFlag::eTRIGGER_SHAPE, bcc.IsTrigger );
-
-		pShape->setLocalPose( Auxiliary::GLMTransformToPx( glm::translate( glm::mat4( 1.0f ), bcc.Offset ) ) );
-
-		m_Shape = pShape;
-
-		rActor.attachShape( *pShape );
-
-		SetFilterData();
+		JPH::BoxShapeSettings shapeSettings( Auxiliary::GLMToJolt( bcc.HalfExtents ) );
+		m_Shape = shapeSettings.Create().Get();
 	}
 
+#if SAT_WITH_PHYSX
 	void BoxShape::ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds )
 	{
 		if( m_Shape->getGeometryType() == physx::PxGeometryType::eBOX )
@@ -218,6 +194,7 @@ namespace Saturn {
 			}
 		}
 	}
+#endif
 
 	void BoxShape::SetTrigger( bool isTrigger )
 	{
@@ -238,7 +215,7 @@ namespace Saturn {
 	{
 	}
 
-	void SphereShape::Create( physx::PxRigidActor& rActor )
+	void SphereShape::Create()
 	{
 		SphereColliderComponent& scc = m_Entity->GetComponent<SphereColliderComponent>();
 		TransformComponent& transform = m_Entity->GetComponent<TransformComponent>();
@@ -255,21 +232,12 @@ namespace Saturn {
 			radius *= scale.x;
 
 		Ref<PhysicsMaterialAsset> materialAsset = GetMaterial( mesh, rPhysMaterialAssetID );
-		physx::PxMaterial* pPxMaterial = materialAsset->GetMaterial();
-
-		physx::PxSphereGeometry SphereGoemetry( radius );
-
-		physx::PxShape* pShape = physx::PxRigidActorExt::createExclusiveShape( rActor, SphereGoemetry, *pPxMaterial );
-
-		pShape->setFlag( physx::PxShapeFlag::eSIMULATION_SHAPE, !scc.IsTrigger );
-		pShape->setFlag( physx::PxShapeFlag::eTRIGGER_SHAPE, scc.IsTrigger );
-
-		m_Shape = pShape;
-		rActor.attachShape( *pShape );
-
-		SetFilterData();
+		
+		JPH::SphereShapeSettings sphereSetting( radius, nullptr );
+		m_Shape = sphereSetting.Create().Get();
 	}
 
+#if SAT_WITH_PHYSX
 	void SphereShape::ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds )
 	{
 		physx::PxTransform actorTransform = rActor.getGlobalPose();
@@ -297,7 +265,7 @@ namespace Saturn {
 
 				// Top pole
 				physx::PxVec3 top = localTransform.transform( physx::PxVec3( 0, radius, 0 ) );
-				glm::vec3 glmTop = Auxiliary::PxToGLM( top );
+				glm::vec3 glmTop = Auxiliary::JoltToGLM( top );
 				if( rData.Bounds.Contains( glmTop ) )
 				{
 					rData.VertexBuffer.push_back( top.x );
@@ -329,7 +297,7 @@ namespace Saturn {
 
 						physx::PxVec3 localPos( x * radius, y * radius, z * radius );
 						physx::PxVec3 worldPos = localTransform.transform( localPos );
-						glm::vec3 glmPos = Auxiliary::PxToGLM( worldPos );
+						glm::vec3 glmPos = Auxiliary::JoltToGLM( worldPos );
 
 						if( rData.Bounds.Contains( glmPos ) )
 						{
@@ -350,7 +318,7 @@ namespace Saturn {
 
 				// Bottom pole
 				physx::PxVec3 bottom = localTransform.transform( physx::PxVec3( 0, -radius, 0 ) );
-				glm::vec3 glmBottom = Auxiliary::PxToGLM( bottom );
+				glm::vec3 glmBottom = Auxiliary::JoltToGLM( bottom );
 				if( rData.Bounds.Contains( glmBottom ) )
 				{
 					rData.VertexBuffer.push_back( bottom.x );
@@ -429,6 +397,7 @@ namespace Saturn {
 			}
 		}
 	}
+#endif
 
 	void SphereShape::SetTrigger( bool isTrigger )
 	{
@@ -449,7 +418,7 @@ namespace Saturn {
 	{
 	}
 
-	void CapsuleShape::Create( physx::PxRigidActor& rActor )
+	void CapsuleShape::Create()
 	{
 		CapsuleColliderComponent& cap = m_Entity->GetComponent<CapsuleColliderComponent>();
 		TransformComponent& transform = m_Entity->GetComponent<TransformComponent>();
@@ -471,22 +440,12 @@ namespace Saturn {
 			height *= scale.y;
 
 		Ref<PhysicsMaterialAsset> materialAsset = GetMaterial( mesh, rPhysMaterialAssetID );
-		physx::PxMaterial* pPxMaterial = materialAsset->GetMaterial();
-
-		physx::PxCapsuleGeometry CapsuleGemetry( radius, height );
-
-		physx::PxShape* pShape = physx::PxRigidActorExt::createExclusiveShape( rActor, CapsuleGemetry, *pPxMaterial );
-		pShape->setFlag( physx::PxShapeFlag::eSIMULATION_SHAPE, !cap.IsTrigger );
-		pShape->setFlag( physx::PxShapeFlag::eTRIGGER_SHAPE, cap.IsTrigger );
-
-		pShape->setLocalPose( physx::PxTransform( physx::PxQuat( physx::PxHalfPi, physx::PxVec3( 0, 0, 1 ) ) ) );
-
-		m_Shape = pShape;
-		rActor.attachShape( *pShape );
-
-		SetFilterData();
+		
+		JPH::CapsuleShapeSettings capsuleSetting( height, radius, nullptr );
+		m_Shape = capsuleSetting.Create().Get();
 	}
 
+#if SAT_WITH_PHYSX
 	void CapsuleShape::ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds )
 	{
 		physx::PxTransform actorTransform = rActor.getGlobalPose();
@@ -520,8 +479,8 @@ namespace Saturn {
 					physx::PxVec3 world0 = localTransform.transform( local0 );
 					physx::PxVec3 world1 = localTransform.transform( local1 );
 
-					glm::vec3 glm0 = Auxiliary::PxToGLM( world0 );
-					glm::vec3 glm1 = Auxiliary::PxToGLM( world1 );
+					glm::vec3 glm0 = Auxiliary::JoltToGLM( world0 );
+					glm::vec3 glm1 = Auxiliary::JoltToGLM( world1 );
 
 					bool inBounds = rData.Bounds.Contains( glm0 ) || rData.Bounds.Contains( glm1 );
 
@@ -584,6 +543,7 @@ namespace Saturn {
 			}
 		}
 	}
+#endif
 
 	void CapsuleShape::SetTrigger( bool isTrigger )
 	{
@@ -591,6 +551,7 @@ namespace Saturn {
 		m_Entity->GetComponent<CapsuleColliderComponent>().IsTrigger = isTrigger;
 	}
 
+#if SAT_WITH_PHYSX
 	//////////////////////////////////////////////////////////////////////////
 	// Triangle
 
@@ -677,7 +638,7 @@ namespace Saturn {
 								physx::PxVec3 scaledVertex = scaleRotation * ( vertexPos.multiply( scale ) );
 								physx::PxVec3 worldSpace = localActorTransform.transform( scaledVertex );
 
-								if( rData.Bounds.Contains( Auxiliary::PxToGLM( worldSpace ) ) )
+								if( rData.Bounds.Contains( Auxiliary::JoltToGLM( worldSpace ) ) )
 								{
 									rNavMeshBounds.Min.x = glm::min( rNavMeshBounds.Min.x, worldSpace.x );
 									rNavMeshBounds.Min.y = glm::min( rNavMeshBounds.Min.y, worldSpace.y );
@@ -806,9 +767,9 @@ namespace Saturn {
 
 						for( int j = 1; j < vertexCount - 1; j++ )
 						{
-							glm::vec3 v0 = glm::vec3( actorTransform * glm::vec4( Auxiliary::PxToGLM( pVertexBuffer[ pPolyIndices[ 0 ] ] ), 1.0f ) );
-							glm::vec3 v1 = glm::vec3( actorTransform * glm::vec4( Auxiliary::PxToGLM( pVertexBuffer[ pPolyIndices[ j ] ] ), 1.0f ) );
-							glm::vec3 v2 = glm::vec3( actorTransform * glm::vec4( Auxiliary::PxToGLM( pVertexBuffer[ pPolyIndices[ i + 1 ] ] ), 1.0f ) );
+							glm::vec3 v0 = glm::vec3( actorTransform * glm::vec4( Auxiliary::JoltToGLM( pVertexBuffer[ pPolyIndices[ 0 ] ] ), 1.0f ) );
+							glm::vec3 v1 = glm::vec3( actorTransform * glm::vec4( Auxiliary::JoltToGLM( pVertexBuffer[ pPolyIndices[ j ] ] ), 1.0f ) );
+							glm::vec3 v2 = glm::vec3( actorTransform * glm::vec4( Auxiliary::JoltToGLM( pVertexBuffer[ pPolyIndices[ i + 1 ] ] ), 1.0f ) );
 
 							const uint32_t baseIndex = ( uint32_t ) rData.VertexBuffer.size();
 							rData.VertexBuffer.push_back( v0.x );
@@ -832,5 +793,5 @@ namespace Saturn {
 			}
 		}
 	}
-
+#endif
 }

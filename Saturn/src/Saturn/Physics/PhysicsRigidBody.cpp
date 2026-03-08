@@ -40,20 +40,6 @@ namespace Saturn {
 	PhysicsRigidBody::PhysicsRigidBody( SharedPtr<Entity> entity )
 		: m_Entity( entity )
 	{
-		const TransformComponent& tc = entity->GetComponent<TransformComponent>();
-		const RigidbodyComponent& rb = entity->GetComponent<RigidbodyComponent>();
-	
-		// Create dynamic body.
-		physx::PxRigidDynamic* pBody = PhysicsFoundation::Get()->GetPhysics().createRigidDynamic( Auxiliary::GLMTransformToPx( tc.GetTransform() ) );
-		m_Actor = pBody;
-
-		SetKinematic( rb.IsKinematic );
-		SetMass( rb.Mass );
-		SetLockFlags( ( RigidbodyLockFlags ) rb.LockFlags, true );
-
-		physx::PxRigidBodyExt::updateMassAndInertia( *pBody, ( physx::PxReal ) rb.Mass );
-
-		m_Actor->setActorFlag( physx::PxActorFlag::eVISUALIZATION, true );
 	}
 
 	PhysicsRigidBody::~PhysicsRigidBody()
@@ -63,13 +49,13 @@ namespace Saturn {
 
 	void PhysicsRigidBody::CreateShape()
 	{
-		RigidbodyComponent& rb = m_Entity->GetComponent<RigidbodyComponent>();
-		
+		const RigidbodyComponent& rb = m_Entity->GetComponent<RigidbodyComponent>();
+		const TransformComponent& tc = m_Entity->GetComponent<TransformComponent>();
+	
 		// No shape is created when we have a CharacterMovementComponent, a DynamicRigidBody is created by PhysX.
 		if( m_Entity->HasComponent<CharacterMovementComponent>() )
 		{
 			auto* pController = m_Entity->GetComponent<CharacterMovementComponent>().CharacterMovement;
-			m_Actor = pController->GetController()->getActor();
 			m_ActorOwned = false;
 		}
 		// Normal Collider Component's have more priority over the static mesh.
@@ -94,26 +80,31 @@ namespace Saturn {
 			SAT_CORE_WARN( "No physics shape component was found! No shape will be attached." );
 		}
 
-		m_Actor->userData = this;
-#if !defined( SAT_DIST )
-		m_Actor->setName( m_Entity->GetName().c_str() );
-#endif
-
 		// The settings might of changed, so update in case.
 		SetKinematic( rb.IsKinematic );
+
+		// Create body after the shape.
+		JPH::BodyCreationSettings settings( m_Shape->GetShape(), Auxiliary::GLMToJolt( tc.Position ), Auxiliary::GLMQToJoltQ( tc.GetRotation() ), ( JPH::EMotionType ) m_Type, PhysLayerMoving );
+		m_pBody = PhysicsFoundation::Get()->GetBodyInterface()->CreateBody( settings );
+
+		PhysicsFoundation::Get()->GetBodyInterface()->AddBody( m_pBody->GetID(), m_Kinematic ? JPH::EActivation::DontActivate : JPH::EActivation::Activate );
+
 		SetMass( rb.Mass );
 	}
 
 	void PhysicsRigidBody::SetShapeTrigger( bool trigger )
 	{
+		/*
 		if( m_Shape )
 			m_Shape->SetTrigger( trigger );
+		*/
 	}
 
 	void PhysicsRigidBody::AttachPhysicsShape( PhysicsShapeType type )
 	{
 		switch( type )
 		{
+			/*
 			case Saturn::PhysicsShapeType::ConvexMesh: 
 			{
 				m_Shape = Ref<ConvexMeshShape>::Create( m_Entity );
@@ -135,6 +126,7 @@ namespace Saturn {
 
 				m_Shape = Ref<TriangleMeshShape>::Create( m_Entity );
 			} break;
+			*/
 
 			case Saturn::PhysicsShapeType::Box: 
 			{
@@ -156,157 +148,101 @@ namespace Saturn {
 				break;
 		}
 
-		if( m_Shape ) 
-		{
-			m_Shape->Create( *m_Actor );
-			m_Shape->SetUserData( this );
-		}
+		if( m_Shape )
+			m_Shape->Create();
 	}
 
 	void PhysicsRigidBody::Destroy()
 	{
-		if( m_Shape )
-		{
-			m_Shape->Detach( *m_Actor );
-		}
+		PhysicsFoundation::Get()->GetBodyInterface()->RemoveBody( m_pBody->GetID() );
+		PhysicsFoundation::Get()->GetBodyInterface()->DestroyBody( m_pBody->GetID() );
 
+		m_pBody = nullptr;
 		m_Shape = nullptr;
-
-		if( m_ActorOwned )
-		{
-			PHYSX_TERMINATE_ITEM( m_Actor );
-		}
-		else
-		{
-			m_Actor = nullptr;
-		}
-
 		m_Entity = nullptr;
 	}
 
 	void PhysicsRigidBody::ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds )
 	{
-		if( m_Shape )
-			m_Shape->ExportRc( *m_Actor, rData, rNavMeshBounds );
 	}
 
 	void PhysicsRigidBody::SetKinematic( bool val )
 	{
-		physx::PxRigidDynamic* pBody = ( physx::PxRigidDynamic* ) m_Actor;
-		pBody->setRigidBodyFlag( physx::PxRigidBodyFlag::eKINEMATIC, val );
-
 		m_Kinematic = val;
 	}
 
 	void PhysicsRigidBody::SetMass( float val )
 	{
-		physx::PxRigidDynamic* pBody = ( physx::PxRigidDynamic* ) m_Actor;
-		pBody->setMass( val );
+		m_pBody->GetMotionProperties()->ScaleToMass( val );
 	}
 
 	void PhysicsRigidBody::SetLinearDrag( float value )
 	{
-		physx::PxRigidDynamic* pBody = ( physx::PxRigidDynamic* ) m_Actor;
-		pBody->setLinearDamping( value );
 	}
 
 	void PhysicsRigidBody::SetLinearVelocity( const glm::vec3& rVelocity )
 	{
-		physx::PxRigidDynamic* pBody = ( physx::PxRigidDynamic* ) m_Actor;
-		pBody->setLinearVelocity( Auxiliary::GLMToPx( rVelocity ) );
+		PhysicsFoundation::Get()->GetBodyInterface()->SetLinearVelocity( m_pBody->GetID(), Auxiliary::GLMToJolt( rVelocity ) );
 	}
 
 	float PhysicsRigidBody::GetLinearDrag()
 	{
-		physx::PxRigidDynamic* pBody = ( physx::PxRigidDynamic* ) m_Actor;
-		return pBody->getLinearDamping();
+		return 0.0f;
 	}
 
 	void PhysicsRigidBody::ApplyForce( glm::vec3 ForceAmount, ForceMode Type )
 	{
-		physx::PxRigidDynamic* pBody = ( physx::PxRigidDynamic* ) m_Actor;
+		switch( Type )
+		{
+			case ForceMode::Force:
+				PhysicsFoundation::Get()->GetBodyInterface()->AddForce( m_pBody->GetID(), Auxiliary::GLMToJolt( ForceAmount ) );
+				break;
 
-		pBody->addForce( Auxiliary::GLMToPx( ForceAmount ), ( physx::PxForceMode::Enum ) Type );
+			case ForceMode::Impulse:
+				PhysicsFoundation::Get()->GetBodyInterface()->AddImpulse( m_pBody->GetID(), Auxiliary::GLMToJolt( ForceAmount ) );
+				break;
+
+			case ForceMode::VelocityChange:
+			case ForceMode::Acceleration:
+			default:
+				break;
+		}
 	}
 
 	void PhysicsRigidBody::Rotate( const glm::vec3& rRotation )
 	{
-		physx::PxTransform trans = m_Actor->getGlobalPose();
-
-		trans.q *= ( physx::PxQuat( glm::radians( rRotation.x ), { 1.0f, 0.0f, 0.0f } )
-			* physx::PxQuat( glm::radians( rRotation.y ), { 0.0f, 1.0f, 0.0f } )
-			* physx::PxQuat( glm::radians( rRotation.z ), { 0.0f, 0.0f, 1.0f } ) );
-		
-		m_Actor->setGlobalPose( trans );
 	}
 
 	void PhysicsRigidBody::Rotate( const glm::quat& rRotation )
 	{
-		physx::PxTransform trans = m_Actor->getGlobalPose();
-
-		trans.q *= Auxiliary::QGLMToPx( rRotation );
-
-		m_Actor->setGlobalPose( trans );
+		PhysicsFoundation::Get()->GetBodyInterface()->SetRotation( m_pBody->GetID(), Auxiliary::GLMQToJoltQ( rRotation ), JPH::EActivation::Activate );
 	}
 
 	void PhysicsRigidBody::SetPosition( const glm::vec3& rPosition )
 	{
-		physx::PxTransform trans = m_Actor->getGlobalPose();
-		trans.p = Auxiliary::GLMToPx( rPosition );
-		m_Actor->setGlobalPose( trans );
+		PhysicsFoundation::Get()->GetBodyInterface()->SetPosition( m_pBody->GetID(), Auxiliary::GLMToJolt( rPosition ), JPH::EActivation::Activate );
 	}
 
 	glm::vec3 PhysicsRigidBody::GetPosition()
 	{
-		float xpos = m_Actor->getGlobalPose().p.x;
-		float ypos = m_Actor->getGlobalPose().p.y;
-		float zpos = m_Actor->getGlobalPose().p.z;
-
-		glm::vec3 pos{};
-
-		pos.x = xpos;
-		pos.y = ypos;
-		pos.z = zpos;
-
-		return  pos;
+		return Auxiliary::JoltToGLM( PhysicsFoundation::Get()->GetBodyInterface()->GetPosition( m_pBody->GetID() ) );
 	}
 
 	glm::vec3 PhysicsRigidBody::GetRotation()
 	{
-		auto xq = m_Actor->getGlobalPose().q.x;
-		auto yq = m_Actor->getGlobalPose().q.y;
-		auto zq = m_Actor->getGlobalPose().q.z;
+		auto eular = glm::eulerAngles( Auxiliary::JoltQToGLMQ( PhysicsFoundation::Get()->GetBodyInterface()->GetRotation( m_pBody->GetID() ) ) );
 
-		glm::vec3 q = {};
-		q.x = xq;
-		q.y = yq;
-		q.z = zq;
-
-		return q;
+		return eular;
 	}
 
 	glm::mat4 PhysicsRigidBody::GetTransform()
 	{
-		auto xpos = m_Actor->getGlobalPose().p.x;
-		auto ypos = m_Actor->getGlobalPose().p.y;
-		auto zpos = m_Actor->getGlobalPose().p.z;
-
-		auto xq = m_Actor->getGlobalPose().q.x;
-		auto yq = m_Actor->getGlobalPose().q.y;
-		auto zq = m_Actor->getGlobalPose().q.z;
-
-		auto pos = glm::mat4( xq * ypos * zpos );
-		auto rot = glm::mat4( xpos * yq * zq );
-
-		return glm::mat4( pos * rot );
+		return glm::mat4{};
 	}
 
 	glm::vec3 PhysicsRigidBody::GetLinearVelocity() const
 	{
-		physx::PxRigidDynamic* pBody = ( physx::PxRigidDynamic* ) m_Actor;
-		physx::PxVec3 vel = pBody->getLinearVelocity();
-
-		return Auxiliary::PxToGLM( vel );
+		return Auxiliary::JoltToGLM( PhysicsFoundation::Get()->GetBodyInterface()->GetLinearVelocity( m_pBody->GetID() ) );
 	}
 
 	void PhysicsRigidBody::SetLockFlags( RigidbodyLockFlags flags, bool value )
@@ -315,9 +251,6 @@ namespace Saturn {
 			m_LockFlags |= flags;
 		else
 			m_LockFlags &= ~flags;
-
-		physx::PxRigidDynamic* pBody = ( physx::PxRigidDynamic* ) m_Actor;
-		pBody->setRigidDynamicLockFlag( ( physx::PxRigidDynamicLockFlag::Enum ) flags, value );
 	}
 
 	bool PhysicsRigidBody::AllRotationLocked() const
@@ -331,11 +264,7 @@ namespace Saturn {
 
 		TransformComponent& tc = m_Entity->GetComponent<TransformComponent>();
 
-		physx::PxTransform actorPose = m_Actor->getGlobalPose();
-		tc.Position = Auxiliary::PxToGLM( actorPose.p );
-
-		if( !AllRotationLocked() )
-			tc.SetRotation( Auxiliary::QPxToGLM( actorPose.q ) );
+		tc.Position = GetPosition();
 	}
 
 }

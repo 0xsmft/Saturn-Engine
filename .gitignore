@@ -82,3 +82,5 @@ Saturn/vendor/imgui/ImGui.txt
 .build-dist/
 **/obj
 **/build
+.kdev4
+*.kdev4

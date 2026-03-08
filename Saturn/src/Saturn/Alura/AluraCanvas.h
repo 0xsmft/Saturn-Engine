@@ -31,6 +31,7 @@
 #include "AluraElement.h"
 #include "AluraStyle.h"
 #include "AluraFont.h"
+#include "AluraDrawer.h"
 
 #include "Saturn/Core/Base.h"
 #include "Saturn/Core/UUID.h"
@@ -103,13 +104,15 @@ namespace Saturn {
 		~AluraCanvas();
 
 		// Init
-		void Begin();
-		void Destory();
+		void NewFrame();
+		void DrawAllDrawers( Timestep ts );
+		void HandleDrawerEvents( Event& rEvent );
+		void Destroy();
 
+		void AddDrawer( Ref<AluraDrawer> drawer );
 		void SetContext( Ref<AluraRenderer> context );
 
 		void PushFontAndSetActive( Ref<AluraFont> font );
-		
 		// Pops the newest font in the fonts list.
 		// NOTE: There must always be an active font, so if you pop the last remaining font, Saturn will assert.
 		void PopFont();
@@ -206,6 +209,7 @@ namespace Saturn {
 
 		Ref<AluraRenderer> m_Renderer;
 
+		std::vector<Ref<AluraDrawer>> m_Drawers;
 		std::vector<Ref<AluraFont>> m_Fonts;
 		std::stack<AluraColorTemp> m_ColorStack;
 

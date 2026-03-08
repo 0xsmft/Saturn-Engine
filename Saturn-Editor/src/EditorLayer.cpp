@@ -352,6 +352,8 @@ namespace Saturn {
 
 			m_RuntimeScene->OnUpdate( time );
 
+			// Suspended only, paused would be in the control of the user, so we don't switch the
+			// camera.
 			if( m_RuntimeScene->GetRuntimeState() == RuntimeState::Suspended ) [[unlikely]]
 			{
 				m_SuspendedEditorCamera.SetActive( m_AllowCameraEvents );
@@ -510,9 +512,28 @@ namespace Saturn {
 					m_SuspendedEditorCamera.OnEvent( rEvent );
 			}
 
-			if( m_RuntimeScene )
+			// TODO: Fix this.... we want events to only fire if the mouse is over the viewport
+			// However, there are two issues to solve this problem,
+			// 1) In UI the mouse will be over the viewport but will not be locked, so the events would fire.
+			// 2) With no click able UI the cursor should be locked which means that it can drift out of the viewport, meaning that we still want events to fire because we're locked but its now no longer over the viewport.
+			//
+			// How could we solve this?
+			// We could check like this, is the mouse locked Yes: fire events regardless No: check if over viewport
+			// OR
+			// We don't handle any of this, it is the responsibly of the caller to do so.
+			
+//			SAT_CORE_INFO( "m_MouseOverViewport: {0}", m_MouseOverViewport );
+
+			if( /*( m_MouseOverViewport || m_ViewportFocused ) &&*/ m_RuntimeScene ) 
+			{
 				m_RuntimeScene->OnEvent( rEvent );
-	
+
+				if( g_AluraCanvas )
+				{
+					g_AluraCanvas->HandleDrawerEvents( rEvent );
+				}
+			}
+
 			m_ImGuiWindowManager->ProcessEvent( rEvent );
 		}
 
@@ -2913,7 +2934,7 @@ namespace Saturn {
 
 	void EditorLayer::Viewport_GizmoControl()
 	{
-		if( g_ActiveScene->IsRuntimeRunning() )
+		if( g_ActiveScene->IsRuntimeRunning() || g_ActiveScene->IsPaused() )
 			return;
 
 		const ImVec2 minBound = ImGui::GetWindowPos();
@@ -3124,7 +3145,7 @@ namespace Saturn {
 	{
 		// Only show the hot reload settings when no runtime is active
 		// So don't even show it while suspended.
-		if( g_ActiveScene->IsRuntimeRunning() )
+		if( g_ActiveScene->IsRuntimeRunning() || g_ActiveScene->IsPaused() )
 			return;
 
 		const ImVec2 minBound = ImGui::GetWindowPos();

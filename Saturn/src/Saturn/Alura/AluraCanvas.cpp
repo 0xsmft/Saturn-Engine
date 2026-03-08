@@ -55,10 +55,10 @@ namespace Saturn {
 
 	AluraCanvas::~AluraCanvas()
 	{
-		Destory();
+		Destroy();
 	}
 
-	void AluraCanvas::Begin()
+	void AluraCanvas::NewFrame()
 	{
 		// Font is null! Must have an active font.
 //		SAT_CORE_ASSERT( m_ActiveFont );
@@ -75,11 +75,41 @@ namespace Saturn {
 		m_MousePosition = Input::Get().MousePosition() - m_Position;
 	}
 
-	void AluraCanvas::Destory()
+	void AluraCanvas::DrawAllDrawers( Timestep ts )
 	{
+		for( auto& rDrawer : m_Drawers )
+		{
+			rDrawer->OnDraw( ts );
+		}
+	}
+
+	void AluraCanvas::HandleDrawerEvents( Event& rEvent )
+	{
+		// TODO: reverse
+		for( auto& rDrawer : m_Drawers )
+		{
+			rDrawer->OnEvent( rEvent );
+		}
+	}
+
+	void AluraCanvas::Destroy()
+	{
+		for( auto& rDrawer : m_Drawers )
+		{
+			rDrawer->OnDestroy();
+		}
+
+		m_Drawers.clear();
+
 		m_Renderer = nullptr;
 		m_ActiveFont = nullptr;
 		m_Fonts.clear();
+	}
+
+	void AluraCanvas::AddDrawer( Ref<AluraDrawer> drawer )
+	{
+		m_Drawers.push_back( drawer );
+		drawer->OnInit();
 	}
 
 	void AluraCanvas::SetContext( Ref<AluraRenderer> context )
@@ -422,3 +452,35 @@ namespace Saturn {
 	}
 
 }
+
+#include "Saturn/GameFramework/Core/EngineGenerated.h"
+
+constexpr std::underlying_type_t<Saturn::SClassFlags> RStaticClassFlagsAluraDrawer = ( Saturn::SClassFlags ) Saturn::SC_VisibleInEditor | Saturn::SC_NoExtendedMetadata | Saturn::SC_Abstract;
+
+static Saturn::SClass* RStaticLnkAluraDrawer()
+{
+	static Saturn::SClass* pClass = nullptr;
+	if( !pClass )
+	{
+		const Saturn::SClassSpecification spec
+		{
+			"AluraDrawer",
+			RStaticClassFlagsAluraDrawer,
+			0,
+			sizeof( Saturn::AluraDrawer ), alignof( Saturn::AluraDrawer ),
+			Saturn::FNV1A64( "AluraDrawer" ),
+			Saturn::AluraDrawer::Super::StaticClass(), nullptr, RStaticLnkAluraDrawer, nullptr, {}
+		};
+
+		Saturn::SClass::RConstructClass( pClass, spec );
+	}
+
+	return pClass;
+}
+
+Saturn::SClass* Saturn::AluraDrawer::GetStaticClassInternal()
+{
+	return RStaticLnkAluraDrawer();
+}
+
+static Saturn::SClassRegistrar RCRBehaviourTreeNodeBase( RStaticLnkAluraDrawer );

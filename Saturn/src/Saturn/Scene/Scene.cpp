@@ -40,6 +40,7 @@
 
 #include "Saturn/Asset/Prefab.h"
 #include "Saturn/Asset/AssetManager.h"
+#include "Saturn/Asset/TextureSourceAsset.h"
 
 #include "Saturn/Core/Profiler.h"
 #include "Saturn/Core/VirtualFS.h"
@@ -196,11 +197,8 @@ namespace Saturn {
 			m_PhysicsScene->Simulate( ts );
 			OnUpdatePhysics( ts );
 
-			for( auto&& [id, entity] : m_EntityIDMap )
-			{
-				entity->OnUpdate( ts );
-			}
-
+			OnUpdateEntities( ts );
+			
 			OnUpdateAnimators( ts );
 
 			UpdateAudioListeners();
@@ -209,6 +207,14 @@ namespace Saturn {
 		}
 	}
 	
+	void Scene::OnUpdateEntities( Timestep ts )
+	{
+		for( auto&& [id, entity] : m_EntityIDMap )
+		{
+			entity->OnUpdate( ts );
+		}
+	}
+
 	void Scene::OnUpdatePhysics( Timestep ts )
 	{
 		SAT_PF_EVENT();
@@ -277,7 +283,7 @@ namespace Saturn {
 	{
 		// Other states do not need to be handled because anything other than Running or Suspended should get through here.
 		// TODO: Handle this better.
-		if( m_RuntimeState == RuntimeState::Suspended )
+		if( IsPausedOrSuspended() )
 			return;
 
 		switch( rEvent.Type )
@@ -367,7 +373,8 @@ namespace Saturn {
 
 		//////////////////////////////////////////////////////////////////////////
 
-		g_AluraCanvas->Begin();
+		g_AluraCanvas->NewFrame();
+		g_AluraCanvas->DrawAllDrawers( ts );
 
 		// Lights
 		RtSetupLights( sceneRenderer );
@@ -526,6 +533,8 @@ namespace Saturn {
 				flip = textureAsset->IsFlagSet( TextureLoadFlags_FlipVertically );
 			}
 			
+			// An extra step to counteract if the texture is the wrong way around,
+			// this allows the billboard to always display correct.
 			if( flip )
 			{
 				sceneRenderer->GetRenderer2D()->SubmitBillboardTexturedFlipped(
@@ -670,7 +679,12 @@ namespace Saturn {
 
 						const auto& rComponent = rEntity->GetComponent<CapsuleColliderComponent>();
 						submitCapsuleCollider( rEntity, mesh, mesh->GetMaterialRegistry() );
-					} 
+					}
+					else if( rEntity->GetClass() == NavBoundsEntity::StaticClass() )
+					{
+						sceneRenderer->GetRenderer2D()->SubmitAABB( m_NavBoundsEntity->GetBoundingBox(), glm::vec4{ 0.0f, 1.0f, 0.0f, 1.0f } );
+						m_NavBoundsEntity->DebugDraw( sceneRenderer->GetRenderer2D().Get() );
+					}
 				}
 			} break;
 
@@ -704,6 +718,12 @@ namespace Saturn {
 
 					const auto& rComponent = rEntity->GetComponent<CapsuleColliderComponent>();
 					submitCapsuleCollider( rEntity, mesh, mesh->GetMaterialRegistry() );
+				}
+
+				if( m_NavBoundsEntity )
+				{
+					sceneRenderer->GetRenderer2D()->SubmitAABB( m_NavBoundsEntity->GetBoundingBox(), glm::vec4{ 0.0f, 1.0f, 0.0f, 1.0f } );
+					m_NavBoundsEntity->DebugDraw( sceneRenderer->GetRenderer2D().Get() );
 				}
 			} break;
 		}
@@ -915,8 +935,8 @@ namespace Saturn {
 
 		if( entity->HasParent() && !parent )
 		{
-			SharedPtr<Entity> parent = FindEntityByID( entity->GetParent() );
-			SharedPtr<Entity> newParent = DuplicateEntity( parent, nullptr );
+			SharedPtr<Entity> xparent = FindEntityByID( entity->GetParent() );
+			SharedPtr<Entity> newParent = DuplicateEntity( xparent, nullptr );
 
 			newEntity->SetParent( newParent->GetUUID() );
 		}
@@ -960,7 +980,7 @@ namespace Saturn {
 
 	void Scene::DestroyEntity( Entity* entity )
 	{
-		m_EntitiesToDestory.push_back( entity );
+		m_EntitiesToDestroy.push_back( entity );
 	}
 
 	void Scene::OnModifyPrefab( Ref<Prefab> prefabAsset )
@@ -1033,12 +1053,12 @@ namespace Saturn {
 
 	void Scene::DestroyPendingEntities()
 	{
-		while( !m_EntitiesToDestory.empty() )
+		while( !m_EntitiesToDestroy.empty() )
 		{
-			Entity* pEntity = m_EntitiesToDestory.back();
+			Entity* pEntity = m_EntitiesToDestroy.back();
 			DeleteEntityChecked( pEntity );
 
-			m_EntitiesToDestory.pop_back();
+			m_EntitiesToDestroy.pop_back();
 		}
 	}
 
@@ -1089,7 +1109,7 @@ namespace Saturn {
 		}
 
 		m_Registry.destroy( pEntity->GetHandle() );
-		// Destory via the shared ptr
+		// Destroy via the shared ptr
 		m_EntityIDMap.erase( pEntity->GetHandle() );
 	}
 
@@ -1125,6 +1145,11 @@ namespace Saturn {
 	{
 		// There isn't much we can do, we must let the parent layer handle a scene travel.
 		Application::Get()->DispatchEvent<SceneTravelEvent>( newSceneID );
+	}
+
+	bool Scene::IsPausedOrSuspended() const
+	{
+		return m_RuntimeState == RuntimeState::Suspended || m_RuntimeState == RuntimeState::Paused;
 	}
 
 	bool Scene::OnRuntimeStart()
@@ -1191,6 +1216,26 @@ namespace Saturn {
 		else if( m_RuntimeState == RuntimeState::Running ) 
 		{
 			SuspendRuntime();
+		}
+	}
+
+	void Scene::PauseGame()
+	{
+		m_RuntimeState = RuntimeState::Paused;
+
+		if( auto entity = m_pMainCameraEntity.Access() )
+		{
+			entity->GetComponent<CameraComponent>().Camera->SetActive( false );
+		}
+	}
+
+	void Scene::UnpauseGame()
+	{
+		m_RuntimeState = RuntimeState::Running;
+
+		if( auto entity = m_pMainCameraEntity.Access() )
+		{
+			entity->GetComponent<CameraComponent>().Camera->SetActive( true );
 		}
 	}
 
@@ -1348,7 +1393,7 @@ namespace Saturn {
 			auto& rAnimator = entity->GetComponent<SkeletalMeshComponent>().LocalAnimator;
 			if( rAnimator )
 			{
-				rAnimator->Destory();
+				rAnimator->Destroy();
 			}
 
 			rAnimator = nullptr;

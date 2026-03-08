@@ -4,7 +4,7 @@
 *                                                                                           *
 * MIT License                                                                               *
 *                                                                                           *
-* Copyright (c) 2020 - 2026 BEAST                                                           *
+* Copyright (c) 2020 - 2025 BEAST                                                           *
 *                                                                                           *
 * Permission is hereby granted, free of charge, to any person obtaining a copy              *
 * of this software and associated documentation files (the "Software"), to deal             *
@@ -26,31 +26,5 @@
 *********************************************************************************************
 */
 
-#pragma once
-
-namespace Saturn {
-
-	// NOTE: This enum is separated from Scene.h as this enum is used by the Node Editors
-	//       So this allows us to use it in the Node Editor without including Scene.h
-	enum class RuntimeState
-	{
-		// Scene Init
-		NoState,
-
-		// Pre init runtime
-		Starting,
-
-		// Runtime
-		Running,
-
-		// Runtime ending
-		Ending,
-
-		// Runtime suspended (Editor)
-		Suspended,
-	
-		// Paused, runtime suspended (Game)
-		Paused
-	};
-	
-}
+#include "sppch.h"
+#include "AluraDrawer.h"

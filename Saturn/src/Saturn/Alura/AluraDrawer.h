@@ -4,7 +4,7 @@
 *                                                                                           *
 * MIT License                                                                               *
 *                                                                                           *
-* Copyright (c) 2020 - 2026 BEAST                                                           *
+* Copyright (c) 2026 BEAST                                                                  *
 *                                                                                           *
 * Permission is hereby granted, free of charge, to any person obtaining a copy              *
 * of this software and associated documentation files (the "Software"), to deal             *
@@ -28,29 +28,38 @@
 
 #pragma once
 
+#include "Saturn/Core/Event.h"
+
+#include "Saturn/GameFramework/SClass.h"
+
 namespace Saturn {
 
-	// NOTE: This enum is separated from Scene.h as this enum is used by the Node Editors
-	//       So this allows us to use it in the Node Editor without including Scene.h
-	enum class RuntimeState
+	SCLASS()
+	class AluraDrawer : public SObject
 	{
-		// Scene Init
-		NoState,
+		// NOTE: SAT_DECLARE_CLASS expanded
+	private:
+		AluraDrawer& operator=( AluraDrawer&& );
+		AluraDrawer& operator=( const AluraDrawer& );
+		static SClass* GetStaticClassInternal();
 
-		// Pre init runtime
-		Starting,
+	public:
+		inline static [[nodiscard]] SClass* StaticClass()
+		{
+			return GetStaticClassInternal();
+		}
+	public:
+		typedef AluraDrawer ThisClass;
+		typedef SObject Super;
 
-		// Runtime
-		Running,
+	public:
+		AluraDrawer() = default;
+		~AluraDrawer() = default;
 
-		// Runtime ending
-		Ending,
-
-		// Runtime suspended (Editor)
-		Suspended,
-	
-		// Paused, runtime suspended (Game)
-		Paused
+		virtual void OnInit() = 0;
+		virtual void OnDraw( Timestep ts ) = 0;
+		virtual void OnDestroy() = 0;
+		virtual void OnEvent( Event& rEvent ) = 0;
 	};
 	
 }

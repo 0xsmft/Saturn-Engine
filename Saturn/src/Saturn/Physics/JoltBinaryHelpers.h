@@ -4,7 +4,7 @@
 *                                                                                           *
 * MIT License                                                                               *
 *                                                                                           *
-* Copyright (c) 2020 - 2026 BEAST                                                           *
+* Copyright (c) 2020 - 2025 BEAST                                                           *
 *                                                                                           *
 * Permission is hereby granted, free of charge, to any person obtaining a copy              *
 * of this software and associated documentation files (the "Software"), to deal             *
@@ -28,56 +28,69 @@
 
 #pragma once
 
-#include "Saturn/Vulkan/Mesh.h"
-#include "Saturn/Scene/Entity.h"
+#include "Saturn/Core/Buffer.h"
 
 #include <Jolt/Jolt.h>
-#include <Jolt/Physics/Collision/Shape/Shape.h>
+#include <Jolt/Core/StreamIn.h>
+#include <Jolt/Core/StreamOut.h>
 
 namespace Saturn {
 
-	// File header
-	struct MeshCacheHeader
-	{
-		// .SMC / SMCS
-		const unsigned char Magic[ 4 ] = { 0x53, 0x4D, 0x43, 0x00 };
-		PhysicsShapeType Type;
-		uint64_t ID = 0;
-		size_t Submeshes = 0;
-	};
-
-	// Data for each submesh
-	struct SubmeshColliderData
-	{
-		uint32_t Index = UINT32_MAX;
-		Buffer Stream;
-	};
-
-	class PhysicsCooking
+	class JoltBinaryReader : public JPH::StreamIn
 	{
 	public:
-		PhysicsCooking();
-		~PhysicsCooking();
+		JoltBinaryReader( const Buffer& rBuffer ) : m_pBuffer( &rBuffer ) {}
+		~JoltBinaryReader()
+		{
+			m_pBuffer = nullptr;
+			m_BytesRead = 0llu;
+		}
 
-		void Init();
-		void Terminate();
+		virtual void ReadBytes( void* pOutData, size_t numBytes ) override
+		{
+			std::memcpy( pOutData, ( ( uint8_t* ) m_pBuffer ) + m_BytesRead, numBytes );
+			m_BytesRead += numBytes;
+		}
 
-	public:
-		// Cook mesh collider to a triangle mesh, if the collider cache does not exist we will create it if it does exist we will not override it and we will not cook the mesh.
-		// For Static meshes only!
-		bool CookMeshCollider( const Ref<StaticMesh>& rMesh, PhysicsShapeType Type );
+		virtual bool IsEOF() const override
+		{
+			return m_pBuffer == nullptr || m_BytesRead > m_pBuffer->Size;
+		}
 
-		JPH::Ref<JPH::Shape> CreateTriangleMesh( SharedPtr<Entity> entity, Ref<StaticMesh> mesh );
+		virtual bool IsFailed() const override
+		{
+			return m_pBuffer == nullptr || m_pBuffer->Data == nullptr || m_pBuffer->Size == 0;
+		}
 
 	private:
-		void ClearCache();
-		void WriteCache( const Ref<StaticMesh>& rMesh, PhysicsShapeType Type );
-		bool LoadColliderFile( const std::filesystem::path& rPath );
-
-		bool TryCookTriangleMesh( const Ref<StaticMesh>& rMesh );
-		bool TryCookConvexMesh( const Ref<StaticMesh>& rMesh );
-
-	private:
-		std::vector<SubmeshColliderData> m_SubmeshData;
+		const Buffer* m_pBuffer = nullptr;
+		uint64_t m_BytesRead = 0llu;
 	};
+
+	class JoltBinaryWriter : public JPH::StreamOut
+	{
+	public:
+		virtual void WriteBytes( const void* pData, size_t numBytes ) override
+		{
+			const size_t currentSize = m_TemporaryBuffer.size();
+		
+			m_TemporaryBuffer.resize( currentSize + numBytes );
+
+			std::memcpy( m_TemporaryBuffer.data() + currentSize, pData, numBytes );
+		}
+
+		virtual bool IsFailed() const override
+		{
+			return false;
+		}
+
+		Buffer ToBuffer() const 
+		{
+			return Buffer::Copy( m_TemporaryBuffer.data(), m_TemporaryBuffer.size() );
+		}
+
+	private:
+		std::vector<uint8_t*> m_TemporaryBuffer;
+	};
+
 }

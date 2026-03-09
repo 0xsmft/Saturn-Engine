@@ -84,7 +84,14 @@ namespace Saturn {
 		SetKinematic( rb.IsKinematic );
 
 		// Create body after the shape.
-		JPH::BodyCreationSettings settings( m_Shape->GetShape(), Auxiliary::GLMToJolt( tc.Position ), Auxiliary::GLMQToJoltQ( tc.GetRotation() ), ( JPH::EMotionType ) m_Type, PhysLayerMoving );
+		JPH::BodyCreationSettings settings( 
+			m_Shape->GetShape(), 
+			Auxiliary::GLMToJolt( tc.Position ), 
+			Auxiliary::GLMQToJoltQ( glm::normalize( tc.GetRotation() ) ), 
+			( JPH::EMotionType ) m_Type, 
+			PhysLayerMoving 
+		);
+		
 		m_pBody = PhysicsFoundation::Get()->GetBodyInterface()->CreateBody( settings );
 
 		PhysicsFoundation::Get()->GetBodyInterface()->AddBody( m_pBody->GetID(), m_Kinematic ? JPH::EActivation::DontActivate : JPH::EActivation::Activate );
@@ -109,6 +116,7 @@ namespace Saturn {
 			{
 				m_Shape = Ref<ConvexMeshShape>::Create( m_Entity );
 			} break;
+			*/
 
 			case Saturn::PhysicsShapeType::TriangleMesh:
 			{
@@ -126,7 +134,6 @@ namespace Saturn {
 
 				m_Shape = Ref<TriangleMeshShape>::Create( m_Entity );
 			} break;
-			*/
 
 			case Saturn::PhysicsShapeType::Box: 
 			{
@@ -168,6 +175,11 @@ namespace Saturn {
 
 	void PhysicsRigidBody::SetKinematic( bool val )
 	{
+		if( val )
+		{
+			m_Type = PhysicsRigidBodyType::Kinematic;
+		}
+
 		m_Kinematic = val;
 	}
 
@@ -220,7 +232,14 @@ namespace Saturn {
 
 	void PhysicsRigidBody::SetPosition( const glm::vec3& rPosition )
 	{
-		PhysicsFoundation::Get()->GetBodyInterface()->SetPosition( m_pBody->GetID(), Auxiliary::GLMToJolt( rPosition ), JPH::EActivation::Activate );
+		if( m_Kinematic )
+		{
+			PhysicsFoundation::Get()->GetBodyInterface()->MoveKinematic( m_pBody->GetID(), Auxiliary::GLMToJolt( rPosition ), JPH::Quat::sIdentity(), 0.0f );
+		}
+		else
+		{
+			PhysicsFoundation::Get()->GetBodyInterface()->SetPosition( m_pBody->GetID(), Auxiliary::GLMToJolt( rPosition ), JPH::EActivation::Activate );
+		}
 	}
 
 	glm::vec3 PhysicsRigidBody::GetPosition()
@@ -260,8 +279,6 @@ namespace Saturn {
 
 	void PhysicsRigidBody::SyncTransfrom()
 	{
-		if( m_Kinematic ) return;
-
 		TransformComponent& tc = m_Entity->GetComponent<TransformComponent>();
 
 		tc.Position = GetPosition();

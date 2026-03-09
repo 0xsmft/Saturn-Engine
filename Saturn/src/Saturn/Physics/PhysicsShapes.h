@@ -123,7 +123,6 @@ namespace Saturn {
 		float m_Radius = 0.0f;
 	};
 
-#if SAT_WITH_PHYSX
 	class TriangleMeshShape : public PhysicsShape
 	{
 	public:
@@ -131,16 +130,17 @@ namespace Saturn {
 		~TriangleMeshShape();
 
 		// This assumes the the mesh collider has already been cooked.
-		void Create( physx::PxRigidActor& rActor ) override;
-		virtual void Detach( physx::PxRigidActor& rActor ) override;
+		void Create() override;
+//		virtual void Detach( physx::PxRigidActor& rActor ) override;
 
 //		void ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
 
 	private:
 		Ref<StaticMesh> m_Mesh;
-		std::vector<physx::PxShape*> m_Shapes;
+//		JPH::Ref<JPH::StaticCompoundShape> m_Shapes;
 	};
 
+#if SAT_WITH_PHYSX
 	class ConvexMeshShape : public PhysicsShape
 	{
 	public:

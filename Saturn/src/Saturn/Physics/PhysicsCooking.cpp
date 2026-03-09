@@ -32,12 +32,20 @@
 #include "PhysicsAuxiliary.h"
 #include "PhysicsFoundation.h"
 #include "PhysicsMaterialAsset.h"
+#include "JoltBinaryHelpers.h"
 
 #include "Saturn/Asset/AssetManager.h"
 
 #include "Saturn/Project/Project.h"
 
 #include "Saturn/Core/Maths.h"
+
+#include "Saturn/Serialisation/Raw/RawSerialisation.h"
+
+#include <Jolt/Jolt.h>
+#include <Jolt/Physics/Collision/Shape/MeshShape.h>
+#include <Jolt/Physics/Collision/Shape/StaticCompoundShape.h>
+#include <Jolt/Physics/Collision/Shape/ScaledShape.h>
 
 namespace Saturn {
 
@@ -107,9 +115,116 @@ namespace Saturn {
 		return Result;
 	}
 
+	JPH::Ref<JPH::Shape> PhysicsCooking::CreateTriangleMesh( SharedPtr<Entity> entity, Ref<StaticMesh> mesh )
+	{
+		if( !mesh )
+			return nullptr;
+
+		std::filesystem::path cachePath = Project::GetActiveProject()->GetFullCachePath();
+		cachePath /= mesh->Name;
+		cachePath.replace_extension( ".smcs" );
+
+		if( !LoadColliderFile( cachePath ) )
+			return nullptr;
+		
+		JPH::StaticCompoundShapeSettings compoundShapeSettings;
+
+		TransformComponent worldTC = entity->GetScene()->GetWorldSpaceTransform( entity );
+
+		size_t index = 0llu;
+		for( const auto& rCookedData : m_SubmeshData )
+		{
+			const Submesh& rSubmesh = mesh->Submeshes()[ index ];
+
+			glm::vec3 submeshPosition, submeshScale;
+			glm::quat submeshRotation;
+
+			Maths::DecomposeTransform( rSubmesh.Transform, submeshPosition, submeshRotation, submeshScale );
+
+			JoltBinaryReader reader( rCookedData.Stream );
+			JPH::Shape::ShapeResult result = JPH::Shape::sRestoreFromBinaryState( reader );
+
+			if( result.HasError() )
+			{
+				SAT_CORE_ERROR( "[JoltPhys]: Unable to create submesh shape for static compound shape! Index/{0}", index );
+				return nullptr;
+			}
+
+			compoundShapeSettings.AddShape( 
+				Auxiliary::GLMToJolt( submeshPosition ), 
+				Auxiliary::GLMQToJoltQ( submeshRotation ), 
+				new JPH::ScaledShape( result.Get(), Auxiliary::GLMToJolt( submeshScale * worldTC.Scale ) )
+			);
+
+			++index;
+		}
+
+		JPH::Shape::ShapeResult result = compoundShapeSettings.Create();
+
+		if( result.HasError() )
+		{
+			SAT_CORE_ERROR( "[JoltPhys]: Unable to create static compound shape! Index/{0}, Error: {1}", index, result.GetError() );
+		}
+
+		JPH::Ref<JPH::Shape> sh = result.Get();
+
+		JPH::Ref<JPH::StaticCompoundShape> scs( ( JPH::StaticCompoundShape* ) ( ( JPH::Shape* )sh.GetPtr() ) );
+		scs->GetMassProperties().mMass;
+
+		return sh;
+	}
+
 	bool PhysicsCooking::TryCookTriangleMesh( const Ref<StaticMesh>& rMesh )
 	{
 		bool Result = false;
+
+		const auto& rVertices = rMesh->Vertices();
+		const auto& rIndices = rMesh->Indices();
+		const auto& rSubmeshes = rMesh->Submeshes();
+
+		size_t index = 0;
+		for( const auto& rSubmesh : rSubmeshes )
+		{
+			JPH::VertexList vertList;
+			JPH::IndexedTriangleList triList;
+
+			for( uint32_t i = rSubmesh.BaseVertex; i < rSubmesh.BaseVertex + rSubmesh.VertexCount; i++ )
+			{
+				const auto& rVertex = rVertices[ i ];
+				vertList.push_back( JPH::Float3( rVertex.Position.x, rVertex.Position.y, rVertex.Position.z ) );
+			}
+
+			for( uint32_t i = rSubmesh.BaseIndex / 3; i < ( rSubmesh.BaseIndex + rSubmesh.IndexCount ) / 3; i++ )
+			{
+				const auto& rIndex = rIndices[ i ];
+				triList.push_back( JPH::IndexedTriangle( rIndex.V1, rIndex.V2, rIndex.V3, 0 ) );
+			}
+
+			JPH::RefConst<JPH::MeshShapeSettings> meshSettings = new JPH::MeshShapeSettings( vertList, triList );
+			auto res = meshSettings->Create();
+
+			if( res.HasError() )
+			{
+				SAT_CORE_ERROR( "[JoltPhys]: Error: {0}", res.GetError() );
+
+				Result = false;
+				break;
+			}
+
+			JPH::RefConst<JPH::Shape> shape = res.Get();
+
+			JoltBinaryWriter writer;
+			shape->SaveBinaryState( writer );
+
+			SubmeshColliderData& rData = m_SubmeshData.emplace_back();
+			rData.Index = index;
+			rData.Stream = writer.ToBuffer();
+
+			++index;
+
+			Result = true;
+		}
+
 		return Result;
 	}
 
@@ -124,19 +239,10 @@ namespace Saturn {
 		if( !std::filesystem::exists( rPath ) )
 			return false;
 
-		Buffer fileBuffer;
-		std::ifstream stream( rPath, std::ios::binary | std::ios::ate );
+		std::ifstream stream( rPath, std::ios::binary | std::ios::in );
 
-		auto end = stream.tellg();
-		stream.seekg( 0, std::ios::beg );
-		auto size = end - stream.tellg();
-
-		fileBuffer.Allocate( ( size_t ) size );
-		stream.read( reinterpret_cast< char* >( fileBuffer.Data ), fileBuffer.Size );
-
-		stream.close();
-
-		MeshCacheHeader hd = *( MeshCacheHeader* ) fileBuffer.Data;
+		MeshCacheHeader hd{};
+		RawSerialisation::ReadObject( hd, stream );
 
 		if( std::memcmp( hd.Magic, "SMC", 4 ) != 0 )
 		{
@@ -150,29 +256,17 @@ namespace Saturn {
 			return false;
 		}
 
-		uint8_t* colliderData = fileBuffer.As<uint8_t>() + sizeof( MeshCacheHeader );
-
 		for( uint32_t i = 0; i < hd.Submeshes; i++ )
 		{
 			SubmeshColliderData submesh{};
 
-			uint32_t index = *( uint32_t* ) colliderData;
-
-			colliderData += sizeof( uint32_t );
-
-			size_t size = *( size_t* ) colliderData;
-
-			colliderData += sizeof( size_t );
-
-			submesh.Index = index;
-			submesh.Stream = Buffer::Copy( colliderData, size );
+			RawSerialisation::ReadObject( submesh.Index, stream );
+			RawSerialisation::ReadSaturnBuffer( submesh.Stream, stream );
 
 			m_SubmeshData.push_back( submesh );
-
-			colliderData += size;
 		}
 
-		fileBuffer.Free();
+		stream.close();
 
 		return true;
 	}
@@ -188,9 +282,9 @@ namespace Saturn {
 		cachePath.replace_extension(".smcs" );
 
 		MeshCacheHeader hd{};
+		hd.Type = Type;
 		hd.ID = rMesh->ID;
 		hd.Submeshes = rMesh->Submeshes().size();
-		hd.Type = Type;
 
 		std::ofstream fout( cachePath, std::ios::binary | std::ios::trunc );
 

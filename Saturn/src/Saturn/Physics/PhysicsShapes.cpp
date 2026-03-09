@@ -42,6 +42,8 @@
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
 #include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
+#include <Jolt/Physics/Collision/Shape/MeshShape.h>
+#include <Jolt/Physics/Collision/Shape/ScaledShape.h>
 
 namespace Saturn {
 
@@ -551,7 +553,7 @@ namespace Saturn {
 		m_Entity->GetComponent<CapsuleColliderComponent>().IsTrigger = isTrigger;
 	}
 
-#if SAT_WITH_PHYSX
+
 	//////////////////////////////////////////////////////////////////////////
 	// Triangle
 
@@ -569,24 +571,15 @@ namespace Saturn {
 	{
 	}
 
-	void TriangleMeshShape::Create( physx::PxRigidActor& rActor )
+	void TriangleMeshShape::Create()
 	{
 		TransformComponent& transform = m_Entity->GetComponent<TransformComponent>();
-		physx::PxTransform PxTrans = Auxiliary::GLMTransformToPx( transform.GetTransform() );
+		Ref<StaticMesh> staticMesh = m_Entity->GetComponent<StaticMeshComponent>().Mesh;
 
-		const std::vector<physx::PxShape*>& rShapes = PhysicsFoundation::Get()->GetCookingContext().CreateTriangleMesh( m_Mesh, rActor, transform.Scale );
-
-		if( rShapes.size() )
-		{
-			m_Shapes = rShapes;
-			m_Shape = rShapes.front();
-		}
-		else
-		{
-			SAT_CORE_WARN( "No shapes we created from 'CreateTriangleMesh' this could mean the path does not exist or file header is not valid." );
-		}
+		m_Shape = PhysicsFoundation::Get()->GetCooking().CreateTriangleMesh( m_Entity, staticMesh );
 	}
 
+#if SAT_WITH_PHYSX
 	void TriangleMeshShape::Detach( physx::PxRigidActor& rActor )
 	{
 		for( physx::PxShape* rShape : m_Shapes )

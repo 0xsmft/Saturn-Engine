@@ -85,7 +85,7 @@ namespace Saturn {
 	{
 		SAT_PF_EVENT();
 
-		PhysicsFoundation::Get()->GetPhysicsSystem()->Update( ts, 1u, PhysicsFoundation::Get()->GetTempAllocator(), PhysicsFoundation::Get()->GetJobSystem() );
+		PhysicsFoundation::Get()->GetPhysicsSystem()->Update( 1.0f / 60.0f, 1u, PhysicsFoundation::Get()->GetTempAllocator(), PhysicsFoundation::Get()->GetJobSystem() );
 	}
 
 	bool PhysicsScene::Raycast( const glm::vec3& rOrigin, const glm::vec3& rDirection, float maxDistance, RaycastHitResult* pOut )

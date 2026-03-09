@@ -110,10 +110,13 @@ namespace Saturn {
 		void Init();
 		void Terminate();
 
-		JPH::JobSystem*		GetJobSystem()     { return m_pJobSystem; }
-		JPH::PhysicsSystem* GetPhysicsSystem() { return m_pPhysicsSystem; }
-		JPH::BodyInterface* GetBodyInterface() { return m_pBodyInterface; }
-		JPH::TempAllocator* GetTempAllocator() { return m_pTempAllocator; }
+		JPH::JobSystem*		GetJobSystem()     const { return m_pJobSystem; }
+		JPH::PhysicsSystem* GetPhysicsSystem() const { return m_pPhysicsSystem; }
+		JPH::BodyInterface* GetBodyInterface() const { return m_pBodyInterface; }
+		JPH::TempAllocator* GetTempAllocator() const { return m_pTempAllocator; }
+
+		PhysicsCooking& GetCooking() { return m_Cooking; }
+		const PhysicsCooking& GetCooking() const { return m_Cooking; }
 
 	private:
 		JPH::JobSystem* m_pJobSystem = nullptr;
@@ -121,6 +124,7 @@ namespace Saturn {
 		JPH::BodyInterface* m_pBodyInterface = nullptr;
 		JPH::TempAllocator* m_pTempAllocator = nullptr;
 
+		PhysicsCooking m_Cooking;
 		PhysicsContact m_ContactHandler;
 		JoltBodyActivationListener m_BodyActivationListener;
 		JoltObjectVsBroadPhaseLayerFilter m_ObjectVsBPLayerFilter{};

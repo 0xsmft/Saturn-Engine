@@ -39,7 +39,7 @@ namespace Saturn {
 	// StraightNavPath - A navigation path from one poly to another
 	// 
 	// In order to create a path call CreateStraightPath from the navigation system.
-	// To destroy a path make sure to call DestoryStraightPath
+	// To destroy a path make sure to call DestroyStraightPath
 	// You must you use the functions listed above because Path objects are owned by the navigation system.
 	// 
 	// The class does not preform any modifications to positions!

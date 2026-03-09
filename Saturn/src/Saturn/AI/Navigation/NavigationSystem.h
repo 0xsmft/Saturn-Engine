@@ -65,10 +65,10 @@ namespace Saturn {
 		// do NOT call delete on it though! shit WILL break!
 		StraightNavPath* CreateStraightPath( const glm::vec3& rStart, const glm::vec3& rEnd, uint32_t maxPaths = 256 );
 
-		// Destory a navpath, you do not need to do this as all paths will get cleared when the
+		// Destroy a navpath, you do not need to do this as all paths will get cleared when the
 		// NavigationSystem cleanups, but if you need to destroy a path then do so with this
 		// function.
-		void DestoryStraightPath( StraightNavPath* pPath );
+		void DestroyStraightPath( StraightNavPath* pPath );
 
 		uint32_t FindNearestPoly( const glm::vec3& rPosition, float* pNearestPoint );
 

@@ -46,16 +46,17 @@ namespace Saturn {
 
 	Animator::~Animator()
 	{
-		Destory();
+		Destroy();
 	}
 
-	void Animator::Destory()
+	void Animator::Destroy()
 	{
 		m_SkeletalMesh = nullptr;
 		m_SingleAnimationAsset = nullptr;
 		m_AnimationControllerAsset = nullptr;
 
 		delete m_pOutPose;
+		m_pOutPose = nullptr;
 	}
 
 	void Animator::InitAnimation( AssetID id, Ref<SkeletalMesh> sk, AnimatorType type )

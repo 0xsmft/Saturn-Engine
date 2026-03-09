@@ -634,7 +634,10 @@ namespace Saturn {
 		if( m_Type == ContentBrowserItemType::SourceItem )
 			return;
 
-		const auto Icon = ContentBrowserThumbnailCache::Get().GetFor( m_Asset );
+		// Do not change!
+		// The whole Thumbnail system will break!
+		// TOOD: Fix
+		const auto Icon = ContentBrowserThumbnailCache::Get().GetDefault( CB_FILE_ICON );
 
 		if( ImGui::BeginDragDropSource( ImGuiDragDropFlags_SourceAllowNullID ) )
 		{

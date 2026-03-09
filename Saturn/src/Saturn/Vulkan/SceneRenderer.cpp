@@ -309,12 +309,20 @@ namespace Saturn {
 		m_RendererData.ShadowCascades.resize( SHADOW_CASCADE_COUNT );
 		m_RendererData.DirShadowMapPasses.resize( SHADOW_CASCADE_COUNT );
 		m_RendererData.DirShadowMapPipelines.resize( SHADOW_CASCADE_COUNT );
+		m_RendererData.DirShadowMapDynamicPipelines.resize( SHADOW_CASCADE_COUNT );
 
 		if( !m_RendererData.DirShadowMapShader )
 		{
 			m_RendererData.DirShadowMapShader = ShaderLibrary::Get().FindOrLoad( "ShadowMap", "content/shaders/ShadowMap.glsl" );
+			m_RendererData.DirShadowMapDynamicShader = ShaderLibrary::Get().FindOrLoad( "ShadowMap-Dynamic", "content/shaders/ShadowMap-Dynamic.glsl" );
 
 			m_RendererData.DirShadowMapMaterial = Ref<Material>::Create( m_RendererData.DirShadowMapShader, "ShdMap" );
+
+			m_RendererData.DirShadowMapDynamicMaterialSet2 = Ref<Material>::Create( m_RendererData.DirShadowMapDynamicShader, "DirShdMpSkS2", 1 );
+			for( size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
+			{
+				m_RendererData.DirShadowMapDynamicMaterialSet2->SetSB( 15u, m_RendererData.SBBoneTransforms->Get( 2u, 15u, ( uint32_t ) i ) );
+			}
 		}
 
 		PipelineSpecification PipelineSpec = {};
@@ -366,6 +374,23 @@ namespace Saturn {
 			m_RendererData.ShadowCascades[ i ].Framebuffer = Ref<Framebuffer>::Create( FBSpec );
 
 			m_RendererData.DirShadowMapPipelines[ i ] = Ref< Pipeline >::Create( PipelineSpec );
+		}
+		
+		//////////////////////////////////////////////////////////////////////////
+		// Dynamic Meshes
+		PipelineSpec.Name = "DirShadowMap-Dynamic";
+		PipelineSpec.Shader = m_RendererData.DirShadowMapDynamicShader;
+		PipelineSpec.AdditionalLayoutAtEnd = {
+			{ ShaderDataType::Int4,   "a_BoneIndices" },
+			{ ShaderDataType::Float4, "a_BoneWeights" }
+		};
+
+		PassSpec.Name = "Dir Shadow Map-Dynamic";
+		PassSpec.Attachments = { ImageFormat::Depth };
+		for( size_t i = 0; i < SHADOW_CASCADE_COUNT; i++ )
+		{
+			PipelineSpec.RenderPass = m_RendererData.DirShadowMapPasses[ i ];
+			m_RendererData.DirShadowMapDynamicPipelines[ i ] = Ref< Pipeline >::Create( PipelineSpec );
 		}
 	}
 
@@ -1001,8 +1026,6 @@ namespace Saturn {
 
 	void SceneRenderer::CreateGridComponents()
 	{
-		auto pAllocator = VulkanContext::Get()->GetVulkanAllocator();
-
 		// Create fullscreen quad.
 		auto [vertex, index] = Renderer::Get()->CreateFullscreenQuad();
 		
@@ -1043,10 +1066,7 @@ namespace Saturn {
 
 	void SceneRenderer::CreateSkyboxComponents()
 	{
-		auto pAllocator = VulkanContext::Get()->GetVulkanAllocator();
-
 		// Create skybox shader.
-
 		if( !m_RendererData.SkyboxShader && !m_RendererData.PreethamShader )
 		{
 			m_RendererData.SkyboxShader = ShaderLibrary::Get().FindOrLoad( "Skybox", "content/shaders/Skybox.glsl" );
@@ -1641,6 +1661,8 @@ namespace Saturn {
 
 		m_RendererData.UniformBufferSet->Get( 0, 1, frame )->UploadData( &u_LightData, sizeof( u_LightData ) );
 
+		m_RendererData.DirShadowMapDynamicMaterialSet2->Update( {} );
+
 		for( int i = 0; i < SHADOW_CASCADE_COUNT; ++i )
 		{
 			m_RendererData.ShadowMapTimers[ i ].Reset();
@@ -1655,6 +1677,7 @@ namespace Saturn {
 			vkCmdSetViewport( m_RendererData.CommandBuffer, 0, 1, &Viewport );
 			vkCmdSetScissor( m_RendererData.CommandBuffer, 0, 1, &Scissor );
 
+			CmdBeginDebugLabel( CommandBuffer, "ShadowMap-Static" );
 			for( auto&& [key, Cmd] : m_ShadowMapDrawList )
 			{
 				// Pass in the cascade index.
@@ -1675,6 +1698,37 @@ namespace Saturn {
 					Cmd.SubmeshIndex, 
 					AdditionalData );
 			}
+			CmdEndDebugLabel( CommandBuffer );
+
+			CmdBeginDebugLabel( CommandBuffer, "ShadowMap-Dynamic" );
+			uint32_t index = 0;
+			for( auto&& [key, Cmd] : m_DynamicShadowMapDrawList )
+			{
+				// Pass in the cascade index.
+				struct PC
+				{
+					uint32_t CascadeIndex = 0u;
+				} u_Data;
+				u_Data.CascadeIndex = i;
+
+				Buffer AdditionalData( sizeof( PC ), &u_Data );
+
+				const auto& rTransformData = m_RendererData.MeshTransforms[ key ];
+				Renderer::Get()->RenderDynamicMeshWithoutMaterial(
+					CommandBuffer,
+					m_RendererData.DirShadowMapDynamicPipelines[ i ],
+					Cmd.Mesh,
+					m_RendererData.DirShadowMapMaterial,
+					m_RendererData.UniformBufferSet,
+					m_RendererData.StorageBufferSet,
+					Cmd.Instances,
+					m_RendererData.SubmeshTransformData[ frame ].VertexBuffer,
+					rTransformData.Offset,
+					Cmd.SubmeshIndex, index, m_RendererData.DirShadowMapDynamicMaterialSet2, AdditionalData );
+
+				index += Cmd.Instances;
+			}
+			CmdEndDebugLabel( CommandBuffer );
 
 			vkCmdEndRenderPass( CommandBuffer );
 			CmdEndDebugLabel( CommandBuffer );
@@ -2377,6 +2431,7 @@ namespace Saturn {
 		m_DrawList.clear();
 		m_DynamicDrawList.clear();
 		m_ShadowMapDrawList.clear();
+		m_DynamicShadowMapDrawList.clear();
 		m_PhysicsColliderDrawList.clear();
 		m_ScheduledFunctions.clear();
 		m_RendererData.MeshTransforms.clear();

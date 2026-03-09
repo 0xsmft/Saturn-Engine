@@ -48,6 +48,7 @@ namespace Saturn {
 		AluraColor_TextDisabled,
 		AluraColor_Button,
 		AluraColor_ButtonHovered,
+		AluraColor_FrameBorder,
 		AluraColor_FrameBackground,
 		AluraColor_ProgressColor,
 		AluraColor_Count,
@@ -88,9 +89,10 @@ namespace Saturn {
 			Colors[ AluraColor_Text ] = glm::one<glm::vec4>();
 			Colors[ AluraColor_TextDisabled ] = glm::vec4( 0.5f, 0.5f, 0.5f, 1.0f );
 			Colors[ AluraColor_Button ] = glm::vec4( 0.26f, 0.59f, 0.98f, 0.40f );
-			Colors[ AluraColor_ButtonHovered ] = glm::vec4( 0.26f, 0.59f, 0.98f, 1.00f );
-			Colors[ AluraColor_FrameBackground ] = glm::vec4( 0.200f, 0.200f, 0.200f, 1.000f );
-			Colors[ AluraColor_ProgressColor ] = glm::vec4( 0.0f, 1.0f, 0.0f, 1.000f );
+			Colors[ AluraColor_ButtonHovered ] = glm::vec4( 0.26f, 0.59f, 0.98f, 1.0f );
+			Colors[ AluraColor_FrameBorder ] = glm::vec4( 0.0f, 0.0f, 0.0f, 1.0f );
+			Colors[ AluraColor_FrameBackground ] = glm::vec4( 0.2f, 0.2f, 0.20f, 1.0f );
+			Colors[ AluraColor_ProgressColor ] = glm::vec4( 0.0f, 1.0f, 0.0f, 1.0f );
 		}
 	};
 	

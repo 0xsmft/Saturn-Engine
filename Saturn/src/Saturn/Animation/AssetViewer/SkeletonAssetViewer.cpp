@@ -132,6 +132,7 @@ namespace Saturn {
 			//////////////////////////////////////////////////////////////////////////
 
 			if( m_ShowCompatibleMeshes ) DrawCompatibleMeshes();
+			if( m_ShowFinderModal ) DrawPickCompatibleMeshWindow();
 
 			//////////////////////////////////////////////////////////////////////////
 
@@ -230,23 +231,26 @@ namespace Saturn {
 					SkelBoneItem* pBoneItem = dynamic_cast< SkelBoneItem* >( pSelectedNode->pItem );
 					if( pBoneItem )
 					{
-						const auto& rBoneTransform = m_SkeletalMesh->GetDefaultBoneTransforms()[ pBoneItem->BoneIndex ];
+						if( m_SkeletalMesh )
+						{
+							const auto& rBoneTransform = m_SkeletalMesh->GetDefaultBoneTransforms()[ pBoneItem->BoneIndex ];
 
-						glm::mat4 offsetTransform = glm::mat4( 1.0f );
-						glm::mat4 ts = rBoneTransform;
+							glm::mat4 offsetTransform = glm::mat4( 1.0f );
+							glm::mat4 ts = rBoneTransform;
 
-						ImGuizmo::SetOrthographic( false );
-						ImGuizmo::SetDrawlist();
-						ImGuizmo::SetRect( viewportPosition.x, viewportPosition.y, viewportSize.x, viewportSize.y );
+							ImGuizmo::SetOrthographic( false );
+							ImGuizmo::SetDrawlist();
+							ImGuizmo::SetRect( viewportPosition.x, viewportPosition.y, viewportSize.x, viewportSize.y );
 
-						ImGuizmo::Manipulate(
-							glm::value_ptr( m_Camera.ViewMatrix() ),
-							glm::value_ptr( m_Camera.ProjectionMatrix() ),
-							ImGuizmo::TRANSLATE,
-							ImGuizmo::LOCAL,
-							glm::value_ptr( ts ),
-							glm::value_ptr( offsetTransform )
-						);
+							ImGuizmo::Manipulate(
+								glm::value_ptr( m_Camera.ViewMatrix() ),
+								glm::value_ptr( m_Camera.ProjectionMatrix() ),
+								ImGuizmo::TRANSLATE,
+								ImGuizmo::LOCAL,
+								glm::value_ptr( ts ),
+								glm::value_ptr( offsetTransform )
+							);
+						}
 					}
 				}
 			}
@@ -323,8 +327,21 @@ namespace Saturn {
 			m_ShowFinderModal = true;
 			ImGui::OpenPopup( "PickMesh##CompSk" );
 		}
+		ImGui::End();
+#endif
+	}
 
-		if( ImGui::BeginPopupModal( "PickMesh##CompSk", &m_ShowFinderModal, ImGuiWindowFlags_NoSavedSettings ) )
+	void SkeletonAssetViewer::DrawPickCompatibleMeshWindow()
+	{
+		bool* pOpen = nullptr;
+		if( m_SkeletalMesh )
+		{
+			pOpen = &m_ShowFinderModal;
+		}
+		else
+			ImGui::OpenPopup( "PickMesh##CompSk" );
+
+		if( ImGui::BeginPopupModal( "PickMesh##CompSk", pOpen, ImGuiWindowFlags_NoSavedSettings ) )
 		{
 			ImGui::Text( "Please pick the mesh that you'd like to mark as compatible with this skeleton." );
 
@@ -349,10 +366,17 @@ namespace Saturn {
 			{
 				m_SkeletonAsset->AddCompatibleMesh( m_TemporaryCompatibleMeshID );
 
+				if( !m_SkeletalMesh )
+				{
+					PickBestMesh();
+				}
+
 				m_TemporaryCompatibleMeshID = 0;
 				m_ShowFinderModal = false;
 				ImGui::CloseCurrentPopup();
 			}
+
+			Auxiliary::DisabledFlag disabledIf( !m_SkeletalMesh );
 
 			if( ImGui::Button( "Cancel" ) )
 			{
@@ -361,12 +385,12 @@ namespace Saturn {
 				ImGui::CloseCurrentPopup();
 			}
 
+			disabledIf.Pop();
+
 			ImGui::EndHorizontal();
 
 			ImGui::EndPopup();
 		}
-		ImGui::End();
-#endif
 	}
 
 	void SkeletonAssetViewer::OnUpdate( Timestep ts )
@@ -393,6 +417,8 @@ namespace Saturn {
 			m_SkeletalMesh = skComp.Mesh;
 			break;
 		}
+
+		m_ShowFinderModal = ( m_SkeletalMesh == nullptr );
 #endif
 	}
 

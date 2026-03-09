@@ -218,13 +218,13 @@ namespace Saturn {
 
 	void SkeletonBoneHierarchyPanel::DrawContextOptionsBone()
 	{
+#if SAT_FEATURE_BONE_ATTACHMENT
 		ImGui::SeparatorText( "BONE OPTIONS" );
 		if( ImGui::MenuItem( "Create new attachment point" ) )
 		{
 			const SkelBoneItem* pBoneItem = dynamic_cast< const SkelBoneItem* >( m_pSelectedBone->pItem );
 			if( pBoneItem )
 			{
-				/*
 				auto& rBone = m_SkeletonAsset->AddNewBoneJoint( pBoneItem->pBone->BoneName, "New Attachment" );
 
 				SkelAttachmentPoint* pAttachmentPoint = new SkelAttachmentPoint();
@@ -235,9 +235,9 @@ namespace Saturn {
 				pNode->pParent = m_pSelectedBone;
 
 				m_pSelectedBone->Children.push_back( pNode );
-				*/
 			}
 		}
+#endif
 	}
 
 	void SkeletonBoneHierarchyPanel::DrawContextOptionsAP()

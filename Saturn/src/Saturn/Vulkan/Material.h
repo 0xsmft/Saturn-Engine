@@ -117,7 +117,7 @@ namespace Saturn {
 		ShaderDescriptorSetTemplate m_DescriptorSetTemplate;
 		ShaderPushConstantTemplate m_ShaderPC{};
 
-		VkDescriptorSet m_DescriptorSets[ MAX_FRAMES_IN_FLIGHT ];
+		std::array<VkDescriptorSet, MAX_FRAMES_IN_FLIGHT> m_DescriptorSets;
 
 	private:
 		friend class MaterialAsset;

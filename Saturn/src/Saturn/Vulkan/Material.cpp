@@ -83,6 +83,8 @@ namespace Saturn {
 			m_PushConstantData.Allocate( totalPCSizes );
 			m_PushConstantData.Zero_Memory();
 		}
+
+		m_DescriptorSets.fill( nullptr );
 	}
 
 	Material::~Material()

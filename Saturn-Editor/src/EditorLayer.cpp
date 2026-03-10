@@ -471,7 +471,7 @@ namespace Saturn {
 			m_TitleBar.OnImGuiRender();
 
 			m_ImGuiWindowManager->DrawAll();
-		
+
 			if( m_ShowImGuiDemoWindow )     ImGui::ShowDemoWindow( &m_ShowImGuiDemoWindow );
 			if( m_ShowUserSettings )        DrawProjectSettingsWindow();
 			if( m_OpenAssetRegistryDebug )  DrawAssetRegistryDebug();
@@ -568,6 +568,11 @@ namespace Saturn {
 				const auto& rParams = rSkylightEvent.GetParams();
 
 				m_SceneRenderer->SetDynamicSky( rParams.x, rParams.y, rParams.z );
+
+				if( m_CameraPreviewSceneRenderer )
+				{
+					m_CameraPreviewSceneRenderer->SetDynamicSky( rParams.x, rParams.y, rParams.z );
+				}
 			} break;
 
 			case EventType::EntitySelected:
@@ -894,6 +899,14 @@ namespace Saturn {
 						{
 							m_NavMeshEntityToDelete = rEntity->GetHandle();
 							m_ShowDeleteNavMeshCachePopup = true;
+						}
+						else if( m_SelectedCameraEntityID == rEntity->GetHandle() )
+						{
+							m_pSelectedCamera = nullptr;
+							m_SelectedCameraEntityID = entt::null;
+							m_ShouldRenderCameraPreview = false;
+
+							g_ActiveScene->DeleteEntity( rEntity );
 						}
 						else
 						{

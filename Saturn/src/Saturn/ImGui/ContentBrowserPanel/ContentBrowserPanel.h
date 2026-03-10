@@ -136,7 +136,7 @@ namespace Saturn {
 		// This used to be SClassExtendedMetadata hence the name
 		const SClass* m_SelectedMetadata = SObject::StaticClass();
 
-		filewatch::FileWatch<std::wstring>* m_Watcher = nullptr;
+		std::unique_ptr<filewatch::FileWatch<std::wstring>> m_Watcher;
 
 	private:
 		std::vector<ContentBrowserQuickAction> m_QuickActionUndo;

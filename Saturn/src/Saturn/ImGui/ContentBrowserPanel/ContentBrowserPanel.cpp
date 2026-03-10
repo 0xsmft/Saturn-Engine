@@ -408,7 +408,7 @@ namespace Saturn {
 			if( ImGui::MenuItem( "New Folder" ) )
 			{
 				auto newPath = m_CurrentPath / "New Folder";
-				int32_t count = GetFilenameCount( "New Folder", true );
+				uint32_t count = GetFilenameCount( "New Folder", true );
 
 				if( count >= 1 )
 				{
@@ -426,7 +426,7 @@ namespace Saturn {
 				auto id = AssetManager::Get()->CreateAsset( AssetType::Material );
 				auto asset = AssetManager::Get()->FindAsset( id );
 				auto newPath = m_CurrentPath / "Untitled Material.smaterial";
-				int32_t count = GetFilenameCount( "Untitled Material.smaterial" );
+				uint32_t count = GetFilenameCount( "Untitled Material.smaterial" );
 
 				if( count >= 1 )
 				{
@@ -451,7 +451,7 @@ namespace Saturn {
 				auto asset = AssetManager::Get()->FindAsset( id );
 				auto newPath = m_CurrentPath / "Untitled Physics Material.sphymaterial";
 
-				int32_t count = GetFilenameCount( "Untitled Physics Material.sphymaterial" );
+				uint32_t count = GetFilenameCount( "Untitled Physics Material.sphymaterial" );
 
 				if( count >= 1 )
 				{
@@ -475,7 +475,7 @@ namespace Saturn {
 				auto id = AssetManager::Get()->CreateAsset( AssetType::Scene );
 				auto asset = AssetManager::Get()->FindAsset( id );
 				auto newPath = m_CurrentPath / "Empty Scene.scene";
-				int32_t count = GetFilenameCount( "Empty Scene.scene" );
+				uint32_t count = GetFilenameCount( "Empty Scene.scene" );
 
 				if( count >= 1 )
 				{
@@ -508,7 +508,7 @@ namespace Saturn {
 				auto id = AssetManager::Get()->CreateAsset( AssetType::GraphSound );
 				auto asset = AssetManager::Get()->FindAsset( id );
 				auto newPath = m_CurrentPath / "New Sound Editor.gsnd";
-				int32_t count = GetFilenameCount( "New Sound Editor.gsnd" );
+				uint32_t count = GetFilenameCount( "New Sound Editor.gsnd" );
 
 				if( count >= 1 )
 					newPath.replace_filename( std::format( "{0} ({1}).gsnd", "Empty Sound Editor", count ) );
@@ -529,7 +529,7 @@ namespace Saturn {
 				auto id = AssetManager::Get()->CreateAsset( AssetType::BehaviourTree );
 				auto asset = AssetManager::Get()->FindAsset( id );
 				auto newPath = m_CurrentPath / "New Behaviour Tree.sbt";
-				int32_t count = GetFilenameCount( "New Behaviour Tree.sbt" );
+				uint32_t count = GetFilenameCount( "New Behaviour Tree.sbt" );
 
 				if( count >= 1 )
 					newPath.replace_filename( std::format( "{0} ({1}).sbt", "New Behaviour Tree", count ) );
@@ -550,7 +550,7 @@ namespace Saturn {
 				auto id = AssetManager::Get()->CreateAsset( AssetType::BehaviourTreeMemory );
 				auto asset = AssetManager::Get()->FindAsset( id );
 				auto newPath = m_CurrentPath / "New Behaviour Tree Memory.sbtm";
-				int32_t count = GetFilenameCount( "New Behaviour Tree Memory.sbtm" );
+				uint32_t count = GetFilenameCount( "New Behaviour Tree Memory.sbtm" );
 
 				if( count >= 1 )
 					newPath.replace_filename( std::format( "{0} ({1}).sbtm", "New Behaviour Tree Memory", count ) );
@@ -572,7 +572,7 @@ namespace Saturn {
 				const auto id = AssetManager::Get()->CreateAsset( AssetType::AnimationController );
 				auto asset = AssetManager::Get()->FindAsset( id );
 				auto newPath = m_CurrentPath / "New Animation Controller.sac";
-				const int32_t count = GetFilenameCount( "New Animation Controller.sac" );
+				const uint32_t count = GetFilenameCount( "New Animation Controller.sac" );
 
 				if( count >= 1 )
 					newPath.replace_filename( std::format( "{0} ({1}).sac", "New Animation Controller", count ) );
@@ -599,7 +599,7 @@ namespace Saturn {
 				const auto id = AssetManager::Get()->CreateAsset( AssetType::StyleProfile );
 				auto asset = AssetManager::Get()->FindAsset( id );
 				auto newPath = m_CurrentPath / "New Style Profile.ssp";
-				int32_t count = GetFilenameCount( "New Style Profile.ssp" );
+				uint32_t count = GetFilenameCount( "New Style Profile.ssp" );
 
 				if( count >= 1 )
 					newPath.replace_filename( std::format( "{0} ({1}).ssp", "New Style Profile", count ) );
@@ -1232,7 +1232,7 @@ namespace Saturn {
 			ImGui::OpenPopup( "Delete Asset##DELETEASSET" );
 
 		ImGui::SetNextWindowPos( ImGui::GetMainViewport()->GetCenter(), ImGuiCond_FirstUseEver, ImVec2( 0.5f, 0.5f ) );
-		if( ImGui::BeginPopupModal( "Delete Asset##DELETEASSET", &m_ShowDeleteAssetPopup, ImGuiWindowFlags_NoSavedSettings ) )
+		if( ImGui::BeginPopupModal( "Delete Asset##DELETEASSET", nullptr, ImGuiWindowFlags_NoSavedSettings ) )
 		{
 			Ref<Asset> assetToDelete = m_ItemToDelete->GetAsset();
 			auto& rMemoryDependencies = AssetManager::Get()->GetAssetDependenciesForAsset( assetToDelete );
@@ -1436,8 +1436,7 @@ namespace Saturn {
 		{
 			m_RootPath = m_CurrentViewModeDirectory;
 
-			delete m_Watcher;
-			m_Watcher = new filewatch::FileWatch<std::wstring>( m_RootPath.wstring(),
+			m_Watcher = std::make_unique<filewatch::FileWatch<std::wstring>>( m_RootPath.wstring(),
 				[this]( const std::wstring& path, const filewatch::Event event )
 				{
 					OnFilewatchEvent( path, event );
@@ -1476,7 +1475,8 @@ namespace Saturn {
 		{
 			if( rItem->GetAssetID() == id )
 			{
-				rItem->Select();
+				ClearSelection();
+				AddSelected( rItem );
 
 				// We skip the clipper for one frame to allow the item to render and set it's scroll as then next time the will be visible.
 				rItem->ScrollTo();
@@ -1692,19 +1692,6 @@ namespace Saturn {
 		while( clipper.Step() )
 		{
 			auto Itr = rList.begin();
-			/*
-			if( !first )
-			{
-				for( int i = 0; i < clipper.DisplayStart; i++ )
-				{
-					for( int c = 0; c < columnCount && Itr != rList.end(); c++ )
-					{
-						Itr++;
-					}
-				}
-			}
-			*/
-
 			// Go to clipper.DisplayStart
 			if( !first )
 			{

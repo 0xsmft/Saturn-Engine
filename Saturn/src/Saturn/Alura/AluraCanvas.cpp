@@ -37,6 +37,16 @@
 
 namespace Saturn {
 
+	void AluraLayout::Reset()
+	{
+		CursorPos = CursorPosPrevLine = CurrLineSize = PrevLineSize = glm::zero<glm::vec2>();
+
+		CurrLineTextBaseOffset = PrevLineTextBaseOffset = CurrentIndent = 0.0f;
+		IsSameLine = false;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+
 	AluraCanvas::AluraCanvas( const AluraCanvasSpecification& rSpecification )
 		: m_Size( rSpecification.Size ), m_Position( rSpecification.Position )
 	{
@@ -69,10 +79,21 @@ namespace Saturn {
 		// Forgot to call PopFontSize()
 		SAT_CORE_ASSERT( m_PushedFontSize == 0.0f );
 
-		m_Layout = {};
+		m_Layout.Reset();
 
 		// Calculate mouse position relative to this canvas' position.
 		m_MousePosition = Input::Get().MousePosition() - m_Position;
+	
+		if( m_FirstFrameEver ) 
+		{
+			m_Layout.CursorStartingPos = m_Style.WindowPadding;
+			m_Layout.CurrentIndent = m_Style.WindowPadding.x;
+
+			m_Layout.CursorPos = m_Layout.CursorStartingPos;
+			m_Layout.CursorPosPrevLine = m_Layout.CursorStartingPos;
+
+			m_FirstFrameEver = false;
+		}
 	}
 
 	void AluraCanvas::DrawAllDrawers( Timestep ts )
@@ -104,6 +125,11 @@ namespace Saturn {
 		m_Renderer = nullptr;
 		m_ActiveFont = nullptr;
 		m_Fonts.clear();
+	}
+
+	void AluraCanvas::EndFrame()
+	{
+		m_FirstFrameEver = true;
 	}
 
 	void AluraCanvas::AddDrawer( Ref<AluraDrawer> drawer )
@@ -187,7 +213,8 @@ namespace Saturn {
 		glm::vec4 frameColor = rColor;
 		
 		// Hit test on the frame
-		if( IsItemHovered() )
+		const bool hovered = IsMouseHoveringRect( posDependingLastCall, { posDependingLastCall + rSize } );
+		if( hovered )
 		{
 			frameColor = m_Style.Colors[ AluraColor_ButtonHovered ];
 		}
@@ -201,7 +228,7 @@ namespace Saturn {
 		// Move on
 		AdvanceCursor( rSize );
 		
-		return IsItemClicked( RubyMouseButton_Left );
+		return Input::Get().MouseButtonPressed( RubyMouseButton_Left ) && hovered;
 	}
 
 	void AluraCanvas::AddProgressBar( float fraction, const glm::vec2& rSize )
@@ -223,7 +250,7 @@ namespace Saturn {
 
 		m_Renderer->SubmitRect( boundingBox.Min, boundingBox.Max, m_Style.Colors[ AluraColor_FrameBackground ] );
 		m_Renderer->SubmitRect( boundingBox.Min, fillMax, m_Style.Colors[ AluraColor_ProgressColor ] );
-		m_Renderer->SubmitRectFrame( boundingBox.Min, boundingBox.Max, 1.0f, { 0.0f, 0.0f, 0.0f, 1.0f } );
+		m_Renderer->SubmitRectFrame( boundingBox.Min, boundingBox.Max, 1.0f, m_Style.Colors[ AluraColor_FrameBorder ] );
 		
 		// Move on.
 		AdvanceCursor( boundingBox.GetSize() );
@@ -243,6 +270,7 @@ namespace Saturn {
 		m_Renderer->SubmitString( rText, m_ActiveFont, m_Style.CurrentFontSize, posDependingLastCall, rColor );
 		
 		const auto textSize = m_ActiveFont->CalcTextSize( m_Style.CurrentFontSize, rText );
+
 		AdvanceCursor( textSize );
 	}
 
@@ -259,21 +287,25 @@ namespace Saturn {
 
 		glm::vec4 color = rColor;
 
-		AdvanceCursor( rSize );
+		// Adjust size for padding
+		glm::vec2 size = rSize;
+		size += m_Style.WindowPadding * 2.0f;
+
+		AdvanceCursor( size );
 
 		// Hit tests
-		const bool hovered = IsMouseHoveringRect( posDependingLastCall, { posDependingLastCall + rSize } );
+		const bool hovered = IsMouseHoveringRect( posDependingLastCall, { posDependingLastCall + size } );
 		if( hovered )
 		{
 			color = m_Style.Colors[ AluraColor_ButtonHovered ];
 		}
 
-		m_Renderer->SubmitRect( posDependingLastCall, { posDependingLastCall + rSize }, color );
+		m_Renderer->SubmitRect( posDependingLastCall, { posDependingLastCall + size }, color );
 
 		return Input::Get().MouseButtonPressed( RubyMouseButton_Left ) && hovered;
 	}
 
-	bool AluraCanvas::AddButton( const std::string& rText )
+	bool AluraCanvas::AddButton( const std::string& rText, const glm::vec2& rSize /*= glm::zero<glm::vec2>()*/ )
 	{
 		// Handle NextItemPosition
 		glm::vec2 posDependingLastCall = m_Layout.CursorPos;
@@ -287,24 +319,25 @@ namespace Saturn {
 		//////////////////////////////////////////////////////////////////////////
 
 		const auto textSize = m_ActiveFont->CalcTextSize( m_Style.CurrentFontSize, rText );
-		
+		glm::vec2 size = CalcItemSize( rSize, textSize.x + m_Style.WindowPadding.x * 2.0f, textSize.y + m_Style.WindowPadding.y * 2.0f );
+
 		// Hit tests
 		glm::vec4 buttonColor = m_Style.Colors[ AluraColor_Button ];
-		const bool hovered = IsMouseHoveringRect( posDependingLastCall, { posDependingLastCall + textSize } );
+		const bool hovered = IsMouseHoveringRect( posDependingLastCall, { posDependingLastCall + size } );
 		if( hovered )
 		{
 			buttonColor = m_Style.Colors[ AluraColor_ButtonHovered ];
 		}
 
 		// Button Rect
-		m_Renderer->SubmitRect( posDependingLastCall, { posDependingLastCall + textSize }, buttonColor );
+		m_Renderer->SubmitRect( posDependingLastCall, { posDependingLastCall + size }, buttonColor );
 
 		// Submit Text centred inside the button.
 		const glm::vec2 position = posDependingLastCall;
 		m_Renderer->SubmitString( rText, m_ActiveFont, m_Style.CurrentFontSize, position, m_Style.Colors[ AluraColor_Text ] );
 
 		// Move on
-		AdvanceCursor( textSize );
+		AdvanceCursor( size );
 
 		return Input::Get().MouseButtonPressed(  RubyMouseButton_Left ) && hovered;
 	}
@@ -339,24 +372,6 @@ namespace Saturn {
 	{
 		m_Layout.CurrentIndent -= ( width == 0.0f ) ? m_Style.IndentSpacing : width;
 		m_Layout.CursorPos.x = m_Layout.CurrentIndent;
-	}
-
-	bool AluraCanvas::IsItemHovered()
-	{
-		/*
-		if( !m_Elements.size() )
-			return false;
-
-		AluraElement& rElement = m_Elements.back();
-		return IsMouseHoveringRect( rElement.m_Position, { rElement.m_Position + rElement.m_Size } );
-		*/
-
-		return false;
-	}
-
-	bool AluraCanvas::IsItemClicked( RubyMouseButton mouseBtn )
-	{
-		return Input::Get().MouseButtonPressed( mouseBtn ) && IsItemHovered();
 	}
 
 	void AluraCanvas::AlignNextItemCenterXY( const glm::vec2& rSize )
@@ -451,6 +466,21 @@ namespace Saturn {
 		return rect.Contains( m_MousePosition );
 	}
 
+	// @see imgui.cpp - CalcItemSize
+	glm::vec2 AluraCanvas::CalcItemSize( glm::vec2 size, float w, float h )
+	{
+		if( size.x == 0.0f )
+			size.x = w;
+		else if( size.x < 0.0f )
+			size.x = glm::max( 4.0f, m_Layout.CursorPos.x + size.x );
+
+		if( size.y == 0.0f )
+			size.y = h;
+		else if( size.y < 0.0f )
+			size.y = glm::max( 4.0f, m_Layout.CursorPos.y + size.y );
+
+		return size;
+	}
 }
 
 #include "Saturn/GameFramework/Core/EngineGenerated.h"

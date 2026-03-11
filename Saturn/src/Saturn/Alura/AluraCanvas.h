@@ -50,8 +50,12 @@ namespace Saturn {
 	// This struct holds the current layout information which is then used to calculate where to place elements.
 	// This struct is volatile meaning that at the beginning of every frame the information in the layout is reset.
 	//
-	struct AluraLayout
+	class AluraLayout
 	{
+	public:
+		// Starting point of the Cursor
+		glm::vec2 CursorStartingPos{ 0.0f };
+
 		// Current emitting position.
 		glm::vec2 CursorPos{ 0.0f };
 		glm::vec2 CursorPosPrevLine{ 0.0f };
@@ -63,6 +67,9 @@ namespace Saturn {
 		float     CurrentIndent{ 0.0f };
 
 		bool IsSameLine = false;
+
+	public:
+		void Reset();
 	};
 
 	// Backup data when PushStyle is called
@@ -108,6 +115,7 @@ namespace Saturn {
 		void DrawAllDrawers( Timestep ts );
 		void HandleDrawerEvents( Event& rEvent );
 		void Destroy();
+		void EndFrame();
 
 		void AddDrawer( Ref<AluraDrawer> drawer );
 		void SetContext( Ref<AluraRenderer> context );
@@ -137,7 +145,9 @@ namespace Saturn {
 		
 		[[nodiscard]] bool AddButton( const glm::vec2& rSize, const glm::vec4& rColor = glm::one<glm::vec4>() );
 		
-		[[nodiscard]] bool AddButton( const std::string& rText );
+		// Add a button with text.
+		// If no size is specified then Alura will calculate the spacing needed.
+		[[nodiscard]] bool AddButton( const std::string& rText, const glm::vec2& rSize = glm::zero<glm::vec2>() );
 
 		void AddCircle( float radius, float thinkness = 1.0f, bool filled = false, const glm::vec4& rColor = glm::one<glm::vec4>() );
 
@@ -148,8 +158,6 @@ namespace Saturn {
 		void Indent( float width = 0.0f );
 		void Unindent( float width = 0.0f );
 
-		[[nodiscard]] bool IsItemHovered();
-		[[nodiscard]] bool IsItemClicked( RubyMouseButton mouseBtn );
 		void AlignNextItemCenterXY( const glm::vec2& rSize );
 
 		void SameLine( float offset = 0.0f, float spacing = -1.0f );
@@ -194,6 +202,8 @@ namespace Saturn {
 	private:
 		void AdvanceCursor( const glm::vec2& rSize );
 		bool IsMouseHoveringRect( const glm::vec2& rMin, const glm::vec2& rMax ) const;
+		
+		glm::vec2 CalcItemSize( glm::vec2 usrSize, float w, float h );
 
 	private:
 		UUID m_ID;
@@ -203,6 +213,7 @@ namespace Saturn {
 		glm::vec2 m_PendingNextItemPosition{};
 		float m_PushedFontSize = 0.0f;
 		bool m_WantToSetItemPosition = false;
+		bool m_FirstFrameEver = true;
 
 		// The mouse position relative to this canvas' positions.
 		glm::vec2 m_MousePosition{};

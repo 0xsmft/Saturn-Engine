@@ -333,6 +333,7 @@ namespace Saturn {
 
 	void SkeletonAssetViewer::DrawPickCompatibleMeshWindow()
 	{
+#if !defined(SAT_DIST)
 		bool* pOpen = nullptr;
 		if( m_SkeletalMesh )
 		{
@@ -391,6 +392,7 @@ namespace Saturn {
 
 			ImGui::EndPopup();
 		}
+#endif
 	}
 
 	void SkeletonAssetViewer::OnUpdate( Timestep ts )

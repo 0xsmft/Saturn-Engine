@@ -49,7 +49,11 @@ namespace Saturn {
 	}
 
 	TextureSourceAsset::TextureSourceAsset( const Ref<Asset>& rBase, std::filesystem::path AbsolutePath, TextureLoadFlags flags )
-		: Asset( rBase ), m_AbsolutePath( std::move( AbsolutePath ) ), m_LoadFlags( flags )
+		: Asset( rBase ), 
+#if !defined(SAT_DIST)
+		m_AbsolutePath( std::move( AbsolutePath ) ), 
+#endif
+		m_LoadFlags( flags )
 	{
 		LoadRawTexture();
 	}

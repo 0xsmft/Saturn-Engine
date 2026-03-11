@@ -198,9 +198,13 @@ namespace Saturn {
 
 	void ShaderLibrary::Load( const std::string& name, const std::string& path )
 	{
+#if !defined(SAT_DIST)
 		SAT_CORE_ASSERT( m_Shaders.find( name ) == m_Shaders.end() );
 
 		m_Shaders[ name ] = Ref<Shader>::Create( path );
+#else
+		SAT_CORE_VERIFY( m_Shaders.find( name ) != m_Shaders.end(), "Shader is unable to be found in the ShaderBundle! It must exist! Dist cannot load shaders from disk. This may indicate that the ShaderBuundle is outdated! Please rebuild the it." );
+#endif
 	}
 
 	void ShaderLibrary::Remove( const Ref<Shader>& shader )

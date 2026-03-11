@@ -84,12 +84,6 @@ namespace Saturn {
 
 		m_SceneRenderer = Ref<SceneRenderer>::Create( SceneRendererFlag_MasterInstance | SceneRendererFlag_SwapchainTarget );
 
-		OpenFile( Project::GetActiveProject()->GetConfig().StartupSceneID );
-
-		Application::Get()->GetWindow()->Show();
-
-		SAT_CORE_VERIFY( m_RuntimeScene->OnRuntimeStart(), "Initial runtime request failed!" );
-
 #if defined(SAT_DIST)
 		SClassDistReferencer::Reference();
 #endif
@@ -108,6 +102,12 @@ namespace Saturn {
 
 		g_AluraCanvas = new AluraCanvas( canvasSpecification );
 		g_AluraCanvas->SetContext( m_SceneRenderer->GetAluraRenderer() );
+
+		OpenFile( Project::GetActiveProject()->GetConfig().StartupSceneID );
+
+		Application::Get()->GetWindow()->Show();
+
+		SAT_CORE_VERIFY( m_RuntimeScene->OnRuntimeStart(), "Initial runtime request failed!" );
 	}
 
 	void RuntimeLayer::OnDetach()
@@ -221,6 +221,11 @@ namespace Saturn {
 			OnWindowResize( ( RubyWindowResizeEvent& ) rEvent );
 
 		m_RuntimeScene->OnEvent( rEvent );
+
+		if( g_AluraCanvas )
+		{
+			g_AluraCanvas->HandleDrawerEvents( rEvent );
+		}
 
 		switch( rEvent.Type )
 		{

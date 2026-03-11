@@ -206,7 +206,7 @@ namespace Saturn {
 
 		//////////////////////////////////////////////////////////////////////////
 		// Scene loading and Scene Renderer
-		m_SceneRenderer = Ref<SceneRenderer>::Create( SceneRendererFlag_MasterInstance | SceneRendererFlag_RenderGrid );
+		m_SceneRenderer = Ref<SceneRenderer>::Create( SceneRendererFlag_MasterInstance | SceneRendererFlag_RenderGrid_DEPRECATED );
 
 		m_SceneRenderer->SetCurrentScene( m_EditorScene.Get() );
 

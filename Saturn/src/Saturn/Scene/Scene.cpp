@@ -375,6 +375,7 @@ namespace Saturn {
 
 		g_AluraCanvas->NewFrame();
 		g_AluraCanvas->DrawAllDrawers( ts );
+		g_AluraCanvas->EndFrame();
 
 		// Lights
 		RtSetupLights( sceneRenderer );
@@ -611,13 +612,16 @@ namespace Saturn {
 		}
 
 #if !defined(SAT_DIST)
-		RtRenderColliderDebug( sceneRenderer );
+		RtBuildSelectedMeshesCmds( sceneRenderer );
 #endif
 	}
 
 #if !defined(SAT_DIST)
-	void Scene::RtRenderColliderDebug( Ref<SceneRenderer> sceneRenderer )
+	void Scene::RtBuildSelectedMeshesCmds( Ref<SceneRenderer> sceneRenderer )
 	{
+		//////////////////////////////////////////////////////////////////////////
+		// PhysColliders
+
 		auto submitBoxCollider = [ this, &sceneRenderer ]( SharedPtr<Entity> entity, Ref<StaticMesh> dbgMesh, Ref<MaterialRegistry> materialRegistry )
 		{
 			const auto& rTransform = GetWorldSpaceTransform( entity );
@@ -1498,11 +1502,11 @@ namespace Saturn {
 	void Scene::PostDeserialise()
 	{
 		// Find and load the nav mesh
-		auto entites = GetAllEntitiesWith<NavigationMeshSpecificationComponent>();
+		auto entities = GetAllEntitiesWith<NavigationMeshSpecificationComponent>();
 
-		SAT_CORE_ASSERT( entites.size() <= 1, "There can only be one entity with a NavigationMeshSpecificationComponent in the scene!" );
+		SAT_CORE_ASSERT( entities.size() <= 1, "There can only be one entity with a NavigationMeshSpecificationComponent in the scene!" );
 
-		for( const auto& rEntity : entites )
+		for( const auto& rEntity : entities )
 		{
 			if( rEntity->GetClass() != NavBoundsEntity::StaticClass() )
 			{
@@ -1564,7 +1568,7 @@ namespace Saturn {
 	SharedPtr<Entity> Scene::HotReloadReplaceOldEntity( SharedPtr<Entity> source )
 	{
 		// Create new entity
-		SharedPtr<Entity> entity = (Entity*)ClassMetadataHandler::Get().CreateClassObject( source->GetClass()->GetHash() );
+		SharedPtr<Entity> entity = ( Entity* ) ClassMetadataHandler::Get().CreateClassObject( source->GetClass()->GetHash() );
 
 		entity->SetName( source->GetName() );
 		entity->GetComponent<IdComponent>().ID = source->GetUUID();

@@ -84,8 +84,25 @@ namespace Saturn {
 	{
 		Project::GetActiveProject()->RemoveAssetFromDefaults( id );
 
-		if( IsAssetLoaded( id ) )
+		{
+			Ref<Asset> asset = m_Assets->FindAsset( id );
+			bool assetWasLoadedBefore = IsAssetLoaded( id );
+			if( !assetWasLoadedBefore )
+			{
+				if( m_Importer.TryLoadData( asset ) ) 
+				{
+					m_Assets->m_LoadedAssets[ id ] = asset;
+				}
+			}
+
 			m_Assets->m_LoadedAssets[ id ]->OnDelete();
+
+			// Unload before deletion to so the ref count decrements.
+			if( !assetWasLoadedBefore )
+			{
+				m_Assets->m_LoadedAssets.erase( id );
+			}
+		}
 
 		m_Assets->RemoveAsset( id );
 		Save();

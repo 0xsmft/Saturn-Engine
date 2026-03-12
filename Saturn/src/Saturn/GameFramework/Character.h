@@ -72,6 +72,9 @@ namespace Saturn {
 		void MoveLeftEnd();
 		void MoveRightEnd();
 
+		void StartSprint();
+		void EndSprint();
+
 	protected:
 		Ref<PlayerInputController> m_PlayerInputController = nullptr;
 
@@ -87,13 +90,15 @@ namespace Saturn {
 		glm::vec3 CalculateRight();
 		glm::vec3 CalculateForward();
 
+		float m_MovementSpeed = 5.0f;
+
 	private:
+		float m_MouseUpMovement = 0.0f;
+		float m_MouseSensitivity = 0.0f;
+
 		glm::vec2 m_MovementDirection{};
 		glm::vec2 m_LastMousePos{};
 		glm::vec3 m_LastMovement{};
-
-		float m_MouseUpMovement = 0.0f;
-		float m_MouseSensitivity = 0.0f;
 
 	private:
 		// TODO: Change to a base mesh class, we don't know what the user will have.

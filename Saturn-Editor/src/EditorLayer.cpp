@@ -2062,12 +2062,23 @@ namespace Saturn {
 		if( ImGui::BeginMenu( "Edit" ) )
 		{
 			{
-				Auxiliary::ScopedDisabledFlag disabledIfRuntime( m_RequestRuntime );
+				Auxiliary::ScopedDisabledFlag disabledIfRuntimeOrEmpty( m_RequestRuntime );
 
 				// TODO: Disable if there's nothing to undo/redo.
-				if( ImGui::MenuItem( "Undo", "Ctrl+Z" ) )           m_GlobalUndoRedoGroup->GlobalUndoRecent();
-				if( ImGui::MenuItem( "Redo", "Ctrl+Y" ) )           m_GlobalUndoRedoGroup->GlobalRedoRecent();
-				if( ImGui::MenuItem( "Clear all action history" ) ) m_GlobalUndoRedoGroup->ClearAll();
+				{
+					Auxiliary::ScopedDisabledFlag disabledIfNoUndo    ( m_GlobalUndoRedoGroup->IsUndoActionsEmpty() );
+					if( ImGui::MenuItem( "Undo", "Ctrl+Z" ) )           m_GlobalUndoRedoGroup->GlobalUndoRecent();
+				}
+				
+				{
+					Auxiliary::ScopedDisabledFlag disabledIfNoRedo    ( m_GlobalUndoRedoGroup->IsRedoActionsEmpty() );
+					if( ImGui::MenuItem( "Redo", "Ctrl+Y" ) )           m_GlobalUndoRedoGroup->GlobalRedoRecent();
+				}
+				
+				{
+					Auxiliary::ScopedDisabledFlag disabledIfNoActions( !m_GlobalUndoRedoGroup->HasAnyActions() );
+					if( ImGui::MenuItem( "Clear all action history" ) ) m_GlobalUndoRedoGroup->ClearAll();
+				}
 			}
 
 			ImGui::EndMenu();
@@ -2717,6 +2728,12 @@ namespace Saturn {
 			{
 				if( !m_BlockingOperation )
 					m_BlockingOperation = Ref<JobProgress>::Create();
+
+				m_JobModalOpen = true;
+				m_BlockingOperation->SetStatus( "Initialising..." );
+
+				SaveFile();
+				SaveProject();
 
 				if( m_ShouldBuildShaderBundle )
 					CreateShaderBundleJob();

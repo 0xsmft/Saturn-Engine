@@ -282,6 +282,13 @@ namespace Saturn {
 		
 			TransitionImageLayout( VulkanFormat( m_Format ), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL );
 		}
+		else
+		{
+			TransitionImageLayout(
+				VulkanFormat( m_Format ),
+				VK_IMAGE_LAYOUT_UNDEFINED,
+				m_DescriptorImageInfo.imageLayout );
+		}
 
 		// Create base image view & sampler.
 		VkImageViewCreateInfo ImageViewCreateInfo = { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };

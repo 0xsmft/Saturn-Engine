@@ -984,36 +984,12 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 				Ref<Asset> asset = AssetManager::Get()->FindAsset( AssetManager::Get()->CreateAsset( AssetType::Material ) );
 				asset->SetAbsolutePath( materialPath );
 
-				materialAsset = Ref<MaterialAsset>::Create( nullptr );
+				materialAsset = Ref<MaterialAsset>::Create( asset, nullptr );
 				materialAsset->SetName( MaterialName );
 
 				needToSaveAssetReg = true;
 
 				m_MeshInformation.MaterialAssets.at( m ) = ( uint64_t ) asset->ID;
-
-				// Write to disk, create file.
-				// TODO: (Asset) Fix this.
-				struct
-				{
-					UUID ID;
-					AssetType Type;
-					uint32_t Flags;
-					std::filesystem::path Path;
-					std::string Name;
-				} OldAssetData = {};
-
-				OldAssetData.ID = asset->ID;
-				OldAssetData.Type = asset->Type;
-				OldAssetData.Flags = asset->Flags;
-				OldAssetData.Path = asset->Path;
-				OldAssetData.Name = asset->Name;
-
-				asset = materialAsset;
-				asset->ID = OldAssetData.ID;
-				asset->Type = OldAssetData.Type;
-				asset->Flags = OldAssetData.Flags;
-				asset->Path = OldAssetData.Path;
-				asset->Name = OldAssetData.Name;
 
 				//////////////////////////////////////////////////////////////////////////
 

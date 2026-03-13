@@ -87,6 +87,9 @@ namespace Saturn {
 		m_PinkTextureCube = Ref< TextureCube >::Create( ImageFormat::BGRA8, 1, 1, pData );
 		m_PinkTextureCube->SetIsRendererTexture( true );
 
+		m_PinkTextureSourceAsset = Ref<TextureSourceAsset>::Create();
+		m_PinkTextureSourceAsset->m_Texture = m_PinkTexture;
+
 		delete[] pData;
 
 		std::vector<VkDescriptorPoolSize> PoolSizes;
@@ -139,6 +142,8 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		m_ShaderReloadedCB.clear();
 #endif
+
+		m_PinkTextureSourceAsset = nullptr;
 
 		m_PinkTextureCube->SetForceTerminate( true );
 		m_PinkTextureCube = nullptr;

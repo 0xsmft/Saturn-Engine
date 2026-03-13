@@ -33,6 +33,9 @@
 #include "StorageBufferSet.h"
 #include "UniformBufferSet.h"
 
+// #FixRendererIncludeToTSA
+#include "Saturn/Asset/TextureSourceAsset.h"
+
 namespace Saturn {
 
 	struct ShaderReference
@@ -103,8 +106,9 @@ namespace Saturn {
 
 		void SubmitTerminateResource( std::function<void()>&& rrFunction );
 
-		Ref<Texture2D>   GetPinkTexture() { return m_PinkTexture; }
-		Ref<TextureCube> GetPinkTextureCube() { return m_PinkTextureCube; }
+		Ref<Texture2D>          GetPinkTexture() { return m_PinkTexture; }
+		Ref<TextureCube>        GetPinkTextureCube() { return m_PinkTextureCube; }
+		Ref<TextureSourceAsset> GetPinkTextureSrcAsset() { return m_PinkTextureSourceAsset; }
 
 		std::pair< Ref<VertexBuffer>, Ref<IndexBuffer>> CreateFullscreenQuad();
 		
@@ -154,6 +158,7 @@ namespace Saturn {
 		
 		Ref<Texture2D> m_PinkTexture;
 		Ref<TextureCube> m_PinkTextureCube;
+		Ref<TextureSourceAsset> m_PinkTextureSourceAsset;
 
 		VkDescriptorSet m_RendererDescriptorSets[ MAX_FRAMES_IN_FLIGHT ]{};
 

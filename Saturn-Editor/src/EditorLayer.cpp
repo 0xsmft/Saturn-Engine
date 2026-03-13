@@ -895,26 +895,34 @@ namespace Saturn {
 					{
 						m_GlobalUndoRedoGroup->RemoveIfActionHasIdentifier( ( uint64_t ) rEntity->GetHandle() );
 						
+						bool canDeleteNow = true;
+
+						// Special deletion cases:
+						//  (a) NavBoundsEntity -> need to show popup to ask if the uesr want to delete the cache.
+						//  (b) Currently selected camera -> invalidate information about the camera.
 						if( rEntity->GetClass() == NavBoundsEntity::StaticClass() )
 						{
 							m_NavMeshEntityToDelete = rEntity->GetHandle();
 							m_ShowDeleteNavMeshCachePopup = true;
+						
+							canDeleteNow = false;
 						}
-						else if( m_SelectedCameraEntityID == rEntity->GetHandle() )
+						// NOT an else if, because what if the user has a camera and a navbounds??
+						// Yes, very rare case, but it will still cause a crash if it's not handled like this.
+						if( m_SelectedCameraEntityID == rEntity->GetHandle() )
 						{
 							m_pSelectedCamera = nullptr;
 							m_SelectedCameraEntityID = entt::null;
 							m_ShouldRenderCameraPreview = false;
-
-							g_ActiveScene->DeleteEntity( rEntity );
 						}
-						else
+						
+						if( canDeleteNow )
 						{
 							g_ActiveScene->DeleteEntity( rEntity );
 						}
 					}
 
-					// The entities will be freed here!
+					// The entities will be freed here! (if we could delete it in the last pass)
 					m_SelectionManager->ClearSelection( g_ActiveScene, true );
 
 					g_ActiveScene->MarkDirty();

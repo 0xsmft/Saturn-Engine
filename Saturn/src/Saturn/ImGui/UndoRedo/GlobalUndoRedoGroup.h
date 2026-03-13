@@ -60,6 +60,10 @@ namespace Saturn {
 
 		void ClearAll();
 		
+		bool IsUndoActionsEmpty() const { return m_UndoActions.empty(); }
+		bool IsRedoActionsEmpty() const { return m_RedoActions.empty(); }
+		bool HasAnyActions() const { return !IsUndoActionsEmpty() || !IsRedoActionsEmpty(); }
+
 	public:
 		// Adds an action to the undo stack.
 		// AddAction expects the action to already be done hence why it is added to the undo stack.

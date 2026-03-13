@@ -102,6 +102,7 @@ namespace Saturn {
 	
 	public:
 		Timestep Time() const { return m_Timestep; }
+		float Framerate() const { return m_Framerate; }
 
 		// Calls the OS to show an open file dialog.
 		// @param rFilter Must be "Desc1|*.txt;" with "|" being a seperator
@@ -220,6 +221,7 @@ namespace Saturn {
 	private:
 		bool m_Running = true;
 
+		float m_Framerate = 0.0f;
 		float m_LastFrameTime = 0.0f;
 		Timestep m_Timestep;
 

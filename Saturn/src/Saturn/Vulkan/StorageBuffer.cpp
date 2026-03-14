@@ -29,6 +29,7 @@
 #include "sppch.h"
 #include "StorageBuffer.h"
 
+#include "VulkanAllocator.h"
 #include "VulkanContext.h"
 
 namespace Saturn {

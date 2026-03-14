@@ -32,6 +32,11 @@
 #include "EnvironmentMap.h"
 #include "StorageBufferSet.h"
 #include "UniformBufferSet.h"
+#include "Pipeline.h"
+#include "Material.h"
+#include "IndexBuffer.h"
+#include "VertexBuffer.h"
+#include "Mesh.h"
 
 // #FixRendererIncludeToTSA
 #include "Saturn/Asset/TextureSourceAsset.h"

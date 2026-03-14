@@ -29,6 +29,7 @@
 #include "sppch.h"
 #include "Image2D.h"
 
+#include "VulkanAllocator.h"
 #include "VulkanContext.h"
 #include "VulkanDebug.h"
 #include "VulkanImageAux.h"

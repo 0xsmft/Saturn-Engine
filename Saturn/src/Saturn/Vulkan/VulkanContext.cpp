@@ -31,9 +31,8 @@
 
 #include "Saturn/Core/Ruby/RubyWindow.h"
 
-#include "VulkanDebugMessenger.h"
-
 #include "VulkanDebug.h"
+#include "VulkanDebugMessenger.h"
 #include "VulkanAllocator.h"
 
 #include "Renderer.h"

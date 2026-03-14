@@ -801,13 +801,22 @@ namespace Saturn {
 	*/
 	void SceneRenderer::RenderGrid()
 	{
+#if !defined(SAT_DIST)
 		SAT_PF_EVENT();
 
-		if( !HasFlag( SceneRendererFlag_RenderGrid ) )
+		// Should we show the grid?
+		const auto& rVisOptions = m_pScene->GetVisualisationOptions();
+		const bool isRuntimeActive = m_pScene->IsRuntimeActive();
+		if( !( isRuntimeActive ? rVisOptions.ShowGridOnRuntime : rVisOptions.ShowGrid ) )
+		{
 			return;
+		}
+#else
+		return;
+#endif
 
 		// Set UB Data.
-		glm::mat4 trans = glm::rotate( glm::mat4( 1.0f ), glm::radians( 90.0f ), glm::vec3( 1.0f, 0.0f, 0.0f ) ) * glm::scale( glm::mat4( 1.0f ), glm::vec3( 16.0f ) );
+		const glm::mat4 trans = glm::rotate( glm::mat4( 1.0f ), glm::radians( 90.0f ), glm::vec3( 1.0f, 0.0f, 0.0f ) ) * glm::scale( glm::mat4( 1.0f ), glm::vec3( 16.0f ) );
 
 		UBGridMatrices GridMatricesObject = {};
 		GridMatricesObject.Transform = trans;
@@ -819,7 +828,12 @@ namespace Saturn {
 		m_RendererData.GridMaterial->UploadDataToUB( 0, &GridMatricesObject, sizeof( GridMatricesObject ) );
 
 		Renderer::Get()->SubmitFullscreenQuad(
-			m_RendererData.CommandBuffer, m_RendererData.GridPipeline, m_RendererData.GridMaterial, m_RendererData.UniformBufferSet, m_RendererData.QuadIndexBuffer, m_RendererData.QuadVertexBuffer );
+			m_RendererData.CommandBuffer,
+			m_RendererData.GridPipeline, 
+			m_RendererData.GridMaterial, 
+			m_RendererData.UniformBufferSet, 
+			m_RendererData.QuadIndexBuffer, m_RendererData.QuadVertexBuffer 
+		);
 	}
 
 	void SceneRenderer::RenderSkybox()
@@ -830,17 +844,17 @@ namespace Saturn {
 		if( !m_pScene )
 			return;
 
-		auto& sceneEnvironment = m_RendererData.SceneEnvironment;
+		auto& rSceneEnvironment = m_RendererData.SceneEnvironment;
 
 		// We have no skybox.
-		if( sceneEnvironment->Azimuth == 0 && sceneEnvironment->Inclination == 0 && sceneEnvironment->Turbidity == 0 )
+		if( rSceneEnvironment->Azimuth == 0 && rSceneEnvironment->Inclination == 0 && rSceneEnvironment->Turbidity == 0 )
 		{
 			// I don't really like this.
 			// TODO: Come back to this.
-			if( sceneEnvironment->IrradianceMap && sceneEnvironment->RadianceMap )
+			if( rSceneEnvironment->IrradianceMap && rSceneEnvironment->RadianceMap )
 			{
-				sceneEnvironment->RadianceMap = nullptr;
-				sceneEnvironment->IrradianceMap = nullptr;
+				rSceneEnvironment->RadianceMap = nullptr;
+				rSceneEnvironment->IrradianceMap = nullptr;
 			}
 
 			return;

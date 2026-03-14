@@ -120,11 +120,12 @@ namespace Saturn {
 
 			if( ImGui::BeginDragDropTarget() )
 			{
-				auto data = ImGui::AcceptDragDropPayload( "CB_ITEM_MOVE", ImGuiDragDropFlags_None );
-
-				if( data )
+				auto* pData = ImGui::AcceptDragDropPayload( "CB_ITEM_MOVE", ImGuiDragDropFlags_None );
+				if( pData )
 				{
-					std::filesystem::directory_entry& entry = *( std::filesystem::directory_entry* ) data->Data;
+					// TODO: Change this to some sort of universal ID and NOT a filesystem directory entry.
+					// very bad!
+					std::filesystem::directory_entry& entry = *( std::filesystem::directory_entry* ) pData->Data;
 
 					std::filesystem::path srcPath = entry.path();
 					std::filesystem::path dstPath = entryPath / srcPath.filename();
@@ -264,9 +265,7 @@ namespace Saturn {
 					{
 						if( AssetManager::Get()->DoesAssetHaveDependencies( rItem->GetAsset() ) )
 						{
-							// Show popup...
-							m_ItemToDelete = rItem;
-							m_ShowDeleteAssetPopup = true;
+							m_ItemsToDelete.insert_range( m_ItemsToDelete.end(), m_SelectedItems );
 						}
 						else
 						{
@@ -281,10 +280,10 @@ namespace Saturn {
 
 				if( ImGui::MenuItem( "Copy Asset ID" ) )
 				{
-					std::string text = "";
+					std::string text;
 					for( auto& rItem : m_SelectedItems )
 					{
-						text += std::format( "{0} ", (uint64_t)rItem->GetAssetID() );
+						text += std::format( "{0} ", ( uint64_t ) rItem->GetAssetID() );
 					}
 
 					/*
@@ -344,30 +343,6 @@ namespace Saturn {
 					{
 						m_CurrentImportPopup = std::make_unique<TextureSourceAssetImportPopup>( path, m_CurrentPath );
 						m_CurrentImportPopup->Initialise();
-
-						/*
-						auto id = AssetManager::Get()->CreateAsset( AssetType::Texture );
-						auto asset = AssetManager::Get()->FindAsset( id );
-
-						std::filesystem::path newPath = m_CurrentPath / path.filename();
-
-						int32_t count = GetFilenameCount( path.filename().string(), false );
-						if( count >= 1 )
-						{
-							newPath.replace_filename( std::format( "{0} ({1})", path.filename().string(), count ) );
-						}
-
-						std::filesystem::copy_file( path, newPath );
-
-						asset->SetAbsolutePath( newPath );
-
-						AssetManagerSerialiser ars;
-						ars.Serialise();
-
-						UpdateFiles( true );
-
-						textureAssetImported = true;
-						*/
 					}
 
 					// Meshes
@@ -794,6 +769,25 @@ namespace Saturn {
 			else if( m_Searching && m_ValidSearchFiles.empty() )
 			{
 				drawTextCentredForNoAssets( "No assets could be found matching that search criteria." );
+			}
+
+			// Process pending deletions
+			if( m_ItemsToDelete.size() )
+			{
+				auto& rCurrentItemInQueue = m_ItemsToDelete.front();
+
+				// We need to check again, because the assets that were previously
+				// needed could of just been deleted.
+				if( AssetManager::Get()->DoesAssetHaveDependencies( rCurrentItemInQueue->GetAsset() ) )
+				{
+					m_ShowDeleteAssetPopup = true;
+				}
+				else
+				{
+					rCurrentItemInQueue->Delete();
+
+					m_ItemsToDelete.erase( std::remove( m_ItemsToDelete.begin(), m_ItemsToDelete.end(), rCurrentItemInQueue ) );
+				}
 			}
 
 			constexpr float padding = 16.0f;
@@ -1234,7 +1228,9 @@ namespace Saturn {
 		ImGui::SetNextWindowPos( ImGui::GetMainViewport()->GetCenter(), ImGuiCond_FirstUseEver, ImVec2( 0.5f, 0.5f ) );
 		if( ImGui::BeginPopupModal( "Delete Asset##DELETEASSET", nullptr, ImGuiWindowFlags_NoSavedSettings ) )
 		{
-			Ref<Asset> assetToDelete = m_ItemToDelete->GetAsset();
+			auto& rItemToDelete = m_ItemsToDelete.front();
+
+			Ref<Asset> assetToDelete = rItemToDelete->GetAsset();
 			auto& rMemoryDependencies = AssetManager::Get()->GetAssetDependenciesForAsset( assetToDelete );
 			auto& rPureDependencies = AssetManager::Get()->GetPureAssetDependenciesForAsset( assetToDelete );
 
@@ -1331,18 +1327,17 @@ namespace Saturn {
 						pDependant->OnUpdate( s_ID );
 					}
 
-					// Update asset (TODO)
 					for( AssetID assetID : rPureDependencies )
 					{
-						AssetManager::Get()->UpdateAssetDependency( m_ItemToDelete->GetAssetID(), assetID, s_ID );
+						AssetManager::Get()->UpdateAssetDependency( rItemToDelete->GetAssetID(), assetID, s_ID );
 					}
 
 					s_ID = 0;
 
 					GlobalUndoRedoGroup::Get()->ClearAll();
 
-					m_ItemToDelete->Delete();
-					m_ItemToDelete = nullptr;
+					rItemToDelete->Delete();
+					m_ItemsToDelete.erase( std::remove( m_ItemsToDelete.begin(), m_ItemsToDelete.end(), rItemToDelete ) );
 
 					m_ShowDeleteAssetPopup = false;
 					ImGui::CloseCurrentPopup();
@@ -1367,15 +1362,15 @@ namespace Saturn {
 
 					for( AssetID assetID : rPureDependencies )
 					{
-						AssetManager::Get()->UpdateAssetDependency( m_ItemToDelete->GetAssetID(), assetID, 0 );
+						AssetManager::Get()->UpdateAssetDependency( rItemToDelete->GetAssetID(), assetID, 0 );
 					}
 
 					AssetManager::Get()->UnregisterAllAssetDependencies( assetToDelete->ID );
 
 					GlobalUndoRedoGroup::Get()->ClearAll();
 
-					m_ItemToDelete->Delete();
-					m_ItemToDelete = nullptr;
+					rItemToDelete->Delete();
+					m_ItemsToDelete.erase( std::remove( m_ItemsToDelete.begin(), m_ItemsToDelete.end(), rItemToDelete ) );
 
 					m_ShowDeleteAssetPopup = false;
 					ImGui::CloseCurrentPopup();
@@ -1387,7 +1382,7 @@ namespace Saturn {
 				ImGui::TableSetColumnIndex( 2 );
 				if( ImGui::Button( "Cancel" ) )
 				{
-					m_ItemToDelete = nullptr;
+					m_ItemsToDelete.erase( std::remove( m_ItemsToDelete.begin(), m_ItemsToDelete.end(), rItemToDelete ) );
 					m_ShowDeleteAssetPopup = false;
 					ImGui::CloseCurrentPopup();
 				}
@@ -1397,6 +1392,10 @@ namespace Saturn {
 
 			ImGui::EndPopup();
 		}
+
+		// We are just always going to assume that we are the last time to delete
+		// even if we aren't.
+		m_ShowDeleteAssetPopup = false;
 #endif
 	}
 

@@ -82,13 +82,13 @@ namespace Saturn {
 		{
 			acl::track_desc_transformf desc;
 			desc.output_index = i;
-			desc.parent_index = ( i == 0 ) ? acl::k_invalid_track_index : sk->GetParentIndex( i );
+			desc.parent_index = ( i == 0 ) ? acl::k_invalid_track_index : ( uint32_t ) sk->GetParentIndex( i );
 			desc.precision = 0.0001f;
 			desc.shell_distance = 3.0f;
 
 			acl::track_qvvf track = acl::track_qvvf::make_reserve( desc, rAllocator, samples, fps );
 
-			for( size_t j = 0; j < samples; ++j )
+			for( uint32_t j = 0; j < samples; ++j )
 			{
 				const auto& rPosition = rChannels[ i ].Positions[ j ].Value;
 				const auto& rRotation = rChannels[ i ].Rotations[ j ].Value;
@@ -202,8 +202,8 @@ namespace Saturn {
 			rChannel.Scale = std::move( ab.Scale );
 		}
 
-		m_UncompressedDuration = pAnimation->mDuration;
-		m_UncompressedTPS = pAnimation->mTicksPerSecond;
+		m_UncompressedDuration = ( float ) pAnimation->mDuration;
+		m_UncompressedTPS = ( float ) pAnimation->mTicksPerSecond;
 
 		Compress();
 	}

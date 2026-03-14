@@ -230,7 +230,42 @@ namespace Saturn {
 		}
 	}
 	
-	void ContentBrowserPanel::DrawBaseContextMenu() 
+	void ContentBrowserPanel::DrawAssetOpenRenamePopup()
+	{
+		/* May not be needed at this point in time.
+		* 
+		if( m_OpenRenameAssetOpenPopup )
+			ImGui::OpenPopup( "Close Asset Viewers##ClsAv" );
+
+		ImGui::SetNextWindowSize( { 350.0F, 0.0F } );
+		if( ImGui::BeginPopupModal( "Close Asset Viewers##ClsAv", &m_OpenRenameAssetOpenPopup, ImGuiWindowFlags_NoSavedSettings ) )
+		{
+			ImGui::Text( "In order to rename this Asset you'll need to close the Asset Viewer." );
+
+			ImGui::BeginHorizontal( "##clsavoptions" );
+
+			if( ImGui::Button( "Close and save" ) )
+			{
+			}
+
+			if( ImGui::Button( "Close without saving" ) )
+			{
+			}
+
+			if( ImGui::Button( "Cancel" ) )
+			{
+				m_OpenRenameAssetOpenPopup = false;
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndHorizontal();
+
+			ImGui::EndPopup();
+		}
+		*/
+	}
+
+	void ContentBrowserPanel::DrawBaseContextMenu()
 	{
 		// SELECTED ITEMS ACTIONS (FOR FOLDERS AND ASSETS)
 		if( m_SelectedItems.size() )

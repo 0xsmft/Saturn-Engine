@@ -378,7 +378,22 @@ namespace Saturn {
 
 					std::memset( s_RenameBuffer, 0, 1024 );
 				}
+
+				/*
+				// TODO: Check for invalid characters and follow OS rules
+				// Windows does not allow \ / : ? * <> | "
+				// Linux does not allow /
+				// Windows does not allow files to end in a space or a dot
+				// Windows does not allow files to be called CON, AUX, PRN, NUL, COM1-9, LPT1-9
+				// Linux does not allow files to be called .., .
+				char c = s_RenameBuffer[ 0 ];
+				while(  c != '\0' )
+				{
+					if( c == '\\' || c == '/' || c == ':' || c == '?' || c == '*'  || c == '<' || c == '>' || c == '|' || c == '\"' )
+						break;
+					++c;
 				}
+				*/
 			}
 			else
 			{
@@ -492,7 +507,7 @@ namespace Saturn {
 		{
 			// If this asset is a dependee, we need to tell
 			// the depedant that we no longer need it, because we won't exist anymore.
-			RemoveAssetDependants();
+			RemoveAssetDependencies();
 			CloseAssetViewersBeforeDeletion();
 			AssetManager::Get()->RemoveAsset( m_Asset->ID );
 		}
@@ -754,7 +769,7 @@ namespace Saturn {
 			{ 0, 1 }, { 1, 0 }, IM_COL32_WHITE, 5.0f, drawFlags );
 	}
 
-	void ContentBrowserItem::RemoveAssetDependants()
+	void ContentBrowserItem::RemoveAssetDependencies()
 	{
 		if( m_Asset )
 		{

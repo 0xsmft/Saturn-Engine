@@ -58,7 +58,7 @@ namespace Saturn {
 		for( size_t i = 0; i < m_SkeletonAsset->GetBoneNames().size(); ++i )
 		{
 			SkelBoneItem* pBoneItem = new SkelBoneItem();
-			pBoneItem->BoneIndex = i;
+			pBoneItem->BoneIndex = ( uint32_t ) i;
 			pBoneItem->Type = SkelItemType::Bone;
 
 			m_BoneTree[ i ] = new SkelItemNode( pBoneItem );
@@ -81,7 +81,7 @@ namespace Saturn {
 
 		for( size_t i = 0; i < m_SkeletonAsset->GetBoneNames().size(); ++i )
 		{
-			const int parentIndex = m_SkeletonAsset->GetParentIndex( i );
+			const auto parentIndex = m_SkeletonAsset->GetParentIndex( ( uint32_t ) i );
 			if( parentIndex == ~0u )
 			{
 				m_BoneTreeRoots.push_back( m_BoneTree[ i ] );

@@ -10,6 +10,9 @@ workspace "Saturn"
 	editandcontinue "Off"
 	debugformat "c7"
 
+	filter "action:vs*"
+		linkoptions { "/ignore:4006" }
+
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 -- Include directories relative to root folder (solution directory)

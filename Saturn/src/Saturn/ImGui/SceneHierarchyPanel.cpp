@@ -728,20 +728,31 @@ namespace Saturn {
 		{
 			bool modified = false;
 
-			auto& translation = tc.Position;
-			glm::vec3 rotation = glm::degrees( tc.GetRotationEuler() );
-			auto& scale = tc.Scale;
-
-			modified = Auxiliary::DrawVec3Control( "Translation", tc.Position );
-		
-			if( Auxiliary::DrawVec3Control( "Rotation", rotation ) ) 
+			auto oldTranslation = tc.Position;
+			if( Auxiliary::DrawVec3Control( "Translation", tc.Position ) ) 
 			{
-				tc.SetRotation( glm::radians( rotation ) );
-				
 				modified |= true;
+
+				Ref<UndoRedoActionModifyVec3> action = Ref<UndoRedoActionModifyVec3>::Create( "Modify Entity Translation", &tc.Position, oldTranslation, tc.Position );
+				GlobalUndoRedoGroup::Get()->AddAction( action, ( uint64_t ) entity->GetHandle() );
 			}
 
-			modified |= Auxiliary::DrawVec3Control( "Scale", tc.Scale, 1.0f );
+			glm::vec3 rotationEuler = glm::degrees( tc.GetRotationEuler() );
+			if( Auxiliary::DrawVec3Control( "Rotation", rotationEuler ) ) 
+			{
+				modified |= true;
+
+				tc.SetRotation( glm::radians( rotationEuler ) );
+			}
+
+			auto oldScale = tc.Scale;
+			if( Auxiliary::DrawVec3Control( "Scale", tc.Scale, 1.0f ) ) 
+			{
+				modified |= true;
+
+				Ref<UndoRedoActionModifyVec3> action = Ref<UndoRedoActionModifyVec3>::Create( "Modify Entity Scale", &tc.Scale, oldScale, tc.Scale );
+				GlobalUndoRedoGroup::Get()->AddAction( action, ( uint64_t ) entity->GetHandle() );
+			}
 
 			if( modified )
 			{

@@ -951,6 +951,10 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 			return false;
 		}
 
+		// We need to get the material count, but we no longer need to search, we are done here.
+		if( !m_NeedToFindMaterials )
+			return true;
+
 		for( size_t m = 0; m < m_Scene->mNumMaterials; m++ )
 		{
 			aiMaterial* material = m_Scene->mMaterials[ m ];
@@ -1246,8 +1250,18 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 		
 		if( m_Scene->HasAnimations() ) SAT_CORE_WARN( "[StaticMeshImporter] Scene has animations, they will be ignored!" );
 
+		if( ( m_ImportBehaviour & MeshImportBehaviour_ImportSubMeshAsAsset ) != 0 )
+		{
+			ImportSubmeshesSeperate();
+		}
+		
 		return FindMaterials() ? AssetImportPopupError::None : AssetImportPopupError::MeshNoMaterials;
 	}
+
+	void StaticMeshImporter::ImportSubmeshesSeperate()
+	{
+	}
+
 #endif
 
 	//////////////////////////////////////////////////////////////////////////

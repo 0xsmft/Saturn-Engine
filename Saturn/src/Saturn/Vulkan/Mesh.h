@@ -465,6 +465,9 @@ namespace Saturn {
 		// INTERNAL FLAG! Should we create a skeleton, or try to merge with an existing one?
 		MeshImportBehaviour_SK_MergeWithExistingSK = 1 << 5,
 
+		// Treat each submesh as it's own asset.
+		MeshImportBehaviour_ImportSubMeshAsAsset   = 1 << 6,
+
 		// Default behaviour for Static Meshes
 		MeshImportBehaviour_Default = MeshImportBehaviour_AllowUnnamedMaterials | MeshImportBehaviour_CreateNoMaterials,
 		// Default behaviour for Skeletal Meshes
@@ -517,6 +520,7 @@ namespace Saturn {
 		MeshImportBehaviour GetImportBehaviour() const { return m_ImportBehaviour; }
 		const MeshInformation& GetMeshInformation() { return m_MeshInformation; }
 		const MeshInformation& GetMeshInformation() const { return m_MeshInformation; }
+		void DisableMaterialSearching() { m_NeedToFindMaterials = false; }
 
 	protected:
 		[[nodiscard]] bool FindMaterials();
@@ -529,6 +533,7 @@ namespace Saturn {
 
 		std::unique_ptr<Assimp::Importer> m_Importer;
 		const aiScene* m_Scene = nullptr;
+		bool m_NeedToFindMaterials = true;
 #else
 	protected:
 		MeshImporterBase() = default;
@@ -545,6 +550,9 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		virtual AssetImportPopupError TryImport() override;
 #endif
+
+	private:
+		void ImportSubmeshesSeperate();
 	};
 
 	class SkeletalMeshImporter : public MeshImporterBase

@@ -220,6 +220,7 @@ namespace Saturn {
 
 	void PrefabViewer::OnImGuiRender()
 	{
+#if !defined(SAT_DIST)
 		ImGuiWindowFlags flags = ImGuiWindowFlags_MenuBar;
 		if( m_DisableWindowMovement )
 			flags |= ImGuiWindowFlags_NoMove;
@@ -466,6 +467,7 @@ namespace Saturn {
 			PrefabSerialiser ps;
 			ps.Serialise( m_Prefab );
 		}
+#endif
 	}
 
 	void PrefabViewer::OnUpdate( Timestep ts )

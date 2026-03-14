@@ -62,6 +62,7 @@ namespace Saturn {
 
 	void TextureSourceAssetSerialiser::Serialise( const Ref<Asset>& rAsset ) const
 	{
+#if !defined(SAT_DIST)
 		const auto& basePath = rAsset->Path;
 		const auto fullPath = GetFilepathAbs( basePath );
 
@@ -99,6 +100,7 @@ namespace Saturn {
 
 		std::ofstream file( fullPath );
 		file << out.c_str();
+#endif
 	}
 
 	bool TextureSourceAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
@@ -139,7 +141,9 @@ namespace Saturn {
 		textureSrcAsset->m_HDR = hdr;
 		textureSrcAsset->m_LoadFlags = ( TextureLoadFlags ) flags;
 		textureSrcAsset->m_SamplerFliteringFlags = ( TextureFilteringFlags ) filteringFlags;
+#if !defined(SAT_DIST)
 		textureSrcAsset->m_AbsolutePath = GetFilepathAbs( path );
+#endif
 
 		textureSrcAsset->LoadRawTexture();
 

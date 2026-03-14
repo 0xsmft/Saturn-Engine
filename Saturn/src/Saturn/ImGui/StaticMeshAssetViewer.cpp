@@ -351,7 +351,7 @@ namespace Saturn {
 					const auto index = m_ResetIndices.front();
 					m_ResetIndices.pop();
 
-					m_Mesh->GetMaterialRegistry()->SetMaterial( index, m_FallbackID );
+					m_Mesh->GetMaterialRegistry()->SetMaterial( ( uint32_t ) index, m_FallbackID );
 				}
 
 				m_ShowNoFallbackPopup = false;

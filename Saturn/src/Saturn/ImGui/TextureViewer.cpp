@@ -63,6 +63,7 @@ namespace Saturn {
 
 	void TextureViewer::OnImGuiRender()
 	{
+#if !defined(SAT_DIST)
 		ImGuiWindowFlags flags = ImGuiWindowFlags_MenuBar;
 		if( m_Dirty )
 			flags |= ImGuiWindowFlags_UnsavedDocument;
@@ -192,6 +193,7 @@ namespace Saturn {
 			m_Open = true;
 			m_ShowDirtyPopup = true;
 		}
+#endif
 	}
 
 	void TextureViewer::OnUpdate( Timestep ts )

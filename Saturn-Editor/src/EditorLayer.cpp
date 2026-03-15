@@ -970,13 +970,29 @@ namespace Saturn {
 			switch( rEvent.GetKeycode() )
 			{
 				case RubyKey_D:
-				{					
-					for( const auto& rEntity : m_SelectionManager->GetSelectionContexts( g_ActiveScene ) )
+				{
+					const auto selections = m_SelectionManager->GetSelectionContexts( g_ActiveScene );
+					if( selections.empty() )
+						break;
+
+					for( const auto& rEntity : selections )
 					{
 						g_ActiveScene->DuplicateEntity( rEntity );
 					}
 
 					g_ActiveScene->MarkDirty();
+
+					if( selections.size() > 1 )
+					{
+						const std::string text = std::format( "Duplicated {0} entities", selections.size() );
+						EditorNotification notification{ .Text = text, .Lifetime = 3.0f };
+						PushNotification( notification );
+					}
+					else
+					{
+						EditorNotification notification{ .Text = "Duplicated 1 entity", .Lifetime = 3.0f };
+						PushNotification( notification );
+					}
 				} break;
 
 				case RubyKey_F:

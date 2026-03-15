@@ -36,6 +36,10 @@
 
 #include <glm/gtx/quaternion.hpp>
 
+#if defined (SAT_PLATFORM_LINUX)
+#undef M_PI
+#endif
+
 constexpr auto M_PI = glm::pi<float>();
 
 namespace Saturn {

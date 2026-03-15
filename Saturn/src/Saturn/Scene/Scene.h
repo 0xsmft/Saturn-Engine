@@ -289,7 +289,7 @@ namespace Saturn {
 
 			for( const auto& [ id, entity ] : m_EntityIDMap )
 			{
-				if( entity->HasComponent<T>() )
+				if( entity->SAT_GCC_TEMPLATE HasComponent<T>() )
 					result.push_back( entity );
 			}
 

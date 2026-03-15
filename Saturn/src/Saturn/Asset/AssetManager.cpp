@@ -248,7 +248,7 @@ namespace Saturn {
 		Ref<Asset> asset = m_Assets->FindAsset( id );
 		if( asset )
 		{
-			const std::wstring& rExt = asset->Path.extension();
+			const std::wstring& rExt = asset->Path.extension().wstring();
 
 			asset->Name = rName;
 			asset->Path.replace_filename( rName );

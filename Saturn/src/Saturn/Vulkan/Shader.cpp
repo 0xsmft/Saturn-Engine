@@ -591,12 +591,12 @@ namespace Saturn {
 
 		for ( const auto& pc : Resources.push_constant_buffers )
 		{
-			const auto& Name = pc.name;
-			auto& BufferType = Compiler.get_type( pc.base_type_id );
-			int MemberCount = ( int )BufferType.member_types.size();
-			uint32_t set = Compiler.get_decoration( pc.id, spv::DecorationDescriptorSet );
+			const auto& Name = rPushConst.name;
+			const auto& BufferType = Compiler.get_type( rPushConst.base_type_id );
+			const int MemberCount = ( int )BufferType.member_types.size();
+			const uint32_t set = Compiler.get_decoration( rPushConst.id, spv::DecorationDescriptorSet );
 
-			uint32_t Size = ( uint32_t ) Compiler.get_declared_struct_size( BufferType );
+			const uint32_t Size = ( uint32_t ) Compiler.get_declared_struct_size( BufferType );
 			uint32_t OffsetFromLastPC = 0;
 
 			SAT_CORE_ASSERT( Size < maxPushConstantSize, "Declared push constant is bigger than the device maximum!" );
@@ -766,7 +766,7 @@ namespace Saturn {
 			std::vector< VkDescriptorSetLayoutBinding > Bindings;
 
 			// Iterate over uniform buffers
-			for( auto& [ Binding, ub ] : descriptorSet.UniformBuffers )
+			for( auto& [ bindingNumber, ub ] : descriptorSet.UniformBuffers )
 			{
 				VkDescriptorSetLayoutBinding Binding = {};
 				Binding.binding = ub.Binding;
@@ -795,7 +795,7 @@ namespace Saturn {
 			}
 
 			// Iterate over storage buffers
-			for( auto& [Binding, sb] : descriptorSet.StorageBuffers )
+			for( auto& [bindingNumber, sb] : descriptorSet.StorageBuffers )
 			{
 				VkDescriptorSetLayoutBinding Binding = {};
 				Binding.binding = sb.Binding;

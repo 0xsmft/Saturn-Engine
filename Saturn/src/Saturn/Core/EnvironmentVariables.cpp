@@ -157,7 +157,7 @@ namespace Saturn::Auxiliary {
 
 		return L"";
 #else
-		return "";
+		return L"";
 #endif
 	}
 

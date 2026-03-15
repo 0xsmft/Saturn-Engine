@@ -101,7 +101,7 @@ namespace Saturn {
 			auto Itr = m_Panels.find( Ty::GetStaticName() );
 
 			if( Itr != m_Panels.end() )
-				return Itr->second.As<Ty>();
+				return Itr->second.SAT_GCC_TEMPLATE As<Ty>();
 			else
 				return nullptr;
 		}

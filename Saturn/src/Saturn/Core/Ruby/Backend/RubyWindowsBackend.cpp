@@ -29,6 +29,8 @@
 #include "sppch.h"
 #include "RubyWindowsBackend.h"
 
+#if defined(SAT_PLATFORM_WINDOWS)
+
 #include "Saturn/Core/Ruby/RubyWindow.h"
 #include "Saturn/Core/StringAuxiliary.h"
 
@@ -1243,3 +1245,5 @@ namespace Saturn {
 	}
 
 }
+
+#endif

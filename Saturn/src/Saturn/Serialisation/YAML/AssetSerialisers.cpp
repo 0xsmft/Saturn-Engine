@@ -463,13 +463,14 @@ namespace Saturn {
 
 		out << YAML::BeginMap;
 
-		std::wstring path = std::filesystem::relative( mesh->FilePath(), Project::GetActiveProject()->GetRootDir() );
+		std::filesystem::path path = std::filesystem::relative( mesh->FilePath(), Project::GetActiveProject()->GetRootDir() );
 
 		// On Windows we serialise the path as a Linux path for Linux support 
 #if defined(SAT_PLATFORM_WINDOWS)
-		std::replace( path.begin(), path.end(), L'\\', L'/' );
+		std::wstring wpath = path.wstring();
+		std::replace( wpath.begin(), wpath.end(), L'\\', L'/' );
 
-		out << YAML::Key << "Filepath" << YAML::Value << path;
+		out << YAML::Key << "Filepath" << YAML::Value << wpath;
 #else
 		out << YAML::Key << "Filepath" << YAML::Value << path;
 #endif
@@ -618,13 +619,14 @@ namespace Saturn {
 
 		out << YAML::BeginMap;
 
-		std::wstring path = std::filesystem::relative( mesh->FilePath(), Project::GetActiveProject()->GetRootDir() );
+		std::filesystem::path path = std::filesystem::relative( mesh->FilePath(), Project::GetActiveProject()->GetRootDir() );
 
 		// On Windows we serialise the path as a Linux path for Linux support 
 #if defined(SAT_PLATFORM_WINDOWS)
-		std::replace( path.begin(), path.end(), L'\\', L'/' );
+		std::wstring wPath = path.wstring();
+		std::replace( wPath.begin(), wPath.end(), L'\\', L'/' );
 
-		out << YAML::Key << "Filepath" << YAML::Value << path;
+		out << YAML::Key << "Filepath" << YAML::Value << wPath;
 #else
 		out << YAML::Key << "Filepath" << YAML::Value << path;
 #endif

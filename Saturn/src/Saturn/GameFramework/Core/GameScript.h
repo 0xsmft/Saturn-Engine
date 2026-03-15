@@ -47,9 +47,9 @@ private: \
 	static SClass* GetStaticClassInternal(); \
 public: \
 	inline static SObject* X31_DefConstructor() { return static_cast< SObject* >( new x() ); } \
-	inline static [[nodiscard]] SClass* StaticClass() { return GetStaticClassInternal(); } \
+	[[nodiscard]] inline static SClass* StaticClass() { return GetStaticClassInternal(); } \
 public: \
-	typedef x ThisClass; \
+	typedef x ThisClass; 
 
 #define SAT_DECLARE_CLASS( x, BaseClass ) \
 private: \
@@ -59,7 +59,7 @@ private: \
 	static SClass* GetStaticClassInternal(); \
 public: \
 	inline static SObject* X31_DefConstructor() { return static_cast< SObject* >( new x() ); } \
-	inline static [[nodiscard]] SClass* StaticClass() { return GetStaticClassInternal(); } \
+	[[nodiscard]] inline static SClass* StaticClass() { return GetStaticClassInternal(); } \
 public: \
 	typedef x ThisClass; \
 	typedef BaseClass Super; \
@@ -70,10 +70,10 @@ private: \
 	x& operator=(const x&); \
 public: \
 	inline static SObject* X31_DefConstructor() { return static_cast< SObject* >( new x() ); } \
-	inline static [[nodiscard]] SClass* StaticClass() { return nullptr; } \
+	[[nodiscard]] inline static SClass* StaticClass() { return nullptr; } \
 public: \
 	typedef x ThisClass; \
-	typedef BaseClass Super; \
+	typedef BaseClass Super;
 
 #define SAT_DECLARE_CLASS_MOVE( x, BaseClass ) \
 private: \
@@ -81,7 +81,7 @@ private: \
 	static SClass* GetStaticClassInternal(); \
 public: \
 	inline static SObject* X31_DefConstructor() { return static_cast< SObject* >( new x() ); } \
-	inline static [[nodiscard]] SClass* StaticClass() { return GetStaticClassInternal(); } \
+	[[nodiscard]] inline static SClass* StaticClass() { return GetStaticClassInternal(); } \
 public: \
 	typedef x ThisClass; \
 	typedef BaseClass Super; \

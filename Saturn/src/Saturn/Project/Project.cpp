@@ -447,7 +447,7 @@ namespace Saturn {
 		const std::wstring wArgs = Auxiliary::ConvertString( Args );
 
 		// Start the process
-		Process buildTool( wArgs, WorkingDir );
+		Process buildTool( wArgs, WorkingDir.wstring() );
 
 		const int exitCode = buildTool.ResultOfProcess();
 		return ( SaturnBuildToolExitCodes ) exitCode;
@@ -487,7 +487,7 @@ namespace Saturn {
 		const std::wstring wArgs = Auxiliary::ConvertString( Args );
 
 		// Start the process
-		Process buildTool( wArgs, WorkingDir );
+		Process buildTool( wArgs, WorkingDir.wstring() );
 
 		const int exitCode = buildTool.ResultOfProcess();
 		return ( SaturnBuildToolExitCodes )exitCode;

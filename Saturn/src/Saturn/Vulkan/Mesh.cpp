@@ -468,6 +468,12 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 #endif
 	}
 
+
+	SkeletalMesh::~SkeletalMesh()
+	{
+		
+	}
+
 	Ref<SkeletonAsset> SkeletalMesh::GetSkeletonAsset() const
 	{
 		return m_SkeletonAsset;

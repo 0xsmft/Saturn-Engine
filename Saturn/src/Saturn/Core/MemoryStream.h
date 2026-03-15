@@ -31,6 +31,12 @@
 #include <vector>
 #include <fstream>
 
+#if defined(_MSC_VER)
+#define SAT_MSVC_CLR_OR_THIS_CALL __CLR_OR_THIS_CALL
+#else
+#define SAT_MSVC_CLR_OR_THIS_CALL
+#endif
+
 namespace Saturn {
 
 	class PakFileMemoryBuffer : public std::streambuf
@@ -55,7 +61,7 @@ namespace Saturn {
 		}
 
 	protected:
-		pos_type __CLR_OR_THIS_CALL seekpos( pos_type position, std::ios_base::openmode = std::ios_base::in | std::ios_base::out ) override
+		pos_type SAT_MSVC_CLR_OR_THIS_CALL seekpos( pos_type position, std::ios_base::openmode = std::ios_base::in | std::ios_base::out ) override
 		{
 			char* pNewPos = eback() + position;
 
@@ -71,7 +77,7 @@ namespace Saturn {
 			}
 		}
 
-		pos_type __CLR_OR_THIS_CALL seekoff( off_type offset, std::ios_base::seekdir seekdir, std::ios_base::openmode = std::ios_base::in | std::ios_base::out ) override
+		pos_type SAT_MSVC_CLR_OR_THIS_CALL seekoff( off_type offset, std::ios_base::seekdir seekdir, std::ios_base::openmode = std::ios_base::in | std::ios_base::out ) override
 		{
 			char* pNewPos = nullptr;
 

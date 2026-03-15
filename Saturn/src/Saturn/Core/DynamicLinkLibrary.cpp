@@ -51,7 +51,7 @@ namespace Saturn {
 		m_Handle = ::LoadLibraryW( rPath.wstring().data() );
 		result = ( bool ) m_Handle;
 #else
-		m_Handle = dlopen( rPath.data(), RTLD_LAZY );
+		m_Handle = dlopen( rPath.string().data(), RTLD_LAZY );
 		result = ( bool ) m_Handle;
 #endif
 

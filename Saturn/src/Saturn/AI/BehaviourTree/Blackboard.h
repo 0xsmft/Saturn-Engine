@@ -52,7 +52,7 @@ namespace Saturn {
 		virtual ~BlackboardVariable() = default;
 
 		template<typename CppType>
-		typename const CppType Get() const
+		SAT_MSVC_TYPENAME const CppType Get() const
 		{
 			if( HoldsAnyValue() )
 				return std::get< CppType >( m_Value );
@@ -144,7 +144,7 @@ inline void BlackboardVariable::Set<CppType>( CppType val )				\
 
 			if( itr != m_Data.end() )
 			{
-				return itr->second->Get<CppType>();
+				return itr->second->SAT_GCC_TEMPLATE Get<CppType>();
 			}
 
 			return std::nullopt;

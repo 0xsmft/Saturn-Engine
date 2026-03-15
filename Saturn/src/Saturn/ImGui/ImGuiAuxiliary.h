@@ -257,7 +257,7 @@ namespace Saturn::Auxiliary {
 
 					ImGui::PushID( static_cast< int >( assetID ) );
 
-					if( rAsset->GetAssetType() == allowedTypes || allowedTypes == AssetType::Unknown )
+					if( rAsset->Type == allowedTypes || allowedTypes == AssetType::Unknown )
 					{
 						if( ImGui::Selectable( rAsset->Name.c_str(), Selected ) )
 						{

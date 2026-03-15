@@ -90,18 +90,18 @@ namespace Saturn {
 
 	std::vector<RubyMonitor> RubyLibrary::GetAllMonitors()
 	{
-		const int Monitors = ::GetSystemMetrics( SM_CMONITORS );
+#if defined(SAT_PLATFORM_WINDOWS)
+		int Monitors = ::GetSystemMetrics( SM_CMONITORS );
 
 		if( m_Monitors.size() != Monitors )
 		{
 			m_Monitors.clear();
 			m_Monitors.reserve( static_cast< size_t >( Monitors ) );
 
-#if defined(_WIN32)
-			LPARAM userData = ( LPARAM ) this;
+			LPARAM userData = (LPARAM)this;
 			::EnumDisplayMonitors( NULL, NULL, MonitorEnumProc, userData );
-#endif
 		}
+#endif
 
 		return m_Monitors;
 	}

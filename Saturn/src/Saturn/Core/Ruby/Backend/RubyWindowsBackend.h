@@ -28,6 +28,7 @@
 
 #pragma once
 
+#if defined(SAT_PLATFORM_WINDOWS)
 #include "RubyBackendBase.h"
 
 #include <Windows.h>
@@ -116,3 +117,5 @@ namespace Saturn {
 		bool m_MouseTracked = false;
 	};
 }
+
+#endif

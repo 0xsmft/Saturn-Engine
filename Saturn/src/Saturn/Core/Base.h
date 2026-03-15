@@ -83,6 +83,10 @@ constexpr auto SAT_VERSION_A_0_2_5 = SAT_MAKE_VERSION( 0, 2, 5 );
 constexpr auto SAT_VERSION_A_0_2_6 = SAT_MAKE_VERSION( 0, 2, 6 );
 constexpr auto SAT_VERSION_A_0_2_7_WIP = SAT_MAKE_VERSION( 0, 2, 7 );
 
+#if defined(SAT_PLATFORM_LINUX) || defined(__linux__)
+#include <signal.h>
+#endif
+
 namespace Saturn::Core {
 
 	inline void BreakDebug()

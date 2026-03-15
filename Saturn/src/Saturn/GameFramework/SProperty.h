@@ -113,10 +113,10 @@ namespace Saturn {
 	// FUNCTION POINTERS
 
 	template<typename Ty>
-	using SetPropertyFn = void( __stdcall* )( SObject*, Ty );
+	using SetPropertyFn = void( SAT_MSVC_STDCALL* )( SObject*, Ty );
 
 	template<typename Ty>
-	using GetPropertyFn = Ty( __stdcall* )( const SObject* );
+	using GetPropertyFn = Ty( SAT_MSVC_STDCALL* )( const SObject* );
 
 	template<SPropertyType Type>
 	struct PropertyTypeTraits;

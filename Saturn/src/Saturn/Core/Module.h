@@ -79,7 +79,7 @@ namespace Saturn {
 	};
 
 	// Default Module registration function.
-	typedef void ( __stdcall* InitModuleFn )( 
+	typedef void ( SAT_MSVC_STDCALL* InitModuleFn )( 
 		Project* /* active project */, 
 		const void* /* tracy profiler data */, 
 		const void* /* imgui context */ );

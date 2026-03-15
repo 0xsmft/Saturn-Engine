@@ -66,7 +66,9 @@ namespace Saturn {
 
 	void AudioThread::ThreadRun()
 	{
-		SetThreadDescription( GetCurrentThread(), L"Audio Thread" );
+#if defined(SAT_PLATFORM_WINDOWS)
+		::SetThreadDescription( ::GetCurrentThread(), L"Audio Thread" );
+#endif
 		m_ThreadID = std::this_thread::get_id();
 
 		while( true )
@@ -541,13 +543,13 @@ namespace Saturn {
 
 		MA_CHECK( ma_decoder_init_file( rSpec->SoundSourcePath.string().data(), &config, &decoder ) );
 
-		uint64_t frames = 0;
+		ma_uint64 frames = 0;
 		MA_CHECK( ma_decoder_get_length_in_pcm_frames( &decoder, &frames ) );
 
 		const uint64_t bpf = ma_get_bytes_per_frame( decoder.outputFormat, decoder.outputChannels );
 		const size_t bufferSize = frames * bpf;
 
-		decodedInformation.PCMFrameCount = frames;
+		decodedInformation.PCMFrameCount = ( uint64_t ) frames;
 		decodedInformation.BytesPerFrame = bpf;
 		decodedInformation.Channels = decoder.outputChannels;
 		decodedInformation.SampleRate = decoder.outputSampleRate;
@@ -557,7 +559,7 @@ namespace Saturn {
 		TemporaryBuffer.Allocate( bufferSize );
 		TemporaryBuffer.Zero_Memory();
 
-		uint64_t totalFrameRead = 0;
+		ma_uint64 totalFrameRead = 0;
 		MA_CHECK( ma_decoder_read_pcm_frames( &decoder, TemporaryBuffer.Data, frames, &totalFrameRead ) );
 
 		SAT_CORE_ASSERT( totalFrameRead == frames, "Audio decoder did not read the whole file/buffer!" );

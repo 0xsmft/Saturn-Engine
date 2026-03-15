@@ -38,6 +38,10 @@
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#if defined (SAT_PLATFORM_LINUX)
+#undef M_PI
+#endif
+
 constexpr double M_PI = 3.14159265358979323846;
 
 namespace Saturn {

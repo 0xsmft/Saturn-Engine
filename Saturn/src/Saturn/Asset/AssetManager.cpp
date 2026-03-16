@@ -45,15 +45,16 @@ namespace Saturn {
 	{
 		SingletonStorage::AddSingleton( this );
 
+		m_Assets = Ref<AssetRegistry>::Create();
+
+		// In distribution builds asset registry is loaded by the Asset Bundle!
+#if !defined(SAT_DIST)
 		const auto project = Project::GetActiveProject();
 		auto assetDir = project->GetFullAssetPath();
 		assetDir /= "AssetRegistry.sreg";
 
-		m_Assets = Ref<AssetRegistry>::Create();
 		m_Assets->m_Path = assetDir;
 
-		// In distribution builds asset registry is loaded by the Asset Bundle!
-#if !defined(SAT_DIST)
 		AssetManagerSerialiser ars;
 		ars.Deserialise();
 #endif

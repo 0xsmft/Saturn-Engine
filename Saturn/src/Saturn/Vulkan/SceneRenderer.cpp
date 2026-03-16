@@ -81,7 +81,7 @@ namespace Saturn {
 		// Geometry 
 		//////////////////////////////////////////////////////////////////////////
 
-		if( !Application::Get()->HasFlag( ApplicationFlag_CreateSceneRenderer ) )
+		if( !Application::Get()->HasFlag( ApplicationFlag_CreateSceneRenderer_DEPRECATED ) )
 			return;
 
 		m_RendererData.StorageBufferSet = Ref<StorageBufferSet>::Create( 0, 0 );
@@ -103,6 +103,7 @@ namespace Saturn {
 
 		m_RendererData.UniformBufferSet = Ref<UniformBufferSet>::Create();
 		// Fill out UBS
+		//																	SIZE -> BINDING
 		m_RendererData.UniformBufferSet->CreateBuffer( sizeof( UBStaticMeshMatrices ), 0u );
 		m_RendererData.UniformBufferSet->CreateBuffer( sizeof( UBLightData ), 1u );
 		m_RendererData.UniformBufferSet->CreateBuffer( sizeof( UBSceneData ), 2u );
@@ -129,8 +130,6 @@ namespace Saturn {
 		InitLateComposite();
 
 		InitTexturePass();
-
-//		InitSelection();
 
 		switch( m_AOTechnique )
 		{
@@ -2186,7 +2185,7 @@ namespace Saturn {
 		// [DRAW CALL 1], 64 bones, 3 instances
 		// same as above but start at 300...
 
-		// Every submesh has to have 100 bone transforms
+		// Every submesh is to have 100 bone transforms.
 		// However, not every mesh actually has 100 bones for example, the mesh that this code was debugged with has 64 bones
 		// So, thats why we have to do a workaround to ensure that the bones transforms is correct because if we don't set them (and use the Meshes' bone count) we will end up reading garbage data.
 		// This could be solved if we simply was able to fill the whole buffer with glm::mat4{0.0f} 
@@ -2466,7 +2465,7 @@ namespace Saturn {
 
 	void RendererData::Terminate()
 	{
-		if( !Application::Get()->HasFlag( ApplicationFlag_CreateSceneRenderer ) )
+		if( !Application::Get()->HasFlag( ApplicationFlag_CreateSceneRenderer_DEPRECATED ) )
 			return;
 
 		// DescriptorSets

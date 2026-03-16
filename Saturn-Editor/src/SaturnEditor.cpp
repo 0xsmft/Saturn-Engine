@@ -107,7 +107,7 @@ Saturn::Application* Saturn::CreateApplication( int argc, char** argv )
 		projectPath = argv[1];
 
 	ApplicationSpecification spec;
-	spec.Flags = ApplicationFlag_CreateSceneRenderer;
+	spec.Flags = ApplicationFlag_CreateSceneRenderer_DEPRECATED;
 
 	return new EditorApplication( spec, projectPath );
 }

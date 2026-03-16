@@ -71,7 +71,7 @@ namespace Saturn {
 		m_MainThreadID = std::this_thread::get_id();
 
 		// Lazy load.
-		RenderThread::Get().EnableIf( HasFlag( ApplicationFlag_UseGameThread ) );
+		RenderThread::Get().EnableIf( HasFlag( ApplicationFlag_UseGameThread_DEPPRECATED ) );
 		RenderThread::Get().Start();
 
 #if defined( SAT_DIST )

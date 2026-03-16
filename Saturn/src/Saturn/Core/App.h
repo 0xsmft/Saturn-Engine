@@ -49,9 +49,15 @@ namespace Saturn {
 	enum ApplicationFlags_
 	{
 		ApplicationFlag_UIOnly = BIT( 0 ),
-		ApplicationFlag_CreateSceneRenderer = BIT( 1 ),
-		ApplicationFlag_UseGameThread = BIT( 2 ),
+
+		// This flag is controlled by the layer!
+		ApplicationFlag_CreateSceneRenderer_DEPRECATED = BIT( 1 ),
+		
+		// Game thread no longer exists.
+		ApplicationFlag_UseGameThread_DEPPRECATED = BIT( 2 ),
+
 		ApplicationFlag_Titlebar = BIT( 3 ),
+
 		ApplicationFlag_UseVFS = BIT( 4 )
 	};
 

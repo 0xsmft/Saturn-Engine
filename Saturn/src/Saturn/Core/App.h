@@ -92,6 +92,11 @@ namespace Saturn {
 
 	class Application : public RubyEventTarget
 	{
+	private:
+		Application( const Application& rOther );
+		Application& operator=( Application&& );
+		Application& operator=( const Application& );
+
 	public:
 		static inline Application* Get() { return SingletonStorage::GetSingleton<Application>(); }
 	public:

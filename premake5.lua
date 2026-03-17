@@ -41,6 +41,7 @@ IncludeDir["Freetype"] = "%{wks.location}/Saturn/vendor/freetype/include"
 IncludeDir["MSDF"] = "%{wks.location}/Saturn/vendor/msdf-atlas-gen/msdfgen"
 IncludeDir["MSDFAG"] = "%{wks.location}/Saturn/vendor/msdf-atlas-gen"
 IncludeDir["JoltPhys"] = "%{wks.location}/Saturn/vendor/JoltPhysics/Jolt"
+IncludeDir["Steamworks"] = "%{wks.location}/Saturn/vendor/steamworks/Include"
 
 -- // -Dependencies-- 
 group "Dependencies"

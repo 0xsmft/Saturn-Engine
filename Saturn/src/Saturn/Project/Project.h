@@ -34,6 +34,8 @@
 #include "Saturn/GameFramework/ActionBinding.h"
 #include "Saturn/Audio/SoundGroup.h"
 
+#include "Saturn/Online/OnlineSystemAPIType.h"
+
 #include "Saturn/Core/UUID.h"
 
 #include <string>
@@ -58,7 +60,8 @@ namespace Saturn {
 	// Project
 	//  GameModule
 	//   Game DLL file
-	//    Game SObjects/SClass that get compiled into the ClassMetadataHandler
+	//    Game SObjects/SClass that get compiled "into" ClassMetadataHandler
+	//
 	// AssetManager relies on Project but is not owned or created by the project
 	//
 	// A Project MUST exist, if not, the editor will not startup
@@ -181,6 +184,11 @@ namespace Saturn {
 		inline void SetDeveloperVersion( const std::string& ver ) { m_DeveloperProjectVersion = ver; }
 #endif
 
+		//////////////////////////////////////////////////////////////////////////
+		// Online System API
+		OnlineSystemAPIType GetOnlineAPIType() const { return m_OnlineAPIType; }
+		void SetOnlineSystemAPI( OnlineSystemAPIType type ) { m_OnlineAPIType = type; }
+
 	public:
 		//////////////////////////////////////////////////////////////////////////
 		// Premake, Building & Preparation for Distribution (Used in Editor)
@@ -209,6 +217,8 @@ namespace Saturn {
 		UUID m_DefaultMaterialAsset = 0;
 		UUID m_DefaultPhysicsMaterialAsset = 0;
 		UUID m_DefaultFontAsset = 0;
+
+		OnlineSystemAPIType m_OnlineAPIType = OnlineSystemAPIType::Steam;
 		
 #if !defined(SAT_DIST)
 		// Time in seconds, converted to minutes or any suitable time to display in the Editor, when changing the time

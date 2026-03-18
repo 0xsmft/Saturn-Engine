@@ -32,19 +32,35 @@
 
 #include "SteamFriend.h"
 
+#include "Saturn/Vulkan/Texture.h"
+
 #include <vector>
 
 namespace Saturn {
 
-	class SteamUser
+	// 
+	// Represents the current steam user using the steamclient application.
+	// 
+	// It gives access to everything to do with the current user including, the users friends, 
+	// the stats in the current game and their stats in the game.
+	// 
+	// Steamworks:
+	//	SteamUser
+	//	SteamFriends
+	//  SteamUserStats
+	//
+	class SteamCurrentUser
 	{
 	public:
-		SteamUser() = default;
-		~SteamUser() = default;
+		SteamCurrentUser() = default;
+		~SteamCurrentUser() = default;
 
 		void Initialise();
 
 	public:
+		//////////////////////////////////////////////////////////////////////////
+		// USER GENERAL
+
 		[[nodiscard]] bool IsLoggedOn() const;
 
 		// Rebuilds the friends list.
@@ -66,6 +82,34 @@ namespace Saturn {
 		[[nodiscard]] bool IsTwoFactorEnabled() const;
 
 		[[nodiscard]] bool IsPhoneVerified() const;
+
+		//
+		// Gets the avatar of the current user.
+		// 
+		// NOTE: The avatar may not be loaded at the time of this function call
+		//		 it may be a white texture for a few frames while steam fetches the image.
+		//
+		Ref<Texture2D> GetAvatar() const;
+
+	public:
+		//////////////////////////////////////////////////////////////////////////
+		// FRIENDS
+
+		// This is the current user friends with another user...
+		[[nodiscard]] bool IsFriendsWith( CSteamID UserID );
+
+		// Gets the number of friends.
+		uint32_t GetFriendCount();
+
+		// Gets the blocked users.
+		uint32_t GetBlockedUsersCount();
+
+		//
+		// Mark a player as being recently in game with.
+		// 
+		// NOTE: You MUST use this on a player that has actually been in the game, or the association will fail.
+		//
+		void AddRecentlyPlayedWith( CSteamID UserID );
 
 	public:
 		//////////////////////////////////////////////////////////////////////////
@@ -163,12 +207,6 @@ namespace Saturn {
 		//
 		bool IsAchievementObtained( const std::string& rName ) const;
 
-		// Gets achievement percent
-		//
-		// @param rName -- name of the achievement in App Admin on the Steamworks website.
-		//
-		float GetAchievementPercent( const std::string& rName );
-
 		// Bring up steam popup to show the progress.
 		// See: https://partner.steamgames.com/doc/api/ISteamUserStats#IndicateAchievementProgress
 		// 
@@ -191,7 +229,7 @@ namespace Saturn {
 		std::vector<std::string> GetAllAchievementNames();
 
 	public:
-		Steam::CSteamID GetNativeID() const { return m_UserID; }
+		CSteamID GetNativeID() const { return m_UserID; }
 		OnlinePresence GetPresence() const { return m_UserPresence; }
 		std::wstring GetUserName() const { return m_UserName; }
 
@@ -199,7 +237,7 @@ namespace Saturn {
 		const std::vector<SteamFriend>& GetFriends() const { return m_Friends; }
 
 	private:
-		Steam::CSteamID m_UserID;
+		CSteamID m_UserID;
 		OnlinePresence m_UserPresence = OnlinePresence::Offline;
 		std::wstring m_UserName;
 		std::vector<SteamFriend> m_Friends;

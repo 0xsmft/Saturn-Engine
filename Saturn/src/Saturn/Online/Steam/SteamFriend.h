@@ -32,16 +32,15 @@
 
 #include "Saturn/Online/OnlinePresence.h"
 
-namespace Steam {
-	#include <steam/steam_api_common.h>
-}
+#include <steam/steam_api_common.h>
+
 #include <string>
 
 namespace Saturn {
 
 	struct SteamFriend
 	{
-		Steam::CSteamID UserID{};
+		CSteamID UserID{};
 		OnlinePresence Presence = OnlinePresence::Offline;
 		std::wstring Name;
 	};

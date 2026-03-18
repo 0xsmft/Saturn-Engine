@@ -28,25 +28,50 @@
 
 #pragma once
 
-#include "Saturn/Core/Base.h"
+#if defined(SAT_WITH_STEAM)
+
+#include "Saturn/Vulkan/Texture.h"
+
+#include <steam/steam_api_common.h>
+#include <steam/isteamfriends.h>
+
+#include <unordered_map>
 
 namespace Saturn {
 
-	class OnlineAPI : public RefTarget
+	class SteamAvatarCache
 	{
 	public:
-		OnlineAPI() = default;
-		virtual ~OnlineAPI() = default;
-		
-	public:
-		// Client API
-		virtual bool Initialise() = 0;
-		virtual void Tick() = 0;
-		virtual void Terminate() = 0;
+		SteamAvatarCache();
+		~SteamAvatarCache();
 
-	public:
-		// Static API
-		static Ref<OnlineAPI> CreateOnlineSystemAPI();
+		//
+		// Remove a texture from the cache.
+		//
+		// NOTE: The texture will be re-added if GetAvatarForUser() is called with the same ID
+		// 
+		// @param ID -- user ID to remove
+		//
+		void Invalidate( CSteamID ID );
+
+		//
+		// Get or differ an avatar.
+		// 
+		// If the avatar is loaded already (i.e. steam says it is), it will be created right now
+		//
+		// However, if it's not it will be differed until the steam callbacks are handled.
+		//
+		Ref<Texture2D> GetAvatarForUser( CSteamID ID );
+
+		// Force clear everything.
+		void ClearAll();
+
+	private:
+		STEAM_CALLBACK( SteamAvatarCache, OnAvatarImageLoaded, AvatarImageLoaded_t );
+
+	private:
+		std::unordered_map<uint64_t, Ref<Texture2D>> m_UserIDToAvatar;
 	};
-	
 }
+
+#endif

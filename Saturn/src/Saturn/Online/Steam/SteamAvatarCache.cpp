@@ -29,106 +29,100 @@
 #include "sppch.h"
 
 #if defined(SAT_WITH_STEAM)
+#include "SteamAvatarCache.h"
+
 #include "SteamOnlineSystemAPI.h"
 
-#include <steam/steam_api.h>
+#include "Saturn/Vulkan/Renderer.h"
 
-#include <filesystem>
+#include <steam/isteamutils.h>
 
 namespace Saturn {
-
-	SteamOnlineSystemAPI::SteamOnlineSystemAPI()
+	
+	SteamAvatarCache::SteamAvatarCache()
 	{
-		SingletonStorage::AddSingleton( this );
 	}
 
-	SteamOnlineSystemAPI::~SteamOnlineSystemAPI()
+	SteamAvatarCache::~SteamAvatarCache()
 	{
-		SingletonStorage::RemoveSingleton( this );
+		ClearAll();
 	}
 
-	static void CreateSteamAppIDFileIfNeeded() 
+	void SteamAvatarCache::Invalidate( CSteamID ID )
 	{
-		// NOTE: Relative to the Editor working dir
-		// OR
-		// The game working dir
-		if( !std::filesystem::exists( "steam_appid.txt" ) )
+		const auto itr = m_UserIDToAvatar.find( ID.ConvertToUint64() );
+		if( itr != m_UserIDToAvatar.end() )
 		{
-			std::ofstream fout( "steam_appid.txt", std::ios::trunc );
-			fout << "480" << std::endl;
-			fout.close();
+			m_UserIDToAvatar.erase( itr );
 		}
 	}
 
-	static void DeleteSteamAPIFileIfNeeded() 
+	void SteamAvatarCache::OnAvatarImageLoaded( AvatarImageLoaded_t* pData )
 	{
-		if( std::filesystem::exists( "steam_appid.txt" ) )
-			std::filesystem::remove( "steam_appid.txt" );
-	}
-
-	bool SteamOnlineSystemAPI::Initialise()
-	{
-		CreateSteamAppIDFileIfNeeded();
-
-		bool result = false;
-
-		SteamErrMsg errorMessage{0};
-		switch( SteamAPI_InitEx( &errorMessage ) )
+		const auto itr = m_UserIDToAvatar.find( pData->m_steamID.ConvertToUint64() );
+		if( itr != m_UserIDToAvatar.end() )
 		{
-			case k_ESteamAPIInitResult_OK: 
+			uint32_t imageWidth = 0, imageHeight = 0;
+			SteamUtils()->GetImageSize( pData->m_iImage, &imageWidth, &imageHeight );
+			if( imageWidth > 0 && imageHeight > 0 )
 			{
-				SAT_CORE_INFO( "[SteamOnlineSystemAPI]: Initialised SteamAPI" );
-				result = true;
+				Buffer TemporaryBuffer;
+				TemporaryBuffer.Allocate( static_cast< size_t >( imageWidth * imageHeight * 4 ) );
+				TemporaryBuffer.Zero_Memory();
 
-				m_CurrentUser.Initialise();
-			} break;
+				// Valve... why is the size of the texture a signed number??
+				SteamUtils()->GetImageRGBA( pData->m_iImage, TemporaryBuffer.Data, ( int ) TemporaryBuffer.Size );
 
-			case k_ESteamAPIInitResult_FailedGeneric: 
-			{
-				SAT_CORE_ERROR( "[SteamOnlineSystemAPI]: Failed to initialise! SteamAPI_InitEx retured 0x01 (FailedGeneric)!" );
-				SAT_CORE_ERROR( "[SteamOnlineSystemAPI]: Steam Error Message: {0}", errorMessage );
-			} break;
+				itr->second = Ref<Texture2D>::Create( ImageFormat::RGBA8, imageWidth, imageHeight, TemporaryBuffer.Data );
 
-			case k_ESteamAPIInitResult_NoSteamClient:
-			{
-				SAT_CORE_ERROR( "[SteamOnlineSystemAPI]: Failed to initialise! SteamAPI_InitEx retured 0x02, is steam running?" );
-				SAT_CORE_ERROR( "[SteamOnlineSystemAPI]: Steam Error Message: {0}", errorMessage );
-			} break;
-
-			case k_ESteamAPIInitResult_VersionMismatch: 
-			{
-				SAT_CORE_ERROR( "[SteamOnlineSystemAPI]: Failed to initialise! SteamAPI_InitEx retured 0x03, version mismatch." );
-				SAT_CORE_ERROR( "[SteamOnlineSystemAPI]: Steam Error Message: {0}", errorMessage );
-			} break;
-
-			default: break;
-		}
-
-		return result;
-	}
-
-	void SteamOnlineSystemAPI::Tick()
-	{
-		if( m_Initialised )
-		{
-			SteamAPI_RunCallbacks();
+				TemporaryBuffer.Free();
+			}
 		}
 	}
 
-	void SteamOnlineSystemAPI::Terminate()
+	Ref<Texture2D> SteamAvatarCache::GetAvatarForUser( CSteamID ID )
 	{
-		SteamAPI_Shutdown();
-		DeleteSteamAPIFileIfNeeded();
+		const auto IDull = ID.ConvertToUint64();
+		const auto Itr = m_UserIDToAvatar.find( IDull );
+		if( Itr == m_UserIDToAvatar.end() )
+		{
+			const auto index = SteamFriends()->GetMediumFriendAvatar( ID );
+
+			// -1 == has not been downloaded yet.
+			// Meaning that we have to wait until our call back does this...
+			if( index == -1 )
+			{
+				//... while we wait for that we can add it to our queue so the callback knows where to load the texture in
+				// and use the pink texture for a fallback image.
+				m_UserIDToAvatar.emplace( IDull, Renderer::Get()->GetPinkTexture() );
+			}
+			else
+			{
+				// Get the texture now.
+				uint32_t imageWidth = 0, imageHeight = 0;
+				SteamUtils()->GetImageSize( index, &imageWidth, &imageHeight );
+				if( imageWidth > 0 && imageHeight > 0 )
+				{
+					Buffer TemporaryBuffer;
+					TemporaryBuffer.Allocate( static_cast< size_t >( imageWidth * imageHeight * 4 ) );
+					TemporaryBuffer.Zero_Memory();
+
+					// Valve... why is the size of the texture a signed number??
+					SteamUtils()->GetImageRGBA( index, TemporaryBuffer.Data, ( int ) TemporaryBuffer.Size );
+
+					m_UserIDToAvatar[ IDull ] = Ref<Texture2D>::Create( ImageFormat::RGBA8, imageWidth, imageHeight, TemporaryBuffer.Data );
+
+					TemporaryBuffer.Free();
+				}
+			}
+		}
+
+		return m_UserIDToAvatar[ IDull ];
 	}
 
-	void SteamOnlineSystemAPI::SetOverlayLocation( ENotificationPosition position )
+	void SteamAvatarCache::ClearAll()
 	{
-		SteamUtils()->SetOverlayNotificationPosition( position );
-	}
-
-	uint32_t SteamOnlineSystemAPI::GetNumSecondsSinceAppActive()
-	{
-		return SteamUtils()->GetSecondsSinceAppActive();
+		m_UserIDToAvatar.clear();
 	}
 
 }

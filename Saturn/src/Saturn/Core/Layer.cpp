@@ -82,11 +82,11 @@ namespace Saturn {
 			rStyle.Colors[ ImGuiCol_WindowBg ].w = 1.0f;
 		}
 
-		rIO.Fonts->AddFontFromMemoryTTF( ( void* ) GNotoSansRegularEmbeded, sizeof( GNotoSansRegularEmbeded ), 18.0f );
+		rIO.Fonts->AddFontFromMemoryTTF( ( void* ) GNotoSansRegularEmbeded, sizeof( GNotoSansRegularEmbeded ), 18.0f, nullptr, rIO.Fonts->GetGlyphRangesCyrillic() );
 		rIO.FontDefault = rIO.Fonts->Fonts.back();
 		
-		rIO.Fonts->AddFontFromMemoryTTF( ( void* ) GNotoSansBoldEmbeded, sizeof( GNotoSansBoldEmbeded ), 18.0f );
-		rIO.Fonts->AddFontFromMemoryTTF( ( void* ) GNotoSansItalicEmbeded, sizeof( GNotoSansItalicEmbeded ), 18.0f );
+		rIO.Fonts->AddFontFromMemoryTTF( ( void* ) GNotoSansBoldEmbeded, sizeof( GNotoSansBoldEmbeded ), 18.0f, nullptr, rIO.Fonts->GetGlyphRangesCyrillic() );
+		rIO.Fonts->AddFontFromMemoryTTF( ( void* ) GNotoSansItalicEmbeded, sizeof( GNotoSansItalicEmbeded ), 18.0f, nullptr, rIO.Fonts->GetGlyphRangesCyrillic() );
 
 		Styles::Dark();
 
@@ -96,17 +96,17 @@ namespace Saturn {
 		{
 			std::vector< VkDescriptorPoolSize > PoolSizes;
 
-			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_SAMPLER, 1000u } );
+//			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_SAMPLER, 1000u } );
 			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000u } );
 			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000u } );
 			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000u } );
-			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000u } );
-			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000u } );
+//			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000u } );
+//			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000u } );
 			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000u } );
 			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000u } );
-			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000u } );
-			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000u } );
-			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000u } );
+//			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000u } );
+//			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000u } );
+//			PoolSizes.push_back( { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000u } );
 
 			VkDescriptorPoolCreateInfo PoolCreateInfo = { VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
 			PoolCreateInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;

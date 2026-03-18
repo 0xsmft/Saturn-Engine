@@ -46,6 +46,7 @@
 #include <Jolt/Physics/Collision/Shape/MeshShape.h>
 #include <Jolt/Physics/Collision/Shape/StaticCompoundShape.h>
 #include <Jolt/Physics/Collision/Shape/ScaledShape.h>
+#include <Jolt/Physics/Collision/Shape/ConvexHullShape.h>
 
 namespace Saturn {
 
@@ -115,6 +116,12 @@ namespace Saturn {
 		return Result;
 	}
 
+	template<typename T, typename U>
+	JPH::Ref<T> CastJoltRef( const JPH::Ref<U> ref )
+	{
+		return JPH::Ref<T>( static_cast< T* >( const_cast< U* >( ref.GetPtr() ) ) );
+	}
+
 	JPH::Ref<JPH::Shape> PhysicsCooking::CreateTriangleMesh( SharedPtr<Entity> entity, Ref<StaticMesh> mesh )
 	{
 		if( !mesh )
@@ -127,9 +134,13 @@ namespace Saturn {
 		if( !LoadColliderFile( cachePath ) )
 			return nullptr;
 		
-		JPH::StaticCompoundShapeSettings compoundShapeSettings;
-
 		TransformComponent worldTC = entity->GetScene()->GetWorldSpaceTransform( entity );
+
+		const auto& rVertices = mesh->Vertices();
+		const auto& rIndices = mesh->Indices();
+		const auto& rSubmeshes = mesh->Submeshes();
+
+		JPH::StaticCompoundShapeSettings compoundShapeSettings;
 
 		size_t index = 0llu;
 		for( const auto& rCookedData : m_SubmeshData )
@@ -166,12 +177,7 @@ namespace Saturn {
 			SAT_CORE_ERROR( "[JoltPhys]: Unable to create static compound shape! Index/{0}, Error: {1}", index, result.GetError() );
 		}
 
-		JPH::Ref<JPH::Shape> sh = result.Get();
-
-		JPH::Ref<JPH::StaticCompoundShape> scs( ( JPH::StaticCompoundShape* ) ( ( JPH::Shape* )sh.GetPtr() ) );
-		scs->GetMassProperties().mMass;
-
-		return sh;
+		return result.Get();
 	}
 
 	bool PhysicsCooking::TryCookTriangleMesh( const Ref<StaticMesh>& rMesh )
@@ -188,21 +194,21 @@ namespace Saturn {
 			JPH::VertexList vertList;
 			JPH::IndexedTriangleList triList;
 
-			for( uint32_t i = rSubmesh.BaseVertex; i < rSubmesh.BaseVertex + rSubmesh.VertexCount; i++ )
+			for( uint32_t i = rSubmesh.BaseVertex; i < rSubmesh.BaseVertex + rSubmesh.VertexCount; ++i )
 			{
 				const auto& rVertex = rVertices[ i ];
 				vertList.push_back( JPH::Float3( rVertex.Position.x, rVertex.Position.y, rVertex.Position.z ) );
 			}
 
-			for( uint32_t i = rSubmesh.BaseIndex / 3; i < ( rSubmesh.BaseIndex + rSubmesh.IndexCount ) / 3; i++ )
+			for( uint32_t i = rSubmesh.BaseIndex / 3; i < rSubmesh.BaseIndex / 3 + rSubmesh.IndexCount / 3; ++i )
 			{
 				const auto& rIndex = rIndices[ i ];
 				triList.push_back( JPH::IndexedTriangle( rIndex.V1, rIndex.V2, rIndex.V3, 0 ) );
 			}
 
 			JPH::RefConst<JPH::MeshShapeSettings> meshSettings = new JPH::MeshShapeSettings( vertList, triList );
-			auto res = meshSettings->Create();
 
+			const auto res = meshSettings->Create();
 			if( res.HasError() )
 			{
 				SAT_CORE_ERROR( "[JoltPhys]: Error: {0}", res.GetError() );
@@ -267,7 +273,6 @@ namespace Saturn {
 		}
 
 		stream.close();
-
 		return true;
 	}
 
@@ -288,16 +293,15 @@ namespace Saturn {
 
 		std::ofstream fout( cachePath, std::ios::binary | std::ios::trunc );
 
-		fout.write( reinterpret_cast< char* >( &hd ), sizeof( MeshCacheHeader ) );
+		RawSerialisation::WriteObject( hd, fout );
 
 		for( auto& rMeshData : m_SubmeshData )
 		{
-			fout.write( reinterpret_cast<char*>( &rMeshData.Index ), sizeof( uint32_t ) );
-
-			fout.write( reinterpret_cast< char* >( &rMeshData.Stream.Size ), sizeof( size_t ) );
-
-			fout.write( reinterpret_cast< char* >( rMeshData.Stream.Data ), rMeshData.Stream.Size );
+			RawSerialisation::WriteObject( rMeshData.Index, fout );
+			RawSerialisation::WriteSaturnBuffer( rMeshData.Stream, fout );
 		}
+
+		fout.close();
 	}
 
 	void PhysicsCooking::ClearCache()

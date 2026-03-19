@@ -24,7 +24,7 @@ jobs:
       run: scripts/WindowsGenProjects-CI.bat
 
     - name: Setup MSBuild
-      uses: microsoft/setup-msbuild@v2.0
+      uses: microsoft/setup-msbuild@v2
     
     - name: Build Solution
       run: msbuild -property:Configuration=Debug,MultiProcessorCompilation=true -maxCpuCount -verbosity:minimal -noLogo Saturn.sln

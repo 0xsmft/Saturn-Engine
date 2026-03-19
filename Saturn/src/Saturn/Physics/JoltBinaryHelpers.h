@@ -48,7 +48,7 @@ namespace Saturn {
 
 		virtual void ReadBytes( void* pOutData, size_t numBytes ) override
 		{
-			std::memcpy( pOutData, ( ( uint8_t* ) m_pBuffer ) + m_BytesRead, numBytes );
+			std::memcpy( pOutData, ( ( uint8_t* ) m_pBuffer->Data ) + m_BytesRead, numBytes );
 			m_BytesRead += numBytes;
 		}
 

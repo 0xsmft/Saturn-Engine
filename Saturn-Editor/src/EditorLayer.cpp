@@ -95,6 +95,11 @@
 
 #include <Saturn/Alura/AluraCanvas.h>
 
+#include <Saturn/Online/OnlineAPI.h>
+#if defined(SAT_WITH_STEAM)
+#include <Saturn/Online/Steam/SteamOnlineSystemAPI.h>
+#endif
+
 #include <ImGuizmo/ImGuizmo.h>
 
 #include <imspinner/imspinner.h>
@@ -103,8 +108,6 @@
 
 #include "Editor/TextEditors.h"
 
-#include "Saturn/Online/OnlineAPI.h"
-#include "Saturn/Online/Steam/SteamOnlineSystemAPI.h"
 namespace Saturn {
 
 	static constexpr inline bool operator==( const ImVec2& lhs, const ImVec2& rhs ) { return lhs.x == rhs.x && lhs.y == rhs.y; }
@@ -236,7 +239,8 @@ namespace Saturn {
 
 		// Create online API but not init it yet.
 		// Wait until runtime for that.
-		m_OnlineAPI = OnlineAPI::CreateOnlineSystemAPI();
+		m_OnlineAPI = OnlineAPI::CreateOnlineSystemAPI( Project::GetActiveProject()->GetOnlineAPIType() );
+
 		/*
 		if( !Project::GetActiveProject()->HasThumbnail() )
 		{
@@ -1774,7 +1778,7 @@ namespace Saturn {
 					// If we weren't selected before this, we need to re-create the system.
 					if( !selected )
 					{
-						m_OnlineAPI = OnlineAPI::CreateOnlineSystemAPI();
+						m_OnlineAPI = OnlineAPI::CreateOnlineSystemAPI( OnlineSystemAPIType::Null );
 						shouldSaveProject = true;
 					}
 				}
@@ -1788,7 +1792,7 @@ namespace Saturn {
 					// If we weren't selected before this, we need to re-create the system.
 					if( !selected )
 					{
-						m_OnlineAPI = OnlineAPI::CreateOnlineSystemAPI();
+						m_OnlineAPI = OnlineAPI::CreateOnlineSystemAPI( OnlineSystemAPIType::Steam );
 						shouldSaveProject = true;
 					}
 				}
@@ -1803,7 +1807,7 @@ namespace Saturn {
 					// If we weren't selected before this, we need to re-create the system.
 					if( !selected )
 					{
-						m_OnlineAPI = OnlineAPI::CreateOnlineSystemAPI();
+						m_OnlineAPI = OnlineAPI::CreateOnlineSystemAPI( OnlineSystemAPIType::Epic );
 						shouldSaveProject = true;
 					}
 				}
@@ -1825,18 +1829,30 @@ namespace Saturn {
 				{
 					ImGui::Text( "Steam Settings" );
 					ImGui::Separator();
+				
+					ImGui::BeginHorizontal( "##steamaihz" );
 
-					uint32_t id = SteamOnlineSystemAPI::Get()->GetAppID();
-					if( ImGui::InputScalarN( "Steam App ID", ImGuiDataType_U32, ( void* ) &id, 1 ) ) 
+					ImGui::Text( "Steam App ID" );
+
+					ImGui::Spring();
+
+					uint32_t id = ActiveProject->GetOnlineAppID();
+					if( ImGui::InputScalarN( "##SteamAppID", ImGuiDataType_U32, ( void* ) &id, 1 ) ) 
 					{
-						SteamOnlineSystemAPI::Get()->SetAppID( id );
+						ActiveProject->SetOnlineAppID( id );
+
+						shouldSaveProject = true;
 					}
 
-					ImGui::TextDisabled( "Note: If you don't have an application on Steamworks, you may use steam ID 480, which is Spacewar, a shared testing application for developers." );
-				
+					ImGui::EndHorizontal();
+
 					if( id == 480 )
 					{
-						ImGui::TextDisabled( "Note: Your application will NOT ship with an ID of 480. You must have your game approved by Valve before shipping." );
+						ImGui::TextDisabled( "Note: Your application will NOT ship with an ID of 480. You must have your game approved by Valve before shipping!" );
+					}
+					else
+					{
+						ImGui::TextDisabled( "Note: If you don't have an application on Steamworks, you may use steam ID 480, which is Spacewar, a shared testing application for developers." );
 					}
 
 					// I assume that the following text below is true?
@@ -3863,7 +3879,7 @@ namespace Saturn {
 		}
 
 #if defined(SAT_WITH_STEAM)
-		if( SteamOnlineSystemAPI::Get()->GetAppID() == 480 )
+		if( ActiveProject->GetOnlineAppID() == 480 )
 		{
 			MessageBoxInfo msgBox
 			{

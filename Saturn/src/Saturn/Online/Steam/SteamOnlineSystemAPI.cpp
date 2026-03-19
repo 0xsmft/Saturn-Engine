@@ -31,6 +31,8 @@
 #if defined(SAT_WITH_STEAM)
 #include "SteamOnlineSystemAPI.h"
 
+#include "Saturn/Project/Project.h"
+
 #include <steam/steam_api.h>
 
 #include <filesystem>
@@ -44,18 +46,18 @@ namespace Saturn {
 
 	SteamOnlineSystemAPI::~SteamOnlineSystemAPI()
 	{
+		SAT_CORE_VERIFY( !m_Initialised, "SteamOnlineSystemAPI::Terminate not called before this SteamOnlineSystemAPI destroys." )
+
 		SingletonStorage::RemoveSingleton( this );
 	}
 
 	static void CreateSteamAppIDFileIfNeeded() 
 	{
-		// NOTE: Relative to the Editor working dir
-		// OR
-		// The game working dir
+		// NOTE: Relative to the Editor/Game working dir
 		if( !std::filesystem::exists( "steam_appid.txt" ) )
 		{
 			std::ofstream fout( "steam_appid.txt", std::ios::trunc );
-			fout << "480" << std::endl;
+			fout << Project::GetActiveProject()->GetOnlineAppID() << std::endl;
 			fout.close();
 		}
 	}
@@ -119,6 +121,7 @@ namespace Saturn {
 	{
 		SteamAPI_Shutdown();
 		DeleteSteamAPIFileIfNeeded();
+		m_Initialised = false;
 	}
 
 	void SteamOnlineSystemAPI::SetOverlayLocation( ENotificationPosition position )

@@ -28,6 +28,8 @@
 
 #pragma once
 
+#include "OnlineSystemAPIType.h"
+
 #include "Saturn/Core/Base.h"
 
 namespace Saturn {
@@ -46,7 +48,7 @@ namespace Saturn {
 
 	public:
 		// Static API
-		static Ref<OnlineAPI> CreateOnlineSystemAPI();
+		static Ref<OnlineAPI> CreateOnlineSystemAPI( OnlineSystemAPIType type );
 	};
 	
 }

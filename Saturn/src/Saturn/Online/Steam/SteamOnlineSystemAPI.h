@@ -74,11 +74,7 @@ namespace Saturn {
 		SteamAvatarCache& GetAvatarCache() { return m_SteamAvatarCache; }
 		const SteamAvatarCache& GetAvatarCache() const { return m_SteamAvatarCache; }
 
-		uint32_t GetAppID() const { return m_AppID; }
-		void SetAppID( uint32_t appID ) { m_AppID = appID; }
-
 	private:
-		uint32_t m_AppID = 0u;
 		bool m_Initialised = false;
 		SteamCurrentUser m_CurrentUser;
 		SteamAvatarCache m_SteamAvatarCache;

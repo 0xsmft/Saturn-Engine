@@ -37,9 +37,9 @@
 
 namespace Saturn {
 
-	Ref<OnlineAPI> OnlineAPI::CreateOnlineSystemAPI()
+	Ref<OnlineAPI> OnlineAPI::CreateOnlineSystemAPI( OnlineSystemAPIType type )
 	{
-		switch( Project::GetActiveProject()->GetOnlineAPIType() )
+		switch( type )
 		{
 			case OnlineSystemAPIType::Null:
 				return nullptr;

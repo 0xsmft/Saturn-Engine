@@ -186,8 +186,12 @@ namespace Saturn {
 
 		//////////////////////////////////////////////////////////////////////////
 		// Online System API
+
 		OnlineSystemAPIType GetOnlineAPIType() const { return m_OnlineAPIType; }
 		void SetOnlineSystemAPI( OnlineSystemAPIType type ) { m_OnlineAPIType = type; }
+
+		void SetOnlineAppID( uint32_t id ) { m_OnlineAppID = id; }
+		uint32_t GetOnlineAppID() const { return m_OnlineAppID; }
 
 	public:
 		//////////////////////////////////////////////////////////////////////////
@@ -219,6 +223,10 @@ namespace Saturn {
 		UUID m_DefaultFontAsset = 0;
 
 		OnlineSystemAPIType m_OnlineAPIType = OnlineSystemAPIType::Steam;
+
+		// TODO: This makes sense to be in the project, however, should be suited to be in the OnlineSystem.
+		//		 Fine for now, or forever...
+		uint32_t m_OnlineAppID = 0u;
 		
 #if !defined(SAT_DIST)
 		// Time in seconds, converted to minutes or any suitable time to display in the Editor, when changing the time

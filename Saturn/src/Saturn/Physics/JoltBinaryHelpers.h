@@ -90,7 +90,7 @@ namespace Saturn {
 		}
 
 	private:
-		std::vector<uint8_t*> m_TemporaryBuffer;
+		std::vector<uint8_t> m_TemporaryBuffer;
 	};
 
 }

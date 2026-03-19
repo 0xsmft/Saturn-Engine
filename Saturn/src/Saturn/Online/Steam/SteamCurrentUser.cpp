@@ -254,12 +254,12 @@ namespace Saturn {
 
 	std::vector<std::string> SteamCurrentUser::GetAllAchievementNames()
 	{
-		const auto numAch = GetNumberOfAchievements();
+		const uint32_t numAch = GetNumberOfAchievements();
 
 		std::vector<std::string> names;
 		names.reserve( numAch );
 
-		for( auto i = 0; i < numAch; ++i )
+		for( uint32_t i = 0u; i < numAch; ++i )
 		{
 			names[ i ] = SteamUserStats()->GetAchievementName( i );
 		}

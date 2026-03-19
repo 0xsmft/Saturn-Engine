@@ -28,41 +28,49 @@
 
 #pragma once
 
-#include "Saturn/Audio/Sound.h"
-#include "Saturn/Audio/GraphSound.h"
+#include "Saturn/Online/OnlineAPI.h"
 
-#include "Saturn/Core/Ruby/RubyEventType.h"
+#if defined(SAT_WITH_STEAM)
+#include "Saturn/Online/Steam/SteamOnlineSystemAPI.h"
+#include "Saturn/Vulkan/Texture.h"
+#endif
 
 namespace Saturn {
 
 	/*
-	+----------+------------------+
-	| PREFIX   | MEANING          |
-	+----------+------------------+
-	| Ipt	   | Input            |
-	| As       | Audio Sys.       |
-	| Am       | Asset Mgr.       |
-	| Rc       | Runtime Ctrl.    |
-	| Os	   | Online System	  |
-	| Oss	   | Online Sys. Steam|
-	| Ose	   | Online Sys. EOS  |
-	+---------------+-------------+
+	+----------+-------------------+
+	| PREFIX   | MEANING           |
+	+----------+-------------------+
+	| Os	   | Online System	   |
+	| Oss	   | Online Sys. Steam |
+	| Ose	   | Online Sys. EOS   |
+	+---------------+--------------+
 	*/
-
-	[[nodiscard]] extern bool IptIsMouseLocked();
-	[[nodiscard]] extern bool IptIsMouseButtonPressed( RubyMouseButton btn );
-	[[nodiscard]] extern bool IptIsKeyPressed( RubyKey key );
-	[[nodiscard]] extern glm::vec2 IptGetMousePosition();
-
-	extern Ref<Sound> AsRequestSound2D( AssetID ID );
-	extern Ref<Sound> AsPlaySound2D( AssetID ID );
-	extern Ref<Sound> AsPlaySoundAtLocation( AssetID ID, const glm::vec3& rPosition, bool PlayNow = true );
-	extern Ref<GraphSound> AsPlayGraphSound( AssetID ID );
-
-	extern Ref<Asset> AmFindAsset( AssetID ID );
 	
-	template<typename Ty>
-	extern Ref<Ty> AmGetAsset( AssetID ID );
+	// Get system type.
+	extern OnlineSystemAPIType OsGetSystemType();
 
-	extern void RcCloseApplication();
+	// Get App ID.
+	extern uint32_t OsGetAppID();
+
+#if defined(SAT_WITH_STEAM)
+	//
+	// For documentation of this function view your subsystem API file
+	// For Steam: /Saturn/Online/Steam/SteamOnlineSystemAPI.h
+	//
+	extern SteamCurrentUser& OsGetCurrentUser();
+#endif
+
+	//
+	// For documentation of this function view your subsystem API file
+	// Steam: /Saturn/Online/Steam/SteamCurrentUser.h
+	//
+	extern uint64_t OsGetCurrentUserID();
+
+	//
+	// For documentation of this function view your subsystem API file
+	// Steam: /Saturn/Online/Steam/SteamAvatarCache.h
+	//
+	extern Ref<Texture2D> OsGetAvatarFromUser( uint64_t ID );
+
 }

@@ -753,6 +753,24 @@ namespace Saturn {
 		}
 	}
 
+	void EditorLayer::NewFile()
+	{
+		Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
+
+		Ref<Scene> newScene = Ref<Scene>::Create();
+		g_ActiveScene = newScene.Get();
+
+		m_SelectionManager->ClearSelection( newScene.Get(), true );
+		hierarchyPanel->SetContext( newScene );
+
+		// Clear old notifications from the old scene.
+		m_Notifications.clear();
+
+		m_SceneRenderer->SetCurrentScene( newScene.Get() );
+
+		m_EditorScene = g_ActiveScene;
+	}
+
 	void EditorLayer::SaveProject()
 	{
 		ProjectSerialiser ps( Project::GetActiveProject() );
@@ -2069,7 +2087,8 @@ namespace Saturn {
 		if( ImGui::BeginMenu( "File" ) )
 		{
 			Auxiliary::DisabledFlag disabledIfRuntime( m_RequestRuntime );
-				
+			
+			if( ImGui::MenuItem( "New Scene" ) )					 NewFile();
 			if( ImGui::MenuItem( "Save Scene", "Ctrl+S" ) )          SaveFile();
 			if( ImGui::MenuItem( "Save Scene As", "Ctrl+Shift+S" ) ) SaveFileAs();
 

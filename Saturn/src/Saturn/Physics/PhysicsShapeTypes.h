@@ -46,8 +46,8 @@ namespace Saturn {
 	{
 		Force,
 		Impulse,
-		VelocityChange,
-		Acceleration
+		ForceAndTorque,
+		Torque
 	};
 
 	enum RigidbodyLockFlags : uint32_t

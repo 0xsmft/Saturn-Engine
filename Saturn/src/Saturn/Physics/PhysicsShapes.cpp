@@ -48,18 +48,6 @@
 namespace Saturn {
 
 	//////////////////////////////////////////////////////////////////////////
-	
-	void PhysicsShape::SetFilterData()
-	{
-	}
-
-	void PhysicsShape::SetUserData( void* pData )
-	{
-	}
-
-	void PhysicsShape::SetTrigger( bool isTrigger )
-	{
-	}
 
 	Ref<PhysicsMaterialAsset> PhysicsShape::GetMaterial( Ref<StaticMesh> mesh, UUID physMaterialAssetID )
 	{
@@ -124,11 +112,15 @@ namespace Saturn {
 	{
 	}
 
-	void BoxShape::Create()
+	void BoxShape::Create( float mass )
 	{
 		BoxColliderComponent& bcc = m_Entity->GetComponent<BoxColliderComponent>();
 		TransformComponent& transform = m_Entity->GetComponent<TransformComponent>();
-		auto& rPhysMaterialAssetID = m_Entity->GetComponent<RigidbodyComponent>().MaterialAssetID;
+		
+		// Check for rigid body
+		UUID rigidBodyMaterialID = 0;
+		if( m_Entity->HasComponent<RigidbodyComponent>() )
+			rigidBodyMaterialID = m_Entity->GetComponent<RigidbodyComponent>().MaterialAssetID;
 
 		Ref<StaticMesh> mesh = nullptr;
 		if( auto* pSM = m_Entity->TryGetComponent<StaticMeshComponent>(); pSM )
@@ -144,9 +136,17 @@ namespace Saturn {
 #endif
 			halfSize = transform.Scale * 0.5f;
 
-		Ref<PhysicsMaterialAsset> materialAsset = GetMaterial( mesh, rPhysMaterialAssetID );
+		Ref<PhysicsMaterialAsset> materialAsset = GetMaterial( mesh, rigidBodyMaterialID );
 
-		JPH::BoxShapeSettings shapeSettings( Auxiliary::GLMToJolt( bcc.HalfExtents ) );
+		const glm::vec3 halfColliderSize = glm::abs( transform.Scale * halfSize );
+	
+		// v = lbh
+		const float volume = halfColliderSize.x * 2.0f * halfColliderSize.y * 2.0f * halfColliderSize.z * 2.0f;
+
+		JPH::BoxShapeSettings shapeSettings( Auxiliary::GLMToJolt( halfColliderSize ) );
+		// d = m/v
+		shapeSettings.mDensity = mass / volume;
+
 		m_Shape = shapeSettings.Create().Get();
 	}
 
@@ -200,8 +200,12 @@ namespace Saturn {
 
 	void BoxShape::SetTrigger( bool isTrigger )
 	{
-		PhysicsShape::SetTrigger( isTrigger );
 		m_Entity->GetComponent<BoxColliderComponent>().IsTrigger = isTrigger;
+	}
+
+	bool BoxShape::IsTrigger()
+	{
+		return m_Entity->GetComponent<BoxColliderComponent>().IsTrigger;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -217,11 +221,15 @@ namespace Saturn {
 	{
 	}
 
-	void SphereShape::Create()
+	void SphereShape::Create( float mass )
 	{
 		SphereColliderComponent& scc = m_Entity->GetComponent<SphereColliderComponent>();
 		TransformComponent& transform = m_Entity->GetComponent<TransformComponent>();
-		auto& rPhysMaterialAssetID = m_Entity->GetComponent<RigidbodyComponent>().MaterialAssetID;
+
+		// Check for rigid body
+		UUID rigidBodyMaterialID = 0;
+		if( m_Entity->HasComponent<RigidbodyComponent>() )
+			rigidBodyMaterialID = m_Entity->GetComponent<RigidbodyComponent>().MaterialAssetID;
 
 		Ref<StaticMesh> mesh = nullptr;
 		if( auto* pSM = m_Entity->TryGetComponent<StaticMeshComponent>(); pSM )
@@ -233,9 +241,15 @@ namespace Saturn {
 		if( scale.x != 0.0f )
 			radius *= scale.x;
 
-		Ref<PhysicsMaterialAsset> materialAsset = GetMaterial( mesh, rPhysMaterialAssetID );
+		Ref<PhysicsMaterialAsset> materialAsset = GetMaterial( mesh, rigidBodyMaterialID );
 		
+		const float largestComponent = glm::abs( glm::max( transform.Scale.x, glm::max( transform.Scale.y, transform.Scale.z ) ) );
+		const float scaledRadius = largestComponent * radius;
+		const float volume = ( 4.0f / 3.0f ) * glm::pi<float>() * glm::pow( scaledRadius, 3 );
+
 		JPH::SphereShapeSettings sphereSetting( radius, nullptr );
+		sphereSetting.mDensity = mass / volume;
+
 		m_Shape = sphereSetting.Create().Get();
 	}
 
@@ -403,8 +417,12 @@ namespace Saturn {
 
 	void SphereShape::SetTrigger( bool isTrigger )
 	{
-		PhysicsShape::SetTrigger( isTrigger );
 		m_Entity->GetComponent<SphereColliderComponent>().IsTrigger = isTrigger;
+	}
+
+	bool SphereShape::IsTrigger()
+	{
+		return m_Entity->GetComponent<SphereColliderComponent>().IsTrigger;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -420,12 +438,17 @@ namespace Saturn {
 	{
 	}
 
-	void CapsuleShape::Create()
+	void CapsuleShape::Create( float mass )
 	{
 		CapsuleColliderComponent& cap = m_Entity->GetComponent<CapsuleColliderComponent>();
 		TransformComponent& transform = m_Entity->GetComponent<TransformComponent>();
-		auto& rPhysMaterialAssetID = m_Entity->GetComponent<RigidbodyComponent>().MaterialAssetID;
 
+		// Check for rigid body
+		UUID rigidBodyMaterialID = 0;
+		if( m_Entity->HasComponent<RigidbodyComponent>() )
+			rigidBodyMaterialID = m_Entity->GetComponent<RigidbodyComponent>().MaterialAssetID;
+
+		// Check for static mesh
 		Ref<StaticMesh> mesh = nullptr;
 		if( auto* pSM = m_Entity->TryGetComponent<StaticMeshComponent>(); pSM )
 			mesh = pSM->Mesh;
@@ -441,9 +464,11 @@ namespace Saturn {
 		if( scale.y != 0.0f && height == 0.0f )
 			height *= scale.y;
 
-		Ref<PhysicsMaterialAsset> materialAsset = GetMaterial( mesh, rPhysMaterialAssetID );
+		Ref<PhysicsMaterialAsset> materialAsset = GetMaterial( mesh, rigidBodyMaterialID );
 		
 		JPH::CapsuleShapeSettings capsuleSetting( height, radius, nullptr );
+		capsuleSetting.mDensity = 10.0f;
+
 		m_Shape = capsuleSetting.Create().Get();
 	}
 
@@ -549,10 +574,13 @@ namespace Saturn {
 
 	void CapsuleShape::SetTrigger( bool isTrigger )
 	{
-		PhysicsShape::SetTrigger( isTrigger );
 		m_Entity->GetComponent<CapsuleColliderComponent>().IsTrigger = isTrigger;
 	}
 
+	bool CapsuleShape::IsTrigger()
+	{
+		return m_Entity->GetComponent<CapsuleColliderComponent>().IsTrigger;
+	}
 
 	//////////////////////////////////////////////////////////////////////////
 	// Triangle
@@ -571,7 +599,7 @@ namespace Saturn {
 	{
 	}
 
-	void TriangleMeshShape::Create()
+	void TriangleMeshShape::Create( float mass )
 	{
 		TransformComponent& transform = m_Entity->GetComponent<TransformComponent>();
 		Ref<StaticMesh> staticMesh = m_Entity->GetComponent<StaticMeshComponent>().Mesh;
@@ -579,15 +607,13 @@ namespace Saturn {
 		m_Shape = PhysicsFoundation::Get()->GetCooking().CreateTriangleMesh( m_Entity, staticMesh );
 	}
 
-#if SAT_WITH_PHYSX
-	void TriangleMeshShape::Detach( physx::PxRigidActor& rActor )
+	bool TriangleMeshShape::IsTrigger()
 	{
-		for( physx::PxShape* rShape : m_Shapes )
-		{
-			rActor.detachShape( *rShape );
-		}
+		// TODO: Mesh colliders as triggers
+		return false;
 	}
 
+#if SAT_WITH_PHYSX
 	void TriangleMeshShape::ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds )
 	{
 		physx::PxTransform actorTransform = rActor.getGlobalPose();
@@ -688,6 +714,7 @@ namespace Saturn {
 			}
 		}
 	}
+#endif
 
 	//////////////////////////////////////////////////////////////////////////
 	// Convex
@@ -706,32 +733,21 @@ namespace Saturn {
 	{
 	}
 
-	void ConvexMeshShape::Create( physx::PxRigidActor& rActor )
+	void ConvexMeshShape::Create( float mass )
 	{
 		TransformComponent& transform = m_Entity->GetComponent<TransformComponent>();
-		physx::PxTransform PxTrans = Auxiliary::GLMTransformToPx( transform.GetTransform() );
+		Ref<StaticMesh> staticMesh = m_Entity->GetComponent<StaticMeshComponent>().Mesh;
 
-		const std::vector<physx::PxShape*>& rShapes = PhysicsFoundation::Get()->GetCookingContext().CreateConvexMesh( m_Mesh, rActor, transform.Scale );
-
-		if( rShapes.size() )
-		{
-			m_Shapes = rShapes;
-			m_Shape = rShapes.front();
-		}
-		else
-		{
-			SAT_CORE_WARN( "No shapes were created from 'CreateConvexMesh' this could mean the path does not exist or file header is not valid." );
-		}
+		m_Shape = PhysicsFoundation::Get()->GetCooking().CreateConvexMesh( m_Entity, staticMesh );
 	}
 
-	void ConvexMeshShape::Detach( physx::PxRigidActor& rActor )
+	bool ConvexMeshShape::IsTrigger()
 	{
-		for( physx::PxShape* rShape : m_Shapes )
-		{
-			rActor.detachShape( *rShape );
-		}
+		// TODO: Mesh colliders as triggers
+		return false;
 	}
 
+#if SAT_WITH_PHYSX
 	void ConvexMeshShape::ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds )
 	{
 		glm::mat4 actorTransform = m_Entity->Transform();

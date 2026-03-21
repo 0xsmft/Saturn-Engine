@@ -38,7 +38,7 @@
 
 #include "PhysicsFoundation.h"
 #include "PhysicsRigidBody.h"
-#include "PhysicsCharacterMovement.h"
+#include "PhysicsCharacterController.h"
 #include "PhysicsAuxiliary.h"
 
 namespace Saturn {
@@ -68,20 +68,20 @@ namespace Saturn {
 	}
 
 	void PhysicsScene::CreateScene()
-	{
-		// Add controllers.
-		auto controllerView = m_Scene->GetAllEntitiesWith<CharacterMovementComponent>();
-		for( auto& rEntity : controllerView )
-		{
-			AddNewController( rEntity );
-		}
-	
+	{	
 		// Add all current bodies to the scene.
 		auto rigidbodyView = m_Scene->GetAllEntitiesWith<RigidbodyComponent>();
 		for( auto& rEntity : rigidbodyView )
 		{
 			auto& rb = rEntity->GetComponent<RigidbodyComponent>();
 			InitialiseNewBody( rEntity, rb );
+		}
+
+		// Add controllers.
+		auto controllerView = m_Scene->GetAllEntitiesWith<CharacterMovementComponent>();
+		for( auto& rEntity : controllerView )
+		{
+			AddNewController( rEntity );
 		}
 
 #if !defined(SAT_DIST)
@@ -92,6 +92,13 @@ namespace Saturn {
 	void PhysicsScene::Simulate( Timestep ts )
 	{
 		SAT_PF_EVENT();
+
+		auto controllerView = m_Scene->GetAllEntitiesWith<CharacterMovementComponent>();
+		for( auto& rEntity : controllerView )
+		{
+			rEntity->GetComponent<CharacterMovementComponent>().CharacterMovement->PreUpdate( 1.0f / 60.0f );
+			rEntity->GetComponent<CharacterMovementComponent>().CharacterMovement->OnUpdate( 1.0f / 60.0f );
+		}
 
 		PhysicsFoundation::Get()->GetPhysicsSystem()->Update( 1.0f / 60.0f, 1u, PhysicsFoundation::Get()->GetTempAllocator(), PhysicsFoundation::Get()->GetJobSystem() );
 
@@ -125,33 +132,23 @@ namespace Saturn {
 		}
 
 		rRigidbodyComponent.Rigidbody = new PhysicsRigidBody( rEntity );
-		
-		if( rEntity->HasComponent<CharacterMovementComponent>() )
-		{
-			auto& pController = rEntity->GetComponent<CharacterMovementComponent>().CharacterMovement;
-			if( pController == nullptr )
-			{
-				AddNewController( rEntity );
-			}
-		}
-
 		rRigidbodyComponent.Rigidbody->CreateShape();
 	}
 
 	void PhysicsScene::AddNewController( SharedPtr<Entity>& rEntity )
 	{
 		auto& rb = rEntity->GetComponent<RigidbodyComponent>();
-		auto& movementComp = rEntity->GetComponent<CharacterMovementComponent>();
+		auto& rMovementComp = rEntity->GetComponent<CharacterMovementComponent>();
 
 		// Bad, this shouldn't be true and should be an assert.
-		if( movementComp.CharacterMovement )
+		if( rMovementComp.CharacterMovement )
 		{
-			delete movementComp.CharacterMovement;
+			delete rMovementComp.CharacterMovement;
 			SAT_CORE_WARN( "A movement controller already exists in this component! Removing and creating a new one." );
 		}
 
-		movementComp.CharacterMovement = new PhysicsCharacterMovement( rb.MaterialAssetID, movementComp.Height, movementComp.Radius );
-		movementComp.CharacterMovement->CreateController( this, rEntity, rEntity->GetLocalPosition() );
+		rMovementComp.CharacterMovement = new PhysicsCharacterController( rb.MaterialAssetID, !rMovementComp.NoGravity, rMovementComp.ControlMovementInAir, rMovementComp.ControlRotationInAir );
+		rMovementComp.CharacterMovement->CreateController( this, rEntity, rEntity->GetLocalPosition() );
 	}
 
 }

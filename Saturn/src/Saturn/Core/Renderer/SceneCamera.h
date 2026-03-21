@@ -54,6 +54,7 @@ namespace Saturn {
 		}
 
 		void SetPosition( const glm::vec3& pos ) { m_Position = pos; }
+		void SetRotation( const glm::vec3& rot ) { m_Rotation = rot; }
 
 		const glm::mat4& ViewMatrix() const { return m_ViewMatrix; }
 		glm::mat4 ViewProjection() const { return m_Projection * m_ViewMatrix; }

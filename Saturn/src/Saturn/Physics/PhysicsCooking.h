@@ -42,15 +42,23 @@ namespace Saturn {
 		// .SMC / SMCS
 		const unsigned char Magic[ 4 ] = { 0x53, 0x4D, 0x43, 0x00 };
 		PhysicsShapeType Type;
-		uint64_t ID = 0;
-		size_t Submeshes = 0;
+		uint64_t ID = 0ull;
+		size_t Submeshes = 0ull;
 	};
 
 	// Data for each submesh
 	struct SubmeshColliderData
 	{
+		// Submesh Index in it's mesh
 		uint32_t Index = UINT32_MAX;
 		Buffer Stream;
+	};
+
+	enum class PhysicsCookingResult 
+	{
+		Success,
+		InvalidTypeForCooking,
+		Failure
 	};
 
 	class PhysicsCooking
@@ -63,21 +71,25 @@ namespace Saturn {
 		void Terminate();
 
 	public:
-		// Cook mesh collider to a triangle mesh, if the collider cache does not exist we will create it if it does exist we will not override it and we will not cook the mesh.
-		// For Static meshes only!
-		bool CookMeshCollider( const Ref<StaticMesh>& rMesh, PhysicsShapeType Type );
+		//
+		// Cook the collider type, into a binary file. Overriding any existing cache file.
+		//
+		PhysicsCookingResult CookMeshCollider( const Ref<StaticMesh> mesh, PhysicsShapeType Type );
 
 		JPH::Ref<JPH::Shape> CreateTriangleMesh( SharedPtr<Entity> entity, Ref<StaticMesh> mesh );
+		JPH::Ref<JPH::Shape> CreateConvexMesh( SharedPtr<Entity> entity, Ref<StaticMesh> mesh );
 
 	private:
 		void ClearCache();
-		void WriteCache( const Ref<StaticMesh>& rMesh, PhysicsShapeType Type );
+		void WriteCache( const Ref<StaticMesh> mesh, PhysicsShapeType Type );
 		bool LoadColliderFile( const std::filesystem::path& rPath );
+		bool MeshColliderAlreadyLoaded( const Ref<StaticMesh> mesh );
 
-		bool TryCookTriangleMesh( const Ref<StaticMesh>& rMesh );
-		bool TryCookConvexMesh( const Ref<StaticMesh>& rMesh );
+		PhysicsCookingResult TryCookTriangleMesh( const Ref<StaticMesh> mesh );
+		PhysicsCookingResult TryCookConvexMesh( const Ref<StaticMesh> mesh );
 
 	private:
-		std::vector<SubmeshColliderData> m_SubmeshData;
+		//					MESH ID -> PER SUBMESH DATA
+		std::unordered_map<UUID, std::vector<SubmeshColliderData>> m_NewSubmeshData;
 	};
 }

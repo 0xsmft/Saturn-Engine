@@ -124,14 +124,6 @@ namespace Saturn {
 			{
 				selections[ 0 ]->AddComponent<Ty>();
 
-				if constexpr( std::is_same<Ty, CharacterMovementComponent>() )
-				{
-					if( selections[ 0 ]->HasComponent<RigidbodyComponent>() )
-					{
-						selections[ 0 ]->GetComponent< RigidbodyComponent >().IsKinematic = true;
-					}
-				}
-
 				Ref<UndoRedoActionAddComponent<Ty>> action = Ref<UndoRedoActionAddComponent<Ty>>::Create( entity );
 				GlobalUndoRedoGroup::Get()->AddAction( action, ( uint64_t ) entity->GetHandle() );
 
@@ -1101,21 +1093,10 @@ namespace Saturn {
 		DrawComponent<RigidbodyComponent>( "Rigidbody", entity, [&]( auto& rb )
 		{
 			bool modified = false;
-			const bool hasMovementComponent = entity->HasComponent<CharacterMovementComponent>();
 
 			if( !m_Context->IsRuntimeRunning() )
 			{
-				{
-					Auxiliary::ScopedDisabledFlag disabled( hasMovementComponent );
-
-					modified = Auxiliary::DrawBoolControl( "Kinematic Body", rb.IsKinematic );
-				
-					if( hasMovementComponent && ImGui::BeginItemTooltip() )
-					{
-						ImGui::Text( "This Rigidbody has to be kinematic due to the entity having a Character Movement Controller." );
-						ImGui::EndTooltip();
-					}
-				}
+				modified = Auxiliary::DrawBoolControl( "Kinematic Body", rb.IsKinematic );
 
 				modified |= Auxiliary::DrawBoolControl( "Use CCD", rb.UseCCD );
 
@@ -1152,11 +1133,6 @@ namespace Saturn {
 					ImGui::Text( "This will override the meshes physics material to an asset of your choice." );
 					ImGui::Text( "If there is no mesh then the engine will automatically use the project default physics material. If there is no project default then it will create a internal material for it." );
 					ImGui::Text( "You do not need to change this if you wish to keep using the meshes physics material." );
-
-					if( hasMovementComponent )
-					{
-						ImGui::Text( "Due to this entity having a Character Movement Component change this material will also change the material in the Controller as well." );
-					}
 
 					ImGui::EndTooltip();
 				}
@@ -1352,12 +1328,13 @@ namespace Saturn {
 			if( modified ) m_Context->MarkDirty();
 		} );
 
-		DrawComponent<CharacterMovementComponent>( "Character Movement", entity, [ & ]( auto& cm )
+		DrawComponent<CharacterMovementComponent>( "Character Movement", entity, [ & ]( CharacterMovementComponent& cm )
 		{
 			bool modified = false;
 			modified =  Auxiliary::DrawFloatControl( "Step Offset", cm.StepOffset );
-			modified |= Auxiliary::DrawFloatControl( "Radius", cm.Radius );
-			modified |= Auxiliary::DrawFloatControl( "Half Height", cm.Height );
+			modified |= Auxiliary::DrawBoolControl( "No Gravity", cm.NoGravity );
+			modified |= Auxiliary::DrawBoolControl( "Control Movement In Air", cm.ControlMovementInAir );
+			modified |= Auxiliary::DrawBoolControl( "Control Rotation In Air ", cm.ControlRotationInAir );
 
 			if( modified ) m_Context->MarkDirty();
 		} );

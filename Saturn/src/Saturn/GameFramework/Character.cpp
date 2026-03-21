@@ -30,7 +30,7 @@
 #include "Character.h"
 
 #include "Saturn/Physics/PhysicsRigidBody.h"
-#include "Saturn/Physics/PhysicsCharacterMovement.h"
+#include "Saturn/Physics/PhysicsCharacterController.h"
 
 #include "Core/ClassMetadataHandler.h"
 

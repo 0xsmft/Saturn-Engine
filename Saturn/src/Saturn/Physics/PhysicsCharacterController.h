@@ -26,79 +26,65 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "PhysicsCharacterMovement.h"
+#pragma once
 
-#include "PhysicsMaterialAsset.h"
-#include "PhysicsFoundation.h"
-#include "PhysicsScene.h"
-#include "PhysicsAuxiliary.h"
+#include "Saturn/Asset/Asset.h"
 
-#include "Saturn/Scene/Entity.h"
-
-#include "Saturn/Project/Project.h"
-
-#include "Saturn/Asset/AssetManager.h"
+#include <Jolt/Jolt.h>
+#include <Jolt/Physics/Character/CharacterVirtual.h>
 
 namespace Saturn {
 
-	PhysicsCharacterMovement::PhysicsCharacterMovement( AssetID materialAsset, float height, float radius )
-		: m_MaterialID( materialAsset ), m_Height( height ), m_Radius( radius )
+	class PhysicsShape;
+	class PhysicsScene;
+	class Entity;
+
+	enum PhysicsControllerCollisionFlag
 	{
-		m_Gravity = glm::length( glm::vec3{ 0.0f, -9.81f, 0.0f } );
-	}
-
-	PhysicsCharacterMovement::~PhysicsCharacterMovement()
+		PhysControllerCollision_None  = 0,
+		PhysControllerCollision_Sides = BIT( 0 ),
+		PhysControllerCollision_Up    = BIT( 1 ),
+		PhysControllerCollision_Down  = BIT( 2 )
+	};
+	
+	class PhysicsCharacterController
 	{
-	}
+	public:
+		PhysicsCharacterController( AssetID materialAsset, bool hasGravity, bool crtlMovementInAir, bool crtlRotationInAir );
+		~PhysicsCharacterController();
 
-	void PhysicsCharacterMovement::OnUpdate( Timestep ts )
-	{
-	}
+		void CreateController( PhysicsScene* pScene, SharedPtr<Entity> entity, const glm::vec3& rOriginPosition );
 
-	static Ref<PhysicsMaterialAsset> GetMaterial( AssetID materialID )
-	{
-		Ref<PhysicsMaterialAsset> materialAsset;
+		void PreUpdate( Timestep ts );
+		void OnUpdate( Timestep ts );
 
-		Ref<Project> activeProject = Project::GetActiveProject();
-		if( materialID == 0 || materialID == activeProject->GetDefaultPhysicsMaterialAsset() )
-		{
-			materialAsset = AssetManager::Get()->GetAssetAs<PhysicsMaterialAsset>( activeProject->GetDefaultPhysicsMaterialAsset() );
-		}
-		else
-		{
-			materialAsset = AssetManager::Get()->GetAssetAs<PhysicsMaterialAsset>( materialID );
-		}
+	public:
+		void Teleport( const glm::vec3& rPosition );
+		void Move( const glm::vec3& rDisplacement );
+		void Rotate( const glm::quat& rRotation );
+		void Jump( float pwr );
 
-		return materialAsset;
-	}
+	public:
+		PhysicsControllerCollisionFlag GetFlags() const { return m_CollisionFlags; }
 
-	void PhysicsCharacterMovement::CreateController( PhysicsScene* pScene, SharedPtr<Entity> entity, const glm::vec3& rOriginPosition )
-	{
-	}
+		[[nodiscard]] bool IsGrounded() const;
 
-	void PhysicsCharacterMovement::Move( const glm::vec3& rDisplacement )
-	{
-		m_Displacement += rDisplacement;
-	}
+		glm::vec3 GetPosition() const;
 
-	void PhysicsCharacterMovement::Jump( float pwr )
-	{
-		m_DownSpeed = -1.0f * pwr;
-	}
+	private:
+		Ref<PhysicsShape> m_Shape;
+		JPH::Ref<JPH::CharacterVirtual> m_Controller;
 
-	void PhysicsCharacterMovement::Teleport( const glm::vec3& rPosition )
-	{
-	}
+		AssetID m_MaterialID = 0;
 
-	bool PhysicsCharacterMovement::IsGrounded() const
-	{
-		return m_CollisionFlags & PhysControllerCollision_Down;
-	}
+		JPH::Vec3 m_Displacement{};
+		JPH::Vec3 m_Velocity{};
 
-	glm::vec3 PhysicsCharacterMovement::GetPosition() const
-	{
-		return glm::vec3();
-	}
+		bool m_HasGravity = true, m_ControlMovementInAir = false, m_ControlRotationInAir = false;
+		PhysicsControllerCollisionFlag m_CollisionFlags = PhysControllerCollision_None;
+
+		float m_JumpPower = 0.0f;
+		float m_Gravity = 0.0f;
+	};
 
 }

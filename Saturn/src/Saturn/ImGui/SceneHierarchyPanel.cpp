@@ -831,6 +831,41 @@ namespace Saturn {
 
 					Auxiliary::EndTreeNode();
 				}
+
+#if SAT_FEATURE_BONE_ATTACHMENT
+				if( Auxiliary::TreeNode( "Attachment", false ) )
+				{
+					ImGui::Text( "Parent Bone Joint (AttachmentPoint)" );
+					if( ImGui::BeginCombo( "##boneAttch", "No Joint Selected" ) )
+					{
+						if( entity->HasParent() )
+						{
+							if( auto* pComp = m_Context->FindEntityByID( entity->GetParent() )->TryGetComponent<SkeletalMeshComponent>() )
+							{
+								if( pComp->Mesh )
+								{
+									for( auto& rJoint : pComp->Mesh->GetSkeletonAsset()->GetBoneJoints() )
+									{
+										if( ImGui::Selectable( rJoint.GetName().c_str(), false ) )
+										{
+											auto& apc = entity->AddComponent<AttachmentPointComponent>();
+											apc.pBoneJoint = &rJoint;
+										}
+									}
+								}
+							}
+						}
+						else
+						{
+							ImGui::Text( "No parent found or the parent does not have a SkeletalMeshComponent." );
+						}
+
+						ImGui::EndCombo();
+					}
+
+					Auxiliary::EndTreeNode();
+				}
+#endif
 			}
 
 			if( Auxiliary::DrawAssetFinder( m_CurrentFinderType, &open, m_CurrentAssetID ) )
@@ -970,6 +1005,36 @@ namespace Saturn {
 
 					ImGui::EndHorizontal();
 
+#if SAT_FEATURE_BONE_ATTACHMENT
+					ImGui::Text( "Parent Bone Joint (AttachmentPoint)" );
+					if( ImGui::BeginCombo( "##boneAttch", "No Joint Selected" ) )
+					{
+						if( entity->HasParent() )
+						{
+							if( auto* pComp = m_Context->FindEntityByID( entity->GetParent() )->TryGetComponent<SkeletalMeshComponent>() ) 
+							{
+								if( pComp->Mesh )
+								{
+									for( auto& rJoint : pComp->Mesh->GetSkeletonAsset()->GetBoneJoints() )
+									{
+										if( ImGui::Selectable( rJoint.GetName().c_str(), false ) )
+										{
+											auto& apc = entity->AddComponent<AttachmentPointComponent>();
+											apc.pBoneJoint = &rJoint;
+										}
+									}
+								}
+							}
+						}
+						else
+						{
+							ImGui::Text( "No parent found or the parent does not have a SkeletalMeshComponent." );
+						}
+
+						ImGui::EndCombo();
+					}
+
+#endif
 					Auxiliary::EndTreeNode();
 				}
 			}

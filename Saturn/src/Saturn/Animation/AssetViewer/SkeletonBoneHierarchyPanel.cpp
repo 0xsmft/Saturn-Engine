@@ -63,8 +63,8 @@ namespace Saturn {
 
 			m_BoneTree[ i ] = new SkelItemNode( pBoneItem );
 
+#if SAT_FEATURE_BONE_ATTACHMENT
 			// Add bone joint if the bone has one.
-			/*
 			if( auto* pBone = m_SkeletonAsset->FindBoneJoint( pBoneItem->pBone->BoneName ) )
 			{
 				SkelAttachmentPoint* pAttachmentPoint = new SkelAttachmentPoint();
@@ -76,7 +76,7 @@ namespace Saturn {
 
 				m_BoneTree[ i ]->Children.push_back( pNode );
 			}
-			*/
+#endif
 		}
 
 		for( size_t i = 0; i < m_SkeletonAsset->GetBoneNames().size(); ++i )

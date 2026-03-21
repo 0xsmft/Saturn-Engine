@@ -31,7 +31,7 @@
 
 #include "PhysicsFoundation.h"
 #include "PhysicsAuxiliary.h"
-#include "PhysicsCharacterMovement.h"
+#include "PhysicsCharacterController.h"
 
 #include "Saturn/AI/Navigation/RecastInputGeometry.h"
 
@@ -51,13 +51,9 @@ namespace Saturn {
 	{
 		const RigidbodyComponent& rb = m_Entity->GetComponent<RigidbodyComponent>();
 		const TransformComponent& tc = m_Entity->GetComponent<TransformComponent>();
-	
-		// No shape is created when we have a CharacterMovementComponent, a DynamicRigidBody is created by PhysX.
-		if( m_Entity->HasComponent<CharacterMovementComponent>() )
-		{
-			auto* pController = m_Entity->GetComponent<CharacterMovementComponent>().CharacterMovement;
-			m_ActorOwned = false;
-		}
+
+		m_LockFlags = rb.LockFlags;
+
 		// Normal Collider Component's have more priority over the static mesh.
 		if( m_Entity->HasComponent<BoxColliderComponent>() )
 		{
@@ -78,10 +74,16 @@ namespace Saturn {
 		else
 		{
 			SAT_CORE_WARN( "No physics shape component was found! No shape will be attached." );
+			SAT_CORE_ASSERT( false );
 		}
 
 		// The settings might of changed, so update in case.
 		SetKinematic( rb.IsKinematic );
+
+		if( m_Shape->GetType() == PhysicsShapeType::TriangleMesh && rb.IsKinematic )
+		{
+			m_Type = PhysicsRigidBodyType::Static;
+		}
 
 		// Create body after the shape.
 		JPH::BodyCreationSettings settings( 
@@ -89,51 +91,36 @@ namespace Saturn {
 			Auxiliary::GLMToJolt( tc.Position ), 
 			Auxiliary::GLMQToJoltQ( glm::normalize( tc.GetRotation() ) ), 
 			( JPH::EMotionType ) m_Type, 
-			PhysLayerMoving 
+			m_Kinematic ? PhysLayerNotMoving : PhysLayerMoving 
 		);
+//		settings.mOverrideMassProperties = JPH::EOverrideMassProperties::CalculateInertia;
+//		settings.mMassPropertiesOverride.mMass = rb.Mass;
+		settings.mIsSensor = m_Shape->IsTrigger();
 		
 		m_pBody = PhysicsFoundation::Get()->GetBodyInterface()->CreateBody( settings );
 
 		PhysicsFoundation::Get()->GetBodyInterface()->AddBody( m_pBody->GetID(), m_Kinematic ? JPH::EActivation::DontActivate : JPH::EActivation::Activate );
 
-		SetMass( rb.Mass );
+		// Handle locking flags
+		CreateDOFConstraint();
 	}
 
 	void PhysicsRigidBody::SetShapeTrigger( bool trigger )
 	{
-		/*
-		if( m_Shape )
-			m_Shape->SetTrigger( trigger );
-		*/
+		if( m_Shape->IsTrigger() == trigger )
+			return;
+
+		m_pBody->SetIsSensor( trigger );
+		m_Shape->SetTrigger( trigger );
 	}
 
 	void PhysicsRigidBody::AttachPhysicsShape( PhysicsShapeType type )
 	{
 		switch( type )
 		{
-			/*
-			case Saturn::PhysicsShapeType::ConvexMesh: 
-			{
-				m_Shape = Ref<ConvexMeshShape>::Create( m_Entity );
-			} break;
-			*/
-
-			case Saturn::PhysicsShapeType::TriangleMesh:
-			{
-				// PhysX requires all non-kinematic dynamic rigid bodies with the flag eSIMULATION_SHAPE to be kinematic.
-				auto& rb = m_Entity->GetComponent<RigidbodyComponent>();
-				
-				if( !rb.IsKinematic )
-				{
-					SAT_CORE_WARN( "PhysX requires all non-kinematic dynamic rigid bodies with the flag eSIMULATION_SHAPE to be kinematic!" );
-					SAT_CORE_WARN( "This happened because you are using a Triangle mesh shape!" );
-					
-					rb.IsKinematic = true;
-					SetKinematic( true );
-				}
-
-				m_Shape = Ref<TriangleMeshShape>::Create( m_Entity );
-			} break;
+			case Saturn::PhysicsShapeType::Unknown:
+			default:
+				break;
 
 			case Saturn::PhysicsShapeType::Box: 
 			{
@@ -150,18 +137,70 @@ namespace Saturn {
 				m_Shape = Ref<CapsuleShape>::Create( m_Entity );
 			} break;
 
-			case Saturn::PhysicsShapeType::Unknown:
-			default:
-				break;
+			case Saturn::PhysicsShapeType::ConvexMesh:
+			{
+				m_Shape = Ref<ConvexMeshShape>::Create( m_Entity );
+			} break;
+
+			case Saturn::PhysicsShapeType::TriangleMesh:
+			{
+				m_Shape = Ref<TriangleMeshShape>::Create( m_Entity );
+			} break;
 		}
 
-		if( m_Shape )
-			m_Shape->Create();
+		if( m_Shape ) 
+		{
+			const RigidbodyComponent& rb = m_Entity->GetComponent<RigidbodyComponent>();
+			m_Shape->Create( rb.Mass );
+		}
+	}
+
+	void PhysicsRigidBody::CreateDOFConstraint()
+	{
+		using EAxis = JPH::SixDOFConstraintSettings::EAxis;
+		JPH::SixDOFConstraintSettings settings;
+
+		if( ( m_LockFlags & RigidbodyLock_PositionX ) )
+		{
+			settings.SetLimitedAxis( EAxis::TranslationX, 1.0F, 0.0F );
+		}
+		if( ( m_LockFlags & RigidbodyLock_PositionY ) )
+		{
+			settings.SetLimitedAxis( EAxis::TranslationY, 1.0F, 0.0F );
+		}
+		if( ( m_LockFlags & RigidbodyLock_PositionZ ) )
+		{
+			settings.SetLimitedAxis( EAxis::TranslationZ, 1.0F, 0.0F );
+		}
+		if( ( m_LockFlags & RigidbodyLock_RotationX ) )
+		{
+			settings.SetLimitedAxis( EAxis::RotationX, 1.0F, 0.0F );
+		}
+		if( ( m_LockFlags & RigidbodyLock_RotationY ) )
+		{
+			settings.SetLimitedAxis( EAxis::RotationY, 1.0F, 0.0F );
+		}
+		if( ( m_LockFlags & RigidbodyLock_RotationZ ) )
+		{
+			settings.SetLimitedAxis( EAxis::RotationY, 1.0F, 0.0F );
+		}
+
+		settings.mPosition2 = m_pBody->GetPosition();
+
+		m_DOFConstraint = static_cast<JPH::SixDOFConstraint*>( settings.Create( JPH::Body::sFixedToWorld, *m_pBody ) );
+
+		PhysicsFoundation::Get()->GetPhysicsSystem()->AddConstraint( m_DOFConstraint );
 	}
 
 	void PhysicsRigidBody::Destroy()
 	{
-		PhysicsFoundation::Get()->GetBodyInterface()->RemoveBody( m_pBody->GetID() );
+		if( m_pBody->IsInBroadPhase() )
+			PhysicsFoundation::Get()->GetBodyInterface()->RemoveBody( m_pBody->GetID() );
+		else
+			PhysicsFoundation::Get()->GetBodyInterface()->DeactivateBody( m_pBody->GetID() );
+
+		PhysicsFoundation::Get()->GetPhysicsSystem()->RemoveConstraint( m_DOFConstraint );
+
 		PhysicsFoundation::Get()->GetBodyInterface()->DestroyBody( m_pBody->GetID() );
 
 		m_pBody = nullptr;
@@ -214,8 +253,14 @@ namespace Saturn {
 				PhysicsFoundation::Get()->GetBodyInterface()->AddImpulse( m_pBody->GetID(), Auxiliary::GLMToJolt( ForceAmount ) );
 				break;
 
-			case ForceMode::VelocityChange:
-			case ForceMode::Acceleration:
+			case ForceMode::ForceAndTorque:
+				PhysicsFoundation::Get()->GetBodyInterface()->AddForceAndTorque( m_pBody->GetID(), Auxiliary::GLMToJolt( ForceAmount ), Auxiliary::GLMToJolt( ForceAmount ) );
+				break;
+
+			case ForceMode::Torque:
+				PhysicsFoundation::Get()->GetBodyInterface()->AddTorque( m_pBody->GetID(), Auxiliary::GLMToJolt( ForceAmount ) );
+				break;
+
 			default:
 				break;
 		}
@@ -266,10 +311,14 @@ namespace Saturn {
 
 	void PhysicsRigidBody::SetLockFlags( RigidbodyLockFlags flags, bool value )
 	{
-		if( value )
-			m_LockFlags |= flags;
-		else
-			m_LockFlags &= ~flags;
+		if( flags != m_LockFlags )
+		{
+			m_LockFlags = flags;
+
+			PhysicsFoundation::Get()->GetPhysicsSystem()->RemoveConstraint( m_DOFConstraint );
+
+			CreateDOFConstraint();
+		}
 	}
 
 	bool PhysicsRigidBody::AllRotationLocked() const
@@ -282,6 +331,9 @@ namespace Saturn {
 		TransformComponent& tc = m_Entity->GetComponent<TransformComponent>();
 
 		tc.Position = GetPosition();
+
+		if( !AllRotationLocked() )
+			tc.SetRotation( GetRotation() );
 	}
 
 }

@@ -34,6 +34,7 @@
 
 #include <Jolt/Jolt.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
+#include <Jolt/Physics/Constraints/SixDOFConstraint.h>
 
 namespace Saturn {
 
@@ -84,19 +85,22 @@ namespace Saturn {
 
 		SharedPtr<Entity> GetEntity() { return m_Entity; }
 
+		Ref<PhysicsShape> GetShape() { return m_Shape; }
+
 		void ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
+
 	private:
 		void AttachPhysicsShape( PhysicsShapeType type );
+		void CreateDOFConstraint();
 		void Destroy();
 
 	private:
 		JPH::Body* m_pBody = nullptr;
+		JPH::Ref<JPH::SixDOFConstraint> m_DOFConstraint;
 
 		SharedPtr<Entity> m_Entity;
-
 		Ref<PhysicsShape> m_Shape;
 
-		bool m_ActorOwned = true;
 		bool m_Kinematic = false;
 		PhysicsRigidBodyType m_Type = PhysicsRigidBodyType::Dynamic;
 		uint32_t m_LockFlags = 0u;

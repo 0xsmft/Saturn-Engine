@@ -51,6 +51,10 @@ namespace Saturn {
 
 	PhysicsScene::~PhysicsScene()
 	{
+#if !defined(SAT_DIST)
+		m_DebugRecorder.EndRecord();
+#endif
+
 		const auto view = m_Scene->GetAllEntitiesWith<RigidbodyComponent>();
 		for( auto& rEntity : view )
 		{
@@ -79,6 +83,10 @@ namespace Saturn {
 			auto& rb = rEntity->GetComponent<RigidbodyComponent>();
 			InitialiseNewBody( rEntity, rb );
 		}
+
+#if !defined(SAT_DIST)
+		m_DebugRecorder.BeginRecord();
+#endif
 	}
 
 	void PhysicsScene::Simulate( Timestep ts )
@@ -86,6 +94,10 @@ namespace Saturn {
 		SAT_PF_EVENT();
 
 		PhysicsFoundation::Get()->GetPhysicsSystem()->Update( 1.0f / 60.0f, 1u, PhysicsFoundation::Get()->GetTempAllocator(), PhysicsFoundation::Get()->GetJobSystem() );
+
+#if !defined(SAT_DIST)
+		m_DebugRecorder.NewFrame();
+#endif
 	}
 
 	bool PhysicsScene::Raycast( const glm::vec3& rOrigin, const glm::vec3& rDirection, float maxDistance, RaycastHitResult* pOut )

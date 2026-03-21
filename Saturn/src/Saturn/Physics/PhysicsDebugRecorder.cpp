@@ -26,52 +26,72 @@
 *********************************************************************************************
 */
 
-#pragma once
-
-#if !defined(SAT_DIST)
+#include "sppch.h"
 #include "PhysicsDebugRecorder.h"
-#endif
 
-#include "Saturn/Scene/Scene.h"
+#include "PhysicsFoundation.h"
+
+#include "Saturn/Project/Project.h"
+#include "Saturn/Serialisation/Raw/RawSerialisation.h"
+
+#include <Jolt/Physics/Body/BodyManager.h>
 
 namespace Saturn {
 
-	struct RigidbodyComponent;
+	//////////////////////////////////////////////////////////////////////////
 
-	struct RaycastHitResult
+	void PhysicsRecorderOut::Open( const std::filesystem::path& rPath )
 	{
-		bool Success = false;
-		float Distance = 0.0f;
-		SharedPtr<Entity> Hit = nullptr;
-		glm::vec3 Position;
-	};
+		m_Stream.open( rPath, std::ios::binary | std::ios::trunc );
+	}
 
-	struct RecastInputGeometryExpData;
-
-	class PhysicsScene
+	void PhysicsRecorderOut::Close()
 	{
-	public:
-		PhysicsScene( Ref<Scene> scene );
-		~PhysicsScene();
+		m_Stream.close();
+	}
 
-		void CreateScene();
-		void Simulate( Timestep ts );
+	void PhysicsRecorderOut::WriteBytes( const void* pData, size_t numBytes )
+	{
+		m_Stream.write( ( const char* ) pData, numBytes );
+	}
 
-		[[nodiscard]] bool Raycast( const glm::vec3& rOrigin, const glm::vec3& rDirection, float maxDistance, RaycastHitResult* pOut );
+	bool PhysicsRecorderOut::IsFailed() const
+	{
+		return m_Stream.fail();
+	}
 
-		void ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
+	//////////////////////////////////////////////////////////////////////////
 
-	private:
-		void InitialiseNewBody( SharedPtr<Entity>& rEntity, RigidbodyComponent& rRigidbodyComponent );
-		void AddNewController( SharedPtr<Entity>& rEntity );
+	PhysicsDebugRecorder::PhysicsDebugRecorder()
+	{
+	}
 
-	private:
-		Ref<Scene> m_Scene;
-#if !defined(SAT_DIST)
-		PhysicsDebugRecorder m_DebugRecorder;
-#endif
+	PhysicsDebugRecorder::~PhysicsDebugRecorder()
+	{
+	}
 
-	private:
-		friend class Scene;
-	};
+	void PhysicsDebugRecorder::BeginRecord()
+	{
+		std::filesystem::path outPath = Project::GetActiveProject()->GetFullCachePath();
+		outPath /= "PerUser";
+		outPath /= std::format( "{0}.JoltCapture.jor", ( uint64_t ) g_ActiveScene->GetInternalID() );
+		m_OutStream.Open( outPath );
+
+		m_Recorder = std::make_unique<JPH::DebugRendererRecorder>( m_OutStream );
+	}
+
+	void PhysicsDebugRecorder::NewFrame()
+	{
+		JPH::BodyManager::DrawSettings drawSettings;
+		PhysicsFoundation::Get()->GetPhysicsSystem()->DrawBodies( drawSettings, m_Recorder.get() );
+		m_Recorder->EndFrame();
+	}
+
+	void PhysicsDebugRecorder::EndRecord()
+	{
+		m_OutStream.Close();
+
+		m_Recorder.reset();
+	}
+
 }

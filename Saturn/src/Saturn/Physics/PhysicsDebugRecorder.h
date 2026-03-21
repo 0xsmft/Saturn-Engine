@@ -28,50 +28,42 @@
 
 #pragma once
 
-#if !defined(SAT_DIST)
-#include "PhysicsDebugRecorder.h"
-#endif
+#include "JoltBinaryHelpers.h"
 
-#include "Saturn/Scene/Scene.h"
+#include <Jolt/Jolt.h>
+#include <Jolt/Renderer/DebugRendererRecorder.h>
 
 namespace Saturn {
 
-	struct RigidbodyComponent;
-
-	struct RaycastHitResult
-	{
-		bool Success = false;
-		float Distance = 0.0f;
-		SharedPtr<Entity> Hit = nullptr;
-		glm::vec3 Position;
-	};
-
-	struct RecastInputGeometryExpData;
-
-	class PhysicsScene
+	class PhysicsRecorderOut : public JPH::StreamOut
 	{
 	public:
-		PhysicsScene( Ref<Scene> scene );
-		~PhysicsScene();
+		PhysicsRecorderOut() = default;
+		~PhysicsRecorderOut() = default;
 
-		void CreateScene();
-		void Simulate( Timestep ts );
+		void Open( const std::filesystem::path& rPath );
+		void Close();
 
-		[[nodiscard]] bool Raycast( const glm::vec3& rOrigin, const glm::vec3& rDirection, float maxDistance, RaycastHitResult* pOut );
-
-		void ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
-
-	private:
-		void InitialiseNewBody( SharedPtr<Entity>& rEntity, RigidbodyComponent& rRigidbodyComponent );
-		void AddNewController( SharedPtr<Entity>& rEntity );
+	public:
+		virtual void WriteBytes( const void* inData, size_t inNumBytes ) override;
+		virtual bool IsFailed() const override;
 
 	private:
-		Ref<Scene> m_Scene;
-#if !defined(SAT_DIST)
-		PhysicsDebugRecorder m_DebugRecorder;
-#endif
+		std::ofstream m_Stream;
+	};
+
+	class PhysicsDebugRecorder
+	{
+	public:
+		PhysicsDebugRecorder();
+		~PhysicsDebugRecorder();
+
+		void BeginRecord();
+		void NewFrame();
+		void EndRecord();
 
 	private:
-		friend class Scene;
+		PhysicsRecorderOut m_OutStream;
+		std::unique_ptr<JPH::DebugRendererRecorder> m_Recorder;
 	};
 }

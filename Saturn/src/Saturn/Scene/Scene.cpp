@@ -49,7 +49,7 @@
 
 #include "Saturn/Physics/PhysicsScene.h"
 #include "Saturn/Physics/PhysicsRigidBody.h"
-#include "Saturn/Physics/PhysicsCharacterMovement.h"
+#include "Saturn/Physics/PhysicsCharacterController.h"
 
 #include "Saturn/Project/Project.h"
 
@@ -196,11 +196,8 @@ namespace Saturn {
 			m_PhysicsScene->Simulate( ts );
 			OnUpdatePhysics( ts );
 
-			for( auto&& [id, entity] : m_EntityIDMap )
-			{
-				entity->OnUpdate( ts );
-			}
-
+			OnUpdateEntities( ts );
+			
 			OnUpdateAnimators( ts );
 
 			UpdateAudioListeners();
@@ -209,6 +206,14 @@ namespace Saturn {
 		}
 	}
 	
+	void Scene::OnUpdateEntities( Timestep ts )
+	{
+		for( auto&& [id, entity] : m_EntityIDMap )
+		{
+			entity->OnUpdate( ts );
+		}
+	}
+
 	void Scene::OnUpdatePhysics( Timestep ts )
 	{
 		SAT_PF_EVENT();
@@ -239,11 +244,10 @@ namespace Saturn {
 			auto* pController = rEntity->GetComponent<CharacterMovementComponent>().CharacterMovement;
 			if( pController )
 			{
-				pController->OnUpdate( ts );
-
 				// SyncTransform
 				rEntity->GetComponent<TransformComponent>().Position = pController->GetPosition();
 
+				/*
 				auto& rb = rEntity->GetComponent<RigidbodyComponent>();
 
 				// rb.Rigidbody will be null if it's just been spawned into the world.
@@ -251,6 +255,7 @@ namespace Saturn {
 				{
 					rb.Rigidbody->SetPosition( pController->GetPosition() );
 				}
+				*/
 			}
 			else
 			{

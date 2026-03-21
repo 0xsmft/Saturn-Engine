@@ -477,8 +477,9 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 			const auto& cmc = entity->GetComponent< CharacterMovementComponent >();
 
 			rEmitter << YAML::Key << "StepOffset" << YAML::Value << cmc.StepOffset;
-			rEmitter << YAML::Key << "Height" << YAML::Value << cmc.Height;
-			rEmitter << YAML::Key << "Radius" << YAML::Value << cmc.Radius;
+			rEmitter << YAML::Key << "NoGravity" << YAML::Value << cmc.NoGravity;
+			rEmitter << YAML::Key << "ControlMovementInAir" << YAML::Value << cmc.ControlMovementInAir;
+			rEmitter << YAML::Key << "ControlRotationInAir" << YAML::Value << cmc.ControlRotationInAir;
 
 			rEmitter << YAML::EndMap;
 		}
@@ -966,9 +967,10 @@ pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value ); \
 		{
 			auto& cm = DeserialisedEntity->AddComponent< CharacterMovementComponent >();
 
-			cm.StepOffset = cmc[ "StepOffset" ].as< float >();
-			cm.Height     = cmc[ "Height" ].as< float >();
-			cm.Radius     = cmc[ "Radius" ].as< float >();
+			cm.StepOffset			= cmc[ "StepOffset" ].as< float >();
+			cm.NoGravity			= cmc[ "NoGravity" ].as< bool >( false );
+			cm.ControlMovementInAir = cmc[ "ControlMovementInAir" ].as< bool >( false );
+			cm.ControlRotationInAir = cmc[ "ControlRotationInAir" ].as< bool>( false );
 		}
 
 		const auto cc = rEntityNode[ "CameraComponent" ];

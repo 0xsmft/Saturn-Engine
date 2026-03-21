@@ -322,8 +322,9 @@ namespace Saturn {
 				auto& cmc = rEntity->GetComponent< CharacterMovementComponent >();
 
 				RawSerialisation::WriteObject( cmc.StepOffset, rStream );
-				RawSerialisation::WriteObject( cmc.Height, rStream );
-				RawSerialisation::WriteObject( cmc.Radius, rStream );
+				RawSerialisation::WriteObject( cmc.NoGravity, rStream );
+				RawSerialisation::WriteObject( cmc.ControlMovementInAir, rStream );
+				RawSerialisation::WriteObject( cmc.ControlRotationInAir, rStream );
 			} );
 
 		// Camera Component
@@ -654,8 +655,9 @@ namespace Saturn {
 				auto& cmc = rEntity->GetComponent< CharacterMovementComponent >();
 
 				RawSerialisation::ReadObject( cmc.StepOffset, rStream );
-				RawSerialisation::ReadObject( cmc.Height, rStream );
-				RawSerialisation::ReadObject( cmc.Radius, rStream );
+				RawSerialisation::ReadObject( cmc.NoGravity, rStream );
+				RawSerialisation::ReadObject( cmc.ControlMovementInAir, rStream );
+				RawSerialisation::ReadObject( cmc.ControlRotationInAir, rStream );
 			} );
 
 		// Camera Component

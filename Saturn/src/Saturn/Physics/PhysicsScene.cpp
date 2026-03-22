@@ -41,6 +41,9 @@
 #include "PhysicsCharacterController.h"
 #include "PhysicsAuxiliary.h"
 
+#include <Jolt/Physics/Collision/RayCast.h>
+#include <Jolt/Physics/Collision/CastResult.h>
+
 namespace Saturn {
 
 	PhysicsScene::PhysicsScene( Ref<Scene> scene )
@@ -109,7 +112,25 @@ namespace Saturn {
 
 	bool PhysicsScene::Raycast( const glm::vec3& rOrigin, const glm::vec3& rDirection, float maxDistance, RaycastHitResult* pOut )
 	{
-		return false;
+		JPH::RRayCast ray{ Auxiliary::GLMToJolt( rOrigin ), Auxiliary::GLMToJolt( rDirection ) };
+
+		RaycastHitResult outHit{};
+
+		JPH::RayCastResult joltHit{};
+		outHit.Success = PhysicsFoundation::Get()->GetPhysicsSystem()->GetNarrowPhaseQuery().CastRay( ray, joltHit );
+
+		if( outHit.Success )
+		{
+			entt::entity entityHandle = ( entt::entity ) PhysicsFoundation::Get()->GetBodyInterface()->GetUserData( joltHit.mBodyID );
+
+			outHit.Position = Auxiliary::JoltToGLM( ray.GetPointOnRay( joltHit.mFraction ) );
+			outHit.Hit = m_Scene->FindEntityByHandle( entityHandle );
+			outHit.Distance = glm::distance( outHit.Position, rOrigin );
+		}
+
+		*pOut = outHit;
+
+		return outHit.Success;
 	}
 
 	void PhysicsScene::ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds )

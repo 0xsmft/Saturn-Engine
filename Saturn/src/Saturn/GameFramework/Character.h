@@ -78,8 +78,6 @@ namespace Saturn {
 		SharedPtr<Entity>& GetCameraEntity() { return m_CameraEntity; }
 		const SharedPtr<Entity>& GetCameraEntity() const { return m_CameraEntity; }
 
-		PhysicsRigidBody* GetRigidBody() { return m_RigidBody; }
-
 	protected:
 		//////////////////////////////////////////////////////////////////////////
 		// Movement
@@ -98,8 +96,6 @@ namespace Saturn {
 	private:
 		// TODO: Change to a base mesh class, we don't know what the user will have.
 		Ref<StaticMesh> m_Mesh;
-		// TODO: Move this to a movement component.
-		PhysicsRigidBody* m_RigidBody = nullptr;
 
 		SharedPtr<Entity> m_CameraEntity = nullptr;
 	};

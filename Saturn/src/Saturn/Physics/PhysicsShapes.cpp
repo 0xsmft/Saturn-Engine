@@ -245,7 +245,7 @@ namespace Saturn {
 		
 		const float largestComponent = glm::abs( glm::max( transform.Scale.x, glm::max( transform.Scale.y, transform.Scale.z ) ) );
 		const float scaledRadius = largestComponent * radius;
-		const float volume = ( 4.0f / 3.0f ) * glm::pi<float>() * glm::pow( scaledRadius, 3 );
+		const float volume = ( 4.0f / 3.0f ) * glm::pi<float>() * ( float ) glm::pow( scaledRadius, 3.0f );
 
 		JPH::SphereShapeSettings sphereSetting( radius, nullptr );
 		sphereSetting.mDensity = mass / volume;

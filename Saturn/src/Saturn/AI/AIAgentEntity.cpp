@@ -52,11 +52,6 @@ namespace Saturn {
 	{
 		AddComponent<StaticMeshComponent>();
 		AddComponent<BehaviourTreeComponent>();
-
-		auto& rRigidbodyComponent = AddComponent<RigidbodyComponent>();
-		rRigidbodyComponent.LockFlags = RigidbodyLockFlags::RigidbodyLock_RotationX | RigidbodyLockFlags::RigidbodyLock_RotationY | RigidbodyLockFlags::RigidbodyLock_RotationZ;
-		rRigidbodyComponent.IsKinematic = true;
-
 		AddComponent<CharacterMovementComponent>();
 	}
 

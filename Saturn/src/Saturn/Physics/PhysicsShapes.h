@@ -68,7 +68,7 @@ namespace Saturn {
 
 		SharedPtr<Entity> m_Entity;
 
-		JPH::ShapeRefC m_Shape = nullptr;
+		JPH::Ref<JPH::Shape> m_Shape = nullptr;
 	};
 
 	class BoxShape : public PhysicsShape

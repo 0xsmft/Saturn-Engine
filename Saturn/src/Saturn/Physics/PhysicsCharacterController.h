@@ -38,14 +38,6 @@ namespace Saturn {
 	class PhysicsShape;
 	class PhysicsScene;
 	class Entity;
-
-	enum PhysicsControllerCollisionFlag
-	{
-		PhysControllerCollision_None  = 0,
-		PhysControllerCollision_Sides = BIT( 0 ),
-		PhysControllerCollision_Up    = BIT( 1 ),
-		PhysControllerCollision_Down  = BIT( 2 )
-	};
 	
 	class PhysicsCharacterController
 	{
@@ -65,10 +57,7 @@ namespace Saturn {
 		void Jump( float pwr );
 
 	public:
-		PhysicsControllerCollisionFlag GetFlags() const { return m_CollisionFlags; }
-
 		[[nodiscard]] bool IsGrounded() const;
-
 		glm::vec3 GetPosition() const;
 
 	private:
@@ -81,7 +70,6 @@ namespace Saturn {
 		JPH::Vec3 m_Velocity{};
 
 		bool m_HasGravity = true, m_ControlMovementInAir = false, m_ControlRotationInAir = false;
-		PhysicsControllerCollisionFlag m_CollisionFlags = PhysControllerCollision_None;
 
 		float m_JumpPower = 0.0f;
 		float m_Gravity = 0.0f;

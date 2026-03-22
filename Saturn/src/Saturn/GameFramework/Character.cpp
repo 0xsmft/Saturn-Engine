@@ -44,11 +44,6 @@ namespace Saturn {
 		m_MouseUpMovement = 0.0f;
 
 		AddComponent<StaticMeshComponent>();
-
-		auto& rRigidbodyComponent = AddComponent<RigidbodyComponent>();
-		rRigidbodyComponent.LockFlags = RigidbodyLockFlags::RigidbodyLock_RotationX | RigidbodyLockFlags::RigidbodyLock_RotationY | RigidbodyLockFlags::RigidbodyLock_RotationZ;
-		rRigidbodyComponent.IsKinematic = true;
-
 		AddComponent<CharacterMovementComponent>();
 		AddComponent<AudioListenerComponent>();
 	}
@@ -88,7 +83,6 @@ namespace Saturn {
 			m_CameraEntity = wTemporaryCameraEntity.Access();
 		}
 
-		m_RigidBody = GetComponent<RigidbodyComponent>().Rigidbody;
 		Input::Get().SetCursorMode( RubyCursorMode::Locked );
 	}
 

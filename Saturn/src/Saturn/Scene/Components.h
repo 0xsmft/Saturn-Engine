@@ -271,17 +271,18 @@ namespace Saturn {
 		CapsuleColliderComponent( float radius, float height ) : Radius( radius ), HalfHeight( height ) { }
 	};
 
-	class PhysicsCharacterMovement;
+	class PhysicsCharacterController;
 	struct CharacterMovementComponent
 	{
-		PhysicsCharacterMovement* CharacterMovement = nullptr;
+		PhysicsCharacterController* CharacterMovement = nullptr;
 
 		float StepOffset = 0.3f;
-		float Height = 1.0f;
-		float Radius = 1.0f;
+		bool NoGravity = false;
+		bool ControlMovementInAir = false;
+		bool ControlRotationInAir = false;
 
 		CharacterMovementComponent() = default;
-		CharacterMovementComponent( float stepOffset, float height, float radius ) : StepOffset( stepOffset ), Height( height ), Radius( radius ) {}
+		CharacterMovementComponent( float stepOffset, bool noGravity, bool controlMovementInAir, bool controlRotationInAir ) : StepOffset( stepOffset ), NoGravity( noGravity ), ControlMovementInAir( controlMovementInAir ), ControlRotationInAir( controlRotationInAir ) {}
 	};
 
 	// TODO: Do we really want to store the rigid body here?
@@ -387,6 +388,7 @@ namespace Saturn {
 		float ConeOuterAngle = 0.0f;
 	};
 
+	// NOTE: This component only exists in the Editor.
 	struct BillboardComponent
 	{
 		MemoryAssetDependency<AssetType::Texture> AssetID;

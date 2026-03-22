@@ -67,8 +67,6 @@ namespace Saturn {
 		m_Velocity = m_Displacement / ts.Seconds();
 		m_Controller->UpdateGroundVelocity();
 		
-		SAT_CORE_INFO( "DISPLACEMENT: X {0} Y{1} Z{2}", m_Displacement.GetX(), m_Displacement.GetY(), m_Displacement.GetZ() );
-
 		JPH::Vec3 currentVerticalVelocity = JPH::Vec3( 0.0f, m_Controller->GetLinearVelocity().GetY(), 0.0f );
 		JPH::Vec3 groundVelocity = m_Controller->GetGroundVelocity();
 
@@ -77,7 +75,7 @@ namespace Saturn {
 		JPH::Vec3 newVelocity{};
 		if( m_HasGravity )
 		{
-			if( m_Controller->GetGroundState() == JPH::CharacterVirtual::EGroundState::OnGround && (!m_Controller->IsSlopeTooSteep( m_Controller->GetGroundNormal() )) )
+			if( m_Controller->GetGroundState() == JPH::CharacterVirtual::EGroundState::OnGround && ( !m_Controller->IsSlopeTooSteep( m_Controller->GetGroundNormal() ) ) )
 			{
 				newVelocity = groundVelocity;
 

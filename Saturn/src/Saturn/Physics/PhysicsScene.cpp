@@ -137,7 +137,6 @@ namespace Saturn {
 
 	void PhysicsScene::AddNewController( SharedPtr<Entity>& rEntity )
 	{
-		auto& rb = rEntity->GetComponent<RigidbodyComponent>();
 		auto& rMovementComp = rEntity->GetComponent<CharacterMovementComponent>();
 
 		// Bad, this shouldn't be true and should be an assert.
@@ -147,7 +146,7 @@ namespace Saturn {
 			SAT_CORE_WARN( "A movement controller already exists in this component! Removing and creating a new one." );
 		}
 
-		rMovementComp.CharacterMovement = new PhysicsCharacterController( rb.MaterialAssetID, !rMovementComp.NoGravity, rMovementComp.ControlMovementInAir, rMovementComp.ControlRotationInAir );
+		rMovementComp.CharacterMovement = new PhysicsCharacterController( 0, !rMovementComp.NoGravity, rMovementComp.ControlMovementInAir, rMovementComp.ControlRotationInAir );
 		rMovementComp.CharacterMovement->CreateController( this, rEntity, rEntity->GetLocalPosition() );
 	}
 

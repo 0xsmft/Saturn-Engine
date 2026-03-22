@@ -1098,9 +1098,9 @@ namespace Saturn {
 			ImGui::Text( "Body Type" );
 			ImGui::Spring();
 
-			constexpr const char* pItems[] = { "Static", "Kinematic", "Dynamic" };
-			static PhysicsRigidBodyType selectedEnum = rb.BodyType;
-			static const char* pSelected = pItems[ ( int ) selectedEnum ];
+			const char* pItems[] = { "Static", "Kinematic", "Dynamic" };
+			PhysicsRigidBodyType selectedEnum = rb.BodyType;
+			const char* pSelected = pItems[ ( int ) selectedEnum ];
 
 			if( ImGui::BeginCombo( "##type", pSelected ) )
 			{

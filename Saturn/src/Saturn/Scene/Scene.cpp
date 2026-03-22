@@ -731,6 +731,20 @@ namespace Saturn {
 				}
 			} break;
 		}
+
+#if SAT_FEATURE_SHOW_SELECTED_CAMERA_FRUSTUM
+		//////////////////////////////////////////////////////////////////////////
+		for( const auto& rEntity : EntitySelectionManager::Get()->GetSelectionContexts( this ) )
+		{
+			if( auto* pCameraComp = rEntity->TryGetComponent<CameraComponent>(); pCameraComp )
+			{
+				auto renderer2D = sceneRenderer->GetRenderer2D();
+				pCameraComp->Camera->RenderDebugFrustum( renderer2D );
+
+				break;
+			}
+		}
+#endif
 	}
 #endif
 

@@ -37,8 +37,30 @@
 
 namespace Saturn {
 
+	enum class PhysicsContactType 
+	{
+		Unknown,
+		Hit,
+		HitTrigger,
+		Leave,
+		LeaveTrigger
+	};
+
+	struct PhysicsContactEventInfo
+	{
+		PhysicsContactType Type = PhysicsContactType::Unknown;
+		Entity* pA = nullptr;
+		Entity* pB = nullptr;
+	};
+
 	class PhysicsContact : public JPH::ContactListener
 	{
+	public:
+		PhysicsContact( const JPH::BodyLockInterfaceNoLock* pBody )
+			: m_pBodyInterface( pBody ) 
+		{
+		}
+
 	public:
 		virtual JPH::ValidateResult OnContactValidate( const JPH::Body& inBody1, const JPH::Body& inBody2, JPH::RVec3Arg inBaseOffset, const JPH::CollideShapeResult& inCollisionResult ) override;
 
@@ -47,6 +69,15 @@ namespace Saturn {
 		void OnContactPersisted( const JPH::Body& inBody1, const JPH::Body& inBody2, const JPH::ContactManifold& inManifold, JPH::ContactSettings& ioSettings ) override;
 		
 		virtual void OnContactRemoved( const JPH::SubShapeIDPair& inSubShapePair ) override;
+
+	public:
+		void DispatchAllContactEvents();
+		void IgnoreAll();
+
+	private:
+		std::vector<PhysicsContactEventInfo> m_PendingEvents;
+
+		const JPH::BodyLockInterfaceNoLock* m_pBodyInterface = nullptr;
 	};
 
 	class JoltBodyActivationListener : public JPH::BodyActivationListener
@@ -118,6 +149,8 @@ namespace Saturn {
 		PhysicsCooking& GetCooking() { return m_Cooking; }
 		const PhysicsCooking& GetCooking() const { return m_Cooking; }
 
+		std::shared_ptr<PhysicsContact> GetContactHandler() { return m_ContactHandler; }
+
 	private:
 		JPH::JobSystem* m_pJobSystem = nullptr;
 		JPH::PhysicsSystem* m_pPhysicsSystem = nullptr;
@@ -125,7 +158,7 @@ namespace Saturn {
 		JPH::TempAllocator* m_pTempAllocator = nullptr;
 
 		PhysicsCooking m_Cooking;
-		PhysicsContact m_ContactHandler;
+		std::shared_ptr<PhysicsContact> m_ContactHandler;
 		JoltBodyActivationListener m_BodyActivationListener;
 		JoltObjectVsBroadPhaseLayerFilter m_ObjectVsBPLayerFilter{};
 		JoltObjectLayerPairFilter m_ObjectVsObjectLayerFilter{};

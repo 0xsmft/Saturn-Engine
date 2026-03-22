@@ -102,8 +102,9 @@ namespace Saturn {
 			m_Type == PhysicsRigidBodyType::Static ? JPH::EActivation::DontActivate : JPH::EActivation::Activate 
 		);
 
-		// Handle locking flags
-		CreateDOFConstraint();
+		// FIXME: Might not be viable to use the handle! (Entity ID may be better, however it's faster to use the handle)
+		//		  If we ever crash tell me to revise this!
+		m_pBody->SetUserData( ( uint64_t ) m_Entity->GetHandle() );
 
 		if( m_Type != PhysicsRigidBodyType::Static )
 		{

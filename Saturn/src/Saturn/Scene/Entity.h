@@ -63,6 +63,16 @@ namespace Saturn {
 		// Called every frame with a fixed timestep 
 		virtual void OnPhysicsUpdate( Saturn::Timestep ts ) {}
 
+		// TODO: Not sure if I like having the physics events in every single entity....
+		//		 we could create a component like PhysicsCallbackComponent, that has two function
+		//		 pointers to events... or some other inheritance way.
+	
+		// When this entity hits another entity with a physics body, or a trigger.
+		virtual void OnEntityHit( Entity* pOther, bool isTrigger ) {}
+
+		// When this entity is no longer in the trigger or the entity.
+		virtual void OnEntityLeave( Entity* pOther, bool isTrigger ) {}
+
 	public:
 		template<typename T, typename... Args>
 		inline T& AddComponent( Args&&... args )

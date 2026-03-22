@@ -21,7 +21,7 @@ jobs:
       uses: BEASTSM96/premake-action@v1.5.1
 
     - name: Generate Project Files
-      run: scripts/WindowsGenProjects-CI.bat
+      run: premake5 vs2022
 
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v2

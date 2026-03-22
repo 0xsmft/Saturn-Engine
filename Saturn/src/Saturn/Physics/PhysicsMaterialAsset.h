@@ -30,41 +30,56 @@
 
 #include "Saturn/Asset/Asset.h"
 
+#include <Jolt/Jolt.h>
+#include <Jolt/Physics/Collision/PhysicsMaterial.h>
+
 namespace Saturn {
 
-	enum class PhysicsMaterialFlags
+	class PhysicsInternalMaterial : public JPH::PhysicsMaterial
 	{
-		None = 0,
-		DisableFriction = BIT( 0 ),
-		DisableHighFriction = BIT( 1 ),
-		ImprovedPatchFriction = BIT( 2 )
+	public:
+		PhysicsInternalMaterial() = default;
+		PhysicsInternalMaterial( float friction, float restitution ) 
+			: m_Friction( friction ), m_Restitution( restitution )
+		{
+		}
+
+		virtual ~PhysicsInternalMaterial() = default;
+
+	public:
+		void SetFriction( float val ) { m_Friction = val; }
+		void SetRestitution( float val ) { m_Restitution = val; }
+
+		float GetFriction()   const { return m_Friction; }
+		float GetRestitution() const { return m_Restitution; }
+
+	private:
+		float m_Friction = 0.6f;
+		float m_Restitution = 0.0f;
+
+	private:
+		friend class PhysicsMaterialAsset;
 	};
 
 	class PhysicsMaterialAsset : public Asset
 	{
 	public:
-		PhysicsMaterialAsset( float StaticFriction, float DynamicFriction, float Restitution, PhysicsMaterialFlags flags = PhysicsMaterialFlags::None );
-		PhysicsMaterialAsset( const Ref<Asset>& rBase, float StaticFriction, float DynamicFriction, float Restitution, PhysicsMaterialFlags flags = PhysicsMaterialFlags::None );
+		PhysicsMaterialAsset( float Friction, float Restitution );
+		PhysicsMaterialAsset( const Ref<Asset>& rBase, float Friction, float Restitution );
 		virtual ~PhysicsMaterialAsset();
 
-		void SetStaticFriction( float val );
-		void SetDynamicFriction( float val );
+		JPH::Ref<PhysicsInternalMaterial> GetNative() { return m_JoltMaterial; }
+		const JPH::Ref<PhysicsInternalMaterial> GetNative() const { return m_JoltMaterial; }
+
+	public:
+		void SetFriction( float val );
 		void SetRestitution( float val );
 		 
-		float GetStaticFriction()  const { return m_StaticFriction; }
-		float GetDynamicFriction() const { return m_DynamicFriction; }
-		float GetRestitution()     const { return m_Restitution; }
-
-		void SetFlag( PhysicsMaterialFlags flag, bool value );
-		[[nodiscard]] bool IsFlagSet( PhysicsMaterialFlags flag ) const { return ( m_Flags & ( uint32_t ) flag ) != 0; }
-		uint32_t GetFlags() const { return m_Flags; }
+		float GetFriction()   const { return m_JoltMaterial->GetFriction(); }
+		float GetRestitution() const { return m_JoltMaterial->GetRestitution(); }
 
 	private:
-		float m_StaticFriction = 0.6f;
-		float m_DynamicFriction = 0.6f;
-		float m_Restitution = 0.0f;
-
-		uint32_t m_Flags = 0;
+		JPH::Ref<PhysicsInternalMaterial> m_JoltMaterial;
 
 	private:
 		friend class PhysicsMaterialAssetViewer;

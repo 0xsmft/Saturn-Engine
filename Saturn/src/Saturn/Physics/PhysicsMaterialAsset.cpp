@@ -34,45 +34,28 @@
 
 namespace Saturn {
 
-	PhysicsMaterialAsset::PhysicsMaterialAsset( const Ref<Asset>& rBase, float StaticFriction, float DynamicFriction, float Restitution, PhysicsMaterialFlags flags /*= PhysicsMaterialFlags::None */ )
-		: Asset( rBase ), m_StaticFriction( StaticFriction ), m_DynamicFriction( DynamicFriction ), m_Restitution( Restitution ), m_Flags( ( uint32_t ) flags )
+	PhysicsMaterialAsset::PhysicsMaterialAsset( float Friction, float Restitution )
+		: Asset(), m_JoltMaterial( new PhysicsInternalMaterial( Friction, Restitution ) )
 	{
 	}
 
-	PhysicsMaterialAsset::PhysicsMaterialAsset( float StaticFriction, float DynamicFriction, float Restitution, PhysicsMaterialFlags flags /*= PhysicsMaterialFlags::None */ )
-		: Asset(), m_StaticFriction( StaticFriction ), m_DynamicFriction( DynamicFriction ), m_Restitution( Restitution ), m_Flags( ( uint32_t ) flags )
+	PhysicsMaterialAsset::PhysicsMaterialAsset( const Ref<Asset>& rBase, float Friction, float Restitution )
+		: Asset( rBase ), m_JoltMaterial( new PhysicsInternalMaterial( Friction, Restitution ) )
 	{
 	}
 
 	PhysicsMaterialAsset::~PhysicsMaterialAsset()
-	{
-		m_StaticFriction = 0.0f;
-		m_DynamicFriction = 0.0f;
-		m_Restitution = 0.0f;
-		
+	{	
 	}
 
-	void PhysicsMaterialAsset::SetStaticFriction( float val )
+	void PhysicsMaterialAsset::SetFriction( float val )
 	{
-		m_StaticFriction = val;
-	}
-
-	void PhysicsMaterialAsset::SetDynamicFriction( float val )
-	{
-		m_DynamicFriction = val;
+		m_JoltMaterial->SetFriction( val );
 	}
 
 	void PhysicsMaterialAsset::SetRestitution( float val )
 	{
-		m_Restitution = val;
-	}
-
-	void PhysicsMaterialAsset::SetFlag( PhysicsMaterialFlags flag, bool value )
-	{
-		if( value )
-			m_Flags |= ( uint32_t ) flag;
-		else
-			m_Flags &= ~( uint32_t ) flag;
+		m_JoltMaterial->SetRestitution( val );
 	}
 
 }

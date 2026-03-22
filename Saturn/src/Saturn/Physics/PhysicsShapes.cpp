@@ -90,7 +90,7 @@ namespace Saturn {
 			// So create memory only asset
 			if( !materialAsset )
 			{
-				materialAsset = Ref<PhysicsMaterialAsset>::Create( 1.0f, 1.0f, 0.5f );
+				materialAsset = Ref<PhysicsMaterialAsset>::Create( 1.0f, 0.5f );
 			}
 		}
 
@@ -146,6 +146,7 @@ namespace Saturn {
 		JPH::BoxShapeSettings shapeSettings( Auxiliary::GLMToJolt( halfColliderSize ) );
 		// d = m/v
 		shapeSettings.mDensity = mass / volume;
+		shapeSettings.mMaterial = materialAsset->GetNative();
 
 		m_Shape = shapeSettings.Create().Get();
 	}
@@ -249,6 +250,7 @@ namespace Saturn {
 
 		JPH::SphereShapeSettings sphereSetting( radius, nullptr );
 		sphereSetting.mDensity = mass / volume;
+		sphereSetting.mMaterial = materialAsset->GetNative();
 
 		m_Shape = sphereSetting.Create().Get();
 	}
@@ -468,6 +470,7 @@ namespace Saturn {
 		
 		JPH::CapsuleShapeSettings capsuleSetting( height, radius, nullptr );
 		capsuleSetting.mDensity = 10.0f;
+		capsuleSetting.mMaterial = materialAsset->GetNative();
 
 		m_Shape = capsuleSetting.Create().Get();
 	}

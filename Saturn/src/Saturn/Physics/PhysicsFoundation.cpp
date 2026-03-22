@@ -31,6 +31,7 @@
 
 #include "PhysicsAuxiliary.h"
 #include "PhysicsRigidBody.h"
+#include "PhysicsMaterialAsset.h"
 
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Core/JobSystemThreadPool.h>
@@ -38,6 +39,33 @@
 namespace Saturn {
 
 	//////////////////////////////////////////////////////////////////////////
+
+	static void PhysGetFrictionAndRestitution( const JPH::Body& inBody1, const JPH::SubShapeID& rSubShapeId, float& rOutFriction, float& rOutRestitution )
+	{
+		const JPH::PhysicsMaterial* pMaterial = inBody1.GetShape()->GetMaterial( rSubShapeId );
+
+		if( pMaterial == JPH::PhysicsMaterial::sDefault )
+		{
+			rOutFriction = inBody1.GetFriction();
+			rOutFriction = inBody1.GetRestitution();
+		}
+		else
+		{
+			const PhysicsInternalMaterial* pSaturnMaterial = static_cast< const PhysicsInternalMaterial* >( pMaterial );
+			rOutFriction = pSaturnMaterial->GetFriction();
+			rOutRestitution = pSaturnMaterial->GetRestitution();
+		}
+	}
+
+	static void PhysAppendPhysMat( const JPH::Body& inBody1, const JPH::Body& inBody2, const JPH::ContactManifold& inManifold, JPH::ContactSettings& ioSettings )
+	{
+		float f1, f2, r1, r2;
+		PhysGetFrictionAndRestitution( inBody1, inManifold.mSubShapeID1, f1, r1 );
+		PhysGetFrictionAndRestitution( inBody2, inManifold.mSubShapeID2, f2, r2 );
+
+		ioSettings.mCombinedFriction = f1 * f2;
+		ioSettings.mCombinedRestitution = glm::max( r1, r2 );
+	}
 
 	JPH::ValidateResult PhysicsContact::OnContactValidate( const JPH::Body& inBody1, const JPH::Body& inBody2, JPH::RVec3Arg inBaseOffset, const JPH::CollideShapeResult& inCollisionResult )
 	{
@@ -65,10 +93,13 @@ namespace Saturn {
 			rEventB.pA = entityB.Get();
 			rEventB.pB = entityA.Get();
 		}
+
+		PhysAppendPhysMat( inBody1, inBody2, inManifold, ioSettings );
 	}
 
 	void PhysicsContact::OnContactPersisted( const JPH::Body& inBody1, const JPH::Body& inBody2, const JPH::ContactManifold& inManifold, JPH::ContactSettings& ioSettings )
 	{
+		PhysAppendPhysMat( inBody1, inBody2, inManifold, ioSettings );
 	}
 
 	void PhysicsContact::OnContactRemoved( const JPH::SubShapeIDPair& inSubShapePair )

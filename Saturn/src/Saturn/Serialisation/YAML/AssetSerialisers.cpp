@@ -785,13 +785,8 @@ namespace Saturn {
 
 		out << YAML::BeginMap;
 
-		out << YAML::Key << "Static Friction" << YAML::Value << material->GetStaticFriction();
-
-		out << YAML::Key << "Dynamic Friction" << YAML::Value << material->GetDynamicFriction();
-
+		out << YAML::Key << "Static Friction" << YAML::Value << material->GetFriction();
 		out << YAML::Key << "Restitution" << YAML::Value << material->GetRestitution();
-
-		out << YAML::Key << "Flags" << YAML::Value << material->GetFlags();
 
 		out << YAML::EndMap;
 
@@ -823,11 +818,9 @@ namespace Saturn {
 			return false;
 
 		const auto staticFriction = materialData[ "Static Friction" ].as<float>( 0.0f );
-		const auto dynamicFriction = materialData[ "Dynamic Friction" ].as<float>( 0.0f );
 		const auto restitution = materialData[ "Restitution" ].as<float>( 0.0f );
-		const auto flags = materialData[ "Flags" ].as<uint32_t>();
 
-		auto material = Ref<PhysicsMaterialAsset>::Create( rAsset, staticFriction, dynamicFriction, restitution, (PhysicsMaterialFlags)flags );
+		auto material = Ref<PhysicsMaterialAsset>::Create( rAsset, staticFriction, restitution );
 
 		// Set rAsset reference to point to our new PhysicsMaterialAsset
 		rAsset = material;

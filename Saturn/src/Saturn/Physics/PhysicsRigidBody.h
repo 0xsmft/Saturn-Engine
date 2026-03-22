@@ -51,7 +51,6 @@ namespace Saturn {
 		// Runtime only!
 		void SetShapeTrigger( bool trigger );
 
-		void SetKinematic( bool val );
 		void SetMass( float val );
 		void SetLinearDrag( float value );
 		void SetLinearVelocity( const glm::vec3& rVelocity );
@@ -62,8 +61,6 @@ namespace Saturn {
 		void SetPosition( const glm::vec3& rPosition );
 
 		void SyncTransfrom();
-
-		bool IsKinematic() const { return m_Kinematic; }
 
 		glm::vec3 GetPosition();
 		glm::vec3 GetRotation();
@@ -101,7 +98,6 @@ namespace Saturn {
 		SharedPtr<Entity> m_Entity;
 		Ref<PhysicsShape> m_Shape;
 
-		bool m_Kinematic = false;
 		PhysicsRigidBodyType m_Type = PhysicsRigidBodyType::Dynamic;
 		uint32_t m_LockFlags = 0u;
 

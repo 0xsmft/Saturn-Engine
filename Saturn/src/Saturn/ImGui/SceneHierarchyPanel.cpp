@@ -1090,33 +1090,73 @@ namespace Saturn {
 		} );
 		*/
 
-		DrawComponent<RigidbodyComponent>( "Rigidbody", entity, [&]( auto& rb )
+		DrawComponent<RigidbodyComponent>( "Rigidbody", entity, [&]( RigidbodyComponent& rb )
 		{
 			bool modified = false;
 
-			if( !m_Context->IsRuntimeRunning() )
-			{
-				modified = Auxiliary::DrawBoolControl( "Kinematic Body", rb.IsKinematic );
+			ImGui::BeginHorizontal( "##setbodytypehz" );
+			ImGui::Text( "Body Type" );
+			ImGui::Spring();
 
-				modified |= Auxiliary::DrawBoolControl( "Use CCD", rb.UseCCD );
+			constexpr const char* pItems[] = { "Static", "Kinematic", "Dynamic" };
+			static PhysicsRigidBodyType selectedEnum = rb.BodyType;
+			static const char* pSelected = pItems[ ( int ) selectedEnum ];
 
-				modified |= Auxiliary::DrawFloatControl( "Mass", rb.Mass );
-				modified |= Auxiliary::DrawFloatControl( "Linear Drag", rb.LinearDrag );
-			}
-			else
+			if( ImGui::BeginCombo( "##type", pSelected ) )
 			{
+				for( unsigned int i = 0u; i < IM_ARRAYSIZE( pItems ); i++ )
 				{
-					Auxiliary::ScopedDisabledFlag disabled( true );
-					
-					Auxiliary::DrawBoolControl( "Kinematic Body", rb.IsKinematic );
-					Auxiliary::DrawBoolControl( "Use CCD", rb.UseCCD );
-				}
-				
-				if( Auxiliary::DrawFloatControl( "Mass", rb.Mass ) )
-					rb.Rigidbody->SetMass( rb.Mass );
+					const bool isSelected = ( pSelected == pItems[ i ] );
+					if( ImGui::Selectable( pItems[ i ], isSelected ) )
+					{
+						selectedEnum = ( PhysicsRigidBodyType ) i;
+						pSelected = pItems[ i ];
 
-				if( Auxiliary::DrawFloatControl( "Linear Drag", rb.LinearDrag ) )
-					rb.Rigidbody->SetLinearDrag( rb.LinearDrag );
+						rb.BodyType = selectedEnum;
+					}
+
+					if( isSelected )
+					{
+						ImGui::SetItemDefaultFocus();
+					}
+				}
+
+				ImGui::EndCombo();
+			}
+
+			ImGui::EndHorizontal();
+
+			ImGui::Separator();
+
+			switch( rb.BodyType )
+			{
+				case PhysicsRigidBodyType::Dynamic:
+				case PhysicsRigidBodyType::Kinematic:
+				{
+					if( !m_Context->IsRuntimeRunning() )
+					{
+						modified |= Auxiliary::DrawBoolControl( "Use CCD", rb.UseCCD );
+
+						modified |= Auxiliary::DrawFloatControl( "Mass", rb.Mass );
+						modified |= Auxiliary::DrawFloatControl( "Linear Drag", rb.LinearDrag );
+					}
+					else
+					{
+						{
+							Auxiliary::ScopedDisabledFlag disabled( true );
+							Auxiliary::DrawBoolControl( "Use CCD", rb.UseCCD );
+						}
+
+						if( Auxiliary::DrawFloatControl( "Mass", rb.Mass ) )
+							rb.Rigidbody->SetMass( rb.Mass );
+
+						if( Auxiliary::DrawFloatControl( "Linear Drag", rb.LinearDrag ) )
+							rb.Rigidbody->SetLinearDrag( rb.LinearDrag );
+					}
+				} break;
+
+				default:
+					break;
 			}
 
 			//////////////////////////////////////////////////////////////////////////
@@ -1201,130 +1241,139 @@ namespace Saturn {
 
 			//////////////////////////////////////////////////////////////////////////
 
-			ImGui::PushID( "rbPos" );
-
-			ImGui::Columns( 2 );
-			ImGui::SetColumnWidth( 0, 125.0f );
-
-			ImGui::BeginHorizontal( "rbPos" );
-
-			ImGui::Text( "Position Lock" );
-
-			ImGui::NextColumn();
-
-			bool posX = rb.LockFlags & RigidbodyLockFlags::RigidbodyLock_PositionX;
-			bool posY = rb.LockFlags & RigidbodyLockFlags::RigidbodyLock_PositionY;
-			bool posZ = rb.LockFlags & RigidbodyLockFlags::RigidbodyLock_PositionZ;
-
-			ImGui::PushMultiItemsWidths( 3, ImGui::CalcItemWidth() );
-			ImGui::PushStyleVar( ImGuiStyleVar_ItemSpacing, ImVec2{ 1.0f, 0.0f } );
-
-			if( ImGui::Checkbox( "##posX", &posX ) )
+			switch( rb.BodyType )
 			{
-				if( posX )
-					rb.LockFlags |= RigidbodyLockFlags::RigidbodyLock_PositionX;
-				else
-					rb.LockFlags &= ~RigidbodyLockFlags::RigidbodyLock_PositionX;
+				case PhysicsRigidBodyType::Dynamic:
+				{
+					ImGui::PushID( "rbPos" );
 
-				modified |= true;
+					ImGui::Columns( 2 );
+					ImGui::SetColumnWidth( 0, 125.0f );
+
+					ImGui::BeginHorizontal( "rbPos" );
+
+					ImGui::Text( "Position Lock" );
+
+					ImGui::NextColumn();
+
+					bool posX = rb.LockFlags & RigidbodyLockFlags::RigidbodyLock_PositionX;
+					bool posY = rb.LockFlags & RigidbodyLockFlags::RigidbodyLock_PositionY;
+					bool posZ = rb.LockFlags & RigidbodyLockFlags::RigidbodyLock_PositionZ;
+
+					ImGui::PushMultiItemsWidths( 3, ImGui::CalcItemWidth() );
+					ImGui::PushStyleVar( ImGuiStyleVar_ItemSpacing, ImVec2{ 1.0f, 0.0f } );
+
+					if( ImGui::Checkbox( "##posX", &posX ) )
+					{
+						if( posX )
+							rb.LockFlags |= RigidbodyLockFlags::RigidbodyLock_PositionX;
+						else
+							rb.LockFlags &= ~RigidbodyLockFlags::RigidbodyLock_PositionX;
+
+						modified |= true;
+					}
+
+					ImGui::PopItemWidth();
+
+					if( ImGui::Checkbox( "##posY", &posY ) )
+					{
+						if( posY )
+							rb.LockFlags |= RigidbodyLockFlags::RigidbodyLock_PositionY;
+						else
+							rb.LockFlags &= ~RigidbodyLockFlags::RigidbodyLock_PositionY;
+
+						modified |= true;
+					}
+
+					ImGui::PopItemWidth();
+
+					if( ImGui::Checkbox( "##posZ", &posZ ) )
+					{
+						if( posZ )
+							rb.LockFlags |= RigidbodyLockFlags::RigidbodyLock_PositionZ;
+						else
+							rb.LockFlags &= ~RigidbodyLockFlags::RigidbodyLock_PositionZ;
+
+						modified |= true;
+					}
+
+					ImGui::PopItemWidth();
+
+					ImGui::PopStyleVar();
+
+					ImGui::EndHorizontal();
+
+					ImGui::Columns( 1 );
+
+					ImGui::PopID();
+
+					//////////////////////////////////////////////////////////////////////////
+
+					ImGui::PushID( "rbRot" );
+
+					ImGui::Columns( 2 );
+					ImGui::SetColumnWidth( 0, 125.0f );
+
+					ImGui::BeginHorizontal( "rbRot" );
+
+					ImGui::Text( "Rotation Lock" );
+
+					ImGui::NextColumn();
+
+					ImGui::PushMultiItemsWidths( 3, ImGui::CalcItemWidth() );
+					ImGui::PushStyleVar( ImGuiStyleVar_ItemSpacing, ImVec2{ 1.0f, 0 } );
+
+					bool rotX = rb.LockFlags & RigidbodyLockFlags::RigidbodyLock_RotationX;
+					bool rotY = rb.LockFlags & RigidbodyLockFlags::RigidbodyLock_RotationY;
+					bool rotZ = rb.LockFlags & RigidbodyLockFlags::RigidbodyLock_RotationZ;
+
+					if( ImGui::Checkbox( "##rotX", &rotX ) )
+					{
+						if( rotX )
+							rb.LockFlags |= RigidbodyLockFlags::RigidbodyLock_RotationX;
+						else
+							rb.LockFlags &= ~RigidbodyLockFlags::RigidbodyLock_RotationX;
+
+						modified |= true;
+					}
+
+					ImGui::PopItemWidth();
+
+					if( ImGui::Checkbox( "##rotY", &rotY ) )
+					{
+						if( rotY )
+							rb.LockFlags |= RigidbodyLockFlags::RigidbodyLock_RotationY;
+						else
+							rb.LockFlags &= ~RigidbodyLockFlags::RigidbodyLock_RotationY;
+
+						modified |= true;
+					}
+
+					ImGui::PopItemWidth();
+
+					if( ImGui::Checkbox( "##rotZ", &rotZ ) )
+					{
+						if( rotZ )
+							rb.LockFlags |= RigidbodyLockFlags::RigidbodyLock_RotationZ;
+						else
+							rb.LockFlags &= ~RigidbodyLockFlags::RigidbodyLock_RotationZ;
+
+						modified |= true;
+					}
+
+					ImGui::PopStyleVar();
+
+					ImGui::EndHorizontal();
+
+					ImGui::Columns( 1 );
+
+					ImGui::PopID();
+				} break;
+
+				default:
+					break;
 			}
 
-			ImGui::PopItemWidth();
-
-			if( ImGui::Checkbox( "##posY", &posY ) )
-			{
-				if( posY )
-					rb.LockFlags |= RigidbodyLockFlags::RigidbodyLock_PositionY;
-				else
-					rb.LockFlags &= ~RigidbodyLockFlags::RigidbodyLock_PositionY;
-
-				modified |= true;
-			}
-
-			ImGui::PopItemWidth();
-
-			if( ImGui::Checkbox( "##posZ", &posZ ) ) 
-			{
-				if( posZ )
-					rb.LockFlags |= RigidbodyLockFlags::RigidbodyLock_PositionZ;
-				else
-					rb.LockFlags &= ~RigidbodyLockFlags::RigidbodyLock_PositionZ;
-			
-				modified |= true;
-			}
-
-			ImGui::PopItemWidth();
-
-			ImGui::PopStyleVar();
-
-			ImGui::EndHorizontal();
-
-			ImGui::Columns( 1 );
-
-			ImGui::PopID();
-
-			//////////////////////////////////////////////////////////////////////////
-
-			ImGui::PushID( "rbRot" );
-
-			ImGui::Columns( 2 );
-			ImGui::SetColumnWidth( 0, 125.0f );
-
-			ImGui::BeginHorizontal( "rbRot" );
-
-			ImGui::Text( "Rotation Lock" );
-
-			ImGui::NextColumn();
-
-			ImGui::PushMultiItemsWidths( 3, ImGui::CalcItemWidth() );
-			ImGui::PushStyleVar( ImGuiStyleVar_ItemSpacing, ImVec2{ 1.0f, 0 } );
-
-			bool rotX = rb.LockFlags & RigidbodyLockFlags::RigidbodyLock_RotationX;
-			bool rotY = rb.LockFlags & RigidbodyLockFlags::RigidbodyLock_RotationY;
-			bool rotZ = rb.LockFlags & RigidbodyLockFlags::RigidbodyLock_RotationZ;
-
-			if( ImGui::Checkbox( "##rotX", &rotX ) )
-			{
-				if( rotX )
-					rb.LockFlags |= RigidbodyLockFlags::RigidbodyLock_RotationX;
-				else
-					rb.LockFlags &= ~RigidbodyLockFlags::RigidbodyLock_RotationX;
-		
-				modified |= true;
-			}
-
-			ImGui::PopItemWidth();
-
-			if( ImGui::Checkbox( "##rotY", &rotY ) )
-			{
-				if( rotY )
-					rb.LockFlags |= RigidbodyLockFlags::RigidbodyLock_RotationY;
-				else
-					rb.LockFlags &= ~RigidbodyLockFlags::RigidbodyLock_RotationY;
-			
-				modified |= true;
-			}
-
-			ImGui::PopItemWidth();
-
-			if( ImGui::Checkbox( "##rotZ", &rotZ ) )
-			{
-				if( rotZ )
-					rb.LockFlags |= RigidbodyLockFlags::RigidbodyLock_RotationZ;
-				else
-					rb.LockFlags &= ~RigidbodyLockFlags::RigidbodyLock_RotationZ;
-			
-				modified |= true;
-			}
-
-			ImGui::PopStyleVar();
-
-			ImGui::EndHorizontal();
-
-			ImGui::Columns( 1 );
-
-			ImGui::PopID();
-			
 			if( modified ) m_Context->MarkDirty();
 		} );
 

@@ -37,6 +37,8 @@
 #include "Saturn/Vulkan/EnvironmentMap.h"
 #include "Saturn/Vulkan/Mesh.h"
 
+#include "Saturn/Physics/PhysicsBodyType.h"
+
 // TODO: Should not be included...
 #include "Saturn/Animation/Animator.h"
 
@@ -287,8 +289,8 @@ namespace Saturn {
 	struct RigidbodyComponent
 	{
 		PhysicsRigidBody* Rigidbody = nullptr;
+		PhysicsRigidBodyType BodyType = PhysicsRigidBodyType::Dynamic;
 
-		bool IsKinematic = false;
 		bool UseCCD = false;
 		float Mass = 2.0f;
 		float LinearDrag = 1.0f;
@@ -297,7 +299,10 @@ namespace Saturn {
 		MemoryAssetDependency<AssetType::PhysicsMaterial> MaterialAssetID;
 
 		RigidbodyComponent() = default;
-		RigidbodyComponent( bool isKinematic ) : IsKinematic( isKinematic ) {}
+		RigidbodyComponent( bool ccd, float mass, float linearDrag, uint32_t lockFlags )
+			: UseCCD( ccd ), Mass( mass ), LinearDrag( linearDrag ), LockFlags( lockFlags )
+		{
+		}
 	};
 
 	struct PointLightComponent

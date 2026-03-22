@@ -40,6 +40,9 @@ namespace Saturn {
 	PhysicsRigidBody::PhysicsRigidBody( SharedPtr<Entity> entity )
 		: m_Entity( entity )
 	{
+		const RigidbodyComponent& rb = m_Entity->GetComponent<RigidbodyComponent>();
+		m_LockFlags = rb.LockFlags;
+		m_Type = rb.BodyType;
 	}
 
 	PhysicsRigidBody::~PhysicsRigidBody()
@@ -51,8 +54,6 @@ namespace Saturn {
 	{
 		const RigidbodyComponent& rb = m_Entity->GetComponent<RigidbodyComponent>();
 		const TransformComponent& tc = m_Entity->GetComponent<TransformComponent>();
-
-		m_LockFlags = rb.LockFlags;
 
 		// Normal Collider Component's have more priority over the static mesh.
 		if( m_Entity->HasComponent<BoxColliderComponent>() )
@@ -73,14 +74,13 @@ namespace Saturn {
 		}
 		else
 		{
-			SAT_CORE_WARN( "No physics shape component was found! No shape will be attached." );
-			SAT_CORE_ASSERT( false );
+			SAT_CORE_WARN( "No physics shape component was found! Box shape will be attached." );
+		
+			AttachPhysicsShape( PhysicsShapeType::Box );
 		}
 
 		// The settings might of changed, so update in case.
-		SetKinematic( rb.IsKinematic );
-
-		if( m_Shape->GetType() == PhysicsShapeType::TriangleMesh && rb.IsKinematic )
+		if( m_Shape->GetType() == PhysicsShapeType::TriangleMesh )
 		{
 			m_Type = PhysicsRigidBodyType::Static;
 		}
@@ -91,18 +91,25 @@ namespace Saturn {
 			Auxiliary::GLMToJolt( tc.Position ), 
 			Auxiliary::GLMQToJoltQ( glm::normalize( tc.GetRotation() ) ), 
 			( JPH::EMotionType ) m_Type, 
-			m_Kinematic ? PhysLayerNotMoving : PhysLayerMoving 
+			m_Type == PhysicsRigidBodyType::Static ? PhysLayerNotMoving : PhysLayerMoving 
 		);
-//		settings.mOverrideMassProperties = JPH::EOverrideMassProperties::CalculateInertia;
-//		settings.mMassPropertiesOverride.mMass = rb.Mass;
 		settings.mIsSensor = m_Shape->IsTrigger();
 		
 		m_pBody = PhysicsFoundation::Get()->GetBodyInterface()->CreateBody( settings );
 
-		PhysicsFoundation::Get()->GetBodyInterface()->AddBody( m_pBody->GetID(), m_Kinematic ? JPH::EActivation::DontActivate : JPH::EActivation::Activate );
+		PhysicsFoundation::Get()->GetBodyInterface()->AddBody( 
+			m_pBody->GetID(), 
+			m_Type == PhysicsRigidBodyType::Static ? JPH::EActivation::DontActivate : JPH::EActivation::Activate 
+		);
 
 		// Handle locking flags
 		CreateDOFConstraint();
+
+		if( m_Type != PhysicsRigidBodyType::Static )
+		{
+			// Handle locking flags
+			CreateDOFConstraint();
+		}
 	}
 
 	void PhysicsRigidBody::SetShapeTrigger( bool trigger )
@@ -199,7 +206,10 @@ namespace Saturn {
 		else
 			PhysicsFoundation::Get()->GetBodyInterface()->DeactivateBody( m_pBody->GetID() );
 
-		PhysicsFoundation::Get()->GetPhysicsSystem()->RemoveConstraint( m_DOFConstraint );
+		if( m_DOFConstraint )
+		{
+			PhysicsFoundation::Get()->GetPhysicsSystem()->RemoveConstraint( m_DOFConstraint );
+		}
 
 		PhysicsFoundation::Get()->GetBodyInterface()->DestroyBody( m_pBody->GetID() );
 
@@ -212,18 +222,14 @@ namespace Saturn {
 	{
 	}
 
-	void PhysicsRigidBody::SetKinematic( bool val )
-	{
-		if( val )
-		{
-			m_Type = PhysicsRigidBodyType::Kinematic;
-		}
-
-		m_Kinematic = val;
-	}
-
 	void PhysicsRigidBody::SetMass( float val )
 	{
+		if( m_Type == PhysicsRigidBodyType::Static )
+		{
+			SAT_CORE_WARN( "[PhysicsRigidBody]: Cannot set mass of a static rigid body!" );
+			return;
+		}
+
 		m_pBody->GetMotionProperties()->ScaleToMass( val );
 	}
 
@@ -233,6 +239,12 @@ namespace Saturn {
 
 	void PhysicsRigidBody::SetLinearVelocity( const glm::vec3& rVelocity )
 	{
+		if( m_Type == PhysicsRigidBodyType::Static )
+		{
+			SAT_CORE_WARN( "[PhysicsRigidBody]: Cannot set linear velocity of a static rigid body!" );
+			return;
+		}
+
 		PhysicsFoundation::Get()->GetBodyInterface()->SetLinearVelocity( m_pBody->GetID(), Auxiliary::GLMToJolt( rVelocity ) );
 	}
 
@@ -243,6 +255,12 @@ namespace Saturn {
 
 	void PhysicsRigidBody::ApplyForce( glm::vec3 ForceAmount, ForceMode Type )
 	{
+		if( m_Type == PhysicsRigidBodyType::Static )
+		{
+			SAT_CORE_WARN( "[PhysicsRigidBody]: Cannot apply force to static immovable rigid body!" );
+			return;
+		}
+
 		switch( Type )
 		{
 			case ForceMode::Force:
@@ -268,22 +286,40 @@ namespace Saturn {
 
 	void PhysicsRigidBody::Rotate( const glm::vec3& rRotation )
 	{
+		Rotate( glm::quat( rRotation ) );
 	}
 
 	void PhysicsRigidBody::Rotate( const glm::quat& rRotation )
 	{
+		if( m_Type == PhysicsRigidBodyType::Static )
+		{
+			SAT_CORE_WARN( "[PhysicsRigidBody]: Cannot rotate immovable rigid body!" );
+			return;
+		}
+
 		PhysicsFoundation::Get()->GetBodyInterface()->SetRotation( m_pBody->GetID(), Auxiliary::GLMQToJoltQ( rRotation ), JPH::EActivation::Activate );
 	}
 
 	void PhysicsRigidBody::SetPosition( const glm::vec3& rPosition )
 	{
-		if( m_Kinematic )
+		switch( m_Type )
 		{
-			PhysicsFoundation::Get()->GetBodyInterface()->MoveKinematic( m_pBody->GetID(), Auxiliary::GLMToJolt( rPosition ), JPH::Quat::sIdentity(), 0.0f );
-		}
-		else
-		{
-			PhysicsFoundation::Get()->GetBodyInterface()->SetPosition( m_pBody->GetID(), Auxiliary::GLMToJolt( rPosition ), JPH::EActivation::Activate );
+			case PhysicsRigidBodyType::Static:
+				SAT_CORE_WARN( "[PhysicsRigidBody]: Cannot move immovable rigid body!" );
+				break;
+			
+			case PhysicsRigidBodyType::Kinematic: 
+			{
+				PhysicsFoundation::Get()->GetBodyInterface()->MoveKinematic( m_pBody->GetID(), Auxiliary::GLMToJolt( rPosition ), JPH::Quat::sIdentity(), 0.0f );
+			} break;
+			
+			case PhysicsRigidBodyType::Dynamic:
+			{
+				PhysicsFoundation::Get()->GetBodyInterface()->SetPosition( m_pBody->GetID(), Auxiliary::GLMToJolt( rPosition ), JPH::EActivation::Activate );
+			} break;
+		
+			default:
+				break;
 		}
 	}
 

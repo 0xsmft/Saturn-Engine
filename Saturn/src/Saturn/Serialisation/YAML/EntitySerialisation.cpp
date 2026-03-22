@@ -459,7 +459,7 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 
 			const auto& rbc = entity->GetComponent< RigidbodyComponent >();
 
-			rEmitter << YAML::Key << "IsKinematic" << YAML::Value << rbc.IsKinematic;
+			rEmitter << YAML::Key << "BodyType" << YAML::Value << ( uint32_t ) rbc.BodyType;
 			rEmitter << YAML::Key << "CCD" << YAML::Value << rbc.UseCCD;
 			rEmitter << YAML::Key << "Mass" << YAML::Value << rbc.Mass;
 
@@ -946,7 +946,7 @@ pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value ); \
 		{
 			auto& rb = DeserialisedEntity->AddComponent< RigidbodyComponent >();
 
-			rb.IsKinematic = rbc[ "IsKinematic" ].as< bool >();
+			rb.BodyType = ( PhysicsRigidBodyType )rbc[ "BodyType" ].as< uint32_t >( 2 /*PhysicsRigidBodyType::Dynamic*/ );
 			rb.UseCCD = rbc[ "CCD" ].as< bool >();
 			rb.Mass = rbc[ "Mass" ].as< float >();
 

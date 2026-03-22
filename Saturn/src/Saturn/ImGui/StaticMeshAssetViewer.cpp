@@ -46,6 +46,10 @@
 
 #include "Saturn/Physics/PhysicsFoundation.h"
 
+#if !defined(SAT_DIST)
+#include "Saturn/ImGui/EditorEvents.h"
+#endif
+
 namespace Saturn {
 
 	StaticMeshAssetViewer::StaticMeshAssetViewer( AssetID id )
@@ -109,6 +113,7 @@ namespace Saturn {
 		//////////////////////////////////////////////////////////////////////////
 
 		if( m_ShowNoFallbackPopup ) DrawNoFallbackPopup();
+		if( m_ShowCookingErrorPopup ) DrawCookingErrorPopup();
 
 		//////////////////////////////////////////////////////////////////////////
 
@@ -119,27 +124,26 @@ namespace Saturn {
 			PhysicsShapeType type = m_Mesh->GetAttachedShape();
 			
 			constexpr const char* pItems[] = { "None", "Box", "Sphere", "Capsule", "Convex Mesh", "Triangle Mesh" };
-			static PhysicsShapeType SelectedEnum = type;
-			static const char* Selected = pItems[ ( int ) SelectedEnum ];
+			static PhysicsShapeType selectedEnum = type;
+			static const char* pSelected = pItems[ ( int ) selectedEnum ];
 
 			ImGui::Text( "Select Physics Shape Type:" );
 			ImGui::SameLine();
 
-			if( ImGui::BeginCombo( "##setshape", Selected ) )
+			if( ImGui::BeginCombo( "##setshape", pSelected ) )
 			{
 				for( unsigned int i = 0u; i < IM_ARRAYSIZE( pItems ); i++ )
 				{
-					bool IsSelected = ( Selected == pItems[ i ] );
-
-					if( ImGui::Selectable( pItems[ i ], IsSelected ) ) 
+					const bool isSelected = ( pSelected == pItems[ i ] );
+					if( ImGui::Selectable( pItems[ i ], isSelected ) ) 
 					{
-						SelectedEnum = ( PhysicsShapeType ) i;
-						Selected = pItems[ i ];
+						selectedEnum = ( PhysicsShapeType ) i;
+						pSelected = pItems[ i ];
 
-						m_Mesh->SetAttachedShape( SelectedEnum );
+						m_Mesh->SetAttachedShape( selectedEnum );
 					}
 
-					if( IsSelected )
+					if( isSelected )
 					{
 						ImGui::SetItemDefaultFocus();
 					}
@@ -148,13 +152,22 @@ namespace Saturn {
 				ImGui::EndCombo();
 			}
 
-			if( SelectedEnum == PhysicsShapeType::TriangleMesh || SelectedEnum == PhysicsShapeType::ConvexMesh )
+			if( selectedEnum == PhysicsShapeType::TriangleMesh || selectedEnum == PhysicsShapeType::ConvexMesh )
 			{
 				if( ImGui::Button( "Generate Mesh Collider" ) )
 				{
-//					bool Result = PhysicsFoundation::Get()->GetCookingContext().CookMeshCollider( m_Mesh, SelectedEnum );
-
-					// TODO: Show a dialog box of what failed.
+					const auto Result = PhysicsFoundation::Get()->GetCooking().CookMeshCollider( m_Mesh, selectedEnum );
+					if( Result != PhysicsCookingResult::Success )
+					{
+						m_ShowCookingErrorPopup = true;
+						m_CookingError = ( uint64_t ) Result;
+					}
+					else
+					{
+#if !defined(SAT_DIST)
+						Application::Get()->DispatchEvent<SendEditorNotificationEvent>( "Successfully cooked mesh collider!" );
+#endif
+					}
 				}
 			}
 
@@ -351,7 +364,7 @@ namespace Saturn {
 					const auto index = m_ResetIndices.front();
 					m_ResetIndices.pop();
 
-					m_Mesh->GetMaterialRegistry()->SetMaterial( index, m_FallbackID );
+					m_Mesh->GetMaterialRegistry()->SetMaterial( ( uint32_t ) index, m_FallbackID );
 				}
 
 				m_ShowNoFallbackPopup = false;
@@ -364,6 +377,46 @@ namespace Saturn {
 			{
 				m_ResetIndices = {};
 				m_ShowNoFallbackPopup = false;
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndHorizontal();
+
+			ImGui::EndPopup();
+		}
+	}
+
+	void StaticMeshAssetViewer::DrawCookingErrorPopup()
+	{
+		ImGui::OpenPopup( "Physics Collider Cooking Error!##physce" );
+
+		if( ImGui::BeginPopupModal( "Physics Collider Cooking Error!##physce", &m_ShowNoFallbackPopup, ImGuiWindowFlags_NoSavedSettings ) )
+		{
+			ImGui::Text( "An error has occurred whilst trying to cook this static mesh as a collider!" );
+
+			PhysicsCookingResult res = ( PhysicsCookingResult )m_CookingError;
+			switch( res )
+			{
+				case PhysicsCookingResult::Failure:
+					ImGui::Text( "General Cooking failure! You may want to check the debug console for more information." );
+					break;
+
+				case PhysicsCookingResult::InvalidTypeForCooking:
+					ImGui::Text( "Invalid mesh type to cook! Only Triangle and Convex collider types can be cooked!" );
+					break;
+
+				default:
+					ImGui::Text( "Unknown Error! Please add this error type to the switch case!" );
+					break;
+			}
+
+			// Options
+			ImGui::BeginHorizontal( "##physcehzop" );
+
+			if( ImGui::Button( "Ok" ) )
+			{
+				m_ShowCookingErrorPopup = false;
+				m_CookingError = 0;
 				ImGui::CloseCurrentPopup();
 			}
 

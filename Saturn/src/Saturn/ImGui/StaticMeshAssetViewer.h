@@ -49,6 +49,7 @@ namespace Saturn {
 	private:
 		void AddMesh();
 		void DrawNoFallbackPopup();
+		void DrawCookingErrorPopup();
 
 	private:
 		Ref<StaticMesh> m_Mesh;
@@ -59,7 +60,10 @@ namespace Saturn {
 		// the user tries to reset a material but we don't know what to
 		// fall back on.
 		bool m_ShowNoFallbackPopup = false;
+		bool m_ShowCookingErrorPopup = false;
+		uint64_t m_CookingError = 0;
 		UUID m_FallbackID = 0;
+	
 		std::queue<uint64_t> m_ResetIndices;
 	};
 }

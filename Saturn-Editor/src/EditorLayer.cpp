@@ -3436,19 +3436,18 @@ namespace Saturn {
 		SaveProject();
 
 		std::filesystem::path SaturnDir = Auxiliary::GetEnvironmentVariableWs( L"SATURN_DIR" );
-		std::filesystem::path WorkingDir = SaturnDir / "ProjectBrowser";
+		std::filesystem::path WorkingDir = SaturnDir / "Saturn-ProjectBrowser";
 
-		// TODO: Allow for other platforms
-#if defined( SAT_DEBUG )
+		const std::string binaryFolderName = std::format( "{0}-{1}-x86_64", Application::GetCurrentConfigName(), Application::GetCurrentPlatformBinaryName() );
+
 		SaturnDir /= L"bin";
-		SaturnDir /= L"Debug-windows-x86_64";
-		SaturnDir /= L"ProjectBrowser";
-		SaturnDir /= L"ProjectBrowser.exe";
+		SaturnDir /= binaryFolderName;
+		SaturnDir /= L"Saturn-ProjectBrowser";
+
+#if defined( SAT_PLATFORM_WINDOWS )
+		SaturnDir /= L"Saturn-ProjectBrowser.exe";
 #else
-		SaturnDir /= L"bin";
-		SaturnDir /= L"Release-windows-x86_64";
-		SaturnDir /= L"ProjectBrowser";
-		SaturnDir /= L"ProjectBrowser.exe";
+		SaturnDir /= L"Saturn-ProjectBrowser";
 #endif
 		DeatchedProcess dp( SaturnDir.wstring(), WorkingDir );
 		Application::Get()->Close();

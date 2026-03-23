@@ -62,6 +62,8 @@ namespace Saturn {
 		void NewFrame();
 		void EndRecord();
 
+		static void OpenRecordedFile();
+
 	private:
 		PhysicsRecorderOut m_OutStream;
 		std::unique_ptr<JPH::DebugRendererRecorder> m_Recorder;

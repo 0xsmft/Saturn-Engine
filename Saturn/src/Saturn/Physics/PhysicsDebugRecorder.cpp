@@ -34,6 +34,9 @@
 #include "Saturn/Project/Project.h"
 #include "Saturn/Serialisation/Raw/RawSerialisation.h"
 
+#include "Saturn/Core/Process.h"
+#include "Saturn/Core/EnvironmentVariables.h"
+
 #include <Jolt/Physics/Body/BodyManager.h>
 
 namespace Saturn {
@@ -74,7 +77,7 @@ namespace Saturn {
 	{
 		std::filesystem::path outPath = Project::GetActiveProject()->GetFullCachePath();
 		outPath /= "PerUser";
-		outPath /= std::format( "{0}.JoltCapture.jor", ( uint64_t ) g_ActiveScene->GetInternalID() );
+		outPath /= std::format( "{0}.JoltCapture.jor", g_ActiveScene->Name );
 		m_OutStream.Open( outPath );
 
 		m_Recorder = std::make_unique<JPH::DebugRendererRecorder>( m_OutStream );
@@ -92,6 +95,39 @@ namespace Saturn {
 		m_OutStream.Close();
 
 		m_Recorder.reset();
+	}
+
+	void PhysicsDebugRecorder::OpenRecordedFile()
+	{
+		std::filesystem::path outPath = Project::GetActiveProject()->GetFullCachePath();
+		outPath /= "PerUser";
+		outPath /= std::format( "{0}.JoltCapture.jor", g_ActiveScene->Name );
+
+		if( !std::filesystem::exists( outPath ) )
+		{
+			return;
+		}
+
+		const std::filesystem::path SaturnRootDir = Auxiliary::GetEnvironmentVariableWs( L"SATURN_DIR" );
+		std::filesystem::path joltViewerPath = SaturnRootDir;
+		joltViewerPath /= "Saturn";
+		joltViewerPath /= "vendor";
+		joltViewerPath /= "JoltPhysics";
+		joltViewerPath /= "JoltViewer";
+		joltViewerPath /= "PreBuilt";
+
+#if defined(SAT_PLATFORM_WINDOWS)
+		joltViewerPath /= "Windows-x64";
+		joltViewerPath /= "JoltViewer.exe";
+#elif defined(SAT_PLATFORM_LINUX)
+		joltViewerPath /= "Linux-x64";
+		joltViewerPath /= "JoltViewer";
+#endif
+
+		joltViewerPath += " ";
+		joltViewerPath += outPath;
+
+		DeatchedProcess dp( joltViewerPath );
 	}
 
 }

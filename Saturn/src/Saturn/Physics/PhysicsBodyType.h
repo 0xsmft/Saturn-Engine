@@ -30,7 +30,7 @@
 
 namespace Saturn {
 
-	enum class PhysicsRigidBodyType
+	enum class PhysicsRigidBodyType : uint8_t
 	{
 		// Taken from the Jolt documentation....
 		Static,						///< Non movable

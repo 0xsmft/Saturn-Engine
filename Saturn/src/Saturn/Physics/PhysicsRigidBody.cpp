@@ -393,7 +393,8 @@ namespace Saturn {
 		{
 			m_LockFlags = flags;
 
-			PhysicsFoundation::Get()->GetPhysicsSystem()->RemoveConstraint( m_DOFConstraint );
+			if( m_DOFConstraint )
+				PhysicsFoundation::Get()->GetPhysicsSystem()->RemoveConstraint( m_DOFConstraint );
 
 			CreateDOFConstraint();
 		}

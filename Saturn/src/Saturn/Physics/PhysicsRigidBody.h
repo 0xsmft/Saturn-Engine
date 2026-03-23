@@ -87,13 +87,13 @@ namespace Saturn {
 
 	private:
 		JPH::BodyID m_BodyID;
+		PhysicsRigidBodyType m_Type = PhysicsRigidBodyType::Dynamic;
+		uint8_t m_LockFlags = 0;
+
 		JPH::Ref<JPH::SixDOFConstraint> m_DOFConstraint;
 
 		SharedPtr<Entity> m_Entity;
 		Ref<PhysicsShape> m_Shape;
-
-		PhysicsRigidBodyType m_Type = PhysicsRigidBodyType::Dynamic;
-		uint32_t m_LockFlags = 0u;
 	private:
 		friend class PhysicsShape;
 		friend class PhysicsFoundation;

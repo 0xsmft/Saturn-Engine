@@ -50,7 +50,7 @@ namespace Saturn {
 		Torque
 	};
 
-	enum RigidbodyLockFlags : uint32_t
+	enum RigidbodyLockFlags : uint8_t
 	{
 		RigidbodyLock_PositionX = BIT( 0 ),
 		RigidbodyLock_PositionY = BIT( 1 ),

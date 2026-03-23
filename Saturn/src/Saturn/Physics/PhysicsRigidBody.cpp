@@ -95,16 +95,17 @@ namespace Saturn {
 		);
 		settings.mIsSensor = m_Shape->IsTrigger();
 		
-		m_pBody = PhysicsFoundation::Get()->GetBodyInterface()->CreateBody( settings );
+		auto* pBody = PhysicsFoundation::Get()->GetBodyInterface()->CreateBody( settings );
+		m_BodyID = pBody->GetID();
 
 		PhysicsFoundation::Get()->GetBodyInterface()->AddBody( 
-			m_pBody->GetID(), 
+			m_BodyID,
 			m_Type == PhysicsRigidBodyType::Static ? JPH::EActivation::DontActivate : JPH::EActivation::Activate 
 		);
 
 		// FIXME: Might not be viable to use the handle! (Entity ID may be better, however it's faster to use the handle)
 		//		  If we ever crash tell me to revise this!
-		m_pBody->SetUserData( ( uint64_t ) m_Entity->GetHandle() );
+		pBody->SetUserData( ( uint64_t ) m_Entity->GetHandle() );
 
 		if( m_Type != PhysicsRigidBodyType::Static )
 		{
@@ -118,7 +119,16 @@ namespace Saturn {
 		if( m_Shape->IsTrigger() == trigger )
 			return;
 
-		m_pBody->SetIsSensor( trigger );
+		// Access
+		auto& bodyInterface = PhysicsFoundation::Get()->GetPhysicsSystem()->GetBodyLockInterface();
+
+		JPH::BodyLockWrite lock( bodyInterface, m_BodyID );
+		if( lock.Succeeded() )
+		{
+			JPH::Body& rBody = lock.GetBody();
+			rBody.SetIsSensor( trigger );
+		}
+
 		m_Shape->SetTrigger( trigger );
 	}
 
@@ -193,28 +203,51 @@ namespace Saturn {
 			settings.SetLimitedAxis( EAxis::RotationY, 1.0F, 0.0F );
 		}
 
-		settings.mPosition2 = m_pBody->GetPosition();
+		// Access
+		auto& bodyInterface = PhysicsFoundation::Get()->GetPhysicsSystem()->GetBodyLockInterface();
 
-		m_DOFConstraint = static_cast<JPH::SixDOFConstraint*>( settings.Create( JPH::Body::sFixedToWorld, *m_pBody ) );
+		JPH::BodyLockWrite lock( bodyInterface, m_BodyID );
+		if( lock.Succeeded() )
+		{
+			JPH::Body& rBody = lock.GetBody();
 
-		PhysicsFoundation::Get()->GetPhysicsSystem()->AddConstraint( m_DOFConstraint );
+			settings.mPosition2 = rBody.GetPosition();
+
+			m_DOFConstraint = static_cast<JPH::SixDOFConstraint*>( settings.Create( JPH::Body::sFixedToWorld, rBody ) );
+
+			PhysicsFoundation::Get()->GetPhysicsSystem()->AddConstraint( m_DOFConstraint );
+		}
+		else
+		{
+			SAT_CORE_WARN( "Failed to create Degrees of Freedom constraint for locking flags!" );
+		}
 	}
 
 	void PhysicsRigidBody::Destroy()
 	{
-		if( m_pBody->IsInBroadPhase() )
-			PhysicsFoundation::Get()->GetBodyInterface()->RemoveBody( m_pBody->GetID() );
-		else
-			PhysicsFoundation::Get()->GetBodyInterface()->DeactivateBody( m_pBody->GetID() );
+		auto& bodyInterface = PhysicsFoundation::Get()->GetPhysicsSystem()->GetBodyLockInterfaceNoLock();
+		JPH::BodyLockWrite lock( bodyInterface, m_BodyID );
+		if( lock.Succeeded() )
+		{
+			JPH::Body& rBody = lock.GetBody();
+
+			if( rBody.IsInBroadPhase() )
+			{
+				PhysicsFoundation::Get()->GetBodyInterface()->RemoveBody( m_BodyID );
+			}
+			else
+			{
+				PhysicsFoundation::Get()->GetBodyInterface()->DeactivateBody( m_BodyID );
+			}
+		}
 
 		if( m_DOFConstraint )
 		{
 			PhysicsFoundation::Get()->GetPhysicsSystem()->RemoveConstraint( m_DOFConstraint );
 		}
 
-		PhysicsFoundation::Get()->GetBodyInterface()->DestroyBody( m_pBody->GetID() );
+		PhysicsFoundation::Get()->GetBodyInterface()->DestroyBody( m_BodyID );
 
-		m_pBody = nullptr;
 		m_Shape = nullptr;
 		m_Entity = nullptr;
 	}
@@ -231,7 +264,15 @@ namespace Saturn {
 			return;
 		}
 
-		m_pBody->GetMotionProperties()->ScaleToMass( val );
+		auto& bodyInterface = PhysicsFoundation::Get()->GetPhysicsSystem()->GetBodyLockInterface();
+
+		JPH::BodyLockWrite lock( bodyInterface, m_BodyID );
+		if( lock.Succeeded() )
+		{
+			JPH::Body& rBody = lock.GetBody();
+
+			rBody.GetMotionProperties()->ScaleToMass( val );
+		}
 	}
 
 	void PhysicsRigidBody::SetLinearDrag( float value )
@@ -246,7 +287,7 @@ namespace Saturn {
 			return;
 		}
 
-		PhysicsFoundation::Get()->GetBodyInterface()->SetLinearVelocity( m_pBody->GetID(), Auxiliary::GLMToJolt( rVelocity ) );
+		PhysicsFoundation::Get()->GetBodyInterface()->SetLinearVelocity( m_BodyID, Auxiliary::GLMToJolt( rVelocity ) );
 	}
 
 	float PhysicsRigidBody::GetLinearDrag()
@@ -265,19 +306,19 @@ namespace Saturn {
 		switch( Type )
 		{
 			case ForceMode::Force:
-				PhysicsFoundation::Get()->GetBodyInterface()->AddForce( m_pBody->GetID(), Auxiliary::GLMToJolt( ForceAmount ) );
+				PhysicsFoundation::Get()->GetBodyInterface()->AddForce( m_BodyID, Auxiliary::GLMToJolt( ForceAmount ) );
 				break;
 
 			case ForceMode::Impulse:
-				PhysicsFoundation::Get()->GetBodyInterface()->AddImpulse( m_pBody->GetID(), Auxiliary::GLMToJolt( ForceAmount ) );
+				PhysicsFoundation::Get()->GetBodyInterface()->AddImpulse( m_BodyID, Auxiliary::GLMToJolt( ForceAmount ) );
 				break;
 
 			case ForceMode::ForceAndTorque:
-				PhysicsFoundation::Get()->GetBodyInterface()->AddForceAndTorque( m_pBody->GetID(), Auxiliary::GLMToJolt( ForceAmount ), Auxiliary::GLMToJolt( ForceAmount ) );
+				PhysicsFoundation::Get()->GetBodyInterface()->AddForceAndTorque( m_BodyID, Auxiliary::GLMToJolt( ForceAmount ), Auxiliary::GLMToJolt( ForceAmount ) );
 				break;
 
 			case ForceMode::Torque:
-				PhysicsFoundation::Get()->GetBodyInterface()->AddTorque( m_pBody->GetID(), Auxiliary::GLMToJolt( ForceAmount ) );
+				PhysicsFoundation::Get()->GetBodyInterface()->AddTorque( m_BodyID, Auxiliary::GLMToJolt( ForceAmount ) );
 				break;
 
 			default:
@@ -298,7 +339,7 @@ namespace Saturn {
 			return;
 		}
 
-		PhysicsFoundation::Get()->GetBodyInterface()->SetRotation( m_pBody->GetID(), Auxiliary::GLMQToJoltQ( rRotation ), JPH::EActivation::Activate );
+		PhysicsFoundation::Get()->GetBodyInterface()->SetRotation( m_BodyID, Auxiliary::GLMQToJoltQ( rRotation ), JPH::EActivation::Activate );
 	}
 
 	void PhysicsRigidBody::SetPosition( const glm::vec3& rPosition )
@@ -311,12 +352,12 @@ namespace Saturn {
 			
 			case PhysicsRigidBodyType::Kinematic: 
 			{
-				PhysicsFoundation::Get()->GetBodyInterface()->MoveKinematic( m_pBody->GetID(), Auxiliary::GLMToJolt( rPosition ), JPH::Quat::sIdentity(), 0.0f );
+				PhysicsFoundation::Get()->GetBodyInterface()->MoveKinematic( m_BodyID, Auxiliary::GLMToJolt( rPosition ), JPH::Quat::sIdentity(), 0.0f );
 			} break;
 			
 			case PhysicsRigidBodyType::Dynamic:
 			{
-				PhysicsFoundation::Get()->GetBodyInterface()->SetPosition( m_pBody->GetID(), Auxiliary::GLMToJolt( rPosition ), JPH::EActivation::Activate );
+				PhysicsFoundation::Get()->GetBodyInterface()->SetPosition( m_BodyID, Auxiliary::GLMToJolt( rPosition ), JPH::EActivation::Activate );
 			} break;
 		
 			default:
@@ -324,14 +365,14 @@ namespace Saturn {
 		}
 	}
 
-	glm::vec3 PhysicsRigidBody::GetPosition()
+	glm::vec3 PhysicsRigidBody::GetPosition() const
 	{
-		return Auxiliary::JoltToGLM( PhysicsFoundation::Get()->GetBodyInterface()->GetPosition( m_pBody->GetID() ) );
+		return Auxiliary::JoltToGLM( PhysicsFoundation::Get()->GetBodyInterface()->GetPosition( m_BodyID ) );
 	}
 
-	glm::vec3 PhysicsRigidBody::GetRotation()
+	glm::vec3 PhysicsRigidBody::GetRotation() const
 	{
-		auto eular = glm::eulerAngles( Auxiliary::JoltQToGLMQ( PhysicsFoundation::Get()->GetBodyInterface()->GetRotation( m_pBody->GetID() ) ) );
+		auto eular = glm::eulerAngles( Auxiliary::JoltQToGLMQ( PhysicsFoundation::Get()->GetBodyInterface()->GetRotation( m_BodyID ) ) );
 
 		return eular;
 	}
@@ -343,7 +384,7 @@ namespace Saturn {
 
 	glm::vec3 PhysicsRigidBody::GetLinearVelocity() const
 	{
-		return Auxiliary::JoltToGLM( PhysicsFoundation::Get()->GetBodyInterface()->GetLinearVelocity( m_pBody->GetID() ) );
+		return Auxiliary::JoltToGLM( PhysicsFoundation::Get()->GetBodyInterface()->GetLinearVelocity( m_BodyID ) );
 	}
 
 	void PhysicsRigidBody::SetLockFlags( RigidbodyLockFlags flags, bool value )

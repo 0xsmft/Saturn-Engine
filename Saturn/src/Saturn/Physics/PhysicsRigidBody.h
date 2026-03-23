@@ -62,8 +62,8 @@ namespace Saturn {
 
 		void SyncTransfrom();
 
-		glm::vec3 GetPosition();
-		glm::vec3 GetRotation();
+		glm::vec3 GetPosition() const;
+		glm::vec3 GetRotation() const;
 		glm::mat4 GetTransform();
 
 		glm::vec3 GetLinearVelocity() const;
@@ -73,12 +73,6 @@ namespace Saturn {
 		RigidbodyLockFlags GetFlags() const { return ( RigidbodyLockFlags )m_LockFlags; }
 		
 		bool AllRotationLocked() const;
-
-		void SetOnCollisionHit( std::function<void( SharedPtr<Entity> rOther )>&& rrFunc ) { m_OnMeshHit = rrFunc; }
-		void SetOnCollisionExit( std::function<void( SharedPtr<Entity> rOther )>&& rrFunc ) { m_OnMeshExit = rrFunc; }
-
-		void OnCollisionHit ( SharedPtr<Entity> rOther ) { m_OnMeshHit( rOther ); }
-		void OnCollisionExit( SharedPtr<Entity> rOther ) { m_OnMeshExit( rOther ); }
 
 		SharedPtr<Entity> GetEntity() { return m_Entity; }
 
@@ -92,7 +86,7 @@ namespace Saturn {
 		void Destroy();
 
 	private:
-		JPH::Body* m_pBody = nullptr;
+		JPH::BodyID m_BodyID;
 		JPH::Ref<JPH::SixDOFConstraint> m_DOFConstraint;
 
 		SharedPtr<Entity> m_Entity;
@@ -100,9 +94,6 @@ namespace Saturn {
 
 		PhysicsRigidBodyType m_Type = PhysicsRigidBodyType::Dynamic;
 		uint32_t m_LockFlags = 0u;
-
-		std::function<void( SharedPtr<Entity> rOther )> m_OnMeshHit;
-		std::function<void( SharedPtr<Entity> rOther )> m_OnMeshExit;
 	private:
 		friend class PhysicsShape;
 		friend class PhysicsFoundation;

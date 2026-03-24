@@ -43,14 +43,12 @@ public class %PROJECT_NAME%Module : Module
             Path.Combine( saturnDir, "Saturn/vendor/tracy/src" ),
             Path.Combine( saturnDir, "Saturn/vendor/Filewatch/src" ),
             Path.Combine( saturnDir, "Saturn/vendor/miniaudio/src" ),
-            Path.Combine( saturnDir, "Saturn/vendor/physx/include" ),
+            Path.Combine( saturnDir, "Saturn/vendor/JoltPhysics/Jolt" ),
             Path.Combine( saturnDir, "Saturn/vendor/zlib" ),
             Path.Combine( saturnDir, "Saturn/vendor/Recast/RecastAndDetour/Include" ),
             Path.Combine( saturnDir, "Saturn/vendor/stb" ),
             Path.Combine( saturnDir, "Saturn/vendor/vulkan/include" ),
             Path.Combine( saturnDir, "Saturn/vendor/spdlog/include" ),
-            Path.Combine( saturnDir, "Saturn/vendor/physx/include/pxshared" ),
-            Path.Combine( saturnDir, "Saturn/vendor/physx/include/physx" ),
             Path.Combine( saturnDir, "Saturn/vendor/acl/include" ),
             Path.Combine( saturnDir, "Saturn/vendor/acl/rtm/include" ),
         } );
@@ -60,7 +58,7 @@ public class %PROJECT_NAME%Module : Module
 
         LibraryPaths.AddRange( new string[] {
             Path.Combine( binPath, "Saturn" ),
-            VendorBinaries.GetBinPath( VendorProject.PHYSX ),
+            VendorBinaries.GetBinPath( VendorProject.JOLT ),
             VendorBinaries.GetBinPath( VendorProject.YAML_CPP ),
             VendorBinaries.GetBinPath( VendorProject.IMGUI ),
             VendorBinaries.GetBinPath( VendorProject.SPIRVCROSS ),
@@ -95,21 +93,6 @@ public class %PROJECT_NAME%Module : Module
                 Path.Combine( saturnDir, "Saturn/vendor/shaderc/bin/Debug-Windows/shaderc_util.lib" ),
                 Path.Combine( saturnDir, "Saturn/vendor/shaderc/bin/Debug-Windows/glslangd.lib" ),
                 Path.Combine( saturnDir, "Saturn/vendor/shaderc/bin/Debug-Windows/SPIRV-Tools.lib" ),
-                Path.Combine( saturnDir, "Saturn/vendor/shaderc/bin/Debug-Windows/glslc.lib" ),
-                Path.Combine( saturnDir, "Saturn/vendor/physx/bin/Debug/LowLevel_static_64.lib" ),
-                Path.Combine( saturnDir, "Saturn/vendor/physx/bin/Debug/LowLevelAABB_static_64.lib" ),
-                Path.Combine( saturnDir, "Saturn/vendor/physx/bin/Debug/LowLevelDynamics_static_64.lib" ),
-                Path.Combine( saturnDir, "Saturn/vendor/physx/bin/Debug/PhysX_64.lib" ),
-                Path.Combine( saturnDir, "Saturn/vendor/physx/bin/Debug/PhysXCharacterKinematic_static_64.lib" ),
-                Path.Combine( saturnDir, "Saturn/vendor/physx/bin/Debug/PhysXCommon_64.lib" ),
-                Path.Combine( saturnDir, "Saturn/vendor/physx/bin/Debug/PhysXCooking_64.lib" ),
-                Path.Combine( saturnDir, "Saturn/vendor/physx/bin/Debug/PhysXExtensions_static_64.lib" ),
-                Path.Combine( saturnDir, "Saturn/vendor/physx/bin/Debug/PhysXFoundation_64.lib" ),
-                Path.Combine( saturnDir, "Saturn/vendor/physx/bin/Debug/PhysXPvdSDK_static_64.lib" ),
-                Path.Combine( saturnDir, "Saturn/vendor/physx/bin/Debug/PhysXTask_static_64.lib" ),
-                Path.Combine( saturnDir, "Saturn/vendor/physx/bin/Debug/PhysXVehicle_static_64.lib" ),
-                Path.Combine( saturnDir, "Saturn/vendor/physx/bin/Debug/SceneQuery_static_64.lib" ),
-                Path.Combine( saturnDir, "Saturn/vendor/physx/bin/Debug/SimulationController_static_64.lib" ),
                 Path.Combine( saturnDir, "Saturn/vendor/vulkan/bin/vulkan-1.lib" ),
             } );
         }
@@ -122,27 +105,12 @@ public class %PROJECT_NAME%Module : Module
                 Path.Combine( saturnDir, "Saturn/vendor/shaderc/bin/Release-Windows/shaderc_util.lib" ),
                 Path.Combine( saturnDir, "Saturn/vendor/shaderc/bin/Release-Windows/glslang.lib" ),
                 Path.Combine( saturnDir, "Saturn/vendor/shaderc/bin/Release-Windows/SPIRV-Tools.lib" ),
-                Path.Combine( saturnDir, "Saturn/vendor/shaderc/bin/Release-Windows/glslc.lib" ),
             } );
         }
         
         if( Shared.ProjectInfo.CurrentConfigKind == ConfigKind.Release || Shared.ProjectInfo.CurrentConfigKind == ConfigKind.Dist )
         {
             Links.AddRange( new string[] {
-                Path.Combine( saturnDir, "Saturn/vendor/physx/bin/Release/LowLevel_static_64.lib" ),
-                Path.Combine( saturnDir, "Saturn/vendor/physx/bin/Release/LowLevelAABB_static_64.lib" ),
-                Path.Combine( saturnDir, "Saturn/vendor/physx/bin/Release/LowLevelDynamics_static_64.lib" ),
-                Path.Combine( saturnDir, "Saturn/vendor/physx/bin/Release/PhysX_64.lib" ),
-                Path.Combine( saturnDir, "Saturn/vendor/physx/bin/Release/PhysXCharacterKinematic_static_64.lib" ),
-                Path.Combine( saturnDir, "Saturn/vendor/physx/bin/Release/PhysXCommon_64.lib" ),
-                Path.Combine( saturnDir, "Saturn/vendor/physx/bin/Release/PhysXCooking_64.lib" ),
-                Path.Combine( saturnDir, "Saturn/vendor/physx/bin/Release/PhysXExtensions_static_64.lib" ),
-                Path.Combine( saturnDir, "Saturn/vendor/physx/bin/Release/PhysXFoundation_64.lib" ),
-                Path.Combine( saturnDir, "Saturn/vendor/physx/bin/Release/PhysXPvdSDK_static_64.lib" ),
-                Path.Combine( saturnDir, "Saturn/vendor/physx/bin/Release/PhysXTask_static_64.lib" ),
-                Path.Combine( saturnDir, "Saturn/vendor/physx/bin/Release/PhysXVehicle_static_64.lib" ),
-                Path.Combine( saturnDir, "Saturn/vendor/physx/bin/Release/SceneQuery_static_64.lib" ),
-                Path.Combine( saturnDir, "Saturn/vendor/physx/bin/Release/SimulationController_static_64.lib" ),
                 Path.Combine( saturnDir, "Saturn/vendor/vulkan/bin/vulkan-1.lib" )
             } );
         }

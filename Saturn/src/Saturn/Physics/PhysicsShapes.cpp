@@ -598,7 +598,7 @@ namespace Saturn {
 					auto* pVertexBuffer = pMesh->getVertices();
 					auto* pIndexBuffer = pMesh->getIndexBuffer();
 
-					for( int i = 0; i < triCount; i++ )
+					for( physx::PxU32 i = 0; i < triCount; i++ )
 					{
 						physx::PxHullPolygon poly{};
 						if( pMesh->getPolygonData( i, poly ) ) continue;
@@ -606,7 +606,7 @@ namespace Saturn {
 						const uint32_t vertexCount = poly.mNbVerts;
 						const physx::PxU8* pPolyIndices = pIndexBuffer + poly.mIndexBase;
 
-						for( int j = 1; j < vertexCount - 1; j++ )
+						for( physx::PxU32 j = 1; j < vertexCount - 1; j++ )
 						{
 							glm::vec3 v0 = glm::vec3( actorTransform * glm::vec4( Auxiliary::JoltToGLM( pVertexBuffer[ pPolyIndices[ 0 ] ] ), 1.0f ) );
 							glm::vec3 v1 = glm::vec3( actorTransform * glm::vec4( Auxiliary::JoltToGLM( pVertexBuffer[ pPolyIndices[ j ] ] ), 1.0f ) );

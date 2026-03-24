@@ -720,20 +720,31 @@ namespace Saturn {
 		{
 			bool modified = false;
 
-			auto& translation = tc.Position;
-			glm::vec3 rotation = glm::degrees( tc.GetRotationEuler() );
-			auto& scale = tc.Scale;
-
-			modified = Auxiliary::DrawVec3Control( "Translation", tc.Position );
-		
-			if( Auxiliary::DrawVec3Control( "Rotation", rotation ) ) 
+			auto oldTranslation = tc.Position;
+			if( Auxiliary::DrawVec3Control( "Translation", tc.Position ) ) 
 			{
-				tc.SetRotation( glm::radians( rotation ) );
-				
 				modified |= true;
+
+				Ref<UndoRedoActionModifyVec3> action = Ref<UndoRedoActionModifyVec3>::Create( "Modify Entity Translation", &tc.Position, oldTranslation, tc.Position );
+				GlobalUndoRedoGroup::Get()->AddAction( action, ( uint64_t ) entity->GetHandle() );
 			}
 
-			modified |= Auxiliary::DrawVec3Control( "Scale", tc.Scale, 1.0f );
+			glm::vec3 rotationEuler = glm::degrees( tc.GetRotationEuler() );
+			if( Auxiliary::DrawVec3Control( "Rotation", rotationEuler ) ) 
+			{
+				modified |= true;
+
+				tc.SetRotation( glm::radians( rotationEuler ) );
+			}
+
+			auto oldScale = tc.Scale;
+			if( Auxiliary::DrawVec3Control( "Scale", tc.Scale, 1.0f ) ) 
+			{
+				modified |= true;
+
+				Ref<UndoRedoActionModifyVec3> action = Ref<UndoRedoActionModifyVec3>::Create( "Modify Entity Scale", &tc.Scale, oldScale, tc.Scale );
+				GlobalUndoRedoGroup::Get()->AddAction( action, ( uint64_t ) entity->GetHandle() );
+			}
 
 			if( modified )
 			{
@@ -812,6 +823,41 @@ namespace Saturn {
 
 					Auxiliary::EndTreeNode();
 				}
+
+#if SAT_FEATURE_BONE_ATTACHMENT
+				if( Auxiliary::TreeNode( "Attachment", false ) )
+				{
+					ImGui::Text( "Parent Bone Joint (AttachmentPoint)" );
+					if( ImGui::BeginCombo( "##boneAttch", "No Joint Selected" ) )
+					{
+						if( entity->HasParent() )
+						{
+							if( auto* pComp = m_Context->FindEntityByID( entity->GetParent() )->TryGetComponent<SkeletalMeshComponent>() )
+							{
+								if( pComp->Mesh )
+								{
+									for( auto& rJoint : pComp->Mesh->GetSkeletonAsset()->GetBoneJoints() )
+									{
+										if( ImGui::Selectable( rJoint.GetName().c_str(), false ) )
+										{
+											auto& apc = entity->AddComponent<AttachmentPointComponent>();
+											apc.pBoneJoint = &rJoint;
+										}
+									}
+								}
+							}
+						}
+						else
+						{
+							ImGui::Text( "No parent found or the parent does not have a SkeletalMeshComponent." );
+						}
+
+						ImGui::EndCombo();
+					}
+
+					Auxiliary::EndTreeNode();
+				}
+#endif
 			}
 
 			if( Auxiliary::DrawAssetFinder( m_CurrentFinderType, &open, m_CurrentAssetID ) )
@@ -951,6 +997,36 @@ namespace Saturn {
 
 					ImGui::EndHorizontal();
 
+#if SAT_FEATURE_BONE_ATTACHMENT
+					ImGui::Text( "Parent Bone Joint (AttachmentPoint)" );
+					if( ImGui::BeginCombo( "##boneAttch", "No Joint Selected" ) )
+					{
+						if( entity->HasParent() )
+						{
+							if( auto* pComp = m_Context->FindEntityByID( entity->GetParent() )->TryGetComponent<SkeletalMeshComponent>() ) 
+							{
+								if( pComp->Mesh )
+								{
+									for( auto& rJoint : pComp->Mesh->GetSkeletonAsset()->GetBoneJoints() )
+									{
+										if( ImGui::Selectable( rJoint.GetName().c_str(), false ) )
+										{
+											auto& apc = entity->AddComponent<AttachmentPointComponent>();
+											apc.pBoneJoint = &rJoint;
+										}
+									}
+								}
+							}
+						}
+						else
+						{
+							ImGui::Text( "No parent found or the parent does not have a SkeletalMeshComponent." );
+						}
+
+						ImGui::EndCombo();
+					}
+
+#endif
 					Auxiliary::EndTreeNode();
 				}
 			}

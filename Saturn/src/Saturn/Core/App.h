@@ -49,9 +49,15 @@ namespace Saturn {
 	enum ApplicationFlags_
 	{
 		ApplicationFlag_UIOnly = BIT( 0 ),
-		ApplicationFlag_CreateSceneRenderer = BIT( 1 ),
-		ApplicationFlag_UseGameThread = BIT( 2 ),
+
+		// This flag is controlled by the layer!
+		ApplicationFlag_CreateSceneRenderer_DEPRECATED = BIT( 1 ),
+		
+		// Game thread no longer exists.
+		ApplicationFlag_UseGameThread_DEPPRECATED = BIT( 2 ),
+
 		ApplicationFlag_Titlebar = BIT( 3 ),
+
 		ApplicationFlag_UseVFS = BIT( 4 )
 	};
 
@@ -86,6 +92,11 @@ namespace Saturn {
 
 	class Application : public RubyEventTarget
 	{
+	private:
+		Application( const Application& rOther );
+		Application& operator=( Application&& );
+		Application& operator=( const Application& );
+
 	public:
 		static inline Application* Get() { return SingletonStorage::GetSingleton<Application>(); }
 	public:
@@ -102,6 +113,7 @@ namespace Saturn {
 	
 	public:
 		Timestep Time() const { return m_Timestep; }
+		float Framerate() const { return m_Framerate; }
 
 		// Calls the OS to show an open file dialog.
 		// @param rFilter Must be "Desc1|*.txt;" with "|" being a seperator
@@ -220,6 +232,7 @@ namespace Saturn {
 	private:
 		bool m_Running = true;
 
+		float m_Framerate = 0.0f;
 		float m_LastFrameTime = 0.0f;
 		Timestep m_Timestep;
 

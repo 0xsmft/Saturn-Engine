@@ -29,6 +29,7 @@
 #include "sppch.h"
 #include "Texture.h"
 
+#include "VulkanAllocator.h"
 #include "VulkanContext.h"
 #include "VulkanDebug.h"
 #include "VulkanImageAux.h"

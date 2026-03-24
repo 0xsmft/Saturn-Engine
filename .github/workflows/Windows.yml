@@ -13,21 +13,18 @@ jobs:
         shell: cmd
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v6.0.2
       with:
         submodules: recursive
         
     - name: Download Premake
-      uses: BEASTSM96/premake-action@v1.4
-      
-    - name: Setup NuGet
-      uses: NuGet/setup-nuget@v1.1.1
+      uses: BEASTSM96/premake-action@v1.5.1
 
     - name: Generate Project Files
-      run: scripts/WindowsGenProjects-CI.bat
+      run: premake5 vs2022
 
     - name: Setup MSBuild
-      uses: microsoft/setup-msbuild@v1.1
+      uses: microsoft/setup-msbuild@v2
     
     - name: Build Solution
       run: msbuild -property:Configuration=Debug,MultiProcessorCompilation=true -maxCpuCount -verbosity:minimal -noLogo Saturn.sln

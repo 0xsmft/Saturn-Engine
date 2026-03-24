@@ -70,7 +70,7 @@ namespace Saturn {
 		void SaveFileAs();
 		void OpenFile( AssetID id );
 		void OpenFileInRuntime( AssetID id );
-
+		void NewFile();
 		void SaveFile();
 		void SaveFileAuto();
 
@@ -140,6 +140,8 @@ namespace Saturn {
 
 		glm::vec2 ConvertMouseToViewportNDC();
 		std::pair<glm::vec3, glm::vec3> RayCast( float mx, float my );
+
+		void PlaceEntityRelativeToMousePos( SharedPtr<Entity> entity );
 
 	private:
 		enum MessageBoxButtons_

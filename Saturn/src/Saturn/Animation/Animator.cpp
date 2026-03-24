@@ -46,16 +46,17 @@ namespace Saturn {
 
 	Animator::~Animator()
 	{
-		Destory();
+		Destroy();
 	}
 
-	void Animator::Destory()
+	void Animator::Destroy()
 	{
 		m_SkeletalMesh = nullptr;
 		m_SingleAnimationAsset = nullptr;
 		m_AnimationControllerAsset = nullptr;
 
 		delete m_pOutPose;
+		m_pOutPose = nullptr;
 	}
 
 	void Animator::InitAnimation( AssetID id, Ref<SkeletalMesh> sk, AnimatorType type )
@@ -211,7 +212,7 @@ namespace Saturn {
 		const size_t count = m_SingleAnimationAsset->GetBoneCount();
 		std::vector<glm::mat4> ts( count );
 
-		for( size_t i = 0; i < count; ++i )
+		for( uint32_t i = 0; i < ( uint32_t ) count; ++i )
 		{
 			const auto& lts = m_pOutPose->LocalTransforms[ i ];
 			const glm::mat4 local = glm::translate( glm::mat4( 1.0f ), lts.Position ) 
@@ -225,7 +226,7 @@ namespace Saturn {
 			SAT_CORE_INFO( " S:{0}", lts.Scale );
 			*/
 
-			const uint32_t parent = m_SkeletalMesh->GetSkeletonAsset()->GetParentIndex( i );
+			const uint32_t parent = ( uint32_t ) m_SkeletalMesh->GetSkeletonAsset()->GetParentIndex( i );
 			ts[ i ] = ( parent == ~0u ) ? local : ts[ parent ] * local;
 		}
 

@@ -9,9 +9,18 @@ public class %PROJECT_NAME%Module : Module
     {
         base.Init();
 
-        Name = "%PROJECT_NAME%";
-        OutputType = LinkerOutput.SharedLibrary;
-        
+        Name = "Saturn";
+
+        // This is so shit, this should be handled by the Target.
+        if( Shared.ProjectInfo.CurrentConfigKind == ConfigKind.Dist )
+        {
+            OutputType = LinkerOutput.Executable;
+        }
+        else
+        {
+            OutputType = LinkerOutput.SharedLibrary;
+        }
+
         // Include directories relative to root folder (solution directory)
         string saturnDir = Shared.ProjectInfo.SaturnDir;
         Includes.AddRange( new string[] {

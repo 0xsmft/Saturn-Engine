@@ -46,18 +46,25 @@ namespace Saturn {
 						VkImageTiling Tiling,
 						VkImageUsageFlags Usage, 
 						VkMemoryPropertyFlags MemProps,
-						VkImage& rImage, VkDeviceMemory& rDeviceMemory, uint32_t MipLevels = 1, uint32_t ArrayLevels = 1, VkImageCreateFlags Flags = 0 );
+						VkImage& rImage, VkDeviceMemory& rDeviceMemory, 
+						uint32_t MipLevels = 1, 
+						uint32_t ArrayLevels = 1, 
+						VkImageCreateFlags Flags = 0 );
 
 	extern VkImageView CreateImageView( 
 						VkImage Image, 
 						VkFormat Format );
 	
 	extern VkImageView CreateImageView(
-					VkImage Image,
-					VkFormat Format,
-					VkImageAspectFlags AspectFlags );
+						VkImage Image,
+						VkFormat Format,
+						VkImageAspectFlags AspectFlags );
 
-	extern void TransitionImageLayout( VkImage Image, VkFormat Format, VkImageLayout OldLayout, VkImageLayout NewLayout );
+	extern void TransitionImageLayout( 
+						VkImage Image, 
+						VkFormat Format, 
+						VkImageLayout OldLayout, 
+						VkImageLayout NewLayout );
 
 	enum class AddressingMode
 	{

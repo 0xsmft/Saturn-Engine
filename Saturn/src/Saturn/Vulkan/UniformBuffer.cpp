@@ -29,6 +29,7 @@
 #include "sppch.h"
 #include "UniformBuffer.h"
 
+#include "VulkanAllocator.h"
 #include "VulkanContext.h"
 
 namespace Saturn {
@@ -71,7 +72,7 @@ namespace Saturn {
 		auto bufferAloc = pAllocator->GetAllocationFromBuffer( m_Buffer );
 
 		void* pBufferData = pAllocator->MapMemory<void>( bufferAloc );
-		memcpy( pBufferData, (const uint8_t*)pData + offset, size );
+		std::memcpy( pBufferData, (const uint8_t*)pData + offset, size );
 		pAllocator->UnmapMemory( bufferAloc );
 	}
 

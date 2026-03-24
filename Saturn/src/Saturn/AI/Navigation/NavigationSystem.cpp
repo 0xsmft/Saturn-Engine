@@ -109,7 +109,7 @@ namespace Saturn {
 		return path.Get();
 	}
 
-	void NavigationSystem::DestoryStraightPath( StraightNavPath* pPath )
+	void NavigationSystem::DestroyStraightPath( StraightNavPath* pPath )
 	{
 		if( const auto itr = std::find( m_Paths.begin(), m_Paths.end(), pPath ); itr != m_Paths.end() )
 		{

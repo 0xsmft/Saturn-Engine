@@ -31,9 +31,8 @@
 
 #include "Saturn/Core/Ruby/RubyWindow.h"
 
-#include "VulkanDebugMessenger.h"
-
 #include "VulkanDebug.h"
+#include "VulkanDebugMessenger.h"
 #include "VulkanAllocator.h"
 
 #include "Renderer.h"
@@ -527,8 +526,7 @@ namespace Saturn {
 
 	VkCommandBuffer VulkanContext::BeginNewCommandBuffer() const
 	{
-		VkCommandBufferAllocateInfo cmdBufAllocateInfo = {};
-		cmdBufAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		VkCommandBufferAllocateInfo cmdBufAllocateInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
 		cmdBufAllocateInfo.commandPool = m_CommandPool;
 		cmdBufAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 		cmdBufAllocateInfo.commandBufferCount = 1;
@@ -546,8 +544,7 @@ namespace Saturn {
 
 	VkCommandBuffer VulkanContext::CreateComputeCommandBuffer() const
 	{
-		VkCommandBufferAllocateInfo cmdBufAllocateInfo = {};
-		cmdBufAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		VkCommandBufferAllocateInfo cmdBufAllocateInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
 		cmdBufAllocateInfo.commandPool = m_ComputeCommandPool;
 		cmdBufAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 		cmdBufAllocateInfo.commandBufferCount = 1;

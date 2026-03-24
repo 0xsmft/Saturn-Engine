@@ -83,6 +83,9 @@ namespace Saturn {
 		virtual void UpdateFiles( bool clear = false ) override;
 		virtual void OnItemSelected( ContentBrowserItem* pItem, bool clicked ) override;
 		virtual void DrawItemsClipped( std::vector<Ref<ContentBrowserItem>>& rList, ImVec2 size, float padding, int columnCount ) override;
+
+	private:
+		void OnKeyPressed( RubyKeyEvent& rEvent );
 		void DrawItemsUnclipped( std::vector<Ref<ContentBrowserItem>>& rList, ImVec2 size, float padding );
 
 		void BuildSearchList();
@@ -93,6 +96,8 @@ namespace Saturn {
 		void DrawScriptsFolderTree();
 
 		void DrawRootFolder( CBViewMode type, bool open = false );
+
+		void DrawAssetOpenRenamePopup();
 
 		void DrawBaseContextMenu();
 		void AssetsPopupContextMenu();
@@ -136,7 +141,7 @@ namespace Saturn {
 		// This used to be SClassExtendedMetadata hence the name
 		const SClass* m_SelectedMetadata = SObject::StaticClass();
 
-		filewatch::FileWatch<std::wstring>* m_Watcher = nullptr;
+		std::unique_ptr<filewatch::FileWatch<std::wstring>> m_Watcher;
 
 	private:
 		std::vector<ContentBrowserQuickAction> m_QuickActionUndo;
@@ -147,10 +152,12 @@ namespace Saturn {
 		std::string m_ClassInstanceName;
 		std::string m_NewClassName;
 
-		Ref<ContentBrowserItem> m_ItemToDelete = nullptr;
+		std::vector<Ref<ContentBrowserItem>> m_ItemsToDelete;
 
 		std::unique_ptr<AssetImportPopupBase> m_CurrentImportPopup;
 
+		// Should be handled by the editor.
+		bool m_OpenRenameAssetOpenPopup = false;
 		bool m_OpenScriptsPopup = false;
 		bool m_OpenClassInstancePopup = false;
 		bool m_ShowDeleteAssetPopup = false;

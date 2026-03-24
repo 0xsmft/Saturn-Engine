@@ -45,15 +45,16 @@ namespace Saturn {
 	{
 		SingletonStorage::AddSingleton( this );
 
+		m_Assets = Ref<AssetRegistry>::Create();
+
+		// In distribution builds asset registry is loaded by the Asset Bundle!
+#if !defined(SAT_DIST)
 		const auto project = Project::GetActiveProject();
 		auto assetDir = project->GetFullAssetPath();
 		assetDir /= "AssetRegistry.sreg";
 
-		m_Assets = Ref<AssetRegistry>::Create();
 		m_Assets->m_Path = assetDir;
 
-		// In distribution builds asset registry is loaded by the Asset Bundle!
-#if !defined(SAT_DIST)
 		AssetManagerSerialiser ars;
 		ars.Deserialise();
 #endif
@@ -84,8 +85,25 @@ namespace Saturn {
 	{
 		Project::GetActiveProject()->RemoveAssetFromDefaults( id );
 
-		if( IsAssetLoaded( id ) )
+		{
+			Ref<Asset> asset = m_Assets->FindAsset( id );
+			bool assetWasLoadedBefore = IsAssetLoaded( id );
+			if( !assetWasLoadedBefore )
+			{
+				if( m_Importer.TryLoadData( asset ) ) 
+				{
+					m_Assets->m_LoadedAssets[ id ] = asset;
+				}
+			}
+
 			m_Assets->m_LoadedAssets[ id ]->OnDelete();
+
+			// Unload before deletion to so the ref count decrements.
+			if( !assetWasLoadedBefore )
+			{
+				m_Assets->m_LoadedAssets.erase( id );
+			}
+		}
 
 		m_Assets->RemoveAsset( id );
 		Save();

@@ -288,7 +288,9 @@ namespace Saturn {
 
 		std::vector< Ref< Pass > > DirShadowMapPasses;
 		std::vector< Ref< Pipeline > > DirShadowMapPipelines;
+		std::vector< Ref< Pipeline > > DirShadowMapDynamicPipelines;
 		Ref<Material> DirShadowMapMaterial;
+		Ref<Material> DirShadowMapDynamicMaterialSet2;
 
 		float CascadeSplitLambda = 0.92f;
 		float CascadeFarPlaneOffset = 100.0f;
@@ -420,6 +422,7 @@ namespace Saturn {
 		Ref< Shader > SceneCompositeShader = nullptr;
 		Ref< Shader > TexturePassShader = nullptr;
 		Ref< Shader > DirShadowMapShader = nullptr;
+		Ref< Shader > DirShadowMapDynamicShader = nullptr;
 		Ref< Shader > SelectedGeometryShader = nullptr;
 		Ref< Shader > AOCompositeShader = nullptr;
 		Ref< Shader > PreDepthShader = nullptr;

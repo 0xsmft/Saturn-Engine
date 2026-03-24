@@ -1,18 +1,10 @@
 #pragma once
 
 #include "VulkanError.h"
-#include "Saturn/Core/App.h"
-#include "Saturn/Core/Renderer/EditorCamera.h"
-#include "Shader.h"
-
-#include "IndexBuffer.h"
-#include "VertexBuffer.h"
-
 #include "SwapChain.h"
-#include "Mesh.h"
 #include "Pass.h"
-#include "Texture.h"
-#include "Pipeline.h"
+
+#include "Saturn/Core/App.h"
 
 #include "SingletonStorage.h"
 

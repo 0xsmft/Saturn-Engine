@@ -96,11 +96,11 @@ vec3 ACES( vec3 colr )
 
 void main()
 {
-	const float gamma = 2.2;
+	const float GAMMA = 2.2;
 
 	vec3 GeometryPassColor = texture( u_GeometryPassTexture, vs_Input.TexCoord ).rgb;
 
-	// Bloom
+	// Bloom Composite
 	/*
 	float sampleScale = 0.5;
 	ivec2 texSize = textureSize(u_BloomTexture, 0);
@@ -112,32 +112,7 @@ void main()
 	*/
 
 	GeometryPassColor = ACES( GeometryPassColor );
-	GeometryPassColor = GammaCorrect( GeometryPassColor, gamma );
-
-	// Fog
-	/*
-	float d = texture( u_DepthTexture, vs_Input.TexCoord ).r;
-	
-	float fogStart = 10.0f;
-	float fogFalloff = 20.0f;
-
-	float fogAmount = smoothstep( fogStart, fogStart + fogFalloff, d );
-
-	vec3 fogColor = vec3(0.5f, 0.02f, 0.01f);
-
-	GeometryPassColor = mix( GeometryPassColor, fogColor, fogAmount );
-	//GeometryPassColor *= 0.80;
-	*/
-
-	// Vignette
-	vec2 coord = vs_Input.TexCoord * 2.0 - 1.0;
-	float dist = length( coord );
-    dist = sqrt( dist );
-    float vi = 1.0 - dist;
-    vi += 0.7;
-    dist = clamp( vi, 0.0, 1.0 );
-
-	//GeometryPassColor *= dist;
+	GeometryPassColor = GammaCorrect( GeometryPassColor, GAMMA );
 
 	FinalColor = vec4( GeometryPassColor, 1.0 );
 }

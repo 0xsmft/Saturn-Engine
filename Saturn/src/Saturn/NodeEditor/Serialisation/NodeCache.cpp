@@ -47,8 +47,8 @@ namespace Saturn {
 	{
 		// .NCS
 		const unsigned char Magic[ 4 ] = { 0x2E, 0x4E, 0x43, 0x53 };
-		size_t SettingsCount = 0;
 		uint64_t Version = SAT_CURRENT_VERSION;
+		size_t SettingsCount = 0;
 	};
 	
 	bool NodeCacheSettings::WriteEditorSettings( SharedPtr<NodeEditorBase> rNodeEditor )
@@ -181,6 +181,7 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// NODE CACHE | EDITOR
 
+	// TODO: The size of this header can be reduceded to 16-bytes but I need to write a system that can port the verisons first.
 	struct NodeCacheEditorHeader
 	{
 		// .NCE

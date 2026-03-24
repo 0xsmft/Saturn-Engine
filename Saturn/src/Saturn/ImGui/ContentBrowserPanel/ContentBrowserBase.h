@@ -66,6 +66,7 @@ namespace Saturn {
 		void FindAndRenameItem( const std::filesystem::path& rName );
 		uint32_t GetFilenameCount( const std::string& rName, bool directoriesOnly = false );
 
+		void AddSelected( Ref<ContentBrowserItem> item );
 		void ClearSelection();
 
 	private:

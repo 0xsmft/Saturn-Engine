@@ -12,12 +12,6 @@ project "Tracy"
 		"src/tracy/TracyClient.cpp"
 	}
 
-	links 
-	{
-		"ws2_32",
-		"dbghelp"
-	}
-
 	filter "system:windows"
 		systemversion "latest"
 		staticruntime "off"
@@ -27,14 +21,30 @@ project "Tracy"
 			"_CRT_SECURE_NO_WARNINGS"
 		}
 
+		links 
+		{
+			"ws2_32",
+			"dbghelp"
+		}
+
 	filter "system:linux"
-		pic "On"
 		systemversion "latest"
 		staticruntime "off"
 
 		defines 
 		{
 			"TRACY_NO_CRASH_HANDLER"
+		}
+
+		files 
+		{
+			"src/libbacktrace/**.cpp",
+			"src/libbacktrace/**.hpp"
+		}
+
+		includedirs 
+		{
+			"src/libbacktrace"
 		}
 
 	filter "configurations:Debug"

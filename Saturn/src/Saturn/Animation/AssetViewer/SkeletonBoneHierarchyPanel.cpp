@@ -58,13 +58,13 @@ namespace Saturn {
 		for( size_t i = 0; i < m_SkeletonAsset->GetBoneNames().size(); ++i )
 		{
 			SkelBoneItem* pBoneItem = new SkelBoneItem();
-			pBoneItem->BoneIndex = i;
+			pBoneItem->BoneIndex = ( uint32_t ) i;
 			pBoneItem->Type = SkelItemType::Bone;
 
 			m_BoneTree[ i ] = new SkelItemNode( pBoneItem );
 
+#if SAT_FEATURE_BONE_ATTACHMENT
 			// Add bone joint if the bone has one.
-			/*
 			if( auto* pBone = m_SkeletonAsset->FindBoneJoint( pBoneItem->pBone->BoneName ) )
 			{
 				SkelAttachmentPoint* pAttachmentPoint = new SkelAttachmentPoint();
@@ -76,12 +76,12 @@ namespace Saturn {
 
 				m_BoneTree[ i ]->Children.push_back( pNode );
 			}
-			*/
+#endif
 		}
 
 		for( size_t i = 0; i < m_SkeletonAsset->GetBoneNames().size(); ++i )
 		{
-			const int parentIndex = m_SkeletonAsset->GetParentIndex( i );
+			const auto parentIndex = m_SkeletonAsset->GetParentIndex( ( uint32_t ) i );
 			if( parentIndex == ~0u )
 			{
 				m_BoneTreeRoots.push_back( m_BoneTree[ i ] );
@@ -218,13 +218,13 @@ namespace Saturn {
 
 	void SkeletonBoneHierarchyPanel::DrawContextOptionsBone()
 	{
+#if SAT_FEATURE_BONE_ATTACHMENT
 		ImGui::SeparatorText( "BONE OPTIONS" );
 		if( ImGui::MenuItem( "Create new attachment point" ) )
 		{
 			const SkelBoneItem* pBoneItem = dynamic_cast< const SkelBoneItem* >( m_pSelectedBone->pItem );
 			if( pBoneItem )
 			{
-				/*
 				auto& rBone = m_SkeletonAsset->AddNewBoneJoint( pBoneItem->pBone->BoneName, "New Attachment" );
 
 				SkelAttachmentPoint* pAttachmentPoint = new SkelAttachmentPoint();
@@ -235,9 +235,9 @@ namespace Saturn {
 				pNode->pParent = m_pSelectedBone;
 
 				m_pSelectedBone->Children.push_back( pNode );
-				*/
 			}
 		}
+#endif
 	}
 
 	void SkeletonBoneHierarchyPanel::DrawContextOptionsAP()

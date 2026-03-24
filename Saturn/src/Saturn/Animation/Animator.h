@@ -55,7 +55,7 @@ namespace Saturn {
 		Animator();
 		~Animator();
 
-		void Destory();
+		void Destroy();
 		void InitAnimation( AssetID id, Ref<SkeletalMesh> sk, AnimatorType type );
 		void TickAnimation( Timestep ts );
 		void Pause();

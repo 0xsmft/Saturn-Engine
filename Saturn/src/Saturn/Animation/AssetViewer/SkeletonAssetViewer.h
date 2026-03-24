@@ -51,6 +51,7 @@ namespace Saturn {
 		void PickBestMesh();
 		void DrawAdvRawViewer();
 		void DrawCompatibleMeshes();
+		void DrawPickCompatibleMeshWindow();
 
 	private:
 		bool m_ShowFinderModal = false;

@@ -306,8 +306,8 @@ namespace Saturn {
 	{
 		// .STM
 		const unsigned char Magic[ 4 ] = { 0x2E, 0x53, 0x54, 0x4D };
-		size_t Thumbnails = 0;
 		uint32_t Version = SAT_CURRENT_VERSION;
+		size_t Thumbnails = 0;
 	};
 
 	static void CreateDirectoriesIfNeeded() 

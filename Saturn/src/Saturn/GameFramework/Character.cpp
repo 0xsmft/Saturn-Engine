@@ -134,7 +134,7 @@ namespace Saturn {
 				direction = glm::normalize( direction );
 			}
 
-			const glm::vec3 displacement = ( direction * 5.0f ) * ts.Seconds();
+			const glm::vec3 displacement = ( direction * m_MovementSpeed ) * ts.Seconds();
 			pController->Move( displacement );
 
 			m_LastMovement = displacement / ts.Seconds();
@@ -204,6 +204,16 @@ namespace Saturn {
 	void Character::MoveRightEnd()
 	{
 		MoveLeftEnd();
+	}
+
+	void Character::StartSprint()
+	{
+		m_MovementSpeed = 12.0f;
+	}
+
+	void Character::EndSprint()
+	{
+		m_MovementSpeed = 5.0f;
 	}
 
 }

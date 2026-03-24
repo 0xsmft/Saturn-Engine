@@ -378,7 +378,22 @@ namespace Saturn {
 
 					std::memset( s_RenameBuffer, 0, 1024 );
 				}
+
+				/*
+				// TODO: Check for invalid characters and follow OS rules
+				// Windows does not allow \ / : ? * <> | "
+				// Linux does not allow /
+				// Windows does not allow files to end in a space or a dot
+				// Windows does not allow files to be called CON, AUX, PRN, NUL, COM1-9, LPT1-9
+				// Linux does not allow files to be called .., .
+				char c = s_RenameBuffer[ 0 ];
+				while(  c != '\0' )
+				{
+					if( c == '\\' || c == '/' || c == ':' || c == '?' || c == '*'  || c == '<' || c == '>' || c == '|' || c == '\"' )
+						break;
+					++c;
 				}
+				*/
 			}
 			else
 			{
@@ -456,9 +471,12 @@ namespace Saturn {
 		m_Path = m_Entry.path();
 	}
 
-	void ContentBrowserItem::Select()
+	void ContentBrowserItem::Select( bool forceMultiSelection /*=false*/ )
 	{
 		m_IsSelected = true;
+	
+		if( forceMultiSelection )
+			m_MultiSelected = true;
 	}
 
 	void ContentBrowserItem::Deselect()
@@ -487,6 +505,9 @@ namespace Saturn {
 		}
 		else
 		{
+			// If this asset is a dependee, we need to tell
+			// the depedant that we no longer need it, because we won't exist anymore.
+			RemoveAssetDependencies();
 			CloseAssetViewersBeforeDeletion();
 			AssetManager::Get()->RemoveAsset( m_Asset->ID );
 		}
@@ -628,7 +649,10 @@ namespace Saturn {
 		if( m_Type == ContentBrowserItemType::SourceItem )
 			return;
 
-		const auto Icon = ContentBrowserThumbnailCache::Get().GetDefault( m_IsDirectory ? CB_DIRECTORY_ICON : CB_FILE_ICON );
+		// Do not change!
+		// The whole Thumbnail system will break!
+		// TOOD: Fix
+		const auto Icon = ContentBrowserThumbnailCache::Get().GetDefault( CB_FILE_ICON );
 
 		if( ImGui::BeginDragDropSource( ImGuiDragDropFlags_SourceAllowNullID ) )
 		{
@@ -637,20 +661,20 @@ namespace Saturn {
 
 			Auxiliary::Image( Icon, ImVec2( 24.0f, 24.0f ) );
 
-			const auto path = std::filesystem::relative( m_Path, Project::GetActiveProject()->GetRootDir() );
 			const void* pData = &m_Asset->ID;
-
 			if( Input::Get().KeyPressed( RubyKey_LeftCtrl ) || Input::Get().KeyPressed( RubyKey_RightCtrl ) )
 			{
 				Select();
 
+				// TODO: Change this to some sort of universal ID and NOT a filesystem directory entry.
+				// very bad!
 				ImGui::SetDragDropPayload( "CB_ITEM_MOVE", &m_Entry, sizeof( std::filesystem::directory_entry ), ImGuiCond_Once );
 
 				ImGui::Text( "Moving: %s", m_Filename.string().c_str() );
 			}
 			else
 			{
-				ImGui::Text( "Importing: %s", m_Filename.string().c_str() );
+				ImGui::Text( "Importing (Ctrl to move): %s", m_Filename.string().c_str() );
 			}
 
 			if( m_MultiSelected )
@@ -669,6 +693,9 @@ namespace Saturn {
 					ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_MODEL", pData, sizeof( uintptr_t ), ImGuiCond_Once );
 				}	break;
 				case Saturn::AssetType::SkeletalMesh:
+				{
+					ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_SKMODEL", pData, sizeof( uintptr_t ), ImGuiCond_Once );
+				}	break;
 				case Saturn::AssetType::Material:
 				{
 					ImGui::SetDragDropPayload( "asset_payload", pData, sizeof( uintptr_t ), ImGuiCond_Once );
@@ -740,6 +767,14 @@ namespace Saturn {
 			rTopLeft,
 			rBottomRight,
 			{ 0, 1 }, { 1, 0 }, IM_COL32_WHITE, 5.0f, drawFlags );
+	}
+
+	void ContentBrowserItem::RemoveAssetDependencies()
+	{
+		if( m_Asset )
+		{
+			AssetManager::Get()->UnregisterAllAssetDependencies( m_Asset->ID );
+		}
 	}
 
 	void ContentBrowserItem::CloseAssetViewersBeforeDeletion()

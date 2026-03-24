@@ -90,31 +90,6 @@ namespace Saturn {
 		s_ActiveProject = rProject;
 	}
 
-	std::filesystem::path Project::FindProjectDir( const std::string& rName )
-	{
-		std::string fullName = rName + ".sproject";
-		std::filesystem::path res;
-
-		for( auto& rEntry : std::filesystem::directory_iterator( std::filesystem::current_path() ) )
-		{
-			if( rEntry.is_directory() )
-				continue;
-
-			std::filesystem::path filepath = rEntry.path();
-
-			if( filepath.extension() == ".sproject" )
-			{
-				if( filepath.filename() == fullName ) 
-				{
-					res = filepath;
-					break;
-				}
-			}
-		}
-
-		return res;
-	}
-
 	void Project::CheckNewAssets()
 	{
 		bool FileChanged = false;

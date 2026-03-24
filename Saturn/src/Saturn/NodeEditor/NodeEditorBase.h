@@ -72,6 +72,7 @@ namespace Saturn {
 
 	// NOTE: This enum does NOT have a bitwise OR (|) operator or a AND (&) operator.
 	//       You must do m_Flags = m_Flags | <flag>, instead of m_Flags =| <flag>
+	//		 yes, I know it's retarded.
 	//
 	// ~NodeEditorUserAuthority~
 	// How much authority does the user have other this Node Editor
@@ -117,7 +118,7 @@ namespace Saturn {
 		//                          /
 		//                        Node C
 		//
-		Left,
+		StartFromRootNode,
 
 		// Forwards, start from a node and work way back to origin/out node.
 		// It is called "Right" because the origin node is on the right hand side of the node editor
@@ -130,7 +131,7 @@ namespace Saturn {
 		//          /
 		//      Node C
 		//
-		Right
+		GoToRootNode
 	};
 
 	template<typename EditorType, typename... V>
@@ -210,7 +211,7 @@ namespace Saturn {
 			switch( dir )
 			{
 				// NOTE: std::queue is FIFO
-				case NodeEditorFlowDirection::Left:
+				case NodeEditorFlowDirection::StartFromRootNode:
 				{
 					std::queue<UUID> temporaryStack;
 					temporaryStack.push( rRootNode->ID );
@@ -235,7 +236,7 @@ namespace Saturn {
 				} break;
 
 				// NOTE: std::stack is LIFO
-				case NodeEditorFlowDirection::Right:
+				case NodeEditorFlowDirection::GoToRootNode:
 				{
 					std::stack<UUID> stack;
 					stack.push( rRootNode->ID );

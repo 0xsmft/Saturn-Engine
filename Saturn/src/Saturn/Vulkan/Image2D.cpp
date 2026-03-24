@@ -29,6 +29,7 @@
 #include "sppch.h"
 #include "Image2D.h"
 
+#include "VulkanAllocator.h"
 #include "VulkanContext.h"
 #include "VulkanDebug.h"
 #include "VulkanImageAux.h"
@@ -281,6 +282,13 @@ namespace Saturn {
 			m_DescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 		
 			TransitionImageLayout( VulkanFormat( m_Format ), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL );
+		}
+		else
+		{
+			TransitionImageLayout(
+				VulkanFormat( m_Format ),
+				VK_IMAGE_LAYOUT_UNDEFINED,
+				m_DescriptorImageInfo.imageLayout );
 		}
 
 		// Create base image view & sampler.

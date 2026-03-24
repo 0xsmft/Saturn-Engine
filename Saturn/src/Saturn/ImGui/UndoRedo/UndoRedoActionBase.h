@@ -65,7 +65,9 @@ namespace Saturn {
 	{
 	public:
 		UndoRedoActionModifyT( const std::string& rName, Ty* pTarget, const Ty& rOldValue, const Ty& rNewValue )
-			: UndoRedoActionBase( rName ), m_OriginalValue( rOldValue ), m_CurrentValue( rNewValue ), m_pTarget( pTarget ) {}
+			: UndoRedoActionBase( rName ), m_OriginalValue( rOldValue ), m_CurrentValue( rNewValue ), m_pTarget( pTarget ) 
+		{
+		}
 		
 		void Undo() override
 		{

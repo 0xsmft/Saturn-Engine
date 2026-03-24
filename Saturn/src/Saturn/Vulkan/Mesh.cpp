@@ -951,6 +951,10 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 			return false;
 		}
 
+		// We need to get the material count, but we no longer need to search, we are done here.
+		if( !m_NeedToFindMaterials )
+			return true;
+
 		for( size_t m = 0; m < m_Scene->mNumMaterials; m++ )
 		{
 			aiMaterial* material = m_Scene->mMaterials[ m ];
@@ -984,36 +988,12 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 				Ref<Asset> asset = AssetManager::Get()->FindAsset( AssetManager::Get()->CreateAsset( AssetType::Material ) );
 				asset->SetAbsolutePath( materialPath );
 
-				materialAsset = Ref<MaterialAsset>::Create( nullptr );
+				materialAsset = Ref<MaterialAsset>::Create( asset, nullptr );
 				materialAsset->SetName( MaterialName );
 
 				needToSaveAssetReg = true;
 
 				m_MeshInformation.MaterialAssets.at( m ) = ( uint64_t ) asset->ID;
-
-				// Write to disk, create file.
-				// TODO: (Asset) Fix this.
-				struct
-				{
-					UUID ID;
-					AssetType Type;
-					uint32_t Flags;
-					std::filesystem::path Path;
-					std::string Name;
-				} OldAssetData = {};
-
-				OldAssetData.ID = asset->ID;
-				OldAssetData.Type = asset->Type;
-				OldAssetData.Flags = asset->Flags;
-				OldAssetData.Path = asset->Path;
-				OldAssetData.Name = asset->Name;
-
-				asset = materialAsset;
-				asset->ID = OldAssetData.ID;
-				asset->Type = OldAssetData.Type;
-				asset->Flags = OldAssetData.Flags;
-				asset->Path = OldAssetData.Path;
-				asset->Name = OldAssetData.Name;
 
 				//////////////////////////////////////////////////////////////////////////
 
@@ -1270,8 +1250,18 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 		
 		if( m_Scene->HasAnimations() ) SAT_CORE_WARN( "[StaticMeshImporter] Scene has animations, they will be ignored!" );
 
+		if( ( m_ImportBehaviour & MeshImportBehaviour_ImportSubMeshAsAsset ) != 0 )
+		{
+			ImportSubmeshesSeperate();
+		}
+		
 		return FindMaterials() ? AssetImportPopupError::None : AssetImportPopupError::MeshNoMaterials;
 	}
+
+	void StaticMeshImporter::ImportSubmeshesSeperate()
+	{
+	}
+
 #endif
 
 	//////////////////////////////////////////////////////////////////////////

@@ -39,7 +39,9 @@ namespace Saturn {
 
 	bool Random::RandomBool()
 	{
-		static std::uniform_int_distribution<int> s_BooleanDistribution( 0, 1 );
+		// Note: char, signed char, unsigned char, char8_t, int8_t, and uint8_t are not allowed
+		// so we have to use a short here, smallest size we can use.
+		static std::uniform_int_distribution<short> s_BooleanDistribution( 0, 1 );
 
 		return s_BooleanDistribution( s_RandomEngine );
 	}

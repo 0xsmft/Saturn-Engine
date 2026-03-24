@@ -107,8 +107,9 @@ namespace Saturn {
 			ImGui::ColorEdit4( "Text Disabled", glm::value_ptr( rStyle.Colors[ 1 ] ) );
 			ImGui::ColorEdit4( "Button", glm::value_ptr( rStyle.Colors[ 2 ] ) );
 			ImGui::ColorEdit4( "Button Hovered", glm::value_ptr( rStyle.Colors[ 3 ] ) );
-			ImGui::ColorEdit4( "Frame Background", glm::value_ptr( rStyle.Colors[ 4 ] ) );
-			ImGui::ColorEdit4( "Progress bar Color", glm::value_ptr( rStyle.Colors[ 5 ] ) );
+			ImGui::ColorEdit4( "Frame Border", glm::value_ptr( rStyle.Colors[ 4 ] ) );
+			ImGui::ColorEdit4( "Frame Background", glm::value_ptr( rStyle.Colors[ 5 ] ) );
+			ImGui::ColorEdit4( "Progress bar Color", glm::value_ptr( rStyle.Colors[ 6 ] ) );
 		}
 
 		ImGui::End();

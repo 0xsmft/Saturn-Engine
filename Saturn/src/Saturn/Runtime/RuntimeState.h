@@ -34,11 +34,23 @@ namespace Saturn {
 	//       So this allows us to use it in the Node Editor without including Scene.h
 	enum class RuntimeState
 	{
+		// Scene Init
 		NoState,
+
+		// Pre init runtime
 		Starting,
+
+		// Runtime
 		Running,
+
+		// Runtime ending
 		Ending,
-		Suspended
+
+		// Runtime suspended (Editor)
+		Suspended,
+	
+		// Paused, runtime suspended (Game)
+		Paused
 	};
 	
 }

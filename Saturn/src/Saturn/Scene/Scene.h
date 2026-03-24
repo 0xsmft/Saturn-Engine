@@ -229,6 +229,7 @@ namespace Saturn {
 		void TravelToScene( AssetID newSceneID );
 
 		void OnUpdate( Timestep ts );
+		void OnUpdateEntities( Timestep ts );
 		void OnUpdatePhysics( Timestep ts );
 		void OnUpdateAnimators( Timestep ts );
 		void OnEvent( Event& rEvent );
@@ -292,21 +293,23 @@ namespace Saturn {
 		void CopyScene( Ref<Scene>& NewScene );
 		void Empty();
 
+	public:
 		[[nodiscard]] bool IsRuntimeActive() const { return m_RuntimeState != RuntimeState::NoState && m_RuntimeState != RuntimeState::Ending; }
-
 		[[nodiscard]] bool IsRuntimeRunning() const { return m_RuntimeState == RuntimeState::Running; }
+		[[nodiscard]] bool IsPaused() const { return m_RuntimeState == RuntimeState::Paused; }
+		[[nodiscard]] bool IsPausedOrSuspended() const;
+		[[nodiscard]] bool OnRuntimeStart();
 
 		[[nodiscard]] RuntimeState GetRuntimeState() const { return m_RuntimeState; }
 
-		[[nodiscard]] bool OnRuntimeStart();
-
 		void SuspendRuntime();
 		void ResumeRuntime();
-		
 		void SuspendOrResumeRuntime();
-
+		void PauseGame();
+		void UnpauseGame();
 		void OnRuntimeEnd();
 
+	public:
 		entt::registry& GetRegistry() { return m_Registry; }
 		const entt::registry& GetRegistry() const { return m_Registry; }
 
@@ -513,7 +516,7 @@ namespace Saturn {
 		void RtSetupLights( Ref<SceneRenderer> sceneRenderer );
 		void RtBuildRenderer2DCommands( Ref<SceneRenderer> sceneRenderer );
 		void RtBuildSceneRendererCommands( Ref<SceneRenderer> sceneRenderer );
-		void RtRenderColliderDebug( Ref<SceneRenderer> sceneRenderer );
+		void RtBuildSelectedMeshesCmds( Ref<SceneRenderer> sceneRenderer );
 
 	private:
 		std::map<entt::entity, SharedPtr<Entity>> m_EntityIDMap;
@@ -526,7 +529,7 @@ namespace Saturn {
 
 		// For use by Runtime Scene only
 		// Holds a list of the entities that will be destroyed in the next frame
-		std::vector<Entity*> m_EntitiesToDestory;
+		std::vector<Entity*> m_EntitiesToDestroy;
 
 		Lights m_Lights;
 

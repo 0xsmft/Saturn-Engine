@@ -497,6 +497,11 @@ namespace Saturn {
 		}
 	}
 
+	bool AudioSystem::DoesSoundExist( UUID UniquePlayerID )
+	{
+		return m_LoadedSounds.contains( UniquePlayerID ) || m_AliveSounds.contains( UniquePlayerID );
+	}
+
 	void AudioSystem::UnloadSound( Ref<SoundBase> sound )
 	{
 		if( !sound ) return;

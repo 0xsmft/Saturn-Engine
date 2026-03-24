@@ -81,7 +81,7 @@ namespace Saturn {
 		// Geometry 
 		//////////////////////////////////////////////////////////////////////////
 
-		if( !Application::Get()->HasFlag( ApplicationFlag_CreateSceneRenderer ) )
+		if( !Application::Get()->HasFlag( ApplicationFlag_CreateSceneRenderer_DEPRECATED ) )
 			return;
 
 		m_RendererData.StorageBufferSet = Ref<StorageBufferSet>::Create( 0, 0 );
@@ -103,6 +103,7 @@ namespace Saturn {
 
 		m_RendererData.UniformBufferSet = Ref<UniformBufferSet>::Create();
 		// Fill out UBS
+		//																	SIZE -> BINDING
 		m_RendererData.UniformBufferSet->CreateBuffer( sizeof( UBStaticMeshMatrices ), 0u );
 		m_RendererData.UniformBufferSet->CreateBuffer( sizeof( UBLightData ), 1u );
 		m_RendererData.UniformBufferSet->CreateBuffer( sizeof( UBSceneData ), 2u );
@@ -129,8 +130,6 @@ namespace Saturn {
 		InitLateComposite();
 
 		InitTexturePass();
-
-//		InitSelection();
 
 		switch( m_AOTechnique )
 		{
@@ -309,12 +308,20 @@ namespace Saturn {
 		m_RendererData.ShadowCascades.resize( SHADOW_CASCADE_COUNT );
 		m_RendererData.DirShadowMapPasses.resize( SHADOW_CASCADE_COUNT );
 		m_RendererData.DirShadowMapPipelines.resize( SHADOW_CASCADE_COUNT );
+		m_RendererData.DirShadowMapDynamicPipelines.resize( SHADOW_CASCADE_COUNT );
 
 		if( !m_RendererData.DirShadowMapShader )
 		{
 			m_RendererData.DirShadowMapShader = ShaderLibrary::Get().FindOrLoad( "ShadowMap", "content/shaders/ShadowMap.glsl" );
+			m_RendererData.DirShadowMapDynamicShader = ShaderLibrary::Get().FindOrLoad( "ShadowMap-Dynamic", "content/shaders/ShadowMap-Dynamic.glsl" );
 
 			m_RendererData.DirShadowMapMaterial = Ref<Material>::Create( m_RendererData.DirShadowMapShader, "ShdMap" );
+
+			m_RendererData.DirShadowMapDynamicMaterialSet2 = Ref<Material>::Create( m_RendererData.DirShadowMapDynamicShader, "DirShdMpSkS2", 1 );
+			for( size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
+			{
+				m_RendererData.DirShadowMapDynamicMaterialSet2->SetSB( 15u, m_RendererData.SBBoneTransforms->Get( 2u, 15u, ( uint32_t ) i ) );
+			}
 		}
 
 		PipelineSpecification PipelineSpec = {};
@@ -366,6 +373,23 @@ namespace Saturn {
 			m_RendererData.ShadowCascades[ i ].Framebuffer = Ref<Framebuffer>::Create( FBSpec );
 
 			m_RendererData.DirShadowMapPipelines[ i ] = Ref< Pipeline >::Create( PipelineSpec );
+		}
+		
+		//////////////////////////////////////////////////////////////////////////
+		// Dynamic Meshes
+		PipelineSpec.Name = "DirShadowMap-Dynamic";
+		PipelineSpec.Shader = m_RendererData.DirShadowMapDynamicShader;
+		PipelineSpec.AdditionalLayoutAtEnd = {
+			{ ShaderDataType::Int4,   "a_BoneIndices" },
+			{ ShaderDataType::Float4, "a_BoneWeights" }
+		};
+
+		PassSpec.Name = "Dir Shadow Map-Dynamic";
+		PassSpec.Attachments = { ImageFormat::Depth };
+		for( size_t i = 0; i < SHADOW_CASCADE_COUNT; i++ )
+		{
+			PipelineSpec.RenderPass = m_RendererData.DirShadowMapPasses[ i ];
+			m_RendererData.DirShadowMapDynamicPipelines[ i ] = Ref< Pipeline >::Create( PipelineSpec );
 		}
 	}
 
@@ -776,13 +800,22 @@ namespace Saturn {
 	*/
 	void SceneRenderer::RenderGrid()
 	{
+#if !defined(SAT_DIST)
 		SAT_PF_EVENT();
 
-		if( !HasFlag( SceneRendererFlag_RenderGrid ) )
+		// Should we show the grid?
+		const auto& rVisOptions = m_pScene->GetVisualisationOptions();
+		const bool isRuntimeActive = m_pScene->IsRuntimeActive();
+		if( !( isRuntimeActive ? rVisOptions.ShowGridOnRuntime : rVisOptions.ShowGrid ) )
+		{
 			return;
+		}
+#else
+		return;
+#endif
 
 		// Set UB Data.
-		glm::mat4 trans = glm::rotate( glm::mat4( 1.0f ), glm::radians( 90.0f ), glm::vec3( 1.0f, 0.0f, 0.0f ) ) * glm::scale( glm::mat4( 1.0f ), glm::vec3( 16.0f ) );
+		const glm::mat4 trans = glm::rotate( glm::mat4( 1.0f ), glm::radians( 90.0f ), glm::vec3( 1.0f, 0.0f, 0.0f ) ) * glm::scale( glm::mat4( 1.0f ), glm::vec3( 16.0f ) );
 
 		UBGridMatrices GridMatricesObject = {};
 		GridMatricesObject.Transform = trans;
@@ -794,7 +827,12 @@ namespace Saturn {
 		m_RendererData.GridMaterial->UploadDataToUB( 0, &GridMatricesObject, sizeof( GridMatricesObject ) );
 
 		Renderer::Get()->SubmitFullscreenQuad(
-			m_RendererData.CommandBuffer, m_RendererData.GridPipeline, m_RendererData.GridMaterial, m_RendererData.UniformBufferSet, m_RendererData.QuadIndexBuffer, m_RendererData.QuadVertexBuffer );
+			m_RendererData.CommandBuffer,
+			m_RendererData.GridPipeline, 
+			m_RendererData.GridMaterial, 
+			m_RendererData.UniformBufferSet, 
+			m_RendererData.QuadIndexBuffer, m_RendererData.QuadVertexBuffer 
+		);
 	}
 
 	void SceneRenderer::RenderSkybox()
@@ -805,17 +843,17 @@ namespace Saturn {
 		if( !m_pScene )
 			return;
 
-		auto& sceneEnvironment = m_RendererData.SceneEnvironment;
+		auto& rSceneEnvironment = m_RendererData.SceneEnvironment;
 
 		// We have no skybox.
-		if( sceneEnvironment->Azimuth == 0 && sceneEnvironment->Inclination == 0 && sceneEnvironment->Turbidity == 0 )
+		if( rSceneEnvironment->Azimuth == 0 && rSceneEnvironment->Inclination == 0 && rSceneEnvironment->Turbidity == 0 )
 		{
 			// I don't really like this.
 			// TODO: Come back to this.
-			if( sceneEnvironment->IrradianceMap && sceneEnvironment->RadianceMap )
+			if( rSceneEnvironment->IrradianceMap && rSceneEnvironment->RadianceMap )
 			{
-				sceneEnvironment->RadianceMap = nullptr;
-				sceneEnvironment->IrradianceMap = nullptr;
+				rSceneEnvironment->RadianceMap = nullptr;
+				rSceneEnvironment->IrradianceMap = nullptr;
 			}
 
 			return;
@@ -1001,8 +1039,6 @@ namespace Saturn {
 
 	void SceneRenderer::CreateGridComponents()
 	{
-		auto pAllocator = VulkanContext::Get()->GetVulkanAllocator();
-
 		// Create fullscreen quad.
 		auto [vertex, index] = Renderer::Get()->CreateFullscreenQuad();
 		
@@ -1043,10 +1079,7 @@ namespace Saturn {
 
 	void SceneRenderer::CreateSkyboxComponents()
 	{
-		auto pAllocator = VulkanContext::Get()->GetVulkanAllocator();
-
 		// Create skybox shader.
-
 		if( !m_RendererData.SkyboxShader && !m_RendererData.PreethamShader )
 		{
 			m_RendererData.SkyboxShader = ShaderLibrary::Get().FindOrLoad( "Skybox", "content/shaders/Skybox.glsl" );
@@ -1641,6 +1674,8 @@ namespace Saturn {
 
 		m_RendererData.UniformBufferSet->Get( 0, 1, frame )->UploadData( &u_LightData, sizeof( u_LightData ) );
 
+		m_RendererData.DirShadowMapDynamicMaterialSet2->Update( {} );
+
 		for( int i = 0; i < SHADOW_CASCADE_COUNT; ++i )
 		{
 			m_RendererData.ShadowMapTimers[ i ].Reset();
@@ -1655,6 +1690,7 @@ namespace Saturn {
 			vkCmdSetViewport( m_RendererData.CommandBuffer, 0, 1, &Viewport );
 			vkCmdSetScissor( m_RendererData.CommandBuffer, 0, 1, &Scissor );
 
+			CmdBeginDebugLabel( CommandBuffer, "ShadowMap-Static" );
 			for( auto&& [key, Cmd] : m_ShadowMapDrawList )
 			{
 				// Pass in the cascade index.
@@ -1675,6 +1711,37 @@ namespace Saturn {
 					Cmd.SubmeshIndex, 
 					AdditionalData );
 			}
+			CmdEndDebugLabel( CommandBuffer );
+
+			CmdBeginDebugLabel( CommandBuffer, "ShadowMap-Dynamic" );
+			uint32_t index = 0;
+			for( auto&& [key, Cmd] : m_DynamicShadowMapDrawList )
+			{
+				// Pass in the cascade index.
+				struct PC
+				{
+					uint32_t CascadeIndex = 0u;
+				} u_Data;
+				u_Data.CascadeIndex = i;
+
+				Buffer AdditionalData( sizeof( PC ), &u_Data );
+
+				const auto& rTransformData = m_RendererData.MeshTransforms[ key ];
+				Renderer::Get()->RenderDynamicMeshWithoutMaterial(
+					CommandBuffer,
+					m_RendererData.DirShadowMapDynamicPipelines[ i ],
+					Cmd.Mesh,
+					m_RendererData.DirShadowMapMaterial,
+					m_RendererData.UniformBufferSet,
+					m_RendererData.StorageBufferSet,
+					Cmd.Instances,
+					m_RendererData.SubmeshTransformData[ frame ].VertexBuffer,
+					rTransformData.Offset,
+					Cmd.SubmeshIndex, index, m_RendererData.DirShadowMapDynamicMaterialSet2, AdditionalData );
+
+				index += Cmd.Instances;
+			}
+			CmdEndDebugLabel( CommandBuffer );
 
 			vkCmdEndRenderPass( CommandBuffer );
 			CmdEndDebugLabel( CommandBuffer );
@@ -2118,7 +2185,7 @@ namespace Saturn {
 		// [DRAW CALL 1], 64 bones, 3 instances
 		// same as above but start at 300...
 
-		// Every submesh has to have 100 bone transforms
+		// Every submesh is to have 100 bone transforms.
 		// However, not every mesh actually has 100 bones for example, the mesh that this code was debugged with has 64 bones
 		// So, thats why we have to do a workaround to ensure that the bones transforms is correct because if we don't set them (and use the Meshes' bone count) we will end up reading garbage data.
 		// This could be solved if we simply was able to fill the whole buffer with glm::mat4{0.0f} 
@@ -2377,6 +2444,7 @@ namespace Saturn {
 		m_DrawList.clear();
 		m_DynamicDrawList.clear();
 		m_ShadowMapDrawList.clear();
+		m_DynamicShadowMapDrawList.clear();
 		m_PhysicsColliderDrawList.clear();
 		m_ScheduledFunctions.clear();
 		m_RendererData.MeshTransforms.clear();
@@ -2397,7 +2465,7 @@ namespace Saturn {
 
 	void RendererData::Terminate()
 	{
-		if( !Application::Get()->HasFlag( ApplicationFlag_CreateSceneRenderer ) )
+		if( !Application::Get()->HasFlag( ApplicationFlag_CreateSceneRenderer_DEPRECATED ) )
 			return;
 
 		// DescriptorSets

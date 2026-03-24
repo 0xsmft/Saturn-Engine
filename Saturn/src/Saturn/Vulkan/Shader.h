@@ -434,7 +434,7 @@ namespace Saturn {
 
 		ShaderDescriptorSetTemplate* GetShaderDescriptorSetTemplates( uint32_t set ) 
 		{
-			if( m_DescriptorSets.size() == 0 && set == 0 || set > m_DescriptorSets.size() )
+			if( ( m_DescriptorSets.size() == 0 && set == 0 ) || set >= m_DescriptorSets.size() )
 				return nullptr;
 
 			return &m_DescriptorSets[ set ]; 

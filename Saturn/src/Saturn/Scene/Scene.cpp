@@ -40,6 +40,7 @@
 
 #include "Saturn/Asset/Prefab.h"
 #include "Saturn/Asset/AssetManager.h"
+#include "Saturn/Asset/TextureSourceAsset.h"
 
 #include "Saturn/Core/Profiler.h"
 #include "Saturn/Core/VirtualFS.h"
@@ -282,7 +283,7 @@ namespace Saturn {
 	{
 		// Other states do not need to be handled because anything other than Running or Suspended should get through here.
 		// TODO: Handle this better.
-		if( m_RuntimeState == RuntimeState::Suspended )
+		if( IsPausedOrSuspended() )
 			return;
 
 		switch( rEvent.Type )
@@ -372,7 +373,9 @@ namespace Saturn {
 
 		//////////////////////////////////////////////////////////////////////////
 
-		g_AluraCanvas->Begin();
+		g_AluraCanvas->NewFrame();
+		g_AluraCanvas->DrawAllDrawers( ts );
+		g_AluraCanvas->EndFrame();
 
 		// Lights
 		RtSetupLights( sceneRenderer );
@@ -531,6 +534,8 @@ namespace Saturn {
 				flip = textureAsset->IsFlagSet( TextureLoadFlags_FlipVertically );
 			}
 			
+			// An extra step to counteract if the texture is the wrong way around,
+			// this allows the billboard to always display correct.
 			if( flip )
 			{
 				sceneRenderer->GetRenderer2D()->SubmitBillboardTexturedFlipped(
@@ -607,13 +612,16 @@ namespace Saturn {
 		}
 
 #if !defined(SAT_DIST)
-		RtRenderColliderDebug( sceneRenderer );
+		RtBuildSelectedMeshesCmds( sceneRenderer );
 #endif
 	}
 
 #if !defined(SAT_DIST)
-	void Scene::RtRenderColliderDebug( Ref<SceneRenderer> sceneRenderer )
+	void Scene::RtBuildSelectedMeshesCmds( Ref<SceneRenderer> sceneRenderer )
 	{
+		//////////////////////////////////////////////////////////////////////////
+		// PhysColliders
+
 		auto submitBoxCollider = [ this, &sceneRenderer ]( SharedPtr<Entity> entity, Ref<StaticMesh> dbgMesh, Ref<MaterialRegistry> materialRegistry )
 		{
 			const auto& rTransform = GetWorldSpaceTransform( entity );
@@ -675,7 +683,12 @@ namespace Saturn {
 
 						const auto& rComponent = rEntity->GetComponent<CapsuleColliderComponent>();
 						submitCapsuleCollider( rEntity, mesh, mesh->GetMaterialRegistry() );
-					} 
+					}
+					else if( rEntity->GetClass() == NavBoundsEntity::StaticClass() )
+					{
+						sceneRenderer->GetRenderer2D()->SubmitAABB( m_NavBoundsEntity->GetBoundingBox(), glm::vec4{ 0.0f, 1.0f, 0.0f, 1.0f } );
+						m_NavBoundsEntity->DebugDraw( sceneRenderer->GetRenderer2D().Get() );
+					}
 				}
 			} break;
 
@@ -710,8 +723,28 @@ namespace Saturn {
 					const auto& rComponent = rEntity->GetComponent<CapsuleColliderComponent>();
 					submitCapsuleCollider( rEntity, mesh, mesh->GetMaterialRegistry() );
 				}
+
+				if( m_NavBoundsEntity )
+				{
+					sceneRenderer->GetRenderer2D()->SubmitAABB( m_NavBoundsEntity->GetBoundingBox(), glm::vec4{ 0.0f, 1.0f, 0.0f, 1.0f } );
+					m_NavBoundsEntity->DebugDraw( sceneRenderer->GetRenderer2D().Get() );
+				}
 			} break;
 		}
+
+#if SAT_FEATURE_SHOW_SELECTED_CAMERA_FRUSTUM
+		//////////////////////////////////////////////////////////////////////////
+		for( const auto& rEntity : EntitySelectionManager::Get()->GetSelectionContexts( this ) )
+		{
+			if( auto* pCameraComp = rEntity->TryGetComponent<CameraComponent>(); pCameraComp )
+			{
+				auto renderer2D = sceneRenderer->GetRenderer2D();
+				pCameraComp->Camera->RenderDebugFrustum( renderer2D );
+
+				break;
+			}
+		}
+#endif
 	}
 #endif
 
@@ -920,8 +953,8 @@ namespace Saturn {
 
 		if( entity->HasParent() && !parent )
 		{
-			SharedPtr<Entity> parent = FindEntityByID( entity->GetParent() );
-			SharedPtr<Entity> newParent = DuplicateEntity( parent, nullptr );
+			SharedPtr<Entity> xparent = FindEntityByID( entity->GetParent() );
+			SharedPtr<Entity> newParent = DuplicateEntity( xparent, nullptr );
 
 			newEntity->SetParent( newParent->GetUUID() );
 		}
@@ -965,7 +998,7 @@ namespace Saturn {
 
 	void Scene::DestroyEntity( Entity* entity )
 	{
-		m_EntitiesToDestory.push_back( entity );
+		m_EntitiesToDestroy.push_back( entity );
 	}
 
 	void Scene::OnModifyPrefab( Ref<Prefab> prefabAsset )
@@ -1038,12 +1071,12 @@ namespace Saturn {
 
 	void Scene::DestroyPendingEntities()
 	{
-		while( !m_EntitiesToDestory.empty() )
+		while( !m_EntitiesToDestroy.empty() )
 		{
-			Entity* pEntity = m_EntitiesToDestory.back();
+			Entity* pEntity = m_EntitiesToDestroy.back();
 			DeleteEntityChecked( pEntity );
 
-			m_EntitiesToDestory.pop_back();
+			m_EntitiesToDestroy.pop_back();
 		}
 	}
 
@@ -1094,7 +1127,7 @@ namespace Saturn {
 		}
 
 		m_Registry.destroy( pEntity->GetHandle() );
-		// Destory via the shared ptr
+		// Destroy via the shared ptr
 		m_EntityIDMap.erase( pEntity->GetHandle() );
 	}
 
@@ -1130,6 +1163,11 @@ namespace Saturn {
 	{
 		// There isn't much we can do, we must let the parent layer handle a scene travel.
 		Application::Get()->DispatchEvent<SceneTravelEvent>( newSceneID );
+	}
+
+	bool Scene::IsPausedOrSuspended() const
+	{
+		return m_RuntimeState == RuntimeState::Suspended || m_RuntimeState == RuntimeState::Paused;
 	}
 
 	bool Scene::OnRuntimeStart()
@@ -1196,6 +1234,26 @@ namespace Saturn {
 		else if( m_RuntimeState == RuntimeState::Running ) 
 		{
 			SuspendRuntime();
+		}
+	}
+
+	void Scene::PauseGame()
+	{
+		m_RuntimeState = RuntimeState::Paused;
+
+		if( auto entity = m_pMainCameraEntity.Access() )
+		{
+			entity->GetComponent<CameraComponent>().Camera->SetActive( false );
+		}
+	}
+
+	void Scene::UnpauseGame()
+	{
+		m_RuntimeState = RuntimeState::Running;
+
+		if( auto entity = m_pMainCameraEntity.Access() )
+		{
+			entity->GetComponent<CameraComponent>().Camera->SetActive( true );
 		}
 	}
 
@@ -1353,7 +1411,7 @@ namespace Saturn {
 			auto& rAnimator = entity->GetComponent<SkeletalMeshComponent>().LocalAnimator;
 			if( rAnimator )
 			{
-				rAnimator->Destory();
+				rAnimator->Destroy();
 			}
 
 			rAnimator = nullptr;
@@ -1458,11 +1516,11 @@ namespace Saturn {
 	void Scene::PostDeserialise()
 	{
 		// Find and load the nav mesh
-		auto entites = GetAllEntitiesWith<NavigationMeshSpecificationComponent>();
+		auto entities = GetAllEntitiesWith<NavigationMeshSpecificationComponent>();
 
-		SAT_CORE_ASSERT( entites.size() <= 1, "There can only be one entity with a NavigationMeshSpecificationComponent in the scene!" );
+		SAT_CORE_ASSERT( entities.size() <= 1, "There can only be one entity with a NavigationMeshSpecificationComponent in the scene!" );
 
-		for( const auto& rEntity : entites )
+		for( const auto& rEntity : entities )
 		{
 			if( rEntity->GetClass() != NavBoundsEntity::StaticClass() )
 			{
@@ -1524,7 +1582,7 @@ namespace Saturn {
 	SharedPtr<Entity> Scene::HotReloadReplaceOldEntity( SharedPtr<Entity> source )
 	{
 		// Create new entity
-		SharedPtr<Entity> entity = (Entity*)ClassMetadataHandler::Get().CreateClassObject( source->GetClass()->GetHash() );
+		SharedPtr<Entity> entity = ( Entity* ) ClassMetadataHandler::Get().CreateClassObject( source->GetClass()->GetHash() );
 
 		entity->SetName( source->GetName() );
 		entity->GetComponent<IdComponent>().ID = source->GetUUID();

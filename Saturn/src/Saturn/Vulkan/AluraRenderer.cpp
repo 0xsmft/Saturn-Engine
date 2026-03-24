@@ -419,7 +419,7 @@ namespace Saturn {
 				continue;
 			}
 
-			auto pGlyph = rFontGeo.GetGlyph( character );
+			auto* pGlyph = rFontGeo.GetGlyph( character );
 			if( character == ' ' )
 			{
 				double advance = pGlyph->GetAdvance();
@@ -442,13 +442,27 @@ namespace Saturn {
 			pGlyph->GetQuadAtlasBounds( atlasLeft, atlasBottom, atlasRight, atlasTop );
 
 			// NOTE: Vulkan: We have to flip the atlasTop and atlasBottom because in the Editor the UI origin is the bottom-left
-			// the reason why it's the bottom-left is because when this image gets flipped in the viewport, the elements at the bottom-left
-			// will be at the top-left, which is correct as the real origin is actually at the top-left.
+			// the reason why it's the bottom-left is because when this image gets flipped in the viewport, 
+			// the elements at the bottom-left will be at the top-left, which is correct 
+			// as the real origin is actually at the top-left.
 			glm::vec2 texCoordMin( atlasLeft, atlasTop );
 			glm::vec2 texCoordMax( atlasRight, atlasBottom );
 
 			float planeLeft, planeBottom, planeRight, planeTop;
+			// Get plane bounds (offsets/bearings)
 			pGlyph->GetQuadPlaneBounds( planeLeft, planeBottom, planeRight, planeTop );
+
+			/*
+			planeLeft *= fsScale;
+			planeBottom *= fsScale;
+			planeRight *= fsScale;
+			planeTop *= fsScale;
+
+			planeLeft += x;
+			planeBottom -= y;
+			planeRight += x;
+			planeTop -= y;
+			*/
 
 			// NOTE: Vulkan: Same as above.
 			glm::vec2 quadMin( x + planeLeft * fsScale, y - planeTop * fsScale );
@@ -469,7 +483,7 @@ namespace Saturn {
 				char next = rText[ i + 1 ];
 				rFontGeo.GetAdvance( advance, character, next );
 
-				x += fsScale * advance + 0.0f;
+				x += fsScale * advance + 0.0f /* <-- kerning */;
 			}
 		}
 	}

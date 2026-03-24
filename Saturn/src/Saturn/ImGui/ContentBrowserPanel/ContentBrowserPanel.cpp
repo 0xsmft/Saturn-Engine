@@ -120,11 +120,12 @@ namespace Saturn {
 
 			if( ImGui::BeginDragDropTarget() )
 			{
-				auto data = ImGui::AcceptDragDropPayload( "CB_ITEM_MOVE", ImGuiDragDropFlags_None );
-
-				if( data )
+				auto* pData = ImGui::AcceptDragDropPayload( "CB_ITEM_MOVE", ImGuiDragDropFlags_None );
+				if( pData )
 				{
-					std::filesystem::directory_entry& entry = *( std::filesystem::directory_entry* ) data->Data;
+					// TODO: Change this to some sort of universal ID and NOT a filesystem directory entry.
+					// very bad!
+					std::filesystem::directory_entry& entry = *( std::filesystem::directory_entry* ) pData->Data;
 
 					std::filesystem::path srcPath = entry.path();
 					std::filesystem::path dstPath = entryPath / srcPath.filename();
@@ -229,7 +230,42 @@ namespace Saturn {
 		}
 	}
 	
-	void ContentBrowserPanel::DrawBaseContextMenu() 
+	void ContentBrowserPanel::DrawAssetOpenRenamePopup()
+	{
+		/* May not be needed at this point in time.
+		* 
+		if( m_OpenRenameAssetOpenPopup )
+			ImGui::OpenPopup( "Close Asset Viewers##ClsAv" );
+
+		ImGui::SetNextWindowSize( { 350.0F, 0.0F } );
+		if( ImGui::BeginPopupModal( "Close Asset Viewers##ClsAv", &m_OpenRenameAssetOpenPopup, ImGuiWindowFlags_NoSavedSettings ) )
+		{
+			ImGui::Text( "In order to rename this Asset you'll need to close the Asset Viewer." );
+
+			ImGui::BeginHorizontal( "##clsavoptions" );
+
+			if( ImGui::Button( "Close and save" ) )
+			{
+			}
+
+			if( ImGui::Button( "Close without saving" ) )
+			{
+			}
+
+			if( ImGui::Button( "Cancel" ) )
+			{
+				m_OpenRenameAssetOpenPopup = false;
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndHorizontal();
+
+			ImGui::EndPopup();
+		}
+		*/
+	}
+
+	void ContentBrowserPanel::DrawBaseContextMenu()
 	{
 		// SELECTED ITEMS ACTIONS (FOR FOLDERS AND ASSETS)
 		if( m_SelectedItems.size() )
@@ -264,9 +300,7 @@ namespace Saturn {
 					{
 						if( AssetManager::Get()->DoesAssetHaveDependencies( rItem->GetAsset() ) )
 						{
-							// Show popup...
-							m_ItemToDelete = rItem;
-							m_ShowDeleteAssetPopup = true;
+							m_ItemsToDelete.insert_range( m_ItemsToDelete.end(), m_SelectedItems );
 						}
 						else
 						{
@@ -281,10 +315,10 @@ namespace Saturn {
 
 				if( ImGui::MenuItem( "Copy Asset ID" ) )
 				{
-					std::string text = "";
+					std::string text;
 					for( auto& rItem : m_SelectedItems )
 					{
-						text += std::format( "{0} ", (uint64_t)rItem->GetAssetID() );
+						text += std::format( "{0} ", ( uint64_t ) rItem->GetAssetID() );
 					}
 
 					/*
@@ -344,30 +378,6 @@ namespace Saturn {
 					{
 						m_CurrentImportPopup = std::make_unique<TextureSourceAssetImportPopup>( path, m_CurrentPath );
 						m_CurrentImportPopup->Initialise();
-
-						/*
-						auto id = AssetManager::Get()->CreateAsset( AssetType::Texture );
-						auto asset = AssetManager::Get()->FindAsset( id );
-
-						std::filesystem::path newPath = m_CurrentPath / path.filename();
-
-						int32_t count = GetFilenameCount( path.filename().string(), false );
-						if( count >= 1 )
-						{
-							newPath.replace_filename( std::format( "{0} ({1})", path.filename().string(), count ) );
-						}
-
-						std::filesystem::copy_file( path, newPath );
-
-						asset->SetAbsolutePath( newPath );
-
-						AssetManagerSerialiser ars;
-						ars.Serialise();
-
-						UpdateFiles( true );
-
-						textureAssetImported = true;
-						*/
 					}
 
 					// Meshes
@@ -408,7 +418,7 @@ namespace Saturn {
 			if( ImGui::MenuItem( "New Folder" ) )
 			{
 				auto newPath = m_CurrentPath / "New Folder";
-				int32_t count = GetFilenameCount( "New Folder", true );
+				uint32_t count = GetFilenameCount( "New Folder", true );
 
 				if( count >= 1 )
 				{
@@ -426,7 +436,7 @@ namespace Saturn {
 				auto id = AssetManager::Get()->CreateAsset( AssetType::Material );
 				auto asset = AssetManager::Get()->FindAsset( id );
 				auto newPath = m_CurrentPath / "Untitled Material.smaterial";
-				int32_t count = GetFilenameCount( "Untitled Material.smaterial" );
+				uint32_t count = GetFilenameCount( "Untitled Material.smaterial" );
 
 				if( count >= 1 )
 				{
@@ -451,7 +461,7 @@ namespace Saturn {
 				auto asset = AssetManager::Get()->FindAsset( id );
 				auto newPath = m_CurrentPath / "Untitled Physics Material.sphymaterial";
 
-				int32_t count = GetFilenameCount( "Untitled Physics Material.sphymaterial" );
+				uint32_t count = GetFilenameCount( "Untitled Physics Material.sphymaterial" );
 
 				if( count >= 1 )
 				{
@@ -475,7 +485,7 @@ namespace Saturn {
 				auto id = AssetManager::Get()->CreateAsset( AssetType::Scene );
 				auto asset = AssetManager::Get()->FindAsset( id );
 				auto newPath = m_CurrentPath / "Empty Scene.scene";
-				int32_t count = GetFilenameCount( "Empty Scene.scene" );
+				uint32_t count = GetFilenameCount( "Empty Scene.scene" );
 
 				if( count >= 1 )
 				{
@@ -508,7 +518,7 @@ namespace Saturn {
 				auto id = AssetManager::Get()->CreateAsset( AssetType::GraphSound );
 				auto asset = AssetManager::Get()->FindAsset( id );
 				auto newPath = m_CurrentPath / "New Sound Editor.gsnd";
-				int32_t count = GetFilenameCount( "New Sound Editor.gsnd" );
+				uint32_t count = GetFilenameCount( "New Sound Editor.gsnd" );
 
 				if( count >= 1 )
 					newPath.replace_filename( std::format( "{0} ({1}).gsnd", "Empty Sound Editor", count ) );
@@ -529,7 +539,7 @@ namespace Saturn {
 				auto id = AssetManager::Get()->CreateAsset( AssetType::BehaviourTree );
 				auto asset = AssetManager::Get()->FindAsset( id );
 				auto newPath = m_CurrentPath / "New Behaviour Tree.sbt";
-				int32_t count = GetFilenameCount( "New Behaviour Tree.sbt" );
+				uint32_t count = GetFilenameCount( "New Behaviour Tree.sbt" );
 
 				if( count >= 1 )
 					newPath.replace_filename( std::format( "{0} ({1}).sbt", "New Behaviour Tree", count ) );
@@ -550,7 +560,7 @@ namespace Saturn {
 				auto id = AssetManager::Get()->CreateAsset( AssetType::BehaviourTreeMemory );
 				auto asset = AssetManager::Get()->FindAsset( id );
 				auto newPath = m_CurrentPath / "New Behaviour Tree Memory.sbtm";
-				int32_t count = GetFilenameCount( "New Behaviour Tree Memory.sbtm" );
+				uint32_t count = GetFilenameCount( "New Behaviour Tree Memory.sbtm" );
 
 				if( count >= 1 )
 					newPath.replace_filename( std::format( "{0} ({1}).sbtm", "New Behaviour Tree Memory", count ) );
@@ -572,7 +582,7 @@ namespace Saturn {
 				const auto id = AssetManager::Get()->CreateAsset( AssetType::AnimationController );
 				auto asset = AssetManager::Get()->FindAsset( id );
 				auto newPath = m_CurrentPath / "New Animation Controller.sac";
-				const int32_t count = GetFilenameCount( "New Animation Controller.sac" );
+				const uint32_t count = GetFilenameCount( "New Animation Controller.sac" );
 
 				if( count >= 1 )
 					newPath.replace_filename( std::format( "{0} ({1}).sac", "New Animation Controller", count ) );
@@ -599,7 +609,7 @@ namespace Saturn {
 				const auto id = AssetManager::Get()->CreateAsset( AssetType::StyleProfile );
 				auto asset = AssetManager::Get()->FindAsset( id );
 				auto newPath = m_CurrentPath / "New Style Profile.ssp";
-				int32_t count = GetFilenameCount( "New Style Profile.ssp" );
+				uint32_t count = GetFilenameCount( "New Style Profile.ssp" );
 
 				if( count >= 1 )
 					newPath.replace_filename( std::format( "{0} ({1}).ssp", "New Style Profile", count ) );
@@ -794,6 +804,25 @@ namespace Saturn {
 			else if( m_Searching && m_ValidSearchFiles.empty() )
 			{
 				drawTextCentredForNoAssets( "No assets could be found matching that search criteria." );
+			}
+
+			// Process pending deletions
+			if( m_ItemsToDelete.size() )
+			{
+				auto& rCurrentItemInQueue = m_ItemsToDelete.front();
+
+				// We need to check again, because the assets that were previously
+				// needed could of just been deleted.
+				if( AssetManager::Get()->DoesAssetHaveDependencies( rCurrentItemInQueue->GetAsset() ) )
+				{
+					m_ShowDeleteAssetPopup = true;
+				}
+				else
+				{
+					rCurrentItemInQueue->Delete();
+
+					m_ItemsToDelete.erase( std::remove( m_ItemsToDelete.begin(), m_ItemsToDelete.end(), rCurrentItemInQueue ) );
+				}
 			}
 
 			constexpr float padding = 16.0f;
@@ -1118,18 +1147,32 @@ namespace Saturn {
 
 	void ContentBrowserPanel::OnEvent( Event& rEvent )
 	{
-		if( m_WindowFocused && rEvent.Type == EventType::MousePressed )
-		{
-			RubyMouseEvent& mouseEvent = ( RubyMouseEvent& ) rEvent;
+		if( !m_WindowFocused )
+			return;
 
-			if( mouseEvent.GetButton() == ( int ) RubyMouseButton_Extra1 )
+		switch( rEvent.Type )
+		{
+			case EventType::KeyPressed:
 			{
-				UndoQuickAction();
-			}
-			else if( mouseEvent.GetButton() == ( int ) RubyMouseButton_Extra2 )
+				OnKeyPressed( ( RubyKeyEvent& ) rEvent );
+			} break;
+
+			case EventType::MousePressed: 
 			{
-				RedoQuickAction();
-			}
+				RubyMouseEvent& mouseEvent = ( RubyMouseEvent& ) rEvent;
+
+				if( mouseEvent.GetButton() == ( int ) RubyMouseButton_Extra1 )
+				{
+					UndoQuickAction();
+				}
+				else if( mouseEvent.GetButton() == ( int ) RubyMouseButton_Extra2 )
+				{
+					RedoQuickAction();
+				}
+			} break;
+
+			default:
+				break;
 		}
 	}
 
@@ -1218,9 +1261,11 @@ namespace Saturn {
 			ImGui::OpenPopup( "Delete Asset##DELETEASSET" );
 
 		ImGui::SetNextWindowPos( ImGui::GetMainViewport()->GetCenter(), ImGuiCond_FirstUseEver, ImVec2( 0.5f, 0.5f ) );
-		if( ImGui::BeginPopupModal( "Delete Asset##DELETEASSET", &m_ShowDeleteAssetPopup, ImGuiWindowFlags_NoSavedSettings ) )
+		if( ImGui::BeginPopupModal( "Delete Asset##DELETEASSET", nullptr, ImGuiWindowFlags_NoSavedSettings ) )
 		{
-			Ref<Asset> assetToDelete = m_ItemToDelete->GetAsset();
+			auto& rItemToDelete = m_ItemsToDelete.front();
+
+			Ref<Asset> assetToDelete = rItemToDelete->GetAsset();
 			auto& rMemoryDependencies = AssetManager::Get()->GetAssetDependenciesForAsset( assetToDelete );
 			auto& rPureDependencies = AssetManager::Get()->GetPureAssetDependenciesForAsset( assetToDelete );
 
@@ -1317,18 +1362,17 @@ namespace Saturn {
 						pDependant->OnUpdate( s_ID );
 					}
 
-					// Update asset (TODO)
 					for( AssetID assetID : rPureDependencies )
 					{
-						AssetManager::Get()->UpdateAssetDependency( m_ItemToDelete->GetAssetID(), assetID, s_ID );
+						AssetManager::Get()->UpdateAssetDependency( rItemToDelete->GetAssetID(), assetID, s_ID );
 					}
 
 					s_ID = 0;
 
 					GlobalUndoRedoGroup::Get()->ClearAll();
 
-					m_ItemToDelete->Delete();
-					m_ItemToDelete = nullptr;
+					rItemToDelete->Delete();
+					m_ItemsToDelete.erase( std::remove( m_ItemsToDelete.begin(), m_ItemsToDelete.end(), rItemToDelete ) );
 
 					m_ShowDeleteAssetPopup = false;
 					ImGui::CloseCurrentPopup();
@@ -1353,15 +1397,15 @@ namespace Saturn {
 
 					for( AssetID assetID : rPureDependencies )
 					{
-						AssetManager::Get()->UpdateAssetDependency( m_ItemToDelete->GetAssetID(), assetID, 0 );
+						AssetManager::Get()->UpdateAssetDependency( rItemToDelete->GetAssetID(), assetID, 0 );
 					}
 
 					AssetManager::Get()->UnregisterAllAssetDependencies( assetToDelete->ID );
 
 					GlobalUndoRedoGroup::Get()->ClearAll();
 
-					m_ItemToDelete->Delete();
-					m_ItemToDelete = nullptr;
+					rItemToDelete->Delete();
+					m_ItemsToDelete.erase( std::remove( m_ItemsToDelete.begin(), m_ItemsToDelete.end(), rItemToDelete ) );
 
 					m_ShowDeleteAssetPopup = false;
 					ImGui::CloseCurrentPopup();
@@ -1373,7 +1417,7 @@ namespace Saturn {
 				ImGui::TableSetColumnIndex( 2 );
 				if( ImGui::Button( "Cancel" ) )
 				{
-					m_ItemToDelete = nullptr;
+					m_ItemsToDelete.erase( std::remove( m_ItemsToDelete.begin(), m_ItemsToDelete.end(), rItemToDelete ) );
 					m_ShowDeleteAssetPopup = false;
 					ImGui::CloseCurrentPopup();
 				}
@@ -1383,6 +1427,10 @@ namespace Saturn {
 
 			ImGui::EndPopup();
 		}
+
+		// We are just always going to assume that we are the last time to delete
+		// even if we aren't.
+		m_ShowDeleteAssetPopup = false;
 #endif
 	}
 
@@ -1422,8 +1470,7 @@ namespace Saturn {
 		{
 			m_RootPath = m_CurrentViewModeDirectory;
 
-			delete m_Watcher;
-			m_Watcher = new filewatch::FileWatch<std::wstring>( m_RootPath.wstring(),
+			m_Watcher = std::make_unique<filewatch::FileWatch<std::wstring>>( m_RootPath.wstring(),
 				[this]( const std::wstring& path, const filewatch::Event event )
 				{
 					OnFilewatchEvent( path, event );
@@ -1462,7 +1509,8 @@ namespace Saturn {
 		{
 			if( rItem->GetAssetID() == id )
 			{
-				rItem->Select();
+				ClearSelection();
+				AddSelected( rItem );
 
 				// We skip the clipper for one frame to allow the item to render and set it's scroll as then next time the will be visible.
 				rItem->ScrollTo();
@@ -1678,19 +1726,6 @@ namespace Saturn {
 		while( clipper.Step() )
 		{
 			auto Itr = rList.begin();
-			/*
-			if( !first )
-			{
-				for( int i = 0; i < clipper.DisplayStart; i++ )
-				{
-					for( int c = 0; c < columnCount && Itr != rList.end(); c++ )
-					{
-						Itr++;
-					}
-				}
-			}
-			*/
-
 			// Go to clipper.DisplayStart
 			if( !first )
 			{
@@ -1733,6 +1768,38 @@ namespace Saturn {
 			}
 
 			first = false;
+		}
+	}
+
+	void ContentBrowserPanel::OnKeyPressed( RubyKeyEvent& rEvent )
+	{
+		// TODO: Not the best way, the ContentBrowserPanel should know if any items are being renamed or not. 
+		const auto numberOfItemsBeingRenamed = std::count_if( m_SelectedItems.begin(), m_SelectedItems.end(),
+			[]( const auto& rItem )
+		{
+			return rItem->IsRenaming();
+		} );
+
+		switch( rEvent.GetKeycode() )
+		{
+			// Select all items.
+			case RubyKey_A:
+			{
+				if( ( rEvent.GetModifers() == RubyKey_LeftCtrl || rEvent.GetModifers() == RubyKey_RightCtrl ) && numberOfItemsBeingRenamed == 0 )
+				{
+					if( m_SelectedItems.capacity() < m_Files.size() )
+						m_SelectedItems.reserve( m_Files.size() );
+
+					for( auto& rItem : m_Files )
+					{
+						rItem->Select( true );
+						m_SelectedItems.push_back( rItem );
+					}
+				}
+			} break;
+
+			default:
+				break;
 		}
 	}
 

@@ -211,7 +211,7 @@ namespace Saturn {
 
 		//////////////////////////////////////////////////////////////////////////
 		// Scene loading and Scene Renderer
-		m_SceneRenderer = Ref<SceneRenderer>::Create( SceneRendererFlag_MasterInstance | SceneRendererFlag_RenderGrid );
+		m_SceneRenderer = Ref<SceneRenderer>::Create( SceneRendererFlag_MasterInstance | SceneRendererFlag_RenderGrid_DEPRECATED );
 
 		m_SceneRenderer->SetCurrentScene( m_EditorScene.Get() );
 
@@ -357,6 +357,8 @@ namespace Saturn {
 
 			m_RuntimeScene->OnUpdate( time );
 
+			// Suspended only, paused would be in the control of the user, so we don't switch the
+			// camera.
 			if( m_RuntimeScene->GetRuntimeState() == RuntimeState::Suspended ) [[unlikely]]
 			{
 				m_SuspendedEditorCamera.SetActive( m_AllowCameraEvents );
@@ -474,7 +476,7 @@ namespace Saturn {
 			m_TitleBar.OnImGuiRender();
 
 			m_ImGuiWindowManager->DrawAll();
-		
+
 			if( m_ShowImGuiDemoWindow )     ImGui::ShowDemoWindow( &m_ShowImGuiDemoWindow );
 			if( m_ShowUserSettings )        DrawProjectSettingsWindow();
 			if( m_OpenAssetRegistryDebug )  DrawAssetRegistryDebug();
@@ -515,9 +517,28 @@ namespace Saturn {
 					m_SuspendedEditorCamera.OnEvent( rEvent );
 			}
 
-			if( m_RuntimeScene )
+			// TODO: Fix this.... we want events to only fire if the mouse is over the viewport
+			// However, there are two issues to solve this problem,
+			// 1) In UI the mouse will be over the viewport but will not be locked, so the events would fire.
+			// 2) With no click able UI the cursor should be locked which means that it can drift out of the viewport, meaning that we still want events to fire because we're locked but its now no longer over the viewport.
+			//
+			// How could we solve this?
+			// We could check like this, is the mouse locked Yes: fire events regardless No: check if over viewport
+			// OR
+			// We don't handle any of this, it is the responsibly of the caller to do so.
+			
+//			SAT_CORE_INFO( "m_MouseOverViewport: {0}", m_MouseOverViewport );
+
+			if( /*( m_MouseOverViewport || m_ViewportFocused ) &&*/ m_RuntimeScene ) 
+			{
 				m_RuntimeScene->OnEvent( rEvent );
-	
+
+				if( g_AluraCanvas )
+				{
+					g_AluraCanvas->HandleDrawerEvents( rEvent );
+				}
+			}
+
 			m_ImGuiWindowManager->ProcessEvent( rEvent );
 		}
 
@@ -552,6 +573,11 @@ namespace Saturn {
 				const auto& rParams = rSkylightEvent.GetParams();
 
 				m_SceneRenderer->SetDynamicSky( rParams.x, rParams.y, rParams.z );
+
+				if( m_CameraPreviewSceneRenderer )
+				{
+					m_CameraPreviewSceneRenderer->SetDynamicSky( rParams.x, rParams.y, rParams.z );
+				}
 			} break;
 
 			case EventType::EntitySelected:
@@ -732,6 +758,24 @@ namespace Saturn {
 		}
 	}
 
+	void EditorLayer::NewFile()
+	{
+		Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
+
+		Ref<Scene> newScene = Ref<Scene>::Create();
+		g_ActiveScene = newScene.Get();
+
+		m_SelectionManager->ClearSelection( newScene.Get(), true );
+		hierarchyPanel->SetContext( newScene );
+
+		// Clear old notifications from the old scene.
+		m_Notifications.clear();
+
+		m_SceneRenderer->SetCurrentScene( newScene.Get() );
+
+		m_EditorScene = g_ActiveScene;
+	}
+
 	void EditorLayer::SaveProject()
 	{
 		ProjectSerialiser ps( Project::GetActiveProject() );
@@ -874,18 +918,34 @@ namespace Saturn {
 					{
 						m_GlobalUndoRedoGroup->RemoveIfActionHasIdentifier( ( uint64_t ) rEntity->GetHandle() );
 						
+						bool canDeleteNow = true;
+
+						// Special deletion cases:
+						//  (a) NavBoundsEntity -> need to show popup to ask if the uesr want to delete the cache.
+						//  (b) Currently selected camera -> invalidate information about the camera.
 						if( rEntity->GetClass() == NavBoundsEntity::StaticClass() )
 						{
 							m_NavMeshEntityToDelete = rEntity->GetHandle();
 							m_ShowDeleteNavMeshCachePopup = true;
+						
+							canDeleteNow = false;
 						}
-						else
+						// NOT an else if, because what if the user has a camera and a navbounds??
+						// Yes, very rare case, but it will still cause a crash if it's not handled like this.
+						if( m_SelectedCameraEntityID == rEntity->GetHandle() )
+						{
+							m_pSelectedCamera = nullptr;
+							m_SelectedCameraEntityID = entt::null;
+							m_ShouldRenderCameraPreview = false;
+						}
+						
+						if( canDeleteNow )
 						{
 							g_ActiveScene->DeleteEntity( rEntity );
 						}
 					}
 
-					// The entities will be freed here!
+					// The entities will be freed here! (if we could delete it in the last pass)
 					m_SelectionManager->ClearSelection( g_ActiveScene, true );
 
 					g_ActiveScene->MarkDirty();
@@ -933,13 +993,29 @@ namespace Saturn {
 			switch( rEvent.GetKeycode() )
 			{
 				case RubyKey_D:
-				{					
-					for( const auto& rEntity : m_SelectionManager->GetSelectionContexts( g_ActiveScene ) )
+				{
+					const auto selections = m_SelectionManager->GetSelectionContexts( g_ActiveScene );
+					if( selections.empty() )
+						break;
+
+					for( const auto& rEntity : selections )
 					{
 						g_ActiveScene->DuplicateEntity( rEntity );
 					}
 
 					g_ActiveScene->MarkDirty();
+
+					if( selections.size() > 1 )
+					{
+						const std::string text = std::format( "Duplicated {0} entities", selections.size() );
+						EditorNotification notification{ .Text = text, .Lifetime = 3.0f };
+						PushNotification( notification );
+					}
+					else
+					{
+						EditorNotification notification{ .Text = "Duplicated 1 entity", .Lifetime = 3.0f };
+						PushNotification( notification );
+					}
 				} break;
 
 				case RubyKey_F:
@@ -1012,6 +1088,58 @@ namespace Saturn {
 		return true;
 	}
 
+	static bool RayIntersectsBillboard( const glm::vec3& rayOrigin, const glm::vec3& rayDirection, float rayDistance, const glm::vec3& billboardPos, float sideLength )
+	{
+		const float epsilon = 1e-6f;
+		float half_S = sideLength * 0.5f;
+		glm::vec3 worldUp( 0.0f, 1.0f, 0.0f );
+
+		glm::vec3 vecToOrigin = rayOrigin - billboardPos;
+		float vecLength = glm::length( vecToOrigin );
+		if( vecLength < epsilon )
+		{
+			return false;
+		}
+		glm::vec3 N = vecToOrigin / vecLength;
+
+		glm::vec3 crossUp = glm::cross( N, worldUp );
+		float crossLength = glm::length( crossUp );
+		if( crossLength < epsilon )
+		{
+			crossUp = glm::cross( N, glm::vec3( 1.0f, 0.0f, 0.0f ) );
+			crossLength = glm::length( crossUp );
+			if( crossLength < epsilon )
+			{
+				return false;
+			}
+		}
+		glm::vec3 U = crossUp / crossLength;
+		glm::vec3 V = glm::cross( N, U );
+
+		float denom = glm::dot( rayDirection, N );
+		if( std::fabs( denom ) < epsilon )
+		{
+			return false;
+		}
+
+		float t = glm::dot( billboardPos - rayOrigin, N ) / denom;
+		if( t < 0.0f || t > rayDistance )
+		{
+			return false;
+		}
+
+		glm::vec3 h = rayOrigin + t * rayDirection;
+
+		glm::vec3 offset = h - billboardPos;
+		float localU = glm::dot( offset, U );
+		float localV = glm::dot( offset, V );
+		if( std::fabs( localU ) <= half_S && std::fabs( localV ) <= half_S )
+		{
+			return true;
+		}
+		return false;
+	}
+
 	bool EditorLayer::OnMousePressed( RubyMouseEvent& rEvent )
 	{
 		if( m_RuntimeScene || !m_MouseOverViewport || rEvent.GetButton() != ( int ) RubyMouseButton_Left || ImGuizmo::IsOver() )
@@ -1063,6 +1191,18 @@ namespace Saturn {
 							}
 						}
 					}
+				}
+			}
+
+			const auto billboards = g_ActiveScene->GetAllEntitiesWith<BillboardComponent>();
+			for( const auto& rEntity : billboards )
+			{
+				const TransformComponent& rTc = g_ActiveScene->GetWorldSpaceTransform( rEntity );
+
+				if( RayIntersectsBillboard( origin, dir, std::numeric_limits<float>::max(), rTc.Position, rTc.Scale.x ) )
+				{
+					m_SelectionManager->Select( rEntity );
+					m_SelectionManager->SetSelectionReason( ESR_Viewport );
 				}
 			}
 
@@ -1952,7 +2092,8 @@ namespace Saturn {
 		if( ImGui::BeginMenu( "File" ) )
 		{
 			Auxiliary::DisabledFlag disabledIfRuntime( m_RequestRuntime );
-				
+			
+			if( ImGui::MenuItem( "New Scene" ) )					 NewFile();
 			if( ImGui::MenuItem( "Save Scene", "Ctrl+S" ) )          SaveFile();
 			if( ImGui::MenuItem( "Save Scene As", "Ctrl+Shift+S" ) ) SaveFileAs();
 
@@ -1969,12 +2110,23 @@ namespace Saturn {
 		if( ImGui::BeginMenu( "Edit" ) )
 		{
 			{
-				Auxiliary::ScopedDisabledFlag disabledIfRuntime( m_RequestRuntime );
+				Auxiliary::ScopedDisabledFlag disabledIfRuntimeOrEmpty( m_RequestRuntime );
 
 				// TODO: Disable if there's nothing to undo/redo.
-				if( ImGui::MenuItem( "Undo", "Ctrl+Z" ) )           m_GlobalUndoRedoGroup->GlobalUndoRecent();
-				if( ImGui::MenuItem( "Redo", "Ctrl+Y" ) )           m_GlobalUndoRedoGroup->GlobalRedoRecent();
-				if( ImGui::MenuItem( "Clear all action history" ) ) m_GlobalUndoRedoGroup->ClearAll();
+				{
+					Auxiliary::ScopedDisabledFlag disabledIfNoUndo    ( m_GlobalUndoRedoGroup->IsUndoActionsEmpty() );
+					if( ImGui::MenuItem( "Undo", "Ctrl+Z" ) )           m_GlobalUndoRedoGroup->GlobalUndoRecent();
+				}
+				
+				{
+					Auxiliary::ScopedDisabledFlag disabledIfNoRedo    ( m_GlobalUndoRedoGroup->IsRedoActionsEmpty() );
+					if( ImGui::MenuItem( "Redo", "Ctrl+Y" ) )           m_GlobalUndoRedoGroup->GlobalRedoRecent();
+				}
+				
+				{
+					Auxiliary::ScopedDisabledFlag disabledIfNoActions( !m_GlobalUndoRedoGroup->HasAnyActions() );
+					if( ImGui::MenuItem( "Clear all action history" ) ) m_GlobalUndoRedoGroup->ClearAll();
+				}
 			}
 
 			ImGui::EndMenu();
@@ -2628,6 +2780,12 @@ namespace Saturn {
 				if( !m_BlockingOperation )
 					m_BlockingOperation = Ref<JobProgress>::Create();
 
+				m_JobModalOpen = true;
+				m_BlockingOperation->SetStatus( "Initialising..." );
+
+				SaveFile();
+				SaveProject();
+
 				if( m_ShouldBuildShaderBundle )
 					CreateShaderBundleJob();
 
@@ -2788,8 +2946,10 @@ namespace Saturn {
 				Ref<Prefab> prefabAsset = m_AssetManager->GetAssetAs<Prefab>( asset->ID );
 
 				CreateEntityParameters createEntityParameters;
-				m_EditorScene->CreatePrefab( prefabAsset, createEntityParameters );
+				auto entity = m_EditorScene->CreatePrefab( prefabAsset, createEntityParameters );
 				m_EditorScene->MarkDirty();
+
+				PlaceEntityRelativeToMousePos( entity );
 			}
 
 			if( auto payload = ImGui::AcceptDragDropPayload( "CONTENT_BROWSER_ITEM_MODEL" ) )
@@ -2804,6 +2964,26 @@ namespace Saturn {
 				auto& rMeshComponent = entity->AddComponent<StaticMeshComponent>();
 				rMeshComponent.Mesh = meshAsset;
 				rMeshComponent.MaterialRegistry = Ref<MaterialRegistry>::Create( meshAsset );
+
+				PlaceEntityRelativeToMousePos( entity );
+
+				m_EditorScene->MarkDirty();
+			}
+
+			if( auto payload = ImGui::AcceptDragDropPayload( "CONTENT_BROWSER_ITEM_SKMODEL" ) )
+			{
+				const UUID* pUUID = ( const UUID* ) payload->Data;
+
+				Ref<Asset> asset = m_AssetManager->FindAsset( *pUUID );
+				Ref<SkeletalMesh> meshAsset = m_AssetManager->GetAssetAs<SkeletalMesh>( asset->ID );
+
+				SharedPtr<Entity> entity = m_EditorScene->CreateEntity( asset->Name );
+
+				auto& rMeshComponent = entity->AddComponent<SkeletalMeshComponent>();
+				rMeshComponent.Mesh = meshAsset;
+				rMeshComponent.MaterialRegistry = Ref<MaterialRegistry>::Create( meshAsset );
+
+				PlaceEntityRelativeToMousePos( entity );
 
 				m_EditorScene->MarkDirty();
 			}
@@ -2835,7 +3015,7 @@ namespace Saturn {
 
 	void EditorLayer::Viewport_GizmoControl()
 	{
-		if( g_ActiveScene->IsRuntimeRunning() )
+		if( g_ActiveScene->IsRuntimeRunning() || g_ActiveScene->IsPaused() )
 			return;
 
 		const ImVec2 minBound = ImGui::GetWindowPos();
@@ -3046,7 +3226,7 @@ namespace Saturn {
 	{
 		// Only show the hot reload settings when no runtime is active
 		// So don't even show it while suspended.
-		if( g_ActiveScene->IsRuntimeRunning() )
+		if( g_ActiveScene->IsRuntimeRunning() || g_ActiveScene->IsPaused() )
 			return;
 
 		const ImVec2 minBound = ImGui::GetWindowPos();
@@ -3264,19 +3444,18 @@ namespace Saturn {
 		SaveProject();
 
 		std::filesystem::path SaturnDir = Auxiliary::GetEnvironmentVariableWs( L"SATURN_DIR" );
-		std::filesystem::path WorkingDir = SaturnDir / "ProjectBrowser";
+		std::filesystem::path WorkingDir = SaturnDir / "Saturn-ProjectBrowser";
 
-		// TODO: Allow for other platforms
-#if defined( SAT_DEBUG )
+		const std::string binaryFolderName = std::format( "{0}-{1}-x86_64", Application::GetCurrentConfigName(), Application::GetCurrentPlatformBinaryName() );
+
 		SaturnDir /= L"bin";
-		SaturnDir /= L"Debug-windows-x86_64";
-		SaturnDir /= L"ProjectBrowser";
-		SaturnDir /= L"ProjectBrowser.exe";
+		SaturnDir /= binaryFolderName;
+		SaturnDir /= L"Saturn-ProjectBrowser";
+
+#if defined( SAT_PLATFORM_WINDOWS )
+		SaturnDir /= L"Saturn-ProjectBrowser.exe";
 #else
-		SaturnDir /= L"bin";
-		SaturnDir /= L"Release-windows-x86_64";
-		SaturnDir /= L"ProjectBrowser";
-		SaturnDir /= L"ProjectBrowser.exe";
+		SaturnDir /= L"Saturn-ProjectBrowser";
 #endif
 		DeatchedProcess dp( SaturnDir.wstring(), WorkingDir );
 		Application::Get()->Close();
@@ -3629,6 +3808,30 @@ namespace Saturn {
 		const glm::vec3 rayDir = inverseView * glm::vec3( ray );
 
 		return { rayPos, rayDir };
+	}
+
+	void EditorLayer::PlaceEntityRelativeToMousePos( SharedPtr<Entity> entity )
+	{
+		// TODO: We will want to do a raycast so the Z axis is relative to where the mouse hits
+		//		 for example, if we have an object that is +10 meters away, with this current method it will
+		//		 not place it there and will only place from where cameras clip is.
+		//		 If we did a raycast we could detect where the mouse was, shoot a ray, and see what it hits, if it
+		//		 hits something get the Z coord and set it, if not we use the cameras clip.
+		//
+		const auto viewportMouse = ConvertMouseToViewportNDC();
+		if( viewportMouse.x > -1.0f && viewportMouse.x < 1.0f && viewportMouse.y > -1.0f && viewportMouse.y < 1.0f )
+		{
+			const glm::vec4 rayClip = glm::vec4( viewportMouse.x, viewportMouse.y, -1.0f, 1.0f );
+			glm::vec4 rayEye = glm::inverse( m_EditorCamera.m_Projection ) * rayClip;
+			rayEye = glm::vec4( rayEye.x, rayEye.y, -1.0f, 0.0f );
+
+			const glm::vec3 rayWorld = glm::normalize(
+				glm::vec3( glm::inverse( m_EditorCamera.m_ViewMatrix ) * rayEye )
+			);
+
+			const glm::vec3 rayOrigin = m_EditorCamera.GetPosition();
+			entity->SetPosition( rayOrigin + rayWorld * 10.0f );
+		}
 	}
 
 	void EditorLayer::PushMessageBox( MessageBoxInfo& rInfo )

@@ -145,7 +145,7 @@ namespace Saturn {
 
 	void TextureSourceAssetImportPopup::Initialise()
 	{
-		// TODO: In order to show a preview we need to ensure that we destory the texture
+		// TODO: In order to show a preview we need to ensure that we destroy the texture
 		//       after the frame is done...
 		// I'll work on that later...
 
@@ -216,7 +216,7 @@ namespace Saturn {
 
 			ImGui::EndHorizontal();
 
-#if PREVIEW_TEXTURE_FIXED
+#if SAT_PREVIEW_TEXTURE_FIXED
 			ImGui::SeparatorText( "Preview Image" );
 
 			const ImVec2 UV0 = ( flip ? ImVec2( 0.0F, 1.0F ) : ImVec2( 0.0F, 0.0F ) );
@@ -551,6 +551,25 @@ namespace Saturn {
 		}
 
 		ImGui::EndHorizontal();
+
+#if SAT_HAS_IMPORT_SUB_MESH_AS_ASSET
+		ImGui::BeginHorizontal( "##importOption_sbm" );
+
+		bool treatSubmeshAsOwnAsset = hasFlag( MeshImportBehaviour_ImportSubMeshAsAsset );
+		ImGui::Text( "Import all Submeshes independent" );
+		ImGui::Spring();
+
+		ImGui::SetNextItemWidth( 130.0f );
+		if( ImGui::Checkbox( "##TreatSubmeshAsOwnAsset", &treatSubmeshAsOwnAsset ) )
+		{
+			if( hasFlag( MeshImportBehaviour_ImportSubMeshAsAsset ) )
+				m_ImportBehaviour &= ~MeshImportBehaviour_ImportSubMeshAsAsset;
+			else
+				m_ImportBehaviour |= MeshImportBehaviour_ImportSubMeshAsAsset;
+		}
+
+		ImGui::EndHorizontal();
+#endif
 	}
 
 	AssetImportPopupError MeshImportPopup::FullyImportMesh()
@@ -560,12 +579,6 @@ namespace Saturn {
 
 	AssetImportPopupError MeshImportPopup::ImportDynamic()
 	{
-		auto assetPath = m_DestinationPath / m_AssetToImportPath.filename();
-		assetPath.replace_extension( ".skmesh" );
-
-		const auto id = AssetManager::Get()->CreateAsset( AssetType::SkeletalMesh );
-		auto asset = AssetManager::Get()->FindAsset( id );
-
 		if( ( m_ImportBehaviour & MeshImportBehaviour_SK_ImportMesh ) != 0 )
 		{
 			// Copy the raw mesh file:
@@ -573,14 +586,20 @@ namespace Saturn {
 
 			if( m_UseBinFile )
 				std::filesystem::copy_file( m_GLTFBinPath, m_DestinationPath / m_GLTFBinPath.filename(), std::filesystem::copy_options::overwrite_existing );
-
-			asset->SetAbsolutePath( assetPath );
 		}
+
+		//////////////////////////////////////////////////////////////////////////
+		// Preform import
 
 		if( m_CurrentAssetIDForSkeleton )
 			m_ImportBehaviour |= MeshImportBehaviour_SK_MergeWithExistingSK;
 
 		SkeletalMeshImporter meshImporter( m_AssetToImportPath, m_DestinationPath, m_ImportBehaviour, m_CurrentAssetIDForSkeleton );
+		
+		// No need to find materials when the user has already selected the one the user wants.
+		if( m_CurrentAssetIDForMaterial != 0 )
+			meshImporter.DisableMaterialSearching();
+
 #if !defined(SAT_DIST)
 		if( const auto err = meshImporter.TryImport(); err != AssetImportPopupError::None )
 		{
@@ -591,10 +610,16 @@ namespace Saturn {
 
 		//////////////////////////////////////////////////////////////////////////
 		// Create the Skeletal Mesh
-
 #if !defined(SAT_DIST)
 		if( ( m_ImportBehaviour & MeshImportBehaviour_SK_ImportMesh ) != 0 )
 		{
+			auto assetPath = m_DestinationPath / m_AssetToImportPath.filename();
+			assetPath.replace_extension( ".skmesh" );
+
+			const auto id = AssetManager::Get()->CreateAsset( AssetType::SkeletalMesh );
+			auto asset = AssetManager::Get()->FindAsset( id );
+			asset->SetAbsolutePath( assetPath );
+
 			auto skeletalMesh = asset.As<SkeletalMesh>();
 			skeletalMesh = Ref<SkeletalMesh>::Create();
 			skeletalMesh->ID = asset->ID;
@@ -605,11 +630,24 @@ namespace Saturn {
 			skeletalMesh->Import_InitMaterialRegistry();
 			skeletalMesh->Import_InitSkeleton( m_CurrentAssetIDForSkeleton == 0 ? meshImporter.GetCreatedSkeletonID() : m_CurrentAssetIDForSkeleton );
 
-			// TOOD: Unload the material assets!! (Textures could be loaded!)
-			for( uint64_t materialID : meshImporter.GetMeshInformation().MaterialAssets )
+#if !defined(SAT_DIST)
+			if( m_CurrentAssetIDForMaterial )
 			{
-				skeletalMesh->GetMaterialRegistry()->AddAsset( AssetManager::Get()->GetAssetAs<MaterialAsset>( materialID ) );
+				// NOTE: The size of MaterialAssets will be correct however there will be NO data in the array.
+				for( size_t i = 0; i < meshImporter.GetMeshInformation().MaterialAssets.size(); ++i )
+				{
+					skeletalMesh->GetMaterialRegistry()->AddAsset( AssetManager::Get()->GetAssetAs<MaterialAsset>( m_CurrentAssetIDForMaterial ) );
+				}
 			}
+			else
+			{
+				// TOOD: Unload the material assets!! (Textures could be loaded!)
+				for( uint64_t materialID : meshImporter.GetMeshInformation().MaterialAssets )
+				{
+					skeletalMesh->GetMaterialRegistry()->AddAsset( AssetManager::Get()->GetAssetAs<MaterialAsset>( materialID ) );
+				}
+			}
+#endif
 
 			// Serialise the mesh asset
 			SkeletalMeshAssetSerialiser sma;
@@ -617,8 +655,6 @@ namespace Saturn {
 
 			skeletalMesh->SetAbsolutePath( assetPath );
 		}
-		else
-			AssetManager::Get()->RemoveAsset( id );
 #endif
 
 		return AssetImportPopupError::None;
@@ -626,21 +662,21 @@ namespace Saturn {
 
 	AssetImportPopupError MeshImportPopup::ImportStatic()
 	{
-		const auto id = AssetManager::Get()->CreateAsset( AssetType::StaticMesh );
-		auto asset = AssetManager::Get()->FindAsset( id );
-
 		// Copy the raw mesh file:
 		std::filesystem::copy_file( m_AssetToImportPath, m_DestinationPath / m_AssetToImportPath.filename(), std::filesystem::copy_options::overwrite_existing );
 
 		if( m_UseBinFile )
 			std::filesystem::copy_file( m_GLTFBinPath, m_DestinationPath / m_GLTFBinPath.filename(), std::filesystem::copy_options::overwrite_existing );
 
-		auto assetPath = m_DestinationPath / m_AssetToImportPath.filename();
-		assetPath.replace_extension( ".stmesh" );
-
-		asset->SetAbsolutePath( assetPath );
+		//////////////////////////////////////////////////////////////////////////
+		// Preform import
 
 		StaticMeshImporter meshImporter( m_AssetToImportPath, m_DestinationPath, m_ImportBehaviour );
+
+		// No need to find materials when the user has already selected the one she wants.
+		if( m_CurrentAssetIDForMaterial != 0 )
+			meshImporter.DisableMaterialSearching();
+
 #if !defined(SAT_DIST)
 		if( const auto err = meshImporter.TryImport(); err != AssetImportPopupError::None ) 
 		{
@@ -650,29 +686,49 @@ namespace Saturn {
 #endif
 		//////////////////////////////////////////////////////////////////////////
 		// Create the mesh asset.
-		
-		auto staticMesh = asset.As<StaticMesh>();
-		staticMesh = Ref<StaticMesh>::Create();
-		staticMesh->ID = asset->ID;
-		staticMesh->Path = asset->Path;
 
-		auto& meshPath = assetPath.replace_extension( m_AssetToImportPath.extension() );
-		staticMesh->SetFilepath( meshPath );
-		staticMesh->Import_InitMaterialRegistry();
+		if( ( m_ImportBehaviour & MeshImportBehaviour_ImportSubMeshAsAsset ) == 0 )
+		{
+			const auto id = AssetManager::Get()->CreateAsset( AssetType::StaticMesh );
+			auto asset = AssetManager::Get()->FindAsset( id );
+			auto assetPath = m_DestinationPath / m_AssetToImportPath.filename();
+			assetPath.replace_extension( ".stmesh" );
+			asset->SetAbsolutePath( assetPath );
+
+			auto staticMesh = asset.As<StaticMesh>();
+			staticMesh = Ref<StaticMesh>::Create();
+			staticMesh->ID = asset->ID;
+			staticMesh->Path = asset->Path;
+
+			auto& meshPath = assetPath.replace_extension( m_AssetToImportPath.extension() );
+			staticMesh->SetFilepath( meshPath );
+			staticMesh->Import_InitMaterialRegistry();
 
 #if !defined(SAT_DIST)
-		// TOOD: Unload the material assets!! (Textures could be loaded!)
-		for( uint64_t materialID : meshImporter.GetMeshInformation().MaterialAssets )
-		{
-			staticMesh->GetMaterialRegistry()->AddAsset( AssetManager::Get()->GetAssetAs<MaterialAsset>( materialID ) );
-		}
+			if( m_CurrentAssetIDForMaterial )
+			{
+				// NOTE: The size of MaterialAssets will be correct however there will be NO data in the array.
+				for( size_t i = 0; i < meshImporter.GetMeshInformation().MaterialAssets.size(); ++i )
+				{
+					staticMesh->GetMaterialRegistry()->AddAsset( AssetManager::Get()->GetAssetAs<MaterialAsset>( m_CurrentAssetIDForMaterial ) );
+				}
+			}
+			else
+			{
+				// TOOD: Unload the material assets!! (Textures could be loaded!)
+				for( uint64_t materialID : meshImporter.GetMeshInformation().MaterialAssets )
+				{
+					staticMesh->GetMaterialRegistry()->AddAsset( AssetManager::Get()->GetAssetAs<MaterialAsset>( materialID ) );
+				}
+			}
 #endif
 
-		// Serialise the mesh asset
-		StaticMeshAssetSerialiser sma;
-		sma.Serialise( staticMesh );
+			// Serialise the mesh asset
+			StaticMeshAssetSerialiser sma;
+			sma.Serialise( staticMesh );
 
-		staticMesh->SetAbsolutePath( assetPath );
+			staticMesh->SetAbsolutePath( assetPath );
+		}
 
 		return AssetImportPopupError::None;
 	}

@@ -64,7 +64,10 @@ namespace Saturn {
 		uint32_t Channels() const { return m_Channels; }
 		bool IsHdr() const { return m_HDR; }
 		Ref<Texture2D> GetTexture() const { return m_Texture; }
+
+#if !defined(SAT_DIST)
 		const std::filesystem::path& GetTextureAbsolutePath() const { return m_AbsolutePath; }
+#endif
 
 		TextureLoadFlags GetFlags() const { return ( TextureLoadFlags ) m_LoadFlags; }
 		bool IsFlagSet( TextureLoadFlags flag ) const { return ( m_LoadFlags & flag ) != 0; }

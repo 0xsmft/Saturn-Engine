@@ -254,6 +254,10 @@ namespace Saturn {
 
 	void PhysicsRigidBody::ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds )
 	{
+		if( m_Shape )
+		{
+			m_Shape->ExportRc( rData, rNavMeshBounds );
+		}
 	}
 
 	void PhysicsRigidBody::SetMass( float val )

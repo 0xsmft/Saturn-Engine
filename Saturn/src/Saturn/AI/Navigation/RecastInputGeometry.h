@@ -77,7 +77,7 @@ namespace Saturn {
 		rcChunkyTriMesh* m_pChunkyTriMesh = nullptr;
 	};
 
-	class PhysXSceneExporter
+	class PhysicsSceneExporter
 	{
 	public:
 		static void Export( RecastInputGeometry& rInputGeom, AABB& rNavMeshBounds );

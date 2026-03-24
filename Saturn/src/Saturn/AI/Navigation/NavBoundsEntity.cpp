@@ -109,7 +109,7 @@ namespace Saturn {
 		navMeshBounds.Min = { FLT_MAX, FLT_MAX, FLT_MAX };
 		navMeshBounds.Max = { -FLT_MAX, -FLT_MAX, -FLT_MAX };
 
-		PhysXSceneExporter::Export( input, navMeshBounds );
+		PhysicsSceneExporter::Export( input, navMeshBounds );
 
 		SAT_CORE_ASSERT( input.GetVertexBuffer().size() % 3 == 0 );
 		SAT_CORE_ASSERT( input.GetIndexBuffer().size() % 3 == 0 );

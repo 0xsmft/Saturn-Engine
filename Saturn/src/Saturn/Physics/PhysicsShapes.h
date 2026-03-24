@@ -49,7 +49,7 @@ namespace Saturn {
 
 		virtual void Create( float mass ) = 0;
 
-//		virtual void ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds ) = 0;
+		virtual void ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds ) = 0;
 
 	public:
 		// Runtime only!
@@ -79,7 +79,7 @@ namespace Saturn {
 
 		void Create( float mass ) override;
 
-//		void ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
+		void ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
 
 		// Runtime only!
 		virtual void SetTrigger( bool isTrigger ) override;
@@ -96,7 +96,7 @@ namespace Saturn {
 		~SphereShape();
 
 		void Create( float mass ) override;
-//		void ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
+		void ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
 
 		// Runtime only!
 		virtual void SetTrigger( bool isTrigger ) override;
@@ -113,7 +113,7 @@ namespace Saturn {
 		~CapsuleShape();
 
 		void Create( float mass ) override;
-//		void ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
+		void ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
 
 		// Runtime only!
 		virtual void SetTrigger( bool isTrigger ) override;
@@ -133,10 +133,13 @@ namespace Saturn {
 		// This assumes the the mesh collider has already been cooked.
 		virtual void Create( float mass ) override;
 
-//		void ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
+		void ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
 
 		virtual void SetTrigger( bool t ) { }
 		[[nodiscard]] virtual bool IsTrigger() override;
+
+	private:
+		void ExportRcScaledShaped( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
 
 	private:
 		Ref<StaticMesh> m_Mesh;
@@ -158,7 +161,7 @@ namespace Saturn {
 		virtual void SetTrigger( bool t ) {}
 		[[nodiscard]] virtual bool IsTrigger() override;
 
-//		void ExportRc( physx::PxRigidActor& rActor, RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
+		void ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
 
 	private:
 		Ref<StaticMesh> m_Mesh;

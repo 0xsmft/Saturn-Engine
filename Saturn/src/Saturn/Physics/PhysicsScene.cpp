@@ -95,7 +95,8 @@ namespace Saturn {
 	void PhysicsScene::Simulate( Timestep ts )
 	{
 		SAT_PF_EVENT();
-
+		
+		// Pre sim
 		auto controllerView = m_Scene->GetAllEntitiesWith<CharacterMovementComponent>();
 		for( auto& rEntity : controllerView )
 		{
@@ -103,11 +104,15 @@ namespace Saturn {
 			rEntity->GetComponent<CharacterMovementComponent>().CharacterMovement->OnUpdate( 1.0f / 60.0f );
 		}
 
+		// sim
 		PhysicsFoundation::Get()->GetPhysicsSystem()->Update( 1.0f / 60.0f, 1u, PhysicsFoundation::Get()->GetTempAllocator(), PhysicsFoundation::Get()->GetJobSystem() );
 
 #if !defined(SAT_DIST)
 		m_DebugRecorder.NewFrame();
 #endif
+
+		// post sim
+		PhysicsFoundation::Get()->GetContactHandler()->DispatchAllContactEvents();
 	}
 
 	bool PhysicsScene::Raycast( const glm::vec3& rOrigin, const glm::vec3& rDirection, float maxDistance, RaycastHitResult* pOut )

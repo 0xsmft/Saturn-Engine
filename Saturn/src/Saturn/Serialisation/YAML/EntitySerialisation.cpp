@@ -460,7 +460,6 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 			const auto& rbc = entity->GetComponent< RigidbodyComponent >();
 
 			rEmitter << YAML::Key << "BodyType" << YAML::Value << ( uint32_t ) rbc.BodyType;
-			rEmitter << YAML::Key << "CCD" << YAML::Value << rbc.UseCCD;
 			rEmitter << YAML::Key << "Mass" << YAML::Value << rbc.Mass;
 
 			rEmitter << YAML::Key << "LockFlags" << YAML::Value << ( int ) rbc.LockFlags;
@@ -946,15 +945,14 @@ pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value ); \
 		{
 			auto& rb = DeserialisedEntity->AddComponent< RigidbodyComponent >();
 
-			rb.BodyType = ( PhysicsRigidBodyType )rbc[ "BodyType" ].as< uint32_t >( 2 /*PhysicsRigidBodyType::Dynamic*/ );
-			rb.UseCCD = rbc[ "CCD" ].as< bool >();
+			rb.BodyType = ( PhysicsRigidBodyType )rbc[ "BodyType" ].as< uint8_t >( 2 /*PhysicsRigidBodyType::Dynamic*/ );
 			rb.Mass = rbc[ "Mass" ].as< float >();
 
 			auto lockNode = rbc[ "LockFlags" ];
 
 			if( lockNode )
 			{
-				rb.LockFlags = lockNode.as< int >( 0 );
+				rb.LockFlags = lockNode.as< uint8_t >( 0 );
 			}
 			else
 			{

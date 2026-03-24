@@ -311,7 +311,6 @@ namespace Saturn {
 				auto& rbc = rEntity->GetComponent< RigidbodyComponent >();
 
 				RawSerialisation::WriteObject( rbc.BodyType, rStream );
-				RawSerialisation::WriteObject( rbc.UseCCD, rStream );
 				RawSerialisation::WriteObject( rbc.Mass, rStream );
 				RawSerialisation::WriteObject( rbc.LockFlags, rStream );
 			} );
@@ -644,7 +643,6 @@ namespace Saturn {
 				auto& rbc = rEntity->GetComponent< RigidbodyComponent >();
 
 				RawSerialisation::ReadObject( rbc.BodyType, rStream );
-				RawSerialisation::ReadObject( rbc.UseCCD, rStream );
 				RawSerialisation::ReadObject( rbc.Mass, rStream );
 				RawSerialisation::ReadObject( rbc.LockFlags, rStream );
 			} );

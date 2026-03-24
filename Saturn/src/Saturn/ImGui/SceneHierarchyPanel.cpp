@@ -1094,6 +1094,7 @@ namespace Saturn {
 		{
 			bool modified = false;
 
+			// 1. Body Type
 			ImGui::BeginHorizontal( "##setbodytypehz" );
 			ImGui::Text( "Body Type" );
 			ImGui::Spring();
@@ -1128,6 +1129,7 @@ namespace Saturn {
 
 			ImGui::Separator();
 
+			// 2. Body Settings
 			switch( rb.BodyType )
 			{
 				case PhysicsRigidBodyType::Dynamic:
@@ -1135,18 +1137,11 @@ namespace Saturn {
 				{
 					if( !m_Context->IsRuntimeRunning() )
 					{
-						modified |= Auxiliary::DrawBoolControl( "Use CCD", rb.UseCCD );
-
-						modified |= Auxiliary::DrawFloatControl( "Mass", rb.Mass );
+						modified |= Auxiliary::DrawFloatControl( "Mass", rb.Mass, 0.0f, FLT_MAX );
 						modified |= Auxiliary::DrawFloatControl( "Linear Drag", rb.LinearDrag );
 					}
 					else
 					{
-						{
-							Auxiliary::ScopedDisabledFlag disabled( true );
-							Auxiliary::DrawBoolControl( "Use CCD", rb.UseCCD );
-						}
-
 						if( Auxiliary::DrawFloatControl( "Mass", rb.Mass ) )
 							rb.Rigidbody->SetMass( rb.Mass );
 

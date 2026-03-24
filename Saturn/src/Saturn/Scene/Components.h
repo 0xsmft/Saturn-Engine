@@ -290,18 +290,18 @@ namespace Saturn {
 	struct RigidbodyComponent
 	{
 		PhysicsRigidBody* Rigidbody = nullptr;
-		PhysicsRigidBodyType BodyType = PhysicsRigidBodyType::Dynamic;
 
-		bool UseCCD = false;
+		PhysicsRigidBodyType BodyType = PhysicsRigidBodyType::Dynamic;
+		uint8_t LockFlags = 0;
+
 		float Mass = 2.0f;
 		float LinearDrag = 1.0f;
-		uint32_t LockFlags = 0;
 
 		MemoryAssetDependency<AssetType::PhysicsMaterial> MaterialAssetID;
 
 		RigidbodyComponent() = default;
-		RigidbodyComponent( bool ccd, float mass, float linearDrag, uint32_t lockFlags )
-			: UseCCD( ccd ), Mass( mass ), LinearDrag( linearDrag ), LockFlags( lockFlags )
+		RigidbodyComponent( bool ccd, float mass, float linearDrag, uint8_t lockFlags )
+			: Mass( mass ), LinearDrag( linearDrag ), LockFlags( lockFlags )
 		{
 		}
 	};

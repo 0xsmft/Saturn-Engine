@@ -32,7 +32,7 @@
 
 namespace Saturn {
 
-	enum class PhysicsShapeType
+	enum class PhysicsShapeType : uint8_t
 	{
 		Unknown,
 		Box,
@@ -42,7 +42,7 @@ namespace Saturn {
 		TriangleMesh
 	};
 
-	enum class ForceMode
+	enum class ForceMode : uint8_t
 	{
 		Force,
 		Impulse,

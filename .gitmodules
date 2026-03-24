@@ -14,3 +14,4 @@
 [submodule "Saturn/vendor/JoltPhysics"]
 	path = Saturn/vendor/JoltPhysics
 	url = https://github.com/0xsmft/fork-JoltPhysics
+	branch = saturn

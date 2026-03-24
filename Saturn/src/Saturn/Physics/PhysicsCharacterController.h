@@ -72,7 +72,6 @@ namespace Saturn {
 		bool m_HasGravity = true, m_ControlMovementInAir = false, m_ControlRotationInAir = false;
 
 		float m_JumpPower = 0.0f;
-		float m_Gravity = 0.0f;
 	};
 
 }

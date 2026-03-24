@@ -555,7 +555,7 @@ namespace Saturn {
 #endif
 
 	private:
-		friend class PhysXSceneExporter;
+		friend class PhysicsSceneExporter;
 		friend class Entity;
 		friend class Prefab;
 		friend class SceneHierarchyPanel;

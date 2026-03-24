@@ -259,7 +259,7 @@ namespace Saturn {
 	
 		m_pJobSystem = new JPH::JobSystemThreadPool( JPH::cMaxPhysicsJobs, JPH::cMaxPhysicsBarriers, std::thread::hardware_concurrency() / 2 );
 
-		m_pTempAllocator = new JPH::TempAllocatorImpl( 10 * 1024 * 1024 );
+		m_pTempAllocator = new JPH::TempAllocatorImpl( 300 * 1024 * 1024 );
 
 		m_pPhysicsSystem = new JPH::PhysicsSystem();
 		m_pPhysicsSystem->Init( 1024, 0, 1024, 1024, m_BPLayerInterface, m_ObjectVsBPLayerFilter, m_ObjectVsObjectLayerFilter );

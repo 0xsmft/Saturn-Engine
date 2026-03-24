@@ -49,7 +49,6 @@ namespace Saturn {
 		m_ControlMovementInAir( crtlMovementInAir ), 
 		m_ControlRotationInAir( crtlRotationInAir )
 	{
-		m_Gravity = glm::length( glm::vec3{ 0.0f, -9.81f, 0.0f } );
 	}
 
 	PhysicsCharacterController::~PhysicsCharacterController()

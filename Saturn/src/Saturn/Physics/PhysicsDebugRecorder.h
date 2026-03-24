@@ -31,7 +31,9 @@
 #include "JoltBinaryHelpers.h"
 
 #include <Jolt/Jolt.h>
+#if !defined(SAT_DIST)
 #include <Jolt/Renderer/DebugRendererRecorder.h>
+#endif
 
 namespace Saturn {
 
@@ -66,6 +68,8 @@ namespace Saturn {
 
 	private:
 		PhysicsRecorderOut m_OutStream;
+#if !defined(SAT_DIST)
 		std::unique_ptr<JPH::DebugRendererRecorder> m_Recorder;
+#endif
 	};
 }

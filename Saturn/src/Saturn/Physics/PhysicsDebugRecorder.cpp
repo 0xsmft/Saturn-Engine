@@ -80,21 +80,27 @@ namespace Saturn {
 		outPath /= std::format( "{0}.JoltCapture.jor", g_ActiveScene->Name );
 		m_OutStream.Open( outPath );
 
+#if !defined(SAT_DIST)
 		m_Recorder = std::make_unique<JPH::DebugRendererRecorder>( m_OutStream );
+#endif
 	}
 
 	void PhysicsDebugRecorder::NewFrame()
 	{
+#if !defined(SAT_DIST)
 		JPH::BodyManager::DrawSettings drawSettings;
 		PhysicsFoundation::Get()->GetPhysicsSystem()->DrawBodies( drawSettings, m_Recorder.get() );
 		m_Recorder->EndFrame();
+#endif
 	}
 
 	void PhysicsDebugRecorder::EndRecord()
 	{
 		m_OutStream.Close();
 
+#if !defined(SAT_DIST)
 		m_Recorder.reset();
+#endif
 	}
 
 	void PhysicsDebugRecorder::OpenRecordedFile()

@@ -47,8 +47,8 @@ namespace Saturn {
 		PhysicsShape( SharedPtr<Entity> entity ) { m_Entity = entity; }
 		virtual ~PhysicsShape() = default;
 
+	public:
 		virtual void Create( float mass ) = 0;
-
 		virtual void ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds ) = 0;
 
 	public:
@@ -64,11 +64,9 @@ namespace Saturn {
 		Ref<PhysicsMaterialAsset> GetMaterial( Ref<StaticMesh> mesh, UUID physMaterialAssetID );
 
 	protected:
-		PhysicsShapeType m_Type = PhysicsShapeType::Unknown;
-
 		SharedPtr<Entity> m_Entity;
-
 		JPH::Ref<JPH::Shape> m_Shape = nullptr;
+		PhysicsShapeType m_Type = PhysicsShapeType::Unknown;
 	};
 
 	class BoxShape : public PhysicsShape
@@ -77,16 +75,14 @@ namespace Saturn {
 		BoxShape( SharedPtr<Entity> entity );
 		~BoxShape();
 
+	public:
 		void Create( float mass ) override;
-
 		void ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
 
+	public:
 		// Runtime only!
 		virtual void SetTrigger( bool isTrigger ) override;
 		[[nodiscard]] virtual bool IsTrigger() override;
-
-	private:
-		float m_Extent = 0.0f;
 	};
 
 	class SphereShape : public PhysicsShape
@@ -95,15 +91,14 @@ namespace Saturn {
 		SphereShape( SharedPtr<Entity> entity );
 		~SphereShape();
 
+	public:
 		void Create( float mass ) override;
 		void ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
-
+	
+	public:
 		// Runtime only!
 		virtual void SetTrigger( bool isTrigger ) override;
 		[[nodiscard]] virtual bool IsTrigger() override;
-
-	private:
-		float m_Radius = 0.0f;
 	};
 
 	class CapsuleShape : public PhysicsShape
@@ -112,16 +107,14 @@ namespace Saturn {
 		CapsuleShape( SharedPtr<Entity> entity );
 		~CapsuleShape();
 
+	public:
 		void Create( float mass ) override;
 		void ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
 
+	public:
 		// Runtime only!
 		virtual void SetTrigger( bool isTrigger ) override;
 		[[nodiscard]] virtual bool IsTrigger() override;
-
-	private:
-		float m_Height = 0.0f;
-		float m_Radius = 0.0f;
 	};
 
 	class TriangleMeshShape : public PhysicsShape
@@ -130,20 +123,17 @@ namespace Saturn {
 		TriangleMeshShape( SharedPtr<Entity> entity );
 		~TriangleMeshShape();
 
+	public:
 		// This assumes the the mesh collider has already been cooked.
 		virtual void Create( float mass ) override;
+		virtual void ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds ) override;
 
-		void ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
-
+	public:
 		virtual void SetTrigger( bool t ) { }
 		[[nodiscard]] virtual bool IsTrigger() override;
 
 	private:
 		void ExportRcScaledShaped( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
-
-	private:
-		Ref<StaticMesh> m_Mesh;
-//		JPH::Ref<JPH::StaticCompoundShape> m_Shapes;
 	};
 
 	//
@@ -155,15 +145,13 @@ namespace Saturn {
 		ConvexMeshShape( SharedPtr<Entity> entity );
 		~ConvexMeshShape();
 
+	public:
 		// This assumes the the mesh collider has already been cooked.
-		void Create( float mass ) override;
+		virtual void Create( float mass ) override;
+		virtual void ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds ) override;
 
+	public:
 		virtual void SetTrigger( bool t ) {}
 		[[nodiscard]] virtual bool IsTrigger() override;
-
-		void ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
-
-	private:
-		Ref<StaticMesh> m_Mesh;
 	};
 }

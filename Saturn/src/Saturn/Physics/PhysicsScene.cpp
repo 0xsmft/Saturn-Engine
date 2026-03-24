@@ -87,6 +87,8 @@ namespace Saturn {
 			AddNewController( rEntity );
 		}
 
+		PhysicsFoundation::Get()->GetPhysicsSystem()->OptimizeBroadPhase();
+
 #if !defined(SAT_DIST)
 		m_DebugRecorder.BeginRecord();
 #endif
@@ -100,8 +102,10 @@ namespace Saturn {
 		auto controllerView = m_Scene->GetAllEntitiesWith<CharacterMovementComponent>();
 		for( auto& rEntity : controllerView )
 		{
-			rEntity->GetComponent<CharacterMovementComponent>().CharacterMovement->PreUpdate( 1.0f / 60.0f );
-			rEntity->GetComponent<CharacterMovementComponent>().CharacterMovement->OnUpdate( 1.0f / 60.0f );
+			auto* pCharacterMovement = rEntity->GetComponent<CharacterMovementComponent>().CharacterMovement;
+
+			pCharacterMovement->PreUpdate( 1.0f / 60.0f );
+			pCharacterMovement->OnUpdate( 1.0f / 60.0f );
 		}
 
 		// sim

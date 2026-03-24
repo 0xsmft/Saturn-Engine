@@ -7,8 +7,8 @@ public class %PROJECT_NAME%Game : Target
     {
         base.Init();
 
-        Name = "%PROJECT_NAME%";
-        Architectures = new[] { ArchitectureKind.x64 };
+        Name = "%PROJECT_NAME%Game";
+        Architectures = new[] { ArchitectureKind.x86_64 };
 
         BuildConfigs = new[] { ConfigKind.Dist };
         OutputType = LinkerOutput.Executable;

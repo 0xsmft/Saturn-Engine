@@ -7,8 +7,8 @@ public class %PROJECT_NAME%Editor : Target
     {
         base.Init();
 
-        Name = "Saturn";
-        Architectures = new[] { ArchitectureKind.x64 };
+        Name = "%PROJECT_NAME%";
+        Architectures = new[] { ArchitectureKind.x86_64 };
 
         BuildConfigs = new[] { ConfigKind.Debug, ConfigKind.Release };
         OutputType = LinkerOutput.SharedLibrary;

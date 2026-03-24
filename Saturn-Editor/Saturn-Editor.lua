@@ -37,9 +37,7 @@ project "Saturn-Editor"
 		"%{IncludeDir.shaderc}",
 		"%{IncludeDir.SPIRV_Cross}",
 		"%{IncludeDir.vma}",
-		"%{IncludeDir.PhysX}",
-		"%{IncludeDir.PhysX}/pxshared",
-		"%{IncludeDir.PhysX}/physx",
+		"%{IncludeDir.JoltPhys}",
 		"%{IncludeDir.Optick}",
 		"%{IncludeDir.ImGuizmo}",
 		"%{IncludeDir.ImSpinner}",
@@ -89,10 +87,6 @@ project "Saturn-Editor"
 			{ 
 				'{COPYFILE} "../Saturn/vendor/assimp/bin/Debug/assimp-vc143-mtd.dll" "%{cfg.targetdir}"',
 				'{COPYFILE} "../bin/Debug-windows-x86_64/Saturn-SharedStorage/Saturn-SharedStorage.dll" "%{cfg.targetdir}"',
-				'{COPYFILE} "../Saturn/vendor/physx/bin/Debug/PhysXCommon_64.dll" "%{cfg.targetdir}"',
-				'{COPYFILE} "../Saturn/vendor/physx/bin/Debug/PhysXFoundation_64.dll" "%{cfg.targetdir}"',
-				'{COPYFILE} "../Saturn/vendor/physx/bin/Debug/PhysXCooking_64.dll" "%{cfg.targetdir}"',
-				'{COPYFILE} "../Saturn/vendor/physx/bin/Debug/PhysX_64.dll" "%{cfg.targetdir}"',
 			}
 
 		filter "configurations:Release"
@@ -114,16 +108,6 @@ project "Saturn-Editor"
 
 			removedefines { "SATURN_SS_IMPORT" }
 			defines { "SATURN_SS_STATIC" }
-
-		filter "configurations:Dist or configurations:Release"
-			postbuildcommands 
-			{ 
-				'{COPYFILE} "../Saturn/vendor/assimp/bin/Release/assimp-vc143-mt.dll" "%{cfg.targetdir}"',
-				'{COPYFILE} "../Saturn/vendor/physx/bin/Release/PhysXCommon_64.dll" "%{cfg.targetdir}"',
-				'{COPYFILE} "../Saturn/vendor/physx/bin/Release/PhysXFoundation_64.dll" "%{cfg.targetdir}"',
-				'{COPYFILE} "../Saturn/vendor/physx/bin/Release/PhysXCooking_64.dll" "%{cfg.targetdir}"',
-				'{COPYFILE} "../Saturn/vendor/physx/bin/Release/PhysX_64.dll" "%{cfg.targetdir}"',
-			}
 
 	filter "system:linux"
 		systemversion "latest"

@@ -469,7 +469,7 @@ namespace Saturn {
 				}
 
 				asset->SetAbsolutePath( newPath );
-				auto materialAsset = Ref<PhysicsMaterialAsset>::Create( asset, 1.0f, 1.0f, 0.5f );
+				auto materialAsset = Ref<PhysicsMaterialAsset>::Create( asset, 1.0f, 0.5f );
 
 				PhysicsMaterialAssetSerialiser mas;
 				mas.Serialise( materialAsset );

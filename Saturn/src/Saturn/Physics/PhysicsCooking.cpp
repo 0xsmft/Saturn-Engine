@@ -116,7 +116,7 @@ namespace Saturn {
 		}
 
 		std::filesystem::path cachePath = Project::GetActiveProject()->GetFullCachePath();
-		cachePath /= mesh->Name;
+		cachePath /= std::to_string( mesh->ID );
 		cachePath.replace_extension( ".smcs" );
 
 		if( !MeshColliderAlreadyLoaded( mesh ) && !LoadColliderFile( cachePath ) )
@@ -174,7 +174,7 @@ namespace Saturn {
 			return nullptr;
 
 		std::filesystem::path cachePath = Project::GetActiveProject()->GetFullCachePath();
-		cachePath /= mesh->Name;
+		cachePath /= std::to_string( mesh->ID );
 		cachePath.replace_extension( ".smcs" );
 
 		if( !MeshColliderAlreadyLoaded( mesh ) && !LoadColliderFile( cachePath ) )
@@ -399,7 +399,7 @@ namespace Saturn {
 		if( !std::filesystem::exists( cachePath ) )
 			std::filesystem::create_directories( cachePath );
 
-		cachePath /= mesh->Name;
+		cachePath /= std::to_string( mesh->ID );
 		cachePath.replace_extension(".smcs" );
 
 		auto& rSubmeshData = itr->second;

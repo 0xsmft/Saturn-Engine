@@ -186,7 +186,7 @@ namespace Saturn {
 	{
 		if( m_Controller->IsSupported() )
 		{
-			// TODO: add rotation...
+			m_Controller->SetRotation( Auxiliary::GLMQToJoltQ( rRotation ) );
 		}
 	}
 

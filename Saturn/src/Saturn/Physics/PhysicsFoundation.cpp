@@ -249,9 +249,23 @@ namespace Saturn {
 		Terminate();
 	}
 
+	static void JphTrace( const char* inFMT, ... )
+	{
+		// Format the message
+		va_list list;
+		va_start( list, inFMT );
+		char buffer[ 1024 ];
+		vsnprintf( buffer, sizeof( buffer ), inFMT, list );
+		va_end( list );
+
+		SAT_CORE_INFO( "Jolt: {0}", buffer );
+	}
+
 	void PhysicsFoundation::Init()
 	{
 		JPH::RegisterDefaultAllocator();
+
+		JPH::Trace = JphTrace;
 
 		JPH::Factory::sInstance = new JPH::Factory();
 		

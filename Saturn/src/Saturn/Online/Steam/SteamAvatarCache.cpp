@@ -35,6 +35,8 @@
 
 #include "Saturn/Vulkan/Renderer.h"
 
+#include "Saturn/Core/JobSystem.h"
+
 #include <steam/isteamutils.h>
 
 namespace Saturn {
@@ -83,6 +85,11 @@ namespace Saturn {
 	Ref<Texture2D> SteamAvatarCache::GetAvatarForUser( CSteamID ID )
 	{
 		const auto IDull = ID.ConvertToUint64();
+
+		// ID not valid, user not logged on?
+		if( IDull == 0 )
+			return Renderer::Get()->GetPinkTexture();
+
 		const auto Itr = m_UserIDToAvatar.find( IDull );
 		if( Itr == m_UserIDToAvatar.end() )
 		{
@@ -98,22 +105,29 @@ namespace Saturn {
 			}
 			else
 			{
-				// Get the texture now.
-				uint32_t imageWidth = 0, imageHeight = 0;
-				SteamUtils()->GetImageSize( index, &imageWidth, &imageHeight );
-				if( imageWidth > 0 && imageHeight > 0 )
+				// Add pink texture... for now, until job system is done.
+				m_UserIDToAvatar[ IDull ] = Renderer::Get()->GetPinkTexture();
+
+				JobSystem::Get().QueueJob( 
+					[index, IDull, this]() 
 				{
-					Buffer TemporaryBuffer;
-					TemporaryBuffer.Allocate( static_cast< size_t >( imageWidth * imageHeight * 4 ) );
-					TemporaryBuffer.Zero_Memory();
+					// Get the texture now.
+					uint32_t imageWidth = 0, imageHeight = 0;
+					SteamUtils()->GetImageSize( index, &imageWidth, &imageHeight );
+					if( imageWidth > 0 && imageHeight > 0 )
+					{
+						Buffer TemporaryBuffer;
+						TemporaryBuffer.Allocate( static_cast< size_t >( imageWidth * imageHeight * 4 ) );
+						TemporaryBuffer.Zero_Memory();
 
-					// Valve... why is the size of the texture a signed number??
-					SteamUtils()->GetImageRGBA( index, TemporaryBuffer.Data, ( int ) TemporaryBuffer.Size );
+						// Valve... why is the size of the texture a signed number??
+						SteamUtils()->GetImageRGBA( index, TemporaryBuffer.Data, ( int ) TemporaryBuffer.Size );
 
-					m_UserIDToAvatar[ IDull ] = Ref<Texture2D>::Create( ImageFormat::RGBA8, imageWidth, imageHeight, TemporaryBuffer.Data );
+						m_UserIDToAvatar[ IDull ] = Ref<Texture2D>::Create( ImageFormat::RGBA8, imageWidth, imageHeight, TemporaryBuffer.Data );
 
-					TemporaryBuffer.Free();
-				}
+						TemporaryBuffer.Free();
+					}
+				} );
 			}
 		}
 

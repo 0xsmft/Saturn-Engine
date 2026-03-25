@@ -51,36 +51,12 @@ namespace Saturn {
 		m_pChunkyTriMesh = new rcChunkyTriMesh();
 	}
 
-	void RecastInputGeometry::AddVert( const glm::vec3& rVertex )
-	{
-		m_ExportData.VertexBuffer.push_back( rVertex.x );
-		m_ExportData.VertexBuffer.push_back( rVertex.y );
-		m_ExportData.VertexBuffer.push_back( rVertex.z );
-	}
-
-	void RecastInputGeometry::AddIndex( const Index& rVertex )
-	{
-		m_ExportData.IndexBuffer.push_back( rVertex.V1 );
-		m_ExportData.IndexBuffer.push_back( rVertex.V2 );
-		m_ExportData.IndexBuffer.push_back( rVertex.V3 );
-	}
-
-	void RecastInputGeometry::AddSingle( float x )
-	{
-		m_ExportData.VertexBuffer.push_back( x );
-	}
-
-	void RecastInputGeometry::AddSingleIndex( int i )
-	{
-		m_ExportData.IndexBuffer.push_back( i );
-	}
-
 	void RecastInputGeometry::EndImport( const AABB& rAABB )
 	{
 		m_MinBounds = rAABB.Min;
 		m_MaxBounds = rAABB.Max;
 
-		rcCreateChunkyTriMesh( m_ExportData.VertexBuffer.data(), m_ExportData.IndexBuffer.data(), (int)m_ExportData.IndexBuffer.size() / 3, 256, m_pChunkyTriMesh );
+		rcCreateChunkyTriMesh( m_ExportData.VertexBuffer.data(), m_ExportData.IndexBuffer.data(), ( int ) m_ExportData.IndexBuffer.size() / 3, 256, m_pChunkyTriMesh );
 	}
 
 	//////////////////////////////////////////////////////////////////////////

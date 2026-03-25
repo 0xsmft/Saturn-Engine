@@ -411,12 +411,20 @@ namespace Saturn {
 
 	void PhysicsRigidBody::SyncTransfrom()
 	{
-		TransformComponent& tc = m_Entity->GetComponent<TransformComponent>();
+		switch( m_Type )
+		{
+			case PhysicsRigidBodyType::Dynamic:
+			{
+				TransformComponent& tc = m_Entity->GetComponent<TransformComponent>();
 
-		tc.Position = GetPosition();
+				tc.Position = GetPosition();
 
-		if( !AllRotationLocked() )
-			tc.SetRotation( GetRotation() );
+				if( !AllRotationLocked() )
+					tc.SetRotation( GetRotation() );
+			} break;
+
+			default: break;
+		}
 	}
 
 }

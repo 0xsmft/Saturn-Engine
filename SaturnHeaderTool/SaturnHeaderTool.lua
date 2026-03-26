@@ -77,6 +77,7 @@ project "SaturnHeaderTool"
 		defines "SAT_RELEASE"
 		runtime "Release"
 		optimize "on"
+		symbols "on"
 
 	filter "configurations:Dist"
 		defines "SAT_DIST"

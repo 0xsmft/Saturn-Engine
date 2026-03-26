@@ -596,11 +596,11 @@ namespace Saturn {
 
 		SkeletalMeshImporter meshImporter( m_AssetToImportPath, m_DestinationPath, m_ImportBehaviour, m_CurrentAssetIDForSkeleton );
 		
+#if !defined(SAT_DIST)
 		// No need to find materials when the user has already selected the one the user wants.
 		if( m_CurrentAssetIDForMaterial != 0 )
 			meshImporter.DisableMaterialSearching();
 
-#if !defined(SAT_DIST)
 		if( const auto err = meshImporter.TryImport(); err != AssetImportPopupError::None )
 		{
 			SAT_CORE_ERROR( "Unable to import dynamic mesh!" );
@@ -673,11 +673,11 @@ namespace Saturn {
 
 		StaticMeshImporter meshImporter( m_AssetToImportPath, m_DestinationPath, m_ImportBehaviour );
 
+#if !defined(SAT_DIST)
 		// No need to find materials when the user has already selected the one she wants.
 		if( m_CurrentAssetIDForMaterial != 0 )
 			meshImporter.DisableMaterialSearching();
 
-#if !defined(SAT_DIST)
 		if( const auto err = meshImporter.TryImport(); err != AssetImportPopupError::None ) 
 		{
 			SAT_CORE_ERROR( "Unable to import mesh!" );

@@ -111,7 +111,7 @@ Saturn::Application* Saturn::CreateApplication( int argc, char** argv )
 	std::filesystem::current_path( WorkingDir.parent_path() );
 
 	Saturn::ApplicationSpecification spec{};
-	spec.Flags = Saturn::ApplicationFlag_CreateSceneRenderer | Saturn::ApplicationFlag_UseVFS | Saturn::ApplicationFlag_UseGameThread;
+	spec.Flags = Saturn::ApplicationFlag_CreateSceneRenderer_DEPRECATED | Saturn::ApplicationFlag_UseVFS;
 
 	return new FBootstrapDistApplication( spec );
 }

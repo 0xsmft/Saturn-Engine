@@ -2361,7 +2361,13 @@ namespace Saturn {
 			}
 
 			ImGui::SeparatorText( "Physics" );
-			if( ImGui::MenuItem( "Open Jolt debug Viewer" ) )       PhysicsDebugRecorder::OpenRecordedFile();
+			if( ImGui::MenuItem( "Open Jolt debug viewer" ) )       PhysicsDebugRecorder::OpenRecordedFile();
+			if( ImGui::MenuItem( "Open debug viewer folder" ) ) 
+			{
+				std::filesystem::path outPath = Project::GetActiveProject()->GetFullCachePath();
+				outPath /= "PerUser";
+				Application::Get()->OpenNativeFileExplorer( outPath );
+			}
 
 			ImGui::EndMenu();
 		}

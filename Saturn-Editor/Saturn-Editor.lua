@@ -154,10 +154,59 @@ project "Saturn-Editor"
 			"SAT_PLATFORM_LINUX"
 		}
 
+		links
+		{
+			"pthread",
+			"dl",
+			"m",
+			"xcb",
+			"Xrandr",
+			"vulkan",
+
+			"ImGui",
+			"SPIRV-Cross",
+			"yaml-cpp",
+			"Tracy",
+			"zlib",
+			"Recast",
+			"freetype",
+			"MSDFGen",
+			"MSDF-Atlas-Gen",
+			"JoltPhysics",
+
+			"Saturn-SharedStorage",
+		}
+
+		libdirs
+		{
+			"../Saturn/vendor/assimp/bin"
+		}
+
+
+		filter "configurations:Debug"
+			links
+			{
+				"assimp",
+				"glslang",
+				"shaderc",
+				"shaderc_util",
+				"SPIRV-Tools",
+				"SPIRV-Tools-opt",
+				"SPIRV"
+			}
+
+			libdirs
+			{
+				"../Saturn/vendor/shaderc/bin/Debug-Linux"
+			}
+
+
 		files 
 		{
 			"../Saturn/src/Saturn/Entry/Unix/**.cpp",
 		}
+
+		buildoptions { "-fno-ms-extensions", "-Wno-changes-meaning", "-fpermissive" }
 
 	filter "system:Mac"
 		systemversion "latest"

@@ -35,6 +35,8 @@
 #include <Jolt/Renderer/DebugRendererRecorder.h>
 #endif
 
+#include <filesystem>
+
 namespace Saturn {
 
 	class PhysicsRecorderOut : public JPH::StreamOut

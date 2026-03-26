@@ -18,6 +18,7 @@ project "Saturn-Editor"
 		"TRACY_ENABLE",
 		"TRACY_DELAYED_INIT",
 		"TRACY_MANUAL_LIFETIME",
+		"SATURN_SS_IMPORT"
 	}
 
 	files
@@ -91,7 +92,6 @@ project "Saturn-Editor"
 		defines
 		{
 			"SAT_PLATFORM_WINDOWS",
-			"SATURN_SS_IMPORT",
 			"_CRT_SECURE_NO_WARNINGS",
 		}
 
@@ -141,10 +141,6 @@ project "Saturn-Editor"
 				}
 
 		filter "configurations:Dist"
-			defines "SAT_DIST"
-			runtime "Release"
-			optimize "on"
-			symbols "Off"
 			kind "WindowedApp"
 
 			removedefines { "SATURN_SS_IMPORT" }
@@ -163,21 +159,6 @@ project "Saturn-Editor"
 			"../Saturn/src/Saturn/Entry/Unix/**.cpp",
 		}
 
-		filter "configurations:Debug"
-			defines "SAT_DEBUG"
-			runtime "Debug"
-			symbols "on"
-
-		filter "configurations:Release"
-			defines "SAT_RELEASE"
-			runtime "Release"
-			optimize "on"
-
-		filter "configurations:Dist"
-			defines "SAT_DIST"
-			runtime "Release"
-			optimize "on"
-
 	filter "system:Mac"
 		systemversion "latest"
 
@@ -190,17 +171,19 @@ project "Saturn-Editor"
 		{
 		}
 
-		filter "configurations:Debug"
-			defines "SAT_DEBUG"
-			runtime "Debug"
-			symbols "on"
+	filter "configurations:Debug"
+		defines "SAT_DEBUG"
+		runtime "Debug"
+		symbols "on"
 
-		filter "configurations:Release"
-			defines "SAT_RELEASE"
-			runtime "Release"
-			optimize "on"
+	filter "configurations:Release"
+		defines "SAT_RELEASE"
+		runtime "Release"
+		optimize "off"
+		symbols "on"
 
-		filter "configurations:Dist"
-			defines "SAT_DIST"
-			runtime "Release"
-			optimize "on"
+	filter "configurations:Dist"
+		defines "SAT_DIST"
+		runtime "Release"
+		optimize "on"
+		symbols "off"

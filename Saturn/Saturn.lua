@@ -132,7 +132,7 @@ project "Saturn"
 			"pthread",
 			"dl",
 			"m",
-			"X11",
+			"xcb",
 			"Xrandr",
 			"vulkan",
 			"vulkan-1"
@@ -143,6 +143,8 @@ project "Saturn"
 			"SAT_PLATFORM_LINUX"
 		}
 
+		buildoptions { "-fno-ms-extensions", "-Wno-changes-meaning", "-fpermissive" }
+		
 		filter { "options:onlineapi=steam", "system:linux" }
 			links
 			{
@@ -192,8 +194,6 @@ project "Saturn"
 			}
 
 		filter "configurations:Release"
-			defines "SAT_RELEASE"
-			runtime "Release"
 			links
 			{
 				"vendor/assimp/bin/Release/assimp-vc143-mt.lib",
@@ -226,3 +226,27 @@ project "Saturn"
             "JPH_EXTERNAL_PROFILE",
 			"JPH_ENABLE_ASSERTS"
 		}
+	
+	filter "configurations:Debug"
+		defines "SAT_DEBUG"
+		runtime "Debug"
+		symbols "on"
+
+	filter "configurations:Release"
+		defines "SAT_RELEASE"
+		runtime "Release"
+		symbols "on"
+	
+	filter "configurations:Dist"
+		defines "SAT_DIST"
+		runtime "Release"
+		optimize "on"
+		symbols "off"
+
+		removelinks { "Tracy", "Freetype", "MSDFGen", "MSDF-Atlas-Gen", "SPIRV-Cross" }
+		removedefines { "TRACY_ENABLE", "TRACY_DELAYED_INIT", "TRACY_MANUAL_LIFETIME", "SATURN_SS_IMPORT" }
+		removefiles { "vendor/ImGuizmo/src/**.cpp", "vendor/ImGuizmo/src/**.h" }
+
+		defines { "SATURN_SS_STATIC" }
+		links { "Saturn-SharedStorage" }
+

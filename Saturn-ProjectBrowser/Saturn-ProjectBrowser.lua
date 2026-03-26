@@ -91,23 +91,13 @@ project "Saturn-ProjectBrowser"
 			}
 
 		filter "configurations:Release"
-			defines "SAT_RELEASE"
-			runtime "Release"
-			optimize "on"
-
 			postbuildcommands 
 			{ 
 				'{COPYFILE} "../bin/Release-windows-x86_64/Saturn-SharedStorage/Saturn-SharedStorage.dll" "%{cfg.targetdir}"'
 			}
 
 		filter "configurations:Dist"
-			defines "SAT_DIST"
-			runtime "Release"
-			optimize "on"
-			symbols "Off"
 			kind "WindowedApp"
-
-			removedefines { "TRACY_ENABLE", "TRACY_DELAYED_INIT", "TRACY_MANUAL_LIFETIME" }
 
 		filter "configurations:Release or configurations:Dist"
 			postbuildcommands 
@@ -128,21 +118,6 @@ project "Saturn-ProjectBrowser"
 			"../Saturn/src/Saturn/Entry/Unix/**.cpp",
 		}
 
-		filter "configurations:Debug"
-			defines "SAT_DEBUG"
-			runtime "Debug"
-			symbols "on"
-
-		filter "configurations:Release"
-			defines "SAT_RELEASE"
-			runtime "Release"
-			optimize "on"
-
-		filter "configurations:Dist"
-			defines "SAT_DIST"
-			runtime "Release"
-			optimize "on"
-
 	filter "system:Mac"
 		systemversion "latest"
 
@@ -156,17 +131,19 @@ project "Saturn-ProjectBrowser"
 			"../Saturn/src/Saturn/Entry/Unix/**.cpp",
 		}
 
-		filter "configurations:Debug"
-			defines "SAT_DEBUG"
-			runtime "Debug"
-			symbols "on"
+	filter "configurations:Debug"
+		defines "SAT_DEBUG"
+		runtime "Debug"
+		symbols "on"
 
-		filter "configurations:Release"
-			defines "SAT_RELEASE"
-			runtime "Release"
-			optimize "on"
+	filter "configurations:Release"
+		defines "SAT_RELEASE"
+		runtime "Release"
+		optimize "on"
 
-		filter "configurations:Dist"
-			defines "SAT_DIST"
-			runtime "Release"
-			optimize "on"
+	filter "configurations:Dist"
+		defines "SAT_DIST"
+		runtime "Release"
+		optimize "on"
+		symbols "Off"
+		removedefines { "TRACY_ENABLE", "TRACY_DELAYED_INIT", "TRACY_MANUAL_LIFETIME" }

@@ -52,7 +52,7 @@ namespace SaturnBuildTool
         // Engine Test -> created buildtool-x0.0.5 was very similar to engine test but it used premake instead of custom C# build rules.
         // buildtool-x0.0.5 -> created sbt-5.1 branch which is this version now.
         //
-        private readonly string StartupMessage = "Saturn Build Tool X0.0.5 \"SBT 5.1\" (Engine Version: 0.2.3 8195)";
+        private readonly string StartupMessage = "Saturn Build Tool X0.0.5 \"SBT 5.1\" (Engine Version: 0.2.4 8196)";
 
         public Application( string[] args )
         {

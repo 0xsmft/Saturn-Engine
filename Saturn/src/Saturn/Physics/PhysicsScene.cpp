@@ -43,6 +43,7 @@
 
 #include <Jolt/Physics/Collision/RayCast.h>
 #include <Jolt/Physics/Collision/CastResult.h>
+#include <Jolt/Physics/Collision/CollisionCollectorImpl.h>
 
 namespace Saturn {
 
@@ -102,7 +103,10 @@ namespace Saturn {
 		auto controllerView = m_Scene->GetAllEntitiesWith<CharacterMovementComponent>();
 		for( auto& rEntity : controllerView )
 		{
+			// Wait until next frame, to create, avoid creating here, expensive.
 			auto* pCharacterMovement = rEntity->GetComponent<CharacterMovementComponent>().CharacterMovement;
+			if( !pCharacterMovement )
+				continue;
 
 			pCharacterMovement->PreUpdate( 1.0f / 60.0f );
 			pCharacterMovement->OnUpdate( 1.0f / 60.0f );
@@ -119,22 +123,83 @@ namespace Saturn {
 		PhysicsFoundation::Get()->GetContactHandler()->DispatchAllContactEvents();
 	}
 
+	class JoltSelfFilter : public JPH::ShapeFilter
+	{
+	public:
+		JoltSelfFilter( const JPH::Shape* pShape ) 
+			: m_pShape( pShape )
+		{
+		}
+
+		virtual bool ShouldCollide( 
+			const JPH::Shape* inShape2, 
+			const JPH::SubShapeID& inSubShapeIDOfShape2 ) const override
+		{
+			return m_pShape != inShape2;
+		}
+
+		virtual bool ShouldCollide( 
+			const JPH::Shape* inShape1, 
+			const JPH::SubShapeID& inSubShapeIDOfShape1, 
+			const JPH::Shape* inShape2, 
+			const JPH::SubShapeID& inSubShapeIDOfShape2 ) const override
+		{
+			return m_pShape != inShape1 || m_pShape != inShape2;
+		}
+
+	private:
+		const JPH::Shape* m_pShape = nullptr;
+	};
+
 	bool PhysicsScene::Raycast( const glm::vec3& rOrigin, const glm::vec3& rDirection, float maxDistance, RaycastHitResult* pOut )
 	{
-		JPH::RRayCast ray{ Auxiliary::GLMToJolt( rOrigin ), Auxiliary::GLMToJolt( rDirection ) };
+		return RaycastIgnoringSelf( nullptr, rOrigin, rDirection, maxDistance, pOut );
+	}
+
+	bool PhysicsScene::RaycastIgnoringSelf( SharedPtr<Entity> entity, const glm::vec3& rOrigin, const glm::vec3& rDirection, float maxDistance, RaycastHitResult* pOut )
+	{
+		const JPH::RayCast ray{ Auxiliary::GLMToJolt( rOrigin ), Auxiliary::GLMToJolt( glm::normalize( rDirection ) ) * maxDistance };
+
+		// TODO: This is bad.
+		//		 But unfortunately not everything has a rigidbody...
+		//		 but everything has a shape and it can only come from two places.
+		JPH::Shape const* pShape = nullptr;
+		if( entity )
+		{
+			// 1. Check rigidbody first
+			if( auto* pRB = entity->TryGetComponent<RigidbodyComponent>(); pRB )
+			{
+				pShape = pRB->Rigidbody->GetShape()->GetShape().GetPtr();
+			}
+
+			// 2. Check for character controller next.
+			// NOTE: This is not an "else if" block because if the user has both 
+			//       we want to pick the character controller over the rigidbody.
+			if( auto* pCharacterController = entity->TryGetComponent<CharacterMovementComponent>(); pCharacterController )
+			{
+				pShape = pCharacterController->CharacterMovement->GetShape()->GetShape().GetPtr();
+			}
+		}
 
 		RaycastHitResult outHit{};
+		JPH::ClosestHitCollisionCollector<JPH::CastRayCollector> collector;
+		JPH::RayCastSettings settings;
+		PhysicsFoundation::Get()->GetPhysicsSystem()->GetNarrowPhaseQuery().CastRay( JPH::RRayCast( ray ), settings, collector, {}, {}, {}, JoltSelfFilter( pShape ) );
 
-		JPH::RayCastResult joltHit{};
-		outHit.Success = PhysicsFoundation::Get()->GetPhysicsSystem()->GetNarrowPhaseQuery().CastRay( ray, joltHit );
+		if( !collector.HadHit() )
+			return false;
 
-		if( outHit.Success )
+		JPH::BodyLockRead lock( PhysicsFoundation::Get()->GetPhysicsSystem()->GetBodyLockInterface(), collector.mHit.mBodyID );
+		if( lock.Succeeded() )
 		{
-			entt::entity entityHandle = ( entt::entity ) PhysicsFoundation::Get()->GetBodyInterface()->GetUserData( joltHit.mBodyID );
+			const JPH::Body& rBody = lock.GetBody();
 
-			outHit.Position = Auxiliary::JoltToGLM( ray.GetPointOnRay( joltHit.mFraction ) );
+			entt::entity entityHandle = ( entt::entity ) rBody.GetUserData();
+
+			outHit.Success = true;
+			outHit.Position = Auxiliary::JoltToGLM( ray.GetPointOnRay( collector.mHit.mFraction ) );
 			outHit.Hit = m_Scene->FindEntityByHandle( entityHandle );
-			outHit.Distance = glm::distance( outHit.Position, rOrigin );
+			outHit.Distance = glm::distance( rOrigin, outHit.Position );
 		}
 
 		*pOut = outHit;

@@ -166,6 +166,8 @@ namespace Saturn {
 
 		JPH::Ref<JPH::CharacterVirtualSettings> settings = new JPH::CharacterVirtualSettings();
 		settings->mShape = m_Shape->GetShape();
+		settings->mInnerBodyShape = m_Shape->GetShape();
+		settings->mInnerBodyLayer = PhysLayerMoving;
 
 		m_Controller = new JPH::CharacterVirtual( settings, Auxiliary::GLMToJolt( rTc.Position ), Auxiliary::GLMQToJoltQ( rTc.GetRotation() ), PhysicsFoundation::Get()->GetPhysicsSystem() );
 

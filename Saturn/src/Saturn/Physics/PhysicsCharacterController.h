@@ -59,6 +59,7 @@ namespace Saturn {
 	public:
 		[[nodiscard]] bool IsGrounded() const;
 		glm::vec3 GetPosition() const;
+		Ref<PhysicsShape> GetShape() const { return m_Shape; }
 
 	private:
 		Ref<PhysicsShape> m_Shape;

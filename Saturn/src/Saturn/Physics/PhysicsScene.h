@@ -59,6 +59,8 @@ namespace Saturn {
 
 		[[nodiscard]] bool Raycast( const glm::vec3& rOrigin, const glm::vec3& rDirection, float maxDistance, RaycastHitResult* pOut );
 
+		[[nodiscard]] bool RaycastIgnoringSelf( SharedPtr<Entity> entity, const glm::vec3& rOrigin, const glm::vec3& rDirection, float maxDistance, RaycastHitResult* pOut );
+
 		void ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
 
 	private:

@@ -276,8 +276,6 @@ namespace Saturn {
 		float m_LastAutoSaveTime = 0.0f;
 		uint32_t m_AutoSaveCount = 0u;
 
-		entt::entity m_SelectedCameraEntityID{ entt::null };
-
 		ImVec2 m_ViewportSize;
 		ImRect m_ViewportBounds;
 
@@ -286,14 +284,15 @@ namespace Saturn {
 		ImVec2 m_PreVPFullscreenSize;
 		ImGuiID m_PreVPDockedNodeID = 0;
 
+		entt::entity m_SelectedCameraEntityID{ entt::null };
+		entt::entity m_NavMeshEntityToDelete{ entt::null };
+
 		std::queue<MessageBoxInfo> m_MessageBoxes;
 		std::vector<EditorNotification> m_Notifications;
 		std::unordered_map<entt::entity, glm::mat4> m_GizmoOrignalTransforms;
 		std::unordered_map<entt::entity, std::tuple<glm::vec3, glm::vec3, glm::vec3>> m_GizmoModifiedTransforms;
 
 		std::function<void()> m_EventAfterPopup;
-
-		entt::entity m_NavMeshEntityToDelete{ entt::null };
 
 		Ref<Scene> m_EditorScene = nullptr;
 		Ref<Scene> m_RuntimeScene = nullptr;

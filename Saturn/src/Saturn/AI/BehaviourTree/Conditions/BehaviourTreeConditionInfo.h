@@ -30,7 +30,7 @@
 
 namespace Saturn {
 
-	enum class BehaviourTreeConditionType
+	enum class BehaviourTreeConditionType : uint8_t
 	{
 		None,
 		Blackboard

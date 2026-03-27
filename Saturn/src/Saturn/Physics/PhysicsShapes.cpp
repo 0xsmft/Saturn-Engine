@@ -117,7 +117,7 @@ namespace Saturn {
 			}
 		}
 
-		SAT_CORE_ASSERT( materialAsset, "Material cannot be null at this stage!, All possible ways have failed, Rigibody PhysMat could not be loaded and/ mesh PhysMat could not be loaded and/or project fallback could not be loaded and somehow the memeory only asset has failed as well." );
+		SAT_CORE_ASSERT( materialAsset, "Material cannot be null at this stage!, All possible ways have failed, Rigidbody PhysMat could not be loaded and/or mesh PhysMat could not be loaded and/or project fallback could not be loaded and somehow the memeory only asset has failed as well." );
 
 		return materialAsset;
 	}

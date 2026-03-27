@@ -32,6 +32,7 @@
 #include "PhysicsAuxiliary.h"
 #include "PhysicsFoundation.h"
 #include "PhysicsMaterialAsset.h"
+#include "JoltBinaryHelpers.h"
 
 #include "Saturn/Asset/AssetManager.h"
 
@@ -39,24 +40,15 @@
 
 #include "Saturn/Core/Maths.h"
 
+#include "Saturn/Serialisation/Raw/RawSerialisation.h"
+
+#include <Jolt/Jolt.h>
+#include <Jolt/Physics/Collision/Shape/MeshShape.h>
+#include <Jolt/Physics/Collision/Shape/StaticCompoundShape.h>
+#include <Jolt/Physics/Collision/Shape/ScaledShape.h>
+#include <Jolt/Physics/Collision/Shape/ConvexHullShape.h>
+
 namespace Saturn {
-
-	static Ref<PhysicsMaterialAsset> GetPhysicsMaterial( Ref<StaticMesh> mesh )
-	{
-		Ref<PhysicsMaterialAsset> materialAsset;
-
-		Ref<Project> activeProject = Project::GetActiveProject();
-		if( mesh->GetPhysicsMaterial() == 0 || mesh->GetPhysicsMaterial() == activeProject->GetDefaultPhysicsMaterialAsset() )
-		{
-			materialAsset = AssetManager::Get()->GetAssetAs<PhysicsMaterialAsset>( activeProject->GetDefaultPhysicsMaterialAsset() );
-		}
-		else
-		{
-			materialAsset = AssetManager::Get()->GetAssetAs<PhysicsMaterialAsset>( mesh->GetPhysicsMaterial() );
-		}
-
-		return materialAsset;
-	}
 
 	PhysicsCooking::PhysicsCooking()
 	{
@@ -64,36 +56,34 @@ namespace Saturn {
 
 	void PhysicsCooking::Init()
 	{
-		physx::PxCookingParams Params( PhysicsFoundation::Get()->m_Physics->getTolerancesScale() );
-		m_Cooking = PxCreateCooking( PX_PHYSICS_VERSION, *PhysicsFoundation::Get()->m_Foundation, Params );
 	}
 
 	void PhysicsCooking::Terminate()
 	{
-		PHYSX_TERMINATE_ITEM( m_Cooking );
+		ClearCache();
 	}
 
 	PhysicsCooking::~PhysicsCooking()
 	{
+		Terminate();
 	}
 
-	bool PhysicsCooking::CookMeshCollider( const Ref<StaticMesh>& rMesh, PhysicsShapeType Type )
+	PhysicsCookingResult PhysicsCooking::CookMeshCollider( const Ref<StaticMesh> mesh, PhysicsShapeType Type )
 	{
 		if( Type <= PhysicsShapeType::Capusle )
-			return false;
+			return PhysicsCookingResult::InvalidTypeForCooking;
 
-		bool Result = false;
-
+		PhysicsCookingResult Result = PhysicsCookingResult::Failure;
 		switch( Type )
 		{
 			case Saturn::PhysicsShapeType::ConvexMesh: 
 			{
-				Result = TryCookConvexMesh( rMesh );
+				Result = TryCookConvexMesh( mesh );
 			} break;
 
 			case Saturn::PhysicsShapeType::TriangleMesh:
 			{
-				Result = TryCookTriangleMesh( rMesh );
+				Result = TryCookTriangleMesh( mesh );
 			} break;
 
 			case Saturn::PhysicsShapeType::Unknown:
@@ -101,87 +91,251 @@ namespace Saturn {
 			case Saturn::PhysicsShapeType::Sphere:
 			case Saturn::PhysicsShapeType::Capusle:
 			default:
+				SAT_CORE_WARN( "Invalid or unhandled type specified into CookMeshCollider! Only Convex and Triangle meshs can be cooked!" );
 				break;
 		}
 
-		WriteCache( rMesh, Type );
-		ClearCache();
+		// Write file
+		WriteCache( mesh, Type );
 
 		return Result;
 	}
 
-	bool PhysicsCooking::TryCookTriangleMesh( const Ref<StaticMesh>& rMesh )
+	template<typename T, typename U>
+	JPH::Ref<T> CastJoltRef( const JPH::Ref<U> ref )
 	{
-		bool Result = false;
+		return JPH::Ref<T>( static_cast< T* >( const_cast< U* >( ref.GetPtr() ) ) );
+	}
 
-		int i = 0;
-		for( auto& rSubmesh : rMesh->Submeshes() )
+	JPH::Ref<JPH::Shape> PhysicsCooking::CreateTriangleMesh( SharedPtr<Entity> entity, Ref<StaticMesh> mesh )
+	{
+		if( !mesh ) 
 		{
-			physx::PxTriangleMeshDesc MeshDesc;
-			MeshDesc.points.data = &rMesh->Vertices()[ rSubmesh.BaseVertex ];
-			MeshDesc.points.count = rSubmesh.VertexCount;
-			MeshDesc.points.stride = sizeof( StaticVertex );
+			SAT_CORE_ERROR( "[PhysicsCooking]: Mesh is null! Not creating a triangle mesh on a null mesh." );
+			return nullptr;
+		}
 
-			MeshDesc.triangles.data = &rMesh->Indices()[ rSubmesh.BaseIndex / 3 ];
-			MeshDesc.triangles.count = rSubmesh.IndexCount / 3;
-			MeshDesc.triangles.stride = sizeof( Index );
+		std::filesystem::path cachePath = Project::GetActiveProject()->GetFullCachePath();
+		cachePath /= std::to_string( mesh->ID );
+		cachePath.replace_extension( ".smcs" );
 
-			physx::PxDefaultMemoryOutputStream stream;
-			physx::PxTriangleMeshCookingResult::Enum errorCode;
+		if( !MeshColliderAlreadyLoaded( mesh ) && !LoadColliderFile( cachePath ) )
+			return nullptr;
+		
+		TransformComponent worldTC = entity->GetScene()->GetWorldSpaceTransform( entity );
 
-			if( Result = m_Cooking->cookTriangleMesh( MeshDesc, stream, &errorCode ) )
+		const auto& rVertices = mesh->Vertices();
+		const auto& rIndices = mesh->Indices();
+		const auto& rSubmeshes = mesh->Submeshes();
+
+		JPH::StaticCompoundShapeSettings compoundShapeSettings;
+
+		size_t subMeshIndex = 0llu;
+		for( const auto& rCookedData : m_NewSubmeshData[ mesh->ID ] )
+		{
+			const Submesh& rSubmesh = mesh->Submeshes()[ subMeshIndex ];
+
+			glm::vec3 submeshPosition, submeshScale;
+			glm::quat submeshRotation;
+
+			Maths::DecomposeTransform( rSubmesh.Transform, submeshPosition, submeshRotation, submeshScale );
+
+			JoltBinaryReader reader( rCookedData.Stream );
+			JPH::Shape::ShapeResult result = JPH::Shape::sRestoreFromBinaryState( reader );
+
+			if( result.HasError() )
 			{
-				SubmeshColliderData data{};
-				data.Index = i;
-				data.Stream = Buffer::Copy( stream.getData(), stream.getSize() );
-
-				m_SubmeshData.push_back( data );
-			}
-			else
-			{ 
-				SAT_CORE_ERROR( "PhysX Cooking error code was: {0}", errorCode );
-				SAT_CORE_INFO( "Please check the log for more info.", errorCode );
+				SAT_CORE_ERROR( "[JoltPhys]: Unable to create submesh shape for static compound shape! Index/{0}", subMeshIndex );
+				return nullptr;
 			}
 
-			++i;
+			compoundShapeSettings.AddShape( 
+				Auxiliary::GLMToJolt( submeshPosition ), 
+				Auxiliary::GLMQToJoltQ( submeshRotation ), 
+				new JPH::ScaledShape( result.Get(), Auxiliary::GLMToJolt( submeshScale * worldTC.Scale ) )
+			);
+
+			++subMeshIndex;
+		}
+
+		JPH::Shape::ShapeResult result = compoundShapeSettings.Create();
+
+		if( result.HasError() )
+		{
+			SAT_CORE_ERROR( "[JoltPhys]: Unable to create static compound shape! Index/{0}, Error: {1}", subMeshIndex, result.GetError() );
+		}
+
+		return result.Get();
+	}
+
+	JPH::Ref<JPH::Shape> PhysicsCooking::CreateConvexMesh( SharedPtr<Entity> entity, Ref<StaticMesh> mesh )
+	{
+		if( !mesh )
+			return nullptr;
+
+		std::filesystem::path cachePath = Project::GetActiveProject()->GetFullCachePath();
+		cachePath /= std::to_string( mesh->ID );
+		cachePath.replace_extension( ".smcs" );
+
+		if( !MeshColliderAlreadyLoaded( mesh ) && !LoadColliderFile( cachePath ) )
+			return nullptr;
+
+		TransformComponent worldTC = entity->GetScene()->GetWorldSpaceTransform( entity );
+
+		const auto& rVertices = mesh->Vertices();
+		const auto& rIndices = mesh->Indices();
+		const auto& rSubmeshes = mesh->Submeshes();
+		const Submesh& rSubmesh = mesh->Submeshes()[ 0 ];
+		const auto& rCookedData = m_NewSubmeshData[ mesh->ID ][ 0 ];
+
+		glm::vec3 submeshPosition, submeshScale;
+		glm::quat submeshRotation;
+
+		Maths::DecomposeTransform( rSubmesh.Transform, submeshPosition, submeshRotation, submeshScale );
+
+		JoltBinaryReader reader( rCookedData.Stream );
+		JPH::Shape::ShapeResult result = JPH::Shape::sRestoreFromBinaryState( reader );
+
+		if( result.HasError() )
+		{
+			SAT_CORE_ERROR( "[JoltPhys]: Unable to create shape for convex mesh!" );
+			return nullptr;
+		}
+
+		JPH::Ref<JPH::ScaledShape> scaledConvexMesh = new JPH::ScaledShape( result.Get(), Auxiliary::GLMToJolt( submeshScale * worldTC.Scale ) );
+
+		return ( JPH::Ref<JPH::Shape> )scaledConvexMesh;
+	}
+
+	PhysicsCookingResult PhysicsCooking::TryCookTriangleMesh( const Ref<StaticMesh> mesh )
+	{
+		PhysicsCookingResult Result = PhysicsCookingResult::Failure;
+
+		const auto& rVertices = mesh->Vertices();
+		const auto& rIndices = mesh->Indices();
+		const auto& rSubmeshes = mesh->Submeshes();
+
+		// Clear any existing cache.
+		const auto itr = m_NewSubmeshData.find( mesh->ID );
+		if( itr != m_NewSubmeshData.end() )
+		{
+			m_NewSubmeshData.erase( itr );
+		}
+
+		auto& rPerSubmeshData = m_NewSubmeshData[ mesh->ID ];
+
+		// Now cook each submesh...
+		size_t subMeshIndex = 0;
+		for( const auto& rSubmesh : rSubmeshes )
+		{
+			JPH::VertexList vertList;
+			JPH::IndexedTriangleList triList;
+
+			for( uint32_t i = rSubmesh.BaseVertex; i < rSubmesh.BaseVertex + rSubmesh.VertexCount; ++i )
+			{
+				const auto& rVertex = rVertices[ i ];
+				vertList.push_back( JPH::Float3( rVertex.Position.x, rVertex.Position.y, rVertex.Position.z ) );
+			}
+
+			for( uint32_t i = rSubmesh.BaseIndex / 3; i < rSubmesh.BaseIndex / 3 + rSubmesh.IndexCount / 3; ++i )
+			{
+				const auto& rIndex = rIndices[ i ];
+				triList.push_back( JPH::IndexedTriangle( rIndex.V1, rIndex.V2, rIndex.V3, 0 ) );
+			}
+
+			JPH::RefConst<JPH::MeshShapeSettings> meshSettings = new JPH::MeshShapeSettings( vertList, triList );
+
+			const auto res = meshSettings->Create();
+			if( res.HasError() )
+			{
+				SAT_CORE_ERROR( "[JoltPhys]: Error: {0}", res.GetError() );
+
+				Result = PhysicsCookingResult::Failure;
+				break;
+			}
+
+			JPH::RefConst<JPH::Shape> shape = res.Get();
+
+			JoltBinaryWriter writer;
+			shape->SaveBinaryState( writer );
+
+			SubmeshColliderData& rData = rPerSubmeshData.emplace_back();
+			rData.Index = ( uint32_t ) subMeshIndex;
+			rData.Stream = writer.ToBuffer();
+
+			++subMeshIndex;
+
+			Result = PhysicsCookingResult::Success;
 		}
 
 		return Result;
 	}
 
-	bool PhysicsCooking::TryCookConvexMesh( const Ref<StaticMesh>& rMesh )
+	PhysicsCookingResult PhysicsCooking::TryCookConvexMesh( const Ref<StaticMesh> mesh )
 	{
-		bool Result = false;
+		PhysicsCookingResult Result = PhysicsCookingResult::Failure;
 
-		for( auto& rSubmesh : rMesh->Submeshes() )
+		const auto& rVertices = mesh->Vertices();
+		const auto& rIndices = mesh->Indices();
+		const auto& rSubmeshes = mesh->Submeshes();
+
+		// Clear any existing cache.
+		const auto itr = m_NewSubmeshData.find( mesh->ID );
+		if( itr != m_NewSubmeshData.end() )
 		{
-			physx::PxConvexMeshDesc MeshDesc;
-			MeshDesc.points.data = &rMesh->Vertices()[ rSubmesh.BaseVertex ];
-			MeshDesc.points.count = rSubmesh.VertexCount;
-			MeshDesc.points.stride = sizeof( StaticVertex );
+			m_NewSubmeshData.erase( itr );
+		}
 
-			MeshDesc.indices.data = &rMesh->Indices()[ rSubmesh.BaseIndex / 3 ];
-			MeshDesc.indices.count = rSubmesh.IndexCount / 3;
-			MeshDesc.indices.stride = sizeof( Index );
+		auto& rPerSubmeshData = m_NewSubmeshData[ mesh->ID ];
 
-			MeshDesc.flags = physx::PxConvexFlag::Enum::eCOMPUTE_CONVEX | physx::PxConvexFlag::eSHIFT_VERTICES;
-
-			physx::PxDefaultMemoryOutputStream stream;
-			physx::PxConvexMeshCookingResult::Enum errorCode;
-
-			if( Result = m_Cooking->cookConvexMesh( MeshDesc, stream, &errorCode ) )
+		// Now cook the submeshes...
+		size_t subMeshIndex = 0;
+		for( const auto& rSubmesh : rSubmeshes )
+		{
+			// Convex mesh needs at least 3+ vertices
+			if( rSubmesh.VertexCount < 3 )
 			{
-				SubmeshColliderData data{};
-				data.Index = 0;
-				data.Stream = Buffer::Copy( stream.getData(), stream.getSize() );
+				rPerSubmeshData.emplace_back();
+				continue;
+			}
 
-				m_SubmeshData.push_back( data );
-			}
-			else
+			JPH::Array<JPH::Vec3> positions;
+
+			for( uint32_t i = rSubmesh.BaseVertex / 3; i < ( rSubmesh.BaseVertex / 3 ) + ( rSubmesh.VertexCount / 3 ); ++i )
 			{
-				SAT_CORE_ERROR( "PhysX Cooking error code was: {0}", errorCode );
-				SAT_CORE_INFO( "Please check the log for more info.", errorCode );
+				const Index& rIndex = rIndices[ i ];
+				const StaticVertex& v1 = rVertices[ rIndex.V1 ];
+				const StaticVertex& v2 = rVertices[ rIndex.V2 ];
+				const StaticVertex& v3 = rVertices[ rIndex.V3 ];
+
+				positions.push_back( JPH::Vec3( v1.Position.x, v1.Position.y, v1.Position.z ) );
+				positions.push_back( JPH::Vec3( v2.Position.x, v2.Position.y, v2.Position.z ) );
+				positions.push_back( JPH::Vec3( v3.Position.x, v3.Position.y, v3.Position.z ) );
 			}
+
+			JPH::RefConst<JPH::ConvexHullShapeSettings> meshSettings = new JPH::ConvexHullShapeSettings( positions );
+
+			const auto res = meshSettings->Create();
+			if( res.HasError() )
+			{
+				SAT_CORE_ERROR( "[JoltPhys]: Error: {0}", res.GetError() );
+
+				Result = PhysicsCookingResult::Failure;
+				break;
+			}
+
+			JPH::RefConst<JPH::Shape> shape = res.Get();
+
+			JoltBinaryWriter writer;
+			shape->SaveBinaryState( writer );
+
+			SubmeshColliderData& rData = rPerSubmeshData.emplace_back();
+			rData.Index = ( uint32_t ) subMeshIndex;
+			rData.Stream = writer.ToBuffer();
+
+			++subMeshIndex;
+
+			Result = PhysicsCookingResult::Success;
 		}
 
 		return Result;
@@ -192,19 +346,10 @@ namespace Saturn {
 		if( !std::filesystem::exists( rPath ) )
 			return false;
 
-		Buffer fileBuffer;
-		std::ifstream stream( rPath, std::ios::binary | std::ios::ate );
+		std::ifstream stream( rPath, std::ios::binary | std::ios::in );
 
-		auto end = stream.tellg();
-		stream.seekg( 0, std::ios::beg );
-		auto size = end - stream.tellg();
-
-		fileBuffer.Allocate( ( size_t ) size );
-		stream.read( reinterpret_cast< char* >( fileBuffer.Data ), fileBuffer.Size );
-
-		stream.close();
-
-		MeshCacheHeader hd = *( MeshCacheHeader* ) fileBuffer.Data;
+		MeshCacheHeader hd{};
+		RawSerialisation::ReadObject( hd, stream );
 
 		if( std::memcmp( hd.Magic, "SMC", 4 ) != 0 )
 		{
@@ -218,196 +363,77 @@ namespace Saturn {
 			return false;
 		}
 
-		uint8_t* colliderData = fileBuffer.As<uint8_t>() + sizeof( MeshCacheHeader );
+		auto& rPerSubmeshData = m_NewSubmeshData[ hd.ID ];
 
-		for( uint32_t i = 0; i < hd.Submeshes; i++ )
+		for( size_t i = 0; i < hd.Submeshes; ++i )
 		{
 			SubmeshColliderData submesh{};
 
-			uint32_t index = *( uint32_t* ) colliderData;
+			RawSerialisation::ReadObject( submesh.Index, stream );
+			RawSerialisation::ReadSaturnBuffer( submesh.Stream, stream );
 
-			colliderData += sizeof( uint32_t );
-
-			size_t size = *( size_t* ) colliderData;
-
-			colliderData += sizeof( size_t );
-
-			submesh.Index = index;
-			submesh.Stream = Buffer::Copy( colliderData, size );
-
-			m_SubmeshData.push_back( submesh );
-
-			colliderData += size;
+			rPerSubmeshData.push_back( submesh );
 		}
 
-		fileBuffer.Free();
-
+		stream.close();
 		return true;
 	}
 
-	std::vector<physx::PxShape*> PhysicsCooking::CreateTriangleMesh( const Ref<StaticMesh>& rMesh, physx::PxRigidActor& rActor, glm::vec3 Scale )
+	bool PhysicsCooking::MeshColliderAlreadyLoaded( const Ref<StaticMesh> mesh )
 	{
-		std::vector<physx::PxShape*> Shapes;
-
-		std::filesystem::path cachePath = Project::GetActiveProject()->GetFullCachePath();
-		cachePath /= rMesh->Name;
-		cachePath.replace_extension( ".smcs" );
-
-		if( !LoadColliderFile( cachePath ) )
-			return Shapes;
-
-		Ref<PhysicsMaterialAsset> materialAsset = GetPhysicsMaterial( rMesh );
-
-		// No material was found, so this means two things, one the project has no default material or (two) the mesh/project has a material asset but it can't be found.
-		if( !materialAsset )
-		{
-			materialAsset = Ref<PhysicsMaterialAsset>::Create( 1.0f, 1.0f, 1.0f );
-		}
-
-		physx::PxMaterial* pMaterial = materialAsset->GetMaterial();
-
-		// TEMP: We might want to change the filter data.
-		physx::PxFilterData data;
-		data.word0 = BIT( 0 );
-		data.word1 = BIT( 0 );
-
-		int i = 0;
-		for( const auto& rCookedData : m_SubmeshData )
-		{
-			const Submesh& rSubmesh = rMesh->Submeshes()[ i ];
-
-			// Read the cooked data.
-			physx::PxDefaultMemoryInputData readBuffer( rCookedData.Stream.Data, static_cast< physx::PxU32 >( rCookedData.Stream.Size ) );
-			physx::PxTriangleMesh* mesh = PhysicsFoundation::Get()->GetPhysics().createTriangleMesh( readBuffer );
-
-			// Create the shape.
-			glm::vec3 submeshPosition, submeshRotation, submeshScale;
-			Maths::DecomposeTransform( rSubmesh.Transform, submeshPosition, submeshRotation, submeshScale );
-
-			physx::PxVec3 ShapeScale = Auxiliary::GLMToPx( submeshScale * Scale );
-			physx::PxMeshScale MeshScale( ShapeScale );
-
-			physx::PxTriangleMeshGeometry MeshGeometry( mesh, ShapeScale );
-
-			physx::PxShape* pShape = PhysicsFoundation::Get()->GetPhysics().createShape( MeshGeometry, *pMaterial, true );
-			
-			// We will always set it to be part of the simulation.
-			pShape->setFlag( physx::PxShapeFlag::eSIMULATION_SHAPE, true ); 
-			pShape->setFlag( physx::PxShapeFlag::eTRIGGER_SHAPE, false );
-			pShape->setLocalPose( Auxiliary::GLMTransformToPx( submeshPosition, submeshRotation ) );
-			pShape->setSimulationFilterData( data );
-
-			mesh->release();
-
-			rActor.attachShape( *pShape );
-
-			Shapes.push_back( pShape );
-
-			++i;
-		}
-
-		ClearCache();
-
-		return Shapes;
+		return m_NewSubmeshData.find( mesh->ID ) != m_NewSubmeshData.end();
 	}
 
-	std::vector<physx::PxShape*> PhysicsCooking::CreateConvexMesh( const Ref<StaticMesh>& rMesh, physx::PxRigidActor& rActor, glm::vec3 Scale )
+	void PhysicsCooking::WriteCache( const Ref<StaticMesh> mesh, PhysicsShapeType Type )
 	{
-		std::vector<physx::PxShape*> Shapes;
-
-		// Load the cache.
-		std::filesystem::path cachePath = Project::GetActiveProject()->GetFullCachePath();
-		cachePath /= rMesh->Name;
-		cachePath.replace_extension( ".smcs" );
-
-		if( !LoadColliderFile( cachePath ) )
-			return Shapes;
-
-		Ref<PhysicsMaterialAsset> materialAsset = GetPhysicsMaterial( rMesh );
-
-		// No material was found, so this means two things, one the project has no default material or (two) the mesh/project has a material asset but it can't be found.
-		if( !materialAsset )
+		// Before anything, check if we even exist in the cache...
+		const auto itr = m_NewSubmeshData.find( mesh->ID );
+		if( itr == m_NewSubmeshData.end() )
 		{
-			materialAsset = Ref<PhysicsMaterialAsset>::Create( 1.0f, 1.0f, 1.0f );
+			return;
 		}
 
-		physx::PxMaterial* pMaterial = materialAsset->GetMaterial();
-
-		// TEMP: We might want to change the filter data.
-		physx::PxFilterData data;
-		data.word0 = BIT( 0 );
-		data.word1 = BIT( 0 );
-
-		int i = 0;
-		for( const auto& rCookedData : m_SubmeshData )
-		{
-			const Submesh& rSubmesh = rMesh->Submeshes()[ i ];
-
-			physx::PxDefaultMemoryInputData InputBuffer( rCookedData.Stream.Data, static_cast< physx::PxU32 >( rCookedData.Stream.Size ) );
-			physx::PxConvexMesh* pMesh = PhysicsFoundation::Get()->GetPhysics().createConvexMesh( InputBuffer );
-
-			glm::vec3 submeshPosition, submeshRotation, submeshScale;
-			Maths::DecomposeTransform( rSubmesh.Transform, submeshPosition, submeshRotation, submeshScale );
-
-			physx::PxVec3 ShapeScale = Auxiliary::GLMToPx( submeshScale * Scale );
-			physx::PxMeshScale MeshScale( ShapeScale );
-
-			physx::PxConvexMeshGeometry MeshGeometry( pMesh, ShapeScale );
-
-			physx::PxShape* pShape = PhysicsFoundation::Get()->GetPhysics().createShape( MeshGeometry, *pMaterial, true );
-
-			// TODO: I think convex meshes don't have to be kinematic meaning they don't have to part of simulation.
-			// We will always set it to be part of the simulation.
-			pShape->setFlag( physx::PxShapeFlag::eSIMULATION_SHAPE, true ); 
-			pShape->setFlag( physx::PxShapeFlag::eTRIGGER_SHAPE, false );
-			pShape->setLocalPose( Auxiliary::GLMTransformToPx( submeshPosition, submeshRotation ) );
-			pShape->setSimulationFilterData( data );
-
-			pMesh->release();
-
-			rActor.attachShape( *pShape );
-
-			Shapes.push_back( pShape );
-
-			++i;
-		}
-
-		ClearCache();
-
-		return Shapes;
-	}
-
-	void PhysicsCooking::WriteCache( const Ref<StaticMesh>& rMesh, PhysicsShapeType Type )
-	{
+		// ... if so we can write.
 		std::filesystem::path cachePath = Project::GetActiveProject()->GetFullCachePath();
 
 		if( !std::filesystem::exists( cachePath ) )
 			std::filesystem::create_directories( cachePath );
 
-		cachePath /= rMesh->Name;
+		cachePath /= std::to_string( mesh->ID );
 		cachePath.replace_extension(".smcs" );
 
+		auto& rSubmeshData = itr->second;
+
 		MeshCacheHeader hd{};
-		hd.ID = rMesh->ID;
-		hd.Submeshes = rMesh->Submeshes().size();
 		hd.Type = Type;
+		hd.ID = mesh->ID;
+		hd.Submeshes = mesh->Submeshes().size();
 
 		std::ofstream fout( cachePath, std::ios::binary | std::ios::trunc );
 
-		fout.write( reinterpret_cast< char* >( &hd ), sizeof( MeshCacheHeader ) );
+		RawSerialisation::WriteObject( hd, fout );
 
-		for( auto& rMeshData : m_SubmeshData )
+		for( auto& rMeshData : rSubmeshData )
 		{
-			fout.write( reinterpret_cast<char*>( &rMeshData.Index ), sizeof( uint32_t ) );
-
-			fout.write( reinterpret_cast< char* >( &rMeshData.Stream.Size ), sizeof( size_t ) );
-
-			fout.write( reinterpret_cast< char* >( rMeshData.Stream.Data ), rMeshData.Stream.Size );
+			RawSerialisation::WriteObject( rMeshData.Index, fout );
+			RawSerialisation::WriteSaturnBuffer( rMeshData.Stream, fout );
 		}
+
+		fout.close();
 	}
 
 	void PhysicsCooking::ClearCache()
 	{
-		m_SubmeshData.clear();
+		for( auto& [id, perSubmeshData] : m_NewSubmeshData )
+		{
+			for( auto& rSubmeshData : perSubmeshData )
+			{
+				// Make sure we clear the data to avoid a leak!
+				rSubmeshData.Stream.Free();
+			}
+		}
+
+		m_NewSubmeshData.clear();
 	}
+
 }

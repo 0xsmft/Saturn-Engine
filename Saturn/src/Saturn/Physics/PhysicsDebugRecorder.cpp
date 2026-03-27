@@ -27,80 +27,113 @@
 */
 
 #include "sppch.h"
-#include "AIAgentEntity.h"
+#include "PhysicsDebugRecorder.h"
 
-#include "Saturn/Core/Random.h"
+#include "PhysicsFoundation.h"
 
-#include "Saturn/Physics/PhysicsRigidBody.h"
+#include "Saturn/Project/Project.h"
+#include "Saturn/Serialisation/Raw/RawSerialisation.h"
 
-#include "Saturn/NodeEditor/NodeEditorBase.h"
-#include "BehaviourTree/BehaviourTree.h"
+#include "Saturn/Core/Process.h"
+#include "Saturn/Core/EnvironmentVariables.h"
 
-#include <Detour/DetourNavMeshQuery.h>
-#include <glm/gtc/type_ptr.hpp>
-
-#if !defined(SAT_DIST)
-#include "BehaviourTree/AssetViewer/BehaviourTreeAssetViewer.h"
-#include "Saturn/ImGui/ImGuiWindowManager.h"
-#else
-#include "BehaviourTree/AssetViewer/BehaviourTreeNodeEditor.h"
-#endif
+#include <Jolt/Physics/Body/BodyManager.h>
 
 namespace Saturn {
 
-	AIAgentEntity::AIAgentEntity()
+	//////////////////////////////////////////////////////////////////////////
+
+	void PhysicsRecorderOut::Open( const std::filesystem::path& rPath )
 	{
-		AddComponent<StaticMeshComponent>();
-		AddComponent<BehaviourTreeComponent>();
-		AddComponent<CharacterMovementComponent>();
+		m_Stream.open( rPath, std::ios::binary | std::ios::trunc );
 	}
 
-	AIAgentEntity::~AIAgentEntity()
+	void PhysicsRecorderOut::Close()
+	{
+		m_Stream.close();
+	}
+
+	void PhysicsRecorderOut::WriteBytes( const void* pData, size_t numBytes )
+	{
+		m_Stream.write( ( const char* ) pData, numBytes );
+	}
+
+	bool PhysicsRecorderOut::IsFailed() const
+	{
+		return m_Stream.fail();
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+
+	PhysicsDebugRecorder::PhysicsDebugRecorder()
 	{
 	}
 
-	void AIAgentEntity::BeginPlay()
+	PhysicsDebugRecorder::~PhysicsDebugRecorder()
 	{
-		Super::BeginPlay();
-
-		auto e = GetScene()->GetAllEntitiesWith<NavigationMeshSpecificationComponent>();
-		if( e.size() )
-		{
-			m_NavBoundsEntity = e[ 0 ].As<NavBoundsEntity>();
-		}
 	}
 
-	void AIAgentEntity::OnUpdate( Saturn::Timestep ts )
+	void PhysicsDebugRecorder::BeginRecord()
 	{
-		Super::OnUpdate( ts );
-
-		if( m_BehaviourTree )
-			m_BehaviourTree->Tick( ts );
-	}
-
-	void AIAgentEntity::OnPhysicsUpdate( Saturn::Timestep ts )
-	{
-		Super::OnPhysicsUpdate( ts );
-	}
-
-	void AIAgentEntity::StartBehaviourTree( AssetID id )
-	{
-		m_BehaviourTree = Ref<BehaviourTree>::Create( id );
-		m_BehaviourTree->Initialise( SharedFromThis() );
-		m_BehaviourTree->FirstEvaluate();
+		std::filesystem::path outPath = Project::GetActiveProject()->GetFullCachePath();
+		outPath /= "PerUser";
+		outPath /= std::format( "{0}.JoltCapture.jor", g_ActiveScene->Name );
+		m_OutStream.Open( outPath );
 
 #if !defined(SAT_DIST)
-		// Add reference if asset viewer is open
-		const std::string name = std::format( "{0}##{1}", m_BehaviourTree->GetAsset()->Name, ( uint64_t ) id );
-		if( Ref<BehaviourTreeAssetViewer> window = ImGuiWindowManager::Get()->GetWindow<BehaviourTreeAssetViewer>( name ); window )
-		{
-			window->AddBehviourTreeReference( m_BehaviourTree );
-		}
+		m_Recorder = std::make_unique<JPH::DebugRendererRecorder>( m_OutStream );
 #endif
 	}
 
+	void PhysicsDebugRecorder::NewFrame()
+	{
+#if !defined(SAT_DIST)
+		JPH::BodyManager::DrawSettings drawSettings;
+		PhysicsFoundation::Get()->GetPhysicsSystem()->DrawBodies( drawSettings, m_Recorder.get() );
+		m_Recorder->EndFrame();
+#endif
+	}
+
+	void PhysicsDebugRecorder::EndRecord()
+	{
+		m_OutStream.Close();
+
+#if !defined(SAT_DIST)
+		m_Recorder.reset();
+#endif
+	}
+
+	void PhysicsDebugRecorder::OpenRecordedFile()
+	{
+		std::filesystem::path outPath = Project::GetActiveProject()->GetFullCachePath();
+		outPath /= "PerUser";
+		outPath /= std::format( "{0}.JoltCapture.jor", g_ActiveScene->Name );
+
+		if( !std::filesystem::exists( outPath ) )
+		{
+			return;
+		}
+
+		const std::filesystem::path SaturnRootDir = Auxiliary::GetEnvironmentVariableWs( L"SATURN_DIR" );
+		std::filesystem::path joltViewerPath = SaturnRootDir;
+		joltViewerPath /= "Saturn";
+		joltViewerPath /= "vendor";
+		joltViewerPath /= "JoltPhysics";
+		joltViewerPath /= "JoltViewer";
+		joltViewerPath /= "PreBuilt";
+
+#if defined(SAT_PLATFORM_WINDOWS)
+		joltViewerPath /= "Windows-x64";
+		joltViewerPath /= "JoltViewer.exe";
+#elif defined(SAT_PLATFORM_LINUX)
+		joltViewerPath /= "Linux-x64";
+		joltViewerPath /= "JoltViewer";
+#endif
+
+		joltViewerPath += " ";
+		joltViewerPath += outPath;
+
+		DeatchedProcess dp( joltViewerPath );
+	}
+
 }
-
-#include "Saturn/GameFramework/Core/EngineGenerated.h"
-
-SAT_X31_CREATE_AUTO_REG_SPWN( AIAgentEntity );

@@ -50,7 +50,7 @@
 
 #include "Saturn/Physics/PhysicsScene.h"
 #include "Saturn/Physics/PhysicsRigidBody.h"
-#include "Saturn/Physics/PhysicsCharacterMovement.h"
+#include "Saturn/Physics/PhysicsCharacterController.h"
 
 #include "Saturn/Project/Project.h"
 
@@ -245,11 +245,10 @@ namespace Saturn {
 			auto* pController = rEntity->GetComponent<CharacterMovementComponent>().CharacterMovement;
 			if( pController )
 			{
-				pController->OnUpdate( ts );
-
 				// SyncTransform
 				rEntity->GetComponent<TransformComponent>().Position = pController->GetPosition();
 
+				/*
 				auto& rb = rEntity->GetComponent<RigidbodyComponent>();
 
 				// rb.Rigidbody will be null if it's just been spawned into the world.
@@ -257,6 +256,7 @@ namespace Saturn {
 				{
 					rb.Rigidbody->SetPosition( pController->GetPosition() );
 				}
+				*/
 			}
 			else
 			{

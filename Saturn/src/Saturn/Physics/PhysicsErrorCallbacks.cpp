@@ -31,6 +31,7 @@
 
 namespace Saturn {
 
+	/*
 	void PhysicsAssertCallback::operator()( const char* pError, const char* pFile, int Line, bool& rTarget )
 	{
 		SAT_CORE_ERROR( "PhsyX error : {0}, File : {1}, Line : {2}", pError, pFile, Line );
@@ -83,5 +84,5 @@ namespace Saturn {
 				break;
 		}
 	}
-
+	*/
 }

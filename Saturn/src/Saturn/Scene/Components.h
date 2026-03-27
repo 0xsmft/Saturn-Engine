@@ -37,6 +37,8 @@
 #include "Saturn/Vulkan/EnvironmentMap.h"
 #include "Saturn/Vulkan/Mesh.h"
 
+#include "Saturn/Physics/PhysicsBodyType.h"
+
 // TODO: Should not be included...
 #include "Saturn/Animation/Animator.h"
 
@@ -269,17 +271,18 @@ namespace Saturn {
 		CapsuleColliderComponent( float radius, float height ) : Radius( radius ), HalfHeight( height ) { }
 	};
 
-	class PhysicsCharacterMovement;
+	class PhysicsCharacterController;
 	struct CharacterMovementComponent
 	{
-		PhysicsCharacterMovement* CharacterMovement = nullptr;
+		PhysicsCharacterController* CharacterMovement = nullptr;
 
 		float StepOffset = 0.3f;
-		float Height = 1.0f;
-		float Radius = 1.0f;
+		bool NoGravity = false;
+		bool ControlMovementInAir = false;
+		bool ControlRotationInAir = false;
 
 		CharacterMovementComponent() = default;
-		CharacterMovementComponent( float stepOffset, float height, float radius ) : StepOffset( stepOffset ), Height( height ), Radius( radius ) {}
+		CharacterMovementComponent( float stepOffset, bool noGravity, bool controlMovementInAir, bool controlRotationInAir ) : StepOffset( stepOffset ), NoGravity( noGravity ), ControlMovementInAir( controlMovementInAir ), ControlRotationInAir( controlRotationInAir ) {}
 	};
 
 	// TODO: Do we really want to store the rigid body here?
@@ -288,16 +291,19 @@ namespace Saturn {
 	{
 		PhysicsRigidBody* Rigidbody = nullptr;
 
-		bool IsKinematic = false;
-		bool UseCCD = false;
+		PhysicsRigidBodyType BodyType = PhysicsRigidBodyType::Dynamic;
+		uint8_t LockFlags = 0;
+
 		float Mass = 2.0f;
 		float LinearDrag = 1.0f;
-		uint32_t LockFlags = 0;
 
 		MemoryAssetDependency<AssetType::PhysicsMaterial> MaterialAssetID;
 
 		RigidbodyComponent() = default;
-		RigidbodyComponent( bool isKinematic ) : IsKinematic( isKinematic ) {}
+		RigidbodyComponent( bool ccd, float mass, float linearDrag, uint8_t lockFlags )
+			: Mass( mass ), LinearDrag( linearDrag ), LockFlags( lockFlags )
+		{
+		}
 	};
 
 	struct PointLightComponent

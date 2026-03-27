@@ -38,8 +38,11 @@
 
 #include "PhysicsFoundation.h"
 #include "PhysicsRigidBody.h"
-#include "PhysicsCharacterMovement.h"
+#include "PhysicsCharacterController.h"
 #include "PhysicsAuxiliary.h"
+
+#include <Jolt/Physics/Collision/RayCast.h>
+#include <Jolt/Physics/Collision/CastResult.h>
 
 namespace Saturn {
 
@@ -51,7 +54,9 @@ namespace Saturn {
 
 	PhysicsScene::~PhysicsScene()
 	{
-		PhysicsFoundation::Get()->DisconnectPVD();
+#if !defined(SAT_DIST)
+		m_DebugRecorder.EndRecord();
+#endif
 
 		const auto view = m_Scene->GetAllEntitiesWith<RigidbodyComponent>();
 		for( auto& rEntity : view )
@@ -63,62 +68,10 @@ namespace Saturn {
 		}
 
 		m_Scene = nullptr;
-
-		m_ControllerManager->purgeControllers();
-
-		PHYSX_TERMINATE_ITEM( m_ControllerManager );
-		PHYSX_TERMINATE_ITEM( m_PhysicsScene );
-	}
-
-	static physx::PxFilterFlags CollisionFilterShader(
-		physx::PxFilterObjectAttributes Attributes0, physx::PxFilterData FilterData0,
-		physx::PxFilterObjectAttributes Attributes1, physx::PxFilterData FilterData1,
-		physx::PxPairFlags& rPairFlags, const void* pConstantBlock, physx::PxU32 ConstantBlockSize )
-	{
-		if( physx::PxFilterObjectIsTrigger( Attributes0 ) || physx::PxFilterObjectIsTrigger( Attributes1 ) )
-		{
-			rPairFlags = physx::PxPairFlag::eTRIGGER_DEFAULT;
-			return physx::PxFilterFlag::eDEFAULT;
-		}
-
-		rPairFlags = physx::PxPairFlag::eCONTACT_DEFAULT | physx::PxPairFlag::eDETECT_CCD_CONTACT | physx::PxPairFlag::eNOTIFY_CONTACT_POINTS;
-
-		if( ( FilterData0.word0 & FilterData1.word1 ) || ( FilterData1.word0 & FilterData0.word1 ) )
-		{
-			rPairFlags |= physx::PxPairFlag::eNOTIFY_TOUCH_FOUND | physx::PxPairFlag::eNOTIFY_TOUCH_LOST | physx::PxPairFlag::eNOTIFY_TOUCH_CCD;
-		}
-
-		return physx::PxFilterFlag::eDEFAULT;
 	}
 
 	void PhysicsScene::CreateScene()
-	{
-		physx::PxSceneDesc sceneDesc( PhysicsFoundation::Get()->m_Physics->getTolerancesScale() );
-		sceneDesc.gravity = physx::PxVec3( 0.0f, -9.81f, 0.0f );
-
-		sceneDesc.cpuDispatcher = PhysicsFoundation::Get()->m_Dispatcher;
-		sceneDesc.simulationEventCallback = &PhysicsFoundation::Get()->m_ContactCallback;
-		sceneDesc.filterShader = CollisionFilterShader;
-		sceneDesc.kineKineFilteringMode = physx::PxPairFilteringMode::eSUPPRESS;
-		sceneDesc.frictionType = physx::PxFrictionType::ePATCH;
-		sceneDesc.flags = physx::PxSceneFlag::eENABLE_CCD;
-
-		m_PhysicsScene = PhysicsFoundation::Get()->GetPhysics().createScene( sceneDesc );
-		PhysicsFoundation::Get()->ConnectPVD();
-
-		m_PhysicsScene->setVisualizationParameter( physx::PxVisualizationParameter::eSCALE, 1.0f );
-		m_PhysicsScene->setVisualizationParameter( physx::PxVisualizationParameter::eCOLLISION_SHAPES, 1.0f );
-		m_PhysicsScene->setVisualizationParameter( physx::PxVisualizationParameter::eCONTACT_POINT, 1.0f );
-
-		m_ControllerManager = PxCreateControllerManager( *m_PhysicsScene );
-
-		// Add controllers.
-		auto controllerView = m_Scene->GetAllEntitiesWith<CharacterMovementComponent>();
-		for( auto& rEntity : controllerView )
-		{
-			AddNewController( rEntity );
-		}
-	
+	{	
 		// Add all current bodies to the scene.
 		auto rigidbodyView = m_Scene->GetAllEntitiesWith<RigidbodyComponent>();
 		for( auto& rEntity : rigidbodyView )
@@ -127,50 +80,66 @@ namespace Saturn {
 			InitialiseNewBody( rEntity, rb );
 		}
 
-		// Set user data
-		// TEMP: Hack
+		// Add controllers.
+		auto controllerView = m_Scene->GetAllEntitiesWith<CharacterMovementComponent>();
 		for( auto& rEntity : controllerView )
 		{
-			auto& rMovement = rEntity->GetComponent<CharacterMovementComponent>();
-			rMovement.CharacterMovement->GetController()->setUserData( rEntity->GetComponent<RigidbodyComponent>().Rigidbody );
+			AddNewController( rEntity );
 		}
+
+		PhysicsFoundation::Get()->GetPhysicsSystem()->OptimizeBroadPhase();
+
+#if !defined(SAT_DIST)
+		m_DebugRecorder.BeginRecord();
+#endif
 	}
 
 	void PhysicsScene::Simulate( Timestep ts )
 	{
 		SAT_PF_EVENT();
+		
+		// Pre sim
+		auto controllerView = m_Scene->GetAllEntitiesWith<CharacterMovementComponent>();
+		for( auto& rEntity : controllerView )
+		{
+			auto* pCharacterMovement = rEntity->GetComponent<CharacterMovementComponent>().CharacterMovement;
 
-		constexpr float FIXED_TIMESTEP = 1.0f / 100.0f;
-		m_PhysicsScene->simulate( FIXED_TIMESTEP );
-		m_PhysicsScene->fetchResults( true );
+			pCharacterMovement->PreUpdate( 1.0f / 60.0f );
+			pCharacterMovement->OnUpdate( 1.0f / 60.0f );
+		}
+
+		// sim
+		PhysicsFoundation::Get()->GetPhysicsSystem()->Update( 1.0f / 60.0f, 1u, PhysicsFoundation::Get()->GetTempAllocator(), PhysicsFoundation::Get()->GetJobSystem() );
+
+#if !defined(SAT_DIST)
+		m_DebugRecorder.NewFrame();
+#endif
+
+		// post sim
+		PhysicsFoundation::Get()->GetContactHandler()->DispatchAllContactEvents();
 	}
 
 	bool PhysicsScene::Raycast( const glm::vec3& rOrigin, const glm::vec3& rDirection, float maxDistance, RaycastHitResult* pOut )
 	{
-		RaycastHitResult hit = {};
+		JPH::RRayCast ray{ Auxiliary::GLMToJolt( rOrigin ), Auxiliary::GLMToJolt( rDirection ) };
 
-		physx::PxRaycastBuffer physXOutHit = {};
+		RaycastHitResult outHit{};
 
-		const bool success = m_PhysicsScene->raycast( Auxiliary::GLMToPx( rOrigin ), Auxiliary::GLMToPx( glm::normalize( rDirection ) ), maxDistance, physXOutHit );
+		JPH::RayCastResult joltHit{};
+		outHit.Success = PhysicsFoundation::Get()->GetPhysicsSystem()->GetNarrowPhaseQuery().CastRay( ray, joltHit );
 
-		hit.Success = success;
-		if( hit.Success )
+		if( outHit.Success )
 		{
-			const physx::PxRaycastHit& rTarget = physXOutHit.block;
+			entt::entity entityHandle = ( entt::entity ) PhysicsFoundation::Get()->GetBodyInterface()->GetUserData( joltHit.mBodyID );
 
-			PhysicsRigidBody* pBody = ( PhysicsRigidBody* ) rTarget.actor->userData;
-
-			// pBody should not be null as the user data should always be set.
-			// So if this assert is hit, then the rigid body is not set up correctly.
-			SAT_CORE_ASSERT( pBody );
-
-			hit.Hit = pBody->GetEntity();
-			hit.Distance = rTarget.distance;
-			hit.Position = Auxiliary::PxToGLM( rTarget.position );
+			outHit.Position = Auxiliary::JoltToGLM( ray.GetPointOnRay( joltHit.mFraction ) );
+			outHit.Hit = m_Scene->FindEntityByHandle( entityHandle );
+			outHit.Distance = glm::distance( outHit.Position, rOrigin );
 		}
 
-		*pOut = hit;
-		return success;
+		*pOut = outHit;
+
+		return outHit.Success;
 	}
 
 	void PhysicsScene::ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds )
@@ -183,11 +152,6 @@ namespace Saturn {
 		}
 	}
 
-	void PhysicsScene::AddToScene( physx::PxRigidActor& rBody )
-	{
-		m_PhysicsScene->addActor( rBody );
-	}
-
 	void PhysicsScene::InitialiseNewBody( SharedPtr<Entity>& rEntity, RigidbodyComponent& rRigidbodyComponent )
 	{
 		// Bad, this shouldn't be true and should be an assert.
@@ -198,35 +162,22 @@ namespace Saturn {
 		}
 
 		rRigidbodyComponent.Rigidbody = new PhysicsRigidBody( rEntity );
-		
-		if( rEntity->HasComponent<CharacterMovementComponent>() )
-		{
-			auto& pController = rEntity->GetComponent<CharacterMovementComponent>().CharacterMovement;
-			if( pController == nullptr )
-			{
-				AddNewController( rEntity );
-			}
-		}
-
 		rRigidbodyComponent.Rigidbody->CreateShape();
-
-		AddToScene( rRigidbodyComponent.Rigidbody->GetActor() );
 	}
 
 	void PhysicsScene::AddNewController( SharedPtr<Entity>& rEntity )
 	{
-		auto& rb = rEntity->GetComponent<RigidbodyComponent>();
-		auto& movementComp = rEntity->GetComponent<CharacterMovementComponent>();
+		auto& rMovementComp = rEntity->GetComponent<CharacterMovementComponent>();
 
 		// Bad, this shouldn't be true and should be an assert.
-		if( movementComp.CharacterMovement )
+		if( rMovementComp.CharacterMovement )
 		{
-			delete movementComp.CharacterMovement;
+			delete rMovementComp.CharacterMovement;
 			SAT_CORE_WARN( "A movement controller already exists in this component! Removing and creating a new one." );
 		}
 
-		movementComp.CharacterMovement = new PhysicsCharacterMovement( rb.MaterialAssetID, movementComp.Height, movementComp.Radius );
-		movementComp.CharacterMovement->CreateController( this, rEntity, rEntity->GetLocalPosition() );
+		rMovementComp.CharacterMovement = new PhysicsCharacterController( 0, !rMovementComp.NoGravity, rMovementComp.ControlMovementInAir, rMovementComp.ControlRotationInAir );
+		rMovementComp.CharacterMovement->CreateController( this, rEntity, rEntity->GetLocalPosition() );
 	}
 
 }

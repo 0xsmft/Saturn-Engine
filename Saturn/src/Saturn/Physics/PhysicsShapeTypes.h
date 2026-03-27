@@ -32,7 +32,7 @@
 
 namespace Saturn {
 
-	enum class PhysicsShapeType
+	enum class PhysicsShapeType : uint8_t
 	{
 		Unknown,
 		Box,
@@ -42,15 +42,15 @@ namespace Saturn {
 		TriangleMesh
 	};
 
-	enum class ForceMode
+	enum class ForceMode : uint8_t
 	{
 		Force,
 		Impulse,
-		VelocityChange,
-		Acceleration
+		ForceAndTorque,
+		Torque
 	};
 
-	enum RigidbodyLockFlags : uint32_t
+	enum RigidbodyLockFlags : uint8_t
 	{
 		RigidbodyLock_PositionX = BIT( 0 ),
 		RigidbodyLock_PositionY = BIT( 1 ),

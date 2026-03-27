@@ -32,16 +32,15 @@ IncludeDir["ImSpinner"] = "%{wks.location}/Saturn/vendor/imspinner/src"
 IncludeDir["Tracy"] = "%{wks.location}/Saturn/vendor/tracy/src"
 IncludeDir["Filewatch"] = "%{wks.location}/Saturn/vendor/Filewatch/src"
 IncludeDir["MiniAudio"] = "%{wks.location}/Saturn/vendor/miniaudio/src"
-IncludeDir["PhysX"] = "%{wks.location}/Saturn/vendor/physx/include"
 IncludeDir["SharedStorage"] = "%{wks.location}/Saturn-SharedStorage/src"
 IncludeDir["zlib"] = "%{wks.location}/Saturn/vendor/zlib"
-IncludeDir["KTX_Software"] = "%{wks.location}/Saturn/vendor/KTX-Software/include"
 IncludeDir["Recast"] = "%{wks.location}/Saturn/vendor/Recast/RecastAndDetour/Include"
 IncludeDir["acl"] = "%{wks.location}/Saturn/vendor/acl/include"
 IncludeDir["rtm"] = "%{wks.location}/Saturn/vendor/acl/rtm/include"
 IncludeDir["Freetype"] = "%{wks.location}/Saturn/vendor/freetype/include"
 IncludeDir["MSDF"] = "%{wks.location}/Saturn/vendor/msdf-atlas-gen/msdfgen"
 IncludeDir["MSDFAG"] = "%{wks.location}/Saturn/vendor/msdf-atlas-gen"
+IncludeDir["JoltPhys"] = "%{wks.location}/Saturn/vendor/JoltPhysics/Jolt"
 
 -- // -Dependencies-- 
 group "Dependencies"
@@ -53,6 +52,7 @@ group "Dependencies"
 	include "Saturn/vendor/Recast"
 	include "Saturn/vendor/freetype"
 	include "Saturn/vendor/msdf-atlas-gen"
+	include "Saturn/vendor/JoltPhysics"
 -- // -Dependencies-- 
 
 -- // -Engine-- 

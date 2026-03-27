@@ -432,21 +432,17 @@ namespace Saturn {
 		PakFileMemoryBuffer membuf( file->FileContent );
 		std::istream stream( &membuf );
 
-		glm::vec3 StaticDynamicFrictionRestitution{};
+		glm::vec2 FrictionRestitution{};
 		uint32_t assetFlags = 0;
 
-		RawSerialisation::ReadObject( StaticDynamicFrictionRestitution.x, stream );
-		RawSerialisation::ReadObject( StaticDynamicFrictionRestitution.y, stream );
-		RawSerialisation::ReadObject( StaticDynamicFrictionRestitution.z, stream );
+		RawSerialisation::ReadObject( FrictionRestitution.x, stream );
+		RawSerialisation::ReadObject( FrictionRestitution.y, stream );
 
 		RawSerialisation::ReadObject( assetFlags, stream );
 
 		auto physMaterialAsset = Ref<PhysicsMaterialAsset>::Create( rAsset, 
-			StaticDynamicFrictionRestitution.x,
-			StaticDynamicFrictionRestitution.y,
-			StaticDynamicFrictionRestitution.z );
-		
-		physMaterialAsset->SetFlag( (PhysicsMaterialFlags)assetFlags, true );
+			FrictionRestitution.x,
+			FrictionRestitution.y );
 
 		// Set rAsset reference to point to our new PhysicsMaterial.
 		rAsset = physMaterialAsset;
@@ -464,11 +460,8 @@ namespace Saturn {
 
 		std::ofstream stream( out, std::ios::binary | std::ios::trunc );
 
-		RawSerialisation::WriteObject( physMaterialAsset->GetStaticFriction(), stream );
-		RawSerialisation::WriteObject( physMaterialAsset->GetDynamicFriction(), stream );
+		RawSerialisation::WriteObject( physMaterialAsset->GetFriction(), stream );
 		RawSerialisation::WriteObject( physMaterialAsset->GetRestitution(), stream );
-
-		RawSerialisation::WriteObject( physMaterialAsset->GetFlags(), stream );
 
 		stream.close();
 

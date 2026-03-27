@@ -64,7 +64,7 @@ namespace Saturn {
 
 	void PhysicsMaterialAssetViewer::DrawInternal()
 	{
-		ImGui::PushID( (int)m_MaterialAsset->ID );
+		ImGui::PushID( ( int ) m_MaterialAsset->ID );
 
 		ImGui::Begin( m_Name.c_str(), &m_Open );
 
@@ -72,20 +72,23 @@ namespace Saturn {
 
 		ImGui::BeginVertical( "##material_settingsV" );
 
-		ImGui::Text( "Static Friction" );
-		ImGui::InputFloat( "##StaticFriction", &m_MaterialAsset->m_StaticFriction, 0.0f, 1000.0f );
+		ImGui::Text( "Friction" );
 
-		ImGui::Spring();
-
-		ImGui::Text( "Dynamic Friction" );
-		ImGui::InputFloat( "##DynamicFriction", &m_MaterialAsset->m_DynamicFriction, 0.0f, 1000.0f );
+		float friction = m_MaterialAsset->GetFriction();
+		if( ImGui::InputFloat( "##StaticFriction", &friction, 0.0f, 1000.0f ) ) 
+		{
+			m_MaterialAsset->SetFriction( friction );
+		}
 		
 		ImGui::Spring();
 
 		ImGui::Text( "Restitution" );
-		ImGui::InputFloat( "##Restitution", &m_MaterialAsset->m_Restitution, 0.0f, 1000.0f );
-		
-		// TODO: Flags
+
+		float restitution = m_MaterialAsset->GetRestitution();
+		if( ImGui::InputFloat( "##Restitution", &restitution, 0.0f, 1000.0f ) ) 
+		{
+			m_MaterialAsset->SetRestitution( restitution );
+		}
 
 		ImGui::EndVertical();
 

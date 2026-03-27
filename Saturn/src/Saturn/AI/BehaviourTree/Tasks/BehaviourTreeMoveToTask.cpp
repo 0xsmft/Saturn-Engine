@@ -35,7 +35,7 @@
 #include "Saturn/AI/BehaviourTree/AssetViewer/Nodes/BehaviourTreeNodeBase.h"
 
 #include "Saturn/Physics/PhysicsRigidBody.h"
-#include "Saturn/Physics/PhysicsCharacterMovement.h"
+#include "Saturn/Physics/PhysicsCharacterController.h"
 
 #include "Saturn/AI/Navigation/RecastCore.h"
 #include <Detour/DetourNavMeshQuery.h>

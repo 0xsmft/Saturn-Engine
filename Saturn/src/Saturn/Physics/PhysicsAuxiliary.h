@@ -28,31 +28,56 @@
 
 #pragma once
 
-#include "PxPhysicsAPI.h"
+#include "PhysicsBodyType.h"
 
 #include "Saturn/Core/Maths.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
 
-#define PHYSX_TERMINATE_ITEM( x ) if(x) x->release(); x = nullptr
+#include <Jolt/Jolt.h>
+#include <Jolt/Physics/Body/MotionType.h>
+
+#define SAT_JPH_TERMINATE_ITEM( x ) if(x) delete x; x = nullptr
 
 namespace Saturn::Auxiliary {
 
-	inline physx::PxVec3 GLMToPx( const glm::vec3& vec ) 
+	inline JPH::Vec3 GLMToJolt( const glm::vec3& vec ) 
 	{
-		return *( physx::PxVec3* )&vec;
+		return JPH::Vec3( vec.x, vec.y, vec.z );
 	}
 
+	inline glm::vec3 JoltToGLM( const JPH::Vec3& vec )
+	{
+		return glm::vec3( vec.GetX(), vec.GetY(), vec.GetZ() );
+	}
+
+	inline JPH::Quat GLMQToJoltQ( const glm::quat& rQuat ) 
+	{
+		return JPH::Quat( rQuat.x, rQuat.y, rQuat.z, rQuat.w );
+	}
+
+	inline glm::quat JoltQToGLMQ( const JPH::Quat& rQuat )
+	{
+		// GLM Quats are WXYZ
+		return glm::quat( rQuat.GetW(), rQuat.GetX(), rQuat.GetY(), rQuat.GetZ() );
+	}
+
+	inline JPH::EMotionType SaturnToJoltBodyType( PhysicsRigidBodyType type )
+	{
+		return ( JPH::EMotionType ) type;
+	}
+
+	inline PhysicsRigidBodyType JoltToSaturnBodyType( JPH::EMotionType type )
+	{
+		return ( PhysicsRigidBodyType ) type;
+	}
+
+	/*
 	inline physx::PxQuat QGLMToPx( const glm::quat& quat )
 	{
 		// X, Y, Z, W
 		return physx::PxQuat( quat.x, quat.y, quat.z, quat.w );
-	}
-
-	inline glm::vec3 PxToGLM( physx::PxVec3 vec )
-	{
-		return *( glm::vec3* ) &vec;
 	}
 
 	inline glm::quat QPxToGLM( physx::PxQuat quat )
@@ -70,7 +95,7 @@ namespace Saturn::Auxiliary {
 		Maths::DecomposeTransform( mat, pos, rot, scale );
 
 		physx::PxQuat r = QGLMToPx( rot );
-		physx::PxVec3 p = GLMToPx( pos );
+		physx::PxVec3 p = GLMToJolt( pos );
 
 		return physx::PxTransform( p, r );
 	}
@@ -78,13 +103,14 @@ namespace Saturn::Auxiliary {
 	inline glm::mat4 PxTransformToGLM( const physx::PxTransform& mat )
 	{
 		glm::quat q( QPxToGLM( mat.q ) );
-		glm::vec3 p( PxToGLM( mat.p ) );
+		glm::vec3 p( JoltToGLM( mat.p ) );
 
 		return glm::translate( glm::mat4( 1.0f ), p ) * glm::toMat4( q );
 	}
 
 	inline physx::PxTransform GLMTransformToPx( const glm::vec3& position, const glm::vec3& rotation )
 	{
-		return physx::PxTransform( GLMToPx( position ), QGLMToPx( glm::quat( rotation ) ) );
+		return physx::PxTransform( GLMToJolt( position ), QGLMToPx( glm::quat( rotation ) ) );
 	}
+	*/
 }

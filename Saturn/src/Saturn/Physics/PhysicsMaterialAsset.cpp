@@ -34,62 +34,28 @@
 
 namespace Saturn {
 
-	PhysicsMaterialAsset::PhysicsMaterialAsset( const Ref<Asset>& rBase, float StaticFriction, float DynamicFriction, float Restitution, PhysicsMaterialFlags flags /*= PhysicsMaterialFlags::None */ )
-		: Asset( rBase ), m_StaticFriction( StaticFriction ), m_DynamicFriction( DynamicFriction ), m_Restitution( Restitution ), m_Flags( ( uint32_t ) flags )
+	PhysicsMaterialAsset::PhysicsMaterialAsset( float Friction, float Restitution )
+		: Asset(), m_JoltMaterial( new PhysicsInternalMaterial( Friction, Restitution ) )
 	{
-		m_Material = PhysicsFoundation::Get()->GetPhysics().createMaterial( StaticFriction, DynamicFriction, Restitution );
-
-		if( flags != PhysicsMaterialFlags::None )
-			m_Material->setFlags( ( physx::PxMaterialFlag::Enum ) flags );
 	}
 
-	PhysicsMaterialAsset::PhysicsMaterialAsset( float StaticFriction, float DynamicFriction, float Restitution, PhysicsMaterialFlags flags /*= PhysicsMaterialFlags::None */ )
-		: Asset(), m_StaticFriction( StaticFriction ), m_DynamicFriction( DynamicFriction ), m_Restitution( Restitution ), m_Flags( ( uint32_t ) flags )
+	PhysicsMaterialAsset::PhysicsMaterialAsset( const Ref<Asset>& rBase, float Friction, float Restitution )
+		: Asset( rBase ), m_JoltMaterial( new PhysicsInternalMaterial( Friction, Restitution ) )
 	{
-		m_Material = PhysicsFoundation::Get()->GetPhysics().createMaterial( StaticFriction, DynamicFriction, Restitution );
-
-		if( flags != PhysicsMaterialFlags::None )
-			m_Material->setFlags( ( physx::PxMaterialFlag::Enum ) flags );
 	}
 
 	PhysicsMaterialAsset::~PhysicsMaterialAsset()
-	{
-		m_StaticFriction = 0.0f;
-		m_DynamicFriction = 0.0f;
-		m_Restitution = 0.0f;
-		
-		PHYSX_TERMINATE_ITEM( m_Material );
+	{	
 	}
 
-	void PhysicsMaterialAsset::SetStaticFriction( float val )
+	void PhysicsMaterialAsset::SetFriction( float val )
 	{
-		m_StaticFriction = val;
-		
-		m_Material->setStaticFriction( val );
-	}
-
-	void PhysicsMaterialAsset::SetDynamicFriction( float val )
-	{
-		m_DynamicFriction = val;
-
-		m_Material->setDynamicFriction( val );
+		m_JoltMaterial->SetFriction( val );
 	}
 
 	void PhysicsMaterialAsset::SetRestitution( float val )
 	{
-		m_Restitution = val;
-
-		m_Material->setRestitution( val );
-	}
-
-	void PhysicsMaterialAsset::SetFlag( PhysicsMaterialFlags flag, bool value )
-	{
-		if( value )
-			m_Flags |= ( uint32_t ) flag;
-		else
-			m_Flags &= ~( uint32_t ) flag;
-
-		m_Material->setFlag( ( physx::PxMaterialFlag::Enum )flag, value );
+		m_JoltMaterial->SetRestitution( val );
 	}
 
 }

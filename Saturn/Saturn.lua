@@ -36,8 +36,6 @@ project "Saturn"
 
 	defines
 	{
-		"PX_PHYSX_STATIC_LIB",
-		"PX_GENERATE_STATIC_LIBRARIES",
 		"GLM_ENABLE_EXPERIMENTAL",
 		"SATURN_SS_IMPORT",
 		"TRACY_ENABLE",
@@ -68,9 +66,7 @@ project "Saturn"
 		"%{IncludeDir.MiniAudio}",
 		"%{IncludeDir.Filewatch}",
 		"%{IncludeDir.zlib}",
-		"%{IncludeDir.PhysX}",
-		"%{IncludeDir.PhysX}/pxshared",
-		"%{IncludeDir.PhysX}/physx",
+		"%{IncludeDir.JoltPhys}",
 		"%{IncludeDir.KTX_Software}",
 		"%{IncludeDir.Recast}",
 		"%{IncludeDir.acl}",
@@ -93,6 +89,7 @@ project "Saturn"
 		"Freetype",
 		"MSDFGen",
 		"MSDF-Atlas-Gen",
+		"JoltPhysics",
 
 		"Saturn-SharedStorage"
 	}
@@ -156,22 +153,6 @@ project "Saturn"
 				"vendor/shaderc/bin/Debug-Windows/shaderc_util.lib",
 				"vendor/shaderc/bin/Debug-Windows/glslangd.lib",
 				"vendor/shaderc/bin/Debug-Windows/SPIRV-Tools.lib",
-
-				-- PhysX
-				"vendor/physx/bin/Debug/LowLevel_static_64.lib",
-				"vendor/physx/bin/Debug/LowLevelAABB_static_64.lib",
-				"vendor/physx/bin/Debug/LowLevelDynamics_static_64.lib",
-				"vendor/physx/bin/Debug/PhysX_64.lib",
-				"vendor/physx/bin/Debug/PhysXCharacterKinematic_static_64.lib",
-				"vendor/physx/bin/Debug/PhysXCommon_64.lib",
-				"vendor/physx/bin/Debug/PhysXCooking_64.lib",
-				"vendor/physx/bin/Debug/PhysXExtensions_static_64.lib",
-				"vendor/physx/bin/Debug/PhysXFoundation_64.lib",
-				"vendor/physx/bin/Debug/PhysXPvdSDK_static_64.lib",
-				"vendor/physx/bin/Debug/PhysXTask_static_64.lib",
-				"vendor/physx/bin/Debug/PhysXVehicle_static_64.lib",
-				"vendor/physx/bin/Debug/SceneQuery_static_64.lib",
-				"vendor/physx/bin/Debug/SimulationController_static_64.lib",
 			}
 
 		filter "configurations:Release"
@@ -198,22 +179,12 @@ project "Saturn"
 
 			defines { "SATURN_SS_STATIC" }
 			links { "Saturn-SharedStorage" }
-
-		filter "configurations:Release or configurations:Dist"
-			links 
-			{
-				"vendor/physx/bin/Release/LowLevel_static_64.lib",
-				"vendor/physx/bin/Release/LowLevelAABB_static_64.lib",
-				"vendor/physx/bin/Release/LowLevelDynamics_static_64.lib",
-				"vendor/physx/bin/Release/PhysX_64.lib",
-				"vendor/physx/bin/Release/PhysXCharacterKinematic_static_64.lib",
-				"vendor/physx/bin/Release/PhysXCommon_64.lib",
-				"vendor/physx/bin/Release/PhysXCooking_64.lib",
-				"vendor/physx/bin/Release/PhysXExtensions_static_64.lib",
-				"vendor/physx/bin/Release/PhysXFoundation_64.lib",
-				"vendor/physx/bin/Release/PhysXPvdSDK_static_64.lib",
-				"vendor/physx/bin/Release/PhysXTask_static_64.lib",
-				"vendor/physx/bin/Release/PhysXVehicle_static_64.lib",
-				"vendor/physx/bin/Release/SceneQuery_static_64.lib",
-				"vendor/physx/bin/Release/SimulationController_static_64.lib"
-			}
+	
+	filter "configurations:Debug or configurations:Release"
+		defines
+		{
+		    "JPH_DEBUG_RENDERER",
+            "JPH_FLOATING_POINT_EXCEPTIONS_ENABLED",
+            "JPH_EXTERNAL_PROFILE",
+			"JPH_ENABLE_ASSERTS"
+		}

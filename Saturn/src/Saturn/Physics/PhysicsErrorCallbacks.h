@@ -30,13 +30,12 @@
 
 #include "Saturn/Core/Base.h"
 
-#include "PxPhysicsAPI.h"
-
 namespace Saturn {
 
 	//////////////////////////////////////////////////////////////////////////
 	// PhysX API in use.
 
+	/*
 	class PhysicsAssertCallback : public physx::PxAssertHandler, RefTarget
 	{
 	public:
@@ -48,4 +47,5 @@ namespace Saturn {
 	public:
 		virtual void reportError( physx::PxErrorCode::Enum Code, const char* pMessage, const char* pFile, int Line ) override;
 	};
+	*/
 }

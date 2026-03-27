@@ -28,80 +28,48 @@
 
 #pragma once
 
-#include "Saturn/Scene/Entity.h"
-#include "Core/GameScript.h"
+#include "JoltBinaryHelpers.h"
 
-#include "PlayerInputController.h"
+#include <Jolt/Jolt.h>
+#if !defined(SAT_DIST)
+#include <Jolt/Renderer/DebugRendererRecorder.h>
+#endif
 
 namespace Saturn {
 
-	// TODO: Make this an SCLASS macro as well be able to spawn this correctly.
-	//       However this is need more work because we'll need to use the Build Tool to compile the engine which is not supported right now.
-	class Character : public Entity
+	class PhysicsRecorderOut : public JPH::StreamOut
 	{
-		//////////////////////////////////////////////////////////////////////////
-		// This is here because we aren't using the Build Tool.
-	
-		SAT_DECLARE_CLASS( Character, Entity );
+	public:
+		PhysicsRecorderOut() = default;
+		~PhysicsRecorderOut() = default;
+
+		void Open( const std::filesystem::path& rPath );
+		void Close();
 
 	public:
-		Character();
-		~Character();
+		virtual void WriteBytes( const void* inData, size_t inNumBytes ) override;
+		virtual bool IsFailed() const override;
 
+	private:
+		std::ofstream m_Stream;
+	};
+
+	class PhysicsDebugRecorder
+	{
 	public:
-		//////////////////////////////////////////////////////////////////////////
-		// Entity overrides
+		PhysicsDebugRecorder();
+		~PhysicsDebugRecorder();
 
-		virtual void BeginPlay() override;
-		virtual void OnUpdate( Timestep ts ) override;
-		virtual void OnPhysicsUpdate( Timestep ts ) override;
+		void BeginRecord();
+		void NewFrame();
+		void EndRecord();
 
-		Ref<StaticMesh>& GetMesh() { return m_Mesh; }
-		const Ref<StaticMesh>& GetMesh() const { return m_Mesh; }
-		
-	protected:
-		virtual void SetupInputBindings() {};
-
-		void MoveForward();
-		void MoveBack();
-		void MoveLeft();
-		void MoveRight();
-
-		void MoveForwardEnd();
-		void MoveBackEnd();
-		void MoveLeftEnd();
-		void MoveRightEnd();
-
-		void StartSprint();
-		void EndSprint();
-
-	protected:
-		Ref<PlayerInputController> m_PlayerInputController = nullptr;
-
-		SharedPtr<Entity>& GetCameraEntity() { return m_CameraEntity; }
-		const SharedPtr<Entity>& GetCameraEntity() const { return m_CameraEntity; }
-
-	protected:
-		//////////////////////////////////////////////////////////////////////////
-		// Movement
-
-		glm::vec3 CalculateRight();
-		glm::vec3 CalculateForward();
-
-		float m_MovementSpeed = 5.0f;
+		static void OpenRecordedFile();
 
 	private:
-		float m_MouseUpMovement = 0.0f;
-		float m_MouseSensitivity = 0.0f;
-
-		glm::vec2 m_MovementDirection{};
-		glm::vec2 m_LastMousePos{};
-		glm::vec3 m_LastMovement{};
-
-	private:
-		// TODO: Change to a base mesh class, we don't know what the user will have.
-		Ref<StaticMesh> m_Mesh;
-
-		SharedPtr<Entity> m_CameraEntity = nullptr;
+		PhysicsRecorderOut m_OutStream;
+#if !defined(SAT_DIST)
+		std::unique_ptr<JPH::DebugRendererRecorder> m_Recorder;
+#endif
 	};
 }

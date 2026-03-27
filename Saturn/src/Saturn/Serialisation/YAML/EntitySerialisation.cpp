@@ -459,8 +459,7 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 
 			const auto& rbc = entity->GetComponent< RigidbodyComponent >();
 
-			rEmitter << YAML::Key << "IsKinematic" << YAML::Value << rbc.IsKinematic;
-			rEmitter << YAML::Key << "CCD" << YAML::Value << rbc.UseCCD;
+			rEmitter << YAML::Key << "BodyType" << YAML::Value << ( uint32_t ) rbc.BodyType;
 			rEmitter << YAML::Key << "Mass" << YAML::Value << rbc.Mass;
 
 			rEmitter << YAML::Key << "LockFlags" << YAML::Value << ( int ) rbc.LockFlags;
@@ -477,8 +476,9 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 			const auto& cmc = entity->GetComponent< CharacterMovementComponent >();
 
 			rEmitter << YAML::Key << "StepOffset" << YAML::Value << cmc.StepOffset;
-			rEmitter << YAML::Key << "Height" << YAML::Value << cmc.Height;
-			rEmitter << YAML::Key << "Radius" << YAML::Value << cmc.Radius;
+			rEmitter << YAML::Key << "NoGravity" << YAML::Value << cmc.NoGravity;
+			rEmitter << YAML::Key << "ControlMovementInAir" << YAML::Value << cmc.ControlMovementInAir;
+			rEmitter << YAML::Key << "ControlRotationInAir" << YAML::Value << cmc.ControlRotationInAir;
 
 			rEmitter << YAML::EndMap;
 		}
@@ -945,15 +945,14 @@ pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value ); \
 		{
 			auto& rb = DeserialisedEntity->AddComponent< RigidbodyComponent >();
 
-			rb.IsKinematic = rbc[ "IsKinematic" ].as< bool >();
-			rb.UseCCD = rbc[ "CCD" ].as< bool >();
+			rb.BodyType = ( PhysicsRigidBodyType )rbc[ "BodyType" ].as< uint8_t >( 2 /*PhysicsRigidBodyType::Dynamic*/ );
 			rb.Mass = rbc[ "Mass" ].as< float >();
 
 			auto lockNode = rbc[ "LockFlags" ];
 
 			if( lockNode )
 			{
-				rb.LockFlags = lockNode.as< int >( 0 );
+				rb.LockFlags = lockNode.as< uint8_t >( 0 );
 			}
 			else
 			{
@@ -966,9 +965,10 @@ pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value ); \
 		{
 			auto& cm = DeserialisedEntity->AddComponent< CharacterMovementComponent >();
 
-			cm.StepOffset = cmc[ "StepOffset" ].as< float >();
-			cm.Height     = cmc[ "Height" ].as< float >();
-			cm.Radius     = cmc[ "Radius" ].as< float >();
+			cm.StepOffset			= cmc[ "StepOffset" ].as< float >();
+			cm.NoGravity			= cmc[ "NoGravity" ].as< bool >( false );
+			cm.ControlMovementInAir = cmc[ "ControlMovementInAir" ].as< bool >( false );
+			cm.ControlRotationInAir = cmc[ "ControlRotationInAir" ].as< bool>( false );
 		}
 
 		const auto cc = rEntityNode[ "CameraComponent" ];

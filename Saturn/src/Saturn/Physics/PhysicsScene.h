@@ -28,9 +28,11 @@
 
 #pragma once
 
-#include "Saturn/Scene/Scene.h"
+#if !defined(SAT_DIST)
+#include "PhysicsDebugRecorder.h"
+#endif
 
-#include "PxPhysicsAPI.h"
+#include "Saturn/Scene/Scene.h"
 
 namespace Saturn {
 
@@ -59,18 +61,15 @@ namespace Saturn {
 
 		void ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
 
-		physx::PxControllerManager* GetControllerManager() { return m_ControllerManager; }
-		const physx::PxControllerManager* GetControllerManager() const { return m_ControllerManager; }
-
 	private:
-		void AddToScene( physx::PxRigidActor& rBody );
 		void InitialiseNewBody( SharedPtr<Entity>& rEntity, RigidbodyComponent& rRigidbodyComponent );
 		void AddNewController( SharedPtr<Entity>& rEntity );
 
 	private:
-		physx::PxScene* m_PhysicsScene = nullptr;
-		physx::PxControllerManager* m_ControllerManager = nullptr;
 		Ref<Scene> m_Scene;
+#if !defined(SAT_DIST)
+		PhysicsDebugRecorder m_DebugRecorder;
+#endif
 
 	private:
 		friend class Scene;

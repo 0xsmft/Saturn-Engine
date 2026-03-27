@@ -30,18 +30,15 @@
 
 #include "Saturn/Scene/Entity.h"
 #include "PhysicsShapes.h"
+#include "PhysicsBodyType.h"
 
-#include "PxPhysicsAPI.h"
+#include <Jolt/Jolt.h>
+#include <Jolt/Physics/Body/BodyCreationSettings.h>
+#include <Jolt/Physics/Constraints/SixDOFConstraint.h>
 
 namespace Saturn {
 
 	struct RecastInputGeometryExpData;
-
-	enum class PhysicsRigidBodyType
-	{
-		Dynamic,
-		Static
-	};
 
 	class PhysicsRigidBody : public RefTarget
 	{
@@ -54,7 +51,6 @@ namespace Saturn {
 		// Runtime only!
 		void SetShapeTrigger( bool trigger );
 
-		void SetKinematic( bool val );
 		void SetMass( float val );
 		void SetLinearDrag( float value );
 		void SetLinearVelocity( const glm::vec3& rVelocity );
@@ -66,16 +62,11 @@ namespace Saturn {
 
 		void SyncTransfrom();
 
-		bool IsKinematic() const { return m_Kinematic; }
-
-		glm::vec3 GetPosition();
-		glm::vec3 GetRotation();
+		glm::vec3 GetPosition() const;
+		glm::vec3 GetRotation() const;
 		glm::mat4 GetTransform();
 
 		glm::vec3 GetLinearVelocity() const;
-
-		physx::PxRigidActor& GetActor() { return *m_Actor; }
-		const physx::PxRigidActor& GetActor() const { return *m_Actor; }
 
 		void SetLockFlags( RigidbodyLockFlags flags, bool value );
 		bool IsFlagSet( RigidbodyLockFlags flags ) const { return ( m_LockFlags & flags ) != 0; }
@@ -83,34 +74,26 @@ namespace Saturn {
 		
 		bool AllRotationLocked() const;
 
-		void SetOnCollisionHit( std::function<void( SharedPtr<Entity> rOther )>&& rrFunc ) { m_OnMeshHit = rrFunc; }
-		void SetOnCollisionExit( std::function<void( SharedPtr<Entity> rOther )>&& rrFunc ) { m_OnMeshExit = rrFunc; }
-
-		void OnCollisionHit ( SharedPtr<Entity> rOther ) { m_OnMeshHit( rOther ); }
-		void OnCollisionExit( SharedPtr<Entity> rOther ) { m_OnMeshExit( rOther ); }
-
 		SharedPtr<Entity> GetEntity() { return m_Entity; }
 
+		Ref<PhysicsShape> GetShape() { return m_Shape; }
+
 		void ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
+
 	private:
 		void AttachPhysicsShape( PhysicsShapeType type );
+		void CreateDOFConstraint();
 		void Destroy();
 
 	private:
-		// The actor that we currently represent.
-		// This actor could be owned and created by us however it could also be created by PhysX if the entity has a CharacterMovementController.
-		physx::PxRigidActor* m_Actor = nullptr;
+		JPH::BodyID m_BodyID;
+		PhysicsRigidBodyType m_Type = PhysicsRigidBodyType::Dynamic;
+		uint8_t m_LockFlags = 0;
+
+		JPH::Ref<JPH::SixDOFConstraint> m_DOFConstraint;
 
 		SharedPtr<Entity> m_Entity;
-
 		Ref<PhysicsShape> m_Shape;
-
-		bool m_ActorOwned = true;
-		bool m_Kinematic = false;
-		uint32_t m_LockFlags = 0u;
-
-		std::function<void( SharedPtr<Entity> rOther )> m_OnMeshHit;
-		std::function<void( SharedPtr<Entity> rOther )> m_OnMeshExit;
 	private:
 		friend class PhysicsShape;
 		friend class PhysicsFoundation;

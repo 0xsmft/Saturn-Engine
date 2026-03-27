@@ -31,7 +31,7 @@
 
 #include "PhysicsFoundation.h"
 #include "PhysicsAuxiliary.h"
-#include "PhysicsCharacterMovement.h"
+#include "PhysicsCharacterController.h"
 
 #include "Saturn/AI/Navigation/RecastInputGeometry.h"
 
@@ -40,20 +40,9 @@ namespace Saturn {
 	PhysicsRigidBody::PhysicsRigidBody( SharedPtr<Entity> entity )
 		: m_Entity( entity )
 	{
-		const TransformComponent& tc = entity->GetComponent<TransformComponent>();
-		const RigidbodyComponent& rb = entity->GetComponent<RigidbodyComponent>();
-	
-		// Create dynamic body.
-		physx::PxRigidDynamic* pBody = PhysicsFoundation::Get()->GetPhysics().createRigidDynamic( Auxiliary::GLMTransformToPx( tc.GetTransform() ) );
-		m_Actor = pBody;
-
-		SetKinematic( rb.IsKinematic );
-		SetMass( rb.Mass );
-		SetLockFlags( ( RigidbodyLockFlags ) rb.LockFlags, true );
-
-		physx::PxRigidBodyExt::updateMassAndInertia( *pBody, ( physx::PxReal ) rb.Mass );
-
-		m_Actor->setActorFlag( physx::PxActorFlag::eVISUALIZATION, true );
+		const RigidbodyComponent& rb = m_Entity->GetComponent<RigidbodyComponent>();
+		m_LockFlags = rb.LockFlags;
+		m_Type = rb.BodyType;
 	}
 
 	PhysicsRigidBody::~PhysicsRigidBody()
@@ -63,15 +52,9 @@ namespace Saturn {
 
 	void PhysicsRigidBody::CreateShape()
 	{
-		RigidbodyComponent& rb = m_Entity->GetComponent<RigidbodyComponent>();
-		
-		// No shape is created when we have a CharacterMovementComponent, a DynamicRigidBody is created by PhysX.
-		if( m_Entity->HasComponent<CharacterMovementComponent>() )
-		{
-			auto* pController = m_Entity->GetComponent<CharacterMovementComponent>().CharacterMovement;
-			m_Actor = pController->GetController()->getActor();
-			m_ActorOwned = false;
-		}
+		const RigidbodyComponent& rb = m_Entity->GetComponent<RigidbodyComponent>();
+		const TransformComponent& tc = m_Entity->GetComponent<TransformComponent>();
+
 		// Normal Collider Component's have more priority over the static mesh.
 		if( m_Entity->HasComponent<BoxColliderComponent>() )
 		{
@@ -91,50 +74,71 @@ namespace Saturn {
 		}
 		else
 		{
-			SAT_CORE_WARN( "No physics shape component was found! No shape will be attached." );
+			SAT_CORE_WARN( "No physics shape component was found! Box shape will be attached." );
+		
+			AttachPhysicsShape( PhysicsShapeType::Box );
 		}
 
-		m_Actor->userData = this;
-#if !defined( SAT_DIST )
-		m_Actor->setName( m_Entity->GetName().c_str() );
-#endif
-
 		// The settings might of changed, so update in case.
-		SetKinematic( rb.IsKinematic );
-		SetMass( rb.Mass );
+		if( m_Shape->GetType() == PhysicsShapeType::TriangleMesh )
+		{
+			m_Type = PhysicsRigidBodyType::Static;
+		}
+
+		// Create body after the shape.
+		JPH::BodyCreationSettings settings( 
+			m_Shape->GetShape(), 
+			Auxiliary::GLMToJolt( tc.Position ), 
+			Auxiliary::GLMQToJoltQ( glm::normalize( tc.GetRotation() ) ), 
+			( JPH::EMotionType ) m_Type, 
+			m_Type == PhysicsRigidBodyType::Static ? PhysLayerNotMoving : PhysLayerMoving 
+		);
+		settings.mIsSensor = m_Shape->IsTrigger();
+		
+		auto* pBody = PhysicsFoundation::Get()->GetBodyInterface()->CreateBody( settings );
+		m_BodyID = pBody->GetID();
+
+		PhysicsFoundation::Get()->GetBodyInterface()->AddBody( 
+			m_BodyID,
+			m_Type == PhysicsRigidBodyType::Static ? JPH::EActivation::DontActivate : JPH::EActivation::Activate 
+		);
+
+		// FIXME: Might not be viable to use the handle! (Entity ID may be better, however it's faster to use the handle)
+		//		  If we ever crash tell me to revise this!
+		pBody->SetUserData( ( uint64_t ) m_Entity->GetHandle() );
+
+		if( m_Type != PhysicsRigidBodyType::Static )
+		{
+			// Handle locking flags
+			CreateDOFConstraint();
+		}
 	}
 
 	void PhysicsRigidBody::SetShapeTrigger( bool trigger )
 	{
-		if( m_Shape )
-			m_Shape->SetTrigger( trigger );
+		if( m_Shape->IsTrigger() == trigger )
+			return;
+
+		// Access
+		auto& bodyInterface = PhysicsFoundation::Get()->GetPhysicsSystem()->GetBodyLockInterface();
+
+		JPH::BodyLockWrite lock( bodyInterface, m_BodyID );
+		if( lock.Succeeded() )
+		{
+			JPH::Body& rBody = lock.GetBody();
+			rBody.SetIsSensor( trigger );
+		}
+
+		m_Shape->SetTrigger( trigger );
 	}
 
 	void PhysicsRigidBody::AttachPhysicsShape( PhysicsShapeType type )
 	{
 		switch( type )
 		{
-			case Saturn::PhysicsShapeType::ConvexMesh: 
-			{
-				m_Shape = Ref<ConvexMeshShape>::Create( m_Entity );
-			} break;
-
-			case Saturn::PhysicsShapeType::TriangleMesh:
-			{
-				// PhysX requires all non-kinematic dynamic rigid bodies with the flag eSIMULATION_SHAPE to be kinematic.
-				auto& rb = m_Entity->GetComponent<RigidbodyComponent>();
-				
-				if( !rb.IsKinematic )
-				{
-					SAT_CORE_WARN( "PhysX requires all non-kinematic dynamic rigid bodies with the flag eSIMULATION_SHAPE to be kinematic!" );
-					SAT_CORE_WARN( "This happened because you are using a Triangle mesh shape!" );
-					
-					rb.IsKinematic = true;
-					SetKinematic( true );
-				}
-
-				m_Shape = Ref<TriangleMeshShape>::Create( m_Entity );
-			} break;
+			case Saturn::PhysicsShapeType::Unknown:
+			default:
+				break;
 
 			case Saturn::PhysicsShapeType::Box: 
 			{
@@ -151,173 +155,253 @@ namespace Saturn {
 				m_Shape = Ref<CapsuleShape>::Create( m_Entity );
 			} break;
 
-			case Saturn::PhysicsShapeType::Unknown:
-			default:
-				break;
+			case Saturn::PhysicsShapeType::ConvexMesh:
+			{
+				m_Shape = Ref<ConvexMeshShape>::Create( m_Entity );
+			} break;
+
+			case Saturn::PhysicsShapeType::TriangleMesh:
+			{
+				m_Shape = Ref<TriangleMeshShape>::Create( m_Entity );
+			} break;
 		}
 
 		if( m_Shape ) 
 		{
-			m_Shape->Create( *m_Actor );
-			m_Shape->SetUserData( this );
+			const RigidbodyComponent& rb = m_Entity->GetComponent<RigidbodyComponent>();
+			m_Shape->Create( rb.Mass );
+		}
+	}
+
+	void PhysicsRigidBody::CreateDOFConstraint()
+	{
+		using EAxis = JPH::SixDOFConstraintSettings::EAxis;
+		JPH::SixDOFConstraintSettings settings;
+
+		if( ( m_LockFlags & RigidbodyLock_PositionX ) )
+		{
+			settings.SetLimitedAxis( EAxis::TranslationX, 1.0F, 0.0F );
+		}
+		if( ( m_LockFlags & RigidbodyLock_PositionY ) )
+		{
+			settings.SetLimitedAxis( EAxis::TranslationY, 1.0F, 0.0F );
+		}
+		if( ( m_LockFlags & RigidbodyLock_PositionZ ) )
+		{
+			settings.SetLimitedAxis( EAxis::TranslationZ, 1.0F, 0.0F );
+		}
+		if( ( m_LockFlags & RigidbodyLock_RotationX ) )
+		{
+			settings.SetLimitedAxis( EAxis::RotationX, 1.0F, 0.0F );
+		}
+		if( ( m_LockFlags & RigidbodyLock_RotationY ) )
+		{
+			settings.SetLimitedAxis( EAxis::RotationY, 1.0F, 0.0F );
+		}
+		if( ( m_LockFlags & RigidbodyLock_RotationZ ) )
+		{
+			settings.SetLimitedAxis( EAxis::RotationY, 1.0F, 0.0F );
+		}
+
+		// Access
+		auto& bodyInterface = PhysicsFoundation::Get()->GetPhysicsSystem()->GetBodyLockInterface();
+
+		JPH::BodyLockWrite lock( bodyInterface, m_BodyID );
+		if( lock.Succeeded() )
+		{
+			JPH::Body& rBody = lock.GetBody();
+
+			settings.mPosition2 = rBody.GetPosition();
+
+			m_DOFConstraint = static_cast<JPH::SixDOFConstraint*>( settings.Create( JPH::Body::sFixedToWorld, rBody ) );
+
+			PhysicsFoundation::Get()->GetPhysicsSystem()->AddConstraint( m_DOFConstraint );
+		}
+		else
+		{
+			SAT_CORE_WARN( "Failed to create Degrees of Freedom constraint for locking flags!" );
 		}
 	}
 
 	void PhysicsRigidBody::Destroy()
 	{
-		if( m_Shape )
+		auto& bodyInterface = PhysicsFoundation::Get()->GetPhysicsSystem()->GetBodyLockInterfaceNoLock();
+		JPH::BodyLockWrite lock( bodyInterface, m_BodyID );
+		if( lock.Succeeded() )
 		{
-			m_Shape->Detach( *m_Actor );
+			JPH::Body& rBody = lock.GetBody();
+
+			if( rBody.IsInBroadPhase() )
+			{
+				PhysicsFoundation::Get()->GetBodyInterface()->RemoveBody( m_BodyID );
+			}
+			else
+			{
+				PhysicsFoundation::Get()->GetBodyInterface()->DeactivateBody( m_BodyID );
+			}
 		}
+
+		if( m_DOFConstraint )
+		{
+			PhysicsFoundation::Get()->GetPhysicsSystem()->RemoveConstraint( m_DOFConstraint );
+		}
+
+		PhysicsFoundation::Get()->GetBodyInterface()->DestroyBody( m_BodyID );
 
 		m_Shape = nullptr;
-
-		if( m_ActorOwned )
-		{
-			PHYSX_TERMINATE_ITEM( m_Actor );
-		}
-		else
-		{
-			m_Actor = nullptr;
-		}
-
 		m_Entity = nullptr;
 	}
 
 	void PhysicsRigidBody::ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds )
 	{
 		if( m_Shape )
-			m_Shape->ExportRc( *m_Actor, rData, rNavMeshBounds );
-	}
-
-	void PhysicsRigidBody::SetKinematic( bool val )
-	{
-		physx::PxRigidDynamic* pBody = ( physx::PxRigidDynamic* ) m_Actor;
-		pBody->setRigidBodyFlag( physx::PxRigidBodyFlag::eKINEMATIC, val );
-
-		m_Kinematic = val;
+		{
+			m_Shape->ExportRc( rData, rNavMeshBounds );
+		}
 	}
 
 	void PhysicsRigidBody::SetMass( float val )
 	{
-		physx::PxRigidDynamic* pBody = ( physx::PxRigidDynamic* ) m_Actor;
-		pBody->setMass( val );
+		if( m_Type == PhysicsRigidBodyType::Static )
+		{
+			SAT_CORE_WARN( "[PhysicsRigidBody]: Cannot set mass of a static rigid body!" );
+			return;
+		}
+
+		auto& bodyInterface = PhysicsFoundation::Get()->GetPhysicsSystem()->GetBodyLockInterface();
+
+		JPH::BodyLockWrite lock( bodyInterface, m_BodyID );
+		if( lock.Succeeded() )
+		{
+			JPH::Body& rBody = lock.GetBody();
+
+			rBody.GetMotionProperties()->ScaleToMass( val );
+		}
 	}
 
 	void PhysicsRigidBody::SetLinearDrag( float value )
 	{
-		physx::PxRigidDynamic* pBody = ( physx::PxRigidDynamic* ) m_Actor;
-		pBody->setLinearDamping( value );
 	}
 
 	void PhysicsRigidBody::SetLinearVelocity( const glm::vec3& rVelocity )
 	{
-		physx::PxRigidDynamic* pBody = ( physx::PxRigidDynamic* ) m_Actor;
-		pBody->setLinearVelocity( Auxiliary::GLMToPx( rVelocity ) );
+		if( m_Type == PhysicsRigidBodyType::Static )
+		{
+			SAT_CORE_WARN( "[PhysicsRigidBody]: Cannot set linear velocity of a static rigid body!" );
+			return;
+		}
+
+		PhysicsFoundation::Get()->GetBodyInterface()->SetLinearVelocity( m_BodyID, Auxiliary::GLMToJolt( rVelocity ) );
 	}
 
 	float PhysicsRigidBody::GetLinearDrag()
 	{
-		physx::PxRigidDynamic* pBody = ( physx::PxRigidDynamic* ) m_Actor;
-		return pBody->getLinearDamping();
+		return 0.0f;
 	}
 
 	void PhysicsRigidBody::ApplyForce( glm::vec3 ForceAmount, ForceMode Type )
 	{
-		physx::PxRigidDynamic* pBody = ( physx::PxRigidDynamic* ) m_Actor;
+		if( m_Type == PhysicsRigidBodyType::Static )
+		{
+			SAT_CORE_WARN( "[PhysicsRigidBody]: Cannot apply force to static immovable rigid body!" );
+			return;
+		}
 
-		pBody->addForce( Auxiliary::GLMToPx( ForceAmount ), ( physx::PxForceMode::Enum ) Type );
+		switch( Type )
+		{
+			case ForceMode::Force:
+				PhysicsFoundation::Get()->GetBodyInterface()->AddForce( m_BodyID, Auxiliary::GLMToJolt( ForceAmount ) );
+				break;
+
+			case ForceMode::Impulse:
+				PhysicsFoundation::Get()->GetBodyInterface()->AddImpulse( m_BodyID, Auxiliary::GLMToJolt( ForceAmount ) );
+				break;
+
+			case ForceMode::ForceAndTorque:
+				PhysicsFoundation::Get()->GetBodyInterface()->AddForceAndTorque( m_BodyID, Auxiliary::GLMToJolt( ForceAmount ), Auxiliary::GLMToJolt( ForceAmount ) );
+				break;
+
+			case ForceMode::Torque:
+				PhysicsFoundation::Get()->GetBodyInterface()->AddTorque( m_BodyID, Auxiliary::GLMToJolt( ForceAmount ) );
+				break;
+
+			default:
+				break;
+		}
 	}
 
 	void PhysicsRigidBody::Rotate( const glm::vec3& rRotation )
 	{
-		physx::PxTransform trans = m_Actor->getGlobalPose();
-
-		trans.q *= ( physx::PxQuat( glm::radians( rRotation.x ), { 1.0f, 0.0f, 0.0f } )
-			* physx::PxQuat( glm::radians( rRotation.y ), { 0.0f, 1.0f, 0.0f } )
-			* physx::PxQuat( glm::radians( rRotation.z ), { 0.0f, 0.0f, 1.0f } ) );
-		
-		m_Actor->setGlobalPose( trans );
+		Rotate( glm::quat( rRotation ) );
 	}
 
 	void PhysicsRigidBody::Rotate( const glm::quat& rRotation )
 	{
-		physx::PxTransform trans = m_Actor->getGlobalPose();
+		if( m_Type == PhysicsRigidBodyType::Static )
+		{
+			SAT_CORE_WARN( "[PhysicsRigidBody]: Cannot rotate immovable rigid body!" );
+			return;
+		}
 
-		trans.q *= Auxiliary::QGLMToPx( rRotation );
-
-		m_Actor->setGlobalPose( trans );
+		PhysicsFoundation::Get()->GetBodyInterface()->SetRotation( m_BodyID, Auxiliary::GLMQToJoltQ( rRotation ), JPH::EActivation::Activate );
 	}
 
 	void PhysicsRigidBody::SetPosition( const glm::vec3& rPosition )
 	{
-		physx::PxTransform trans = m_Actor->getGlobalPose();
-		trans.p = Auxiliary::GLMToPx( rPosition );
-		m_Actor->setGlobalPose( trans );
+		switch( m_Type )
+		{
+			case PhysicsRigidBodyType::Static:
+				SAT_CORE_WARN( "[PhysicsRigidBody]: Cannot move immovable rigid body!" );
+				break;
+			
+			case PhysicsRigidBodyType::Kinematic: 
+			{
+				PhysicsFoundation::Get()->GetBodyInterface()->MoveKinematic( m_BodyID, Auxiliary::GLMToJolt( rPosition ), JPH::Quat::sIdentity(), 0.0f );
+			} break;
+			
+			case PhysicsRigidBodyType::Dynamic:
+			{
+				PhysicsFoundation::Get()->GetBodyInterface()->SetPosition( m_BodyID, Auxiliary::GLMToJolt( rPosition ), JPH::EActivation::Activate );
+			} break;
+		
+			default:
+				break;
+		}
 	}
 
-	glm::vec3 PhysicsRigidBody::GetPosition()
+	glm::vec3 PhysicsRigidBody::GetPosition() const
 	{
-		float xpos = m_Actor->getGlobalPose().p.x;
-		float ypos = m_Actor->getGlobalPose().p.y;
-		float zpos = m_Actor->getGlobalPose().p.z;
-
-		glm::vec3 pos{};
-
-		pos.x = xpos;
-		pos.y = ypos;
-		pos.z = zpos;
-
-		return  pos;
+		return Auxiliary::JoltToGLM( PhysicsFoundation::Get()->GetBodyInterface()->GetPosition( m_BodyID ) );
 	}
 
-	glm::vec3 PhysicsRigidBody::GetRotation()
+	glm::vec3 PhysicsRigidBody::GetRotation() const
 	{
-		auto xq = m_Actor->getGlobalPose().q.x;
-		auto yq = m_Actor->getGlobalPose().q.y;
-		auto zq = m_Actor->getGlobalPose().q.z;
+		auto eular = glm::eulerAngles( Auxiliary::JoltQToGLMQ( PhysicsFoundation::Get()->GetBodyInterface()->GetRotation( m_BodyID ) ) );
 
-		glm::vec3 q = {};
-		q.x = xq;
-		q.y = yq;
-		q.z = zq;
-
-		return q;
+		return eular;
 	}
 
 	glm::mat4 PhysicsRigidBody::GetTransform()
 	{
-		auto xpos = m_Actor->getGlobalPose().p.x;
-		auto ypos = m_Actor->getGlobalPose().p.y;
-		auto zpos = m_Actor->getGlobalPose().p.z;
-
-		auto xq = m_Actor->getGlobalPose().q.x;
-		auto yq = m_Actor->getGlobalPose().q.y;
-		auto zq = m_Actor->getGlobalPose().q.z;
-
-		auto pos = glm::mat4( xq * ypos * zpos );
-		auto rot = glm::mat4( xpos * yq * zq );
-
-		return glm::mat4( pos * rot );
+		return glm::mat4{};
 	}
 
 	glm::vec3 PhysicsRigidBody::GetLinearVelocity() const
 	{
-		physx::PxRigidDynamic* pBody = ( physx::PxRigidDynamic* ) m_Actor;
-		physx::PxVec3 vel = pBody->getLinearVelocity();
-
-		return Auxiliary::PxToGLM( vel );
+		return Auxiliary::JoltToGLM( PhysicsFoundation::Get()->GetBodyInterface()->GetLinearVelocity( m_BodyID ) );
 	}
 
 	void PhysicsRigidBody::SetLockFlags( RigidbodyLockFlags flags, bool value )
 	{
-		if( value )
-			m_LockFlags |= flags;
-		else
-			m_LockFlags &= ~flags;
+		if( flags != m_LockFlags )
+		{
+			m_LockFlags = flags;
 
-		physx::PxRigidDynamic* pBody = ( physx::PxRigidDynamic* ) m_Actor;
-		pBody->setRigidDynamicLockFlag( ( physx::PxRigidDynamicLockFlag::Enum ) flags, value );
+			if( m_DOFConstraint )
+				PhysicsFoundation::Get()->GetPhysicsSystem()->RemoveConstraint( m_DOFConstraint );
+
+			CreateDOFConstraint();
+		}
 	}
 
 	bool PhysicsRigidBody::AllRotationLocked() const
@@ -327,15 +411,20 @@ namespace Saturn {
 
 	void PhysicsRigidBody::SyncTransfrom()
 	{
-		if( m_Kinematic ) return;
+		switch( m_Type )
+		{
+			case PhysicsRigidBodyType::Dynamic:
+			{
+				TransformComponent& tc = m_Entity->GetComponent<TransformComponent>();
 
-		TransformComponent& tc = m_Entity->GetComponent<TransformComponent>();
+				tc.Position = GetPosition();
 
-		physx::PxTransform actorPose = m_Actor->getGlobalPose();
-		tc.Position = Auxiliary::PxToGLM( actorPose.p );
+				if( !AllRotationLocked() )
+					tc.SetRotation( GetRotation() );
+			} break;
 
-		if( !AllRotationLocked() )
-			tc.SetRotation( Auxiliary::QPxToGLM( actorPose.q ) );
+			default: break;
+		}
 	}
 
 }

@@ -4,7 +4,7 @@
 *                                                                                           *
 * MIT License                                                                               *
 *                                                                                           *
-* Copyright (c) 2020 - 2026 BEAST                                                           *
+* Copyright (c) 2020 - 2025 BEAST                                                           *
 *                                                                                           *
 * Permission is hereby granted, free of charge, to any person obtaining a copy              *
 * of this software and associated documentation files (the "Software"), to deal             *
@@ -28,80 +28,14 @@
 
 #pragma once
 
-#include "Saturn/Scene/Entity.h"
-#include "Core/GameScript.h"
-
-#include "PlayerInputController.h"
-
 namespace Saturn {
 
-	// TODO: Make this an SCLASS macro as well be able to spawn this correctly.
-	//       However this is need more work because we'll need to use the Build Tool to compile the engine which is not supported right now.
-	class Character : public Entity
+	enum class PhysicsRigidBodyType : uint8_t
 	{
-		//////////////////////////////////////////////////////////////////////////
-		// This is here because we aren't using the Build Tool.
-	
-		SAT_DECLARE_CLASS( Character, Entity );
-
-	public:
-		Character();
-		~Character();
-
-	public:
-		//////////////////////////////////////////////////////////////////////////
-		// Entity overrides
-
-		virtual void BeginPlay() override;
-		virtual void OnUpdate( Timestep ts ) override;
-		virtual void OnPhysicsUpdate( Timestep ts ) override;
-
-		Ref<StaticMesh>& GetMesh() { return m_Mesh; }
-		const Ref<StaticMesh>& GetMesh() const { return m_Mesh; }
-		
-	protected:
-		virtual void SetupInputBindings() {};
-
-		void MoveForward();
-		void MoveBack();
-		void MoveLeft();
-		void MoveRight();
-
-		void MoveForwardEnd();
-		void MoveBackEnd();
-		void MoveLeftEnd();
-		void MoveRightEnd();
-
-		void StartSprint();
-		void EndSprint();
-
-	protected:
-		Ref<PlayerInputController> m_PlayerInputController = nullptr;
-
-		SharedPtr<Entity>& GetCameraEntity() { return m_CameraEntity; }
-		const SharedPtr<Entity>& GetCameraEntity() const { return m_CameraEntity; }
-
-	protected:
-		//////////////////////////////////////////////////////////////////////////
-		// Movement
-
-		glm::vec3 CalculateRight();
-		glm::vec3 CalculateForward();
-
-		float m_MovementSpeed = 5.0f;
-
-	private:
-		float m_MouseUpMovement = 0.0f;
-		float m_MouseSensitivity = 0.0f;
-
-		glm::vec2 m_MovementDirection{};
-		glm::vec2 m_LastMousePos{};
-		glm::vec3 m_LastMovement{};
-
-	private:
-		// TODO: Change to a base mesh class, we don't know what the user will have.
-		Ref<StaticMesh> m_Mesh;
-
-		SharedPtr<Entity> m_CameraEntity = nullptr;
+		// Taken from the Jolt documentation....
+		Static,						///< Non movable
+		Kinematic,					///< Movable using velocities only, does not respond to forces
+		Dynamic,					///< Responds to forces as a normal physics object
 	};
+
 }

@@ -82,6 +82,11 @@
 
 #include <Saturn/Physics/PhysicsDebugMeshes.h>
 
+#if !defined(JPH_DEBUG_RENDERER)
+#define JPH_DEBUG_RENDERER
+#include <Saturn/Physics/PhysicsDebugRecorder.h>
+#endif
+
 #include <Saturn/AI/Navigation/NavBoundsEntity.h>
 
 #include <Saturn/Project/Premake.h>
@@ -2353,6 +2358,15 @@ namespace Saturn {
 				ImGui::SeparatorText( "Auto Saves" );
 				if( ImGui::MenuItem( "Clear all auto saves" ) )           ClearAllAutoSaves();
 				if( ImGui::MenuItem( "Clear all for the active scene") )  ClearAutoSavesForActiveScene();
+			}
+
+			ImGui::SeparatorText( "Physics" );
+			if( ImGui::MenuItem( "Open Jolt debug viewer" ) )       PhysicsDebugRecorder::OpenRecordedFile();
+			if( ImGui::MenuItem( "Open debug viewer folder" ) ) 
+			{
+				std::filesystem::path outPath = Project::GetActiveProject()->GetFullCachePath();
+				outPath /= "PerUser";
+				Application::Get()->OpenNativeFileExplorer( outPath );
 			}
 
 			ImGui::EndMenu();

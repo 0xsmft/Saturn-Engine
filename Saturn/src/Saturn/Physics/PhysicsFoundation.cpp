@@ -31,163 +31,211 @@
 
 #include "PhysicsAuxiliary.h"
 #include "PhysicsRigidBody.h"
+#include "PhysicsMaterialAsset.h"
+
+#include <Jolt/RegisterTypes.h>
+#include <Jolt/Core/JobSystemThreadPool.h>
 
 namespace Saturn {
 
-	void PhysicsContact::onConstraintBreak( physx::PxConstraintInfo* pConstraints, physx::PxU32 Count )
+	//////////////////////////////////////////////////////////////////////////
+
+	static void PhysGetFrictionAndRestitution( const JPH::Body& inBody1, const JPH::SubShapeID& rSubShapeId, float& rOutFriction, float& rOutRestitution )
 	{
-	}
+		const JPH::PhysicsMaterial* pMaterial = inBody1.GetShape()->GetMaterial( rSubShapeId );
 
-	void PhysicsContact::onWake( physx::PxActor** ppActors, physx::PxU32 Count )
-	{
-	}
-
-	void PhysicsContact::onSleep( physx::PxActor** ppActors, physx::PxU32 Count )
-	{
-	}
-
-	void PhysicsContact::onTrigger( physx::PxTriggerPair* pPairs, physx::PxU32 Count )
-	{
-		if( Count < 1 )
-			return;
-
-		PhysicsRigidBody* A = ( PhysicsRigidBody* ) pPairs->triggerActor->userData;
-		PhysicsRigidBody* B = ( PhysicsRigidBody* ) pPairs->otherActor->userData;
-
-		if( !A || !B )
-			return;
-
-		auto callCollisonBeginMethod = []( PhysicsRigidBody* A, PhysicsRigidBody* B )
+		if( pMaterial == JPH::PhysicsMaterial::sDefault )
 		{
-			if( A->m_OnMeshHit )
-				A->OnCollisionHit( B->GetEntity() );
-
-			if( B->m_OnMeshHit )
-				B->OnCollisionHit( A->GetEntity() );
-		};
-
-		auto callCollisonExitMethod = []( PhysicsRigidBody* A, PhysicsRigidBody* B )
-		{
-			if( A->m_OnMeshExit )
-				A->OnCollisionExit( B->GetEntity() );
-
-			if( B->m_OnMeshExit )
-				B->OnCollisionExit( A->GetEntity() );
-		};
-
-		if( pPairs->status == physx::PxContactPairFlag::eACTOR_PAIR_HAS_FIRST_TOUCH )
-		{
-			callCollisonBeginMethod( A, B );
+			rOutFriction = inBody1.GetFriction();
+			rOutFriction = inBody1.GetRestitution();
 		}
-		else if( pPairs->status == physx::PxContactPairFlag::eACTOR_PAIR_LOST_TOUCH )
+		else
 		{
-			callCollisonExitMethod( A, B );
+			const PhysicsInternalMaterial* pSaturnMaterial = static_cast< const PhysicsInternalMaterial* >( pMaterial );
+			rOutFriction = pSaturnMaterial->GetFriction();
+			rOutRestitution = pSaturnMaterial->GetRestitution();
 		}
 	}
 
-	void PhysicsContact::onAdvance( const physx::PxRigidBody* const* pBodyBuffer, const physx::PxTransform* PoseBuffer, const physx::PxU32 Count )
+	static void PhysAppendPhysMat( const JPH::Body& inBody1, const JPH::Body& inBody2, const JPH::ContactManifold& inManifold, JPH::ContactSettings& ioSettings )
 	{
+		float f1, f2, r1, r2;
+		PhysGetFrictionAndRestitution( inBody1, inManifold.mSubShapeID1, f1, r1 );
+		PhysGetFrictionAndRestitution( inBody2, inManifold.mSubShapeID2, f2, r2 );
+
+		ioSettings.mCombinedFriction = f1 * f2;
+		ioSettings.mCombinedRestitution = glm::max( r1, r2 );
 	}
 
-	void PhysicsContact::onContact( const physx::PxContactPairHeader& rPairHeader, const physx::PxContactPair* pPairs, physx::PxU32 Pairs )
+	JPH::ValidateResult PhysicsContact::OnContactValidate( const JPH::Body& inBody1, const JPH::Body& inBody2, JPH::RVec3Arg inBaseOffset, const JPH::CollideShapeResult& inCollisionResult )
 	{
-		PhysicsRigidBody* A = ( PhysicsRigidBody* ) rPairHeader.actors[ 0 ]->userData;
-		PhysicsRigidBody* B = ( PhysicsRigidBody* ) rPairHeader.actors[ 1 ]->userData;
+		return JPH::ValidateResult::AcceptContact;
+	}
 
-		if( !A || !B )
+	void PhysicsContact::OnContactAdded( const JPH::Body& inBody1, const JPH::Body& inBody2, const JPH::ContactManifold& inManifold, JPH::ContactSettings& ioSettings )
+	{
+		SharedPtr<Entity> entityA = g_ActiveScene->FindEntityByHandle( ( entt::entity ) inBody1.GetUserData() );
+		SharedPtr<Entity> entityB = g_ActiveScene->FindEntityByHandle( ( entt::entity ) inBody2.GetUserData() );
+
+		if( entityA && entityB )
+		{
+			auto& rEventA = m_PendingEvents.emplace_back();
+
+			// Handle entity A
+			rEventA.Type = inBody2.IsSensor() ? PhysicsContactType::HitTrigger : PhysicsContactType::Hit;
+			rEventA.pA = entityA.Get();
+			rEventA.pB = entityB.Get();
+
+			auto& rEventB = m_PendingEvents.emplace_back();
+
+			// Handle entity B
+			rEventB.Type = inBody1.IsSensor() ? PhysicsContactType::HitTrigger : PhysicsContactType::Hit;
+			rEventB.pA = entityB.Get();
+			rEventB.pB = entityA.Get();
+		}
+
+		PhysAppendPhysMat( inBody1, inBody2, inManifold, ioSettings );
+	}
+
+	void PhysicsContact::OnContactPersisted( const JPH::Body& inBody1, const JPH::Body& inBody2, const JPH::ContactManifold& inManifold, JPH::ContactSettings& ioSettings )
+	{
+		PhysAppendPhysMat( inBody1, inBody2, inManifold, ioSettings );
+	}
+
+	void PhysicsContact::OnContactRemoved( const JPH::SubShapeIDPair& inSubShapePair )
+	{
+		auto* pBodyA = m_pBodyInterface->TryGetBody( inSubShapePair.GetBody1ID() );
+		auto* pBodyB = m_pBodyInterface->TryGetBody( inSubShapePair.GetBody2ID() );
+
+		if( !pBodyA || !pBodyB )
 			return;
-		
-		auto callCollisonBeginMethod = []( PhysicsRigidBody* A, PhysicsRigidBody* B )
-		{
-			if( A->m_OnMeshHit )
-				A->OnCollisionHit( B->GetEntity() );
-			
-			if( B->m_OnMeshHit )
-				B->OnCollisionHit( A->GetEntity() );
-		};
 
-		auto callCollisonExitMethod = []( PhysicsRigidBody* A, PhysicsRigidBody* B )
-		{
-			if( A->m_OnMeshExit )
-				A->OnCollisionExit( B->GetEntity() );
+		SharedPtr<Entity> entityA = g_ActiveScene->FindEntityByHandle( ( entt::entity ) pBodyA->GetUserData() );
+		SharedPtr<Entity> entityB = g_ActiveScene->FindEntityByHandle( ( entt::entity ) pBodyA->GetUserData() );
 
-			if( B->m_OnMeshExit )
-				B->OnCollisionExit( A->GetEntity() );
-		};
+		if( entityA && entityB )
+		{
+			auto& rEventA = m_PendingEvents.emplace_back();
 
-		if( pPairs->flags == physx::PxContactPairFlag::eACTOR_PAIR_HAS_FIRST_TOUCH ) 
+			// Handle entity A
+			rEventA.Type = pBodyB->IsSensor() ? PhysicsContactType::LeaveTrigger : PhysicsContactType::Leave;
+			rEventA.pA = entityA.Get();
+			rEventA.pB = entityB.Get();
+
+			auto& rEventB = m_PendingEvents.emplace_back();
+
+			// Handle entity B
+			rEventB.Type = pBodyA->IsSensor() ? PhysicsContactType::LeaveTrigger : PhysicsContactType::Leave;
+			rEventB.pA = entityB.Get();
+			rEventB.pB = entityA.Get();
+		}
+	}
+
+	void PhysicsContact::DispatchAllContactEvents()
+	{
+		for( const auto& rAwatingEvent : m_PendingEvents )
 		{
-			callCollisonBeginMethod( A, B );
-		} 
-		else if( pPairs->flags == physx::PxContactPairFlag::eACTOR_PAIR_LOST_TOUCH ) 
+			switch( rAwatingEvent.Type )
+			{
+				case PhysicsContactType::Hit:
+				case PhysicsContactType::HitTrigger:
+				{
+					rAwatingEvent.pA->OnEntityHit( rAwatingEvent.pB, rAwatingEvent.Type == PhysicsContactType::HitTrigger );
+				} break;
+
+				case PhysicsContactType::Leave:
+				case PhysicsContactType::LeaveTrigger:
+				{
+					rAwatingEvent.pA->OnEntityLeave( rAwatingEvent.pB, rAwatingEvent.Type == PhysicsContactType::LeaveTrigger );
+				} break;
+
+				default:
+					break;
+			}
+		}
+
+		IgnoreAll();
+	}
+
+	void PhysicsContact::IgnoreAll()
+	{
+		m_PendingEvents.clear();
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+
+	void JoltBodyActivationListener::OnBodyActivated( const JPH::BodyID& inBodyID, uint64_t inBodyUserData )
+	{
+
+	}
+
+	void JoltBodyActivationListener::OnBodyDeactivated( const JPH::BodyID& inBodyID, uint64_t inBodyUserData )
+	{
+
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+
+	bool JoltObjectVsBroadPhaseLayerFilter::ShouldCollide( JPH::ObjectLayer layer1, JPH::BroadPhaseLayer layer2 ) const
+	{
+		switch( layer1 )
 		{
-			callCollisonExitMethod( A, B );
+			case PhysLayerNotMoving:
+				return layer2 == PhysBPLayerMoving;
+
+			case PhysLayerMoving:
+				return true;
+
+			default:
+				return false;
 		}
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	
-	void PhysicsControllerContact::onShapeHit( const physx::PxControllerShapeHit& hit )
+
+	bool JoltObjectLayerPairFilter::ShouldCollide( JPH::ObjectLayer inLayer1, JPH::ObjectLayer inLayer2 ) const
 	{
-		PhysicsRigidBody* A = reinterpret_cast< PhysicsRigidBody* >( hit.controller->getUserData() );
-		PhysicsRigidBody* B = reinterpret_cast< PhysicsRigidBody* >( hit.actor->userData );
-
-		if( !A || !B )
-			return;
-
-		auto callCollisonBeginMethod = []( PhysicsRigidBody* A, PhysicsRigidBody* B )
+		switch( inLayer1 )
 		{
-			if( A->m_OnMeshHit )
-				A->OnCollisionHit( B->GetEntity() );
+			case PhysLayerNotMoving:
+				return inLayer2 == PhysLayerMoving;
 
-			if( B->m_OnMeshHit )
-				B->OnCollisionHit( A->GetEntity() );
-		};
+			case PhysLayerMoving:
+				return true;
 
-		auto callCollisonExitMethod = []( PhysicsRigidBody* A, PhysicsRigidBody* B )
-		{
-			if( A->m_OnMeshExit )
-				A->OnCollisionExit( B->GetEntity() );
-
-			if( B->m_OnMeshExit )
-				B->OnCollisionExit( A->GetEntity() );
-		};
-
-		callCollisonBeginMethod( A, B );
+			default:
+				return false;
+		}
 	}
 
-	void PhysicsControllerContact::onControllerHit( const physx::PxControllersHit& hit )
+	//////////////////////////////////////////////////////////////////////////
+
+	JoltBPLayerInterface::JoltBPLayerInterface()
 	{
-		PhysicsRigidBody* A = reinterpret_cast< PhysicsRigidBody* >( hit.controller->getUserData() );
-		PhysicsRigidBody* B = reinterpret_cast< PhysicsRigidBody* >( hit.other->getUserData() );
-
-		if( !A || !B )
-			return;
-
-		auto callCollisonBeginMethod = []( PhysicsRigidBody* A, PhysicsRigidBody* B )
-		{
-			if( A->m_OnMeshHit )
-				A->OnCollisionHit( B->GetEntity() );
-
-			if( B->m_OnMeshHit )
-				B->OnCollisionHit( A->GetEntity() );
-		};
-
-		auto callCollisonExitMethod = []( PhysicsRigidBody* A, PhysicsRigidBody* B )
-		{
-			if( A->m_OnMeshExit )
-				A->OnCollisionExit( B->GetEntity() );
-
-			if( B->m_OnMeshExit )
-				B->OnCollisionExit( A->GetEntity() );
-		};
-
-		callCollisonBeginMethod( A, B );
+		m_ObjectToBroadPhase[ PhysLayerMoving ] = PhysBPLayerMoving;
+		m_ObjectToBroadPhase[ PhysLayerNotMoving ] = PhysBPLayerNotMoving;
 	}
 
-	void PhysicsControllerContact::onObstacleHit( const physx::PxControllerObstacleHit& hit )
+	JoltBPLayerInterface::~JoltBPLayerInterface()
 	{
 	}
+
+	uint32_t JoltBPLayerInterface::GetNumBroadPhaseLayers() const
+	{
+		return 2u;
+	}
+
+	JPH::BroadPhaseLayer JoltBPLayerInterface::GetBroadPhaseLayer( JPH::ObjectLayer inLayer ) const
+	{
+		return m_ObjectToBroadPhase[ inLayer ];
+	}
+
+#if defined(JPH_EXTERNAL_PROFILE) || defined(JPH_PROFILE_ENABLED)
+	const char* JoltBPLayerInterface::GetBroadPhaseLayerName( JPH::BroadPhaseLayer inLayer ) const
+	{
+		return "<NULL>";
+	}
+#endif
 
 	//////////////////////////////////////////////////////////////////////////
 
@@ -201,56 +249,52 @@ namespace Saturn {
 		Terminate();
 	}
 
+	static void JphTrace( const char* inFMT, ... )
+	{
+		// Format the message
+		va_list list;
+		va_start( list, inFMT );
+		char buffer[ 1024 ];
+		vsnprintf( buffer, sizeof( buffer ), inFMT, list );
+		va_end( list );
+
+		SAT_CORE_INFO( "Jolt: {0}", buffer );
+	}
+
 	void PhysicsFoundation::Init()
 	{
-		physx::PxTolerancesScale Scale;
-		Scale.length = 10.0f;
+		JPH::RegisterDefaultAllocator();
 
-		m_Foundation = PxCreateFoundation( PX_PHYSICS_VERSION, m_AllocatorCallback, m_ErrorCallback );
+		JPH::Trace = JphTrace;
 
-#if defined( SAT_DEBUG ) || defined( SAT_RELEASE )
-		m_Pvd = PxCreatePvd( *m_Foundation );
-		m_Physics = PxCreatePhysics( PX_PHYSICS_VERSION, *m_Foundation, Scale, true, m_Pvd );
-#else
-		m_Physics = PxCreatePhysics( PX_PHYSICS_VERSION, *m_Foundation, Scale, true );
-#endif
-		m_Dispatcher = physx::PxDefaultCpuDispatcherCreate( std::thread::hardware_concurrency() / 2 );
+		JPH::Factory::sInstance = new JPH::Factory();
+		
+		JPH::RegisterTypes();
+	
+		m_pJobSystem = new JPH::JobSystemThreadPool( JPH::cMaxPhysicsJobs, JPH::cMaxPhysicsBarriers, std::thread::hardware_concurrency() / 2 );
 
-		physx::PxSetAssertHandler( m_AssertCallback );
+		m_pTempAllocator = new JPH::TempAllocatorImpl( 300 * 1024 * 1024 );
 
-		m_CookingContext.Init();
+		m_pPhysicsSystem = new JPH::PhysicsSystem();
+		m_pPhysicsSystem->Init( 1024, 0, 1024, 1024, m_BPLayerInterface, m_ObjectVsBPLayerFilter, m_ObjectVsObjectLayerFilter );
+
+		m_ContactHandler = std::make_shared<PhysicsContact>( &m_pPhysicsSystem->GetBodyLockInterfaceNoLock() );
+
+		m_pPhysicsSystem->SetContactListener( m_ContactHandler.get() );
+		m_pPhysicsSystem->SetBodyActivationListener( &m_BodyActivationListener );
+
+		m_pBodyInterface = &m_pPhysicsSystem->GetBodyInterface();
 	}
 
 	void PhysicsFoundation::Terminate()
 	{
-#if defined( SAT_DEBUG ) || defined( SAT_RELEASE )
-		m_Pvd->disconnect();
-#endif
+		SAT_JPH_TERMINATE_ITEM( m_pPhysicsSystem );
+		SAT_JPH_TERMINATE_ITEM( m_pTempAllocator );
+		SAT_JPH_TERMINATE_ITEM( m_pJobSystem );
 
-		m_CookingContext.Terminate();
-
-		PHYSX_TERMINATE_ITEM( m_Dispatcher );
-		PHYSX_TERMINATE_ITEM( m_Physics );
-		PHYSX_TERMINATE_ITEM( m_Pvd );
-		PHYSX_TERMINATE_ITEM( m_Foundation );
-	}
-
-	// NOTE: When debugging using the PhysX Visual Debugger, you may see two scenes, one for the editor and a second one for the runtime.
-	// The editor scene is only created if a nav mesh was created in the editor.
-	bool PhysicsFoundation::ConnectPVD()
-	{
-#if defined( SAT_DEBUG ) || defined( SAT_RELEASE )
-		physx::PxPvdTransport* transport = physx::PxDefaultPvdSocketTransportCreate( "127.0.0.1", 5425, 1 );
-		return m_Pvd->connect( *transport, physx::PxPvdInstrumentationFlag::eALL );
-#endif
-		return true;
-	}
-
-	void PhysicsFoundation::DisconnectPVD()
-	{
-#if defined( SAT_DEBUG ) || defined( SAT_RELEASE )
-		m_Pvd->disconnect();
-#endif
+		JPH::UnregisterTypes();
+	
+		SAT_JPH_TERMINATE_ITEM( JPH::Factory::sInstance );
 	}
 
 }

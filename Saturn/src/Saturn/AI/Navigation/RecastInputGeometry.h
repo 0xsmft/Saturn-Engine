@@ -40,6 +40,13 @@ namespace Saturn {
 		std::vector<float> VertexBuffer;
 		std::vector<int> IndexBuffer;
 		
+		// Maximum extent.
+		// The size specified by the user.
+		//
+		// NOTE: This size is not reflective of the actual size of the navmesh, 
+		//       we may have a 10x10 AABB but the real size of the navmesh may only 
+		//       be the size of a couple of small tiles... it all depends on the geometry
+		//		 supplied into the export.
 		AABB Bounds;
 	};
 
@@ -50,10 +57,6 @@ namespace Saturn {
 		~RecastInputGeometry() = default;
 
 		void BeginImport();
-		void AddVert( const glm::vec3& rVertex );
-		void AddIndex( const Index& rVertex );
-		void AddSingle( float x );
-		void AddSingleIndex( int i );
 		void EndImport( const AABB& rAABB );
 
 		AABB GetAABB() const { return AABB( m_MinBounds, m_MaxBounds ); }
@@ -77,9 +80,19 @@ namespace Saturn {
 		rcChunkyTriMesh* m_pChunkyTriMesh = nullptr;
 	};
 
-	class PhysXSceneExporter
+	class PhysicsSceneExporter
 	{
 	public:
+		//
+		// Begin export of physics shapes to Recast.
+		// 
+		// @param rNavMeshBounds - this is the real size of the navmesh and it is cumulative, meaning
+		//						   each call to export each shape will (potentially) increase the
+		//						   the size of the bounds.
+		//						   This will be size that will be used to generate each tile, specifying the tile size.
+		//						   Typically this will be smaller than the bounds specified in rInputGeom
+		//						   however in some rare cases it may be slightly bigger if a vertex is cut off.
+		//
 		static void Export( RecastInputGeometry& rInputGeom, AABB& rNavMeshBounds );
 	};
 }

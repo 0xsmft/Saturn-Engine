@@ -171,6 +171,18 @@ namespace Saturn {
 			const RigidbodyComponent& rb = m_Entity->GetComponent<RigidbodyComponent>();
 			m_Shape->Create( rb.Mass );
 		}
+		
+		// If not shape is created create a box shape and warn.
+		if( m_Shape == nullptr || m_Shape->GetShape() == nullptr )
+		{
+			if( !m_Entity->HasComponent<BoxColliderComponent>() )
+				m_Entity->AddComponent<BoxColliderComponent>( glm::one<glm::vec3>() );
+
+			m_Shape = Ref<BoxShape>::Create( m_Entity );
+			m_Shape->Create( 100.0f );
+
+			SAT_CORE_WARN( "Unable to create shape... using a default box instead." );
+		}
 	}
 
 	void PhysicsRigidBody::CreateDOFConstraint()

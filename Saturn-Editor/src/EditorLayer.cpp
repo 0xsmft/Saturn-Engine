@@ -195,6 +195,7 @@ namespace Saturn {
 		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/NextMultiMedia.png", AddressingMode::Repeat, false ) );
 		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Visible.png", AddressingMode::Repeat, false ) );
 		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Hidden.png", AddressingMode::Repeat, false ) );
+		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/SearchFolder.png", AddressingMode::Repeat ) );
 
 		// Create Panel Manager.
 		m_ImGuiWindowManager = Ref<ImGuiWindowManager>::Create();
@@ -1339,7 +1340,7 @@ namespace Saturn {
 				{
 					Auxiliary::ScopedDisabledFlag disabledFlag( rConfig.StartupSceneID == 0 && !m_RequestRuntime );
 
-					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "NoIcon" ), { 24.0f, 24.0f } ) )
+					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "SearchFolder" ), { 24.0f, 24.0f } ) )
 					{
 						Ref<Asset> target = m_AssetManager->FindAsset( rConfig.StartupSceneID );
 
@@ -1348,6 +1349,12 @@ namespace Saturn {
 							Ref<ContentBrowserPanel> contentBrowserPanel = m_ImGuiWindowManager->GetPanel<ContentBrowserPanel>();
 							contentBrowserPanel->BrowseToItem( target->Path, rConfig.StartupSceneID );
 						}
+					}
+
+					if( ImGui::BeginItemTooltip() )
+					{
+						ImGui::Text( "Find in Content Browser" );
+						ImGui::EndTooltip();
 					}
 				}
 			}
@@ -1380,7 +1387,7 @@ namespace Saturn {
 				{
 					Auxiliary::ScopedDisabledFlag disabledFlag( defaultMaterialID == 0 );
 
-					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "NoIcon" ), { 24.0f, 24.0f } ) )
+					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "SearchFolder" ), { 24.0f, 24.0f } ) )
 					{
 						const Ref<Asset> target = m_AssetManager->FindAsset( defaultMaterialID );
 
@@ -1389,6 +1396,12 @@ namespace Saturn {
 							Ref<ContentBrowserPanel> contentBrowserPanel = m_ImGuiWindowManager->GetPanel<ContentBrowserPanel>();
 							contentBrowserPanel->BrowseToItem( target->Path, defaultMaterialID );
 						}
+					}
+
+					if( ImGui::BeginItemTooltip() )
+					{
+						ImGui::Text( "Find in Content Browser" );
+						ImGui::EndTooltip();
 					}
 				} 
 			}
@@ -1419,7 +1432,7 @@ namespace Saturn {
 				{
 					Auxiliary::ScopedDisabledFlag disabledFlag( defaultMaterialID == 0 );
 
-					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "NoIcon" ), { 24.0f, 24.0f } ) )
+					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "SearchFolder" ), { 24.0f, 24.0f } ) )
 					{
 						const Ref<Asset> target = m_AssetManager->FindAsset( defaultMaterialID );
 
@@ -1428,6 +1441,12 @@ namespace Saturn {
 							Ref<ContentBrowserPanel> contentBrowserPanel = m_ImGuiWindowManager->GetPanel<ContentBrowserPanel>();
 							contentBrowserPanel->BrowseToItem( target->Path, defaultMaterialID );
 						}
+					}
+
+					if( ImGui::BeginItemTooltip() )
+					{
+						ImGui::Text( "Find in Content Browser" );
+						ImGui::EndTooltip();
 					}
 				}
 			}
@@ -1458,7 +1477,7 @@ namespace Saturn {
 				{
 					Auxiliary::ScopedDisabledFlag disabledFlag( defaultFontAsset == 0 );
 
-					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "NoIcon" ), { 24.0f, 24.0f } ) )
+					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "SearchFolder" ), { 24.0f, 24.0f } ) )
 					{
 						const Ref<Asset> target = m_AssetManager->FindAsset( defaultFontAsset );
 
@@ -1467,6 +1486,12 @@ namespace Saturn {
 							Ref<ContentBrowserPanel> contentBrowserPanel = m_ImGuiWindowManager->GetPanel<ContentBrowserPanel>();
 							contentBrowserPanel->BrowseToItem( target->Path, defaultFontAsset );
 						}
+					}
+
+					if( ImGui::BeginItemTooltip() )
+					{
+						ImGui::Text( "Find in Content Browser" );
+						ImGui::EndTooltip();
 					}
 				}
 			}
@@ -2182,9 +2207,15 @@ namespace Saturn {
 
 				inspectDisabledFlag.Pop();
 
-				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "NoIcon" ), { 24.0f, 24.0f } ) )
+				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "SearchFolder" ), { 24.0f, 24.0f } ) )
 				{
 					Application::Get()->OpenNativeFileExplorer( rEngineSettings.StartupProject, true );
+				}
+
+				if( ImGui::BeginItemTooltip() )
+				{
+					ImGui::Text( "Find in Native Explorer" );
+					ImGui::EndTooltip();
 				}
 
 				ImGui::SetNextItemWidth( 130.0f );
@@ -2355,7 +2386,8 @@ namespace Saturn {
 
 				if( ImGui::BeginItemTooltip() )
 				{
-					ImGui::Text( "Attempts to build the Shader Bundle and the Asset Bundle and copies important build files for distribution.\nYou must run this before clicking the \"Distribute project\" button." );
+					ImGui::Text( "Attempts to build the Shader Bundle and the Asset Bundle and copies important build files for distribution." );
+					ImGui::Text( "You must run this before clicking the \"Distribute project\" button." );
 					ImGui::EndTooltip();
 				}
 
@@ -2367,6 +2399,8 @@ namespace Saturn {
 				if( ImGui::BeginItemTooltip() )
 				{
 					ImGui::Text( "Attempts to compile all shaders and bundles them all into one file.\nYou do not need to do this if you intend to prepare the project for distribution as that option will build it for you.\nOnly build the Shader Bundle if there is a problem with your shaders." );
+					ImGui::Text( "You do not need to do this if you intend to prepare the project for distribution as that option will build it for you." );
+					ImGui::Text( "Only build the Shader Bundle if there is a problem with your shaders." );
 					ImGui::EndTooltip();
 				}
 
@@ -2397,7 +2431,8 @@ namespace Saturn {
 
 				if( ImGui::BeginItemTooltip() )
 				{
-					ImGui::Text( "Attempts to compile the project and fully setup the project for Distribution.\nMake sure you have prepare the project before attempting to distribute the project." );
+					ImGui::Text( "Attempts to compile the project and fully setup the project for Distribution." );
+					ImGui::Text( "Make sure you have prepare the project before attempting to distribute the project." );
 					ImGui::EndTooltip();
 				}
 			}

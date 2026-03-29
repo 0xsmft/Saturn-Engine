@@ -160,6 +160,22 @@ namespace Saturn {
 		ed::EditorContext* m_OldValue = nullptr;
 	};
 
+	enum class NodeEditorVersion : uint8_t
+	{
+		// <0.2.5
+		BeforeVersionWasAdded,
+		
+		// Subgraph feature added, 0.2.3
+		Subgraphs,
+
+		// Breakpoint feature added, 0.2.5
+		Breakpoints,
+
+		//^^^ only add new versions above here....
+		Latest = Breakpoints,
+		Lowest = BeforeVersionWasAdded
+	};
+
 	// The base class for all Node Editors (Node Graphs).
 	// NodeEditorBase does not inherit from ImGuiWindow because NodeEditorBase is more of the backend and doesn't
 	// need to always be a window.
@@ -314,8 +330,6 @@ namespace Saturn {
 
 	protected:
 		std::string m_Name;
-		bool m_WindowOpen = false;
-		uint32_t m_Version = SAT_CURRENT_VERSION;
 
 		ed::EditorContext* m_Editor = nullptr;
 		std::string m_ActiveNodeEditorState;
@@ -328,9 +342,15 @@ namespace Saturn {
 
 		AssetID m_AssetID = 0;
 
-		NodeEditorState m_State = NodeEditorState::Editing;
+		bool m_WindowOpen = false;
+
+		// Start in the editing state.
+		NodeEditorState m_State = NodeEditorState_Editing;
+		
 		// User has full authority over this node editor by default
 		NodeEditorUserAuthority m_Privileges = NodeEditorUserAuthority::Full;
+
+		NodeEditorVersion m_Version = NodeEditorVersion::Lowest;
 
 	private:
 		friend class NodeEditorCache;

@@ -181,15 +181,39 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// NODE CACHE | EDITOR
 
-	// TODO: The size of this header can be reduceded to 16-bytes but I need to write a system that can port the verisons first.
-	struct NodeCacheEditorHeader
+	struct alignas( 16 ) NodeCacheEditorHeader
 	{
+		AssetID AssetID = 0;
 		// .NCE
 		const unsigned char Magic[ 4 ] = { 0x2E, 0x4E, 0x43, 0x45 };
-		AssetID AssetID = 0;
-		uint32_t Version = SAT_CURRENT_VERSION;
+		NodeEditorVersion Version = NodeEditorVersion::Lowest;
 	};
 	
+	template<typename IStream>
+	[[nodiscard]] static bool ReadNodeCacheEdHeader( NodeCacheEditorHeader& rHeader, IStream& rStream )
+	{
+		char magic[ 4 ]{};
+		RawSerialisation::ReadObject( magic, rStream );
+
+		if( std::memcmp( magic, ".NCE", 4 ) != 0 )
+		{
+			SAT_CORE_ERROR( "Invalid node editor cache file header or corrupt cache file!" );
+			return false;
+		}
+
+		RawSerialisation::ReadObject( rHeader.Version, rStream );
+		RawSerialisation::ReadObject( rHeader.AssetID, rStream );
+
+		return true;
+	}
+
+	static void WriteNodeCacheEdHeader( const NodeCacheEditorHeader& rHeader, std::ofstream& rStream )
+	{
+		RawSerialisation::WriteObject( rHeader.Magic, rStream );
+		RawSerialisation::WriteObject( rHeader.Version, rStream );
+		RawSerialisation::WriteObject( rHeader.AssetID, rStream );
+	}
+
 	static void CreateDirIfNeeded()
 	{
 		std::filesystem::path dir = Project::GetActiveProject()->GetFullCachePath();
@@ -239,8 +263,9 @@ namespace Saturn {
 
 		NodeCacheEditorHeader header{};
 		header.AssetID = nodeEditor->GetAssetID();
+		header.Version = nodeEditor->GetVersion();
 
-		RawSerialisation::WriteObject( header, fout );
+		WriteNodeCacheEdHeader( header, fout );
 
 #if !defined(SAT_DIST)
 		constexpr bool DISTRIBUTION_SERIALSATION = false;
@@ -298,26 +323,9 @@ namespace Saturn {
 		std::ifstream stream( cachePathAbs, std::ios::binary | std::ios::in );
 #endif
 
-		NodeCacheEditorHeader header;
-		RawSerialisation::ReadObject( header, stream );
-
-		if( std::memcmp( header.Magic, ".NCE", 4 ) != 0 )
-		{
-			SAT_CORE_ERROR( "Invalid node editor cache file header or corrupt cache file!" );
+		NodeCacheEditorHeader header{};
+		if( !ReadNodeCacheEdHeader( header, stream ) )
 			return false;
-		}
-
-		bool needsUpdate = false;
-		if( header.Version != SAT_CURRENT_VERSION )
-		{
-			std::string decodedAssetBundleVer;
-			SAT_DECODE_VER_STRING( header.Version, decodedAssetBundleVer );
-
-			SAT_CORE_WARN( "Node Editor Cache version mismatch! This should not happen. Cache file version is: {0} while current engine version is: {1}.", decodedAssetBundleVer, SAT_CURRENT_VERSION_STRING );
-			SAT_CORE_WARN( "The engine will continue to load however this may result in the cache file not loading!" );
-		
-			needsUpdate = true;
-		}
 
 		if( header.AssetID != id )
 		{
@@ -326,7 +334,7 @@ namespace Saturn {
 		}
 
 		nodeEditor->m_AssetID = id;
-		nodeEditor->m_Version = asset->Version;
+		nodeEditor->m_Version = header.Version;
 		nodeEditor->DeserialiseData( stream );
 
 #if !defined(SAT_DIST)

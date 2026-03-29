@@ -32,7 +32,7 @@
 
 namespace Saturn {
 
-	enum class BreakPointType : uint8_t 
+	enum class NodeBreakPointType : uint8_t 
 	{
 		Normal,
 		Tracepoint,
@@ -43,7 +43,7 @@ namespace Saturn {
 	struct NodeBreakPoint 
 	{
 		uint64_t HitCount = 0llu;
-		BreakPointType Type = BreakPointType::Normal;
+		NodeBreakPointType Type = NodeBreakPointType::Normal;
 		bool Active = true;
 	};	
 	

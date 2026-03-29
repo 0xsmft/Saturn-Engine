@@ -40,10 +40,32 @@ namespace Saturn {
 		m_Breakpoints.clear();
 	}
 
-	NodeBreakPoint& NodeBreakPointManager::AddBreakPoint( UUID nodeID, BreakPointType type )
+	NodeBreakPoint& NodeBreakPointManager::AddBreakPoint( UUID nodeID, NodeBreakPointType type )
 	{
 		m_Breakpoints.emplace( nodeID, NodeBreakPoint{ 0, type } );
 		return m_Breakpoints[ nodeID ];
+	}
+
+	NodeBreakPoint& NodeBreakPointManager::GetBreakPoint( UUID nodeID )
+	{
+		const auto itr = m_Breakpoints.find( nodeID );
+		if( itr == m_Breakpoints.end() )
+		{
+			SAT_CORE_ASSERT( false, "Node does not have a break point! Use TryGetBreakPoint instead!" );
+		}
+
+		return itr->second;
+	}
+
+	NodeBreakPoint* NodeBreakPointManager::TryGetBreakPoint( UUID nodeID )
+	{
+		const auto itr = m_Breakpoints.find( nodeID );
+		if( itr == m_Breakpoints.end() )
+		{
+			return nullptr;
+		}
+
+		return &itr->second;
 	}
 
 	void NodeBreakPointManager::Break( UUID nodeID )
@@ -53,7 +75,7 @@ namespace Saturn {
 		{
 			// ... if not we can add one and set it to be single fire.
 
-			AddBreakPoint( nodeID, BreakPointType::SingleFire );
+			AddBreakPoint( nodeID, NodeBreakPointType::SingleFire );
 		}
 		else
 		{
@@ -93,7 +115,7 @@ namespace Saturn {
 
 			++rBreakPoint.HitCount;
 			
-			if( rBreakPoint.Type == BreakPointType::SingleFire )
+			if( rBreakPoint.Type == NodeBreakPointType::SingleFire )
 			{
 				m_Breakpoints.erase( itr );
 			}
@@ -102,6 +124,11 @@ namespace Saturn {
 		}
 
 		return false;
+	}
+
+	bool NodeBreakPointManager::HasBreakPoint( UUID nodeID )
+	{
+		return m_Breakpoints.contains( nodeID );
 	}
 
 }

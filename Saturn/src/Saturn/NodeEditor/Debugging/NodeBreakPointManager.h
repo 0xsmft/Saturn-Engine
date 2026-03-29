@@ -44,13 +44,17 @@ namespace Saturn {
 		NodeBreakPointManager();
 		~NodeBreakPointManager();
 
-		NodeBreakPoint& AddBreakPoint( UUID nodeID, BreakPointType type );
+		NodeBreakPoint& AddBreakPoint( UUID nodeID, NodeBreakPointType type );
+
+		NodeBreakPoint& GetBreakPoint( UUID nodeID );
+		NodeBreakPoint* TryGetBreakPoint( UUID nodeID );
 
 		void Break( UUID nodeID );
 		void Remove( UUID nodeID );
 		void Deactivate( UUID nodeID );
 
-		bool ShouldBreak( UUID nodeID );
+		[[nodiscard]] bool ShouldBreak( UUID nodeID );
+		[[nodiscard]] bool HasBreakPoint( UUID nodeID );
 
 	public:
 		const std::unordered_map<UUID, NodeBreakPoint>& GetBreakPoints() const { return m_Breakpoints; }

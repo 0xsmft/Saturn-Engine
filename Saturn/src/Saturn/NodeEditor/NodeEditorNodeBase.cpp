@@ -33,6 +33,10 @@
 
 #include "Saturn/Serialisation/Raw/RawSerialisation.h"
 
+#if !defined(SAT_DIST)
+#include "Debugging/NodeBreakPointManager.h"
+#endif
+
 namespace Saturn {
 
 	NodeEditorNodeBase::NodeEditorNodeBase( const std::string& rName )
@@ -73,6 +77,20 @@ namespace Saturn {
 
 		RawSerialisation::WriteString( ActiveState, rStream );
 		RawSerialisation::WriteString( SavedState, rStream );
+
+		auto* pNodeEditorBase = dynamic_cast< NodeEditorBase* >( GetParentObject() );
+		if( pNodeEditorBase && pNodeEditorBase->GetVersion() >= NodeEditorVersion::Breakpoints )
+		{
+			bool hasBreakpoint = NodeBreakPointManager::Get().HasBreakPoint( ID );
+			RawSerialisation::WriteObject( hasBreakpoint, rStream );
+
+			if( hasBreakpoint )
+			{
+				auto& rBreakpoint = NodeBreakPointManager::Get().GetBreakPoint( ID );
+				RawSerialisation::WriteObject( rBreakpoint.Active, rStream );
+				RawSerialisation::WriteObject( rBreakpoint.Type, rStream );
+			}
+		}
 #endif
 
 		RawSerialisation::WriteObject( Inputs.size(), rStream );
@@ -106,10 +124,31 @@ namespace Saturn {
 		ImVec2 position{};
 		Auxiliary::DeserialiseImVec2( position, rStream );
 	
-//		ed::SetNodePosition( ed::NodeId( ID ), position );
+		ed::SetNodePosition( ed::NodeId( ID ), position );
 
 		RawSerialisation::ReadString( rStream );
 		RawSerialisation::ReadString( rStream );
+
+		auto* pNodeEditorBase = dynamic_cast< NodeEditorBase* >( GetParentObject() );
+		if( pNodeEditorBase && pNodeEditorBase->GetVersion() >= NodeEditorVersion::Breakpoints )
+		{
+			bool hasBreakpoint = false;
+			RawSerialisation::ReadObject( hasBreakpoint, rStream );
+
+ 			if( hasBreakpoint )
+			{
+				bool active = false;
+				NodeBreakPointType type = NodeBreakPointType::Normal;
+				
+				RawSerialisation::ReadObject( active, rStream );
+				RawSerialisation::ReadObject( type, rStream );
+
+				auto& rBreakpoint = NodeBreakPointManager::Get().AddBreakPoint( ID, type );
+				rBreakpoint.Active = active;
+
+				SAT_CORE_INFO( "[NodeEditorNodeBase] Added breakpoint for node {0} ({1})", Name, ID );
+			}
+		}
 //#endif
 
 		// We make sure to read the last saved pin count and not the real pin size from the Node it self,

@@ -886,6 +886,16 @@ namespace Saturn {
 		return false;
 	}
 
+	bool Scene::RaycastIgnore( SharedPtr<Entity> entityIgnore, const glm::vec3& Origin, const glm::vec3& Direction, float MaxDistance, RaycastHitResult* pOut )
+	{
+		if( m_PhysicsScene )
+		{
+			return m_PhysicsScene->RaycastIgnoringSelf( entityIgnore, Origin, Direction, MaxDistance, pOut );
+		}
+
+		return false;
+	}
+
 	template<typename ...V>
 	static void CopyComponent( entt::registry& dstRegistry, entt::registry& srcRegistry, const std::unordered_map<UUID, entt::entity>& enttMap )
 	{

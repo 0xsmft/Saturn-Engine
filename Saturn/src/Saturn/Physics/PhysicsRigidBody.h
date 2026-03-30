@@ -75,8 +75,8 @@ namespace Saturn {
 		bool AllRotationLocked() const;
 
 		SharedPtr<Entity> GetEntity() { return m_Entity; }
-
 		Ref<PhysicsShape> GetShape() { return m_Shape; }
+		JPH::BodyID GetBodyID() const { return m_BodyID; }
 
 		void ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
 

@@ -45,12 +45,35 @@ namespace Saturn {
 
 	struct SettingsFileHeader
 	{
-		// .NCS
-		const unsigned char Magic[ 4 ] = { 0x2E, 0x4E, 0x43, 0x53 };
 		uint64_t Version = SAT_CURRENT_VERSION;
 		size_t SettingsCount = 0;
+		// .NCS
+		const unsigned char Magic[ 4 ] = { 0x2E, 0x4E, 0x43, 0x53 };
 	};
 	
+	static void WriteSettingsFileCacheHeader( const SettingsFileHeader& rSettings, std::ofstream& rStream )
+	{
+		RawSerialisation::WriteObject( rSettings.Magic, rStream );
+		RawSerialisation::WriteObject( rSettings.Version, rStream );
+		RawSerialisation::WriteObject( rSettings.SettingsCount, rStream );
+	}
+
+	[[nodiscard]] static bool ReadSettingsFileCacheHeader( SettingsFileHeader& rSettings, std::ifstream& rStream )
+	{
+		char magic[ 4 ]{ 0 };
+		RawSerialisation::ReadObject( magic, rStream );
+
+		if( std::memcmp( magic, ".NCS", 4 ) != 0 )
+		{
+			return false;
+		}
+
+		RawSerialisation::ReadObject( rSettings.Version, rStream );
+		RawSerialisation::ReadObject( rSettings.SettingsCount, rStream );
+
+		return true;
+	}
+
 	bool NodeCacheSettings::WriteEditorSettings( SharedPtr<NodeEditorBase> rNodeEditor )
 	{
 		std::filesystem::path filepath = Project::GetActiveProject()->GetAppDataFolder();
@@ -82,12 +105,8 @@ namespace Saturn {
 		std::ifstream stream( filepath, std::ios::binary | std::ios::in );
 
 		SettingsFileHeader fileHeader{};
-		RawSerialisation::ReadObject( fileHeader, stream );
-
-		if( std::memcmp( fileHeader.Magic, ".NCS", 4 ) != 0 )
-		{
+		if( !ReadSettingsFileCacheHeader( fileHeader, stream ) )
 			return;
-		}
 
 		// Get all currently saved states
 		// TODO: Cache in memory
@@ -129,7 +148,7 @@ namespace Saturn {
 		std::map< uint64_t, std::string > stateMap;
 		stateMap[ rNodeEditor->GetAssetID() ] = rNodeEditor->m_ActiveNodeEditorState;
 
-		RawSerialisation::WriteObject( fileHeader, fout );
+		WriteSettingsFileCacheHeader( fileHeader, fout );
 		RawSerialisation::WriteMap( stateMap, fout );
 
 		fout.close();
@@ -140,9 +159,7 @@ namespace Saturn {
 		std::ifstream stream( rFilepath, std::ios::binary | std::ios::in );
 
 		SettingsFileHeader fileHeader{};
-		RawSerialisation::ReadObject( fileHeader, stream );
-
-		if( std::memcmp( fileHeader.Magic, ".NCS", 4 ) != 0 )
+		if( !ReadSettingsFileCacheHeader( fileHeader, stream ) ) 
 		{
 			OverrideFile( rFilepath, rNodeEditor );
 			return;
@@ -171,7 +188,7 @@ namespace Saturn {
 
 		std::ofstream fout( rFilepath, std::ios::binary | std::ios::trunc );
 
-		RawSerialisation::WriteObject( fileHeader, fout );
+		WriteSettingsFileCacheHeader( fileHeader, fout );
 
 		RawSerialisation::WriteMap( stateMap, fout );
 

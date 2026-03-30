@@ -277,6 +277,11 @@ namespace Saturn {
 					m_WindowOpen = false;
 				}
 
+				if( ImGui::MenuItem( "Find" ) )
+				{
+					m_IsSearching ^= 1;
+				}
+
 				ImGui::EndMenu();
 			}
 
@@ -338,7 +343,7 @@ namespace Saturn {
 			if( m_HoveredNode )
 			{
 				ed::SelectNode( ed::NodeId( m_HoveredNode->ID ) );
-				ed::NavigateToSelection( true );
+				ed::NavigateToSelection();
 
 				ImGui::FocusWindow( ImGui::GetCurrentWindow() );
 
@@ -516,8 +521,9 @@ namespace Saturn {
 
 		HandleStateCanvasBorders();
 
-		if( m_OutputWindow.IsOpen() ) 
-			m_OutputWindow.Draw();
+		if( m_IsSearching )				DrawBeginSearchWindow();
+		if( m_ShowSearchResultsWindow ) DrawSearchResultsWindow();
+		if( m_OutputWindow.IsOpen() )	m_OutputWindow.Draw();
 
 		ImGui::End(); // NODE_EDITOR
 
@@ -545,6 +551,10 @@ namespace Saturn {
 	}
 
 	void NodeEditor::OnUpdate( Timestep ts )
+	{
+	}
+
+	void NodeEditor::OnEvent( Event& rEvent )
 	{
 	}
 
@@ -1341,6 +1351,72 @@ namespace Saturn {
 		ImGui::End();
 	}
 
+	void NodeEditor::DrawBeginSearchWindow()
+	{
+		if( ImGui::Begin( "Find##NE_SEARCH", &m_IsSearching, ImGuiWindowFlags_NoSavedSettings ) ) 
+		{
+			if( ImGui::IsWindowAppearing() )
+			{
+				ImGui::SetKeyboardFocusHere( 0 );
+			}
+
+			m_SearchCacher.Filter.Draw( "##search" );
+
+			if( ImGui::Button( "Go" ) )
+			{
+				m_SearchCacher.NodeNames.reserve( m_Nodes.size() );
+				
+				for( const auto& [ID, rNode] : m_Nodes )
+				{
+					m_SearchCacher.NodeNames.emplace_back( rNode->Name );
+				}
+
+				m_SearchCacher.FilterNames();
+
+				m_ShowSearchResultsWindow = true;
+				m_IsSearching = false;
+
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::SameLine();
+
+			if( ImGui::Button( "Close" ) )
+			{
+				m_IsSearching = false;
+				ImGui::CloseCurrentPopup();
+			}
+		}
+
+		ImGui::End();
+	}
+
+	void NodeEditor::DrawSearchResultsWindow()
+	{
+		if( ImGui::Begin( "Search Results", &m_ShowSearchResultsWindow ) )
+		{
+			for( const auto& rNodeName : m_SearchCacher.PassedNodeNames )
+			{
+				if( ImGui::Selectable( rNodeName.c_str() ) ) 
+				{
+					auto node = FindNode( rNodeName );
+					if( node )
+					{
+						ed::SelectNode( ed::NodeId( node->ID ) );
+						ed::NavigateToSelection();
+					}
+				}
+			}
+		}
+
+		if( !m_ShowSearchResultsWindow )
+		{
+			m_SearchCacher.Clear();
+		}
+
+		ImGui::End();
+	}
+
 #if !defined(SAT_DIST)
 
 	void NodeEditor::OnChooseNewNode( SharedPtr<NodeEditorNodeBase> node )
@@ -1540,5 +1616,32 @@ namespace Saturn {
 		m_State = NodeEditorState_Editing;
 	}
 #endif
+
+	//////////////////////////////////////////////////////////////////////////
+	// NodeEditorSearchCacher
+
+	void NodeEditorSearchCacher::FilterNames()
+	{
+		// TODO: Yea, this could be slow, we could either find a new way or 
+		// use the job system for this.
+		
+		// Assume we'll eliminate half of the nodes...
+		PassedNodeNames.reserve( NodeNames.size() / 2 );
+
+		for( const auto& rName : NodeNames )
+		{
+			if( Filter.PassFilter( rName.data() ) )
+			{
+				PassedNodeNames.push_back( rName );
+			}
+		}
+	}
+
+	void NodeEditorSearchCacher::Clear()
+	{
+		PassedNodeNames.clear();
+		NodeNames.clear();
+		Filter.Clear();
+	}
 
 }

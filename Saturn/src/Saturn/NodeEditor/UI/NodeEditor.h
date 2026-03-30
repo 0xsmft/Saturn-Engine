@@ -52,6 +52,16 @@ namespace Saturn {
 		DeselectLink
 	};
 
+	struct NodeEditorSearchCacher
+	{
+		ImGuiTextFilter Filter;
+		std::vector<std::string> NodeNames;
+		std::vector<std::string> PassedNodeNames;
+	
+		void FilterNames();
+		void Clear();
+	};
+
 #if !defined(SAT_DIST)
 	typedef NodeEditor FDependentNodeEditorSuper;
 #else
@@ -75,7 +85,7 @@ namespace Saturn {
 		// NodeEditorBase overrides
 		virtual void OnImGuiRender() override;
 		virtual void OnUpdate( Timestep ts ) override;
-		virtual void OnEvent( Event& rEvent ) override {}
+		virtual void OnEvent( Event& rEvent ) override;
 
 		// NodeEditor virtuals
 		virtual void OnTopBarRender() {}
@@ -175,14 +185,20 @@ namespace Saturn {
 		void DrawDetailsWindow();
 		void DrawDataWindow();
 		void DrawDebugWindow();
+		void DrawBeginSearchWindow();
+		void DrawSearchResultsWindow();
 
 		virtual void DrawGraph();
 
 	protected:
+		NodeEditorSearchCacher m_SearchCacher;
+
 		std::function<SharedPtr<NodeEditorNodeBase>()> m_CreateNewNodeFunction;
 		std::function<void()> m_TopbarItemsFunction;
 		std::function<void()> m_BreadCrumbsFunction;
 
+		bool m_ShowSearchResultsWindow = false;
+		bool m_IsSearching = false;
 		bool m_CreateNewNode = false;
 		bool m_ShowUnsavedChanges = false;
 		bool m_Dirty = false;

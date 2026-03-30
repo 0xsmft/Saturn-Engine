@@ -43,6 +43,7 @@ namespace Saturn {
 
 	public:
 		[[nodiscard]] bool TryLoadData(       Ref<Asset>& rAsset ) override;
+		[[nodiscard]] bool HasImporter(		  AssetType Type ) const;
 
 		static AssetImporterType GetStaticType() { return AssetImporterType::YAML; }
 

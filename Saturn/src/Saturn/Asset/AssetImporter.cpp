@@ -56,4 +56,10 @@ namespace Saturn {
 	{
 		return m_AssetSerialisers[ rAsset->Type ]->TryLoadData( rAsset );
 	}
+
+	bool AssetImporter::HasImporter( AssetType Type ) const
+	{
+		return m_AssetSerialisers.contains( Type );
+	}
+
 }

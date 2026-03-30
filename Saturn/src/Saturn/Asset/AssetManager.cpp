@@ -87,19 +87,23 @@ namespace Saturn {
 
 		{
 			Ref<Asset> asset = m_Assets->FindAsset( id );
+			
+			bool assetLoaded = false;
 			bool assetWasLoadedBefore = IsAssetLoaded( id );
 			if( !assetWasLoadedBefore )
 			{
-				if( m_Importer.TryLoadData( asset ) ) 
+				if( m_Importer.HasImporter( asset->Type ) && m_Importer.TryLoadData( asset ) ) 
 				{
+					assetLoaded = true;
 					m_Assets->m_LoadedAssets[ id ] = asset;
 				}
 			}
 
-			m_Assets->m_LoadedAssets[ id ]->OnDelete();
+			if( assetLoaded )
+				m_Assets->m_LoadedAssets[ id ]->OnDelete();
 
 			// Unload before deletion to so the ref count decrements.
-			if( !assetWasLoadedBefore )
+			if( !assetWasLoadedBefore || assetLoaded )
 			{
 				m_Assets->m_LoadedAssets.erase( id );
 			}

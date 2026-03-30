@@ -82,6 +82,9 @@ namespace Saturn {
 		// NOTE: The ImGui window has already begun when this function is called.
 		virtual void OnExtraRender() {}
 		virtual void OnNodeEditorEvent( NodeEditorAction action ) {}
+#if !defined(SAT_DIST)
+		virtual void OnDebugBreak();
+#endif
 
 		// Happens when the user clicks on the empty space.
 		void SetCreateNewNodeFunction( std::function<SharedPtr<NodeEditorNodeBase>()>&& rrCreateNewNodeFunction )
@@ -133,6 +136,10 @@ namespace Saturn {
 		[[nodiscard]] std::vector<SharedPtr<NodeEditorNodeBase>> GetSubGraphs() const { return m_SubGraphs; }
 		
 		SharedPtr<NodeEditorNodeBase> GetActiveSubGraph() { return m_ActiveSubGraph; }
+
+		void AllowEditingAndDisableDebugging();
+		void SetCurrentDebuggingEditor( SharedPtr<NodeEditor> nodeEditor );
+		void ResetDebugging();
 #endif
 
 		std::vector<UUID> GetSelectedNodes();
@@ -159,6 +166,7 @@ namespace Saturn {
 		void DeleteDeadLinks( UUID nodeID );
 		void CreateNewEditorIfNeeded();
 		void DrawSimulatingCanvas();
+		void DrawDebuggingCanvas();
 		void TryDrawUnsavedChangesModal();
 		void DrawTopBarChildInternal();
 		void HandleCreate();
@@ -180,7 +188,11 @@ namespace Saturn {
 		bool m_Dirty = false;
 #if !defined(SAT_DIST)
 		bool m_ShowRightClickContextMenu = false;
+		bool m_PendingBreakHandle = false;
 #endif
+		bool m_ShowDebugInformation = false;
+		bool m_ShowDetailsInformation = false;
+		bool m_ShowDataWindow = false;
 
 		Ref<Pin> m_NewLinkPin = nullptr;
 		Ref<Pin> m_NewNodeLinkPin = nullptr;
@@ -192,10 +204,6 @@ namespace Saturn {
 		// Sub-graph path
 		std::vector<SharedPtr<NodeEditorNodeBase>> m_SubGraphs;
 #endif
-
-		bool m_ShowDebugInformation = false;
-		bool m_ShowDetailsInformation = false;
-		bool m_ShowDataWindow = false;
 
 		ImVec2 m_ViewportSize;
 

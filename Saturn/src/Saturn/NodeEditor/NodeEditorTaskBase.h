@@ -40,6 +40,7 @@ namespace Saturn {
 		Starting,
 		Running,
 		Completed, // success flag
+		DebugBreakRequested,
 		Failed
 	};
 

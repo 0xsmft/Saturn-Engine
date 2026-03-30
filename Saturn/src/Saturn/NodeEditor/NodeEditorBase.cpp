@@ -88,6 +88,7 @@ namespace Saturn {
 	void NodeEditorBase::SerialiseData( std::ofstream& rStream, bool isForDist )
 	{
 		RawSerialisation::WriteString( m_Name, rStream );
+		RawSerialisation::WriteObject( m_Version, rStream );
 
 		// Data handles
 		size_t mapSize = m_DataHandles.size();
@@ -330,10 +331,10 @@ namespace Saturn {
 
 	NodeEditorCompilationStatus NodeEditorBase::Evaluate()
 	{
-		if( !m_Runtime || m_State == NodeEditorState::Loading || !HasPrivilege( NodeEditorUserAuthority::Evaluation ) )
+		if( !m_Runtime || m_State == NodeEditorState_Loading || !HasUserAuthority( NodeEditorUserAuthority::Evaluation ) )
 			return NodeEditorCompilationStatus::Failed;
 
-		m_State = NodeEditorState::Evaluating;
+		m_State = NodeEditorState_Evaluating;
 
 		return m_Runtime->EvaluateEditor();
 	}
@@ -417,12 +418,12 @@ namespace Saturn {
 		ed::Flow( ed::LinkId( linkID ) );
 	}
 
-	bool NodeEditorBase::HasPrivilege( NodeEditorUserAuthority privilege ) const
+	bool NodeEditorBase::HasUserAuthority( NodeEditorUserAuthority privilege ) const
 	{
 		return ( m_Privileges & privilege ) == privilege;
 	}
 
-	void NodeEditorBase::SetPrivileges( NodeEditorUserAuthority privilege, bool value )
+	void NodeEditorBase::SetUserAuthorityFlag( NodeEditorUserAuthority privilege, bool value )
 	{
 		if( value )
 			m_Privileges = m_Privileges | privilege;
@@ -449,7 +450,7 @@ namespace Saturn {
 
 	void NodeEditorBase::AddNode( SharedPtr<NodeEditorNodeBase> node )
 	{
-		if( m_State == NodeEditorState::Loading )
+		if( m_State == NodeEditorState_Loading )
 			return;
 
 		m_Nodes[ node->ID ] = node;

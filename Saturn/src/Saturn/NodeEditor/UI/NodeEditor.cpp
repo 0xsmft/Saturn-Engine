@@ -41,6 +41,8 @@
 #include "Saturn/NodeEditor/NodeEditorBlueprintNode.h"
 #include "Saturn/NodeEditor/UndoRedo/UndoRedoNodeEditorActions.h"
 
+#include "Saturn/NodeEditor/Debugging/NodeBreakPointManager.h"
+
 #include "Saturn/ImGui/UndoRedo/GlobalUndoRedoGroup.h"
 
 #include "Saturn/GameFramework/SClass.h"
@@ -105,7 +107,7 @@ namespace Saturn {
 	{
 		m_Editor = nullptr;
 
-		SetPrivileges( NodeEditorUserAuthority::Full, true );
+		SetUserAuthorityFlag( NodeEditorUserAuthority::Full, true );
 	}
 
 	NodeEditor::~NodeEditor()
@@ -149,6 +151,15 @@ namespace Saturn {
 			if( !pNode )
 				return false;
 
+			// Ignore events if we are debugging, simulating or suspended.
+			if( 
+				pThis->IsStateFlagSet( NodeEditorState_Debugging ) || 
+				pThis->IsStateFlagSet( NodeEditorState_Simulating ) ||
+				pThis->IsStateFlagSet( NodeEditorState_Suspended ) )
+			{
+				return false;
+			}
+
 			if( ( reason & ed::SaveReasonFlags::EndDrag ) == ed::SaveReasonFlags::EndDrag )
 			{
 				pThis->OnNodeEditorEvent( NodeEditorAction::MoveNode );
@@ -176,7 +187,7 @@ namespace Saturn {
 
 			// Only mark dirty if we are not loading
 			// imgui_node_editor will call this function when initialising
-			if( pThis->GetState() != NodeEditorState::Loading )
+			if( !pThis->IsStateFlagSet( NodeEditorState_Loading ) )
 			{
 				pThis->MarkDirty();
 			}
@@ -321,6 +332,22 @@ namespace Saturn {
 		// We'll use a VariableGuard<ed::EditorContext*> when we can't be sure that we are the current node editor.
 		ed::SetCurrentEditor( m_Editor );
 
+		if( m_PendingBreakHandle )
+		{
+			// Hacky way for us to find what node caused the break point.
+			if( m_HoveredNode )
+			{
+				ed::SelectNode( ed::NodeId( m_HoveredNode->ID ) );
+				ed::NavigateToSelection( true );
+
+				ImGui::FocusWindow( ImGui::GetCurrentWindow() );
+
+				m_HoveredNode = nullptr;
+			}
+
+			m_PendingBreakHandle = false;
+		}
+
 		TryDrawUnsavedChangesModal();
 
 		if( m_ViewportSize != ImGui::GetContentRegionAvail() )
@@ -363,7 +390,7 @@ namespace Saturn {
 		ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 8.0f, 8.0f ) );
 		if( ImGui::BeginPopup( "Create New Node" ) )
 		{
-			if( HasPrivilege( NodeEditorUserAuthority::Editing ) )
+			if( HasUserAuthority( NodeEditorUserAuthority::Editing ) )
 			{
 				const ImVec2 mousePos = ImGui::GetMousePosOnOpeningCurrentPopup();
 				SharedPtr<NodeEditorNodeBase> node = nullptr;
@@ -394,22 +421,89 @@ namespace Saturn {
 		{
 			m_HoveredNode->RenderContextWindow();
 
-			Auxiliary::DisabledFlag disabled( true );
+			ImGui::SeparatorText( "Breakpoints" );
 
-			ImGui::Separator();
+			if( NodeBreakPointManager::Get().HasBreakPoint( m_HoveredNode->ID ) )
+			{
+				auto& rBreakpoint = NodeBreakPointManager::Get().GetBreakPoint( m_HoveredNode->ID );
 
-			ImGui::Text( "NC/%llu", m_HoveredNode->ID );
-			ImGui::Text( "%s", m_HoveredNode->Name.c_str() );
+				if( ImGui::BeginMenu( "Breakpoint settings" ) )
+				{
+					if( rBreakpoint.Active )
+					{
+						if( ImGui::MenuItem( "Disable breakpoint" ) )
+						{
+							rBreakpoint.Active = false;
+						}
+					}
+					else
+					{
+						if( ImGui::MenuItem( "Enable breakpoint" ) )
+						{
+							rBreakpoint.Active = true;
+						}
+					}
 
-			ImGui::Separator();
+					if( ImGui::BeginMenu( "Breakpoint type" ) )
+					{
+						if( ImGui::MenuItem( "Normal" ) )
+						{
+							rBreakpoint.Type = NodeBreakPointType::Normal;
+						}
 
-			const auto& rPosition = ed::GetNodePosition( ed::NodeId( m_HoveredNode->ID ) );
-			const auto& rSize = ed::GetNodeSize( ed::NodeId( m_HoveredNode->ID ) );
+						if( ImGui::MenuItem( "Single fire" ) )
+						{
+							rBreakpoint.Type = NodeBreakPointType::SingleFire;
+						}
 
-			ImGui::Text( "Size X/%f Y/%f", rSize.x, rSize.y );
-			ImGui::Text( "Pos X/%f Y/%f", rPosition.x, rPosition.y );
+						if( ImGui::MenuItem( "Conditional" ) )
+						{
+							rBreakpoint.Type = NodeBreakPointType::Conditional;
+						}
 
-			disabled.Pop();
+						ImGui::EndMenu();
+					}
+
+					ImGui::EndMenu();
+				}
+
+				if( ImGui::Selectable( "Remove breakpoint" ) )
+				{
+					NodeBreakPointManager::Get().Remove( m_HoveredNode->ID );
+				}
+
+				ImGui::Separator();
+
+				{
+					Auxiliary::ScopedDisabledFlag disabled( true );
+					ImGui::Text( "Hit Count: %i", rBreakpoint.HitCount );
+				}
+			}
+			else
+			{
+				if( ImGui::Selectable( "Add breakpoint" ) )
+				{
+					NodeBreakPointManager::Get().AddBreakPoint( m_HoveredNode->ID, NodeBreakPointType::Normal );
+				}
+			}
+
+			{
+				ImGui::SeparatorText( "Debug Info" );
+				Auxiliary::ScopedDisabledFlag disabled( true );
+
+				ImGui::Text( "NC/%llu", m_HoveredNode->ID );
+				ImGui::Text( "%s", m_HoveredNode->Name.c_str() );
+
+				ImGui::Separator();
+
+				const auto& rPosition = ed::GetNodePosition( ed::NodeId( m_HoveredNode->ID ) );
+				const auto& rSize = ed::GetNodeSize( ed::NodeId( m_HoveredNode->ID ) );
+
+				ImGui::Text( "Size X/%f Y/%f", rSize.x, rSize.y );
+				ImGui::Text( "Pos X/%f Y/%f", rPosition.x, rPosition.y );
+
+			}
+
 			ImGui::EndPopup();
 		}
 
@@ -422,7 +516,8 @@ namespace Saturn {
 
 		HandleStateCanvasBorders();
 
-		if( m_OutputWindow.IsOpen() ) m_OutputWindow.Draw();
+		if( m_OutputWindow.IsOpen() ) 
+			m_OutputWindow.Draw();
 
 		ImGui::End(); // NODE_EDITOR
 
@@ -451,6 +546,16 @@ namespace Saturn {
 
 	void NodeEditor::OnUpdate( Timestep ts )
 	{
+	}
+
+	void NodeEditor::OnDebugBreak()
+	{
+		SetUserAuthorityFlag( NodeEditorUserAuthority::Editing, false );
+
+		SetStateFlag( NodeEditorState_Evaluating, false );
+		SetStateFlag( NodeEditorState_Debugging | NodeEditorState_Suspended, true );
+
+		m_PendingBreakHandle = true;
 	}
 
 	void NodeEditor::ThrowError( const std::string& rMessage )
@@ -492,7 +597,8 @@ namespace Saturn {
 		{
 			// Find and bump asset version.
 			Ref<Asset> correspondingAsset = AssetManager::Get()->FindAsset( m_AssetID );
-			correspondingAsset->Version = m_Version;
+			correspondingAsset->Version = SAT_CURRENT_VERSION;
+			m_Version = NodeEditorVersion::Latest;
 
 			// #SaveAssetManagerOnJT
 			AssetManager::Get()->Save();
@@ -635,6 +741,32 @@ namespace Saturn {
 			m_SubGraphs.erase( std::next( itr ), m_SubGraphs.end() );
 		}
 	}
+
+	void NodeEditor::AllowEditingAndDisableDebugging()
+	{
+		ResetDebugging();
+
+		// Clear state, reset to editing.
+		SetState( NodeEditorState_Editing );
+		SetUserAuthorityFlag( NodeEditorUserAuthority::Editing, true );
+	}
+
+	void NodeEditor::SetCurrentDebuggingEditor( SharedPtr<NodeEditor> nodeEditor )
+	{
+		m_OldEditor = m_Editor;
+		m_Editor = nodeEditor->m_Editor;
+	}
+
+	void NodeEditor::ResetDebugging()
+	{
+		// Probably didn't have a valid debugging editor and the user tried to remove the reference.
+		if( !m_OldEditor )
+			return;
+
+		m_Editor = m_OldEditor;
+		m_OldEditor = nullptr;
+	}
+
 #endif
 
 	void NodeEditor::CreateNewEditorIfNeeded()
@@ -655,7 +787,27 @@ namespace Saturn {
 		// Draw
 		pDrawList->AddRect( canvasRect.Min, canvasRect.Max, borderColor, rounding, ImDrawFlags_RoundCornersAll, thickness );
 
-		const std::string canvasName = "SIMULATING";
+		const std::string canvasName = "SIMULATING | READ ONLY";
+		const ImVec2 textSize = ImGui::CalcTextSize( canvasName.c_str() );
+		const float padding = 10.0f;
+
+		const ImVec2 textPos = ImVec2( canvasRect.Min.x + padding, canvasRect.Min.y + padding );
+		pDrawList->AddText( textPos, IM_COL32( 255, 255, 255, 255 ), canvasName.c_str() );
+	}
+
+	void NodeEditor::DrawDebuggingCanvas()
+	{
+		auto canvasRect = ImRect( ed::GetRectMin(), ed::GetRectMax() );
+		ImDrawList* pDrawList = ImGui::GetWindowDrawList();
+
+		const ImU32 borderColor = IM_COL32( 255, 0, 0, 255 );
+		const float thickness = 6.0F;
+		const float rounding = 12.0F;
+
+		// Draw
+		pDrawList->AddRect( canvasRect.Min, canvasRect.Max, borderColor, rounding, ImDrawFlags_RoundCornersAll, thickness );
+
+		const std::string canvasName = "DEBUGGING | PAUSED | READ ONLY";
 		const ImVec2 textSize = ImGui::CalcTextSize( canvasName.c_str() );
 		const float padding = 10.0f;
 
@@ -665,7 +817,7 @@ namespace Saturn {
 
 	void NodeEditor::TryDrawUnsavedChangesModal()
 	{
-		if( m_ShowUnsavedChanges && HasPrivilege( NodeEditorUserAuthority::Editing ) )
+		if( m_ShowUnsavedChanges && HasUserAuthority( NodeEditorUserAuthority::Editing ) )
 			ImGui::OpenPopup( "Unsaved Changes" );
 
 		// Unsaved changes modal
@@ -727,7 +879,7 @@ namespace Saturn {
 			ImGui::EndTooltip();
 		}
 
-		Auxiliary::DisabledFlag disabled( !HasPrivilege( NodeEditorUserAuthority::Evaluation ) );
+		Auxiliary::DisabledFlag disabled( !HasUserAuthority( NodeEditorUserAuthority::Evaluation ) );
 
 		if( Auxiliary::ImageButton( m_CompileTexture, { 24.0f, 24.0f } ) )
 		{
@@ -758,7 +910,7 @@ namespace Saturn {
 	void NodeEditor::HandleCreate() 
 	{
 #if !defined(SAT_DIST)
-		if( !m_CreateNewNode && HasPrivilege( NodeEditorUserAuthority::Editing ) )
+		if( !m_CreateNewNode && HasUserAuthority( NodeEditorUserAuthority::Editing ) )
 		{
 			if( ed::BeginCreate( ImColor( 255, 255, 255 ), 2.0f ) )
 			{
@@ -838,7 +990,7 @@ namespace Saturn {
 							{
 								if( shouldDelete )
 								{
-									if( m_State == NodeEditorState::Simulating )
+									if( IsStateFlagSet( NodeEditorState_Simulating ) )
 									{
 										ed::StopFlow();
 
@@ -901,7 +1053,7 @@ namespace Saturn {
 				{
 					if( ed::AcceptDeletedItem() )
 					{
-						if( m_State == NodeEditorState::Simulating )
+						if( IsStateFlagSet( NodeEditorState_Simulating ) )
 						{
 							ed::StopFlow();
 
@@ -936,7 +1088,7 @@ namespace Saturn {
 						{
 							if( ed::AcceptDeletedItem() )
 							{
-								if( m_State == NodeEditorState::Simulating )
+								if( IsStateFlagSet( NodeEditorState_Simulating ) )
 								{
 									ed::StopFlow();
 
@@ -964,30 +1116,24 @@ namespace Saturn {
 
 	void NodeEditor::HandleStateCanvasBorders()
 	{
-		switch( m_State )
+		if( IsStateFlagSet( NodeEditorState_Debugging ) )
 		{
-			case NodeEditorState::Loading:
-			case NodeEditorState::Editing:
-			case NodeEditorState::Evaluating:
-			case NodeEditorState::Suspended:
-				break;
+			DrawDebuggingCanvas();
+			return;
+		}
 
-			case NodeEditorState::Simulating:
-			{
-				DrawSimulatingCanvas();
-
-				// WARNING: TODO: Should sub-graphs be allowed to have their own runtime,
-				//				  or should it be one runtime from the parent that will handle everything including sub-graphs?
-				if( m_Runtime )
-				{
-					m_Runtime->TraceEvaluationPath();
-				}
-			} break;
+		if( IsStateFlagSet( NodeEditorState_Simulating ) )
+		{
+			DrawSimulatingCanvas();
+			return;
 		}
 	}
 
 	void NodeEditor::EdEvaluateEditor()
 	{
+		if( !HasUserAuthority( NodeEditorUserAuthority::Editing ) )
+			return;
+
 		m_OutputWindow.ClearOutput();
 
 		if( m_Runtime )
@@ -1020,7 +1166,7 @@ namespace Saturn {
 		// Extra information window
 		if( ImGui::Begin( "Details", &m_ShowDetailsInformation ) )
 		{
-			Auxiliary::ScopedDisabledFlag disabled( !HasPrivilege( NodeEditorUserAuthority::Editing ) );
+			Auxiliary::ScopedDisabledFlag disabled( !HasUserAuthority( NodeEditorUserAuthority::Editing ) );
 
 			OnExtraRender();
 		}
@@ -1032,7 +1178,7 @@ namespace Saturn {
 	{
 		if( ImGui::Begin( "Data", &m_ShowDataWindow ) )
 		{
-			Auxiliary::ScopedDisabledFlag disabled( !HasPrivilege( NodeEditorUserAuthority::Editing ) );
+			Auxiliary::ScopedDisabledFlag disabled( !HasUserAuthority( NodeEditorUserAuthority::Editing ) );
 
 			if( Auxiliary::TreeNode( "Variables" ) )
 			{
@@ -1298,10 +1444,10 @@ namespace Saturn {
 
 	void NodeEditor::DeserialiseData( std::ifstream& rStream )
 	{
-		m_State = NodeEditorState::Loading;
+		m_State = NodeEditorState_Loading;
 
 		// NOTE: using the "this" keyword is fine here, 
-		// ReadEditorSettings takes in a raw ptr
+		//		 ReadEditorSettings takes in a raw ptr
 		NodeCacheSettings::ReadEditorSettings( this );
 
 		m_Name = RawSerialisation::ReadString( rStream );
@@ -1357,7 +1503,7 @@ namespace Saturn {
 			node->PositionBeforeMove = ed::GetNodePosition( ed::NodeId( node->ID ) );
 
 			UUID parentID = 0;
-			if( m_Version >= SAT_VERSION_A_0_2_3 )
+			if( m_Version >= NodeEditorVersion::Subgraphs )
 			{
 				RawSerialisation::ReadObjectChecked( parentID, rStream );
 			}
@@ -1391,7 +1537,7 @@ namespace Saturn {
 			m_Links[ i ] = link;
 		}
 
-		m_State = NodeEditorState::Editing;
+		m_State = NodeEditorState_Editing;
 	}
 #endif
 

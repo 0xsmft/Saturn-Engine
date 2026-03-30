@@ -39,6 +39,12 @@ namespace Saturn {
 
 	class BehaviourTreeNodeEditor;
 
+	//
+	// BehaviourTree 
+	// 
+	// This class is local and is tied to an asset but can be loaded many time, for every entity that uses a BehaviourTree 
+	// this class will be created.
+	//
 	class BehaviourTree : public RefTarget
 	{
 	public:
@@ -53,7 +59,14 @@ namespace Saturn {
 		Ref<Asset> GetAsset() const { return m_BehaviourTreeAsset; }
 		SharedPtr<BehaviourTreeNodeEditor> GetNodeEditor() const { return m_NodeEditor; }
 
+#if !defined(SAT_DIST)
+	public:
+		const std::string& GetDebugName() const { return m_DebugName; }
+
 	private:
+		std::string m_DebugName;
+#endif
+
 		// The "BehaviourTree" class is not an asset however BehaviourTree are an asset
 		Ref<Asset> m_BehaviourTreeAsset;
 		SharedPtr<BehaviourTreeNodeEditor> m_NodeEditor;

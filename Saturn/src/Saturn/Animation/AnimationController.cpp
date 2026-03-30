@@ -53,7 +53,7 @@ namespace Saturn {
 	{
 		m_AnimationGraph = SharedPtr<AnimGraph>::Create( m_ControllerAsset->ID );
 		// Read only...
-		m_AnimationGraph->SetPrivileges( NodeEditorUserAuthority::Editing, false );
+		m_AnimationGraph->SetUserAuthorityFlag( NodeEditorUserAuthority::Editing, false );
 
 		const std::string filename = std::format( "{0}.sac", m_ControllerAsset->Name );
 		if( NodeCacheEditor::ReadNodeEditorCache( m_AnimationGraph, m_ControllerAsset->ID, filename ) )

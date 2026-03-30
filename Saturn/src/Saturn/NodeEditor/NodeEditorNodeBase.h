@@ -152,6 +152,8 @@ namespace Saturn {
 		// For Undo/Redo, the position of the node before it was moved by the user, not serialised.
 		ImVec2					PositionBeforeMove;
 		bool					CanBeDeleted = true;
+		// Was this the node that had a breakpoint and the breakpoint was hit?
+		bool					ThisNodeBrokeDebug = false;
 #endif
 
 	public:

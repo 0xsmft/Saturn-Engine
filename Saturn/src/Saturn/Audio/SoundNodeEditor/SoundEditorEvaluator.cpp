@@ -141,7 +141,7 @@ namespace Saturn {
 #endif
 		}
 
-		m_NodeEditor->SetState( compileResult == NodeEditorCompilationStatus::Success ? NodeEditorState::Simulating : NodeEditorState::Editing );
+		m_NodeEditor->SetState( compileResult == NodeEditorCompilationStatus::Success ? NodeEditorState_Simulating : NodeEditorState_Editing );
 
 #if !defined(SAT_DIST)
 		for( const auto& [id, state] : EvaluatedPath )
@@ -231,7 +231,7 @@ namespace Saturn {
 
 		if( SoundsPlaying.size() == 0 )
 		{
-			m_NodeEditor->SetState( NodeEditorState::Evaluating );
+			m_NodeEditor->SetState( NodeEditorState_Evaluating );
 			if( m_Looping )
 				EvalNoChecks();
 			else
@@ -242,7 +242,7 @@ namespace Saturn {
 	void SoundEditorEvaluator::TerminateEvaluation()
 	{
 		DestroyAliveSounds();
-		m_NodeEditor->SetState( NodeEditorState::Editing );
+		m_NodeEditor->SetState( NodeEditorState_Editing );
 	}
 
 	void SoundEditorEvaluator::TraceEvaluationPath()

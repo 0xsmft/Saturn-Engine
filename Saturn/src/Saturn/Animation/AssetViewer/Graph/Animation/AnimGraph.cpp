@@ -517,7 +517,7 @@ namespace Saturn {
 				ImGui::TextUnformatted( label );
 			};
 
-			if( HasPrivilege( NodeEditorUserAuthority::Editing ) && ( ImGui::IsMouseDown( ImGuiMouseButton_Left ) || m_CreateNewNode || ImGui::IsPopupOpen( "Create New Node" ) ) )
+			if( HasUserAuthority( NodeEditorUserAuthority::Editing ) && ( ImGui::IsMouseDown( ImGuiMouseButton_Left ) || m_CreateNewNode || ImGui::IsPopupOpen( "Create New Node" ) ) )
 			{
 				ImVec2 startPoint;
 				ImVec2 endPoint;

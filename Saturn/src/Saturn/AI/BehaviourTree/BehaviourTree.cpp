@@ -56,7 +56,7 @@ namespace Saturn {
 		m_NodeEditor = SharedPtr<BehaviourTreeNodeEditor>::Create( m_BehaviourTreeAsset->ID );
 #if !defined(SAT_DIST)
 		// Read only...
-		m_NodeEditor->SetPrivileges( NodeEditorUserAuthority::Full, false );
+		m_NodeEditor->SetUserAuthorityFlag( NodeEditorUserAuthority::Evaluation, false );
 #endif
 
 		const std::string filename = std::format( "{0}.sbt", m_BehaviourTreeAsset->Name );
@@ -72,12 +72,14 @@ namespace Saturn {
 
 		m_AIAgentEntity = entity.Get();
 		m_NodeEditor->SetTargetAgent( m_AIAgentEntity );
-
+		
 		// Convert nodes into tasks.
 		m_NodeEditor->InitBBAndTasks();
 	
 #if !defined(SAT_DIST)
-		m_NodeEditor->SetState( NodeEditorState::Simulating );
+		m_NodeEditor->SetState( NodeEditorState_Simulating );
+
+		m_DebugName = std::format( "{0}/{1} ({2})", m_BehaviourTreeAsset->Name, m_AIAgentEntity->GetName(), ( uint64_t ) m_AIAgentEntity->GetUUID() );
 #endif
 	}
 

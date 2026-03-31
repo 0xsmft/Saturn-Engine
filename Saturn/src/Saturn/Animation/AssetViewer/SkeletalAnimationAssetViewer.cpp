@@ -35,7 +35,7 @@
 
 #include "Saturn/Asset/AssetManager.h"
 
-// TOOD: #FixSceneRendererIncludes
+// #FixSceneRendererIncludes
 #include "Saturn/Vulkan/Renderer2D.h"
 #include "Saturn/Vulkan/AluraRenderer.h"
 
@@ -48,12 +48,15 @@
 namespace Saturn {
 
 	SkeletalAnimationAssetViewer::SkeletalAnimationAssetViewer( AssetID id )
-		: AssetViewer( id ), SubSceneRendererWindow()
+		: AssetViewer( id )
 	{
 		m_AssetType = AssetType::SkeletalAnimation;
 
-		Initialise();
-		SetViewportWindowID( m_AssetID );
+		m_Scene = Ref<Scene>::Create();
+		m_Viewport = std::make_unique<EditorViewport>( VP_DefaultSub );
+
+		const std::string vpName = std::format( "Viewport##{0}", ( uint64_t ) m_AssetID );
+		m_Viewport->Initialise( SceneRendererFlag_NoAlura, m_Scene, vpName, m_AssetID );
 
 		ImportMeshAndAnimation();
 		m_Name = std::format( "{0}##{1}", m_Asset->Name, ( uint64_t ) m_AssetID );
@@ -79,7 +82,9 @@ namespace Saturn {
 
 		//////////////////////////////////////////////////////////////////////////
 
-		RenderViewport();
+		m_Viewport->Draw();
+
+		//////////////////////////////////////////////////////////////////////////
 
 		ImGui::Begin( "Sidebar" );
 
@@ -244,21 +249,25 @@ namespace Saturn {
 			SkeletalAnimationAssetSerialiser skAnimSerialiser;
 			skAnimSerialiser.Serialise( m_Asset );
 
+			/*
+			* #FixEditorViewportSceneRendererClose
 			RenderThread::Get().Queue( [ = ]()
 			{
 				m_SceneRenderer = nullptr;
 			} );
+			*/
 		}
 	}
 
 	void SkeletalAnimationAssetViewer::OnUpdate( Timestep ts )
 	{
-		OnUpdateRenderer( ts );
+		m_Viewport->OnUpdate( ts );
 	}
 
 	void SkeletalAnimationAssetViewer::OnEvent( Event& rEvent )
 	{
-		OnCameraEvent( rEvent );
+		if( ( rEvent.Category & EC_Ruby ) != 0 )
+			m_Viewport->OnEvent( rEvent );
 	}
 
 	void SkeletalAnimationAssetViewer::ImportMeshAndAnimation()

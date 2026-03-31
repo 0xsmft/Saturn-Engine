@@ -53,16 +53,18 @@
 namespace Saturn {
 
 	StaticMeshAssetViewer::StaticMeshAssetViewer( AssetID id )
-		: AssetViewer( id ), SubSceneRendererWindow()
+		: AssetViewer( id )
 	{
 		m_AssetType = AssetType::StaticMesh;
 
-		Initialise();
-		SetViewportWindowID( m_AssetID );
+		m_Scene = Ref<Scene>::Create();
+		m_EditorViewport = std::make_unique<EditorViewport>( VP_DefaultSub );
+
+		const auto name = std::format( "Viewport##{0}", ( uint64_t ) m_AssetID );
+		m_EditorViewport->Initialise( SceneRendererFlag_NoAlura, m_Scene, name, m_AssetID );
 
 		AddMesh();
 		m_Name = std::format( "{0}##{1}", m_Mesh->Name, std::to_string( m_AssetID ) );
-
 		m_AssetFinderOutPhys = m_Mesh->GetPhysicsMaterial();
 	}
 
@@ -108,7 +110,9 @@ namespace Saturn {
 
 		//////////////////////////////////////////////////////////////////////////
 
-		RenderViewport();
+		//RenderViewport();
+
+		m_EditorViewport->Draw();
 
 		//////////////////////////////////////////////////////////////////////////
 
@@ -287,21 +291,25 @@ namespace Saturn {
 		{
 			m_Open = false;
 
+			/*
+			* #FixEditorViewportSceneRendererClose
 			RenderThread::Get().Queue( [=]()
 			{
 				m_SceneRenderer = nullptr;
 			} );
+			*/
 		}
 	}
 
 	void StaticMeshAssetViewer::OnUpdate( Timestep ts )
 	{
-		OnUpdateRenderer( ts );
+		m_EditorViewport->OnUpdate( ts );
 	}
 
 	void StaticMeshAssetViewer::OnEvent( Event& rEvent )
 	{
-		OnCameraEvent( rEvent );
+		if( rEvent.Category == EC_Ruby )
+			m_EditorViewport->OnEvent( rEvent );
 	}
 
 	void StaticMeshAssetViewer::AddMesh()

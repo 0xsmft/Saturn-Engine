@@ -29,13 +29,11 @@
 #pragma once
 
 #include "Saturn/ImGui/AssetViewer.h"
-#include "Saturn/ImGui/TitleBar.h"
-#include "Saturn/ImGui/SceneHierarchyPanel.h"
-#include "Saturn/ImGui/SubSceneRendererWindow.h"
+#include "Saturn/ImGui/EditorViewport.h"
 
 namespace Saturn {
 
-	class SkeletalMeshAssetViewer : public AssetViewer, public SubSceneRendererWindow
+	class SkeletalMeshAssetViewer : public AssetViewer
 	{
 	public:
 		SkeletalMeshAssetViewer( AssetID id );
@@ -50,6 +48,8 @@ namespace Saturn {
 		void RenderSidebar();
 
 	private:
+		std::unique_ptr<EditorViewport> m_Viewport;
+		Ref<Scene> m_Scene;
 		Ref<SkeletalMesh> m_Mesh;
 		Ref<SkeletalAnimationAsset> m_PreviewAnimation;
 		SharedPtr<Entity> m_Entity;

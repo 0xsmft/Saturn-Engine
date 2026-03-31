@@ -52,9 +52,12 @@ namespace Saturn {
 	{
 		m_AssetType = AssetType::SkeletalMesh;
 
-		Initialise();
-		SetViewportWindowID( m_AssetID );
-	
+		m_Scene = Ref<Scene>::Create();
+		m_Viewport = std::make_unique<EditorViewport>( VP_DefaultSub );
+
+		const std::string vpName = std::format( "Viewport##{0}", ( uint64_t ) m_AssetID );
+		m_Viewport->Initialise( SceneRendererFlag_NoAlura, m_Scene, vpName, m_AssetID );
+
 		AddMesh();
 		m_Name = std::format( "{0}##{1}", m_Mesh->Name, std::to_string( m_AssetID ) );
 	}
@@ -119,7 +122,7 @@ namespace Saturn {
 
 		//////////////////////////////////////////////////////////////////////////
 
-		RenderViewport();
+		m_Viewport->Draw();
 
 		//////////////////////////////////////////////////////////////////////////
 
@@ -133,10 +136,13 @@ namespace Saturn {
 		{
 			m_Open = false;
 
+			/*
+			* #FixEditorViewportSceneRendererClose
 			RenderThread::Get().Queue( [ = ]()
 			{
 				m_SceneRenderer = nullptr;
 			} );
+			*/
 		}
 	}
 
@@ -227,12 +233,13 @@ namespace Saturn {
 
 	void SkeletalMeshAssetViewer::OnUpdate( Timestep ts )
 	{
-		OnUpdateRenderer( ts );
+		m_Viewport->OnUpdate( ts );
 	}
 
 	void SkeletalMeshAssetViewer::OnEvent( Event& rEvent )
 	{
-		OnCameraEvent( rEvent );
+		if( ( rEvent.Category & EC_Ruby ) )
+			m_Viewport->OnEvent( rEvent );
 	}
 
 	void SkeletalMeshAssetViewer::AddMesh()

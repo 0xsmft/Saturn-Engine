@@ -65,7 +65,7 @@ namespace Saturn {
 		// fall back on.
 		bool m_ShowNoFallbackPopup = false;
 		bool m_ShowCookingErrorPopup = false;
-		uint64_t m_CookingError = 0;
+		uint8_t m_CookingError = 0;
 		UUID m_FallbackID = 0;
 	
 		std::queue<uint64_t> m_ResetIndices;

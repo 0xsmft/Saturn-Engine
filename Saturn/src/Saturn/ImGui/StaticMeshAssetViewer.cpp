@@ -127,7 +127,7 @@ namespace Saturn {
 		{
 			PhysicsShapeType type = m_Mesh->GetAttachedShape();
 			
-			constexpr const char* pItems[] = { "None", "Box", "Sphere", "Capsule", "Convex Mesh", "Triangle Mesh" };
+			const char* pItems[] = { "None", "Box", "Sphere", "Capsule", "Convex Mesh", "Triangle Mesh" };
 			static PhysicsShapeType selectedEnum = type;
 			static const char* pSelected = pItems[ ( int ) selectedEnum ];
 
@@ -164,7 +164,7 @@ namespace Saturn {
 					if( Result != PhysicsCookingResult::Success )
 					{
 						m_ShowCookingErrorPopup = true;
-						m_CookingError = ( uint64_t ) Result;
+						m_CookingError = ( uint8_t ) Result;
 					}
 					else
 					{

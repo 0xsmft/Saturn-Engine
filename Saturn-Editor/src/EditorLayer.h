@@ -141,6 +141,10 @@ namespace Saturn {
 		glm::vec2 ConvertMouseToViewportNDC();
 		std::pair<glm::vec3, glm::vec3> RayCast( float mx, float my );
 
+		void DndImportPrefab( Ref<Asset> asset, bool select = false, bool clearSelection = true );
+		void DndImportStaticMesh( Ref<Asset> asset, bool select = false, bool clearSelection = true );
+		void DndImportSkeletalMesh( Ref<Asset> asset, bool select = false, bool clearSelection = true );
+
 		void PlaceEntityRelativeToMousePos( SharedPtr<Entity> entity );
 
 	private:

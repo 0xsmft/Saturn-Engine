@@ -53,6 +53,9 @@ namespace Saturn {
 
 		virtual void ResetPath( const std::filesystem::path& rPath ) = 0;
 
+	public:
+		const std::vector<Ref<ContentBrowserItem>>& GetSelectedItems() const { return m_SelectedItems; }
+
 	protected:
 		void DrawTopBar();
 		void SortFiles();

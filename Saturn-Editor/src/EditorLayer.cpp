@@ -2973,6 +2973,37 @@ namespace Saturn {
 
 		if( ImGui::BeginDragDropTarget() )
 		{
+			if( auto payload = ImGui::AcceptDragDropPayload( "CONTENT_BROWSER_ITEM_MULTI_NDT" ) )
+			{
+				m_SelectionManager->ClearSelection( m_EditorScene.Get(), false );
+				m_SelectionManager->EnableMultiSelection();
+
+				const auto contentBrowserPanel = m_ImGuiWindowManager->GetPanel<ContentBrowserPanel>();
+				for( const auto& rItem : contentBrowserPanel->GetSelectedItems() )
+				{
+					switch( rItem->GetAsset()->Type )
+					{
+						case AssetType::Prefab:
+						{
+							DndImportPrefab( rItem->GetAsset(), true, false );
+						} break;
+
+						case AssetType::StaticMesh:
+						{
+							DndImportStaticMesh( rItem->GetAsset(), true, false );
+						} break;
+
+						case AssetType::SkeletalMesh:
+						{
+							DndImportSkeletalMesh( rItem->GetAsset(), true, false );
+						} break;
+
+						default:
+							break;
+					}
+				}
+			}
+
 			if( auto payload = ImGui::AcceptDragDropPayload( "CONTENT_BROWSER_ITEM_SCENE" ) )
 			{
 				const UUID* pUUID = ( const UUID* ) payload->Data;
@@ -2984,13 +3015,8 @@ namespace Saturn {
 				const UUID* pUUID = ( const UUID* ) payload->Data;
 
 				Ref<Asset> asset = m_AssetManager->FindAsset( *pUUID );
-				Ref<Prefab> prefabAsset = m_AssetManager->GetAssetAs<Prefab>( asset->ID );
-
-				CreateEntityParameters createEntityParameters;
-				auto entity = m_EditorScene->CreatePrefab( prefabAsset, createEntityParameters );
-				m_EditorScene->MarkDirty();
-
-				PlaceEntityRelativeToMousePos( entity );
+				
+				DndImportPrefab( asset, true );
 			}
 
 			if( auto payload = ImGui::AcceptDragDropPayload( "CONTENT_BROWSER_ITEM_MODEL" ) )
@@ -2998,17 +3024,7 @@ namespace Saturn {
 				const UUID* pUUID = ( const UUID* ) payload->Data;
 
 				Ref<Asset> asset = m_AssetManager->FindAsset( *pUUID );
-				Ref<StaticMesh> meshAsset = m_AssetManager->GetAssetAs<StaticMesh>( asset->ID );
-
-				SharedPtr<Entity> entity = m_EditorScene->CreateEntity( asset->Name );
-
-				auto& rMeshComponent = entity->AddComponent<StaticMeshComponent>();
-				rMeshComponent.Mesh = meshAsset;
-				rMeshComponent.MaterialRegistry = Ref<MaterialRegistry>::Create( meshAsset );
-
-				PlaceEntityRelativeToMousePos( entity );
-
-				m_EditorScene->MarkDirty();
+				DndImportStaticMesh( asset, true );
 			}
 
 			if( auto payload = ImGui::AcceptDragDropPayload( "CONTENT_BROWSER_ITEM_SKMODEL" ) )
@@ -3016,17 +3032,8 @@ namespace Saturn {
 				const UUID* pUUID = ( const UUID* ) payload->Data;
 
 				Ref<Asset> asset = m_AssetManager->FindAsset( *pUUID );
-				Ref<SkeletalMesh> meshAsset = m_AssetManager->GetAssetAs<SkeletalMesh>( asset->ID );
 
-				SharedPtr<Entity> entity = m_EditorScene->CreateEntity( asset->Name );
-
-				auto& rMeshComponent = entity->AddComponent<SkeletalMeshComponent>();
-				rMeshComponent.Mesh = meshAsset;
-				rMeshComponent.MaterialRegistry = Ref<MaterialRegistry>::Create( meshAsset );
-
-				PlaceEntityRelativeToMousePos( entity );
-
-				m_EditorScene->MarkDirty();
+				DndImportSkeletalMesh( asset, true );
 			}
 
 			ImGui::EndDragDropTarget();
@@ -3849,6 +3856,71 @@ namespace Saturn {
 		const glm::vec3 rayDir = inverseView * glm::vec3( ray );
 
 		return { rayPos, rayDir };
+	}
+
+	void EditorLayer::DndImportPrefab( Ref<Asset> asset, bool select /*= false*/, bool clearSelection /*= true*/ )
+	{
+		Ref<Prefab> prefabAsset = m_AssetManager->GetAssetAs<Prefab>( asset->ID );
+
+		CreateEntityParameters createEntityParameters;
+		auto entity = m_EditorScene->CreatePrefab( prefabAsset, createEntityParameters );
+		m_EditorScene->MarkDirty();
+
+		PlaceEntityRelativeToMousePos( entity );
+	
+		if( select )
+		{
+			if( clearSelection )
+				m_SelectionManager->ClearSelection( m_EditorScene.Get(), true );
+		
+			m_SelectionManager->Select( entity );
+		}
+	}
+
+	void EditorLayer::DndImportStaticMesh( Ref<Asset> asset, bool select /*= false*/, bool clearSelection /*= true*/ )
+	{
+		Ref<StaticMesh> meshAsset = m_AssetManager->GetAssetAs<StaticMesh>( asset->ID );
+
+		SharedPtr<Entity> entity = m_EditorScene->CreateEntity( asset->Name );
+
+		auto& rMeshComponent = entity->AddComponent<StaticMeshComponent>();
+		rMeshComponent.Mesh = meshAsset;
+		rMeshComponent.MaterialRegistry = Ref<MaterialRegistry>::Create( meshAsset );
+
+		PlaceEntityRelativeToMousePos( entity );
+
+		m_EditorScene->MarkDirty();
+		
+		if( select )
+		{
+			if( clearSelection )
+				m_SelectionManager->ClearSelection( m_EditorScene.Get(), true );
+
+			m_SelectionManager->Select( entity );
+		}
+	}
+
+	void EditorLayer::DndImportSkeletalMesh( Ref<Asset> asset, bool select /*= false*/, bool clearSelection /*= true*/ )
+	{
+		Ref<SkeletalMesh> meshAsset = m_AssetManager->GetAssetAs<SkeletalMesh>( asset->ID );
+
+		SharedPtr<Entity> entity = m_EditorScene->CreateEntity( asset->Name );
+
+		auto& rMeshComponent = entity->AddComponent<SkeletalMeshComponent>();
+		rMeshComponent.Mesh = meshAsset;
+		rMeshComponent.MaterialRegistry = Ref<MaterialRegistry>::Create( meshAsset );
+
+		PlaceEntityRelativeToMousePos( entity );
+
+		m_EditorScene->MarkDirty();
+
+		if( select )
+		{
+			if( clearSelection )
+				m_SelectionManager->ClearSelection( m_EditorScene.Get(), true );
+
+			m_SelectionManager->Select( entity );
+		}
 	}
 
 	void EditorLayer::PlaceEntityRelativeToMousePos( SharedPtr<Entity> entity )

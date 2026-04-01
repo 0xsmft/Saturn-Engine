@@ -684,39 +684,48 @@ namespace Saturn {
 
 			ImGui::EndHorizontal();
 
-			switch( m_Asset->Type )
+			if( m_MultiSelected )
 			{
-				case Saturn::AssetType::Texture:
-					break;
-				case Saturn::AssetType::StaticMesh:
+				// NOTE: As you can clearly see there is NO payload data
+				//		 attached with the drag and drop, use content browser instead.
+				ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_MULTI_NDT", pData, sizeof( uintptr_t ), ImGuiCond_Once );
+			}
+			else
+			{
+				switch( m_Asset->Type )
 				{
-					ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_MODEL", pData, sizeof( uintptr_t ), ImGuiCond_Once );
-				}	break;
-				case Saturn::AssetType::SkeletalMesh:
-				{
-					ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_SKMODEL", pData, sizeof( uintptr_t ), ImGuiCond_Once );
-				}	break;
-				case Saturn::AssetType::Material:
-				{
-					ImGui::SetDragDropPayload( "asset_payload", pData, sizeof( uintptr_t ), ImGuiCond_Once );
-				}	break;
-				case Saturn::AssetType::MaterialInstance:
-				case Saturn::AssetType::Sound:
-					break;
-				case Saturn::AssetType::Scene:
-				{
-					ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_SCENE", pData, sizeof( uintptr_t ), ImGuiCond_Once );
-				} break;
+					case Saturn::AssetType::Texture:
+						break;
+					case Saturn::AssetType::StaticMesh:
+					{
+						ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_MODEL", pData, sizeof( uintptr_t ), ImGuiCond_Once );
+					}	break;
+					case Saturn::AssetType::SkeletalMesh:
+					{
+						ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_SKMODEL", pData, sizeof( uintptr_t ), ImGuiCond_Once );
+					}	break;
+					case Saturn::AssetType::Material:
+					{
+						ImGui::SetDragDropPayload( "asset_payload", pData, sizeof( uintptr_t ), ImGuiCond_Once );
+					}	break;
+					case Saturn::AssetType::MaterialInstance:
+					case Saturn::AssetType::Sound:
+						break;
+					case Saturn::AssetType::Scene:
+					{
+						ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_SCENE", pData, sizeof( uintptr_t ), ImGuiCond_Once );
+					} break;
 
-				case Saturn::AssetType::Prefab:
-				{
-					ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_PREFAB", pData, sizeof( uintptr_t ), ImGuiCond_Once );
-				} break;
+					case Saturn::AssetType::Prefab:
+					{
+						ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_PREFAB", pData, sizeof( uintptr_t ), ImGuiCond_Once );
+					} break;
 
-				case Saturn::AssetType::Unknown:
-				case Saturn::AssetType::COUNT:
-				default:
-					break;
+					case Saturn::AssetType::Unknown:
+					case Saturn::AssetType::COUNT:
+					default:
+						break;
+				}
 			}
 
 			ImGui::EndDragDropSource();

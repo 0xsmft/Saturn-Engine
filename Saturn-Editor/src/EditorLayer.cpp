@@ -2998,6 +2998,11 @@ namespace Saturn {
 							DndImportSkeletalMesh( rItem->GetAsset(), true, false );
 						} break;
 
+						case AssetType::Sound:
+						{
+							DndImportSound( rItem->GetAsset(), true, false );
+						} break;
+
 						default:
 							break;
 					}
@@ -3034,6 +3039,14 @@ namespace Saturn {
 				Ref<Asset> asset = m_AssetManager->FindAsset( *pUUID );
 
 				DndImportSkeletalMesh( asset, true );
+			}
+
+			if( auto payload = ImGui::AcceptDragDropPayload( "CONTENT_BROWSER_ITEM_SND" ) )
+			{
+				const UUID* pUUID = ( const UUID* ) payload->Data;
+
+				Ref<Asset> asset = m_AssetManager->FindAsset( *pUUID );
+				DndImportSound( asset, true );
 			}
 
 			ImGui::EndDragDropTarget();
@@ -3909,6 +3922,26 @@ namespace Saturn {
 		auto& rMeshComponent = entity->AddComponent<SkeletalMeshComponent>();
 		rMeshComponent.Mesh = meshAsset;
 		rMeshComponent.MaterialRegistry = Ref<MaterialRegistry>::Create( meshAsset );
+
+		PlaceEntityRelativeToMousePos( entity );
+
+		m_EditorScene->MarkDirty();
+
+		if( select )
+		{
+			if( clearSelection )
+				m_SelectionManager->ClearSelection( m_EditorScene.Get(), true );
+
+			m_SelectionManager->Select( entity );
+		}
+	}
+
+	void EditorLayer::DndImportSound( Ref<Asset> asset, bool select /*= false*/, bool clearSelection /*= true */ )
+	{
+		SharedPtr<Entity> entity = m_EditorScene->CreateEntity( asset->Name );
+
+		auto& rAudioPlayerComponent = entity->AddComponent<AudioPlayerComponent>();
+		rAudioPlayerComponent.SpecAssetID = asset->ID;
 
 		PlaceEntityRelativeToMousePos( entity );
 

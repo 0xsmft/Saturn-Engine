@@ -144,6 +144,7 @@ namespace Saturn {
 		void DndImportPrefab( Ref<Asset> asset, bool select = false, bool clearSelection = true );
 		void DndImportStaticMesh( Ref<Asset> asset, bool select = false, bool clearSelection = true );
 		void DndImportSkeletalMesh( Ref<Asset> asset, bool select = false, bool clearSelection = true );
+		void DndImportSound( Ref<Asset> asset, bool select = false, bool clearSelection = true );
 
 		void PlaceEntityRelativeToMousePos( SharedPtr<Entity> entity );
 

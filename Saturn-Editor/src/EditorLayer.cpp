@@ -1022,17 +1022,19 @@ namespace Saturn {
 				case RubyKey_F:
 				{
 					auto selectedEntities = m_SelectionManager->GetSelectionContexts( g_ActiveScene );
-
-					glm::vec3 Positions = {};
-					for( auto& rEntity : selectedEntities )
+					if( selectedEntities.size() )
 					{
-						TransformComponent worldSpace = g_ActiveScene->GetWorldSpaceTransform( rEntity );
-						Positions += worldSpace.Position;
+						glm::vec3 Positions = {};
+						for( auto& rEntity : selectedEntities )
+						{
+							TransformComponent worldSpace = g_ActiveScene->GetWorldSpaceTransform( rEntity );
+							Positions += worldSpace.Position;
+						}
+
+						Positions /= selectedEntities.size();
+
+						m_EditorCamera.Focus( Positions );
 					}
-
-					Positions /= selectedEntities.size();
-
-					m_EditorCamera.Focus( Positions );
 				} break;
 
 				case RubyKey_S:

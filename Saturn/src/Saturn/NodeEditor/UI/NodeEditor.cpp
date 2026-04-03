@@ -439,6 +439,8 @@ namespace Saturn {
 						if( ImGui::MenuItem( "Disable breakpoint" ) )
 						{
 							rBreakpoint.Active = false;
+
+							MarkDirty();
 						}
 					}
 					else
@@ -446,6 +448,8 @@ namespace Saturn {
 						if( ImGui::MenuItem( "Enable breakpoint" ) )
 						{
 							rBreakpoint.Active = true;
+
+							MarkDirty();
 						}
 					}
 
@@ -454,16 +458,19 @@ namespace Saturn {
 						if( ImGui::MenuItem( "Normal" ) )
 						{
 							rBreakpoint.Type = NodeBreakPointType::Normal;
+							MarkDirty();
 						}
 
 						if( ImGui::MenuItem( "Single fire" ) )
 						{
 							rBreakpoint.Type = NodeBreakPointType::SingleFire;
+							MarkDirty();
 						}
 
 						if( ImGui::MenuItem( "Conditional" ) )
 						{
 							rBreakpoint.Type = NodeBreakPointType::Conditional;
+							MarkDirty();
 						}
 
 						ImGui::EndMenu();
@@ -475,6 +482,7 @@ namespace Saturn {
 				if( ImGui::Selectable( "Remove breakpoint" ) )
 				{
 					NodeBreakPointManager::Get().Remove( m_HoveredNode->ID );
+					MarkDirty();
 				}
 
 				ImGui::Separator();
@@ -489,6 +497,7 @@ namespace Saturn {
 				if( ImGui::Selectable( "Add breakpoint" ) )
 				{
 					NodeBreakPointManager::Get().AddBreakPoint( m_HoveredNode->ID, NodeBreakPointType::Normal );
+					MarkDirty();
 				}
 			}
 
@@ -697,6 +706,9 @@ namespace Saturn {
 //					Ref<UndoRedoActionDeleteNode> action = Ref<UndoRedoActionDeleteNode>::Create( SharedFromThis(), rNode );
 //					GlobalUndoRedoGroup::Get()->AddAction( action, m_AssetID );
 				}
+
+				// Remove breakpoints, if any.
+				NodeBreakPointManager::Get().Remove( id );
 
 				rNode->Destroy();
 				DeleteDeadLinks( id );

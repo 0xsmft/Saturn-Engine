@@ -104,9 +104,9 @@ namespace Saturn {
 	void Application::InitWindow()
 	{
 		// Setup default width and height
-		const RubyMonitor& rPrimaryMonitor = RubyLibrary::Get().GetPrimaryMonitor();
-		const uint32_t width = 3 * rPrimaryMonitor.MonitorSize.x / 4;
-		const uint32_t height = 3 * rPrimaryMonitor.MonitorSize.y / 4;
+		//const RubyMonitor& rPrimaryMonitor = RubyLibrary::Get().GetPrimaryMonitor();
+		//const uint32_t width = 3 * rPrimaryMonitor.MonitorSize.x / 4;
+		//const uint32_t height = 3 * rPrimaryMonitor.MonitorSize.y / 4;
 
 		const RubyStyle windowStyle = HasFlag( ApplicationFlag_Titlebar ) ? RubyStyle::Default : m_Specification.WindowStyle;
 
@@ -252,8 +252,8 @@ namespace Saturn {
 
 	void Application::ProcessAllEvents()
 	{
-		// Poll all windows owned by the main thread.
-		RubyLibrary::PollEvents();
+		// Poll all windows owned by the main thread
+		RubyLibrary::Get().PollEvents();
 
 		std::scoped_lock<std::mutex> lock( m_Mutex );
 

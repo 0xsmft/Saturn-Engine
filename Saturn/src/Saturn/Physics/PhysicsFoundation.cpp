@@ -37,6 +37,10 @@
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Core/JobSystemThreadPool.h>
 
+#if defined(SAT_COMPILER_CLANG)
+#include <stdarg.h>
+#endif
+
 namespace Saturn {
 
 	//////////////////////////////////////////////////////////////////////////

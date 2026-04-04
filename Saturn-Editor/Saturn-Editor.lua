@@ -160,6 +160,7 @@ project "Saturn-Editor"
 			"dl",
 			"m",
 			"xcb",
+			"xcb-keysyms",
 			"Xrandr",
 			"vulkan",
 
@@ -169,9 +170,9 @@ project "Saturn-Editor"
 			"Tracy",
 			"zlib",
 			"Recast",
-			"freetype",
-			"MSDFGen",
 			"MSDF-Atlas-Gen",
+			"MSDFGen",
+			"Freetype",
 			"JoltPhysics",
 
 			"Saturn-SharedStorage",
@@ -187,17 +188,8 @@ project "Saturn-Editor"
 			links
 			{
 				"assimp",
-				"glslang",
-				"shaderc",
-				"shaderc_util",
-				"SPIRV-Tools",
-				"SPIRV-Tools-opt",
+				"shaderc_shared",
 				"SPIRV"
-			}
-
-			libdirs
-			{
-				"../Saturn/vendor/shaderc/bin/Debug-Linux"
 			}
 
 

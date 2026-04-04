@@ -144,7 +144,7 @@ inline void BlackboardVariable::Set<CppType>( CppType val )				\
 
 			if( itr != m_Data.end() )
 			{
-				return itr->second->SAT_GCC_TEMPLATE Get<CppType>();
+				return itr->second->SAT_GCC_CLANG_TEMPLATE Get<CppType>();
 			}
 
 			return std::nullopt;

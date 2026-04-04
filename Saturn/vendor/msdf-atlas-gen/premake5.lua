@@ -8,6 +8,11 @@ project "MSDF-Atlas-Gen"
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
 
+	links
+	{
+		"MSDFGen"
+	}
+
 	files
 	{
 		"msdf-atlas-gen/*.h",

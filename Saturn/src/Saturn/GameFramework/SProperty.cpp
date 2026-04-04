@@ -39,6 +39,7 @@ namespace Saturn {
 
 	void SProperty::RtCopyFromOther( const SObject* pSrcObject, SObject* pDstObject ) const
 	{
+		/*
 #define SAT_HANDLE_TYPE( PropertyType ) \
 {\
 typename PropertyTypeTraits<Saturn::SPropertyType::PropertyType>::Type value = Read<Saturn::SPropertyType::PropertyType>( pSrcObject ); \
@@ -108,10 +109,13 @@ SetPropertyInternal<typename PropertyTypeTraits<Saturn::SPropertyType::PropertyT
 			default:
 				break;
 		}
+
+		*/
 	}
 
 	void SProperty::Serialise( const SObject* pObject, std::ofstream& rStream ) const
 	{
+		/*
 #define SAT_SERIALISE_PROPERTY( PropertyType ) \
 { \
 typename PropertyTypeTraits<Saturn::SPropertyType::PropertyType>::Type value = Read<Saturn::SPropertyType::PropertyType>( pObject ); \
@@ -199,10 +203,12 @@ RawSerialisation::WriteObject( value, rStream ); \
 			default:
 				break;
 		}
+		*/
 	}
 
 	void SProperty::Deserialise( SObject* pObject, std::istream& rStream )
 	{
+		/*
 #define SAT_DESERIALISE_PROPERTY( PropertyType ) \
 { \
 typename PropertyTypeTraits<Saturn::SPropertyType::PropertyType>::Type value{}; \
@@ -293,6 +299,7 @@ SetProperty( pObject, value );\
 			default:
 				break;
 		}
+		*/
 	}
 
 }

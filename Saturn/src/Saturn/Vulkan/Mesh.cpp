@@ -86,8 +86,8 @@ aiProcess_GenUVCoords |             // Convert UVs if required
 aiProcess_OptimizeMeshes |          // Batch draws where possible
 aiProcess_JoinIdenticalVertices |
 aiProcess_LimitBoneWeights |
-aiProcess_ValidateDataStructure |    // Validation
-aiProcess_GlobalScale;             // e.g. convert cm to m for fbx import (and other formats where cm is native)
+aiProcess_ValidateDataStructure;    // Validation
+//aiProcess_GlobalScale;             // e.g. convert cm to m for fbx import (and other formats where cm is native)
 
 #if defined(SAT_PLATFORM_WINDOWS) && defined(_MSC_VER)
 static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_DEBUGGER;
@@ -192,7 +192,12 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 
 		Assimp::Importer importer;
 
-		const aiScene* scene = importer.ReadFile( m_FilePath.string(), s_MeshImportFlags );
+		// Check for global scale flag.
+		auto flags = s_MeshImportFlags;
+		if( ( m_MeshImportFlags & MeshImportBehaviour_GlobalScale ) )
+			flags |= aiProcess_GlobalScale;
+
+		const aiScene* scene = importer.ReadFile( m_FilePath.string(), flags );
 		if( scene == nullptr || !scene->HasMeshes() )
 		{
 			SAT_CORE_ERROR( "Failed to load mesh file (does the file have meshes?): {0}", m_FilePath );
@@ -503,7 +508,12 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 		Assimp::Importer importer;
 		importer.SetPropertyBool( AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false );
 
-		const aiScene* scene = importer.ReadFile( m_FilePath.string(), s_MeshImportFlags );
+		// Check for global scale flag.
+		auto flags = s_MeshImportFlags;
+		if( ( m_MeshImportFlags & MeshImportBehaviour_GlobalScale ) )
+			flags |= aiProcess_GlobalScale;
+
+		const aiScene* scene = importer.ReadFile( m_FilePath.string(), flags );
 		if( scene == nullptr || !scene->HasMeshes() )
 		{
 			SAT_CORE_ERROR( "Failed to load mesh file (does the file have meshes?): {0}", m_FilePath );

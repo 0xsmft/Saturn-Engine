@@ -76,7 +76,7 @@ namespace Saturn {
 			case AssetImportPopupError::MeshAssimpInternalError:
 			{
 				ImGui::Text( "Error: MeshAssimpInternalError (0x%08x)", m_Error );
-				ImGui::Text( "An internal Assimp error occured while importing the mesh." );
+				ImGui::Text( "An internal Assimp error occurred while importing the mesh." );
 			} break;			
 		}
 	}
@@ -501,23 +501,6 @@ namespace Saturn {
 			return ( m_ImportBehaviour & flag ) != 0;
 		};
 
-		ImGui::BeginHorizontal( "##importOption_aum" );
-
-		bool allowUnnamedMaterials = hasFlag( MeshImportBehaviour_AllowUnnamedMaterials );
-		ImGui::Text( "Allow Unnamed Materials" );
-		ImGui::Spring();
-
-		ImGui::SetNextItemWidth( 130.0f );
-		if( ImGui::Checkbox( "##AllowUnnamedMaterials", &allowUnnamedMaterials ) )
-		{
-			if( hasFlag( MeshImportBehaviour_AllowUnnamedMaterials ) )
-				m_ImportBehaviour &= ~MeshImportBehaviour_AllowUnnamedMaterials;
-			else
-				m_ImportBehaviour |= MeshImportBehaviour_AllowUnnamedMaterials;
-		}
-
-		ImGui::EndHorizontal();
-
 		ImGui::BeginHorizontal( "##importOption_nomat" );
 
 		bool noMaterials = hasFlag( MeshImportBehaviour_CreateNoMaterials );
@@ -534,6 +517,37 @@ namespace Saturn {
 		}
 
 		ImGui::EndHorizontal();
+
+		if( !noMaterials )
+		{
+			ImGui::BeginHorizontal( "##importOption_aum" );
+
+			bool allowUnnamedMaterials = hasFlag( MeshImportBehaviour_AllowUnnamedMaterials );
+			ImGui::Text( "Allow Unnamed Materials" );
+
+			if( ImGui::BeginItemTooltip() )
+			{
+				ImGui::Text( "Enable this option if you know that the mesh you are importing will have unnamed materials." );
+				ImGui::Text( "If this option is on Saturn will generate material names such as 'UnnamedMaterials[RandomID]'." );
+
+				ImGui::Text( "NOTE: If this flag is not enabled and there is a material with no name the engine will refuse to import it!" );
+
+				ImGui::EndTooltip();
+			}
+
+			ImGui::Spring();
+
+			ImGui::SetNextItemWidth( 130.0f );
+			if( ImGui::Checkbox( "##AllowUnnamedMaterials", &allowUnnamedMaterials ) )
+			{
+				if( hasFlag( MeshImportBehaviour_AllowUnnamedMaterials ) )
+					m_ImportBehaviour &= ~MeshImportBehaviour_AllowUnnamedMaterials;
+				else
+					m_ImportBehaviour |= MeshImportBehaviour_AllowUnnamedMaterials;
+			}
+
+			ImGui::EndHorizontal();
+		}
 
 		ImGui::BeginHorizontal( "##importOption_ext" );
 
@@ -570,6 +584,30 @@ namespace Saturn {
 
 		ImGui::EndHorizontal();
 #endif
+
+		ImGui::BeginHorizontal( "##importOption_glbsc" );
+
+		bool globalScale = hasFlag( MeshImportBehaviour_GlobalScale );
+		ImGui::Text( "Global Scale" );
+
+		if( ImGui::BeginItemTooltip() )
+		{
+			ImGui::Text( "Converts meters to centimeters." );
+			ImGui::EndTooltip();
+		}
+
+		ImGui::Spring();
+
+		ImGui::SetNextItemWidth( 130.0f );
+		if( ImGui::Checkbox( "##GlobalScale", &globalScale ) )
+		{
+			if( hasFlag( MeshImportBehaviour_GlobalScale ) )
+				m_ImportBehaviour &= ~MeshImportBehaviour_GlobalScale;
+			else
+				m_ImportBehaviour |= MeshImportBehaviour_GlobalScale;
+		}
+
+		ImGui::EndHorizontal();
 	}
 
 	AssetImportPopupError MeshImportPopup::FullyImportMesh()
@@ -629,6 +667,7 @@ namespace Saturn {
 			skeletalMesh->SetFilepath( meshPath );
 			skeletalMesh->Import_InitMaterialRegistry();
 			skeletalMesh->Import_InitSkeleton( m_CurrentAssetIDForSkeleton == 0 ? meshImporter.GetCreatedSkeletonID() : m_CurrentAssetIDForSkeleton );
+			skeletalMesh->Import_SetImportBehaviour( m_ImportBehaviour );
 
 #if !defined(SAT_DIST)
 			if( m_CurrentAssetIDForMaterial )
@@ -703,6 +742,7 @@ namespace Saturn {
 			auto& meshPath = assetPath.replace_extension( m_AssetToImportPath.extension() );
 			staticMesh->SetFilepath( meshPath );
 			staticMesh->Import_InitMaterialRegistry();
+			staticMesh->Import_SetImportBehaviour( m_ImportBehaviour );
 
 #if !defined(SAT_DIST)
 			if( m_CurrentAssetIDForMaterial )

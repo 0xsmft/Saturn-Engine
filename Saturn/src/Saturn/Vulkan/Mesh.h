@@ -238,7 +238,7 @@ namespace Saturn {
 		std::vector<uint32_t> Submeshes;
 
 		std::string Name;
-		glm::mat4 LocalTransform;
+		glm::mat4 LocalTransform{};
 
 		inline bool IsRoot() const { return Parent == 0xFFFFFFFF; }
 	};
@@ -299,6 +299,9 @@ namespace Saturn {
 		void SetPhysicsMaterial( AssetID id );
 		const AssetID GetPhysicsMaterial() const { return m_PhysicsMaterial; }
 
+		void Import_SetImportBehaviour( uint32_t importBehaviour ) { m_MeshImportFlags = importBehaviour; }
+		const uint32_t GetImportBehaviour() const { return m_MeshImportFlags; }
+
 		Ref<MaterialRegistry>& GetMaterialRegistry() { return m_MaterialRegistry; }
 		const Ref<MaterialRegistry>& GetMaterialRegistry() const { return m_MaterialRegistry; }
 
@@ -333,7 +336,7 @@ namespace Saturn {
 
 		PhysicsShapeType m_AttachedPhysicsShape = PhysicsShapeType::Unknown;
 
-		// This is not a MemoryAssetDependency because we are able to be pure asset dependency
+		// This is not a MemoryAssetDependency because we are able to be a pure asset dependency
 		// due to us being an asset and depending on another asset.
 		UUID m_PhysicsMaterial = 0;
 
@@ -344,6 +347,11 @@ namespace Saturn {
 
 #if !defined(SAT_DIST)
 		const aiScene* m_Scene = nullptr;
+		
+		// uint32_t == MeshImportBehaviour_
+		// 
+		// MeshImportBehaviour_ is used for when we first ever import a mesh however, it is also used for StaticMesh and DynamicMeshes after initial first ever import.
+		uint32_t m_MeshImportFlags = 0;
 #endif
 	};
 
@@ -468,10 +476,16 @@ namespace Saturn {
 		// Treat each submesh as it's own asset.
 		MeshImportBehaviour_ImportSubMeshAsAsset   = 1 << 6,
 
+		// Global Scale ( convert cm to m )
+		MeshImportBehaviour_GlobalScale			   = 1 << 7,
+
+		/// ^^^ add new flags here ^^^ Default flags vvvvv
+
 		// Default behaviour for Static Meshes
-		MeshImportBehaviour_Default = MeshImportBehaviour_AllowUnnamedMaterials | MeshImportBehaviour_CreateNoMaterials,
+		MeshImportBehaviour_Default = MeshImportBehaviour_AllowUnnamedMaterials | MeshImportBehaviour_CreateNoMaterials | MeshImportBehaviour_GlobalScale,
+
 		// Default behaviour for Skeletal Meshes
-		MeshImportBehaviour_SK_Default = MeshImportBehaviour_AllowUnnamedMaterials | MeshImportBehaviour_CreateNoMaterials | MeshImportBehaviour_SK_ImportMesh
+		MeshImportBehaviour_SK_Default = MeshImportBehaviour_AllowUnnamedMaterials | MeshImportBehaviour_CreateNoMaterials | MeshImportBehaviour_GlobalScale | MeshImportBehaviour_SK_ImportMesh
 	};
 
 	// enum MeshImportBehaviour_

@@ -33,6 +33,16 @@ workspace "Saturn"
 		sanitize { "Address" }
 		buildoptions { "/fsanitize=address" }
 
+	filter "toolset:clang"
+		defines { "SAT_COMPILER_CLANG", "MA_USE_STDINT" }
+		buildoptions { "-Wno-missing-template-arg-list-after-template-kw", "-Wno-non-pod-varargs" }
+
+	filter "toolset:gcc"
+		defines { "SAT_COMPILER_GCC" }
+		buildoptions { "-fno-ms-extensions", "-Wno-changes-meaning", "-fpermissive" }
+
+
+
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 -- Include directories relative to root folder (solution directory)

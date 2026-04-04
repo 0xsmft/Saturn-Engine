@@ -520,6 +520,7 @@ namespace Saturn {
 
 	void SceneHierarchyPanel::DrawEntityProperties( SharedPtr<Entity> entity ) 
 	{
+		/*
 		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_AllowItemOverlap;
 
 		const bool hasProps = entity->GetClass()->GetPropertyCount() > 0;
@@ -756,6 +757,7 @@ namespace Saturn {
 		}
 
 		ImGui::Separator();
+		*/
 	} 
 
 	void SceneHierarchyPanel::DrawEntityComponents( SharedPtr<Entity> entity )

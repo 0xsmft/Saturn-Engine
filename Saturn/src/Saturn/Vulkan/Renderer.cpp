@@ -156,12 +156,33 @@ namespace Saturn {
 		VkCommandBuffer CommandBuffer,
 		Ref<Saturn::Pipeline> Pipeline,
 		Ref<Material> material,
-		Ref<UniformBufferSet> ubSet,
 		Ref<IndexBuffer> IndexBuffer, Ref<VertexBuffer> VertexBuffer )
 	{
 		SAT_PF_EVENT();
 
 		Pipeline->Bind( CommandBuffer );
+
+		material->Bind( CommandBuffer, Pipeline->GetPipelineLayout(), {} );
+
+		VertexBuffer->Bind( CommandBuffer );
+		IndexBuffer->Bind( CommandBuffer );
+
+		IndexBuffer->Draw( CommandBuffer );
+	}
+
+	void Renderer::SubmitFullscreenQuadPushConst( 
+		VkCommandBuffer CommandBuffer, 
+		Ref<Saturn::Pipeline> Pipeline, 
+		Ref<Material> material, 
+		Ref<IndexBuffer> IndexBuffer, 
+		Ref<VertexBuffer> VertexBuffer, 
+		Buffer PushConstData )
+	{
+		SAT_PF_EVENT();
+
+		Pipeline->Bind( CommandBuffer );
+
+		vkCmdPushConstants( CommandBuffer, Pipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, PushConstData.Size, PushConstData.Data );
 
 		material->Bind( CommandBuffer, Pipeline->GetPipelineLayout(), {} );
 

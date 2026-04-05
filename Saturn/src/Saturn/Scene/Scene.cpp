@@ -734,6 +734,8 @@ namespace Saturn {
 
 #if SAT_FEATURE_SHOW_SELECTED_CAMERA_FRUSTUM
 		//////////////////////////////////////////////////////////////////////////
+		// Camera Frustum
+
 		for( const auto& rEntity : EntitySelectionManager::Get()->GetSelectionContexts( this ) )
 		{
 			if( auto* pCameraComp = rEntity->TryGetComponent<CameraComponent>(); pCameraComp )
@@ -745,6 +747,24 @@ namespace Saturn {
 			}
 		}
 #endif
+
+		for( const auto& rEntity : EntitySelectionManager::Get()->GetSelectionContexts( this ) )
+		{
+			if( auto* pStaticMeshComp = rEntity->TryGetComponent<StaticMeshComponent>() )
+			{
+				if( pStaticMeshComp->Mesh )
+				{
+					const auto transform = GetTransformRelativeToParent( rEntity );
+
+					Ref<MaterialRegistry> targetMaterialRegistry = pStaticMeshComp->Mesh->GetMaterialRegistry();
+
+					if( pStaticMeshComp->MaterialRegistry && pStaticMeshComp->MaterialRegistry->HasAnyOverrides() )
+						targetMaterialRegistry = pStaticMeshComp->MaterialRegistry;
+
+					sceneRenderer->SubmitSelectedStaticMesh( rEntity, pStaticMeshComp->Mesh, targetMaterialRegistry, transform );
+				}
+			}
+		}
 	}
 #endif
 

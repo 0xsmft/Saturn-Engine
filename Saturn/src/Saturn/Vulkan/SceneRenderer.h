@@ -237,24 +237,20 @@ namespace Saturn {
 		
 		//////////////////////////////////////////////////////////////////////////
 
-		uint32_t FrameCount = 0;
-
-		//////////////////////////////////////////////////////////////////////////
-
 		RendererCamera CurrentCamera;
 
 		//////////////////////////////////////////////////////////////////////////
 		
 		bool IsSwapchainTarget = false;
-
-		//////////////////////////////////////////////////////////////////////////
-		
 		bool Resized = false;
+		bool SSAONoiseGenerated = false;
+		bool EnableShadows = true;
 
 		uint32_t Width = 0;
 		uint32_t Height = 0;
 
 		glm::vec2 ViewportPos{};
+		uint32_t FrameCount = 0;
 
 		//////////////////////////////////////////////////////////////////////////
 
@@ -283,8 +279,6 @@ namespace Saturn {
 
 		// DirShadowMap
 		//////////////////////////////////////////////////////////////////////////
-		
-		bool EnableShadows = true;
 
 		std::vector< Ref< Pass > > DirShadowMapPasses;
 		std::vector< Ref< Pipeline > > DirShadowMapPipelines;
@@ -350,7 +344,18 @@ namespace Saturn {
 		//////////////////////////////////////////////////////////////////////////
 		
 		// End Geometry
-		 
+		
+		//////////////////////////////////////////////////////////////////////////
+
+		// Begin AO
+		Ref<Pipeline>	 SSAOPipeline   = nullptr;
+		Ref<Pass>		 SSAORenderPass = nullptr;
+		Ref<Material>	 SSAOMaterial   = nullptr;
+		Ref<Framebuffer> SSAOFramebuffer = nullptr;
+		Ref<Texture2D>	 SSAONoiseImage = nullptr;
+
+		//////////////////////////////////////////////////////////////////////////
+
 		//////////////////////////////////////////////////////////////////////////
 
 		// Begin Scene Composite
@@ -373,6 +378,32 @@ namespace Saturn {
 		//////////////////////////////////////////////////////////////////////////
 		// End Scene Composite
 		//////////////////////////////////////////////////////////////////////////
+
+		// Selected Geometry
+		//////////////////////////////////////////////////////////////////////////
+
+		Ref<Pass> SelectedGeometryPass = nullptr;
+		Ref<Framebuffer> SelectedGeometryFramebuffer = nullptr;
+		Ref<Pipeline> SelectedGeometryPipeline = nullptr;
+		Ref<Material> SelectedGeometryMaterial = nullptr;
+
+		// Jumpflooding
+		//////////////////////////////////////////////////////////////////////////
+
+		Ref<Framebuffer> JumpFloodFirstPassFB = nullptr;
+		Ref<Pass> JumpFloodFirstPass = nullptr;
+		Ref<Material> JumpFloodFirstMaterial = nullptr;
+		Ref<Pipeline> JumpFloodFirstPipeline = nullptr;
+
+		Ref<Pass> JumpFloodEvenPass = nullptr;
+		Ref<Framebuffer> JumpFloodEvenFB = nullptr;
+		Ref<Material> JumpFloodEvenMaterial = nullptr;
+		Ref<Pipeline> JumpFloodEvenPipeline = nullptr;
+
+		Ref<Framebuffer> JumpFloodOddFB = nullptr;
+		Ref<Pass> JumpFloodOddPass = nullptr;
+		Ref<Material> JumpFloodOddMaterial = nullptr;
+		Ref<Pipeline> JumpFloodOddPipeline = nullptr;
 
 		// Bloom
 		//////////////////////////////////////////////////////////////////////////
@@ -423,7 +454,7 @@ namespace Saturn {
 		Ref< Shader > TexturePassShader = nullptr;
 		Ref< Shader > DirShadowMapShader = nullptr;
 		Ref< Shader > DirShadowMapDynamicShader = nullptr;
-		Ref< Shader > SelectedGeometryShader = nullptr;
+		Ref< Shader > AOShader = nullptr;
 		Ref< Shader > AOCompositeShader = nullptr;
 		Ref< Shader > PreDepthShader = nullptr;
 		Ref< Shader > PreDepthDynamicShader = nullptr;
@@ -431,6 +462,9 @@ namespace Saturn {
 		Ref< Shader > BloomShader = nullptr;
 		Ref< Shader > PhysicsOutlineShader = nullptr;
 		Ref< Shader > SelectionShader = nullptr;
+		Ref< Shader > JmpFloodFirstShader = nullptr;
+		Ref< Shader > JmpFloodEvenShader = nullptr;
+		Ref< Shader > JmpFloodOddShader = nullptr;
 	};
 
 	class Renderer2D;
@@ -447,14 +481,18 @@ namespace Saturn {
 		void ImGuiRender();
 
 		void SetCurrentScene( Scene* pScene );
+#if !defined(SAT_DIST)
+		Scene* GetCurrentScene() const { return m_pScene; }
+#endif
 
 		void SubmitStaticMesh( SharedPtr<Entity> entity, Ref<StaticMesh> mesh, Ref<MaterialRegistry> materialRegistry, const glm::mat4& transform );
 
 		void SubmitDynamicMesh( SharedPtr<Entity> entity, Ref<SkeletalMesh> mesh, Ref<MaterialRegistry> materialRegistry, const glm::mat4& transform, const std::vector<glm::mat4>& boneTransforms );
 		
-		// This will work for now (as atm now we are just gonna render the mesh ).
-		// However, if we have a different collider mesh than the mesh it will not be correct.
+		// NOTE: mesh is not the physical mesh in the entity, it is the phsyics mesh!
 		void SubmitPhysicsCollider( SharedPtr<Entity> entity, Ref< StaticMesh > mesh, Ref<MaterialRegistry> materialRegistry, const glm::mat4& transform );
+
+		void SubmitSelectedStaticMesh( SharedPtr<Entity> entity, Ref< StaticMesh > mesh, Ref<MaterialRegistry> materialRegistry, const glm::mat4& transform );
 
 		void SetViewportSize( uint32_t w, uint32_t h );
 		void SetViewportPosition( float x, float y ) { m_RendererData.ViewportPos = glm::vec2( x, y ); }
@@ -523,7 +561,11 @@ namespace Saturn {
 		void InitTexturePass();
 		void InitSSAO();
 		void InitHBAO();
-//		void InitSelection();
+		void InitSelectionPass();
+		void InitJumpFlood();
+		void InitJmpfFirstPass();
+		void InitJmpfEvenPass();
+		void InitJmpfOddPass();
 
 		void InitBuffers();
 		void InitRenderer2D();
@@ -534,9 +576,12 @@ namespace Saturn {
 		void LightCullingPass();
 		void GeometryPass();
 		void BloomPass();
+		void SSAOPass();
+		void SelectedGeometryPass();
+		void JumpFloodPass();
 		void SceneCompositePass();
 		void LateCompPhysicsOutline();
-//		void SelectionPass();
+		void JumpFloodLatePass();
 		void TexturePass();
 
 		void RenderStaticMeshes();
@@ -563,6 +608,7 @@ namespace Saturn {
 		std::unordered_map< StaticMeshKey, DrawCommand > m_DrawList;
 		std::unordered_map< StaticMeshKey, DrawCommand > m_ShadowMapDrawList;
 		std::unordered_map< StaticMeshKey, DrawCommand > m_PhysicsColliderDrawList;
+		std::unordered_map< StaticMeshKey, DrawCommand > m_SelectedStaticMeshDrawList;
 		
 		std::unordered_map< StaticMeshKey, DynamicDrawCommand > m_DynamicShadowMapDrawList;
 		std::unordered_map< StaticMeshKey, DynamicDrawCommand > m_DynamicDrawList;

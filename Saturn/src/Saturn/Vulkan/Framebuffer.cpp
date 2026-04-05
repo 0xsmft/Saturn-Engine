@@ -230,6 +230,8 @@ namespace Saturn {
 				m_AttachmentImageViews.push_back( m_DepthAttachmentResource->GetImageView( m_Specification.ExistingImageLayer ) );
 		}
 
+		SAT_CORE_ASSERT( m_Specification.RenderPass, "RenderPass cannot ever be null when creating a Framebuffer!" );
+
 		// Create Framebuffer
 		VkFramebufferCreateInfo FramebufferCreateInfo = { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
 		FramebufferCreateInfo.renderPass = m_Specification.RenderPass->GetVulkanPass();

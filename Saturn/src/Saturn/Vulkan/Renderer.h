@@ -66,7 +66,9 @@ namespace Saturn {
 		Renderer();
 		~Renderer();
 
-		void SubmitFullscreenQuad( VkCommandBuffer CommandBuffer, Ref<Saturn::Pipeline> Pipeline, Ref<Material> material, Ref<UniformBufferSet> ubSet, Ref<IndexBuffer> IndexBuffer, Ref<VertexBuffer> VertexBuffer );
+		void SubmitFullscreenQuad( VkCommandBuffer CommandBuffer, Ref<Saturn::Pipeline> Pipeline, Ref<Material> material, Ref<IndexBuffer> IndexBuffer, Ref<VertexBuffer> VertexBuffer );
+
+		void SubmitFullscreenQuadPushConst( VkCommandBuffer CommandBuffer, Ref<Saturn::Pipeline> Pipeline, Ref<Material> material, Ref<IndexBuffer> IndexBuffer, Ref<VertexBuffer> VertexBuffer, Buffer PushConstData );
 
 		// Render pass helpers.
 		void BeginRenderPass( VkCommandBuffer CommandBuffer, Pass& rPass );

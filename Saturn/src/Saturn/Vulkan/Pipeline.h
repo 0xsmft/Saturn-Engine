@@ -47,6 +47,12 @@ namespace Saturn {
 		FrontAndBack
 	};
 
+	enum class PipelineBlendMode
+	{
+		Default,
+		OneZero,
+	};
+
 	struct PipelineSpecification
 	{
 		PipelineSpecification() {}
@@ -71,10 +77,11 @@ namespace Saturn {
 		VkPolygonMode PolygonMode = VK_POLYGON_MODE_FILL;
 		VkCompareOp DepthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
 		VkPrimitiveTopology Topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+		PipelineBlendMode BlendMode = PipelineBlendMode::Default;
 
 		// SpecializationInfo
-		VkSpecializationInfo SpecializationInfo = {};
 		ShaderType SpecializationStage = ShaderType::None;
+		VkSpecializationInfo SpecializationInfo = {};
 	};
 
 	class Pipeline : public RefTarget

@@ -4,7 +4,7 @@
 *                                                                                           *
 * MIT License                                                                               *
 *                                                                                           *
-* Copyright (c) 2020 - 2026 BEAST                                                           *
+* Copyright (c) 2020 - 2025 BEAST                                                           *
 *                                                                                           *
 * Permission is hereby granted, free of charge, to any person obtaining a copy              *
 * of this software and associated documentation files (the "Software"), to deal             *
@@ -31,22 +31,26 @@
 #include "RubyMonitor.h"
 #include "RubyEventType.h"
 
-#include "SingletonStorage.h"
-
 #include <unordered_set>
 
+#if defined(SAT_PLATFORM_LINUX)
+#include <xcb/xcb.h>
+#endif
+
 namespace Saturn {
+	
+	class RubyWindow;
 
 	class RubyLibrary final
 	{
 	public:
-		SAT_SINGLETON_LAZY( RubyLibrary )
+		SAT_SINGLETON_LAZY( RubyLibrary );
 
 	public:
 		RubyLibrary();
 		~RubyLibrary() = default;
 
-		static void PollEvents();
+		void PollEvents();
 
 		std::vector<RubyMonitor> GetAllMonitors();
 		RubyMonitor& GetPrimaryMonitor();
@@ -93,9 +97,30 @@ namespace Saturn {
 			m_CurrentMouseButtons.clear();
 		}
 
+	public:
+#if defined(SAT_PLATFORM_LINUX)
+		void RegisterWindow( RubyWindow* pWindow ) { m_Windows.push_back( pWindow ); }
+		void UnregisterWindow( RubyWindow* pWindow ) 
+		{
+			const auto itr = std::find( m_Windows.begin(), m_Windows.end(), pWindow );
+			if( itr != m_Windows.end() ) 
+			{
+				m_Windows.erase( itr );
+			}
+		}
+
+		bool TryOpenConnection();
+		xcb_connection_t* GetConnection() const { return m_pConnection; }
+#endif
+
 	private:
 		std::unordered_set<RubyKey> m_Keys;
 		std::unordered_set<RubyMouseButton> m_CurrentMouseButtons;
 		std::vector<RubyMonitor> m_Monitors;
+		
+#if defined(SAT_PLATFORM_LINUX)
+		std::vector<RubyWindow*> m_Windows;
+		xcb_connection_t* m_pConnection = NULL;
+#endif
 	};
 }

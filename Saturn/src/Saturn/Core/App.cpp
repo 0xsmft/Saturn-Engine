@@ -349,7 +349,16 @@ namespace Saturn {
 
 		::CoTaskMemFree( nativePath );
 #elif defined(SAT_PLATFORM_LINUX)
-		Core::BreakDebug();
+		const char* pHomeDir = std::getenv( "HOME");
+		if( !pHomeDir )
+		{
+			pHomeDir = std::getenv( "XDG_CONFIG_HOME" );
+		}
+
+		path = pHomeDir;
+
+		path /= ".config";
+		path /= "Saturn";
 #endif
 
 		if( !std::filesystem::exists( path ) )

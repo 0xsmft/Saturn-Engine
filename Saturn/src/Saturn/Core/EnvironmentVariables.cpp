@@ -51,8 +51,9 @@ namespace Saturn::Auxiliary {
 		}
 
 		return lResult == ERROR_SUCCESS;
-#else
-		return false;
+#elif defined(SAT_PLATFORM_LINUX)
+		const char* pValue = std::getenv( rKey.c_str() );
+		return pValue != nullptr;
 #endif
 	}
 
@@ -103,6 +104,10 @@ namespace Saturn::Auxiliary {
 				Error = NULL;
 			}
 		}
+#elif defined(SAT_PLATFORM_LINUX)
+		const char* pValue = std::getenv( rKey.c_str() );
+		if( pValue )
+			return pValue;
 #endif
 		return "";
 	}
@@ -220,6 +225,9 @@ namespace Saturn::Auxiliary {
 			::LocalFree( Error );
 			Error = NULL;
 		}
+#elif defined(SAT_PLATFORM_LINUX)
+		if( !std::setenv( rKey.c_str(), rValue.c_str(), 1 ) )
+			SAT_CORE_ASSERT( false, "Unable to set environment variable!" );
 #endif
 	}
 

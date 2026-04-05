@@ -188,8 +188,6 @@ namespace Saturn {
 		
 		void* m_pData = nullptr;
 		size_t m_Size = 0;
-		
-		VertexBufferLayout Layout;
 	
 		VkBuffer m_Buffer = nullptr;
 

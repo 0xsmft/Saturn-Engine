@@ -162,7 +162,6 @@ namespace Saturn {
 
 			InstanceInfo.pNext = &Features;
 		}
-		*/
 #endif
 
 		InstanceInfo.enabledExtensionCount = ( uint32_t ) Extensions.size();

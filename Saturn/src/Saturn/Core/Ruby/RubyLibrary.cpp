@@ -4,7 +4,7 @@
 *                                                                                           *
 * MIT License                                                                               *
 *                                                                                           *
-* Copyright (c) 2020 - 2026 BEAST                                                           *
+* Copyright (c) 2020 - 2025 BEAST                                                           *
 *                                                                                           *
 * Permission is hereby granted, free of charge, to any person obtaining a copy              *
 * of this software and associated documentation files (the "Software"), to deal             *
@@ -32,6 +32,9 @@
 #if defined( SAT_PLATFORM_WINDOWS )
 #include <Windows.h>
 #include "Backend/RubyWindowsBackend.h"
+#elif defined(SAT_PLATFORM_LINUX)
+#include "RubyWindow.h"
+#include <xcb/randr.h>
 #endif
 
 namespace Saturn {
@@ -73,7 +76,9 @@ namespace Saturn {
 
 	RubyLibrary::RubyLibrary()
 	{
+#if defined( SAT_PLATFORM_WINDOWS )
 		GetAllMonitors();
+#endif
 	}
 
 	void RubyLibrary::AddMonintor( const RubyMonitor& rMonitor )
@@ -85,12 +90,17 @@ namespace Saturn {
 	{
 #if defined( SAT_PLATFORM_WINDOWS )
 		RubyWindowsBackend::PollEvents();
+#elif defined(SAT_PLATFORM_LINUX)
+		for( auto* pWindow : m_Windows ) 
+		{
+			pWindow->PollEvents();
+		} 
 #endif
 	}
 
 	std::vector<RubyMonitor> RubyLibrary::GetAllMonitors()
 	{
-#if defined(SAT_PLATFORM_WINDOWS)
+#if defined( SAT_PLATFORM_WINDOWS )
 		int Monitors = ::GetSystemMetrics( SM_CMONITORS );
 
 		if( m_Monitors.size() != Monitors )
@@ -101,6 +111,32 @@ namespace Saturn {
 			LPARAM userData = (LPARAM)this;
 			::EnumDisplayMonitors( NULL, NULL, MonitorEnumProc, userData );
 		}
+#elif defined(SAT_PLATFORM_LINUX)
+		xcb_window_t rootWindow = static_cast<xcb_window_t>(
+			reinterpret_cast<uintptr_t>(m_Windows[0]->GetNativeHandle())
+		);
+		xcb_randr_get_monitors_cookie_t cookie = xcb_randr_get_monitors(m_pConnection, rootWindow, 1);
+
+		xcb_randr_get_monitors_reply_t* reply = xcb_randr_get_monitors_reply(m_pConnection, cookie, nullptr);
+
+		int n = xcb_randr_get_monitors_monitors_length(reply);
+		auto it =  xcb_randr_get_monitors_monitors_iterator(reply);
+
+		m_Monitors.clear();
+		m_Monitors.reserve(n);
+
+		for (int i = 0; i < n; i++, xcb_randr_monitor_info_next(&it))
+		{
+			const xcb_randr_monitor_info_t& monitorInfo = *it.data;
+
+			RubyMonitor& rMonitor = m_Monitors.emplace_back();
+			rMonitor.Primary = monitorInfo.primary != 0;
+			rMonitor.MonitorPosition = { monitorInfo.x, monitorInfo.y };
+			rMonitor.MonitorSize = { monitorInfo.width, monitorInfo.height };
+			rMonitor.WorkSize = rMonitor.MonitorSize; // no separate work area in X11
+		}
+
+		std::free(reply);
 #endif
 
 		return m_Monitors;
@@ -119,4 +155,16 @@ namespace Saturn {
 
 		return *( Itr );
 	}
+
+#if defined(SAT_PLATFORM_LINUX)
+	bool RubyLibrary::TryOpenConnection()
+	{
+		if( m_pConnection )
+			return true;
+
+		m_pConnection = xcb_connect( 0, 0 );
+
+		return m_pConnection != nullptr;
+	}
+#endif
 }

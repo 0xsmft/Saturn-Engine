@@ -228,8 +228,9 @@ namespace Saturn {
 	void RubyXcbBackend::Create()
 	{
 		RubyLibrary::Get().RegisterWindow( m_pWindow );
+		SAT_CORE_ASSERT( RubyLibrary::Get().TryOpenConnection() );
 
-		m_pConnection = xcb_connect( 0, 0 );
+		m_pConnection = RubyLibrary::Get().GetConnection();
 
 		const xcb_setup_t      *setup  = xcb_get_setup(m_pConnection);
 		xcb_screen_iterator_t   iter   = xcb_setup_roots_iterator(setup);
@@ -282,12 +283,14 @@ namespace Saturn {
 		// Map the window on the screen.
 		xcb_map_window(m_pConnection, m_Handle);
 		xcb_flush( m_pConnection );
+
+		RubyLibrary::Get().GetAllMonitors();
 	}
 	
 	void RubyXcbBackend::HandleXcbEvents()
 	{
 		xcb_generic_event_t* pEvent = nullptr;
-		while( ( pEvent = xcb_wait_for_event( m_pConnection ) ) )
+		while( ( pEvent = xcb_poll_for_event( m_pConnection ) ) )
 		{
 			switch( pEvent->response_type & ~0x80 ) 
 			{
@@ -435,9 +438,9 @@ namespace Saturn {
 				
 				default: break;
 			}
+
+			std::free( pEvent );
 		}
-		
-		std::free( pEvent );
 	}
 
 	void RubyXcbBackend::FindMouseRestorePoint()
@@ -687,6 +690,9 @@ namespace Saturn {
 	VkResult RubyXcbBackend::CreateVulkanWindowSurface( VkInstance Instance, VkSurfaceKHR* pOutSurface )
 	{
 		VkXcbSurfaceCreateInfoKHR CreateInfo{ VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR };
+		CreateInfo.window = m_Handle;
+		CreateInfo.connection = m_pConnection;
+
 		return vkCreateXcbSurfaceKHR( Instance, &CreateInfo, nullptr, pOutSurface );
 	}
 

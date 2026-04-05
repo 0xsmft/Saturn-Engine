@@ -34,7 +34,11 @@
 
 #if defined(_WIN32)
 #include "Backend/RubyWindowsBackend.h"
+#elif defined(__linux__)
+#include "Backend/RubyXcbBackend.h"
 #endif
+
+#define SAT_PLATFORM_VULKAN_SURFACE_NAME "VK_KHR_xcb_surface"
 
 namespace Saturn {
 
@@ -43,6 +47,8 @@ namespace Saturn {
 	{
 #if defined(_WIN32)
 		m_pDefaultBackend = std::make_unique<RubyWindowsBackend>( rSpec, this );
+#elif defined (SAT_PLATFORM_LINUX) || defined(__linux__)
+		m_pDefaultBackend = std::make_unique<RubyXcbBackend>( rSpec, this );
 #endif
 
 		m_pDefaultBackend->Create();
@@ -60,11 +66,21 @@ namespace Saturn {
 
 	void RubyWindow::PollEvents()
 	{
+#if defined(SAT_PLATFORM_LINUX)
+		auto* pXcbBackend = dynamic_cast<RubyXcbBackend*>( m_pDefaultBackend.get() );
+		if( pXcbBackend ) 
+		{
+			pXcbBackend->PollEvents();
+		}
+#endif
+		
+		/*
 		if( !m_pDefaultBackend->Focused() && m_CursorMode >= RubyCursorMode::Hidden )
 		{
 			SetMouseCursorMode( RubyCursorMode::Normal );
 			SetMouseCursor( RubyCursorType::Arrow );
 		}
+		*/
 	}
 
 	bool RubyWindow::ShouldClose()

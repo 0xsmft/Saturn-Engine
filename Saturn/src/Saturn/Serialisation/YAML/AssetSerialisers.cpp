@@ -429,7 +429,9 @@ namespace Saturn {
 
 		out << YAML::Key << "Attached Shape" << YAML::Value << (int)mesh->GetAttachedShape();
 
-		out << YAML::Key << "Physics Material ID" << YAML::Value << (int)mesh->GetPhysicsMaterial();
+		out << YAML::Key << "Physics Material ID" << YAML::Value << ( uint64_t ) mesh->GetPhysicsMaterial();
+
+		out << YAML::Key << "Import Behaviour" << YAML::Value << ( uint32_t ) mesh->GetImportBehaviour();
 
 		out << YAML::Key << "MaterialRegistry";
 		out << YAML::BeginMap;
@@ -485,6 +487,7 @@ namespace Saturn {
 		const auto meshData = data[ "StaticMesh" ];
 		const auto shapeType = meshData[ "Attached Shape" ].as<int>( 0 );
 		const auto physicsMaterial = meshData[ "Physics Material ID" ].as<uint64_t>( 0 );
+		const auto importBehaviour = meshData[ "Import Behaviour" ].as<uint32_t>( MeshImportBehaviour_Default );
 
 		std::filesystem::path filepath = meshData[ "Filepath" ].as<std::string>();
 
@@ -499,6 +502,7 @@ namespace Saturn {
 
 		mesh->SetAttachedShape( (PhysicsShapeType)shapeType );
 		mesh->SetPhysicsMaterial( physicsMaterial );
+		mesh->Import_SetImportBehaviour( importBehaviour );
 
 		if( physicsMaterial )
 			AssetManager::Get()->RegisterAssetDependency( rAsset->ID, physicsMaterial );
@@ -579,6 +583,8 @@ namespace Saturn {
 
 		out << YAML::Key << "Skeleton Asset ID" << YAML::Value << ( uint64_t ) mesh->GetSkeletonAsset()->ID;
 
+		out << YAML::Key << "Import Behaviour" << YAML::Value << ( uint32_t ) mesh->GetImportBehaviour();
+
 		out << YAML::Key << "MaterialRegistry";
 		out << YAML::BeginMap;
 
@@ -634,6 +640,7 @@ namespace Saturn {
 		const auto shapeType       = meshData[ "Attached Shape" ].as<int>( 0 );
 		const auto physicsMaterial = meshData[ "Physics Material ID" ].as<uint64_t>( 0 );
 		const auto skeletonAsset   = meshData[ "Skeleton Asset ID" ].as<uint64_t>( 0 );
+		const auto importBehaviour = meshData[ "Import Behaviour" ].as<uint32_t>( 0 );
 
 		std::filesystem::path filepath = meshData[ "Filepath" ].as<std::string>();
 
@@ -648,6 +655,7 @@ namespace Saturn {
 
 		mesh->SetAttachedShape( ( PhysicsShapeType ) shapeType );
 		mesh->SetPhysicsMaterial( physicsMaterial );
+		mesh->Import_SetImportBehaviour( importBehaviour );
 
 		if( physicsMaterial )
 			AssetManager::Get()->RegisterAssetDependency( rAsset->ID, physicsMaterial );

@@ -302,7 +302,7 @@ namespace Saturn {
 
 	void AssetManager::RegisterAssetDependency( AssetID assetID, AssetID dependencyID )
 	{
-		// dependencyID == assetID not valid an asset cannot depend on itself.
+		// dependencyID == assetID not valid, an asset cannot depend on itself.
 		SAT_CORE_ASSERT( dependencyID != assetID );
 
 		if( assetID != 0 && dependencyID != 0 )

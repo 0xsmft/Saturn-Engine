@@ -42,7 +42,7 @@ namespace Saturn {
 		// However, the render pass need to know all of the attachments regardless if they already exist or not.
 		std::vector< ImageFormat > Attachments = {};
 
-		std::string Name = "";
+		std::string Name;
 
 		// If this is true then this Render Pass will output to the Swapchain Framebuffer.
 		bool IsSwapchainTarget = false;

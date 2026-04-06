@@ -2600,7 +2600,7 @@ namespace Saturn {
 	void SceneRenderer::OnShaderReloaded( const std::string& rName )
 	{
 		const Ref<Shader> shader = ShaderLibrary::Get().Find( rName );
-		auto& rReference = Renderer::Get()->FindShaderReference( shader->GetShaderHash() );
+		auto& rReference = Renderer::Get()->FindOrCreateShaderReference( shader->GetShaderHash() );
 
 		for( auto& rPipeline : rReference.Pipelines )
 		{

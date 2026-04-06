@@ -182,7 +182,9 @@ namespace Saturn {
 
 		Pipeline->Bind( CommandBuffer );
 
-		vkCmdPushConstants( CommandBuffer, Pipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, PushConstData.Size, PushConstData.Data );
+		SAT_CORE_ASSERT( PushConstData.Data );
+
+		vkCmdPushConstants( CommandBuffer, Pipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, ( uint32_t ) PushConstData.Size, PushConstData.Data );
 
 		material->Bind( CommandBuffer, Pipeline->GetPipelineLayout(), {} );
 
@@ -616,7 +618,7 @@ namespace Saturn {
 #endif
 
 		// ^^^ cleanup from last frame
-		// Actual Begin frame
+		// Actual Begin frame vvvv
 
 		m_CommandBuffer = AllocateCommandBuffer( VulkanContext::Get()->GetCommandPool() );
 
@@ -790,7 +792,37 @@ namespace Saturn {
 		m_ShaderReferences.clear();
 	}
 
-	ShaderReference& Renderer::FindShaderReference( UUID Hash )
+	void Renderer::RemovePipelineReferenceFromShaderRef( UUID Hash, Pipeline* pPipeline )
+	{
+		const auto itr = m_ShaderReferences.find( Hash );
+		if( itr != m_ShaderReferences.end() )
+		{
+			auto& rPipelines = itr->second.Pipelines;
+
+			const auto pipelineItr = std::find( rPipelines.begin(), rPipelines.end(), pPipeline );
+			if( pipelineItr != rPipelines.end() )
+			{
+				rPipelines.erase( pipelineItr );
+			}
+		}
+	}
+
+	void Renderer::RemoveMaterialReferenceFromShaderRef( UUID Hash, Material* pMaterial )
+	{
+		const auto itr = m_ShaderReferences.find( Hash );
+		if( itr != m_ShaderReferences.end() )
+		{
+			auto& rMaterials = itr->second.Materials;
+
+			const auto materialItr = std::find( rMaterials.begin(), rMaterials.end(), pMaterial );
+			if( materialItr != rMaterials.end() )
+			{
+				rMaterials.erase( materialItr );
+			}
+		}
+	}
+
+	ShaderReference& Renderer::FindOrCreateShaderReference( UUID Hash )
 	{
 		return m_ShaderReferences[ Hash ];
 	}

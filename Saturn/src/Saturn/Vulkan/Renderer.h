@@ -47,9 +47,9 @@ namespace Saturn {
 	{
 		UUID Hash = 0;
 
-		std::vector<Ref<Pipeline>> Pipelines;
-		std::vector<Ref<Material>> Materials;
-		//std::vector<Ref<MaterialAssets>> MaterialAssets;
+		// NOTE: Non owning raw ptr, basically a weak ref.
+		std::vector<Pipeline*> Pipelines;
+		std::vector<Material*> Materials;
 
 		~ShaderReference() 
 		{
@@ -129,7 +129,10 @@ namespace Saturn {
 		void RemoveShaderReference( UUID Hash );
 		void ClearShaderReferences();
 
-		ShaderReference& FindShaderReference( UUID Hash );
+		void RemovePipelineReferenceFromShaderRef( UUID Hash, Pipeline* pPipeline );
+		void RemoveMaterialReferenceFromShaderRef( UUID Hash, Material* pMaterial );
+
+		ShaderReference& FindOrCreateShaderReference( UUID Hash );
 #endif
 
 	public:

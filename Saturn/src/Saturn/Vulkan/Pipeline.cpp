@@ -68,6 +68,10 @@ namespace Saturn {
 
 	void Pipeline::Terminate()
 	{
+#if !defined(SAT_DIST)
+		Renderer::Get()->RemovePipelineReferenceFromShaderRef( m_Specification.Shader->GetShaderHash(), this );
+#endif
+
 		if( m_PipelineLayout )
 			vkDestroyPipelineLayout( VulkanContext::Get()->GetDevice(), m_PipelineLayout, nullptr );
 
@@ -385,7 +389,7 @@ namespace Saturn {
 		vkDestroyShaderModule( VulkanContext::Get()->GetDevice(), FragmentModule, nullptr );
 
 #if !defined(SAT_DIST)
-		Renderer::Get()->FindShaderReference( m_Specification.Shader->GetShaderHash() ).Pipelines.push_back( this );
+		Renderer::Get()->FindOrCreateShaderReference( m_Specification.Shader->GetShaderHash() ).Pipelines.push_back( this );
 #endif
 	}
 }

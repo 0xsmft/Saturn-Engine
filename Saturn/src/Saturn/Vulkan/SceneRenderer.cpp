@@ -2588,7 +2588,7 @@ namespace Saturn {
 
 		m_RendererData.JumpFloodEvenPass->EndPass();
 
-		step /= 2;
+		PushConstData.Free();
 	}
 
 	void SceneRenderer::AddScheduledFunction( ScheduledFunc&& rrFunc )

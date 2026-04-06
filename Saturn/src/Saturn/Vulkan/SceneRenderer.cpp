@@ -1662,7 +1662,6 @@ namespace Saturn {
 	{
 		SAT_PF_EVENT();
 
-		const auto& id = mesh->ID;
 		const auto& submeshes = mesh->Submeshes();
 		for( size_t i = 0; i < submeshes.size(); i++ )
 		{
@@ -1693,29 +1692,30 @@ namespace Saturn {
 	{
 		SAT_PF_EVENT();
 
-		const auto& id = mesh->ID;
 		const auto& rSubmeshes = mesh->Submeshes();
 		for( size_t i = 0; i < rSubmeshes.size(); ++i )
 		{
-			StaticMeshKey key = { mesh->ID, materialRegistry, ( uint32_t ) i };
+			const glm::mat4 submeshTransform = transform * rSubmeshes[ i ].Transform;
 
-			auto& rCommand = m_SelectedStaticMeshDrawList[ key ];
-			rCommand.Mesh = mesh;
-			rCommand.SubmeshIndex = ( uint32_t ) i;
-			++rCommand.Instances;
+			const StaticMeshKey key = { mesh->ID, materialRegistry, ( uint32_t ) i, true };
+
+			auto& command = m_SelectedStaticMeshDrawList[ key ];
+			command.Mesh = mesh;
+			command.SubmeshIndex = ( uint32_t ) i;
+			++command.Instances;
 
 			auto& rData = m_RendererData.MeshTransforms[ key ].Data.emplace_back();
 			rData.TransfromBufferR[ 0 ] = {
-				transform[ 0 ][ 0 ], transform[ 1 ][ 0 ], transform[ 2 ][ 0 ], transform[ 3 ][ 0 ]
+				submeshTransform[ 0 ][ 0 ], submeshTransform[ 1 ][ 0 ], submeshTransform[ 2 ][ 0 ], submeshTransform[ 3 ][ 0 ]
 			};
 			rData.TransfromBufferR[ 1 ] = {
-				transform[ 0 ][ 1 ], transform[ 1 ][ 1 ], transform[ 2 ][ 1 ], transform[ 3 ][ 1 ]
+				submeshTransform[ 0 ][ 1 ], submeshTransform[ 1 ][ 1 ], submeshTransform[ 2 ][ 1 ], submeshTransform[ 3 ][ 1 ]
 			};
 			rData.TransfromBufferR[ 2 ] = {
-				transform[ 0 ][ 2 ], transform[ 1 ][ 2 ], transform[ 2 ][ 2 ], transform[ 3 ][ 2 ]
+				submeshTransform[ 0 ][ 2 ], submeshTransform[ 1 ][ 2 ], submeshTransform[ 2 ][ 2 ], submeshTransform[ 3 ][ 2 ]
 			};
 			rData.TransfromBufferR[ 3 ] = {
-				transform[ 0 ][ 3 ], transform[ 1 ][ 3 ], transform[ 2 ][ 3 ], transform[ 3 ][ 3 ]
+				submeshTransform[ 0 ][ 3 ], submeshTransform[ 1 ][ 3 ], submeshTransform[ 2 ][ 3 ], submeshTransform[ 3 ][ 3 ]
 			};
 		}
 	}

@@ -59,6 +59,13 @@ namespace Saturn {
 		uint32_t InstanceOffset = 0;
 	};
 
+	struct SelectedDrawCommand
+	{
+		Ref< StaticMesh > Mesh = nullptr;
+		uint32_t SubmeshIndex = 0;
+		uint32_t TransfromBufferOffset = 0;
+	};
+
 	struct DynamicDrawCommand
 	{
 		Ref<SkeletalMesh> Mesh = nullptr;
@@ -106,20 +113,20 @@ namespace Saturn {
 	{
 		AssetID MeshID = 0;
 		Ref<MaterialRegistry> Registry;
-
 		uint32_t SubmeshIndex;
+		bool SelectedKey = false;
 
 		StaticMeshKey() = default;
-		StaticMeshKey( AssetID meshID, Ref<MaterialRegistry> materialReg, uint32_t submeshIndex ) : MeshID( meshID ), SubmeshIndex( submeshIndex ) { Registry = materialReg; }
+		StaticMeshKey( AssetID meshID, Ref<MaterialRegistry> materialReg, uint32_t submeshIndex, bool selected = false ) : MeshID( meshID ), SubmeshIndex( submeshIndex ), SelectedKey( selected ) { Registry = materialReg; }
 
 		bool operator==( const StaticMeshKey& rKey )
 		{
-			return ( MeshID == rKey.MeshID && Registry == rKey.Registry && SubmeshIndex == rKey.SubmeshIndex );
+			return ( MeshID == rKey.MeshID && Registry == rKey.Registry && SubmeshIndex == rKey.SubmeshIndex && rKey.SelectedKey == SelectedKey );
 		}
 
 		bool operator==( const StaticMeshKey& rKey ) const
 		{
-			return ( MeshID == rKey.MeshID && Registry == rKey.Registry && SubmeshIndex == rKey.SubmeshIndex );
+			return ( MeshID == rKey.MeshID && Registry == rKey.Registry && SubmeshIndex == rKey.SubmeshIndex && rKey.SelectedKey == SelectedKey );
 		}
 	};
 
@@ -612,6 +619,8 @@ namespace Saturn {
 		
 		std::unordered_map< StaticMeshKey, DynamicDrawCommand > m_DynamicShadowMapDrawList;
 		std::unordered_map< StaticMeshKey, DynamicDrawCommand > m_DynamicDrawList;
+
+		//////////////////////////////////////////////////////////////////////////
 
 		std::vector< ScheduledFunc > m_ScheduledFunctions;
 		ScheduledFunc m_LightCullingFunction;

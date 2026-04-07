@@ -2949,6 +2949,10 @@ namespace Saturn {
 		for( int i = 0; i < SHADOW_CASCADE_COUNT; ++i )
 			ShadowCascades[ i ].Framebuffer = nullptr;
 
+		JumpFloodOddFB = nullptr;
+		JumpFloodEvenFB = nullptr;
+		JumpFloodFirstPassFB = nullptr;
+
 		ShadowCascades.clear();
 
 		// Render Passes
@@ -2968,6 +2972,14 @@ namespace Saturn {
 
 		SelectedGeometryPass->Terminate();
 		SelectedGeometryPass = nullptr;
+
+		JumpFloodFirstPass->Terminate();
+		JumpFloodOddPass->Terminate();
+		JumpFloodEvenPass->Terminate();
+
+		JumpFloodOddPass = nullptr;
+		JumpFloodFirstPass = nullptr;
+		JumpFloodEvenPass = nullptr;
 
 		// Pipelines
 		SceneCompositePipeline = nullptr;

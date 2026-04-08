@@ -33,7 +33,7 @@ namespace Saturn {
 	// The enum below is place in its own file so that Mesh.h can include it without including the popup class.
 
 	// Shared enum to avoid having to create a special virtual function to print each error + desc.
-	enum class AssetImportPopupError
+	enum class AssetImportPopupError : uint8_t
 	{
 		None,
 		MeshNoMaterials,

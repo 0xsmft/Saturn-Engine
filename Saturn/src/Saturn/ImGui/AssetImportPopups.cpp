@@ -82,6 +82,78 @@ namespace Saturn {
 	}
 
 	//////////////////////////////////////////////////////////////////////////
+	// AUXILIARY
+
+	std::shared_ptr<Saturn::AssetImportPopupBase> AssetImportPopupAuxiliary::CreatePopupFromAssetTypeReimport( Ref<Asset> asset, const std::filesystem::path& rDestinationPath )
+	{
+		const auto& id = asset->ID;
+		const auto type = asset->Type;
+
+		switch( type )
+		{
+			case AssetType::Texture:
+			{
+				Ref<TextureSourceAsset> textureAsset = AssetManager::Get()->GetAssetAs<TextureSourceAsset>( id );
+				
+				return std::make_shared<Saturn::TextureSourceAssetImportPopup>( textureAsset->GetTextureAbsolutePath(), rDestinationPath );
+			}
+
+			case AssetType::StaticMesh:
+			{
+				Ref<StaticMesh> staticMesh = AssetManager::Get()->GetAssetAs<StaticMesh>( id );
+				return std::make_shared<Saturn::MeshImportPopup>( staticMesh->FilePath(), rDestinationPath );
+			}
+
+			case AssetType::SkeletalMesh:
+			{
+				Ref<SkeletalMesh> skMesh = AssetManager::Get()->GetAssetAs<SkeletalMesh>( id );
+				return std::make_shared<Saturn::MeshImportPopup>( skMesh->FilePath(), rDestinationPath );
+			}
+
+			case AssetType::Material:
+			case AssetType::MaterialInstance:
+				break;
+
+			case AssetType::Sound:
+			{
+				Ref<SoundSpecification> soundSpec = AssetManager::Get()->GetAssetAs<SoundSpecification>( id );
+				return std::make_shared<Saturn::SoundImportPopup>( soundSpec->SoundSourcePath, rDestinationPath );
+			}
+
+			case AssetType::GraphSound:
+			case AssetType::Scene:
+			case AssetType::Prefab:
+			case AssetType::Skeleton:
+			case AssetType::PhysicsMaterial:
+			case AssetType::BehaviourTree:
+			case AssetType::BehaviourTreeMemory:
+			case AssetType::SkeletalAnimation:
+			case AssetType::AnimationController:
+				break;
+
+			case AssetType::Font:
+			{
+				Ref<AluraFont> font = AssetManager::Get()->GetAssetAs<AluraFont>( id );
+				return std::make_shared<Saturn::FontImportPopup>( font->GetFontFilepath(), rDestinationPath );
+			}	
+
+			case AssetType::StyleProfile:
+				break;
+			
+			case AssetType::Unknown:
+			case AssetType::COUNT:
+				SAT_CORE_ASSERT( false, "Invalid type!" );
+				break;
+
+			default:
+				SAT_CORE_ASSERT( false, "Unhandled case!" );
+				break;
+		}
+
+		return std::make_shared<Saturn::UnknownImportPopup>( "" );
+	}
+
+	//////////////////////////////////////////////////////////////////////////
 	// UNKNWON POPUP
 
 	UnknownImportPopup::UnknownImportPopup( const std::filesystem::path& rAssetToImportPath )
@@ -228,24 +300,14 @@ namespace Saturn {
 
 			if( ImGui::Button( "Import" ) )
 			{
-				const auto id = AssetManager::Get()->CreateAsset( AssetType::Texture );
-				auto asset = AssetManager::Get()->FindAsset( id );
-				auto assetPath = m_DestinationPath / m_AssetToImportPath.filename();
-
-				// Copy the source.
-				std::filesystem::copy_file( m_AssetToImportPath, assetPath, std::filesystem::copy_options::overwrite_existing );
-
-				// Replace Extension for texture asset
-				auto stxPath = assetPath;
-				stxPath.replace_extension( ".stx" );
-				asset->SetAbsolutePath( stxPath );
-
-				// Create the asset.
-				auto texAsset = Ref<TextureSourceAsset>::Create( asset, assetPath, ( TextureLoadFlags ) m_ImportBehaviour );
-
-				// Save the asset
-				TextureSourceAssetSerialiser tsas;
-				tsas.Serialise( texAsset );
+				if( !m_IsReimport )
+				{
+					CreateNew();
+				}
+				else
+				{
+					Reimport();
+				}
 
 				PopupModified = true;
 			}
@@ -270,6 +332,46 @@ namespace Saturn {
 
 			ImGui::EndPopup();
 		}
+	}
+
+	void TextureSourceAssetImportPopup::CreateNew()
+	{
+		const auto id = AssetManager::Get()->CreateAsset( AssetType::Texture );
+		auto asset = AssetManager::Get()->FindAsset( id );
+		auto assetPath = m_DestinationPath / m_AssetToImportPath.filename();
+
+		// Copy the source:
+		std::filesystem::copy_file( m_AssetToImportPath, assetPath, std::filesystem::copy_options::overwrite_existing );
+
+		// Replace Extension for texture asset
+		auto stxPath = assetPath;
+		stxPath.replace_extension( ".stx" );
+		asset->SetAbsolutePath( stxPath );
+
+		// Create the asset.
+		auto texAsset = Ref<TextureSourceAsset>::Create( asset, assetPath, ( TextureLoadFlags ) m_ImportBehaviour );
+
+		// Save the asset
+		TextureSourceAssetSerialiser tsas;
+		tsas.Serialise( texAsset );
+	}
+
+	void TextureSourceAssetImportPopup::Reimport()
+	{
+		auto asset = AssetManager::Get()->GetAssetAs<TextureSourceAsset>( m_ReimportID );
+
+		// Act as if we deleted the asset (so it can delete it;s source file)
+		asset->OnDelete();
+
+		// Copy the source:
+		auto assetPath = m_DestinationPath / m_AssetToImportPath.filename();
+		std::filesystem::copy_file( m_AssetToImportPath, assetPath, std::filesystem::copy_options::overwrite_existing );
+
+		asset->OnReimport( assetPath );
+
+		// Save the asset
+		TextureSourceAssetSerialiser tsas;
+		tsas.Serialise( asset );
 	}
 
 	//////////////////////////////////////////////////////////////////////////

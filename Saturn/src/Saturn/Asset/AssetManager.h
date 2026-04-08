@@ -266,6 +266,7 @@ namespace Saturn {
 		VFSAssetImporter m_Importer;
 #endif
 
+
 		Ref<AssetRegistry> m_Assets = nullptr;
 	private:
 		friend class AssetBundle;

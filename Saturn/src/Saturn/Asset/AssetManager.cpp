@@ -68,7 +68,7 @@ namespace Saturn {
 		m_AssetTypeTraits[ AssetType::StaticMesh ]          = { .CanBeReimported = true, .HasLoadSettings = false };
 		m_AssetTypeTraits[ AssetType::SkeletalMesh ]        = { .CanBeReimported = true, .HasLoadSettings = false };
 		m_AssetTypeTraits[ AssetType::Material ]            = { .CanBeReimported = false, .HasLoadSettings = true };
-		m_AssetTypeTraits[ AssetType::Sound ]               = { .CanBeReimported = true, .HasLoadSettings = false };
+		m_AssetTypeTraits[ AssetType::Sound ]               = { .CanBeReimported = false, .HasLoadSettings = false };
 		m_AssetTypeTraits[ AssetType::GraphSound ]          = { .CanBeReimported = false, .HasLoadSettings = true };
 		m_AssetTypeTraits[ AssetType::Scene ]               = { .CanBeReimported = false, .HasLoadSettings = false };
 		m_AssetTypeTraits[ AssetType::Prefab ]              = { .CanBeReimported = false, .HasLoadSettings = false };
@@ -82,7 +82,7 @@ namespace Saturn {
 		m_AssetTypeTraits[ AssetType::StyleProfile ]        = { .CanBeReimported = false, .HasLoadSettings = true };
 
 		const size_t count = ( size_t ) AssetType::Unknown - 1;
-		SAT_CORE_ASSERT( count != m_AssetTypeTraits.size() );
+		SAT_CORE_ASSERT( count == m_AssetTypeTraits.size() );
 	}
 
 	void AssetManager::Terminate()

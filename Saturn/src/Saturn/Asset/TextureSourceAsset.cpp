@@ -204,4 +204,17 @@ namespace Saturn {
 		TemporaryBuffer.Free();
 #endif
 	}
+
+	void TextureSourceAsset::OnDelete()
+	{
+		if( std::filesystem::exists( m_AbsolutePath ) )
+			std::filesystem::remove( m_AbsolutePath );
+	}
+
+	void TextureSourceAsset::OnReimport( const std::filesystem::path& rPath )
+	{
+		m_AbsolutePath = rPath;
+		LoadRawTexture();
+	}
+
 }

@@ -59,6 +59,15 @@ namespace Saturn {
 		void ReadFromVFS();
 
 	public:
+		// Asset vvvv
+#if !defined(SAT_DIST)
+		virtual void OnDelete() override;
+		// Asset ^^^
+
+		void OnReimport( const std::filesystem::path& rPath );
+#endif
+
+	public:
 		uint32_t Width()  const { return m_Width; }
 		uint32_t Height() const { return m_Height; }
 		uint32_t Channels() const { return m_Channels; }

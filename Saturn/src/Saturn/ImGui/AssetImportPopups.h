@@ -170,6 +170,11 @@ namespace Saturn {
 
 		virtual void Initialise();
 		virtual void OnImGuiRender();
+
+	private:
+		void CreateNew();
+		void Reimport();
+		std::string GetLastModificationDate();
 	};
 
 	class FontImportPopup : public AssetImportPopupBase 
@@ -180,6 +185,10 @@ namespace Saturn {
 
 		virtual void Initialise();
 		virtual void OnImGuiRender();
+	
+	private:
+		void CreateNew();
+		void Reimport();
 	};
 
 }

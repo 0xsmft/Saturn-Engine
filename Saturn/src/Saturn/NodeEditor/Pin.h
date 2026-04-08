@@ -84,63 +84,6 @@ namespace Saturn {
 		Custom
 	};
 
-	inline std::string_view PinTypeToString( PinType type )
-	{
-		switch( type )
-		{
-			case PinType::Flow:
-				return "Flow";
-			case PinType::Bool:
-				return "Bool";
-			case PinType::Int:
-				return "Int";
-			case PinType::Float:
-				return "Float";
-			case PinType::String:
-				return "String";
-			case PinType::Class:
-				return "Class";
-			case PinType::Function:
-				return "Function";
-			case PinType::Delegate:
-				return "Delegate";
-			case PinType::Material_Color:
-				return "Material_Color";
-			case PinType::Material_TextureColor:
-				return "Material_TextureColor";
-			case PinType::AssetID:
-				return "AssetHandle";
-			
-			default: return "";
-		}
-	}
-
-	inline PinType StringToPinType( const std::string& rString )
-	{
-		if( rString == "Flow" )
-			return PinType::Flow;
-		else if( rString == "Bool" )
-			return PinType::Bool;
-		else if( rString == "Int" )
-			return PinType::Int;
-		else if( rString == "Float" )
-			return PinType::Float;
-		else if( rString == "String" )
-			return PinType::String;
-		else if( rString == "Class" )
-			return PinType::Class;
-		else if( rString == "Function" )
-			return PinType::Function;
-		else if( rString == "Material_Color" )
-			return PinType::Material_Color;
-		else if( rString == "Material_TextureColor" )
-			return PinType::Material_TextureColor;
-		else if( rString == "AssetHandle" )
-			return PinType::AssetID;
-		else
-			return PinType::Class;
-	}
-
 	class NodeEditorNodeBase;
 
 	class Pin : public RefTarget

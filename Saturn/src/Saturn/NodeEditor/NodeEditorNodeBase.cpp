@@ -180,6 +180,8 @@ namespace Saturn {
 
 }
 
+//////////////////////////////////////////////////////////////////////////
+
 #include "Saturn/GameFramework/Core/EngineGenerated.h"
 
 static Saturn::SClass* RStaticLnkNodeEditorNodeBase()

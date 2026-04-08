@@ -168,6 +168,17 @@ namespace Saturn {
 		ed::EditorContext* m_OldValue = nullptr;
 	};
 
+	// Asset version...
+	// 256 (0-255) possible (major/breaking) changes,
+	// please do not add new "versions" just because a small thing has changed,
+	// only add new versions if a big breaking change has occurred OR
+	// something new has to be serialised, the same applies with omissions.
+	//
+	// NOTE: This enum is not a bitfield! It is expected if we upgrade/downgrade we gain/lose the modifications that
+	// are new/old.
+	// 
+	// e.g. if this asset version is 0 and we upgrade to Breakpoints (2) we get Subgraphs (1) as well. 
+	//
 	enum class NodeEditorVersion : uint8_t
 	{
 		// <0.2.5
@@ -179,7 +190,7 @@ namespace Saturn {
 		// Breakpoint feature added, 0.2.5
 		Breakpoints,
 
-		//^^^ only add new versions above here....
+		//^^^ only add new versions above here.... and not below here vvv
 		Latest = Breakpoints,
 		Lowest = BeforeVersionWasAdded
 	};

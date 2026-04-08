@@ -213,6 +213,12 @@ namespace Saturn {
 		const std::unordered_map<AssetID, std::unordered_set<AssetID>> GetPureAssetDependencies() const;
 		const std::unordered_set<AssetID> GetPureAssetDependenciesForAsset( const Ref<Asset> asset ) const;
 
+	public:
+		AssetTypeTraits& GetAssetTypeTrait( AssetType type );
+		const AssetTypeTraits& GetAssetTypeTrait( AssetType type ) const;
+
+		[[nodiscard]] bool IsAssetTypeReimportable( AssetType type ) const;
+
 	private:
 		template<typename Ty>
 		Ref<Ty> ImportAssetAs( Ref<AssetRegistry> TargetRegistry, AssetID id )
@@ -239,6 +245,9 @@ namespace Saturn {
 		}
 
 	private:
+		void CreateAssetTypeTraitsTable();
+
+	private:
 #if !defined(SAT_DIST)
 		// An Asset in our registry -> unordered_set of AssetDependency who depend on Asset
 		// Memory Dependency
@@ -248,6 +257,9 @@ namespace Saturn {
 		// Asset Dependency (asset interdependence)
 		//                 AssetID                     WhatIDependOn
 		std::unordered_map<AssetID, std::unordered_set<AssetID>> m_AssetDependencies;
+
+		// AssetTypeTraits for Runtime information.
+		std::unordered_map<AssetType, AssetTypeTraits> m_AssetTypeTraits;
 
 		AssetImporter m_Importer;
 #else

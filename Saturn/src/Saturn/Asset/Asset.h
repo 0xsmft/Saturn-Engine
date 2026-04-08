@@ -239,6 +239,12 @@ namespace Saturn {
 			return AssetType::Unknown;
 	}
 
+	struct AssetTypeTraits
+	{
+		uint8_t CanBeReimported : 1 = false;
+		uint8_t HasLoadSettings : 1 = false;
+	};
+
 	// NOTE: The Asset class has no reflection data, but we can allow other assets to have reflection data, so thats why we are based from SObject
 	class Asset : public SObject
 	{

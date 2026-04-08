@@ -57,7 +57,32 @@ namespace Saturn {
 
 		AssetManagerSerialiser ars;
 		ars.Deserialise();
+
+		CreateAssetTypeTraitsTable();
 #endif
+	}
+
+	void AssetManager::CreateAssetTypeTraitsTable()
+	{
+		m_AssetTypeTraits[ AssetType::Texture ]             = { .CanBeReimported = true, .HasLoadSettings = false };
+		m_AssetTypeTraits[ AssetType::StaticMesh ]          = { .CanBeReimported = true, .HasLoadSettings = false };
+		m_AssetTypeTraits[ AssetType::SkeletalMesh ]        = { .CanBeReimported = true, .HasLoadSettings = false };
+		m_AssetTypeTraits[ AssetType::Material ]            = { .CanBeReimported = false, .HasLoadSettings = true };
+		m_AssetTypeTraits[ AssetType::Sound ]               = { .CanBeReimported = true, .HasLoadSettings = false };
+		m_AssetTypeTraits[ AssetType::GraphSound ]          = { .CanBeReimported = false, .HasLoadSettings = true };
+		m_AssetTypeTraits[ AssetType::Scene ]               = { .CanBeReimported = false, .HasLoadSettings = false };
+		m_AssetTypeTraits[ AssetType::Prefab ]              = { .CanBeReimported = false, .HasLoadSettings = false };
+		m_AssetTypeTraits[ AssetType::Skeleton ]            = { .CanBeReimported = false, .HasLoadSettings = false };
+		m_AssetTypeTraits[ AssetType::PhysicsMaterial ]     = { .CanBeReimported = false, .HasLoadSettings = false };
+		m_AssetTypeTraits[ AssetType::BehaviourTree ]       = { .CanBeReimported = false, .HasLoadSettings = true };
+		m_AssetTypeTraits[ AssetType::BehaviourTreeMemory ] = { .CanBeReimported = false, .HasLoadSettings = true };
+		m_AssetTypeTraits[ AssetType::SkeletalAnimation ]   = { .CanBeReimported = true, .HasLoadSettings = false };
+		m_AssetTypeTraits[ AssetType::AnimationController ] = { .CanBeReimported = false, .HasLoadSettings = true };
+		m_AssetTypeTraits[ AssetType::Font ]                = { .CanBeReimported = true, .HasLoadSettings = false };
+		m_AssetTypeTraits[ AssetType::StyleProfile ]        = { .CanBeReimported = false, .HasLoadSettings = true };
+
+		const size_t count = ( size_t ) AssetType::Unknown - 1;
+		SAT_CORE_ASSERT( count != m_AssetTypeTraits.size() );
 	}
 
 	void AssetManager::Terminate()
@@ -345,6 +370,29 @@ namespace Saturn {
 		}
 
 		return map;
+	}
+
+	AssetTypeTraits& AssetManager::GetAssetTypeTrait( AssetType type )
+	{
+		const auto itr = m_AssetTypeTraits.find( type );
+
+		SAT_CORE_ASSERT( itr != m_AssetTypeTraits.end(), "Type does not exist in the map! You may have forgotten to add it to the type traits map to begin with." );
+
+		return itr->second;
+	}
+
+	const AssetTypeTraits& AssetManager::GetAssetTypeTrait( AssetType type ) const
+	{
+		const auto itr = m_AssetTypeTraits.find( type );
+
+		SAT_CORE_ASSERT( itr != m_AssetTypeTraits.end(), "Type does not exist in the map! You may have forgotten to add it to the type traits map to begin with." );
+
+		return itr->second;
+	}
+
+	bool AssetManager::IsAssetTypeReimportable( AssetType type ) const
+	{
+		return GetAssetTypeTrait( type ).CanBeReimported;
 	}
 
 #else

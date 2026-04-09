@@ -162,8 +162,12 @@ namespace Saturn {
 
 		glm::vec2 CalcTextSize( float fontSize, const std::string& rText );
 
-		std::filesystem::path GetFontFilepath() const { return m_Filepath; }
+		std::filesystem::path GetFontFilepath() const { return m_FontFilepath; }
 		std::string GetFontName() const { return m_Name; }
+
+#if !defined(SAT_DIST)
+		void OnReimport( const std::filesystem::path& rPath );
+#endif
 
 	private:
 		void CreateOrLoadAtlas( bool overrideCache = false );
@@ -173,7 +177,8 @@ namespace Saturn {
 
 	private:
 		std::string m_Name;
-		std::filesystem::path m_Filepath;
+		// The path to the font source i.e. MyFont.ttf
+		std::filesystem::path m_FontFilepath;
 		AluraFontData m_AluraFontData{};
 		Ref<Texture2D> m_TextureAtlas;
 		

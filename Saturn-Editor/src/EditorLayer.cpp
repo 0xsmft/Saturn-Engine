@@ -211,6 +211,25 @@ namespace Saturn {
 		m_TitleBar.AddOnExitFunction( SAT_BIND_EVENT_FN( OnTitlebarExit ) );
 
 		//////////////////////////////////////////////////////////////////////////
+		// Load shader bundle (if possible)
+		const std::filesystem::path editorShaderBundlePath = Application::Get()->GetAppDataFolder() / "EditorShaderBundle.ssb";
+
+		if( std::filesystem::exists( editorShaderBundlePath ) )
+		{
+			if( const auto result = ShaderBundle::ReadBundle( ShaderBundleType::Editor ); result != ShaderBundleResult::Success )
+			{
+				SAT_CORE_WARN( "Failed to read editor shader bundle! Engine will compile them." );
+			}
+			else
+			{
+				SAT_CORE_INFO( "Read engine shader bundle!" );
+				SAT_CORE_WARN( "NB: No shaders will be reloaded! Please reload the shaders from the editor!" );
+			}
+		}
+		else
+			SAT_CORE_WARN( "No editor shader bundle exists! Engine will compile them." );
+
+		//////////////////////////////////////////////////////////////////////////
 		// Scene loading and Scene Renderer
 		m_SceneRenderer = Ref<SceneRenderer>::Create( SceneRendererFlag_MasterInstance | SceneRendererFlag_RenderGrid_DEPRECATED );
 
@@ -2521,8 +2540,37 @@ namespace Saturn {
 				Auxiliary::EndTreeNode();
 			}
 
-			if( Auxiliary::TreeNode( "Shaders", false ) )
+			if( Auxiliary::TreeNode( "Engine Shaders", false ) )
 			{
+				ImGui::BeginHorizontal( "##edbundleopt" );
+
+				if( ImGui::Button( "Force package engine shaders" ) )
+				{
+					if( const auto result = ShaderBundle::BundleShaders( ShaderBundleType::Editor ); result != ShaderBundleResult::Success ) 
+					{
+						EditorNotification notification{ .Text = "Failed to package editor shader bundle!", .Lifetime = 5.0f };
+						PushNotification( notification );
+					}
+					else
+					{
+						EditorNotification notification{ .Text = "Packaged editor shader bundle!", .Lifetime = 5.0f };
+						PushNotification( notification );
+					}
+				}
+
+				ImGui::Spring();
+
+				if( ImGui::Button( "Delete ShaderBundle" ) )
+				{
+					const std::filesystem::path shaderBundleFilePath = Application::Get()->GetAppDataFolder() / "EditorShaderBundle.ssb";
+					if( std::filesystem::exists( shaderBundleFilePath ) )
+					{
+						std::filesystem::remove( shaderBundleFilePath );
+					}
+				}
+
+				ImGui::EndHorizontal();
+
 				ImGui::BeginVertical( "shadersV" );
 
 				for( auto& [name, shader] : ShaderLibrary::Get().GetShaders() )
@@ -2535,6 +2583,12 @@ namespace Saturn {
 
 					ImGui::Text( name.c_str() );
 
+					if( ImGui::BeginItemTooltip() )
+					{
+						ImGui::Text( "Hash: %llu", shader->GetShaderHash() );
+						ImGui::EndTooltip();
+					}
+
 					ImGui::PopItemWidth();
 
 					ImGui::NextColumn();
@@ -2545,9 +2599,20 @@ namespace Saturn {
 						{
 							Application::Get()->GetWindow()->FlashAttention();
 
-							MessageBoxInfo msgBox = { .Title = "Error", .Text = std::format( "Shader '{0}' failed to recompile. Defaulting back to last successful build.", shader->GetName() ) };
+							MessageBoxInfo msgBox = { .Title = "Error", .Text = std::format( "Shader '{0}' failed to recompile. Defaulting back to last successful build. Check debug console for more information!", shader->GetName() ) };
 							PushMessageBox( msgBox );
 						}
+						else
+						{
+							EditorNotification notification{ .Text = "Hot reloaded shader!", .Lifetime = 5.0f };
+							PushNotification( notification );
+						}
+					}
+
+					if( ImGui::Button( "View" ) )
+					{
+						std::filesystem::path absPath = std::filesystem::absolute( shader->GetFilepath() );
+						Application::Get()->OpenNativeFileExplorer( absPath, true );
 					}
 
 					ImGui::PopItemWidth();

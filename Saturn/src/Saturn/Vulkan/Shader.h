@@ -411,6 +411,8 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		ShaderSourceMap& GetShaderSources() { return m_ShaderSources; }
 		const ShaderSourceMap& GetShaderSources() const { return m_ShaderSources; }
+		
+		const std::filesystem::path& GetFilepath() const { return m_Filepath; }
 #endif
 
 		const SpvSourceMap& GetSpvCode() const { return m_SpvCode; }

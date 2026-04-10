@@ -895,12 +895,17 @@ namespace Saturn {
 		m_VulkanRanges.clear();
 		m_PushConstants.clear();
 
+		// Compile...
 		if( !CompileGlslToSpvAssembly() )
 		{
+			// ... actually never mind, we didn't compile successfully
+			// so set it back to what it was beforehand.
 			m_SpvCode              = OldSpvMap;
 			m_DescriptorSets       = OldDescriptorSets;
 			m_VulkanRanges         = OldPushConstsRange;
 			m_PushConstants        = OldPushContsts;
+			m_FileContents		   = OldfileContents;
+			m_FileSize			   = OldFileSize;
 
 			SAT_CORE_ERROR( "Shader hot reloading failed. Shader did not compile successfully!" );
 

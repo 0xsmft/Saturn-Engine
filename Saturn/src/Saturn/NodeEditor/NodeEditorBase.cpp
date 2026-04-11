@@ -450,7 +450,7 @@ namespace Saturn {
 
 	void NodeEditorBase::AddNode( SharedPtr<NodeEditorNodeBase> node )
 	{
-		if( m_State == NodeEditorState_Loading )
+		if( IsStateFlagSet( NodeEditorState_Loading ) )
 			return;
 
 		m_Nodes[ node->ID ] = node;

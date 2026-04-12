@@ -51,6 +51,7 @@ namespace Saturn {
 	{
 		m_TriangleVertices.clear();
 		m_LineVertices.clear();
+		m_Colors.clear();
 
 		m_pRenderer2D = pRenderer2D;
 	}

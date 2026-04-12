@@ -47,7 +47,7 @@ namespace Saturn {
 		float TextureIndex;
 	};
 
-	struct LineDrawCommand
+	struct LineVertex
 	{
 		glm::vec3 Position;
 		glm::vec4 Color;
@@ -109,8 +109,8 @@ namespace Saturn {
 		void AddTriangleLineBuffer();
 
 		QuadVertex*& GetQuadBuffer();
-		LineDrawCommand*& GetLineBuffer();
-		LineDrawCommand*& GetTriangleLineBuffer();
+		LineVertex*& GetLineBuffer();
+		LineVertex*& GetTriangleLineBuffer();
 
 	private:
 		Ref<Pass> m_TargetRenderPass = nullptr;
@@ -132,15 +132,15 @@ namespace Saturn {
 		//////////////////////////////////////////////////////////////////////////
 		// LINES
 		std::vector< VertexBufferPerFrame > m_LineVertexBuffers;
-		std::vector< std::vector< LineDrawCommand* > > m_CurrentLineBases;
-		std::vector<LineDrawCommand*> m_CurrentLinePtr;
+		std::vector< std::vector< LineVertex* > > m_CurrentLineBases;
+		std::vector<LineVertex*> m_CurrentLineVertexBufferPtr;
 
 		size_t m_LineBufferIndex = 0llu;
 
 		// Triangle (part of the lines)
 		std::vector< VertexBufferPerFrame > m_TriangleVertexBuffers;
-		std::vector< std::vector<LineDrawCommand*> > m_CurrentTriangleBases;
-		std::vector<LineDrawCommand*> m_CurrentTrianglePtr;
+		std::vector< std::vector<LineVertex*> > m_CurrentTriangleBases;
+		std::vector<LineVertex*> m_CurrentTrianglePtr;
 
 		size_t m_LineTriangleBufferIndex = 0llu;
 

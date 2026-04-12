@@ -49,21 +49,34 @@ namespace Saturn {
 
 	void RecastDebugVisualisation::BeginRender( Renderer2D* pRenderer2D )
 	{
+		m_TriangleVertices.clear();
+		m_LineVertices.clear();
+
 		m_pRenderer2D = pRenderer2D;
 	}
 
 	void RecastDebugVisualisation::EndRender()
 	{
+		for( size_t i = 0; i < m_TriangleVertices.size(); i += 3 )
+		{
+			m_pRenderer2D->SubmitTriangle( 
+				m_TriangleVertices[ i ], 
+				m_TriangleVertices[ i + 1 ], 
+				m_TriangleVertices[ i + 2 ],
+				m_Colors[ i ]
+			);
+		}
+
+		for( size_t i = 0; i < m_LineVertices.size(); i += 2 )
+		{
+			m_pRenderer2D->SubmitLine( 
+				m_LineVertices[ i ], 
+				m_LineVertices[ i + 1 ], 
+				glm::vec4{ 1.0f, 0.0f, 0.0f, 1.0f }
+			);
+		}
+
 		m_pRenderer2D = nullptr;
-	}
-
-	void RecastDebugVisualisation::depthMask( bool state )
-	{
-		// we only support drawing lines
-	}
-
-	void RecastDebugVisualisation::texture( bool state )
-	{
 	}
 
 	void RecastDebugVisualisation::begin( duDebugDrawPrimitives prim, float size /*= 1.0f */ )
@@ -71,7 +84,7 @@ namespace Saturn {
 		SAT_CORE_ASSERT( m_pRenderer2D, "[RecastDebugVisualisation] BeginRender must be called before Recast's begin funcition!" );
 
 		m_CurrentPolygonMode = prim;
-		m_Scale = size;
+		m_Scale = size; 
 	}
 
 	static glm::vec4 UnpackColor( unsigned int color ) 
@@ -119,19 +132,18 @@ namespace Saturn {
 	{
 		switch( m_CurrentPolygonMode )
 		{
+			default:
 			case DU_DRAW_POINTS:
 				break;
 
 			case DU_DRAW_LINES:
-				m_pRenderer2D->SubmitSingleLine( rPosition, rColor );
+				m_LineVertices.push_back( rPosition );
 				break;
 
 			case DU_DRAW_QUADS:
-				m_pRenderer2D->SubmitQuad( rPosition, rColor, glm::vec2{ m_Scale } );
-				break;
-
 			case DU_DRAW_TRIS:
-				m_pRenderer2D->SubmitVertex( rPosition, rColor );
+				m_TriangleVertices.push_back( rPosition );
+				m_Colors.push_back( rColor );
 				break;
 		}
 	}

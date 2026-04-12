@@ -45,8 +45,8 @@ namespace Saturn {
 		void EndRender();
 
 	public:
-		void depthMask( bool state ) override;
-		void texture( bool state ) override;
+		void depthMask( bool state ) override {}
+		void texture( bool state ) override {}
 
 		void begin( duDebugDrawPrimitives prim, float size = 1.0f ) override;
 
@@ -64,6 +64,11 @@ namespace Saturn {
 		Renderer2D* m_pRenderer2D = nullptr;
 		duDebugDrawPrimitives m_CurrentPolygonMode = DU_DRAW_LINES;
 		float m_Scale = 1.0f;
+
+		std::vector<glm::vec3> m_LineVertices;
+		std::vector<glm::vec3> m_TriangleVertices;
+
+		std::vector<glm::vec4> m_Colors;
 	};
 	
 }

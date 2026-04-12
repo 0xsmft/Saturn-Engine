@@ -86,31 +86,16 @@ namespace Saturn {
 		m_pCurrentQuadPtr.resize( 1 );
 
 		// Lines
-		m_LineVertexBuffers.resize( 1 );
-		m_LineVertexBuffers[ 0 ].resize( MAX_FRAMES_IN_FLIGHT );
+		AddLineBuffer();
+		m_CurrentLineVertexBufferPtr.resize( 1 );
 
-		m_CurrentLineBases.resize( 1 );
-		m_CurrentLineBases[ 0 ].resize( MAX_FRAMES_IN_FLIGHT );
-
-		m_CurrentLinePtr.resize( 1 );
-		
-		m_TriangleVertexBuffers.resize( 1 );
-		m_TriangleVertexBuffers[ 0 ].resize( MAX_FRAMES_IN_FLIGHT );
-
-		m_CurrentTriangleBases.resize( 1 );
-		m_CurrentTriangleBases[ 0 ].resize( MAX_FRAMES_IN_FLIGHT );
+		AddTriangleLineBuffer();
 		m_CurrentTrianglePtr.resize( 1 );
 
 		for( int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++ )
 		{
 			m_QuadVertexBuffers[ 0 ][ i ] = Ref<VertexBuffer>::Create( s_MaxVertices * sizeof( QuadVertex ) );
 			m_CurrentQuadBases[ 0 ][ i ] = new QuadVertex[ s_MaxVertices ];
-
-			m_LineVertexBuffers[ 0 ][ i ] = Ref<VertexBuffer>::Create( s_MaxLineVertices * sizeof( LineDrawCommand ) );
-			m_CurrentLineBases[ 0 ][ i ] = new LineDrawCommand[ s_MaxLineVertices ];
-
-			m_TriangleVertexBuffers[ 0 ][ i ] = Ref<VertexBuffer>::Create( s_MaxSolidLineVertices * sizeof( LineDrawCommand ) );
-			m_CurrentTriangleBases[ 0 ][ i ] = new LineDrawCommand[ s_MaxSolidLineVertices ];
 		}
 
 		// Setup Index Buffer
@@ -314,19 +299,20 @@ namespace Saturn {
 
 	void Renderer2D::AddLineBuffer()
 	{
+		SAT_CORE_WARN( "BUFF OVR DRW!" );
 		SAT_CORE_INFO( "AddLineBuffer, VBs:{0}, Bases:{1}", m_LineVertexBuffers.size(), m_CurrentLineBases.size() );
 
 		std::vector< Ref<VertexBuffer> >& rNewVB = m_LineVertexBuffers.emplace_back();
-		std::vector< LineDrawCommand* >& rNewBase = m_CurrentLineBases.emplace_back();
+		std::vector< LineVertex* >& rNewBase = m_CurrentLineBases.emplace_back();
 
 		rNewVB.resize( MAX_FRAMES_IN_FLIGHT );
 		rNewBase.resize( MAX_FRAMES_IN_FLIGHT );
 
 		for( auto i = 0; i < MAX_FRAMES_IN_FLIGHT; i++ )
 		{
-			const uint64_t allocSize = s_MaxLineVertices * sizeof( LineDrawCommand );
+			const uint64_t allocSize = s_MaxLineIndices * sizeof( LineVertex );
 			rNewVB[ i ] = Ref<VertexBuffer>::Create( allocSize );
-			rNewBase[ i ] = new LineDrawCommand[ s_MaxLineVertices ];
+			rNewBase[ i ] = new LineVertex[ s_MaxLineIndices ];
 		}
 	}
 
@@ -335,16 +321,16 @@ namespace Saturn {
 		SAT_CORE_INFO( "AddTriangleLineBuffer, VBs:{0}, Bases:{1}", m_TriangleVertexBuffers.size(), m_CurrentTriangleBases.size() );
 
 		std::vector< Ref<VertexBuffer> >& rNewVB = m_TriangleVertexBuffers.emplace_back();
-		std::vector< LineDrawCommand* >& rNewBase = m_CurrentTriangleBases.emplace_back();
+		std::vector< LineVertex* >& rNewBase = m_CurrentTriangleBases.emplace_back();
 
 		rNewVB.resize( MAX_FRAMES_IN_FLIGHT );
 		rNewBase.resize( MAX_FRAMES_IN_FLIGHT );
 
 		for( auto i = 0; i < MAX_FRAMES_IN_FLIGHT; i++ )
 		{
-			const uint64_t allocSize = s_MaxSolidLineVertices * sizeof( LineDrawCommand );
+			const uint64_t allocSize = s_MaxSolidLineIndices * sizeof( LineVertex );
 			rNewVB[ i ] = Ref<VertexBuffer>::Create( allocSize );
-			rNewBase[ i ] = new LineDrawCommand[ s_MaxSolidLineVertices ];
+			rNewBase[ i ] = new LineVertex[ s_MaxSolidLineIndices ];
 		}
 	}
 
@@ -363,33 +349,29 @@ namespace Saturn {
 		return m_pCurrentQuadPtr[ m_QuadBufferIndex ];
 	}
 
-	LineDrawCommand*& Renderer2D::GetLineBuffer()
+	LineVertex*& Renderer2D::GetLineBuffer()
 	{
 		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
 		
-		const uint32_t indicesPerBuffer = s_MaxLineIndices;
-		const uint32_t linesPerBuffer = indicesPerBuffer / 2u;
-
 		m_LineBufferIndex = m_LineIndexCount / s_MaxLineIndices;
 
+		// Reallocate if needed.
 		if( m_LineBufferIndex >= m_LineVertexBuffers.size() )
 		{
 			AddLineBuffer();
-			m_CurrentLinePtr.emplace_back();
-			m_CurrentLinePtr[ m_LineBufferIndex ] = m_CurrentLineBases[ m_LineBufferIndex ][ frame ];
+		
+			m_CurrentLineVertexBufferPtr.emplace_back();
+			m_CurrentLineVertexBufferPtr[ m_LineBufferIndex ] = m_CurrentLineBases[ m_LineBufferIndex ][ frame ];
 		}
 
-		return m_CurrentLinePtr[ m_LineBufferIndex ];
+		return m_CurrentLineVertexBufferPtr[ m_LineBufferIndex ];
 	}
 
-	LineDrawCommand*& Renderer2D::GetTriangleLineBuffer()
+	LineVertex*& Renderer2D::GetTriangleLineBuffer()
 	{
 		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
 
-		const uint32_t indicesPerBuffer = s_MaxLineIndices;
-		const uint32_t linesPerBuffer = indicesPerBuffer / 2u;
-
-		m_LineTriangleBufferIndex = m_TriangleIndexCount / s_MaxLineIndices;
+		m_LineTriangleBufferIndex = m_TriangleIndexCount / s_MaxSolidLineIndices;
 		
 		if( m_LineTriangleBufferIndex >= m_TriangleVertexBuffers.size() )
 		{
@@ -796,7 +778,7 @@ namespace Saturn {
 
 	void Renderer2D::SubmitVertex( const glm::vec3& rV0, const glm::vec4& rColor )
 	{
-		SAT_CORE_ASSERT( m_TriangleIndexCount < s_MaxLineIndices );
+//		SAT_CORE_ASSERT( m_TriangleIndexCount < s_MaxLineIndices );
 
 		auto& prCurrentTrianglePtr = GetTriangleLineBuffer();
 
@@ -822,8 +804,8 @@ namespace Saturn {
 			m_pCurrentQuadPtr[ i ] = m_CurrentQuadBases[ i ][ frame ];
 
 		m_LineIndexCount = 0;
-		for( size_t i = 0; i < m_CurrentLinePtr.size(); i++ )
-			m_CurrentLinePtr[ i ] = m_CurrentLineBases[ i ][ frame ];
+		for( size_t i = 0; i < m_CurrentLineVertexBufferPtr.size(); i++ )
+			m_CurrentLineVertexBufferPtr[ i ] = m_CurrentLineBases[ i ][ frame ];
 
 		m_TriangleIndexCount = 0;
 		for( size_t i = 0; i < m_CurrentTrianglePtr.size(); i++ )
@@ -881,7 +863,7 @@ namespace Saturn {
 
 			if( dataSize )
 			{
-				m_QuadVertexBuffers[ i ][ frame ]->Reallocate( m_CurrentQuadBases[ i ][ frame ], dataSize );
+				m_QuadVertexBuffers[ i ][ frame ]->SetData( m_CurrentQuadBases[ i ][ frame ], dataSize );
 
 				for( uint32_t j = 0; j < m_Textures.size(); j++ )
 				{
@@ -923,10 +905,10 @@ namespace Saturn {
 
 		for( size_t i = 0; i <= m_LineBufferIndex; i++ )
 		{
-			const uint32_t dataSize = ( uint32_t ) ( ( uint8_t* ) m_CurrentLinePtr[ i ] - ( uint8_t* ) m_CurrentLineBases[ i ][ frame ] );
+			const uint32_t dataSize = ( uint32_t ) ( ( uint8_t* ) m_CurrentLineVertexBufferPtr[ i ] - ( uint8_t* ) m_CurrentLineBases[ i ][ frame ] );
 			if( dataSize )
 			{
-				m_LineVertexBuffers[ i ][ frame ]->Reallocate( m_CurrentLineBases[ i ][ frame ], dataSize );
+				m_LineVertexBuffers[ i ][ frame ]->SetData( m_CurrentLineBases[ i ][ frame ], dataSize );
 
 				m_LineMaterial->Bind( m_CommandBuffer, m_LinePipeline->GetPipelineLayout(), {} );
 
@@ -960,7 +942,7 @@ namespace Saturn {
 			const uint32_t dataSize = ( uint32_t ) ( ( uint8_t* ) m_CurrentTrianglePtr[ i ] - ( uint8_t* ) m_CurrentTriangleBases[ i ][ frame ] );
 			if( dataSize )
 			{
-				m_TriangleVertexBuffers[ i ][ frame ]->Reallocate( m_CurrentTriangleBases[ i ][ frame ], dataSize );
+				m_TriangleVertexBuffers[ i ][ frame ]->SetData( m_CurrentTriangleBases[ i ][ frame ], dataSize );
 
 				m_LineMaterial->Bind( m_CommandBuffer, m_TrianglePipeline->GetPipelineLayout(), {} );
 

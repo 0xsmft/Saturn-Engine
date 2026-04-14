@@ -582,6 +582,12 @@ namespace Saturn {
 			}
 		}
 
+		uint32_t maxPushConstantSize = 0;
+		for( const auto& rDeviceProp : VulkanContext::Get()->GetPhysicalDeviceProperties() )
+		{
+			maxPushConstantSize = glm::max( maxPushConstantSize, rDeviceProp.DeviceProps.limits.maxPushConstantsSize );
+		}
+
 		for ( const auto& pc : Resources.push_constant_buffers )
 		{
 			const auto& Name = pc.name;
@@ -591,6 +597,8 @@ namespace Saturn {
 
 			uint32_t Size = ( uint32_t ) Compiler.get_declared_struct_size( BufferType );
 			uint32_t OffsetFromLastPC = 0;
+
+			SAT_CORE_ASSERT( Size < maxPushConstantSize, "Declared push constant is bigger than the device maximum!" );
 
 			// Make sure the buffer offset is size + offset for because that's what vulkan needs when we render.
 			if( m_VulkanRanges.size() )
@@ -837,7 +845,7 @@ namespace Saturn {
 		CompilerOptions.SetTargetEnvironment( shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_2 );
 		CompilerOptions.SetTargetSpirv( shaderc_spirv_version_1_5 );
 
-		// TODO: Shader cache and shader hot reloading.
+		// TODO: Shader cache.
 		Timer CompileTimer;
 	
 		for ( auto&& [key, src] : m_ShaderSources )

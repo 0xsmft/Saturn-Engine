@@ -72,6 +72,7 @@ namespace Saturn {
 		bool UseStencilTest = false;
 		bool HasColorAttachment = true;
 		bool UseSpecializationInfo = false;
+		bool EnableBlending = true;
 		CullMode CullMode = CullMode::Back;
 		VkFrontFace FrontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 		VkPolygonMode PolygonMode = VK_POLYGON_MODE_FILL;

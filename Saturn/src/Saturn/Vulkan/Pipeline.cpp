@@ -274,7 +274,7 @@ namespace Saturn {
 		{
 			VkPipelineColorBlendAttachmentState ColorBlendAttachmentState = {};
 			ColorBlendAttachmentState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-			ColorBlendAttachmentState.blendEnable = VK_TRUE;
+			ColorBlendAttachmentState.blendEnable = m_Specification.EnableBlending ? VK_TRUE : VK_FALSE;
 			
 			switch( m_Specification.BlendMode )
 			{

@@ -349,6 +349,8 @@ namespace Saturn {
 				DrawAddComponents<BehaviourTreeComponent>( "Behaviour Tree", selections[ 0 ] );
 			}
 
+			DrawAddComponents<TextComponent>( "Text", selections[ 0 ] );
+
 			ImGui::EndPopup();
 		}
 	}
@@ -1704,6 +1706,46 @@ namespace Saturn {
 			}
 
 			if( modified ) m_Context->MarkDirty();
+		} );
+
+		DrawComponent<TextComponent>( "Text", entity, [ & ]( TextComponent& rTextComp ) 
+		{
+			bool modified = false;
+
+			ImGui::Text( "Text" );
+			ImGui::SameLine();
+			if( Auxiliary::InputText( "##textinput", &rTextComp.Text ) )
+				modified = true;
+
+			if( Auxiliary::DrawColorVec4Control( "Color", rTextComp.Color ) )
+				modified = true;
+		
+			{
+				bool open = false;
+
+				Auxiliary::ScopedDisabledFlag disabledIfRT( m_Context->IsRuntimeRunning() );
+
+				ImGui::TextDisabled( "%llu", rTextComp.FontAssetID.AssetID );
+
+				ImGui::SameLine();
+
+				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0F, 24.0F ) ) )
+				{
+					m_CurrentFinderType = AssetType::Font;
+					open = true;
+
+					if( rTextComp.FontAssetID != 0 )
+						m_CurrentAssetID = rTextComp.FontAssetID;
+				}
+
+				ImGui::SameLine();
+
+				if( Auxiliary::DrawAssetFinder( m_CurrentFinderType, &open, m_CurrentAssetID ) )
+				{
+					rTextComp.FontAssetID = m_CurrentAssetID;
+					modified = true;
+				}
+			}
 		} );
 	}
 

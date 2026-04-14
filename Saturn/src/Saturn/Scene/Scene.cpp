@@ -555,6 +555,24 @@ namespace Saturn {
 				);
 			}
 		}
+
+		const auto textEntities = GetAllEntitiesWith<TextComponent>();
+		for( const auto& rEntity : textEntities )
+		{
+			const TextComponent& rTextComp = rEntity->GetComponent<TextComponent>();
+			const TransformComponent& rTc = rEntity->GetComponent<TransformComponent>();
+
+			Ref<AluraFont> font = AssetManager::Get()->GetAssetAs<AluraFont>( rTextComp.FontAssetID );
+			if( !font )
+			{
+				font = AssetManager::Get()->GetAssetAs<AluraFont>( Project::GetActiveProject()->GetDefaultFontAsset() );
+
+				// If we get here then I'll need to add an editor backup font!
+				SAT_CORE_ASSERT( font );
+			}
+
+			sceneRenderer->GetRenderer2D()->SubmitString( rTextComp.Text, font, rTc.GetTransform(), rTextComp.Color );
+		}
 #endif
 
 		if( m_RuntimeState == RuntimeState::Suspended )

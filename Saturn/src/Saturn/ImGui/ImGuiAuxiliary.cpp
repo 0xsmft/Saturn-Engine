@@ -202,7 +202,7 @@ namespace Saturn::Auxiliary {
 		return modified;
 	}
 
-	extern bool DrawColorVec3Control( const std::string& rLabel, glm::vec3& values, float resetValue /*= 0.0f*/, bool useColumns /*= true*/, float columnWidth /*= 100.0f */ )
+	bool DrawColorVec3Control( const std::string& rLabel, glm::vec3& values, float resetValue /*= 0.0f*/, bool useColumns /*= true*/, float columnWidth /*= 100.0f */ )
 	{
 		bool modified = false;
 
@@ -213,6 +213,23 @@ namespace Saturn::Auxiliary {
 		ImGui::SameLine();
 
 		modified |= ImGui::ColorEdit3( "##picker", glm::value_ptr( values ) );
+
+		ImGui::PopID();
+
+		return modified;
+	}
+
+	bool DrawColorVec4Control( const std::string& rLabel, glm::vec4& values, float resetValue /*= 0.0f*/, bool useColumns /*= true*/, float columnWidth /*= 100.0f */ )
+	{
+		bool modified = false;
+
+		ImGui::PushID( rLabel.c_str() );
+
+		ImGui::Text( rLabel.c_str() );
+
+		ImGui::SameLine();
+
+		modified |= ImGui::ColorEdit4( "##picker", glm::value_ptr( values ) );
 
 		ImGui::PopID();
 

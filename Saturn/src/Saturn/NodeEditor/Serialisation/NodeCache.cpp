@@ -33,6 +33,8 @@
 
 #include "Saturn/Project/Project.h"
 
+#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
+
 #if defined(SAT_DIST)
 #include "Saturn/Core/VirtualFS.h"
 #include "Saturn/Core/MemoryStream.h"
@@ -205,6 +207,12 @@ namespace Saturn {
 		const unsigned char Magic[ 4 ] = { 0x2E, 0x4E, 0x43, 0x45 };
 		NodeEditorVersion Version = NodeEditorVersion::Lowest;
 	};
+
+	struct NodeCacheTaskCacheHeader
+	{
+		// .NTC
+		const unsigned char Magic[ 4 ] = { 0x2E, 0x4E, 0x54, 0x43 };
+	};
 	
 	template<typename IStream>
 	[[nodiscard]] static bool ReadNodeCacheEdHeader( NodeCacheEditorHeader& rHeader, IStream& rStream )
@@ -280,7 +288,9 @@ namespace Saturn {
 
 		NodeCacheEditorHeader header{};
 		header.AssetID = nodeEditor->GetAssetID();
-		header.Version = nodeEditor->GetVersion();
+		header.Version = NodeEditorVersion::Latest;
+
+		nodeEditor->m_Version = NodeEditorVersion::Latest;
 
 		WriteNodeCacheEdHeader( header, fout );
 
@@ -291,6 +301,18 @@ namespace Saturn {
 #endif
 
 		nodeEditor->SerialiseData( fout, DISTRIBUTION_SERIALSATION );
+
+		// Now write task cache
+		NodeCacheTaskCacheHeader tcHeader{};
+		RawSerialisation::WriteObject( tcHeader, fout );
+
+		const auto& rList = nodeEditor->m_TaskCache.GetMasterListForSerialisation();
+
+		RawSerialisation::WriteObject( rList.size(), fout );
+		for( const auto& rTask : rList )
+		{
+			RawSerialisation::WriteObject( rTask->GetClass()->GetHash(), fout );
+		}
 
 		fout.close();
 	}
@@ -357,6 +379,44 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		stream.close();
 #endif
+
+		if( header.Version >= NodeEditorVersion::TaskCache )
+		{
+			NodeCacheTaskCacheHeader tcHeader{};
+			RawSerialisation::ReadObject( tcHeader, stream );
+
+			if( std::memcmp( tcHeader.Magic, ".NTC", 4 ) != 0 )
+			{
+				SAT_CORE_ERROR( "NodeTaskCache header missmatch!" );
+				
+				// Return true here because the task cache can just be re-created after we load fully.
+				// It is not necessary for a NodeEditor to have a valid task cache*
+				// *unless we are on Dist.
+				return true;
+			}
+
+			auto& rList = nodeEditor->m_TaskCache.GetMasterListForSerialisation();
+
+			size_t size = 0llu;
+			RawSerialisation::ReadObject( size, stream );
+
+			rList.reserve( size );
+			
+			for( size_t i = 0; i < size; ++i )
+			{
+				uint64_t classHash = 0llu;
+				RawSerialisation::ReadObject( classHash, stream );
+
+				NodeEditorTaskBase* taskObj = dynamic_cast<NodeEditorTaskBase*>( ClassMetadataHandler::Get().CreateClassObject( classHash ) );
+				if( taskObj )
+				{
+					// NB: Converted to Ref<>
+					rList.push_back( taskObj );
+				}
+				else
+					SAT_CORE_WARN( "[NodeCache]: TaskCache: ClassHash: {0}, invalid! Not creating task from an invalid class hash" );
+			}
+		}
 
 		return true;
 	}

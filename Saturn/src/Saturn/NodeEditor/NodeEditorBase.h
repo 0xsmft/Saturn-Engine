@@ -31,6 +31,7 @@
 #include "NodeEditorCompilationStatus.h"
 #include "NodeEditorNodeBase.h"
 #include "NodeEditorVariable.h"
+#include "NodeTaskCache.h"
 #include "Link.h"
 
 #include "Saturn/Core/VariableGuard.h"
@@ -190,8 +191,11 @@ namespace Saturn {
 		// Breakpoint feature added, 0.2.5
 		Breakpoints,
 
+		// Node editor task cache added, 0.2.5
+		TaskCache,
+
 		//^^^ only add new versions above here.... and not below here vvv
-		Latest = Breakpoints,
+		Latest = TaskCache,
 		Lowest = BeforeVersionWasAdded
 	};
 
@@ -376,6 +380,11 @@ namespace Saturn {
 		std::map<UUID, SharedPtr<NodeEditorNodeBase>> m_Nodes;
 		std::vector<Ref<Link>> m_Links;
 
+#if !defined( SAT_DIST )
+		// Temporary task cache, only exists for serialisation.
+		NodeTaskCache m_TaskCache;
+#endif
+
 		Ref<NodeEditorRuntime> m_Runtime;
 
 		AssetID m_AssetID = 0;
@@ -388,7 +397,7 @@ namespace Saturn {
 		// User has full authority over this node editor by default
 		NodeEditorUserAuthority m_Privileges = NodeEditorUserAuthority::Full;
 
-		NodeEditorVersion m_Version = NodeEditorVersion::Lowest;
+		NodeEditorVersion m_Version = NodeEditorVersion::Latest;
 
 	private:
 		friend class NodeEditorCache;

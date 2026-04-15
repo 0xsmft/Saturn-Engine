@@ -617,7 +617,9 @@ namespace Saturn {
 			// Find and bump asset version.
 			Ref<Asset> correspondingAsset = AssetManager::Get()->FindAsset( m_AssetID );
 			correspondingAsset->Version = SAT_CURRENT_VERSION;
-			m_Version = NodeEditorVersion::Latest;
+
+			// NB: Already done by WriteNodeEditorCache!
+//			m_Version = NodeEditorVersion::Latest;
 
 			// #SaveAssetManagerOnJT
 			AssetManager::Get()->Save();

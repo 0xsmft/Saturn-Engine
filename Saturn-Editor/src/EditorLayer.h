@@ -53,18 +53,19 @@ namespace Saturn {
 	
 	class GameModule;
 	class SceneTravelEvent;
+	class SandboxNodeEditorViewer;
 
 	class EditorLayer : public Layer
 	{
 	public:
 		EditorLayer();
-		~EditorLayer();
+		virtual ~EditorLayer();
 
-		void OnUpdate( Timestep time ) override;
-		void OnImGuiRender() override;
-		void OnEvent( Event& rEvent ) override;
-		void OnAttach() override;
-		void OnDetach() override;
+		virtual void OnUpdate( Timestep time ) override;
+		virtual void OnImGuiRender() override;
+		virtual void OnEvent( Event& rEvent ) override;
+		virtual void OnAttach() override;
+		virtual void OnDetach() override;
 		
 	private:
 		void SaveFileAs();
@@ -224,6 +225,8 @@ namespace Saturn {
 		Ref<AssetManager> m_AssetManager;
 		Ref<SceneRenderer> m_SceneRenderer;
 		Ref<SceneRenderer> m_CameraPreviewSceneRenderer;
+
+		Ref<SandboxNodeEditorViewer> m_SandboxNodeEditorViewer;
 
 		Ref<GlobalUndoRedoGroup> m_GlobalUndoRedoGroup = nullptr;
 		std::unique_ptr<EntitySelectionManager> m_SelectionManager;

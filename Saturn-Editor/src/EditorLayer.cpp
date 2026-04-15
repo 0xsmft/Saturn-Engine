@@ -89,6 +89,9 @@
 
 #include <Saturn/AI/Navigation/NavBoundsEntity.h>
 
+#include <Saturn/NodeEditor/UI/NodeEditor.h>
+#include <Saturn/NodeEditor/SandboxNodeEditor/SandboxNodeEditorViewer.h>
+
 #include <Saturn/Project/Premake.h>
 
 #include <Saturn/Runtime/RuntimeEvents.h>
@@ -283,6 +286,7 @@ namespace Saturn {
 	EditorLayer::~EditorLayer()
 	{
 		m_ImGuiWindowManager = nullptr;
+		m_SandboxNodeEditorViewer = nullptr;
 
 		delete g_AluraCanvas;
 		g_AluraCanvas = nullptr;
@@ -2425,6 +2429,17 @@ namespace Saturn {
 				Application::Get()->OpenNativeFileExplorer( outPath );
 			}
 
+			ImGui::SeparatorText( "Debug" );
+			if( ImGui::MenuItem( "Open sandbox node editor" ) )
+			{
+				if( !m_SandboxNodeEditorViewer )
+					m_SandboxNodeEditorViewer = Ref<SandboxNodeEditorViewer>::Create();
+
+				m_SandboxNodeEditorViewer->ForceOpenWindow();
+
+				m_ImGuiWindowManager->AddWindow( m_SandboxNodeEditorViewer, "SndboxVwr" );
+			}
+
 			ImGui::EndMenu();
 		}
 
@@ -2471,7 +2486,7 @@ namespace Saturn {
 				}
 
 				ImGui::EndMenu();
-			} 
+			}
 		}
 
 		// Draw Project name text and box.

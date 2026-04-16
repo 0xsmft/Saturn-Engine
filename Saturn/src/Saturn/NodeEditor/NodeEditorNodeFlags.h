@@ -26,52 +26,23 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "BehaviourTreeRootNode.h"
-
-#if !defined( SAT_DIST )
-#include "Saturn/NodeEditor/UI/NodeEditor.h"
-#else
-#include "Saturn/NodeEditor/NodeEditorBase.h"
-#endif
+#pragma once
 
 namespace Saturn {
 
-	BehaviourTreeRootNode::BehaviourTreeRootNode()
-		: BehaviourTreeNodeBase( "Root Node" )
+	enum NodeEditorNodeFlags : uint8_t
 	{
-		CreateNode();
-	}
+		// No flags
+		NodeFlags_Default = 0,
 
-	void BehaviourTreeRootNode::CreateNode()
-	{
-		ExecutionType = NodeExecutionType::BehaviourTreeRootNode;
+		// If this flag is set the the node can not be deleted.
+		NodeFlags_Irremovable = BIT( 0 ),
 
-#if !defined(SAT_DIST)
-		Flags |= NodeFlags_Irremovable;
-		Color = ImColor( 48, 128, 255, 100 );
-		RenderType = NodeRenderType::Tree;
-#endif
+		// If this node has a value which is known at evaluation time/compile time then it lets the task know that there is no need to Tick.
+		NodeFlags_ConstantEvaluated = BIT( 1 ),
 
-		Outputs.emplace_back( Ref<Pin>::Create( "Out", PinType::Flow, PinKind::Output ) );
-
-		for( auto& rOutput : Outputs )
-		{
-			rOutput->RenderType = PinRenderType::Tree;
-		}
-	}
-
-	BehaviourTreeRootNode::~BehaviourTreeRootNode()
-	{
-	}
-
-	NodeEvaluationState BehaviourTreeRootNode::EvaluateNode( NodeEditorRuntime* pEvaluator )
-	{	
-		return NodeEvaluationState::Evaluated;
-	}
-
+		// Debug flag: temporary flag to let the debugging system know that this Node broke debug.
+		NodeFlags_BrokeDebug = BIT( 2 ),
+	};
+	
 }
-
-#include "Saturn/GameFramework/Core/EngineGenerated.h"
-
-SAT_X31_CREATE_AUTO_REG( BehaviourTreeRootNode );

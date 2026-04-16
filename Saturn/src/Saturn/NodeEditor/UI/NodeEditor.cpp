@@ -680,7 +680,7 @@ namespace Saturn {
 		if( itr != m_Nodes.end() )
 		{
 			auto& rNode = ( itr->second );
-			if( rNode->CanBeDeleted )
+			if( !rNode->IsFlagSet( NodeFlags_Irremovable ) )
 			{
 				std::vector<NodeEditorNodeBase*> children;
 				for( const auto& [id, rCandidate] : m_Nodes )
@@ -1108,7 +1108,7 @@ namespace Saturn {
 					{
 						auto& rNode = ( itr->second );
 
-						if( rNode->CanBeDeleted )
+						if( !rNode->IsFlagSet( NodeFlags_Irremovable ) )
 						{
 							if( ed::AcceptDeletedItem() )
 							{

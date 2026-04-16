@@ -48,7 +48,7 @@ namespace Saturn {
 		ExecutionType = NodeExecutionType::AnimGraphOutputNode;
 
 #if !defined(SAT_DIST)
-		CanBeDeleted = false;
+		Flags |= NodeFlags_Irremovable;
 		Color = ImColor( 48, 128, 255, 100 );
 		RenderType = NodeRenderType::Blueprint;
 #endif

@@ -53,7 +53,7 @@ namespace Saturn {
 	{
 		ExecutionType = NodeExecutionType::SoundOutput;
 #if !defined(SAT_DIST)
-		CanBeDeleted = false;
+		Flags |= NodeFlags_Irremovable;
 		Color = ImColor( 237, 202, 5, 255 );
 //		Color = ImColor( 255, 128, 128 );
 #endif

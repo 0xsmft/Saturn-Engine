@@ -68,7 +68,7 @@ namespace Saturn {
 		SharedPtr<BehaviourTreeNodeEditor> behaviourTreeEditor = m_NodeEditor.As<BehaviourTreeNodeEditor>();
 		SharedPtr<NodeEditorNodeBase> OutputNode = m_NodeEditor->FindNode( m_Info.OutputNodeID );
 		
-		m_NodeEditor->SetState( NodeEditorState::Evaluating );
+		m_NodeEditor->SetState( NodeEditorState_Evaluating );
 
 		behaviourTreeEditor->TraverseBehaviourTree( OutputNode );
 
@@ -84,7 +84,7 @@ namespace Saturn {
 	void BehaviourTreeEditorEvaluator::TerminateEvaluation()
 	{
 		m_EvaluationComplete = false;
-		m_NodeEditor->SetState( NodeEditorState::Editing );
+		m_NodeEditor->SetState( NodeEditorState_Editing );
 	}
 
 }

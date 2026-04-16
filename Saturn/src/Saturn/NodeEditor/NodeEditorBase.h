@@ -229,6 +229,7 @@ namespace Saturn {
 		bool IsLinked( UUID pinID );
 		Ref<Pin> FindPin( UUID id );
 		Ref<Link> FindLink( UUID id );
+		Ref<Link> FindLinkByPin( UUID id );
 		SharedPtr<NodeEditorNodeBase> FindNode( UUID id );
 		SharedPtr<NodeEditorNodeBase> FindNode( const std::string& rName );
 		SharedPtr<NodeEditorNodeBase> FindNodeByPin( UUID id );
@@ -348,6 +349,8 @@ namespace Saturn {
 		const std::vector<Ref<Link>>& GetLinks() const { return m_Links; }
 		std::vector<Ref<Link>>& GetLinks() { return m_Links; }
 
+		const NodeTaskCache GetNodeTaskCache() const { return m_TaskCache; }
+
 		void AddNode( SharedPtr<NodeEditorNodeBase> node );
 
 		bool IsOpen() const { return m_WindowOpen; }
@@ -362,9 +365,6 @@ namespace Saturn {
 #else
 		virtual void DeserialiseData( std::istream& rStream );
 #endif
-
-	protected:
-		Ref<Link> FindLinkByPin( UUID id );
 
 	protected:
 		std::string m_Name;

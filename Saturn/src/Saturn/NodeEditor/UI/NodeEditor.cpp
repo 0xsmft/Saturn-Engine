@@ -1000,7 +1000,7 @@ namespace Saturn {
 						{
 							bool shouldDelete = false;
 
-							if( IsLinked( EndPin->ID ) && !EndPin->AcceptMultipleLinks )
+							if( IsLinked( EndPin->ID ) && !EndPin->IsFlagSet( PinFlag_AcceptMultipleLinks ) )
 							{
 								showLabel( "+ Replace old link with current link", ImColor( 32, 45, 32, 180 ) );
 								shouldDelete = true;
@@ -1331,7 +1331,8 @@ namespace Saturn {
 							{
 								ImGui::Text( "%s", rOutput->Name.c_str() );
 								ImGui::Text( "ID/%llu", rOutput->ID );
-								ImGui::Text( "Accepts Multiple Links %i", rOutput->AcceptMultipleLinks );
+
+								ImGui::Text( "Flags %ui", rOutput->PinFlags );
 							}
 
 							Auxiliary::EndTreeNode();
@@ -1344,7 +1345,8 @@ namespace Saturn {
 							{
 								ImGui::Text( "%s", rInput->Name.c_str() );
 								ImGui::Text( "ID/%llu", rInput->ID );
-								ImGui::Text( "Accepts Multiple Links %i", rInput->AcceptMultipleLinks );
+								
+								ImGui::Text( "Accepts Multiple Links %ui", rInput->PinFlags );
 							}
 
 							Auxiliary::EndTreeNode();

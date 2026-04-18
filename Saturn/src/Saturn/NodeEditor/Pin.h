@@ -33,6 +33,8 @@
 
 #include "Link.h"
 
+#include "Saturn/Serialisation/Raw/RawSerialisationBase.h"
+
 #include <string>
 #include <imgui_node_editor.h>
 #include <glm/glm.hpp>
@@ -47,9 +49,9 @@ namespace ax {
 
 namespace Saturn {
 
-	enum class PinIconType : unsigned int;
+	enum class PinIconType : uint32_t;
 
-	enum class PinType
+	enum class PinType : uint32_t
 	{
 		Flow,
 		Bool,
@@ -71,17 +73,24 @@ namespace Saturn {
 		Vec4
 	};
 
-	enum class PinKind
+	enum class PinKind : uint32_t
 	{
 		Output,
 		Input
 	};
 
-	enum class PinRenderType
+	enum class PinRenderType : uint32_t
 	{
 		Blueprint,
 		Tree,
 		Custom
+	};
+
+	enum PinFlag : uint8_t
+	{
+		PinFlag_DefaultSet = 0,
+		PinFlag_AcceptMultipleLinks = BIT( 0 ),
+		PinFlag_RequiredForEvaluation = BIT( 1 ),
 	};
 
 	class NodeEditorNodeBase;
@@ -90,8 +99,8 @@ namespace Saturn {
 	{
 	public:
 		Pin() = default;
-		Pin( const std::string& rName, PinType type, PinKind kind );
-		Pin( UUID id, const std::string& rName, PinType type, UUID nodeID );
+		Pin( const std::string& rName, PinType type, PinKind kind, PinFlag flags = PinFlag_DefaultSet );
+		Pin( UUID id, const std::string& rName, PinType type, UUID nodeID, PinFlag flags = PinFlag_DefaultSet );
 
 		virtual ~Pin() = default;
 
@@ -104,7 +113,7 @@ namespace Saturn {
 		PinType        Type = PinType::Flow;
 		PinKind        Kind = PinKind::Input;
 		PinRenderType  RenderType = PinRenderType::Blueprint;
-		bool           AcceptMultipleLinks = false;
+		uint8_t		   PinFlags = PinFlag_DefaultSet;
 
 	public:
 		PinIconType GetIconType() const;
@@ -112,6 +121,8 @@ namespace Saturn {
 
 		void RenderInput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked );
 		void RenderOutput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked );
+
+		bool IsFlagSet( PinFlag flag ) const { return ( flag & PinFlags ) != 0; }
 
 	public:
 		virtual void Serialise( std::ofstream& rStream ) const;

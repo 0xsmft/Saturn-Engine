@@ -39,13 +39,13 @@
 
 namespace Saturn {
 
-	Pin::Pin( const std::string& rName, PinType type, PinKind kind )
-		: Name( rName ), Type( type ), Kind( kind ), Node( nullptr ), ID()
+	Pin::Pin( const std::string& rName, PinType type, PinKind kind, PinFlag flags /*= PinFlag_DefaultSet*/ )
+		: Name( rName ), Type( type ), Kind( kind ), Node( nullptr ), ID(), PinFlags( flags )
 	{
 	}
 
-	Pin::Pin( UUID id, const std::string& rName, PinType type, UUID nodeID )
-		: Node( nullptr ), Name( rName ), Type( type ), Kind( PinKind::Input ), ID( id )
+	Pin::Pin( UUID id, const std::string& rName, PinType type, UUID nodeID, PinFlag flags /*= PinFlag_DefaultSet*/ )
+		: Node( nullptr ), Name( rName ), Type( type ), Kind( PinKind::Input ), ID( id ), PinFlags( flags )
 	{
 	}
 

@@ -28,74 +28,25 @@
 
 #pragma once
 
-#include "Saturn/NodeEditor/NodeEditorBlueprintNode.h"
+#include "NodeEditorVariable.h"
 
 namespace Saturn {
 
-	//
-	// SandboxNodeEditorOutputNode
-	//
-	SCLASS()
-	class SandboxNodeEditorOutputNode : public NodeEditorBlueprintNode
+	class NodeEditorVariableLocator
 	{
-		SAT_DECLARE_CLASS( SandboxNodeEditorOutputNode, NodeEditorBlueprintNode );
 	public:
-		SandboxNodeEditorOutputNode();
-		virtual ~SandboxNodeEditorOutputNode() = default;
+		NodeEditorVariableLocator() = default;
+		~NodeEditorVariableLocator() = default;
 
-		virtual NodeEditorTaskBase* ConvertToTask();
+		void Set( const void* pAddress )
+		{
+			m_pVariable = pAddress;
+		}
+
+		const void* Get() const { return m_pVariable; }
 
 	private:
-		void CreateNode();
-	};
-
-	//
-	// SandboxNodeEditorNode
-	// 
-	// Example node implementation (consteval)
-	//
-	// Stores a number...
-	//
-	SCLASS()
-	class SandboxNodeEditorNode : public NodeEditorBlueprintNode
-	{
-		SAT_DECLARE_CLASS( SandboxNodeEditorNode, NodeEditorBlueprintNode );
-	public:
-		SandboxNodeEditorNode();
-		virtual ~SandboxNodeEditorNode() = default;
-
-		uint64_t GetSpecialValue() const { return m_SpecialSandboxValue; }
-
-		virtual NodeEditorTaskBase* ConvertToTask();
-
-	protected:
-		uint64_t m_SpecialSandboxValue = 0xC0DEBABE;
-
-	private:
-		void CreateNode();
+		const void* m_pVariable = nullptr;
 	};
 	
-	//
-	// SandboxNodeExampleNode
-	//
-	// Example implementation.
-	//
-	SCLASS()
-	class SandboxNodeExampleNode : public SandboxNodeEditorNode
-	{
-		SAT_DECLARE_CLASS( SandboxNodeExampleNode, SandboxNodeEditorNode );
-	public:
-		SandboxNodeExampleNode();
-		virtual ~SandboxNodeExampleNode() = default;
-
-		uint64_t GetAnotherNumber() const { return m_AnotherNumber; }
-
-		virtual NodeEditorTaskBase* ConvertToTask();
-
-	protected:
-		uint64_t m_AnotherNumber = 0xDEADBEEF;
-
-	private:
-		void CreateNode();
-	};
 }

@@ -311,7 +311,10 @@ namespace Saturn {
 		RawSerialisation::WriteObject( rList.size(), fout );
 		for( const auto& rTask : rList )
 		{
+			RawSerialisation::WriteObjectChecked( rTask->GetNodeID(), fout );
 			RawSerialisation::WriteObject( rTask->GetClass()->GetHash(), fout );
+
+			rTask->Serialise( fout );
 		}
 
 		fout.close();
@@ -376,10 +379,6 @@ namespace Saturn {
 		nodeEditor->m_Version = header.Version;
 		nodeEditor->DeserialiseData( stream );
 
-#if !defined(SAT_DIST)
-		stream.close();
-#endif
-
 		if( header.Version >= NodeEditorVersion::TaskCache )
 		{
 			NodeCacheTaskCacheHeader tcHeader{};
@@ -404,19 +403,28 @@ namespace Saturn {
 			
 			for( size_t i = 0; i < size; ++i )
 			{
+				UUID nodeID = 0llu;
+				RawSerialisation::ReadObjectChecked( nodeID, stream );
+
 				uint64_t classHash = 0llu;
 				RawSerialisation::ReadObject( classHash, stream );
 
 				NodeEditorTaskBase* taskObj = dynamic_cast<NodeEditorTaskBase*>( ClassMetadataHandler::Get().CreateClassObject( classHash ) );
 				if( taskObj )
 				{
+					taskObj->Deserialise( stream );
+
 					// NB: Converted to Ref<>
-					rList.push_back( taskObj );
+					rList.emplace_back( taskObj );
 				}
 				else
 					SAT_CORE_WARN( "[NodeCache]: TaskCache: ClassHash: {0}, invalid! Not creating task from an invalid class hash" );
 			}
 		}
+
+#if !defined(SAT_DIST)
+		stream.close();
+#endif
 
 		return true;
 	}

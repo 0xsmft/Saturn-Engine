@@ -33,17 +33,15 @@ namespace Saturn {
 
 	SandboxNodeEditorTaskHandler::SandboxNodeEditorTaskHandler()
 	{
-
 	}
 
 	SandboxNodeEditorTaskHandler::~SandboxNodeEditorTaskHandler()
 	{
-
 	}
 
 	void SandboxNodeEditorTaskHandler::Tick( Timestep ts )
 	{
-
+		NodeEditorTaskHandler::Tick( ts );
 	}
 
 }

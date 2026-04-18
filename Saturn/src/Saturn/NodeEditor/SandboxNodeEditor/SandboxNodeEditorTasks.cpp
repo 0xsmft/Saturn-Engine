@@ -29,6 +29,15 @@
 #include "sppch.h"
 #include "SandboxNodeEditorTasks.h"
 
+#include "Saturn/Serialisation/Raw/RawSerialisation.h"
+
+#if !defined(SAT_DIST)
+#include "SandboxNodeEditorNodes.h"
+#include "Saturn/NodeEditor/NodeEditorBase.h"
+#endif
+
+#include "Saturn/NodeEditor/NodeEditorTaskHandler.h"
+
 namespace Saturn {
 
 	//////////////////////////////////////////////////////////////////////////
@@ -42,8 +51,28 @@ namespace Saturn {
 	{
 	}
 
-	void SandboxNodeEditorNodeTask::InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
+#if !defined(SAT_DIST)
+	void SandboxNodeEditorNodeTask::PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
 	{
+		SandboxNodeEditorNode* pSandboxNode = dynamic_cast< SandboxNodeEditorNode* >( pNode );
+		if( pSandboxNode )
+		{
+			m_Number = pSandboxNode->GetSpecialValue();
+			m_NodeFlags = ( NodeEditorNodeFlags ) pSandboxNode->Flags;
+		}
+	}
+#endif
+
+	void SandboxNodeEditorNodeTask::InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther )
+	{
+		Super::InitialiseTaskWithOther( pHandler, pOther );
+
+		SandboxNodeEditorNodeTask* pSandboxOther = dynamic_cast< SandboxNodeEditorNodeTask* >( pOther );
+		if( pSandboxOther )
+		{
+			m_Number = pSandboxOther->m_Number;
+			pHandler->RegisterLocator<uint64_t>( m_NodeID, &m_Number );
+		}
 	}
 
 	NodeEditorTaskState SandboxNodeEditorNodeTask::Tick( Timestep ts )
@@ -54,6 +83,20 @@ namespace Saturn {
 	void SandboxNodeEditorNodeTask::Reset()
 	{
 		m_Number = 0llu;
+	}
+
+	void SandboxNodeEditorNodeTask::Serialise( std::ofstream& rStream ) const
+	{
+		Super::Serialise( rStream );
+
+		RawSerialisation::WriteObject( m_Number, rStream );
+	}
+
+	void SandboxNodeEditorNodeTask::Deserialise( FDependentIStream& rStream )
+	{
+		Super::Deserialise( rStream );
+
+		RawSerialisation::ReadObject( m_Number, rStream );
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -67,19 +110,70 @@ namespace Saturn {
 	{
 	}
 
-	void SandboxNodeEditorOutputTask::InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
+#if !defined(SAT_DIST)
+	void SandboxNodeEditorOutputTask::PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
 	{
+		m_NodeFlags = ( NodeEditorNodeFlags ) pNode->Flags;
 
+		if( !pNode || !pNode->Inputs.size() )
+			return;
+
+		// NB: FindLinkByPin is OK here, Pin does not have PinFlag_AcceptMultipleLinks flag.
+		auto link = pEditor->FindLinkByPin( pNode->Inputs[ 0 ]->ID );
+		if( link && link->StartPinID )
+		{
+			auto otherPin = pEditor->FindPin( link->StartPinID );
+			if( otherPin )
+			{
+				m_IncomingNodeIDPin0 = otherPin->Node->ID;
+			}
+		}
+	}
+#endif
+
+	void SandboxNodeEditorOutputTask::InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther )
+	{
+		Super::InitialiseTaskWithOther( pHandler, pOther );
+
+		SandboxNodeEditorOutputTask* pSandboxOther = dynamic_cast< SandboxNodeEditorOutputTask* >( pOther );
+		if( pSandboxOther )
+		{
+			m_IncomingNodeIDPin0 = pSandboxOther->m_IncomingNodeIDPin0;
+
+			// We need to find what our input ptr is
+			m_pInputNumber = pHandler->AccessLocator<uint64_t>( m_IncomingNodeIDPin0 );
+		}
 	}
 
 	NodeEditorTaskState SandboxNodeEditorOutputTask::Tick( Timestep ts )
 	{
-		return NodeEditorTaskState::Completed;
+		if( m_CurrentState != NodeEditorTaskState::Completed )
+		{
+			m_FinalNumber = ( *m_pInputNumber ) * 2;
+		
+			m_CurrentState = NodeEditorTaskState::Completed;
+		}
+
+		return m_CurrentState;
 	}
 
 	void SandboxNodeEditorOutputTask::Reset()
 	{
 		m_FinalNumber = 0llu;
+	}
+
+	void SandboxNodeEditorOutputTask::Serialise( std::ofstream& rStream ) const
+	{
+		Super::Serialise( rStream );
+
+		RawSerialisation::WriteObject( m_IncomingNodeIDPin0, rStream );
+	}
+
+	void SandboxNodeEditorOutputTask::Deserialise( FDependentIStream& rStream )
+	{
+		Super::Deserialise( rStream );
+
+		RawSerialisation::ReadObject( m_IncomingNodeIDPin0, rStream );
 	}
 
 }

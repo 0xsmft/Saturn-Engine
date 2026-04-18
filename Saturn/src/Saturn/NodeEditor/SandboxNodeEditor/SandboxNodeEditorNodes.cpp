@@ -47,9 +47,9 @@ namespace Saturn {
 	void SandboxNodeEditorOutputNode::CreateNode()
 	{
 		Name = "Output Node";
-		CanBeDeleted = false;
+		Flags |= NodeFlags_Irremovable;
 
-		Inputs.push_back( Ref<Pin>::Create( "Result", PinType::Int, PinKind::Input ) );
+		Inputs.push_back( Ref<Pin>::Create( "Result", PinType::Int, PinKind::Input, PinFlag_RequiredForEvaluation ) );
 	}
 
 	NodeEditorTaskBase* SandboxNodeEditorOutputNode::ConvertToTask()
@@ -68,7 +68,8 @@ namespace Saturn {
 
 	void SandboxNodeEditorNode::CreateNode()
 	{
-		Name = "Sandbox Node";
+		Name = "Sandbox Node (Constant)";
+		Flags = NodeFlags_ConstantEvaluated;
 
 		Outputs.push_back( Ref<Pin>::Create( "Result", PinType::Int, PinKind::Output ) );
 	}
@@ -90,6 +91,7 @@ namespace Saturn {
 	void SandboxNodeExampleNode::CreateNode()
 	{
 		Name = "Example Node";
+		Flags = NodeFlags_Default;
 	}
 
 	NodeEditorTaskBase* SandboxNodeExampleNode::ConvertToTask()

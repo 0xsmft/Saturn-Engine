@@ -28,74 +28,46 @@
 
 #pragma once
 
-#include "Saturn/NodeEditor/NodeEditorBlueprintNode.h"
+#include "NodeEditorVariable.h"
 
 namespace Saturn {
 
-	//
-	// SandboxNodeEditorOutputNode
-	//
-	SCLASS()
-	class SandboxNodeEditorOutputNode : public NodeEditorBlueprintNode
+	class NodeEditorTaskVariable
 	{
-		SAT_DECLARE_CLASS( SandboxNodeEditorOutputNode, NodeEditorBlueprintNode );
 	public:
-		SandboxNodeEditorOutputNode();
-		virtual ~SandboxNodeEditorOutputNode() = default;
+		NodeEditorTaskVariable() = default;
+		~NodeEditorTaskVariable() = default;
 
-		virtual NodeEditorTaskBase* ConvertToTask();
+		template<typename TCppType>
+		typename const TCppType Get() const
+		{
+			if( !std::holds_alternative<std::monostate>( m_Value ) )
+			{
+				return std::get<TCppType>( m_Value );
+			}
+
+			return TCppType{};
+		}
+
+		template<typename TCppType>
+		typename TCppType* GetIf()
+		{
+			if( !std::holds_alternative<std::monostate>( m_Value ) )
+			{
+				return std::get_if<TCppType>( &m_Value );
+			}
+
+			return nullptr;
+		}
+
+		template<typename TCppType>
+		void WriteValue( TCppType value )
+		{
+			m_Value = value;
+		}
 
 	private:
-		void CreateNode();
+		NodeEditorVariableTypes m_Value;
 	};
 
-	//
-	// SandboxNodeEditorNode
-	// 
-	// Example node implementation (consteval)
-	//
-	// Stores a number...
-	//
-	SCLASS()
-	class SandboxNodeEditorNode : public NodeEditorBlueprintNode
-	{
-		SAT_DECLARE_CLASS( SandboxNodeEditorNode, NodeEditorBlueprintNode );
-	public:
-		SandboxNodeEditorNode();
-		virtual ~SandboxNodeEditorNode() = default;
-
-		uint64_t GetSpecialValue() const { return m_SpecialSandboxValue; }
-
-		virtual NodeEditorTaskBase* ConvertToTask();
-
-	protected:
-		uint64_t m_SpecialSandboxValue = 0xC0DEBABE;
-
-	private:
-		void CreateNode();
-	};
-	
-	//
-	// SandboxNodeExampleNode
-	//
-	// Example implementation.
-	//
-	SCLASS()
-	class SandboxNodeExampleNode : public SandboxNodeEditorNode
-	{
-		SAT_DECLARE_CLASS( SandboxNodeExampleNode, SandboxNodeEditorNode );
-	public:
-		SandboxNodeExampleNode();
-		virtual ~SandboxNodeExampleNode() = default;
-
-		uint64_t GetAnotherNumber() const { return m_AnotherNumber; }
-
-		virtual NodeEditorTaskBase* ConvertToTask();
-
-	protected:
-		uint64_t m_AnotherNumber = 0xDEADBEEF;
-
-	private:
-		void CreateNode();
-	};
 }

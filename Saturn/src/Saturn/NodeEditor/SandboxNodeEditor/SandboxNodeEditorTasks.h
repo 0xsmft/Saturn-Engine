@@ -40,14 +40,21 @@ namespace Saturn {
 		SandboxNodeEditorNodeTask();
 		virtual ~SandboxNodeEditorNodeTask();
 
-		virtual void InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+		virtual void PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther ) override;
+
 		virtual NodeEditorTaskState Tick( Timestep ts ) override;
 		virtual void Reset() override;
 
+	public:
 #if !defined(SAT_DIST)
 		[[nodiscard]] virtual bool IsSpawnableNode() const { return true; }
 		virtual const char* GetTaskName() const { return "Sandbox Tsk"; }
 #endif
+
+	public:
+		virtual void Serialise( std::ofstream& rStream ) const override;
+		virtual void Deserialise( FDependentIStream& rStream ) override;
 
 	private:
 		uint64_t m_Number = 0llu;
@@ -59,13 +66,24 @@ namespace Saturn {
 		SAT_DECLARE_CLASS_MOVE( SandboxNodeEditorOutputTask, NodeEditorTaskBase );
 	public:
 		SandboxNodeEditorOutputTask();
+		SandboxNodeEditorOutputTask( const SandboxNodeEditorOutputTask* pOther );
+
 		virtual ~SandboxNodeEditorOutputTask();
 
-		virtual void InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+		virtual void PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther ) override;
+
 		virtual NodeEditorTaskState Tick( Timestep ts ) override;
 		virtual void Reset() override;
 
+	public:
+		virtual void Serialise( std::ofstream& rStream ) const override;
+		virtual void Deserialise( FDependentIStream& rStream ) override;
+
 	private:
+		UUID m_IncomingNodeIDPin0 = 0;
+
+		uint64_t* m_pInputNumber = nullptr;
 		uint64_t m_FinalNumber = 0llu;
 	};
 

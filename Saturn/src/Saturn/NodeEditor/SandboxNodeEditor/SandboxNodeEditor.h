@@ -28,6 +28,8 @@
 
 #pragma once
 
+#include "SandboxNodeEditorTaskHandler.h"
+
 #include "Saturn/NodeEditor/UI/NodeEditor.h"
 
 namespace Saturn {
@@ -50,6 +52,8 @@ namespace Saturn {
 		//     is kept alive by the Editor.
 		void BuildTaskCache();
 
+		virtual void OnUpdate( Timestep ts ) override;
+
 #if !defined(SAT_DIST)
 	public:
 		virtual void OnImGuiRender() override;
@@ -61,6 +65,11 @@ namespace Saturn {
 		void ClearEditor();
 
 	private:
+		// NB: Typically, you'd store this elsewhere and anyway from the NodeEditor because the NodeEditor
+		//	   will not exist on Dist and you'd use tasks when in Runtime or Dist.
+		//     but for example purposes it's fine here inside of the NodeEditor.
+		Ref<SandboxNodeEditorTaskHandler> m_TaskHandler;
+
 		bool m_ShowRuntimeControl = false;
 	};
 	

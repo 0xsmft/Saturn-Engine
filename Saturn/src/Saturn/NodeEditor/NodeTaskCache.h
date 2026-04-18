@@ -37,6 +37,9 @@ namespace Saturn {
 	class NodeTaskCache
 	{
 	public:
+		using NodeTaskCacheMap = std::vector<Ref<NodeEditorTaskBase>>;
+
+	public:
 		NodeTaskCache();
 		~NodeTaskCache();
 
@@ -53,20 +56,20 @@ namespace Saturn {
 		void BuildMasterList( const std::vector<SharedPtr<NodeEditorNodeBase>>& rOrder );
 
 		//
-		// Load the master list from the NC.
+		// Clear the list.
 		//
-		void LoadMasterList( std::ifstream& rStream );
+		void Clear();
 
 	public:
 		[[nodiscard]] bool IsListEmpty() const { return m_Tasks.empty(); }
 
-		std::vector<Ref<NodeEditorTaskBase>>& GetMasterListForSerialisation() { return m_Tasks; }
+		const NodeTaskCacheMap& GetMasterListForSerialisation() const { return m_Tasks; }
+		NodeTaskCacheMap& GetMasterListForSerialisation() { return m_Tasks; }
 
-		std::vector<Ref<NodeEditorTaskBase>> InstantiateNewTaskList();
+		NodeTaskCacheMap InstantiateNewTaskList( NodeEditorTaskHandler* pHandler ) const;
 
 	private:
-//		std::unordered_map<UUID, Ref<NodeEditorTaskBase>> m_Tasks;
-		std::vector<Ref<NodeEditorTaskBase>> m_Tasks;
+		NodeTaskCacheMap m_Tasks;
 	};
 	
 }

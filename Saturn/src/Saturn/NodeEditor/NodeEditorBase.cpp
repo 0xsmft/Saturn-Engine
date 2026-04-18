@@ -331,7 +331,7 @@ namespace Saturn {
 
 	NodeEditorCompilationStatus NodeEditorBase::Evaluate()
 	{
-		if( !m_Runtime || m_State == NodeEditorState_Loading || !HasUserAuthority( NodeEditorUserAuthority::Evaluation ) )
+		if( !m_Runtime || IsStateFlagSet( NodeEditorState_Loading ) || !HasUserAuthority( NodeEditorUserAuthority::Evaluation ) )
 			return NodeEditorCompilationStatus::Failed;
 
 		m_State = NodeEditorState_Evaluating;

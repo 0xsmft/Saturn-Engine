@@ -42,16 +42,7 @@ namespace Saturn {
 
 	void NodeEditorTaskHandler::Init( SharedPtr<NodeEditorBase> nodeEditor )
 	{
-		for( const auto& [id, rNode] : nodeEditor->GetNodes() )
-		{
-			NodeEditorTaskBase* pTask = rNode->ConvertToTask();
-			if( pTask )
-			{
-				pTask->InitialiseTask( this, nodeEditor.Get(), rNode.Get() );
-
-				m_Tasks.push_back( pTask );
-			}
-		}
+		m_Tasks = nodeEditor->GetNodeTaskCache().InstantiateNewTaskList( this );
 	}
 
 	void NodeEditorTaskHandler::ResetAllTasks()
@@ -78,7 +69,7 @@ namespace Saturn {
 
 		if( m_CurrentTask == nullptr )
 		{
-			if( m_CurrentTaskIndex + 1 > m_Tasks.size() )
+			if( m_CurrentTaskIndex + 1 >= m_Tasks.size() )
 			{
 				// At end, restart from the root.
 				ResetAllTasks();

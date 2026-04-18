@@ -31,6 +31,7 @@
 
 #include "NodeEditorBase.h"
 
+#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 #include "Saturn/Serialisation/Raw/RawSerialisation.h"
 
 namespace Saturn {
@@ -48,17 +49,37 @@ namespace Saturn {
 	{
 		for( const auto& rNode : rOrder )
 		{
-			m_Tasks.push_back( rNode->ConvertToTask() );
+			auto* pTask = rNode->ConvertToTask();
+
+			pTask->PreInitialiseTask( ( NodeEditorBase* ) rNode->GetParentObject(), rNode.Get() );
+
+			// Converted to Ref<>!
+			m_Tasks.emplace_back( pTask );
 		}
 	}
 
-	void NodeTaskCache::LoadMasterList( std::ifstream& rStream )
+	void NodeTaskCache::Clear()
 	{
-
+		m_Tasks.clear();
 	}
 
-	std::vector<Ref<NodeEditorTaskBase>> NodeTaskCache::InstantiateNewTaskList()
+	NodeTaskCache::NodeTaskCacheMap NodeTaskCache::InstantiateNewTaskList( NodeEditorTaskHandler* pHandler ) const
 	{
+		NodeTaskCache::NodeTaskCacheMap map;
+		map.reserve( m_Tasks.size() );
+
+		for( const auto& rTask : m_Tasks )
+		{
+			NodeEditorTaskBase* pObject = ( NodeEditorTaskBase* )ClassMetadataHandler::Get().CreateClassObject( rTask->GetClass()->GetHash(), nullptr );
+
+			if( pHandler )
+			{
+				pObject->InitialiseTaskWithOther( pHandler, ( NodeEditorTaskBase* )rTask.Get() );
+			}
+
+			map.emplace_back( pObject );
+		}
+
 		return m_Tasks;
 	}
 

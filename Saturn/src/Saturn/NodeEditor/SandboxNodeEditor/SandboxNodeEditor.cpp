@@ -64,9 +64,19 @@ namespace Saturn {
 					ids.push_back( FindNode( id ) );
 				} );
 
+				std::reverse( ids.begin(), ids.end() );
+
 				m_TaskCache.BuildMasterList( ids );
 				SaveAndMarkClean();
 			}
+		}
+	}
+
+	void SandboxNodeEditor::OnUpdate( Timestep ts )
+	{
+		if( m_TaskHandler )
+		{
+			m_TaskHandler->Tick( ts );
 		}
 	}
 
@@ -117,18 +127,27 @@ namespace Saturn {
 		{
 			if( ImGui::Button( "Build NodeTaskCache" ) )
 			{
+				m_TaskCache.Clear();
+				BuildTaskCache();
 			}
 
 			if( ImGui::Button( "Clear NodeTaskCache" ) )
 			{
+				m_TaskCache.Clear();
 			}
 
 			if( ImGui::Button( "Simulate Runtime" ) )
 			{
+				m_TaskHandler = Ref<SandboxNodeEditorTaskHandler>::Create();
+				m_TaskHandler->Init( SharedFromThis() );
+
+				SetStateFlag( NodeEditorState_Simulating, true );
 			}
 
 			if( ImGui::Button( "Terminate Runtime" ) )
 			{
+				m_TaskHandler = nullptr;
+				SetStateFlag( NodeEditorState_Simulating, false );
 			}
 		}
 

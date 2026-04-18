@@ -57,17 +57,22 @@ namespace Saturn {
 
 	public:
 		template<typename Ty>
-		void RegisterLocator( UUID nodeID, Ty* pAddress ) 
+		void RegisterLocator( UUID nodeID, size_t pinIndex, Ty* pAddress ) 
 		{
-			m_Locators[ nodeID ].Set( pAddress );
+			m_Locators[ nodeID ][ pinIndex ].Set( pAddress );
 		}
 
 		template<typename Ty>
-		Ty* AccessLocator( UUID id ) 
+		Ty* AccessLocator( UUID id, size_t pinIndex ) const
 		{
 			const auto itr = m_Locators.find( id );
-			
-			return itr != m_Locators.end() ? ( Ty* ) itr->second.Get() : nullptr;
+			if( itr == m_Locators.end() )
+				return nullptr;
+
+			if( pinIndex >= itr->second.size() )
+				return nullptr;
+
+			return ( Ty* ) itr->second[ pinIndex ].Get();
 		}
 
 	protected:
@@ -81,7 +86,7 @@ namespace Saturn {
 		size_t m_CurrentTaskIndex = 0;
 
 		std::map<UUID, DataLine> m_Lines;
-		std::map<UUID, NodeEditorVariableLocator> m_Locators;
+		std::map<UUID, std::vector<NodeEditorVariableLocator>> m_Locators;
 	};
 	
 }

@@ -31,8 +31,6 @@
 #include "Saturn/Core/UUID.h"
 #include "Saturn/GameFramework/SObject.h"
 
-#include "Saturn/Serialisation/Raw/RawSerialisation.h"
-
 #include <filesystem>
 
 namespace Saturn {
@@ -271,8 +269,10 @@ namespace Saturn {
 	
 		// Path must be an absolute path.
 		// If you want to set a relative path just modify the 'Path' variable directly and update the name accordingly.
+		// NB: This will update the Name as well!
 		void SetAbsolutePath( const std::filesystem::path& rPath );
 
+#if !defined(SAT_DIST)
 		// Called when this asset is about to be deleted,
 		// use this if this asset needs to clean up before its deleted,
 		// for example, any type of mesh needs to also delete its source file or for sounds they need to do the same.
@@ -280,32 +280,14 @@ namespace Saturn {
 
 		// Called when an Asset Dependency needs to be replaced with a new ID.
 		virtual void OnAssetDependencyReplace( AssetID oldID, AssetID newID ) {}
+#endif
 
 	public:
 		//////////////////////////////////////////////////////////////////////////
 		// #WARNING This should not be confused with AssetSerialisers. This is for raw binary serialisation! (see: AssetBundle)
 
-		inline void SerialiseData( std::ofstream& rStream ) const
-		{
-			// TODO: Support writing for a filesystem path.
-			RawSerialisation::WriteString( Name, rStream );
-			RawSerialisation::WriteString( Path, rStream );
-
-			RawSerialisation::WriteObject( ID, rStream );
-			RawSerialisation::WriteObject( Type, rStream );
-			RawSerialisation::WriteObject( Flags, rStream );
-		}
-
-		inline void DeserialiseData( std::ifstream& rStream )
-		{
-			// TODO: Support reading for a filesystem path.
-			Name = RawSerialisation::ReadString( rStream );
-			Path = RawSerialisation::ReadString( rStream );
-
-			RawSerialisation::ReadObject( ID, rStream );
-			RawSerialisation::ReadObject( Type, rStream );
-			RawSerialisation::ReadObject( Flags, rStream );
-		}
+		void SerialiseData( std::ofstream& rStream ) const;
+		void DeserialiseData( std::ifstream& rStream );
 
 	private:
 		friend class AssetManagerSerialiser;

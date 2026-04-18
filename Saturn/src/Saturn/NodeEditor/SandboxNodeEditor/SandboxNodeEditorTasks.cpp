@@ -59,6 +59,7 @@ namespace Saturn {
 		{
 			m_Number = pSandboxNode->GetSpecialValue();
 			m_NodeFlags = ( NodeEditorNodeFlags ) pSandboxNode->Flags;
+			m_NodeID = pNode->ID;
 		}
 	}
 #endif
@@ -71,7 +72,7 @@ namespace Saturn {
 		if( pSandboxOther )
 		{
 			m_Number = pSandboxOther->m_Number;
-			pHandler->RegisterLocator<uint64_t>( m_NodeID, &m_Number );
+			pHandler->RegisterLocator<uint64_t>( m_NodeID, 0, &m_Number );
 		}
 	}
 
@@ -113,10 +114,11 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 	void SandboxNodeEditorOutputTask::PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
 	{
-		m_NodeFlags = ( NodeEditorNodeFlags ) pNode->Flags;
-
 		if( !pNode || !pNode->Inputs.size() )
 			return;
+
+		m_NodeFlags = ( NodeEditorNodeFlags ) pNode->Flags;
+		m_NodeID = pNode->ID;
 
 		// NB: FindLinkByPin is OK here, Pin does not have PinFlag_AcceptMultipleLinks flag.
 		auto link = pEditor->FindLinkByPin( pNode->Inputs[ 0 ]->ID );
@@ -141,7 +143,7 @@ namespace Saturn {
 			m_IncomingNodeIDPin0 = pSandboxOther->m_IncomingNodeIDPin0;
 
 			// We need to find what our input ptr is
-			m_pInputNumber = pHandler->AccessLocator<uint64_t>( m_IncomingNodeIDPin0 );
+			m_pInputNumber = pHandler->AccessLocator<uint64_t>( m_IncomingNodeIDPin0, 0 );
 		}
 	}
 

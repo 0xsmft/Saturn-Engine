@@ -59,7 +59,13 @@ namespace Saturn {
 		template<typename Ty>
 		void RegisterLocator( UUID nodeID, size_t pinIndex, Ty* pAddress ) 
 		{
-			m_Locators[ nodeID ][ pinIndex ].Set( pAddress );
+			auto& rLocators = m_Locators[ nodeID ];
+			if( pinIndex >= rLocators.size() )
+			{
+				rLocators.resize( pinIndex + 1 );
+			}
+
+			rLocators[ pinIndex ].Set( pAddress );
 		}
 
 		template<typename Ty>

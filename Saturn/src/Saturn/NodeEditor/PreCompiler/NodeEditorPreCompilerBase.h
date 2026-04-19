@@ -28,52 +28,66 @@
 
 #pragma once
 
-#include "Saturn/Core/UUID.h"
-
-#include <string>
-#include <vector>
+#include "Saturn/NodeEditor/NodeEditorBase.h"
 
 namespace Saturn {
 
-	enum class NodeEditorMessageSeverity : uint8_t 
+	// Standard set of errors
+	enum NodeEditorPreCompileStdErrors : uint32_t
 	{
-		Info,
-		Warning,
-		Error
+		NodeEdPreCompError_InternalError		= BIT( 0 ),
+		NodeEdPreCompError_MissingRequiredLink	= BIT( 1 ),
+		NodeEdPreCompError_MissingRequiredData	= BIT( 2 ),
 	};
 
-	struct NodeEditorMessage
+	// Standard errors category i.e. what node editor.
+	enum NodeEditorPreCompileCategory : uint32_t
 	{
-		std::string MessageText;
-		UUID ID;
-		NodeEditorMessageSeverity Type = NodeEditorMessageSeverity::Info;
+		NodeEdPreCompCategory_Standard		   = BIT( 0 ),
+		NodeEdPreCompCategory_MaterialGraph    = BIT( 1 ),
+		NodeEdPreCompCategory_SoundGraph	   = BIT( 2 ),
+		NodeEdPreCompCategory_AnimationGraph   = BIT( 3 ),
+		NodeEdPreCompCategory_Sandbox		   = BIT( 4 ),
+		NodeEdPreCompCategory_BehaviourTree	   = BIT( 5 ),
 	};
 
-	class NodeEditorOutput
+	struct NodeEditorPreCompileError
+	{
+		NodeEditorPreCompileCategory Category = NodeEdPreCompCategory_Standard;
+		uint32_t ErrorCode = 0u;
+	};
+
+	//
+	// NodeEditorPreCompilerBase
+	// 
+	// The pre-compiler runs before simulation. It is the first stage in compilation stage.
+	// 
+	// The pre-compile must have zero errors in other for the TaskCache to be built.
+	// 
+	// NB: In some NodeEditors (namely Materials) the pre-compilation IS the compilation stage itself.
+	//	   In such a case no task cache will be built nor will there be any simulation stage.
+	//
+	class NodeEditorPreCompilerBase : public RefTarget
 	{
 	public:
-		NodeEditorOutput( UUID outputWindowID );
-		~NodeEditorOutput();
+		NodeEditorPreCompilerBase() = default;
+		NodeEditorPreCompilerBase( SharedPtr<NodeEditorBase> nodeEditor ) 
+			: m_NodeEditor( nodeEditor )
+		{
+		}
 
-		void Draw();
-		void ClearOutput();
-		void PushMessage( const NodeEditorMessage& rMessageData );
+		virtual ~NodeEditorPreCompilerBase() = default;
 
-		[[nodiscard]] bool IsOpen() const { return m_ShowWindow; }
+		virtual void Init( const std::vector<SharedPtr<NodeEditorNodeBase>>& rOrder )
+		{
+			m_Order = rOrder;
+		}
 
-		inline void ShowOrHide() { m_ShowWindow ^= 1; }
-		inline void Hide() { m_ShowWindow = false; }
-		inline void Show() { m_ShowWindow = true; }
+		virtual std::vector<NodeEditorPreCompileError> PreCompile() = 0;
 
-	private:
-		void DrawMessage( const NodeEditorMessage& rMessage );
-		void ClearMessage( UUID messageID );
-
-	private:
-		std::string m_WindowName{};
-		std::vector<NodeEditorMessage> m_Messages;
-		UUID m_SelectedMessageID = 0;
-		UUID m_OutputWindowID;
-		bool m_ShowWindow = true;
+	protected:
+		SharedPtr<NodeEditorBase> m_NodeEditor;
+		std::vector<SharedPtr<NodeEditorNodeBase>> m_Order;
 	};
+	
 }

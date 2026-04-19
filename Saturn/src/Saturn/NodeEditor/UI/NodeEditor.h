@@ -30,6 +30,7 @@
 
 #include "Saturn/NodeEditor/NodeEditorBase.h"
 #include "Saturn/NodeEditor/NodeEditorCompilationStatus.h"
+#include "Saturn/NodeEditor/PreCompiler/NodeEditorPreCompilerBase.h"
 
 #include "NodeEditorOutput.h"
 
@@ -178,6 +179,7 @@ namespace Saturn {
 		void DrawSimulatingCanvas();
 		void DrawDebuggingCanvas();
 		void TryDrawUnsavedChangesModal();
+		void TryDrawCompileErrorModal();
 		void DrawTopBarChildInternal();
 		void HandleCreate();
 		void HandleStateCanvasBorders();
@@ -209,6 +211,8 @@ namespace Saturn {
 		bool m_ShowDebugInformation = false;
 		bool m_ShowDetailsInformation = false;
 		bool m_ShowDataWindow = false;
+		bool m_HasPreCompileErrors = false;
+		bool m_ShowErrorPopup = false;
 
 		Ref<Pin> m_NewLinkPin = nullptr;
 		Ref<Pin> m_NewNodeLinkPin = nullptr;
@@ -220,6 +224,8 @@ namespace Saturn {
 		// Sub-graph path
 		std::vector<SharedPtr<NodeEditorNodeBase>> m_SubGraphs;
 #endif
+
+		Ref<NodeEditorPreCompilerBase> m_PreCompiler;
 
 		ImVec2 m_ViewportSize;
 

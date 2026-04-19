@@ -26,54 +26,34 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "StandardErrorsToString.h"
 
-#include "Saturn/Core/UUID.h"
+#include "NodeEditorPreCompilerBase.h"
 
-#include <string>
-#include <vector>
-
-namespace Saturn {
-
-	enum class NodeEditorMessageSeverity : uint8_t 
+namespace Saturn::Auxiliary {
+	
+	std::string NodeEditorPreCompStdErrorToString( uint32_t ec )
 	{
-		Info,
-		Warning,
-		Error
-	};
+		switch( ec )
+		{
+			case NodeEdPreCompError_InternalError:
+			{
+				return "error STD0x01: An internal error has occurred.";
+			}
 
-	struct NodeEditorMessage
-	{
-		std::string MessageText;
-		UUID ID;
-		NodeEditorMessageSeverity Type = NodeEditorMessageSeverity::Info;
-	};
+			case NodeEdPreCompError_MissingRequiredLink:
+			{
+				return "error STD0x02: A link is required for a pin.";
+			}
 
-	class NodeEditorOutput
-	{
-	public:
-		NodeEditorOutput( UUID outputWindowID );
-		~NodeEditorOutput();
+			case NodeEdPreCompError_MissingRequiredData:
+			{
+				return "error STD0x04: A data input is required for a pin.";
+			}
 
-		void Draw();
-		void ClearOutput();
-		void PushMessage( const NodeEditorMessage& rMessageData );
-
-		[[nodiscard]] bool IsOpen() const { return m_ShowWindow; }
-
-		inline void ShowOrHide() { m_ShowWindow ^= 1; }
-		inline void Hide() { m_ShowWindow = false; }
-		inline void Show() { m_ShowWindow = true; }
-
-	private:
-		void DrawMessage( const NodeEditorMessage& rMessage );
-		void ClearMessage( UUID messageID );
-
-	private:
-		std::string m_WindowName{};
-		std::vector<NodeEditorMessage> m_Messages;
-		UUID m_SelectedMessageID = 0;
-		UUID m_OutputWindowID;
-		bool m_ShowWindow = true;
-	};
+			default:
+				return "error STD0x??: Unknown error.";
+		}
+	}
 }

@@ -40,6 +40,8 @@
 #include "Saturn/NodeEditor/Serialisation/NodeCache.h"
 #include "Saturn/NodeEditor/NodeEditorBlueprintNode.h"
 #include "Saturn/NodeEditor/UndoRedo/UndoRedoNodeEditorActions.h"
+#include "Saturn/NodeEditor/PreCompiler/NodeEditorDefaultPreCompiler.h"
+#include "Saturn/NodeEditor/PreCompiler/StandardErrorsToString.h"
 
 #include "Saturn/NodeEditor/Debugging/NodeBreakPointManager.h"
 
@@ -353,6 +355,7 @@ namespace Saturn {
 			m_PendingBreakHandle = false;
 		}
 
+		TryDrawCompileErrorModal();
 		TryDrawUnsavedChangesModal();
 
 		if( m_ViewportSize != ImGui::GetContentRegionAvail() )
@@ -541,6 +544,9 @@ namespace Saturn {
 		{
 			m_WindowOpen = true;
 		
+			if( m_HasPreCompileErrors )
+				m_ShowErrorPopup = true;
+
 			m_ShowUnsavedChanges = true;
 		}
 #endif
@@ -841,13 +847,13 @@ namespace Saturn {
 
 	void NodeEditor::TryDrawUnsavedChangesModal()
 	{
-		if( m_ShowUnsavedChanges && HasUserAuthority( NodeEditorUserAuthority::Editing ) )
+		if( !m_ShowErrorPopup && m_ShowUnsavedChanges && HasUserAuthority( NodeEditorUserAuthority::Editing ) )
 			ImGui::OpenPopup( "Unsaved Changes" );
 
 		// Unsaved changes modal
 		// TODO: Center window with our main window
 		ImGui::SetNextWindowPos( ImGui::GetWindowViewport()->GetCenter(), ImGuiCond_FirstUseEver );
-		if( ImGui::BeginPopupModal( "Unsaved Changes", &m_ShowUnsavedChanges, ImGuiWindowFlags_NoSavedSettings ) )
+		if( ImGui::BeginPopupModal( "Unsaved Changes", nullptr, ImGuiWindowFlags_NoSavedSettings ) )
 		{
 			ImGui::Text( "You have unsaved changes to this editor." );
 			ImGui::Text( "Would you like to save before closing?" );
@@ -875,6 +881,38 @@ namespace Saturn {
 			if( ImGui::Button( "Cancel" ) )
 			{
 				m_ShowUnsavedChanges = false;
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndHorizontal();
+
+			ImGui::EndPopup();
+		}
+	}
+
+	void NodeEditor::TryDrawCompileErrorModal()
+	{
+		if( m_ShowErrorPopup && HasUserAuthority( NodeEditorUserAuthority::Editing ) )
+			ImGui::OpenPopup( "PreCompile error" );
+
+		ImGui::SetNextWindowPos( ImGui::GetWindowViewport()->GetCenter(), ImGuiCond_FirstUseEver );
+		if( ImGui::BeginPopupModal( "PreCompile error", nullptr, ImGuiWindowFlags_NoSavedSettings ) )
+		{
+			ImGui::Text( "There are errors in the NodeEditor" );
+			ImGui::Text( "Would you like to fix them before closing?" );
+
+			ImGui::BeginHorizontal( "##DirtyModalOpt" );
+
+			if( ImGui::Button( "Yes" ) )
+			{
+				m_ShowErrorPopup = false;
+				ImGui::CloseCurrentPopup();
+			}
+
+			if( ImGui::Button( "No" ) )
+			{
+				m_WindowOpen = true;
+				m_ShowErrorPopup = false;
 				ImGui::CloseCurrentPopup();
 			}
 
@@ -1162,23 +1200,19 @@ namespace Saturn {
 
 		if( m_Runtime )
 		{
-			OnNodeEditorEvent( NodeEditorAction::PreEvaluate );
+			if( !m_PreCompiler )
+				m_PreCompiler = Ref<NodeEditorDefaultPreCompiler>::Create( SharedFromThis() );
 
-			NodeEditorCompilationStatus result = m_Runtime->EvaluateEditor();
+			OnNodeEditorEvent( NodeEditorAction::PreEvaluate );
+			
+			const auto results = m_PreCompiler->PreCompile();
+			m_HasPreCompileErrors = !results.empty();
 
 			OnNodeEditorEvent( NodeEditorAction::PostEvaluate );
 
-			switch( result )
+			for( const auto& rErrors : results )
 			{
-				case NodeEditorCompilationStatus::Success:
-				{
-					m_OutputWindow.PushMessage( { .MessageText = "Successfully compiled and evaluated node editor!", .Type = NodeEditorMessageSeverity::Info } );
-				} break;
-
-				case NodeEditorCompilationStatus::Failed:
-				{
-					m_OutputWindow.PushMessage( { .MessageText = "Failed to compile node editor.", .Type = NodeEditorMessageSeverity::Error } );
-				} break;
+				m_OutputWindow.PushMessage( { .MessageText = Auxiliary::NodeEditorPreCompStdErrorToString( rErrors.ErrorCode ), .Type = NodeEditorMessageSeverity::Error } );
 			}
 		}
 		else
@@ -1603,7 +1637,6 @@ namespace Saturn {
 			parentToChildMap[ parentID ].push_back( key );
 
 			m_Nodes[ key ] = node;
-			BuildNode( node );
 		}
 
 		// Sub-graph parent

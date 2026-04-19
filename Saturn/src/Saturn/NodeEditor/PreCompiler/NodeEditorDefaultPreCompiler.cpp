@@ -26,54 +26,34 @@
 *********************************************************************************************
 */
 
-#pragma once
-
-#include "Saturn/Core/UUID.h"
-
-#include <string>
-#include <vector>
+#include "sppch.h"
+#include "NodeEditorDefaultPreCompiler.h"
 
 namespace Saturn {
 
-	enum class NodeEditorMessageSeverity : uint8_t 
+	std::vector<NodeEditorPreCompileError> NodeEditorDefaultPreCompiler::PreCompile()
 	{
-		Info,
-		Warning,
-		Error
-	};
+		std::vector<NodeEditorPreCompileError> errors;
 
-	struct NodeEditorMessage
-	{
-		std::string MessageText;
-		UUID ID;
-		NodeEditorMessageSeverity Type = NodeEditorMessageSeverity::Info;
-	};
+		if( !m_NodeEditor ) 
+		{
+			errors.emplace_back( NodeEdPreCompCategory_Standard, NodeEdPreCompError_InternalError );
+			return errors;
+		}
 
-	class NodeEditorOutput
-	{
-	public:
-		NodeEditorOutput( UUID outputWindowID );
-		~NodeEditorOutput();
+		// Walk through all the node and find any pins with the PinFlag_RequiredForEvaulation.
+		for( const auto& rNode : m_Order )
+		{
+			for( const auto& rInput : rNode->Inputs )
+			{
+				if( rInput->IsFlagSet( PinFlag_RequiredForEvaluation ) && !m_NodeEditor->IsLinked( rInput->ID ) )
+				{
+					errors.emplace_back( NodeEdPreCompCategory_Standard, NodeEdPreCompError_MissingRequiredLink );
+				}
+			}
+		}
 
-		void Draw();
-		void ClearOutput();
-		void PushMessage( const NodeEditorMessage& rMessageData );
+		return errors;
+	}
 
-		[[nodiscard]] bool IsOpen() const { return m_ShowWindow; }
-
-		inline void ShowOrHide() { m_ShowWindow ^= 1; }
-		inline void Hide() { m_ShowWindow = false; }
-		inline void Show() { m_ShowWindow = true; }
-
-	private:
-		void DrawMessage( const NodeEditorMessage& rMessage );
-		void ClearMessage( UUID messageID );
-
-	private:
-		std::string m_WindowName{};
-		std::vector<NodeEditorMessage> m_Messages;
-		UUID m_SelectedMessageID = 0;
-		UUID m_OutputWindowID;
-		bool m_ShowWindow = true;
-	};
 }

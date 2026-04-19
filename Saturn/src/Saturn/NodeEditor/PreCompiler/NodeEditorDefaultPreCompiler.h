@@ -28,52 +28,30 @@
 
 #pragma once
 
-#include "Saturn/Core/UUID.h"
-
-#include <string>
-#include <vector>
+#include "NodeEditorPreCompilerBase.h"
 
 namespace Saturn {
 
-	enum class NodeEditorMessageSeverity : uint8_t 
-	{
-		Info,
-		Warning,
-		Error
-	};
-
-	struct NodeEditorMessage
-	{
-		std::string MessageText;
-		UUID ID;
-		NodeEditorMessageSeverity Type = NodeEditorMessageSeverity::Info;
-	};
-
-	class NodeEditorOutput
+	//
+	// NodeEditorDefaultPreCompiler
+	// 
+	// A NodeEditorDefaultPreCompiler is a default pre-compiler.
+	// It's behaviour is to walk through all the nodes and check if they need to be linked.
+	// 
+	// Other pre-compilers can be created by simply inhering NodeEditorPreCompilerBase.
+	//
+	class NodeEditorDefaultPreCompiler : public NodeEditorPreCompilerBase
 	{
 	public:
-		NodeEditorOutput( UUID outputWindowID );
-		~NodeEditorOutput();
+		NodeEditorDefaultPreCompiler() = default;
+		NodeEditorDefaultPreCompiler( SharedPtr<NodeEditorBase> nodeEditor ) 
+			: NodeEditorPreCompilerBase( nodeEditor )
+		{
+		}
 
-		void Draw();
-		void ClearOutput();
-		void PushMessage( const NodeEditorMessage& rMessageData );
+		virtual ~NodeEditorDefaultPreCompiler() = default;
 
-		[[nodiscard]] bool IsOpen() const { return m_ShowWindow; }
-
-		inline void ShowOrHide() { m_ShowWindow ^= 1; }
-		inline void Hide() { m_ShowWindow = false; }
-		inline void Show() { m_ShowWindow = true; }
-
-	private:
-		void DrawMessage( const NodeEditorMessage& rMessage );
-		void ClearMessage( UUID messageID );
-
-	private:
-		std::string m_WindowName{};
-		std::vector<NodeEditorMessage> m_Messages;
-		UUID m_SelectedMessageID = 0;
-		UUID m_OutputWindowID;
-		bool m_ShowWindow = true;
+		virtual std::vector<NodeEditorPreCompileError> PreCompile() override;
 	};
+	
 }

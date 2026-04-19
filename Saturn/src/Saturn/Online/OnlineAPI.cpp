@@ -49,7 +49,7 @@ namespace Saturn {
 #if defined(SAT_WITH_STEAM)
 				return Ref<SteamOnlineSystemAPI>::Create();
 #else
-				SAT_CORE_ASSERT( false, "Attempt to use Steamworks API when SAT_WITH_STEAM is not defined!" );
+				SAT_CORE_WARN( "Attempt to use Steamworks API when SAT_WITH_STEAM is not defined! Creating no online system!" );
 				return nullptr;
 #endif
 			}

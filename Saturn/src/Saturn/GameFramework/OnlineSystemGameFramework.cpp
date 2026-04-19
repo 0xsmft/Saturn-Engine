@@ -43,6 +43,7 @@ namespace Saturn {
 		return Project::GetActiveProject()->GetOnlineAppID();
 	}
 
+#if defined(SAT_WITH_STEAM)
 	SteamCurrentUser& OsGetCurrentUser()
 	{
 		return SteamOnlineSystemAPI::Get()->GetCurrentUser();
@@ -57,5 +58,6 @@ namespace Saturn {
 	{
 		return SteamOnlineSystemAPI::Get()->GetAvatarCache().GetAvatarForUser( ID );
 	}
+#endif
 
 }

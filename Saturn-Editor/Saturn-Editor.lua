@@ -62,6 +62,17 @@ project "Saturn-Editor"
 		"Saturn"
 	}
 
+	filter { "options:onlineapi=steam" }
+		includedirs
+		{
+			"%{IncludeDir.Steamworks}"
+		}
+
+		defines 
+		{
+			"SAT_WITH_STEAM"
+		}
+
 	filter "system:windows"
 		systemversion "latest"
 
@@ -77,6 +88,12 @@ project "Saturn-Editor"
 			"../Saturn/visualisers/*.natvis",
 			"../Saturn/src/Saturn/Entry/Windows/**.cpp",
 		}
+
+		filter { "options:onlineapi=steam" }
+			postbuildcommands
+			{
+				'{COPYFILE} "../Saturn/vendor/steamworks/Bin/Windows/steam_api64.dll" "%{cfg.targetdir}"'
+			}
 
 		filter "configurations:Debug"
 			defines "SAT_DEBUG"

@@ -1,3 +1,15 @@
+newoption {
+   trigger = "onlineapi",
+   value = "API",
+   description = "Choose a particular Online-subsystem API",
+   allowed = {
+      { "steam",    "Steamworks API" },
+--      { "epic",  "EOS (Epic Online Services)" },
+      { "none",  "No API (default)" }
+   },
+   default = "none"
+}
+
 workspace "Saturn"
 	architecture "x64"
 	startproject "Saturn-Editor"

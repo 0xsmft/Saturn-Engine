@@ -1772,19 +1772,23 @@ namespace Saturn {
 			std::string sdkDisplayName = "Null";
 			switch( selectedType )
 			{
-#if defined(SAT_WITH_STEAM)
 				case OnlineSystemAPIType::Steam:
 				{
+#if defined(SAT_WITH_STEAM)
 					sdkDisplayName = "Steam";
-				} break;
+#else
+					sdkDisplayName = "Steam (SAT_WITH_STEAM define missing!)";
 #endif
+				} break;
 
-#if defined(SAT_WITH_EPIC)
 				case OnlineSystemAPIType::Epic:
 				{
+#if defined(SAT_WITH_EPIC)
 					sdkDisplayName = "Epic";
-				} break;
+#else
+					sdkDisplayName = "Epic (SAT_WITH_EPIC define missing!)";
 #endif
+				} break;
 
 				case OnlineSystemAPIType::Null:
 				default:
@@ -1792,7 +1796,7 @@ namespace Saturn {
 			}
 
 			Auxiliary::DisabledFlag onlineSystemDisabledIf( m_RequestRuntime );
-			ImGui::SetNextItemWidth( 130.0f );
+			ImGui::SetNextItemWidth( ImGui::CalcTextSize( sdkDisplayName.data() ).x + 24.0f );
 			if( ImGui::BeginCombo( "##osystem", sdkDisplayName.data() ) )
 			{
 				bool selected = ( selectedType == OnlineSystemAPIType::Null );

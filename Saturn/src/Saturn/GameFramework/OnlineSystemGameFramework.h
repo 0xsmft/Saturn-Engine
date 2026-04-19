@@ -32,8 +32,9 @@
 
 #if defined(SAT_WITH_STEAM)
 #include "Saturn/Online/Steam/SteamOnlineSystemAPI.h"
-#include "Saturn/Vulkan/Texture.h"
 #endif
+
+#include "Saturn/Vulkan/Texture.h"
 
 namespace Saturn {
 
@@ -71,6 +72,8 @@ namespace Saturn {
 	// For documentation of this function view your subsystem API file
 	// Steam: /Saturn/Online/Steam/SteamAvatarCache.h
 	//
+#if defined(SAT_WITH_STEAM) || defined(SAT_WITH_EPIC)
 	extern Ref<Texture2D> OsGetAvatarFromUser( uint64_t ID );
+#endif
 
 }

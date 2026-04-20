@@ -35,9 +35,9 @@ namespace Saturn {
 	// Standard set of errors
 	enum NodeEditorPreCompileStdErrors : uint32_t
 	{
-		NodeEdPreCompError_InternalError		= BIT( 0 ),
-		NodeEdPreCompError_MissingRequiredLink	= BIT( 1 ),
-		NodeEdPreCompError_MissingRequiredData	= BIT( 2 ),
+		NodeEdPreCompError_InternalError	   = 0,
+		NodeEdPreCompError_MissingRequiredLink = 1,
+		NodeEdPreCompError_MissingRequiredData = 2,
 	};
 
 	// Standard errors category i.e. what node editor.

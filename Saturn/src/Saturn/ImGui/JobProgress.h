@@ -69,9 +69,9 @@ namespace Saturn {
 		}
 
 	private:
-		std::atomic<float> m_Progress = 0.0f;
 		std::string m_Status;
 		std::string m_Title;
+		std::atomic<float> m_Progress = 0.0f;
 		std::atomic_bool m_Done = false;
 	};
 }

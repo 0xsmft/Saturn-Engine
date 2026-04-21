@@ -240,7 +240,7 @@ namespace Saturn {
 
 			case RubyKey_F5:
 			{
-				if( IsViewportFlagSet(VP_DisplayRuntimeControl ) )
+				if( IsViewportFlagSet( VP_DisplayRuntimeControl ) )
 				{
 					if( m_MouseOverViewport || m_ViewportFocused )
 						*m_pRequestRuntime ^= 1;

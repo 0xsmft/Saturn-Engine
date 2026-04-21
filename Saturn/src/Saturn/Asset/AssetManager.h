@@ -155,9 +155,9 @@ namespace Saturn {
 		// For example, when an entity needs a mesh it becomes a MemoryAssetDependency.
 		//
 		// Pure dependencies, are when an Asset needs an Asset, (asset interdependence), these are also called Pure Dependencies.
-		// So for example, when a MaterialAssets needs a TextureSourceAsset, the material, the "dependant" will hold a depednecy that texture asset.
+		// So for example, when a MaterialAssets needs a TextureSourceAsset, the material, the "dependent" will hold a depednecy that texture asset.
 		// 
-		// NOTE: Dependency IDs are stored in the dependee's list NOT the dependant's list.
+		// NOTE: Dependency IDs are stored in the dependee's list NOT the dependent's list.
 		// So in the AssetRegistry.sreg file it would look like this:
 		//
 		// - AssetID: 17156012918794846394 (The dependee)

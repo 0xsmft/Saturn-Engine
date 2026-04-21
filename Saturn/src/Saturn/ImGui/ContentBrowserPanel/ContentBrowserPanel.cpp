@@ -1307,11 +1307,11 @@ namespace Saturn {
 			{
 				for( AssetID id : rPureDependencies )
 				{
-					Ref<Asset> dependant = AssetManager::Get()->FindAsset( id );
-					if( !dependant )
-						ImGui::Selectable( "<NULL DEPENDANT>" );
+					Ref<Asset> dependent = AssetManager::Get()->FindAsset( id );
+					if( !dependent )
+						ImGui::Selectable( "<NULL DEPENDENT>" );
 					else
-						ImGui::Selectable( dependant->Name.c_str() );
+						ImGui::Selectable( dependent->Name.c_str() );
 				}
 
 				ImGui::EndListBox();
@@ -1375,9 +1375,9 @@ namespace Saturn {
 
 				if( ImGui::Button( "Replace & Delete" ) )
 				{
-					for( MemoryAssetDependencyBase* pDependant : rMemoryDependencies )
+					for( MemoryAssetDependencyBase* pDependent : rMemoryDependencies )
 					{
-						pDependant->OnUpdate( s_ID );
+						pDependent->OnUpdate( s_ID );
 					}
 
 					for( AssetID assetID : rPureDependencies )
@@ -1408,9 +1408,9 @@ namespace Saturn {
 
 				if( ImGui::Button( "Force Delete" ) )
 				{
-					for( MemoryAssetDependencyBase* pDependant : rMemoryDependencies )
+					for( MemoryAssetDependencyBase* pDependent : rMemoryDependencies )
 					{
-						pDependant->OnUpdate( 0 );
+						pDependent->OnUpdate( 0 );
 					}
 
 					for( AssetID assetID : rPureDependencies )

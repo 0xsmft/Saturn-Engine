@@ -307,9 +307,9 @@ namespace Saturn {
 			}
 			else
 			{
-				std::erase_if( deps, []( const auto& rDependant ) -> bool
+				std::erase_if( deps, []( const auto& rDependent ) -> bool
 				{
-					return !AssetManager::Get()->DoesAssetIDExist( rDependant );
+					return !AssetManager::Get()->DoesAssetIDExist( rDependent );
 				} );
 
 				// Remove from asset dependencies map if we no longer have dependencies.

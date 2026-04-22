@@ -135,6 +135,11 @@ namespace Saturn {
 			return ( m_pClassConstructor )( );
 		}
 
+		inline SObject* CreateDefaultObject() const
+		{
+			return ( m_pClassConstructor ) ( );
+		}
+
 	public:
 		inline SClassFlags GetFlags() const { return m_Flags; }
 		inline const std::string& GetName() const { return m_Name; }

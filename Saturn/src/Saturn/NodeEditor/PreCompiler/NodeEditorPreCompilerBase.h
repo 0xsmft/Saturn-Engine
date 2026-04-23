@@ -40,21 +40,38 @@ namespace Saturn {
 		NodeEdPreCompError_MissingRequiredData = 2,
 	};
 
+	// Standard set of warnings
+	enum NodeEditorPreCompileStdWarnings : uint32_t 
+	{
+		NodeEdPreCompWarning_SkippingUnlinkedNode = 0,
+		NodeEdPreCompWarning_SkippingNodeWithNotConnectedViaOutput = 1,
+	};
+
 	// Standard errors category i.e. what node editor.
 	enum NodeEditorPreCompileCategory : uint32_t
 	{
-		NodeEdPreCompCategory_Standard		   = BIT( 0 ),
-		NodeEdPreCompCategory_MaterialGraph    = BIT( 1 ),
-		NodeEdPreCompCategory_SoundGraph	   = BIT( 2 ),
-		NodeEdPreCompCategory_AnimationGraph   = BIT( 3 ),
-		NodeEdPreCompCategory_Sandbox		   = BIT( 4 ),
-		NodeEdPreCompCategory_BehaviourTree	   = BIT( 5 ),
+		NodeEdPreCompCategory_Warning		   = BIT( 0 ),
+		NodeEdPreCompCategory_Standard		   = BIT( 1 ),
+		NodeEdPreCompCategory_MaterialGraph    = BIT( 2 ),
+		NodeEdPreCompCategory_SoundGraph	   = BIT( 3 ),
+		NodeEdPreCompCategory_AnimationGraph   = BIT( 4 ),
+		NodeEdPreCompCategory_Sandbox		   = BIT( 5 ),
+		NodeEdPreCompCategory_BehaviourTree	   = BIT( 6 ),
 	};
 
-	struct NodeEditorPreCompileError
+	struct NodeEditorPreCompileMessage
 	{
+		UUID FaultingNode = 0u;
+		UUID FaultingPin = 0u;
+
 		NodeEditorPreCompileCategory Category = NodeEdPreCompCategory_Standard;
-		uint32_t ErrorCode = 0u;
+		uint32_t MessageCode = 0u;
+	};
+
+	struct NodeEditorPreCompileResult
+	{
+		std::vector<NodeEditorPreCompileMessage> Messages;
+		bool Succeeded = false;
 	};
 
 	//
@@ -83,7 +100,7 @@ namespace Saturn {
 			m_Order = rOrder;
 		}
 
-		virtual std::vector<NodeEditorPreCompileError> PreCompile() = 0;
+		virtual NodeEditorPreCompileResult PreCompile() = 0;
 
 	protected:
 		SharedPtr<NodeEditorBase> m_NodeEditor;

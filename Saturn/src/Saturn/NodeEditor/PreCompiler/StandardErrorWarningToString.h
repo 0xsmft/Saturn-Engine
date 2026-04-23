@@ -26,34 +26,12 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "StandardErrorsToString.h"
+#pragma once
 
-#include "NodeEditorPreCompilerBase.h"
+#include <string>
 
 namespace Saturn::Auxiliary {
-	
-	std::string NodeEditorPreCompStdErrorToString( uint32_t ec )
-	{
-		switch( ec )
-		{
-			case NodeEdPreCompError_InternalError:
-			{
-				return "error STD0x01: An internal error has occurred.";
-			}
 
-			case NodeEdPreCompError_MissingRequiredLink:
-			{
-				return "error STD0x02: A link is required for a pin.";
-			}
+	extern std::string NodeEditorPreCompResultToString( const NodeEditorPreCompileMessage& rMessage );
 
-			case NodeEdPreCompError_MissingRequiredData:
-			{
-				return "error STD0x04: A data input is required for a pin.";
-			}
-
-			default:
-				return "error STD0x??: Unknown error.";
-		}
-	}
 }

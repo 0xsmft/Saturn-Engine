@@ -26,12 +26,66 @@
 *********************************************************************************************
 */
 
-#pragma once
-
-#include <string>
+#include "sppch.h"
+#include "NodeEditorPreCompilerBase.h"
+#include "StandardErrorWarningToString.h"
 
 namespace Saturn::Auxiliary {
-
-	extern std::string NodeEditorPreCompStdErrorToString( uint32_t ec );
 	
+	static std::string NodeEditorPreCompStdWarningToStr( uint32_t ec )
+	{
+		switch( ec )
+		{
+			case NodeEdPreCompWarning_SkippingUnlinkedNode:
+			{
+				return "warn STD0x01: Skipping a node with no pins linked.";
+			}
+
+			case NodeEdPreCompWarning_SkippingNodeWithNotConnectedViaOutput:
+			{
+				return "warn STD0x02: Skipping a node with it's output pin not linked.";
+			}
+
+			default:
+				return "warn STD0x??: Unknown warning.";
+		}
+	}
+
+	static std::string NodeEditorPreCompStdErrorToStr( uint32_t ec )
+	{
+		switch( ec )
+		{
+			case NodeEdPreCompError_InternalError:
+			{
+				return "error STD0x01: An internal error has occurred.";
+			}
+
+			case NodeEdPreCompError_MissingRequiredLink:
+			{
+				return "error STD0x02: A link is required for a pin.";
+			}
+
+			case NodeEdPreCompError_MissingRequiredData:
+			{
+				return "error STD0x04: A data input is required for a pin.";
+			}
+
+			default:
+				return "error STD0x??: Unknown error.";
+		}
+	}
+	
+	std::string NodeEditorPreCompResultToString( const NodeEditorPreCompileMessage& rMessage )
+	{
+		if( ( rMessage.Category & NodeEdPreCompCategory_Warning ) != 0 )
+		{
+			return NodeEditorPreCompStdWarningToStr( rMessage.MessageCode );
+		}
+		else if( ( rMessage.Category & NodeEdPreCompCategory_Standard ) != 0 )
+		{
+			return NodeEditorPreCompStdErrorToStr( rMessage.MessageCode );
+		}
+		else
+			return "Unknown message category!";
+	}
 }

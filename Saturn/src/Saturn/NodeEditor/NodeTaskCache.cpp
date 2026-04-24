@@ -80,7 +80,7 @@ namespace Saturn {
 			map.emplace_back( pObject );
 		}
 
-		return m_Tasks;
+		return map;
 	}
 
 }

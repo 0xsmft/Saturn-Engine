@@ -69,7 +69,7 @@ namespace Saturn {
 
 		if( m_CurrentTask == nullptr )
 		{
-			if( m_CurrentTaskIndex + 1 >= m_Tasks.size() )
+			if( m_CurrentTaskIndex + 1 > m_Tasks.size() )
 			{
 				// At end, restart from the root.
 				ResetAllTasks();

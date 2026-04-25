@@ -26,41 +26,19 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "SoundFloatConstNode.h"
+#pragma once
 
 #include "Saturn/NodeEditor/Pin.h"
 
 namespace Saturn {
 
-	SoundFloatConst::SoundFloatConst()
-		: NodeEditorBlueprintNode( "Constant Float" )
+	// A SoundPin is a specialized IntPin that represents the index of what sound should play.
+	class SoundPin : public IntPin
 	{
-		CreateNode();
-	}
-
-	SoundFloatConst::SoundFloatConst( const std::string& rName )
-		: NodeEditorBlueprintNode( rName )
-	{
-		CreateNode();
-	}
-
-	void SoundFloatConst::CreateNode()
-	{
-		ExecutionType = NodeExecutionType::SoundFloatConst;
-#if !defined(SAT_DIST)
-		Color = ImColor( 173, 18, 128 );
-#endif
-
-		Outputs.push_back( Ref<FloatPin>::Create( "Constant", PinKind::Output ) );
-	}
-
-	SoundFloatConst::~SoundFloatConst()
-	{
-	}
-
+	public:
+		SoundPin() = default;
+		SoundPin( const std::string& rName, PinKind kind, PinFlag flag = PinFlag_DefaultSet );
+		SoundPin( UUID id, const std::string& rName, PinType type, UUID nodeID, PinFlag flag = PinFlag_DefaultSet );
+	};
+	
 }
-
-#include "Saturn/GameFramework/Core/EngineGenerated.h"
-
-SAT_X31_CREATE_AUTO_REG( SoundFloatConst );

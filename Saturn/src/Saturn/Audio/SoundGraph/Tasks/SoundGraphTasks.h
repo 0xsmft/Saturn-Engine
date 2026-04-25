@@ -28,22 +28,83 @@
 
 #pragma once
 
-#include "Saturn/NodeEditor/NodeEditorBlueprintNode.h"
+#include "Saturn/NodeEditor/NodeEditorTaskBase.h"
 
 namespace Saturn {
 
-	class SoundRandomSoundNode : public NodeEditorBlueprintNode
+	SCLASS()
+	class SGraphSoundOutputTask : public NodeEditorTaskBase 
 	{
-		SAT_DECLARE_CLASS( SoundRandomSoundNode, NodeEditorBlueprintNode );
+		SAT_DECLARE_CLASS_MOVE( SGraphSoundOutputTask, NodeEditorTaskBase );
 	public:
-		SoundRandomSoundNode();
-		SoundRandomSoundNode( const std::string& rName );
+		SGraphSoundOutputTask();
+		virtual ~SGraphSoundOutputTask();
 
-		virtual ~SoundRandomSoundNode();
+#if !defined(SAT_DIST)
+		virtual void PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+#endif
 
-		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
+		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther ) override;
+
+		virtual NodeEditorTaskState Tick( Timestep ts ) override;
+
+	public:
+		virtual void Serialise( std::ofstream& rStream ) const override;
+		virtual void Deserialise( FDependentIStream& rStream ) override;
+	};
+
+	SCLASS()
+	class SGraphSoundPlayerTask : public NodeEditorTaskBase
+	{
+		SAT_DECLARE_CLASS_MOVE( SGraphSoundPlayerTask, NodeEditorTaskBase );
+	public:
+		SGraphSoundPlayerTask();
+		virtual ~SGraphSoundPlayerTask();
+
+#if !defined(SAT_DIST)
+		virtual void PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+#endif
+
+		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther ) override;
+
+		virtual NodeEditorTaskState Tick( Timestep ts ) override;
+
+	public:
+		virtual void Serialise( std::ofstream& rStream ) const override;
+		virtual void Deserialise( FDependentIStream& rStream ) override;
 
 	private:
-		void CreateNode();
+		uint64_t m_SpecAssetID = 0;
+		size_t m_SoundIndex = 0llu;
+		bool m_Spatialisation = false;
+	};
+
+	SCLASS()
+	class SGraphSoundRandomSoundTask : public NodeEditorTaskBase
+	{
+		SAT_DECLARE_CLASS_MOVE( SGraphSoundRandomSoundTask, NodeEditorTaskBase );
+	public:
+		SGraphSoundRandomSoundTask();
+		virtual ~SGraphSoundRandomSoundTask();
+
+#if !defined(SAT_DIST)
+		virtual void PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+#endif
+
+		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther ) override;
+
+		virtual NodeEditorTaskState Tick( Timestep ts ) override;
+
+	public:
+		virtual void Serialise( std::ofstream& rStream ) const override;
+		virtual void Deserialise( FDependentIStream& rStream ) override;
+
+	private:
+		UUID m_PinANode = 0llu, m_PinBNode = 0llu;
+
+		size_t* m_pIndexA = nullptr;
+		size_t* m_pIndexB = nullptr;
+		
+		size_t m_ChosenIndex = 0llu;
 	};
 }

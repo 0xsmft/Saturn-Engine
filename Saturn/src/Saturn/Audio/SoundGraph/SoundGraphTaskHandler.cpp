@@ -26,32 +26,81 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "SoundGraphTaskHandler.h"
 
-#include "Saturn/NodeEditor/NodeEditorBase.h"
+#include "Saturn/Audio/Sound.h"
+#include "Saturn/Audio/AudioSystem.h"
 
 namespace Saturn {
 
-	class SoundOutputNode;
-	class SoundPlayerNode;
-	class SoundRandomSoundNode;
-	class SoundMixerNode;
-	class SoundPitchNode;
-	class SoundRandomPitchNode;
-	class SoundFloatConst;
-
-	class SoundNodeLibrary
+	SoundGraphTaskHandler::SoundGraphTaskHandler()
 	{
-	public:
-		static NodeEditorType GetStaticType() { return NodeEditorType::Material; }
+	}
 
-		static SharedPtr<SoundRandomSoundNode> SpawnRandomNode( SharedPtr<NodeEditorBase> nodeEditor );
-		static SharedPtr<SoundMixerNode>       SpawnMixerNode ( SharedPtr<NodeEditorBase> nodeEditor );
-		static SharedPtr<SoundPlayerNode>      SpawnPlayerNode( SharedPtr<NodeEditorBase> nodeEditor );
-		static SharedPtr<SoundPitchNode>       SpawnPitchNode ( SharedPtr<NodeEditorBase> nodeEditor );
-		static SharedPtr<SoundRandomPitchNode> SpawnRandPitch ( SharedPtr<NodeEditorBase> nodeEditor );
-		static SharedPtr<SoundFloatConst>      SpawnFloatConst( SharedPtr<NodeEditorBase> nodeEditor );
-		
-		static SharedPtr<SoundOutputNode>      SpawnOutputNode( SharedPtr<NodeEditorBase> nodeEditor );
-	};
+	SoundGraphTaskHandler::~SoundGraphTaskHandler()
+	{
+	}
+
+	void SoundGraphTaskHandler::Tick( Timestep ts )
+	{
+		NodeEditorTaskHandler::Tick( ts );
+	}
+
+	size_t SoundGraphTaskHandler::AddNewSound( UUID assetID, bool spatialisation /*= false */ )
+	{
+		Ref<Sound> snd;
+		if( spatialisation )
+		{
+			snd = AudioSystem::Get().PlaySoundAtLocation( assetID, UUID(), { 0.0f, 0.0f, 0.0f }, false, nullptr );
+		}
+		else
+		{
+			snd = AudioSystem::Get().RequestNewSound( assetID, UUID(), false, nullptr );
+		}
+
+		snd->AddOnCompleteFunction( SAT_BIND_EVENT_FN( SoundGraphTaskHandler::OnSoundCompleted ) );
+//		snd->WaitUntilLoaded();
+		snd->Play();
+
+		m_AliveSounds.push_back( snd );
+
+		return m_AliveSounds.size() - 1;
+	}
+
+	void SoundGraphTaskHandler::OnSoundCompleted( UUID PlayerID )
+	{
+		auto Itr = std::find_if( m_AliveSounds.begin(), m_AliveSounds.end(),
+			[ PlayerID ]( const auto& rSound )
+		{
+			return rSound->GetPlayerID() == PlayerID;
+		} );
+
+		if( Itr != m_AliveSounds.end() )
+		{
+			m_AliveSounds.erase( Itr );
+		}
+
+		m_Completed = m_AliveSounds.empty();
+		if( m_Completed && m_Looping )
+		{
+			m_Completed = false;
+
+			ResetAllTasks();
+		}
+	}
+
+	void SoundGraphTaskHandler::DestroyAliveSounds()
+	{
+
+	}
+
+	void SoundGraphTaskHandler::RegisterSound( size_t index )
+	{
+	}
+
+	void SoundGraphTaskHandler::UnregisterSound( size_t index )
+	{
+	}
+
 }

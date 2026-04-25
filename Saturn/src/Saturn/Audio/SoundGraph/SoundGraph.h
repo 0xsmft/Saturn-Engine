@@ -26,86 +26,32 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "SoundMixerNode.h"
+#pragma once
 
-#if !defined(SAT_DIST)
 #include "Saturn/NodeEditor/UI/NodeEditor.h"
-#else
-#include "Saturn/NodeEditor/NodeEditorBase.h"
-#endif
-
-#include "SoundPlayerNode.h"
-#include "SoundRandomSoundNode.h"
-
-#include "Saturn/Audio/SoundNodeEditor/SoundPin.h"
-#include "Saturn/Audio/SoundNodeEditor/SoundEditorEvaluator.h"
 
 namespace Saturn {
 
-	SoundMixerNode::SoundMixerNode()
-		: NodeEditorBlueprintNode( "Mixer" )
+	class SoundGraph : public NodeEditor
 	{
-		CreateNode();
-	}
+	public:
+		SoundGraph( AssetID assetID );
+		virtual ~SoundGraph();
 
-	SoundMixerNode::SoundMixerNode( const std::string& rName )
-		: NodeEditorBlueprintNode( rName )
-	{
-		CreateNode();
-	}
-
-	void SoundMixerNode::CreateNode()
-	{
-		ExecutionType = NodeExecutionType::SoundMixer;
 #if !defined(SAT_DIST)
-		Color = ImColor( 173, 18, 128 );
+	public:
+		virtual void OnImGuiRender() override;
+		virtual void OnTopBarRender() override;
+		virtual void OnNodeEditorEvent( NodeEditorAction action ) override;
 #endif
 
-		Inputs.push_back( Ref<SoundPin>::Create( "Sound 1", PinKind::Input ) );
-		Inputs.push_back( Ref<SoundPin>::Create( "Sound 2", PinKind::Input ) );
-		
-		Outputs.push_back( Ref<SoundPin>::Create( "Result", PinKind::Output ) );
-	}
+		UUID GetOutputNodeID() const { return m_OutputID; }
 
-	SoundMixerNode::~SoundMixerNode()
-	{
-	}
+	private:
+		void BuildTaskCache();
 
-	Saturn::NodeEvaluationState SoundMixerNode::EvaluateNode( NodeEditorRuntime* evaluator )
-	{
-		SoundEditorEvaluator* pSoundEditorEvaluator = dynamic_cast< SoundEditorEvaluator* >( evaluator );
-
-		if( !pSoundEditorEvaluator )
-			return NodeEvaluationState::Failed;
-
-#if !defined( SAT_DIST )
-		const auto count = std::count_if( Inputs.begin(), Inputs.end(),
-			[=]( const auto& pin )
-			{
-				return pSoundEditorEvaluator->GetTargetNodeEditor()->IsLinked( pin->ID );
-			} );
-
-		if( count != Inputs.size() )
-		{
-			SharedPtr<NodeEditor> uiEditor = pSoundEditorEvaluator->GetTargetNodeEditor().As<NodeEditor>();
-
-			uiEditor->ThrowError( "Not all pins are linked to the mixer node!" );
-
-			return NodeEvaluationState::Failed;
-		}
-#endif
-
-		for( size_t i = 0; i < Inputs.size(); i++ )
-		{
-			pSoundEditorEvaluator->RegisterSound( i );
-		}
-
-		return NodeEvaluationState::Evaluated;
-	}
-
+	private:
+		UUID m_OutputID = 0;
+	};
+	
 }
-
-#include "Saturn/GameFramework/Core/EngineGenerated.h"
-
-SAT_X31_CREATE_AUTO_REG( SoundMixerNode );

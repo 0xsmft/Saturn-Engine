@@ -27,89 +27,22 @@
 */
 
 #include "sppch.h"
-#include "SoundOutputNode.h"
+#include "SoundPin.h"
 
-#if !defined( SAT_DIST )
-#include "Saturn/NodeEditor/UI/NodeEditor.h"
-#else
-#include "Saturn/NodeEditor/NodeEditorBase.h"
-#endif
-
-#include "Saturn/Audio/SoundNodeEditor/SoundEditorEvaluator.h"
-#include "Saturn/Audio/SoundNodeEditor/SoundPin.h"
-
-#include "Saturn/Audio/AudioSystem.h"
-#include "Saturn/Audio/Sound.h"
+#include "Saturn/NodeEditor/NodeEditorNodeBase.h"
 
 namespace Saturn {
 
-	SoundOutputNode::SoundOutputNode()
-		: NodeEditorBlueprintNode( "Sound Output" )
+	SoundPin::SoundPin( const std::string& rName, PinKind kind, PinFlag flag )
+		: IntPin( rName, kind, flag )
 	{
-		CreateNode();
+		Type = PinType::Sound;
 	}
 
-	void SoundOutputNode::CreateNode()
+	SoundPin::SoundPin( UUID id, const std::string& rName, PinType type, UUID nodeID, PinFlag flag )
+		: IntPin( id, rName, type, nodeID, flag )
 	{
-		ExecutionType = NodeExecutionType::SoundOutput;
-#if !defined(SAT_DIST)
-		Flags |= NodeFlags_Irremovable;
-		Color = ImColor( 237, 202, 5, 255 );
-//		Color = ImColor( 255, 128, 128 );
-#endif
-
-		Inputs.push_back( Ref<SoundPin>::Create( "Final Result", PinKind::Input ) );
-	}
-
-	SoundOutputNode::~SoundOutputNode()
-	{
-	}
-
-	Saturn::NodeEvaluationState SoundOutputNode::EvaluateNode( NodeEditorRuntime* evaluator )
-	{
-		SoundEditorEvaluator* pSoundEditorEvaluator = dynamic_cast<SoundEditorEvaluator*>( evaluator );
-		
-		if( !pSoundEditorEvaluator )
-			return NodeEvaluationState::Failed;
-
-		// For all currently alive sounds check if they are allowed to play
-		// if they are then we play them if not then we'll unload and erase
-		size_t index = 0;
-		for( auto Itr = pSoundEditorEvaluator->AliveSounds.begin(); Itr != pSoundEditorEvaluator->AliveSounds.end(); )
-		{
-			Ref<Sound>& rSound = *(Itr);
-
-			if( pSoundEditorEvaluator->SoundsPlaying.count( index ) > 0 )
-			{
-				rSound->Play();
-				++Itr;
-			}
-			else
-			{
-				// erase
-				rSound->Unload();
-
-				Itr = pSoundEditorEvaluator->AliveSounds.erase( Itr );
-			}
-
-			++index;
-		}
-
-#if !defined( SAT_DIST )
-		SharedPtr<NodeEditor> uiEditor = pSoundEditorEvaluator->GetTargetNodeEditor().As<NodeEditor>();
-		const std::string message = std::format( "Playing {0} of out {1} sounds.", pSoundEditorEvaluator->SoundsPlaying.size(), pSoundEditorEvaluator->AliveSounds.size() );
-
-		uiEditor->PushInfoMessage( message );
-		SAT_CORE_INFO( message );
-#endif
-
-		pSoundEditorEvaluator->SoundsPlaying.clear();
-
-		return NodeEvaluationState::Evaluated;
+		Type = PinType::Sound;
 	}
 
 }
-
-#include "Saturn/GameFramework/Core/EngineGenerated.h"
-
-SAT_X31_CREATE_AUTO_REG( SoundOutputNode );

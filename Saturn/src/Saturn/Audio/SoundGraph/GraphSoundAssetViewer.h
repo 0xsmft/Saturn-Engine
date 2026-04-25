@@ -28,21 +28,53 @@
 
 #pragma once
 
-#include "Saturn/NodeEditor/NodeEditorBlueprintNode.h"
+#include "SoundGraph.h"
+
+#include "Saturn/ImGui/AssetViewer.h"
+#include "Saturn/Audio/Sound.h"
 
 namespace Saturn {
 
-	class SoundMixerNode : public NodeEditorBlueprintNode
-	{
-		SAT_DECLARE_CLASS( SoundMixerNode, NodeEditorBlueprintNode );
-	public:
-		SoundMixerNode();
-		SoundMixerNode( const std::string& rName );
-		virtual ~SoundMixerNode();
+	class SoundGraphTaskHandler;
+	class GraphSound;
 
-		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
+#if !defined(SAT_DIST)
+	struct GraphSoundAssetViewerReference
+	{
+		Ref<GraphSound> Sound;
+	};
+#endif
+
+	class GraphSoundAssetViewer : public AssetViewer
+	{
+	public:
+		GraphSoundAssetViewer( AssetID id );
+		~GraphSoundAssetViewer();
+
+		virtual void OnImGuiRender() override;
+		virtual void OnUpdate( Timestep ts ) override;
+		virtual void OnEvent( Event& rEvent ) override;
+		virtual void OnRuntimeStateChanged( RuntimeState newState, RuntimeState oldState ) override;
+
+#if !defined(SAT_DIST)
+		void AddSoundReference( Ref<GraphSound> sound );
+#endif
 
 	private:
-		void CreateNode();
+		void AddSoundAsset();
+		void SetupNewNodeEditor();
+		void SetupNodeEditorCallbacks();
+
+	private:
+		// Sound specification asset
+		Ref<Asset> m_Asset = nullptr;
+		
+		// Current graph that we are drawing
+		SharedPtr<SoundGraph> m_SoundGraph = nullptr;
+
+		Ref<SoundGraphTaskHandler> m_TaskHandler;
+
+		bool m_ShowDirtyModal = false;
+		UUID m_OutputNodeID = 0;
 	};
 }

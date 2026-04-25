@@ -33,9 +33,7 @@
 #include "Saturn/Audio/SoundGroup.h"
 #include "Saturn/Audio/AudioSystem.h"
 
-#include "Nodes/SoundOutputNode.h"
-#include "Nodes/SoundPlayerNode.h"
-#include "Nodes/SoundRandomSoundNode.h"
+#include "Nodes/SoundGraphNodes.h"
 
 #if !defined(SAT_DIST)
 #include "Saturn/NodeEditor/UI/NodeEditor.h"

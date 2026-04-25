@@ -26,23 +26,77 @@
 *********************************************************************************************
 */
 
-#pragma once
-
-#include "Saturn/NodeEditor/NodeEditorBlueprintNode.h"
+#include "sppch.h"
+#include "SoundGraph.h"
 
 namespace Saturn {
-
-	class SoundPitchNode : public NodeEditorBlueprintNode
+	
+	SoundGraph::SoundGraph( AssetID assetID )
+		: NodeEditor( assetID )
 	{
-		SAT_DECLARE_CLASS( SoundPitchNode, NodeEditorBlueprintNode );
-	public:
-		SoundPitchNode();
-		SoundPitchNode( const std::string& rName );
-		virtual ~SoundPitchNode();
+	}
 
-		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
+	SoundGraph::~SoundGraph()
+	{
+	}
 
-	private:
-		void CreateNode();
-	};
+	void SoundGraph::OnImGuiRender()
+	{
+		NodeEditor::OnImGuiRender();
+	}
+
+	void SoundGraph::OnTopBarRender()
+	{
+
+	}
+
+	void SoundGraph::OnNodeEditorEvent( NodeEditorAction action )
+	{
+		switch( action )
+		{
+			case NodeEditorAction::PostLoad: 
+			{
+				const auto node = FindNode( "Sound Output" );
+				if( node )
+				{
+					m_OutputID = node->ID;
+				}
+			} break;
+
+			case NodeEditorAction::PreEvaluate:
+			{
+				std::vector< SharedPtr<NodeEditorNodeBase> > ids;
+				TraverseFromStart( FindNode( m_OutputID ), NodeEditorFlowDirection::GoToRootNode, [ & ]( const auto id )
+				{
+					ids.push_back( FindNode( id ) );
+				} );
+
+				std::reverse( ids.begin(), ids.end() );
+
+				m_PreCompiler->Init( ids );
+			} break;
+
+			case NodeEditorAction::PostEvaluateSuccess: 
+			{
+				BuildTaskCache();
+			} break;
+
+			default:
+				break;
+		}
+	}
+
+	void SoundGraph::BuildTaskCache()
+	{
+		std::vector< SharedPtr<NodeEditorNodeBase> > ids;
+		TraverseFromStart( FindNode( m_OutputID ), NodeEditorFlowDirection::GoToRootNode, [ & ]( const auto id )
+		{
+			ids.push_back( FindNode( id ) );
+		} );
+
+		std::reverse( ids.begin(), ids.end() );
+
+		m_TaskCache.BuildMasterList( ids );
+	}
+
 }

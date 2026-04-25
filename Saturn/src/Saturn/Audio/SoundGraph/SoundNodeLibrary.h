@@ -26,23 +26,28 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "SoundPin.h"
+#pragma once
 
-#include "Saturn/NodeEditor/NodeEditorNodeBase.h"
+#include "Saturn/NodeEditor/NodeEditorBase.h"
 
 namespace Saturn {
 
-	SoundPin::SoundPin( const std::string& rName, PinKind kind )
-		: IntPin( rName, kind )
-	{
-		Type = PinType::Sound;
-	}
+	class SoundOutputNode;
+	class SoundPlayerNode;
+	class SoundRandomSoundNode;
+	class SoundPitchNode;
+	class SoundRandomPitchNode;
+	class SoundFloatConst;
 
-	SoundPin::SoundPin( UUID id, const std::string& rName, PinType type, UUID nodeID )
-		: IntPin( id, rName, type, nodeID )
+	class SoundNodeLibrary
 	{
-		Type = PinType::Sound;
-	}
-
+	public:
+		static SharedPtr<SoundRandomSoundNode> SpawnRandomNode( SharedPtr<NodeEditorBase> nodeEditor );
+		static SharedPtr<SoundPlayerNode>      SpawnPlayerNode( SharedPtr<NodeEditorBase> nodeEditor );
+		static SharedPtr<SoundPitchNode>       SpawnPitchNode ( SharedPtr<NodeEditorBase> nodeEditor );
+		static SharedPtr<SoundRandomPitchNode> SpawnRandPitch ( SharedPtr<NodeEditorBase> nodeEditor );
+		static SharedPtr<SoundFloatConst>      SpawnFloatConst( SharedPtr<NodeEditorBase> nodeEditor );
+		
+		static SharedPtr<SoundOutputNode>      SpawnOutputNode( SharedPtr<NodeEditorBase> nodeEditor );
+	};
 }

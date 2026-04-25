@@ -29,30 +29,19 @@
 #include "sppch.h"
 #include "GraphSoundAssetViewer.h"
 
-#include "Saturn/NodeEditor/Serialisation/NodeCache.h"
-
-#include "SoundEditorEvaluator.h"
-
-#include "Nodes/SoundRandomSoundNode.h" 
-#include "Nodes/SoundOutputNode.h" 
-#include "Nodes/SoundPlayerNode.h"
-#include "Nodes/SoundMixerNode.h"
-#include "Nodes/SoundPitchNode.h"
-#include "Nodes/SoundRandomPitchNode.h"
-
 #include "SoundNodeLibrary.h"
+#include "SoundGraphTaskHandler.h"
+#include "Nodes/SoundGraphNodes.h"
 
 #include "Saturn/Audio/AudioSystem.h"
 
+#include "Saturn/NodeEditor/Serialisation/NodeCache.h"
+
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
 #include "Saturn/ImGui/EditorIcons.h"
+#include "Saturn/ImGui/UndoRedo/GlobalUndoRedoGroup.h"
 
 #include "Saturn/Asset/AssetManager.h"
-#include "Saturn/Core/Profiler.h"
-
-#include "Saturn/Scene/Scene.h"
-
-#include "Saturn/ImGui/UndoRedo/GlobalUndoRedoGroup.h"
 
 namespace Saturn {
 
@@ -66,78 +55,63 @@ namespace Saturn {
 	GraphSoundAssetViewer::~GraphSoundAssetViewer()
 	{		
 		// Rare case, may only happen if this viewer without the user ever saving it.
-		if( m_Dirty || m_NodeEditor->IsDirty() )
+		if( m_Dirty || m_SoundGraph->IsDirty() )
 		{
-			m_NodeEditor->SaveAndMarkClean();
+			m_SoundGraph->SaveAndMarkClean();
 		}
 		
 		m_Asset = nullptr;
 
-		m_NodeEditor->SetRuntime( nullptr );
-		m_Runtime = nullptr;
-
 		GlobalUndoRedoGroup::Get()->RemoveIfActionHasIdentifier( m_AssetID );
-		m_NodeEditor = nullptr;
+		m_SoundGraph = nullptr;
 	}
 
 	void GraphSoundAssetViewer::OnImGuiRender()
 	{
-		SAT_PF_EVENT();
-
-		if( m_NodeEditor->IsOpen() )
+		if( m_SoundGraph->IsOpen() )
 		{
-			m_NodeEditor->OnImGuiRender();
+			m_SoundGraph->OnImGuiRender();
 		}
 		else
 		{
 			AudioSystem::Get().StopPreviewSounds( m_AssetID );
-			m_NodeEditor->OpenWindow( false );
+			m_SoundGraph->OpenWindow( false );
 			m_Open = false;
 		}
 	}
 
 	void GraphSoundAssetViewer::AddSoundAsset()
 	{
-		Ref<Asset> asset = AssetManager::Get()->FindAsset( m_AssetID );
-		m_Asset = asset;
-
+		m_Asset = AssetManager::Get()->FindAsset( m_AssetID );
 		m_Name = std::format( "{0}##{1}", m_Asset->Name, ( uint64_t ) m_AssetID );
 
-		m_NodeEditor = SharedPtr<NodeEditor>::Create( m_AssetID );
+		m_SoundGraph = SharedPtr<SoundGraph>::Create( m_AssetID );
 
 		const std::string filename = std::format( "{0}.gsnd", m_Asset->Name );
-		if( NodeCacheEditor::ReadNodeEditorCache( m_NodeEditor, m_AssetID, filename ) )
+		if( NodeCacheEditor::ReadNodeEditorCache( m_SoundGraph, m_AssetID, filename ) )
 		{
-			m_OutputNodeID = m_NodeEditor->FindNode( "Sound Output" )->ID;
+			m_OutputNodeID = m_SoundGraph->GetOutputNodeID();
 		}
 		else
 		{
 			SetupNewNodeEditor();
 		}
 		
-		m_NodeEditor->NcSetCustomName( filename );
-		m_NodeEditor->SetWindowName( m_Name );
+		m_SoundGraph->NcSetCustomName( filename );
+		m_SoundGraph->SetWindowName( m_Name );
 
-		m_NodeEditor->OpenWindow( true );
+		m_SoundGraph->OpenWindow( true );
 		m_Open = true;
 
 		SetupNodeEditorCallbacks();
-
-		SoundEditorEvaluator::SoundEdEvaluatorInfo info;
-		info.SoundGroup = nullptr;
-		info.OutputNodeID = m_OutputNodeID;
-		
-		m_Runtime = Ref<SoundEditorEvaluator>::Create( info );
-		m_Runtime->SetTargetNodeEditor( m_NodeEditor );
-
-		m_NodeEditor->SetRuntime( m_Runtime );
 	}
 
 	void GraphSoundAssetViewer::SetupNewNodeEditor()
 	{
-		SharedPtr<SoundOutputNode> OutputNode = SoundNodeLibrary::SpawnOutputNode( m_NodeEditor );
-
+		SharedPtr<SoundOutputNode> OutputNode = SoundNodeLibrary::SpawnOutputNode( m_SoundGraph );
 		m_OutputNodeID = OutputNode->ID;
+
+		m_SoundGraph->OnNodeEditorEvent( NodeEditorAction::PostLoad );
 
 		MarkDirty();
 	}
@@ -145,7 +119,7 @@ namespace Saturn {
 	void GraphSoundAssetViewer::SetupNodeEditorCallbacks()
 	{
 #if !defined(SAT_DIST)
-		m_NodeEditor->SetCreateNewNodeFunction(
+		m_SoundGraph->SetCreateNewNodeFunction(
 			[&]() -> SharedPtr<NodeEditorNodeBase>
 			{
 				SharedPtr<NodeEditorNodeBase> result = nullptr;
@@ -153,33 +127,33 @@ namespace Saturn {
 				ImGui::SeparatorText( "Sound" );
 
 				if( ImGui::MenuItem( "Sound Player" ) )
-					result = SoundNodeLibrary::SpawnPlayerNode( m_NodeEditor );
+					result = SoundNodeLibrary::SpawnPlayerNode( m_SoundGraph );
 
 				if( ImGui::MenuItem( "Random Sound" ) )
-					result = SoundNodeLibrary::SpawnRandomNode( m_NodeEditor );
-
-				if( ImGui::MenuItem( "Sound Mixer" ) )
-					result = SoundNodeLibrary::SpawnMixerNode( m_NodeEditor );
+					result = SoundNodeLibrary::SpawnRandomNode( m_SoundGraph );
 
 				if( ImGui::MenuItem( "Set Sound Pitch" ) )
-					result = SoundNodeLibrary::SpawnPitchNode( m_NodeEditor );
+					result = SoundNodeLibrary::SpawnPitchNode( m_SoundGraph );
 
 				if( ImGui::MenuItem( "Random Pitch" ) )
-					result = SoundNodeLibrary::SpawnRandPitch( m_NodeEditor );
-				
-				//ImGui::SeparatorText( "Maths" );
-
-				//if( ImGui::MenuItem( "Constant Float" ) )
-				//	result = SoundNodeLibrary::SpawnFloatConst( m_NodeEditor );
+					result = SoundNodeLibrary::SpawnRandPitch( m_SoundGraph );
 
 				return result;
 			} );
 
-		m_NodeEditor->SetTopBarFunction( [&]() 
+		m_SoundGraph->SetTopBarFunction( [&]() 
 			{
+				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Billboard_Audio" ), { 24, 24 } ) )
+				{
+					if( !m_TaskHandler )
+					{
+						m_TaskHandler = Ref<SoundGraphTaskHandler>::Create();
+						m_TaskHandler->Init( m_SoundGraph );
+					}
+				}
+
 				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Billboard_AudioMuted" ), { 24, 24 } ) )
 				{
-					m_Runtime->TerminateEvaluation();
 				}
 
 				if( ImGui::IsItemHovered() )
@@ -188,37 +162,14 @@ namespace Saturn {
 					ImGui::Text( "Stop all sounds." );
 					ImGui::EndTooltip();
 				}
-
-				ImGui::SeparatorEx( ImGuiSeparatorFlags_Vertical );
-
-				// drop down
-				ImGui::Text( "References" );
-
-				ImGui::SetNextItemWidth( 134.0F );
-				if( ImGui::BeginCombo( "##References", "" ) ) 
-				{
-					for( const auto& rAsset : m_ReferencingAssets )
-					{
-						const std::string name = std::to_string( rAsset->GetPlayerID() );
-						if( ImGui::Selectable( name.c_str() ) )
-						{
-							// TODO: There isn't technically API to support this asset viewer changing its node editor
-							//       however, maybe we should think of a different way to show what the referencing assets are doing
-							m_NodeEditor = rAsset->GetNodeEditor();
-							m_NodeEditor->OpenWindow( true );
-
-							SetupNodeEditorCallbacks();
-						}
-					}
-
-					ImGui::EndCombo();
-				}
 			} );
 #endif
 	}
 
 	void GraphSoundAssetViewer::OnUpdate( Timestep ts )
 	{
+		if( m_TaskHandler )
+			m_TaskHandler->Tick( ts );
 	}
 
 	void GraphSoundAssetViewer::OnEvent( Event& rEvent )
@@ -238,21 +189,16 @@ namespace Saturn {
 
 			case RuntimeState::Running:
 			{
-				if( oldState == RuntimeState::Starting || oldState == RuntimeState::NoState )
-					m_OriginalNodeEditor = m_NodeEditor;
 			} break;
 
 			case RuntimeState::Ending:
 			{
-				m_NodeEditor = m_OriginalNodeEditor;
-				m_ReferencingAssets.clear();
 			} break;
 		}
 	}
 
 	void GraphSoundAssetViewer::AddSoundReference( Ref<GraphSound> sound )
 	{
-		m_ReferencingAssets.push_back( sound );
 	}
 #endif
 

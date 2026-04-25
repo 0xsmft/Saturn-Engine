@@ -26,19 +26,60 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "SoundNodeLibrary.h"
 
-#include "Saturn/NodeEditor/Pin.h"
+#include "Nodes/SoundGraphNodes.h"
+
+#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 
 namespace Saturn {
 
-	// A SoundPin is a specialized IntPin that represents the index of what sound should play.
-	class SoundPin : public IntPin
+	SharedPtr<SoundRandomSoundNode> SoundNodeLibrary::SpawnRandomNode( SharedPtr<NodeEditorBase> nodeEditor )
 	{
-	public:
-		SoundPin() = default;
-		SoundPin( const std::string& rName, PinKind kind );
-		SoundPin( UUID id, const std::string& rName, PinType type, UUID nodeID );
-	};
-	
+		SharedPtr<SoundRandomSoundNode> node = NewObject<SoundRandomSoundNode>( nodeEditor.Get() );
+		nodeEditor->AddNode( node );
+
+		return node;
+	}
+
+	SharedPtr<SoundPlayerNode> SoundNodeLibrary::SpawnPlayerNode( SharedPtr<NodeEditorBase> nodeEditor )
+	{
+		SharedPtr<SoundPlayerNode> node = NewObject<SoundPlayerNode>( nodeEditor.Get() );
+		nodeEditor->AddNode( node );
+
+		return node;
+	}
+
+	SharedPtr<SoundPitchNode> SoundNodeLibrary::SpawnPitchNode( SharedPtr<NodeEditorBase> nodeEditor )
+	{
+		SharedPtr<SoundPitchNode> node = NewObject<SoundPitchNode>( nodeEditor.Get() );
+		nodeEditor->AddNode( node );
+
+		return node;
+	}
+
+	SharedPtr<SoundRandomPitchNode> SoundNodeLibrary::SpawnRandPitch( SharedPtr<NodeEditorBase> nodeEditor )
+	{
+		SharedPtr<SoundRandomPitchNode> node = NewObject<SoundRandomPitchNode>( nodeEditor.Get() );
+		nodeEditor->AddNode( node );
+
+		return node;
+	}
+
+	SharedPtr<SoundFloatConst> SoundNodeLibrary::SpawnFloatConst( SharedPtr<NodeEditorBase> nodeEditor )
+	{
+		SharedPtr<SoundFloatConst> node = NewObject<SoundFloatConst>( nodeEditor.Get() );
+		nodeEditor->AddNode( node );
+
+		return node;
+	}
+
+	SharedPtr<SoundOutputNode> SoundNodeLibrary::SpawnOutputNode( SharedPtr<NodeEditorBase> nodeEditor )
+	{
+		SharedPtr<SoundOutputNode> node = NewObject<SoundOutputNode>( nodeEditor.Get() );
+		nodeEditor->AddNode( node );
+
+		return node;
+	}
 }

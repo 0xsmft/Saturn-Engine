@@ -26,74 +26,96 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "SoundNodeLibrary.h"
+#pragma once
 
-#include "Nodes/SoundOutputNode.h"
-#include "Nodes/SoundPlayerNode.h"
-#include "Nodes/SoundRandomSoundNode.h" 
-#include "Nodes/SoundMixerNode.h" 
-#include "Nodes/SoundPitchNode.h" 
-#include "Nodes/SoundRandomPitchNode.h"
-#include "Nodes/SoundFloatConstNode.h"
-
-#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
+#include "Saturn/NodeEditor/NodeEditorBlueprintNode.h"
 
 namespace Saturn {
 
-	SharedPtr<SoundRandomSoundNode> SoundNodeLibrary::SpawnRandomNode( SharedPtr<NodeEditorBase> nodeEditor )
+	SCLASS()
+	class SoundOutputNode : public NodeEditorBlueprintNode
 	{
-		SharedPtr<SoundRandomSoundNode> node = NewObject<SoundRandomSoundNode>( nodeEditor.Get() );
-		nodeEditor->AddNode( node );
+		SAT_DECLARE_CLASS( SoundOutputNode, NodeEditorBlueprintNode );
+	public:
+		SoundOutputNode();
+		virtual ~SoundOutputNode();
 
-		return node;
-	}
+		virtual NodeEditorTaskBase* ConvertToTask() override;
 
-	SharedPtr<SoundMixerNode> SoundNodeLibrary::SpawnMixerNode( SharedPtr<NodeEditorBase> nodeEditor )
+	private:
+		void CreateNode();
+	};
+
+	SCLASS()
+	class SoundPitchNode : public NodeEditorBlueprintNode
 	{
-		SharedPtr<SoundMixerNode> node = NewObject<SoundMixerNode>( nodeEditor.Get() );;
-		nodeEditor->AddNode( node );
+		SAT_DECLARE_CLASS( SoundPitchNode, NodeEditorBlueprintNode );
+	public:
+		SoundPitchNode();
+		SoundPitchNode( const std::string& rName );
+		virtual ~SoundPitchNode();
 
-		return node;
-	}
+	private:
+		void CreateNode();
+	};
 
-	SharedPtr<SoundPlayerNode> SoundNodeLibrary::SpawnPlayerNode( SharedPtr<NodeEditorBase> nodeEditor )
+	SCLASS()
+	class SoundPlayerNode : public NodeEditorBlueprintNode
 	{
-		SharedPtr<SoundPlayerNode> node = NewObject<SoundPlayerNode>( nodeEditor.Get() );
-		nodeEditor->AddNode( node );
+		SAT_DECLARE_CLASS( SoundPlayerNode, NodeEditorBlueprintNode );
+	public:
+		SoundPlayerNode();
+		SoundPlayerNode( const std::string& rName );
+		virtual ~SoundPlayerNode();
 
-		return node;
-	}
+		virtual NodeEditorTaskBase* ConvertToTask() override;
 
-	SharedPtr<SoundPitchNode> SoundNodeLibrary::SpawnPitchNode( SharedPtr<NodeEditorBase> nodeEditor )
+	public:
+		uint64_t GetAssetID() const;
+
+	private:
+		void CreateNode();
+	};
+
+	SCLASS()
+	class SoundRandomPitchNode : public NodeEditorBlueprintNode
 	{
-		SharedPtr<SoundPitchNode> node = NewObject<SoundPitchNode>( nodeEditor.Get() );
-		nodeEditor->AddNode( node );
+		SAT_DECLARE_CLASS( SoundRandomPitchNode, NodeEditorBlueprintNode );
+	public:
+		SoundRandomPitchNode();
+		SoundRandomPitchNode( const std::string& rName );
+		virtual ~SoundRandomPitchNode();
 
-		return node;
-	}
+	private:
+		void CreateNode();
+	};
 
-	SharedPtr<SoundRandomPitchNode> SoundNodeLibrary::SpawnRandPitch( SharedPtr<NodeEditorBase> nodeEditor )
+	SCLASS()
+	class SoundRandomSoundNode : public NodeEditorBlueprintNode
 	{
-		SharedPtr<SoundRandomPitchNode> node = NewObject<SoundRandomPitchNode>( nodeEditor.Get() );
-		nodeEditor->AddNode( node );
+		SAT_DECLARE_CLASS( SoundRandomSoundNode, NodeEditorBlueprintNode );
+	public:
+		SoundRandomSoundNode();
+		SoundRandomSoundNode( const std::string& rName );
+		virtual ~SoundRandomSoundNode();
 
-		return node;
-	}
+		virtual NodeEditorTaskBase* ConvertToTask() override;
 
-	SharedPtr<SoundFloatConst> SoundNodeLibrary::SpawnFloatConst( SharedPtr<NodeEditorBase> nodeEditor )
+	private:
+		void CreateNode();
+	};
+
+	SCLASS()
+	class SoundFloatConst : public NodeEditorBlueprintNode
 	{
-		SharedPtr<SoundFloatConst> node = NewObject<SoundFloatConst>( nodeEditor.Get() );
-		nodeEditor->AddNode( node );
+		SAT_DECLARE_CLASS( SoundFloatConst, NodeEditorBlueprintNode );
+	public:
+		SoundFloatConst();
+		SoundFloatConst( const std::string& rName );
+		virtual ~SoundFloatConst();
 
-		return node;
-	}
+	private:
+		void CreateNode();
+	};
 
-	SharedPtr<SoundOutputNode> SoundNodeLibrary::SpawnOutputNode( SharedPtr<NodeEditorBase> nodeEditor )
-	{
-		SharedPtr<SoundOutputNode> node = NewObject<SoundOutputNode>( nodeEditor.Get() );
-		nodeEditor->AddNode( node );
-
-		return node;
-	}
 }

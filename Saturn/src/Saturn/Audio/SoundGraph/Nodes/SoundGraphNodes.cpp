@@ -32,7 +32,6 @@
 #include "Saturn/NodeEditor/Pin.h"
 #include "Saturn/NodeEditor/AssetIDPin.h"
 
-#include "Saturn/Audio/SoundGraph/SoundEditorEvaluator.h"
 #include "Saturn/Audio/SoundGraph/SoundPin.h"
 #include "Saturn/Audio/SoundGraph/Tasks/SoundGraphTasks.h"
 

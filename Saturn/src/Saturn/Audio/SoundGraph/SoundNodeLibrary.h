@@ -37,7 +37,6 @@ namespace Saturn {
 	class SoundRandomSoundNode;
 	class SoundPitchNode;
 	class SoundRandomPitchNode;
-	class SoundFloatConst;
 
 	class SoundNodeLibrary
 	{
@@ -46,7 +45,6 @@ namespace Saturn {
 		static SharedPtr<SoundPlayerNode>      SpawnPlayerNode( SharedPtr<NodeEditorBase> nodeEditor );
 		static SharedPtr<SoundPitchNode>       SpawnPitchNode ( SharedPtr<NodeEditorBase> nodeEditor );
 		static SharedPtr<SoundRandomPitchNode> SpawnRandPitch ( SharedPtr<NodeEditorBase> nodeEditor );
-		static SharedPtr<SoundFloatConst>      SpawnFloatConst( SharedPtr<NodeEditorBase> nodeEditor );
 		
 		static SharedPtr<SoundOutputNode>      SpawnOutputNode( SharedPtr<NodeEditorBase> nodeEditor );
 	};

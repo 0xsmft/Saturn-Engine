@@ -32,7 +32,7 @@
 
 #include <miniaudio.h>
 
-#define MA_CHECK( x ) _maCheckResult(x)
+#define MA_CHECK( x ) _maCheckResult( x )
 
 inline std::string_view MiniAudioErrorToStr( ma_result Result )
 {
@@ -120,10 +120,13 @@ inline void _maCheckResult( ma_result Result )
 {
 	if( Result != MA_SUCCESS )
 	{
-		auto ErrorStr = MiniAudioErrorToStr( Result );
-
+		const auto ErrorStr = MiniAudioErrorToStr( Result );
 		SAT_CORE_INFO( "[MiniAudio Error] {0}", ErrorStr );
 
+#if defined(SAT_DIST)
+		SAT_CORE_VERIFY( false, ErrorStr );
+#else
 		Saturn::Core::BreakDebug();
+#endif
 	}
 }

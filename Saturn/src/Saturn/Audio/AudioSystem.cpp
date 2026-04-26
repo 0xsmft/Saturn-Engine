@@ -227,6 +227,7 @@ namespace Saturn {
 		Ref<SoundSpecification> spec = AssetManager::Get()->GetAssetAs<SoundSpecification>( ID );
 
 		Ref<Sound> newSound = Ref<Sound>::Create( spec, soundGroup );
+		newSound->SetID( UniquePlayerID );
 		m_AliveSounds[ UniquePlayerID ] = newSound;
 
 		auto loadFunc = [=]() -> void
@@ -234,7 +235,6 @@ namespace Saturn {
 			// Intentional.
 			// Better to get the sound again rather than copy it into this lambda.
 			Ref<Sound> newSound = m_AliveSounds[ UniquePlayerID ];
-			newSound->SetID( UniquePlayerID );
 
 			newSound->Load( MA_SOUND_FLAG_NO_SPATIALIZATION );
 			// If the sound was already loaded then we can still disable it here.
@@ -256,6 +256,8 @@ namespace Saturn {
 		Ref<SoundSpecification> spec = AssetManager::Get()->GetAssetAs<SoundSpecification>( ID );
 
 		Ref<Sound> newSound = Ref<Sound>::Create( spec, soundGroup );
+		newSound->SetID( UniquePlayerID );
+
 		m_AliveSounds[ UniquePlayerID ] = newSound;
 
 		auto loadFunc = [=]() -> void
@@ -268,7 +270,6 @@ namespace Saturn {
 			// If the sound was already loaded then we can still enable it here.
 			newSound->SetSpatialisation( true );
 			newSound->SetPosition( rPos );
-			newSound->SetID( UniquePlayerID );
 
 			if( PlayNow ) newSound->Play();
 

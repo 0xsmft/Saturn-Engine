@@ -80,6 +80,60 @@ namespace Saturn {
 	};
 
 	SCLASS()
+	class SGraphSoundPitchTask : public NodeEditorTaskBase
+	{
+		SAT_DECLARE_CLASS_MOVE( SGraphSoundPitchTask, NodeEditorTaskBase );
+	public:
+		SGraphSoundPitchTask();
+		virtual ~SGraphSoundPitchTask();
+
+#if !defined(SAT_DIST)
+		virtual void PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+#endif
+
+		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther ) override;
+
+		virtual NodeEditorTaskState Tick( Timestep ts ) override;
+
+	public:
+		virtual void Serialise( std::ofstream& rStream ) const override;
+		virtual void Deserialise( FDependentIStream& rStream ) override;
+
+	private:
+		UUID m_SoundNodeID = 0llu;
+		size_t* m_pTargetSoundIndex = 0llu;
+		float m_Pitch = 1.0f;
+	};
+
+	SCLASS()
+	class SGraphSoundRandomPitchTask : public NodeEditorTaskBase
+	{
+		SAT_DECLARE_CLASS_MOVE( SGraphSoundRandomPitchTask, NodeEditorTaskBase );
+	public:
+		SGraphSoundRandomPitchTask();
+		virtual ~SGraphSoundRandomPitchTask();
+
+#if !defined(SAT_DIST)
+		virtual void PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+#endif
+
+		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther ) override;
+
+		virtual NodeEditorTaskState Tick( Timestep ts ) override;
+
+	public:
+		virtual void Serialise( std::ofstream& rStream ) const override;
+		virtual void Deserialise( FDependentIStream& rStream ) override;
+
+	private:
+		UUID m_SoundNodeID = 0llu;
+		size_t* m_pTargetSoundIndex = 0llu;
+
+		float m_MinPitch = 1.0f;
+		float m_MaxPitch = 2.0f;
+	};
+
+	SCLASS()
 	class SGraphSoundRandomSoundTask : public NodeEditorTaskBase
 	{
 		SAT_DECLARE_CLASS_MOVE( SGraphSoundRandomSoundTask, NodeEditorTaskBase );

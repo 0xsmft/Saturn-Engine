@@ -30,6 +30,8 @@
 
 #include "Saturn/NodeEditor/NodeEditorTaskHandler.h"
 
+#include <unordered_set>
+
 namespace Saturn {
 
 	class Sound;
@@ -40,21 +42,30 @@ namespace Saturn {
 		SoundGraphTaskHandler();
 		virtual ~SoundGraphTaskHandler();
 
-		size_t AddNewSound( UUID assetID, bool spatialisation = false );
-		
-		void RegisterSound( size_t index );
-		void UnregisterSound( size_t index );
-
 	public:
 		virtual void Tick( Timestep ts ) override;
 
+	public:
+		void Loop( bool shouldLoop ) { m_Looping = shouldLoop; }
+
+		void PlaySounds();
+		void StopSounds();
+		void DestroyAliveSounds();
+
+		UUID AddNewSound( UUID assetID, bool spatialisation = false );
+
+		void RegisterSound( size_t index );
+		void UnregisterSound( size_t index );
+
+		Ref<Sound> GetSoundFromIndex( size_t index );
+
 	private:
 		void OnSoundCompleted( UUID PlayerID );
-		void DestroyAliveSounds();
 
 	private:
 		// Sounds that are currently playing
 		std::vector<Ref<Sound>> m_AliveSounds;
+		std::unordered_set<size_t> m_SoundsPlaying;
 
 		bool m_Looping = false;
 		bool m_Completed = false;

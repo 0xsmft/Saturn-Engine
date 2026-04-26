@@ -40,6 +40,7 @@ namespace Saturn {
 
 	SoundGraphTaskHandler::~SoundGraphTaskHandler()
 	{
+		DestroyAliveSounds();
 	}
 
 	void SoundGraphTaskHandler::Tick( Timestep ts )
@@ -47,7 +48,38 @@ namespace Saturn {
 		NodeEditorTaskHandler::Tick( ts );
 	}
 
-	size_t SoundGraphTaskHandler::AddNewSound( UUID assetID, bool spatialisation /*= false */ )
+	void SoundGraphTaskHandler::PlaySounds()
+	{
+		size_t index = 0;
+		for( auto itr = m_AliveSounds.begin(); itr != m_AliveSounds.end(); )
+		{
+			Ref<Sound> sound = *( itr );
+
+			if( m_SoundsPlaying.count( index ) > 0 )
+			{
+				sound->Play();
+				++itr;
+			}
+			else
+			{
+				sound->Unload();
+
+				itr = m_AliveSounds.erase( itr );
+			}
+
+			++index;
+		}
+	}
+
+	void SoundGraphTaskHandler::StopSounds()
+	{
+		for( auto& rSound : m_AliveSounds )
+		{
+			rSound->Stop();
+		}
+	}
+
+	UUID SoundGraphTaskHandler::AddNewSound( UUID assetID, bool spatialisation /*= false */ )
 	{
 		Ref<Sound> snd;
 		if( spatialisation )
@@ -61,7 +93,6 @@ namespace Saturn {
 
 		snd->AddOnCompleteFunction( SAT_BIND_EVENT_FN( SoundGraphTaskHandler::OnSoundCompleted ) );
 //		snd->WaitUntilLoaded();
-		snd->Play();
 
 		m_AliveSounds.push_back( snd );
 
@@ -86,21 +117,40 @@ namespace Saturn {
 		{
 			m_Completed = false;
 
+			m_SoundsPlaying.clear();
+
 			ResetAllTasks();
 		}
 	}
 
 	void SoundGraphTaskHandler::DestroyAliveSounds()
 	{
+		for( auto& rSound : m_AliveSounds )
+		{
+			rSound->Stop();
+			AudioSystem::Get().UnloadSound( rSound );
+		}
 
+		m_AliveSounds.clear();
+		m_SoundsPlaying.clear();
 	}
 
 	void SoundGraphTaskHandler::RegisterSound( size_t index )
 	{
+		m_SoundsPlaying.insert( index );
 	}
 
 	void SoundGraphTaskHandler::UnregisterSound( size_t index )
 	{
+		m_SoundsPlaying.erase( index );
+	}
+
+	Ref<Sound> SoundGraphTaskHandler::GetSoundFromIndex( size_t index )
+	{
+		if( index >= m_AliveSounds.size() )
+			return nullptr;
+	
+		return m_AliveSounds[ index ];
 	}
 
 }

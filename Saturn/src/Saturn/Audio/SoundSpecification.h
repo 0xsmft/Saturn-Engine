@@ -28,6 +28,7 @@
 
 #pragma once
 
+#include "Saturn/Core/Buffer.h"
 #include "Saturn/Asset/Asset.h"
 
 namespace Saturn {

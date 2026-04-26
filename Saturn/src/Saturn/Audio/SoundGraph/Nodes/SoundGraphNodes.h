@@ -55,6 +55,8 @@ namespace Saturn {
 		SoundPitchNode( const std::string& rName );
 		virtual ~SoundPitchNode();
 
+		virtual NodeEditorTaskBase* ConvertToTask() override;
+
 	private:
 		void CreateNode();
 	};
@@ -86,6 +88,8 @@ namespace Saturn {
 		SoundRandomPitchNode( const std::string& rName );
 		virtual ~SoundRandomPitchNode();
 
+		virtual NodeEditorTaskBase* ConvertToTask() override;
+
 	private:
 		void CreateNode();
 	};
@@ -100,19 +104,6 @@ namespace Saturn {
 		virtual ~SoundRandomSoundNode();
 
 		virtual NodeEditorTaskBase* ConvertToTask() override;
-
-	private:
-		void CreateNode();
-	};
-
-	SCLASS()
-	class SoundFloatConst : public NodeEditorBlueprintNode
-	{
-		SAT_DECLARE_CLASS( SoundFloatConst, NodeEditorBlueprintNode );
-	public:
-		SoundFloatConst();
-		SoundFloatConst( const std::string& rName );
-		virtual ~SoundFloatConst();
 
 	private:
 		void CreateNode();

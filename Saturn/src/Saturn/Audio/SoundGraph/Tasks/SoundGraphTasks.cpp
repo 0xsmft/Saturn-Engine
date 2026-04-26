@@ -70,7 +70,18 @@ namespace Saturn {
 
 	NodeEditorTaskState SGraphSoundOutputTask::Tick( Timestep ts )
 	{
-		return NodeEditorTaskState::Completed;
+		if( m_CurrentState == NodeEditorTaskState::Unknown )
+		{
+			SoundGraphTaskHandler* pSGHandler = dynamic_cast< SoundGraphTaskHandler* >( m_pHandler );
+			if( pSGHandler )
+			{
+				pSGHandler->PlaySounds();
+			}
+
+			m_CurrentState = NodeEditorTaskState::Completed;
+		}
+
+		return m_CurrentState;
 	}
 
 	void SGraphSoundOutputTask::Serialise( std::ofstream& rStream ) const
@@ -124,6 +135,8 @@ namespace Saturn {
 				m_SoundIndex = pSGHandler->AddNewSound( m_SpecAssetID, m_Spatialisation );
 				pSGHandler->RegisterLocator<size_t>( m_NodeID, 0, &m_SoundIndex );
 		
+				pSGHandler->RegisterSound( m_SoundIndex );
+
 				m_CurrentState = NodeEditorTaskState::Completed;
 			}
 		}
@@ -148,6 +161,200 @@ namespace Saturn {
 
 		RawSerialisation::ReadObject( m_SpecAssetID, rStream );
 		RawSerialisation::ReadObject( m_Spatialisation, rStream );
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// SGraphSoundPitchTask
+
+	SGraphSoundPitchTask::SGraphSoundPitchTask()
+	{
+	}
+
+	SGraphSoundPitchTask::~SGraphSoundPitchTask()
+	{
+	}
+
+#if !defined(SAT_DIST)
+	void SGraphSoundPitchTask::PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
+	{
+		Super::PreInitialiseTask( pEditor, pNode );
+
+		SoundPitchNode* pSoundNode = dynamic_cast< SoundPitchNode* >( pNode );
+		if( pSoundNode )
+		{
+			m_Pitch = pSoundNode->Inputs[ 1 ].As<FloatPin>()->Data;
+		
+			// NB: FindLinkByPin is OK here, Pin does not have PinFlag_AcceptMultipleLinks flag.
+			auto link = pEditor->FindLinkByPin( pNode->Inputs[ 0 ]->ID );
+			if( link && link->StartPinID )
+			{
+				auto otherPin = pEditor->FindPin( link->StartPinID );
+				if( otherPin )
+				{
+					m_SoundNodeID = otherPin->Node->ID;
+				}
+			}
+		}
+	}
+#endif
+
+	void SGraphSoundPitchTask::InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther )
+	{
+		Super::InitialiseTaskWithOther( pHandler, pOther );
+
+		SoundGraphTaskHandler* pSGHandler = dynamic_cast< SoundGraphTaskHandler* >( m_pHandler );
+		if( pSGHandler )
+		{
+			SGraphSoundPitchTask* pThisOther = dynamic_cast< SGraphSoundPitchTask* >( pOther );
+			if( pThisOther )
+			{
+				m_SoundNodeID = pThisOther->m_SoundNodeID;
+				m_Pitch = pThisOther->m_Pitch;
+			}
+		}
+	}
+
+	NodeEditorTaskState SGraphSoundPitchTask::Tick( Timestep ts )
+	{
+		if( m_CurrentState == NodeEditorTaskState::Unknown )
+		{
+			SoundGraphTaskHandler* pSGHandler = dynamic_cast< SoundGraphTaskHandler* >( m_pHandler );
+			if( pSGHandler )
+			{
+				m_pTargetSoundIndex = pSGHandler->AccessLocator<size_t>( m_SoundNodeID, 0 );
+
+				auto snd = pSGHandler->GetSoundFromIndex( *m_pTargetSoundIndex );
+				if( snd )
+				{
+					snd->SetPitch( m_Pitch );
+				}
+
+				pSGHandler->RegisterLocator<size_t>( m_NodeID, 0, m_pTargetSoundIndex );
+
+				m_CurrentState = NodeEditorTaskState::Completed;
+			}
+			else
+				m_CurrentState = NodeEditorTaskState::Failed;
+		}
+
+		return m_CurrentState;
+	}
+
+	void SGraphSoundPitchTask::Serialise( std::ofstream& rStream ) const
+	{
+		Super::Serialise( rStream );
+
+		RawSerialisation::WriteObject( m_SoundNodeID, rStream );
+		RawSerialisation::WriteObject( m_Pitch, rStream );
+	}
+
+	void SGraphSoundPitchTask::Deserialise( FDependentIStream& rStream )
+	{
+		Super::Deserialise( rStream );
+
+		RawSerialisation::ReadObject( m_SoundNodeID, rStream );
+		RawSerialisation::ReadObject( m_Pitch, rStream );
+	}
+	
+	//////////////////////////////////////////////////////////////////////////
+	// SGraphSoundRandomPitchTask
+
+	SGraphSoundRandomPitchTask::SGraphSoundRandomPitchTask()
+	{
+	}
+
+	SGraphSoundRandomPitchTask::~SGraphSoundRandomPitchTask()
+	{
+	}
+
+#if !defined(SAT_DIST)
+	void SGraphSoundRandomPitchTask::PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
+	{
+		Super::PreInitialiseTask( pEditor, pNode );
+
+		SoundRandomPitchNode* pSoundNode = dynamic_cast< SoundRandomPitchNode* >( pNode );
+		if( pSoundNode )
+		{
+			m_MinPitch = pSoundNode->Inputs[ 1 ].As<FloatPin>()->Data;
+			m_MaxPitch = pSoundNode->Inputs[ 2 ].As<FloatPin>()->Data;
+			
+			// Safety, just in case for whatever reason in min is the max.
+			m_MinPitch = glm::min( m_MinPitch, m_MaxPitch );
+			m_MaxPitch = glm::max( m_MinPitch, m_MaxPitch );
+
+			// NB: FindLinkByPin is OK here, Pin does not have PinFlag_AcceptMultipleLinks flag.
+			const auto link = pEditor->FindLinkByPin( pNode->Inputs[ 0 ]->ID );
+			if( link && link->StartPinID )
+			{
+				auto otherPin = pEditor->FindPin( link->StartPinID );
+				if( otherPin )
+				{
+					m_SoundNodeID = otherPin->Node->ID;
+				}
+			}
+		}
+	}
+#endif
+
+	void SGraphSoundRandomPitchTask::InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther )
+	{
+		Super::InitialiseTaskWithOther( pHandler, pOther );
+
+		SoundGraphTaskHandler* pSGHandler = dynamic_cast< SoundGraphTaskHandler* >( m_pHandler );
+		if( pSGHandler )
+		{
+			SGraphSoundRandomPitchTask* pThisOther = dynamic_cast< SGraphSoundRandomPitchTask* >( pOther );
+			if( pThisOther )
+			{
+				m_SoundNodeID = pThisOther->m_SoundNodeID;
+				m_MinPitch = pThisOther->m_MinPitch;
+				m_MaxPitch = pThisOther->m_MaxPitch;
+			}
+		}
+	}
+
+	NodeEditorTaskState SGraphSoundRandomPitchTask::Tick( Timestep ts )
+	{
+		if( m_CurrentState == NodeEditorTaskState::Unknown )
+		{
+			SoundGraphTaskHandler* pSGHandler = dynamic_cast< SoundGraphTaskHandler* >( m_pHandler );
+			if( pSGHandler )
+			{
+				m_pTargetSoundIndex = pSGHandler->AccessLocator<size_t>( m_SoundNodeID, 0 );
+
+				auto snd = pSGHandler->GetSoundFromIndex( *m_pTargetSoundIndex );
+				if( snd )
+				{
+					snd->SetPitch( Random::RandomFloatInRange( m_MinPitch, m_MaxPitch ) );
+				}
+
+				pSGHandler->RegisterLocator<size_t>( m_NodeID, 0, m_pTargetSoundIndex );
+
+				m_CurrentState = NodeEditorTaskState::Completed;
+			}
+			else
+				m_CurrentState = NodeEditorTaskState::Failed;
+		}
+
+		return m_CurrentState;
+	}
+
+	void SGraphSoundRandomPitchTask::Serialise( std::ofstream& rStream ) const
+	{
+		Super::Serialise( rStream );
+	
+		RawSerialisation::WriteObject( m_MinPitch, rStream );
+		RawSerialisation::WriteObject( m_MaxPitch, rStream );
+		RawSerialisation::WriteObject( m_SoundNodeID, rStream );
+	}
+
+	void SGraphSoundRandomPitchTask::Deserialise( FDependentIStream& rStream )
+	{
+		Super::Deserialise( rStream );
+
+		RawSerialisation::ReadObject( m_MinPitch, rStream );
+		RawSerialisation::ReadObject( m_MaxPitch, rStream );
+		RawSerialisation::ReadObject( m_SoundNodeID, rStream );
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -218,6 +425,16 @@ namespace Saturn {
 			if( pSGHandler )
 			{
 				pSGHandler->RegisterLocator<size_t>( m_NodeID, 0, &m_ChosenIndex );
+				pSGHandler->RegisterSound( m_ChosenIndex );
+
+				if( *m_pIndexA == m_ChosenIndex )
+				{
+					pSGHandler->UnregisterSound( *m_pIndexB );
+				}
+				else
+				{
+					pSGHandler->UnregisterSound( *m_pIndexA );
+				}
 			}
 
 			m_CurrentState = NodeEditorTaskState::Completed;
@@ -248,4 +465,6 @@ namespace Saturn {
 
 SAT_X31_CREATE_AUTO_REG( SGraphSoundOutputTask );
 SAT_X31_CREATE_AUTO_REG( SGraphSoundPlayerTask );
+SAT_X31_CREATE_AUTO_REG( SGraphSoundPitchTask );
+SAT_X31_CREATE_AUTO_REG( SGraphSoundRandomPitchTask );
 SAT_X31_CREATE_AUTO_REG( SGraphSoundRandomSoundTask );

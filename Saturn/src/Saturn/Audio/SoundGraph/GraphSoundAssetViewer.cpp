@@ -154,6 +154,8 @@ namespace Saturn {
 
 				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Billboard_AudioMuted" ), { 24, 24 } ) )
 				{
+					m_TaskHandler->DestroyAliveSounds();
+					m_TaskHandler = nullptr;
 				}
 
 				if( ImGui::IsItemHovered() )

@@ -67,14 +67,6 @@ namespace Saturn {
 		return node;
 	}
 
-	SharedPtr<SoundFloatConst> SoundNodeLibrary::SpawnFloatConst( SharedPtr<NodeEditorBase> nodeEditor )
-	{
-		SharedPtr<SoundFloatConst> node = NewObject<SoundFloatConst>( nodeEditor.Get() );
-		nodeEditor->AddNode( node );
-
-		return node;
-	}
-
 	SharedPtr<SoundOutputNode> SoundNodeLibrary::SpawnOutputNode( SharedPtr<NodeEditorBase> nodeEditor )
 	{
 		SharedPtr<SoundOutputNode> node = NewObject<SoundOutputNode>( nodeEditor.Get() );

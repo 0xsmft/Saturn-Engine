@@ -32,6 +32,10 @@
 
 namespace Saturn {
 
+	//
+	// General Task Node
+	//
+	SCLASS()
 	class BehaviourTreeTaskNode : public BehaviourTreeNodeBase
 	{
 		SAT_DECLARE_CLASS( BehaviourTreeTaskNode, BehaviourTreeNodeBase );
@@ -46,7 +50,6 @@ namespace Saturn {
 		//////////////////////////////////////////////////////////////////////////
 		// NodeEditorNodeBase
 
-		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* pEvaluator ) override;
 		virtual void Serialise( std::ofstream& rStream, bool isForDist ) const override;
 		virtual void Deserialise( FDependentIStream& rStream ) override;
 

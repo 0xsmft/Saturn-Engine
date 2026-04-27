@@ -65,11 +65,6 @@ namespace Saturn {
 	{
 	}
 
-	NodeEvaluationState BehaviourTreeRootNode::EvaluateNode( NodeEditorRuntime* pEvaluator )
-	{	
-		return NodeEvaluationState::Evaluated;
-	}
-
 }
 
 #include "Saturn/GameFramework/Core/EngineGenerated.h"

@@ -73,11 +73,6 @@ namespace Saturn {
 		Reset();
 	}
 
-	NodeEvaluationState BehaviourTreeSelectorNode::EvaluateNode( NodeEditorRuntime* pEvaluator )
-	{
-		return NodeEvaluationState::Failed;
-	}
-
 	void BehaviourTreeSelectorNode::Serialise( std::ofstream& rStream, bool isForDist ) const
 	{
 		BehaviourTreeNodeBase::Serialise( rStream, isForDist );

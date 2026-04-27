@@ -29,7 +29,7 @@
 #include "sppch.h"
 #include "BehaviourTreeTaskNode.h"
 
-#include "Saturn/GameFramework/core/ClassMetadataHandler.h"
+#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 
 #include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeNodeEditor.h"
 
@@ -82,11 +82,6 @@ namespace Saturn {
 
 	BehaviourTreeTaskNode::~BehaviourTreeTaskNode()
 	{
-	}
-
-	NodeEvaluationState BehaviourTreeTaskNode::EvaluateNode( NodeEditorRuntime* pEvaluator )
-	{
-		return NodeEvaluationState::Failed;
 	}
 
 	void BehaviourTreeTaskNode::Serialise( std::ofstream& rStream, bool isForDist ) const

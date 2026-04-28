@@ -34,13 +34,13 @@
 namespace Saturn {
 
 	SoundPin::SoundPin( const std::string& rName, PinKind kind, PinFlag flag )
-		: IntPin( rName, kind, flag )
+		: UInt64Pin( rName, kind, flag )
 	{
 		Type = PinType::Sound;
 	}
 
 	SoundPin::SoundPin( UUID id, const std::string& rName, PinType type, UUID nodeID, PinFlag flag )
-		: IntPin( id, rName, type, nodeID, flag )
+		: UInt64Pin( id, rName, type, nodeID, flag )
 	{
 		Type = PinType::Sound;
 	}

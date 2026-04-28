@@ -32,8 +32,8 @@
 
 namespace Saturn {
 
-	// A SoundPin is a specialized IntPin that represents the index of what sound should play.
-	class SoundPin : public IntPin
+	// A SoundPin is a specialized UInt64Pin that represents the index of what sound should play.
+	class SoundPin : public UInt64Pin
 	{
 	public:
 		SoundPin() = default;

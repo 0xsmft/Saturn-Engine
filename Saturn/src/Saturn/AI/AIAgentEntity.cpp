@@ -29,21 +29,11 @@
 #include "sppch.h"
 #include "AIAgentEntity.h"
 
-#include "Saturn/Core/Random.h"
-
-#include "Saturn/Physics/PhysicsRigidBody.h"
-
-#include "Saturn/NodeEditor/NodeEditorBase.h"
 #include "BehaviourTree/BehaviourTree.h"
-
-#include <Detour/DetourNavMeshQuery.h>
-#include <glm/gtc/type_ptr.hpp>
 
 #if !defined(SAT_DIST)
 #include "BehaviourTree/AssetViewer/BehaviourTreeAssetViewer.h"
 #include "Saturn/ImGui/ImGuiWindowManager.h"
-#else
-#include "BehaviourTree/AssetViewer/BehaviourTreeNodeEditor.h"
 #endif
 
 namespace Saturn {
@@ -62,12 +52,6 @@ namespace Saturn {
 	void AIAgentEntity::BeginPlay()
 	{
 		Super::BeginPlay();
-
-		auto e = GetScene()->GetAllEntitiesWith<NavigationMeshSpecificationComponent>();
-		if( e.size() )
-		{
-			m_NavBoundsEntity = e[ 0 ].As<NavBoundsEntity>();
-		}
 	}
 
 	void AIAgentEntity::OnUpdate( Saturn::Timestep ts )
@@ -87,11 +71,10 @@ namespace Saturn {
 	{
 		m_BehaviourTree = Ref<BehaviourTree>::Create( id );
 		m_BehaviourTree->Initialise( SharedFromThis() );
-		m_BehaviourTree->FirstEvaluate();
 
 #if !defined(SAT_DIST)
 		// Add reference if asset viewer is open
-		const std::string name = std::format( "{0}##{1}", m_BehaviourTree->GetAsset()->Name, ( uint64_t ) id );
+		const std::string name = std::format( "{0}##{1}", m_BehaviourTree->GetUnderlyingAsset()->Name, ( uint64_t ) id );
 		if( Ref<BehaviourTreeAssetViewer> window = ImGuiWindowManager::Get()->GetWindow<BehaviourTreeAssetViewer>( name ); window )
 		{
 			window->AddBehviourTreeReference( m_BehaviourTree );

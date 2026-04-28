@@ -28,47 +28,28 @@
 
 #pragma once
 
-#include "BehaviourTreeBaseTask.h"
-
-#include "Saturn/AI/Navigation/StraightNavPath.h"
+#include "Saturn/NodeEditor/NodeEditorTaskHandler.h"
 
 namespace Saturn {
 
 	class AIAgentEntity;
 
-	SCLASS()
-	class BehaviourTreeMoveToTask : public BehaviourTreeBaseTask
+	class BehaviourTreeTaskHandler : public NodeEditorTaskHandler
 	{
-		SAT_DECLARE_CLASS_MOVE( BehaviourTreeMoveToTask, BehaviourTreeBaseTask )
 	public:
-		BehaviourTreeMoveToTask() = default;
+		BehaviourTreeTaskHandler();
+		virtual ~BehaviourTreeTaskHandler();
 
-		BehaviourTreeMoveToTask( const glm::vec3& rTargetPosition );
-		virtual ~BehaviourTreeMoveToTask();
+		void SetAgent( AIAgentEntity* pAgent ) { m_pAIAgentEntity = pAgent; }
 
-#if !defined(SAT_DIST)
-		virtual void PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode );
-#endif
-		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther );
+		virtual void Tick( Timestep ts ) override;
 
-		virtual NodeEditorTaskState Tick( Timestep ts ) override;
-		virtual void Reset() override;
-
-#if !defined(SAT_DIST)
-		[[nodiscard]] virtual bool IsSpawnableNode() const { return true; }
-		virtual const char* GetTaskName() const { return "Move To"; }
-#endif
+		AIAgentEntity* GetTargetAgent() const { return m_pAIAgentEntity; }
 
 	private:
-		// #ReplaceRawPtrOrRefWithWeakRef, for now it's a raw ptr
-		AIAgentEntity* m_Agent = nullptr;
-
-		glm::vec3 m_TargetPosition{};
-		StraightNavPath m_Path{};
-
-	private:
-		[[nodiscard]] NodeEditorTaskState InitPathTo();
-		[[nodiscard]] NodeEditorTaskState WalkToNextWaypoint( Timestep ts );
+		// The current Agent that we are trying to control
+		// #ReplaceRawPtrOrRefWithWeakRef, non owning ptr, should be converted to a weak ptr because we don't want to stop the entity from delete, we are "child" of it
+		AIAgentEntity* m_pAIAgentEntity = nullptr;
 	};
 	
 }

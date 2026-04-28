@@ -49,15 +49,28 @@ namespace Saturn {
 		}
 	}
 
-	void BehaviourTreePlaySoundTask::InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
-	{
-		m_NodeID = pNode->ID;
-	}
-
 	BehaviourTreePlaySoundTask::~BehaviourTreePlaySoundTask()
 	{
 		Reset();
 		m_Sound = nullptr;
+	}
+
+#if !defined(SAT_DIST)
+	void BehaviourTreePlaySoundTask::PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
+	{
+		Super::PreInitialiseTask( pEditor, pNode );
+	}
+#endif
+
+	void BehaviourTreePlaySoundTask::InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther )
+	{
+		Super::InitialiseTaskWithOther( pHandler, pOther );
+
+		BehaviourTreePlaySoundTask* pThisOther = dynamic_cast< BehaviourTreePlaySoundTask* >( pOther );
+		if( pThisOther )
+		{
+			m_Sound = pThisOther->m_Sound;
+		}
 	}
 
 	NodeEditorTaskState BehaviourTreePlaySoundTask::Tick( Timestep ts )

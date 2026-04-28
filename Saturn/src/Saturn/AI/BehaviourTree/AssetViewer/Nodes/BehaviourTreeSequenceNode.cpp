@@ -34,7 +34,6 @@
 
 #include "Saturn/NodeEditor/NodeEditorBase.h"
 
-#include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeEditorEvaluator.h"
 #include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeNodeEditor.h"
 
 #include "Saturn/AI/BehaviourTree/Tasks/BehaviourTreeCompositeTasks.h"

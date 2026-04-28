@@ -29,14 +29,12 @@
 #include "sppch.h"
 #include "BehaviourTree.h"
 
-#include "AssetViewer/Nodes/BehaviourTreeSequenceNode.h"
-#include "AssetViewer/BehaviourTreeNodeEditor.h"
+#include "BehaviourTreeTaskHandler.h"
 
 #include "Saturn/Asset/AssetManager.h"
 
-#include "Saturn/NodeEditor/NodeEditorBase.h"
-#include "Saturn/NodeEditor/UI/NodeEditor.h"
 #include "Saturn/NodeEditor/Serialisation/NodeCache.h"
+#include "Saturn/NodeEditor/GlobalNodeEditorTaskCache.h"
 
 namespace Saturn {
 
@@ -47,50 +45,32 @@ namespace Saturn {
 
 	BehaviourTree::~BehaviourTree()
 	{
-		if( m_NodeEditor )
-			m_NodeEditor->SetRuntime( nullptr );
 	}
 
 	void BehaviourTree::Initialise( SharedPtr<AIAgentEntity> entity )
 	{
-		m_NodeEditor = SharedPtr<BehaviourTreeNodeEditor>::Create( m_BehaviourTreeAsset->ID );
-#if !defined(SAT_DIST)
-		// Read only...
-		m_NodeEditor->SetUserAuthorityFlag( NodeEditorUserAuthority::Evaluation, false );
-#endif
+		m_TaskHandler = Ref<BehaviourTreeTaskHandler>::Create();
 
-		const std::string filename = std::format( "{0}.sbt", m_BehaviourTreeAsset->Name );
-		if( NodeCacheEditor::ReadNodeEditorCache( m_NodeEditor, m_BehaviourTreeAsset->ID, filename ) )
+		// Try to load without touching the disk...
+		auto& rCache = GlobalNodeEditorTaskCache::Get().GetOrCreateTaskCache( m_BehaviourTreeAsset->ID );
+		if( rCache.IsListEmpty() )
 		{
-			m_OutputNodeID = m_NodeEditor->FindNode( "Root Node" )->ID;
-		}
-		else
-		{
-			SAT_CORE_WARN( "Failed to read node editor, using empty behaviour tree" );
-			SAT_CORE_VERIFY( false );
+			// ...otherwise load it from disk.
+			const std::string filename = std::format( "{0}.sbt", m_BehaviourTreeAsset->Name );
+			NodeCacheEditor::ReadNodeTaskCacheOnly( rCache, m_BehaviourTreeAsset->ID, filename );
 		}
 
-		m_AIAgentEntity = entity.Get();
-		m_NodeEditor->SetTargetAgent( m_AIAgentEntity );
-		
-		// Convert nodes into tasks.
-		m_NodeEditor->InitBBAndTasks();
-	
+		m_TaskHandler->SetAgent( entity.Get() );
+		m_TaskHandler->Init( rCache );
+
 #if !defined(SAT_DIST)
-		m_NodeEditor->SetState( NodeEditorState_Simulating );
-
-		m_DebugName = std::format( "{0}/{1} ({2})", m_BehaviourTreeAsset->Name, m_AIAgentEntity->GetName(), ( uint64_t ) m_AIAgentEntity->GetUUID() );
+		m_DebugName = std::format( "{0}/{1} ({2})", m_BehaviourTreeAsset->Name, entity->GetName(), ( uint64_t ) entity->GetUUID() );
 #endif
-	}
-
-	void BehaviourTree::FirstEvaluate()
-	{
-		m_NodeEditor->Evaluate();
 	}
 
 	void BehaviourTree::Tick( Timestep ts )
 	{
-		m_NodeEditor->Tick( ts );
+		m_TaskHandler->Tick( ts );
 	}
 
 }

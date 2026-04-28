@@ -62,18 +62,28 @@ namespace Saturn {
 	{
 	}
 
-	void BehaviourTreeMoveToTask::InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
-	{
-		BehaviourTreeNodeEditor* pBehaviourTreeNodeEditor = dynamic_cast< BehaviourTreeNodeEditor* >( pEditor );
-
-		m_Agent = pBehaviourTreeNodeEditor->GetTargetAgent();
-		m_NodeID = pNode->ID;
-	}
-
 	BehaviourTreeMoveToTask::~BehaviourTreeMoveToTask()
 	{
 		m_Agent = nullptr;
 		Reset();
+	}
+
+#if !defined( SAT_DIST )
+	void BehaviourTreeMoveToTask::PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
+	{
+		Super::PreInitialiseTask( pEditor, pNode );
+	}
+#endif
+
+	void BehaviourTreeMoveToTask::InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther )
+	{
+		Super::InitialiseTaskWithOther( pHandler, pOther );
+	
+		BehaviourTreeMoveToTask* pThisOther = dynamic_cast< BehaviourTreeMoveToTask* >( pOther );
+		if( pThisOther )
+		{
+			__debugbreak();
+		}
 	}
 
 	NodeEditorTaskState BehaviourTreeMoveToTask::Tick( Timestep ts )

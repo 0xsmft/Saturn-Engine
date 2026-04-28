@@ -26,49 +26,22 @@
 *********************************************************************************************
 */
 
-#pragma once
-
-#include "BehaviourTreeBaseTask.h"
-
-#include "Saturn/AI/Navigation/StraightNavPath.h"
+#include "sppch.h"
+#include "BehaviourTreeTaskHandler.h"
 
 namespace Saturn {
 
-	class AIAgentEntity;
-
-	SCLASS()
-	class BehaviourTreeMoveToTask : public BehaviourTreeBaseTask
+	BehaviourTreeTaskHandler::BehaviourTreeTaskHandler()
 	{
-		SAT_DECLARE_CLASS_MOVE( BehaviourTreeMoveToTask, BehaviourTreeBaseTask )
-	public:
-		BehaviourTreeMoveToTask() = default;
+	}
 
-		BehaviourTreeMoveToTask( const glm::vec3& rTargetPosition );
-		virtual ~BehaviourTreeMoveToTask();
+	BehaviourTreeTaskHandler::~BehaviourTreeTaskHandler()
+	{
+	}
 
-#if !defined(SAT_DIST)
-		virtual void PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode );
-#endif
-		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther );
+	void BehaviourTreeTaskHandler::Tick( Timestep ts )
+	{
+		NodeEditorTaskHandler::Tick( ts );
+	}
 
-		virtual NodeEditorTaskState Tick( Timestep ts ) override;
-		virtual void Reset() override;
-
-#if !defined(SAT_DIST)
-		[[nodiscard]] virtual bool IsSpawnableNode() const { return true; }
-		virtual const char* GetTaskName() const { return "Move To"; }
-#endif
-
-	private:
-		// #ReplaceRawPtrOrRefWithWeakRef, for now it's a raw ptr
-		AIAgentEntity* m_Agent = nullptr;
-
-		glm::vec3 m_TargetPosition{};
-		StraightNavPath m_Path{};
-
-	private:
-		[[nodiscard]] NodeEditorTaskState InitPathTo();
-		[[nodiscard]] NodeEditorTaskState WalkToNextWaypoint( Timestep ts );
-	};
-	
 }

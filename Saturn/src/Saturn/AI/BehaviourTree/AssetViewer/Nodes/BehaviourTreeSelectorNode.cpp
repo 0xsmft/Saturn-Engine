@@ -32,7 +32,6 @@
 #include "Saturn/AI/BehaviourTree/Tasks/BehaviourTreeCompositeTasks.h"
 
 #include "Saturn/NodeEditor/NodeEditorBase.h"
-#include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeEditorEvaluator.h"
 
 // #RmIncToCMHForNewObject
 #include "Saturn/GameFramework/Core/ClassMetadataHandler.h"

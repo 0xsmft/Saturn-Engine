@@ -45,8 +45,6 @@
 #include "Saturn/NodeEditor/NodeEditorVariableNode.h"
 #include "Saturn/NodeEditor/Serialisation/NodeCache.h"
 
-#include "Saturn/NodeEditor/Maths/MathsNodes.h"
-
 #include "Saturn/ImGui/UndoRedo/GlobalUndoRedoGroup.h"
 
 #include <imgui.h>
@@ -172,12 +170,6 @@ namespace Saturn {
 				result = ( SharedPtr<NodeEditorSetVariableNode> )NodeEditorSetVariableNode::SpawnSetVariableNode( rVariable, m_NodeEditor );
 		}
 
-		ImGui::SeparatorText( "Maths" );
-		if( auto mathResult = MathsNodesAuxiliary::DrawContextMenu( m_NodeEditor ); mathResult )
-		{
-			result = mathResult;
-		}
-
 		return result;
 	}
 
@@ -232,12 +224,6 @@ namespace Saturn {
 			{
 				result = ( SharedPtr<NodeEditorVariableNode> )NodeEditorVariableNode::SpawnVariableNode( rVariable, m_NodeEditor );
 			}
-		}
-
-		ImGui::SeparatorText( "Maths" );
-		if( auto mathResult = MathsNodesAuxiliary::DrawContextMenu( m_NodeEditor ); mathResult )
-		{
-			result = mathResult;
 		}
 
 		return result;

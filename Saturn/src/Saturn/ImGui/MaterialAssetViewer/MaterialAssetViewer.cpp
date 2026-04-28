@@ -32,8 +32,6 @@
 #include "Saturn/NodeEditor/NodeEditorBase.h"
 #include "Saturn/NodeEditor/UI/NodeEditor.h"
 #include "Saturn/NodeEditor/Serialisation/NodeCache.h"
-#include "Saturn/NodeEditor/Maths/MathsNodes.h"
-#include "Saturn/NodeEditor/Maths/MathsNodeLibrary.h"
 
 #include "MaterialNodeEditorEvaluator.h"
 #include "MaterialViewerNodes.h"
@@ -181,20 +179,6 @@ namespace Saturn {
 
 				if( ImGui::MenuItem( "Separate Color (RGB)" ) )
 					node = MaterialNodeLibrary::SpawnSeparateColorRGB( m_NodeEditor );
-
-				ImGui::SeparatorText( "Maths" );
-
-				if( ImGui::MenuItem( "Add Floats" ) )
-					node = MathsNodeLibrary::SpawnMathAdd( m_NodeEditor );
-
-				if( ImGui::MenuItem( "Subtract Floats" ) )
-					node = MathsNodeLibrary::SpawnMathSub( m_NodeEditor );
-
-				if( ImGui::MenuItem( "Multiply Floats" ) )
-					node = MathsNodeLibrary::SpawnMathMul( m_NodeEditor );
-
-				if( ImGui::MenuItem( "Divide Floats" ) )
-					node = MathsNodeLibrary::SpawnMathDiv( m_NodeEditor );
 
 				return node;
 			} );

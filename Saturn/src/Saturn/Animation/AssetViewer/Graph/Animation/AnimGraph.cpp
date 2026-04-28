@@ -52,9 +52,6 @@
 #include "Saturn/NodeEditor/NodeEditorVariableNode.h"
 #include "Saturn/NodeEditor/NodeEditorHintNode.h"
 
-#include "Saturn/NodeEditor/Maths/MathsNodes.h"
-#include "Saturn/NodeEditor/Maths/MathsNodeLibrary.h"
-
 #include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
@@ -275,7 +272,6 @@ namespace Saturn {
 			case NodeEditorAction::CreateNode:
 			case NodeEditorAction::MoveNode:
 			case NodeEditorAction::PreEvaluate:
-			case NodeEditorAction::PostEvaluate:
 			case NodeEditorAction::SelectNode:
 			case NodeEditorAction::DeselectNode:
 			case NodeEditorAction::SelectLink:
@@ -329,16 +325,6 @@ namespace Saturn {
 
 		//////////////////////////////////////////////////////////////////////////
 		{ NodeEditorHintNode::StaticClass()              },
-
-		//////////////////////////////////////////////////////////////////////////
-		{ MathsAddFloats::StaticClass()                    },
-		{ MathsSubFloats::StaticClass()                    },
-		{ MathsMulFloats::StaticClass()                    },
-		{ MathsDivideFloats::StaticClass()                 },
-		{ MathsGreaterThanFloats::StaticClass()			   },
-		{ MathsLessThanFloats::StaticClass()               },
-		{ MathsNot::StaticClass()						   },
-		{ MathsOr::StaticClass()						   }
 	};
 
 	static std::vector<SClass*> s_StateMachineAllowedNodes
@@ -359,16 +345,6 @@ namespace Saturn {
 
 		//////////////////////////////////////////////////////////////////////////
 		{ NodeEditorHintNode::StaticClass()                },
-
-		//////////////////////////////////////////////////////////////////////////
-		{ MathsAddFloats::StaticClass()                    },
-		{ MathsSubFloats::StaticClass()                    },
-		{ MathsMulFloats::StaticClass()                    },
-		{ MathsDivideFloats::StaticClass()                 },
-		{ MathsGreaterThanFloats::StaticClass()			   },
-		{ MathsLessThanFloats::StaticClass()               },
-		{ MathsNot::StaticClass()						   },
-		{ MathsOr::StaticClass()						   },
 	};
 
 	static std::vector<SClass*> s_TransitionAllowedNodes
@@ -382,16 +358,6 @@ namespace Saturn {
 		//////////////////////////////////////////////////////////////////////////
 		{ NodeEditorVariableNode::StaticClass()          },
 		{ NodeEditorSetVariableNode::StaticClass()       },
-
-		//////////////////////////////////////////////////////////////////////////
-		{ MathsAddFloats::StaticClass()                    },
-		{ MathsSubFloats::StaticClass()                    },
-		{ MathsMulFloats::StaticClass()                    },
-		{ MathsDivideFloats::StaticClass()                 },
-		{ MathsGreaterThanFloats::StaticClass()            },
-		{ MathsLessThanFloats::StaticClass()               },
-		{ MathsNot::StaticClass()						   },
-		{ MathsOr::StaticClass()						   },
 	};
 
 	void AnimGraph::DrawGraph()

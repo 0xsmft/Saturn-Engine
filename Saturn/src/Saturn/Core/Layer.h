@@ -52,11 +52,12 @@ namespace Saturn {
 	{
 	public:
 		ImGuiLayer();
-		~ImGuiLayer();
+		virtual ~ImGuiLayer();
+
+		void LoadFonts();
 
 		void Begin();
 		void End( VkCommandBuffer CommandBuffer );
-		virtual void OnImGuiRender( void ) {}
 
 	public:
 		// Layer

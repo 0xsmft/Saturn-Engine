@@ -2059,6 +2059,70 @@ namespace Saturn {
 
 			auto& rEngineSettings = EngineSettings::Get();
 
+			ImGui::PushFont( boldFont );
+			ImGui::Text( "Customisation" );
+			ImGui::PopFont();
+
+			ImGui::Text( "Font" );
+			ImGui::SameLine();
+
+			const char* pPreviewValue = nullptr;
+
+			const EditorFont fontBeforeSelection = rEngineSettings.GetEditorFont();
+			switch( fontBeforeSelection )
+			{
+				case EditorFont::NotoSans:
+				{
+					pPreviewValue = "Noto Sans";
+				} break;
+
+				case EditorFont::Atkinson:
+				{
+					pPreviewValue = "Atkinson";
+				} break;
+
+				default:
+					pPreviewValue = "UNKNOWN FONT";
+					break;
+			}
+
+			ImGui::SetNextItemWidth( 130.0f );
+			if( ImGui::BeginCombo( "##selectFont", pPreviewValue ) )
+			{
+				if( ImGui::Selectable( "Noto Sans", rEngineSettings.GetEditorFont() == EditorFont::NotoSans ) )
+				{
+					rEngineSettings.SetEditorFont( EditorFont::NotoSans );
+					m_FontChanged = true;
+				}
+
+				if( ImGui::Selectable( "Atkinson Hyperlegible Next", rEngineSettings.GetEditorFont() == EditorFont::Atkinson ) )
+				{
+					rEngineSettings.SetEditorFont( EditorFont::Atkinson );
+					m_FontChanged = true;
+				}
+
+				ImGui::EndCombo();
+			}
+
+			if( m_FontChanged )
+			{
+				const char* pWarningText = "An Editor restart is required for the changes to apply!";
+
+				const ImVec2 padding = ImGui::GetStyle().FramePadding;
+				const ImVec2 textPosition = ImGui::GetCursorScreenPos();
+				const ImVec2 textSize = ImGui::CalcTextSize( pWarningText );
+
+				const ImVec2 min = ImVec2( textPosition.x - padding.x, textPosition.y - padding.y );
+				const ImVec2 max = ImVec2( textPosition.x + padding.x + textSize.x, textPosition.y + padding.y + textSize.y );
+
+				ImGui::GetWindowDrawList()->AddRectFilled( min, max,
+					IM_COL32( 200, 30, 60, 255 ), 2.0f, ImDrawFlags_RoundCornersAll );
+
+				ImGui::TextUnformatted( pWarningText );
+			}
+
+			ImGui::Separator();
+
 			ImGui::Text( "Recent Projects" );
 			for( const auto& rPath : rEngineSettings.GetAllRecentProjects() )
 			{

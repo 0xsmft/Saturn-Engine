@@ -275,6 +275,7 @@ namespace Saturn {
 		bool m_ShowDeleteNavMeshCachePopup = false;
 		// Show the navmesh debug while in runtime instead of while suspended.
 		bool m_ShowNavMeshDebugRT = false;
+		bool m_FontChanged = false;
 
 		// JobProgress
 		float m_OperationPercent = 0.0f;

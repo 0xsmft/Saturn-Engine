@@ -63,7 +63,6 @@ public: \
 public: \
 	typedef x ThisClass; \
 	typedef BaseClass Super; \
-	typedef x##Int InternalClass; \
 
 #define SAT_DECLARE_CLASS_NO_INTER( x, BaseClass ) \
 private: \
@@ -86,4 +85,3 @@ public: \
 public: \
 	typedef x ThisClass; \
 	typedef BaseClass Super; \
-	typedef x##Int InternalClass; \

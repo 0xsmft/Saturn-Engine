@@ -205,6 +205,7 @@ namespace Saturn {
 		AssetID AssetID = 0;
 		// .NCE
 		const unsigned char Magic[ 4 ] = { 0x2E, 0x4E, 0x43, 0x45 };
+		uint32_t PositionOfTaskCache = 0u;
 		NodeEditorVersion Version = NodeEditorVersion::Lowest;
 	};
 
@@ -227,6 +228,12 @@ namespace Saturn {
 		}
 
 		RawSerialisation::ReadObject( rHeader.Version, rStream );
+
+		if( rHeader.Version >= NodeEditorVersion::TaskCache )
+		{
+			RawSerialisation::ReadObject( rHeader.PositionOfTaskCache, rStream );
+		}
+
 		RawSerialisation::ReadObject( rHeader.AssetID, rStream );
 
 		return true;
@@ -236,6 +243,7 @@ namespace Saturn {
 	{
 		RawSerialisation::WriteObject( rHeader.Magic, rStream );
 		RawSerialisation::WriteObject( rHeader.Version, rStream );
+		RawSerialisation::WriteObject( rHeader.PositionOfTaskCache, rStream );
 		RawSerialisation::WriteObject( rHeader.AssetID, rStream );
 	}
 
@@ -292,7 +300,9 @@ namespace Saturn {
 
 		nodeEditor->m_Version = NodeEditorVersion::Latest;
 
-		WriteNodeCacheEdHeader( header, fout );
+		RawSerialisation::WriteN( 17u, fout );
+
+//		WriteNodeCacheEdHeader( header, fout );
 
 #if !defined(SAT_DIST)
 		constexpr bool DISTRIBUTION_SERIALSATION = false;
@@ -301,6 +311,8 @@ namespace Saturn {
 #endif
 
 		nodeEditor->SerialiseData( fout, DISTRIBUTION_SERIALSATION );
+
+		header.PositionOfTaskCache = ( uint32_t ) fout.tellp();
 
 		// Now write task cache
 		NodeCacheTaskCacheHeader tcHeader{};
@@ -317,13 +329,138 @@ namespace Saturn {
 			rTask->Serialise( fout );
 		}
 
+		// Now write the header.
+		fout.seekp( fout.beg );
+		WriteNodeCacheEdHeader( header, fout );
+
 		fout.close();
+	}
+
+	template<typename IStream>
+	static bool ReadNodeTaskCache( NodeTaskCache& rCache, IStream& rStream )
+	{
+		NodeCacheTaskCacheHeader tcHeader{};
+		RawSerialisation::ReadObject( tcHeader, rStream );
+
+		if( std::memcmp( tcHeader.Magic, ".NTC", 4 ) != 0 )
+		{
+			SAT_CORE_ERROR( "NodeTaskCache header missmatch!" );
+
+			// Return true here because the task cache can just be re-created after we load fully.
+			// It is not necessary for a NodeEditor to have a valid task cache*
+			// *unless we are on Dist.
+
+#if defined(SAT_DIST)
+			return false;
+#else
+			return true;
+#endif
+		}
+
+		auto& rList = rCache.GetMasterListForSerialisation();
+
+		size_t size = 0llu;
+		RawSerialisation::ReadObject( size, rStream );
+
+		rList.reserve( size );
+
+		for( size_t i = 0; i < size; ++i )
+		{
+			UUID nodeID = 0llu;
+			RawSerialisation::ReadObjectChecked( nodeID, rStream );
+
+			uint64_t classHash = 0llu;
+			RawSerialisation::ReadObject( classHash, rStream );
+
+			NodeEditorTaskBase* taskObj = dynamic_cast< NodeEditorTaskBase* >( ClassMetadataHandler::Get().CreateClassObject( classHash ) );
+			if( taskObj )
+			{
+				taskObj->Deserialise( rStream );
+
+				// NB: Converted to Ref<>
+				rList.emplace_back( taskObj );
+			}
+			else
+				SAT_CORE_WARN( "[NodeCache]: TaskCache: ClassHash: {0}, invalid! Not creating task from an invalid class hash." );
+		}
+
+		return true;
 	}
 
 	bool NodeCacheEditor::ReadNodeEditorCache( SharedPtr<NodeEditorBase> nodeEditor, AssetID id, const std::string& rCustomName )
 	{
 		std::string filename;
 		
+		Ref<Asset> asset = AssetManager::Get()->FindAsset( id );
+		std::filesystem::path cachePath;
+
+		if( asset )
+		{
+			filename = std::format( "{0}.{1}.nce", asset->Name, ( uint64_t ) id );
+			cachePath = asset->Path.parent_path();
+		}
+		else
+		{
+			filename = std::format( "NCEditor.{0}.nce", ( uint64_t ) id );
+			cachePath = GetDefaultCachePath();
+		}
+
+		if( !rCustomName.empty() )
+			filename = rCustomName;
+
+		cachePath /= filename;
+
+#if defined( SAT_DIST )
+		const std::string& rMountBase = Project::GetActiveConfig().Name;
+		Ref<VFile> file = VirtualFS::Get().FindFile( rMountBase, cachePath );
+
+		if( !file )
+		{
+			SAT_CORE_ERROR( "NodeCache VFile does not exist" );
+			return false;
+		}
+
+		PakFileMemoryBuffer membuf( file->FileContent );
+
+		std::istream stream( &membuf );
+#else
+		const std::filesystem::path cachePathAbs = Project::GetActiveProject()->FilepathAbs( cachePath );
+
+		if( !std::filesystem::exists( cachePathAbs ) )
+			return false;
+
+		std::ifstream stream( cachePathAbs, std::ios::binary | std::ios::in );
+#endif
+		NodeCacheEditorHeader header{};
+		if( !ReadNodeCacheEdHeader( header, stream ) )
+			return false;
+
+		if( header.AssetID != id )
+		{
+			SAT_CORE_ERROR( "Node editor cache file asset id mismatch! Saved ID was: {0} however ID passed in was {1}", header.AssetID, id );
+			return false;
+		}
+
+		nodeEditor->m_AssetID = id;
+		nodeEditor->m_Version = header.Version;
+		nodeEditor->DeserialiseData( stream );
+
+		if( header.Version >= NodeEditorVersion::TaskCache )
+		{
+			ReadNodeTaskCache( nodeEditor->m_TaskCache, stream );
+		}
+
+#if !defined(SAT_DIST)
+		stream.close();
+#endif
+
+		return true;
+	}
+
+	bool NodeCacheEditor::ReadNodeTaskCacheOnly( NodeTaskCache& rNodeTaskCache, AssetID id, const std::string& rCustomName /*= "" */ )
+	{
+		std::string filename;
+
 		Ref<Asset> asset = AssetManager::Get()->FindAsset( id );
 		std::filesystem::path cachePath;
 
@@ -375,58 +512,9 @@ namespace Saturn {
 			return false;
 		}
 
-		nodeEditor->m_AssetID = id;
-		nodeEditor->m_Version = header.Version;
-		nodeEditor->DeserialiseData( stream );
+		stream.seekg( header.PositionOfTaskCache );
 
-		if( header.Version >= NodeEditorVersion::TaskCache )
-		{
-			NodeCacheTaskCacheHeader tcHeader{};
-			RawSerialisation::ReadObject( tcHeader, stream );
-
-			if( std::memcmp( tcHeader.Magic, ".NTC", 4 ) != 0 )
-			{
-				SAT_CORE_ERROR( "NodeTaskCache header missmatch!" );
-				
-				// Return true here because the task cache can just be re-created after we load fully.
-				// It is not necessary for a NodeEditor to have a valid task cache*
-				// *unless we are on Dist.
-				return true;
-			}
-
-			auto& rList = nodeEditor->m_TaskCache.GetMasterListForSerialisation();
-
-			size_t size = 0llu;
-			RawSerialisation::ReadObject( size, stream );
-
-			rList.reserve( size );
-			
-			for( size_t i = 0; i < size; ++i )
-			{
-				UUID nodeID = 0llu;
-				RawSerialisation::ReadObjectChecked( nodeID, stream );
-
-				uint64_t classHash = 0llu;
-				RawSerialisation::ReadObject( classHash, stream );
-
-				NodeEditorTaskBase* taskObj = dynamic_cast<NodeEditorTaskBase*>( ClassMetadataHandler::Get().CreateClassObject( classHash ) );
-				if( taskObj )
-				{
-					taskObj->Deserialise( stream );
-
-					// NB: Converted to Ref<>
-					rList.emplace_back( taskObj );
-				}
-				else
-					SAT_CORE_WARN( "[NodeCache]: TaskCache: ClassHash: {0}, invalid! Not creating task from an invalid class hash" );
-			}
-		}
-
-#if !defined(SAT_DIST)
-		stream.close();
-#endif
-
-		return true;
+		return ReadNodeTaskCache( rNodeTaskCache, stream );
 	}
 
 	void NodeCacheEditor::ConvertToDistNC( AssetID id, const std::string& rCustomName /*= "" */ )

@@ -79,6 +79,7 @@ namespace Saturn {
 			case NodeEditorAction::PostEvaluateSuccess: 
 			{
 				BuildTaskCache();
+				SaveAndMarkClean();
 			} break;
 
 			default:

@@ -153,4 +153,36 @@ namespace Saturn {
 		return m_AliveSounds[ index ];
 	}
 
+	void SoundGraphTaskHandler::SetSpatialisation( bool value )
+	{
+		for( auto& rSound : m_AliveSounds )
+		{
+			rSound->SetSpatialisation( value );
+		}
+	}
+
+	void SoundGraphTaskHandler::SetPosition( const glm::vec3& rPosition )
+	{
+		for( auto& rSound : m_AliveSounds )
+		{
+			rSound->SetPosition( rPosition );
+		}
+	}
+
+	void SoundGraphTaskHandler::SetPitch( float pitch )
+	{
+		for( auto& rSound : m_AliveSounds )
+		{
+			rSound->SetPitch( pitch );
+		}
+	}
+
+	void SoundGraphTaskHandler::SetVolume( float vol )
+	{
+		for( auto& rSound : m_AliveSounds )
+		{
+			rSound->SetVolume( vol );
+		}
+	}
+
 }

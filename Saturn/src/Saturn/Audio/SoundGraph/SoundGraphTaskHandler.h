@@ -59,6 +59,13 @@ namespace Saturn {
 
 		Ref<Sound> GetSoundFromIndex( size_t index );
 
+	public:
+		// Sound modification API
+		void SetSpatialisation( bool value );
+		void SetPosition( const glm::vec3& rPosition );
+		void SetPitch( float pitch );
+		void SetVolume( float vol );
+
 	private:
 		void OnSoundCompleted( UUID PlayerID );
 

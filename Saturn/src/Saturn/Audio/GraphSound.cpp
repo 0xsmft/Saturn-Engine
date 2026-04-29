@@ -34,9 +34,8 @@
 
 #include "Saturn/Asset/AssetManager.h"
 
-#include "Saturn/NodeEditor/NodeEditorBase.h"
-#include "Saturn/NodeEditor/UI/NodeEditor.h"
 #include "Saturn/NodeEditor/Serialisation/NodeCache.h"
+#include "Saturn/NodeEditor/GlobalNodeEditorTaskCache.h"
 
 namespace Saturn {
 
@@ -57,12 +56,23 @@ namespace Saturn {
 		if( m_Loaded )
 			return;
 
-		const std::string filename = std::format( "{0}.gsnd", m_GraphAsset->Name );
-		if( !NodeCacheEditor::ReadNodeTaskCacheOnly( m_TaskCache, m_GraphAsset->ID, filename ) )
+		m_TaskHandler = Ref<SoundGraphTaskHandler>::Create();
+
+		// Try to load without touching the disk...
+		auto& rCache = GlobalNodeEditorTaskCache::Get().GetOrCreateTaskCache( m_GraphAsset->ID );
+		if( rCache.IsListEmpty() )
 		{
-			SAT_CORE_WARN( "Failed to read node editor, using empty graph sound" );
-			SAT_CORE_VERIFY( false );
+			// ...otherwise load it from disk.
+			const std::string filename = std::format( "{0}.gsnd", m_GraphAsset->Name );
+
+			if( !NodeCacheEditor::ReadNodeTaskCacheOnly( rCache, m_GraphAsset->ID, filename ) )
+			{
+				m_SoundState = SoundState::NoDataSource;
+				return;
+			}
 		}
+
+		m_TaskHandler->Init( rCache );
 	}
 
 	void GraphSound::Play( uint64_t frameOffset )
@@ -119,42 +129,22 @@ namespace Saturn {
 
 	void GraphSound::SetVolume( float volume )
 	{
-		/*
-		for( auto& rSound : m_Runtime->AliveSounds )
-		{
-			rSound->SetVolume( volume );
-		}
-		*/
+		m_TaskHandler->SetVolume( volume );
 	}
 
 	void GraphSound::SetPitch( float pitch )
 	{
-		/*
-		for( auto& rSound : m_Runtime->AliveSounds )
-		{
-			rSound->SetPitch( pitch );
-		}
-		*/
+		m_TaskHandler->SetPitch( pitch );
 	}
 
 	void GraphSound::SetPosition( const glm::vec3& rPos )
 	{
-		/*
-		for( auto& rSound : m_Runtime->AliveSounds )
-		{
-			rSound->SetPosition( rPos );
-		}
-		*/
+		m_TaskHandler->SetPosition( rPos );
 	}
 
 	void GraphSound::SetSpatialisation( bool value )
 	{
-		/*
-		for( auto& rSound : m_Runtime->AliveSounds )
-		{
-			rSound->SetSpatialisation( value );
-		}
-		*/
+		m_TaskHandler->SetSpatialisation( value );
 	}
 
 	void GraphSound::Unload()

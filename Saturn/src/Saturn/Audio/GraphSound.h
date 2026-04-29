@@ -43,7 +43,7 @@ namespace Saturn {
 	{
 	public:
 		GraphSound( AssetID id );
-		~GraphSound();
+		virtual ~GraphSound();
 
 		void Initialise();
 
@@ -72,8 +72,5 @@ namespace Saturn {
 		Ref<Asset> m_GraphAsset;
 		Ref<SoundGroup> m_SoundGroup;
 		Ref<SoundGraphTaskHandler> m_TaskHandler;
-	
-		// Temporary: will be moved into a centralised storage.
-		NodeTaskCache m_TaskCache;
 	};
 }

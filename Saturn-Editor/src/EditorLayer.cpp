@@ -862,7 +862,7 @@ namespace Saturn {
 		canvasSpecification.Position = glm::vec2{ 0.0f };
 		canvasSpecification.MasterFontAssetID = Project::GetActiveProject()->GetDefaultFontAsset();
 
-		if( g_AluraCanvas ) 
+		if( g_AluraCanvas )
 			delete g_AluraCanvas;
 
 		g_AluraCanvas = new AluraCanvas( canvasSpecification );
@@ -941,7 +941,7 @@ namespace Saturn {
 					for( auto& rEntity : m_SelectionManager->GetSelectionContexts( g_ActiveScene ) )
 					{
 						m_GlobalUndoRedoGroup->RemoveIfActionHasIdentifier( ( uint64_t ) rEntity->GetHandle() );
-						
+
 						bool canDeleteNow = true;
 
 						// Special deletion cases:
@@ -951,7 +951,7 @@ namespace Saturn {
 						{
 							m_NavMeshEntityToDelete = rEntity->GetHandle();
 							m_ShowDeleteNavMeshCachePopup = true;
-						
+
 							canDeleteNow = false;
 						}
 						// NOT an else if, because what if the user has a camera and a navbounds??
@@ -962,7 +962,7 @@ namespace Saturn {
 							m_SelectedCameraEntityID = entt::null;
 							m_ShouldRenderCameraPreview = false;
 						}
-						
+
 						if( canDeleteNow )
 						{
 							g_ActiveScene->DeleteEntity( rEntity );
@@ -1003,7 +1003,7 @@ namespace Saturn {
 					m_RequestRuntime ^= 1;
 			} break;
 
-			case RubyKey_F11: 
+			case RubyKey_F11:
 			{
 				if( m_MouseOverViewport || m_ViewportFocused )
 				{
@@ -1012,7 +1012,7 @@ namespace Saturn {
 			} break;
 		}
 
-		if( Input::Get().KeyPressed( RubyKey_LeftCtrl ) && !m_RuntimeScene )
+		if( Input::Get().KeyPressed( RubyKey_LeftCtrl ) || Input::Get().KeyPressed( RubyKey_RightCtrl ) && !m_RuntimeScene )
 		{
 			switch( rEvent.GetKeycode() )
 			{
@@ -1074,7 +1074,7 @@ namespace Saturn {
 						PushNotification( notification );
 					}
 				} break;
-			
+
 				case RubyKey_Y:
 				{
 					if( auto action = m_GlobalUndoRedoGroup->GlobalRedoRecent(); action )
@@ -1083,6 +1083,11 @@ namespace Saturn {
 						EditorNotification notification{ .Text = redoName, .Lifetime = 3.0f };
 						PushNotification( notification );
 					}
+				} break;
+
+				case RubyKey_W:
+				{
+					CloseEditorAndOpenPB();
 				} break;
 			}
 
@@ -1097,18 +1102,48 @@ namespace Saturn {
 				}
 			}
 
-#if defined(SAT_RELEASE)
 			if( Input::Get().KeyPressed( RubyKey_LeftAlt ) && g_ActiveScene != m_RuntimeScene.Get() )
 			{
 				switch( rEvent.GetKeycode() )
 				{
+					default: break;
+
+#if defined(SAT_RELEASE)
 					case RubyKey_F5:
 					{
 						HotReloadGame();
 					} break;
+#endif
 				}
 			}
-#endif
+		}
+
+		if( Input::Get().KeyPressed( RubyKey_LeftAlt ) && g_ActiveScene != m_RuntimeScene.Get() )
+		{
+			if( Input::Get().KeyPressed( RubyKey_LeftShift ) )
+			{
+				switch( rEvent.GetKeycode() )
+				{
+					default: break;
+					case RubyKey_S:
+					{
+						SaveProject();
+					} break;
+
+					case RubyKey_N:
+					{
+						if( g_ActiveScene->IsDirty() ) 
+						{
+							m_ShowSceneDirtyModal = true;
+							m_EventAfterPopup = [ this ]() { OpenFile( 0 ); };
+						}
+						else
+						{
+							OpenFile( 0 );
+						}
+					} break;
+				}
+			}
 		}
 
 		return true;
@@ -2212,13 +2247,13 @@ namespace Saturn {
 		if( ImGui::BeginMenu( "File" ) )
 		{
 			Auxiliary::DisabledFlag disabledIfRuntime( m_RequestRuntime );
-			
-			if( ImGui::MenuItem( "New Scene" ) )					 NewFile();
+
+			if( ImGui::MenuItem( "New Scene", "Alt+Shift+N" ) )		 NewFile();
 			if( ImGui::MenuItem( "Save Scene", "Ctrl+S" ) )          SaveFile();
 			if( ImGui::MenuItem( "Save Scene As", "Ctrl+Shift+S" ) ) SaveFileAs();
 
-			if( ImGui::MenuItem( "Save Project" ) )                  SaveProject();
-			if( ImGui::MenuItem( "Close Project" ) )                 CloseEditorAndOpenPB();
+			if( ImGui::MenuItem( "Save Project", "Alt+Shift+S" ) )   SaveProject();
+			if( ImGui::MenuItem( "Close Project", "Ctrl+W" ) )       CloseEditorAndOpenPB();
 
 			disabledIfRuntime.Pop();
 
@@ -2234,15 +2269,15 @@ namespace Saturn {
 
 				// TODO: Disable if there's nothing to undo/redo.
 				{
-					Auxiliary::ScopedDisabledFlag disabledIfNoUndo    ( m_GlobalUndoRedoGroup->IsUndoActionsEmpty() );
+					Auxiliary::ScopedDisabledFlag disabledIfNoUndo( m_GlobalUndoRedoGroup->IsUndoActionsEmpty() );
 					if( ImGui::MenuItem( "Undo", "Ctrl+Z" ) )           m_GlobalUndoRedoGroup->GlobalUndoRecent();
 				}
-				
+
 				{
-					Auxiliary::ScopedDisabledFlag disabledIfNoRedo    ( m_GlobalUndoRedoGroup->IsRedoActionsEmpty() );
+					Auxiliary::ScopedDisabledFlag disabledIfNoRedo( m_GlobalUndoRedoGroup->IsRedoActionsEmpty() );
 					if( ImGui::MenuItem( "Redo", "Ctrl+Y" ) )           m_GlobalUndoRedoGroup->GlobalRedoRecent();
 				}
-				
+
 				{
 					Auxiliary::ScopedDisabledFlag disabledIfNoActions( !m_GlobalUndoRedoGroup->HasAnyActions() );
 					if( ImGui::MenuItem( "Clear all action history" ) ) m_GlobalUndoRedoGroup->ClearAll();
@@ -2252,26 +2287,12 @@ namespace Saturn {
 			ImGui::EndMenu();
 		}
 
-		if( ImGui::BeginMenu( "Saturn" ) )
-		{
-			if( ImGui::MenuItem( "About" ) )        m_OpenAboutWindow ^= 1;
-			
-			ImGui::SeparatorText( "Windows" );
-
-			if( ImGui::MenuItem( "Scene Renderer" ) )         m_ShowSceneRendererWindow ^= 1;
-			if( ImGui::MenuItem( "Renderer (Vulkan Info)" ) ) m_ShowRendererWindow ^= 1;
-			if( ImGui::MenuItem( "Content Browser Panel" ) )  ShowOrHideContentBrowserPanel();
-			if( ImGui::MenuItem( "Scene Hierarchy Panel" ) )  ShowOrHideSceneHierarchyPanel();
-
-			ImGui::EndMenu();
-		}
-
 		if( ImGui::BeginMenu( "Project" ) )
 		{
 			if( ImGui::BeginMenu( "Open Project in" ) )
 			{
 #if defined(SAT_PLATFORM_WINDOWS) || defined(SAT_PLAFORM_MACOS)
-				if( ImGui::MenuItem( "Visual Studio Latest" ) ) 
+				if( ImGui::MenuItem( "Visual Studio Latest" ) )
 				{
 					std::filesystem::path solutionPath = Project::GetActiveProject()->GetRootDir();
 					solutionPath /= std::format( "{0}.sln", Project::GetActiveConfig().Name );
@@ -2282,7 +2303,7 @@ namespace Saturn {
 
 				ImGui::EndMenu();
 			}
-			
+
 			ImGui::SeparatorText( "Settings" );
 
 			if( ImGui::MenuItem( "Project settings" ) ) m_ShowUserSettings ^= 1;
@@ -2308,7 +2329,11 @@ namespace Saturn {
 						if( !Project::GetActiveProject()->HasPremakeFile() )
 							Project::GetActiveProject()->CreatePremakeFile();
 
+#if defined(SAT_PLATFORM_WINDOWS)
 						Premake::Launch( Project::GetActiveProject()->GetRootDir().wstring(), L"premake5.lua", PremakeAction::VisualStudio2022 );
+#else
+						Premake::Launch( Project::GetActiveProject()->GetRootDir().wstring(), L"premake5.lua", PremakeAction::Makefile );
+#endif
 					} );
 				}
 
@@ -2353,22 +2378,22 @@ namespace Saturn {
 					if( !m_BlockingOperation )
 						m_BlockingOperation = Ref<JobProgress>::Create();
 
-					JobSystem::Get().QueueJob( [this]()
-						{
-							m_JobModalOpen = true;
-							m_BlockingOperation->SetTitle( "Distributing Project" );
+					JobSystem::Get().QueueJob( [ this ]()
+					{
+						m_JobModalOpen = true;
+						m_BlockingOperation->SetTitle( "Distributing Project" );
 
-							m_BlockingOperation->SetStatus( "Building project" );
-							Project::GetActiveProject()->Rebuild( ApplicationConfigKind::Dist );
+						m_BlockingOperation->SetStatus( "Building project" );
+						Project::GetActiveProject()->Rebuild( ApplicationConfigKind::Dist );
 
-							m_BlockingOperation->SetProgress( 50.0f );
+						m_BlockingOperation->SetProgress( 50.0f );
 
-							m_BlockingOperation->SetStatus( "Copying for Distribution" );
-							Project::GetActiveProject()->Distribute( ApplicationConfigKind::Dist );
+						m_BlockingOperation->SetStatus( "Copying for Distribution" );
+						Project::GetActiveProject()->Distribute( ApplicationConfigKind::Dist );
 
-							m_BlockingOperation->SetProgress( 100.0f );
-							m_BlockingOperation->OnComplete();
-						} );
+						m_BlockingOperation->SetProgress( 100.0f );
+						m_BlockingOperation->OnComplete();
+					} );
 				}
 
 				if( ImGui::BeginItemTooltip() )
@@ -2390,35 +2415,35 @@ namespace Saturn {
 			ImGui::EndMenu();
 		}
 
-		if( ImGui::BeginMenu( "Settings" ) )
+		if( ImGui::BeginMenu( "View" ) )
 		{
-			if( ImGui::MenuItem( "Project settings" ) )           m_ShowUserSettings       ^= 1;
-			if( ImGui::MenuItem( "Editor Settings" ) )            m_OpenEditorSettings     ^= 1;
+			ImGui::SeparatorText( "Windows" );
+			if( ImGui::MenuItem( "Project settings" ) )           m_ShowUserSettings ^= 1;
+			if( ImGui::MenuItem( "Editor Settings" ) )            m_OpenEditorSettings ^= 1;
+			if( ImGui::MenuItem( "Scene Renderer" ) )             m_ShowSceneRendererWindow ^= 1;
+			if( ImGui::MenuItem( "Renderer (Vulkan Info)" ) )     m_ShowRendererWindow ^= 1;
+			if( ImGui::MenuItem( "Content Browser Panel" ) )      ShowOrHideContentBrowserPanel();
+			if( ImGui::MenuItem( "Scene Hierarchy Panel" ) )      ShowOrHideSceneHierarchyPanel();
 
-			ImGui::EndMenu();
-		}
-
-		if( ImGui::BeginMenu( "Auxiliary" ) )
-		{
 			ImGui::SeparatorText( "Asset Manager" );
 			if( ImGui::MenuItem( "Asset Registry Debug" ) )       m_OpenAssetRegistryDebug ^= 1;
-			if( ImGui::MenuItem( "Loaded Assets Debug" ) )        m_OpenLoadedAssetDebug   ^= 1;
-			if( ImGui::MenuItem( "Asset Dependencies" ) )         m_ShowAssetDependencies  ^= 1;
+			if( ImGui::MenuItem( "Loaded Assets Debug" ) )        m_OpenLoadedAssetDebug ^= 1;
+			if( ImGui::MenuItem( "Asset Dependencies" ) )         m_ShowAssetDependencies ^= 1;
 
 			ImGui::SeparatorText( "SClass" );
 			if( ImGui::MenuItem( "Metadata Debug" ) )             m_ShowMetadataDebug ^= 1;
 
 			ImGui::SeparatorText( "Demo Window" );
-			if( ImGui::MenuItem( "Show demo window" ) )           m_ShowImGuiDemoWindow    ^= 1;
+			if( ImGui::MenuItem( "Show demo window" ) )           m_ShowImGuiDemoWindow ^= 1;
 
 			ImGui::SeparatorText( "Virtual Filesystem (VFS)" );
-			if( ImGui::MenuItem( "Virtual Filesystem Debug" ) )   m_ShowVFSDebug           ^= 1;
+			if( ImGui::MenuItem( "Virtual Filesystem Debug" ) )   m_ShowVFSDebug ^= 1;
 
 			ImGui::SeparatorText( "Scene Renderer" );
-			if( ImGui::MenuItem( "Render Mesh AABB" ) )           m_ShowMeshAABB           ^= 1;
-			if( ImGui::MenuItem( "Show Camera Frustum" ) )        m_ShowCameraFrustum      ^= 1;
-			if( ImGui::MenuItem( "Show NavMesh Debug" ) )		  m_ShowNavMeshDebugRT	   ^= 1;
-			
+			if( ImGui::MenuItem( "Render Mesh AABB" ) )           m_ShowMeshAABB ^= 1;
+			if( ImGui::MenuItem( "Show Camera Frustum" ) )        m_ShowCameraFrustum ^= 1;
+			if( ImGui::MenuItem( "Show NavMesh Debug" ) )		  m_ShowNavMeshDebugRT ^= 1;
+
 			if( ImGui::BeginMenu( "Scene Visualisation Options" ) )
 			{
 				auto& rVisualisationOptions = g_ActiveScene->GetVisualisationOptions();
@@ -2438,7 +2463,7 @@ namespace Saturn {
 							rVisualisationOptions.PhysColliderOptions = PhysicsColliderVisualisationOptions::Disabled;
 						else
 							rVisualisationOptions.PhysColliderOptions = PhysicsColliderVisualisationOptions::SelectedOnly;
-					
+
 						g_ActiveScene->MarkDirty();
 					}
 
@@ -2471,22 +2496,22 @@ namespace Saturn {
 			}
 
 			ImGui::SeparatorText( "Content Browser" );
-			if( ImGui::MenuItem( "Show Thumbnail Cache" ) )       m_ShowCBThumbnailDebug   ^= 1;
+			if( ImGui::MenuItem( "Show Thumbnail Cache" ) )       m_ShowCBThumbnailDebug ^= 1;
 
 			ImGui::SeparatorText( "Undo Redo" );
-			if( ImGui::MenuItem( "Show Undo Redo Stack" ) )       m_ShowUndoRedoDebug      ^= 1;
+			if( ImGui::MenuItem( "Show Undo Redo Stack" ) )       m_ShowUndoRedoDebug ^= 1;
 
 			{
 				Auxiliary::ScopedDisabledFlag disabled( m_RequestRuntime );
 
 				ImGui::SeparatorText( "Auto Saves" );
 				if( ImGui::MenuItem( "Clear all auto saves" ) )           ClearAllAutoSaves();
-				if( ImGui::MenuItem( "Clear all for the active scene") )  ClearAutoSavesForActiveScene();
+				if( ImGui::MenuItem( "Clear all for the active scene" ) )  ClearAutoSavesForActiveScene();
 			}
 
 			ImGui::SeparatorText( "Physics" );
 			if( ImGui::MenuItem( "Open Jolt debug viewer" ) )       PhysicsDebugRecorder::OpenRecordedFile();
-			if( ImGui::MenuItem( "Open debug viewer folder" ) ) 
+			if( ImGui::MenuItem( "Open debug viewer folder" ) )
 			{
 				std::filesystem::path outPath = Project::GetActiveProject()->GetFullCachePath();
 				outPath /= "PerUser";
@@ -2553,13 +2578,19 @@ namespace Saturn {
 			}
 		}
 
+		if( ImGui::BeginMenu( "Help" ) )
+		{
+			if( ImGui::MenuItem( "About" ) )        m_OpenAboutWindow ^= 1;
+			ImGui::EndMenu();
+		}
+
 		// Draw Project name text and box.
 		ImGui::SeparatorEx( ImGuiSeparatorFlags_Vertical );
 
 #if defined(SAT_DEBUG) || 1
 		const std::string prjName = Project::GetActiveConfig().Name;
 		const auto devVer = Project::GetActiveProject()->GetDeveloperVersion();
-		
+
 		std::string text = prjName;
 		if( !devVer.empty() )
 			text = std::format( "{0}-{1}", prjName, devVer );
@@ -2569,8 +2600,8 @@ namespace Saturn {
 
 		text += std::format( " | {0}", g_ActiveScene->Name.empty() ? "<New Scene>" : g_ActiveScene->Name );
 
-		const ImVec2 textSize   = ImGui::CalcTextSize( text.c_str() );
-		ImDrawList* pDrawList   = ImGui::GetWindowDrawList();
+		const ImVec2 textSize = ImGui::CalcTextSize( text.c_str() );
+		ImDrawList* pDrawList = ImGui::GetWindowDrawList();
 		const float frameHeight = ImGui::GetFrameHeight();
 
 		const ImVec2 min = ImGui::GetWindowPos() + ImGui::GetCursorPos();

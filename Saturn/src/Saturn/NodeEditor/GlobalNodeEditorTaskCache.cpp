@@ -48,7 +48,7 @@ namespace Saturn {
 		auto itr = m_Caches.find( id );
 		if( itr == m_Caches.end() )
 		{
-			m_Caches.insert( { id, NodeTaskCache() } );
+			m_Caches.try_emplace( id );
 		}
 
 		return m_Caches[ id ];

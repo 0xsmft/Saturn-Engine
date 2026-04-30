@@ -66,9 +66,16 @@ namespace Saturn {
 	public:
 		//////////////////////////////////////////////////////////////////////////
 		// NODE EDITOR TASK BASE
-		virtual void InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+#if !defined(SAT_DIST)
+		virtual void PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+#endif
+		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther ) override;
+
 		virtual NodeEditorTaskState Tick( Timestep ts ) override;
 		virtual void Reset() override;
+
+		virtual void Serialise( std::ofstream& rStream ) const override;
+		virtual void Deserialise( std::ifstream& rStream ) override;
 
 	private:
 		void ResetTaskData();

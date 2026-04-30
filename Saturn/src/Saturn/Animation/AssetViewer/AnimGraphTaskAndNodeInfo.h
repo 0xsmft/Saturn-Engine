@@ -4,7 +4,7 @@
 *                                                                                           *
 * MIT License                                                                               *
 *                                                                                           *
-* Copyright (c) 2020 - 2026 BEAST                                                           *
+* Copyright (c) 2026 BEAST                                                                  *
 *                                                                                           *
 * Permission is hereby granted, free of charge, to any person obtaining a copy              *
 * of this software and associated documentation files (the "Software"), to deal             *
@@ -28,13 +28,19 @@
 
 #pragma once
 
+#include "Graph/Tasks/GraphTask.h"
+
 namespace Saturn {
 
-	// NOTE: This enum is separated because it's best for the animator class not to include Components.h which is where it was defined originally.
-	enum class AnimatorType : uint8_t
-	{
-		Single,
-		AnimationControllerGraph
-	};	
+	class NodeEditorNodeBase;
 
+	//
+	// Temporary information, created whist sorting the AnimGraph.
+	//
+	struct AnimGraphNodeAndTaskInfo
+	{
+		SGraphTask* pGraphTask = nullptr;
+		SharedPtr<NodeEditorNodeBase> Node;
+	};
+	
 }

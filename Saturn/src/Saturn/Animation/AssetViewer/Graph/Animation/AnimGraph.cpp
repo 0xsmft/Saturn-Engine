@@ -29,6 +29,8 @@
 #include "sppch.h"
 #include "AnimGraph.h"
 
+#include "Saturn/Animation/AssetViewer/Graph/AnimGraphPreCompiler.h"
+
 // ANIMATION EDITOR
 #include "Saturn/Animation/AssetViewer/Graph/Animation/AnimGraphOutputNode.h"
 #include "Saturn/Animation/AssetViewer/Graph/Animation/AnimGraphStateMachinePlayerNode.h"
@@ -61,18 +63,20 @@ namespace Saturn {
 	AnimGraph::AnimGraph()
 		: FDependentNodeEditorSuper()
 	{
+		m_PreCompiler = Ref<AnimGraphPreCompiler>::Create();
 	}
 
 	AnimGraph::AnimGraph( AssetID id )
 		: FDependentNodeEditorSuper( id )
 	{
+		m_PreCompiler = Ref<AnimGraphPreCompiler>::Create();
 	}
 
 	AnimGraph::~AnimGraph()
 	{
 	}
 
-	IndexedMap<UUID, SGraphTask*> AnimGraph::TraverseAndCreateTasks()
+	AnimGraph::AnimGraphSortMap AnimGraph::TraverseAndCreateTasks()
 	{
 		// SORTING:
 		// 1. Sort the animation graph first
@@ -83,28 +87,17 @@ namespace Saturn {
 		// 3: Push transitions and other state machine states and state machine state graphs
 		// 4. Combine into a map of sub-graph parent ID to tasks for runtime.
 
-		IndexedMap<UUID, SGraphTask*> resultToChildren;
+		AnimGraphSortMap resultToChildren;
 
 		// 1: PARENT ID -> CHILDREN
 		std::unordered_map<UUID, std::vector<SharedPtr<NodeEditorNodeBase>>> parentToChildren;
 		for( const auto& [id, node] : m_Nodes )
 		{
-			if( node->pParentObject ) 
-			{
-				/*
-				parentToChildren[ node->pParentObject->ID ].push_back( node );
-
-				if( parentToChildren[ node->pParentObject->ID ].size() == 1 )
-				{
-					resultToChildren[ node->pParentObject->ID ] = NewObject<SGraphTask>();
-				}
-				*/
-			}
-			else 
+			if( !node->pParentObject ) 
 			{
 				if( !parentToChildren[ 0llu ].size() )
 				{
-					resultToChildren[ 0llu ] = NewObject<SGraphTask>( this );
+					resultToChildren[ 0llu ].pGraphTask = NewObject<SGraphTask>( this );
 				}
 			}
 		}
@@ -117,7 +110,7 @@ namespace Saturn {
 		return resultToChildren;
 	}
 
-	void AnimGraph::SortAnimGraph( IndexedMap<UUID, SGraphTask*>& rMap )
+	void AnimGraph::SortAnimGraph( AnimGraphSortMap& rMap )
 	{
 		std::stack<UUID> stack;
 		stack.push( FindNode( "Output Node" )->ID );
@@ -130,7 +123,9 @@ namespace Saturn {
 			SharedPtr<NodeEditorNodeBase> currentNode = FindNode( currentID );
 
 			const UUID subGraphID = currentNode->pParentObject ? currentNode->pParentObject->ID : UUID( 0 );
-			rMap[ subGraphID ]->AddTask( currentID, currentNode->ConvertToTask() );
+			auto& rInfo = rMap[ subGraphID ];
+			
+			rInfo.pGraphTask->AddTask( currentID, currentNode->ConvertToTask() );
 
 			// Find neighbors from inputs and continue until there is no neighbors
 			for( const auto& rNeighbor : FindNeighborsRight( currentNode ) )
@@ -140,7 +135,7 @@ namespace Saturn {
 		}
 	}
 
-	void AnimGraph::SortStateMachineEntry( IndexedMap<UUID, SGraphTask*>& rMap )
+	void AnimGraph::SortStateMachineEntry( AnimGraphSortMap& rMap )
 	{
 		auto stateNode = m_StateMachineEntryNode.As<AnimGraphStateMachineStateNode>();
 
@@ -166,12 +161,13 @@ namespace Saturn {
 
 			// Now add this node's task.
 			auto& rGraphTask = rMap[ currentNode->pParentObject->ID ];
-			if( !rGraphTask )
+			if( !rGraphTask.pGraphTask )
 			{
-				rGraphTask = NewObject<SGraphTask>( this );
+				rGraphTask.pGraphTask = NewObject<SGraphTask>( this );
 			}
 
-			rGraphTask->AddTask( currentID, currentNode->ConvertToTask() );
+			rGraphTask.Node = currentNode;
+			rGraphTask.pGraphTask->AddTask( currentID, currentNode->ConvertToTask() );
 
 			const auto& rNeighbours = FindNeighborsLeft( currentNode );
 			for( auto Itr = rNeighbours.rbegin(); Itr != rNeighbours.rend(); ++Itr )
@@ -185,7 +181,7 @@ namespace Saturn {
 		}
 	}
 
-	void AnimGraph::SortTransitionNodeOrStateMachineAfterEntryRec( UUID id, IndexedMap<UUID, SGraphTask*>& rMap )
+	void AnimGraph::SortTransitionNodeOrStateMachineAfterEntryRec( UUID id, AnimGraphSortMap& rMap )
 	{
 		SharedPtr<NodeEditorNodeBase> nodeStarting = FindNode( id );
 		UUID startID = 0llu;
@@ -212,13 +208,14 @@ namespace Saturn {
 			// Now add this node's task.
 			const UUID subGraphID = currentNode->pParentObject ? currentNode->pParentObject->ID : UUID( 0 );
 			auto& rGraphTask = rMap[ subGraphID ];
+			rGraphTask.Node = currentNode;
 
-			if( !rGraphTask )
+			if( !rGraphTask.pGraphTask )
 			{
-				rGraphTask = NewObject<SGraphTask>( this );
+				rGraphTask.pGraphTask = NewObject<SGraphTask>( this );
 			}
 
-			rGraphTask->AddTask( currentID, currentNode->ConvertToTask() );
+			rGraphTask.pGraphTask->AddTask( currentID, currentNode->ConvertToTask() );
 
 			// Find neighbors from inputs and continue until there is no neighbors
 			for( const auto& rNeighbor : FindNeighborsRight( currentNode ) )
@@ -229,6 +226,13 @@ namespace Saturn {
 	}
 
 #if !defined(SAT_DIST)
+
+	void AnimGraph::BuildTaskCache()
+	{
+		auto order = TraverseAndCreateTasks();
+		m_TaskCache.BuildMasterListForAnimGraph( this, order );
+	}
+
 	void AnimGraph::OnExtraRender()
 	{
 		std::vector<UUID> nodes = GetSelectedNodes();
@@ -245,14 +249,14 @@ namespace Saturn {
 
 	void AnimGraph::OnNodeEditorEvent( NodeEditorAction action )
 	{
-		std::vector<UUID> nodesToDelete;
-		// Worse case we need to delete more than 5 nodes, we reallocate the vector.
-		nodesToDelete.reserve( 5 );
-
 		switch( action )
 		{
 			case NodeEditorAction::DestroyNode:
 			{
+				std::vector<UUID> nodesToDelete;
+				// Worse case we need to delete more than 5 nodes, we reallocate the vector.
+				nodesToDelete.reserve( 5 );
+
 				// Find all ill-formatted transition nodes, if a state machine state node was destroyed.
 				for( const auto& [id, node] : m_Nodes )
 				{
@@ -265,13 +269,28 @@ namespace Saturn {
 						nodesToDelete.push_back( id );
 					}
 				}
+		
+				for( const auto& id : nodesToDelete )
+				{
+					DeleteNode( id, true );
+				}
+			} break;
+
+			case NodeEditorAction::PreEvaluate:
+			{
+
+			} break;
+
+			case NodeEditorAction::PostEvaluateSuccess:
+			{
+				BuildTaskCache();
+				SaveAndMarkClean();
 			} break;
 
 			case NodeEditorAction::CreateLink:
 			case NodeEditorAction::BreakLink:
 			case NodeEditorAction::CreateNode:
 			case NodeEditorAction::MoveNode:
-			case NodeEditorAction::PreEvaluate:
 			case NodeEditorAction::SelectNode:
 			case NodeEditorAction::DeselectNode:
 			case NodeEditorAction::SelectLink:
@@ -279,11 +298,6 @@ namespace Saturn {
 				break;
 			
 			default: break;
-		}
-
-		for( const auto& id : nodesToDelete )
-		{
-			DeleteNode( id, true );
 		}
 	}
 

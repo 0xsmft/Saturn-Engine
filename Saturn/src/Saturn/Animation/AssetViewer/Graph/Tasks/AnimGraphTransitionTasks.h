@@ -67,7 +67,6 @@ namespace Saturn {
 		bool GetResult() const { return *m_Result; }
 
 	private:
-		NodeEditorTaskHandler* m_pHandler = nullptr;
 		bool* m_Result = nullptr;
 	};
 

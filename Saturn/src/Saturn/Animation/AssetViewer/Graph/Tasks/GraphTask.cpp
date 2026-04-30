@@ -31,7 +31,13 @@
 
 #include "AnimGraphTransitionTasks.h"
 
+#if !defined(SAT_DIST)
 #include "Saturn/NodeEditor/NodeEditorBase.h"
+#endif
+
+#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
+
+#include "Saturn/Serialisation/Raw/RawSerialisation.h"
 
 namespace Saturn {
 
@@ -45,6 +51,8 @@ namespace Saturn {
 		{
 			delete rItem.pTask;
 		}
+
+		m_Tasks.clear();
 	}
 
 	void SGraphTask::AddTask( UUID nodeID, NodeEditorTaskBase* pTask )
@@ -52,9 +60,10 @@ namespace Saturn {
 		m_Tasks.emplace_back( nodeID, pTask );
 	}
 
-	void SGraphTask::InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
+#if !defined(SAT_DIST)
+	void SGraphTask::PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
 	{
-		pParentHandler = pHandler;
+		Super::PreInitialiseTask( pEditor, pNode );
 
 		std::reverse( m_Tasks.begin(), m_Tasks.end() );
 
@@ -63,7 +72,75 @@ namespace Saturn {
 			if( rItem.pTask )
 			{
 				auto node = pEditor->FindNode( rItem.NodeID );
-				rItem.pTask->InitialiseTask( pHandler, pEditor, node.Get() );
+				rItem.pTask->PreInitialiseTask( pEditor, node.Get() );
+			}
+		}
+	}
+#endif
+
+	void SGraphTask::InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther )
+	{
+		Super::InitialiseTaskWithOther( pHandler, pOther );
+
+		SGraphTask* pGraphTask = dynamic_cast< SGraphTask* >( pOther );
+
+		m_Tasks.reserve( pGraphTask->GetTasks().size() );
+
+		for( const auto& rTask : pGraphTask->GetTasks() )
+		{
+			m_Tasks.emplace_back( rTask.NodeID, (NodeEditorTaskBase*)ClassMetadataHandler::Get().CreateClassObject( rTask.pTask->GetClass() ) );
+			m_Tasks.back().pTask->InitialiseTaskWithOther( pHandler, rTask.pTask );
+		}
+	}
+
+	void SGraphTask::Serialise( std::ofstream& rStream ) const
+	{
+		Super::Serialise( rStream );
+
+		RawSerialisation::WriteObject( m_Tasks.size(), rStream );
+
+		for( const auto& [nodeID, rTask] : m_Tasks )
+		{
+			RawSerialisation::WriteObject( nodeID, rStream );
+			
+			if( rTask )
+			{
+				RawSerialisation::WriteObject( rTask->GetClass()->GetHash(), rStream );
+				rTask->Serialise( rStream );
+			}
+			else
+			{
+				RawSerialisation::WriteObject( UUID( 0llu ), rStream );
+			}
+		}
+	}
+
+	void SGraphTask::Deserialise( std::ifstream& rStream )
+	{
+		Super::Deserialise( rStream );
+
+		size_t taskCount = 0llu;
+		RawSerialisation::ReadObject( taskCount, rStream );
+
+		m_Tasks.reserve( taskCount );
+
+		for( size_t i = 0; i < taskCount; ++i )
+		{
+			UUID nodeID = 0llu;
+			RawSerialisation::ReadObject( nodeID, rStream );
+
+			uint64_t classHash = 0llu;
+			RawSerialisation::ReadObject( classHash, rStream );
+		
+			if( classHash )
+			{
+				NodeEditorTaskBase* pTaskObj = ( NodeEditorTaskBase* ) ClassMetadataHandler::Get().CreateClassObject( classHash, this );
+
+				SAT_CORE_VERIFY( pTaskObj );
+
+				pTaskObj->Deserialise( rStream );
+
+				m_Tasks.emplace_back( nodeID, pTaskObj );
 			}
 		}
 	}

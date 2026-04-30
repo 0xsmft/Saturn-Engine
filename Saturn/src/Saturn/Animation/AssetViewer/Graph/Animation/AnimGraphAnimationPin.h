@@ -33,7 +33,7 @@
 
 namespace Saturn {
 
-	enum class AnimGraphAnimationPinFlags 
+	enum class AnimGraphAnimationPinFlags : uint8_t
 	{
 		// Does this pin input/output a single animation
 		Animation,
@@ -61,12 +61,11 @@ namespace Saturn {
 		virtual void OnRenderOutput() override;
 
 	private:
-		AnimGraphAnimationPinFlags m_Flags = AnimGraphAnimationPinFlags::Animation;
-
-		AssetID m_AssetID = 0;
 #if defined(SAT_DEBUG) || defined(SAT_RELEASE)
 		std::string m_AssetName;
 #endif
+		AssetID m_AssetID = 0;
+		AnimGraphAnimationPinFlags m_Flags = AnimGraphAnimationPinFlags::Animation;
 	};
 
 }

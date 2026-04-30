@@ -29,12 +29,14 @@
 #include "sppch.h"
 #include "AnimationController.h"
 
-#include "AssetViewer/Graph/Animation/AnimGraph.h"
 #include "SkeletonAsset.h"
+
+#include "AssetViewer/Graph/Animation/AnimGraph.h"
 
 #include "Saturn/Asset/AssetManager.h"
 
 #include "Saturn/NodeEditor/Serialisation/NodeCache.h"
+#include "Saturn/NodeEditor/GlobalNodeEditorTaskCache.h"
 
 namespace Saturn {
 
@@ -46,36 +48,24 @@ namespace Saturn {
 	AnimationController::~AnimationController()
 	{		
 		m_TaskHandler = nullptr;
-		m_AnimationGraph = nullptr;
 	}
 
 	void AnimationController::Initialise( Ref<Animator> animator )
 	{
-		m_AnimationGraph = SharedPtr<AnimGraph>::Create( m_ControllerAsset->ID );
-		// Read only...
-		m_AnimationGraph->SetUserAuthorityFlag( NodeEditorUserAuthority::Editing, false );
+		m_TaskHandler = Ref<AnimGraphTaskHandler>::Create( animator );
 
-		const std::string filename = std::format( "{0}.sac", m_ControllerAsset->Name );
-		if( NodeCacheEditor::ReadNodeEditorCache( m_AnimationGraph, m_ControllerAsset->ID, filename ) )
+		auto& rCache = GlobalNodeEditorTaskCache::Get().GetOrCreateTaskCache( m_ControllerAsset->ID );
+		if( rCache.IsListEmpty() )
 		{
-			const auto order2 = m_AnimationGraph->TraverseAndCreateTasks();
-			m_TaskHandler = Ref<AnimGraphTaskHandler>::Create( animator );
-			m_TaskHandler->InitWithCustomOrder2( m_AnimationGraph, order2 );
+			const std::string filename = std::format( "{0}.sac", m_ControllerAsset->Name );
+			NodeCacheEditor::ReadNodeTaskCacheOnly( rCache, m_ControllerAsset->ID, filename );
 		}
+
+		m_TaskHandler->Init( rCache );
 	}
 
 	void AnimationController::Tick( Timestep ts )
 	{
-		if( Input::Get().KeyPressed( RubyKey_C ) )
-		{
-			m_AnimationGraph->FindDataHandle( "Speed" )->Set<float>( 67.0f );
-		}
-		
-		if( Input::Get().KeyPressed( RubyKey_V ) )
-		{
-			m_AnimationGraph->FindDataHandle( "Speed" )->Set<float>( 21.0f );
-		}
-
 		m_TaskHandler->Tick( ts );
 	}
 

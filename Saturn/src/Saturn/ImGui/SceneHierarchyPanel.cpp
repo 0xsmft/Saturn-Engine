@@ -1652,11 +1652,11 @@ namespace Saturn {
 
 			if( boundsEntity->NeedsRebuilding() )
 			{
-				const std::string text = "A rebuild is required for the changes to have effect!";
+				const char* pText = "A rebuild is required for the changes to have effect!";
 
 				const ImVec2 padding = ImGui::GetStyle().FramePadding;
 				const ImVec2 textPosition = ImGui::GetCursorScreenPos();
-				const ImVec2 textSize = ImGui::CalcTextSize( text.c_str() );
+				const ImVec2 textSize = ImGui::CalcTextSize( pText );
 
 				const ImVec2 min = ImVec2( textPosition.x - padding.x, textPosition.y - padding.y );
 				const ImVec2 max = ImVec2( textPosition.x + padding.x + textSize.x, textPosition.y + padding.y + textSize.y );
@@ -1664,7 +1664,7 @@ namespace Saturn {
 				ImGui::GetWindowDrawList()->AddRectFilled( min, max,
 					IM_COL32( 200, 30, 60, 255 ), 2.0f, ImDrawFlags_RoundCornersAll );
 
-				ImGui::TextUnformatted( text.c_str() );
+				ImGui::TextUnformatted( pText );
 			}
 		} );
 

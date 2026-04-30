@@ -229,10 +229,8 @@ namespace Saturn {
 			ImGui::Spring( 0 );
 		}
 
-#if !defined(SAT_DEBUG)
 		// Hand off to children only if not linked
 		if( !linked )
-#endif
 			OnRenderInput();
 
 		ImGui::Spring( 0 );
@@ -358,13 +356,13 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// INT PIN
 
-	IntPin::IntPin( UUID id, const std::string& rName, PinType type, UUID nodeID )
-		: Pin( id, rName, type, nodeID )
+	IntPin::IntPin( UUID id, const std::string& rName, PinType type, UUID nodeID, PinFlag flags )
+		: Pin( id, rName, type, nodeID, flags )
 	{
 	}
 
-	IntPin::IntPin( const std::string& rName, PinKind kind )
-		: Pin( rName, PinType::Int, kind )
+	IntPin::IntPin( const std::string& rName, PinKind kind, PinFlag flags )
+		: Pin( rName, PinType::Int, kind, flags )
 	{
 	}
 
@@ -398,13 +396,13 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// UINT PIN
 	
-	UInt64Pin::UInt64Pin( const std::string& rName, PinKind kind )
-		: Pin( rName, PinType::U64, kind )
+	UInt64Pin::UInt64Pin( const std::string& rName, PinKind kind, PinFlag flags )
+		: Pin( rName, PinType::U64, kind, flags )
 	{
 	}
 
-	UInt64Pin::UInt64Pin( UUID id, const std::string& rName, PinType type, UUID nodeID )
-		: Pin( id, rName, type, nodeID )
+	UInt64Pin::UInt64Pin( UUID id, const std::string& rName, PinType type, UUID nodeID, PinFlag flags )
+		: Pin( id, rName, type, nodeID, flags )
 	{
 	}
 

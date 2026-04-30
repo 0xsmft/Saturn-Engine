@@ -191,8 +191,8 @@ template<> struct PinTypeTraits<CppType>				\
 	{
 	public:
 		IntPin() = default;
-		IntPin( const std::string& rName, PinKind kind );
-		IntPin( UUID id, const std::string& rName, PinType type, UUID nodeID );
+		IntPin( const std::string& rName, PinKind kind, PinFlag flags = PinFlag_DefaultSet );
+		IntPin( UUID id, const std::string& rName, PinType type, UUID nodeID, PinFlag flags = PinFlag_DefaultSet );
 
 		virtual ~IntPin() = default;
 
@@ -216,8 +216,8 @@ template<> struct PinTypeTraits<CppType>				\
 	{
 	public:
 		UInt64Pin() = default;
-		UInt64Pin( const std::string& rName, PinKind kind );
-		UInt64Pin( UUID id, const std::string& rName, PinType type, UUID nodeID );
+		UInt64Pin( const std::string& rName, PinKind kind, PinFlag flags = PinFlag_DefaultSet );
+		UInt64Pin( UUID id, const std::string& rName, PinType type, UUID nodeID, PinFlag flags = PinFlag_DefaultSet );
 
 		virtual ~UInt64Pin() = default;
 

@@ -37,6 +37,7 @@ namespace Saturn {
 	// 
 	// A NodeEditorDefaultPreCompiler is a default pre-compiler.
 	// It's behaviour is to walk through all the nodes and check if they need to be linked.
+	// It will also warn if a node is connected to anything.
 	// 
 	// Other pre-compilers can be created by simply inhering NodeEditorPreCompilerBase.
 	//
@@ -51,7 +52,7 @@ namespace Saturn {
 
 		virtual ~NodeEditorDefaultPreCompiler() = default;
 
-		virtual std::vector<NodeEditorPreCompileError> PreCompile() override;
+		virtual NodeEditorPreCompileResult PreCompile() override;
 	};
 	
 }

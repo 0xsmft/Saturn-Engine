@@ -71,7 +71,7 @@ namespace Saturn {
 	struct NodeEditorPreCompileResult
 	{
 		std::vector<NodeEditorPreCompileMessage> Messages;
-		bool Succeeded = false;
+		bool Succeeded = true;
 	};
 
 	//

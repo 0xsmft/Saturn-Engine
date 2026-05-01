@@ -327,53 +327,6 @@ namespace Saturn {
 #endif
 
 #if !defined(SAT_DIST)
-	static std::vector<SClass*> s_AnimGraphAllowedNodes
-	{ 
-		//////////////////////////////////////////////////////////////////////////
-		{ AnimGraphOutputNode::StaticClass()             },
-		{ AnimGraphStateMachinePlayerNode::StaticClass() },
-
-		//////////////////////////////////////////////////////////////////////////
-		{ NodeEditorVariableNode::StaticClass()          },
-		{ NodeEditorSetVariableNode::StaticClass()       },
-
-		//////////////////////////////////////////////////////////////////////////
-		{ NodeEditorHintNode::StaticClass()              },
-	};
-
-	static std::vector<SClass*> s_StateMachineAllowedNodes
-	{
-		//////////////////////////////////////////////////////////////////////////
-		{ AnimGraphStateMachineStateNode::StaticClass()      },
-		{ AnimGraphStateMachineTransitionNode::StaticClass() },
-
-		//////////////////////////////////////////////////////////////////////////
-		{ NodeEditorHintNode::StaticClass()					 },
-	};
-
-	static std::vector<SClass*> s_StateMachineStateAllowedNodes
-	{
-		//////////////////////////////////////////////////////////////////////////
-		{ AnimGraphStateMachinePlayAnimNode::StaticClass() },
-		{ AnimGraphStateMachineOutNode::StaticClass()      },
-
-		//////////////////////////////////////////////////////////////////////////
-		{ NodeEditorHintNode::StaticClass()                },
-	};
-
-	static std::vector<SClass*> s_TransitionAllowedNodes
-	{
-		//////////////////////////////////////////////////////////////////////////
-		{ AnimGraphTransitionGraphResultNode::StaticClass() },
-
-		//////////////////////////////////////////////////////////////////////////
-		{ NodeEditorHintNode::StaticClass()                },
-
-		//////////////////////////////////////////////////////////////////////////
-		{ NodeEditorVariableNode::StaticClass()          },
-		{ NodeEditorSetVariableNode::StaticClass()       },
-	};
-
 	void AnimGraph::DrawGraph()
 	{
 		// Suspend user input if we are currently dragging.
@@ -397,71 +350,44 @@ namespace Saturn {
 			if( rNode->pParentObject != m_ActiveSubGraph.Get() )
 				continue;
 
-			// Determine current view mode from current sub-graph
-			if( !m_ActiveSubGraph )
-			{
-				if( std::find( s_AnimGraphAllowedNodes.begin(), s_AnimGraphAllowedNodes.end(), rNode->GetClass() ) != s_AnimGraphAllowedNodes.end() )
-				{
-					rNode->Render( m_Builder );
-				}
-			}
-			else if( m_ActiveSubGraph->ExecutionType == NodeExecutionType::AnimGraphStateMachinePlayerNode )
-			{
-				// Draw state machine nodes
-				if( std::find( s_StateMachineAllowedNodes.begin(), s_StateMachineAllowedNodes.end(), rNode->GetClass() ) != s_StateMachineAllowedNodes.end() )
-				{
-					rNode->Render( m_Builder );
+			// Render the node.
+			rNode->Render( m_Builder );
 
-					if( !ImGui::IsItemActive() )
+			if( m_ActiveSubGraph && m_ActiveSubGraph->ExecutionType == NodeExecutionType::AnimGraphStateMachinePlayerNode )
+			{
+				if( !ImGui::IsItemActive() )
+				{
+					const ImVec2 nodePosition = ed::GetNodePosition( ed::NodeId( id ) );
+					const ImVec2 nodeSize = ed::GetNodeSize( ed::NodeId( id ) );
+					const ImRect nodeRectangle( nodePosition, nodePosition + nodeSize );
+
+					if( nodeRectangle.Contains( ImGui::GetMousePos() ) )
 					{
-						const ImVec2 nodePosition = ed::GetNodePosition( ed::NodeId( id ) );
-						const ImVec2 nodeSize = ed::GetNodeSize( ed::NodeId( id ) );
-						const ImRect nodeRectangle( nodePosition, nodePosition + nodeSize );
+						m_StateNodeHovered = true;
+						m_HoveredNode = rNode;
 
-						if( nodeRectangle.Contains( ImGui::GetMousePos() ) )
+						if( ImGui::IsMouseDown( ImGuiMouseButton_Left ) && ImGui::IsKeyDown( ImGuiKey_LeftCtrl ) )
 						{
-							m_StateNodeHovered = true;
-							m_HoveredNode = rNode;
-
-							if( ImGui::IsMouseDown( ImGuiMouseButton_Left ) && ImGui::IsKeyDown( ImGuiKey_LeftCtrl ) )
+							// Set the starting point of a new transition to be the hovered state node.
+							if( m_TransitionStartNode == 0 )
 							{
-								// Set the starting point of a new transition to be the hovered state node.
-								if( m_TransitionStartNode == 0 )
-								{
-									m_TransitionStartNode = id;
-								}
-							}
-
-							// If we double click, go into the state node.
-							if( rNode->ExecutionType == NodeExecutionType::AnimGraphStateMachineStateNode && ImGui::IsMouseDoubleClicked( ImGuiMouseButton_Left ) )
-							{
-								AddSubGraph( rNode );
-								ChangeEditorNextFrame( rNode );
+								m_TransitionStartNode = id;
 							}
 						}
-						else if( m_StateNodeHovered && !m_CanResetHoveredNode )
+
+						// If we double click, go into the state node.
+						if( rNode->ExecutionType == NodeExecutionType::AnimGraphStateMachineStateNode && ImGui::IsMouseDoubleClicked( ImGuiMouseButton_Left ) )
 						{
-							// We can only reset the hovered node after we've moved away from it, if the
-							// right click popup is not open.
-							m_CanResetHoveredNode = !ImGui::IsPopupOpen( "NE_NodeAction" );
+							AddSubGraph( rNode );
+							ChangeEditorNextFrame( rNode );
 						}
 					}
-				}
-			}
-			else if( m_ActiveSubGraph->GetClass() == AnimGraphStateMachineStateNode::StaticClass() )
-			{
-				// Render State Machine state nodes
-				if( std::find( s_StateMachineStateAllowedNodes.begin(), s_StateMachineStateAllowedNodes.end(), rNode->GetClass() ) != s_StateMachineStateAllowedNodes.end() )
-				{
-					rNode->Render( m_Builder );
-				}
-			}
-			else if( m_ActiveSubGraph->GetClass() == AnimGraphStateMachineTransitionNode::StaticClass() )
-			{
-				// Render transition nodes
-				if( std::find( s_TransitionAllowedNodes.begin(), s_TransitionAllowedNodes.end(), rNode->GetClass() ) != s_TransitionAllowedNodes.end() )
-				{
-					rNode->Render( m_Builder );
+					else if( m_StateNodeHovered && !m_CanResetHoveredNode )
+					{
+						// We can only reset the hovered node after we've moved away from it, if the
+						// right click popup is not open.
+						m_CanResetHoveredNode = !ImGui::IsPopupOpen( "NE_NodeAction" );
+					}
 				}
 			}
 		}

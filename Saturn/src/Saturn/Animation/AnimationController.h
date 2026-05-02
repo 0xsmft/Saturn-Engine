@@ -53,7 +53,6 @@ namespace Saturn {
 		Ref<AnimGraphTaskHandler> m_TaskHandler;
 
 		Ref<Asset> m_ControllerAsset;
-		Ref<SkeletonAsset> m_Skeleton;
 	};
 	
 }

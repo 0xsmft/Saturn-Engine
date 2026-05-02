@@ -194,20 +194,16 @@ namespace Saturn {
 		// Node editor task cache added, 0.2.5
 		TaskCache,
 
+		// PinType, PinKind, PinRenderType all changed to single-bytes, 0.2.5
+		PinClassSizeChange,
+
 		//^^^ only add new versions above here.... and not below here vvv
-		Latest = TaskCache,
+		Latest = PinClassSizeChange,
 		Lowest = BeforeVersionWasAdded
 	};
 
-	// The base class for all Node Editors (Node Graphs).
-	// NodeEditorBase does not inherit from ImGuiWindow because NodeEditorBase is more of the backend and doesn't
-	// need to always be a window.
-	// NodeEditorBase does not draw anything, it simply provides the logical code for nodes without any rendering
-	// For example, you can setup a NodeEditorBase the same way as a NodeEditor would of been created and use it the same way just without any graphical representation. 
-	// On dist, this class will ALWAYS be used in place of NodeEditor
+	//
 	// 
-	// NodeEditors are based from an SObject, which is okay however we are wasting 32 whole ass bytes :(
-	// The reason why we are based from an SObject is that we want Tasks* and Nodes to share the same ancestor, so m_pParentObject = NodeEditorBase, before this Nodes had their own pointer to us, and tasks did not, every task could have a pointer to NodeEditorBase however Tasks are due a rewrite in their own respect, so maybe this won't last long as well.
 	//
 	class NodeEditorBase : public SObject, public EnabledSharedFromThis<NodeEditorBase>
 	{

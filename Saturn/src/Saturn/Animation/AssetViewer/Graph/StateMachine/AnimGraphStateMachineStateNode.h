@@ -49,7 +49,6 @@ namespace Saturn {
 		virtual void Deserialise( FDependentIStream& rStream ) override;
 		virtual NodeEditorTaskBase* ConvertToTask() override;
 		virtual void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder ) override;
-		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
 
 	public:
 		UUID GetOutputNodeID() const { return m_OutputNodeID; }

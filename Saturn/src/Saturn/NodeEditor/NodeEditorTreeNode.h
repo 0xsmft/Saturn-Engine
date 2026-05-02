@@ -32,6 +32,11 @@
 
 namespace Saturn {
 
+	//
+	// NodeEditorTreeNode
+	// 
+	// Base class for Nodes with a behaviour tree look.
+	//
 	SCLASS()
 	class NodeEditorTreeNode : public NodeEditorNodeBase
 	{
@@ -52,7 +57,6 @@ namespace Saturn {
 		// NodeEditorNodeBase
 		
 		virtual void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder ) override final;
-		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override { return NodeEvaluationState::Failed; }
 	};
 	
 }

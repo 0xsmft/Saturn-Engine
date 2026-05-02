@@ -174,7 +174,6 @@ namespace Saturn {
 		void Destroy();
 
 		virtual void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder ) = 0;
-		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) = 0;
 		
 #if !defined(SAT_DIST)
 		// This function is not pure virtual because not every Node needs a special right click menu

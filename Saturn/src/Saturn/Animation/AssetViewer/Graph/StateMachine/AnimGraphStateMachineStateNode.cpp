@@ -148,11 +148,6 @@ namespace Saturn {
 		}
 	}
 
-	NodeEvaluationState AnimGraphStateMachineStateNode::EvaluateNode( NodeEditorRuntime* evaluator )
-	{
-		return NodeEvaluationState::Failed;
-	}
-
 }
 
 #include "Saturn/GameFramework/Core/EngineGenerated.h"

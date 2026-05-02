@@ -146,11 +146,6 @@ namespace Saturn {
 #endif
 	}
 
-	NodeEvaluationState AnimGraphStateMachineTransitionNode::EvaluateNode( NodeEditorRuntime* evaluator )
-	{
-		return NodeEvaluationState::Evaluated;
-	}
-
 	void AnimGraphStateMachineTransitionNode::PostPlace()
 	{
 		// Create output node for this transition.

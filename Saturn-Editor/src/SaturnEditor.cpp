@@ -74,6 +74,8 @@ public:
 				}
 			}
 		}
+
+		LoadFonts();
 	}
 
 	virtual void OnInit() override

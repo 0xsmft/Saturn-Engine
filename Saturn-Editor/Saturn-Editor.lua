@@ -89,7 +89,7 @@ project "Saturn-Editor"
 			"../Saturn/src/Saturn/Entry/Windows/**.cpp",
 		}
 
-		filter { "options:onlineapi=steam" }
+		filter { "options:onlineapi=steam", "system:windows" }
 			postbuildcommands
 			{
 				'{COPYFILE} "../Saturn/vendor/steamworks/Bin/Windows/steam_api64.dll" "%{cfg.targetdir}"'

@@ -130,7 +130,7 @@ project "Saturn"
 			"SAT_PLATFORM_LINUX"
 		}
 
-		filter { "options:onlineapi=steam" }
+		filter { "options:onlineapi=steam", "system:linux" }
 			links
 			{
 				"vendor/steamworks/Bin/Linux/libsteam_api.so"
@@ -156,7 +156,7 @@ project "Saturn"
 			"%{prj.name}/visualisers/*.natvis"
 		}
 
-		filter { "options:onlineapi=steam" }
+		filter { "options:onlineapi=steam", "system:windows" }
 			links
 			{
 				"vendor/steamworks/Bin/Windows/steam_api64.lib"

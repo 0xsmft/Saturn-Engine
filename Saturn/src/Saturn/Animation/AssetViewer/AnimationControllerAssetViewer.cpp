@@ -45,6 +45,8 @@
 #include "Saturn/NodeEditor/NodeEditorVariableNode.h"
 #include "Saturn/NodeEditor/Serialisation/NodeCache.h"
 
+#include "Saturn/NodeEditor/Maths/Maths2NodeLibrary.h"
+
 #include "Saturn/ImGui/UndoRedo/GlobalUndoRedoGroup.h"
 
 #include <imgui.h>
@@ -159,7 +161,7 @@ namespace Saturn {
 		}
 
 		ImGui::SeparatorText( "Variables" );
-		for( const auto& [id, rVariable] : m_NodeEditor->GetDataHandles() )
+		for( const auto& [id, rVariable] : m_NodeEditor->GetVariables() )
 		{
 			if( ImGui::MenuItem( rVariable->GetName().c_str() ) )
 			{
@@ -202,7 +204,7 @@ namespace Saturn {
 			result = ( SharedPtr<NodeEditorNodeBase> )StateMachineStateNodeLibrary::SpawnPlayAnimNode( m_NodeEditor );
 
 		ImGui::SeparatorText( "Variables" );
-		for( const auto& [id, rVariable] : m_NodeEditor->GetDataHandles() )
+		for( const auto& [id, rVariable] : m_NodeEditor->GetVariables() )
 		{
 			if( ImGui::MenuItem( rVariable->GetName().c_str() ) )
 			{
@@ -218,12 +220,18 @@ namespace Saturn {
 		SharedPtr<NodeEditorNodeBase> result;
 
 		ImGui::SeparatorText( "Variables" );
-		for( const auto& [id, rVariable] : m_NodeEditor->GetDataHandles() )
+		for( const auto& [id, rVariable] : m_NodeEditor->GetVariables() )
 		{
 			if( ImGui::MenuItem( rVariable->GetName().c_str() ) )
 			{
 				result = ( SharedPtr<NodeEditorVariableNode> )NodeEditorVariableNode::SpawnVariableNode( rVariable, m_NodeEditor );
 			}
+		}
+
+		ImGui::SeparatorText( "Maths" );
+		if( auto mathsResult = Maths2BoolNodeLibrary::DrawImGuiSelectionMenu( m_NodeEditor ); mathsResult )
+		{
+			result = mathsResult;
 		}
 
 		return result;
@@ -242,14 +250,17 @@ namespace Saturn {
 			{
 				result = DrawRootGraphNewNodeOptions();
 			}
+			// State machine
 			else if( m_NodeEditor->GetActiveSubGraph()->GetClass() == AnimGraphStateMachinePlayerNode::StaticClass() )
 			{
 				result = DrawStateMachineNewNodeOptions();
 			}
+			// State machine state
 			else if( m_NodeEditor->GetActiveSubGraph()->GetClass() == AnimGraphStateMachineStateNode::StaticClass() )
 			{
 				result = DrawStateMachineStateNewNodeOptions();
 			}
+			// State machine transition
 			else if( m_NodeEditor->GetActiveSubGraph()->GetClass() == AnimGraphStateMachineTransitionNode::StaticClass() )
 			{
 				result = DrawTransitionNewNodeOptions();

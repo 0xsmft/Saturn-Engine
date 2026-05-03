@@ -29,7 +29,6 @@
 #include "sppch.h"
 #include "AnimGraphTransitionTasks.h"
 
-#include "Saturn/NodeEditor/DataLine.h"
 #include "Saturn/NodeEditor/NodeEditorTaskHandler.h"
 
 #include "Saturn/NodeEditor/NodeEditorBase.h"
@@ -75,27 +74,34 @@ namespace Saturn {
 	{
 	}
 
-	void AnimGraphTransitionResultTask::InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
+#if !defined(SAT_DIST)
+	void AnimGraphTransitionResultTask::PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
 	{
-		AnimGraphTransitionGraphResultNode* pResultNode = dynamic_cast< AnimGraphTransitionGraphResultNode* >( pNode );
-		if( pResultNode )
+		Super::PreInitialiseTask( pEditor, pNode );
+	
+		// NB: FindLinkByPin is OK here, Pin does not have PinFlag_AcceptMultipleLinks flag.
+		const auto link = pEditor->FindLinkByPin( pNode->Inputs[ 0 ]->ID );
+		if( link && link->StartPinID )
 		{
-			const auto links = pEditor->FindLinksByPin( pResultNode->Inputs[ 0 ]->ID );
-			for( const auto& rLink : links )
+			auto otherPin = pEditor->FindPin( link->StartPinID );
+			if( otherPin )
 			{
-				// Get the data handle
-				if( pHandler->DoesDataLineExist( rLink->ID ) )
-				{
-					auto* pDataLine = pHandler->GetDataLine( rLink->ID );
-					if( pDataLine )
-					{
-						m_Result = pDataLine->GetIf<bool>();
-					}
-				}
+				m_IncomingNodeID = otherPin->Node->ID;
 			}
+		}
+	}
+#endif
 
-			m_NodeID = pResultNode->ID;
-			m_pHandler = pHandler;
+	void AnimGraphTransitionResultTask::InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther )
+	{
+		Super::InitialiseTaskWithOther( pHandler, pOther );
+
+		AnimGraphTransitionResultTask* pThisOther = dynamic_cast< AnimGraphTransitionResultTask* >( pOther );
+		if( pThisOther ) 
+		{
+			m_IncomingNodeID = pThisOther->m_IncomingNodeID;
+
+			m_Result = pHandler->AccessLocator<bool>( m_IncomingNodeID, 0 );
 		}
 	}
 
@@ -106,6 +112,20 @@ namespace Saturn {
 
 	void AnimGraphTransitionResultTask::Reset()
 	{
+	}
+
+	void AnimGraphTransitionResultTask::Serialise( std::ofstream& rStream ) const
+	{
+		Super::Serialise( rStream );
+
+		RawSerialisation::WriteObjectChecked( m_IncomingNodeID, rStream );
+	}
+
+	void AnimGraphTransitionResultTask::Deserialise( FDependentIStream& rStream )
+	{
+		Super::Deserialise( rStream );
+
+		RawSerialisation::ReadObjectChecked( m_IncomingNodeID, rStream );
 	}
 
 }

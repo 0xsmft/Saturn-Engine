@@ -35,29 +35,24 @@
 
 namespace Saturn {
 
-	class AnimGraph;
 	class SkeletonAsset;
-	class NodeEditorNodeBase;
 
 	class AnimationController : public RefTarget
 	{
 	public:
 		AnimationController() = default;
 		AnimationController( AssetID id );
-		~AnimationController();
+		virtual ~AnimationController();
 
 		void Initialise( Ref<Animator> animator );
 		void Tick( Timestep ts );
 
 		[[nodiscard]] Ref<Asset> GetAsset() const { return m_ControllerAsset; }
-		[[nodiscard]] SharedPtr<AnimGraph> GetAnimationGraph() const { return m_AnimationGraph; }
 
 	private:
 		Ref<AnimGraphTaskHandler> m_TaskHandler;
 
 		Ref<Asset> m_ControllerAsset;
-		Ref<SkeletonAsset> m_Skeleton;
-		SharedPtr<AnimGraph> m_AnimationGraph;
 	};
 	
 }

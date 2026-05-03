@@ -33,12 +33,17 @@
 #include "Saturn/AI/AIAgentEntity.h"
 
 #include "Saturn/Asset/Asset.h"
-#include "AssetViewer/BehaviourTreeEditorEvaluator.h"
 
 namespace Saturn {
 
-	class BehaviourTreeNodeEditor;
+	class BehaviourTreeTaskHandler;
 
+	//
+	// BehaviourTree 
+	// 
+	// This class is local and is tied to an asset but can be loaded many time. 
+	// For every entity that uses a BehaviourTree this class will be created.
+	//
 	class BehaviourTree : public RefTarget
 	{
 	public:
@@ -47,21 +52,20 @@ namespace Saturn {
 		virtual ~BehaviourTree();
 
 		void Initialise( SharedPtr<AIAgentEntity> entity );
-		void FirstEvaluate();
 		void Tick( Timestep ts );
 
-		Ref<Asset> GetAsset() const { return m_BehaviourTreeAsset; }
-		SharedPtr<BehaviourTreeNodeEditor> GetNodeEditor() const { return m_NodeEditor; }
+		Ref<Asset> GetUnderlyingAsset() const { return m_BehaviourTreeAsset; }
+
+#if !defined(SAT_DIST)
+	public:
+		const std::string& GetDebugName() const { return m_DebugName; }
 
 	private:
+		std::string m_DebugName;
+#endif
 		// The "BehaviourTree" class is not an asset however BehaviourTree are an asset
 		Ref<Asset> m_BehaviourTreeAsset;
-		SharedPtr<BehaviourTreeNodeEditor> m_NodeEditor;
-
-		// TODO: Weak Ref? #ReplaceRawPtrOrRefWithWeakRef, non owning ptr
-		AIAgentEntity* m_AIAgentEntity = nullptr;
-
-		UUID m_OutputNodeID = 0;
+		Ref<BehaviourTreeTaskHandler> m_TaskHandler;
 	};
 
 }

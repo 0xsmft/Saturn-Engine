@@ -33,6 +33,7 @@
 #include "Pin.h"
 #include "NodeEditorTaskBase.h"
 #include "NodeEditorCompilationStatus.h"
+#include "NodeEditorNodeFlags.h"
 
 #include "Saturn/Core/Buffer.h"
 #include "Saturn/Core/UUID.h"
@@ -50,7 +51,7 @@ namespace ax::NodeEditor::Utilities {
 
 namespace Saturn {
 
-	enum class NodeRenderType
+	enum class NodeRenderType : uint8_t
 	{
 		Blueprint,
 		Tree,
@@ -60,7 +61,7 @@ namespace Saturn {
 	// NOTE: When adding new execution types, make sure to be careful with the order of the enum values.
 	// If you change the order, you will break the serialisation of the nodes.
 	// So, make sure to add new execution types at the end of the enum
-	enum class NodeExecutionType
+	enum class NodeExecutionType : uint8_t
 	{
 		Value,
 		AssetID,
@@ -105,6 +106,9 @@ namespace Saturn {
 	class NodeEditorBase;
 	class NodeEditorRuntime;
 
+	//
+	// Base class for all Nodes in a NodeEditor
+	//
 	SCLASS()
 	class NodeEditorNodeBase : public SObject, public EnabledSharedFromThis<NodeEditorNodeBase>
 	{
@@ -132,18 +136,17 @@ namespace Saturn {
 		std::string				Name;
 		std::vector<Ref<Pin>>	Inputs;
 		std::vector<Ref<Pin>>	Outputs;
-		NodeRenderType			RenderType = NodeRenderType::Blueprint;
-		// TODO: This should be a local enum and not a global enum, it should be like SoundGraphEditor::NodeExecutionType::Type or equiv.
-		NodeExecutionType		ExecutionType = NodeExecutionType::None;
 		size_t					EvaluationOrder = 0;
 
 		// The node in which be belong to, this is usually going to be nullptr however, if its not
 		// then we know that this node belongs to a sub-graph with that sub-graph being owned by the Node
 		// specified in pParentObject
 		// sub-graph do not exist, there is not hard separation between them, the separation is purely visual.
+		// 
+		// NB: This is different to the parent object stored in SObject, that object will be the NodeEditor
 		NodeEditorNodeBase*		pParentObject = nullptr;
 
-		// Editor only data
+		// Editor only data vvvv
 #if !defined(SAT_DIST)
 		std::string				ActiveState;
 		std::string				SavedState;
@@ -151,8 +154,17 @@ namespace Saturn {
 		ImVec2					Size;
 		// For Undo/Redo, the position of the node before it was moved by the user, not serialised.
 		ImVec2					PositionBeforeMove;
-		bool					CanBeDeleted = true;
+
 #endif
+		// ^^^^ editor only data
+		
+		uint8_t					Flags = NodeFlags_Default;
+
+		// Type to be rendered.
+		NodeRenderType			RenderType = NodeRenderType::Blueprint;
+		// TODO: This should be a local enum and not a global enum, it should be like SoundGraphEditor::NodeExecutionType::Type or equiv.
+		// Runtime type of this node.
+		NodeExecutionType		ExecutionType = NodeExecutionType::None;
 
 	public:
 		NodeEditorNodeBase() = default;
@@ -162,7 +174,6 @@ namespace Saturn {
 		void Destroy();
 
 		virtual void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder ) = 0;
-		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) = 0;
 		
 #if !defined(SAT_DIST)
 		// This function is not pure virtual because not every Node needs a special right click menu
@@ -171,7 +182,12 @@ namespace Saturn {
 		virtual void RenderContextWindow() {}
 #endif
 
+		//
+		// Convert this node to it's task version.
+		//
 		virtual NodeEditorTaskBase* ConvertToTask() { return nullptr; }
+
+		bool IsFlagSet( NodeEditorNodeFlags flagBit ) const { return ( Flags & flagBit ) != 0; }
 
 	public:
 		// Serialise/Deserialise NodeCache (NC)

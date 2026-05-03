@@ -352,6 +352,24 @@ namespace Saturn {
 						Application::Get()->OpenNativeFileExplorer( rItem->Path(), true );
 					}
 				}
+			
+				// TODO: Allow for more than one
+				if( m_SelectedItems.size() == 1 )
+				{
+					for( auto& rItem : m_SelectedItems )
+					{
+						const auto type = rItem->GetAsset()->Type;
+						if( AssetManager::Get()->IsAssetTypeReimportable( type ) )
+						{
+							if( ImGui::MenuItem( "Reimport" ) )
+							{
+								m_CurrentImportPopup = AssetImportPopupAuxiliary::CreatePopupFromAssetTypeReimport( rItem->GetAsset(), m_CurrentPath );
+								m_CurrentImportPopup->SetIsReimport( true, rItem->GetAssetID() );
+								m_CurrentImportPopup->Initialise();
+							}
+						}
+					}
+				}
 			}
 		}
 		else
@@ -376,35 +394,35 @@ namespace Saturn {
 					bool textureAssetImported = false;
 					if( AssetExtensions::IsTexture( extensionLower ) )
 					{
-						m_CurrentImportPopup = std::make_unique<TextureSourceAssetImportPopup>( path, m_CurrentPath );
+						m_CurrentImportPopup = std::make_shared<TextureSourceAssetImportPopup>( path, m_CurrentPath );
 						m_CurrentImportPopup->Initialise();
 					}
 
 					// Meshes
 					if( AssetExtensions::IsModel( extensionLower ) )
 					{
-						m_CurrentImportPopup = std::make_unique<MeshImportPopup>( path, m_CurrentPath );
+						m_CurrentImportPopup = std::make_shared<MeshImportPopup>( path, m_CurrentPath );
 						m_CurrentImportPopup->Initialise();
 					}
 
 					// Audio
 					if( AssetExtensions::IsAudio( extensionLower ) )
 					{
-						m_CurrentImportPopup = std::make_unique<SoundImportPopup>( path, m_CurrentPath );
+						m_CurrentImportPopup = std::make_shared<SoundImportPopup>( path, m_CurrentPath );
 						m_CurrentImportPopup->Initialise();
 					}
 
 					// Font
 					if( AssetExtensions::IsFont( extensionLower ) )
 					{
-						m_CurrentImportPopup = std::make_unique<FontImportPopup>( path, m_CurrentPath );
+						m_CurrentImportPopup = std::make_shared<FontImportPopup>( path, m_CurrentPath );
 						m_CurrentImportPopup->Initialise();
 					}
 
 					// Still no import popup? means that we have an unknown extension (file type).
 					if( !m_CurrentImportPopup && !textureAssetImported )
 					{
-						m_CurrentImportPopup = std::make_unique<UnknownImportPopup>( path );
+						m_CurrentImportPopup = std::make_shared<UnknownImportPopup>( path );
 						m_CurrentImportPopup->Initialise();
 					}
 				}
@@ -1289,11 +1307,11 @@ namespace Saturn {
 			{
 				for( AssetID id : rPureDependencies )
 				{
-					Ref<Asset> dependant = AssetManager::Get()->FindAsset( id );
-					if( !dependant )
-						ImGui::Selectable( "<NULL DEPENDANT>" );
+					Ref<Asset> dependent = AssetManager::Get()->FindAsset( id );
+					if( !dependent )
+						ImGui::Selectable( "<NULL DEPENDENT>" );
 					else
-						ImGui::Selectable( dependant->Name.c_str() );
+						ImGui::Selectable( dependent->Name.c_str() );
 				}
 
 				ImGui::EndListBox();
@@ -1357,9 +1375,9 @@ namespace Saturn {
 
 				if( ImGui::Button( "Replace & Delete" ) )
 				{
-					for( MemoryAssetDependencyBase* pDependant : rMemoryDependencies )
+					for( MemoryAssetDependencyBase* pDependent : rMemoryDependencies )
 					{
-						pDependant->OnUpdate( s_ID );
+						pDependent->OnUpdate( s_ID );
 					}
 
 					for( AssetID assetID : rPureDependencies )
@@ -1390,9 +1408,9 @@ namespace Saturn {
 
 				if( ImGui::Button( "Force Delete" ) )
 				{
-					for( MemoryAssetDependencyBase* pDependant : rMemoryDependencies )
+					for( MemoryAssetDependencyBase* pDependent : rMemoryDependencies )
 					{
-						pDependant->OnUpdate( 0 );
+						pDependent->OnUpdate( 0 );
 					}
 
 					for( AssetID assetID : rPureDependencies )

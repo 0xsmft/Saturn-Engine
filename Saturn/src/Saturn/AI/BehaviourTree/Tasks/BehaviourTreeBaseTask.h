@@ -47,9 +47,16 @@ namespace Saturn {
 
 		void SetBlackboard( BehaviourTreeMemory* pBlackboard );
 
+#if !defined(SAT_DIST)
 	public:
-		virtual void Serialise( std::ofstream& rStream ) const {}
-		virtual void Deserialise( FDependentIStream& rStream ) {}
+		[[nodiscard]] virtual const char* GetTaskName() const { return "Base Task"; }
+
+		// allows us to filter if the node that we represent is spawnable or not.
+		[[nodiscard]] virtual bool IsSpawnableNode() const { return false; }
+
+		virtual void OnRenderExtra() {}
+		virtual void RenderDetails() {}
+#endif
 
 	protected:
 		template<typename CppType>

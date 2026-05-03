@@ -29,6 +29,8 @@
 #include "sppch.h"
 #include "AnimGraph.h"
 
+#include "Saturn/Animation/AssetViewer/Graph/AnimGraphPreCompiler.h"
+
 // ANIMATION EDITOR
 #include "Saturn/Animation/AssetViewer/Graph/Animation/AnimGraphOutputNode.h"
 #include "Saturn/Animation/AssetViewer/Graph/Animation/AnimGraphStateMachinePlayerNode.h"
@@ -52,9 +54,6 @@
 #include "Saturn/NodeEditor/NodeEditorVariableNode.h"
 #include "Saturn/NodeEditor/NodeEditorHintNode.h"
 
-#include "Saturn/NodeEditor/Maths/MathsNodes.h"
-#include "Saturn/NodeEditor/Maths/MathsNodeLibrary.h"
-
 #include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
@@ -64,18 +63,20 @@ namespace Saturn {
 	AnimGraph::AnimGraph()
 		: FDependentNodeEditorSuper()
 	{
+		m_PreCompiler = Ref<AnimGraphPreCompiler>::Create();
 	}
 
 	AnimGraph::AnimGraph( AssetID id )
 		: FDependentNodeEditorSuper( id )
 	{
+		m_PreCompiler = Ref<AnimGraphPreCompiler>::Create();
 	}
 
 	AnimGraph::~AnimGraph()
 	{
 	}
 
-	IndexedMap<UUID, SGraphTask*> AnimGraph::TraverseAndCreateTasks()
+	AnimGraph::AnimGraphSortMap AnimGraph::TraverseAndCreateTasks()
 	{
 		// SORTING:
 		// 1. Sort the animation graph first
@@ -86,28 +87,17 @@ namespace Saturn {
 		// 3: Push transitions and other state machine states and state machine state graphs
 		// 4. Combine into a map of sub-graph parent ID to tasks for runtime.
 
-		IndexedMap<UUID, SGraphTask*> resultToChildren;
+		AnimGraphSortMap resultToChildren;
 
 		// 1: PARENT ID -> CHILDREN
 		std::unordered_map<UUID, std::vector<SharedPtr<NodeEditorNodeBase>>> parentToChildren;
 		for( const auto& [id, node] : m_Nodes )
 		{
-			if( node->pParentObject ) 
-			{
-				/*
-				parentToChildren[ node->pParentObject->ID ].push_back( node );
-
-				if( parentToChildren[ node->pParentObject->ID ].size() == 1 )
-				{
-					resultToChildren[ node->pParentObject->ID ] = NewObject<SGraphTask>();
-				}
-				*/
-			}
-			else 
+			if( !node->pParentObject ) 
 			{
 				if( !parentToChildren[ 0llu ].size() )
 				{
-					resultToChildren[ 0llu ] = NewObject<SGraphTask>( this );
+					resultToChildren[ 0llu ].pGraphTask = NewObject<SGraphTask>( this );
 				}
 			}
 		}
@@ -120,7 +110,7 @@ namespace Saturn {
 		return resultToChildren;
 	}
 
-	void AnimGraph::SortAnimGraph( IndexedMap<UUID, SGraphTask*>& rMap )
+	void AnimGraph::SortAnimGraph( AnimGraphSortMap& rMap )
 	{
 		std::stack<UUID> stack;
 		stack.push( FindNode( "Output Node" )->ID );
@@ -133,7 +123,9 @@ namespace Saturn {
 			SharedPtr<NodeEditorNodeBase> currentNode = FindNode( currentID );
 
 			const UUID subGraphID = currentNode->pParentObject ? currentNode->pParentObject->ID : UUID( 0 );
-			rMap[ subGraphID ]->AddTask( currentID, currentNode->ConvertToTask() );
+			auto& rInfo = rMap[ subGraphID ];
+			
+			rInfo.pGraphTask->AddTask( currentID, currentNode->ConvertToTask() );
 
 			// Find neighbors from inputs and continue until there is no neighbors
 			for( const auto& rNeighbor : FindNeighborsRight( currentNode ) )
@@ -143,7 +135,7 @@ namespace Saturn {
 		}
 	}
 
-	void AnimGraph::SortStateMachineEntry( IndexedMap<UUID, SGraphTask*>& rMap )
+	void AnimGraph::SortStateMachineEntry( AnimGraphSortMap& rMap )
 	{
 		auto stateNode = m_StateMachineEntryNode.As<AnimGraphStateMachineStateNode>();
 
@@ -169,12 +161,13 @@ namespace Saturn {
 
 			// Now add this node's task.
 			auto& rGraphTask = rMap[ currentNode->pParentObject->ID ];
-			if( !rGraphTask )
+			if( !rGraphTask.pGraphTask )
 			{
-				rGraphTask = NewObject<SGraphTask>( this );
+				rGraphTask.pGraphTask = NewObject<SGraphTask>( this );
 			}
 
-			rGraphTask->AddTask( currentID, currentNode->ConvertToTask() );
+			rGraphTask.Node = currentNode;
+			rGraphTask.pGraphTask->AddTask( currentID, currentNode->ConvertToTask() );
 
 			const auto& rNeighbours = FindNeighborsLeft( currentNode );
 			for( auto Itr = rNeighbours.rbegin(); Itr != rNeighbours.rend(); ++Itr )
@@ -188,7 +181,7 @@ namespace Saturn {
 		}
 	}
 
-	void AnimGraph::SortTransitionNodeOrStateMachineAfterEntryRec( UUID id, IndexedMap<UUID, SGraphTask*>& rMap )
+	void AnimGraph::SortTransitionNodeOrStateMachineAfterEntryRec( UUID id, AnimGraphSortMap& rMap )
 	{
 		SharedPtr<NodeEditorNodeBase> nodeStarting = FindNode( id );
 		UUID startID = 0llu;
@@ -215,13 +208,14 @@ namespace Saturn {
 			// Now add this node's task.
 			const UUID subGraphID = currentNode->pParentObject ? currentNode->pParentObject->ID : UUID( 0 );
 			auto& rGraphTask = rMap[ subGraphID ];
+			rGraphTask.Node = currentNode;
 
-			if( !rGraphTask )
+			if( !rGraphTask.pGraphTask )
 			{
-				rGraphTask = NewObject<SGraphTask>( this );
+				rGraphTask.pGraphTask = NewObject<SGraphTask>( this );
 			}
 
-			rGraphTask->AddTask( currentID, currentNode->ConvertToTask() );
+			rGraphTask.pGraphTask->AddTask( currentID, currentNode->ConvertToTask() );
 
 			// Find neighbors from inputs and continue until there is no neighbors
 			for( const auto& rNeighbor : FindNeighborsRight( currentNode ) )
@@ -232,6 +226,13 @@ namespace Saturn {
 	}
 
 #if !defined(SAT_DIST)
+
+	void AnimGraph::BuildTaskCache()
+	{
+		auto order = TraverseAndCreateTasks();
+		m_TaskCache.BuildMasterListForAnimGraph( this, order );
+	}
+
 	void AnimGraph::OnExtraRender()
 	{
 		std::vector<UUID> nodes = GetSelectedNodes();
@@ -248,14 +249,14 @@ namespace Saturn {
 
 	void AnimGraph::OnNodeEditorEvent( NodeEditorAction action )
 	{
-		std::vector<UUID> nodesToDelete;
-		// Worse case we need to delete more than 5 nodes, we reallocate the vector.
-		nodesToDelete.reserve( 5 );
-
 		switch( action )
 		{
 			case NodeEditorAction::DestroyNode:
 			{
+				std::vector<UUID> nodesToDelete;
+				// Worse case we need to delete more than 5 nodes, we reallocate the vector.
+				nodesToDelete.reserve( 5 );
+
 				// Find all ill-formatted transition nodes, if a state machine state node was destroyed.
 				for( const auto& [id, node] : m_Nodes )
 				{
@@ -268,14 +269,28 @@ namespace Saturn {
 						nodesToDelete.push_back( id );
 					}
 				}
+		
+				for( const auto& id : nodesToDelete )
+				{
+					DeleteNode( id, true );
+				}
+			} break;
+
+			case NodeEditorAction::PreEvaluate:
+			{
+
+			} break;
+
+			case NodeEditorAction::PostEvaluateSuccess:
+			{
+				BuildTaskCache();
+				SaveAndMarkClean();
 			} break;
 
 			case NodeEditorAction::CreateLink:
 			case NodeEditorAction::BreakLink:
 			case NodeEditorAction::CreateNode:
 			case NodeEditorAction::MoveNode:
-			case NodeEditorAction::PreEvaluate:
-			case NodeEditorAction::PostEvaluate:
 			case NodeEditorAction::SelectNode:
 			case NodeEditorAction::DeselectNode:
 			case NodeEditorAction::SelectLink:
@@ -283,11 +298,6 @@ namespace Saturn {
 				break;
 			
 			default: break;
-		}
-
-		for( const auto& id : nodesToDelete )
-		{
-			DeleteNode( id, true );
 		}
 	}
 
@@ -317,83 +327,6 @@ namespace Saturn {
 #endif
 
 #if !defined(SAT_DIST)
-	static std::vector<SClass*> s_AnimGraphAllowedNodes
-	{ 
-		//////////////////////////////////////////////////////////////////////////
-		{ AnimGraphOutputNode::StaticClass()             },
-		{ AnimGraphStateMachinePlayerNode::StaticClass() },
-
-		//////////////////////////////////////////////////////////////////////////
-		{ NodeEditorVariableNode::StaticClass()          },
-		{ NodeEditorSetVariableNode::StaticClass()       },
-
-		//////////////////////////////////////////////////////////////////////////
-		{ NodeEditorHintNode::StaticClass()              },
-
-		//////////////////////////////////////////////////////////////////////////
-		{ MathsAddFloats::StaticClass()                    },
-		{ MathsSubFloats::StaticClass()                    },
-		{ MathsMulFloats::StaticClass()                    },
-		{ MathsDivideFloats::StaticClass()                 },
-		{ MathsGreaterThanFloats::StaticClass()			   },
-		{ MathsLessThanFloats::StaticClass()               },
-		{ MathsNot::StaticClass()						   },
-		{ MathsOr::StaticClass()						   }
-	};
-
-	static std::vector<SClass*> s_StateMachineAllowedNodes
-	{
-		//////////////////////////////////////////////////////////////////////////
-		{ AnimGraphStateMachineStateNode::StaticClass()      },
-		{ AnimGraphStateMachineTransitionNode::StaticClass() },
-
-		//////////////////////////////////////////////////////////////////////////
-		{ NodeEditorHintNode::StaticClass()					 },
-	};
-
-	static std::vector<SClass*> s_StateMachineStateAllowedNodes
-	{
-		//////////////////////////////////////////////////////////////////////////
-		{ AnimGraphStateMachinePlayAnimNode::StaticClass() },
-		{ AnimGraphStateMachineOutNode::StaticClass()      },
-
-		//////////////////////////////////////////////////////////////////////////
-		{ NodeEditorHintNode::StaticClass()                },
-
-		//////////////////////////////////////////////////////////////////////////
-		{ MathsAddFloats::StaticClass()                    },
-		{ MathsSubFloats::StaticClass()                    },
-		{ MathsMulFloats::StaticClass()                    },
-		{ MathsDivideFloats::StaticClass()                 },
-		{ MathsGreaterThanFloats::StaticClass()			   },
-		{ MathsLessThanFloats::StaticClass()               },
-		{ MathsNot::StaticClass()						   },
-		{ MathsOr::StaticClass()						   },
-	};
-
-	static std::vector<SClass*> s_TransitionAllowedNodes
-	{
-		//////////////////////////////////////////////////////////////////////////
-		{ AnimGraphTransitionGraphResultNode::StaticClass() },
-
-		//////////////////////////////////////////////////////////////////////////
-		{ NodeEditorHintNode::StaticClass()                },
-
-		//////////////////////////////////////////////////////////////////////////
-		{ NodeEditorVariableNode::StaticClass()          },
-		{ NodeEditorSetVariableNode::StaticClass()       },
-
-		//////////////////////////////////////////////////////////////////////////
-		{ MathsAddFloats::StaticClass()                    },
-		{ MathsSubFloats::StaticClass()                    },
-		{ MathsMulFloats::StaticClass()                    },
-		{ MathsDivideFloats::StaticClass()                 },
-		{ MathsGreaterThanFloats::StaticClass()            },
-		{ MathsLessThanFloats::StaticClass()               },
-		{ MathsNot::StaticClass()						   },
-		{ MathsOr::StaticClass()						   },
-	};
-
 	void AnimGraph::DrawGraph()
 	{
 		// Suspend user input if we are currently dragging.
@@ -417,71 +350,44 @@ namespace Saturn {
 			if( rNode->pParentObject != m_ActiveSubGraph.Get() )
 				continue;
 
-			// Determine current view mode from current sub-graph
-			if( !m_ActiveSubGraph )
-			{
-				if( std::find( s_AnimGraphAllowedNodes.begin(), s_AnimGraphAllowedNodes.end(), rNode->GetClass() ) != s_AnimGraphAllowedNodes.end() )
-				{
-					rNode->Render( m_Builder );
-				}
-			}
-			else if( m_ActiveSubGraph->ExecutionType == NodeExecutionType::AnimGraphStateMachinePlayerNode )
-			{
-				// Draw state machine nodes
-				if( std::find( s_StateMachineAllowedNodes.begin(), s_StateMachineAllowedNodes.end(), rNode->GetClass() ) != s_StateMachineAllowedNodes.end() )
-				{
-					rNode->Render( m_Builder );
+			// Render the node.
+			rNode->Render( m_Builder );
 
-					if( !ImGui::IsItemActive() )
+			if( m_ActiveSubGraph && m_ActiveSubGraph->ExecutionType == NodeExecutionType::AnimGraphStateMachinePlayerNode )
+			{
+				if( !ImGui::IsItemActive() )
+				{
+					const ImVec2 nodePosition = ed::GetNodePosition( ed::NodeId( id ) );
+					const ImVec2 nodeSize = ed::GetNodeSize( ed::NodeId( id ) );
+					const ImRect nodeRectangle( nodePosition, nodePosition + nodeSize );
+
+					if( nodeRectangle.Contains( ImGui::GetMousePos() ) )
 					{
-						const ImVec2 nodePosition = ed::GetNodePosition( ed::NodeId( id ) );
-						const ImVec2 nodeSize = ed::GetNodeSize( ed::NodeId( id ) );
-						const ImRect nodeRectangle( nodePosition, nodePosition + nodeSize );
+						m_StateNodeHovered = true;
+						m_HoveredNode = rNode;
 
-						if( nodeRectangle.Contains( ImGui::GetMousePos() ) )
+						if( ImGui::IsMouseDown( ImGuiMouseButton_Left ) && ImGui::IsKeyDown( ImGuiKey_LeftCtrl ) )
 						{
-							m_StateNodeHovered = true;
-							m_HoveredNode = rNode;
-
-							if( ImGui::IsMouseDown( ImGuiMouseButton_Left ) && ImGui::IsKeyDown( ImGuiKey_LeftCtrl ) )
+							// Set the starting point of a new transition to be the hovered state node.
+							if( m_TransitionStartNode == 0 )
 							{
-								// Set the starting point of a new transition to be the hovered state node.
-								if( m_TransitionStartNode == 0 )
-								{
-									m_TransitionStartNode = id;
-								}
-							}
-
-							// If we double click, go into the state node.
-							if( rNode->ExecutionType == NodeExecutionType::AnimGraphStateMachineStateNode && ImGui::IsMouseDoubleClicked( ImGuiMouseButton_Left ) )
-							{
-								AddSubGraph( rNode );
-								ChangeEditorNextFrame( rNode );
+								m_TransitionStartNode = id;
 							}
 						}
-						else if( m_StateNodeHovered && !m_CanResetHoveredNode )
+
+						// If we double click, go into the state node.
+						if( rNode->ExecutionType == NodeExecutionType::AnimGraphStateMachineStateNode && ImGui::IsMouseDoubleClicked( ImGuiMouseButton_Left ) )
 						{
-							// We can only reset the hovered node after we've moved away from it, if the
-							// right click popup is not open.
-							m_CanResetHoveredNode = !ImGui::IsPopupOpen( "NE_NodeAction" );
+							AddSubGraph( rNode );
+							ChangeEditorNextFrame( rNode );
 						}
 					}
-				}
-			}
-			else if( m_ActiveSubGraph->GetClass() == AnimGraphStateMachineStateNode::StaticClass() )
-			{
-				// Render State Machine state nodes
-				if( std::find( s_StateMachineStateAllowedNodes.begin(), s_StateMachineStateAllowedNodes.end(), rNode->GetClass() ) != s_StateMachineStateAllowedNodes.end() )
-				{
-					rNode->Render( m_Builder );
-				}
-			}
-			else if( m_ActiveSubGraph->GetClass() == AnimGraphStateMachineTransitionNode::StaticClass() )
-			{
-				// Render transition nodes
-				if( std::find( s_TransitionAllowedNodes.begin(), s_TransitionAllowedNodes.end(), rNode->GetClass() ) != s_TransitionAllowedNodes.end() )
-				{
-					rNode->Render( m_Builder );
+					else if( m_StateNodeHovered && !m_CanResetHoveredNode )
+					{
+						// We can only reset the hovered node after we've moved away from it, if the
+						// right click popup is not open.
+						m_CanResetHoveredNode = !ImGui::IsPopupOpen( "NE_NodeAction" );
+					}
 				}
 			}
 		}
@@ -517,7 +423,7 @@ namespace Saturn {
 				ImGui::TextUnformatted( label );
 			};
 
-			if( HasPrivilege( NodeEditorUserAuthority::Editing ) && ( ImGui::IsMouseDown( ImGuiMouseButton_Left ) || m_CreateNewNode || ImGui::IsPopupOpen( "Create New Node" ) ) )
+			if( HasUserAuthority( NodeEditorUserAuthority::Editing ) && ( ImGui::IsMouseDown( ImGuiMouseButton_Left ) || m_CreateNewNode || ImGui::IsPopupOpen( "Create New Node" ) ) )
 			{
 				ImVec2 startPoint;
 				ImVec2 endPoint;

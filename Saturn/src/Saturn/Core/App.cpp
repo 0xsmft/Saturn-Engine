@@ -345,6 +345,14 @@ namespace Saturn {
 		m_BlockCV.notify_all();
 	}
 
+#if !defined(SAT_DIST)
+	void Application::LoadFonts()
+	{
+		if( m_ImGuiLayer )
+			m_ImGuiLayer->LoadFonts();
+	}
+#endif
+
 	std::filesystem::path Application::OpenFile( const std::wstring& rFilter ) const
 	{
 		std::filesystem::path path;

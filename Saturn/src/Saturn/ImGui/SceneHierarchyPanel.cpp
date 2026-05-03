@@ -349,6 +349,8 @@ namespace Saturn {
 				DrawAddComponents<BehaviourTreeComponent>( "Behaviour Tree", selections[ 0 ] );
 			}
 
+			DrawAddComponents<TextComponent>( "Text", selections[ 0 ] );
+
 			ImGui::EndPopup();
 		}
 	}
@@ -1650,11 +1652,11 @@ namespace Saturn {
 
 			if( boundsEntity->NeedsRebuilding() )
 			{
-				const std::string text = "A rebuild is required for the changes to have effect!";
+				const char* pText = "A rebuild is required for the changes to have effect!";
 
 				const ImVec2 padding = ImGui::GetStyle().FramePadding;
 				const ImVec2 textPosition = ImGui::GetCursorScreenPos();
-				const ImVec2 textSize = ImGui::CalcTextSize( text.c_str() );
+				const ImVec2 textSize = ImGui::CalcTextSize( pText );
 
 				const ImVec2 min = ImVec2( textPosition.x - padding.x, textPosition.y - padding.y );
 				const ImVec2 max = ImVec2( textPosition.x + padding.x + textSize.x, textPosition.y + padding.y + textSize.y );
@@ -1662,7 +1664,7 @@ namespace Saturn {
 				ImGui::GetWindowDrawList()->AddRectFilled( min, max,
 					IM_COL32( 200, 30, 60, 255 ), 2.0f, ImDrawFlags_RoundCornersAll );
 
-				ImGui::TextUnformatted( text.c_str() );
+				ImGui::TextUnformatted( pText );
 			}
 		} );
 
@@ -1704,6 +1706,46 @@ namespace Saturn {
 			}
 
 			if( modified ) m_Context->MarkDirty();
+		} );
+
+		DrawComponent<TextComponent>( "Text", entity, [ & ]( TextComponent& rTextComp ) 
+		{
+			bool modified = false;
+
+			ImGui::Text( "Text" );
+			ImGui::SameLine();
+			if( Auxiliary::InputText( "##textinput", &rTextComp.Text ) )
+				modified = true;
+
+			if( Auxiliary::DrawColorVec4Control( "Color", rTextComp.Color ) )
+				modified = true;
+		
+			{
+				bool open = false;
+
+				Auxiliary::ScopedDisabledFlag disabledIfRT( m_Context->IsRuntimeRunning() );
+
+				ImGui::TextDisabled( "%llu", rTextComp.FontAssetID.AssetID );
+
+				ImGui::SameLine();
+
+				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0F, 24.0F ) ) )
+				{
+					m_CurrentFinderType = AssetType::Font;
+					open = true;
+
+					if( rTextComp.FontAssetID != 0 )
+						m_CurrentAssetID = rTextComp.FontAssetID;
+				}
+
+				ImGui::SameLine();
+
+				if( Auxiliary::DrawAssetFinder( m_CurrentFinderType, &open, m_CurrentAssetID ) )
+				{
+					rTextComp.FontAssetID = m_CurrentAssetID;
+					modified = true;
+				}
+			}
 		} );
 	}
 

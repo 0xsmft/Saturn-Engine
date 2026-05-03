@@ -50,8 +50,6 @@ namespace Saturn {
 
 		virtual ~MaterialOutputNode();
 
-		NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
-
 	public:
 		RuntimeData RuntimeData;
 
@@ -70,8 +68,6 @@ namespace Saturn {
 
 		virtual ~MaterialSampler2DNode();
 
-		NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
-
 	public:
 		size_t TextureSlot = 0;
 	
@@ -87,8 +83,6 @@ namespace Saturn {
 		MaterialColorPickerNode( const std::string& rName );
 
 		virtual ~MaterialColorPickerNode();
-
-		NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
 
 		void SetColor( const glm::vec3& rColor );
 
@@ -108,8 +102,6 @@ namespace Saturn {
 
 		virtual ~MaterialGetAssetNode();
 
-		NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
-
 		AssetID GetAssetID() const;
 		void SetAssetID( AssetID id );
 
@@ -126,8 +118,6 @@ namespace Saturn {
 
 		virtual ~MaterialSeparateColorRGBNode();
 
-		NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
-
 	private:
 		void CreateNode();
 	};
@@ -140,8 +130,6 @@ namespace Saturn {
 		MaterialColorMixerNode( const std::string& rName );
 
 		virtual ~MaterialColorMixerNode();
-
-		NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
 
 	private:
 		void CreateNode();

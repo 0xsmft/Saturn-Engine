@@ -60,12 +60,12 @@ namespace Saturn {
 
 		for( auto& rOutput : Outputs )
 		{
-			rOutput->AcceptMultipleLinks = true;
+			rOutput->PinFlags |= PinFlag_AcceptMultipleLinks;
 		}
 
 		for( auto& rInput : Inputs )
 		{
-			rInput->AcceptMultipleLinks = true;
+			rInput->PinFlags |= PinFlag_AcceptMultipleLinks;
 		}
 
 #if !defined(SAT_DIST)
@@ -146,11 +146,6 @@ namespace Saturn {
 			outNode->pParentObject = this;
 			m_OutputNodeID = outNode->ID;
 		}
-	}
-
-	NodeEvaluationState AnimGraphStateMachineStateNode::EvaluateNode( NodeEditorRuntime* evaluator )
-	{
-		return NodeEvaluationState::Failed;
 	}
 
 }

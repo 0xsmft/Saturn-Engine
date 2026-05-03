@@ -30,23 +30,24 @@
 
 #include "SoundGroup.h"
 #include "SoundBase.h"
+
+#include "Saturn/NodeEditor/NodeTaskCache.h"
+
 #include "Saturn/Asset/Asset.h"
 
 namespace Saturn {
 
-	class NodeEditor;
-	class NodeEditorBase;
-	class SoundEditorEvaluator;
+	class SoundGraphTaskHandler;
 
 	class GraphSound : public SoundBase
 	{
 	public:
 		GraphSound( AssetID id );
-		~GraphSound();
+		virtual ~GraphSound();
 
 		void Initialise();
-		virtual void Play( int frameOffset = 0 ) override;
 
+		virtual void Play( uint64_t frameOffset = 0llu ) override;
 		virtual void Stop() override;
 		virtual void Loop( bool loop = true ) override;
 		virtual void Load( uint32_t flags ) override;
@@ -63,10 +64,6 @@ namespace Saturn {
 
 		void SetPosition( const glm::vec3& rPos );
 
-#if !defined(SAT_DIST)
-		SharedPtr<NodeEditor> GetNodeEditor() const;
-#endif
-
 	private:
 		void Unload() override;
 
@@ -74,13 +71,6 @@ namespace Saturn {
 		// The "GraphSound" class is not an asset however GraphSounds are an asset
 		Ref<Asset> m_GraphAsset;
 		Ref<SoundGroup> m_SoundGroup;
-		Ref<SoundEditorEvaluator> m_Runtime;
-
-#if !defined(SAT_DIST)
-		SharedPtr<NodeEditor> m_NodeEditor;
-#else
-		SharedPtr<NodeEditorBase> m_NodeEditor;
-#endif
-		UUID m_OutputNodeID = 0;
+		Ref<SoundGraphTaskHandler> m_TaskHandler;
 	};
 }

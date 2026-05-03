@@ -421,6 +421,13 @@ namespace Saturn {
 		BehaviourTreeComponent( AssetID assetID ) : BehaviourTreeAssetID( assetID ) {}
 	};
 
+	struct TextComponent
+	{
+		std::string Text;
+		MemoryAssetDependency<AssetType::Font> FontAssetID;
+		glm::vec4 Color = glm::one<glm::vec4>();
+	};
+
 	template<typename... V>
 	struct ComponentGroup {};
 
@@ -433,7 +440,8 @@ namespace Saturn {
 		BillboardComponent,
 		NavigationMeshSpecificationComponent,
 		AttachmentPointComponent, 
-		BehaviourTreeComponent>;
+		BehaviourTreeComponent,
+		TextComponent>;
 
 	// Without TagComponent, IdComponent, RelationshipComponent
 	// We could use templates and concepts for this however that will add a new layer of complexity and ambiguity.
@@ -446,5 +454,6 @@ namespace Saturn {
 		BillboardComponent,
 		NavigationMeshSpecificationComponent,
 		AttachmentPointComponent, 
-		BehaviourTreeComponent>;
+		BehaviourTreeComponent,
+		TextComponent>;
 }

@@ -48,14 +48,26 @@ namespace Saturn {
 		m_RTBlackboardVariableID = WaitDurationVarID;
 	}
 
-	void BehaviourTreeWaitTask::InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
-	{
-		if( pNode )
-			m_NodeID = pNode->ID;
-	}
-
 	BehaviourTreeWaitTask::~BehaviourTreeWaitTask()
 	{
+	}
+
+#if !defined(SAT_DIST)
+	void BehaviourTreeWaitTask::PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
+	{
+		Super::PreInitialiseTask( pEditor, pNode );
+	}
+#endif
+
+	void BehaviourTreeWaitTask::InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther )
+	{
+		Super::InitialiseTaskWithOther( pHandler, pOther );
+
+		BehaviourTreeWaitTask* pThisOther = dynamic_cast< BehaviourTreeWaitTask* >( pOther );
+		if( pThisOther )
+		{
+			m_WaitDuration = pThisOther->m_WaitDuration;
+		}
 	}
 
 	NodeEditorTaskState BehaviourTreeWaitTask::Tick( Timestep ts )
@@ -113,11 +125,15 @@ namespace Saturn {
 
 	void BehaviourTreeWaitTask::Serialise( std::ofstream& rStream ) const
 	{
+		Super::Serialise( rStream );
+
 		RawSerialisation::WriteObject( m_WaitDuration, rStream );
 	}
 
 	void BehaviourTreeWaitTask::Deserialise( FDependentIStream& rStream )
 	{
+		Super::Deserialise( rStream );
+
 		RawSerialisation::ReadObject( m_WaitDuration, rStream );
 	}
 

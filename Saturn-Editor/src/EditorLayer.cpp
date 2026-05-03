@@ -89,6 +89,9 @@
 
 #include <Saturn/AI/Navigation/NavBoundsEntity.h>
 
+#include <Saturn/NodeEditor/UI/NodeEditor.h>
+#include <Saturn/NodeEditor/SandboxNodeEditor/SandboxNodeEditorViewer.h>
+
 #include <Saturn/Project/Premake.h>
 
 #include <Saturn/Runtime/RuntimeEvents.h>
@@ -216,6 +219,25 @@ namespace Saturn {
 		m_TitleBar.AddOnExitFunction( SAT_BIND_EVENT_FN( OnTitlebarExit ) );
 
 		//////////////////////////////////////////////////////////////////////////
+		// Load shader bundle (if possible)
+		const std::filesystem::path editorShaderBundlePath = Application::Get()->GetAppDataFolder() / "EditorShaderBundle.ssb";
+
+		if( std::filesystem::exists( editorShaderBundlePath ) )
+		{
+			if( const auto result = ShaderBundle::ReadBundle( ShaderBundleType::Editor ); result != ShaderBundleResult::Success )
+			{
+				SAT_CORE_WARN( "Failed to read editor shader bundle! Engine will compile them." );
+			}
+			else
+			{
+				SAT_CORE_INFO( "Read engine shader bundle!" );
+				SAT_CORE_WARN( "NB: No shaders will be reloaded! Please reload the shaders from the editor!" );
+			}
+		}
+		else
+			SAT_CORE_WARN( "No editor shader bundle exists! Engine will compile them." );
+
+		//////////////////////////////////////////////////////////////////////////
 		// Scene loading and Scene Renderer
 		m_SceneRenderer = Ref<SceneRenderer>::Create( SceneRendererFlag_MasterInstance | SceneRendererFlag_RenderGrid_DEPRECATED );
 
@@ -273,6 +295,7 @@ namespace Saturn {
 	EditorLayer::~EditorLayer()
 	{
 		m_ImGuiWindowManager = nullptr;
+		m_SandboxNodeEditorViewer = nullptr;
 
 		delete g_AluraCanvas;
 		g_AluraCanvas = nullptr;
@@ -851,7 +874,7 @@ namespace Saturn {
 		canvasSpecification.Position = glm::vec2{ 0.0f };
 		canvasSpecification.MasterFontAssetID = Project::GetActiveProject()->GetDefaultFontAsset();
 
-		if( g_AluraCanvas ) 
+		if( g_AluraCanvas )
 			delete g_AluraCanvas;
 
 		g_AluraCanvas = new AluraCanvas( canvasSpecification );
@@ -934,7 +957,7 @@ namespace Saturn {
 					for( auto& rEntity : m_SelectionManager->GetSelectionContexts( g_ActiveScene ) )
 					{
 						m_GlobalUndoRedoGroup->RemoveIfActionHasIdentifier( ( uint64_t ) rEntity->GetHandle() );
-						
+
 						bool canDeleteNow = true;
 
 						// Special deletion cases:
@@ -944,7 +967,7 @@ namespace Saturn {
 						{
 							m_NavMeshEntityToDelete = rEntity->GetHandle();
 							m_ShowDeleteNavMeshCachePopup = true;
-						
+
 							canDeleteNow = false;
 						}
 						// NOT an else if, because what if the user has a camera and a navbounds??
@@ -955,7 +978,7 @@ namespace Saturn {
 							m_SelectedCameraEntityID = entt::null;
 							m_ShouldRenderCameraPreview = false;
 						}
-						
+
 						if( canDeleteNow )
 						{
 							g_ActiveScene->DeleteEntity( rEntity );
@@ -996,7 +1019,7 @@ namespace Saturn {
 					m_RequestRuntime ^= 1;
 			} break;
 
-			case RubyKey_F11: 
+			case RubyKey_F11:
 			{
 				if( m_MouseOverViewport || m_ViewportFocused )
 				{
@@ -1005,7 +1028,7 @@ namespace Saturn {
 			} break;
 		}
 
-		if( Input::Get().KeyPressed( RubyKey_LeftCtrl ) && !m_RuntimeScene )
+		if( Input::Get().KeyPressed( RubyKey_LeftCtrl ) || Input::Get().KeyPressed( RubyKey_RightCtrl ) && !m_RuntimeScene )
 		{
 			switch( rEvent.GetKeycode() )
 			{
@@ -1038,17 +1061,19 @@ namespace Saturn {
 				case RubyKey_F:
 				{
 					auto selectedEntities = m_SelectionManager->GetSelectionContexts( g_ActiveScene );
-
-					glm::vec3 Positions = {};
-					for( auto& rEntity : selectedEntities )
+					if( selectedEntities.size() )
 					{
-						TransformComponent worldSpace = g_ActiveScene->GetWorldSpaceTransform( rEntity );
-						Positions += worldSpace.Position;
+						glm::vec3 Positions = {};
+						for( auto& rEntity : selectedEntities )
+						{
+							TransformComponent worldSpace = g_ActiveScene->GetWorldSpaceTransform( rEntity );
+							Positions += worldSpace.Position;
+						}
+
+						Positions /= selectedEntities.size();
+
+						m_EditorCamera.Focus( Positions );
 					}
-
-					Positions /= selectedEntities.size();
-
-					m_EditorCamera.Focus( Positions );
 				} break;
 
 				case RubyKey_S:
@@ -1065,7 +1090,7 @@ namespace Saturn {
 						PushNotification( notification );
 					}
 				} break;
-			
+
 				case RubyKey_Y:
 				{
 					if( auto action = m_GlobalUndoRedoGroup->GlobalRedoRecent(); action )
@@ -1074,6 +1099,11 @@ namespace Saturn {
 						EditorNotification notification{ .Text = redoName, .Lifetime = 3.0f };
 						PushNotification( notification );
 					}
+				} break;
+
+				case RubyKey_W:
+				{
+					CloseEditorAndOpenPB();
 				} break;
 			}
 
@@ -1088,18 +1118,48 @@ namespace Saturn {
 				}
 			}
 
-#if defined(SAT_RELEASE)
 			if( Input::Get().KeyPressed( RubyKey_LeftAlt ) && g_ActiveScene != m_RuntimeScene.Get() )
 			{
 				switch( rEvent.GetKeycode() )
 				{
+					default: break;
+
+#if defined(SAT_RELEASE)
 					case RubyKey_F5:
 					{
 						HotReloadGame();
 					} break;
+#endif
 				}
 			}
-#endif
+		}
+
+		if( Input::Get().KeyPressed( RubyKey_LeftAlt ) && g_ActiveScene != m_RuntimeScene.Get() )
+		{
+			if( Input::Get().KeyPressed( RubyKey_LeftShift ) )
+			{
+				switch( rEvent.GetKeycode() )
+				{
+					default: break;
+					case RubyKey_S:
+					{
+						SaveProject();
+					} break;
+
+					case RubyKey_N:
+					{
+						if( g_ActiveScene->IsDirty() ) 
+						{
+							m_ShowSceneDirtyModal = true;
+							m_EventAfterPopup = [ this ]() { OpenFile( 0 ); };
+						}
+						else
+						{
+							OpenFile( 0 );
+						}
+					} break;
+				}
+			}
 		}
 
 		return true;
@@ -2188,6 +2248,70 @@ namespace Saturn {
 
 			auto& rEngineSettings = EngineSettings::Get();
 
+			ImGui::PushFont( boldFont );
+			ImGui::Text( "Customisation" );
+			ImGui::PopFont();
+
+			ImGui::Text( "Font" );
+			ImGui::SameLine();
+
+			const char* pPreviewValue = nullptr;
+
+			const EditorFont fontBeforeSelection = rEngineSettings.GetEditorFont();
+			switch( fontBeforeSelection )
+			{
+				case EditorFont::NotoSans:
+				{
+					pPreviewValue = "Noto Sans";
+				} break;
+
+				case EditorFont::Atkinson:
+				{
+					pPreviewValue = "Atkinson";
+				} break;
+
+				default:
+					pPreviewValue = "UNKNOWN FONT";
+					break;
+			}
+
+			ImGui::SetNextItemWidth( 130.0f );
+			if( ImGui::BeginCombo( "##selectFont", pPreviewValue ) )
+			{
+				if( ImGui::Selectable( "Noto Sans", rEngineSettings.GetEditorFont() == EditorFont::NotoSans ) )
+				{
+					rEngineSettings.SetEditorFont( EditorFont::NotoSans );
+					m_FontChanged = true;
+				}
+
+				if( ImGui::Selectable( "Atkinson Hyperlegible Next", rEngineSettings.GetEditorFont() == EditorFont::Atkinson ) )
+				{
+					rEngineSettings.SetEditorFont( EditorFont::Atkinson );
+					m_FontChanged = true;
+				}
+
+				ImGui::EndCombo();
+			}
+
+			if( m_FontChanged )
+			{
+				const char* pWarningText = "An Editor restart is required for the changes to apply!";
+
+				const ImVec2 padding = ImGui::GetStyle().FramePadding;
+				const ImVec2 textPosition = ImGui::GetCursorScreenPos();
+				const ImVec2 textSize = ImGui::CalcTextSize( pWarningText );
+
+				const ImVec2 min = ImVec2( textPosition.x - padding.x, textPosition.y - padding.y );
+				const ImVec2 max = ImVec2( textPosition.x + padding.x + textSize.x, textPosition.y + padding.y + textSize.y );
+
+				ImGui::GetWindowDrawList()->AddRectFilled( min, max,
+					IM_COL32( 200, 30, 60, 255 ), 2.0f, ImDrawFlags_RoundCornersAll );
+
+				ImGui::TextUnformatted( pWarningText );
+			}
+
+			ImGui::Separator();
+
 			ImGui::Text( "Recent Projects" );
 			for( const auto& rPath : rEngineSettings.GetAllRecentProjects() )
 			{
@@ -2277,13 +2401,13 @@ namespace Saturn {
 		if( ImGui::BeginMenu( "File" ) )
 		{
 			Auxiliary::DisabledFlag disabledIfRuntime( m_RequestRuntime );
-			
-			if( ImGui::MenuItem( "New Scene" ) )					 NewFile();
+
+			if( ImGui::MenuItem( "New Scene", "Alt+Shift+N" ) )		 NewFile();
 			if( ImGui::MenuItem( "Save Scene", "Ctrl+S" ) )          SaveFile();
 			if( ImGui::MenuItem( "Save Scene As", "Ctrl+Shift+S" ) ) SaveFileAs();
 
-			if( ImGui::MenuItem( "Save Project" ) )                  SaveProject();
-			if( ImGui::MenuItem( "Close Project" ) )                 CloseEditorAndOpenPB();
+			if( ImGui::MenuItem( "Save Project", "Alt+Shift+S" ) )   SaveProject();
+			if( ImGui::MenuItem( "Close Project", "Ctrl+W" ) )       CloseEditorAndOpenPB();
 
 			disabledIfRuntime.Pop();
 
@@ -2299,15 +2423,15 @@ namespace Saturn {
 
 				// TODO: Disable if there's nothing to undo/redo.
 				{
-					Auxiliary::ScopedDisabledFlag disabledIfNoUndo    ( m_GlobalUndoRedoGroup->IsUndoActionsEmpty() );
+					Auxiliary::ScopedDisabledFlag disabledIfNoUndo( m_GlobalUndoRedoGroup->IsUndoActionsEmpty() );
 					if( ImGui::MenuItem( "Undo", "Ctrl+Z" ) )           m_GlobalUndoRedoGroup->GlobalUndoRecent();
 				}
-				
+
 				{
-					Auxiliary::ScopedDisabledFlag disabledIfNoRedo    ( m_GlobalUndoRedoGroup->IsRedoActionsEmpty() );
+					Auxiliary::ScopedDisabledFlag disabledIfNoRedo( m_GlobalUndoRedoGroup->IsRedoActionsEmpty() );
 					if( ImGui::MenuItem( "Redo", "Ctrl+Y" ) )           m_GlobalUndoRedoGroup->GlobalRedoRecent();
 				}
-				
+
 				{
 					Auxiliary::ScopedDisabledFlag disabledIfNoActions( !m_GlobalUndoRedoGroup->HasAnyActions() );
 					if( ImGui::MenuItem( "Clear all action history" ) ) m_GlobalUndoRedoGroup->ClearAll();
@@ -2317,26 +2441,12 @@ namespace Saturn {
 			ImGui::EndMenu();
 		}
 
-		if( ImGui::BeginMenu( "Saturn" ) )
-		{
-			if( ImGui::MenuItem( "About" ) )        m_OpenAboutWindow ^= 1;
-			
-			ImGui::SeparatorText( "Windows" );
-
-			if( ImGui::MenuItem( "Scene Renderer" ) )         m_ShowSceneRendererWindow ^= 1;
-			if( ImGui::MenuItem( "Renderer (Vulkan Info)" ) ) m_ShowRendererWindow ^= 1;
-			if( ImGui::MenuItem( "Content Browser Panel" ) )  ShowOrHideContentBrowserPanel();
-			if( ImGui::MenuItem( "Scene Hierarchy Panel" ) )  ShowOrHideSceneHierarchyPanel();
-
-			ImGui::EndMenu();
-		}
-
 		if( ImGui::BeginMenu( "Project" ) )
 		{
 			if( ImGui::BeginMenu( "Open Project in" ) )
 			{
 #if defined(SAT_PLATFORM_WINDOWS) || defined(SAT_PLAFORM_MACOS)
-				if( ImGui::MenuItem( "Visual Studio Latest" ) ) 
+				if( ImGui::MenuItem( "Visual Studio Latest" ) )
 				{
 					std::filesystem::path solutionPath = Project::GetActiveProject()->GetRootDir();
 					solutionPath /= std::format( "{0}.sln", Project::GetActiveConfig().Name );
@@ -2347,7 +2457,7 @@ namespace Saturn {
 
 				ImGui::EndMenu();
 			}
-			
+
 			ImGui::SeparatorText( "Settings" );
 
 			if( ImGui::MenuItem( "Project settings" ) ) m_ShowUserSettings ^= 1;
@@ -2373,7 +2483,11 @@ namespace Saturn {
 						if( !Project::GetActiveProject()->HasPremakeFile() )
 							Project::GetActiveProject()->CreatePremakeFile();
 
+#if defined(SAT_PLATFORM_WINDOWS)
 						Premake::Launch( Project::GetActiveProject()->GetRootDir().wstring(), L"premake5.lua", PremakeAction::VisualStudio2022 );
+#else
+						Premake::Launch( Project::GetActiveProject()->GetRootDir().wstring(), L"premake5.lua", PremakeAction::Makefile );
+#endif
 					} );
 				}
 
@@ -2418,22 +2532,22 @@ namespace Saturn {
 					if( !m_BlockingOperation )
 						m_BlockingOperation = Ref<JobProgress>::Create();
 
-					JobSystem::Get().QueueJob( [this]()
-						{
-							m_JobModalOpen = true;
-							m_BlockingOperation->SetTitle( "Distributing Project" );
+					JobSystem::Get().QueueJob( [ this ]()
+					{
+						m_JobModalOpen = true;
+						m_BlockingOperation->SetTitle( "Distributing Project" );
 
-							m_BlockingOperation->SetStatus( "Building project" );
-							Project::GetActiveProject()->Rebuild( ApplicationConfigKind::Dist );
+						m_BlockingOperation->SetStatus( "Building project" );
+						Project::GetActiveProject()->Rebuild( ApplicationConfigKind::Dist );
 
-							m_BlockingOperation->SetProgress( 50.0f );
+						m_BlockingOperation->SetProgress( 50.0f );
 
-							m_BlockingOperation->SetStatus( "Copying for Distribution" );
-							Project::GetActiveProject()->Distribute( ApplicationConfigKind::Dist );
+						m_BlockingOperation->SetStatus( "Copying for Distribution" );
+						Project::GetActiveProject()->Distribute( ApplicationConfigKind::Dist );
 
-							m_BlockingOperation->SetProgress( 100.0f );
-							m_BlockingOperation->OnComplete();
-						} );
+						m_BlockingOperation->SetProgress( 100.0f );
+						m_BlockingOperation->OnComplete();
+					} );
 				}
 
 				if( ImGui::BeginItemTooltip() )
@@ -2455,35 +2569,35 @@ namespace Saturn {
 			ImGui::EndMenu();
 		}
 
-		if( ImGui::BeginMenu( "Settings" ) )
+		if( ImGui::BeginMenu( "View" ) )
 		{
-			if( ImGui::MenuItem( "Project settings" ) )           m_ShowUserSettings       ^= 1;
-			if( ImGui::MenuItem( "Editor Settings" ) )            m_OpenEditorSettings     ^= 1;
+			ImGui::SeparatorText( "Windows" );
+			if( ImGui::MenuItem( "Project settings" ) )           m_ShowUserSettings ^= 1;
+			if( ImGui::MenuItem( "Editor Settings" ) )            m_OpenEditorSettings ^= 1;
+			if( ImGui::MenuItem( "Scene Renderer" ) )             m_ShowSceneRendererWindow ^= 1;
+			if( ImGui::MenuItem( "Renderer (Vulkan Info)" ) )     m_ShowRendererWindow ^= 1;
+			if( ImGui::MenuItem( "Content Browser Panel" ) )      ShowOrHideContentBrowserPanel();
+			if( ImGui::MenuItem( "Scene Hierarchy Panel" ) )      ShowOrHideSceneHierarchyPanel();
 
-			ImGui::EndMenu();
-		}
-
-		if( ImGui::BeginMenu( "Auxiliary" ) )
-		{
 			ImGui::SeparatorText( "Asset Manager" );
 			if( ImGui::MenuItem( "Asset Registry Debug" ) )       m_OpenAssetRegistryDebug ^= 1;
-			if( ImGui::MenuItem( "Loaded Assets Debug" ) )        m_OpenLoadedAssetDebug   ^= 1;
-			if( ImGui::MenuItem( "Asset Dependencies" ) )         m_ShowAssetDependencies  ^= 1;
+			if( ImGui::MenuItem( "Loaded Assets Debug" ) )        m_OpenLoadedAssetDebug ^= 1;
+			if( ImGui::MenuItem( "Asset Dependencies" ) )         m_ShowAssetDependencies ^= 1;
 
 			ImGui::SeparatorText( "SClass" );
 			if( ImGui::MenuItem( "Metadata Debug" ) )             m_ShowMetadataDebug ^= 1;
 
 			ImGui::SeparatorText( "Demo Window" );
-			if( ImGui::MenuItem( "Show demo window" ) )           m_ShowImGuiDemoWindow    ^= 1;
+			if( ImGui::MenuItem( "Show demo window" ) )           m_ShowImGuiDemoWindow ^= 1;
 
 			ImGui::SeparatorText( "Virtual Filesystem (VFS)" );
-			if( ImGui::MenuItem( "Virtual Filesystem Debug" ) )   m_ShowVFSDebug           ^= 1;
+			if( ImGui::MenuItem( "Virtual Filesystem Debug" ) )   m_ShowVFSDebug ^= 1;
 
 			ImGui::SeparatorText( "Scene Renderer" );
-			if( ImGui::MenuItem( "Render Mesh AABB" ) )           m_ShowMeshAABB           ^= 1;
-			if( ImGui::MenuItem( "Show Camera Frustum" ) )        m_ShowCameraFrustum      ^= 1;
-			if( ImGui::MenuItem( "Show NavMesh Debug" ) )		  m_ShowNavMeshDebugRT	   ^= 1;
-			
+			if( ImGui::MenuItem( "Render Mesh AABB" ) )           m_ShowMeshAABB ^= 1;
+			if( ImGui::MenuItem( "Show Camera Frustum" ) )        m_ShowCameraFrustum ^= 1;
+			if( ImGui::MenuItem( "Show NavMesh Debug" ) )		  m_ShowNavMeshDebugRT ^= 1;
+
 			if( ImGui::BeginMenu( "Scene Visualisation Options" ) )
 			{
 				auto& rVisualisationOptions = g_ActiveScene->GetVisualisationOptions();
@@ -2503,7 +2617,7 @@ namespace Saturn {
 							rVisualisationOptions.PhysColliderOptions = PhysicsColliderVisualisationOptions::Disabled;
 						else
 							rVisualisationOptions.PhysColliderOptions = PhysicsColliderVisualisationOptions::SelectedOnly;
-					
+
 						g_ActiveScene->MarkDirty();
 					}
 
@@ -2536,26 +2650,37 @@ namespace Saturn {
 			}
 
 			ImGui::SeparatorText( "Content Browser" );
-			if( ImGui::MenuItem( "Show Thumbnail Cache" ) )       m_ShowCBThumbnailDebug   ^= 1;
+			if( ImGui::MenuItem( "Show Thumbnail Cache" ) )       m_ShowCBThumbnailDebug ^= 1;
 
 			ImGui::SeparatorText( "Undo Redo" );
-			if( ImGui::MenuItem( "Show Undo Redo Stack" ) )       m_ShowUndoRedoDebug      ^= 1;
+			if( ImGui::MenuItem( "Show Undo Redo Stack" ) )       m_ShowUndoRedoDebug ^= 1;
 
 			{
 				Auxiliary::ScopedDisabledFlag disabled( m_RequestRuntime );
 
 				ImGui::SeparatorText( "Auto Saves" );
 				if( ImGui::MenuItem( "Clear all auto saves" ) )           ClearAllAutoSaves();
-				if( ImGui::MenuItem( "Clear all for the active scene") )  ClearAutoSavesForActiveScene();
+				if( ImGui::MenuItem( "Clear all for the active scene" ) )  ClearAutoSavesForActiveScene();
 			}
 
 			ImGui::SeparatorText( "Physics" );
 			if( ImGui::MenuItem( "Open Jolt debug viewer" ) )       PhysicsDebugRecorder::OpenRecordedFile();
-			if( ImGui::MenuItem( "Open debug viewer folder" ) ) 
+			if( ImGui::MenuItem( "Open debug viewer folder" ) )
 			{
 				std::filesystem::path outPath = Project::GetActiveProject()->GetFullCachePath();
 				outPath /= "PerUser";
 				Application::Get()->OpenNativeFileExplorer( outPath );
+			}
+
+			ImGui::SeparatorText( "Debug" );
+			if( ImGui::MenuItem( "Open sandbox node editor" ) )
+			{
+				if( !m_SandboxNodeEditorViewer )
+					m_SandboxNodeEditorViewer = Ref<SandboxNodeEditorViewer>::Create();
+
+				m_SandboxNodeEditorViewer->ForceOpenWindow();
+
+				m_ImGuiWindowManager->AddWindow( m_SandboxNodeEditorViewer, "SndboxVwr" );
 			}
 
 			ImGui::EndMenu();
@@ -2604,7 +2729,13 @@ namespace Saturn {
 				}
 
 				ImGui::EndMenu();
-			} 
+			}
+		}
+
+		if( ImGui::BeginMenu( "Help" ) )
+		{
+			if( ImGui::MenuItem( "About" ) )        m_OpenAboutWindow ^= 1;
+			ImGui::EndMenu();
 		}
 
 		// Draw Project name text and box.
@@ -2613,7 +2744,7 @@ namespace Saturn {
 #if defined(SAT_DEBUG) || 1
 		const std::string prjName = Project::GetActiveConfig().Name;
 		const auto devVer = Project::GetActiveProject()->GetDeveloperVersion();
-		
+
 		std::string text = prjName;
 		if( !devVer.empty() )
 			text = std::format( "{0}-{1}", prjName, devVer );
@@ -2623,8 +2754,8 @@ namespace Saturn {
 
 		text += std::format( " | {0}", g_ActiveScene->Name.empty() ? "<New Scene>" : g_ActiveScene->Name );
 
-		const ImVec2 textSize   = ImGui::CalcTextSize( text.c_str() );
-		ImDrawList* pDrawList   = ImGui::GetWindowDrawList();
+		const ImVec2 textSize = ImGui::CalcTextSize( text.c_str() );
+		ImDrawList* pDrawList = ImGui::GetWindowDrawList();
 		const float frameHeight = ImGui::GetFrameHeight();
 
 		const ImVec2 min = ImGui::GetWindowPos() + ImGui::GetCursorPos();
@@ -2673,8 +2804,37 @@ namespace Saturn {
 				Auxiliary::EndTreeNode();
 			}
 
-			if( Auxiliary::TreeNode( "Shaders", false ) )
+			if( Auxiliary::TreeNode( "Engine Shaders", false ) )
 			{
+				ImGui::BeginHorizontal( "##edbundleopt" );
+
+				if( ImGui::Button( "Force package engine shaders" ) )
+				{
+					if( const auto result = ShaderBundle::BundleShaders( ShaderBundleType::Editor ); result != ShaderBundleResult::Success ) 
+					{
+						EditorNotification notification{ .Text = "Failed to package editor shader bundle!", .Lifetime = 5.0f };
+						PushNotification( notification );
+					}
+					else
+					{
+						EditorNotification notification{ .Text = "Packaged editor shader bundle!", .Lifetime = 5.0f };
+						PushNotification( notification );
+					}
+				}
+
+				ImGui::Spring();
+
+				if( ImGui::Button( "Delete ShaderBundle" ) )
+				{
+					const std::filesystem::path shaderBundleFilePath = Application::Get()->GetAppDataFolder() / "EditorShaderBundle.ssb";
+					if( std::filesystem::exists( shaderBundleFilePath ) )
+					{
+						std::filesystem::remove( shaderBundleFilePath );
+					}
+				}
+
+				ImGui::EndHorizontal();
+
 				ImGui::BeginVertical( "shadersV" );
 
 				for( auto& [name, shader] : ShaderLibrary::Get().GetShaders() )
@@ -2687,6 +2847,12 @@ namespace Saturn {
 
 					ImGui::Text( name.c_str() );
 
+					if( ImGui::BeginItemTooltip() )
+					{
+						ImGui::Text( "Hash: %llu", shader->GetShaderHash() );
+						ImGui::EndTooltip();
+					}
+
 					ImGui::PopItemWidth();
 
 					ImGui::NextColumn();
@@ -2697,9 +2863,20 @@ namespace Saturn {
 						{
 							Application::Get()->GetWindow()->FlashAttention();
 
-							MessageBoxInfo msgBox = { .Title = "Error", .Text = std::format( "Shader '{0}' failed to recompile. Defaulting back to last successful build.", shader->GetName() ) };
+							MessageBoxInfo msgBox = { .Title = "Error", .Text = std::format( "Shader '{0}' failed to recompile. Defaulting back to last successful build. Check debug console for more information!", shader->GetName() ) };
 							PushMessageBox( msgBox );
 						}
+						else
+						{
+							EditorNotification notification{ .Text = "Hot reloaded shader!", .Lifetime = 5.0f };
+							PushNotification( notification );
+						}
+					}
+
+					if( ImGui::Button( "View" ) )
+					{
+						std::filesystem::path absPath = std::filesystem::absolute( shader->GetFilepath() );
+						Application::Get()->OpenNativeFileExplorer( absPath, true );
 					}
 
 					ImGui::PopItemWidth();
@@ -3127,6 +3304,42 @@ namespace Saturn {
 
 		if( ImGui::BeginDragDropTarget() )
 		{
+			if( auto payload = ImGui::AcceptDragDropPayload( "CONTENT_BROWSER_ITEM_MULTI_NDT" ) )
+			{
+				m_SelectionManager->ClearSelection( m_EditorScene.Get(), false );
+				m_SelectionManager->EnableMultiSelection();
+
+				const auto contentBrowserPanel = m_ImGuiWindowManager->GetPanel<ContentBrowserPanel>();
+				for( const auto& rItem : contentBrowserPanel->GetSelectedItems() )
+				{
+					switch( rItem->GetAsset()->Type )
+					{
+						case AssetType::Prefab:
+						{
+							DndImportPrefab( rItem->GetAsset(), true, false );
+						} break;
+
+						case AssetType::StaticMesh:
+						{
+							DndImportStaticMesh( rItem->GetAsset(), true, false );
+						} break;
+
+						case AssetType::SkeletalMesh:
+						{
+							DndImportSkeletalMesh( rItem->GetAsset(), true, false );
+						} break;
+
+						case AssetType::Sound:
+						{
+							DndImportSound( rItem->GetAsset(), true, false );
+						} break;
+
+						default:
+							break;
+					}
+				}
+			}
+
 			if( auto payload = ImGui::AcceptDragDropPayload( "CONTENT_BROWSER_ITEM_SCENE" ) )
 			{
 				const UUID* pUUID = ( const UUID* ) payload->Data;
@@ -3138,13 +3351,8 @@ namespace Saturn {
 				const UUID* pUUID = ( const UUID* ) payload->Data;
 
 				Ref<Asset> asset = m_AssetManager->FindAsset( *pUUID );
-				Ref<Prefab> prefabAsset = m_AssetManager->GetAssetAs<Prefab>( asset->ID );
-
-				CreateEntityParameters createEntityParameters;
-				auto entity = m_EditorScene->CreatePrefab( prefabAsset, createEntityParameters );
-				m_EditorScene->MarkDirty();
-
-				PlaceEntityRelativeToMousePos( entity );
+				
+				DndImportPrefab( asset, true );
 			}
 
 			if( auto payload = ImGui::AcceptDragDropPayload( "CONTENT_BROWSER_ITEM_MODEL" ) )
@@ -3152,17 +3360,7 @@ namespace Saturn {
 				const UUID* pUUID = ( const UUID* ) payload->Data;
 
 				Ref<Asset> asset = m_AssetManager->FindAsset( *pUUID );
-				Ref<StaticMesh> meshAsset = m_AssetManager->GetAssetAs<StaticMesh>( asset->ID );
-
-				SharedPtr<Entity> entity = m_EditorScene->CreateEntity( asset->Name );
-
-				auto& rMeshComponent = entity->AddComponent<StaticMeshComponent>();
-				rMeshComponent.Mesh = meshAsset;
-				rMeshComponent.MaterialRegistry = Ref<MaterialRegistry>::Create( meshAsset );
-
-				PlaceEntityRelativeToMousePos( entity );
-
-				m_EditorScene->MarkDirty();
+				DndImportStaticMesh( asset, true );
 			}
 
 			if( auto payload = ImGui::AcceptDragDropPayload( "CONTENT_BROWSER_ITEM_SKMODEL" ) )
@@ -3170,17 +3368,16 @@ namespace Saturn {
 				const UUID* pUUID = ( const UUID* ) payload->Data;
 
 				Ref<Asset> asset = m_AssetManager->FindAsset( *pUUID );
-				Ref<SkeletalMesh> meshAsset = m_AssetManager->GetAssetAs<SkeletalMesh>( asset->ID );
 
-				SharedPtr<Entity> entity = m_EditorScene->CreateEntity( asset->Name );
+				DndImportSkeletalMesh( asset, true );
+			}
 
-				auto& rMeshComponent = entity->AddComponent<SkeletalMeshComponent>();
-				rMeshComponent.Mesh = meshAsset;
-				rMeshComponent.MaterialRegistry = Ref<MaterialRegistry>::Create( meshAsset );
+			if( auto payload = ImGui::AcceptDragDropPayload( "CONTENT_BROWSER_ITEM_SND" ) )
+			{
+				const UUID* pUUID = ( const UUID* ) payload->Data;
 
-				PlaceEntityRelativeToMousePos( entity );
-
-				m_EditorScene->MarkDirty();
+				Ref<Asset> asset = m_AssetManager->FindAsset( *pUUID );
+				DndImportSound( asset, true );
 			}
 
 			ImGui::EndDragDropTarget();
@@ -4017,6 +4214,91 @@ namespace Saturn {
 		const glm::vec3 rayDir = inverseView * glm::vec3( ray );
 
 		return { rayPos, rayDir };
+	}
+
+	void EditorLayer::DndImportPrefab( Ref<Asset> asset, bool select /*= false*/, bool clearSelection /*= true*/ )
+	{
+		Ref<Prefab> prefabAsset = m_AssetManager->GetAssetAs<Prefab>( asset->ID );
+
+		CreateEntityParameters createEntityParameters;
+		auto entity = m_EditorScene->CreatePrefab( prefabAsset, createEntityParameters );
+		m_EditorScene->MarkDirty();
+
+		PlaceEntityRelativeToMousePos( entity );
+	
+		if( select )
+		{
+			if( clearSelection )
+				m_SelectionManager->ClearSelection( m_EditorScene.Get(), true );
+		
+			m_SelectionManager->Select( entity );
+		}
+	}
+
+	void EditorLayer::DndImportStaticMesh( Ref<Asset> asset, bool select /*= false*/, bool clearSelection /*= true*/ )
+	{
+		Ref<StaticMesh> meshAsset = m_AssetManager->GetAssetAs<StaticMesh>( asset->ID );
+
+		SharedPtr<Entity> entity = m_EditorScene->CreateEntity( asset->Name );
+
+		auto& rMeshComponent = entity->AddComponent<StaticMeshComponent>();
+		rMeshComponent.Mesh = meshAsset;
+		rMeshComponent.MaterialRegistry = Ref<MaterialRegistry>::Create( meshAsset );
+
+		PlaceEntityRelativeToMousePos( entity );
+
+		m_EditorScene->MarkDirty();
+		
+		if( select )
+		{
+			if( clearSelection )
+				m_SelectionManager->ClearSelection( m_EditorScene.Get(), true );
+
+			m_SelectionManager->Select( entity );
+		}
+	}
+
+	void EditorLayer::DndImportSkeletalMesh( Ref<Asset> asset, bool select /*= false*/, bool clearSelection /*= true*/ )
+	{
+		Ref<SkeletalMesh> meshAsset = m_AssetManager->GetAssetAs<SkeletalMesh>( asset->ID );
+
+		SharedPtr<Entity> entity = m_EditorScene->CreateEntity( asset->Name );
+
+		auto& rMeshComponent = entity->AddComponent<SkeletalMeshComponent>();
+		rMeshComponent.Mesh = meshAsset;
+		rMeshComponent.MaterialRegistry = Ref<MaterialRegistry>::Create( meshAsset );
+
+		PlaceEntityRelativeToMousePos( entity );
+
+		m_EditorScene->MarkDirty();
+
+		if( select )
+		{
+			if( clearSelection )
+				m_SelectionManager->ClearSelection( m_EditorScene.Get(), true );
+
+			m_SelectionManager->Select( entity );
+		}
+	}
+
+	void EditorLayer::DndImportSound( Ref<Asset> asset, bool select /*= false*/, bool clearSelection /*= true */ )
+	{
+		SharedPtr<Entity> entity = m_EditorScene->CreateEntity( asset->Name );
+
+		auto& rAudioPlayerComponent = entity->AddComponent<AudioPlayerComponent>();
+		rAudioPlayerComponent.SpecAssetID = asset->ID;
+
+		PlaceEntityRelativeToMousePos( entity );
+
+		m_EditorScene->MarkDirty();
+
+		if( select )
+		{
+			if( clearSelection )
+				m_SelectionManager->ClearSelection( m_EditorScene.Get(), true );
+
+			m_SelectionManager->Select( entity );
+		}
 	}
 
 	void EditorLayer::PlaceEntityRelativeToMousePos( SharedPtr<Entity> entity )

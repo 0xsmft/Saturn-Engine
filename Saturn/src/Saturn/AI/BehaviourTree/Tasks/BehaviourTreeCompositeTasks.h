@@ -44,11 +44,19 @@ namespace Saturn {
 	public:
 		virtual void Reset() override;
 
+	public:
 #if !defined(SAT_DIST)
 		// Composite tasks aren't normal tasks and thus cannot be created from the right click context menu (and would be a TaskNode) instead they are BehaviourTreeSelectorNode/SBehaviourTreeSequenceNode
 		[[nodiscard]] virtual bool IsSpawnableNode() const override final { return false; }
 		virtual const char* GetTaskName() const override final { return ""; }
 #endif
+
+	public:
+		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther ) override;
+
+	public:
+		virtual void Serialise( std::ofstream& rStream ) const override;
+		virtual void Deserialise( FDependentIStream& rStream ) override;
 
 	protected:
 		size_t m_CurrentTaskIndex = 0;
@@ -70,7 +78,10 @@ namespace Saturn {
 		BehaviourTreeSelectorTask();
 		virtual ~BehaviourTreeSelectorTask();
 
-		virtual void InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+#if !defined(SAT_DIST)
+		virtual void PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+#endif
+		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther ) override;
 
 	public:
 		virtual NodeEditorTaskState Tick( Timestep ts ) override;
@@ -89,7 +100,10 @@ namespace Saturn {
 		BehaviourTreeSequenceTask();
 		virtual ~BehaviourTreeSequenceTask();
 
-		virtual void InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+#if !defined(SAT_DIST)
+		virtual void PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+#endif
+		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther ) override;
 
 	public:
 		virtual NodeEditorTaskState Tick( Timestep ts ) override;

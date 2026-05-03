@@ -35,7 +35,6 @@
 #include "Nodes/BehaviourTreeTaskNode.h"
 
 #include "BehaviourTreeNodeLibrary.h"
-#include "BehaviourTreeEditorEvaluator.h"
 
 #include "Saturn/NodeEditor/NodeEditorHintNode.h"
 #include "Saturn/NodeEditor/Serialisation/NodeCache.h"
@@ -65,7 +64,6 @@ namespace Saturn {
 		}
 
 		m_Asset = nullptr;
-		m_NodeEditor->SetRuntime( nullptr );
 
 		GlobalUndoRedoGroup::Get()->RemoveIfActionHasIdentifier( m_AssetID );
 		m_NodeEditor = nullptr;
@@ -121,14 +119,6 @@ namespace Saturn {
 		m_Open = true;
 
 		SetupNodeEditorCallbacks();
-
-		BehaviourTreeEditorEvaluator::BehaviourTreeEdEvaluatorInfo info{};
-		info.OutputNodeID = m_RootNodeID;
-
-		m_Runtime = Ref<BehaviourTreeEditorEvaluator>::Create( info );
-		m_Runtime->SetTargetNodeEditor( m_NodeEditor );
-
-		m_NodeEditor->SetRuntime( m_Runtime );
 
 #if !defined(SAT_DIST)
 		// Discover all classes that are based from BehaviourTreeBaseTask for our context menu.
@@ -208,23 +198,34 @@ namespace Saturn {
 
 			ImGui::SeparatorEx( ImGuiSeparatorFlags_Vertical );
 
-			// drop down
+			// Debug References
 			ImGui::Text( "References" );
 
 			ImGui::SetNextItemWidth( 134.0F );
-			if( ImGui::BeginCombo( "##References", "" ) )
-			{
-				for( const auto& rAsset : m_ReferencingAssets )
-				{
-					if( ImGui::Selectable( rAsset->GetAsset()->Name.c_str() ) )
-					{
-						// TODO: There isn't technically API to support this asset viewer changing its node editor
-						//       however, maybe we should think of a different way to show what the referencing assets are doing
-						m_NodeEditor = rAsset->GetNodeEditor();
-						m_NodeEditor->OpenWindow( true );
-						m_NodeEditor->SetState( NodeEditorState::Simulating );
 
-						SetupNodeEditorCallbacks();
+			std::string previewVal;
+			if( m_SelectedReferenceObject )
+				previewVal = m_SelectedReferenceObject->GetDebugName();
+
+			if( ImGui::BeginCombo( "##References", previewVal.data(), ImGuiComboFlags_WidthFitPreview ) )
+			{
+				if( ImGui::Selectable( "Main Asset (removes reference)" ) )
+				{
+					m_SelectedReferenceObject = nullptr;
+					m_NodeEditor->ResetDebugging();
+				}
+
+				ImGui::Separator();
+
+				for( const auto& rBehaviourTree : m_ReferencingObjects )
+				{
+					const bool selected = m_SelectedReferenceObject == rBehaviourTree;
+
+					if( ImGui::Selectable( rBehaviourTree->GetDebugName().c_str(), selected ) )
+					{
+						m_SelectedReferenceObject = rBehaviourTree;
+
+//						m_NodeEditor->SetCurrentDebuggingEditor( rBehaviourTree->GetNodeEditor() );
 					}
 				}
 
@@ -247,21 +248,39 @@ namespace Saturn {
 
 			case RuntimeState::Running:
 			{
-				if( oldState == RuntimeState::Starting || oldState == RuntimeState::NoState )
-					m_OriginalNodeEditor = m_NodeEditor;
+				if( oldState == RuntimeState::Starting || oldState == RuntimeState::NoState ) 
+				{
+					m_SelectedReferenceObject = nullptr;
+				}
 			} break;
 
 			case RuntimeState::Ending:
 			{
-				m_NodeEditor = m_OriginalNodeEditor;
-				m_ReferencingAssets.clear();
+				m_NodeEditor->AllowEditingAndDisableDebugging();
+
+				m_SelectedReferenceObject = nullptr;
+				m_ReferencingObjects.clear();
 			} break;
 		}
 	}
 
-	void BehaviourTreeAssetViewer::AddBehviourTreeReference( Ref<BehaviourTree> asset )
+	void BehaviourTreeAssetViewer::AddBehviourTreeReference( Ref<BehaviourTree> bt )
 	{
-		m_ReferencingAssets.push_back( asset );
+		m_ReferencingObjects.push_back( bt );
+	}
+
+	void BehaviourTreeAssetViewer::SetActiveReference( Ref<BehaviourTree> bt )
+	{
+		const auto itr = std::find( m_ReferencingObjects.begin(), m_ReferencingObjects.end(), bt );
+		if( itr != m_ReferencingObjects.end() )
+		{
+			m_SelectedReferenceObject = bt;
+		}
+	}
+
+	void BehaviourTreeAssetViewer::OnDebugBreak()
+	{
+		m_NodeEditor->OnDebugBreak();
 	}
 
 #endif

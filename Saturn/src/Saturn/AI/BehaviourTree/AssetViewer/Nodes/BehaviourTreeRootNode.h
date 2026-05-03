@@ -39,8 +39,6 @@ namespace Saturn {
 		BehaviourTreeRootNode();
 		virtual ~BehaviourTreeRootNode();
 
-		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* pEvaluator ) override;
-
 	private:
 		void CreateNode();
 	};

@@ -35,7 +35,7 @@
 
 namespace Saturn {
 
-	enum class ImGuiHideWindowFlags
+	enum class ImGuiHideWindowFlags : uint8_t
 	{
 		// Destroy the window when its closed.
 		Destroy,
@@ -80,9 +80,9 @@ namespace Saturn {
 		const std::string& GetWindowName() const { return m_Name; }
 
 	protected:
+		std::string m_Name;
 		ImGuiHideWindowFlags m_HideFlags = ImGuiHideWindowFlags::Destroy;
 		bool m_Open = false;
-		std::string m_Name = "";
 	};
 
 }

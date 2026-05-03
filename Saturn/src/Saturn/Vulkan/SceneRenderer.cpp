@@ -129,6 +129,10 @@ namespace Saturn {
 
 		InitLateComposite();
 
+		InitSelectionPass();
+
+		InitJumpFlood();
+
 		InitTexturePass();
 
 		switch( m_AOTechnique )
@@ -721,71 +725,170 @@ namespace Saturn {
 
 	void SceneRenderer::InitSSAO()
 	{
+		if( !m_RendererData.AOShader )
+		{
+			m_RendererData.AOShader = ShaderLibrary::Get().FindOrLoad( "SSAO", "content/shaders/SSAO.glsl" );
+			m_RendererData.SSAOMaterial = Ref<Material>::Create( m_RendererData.AOShader, "SSAO" );
+		}
+
+		m_RendererData.SSAOMaterial->SetResource( "u_DepthTexture", m_RendererData.PreDepthFramebuffer->GetDepthAttachmentResource() );
+		m_RendererData.SSAOMaterial->SetResource( "u_ViewNormalTexture", m_RendererData.GeometryFramebuffer->GetColorAttachmentsResources()[ 1 ] );
+
+		if( !m_RendererData.SSAONoiseGenerated || !m_RendererData.SSAONoiseImage )
+		{
+			std::vector<glm::vec4> ssaoNoise( 4 * 4 );
+			for( size_t i = 0; i < ssaoNoise.size(); i++ )
+			{
+				ssaoNoise[ i ] = glm::vec4(
+					Random::RandomFloatInRange( 0.0F, 1.0F ) * 2.0F - 1.0F,
+					Random::RandomFloatInRange( 0.0F, 1.0F ) * 2.0F - 1.0F,
+					0.0F, 0.0F );
+			}
+
+			m_RendererData.SSAONoiseGenerated = true;
+
+			m_RendererData.SSAONoiseImage = Ref<Texture2D>::Create( ImageFormat::RGBA32F, 4, 4, ssaoNoise.data() );
+
+			m_RendererData.SSAOMaterial->SetResource( "u_NoiseTexture", m_RendererData.SSAONoiseImage );
+
+			// Sample Kernel
+			std::vector<glm::vec4> ssaoKernel( 32 );
+			for( size_t i = 0; i < ssaoKernel.size(); i++ )
+			{
+				glm::vec3 sample(
+					Random::RandomFloatInRange( 0.0F, 1.0F ) * 2.0F - 1.0F,
+					Random::RandomFloatInRange( 0.0F, 1.0F ) * 2.0F - 1.0F,
+					Random::RandomFloatInRange( 0.0F, 1.0F ) );
+
+				sample = glm::normalize( sample );
+				sample *= Random::RandomFloatInRange( 0.0F, 1.0F );
+
+				float scale = float( i ) / 32.0f;
+				scale = std::lerp( 0.1f, 1.0f, scale * scale );
+
+				ssaoKernel[ i ] = glm::vec4( sample * scale, 0.0f );
+			}
+
+			// u_Matrices
+			struct USSAOData
+			{
+				glm::vec4 Samples[ 32 ];
+				float R = 0.5f;
+			} u_Data{};
+
+			std::memcpy( u_Data.Samples, ssaoKernel.data(), ssaoKernel.size() * sizeof( glm::vec4 ) );
+
+			// We cannot write to the UniformBufferSet as we don't use the same UB as the other shaders
+			m_RendererData.SSAOMaterial->UploadDataToUB( 1, &u_Data, sizeof( u_Data ) );
+		}
+
+		if( m_RendererData.SSAORenderPass )
+		{
+			m_RendererData.SSAORenderPass->Recreate();
+		}
+		else
+		{
+			PassSpecification PassSpec = {};
+			PassSpec.Name = "SSAO RP";
+			PassSpec.Attachments = { ImageFormat::RED8 };
+
+			m_RendererData.SSAORenderPass = Ref<Pass>::Create( PassSpec );
+		}
+
+		if( m_RendererData.SSAOFramebuffer )
+		{
+			m_RendererData.SSAOFramebuffer->Recreate( m_RendererData.Width / 2, m_RendererData.Height / 2 );
+		}
+		else
+		{
+			FramebufferSpecification FBSpec;
+			FBSpec.RenderPass = m_RendererData.SSAORenderPass;
+			FBSpec.Width = m_RendererData.Width / 2;
+			FBSpec.Height = m_RendererData.Height / 2;
+			FBSpec.Attachments = { ImageFormat::RED8 };
+			FBSpec.CreateDepth = false;
+
+			m_RendererData.SSAOFramebuffer = Ref<Framebuffer>::Create( FBSpec );
+		}
+
+		if( m_RendererData.SSAOPipeline )
+			m_RendererData.SSAOPipeline = nullptr;
+
+		PipelineSpecification PipelineSpec = {};
+		PipelineSpec.Width = m_RendererData.Width / 2;
+		PipelineSpec.Height = m_RendererData.Height / 2;
+		PipelineSpec.Name = "SSAO";
+		PipelineSpec.Shader = m_RendererData.AOShader;
+		PipelineSpec.RenderPass = m_RendererData.SSAORenderPass;
+		PipelineSpec.UseDepthTest = true;
+		PipelineSpec.CullMode = CullMode::None;
+		PipelineSpec.FrontFace = VK_FRONT_FACE_CLOCKWISE;
+		PipelineSpec.VertexLayout = {
+			{ ShaderDataType::Float3, "a_Position" },
+			{ ShaderDataType::Float2, "a_TexCoord" },
+		};
+
+		m_RendererData.SSAOPipeline = Ref<Pipeline>::Create( PipelineSpec );
 	}
 
 	void SceneRenderer::InitHBAO()
 	{
 	}
 
-	/*
-	void SceneRenderer::InitSelection()
+	void SceneRenderer::InitSelectionPass()
 	{
-		if( !m_RendererData.SelectionShader )
-		{
-			m_RendererData.SelectionShader = ShaderLibrary::Get().FindOrLoad( "Selection", "content/shaders/Selection.glsl" );
-		}
-
-		m_RendererData.SelectionMaterial = Ref<Material>::Create( m_RendererData.SelectionShader, "PhysicsOutline" );
-
-		if( m_RendererData.SelectionRenderPass )
-			m_RendererData.SelectionRenderPass->Recreate();
+		if( m_RendererData.SelectedGeometryPass )
+			m_RendererData.SelectedGeometryPass->Recreate();
 		else
 		{
+			// Create the scene composite render pass.
 			PassSpecification PassSpec = {};
-			PassSpec.Name = "Selection pass";
-			PassSpec.LoadDepth = true;
+			PassSpec.Name = "Selected Geometry pass";
+			PassSpec.Attachments = { ImageFormat::RGBA32F, ImageFormat::DEPTH24STENCIL8 };
 
-			// Depth = PreDepth.
-			PassSpec.Attachments = { ImageFormat::RGBA8, ImageFormat::DEPTH24STENCIL8 };
-
-			m_RendererData.SelectionRenderPass = Ref< Pass >::Create( PassSpec );
+			m_RendererData.SelectedGeometryPass = Ref< Pass >::Create( PassSpec );
 		}
 
-		if( m_RendererData.SelectionFramebuffer )
+		if( m_RendererData.SelectedGeometryFramebuffer )
 		{
-			FramebufferSpecification NewSpec;
-			NewSpec.ExistingImages[ 1 ] = m_RendererData.PreDepthFramebuffer->GetDepthAttachmentResource();
-
-			m_RendererData.SelectionFramebuffer->Recreate( m_RendererData.Width, m_RendererData.Height, NewSpec );
+			m_RendererData.SelectedGeometryFramebuffer->Recreate( m_RendererData.Width, m_RendererData.Height, {} );
 		}
 		else
 		{
 			FramebufferSpecification FBSpec = {};
-			FBSpec.RenderPass = m_RendererData.SelectionRenderPass;
+			FBSpec.RenderPass = m_RendererData.SelectedGeometryPass;
 			FBSpec.Width = m_RendererData.Width;
 			FBSpec.Height = m_RendererData.Height;
+			FBSpec.Attachments = { ImageFormat::RGBA32F, ImageFormat::DEPTH24STENCIL8 };
 
-			FBSpec.Attachments = { ImageFormat::RGBA8 };
-			FBSpec.ExistingImages[ 1 ] = m_RendererData.PreDepthFramebuffer->GetDepthAttachmentResource();
-
-			m_RendererData.SelectionFramebuffer = Ref<Framebuffer>::Create( FBSpec );
+			m_RendererData.SelectedGeometryFramebuffer = Ref<Framebuffer>::Create( FBSpec );
 		}
+
+		if( !m_RendererData.SelectionShader )
+		{
+			m_RendererData.SelectionShader = ShaderLibrary::Get().FindOrLoad( "SelectedGeometry", "content/shaders/SelectedGeometry.glsl" );
+		}
+
+		m_RendererData.SelectedGeometryMaterial = Ref<Material>::Create( m_RendererData.SelectionShader, "SelectedGeometry" );
+
+		if( m_RendererData.SelectedGeometryPipeline )
+			m_RendererData.SelectedGeometryPipeline = nullptr;
 
 		PipelineSpecification PipelineSpec = {};
 		PipelineSpec.Width = m_RendererData.Width;
 		PipelineSpec.Height = m_RendererData.Height;
-		PipelineSpec.Name = "SelectionPipeline";
+		PipelineSpec.Name = "Selected Geometry";
 		PipelineSpec.Shader = m_RendererData.SelectionShader;
-		PipelineSpec.RenderPass = m_RendererData.SelectionRenderPass;
+		PipelineSpec.RenderPass = m_RendererData.SelectedGeometryPass;
 		PipelineSpec.UseDepthTest = true;
-		PipelineSpec.CullMode = CullMode::None;
+		PipelineSpec.CullMode = CullMode::Back;
 		PipelineSpec.FrontFace = VK_FRONT_FACE_CLOCKWISE;
 		PipelineSpec.PolygonMode = VK_POLYGON_MODE_FILL;
 		PipelineSpec.VertexLayout = {
 			{ ShaderDataType::Float3, "a_Position" },
 			{ ShaderDataType::Float3, "a_Normal" },
 			{ ShaderDataType::Float3, "a_Tanget" },
-			{ ShaderDataType::Float3, "a_Position" },
+			{ ShaderDataType::Float3, "a_Binormal" },
 			{ ShaderDataType::Float2, "a_TexCoord" }
 		};
 		PipelineSpec.InstanceLayout = {
@@ -795,9 +898,194 @@ namespace Saturn {
 			{ ShaderDataType::Float4, "a_TransformBufferR4" }
 		};
 
-		m_RendererData.SelectionPipeline = Ref<Pipeline>::Create( PipelineSpec );
+		m_RendererData.SelectedGeometryPipeline = Ref<Pipeline>::Create( PipelineSpec );
 	}
-	*/
+
+	void SceneRenderer::InitJumpFlood()
+	{
+		if( !m_RendererData.JmpFloodFirstShader || !m_RendererData.JmpFloodEvenShader || !m_RendererData.JmpFloodOddShader )
+		{
+			m_RendererData.JmpFloodFirstShader = ShaderLibrary::Get().FindOrLoad( "JumpFloodFirst", "content/shaders/JumpFloodFirst.glsl" );
+			m_RendererData.JmpFloodEvenShader = ShaderLibrary::Get().FindOrLoad( "JumpFloodEven", "content/shaders/JumpFloodEven.glsl" );
+			m_RendererData.JmpFloodOddShader = ShaderLibrary::Get().FindOrLoad( "JumpFloodOdd", "content/shaders/JumpFloodOdd.glsl" );
+
+			m_RendererData.JumpFloodFirstMaterial = Ref<Material>::Create( m_RendererData.JmpFloodFirstShader, "JumpFloodFirst" );
+			m_RendererData.JumpFloodEvenMaterial = Ref<Material>::Create( m_RendererData.JmpFloodEvenShader, "JumpFloodEven" );
+			m_RendererData.JumpFloodOddMaterial = Ref<Material>::Create( m_RendererData.JmpFloodOddShader, "JumpFloodOdd" );
+		}
+
+		InitJmpfFirstPass();
+		InitJmpfEvenPass();
+		InitJmpfOddPass();
+	}
+
+	void SceneRenderer::InitJmpfFirstPass()
+	{
+		if( m_RendererData.JumpFloodFirstPass )
+			m_RendererData.JumpFloodFirstPass->Recreate();
+		else
+		{
+			// Create the scene composite render pass.
+			PassSpecification PassSpec = {};
+			PassSpec.Name = "Jump Flood 0 pass";
+			PassSpec.Attachments = { ImageFormat::RGBA32F };
+
+			m_RendererData.JumpFloodFirstPass = Ref< Pass >::Create( PassSpec );
+		}
+
+		if( m_RendererData.JumpFloodFirstPassFB )
+		{
+			m_RendererData.JumpFloodFirstPassFB->Recreate( m_RendererData.Width, m_RendererData.Height, {} );
+		}
+		else
+		{
+			FramebufferSpecification FBSpec = {};
+			FBSpec.RenderPass = m_RendererData.JumpFloodFirstPass;
+			FBSpec.Width = m_RendererData.Width;
+			FBSpec.Height = m_RendererData.Height;
+			FBSpec.CreateDepth = false;
+			FBSpec.Attachments = { ImageFormat::RGBA32F };
+
+			m_RendererData.JumpFloodFirstPassFB = Ref<Framebuffer>::Create( FBSpec );
+		}
+
+		if( m_RendererData.JumpFloodFirstPipeline )
+			m_RendererData.JumpFloodFirstPipeline = nullptr;
+
+		PipelineSpecification PipelineSpec = {};
+		PipelineSpec.Width = m_RendererData.Width;
+		PipelineSpec.Height = m_RendererData.Height;
+		PipelineSpec.Name = "JumpFloodFirst";
+		PipelineSpec.Shader = m_RendererData.JmpFloodFirstShader;
+		PipelineSpec.RenderPass = m_RendererData.JumpFloodFirstPass;
+		PipelineSpec.UseDepthTest = true;
+		PipelineSpec.CullMode = CullMode::Back;
+		PipelineSpec.FrontFace = VK_FRONT_FACE_CLOCKWISE;
+		PipelineSpec.PolygonMode = VK_POLYGON_MODE_FILL;
+		PipelineSpec.DepthCompareOp = VK_COMPARE_OP_GREATER_OR_EQUAL;
+		PipelineSpec.BlendMode = PipelineBlendMode::OneZero;
+		PipelineSpec.VertexLayout = {
+			{ ShaderDataType::Float3, "a_Position" },
+			{ ShaderDataType::Float2, "a_TexCoord" }
+		};
+
+		m_RendererData.JumpFloodFirstPipeline = Ref<Pipeline>::Create( PipelineSpec );
+
+		m_RendererData.JumpFloodFirstMaterial->SetResource( "u_InputTexture", m_RendererData.SelectedGeometryFramebuffer->GetColorAttachmentsResources()[ 0 ] );
+	}
+
+	void SceneRenderer::InitJmpfEvenPass()
+	{
+		if( m_RendererData.JumpFloodEvenPass )
+			m_RendererData.JumpFloodEvenPass->Recreate();
+		else
+		{
+			// Create the scene composite render pass.
+			PassSpecification PassSpec = {};
+			PassSpec.Name = "Jump Flood Even pass";
+			PassSpec.Attachments = { ImageFormat::RGBA32F };
+
+			m_RendererData.JumpFloodEvenPass = Ref< Pass >::Create( PassSpec );
+		}
+
+		if( m_RendererData.JumpFloodEvenFB )
+		{
+			m_RendererData.JumpFloodEvenFB->Recreate( m_RendererData.Width, m_RendererData.Height, {} );
+		}
+		else
+		{
+			FramebufferSpecification FBSpec = {};
+			FBSpec.RenderPass = m_RendererData.JumpFloodEvenPass;
+			FBSpec.Width = m_RendererData.Width;
+			FBSpec.Height = m_RendererData.Height;
+			FBSpec.CreateDepth = false;
+			FBSpec.Attachments = { ImageFormat::RGBA32F };
+
+			m_RendererData.JumpFloodEvenFB = Ref<Framebuffer>::Create( FBSpec );
+		}
+
+		if( m_RendererData.JumpFloodEvenPipeline )
+			m_RendererData.JumpFloodEvenPipeline = nullptr;
+
+		PipelineSpecification PipelineSpec = {};
+		PipelineSpec.Width = m_RendererData.Width;
+		PipelineSpec.Height = m_RendererData.Height;
+		PipelineSpec.Name = "JumpFloodEvenPass";
+		PipelineSpec.Shader = m_RendererData.JmpFloodEvenShader;
+		PipelineSpec.RenderPass = m_RendererData.JumpFloodEvenPass;
+		PipelineSpec.UseDepthTest = true;
+		PipelineSpec.CullMode = CullMode::Back;
+		PipelineSpec.FrontFace = VK_FRONT_FACE_CLOCKWISE;
+		PipelineSpec.PolygonMode = VK_POLYGON_MODE_FILL;
+		PipelineSpec.DepthCompareOp = VK_COMPARE_OP_GREATER_OR_EQUAL;
+		PipelineSpec.BlendMode = PipelineBlendMode::OneZero;
+		PipelineSpec.VertexLayout = {
+			{ ShaderDataType::Float3, "a_Position" },
+			{ ShaderDataType::Float2, "a_TexCoord" }
+		};
+
+		m_RendererData.JumpFloodEvenPipeline = Ref<Pipeline>::Create( PipelineSpec );
+
+		m_RendererData.JumpFloodEvenMaterial->SetResource( "u_InputTexture", m_RendererData.JumpFloodFirstPassFB->GetColorAttachmentsResources()[ 0 ] );
+	}
+
+	void SceneRenderer::InitJmpfOddPass()
+	{
+		if( m_RendererData.JumpFloodOddPass )
+			m_RendererData.JumpFloodOddPass->Recreate();
+		else
+		{
+			// Create the scene composite render pass.
+			PassSpecification PassSpec = {};
+			PassSpec.Name = "Jump Flood Odd pass";
+			PassSpec.LoadColor = true;
+			PassSpec.Attachments = { ImageFormat::RGBA32F };
+
+			m_RendererData.JumpFloodOddPass = Ref< Pass >::Create( PassSpec );
+		}
+
+		if( m_RendererData.JumpFloodOddFB )
+		{
+			FramebufferSpecification FBSpec = {};
+			FBSpec.ExistingImages[ 0 ] = m_RendererData.SceneCompositeFramebuffer->GetColorAttachmentsResources()[ 0 ];
+
+			m_RendererData.JumpFloodOddFB->Recreate( m_RendererData.Width, m_RendererData.Height, FBSpec );
+		}
+		else
+		{
+			FramebufferSpecification FBSpec = {};
+			FBSpec.RenderPass = m_RendererData.JumpFloodOddPass;
+			FBSpec.Width = m_RendererData.Width;
+			FBSpec.Height = m_RendererData.Height;
+			FBSpec.CreateDepth = false;
+			FBSpec.ExistingImages[ 0 ] = m_RendererData.SceneCompositeFramebuffer->GetColorAttachmentsResources()[ 0 ];
+
+			m_RendererData.JumpFloodOddFB = Ref<Framebuffer>::Create( FBSpec );
+		}
+
+		if( m_RendererData.JumpFloodOddPipeline )
+			m_RendererData.JumpFloodOddPipeline = nullptr;
+
+		PipelineSpecification PipelineSpec = {};
+		PipelineSpec.Width = m_RendererData.Width;
+		PipelineSpec.Height = m_RendererData.Height;
+		PipelineSpec.Name = "JumpFloodOddPass";
+		PipelineSpec.Shader = m_RendererData.JmpFloodOddShader;
+		PipelineSpec.RenderPass = m_RendererData.JumpFloodOddPass;
+		PipelineSpec.UseDepthTest = true;
+		PipelineSpec.CullMode = CullMode::Back;
+		PipelineSpec.FrontFace = VK_FRONT_FACE_CLOCKWISE;
+		PipelineSpec.PolygonMode = VK_POLYGON_MODE_FILL;
+		PipelineSpec.VertexLayout = {
+			{ ShaderDataType::Float3, "a_Position" },
+			{ ShaderDataType::Float2, "a_TexCoord" }
+		};
+
+		m_RendererData.JumpFloodOddPipeline = Ref<Pipeline>::Create( PipelineSpec );
+
+		m_RendererData.JumpFloodOddMaterial->SetResource( "u_InputTexture", m_RendererData.JumpFloodEvenFB->GetColorAttachmentsResources()[ 0 ] );
+	}
+
 	void SceneRenderer::RenderGrid()
 	{
 #if !defined(SAT_DIST)
@@ -830,7 +1118,6 @@ namespace Saturn {
 			m_RendererData.CommandBuffer,
 			m_RendererData.GridPipeline, 
 			m_RendererData.GridMaterial, 
-			m_RendererData.UniformBufferSet, 
 			m_RendererData.QuadIndexBuffer, m_RendererData.QuadVertexBuffer 
 		);
 	}
@@ -886,7 +1173,6 @@ namespace Saturn {
 		Renderer::Get()->SubmitFullscreenQuad( CommandBuffer, 
 			m_RendererData.SkyboxPipeline, 
 			m_RendererData.SkyboxMaterial,
-			m_RendererData.UniformBufferSet,
 			m_RendererData.QuadIndexBuffer, 
 			m_RendererData.QuadVertexBuffer );
 	}
@@ -1276,17 +1562,17 @@ namespace Saturn {
 	{
 		SAT_PF_EVENT();
 
-		auto& id = mesh->ID;
+		const auto& id = mesh->ID;
 
 		uint32_t instanceOffset = 0;
 
-		auto& submeshes = mesh->Submeshes();
+		const auto& submeshes = mesh->Submeshes();
 		for( size_t i = 0; i < submeshes.size(); ++i )
 		{
-			glm::mat4 submeshTransform = transform * submeshes[ i ].Transform;
+			const glm::mat4 submeshTransform = transform * submeshes[ i ].Transform;
 
-			AABB submeshAABB = submeshes[ i ].BoundingBox;
-			AABB transformedAABB = TransformAABB( submeshAABB, submeshTransform );
+			const AABB submeshAABB = submeshes[ i ].BoundingBox;
+			const AABB transformedAABB = TransformAABB( submeshAABB, submeshTransform );
 
 			if( m_RendererData.CurrentCamera.pCamera->CameraFrustumIntersectsAABB( transformedAABB ) )
 			{
@@ -1327,7 +1613,7 @@ namespace Saturn {
 	{
 		SAT_PF_EVENT();
 
-		auto& id = mesh->ID;
+		const auto& id = mesh->ID;
 
 		auto& submeshes = mesh->Submeshes();
 		for( size_t i = 0; i < submeshes.size(); i++ )
@@ -1376,8 +1662,7 @@ namespace Saturn {
 	{
 		SAT_PF_EVENT();
 
-		auto& id = mesh->ID;
-		auto& submeshes = mesh->Submeshes();
+		const auto& submeshes = mesh->Submeshes();
 		for( size_t i = 0; i < submeshes.size(); i++ )
 		{
 			StaticMeshKey key = { mesh->ID, materialRegistry, ( uint32_t ) i };
@@ -1399,6 +1684,38 @@ namespace Saturn {
 			};
 			data.TransfromBufferR[ 3 ] = {
 				transform[ 0 ][ 3 ], transform[ 1 ][ 3 ], transform[ 2 ][ 3 ], transform[ 3 ][ 3 ]
+			};
+		}
+	}
+
+	void SceneRenderer::SubmitSelectedStaticMesh( SharedPtr<Entity> entity, Ref< StaticMesh > mesh, Ref<MaterialRegistry> materialRegistry, const glm::mat4& transform )
+	{
+		SAT_PF_EVENT();
+
+		const auto& rSubmeshes = mesh->Submeshes();
+		for( size_t i = 0; i < rSubmeshes.size(); ++i )
+		{
+			const glm::mat4 submeshTransform = transform * rSubmeshes[ i ].Transform;
+
+			const StaticMeshKey key = { mesh->ID, materialRegistry, ( uint32_t ) i, true };
+
+			auto& command = m_SelectedStaticMeshDrawList[ key ];
+			command.Mesh = mesh;
+			command.SubmeshIndex = ( uint32_t ) i;
+			++command.Instances;
+
+			auto& rData = m_RendererData.MeshTransforms[ key ].Data.emplace_back();
+			rData.TransfromBufferR[ 0 ] = {
+				submeshTransform[ 0 ][ 0 ], submeshTransform[ 1 ][ 0 ], submeshTransform[ 2 ][ 0 ], submeshTransform[ 3 ][ 0 ]
+			};
+			rData.TransfromBufferR[ 1 ] = {
+				submeshTransform[ 0 ][ 1 ], submeshTransform[ 1 ][ 1 ], submeshTransform[ 2 ][ 1 ], submeshTransform[ 3 ][ 1 ]
+			};
+			rData.TransfromBufferR[ 2 ] = {
+				submeshTransform[ 0 ][ 2 ], submeshTransform[ 1 ][ 2 ], submeshTransform[ 2 ][ 2 ], submeshTransform[ 3 ][ 2 ]
+			};
+			rData.TransfromBufferR[ 3 ] = {
+				submeshTransform[ 0 ][ 3 ], submeshTransform[ 1 ][ 3 ], submeshTransform[ 2 ][ 3 ], submeshTransform[ 3 ][ 3 ]
 			};
 		}
 	}
@@ -1428,8 +1745,25 @@ namespace Saturn {
 		InitSceneComposite();
 		InitLateComposite();
 		InitPhysicsOutline();
+		InitSelectionPass();
+		InitJumpFlood();
 		
 		InitTexturePass();
+
+		switch( m_AOTechnique )
+		{
+			case AOTechnique::SSAO:
+				InitSSAO();
+				break;
+
+			case AOTechnique::HBAO:
+				InitHBAO();
+				break;
+
+			case AOTechnique::None:
+			default:
+				break;
+		}
 
 		const glm::uvec2 viewportSize = { m_RendererData.Width, m_RendererData.Height };
 
@@ -1575,7 +1909,7 @@ namespace Saturn {
 
 		m_RendererData.UniformBufferSet->Get( 0, 0, frame )->UploadData( &u_Matrices, sizeof( u_Matrices ) );
 
-	//		m_RendererData.UniformBufferSet->Get( 0, 1, frame )->UploadData( &u_LightData, sizeof( u_LightData ) );
+//		m_RendererData.UniformBufferSet->Get( 0, 1, frame )->UploadData( &u_LightData, sizeof( u_LightData ) );
 
 		m_RendererData.UniformBufferSet->Get( 0, 2, frame )->UploadData( &u_SceneData, sizeof( u_SceneData ) );
 		m_RendererData.UniformBufferSet->Get( 0, 3, frame )->UploadData( &u_ShadowData, sizeof( u_ShadowData ) );
@@ -1863,8 +2197,9 @@ namespace Saturn {
 
 		// Actual scene composite pass.
 		Renderer::Get()->SubmitFullscreenQuad(
-			CommandBuffer, m_RendererData.SceneCompositePipeline,
-			m_RendererData.SceneCompositeMaterial, m_RendererData.UniformBufferSet,
+			CommandBuffer, 
+			m_RendererData.SceneCompositePipeline,
+			m_RendererData.SceneCompositeMaterial,
 			m_RendererData.QuadIndexBuffer, m_RendererData.QuadVertexBuffer );
 
 		// End scene composite pass.
@@ -1926,14 +2261,10 @@ namespace Saturn {
 		m_RendererData.LateCompositePass->EndPass();
 	}
 
-	/*
-	void SceneRenderer::SelectionPass()
+	void SceneRenderer::JumpFloodLatePass()
 	{
-		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
-		VkExtent2D Extent = { m_RendererData.Width,m_RendererData.Height };
-		VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
-
-		m_RendererData.SelectionRenderPass->BeginPass( CommandBuffer, m_RendererData.SelectionFramebuffer->GetVulkanFramebuffer(), Extent );
+		const VkExtent2D Extent = { m_RendererData.Width, m_RendererData.Height };
+		const VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
 
 		VkViewport Viewport = {};
 		Viewport.x = 0;
@@ -1943,80 +2274,27 @@ namespace Saturn {
 		Viewport.minDepth = 0.0f;
 		Viewport.maxDepth = 1.0f;
 
-		VkRect2D Scissor = { .offset = { 0, 0 }, .extent = Extent };
+		const VkRect2D Scissor = { .offset = { 0, 0 }, .extent = Extent };
 
 		vkCmdSetViewport( CommandBuffer, 0, 1, &Viewport );
 		vkCmdSetScissor( CommandBuffer, 0, 1, &Scissor );
 
-		struct UB_Matrices
-		{
-			glm::mat4 ViewProjection;
-		} u_Matrices{};
+		// Begin odd pass
+		m_RendererData.JumpFloodOddPass->BeginPass( CommandBuffer, m_RendererData.JumpFloodOddFB->GetVulkanFramebuffer(), Extent );
 
-		u_Matrices.ViewProjection = m_RendererData.CurrentCamera.pCamera->ProjectionMatrix() * m_RendererData.CurrentCamera.ViewMatrix;
+		vkCmdSetViewport( CommandBuffer, 0, 1, &Viewport );
+		vkCmdSetScissor( CommandBuffer, 0, 1, &Scissor );
 
-		m_RendererData.SelectionMaterial->UploadDataToUB( 0, &u_Matrices, sizeof( u_Matrices ) );
+		Renderer::Get()->SubmitFullscreenQuad(
+			CommandBuffer,
+			m_RendererData.JumpFloodOddPipeline,
+			m_RendererData.JumpFloodOddMaterial,
+			m_RendererData.QuadIndexBuffer,
+			m_RendererData.QuadVertexBuffer
+		);
 
-		for( auto& rCommand : m_TemporarySelectedMeshDrawList )
-		{
-			glm::mat4 transform = rCommand.entity->GetComponent<TransformComponent>();
-			ENTT_ID_TYPE handle = ( ENTT_ID_TYPE ) rCommand.entity->GetHandle();
-
-			glm::vec3 idColor{};
-
-			uint32_t r, g, b;
-			r = ( handle >> 16 ) & 0xFF;
-			g = ( handle >> 8 ) & 0xFF;
-			b = ( handle ) & 0xFF;
-
-			idColor = glm::vec3( r / 255.0f, g / 255.0f, b / 255.0f );
-
-			m_RendererData.SelectionMaterial->SetPC( "u_IDBuffer.IDColor", idColor );
-
-			vkCmdPushConstants( CommandBuffer, m_RendererData.SelectionPipeline->GetPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, ( uint32_t ) m_RendererData.SelectionMaterial->GetPushConstantData().Size, m_RendererData.SelectionMaterial->GetPushConstantData().Data );
-
-			Buffer transformBufer( sizeof( glm::mat4 ), &transform );
-
-			Renderer::Get()->RenderMeshWithoutMaterial(
-				CommandBuffer,
-				m_RendererData.SelectionPipeline,
-				rCommand.Mesh,
-				m_RendererData.SelectionMaterial,
-				nullptr,
-				m_RendererData.StorageBufferSet,
-				rCommand.SubmeshIndex, transformBufer );
-		}
-
-		m_RendererData.SelectionRenderPass->EndPass();
-
-		// Now read the texture
-		Ref<Image2D> selectionOut = m_RendererData.SelectionFramebuffer->GetColorAttachmentsResources()[ 0 ];
-
-		glm::vec2 pos = Input::Get().MousePosition();
-
-		int x = glm::clamp( ( int ) pos.x - (int)m_RendererData.ViewportPos.x, 0, ( int ) m_RendererData.Width - 1 );
-		int y = glm::clamp( ( int ) pos.y - ( int ) m_RendererData.ViewportPos.y, 0, ( int ) m_RendererData.Height - 1 );
-	
-		Buffer pixel = selectionOut->CopyToBufferPixel( x, y );
-
-		if( pixel.Data )
-		{
-			uint32_t handle = ( ( ( pixel[ 0 ] & 0x0FF ) << 16 ) | ( ( pixel[ 1 ] & 0x0FF ) << 8 ) | ( pixel[ 2 ] & 0x0FF ) );
-
-			if( handle != 0 || handle != UINT32_MAX )
-			{
-				SharedPtr<Entity> e = m_pScene->FindEntityByHandle( entt::entity( handle ) );
-
-				if( e )
-				{
-					m_pScene->AddSelectedEntity( e );
-				}
-			}
-		}
-
-		pixel.Free();
+		m_RendererData.JumpFloodOddPass->EndPass();
 	}
-	*/
 
 	void SceneRenderer::TexturePass()
 	{
@@ -2047,7 +2325,7 @@ namespace Saturn {
 		// Actual scene composite pass.
 		Renderer::Get()->SubmitFullscreenQuad(
 			CommandBuffer, m_RendererData.TexturePassPipeline,
-			m_RendererData.TexturePassMaterial, m_RendererData.UniformBufferSet,
+			m_RendererData.TexturePassMaterial,
 			m_RendererData.QuadIndexBuffer, m_RendererData.QuadVertexBuffer );
 
 		// End scene composite pass.
@@ -2152,6 +2430,167 @@ namespace Saturn {
 		//return;
 	}
 
+	void SceneRenderer::SSAOPass()
+	{
+		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
+		VkExtent2D Extent = { m_RendererData.Width / 2, m_RendererData.Height / 2 };
+		VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
+
+		m_RendererData.SSAORenderPass->BeginPass( CommandBuffer, m_RendererData.SSAOFramebuffer->GetVulkanFramebuffer(), Extent );
+
+		VkViewport Viewport = {};
+		Viewport.x = 0;
+		Viewport.y = 0;
+		Viewport.width = ( float ) m_RendererData.Width / 2;
+		Viewport.height = ( float ) m_RendererData.Height / 2;
+		Viewport.minDepth = 0.0f;
+		Viewport.maxDepth = 1.0f;
+
+		VkRect2D Scissor = { .offset = { 0, 0 }, .extent = Extent };
+
+		vkCmdSetViewport( CommandBuffer, 0, 1, &Viewport );
+		vkCmdSetScissor( CommandBuffer, 0, 1, &Scissor );
+
+		struct UB_Matrices
+		{
+			glm::mat4 Projection;
+			glm::mat4 InvProjection;
+		} u_Matrices{};
+
+		u_Matrices.Projection = m_RendererData.CurrentCamera.pCamera->ProjectionMatrix();
+		u_Matrices.InvProjection = glm::inverse( u_Matrices.Projection );
+
+		m_RendererData.SSAOMaterial->UploadDataToUB( 0, &u_Matrices, sizeof( u_Matrices ) );
+
+		Renderer::Get()->SubmitFullscreenQuad(
+			CommandBuffer, 
+			m_RendererData.SSAOPipeline,
+			m_RendererData.SSAOMaterial,
+			m_RendererData.QuadIndexBuffer, m_RendererData.QuadVertexBuffer );
+
+		m_RendererData.SSAORenderPass->EndPass();
+	}
+
+	void SceneRenderer::SelectedGeometryPass()
+	{
+		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
+		VkExtent2D Extent = { m_RendererData.Width, m_RendererData.Height };
+		VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
+
+		m_RendererData.SelectedGeometryPass->BeginPass( CommandBuffer, m_RendererData.SelectedGeometryFramebuffer->GetVulkanFramebuffer(), Extent );
+
+		VkViewport Viewport = {};
+		Viewport.x = 0;
+		Viewport.y = 0;
+		Viewport.width = ( float ) m_RendererData.Width;
+		Viewport.height = ( float ) m_RendererData.Height;
+		Viewport.minDepth = 0.0f;
+		Viewport.maxDepth = 1.0f;
+
+		VkRect2D Scissor = { .offset = { 0, 0 }, .extent = Extent };
+
+		vkCmdSetViewport( CommandBuffer, 0, 1, &Viewport );
+		vkCmdSetScissor( CommandBuffer, 0, 1, &Scissor );
+
+		// Render
+
+		struct UB_Matrices
+		{
+			glm::mat4 ViewProjection;
+		} u_Matrices{};
+
+		u_Matrices.ViewProjection = m_RendererData.CurrentCamera.pCamera->ProjectionMatrix() * m_RendererData.CurrentCamera.ViewMatrix;
+
+		m_RendererData.SelectedGeometryMaterial->UploadDataToUB( 0, &u_Matrices, sizeof( u_Matrices ) );
+
+		for( auto& [key, Cmd] : m_SelectedStaticMeshDrawList )
+		{
+			const auto& rTransformData = m_RendererData.MeshTransforms[ key ];
+
+			Renderer::Get()->RenderMeshWithoutMaterial(
+				CommandBuffer,
+				m_RendererData.SelectedGeometryPipeline,
+				Cmd.Mesh,
+				m_RendererData.SelectedGeometryMaterial,
+				m_RendererData.UniformBufferSet,
+				m_RendererData.StorageBufferSet,
+				Cmd.Instances,
+				m_RendererData.SubmeshTransformData[ frame ].VertexBuffer,
+				rTransformData.Offset,
+				Cmd.SubmeshIndex );
+		}
+
+		m_RendererData.SelectedGeometryPass->EndPass();
+	}
+
+	void SceneRenderer::JumpFloodPass()
+	{
+		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
+		VkExtent2D Extent = { m_RendererData.Width, m_RendererData.Height };
+		VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
+
+		m_RendererData.JumpFloodFirstPass->BeginPass( CommandBuffer, m_RendererData.JumpFloodFirstPassFB->GetVulkanFramebuffer(), Extent );
+
+		VkViewport Viewport = {};
+		Viewport.x = 0;
+		Viewport.y = 0;
+		Viewport.width = ( float ) m_RendererData.Width;
+		Viewport.height = ( float ) m_RendererData.Height;
+		Viewport.minDepth = 0.0f;
+		Viewport.maxDepth = 1.0f;
+
+		VkRect2D Scissor = { .offset = { 0, 0 }, .extent = Extent };
+
+		vkCmdSetViewport( CommandBuffer, 0, 1, &Viewport );
+		vkCmdSetScissor( CommandBuffer, 0, 1, &Scissor );
+
+		Renderer::Get()->SubmitFullscreenQuad( 
+			CommandBuffer, 
+			m_RendererData.JumpFloodFirstPipeline, 
+			m_RendererData.JumpFloodFirstMaterial, 
+			m_RendererData.QuadIndexBuffer, 
+			m_RendererData.QuadVertexBuffer 
+		);
+
+		m_RendererData.JumpFloodFirstPass->EndPass();
+
+		const int steps = 2;
+		int step = ( int ) glm::round( glm::pow<int>( steps - 1, 2 ) );
+		glm::vec2 texelSize = { 1.0f / ( float ) m_RendererData.JumpFloodEvenFB->GetWidth(), 1.0f / ( float ) m_RendererData.JumpFloodEvenFB->GetHeight() };
+
+		struct JmpFPushConst
+		{
+			glm::vec2 TexelSize{};
+			int Step = 0;
+		} pc_JmpFlood;
+
+		pc_JmpFlood.TexelSize = texelSize;
+		pc_JmpFlood.Step = step;
+
+		Buffer PushConstData;
+		PushConstData.Allocate( sizeof( JmpFPushConst ) );
+		PushConstData.Write( &pc_JmpFlood, sizeof( JmpFPushConst ), 0 );
+
+		// Begin even pass
+		m_RendererData.JumpFloodEvenPass->BeginPass( CommandBuffer, m_RendererData.JumpFloodEvenFB->GetVulkanFramebuffer(), Extent );
+
+		vkCmdSetViewport( CommandBuffer, 0, 1, &Viewport );
+		vkCmdSetScissor( CommandBuffer, 0, 1, &Scissor );
+
+		Renderer::Get()->SubmitFullscreenQuadPushConst(
+			CommandBuffer,
+			m_RendererData.JumpFloodEvenPipeline,
+			m_RendererData.JumpFloodEvenMaterial,
+			m_RendererData.QuadIndexBuffer,
+			m_RendererData.QuadVertexBuffer,
+			PushConstData
+		);
+
+		m_RendererData.JumpFloodEvenPass->EndPass();
+
+		PushConstData.Free();
+	}
+
 	void SceneRenderer::AddScheduledFunction( ScheduledFunc&& rrFunc )
 	{
 		m_ScheduledFunctions.push_back( rrFunc );
@@ -2161,7 +2600,7 @@ namespace Saturn {
 	void SceneRenderer::OnShaderReloaded( const std::string& rName )
 	{
 		const Ref<Shader> shader = ShaderLibrary::Get().Find( rName );
-		auto& rReference = Renderer::Get()->FindShaderReference( shader->GetShaderHash() );
+		auto& rReference = Renderer::Get()->FindOrCreateShaderReference( shader->GetShaderHash() );
 
 		for( auto& rPipeline : rReference.Pipelines )
 		{
@@ -2416,6 +2855,23 @@ namespace Saturn {
 		}
 
 		{
+			ScopedDebugLabel label( m_RendererData.CommandBuffer, "SelectedGeometry" );
+			SelectedGeometryPass();
+		}
+
+		/*
+		{
+			ScopedDebugLabel label( m_RendererData.CommandBuffer, "SSAO" );
+			SSAOPass();
+		}
+		*/
+
+		{
+			ScopedDebugLabel label( m_RendererData.CommandBuffer, "JumpFlood" );
+			JumpFloodPass();
+		}
+
+		{
 			ScopedDebugLabel label( m_RendererData.CommandBuffer, "Scene Composite/Post Processing" );
 			SceneCompositePass();
 		}
@@ -2423,6 +2879,11 @@ namespace Saturn {
 		{
 			ScopedDebugLabel label( m_RendererData.CommandBuffer, "Late Composite/SceneRenderer" );
 			LateCompPhysicsOutline();
+		}
+
+		{
+			ScopedDebugLabel label( m_RendererData.CommandBuffer, "Late Composite/JmpFlood" );
+			JumpFloodLatePass();
 		}
 
 		if( m_AluraRenderer )
@@ -2446,6 +2907,7 @@ namespace Saturn {
 		m_ShadowMapDrawList.clear();
 		m_DynamicShadowMapDrawList.clear();
 		m_PhysicsColliderDrawList.clear();
+		m_SelectedStaticMeshDrawList.clear();
 		m_ScheduledFunctions.clear();
 		m_RendererData.MeshTransforms.clear();
 		m_RendererData.BoneTransformMap.clear();
@@ -2487,6 +2949,10 @@ namespace Saturn {
 		for( int i = 0; i < SHADOW_CASCADE_COUNT; ++i )
 			ShadowCascades[ i ].Framebuffer = nullptr;
 
+		JumpFloodOddFB = nullptr;
+		JumpFloodEvenFB = nullptr;
+		JumpFloodFirstPassFB = nullptr;
+
 		ShadowCascades.clear();
 
 		// Render Passes
@@ -2503,6 +2969,17 @@ namespace Saturn {
 
 		LateCompositePass->Terminate();
 		LateCompositePass = nullptr;
+
+		SelectedGeometryPass->Terminate();
+		SelectedGeometryPass = nullptr;
+
+		JumpFloodFirstPass->Terminate();
+		JumpFloodOddPass->Terminate();
+		JumpFloodEvenPass->Terminate();
+
+		JumpFloodOddPass = nullptr;
+		JumpFloodFirstPass = nullptr;
+		JumpFloodEvenPass = nullptr;
 
 		// Pipelines
 		SceneCompositePipeline = nullptr;

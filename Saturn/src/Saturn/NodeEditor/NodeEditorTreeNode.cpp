@@ -30,6 +30,9 @@
 #include "NodeEditorTreeNode.h"
 
 #include "UI/NodeEditor.h"
+
+#include "Debugging/NodeBreakPointManager.h"
+
 #include <imgui_internal.h>
 
 namespace Saturn {
@@ -67,21 +70,52 @@ namespace Saturn {
 
 		auto* pDrawList = ImGui::GetWindowDrawList();
 
+		ImVec2 headerEndPos = ImGui::GetCursorScreenPos();
+		
+		///////////////////////////////
+		// Debug breakpoint
+		if( auto* pBreakpoint = NodeBreakPointManager::Get().TryGetBreakPoint( ID ); pBreakpoint )
+		{
+			ImVec2 badgePos = headerEndPos;
+			badgePos.x += ed::GetNodeSize( ed::NodeId( ID ) ).x;
+
+			const float radius = 10.0f;
+
+			ImVec2 hex[ 6 ];
+			for( int i = 0; i < 6; i++ )
+			{
+				const float angle = IM_PI / 3.0f * i; // 60 deg per segment.
+				hex[ i ] = ImVec2(
+					badgePos.x + radius + std::cosf( angle ) * radius,
+					badgePos.y + radius + std::sinf( angle ) * radius
+				);
+			}
+
+			if( pBreakpoint->Type == NodeBreakPointType::Normal )
+			{
+				// Draw filled hexagon.
+				const ImU32 badgeColor = IM_COL32( 255, 0, 0, 255 );
+				pDrawList->AddConvexPolyFilled( hex, 6, badgeColor );
+			}
+
+			// Draw border.
+			const ImU32 borderColor = IM_COL32( 0, 0, 0, 255 );
+			pDrawList->AddPolyline( hex, 6, borderColor, ImDrawFlags_Closed, 2.0f );
+		}
+
 		///////////////////////////////
 		// Evaluation Order
-
-		ImVec2 headerEndPos = ImGui::GetCursorScreenPos();
-		ImVec2 badgePos = headerEndPos + ed::GetNodeSize( ed::NodeId( ID ) );
+		auto badgePos = headerEndPos + ed::GetNodeSize( ed::NodeId( ID ) );
 		badgePos.y -= 20.0f + ImGui::GetStyle().FramePadding.x;
 
 		ImVec2 badgeSize = ImVec2( 20.0f, 20.0f );
 
 		// Draw background
-		ImU32 badgeColor = IM_COL32( 255, 100, 100, 255 );
+		auto badgeColor = IM_COL32( 255, 100, 100, 255 );
 		pDrawList->AddRectFilled( badgePos, ImVec2( badgePos.x + badgeSize.x, badgePos.y + badgeSize.y ), badgeColor, 5.0f );
 
 		// Draw border
-		ImU32 borderColor = IM_COL32( 0, 0, 0, 255 );
+		auto borderColor = IM_COL32( 0, 0, 0, 255 );
 		pDrawList->AddRect( badgePos, ImVec2( badgePos.x + badgeSize.x, badgePos.y + badgeSize.y ), borderColor, 5.0f );
 
 		// Draw text centered in the badge
@@ -90,6 +124,9 @@ namespace Saturn {
 		ImVec2 textSize = ImGui::CalcTextSize( text.data() );
 		ImVec2 textPos = ImVec2( badgePos.x + ( badgeSize.x - textSize.x ) * 0.5f, badgePos.y + ( badgeSize.y - textSize.y ) * 0.5f );
 		pDrawList->AddText( textPos, IM_COL32( 255, 255, 255, 255 ), text.data() );
+
+		//////////////////////////////////////////////////////////////////////////
+		// NODE
 
 		ImGui::BeginVertical( (int)ID );
 		ImGui::BeginHorizontal( "Inputs" );

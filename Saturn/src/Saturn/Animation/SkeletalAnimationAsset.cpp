@@ -38,6 +38,9 @@
 
 #include "Saturn/Asset/AssetManager.h"
 
+#include "Saturn/Serialisation/Raw/RawSerialisationBase.h"
+#include "Saturn/Serialisation/Raw/RawSerialisation.h"
+
 #include <acl/compression/compress.h>
 #include <acl/compression/pre_process.h>
 #include <acl/compression/track_array.h>

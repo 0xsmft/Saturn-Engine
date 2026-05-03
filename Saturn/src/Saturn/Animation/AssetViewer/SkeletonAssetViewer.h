@@ -28,20 +28,20 @@
 
 #pragma once
 
-#include "Saturn/ImGui/AssetViewer.h"
 #include "SkeletonBoneHierarchyPanel.h"
-#include "Saturn/ImGui/SubSceneRendererWindow.h"
+
+#include "Saturn/ImGui/AssetViewer.h"
+#include "Saturn/ImGui/EditorViewport.h"
 
 namespace Saturn {
 
 	class SceneRenderer;
-	class EditorCamera;
 
-	class SkeletonAssetViewer : public AssetViewer, public SubSceneRendererWindow
+	class SkeletonAssetViewer : public AssetViewer
 	{
 	public:
 		SkeletonAssetViewer( AssetID id );
-		~SkeletonAssetViewer();
+		virtual ~SkeletonAssetViewer();
 
 		virtual void OnImGuiRender() override;
 		virtual void OnUpdate( Timestep ts ) override;
@@ -54,6 +54,14 @@ namespace Saturn {
 		void DrawPickCompatibleMeshWindow();
 
 	private:
+		UUID m_TemporaryCompatibleMeshID = 0;
+		std::unique_ptr<EditorViewport> m_Viewport;
+		Ref<SkeletonAsset> m_SkeletonAsset;
+		Ref<Scene> m_Scene;
+		Ref<SkeletalMesh> m_SkeletalMesh;
+
+		SkeletonBoneHierarchyPanel m_BoneHierarchyPanel;
+
 		bool m_ShowFinderModal = false;
 		bool m_ShowAdvRawViewer = false;
 		bool m_ShowCompatibleMeshes = true;
@@ -62,12 +70,6 @@ namespace Saturn {
 		// so when we use our gizmo, we want to disable movement from our main window.
 		// We need m_DisableViewportMovement because in a rare case our main window may be docked or the viewport window may be undocked from the main window, we'd want to do the same with our viewport window.
 		bool m_DisableWindowMovement = false;
-		UUID m_TemporaryCompatibleMeshID = 0;
-		Ref<SkeletonAsset> m_SkeletonAsset;
-		Ref<SceneRenderer> m_SceneRenderer;
-		Ref<SkeletalMesh> m_SkeletalMesh;
-
-		SkeletonBoneHierarchyPanel m_BoneHierarchyPanel;
 	};
 	
 }

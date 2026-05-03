@@ -30,6 +30,7 @@
 
 #include "Saturn/NodeEditor/NodeEditorBase.h"
 #include "Saturn/NodeEditor/NodeEditorCompilationStatus.h"
+#include "Saturn/NodeEditor/PreCompiler/NodeEditorPreCompilerBase.h"
 
 #include "NodeEditorOutput.h"
 
@@ -50,6 +51,16 @@ namespace Saturn {
 		DeselectNode,
 		SelectLink,
 		DeselectLink
+	};
+
+	struct NodeEditorSearchCacher
+	{
+		ImGuiTextFilter Filter;
+		std::vector<std::string> NodeNames;
+		std::vector<std::string> PassedNodeNames;
+	
+		void FilterNames();
+		void Clear();
 	};
 
 #if !defined(SAT_DIST)
@@ -75,13 +86,16 @@ namespace Saturn {
 		// NodeEditorBase overrides
 		virtual void OnImGuiRender() override;
 		virtual void OnUpdate( Timestep ts ) override;
-		virtual void OnEvent( Event& rEvent ) override {}
+		virtual void OnEvent( Event& rEvent ) override;
 
 		// NodeEditor virtuals
 		virtual void OnTopBarRender() {}
 		// NOTE: The ImGui window has already begun when this function is called.
 		virtual void OnExtraRender() {}
 		virtual void OnNodeEditorEvent( NodeEditorAction action ) {}
+#if !defined(SAT_DIST)
+		virtual void OnDebugBreak();
+#endif
 
 		// Happens when the user clicks on the empty space.
 		void SetCreateNewNodeFunction( std::function<SharedPtr<NodeEditorNodeBase>()>&& rrCreateNewNodeFunction )
@@ -133,6 +147,10 @@ namespace Saturn {
 		[[nodiscard]] std::vector<SharedPtr<NodeEditorNodeBase>> GetSubGraphs() const { return m_SubGraphs; }
 		
 		SharedPtr<NodeEditorNodeBase> GetActiveSubGraph() { return m_ActiveSubGraph; }
+
+		void AllowEditingAndDisableDebugging();
+		void SetCurrentDebuggingEditor( SharedPtr<NodeEditor> nodeEditor );
+		void ResetDebugging();
 #endif
 
 		std::vector<UUID> GetSelectedNodes();
@@ -159,7 +177,9 @@ namespace Saturn {
 		void DeleteDeadLinks( UUID nodeID );
 		void CreateNewEditorIfNeeded();
 		void DrawSimulatingCanvas();
+		void DrawDebuggingCanvas();
 		void TryDrawUnsavedChangesModal();
+		void TryDrawCompileErrorModal();
 		void DrawTopBarChildInternal();
 		void HandleCreate();
 		void HandleStateCanvasBorders();
@@ -167,20 +187,32 @@ namespace Saturn {
 		void DrawDetailsWindow();
 		void DrawDataWindow();
 		void DrawDebugWindow();
+		void DrawBeginSearchWindow();
+		void DrawSearchResultsWindow();
 
 		virtual void DrawGraph();
 
 	protected:
+		NodeEditorSearchCacher m_SearchCacher;
+
 		std::function<SharedPtr<NodeEditorNodeBase>()> m_CreateNewNodeFunction;
 		std::function<void()> m_TopbarItemsFunction;
 		std::function<void()> m_BreadCrumbsFunction;
 
+		bool m_ShowSearchResultsWindow = false;
+		bool m_IsSearching = false;
 		bool m_CreateNewNode = false;
 		bool m_ShowUnsavedChanges = false;
 		bool m_Dirty = false;
 #if !defined(SAT_DIST)
 		bool m_ShowRightClickContextMenu = false;
+		bool m_PendingBreakHandle = false;
 #endif
+		bool m_ShowDebugInformation = false;
+		bool m_ShowDetailsInformation = false;
+		bool m_ShowDataWindow = false;
+		bool m_HasPreCompileErrors = false;
+		bool m_ShowErrorPopup = false;
 
 		Ref<Pin> m_NewLinkPin = nullptr;
 		Ref<Pin> m_NewNodeLinkPin = nullptr;
@@ -193,9 +225,7 @@ namespace Saturn {
 		std::vector<SharedPtr<NodeEditorNodeBase>> m_SubGraphs;
 #endif
 
-		bool m_ShowDebugInformation = false;
-		bool m_ShowDetailsInformation = false;
-		bool m_ShowDataWindow = false;
+		Ref<NodeEditorPreCompilerBase> m_PreCompiler;
 
 		ImVec2 m_ViewportSize;
 

@@ -73,6 +73,10 @@ namespace Saturn {
 		out << YAML::BeginMap;
 
 		out << YAML::Key << "Startup Project" << YAML::Value << rSettings.StartupProject;
+		
+		// We have to serialise as uint16_t or greater
+		// because if we do it as a uint8_t it may write it as "\x01" and will refuse to read it back...
+		out << YAML::Key << "Editor Font" << YAML::Value << ( uint16_t ) rSettings.m_EditorFont;
 
 		out << YAML::Key << "Recent Projects";
 		
@@ -117,6 +121,26 @@ namespace Saturn {
 				rSettings.StartupProjectName = startupPath.stem().string();
 				rSettings.StartupProject = startupPath;
 			}
+		}
+
+		const auto editorFont = data[ "Editor Font" ];
+		if( !editorFont.IsNull() )
+		{
+			EditorFont font = EditorFont::NotoSans;
+
+			const uint16_t fontDoubleSize = ( uint16_t ) editorFont.as<uint16_t>( 0 );
+			if( fontDoubleSize > std::numeric_limits<uint8_t>::max() )
+			{
+				// Even if we were to set font to fontDoubleSize it would overflow to 0 anyways as
+				// unsigned overflow is defined behavior.
+				SAT_CORE_WARN( "Editor font {0} is greater than max font {1}, overflow detected.", fontDoubleSize, 0xFF );
+			}
+			else
+			{
+				font = ( EditorFont ) fontDoubleSize;
+			}
+
+			rSettings.m_EditorFont = font;
 		}
 
 		const auto recentProjects = data[ "Recent Projects" ];

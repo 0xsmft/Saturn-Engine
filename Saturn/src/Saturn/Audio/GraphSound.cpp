@@ -29,14 +29,13 @@
 #include "sppch.h"
 #include "GraphSound.h"
 
+#include "Sound.h"
+#include "SoundGraph/SoundGraphTaskHandler.h"
+
 #include "Saturn/Asset/AssetManager.h"
 
-#include "SoundNodeEditor/SoundEditorEvaluator.h"
-#include "Sound.h"
-
-#include "Saturn/NodeEditor/NodeEditorBase.h"
-#include "Saturn/NodeEditor/UI/NodeEditor.h"
 #include "Saturn/NodeEditor/Serialisation/NodeCache.h"
+#include "Saturn/NodeEditor/GlobalNodeEditorTaskCache.h"
 
 namespace Saturn {
 
@@ -48,12 +47,6 @@ namespace Saturn {
 	GraphSound::~GraphSound()
 	{
 		m_SoundGroup = nullptr;
-
-		if( m_NodeEditor )
-			m_NodeEditor->SetRuntime( nullptr );
-
-		m_Runtime = nullptr;
-		m_NodeEditor = nullptr;
 	}
 
 	void GraphSound::Initialise()
@@ -63,44 +56,30 @@ namespace Saturn {
 		if( m_Loaded )
 			return;
 
-#if defined(SAT_DIST)
-		m_NodeEditor = SharedPtr<NodeEditorBase>::Create( m_GraphAsset->ID );
-#else
-		m_NodeEditor = SharedPtr<NodeEditor>::Create( m_GraphAsset->ID );
-#endif
+		m_TaskHandler = Ref<SoundGraphTaskHandler>::Create();
 
-		m_NodeEditor->SetPrivileges( NodeEditorUserAuthority::Full, false );
-		m_NodeEditor->SetPrivileges( NodeEditorUserAuthority::Evaluation, true );
+		// Try to load without touching the disk...
+		auto& rCache = GlobalNodeEditorTaskCache::Get().GetOrCreateTaskCache( m_GraphAsset->ID );
+		if( rCache.IsListEmpty() )
+		{
+			// ...otherwise load it from disk.
+			const std::string filename = std::format( "{0}.gsnd", m_GraphAsset->Name );
 
-		const std::string filename = std::format( "{0}.gsnd", m_GraphAsset->Name );
-		if( NodeCacheEditor::ReadNodeEditorCache( m_NodeEditor, m_GraphAsset->ID, filename ) )
-		{
-			m_OutputNodeID = m_NodeEditor->FindNode( "Sound Output" )->ID;
-		}
-		else
-		{
-			SAT_CORE_WARN( "Failed to read node editor, using empty graph sound" );
-			SAT_CORE_ASSERT( false );
+			if( !NodeCacheEditor::ReadNodeTaskCacheOnly( rCache, m_GraphAsset->ID, filename ) )
+			{
+				m_SoundState = SoundState::NoDataSource;
+				return;
+			}
 		}
 
-		SoundEditorEvaluator::SoundEdEvaluatorInfo info;
-		info.SoundGroup = m_SoundGroup;
-		info.OutputNodeID = m_OutputNodeID;
-	
-		m_Runtime = Ref<SoundEditorEvaluator>::Create( info );
-		m_Runtime->SetTargetNodeEditor( m_NodeEditor );
-
-		m_NodeEditor->SetRuntime( m_Runtime );
+		m_TaskHandler->Init( rCache );
 	}
 
-	void GraphSound::Play( int frameOffset )
+	void GraphSound::Play( uint64_t frameOffset )
 	{
-		if( m_OutputNodeID == 0 || !m_NodeEditor )
-			return;
-
-		if( m_Runtime->IsCompleted() && m_SoundState != SoundState::Playing )
+		if( m_SoundState != SoundState::Playing )
 		{
-			m_NodeEditor->Evaluate();
+			m_TaskHandler->PlaySounds();
 
 			m_Loaded = true;
 			m_SoundState = SoundState::Playing;
@@ -109,17 +88,14 @@ namespace Saturn {
 
 	void GraphSound::Stop()
 	{
-		for( auto& rSound : m_Runtime->AliveSounds )
-		{
-			rSound->Stop();
-		}
+		m_TaskHandler->StopSounds();
 
 		m_SoundState = SoundState::Stopped;
 	}
 
 	void GraphSound::Loop( bool loop )
 	{
-		m_Runtime->Loop( loop );
+		m_TaskHandler->Loop( loop );
 		m_Looping = loop;
 	}
 
@@ -130,10 +106,12 @@ namespace Saturn {
 
 	void GraphSound::Reset()
 	{
+		/*
 		for( auto& rSound : m_Runtime->AliveSounds )
 		{
 			rSound->Reset();
 		}
+		*/
 	}
 
 	void GraphSound::OnSoundCompleted()
@@ -151,51 +129,30 @@ namespace Saturn {
 
 	void GraphSound::SetVolume( float volume )
 	{
-		for( auto& rSound : m_Runtime->AliveSounds )
-		{
-			rSound->SetVolume( volume );
-		}
+		m_TaskHandler->SetVolume( volume );
 	}
 
 	void GraphSound::SetPitch( float pitch )
 	{
-		for( auto& rSound : m_Runtime->AliveSounds )
-		{
-			rSound->SetPitch( pitch );
-		}
+		m_TaskHandler->SetPitch( pitch );
 	}
 
 	void GraphSound::SetPosition( const glm::vec3& rPos )
 	{
-		for( auto& rSound : m_Runtime->AliveSounds )
-		{
-			rSound->SetPosition( rPos );
-		}
+		m_TaskHandler->SetPosition( rPos );
 	}
 
 	void GraphSound::SetSpatialisation( bool value )
 	{
-		for( auto& rSound : m_Runtime->AliveSounds )
-		{
-			rSound->SetSpatialisation( value );
-		}
+		m_TaskHandler->SetSpatialisation( value );
 	}
-
-#if !defined(SAT_DIST)
-	SharedPtr<NodeEditor> GraphSound::GetNodeEditor() const
-	{
-		return m_NodeEditor;
-	}
-#endif
 
 	void GraphSound::Unload()
 	{
-		for( auto& rSound : m_Runtime->AliveSounds )
-		{
-			rSound->Unload();
-		}
+		m_TaskHandler->DestroyAliveSounds();
 
 		m_Loaded = false;
 		m_SoundState = SoundState::NoDataSource;
 	}
+
 }

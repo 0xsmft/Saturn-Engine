@@ -29,6 +29,30 @@
 #include "sppch.h"
 #include "NodeEditorTaskBase.h"
 
+#include "Saturn/Serialisation/Raw/RawSerialisation.h"
+
+namespace Saturn {
+
+	void NodeEditorTaskBase::InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther )
+	{
+		m_NodeID = pOther->m_NodeID;
+		m_NodeFlags = pOther->m_NodeFlags;
+	}
+
+	void NodeEditorTaskBase::Serialise( std::ofstream& rStream ) const
+	{
+		RawSerialisation::WriteObject( m_NodeID, rStream );
+		RawSerialisation::WriteObject( m_NodeFlags, rStream );
+	}
+
+	void NodeEditorTaskBase::Deserialise( FDependentIStream& rStream )
+	{
+		RawSerialisation::ReadObject( m_NodeID, rStream );
+		RawSerialisation::ReadObject( m_NodeFlags, rStream );
+	}
+
+}
+
 #include "Saturn/GameFramework/Core/EngineGenerated.h"
 
 SAT_X31_CREATE_AUTO_REG( NodeEditorTaskBase );

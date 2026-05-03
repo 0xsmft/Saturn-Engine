@@ -52,6 +52,8 @@ namespace Saturn {
 		static void WriteNodeEditorCache( SharedPtr<NodeEditorBase> nodeEditor, const std::string& rCustomName = "" );
 		static bool ReadNodeEditorCache( SharedPtr<NodeEditorBase> nodeEditor, AssetID id, const std::string& rCustomName = "" );
 
+		static bool ReadNodeTaskCacheOnly( NodeTaskCache& rNodeTaskCache, AssetID id, const std::string& rCustomName = "" );
+
 		// Dist
 		static void ConvertToDistNC( AssetID id, const std::string& rCustomName = "" );
 	};

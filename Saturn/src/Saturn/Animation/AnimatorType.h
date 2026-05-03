@@ -31,7 +31,7 @@
 namespace Saturn {
 
 	// NOTE: This enum is separated because it's best for the animator class not to include Components.h which is where it was defined originally.
-	enum class AnimatorType
+	enum class AnimatorType : uint8_t
 	{
 		Single,
 		AnimationControllerGraph

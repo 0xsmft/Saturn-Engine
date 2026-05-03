@@ -43,6 +43,19 @@ namespace Saturn {
 		std::filesystem::path Path;
 	};
 
+	enum class EditorFont : uint8_t
+	{
+		// The default font prior to Saturn Version 0.2.5,
+		// this font is good because it supports Latin, Greek and Cyrillic letters!
+		// see: https://fonts.google.com/noto/specimen/Noto+Sans
+		NotoSans,
+
+		// Atkinson Hyperlegible Next
+		// NB: This font does not support Greek and Cyrillic letters!
+		// see: https://fonts.google.com/specimen/Atkinson+Hyperlegible+Next
+		Atkinson
+	};
+
 	class EngineSettings
 	{
 	public:
@@ -58,6 +71,9 @@ namespace Saturn {
 		std::deque<std::filesystem::path> GetAllRecentProjects() { return m_RecentProjects; }
 		const std::deque<std::filesystem::path> GetAllRecentProjects() const { return m_RecentProjects; }
 
+		void SetEditorFont( EditorFont font ) { m_EditorFont = font; }
+		EditorFont GetEditorFont() const { return m_EditorFont; }
+
 	public:
 		// The startup project name i.e. (MyProject)
 		std::string StartupProjectName;
@@ -67,6 +83,7 @@ namespace Saturn {
 
 	private:
 		std::deque< std::filesystem::path > m_RecentProjects; // [Serialised]
+		EditorFont m_EditorFont = EditorFont::NotoSans; // [Serialised]
 
 	private:
 		friend class EngineSettingsSerialiser;

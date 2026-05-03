@@ -31,6 +31,7 @@
 #include "NodeEditorCompilationStatus.h"
 #include "NodeEditorNodeBase.h"
 #include "NodeEditorVariable.h"
+#include "NodeTaskCache.h"
 #include "Link.h"
 
 #include "Saturn/Core/VariableGuard.h"
@@ -45,7 +46,7 @@ namespace ed = ax::NodeEditor;
 
 namespace Saturn {
 
-	enum class NodeEditorType
+	enum class NodeEditorType : uint8_t
 	{
 		Unknown,
 		Default,
@@ -55,19 +56,27 @@ namespace Saturn {
 		AnimationController
 	};
 
-	enum class NodeEditorState
+	enum NodeEditorState : uint8_t
 	{
-		// Default state when the editor is not in any specific state
-		Editing,
+		// Default state when the editor is not in any specific state, we are simply just viewing the Node Editor.
+		NodeEditorState_Editing = BIT( 0 ),
+
 		// This state can only happen if evaluation was successful and we are ready to actually use the evaluated data
 		// For example, GraphSounds are evaluated then they are ready to be simulated (played).
-		Simulating,
+		// Same applies with behaviour trees, the get evaluated, the simulated in runtime.
+		NodeEditorState_Simulating = BIT( 1 ),
+
 		// Only true if we are simulating and the simulation is paused i.e. editor suspended or when the NodeEditor is loaded but is not being used.
-		Suspended,
-		// Used when the node editor is being loaded from NC
-		Loading,
+		NodeEditorState_Suspended = BIT( 2 ),
+
+		// Used when the node editor is being loaded from NC, shorted lived state (normally)
+		NodeEditorState_Loading = BIT( 3 ),
+
 		// Used when evaluation is in progress
-		Evaluating 
+		NodeEditorState_Evaluating = BIT( 4 ),
+
+		// This state happens when a breakpoint is hit, it's used along with Simulating and Suspended
+		NodeEditorState_Debugging = BIT( 5 ),
 	};
 
 	// NOTE: This enum does NOT have a bitwise OR (|) operator or a AND (&) operator.
@@ -77,7 +86,7 @@ namespace Saturn {
 	// ~NodeEditorUserAuthority~
 	// How much authority does the user have other this Node Editor
 	// We can pick and choose what we want the user to be able todo.
-	enum class NodeEditorUserAuthority
+	enum class NodeEditorUserAuthority : uint8_t
 	{
 		// User can edit the nodes
 		Editing = BIT( 0 ),
@@ -105,7 +114,7 @@ namespace Saturn {
 		return static_cast< NodeEditorUserAuthority >( ~static_cast< U >( rhs ) );
 	}
 
-	enum class NodeEditorFlowDirection 
+	enum class NodeEditorFlowDirection : uint8_t
 	{
 		// Backwards flow, start from the origin node. 
 		// It is called "Left" because the origin node is on the left hand side of the node editor
@@ -160,15 +169,41 @@ namespace Saturn {
 		ed::EditorContext* m_OldValue = nullptr;
 	};
 
-	// The base class for all Node Editors (Node Graphs).
-	// NodeEditorBase does not inherit from ImGuiWindow because NodeEditorBase is more of the backend and doesn't
-	// need to always be a window.
-	// NodeEditorBase does not draw anything, it simply provides the logical code for nodes without any rendering
-	// For example, you can setup a NodeEditorBase the same way as a NodeEditor would of been created and use it the same way just without any graphical representation. 
-	// On dist, this class will ALWAYS be used in place of NodeEditor
+	// Asset version...
+	// 256 (0-255) possible (major/breaking) changes,
+	// please do not add new "versions" just because a small thing has changed,
+	// only add new versions if a big breaking change has occurred OR
+	// something new has to be serialised, the same applies with omissions.
+	//
+	// NOTE: This enum is not a bitfield! It is expected if we upgrade/downgrade we gain/lose the modifications that
+	// are new/old.
 	// 
-	// NodeEditors are based from an SObject, which is okay however we are wasting 32 whole ass bytes :(
-	// The reason why we are based from an SObject is that we want Tasks* and Nodes to share the same ancestor, so m_pParentObject = NodeEditorBase, before this Nodes had their own pointer to us, and tasks did not, every task could have a pointer to NodeEditorBase however Tasks are due a rewrite in their own respect, so maybe this won't last long as well.
+	// e.g. if this asset version is 0 and we upgrade to Breakpoints (2) we get Subgraphs (1) as well. 
+	//
+	enum class NodeEditorVersion : uint8_t
+	{
+		// <0.2.5
+		BeforeVersionWasAdded,
+		
+		// Subgraph feature added, 0.2.3
+		Subgraphs,
+
+		// Breakpoint feature added, 0.2.5
+		Breakpoints,
+
+		// Node editor task cache added, 0.2.5
+		TaskCache,
+
+		// PinType, PinKind, PinRenderType all changed to single-bytes, 0.2.5
+		PinClassSizeChange,
+
+		//^^^ only add new versions above here.... and not below here vvv
+		Latest = PinClassSizeChange,
+		Lowest = BeforeVersionWasAdded
+	};
+
+	//
+	// 
 	//
 	class NodeEditorBase : public SObject, public EnabledSharedFromThis<NodeEditorBase>
 	{
@@ -190,6 +225,7 @@ namespace Saturn {
 		bool IsLinked( UUID pinID );
 		Ref<Pin> FindPin( UUID id );
 		Ref<Link> FindLink( UUID id );
+		Ref<Link> FindLinkByPin( UUID id );
 		SharedPtr<NodeEditorNodeBase> FindNode( UUID id );
 		SharedPtr<NodeEditorNodeBase> FindNode( const std::string& rName );
 		SharedPtr<NodeEditorNodeBase> FindNodeByPin( UUID id );
@@ -267,21 +303,36 @@ namespace Saturn {
 		void ShowFlow( const Ref<Link>& rLink );
 		void ShowFlow( UUID linkID );
 
-		NodeEditorState GetState() const { return m_State; }
+		NodeEditorState GetState() const { return ( NodeEditorState ) m_State; }
+		bool IsStateFlagSet( NodeEditorState flag ) const { return ( m_State & flag ) != 0; }
+
 		void SetState( NodeEditorState state )
 		{
 			if( m_State != state )
 			{
 				m_State = state;
-//				m_Runtime->SetState( state );
 			}
 		}
 
-		[[nodiscard]] bool HasPrivilege( NodeEditorUserAuthority privilege ) const;
-		void SetPrivileges( NodeEditorUserAuthority privilege, bool value );
+		void SetStateFlag( std::underlying_type_t< NodeEditorState > states, bool val )
+		{
+			const auto flags = states;
+			auto cur = ( std::underlying_type_t< NodeEditorState > )m_State;
+
+			if( val )
+				cur |= flags;
+			else
+				cur &= ~flags;
+
+			m_State = ( NodeEditorState ) cur;
+		}
+
+		[[nodiscard]] bool HasUserAuthority( NodeEditorUserAuthority privilege ) const;
+		void SetUserAuthorityFlag( NodeEditorUserAuthority privilege, bool value );
 
 	public:
 		AssetID GetAssetID() const { return m_AssetID; }
+		NodeEditorVersion GetVersion() const { return m_Version; }
 
 		const std::map<UUID, SharedPtr<NodeEditorNodeBase>>& GetNodes() const { return m_Nodes; }
 		std::map<UUID, SharedPtr<NodeEditorNodeBase>>& GetNodes() { return m_Nodes; }
@@ -293,6 +344,8 @@ namespace Saturn {
 
 		const std::vector<Ref<Link>>& GetLinks() const { return m_Links; }
 		std::vector<Ref<Link>>& GetLinks() { return m_Links; }
+
+		const NodeTaskCache GetNodeTaskCache() const { return m_TaskCache; }
 
 		void AddNode( SharedPtr<NodeEditorNodeBase> node );
 
@@ -310,27 +363,37 @@ namespace Saturn {
 #endif
 
 	protected:
-		Ref<Link> FindLinkByPin( UUID id );
-
-	protected:
 		std::string m_Name;
-		bool m_WindowOpen = false;
-		uint32_t m_Version = SAT_CURRENT_VERSION;
 
 		ed::EditorContext* m_Editor = nullptr;
+#if !defined( SAT_DIST )
+		// m_OldEditor is only valid if we switch editor during a debugging session (in the Editor).
+		ed::EditorContext* m_OldEditor = nullptr;
+#endif
 		std::string m_ActiveNodeEditorState;
 
 		std::unordered_map<UUID, Ref<NodeEditorVariable>> m_DataHandles;
 		std::map<UUID, SharedPtr<NodeEditorNodeBase>> m_Nodes;
 		std::vector<Ref<Link>> m_Links;
 
+#if !defined( SAT_DIST )
+		// Temporary task cache, only exists for serialisation.
+		NodeTaskCache m_TaskCache;
+#endif
+
 		Ref<NodeEditorRuntime> m_Runtime;
 
 		AssetID m_AssetID = 0;
 
-		NodeEditorState m_State = NodeEditorState::Editing;
+		bool m_WindowOpen = false;
+
+		// Start in the editing state.
+		NodeEditorState m_State = NodeEditorState_Editing;
+		
 		// User has full authority over this node editor by default
 		NodeEditorUserAuthority m_Privileges = NodeEditorUserAuthority::Full;
+
+		NodeEditorVersion m_Version = NodeEditorVersion::Latest;
 
 	private:
 		friend class NodeEditorCache;

@@ -4,7 +4,7 @@
 #version 450
 
 // Inputs
-layout(location = 0) in vec2 a_Position;
+layout(location = 0) in vec3 a_Position;
 layout(location = 1) in vec2 a_TexCoord;
 layout(location = 2) in vec4 a_Color;
 layout(location = 3) in float a_TexIndex;
@@ -29,12 +29,11 @@ void main()
 	o_OutputData.TexCoord = a_TexCoord;
 	o_AtlasIndex = a_TexIndex;
 
-	gl_Position = u_Transform.Projection * vec4( a_Position, 0.0, 1.0 );
+	gl_Position = u_Transform.Projection * vec4( a_Position, 1.0 );
 }
 
 #type fragment
 #version 450
-//#extension GL_EXT_debug_printf : enable
 
 struct VertOut 
 {
@@ -75,12 +74,6 @@ void main()
 	float sd = Median( msd.r, msd.g, msd.b );
 	float screenPxDistance = ScreenPxRange() * ( sd - 0.5 );
 	float alpha = clamp( screenPxDistance + 0.5, 0.0, 1.0 );
-
-	/*
-	debugPrintfEXT( "sd: %f", sd );
-	debugPrintfEXT( "screenPxDistance: %f", screenPxDistance );
-	debugPrintfEXT( "alpha: %f", alpha );
-	*/
 
 	FinalColor = mix( bgColor, fgColor, alpha );
 }

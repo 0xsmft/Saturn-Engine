@@ -35,7 +35,7 @@
 
 namespace Saturn {
 
-	enum class NodeEditorMessageSeverity 
+	enum class NodeEditorMessageSeverity : uint8_t 
 	{
 		Info,
 		Warning,
@@ -45,8 +45,8 @@ namespace Saturn {
 	struct NodeEditorMessage
 	{
 		std::string MessageText;
-		NodeEditorMessageSeverity Type;
 		UUID ID;
+		NodeEditorMessageSeverity Type = NodeEditorMessageSeverity::Info;
 	};
 
 	class NodeEditorOutput

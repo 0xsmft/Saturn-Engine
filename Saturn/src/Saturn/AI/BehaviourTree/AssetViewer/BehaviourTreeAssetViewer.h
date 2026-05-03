@@ -37,8 +37,6 @@
 
 namespace Saturn {
 
-	class BehaviourTreeEditorEvaluator;
-
 	class BehaviourTreeAssetViewer : public	AssetViewer
 	{
 	public:
@@ -52,7 +50,10 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		void OnRuntimeStateChanged( RuntimeState newState, RuntimeState oldState ) override;
 
-		void AddBehviourTreeReference( Ref<BehaviourTree> asset );
+		// Debugging
+		void AddBehviourTreeReference( Ref<BehaviourTree> bt );
+		void SetActiveReference( Ref<BehaviourTree> bt );
+		void OnDebugBreak();
 #endif
 
 	private:
@@ -63,7 +64,6 @@ namespace Saturn {
 	private:
 		Ref<Asset> m_Asset = nullptr;
 		SharedPtr<BehaviourTreeNodeEditor> m_NodeEditor = nullptr;
-		Ref<BehaviourTreeEditorEvaluator> m_Runtime = nullptr;
 
 		UUID m_RootNodeID = 0;
 
@@ -72,9 +72,8 @@ namespace Saturn {
 		// For example we could have the same sound spec asset being used in different places so which one are we trying to view (only available when in Runtime).
 
 		// TODO: Weak Ref #ReplaceRawPtrOrRefWithWeakRef
-		std::vector<Ref<BehaviourTree>> m_ReferencingAssets;
-
-		SharedPtr<BehaviourTreeNodeEditor> m_OriginalNodeEditor = nullptr;
+		std::vector<Ref<BehaviourTree>> m_ReferencingObjects;
+		Ref<BehaviourTree> m_SelectedReferenceObject;
 
 		std::vector<BehaviourTreeBaseTask*> m_ClassCache;
 #endif

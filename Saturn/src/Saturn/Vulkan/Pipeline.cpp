@@ -68,6 +68,10 @@ namespace Saturn {
 
 	void Pipeline::Terminate()
 	{
+#if !defined(SAT_DIST)
+		Renderer::Get()->RemovePipelineReferenceFromShaderRef( m_Specification.Shader->GetShaderHash(), this );
+#endif
+
 		if( m_PipelineLayout )
 			vkDestroyPipelineLayout( VulkanContext::Get()->GetDevice(), m_PipelineLayout, nullptr );
 
@@ -91,6 +95,8 @@ namespace Saturn {
 
 	void Pipeline::Create()
 	{
+		SAT_CORE_ASSERT( m_Specification.Shader, "Shader can not ever be null when create a Pipeline!" );
+
 		// Create the layout.
 		VkPipelineLayoutCreateInfo PipelineLayoutCreateInfo = { VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO };
 		if( m_Specification.Shader->GetPushConstantRanges().size() > 0 )
@@ -268,23 +274,31 @@ namespace Saturn {
 		{
 			VkPipelineColorBlendAttachmentState ColorBlendAttachmentState = {};
 			ColorBlendAttachmentState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-			ColorBlendAttachmentState.blendEnable = VK_TRUE;
-			/*
-			ColorBlendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-			ColorBlendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-			ColorBlendAttachmentState.colorBlendOp = VK_BLEND_OP_ADD;
-			ColorBlendAttachmentState.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-			ColorBlendAttachmentState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-			ColorBlendAttachmentState.alphaBlendOp = VK_BLEND_OP_ADD;
-			*/
+			ColorBlendAttachmentState.blendEnable = m_Specification.EnableBlending ? VK_TRUE : VK_FALSE;
+			
+			switch( m_Specification.BlendMode )
+			{
+				default:
+				case PipelineBlendMode::Default:
+				{
+					ColorBlendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+					ColorBlendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+					ColorBlendAttachmentState.colorBlendOp = VK_BLEND_OP_ADD;
+					ColorBlendAttachmentState.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+					ColorBlendAttachmentState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+					ColorBlendAttachmentState.alphaBlendOp = VK_BLEND_OP_ADD;
+				} break;
 
-			// TODO: Add Pipeline spec option for this.
-			ColorBlendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-			ColorBlendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-			ColorBlendAttachmentState.colorBlendOp = VK_BLEND_OP_ADD;
-			ColorBlendAttachmentState.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-			ColorBlendAttachmentState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-			ColorBlendAttachmentState.alphaBlendOp = VK_BLEND_OP_ADD;
+				case PipelineBlendMode::OneZero:
+				{
+					ColorBlendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+					ColorBlendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+					ColorBlendAttachmentState.colorBlendOp = VK_BLEND_OP_ADD;
+					ColorBlendAttachmentState.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+					ColorBlendAttachmentState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+					ColorBlendAttachmentState.alphaBlendOp = VK_BLEND_OP_ADD;
+				} break;
+			}
 
 			ColorBlendAttachmentStates.push_back( ColorBlendAttachmentState );
 		}
@@ -300,14 +314,14 @@ namespace Saturn {
 		RasterizationState.polygonMode = m_Specification.PolygonMode;
 		RasterizationState.cullMode = CullModeToVulkan( m_Specification.CullMode );
 		RasterizationState.frontFace = m_Specification.FrontFace;
-		RasterizationState.lineWidth = 2.0f;
+		RasterizationState.lineWidth = 1.0f;
 		RasterizationState.depthBiasEnable = VK_TRUE;
 		RasterizationState.depthClampEnable = VK_FALSE;
 		RasterizationState.rasterizerDiscardEnable = VK_FALSE;
 		RasterizationState.depthBiasEnable = VK_FALSE;
 
 		VkPipelineMultisampleStateCreateInfo PipelineMultisampleState = { VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO };
-		PipelineMultisampleState.sampleShadingEnable = VK_TRUE;
+		PipelineMultisampleState.sampleShadingEnable = VK_FALSE;
 		PipelineMultisampleState.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
 		VkPipelineDepthStencilStateCreateInfo DepthStencilState = { VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO };
@@ -375,7 +389,7 @@ namespace Saturn {
 		vkDestroyShaderModule( VulkanContext::Get()->GetDevice(), FragmentModule, nullptr );
 
 #if !defined(SAT_DIST)
-		Renderer::Get()->FindShaderReference( m_Specification.Shader->GetShaderHash() ).Pipelines.push_back( this );
+		Renderer::Get()->FindOrCreateShaderReference( m_Specification.Shader->GetShaderHash() ).Pipelines.push_back( this );
 #endif
 	}
 }

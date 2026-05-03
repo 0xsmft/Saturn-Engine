@@ -76,9 +76,81 @@ namespace Saturn {
 			case AssetImportPopupError::MeshAssimpInternalError:
 			{
 				ImGui::Text( "Error: MeshAssimpInternalError (0x%08x)", m_Error );
-				ImGui::Text( "An internal Assimp error occured while importing the mesh." );
+				ImGui::Text( "An internal Assimp error occurred while importing the mesh." );
 			} break;			
 		}
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// AUXILIARY
+
+	std::shared_ptr<Saturn::AssetImportPopupBase> AssetImportPopupAuxiliary::CreatePopupFromAssetTypeReimport( Ref<Asset> asset, const std::filesystem::path& rDestinationPath )
+	{
+		const auto& id = asset->ID;
+		const auto type = asset->Type;
+
+		switch( type )
+		{
+			case AssetType::Texture:
+			{
+				Ref<TextureSourceAsset> textureAsset = AssetManager::Get()->GetAssetAs<TextureSourceAsset>( id );
+				
+				return std::make_shared<Saturn::TextureSourceAssetImportPopup>( textureAsset->GetTextureAbsolutePath(), rDestinationPath );
+			}
+
+			case AssetType::StaticMesh:
+			{
+				Ref<StaticMesh> staticMesh = AssetManager::Get()->GetAssetAs<StaticMesh>( id );
+				return std::make_shared<Saturn::MeshImportPopup>( staticMesh->FilePath(), rDestinationPath );
+			}
+
+			case AssetType::SkeletalMesh:
+			{
+				Ref<SkeletalMesh> skMesh = AssetManager::Get()->GetAssetAs<SkeletalMesh>( id );
+				return std::make_shared<Saturn::MeshImportPopup>( skMesh->FilePath(), rDestinationPath );
+			}
+
+			case AssetType::Material:
+			case AssetType::MaterialInstance:
+				break;
+
+			case AssetType::Sound:
+			{
+				Ref<SoundSpecification> soundSpec = AssetManager::Get()->GetAssetAs<SoundSpecification>( id );
+				return std::make_shared<Saturn::SoundImportPopup>( soundSpec->SoundSourcePath, rDestinationPath );
+			}
+
+			case AssetType::GraphSound:
+			case AssetType::Scene:
+			case AssetType::Prefab:
+			case AssetType::Skeleton:
+			case AssetType::PhysicsMaterial:
+			case AssetType::BehaviourTree:
+			case AssetType::BehaviourTreeMemory:
+			case AssetType::SkeletalAnimation:
+			case AssetType::AnimationController:
+				break;
+
+			case AssetType::Font:
+			{
+				Ref<AluraFont> font = AssetManager::Get()->GetAssetAs<AluraFont>( id );
+				return std::make_shared<Saturn::FontImportPopup>( font->GetFontFilepath(), rDestinationPath );
+			}	
+
+			case AssetType::StyleProfile:
+				break;
+			
+			case AssetType::Unknown:
+			case AssetType::COUNT:
+				SAT_CORE_ASSERT( false, "Invalid type!" );
+				break;
+
+			default:
+				SAT_CORE_ASSERT( false, "Unhandled case!" );
+				break;
+		}
+
+		return std::make_shared<Saturn::UnknownImportPopup>( "" );
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -228,24 +300,14 @@ namespace Saturn {
 
 			if( ImGui::Button( "Import" ) )
 			{
-				const auto id = AssetManager::Get()->CreateAsset( AssetType::Texture );
-				auto asset = AssetManager::Get()->FindAsset( id );
-				auto assetPath = m_DestinationPath / m_AssetToImportPath.filename();
-
-				// Copy the source.
-				std::filesystem::copy_file( m_AssetToImportPath, assetPath, std::filesystem::copy_options::overwrite_existing );
-
-				// Replace Extension for texture asset
-				auto stxPath = assetPath;
-				stxPath.replace_extension( ".stx" );
-				asset->SetAbsolutePath( stxPath );
-
-				// Create the asset.
-				auto texAsset = Ref<TextureSourceAsset>::Create( asset, assetPath, ( TextureLoadFlags ) m_ImportBehaviour );
-
-				// Save the asset
-				TextureSourceAssetSerialiser tsas;
-				tsas.Serialise( texAsset );
+				if( !m_IsReimport )
+				{
+					CreateNew();
+				}
+				else
+				{
+					Reimport();
+				}
 
 				PopupModified = true;
 			}
@@ -270,6 +332,46 @@ namespace Saturn {
 
 			ImGui::EndPopup();
 		}
+	}
+
+	void TextureSourceAssetImportPopup::CreateNew()
+	{
+		const auto id = AssetManager::Get()->CreateAsset( AssetType::Texture );
+		auto asset = AssetManager::Get()->FindAsset( id );
+		const auto assetPath = m_DestinationPath / m_AssetToImportPath.filename();
+
+		// Copy the source:
+		std::filesystem::copy_file( m_AssetToImportPath, assetPath, std::filesystem::copy_options::overwrite_existing );
+
+		// Replace Extension for texture asset
+		auto stxPath = assetPath;
+		stxPath.replace_extension( ".stx" );
+		asset->SetAbsolutePath( stxPath );
+
+		// Create the asset.
+		const auto texAsset = Ref<TextureSourceAsset>::Create( asset, assetPath, ( TextureLoadFlags ) m_ImportBehaviour );
+
+		// Save the asset
+		TextureSourceAssetSerialiser tsas;
+		tsas.Serialise( texAsset );
+	}
+
+	void TextureSourceAssetImportPopup::Reimport()
+	{
+		auto asset = AssetManager::Get()->GetAssetAs<TextureSourceAsset>( m_ReimportID );
+
+		// Act as if we deleted the asset (so it can delete it's source file)
+		asset->OnDelete();
+
+		// Copy the source:
+		const auto assetPath = m_DestinationPath / m_AssetToImportPath.filename();
+		std::filesystem::copy_file( m_AssetToImportPath, assetPath, std::filesystem::copy_options::overwrite_existing );
+
+		asset->OnReimport( assetPath );
+
+		// Save the asset
+		TextureSourceAssetSerialiser tsas;
+		tsas.Serialise( asset );
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -333,6 +435,8 @@ namespace Saturn {
 		{
 			bool PopupModified = false;
 
+			Auxiliary::DisabledFlag disabledIfReimport( m_IsReimport );
+
 			ImGui::BeginVertical( "##inputv" );
 
 			ImGui::Text( "Path:" );
@@ -354,6 +458,8 @@ namespace Saturn {
 
 			if( m_IsSkeletal )
 				DrawSkeletalMeshOptions();
+			
+			disabledIfReimport.Pop();
 
 			DrawAndHandleImportBehaviour();
 
@@ -501,23 +607,6 @@ namespace Saturn {
 			return ( m_ImportBehaviour & flag ) != 0;
 		};
 
-		ImGui::BeginHorizontal( "##importOption_aum" );
-
-		bool allowUnnamedMaterials = hasFlag( MeshImportBehaviour_AllowUnnamedMaterials );
-		ImGui::Text( "Allow Unnamed Materials" );
-		ImGui::Spring();
-
-		ImGui::SetNextItemWidth( 130.0f );
-		if( ImGui::Checkbox( "##AllowUnnamedMaterials", &allowUnnamedMaterials ) )
-		{
-			if( hasFlag( MeshImportBehaviour_AllowUnnamedMaterials ) )
-				m_ImportBehaviour &= ~MeshImportBehaviour_AllowUnnamedMaterials;
-			else
-				m_ImportBehaviour |= MeshImportBehaviour_AllowUnnamedMaterials;
-		}
-
-		ImGui::EndHorizontal();
-
 		ImGui::BeginHorizontal( "##importOption_nomat" );
 
 		bool noMaterials = hasFlag( MeshImportBehaviour_CreateNoMaterials );
@@ -534,6 +623,37 @@ namespace Saturn {
 		}
 
 		ImGui::EndHorizontal();
+
+		if( !noMaterials )
+		{
+			ImGui::BeginHorizontal( "##importOption_aum" );
+
+			bool allowUnnamedMaterials = hasFlag( MeshImportBehaviour_AllowUnnamedMaterials );
+			ImGui::Text( "Allow Unnamed Materials" );
+
+			if( ImGui::BeginItemTooltip() )
+			{
+				ImGui::Text( "Enable this option if you know that the mesh you are importing will have unnamed materials." );
+				ImGui::Text( "If this option is on Saturn will generate material names such as 'UnnamedMaterials[RandomID]'." );
+
+				ImGui::Text( "NOTE: If this flag is not enabled and there is a material with no name the engine will refuse to import it!" );
+
+				ImGui::EndTooltip();
+			}
+
+			ImGui::Spring();
+
+			ImGui::SetNextItemWidth( 130.0f );
+			if( ImGui::Checkbox( "##AllowUnnamedMaterials", &allowUnnamedMaterials ) )
+			{
+				if( hasFlag( MeshImportBehaviour_AllowUnnamedMaterials ) )
+					m_ImportBehaviour &= ~MeshImportBehaviour_AllowUnnamedMaterials;
+				else
+					m_ImportBehaviour |= MeshImportBehaviour_AllowUnnamedMaterials;
+			}
+
+			ImGui::EndHorizontal();
+		}
 
 		ImGui::BeginHorizontal( "##importOption_ext" );
 
@@ -570,6 +690,30 @@ namespace Saturn {
 
 		ImGui::EndHorizontal();
 #endif
+
+		ImGui::BeginHorizontal( "##importOption_glbsc" );
+
+		bool globalScale = hasFlag( MeshImportBehaviour_GlobalScale );
+		ImGui::Text( "Global Scale" );
+
+		if( ImGui::BeginItemTooltip() )
+		{
+			ImGui::Text( "Converts meters to centimeters." );
+			ImGui::EndTooltip();
+		}
+
+		ImGui::Spring();
+
+		ImGui::SetNextItemWidth( 130.0f );
+		if( ImGui::Checkbox( "##GlobalScale", &globalScale ) )
+		{
+			if( hasFlag( MeshImportBehaviour_GlobalScale ) )
+				m_ImportBehaviour &= ~MeshImportBehaviour_GlobalScale;
+			else
+				m_ImportBehaviour |= MeshImportBehaviour_GlobalScale;
+		}
+
+		ImGui::EndHorizontal();
 	}
 
 	AssetImportPopupError MeshImportPopup::FullyImportMesh()
@@ -629,6 +773,7 @@ namespace Saturn {
 			skeletalMesh->SetFilepath( meshPath );
 			skeletalMesh->Import_InitMaterialRegistry();
 			skeletalMesh->Import_InitSkeleton( m_CurrentAssetIDForSkeleton == 0 ? meshImporter.GetCreatedSkeletonID() : m_CurrentAssetIDForSkeleton );
+			skeletalMesh->Import_SetImportBehaviour( m_ImportBehaviour );
 
 #if !defined(SAT_DIST)
 			if( m_CurrentAssetIDForMaterial )
@@ -662,6 +807,7 @@ namespace Saturn {
 
 	AssetImportPopupError MeshImportPopup::ImportStatic()
 	{
+		// NB: Copy even if this is a reimport, the purpose of a reimport is reload the raw mesh!
 		// Copy the raw mesh file:
 		std::filesystem::copy_file( m_AssetToImportPath, m_DestinationPath / m_AssetToImportPath.filename(), std::filesystem::copy_options::overwrite_existing );
 
@@ -684,6 +830,18 @@ namespace Saturn {
 			return err;
 		}
 #endif
+
+		if( m_IsReimport )
+		{
+			auto staticMesh = AssetManager::Get()->GetAssetAs<StaticMesh>( m_ReimportID );
+
+			// Serialise the mesh asset
+			StaticMeshAssetSerialiser sma;
+			sma.Serialise( staticMesh );
+
+			return AssetImportPopupError::None;
+		}
+
 		//////////////////////////////////////////////////////////////////////////
 		// Create the mesh asset.
 
@@ -703,6 +861,7 @@ namespace Saturn {
 			auto& meshPath = assetPath.replace_extension( m_AssetToImportPath.extension() );
 			staticMesh->SetFilepath( meshPath );
 			staticMesh->Import_InitMaterialRegistry();
+			staticMesh->Import_SetImportBehaviour( m_ImportBehaviour );
 
 #if !defined(SAT_DIST)
 			if( m_CurrentAssetIDForMaterial )
@@ -779,36 +938,13 @@ namespace Saturn {
 
 			if( ImGui::Button( "Create" ) )
 			{
-				const auto id = AssetManager::Get()->CreateAsset( AssetType::Sound );
-				auto asset = AssetManager::Get()->FindAsset( id );
-				auto assetPath = m_DestinationPath / m_AssetToImportPath.filename();
+				if( !m_IsReimport )
+				{
+				}
+				else
+				{
 
-				// Copy the audio source.
-				std::filesystem::copy_file( m_AssetToImportPath, assetPath, std::filesystem::copy_options::overwrite_existing );
-
-				// Replace Extension for sound asset
-				assetPath.replace_extension( ".snd" );
-				asset->SetAbsolutePath( assetPath );
-
-				// Create the asset.
-				auto sound = Ref<SoundSpecification>::Create( asset );
-
-				sound->OriginalImportPath = m_AssetToImportPath;
-				sound->SoundSourcePath = m_DestinationPath / m_AssetToImportPath.filename();
-
-				// Currently the date is YYYY-MM-DD HH-MM-SS however all we want is YYYY-MM-DD
-				std::string fullTime = std::format( "{0}", std::filesystem::last_write_time( m_AssetToImportPath ) );
-				const auto pos = fullTime.find_first_of( " " );
-				if( pos != std::string::npos )
-					fullTime.resize( fullTime.find_first_of( " " ) );
-
-#if !defined(SAT_DIST)
-				sound->LastWriteTime = fullTime;
-#endif
-
-				// Save the asset
-				SoundSpecificationAssetSerialiser s2d;
-				s2d.Serialise( sound );
+				}
 
 				PopupModified = true;
 			}
@@ -833,6 +969,58 @@ namespace Saturn {
 		}
 	}
 	
+	void SoundImportPopup::CreateNew()
+	{
+		const auto id = AssetManager::Get()->CreateAsset( AssetType::Sound );
+		auto asset = AssetManager::Get()->FindAsset( id );
+		auto assetPath = m_DestinationPath / m_AssetToImportPath.filename();
+
+		// Copy the audio source.
+		std::filesystem::copy_file( m_AssetToImportPath, assetPath, std::filesystem::copy_options::overwrite_existing );
+
+		// Replace Extension for sound asset
+		assetPath.replace_extension( ".snd" );
+		asset->SetAbsolutePath( assetPath );
+
+		// Create the asset.
+		auto sound = Ref<SoundSpecification>::Create( asset );
+
+		sound->OriginalImportPath = m_AssetToImportPath;
+		sound->SoundSourcePath = m_DestinationPath / m_AssetToImportPath.filename();
+
+#if !defined(SAT_DIST)
+		sound->LastWriteTime = GetLastModificationDate();
+#endif
+
+		// Save the asset
+		SoundSpecificationAssetSerialiser s2d;
+		s2d.Serialise( sound );
+	}
+
+	void SoundImportPopup::Reimport()
+	{
+		auto soundSpec = AssetManager::Get()->GetAssetAs<SoundSpecification>( m_ReimportID );
+		if( soundSpec )
+		{
+			soundSpec->SoundSourcePath = m_AssetToImportPath;
+
+			// Save the asset
+			SoundSpecificationAssetSerialiser s2d;
+			s2d.Serialise( soundSpec );
+		}
+	}
+
+	std::string SoundImportPopup::GetLastModificationDate()
+	{
+		// Currently the date is YYYY-MM-DD HH-MM-SS however all we want is YYYY-MM-DD
+		std::string fullTime = std::format( "{0}", std::filesystem::last_write_time( m_AssetToImportPath ) );
+		const auto pos = fullTime.find_first_of( " " );
+		if( pos != std::string::npos )
+			fullTime.resize( fullTime.find_first_of( " " ) );
+
+		return fullTime;
+	}
+
 	//////////////////////////////////////////////////////////////////////////
 	// FONT IMPORT POPUP
 
@@ -859,6 +1047,8 @@ namespace Saturn {
 		{
 			bool PopupModified = false;
 
+			Auxiliary::DisabledFlag disabledIfReimport( m_IsReimport );
+
 			ImGui::Text( "Path:" );
 			ImGui::BeginHorizontal( "##inputH" );
 
@@ -872,20 +1062,29 @@ namespace Saturn {
 
 			ImGui::EndHorizontal();
 
+			disabledIfReimport.Pop();
+
+			if( m_IsReimport )
+			{
+				ImGui::TextWrapped( "You are unable to change the font itself! To do that you must import a new asset!" );
+				ImGui::TextWrapped( "\"Reimport\" is meant if the source file has changed and you'd like to reload it. As fonts are baked once they are imported." );
+			}
+
 			ImGui::BeginHorizontal( "##actionsH" );
 
-			if( ImGui::Button( "Create" ) )
+			// Yes, this is our third time checking m_IsReimport, we could be more smart
+			// and do a single check and create separate functions but I don't want to do that...
+			if( ImGui::Button( m_IsReimport ? "Reimport" : "Create" ) )
 			{
-				const auto id = AssetManager::Get()->CreateAsset( AssetType::Font );
-				auto asset = AssetManager::Get()->FindAsset( id );
-				auto assetPath = m_DestinationPath / m_AssetToImportPath.filename();
-
-				// Replace Extension for font asset
-				assetPath.replace_extension( ".saf" );
-				asset->SetAbsolutePath( assetPath );
-
-				// Create the asset.
-				auto font = Ref<AluraFont>::Create( m_AssetToImportPath, asset );
+				// ... now it's 4 times.
+				if( !m_IsReimport )
+				{
+					CreateNew();
+				}
+				else
+				{
+					Reimport();
+				}
 
 				PopupModified = true;
 			}
@@ -908,6 +1107,30 @@ namespace Saturn {
 			}
 
 			ImGui::EndPopup();
+		}
+	}
+
+	void FontImportPopup::CreateNew() 
+	{
+		const auto id = AssetManager::Get()->CreateAsset( AssetType::Font );
+		auto asset = AssetManager::Get()->FindAsset( id );
+		auto assetPath = m_DestinationPath / m_AssetToImportPath.filename();
+
+		// Replace Extension for font asset
+		assetPath.replace_extension( ".saf" );
+		asset->SetAbsolutePath( assetPath );
+
+		// Create the asset.
+		// NB: No serialisation done by this popup! The asset does that when it creates the font atlas.
+		auto font = Ref<AluraFont>::Create( m_AssetToImportPath, asset );
+	}
+
+	void FontImportPopup::Reimport()
+	{
+		auto font = AssetManager::Get()->GetAssetAs<AluraFont>( m_ReimportID );
+		if( font )
+		{
+			font->OnReimport( m_AssetToImportPath );
 		}
 	}
 

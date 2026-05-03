@@ -31,6 +31,8 @@
 #include "Saturn/NodeEditor/UI/NodeEditor.h"
 #include "Saturn/Core/IndexedMap.h"
 
+#include "Saturn/Animation/AssetViewer/AnimGraphTaskAndNodeInfo.h"
+
 namespace Saturn {
 
 	class SGraphTask;
@@ -38,16 +40,22 @@ namespace Saturn {
 	class AnimGraph : public FDependentNodeEditorSuper
 	{
 	public:
+		using AnimGraphSortMap = IndexedMap<UUID, AnimGraphNodeAndTaskInfo>;
+
+	public:
 		AnimGraph();
 		AnimGraph( AssetID id );
 		virtual ~AnimGraph();
 
-		IndexedMap<UUID, SGraphTask*> TraverseAndCreateTasks();
+		AnimGraphSortMap TraverseAndCreateTasks();
 
 		void MarkNodeAsEntry( SharedPtr<NodeEditorNodeBase> node ) { m_StateMachineEntryNode = node; }
 		SharedPtr<NodeEditorNodeBase> GetEntryNode() const { return m_StateMachineEntryNode; }
 
 #if !defined(SAT_DIST)
+	public:
+		void BuildTaskCache();
+
 	public:
 		virtual void OnExtraRender() override;
 		virtual void OnNodeEditorEvent( NodeEditorAction action ) override;
@@ -65,9 +73,9 @@ namespace Saturn {
 
 	private:
 		// Sorting
-		void SortAnimGraph( IndexedMap<UUID, SGraphTask*>& rMap );
-		void SortStateMachineEntry( IndexedMap<UUID, SGraphTask*>& rMap );
-		void SortTransitionNodeOrStateMachineAfterEntryRec( UUID id, IndexedMap<UUID, SGraphTask*>& rMap );
+		void SortAnimGraph( AnimGraphSortMap& rMap );
+		void SortStateMachineEntry( AnimGraphSortMap& rMap );
+		void SortTransitionNodeOrStateMachineAfterEntryRec( UUID id, AnimGraphSortMap& rMap );
 
 	private:
 		UUID m_TransitionStartNode = 0;

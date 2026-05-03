@@ -86,31 +86,20 @@ namespace Saturn {
 		m_pCurrentQuadPtr.resize( 1 );
 
 		// Lines
-		m_LineVertexBuffers.resize( 1 );
-		m_LineVertexBuffers[ 0 ].resize( MAX_FRAMES_IN_FLIGHT );
+		AddLineBuffer();
+		m_CurrentLineVertexBufferPtr.resize( 1 );
 
-		m_CurrentLineBases.resize( 1 );
-		m_CurrentLineBases[ 0 ].resize( MAX_FRAMES_IN_FLIGHT );
-
-		m_CurrentLinePtr.resize( 1 );
-		
-		m_TriangleVertexBuffers.resize( 1 );
-		m_TriangleVertexBuffers[ 0 ].resize( MAX_FRAMES_IN_FLIGHT );
-
-		m_CurrentTriangleBases.resize( 1 );
-		m_CurrentTriangleBases[ 0 ].resize( MAX_FRAMES_IN_FLIGHT );
+		AddTriangleLineBuffer();
 		m_CurrentTrianglePtr.resize( 1 );
+
+		// Text
+		AddTextBuffer();
+		m_CurrentTextPtr.resize( 1 );
 
 		for( int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++ )
 		{
 			m_QuadVertexBuffers[ 0 ][ i ] = Ref<VertexBuffer>::Create( s_MaxVertices * sizeof( QuadVertex ) );
 			m_CurrentQuadBases[ 0 ][ i ] = new QuadVertex[ s_MaxVertices ];
-
-			m_LineVertexBuffers[ 0 ][ i ] = Ref<VertexBuffer>::Create( s_MaxLineVertices * sizeof( LineDrawCommand ) );
-			m_CurrentLineBases[ 0 ][ i ] = new LineDrawCommand[ s_MaxLineVertices ];
-
-			m_TriangleVertexBuffers[ 0 ][ i ] = Ref<VertexBuffer>::Create( s_MaxSolidLineVertices * sizeof( LineDrawCommand ) );
-			m_CurrentTriangleBases[ 0 ][ i ] = new LineDrawCommand[ s_MaxSolidLineVertices ];
 		}
 
 		// Setup Index Buffer
@@ -132,6 +121,7 @@ namespace Saturn {
 		}
 
 		m_QuadIndexBuffer = Ref<IndexBuffer>::Create( quadBuffer, s_MaxIndices * sizeof( uint32_t ) );
+		m_TextIndexBuffer = Ref<IndexBuffer>::Create( quadBuffer, s_MaxIndices * sizeof( uint32_t ) );
 		delete[] quadBuffer;
 
 		uint32_t* pLineBuffer = new uint32_t[ s_MaxLineIndices ];
@@ -183,6 +173,12 @@ namespace Saturn {
 			m_LineMaterial = Ref<Material>::Create( m_LineShader, "DebugLineMaterial" );
 		}
 
+		if( !m_TextShader )
+		{
+			m_TextShader = ShaderLibrary::Get().FindOrLoad( "MsdfText", "content/shaders/MsdfText.glsl" );
+			m_TextMaterial = Ref<Material>::Create( m_TextShader, "MsdfText" );
+		}
+
 		PipelineSpecification PipelineSpec{};
 		PipelineSpec.Width = m_Width;
 		PipelineSpec.Height = m_Height;
@@ -218,6 +214,21 @@ namespace Saturn {
 		PipelineSpec.Topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
 		m_TrianglePipeline = Ref<Pipeline>::Create( PipelineSpec );
+
+		PipelineSpec.Name = "Renderer2D(Text)";
+		PipelineSpec.Shader = m_TextShader;
+		PipelineSpec.RenderPass = targetPass == nullptr ? m_TempRenderPass : targetPass;
+		PipelineSpec.CullMode = CullMode::None;
+		PipelineSpec.FrontFace = VK_FRONT_FACE_CLOCKWISE;
+		PipelineSpec.UseDepthTest = true;
+		PipelineSpec.VertexLayout = {
+			{ ShaderDataType::Float3, "a_Position" },
+			{ ShaderDataType::Float2, "a_TexCoord" },
+			{ ShaderDataType::Float4, "a_Color" },
+			{ ShaderDataType::Float, "a_TextureIndex" },
+		};
+
+		m_TextPipeline = Ref<Pipeline>::Create( PipelineSpec );
 	}
 
 	void Renderer2D::Terminate()
@@ -241,9 +252,15 @@ namespace Saturn {
 		m_TriangleIndexBuffer = nullptr;
 		m_TrianglePipeline = nullptr;
 
+		m_TextPipeline = nullptr;
+		m_TextIndexBuffer = nullptr;
+		m_TextShader = nullptr;
+		m_TextMaterial = nullptr;
+
 		m_QuadVertexBuffers.clear();
 		m_LineVertexBuffers.clear();
 		m_TriangleVertexBuffers.clear();
+		m_TextVertexBuffers.clear();
 
 		for( auto& texture : m_Textures )
 			texture = nullptr;
@@ -257,6 +274,10 @@ namespace Saturn {
 				delete[] buffer;
 
 		for( auto& rBuffers : m_CurrentTriangleBases )
+			for( auto buffer : rBuffers )
+				delete[] buffer;
+
+		for( auto& rBuffers : m_CurrentTextBases )
 			for( auto buffer : rBuffers )
 				delete[] buffer;
 	}
@@ -303,48 +324,65 @@ namespace Saturn {
 
 		rNewVB.resize( MAX_FRAMES_IN_FLIGHT );
 		rNewBase.resize( MAX_FRAMES_IN_FLIGHT );
-	
+
 		for( auto i = 0; i < MAX_FRAMES_IN_FLIGHT; i++ )
 		{
-			const uint64_t allocSize = s_MaxVertices * sizeof( QuadVertex );
+			const uint64_t allocSize = s_MaxIndices * sizeof( QuadVertex );
 			rNewVB[ i ] = Ref<VertexBuffer>::Create( allocSize );
-			rNewBase[ i ] = new QuadVertex[ s_MaxVertices ];
+			rNewBase[ i ] = new QuadVertex[ s_MaxIndices ];
 		}
 	}
 
 	void Renderer2D::AddLineBuffer()
 	{
+#if defined(SAT_R2D_BUFF_OVR_DRW_WARN)
+		SAT_CORE_WARN( "BUFF OVR DRW!" );
 		SAT_CORE_INFO( "AddLineBuffer, VBs:{0}, Bases:{1}", m_LineVertexBuffers.size(), m_CurrentLineBases.size() );
+#endif
 
 		std::vector< Ref<VertexBuffer> >& rNewVB = m_LineVertexBuffers.emplace_back();
-		std::vector< LineDrawCommand* >& rNewBase = m_CurrentLineBases.emplace_back();
+		std::vector< LineVertex* >& rNewBase = m_CurrentLineBases.emplace_back();
 
 		rNewVB.resize( MAX_FRAMES_IN_FLIGHT );
 		rNewBase.resize( MAX_FRAMES_IN_FLIGHT );
 
 		for( auto i = 0; i < MAX_FRAMES_IN_FLIGHT; i++ )
 		{
-			const uint64_t allocSize = s_MaxLineVertices * sizeof( LineDrawCommand );
+			const uint64_t allocSize = s_MaxLineIndices * sizeof( LineVertex );
 			rNewVB[ i ] = Ref<VertexBuffer>::Create( allocSize );
-			rNewBase[ i ] = new LineDrawCommand[ s_MaxLineVertices ];
+			rNewBase[ i ] = new LineVertex[ s_MaxLineIndices ];
 		}
 	}
 
 	void Renderer2D::AddTriangleLineBuffer()
 	{
-		SAT_CORE_INFO( "AddTriangleLineBuffer, VBs:{0}, Bases:{1}", m_TriangleVertexBuffers.size(), m_CurrentTriangleBases.size() );
-
 		std::vector< Ref<VertexBuffer> >& rNewVB = m_TriangleVertexBuffers.emplace_back();
-		std::vector< LineDrawCommand* >& rNewBase = m_CurrentTriangleBases.emplace_back();
+		std::vector< LineVertex* >& rNewBase = m_CurrentTriangleBases.emplace_back();
 
 		rNewVB.resize( MAX_FRAMES_IN_FLIGHT );
 		rNewBase.resize( MAX_FRAMES_IN_FLIGHT );
 
 		for( auto i = 0; i < MAX_FRAMES_IN_FLIGHT; i++ )
 		{
-			const uint64_t allocSize = s_MaxSolidLineVertices * sizeof( LineDrawCommand );
+			const uint64_t allocSize = s_MaxSolidLineIndices * sizeof( LineVertex );
 			rNewVB[ i ] = Ref<VertexBuffer>::Create( allocSize );
-			rNewBase[ i ] = new LineDrawCommand[ s_MaxSolidLineVertices ];
+			rNewBase[ i ] = new LineVertex[ s_MaxSolidLineIndices ];
+		}
+	}
+
+	void Renderer2D::AddTextBuffer()
+	{
+		std::vector< Ref<VertexBuffer> >& rNewVB = m_TextVertexBuffers.emplace_back();
+		std::vector< TextVertex* >& rNewBase = m_CurrentTextBases.emplace_back();
+
+		rNewVB.resize( MAX_FRAMES_IN_FLIGHT );
+		rNewBase.resize( MAX_FRAMES_IN_FLIGHT );
+
+		for( auto i = 0; i < MAX_FRAMES_IN_FLIGHT; i++ )
+		{
+			const uint64_t allocSize = s_MaxIndices * sizeof( TextVertex );
+			rNewVB[ i ] = Ref<VertexBuffer>::Create( allocSize );
+			rNewBase[ i ] = new TextVertex[ s_MaxIndices ];
 		}
 	}
 
@@ -363,34 +401,30 @@ namespace Saturn {
 		return m_pCurrentQuadPtr[ m_QuadBufferIndex ];
 	}
 
-	LineDrawCommand*& Renderer2D::GetLineBuffer()
+	LineVertex*& Renderer2D::GetLineBuffer()
 	{
 		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
-		
-		const uint32_t indicesPerBuffer = s_MaxLineIndices;
-		const uint32_t linesPerBuffer = indicesPerBuffer / 2u;
 
 		m_LineBufferIndex = m_LineIndexCount / s_MaxLineIndices;
 
+		// Reallocate if needed.
 		if( m_LineBufferIndex >= m_LineVertexBuffers.size() )
 		{
 			AddLineBuffer();
-			m_CurrentLinePtr.emplace_back();
-			m_CurrentLinePtr[ m_LineBufferIndex ] = m_CurrentLineBases[ m_LineBufferIndex ][ frame ];
+
+			m_CurrentLineVertexBufferPtr.emplace_back();
+			m_CurrentLineVertexBufferPtr[ m_LineBufferIndex ] = m_CurrentLineBases[ m_LineBufferIndex ][ frame ];
 		}
 
-		return m_CurrentLinePtr[ m_LineBufferIndex ];
+		return m_CurrentLineVertexBufferPtr[ m_LineBufferIndex ];
 	}
 
-	LineDrawCommand*& Renderer2D::GetTriangleLineBuffer()
+	LineVertex*& Renderer2D::GetTriangleLineBuffer()
 	{
 		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
 
-		const uint32_t indicesPerBuffer = s_MaxLineIndices;
-		const uint32_t linesPerBuffer = indicesPerBuffer / 2u;
+		m_LineTriangleBufferIndex = m_TriangleIndexCount / s_MaxSolidLineIndices;
 
-		m_LineTriangleBufferIndex = m_TriangleIndexCount / s_MaxLineIndices;
-		
 		if( m_LineTriangleBufferIndex >= m_TriangleVertexBuffers.size() )
 		{
 			AddTriangleLineBuffer();
@@ -399,6 +433,22 @@ namespace Saturn {
 		}
 
 		return m_CurrentTrianglePtr[ m_LineTriangleBufferIndex ];
+	}
+
+	TextVertex*& Renderer2D::GetTextBuffer()
+	{
+		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
+
+		m_TextBufferIndex = m_TextIndexCount / s_MaxIndices;
+
+		if( m_TextBufferIndex >= m_TriangleVertexBuffers.size() )
+		{
+			AddTextBuffer();
+			m_CurrentTextPtr.emplace_back();
+			m_CurrentTextPtr[ m_TextBufferIndex ] = m_CurrentTextBases[ m_TextBufferIndex ][ frame ];
+		}
+
+		return m_CurrentTextPtr[ m_TextBufferIndex ];
 	}
 
 	void Renderer2D::SubmitQuad( const glm::mat4& transform, const glm::vec4& color )
@@ -449,7 +499,7 @@ namespace Saturn {
 		int textureID = 0;
 		for( uint32_t i = 1; i < m_CurrentTextureSlot; ++i )
 		{
-			if( m_Textures[ i ] == rTexture ) 
+			if( m_Textures[ i ] == rTexture )
 			{
 				textureID = i;
 				break;
@@ -458,7 +508,7 @@ namespace Saturn {
 
 		if( textureID == 0 )
 		{
-			if( m_CurrentTextureSlot >= s_MaxTextureSlots ) 
+			if( m_CurrentTextureSlot >= s_MaxTextureSlots )
 			{
 				SAT_CORE_ASSERT( false, "Remind me to implement this again..." );
 			}
@@ -474,7 +524,7 @@ namespace Saturn {
 			prCurrentQuad->Position = transform * m_QuadVertexPositions[ i ];
 			prCurrentQuad->Color = color;
 			prCurrentQuad->TexCoord = TexCoord[ i ];
-			prCurrentQuad->TextureIndex = (float)textureID;
+			prCurrentQuad->TextureIndex = ( float ) textureID;
 
 			++prCurrentQuad;
 		}
@@ -522,7 +572,7 @@ namespace Saturn {
 
 		if( textureID == 0 )
 		{
-			if( m_CurrentTextureSlot >= s_MaxTextureSlots ) 
+			if( m_CurrentTextureSlot >= s_MaxTextureSlots )
 			{
 				SAT_CORE_ASSERT( false, "Remind me to implement this again..." );
 			}
@@ -538,7 +588,7 @@ namespace Saturn {
 			prCurrentQuad->Position = position + CamRight * ( m_QuadVertexPositions[ i ].x ) * rSize.x + CamUp * m_QuadVertexPositions[ i ].y * rSize.y;
 			prCurrentQuad->Color = color;
 			prCurrentQuad->TexCoord = TexCoord[ i ];
-			prCurrentQuad->TextureIndex = (float)textureID;
+			prCurrentQuad->TextureIndex = ( float ) textureID;
 
 			++prCurrentQuad;
 		}
@@ -595,9 +645,9 @@ namespace Saturn {
 
 		prCurrentLinePtr->Position = rStart;
 		prCurrentLinePtr->Color = rColor;
-	
+
 		++prCurrentLinePtr;
-	
+
 		prCurrentLinePtr->Position = rEnd;
 		prCurrentLinePtr->Color = rColor;
 
@@ -666,14 +716,14 @@ namespace Saturn {
 	{
 		const float halfSize = size * 0.5f;
 
-		const glm::vec3 top     = rCenter + glm::vec3( 0.0f, halfSize, 0.0f );
-		const glm::vec3 bottom  = rCenter + glm::vec3( 0.0f, -halfSize, 0.0f );
+		const glm::vec3 top = rCenter + glm::vec3( 0.0f, halfSize, 0.0f );
+		const glm::vec3 bottom = rCenter + glm::vec3( 0.0f, -halfSize, 0.0f );
 
 		// Square in the middle
-		const glm::vec3 front   = rCenter + glm::vec3( 0.0f, 0.0f, halfSize );
-		const glm::vec3 back    = rCenter + glm::vec3( 0.0f, 0.0f, -halfSize );
-		const glm::vec3 right   = rCenter + glm::vec3( halfSize, 0.0f, 0.0f );
-		const glm::vec3 left    = rCenter + glm::vec3( -halfSize, 0.0f, 0.0f );
+		const glm::vec3 front = rCenter + glm::vec3( 0.0f, 0.0f, halfSize );
+		const glm::vec3 back = rCenter + glm::vec3( 0.0f, 0.0f, -halfSize );
+		const glm::vec3 right = rCenter + glm::vec3( halfSize, 0.0f, 0.0f );
+		const glm::vec3 left = rCenter + glm::vec3( -halfSize, 0.0f, 0.0f );
 
 		// A diamond is a square on the XZ plane (when looking right down at it)
 		/*
@@ -796,7 +846,7 @@ namespace Saturn {
 
 	void Renderer2D::SubmitVertex( const glm::vec3& rV0, const glm::vec4& rColor )
 	{
-		SAT_CORE_ASSERT( m_TriangleIndexCount < s_MaxLineIndices );
+		//		SAT_CORE_ASSERT( m_TriangleIndexCount < s_MaxLineIndices );
 
 		auto& prCurrentTrianglePtr = GetTriangleLineBuffer();
 
@@ -807,28 +857,167 @@ namespace Saturn {
 		++m_TriangleIndexCount;
 	}
 
+	void Renderer2D::SubmitString( const std::string& rText, Ref<AluraFont> font, const glm::mat4& rTransform, const glm::vec4& rColor )
+	{
+		auto& rFontGeo = font->GetFontData();
+		const auto& rMetrics = font->GetFontData().GetMetrics();
+
+		double x = 0.0;
+
+		// One EM is equivalent to 16px, so 0.5 em is 8px 2 em is 24px
+		// By default most fonts use emSize = 1 (16px)
+		const double fsScale = 1 / rMetrics.EmSize;
+
+		double y = fsScale * rMetrics.AscenderY;
+		for( size_t i = 0; i < rText.size(); i++ )
+		{
+			const char character = rText[ i ];
+			if( character == '\r' ) continue;
+
+			if( character == '\n' )
+			{
+				x = 0;
+				y += fsScale * rMetrics.LineHeight;
+				continue;
+			}
+
+			auto* pGlyph = rFontGeo.GetGlyph( character );
+			if( character == ' ' )
+			{
+				double advance = pGlyph->GetAdvance();
+				x += fsScale * advance;
+				continue;
+			}
+			// TOOD: Add a font setting or a style setting to determinate how many spaces a tab should be
+			// right now we'll do 4 spaces.
+			else if( character == '\t' )
+			{
+				pGlyph = rFontGeo.GetGlyph( ' ' );
+				double advance = pGlyph->GetAdvance() * 4.0 /* NUMBER_OF_SPACES_PER_TAB */;
+				x += fsScale * advance;
+				continue;
+			}
+
+			if( !pGlyph ) pGlyph = rFontGeo.GetGlyph( '?' );
+
+			float atlasLeft, atlasBottom, atlasRight, atlasTop;
+			pGlyph->GetQuadAtlasBounds( atlasLeft, atlasBottom, atlasRight, atlasTop );
+
+			glm::vec2 texCoordMin( atlasLeft, atlasBottom );
+			glm::vec2 texCoordMax( atlasRight, atlasTop );
+
+			float planeLeft, planeBottom, planeRight, planeTop;
+
+			// Get plane bounds (offsets/bearings)
+			pGlyph->GetQuadPlaneBounds( planeLeft, planeBottom, planeRight, planeTop );
+
+			// NOTE: Vulkan: Same as above.
+			glm::vec2 quadMin( x + planeLeft * fsScale, y + planeBottom * fsScale );
+			glm::vec2 quadMax( x + planeRight * fsScale, y + planeTop * fsScale );
+
+			const float texelWidth = 1.0f / font->GetTexture()->Width();
+			const float texelHeight = 1.0f / font->GetTexture()->Height();
+
+			texCoordMin *= glm::vec2( texelWidth, texelHeight );
+			texCoordMax *= glm::vec2( texelWidth, texelHeight );
+
+			SubmitTextGlyph( quadMin, quadMax, texCoordMin, texCoordMax, rColor, font->GetTexture(), rTransform );
+
+			// Next character spacing
+			if( i < rText.size() - 1 )
+			{
+				double advance = pGlyph->GetAdvance();
+				char next = rText[ i + 1 ];
+				rFontGeo.GetAdvance( advance, character, next );
+
+				x += fsScale * advance + 0.0f /* <-- kerning */;
+			}
+		}
+	}
+
+	void Renderer2D::SubmitTextGlyph( const glm::vec2& rMin, const glm::vec2& rMax, const glm::vec2& rTexCoordMin, const glm::vec2& rTexCoordMax, const glm::vec4& rColor, Ref<Texture2D> atlasTexture, const glm::mat4& rTransform )
+	{
+		uint32_t textureID = 0u;
+		uint32_t fullTextureIndex = 0u;
+
+		for( uint32_t textureIndex = 17u, i = 0u; i < m_CurrentTextureSlot; ++i, ++textureIndex )
+		{
+			if( m_Textures[ textureIndex ] == atlasTexture )
+			{
+				textureID = i;
+				fullTextureIndex = textureIndex;
+				break;
+			}
+		}
+
+		if( fullTextureIndex == 0 )
+		{
+			if( m_CurrentTextureSlot >= s_MaxTextureSlots )
+			{
+				SAT_CORE_ASSERT( false, "Remind me to implement this again..." );
+			}
+
+			textureID = m_CurrentTextureSlot;
+			m_Textures[ textureID + 17u ] = atlasTexture;
+			++m_CurrentTextureSlot;
+		}
+
+		auto& prCurrentTextPtr = GetTextBuffer();
+
+		prCurrentTextPtr->Position = rTransform * glm::vec4( rMin, 0.0f, 1.0f );
+		prCurrentTextPtr->Color = rColor;
+		prCurrentTextPtr->TexCoord = rTexCoordMin;
+		prCurrentTextPtr->TextureIndex = ( float ) textureID;
+		++prCurrentTextPtr;
+
+		prCurrentTextPtr->Position = rTransform * glm::vec4( rMin.x, rMax.y, 0.0f, 1.0f );
+		prCurrentTextPtr->Color = rColor;
+		prCurrentTextPtr->TexCoord = { rTexCoordMin.x, rTexCoordMax.y };
+		prCurrentTextPtr->TextureIndex = ( float ) textureID;
+		++prCurrentTextPtr;
+
+		prCurrentTextPtr->Position = rTransform * glm::vec4( rMax, 0.0f, 1.0f );
+		prCurrentTextPtr->Color = rColor;
+		prCurrentTextPtr->TexCoord = rTexCoordMax;
+		prCurrentTextPtr->TextureIndex = ( float ) textureID;
+		++prCurrentTextPtr;
+
+		prCurrentTextPtr->Position = rTransform * glm::vec4( rMax.x, rMin.y, 0.0f, 1.0 );
+		prCurrentTextPtr->Color = rColor;
+		prCurrentTextPtr->TexCoord = { rTexCoordMax.x, rTexCoordMin.y };
+		prCurrentTextPtr->TextureIndex = ( float ) textureID;
+		++prCurrentTextPtr;
+
+		m_TextIndexCount += 6;
+	}
+
 	void Renderer2D::SetCamera( const RendererCamera& rRendererCamera )
 	{
 		m_CameraView = rRendererCamera.ViewMatrix;
-		m_CameraViewProjection = rRendererCamera.pCamera->ProjectionMatrix() * rRendererCamera.ViewMatrix;
+		m_CameraProjection = rRendererCamera.pCamera->ProjectionMatrix();
+		m_CameraViewProjection = m_CameraProjection * m_CameraView;
 	}
 
 	void Renderer2D::PreRender()
 	{
 		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
-		
+
 		m_QuadIndexCount = 0;
 		for( size_t i = 0; i < m_pCurrentQuadPtr.size(); i++ )
 			m_pCurrentQuadPtr[ i ] = m_CurrentQuadBases[ i ][ frame ];
 
 		m_LineIndexCount = 0;
-		for( size_t i = 0; i < m_CurrentLinePtr.size(); i++ )
-			m_CurrentLinePtr[ i ] = m_CurrentLineBases[ i ][ frame ];
+		for( size_t i = 0; i < m_CurrentLineVertexBufferPtr.size(); i++ )
+			m_CurrentLineVertexBufferPtr[ i ] = m_CurrentLineBases[ i ][ frame ];
 
 		m_TriangleIndexCount = 0;
 		for( size_t i = 0; i < m_CurrentTrianglePtr.size(); i++ )
 			m_CurrentTrianglePtr[ i ] = m_CurrentTriangleBases[ i ][ frame ];
-	
+
+		m_TextIndexCount = 0;
+		for( size_t i = 0; i < m_CurrentTextPtr.size(); i++ )
+			m_CurrentTextPtr[ i ] = m_CurrentTextBases[ i ][ frame ];
+
 		// Not great... but, we want to clear the textures and reset the slot.
 		// So works for now.
 		// TODO: Fix (later)
@@ -858,6 +1047,7 @@ namespace Saturn {
 
 		RenderAllQuads();
 		RenderAllLines();
+		RenderAllText();
 
 		m_TargetRenderPass->EndPass();
 	}
@@ -881,9 +1071,9 @@ namespace Saturn {
 
 			if( dataSize )
 			{
-				m_QuadVertexBuffers[ i ][ frame ]->Reallocate( m_CurrentQuadBases[ i ][ frame ], dataSize );
+				m_QuadVertexBuffers[ i ][ frame ]->SetData( m_CurrentQuadBases[ i ][ frame ], dataSize );
 
-				for( uint32_t j = 0; j < m_Textures.size(); j++ )
+				for( uint32_t j = 0; j < 16; ++j )
 				{
 					if( m_Textures[ j ] )
 						m_QuadMaterial->SetResource( "u_InputTexture", m_Textures[ j ], j );
@@ -923,10 +1113,10 @@ namespace Saturn {
 
 		for( size_t i = 0; i <= m_LineBufferIndex; i++ )
 		{
-			const uint32_t dataSize = ( uint32_t ) ( ( uint8_t* ) m_CurrentLinePtr[ i ] - ( uint8_t* ) m_CurrentLineBases[ i ][ frame ] );
+			const uint32_t dataSize = ( uint32_t ) ( ( uint8_t* ) m_CurrentLineVertexBufferPtr[ i ] - ( uint8_t* ) m_CurrentLineBases[ i ][ frame ] );
 			if( dataSize )
 			{
-				m_LineVertexBuffers[ i ][ frame ]->Reallocate( m_CurrentLineBases[ i ][ frame ], dataSize );
+				m_LineVertexBuffers[ i ][ frame ]->SetData( m_CurrentLineBases[ i ][ frame ], dataSize );
 
 				m_LineMaterial->Bind( m_CommandBuffer, m_LinePipeline->GetPipelineLayout(), {} );
 
@@ -949,7 +1139,7 @@ namespace Saturn {
 				{
 					indexCount = s_MaxLineIndices;
 				}
-				
+
 				vkCmdDrawIndexed( m_CommandBuffer, indexCount, 1, 0, 0, 0 );
 			}
 		}
@@ -960,7 +1150,7 @@ namespace Saturn {
 			const uint32_t dataSize = ( uint32_t ) ( ( uint8_t* ) m_CurrentTrianglePtr[ i ] - ( uint8_t* ) m_CurrentTriangleBases[ i ][ frame ] );
 			if( dataSize )
 			{
-				m_TriangleVertexBuffers[ i ][ frame ]->Reallocate( m_CurrentTriangleBases[ i ][ frame ], dataSize );
+				m_TriangleVertexBuffers[ i ][ frame ]->SetData( m_CurrentTriangleBases[ i ][ frame ], dataSize );
 
 				m_LineMaterial->Bind( m_CommandBuffer, m_TrianglePipeline->GetPipelineLayout(), {} );
 
@@ -971,6 +1161,42 @@ namespace Saturn {
 				m_TriangleVertexBuffers[ i ][ frame ]->Bind( m_CommandBuffer );
 
 				const uint32_t indexCount = i == m_LineTriangleBufferIndex ? m_TriangleIndexCount - ( s_MaxLineIndices * ( uint32_t ) i ) : s_MaxLineIndices;
+				vkCmdDrawIndexed( m_CommandBuffer, indexCount, 1, 0, 0, 0 );
+			}
+		}
+	}
+
+	void Renderer2D::RenderAllText()
+	{
+		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
+
+		for( size_t i = 0; i <= m_TextBufferIndex; i++ )
+		{
+			const uint32_t dataSize = ( uint32_t ) ( ( uint8_t* ) m_CurrentTextPtr[ i ] - ( uint8_t* ) m_CurrentTextBases[ i ][ frame ] );
+
+			if( dataSize )
+			{
+				m_TextVertexBuffers[ i ][ frame ]->SetData( m_CurrentTextBases[ i ][ frame ], dataSize );
+
+				for( uint32_t textureIndex = 17, j = 0; textureIndex < m_Textures.size(); j++, textureIndex++ )
+				{
+					if( m_Textures[ textureIndex ] )
+						m_TextMaterial->SetResource( "u_FontAtlases", m_Textures[ textureIndex ], j );
+					else
+						m_TextMaterial->SetResource( "u_FontAtlases", Renderer::Get()->GetPinkTexture(), j );
+				}
+
+				m_TextMaterial->SetPC( "u_Transform.Projection", m_CameraViewProjection );
+				m_TextMaterial->Bind( m_CommandBuffer, m_TextPipeline->GetPipelineLayout(), {} );
+
+				m_TextPipeline->Bind( m_CommandBuffer );
+
+				vkCmdPushConstants( m_CommandBuffer, m_TextPipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, ( uint32_t ) m_TextMaterial->GetPushConstantData().Size, m_TextMaterial->GetPushConstantData().Data );
+
+				m_TextVertexBuffers[ i ][ frame ]->Bind( m_CommandBuffer );
+				m_TextIndexBuffer->Bind( m_CommandBuffer );
+
+				const uint32_t indexCount = i == m_TextBufferIndex ? m_TextIndexCount - ( s_MaxIndices * ( uint32_t ) i ) : s_MaxIndices;
 				vkCmdDrawIndexed( m_CommandBuffer, indexCount, 1, 0, 0, 0 );
 			}
 		}

@@ -155,6 +155,10 @@ namespace Saturn {
 		void SuspendMainThreadCV();
 		void ResumeMainThreadCV();
 
+#if !defined(SAT_DIST)
+		void LoadFonts();
+#endif
+
 	public:
 		static const char* GetCurrentPlatformName();
 		static const char* GetCurrentConfigName();

@@ -54,18 +54,19 @@ namespace Saturn {
 	class GameModule;
 	class SceneTravelEvent;
 	class OnlineAPI;
+	class SandboxNodeEditorViewer;
 
 	class EditorLayer : public Layer
 	{
 	public:
 		EditorLayer();
-		~EditorLayer();
+		virtual ~EditorLayer();
 
-		void OnUpdate( Timestep time ) override;
-		void OnImGuiRender() override;
-		void OnEvent( Event& rEvent ) override;
-		void OnAttach() override;
-		void OnDetach() override;
+		virtual void OnUpdate( Timestep time ) override;
+		virtual void OnImGuiRender() override;
+		virtual void OnEvent( Event& rEvent ) override;
+		virtual void OnAttach() override;
+		virtual void OnDetach() override;
 		
 	private:
 		void SaveFileAs();
@@ -141,6 +142,11 @@ namespace Saturn {
 
 		glm::vec2 ConvertMouseToViewportNDC();
 		std::pair<glm::vec3, glm::vec3> RayCast( float mx, float my );
+
+		void DndImportPrefab( Ref<Asset> asset, bool select = false, bool clearSelection = true );
+		void DndImportStaticMesh( Ref<Asset> asset, bool select = false, bool clearSelection = true );
+		void DndImportSkeletalMesh( Ref<Asset> asset, bool select = false, bool clearSelection = true );
+		void DndImportSound( Ref<Asset> asset, bool select = false, bool clearSelection = true );
 
 		void PlaceEntityRelativeToMousePos( SharedPtr<Entity> entity );
 
@@ -221,6 +227,8 @@ namespace Saturn {
 		Ref<SceneRenderer> m_SceneRenderer;
 		Ref<SceneRenderer> m_CameraPreviewSceneRenderer;
 
+		Ref<SandboxNodeEditorViewer> m_SandboxNodeEditorViewer;
+
 		Ref<GlobalUndoRedoGroup> m_GlobalUndoRedoGroup = nullptr;
 		std::unique_ptr<EntitySelectionManager> m_SelectionManager;
 
@@ -270,6 +278,7 @@ namespace Saturn {
 		bool m_ShowDeleteNavMeshCachePopup = false;
 		// Show the navmesh debug while in runtime instead of while suspended.
 		bool m_ShowNavMeshDebugRT = false;
+		bool m_FontChanged = false;
 
 		// JobProgress
 		float m_OperationPercent = 0.0f;

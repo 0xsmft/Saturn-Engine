@@ -29,13 +29,20 @@
 #include "sppch.h"
 #include "BehaviourTreeCompositeTasks.h"
 
+#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
+
 #include "Saturn/AI/BehaviourTree/Conditions/BehaviourTreeCondition.h"
 
 #include "Saturn/AI/AIAgentEntity.h"
+
+#if !defined(SAT_DIST)
 #include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeNodeEditor.h"
 
 #include "Saturn/AI/BehaviourTree/AssetViewer/Nodes/BehaviourTreeSelectorNode.h"
 #include "Saturn/AI/BehaviourTree/AssetViewer/Nodes/BehaviourTreeSequenceNode.h"
+
+#include "Saturn/NodeEditor/Debugging/NodeBreakPointManager.h"
+#endif
 
 namespace Saturn {
 
@@ -47,6 +54,62 @@ namespace Saturn {
 		m_pCurrentTask = nullptr;
 		m_CurrentTaskIndex = 0;
 	}
+	
+	void BehaviourTreeCompositeBaseTask::InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther )
+	{
+		Super::InitialiseTaskWithOther( pHandler, pOther );
+
+		// Get the seq node.
+		BehaviourTreeCompositeBaseTask* pCompositeBaseTask = dynamic_cast< BehaviourTreeCompositeBaseTask* >( pOther );
+		if( pCompositeBaseTask )
+		{
+			// Create local copy of children from the template node.
+			m_Children.reserve( pCompositeBaseTask->m_Children.size() );
+
+			for( const auto* pTask : pCompositeBaseTask->m_Children )
+			{
+				auto* pChildTask = ( BehaviourTreeBaseTask* ) ClassMetadataHandler::Get().CreateClassObject( pTask->GetClass() );
+				pChildTask->InitialiseTaskWithOther( pHandler, ( NodeEditorTaskBase* ) pTask );
+
+				m_Children.push_back( pChildTask );
+			}
+		}
+	}
+
+	void BehaviourTreeCompositeBaseTask::Serialise( std::ofstream& rStream ) const
+	{
+		Super::Serialise( rStream );
+
+		RawSerialisation::WriteObject( m_Children.size(), rStream );
+
+		for( const auto& rChildTask : m_Children )
+		{
+			RawSerialisation::WriteObject( rChildTask->GetClass()->GetHash(), rStream );
+
+			rChildTask->Serialise( rStream );
+		}
+	}
+
+	void BehaviourTreeCompositeBaseTask::Deserialise( FDependentIStream& rStream )
+	{
+		Super::Deserialise( rStream );
+
+		size_t childrenCount = 0llu;
+		RawSerialisation::ReadObject( childrenCount, rStream );
+
+		for( size_t i = 0; i < childrenCount; ++i )
+		{
+			uint64_t classHash = 0llu;
+			RawSerialisation::ReadObject( classHash, rStream );
+
+			BehaviourTreeBaseTask* pBaseObject = ( BehaviourTreeBaseTask* )ClassMetadataHandler::Get().CreateClassObject( classHash );
+
+			pBaseObject->Deserialise( rStream );
+
+			// NB: pBaseObject Converted to Ref<>
+			m_Children.push_back( pBaseObject );
+		}
+	}
 
 	//////////////////////////////////////////////////////////////////////////
 	// SELECTOR TASK
@@ -55,31 +118,40 @@ namespace Saturn {
 	{
 	}
 
-	void BehaviourTreeSelectorTask::InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
-	{
-		BehaviourTreeNodeEditor* pBehaviourTreeNodeEditor = dynamic_cast< BehaviourTreeNodeEditor* >( pEditor );
-
-		BehaviourTreeSelectorNode* pSelectorNode = dynamic_cast< BehaviourTreeSelectorNode* >( pNode );
-		if( pSelectorNode )
-		{
-			for( const auto& rNode : pSelectorNode->GetChildren() )
-			{
-				m_Children.push_back( pBehaviourTreeNodeEditor->GetTaskFor( rNode ).Get() );
-			}
-
-			m_NodeID = pSelectorNode->ID;
-
-			m_pNodeCondition = pSelectorNode->NodeCondition.Get();
-			if( m_pNodeCondition )
-			{
-				m_pNodeCondition->InitialiseTask( pHandler, pEditor, pNode );
-			}
-		}
-	}
-
 	BehaviourTreeSelectorTask::~BehaviourTreeSelectorTask()
 	{
 		Reset();
+	}
+
+#if !defined(SAT_DIST)
+	void BehaviourTreeSelectorTask::PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
+	{
+		Super::PreInitialiseTask( pEditor, pNode );
+
+		// Get the seq node.
+		BehaviourTreeSelectorNode* pSelectorNode = dynamic_cast< BehaviourTreeSelectorNode* >( pNode );
+		if( pSelectorNode )
+		{
+			// The children are added... but no tasks exist
+			// so lets create them!
+			m_Children.reserve( pSelectorNode->GetChildren().size() );
+
+			for( const auto& rNodeID : pSelectorNode->GetChildren() )
+			{
+				if( const auto rNode = pEditor->FindNode( rNodeID ) )
+				{
+					auto* pChildTask = ( BehaviourTreeBaseTask* ) rNode->ConvertToTask();
+					pChildTask->PreInitialiseTask( pEditor, rNode.Get() );
+					m_Children.push_back( pChildTask );
+				}
+			}
+		}
+	}
+#endif
+
+	void BehaviourTreeSelectorTask::InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther )
+	{
+		Super::InitialiseTaskWithOther( pHandler, pOther );
 	}
 
 	NodeEditorTaskState BehaviourTreeSelectorTask::Tick( Timestep ts )
@@ -115,31 +187,40 @@ namespace Saturn {
 	{
 	}
 
-	void BehaviourTreeSequenceTask::InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
-	{
-		BehaviourTreeNodeEditor* pBehaviourTreeNodeEditor = dynamic_cast< BehaviourTreeNodeEditor* >( pEditor );
-
-		BehaviourTreeSequenceNode* pSequenceNode = dynamic_cast< BehaviourTreeSequenceNode* >( pNode );
-		if( pSequenceNode )
-		{
-			for( const auto& rNode : pSequenceNode->GetChildren() )
-			{
-				m_Children.push_back( pBehaviourTreeNodeEditor->GetTaskFor( rNode ).Get() );
-			}
-
-			m_NodeID = pSequenceNode->ID;
-
-			m_pNodeCondition = pSequenceNode->NodeCondition.Get();
-			if( m_pNodeCondition )
-			{
-				m_pNodeCondition->InitialiseTask( pHandler, pEditor, pNode );
-			}
-		}
-	}
-
 	BehaviourTreeSequenceTask::~BehaviourTreeSequenceTask()
 	{
 		Reset();
+	}
+
+#if !defined(SAT_DIST)
+	void BehaviourTreeSequenceTask::PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
+	{
+		Super::PreInitialiseTask( pEditor, pNode );
+
+		// Get the seq node.
+		BehaviourTreeSequenceNode* pSequenceNode = dynamic_cast< BehaviourTreeSequenceNode* >( pNode );
+		if( pSequenceNode )
+		{
+			// The children are added... but no tasks exist
+			// so lets create them!
+			m_Children.reserve( pSequenceNode->GetChildren().size() );
+
+			for( const auto& rNodeID : pSequenceNode->GetChildren() )
+			{
+				if( const auto rNode = pEditor->FindNode( rNodeID ) )
+				{
+					auto* pChildTask = ( BehaviourTreeBaseTask* ) rNode->ConvertToTask();
+					pChildTask->PreInitialiseTask( pEditor, rNode.Get() );
+					m_Children.push_back( pChildTask );
+				}
+			}
+		}
+	}
+#endif
+
+	void BehaviourTreeSequenceTask::InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther )
+	{
+		Super::InitialiseTaskWithOther( pHandler, pOther );
 	}
 
 	NodeEditorTaskState BehaviourTreeSequenceTask::Tick( Timestep ts )

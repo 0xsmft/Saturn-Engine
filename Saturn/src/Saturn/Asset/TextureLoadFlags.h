@@ -30,13 +30,13 @@
 
 namespace Saturn {
 
-	enum TextureLoadFlags : unsigned int
+	enum TextureLoadFlags : uint8_t
 	{
 		TextureLoadFlags_None = 0,
 		TextureLoadFlags_FlipVertically = BIT( 0 ),
 	};
 
-	enum class TextureFilteringFlags
+	enum class TextureFilteringFlags : uint8_t
 	{
 		// VK_FILTER_LINEAR
 		Linear,

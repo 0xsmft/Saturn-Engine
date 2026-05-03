@@ -29,18 +29,19 @@
 #pragma once
 
 #include "AssetViewer.h"
-#include "SubSceneRendererWindow.h"
+
+#include "EditorViewport.h"
 
 namespace Saturn {
 
 	class SceneRenderer;
 	class EditorCamera;
 
-	class StaticMeshAssetViewer : public AssetViewer, public SubSceneRendererWindow
+	class StaticMeshAssetViewer : public AssetViewer
 	{
 	public:
 		StaticMeshAssetViewer( AssetID id );
-		~StaticMeshAssetViewer();
+		virtual ~StaticMeshAssetViewer();
 
 		virtual void OnImGuiRender() override;
 		virtual void OnUpdate( Timestep ts ) override;
@@ -52,7 +53,10 @@ namespace Saturn {
 		void DrawCookingErrorPopup();
 
 	private:
+		Ref<Scene> m_Scene;
 		Ref<StaticMesh> m_Mesh;
+		std::unique_ptr<EditorViewport> m_EditorViewport;
+
 		AssetID m_AssetFinderOut = 0;
 		AssetID m_AssetFinderOutPhys = 0;
 
@@ -61,7 +65,7 @@ namespace Saturn {
 		// fall back on.
 		bool m_ShowNoFallbackPopup = false;
 		bool m_ShowCookingErrorPopup = false;
-		uint64_t m_CookingError = 0;
+		uint8_t m_CookingError = 0;
 		UUID m_FallbackID = 0;
 	
 		std::queue<uint64_t> m_ResetIndices;

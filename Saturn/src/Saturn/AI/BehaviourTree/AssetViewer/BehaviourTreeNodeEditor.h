@@ -61,17 +61,8 @@ namespace Saturn {
 		BehaviourTreeNodeEditor( AssetID id );
 		virtual ~BehaviourTreeNodeEditor();
 
-		// RUNTIME | SIMULATION ONLY
-		void Tick( Timestep ts );
-		void InitBBAndTasks();
-
-		Ref<BehaviourTreeBaseTask> GetTaskFor( UUID node ) const;
-
 	public:
 		void TraverseBehaviourTree( const SharedPtr<NodeEditorNodeBase>& rRootNode );
-
-		void SetTargetAgent( AIAgentEntity* agent );
-		[[nodiscard]] AIAgentEntity* GetTargetAgent() const;
 
 		Ref<BehaviourTreeMemory> GetBlackboard() const { return	m_Blackboard; }
 		Ref<BehaviourTreeMemorySpecification> GetBlackboardSpec() const { return m_BlackboardSpec; }
@@ -85,6 +76,7 @@ namespace Saturn {
 		virtual void OnTopBarRender() override;
 		virtual void OnExtraRender() override;
 		virtual void OnNodeEditorEvent( NodeEditorAction action ) override;
+		virtual void OnDebugBreak() override;
 	
 	private:
 		void ShowTreeFlow();
@@ -92,30 +84,18 @@ namespace Saturn {
 		void BuildFlow( SharedPtr<BehaviourTreeNodeBase> node );
 #endif
 
-		void ResetAllTasks();
+		void BuildTaskCache();
 
-	private:
-		Ref<BehaviourTreeBaseTask> m_CurrentTask;
-		size_t m_CurrentTaskIndex = 0;
-		
+		void Sort( std::vector<SharedPtr<NodeEditorNodeBase>>& rOrder );
+		void SortFrom( std::vector<SharedPtr<NodeEditorNodeBase>>& rOrder, SharedPtr<NodeEditorNodeBase> node );
+
+	private:		
 		AssetID m_BehaviourTreeMemoryAssetID = 0;
 
 #if !defined(SAT_DIST)
 		bool m_AutoEvaluate = true;
 #endif
-
-		// The current Agent that we are trying to control
-		// #ReplaceRawPtrOrRefWithWeakRef, non owning ptr, should be converted to a weak ptr because we don't want to stop the entity from delete, we are "child" of it
-		AIAgentEntity* m_pAIAgentEntity = nullptr;
-
-		// All tasks in the tree
-		//       NODE ID -> TASK*
-		std::map<UUID, Ref<BehaviourTreeBaseTask>> m_Tasks;
 		
-		// All tasks at level one, level one meaning right below the root node
-		//       INDEX -> TASK* (Index is relative to the m_Tasks map)
-		std::map<size_t, Ref<BehaviourTreeBaseTask>> m_LevelOneTasks;
-
 		std::vector<BehaviourTreeCompositeOrderInfo> m_EvaluationOrder;
 
 #if !defined(SAT_DIST)

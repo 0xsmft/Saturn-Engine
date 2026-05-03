@@ -64,7 +64,7 @@ namespace Saturn {
 	void TextureViewer::OnImGuiRender()
 	{
 #if !defined(SAT_DIST)
-		ImGuiWindowFlags flags = ImGuiWindowFlags_MenuBar;
+		ImGuiWindowFlags flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_HorizontalScrollbar;
 		if( m_Dirty )
 			flags |= ImGuiWindowFlags_UnsavedDocument;
 

@@ -118,6 +118,7 @@ namespace Saturn {
 		RuntimeData.MaterialAsset = nullptr;
 	}
 
+	/*
 	Saturn::NodeEvaluationState MaterialOutputNode::EvaluateNode( NodeEditorRuntime* evaluator )
 	{
 		MaterialNodeEditorEvaluator* materialEval = dynamic_cast< MaterialNodeEditorEvaluator* >( evaluator );
@@ -181,6 +182,7 @@ namespace Saturn {
 
 		return NodeEvaluationState::Evaluated;
 	}
+	*/
 
 	void MaterialOutputNode::CreateNode()
 	{
@@ -188,7 +190,7 @@ namespace Saturn {
 
 #if !defined(SAT_DIST)
 		Color = ImColor( 255, 128, 128 );
-		CanBeDeleted = false;
+		Flags |= NodeFlags_Irremovable;
 #endif
 
 		// Inputs
@@ -248,6 +250,7 @@ namespace Saturn {
 	{
 	}
 
+	/*
 	Saturn::NodeEvaluationState MaterialSampler2DNode::EvaluateNode( NodeEditorRuntime* evaluator )
 	{
 		MaterialNodeEditorEvaluator* materialEval = dynamic_cast< MaterialNodeEditorEvaluator* >( evaluator );
@@ -275,6 +278,7 @@ namespace Saturn {
 		
 		return NodeEvaluationState::Evaluated;
 	}
+	*/
 
 	//////////////////////////////////////////////////////////////////////////
 	// MATERIAL COLOR PICKER NODE
@@ -305,6 +309,7 @@ namespace Saturn {
 	{
 	}
 
+	/*
 	Saturn::NodeEvaluationState MaterialColorPickerNode::EvaluateNode( NodeEditorRuntime* evaluator )
 	{
 		MaterialNodeEditorEvaluator* materialEval = dynamic_cast< MaterialNodeEditorEvaluator* >( evaluator );
@@ -328,6 +333,7 @@ namespace Saturn {
 
 		return NodeEvaluationState::Evaluated;
 	}
+	*/
 
 	void MaterialColorPickerNode::SetColor( const glm::vec3& rColor )
 	{
@@ -363,6 +369,7 @@ namespace Saturn {
 	{
 	}
 
+	/*
 	Saturn::NodeEvaluationState MaterialGetAssetNode::EvaluateNode( NodeEditorRuntime* evaluator )
 	{
 		MaterialNodeEditorEvaluator* materialEval = dynamic_cast< MaterialNodeEditorEvaluator* >( evaluator );
@@ -385,6 +392,7 @@ namespace Saturn {
 
 		return NodeEvaluationState::Evaluated;
 	}
+	*/
 
 	AssetID MaterialGetAssetNode::GetAssetID() const
 	{
@@ -424,6 +432,7 @@ namespace Saturn {
 	{
 	}
 
+	/*
 	Saturn::NodeEvaluationState MaterialSeparateColorRGBNode::EvaluateNode( NodeEditorRuntime* evaluator )
 	{
 		MaterialNodeEditorEvaluator* materialEval = dynamic_cast< MaterialNodeEditorEvaluator* >( evaluator );
@@ -443,6 +452,7 @@ namespace Saturn {
 
 		return NodeEvaluationState::Evaluated;
 	}
+	*/
 
 	//////////////////////////////////////////////////////////////////////////
 	// MATERIAL COLOR MIXER NODE
@@ -478,6 +488,7 @@ namespace Saturn {
 	{
 	}
 
+	/*
 	Saturn::NodeEvaluationState MaterialColorMixerNode::EvaluateNode( NodeEditorRuntime* evaluator )
 	{
 		MaterialNodeEditorEvaluator* materialEval = dynamic_cast< MaterialNodeEditorEvaluator* >( evaluator );
@@ -511,6 +522,7 @@ namespace Saturn {
 
 		return NodeEvaluationState::Evaluated;
 	}
+	*/
 
 }
 

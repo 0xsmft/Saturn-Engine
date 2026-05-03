@@ -45,12 +45,20 @@ namespace Saturn {
 		~AnimGraphPlayAnimTask();
 
 	public:
-		virtual void InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+#if !defined(SAT_DIST)
+		virtual void PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+#endif
+		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther ) override;
+
 		virtual NodeEditorTaskState Tick( Timestep ts ) override;
 		virtual void Reset() override;
 
+		virtual void Serialise( std::ofstream& rStream ) const override;
+		virtual void Deserialise( FDependentIStream& rStream ) override;
+
 	private:
 		Ref<Animator> m_Animator;
+		UUID m_AnimationAssetID = 0llu;
 		Ref<SkeletalAnimationAsset> m_AnimationAsset;
 	};
 

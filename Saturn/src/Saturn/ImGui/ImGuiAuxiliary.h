@@ -130,6 +130,9 @@ namespace Saturn::Auxiliary {
 
 	// NOTE: When not using columns you MUST draw the text before calling this function!
 	extern bool DrawColorVec3Control( const std::string& rLabel, glm::vec3& values, float resetValue = 0.0f, bool useColumns = true, float columnWidth = 100.0f );
+	
+	// NOTE: When not using columns you MUST draw the text before calling this function!
+	extern bool DrawColorVec4Control( const std::string& rLabel, glm::vec4& values, float resetValue = 0.0f, bool useColumns = true, float columnWidth = 100.0f );
 
 	// NOTE: When not using columns you MUST draw the text before calling this function!
 	extern bool DrawFloatControl( const std::string& rLabel, float& values, float min = 0.0f, float max = 500.0f, bool useColumns = true, float columnWidth = 125.0f );

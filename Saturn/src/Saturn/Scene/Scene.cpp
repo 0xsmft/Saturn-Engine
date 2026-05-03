@@ -555,6 +555,24 @@ namespace Saturn {
 				);
 			}
 		}
+
+		const auto textEntities = GetAllEntitiesWith<TextComponent>();
+		for( const auto& rEntity : textEntities )
+		{
+			const TextComponent& rTextComp = rEntity->GetComponent<TextComponent>();
+			const TransformComponent& rTc = rEntity->GetComponent<TransformComponent>();
+
+			Ref<AluraFont> font = AssetManager::Get()->GetAssetAs<AluraFont>( rTextComp.FontAssetID );
+			if( !font )
+			{
+				font = AssetManager::Get()->GetAssetAs<AluraFont>( Project::GetActiveProject()->GetDefaultFontAsset() );
+
+				// If we get here then I'll need to add an editor backup font!
+				SAT_CORE_ASSERT( font );
+			}
+
+			sceneRenderer->GetRenderer2D()->SubmitString( rTextComp.Text, font, rTc.GetTransform(), rTextComp.Color );
+		}
 #endif
 
 		if( m_RuntimeState == RuntimeState::Suspended )
@@ -734,6 +752,8 @@ namespace Saturn {
 
 #if SAT_FEATURE_SHOW_SELECTED_CAMERA_FRUSTUM
 		//////////////////////////////////////////////////////////////////////////
+		// Camera Frustum
+
 		for( const auto& rEntity : EntitySelectionManager::Get()->GetSelectionContexts( this ) )
 		{
 			if( auto* pCameraComp = rEntity->TryGetComponent<CameraComponent>(); pCameraComp )
@@ -745,6 +765,24 @@ namespace Saturn {
 			}
 		}
 #endif
+
+		for( const auto& rEntity : EntitySelectionManager::Get()->GetSelectionContexts( this ) )
+		{
+			if( auto* pStaticMeshComp = rEntity->TryGetComponent<StaticMeshComponent>() )
+			{
+				if( pStaticMeshComp->Mesh )
+				{
+					const auto transform = GetTransformRelativeToParent( rEntity );
+
+					Ref<MaterialRegistry> targetMaterialRegistry = pStaticMeshComp->Mesh->GetMaterialRegistry();
+
+					if( pStaticMeshComp->MaterialRegistry && pStaticMeshComp->MaterialRegistry->HasAnyOverrides() )
+						targetMaterialRegistry = pStaticMeshComp->MaterialRegistry;
+
+					sceneRenderer->SubmitSelectedStaticMesh( rEntity, pStaticMeshComp->Mesh, targetMaterialRegistry, transform );
+				}
+			}
+		}
 	}
 #endif
 
@@ -882,6 +920,16 @@ namespace Saturn {
 	{
 		if( m_PhysicsScene )
 			return m_PhysicsScene->Raycast( Origin, Direction, MaxDistance, pOut );
+
+		return false;
+	}
+
+	bool Scene::RaycastIgnore( SharedPtr<Entity> entityIgnore, const glm::vec3& Origin, const glm::vec3& Direction, float MaxDistance, RaycastHitResult* pOut )
+	{
+		if( m_PhysicsScene )
+		{
+			return m_PhysicsScene->RaycastIgnoringSelf( entityIgnore, Origin, Direction, MaxDistance, pOut );
+		}
 
 		return false;
 	}

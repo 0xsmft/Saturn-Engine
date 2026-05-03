@@ -47,9 +47,9 @@ namespace Saturn {
 	{
 		UUID Hash = 0;
 
-		std::vector<Ref<Pipeline>> Pipelines;
-		std::vector<Ref<Material>> Materials;
-		//std::vector<Ref<MaterialAssets>> MaterialAssets;
+		// NOTE: Non owning raw ptr, basically a weak ref.
+		std::vector<Pipeline*> Pipelines;
+		std::vector<Material*> Materials;
 
 		~ShaderReference() 
 		{
@@ -66,7 +66,9 @@ namespace Saturn {
 		Renderer();
 		~Renderer();
 
-		void SubmitFullscreenQuad( VkCommandBuffer CommandBuffer, Ref<Saturn::Pipeline> Pipeline, Ref<Material> material, Ref<UniformBufferSet> ubSet, Ref<IndexBuffer> IndexBuffer, Ref<VertexBuffer> VertexBuffer );
+		void SubmitFullscreenQuad( VkCommandBuffer CommandBuffer, Ref<Saturn::Pipeline> Pipeline, Ref<Material> material, Ref<IndexBuffer> IndexBuffer, Ref<VertexBuffer> VertexBuffer );
+
+		void SubmitFullscreenQuadPushConst( VkCommandBuffer CommandBuffer, Ref<Saturn::Pipeline> Pipeline, Ref<Material> material, Ref<IndexBuffer> IndexBuffer, Ref<VertexBuffer> VertexBuffer, Buffer PushConstData );
 
 		// Render pass helpers.
 		void BeginRenderPass( VkCommandBuffer CommandBuffer, Pass& rPass );
@@ -127,7 +129,10 @@ namespace Saturn {
 		void RemoveShaderReference( UUID Hash );
 		void ClearShaderReferences();
 
-		ShaderReference& FindShaderReference( UUID Hash );
+		void RemovePipelineReferenceFromShaderRef( UUID Hash, Pipeline* pPipeline );
+		void RemoveMaterialReferenceFromShaderRef( UUID Hash, Material* pMaterial );
+
+		ShaderReference& FindOrCreateShaderReference( UUID Hash );
 #endif
 
 	public:

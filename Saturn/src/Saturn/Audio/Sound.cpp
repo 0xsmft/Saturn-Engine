@@ -142,7 +142,7 @@ namespace Saturn {
 		Unload();
 	}
 
-	void Sound::Play( int frameOffset )
+	void Sound::Play( uint64_t frameOffset )
 	{
 		auto playFunc = [this, frameOffset]()
 		{

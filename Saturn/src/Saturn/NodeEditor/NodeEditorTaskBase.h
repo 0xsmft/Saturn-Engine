@@ -28,18 +28,24 @@
 
 #pragma once
 
+#include "NodeEditorNodeFlags.h"
+
 #include "Saturn/Core/Base.h"
 #include "Saturn/Core/UUID.h"
 #include "Saturn/GameFramework/SObject.h"
 
+// I don't like the fact we have to include <fstream>... (which is pulled in from the file below)
+#include "Saturn/Serialisation/Raw/RawSerialisationBase.h"
+
 namespace Saturn {
 
-	enum class NodeEditorTaskState
+	enum class NodeEditorTaskState : uint8_t
 	{
 		Unknown,
 		Starting,
 		Running,
 		Completed, // success flag
+		DebugBreakRequested,
 		Failed
 	};
 
@@ -47,32 +53,43 @@ namespace Saturn {
 	class NodeEditorBase;
 	class NodeEditorTaskHandler;
 
+	//
+	// NodeEditorTaskBase
+	// 
+	// A NodeEditorTaskBase is a the runtime representation of a Node.
+	//
 	SCLASS()
 	class NodeEditorTaskBase : public SObject
 	{
-		SAT_DECLARE_CLASS( NodeEditorTaskBase, SObject );
+		SAT_DECLARE_CLASS_MOVE( NodeEditorTaskBase, SObject );
 	public:
 		NodeEditorTaskBase() = default;
 		virtual ~NodeEditorTaskBase() = default;
 
+	public:
+#if !defined(SAT_DIST)
+		virtual void PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) {}
+#endif
+		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther );
+
 		virtual void InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) {}
+		// Called every frame unless the node has the ConstantEvaluated flag.
 		virtual NodeEditorTaskState Tick( Timestep ts ) { return NodeEditorTaskState::Unknown; }
 		virtual void Reset() {}
 
 	public:
-		[[nodiscard]] Saturn::UUID GetNodeID() const { return m_NodeID; }
-		[[nodiscard]] NodeEditorTaskState GetState() const { return m_CurrentState; }
+		virtual void Serialise( std::ofstream& rStream ) const;
+		virtual void Deserialise( FDependentIStream& rStream );
 
 	public:
-#if !defined(SAT_DIST)
-		[[nodiscard]] virtual const char* GetTaskName() const { return "Base Task"; }
-		[[nodiscard]] virtual bool IsSpawnableNode() const { return false; }
-		virtual void OnRenderExtra() {}
-		virtual void RenderDetails() {}
-#endif
+		[[nodiscard]] Saturn::UUID GetNodeID() const { return m_NodeID; }
+		[[nodiscard]] NodeEditorNodeFlags GetNodeFlags() const { return m_NodeFlags; }
+		[[nodiscard]] NodeEditorTaskState GetState() const { return m_CurrentState; }
 
 	protected:
+		// The original Node ID, we need this just in case we need to access any data that is linked to a Node ID.
 		Saturn::UUID m_NodeID = 0;
+		NodeEditorNodeFlags m_NodeFlags = NodeFlags_Default;
 		NodeEditorTaskState m_CurrentState = NodeEditorTaskState::Unknown;
 	};
 	

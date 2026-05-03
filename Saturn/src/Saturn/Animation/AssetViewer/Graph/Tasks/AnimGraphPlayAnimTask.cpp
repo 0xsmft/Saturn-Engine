@@ -51,38 +51,40 @@ namespace Saturn {
 		m_Animator = nullptr;
 	}
 
-	void AnimGraphPlayAnimTask::InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
+#if !defined(SAT_DIST)
+	void AnimGraphPlayAnimTask::PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
 	{
+		Super::PreInitialiseTask( pEditor, pNode );
+	
 		const AnimGraphStateMachinePlayAnimNode* pAGNode = dynamic_cast< AnimGraphStateMachinePlayAnimNode* >( pNode );
-		const AnimGraphTaskHandler* pAGTaskHandler = dynamic_cast< AnimGraphTaskHandler* >( pHandler );
-		
-		if( pAGTaskHandler )
-		{
-			m_Animator = pAGTaskHandler->GetAnimator();
-		}
 
 		if( pAGNode )
 		{
-			m_AnimationAsset = AssetManager::Get()->GetAssetAs<SkeletalAnimationAsset>( pAGNode->Outputs[ 0 ].As<AnimGraphAnimationPin>()->GetAssetID() );
+			m_AnimationAssetID = pAGNode->Outputs[ 0 ].As<AnimGraphAnimationPin>()->GetAssetID();
 		}
+	}
+#endif
 
-		/*
-		if( m_AnimationAsset && m_Animator )
+	void AnimGraphPlayAnimTask::InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther )
+	{
+		Super::InitialiseTaskWithOther( pHandler, pOther );
+
+		const AnimGraphTaskHandler* pAG = dynamic_cast< AnimGraphTaskHandler* >( pHandler );
+		if( pAG )
 		{
-			m_Animator->Loop( true );
-//			m_Animator->SetPlaybackSpeed( pAGNode->GetPlaybackSpeed() );
+			m_Animator = pAG->GetAnimator();
 
-			m_Animator->m_SingleAnimationAsset = m_AnimationAsset;
-			m_Animator->m_Context.initialize( *static_cast< const acl::compressed_tracks* >( m_AnimationAsset->GetData() ) );
-			m_Animator->TickSingleAnim( 0.0f );
+			const AnimGraphPlayAnimTask* pAGOther = dynamic_cast< AnimGraphPlayAnimTask* >( pOther );
+			if( pAGOther )
+			{
+				m_AnimationAssetID = pAGOther->m_AnimationAssetID;
+				m_AnimationAsset = AssetManager::Get()->GetAssetAs<SkeletalAnimationAsset>( m_AnimationAssetID );
+			}
 		}
-		*/
 	}
 
 	NodeEditorTaskState AnimGraphPlayAnimTask::Tick( Timestep ts )
 	{
-		SAT_CORE_INFO( "AnimGraphPlayAnimTask::Tick" );
-
 		if( m_AnimationAsset && m_Animator )
 		{
 			m_Animator->Loop( true );
@@ -104,6 +106,20 @@ namespace Saturn {
 	void AnimGraphPlayAnimTask::Reset()
 	{
 		m_CurrentState = NodeEditorTaskState::Unknown;
+	}
+
+	void AnimGraphPlayAnimTask::Serialise( std::ofstream& rStream ) const
+	{
+		Super::Serialise( rStream );
+	
+		RawSerialisation::WriteObject( m_AnimationAssetID, rStream );
+	}
+
+	void AnimGraphPlayAnimTask::Deserialise( FDependentIStream& rStream )
+	{
+		Super::Deserialise( rStream );
+
+		RawSerialisation::ReadObject( m_AnimationAssetID, rStream );
 	}
 
 }

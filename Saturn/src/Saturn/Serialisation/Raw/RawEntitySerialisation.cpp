@@ -375,6 +375,15 @@ namespace Saturn {
 				auto& btc = rEntity->GetComponent< BehaviourTreeComponent >();
 				WriteAssetDependency( btc.BehaviourTreeAssetID, rStream );
 			} );
+
+		// Text Component
+		WriteComponent<TextComponent>( rEntity, rStream, [ & ]()
+			{
+				auto& rTextComponent = rEntity->GetComponent< TextComponent>();
+				WriteAssetDependency( rTextComponent.FontAssetID, rStream );
+				RawSerialisation::WriteVec4( rTextComponent.Color, rStream );
+				RawSerialisation::WriteString( rTextComponent.Text, rStream );
+			} );
 	}
 
 	void RawEntitySerialisation::DeserialiseEntity( SharedPtr<Entity>& rEntity, std::istream& rStream )
@@ -706,6 +715,15 @@ namespace Saturn {
 			{
 				auto& btc = rEntity->GetComponent< BehaviourTreeComponent>();
 				ReadAssetDependency( btc.BehaviourTreeAssetID, rStream );
+			} );
+
+		// Text Component
+		ReadComponent<TextComponent>( rEntity, rStream, [ & ]()
+			{
+				auto& rTextComponent = rEntity->GetComponent< TextComponent>();
+				ReadAssetDependency( rTextComponent.FontAssetID, rStream );
+				RawSerialisation::ReadVec4( rTextComponent.Color, rStream );
+				rTextComponent.Text = RawSerialisation::ReadString( rStream );
 			} );
 	}
 

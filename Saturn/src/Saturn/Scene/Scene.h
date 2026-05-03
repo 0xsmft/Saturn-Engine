@@ -288,6 +288,7 @@ namespace Saturn {
 		TransformComponent GetWorldSpaceTransform( const SharedPtr<Entity> entity );
 
 		[[nodiscard]] bool Raycast( const glm::vec3& Origin, const glm::vec3& Direction, float MaxDistance, RaycastHitResult* pOut );
+		[[nodiscard]] bool RaycastIgnore( SharedPtr<Entity> entityIgnore, const glm::vec3& Origin, const glm::vec3& Direction, float MaxDistance, RaycastHitResult* pOut );
 
 	public:
 		void CopyScene( Ref<Scene>& NewScene );

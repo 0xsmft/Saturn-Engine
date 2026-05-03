@@ -29,6 +29,8 @@
 #include "sppch.h"
 #include "Pin.h"
 
+#include "NodeEditorBase.h"
+
 #include "Saturn/Serialisation/Raw/RawSerialisation.h"
 #include "Saturn/NodeEditor/NodeEditorBlueprintNode.h"
 
@@ -39,13 +41,13 @@
 
 namespace Saturn {
 
-	Pin::Pin( const std::string& rName, PinType type, PinKind kind )
-		: Name( rName ), Type( type ), Kind( kind ), Node( nullptr ), ID()
+	Pin::Pin( const std::string& rName, PinType type, PinKind kind, PinFlag flags /*= PinFlag_DefaultSet*/ )
+		: Name( rName ), Type( type ), Kind( kind ), Node( nullptr ), ID(), PinFlags( flags )
 	{
 	}
 
-	Pin::Pin( UUID id, const std::string& rName, PinType type, UUID nodeID )
-		: Node( nullptr ), Name( rName ), Type( type ), Kind( PinKind::Input ), ID( id )
+	Pin::Pin( UUID id, const std::string& rName, PinType type, UUID nodeID, PinFlag flags /*= PinFlag_DefaultSet*/ )
+		: Node( nullptr ), Name( rName ), Type( type ), Kind( PinKind::Input ), ID( id ), PinFlags( flags )
 	{
 	}
 
@@ -65,9 +67,10 @@ namespace Saturn {
 			case PinType::Material_Color:
 			case PinType::Material_TextureColor:
 			case PinType::AssetID:            return PinIconType::Circle;
+		
+			default:
+				return PinIconType::Circle;
 		}
-
-		return PinIconType::Circle;
 	}
 
 	ImColor Pin::GetPinColor() const
@@ -78,8 +81,10 @@ namespace Saturn {
 			case PinType::AnimGraphAnimation:
 			case PinType::Flow:                  return ImColor( 255, 255, 255 ); // Pure White
 			case PinType::Bool:                  return ImColor( 220, 48, 48 );   // Red, not fully
+			case PinType::U32:
+			case PinType::U64:
 			case PinType::Int:                   return ImColor( 68, 201, 156 );  // Light Green
-			case PinType::Float:                 return ImColor( 147, 226, 74 );  // Slightly darker green
+			case PinType::Float:                 return ImColor( 28, 158, 63 );   // Slightly darker green
 			case PinType::String:                return ImColor( 124, 21, 153 );  // Purple
 			case PinType::Class:                 return ImColor( 51, 150, 215 );  // Light Blue
 			case PinType::Function:              return ImColor( 218, 0, 183 );   // Pink
@@ -224,10 +229,8 @@ namespace Saturn {
 			ImGui::Spring( 0 );
 		}
 
-#if !defined(SAT_DEBUG)
 		// Hand off to children only if not linked
 		if( !linked )
-#endif
 			OnRenderInput();
 
 		ImGui::Spring( 0 );
@@ -280,8 +283,21 @@ namespace Saturn {
 		RawSerialisation::ReadObject( ID, rStream );
 
 		Name = RawSerialisation::ReadString( rStream );
-		RawSerialisation::ReadObject( Type, rStream );
-		RawSerialisation::ReadObject( Kind, rStream );
+
+		auto* pEditor = dynamic_cast<NodeEditorBase*>( Node->GetParentObject() );
+		if( pEditor->GetVersion() >= NodeEditorVersion::PinClassSizeChange )
+		{
+			RawSerialisation::ReadObject( Type, rStream );
+			RawSerialisation::ReadObject( Kind, rStream );
+		}
+		else
+		{
+			RawSerialisation::ReadObject( Type, rStream );
+			rStream.ignore( 3 );
+
+			RawSerialisation::ReadObject( Kind, rStream );
+			rStream.ignore( 3 );
+		}
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -340,13 +356,13 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// INT PIN
 
-	IntPin::IntPin( UUID id, const std::string& rName, PinType type, UUID nodeID )
-		: Pin( id, rName, type, nodeID )
+	IntPin::IntPin( UUID id, const std::string& rName, PinType type, UUID nodeID, PinFlag flags )
+		: Pin( id, rName, type, nodeID, flags )
 	{
 	}
 
-	IntPin::IntPin( const std::string& rName, PinKind kind )
-		: Pin( rName, PinType::Int, kind )
+	IntPin::IntPin( const std::string& rName, PinKind kind, PinFlag flags )
+		: Pin( rName, PinType::Int, kind, flags )
 	{
 	}
 
@@ -374,6 +390,78 @@ namespace Saturn {
 	{
 		Pin::Deserialise( rStream );
 
+		RawSerialisation::ReadObject( Data, rStream );
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// UINT PIN
+	
+	UInt64Pin::UInt64Pin( const std::string& rName, PinKind kind, PinFlag flags )
+		: Pin( rName, PinType::U64, kind, flags )
+	{
+	}
+
+	UInt64Pin::UInt64Pin( UUID id, const std::string& rName, PinType type, UUID nodeID, PinFlag flags )
+		: Pin( id, rName, type, nodeID, flags )
+	{
+	}
+
+	void UInt64Pin::OnRenderInput()
+	{
+		ImGui::SetNextItemWidth( 25.0f );
+
+		ImGui::PushID( static_cast< int >( ID ) );
+		ImGui::DragScalar( "##input", ImGuiDataType_U64, &Data );
+		ImGui::PopID();
+
+		ImGui::Spring( 0 );
+	}
+
+	void UInt64Pin::Serialise( std::ofstream& rStream ) const
+	{
+		Pin::Serialise( rStream );
+		RawSerialisation::WriteObject( Data, rStream );
+	}
+
+	void UInt64Pin::Deserialise( FDependentIStream& rStream )
+	{
+		Pin::Deserialise( rStream );
+		RawSerialisation::ReadObject( Data, rStream );
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// UINT32 PIN
+	
+	UInt32Pin::UInt32Pin( const std::string& rName, PinKind kind, PinFlag flags /*= PinFlag_DefaultSet*/ )
+		: Pin( rName, PinType::U32, kind, flags )
+	{
+	}
+
+	UInt32Pin::UInt32Pin( UUID id, const std::string& rName, PinType type, UUID nodeID, PinFlag flags /*= PinFlag_DefaultSet*/ )
+		: Pin( id, rName, type, nodeID, flags )
+	{
+	}
+
+	void UInt32Pin::OnRenderInput()
+	{
+		ImGui::SetNextItemWidth( 25.0f );
+
+		ImGui::PushID( static_cast< int >( ID ) );
+		ImGui::DragScalar( "##input", ImGuiDataType_U32, &Data );
+		ImGui::PopID();
+
+		ImGui::Spring( 0 );
+	}
+
+	void UInt32Pin::Serialise( std::ofstream& rStream ) const
+	{
+		Pin::Serialise( rStream );
+		RawSerialisation::WriteObject( Data, rStream );
+	}
+
+	void UInt32Pin::Deserialise( FDependentIStream& rStream )
+	{
+		Pin::Deserialise( rStream );
 		RawSerialisation::ReadObject( Data, rStream );
 	}
 
@@ -432,12 +520,14 @@ namespace Saturn {
 
 	void Vec2Pin::Serialise( std::ofstream& rStream ) const
 	{
-
+		Pin::Serialise( rStream );
+		RawSerialisation::WriteObject( Data, rStream );
 	}
 
 	void Vec2Pin::Deserialise( FDependentIStream& rStream )
 	{
-
+		Pin::Deserialise( rStream );
+		RawSerialisation::ReadObject( Data, rStream );
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -455,12 +545,14 @@ namespace Saturn {
 
 	void Vec3Pin::Serialise( std::ofstream& rStream ) const
 	{
-
+		Pin::Serialise( rStream );
+		RawSerialisation::WriteObject( Data, rStream );
 	}
 
 	void Vec3Pin::Deserialise( FDependentIStream& rStream )
 	{
-
+		Pin::Deserialise( rStream );
+		RawSerialisation::ReadObject( Data, rStream );
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -478,12 +570,14 @@ namespace Saturn {
 
 	void Vec4Pin::Serialise( std::ofstream& rStream ) const
 	{
-
+		Pin::Serialise( rStream );
+		RawSerialisation::WriteObject( Data, rStream );
 	}
 
 	void Vec4Pin::Deserialise( FDependentIStream& rStream )
 	{
-
+		Pin::Deserialise( rStream );
+		RawSerialisation::ReadObject( Data, rStream );
 	}
 
 }

@@ -38,28 +38,62 @@ namespace Saturn {
 
 	struct ShaderBundleHeader
 	{
-		// .SB
-		const unsigned char Magic[ 4 ] = { 0x2E, 0x53, 0x42, 0x00 };
+		//									 .SB
+		//								   | 4 BYTES			|		4 BYTES		    |
+		const unsigned char Magic[ 4 ] = { 0x2E, 0x53, 0x42, 0x00/*, 0x00, 0x00, 0x00, 0x00*/ };
 		size_t Shaders;
 	};
 
-	ShaderBundleResult ShaderBundle::BundleShaders()
+	struct EditorShaderBundleHeader
+	{
+		//									 .SB				 .XA
+		//								   | 4 BYTES			|		4 BYTES		    |
+		const unsigned char Magic[ 8 ] = { 0x2E, 0x53, 0x42, 0x00, 0x2E, 0x58, 0x41, 0x00 };
+		size_t Shaders;
+	};
+
+	static void WriteShaderBundleHeader( std::ofstream& rStream, ShaderBundleType flags ) 
+	{
+		switch( flags )
+		{
+			default:
+			case ShaderBundleType::Normal:
+			{
+				ShaderBundleHeader header{};
+				header.Shaders = ShaderLibrary::Get().GetShaders().size();
+				rStream.write( reinterpret_cast< char* >( &header ), sizeof( ShaderBundleHeader ) );
+			} break;
+			
+			case ShaderBundleType::Editor:
+			{
+				EditorShaderBundleHeader header{};
+				header.Shaders = ShaderLibrary::Get().GetShaders().size();
+				rStream.write( reinterpret_cast< char* >( &header ), sizeof( EditorShaderBundleHeader ) );
+			} break;
+		}
+	}
+
+	ShaderBundleResult ShaderBundle::BundleShaders( ShaderBundleType type )
 	{
 		std::filesystem::path cachePath = Project::GetActiveProject()->GetFullCachePath();
+		
+		// Editor shader bundle built into a different directory.
+		if( type == ShaderBundleType::Editor )
+		{
+			cachePath = Application::Get()->GetAppDataFolder() / "EditorShaderBundle.ssb";
+		}
+		else
+		{
+			if( !std::filesystem::exists( cachePath ) )
+				std::filesystem::create_directories( cachePath );
 
-		if( !std::filesystem::exists( cachePath ) )
-			std::filesystem::create_directories( cachePath );
-
-		cachePath /= "ShaderBundle.ssb";
+			cachePath /= "ShaderBundle.ssb";
+		}
 
 		std::ofstream fout( cachePath, std::ios::binary | std::ios::trunc );
 
-		ShaderBundleHeader header{};
-		header.Shaders = ShaderLibrary::Get().GetShaders().size();
+		WriteShaderBundleHeader( fout, type );
 
-		fout.write( reinterpret_cast< char* >( &header ), sizeof( ShaderBundleHeader ) );
-
-		int i = 0;
 		for( auto&& [name, shader] : ShaderLibrary::Get().GetShaders() )
 		{
 			SAT_CORE_INFO( "Packaging shader: {0}", name );
@@ -70,8 +104,6 @@ namespace Saturn {
 			fout.write( name.c_str(), stringSize );
 
 			shader->SerialiseShaderData( fout );
-
-			++i;
 		}
 
 		fout.close();
@@ -79,26 +111,91 @@ namespace Saturn {
 		return ShaderBundleResult::Success;
 	}
 
-	ShaderBundleResult ShaderBundle::ReadBundle()
+	static ShaderBundleResult ReadShaderBundleHeader( std::ifstream& rStream, ShaderBundleType type )
+	{
+		switch( type )
+		{
+			default:
+			case ShaderBundleType::Normal:
+			{
+				ShaderBundleHeader header{};
+				rStream.read( reinterpret_cast< char* >( &header ), sizeof( ShaderBundleHeader ) );
+
+				// NB: Yes the header.Magic is 8 bytes but the real header is only 4
+				// the remaining 4 bytes is just for padding and to make sure that
+				if( std::memcmp( header.Magic, ".SB", 4 ) != 0 )
+				{
+					SAT_CORE_ERROR( "Invalid shader bundle file header!" );
+					return ShaderBundleResult::InvalidShaderHeader;
+				}
+			} break;
+
+			case ShaderBundleType::Editor:
+				break;
+		}
+
+		return ShaderBundleResult::Success;
+	}
+
+	ShaderBundleResult ShaderBundle::ReadBundle( ShaderBundleType type )
 	{
 		std::filesystem::path cachePath = Project::GetActiveProject()->GetFullCachePath();
-		cachePath /= "ShaderBundle.ssb";
+		if( type == ShaderBundleType::Editor )
+		{
+			cachePath = Application::Get()->GetAppDataFolder() / "EditorShaderBundle.ssb";
+		}
+		else
+		{
+			cachePath /= "ShaderBundle.ssb";
+		}
 
 		if( !std::filesystem::exists( cachePath ) )
 			return ShaderBundleResult::FileNotFound;
 
 		std::ifstream stream( cachePath, std::ios::binary | std::ios::in );
 
-		ShaderBundleHeader header{};
-		stream.read( reinterpret_cast< char* >( &header ), sizeof( ShaderBundleHeader ) );
-
-		if( std::memcmp( header.Magic, ".SB", 4 ) != 0 )
+		size_t shaderCount = 0llu;
+		switch( type )
 		{
-			SAT_CORE_ERROR( "Invalid shader bundle file header!" );
-			return ShaderBundleResult::InvalidShaderHeader;
+			default:
+			case ShaderBundleType::Normal:
+			{
+				ShaderBundleHeader header{};
+				stream.read( reinterpret_cast< char* >( &header ), sizeof( ShaderBundleHeader ) );
+
+				// NB: Yes the header.Magic is 8 bytes but the real header is only 4
+				// the remaining 4 bytes is just for padding and to make sure that
+				if( std::memcmp( header.Magic, ".SB", 4 ) != 0 )
+				{
+					SAT_CORE_ERROR( "Invalid shader bundle file header!" );
+					return ShaderBundleResult::InvalidShaderHeader;
+				}
+
+				shaderCount = header.Shaders;
+			} break;
+			
+			case ShaderBundleType::Editor:
+			{
+				EditorShaderBundleHeader header{};
+				stream.read( reinterpret_cast< char* >( &header ), sizeof( EditorShaderBundleHeader ) );
+
+				if( std::memcmp( header.Magic, ".SB", 4 ) != 0 )
+				{
+					SAT_CORE_ERROR( "Invalid shader bundle file header!" );
+					return ShaderBundleResult::InvalidShaderHeader;
+				}
+
+				if( std::memcmp( header.Magic + 4, ".XA", 4 ) != 0 )
+				{
+					SAT_CORE_ERROR( "Invalid shader bundle file header!" );
+					return ShaderBundleResult::InvalidShaderHeader;
+				}
+
+				shaderCount = header.Shaders;
+			} break;
 		}
 
-		for( uint32_t i = 0; i < header.Shaders; i++ )
+		for( size_t i = 0; i < shaderCount; i++ )
 		{
 			Ref<Shader> shader = Ref<Shader>::Create();
 

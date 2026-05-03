@@ -33,6 +33,8 @@
 
 #include "Saturn/Project/Project.h"
 
+#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
+
 #if defined(SAT_DIST)
 #include "Saturn/Core/VirtualFS.h"
 #include "Saturn/Core/MemoryStream.h"
@@ -45,12 +47,35 @@ namespace Saturn {
 
 	struct SettingsFileHeader
 	{
-		// .NCS
-		const unsigned char Magic[ 4 ] = { 0x2E, 0x4E, 0x43, 0x53 };
 		uint64_t Version = SAT_CURRENT_VERSION;
 		size_t SettingsCount = 0;
+		// .NCS
+		const unsigned char Magic[ 4 ] = { 0x2E, 0x4E, 0x43, 0x53 };
 	};
 	
+	static void WriteSettingsFileCacheHeader( const SettingsFileHeader& rSettings, std::ofstream& rStream )
+	{
+		RawSerialisation::WriteObject( rSettings.Magic, rStream );
+		RawSerialisation::WriteObject( rSettings.Version, rStream );
+		RawSerialisation::WriteObject( rSettings.SettingsCount, rStream );
+	}
+
+	[[nodiscard]] static bool ReadSettingsFileCacheHeader( SettingsFileHeader& rSettings, std::ifstream& rStream )
+	{
+		char magic[ 4 ]{ 0 };
+		RawSerialisation::ReadObject( magic, rStream );
+
+		if( std::memcmp( magic, ".NCS", 4 ) != 0 )
+		{
+			return false;
+		}
+
+		RawSerialisation::ReadObject( rSettings.Version, rStream );
+		RawSerialisation::ReadObject( rSettings.SettingsCount, rStream );
+
+		return true;
+	}
+
 	bool NodeCacheSettings::WriteEditorSettings( SharedPtr<NodeEditorBase> rNodeEditor )
 	{
 		std::filesystem::path filepath = Project::GetActiveProject()->GetAppDataFolder();
@@ -82,12 +107,8 @@ namespace Saturn {
 		std::ifstream stream( filepath, std::ios::binary | std::ios::in );
 
 		SettingsFileHeader fileHeader{};
-		RawSerialisation::ReadObject( fileHeader, stream );
-
-		if( std::memcmp( fileHeader.Magic, ".NCS", 4 ) != 0 )
-		{
+		if( !ReadSettingsFileCacheHeader( fileHeader, stream ) )
 			return;
-		}
 
 		// Get all currently saved states
 		// TODO: Cache in memory
@@ -129,7 +150,7 @@ namespace Saturn {
 		std::map< uint64_t, std::string > stateMap;
 		stateMap[ rNodeEditor->GetAssetID() ] = rNodeEditor->m_ActiveNodeEditorState;
 
-		RawSerialisation::WriteObject( fileHeader, fout );
+		WriteSettingsFileCacheHeader( fileHeader, fout );
 		RawSerialisation::WriteMap( stateMap, fout );
 
 		fout.close();
@@ -140,9 +161,7 @@ namespace Saturn {
 		std::ifstream stream( rFilepath, std::ios::binary | std::ios::in );
 
 		SettingsFileHeader fileHeader{};
-		RawSerialisation::ReadObject( fileHeader, stream );
-
-		if( std::memcmp( fileHeader.Magic, ".NCS", 4 ) != 0 )
+		if( !ReadSettingsFileCacheHeader( fileHeader, stream ) ) 
 		{
 			OverrideFile( rFilepath, rNodeEditor );
 			return;
@@ -171,7 +190,7 @@ namespace Saturn {
 
 		std::ofstream fout( rFilepath, std::ios::binary | std::ios::trunc );
 
-		RawSerialisation::WriteObject( fileHeader, fout );
+		WriteSettingsFileCacheHeader( fileHeader, fout );
 
 		RawSerialisation::WriteMap( stateMap, fout );
 
@@ -181,15 +200,53 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// NODE CACHE | EDITOR
 
-	// TODO: The size of this header can be reduceded to 16-bytes but I need to write a system that can port the verisons first.
-	struct NodeCacheEditorHeader
+	struct alignas( 16 ) NodeCacheEditorHeader
 	{
+		AssetID AssetID = 0;
 		// .NCE
 		const unsigned char Magic[ 4 ] = { 0x2E, 0x4E, 0x43, 0x45 };
-		AssetID AssetID = 0;
-		uint32_t Version = SAT_CURRENT_VERSION;
+		uint32_t PositionOfTaskCache = 0u;
+		NodeEditorVersion Version = NodeEditorVersion::Lowest;
+	};
+
+	struct NodeCacheTaskCacheHeader
+	{
+		// .NTC
+		const unsigned char Magic[ 4 ] = { 0x2E, 0x4E, 0x54, 0x43 };
 	};
 	
+	template<typename IStream>
+	[[nodiscard]] static bool ReadNodeCacheEdHeader( NodeCacheEditorHeader& rHeader, IStream& rStream )
+	{
+		char magic[ 4 ]{};
+		RawSerialisation::ReadObject( magic, rStream );
+
+		if( std::memcmp( magic, ".NCE", 4 ) != 0 )
+		{
+			SAT_CORE_ERROR( "Invalid node editor cache file header or corrupt cache file!" );
+			return false;
+		}
+
+		RawSerialisation::ReadObject( rHeader.Version, rStream );
+
+		if( rHeader.Version >= NodeEditorVersion::TaskCache )
+		{
+			RawSerialisation::ReadObject( rHeader.PositionOfTaskCache, rStream );
+		}
+
+		RawSerialisation::ReadObject( rHeader.AssetID, rStream );
+
+		return true;
+	}
+
+	static void WriteNodeCacheEdHeader( const NodeCacheEditorHeader& rHeader, std::ofstream& rStream )
+	{
+		RawSerialisation::WriteObject( rHeader.Magic, rStream );
+		RawSerialisation::WriteObject( rHeader.Version, rStream );
+		RawSerialisation::WriteObject( rHeader.PositionOfTaskCache, rStream );
+		RawSerialisation::WriteObject( rHeader.AssetID, rStream );
+	}
+
 	static void CreateDirIfNeeded()
 	{
 		std::filesystem::path dir = Project::GetActiveProject()->GetFullCachePath();
@@ -239,8 +296,13 @@ namespace Saturn {
 
 		NodeCacheEditorHeader header{};
 		header.AssetID = nodeEditor->GetAssetID();
+		header.Version = NodeEditorVersion::Latest;
 
-		RawSerialisation::WriteObject( header, fout );
+		nodeEditor->m_Version = NodeEditorVersion::Latest;
+
+		RawSerialisation::WriteN( 17u, fout );
+
+//		WriteNodeCacheEdHeader( header, fout );
 
 #if !defined(SAT_DIST)
 		constexpr bool DISTRIBUTION_SERIALSATION = false;
@@ -250,7 +312,79 @@ namespace Saturn {
 
 		nodeEditor->SerialiseData( fout, DISTRIBUTION_SERIALSATION );
 
+		header.PositionOfTaskCache = ( uint32_t ) fout.tellp();
+
+		// Now write task cache
+		NodeCacheTaskCacheHeader tcHeader{};
+		RawSerialisation::WriteObject( tcHeader, fout );
+
+		const auto& rList = nodeEditor->m_TaskCache.GetMasterListForSerialisation();
+
+		RawSerialisation::WriteObject( rList.size(), fout );
+		for( const auto& rTask : rList )
+		{
+			RawSerialisation::WriteObjectChecked( rTask->GetNodeID(), fout );
+			RawSerialisation::WriteObject( rTask->GetClass()->GetHash(), fout );
+
+			rTask->Serialise( fout );
+		}
+
+		// Now write the header.
+		fout.seekp( fout.beg );
+		WriteNodeCacheEdHeader( header, fout );
+
 		fout.close();
+	}
+
+	template<typename IStream>
+	static bool ReadNodeTaskCache( NodeTaskCache& rCache, IStream& rStream )
+	{
+		NodeCacheTaskCacheHeader tcHeader{};
+		RawSerialisation::ReadObject( tcHeader, rStream );
+
+		if( std::memcmp( tcHeader.Magic, ".NTC", 4 ) != 0 )
+		{
+			SAT_CORE_ERROR( "NodeTaskCache header missmatch!" );
+
+			// Return true here because the task cache can just be re-created after we load fully.
+			// It is not necessary for a NodeEditor to have a valid task cache*
+			// *unless we are on Dist.
+
+#if defined(SAT_DIST)
+			return false;
+#else
+			return true;
+#endif
+		}
+
+		auto& rList = rCache.GetMasterListForSerialisation();
+
+		size_t size = 0llu;
+		RawSerialisation::ReadObject( size, rStream );
+
+		rList.reserve( size );
+
+		for( size_t i = 0; i < size; ++i )
+		{
+			UUID nodeID = 0llu;
+			RawSerialisation::ReadObjectChecked( nodeID, rStream );
+
+			uint64_t classHash = 0llu;
+			RawSerialisation::ReadObject( classHash, rStream );
+
+			NodeEditorTaskBase* taskObj = dynamic_cast< NodeEditorTaskBase* >( ClassMetadataHandler::Get().CreateClassObject( classHash ) );
+			if( taskObj )
+			{
+				taskObj->Deserialise( rStream );
+
+				// NB: Converted to Ref<>
+				rList.emplace_back( taskObj );
+			}
+			else
+				SAT_CORE_WARN( "[NodeCache]: TaskCache: ClassHash: {0}, invalid! Not creating task from an invalid class hash." );
+		}
+
+		return true;
 	}
 
 	bool NodeCacheEditor::ReadNodeEditorCache( SharedPtr<NodeEditorBase> nodeEditor, AssetID id, const std::string& rCustomName )
@@ -297,27 +431,9 @@ namespace Saturn {
 
 		std::ifstream stream( cachePathAbs, std::ios::binary | std::ios::in );
 #endif
-
-		NodeCacheEditorHeader header;
-		RawSerialisation::ReadObject( header, stream );
-
-		if( std::memcmp( header.Magic, ".NCE", 4 ) != 0 )
-		{
-			SAT_CORE_ERROR( "Invalid node editor cache file header or corrupt cache file!" );
+		NodeCacheEditorHeader header{};
+		if( !ReadNodeCacheEdHeader( header, stream ) )
 			return false;
-		}
-
-		bool needsUpdate = false;
-		if( header.Version != SAT_CURRENT_VERSION )
-		{
-			std::string decodedAssetBundleVer;
-			SAT_DECODE_VER_STRING( header.Version, decodedAssetBundleVer );
-
-			SAT_CORE_WARN( "Node Editor Cache version mismatch! This should not happen. Cache file version is: {0} while current engine version is: {1}.", decodedAssetBundleVer, SAT_CURRENT_VERSION_STRING );
-			SAT_CORE_WARN( "The engine will continue to load however this may result in the cache file not loading!" );
-		
-			needsUpdate = true;
-		}
 
 		if( header.AssetID != id )
 		{
@@ -326,14 +442,79 @@ namespace Saturn {
 		}
 
 		nodeEditor->m_AssetID = id;
-		nodeEditor->m_Version = asset->Version;
+		nodeEditor->m_Version = header.Version;
 		nodeEditor->DeserialiseData( stream );
+
+		if( header.Version >= NodeEditorVersion::TaskCache )
+		{
+			ReadNodeTaskCache( nodeEditor->m_TaskCache, stream );
+		}
 
 #if !defined(SAT_DIST)
 		stream.close();
 #endif
 
 		return true;
+	}
+
+	bool NodeCacheEditor::ReadNodeTaskCacheOnly( NodeTaskCache& rNodeTaskCache, AssetID id, const std::string& rCustomName /*= "" */ )
+	{
+		std::string filename;
+
+		Ref<Asset> asset = AssetManager::Get()->FindAsset( id );
+		std::filesystem::path cachePath;
+
+		if( asset )
+		{
+			filename = std::format( "{0}.{1}.nce", asset->Name, ( uint64_t ) id );
+			cachePath = asset->Path.parent_path();
+		}
+		else
+		{
+			filename = std::format( "NCEditor.{0}.nce", ( uint64_t ) id );
+			cachePath = GetDefaultCachePath();
+		}
+
+		if( !rCustomName.empty() )
+			filename = rCustomName;
+
+		cachePath /= filename;
+
+#if defined( SAT_DIST )
+		const std::string& rMountBase = Project::GetActiveConfig().Name;
+		Ref<VFile> file = VirtualFS::Get().FindFile( rMountBase, cachePath );
+
+		if( !file )
+		{
+			SAT_CORE_ERROR( "NodeCache VFile does not exist" );
+			return false;
+		}
+
+		PakFileMemoryBuffer membuf( file->FileContent );
+
+		std::istream stream( &membuf );
+#else
+		const std::filesystem::path cachePathAbs = Project::GetActiveProject()->FilepathAbs( cachePath );
+
+		if( !std::filesystem::exists( cachePathAbs ) )
+			return false;
+
+		std::ifstream stream( cachePathAbs, std::ios::binary | std::ios::in );
+#endif
+
+		NodeCacheEditorHeader header{};
+		if( !ReadNodeCacheEdHeader( header, stream ) )
+			return false;
+
+		if( header.AssetID != id )
+		{
+			SAT_CORE_ERROR( "Node editor cache file asset id mismatch! Saved ID was: {0} however ID passed in was {1}", header.AssetID, id );
+			return false;
+		}
+
+		stream.seekg( header.PositionOfTaskCache );
+
+		return ReadNodeTaskCache( rNodeTaskCache, stream );
 	}
 
 	void NodeCacheEditor::ConvertToDistNC( AssetID id, const std::string& rCustomName /*= "" */ )

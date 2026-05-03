@@ -34,7 +34,6 @@
 
 #include "Saturn/NodeEditor/NodeEditorBase.h"
 
-#include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeEditorEvaluator.h"
 #include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeNodeEditor.h"
 
 #include "Saturn/AI/BehaviourTree/Tasks/BehaviourTreeCompositeTasks.h"
@@ -80,11 +79,6 @@ namespace Saturn {
 	{
 	}
 
-	NodeEvaluationState BehaviourTreeSequenceNode::EvaluateNode( NodeEditorRuntime* pEvaluator )
-	{
-		return NodeEvaluationState::Failed;
-	}
-
 	void BehaviourTreeSequenceNode::Serialise( std::ofstream& rStream, bool isForDist ) const
 	{
 		BehaviourTreeNodeBase::Serialise( rStream, isForDist );
@@ -127,7 +121,7 @@ namespace Saturn {
 
 	NodeEditorTaskBase* BehaviourTreeSequenceNode::ConvertToTask()
 	{
-		return new BehaviourTreeSequenceTask();
+		return NewObject<BehaviourTreeSequenceTask>( nullptr );
 	}
 
 #if !defined( SAT_DIST )
@@ -157,6 +151,8 @@ namespace Saturn {
 	void BehaviourTreeSequenceNode::RenderContextWindow()
 	{
 		Auxiliary::DisabledFlag disabledIfCondition( NodeCondition );
+
+		ImGui::SeparatorText( "Condition" );
 
 		if( ImGui::BeginMenu( "Add Condition" ) )
 		{

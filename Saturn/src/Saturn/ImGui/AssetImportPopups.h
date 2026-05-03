@@ -39,7 +39,7 @@
 
 namespace Saturn {
 
-	enum class AssetImportModificationState
+	enum class AssetImportModificationState : uint8_t
 	{
 		// Failed, popup may of modified but m_Error in the popup will be set to the correct error.
 		Failed, 
@@ -67,10 +67,12 @@ namespace Saturn {
 		virtual void Initialise() {}
 		virtual void OnImGuiRender() {}
 
+	public:
 		void Close() { m_Open = false; }
-
 		void DrawErrorTextAndDescription();
+		void SetIsReimport( bool reimport, AssetID reimportID ) { m_IsReimport = reimport; m_ReimportID = reimportID; }
 
+	public:
 		[[nodiscard]] bool IsReady() const { return m_IsReady.load(); }
 		[[nodiscard]] bool IsOpen() const { return m_Open; }
 		[[nodiscard]] AssetImportModificationState GetModificationState() const { return m_ModificationState; }
@@ -81,11 +83,25 @@ namespace Saturn {
 		AssetImportModificationState m_ModificationState = AssetImportModificationState::NotModified;
 		AssetImportPopupError m_Error = AssetImportPopupError::None;
 		bool m_Open = false;
+		bool m_IsReimport = false;
 		std::atomic_bool m_IsReady{ false };
+
+		AssetID m_ReimportID = 0;
 
 		std::filesystem::path m_AssetToImportPath;
 		std::filesystem::path m_DestinationPath;
 	};
+
+	//////////////////////////////////////////////////////////////////////////
+
+	class AssetImportPopupAuxiliary
+	{
+	public:
+		// NB: Will return Unknown if not found!
+		static std::shared_ptr<AssetImportPopupBase> CreatePopupFromAssetTypeReimport( Ref<Asset> asset, const std::filesystem::path& rDestinationPath );
+	};
+	
+	//////////////////////////////////////////////////////////////////////////
 
 	class UnknownImportPopup : public AssetImportPopupBase 
 	{
@@ -107,9 +123,14 @@ namespace Saturn {
 
 		virtual void Initialise() override;
 		virtual void OnImGuiRender() override;
+	
 	private:
-		std::underlying_type_t<TextureLoadFlags> m_ImportBehaviour = TextureLoadFlags_None;
+		void CreateNew();
+		void Reimport();
+
+	private:
 		Ref<Texture2D> m_PreviewTexture = nullptr;
+		std::underlying_type_t<TextureLoadFlags> m_ImportBehaviour = TextureLoadFlags_None;
 	};
 
 	class MeshImportPopup : public AssetImportPopupBase
@@ -149,6 +170,11 @@ namespace Saturn {
 
 		virtual void Initialise();
 		virtual void OnImGuiRender();
+
+	private:
+		void CreateNew();
+		void Reimport();
+		std::string GetLastModificationDate();
 	};
 
 	class FontImportPopup : public AssetImportPopupBase 
@@ -159,6 +185,10 @@ namespace Saturn {
 
 		virtual void Initialise();
 		virtual void OnImGuiRender();
+	
+	private:
+		void CreateNew();
+		void Reimport();
 	};
 
 }

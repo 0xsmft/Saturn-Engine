@@ -183,7 +183,7 @@ namespace Saturn {
 		if( pBoneItem )
 		{
 			ImGui::BeginHorizontal( ( void* ) pBoneItem );
-			ImGui::Text( "Bone Name: %s", m_SkeletonAsset->GetBoneName( pBoneItem->BoneIndex ) );
+			ImGui::Text( "Bone Name: %s", m_SkeletonAsset->GetBoneName( pBoneItem->BoneIndex ).c_str() );
 			ImGui::EndHorizontal();
 		}
 	}

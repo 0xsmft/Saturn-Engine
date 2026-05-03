@@ -40,15 +40,6 @@
 
 namespace Saturn {
 
-#if !defined(SAT_DIST)
-	// Determined by current build config, in Development configs read from a file
-	using FDependentIStream = std::ifstream;
-#else
-	// In Dist, we read from a VFS file which is not an actual file so we can't use std::ifstream
-	// VFS files are just a contentious span of file data
-	using FDependentIStream = std::istream;
-#endif
-
 	template<typename Ty, typename OStream>
 	concept HasSerialiseFunction = requires( const Ty& rObject, OStream& rStream )
 	{

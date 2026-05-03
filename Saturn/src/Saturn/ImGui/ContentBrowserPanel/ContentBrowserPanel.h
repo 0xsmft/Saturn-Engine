@@ -154,7 +154,7 @@ namespace Saturn {
 
 		std::vector<Ref<ContentBrowserItem>> m_ItemsToDelete;
 
-		std::unique_ptr<AssetImportPopupBase> m_CurrentImportPopup;
+		std::shared_ptr<AssetImportPopupBase> m_CurrentImportPopup;
 
 		// Should be handled by the editor.
 		bool m_OpenRenameAssetOpenPopup = false;

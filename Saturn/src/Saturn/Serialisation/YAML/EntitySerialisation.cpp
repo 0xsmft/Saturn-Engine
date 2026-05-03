@@ -571,6 +571,23 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 
 			rEmitter << YAML::EndMap;
 		}
+
+		// Text Component
+		if( entity->HasComponent<TextComponent>() )
+		{
+			rEmitter << YAML::Key << "TextComponent";
+			rEmitter << YAML::BeginMap;
+
+			const auto& textComp = entity->GetComponent< TextComponent >();
+
+			// TODO: What if we have unicode characters in the Text?
+			//		 The filesystem will not be happy about that...
+			rEmitter << YAML::Key << "Text" << YAML::Value << textComp.Text;
+			rEmitter << YAML::Key << "AssetID" << YAML::Value << textComp.FontAssetID;
+			rEmitter << YAML::Key << "Color" << YAML::Value << textComp.Color;
+
+			rEmitter << YAML::EndMap;
+		}
 	}
 
 	void ComponentSerialisation::DeserialiseComponents( const YAML::Node& rEntityNode, Ref<Scene> scene )
@@ -1028,6 +1045,16 @@ pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value ); \
 		{
 			auto& bt = DeserialisedEntity->AddComponent< BehaviourTreeComponent >();
 			bt.BehaviourTreeAssetID = btc[ "AssetID" ].as< uint64_t >();
+		}
+
+		const auto textComp = rEntityNode[ "TextComponent" ];
+		if( textComp )
+		{
+			auto& rTextComp = DeserialisedEntity->AddComponent<TextComponent>();
+
+			rTextComp.Text = textComp[ "Text" ].as<std::string>();
+			rTextComp.FontAssetID = textComp[ "AssetID" ].as<uint64_t>();
+			rTextComp.Color = textComp[ "Color" ].as<glm::vec4>();
 		}
 	}
 }

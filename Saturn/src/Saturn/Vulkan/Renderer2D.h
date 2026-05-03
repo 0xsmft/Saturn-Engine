@@ -30,6 +30,8 @@
 
 #include "Saturn/Core/Ref.h"
 
+#include "Saturn/Alura/AluraFont.h"
+
 #include "Pass.h"
 #include "Texture.h"
 #include "Framebuffer.h"
@@ -47,10 +49,18 @@ namespace Saturn {
 		float TextureIndex;
 	};
 
-	struct LineDrawCommand
+	struct LineVertex
 	{
 		glm::vec3 Position;
 		glm::vec4 Color;
+	};
+
+	struct TextVertex
+	{
+		glm::vec3 Position;
+		glm::vec2 TexCoord;
+		glm::vec4 Color;
+		float TextureIndex;
 	};
 
 	class Renderer2D : public RefTarget
@@ -87,6 +97,10 @@ namespace Saturn {
 		void SubmitTriangle( const glm::vec3& rV0, const glm::vec3& rV1, const glm::vec3& rV2, const glm::vec4& rColor );
 		void SubmitVertex( const glm::vec3& rV0, const glm::vec4& rColor );
 
+		void SubmitString( const std::string& rText, Ref<AluraFont> font, const glm::mat4& rTransform, const glm::vec4& rColor );
+
+		void SubmitTextGlyph( const glm::vec2& rMin, const glm::vec2& rMax, const glm::vec2& rTexCoordMin, const glm::vec2& rTexCoordMax, const glm::vec4& rColor, Ref<Texture2D> atlasTexture, const glm::mat4& rTransform );
+
 		void SetCamera( const RendererCamera& rRendererCamera );
 
 		void PreRender();
@@ -103,14 +117,17 @@ namespace Saturn {
 		void RenderAll();
 		void RenderAllQuads();
 		void RenderAllLines();
+		void RenderAllText();
 
 		void AddQuadBuffer();
 		void AddLineBuffer();
 		void AddTriangleLineBuffer();
+		void AddTextBuffer();
 
 		QuadVertex*& GetQuadBuffer();
-		LineDrawCommand*& GetLineBuffer();
-		LineDrawCommand*& GetTriangleLineBuffer();
+		LineVertex*& GetLineBuffer();
+		LineVertex*& GetTriangleLineBuffer();
+		TextVertex*& GetTextBuffer();
 
 	private:
 		Ref<Pass> m_TargetRenderPass = nullptr;
@@ -132,31 +149,42 @@ namespace Saturn {
 		//////////////////////////////////////////////////////////////////////////
 		// LINES
 		std::vector< VertexBufferPerFrame > m_LineVertexBuffers;
-		std::vector< std::vector< LineDrawCommand* > > m_CurrentLineBases;
-		std::vector<LineDrawCommand*> m_CurrentLinePtr;
+		std::vector< std::vector< LineVertex* > > m_CurrentLineBases;
+		std::vector<LineVertex*> m_CurrentLineVertexBufferPtr;
 
 		size_t m_LineBufferIndex = 0llu;
 
 		// Triangle (part of the lines)
 		std::vector< VertexBufferPerFrame > m_TriangleVertexBuffers;
-		std::vector< std::vector<LineDrawCommand*> > m_CurrentTriangleBases;
-		std::vector<LineDrawCommand*> m_CurrentTrianglePtr;
+		std::vector< std::vector<LineVertex*> > m_CurrentTriangleBases;
+		std::vector<LineVertex*> m_CurrentTrianglePtr;
 
 		size_t m_LineTriangleBufferIndex = 0llu;
+
+		//////////////////////////////////////////////////////////////////////////
+		// TEXT
+
+		std::vector< VertexBufferPerFrame > m_TextVertexBuffers;
+		std::vector< std::vector<TextVertex*> > m_CurrentTextBases;
+		std::vector<TextVertex*> m_CurrentTextPtr;
+
+		size_t m_TextBufferIndex = 0llu;
 
 		//////////////////////////////////////////////////////////////////////////
 		// Counts
 		uint32_t m_QuadIndexCount = 0;
 		uint32_t m_LineIndexCount = 0;
 		uint32_t m_TriangleIndexCount = 0;
+		uint32_t m_TextIndexCount = 0;
 
 		//////////////////////////////////////////////////////////////////////////
 		
-		std::array<Ref<Texture2D>, 32> m_Textures;
+		std::array<Ref<Texture2D>, 33> m_Textures;
 		uint32_t m_DefaultTextureSlot = 0;
 		uint32_t m_CurrentTextureSlot = 1;
 
 		glm::mat4 m_CameraView = glm::mat4( 1.0f );
+		glm::mat4 m_CameraProjection = glm::mat4( 1.0f );
 		glm::mat4 m_CameraViewProjection = glm::mat4( 1.0f );
 
 		uint32_t m_Width = 0;
@@ -186,5 +214,11 @@ namespace Saturn {
 		// Line fill (triangle)
 		Ref<Pipeline> m_TrianglePipeline = nullptr;
 		Ref<IndexBuffer> m_TriangleIndexBuffer = nullptr;
+
+		// Text
+		Ref<Pipeline> m_TextPipeline = nullptr;
+		Ref<IndexBuffer> m_TextIndexBuffer = nullptr;
+		Ref<Shader> m_TextShader = nullptr;
+		Ref<Material> m_TextMaterial = nullptr;
 	};
 }

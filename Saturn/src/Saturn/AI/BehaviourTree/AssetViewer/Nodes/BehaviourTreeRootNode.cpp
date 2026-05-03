@@ -48,7 +48,7 @@ namespace Saturn {
 		ExecutionType = NodeExecutionType::BehaviourTreeRootNode;
 
 #if !defined(SAT_DIST)
-		CanBeDeleted = false;
+		Flags |= NodeFlags_Irremovable;
 		Color = ImColor( 48, 128, 255, 100 );
 		RenderType = NodeRenderType::Tree;
 #endif
@@ -63,11 +63,6 @@ namespace Saturn {
 
 	BehaviourTreeRootNode::~BehaviourTreeRootNode()
 	{
-	}
-
-	NodeEvaluationState BehaviourTreeRootNode::EvaluateNode( NodeEditorRuntime* pEvaluator )
-	{	
-		return NodeEvaluationState::Evaluated;
 	}
 
 }

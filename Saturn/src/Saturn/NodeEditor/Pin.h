@@ -33,6 +33,8 @@
 
 #include "Link.h"
 
+#include "Saturn/Serialisation/Raw/RawSerialisationBase.h"
+
 #include <string>
 #include <imgui_node_editor.h>
 #include <glm/glm.hpp>
@@ -47,9 +49,9 @@ namespace ax {
 
 namespace Saturn {
 
-	enum class PinIconType : unsigned int;
+	enum class PinIconType : uint32_t;
 
-	enum class PinType
+	enum class PinType : uint8_t
 	{
 		Flow,
 		Bool,
@@ -68,78 +70,30 @@ namespace Saturn {
 		AnimGraphAnimation,
 		Vec2,
 		Vec3,
-		Vec4
+		Vec4,
+		U64,
+		U32
 	};
 
-	enum class PinKind
+	enum class PinKind : uint8_t
 	{
 		Output,
 		Input
 	};
 
-	enum class PinRenderType
+	enum class PinRenderType : uint8_t
 	{
 		Blueprint,
 		Tree,
 		Custom
 	};
 
-	inline std::string_view PinTypeToString( PinType type )
+	enum PinFlag : uint8_t
 	{
-		switch( type )
-		{
-			case PinType::Flow:
-				return "Flow";
-			case PinType::Bool:
-				return "Bool";
-			case PinType::Int:
-				return "Int";
-			case PinType::Float:
-				return "Float";
-			case PinType::String:
-				return "String";
-			case PinType::Class:
-				return "Class";
-			case PinType::Function:
-				return "Function";
-			case PinType::Delegate:
-				return "Delegate";
-			case PinType::Material_Color:
-				return "Material_Color";
-			case PinType::Material_TextureColor:
-				return "Material_TextureColor";
-			case PinType::AssetID:
-				return "AssetHandle";
-			
-			default: return "";
-		}
-	}
-
-	inline PinType StringToPinType( const std::string& rString )
-	{
-		if( rString == "Flow" )
-			return PinType::Flow;
-		else if( rString == "Bool" )
-			return PinType::Bool;
-		else if( rString == "Int" )
-			return PinType::Int;
-		else if( rString == "Float" )
-			return PinType::Float;
-		else if( rString == "String" )
-			return PinType::String;
-		else if( rString == "Class" )
-			return PinType::Class;
-		else if( rString == "Function" )
-			return PinType::Function;
-		else if( rString == "Material_Color" )
-			return PinType::Material_Color;
-		else if( rString == "Material_TextureColor" )
-			return PinType::Material_TextureColor;
-		else if( rString == "AssetHandle" )
-			return PinType::AssetID;
-		else
-			return PinType::Class;
-	}
+		PinFlag_DefaultSet = 0,
+		PinFlag_AcceptMultipleLinks = BIT( 0 ),
+		PinFlag_RequiredForEvaluation = BIT( 1 ),
+	};
 
 	class NodeEditorNodeBase;
 
@@ -147,8 +101,8 @@ namespace Saturn {
 	{
 	public:
 		Pin() = default;
-		Pin( const std::string& rName, PinType type, PinKind kind );
-		Pin( UUID id, const std::string& rName, PinType type, UUID nodeID );
+		Pin( const std::string& rName, PinType type, PinKind kind, PinFlag flags = PinFlag_DefaultSet );
+		Pin( UUID id, const std::string& rName, PinType type, UUID nodeID, PinFlag flags = PinFlag_DefaultSet );
 
 		virtual ~Pin() = default;
 
@@ -161,7 +115,7 @@ namespace Saturn {
 		PinType        Type = PinType::Flow;
 		PinKind        Kind = PinKind::Input;
 		PinRenderType  RenderType = PinRenderType::Blueprint;
-		bool           AcceptMultipleLinks = false;
+		uint8_t		   PinFlags = PinFlag_DefaultSet;
 
 	public:
 		PinIconType GetIconType() const;
@@ -169,6 +123,8 @@ namespace Saturn {
 
 		void RenderInput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked );
 		void RenderOutput( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder, bool linked );
+
+		bool IsFlagSet( PinFlag flag ) const { return ( flag & PinFlags ) != 0; }
 
 	public:
 		virtual void Serialise( std::ofstream& rStream ) const;
@@ -190,6 +146,18 @@ namespace Saturn {
 		bool CanCreateLink( const Ref<Pin>& rOther ) const;
 	};
 
+	//////////////////////////////////////////////////////////////////////////
+	template<typename Ty>
+	struct PinTypeTraits;
+
+#define SAT_DEFINE_PIN_TYPE_TRAITS( PinClass, CppType ) \
+template<> struct PinTypeTraits<CppType>				\
+{														\
+	using PinType = PinClass;							\
+	using PinRefType = Ref<PinType>;					\
+	using Value = CppType;								\
+};
+
 	// 
 	// FloatPin, carries across a single floating-point number.
 	//
@@ -200,7 +168,7 @@ namespace Saturn {
 		FloatPin( const std::string& rName, PinKind kind );
 		FloatPin( UUID id, const std::string& rName, PinType type, UUID nodeID );
 
-		~FloatPin() = default;
+		virtual ~FloatPin() = default;
 
 	public:
 		void Serialise( std::ofstream& rStream ) const override;
@@ -214,6 +182,8 @@ namespace Saturn {
 		float Data = 0.0f;
 	};
 
+	SAT_DEFINE_PIN_TYPE_TRAITS( FloatPin, float );
+
 	// 
 	// IntPin, carries across a single 32-bit signed integer number.
 	//
@@ -221,10 +191,10 @@ namespace Saturn {
 	{
 	public:
 		IntPin() = default;
-		IntPin( const std::string& rName, PinKind kind );
-		IntPin( UUID id, const std::string& rName, PinType type, UUID nodeID );
+		IntPin( const std::string& rName, PinKind kind, PinFlag flags = PinFlag_DefaultSet );
+		IntPin( UUID id, const std::string& rName, PinType type, UUID nodeID, PinFlag flags = PinFlag_DefaultSet );
 
-		~IntPin() = default;
+		virtual ~IntPin() = default;
 
 	public:
 		void Serialise( std::ofstream& rStream ) const override;
@@ -237,6 +207,58 @@ namespace Saturn {
 		int Data = 0;
 	};
 
+	SAT_DEFINE_PIN_TYPE_TRAITS( IntPin, int );
+
+	// 
+	// UInt64Pin, carries across a single 64-bit unsigned integer number.
+	//
+	class UInt64Pin : public Pin
+	{
+	public:
+		UInt64Pin() = default;
+		UInt64Pin( const std::string& rName, PinKind kind, PinFlag flags = PinFlag_DefaultSet );
+		UInt64Pin( UUID id, const std::string& rName, PinType type, UUID nodeID, PinFlag flags = PinFlag_DefaultSet );
+
+		virtual ~UInt64Pin() = default;
+
+	public:
+		void Serialise( std::ofstream& rStream ) const override;
+		void Deserialise( FDependentIStream& rStream ) override;
+
+	protected:
+		void OnRenderInput() override;
+
+	public:
+		uint64_t Data = 0llu;
+	};
+
+	SAT_DEFINE_PIN_TYPE_TRAITS( UInt64Pin, uint64_t );
+
+	// 
+	// UInt32Pin, carries across a single 32-bit unsigned integer number.
+	//
+	class UInt32Pin : public Pin
+	{
+	public:
+		UInt32Pin() = default;
+		UInt32Pin( const std::string& rName, PinKind kind, PinFlag flags = PinFlag_DefaultSet );
+		UInt32Pin( UUID id, const std::string& rName, PinType type, UUID nodeID, PinFlag flags = PinFlag_DefaultSet );
+
+		virtual ~UInt32Pin() = default;
+
+	public:
+		void Serialise( std::ofstream& rStream ) const override;
+		void Deserialise( FDependentIStream& rStream ) override;
+
+	protected:
+		void OnRenderInput() override;
+
+	public:
+		uint32_t Data = 0llu;
+	};
+
+	SAT_DEFINE_PIN_TYPE_TRAITS( UInt32Pin, uint32_t );
+
 	// 
 	// BoolPin, carries across a single boolean.
 	//
@@ -247,7 +269,7 @@ namespace Saturn {
 		BoolPin( const std::string& rName, PinKind kind );
 		BoolPin( UUID id, const std::string& rName, PinType type, UUID nodeID );
 
-		~BoolPin() = default;
+		virtual ~BoolPin() = default;
 
 	public:
 		void Serialise( std::ofstream& rStream ) const override;
@@ -260,6 +282,8 @@ namespace Saturn {
 		bool Data = false;
 	};
 
+	SAT_DEFINE_PIN_TYPE_TRAITS( BoolPin, bool );
+
 	// 
 	// Vec2Pin, carries across a single vector2 value.
 	//
@@ -270,7 +294,7 @@ namespace Saturn {
 		Vec2Pin( const std::string& rName, PinKind kind );
 		Vec2Pin( UUID id, const std::string& rName, PinType type, UUID nodeID );
 
-		~Vec2Pin() = default;
+		virtual ~Vec2Pin() = default;
 
 	public:
 		void Serialise( std::ofstream& rStream ) const override;
@@ -279,6 +303,8 @@ namespace Saturn {
 	public:
 		glm::vec2 Data{};
 	};
+
+	SAT_DEFINE_PIN_TYPE_TRAITS( Vec2Pin, glm::vec2 );
 
 	// 
 	// Vec3Pin, carries across a single vector3 value.
@@ -290,7 +316,7 @@ namespace Saturn {
 		Vec3Pin( const std::string& rName, PinKind kind );
 		Vec3Pin( UUID id, const std::string& rName, PinType type, UUID nodeID );
 
-		~Vec3Pin() = default;
+		virtual ~Vec3Pin() = default;
 
 	public:
 		void Serialise( std::ofstream& rStream ) const override;
@@ -299,6 +325,8 @@ namespace Saturn {
 	public:
 		glm::vec3 Data{};
 	};
+
+	SAT_DEFINE_PIN_TYPE_TRAITS( Vec3Pin, glm::vec3 );
 
 	// 
 	// Vec4Pin, carries across a single vector4 value.
@@ -310,7 +338,7 @@ namespace Saturn {
 		Vec4Pin( const std::string& rName, PinKind kind );
 		Vec4Pin( UUID id, const std::string& rName, PinType type, UUID nodeID );
 
-		~Vec4Pin() = default;
+		virtual ~Vec4Pin() = default;
 
 	public:
 		void Serialise( std::ofstream& rStream ) const override;
@@ -320,4 +348,5 @@ namespace Saturn {
 		glm::vec4 Data{};
 	};
 
+	SAT_DEFINE_PIN_TYPE_TRAITS( Vec4Pin, glm::vec4 );
 }

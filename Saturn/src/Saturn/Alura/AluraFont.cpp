@@ -96,7 +96,7 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 
 	AluraFont::AluraFont( const std::filesystem::path& rFontPath, const Ref<Asset>& rBase )
-		: Asset( rBase ), m_Filepath( rFontPath )
+		: Asset( rBase ), m_FontFilepath( rFontPath )
 	{
 #if !defined(SAT_DIST)
 		CreateOrLoadAtlas( true );
@@ -156,6 +156,12 @@ namespace Saturn {
 		msdf::FreetypeHandle* m_pFreetypeHandle;
 		msdf::FontHandle* m_pFontHandle = nullptr;
 	};
+
+	void AluraFont::OnReimport( const std::filesystem::path& rPath )
+	{
+		m_FontFilepath = rPath;
+		CreateOrLoadAtlas( true );
+	}
 #endif
 
 	void AluraFont::CreateOrLoadAtlas( bool overrideCache /*= false*/ )
@@ -164,7 +170,7 @@ namespace Saturn {
 		m_AluraFontData.ClearData();
 
 		FMsdfFont font;
-		if( !font.Load( m_Filepath.string().c_str() ) )
+		if( !font.Load( m_FontFilepath.string().c_str() ) )
 		{
 			SAT_CORE_ERROR( "[Alura] Font was unabled to be loaded by Freetype or Msdf library was not initialised." );
 			SAT_CORE_ASSERT( false );
@@ -188,7 +194,7 @@ namespace Saturn {
 		}
 		else
 		{
-			m_Name = m_Filepath.stem().string();
+			m_Name = m_FontFilepath.stem().string();
 		}
 
 		SAT_CORE_INFO( "[Alura] Loading new font {0}.", m_Name );
@@ -321,7 +327,7 @@ namespace Saturn {
 		RawSerialisation::WriteString( m_Name, fout );
 		
 		// Write path
-		RawSerialisation::WriteString( m_Filepath, fout );
+		RawSerialisation::WriteString( m_FontFilepath, fout );
 
 		// Metrics
 		RawSerialisation::WriteObject( m_AluraFontData.GetMetrics(), fout );
@@ -381,7 +387,7 @@ namespace Saturn {
 		// Name of the font file
 		m_Name = RawSerialisation::ReadString( rStream );
 
-		m_Filepath = RawSerialisation::ReadString( rStream );
+		m_FontFilepath = RawSerialisation::ReadString( rStream );
 
 		// Metrics
 		RawSerialisation::ReadObject( m_AluraFontData.GetMetrics(), rStream );

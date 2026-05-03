@@ -1,0 +1,90 @@
+/********************************************************************************************
+*                                                                                           *
+*                                                                                           *
+*                                                                                           *
+* MIT License                                                                               *
+*                                                                                           *
+* Copyright (c) 2020 - 2026 BEAST                                                           *
+*                                                                                           *
+* Permission is hereby granted, free of charge, to any person obtaining a copy              *
+* of this software and associated documentation files (the "Software"), to deal             *
+* in the Software without restriction, including without limitation the rights              *
+* to use, copy, modify, merge, publish, distribute, sublicense, and/or sell                 *
+* copies of the Software, and to permit persons to whom the Software is                     *
+* furnished to do so, subject to the following conditions:                                  *
+*                                                                                           *
+* The above copyright notice and this permission notice shall be included in all            *
+* copies or substantial portions of the Software.                                           *
+*                                                                                           *
+* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR                *
+* IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,                  *
+* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE               *
+* AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER                    *
+* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,             *
+* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE             *
+* SOFTWARE.                                                                                 *
+*********************************************************************************************
+*/
+
+#pragma once
+
+#include "Saturn/NodeEditor/NodeEditorTaskBase.h"
+
+namespace Saturn {
+
+	SCLASS()
+	class SandboxNodeEditorNodeTask : public NodeEditorTaskBase
+	{
+		SAT_DECLARE_CLASS_MOVE( SandboxNodeEditorNodeTask, NodeEditorTaskBase );
+	public:
+		SandboxNodeEditorNodeTask();
+		virtual ~SandboxNodeEditorNodeTask();
+
+		virtual void PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther ) override;
+
+		virtual NodeEditorTaskState Tick( Timestep ts ) override;
+		virtual void Reset() override;
+
+	public:
+#if !defined(SAT_DIST)
+		[[nodiscard]] virtual bool IsSpawnableNode() const { return true; }
+		virtual const char* GetTaskName() const { return "Sandbox Tsk"; }
+#endif
+
+	public:
+		virtual void Serialise( std::ofstream& rStream ) const override;
+		virtual void Deserialise( FDependentIStream& rStream ) override;
+
+	private:
+		uint64_t m_Number = 0llu;
+	};
+	
+	SCLASS()
+	class SandboxNodeEditorOutputTask : public NodeEditorTaskBase
+	{
+		SAT_DECLARE_CLASS_MOVE( SandboxNodeEditorOutputTask, NodeEditorTaskBase );
+	public:
+		SandboxNodeEditorOutputTask();
+		SandboxNodeEditorOutputTask( const SandboxNodeEditorOutputTask* pOther );
+
+		virtual ~SandboxNodeEditorOutputTask();
+
+		virtual void PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther ) override;
+
+		virtual NodeEditorTaskState Tick( Timestep ts ) override;
+		virtual void Reset() override;
+
+	public:
+		virtual void Serialise( std::ofstream& rStream ) const override;
+		virtual void Deserialise( FDependentIStream& rStream ) override;
+
+	private:
+		UUID m_IncomingNodeIDPin0 = 0;
+
+		uint64_t* m_pInputNumber = nullptr;
+		uint64_t m_FinalNumber = 0llu;
+	};
+
+}

@@ -33,7 +33,7 @@
 
 namespace Saturn {
 
-	enum class ShaderBundleResult 
+	enum class ShaderBundleResult :	uint8_t
 	{
 		Success,
 		FileNotFound,
@@ -41,11 +41,24 @@ namespace Saturn {
 		Failed
 	};
 
+	enum class ShaderBundleType : uint8_t
+	{
+		// A standard ShaderBundle, the same exact one that ships
+		// with distribution games.
+		Normal = BIT( 0 ),
+
+		// Editor shader bundle
+		// used for the editor and works just like the normal
+		// distribution however it cannot be read by the distribution application
+		// if ShaderBundleFlags_Editor is not specified.
+		Editor = BIT( 1 ),
+	};
+
 	class ShaderBundle
 	{
 	public:
-		[[nodiscard]] static ShaderBundleResult BundleShaders();
-		[[nodiscard]] static ShaderBundleResult ReadBundle();
+		[[nodiscard]] static ShaderBundleResult BundleShaders( ShaderBundleType type = ShaderBundleType::Normal );
+		[[nodiscard]] static ShaderBundleResult ReadBundle( ShaderBundleType type = ShaderBundleType::Normal );
 	};
 }
 

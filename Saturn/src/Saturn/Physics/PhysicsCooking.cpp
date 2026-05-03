@@ -120,7 +120,10 @@ namespace Saturn {
 		cachePath.replace_extension( ".smcs" );
 
 		if( !MeshColliderAlreadyLoaded( mesh ) && !LoadColliderFile( cachePath ) )
+		{
+			SAT_CORE_ERROR( "[PhysicsCooking]: Unable to load collider file. Is it a valid Saturn collider cache?" );
 			return nullptr;
+		}
 		
 		TransformComponent worldTC = entity->GetScene()->GetWorldSpaceTransform( entity );
 
@@ -171,14 +174,20 @@ namespace Saturn {
 	JPH::Ref<JPH::Shape> PhysicsCooking::CreateConvexMesh( SharedPtr<Entity> entity, Ref<StaticMesh> mesh )
 	{
 		if( !mesh )
+		{
+			SAT_CORE_ERROR( "[PhysicsCooking]: Mesh is null! Not creating a convex mesh on a null mesh." );
 			return nullptr;
+		}
 
 		std::filesystem::path cachePath = Project::GetActiveProject()->GetFullCachePath();
 		cachePath /= std::to_string( mesh->ID );
 		cachePath.replace_extension( ".smcs" );
 
 		if( !MeshColliderAlreadyLoaded( mesh ) && !LoadColliderFile( cachePath ) )
+		{
+			SAT_CORE_ERROR( "[PhysicsCooking]: Unable to load collider file. Is it a valid Saturn collider cache?" );
 			return nullptr;
+		}
 
 		TransformComponent worldTC = entity->GetScene()->GetWorldSpaceTransform( entity );
 

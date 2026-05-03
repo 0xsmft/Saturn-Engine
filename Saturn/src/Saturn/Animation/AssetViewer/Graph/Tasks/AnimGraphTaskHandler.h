@@ -35,6 +35,7 @@ namespace Saturn {
 
 	class NodeEditorTaskGroup;
 	class SGraphTask;
+	class Animator;
 
 	class AnimGraphTaskHandler : public NodeEditorTaskHandler
 	{

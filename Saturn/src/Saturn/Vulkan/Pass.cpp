@@ -122,7 +122,7 @@ namespace Saturn {
 					m_ColorAttachments.emplace_back( ( uint32_t ) i, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL );
 				}
 
-				m_ClearValues[ i ].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
+				m_ClearValues[ i ].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
 			}
 			else 
 			{

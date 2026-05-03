@@ -32,7 +32,6 @@
 #include "Saturn/AI/BehaviourTree/Tasks/BehaviourTreeCompositeTasks.h"
 
 #include "Saturn/NodeEditor/NodeEditorBase.h"
-#include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeEditorEvaluator.h"
 
 // #RmIncToCMHForNewObject
 #include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
@@ -71,11 +70,6 @@ namespace Saturn {
 	BehaviourTreeSelectorNode::~BehaviourTreeSelectorNode()
 	{
 		Reset();
-	}
-
-	NodeEvaluationState BehaviourTreeSelectorNode::EvaluateNode( NodeEditorRuntime* pEvaluator )
-	{
-		return NodeEvaluationState::Failed;
 	}
 
 	void BehaviourTreeSelectorNode::Serialise( std::ofstream& rStream, bool isForDist ) const

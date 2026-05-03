@@ -30,6 +30,7 @@
 
 #include "NodeEditorTaskBase.h"
 #include "DataLine.h"
+#include "NodeEditorVariableLocator.h"
 
 #include <map>
 
@@ -42,13 +43,43 @@ namespace Saturn {
 	public:
 		NodeEditorTaskHandler() = default;
 		virtual ~NodeEditorTaskHandler();
-
-		void Init( SharedPtr<NodeEditorBase> nodeEditor );
+		
+	public:
 		virtual void Tick( Timestep ts );
 
+	public:
+		void Init( SharedPtr<NodeEditorBase> nodeEditor );
+
+	public:
 		void InsertDataLine( UUID linkID, const DataLine& rLine );
 		DataLine* GetDataLine( UUID linkID );
 		bool DoesDataLineExist( UUID linkID );
+
+	public:
+		template<typename Ty>
+		void RegisterLocator( UUID nodeID, size_t pinIndex, Ty* pAddress ) 
+		{
+			auto& rLocators = m_Locators[ nodeID ];
+			if( pinIndex >= rLocators.size() )
+			{
+				rLocators.resize( pinIndex + 1 );
+			}
+
+			rLocators[ pinIndex ].Set( pAddress );
+		}
+
+		template<typename Ty>
+		Ty* AccessLocator( UUID id, size_t pinIndex ) const
+		{
+			const auto itr = m_Locators.find( id );
+			if( itr == m_Locators.end() )
+				return nullptr;
+
+			if( pinIndex >= itr->second.size() )
+				return nullptr;
+
+			return ( Ty* ) itr->second[ pinIndex ].Get();
+		}
 
 	protected:
 		void ResetAllTasks();
@@ -61,6 +92,7 @@ namespace Saturn {
 		size_t m_CurrentTaskIndex = 0;
 
 		std::map<UUID, DataLine> m_Lines;
+		std::map<UUID, std::vector<NodeEditorVariableLocator>> m_Locators;
 	};
 	
 }

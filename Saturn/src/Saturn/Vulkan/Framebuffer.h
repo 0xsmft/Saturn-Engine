@@ -54,8 +54,8 @@ namespace Saturn {
 
 	struct FramebufferSpecification
 	{
-		uint32_t Width;
-		uint32_t Height;
+		uint32_t Width = 0;
+		uint32_t Height = 0;
 		uint32_t ArrayLevels = 1;
 		uint32_t ExistingImageLayer = 0;
 
@@ -103,6 +103,9 @@ namespace Saturn {
 		const Ref<Image2D> GetDepthAttachmentResource() const { return m_DepthAttachmentResource; }
 
 		void Capture( const std::filesystem::path& rPath, uint32_t ColorAttachmentIndex = 0, const glm::vec2& rResize = {} );
+
+		uint32_t GetWidth() const { return m_Specification.Width; }
+		uint32_t GetHeight() const { return m_Specification.Height; }
 
 	private:
 		void Create();

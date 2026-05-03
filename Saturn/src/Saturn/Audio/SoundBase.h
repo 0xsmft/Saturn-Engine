@@ -32,11 +32,10 @@
 #include "AudioCore.h"
 
 #include <miniaudio.h>
-#include <filesystem>
 
 namespace Saturn {
 
-	enum class SoundState
+	enum class SoundState : uint8_t
 	{
 		NoDataSource, // Default state used, could be called a null state
 		Playing,
@@ -51,7 +50,7 @@ namespace Saturn {
 		SoundBase() = default;
 		virtual ~SoundBase() = default;
 
-		virtual void Play( int frameOffset ) = 0;
+		virtual void Play( uint64_t frameOffset ) = 0;
 		virtual void Stop() = 0;
 		virtual void Loop( bool loop = true ) = 0;
 		virtual void Load( uint32_t flags ) = 0;
@@ -83,7 +82,6 @@ namespace Saturn {
 		UUID m_PlayerID = 0;
 
 		SoundState m_SoundState = SoundState::NoDataSource;
-
 		bool m_Loaded = false;
 		bool m_Looping = false;
 		bool m_MarkedForDestroy = false;

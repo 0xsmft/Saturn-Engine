@@ -48,7 +48,7 @@
 namespace Saturn {
 
 	SkeletonAssetViewer::SkeletonAssetViewer( AssetID id )
-		: AssetViewer( id ), SubSceneRendererWindow()
+		: AssetViewer( id )
 	{
 		m_AssetType = AssetType::Skeleton;
 
@@ -60,8 +60,12 @@ namespace Saturn {
 
 		m_BoneHierarchyPanel.Initialise( id );
 	
-		Initialise();
-		SetViewportWindowID( m_AssetID );
+		m_Scene = Ref<Scene>::Create();
+		m_Viewport = std::make_unique<EditorViewport>( VP_DefaultSub );
+		
+		const std::string vpName = std::format( "Viewport##{0}", ( uint64_t ) m_AssetID );
+		m_Viewport->Initialise( SceneRendererFlag_NoAlura, m_Scene, vpName, m_AssetID );
+
 		PickBestMesh();
 	}
 
@@ -140,12 +144,13 @@ namespace Saturn {
 
 			//////////////////////////////////////////////////////////////////////////
 
-			RenderViewport( false );
+			m_Viewport->Draw();
 
+			/*
 			ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 0.0f, 0.0f ) );
 
 			const auto viewportPosition = ImGui::GetWindowPos();
-			const auto viewportSize = GetViewportSize();
+			const auto viewportSize = m_Viewport->GetSize();
 
 			if( auto* pSelectedNode = m_BoneHierarchyPanel.GetSelectedItem() )
 			{
@@ -216,13 +221,13 @@ namespace Saturn {
 						}
 						else
 						{
-							/*
+						#if OLD
 							if( ( !mainWindowDocked || !ImGui::IsWindowDocked() ) || m_DisableViewportMovement || m_DisableWindowMovement )
 							{
 								m_DisableViewportMovement = false;
 								m_DisableWindowMovement = false;
 							}
-							*/
+						#endif
 						}
 					}
 				}
@@ -258,6 +263,7 @@ namespace Saturn {
 			ImGui::PopStyleVar();
 
 			End();
+			*/
 		}
 
 		ImGui::End();
@@ -397,12 +403,13 @@ namespace Saturn {
 
 	void SkeletonAssetViewer::OnUpdate( Timestep ts )
 	{
-		OnUpdateRenderer( ts );
+		m_Viewport->OnUpdate( ts );
 	}
 
 	void SkeletonAssetViewer::OnEvent( Event& rEvent )
 	{
-		OnCameraEvent( rEvent );
+		if( ( rEvent.Category & EC_Ruby ) != 0 )
+			m_Viewport->OnEvent( rEvent );
 	}
 
 	void SkeletonAssetViewer::PickBestMesh()

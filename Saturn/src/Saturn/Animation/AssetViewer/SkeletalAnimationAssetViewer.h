@@ -29,15 +29,15 @@
 #pragma once
 
 #include "Saturn/ImGui/AssetViewer.h"
-#include "Saturn/ImGui/SubSceneRendererWindow.h"
+#include "Saturn/ImGui/EditorViewport.h"
 
 namespace Saturn {
 
-	class SkeletalAnimationAssetViewer : public AssetViewer, public SubSceneRendererWindow
+	class SkeletalAnimationAssetViewer : public AssetViewer
 	{
 	public:
 		SkeletalAnimationAssetViewer( AssetID id );
-		~SkeletalAnimationAssetViewer();
+		virtual ~SkeletalAnimationAssetViewer();
 
 		virtual void OnImGuiRender() override;
 		virtual void OnUpdate( Timestep ts ) override;
@@ -47,10 +47,12 @@ namespace Saturn {
 		void ImportMeshAndAnimation();
 
 	private:
+		SharedPtr<Entity> m_Entity;
+		std::unique_ptr<EditorViewport> m_Viewport;
 		Ref<SkeletalAnimationAsset> m_Asset;
+		Ref<Scene> m_Scene;
 		Ref<SkeletalMesh> m_Mesh;
 		Ref<Animator> m_Animator;
-		SharedPtr<Entity> m_Entity;
 
 		AssetID m_AssetFinderOut = 0;
 	};

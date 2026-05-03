@@ -222,12 +222,20 @@ namespace Saturn {
 	{
 		DestroyWindow();
 
-		RubyLibrary::Get().UnregisterWindow( m_pWindow );
+		RubyLibrary::Get().UnregisterWindow( m_Handle );
 	}
+
+	struct RubyXcbMotfiHints
+	{
+		uint32_t   Flags;
+		uint32_t   Functions;
+		uint32_t   Decorations;
+		int32_t    InputMode;
+		uint32_t   Status;
+	};
 
 	void RubyXcbBackend::Create()
 	{
-		RubyLibrary::Get().RegisterWindow( m_pWindow );
 		SAT_CORE_ASSERT( RubyLibrary::Get().TryOpenConnection() );
 
 		m_pConnection = RubyLibrary::Get().GetConnection();
@@ -248,7 +256,9 @@ namespace Saturn {
               XCB_EVENT_MASK_BUTTON_RELEASE | XCB_EVENT_MASK_POINTER_MOTION |
               XCB_EVENT_MASK_ENTER_WINDOW   | XCB_EVENT_MASK_LEAVE_WINDOW   |
               XCB_EVENT_MASK_KEY_PRESS      | XCB_EVENT_MASK_KEY_RELEASE | XCB_EVENT_MASK_FOCUS_CHANGE;
-		
+
+		const xcb_window_t ParentHWND = m_WindowSpecification.pParentWindow != nullptr ? m_WindowSpecification.pParentWindow->GetNativeHandle() : screen->root;
+
 		xcb_create_window(m_pConnection,
 							XCB_COPY_FROM_PARENT,
 							m_Handle,
@@ -260,6 +270,30 @@ namespace Saturn {
 							screen->root_visual,
 							mask, values 
 		);                     
+
+		RubyLibrary::Get().RegisterWindow( this );
+
+		switch( m_WindowSpecification.Style )
+		{
+			default: break;
+
+			case RubyStyle::BorderlessNoResize:
+			case RubyStyle::Borderless:
+			{
+				RubyXcbMotfiHints hints{};
+				hints.Flags = 2u;
+				hints.Functions = 0u;
+				hints.Decorations = 0u;
+				hints.InputMode = 0;
+				hints.Status = 0u;
+
+				// Get cookie to modif hints.
+				xcb_intern_atom_cookie_t cookie = xcb_intern_atom( m_pConnection, 0, strlen( "_MOTIF_WM_HINTS" ), "_MOTIF_WM_HINTS" );
+				xcb_intern_atom_reply_t* pReply = xcb_intern_atom_reply( m_pConnection, cookie, nullptr );
+
+				xcb_change_property( m_pConnection, XCB_PROP_MODE_REPLACE, m_Handle, pReply->atom, pReply->atom,  32, 5, &hints );
+			} break;
+		}
 
 		// Set title.
 		xcb_change_property(
@@ -290,16 +324,22 @@ namespace Saturn {
 	void RubyXcbBackend::HandleXcbEvents()
 	{
 		xcb_generic_event_t* pEvent = nullptr;
-		while( ( pEvent = xcb_poll_for_event( m_pConnection ) ) )
+		while( ( pEvent = xcb_poll_for_event( RubyLibrary::Get().GetConnection() ) ) )
 		{
 			switch( pEvent->response_type & ~0x80 ) 
 			{
 				case XCB_BUTTON_PRESS:
 				{
-					xcb_button_press_event_t *ev = (xcb_button_press_event_t *)pEvent;
+					xcb_button_press_event_t* ev = (xcb_button_press_event_t *)pEvent;
+
+					xcb_window_t XcbWindow = ev->event;
+					auto* pThis = RubyLibrary::Get().FindWindowFromXcbHnd( XcbWindow );
+
+					if( !pThis )
+						break;
 
 					RubyMouseButton btn = RubyMouseButton_Unknown;
-					switch( ev->detail ) 
+					switch( ev->detail )
 					{
 						case SAT_XCB_LEFT_MOUSE:
 							btn = RubyMouseButton_Left;
@@ -313,6 +353,14 @@ namespace Saturn {
 							btn = RubyMouseButton_Right;
 							break;
 							
+						case SAT_XCB_WHEEL_UP_MOUSE:
+							pThis->GetParent()->DispatchEvent<RubyMouseScrollEvent>( EventType::MouseScroll, 0, 1.0 );
+							return;
+
+						case SAT_XCB_WHEEL_DOWN_MOUSE:
+							pThis->GetParent()->DispatchEvent<RubyMouseScrollEvent>( EventType::MouseScroll, 0, -1.0 );
+							return;
+
 						case SAT_XCB_XBTN_0_MOUSE:
 							btn = RubyMouseButton_Extra1;
 							break;
@@ -322,13 +370,19 @@ namespace Saturn {
 							break;
 					}
 
-					m_pWindow->IntrnlSetMouseState( btn, true );
-					m_pWindow->DispatchEvent<RubyMouseEvent>( EventType::MousePressed, ( int )btn );
+					pThis->GetParent()->IntrnlSetMouseState( btn, true );
+					pThis->GetParent()->DispatchEvent<RubyMouseEvent>( EventType::MousePressed, ( int )btn );
 				} break;
 				
 				case XCB_BUTTON_RELEASE:
 				{
-					xcb_button_release_event_t *ev = (xcb_button_release_event_t*)pEvent;
+					xcb_button_release_event_t* ev = (xcb_button_release_event_t*)pEvent;
+
+					xcb_window_t XcbWindow = ev->event;
+					auto* pThis = RubyLibrary::Get().FindWindowFromXcbHnd( XcbWindow );
+
+					if( !pThis )
+						break;
 
 					RubyMouseButton btn = RubyMouseButton_Unknown;
 					switch( ev->detail ) 
@@ -354,86 +408,142 @@ namespace Saturn {
 							break;
 					}
 
-					m_pWindow->IntrnlSetMouseState( btn, false );
-					m_pWindow->DispatchEvent<RubyMouseEvent>( EventType::MouseReleased, ( int )btn );
+					pThis->GetParent()->IntrnlSetMouseState( btn, false );
+					pThis->GetParent()->DispatchEvent<RubyMouseEvent>( EventType::MouseReleased, ( int )btn );
 				} break;
 				
 
 				case XCB_ENTER_NOTIFY: 
 				{
-					m_pWindow->DispatchEvent<Event>( EventType::MouseEnterWindow, EventCategory::EC_Ruby );
+					xcb_enter_notify_event_t* ev = (xcb_enter_notify_event_t*)pEvent;
+
+					xcb_window_t XcbWindow = ev->event;
+					auto* pThis = RubyLibrary::Get().FindWindowFromXcbHnd( XcbWindow );
+
+					if( !pThis )
+						break;
+
+					pThis->GetParent()->DispatchEvent<Event>( EventType::MouseEnterWindow, EventCategory::EC_Ruby );
 				} break;
 				
 				case XCB_LEAVE_NOTIFY: 
 				{
-					m_pWindow->DispatchEvent<Event>( EventType::MouseLeaveWindow, EventCategory::EC_Ruby );
+					xcb_leave_notify_event_t* ev = (xcb_leave_notify_event_t*)pEvent;
+
+					xcb_window_t XcbWindow = ev->event;
+					auto* pThis = RubyLibrary::Get().FindWindowFromXcbHnd( XcbWindow );
+
+					if( !pThis )
+						break;
+
+					pThis->GetParent()->DispatchEvent<Event>( EventType::MouseLeaveWindow, EventCategory::EC_Ruby );
 				} break;
 				
 				case XCB_MOTION_NOTIFY: 
 				{
 					xcb_motion_notify_event_t *ev = (xcb_motion_notify_event_t *)pEvent;
 					
+					xcb_window_t XcbWindow = ev->event;
+					auto* pThis = RubyLibrary::Get().FindWindowFromXcbHnd( XcbWindow );
+
+					if( !pThis )
+						break;
+
 					const int x = ev->event_x;
 					const int y = ev->event_y;
 					
-					if( m_pWindow->GetCursorMode() == RubyCursorMode::Locked ) 
+					SAT_CORE_INFO( "X: {0} Y: {1}", x, y );
+					SAT_CORE_INFO( "ZX: {0} ZY: {1}", ev->root_x, ev->root_y );
+
+					if( pThis->GetParent()->GetCursorMode() == RubyCursorMode::Locked )
 					{
 						// TODO: will do when ported.
 					}
 					else
 					{
-						m_pWindow->DispatchEvent<RubyMouseMoveEvent>( EventType::MouseMoved, ( float ) x, ( float ) y );
+						pThis->GetParent()->DispatchEvent<RubyMouseMoveEvent>( EventType::MouseMoved, ( float ) x, ( float ) y );
 					}
 					
-					m_pWindow->IntrnlSetLastMousePos( { x, y } );
+					pThis->GetParent()->IntrnlSetLastMousePos( { x, y } );
 				} break;
 				
 				case XCB_FOCUS_IN: 
 				{
-					if( m_pWindow->GetCursorMode() == RubyCursorMode::Locked ) 
+					xcb_focus_in_event_t* ev = (xcb_focus_in_event_t *)pEvent;
+
+					xcb_window_t XcbWindow = ev->event;
+					auto* pThis = RubyLibrary::Get().FindWindowFromXcbHnd( XcbWindow );
+
+					if( !pThis )
+						break;
+
+					if( pThis->GetParent()->GetCursorMode() == RubyCursorMode::Locked )
 					{
-						SetMouseCursor( RubyCursorType::Arrow );
+						pThis->GetParent()->SetMouseCursor( RubyCursorType::Arrow );
 					}
 					
-					m_pWindow->DispatchEvent<RubyFocusEvent>( EventType::WindowFocus, true );
+					pThis->GetParent()->DispatchEvent<RubyFocusEvent>( EventType::WindowFocus, true );
 				} break;
 				
 				case XCB_FOCUS_OUT: 
 				{
-					if( m_pWindow->GetCursorMode() == RubyCursorMode::Locked ) 
+					xcb_focus_out_event_t* ev = (xcb_focus_out_event_t *)pEvent;
+
+					xcb_window_t XcbWindow = ev->event;
+					auto* pThis = RubyLibrary::Get().FindWindowFromXcbHnd( XcbWindow );
+
+					if( !pThis )
+						break;
+
+					if( pThis->GetParent()->GetCursorMode() == RubyCursorMode::Locked )
 					{
-						SetMouseCursor( RubyCursorType::None );
+						pThis->GetParent()->SetMouseCursor( RubyCursorType::None );
 					}
 					
-					m_pWindow->DispatchEvent<RubyFocusEvent>( EventType::WindowFocus, false );
+					pThis->GetParent()->DispatchEvent<RubyFocusEvent>( EventType::WindowFocus, false );
 				} break;
 
 				case XCB_KEY_PRESS: 
 				{
 					xcb_key_press_event_t *ev = (xcb_key_press_event_t *)pEvent;
-					xcb_keysym_t keysym = xcb_key_symbols_get_keysym(m_Symbols, ev->detail, 0);
+
+					xcb_window_t XcbWindow = ev->event;
+					auto* pThis = RubyLibrary::Get().FindWindowFromXcbHnd( XcbWindow );
+
+					if( !pThis )
+						break;
+
+					xcb_keysym_t keysym = xcb_key_symbols_get_keysym( pThis->GetSymbols(), ev->detail, 0 );
 					const RubyKey saturnKey = ConvertWinScancodeToRuby( keysym );
 					
+					SAT_CORE_INFO( "Saturn Key: {0}", (uint32_t)ev->detail );
+
 					if( keysym ) 
 					{
 						if( keysym >= XK_space && keysym <= XK_asciitilde ) 
 						{
 							const wchar_t wc = (uint16_t)keysym;
-							m_pWindow->DispatchEvent<RubyCharacterEvent>( EventType::InputCharacter, wc );
+							pThis->GetParent()->DispatchEvent<RubyCharacterEvent>( EventType::InputCharacter, wc );
 						}
 					}
 					
-					m_pWindow->DispatchEvent<RubyKeyEvent>( EventType::KeyPressed, saturnKey, keysym, 0 );
-					
+					pThis->GetParent()->DispatchEvent<RubyKeyEvent>( EventType::KeyPressed, saturnKey, keysym, 0 );
 				} break;
 				
 				case XCB_KEY_RELEASE: 
 				{
 					xcb_key_press_event_t *ev = (xcb_key_press_event_t *)pEvent;
-					xcb_keysym_t keysym = xcb_key_symbols_get_keysym(m_Symbols, ev->detail, 0);
+
+					xcb_window_t XcbWindow = ev->event;
+					auto* pThis = RubyLibrary::Get().FindWindowFromXcbHnd( XcbWindow );
+
+					if( !pThis )
+						break;
+
+					xcb_keysym_t keysym = xcb_key_symbols_get_keysym( pThis->GetSymbols(), ev->detail, 0 );
+
 					const RubyKey saturnKey = ConvertWinScancodeToRuby( keysym );
-					
-					m_pWindow->DispatchEvent<RubyKeyEvent>( EventType::KeyReleased, saturnKey, keysym, 0 );
+					pThis->GetParent()->DispatchEvent<RubyKeyEvent>( EventType::KeyReleased, saturnKey, keysym, 0 );
 				} break;
 				
 				default: break;
@@ -583,7 +693,7 @@ namespace Saturn {
 
 	WindowType RubyXcbBackend::GetNativeHandle()
 	{
-		return (void*)m_Handle;
+		return m_Handle;
 	}
 
 	bool RubyXcbBackend::Minimized()
@@ -659,31 +769,17 @@ namespace Saturn {
 
 	bool RubyXcbBackend::Focused()
 	{
-		xcb_atom_t active_atom = XcbGetAtom(m_pConnection, "_NET_ACTIVE_WINDOW");
-
-		xcb_get_property_cookie_t cookie =
-			xcb_get_property(m_pConnection,
-							 0,
-							 m_Handle,
-							 active_atom,
-							 XCB_ATOM_WINDOW,
-							 0,
-							 1);
-
-		xcb_get_property_reply_t *reply =
-			xcb_get_property_reply(m_pConnection, cookie, NULL);
-
-		if (!reply)
-			return false;
-
-		xcb_window_t *active = (xcb_atom_t*)xcb_get_property_value(reply);
+		xcb_get_input_focus_cookie_t cookie = xcb_get_input_focus( m_pConnection );
+		xcb_get_input_focus_reply_t* pFocusReply = xcb_get_input_focus_reply( m_pConnection, cookie, nullptr );
 
 		bool focused = false;
+		if( pFocusReply )
+		{
+			focused = ( pFocusReply->focus == m_Handle );
 
-		if (active && *active == m_Handle)
-			focused = true;
+			std::free( pFocusReply );
+		}
 
-		std::free(reply);
 		return focused;
 	}
 
@@ -722,7 +818,23 @@ namespace Saturn {
 	{
 		const auto cookieReq = xcb_query_pointer( m_pConnection, m_Handle );
 		auto reply = xcb_query_pointer_reply( m_pConnection, cookieReq, NULL );
-		return { (float)reply->root_x, (float)reply->root_y };
+
+		xcb_get_setup(m_pConnection);
+		xcb_screen_t *screen = xcb_setup_roots_iterator(xcb_get_setup(m_pConnection)).data;
+
+		xcb_translate_coordinates_cookie_t cookie = xcb_translate_coordinates(
+			m_pConnection,
+			screen->root,  // Source: Root Window
+			m_Handle,      // Destination: Your Window
+			reply->root_x, // Root X (from event)
+			reply->root_y  // Root Y (from event)
+		);
+
+		xcb_translate_coordinates_reply_t* tsReply = xcb_translate_coordinates_reply(
+			m_pConnection, cookie, nullptr
+		);
+
+		return { (float)tsReply->dst_x, (float)tsReply->dst_y };
 	}
 
 	void RubyXcbBackend::DestroyWindow()
@@ -781,12 +893,36 @@ namespace Saturn {
 		const auto geoReq = xcb_get_geometry( m_pConnection, m_Handle );
 		auto* pGeo = xcb_get_geometry_reply(m_pConnection, geoReq, NULL);
 		
-		return { pGeo->x, pGeo->y };
+		xcb_get_setup(m_pConnection);
+		xcb_screen_t *screen = xcb_setup_roots_iterator(xcb_get_setup(m_pConnection)).data;
+
+		xcb_translate_coordinates_cookie_t cookie = xcb_translate_coordinates(
+			m_pConnection,
+			m_Handle,       // Source window
+			screen->root, // Destination window (desktop)
+			0, 0          // Point (0,0) in your window
+		);
+
+		xcb_translate_coordinates_reply_t* reply = xcb_translate_coordinates_reply(m_pConnection, cookie, NULL);
+
+		return { reply->dst_x, reply->dst_y };
 	}
 
 	bool RubyXcbBackend::MouseInRect()
 	{
-		return false;
+		const auto cookieReq = xcb_query_pointer( m_pConnection, m_Handle );
+		auto reply = xcb_query_pointer_reply( m_pConnection, cookieReq, nullptr );
+
+		bool inRect = false;
+		if( reply )
+		{
+			if( reply->root == m_Handle )
+				inRect = true;
+
+			std::free( reply );
+		}
+
+		return inRect;
 	}
 
 	void RubyXcbBackend::FlashAttention()

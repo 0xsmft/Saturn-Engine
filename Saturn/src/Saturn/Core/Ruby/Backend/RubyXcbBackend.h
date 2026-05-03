@@ -82,7 +82,7 @@ namespace Saturn {
 		const char* GetClipboardText() override;
 		const wchar_t* GetClipboardTextW() override;
 
-		void PollEvents();
+		static void PollEvents();
 		bool PendingClose() override;
 
 		void Focus() override;
@@ -105,10 +105,12 @@ namespace Saturn {
 		bool IsMouseTracked() const { return m_MouseTracked; }
 		void SetTrackMouse( bool value ) { m_MouseTracked = value; }
 
+		xcb_key_symbols_t* GetSymbols() { return m_Symbols; }
+
 	private:
 		void DisableCursor();
 		void FindMouseRestorePoint();
-		void HandleXcbEvents();
+		static void HandleXcbEvents();
 
 	private:
 		xcb_window_t m_Handle{};

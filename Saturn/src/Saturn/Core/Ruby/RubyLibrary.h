@@ -35,11 +35,13 @@
 
 #if defined(SAT_PLATFORM_LINUX)
 #include <xcb/xcb.h>
+#include <unordered_map>
 #endif
 
 namespace Saturn {
 	
 	class RubyWindow;
+	class RubyXcbBackend;
 
 	class RubyLibrary final
 	{
@@ -99,14 +101,20 @@ namespace Saturn {
 
 	public:
 #if defined(SAT_PLATFORM_LINUX)
-		void RegisterWindow( RubyWindow* pWindow ) { m_Windows.push_back( pWindow ); }
-		void UnregisterWindow( RubyWindow* pWindow ) 
+		void RegisterWindow( RubyXcbBackend* pWindow );
+		void UnregisterWindow( xcb_window_t windowHandle )
 		{
-			const auto itr = std::find( m_Windows.begin(), m_Windows.end(), pWindow );
+			const auto itr = m_Windows.find( windowHandle );
 			if( itr != m_Windows.end() ) 
 			{
 				m_Windows.erase( itr );
 			}
+		}
+
+		RubyXcbBackend* FindWindowFromXcbHnd( xcb_window_t window )
+		{
+			const auto itr = m_Windows.find( window );
+			return itr == m_Windows.end() ? nullptr : itr->second;
 		}
 
 		bool TryOpenConnection();
@@ -119,7 +127,7 @@ namespace Saturn {
 		std::vector<RubyMonitor> m_Monitors;
 		
 #if defined(SAT_PLATFORM_LINUX)
-		std::vector<RubyWindow*> m_Windows;
+		std::unordered_map<xcb_window_t, RubyXcbBackend*> m_Windows;
 		xcb_connection_t* m_pConnection = NULL;
 #endif
 	};

@@ -34,8 +34,12 @@ namespace Saturn {
 
 	class NodeEditorVariable;
 	class NodeEditorTaskHandler;
-	class Pin;
 
+	//
+	// SNodeEditorGetVariableTask
+	//
+	// This task does not tick! All it does it register a locator with an address to the variable ID.
+	//
 	SCLASS()
 	class SNodeEditorGetVariableTask : public NodeEditorTaskBase
 	{

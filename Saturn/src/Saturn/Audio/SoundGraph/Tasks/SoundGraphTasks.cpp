@@ -278,7 +278,7 @@ namespace Saturn {
 			m_MinPitch = pSoundNode->Inputs[ 1 ].As<FloatPin>()->Data;
 			m_MaxPitch = pSoundNode->Inputs[ 2 ].As<FloatPin>()->Data;
 			
-			// Safety, just in case for whatever reason in min is the max.
+			// Safety, just in case for whatever reason min is the max.
 			m_MinPitch = glm::min( m_MinPitch, m_MaxPitch );
 			m_MaxPitch = glm::max( m_MinPitch, m_MaxPitch );
 

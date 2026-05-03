@@ -38,7 +38,7 @@ namespace Saturn {
 
 	// A texture source asset is an asset that holds a texture,
 	// I recommended that you do NOT hold a reference to the texture that this asset holds,
-	// instead you should hold a reference to this asset it self.
+	// instead you should hold a reference to this class it self.
 	//
 	// This is because the texture that is held by this asset can change entirely or it's flags could change causing
 	// the texture to be reloaded from disk (if load flags changed) or recreated internally (if filtering flags changed).

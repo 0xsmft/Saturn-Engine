@@ -33,6 +33,11 @@
 
 namespace Saturn {
 
+	//
+	// NodeEditorVariableNode
+	//
+	// The node that represents a NodeEditorVariable
+	//
 	SCLASS();
 	class NodeEditorVariableNode : public NodeEditorNodeBase
 	{

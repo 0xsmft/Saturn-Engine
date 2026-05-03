@@ -83,6 +83,15 @@ namespace Saturn {
 		SClass*,
 		std::string>;
 
+	//
+	// NodeEditorVariable
+	// 
+	// Represents a user defined "variable" in the NodeEditor.
+	// 
+	// For example, the user in an AnimGraph may define "IsInAir" as a variable.
+	// 
+	// The value of the variable is stored in a type safe union i.e. std::variant.
+	//
 	class NodeEditorVariable : public RefTarget
 	{
 	public:

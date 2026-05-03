@@ -113,6 +113,44 @@ project "Saturn-ProjectBrowser"
 			"SAT_PLATFORM_LINUX"
 		}
 
+		links
+		{
+			"pthread",
+			"dl",
+			"m",
+			"xcb",
+			"xcb-keysyms",
+			"Xrandr",
+			"xcb-randr",
+			"vulkan",
+
+			"ImGui",
+			"SPIRV-Cross",
+			"yaml-cpp",
+			"Tracy",
+			"zlib",
+			"Recast",
+			"MSDF-Atlas-Gen",
+			"MSDFGen",
+			"Freetype",
+			"JoltPhysics",
+
+			"Saturn-SharedStorage",
+		}
+
+		libdirs
+		{
+			"../Saturn/vendor/assimp/bin"
+		}
+
+		filter "configurations:Debug"
+			links
+			{
+				"assimp",
+				"shaderc_shared",
+				"SPIRV"
+			}
+
 		files 
 		{
 			"../Saturn/src/Saturn/Entry/Unix/**.cpp",

@@ -34,7 +34,7 @@ workspace "Saturn"
 		buildoptions { "/fsanitize=address" }
 
 	filter "toolset:clang"
-		defines { "SAT_COMPILER_CLANG", "MA_USE_STDINT" }
+		defines { "SAT_COMPILER_CLANG" }
 		buildoptions { "-Wno-missing-template-arg-list-after-template-kw", "-Wno-non-pod-varargs" }
 
 	filter "toolset:gcc"

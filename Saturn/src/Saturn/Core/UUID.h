@@ -84,3 +84,16 @@ namespace std {
 	};
 
 }
+
+#if defined(SAT_PLATFORM_LINUX) || defined(__linux__)
+#include <spdlog/fmt/fmt.h>
+template <>
+struct fmt::formatter<Saturn::UUID> : fmt::formatter<uint64_t>
+{
+	template <typename FormatContext>
+	auto format(const Saturn::UUID& uuid, FormatContext& ctx) const
+	{
+		return fmt::formatter<uint64_t>::format((uint64_t)uuid, ctx);
+	}
+};
+#endif

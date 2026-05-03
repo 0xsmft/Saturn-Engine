@@ -34,6 +34,7 @@
 #include "Backend/RubyWindowsBackend.h"
 #elif defined(SAT_PLATFORM_LINUX)
 #include "RubyWindow.h"
+#include "Backend/RubyXcbBackend.h"
 #include <xcb/randr.h>
 #endif
 
@@ -91,10 +92,7 @@ namespace Saturn {
 #if defined( SAT_PLATFORM_WINDOWS )
 		RubyWindowsBackend::PollEvents();
 #elif defined(SAT_PLATFORM_LINUX)
-		for( auto* pWindow : m_Windows ) 
-		{
-			pWindow->PollEvents();
-		} 
+		RubyXcbBackend::PollEvents();
 #endif
 	}
 
@@ -112,9 +110,7 @@ namespace Saturn {
 			::EnumDisplayMonitors( NULL, NULL, MonitorEnumProc, userData );
 		}
 #elif defined(SAT_PLATFORM_LINUX)
-		xcb_window_t rootWindow = static_cast<xcb_window_t>(
-			reinterpret_cast<uintptr_t>(m_Windows[0]->GetNativeHandle())
-		);
+		xcb_window_t rootWindow = m_Windows.begin()->second->GetNativeHandle();
 		xcb_randr_get_monitors_cookie_t cookie = xcb_randr_get_monitors(m_pConnection, rootWindow, 1);
 
 		xcb_randr_get_monitors_reply_t* reply = xcb_randr_get_monitors_reply(m_pConnection, cookie, nullptr);
@@ -157,6 +153,11 @@ namespace Saturn {
 	}
 
 #if defined(SAT_PLATFORM_LINUX)
+	void RubyLibrary::RegisterWindow( RubyXcbBackend* pWindow )
+	{
+		m_Windows[ pWindow->GetNativeHandle() ] = pWindow;
+	}
+
 	bool RubyLibrary::TryOpenConnection()
 	{
 		if( m_pConnection )

@@ -68,11 +68,9 @@ namespace Saturn {
 			std::filesystem::remove( "steam_appid.txt" );
 	}
 
-	bool SteamOnlineSystemAPI::Initialise()
+	void SteamOnlineSystemAPI::Initialise()
 	{
 		CreateSteamAppIDFileIfNeeded();
-
-		bool result = false;
 
 		SteamErrMsg errorMessage{0};
 		switch( SteamAPI_InitEx( &errorMessage ) )
@@ -80,9 +78,9 @@ namespace Saturn {
 			case k_ESteamAPIInitResult_OK: 
 			{
 				SAT_CORE_INFO( "[SteamOnlineSystemAPI]: Initialised SteamAPI" );
-				result = true;
 
 				m_CurrentUser.Initialise();
+				m_Initialised = true;
 			} break;
 
 			case k_ESteamAPIInitResult_FailedGeneric: 
@@ -105,8 +103,6 @@ namespace Saturn {
 
 			default: break;
 		}
-
-		return result;
 	}
 
 	void SteamOnlineSystemAPI::Tick()
@@ -114,6 +110,8 @@ namespace Saturn {
 		if( m_Initialised )
 		{
 			SteamAPI_RunCallbacks();
+		
+			m_SteamAvatarCache.Tick();
 		}
 	}
 

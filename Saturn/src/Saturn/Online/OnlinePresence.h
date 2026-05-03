@@ -30,7 +30,7 @@
 
 namespace Saturn {
 
-	enum class OnlinePresence
+	enum class OnlinePresence : uint8_t
 	{
 		Offline,
 		Online,

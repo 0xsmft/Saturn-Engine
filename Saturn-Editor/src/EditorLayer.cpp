@@ -367,6 +367,9 @@ namespace Saturn {
 
 			m_RuntimeScene->OnUpdate( time );
 
+			// Online subsystem update...
+			m_OnlineAPI->Tick();
+
 			// Suspended only, paused would be in the control of the user, so we don't switch the
 			// camera.
 			if( m_RuntimeScene->GetRuntimeState() == RuntimeState::Suspended ) [[unlikely]]

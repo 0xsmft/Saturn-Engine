@@ -50,6 +50,27 @@ namespace Saturn {
 		ClearAll();
 	}
 
+	void SteamAvatarCache::Tick()
+	{
+		while( m_TemporaryGenerationData.size() )
+		{
+			auto& rData = m_TemporaryGenerationData.front();
+
+			// Valve... why is the size of the texture a signed number??
+			// Fill buffer data
+			if( SteamUtils()->GetImageRGBA( rData.Index, rData.ImageBuffer.Data, ( int ) rData.ImageBuffer.Size ) ) 
+			{
+				m_UserIDToAvatar[ rData.UserID ] = Ref<Texture2D>::Create( ImageFormat::RGBA8, rData.Width, rData.Height, rData.ImageBuffer.Data );
+			}
+
+			rData.ImageBuffer.Free();
+
+			m_TemporaryGenerationData.pop();
+
+			break;
+		}
+	}
+
 	void SteamAvatarCache::Invalidate( CSteamID ID )
 	{
 		const auto itr = m_UserIDToAvatar.find( ID.ConvertToUint64() );
@@ -84,7 +105,7 @@ namespace Saturn {
 
 	Ref<Texture2D> SteamAvatarCache::GetAvatarForUser( CSteamID ID )
 	{
-		const auto IDull = ID.ConvertToUint64();
+		const uint64_t IDull = ID.ConvertToUint64();
 
 		// ID not valid, user not logged on?
 		if( IDull == 0 )
@@ -103,31 +124,13 @@ namespace Saturn {
 				// and use the pink texture for a fallback image.
 				m_UserIDToAvatar.emplace( IDull, Renderer::Get()->GetPinkTexture() );
 			}
+			// However, if it is downloaded, we can process it now on the job system.
 			else
 			{
 				// Add pink texture... for now, until job system is done.
 				m_UserIDToAvatar[ IDull ] = Renderer::Get()->GetPinkTexture();
 
-				JobSystem::Get().QueueJob( 
-					[index, IDull, this]() 
-				{
-					// Get the texture now.
-					uint32_t imageWidth = 0, imageHeight = 0;
-					SteamUtils()->GetImageSize( index, &imageWidth, &imageHeight );
-					if( imageWidth > 0 && imageHeight > 0 )
-					{
-						Buffer TemporaryBuffer;
-						TemporaryBuffer.Allocate( static_cast< size_t >( imageWidth * imageHeight * 4 ) );
-						TemporaryBuffer.Zero_Memory();
-
-						// Valve... why is the size of the texture a signed number??
-						SteamUtils()->GetImageRGBA( index, TemporaryBuffer.Data, ( int ) TemporaryBuffer.Size );
-
-						m_UserIDToAvatar[ IDull ] = Ref<Texture2D>::Create( ImageFormat::RGBA8, imageWidth, imageHeight, TemporaryBuffer.Data );
-
-						TemporaryBuffer.Free();
-					}
-				} );
+				QueueAvatarImageCreation( index, IDull );
 			}
 		}
 
@@ -137,6 +140,19 @@ namespace Saturn {
 	void SteamAvatarCache::ClearAll()
 	{
 		m_UserIDToAvatar.clear();
+	}
+
+	void SteamAvatarCache::QueueAvatarImageCreation( size_t index, uint64_t ID )
+	{
+		uint32_t imageWidth = 0, imageHeight = 0;	
+		if( SteamUtils()->GetImageSize( index, &imageWidth, &imageHeight ) && imageWidth > 0 && imageHeight > 0 )
+		{
+			Buffer TemporaryBuffer;
+			TemporaryBuffer.Allocate( static_cast< size_t >( imageWidth * imageHeight * 4u ) );
+			TemporaryBuffer.Zero_Memory();
+
+			m_TemporaryGenerationData.emplace( Buffer( TemporaryBuffer.Size, TemporaryBuffer.Data ), imageWidth, imageHeight, index, ID );
+		}
 	}
 
 }

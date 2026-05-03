@@ -40,9 +40,9 @@ namespace Saturn {
 
 	struct SteamFriend
 	{
+		std::wstring Name;
 		CSteamID UserID{};
 		OnlinePresence Presence = OnlinePresence::Offline;
-		std::wstring Name;
 	};
 	
 }

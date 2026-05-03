@@ -237,10 +237,10 @@ namespace Saturn {
 		const std::vector<SteamFriend>& GetFriends() const { return m_Friends; }
 
 	private:
-		CSteamID m_UserID;
-		OnlinePresence m_UserPresence = OnlinePresence::Offline;
 		std::wstring m_UserName;
 		std::vector<SteamFriend> m_Friends;
+		CSteamID m_UserID;
+		OnlinePresence m_UserPresence = OnlinePresence::Offline;
 	};
 
 }

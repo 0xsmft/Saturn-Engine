@@ -36,14 +36,25 @@
 #include <steam/isteamfriends.h>
 
 #include <unordered_map>
+#include <queue>
 
 namespace Saturn {
+
+	struct SteamAvatarTemporaryGenerationData
+	{
+		Buffer ImageBuffer;
+		uint32_t Width = 0u, Height = 0u;
+		size_t Index = 0llu;
+		uint64_t UserID = 0llu;
+	};
 
 	class SteamAvatarCache
 	{
 	public:
 		SteamAvatarCache();
 		~SteamAvatarCache();
+
+		void Tick();
 
 		//
 		// Remove a texture from the cache.
@@ -69,8 +80,11 @@ namespace Saturn {
 	private:
 		STEAM_CALLBACK( SteamAvatarCache, OnAvatarImageLoaded, AvatarImageLoaded_t );
 
+		void QueueAvatarImageCreation( size_t index, uint64_t ID );
+
 	private:
 		std::unordered_map<uint64_t, Ref<Texture2D>> m_UserIDToAvatar;
+		std::queue<SteamAvatarTemporaryGenerationData> m_TemporaryGenerationData;
 	};
 }
 

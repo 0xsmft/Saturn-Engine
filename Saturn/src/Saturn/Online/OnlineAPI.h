@@ -42,7 +42,7 @@ namespace Saturn {
 		
 	public:
 		// Client API
-		virtual bool Initialise() = 0;
+		virtual void Initialise() = 0;
 		virtual void Tick() = 0;
 		virtual void Terminate() = 0;
 

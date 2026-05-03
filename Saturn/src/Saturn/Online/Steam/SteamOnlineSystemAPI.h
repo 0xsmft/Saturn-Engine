@@ -52,7 +52,7 @@ namespace Saturn {
 		virtual ~SteamOnlineSystemAPI();
 
 	public:
-		virtual bool Initialise() override;
+		virtual void Initialise() override;
 		virtual void Tick() override;
 		virtual void Terminate() override;
 
@@ -75,9 +75,9 @@ namespace Saturn {
 		const SteamAvatarCache& GetAvatarCache() const { return m_SteamAvatarCache; }
 
 	private:
-		bool m_Initialised = false;
 		SteamCurrentUser m_CurrentUser;
 		SteamAvatarCache m_SteamAvatarCache;
+		bool m_Initialised = false;
 	};
 
 }

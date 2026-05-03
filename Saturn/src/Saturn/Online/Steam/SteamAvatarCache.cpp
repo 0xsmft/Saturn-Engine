@@ -58,7 +58,7 @@ namespace Saturn {
 
 			// Valve... why is the size of the texture a signed number??
 			// Fill buffer data
-			if( SteamUtils()->GetImageRGBA( rData.Index, rData.ImageBuffer.Data, ( int ) rData.ImageBuffer.Size ) ) 
+			if( SteamUtils()->GetImageRGBA( ( int )rData.Index, rData.ImageBuffer.Data, ( int ) rData.ImageBuffer.Size ) ) 
 			{
 				m_UserIDToAvatar[ rData.UserID ] = Ref<Texture2D>::Create( ImageFormat::RGBA8, rData.Width, rData.Height, rData.ImageBuffer.Data );
 			}
@@ -145,7 +145,7 @@ namespace Saturn {
 	void SteamAvatarCache::QueueAvatarImageCreation( size_t index, uint64_t ID )
 	{
 		uint32_t imageWidth = 0, imageHeight = 0;	
-		if( SteamUtils()->GetImageSize( index, &imageWidth, &imageHeight ) && imageWidth > 0 && imageHeight > 0 )
+		if( SteamUtils()->GetImageSize( ( int ) index, &imageWidth, &imageHeight ) && imageWidth > 0 && imageHeight > 0 )
 		{
 			Buffer TemporaryBuffer;
 			TemporaryBuffer.Allocate( static_cast< size_t >( imageWidth * imageHeight * 4u ) );

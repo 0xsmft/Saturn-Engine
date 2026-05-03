@@ -131,11 +131,11 @@ OStream& operator<<( OStream& os, const glm::mat4& matrix )
 }
 
 // Core log macros
-#define SAT_CORE_TRACE(...)				//Saturn::Log::Get().CoreLogger()->trace(__VA_ARGS__)
-#define SAT_CORE_INFO(...)				//Saturn::Log::Get().CoreLogger()->info(__VA_ARGS__)
-#define SAT_CORE_WARN(...)				//Saturn::Log::Get().CoreLogger()->warn(__VA_ARGS__)
-#define SAT_CORE_ERROR(...)				//Saturn::Log::Get().CoreLogger()->error(__VA_ARGS__)
-#define SAT_CORE_FATAL(...)				//Saturn::Log::Get().CoreLogger()->critical(__VA_ARGS__)
+#define SAT_CORE_TRACE(...)				Saturn::Log::Get().CoreLogger()->trace(__VA_ARGS__)
+#define SAT_CORE_INFO(...)				Saturn::Log::Get().CoreLogger()->info(__VA_ARGS__)
+#define SAT_CORE_WARN(...)				Saturn::Log::Get().CoreLogger()->warn(__VA_ARGS__)
+#define SAT_CORE_ERROR(...)				Saturn::Log::Get().CoreLogger()->error(__VA_ARGS__)
+#define SAT_CORE_FATAL(...)				Saturn::Log::Get().CoreLogger()->critical(__VA_ARGS__)
 
 // Client log macros
 #define SAT_TRACE(...)					//Saturn::Log::Get().ClientLogger()->trace(__VA_ARGS__)

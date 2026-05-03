@@ -51,7 +51,7 @@ namespace Saturn {
 #include <Windows.h>
 	using WindowType = HWND;
 #else
-	using WindowType = void*;
+	using WindowType = uint32_t;
 #endif
 
 	enum class RubyGraphicsAPI : uint8_t

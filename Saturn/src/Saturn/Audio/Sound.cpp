@@ -99,7 +99,7 @@ namespace Saturn {
 		m_Sound = new ma_sound();
 
 		// TODO: Wait for the sound to load by using the fence.
-		MA_CHECK( ma_sound_init_from_file( &AudioSystem::Get().GetAudioEngine(),
+		MA_CHECK( ma_sound_init_from_file( AudioSystem::Get().GetAudioEngine(),
 			m_Specification->SoundSourcePath.string().c_str(),
 			initFlags, nullptr, nullptr, m_Sound ) );
 
@@ -150,8 +150,8 @@ namespace Saturn {
 			{
 				SAT_SND_VERBOSE_INFO( "Trying to start sound \"{0}\" in {1} frames", m_Specification->Name, frameOffset );
 				ma_sound_set_start_time_in_pcm_frames( m_Sound,
-					ma_engine_get_time_in_pcm_frames( &AudioSystem::Get().GetAudioEngine() )
-					+ ( ma_engine_get_sample_rate( &AudioSystem::Get().GetAudioEngine() ) * frameOffset ) );
+					ma_engine_get_time_in_pcm_frames( AudioSystem::Get().GetAudioEngine() )
+					+ ( ma_engine_get_sample_rate( AudioSystem::Get().GetAudioEngine() ) * frameOffset ) );
 
 			}
 

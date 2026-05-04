@@ -40,13 +40,6 @@
 
 namespace Saturn {
 
-	enum AudioType
-	{
-		Static, // 2D
-		Dynamic, // 3D
-		Unknown
-	};
-
 	class AudioThread : public Thread
 	{
 	public:
@@ -79,29 +72,42 @@ namespace Saturn {
 
 		// Loads a new Sound2D to be played
 		// By default the sound will automatically play upon loading.
+		// Set index == 1
 		// WARNING:
 		//  This function uses the Audio Thread
 		//  This function will return the sound however, it may not be loaded as soon as it returns!
 		//  Use WaitUntilLoaded for safety.
 		Ref<Sound> RequestNewSound( AssetID ID, UUID UniquePlayerID = Saturn::UUID(), bool PlayNow = true, Ref<SoundGroup> soundGroup = nullptr );
+
+		// Loads a new spatialised sound to be played.
+		// Set index == 1
+		// WARNING:
+		//  This function uses the Audio Thread
+		//  This function will return the sound however, it may not be loaded as soon as it returns!
+		//  Use WaitUntilLoaded for safety.
 		Ref<Sound> PlaySoundAtLocation( AssetID ID, UUID UniquePlayerID, const glm::vec3& rPos, bool PlayNow = true, Ref<SoundGroup> soundGroup = nullptr );
 	
-		Ref<Sound> RequestPreviewSound( AssetID AssetID, UUID Identifier, bool allowMultiple = false );
-
 		Ref<GraphSound> PlayGraphSound( AssetID ID, UUID UniquePlayerID );
+
+		// Load a sound in set index 0
+		Ref<Sound> RequestPreviewSound( AssetID ID, UUID UniquePlayerID = Saturn::UUID(), bool PlayNow = true, Ref<SoundGroup> soundGroup = nullptr );
 
 		void RequestNewSounds( std::vector<AssetID> Ids, std::vector<UUID> PlayerIds, std::function<void(Ref<Sound>)>&& rVistor );
 
 		void ReportSoundCompleted( UUID UniquePlayerID );
 		void ReportSoundPlayingIfNeeded( UUID UniquePlayerID );
 
+		// Suspend ALL sounds and pause the Audio device interface.
 		void Suspend();
+
+		// Resume ALL sounds and resume the Audio device interface.
 		void Resume();
 
 		void SetPrimaryListenerPos( const glm::vec3& rPos );
 		void SetPrimaryListenerDirection( const glm::vec3& rDir );
 
-		void StopPreviewSounds( UUID Identifier );
+		void DestroySoundsInSet( uint8_t set );
+		void StopSoundInSet( uint8_t set );
 		void StopAndResetSound( UUID UniquePlayerID );
 		void StopSound( UUID UniquePlayerID );
 
@@ -113,7 +119,7 @@ namespace Saturn {
 		void StartSoundGroups();
 		void StopSoundGroups();
 
-		ma_engine& GetAudioEngine() { return m_Engine; }
+		ma_engine* GetAudioEngine() const { return m_pEngine; }
 		Ref<SoundGroup>& GetMasterSoundGroup() { return m_MasterSoundGroup; }
 
 		SoundDecodedInformation DecodeSound( const Ref<SoundSpecification>& rSpec );
@@ -135,16 +141,10 @@ namespace Saturn {
 		// A list of every loaded sound in memory.
 		std::unordered_map<UUID, Ref<SoundBase>> m_LoadedSounds;
 
-		// Preview sound are not available in Dist.
-#if defined( SAT_DEBUG ) || defined( SAT_RELEASE )
-		// Identifier -> Asset ID -> Sound
-		std::unordered_map<UUID, std::unordered_map< AssetID, Ref<SoundBase> >> m_PreviewSounds;
-#endif
-
 	private:
-		ma_engine m_Engine;
-		ma_context m_Context;
-		ma_device m_Device;
+		ma_engine*  m_pEngine;
+		ma_context* m_pContext;
+		ma_device*  m_pDevice;
 
 		std::atomic<bool> m_Initialised = false;
 	};

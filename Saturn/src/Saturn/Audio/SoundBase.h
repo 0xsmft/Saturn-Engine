@@ -65,10 +65,12 @@ namespace Saturn {
 		ma_sound* GetRawSound() { return m_Sound; }
 		const AssetID GetPlayerID() const { return m_PlayerID; }
 		inline void SetID( UUID id ) { m_PlayerID = id; }
+		inline void MarkSet( uint8_t set ) { m_Set = set; }
 		inline void MarkForDestroy() { m_MarkedForDestroy = true; }
 
 		[[nodiscard]] bool HasDataSource() const { return m_Loaded; }
 		[[nodiscard]] bool IsPlaying() const { return m_SoundState == SoundState::Playing; }
+		uint8_t GetSet() const { return m_Set; }
 
 	protected:
 		ma_sound* m_Sound = nullptr;
@@ -85,6 +87,12 @@ namespace Saturn {
 		bool m_Loaded = false;
 		bool m_Looping = false;
 		bool m_MarkedForDestroy = false;
+
+		// The set in which this sound belongs in to:
+		// A set index of 0 means that this sound belongs into the root set.
+		// A set index of 1 means that this sound belongs into the runtime set.
+		// Anything else would mean a custom set index.
+		uint8_t m_Set = 0u;
 
 	private:
 		friend class AudioSystem;

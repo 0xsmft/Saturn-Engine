@@ -100,6 +100,11 @@ namespace Saturn {
 
 	void AudioSystem::Initialise()
 	{
+		SAT_CORE_INFO( "[AudioSystem::Initialise]... Allocating Engine, Device and Context.");
+		m_pContext = new ma_context();
+		m_pDevice = new ma_device();
+		m_pEngine = new ma_engine();
+
 		SAT_CORE_INFO( "Starting Audio Thread...");
 		m_AudioThread = Ref<AudioThread>::Create();
 		m_AudioThread->Start();
@@ -109,13 +114,14 @@ namespace Saturn {
 			[&]() 
 			{
 				// Create engine
-				MA_CHECK( ma_engine_init( nullptr, &m_Engine ) );
+				MA_CHECK( ma_engine_init( nullptr, m_pEngine ) );
 
+				// Init context.
 				ma_backend backends[ 1 ] = { ma_backend_wasapi };
-				MA_CHECK( ma_context_init( backends, 1, nullptr, &m_Context ) );
+				MA_CHECK( ma_context_init( backends, 1, nullptr, m_pContext ) );
 
 				ma_device_info deviceInfo;
-				MA_CHECK( ma_context_get_device_info( &m_Context, ma_device_type_playback, nullptr, &deviceInfo ) );
+				MA_CHECK( ma_context_get_device_info( m_pContext, ma_device_type_playback, nullptr, &deviceInfo ) );
 
 				ma_device_config deviceConfig = ma_device_config_init( ma_device_type_playback );
 				deviceConfig.playback.format = ma_format_f32;
@@ -123,16 +129,17 @@ namespace Saturn {
 				deviceConfig.sampleRate = 48000;
 				deviceConfig.dataCallback = nullptr;
 
-				MA_CHECK( ma_device_init( &m_Context, &deviceConfig, &m_Device ) );
+				// Init device.
+				MA_CHECK( ma_device_init( m_pContext, &deviceConfig, m_pDevice ) );
 
 				SAT_CORE_INFO( "Audio Device information:" );
 				SAT_CORE_INFO( " Using backend API: {0}", ma_get_backend_name( backends[ 0 ] ) );
 				SAT_CORE_INFO( " Device Name: {0}", deviceInfo.name );
 				SAT_CORE_INFO( " Is Primary: {0}", deviceInfo.isDefault );
-				SAT_CORE_INFO( " Channels: {0}", m_Device.playback.channels );
-				SAT_CORE_INFO( " Sample Rate: {0}", m_Device.playback.internalSampleRate );
-				SAT_CORE_INFO( " Buffer Cap: {0}", m_Device.playback.intermediaryBufferCap );
-				SAT_CORE_INFO( " Format: {0}", m_Device.playback.format );
+				SAT_CORE_INFO( " Channels: {0}", m_pDevice->playback.channels );
+				SAT_CORE_INFO( " Sample Rate: {0}", m_pDevice->playback.internalSampleRate );
+				SAT_CORE_INFO( " Buffer Cap: {0}", m_pDevice->playback.intermediaryBufferCap );
+				SAT_CORE_INFO( " Format: {0}", m_pDevice->playback.format );
 				SAT_CORE_INFO( "==============" );
 
 				m_MasterSoundGroup = Ref<SoundGroup>::Create( "Master" );
@@ -150,22 +157,6 @@ namespace Saturn {
 			sound->Stop();
 			sound->Unload();
 		}
-
-#if defined( SAT_DEBUG ) || defined( SAT_RELEASE )
-		// Stop and unload any preview sounds
-		for( auto& [identifier, identifierMap] : m_PreviewSounds )
-		{
-			for( auto& [ID, sound] : identifierMap ) 
-			{
-				sound->Stop();
-				sound->Unload();
-			}
-
-			identifierMap.clear();
-		}
-
-		m_PreviewSounds.clear();
-#endif
 
 		// Unload remaining sounds
 		for( auto& [id, sound] : m_LoadedSounds )
@@ -190,12 +181,15 @@ namespace Saturn {
 		SAT_CORE_INFO( "Stopping Audio Thread..." );
 		m_AudioThread->RequestJoin();
 
-		MA_CHECK( ma_device_stop( &m_Device ) );
-
-		MA_CHECK( ma_context_uninit( &m_Context ) );
+		MA_CHECK( ma_device_stop( m_pDevice ) );
+		MA_CHECK( ma_context_uninit( m_pContext ) );
 
 		// NOTE: Device is owned by the engine, so it will uninit it for us.
-		ma_engine_uninit( &m_Engine );
+		ma_engine_uninit( m_pEngine );
+
+		delete m_pEngine;
+		delete m_pDevice;
+		delete m_pContext;
 
 		m_AliveSounds.clear();
 		m_LoadedSounds.clear();
@@ -228,6 +222,7 @@ namespace Saturn {
 
 		Ref<Sound> newSound = Ref<Sound>::Create( spec, soundGroup );
 		newSound->SetID( UniquePlayerID );
+		newSound->MarkSet( 1u );
 		m_AliveSounds[ UniquePlayerID ] = newSound;
 
 		auto loadFunc = [=]() -> void
@@ -257,6 +252,7 @@ namespace Saturn {
 
 		Ref<Sound> newSound = Ref<Sound>::Create( spec, soundGroup );
 		newSound->SetID( UniquePlayerID );
+		newSound->MarkSet( 1u );
 
 		m_AliveSounds[ UniquePlayerID ] = newSound;
 
@@ -281,51 +277,9 @@ namespace Saturn {
 		return newSound;
 	}
 
-	Ref<Sound> AudioSystem::RequestPreviewSound( AssetID AssetID, UUID Identifier, bool AllowMultiple )
+	Ref<Sound> AudioSystem::RequestPreviewSound( AssetID ID, UUID UniquePlayerID /*= UUID()*/, bool PlayNow /*= true*/, Ref<SoundGroup> soundGroup /*= nullptr*/ )
 	{
-#if defined( SAT_DEBUG ) || defined( SAT_RELEASE )
-		if( !AllowMultiple )
-		{
-			const auto identifierItr = m_PreviewSounds.find( Identifier );
-
-			if( identifierItr != m_PreviewSounds.end() )
-			{
-				auto& rIdentifierMap = identifierItr->second;
-
-				for( auto& [id, sound] : rIdentifierMap )
-				{
-					sound->Stop();
-					sound->Reset();
-				}
-
-				rIdentifierMap.clear();
-			}
-		}
-		
-		Ref<SoundSpecification> soundSpec = AssetManager::Get()->GetAssetAs<SoundSpecification>( AssetID );
-
-		Ref<Sound> snd = Ref<Sound>::Create( soundSpec, nullptr );
-		m_PreviewSounds[ Identifier ][ AssetID ] = snd;
-
-		auto loadFunc = [=]() 
-		{
-			// Intentional.
-			Ref<Sound> sound = m_PreviewSounds[ Identifier ][ AssetID ];
-
-			sound->Load( MA_SOUND_FLAG_NO_SPATIALIZATION );
-			sound->SetSpatialisation( false );
-			sound->Play();
-
-			m_AliveSounds[ AssetID ] = sound;
-			m_LoadedSounds[ AssetID ] = sound;
-		};
-
-		m_AudioThread->IsCurrentThread() ? loadFunc() : m_AudioThread->Queue( loadFunc );
-
-		return snd;
-#else
 		return nullptr;
-#endif
 	}
 
 	Ref<GraphSound> AudioSystem::PlayGraphSound( AssetID ID, UUID UniquePlayerID )
@@ -373,26 +327,6 @@ namespace Saturn {
 
 	void AudioSystem::ReportSoundCompleted( UUID UniquePlayerID )
 	{
-#if defined( SAT_DEBUG ) || defined( SAT_RELEASE )
-		for( auto&& [identifier, identifierMap] : m_PreviewSounds )
-		{
-			auto PreviewItr = identifierMap.find( UniquePlayerID );
-
-			if( PreviewItr != identifierMap.end() )
-			{
-				auto& rSnd = ( PreviewItr )->second;
-
-				rSnd->Stop();
-				rSnd->Reset();
-				rSnd->Unload();
-
-				identifierMap.erase( PreviewItr );
-				m_PreviewSounds.erase( identifier );
-
-				break;
-			}
-		}
-#endif
 		const auto Itr = m_AliveSounds.find( UniquePlayerID );
 
 		if( Itr != m_AliveSounds.end() ) 
@@ -422,12 +356,12 @@ namespace Saturn {
 			sound->Stop();
 		}
 	
-		MA_CHECK( ma_device_stop( &m_Device ) );
+		MA_CHECK( ma_device_stop( m_pDevice ) );
 	}
 
 	void AudioSystem::Resume()
 	{
-		MA_CHECK( ma_device_start( &m_Device ) );
+		MA_CHECK( ma_device_start( m_pDevice ) );
 
 		for( auto& [id, sound] : m_AliveSounds )
 		{
@@ -437,32 +371,42 @@ namespace Saturn {
 
 	void AudioSystem::SetPrimaryListenerPos( const glm::vec3& rPos )
 	{
-		ma_engine_listener_set_position( &m_Engine, 0, rPos.x, rPos.y, rPos.z );
+		ma_engine_listener_set_position( m_pEngine, 0, rPos.x, rPos.y, rPos.z );
 	}
 
 	void AudioSystem::SetPrimaryListenerDirection( const glm::vec3& rDir )
 	{
-		ma_engine_listener_set_direction( &m_Engine, 0, rDir.x, rDir.y, rDir.z );
+		ma_engine_listener_set_direction( m_pEngine, 0, rDir.x, rDir.y, rDir.z );
 	}
 
-	void AudioSystem::StopPreviewSounds( UUID Identifier )
+	void AudioSystem::DestroySoundsInSet( uint8_t set )
 	{
-#if defined( SAT_DEBUG ) || defined( SAT_RELEASE )
-		const auto identifierItr = m_PreviewSounds.find( Identifier );
-
-		if( identifierItr != m_PreviewSounds.end() )
+		std::erase_if( m_AliveSounds, 
+			[ set ](auto& kv) -> bool
 		{
-			auto& rIdentifierMap = identifierItr->second;
-
-			for( auto& [id, sound] : rIdentifierMap )
+			if( kv.second->GetSet() == set ) 
 			{
-				sound->Stop();
-				sound->Reset();
+				kv.second->Unload();
+				return true;
 			}
 
-			rIdentifierMap.clear();
+			return false;
+		} );
+
+		std::erase_if( m_LoadedSounds,
+			[ set ]( const auto& kv ) -> bool
+		{
+			return kv.second->GetSet() == set;
+		} );
+	}
+
+	void AudioSystem::StopSoundInSet( uint8_t set )
+	{
+		for( auto& [id, sound] : m_AliveSounds )
+		{
+			if( sound->GetSet() == set )
+				sound->Stop();
 		}
-#endif
 	}
 
 	void AudioSystem::StopAndResetSound( UUID UniquePlayerID )
@@ -577,7 +521,7 @@ namespace Saturn {
 		ma_decoder decoder;
 		ma_decoder_config config{};
 		
-		config = ma_decoder_config_init( ma_format_f32, 2, m_Engine.sampleRate );
+		config = ma_decoder_config_init( ma_format_f32, 2, m_pEngine->sampleRate );
 
 		MA_CHECK( ma_decoder_init_file( rSpec->SoundSourcePath.string().data(), &config, &decoder ) );
 

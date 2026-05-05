@@ -29,7 +29,7 @@
 #pragma once
 
 #include "Saturn/Core/UUID.h"
-#include "Saturn/GameFramework/SObject.h"
+#include "Saturn/Core/Ref.h"
 
 #include <filesystem>
 
@@ -37,7 +37,7 @@ namespace Saturn {
 
 	using AssetID = UUID;
 
-	enum class AssetType
+	enum class AssetType : uint8_t
 	{
 		Texture,
 		StaticMesh,
@@ -243,8 +243,19 @@ namespace Saturn {
 		uint8_t HasLoadSettings : 1 = false;
 	};
 
-	// NOTE: The Asset class has no reflection data, but we can allow other assets to have reflection data, so thats why we are based from SObject
-	class Asset : public SObject
+	enum class AssetVersion : uint8_t
+	{
+		BeforeVersionWasAdded,
+
+		// Version added and Asset class size changed
+		VersionTypeChangedAndClassSize,
+
+		// add new version above ^^^ and not below vvvv 
+		Lowest = BeforeVersionWasAdded,
+		Latest = VersionTypeChangedAndClassSize
+	};
+
+	class Asset : public RefTarget
 	{
 	public:
 		// The relative path to this Asset.
@@ -254,14 +265,13 @@ namespace Saturn {
 
 		AssetID ID = 0;
 		AssetType Type = AssetType::Unknown;
-		uint32_t Flags = 0;
-		uint32_t Version = SAT_CURRENT_VERSION;
+		AssetVersion Version = AssetVersion::Latest;
 
 	public:
 		Asset() = default;
 		
 		Asset( const Ref<Asset>& rOther ) 
-			: ID( rOther->ID ), Type( rOther->Type ), Flags( rOther->Flags ), Version( rOther->Version ), Path( rOther->Path ), Name( rOther->Name )
+			: ID( rOther->ID ), Type( rOther->Type ), Version( rOther->Version ), Path( rOther->Path ), Name( rOther->Name )
 		{
 		}
 

@@ -1118,7 +1118,6 @@ namespace Saturn {
 					prefab->Name = m_ClassInstanceName;
 					prefab->ID = prefabAsset->ID;
 					prefab->Type = prefabAsset->Type;
-					prefab->Flags = prefabAsset->Flags;
 
 					// Create the source entity.
 					SharedPtr<Entity> sourceEntity = nullptr;

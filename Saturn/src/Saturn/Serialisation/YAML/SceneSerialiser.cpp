@@ -122,7 +122,6 @@ namespace Saturn {
 		m_Scene->Name = asset->Name;
 		m_Scene->ID = asset->ID;
 		m_Scene->Type = asset->Type;
-		m_Scene->Flags = asset->Flags;
 		m_Scene->Version = asset->Version;
 
 #if !defined(SAT_DIST)

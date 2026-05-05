@@ -189,7 +189,6 @@ namespace Saturn {
 
 	class Scene : public Asset
 	{
-		SAT_DECLARE_CLASS_NO_INTER( Scene, Asset )
 	public:
 		Scene();
 		~Scene();

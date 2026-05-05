@@ -127,11 +127,11 @@ namespace Saturn {
 			return m_Assets->DoesIDExists( id );
 		}
 
-		void BumpAssetVersion( uint32_t newVersion ) 
+		void BumpAssetVersion()
 		{
 			for( auto& [ id, rAsset ] : m_Assets->m_Assets )
 			{
-				rAsset->Version = newVersion;
+				rAsset->Version = AssetVersion::Latest;
 			}
 		}
 

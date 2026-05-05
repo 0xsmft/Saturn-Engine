@@ -716,7 +716,7 @@ namespace Saturn {
 		m_Notifications.clear();
 
 		const Ref<Asset> asset = id == 0 ? nullptr : m_AssetManager->FindAsset( id );
-		
+
 		if( asset )
 		{
 			SceneSerialiser serialiser( newScene );
@@ -731,9 +731,8 @@ namespace Saturn {
 			m_EditorScene->Path = asset->Path;
 			m_EditorScene->ID = asset->ID;
 			m_EditorScene->Type = asset->Type;
-			m_EditorScene->Flags = asset->Flags;
 		}
-	
+
 		g_ActiveScene = m_EditorScene.Get();
 
 		hierarchyPanel->SetContext( m_EditorScene );
@@ -765,7 +764,6 @@ namespace Saturn {
 		m_RuntimeScene->Path = asset->Path;
 		m_RuntimeScene->ID = asset->ID;
 		m_RuntimeScene->Type = asset->Type;
-		m_RuntimeScene->Flags = asset->Flags;
 
 		g_ActiveScene = m_RuntimeScene.Get();
 
@@ -1990,10 +1988,10 @@ namespace Saturn {
 					ImGui::TableSetColumnIndex( 4 );
 					ImGui::Text( "%i", asset->Version );
 
-					if( asset->Version != SAT_CURRENT_VERSION )
+					if( asset->Version < AssetVersion::Latest )
 					{
 						ImGui::SameLine();
-						ImGui::Text( "(Version does not match)" );
+						ImGui::Text( "(Version is older than newer)" );
 					}
 
 					ImGui::TableSetColumnIndex( 5 );

@@ -51,7 +51,7 @@ namespace Saturn {
 
 		RawSerialisation::WriteObject( ID, rStream );
 		RawSerialisation::WriteObject( Type, rStream );
-		RawSerialisation::WriteObject( Flags, rStream );
+		RawSerialisation::WriteObject( Version, rStream );
 	}
 
 	void Asset::DeserialiseData( std::ifstream& rStream )
@@ -62,7 +62,7 @@ namespace Saturn {
 
 		RawSerialisation::ReadObject( ID, rStream );
 		RawSerialisation::ReadObject( Type, rStream );
-		RawSerialisation::ReadObject( Flags, rStream );
+		RawSerialisation::ReadObject( Version, rStream );
 	}
 
 }

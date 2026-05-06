@@ -314,19 +314,30 @@ namespace Saturn {
 
 		header.PositionOfTaskCache = ( uint32_t ) fout.tellp();
 
-		// Now write task cache
+		// Write task cache
 		NodeCacheTaskCacheHeader tcHeader{};
 		RawSerialisation::WriteObject( tcHeader, fout );
 
-		const auto& rList = nodeEditor->m_TaskCache.GetMasterListForSerialisation();
+		const auto& rTaskCacheList = nodeEditor->m_TaskCache.GetMasterListForSerialisation();
 
-		RawSerialisation::WriteObject( rList.size(), fout );
-		for( const auto& rTask : rList )
+		RawSerialisation::WriteObject( rTaskCacheList.size(), fout );
+		for( const auto& rTask : rTaskCacheList )
 		{
 			RawSerialisation::WriteObjectChecked( rTask->GetNodeID(), fout );
 			RawSerialisation::WriteObject( rTask->GetClass()->GetHash(), fout );
 
 			rTask->Serialise( fout );
+		}
+
+		// Variables
+		const auto& rVarList = nodeEditor->m_TaskCache.GetMasterVariablesListForSerialisation();
+
+		RawSerialisation::WriteObject( rVarList.size(), fout );
+		for( const auto& [id, variable ] : rVarList )
+		{
+			RawSerialisation::WriteObjectChecked( id, fout );
+
+			NodeEditorVariable::Serialise( variable, fout );
 		}
 
 		// Now write the header.
@@ -344,7 +355,7 @@ namespace Saturn {
 
 		if( std::memcmp( tcHeader.Magic, ".NTC", 4 ) != 0 )
 		{
-			SAT_CORE_ERROR( "NodeTaskCache header missmatch!" );
+			SAT_CORE_ERROR( "NodeTaskCache header mismatch!" );
 
 			// Return true here because the task cache can just be re-created after we load fully.
 			// It is not necessary for a NodeEditor to have a valid task cache*
@@ -382,6 +393,24 @@ namespace Saturn {
 			}
 			else
 				SAT_CORE_WARN( "[NodeCache]: TaskCache: ClassHash: {0}, invalid! Not creating task from an invalid class hash." );
+		}
+
+		// Variables
+		auto& rVarList = rCache.GetMasterVariablesListForSerialisation();
+
+		RawSerialisation::ReadObject( size, rStream );
+
+		rVarList.reserve( size );
+
+		for( size_t i = 0; i < size; ++i )
+		{
+			UUID varID = 0llu;
+			RawSerialisation::ReadObjectChecked( varID, rStream );
+
+			Ref<NodeEditorVariable> var = Ref<NodeEditorVariable>::Create();
+			NodeEditorVariable::Deserialise( var, rStream );
+
+			rVarList[ varID ] = var;
 		}
 
 		return true;
@@ -512,7 +541,9 @@ namespace Saturn {
 			return false;
 		}
 
+#if !defined( SAT_DIST )
 		stream.seekg( header.PositionOfTaskCache );
+#endif
 
 		return ReadNodeTaskCache( rNodeTaskCache, stream );
 	}

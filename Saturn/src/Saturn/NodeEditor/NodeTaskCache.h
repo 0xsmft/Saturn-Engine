@@ -30,14 +30,20 @@
 
 #include "NodeEditorTaskBase.h"
 
+#include "Saturn/Core/IndexedMap.h"
+
 #include <unordered_map>
 
 namespace Saturn {
+
+	struct AnimGraphNodeAndTaskInfo;
+	class NodeEditorVariable;
 
 	class NodeTaskCache
 	{
 	public:
 		using NodeTaskCacheMap = std::vector<Ref<NodeEditorTaskBase>>;
+		using NodeVariableMap = std::unordered_map<UUID, Ref<NodeEditorVariable>>;
 
 	public:
 		NodeTaskCache();
@@ -53,7 +59,16 @@ namespace Saturn {
 		//				   on conditions and the state machine.
 		//				   SoundGraphs do have a fixed order however that can be broken if there is a RandomSound node.
 		//
-		void BuildMasterList( const std::vector<SharedPtr<NodeEditorNodeBase>>& rOrder );
+		// @param cacheVariables - specify whether to cache variables or not. Default value is true
+		//
+		void BuildMasterList( const std::vector<SharedPtr<NodeEditorNodeBase>>& rOrder, bool cacheVariables = true );
+
+		//
+		// @see: BuildMasterList
+		// 
+		// Builds the master list for an animation graph.
+		//
+		void BuildMasterListForAnimGraph( NodeEditorBase* pEditor, const IndexedMap<UUID, AnimGraphNodeAndTaskInfo>& rOrder, bool cacheVariables = true );
 
 		//
 		// Clear the list.
@@ -66,10 +81,29 @@ namespace Saturn {
 		const NodeTaskCacheMap& GetMasterListForSerialisation() const { return m_Tasks; }
 		NodeTaskCacheMap& GetMasterListForSerialisation() { return m_Tasks; }
 
+		std::unordered_map<UUID, Ref<NodeEditorVariable>>& GetMasterVariablesListForSerialisation() { return m_EditorVariables; }
+
 		NodeTaskCacheMap InstantiateNewTaskList( NodeEditorTaskHandler* pHandler ) const;
 
+#if !defined(SAT_DIST)
+		[[nodiscard]] bool IsDirty() const { return m_IsDirty; }
+		void MarkDirty() { m_IsDirty = true; }
+		void MarkClean() { m_IsDirty = false; }
+#endif
+
 	private:
+		void CacheVariables( NodeEditorBase* pEditor );
+
+	private:
+		// Task map, global, any new TaskHandler will use the map and create their own global copy of it.
 		NodeTaskCacheMap m_Tasks;
+
+		// Variable map, global, any new TaskHandler will use the map and create their own global copy of it.
+		NodeVariableMap m_EditorVariables;
+
+#if !defined(SAT_DIST)
+		bool m_IsDirty = false;
+#endif
 	};
 	
 }

@@ -940,10 +940,10 @@ namespace Saturn {
 			{
 				if( !m_IsReimport )
 				{
+					CreateNew();
 				}
 				else
 				{
-
 				}
 
 				PopupModified = true;

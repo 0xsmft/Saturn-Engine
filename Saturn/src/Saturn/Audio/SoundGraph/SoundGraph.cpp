@@ -29,6 +29,9 @@
 #include "sppch.h"
 #include "SoundGraph.h"
 
+#include "Nodes/SoundGraphNodes.h"
+#include "SoundNodeLibrary.h"
+
 namespace Saturn {
 	
 	SoundGraph::SoundGraph( AssetID assetID )
@@ -40,6 +43,11 @@ namespace Saturn {
 	{
 	}
 
+	SharedPtr<NodeEditorNodeBase> SoundGraph::SetupNewNodeEditor()
+	{
+		return SoundNodeLibrary::SpawnOutputNode( SharedFromThis() );
+	}
+
 	void SoundGraph::OnImGuiRender()
 	{
 		NodeEditor::OnImGuiRender();
@@ -47,7 +55,6 @@ namespace Saturn {
 
 	void SoundGraph::OnTopBarRender()
 	{
-
 	}
 
 	void SoundGraph::OnNodeEditorEvent( NodeEditorAction action )

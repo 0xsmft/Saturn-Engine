@@ -47,6 +47,8 @@ namespace Saturn {
 		AnimGraph( AssetID id );
 		virtual ~AnimGraph();
 
+		SharedPtr<NodeEditorNodeBase> SetupNewNodeEditor();
+
 		AnimGraphSortMap TraverseAndCreateTasks();
 
 		void MarkNodeAsEntry( SharedPtr<NodeEditorNodeBase> node ) { m_StateMachineEntryNode = node; }

@@ -141,8 +141,7 @@ namespace Saturn {
 
 	void AnimationControllerAssetViewer::SetupNewNodeEditor()
 	{
-		SharedPtr<AnimGraphOutputNode> outputNode = AnimGraphNodeLibrary::SpawnOutputNode( m_NodeEditor );
-		m_RootNodeID = outputNode->ID;
+		m_RootNodeID = m_NodeEditor->SetupNewNodeEditor()->ID;
 	}
 
 	SharedPtr<NodeEditorNodeBase> AnimationControllerAssetViewer::DrawRootGraphNewNodeOptions()

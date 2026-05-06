@@ -87,7 +87,7 @@ namespace Saturn {
 		//  Use WaitUntilLoaded for safety.
 		Ref<Sound> PlaySoundAtLocation( AssetID ID, UUID UniquePlayerID, const glm::vec3& rPos, bool PlayNow = true, Ref<SoundGroup> soundGroup = nullptr );
 	
-		Ref<GraphSound> PlayGraphSound( AssetID ID, UUID UniquePlayerID );
+		Ref<GraphSound> PlayGraphSound( AssetID ID, UUID UniquePlayerID = Saturn::UUID(), bool spatialisation = false, bool PlayNow = true );
 
 		// Load a sound in set index 0
 		Ref<Sound> RequestPreviewSound( AssetID ID, UUID UniquePlayerID = Saturn::UUID(), bool PlayNow = true, Ref<SoundGroup> soundGroup = nullptr );

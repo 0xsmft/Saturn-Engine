@@ -34,6 +34,7 @@
 // ANIMATION EDITOR
 #include "Saturn/Animation/AssetViewer/Graph/Animation/AnimGraphOutputNode.h"
 #include "Saturn/Animation/AssetViewer/Graph/Animation/AnimGraphStateMachinePlayerNode.h"
+#include "Saturn/Animation/AssetViewer/Graph/Animation/AnimGraphNodeLibrary.h"
 
 // STATE MACHINE
 #include "Saturn/Animation/AssetViewer/Graph/StateMachine/AnimGraphStateMachineStateNode.h"
@@ -74,6 +75,11 @@ namespace Saturn {
 
 	AnimGraph::~AnimGraph()
 	{
+	}
+
+	SharedPtr<NodeEditorNodeBase> AnimGraph::SetupNewNodeEditor()
+	{
+		return AnimGraphNodeLibrary::SpawnOutputNode( SharedFromThis() );
 	}
 
 	AnimGraph::AnimGraphSortMap AnimGraph::TraverseAndCreateTasks()

@@ -74,7 +74,6 @@ namespace Saturn {
 		}
 		else
 		{
-			AudioSystem::Get().StopPreviewSounds( m_AssetID );
 			m_SoundGraph->OpenWindow( false );
 			m_Open = false;
 		}
@@ -108,8 +107,7 @@ namespace Saturn {
 
 	void GraphSoundAssetViewer::SetupNewNodeEditor()
 	{
-		SharedPtr<SoundOutputNode> OutputNode = SoundNodeLibrary::SpawnOutputNode( m_SoundGraph );
-		m_OutputNodeID = OutputNode->ID;
+		m_OutputNodeID = m_SoundGraph->SetupNewNodeEditor()->ID;
 
 		m_SoundGraph->OnNodeEditorEvent( NodeEditorAction::PostLoad );
 

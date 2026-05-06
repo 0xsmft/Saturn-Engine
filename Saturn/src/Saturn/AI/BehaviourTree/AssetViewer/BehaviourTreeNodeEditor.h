@@ -61,6 +61,8 @@ namespace Saturn {
 		BehaviourTreeNodeEditor( AssetID id );
 		virtual ~BehaviourTreeNodeEditor();
 
+		SharedPtr<NodeEditorNodeBase> SetupNewNodeEditor();
+
 	public:
 		void TraverseBehaviourTree( const SharedPtr<NodeEditorNodeBase>& rRootNode );
 

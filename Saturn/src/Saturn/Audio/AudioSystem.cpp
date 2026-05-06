@@ -282,10 +282,11 @@ namespace Saturn {
 		return nullptr;
 	}
 
-	Ref<GraphSound> AudioSystem::PlayGraphSound( AssetID ID, UUID UniquePlayerID )
+	Ref<GraphSound> AudioSystem::PlayGraphSound( AssetID ID, UUID UniquePlayerID, bool spatialisation /*=false*/, bool PlayNow /*= false*/ )
 	{
 		Ref<GraphSound> snd = Ref<GraphSound>::Create( ID );
 		snd->SetID( UniquePlayerID );
+		snd->MarkSet( 1u );
 
 		m_AliveSounds[ UniquePlayerID ] = snd;
 
@@ -294,8 +295,9 @@ namespace Saturn {
 				// Intentional.
 				Ref<GraphSound> graphSoundAsset = m_AliveSounds[ UniquePlayerID ];
 
-				graphSoundAsset->Load( MA_SOUND_FLAG_NO_SPATIALIZATION );
-				graphSoundAsset->Play();
+				graphSoundAsset->Load( !spatialisation ? MA_SOUND_FLAG_NO_SPATIALIZATION : 0 );
+				
+				if( PlayNow ) graphSoundAsset->Play();
 
 				m_LoadedSounds[ UniquePlayerID ] = graphSoundAsset;
 			};

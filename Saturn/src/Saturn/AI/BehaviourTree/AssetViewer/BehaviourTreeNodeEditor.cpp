@@ -31,6 +31,7 @@
 #include "Nodes/BehaviourTreeSelectorNode.h"
 
 #include "BehaviourTreeNodeEditor.h"
+#include "BehaviourTreeNodeLibrary.h"
 
 #include "Nodes/BehaviourTreeTaskNode.h"
 #include "Nodes/BehaviourTreeNodeBase.h"
@@ -68,6 +69,11 @@ namespace Saturn {
 
 	BehaviourTreeNodeEditor::~BehaviourTreeNodeEditor()
 	{
+	}
+
+	SharedPtr<NodeEditorNodeBase> BehaviourTreeNodeEditor::SetupNewNodeEditor()
+	{
+		return BehaviourTreeNodeLibrary::SpawnRootNode( SharedFromThis() );
 	}
 
 	void BehaviourTreeNodeEditor::TraverseBehaviourTree( const SharedPtr<NodeEditorNodeBase>& rRootNode )

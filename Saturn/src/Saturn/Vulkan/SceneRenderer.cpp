@@ -569,10 +569,6 @@ namespace Saturn {
 		PipelineSpec.UseDepthTest = true;
 		PipelineSpec.CullMode = CullMode::None;
 		PipelineSpec.FrontFace = VK_FRONT_FACE_CLOCKWISE;
-		PipelineSpec.VertexLayout = {
-			{ ShaderDataType::Float3, "a_Position" },
-			{ ShaderDataType::Float2, "a_TexCoord" },
-		};
 
 		m_RendererData.SceneCompositePipeline = Ref<Pipeline>::Create( PipelineSpec );
 	}
@@ -2196,11 +2192,10 @@ namespace Saturn {
 		vkCmdSetScissor( CommandBuffer, 0, 1, &Scissor );
 
 		// Actual scene composite pass.
-		Renderer::Get()->SubmitFullscreenQuad(
+		Renderer::Get()->SubmitFullscreenQuad2(
 			CommandBuffer, 
 			m_RendererData.SceneCompositePipeline,
-			m_RendererData.SceneCompositeMaterial,
-			m_RendererData.QuadIndexBuffer, m_RendererData.QuadVertexBuffer );
+			m_RendererData.SceneCompositeMaterial );
 
 		// End scene composite pass.
 		m_RendererData.SceneComposite->EndPass();

@@ -3,9 +3,6 @@
 #type vertex
 #version 450
 
-layout(location = 0) in vec3 a_Position;
-layout(location = 1) in vec2 a_TexCoord;
-
 layout(location = 1) out VertexOutput 
 {
 	vec3 Position;
@@ -14,11 +11,10 @@ layout(location = 1) out VertexOutput
 
 void main()
 {
-	vs_Output.Position = a_Position;
-	vs_Output.TexCoord = a_TexCoord;
-
-	vec4 position = vec4( a_Position.xy, 0.0, 1.0 );
+	vs_Output.TexCoord = vec2( ( gl_VertexIndex << 1 ) & 2, gl_VertexIndex & 2 );
+	vec4 position = vec4( vs_Output.TexCoord * 2.0f + -1.0f, 0.0, 1.0 );
 	
+	vs_Output.Position = position.xyz;
 	gl_Position = position;
 }
 
@@ -113,6 +109,9 @@ void main()
 
 	GeometryPassColor = ACES( GeometryPassColor );
 	GeometryPassColor = GammaCorrect( GeometryPassColor, GAMMA );
+
+	float ao = texture( u_BloomDirtTexture, vs_Input.TexCoord ).r;
+	GeometryPassColor *= ao;
 
 	FinalColor = vec4( GeometryPassColor, 1.0 );
 }

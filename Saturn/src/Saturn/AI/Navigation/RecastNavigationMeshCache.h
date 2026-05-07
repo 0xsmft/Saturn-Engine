@@ -33,6 +33,17 @@
 
 namespace Saturn {
 
+	enum class RecastNavMeshCacheVersion : uint8_t
+	{
+		BeforeVersionWasAdded,
+
+		VersionAdded,
+
+		//^^^ only add new versions above here.... and not below here vvv
+		Lowest = BeforeVersionWasAdded,
+		Latest = VersionAdded
+	};
+
 	class RecastNavigationMeshCache
 	{
 	public:

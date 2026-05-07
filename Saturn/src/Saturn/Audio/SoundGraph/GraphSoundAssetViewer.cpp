@@ -146,14 +146,17 @@ namespace Saturn {
 					if( !m_TaskHandler )
 					{
 						m_TaskHandler = Ref<SoundGraphTaskHandler>::Create();
-						m_TaskHandler->Init( m_SoundGraph );
+						m_TaskHandler->Init( m_SoundGraph->GetNodeTaskCache() );
 					}
 				}
 
 				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Billboard_AudioMuted" ), { 24, 24 } ) )
 				{
-					m_TaskHandler->DestroyAliveSounds();
-					m_TaskHandler = nullptr;
+					if( m_TaskHandler )
+					{
+						m_TaskHandler->DestroyAliveSounds();
+						m_TaskHandler = nullptr;
+					}
 				}
 
 				if( ImGui::IsItemHovered() )

@@ -66,7 +66,7 @@ namespace Saturn {
 						VkImageLayout OldLayout, 
 						VkImageLayout NewLayout );
 
-	enum class AddressingMode
+	enum class AddressingMode : uint8_t
 	{
 		Repeat,
 		MirroredRepeat,
@@ -152,10 +152,9 @@ namespace Saturn {
 		bool m_ForceTerminate = false;
 		bool m_MipsCreated = false;
 		bool m_Storage = false;
+		AddressingMode m_AddressingMode = AddressingMode::Repeat;
 		
 		void* m_pData = nullptr;
-
-		AddressingMode m_AddressingMode = AddressingMode::Repeat;
 
 		std::unordered_map<uint32_t, VkImageView> m_MipToImageViewMap;
 

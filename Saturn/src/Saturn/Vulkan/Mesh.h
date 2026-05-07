@@ -314,6 +314,9 @@ namespace Saturn {
 		// Return the number of faces
 		size_t GetFaceCount() const { return m_Indices.size(); }
 
+		std::vector<StaticVertex>& Vertices() { return m_Vertices; }
+		const std::vector<StaticVertex>& Vertices() const { return m_Vertices; }
+
 	protected:
 		void DeleteSourceModel() const;
 
@@ -369,10 +372,6 @@ namespace Saturn {
 		// Asset
 		virtual void OnDelete() override;
 		virtual void OnAssetDependencyReplace( AssetID oldID, AssetID newID ) override;
-
-	public:
-		std::vector<StaticVertex>& Vertices() { return m_Vertices; }
-		const std::vector<StaticVertex>& Vertices() const { return m_Vertices; }
 
 	public:
 		void SerialiseData( std::ofstream& rStream ) const;

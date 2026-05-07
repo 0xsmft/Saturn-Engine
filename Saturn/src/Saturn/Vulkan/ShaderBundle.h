@@ -28,9 +28,6 @@
 
 #pragma once
 
-#include "Saturn/Core/Ref.h"
-#include "SingletonStorage.h"
-
 namespace Saturn {
 
 	enum class ShaderBundleResult :	uint8_t

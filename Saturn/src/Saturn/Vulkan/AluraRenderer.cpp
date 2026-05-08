@@ -143,7 +143,7 @@ namespace Saturn {
 		PipelineSpec.Name = "Alura/Text";
 		PipelineSpec.Shader = m_TextShader;
 		PipelineSpec.VertexLayout = {
-			{ ShaderDataType::Float2, "a_Position" },
+			{ ShaderDataType::Float4, "a_Position" },
 			{ ShaderDataType::Float2, "a_TexCoord" },
 			{ ShaderDataType::Float4, "a_Color" },
 			{ ShaderDataType::Float, "a_TexIndex" },
@@ -253,7 +253,7 @@ namespace Saturn {
 		const uint32_t dataSize = ( uint32_t ) ( ( uint8_t* ) m_pQuadVertexPtr - ( uint8_t* ) m_QuadVertexBase[ frame ] );
 		if( dataSize >= 1 )
 		{
-			m_VertexBuffers[ frame ]->Reallocate( m_QuadVertexBase[ frame ], dataSize );
+			m_VertexBuffers[ frame ]->SetData( m_QuadVertexBase[ frame ], dataSize );
 			m_VertexBuffers[ frame ]->Bind( m_CommandBuffer );
 
 			for( uint32_t i = 0; i < 16; i++ )
@@ -279,7 +279,7 @@ namespace Saturn {
 		const uint32_t textDataSize = ( uint32_t ) ( ( uint8_t* ) m_pTextVertexPtr - ( uint8_t* ) m_TextVertexBase[ frame ] );
 		if( textDataSize >= 1 )
 		{
-			m_TextVertexBuffers[ frame ]->Reallocate( m_TextVertexBase[ frame ], textDataSize );
+			m_TextVertexBuffers[ frame ]->SetData( m_TextVertexBase[ frame ], textDataSize );
 			m_TextVertexBuffers[ frame ]->Bind( m_CommandBuffer );
 
 			for( uint32_t textureIndex = 17, i = 0; textureIndex < m_Textures.size(); i++, textureIndex++ )
@@ -544,10 +544,10 @@ namespace Saturn {
 
 	void AluraRenderer::SubmitCircle( const glm::vec2& rCentre, float radius, float thickness, const glm::vec4& rColor )
 	{
-		const int segments = 64;
-		const float step = 2.0f * glm::pi<float>() / segments;
+		constexpr int segments = 64;
+		constexpr float step = 2.0f * glm::pi<float>() / segments;
 
-		for( int i = 0; i < segments; i++ )
+		for( int i = 0; i < segments; ++i )
 		{
 			const float a0 = i * step;
 			const float a1 = ( i + 1 ) * step;
@@ -557,7 +557,7 @@ namespace Saturn {
 			const glm::vec2 p2 = rCentre + glm::vec2( glm::cos( a1 ), glm::sin( a1 ) ) * ( radius + thickness );
 			const glm::vec2 p3 = rCentre + glm::vec2( glm::cos( a0 ), glm::sin( a0 ) ) * ( radius + thickness );
 
-			m_pQuadVertexPtr->Position = p0; 
+			m_pQuadVertexPtr->Position = p0;
 			m_pQuadVertexPtr->Color = rColor; 
 			m_pQuadVertexPtr->TexCoord = { 0,0 };
 			m_pQuadVertexPtr->TextureIndex = 0.0f; 
@@ -569,13 +569,13 @@ namespace Saturn {
 			m_pQuadVertexPtr->TextureIndex = 0.0f; 
 			++m_pQuadVertexPtr;
 			
-			m_pQuadVertexPtr->Position = p2; 
+			m_pQuadVertexPtr->Position = p2;
 			m_pQuadVertexPtr->Color = rColor; 
 			m_pQuadVertexPtr->TexCoord = { 1,1 }; 
 			m_pQuadVertexPtr->TextureIndex = 0.0f; 
 			++m_pQuadVertexPtr;
 			
-			m_pQuadVertexPtr->Position = p3; 
+			m_pQuadVertexPtr->Position = p3;
 			m_pQuadVertexPtr->Color = rColor; 
 			m_pQuadVertexPtr->TexCoord = { 0,1 }; 
 			m_pQuadVertexPtr->TextureIndex = 0.0f; 

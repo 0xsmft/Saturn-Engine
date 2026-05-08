@@ -173,7 +173,7 @@ namespace Saturn {
 		void Bind( VkCommandBuffer CommandBuffer, uint32_t binding = 0 );
 		void Bind( VkCommandBuffer CommandBuffer, uint32_t binding, VkDeviceSize* Offsets );
 
-		void Reallocate( void* pData, uint32_t size, uint32_t offset = 0 );
+		void SetData( void* pData, uint32_t size, uint32_t offset = 0 );
 
 		void Draw( VkCommandBuffer CommandBuffer );
 		void BindAndDraw( VkCommandBuffer CommandBuffer );

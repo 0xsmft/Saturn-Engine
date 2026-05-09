@@ -31,6 +31,12 @@
 
 #include "SandboxNodeLibrary.h"
 
+#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
+
+#include "Saturn/NodeEditor/Maths/Maths2AllTasks.h"
+#include "Saturn/NodeEditor/Maths/Maths2AllNodes.h"
+#include "Saturn/NodeEditor/Maths/Maths2NodeLibrary.h"
+
 #include "Saturn/NodeEditor/Serialisation/NodeCache.h"
 
 namespace Saturn {
@@ -116,6 +122,16 @@ namespace Saturn {
 			if( ImGui::MenuItem( "Base class node" ) )
 			{
 				result = ( SharedPtr<NodeEditorNodeBase> )SandboxNodeLibrary::SpawnBaseClassNode( m_NodeEditor );
+			}
+
+			if( ImGui::BeginMenu( "Maths" ) )
+			{
+				SharedPtr<NodeEditorNodeBase> mathsResult = Maths2BoolNodeLibrary::DrawImGuiSelectionMenu( m_NodeEditor );
+				
+				if( mathsResult )
+					result = mathsResult;
+
+				ImGui::EndMenu();
 			}
 
 			return result;

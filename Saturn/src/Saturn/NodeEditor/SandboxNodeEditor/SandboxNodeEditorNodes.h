@@ -69,7 +69,7 @@ namespace Saturn {
 		virtual NodeEditorTaskBase* ConvertToTask();
 
 	protected:
-		uint64_t m_SpecialSandboxValue = 0xC0DEBABE;
+		uint64_t m_SpecialSandboxValue = 47;
 
 	private:
 		void CreateNode();
@@ -93,7 +93,7 @@ namespace Saturn {
 		virtual NodeEditorTaskBase* ConvertToTask();
 
 	protected:
-		uint64_t m_AnotherNumber = 0xDEADBEEF;
+		uint64_t m_AnotherNumber = 10;
 
 	private:
 		void CreateNode();

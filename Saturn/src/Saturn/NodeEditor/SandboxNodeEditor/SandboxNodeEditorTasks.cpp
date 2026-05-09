@@ -54,12 +54,12 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 	void SandboxNodeEditorNodeTask::PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
 	{
+		Super::PreInitialiseTask( pEditor, pNode );
+
 		SandboxNodeEditorNode* pSandboxNode = dynamic_cast< SandboxNodeEditorNode* >( pNode );
 		if( pSandboxNode )
 		{
 			m_Number = pSandboxNode->GetSpecialValue();
-			m_NodeFlags = ( NodeEditorNodeFlags ) pSandboxNode->Flags;
-			m_NodeID = pNode->ID;
 		}
 	}
 #endif
@@ -117,11 +117,10 @@ namespace Saturn {
 		if( !pNode || !pNode->Inputs.size() )
 			return;
 
-		m_NodeFlags = ( NodeEditorNodeFlags ) pNode->Flags;
-		m_NodeID = pNode->ID;
+		Super::PreInitialiseTask( pEditor, pNode );
 
 		// NB: FindLinkByPin is OK here, Pin does not have PinFlag_AcceptMultipleLinks flag.
-		auto link = pEditor->FindLinkByPin( pNode->Inputs[ 0 ]->ID );
+		const auto link = pEditor->FindLinkByPin( pNode->Inputs[ 0 ]->ID );
 		if( link && link->StartPinID )
 		{
 			auto otherPin = pEditor->FindPin( link->StartPinID );

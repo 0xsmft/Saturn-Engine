@@ -80,6 +80,38 @@ namespace Saturn {
 		}
 	}
 
+	void SandboxNodeEditor::OnNodeEditorEvent( NodeEditorAction action )
+	{
+		switch( action )
+		{
+			case NodeEditorAction::PreEvaluate:
+			{
+				// SHIT! Will be fixed sooner or later...
+				const auto itr = std::find_if( m_Nodes.begin(), m_Nodes.end(),
+					[]( const auto& rKV ) -> bool
+				{
+					return rKV.second->GetClass() == SandboxNodeEditorOutputNode::StaticClass();
+				} );
+
+				if( itr != m_Nodes.end() )
+				{
+					std::vector< SharedPtr<NodeEditorNodeBase> > ids;
+					TraverseFromStart( itr->second, NodeEditorFlowDirection::GoToRootNode, [ & ]( const auto id )
+					{
+						ids.push_back( FindNode( id ) );
+					} );
+
+					std::reverse( ids.begin(), ids.end() );
+
+					m_PreCompiler->Init( ids );
+				}
+			} break;
+
+			default:
+				break;
+		}
+	}
+
 	void SandboxNodeEditor::OnImGuiRender()
 	{
 		NodeEditor::OnImGuiRender();
@@ -139,7 +171,13 @@ namespace Saturn {
 			if( ImGui::Button( "Simulate Runtime" ) )
 			{
 				m_TaskHandler = Ref<SandboxNodeEditorTaskHandler>::Create();
-				m_TaskHandler->Init( SharedFromThis() );
+				
+				if( m_TaskCache.IsListEmpty() || m_TaskCache.IsDirty() )
+				{
+					BuildTaskCache();
+
+					m_TaskHandler->Init( m_TaskCache );
+				}
 
 				SetStateFlag( NodeEditorState_Simulating, true );
 			}

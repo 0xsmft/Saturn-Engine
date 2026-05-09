@@ -54,6 +54,8 @@ namespace Saturn {
 
 		virtual void OnUpdate( Timestep ts ) override;
 
+		virtual void OnNodeEditorEvent( NodeEditorAction action ) override;
+
 #if !defined(SAT_DIST)
 	public:
 		virtual void OnImGuiRender() override;

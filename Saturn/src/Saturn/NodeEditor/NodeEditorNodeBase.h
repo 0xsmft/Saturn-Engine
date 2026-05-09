@@ -103,7 +103,7 @@ namespace Saturn {
 	};
 
 	class NodeEditor;
-	class NodeEditorBase;
+	class NodeEditor;
 	class NodeEditorRuntime;
 
 	//
@@ -191,7 +191,7 @@ namespace Saturn {
 
 	public:
 		// Serialise/Deserialise NodeCache (NC)
-		virtual void Serialise( std::ofstream& rStream, bool isForDist ) const;
+		virtual void Serialise( std::ofstream& rStream ) const;
 		virtual void Deserialise( FDependentIStream& rStream );
 	};
 

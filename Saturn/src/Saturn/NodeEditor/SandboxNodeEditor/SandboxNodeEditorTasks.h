@@ -40,7 +40,7 @@ namespace Saturn {
 		SandboxNodeEditorNodeTask();
 		virtual ~SandboxNodeEditorNodeTask();
 
-		virtual void PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+		virtual void PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode ) override;
 		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther ) override;
 
 		virtual NodeEditorTaskState Tick( Timestep ts ) override;
@@ -70,7 +70,7 @@ namespace Saturn {
 
 		virtual ~SandboxNodeEditorOutputTask();
 
-		virtual void PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+		virtual void PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode ) override;
 		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther ) override;
 
 		virtual NodeEditorTaskState Tick( Timestep ts ) override;

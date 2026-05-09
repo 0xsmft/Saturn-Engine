@@ -65,31 +65,31 @@ namespace Saturn {
 	class Maths2BoolNodeLibrary
 	{
 	public:
-		static SharedPtr<SMaths2LessThanFloatNode>      SpawnMathsLTFlts( SharedPtr<NodeEditorBase> nodeEditor );
-		static SharedPtr<SMaths2LessThanIntNode>        SpawnMathsLTInts( SharedPtr<NodeEditorBase> nodeEditor );
-		static SharedPtr<SMaths2LessThanUIntNode>       SpawnMathsLTUInts( SharedPtr<NodeEditorBase> nodeEditor );
-		static SharedPtr<SMaths2LessThanOrEquFloatNode> SpawnMathsLTOrEquFlts( SharedPtr<NodeEditorBase> nodeEditor );
-		static SharedPtr<SMaths2LessThanOrEquIntNode>   SpawnMathsLTOrEquInts( SharedPtr<NodeEditorBase> nodeEditor );
-		static SharedPtr<SMaths2LessThanOrEquUIntNode>  SpawnMathsLTOrEquUInts( SharedPtr<NodeEditorBase> nodeEditor );
-		static SharedPtr<SMaths2GreaterThanFloatNode>   SpawnMathsGTFlts( SharedPtr<NodeEditorBase> nodeEditor );
-		static SharedPtr<SMaths2GreaterThanIntNode>     SpawnMathsGTInts( SharedPtr<NodeEditorBase> nodeEditor );
-		static SharedPtr<SMaths2GreaterThanUIntNode>    SpawnMathsGTUInts( SharedPtr<NodeEditorBase> nodeEditor );
-		static SharedPtr<SMaths2GreaterThanOrEquFloatNode> SpawnMathsGTOrEquFlts( SharedPtr<NodeEditorBase> nodeEditor );
-		static SharedPtr<SMaths2GreaterThanOrEquIntNode>   SpawnMathsGTOrEquInts( SharedPtr<NodeEditorBase> nodeEditor );
-		static SharedPtr<SMaths2GreaterThanOrEquUIntNode>  SpawnMathsGTOrEquUInts( SharedPtr<NodeEditorBase> nodeEditor );
-		static SharedPtr<SMaths2EquToBoolNode>   SpawnMathsEquToBool( SharedPtr<NodeEditorBase> nodeEditor );
-		static SharedPtr<SMaths2EquToFloatNode>  SpawnMathsEquToFlt( SharedPtr<NodeEditorBase> nodeEditor );
-		static SharedPtr<SMaths2EquToIntNode>    SpawnMathsEquToInt( SharedPtr<NodeEditorBase> nodeEditor );
-		static SharedPtr<SMaths2EquToUIntNode>   SpawnMathsEquToUInts( SharedPtr<NodeEditorBase> nodeEditor );
-		static SharedPtr<SMaths2NotEqualToBoolNode>   SpawnMathsNotEquToBool( SharedPtr<NodeEditorBase> nodeEditor );
-		static SharedPtr<SMaths2NotEqualToFloatNode>  SpawnMathsNotEquToFlt( SharedPtr<NodeEditorBase> nodeEditor );
-		static SharedPtr<SMaths2NotEqualToIntNode>    SpawnMathsNotEquToInt( SharedPtr<NodeEditorBase> nodeEditor );
-		static SharedPtr<SMaths2NotEqualToUIntNode>   SpawnMathsNotEquToUInts( SharedPtr<NodeEditorBase> nodeEditor );
+		static SharedPtr<SMaths2LessThanFloatNode>      SpawnMathsLTFlts( SharedPtr<NodeEditor> nodeEditor );
+		static SharedPtr<SMaths2LessThanIntNode>        SpawnMathsLTInts( SharedPtr<NodeEditor> nodeEditor );
+		static SharedPtr<SMaths2LessThanUIntNode>       SpawnMathsLTUInts( SharedPtr<NodeEditor> nodeEditor );
+		static SharedPtr<SMaths2LessThanOrEquFloatNode> SpawnMathsLTOrEquFlts( SharedPtr<NodeEditor> nodeEditor );
+		static SharedPtr<SMaths2LessThanOrEquIntNode>   SpawnMathsLTOrEquInts( SharedPtr<NodeEditor> nodeEditor );
+		static SharedPtr<SMaths2LessThanOrEquUIntNode>  SpawnMathsLTOrEquUInts( SharedPtr<NodeEditor> nodeEditor );
+		static SharedPtr<SMaths2GreaterThanFloatNode>   SpawnMathsGTFlts( SharedPtr<NodeEditor> nodeEditor );
+		static SharedPtr<SMaths2GreaterThanIntNode>     SpawnMathsGTInts( SharedPtr<NodeEditor> nodeEditor );
+		static SharedPtr<SMaths2GreaterThanUIntNode>    SpawnMathsGTUInts( SharedPtr<NodeEditor> nodeEditor );
+		static SharedPtr<SMaths2GreaterThanOrEquFloatNode> SpawnMathsGTOrEquFlts( SharedPtr<NodeEditor> nodeEditor );
+		static SharedPtr<SMaths2GreaterThanOrEquIntNode>   SpawnMathsGTOrEquInts( SharedPtr<NodeEditor> nodeEditor );
+		static SharedPtr<SMaths2GreaterThanOrEquUIntNode>  SpawnMathsGTOrEquUInts( SharedPtr<NodeEditor> nodeEditor );
+		static SharedPtr<SMaths2EquToBoolNode>   SpawnMathsEquToBool( SharedPtr<NodeEditor> nodeEditor );
+		static SharedPtr<SMaths2EquToFloatNode>  SpawnMathsEquToFlt( SharedPtr<NodeEditor> nodeEditor );
+		static SharedPtr<SMaths2EquToIntNode>    SpawnMathsEquToInt( SharedPtr<NodeEditor> nodeEditor );
+		static SharedPtr<SMaths2EquToUIntNode>   SpawnMathsEquToUInts( SharedPtr<NodeEditor> nodeEditor );
+		static SharedPtr<SMaths2NotEqualToBoolNode>   SpawnMathsNotEquToBool( SharedPtr<NodeEditor> nodeEditor );
+		static SharedPtr<SMaths2NotEqualToFloatNode>  SpawnMathsNotEquToFlt( SharedPtr<NodeEditor> nodeEditor );
+		static SharedPtr<SMaths2NotEqualToIntNode>    SpawnMathsNotEquToInt( SharedPtr<NodeEditor> nodeEditor );
+		static SharedPtr<SMaths2NotEqualToUIntNode>   SpawnMathsNotEquToUInts( SharedPtr<NodeEditor> nodeEditor );
 
-		static SharedPtr<SMaths2AddFloatNode> SpawnMathsAddFlts( SharedPtr<NodeEditorBase> nodeEditor );
-		static SharedPtr<SMaths2AddIntNode>   SpawnMathsAddInts( SharedPtr<NodeEditorBase> nodeEditor );
-		static SharedPtr<SMaths2AddUIntNode>  SpawnMathsAddUInts( SharedPtr<NodeEditorBase> nodeEditor );
+		static SharedPtr<SMaths2AddFloatNode> SpawnMathsAddFlts( SharedPtr<NodeEditor> nodeEditor );
+		static SharedPtr<SMaths2AddIntNode>   SpawnMathsAddInts( SharedPtr<NodeEditor> nodeEditor );
+		static SharedPtr<SMaths2AddUIntNode>  SpawnMathsAddUInts( SharedPtr<NodeEditor> nodeEditor );
 
-		static SharedPtr<NodeEditorNodeBase> DrawImGuiSelectionMenu( SharedPtr<NodeEditorBase> nodeEditor );
+		static SharedPtr<NodeEditorNodeBase> DrawImGuiSelectionMenu( SharedPtr<NodeEditor> nodeEditor );
 	};
 }

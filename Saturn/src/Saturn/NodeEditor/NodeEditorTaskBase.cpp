@@ -36,7 +36,7 @@
 namespace Saturn {
 
 #if !defined(SAT_DIST)
-	void NodeEditorTaskBase::PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
+	void NodeEditorTaskBase::PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode )
 	{
 		if( pNode )
 		{

@@ -33,6 +33,10 @@
 
 #include "Saturn/Asset/AssetManager.h"
 
+#if !defined(IMGUI_DEFINE_MATH_OPERATORS)
+#define IMGUI_DEFINE_MATH_OPERATORS
+#endif
+
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
 #include "Saturn/ImGui/EditorIcons.h"
 
@@ -99,30 +103,26 @@ namespace Saturn {
 	// NODE EDITOR
 
 	NodeEditor::NodeEditor( AssetID ID )
-		: NodeEditorBase( ID ), m_OutputWindow( ID )
+		: m_AssetID( ID ), m_OutputWindow( ID )
 	{
-		m_AssetID = ID;
-
 		CreateEditor();
 	}
 
 	NodeEditor::NodeEditor()
-		: NodeEditorBase(), m_OutputWindow( 0llu )
+		: m_AssetID( 0 ), m_OutputWindow( 0llu )
 	{
-		m_Editor = nullptr;
-
 		SetUserAuthorityFlag( NodeEditorUserAuthority::Full, true );
 	}
 
 	NodeEditor::~NodeEditor()
 	{
+		Close();
+
 		//if( m_AssetID != 0 )
 			GlobalUndoRedoGroup::Get()->RemoveIfActionHasIdentifier( m_AssetID );
 
 		m_ZoomTexture = nullptr;
 		m_CompileTexture = nullptr;
-		
-		Close();
 	}
 
 	void NodeEditor::CreateEditor()
@@ -1055,9 +1055,6 @@ namespace Saturn {
 									if( IsStateFlagSet( NodeEditorState_Simulating ) )
 									{
 										ed::StopFlow();
-
-										// Terminate simulation
-										m_Runtime->TerminateEvaluation();
 									}
 
 									ed::BreakLinks( EndPinId );
@@ -1118,9 +1115,6 @@ namespace Saturn {
 						if( IsStateFlagSet( NodeEditorState_Simulating ) )
 						{
 							ed::StopFlow();
-
-							// Terminate simulation
-							m_Runtime->TerminateEvaluation();
 						}
 
 						DeleteLink( linkId.Get() );
@@ -1153,9 +1147,6 @@ namespace Saturn {
 								if( IsStateFlagSet( NodeEditorState_Simulating ) )
 								{
 									ed::StopFlow();
-
-									// Terminate simulation
-									m_Runtime->TerminateEvaluation();
 								}
 
 								// TODO: Not the best way, 
@@ -1198,27 +1189,22 @@ namespace Saturn {
 
 		m_OutputWindow.ClearOutput();
 
-		if( m_Runtime )
-		{
-			if( !m_PreCompiler )
-				m_PreCompiler = Ref<NodeEditorDefaultPreCompiler>::Create( SharedFromThis() );
+		if( !m_PreCompiler )
+			m_PreCompiler = Ref<NodeEditorDefaultPreCompiler>::Create( SharedFromThis() );
 
-			OnNodeEditorEvent( NodeEditorAction::PreEvaluate );
+		OnNodeEditorEvent( NodeEditorAction::PreEvaluate );
 			
-			const auto& result = m_PreCompiler->PreCompile();
-			m_HasPreCompileErrors = !result.Succeeded;
+		const auto& result = m_PreCompiler->PreCompile();
+		m_HasPreCompileErrors = !result.Succeeded;
 
-			OnNodeEditorEvent( m_HasPreCompileErrors ? NodeEditorAction::PostEvaluateFailed : NodeEditorAction::PostEvaluateSuccess );
+		OnNodeEditorEvent( m_HasPreCompileErrors ? NodeEditorAction::PostEvaluateFailed : NodeEditorAction::PostEvaluateSuccess );
 
-			for( const auto& rMessage : result.Messages )
-			{
-				const NodeEditorMessageSeverity severity = ( ( rMessage.Category & NodeEdPreCompCategory_Warning ) == 0 ) ? NodeEditorMessageSeverity::Error : NodeEditorMessageSeverity::Warning;
+		for( const auto& rMessage : result.Messages )
+		{
+			const NodeEditorMessageSeverity severity = ( ( rMessage.Category & NodeEdPreCompCategory_Warning ) == 0 ) ? NodeEditorMessageSeverity::Error : NodeEditorMessageSeverity::Warning;
 
-				m_OutputWindow.PushMessage( { .MessageText = Auxiliary::NodeEditorPreCompResultToString( rMessage ), .Type = severity } );
-			}
+			m_OutputWindow.PushMessage( { .MessageText = Auxiliary::NodeEditorPreCompResultToString( rMessage ), .Type = severity } );
 		}
-		else
-			m_OutputWindow.PushMessage( { .MessageText = "No active compiler was found!", .Type = NodeEditorMessageSeverity::Error } );
 	}
 
 	void NodeEditor::DrawDetailsWindow()
@@ -1469,8 +1455,6 @@ namespace Saturn {
 		ImGui::End();
 	}
 
-#if !defined(SAT_DIST)
-
 	void NodeEditor::OnChooseNewNode( SharedPtr<NodeEditorNodeBase> node )
 	{
 		BuildNode( node );
@@ -1529,9 +1513,272 @@ namespace Saturn {
 	}
 
 	//////////////////////////////////////////////////////////////////////////
+	// NODE EDITOR BASE
+
+	void NodeEditor::SaveSettings()
+	{
+		NodeCacheSettings::WriteEditorSettings( SharedFromThis() );
+	}
+
+	bool NodeEditor::IsLinked( UUID pinID )
+	{
+		if( !pinID )
+			return false;
+
+		const auto Itr = std::find_if( m_Links.begin(), m_Links.end(),
+			[ pinID ]( const auto& rLink )
+		{
+			return rLink->StartPinID == pinID || rLink->EndPinID == pinID;
+		} );
+
+		if( Itr != m_Links.end() )
+			return true;
+
+		return false;
+	}
+
+	Ref<Pin> NodeEditor::FindPin( UUID id )
+	{
+		if( !id )
+			return nullptr;
+
+		for( const auto& [nodeId, rNode] : m_Nodes )
+		{
+			for( const auto& pin : rNode->Inputs )
+			{
+				if( pin->ID == id )
+				{
+					return pin;
+				}
+			}
+
+			for( const auto& pin : rNode->Outputs )
+			{
+				if( pin->ID == id )
+				{
+					return pin;
+				}
+			}
+		}
+
+		return nullptr;
+	}
+
+	Ref<Link> NodeEditor::FindLink( UUID id )
+	{
+		const auto Itr = std::find_if( m_Links.begin(), m_Links.end(),
+			[ id ]( const auto& rLink )
+		{
+			return rLink->ID == id;
+		} );
+
+		if( Itr != m_Links.end() )
+			return *Itr;
+
+		return nullptr;
+	}
+
+	SharedPtr<NodeEditorNodeBase> NodeEditor::FindNode( UUID id )
+	{
+		const auto Itr = m_Nodes.find( id );
+
+		if( Itr != m_Nodes.end() )
+			return Itr->second;
+
+		return nullptr;
+	}
+
+	SharedPtr<NodeEditorNodeBase> NodeEditor::FindNode( const std::string& rName )
+	{
+		for( auto& [id, node] : m_Nodes )
+		{
+			if( node->Name == rName )
+				return node;
+		}
+
+		return nullptr;
+	}
+
+	Ref<Link> NodeEditor::FindLinkByPin( UUID id )
+	{
+		if( id == 0 )
+			return nullptr;
+
+		if( !IsLinked( id ) )
+			return nullptr;
+
+		const auto Itr = std::find_if( m_Links.begin(), m_Links.end(),
+			[ id ]( const auto& rLink )
+		{
+			return rLink->StartPinID == id || rLink->EndPinID == id;
+		} );
+
+		if( Itr != m_Links.end() )
+			return *Itr;
+
+		return nullptr;
+	}
+
+	SharedPtr<NodeEditorNodeBase> NodeEditor::FindNodeByPin( UUID id )
+	{
+		if( auto rPin = FindPin( id ) )
+			return rPin->Node;
+
+		return nullptr;
+	}
+
+	std::vector<Ref<Link>> NodeEditor::FindLinksByPin( UUID id )
+	{
+		std::vector<Ref<Link>> result;
+
+		if( id == 0 )
+			return result;
+
+		for( const auto& rLink : m_Links )
+		{
+			if( rLink->StartPinID == id || rLink->EndPinID == id )
+			{
+				result.push_back( rLink );
+			}
+		}
+
+		return result;
+	}
+
+	std::vector<UUID> NodeEditor::FindNeighborsRight( SharedPtr<NodeEditorNodeBase> node )
+	{
+		std::vector<UUID> ids;
+
+		for( const auto& rInput : node->Inputs )
+		{
+			if( !IsLinked( rInput->ID ) )
+				continue;
+
+			// If the pin is linked find the other end of it and add it to our list.
+			const auto links = FindLinksByPin( rInput->ID );
+			for( const auto& rLink : links )
+			{
+				const bool isStart = rLink->StartPinID == rInput->ID;
+				SharedPtr<NodeEditorNodeBase> otherNode = FindNodeByPin( isStart ? rLink->EndPinID : rLink->StartPinID );
+
+				ids.push_back( otherNode->ID );
+			}
+		}
+
+		return ids;
+	}
+
+	std::vector<UUID> NodeEditor::FindNeighborsLeft( SharedPtr<NodeEditorNodeBase> node )
+	{
+		std::vector<UUID> ids;
+
+		for( const auto& rOutput : node->Outputs )
+		{
+			if( !IsLinked( rOutput->ID ) )
+				continue;
+
+			// If the pin is linked find the other end of it and add it to our list.
+			const auto links = FindLinksByPin( rOutput->ID );
+
+			for( const auto& rLink : links )
+			{
+				const bool isStart = rLink->StartPinID == rOutput->ID;
+				SharedPtr<NodeEditorNodeBase> otherNode = FindNodeByPin( isStart ? rLink->EndPinID : rLink->StartPinID );
+
+				ids.push_back( otherNode->ID );
+			}
+		}
+
+		return ids;
+	}
+
+	void NodeEditor::CreateLink( const Ref<Pin>& rStart, const Ref<Pin>& rEnd, ImColor color )
+	{
+		m_Links.push_back( Ref<Link>::Create( UUID(), rStart->ID, rEnd->ID, color ) );
+	}
+
+	void NodeEditor::CreateLinkWithID( UUID linkID, const Ref<Pin>& rStart, const Ref<Pin>& rEnd, ImColor color )
+	{
+		m_Links.push_back( Ref<Link>::Create( linkID, rStart->ID, rEnd->ID, color ) );
+	}
+
+	void NodeEditor::ShowFlow()
+	{
+		for( const auto& rLink : m_Links )
+			ed::Flow( ed::LinkId( rLink->ID ) );
+	}
+
+	void NodeEditor::ShowFlow( const std::vector<Ref<Link>>& rLinks )
+	{
+		for( const auto& rLink : rLinks )
+			ed::Flow( ed::LinkId( rLink->ID ) );
+	}
+
+	void NodeEditor::ShowFlow( const Ref<Link>& rLink )
+	{
+		ed::Flow( ed::LinkId( rLink->ID ) );
+	}
+
+	void NodeEditor::ShowFlow( UUID linkID )
+	{
+		ed::Flow( ed::LinkId( linkID ) );
+	}
+
+	bool NodeEditor::HasUserAuthority( NodeEditorUserAuthority privilege ) const
+	{
+		return ( m_Privileges & privilege ) == privilege;
+	}
+
+	void NodeEditor::SetUserAuthorityFlag( NodeEditorUserAuthority privilege, bool value )
+	{
+		if( value )
+			m_Privileges = m_Privileges | privilege;
+		else
+			m_Privileges = m_Privileges & ~privilege;
+	}
+
+	Ref<NodeEditorVariable> NodeEditor::FindVariable( UUID id ) const
+	{
+		auto itr = m_EditorVariables.find( id );
+		return itr == m_EditorVariables.end() ? nullptr : itr->second;
+	}
+
+	Ref<NodeEditorVariable> NodeEditor::FindVariable( const std::string& rName ) const
+	{
+		for( const auto& [uuid, var] : m_EditorVariables )
+		{
+			if( var->GetName() == rName )
+				return var;
+		}
+
+		return nullptr;
+	}
+
+	void NodeEditor::AddNode( SharedPtr<NodeEditorNodeBase> node )
+	{
+		if( IsStateFlagSet( NodeEditorState_Loading ) )
+			return;
+
+		m_Nodes[ node->ID ] = node;
+
+		BuildNode( node );
+
+#if !defined(SAT_DIST)
+		VariableGuard<ed::EditorContext*, ed::EditorContext*> guard( m_Editor );
+		//		node->PositionBeforeMove = ed::GetNodePosition( ed::NodeId( node->ID ) );
+
+				// TODO: Currently no way for us to preemptively set a position of a node before the first frame is drawn.
+		//		if( node->Position.x != 0.0f && node->Position.y != 0.0f )
+		//			ed::SetNodePosition( ed::NodeId( node->ID ), node->Position );
+#endif
+
+//		node->pOuter = this;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
 	// SERIALISATION (DEBUG AND RELEASE)
 
-	void NodeEditor::SerialiseData( std::ofstream& rStream, bool isForDist )
+	void NodeEditor::SerialiseData( std::ofstream& rStream )
 	{
 		RawSerialisation::WriteString( m_Name, rStream );
 
@@ -1553,7 +1800,7 @@ namespace Saturn {
 
 			RawSerialisation::WriteObject( value->GetClass()->GetHash(), rStream );
 
-			value->Serialise( rStream, isForDist );
+			value->Serialise( rStream );
 
 			if( value->pParentObject )
 				RawSerialisation::WriteObjectChecked( value->pParentObject->ID, rStream );
@@ -1626,7 +1873,6 @@ namespace Saturn {
 
 //			AddNode( node );
 
-			// NOTE: Although AddNode sets the pOuter, we want to override it to point to us (a NodeEditor), instead of NodeEditorBase
 			node->Deserialise( rStream );
 			node->PositionBeforeMove = ed::GetNodePosition( ed::NodeId( node->ID ) );
 
@@ -1668,7 +1914,6 @@ namespace Saturn {
 
 		OnNodeEditorEvent( NodeEditorAction::PostLoad );
 	}
-#endif
 
 	//////////////////////////////////////////////////////////////////////////
 	// NodeEditorSearchCacher

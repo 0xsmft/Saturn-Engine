@@ -47,7 +47,7 @@ namespace Saturn {
 		virtual ~BehaviourTreeMoveToTask();
 
 #if !defined(SAT_DIST)
-		virtual void PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode );
+		virtual void PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode );
 #endif
 		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther );
 

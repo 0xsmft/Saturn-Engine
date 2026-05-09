@@ -31,6 +31,7 @@
 
 #include "SandboxNodeEditorNodes.h"
 
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui_internal.h>
 
 namespace Saturn {

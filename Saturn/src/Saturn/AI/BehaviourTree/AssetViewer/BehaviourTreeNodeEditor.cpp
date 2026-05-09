@@ -263,14 +263,6 @@ namespace Saturn {
 
 		switch( action )
 		{
-			case NodeEditorAction::CreateLink:
-			case NodeEditorAction::BreakLink:
-			case NodeEditorAction::CreateNode:
-			case NodeEditorAction::DestroyNode:
-			case NodeEditorAction::MoveNode:
-				Evaluate();
-				break;
-
 			case NodeEditorAction::PreEvaluate:
 			{
 				std::vector<SharedPtr<NodeEditorNodeBase>> order;
@@ -285,10 +277,6 @@ namespace Saturn {
 				SaveAndMarkClean();
 			} break;
 
-			case NodeEditorAction::SelectNode:
-			case NodeEditorAction::DeselectNode:
-			case NodeEditorAction::SelectLink:
-			case NodeEditorAction::DeselectLink:
 			default: break;
 		}
 	}
@@ -372,9 +360,9 @@ namespace Saturn {
 	}
 #endif
 
-	void BehaviourTreeNodeEditor::SerialiseData( std::ofstream& rStream, bool isForDist )
+	void BehaviourTreeNodeEditor::SerialiseData( std::ofstream& rStream )
 	{
-		FDependentNodeEditorSuper::SerialiseData( rStream, isForDist );
+		FDependentNodeEditorSuper::SerialiseData( rStream );
 		RawSerialisation::WriteVector( m_EvaluationOrder, rStream );
 
 		RawSerialisation::WriteObject( m_BehaviourTreeMemoryAssetID, rStream );

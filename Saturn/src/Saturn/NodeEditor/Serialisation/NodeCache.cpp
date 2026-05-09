@@ -76,7 +76,7 @@ namespace Saturn {
 		return true;
 	}
 
-	bool NodeCacheSettings::WriteEditorSettings( SharedPtr<NodeEditorBase> rNodeEditor )
+	bool NodeCacheSettings::WriteEditorSettings( SharedPtr<NodeEditor> rNodeEditor )
 	{
 		std::filesystem::path filepath = Project::GetActiveProject()->GetAppDataFolder();
 
@@ -94,7 +94,7 @@ namespace Saturn {
 		return true;
 	}
 
-	void NodeCacheSettings::ReadEditorSettings( NodeEditorBase* pNodeEditor )
+	void NodeCacheSettings::ReadEditorSettings( NodeEditor* pNodeEditor )
 	{
 		std::filesystem::path filepath = Project::GetActiveProject()->GetAppDataFolder();
 
@@ -140,7 +140,7 @@ namespace Saturn {
 		return size != 0;
 	}
 
-	void NodeCacheSettings::OverrideFile( const std::filesystem::path& rFilepath, SharedPtr<NodeEditorBase> rNodeEditor )
+	void NodeCacheSettings::OverrideFile( const std::filesystem::path& rFilepath, SharedPtr<NodeEditor> rNodeEditor )
 	{
 		SettingsFileHeader fileHeader;
 		++fileHeader.SettingsCount;
@@ -156,7 +156,7 @@ namespace Saturn {
 		fout.close();
 	}
 
-	void NodeCacheSettings::AppendFile( const std::filesystem::path& rFilepath, SharedPtr<NodeEditorBase> rNodeEditor )
+	void NodeCacheSettings::AppendFile( const std::filesystem::path& rFilepath, SharedPtr<NodeEditor> rNodeEditor )
 	{
 		std::ifstream stream( rFilepath, std::ios::binary | std::ios::in );
 
@@ -266,7 +266,7 @@ namespace Saturn {
 		return dir;
 	}
 
-	void NodeCacheEditor::WriteNodeEditorCache( SharedPtr<NodeEditorBase> nodeEditor, const std::string& rCustomName )
+	void NodeCacheEditor::WriteNodeEditorCache( SharedPtr<NodeEditor> nodeEditor, const std::string& rCustomName )
 	{
 		Ref<Asset> asset = AssetManager::Get()->FindAsset( nodeEditor->GetAssetID() );
 		std::string filename;
@@ -304,13 +304,7 @@ namespace Saturn {
 
 //		WriteNodeCacheEdHeader( header, fout );
 
-#if !defined(SAT_DIST)
-		constexpr bool DISTRIBUTION_SERIALSATION = false;
-#else
-		constexpr bool DISTRIBUTION_SERIALSATION = true;
-#endif
-
-		nodeEditor->SerialiseData( fout, DISTRIBUTION_SERIALSATION );
+		nodeEditor->SerialiseData( fout );
 
 		header.PositionOfTaskCache = ( uint32_t ) fout.tellp();
 
@@ -416,7 +410,7 @@ namespace Saturn {
 		return true;
 	}
 
-	bool NodeCacheEditor::ReadNodeEditorCache( SharedPtr<NodeEditorBase> nodeEditor, AssetID id, const std::string& rCustomName )
+	bool NodeCacheEditor::ReadNodeEditorCache( SharedPtr<NodeEditor> nodeEditor, AssetID id, const std::string& rCustomName )
 	{
 		std::string filename;
 		

@@ -45,7 +45,7 @@ namespace Saturn {
 	}
 
 #if !defined(SAT_DIST)
-	void SMaterialGraphColorPickerTask::PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
+	void SMaterialGraphColorPickerTask::PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode )
 	{
 		Super::PreInitialiseTask( pEditor, pNode );
 
@@ -105,7 +105,7 @@ namespace Saturn {
 	}
 
 #if !defined(SAT_DIST)
-	void SMaterialGraphOutputNodeTask::PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
+	void SMaterialGraphOutputNodeTask::PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode )
 	{
 		Super::PreInitialiseTask( pEditor, pNode );
 

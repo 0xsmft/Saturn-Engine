@@ -27,56 +27,18 @@
 */
 
 #include "sppch.h"
-#include "Saturn/NodeEditor/NodeEditorBase.h"
-#include "NodeEditorDefaultPreCompiler.h"
+#include "AnimGraphPreCompiler.h"
 
 namespace Saturn {
 
-	NodeEditorPreCompileResult NodeEditorDefaultPreCompiler::PreCompile()
+	void AnimGraphPreCompiler::InitForAnimGraph( const IndexedMap<UUID, SGraphTask*>& rOrder )
+	{
+
+	}
+
+	NodeEditorPreCompileResult AnimGraphPreCompiler::PreCompile()
 	{
 		NodeEditorPreCompileResult result;
-
-		if( !m_NodeEditor ) 
-		{
-			result.Messages.emplace_back( 0llu, 0llu, NodeEdPreCompCategory_Standard, NodeEdPreCompError_InternalError );
-			result.Succeeded = false;
-
-			return result;
-		}
-
-		// Walk through all the node and find any pins with the PinFlag_RequiredForEvaulation.
-		for( const auto& rNode : m_Order )
-		{
-			bool anyPinsLinked = false;
-			for( const auto& rInput : rNode->Inputs )
-			{
-				bool linked = m_NodeEditor->IsLinked( rInput->ID );
-				anyPinsLinked |= linked;
-
-				if( rInput->IsFlagSet( PinFlag_RequiredForEvaluation ) && !linked )
-				{
-					result.Messages.emplace_back( rNode->ID, rInput->ID, NodeEdPreCompCategory_Standard, NodeEdPreCompError_MissingRequiredLink );
-
-					result.Succeeded = false;
-				}
-			}
-
-			for( const auto& rOutput : rNode->Outputs )
-			{
-				bool linked = m_NodeEditor->IsLinked( rOutput->ID );
-				anyPinsLinked |= linked;
-
-				if( !linked )
-				{
-					result.Messages.emplace_back( rNode->ID, rOutput->ID, NodeEdPreCompCategory_Warning, NodeEdPreCompWarning_SkippingNodeWithNotConnectedViaOutput );
-				}
-			}
-
-			if( !anyPinsLinked )
-			{
-				result.Messages.emplace_back( 0llu, 0llu, NodeEdPreCompCategory_Warning, NodeEdPreCompWarning_SkippingUnlinkedNode );
-			}
-		}
 
 		return result;
 	}

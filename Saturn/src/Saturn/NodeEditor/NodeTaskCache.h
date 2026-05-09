@@ -68,7 +68,7 @@ namespace Saturn {
 		// 
 		// Builds the master list for an animation graph.
 		//
-		void BuildMasterListForAnimGraph( NodeEditorBase* pEditor, const IndexedMap<UUID, AnimGraphNodeAndTaskInfo>& rOrder, bool cacheVariables = true );
+		void BuildMasterListForAnimGraph( NodeEditor* pEditor, const IndexedMap<UUID, AnimGraphNodeAndTaskInfo>& rOrder, bool cacheVariables = true );
 
 		//
 		// Clear the list.
@@ -92,7 +92,7 @@ namespace Saturn {
 #endif
 
 	private:
-		void CacheVariables( NodeEditorBase* pEditor );
+		void CacheVariables( NodeEditor* pEditor );
 
 	private:
 		// Task map, global, any new TaskHandler will use the map and create their own global copy of it.

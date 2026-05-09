@@ -59,14 +59,14 @@ namespace Saturn {
 			auto* pTask = rNode->ConvertToTask();
 			SAT_CORE_ASSERT( pTask, "ConvertToTask returned null! If such node does not have a task it should not be included in the task cache order list!" );
 
-			pTask->PreInitialiseTask( ( NodeEditorBase* ) rNode->GetParentObject(), rNode.Get() );
+			pTask->PreInitialiseTask( ( NodeEditor* ) rNode->GetParentObject(), rNode.Get() );
 
 			// Converted to Ref<>!
 			m_Tasks.emplace_back( pTask );
 		}
 	}
 
-	void NodeTaskCache::BuildMasterListForAnimGraph( NodeEditorBase* pEditor, const IndexedMap<UUID, AnimGraphNodeAndTaskInfo>& rOrder, bool cacheVariables )
+	void NodeTaskCache::BuildMasterListForAnimGraph( NodeEditor* pEditor, const IndexedMap<UUID, AnimGraphNodeAndTaskInfo>& rOrder, bool cacheVariables )
 	{
 		Clear();
 
@@ -116,7 +116,7 @@ namespace Saturn {
 		return map;
 	}
 
-	void NodeTaskCache::CacheVariables( NodeEditorBase* pEditor )
+	void NodeTaskCache::CacheVariables( NodeEditor* pEditor )
 	{
 		const auto& rVariablesMap = pEditor->GetVariables();
 		m_EditorVariables.reserve( rVariablesMap.size() );

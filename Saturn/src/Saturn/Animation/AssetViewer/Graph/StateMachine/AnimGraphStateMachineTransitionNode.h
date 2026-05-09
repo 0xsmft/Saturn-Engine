@@ -48,7 +48,7 @@ namespace Saturn {
 	public:
 		// NodeEditorNodeBase
 		virtual void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder ) override;
-		virtual void Serialise( std::ofstream& rStream, bool isForDist ) const override;
+		virtual void Serialise( std::ofstream& rStream ) const override;
 		virtual void Deserialise( FDependentIStream& rStream ) override;
 		virtual NodeEditorTaskBase* ConvertToTask() override;
 

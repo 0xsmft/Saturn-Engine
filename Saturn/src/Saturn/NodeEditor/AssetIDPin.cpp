@@ -77,7 +77,7 @@ namespace Saturn {
 		{
 			m_AssetName = AssetManager::Get()->FindAsset( m_AssetID )->Name;
 
-			NodeEditorBase* pOuter = dynamic_cast< NodeEditorBase* >( Node->GetParentObject() );
+			NodeEditor* pOuter = dynamic_cast< NodeEditor* >( Node->GetParentObject() );
 
 			if( pOuter && pOuter->GetAssetID() != 0 )
 			{

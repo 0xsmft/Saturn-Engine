@@ -39,7 +39,7 @@ namespace Saturn {
 	{
 	}
 
-	void AnimGraphStateMachineStateTask::InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
+	void AnimGraphStateMachineStateTask::InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditor* pEditor, NodeEditorNodeBase* pNode )
 	{
 
 	}

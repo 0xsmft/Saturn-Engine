@@ -52,7 +52,7 @@ namespace Saturn {
 	}
 
 #if !defined(SAT_DIST)
-	void SandboxNodeEditorNodeTask::PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
+	void SandboxNodeEditorNodeTask::PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode )
 	{
 		Super::PreInitialiseTask( pEditor, pNode );
 
@@ -112,7 +112,7 @@ namespace Saturn {
 	}
 
 #if !defined(SAT_DIST)
-	void SandboxNodeEditorOutputTask::PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
+	void SandboxNodeEditorOutputTask::PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode )
 	{
 		if( !pNode || !pNode->Inputs.size() )
 			return;

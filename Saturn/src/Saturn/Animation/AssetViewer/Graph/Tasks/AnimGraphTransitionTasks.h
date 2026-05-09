@@ -40,7 +40,7 @@ namespace Saturn {
 		AnimGraphTransitionTask();
 		~AnimGraphTransitionTask();
 
-		virtual	void InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+		virtual	void InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditor* pEditor, NodeEditorNodeBase* pNode ) override;
 		virtual	NodeEditorTaskState Tick( Timestep ts ) override;
 		virtual	void Reset() override;
 
@@ -61,7 +61,7 @@ namespace Saturn {
 		~AnimGraphTransitionResultTask();
 
 #if !defined(SAT_DIST)
-		virtual	void PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+		virtual	void PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode ) override;
 #endif
 		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther ) override;
 

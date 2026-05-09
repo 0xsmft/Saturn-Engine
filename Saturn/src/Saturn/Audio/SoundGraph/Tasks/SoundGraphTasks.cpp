@@ -57,7 +57,7 @@ namespace Saturn {
 	}
 
 #if !defined(SAT_DIST)
-	void SGraphSoundOutputTask::PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
+	void SGraphSoundOutputTask::PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode )
 	{
 		Super::PreInitialiseTask( pEditor, pNode );
 	}
@@ -106,7 +106,7 @@ namespace Saturn {
 	}
 
 #if !defined(SAT_DIST)
-	void SGraphSoundPlayerTask::PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
+	void SGraphSoundPlayerTask::PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode )
 	{
 		Super::PreInitialiseTask( pEditor, pNode );
 
@@ -175,7 +175,7 @@ namespace Saturn {
 	}
 
 #if !defined(SAT_DIST)
-	void SGraphSoundPitchTask::PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
+	void SGraphSoundPitchTask::PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode )
 	{
 		Super::PreInitialiseTask( pEditor, pNode );
 
@@ -268,7 +268,7 @@ namespace Saturn {
 	}
 
 #if !defined(SAT_DIST)
-	void SGraphSoundRandomPitchTask::PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
+	void SGraphSoundRandomPitchTask::PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode )
 	{
 		Super::PreInitialiseTask( pEditor, pNode );
 
@@ -369,7 +369,7 @@ namespace Saturn {
 	}
 
 #if !defined(SAT_DIST)
-	void SGraphSoundRandomSoundTask::PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
+	void SGraphSoundRandomSoundTask::PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode )
 	{
 		Super::PreInitialiseTask( pEditor, pNode );
 

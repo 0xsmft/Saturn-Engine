@@ -79,9 +79,9 @@ namespace Saturn {
 	{
 	}
 
-	void AnimGraphStateMachineStateNode::Serialise( std::ofstream& rStream, bool isForDist ) const
+	void AnimGraphStateMachineStateNode::Serialise( std::ofstream& rStream ) const
 	{
-		Super::Serialise( rStream, isForDist );
+		Super::Serialise( rStream );
 		RawSerialisation::WriteObjectChecked( m_OutputNodeID, rStream );
 	}
 

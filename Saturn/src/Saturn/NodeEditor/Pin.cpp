@@ -284,7 +284,7 @@ namespace Saturn {
 
 		Name = RawSerialisation::ReadString( rStream );
 
-		auto* pEditor = dynamic_cast<NodeEditorBase*>( Node->GetParentObject() );
+		auto* pEditor = dynamic_cast<NodeEditor*>( Node->GetParentObject() );
 		if( pEditor->GetVersion() >= NodeEditorVersion::PinClassSizeChange )
 		{
 			RawSerialisation::ReadObject( Type, rStream );

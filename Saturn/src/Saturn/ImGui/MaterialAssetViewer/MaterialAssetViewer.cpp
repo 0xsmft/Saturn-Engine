@@ -107,10 +107,12 @@ namespace Saturn {
 			}
 		}
 
+		/*
 		if( m_NodeEditor->Evaluate() != NodeEditorCompilationStatus::Success ) 
 		{
 			Application::Get()->DispatchEvent<SendEditorNotificationEvent>( "The node editor failed to evaluate." );
 		}
+		*/
 
 		m_NodeEditor->SaveAndMarkClean();
 #endif
@@ -143,7 +145,6 @@ namespace Saturn {
 		auto rt = Ref<MaterialNodeEditorEvaluator>::Create( info );
 		rt->SetTargetNodeEditor( m_NodeEditor );
 
-		m_NodeEditor->SetRuntime( rt );
 		m_NodeEditor->SetWindowName( m_Name );
 		m_NodeEditor->SetHostMaterialAsset( m_HostMaterialAsset );
 

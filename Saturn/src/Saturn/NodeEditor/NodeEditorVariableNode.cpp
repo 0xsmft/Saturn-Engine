@@ -90,7 +90,7 @@ namespace Saturn {
 		}
 	}
 
-	void NodeEditorVariableNode::Serialise( std::ofstream& rStream, bool isForDist ) const
+	void NodeEditorVariableNode::Serialise( std::ofstream& rStream ) const
 	{
 		// We must write the ID first, so when we deserailise we know what pin type to load back from.
 		if( m_Variable )
@@ -100,7 +100,7 @@ namespace Saturn {
 		else
 			RawSerialisation::WriteObjectChecked( 0llu, rStream );
 
-		Super::Serialise( rStream, isForDist );
+		Super::Serialise( rStream );
 	}
 
 	void NodeEditorVariableNode::Deserialise( FDependentIStream& rStream )
@@ -110,7 +110,7 @@ namespace Saturn {
 
 		if( dataHandleID )
 		{
-			auto* pOuter = dynamic_cast< NodeEditorBase* >( GetParentObject() );
+			auto* pOuter = dynamic_cast< NodeEditor* >( GetParentObject() );
 			m_Variable = pOuter->FindVariable( dataHandleID );
 			InitPinsForVariable();
 		}
@@ -133,7 +133,7 @@ namespace Saturn {
 		ImGui::TextUnformatted( Name.c_str() );
 		ImGui::EndHorizontal();
 
-		auto* pOuter = dynamic_cast< NodeEditorBase* >( GetParentObject() );
+		auto* pOuter = dynamic_cast< NodeEditor* >( GetParentObject() );
 		for( auto& rOutput : Outputs )
 		{
 			rOutput->RenderOutput( rBuilder, pOuter->IsLinked( rOutput->ID ) );
@@ -150,7 +150,7 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// Spawners
 
-	SharedPtr<NodeEditorVariableNode> NodeEditorVariableNode::SpawnVariableNode( Ref<NodeEditorVariable> var, SharedPtr<NodeEditorBase> nodeEditor )
+	SharedPtr<NodeEditorVariableNode> NodeEditorVariableNode::SpawnVariableNode( Ref<NodeEditorVariable> var, SharedPtr<NodeEditor> nodeEditor )
 	{
 		NodeEditorVariableNode* pNode = NewObject<NodeEditorVariableNode>( nodeEditor.Get(), var->GetName(), var );
 		SharedPtr<NodeEditorVariableNode> sp = pNode;
@@ -224,7 +224,7 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// Spawners
 
-	SharedPtr<NodeEditorSetVariableNode> NodeEditorSetVariableNode::SpawnSetVariableNode( Ref<NodeEditorVariable> var, SharedPtr<NodeEditorBase> nodeEditor )
+	SharedPtr<NodeEditorSetVariableNode> NodeEditorSetVariableNode::SpawnSetVariableNode( Ref<NodeEditorVariable> var, SharedPtr<NodeEditor> nodeEditor )
 	{
 		NodeEditorSetVariableNode* pNode = NewObject<NodeEditorSetVariableNode>( nodeEditor.Get(), var->GetName(), var );
 

@@ -45,7 +45,7 @@ namespace Saturn {
 	{
 	}
 
-	void AnimGraphTransitionTask::InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
+	void AnimGraphTransitionTask::InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditor* pEditor, NodeEditorNodeBase* pNode )
 	{
 		AnimGraphStateMachineTransitionNode* pTransitionNode = dynamic_cast< AnimGraphStateMachineTransitionNode* >( pNode );
 		if( pTransitionNode )
@@ -75,7 +75,7 @@ namespace Saturn {
 	}
 
 #if !defined(SAT_DIST)
-	void AnimGraphTransitionResultTask::PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
+	void AnimGraphTransitionResultTask::PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode )
 	{
 		Super::PreInitialiseTask( pEditor, pNode );
 	

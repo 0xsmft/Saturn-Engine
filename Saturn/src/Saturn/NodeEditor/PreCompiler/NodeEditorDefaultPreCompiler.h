@@ -45,7 +45,7 @@ namespace Saturn {
 	{
 	public:
 		NodeEditorDefaultPreCompiler() = default;
-		NodeEditorDefaultPreCompiler( SharedPtr<NodeEditorBase> nodeEditor ) 
+		NodeEditorDefaultPreCompiler( SharedPtr<NodeEditor> nodeEditor ) 
 			: NodeEditorPreCompilerBase( nodeEditor )
 		{
 		}

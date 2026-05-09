@@ -53,7 +53,7 @@ namespace Saturn {
 	}
 
 #if !defined(SAT_DIST)
-	void BehaviourTreeWaitTask::PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
+	void BehaviourTreeWaitTask::PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode )
 	{
 		Super::PreInitialiseTask( pEditor, pNode );
 	}

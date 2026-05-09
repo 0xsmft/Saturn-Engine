@@ -64,7 +64,7 @@ namespace Saturn {
 		Outputs.clear();
 	}
 
-	void NodeEditorNodeBase::Serialise( std::ofstream& rStream, bool isForDist ) const
+	void NodeEditorNodeBase::Serialise( std::ofstream& rStream ) const
 	{
 		RawSerialisation::WriteUUID( ID, rStream );
 		RawSerialisation::WriteString( Name, rStream );
@@ -78,7 +78,7 @@ namespace Saturn {
 		RawSerialisation::WriteString( ActiveState, rStream );
 		RawSerialisation::WriteString( SavedState, rStream );
 
-		auto* pNodeEditorBase = dynamic_cast< NodeEditorBase* >( GetParentObject() );
+		auto* pNodeEditorBase = dynamic_cast< NodeEditor* >( GetParentObject() );
 		if( pNodeEditorBase && pNodeEditorBase->GetVersion() >= NodeEditorVersion::Breakpoints )
 		{
 			bool hasBreakpoint = NodeBreakPointManager::Get().HasBreakPoint( ID );
@@ -129,7 +129,7 @@ namespace Saturn {
 		RawSerialisation::ReadString( rStream );
 		RawSerialisation::ReadString( rStream );
 
-		auto* pNodeEditorBase = dynamic_cast< NodeEditorBase* >( GetParentObject() );
+		auto* pNodeEditorBase = dynamic_cast< NodeEditor* >( GetParentObject() );
 		if( pNodeEditorBase && pNodeEditorBase->GetVersion() >= NodeEditorVersion::Breakpoints )
 		{
 			bool hasBreakpoint = false;

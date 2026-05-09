@@ -70,7 +70,7 @@ namespace Saturn {
 		Ref<BehaviourTreeMemorySpecification> GetBlackboardSpec() const { return m_BlackboardSpec; }
 
 	protected:
-		virtual void SerialiseData( std::ofstream& rStream, bool isForDist ) override;
+		virtual void SerialiseData( std::ofstream& rStream ) override;
 		virtual void DeserialiseData( FDependentIStream& rStream ) override;
 
 #if !defined(SAT_DIST)

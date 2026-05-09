@@ -53,14 +53,14 @@ namespace Saturn {
 		//////////////////////////////////////////////////////////////////////////
 		// NodeEditorNodeBase
 
-		virtual void Serialise( std::ofstream& rStream, bool isForDist ) const override;
+		virtual void Serialise( std::ofstream& rStream ) const override;
 		virtual void Deserialise( FDependentIStream& rStream ) override;
 
 		virtual void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder ) override;
 		virtual NodeEditorTaskBase* ConvertToTask() override;
 
 	public:
-		static SharedPtr<NodeEditorVariableNode> SpawnVariableNode( Ref<NodeEditorVariable> var, SharedPtr<NodeEditorBase> nodeEditor );
+		static SharedPtr<NodeEditorVariableNode> SpawnVariableNode( Ref<NodeEditorVariable> var, SharedPtr<NodeEditor> nodeEditor );
 
 	private:
 		void CreateNode();
@@ -81,7 +81,7 @@ namespace Saturn {
 		~NodeEditorSetVariableNode();
 
 	public:
-		static SharedPtr<NodeEditorSetVariableNode> SpawnSetVariableNode( Ref<NodeEditorVariable> var, SharedPtr<NodeEditorBase> nodeEditor );
+		static SharedPtr<NodeEditorSetVariableNode> SpawnSetVariableNode( Ref<NodeEditorVariable> var, SharedPtr<NodeEditor> nodeEditor );
 
 	private:
 		void CreateNode();

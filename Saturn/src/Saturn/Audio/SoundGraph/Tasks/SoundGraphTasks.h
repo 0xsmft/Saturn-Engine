@@ -41,7 +41,7 @@ namespace Saturn {
 		virtual ~SGraphSoundOutputTask();
 
 #if !defined(SAT_DIST)
-		virtual void PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+		virtual void PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode ) override;
 #endif
 
 		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther ) override;
@@ -62,7 +62,7 @@ namespace Saturn {
 		virtual ~SGraphSoundPlayerTask();
 
 #if !defined(SAT_DIST)
-		virtual void PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+		virtual void PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode ) override;
 #endif
 
 		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther ) override;
@@ -88,7 +88,7 @@ namespace Saturn {
 		virtual ~SGraphSoundPitchTask();
 
 #if !defined(SAT_DIST)
-		virtual void PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+		virtual void PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode ) override;
 #endif
 
 		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther ) override;
@@ -114,7 +114,7 @@ namespace Saturn {
 		virtual ~SGraphSoundRandomPitchTask();
 
 #if !defined(SAT_DIST)
-		virtual void PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+		virtual void PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode ) override;
 #endif
 
 		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther ) override;
@@ -142,7 +142,7 @@ namespace Saturn {
 		virtual ~SGraphSoundRandomSoundTask();
 
 #if !defined(SAT_DIST)
-		virtual void PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+		virtual void PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode ) override;
 #endif
 
 		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther ) override;

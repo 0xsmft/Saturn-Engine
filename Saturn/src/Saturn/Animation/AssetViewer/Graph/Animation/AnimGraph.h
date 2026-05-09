@@ -64,7 +64,7 @@ namespace Saturn {
 
 	protected:
 		//////////////////////////////////////////////////////////////////////////
-		void SerialiseData( std::ofstream& rStream, bool isForDist ) override;
+		void SerialiseData( std::ofstream& rStream ) override;
 		void DeserialiseData( FDependentIStream& rStream ) override;
 	protected:
 		virtual void DrawGraph() override;

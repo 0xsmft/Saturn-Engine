@@ -50,7 +50,7 @@ namespace Saturn {
 	};
 
 	class NodeEditorNodeBase;
-	class NodeEditorBase;
+	class NodeEditor;
 	class NodeEditorTaskHandler;
 
 	//
@@ -68,11 +68,11 @@ namespace Saturn {
 
 	public:
 #if !defined(SAT_DIST)
-		virtual void PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode );
+		virtual void PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode );
 #endif
 		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther );
 
-		virtual void InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) {}
+		virtual void InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditor* pEditor, NodeEditorNodeBase* pNode ) {}
 		// Called every frame unless the node has the ConstantEvaluated flag.
 		virtual NodeEditorTaskState Tick( Timestep ts ) { return NodeEditorTaskState::Unknown; }
 		virtual void Reset() {}

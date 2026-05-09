@@ -56,7 +56,7 @@ namespace Saturn {
 	}
 
 #if !defined(SAT_DIST)
-	void BehaviourTreePlaySoundTask::PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
+	void BehaviourTreePlaySoundTask::PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode )
 	{
 		Super::PreInitialiseTask( pEditor, pNode );
 	}

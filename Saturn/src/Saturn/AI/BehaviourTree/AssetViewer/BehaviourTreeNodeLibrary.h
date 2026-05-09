@@ -44,10 +44,10 @@ namespace Saturn {
 	public:
 		static NodeEditorType GetStaticType() { return NodeEditorType::BehaviourTree; }
 
-		static SharedPtr<BehaviourTreeSelectorNode>  SpawnSelectorNode( SharedPtr<NodeEditorBase> nodeEditor );
-		static SharedPtr<BehaviourTreeSequenceNode>  SpawnSequenceNode( SharedPtr<NodeEditorBase> nodeEditor );
+		static SharedPtr<BehaviourTreeSelectorNode>  SpawnSelectorNode( SharedPtr<NodeEditor> nodeEditor );
+		static SharedPtr<BehaviourTreeSequenceNode>  SpawnSequenceNode( SharedPtr<NodeEditor> nodeEditor );
 
-		static SharedPtr<BehaviourTreeRootNode>     SpawnRootNode( SharedPtr<NodeEditorBase> nodeEditor );
+		static SharedPtr<BehaviourTreeRootNode>     SpawnRootNode( SharedPtr<NodeEditor> nodeEditor );
 	};
 	
 }

@@ -49,11 +49,11 @@ namespace Saturn {
 		NodeEditorMessageSeverity Type = NodeEditorMessageSeverity::Info;
 	};
 
-	class NodeEditorOutput
+	class NodeEditorOutputWindow
 	{
 	public:
-		NodeEditorOutput( UUID outputWindowID );
-		~NodeEditorOutput();
+		NodeEditorOutputWindow( UUID outputWindowID );
+		~NodeEditorOutputWindow();
 
 		void Draw();
 		void ClearOutput();

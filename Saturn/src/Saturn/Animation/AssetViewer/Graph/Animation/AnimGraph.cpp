@@ -57,6 +57,7 @@
 
 #include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
 
 namespace Saturn {
@@ -307,9 +308,9 @@ namespace Saturn {
 		}
 	}
 
-	void AnimGraph::SerialiseData( std::ofstream& rStream, bool isForDist )
+	void AnimGraph::SerialiseData( std::ofstream& rStream )
 	{
-		FDependentNodeEditorSuper::SerialiseData( rStream, isForDist );
+		FDependentNodeEditorSuper::SerialiseData( rStream );
 
 		// We may not actually have an entry node yet, this graph might not contain any state machines yet.
 		if( m_StateMachineEntryNode )

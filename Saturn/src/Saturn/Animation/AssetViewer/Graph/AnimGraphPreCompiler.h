@@ -26,59 +26,24 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "Saturn/NodeEditor/NodeEditorBase.h"
-#include "NodeEditorDefaultPreCompiler.h"
+#pragma once
+
+#include "Saturn/NodeEditor/PreCompiler/NodeEditorPreCompilerBase.h"
+#include "Saturn/Core/IndexedMap.h"
 
 namespace Saturn {
 
-	NodeEditorPreCompileResult NodeEditorDefaultPreCompiler::PreCompile()
+	class SGraphTask;
+
+	class AnimGraphPreCompiler : public NodeEditorPreCompilerBase
 	{
-		NodeEditorPreCompileResult result;
+	public:
+		AnimGraphPreCompiler() = default;
+		~AnimGraphPreCompiler() = default;
 
-		if( !m_NodeEditor ) 
-		{
-			result.Messages.emplace_back( 0llu, 0llu, NodeEdPreCompCategory_Standard, NodeEdPreCompError_InternalError );
-			result.Succeeded = false;
+		void InitForAnimGraph( const IndexedMap<UUID, SGraphTask*>& rOrder );
 
-			return result;
-		}
-
-		// Walk through all the node and find any pins with the PinFlag_RequiredForEvaulation.
-		for( const auto& rNode : m_Order )
-		{
-			bool anyPinsLinked = false;
-			for( const auto& rInput : rNode->Inputs )
-			{
-				bool linked = m_NodeEditor->IsLinked( rInput->ID );
-				anyPinsLinked |= linked;
-
-				if( rInput->IsFlagSet( PinFlag_RequiredForEvaluation ) && !linked )
-				{
-					result.Messages.emplace_back( rNode->ID, rInput->ID, NodeEdPreCompCategory_Standard, NodeEdPreCompError_MissingRequiredLink );
-
-					result.Succeeded = false;
-				}
-			}
-
-			for( const auto& rOutput : rNode->Outputs )
-			{
-				bool linked = m_NodeEditor->IsLinked( rOutput->ID );
-				anyPinsLinked |= linked;
-
-				if( !linked )
-				{
-					result.Messages.emplace_back( rNode->ID, rOutput->ID, NodeEdPreCompCategory_Warning, NodeEdPreCompWarning_SkippingNodeWithNotConnectedViaOutput );
-				}
-			}
-
-			if( !anyPinsLinked )
-			{
-				result.Messages.emplace_back( 0llu, 0llu, NodeEdPreCompCategory_Warning, NodeEdPreCompWarning_SkippingUnlinkedNode );
-			}
-		}
-
-		return result;
-	}
+		virtual NodeEditorPreCompileResult PreCompile() override;
+	};
 
 }

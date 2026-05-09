@@ -41,7 +41,7 @@ namespace Saturn {
 
 		virtual NodeEditorTaskBase* ConvertToTask();
 
-		virtual void Serialise( std::ofstream& rStream, bool isForDist ) const;
+		virtual void Serialise( std::ofstream& rStream ) const;
 		virtual void Deserialise( FDependentIStream& rStream );
 
 	public:

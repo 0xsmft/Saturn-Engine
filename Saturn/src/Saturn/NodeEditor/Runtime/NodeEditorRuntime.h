@@ -32,7 +32,7 @@
 
 namespace Saturn {
 
-	class NodeEditorBase;
+	class NodeEditor;
 
 	class NodeEditorRuntime : public RefTarget
 	{
@@ -40,8 +40,8 @@ namespace Saturn {
 		NodeEditorRuntime() = default;
 		virtual ~NodeEditorRuntime() = default;
 
-		void SetTargetNodeEditor( SharedPtr<NodeEditorBase> nodeEditor ) { m_NodeEditor = nodeEditor; }
-		SharedPtr<NodeEditorBase> GetTargetEditor() const { return m_NodeEditor; }
+		void SetTargetNodeEditor( SharedPtr<NodeEditor> nodeEditor ) { m_NodeEditor = nodeEditor; }
+		SharedPtr<NodeEditor> GetTargetEditor() const { return m_NodeEditor; }
 
 		[[nodiscard]] virtual NodeEditorCompilationStatus EvaluateEditor() { return NodeEditorCompilationStatus::Failed; }
 
@@ -49,10 +49,10 @@ namespace Saturn {
 		virtual void TerminateEvaluation() {}
 
 	protected:
-		SharedPtr<NodeEditorBase> m_NodeEditor;
+		SharedPtr<NodeEditor> m_NodeEditor;
 
 	private:
-		friend class NodeEditorBase;
+		friend class NodeEditor;
 		friend class NodeCacheEditor;
 	};
 }

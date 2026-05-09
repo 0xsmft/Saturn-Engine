@@ -84,9 +84,9 @@ namespace Saturn {
 	{
 	}
 
-	void BehaviourTreeTaskNode::Serialise( std::ofstream& rStream, bool isForDist ) const
+	void BehaviourTreeTaskNode::Serialise( std::ofstream& rStream ) const
 	{
-		BehaviourTreeNodeBase::Serialise( rStream, isForDist );
+		BehaviourTreeNodeBase::Serialise( rStream );
 
 		RawSerialisation::WriteString( m_TaskInstance->GetClass()->GetName(), rStream );
 

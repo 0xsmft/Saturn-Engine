@@ -336,21 +336,17 @@ namespace Saturn {
 		std::string m_InternalEditorID{};
 
 		ed::EditorContext* m_Editor = nullptr;
-#if !defined( SAT_DIST )
 		// m_OldEditor is only valid if we switch editor during a debugging session (in the Editor).
 		ed::EditorContext* m_OldEditor = nullptr;
-#endif
 		std::string m_ActiveNodeEditorState;
 
 		std::unordered_map<UUID, Ref<NodeEditorVariable>> m_EditorVariables;
 		std::map<UUID, SharedPtr<NodeEditorNodeBase>> m_Nodes;
 		std::vector<Ref<Link>> m_Links;
 
-#if !defined( SAT_DIST )
 		// Temporary task cache, only exists for serialisation.
 		// or for editor simulation.
 		NodeTaskCache m_TaskCache;
-#endif
 
 		NodeEditorSearchCacher m_SearchCacher;
 
@@ -364,10 +360,8 @@ namespace Saturn {
 		bool m_CreateNewNode = false;
 		bool m_ShowUnsavedChanges = false;
 		bool m_Dirty = false;
-#if !defined(SAT_DIST)
 		bool m_ShowRightClickContextMenu = false;
 		bool m_PendingBreakHandle = false;
-#endif
 		bool m_ShowDebugInformation = false;
 		bool m_ShowDetailsInformation = false;
 		bool m_ShowDataWindow = false;

@@ -62,7 +62,7 @@ namespace Saturn {
 		virtual void SetSpatialisation( bool value ) = 0;
 
 	public:
-		ma_sound* GetRawSound() { return m_Sound; }
+		ma_sound* GetRawSound() { return m_pSound; }
 		const AssetID GetPlayerID() const { return m_PlayerID; }
 		inline void SetID( UUID id ) { m_PlayerID = id; }
 		inline void MarkSet( uint8_t set ) { m_Set = set; }
@@ -73,7 +73,7 @@ namespace Saturn {
 		uint8_t GetSet() const { return m_Set; }
 
 	protected:
-		ma_sound* m_Sound = nullptr;
+		ma_sound* m_pSound = nullptr;
 		// Actual SoundSpecification asset
 		Ref<SoundSpecification> m_Specification;
 

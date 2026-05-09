@@ -65,7 +65,9 @@ namespace Saturn {
 		MaterialAsset( Ref<Material> material );
 		virtual ~MaterialAsset();
 
+#if !defined(SAT_DIST)
 		virtual void OnAssetDependencyReplace( AssetID oldID, AssetID newID ) override;
+#endif
 
 	public:
 		// Texture

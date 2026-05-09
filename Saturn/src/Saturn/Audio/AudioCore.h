@@ -124,7 +124,7 @@ inline void _maCheckResult( ma_result Result )
 		SAT_CORE_INFO( "[MiniAudio Error] {0}", ErrorStr );
 
 #if defined(SAT_DIST)
-		SAT_CORE_VERIFY( false, ErrorStr );
+		SAT_CORE_VERIFY( false, std::string( ErrorStr ) );
 #else
 		Saturn::Core::BreakDebug();
 #endif

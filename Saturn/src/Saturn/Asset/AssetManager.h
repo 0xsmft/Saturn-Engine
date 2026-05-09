@@ -244,11 +244,11 @@ namespace Saturn {
 			return asset.As<Ty>();
 		}
 
+#if !defined(SAT_DIST)
 	private:
 		void CreateAssetTypeTraitsTable();
 
 	private:
-#if !defined(SAT_DIST)
 		// An Asset in our registry -> unordered_set of AssetDependency who depend on Asset
 		// Memory Dependency
 		//                 AssetID                     WhatDependsOnMe

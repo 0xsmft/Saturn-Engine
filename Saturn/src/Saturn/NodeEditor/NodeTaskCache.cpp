@@ -50,6 +50,7 @@ namespace Saturn {
 		m_Tasks.clear();
 	}
 
+#if !defined(SAT_DIST)
 	void NodeTaskCache::BuildMasterList( const std::vector<SharedPtr<NodeEditorNodeBase>>& rOrder, bool cacheVariables )
 	{
 		Clear();
@@ -85,6 +86,7 @@ namespace Saturn {
 	{
 		m_Tasks.clear();
 	}
+#endif
 
 	NodeTaskCache::NodeTaskCacheMap NodeTaskCache::InstantiateNewTaskList( NodeEditorTaskHandler* pHandler ) const
 	{

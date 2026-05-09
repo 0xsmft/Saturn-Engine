@@ -40,6 +40,7 @@
 #include "Saturn/AI/Navigation/NavigationSystem.h"
 
 #include "Saturn/GameFramework/Core/GameScript.h"
+#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 
 #include "Saturn/Core/Renderer/EditorCamera.h"
 
@@ -523,8 +524,6 @@ namespace Saturn {
 		entt::registry m_Registry;
 		entt::entity m_SceneEntity{ entt::null };
 		
-		RuntimeState m_RuntimeState = RuntimeState::NoState;
-
 		std::vector<Ref<PlayerInputController>> m_Controllers;
 
 		// For use by Runtime Scene only
@@ -551,6 +550,10 @@ namespace Saturn {
 		UUID m_InternalID;
 #if !defined(SAT_DIST)
 		bool m_Dirty = false;
+#endif
+		RuntimeState m_RuntimeState = RuntimeState::NoState;
+
+#if !defined(SAT_DIST)
 		SceneVisualisationOptions m_VisualisationOptions{};
 #endif
 

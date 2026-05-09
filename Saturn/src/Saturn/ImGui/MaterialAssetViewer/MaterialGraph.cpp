@@ -63,6 +63,7 @@ namespace Saturn {
 			m_TaskHandler = Ref<MaterialGraphTaskHandler>::Create( m_HostMaterialAsset->GetMaterial() );
 	}
 
+#if !defined(SAT_DIST)
 	void MaterialGraph::BuildTaskCache()
 	{
 		std::vector<SharedPtr<NodeEditorNodeBase>> order;
@@ -77,7 +78,9 @@ namespace Saturn {
 
 		m_TaskCache.BuildMasterList( order );
 	}
+#endif
 
+#if !defined(SAT_DIST)
 	void MaterialGraph::OnNodeEditorEvent( NodeEditorAction action )
 	{
 		switch( action )
@@ -109,6 +112,7 @@ namespace Saturn {
 				break;
 		}
 	}
+#endif
 
 	void MaterialGraph::SimulateChanges()
 	{

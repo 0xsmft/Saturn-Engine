@@ -93,9 +93,13 @@ namespace Saturn {
 		{
 			case AssetType::Texture:
 			{
+#if !defined(SAT_DIST)
 				Ref<TextureSourceAsset> textureAsset = AssetManager::Get()->GetAssetAs<TextureSourceAsset>( id );
 				
 				return std::make_shared<Saturn::TextureSourceAssetImportPopup>( textureAsset->GetTextureAbsolutePath(), rDestinationPath );
+#else
+				return nullptr;
+#endif
 			}
 
 			case AssetType::StaticMesh:
@@ -358,6 +362,7 @@ namespace Saturn {
 
 	void TextureSourceAssetImportPopup::Reimport()
 	{
+#if !defined(SAT_DIST)
 		auto asset = AssetManager::Get()->GetAssetAs<TextureSourceAsset>( m_ReimportID );
 
 		// Act as if we deleted the asset (so it can delete it's source file)
@@ -372,6 +377,7 @@ namespace Saturn {
 		// Save the asset
 		TextureSourceAssetSerialiser tsas;
 		tsas.Serialise( asset );
+#endif
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -861,9 +867,9 @@ namespace Saturn {
 			auto& meshPath = assetPath.replace_extension( m_AssetToImportPath.extension() );
 			staticMesh->SetFilepath( meshPath );
 			staticMesh->Import_InitMaterialRegistry();
+#if !defined(SAT_DIST)
 			staticMesh->Import_SetImportBehaviour( m_ImportBehaviour );
 
-#if !defined(SAT_DIST)
 			if( m_CurrentAssetIDForMaterial )
 			{
 				// NOTE: The size of MaterialAssets will be correct however there will be NO data in the array.
@@ -1127,11 +1133,13 @@ namespace Saturn {
 
 	void FontImportPopup::Reimport()
 	{
+#if !defined(SAT_DIST)
 		auto font = AssetManager::Get()->GetAssetAs<AluraFont>( m_ReimportID );
 		if( font )
 		{
 			font->OnReimport( m_AssetToImportPath );
 		}
+#endif
 	}
 
 }

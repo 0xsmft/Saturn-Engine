@@ -205,6 +205,7 @@ namespace Saturn {
 #endif
 	}
 
+#if !defined(SAT_DIST)
 	void TextureSourceAsset::OnDelete()
 	{
 		if( std::filesystem::exists( m_AbsolutePath ) )
@@ -216,5 +217,5 @@ namespace Saturn {
 		m_AbsolutePath = rPath;
 		LoadRawTexture();
 	}
-
+#endif
 }

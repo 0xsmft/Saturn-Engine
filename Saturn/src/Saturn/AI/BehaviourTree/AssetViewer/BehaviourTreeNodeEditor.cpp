@@ -290,10 +290,12 @@ namespace Saturn {
 
 	void BehaviourTreeNodeEditor::BuildTaskCache()
 	{
+#if !defined(SAT_DIST)
 		std::vector<SharedPtr<NodeEditorNodeBase>> order;
 		Sort( order );
 
 		m_TaskCache.BuildMasterList( order );
+#endif
 	}
 
 	void BehaviourTreeNodeEditor::Sort( std::vector<SharedPtr<NodeEditorNodeBase>>& rOrder )
@@ -368,7 +370,7 @@ namespace Saturn {
 		RawSerialisation::WriteObject( m_BehaviourTreeMemoryAssetID, rStream );
 	}
 
-	void BehaviourTreeNodeEditor::DeserialiseData( FDependentIStream& rStream )
+	void BehaviourTreeNodeEditor::DeserialiseData( std::ifstream& rStream )
 	{
 		FDependentNodeEditorSuper::DeserialiseData( rStream );
 		RawSerialisation::ReadVector( m_EvaluationOrder, rStream );

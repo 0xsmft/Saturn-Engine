@@ -112,7 +112,7 @@ namespace Saturn {
 		RawSerialisation::ReadUUID( ID, rStream );
 		Name = RawSerialisation::ReadString( rStream );
 
-//#if !defined(SAT_DIST)
+#if !defined(SAT_DIST)
 		ImColor col;
 		RawSerialisation::ReadObject( col, rStream );
 		RawSerialisation::ReadObject( RenderType, rStream );
@@ -149,7 +149,7 @@ namespace Saturn {
 				SAT_CORE_INFO( "[NodeEditorNodeBase] Added breakpoint for node {0} ({1})", Name, ID );
 			}
 		}
-//#endif
+#endif
 
 		// We make sure to read the last saved pin count and not the real pin size from the Node it self,
 		// This is to make sure that if a pin was added in a newer version but has not been serialised yet, 

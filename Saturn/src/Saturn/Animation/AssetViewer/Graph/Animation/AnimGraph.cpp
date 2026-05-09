@@ -294,16 +294,6 @@ namespace Saturn {
 				SaveAndMarkClean();
 			} break;
 
-			case NodeEditorAction::CreateLink:
-			case NodeEditorAction::BreakLink:
-			case NodeEditorAction::CreateNode:
-			case NodeEditorAction::MoveNode:
-			case NodeEditorAction::SelectNode:
-			case NodeEditorAction::DeselectNode:
-			case NodeEditorAction::SelectLink:
-			case NodeEditorAction::DeselectLink:
-				break;
-			
 			default: break;
 		}
 	}
@@ -319,7 +309,7 @@ namespace Saturn {
 			RawSerialisation::WriteObjectChecked( 0llu, rStream );
 	}
 
-	void AnimGraph::DeserialiseData( FDependentIStream& rStream )
+	void AnimGraph::DeserialiseData( std::ifstream& rStream )
 	{
 		FDependentNodeEditorSuper::DeserialiseData( rStream );
 

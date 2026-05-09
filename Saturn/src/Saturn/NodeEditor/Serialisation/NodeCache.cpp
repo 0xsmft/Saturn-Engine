@@ -412,6 +412,7 @@ namespace Saturn {
 
 	bool NodeCacheEditor::ReadNodeEditorCache( SharedPtr<NodeEditor> nodeEditor, AssetID id, const std::string& rCustomName )
 	{
+#if !defined(SAT_DIST)
 		std::string filename;
 		
 		Ref<Asset> asset = AssetManager::Get()->FindAsset( id );
@@ -478,6 +479,10 @@ namespace Saturn {
 #endif
 
 		return true;
+#else
+		SAT_CORE_VERIFY( false, "NodeCacheEditor::ReadNodeEditorCache should not be called on Dist! Please use NodeCacheEditor::ReadNodeTaskCacheOnly." );
+		return false;
+#endif
 	}
 
 	bool NodeCacheEditor::ReadNodeTaskCacheOnly( NodeTaskCache& rNodeTaskCache, AssetID id, const std::string& rCustomName /*= "" */ )

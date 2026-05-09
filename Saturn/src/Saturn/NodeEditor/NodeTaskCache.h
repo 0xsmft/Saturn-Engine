@@ -49,6 +49,7 @@ namespace Saturn {
 		NodeTaskCache();
 		~NodeTaskCache();
 
+#if !defined(SAT_DIST)
 		//
 		// Build the master task list for this cache.
 		// 
@@ -74,6 +75,7 @@ namespace Saturn {
 		// Clear the list.
 		//
 		void Clear();
+#endif
 
 	public:
 		[[nodiscard]] bool IsListEmpty() const { return m_Tasks.empty(); }

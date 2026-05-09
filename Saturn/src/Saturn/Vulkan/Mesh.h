@@ -299,8 +299,10 @@ namespace Saturn {
 		void SetPhysicsMaterial( AssetID id );
 		const AssetID GetPhysicsMaterial() const { return m_PhysicsMaterial; }
 
+#if !defined(SAT_DIST)
 		void Import_SetImportBehaviour( uint32_t importBehaviour ) { m_MeshImportFlags = importBehaviour; }
 		const uint32_t GetImportBehaviour() const { return m_MeshImportFlags; }
+#endif
 
 		Ref<MaterialRegistry>& GetMaterialRegistry() { return m_MaterialRegistry; }
 		const Ref<MaterialRegistry>& GetMaterialRegistry() const { return m_MaterialRegistry; }
@@ -368,10 +370,12 @@ namespace Saturn {
 		
 		virtual ~StaticMesh();
 		
+#if !defined(SAT_DIST)
 	public:
 		// Asset
 		virtual void OnDelete() override;
 		virtual void OnAssetDependencyReplace( AssetID oldID, AssetID newID ) override;
+#endif
 
 	public:
 		void SerialiseData( std::ofstream& rStream ) const;
@@ -411,9 +415,11 @@ namespace Saturn {
 #endif
 
 	public:
+#if !defined(SAT_DIST)
 		// Asset
 		virtual void OnDelete() override;
 		virtual void OnAssetDependencyReplace( AssetID oldID, AssetID newID ) override;
+#endif
 
 	public:
 		void SerialiseData( std::ofstream& rStream ) const;

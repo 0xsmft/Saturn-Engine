@@ -75,7 +75,7 @@ namespace Saturn {
 		virtual void Reset() override;
 
 		virtual void Serialise( std::ofstream& rStream ) const override;
-		virtual void Deserialise( std::ifstream& rStream ) override;
+		virtual void Deserialise( FDependentIStream& rStream ) override;
 
 	private:
 		void ResetTaskData();

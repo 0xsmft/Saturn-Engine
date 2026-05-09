@@ -62,6 +62,7 @@ namespace Saturn {
 #endif
 	}
 
+#if !defined(SAT_DIST)
 	void AssetManager::CreateAssetTypeTraitsTable()
 	{
 		m_AssetTypeTraits[ AssetType::Texture ]             = { .CanBeReimported = true, .HasLoadSettings = false };
@@ -84,6 +85,7 @@ namespace Saturn {
 		const size_t count = ( size_t ) AssetType::Unknown - 1;
 		SAT_CORE_ASSERT( count == m_AssetTypeTraits.size() );
 	}
+#endif
 
 	void AssetManager::Terminate()
 	{
@@ -108,6 +110,7 @@ namespace Saturn {
 
 	void AssetManager::RemoveAsset( AssetID id )
 	{
+#if !defined(SAT_DIST)
 		Project::GetActiveProject()->RemoveAssetFromDefaults( id );
 
 		{
@@ -136,10 +139,12 @@ namespace Saturn {
 
 		m_Assets->RemoveAsset( id );
 		Save();
+#endif
 	}
 
 	void AssetManager::UpdateAssetDependency( AssetID assetDeleted, AssetID depID, AssetID replacementID )
 	{
+#if !defined(SAT_DIST)
 		Ref<Asset> asset = m_Assets->FindAsset( depID );
 		bool assetWasLoadedBefore = IsAssetLoaded( depID );
 
@@ -161,15 +166,20 @@ namespace Saturn {
 		{
 			m_Assets->m_LoadedAssets.erase( depID );
 		}
+#endif
 	}
 
 	AssetID AssetManager::DuplicateAsset( Ref<Asset> asset )
 	{
+#if !defined(SAT_DIST)
 		Ref<Asset> dupedAsset = m_Assets->m_Assets[ m_Assets->CreateAsset( asset->Type ) ];
 		dupedAsset->Path = asset->Path;
 		dupedAsset->Name = asset->Name;
 
 		return dupedAsset->ID;
+#else
+		return 0llu;
+#endif
 	}
 
 	AssetID AssetManager::CreateAsset( AssetType type )

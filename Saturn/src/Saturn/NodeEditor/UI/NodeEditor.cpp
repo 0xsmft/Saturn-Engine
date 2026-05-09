@@ -573,6 +573,7 @@ namespace Saturn {
 	{
 	}
 
+#if !defined(SAT_DIST)
 	void NodeEditor::OnDebugBreak()
 	{
 		SetUserAuthorityFlag( NodeEditorUserAuthority::Editing, false );
@@ -582,6 +583,7 @@ namespace Saturn {
 
 		m_PendingBreakHandle = true;
 	}
+#endif
 
 	void NodeEditor::ThrowError( const std::string& rMessage )
 	{
@@ -1819,6 +1821,7 @@ namespace Saturn {
 
 	void NodeEditor::DeserialiseData( std::ifstream& rStream )
 	{
+#if !defined(SAT_DIST)
 		m_State = NodeEditorState_Loading;
 
 		// NOTE: using the "this" keyword is fine here, 
@@ -1913,6 +1916,7 @@ namespace Saturn {
 		m_State = NodeEditorState_Editing;
 
 		OnNodeEditorEvent( NodeEditorAction::PostLoad );
+#endif
 	}
 
 	//////////////////////////////////////////////////////////////////////////

@@ -48,6 +48,7 @@ namespace Saturn {
 		return SoundNodeLibrary::SpawnOutputNode( SharedFromThis() );
 	}
 
+#if !defined(SAT_DIST)
 	void SoundGraph::OnImGuiRender()
 	{
 		NodeEditor::OnImGuiRender();
@@ -93,9 +94,11 @@ namespace Saturn {
 				break;
 		}
 	}
+#endif
 
 	void SoundGraph::BuildTaskCache()
 	{
+#if !defined(SAT_DIST)
 		std::vector< SharedPtr<NodeEditorNodeBase> > ids;
 		TraverseFromStart( FindNode( m_OutputID ), NodeEditorFlowDirection::GoToRootNode, [ & ]( const auto id )
 		{
@@ -105,6 +108,7 @@ namespace Saturn {
 		std::reverse( ids.begin(), ids.end() );
 
 		m_TaskCache.BuildMasterList( ids );
+#endif
 	}
 
 }

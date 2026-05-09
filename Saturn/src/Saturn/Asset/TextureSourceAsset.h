@@ -58,9 +58,9 @@ namespace Saturn {
 		void WriteToVFS();
 		void ReadFromVFS();
 
+#if !defined(SAT_DIST)
 	public:
 		// Asset vvvv
-#if !defined(SAT_DIST)
 		virtual void OnDelete() override;
 		// Asset ^^^
 

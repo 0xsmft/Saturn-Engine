@@ -71,7 +71,7 @@ namespace Saturn {
 
 	protected:
 		virtual void SerialiseData( std::ofstream& rStream ) override;
-		virtual void DeserialiseData( FDependentIStream& rStream ) override;
+		virtual void DeserialiseData( std::ifstream& rStream ) override;
 
 #if !defined(SAT_DIST)
 	public:

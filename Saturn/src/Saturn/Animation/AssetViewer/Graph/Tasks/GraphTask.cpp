@@ -115,7 +115,7 @@ namespace Saturn {
 		}
 	}
 
-	void SGraphTask::Deserialise( std::ifstream& rStream )
+	void SGraphTask::Deserialise( FDependentIStream& rStream )
 	{
 		Super::Deserialise( rStream );
 

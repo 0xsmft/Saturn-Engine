@@ -48,6 +48,7 @@ namespace Saturn {
 
 	void SandboxNodeEditor::BuildTaskCache()
 	{
+#if !defined(SAT_DIST)
 		if( m_Dirty || m_TaskCache.IsListEmpty() )
 		{
 			// SHIT! Will be fixed sooner or later...
@@ -71,6 +72,7 @@ namespace Saturn {
 				SaveAndMarkClean();
 			}
 		}
+#endif
 	}
 
 	void SandboxNodeEditor::OnUpdate( Timestep ts )
@@ -113,6 +115,7 @@ namespace Saturn {
 		}
 	}
 
+#if !defined(SAT_DIST)
 	void SandboxNodeEditor::OnImGuiRender()
 	{
 		NodeEditor::OnImGuiRender();
@@ -120,7 +123,6 @@ namespace Saturn {
 		if( m_ShowRuntimeControl ) DrawRuntimeControl();
 	}
 
-#if !defined(SAT_DIST)
 	void SandboxNodeEditor::OnTopBarRender()
 	{
 		if( ImGui::Button( "Open Runtime control" ) ) 
@@ -156,6 +158,7 @@ namespace Saturn {
 
 	void SandboxNodeEditor::DrawRuntimeControl()
 	{
+#if !defined(SAT_DIST)
 		if( ImGui::Begin( "Runtime Control##sndbxne", &m_ShowRuntimeControl, ImGuiWindowFlags_NoSavedSettings ) )
 		{
 			if( ImGui::Button( "Build NodeTaskCache" ) )
@@ -172,7 +175,7 @@ namespace Saturn {
 			if( ImGui::Button( "Simulate Runtime" ) )
 			{
 				m_TaskHandler = Ref<SandboxNodeEditorTaskHandler>::Create();
-				
+
 				if( m_TaskCache.IsListEmpty() || m_TaskCache.IsDirty() )
 				{
 					BuildTaskCache();
@@ -191,6 +194,7 @@ namespace Saturn {
 		}
 
 		ImGui::End();
+#endif
 	}
 
 	void SandboxNodeEditor::ClearEditor()

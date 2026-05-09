@@ -29,6 +29,8 @@
 #include "sppch.h"
 #include "NodeEditor.h"
 
+#include "Saturn/Core/Input.h"
+
 #include "Saturn/Asset/AssetManager.h"
 
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
@@ -41,7 +43,7 @@
 #include "Saturn/NodeEditor/NodeEditorBlueprintNode.h"
 #include "Saturn/NodeEditor/UndoRedo/UndoRedoNodeEditorActions.h"
 #include "Saturn/NodeEditor/PreCompiler/NodeEditorDefaultPreCompiler.h"
-#include "Saturn/NodeEditor/PreCompiler/StandardErrorsToString.h"
+#include "Saturn/NodeEditor/PreCompiler/StandardErrorWarningToString.h"
 
 #include "Saturn/NodeEditor/Debugging/NodeBreakPointManager.h"
 
@@ -114,7 +116,8 @@ namespace Saturn {
 
 	NodeEditor::~NodeEditor()
 	{
-		GlobalUndoRedoGroup::Get()->RemoveIfActionHasIdentifier( m_AssetID );
+		//if( m_AssetID != 0 )
+			GlobalUndoRedoGroup::Get()->RemoveIfActionHasIdentifier( m_AssetID );
 
 		m_ZoomTexture = nullptr;
 		m_CompileTexture = nullptr;
@@ -201,7 +204,7 @@ namespace Saturn {
 		ed::SetCurrentEditor( m_Editor );
 
 		m_ZoomTexture = EditorIcons::GetIcon( "Inspect" );
-		m_CompileTexture = EditorIcons::GetIcon( "NoIcon" );
+		m_CompileTexture = EditorIcons::GetIcon( "Compile" );
 		
 		const auto texture = GetBlueprintBackground();
 		m_Builder = util::BlueprintNodeBuilder( ( ImTextureID ) texture->GetDescriptorSet(), texture->Width(), texture->Height() );
@@ -304,11 +307,8 @@ namespace Saturn {
 					ed::NavigateToContent( 0.25f );
 				}
 
-				ImGui::EndMenu();
-			}
+				ImGui::SeparatorText( "Windows" );
 
-			if( ImGui::BeginMenu( "Window" ) )
-			{
 				if( ImGui::MenuItem( "Show Output Windows" ) )
 				{
 					m_OutputWindow.ShowOrHide();
@@ -622,7 +622,7 @@ namespace Saturn {
 		{
 			// Find and bump asset version.
 			Ref<Asset> correspondingAsset = AssetManager::Get()->FindAsset( m_AssetID );
-			correspondingAsset->Version = SAT_CURRENT_VERSION;
+			correspondingAsset->Version = AssetVersion::Latest;
 
 			// NB: Already done by WriteNodeEditorCache!
 //			m_Version = NodeEditorVersion::Latest;
@@ -1017,7 +1017,7 @@ namespace Saturn {
 					if( StartPin && EndPin )
 					{
 						// Pin is the same, reject.
-						if( EndPin == StartPin )
+						if( EndPin == StartPin || EndPin->Node == StartPin->Node )
 						{
 							showLabel( "x Cannot link to self!", ImColor( 45, 32, 32, 180 ) );
 							ed::RejectNewItem( ImColor( 225, 0, 0 ), 2.0f );
@@ -1205,14 +1205,16 @@ namespace Saturn {
 
 			OnNodeEditorEvent( NodeEditorAction::PreEvaluate );
 			
-			const auto results = m_PreCompiler->PreCompile();
-			m_HasPreCompileErrors = !results.empty();
+			const auto& result = m_PreCompiler->PreCompile();
+			m_HasPreCompileErrors = !result.Succeeded;
 
-			OnNodeEditorEvent( NodeEditorAction::PostEvaluate );
+			OnNodeEditorEvent( m_HasPreCompileErrors ? NodeEditorAction::PostEvaluateFailed : NodeEditorAction::PostEvaluateSuccess );
 
-			for( const auto& rErrors : results )
+			for( const auto& rMessage : result.Messages )
 			{
-				m_OutputWindow.PushMessage( { .MessageText = Auxiliary::NodeEditorPreCompStdErrorToString( rErrors.ErrorCode ), .Type = NodeEditorMessageSeverity::Error } );
+				const NodeEditorMessageSeverity severity = ( ( rMessage.Category & NodeEdPreCompCategory_Warning ) == 0 ) ? NodeEditorMessageSeverity::Error : NodeEditorMessageSeverity::Warning;
+
+				m_OutputWindow.PushMessage( { .MessageText = Auxiliary::NodeEditorPreCompResultToString( rMessage ), .Type = severity } );
 			}
 		}
 		else
@@ -1240,7 +1242,7 @@ namespace Saturn {
 
 			if( Auxiliary::TreeNode( "Variables" ) )
 			{
-				for( auto& [id, rVariable] : m_DataHandles )
+				for( auto& [id, rVariable] : m_EditorVariables )
 				{
 					ImGui::BeginHorizontal( ( int ) id );
 					if( Auxiliary::InputText( "##editname", &rVariable->m_Name ) )
@@ -1274,7 +1276,7 @@ namespace Saturn {
 
 					if( ImGui::SmallButton( "-" ) )
 					{
-						m_DataHandles.erase( id );
+						m_EditorVariables.erase( id );
 						MarkDirty();
 
 						ImGui::EndHorizontal();
@@ -1286,18 +1288,18 @@ namespace Saturn {
 					// No new line!
 					if( rVariable->m_Name.empty() )
 					{
-						const std::string text = "The variable name cannot be empty!";
+						const char* pText = "The variable name cannot be empty!";
 
 						const ImVec2 padding = ImGui::GetStyle().FramePadding;
 						const ImVec2 textPosition = ImGui::GetCursorScreenPos();
-						const ImVec2 textSize = ImGui::CalcTextSize( text.c_str() );
+						const ImVec2 textSize = ImGui::CalcTextSize( pText );
 
 						const ImVec2 min = ImVec2( textPosition.x - padding.x, textPosition.y - padding.y );
 						const ImVec2 max = ImVec2( textPosition.x + padding.x + textSize.x, textPosition.y + padding.y + textSize.y );
 
 						ImGui::GetWindowDrawList()->AddRectFilled( min, max, IM_COL32( 200, 30, 60, 255 ), 2.0f, ImDrawFlags_RoundCornersAll );
 
-						ImGui::TextUnformatted( text.c_str() );
+						ImGui::TextUnformatted( pText );
 					}
 				}
 
@@ -1307,7 +1309,7 @@ namespace Saturn {
 
 					std::string name = "NewVariable";
 
-					const auto count = std::count_if( m_DataHandles.begin(), m_DataHandles.end(),
+					const auto count = std::count_if( m_EditorVariables.begin(), m_EditorVariables.end(),
 						[ name ]( const auto& rCandidate )
 					{
 						return rCandidate.second->m_Name.contains( name );
@@ -1317,7 +1319,7 @@ namespace Saturn {
 						name += std::to_string( count );
 
 					var->m_Name = name;
-					m_DataHandles[ var->GetUUID() ] = var;
+					m_EditorVariables[ var->GetUUID() ] = var;
 					MarkDirty();
 				}
 
@@ -1533,10 +1535,10 @@ namespace Saturn {
 	{
 		RawSerialisation::WriteString( m_Name, rStream );
 
-		size_t mapSize = m_DataHandles.size();
+		size_t mapSize = m_EditorVariables.size();
 		RawSerialisation::WriteObject( mapSize, rStream );
 
-		for( const auto& [id, rHandle] : m_DataHandles )
+		for( const auto& [id, rHandle] : m_EditorVariables )
 		{
 			RawSerialisation::WriteObjectChecked( id, rStream );
 			NodeEditorVariable::Serialise( rHandle, rStream );
@@ -1583,7 +1585,7 @@ namespace Saturn {
 		size_t mapSize = 0;
 		RawSerialisation::ReadObject( mapSize, rStream );
 
-		m_DataHandles.reserve( mapSize );
+		m_EditorVariables.reserve( mapSize );
 
 		for( size_t i = 0; i < mapSize; ++i )
 		{
@@ -1593,7 +1595,7 @@ namespace Saturn {
 			Ref<NodeEditorVariable> var = Ref<NodeEditorVariable>::Create();
 			NodeEditorVariable::Deserialise( var, rStream );
 
-			m_DataHandles[ id ] = var;
+			m_EditorVariables[ id ] = var;
 		}
 
 		mapSize = 0;
@@ -1663,6 +1665,8 @@ namespace Saturn {
 		}
 
 		m_State = NodeEditorState_Editing;
+
+		OnNodeEditorEvent( NodeEditorAction::PostLoad );
 	}
 #endif
 

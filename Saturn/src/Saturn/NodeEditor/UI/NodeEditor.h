@@ -38,15 +38,18 @@
 
 namespace Saturn {
 
-	enum class NodeEditorAction 
+	enum class NodeEditorAction : uint8_t
 	{
+		PostLoad,
 		CreateLink,
 		BreakLink,
 		CreateNode,
 		DestroyNode,
 		MoveNode,
 		PreEvaluate,
-		PostEvaluate,
+		OnEvaluate,
+		PostEvaluateSuccess,
+		PostEvaluateFailed,
 		SelectNode,
 		DeselectNode,
 		SelectLink,

@@ -166,6 +166,7 @@ namespace Saturn {
 			if( i >= Inputs.size() )
 				break;
 
+			Inputs[ i ]->Node = SharedFromThis();
 			Inputs[ i ]->Deserialise( rStream );
 		}
 
@@ -174,6 +175,7 @@ namespace Saturn {
 			if( i >= Outputs.size() )
 				break;
 
+			Outputs[ i ]->Node = SharedFromThis();
 			Outputs[ i ]->Deserialise( rStream );
 		}
 	}

@@ -337,10 +337,10 @@ namespace Saturn {
 		const std::map<UUID, SharedPtr<NodeEditorNodeBase>>& GetNodes() const { return m_Nodes; }
 		std::map<UUID, SharedPtr<NodeEditorNodeBase>>& GetNodes() { return m_Nodes; }
 
-		std::unordered_map<UUID, Ref<NodeEditorVariable>> GetDataHandles() const { return m_DataHandles; }
+		std::unordered_map<UUID, Ref<NodeEditorVariable>> GetVariables() const { return m_EditorVariables; }
 
-		[[nodiscard]] Ref<NodeEditorVariable> FindDataHandle( UUID id ) const;
-		[[nodiscard]] Ref<NodeEditorVariable> FindDataHandle( const std::string& rName ) const;
+		[[nodiscard]] Ref<NodeEditorVariable> FindVariable( UUID id ) const;
+		[[nodiscard]] Ref<NodeEditorVariable> FindVariable( const std::string& rName ) const;
 
 		const std::vector<Ref<Link>>& GetLinks() const { return m_Links; }
 		std::vector<Ref<Link>>& GetLinks() { return m_Links; }
@@ -372,12 +372,13 @@ namespace Saturn {
 #endif
 		std::string m_ActiveNodeEditorState;
 
-		std::unordered_map<UUID, Ref<NodeEditorVariable>> m_DataHandles;
+		std::unordered_map<UUID, Ref<NodeEditorVariable>> m_EditorVariables;
 		std::map<UUID, SharedPtr<NodeEditorNodeBase>> m_Nodes;
 		std::vector<Ref<Link>> m_Links;
 
 #if !defined( SAT_DIST )
 		// Temporary task cache, only exists for serialisation.
+		// or for editor simulation.
 		NodeTaskCache m_TaskCache;
 #endif
 

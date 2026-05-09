@@ -88,13 +88,12 @@ namespace Saturn {
 	void NodeEditorBase::SerialiseData( std::ofstream& rStream, bool isForDist )
 	{
 		RawSerialisation::WriteString( m_Name, rStream );
-		RawSerialisation::WriteObject( m_Version, rStream );
 
 		// Data handles
-		size_t mapSize = m_DataHandles.size();
+		size_t mapSize = m_EditorVariables.size();
 		RawSerialisation::WriteObject( mapSize, rStream );
 
-		for( const auto& [id, rHandle] : m_DataHandles )
+		for( const auto& [id, rHandle] : m_EditorVariables )
 		{
 			RawSerialisation::WriteObjectChecked( id, rStream );
 			NodeEditorVariable::Serialise( rHandle, rStream );
@@ -135,7 +134,7 @@ namespace Saturn {
 		size_t mapSize = 0;
 		RawSerialisation::ReadObject( mapSize, rStream );
 
-		m_DataHandles.reserve( mapSize );
+		m_EditorVariables.reserve( mapSize );
 
 		for( size_t i = 0; i < mapSize; ++i )
 		{
@@ -145,7 +144,7 @@ namespace Saturn {
 			Ref<NodeEditorVariable> var = Ref<NodeEditorVariable>::Create();
 			NodeEditorVariable::Deserialise( var, rStream );
 
-			m_DataHandles[ id ] = var;
+			m_EditorVariables[ id ] = var;
 		}
 
 		RawSerialisation::ReadObject( mapSize, rStream );
@@ -431,15 +430,15 @@ namespace Saturn {
 			m_Privileges = m_Privileges & ~privilege;
 	}
 
-	Ref<NodeEditorVariable> NodeEditorBase::FindDataHandle( UUID id ) const
+	Ref<NodeEditorVariable> NodeEditorBase::FindVariable( UUID id ) const
 	{
-		auto itr = m_DataHandles.find( id );
-		return itr == m_DataHandles.end() ? nullptr : itr->second;
+		auto itr = m_EditorVariables.find( id );
+		return itr == m_EditorVariables.end() ? nullptr : itr->second;
 	}
 
-	Ref<NodeEditorVariable> NodeEditorBase::FindDataHandle( const std::string& rName ) const
+	Ref<NodeEditorVariable> NodeEditorBase::FindVariable( const std::string& rName ) const
 	{
-		for( const auto& [uuid, var] : m_DataHandles )
+		for( const auto& [uuid, var] : m_EditorVariables )
 		{
 			if( var->GetName() == rName )
 				return var;

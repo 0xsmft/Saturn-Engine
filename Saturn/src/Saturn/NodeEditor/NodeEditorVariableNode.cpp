@@ -111,7 +111,7 @@ namespace Saturn {
 		if( dataHandleID )
 		{
 			auto* pOuter = dynamic_cast< NodeEditorBase* >( GetParentObject() );
-			m_Variable = pOuter->FindDataHandle( dataHandleID );
+			m_Variable = pOuter->FindVariable( dataHandleID );
 			InitPinsForVariable();
 		}
 
@@ -134,21 +134,12 @@ namespace Saturn {
 		ImGui::EndHorizontal();
 
 		auto* pOuter = dynamic_cast< NodeEditorBase* >( GetParentObject() );
-
 		for( auto& rOutput : Outputs )
 		{
-			if( rOutput->Type == PinType::Delegate )
-				continue;
-
 			rOutput->RenderOutput( rBuilder, pOuter->IsLinked( rOutput->ID ) );
 		}
 
 		rBuilder.End();
-	}
-
-	NodeEvaluationState NodeEditorVariableNode::EvaluateNode( NodeEditorRuntime* evaluator )
-	{
-		return NodeEvaluationState::NeverEvaluated;
 	}
 
 	NodeEditorTaskBase* NodeEditorVariableNode::ConvertToTask()
@@ -228,11 +219,6 @@ namespace Saturn {
 
 	NodeEditorSetVariableNode::~NodeEditorSetVariableNode()
 	{
-	}
-
-	NodeEvaluationState NodeEditorSetVariableNode::EvaluateNode( NodeEditorRuntime* evaluator )
-	{
-		return NodeEvaluationState::Evaluated;
 	}
 
 	//////////////////////////////////////////////////////////////////////////

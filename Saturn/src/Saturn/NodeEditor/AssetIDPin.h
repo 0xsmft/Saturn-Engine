@@ -41,8 +41,8 @@ namespace Saturn {
 	{
 	public:
 		AssetIDPin() = default;
-		AssetIDPin( const std::string& rName, PinKind kind, AssetType assetType );
-		AssetIDPin( UUID ID, const std::string& rName, PinType type, UUID nodeid );
+		AssetIDPin( const std::string& rName, PinKind kind, AssetType assetType, PinFlag flags = PinFlag_DefaultSet );
+		AssetIDPin( UUID ID, const std::string& rName, PinType type, UUID nodeid, PinFlag flags = PinFlag_DefaultSet );
 
 		~AssetIDPin();
 

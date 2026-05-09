@@ -36,10 +36,24 @@ namespace Saturn {
 	{
 	public:
 		NodeEditorVariableLocator() = default;
-		~NodeEditorVariableLocator() = default;
-
-		void Set( const void* pAddress )
+		NodeEditorVariableLocator( const void* pAddress ) 
+			: m_pVariable( pAddress )
 		{
+		}
+
+		~NodeEditorVariableLocator() 
+		{
+			if( m_Owned )
+			{
+				delete m_pVariable;
+			}
+
+			m_pVariable = nullptr;
+		}
+
+		void Set( const void* pAddress, bool owned = false )
+		{
+			m_Owned = owned ? 1 : 0;
 			m_pVariable = pAddress;
 		}
 
@@ -47,6 +61,7 @@ namespace Saturn {
 
 	private:
 		const void* m_pVariable = nullptr;
+		uint8_t m_Owned : 1 = false;
 	};
 	
 }

@@ -26,48 +26,9 @@
 *********************************************************************************************
 */
 
-#pragma once
-
-#include "NodeEditorVariable.h"
+#include "sppch.h"
+#include "NodeEditorVariableLocator.h"
 
 namespace Saturn {
 
-	class DataLine
-	{
-	public:
-		DataLine() = default;
-		~DataLine() = default;
-
-		template<typename TCppType>
-		typename const TCppType Get() const
-		{
-			if( !std::holds_alternative<std::monostate>( m_Value ) )
-			{
-				return std::get<TCppType>( m_Value );
-			}
-
-			return TCppType{};
-		}
-
-		template<typename TCppType>
-		typename TCppType* GetIf()
-		{
-			if( !std::holds_alternative<std::monostate>( m_Value ) )
-			{
-				return std::get_if<TCppType>( &m_Value );
-			}
-
-			return nullptr;
-		}
-
-		template<typename TCppType>
-		void WriteValue( TCppType value )
-		{
-			m_Value = value;
-		}
-
-	private:
-		NodeEditorVariableTypes m_Value;
-	};
-	
 }

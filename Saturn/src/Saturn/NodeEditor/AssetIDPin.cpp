@@ -36,13 +36,13 @@
 
 namespace Saturn {
 
-	AssetIDPin::AssetIDPin( const std::string& rName, PinKind kind, AssetType assetType )
-		: Pin( rName, PinType::AssetID, kind ), m_AssetType( assetType )
+	AssetIDPin::AssetIDPin( const std::string& rName, PinKind kind, AssetType assetType, PinFlag flags )
+		: Pin( rName, PinType::AssetID, kind, flags ), m_AssetType( assetType )
 	{
 	}
 
-	AssetIDPin::AssetIDPin( UUID ID, const std::string& rName, PinType type, UUID nodeid )
-		: Pin( ID, rName, PinType::AssetID, nodeid )
+	AssetIDPin::AssetIDPin( UUID ID, const std::string& rName, PinType type, UUID nodeid, PinFlag flags )
+		: Pin( ID, rName, PinType::AssetID, nodeid, flags )
 	{
 	}
 

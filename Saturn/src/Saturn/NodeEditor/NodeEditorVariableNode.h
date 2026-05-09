@@ -45,9 +45,7 @@ namespace Saturn {
 	public:
 		NodeEditorVariableNode();
 		NodeEditorVariableNode( const std::string& rName, Ref<NodeEditorVariable> var );
-		~NodeEditorVariableNode();
-
-		void InitPinsForVariable();
+		virtual ~NodeEditorVariableNode();
 
 		Ref<NodeEditorVariable> GetVariable() const { return m_Variable; }
 
@@ -59,7 +57,6 @@ namespace Saturn {
 		virtual void Deserialise( FDependentIStream& rStream ) override;
 
 		virtual void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder ) override;
-		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
 		virtual NodeEditorTaskBase* ConvertToTask() override;
 
 	public:
@@ -67,8 +64,10 @@ namespace Saturn {
 
 	private:
 		void CreateNode();
+		void InitPinsForVariable();
 
 	private:
+		// Non-owning, used so we can properly create this node with the correct PinType.
 		Ref<NodeEditorVariable> m_Variable;
 	};
 
@@ -83,9 +82,6 @@ namespace Saturn {
 
 	public:
 		static SharedPtr<NodeEditorSetVariableNode> SpawnSetVariableNode( Ref<NodeEditorVariable> var, SharedPtr<NodeEditorBase> nodeEditor );
-
-	public:
-		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
 
 	private:
 		void CreateNode();

@@ -52,7 +52,6 @@ namespace Saturn {
 		// NodeEditorNodeBase
 		
 		virtual void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder ) override;
-		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override { return NodeEvaluationState::Failed; }
 	};
 
 }

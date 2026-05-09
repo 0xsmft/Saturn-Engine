@@ -26,36 +26,96 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "MaterialGraphColorPin.h"
 
-#include "Saturn/NodeEditor/Pin.h"
+#include "Saturn/NodeEditor/NodeEditorNodeBase.h"
+
+#include "Saturn/ImGui/ImGuiAuxiliary.h"
+
+#include "imgui.h"
+#include "imgui_internal.h"
 
 namespace Saturn {
 
-	class MaterialViewerColorPin : public Pin
+	MaterialViewerColorPin::MaterialViewerColorPin( UUID id, const std::string& rName, PinType type, UUID nodeID )
+		: Pin( id, rName, type, nodeID )
 	{
-	public:
-		MaterialViewerColorPin() = default;
-		MaterialViewerColorPin( const std::string& rName, PinKind kind, bool readonly = false, bool accpetOnlyTextures = false );
-		MaterialViewerColorPin( UUID id, const std::string& rName, PinType type, UUID nodeID );
+	}
 
-		~MaterialViewerColorPin();
+	MaterialViewerColorPin::MaterialViewerColorPin( const std::string& rName, PinKind kind, bool readonly, bool accpetOnlyTextures )
+		: Pin( rName, accpetOnlyTextures ? PinType::Material_TextureColor : PinType::Material_Color, kind ), m_ReadOnly( readonly ), m_AccpetOnlyTextures( accpetOnlyTextures )
+	{
+		if( accpetOnlyTextures )
+			Type = PinType::Material_TextureColor;
+	}
 
-	public:
-		glm::vec3 Data{};
+	MaterialViewerColorPin::~MaterialViewerColorPin()
+	{
+	}
 
-		void SetReadOnly( bool value ) { m_ReadOnly = value; }
-		bool IsReadOnly() const { return m_ReadOnly; }
+	void MaterialViewerColorPin::OnRenderOutput()
+	{
+		if( m_ReadOnly ) return;
 
-	public:
-		void Serialise( std::ofstream& rStream ) const override;
-		void Deserialise( FDependentIStream& rStream ) override;
+		bool OpenAssetColorPicker = false;
 
-	protected:
-		void OnRenderOutput() override final;
+		ImGui::BeginHorizontal( "PickerH" );
 
-	private:
-		bool m_ReadOnly = false;
-		bool m_AccpetOnlyTextures = false;
-	};
+		ImVec2 buttonSize = { ImGui::GetFrameHeight(), ImGui::GetFrameHeight() };
+		ImRect boundingBox = { ImGui::GetCursorPos(), ImGui::GetCursorPos() + buttonSize };
+
+		bool hovered, held;
+
+		ImGui::ButtonBehavior( boundingBox, ImGui::GetID( &ID ), &hovered, &held );
+
+		// TODO: Ruby and ImGui do not match! so ImGuiButtonFlags_None = 0 and RubyMouseButton_Left = 0
+		if( hovered && ImGui::IsMouseClicked( ImGuiButtonFlags_None ) )
+		{
+			OpenAssetColorPicker = true;
+		}
+
+		Auxiliary::DrawColoredRect( buttonSize, ImVec4( Data.x, Data.y, Data.z, 255.0f ) );
+
+		ImGui::EndHorizontal();
+
+		ed::Suspend();
+
+		if( OpenAssetColorPicker )
+		{
+			ImGui::OpenPopup( "AssetColorPicker" );
+		}
+
+		ImGui::SetNextWindowSize( { 350.0f, 0.0f } );
+		if( ImGui::BeginPopup( "AssetColorPicker", ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize ) )
+		{
+			ImVec4 color = ImVec4( Data.x, Data.y, Data.z, 255.0f );
+
+			if( ImGui::ColorPicker3( "Color Picker", ( float* ) &color ) )
+			{
+				Data = glm::vec3( color.x, color.y, color.z );
+			}
+
+			ImGui::EndPopup();
+		}
+
+		ed::Resume();
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+
+	void MaterialViewerColorPin::Serialise( std::ofstream& rStream ) const
+	{
+		Pin::Serialise( rStream );
+
+		RawSerialisation::WriteVec3( Data, rStream );
+	}
+
+	void MaterialViewerColorPin::Deserialise( FDependentIStream& rStream )
+	{
+		Pin::Deserialise( rStream );
+
+		RawSerialisation::ReadVec3( Data, rStream );
+	}
+
 }

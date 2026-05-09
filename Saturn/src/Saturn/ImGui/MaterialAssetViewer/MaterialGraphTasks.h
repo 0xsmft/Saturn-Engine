@@ -28,41 +28,55 @@
 
 #pragma once
 
-#include "MaterialGraph.h"
-
-#include "Saturn/ImGui/AssetViewer.h"
-
-#include "Saturn/Asset/MaterialAsset.h"
+#include "Saturn/NodeEditor/NodeEditorTaskBase.h"
 
 namespace Saturn {
 
-	class MaterialAssetViewer : public AssetViewer
+	SCLASS();
+	class SMaterialGraphColorPickerTask : public NodeEditorTaskBase
 	{
+		SAT_DECLARE_CLASS( SMaterialGraphColorPickerTask, NodeEditorTaskBase );
 	public:
-		MaterialAssetViewer( AssetID id );
-		virtual ~MaterialAssetViewer();
-
-		virtual void OnImGuiRender() override;
-		virtual void OnUpdate( Timestep ts ) override {}
-		virtual void OnEvent( Event& rEvent ) override {}
+		SMaterialGraphColorPickerTask();
+		virtual ~SMaterialGraphColorPickerTask();
 
 	public:
-		void HandleAssetDependencyReplace( AssetID oldID, AssetID newID );
+#if !defined(SAT_DIST)
+		virtual void PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+#endif
+		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther ) override;
+
+		virtual NodeEditorTaskState Tick( Timestep ts ) override;
+		virtual void Reset() override;
+		virtual void Serialise( std::ofstream& rStream ) const override;
+		virtual void Deserialise( FDependentIStream& rStream ) override;
 
 	private:
-		void AddMaterialAsset();
-		void DrawInternal();
-
-		void SetupNodeEditorCallbacks();
-		void SetupNewNodeEditor();
-		void SetupNodesFromMaterial();
-		void CreateNodesFromTexture( Ref<Texture2D> texture, int slot );
-
-	private:
-		SharedPtr<MaterialGraph> m_NodeEditor = nullptr;
-		Ref<MaterialAsset> m_HostMaterialAsset = nullptr;
-		Ref<Material> m_EditingMaterial = nullptr;
-
-		UUID m_OutputNodeID = 0;
+		glm::vec3 m_Color{ 1.0f };
 	};
+	
+	SCLASS();
+	class SMaterialGraphOutputNodeTask : public NodeEditorTaskBase
+	{
+		SAT_DECLARE_CLASS( SMaterialGraphOutputNodeTask, NodeEditorTaskBase );
+	public:
+		SMaterialGraphOutputNodeTask();
+		virtual ~SMaterialGraphOutputNodeTask();
+
+	public:
+#if !defined(SAT_DIST)
+		virtual void PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+#endif
+		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther ) override;
+
+		virtual NodeEditorTaskState Tick( Timestep ts ) override;
+		virtual void Reset() override;
+		virtual void Serialise( std::ofstream& rStream ) const override;
+		virtual void Deserialise( FDependentIStream& rStream ) override;
+
+	private:
+		bool m_AlbedoIsColor = false;
+		UUID m_AlbedoID = 0, m_NormalID = 0, m_RoughnessID = 0, m_MetallicID = 0, m_EmissionID = 0;
+	};
+
 }

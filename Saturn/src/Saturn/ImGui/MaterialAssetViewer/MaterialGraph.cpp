@@ -26,43 +26,104 @@
 *********************************************************************************************
 */
 
-#pragma once
-
+#include "sppch.h"
 #include "MaterialGraph.h"
 
-#include "Saturn/ImGui/AssetViewer.h"
+#include "MaterialGraphTaskHandler.h"
 
 #include "Saturn/Asset/MaterialAsset.h"
 
 namespace Saturn {
 
-	class MaterialAssetViewer : public AssetViewer
+	MaterialGraph::MaterialGraph()
+		: NodeEditor()
 	{
-	public:
-		MaterialAssetViewer( AssetID id );
-		virtual ~MaterialAssetViewer();
+	}
 
-		virtual void OnImGuiRender() override;
-		virtual void OnUpdate( Timestep ts ) override {}
-		virtual void OnEvent( Event& rEvent ) override {}
+	MaterialGraph::MaterialGraph( AssetID id )
+		: NodeEditor( id )
+	{
+	}
 
-	public:
-		void HandleAssetDependencyReplace( AssetID oldID, AssetID newID );
+	MaterialGraph::~MaterialGraph()
+	{
+	}
 
-	private:
-		void AddMaterialAsset();
-		void DrawInternal();
+	SharedPtr<NodeEditorNodeBase> MaterialGraph::SetupNewNodeEditor( Ref<Material> material )
+	{
+		return nullptr;
+	}
 
-		void SetupNodeEditorCallbacks();
-		void SetupNewNodeEditor();
-		void SetupNodesFromMaterial();
-		void CreateNodesFromTexture( Ref<Texture2D> texture, int slot );
+	void MaterialGraph::SetHostMaterialAsset( Ref<MaterialAsset> asset )
+	{
+		m_HostMaterialAsset = asset;
+		m_EditingMaterial = Ref<Material>( m_HostMaterialAsset->GetMaterial() );
 
-	private:
-		SharedPtr<MaterialGraph> m_NodeEditor = nullptr;
-		Ref<MaterialAsset> m_HostMaterialAsset = nullptr;
-		Ref<Material> m_EditingMaterial = nullptr;
+		if( !m_TaskHandler )
+			m_TaskHandler = Ref<MaterialGraphTaskHandler>::Create( m_HostMaterialAsset->GetMaterial() );
+	}
 
-		UUID m_OutputNodeID = 0;
-	};
+	void MaterialGraph::BuildTaskCache()
+	{
+		std::vector<SharedPtr<NodeEditorNodeBase>> order;
+		order.reserve( m_Nodes.size() );
+
+		SharedPtr<NodeEditorNodeBase> outputNode = FindNode( "Material Output" );
+		TraverseFromStart( outputNode, NodeEditorFlowDirection::GoToRootNode,
+			[ & ]( const auto id )
+		{
+			order.push_back( FindNode( id ) );
+		} );
+
+		m_TaskCache.BuildMasterList( order );
+	}
+
+	void MaterialGraph::OnNodeEditorEvent( NodeEditorAction action )
+	{
+		switch( action )
+		{
+			case NodeEditorAction::PreEvaluate: 
+			{
+				std::vector<SharedPtr<NodeEditorNodeBase>> order;
+				order.reserve( m_Nodes.size() );
+
+				SharedPtr<NodeEditorNodeBase> outputNode = FindNode( "Material Output" );
+				TraverseFromStart( outputNode, NodeEditorFlowDirection::GoToRootNode,
+					[ & ]( const auto id )
+				{
+					order.push_back( FindNode( id ) );
+				} );
+
+				m_PreCompiler->Init( order );
+			} break;
+
+			case NodeEditorAction::PostEvaluateSuccess:
+			{
+				BuildTaskCache();
+				SimulateChanges();
+
+				SaveAndMarkClean();
+			} break;
+
+			default:
+				break;
+		}
+	}
+
+	void MaterialGraph::SimulateChanges()
+	{
+		m_TaskHandler->Init( m_TaskCache );
+
+		// Tick twice
+		// (1) to get the first task
+		// (2) to tick the first task
+		m_TaskHandler->Tick( 0.0f );
+		m_TaskHandler->Tick( 0.0f );
+	}
+
+	void MaterialGraph::ApplyMaterialChanges()
+	{
+
+	}
+
 }

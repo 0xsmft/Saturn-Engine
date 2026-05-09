@@ -28,41 +28,34 @@
 
 #pragma once
 
-#include "MaterialGraph.h"
-
-#include "Saturn/ImGui/AssetViewer.h"
-
-#include "Saturn/Asset/MaterialAsset.h"
+#include "Saturn/NodeEditor/Pin.h"
 
 namespace Saturn {
 
-	class MaterialAssetViewer : public AssetViewer
+	class MaterialViewerColorPin : public Pin
 	{
 	public:
-		MaterialAssetViewer( AssetID id );
-		virtual ~MaterialAssetViewer();
+		MaterialViewerColorPin() = default;
+		MaterialViewerColorPin( const std::string& rName, PinKind kind, bool readonly = false, bool accpetOnlyTextures = false );
+		MaterialViewerColorPin( UUID id, const std::string& rName, PinType type, UUID nodeID );
 
-		virtual void OnImGuiRender() override;
-		virtual void OnUpdate( Timestep ts ) override {}
-		virtual void OnEvent( Event& rEvent ) override {}
+		virtual ~MaterialViewerColorPin();
 
 	public:
-		void HandleAssetDependencyReplace( AssetID oldID, AssetID newID );
+		glm::vec3 Data{};
+
+		void SetReadOnly( bool value ) { m_ReadOnly = value; }
+		bool IsReadOnly() const { return m_ReadOnly; }
+
+	public:
+		void Serialise( std::ofstream& rStream ) const override;
+		void Deserialise( FDependentIStream& rStream ) override;
+
+	protected:
+		void OnRenderOutput() override final;
 
 	private:
-		void AddMaterialAsset();
-		void DrawInternal();
-
-		void SetupNodeEditorCallbacks();
-		void SetupNewNodeEditor();
-		void SetupNodesFromMaterial();
-		void CreateNodesFromTexture( Ref<Texture2D> texture, int slot );
-
-	private:
-		SharedPtr<MaterialGraph> m_NodeEditor = nullptr;
-		Ref<MaterialAsset> m_HostMaterialAsset = nullptr;
-		Ref<Material> m_EditingMaterial = nullptr;
-
-		UUID m_OutputNodeID = 0;
+		bool m_ReadOnly = false;
+		bool m_AccpetOnlyTextures = false;
 	};
 }

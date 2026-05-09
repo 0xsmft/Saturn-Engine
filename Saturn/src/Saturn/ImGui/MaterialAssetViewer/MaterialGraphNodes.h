@@ -50,6 +50,8 @@ namespace Saturn {
 
 		virtual ~MaterialOutputNode();
 
+		virtual NodeEditorTaskBase* ConvertToTask() override;
+
 	public:
 		RuntimeData RuntimeData;
 
@@ -85,6 +87,8 @@ namespace Saturn {
 		virtual ~MaterialColorPickerNode();
 
 		void SetColor( const glm::vec3& rColor );
+
+		virtual NodeEditorTaskBase* ConvertToTask() override;
 
 	public:
 		size_t TextureSlot = 0;

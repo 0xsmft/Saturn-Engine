@@ -26,43 +26,18 @@
 *********************************************************************************************
 */
 
-#pragma once
-
-#include "MaterialGraph.h"
-
-#include "Saturn/ImGui/AssetViewer.h"
-
-#include "Saturn/Asset/MaterialAsset.h"
+#include "sppch.h"
+#include "MaterialGraphTaskHandler.h"
 
 namespace Saturn {
 
-	class MaterialAssetViewer : public AssetViewer
+	MaterialGraphTaskHandler::MaterialGraphTaskHandler( Ref<Material> editingMaterial )
+		: m_EditingMaterial( editingMaterial )
 	{
-	public:
-		MaterialAssetViewer( AssetID id );
-		virtual ~MaterialAssetViewer();
+	}
 
-		virtual void OnImGuiRender() override;
-		virtual void OnUpdate( Timestep ts ) override {}
-		virtual void OnEvent( Event& rEvent ) override {}
+	MaterialGraphTaskHandler::~MaterialGraphTaskHandler()
+	{
+	}
 
-	public:
-		void HandleAssetDependencyReplace( AssetID oldID, AssetID newID );
-
-	private:
-		void AddMaterialAsset();
-		void DrawInternal();
-
-		void SetupNodeEditorCallbacks();
-		void SetupNewNodeEditor();
-		void SetupNodesFromMaterial();
-		void CreateNodesFromTexture( Ref<Texture2D> texture, int slot );
-
-	private:
-		SharedPtr<MaterialGraph> m_NodeEditor = nullptr;
-		Ref<MaterialAsset> m_HostMaterialAsset = nullptr;
-		Ref<Material> m_EditingMaterial = nullptr;
-
-		UUID m_OutputNodeID = 0;
-	};
 }

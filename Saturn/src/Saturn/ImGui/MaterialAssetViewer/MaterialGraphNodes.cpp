@@ -28,10 +28,11 @@
 
 #include "sppch.h"
 #include "Saturn/Vulkan/Mesh.h"
-#include "MaterialViewerNodes.h"
+#include "MaterialGraphNodes.h"
 
 #include "MaterialNodeEditorEvaluator.h"
-#include "MaterialViewerColorPin.h"
+#include "MaterialGraphColorPin.h"
+#include "MaterialGraphTasks.h"
 
 #include "Saturn/NodeEditor/AssetIDPin.h"
 
@@ -116,6 +117,11 @@ namespace Saturn {
 	MaterialOutputNode::~MaterialOutputNode()
 	{
 		RuntimeData.MaterialAsset = nullptr;
+	}
+
+	NodeEditorTaskBase* MaterialOutputNode::ConvertToTask()
+	{
+		return NewObject<SMaterialGraphOutputNodeTask>( nullptr );
 	}
 
 	/*
@@ -242,8 +248,8 @@ namespace Saturn {
 		Color = ImColor( 0, 255, 0 );
 #endif
 
-		Inputs.push_back( Ref<AssetIDPin>::Create( "Asset",             PinKind::Input, AssetType::Texture ) );
-		Outputs.push_back( Ref<MaterialViewerColorPin>::Create( "RGBA", PinKind::Output, true ) );
+		Inputs.push_back( Ref<AssetIDPin>::Create( "Asset",            PinKind::Input, AssetType::Texture ) );
+		Outputs.push_back( Ref<MaterialViewerColorPin>::Create( "RGB", PinKind::Output, true ) );
 	}
 
 	MaterialSampler2DNode::~MaterialSampler2DNode()
@@ -301,8 +307,9 @@ namespace Saturn {
 		Color = ImColor( 252, 186, 3 );
 #endif
 		ExecutionType = NodeExecutionType::ColorPicker;
+		Flags = NodeFlags_ConstantEvaluated;
 
-		Outputs.push_back( Ref<MaterialViewerColorPin>::Create( "RGBA", PinKind::Output ) );
+		Outputs.push_back( Ref<MaterialViewerColorPin>::Create( "RGB", PinKind::Output ) );
 	}
 
 	MaterialColorPickerNode::~MaterialColorPickerNode()
@@ -340,6 +347,11 @@ namespace Saturn {
 		Outputs[ 0 ].As<MaterialViewerColorPin>()->Data = rColor;
 	}
 
+	NodeEditorTaskBase* MaterialColorPickerNode::ConvertToTask()
+	{
+		return NewObject<SMaterialGraphColorPickerTask>( nullptr );
+	}
+
 	//////////////////////////////////////////////////////////////////////////
 	// MATERIAL GET ASSET NODE
 
@@ -361,8 +373,9 @@ namespace Saturn {
 		Color = ImColor( 30, 117, 217 );
 #endif
 		ExecutionType = NodeExecutionType::AssetID;
+		Flags = NodeFlags_ConstantEvaluated;
 
-		Outputs.push_back( Ref<AssetIDPin>::Create( "Asset ID", PinKind::Output, AssetType::Texture ) );
+		Outputs.push_back( Ref<AssetIDPin>::Create( "Out ID", PinKind::Output, AssetType::Texture ) );
 	}
 
 	MaterialGetAssetNode::~MaterialGetAssetNode()

@@ -28,41 +28,31 @@
 
 #pragma once
 
-#include "MaterialGraph.h"
-
-#include "Saturn/ImGui/AssetViewer.h"
-
-#include "Saturn/Asset/MaterialAsset.h"
+#include "Saturn/Vulkan/Material.h"
+#include "Saturn/NodeEditor/NodeEditorTaskHandler.h"
 
 namespace Saturn {
 
-	class MaterialAssetViewer : public AssetViewer
+	struct MaterialOutputPinData
+	{
+		union
+		{
+			uint8_t IsBoolTexture : 1;
+			UUID TextureID;
+			glm::vec3 Color;
+		};
+	};
+
+	class MaterialGraphTaskHandler : public NodeEditorTaskHandler
 	{
 	public:
-		MaterialAssetViewer( AssetID id );
-		virtual ~MaterialAssetViewer();
+		MaterialGraphTaskHandler( Ref<Material> editingMaterial );
+		virtual ~MaterialGraphTaskHandler();
 
-		virtual void OnImGuiRender() override;
-		virtual void OnUpdate( Timestep ts ) override {}
-		virtual void OnEvent( Event& rEvent ) override {}
-
-	public:
-		void HandleAssetDependencyReplace( AssetID oldID, AssetID newID );
+		Ref<Material> GetMaterial() { return m_EditingMaterial; }
 
 	private:
-		void AddMaterialAsset();
-		void DrawInternal();
-
-		void SetupNodeEditorCallbacks();
-		void SetupNewNodeEditor();
-		void SetupNodesFromMaterial();
-		void CreateNodesFromTexture( Ref<Texture2D> texture, int slot );
-
-	private:
-		SharedPtr<MaterialGraph> m_NodeEditor = nullptr;
-		Ref<MaterialAsset> m_HostMaterialAsset = nullptr;
-		Ref<Material> m_EditingMaterial = nullptr;
-
-		UUID m_OutputNodeID = 0;
+		Ref<Material> m_EditingMaterial;
 	};
+	
 }

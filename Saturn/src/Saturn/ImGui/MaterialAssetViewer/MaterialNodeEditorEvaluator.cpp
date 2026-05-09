@@ -29,7 +29,7 @@
 #include "sppch.h"
 #include "MaterialNodeEditorEvaluator.h"
 
-#include "MaterialViewerNodes.h"
+#include "MaterialGraphNodes.h"
 
 #if !defined(SAT_DIST)
 #include "Saturn/NodeEditor/UI/NodeEditor.h"

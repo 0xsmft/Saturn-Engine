@@ -148,6 +148,7 @@ namespace Saturn {
 		void DndImportSound( Ref<Asset> asset, bool select = false, bool clearSelection = true );
 
 		void PlaceEntityRelativeToMousePos( SharedPtr<Entity> entity );
+		bool TrySelectEntityFromMouse( Mesh* mesh, SharedPtr<Entity> entity, const glm::vec3& rOrigin, const glm::vec3& rDirection );
 
 	private:
 		enum MessageBoxButtons_

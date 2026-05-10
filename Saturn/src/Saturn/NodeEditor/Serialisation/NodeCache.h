@@ -55,6 +55,8 @@ namespace Saturn {
 		static bool ReadNodeTaskCacheOnly( NodeTaskCache& rNodeTaskCache, AssetID id, const std::string& rCustomName = "" );
 
 		// Dist
+		static void WriteTaskCacheOnlyDistNC( const NodeTaskCache& rCache, const std::filesystem::path& rPath );
+
 		static void ConvertToDistNC( AssetID id, const std::string& rCustomName = "" );
 	};
 	

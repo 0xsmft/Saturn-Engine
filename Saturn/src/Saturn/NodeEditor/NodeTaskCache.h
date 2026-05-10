@@ -85,6 +85,8 @@ namespace Saturn {
 
 		std::unordered_map<UUID, Ref<NodeEditorVariable>>& GetMasterVariablesListForSerialisation() { return m_EditorVariables; }
 
+		const std::unordered_map<UUID, Ref<NodeEditorVariable>>& GetMasterVariablesListForSerialisation() const { return m_EditorVariables; }
+
 		NodeTaskCacheMap InstantiateNewTaskList( NodeEditorTaskHandler* pHandler ) const;
 
 #if !defined(SAT_DIST)

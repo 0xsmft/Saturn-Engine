@@ -266,6 +266,35 @@ namespace Saturn {
 		return dir;
 	}
 
+	static void WriteTaskCache( const NodeTaskCache& rCache, std::ofstream& rStream )
+	{
+		// Write task cache
+		NodeCacheTaskCacheHeader tcHeader{};
+		RawSerialisation::WriteObject( tcHeader, rStream );
+
+		const auto& rTaskCacheList = rCache.GetMasterListForSerialisation();
+
+		RawSerialisation::WriteObject( rTaskCacheList.size(), rStream );
+		for( const auto& rTask : rTaskCacheList )
+		{
+			RawSerialisation::WriteObjectChecked( rTask->GetNodeID(), rStream );
+			RawSerialisation::WriteObject( rTask->GetClass()->GetHash(), rStream );
+
+			rTask->Serialise( rStream );
+		}
+
+		// Variables
+		const auto& rVarList = rCache.GetMasterVariablesListForSerialisation();
+
+		RawSerialisation::WriteObject( rVarList.size(), rStream );
+		for( const auto& [id, variable] : rVarList )
+		{
+			RawSerialisation::WriteObjectChecked( id, rStream );
+
+			NodeEditorVariable::Serialise( variable, rStream );
+		}
+	}
+
 	void NodeCacheEditor::WriteNodeEditorCache( SharedPtr<NodeEditor> nodeEditor, const std::string& rCustomName )
 	{
 		Ref<Asset> asset = AssetManager::Get()->FindAsset( nodeEditor->GetAssetID() );
@@ -308,31 +337,7 @@ namespace Saturn {
 
 		header.PositionOfTaskCache = ( uint32_t ) fout.tellp();
 
-		// Write task cache
-		NodeCacheTaskCacheHeader tcHeader{};
-		RawSerialisation::WriteObject( tcHeader, fout );
-
-		const auto& rTaskCacheList = nodeEditor->m_TaskCache.GetMasterListForSerialisation();
-
-		RawSerialisation::WriteObject( rTaskCacheList.size(), fout );
-		for( const auto& rTask : rTaskCacheList )
-		{
-			RawSerialisation::WriteObjectChecked( rTask->GetNodeID(), fout );
-			RawSerialisation::WriteObject( rTask->GetClass()->GetHash(), fout );
-
-			rTask->Serialise( fout );
-		}
-
-		// Variables
-		const auto& rVarList = nodeEditor->m_TaskCache.GetMasterVariablesListForSerialisation();
-
-		RawSerialisation::WriteObject( rVarList.size(), fout );
-		for( const auto& [id, variable ] : rVarList )
-		{
-			RawSerialisation::WriteObjectChecked( id, fout );
-
-			NodeEditorVariable::Serialise( variable, fout );
-		}
+		WriteTaskCache( nodeEditor->m_TaskCache, fout );
 
 		// Now write the header.
 		fout.seekp( fout.beg );
@@ -547,39 +552,13 @@ namespace Saturn {
 		return ReadNodeTaskCache( rNodeTaskCache, stream );
 	}
 
-	void NodeCacheEditor::ConvertToDistNC( AssetID id, const std::string& rCustomName /*= "" */ )
+	void NodeCacheEditor::WriteTaskCacheOnlyDistNC( const NodeTaskCache& rCache, const std::filesystem::path& rPath )
 	{
-		std::string filename;
+		std::ofstream fout( rPath, std::ios::trunc | std::ios::binary );
 
-		const Ref<Asset> asset = AssetManager::Get()->FindAsset( id );
-		std::filesystem::path cachePath;
+		WriteTaskCache( rCache, fout );
 
-		if( asset )
-		{
-			filename = std::format( "{0}.{1}.nce", asset->Name, ( uint64_t ) id );
-			cachePath = asset->Path.parent_path();
-		}
-		else
-		{
-			filename = std::format( "NCEditor.{0}.nce", ( uint64_t ) id );
-			cachePath = GetDefaultCachePath();
-		}
-
-		if( !rCustomName.empty() )
-			filename = rCustomName;
-
-		cachePath /= filename;
-
-		const std::filesystem::path cachePathAbs = Project::GetActiveProject()->FilepathAbs( cachePath );
-		if( !std::filesystem::exists( cachePathAbs ) )
-			return;
-
-		// Copy for dist
-		std::filesystem::path newPath = Project::GetActiveProject()->GetTempDir();
-		newPath /= std::to_string( id );
-		newPath.replace_extension( ".vfs" );
-
-		std::filesystem::copy_file( cachePathAbs, newPath, std::filesystem::copy_options::overwrite_existing );
+		fout.close();
 	}
 
 }

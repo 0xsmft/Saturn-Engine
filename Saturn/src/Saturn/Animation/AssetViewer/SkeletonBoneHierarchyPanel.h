@@ -33,7 +33,7 @@
 
 namespace Saturn {
 
-	enum class SkelItemType
+	enum class SkelItemType : uint8_t
 	{
 		Unknown,
 		Bone,

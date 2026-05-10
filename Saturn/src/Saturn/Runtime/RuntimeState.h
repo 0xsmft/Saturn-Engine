@@ -32,7 +32,7 @@ namespace Saturn {
 
 	// NOTE: This enum is separated from Scene.h as this enum is used by the Node Editors
 	//       So this allows us to use it in the Node Editor without including Scene.h
-	enum class RuntimeState
+	enum class RuntimeState : uint8_t
 	{
 		// Scene Init
 		NoState,

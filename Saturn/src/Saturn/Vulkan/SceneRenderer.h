@@ -91,22 +91,23 @@ namespace Saturn {
 		float Multiplier = 0.0f;
 	};
 
-	// -1 = Prefilter, 0 = Downsample, 1 = Upsample
-	enum class BloomStage
+	enum class BloomStage : uint8_t
 	{
-		FirstUpsample = -2,
-		Prefilter = -1,
+		Prefilter,
 		Downsample,
+		FirstUpsample,
 		Upsample
 	};
 
-	enum class AOTechnique 
+	enum class AOTechnique : uint8_t
 	{
+		None,
+
 		// Screen Space AO
 		SSAO,
+
 		// Horizon Based AO+
 		HBAO,
-		None
 	};
 
 	struct StaticMeshKey
@@ -415,13 +416,28 @@ namespace Saturn {
 		// Bloom
 		//////////////////////////////////////////////////////////////////////////
 
+		struct BloomTexture
+		{
+			Ref<Texture2D> Texture;
+			std::vector<VkDescriptorImageInfo> ImageInfos;
+		};
+
+		std::array<BloomTexture, 3> BloomTextures;
 		Ref<ComputePipeline> BloomComputePipeline = nullptr;
-		Ref<Texture2D> BloomTextures[ 3 ];
 		Ref<Texture2D> BloomDirtTexture = nullptr;
 		Ref< DescriptorSet > BloomDS = nullptr;
 
+		Ref<Material> BloomPrefilterMaterial;
+		Ref<Material> BloomFirstUpsampleMaterial;
+
+		std::vector<Ref<Material>> BloomDownsampleAMaterials;
+		std::vector<Ref<Material>> BloomDownsampleBMaterials;
+		std::vector<Ref<Material>> BloomUpsampleMaterials;
+
 		uint32_t BloomWorkSize = 4;
 
+		// The value of a pixel component before it's considered to be an emissive object.
+		float BloomThreshold = 1.5f;
 		float BloomDirtIntensity = 20.0f;
 
 		// BDRF Lut
@@ -600,6 +616,7 @@ namespace Saturn {
 		void OnShaderReloaded( const std::string& rName );
 #endif
 
+		void CreateBloomMaterials();
 		void SendBoneDataToMap( Ref<SkeletalMesh> mesh, const StaticMeshKey& rKey, const std::vector<glm::mat4>& rBoneTransforms );
 
 		Ref<TextureCube> CreateDymanicSky();

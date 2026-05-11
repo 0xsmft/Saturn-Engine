@@ -31,7 +31,7 @@
 namespace Saturn {
 
 	// This enum is in a separate header file because I don't want classes who just want the scene renderer flags have to include the whole entire Scene Renderer
-	enum SceneRendererFlags_
+	enum SceneRendererFlags_ : uint8_t
 	{
 		SceneRendererFlag_NoFlags         = BIT( 0 ),
 		SceneRendererFlag_MasterInstance  = BIT( 1 ),
@@ -42,5 +42,5 @@ namespace Saturn {
 	};
 
 	// enum SceneRendererFlags_
-	typedef int SceneRendererFlags;
+	typedef uint8_t SceneRendererFlags;
 }

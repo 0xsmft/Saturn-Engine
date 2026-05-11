@@ -552,8 +552,10 @@ namespace Saturn {
 
 		m_RendererData.SceneCompositeMaterial->SetResource( "u_GeometryPassTexture", m_RendererData.GeometryFramebuffer->GetColorAttachmentsResources()[ 0 ] );
 
-		m_RendererData.SceneCompositeMaterial->SetResource( "u_BloomTexture", Renderer::Get()->GetPinkTexture());
+		m_RendererData.SceneCompositeMaterial->SetResource( "u_BloomTexture", m_RendererData.BloomTextures[ 2 ].Texture );
 		m_RendererData.SceneCompositeMaterial->SetResource( "u_BloomDirtTexture", Renderer::Get()->GetPinkTexture() );
+
+//		BindSceneCompositeAOTexture();
 		
 		m_RendererData.SceneCompositeMaterial->SetResource( "u_DepthTexture", m_RendererData.GeometryFramebuffer->GetDepthAttachmentResource() );
 
@@ -667,22 +669,10 @@ namespace Saturn {
 
 		m_RendererData.BloomComputePipeline = Ref<ComputePipeline>::Create( m_RendererData.BloomShader );
 
-		const glm::uvec2 viewportSize = { m_RendererData.Width, m_RendererData.Height };
-
-		glm::uvec2 bs = ( viewportSize + 1u ) / 2u;
-		bs += m_RendererData.BloomWorkSize - bs % m_RendererData.BloomWorkSize;
-
-		for( uint32_t i = 0; i < 3; i++ )
-		{
-			m_RendererData.BloomTextures[ i ] = Ref<Texture2D>::Create( ImageFormat::RGBA32F, bs.x, bs.y, nullptr, true );
-			m_RendererData.BloomTextures[ i ]->SetDebugName( "Bloom Texture: " + std::to_string( i ) );
-		}
+		CreateBloomMaterials();
 
 		m_RendererData.BloomDirtTexture = Renderer::Get()->GetPinkTexture();
-
 		m_RendererData.BloomDS = m_RendererData.BloomShader->CreateDescriptorSet( 0 );
-
-//		m_RendererData.BloomDirtTexture = Ref<Texture2D>::Create( "content/textures/editor/BloomDirtTextureUE.png", AddressingMode::Repeat );
 	}
 
 	void SceneRenderer::InitTexturePass()
@@ -1474,7 +1464,7 @@ namespace Saturn {
 			{
 				static int index = 0;
 				static int MipIndex = 0;
-				auto& img = m_RendererData.BloomTextures[ index ];
+				auto& img = m_RendererData.BloomTextures[ index ].Texture;
 
 				ImGui::SliderInt( "##bloom_tex", &index, 0, 2 );
 				ImGui::SliderInt( "##mip", &MipIndex, 0, img->GetMipMapLevels() - 2 );
@@ -1735,16 +1725,7 @@ namespace Saturn {
 	void SceneRenderer::Recreate()
 	{
 		InitPreDepth();
-
 		InitGeometryPass();
-
-		InitSceneComposite();
-		InitLateComposite();
-		InitPhysicsOutline();
-		InitSelectionPass();
-		InitJumpFlood();
-		
-		InitTexturePass();
 
 		switch( m_AOTechnique )
 		{
@@ -1761,16 +1742,7 @@ namespace Saturn {
 				break;
 		}
 
-		const glm::uvec2 viewportSize = { m_RendererData.Width, m_RendererData.Height };
-
-		glm::uvec2 bs = ( viewportSize + 1u ) / 2u;
-		bs += m_RendererData.BloomWorkSize - bs % m_RendererData.BloomWorkSize;
-
-		for( uint32_t i = 0; i < 3; i++ )
-		{
-			m_RendererData.BloomTextures[ i ] = Ref<Texture2D>::Create( ImageFormat::RGBA32F, bs.x, bs.y, nullptr, true );
-			m_RendererData.BloomTextures[ i ]->SetDebugName( "Bloom Texture: " + std::to_string( i ) );
-		}
+		CreateBloomMaterials();
 
 		constexpr uint32_t TILE_SIZE = 16;
 		glm::uvec2 Viewport = { m_RendererData.Width, m_RendererData.Height };
@@ -1778,11 +1750,16 @@ namespace Saturn {
 		Size += TILE_SIZE - Viewport % TILE_SIZE;
 
 		m_RendererData.LightCullingWorkGroups = { Size / TILE_SIZE, 1 };
-
-		float size = m_RendererData.LightCullingWorkGroups.x * m_RendererData.LightCullingWorkGroups.y * 4.0f * 1024.0f;
+		const float size = m_RendererData.LightCullingWorkGroups.x * m_RendererData.LightCullingWorkGroups.y * 4.0f * 1024.0f;
 		m_RendererData.StorageBufferSet->Resize( 0, 14, ( size_t ) size );
 
-//		m_RendererData.SceneCompositeShader->WriteDescriptor( "u_BloomTexture", m_RendererData.BloomTextures[ 2 ]->GetDescriptorInfo(), m_RendererData.SC_DescriptorSet->GetVulkanSet() );
+		InitSceneComposite();
+		InitLateComposite();
+		InitPhysicsOutline();
+		InitSelectionPass();
+		InitJumpFlood();
+
+		InitTexturePass();
 
 		CreateSkyboxComponents();
 		CreateGridComponents();
@@ -2419,10 +2396,125 @@ namespace Saturn {
 		SAT_PF_EVENT();
 
 		m_RendererData.BloomTimer.Reset();
-		m_RendererData.BloomTimer.Stop();
 
-		// TEMP
-		//return;
+		struct u_Settings
+		{
+			float Threshold;
+			float Knee;
+			float TK;
+			float DK;
+			float QK;
+			float Lod;
+			uint8_t Stage;
+		} pc_Settings{};
+
+		pc_Settings.Threshold = m_RendererData.BloomThreshold;
+		pc_Settings.Knee = 0.1f;
+		pc_Settings.TK = pc_Settings.Threshold - pc_Settings.Knee;
+		pc_Settings.DK = pc_Settings.Knee * 2.0F;
+		pc_Settings.QK = pc_Settings.Knee / 0.25F;
+		pc_Settings.Lod = 0.0f;
+
+		glm::uvec3 workGroups{ 0 };
+
+		m_RendererData.BloomComputePipeline->BindWithCommandBuffer( m_RendererData.CommandBuffer );
+
+		// Prefilter
+		pc_Settings.Stage = ( uint8_t ) BloomStage::Prefilter;
+		CmdBeginDebugLabel( m_RendererData.CommandBuffer, "Prefilter" );
+		{
+			// Get anything over the bloom threshold
+			workGroups = {
+				m_RendererData.BloomTextures[ 0 ].Texture->Width() / m_RendererData.BloomWorkSize,
+				m_RendererData.BloomTextures[ 0 ].Texture->Height() / m_RendererData.BloomWorkSize,
+				1u };
+
+			Buffer pc( sizeof( u_Settings ), &pc_Settings );
+
+			m_RendererData.BloomComputePipeline->ExecuteWithExternalPC( m_RendererData.BloomPrefilterMaterial, pc,
+				workGroups.x,
+				workGroups.y,
+				workGroups.z );
+		}
+		CmdEndDebugLabel( m_RendererData.CommandBuffer );
+
+		// Downsample chain.
+		pc_Settings.Stage = ( uint8_t ) BloomStage::Downsample;
+		CmdBeginDebugLabel( m_RendererData.CommandBuffer, "Dowsample chain" );
+
+		uint32_t mips = m_RendererData.BloomTextures[ 0 ].Texture->GetMipMapLevels() - 2;
+		for( uint32_t i = 1; i < mips; ++i )
+		{
+			const auto [mipW, mipH] = m_RendererData.BloomTextures[ 0 ].Texture->GetMipSize( i );
+
+			workGroups.x = ( uint32_t ) glm::ceil( static_cast< uint32_t >( mipW / m_RendererData.BloomWorkSize ) );
+			workGroups.y = ( uint32_t ) glm::ceil( static_cast< uint32_t >( mipH / m_RendererData.BloomWorkSize ) );
+
+			pc_Settings.Lod = static_cast< float >( i - 1.0f );
+
+			// Render
+			Buffer pc( sizeof( u_Settings ), &pc_Settings );
+
+			m_RendererData.BloomComputePipeline->ExecuteWithExternalPC( m_RendererData.BloomDownsampleAMaterials[ i ], pc,
+				workGroups.x,
+				workGroups.y,
+				workGroups.z );
+
+			// B pass
+			pc_Settings.Lod = ( float ) i;
+
+			// Render
+			pc = Buffer( sizeof( u_Settings ), &pc_Settings );
+
+			m_RendererData.BloomComputePipeline->ExecuteWithExternalPC( m_RendererData.BloomDownsampleBMaterials[ i ], pc,
+				workGroups.x,
+				workGroups.y,
+				workGroups.z );
+		}
+		CmdEndDebugLabel( m_RendererData.CommandBuffer );
+
+		// Upsample chain.
+		pc_Settings.Stage = ( uint8_t ) BloomStage::FirstUpsample;
+		CmdBeginDebugLabel( m_RendererData.CommandBuffer, "Initial Upsample" );
+		{
+			--pc_Settings.Lod;
+
+			const auto [mipW, mipH] = m_RendererData.BloomTextures[ 2 ].Texture->GetMipSize( mips - 2 );
+
+			workGroups.x = ( uint32_t ) glm::ceil( static_cast< uint32_t >( mipW / m_RendererData.BloomWorkSize ) );
+			workGroups.y = ( uint32_t ) glm::ceil( static_cast< uint32_t >( mipH / m_RendererData.BloomWorkSize ) );
+
+			Buffer pc( sizeof( u_Settings ), &pc_Settings );
+
+			m_RendererData.BloomComputePipeline->ExecuteWithExternalPC( m_RendererData.BloomFirstUpsampleMaterial, pc,
+				workGroups.x,
+				workGroups.y,
+				workGroups.z );
+		}
+		CmdEndDebugLabel( m_RendererData.CommandBuffer );
+
+		pc_Settings.Stage = ( uint8_t ) BloomStage::Upsample;
+		CmdBeginDebugLabel( m_RendererData.CommandBuffer, "Upsample chain" );
+		{
+			for( int32_t i = mips - 3; i >= 0; --i )
+			{
+				const auto [mipW, mipH] = m_RendererData.BloomTextures[ 2 ].Texture->GetMipSize( i );
+
+				workGroups.x = ( uint32_t ) glm::ceil( static_cast< uint32_t >( mipW / m_RendererData.BloomWorkSize ) );
+				workGroups.y = ( uint32_t ) glm::ceil( static_cast< uint32_t >( mipH / m_RendererData.BloomWorkSize ) );
+
+				pc_Settings.Lod = ( float ) i;
+				Buffer pc( sizeof( u_Settings ), &pc_Settings );
+
+				m_RendererData.BloomComputePipeline->ExecuteWithExternalPC( m_RendererData.BloomUpsampleMaterials[ i ], pc,
+					workGroups.x,
+					workGroups.y,
+					workGroups.z );
+			}
+		}
+		CmdEndDebugLabel( m_RendererData.CommandBuffer );
+
+		m_RendererData.BloomTimer.Stop();
 	}
 
 	void SceneRenderer::SSAOPass()
@@ -2562,9 +2654,7 @@ namespace Saturn {
 		pc_JmpFlood.TexelSize = texelSize;
 		pc_JmpFlood.Step = step;
 
-		Buffer PushConstData;
-		PushConstData.Allocate( sizeof( JmpFPushConst ) );
-		PushConstData.Write( &pc_JmpFlood, sizeof( JmpFPushConst ), 0 );
+		Buffer PushConstData( sizeof( JmpFPushConst ), &pc_JmpFlood );
 
 		// Begin even pass
 		m_RendererData.JumpFloodEvenPass->BeginPass( CommandBuffer, m_RendererData.JumpFloodEvenFB->GetVulkanFramebuffer(), Extent );
@@ -2582,8 +2672,6 @@ namespace Saturn {
 		);
 
 		m_RendererData.JumpFloodEvenPass->EndPass();
-
-		PushConstData.Free();
 	}
 
 	void SceneRenderer::AddScheduledFunction( ScheduledFunc&& rrFunc )
@@ -2603,6 +2691,99 @@ namespace Saturn {
 		}
 	}
 #endif
+
+	void SceneRenderer::CreateBloomMaterials()
+	{
+		const glm::uvec2 viewportSize = { m_RendererData.Width, m_RendererData.Height };
+
+		glm::uvec2 bs = ( viewportSize + 1u ) / 2u;
+		bs += m_RendererData.BloomWorkSize - bs % m_RendererData.BloomWorkSize;
+
+		m_RendererData.BloomTextures.fill( {} );
+
+		// Create bloom textures
+		for( uint32_t i = 0; i < 3; i++ )
+		{
+			auto& rTextureInfo = m_RendererData.BloomTextures[ i ];
+
+			rTextureInfo.Texture = Ref<Texture2D>::Create( ImageFormat::RGBA32F, bs.x, bs.y, nullptr, true );
+			rTextureInfo.Texture->SetDebugName( "Bloom Texture: " + std::to_string( i ) );
+
+			for( size_t i = 0; i < rTextureInfo.Texture->GetMipMapLevels(); i++ )
+			{
+				auto ds = rTextureInfo.Texture->GetDescriptorInfo();
+				ds.imageView = rTextureInfo.Texture->GetOrCreateMipImageView( ( uint32_t ) i );
+
+				rTextureInfo.ImageInfos.push_back( ds );
+			}
+		}
+
+		// Materials
+		if( !m_RendererData.BloomPrefilterMaterial )
+			m_RendererData.BloomPrefilterMaterial = Ref<Material>::Create( m_RendererData.BloomShader, "Bloom-Prefliter" );
+
+		// Set prefliter data.
+		m_RendererData.BloomPrefilterMaterial->SetResourceWithVulkanInfo( "o_Image", m_RendererData.BloomTextures[ 0 ].Texture, m_RendererData.BloomTextures[ 0 ].ImageInfos[ 0 ] );
+		m_RendererData.BloomPrefilterMaterial->SetResource( "u_InputTexture", m_RendererData.GeometryFramebuffer->GetColorAttachmentsResources()[ 0 ] );
+		m_RendererData.BloomPrefilterMaterial->SetResource( "u_BloomTexture", m_RendererData.GeometryFramebuffer->GetColorAttachmentsResources()[ 0 ] );
+
+		// Downsample
+		uint32_t mips = m_RendererData.BloomTextures[ 0 ].Texture->GetMipMapLevels() - 2;
+		m_RendererData.BloomDownsampleAMaterials.resize( mips );
+		m_RendererData.BloomDownsampleBMaterials.resize( mips );
+
+		for( uint32_t i = 0; i < mips; ++i )
+		{
+			m_RendererData.BloomDownsampleAMaterials[ i ] = Ref<Material>::Create( m_RendererData.BloomShader, "Bloom Downsample A" );
+
+			m_RendererData.BloomDownsampleAMaterials[ i ]->SetResourceWithVulkanInfo( "o_Image", m_RendererData.BloomTextures[ 1 ].Texture, m_RendererData.BloomTextures[ 1 ].ImageInfos[ i ] );
+			m_RendererData.BloomDownsampleAMaterials[ i ]->SetResource( "u_InputTexture", m_RendererData.BloomTextures[ 0 ].Texture );
+			m_RendererData.BloomDownsampleAMaterials[ i ]->SetResource( "u_BloomTexture", m_RendererData.GeometryFramebuffer->GetColorAttachmentsResources()[ 0 ] );
+
+			m_RendererData.BloomDownsampleBMaterials[ i ] = Ref<Material>::Create( m_RendererData.BloomShader, "Bloom Downsample B" );
+
+			m_RendererData.BloomDownsampleBMaterials[ i ]->SetResourceWithVulkanInfo( "o_Image", m_RendererData.BloomTextures[ 0 ].Texture, m_RendererData.BloomTextures[ 0 ].ImageInfos[ i ] );
+			m_RendererData.BloomDownsampleBMaterials[ i ]->SetResource( "u_InputTexture", m_RendererData.BloomTextures[ 1 ].Texture );
+			m_RendererData.BloomDownsampleBMaterials[ i ]->SetResource( "u_BloomTexture", m_RendererData.GeometryFramebuffer->GetColorAttachmentsResources()[ 0 ] );
+		}
+
+		// Upsampling
+		m_RendererData.BloomFirstUpsampleMaterial = Ref<Material>::Create( m_RendererData.BloomShader, "Bloom First Upsample" );
+
+		m_RendererData.BloomFirstUpsampleMaterial->SetResourceWithVulkanInfo( "o_Image", m_RendererData.BloomTextures[ 2 ].Texture, m_RendererData.BloomTextures[ 2 ].ImageInfos[ mips - 2 ] );
+		m_RendererData.BloomFirstUpsampleMaterial->SetResource( "u_InputTexture", m_RendererData.BloomTextures[ 0 ].Texture );
+		m_RendererData.BloomFirstUpsampleMaterial->SetResource( "u_BloomTexture", m_RendererData.GeometryFramebuffer->GetColorAttachmentsResources()[ 0 ] );
+
+		m_RendererData.BloomUpsampleMaterials.resize( ( mips - 3 ) + 1 );
+		for( int32_t i = mips - 3; i >= 0; --i )
+		{
+			m_RendererData.BloomUpsampleMaterials[ i ] = Ref<Material>::Create( m_RendererData.BloomShader, "Bloom Upsample" );
+
+			m_RendererData.BloomUpsampleMaterials[ i ]->SetResourceWithVulkanInfo( "o_Image", m_RendererData.BloomTextures[ 1 ].Texture, m_RendererData.BloomTextures[ 2 ].ImageInfos[ i ] );
+			m_RendererData.BloomUpsampleMaterials[ i ]->SetResource( "u_InputTexture", m_RendererData.BloomTextures[ 0 ].Texture );
+			m_RendererData.BloomUpsampleMaterials[ i ]->SetResource( "u_BloomTexture", m_RendererData.BloomTextures[ 2 ].Texture );
+		}
+	}
+
+	void SceneRenderer::BindSceneCompositeAOTexture()
+	{
+		// TODO: TEMP u_BloomDirtTexture -> u_AOTexture
+		switch( m_AOTechnique )
+		{
+			default:
+			case AOTechnique::None:
+				m_RendererData.SceneCompositeMaterial->SetResource( "u_BloomDirtTexture", Renderer::Get()->GetPinkTexture() );
+				break;
+
+			case AOTechnique::SSAO:
+				m_RendererData.SceneCompositeMaterial->SetResource( "u_BloomDirtTexture", m_RendererData.AOBlurFramebuffer->GetColorAttachmentsResources()[ 0 ] );
+				break;
+
+			case AOTechnique::HBAO:
+				m_RendererData.SceneCompositeMaterial->SetResource( "u_BloomDirtTexture", Renderer::Get()->GetPinkTexture() );
+				break;
+		}
+	}
 
 	void SceneRenderer::SendBoneDataToMap( Ref<SkeletalMesh> mesh, const StaticMeshKey& rKey, const std::vector<glm::mat4>& rBoneTransforms )
 	{
@@ -2731,7 +2912,7 @@ namespace Saturn {
 			}
 		}
 
-		m_RendererData.SubmeshTransformData[ frame ].VertexBuffer->Reallocate( m_RendererData.SubmeshTransformData[ frame ].pData, off * sizeof( TransformBufferData ) );
+		m_RendererData.SubmeshTransformData[ frame ].VertexBuffer->SetData( m_RendererData.SubmeshTransformData[ frame ].pData, off * sizeof( TransformBufferData ) );
 	
 		off = 0;
 		for( auto& [id, buffer] : m_RendererData.BoneTransformMap )
@@ -2938,8 +3119,7 @@ namespace Saturn {
 		PreDepthFramebuffer       = nullptr;
 		LateCompositeFramebuffer  = nullptr;
 
-		for( int i = 0; i < 3; ++i )
-			BloomTextures[ i ] = nullptr;
+		BloomTextures.fill( {} );
 
 		for( int i = 0; i < SHADOW_CASCADE_COUNT; ++i )
 			ShadowCascades[ i ].Framebuffer = nullptr;

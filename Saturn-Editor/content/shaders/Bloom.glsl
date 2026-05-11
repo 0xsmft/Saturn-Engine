@@ -1,12 +1,13 @@
 // Bloom shader
 // Based from:
-//	https://learnopengl.com/Guest-Articles/2022/Phys.-Based-Bloom
-//	http://www.iryoku.com/next-generation-post-processing-in-call-of-duty-advanced-warfare (Jorge Jimenez)
-//	The Cherno's Hazel Engine https://github.com/TheCherno
+//	Alexander Christensen: https://learnopengl.com/Guest-Articles/2022/Phys.-Based-Bloom
+//	Jorge Jimenez, Sledgehammer Games: http://www.iryoku.com/next-generation-post-processing-in-call-of-duty-advanced-warfare
+//	Yan Chernikov: Hazel Engine https://github.com/TheCherno
 
 #type compute
 #version 450 core
 
+// Output image
 layout( binding = 0, rgba32f ) restrict writeonly uniform image2D o_Image;
 
 layout(binding = 1) uniform sampler2D u_InputTexture;
@@ -19,8 +20,8 @@ layout(push_constant) uniform u_Settings
 	float TK; // Threshold - Knee
 	float DK; // Knee * 2.0f
 	float QK; // Knee / 0.25f
-	float Stage; // -1 = Prefilter, 0 = Downsample, 1 = Upsample
 	float LOD;
+	uint Stage;
 } pc_Settings;
 
 vec3 Downsample( sampler2D tex, float lod, vec2 uv, vec2 texelSize ) 
@@ -29,6 +30,16 @@ vec3 Downsample( sampler2D tex, float lod, vec2 uv, vec2 texelSize )
     vec3 A = textureLod(tex, uv, lod).rgb;
 
     texelSize *= 0.5f; // Sample from center of texels
+
+	// Take 13 samples around the texel:
+	// As LearnOpenGL persent it:
+	// a - b - c
+	// - j - k -
+	// d - e - f
+	// - l - m -
+	// g - h - i
+	//
+	// e == current pixel
 
     // Inner box
     vec3 B = textureLod(tex, uv + texelSize * vec2(-1.0f, -1.0f), lod).rgb;
@@ -47,6 +58,8 @@ vec3 Downsample( sampler2D tex, float lod, vec2 uv, vec2 texelSize )
     vec3 M = textureLod(tex, uv + texelSize * vec2(0.0f, -2.0f), lod).rgb;
 
     // Weights
+	// 0.5 + 0.125 + 0.125 + 0.125 + 0.125 = 1
+
     vec3 result = vec3(0.0);
     // Inner box
     result += (B + C + D + E) * 0.5f;
@@ -122,37 +135,47 @@ void main()
 	vec2 texSize = vec2( textureSize( u_InputTexture, int( pc_Settings.LOD ) ) );
 	vec4 color = vec4( 1, 0, 1, 1 );
 
-	// Prefilter
-	if( pc_Settings.Stage == -1 ) // Prefilter
+	switch( pc_Settings.Stage )
 	{
-		color.rgb = Downsample( u_InputTexture, pc_Settings.LOD, tc, 1.0f / texSize );
-		color = Prefilter( color, tc );
-		color.a = 1.0f;
+		// Prefilter:
+		case 0:
+		{
+			color.rgb = Downsample( u_InputTexture, pc_Settings.LOD, tc, 1.0f / texSize );
+			color = Prefilter( color, tc );
+			color.a = 1.0f;
+		} break;
+
+		// Downsample:
+		case 1: 
+		{
+			color.rgb = Downsample( u_InputTexture, pc_Settings.LOD, tc, 1.0f / texSize );
+		} break;
+
+		// First upsample:
+		case 2: 
+		{
+			vec2 texSize = vec2( textureSize( u_InputTexture, int( pc_Settings.LOD + 1.0f ) ) );
+			float scale = 1.0f;
+
+			vec3 upsampleTexture = Upsample( u_InputTexture, pc_Settings.LOD + 1.0f, tc, 1.0f / texSize, scale );
+
+			vec3 last = textureLod( u_InputTexture, tc, pc_Settings.LOD ).rgb;
+			color.rgb = last + upsampleTexture;
+		} break;
+
+		// Upsample:
+		case 3: 
+		{
+			vec2 texSize = vec2( textureSize( u_BloomTexture, int( pc_Settings.LOD + 1.0f ) ) );
+			float scale = 1.0f;
+
+			vec3 upsampleTexture = Upsample( u_BloomTexture, pc_Settings.LOD + 1.0f, tc, 1.0f / texSize, scale );
+
+			vec3 last = textureLod( u_InputTexture, tc,  pc_Settings.LOD ).rgb;
+			color.rgb = last + upsampleTexture;
+		} break;
 	}
-	else if( pc_Settings.Stage == 0 )  // Downsample
-	{
-		color.rgb = Downsample( u_InputTexture, pc_Settings.LOD, tc, 1.0f / texSize );
-	}
-	else if( pc_Settings.Stage == -2 ) // First upsample 
-	{
-		vec2 texSize = vec2( textureSize( u_InputTexture, int( pc_Settings.LOD + 1.0f ) ) );
-		float scale = 1.0f;
 
-		vec3 upsampleTexture = Upsample( u_InputTexture, pc_Settings.LOD + 1.0f, tc, 1.0f / texSize, scale );
-
-		vec3 last = textureLod( u_InputTexture, tc, pc_Settings.LOD ).rgb;
-		color.rgb = last + upsampleTexture;
-	}
-	else if( pc_Settings.Stage == 1 ) // Upsample
-	{
-		vec2 texSize = vec2( textureSize( u_BloomTexture, int( pc_Settings.LOD + 1.0f ) ) );
-		float scale = 1.0f;
-
-		vec3 upsampleTexture = Upsample( u_BloomTexture, pc_Settings.LOD + 1.0f, tc, 1.0f / texSize, scale );
-
-		vec3 last = textureLod( u_InputTexture, tc,  pc_Settings.LOD ).rgb;
-		color.rgb = last + upsampleTexture;
-	}
-
+	// Store the final image.
 	imageStore( o_Image, ivec2( gl_GlobalInvocationID ), color );
 }

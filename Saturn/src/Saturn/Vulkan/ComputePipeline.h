@@ -42,14 +42,39 @@ namespace Saturn {
 		ComputePipeline( Ref<Shader> ComputeShader );
 		~ComputePipeline();
 
+		// Begin pipeline in COMPUTE queue
 		void Bind();
+
+		// End pipeline in COMPUTE queue
 		void Unbind();
 
+		//
 		// Bind the pipeline to a command buffer using the graphics queue.
+		// 
+		// NB: Using this function will cause the compute pipeline to be executed in the graphics queue.
+		//
 		void BindWithCommandBuffer( VkCommandBuffer CommandBuffer );
 
-		// Bind using the compute queue.
+		//
+		// ExecuteWithExternalPC - execute the pipeline now i.e. vkCmdDispatch
+		// 
+		// @param material - the material that will be bound during this operation.
+		// @param X - work group count X
+		// @param Y - work group count Y
+		// @param Z - work group count Z
+		//
 		void Execute( Ref<Material> material, uint32_t X, uint32_t Y, uint32_t Z );
+		
+		//
+		// ExecuteWithExternalPC - execute the pipeline now i.e. vkCmdDispatch with an external push constant.
+		// 
+		// @param material - the material that will be bound during this operation.
+		// @param PushConstant - PushConstant buffer, cannot be zero or null
+		// @param X - work group count X
+		// @param Y - work group count Y
+		// @param Z - work group count Z
+		//
+		void ExecuteWithExternalPC( Ref<Material> material, Buffer PushConstant, uint32_t X, uint32_t Y, uint32_t Z );
 
 		VkCommandBuffer GetCommandBuffer() const { return m_CommandBuffer; }
 		VkPipelineLayout GetLayout() const { return m_PipelineLayout; }
@@ -60,11 +85,11 @@ namespace Saturn {
 	private:
 		VkPipeline m_Pipeline = nullptr;
 		VkPipelineLayout m_PipelineLayout = nullptr;
+		VkCommandBuffer m_CommandBuffer = nullptr;
 
 		Ref<Shader> m_ComputeShader;
 
-		VkCommandBuffer m_CommandBuffer = nullptr;
-
 		bool m_UseGraphicsQueue = false;
 	};
+
 }

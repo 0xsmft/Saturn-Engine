@@ -78,6 +78,17 @@ namespace Saturn {
 		void SetResource( const std::string& Name, const Ref<Texture2D>& Texture );
 
 		// 
+		// Set a image view resource.
+		// 
+		// NB: The texture param MUST be the same as the
+		// 
+		// @param Name -- the name of the resource in the SHADER e.g. u_MyTexture
+		// @param Texture -- the texture
+		// @param ImageViewTexture -- image view index that the image view will come from
+		//
+		void SetResourceWithVulkanInfo( const std::string& Name, Ref<Texture2D> Texture, const VkDescriptorImageInfo& rVulkanInfo );
+
+		// 
 		// Set a single texture resource in a texture array.
 		// 
 		// @param Name -- the name of the resource in the SHADER e.g. u_MyTextureArray

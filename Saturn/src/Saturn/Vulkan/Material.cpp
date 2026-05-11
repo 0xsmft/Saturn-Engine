@@ -336,6 +336,38 @@ namespace Saturn {
 		}
 	}
 
+	void Material::SetResourceWithVulkanInfo( const std::string& Name, Ref<Texture2D> Texture, const VkDescriptorImageInfo& rVulkanInfo )
+	{
+		m_Textures[ Name ] = Texture;
+
+		auto Itr = std::find_if( m_DescriptorSetTemplate.SampledImages.begin(), m_DescriptorSetTemplate.SampledImages.end(),
+			[ Name ]( const ShaderSampledImage& rImage )
+		{
+			return rImage.Name == Name;
+		} );
+
+		if( Itr != m_DescriptorSetTemplate.SampledImages.end() )
+		{
+			ShaderSampledImage ssi = *( Itr );
+			m_DescriptorSetTemplate.WriteDescriptorSets[ ssi.Binding ].pImageInfo = &rVulkanInfo;
+		}
+		else
+		{
+			// Check for if resource is a storage image
+			Itr = std::find_if( m_DescriptorSetTemplate.StorageImages.begin(), m_DescriptorSetTemplate.StorageImages.end(),
+				[ Name ]( const ShaderSampledImage& rImage )
+			{
+				return rImage.Name == Name;
+			} );
+
+			if( Itr != m_DescriptorSetTemplate.StorageImages.end() )
+			{
+				ShaderSampledImage ssi = *( Itr );
+				m_DescriptorSetTemplate.WriteDescriptorSets[ ssi.Binding ].pImageInfo = &rVulkanInfo;
+			}
+		}
+	}
+
 	Ref<Texture2D> Material::GetResource( const std::string& Name )
 	{
 		if( m_Textures.size() > 0 )

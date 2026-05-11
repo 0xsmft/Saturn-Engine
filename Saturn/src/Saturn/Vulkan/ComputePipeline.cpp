@@ -81,14 +81,25 @@ namespace Saturn {
 		vkCmdDispatch( m_CommandBuffer, X, Y, Z );
 	}
 
+	void ComputePipeline::ExecuteWithExternalPC( Ref<Material> material, Buffer PushConstant, uint32_t X, uint32_t Y, uint32_t Z )
+	{
+		material->Bind( m_CommandBuffer, m_PipelineLayout, {}, VK_PIPELINE_BIND_POINT_COMPUTE );
+
+		if( PushConstant.Size )
+		{
+			vkCmdPushConstants( m_CommandBuffer, m_PipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, ( uint32_t ) PushConstant.Size, PushConstant.Data );
+		}
+
+		vkCmdDispatch( m_CommandBuffer, X, Y, Z );
+	}
+
 	void ComputePipeline::Unbind()
 	{
-		auto LogicalDevice = VulkanContext::Get()->GetDevice();
-
-		auto ComputeQueue = VulkanContext::Get()->GetComputeQueue();
-
 		if( m_UseGraphicsQueue )
 			return;
+
+		auto LogicalDevice = VulkanContext::Get()->GetDevice();
+		auto ComputeQueue = VulkanContext::Get()->GetComputeQueue();
 
 		vkEndCommandBuffer( m_CommandBuffer );
 

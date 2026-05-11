@@ -46,7 +46,7 @@
 
 #include "Pipeline.h"
 
-constexpr int SHADOW_CASCADE_COUNT = 4;
+constexpr uint32_t SHADOW_CASCADE_COUNT = 4u;
 constexpr int MAX_POINT_LIGHTS = 512;
 
 namespace Saturn {
@@ -393,6 +393,7 @@ namespace Saturn {
 		Ref<Pass> SelectedGeometryPass = nullptr;
 		Ref<Framebuffer> SelectedGeometryFramebuffer = nullptr;
 		Ref<Pipeline> SelectedGeometryPipeline = nullptr;
+		Ref<Pipeline> SelectedGeometryDynamicPipeline = nullptr;
 		Ref<Material> SelectedGeometryMaterial = nullptr;
 
 		// Jumpflooding
@@ -485,6 +486,7 @@ namespace Saturn {
 		Ref< Shader > BloomShader = nullptr;
 		Ref< Shader > PhysicsOutlineShader = nullptr;
 		Ref< Shader > SelectionShader = nullptr;
+		Ref< Shader > SelectionDynamicShader = nullptr;
 		Ref< Shader > JmpFloodFirstShader = nullptr;
 		Ref< Shader > JmpFloodEvenShader = nullptr;
 		Ref< Shader > JmpFloodOddShader = nullptr;
@@ -512,10 +514,12 @@ namespace Saturn {
 
 		void SubmitDynamicMesh( SharedPtr<Entity> entity, Ref<SkeletalMesh> mesh, Ref<MaterialRegistry> materialRegistry, const glm::mat4& transform, const std::vector<glm::mat4>& boneTransforms );
 		
-		// NOTE: mesh is not the physical mesh in the entity, it is the phsyics mesh!
+		// NOTE: mesh is not the physical mesh in the entity, it is the physics mesh!
 		void SubmitPhysicsCollider( SharedPtr<Entity> entity, Ref< StaticMesh > mesh, Ref<MaterialRegistry> materialRegistry, const glm::mat4& transform );
 
 		void SubmitSelectedStaticMesh( SharedPtr<Entity> entity, Ref< StaticMesh > mesh, Ref<MaterialRegistry> materialRegistry, const glm::mat4& transform );
+
+		void SubmitSelectedDynamicMesh( SharedPtr<Entity> entity, Ref< SkeletalMesh > mesh, Ref<MaterialRegistry> materialRegistry, const glm::mat4& transform );
 
 		void SetViewportSize( uint32_t w, uint32_t h );
 		void SetViewportPosition( float x, float y ) { m_RendererData.ViewportPos = glm::vec2( x, y ); }
@@ -636,6 +640,7 @@ namespace Saturn {
 		
 		std::unordered_map< StaticMeshKey, DynamicDrawCommand > m_DynamicShadowMapDrawList;
 		std::unordered_map< StaticMeshKey, DynamicDrawCommand > m_DynamicDrawList;
+		std::unordered_map< StaticMeshKey, DynamicDrawCommand > m_DynamicSelectedMeshDrawList;
 
 		//////////////////////////////////////////////////////////////////////////
 

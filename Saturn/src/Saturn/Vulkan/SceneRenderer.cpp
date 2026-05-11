@@ -853,6 +853,7 @@ namespace Saturn {
 		if( !m_RendererData.SelectionShader )
 		{
 			m_RendererData.SelectionShader = ShaderLibrary::Get().FindOrLoad( "SelectedGeometry", "content/shaders/SelectedGeometry.glsl" );
+			m_RendererData.SelectionDynamicShader = ShaderLibrary::Get().FindOrLoad( "SelectedGeometry-Dynamic", "content/shaders/SelectedGeometry-Dynamic.glsl" );
 		}
 
 		m_RendererData.SelectedGeometryMaterial = Ref<Material>::Create( m_RendererData.SelectionShader, "SelectedGeometry" );
@@ -885,6 +886,18 @@ namespace Saturn {
 		};
 
 		m_RendererData.SelectedGeometryPipeline = Ref<Pipeline>::Create( PipelineSpec );
+
+		if( !m_RendererData.SelectedGeometryDynamicPipeline )
+			m_RendererData.SelectedGeometryDynamicPipeline = nullptr;
+
+		PipelineSpec.Name = "Selected Geometry (Dynamic)";
+		PipelineSpec.Shader = m_RendererData.SelectionDynamicShader;
+		PipelineSpec.AdditionalLayoutAtEnd = {
+			{ ShaderDataType::Int4,   "a_BoneIndices" },
+			{ ShaderDataType::Float4, "a_BoneWeights" }
+		};
+
+		m_RendererData.SelectedGeometryDynamicPipeline = Ref<Pipeline>::Create( PipelineSpec );
 	}
 
 	void SceneRenderer::InitJumpFlood()
@@ -1686,6 +1699,38 @@ namespace Saturn {
 			const StaticMeshKey key = { mesh->ID, materialRegistry, ( uint32_t ) i, true };
 
 			auto& command = m_SelectedStaticMeshDrawList[ key ];
+			command.Mesh = mesh;
+			command.SubmeshIndex = ( uint32_t ) i;
+			++command.Instances;
+
+			auto& rData = m_RendererData.MeshTransforms[ key ].Data.emplace_back();
+			rData.TransfromBufferR[ 0 ] = {
+				submeshTransform[ 0 ][ 0 ], submeshTransform[ 1 ][ 0 ], submeshTransform[ 2 ][ 0 ], submeshTransform[ 3 ][ 0 ]
+			};
+			rData.TransfromBufferR[ 1 ] = {
+				submeshTransform[ 0 ][ 1 ], submeshTransform[ 1 ][ 1 ], submeshTransform[ 2 ][ 1 ], submeshTransform[ 3 ][ 1 ]
+			};
+			rData.TransfromBufferR[ 2 ] = {
+				submeshTransform[ 0 ][ 2 ], submeshTransform[ 1 ][ 2 ], submeshTransform[ 2 ][ 2 ], submeshTransform[ 3 ][ 2 ]
+			};
+			rData.TransfromBufferR[ 3 ] = {
+				submeshTransform[ 0 ][ 3 ], submeshTransform[ 1 ][ 3 ], submeshTransform[ 2 ][ 3 ], submeshTransform[ 3 ][ 3 ]
+			};
+		}
+	}
+
+	void SceneRenderer::SubmitSelectedDynamicMesh( SharedPtr<Entity> entity, Ref< SkeletalMesh > mesh, Ref<MaterialRegistry> materialRegistry, const glm::mat4& transform )
+	{
+		SAT_PF_EVENT();
+
+		const auto& rSubmeshes = mesh->Submeshes();
+		for( size_t i = 0; i < rSubmeshes.size(); ++i )
+		{
+			const glm::mat4 submeshTransform = transform * rSubmeshes[ i ].Transform;
+
+			const StaticMeshKey key = { mesh->ID, materialRegistry, ( uint32_t ) i, true };
+
+			auto& command = m_DynamicSelectedMeshDrawList[ key ];
 			command.Mesh = mesh;
 			command.SubmeshIndex = ( uint32_t ) i;
 			++command.Instances;
@@ -2580,7 +2625,6 @@ namespace Saturn {
 		vkCmdSetScissor( CommandBuffer, 0, 1, &Scissor );
 
 		// Render
-
 		struct UB_Matrices
 		{
 			glm::mat4 ViewProjection;
@@ -2605,6 +2649,26 @@ namespace Saturn {
 				m_RendererData.SubmeshTransformData[ frame ].VertexBuffer,
 				rTransformData.Offset,
 				Cmd.SubmeshIndex );
+		}
+
+		uint32_t index = 0;
+		for( auto& [key, Cmd] : m_DynamicSelectedMeshDrawList )
+		{
+			const auto& rTransformData = m_RendererData.MeshTransforms[ key ];
+
+			Renderer::Get()->RenderDynamicMeshWithoutMaterial(
+				CommandBuffer,
+				m_RendererData.SelectedGeometryDynamicPipeline,
+				Cmd.Mesh,
+				m_RendererData.SelectedGeometryMaterial,
+				m_RendererData.UniformBufferSet,
+				m_RendererData.StorageBufferSet,
+				Cmd.Instances,
+				m_RendererData.SubmeshTransformData[ frame ].VertexBuffer,
+				rTransformData.Offset,
+				Cmd.SubmeshIndex, index, m_RendererData.PreDepthDynamicMaterialSet2 );
+
+			index += Cmd.Instances;
 		}
 
 		m_RendererData.SelectedGeometryPass->EndPass();
@@ -3084,6 +3148,7 @@ namespace Saturn {
 		m_DynamicShadowMapDrawList.clear();
 		m_PhysicsColliderDrawList.clear();
 		m_SelectedStaticMeshDrawList.clear();
+		m_DynamicSelectedMeshDrawList.clear();
 		m_ScheduledFunctions.clear();
 		m_RendererData.MeshTransforms.clear();
 		m_RendererData.BoneTransformMap.clear();

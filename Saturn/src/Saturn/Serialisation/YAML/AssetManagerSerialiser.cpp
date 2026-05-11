@@ -93,7 +93,9 @@ namespace Saturn {
 
 			out << YAML::Key << "Type" << YAML::Value << AssetTypeToString( asset->Type );
 
-			out << YAML::Key << "Version" << YAML::Value << asset->Version;
+			// If we serialise as a byte YAML will write it as "\x01" and refuse to read it back...
+			// so we can write it as a two-byte value.
+			out << YAML::Key << "Version" << YAML::Value << ( uint16_t ) asset->Version;
 
 			out << YAML::EndMap;
 		}
@@ -158,7 +160,9 @@ namespace Saturn {
 			auto type = asset[ "Type" ].as< std::string >();
 
 			// Fallback to newest version if no version is present.
-			auto version = asset[ "Version" ].as< uint32_t >( SAT_CURRENT_VERSION );
+			// NOTE: uint16_t is on purpose... see serialisation function for more detail.
+			auto version = asset[ "Version" ].as< uint16_t >( ( uint16_t ) AssetVersion::Latest );
+			SAT_CORE_ASSERT( version < std::numeric_limits<uint8_t>::max(), "Asset version is greater than the max of 255!" );
 
 			assetRegistry->AddAsset( assetID );
 
@@ -176,16 +180,11 @@ namespace Saturn {
 
 			DeserialisedAsset->Name = path.stem().string();
 			DeserialisedAsset->Type = AssetTypeFromString( type );
-			DeserialisedAsset->Version = version;
+			DeserialisedAsset->Version = ( AssetVersion ) version;
 
-			if( version != SAT_CURRENT_VERSION )
+			if( DeserialisedAsset->Version < AssetVersion::Latest )
 			{
-				std::string versionString = SAT_CURRENT_VERSION_STRING;
-
-				std::string assetVersionString;
-				SAT_DECODE_VER_STRING( version, assetVersionString );
-
-				SAT_CORE_WARN( "Asset \"{0}\" was created in a different version (asset version was {1}) Saturn version is {2}", DeserialisedAsset->Name, assetVersionString, versionString );
+				SAT_CORE_WARN( "Asset \"{0}\" was created in a different version (asset version was {1}) Lastest is {2}", DeserialisedAsset->Name, ( uint8_t ) DeserialisedAsset->Version, ( uint8_t ) AssetVersion::Latest );
 
 				differingAssetVersions |= true;
 			}

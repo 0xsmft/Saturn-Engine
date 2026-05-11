@@ -28,34 +28,55 @@
 
 #pragma once
 
-#include "Saturn/NodeEditor/Pin.h"
+#include "Saturn/NodeEditor/NodeEditorTaskBase.h"
 
 namespace Saturn {
 
-	class MaterialViewerColorPin : public Pin
+	SCLASS();
+	class SMaterialGraphColorPickerTask : public NodeEditorTaskBase
 	{
+		SAT_DECLARE_CLASS( SMaterialGraphColorPickerTask, NodeEditorTaskBase );
 	public:
-		MaterialViewerColorPin() = default;
-		MaterialViewerColorPin( const std::string& rName, PinKind kind, bool readonly = false, bool accpetOnlyTextures = false );
-		MaterialViewerColorPin( UUID id, const std::string& rName, PinType type, UUID nodeID );
-
-		~MaterialViewerColorPin();
+		SMaterialGraphColorPickerTask();
+		virtual ~SMaterialGraphColorPickerTask();
 
 	public:
-		glm::vec3 Data{};
+#if !defined(SAT_DIST)
+		virtual void PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode ) override;
+#endif
+		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther ) override;
 
-		void SetReadOnly( bool value ) { m_ReadOnly = value; }
-		bool IsReadOnly() const { return m_ReadOnly; }
-
-	public:
-		void Serialise( std::ofstream& rStream ) const override;
-		void Deserialise( FDependentIStream& rStream ) override;
-
-	protected:
-		void OnRenderOutput() override final;
+		virtual NodeEditorTaskState Tick( Timestep ts ) override;
+		virtual void Reset() override;
+		virtual void Serialise( std::ofstream& rStream ) const override;
+		virtual void Deserialise( FDependentIStream& rStream ) override;
 
 	private:
-		bool m_ReadOnly = false;
-		bool m_AccpetOnlyTextures = false;
+		glm::vec3 m_Color{ 1.0f };
 	};
+	
+	SCLASS();
+	class SMaterialGraphOutputNodeTask : public NodeEditorTaskBase
+	{
+		SAT_DECLARE_CLASS( SMaterialGraphOutputNodeTask, NodeEditorTaskBase );
+	public:
+		SMaterialGraphOutputNodeTask();
+		virtual ~SMaterialGraphOutputNodeTask();
+
+	public:
+#if !defined(SAT_DIST)
+		virtual void PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode ) override;
+#endif
+		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther ) override;
+
+		virtual NodeEditorTaskState Tick( Timestep ts ) override;
+		virtual void Reset() override;
+		virtual void Serialise( std::ofstream& rStream ) const override;
+		virtual void Deserialise( FDependentIStream& rStream ) override;
+
+	private:
+		bool m_AlbedoIsColor = false;
+		UUID m_AlbedoID = 0, m_NormalID = 0, m_RoughnessID = 0, m_MetallicID = 0, m_EmissionID = 0;
+	};
+
 }

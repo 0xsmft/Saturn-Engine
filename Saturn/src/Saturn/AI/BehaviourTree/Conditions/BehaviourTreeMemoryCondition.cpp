@@ -50,7 +50,7 @@ namespace Saturn {
 	{
 	}
 
-	void BehaviourTreeMemoryCondition::InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
+	void BehaviourTreeMemoryCondition::InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditor* pEditor, NodeEditorNodeBase* pNode )
 	{
 		BehaviourTreeNodeEditor* pBehaviourTreeNodeEditor = dynamic_cast< BehaviourTreeNodeEditor* >( pEditor );
 		m_pRTBlackboard = pBehaviourTreeNodeEditor->GetBlackboard().Get();

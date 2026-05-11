@@ -269,8 +269,7 @@ namespace Saturn {
 	{
 		// TODO: For now this function will just update the "Version" variable in the asset
 		//       In the future we will want to actually upgrade the asset.
-
-		AssetManager::Get()->BumpAssetVersion( SAT_CURRENT_VERSION );
+		AssetManager::Get()->BumpAssetVersion();
 		
 		AssetManagerSerialiser ars;
 		ars.Serialise();

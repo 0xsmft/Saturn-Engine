@@ -86,7 +86,7 @@ namespace Saturn {
 
 		rBuilder.EndHeader();
 
-		NodeEditorBase* pOuter = dynamic_cast< NodeEditorBase* >( GetParentObject() );
+		NodeEditor* pOuter = dynamic_cast< NodeEditor* >( GetParentObject() );
 
 		for( auto& rInput : Inputs )
 		{

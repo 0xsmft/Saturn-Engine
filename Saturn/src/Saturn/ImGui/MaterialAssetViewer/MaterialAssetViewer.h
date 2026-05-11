@@ -28,21 +28,19 @@
 
 #pragma once
 
+#include "MaterialGraph.h"
+
 #include "Saturn/ImGui/AssetViewer.h"
+
 #include "Saturn/Asset/MaterialAsset.h"
-#include "Saturn/NodeEditor/NodeEditorBase.h"
-#include "Saturn/NodeEditor/Runtime/NodeEditorRuntime.h"
 
 namespace Saturn {
-
-	class NodeEditor;
-	class NodeEditorNodeBase;
 
 	class MaterialAssetViewer : public AssetViewer
 	{
 	public:
 		MaterialAssetViewer( AssetID id );
-		~MaterialAssetViewer();
+		virtual ~MaterialAssetViewer();
 
 		virtual void OnImGuiRender() override;
 		virtual void OnUpdate( Timestep ts ) override {}
@@ -58,13 +56,12 @@ namespace Saturn {
 		void SetupNodeEditorCallbacks();
 		void SetupNewNodeEditor();
 		void SetupNodesFromMaterial();
-		void CreateNodesFromTexture( const Ref<Texture2D>& rTexture, int slot );
+		void CreateNodesFromTexture( Ref<Texture2D> texture, int slot );
 
 	private:
+		SharedPtr<MaterialGraph> m_NodeEditor = nullptr;
 		Ref<MaterialAsset> m_HostMaterialAsset = nullptr;
 		Ref<Material> m_EditingMaterial = nullptr;
-
-		SharedPtr<NodeEditor> m_NodeEditor = nullptr;
 
 		UUID m_OutputNodeID = 0;
 	};

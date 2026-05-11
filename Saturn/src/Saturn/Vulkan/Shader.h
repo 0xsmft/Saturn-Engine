@@ -43,7 +43,7 @@
 
 namespace Saturn {
 	
-	enum class ShaderType : uint32_t
+	enum class ShaderType : uint8_t
 	{
 		None = 0,
 		Vertex = 1,
@@ -191,6 +191,10 @@ namespace Saturn {
 	//
 	// Our C++ information would be:
 	// u_PushConstantData, ShaderType::Vertex, 128, MemberOffsets[(u_PushConstantData.ViewProjection, 0), (u_PushConstantData.View, 64)]
+	//
+	// NB: Push constant must be NOT be larger than maxPushConstantsSize specified in VkPhysicalDeviceLimits
+	// if there is more than one device, we pick the largest one.
+	//
 	struct ShaderPushConstantTemplate
 	{
 		std::string Name;

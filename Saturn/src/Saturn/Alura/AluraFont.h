@@ -31,7 +31,10 @@
 #include "Saturn/Asset/Asset.h"
 #include "Saturn/Vulkan/Texture.h"
 
+#include "Saturn/Serialisation/Raw/RawSerialisationBase.h"
+
 #include <filesystem>
+#include <map>
 
 namespace Saturn {
 
@@ -162,11 +165,14 @@ namespace Saturn {
 
 		glm::vec2 CalcTextSize( float fontSize, const std::string& rText );
 
+#if !defined(SAT_DIST)
 		std::filesystem::path GetFontFilepath() const { return m_FontFilepath; }
 		std::string GetFontName() const { return m_Name; }
 
-#if !defined(SAT_DIST)
 		void OnReimport( const std::filesystem::path& rPath );
+#else
+		std::filesystem::path GetFontFilepath() const { return ""; }
+		std::string GetFontName() const { return ""; }
 #endif
 
 	private:
@@ -176,9 +182,11 @@ namespace Saturn {
 #endif
 
 	private:
+#if !defined(SAT_DIST)
 		std::string m_Name;
 		// The path to the font source i.e. MyFont.ttf
 		std::filesystem::path m_FontFilepath;
+#endif
 		AluraFontData m_AluraFontData{};
 		Ref<Texture2D> m_TextureAtlas;
 		

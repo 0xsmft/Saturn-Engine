@@ -26,54 +26,108 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "MaterialGraph.h"
 
-#include "Saturn/Core/UUID.h"
+#include "MaterialGraphTaskHandler.h"
 
-#include <string>
-#include <vector>
+#include "Saturn/Asset/MaterialAsset.h"
 
 namespace Saturn {
 
-	enum class NodeEditorMessageSeverity : uint8_t 
+	MaterialGraph::MaterialGraph()
+		: NodeEditor()
 	{
-		Info,
-		Warning,
-		Error
-	};
+	}
 
-	struct NodeEditorMessage
+	MaterialGraph::MaterialGraph( AssetID id )
+		: NodeEditor( id )
 	{
-		std::string MessageText;
-		UUID ID;
-		NodeEditorMessageSeverity Type = NodeEditorMessageSeverity::Info;
-	};
+	}
 
-	class NodeEditorOutput
+	MaterialGraph::~MaterialGraph()
 	{
-	public:
-		NodeEditorOutput( UUID outputWindowID );
-		~NodeEditorOutput();
+	}
 
-		void Draw();
-		void ClearOutput();
-		void PushMessage( const NodeEditorMessage& rMessageData );
+	SharedPtr<NodeEditorNodeBase> MaterialGraph::SetupNewNodeEditor( Ref<Material> material )
+	{
+		return nullptr;
+	}
 
-		[[nodiscard]] bool IsOpen() const { return m_ShowWindow; }
+	void MaterialGraph::SetHostMaterialAsset( Ref<MaterialAsset> asset )
+	{
+		m_HostMaterialAsset = asset;
+		m_EditingMaterial = Ref<Material>( m_HostMaterialAsset->GetMaterial() );
 
-		inline void ShowOrHide() { m_ShowWindow ^= 1; }
-		inline void Hide() { m_ShowWindow = false; }
-		inline void Show() { m_ShowWindow = true; }
+		if( !m_TaskHandler )
+			m_TaskHandler = Ref<MaterialGraphTaskHandler>::Create( m_HostMaterialAsset->GetMaterial() );
+	}
 
-	private:
-		void DrawMessage( const NodeEditorMessage& rMessage );
-		void ClearMessage( UUID messageID );
+#if !defined(SAT_DIST)
+	void MaterialGraph::BuildTaskCache()
+	{
+		std::vector<SharedPtr<NodeEditorNodeBase>> order;
+		order.reserve( m_Nodes.size() );
 
-	private:
-		std::string m_WindowName{};
-		std::vector<NodeEditorMessage> m_Messages;
-		UUID m_SelectedMessageID = 0;
-		UUID m_OutputWindowID;
-		bool m_ShowWindow = true;
-	};
+		SharedPtr<NodeEditorNodeBase> outputNode = FindNode( "Material Output" );
+		TraverseFromStart( outputNode, NodeEditorFlowDirection::GoToRootNode,
+			[ & ]( const auto id )
+		{
+			order.push_back( FindNode( id ) );
+		} );
+
+		m_TaskCache.BuildMasterList( order );
+	}
+#endif
+
+#if !defined(SAT_DIST)
+	void MaterialGraph::OnNodeEditorEvent( NodeEditorAction action )
+	{
+		switch( action )
+		{
+			case NodeEditorAction::PreEvaluate: 
+			{
+				std::vector<SharedPtr<NodeEditorNodeBase>> order;
+				order.reserve( m_Nodes.size() );
+
+				SharedPtr<NodeEditorNodeBase> outputNode = FindNode( "Material Output" );
+				TraverseFromStart( outputNode, NodeEditorFlowDirection::GoToRootNode,
+					[ & ]( const auto id )
+				{
+					order.push_back( FindNode( id ) );
+				} );
+
+				m_PreCompiler->Init( order );
+			} break;
+
+			case NodeEditorAction::PostEvaluateSuccess:
+			{
+				BuildTaskCache();
+				SimulateChanges();
+
+				SaveAndMarkClean();
+			} break;
+
+			default:
+				break;
+		}
+	}
+#endif
+
+	void MaterialGraph::SimulateChanges()
+	{
+		m_TaskHandler->Init( m_TaskCache );
+
+		// Tick twice
+		// (1) to get the first task
+		// (2) to tick the first task
+		m_TaskHandler->Tick( 0.0f );
+		m_TaskHandler->Tick( 0.0f );
+	}
+
+	void MaterialGraph::ApplyMaterialChanges()
+	{
+
+	}
+
 }

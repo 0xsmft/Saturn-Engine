@@ -35,7 +35,7 @@
 
 namespace Saturn {
 
-	SharedPtr<SandboxNodeExampleNode> SandboxNodeLibrary::SpawnExampleNode( SharedPtr<NodeEditorBase> nodeEditor )
+	SharedPtr<SandboxNodeExampleNode> SandboxNodeLibrary::SpawnExampleNode( SharedPtr<NodeEditor> nodeEditor )
 	{
 		SandboxNodeExampleNode* pNode = NewObject<SandboxNodeExampleNode>( nodeEditor.Get() );
 
@@ -45,7 +45,7 @@ namespace Saturn {
 		return sp;
 	}
 
-	SharedPtr<SandboxNodeEditorNode> SandboxNodeLibrary::SpawnBaseClassNode( SharedPtr<NodeEditorBase> nodeEditor )
+	SharedPtr<SandboxNodeEditorNode> SandboxNodeLibrary::SpawnBaseClassNode( SharedPtr<NodeEditor> nodeEditor )
 	{
 		SandboxNodeEditorNode* pNode = NewObject<SandboxNodeEditorNode>( nodeEditor.Get() );
 
@@ -55,7 +55,7 @@ namespace Saturn {
 		return sp;
 	}
 
-	SharedPtr<SandboxNodeEditorOutputNode> SandboxNodeLibrary::SpawnOutputNode( SharedPtr<NodeEditorBase> nodeEditor )
+	SharedPtr<SandboxNodeEditorOutputNode> SandboxNodeLibrary::SpawnOutputNode( SharedPtr<NodeEditor> nodeEditor )
 	{
 		SandboxNodeEditorOutputNode* pNode = NewObject<SandboxNodeEditorOutputNode>( nodeEditor.Get() );
 

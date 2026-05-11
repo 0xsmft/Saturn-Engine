@@ -129,7 +129,7 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// STATIC API
 
-	SharedPtr<NodeEditorHintNode> NodeEditorHintNode::SpawnHintNode( SharedPtr<NodeEditorBase> nodeEditor )
+	SharedPtr<NodeEditorHintNode> NodeEditorHintNode::SpawnHintNode( SharedPtr<NodeEditor> nodeEditor )
 	{
 		SharedPtr<NodeEditorHintNode> node = ( NodeEditorHintNode* ) ClassMetadataHandler::Get().CreateClassObject( NodeEditorHintNode::StaticClass() );
 

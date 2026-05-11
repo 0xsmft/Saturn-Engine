@@ -42,6 +42,10 @@
 #include "Saturn/Asset/AssetExtensions.h"
 #include "Saturn/AI/BehaviourTree/BehaviourTreeMemorySpecification.h"
 #include "Saturn/Alura/AluraStylingProfile.h"
+#include "Saturn/Audio/SoundGraph/SoundGraph.h"
+#include "Saturn/AI/BehaviourTree/AssetViewer/Nodes/BehaviourTreeNodeBase.h"
+#include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeNodeEditor.h"
+#include "Saturn/Animation/AssetViewer/Graph/Animation/AnimGraph.h"
 
 #include "Saturn/Serialisation/YAML/AssetSerialisers.h"
 #include "Saturn/Serialisation/YAML/SceneSerialiser.h"
@@ -543,10 +547,10 @@ namespace Saturn {
 
 				asset->SetAbsolutePath( newPath );
 
-				std::ofstream fout( newPath );
-				fout.close();
-
-				AssetManager::Get()->Save();
+				SharedPtr<SoundGraph> soundGraph = SharedPtr<SoundGraph>::Create( id );
+				soundGraph->SetupNewNodeEditor();
+				soundGraph->NcSetCustomName( newPath.filename().string() );
+				soundGraph->SaveAndMarkClean();
 
 				UpdateFiles( true );
 				FindAndRenameItem( asset->Name );
@@ -564,10 +568,10 @@ namespace Saturn {
 
 				asset->SetAbsolutePath( newPath );
 
-				std::ofstream fout( newPath );
-				fout.close();
-
-				AssetManager::Get()->Save();
+				SharedPtr<BehaviourTreeNodeEditor> behaviourTree = SharedPtr<BehaviourTreeNodeEditor>::Create( id );
+				behaviourTree->SetupNewNodeEditor();
+				behaviourTree->NcSetCustomName( newPath.filename().string() );
+				behaviourTree->SaveAndMarkClean();
 
 				UpdateFiles( true );
 				FindAndRenameItem( asset->Name );
@@ -606,15 +610,11 @@ namespace Saturn {
 					newPath.replace_filename( std::format( "{0} ({1}).sac", "New Animation Controller", count ) );
 
 				asset->SetAbsolutePath( newPath );
-				/*
-				Ref<BehaviourTreeMemorySpecification> spec = Ref<BehaviourTreeMemorySpecification>::Create( asset );
 
-				BehaviourTreeMemorySpecAssetSerialiser btms;
-				btms.Serialise( spec );
-				*/
-
-				std::ofstream fout( newPath );
-				fout.close();
+				SharedPtr<AnimGraph> behaviourTree = SharedPtr<AnimGraph>::Create( id );
+				behaviourTree->SetupNewNodeEditor();
+				behaviourTree->NcSetCustomName( newPath.filename().string() );
+				behaviourTree->SaveAndMarkClean();
 
 				AssetManager::Get()->Save();
 
@@ -1118,7 +1118,6 @@ namespace Saturn {
 					prefab->Name = m_ClassInstanceName;
 					prefab->ID = prefabAsset->ID;
 					prefab->Type = prefabAsset->Type;
-					prefab->Flags = prefabAsset->Flags;
 
 					// Create the source entity.
 					SharedPtr<Entity> sourceEntity = nullptr;

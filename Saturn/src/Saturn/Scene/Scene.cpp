@@ -73,7 +73,7 @@
 #include "Saturn/ImGui/EditorEvents.h"
 #include "Saturn/ImGui/ImGuiWindowManager.h"
 
-#include "Saturn/Audio/SoundNodeEditor/GraphSoundAssetViewer.h"
+#include "Saturn/Audio/SoundGraph/GraphSoundAssetViewer.h"
 
 #include "Saturn/Physics/PhysicsDebugMeshes.h"
 #endif

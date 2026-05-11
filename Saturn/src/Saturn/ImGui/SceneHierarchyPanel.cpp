@@ -1558,6 +1558,7 @@ namespace Saturn {
 				modified |= Auxiliary::DrawFloatControl( "Volume", ap.Volume, 0.0f, 100.0f );
 				modified |= Auxiliary::DrawFloatControl( "Pitch", ap.Pitch, 0.0f, 100.0f );
 
+#if SAT_FEATURE_SOUNDGROUPS
 				ImGui::PushID( "##select_sound_grp" );
 
 				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24, 24 ) ) )
@@ -1610,6 +1611,7 @@ namespace Saturn {
 
 					ImGui::EndPopup();
 				}
+#endif
 			}
 
 			if( modified ) m_Context->MarkDirty();

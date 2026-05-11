@@ -46,7 +46,7 @@ namespace Saturn {
 	{
 	}
 
-	void AnimGraphTaskHandler::InitWithCustomOrder2( SharedPtr<NodeEditorBase> nodeEditor, const IndexedMap<UUID, SGraphTask*>& rOrder )
+	void AnimGraphTaskHandler::InitWithCustomOrder2( SharedPtr<NodeEditor> nodeEditor, const IndexedMap<UUID, SGraphTask*>& rOrder )
 	{
 		for( auto& [id, pTask] : rOrder )
 		{

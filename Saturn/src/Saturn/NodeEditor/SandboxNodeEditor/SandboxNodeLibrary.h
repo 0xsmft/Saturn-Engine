@@ -39,10 +39,10 @@ namespace Saturn {
 	class SandboxNodeLibrary
 	{
 	public:
-		static SharedPtr<SandboxNodeExampleNode> SpawnExampleNode( SharedPtr<NodeEditorBase> nodeEditor );
-		static SharedPtr<SandboxNodeEditorNode> SpawnBaseClassNode( SharedPtr<NodeEditorBase> nodeEditor );
+		static SharedPtr<SandboxNodeExampleNode> SpawnExampleNode( SharedPtr<NodeEditor> nodeEditor );
+		static SharedPtr<SandboxNodeEditorNode> SpawnBaseClassNode( SharedPtr<NodeEditor> nodeEditor );
 
-		static SharedPtr<SandboxNodeEditorOutputNode> SpawnOutputNode( SharedPtr<NodeEditorBase> nodeEditor );
+		static SharedPtr<SandboxNodeEditorOutputNode> SpawnOutputNode( SharedPtr<NodeEditor> nodeEditor );
 	};
 
 }

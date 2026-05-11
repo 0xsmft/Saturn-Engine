@@ -28,10 +28,11 @@
 
 #include "sppch.h"
 #include "Saturn/Vulkan/Mesh.h"
-#include "MaterialViewerNodes.h"
+#include "MaterialGraphNodes.h"
 
 #include "MaterialNodeEditorEvaluator.h"
-#include "MaterialViewerColorPin.h"
+#include "MaterialGraphColorPin.h"
+#include "MaterialGraphTasks.h"
 
 #include "Saturn/NodeEditor/AssetIDPin.h"
 
@@ -50,7 +51,7 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// MATERIAL NODE LIBRARY
 
-	SharedPtr<MaterialOutputNode> MaterialNodeLibrary::SpawnOutputNode( SharedPtr<NodeEditorBase> nodeEditor )
+	SharedPtr<MaterialOutputNode> MaterialNodeLibrary::SpawnOutputNode( SharedPtr<NodeEditor> nodeEditor )
 	{
 		SharedPtr<MaterialOutputNode> node = NewObject<MaterialOutputNode>( nodeEditor.Get() );
 		nodeEditor->AddNode( node );
@@ -58,7 +59,7 @@ namespace Saturn {
 		return node;
 	}
 
-	SharedPtr<MaterialGetAssetNode> MaterialNodeLibrary::SpawnGetAsset( SharedPtr<NodeEditorBase> nodeEditor )
+	SharedPtr<MaterialGetAssetNode> MaterialNodeLibrary::SpawnGetAsset( SharedPtr<NodeEditor> nodeEditor )
 	{
 		SharedPtr<MaterialGetAssetNode> node = NewObject<MaterialGetAssetNode>( nodeEditor.Get() );
 		nodeEditor->AddNode( node );
@@ -66,7 +67,7 @@ namespace Saturn {
 		return node;
 	}
 
-	SharedPtr<MaterialColorPickerNode> MaterialNodeLibrary::SpawnColorPicker( SharedPtr<NodeEditorBase> nodeEditor )
+	SharedPtr<MaterialColorPickerNode> MaterialNodeLibrary::SpawnColorPicker( SharedPtr<NodeEditor> nodeEditor )
 	{
 		SharedPtr<MaterialColorPickerNode> node = NewObject<MaterialColorPickerNode>( nodeEditor.Get() );
 		nodeEditor->AddNode( node );
@@ -74,7 +75,7 @@ namespace Saturn {
 		return node;
 	}
 
-	SharedPtr<MaterialSampler2DNode> MaterialNodeLibrary::SpawnSampler2D( SharedPtr<NodeEditorBase> nodeEditor )
+	SharedPtr<MaterialSampler2DNode> MaterialNodeLibrary::SpawnSampler2D( SharedPtr<NodeEditor> nodeEditor )
 	{
 		SharedPtr<MaterialSampler2DNode> node = NewObject<MaterialSampler2DNode>( nodeEditor.Get() );
 		nodeEditor->AddNode( node );
@@ -82,7 +83,7 @@ namespace Saturn {
 		return node;
 	}
 
-	SharedPtr<MaterialSeparateColorRGBNode> MaterialNodeLibrary::SpawnSeparateColorRGB( SharedPtr<NodeEditorBase> nodeEditor )
+	SharedPtr<MaterialSeparateColorRGBNode> MaterialNodeLibrary::SpawnSeparateColorRGB( SharedPtr<NodeEditor> nodeEditor )
 	{
 		SharedPtr<MaterialSeparateColorRGBNode> node = NewObject<MaterialSeparateColorRGBNode>( nodeEditor.Get() );
 		nodeEditor->AddNode( node );
@@ -90,7 +91,7 @@ namespace Saturn {
 		return node;
 	}
 
-	SharedPtr<MaterialColorMixerNode> MaterialNodeLibrary::SpawnMixColors( SharedPtr<NodeEditorBase> nodeEditor )
+	SharedPtr<MaterialColorMixerNode> MaterialNodeLibrary::SpawnMixColors( SharedPtr<NodeEditor> nodeEditor )
 	{
 		SharedPtr<MaterialColorMixerNode> node = NewObject<MaterialColorMixerNode>( nodeEditor.Get() );
 		nodeEditor->AddNode( node );
@@ -116,6 +117,11 @@ namespace Saturn {
 	MaterialOutputNode::~MaterialOutputNode()
 	{
 		RuntimeData.MaterialAsset = nullptr;
+	}
+
+	NodeEditorTaskBase* MaterialOutputNode::ConvertToTask()
+	{
+		return NewObject<SMaterialGraphOutputNodeTask>( nullptr );
 	}
 
 	/*
@@ -242,8 +248,8 @@ namespace Saturn {
 		Color = ImColor( 0, 255, 0 );
 #endif
 
-		Inputs.push_back( Ref<AssetIDPin>::Create( "Asset",             PinKind::Input, AssetType::Texture ) );
-		Outputs.push_back( Ref<MaterialViewerColorPin>::Create( "RGBA", PinKind::Output, true ) );
+		Inputs.push_back( Ref<AssetIDPin>::Create( "Asset",            PinKind::Input, AssetType::Texture ) );
+		Outputs.push_back( Ref<MaterialViewerColorPin>::Create( "RGB", PinKind::Output, true ) );
 	}
 
 	MaterialSampler2DNode::~MaterialSampler2DNode()
@@ -301,8 +307,9 @@ namespace Saturn {
 		Color = ImColor( 252, 186, 3 );
 #endif
 		ExecutionType = NodeExecutionType::ColorPicker;
+		Flags = NodeFlags_ConstantEvaluated;
 
-		Outputs.push_back( Ref<MaterialViewerColorPin>::Create( "RGBA", PinKind::Output ) );
+		Outputs.push_back( Ref<MaterialViewerColorPin>::Create( "RGB", PinKind::Output ) );
 	}
 
 	MaterialColorPickerNode::~MaterialColorPickerNode()
@@ -340,6 +347,11 @@ namespace Saturn {
 		Outputs[ 0 ].As<MaterialViewerColorPin>()->Data = rColor;
 	}
 
+	NodeEditorTaskBase* MaterialColorPickerNode::ConvertToTask()
+	{
+		return NewObject<SMaterialGraphColorPickerTask>( nullptr );
+	}
+
 	//////////////////////////////////////////////////////////////////////////
 	// MATERIAL GET ASSET NODE
 
@@ -361,8 +373,9 @@ namespace Saturn {
 		Color = ImColor( 30, 117, 217 );
 #endif
 		ExecutionType = NodeExecutionType::AssetID;
+		Flags = NodeFlags_ConstantEvaluated;
 
-		Outputs.push_back( Ref<AssetIDPin>::Create( "Asset ID", PinKind::Output, AssetType::Texture ) );
+		Outputs.push_back( Ref<AssetIDPin>::Create( "Out ID", PinKind::Output, AssetType::Texture ) );
 	}
 
 	MaterialGetAssetNode::~MaterialGetAssetNode()

@@ -29,7 +29,7 @@
 #pragma once
 
 #include "Saturn/GameFramework/SClass.h"
-#include "Saturn/Serialisation/Raw/RawSerialisation.h"
+#include "Saturn/Serialisation/Raw/RawSerialisationBase.h"
 #include "Saturn/Core/UUID.h"
 
 #include <glm/glm.hpp>
@@ -37,7 +37,7 @@
 
 namespace Saturn {
 
-	enum class NodeEditorVariableDataType
+	enum class NodeEditorVariableDataType : uint8_t
 	{
 		Float, Int, ID, Bool, Vec2, Vec3, Vec4, Class, String, Unknown
 	};
@@ -83,10 +83,26 @@ namespace Saturn {
 		SClass*,
 		std::string>;
 
+	//
+	// NodeEditorVariable
+	// 
+	// Represents a user defined "variable" in the NodeEditor.
+	// 
+	// For example, the user in an AnimGraph may define "IsInAir" as a variable.
+	// 
+	// The value of the variable is stored in a type safe union i.e. std::variant.
+	//
 	class NodeEditorVariable : public RefTarget
 	{
 	public:
 		NodeEditorVariable() = default;
+		NodeEditorVariable( const NodeEditorVariable* pOther ) 
+			: m_Value( pOther->m_Value ),
+			m_Name( pOther->m_Name ),
+			m_VariableID( pOther->m_VariableID ),
+			m_DataType( pOther->m_DataType )
+		{
+		}
 
 		NodeEditorVariable( NodeEditorVariableDataType variableType ) 
 			: m_DataType( variableType )
@@ -100,6 +116,15 @@ namespace Saturn {
 				return std::get<TCppType>( m_Value );
 
 			return TCppType{};
+		}
+
+		template<typename TCppType>
+		typename TCppType* GetPtr()
+		{
+			if( HoldsProperType() )
+				return std::get_if<TCppType>( &m_Value );
+
+			return nullptr;
 		}
 
 		template<typename TCppType>
@@ -120,10 +145,10 @@ namespace Saturn {
 		const std::string& GetName() const { return m_Name; }
 
 	private:
-		NodeEditorVariableDataType m_DataType = NodeEditorVariableDataType::Unknown;
-		Saturn::UUID m_VariableID;
 		NodeEditorVariableTypes m_Value;
 		std::string m_Name;
+		Saturn::UUID m_VariableID;
+		NodeEditorVariableDataType m_DataType = NodeEditorVariableDataType::Unknown;
 
 	private:
 		friend class NodeEditor;

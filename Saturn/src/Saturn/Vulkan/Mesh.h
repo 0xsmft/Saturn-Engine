@@ -299,8 +299,10 @@ namespace Saturn {
 		void SetPhysicsMaterial( AssetID id );
 		const AssetID GetPhysicsMaterial() const { return m_PhysicsMaterial; }
 
+#if !defined(SAT_DIST)
 		void Import_SetImportBehaviour( uint32_t importBehaviour ) { m_MeshImportFlags = importBehaviour; }
 		const uint32_t GetImportBehaviour() const { return m_MeshImportFlags; }
+#endif
 
 		Ref<MaterialRegistry>& GetMaterialRegistry() { return m_MaterialRegistry; }
 		const Ref<MaterialRegistry>& GetMaterialRegistry() const { return m_MaterialRegistry; }
@@ -313,6 +315,9 @@ namespace Saturn {
 
 		// Return the number of faces
 		size_t GetFaceCount() const { return m_Indices.size(); }
+
+		std::vector<StaticVertex>& Vertices() { return m_Vertices; }
+		const std::vector<StaticVertex>& Vertices() const { return m_Vertices; }
 
 	protected:
 		void DeleteSourceModel() const;
@@ -365,14 +370,12 @@ namespace Saturn {
 		
 		virtual ~StaticMesh();
 		
+#if !defined(SAT_DIST)
 	public:
 		// Asset
 		virtual void OnDelete() override;
 		virtual void OnAssetDependencyReplace( AssetID oldID, AssetID newID ) override;
-
-	public:
-		std::vector<StaticVertex>& Vertices() { return m_Vertices; }
-		const std::vector<StaticVertex>& Vertices() const { return m_Vertices; }
+#endif
 
 	public:
 		void SerialiseData( std::ofstream& rStream ) const;
@@ -412,9 +415,11 @@ namespace Saturn {
 #endif
 
 	public:
+#if !defined(SAT_DIST)
 		// Asset
 		virtual void OnDelete() override;
 		virtual void OnAssetDependencyReplace( AssetID oldID, AssetID newID ) override;
+#endif
 
 	public:
 		void SerialiseData( std::ofstream& rStream ) const;

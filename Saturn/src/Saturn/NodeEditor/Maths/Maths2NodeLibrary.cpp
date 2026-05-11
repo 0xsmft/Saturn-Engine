@@ -41,7 +41,7 @@ namespace Saturn {
 	struct MathsNodeContextMenuCaller;
 
 #define SAT_DECLARE_SPAWN_MATHS_FUNCTION( ClassType, ClassName, FunctionName )			\
-SharedPtr<ClassType> ClassName::FunctionName( SharedPtr<NodeEditorBase> nodeEditor )	\
+SharedPtr<ClassType> ClassName::FunctionName( SharedPtr<NodeEditor> nodeEditor )	\
 {																						\
 	SharedPtr<ClassType> node = NewObject<ClassType>( nodeEditor.Get() );				\
 	nodeEditor->AddNode( node );														\
@@ -50,7 +50,7 @@ SharedPtr<ClassType> ClassName::FunctionName( SharedPtr<NodeEditorBase> nodeEdit
 }																						\
 template<> struct MathsNodeContextMenuCaller<ClassType>									\
 {																						\
-	static SharedPtr<ClassType> DoCall( SharedPtr<NodeEditorBase> nodeEditor )			\
+	static SharedPtr<ClassType> DoCall( SharedPtr<NodeEditor> nodeEditor )			\
 	{																					\
 		SharedPtr<ClassType> node;														\
 		if( ImGui::MenuItem( ClassType::M2_GetNodeName() ) )							\
@@ -110,7 +110,7 @@ SAT_DECLARE_SPAWN_MATHS_FUNCTION( SMaths2AddUIntNode,  ClassName, SpawnMathsAddU
 
 	//////////////////////////////////////////////////////////////////////////
 
-	SharedPtr<NodeEditorNodeBase> Maths2BoolNodeLibrary::DrawImGuiSelectionMenu( SharedPtr<NodeEditorBase> nodeEditor )
+	SharedPtr<NodeEditorNodeBase> Maths2BoolNodeLibrary::DrawImGuiSelectionMenu( SharedPtr<NodeEditor> nodeEditor )
 	{
 		SharedPtr<NodeEditorNodeBase> node;
 

@@ -26,96 +26,45 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "MaterialViewerColorPin.h"
+#pragma once
 
-#include "Saturn/NodeEditor/NodeEditorNodeBase.h"
-
-#include "Saturn/ImGui/ImGuiAuxiliary.h"
-
-#include "imgui.h"
-#include "imgui_internal.h"
+#include "Saturn/NodeEditor/UI/NodeEditor.h"
 
 namespace Saturn {
 
-	MaterialViewerColorPin::MaterialViewerColorPin( UUID id, const std::string& rName, PinType type, UUID nodeID )
-		: Pin( id, rName, type, nodeID )
+	class Material;
+	class MaterialAsset;
+	class MaterialGraphTaskHandler;
+
+	class MaterialGraph : public NodeEditor
 	{
-	}
+	public:
+		MaterialGraph();
+		MaterialGraph( AssetID id );
+		virtual ~MaterialGraph();
 
-	MaterialViewerColorPin::MaterialViewerColorPin( const std::string& rName, PinKind kind, bool readonly, bool accpetOnlyTextures )
-		: Pin( rName, accpetOnlyTextures ? PinType::Material_TextureColor : PinType::Material_Color, kind ), m_ReadOnly( readonly ), m_AccpetOnlyTextures( accpetOnlyTextures )
-	{
-		if( accpetOnlyTextures )
-			Type = PinType::Material_TextureColor;
-	}
+		SharedPtr<NodeEditorNodeBase> SetupNewNodeEditor( Ref<Material> material );
 
-	MaterialViewerColorPin::~MaterialViewerColorPin()
-	{
-	}
+		void SetHostMaterialAsset( Ref<MaterialAsset> asset );
 
-	void MaterialViewerColorPin::OnRenderOutput()
-	{
-		if( m_ReadOnly ) return;
+#if !defined(SAT_DIST)
+	public:
+		void BuildTaskCache();
+		void OnNodeEditorEvent( NodeEditorAction action );
+#endif
+	
+	private:
+		void SimulateChanges();
+		void ApplyMaterialChanges();
 
-		bool OpenAssetColorPicker = false;
-
-		ImGui::BeginHorizontal( "PickerH" );
-
-		ImVec2 buttonSize = { ImGui::GetFrameHeight(), ImGui::GetFrameHeight() };
-		ImRect boundingBox = { ImGui::GetCursorPos(), ImGui::GetCursorPos() + buttonSize };
-
-		bool hovered, held;
-
-		ImGui::ButtonBehavior( boundingBox, ImGui::GetID( &ID ), &hovered, &held );
-
-		// TODO: Ruby and ImGui do not match! so ImGuiButtonFlags_None = 0 and RubyMouse::Left = 0
-		if( hovered && ImGui::IsMouseClicked( ImGuiButtonFlags_None ) )
-		{
-			OpenAssetColorPicker = true;
-		}
-
-		Auxiliary::DrawColoredRect( buttonSize, ImVec4( Data.x, Data.y, Data.z, 255.0f ) );
-
-		ImGui::EndHorizontal();
-
-		ed::Suspend();
-
-		if( OpenAssetColorPicker )
-		{
-			ImGui::OpenPopup( "AssetColorPicker" );
-		}
-
-		ImGui::SetNextWindowSize( { 350.0f, 0.0f } );
-		if( ImGui::BeginPopup( "AssetColorPicker", ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize ) )
-		{
-			ImVec4 color = ImVec4( Data.x, Data.y, Data.z, 255.0f );
-
-			if( ImGui::ColorPicker3( "Color Picker", ( float* ) &color ) )
-			{
-				Data = glm::vec3( color.x, color.y, color.z );
-			}
-
-			ImGui::EndPopup();
-		}
-
-		ed::Resume();
-	}
-
-	//////////////////////////////////////////////////////////////////////////
-
-	void MaterialViewerColorPin::Serialise( std::ofstream& rStream ) const
-	{
-		Pin::Serialise( rStream );
-
-		RawSerialisation::WriteVec3( Data, rStream );
-	}
-
-	void MaterialViewerColorPin::Deserialise( FDependentIStream& rStream )
-	{
-		Pin::Deserialise( rStream );
-
-		RawSerialisation::ReadVec3( Data, rStream );
-	}
-
+	private:
+		// Local task handler needed for simulation.
+		Ref<MaterialGraphTaskHandler> m_TaskHandler;
+		Ref<MaterialAsset> m_HostMaterialAsset;
+	
+		// The temporary material that will have all of its changes applied in real time.
+		// Owned by this class.
+		Ref<Material> m_EditingMaterial;
+	};
+	
 }

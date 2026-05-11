@@ -147,7 +147,6 @@ namespace Saturn {
 		m_RuntimeScene->Path = asset->Path;
 		m_RuntimeScene->ID = asset->ID;
 		m_RuntimeScene->Type = asset->Type;
-		m_RuntimeScene->Flags = asset->Flags;
 
 		Scene::SetActiveScene( m_RuntimeScene.Get() );
 
@@ -174,7 +173,6 @@ namespace Saturn {
 		m_RuntimeScene->Path = asset->Path;
 		m_RuntimeScene->ID = asset->ID;
 		m_RuntimeScene->Type = asset->Type;
-		m_RuntimeScene->Flags = asset->Flags;
 
 		Scene::SetActiveScene( m_RuntimeScene.Get() );
 

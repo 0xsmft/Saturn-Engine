@@ -29,12 +29,26 @@
 #include "sppch.h"
 #include "NodeEditorTaskBase.h"
 
+#include "NodeEditorBase.h"
+
 #include "Saturn/Serialisation/Raw/RawSerialisation.h"
 
 namespace Saturn {
 
+#if !defined(SAT_DIST)
+	void NodeEditorTaskBase::PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode )
+	{
+		if( pNode )
+		{
+			m_NodeFlags = ( NodeEditorNodeFlags ) pNode->Flags;
+			m_NodeID = pNode->ID;
+		}
+	}
+#endif
+
 	void NodeEditorTaskBase::InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther )
 	{
+		m_pHandler = pHandler;
 		m_NodeID = pOther->m_NodeID;
 		m_NodeFlags = pOther->m_NodeFlags;
 	}

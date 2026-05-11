@@ -29,6 +29,9 @@
 #include "sppch.h"
 #include "SoundGraph.h"
 
+#include "Nodes/SoundGraphNodes.h"
+#include "SoundNodeLibrary.h"
+
 namespace Saturn {
 	
 	SoundGraph::SoundGraph( AssetID assetID )
@@ -40,6 +43,12 @@ namespace Saturn {
 	{
 	}
 
+	SharedPtr<NodeEditorNodeBase> SoundGraph::SetupNewNodeEditor()
+	{
+		return SoundNodeLibrary::SpawnOutputNode( SharedFromThis() );
+	}
+
+#if !defined(SAT_DIST)
 	void SoundGraph::OnImGuiRender()
 	{
 		NodeEditor::OnImGuiRender();
@@ -47,7 +56,6 @@ namespace Saturn {
 
 	void SoundGraph::OnTopBarRender()
 	{
-
 	}
 
 	void SoundGraph::OnNodeEditorEvent( NodeEditorAction action )
@@ -86,9 +94,11 @@ namespace Saturn {
 				break;
 		}
 	}
+#endif
 
 	void SoundGraph::BuildTaskCache()
 	{
+#if !defined(SAT_DIST)
 		std::vector< SharedPtr<NodeEditorNodeBase> > ids;
 		TraverseFromStart( FindNode( m_OutputID ), NodeEditorFlowDirection::GoToRootNode, [ & ]( const auto id )
 		{
@@ -98,6 +108,7 @@ namespace Saturn {
 		std::reverse( ids.begin(), ids.end() );
 
 		m_TaskCache.BuildMasterList( ids );
+#endif
 	}
 
 }

@@ -26,48 +26,96 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "MaterialGraphColorPin.h"
 
-#include "NodeEditorVariable.h"
+#include "Saturn/NodeEditor/NodeEditorNodeBase.h"
+
+#include "Saturn/ImGui/ImGuiAuxiliary.h"
+
+#include "imgui.h"
+#include "imgui_internal.h"
 
 namespace Saturn {
 
-	class NodeEditorTaskVariable
+	MaterialViewerColorPin::MaterialViewerColorPin( UUID id, const std::string& rName, PinType type, UUID nodeID )
+		: Pin( id, rName, type, nodeID )
 	{
-	public:
-		NodeEditorTaskVariable() = default;
-		~NodeEditorTaskVariable() = default;
+	}
 
-		template<typename TCppType>
-		typename const TCppType Get() const
+	MaterialViewerColorPin::MaterialViewerColorPin( const std::string& rName, PinKind kind, bool readonly, bool accpetOnlyTextures )
+		: Pin( rName, accpetOnlyTextures ? PinType::Material_TextureColor : PinType::Material_Color, kind ), m_ReadOnly( readonly ), m_AccpetOnlyTextures( accpetOnlyTextures )
+	{
+		if( accpetOnlyTextures )
+			Type = PinType::Material_TextureColor;
+	}
+
+	MaterialViewerColorPin::~MaterialViewerColorPin()
+	{
+	}
+
+	void MaterialViewerColorPin::OnRenderOutput()
+	{
+		if( m_ReadOnly ) return;
+
+		bool OpenAssetColorPicker = false;
+
+		ImGui::BeginHorizontal( "PickerH" );
+
+		ImVec2 buttonSize = { ImGui::GetFrameHeight(), ImGui::GetFrameHeight() };
+		ImRect boundingBox = { ImGui::GetCursorPos(), ImGui::GetCursorPos() + buttonSize };
+
+		bool hovered, held;
+
+		ImGui::ButtonBehavior( boundingBox, ImGui::GetID( &ID ), &hovered, &held );
+
+		// TODO: Ruby and ImGui do not match! so ImGuiButtonFlags_None = 0 and RubyMouseButton_Left = 0
+		if( hovered && ImGui::IsMouseClicked( ImGuiButtonFlags_None ) )
 		{
-			if( !std::holds_alternative<std::monostate>( m_Value ) )
+			OpenAssetColorPicker = true;
+		}
+
+		Auxiliary::DrawColoredRect( buttonSize, ImVec4( Data.x, Data.y, Data.z, 255.0f ) );
+
+		ImGui::EndHorizontal();
+
+		ed::Suspend();
+
+		if( OpenAssetColorPicker )
+		{
+			ImGui::OpenPopup( "AssetColorPicker" );
+		}
+
+		ImGui::SetNextWindowSize( { 350.0f, 0.0f } );
+		if( ImGui::BeginPopup( "AssetColorPicker", ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize ) )
+		{
+			ImVec4 color = ImVec4( Data.x, Data.y, Data.z, 255.0f );
+
+			if( ImGui::ColorPicker3( "Color Picker", ( float* ) &color ) )
 			{
-				return std::get<TCppType>( m_Value );
+				Data = glm::vec3( color.x, color.y, color.z );
 			}
 
-			return TCppType{};
+			ImGui::EndPopup();
 		}
 
-		template<typename TCppType>
-		typename TCppType* GetIf()
-		{
-			if( !std::holds_alternative<std::monostate>( m_Value ) )
-			{
-				return std::get_if<TCppType>( &m_Value );
-			}
+		ed::Resume();
+	}
 
-			return nullptr;
-		}
+	//////////////////////////////////////////////////////////////////////////
 
-		template<typename TCppType>
-		void WriteValue( TCppType value )
-		{
-			m_Value = value;
-		}
+	void MaterialViewerColorPin::Serialise( std::ofstream& rStream ) const
+	{
+		Pin::Serialise( rStream );
 
-	private:
-		NodeEditorVariableTypes m_Value;
-	};
+		RawSerialisation::WriteVec3( Data, rStream );
+	}
+
+	void MaterialViewerColorPin::Deserialise( FDependentIStream& rStream )
+	{
+		Pin::Deserialise( rStream );
+
+		RawSerialisation::ReadVec3( Data, rStream );
+	}
 
 }

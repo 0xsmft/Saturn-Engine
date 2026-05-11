@@ -28,46 +28,52 @@
 
 #pragma once
 
-#include "NodeEditorVariable.h"
+#include "Saturn/Core/UUID.h"
+
+#include <string>
+#include <vector>
 
 namespace Saturn {
 
-	class DataLine
+	enum class NodeEditorMessageSeverity : uint8_t 
+	{
+		Info,
+		Warning,
+		Error
+	};
+
+	struct NodeEditorMessage
+	{
+		std::string MessageText;
+		UUID ID;
+		NodeEditorMessageSeverity Type = NodeEditorMessageSeverity::Info;
+	};
+
+	class NodeEditorOutputWindow
 	{
 	public:
-		DataLine() = default;
-		~DataLine() = default;
+		NodeEditorOutputWindow( UUID outputWindowID );
+		~NodeEditorOutputWindow();
 
-		template<typename TCppType>
-		typename const TCppType Get() const
-		{
-			if( !std::holds_alternative<std::monostate>( m_Value ) )
-			{
-				return std::get<TCppType>( m_Value );
-			}
+		void Draw();
+		void ClearOutput();
+		void PushMessage( const NodeEditorMessage& rMessageData );
 
-			return TCppType{};
-		}
+		[[nodiscard]] bool IsOpen() const { return m_ShowWindow; }
 
-		template<typename TCppType>
-		typename TCppType* GetIf()
-		{
-			if( !std::holds_alternative<std::monostate>( m_Value ) )
-			{
-				return std::get_if<TCppType>( &m_Value );
-			}
-
-			return nullptr;
-		}
-
-		template<typename TCppType>
-		void WriteValue( TCppType value )
-		{
-			m_Value = value;
-		}
+		inline void ShowOrHide() { m_ShowWindow ^= 1; }
+		inline void Hide() { m_ShowWindow = false; }
+		inline void Show() { m_ShowWindow = true; }
 
 	private:
-		NodeEditorVariableTypes m_Value;
+		void DrawMessage( const NodeEditorMessage& rMessage );
+		void ClearMessage( UUID messageID );
+
+	private:
+		std::string m_WindowName{};
+		std::vector<NodeEditorMessage> m_Messages;
+		UUID m_SelectedMessageID = 0;
+		UUID m_OutputWindowID;
+		bool m_ShowWindow = true;
 	};
-	
 }

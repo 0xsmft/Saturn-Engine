@@ -28,9 +28,10 @@
 
 #pragma once
 
-#include "Saturn/NodeEditor/NodeEditorBase.h"
-
 namespace Saturn {
+
+	class NodeEditor;
+	class NodeEditorNodeBase;
 
 	// Standard set of errors
 	enum NodeEditorPreCompileStdErrors : uint32_t
@@ -88,7 +89,7 @@ namespace Saturn {
 	{
 	public:
 		NodeEditorPreCompilerBase() = default;
-		NodeEditorPreCompilerBase( SharedPtr<NodeEditorBase> nodeEditor ) 
+		NodeEditorPreCompilerBase( SharedPtr<NodeEditor> nodeEditor ) 
 			: m_NodeEditor( nodeEditor )
 		{
 		}
@@ -103,7 +104,7 @@ namespace Saturn {
 		virtual NodeEditorPreCompileResult PreCompile() = 0;
 
 	protected:
-		SharedPtr<NodeEditorBase> m_NodeEditor;
+		SharedPtr<NodeEditor> m_NodeEditor;
 		std::vector<SharedPtr<NodeEditorNodeBase>> m_Order;
 	};
 	

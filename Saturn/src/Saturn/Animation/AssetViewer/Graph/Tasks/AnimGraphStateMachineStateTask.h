@@ -44,7 +44,7 @@ namespace Saturn {
 		//////////////////////////////////////////////////////////////////////////
 		// NODE EDITOR TASK BASE
 
-		virtual void InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+		virtual void InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditor* pEditor, NodeEditorNodeBase* pNode ) override;
 		virtual NodeEditorTaskState Tick( Timestep ts ) override;
 		virtual void Reset() override;
 	};

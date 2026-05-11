@@ -48,7 +48,7 @@
 #include "Saturn/ImGui/MaterialAssetViewer/MaterialAssetViewer.h"
 #include "Saturn/ImGui/TextureViewer.h"
 #include "Saturn/ImGui/SoundAssetViewer.h"
-#include "Saturn/Audio/SoundNodeEditor/GraphSoundAssetViewer.h"
+#include "Saturn/Audio/SoundGraph/GraphSoundAssetViewer.h"
 #include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeAssetViewer.h"
 #include "Saturn/AI/BehaviourTree/BehaviourTreeMemoryAssetViewer.h"
 #include "Saturn/Animation/AssetViewer/SkeletonAssetViewer.h"

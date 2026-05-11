@@ -33,6 +33,11 @@
 
 namespace Saturn {
 
+	//
+	// NodeEditorVariableNode
+	//
+	// The node that represents a NodeEditorVariable
+	//
 	SCLASS();
 	class NodeEditorVariableNode : public NodeEditorNodeBase
 	{
@@ -40,9 +45,7 @@ namespace Saturn {
 	public:
 		NodeEditorVariableNode();
 		NodeEditorVariableNode( const std::string& rName, Ref<NodeEditorVariable> var );
-		~NodeEditorVariableNode();
-
-		void InitPinsForVariable();
+		virtual ~NodeEditorVariableNode();
 
 		Ref<NodeEditorVariable> GetVariable() const { return m_Variable; }
 
@@ -50,20 +53,21 @@ namespace Saturn {
 		//////////////////////////////////////////////////////////////////////////
 		// NodeEditorNodeBase
 
-		virtual void Serialise( std::ofstream& rStream, bool isForDist ) const override;
+		virtual void Serialise( std::ofstream& rStream ) const override;
 		virtual void Deserialise( FDependentIStream& rStream ) override;
 
 		virtual void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder ) override;
-		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
 		virtual NodeEditorTaskBase* ConvertToTask() override;
 
 	public:
-		static SharedPtr<NodeEditorVariableNode> SpawnVariableNode( Ref<NodeEditorVariable> var, SharedPtr<NodeEditorBase> nodeEditor );
+		static SharedPtr<NodeEditorVariableNode> SpawnVariableNode( Ref<NodeEditorVariable> var, SharedPtr<NodeEditor> nodeEditor );
 
 	private:
 		void CreateNode();
+		void InitPinsForVariable();
 
 	private:
+		// Non-owning, used so we can properly create this node with the correct PinType.
 		Ref<NodeEditorVariable> m_Variable;
 	};
 
@@ -77,10 +81,7 @@ namespace Saturn {
 		~NodeEditorSetVariableNode();
 
 	public:
-		static SharedPtr<NodeEditorSetVariableNode> SpawnSetVariableNode( Ref<NodeEditorVariable> var, SharedPtr<NodeEditorBase> nodeEditor );
-
-	public:
-		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* evaluator ) override;
+		static SharedPtr<NodeEditorSetVariableNode> SpawnSetVariableNode( Ref<NodeEditorVariable> var, SharedPtr<NodeEditor> nodeEditor );
 
 	private:
 		void CreateNode();

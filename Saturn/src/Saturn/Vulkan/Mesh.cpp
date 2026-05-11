@@ -230,6 +230,7 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 		m_MaterialRegistry = nullptr;
 	}
 
+#if !defined(SAT_DIST)
 	void StaticMesh::OnDelete()
 	{
 		DeleteSourceModel();
@@ -274,7 +275,6 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 		AssetManager::Get()->Save();
 	}
 
-#if !defined(SAT_DIST)
 	void StaticMesh::CreateVertices()
 	{
 		m_Submeshes.reserve( m_Scene->mNumMeshes );
@@ -748,6 +748,7 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 	}
 #endif
 
+#if !defined(SAT_DIST)
 	void SkeletalMesh::OnDelete()
 	{
 		DeleteSourceModel();
@@ -797,6 +798,7 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 
 		AssetManager::Get()->Save();
 	}
+#endif
 
 	void SkeletalMesh::SerialiseData( std::ofstream& rStream ) const
 	{

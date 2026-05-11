@@ -36,7 +36,7 @@
 
 namespace Saturn {
 
-	SharedPtr<AnimGraphStateMachinePlayAnimNode> StateMachineStateNodeLibrary::SpawnPlayAnimNode( SharedPtr<NodeEditorBase> nodeEditor )
+	SharedPtr<AnimGraphStateMachinePlayAnimNode> StateMachineStateNodeLibrary::SpawnPlayAnimNode( SharedPtr<NodeEditor> nodeEditor )
 	{
 		AnimGraphStateMachinePlayAnimNode* pNode = NewObject<AnimGraphStateMachinePlayAnimNode>( nodeEditor.Get() );
 
@@ -47,7 +47,7 @@ namespace Saturn {
 		return sp;
 	}
 
-	SharedPtr<AnimGraphStateMachineOutNode> StateMachineStateNodeLibrary::SpawnOutputNode( SharedPtr<NodeEditorBase> nodeEditor )
+	SharedPtr<AnimGraphStateMachineOutNode> StateMachineStateNodeLibrary::SpawnOutputNode( SharedPtr<NodeEditor> nodeEditor )
 	{
 		AnimGraphStateMachineOutNode* pNode = NewObject<AnimGraphStateMachineOutNode>( nodeEditor.Get() );
 

@@ -551,7 +551,6 @@ namespace Saturn {
 		textureSourceAsset->Path = rAsset->Path;
 		textureSourceAsset->ID = rAsset->ID;
 		textureSourceAsset->Name = rAsset->Name;
-		textureSourceAsset->Flags = rAsset->Flags;
 		textureSourceAsset->Type = rAsset->Type;
 
 		textureSourceAsset->ReadFromVFS();

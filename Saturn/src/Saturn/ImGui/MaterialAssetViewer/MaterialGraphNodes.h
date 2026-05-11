@@ -50,6 +50,8 @@ namespace Saturn {
 
 		virtual ~MaterialOutputNode();
 
+		virtual NodeEditorTaskBase* ConvertToTask() override;
+
 	public:
 		RuntimeData RuntimeData;
 
@@ -85,6 +87,8 @@ namespace Saturn {
 		virtual ~MaterialColorPickerNode();
 
 		void SetColor( const glm::vec3& rColor );
+
+		virtual NodeEditorTaskBase* ConvertToTask() override;
 
 	public:
 		size_t TextureSlot = 0;
@@ -138,13 +142,13 @@ namespace Saturn {
 	class MaterialNodeLibrary
 	{
 	public:
-		static SharedPtr<MaterialOutputNode> SpawnOutputNode( SharedPtr<NodeEditorBase> nodeEditor );
+		static SharedPtr<MaterialOutputNode> SpawnOutputNode( SharedPtr<NodeEditor> nodeEditor );
 
-		static SharedPtr<MaterialGetAssetNode> SpawnGetAsset( SharedPtr<NodeEditorBase> nodeEditor );
-		static SharedPtr<MaterialColorPickerNode> SpawnColorPicker( SharedPtr<NodeEditorBase> nodeEditor );
-		static SharedPtr<MaterialSampler2DNode> SpawnSampler2D( SharedPtr<NodeEditorBase> nodeEditor );
-		static SharedPtr<MaterialSeparateColorRGBNode> SpawnSeparateColorRGB( SharedPtr<NodeEditorBase> nodeEditor );
+		static SharedPtr<MaterialGetAssetNode> SpawnGetAsset( SharedPtr<NodeEditor> nodeEditor );
+		static SharedPtr<MaterialColorPickerNode> SpawnColorPicker( SharedPtr<NodeEditor> nodeEditor );
+		static SharedPtr<MaterialSampler2DNode> SpawnSampler2D( SharedPtr<NodeEditor> nodeEditor );
+		static SharedPtr<MaterialSeparateColorRGBNode> SpawnSeparateColorRGB( SharedPtr<NodeEditor> nodeEditor );
 
-		static SharedPtr<MaterialColorMixerNode> SpawnMixColors( SharedPtr<NodeEditorBase> nodeEditor );
+		static SharedPtr<MaterialColorMixerNode> SpawnMixColors( SharedPtr<NodeEditor> nodeEditor );
 	};
 }

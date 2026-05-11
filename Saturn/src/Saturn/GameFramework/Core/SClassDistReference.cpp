@@ -74,21 +74,13 @@
 #include "Saturn/Animation/AssetViewer/Graph/Tasks/AnimGraphTransitionTasks.h"
 #include "Saturn/Animation/AssetViewer/Graph/Tasks/GraphTask.h"
 
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundFloatConstNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundMixerNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundOutputNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundPitchNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundPlayerNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundRandomPitchNode.h"
-#include "Saturn/Audio/SoundNodeEditor/Nodes/SoundRandomSoundNode.h"
+#include "Saturn/Audio/SoundGraph/Tasks/SoundGraphTasks.h"
+#include "Saturn/Audio/SoundGraph/Nodes/SoundGraphNodes.h"
 
 #include "Saturn/GameFramework/Character.h"
 #include "Saturn/GameFramework/Core/GameModule.h"
 
-#include "Saturn/ImGui/MaterialAssetViewer/MaterialViewerNodes.h"
-
-#include "Saturn/NodeEditor/Maths/MathsNodes.h"
-#include "Saturn/NodeEditor/Maths/MathsTasks.h"
+#include "Saturn/ImGui/MaterialAssetViewer/MaterialGraphNodes.h"
 
 #include "Saturn/NodeEditor/NodeEditorBlueprintNode.h"
 #include "Saturn/NodeEditor/NodeEditorHintNode.h"
@@ -133,14 +125,6 @@ namespace Saturn {
 		AnimGraphTransitionTask::StaticClass();
 		AnimGraphTransitionResultTask::StaticClass();
 		SGraphTask::StaticClass();
-	
-		SoundFloatConst::StaticClass();
-		SoundMixerNode::StaticClass();
-		SoundOutputNode::StaticClass();
-		SoundPitchNode::StaticClass();
-		SoundPlayerNode::StaticClass();
-		SoundRandomPitchNode::StaticClass();
-		SoundRandomSoundNode::StaticClass();
 		
 		Character::StaticClass();
 		GameModule::StaticClass();
@@ -150,22 +134,6 @@ namespace Saturn {
 		MaterialGetAssetNode::StaticClass();
 		MaterialColorPickerNode::StaticClass();
 		MaterialColorMixerNode::StaticClass();
-
-		MathsSubFloats::StaticClass();
-		MathsOr::StaticClass();
-		MathsNot::StaticClass();
-		MathsMulFloats::StaticClass();
-		MathsLessThanFloats::StaticClass();
-		MathsGreaterThanFloats::StaticClass();
-		MathsDivideFloats::StaticClass();
-		MathsAddFloats::StaticClass();
-		MathsAddFloats::StaticClass();
-
-		SMathsOrTask::StaticClass();
-		SMathsNotTask::StaticClass();
-		SMathsLessThanFloatsTask::StaticClass();
-		SMathsGreaterThanFloatsTask::StaticClass();
-		SMathsAddFloatsTask::StaticClass();
 
 		NodeEditorBlueprintNode::StaticClass();
 		NodeEditorHintNode::StaticClass();

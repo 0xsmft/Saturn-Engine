@@ -31,6 +31,7 @@
 #include "Nodes/BehaviourTreeSelectorNode.h"
 
 #include "BehaviourTreeNodeEditor.h"
+#include "BehaviourTreeNodeLibrary.h"
 
 #include "Nodes/BehaviourTreeTaskNode.h"
 #include "Nodes/BehaviourTreeNodeBase.h"
@@ -68,6 +69,11 @@ namespace Saturn {
 
 	BehaviourTreeNodeEditor::~BehaviourTreeNodeEditor()
 	{
+	}
+
+	SharedPtr<NodeEditorNodeBase> BehaviourTreeNodeEditor::SetupNewNodeEditor()
+	{
+		return BehaviourTreeNodeLibrary::SpawnRootNode( SharedFromThis() );
 	}
 
 	void BehaviourTreeNodeEditor::TraverseBehaviourTree( const SharedPtr<NodeEditorNodeBase>& rRootNode )
@@ -257,14 +263,6 @@ namespace Saturn {
 
 		switch( action )
 		{
-			case NodeEditorAction::CreateLink:
-			case NodeEditorAction::BreakLink:
-			case NodeEditorAction::CreateNode:
-			case NodeEditorAction::DestroyNode:
-			case NodeEditorAction::MoveNode:
-				Evaluate();
-				break;
-
 			case NodeEditorAction::PreEvaluate:
 			{
 				std::vector<SharedPtr<NodeEditorNodeBase>> order;
@@ -279,10 +277,6 @@ namespace Saturn {
 				SaveAndMarkClean();
 			} break;
 
-			case NodeEditorAction::SelectNode:
-			case NodeEditorAction::DeselectNode:
-			case NodeEditorAction::SelectLink:
-			case NodeEditorAction::DeselectLink:
 			default: break;
 		}
 	}
@@ -296,10 +290,12 @@ namespace Saturn {
 
 	void BehaviourTreeNodeEditor::BuildTaskCache()
 	{
+#if !defined(SAT_DIST)
 		std::vector<SharedPtr<NodeEditorNodeBase>> order;
 		Sort( order );
 
 		m_TaskCache.BuildMasterList( order );
+#endif
 	}
 
 	void BehaviourTreeNodeEditor::Sort( std::vector<SharedPtr<NodeEditorNodeBase>>& rOrder )
@@ -366,15 +362,15 @@ namespace Saturn {
 	}
 #endif
 
-	void BehaviourTreeNodeEditor::SerialiseData( std::ofstream& rStream, bool isForDist )
+	void BehaviourTreeNodeEditor::SerialiseData( std::ofstream& rStream )
 	{
-		FDependentNodeEditorSuper::SerialiseData( rStream, isForDist );
+		FDependentNodeEditorSuper::SerialiseData( rStream );
 		RawSerialisation::WriteVector( m_EvaluationOrder, rStream );
 
 		RawSerialisation::WriteObject( m_BehaviourTreeMemoryAssetID, rStream );
 	}
 
-	void BehaviourTreeNodeEditor::DeserialiseData( FDependentIStream& rStream )
+	void BehaviourTreeNodeEditor::DeserialiseData( std::ifstream& rStream )
 	{
 		FDependentNodeEditorSuper::DeserialiseData( rStream );
 		RawSerialisation::ReadVector( m_EvaluationOrder, rStream );

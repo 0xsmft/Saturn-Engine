@@ -28,25 +28,39 @@
 
 #pragma once
 
-#include "Saturn/NodeEditor/NodeEditorBase.h"
+#include "Saturn/NodeEditor/NodeEditorDefinitions.h"
+#include "Saturn/NodeEditor/NodeEditorNodeBase.h"
 #include "Saturn/NodeEditor/NodeEditorCompilationStatus.h"
+#include "Saturn/NodeEditor/NodeEditorVariable.h"
 #include "Saturn/NodeEditor/PreCompiler/NodeEditorPreCompilerBase.h"
+#include "Saturn/NodeEditor/NodeTaskCache.h"
 
-#include "NodeEditorOutput.h"
+// For AssetID
+#include "Saturn/Asset/Asset.h"
+
+#include "Saturn/Core/Event.h"
+
+#include "NodeEditorOutputWindow.h"
 
 #include "builders.h"
 
+#include <stack>
+#include <queue>
+
 namespace Saturn {
 
-	enum class NodeEditorAction 
+	enum class NodeEditorAction : uint8_t
 	{
+		PostLoad,
 		CreateLink,
 		BreakLink,
 		CreateNode,
 		DestroyNode,
 		MoveNode,
 		PreEvaluate,
-		PostEvaluate,
+		OnEvaluate,
+		PostEvaluateSuccess,
+		PostEvaluateFailed,
 		SelectNode,
 		DeselectNode,
 		SelectLink,
@@ -63,14 +77,11 @@ namespace Saturn {
 		void Clear();
 	};
 
-#if !defined(SAT_DIST)
 	typedef NodeEditor FDependentNodeEditorSuper;
-#else
-	typedef NodeEditorBase FDependentNodeEditorSuper;
-#endif
 
-	// The NodeEditor class is a graphical representation of NodeEditorBase
-	class NodeEditor : public NodeEditorBase
+	class Texture2D;
+
+	class NodeEditor : public SObject, public EnabledSharedFromThis<NodeEditor>
 	{
 	public:
 		static Ref<Texture2D> GetBlueprintBackground();
@@ -78,15 +89,15 @@ namespace Saturn {
 	public:
 		NodeEditor();
 		NodeEditor( AssetID ID );
-		~NodeEditor();
+		virtual ~NodeEditor();
 
 		void OpenWindow( bool open ) { m_WindowOpen = open; }
 		bool CanCreateLink( const Ref<Pin>& a, const Ref<Pin>& b );	
 
 		// NodeEditorBase overrides
-		virtual void OnImGuiRender() override;
-		virtual void OnUpdate( Timestep ts ) override;
-		virtual void OnEvent( Event& rEvent ) override;
+		virtual void OnImGuiRender();
+		virtual void OnUpdate( Timestep ts );
+		virtual void OnEvent( Event& rEvent );
 
 		// NodeEditor virtuals
 		virtual void OnTopBarRender() {}
@@ -97,6 +108,135 @@ namespace Saturn {
 		virtual void OnDebugBreak();
 #endif
 
+	public:
+		bool IsLinked( UUID pinID );
+		Ref<Pin> FindPin( UUID id );
+		Ref<Link> FindLink( UUID id );
+		Ref<Link> FindLinkByPin( UUID id );
+		SharedPtr<NodeEditorNodeBase> FindNode( UUID id );
+		SharedPtr<NodeEditorNodeBase> FindNode( const std::string& rName );
+		SharedPtr<NodeEditorNodeBase> FindNodeByPin( UUID id );
+
+		std::vector<Ref<Link>> FindLinksByPin( UUID id );
+
+		// Search via inputs
+		std::vector<UUID> FindNeighborsRight( SharedPtr<NodeEditorNodeBase> node );
+
+		// Search via outputs
+		std::vector<UUID> FindNeighborsLeft( SharedPtr<NodeEditorNodeBase> node );
+
+		template<typename Function>
+		void TraverseFromStart( const SharedPtr<NodeEditorNodeBase>& rRootNode, NodeEditorFlowDirection dir, Function func )
+		{
+			switch( dir )
+			{
+				// NOTE: std::queue is FIFO
+				case NodeEditorFlowDirection::StartFromRootNode:
+				{
+					std::queue<UUID> temporaryStack;
+					temporaryStack.push( rRootNode->ID );
+
+					while( !temporaryStack.empty() )
+					{
+						const auto currentID = temporaryStack.front();
+						temporaryStack.pop();
+
+						// Visit, add evaluation stack
+						func( currentID );
+
+						// Find neighbors from outputs and continue until there is no neighbors
+						SharedPtr<NodeEditorNodeBase> currentNode = FindNode( currentID );
+						const auto& rNeighbours = FindNeighborsLeft( currentNode );
+
+						for( auto Itr = rNeighbours.rbegin(); Itr != rNeighbours.rend(); Itr++ )
+						{
+							temporaryStack.push( *Itr );
+						}
+					}
+				} break;
+
+				// NOTE: std::stack is LIFO
+				case NodeEditorFlowDirection::GoToRootNode:
+				{
+					std::stack<UUID> stack;
+					stack.push( rRootNode->ID );
+
+					while( !stack.empty() )
+					{
+						const auto currentID = stack.top();
+						stack.pop();
+
+						func( currentID );
+
+						// Find neighbors from inputs and continue until there is no neighbors
+						SharedPtr<NodeEditorNodeBase> currentNode = FindNode( currentID );
+						for( const auto& rNeighbor : FindNeighborsRight( currentNode ) )
+						{
+							stack.push( rNeighbor );
+						}
+					}
+				} break;
+			}
+		}
+
+		void CreateLink( const Ref<Pin>& rStart, const Ref<Pin>& rEnd, ImColor color );
+		void CreateLinkWithID( UUID linkID, const Ref<Pin>& rStart, const Ref<Pin>& rEnd, ImColor color );
+
+		void ShowFlow();
+		void ShowFlow( const std::vector<Ref<Link>>& rLinks );
+		void ShowFlow( const Ref<Link>& rLink );
+		void ShowFlow( UUID linkID );
+
+		NodeEditorState GetState() const { return ( NodeEditorState ) m_State; }
+		bool IsStateFlagSet( NodeEditorState flag ) const { return ( m_State & flag ) != 0; }
+
+		void SetState( NodeEditorState state )
+		{
+			if( m_State != state )
+			{
+				m_State = state;
+			}
+		}
+
+		void SetStateFlag( std::underlying_type_t< NodeEditorState > states, bool val )
+		{
+			const auto flags = states;
+			auto cur = ( std::underlying_type_t< NodeEditorState > )m_State;
+
+			if( val )
+				cur |= flags;
+			else
+				cur &= ~flags;
+
+			m_State = ( NodeEditorState ) cur;
+		}
+
+		[[nodiscard]] bool HasUserAuthority( NodeEditorUserAuthority privilege ) const;
+		void SetUserAuthorityFlag( NodeEditorUserAuthority privilege, bool value );
+
+	public:
+		AssetID GetAssetID() const { return m_AssetID; }
+		NodeEditorVersion GetVersion() const { return m_Version; }
+
+		const std::map<UUID, SharedPtr<NodeEditorNodeBase>>& GetNodes() const { return m_Nodes; }
+		std::map<UUID, SharedPtr<NodeEditorNodeBase>>& GetNodes() { return m_Nodes; }
+
+		std::unordered_map<UUID, Ref<NodeEditorVariable>> GetVariables() const { return m_EditorVariables; }
+
+		[[nodiscard]] Ref<NodeEditorVariable> FindVariable( UUID id ) const;
+		[[nodiscard]] Ref<NodeEditorVariable> FindVariable( const std::string& rName ) const;
+
+		const std::vector<Ref<Link>>& GetLinks() const { return m_Links; }
+		std::vector<Ref<Link>>& GetLinks() { return m_Links; }
+
+		const NodeTaskCache GetNodeTaskCache() const { return m_TaskCache; }
+
+		void AddNode( SharedPtr<NodeEditorNodeBase> node );
+
+		bool IsOpen() const { return m_WindowOpen; }
+
+		void SaveSettings();
+	public:
 		// Happens when the user clicks on the empty space.
 		void SetCreateNewNodeFunction( std::function<SharedPtr<NodeEditorNodeBase>()>&& rrCreateNewNodeFunction )
 		{
@@ -164,10 +304,8 @@ namespace Saturn {
 		void OnChooseNewNode( SharedPtr<NodeEditorNodeBase> node );
 
 	protected:
-#if !defined(SAT_DIST)
-		virtual void SerialiseData( std::ofstream& rStream, bool isForDist ) override;
-		virtual void DeserialiseData( std::ifstream& rStream ) override;
-#endif
+		virtual void SerialiseData( std::ofstream& rStream );
+		virtual void DeserialiseData( std::ifstream& rStream );
 
 	private:
 		void CreateEditor();
@@ -193,26 +331,50 @@ namespace Saturn {
 		virtual void DrawGraph();
 
 	protected:
+		std::string m_Name;
+		// Internal imgui_node_editor ID, NOT to be confused with the Window Name (m_Name)
+		std::string m_InternalEditorID{};
+
+		ed::EditorContext* m_Editor = nullptr;
+		// m_OldEditor is only valid if we switch editor during a debugging session (in the Editor).
+		ed::EditorContext* m_OldEditor = nullptr;
+		std::string m_ActiveNodeEditorState;
+
+		std::unordered_map<UUID, Ref<NodeEditorVariable>> m_EditorVariables;
+		std::map<UUID, SharedPtr<NodeEditorNodeBase>> m_Nodes;
+		std::vector<Ref<Link>> m_Links;
+
+		// Temporary task cache, only exists for serialisation.
+		// or for editor simulation.
+		NodeTaskCache m_TaskCache;
+
 		NodeEditorSearchCacher m_SearchCacher;
 
 		std::function<SharedPtr<NodeEditorNodeBase>()> m_CreateNewNodeFunction;
 		std::function<void()> m_TopbarItemsFunction;
 		std::function<void()> m_BreadCrumbsFunction;
 
+		bool m_WindowOpen = false;
 		bool m_ShowSearchResultsWindow = false;
 		bool m_IsSearching = false;
 		bool m_CreateNewNode = false;
 		bool m_ShowUnsavedChanges = false;
 		bool m_Dirty = false;
-#if !defined(SAT_DIST)
 		bool m_ShowRightClickContextMenu = false;
 		bool m_PendingBreakHandle = false;
-#endif
 		bool m_ShowDebugInformation = false;
 		bool m_ShowDetailsInformation = false;
 		bool m_ShowDataWindow = false;
 		bool m_HasPreCompileErrors = false;
 		bool m_ShowErrorPopup = false;
+
+		// Start in the editing state.
+		NodeEditorState m_State = NodeEditorState_Editing;
+
+		// User has full authority over this node editor by default
+		NodeEditorUserAuthority m_Privileges = NodeEditorUserAuthority::Full;
+
+		NodeEditorVersion m_Version = NodeEditorVersion::Latest;
 
 		Ref<Pin> m_NewLinkPin = nullptr;
 		Ref<Pin> m_NewNodeLinkPin = nullptr;
@@ -231,16 +393,14 @@ namespace Saturn {
 
 		Ref<Texture2D> m_ZoomTexture;
 		Ref<Texture2D> m_CompileTexture;
+		AssetID m_AssetID = 0llu;
 
 		util::BlueprintNodeBuilder m_Builder;
 
-		NodeEditorOutput m_OutputWindow;
-
-		// Internal imgui_node_editor ID, NOT to be confused with the Window Name (m_Name)
-		std::string m_InternalEditorID{};
+		NodeEditorOutputWindow m_OutputWindow;
 
 	private:
-		friend class NodeEditorCache;
+		friend class NodeCacheEditor;
 		friend class NodeCacheSettings;
 	};
 }

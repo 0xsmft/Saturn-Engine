@@ -52,7 +52,7 @@ namespace Saturn {
 	}
 
 #if !defined(SAT_DIST)
-	void AnimGraphPlayAnimTask::PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
+	void AnimGraphPlayAnimTask::PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode )
 	{
 		Super::PreInitialiseTask( pEditor, pNode );
 	

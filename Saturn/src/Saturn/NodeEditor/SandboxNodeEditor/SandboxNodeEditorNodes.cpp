@@ -49,7 +49,7 @@ namespace Saturn {
 		Name = "Output Node";
 		Flags |= NodeFlags_Irremovable;
 
-		Inputs.push_back( Ref<Pin>::Create( "Result", PinType::Int, PinKind::Input, PinFlag_RequiredForEvaluation ) );
+		Inputs.push_back( Ref<UInt32Pin>::Create( "Result", PinKind::Input, PinFlag_RequiredForEvaluation ) );
 	}
 
 	NodeEditorTaskBase* SandboxNodeEditorOutputNode::ConvertToTask()
@@ -71,7 +71,7 @@ namespace Saturn {
 		Name = "Sandbox Node (Constant)";
 		Flags = NodeFlags_ConstantEvaluated;
 
-		Outputs.push_back( Ref<Pin>::Create( "Result", PinType::Int, PinKind::Output ) );
+		Outputs.push_back( Ref<UInt32Pin>::Create( "Result", PinKind::Output ) );
 	}
 	
 	NodeEditorTaskBase* SandboxNodeEditorNode::ConvertToTask()

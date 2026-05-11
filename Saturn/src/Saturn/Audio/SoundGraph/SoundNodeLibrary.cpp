@@ -35,7 +35,7 @@
 
 namespace Saturn {
 
-	SharedPtr<SoundRandomSoundNode> SoundNodeLibrary::SpawnRandomNode( SharedPtr<NodeEditorBase> nodeEditor )
+	SharedPtr<SoundRandomSoundNode> SoundNodeLibrary::SpawnRandomNode( SharedPtr<NodeEditor> nodeEditor )
 	{
 		SharedPtr<SoundRandomSoundNode> node = NewObject<SoundRandomSoundNode>( nodeEditor.Get() );
 		nodeEditor->AddNode( node );
@@ -43,7 +43,7 @@ namespace Saturn {
 		return node;
 	}
 
-	SharedPtr<SoundPlayerNode> SoundNodeLibrary::SpawnPlayerNode( SharedPtr<NodeEditorBase> nodeEditor )
+	SharedPtr<SoundPlayerNode> SoundNodeLibrary::SpawnPlayerNode( SharedPtr<NodeEditor> nodeEditor )
 	{
 		SharedPtr<SoundPlayerNode> node = NewObject<SoundPlayerNode>( nodeEditor.Get() );
 		nodeEditor->AddNode( node );
@@ -51,7 +51,7 @@ namespace Saturn {
 		return node;
 	}
 
-	SharedPtr<SoundPitchNode> SoundNodeLibrary::SpawnPitchNode( SharedPtr<NodeEditorBase> nodeEditor )
+	SharedPtr<SoundPitchNode> SoundNodeLibrary::SpawnPitchNode( SharedPtr<NodeEditor> nodeEditor )
 	{
 		SharedPtr<SoundPitchNode> node = NewObject<SoundPitchNode>( nodeEditor.Get() );
 		nodeEditor->AddNode( node );
@@ -59,7 +59,7 @@ namespace Saturn {
 		return node;
 	}
 
-	SharedPtr<SoundRandomPitchNode> SoundNodeLibrary::SpawnRandPitch( SharedPtr<NodeEditorBase> nodeEditor )
+	SharedPtr<SoundRandomPitchNode> SoundNodeLibrary::SpawnRandPitch( SharedPtr<NodeEditor> nodeEditor )
 	{
 		SharedPtr<SoundRandomPitchNode> node = NewObject<SoundRandomPitchNode>( nodeEditor.Get() );
 		nodeEditor->AddNode( node );
@@ -67,7 +67,7 @@ namespace Saturn {
 		return node;
 	}
 
-	SharedPtr<SoundOutputNode> SoundNodeLibrary::SpawnOutputNode( SharedPtr<NodeEditorBase> nodeEditor )
+	SharedPtr<SoundOutputNode> SoundNodeLibrary::SpawnOutputNode( SharedPtr<NodeEditor> nodeEditor )
 	{
 		SharedPtr<SoundOutputNode> node = NewObject<SoundOutputNode>( nodeEditor.Get() );
 		nodeEditor->AddNode( node );

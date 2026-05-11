@@ -61,7 +61,7 @@ namespace Saturn {
 	}
 
 #if !defined(SAT_DIST)
-	void SGraphTask::PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
+	void SGraphTask::PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode )
 	{
 		Super::PreInitialiseTask( pEditor, pNode );
 
@@ -115,7 +115,7 @@ namespace Saturn {
 		}
 	}
 
-	void SGraphTask::Deserialise( std::ifstream& rStream )
+	void SGraphTask::Deserialise( FDependentIStream& rStream )
 	{
 		Super::Deserialise( rStream );
 

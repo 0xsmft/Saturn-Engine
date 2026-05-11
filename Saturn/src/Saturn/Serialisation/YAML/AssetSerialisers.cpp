@@ -431,7 +431,9 @@ namespace Saturn {
 
 		out << YAML::Key << "Physics Material ID" << YAML::Value << ( uint64_t ) mesh->GetPhysicsMaterial();
 
+#if !defined(SAT_DIST)
 		out << YAML::Key << "Import Behaviour" << YAML::Value << ( uint32_t ) mesh->GetImportBehaviour();
+#endif
 
 		out << YAML::Key << "MaterialRegistry";
 		out << YAML::BeginMap;
@@ -502,7 +504,10 @@ namespace Saturn {
 
 		mesh->SetAttachedShape( (PhysicsShapeType)shapeType );
 		mesh->SetPhysicsMaterial( physicsMaterial );
+		
+#if !defined(SAT_DIST)
 		mesh->Import_SetImportBehaviour( importBehaviour );
+#endif
 
 		if( physicsMaterial )
 			AssetManager::Get()->RegisterAssetDependency( rAsset->ID, physicsMaterial );
@@ -583,7 +588,9 @@ namespace Saturn {
 
 		out << YAML::Key << "Skeleton Asset ID" << YAML::Value << ( uint64_t ) mesh->GetSkeletonAsset()->ID;
 
+#if !defined(SAT_DIST)
 		out << YAML::Key << "Import Behaviour" << YAML::Value << ( uint32_t ) mesh->GetImportBehaviour();
+#endif
 
 		out << YAML::Key << "MaterialRegistry";
 		out << YAML::BeginMap;
@@ -655,7 +662,10 @@ namespace Saturn {
 
 		mesh->SetAttachedShape( ( PhysicsShapeType ) shapeType );
 		mesh->SetPhysicsMaterial( physicsMaterial );
+		
+#if !defined(SAT_DIST)
 		mesh->Import_SetImportBehaviour( importBehaviour );
+#endif
 
 		if( physicsMaterial )
 			AssetManager::Get()->RegisterAssetDependency( rAsset->ID, physicsMaterial );

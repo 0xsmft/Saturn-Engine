@@ -138,9 +138,7 @@ namespace Saturn {
 
 	void BehaviourTreeAssetViewer::SetupNewNodeEditor()
 	{
-		SharedPtr<BehaviourTreeRootNode> OutputNode = BehaviourTreeNodeLibrary::SpawnRootNode( m_NodeEditor );
-		m_RootNodeID = OutputNode->ID;
-
+		m_RootNodeID = m_NodeEditor->SetupNewNodeEditor()->ID;
 		MarkDirty();
 	}
 

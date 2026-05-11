@@ -79,15 +79,15 @@ namespace Saturn {
 		m_Material = nullptr;
 	}
 
+#if !defined(SAT_DIST)
 	void MaterialAsset::OnAssetDependencyReplace( AssetID oldID, AssetID newID )
 	{
-#if !defined(SAT_DIST)
 		SAT_CORE_ASSERT( m_Material );
 
 		Ref<MaterialAssetViewer> assetViewer = Ref<MaterialAssetViewer>::Create( ID );
 		assetViewer->HandleAssetDependencyReplace( oldID, newID );
-#endif
 	}
+#endif
 
 	void MaterialAsset::Default()
 	{

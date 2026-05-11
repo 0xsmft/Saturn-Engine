@@ -34,24 +34,35 @@ namespace Saturn {
 
 	class NodeEditorVariable;
 	class NodeEditorTaskHandler;
-	class Pin;
 
+	//
+	// SNodeEditorGetVariableTask
+	//
+	// This task does not tick! All it does it register a locator with an address to the variable ID.
+	//
 	SCLASS()
 	class SNodeEditorGetVariableTask : public NodeEditorTaskBase
 	{
 		SAT_DECLARE_CLASS( SNodeEditorGetVariableTask, NodeEditorTaskBase );
 	public:
 		SNodeEditorGetVariableTask();
-		~SNodeEditorGetVariableTask();
+		virtual ~SNodeEditorGetVariableTask();
+		
+#if !defined(SAT_DIST)
+		virtual void PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode ) override;
+#endif
 
-		virtual void InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther ) override;
+
 		virtual NodeEditorTaskState Tick( Timestep ts ) override;
 		virtual void Reset() override;
 
+		virtual void Serialise( std::ofstream& rStream ) const override;
+		virtual void Deserialise( FDependentIStream& rStream ) override;
+
 	private:
-		NodeEditorTaskHandler* m_pHandler = nullptr;
+		UUID m_VariableID = 0llu;
 		Ref<NodeEditorVariable> m_Variable;
-		std::vector<UUID> Outgoings;
 	};
 	
 }

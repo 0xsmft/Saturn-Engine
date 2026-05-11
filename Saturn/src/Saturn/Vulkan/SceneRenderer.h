@@ -46,7 +46,7 @@
 
 #include "Pipeline.h"
 
-constexpr int SHADOW_CASCADE_COUNT = 4;
+constexpr uint32_t SHADOW_CASCADE_COUNT = 4u;
 constexpr int MAX_POINT_LIGHTS = 512;
 
 namespace Saturn {
@@ -91,22 +91,23 @@ namespace Saturn {
 		float Multiplier = 0.0f;
 	};
 
-	// -1 = Prefilter, 0 = Downsample, 1 = Upsample
-	enum class BloomStage
+	enum class BloomStage : uint8_t
 	{
-		FirstUpsample = -2,
-		Prefilter = -1,
+		Prefilter,
 		Downsample,
+		FirstUpsample,
 		Upsample
 	};
 
-	enum class AOTechnique 
+	enum class AOTechnique : uint8_t
 	{
+		None,
+
 		// Screen Space AO
 		SSAO,
+
 		// Horizon Based AO+
 		HBAO,
-		None
 	};
 
 	struct StaticMeshKey
@@ -392,6 +393,7 @@ namespace Saturn {
 		Ref<Pass> SelectedGeometryPass = nullptr;
 		Ref<Framebuffer> SelectedGeometryFramebuffer = nullptr;
 		Ref<Pipeline> SelectedGeometryPipeline = nullptr;
+		Ref<Pipeline> SelectedGeometryDynamicPipeline = nullptr;
 		Ref<Material> SelectedGeometryMaterial = nullptr;
 
 		// Jumpflooding
@@ -415,13 +417,28 @@ namespace Saturn {
 		// Bloom
 		//////////////////////////////////////////////////////////////////////////
 
+		struct BloomTexture
+		{
+			Ref<Texture2D> Texture;
+			std::vector<VkDescriptorImageInfo> ImageInfos;
+		};
+
+		std::array<BloomTexture, 3> BloomTextures;
 		Ref<ComputePipeline> BloomComputePipeline = nullptr;
-		Ref<Texture2D> BloomTextures[ 3 ];
 		Ref<Texture2D> BloomDirtTexture = nullptr;
 		Ref< DescriptorSet > BloomDS = nullptr;
 
+		Ref<Material> BloomPrefilterMaterial;
+		Ref<Material> BloomFirstUpsampleMaterial;
+
+		std::vector<Ref<Material>> BloomDownsampleAMaterials;
+		std::vector<Ref<Material>> BloomDownsampleBMaterials;
+		std::vector<Ref<Material>> BloomUpsampleMaterials;
+
 		uint32_t BloomWorkSize = 4;
 
+		// The value of a pixel component before it's considered to be an emissive object.
+		float BloomThreshold = 1.5f;
 		float BloomDirtIntensity = 20.0f;
 
 		// BDRF Lut
@@ -469,6 +486,7 @@ namespace Saturn {
 		Ref< Shader > BloomShader = nullptr;
 		Ref< Shader > PhysicsOutlineShader = nullptr;
 		Ref< Shader > SelectionShader = nullptr;
+		Ref< Shader > SelectionDynamicShader = nullptr;
 		Ref< Shader > JmpFloodFirstShader = nullptr;
 		Ref< Shader > JmpFloodEvenShader = nullptr;
 		Ref< Shader > JmpFloodOddShader = nullptr;
@@ -496,10 +514,12 @@ namespace Saturn {
 
 		void SubmitDynamicMesh( SharedPtr<Entity> entity, Ref<SkeletalMesh> mesh, Ref<MaterialRegistry> materialRegistry, const glm::mat4& transform, const std::vector<glm::mat4>& boneTransforms );
 		
-		// NOTE: mesh is not the physical mesh in the entity, it is the phsyics mesh!
+		// NOTE: mesh is not the physical mesh in the entity, it is the physics mesh!
 		void SubmitPhysicsCollider( SharedPtr<Entity> entity, Ref< StaticMesh > mesh, Ref<MaterialRegistry> materialRegistry, const glm::mat4& transform );
 
 		void SubmitSelectedStaticMesh( SharedPtr<Entity> entity, Ref< StaticMesh > mesh, Ref<MaterialRegistry> materialRegistry, const glm::mat4& transform );
+
+		void SubmitSelectedDynamicMesh( SharedPtr<Entity> entity, Ref< SkeletalMesh > mesh, Ref<MaterialRegistry> materialRegistry, const glm::mat4& transform );
 
 		void SetViewportSize( uint32_t w, uint32_t h );
 		void SetViewportPosition( float x, float y ) { m_RendererData.ViewportPos = glm::vec2( x, y ); }
@@ -600,6 +620,7 @@ namespace Saturn {
 		void OnShaderReloaded( const std::string& rName );
 #endif
 
+		void CreateBloomMaterials();
 		void SendBoneDataToMap( Ref<SkeletalMesh> mesh, const StaticMeshKey& rKey, const std::vector<glm::mat4>& rBoneTransforms );
 
 		Ref<TextureCube> CreateDymanicSky();
@@ -619,6 +640,7 @@ namespace Saturn {
 		
 		std::unordered_map< StaticMeshKey, DynamicDrawCommand > m_DynamicShadowMapDrawList;
 		std::unordered_map< StaticMeshKey, DynamicDrawCommand > m_DynamicDrawList;
+		std::unordered_map< StaticMeshKey, DynamicDrawCommand > m_DynamicSelectedMeshDrawList;
 
 		//////////////////////////////////////////////////////////////////////////
 

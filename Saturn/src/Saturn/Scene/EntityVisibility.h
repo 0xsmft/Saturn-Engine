@@ -31,7 +31,7 @@
 
 namespace Saturn {
 
-	enum class EntityVisibility 
+	enum class EntityVisibility : uint8_t
 	{
 		Visible = 0,
 		Hidden = 1

@@ -54,7 +54,7 @@ namespace Saturn {
 		Buffer Stream;
 	};
 
-	enum class PhysicsCookingResult 
+	enum class PhysicsCookingResult : uint8_t
 	{
 		Success,
 		InvalidTypeForCooking,

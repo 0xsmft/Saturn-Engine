@@ -66,6 +66,7 @@ namespace Saturn {
 
 	void ImGuiLayer::LoadFonts()
 	{
+#if !defined(SAT_DIST)
 		ImGuiIO& rIO = ImGui::GetIO();
 		switch( EngineSettings::Get().GetEditorFont() )
 		{
@@ -90,6 +91,7 @@ namespace Saturn {
 				rIO.Fonts->AddFontFromMemoryTTF( ( void* ) GAtkinsonHyperlegibleNextItalicEmbedded, sizeof( GAtkinsonHyperlegibleNextItalicEmbedded ), 20.0f );
 			} break;
 		}
+#endif
 	}
 
 	void ImGuiLayer::OnAttach( void )

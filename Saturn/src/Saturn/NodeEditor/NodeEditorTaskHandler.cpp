@@ -29,6 +29,8 @@
 #include "sppch.h"
 #include "NodeEditorTaskHandler.h"
 
+#include "NodeTaskCache.h"
+
 #include "NodeEditorBase.h"
 
 namespace Saturn {
@@ -40,9 +42,16 @@ namespace Saturn {
 		m_Tasks.clear();
 	}
 
-	void NodeEditorTaskHandler::Init( SharedPtr<NodeEditorBase> nodeEditor )
+	void NodeEditorTaskHandler::Init( const NodeTaskCache& rCache )
 	{
-		m_Tasks = nodeEditor->GetNodeTaskCache().InstantiateNewTaskList( this );
+		m_Tasks = rCache.InstantiateNewTaskList( this );
+	}
+
+	Ref<NodeEditorVariable> NodeEditorTaskHandler::GetVariable( UUID id )
+	{
+		auto itr = m_EditorVariables.find( id );
+
+		return itr == m_EditorVariables.end() ? nullptr : itr->second;
 	}
 
 	void NodeEditorTaskHandler::ResetAllTasks()
@@ -60,11 +69,16 @@ namespace Saturn {
 	{
 		if( m_CurrentTask )
 		{
-			const auto status = m_CurrentTask->Tick( ts );
-			if( status == NodeEditorTaskState::Completed ) 
+			if( ( m_CurrentTask->GetNodeFlags() & NodeFlags_ConstantEvaluated ) == 0 )
 			{
-				m_CurrentTask = nullptr;
+				const auto status = m_CurrentTask->Tick( ts );
+				if( status == NodeEditorTaskState::Completed )
+				{
+					m_CurrentTask = nullptr;
+				}
 			}
+			else
+				m_CurrentTask = nullptr;
 		}
 
 		if( m_CurrentTask == nullptr )
@@ -79,31 +93,6 @@ namespace Saturn {
 				m_CurrentTask = m_Tasks.at( m_CurrentTaskIndex++ );
 			}
 		}
-	}
-
-	void NodeEditorTaskHandler::InsertDataLine( UUID linkID, const DataLine& rLine )
-	{
-		const auto itr = m_Lines.find( linkID );
-		if( itr == m_Lines.end() )
-		{
-			m_Lines.insert( { linkID, rLine } );
-		}
-	}
-
-	DataLine* NodeEditorTaskHandler::GetDataLine( UUID linkID )
-	{
-		const auto itr = m_Lines.find( linkID );
-		if( itr != m_Lines.end() )
-		{
-			return &itr->second;
-		}
-
-		return nullptr;
-	}
-
-	bool NodeEditorTaskHandler::DoesDataLineExist( UUID linkID )
-	{
-		return m_Lines.contains( linkID );
 	}
 
 }

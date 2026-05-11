@@ -76,7 +76,7 @@ namespace Saturn {
 		return true;
 	}
 
-	bool NodeCacheSettings::WriteEditorSettings( SharedPtr<NodeEditorBase> rNodeEditor )
+	bool NodeCacheSettings::WriteEditorSettings( SharedPtr<NodeEditor> rNodeEditor )
 	{
 		std::filesystem::path filepath = Project::GetActiveProject()->GetAppDataFolder();
 
@@ -94,7 +94,7 @@ namespace Saturn {
 		return true;
 	}
 
-	void NodeCacheSettings::ReadEditorSettings( NodeEditorBase* pNodeEditor )
+	void NodeCacheSettings::ReadEditorSettings( NodeEditor* pNodeEditor )
 	{
 		std::filesystem::path filepath = Project::GetActiveProject()->GetAppDataFolder();
 
@@ -140,7 +140,7 @@ namespace Saturn {
 		return size != 0;
 	}
 
-	void NodeCacheSettings::OverrideFile( const std::filesystem::path& rFilepath, SharedPtr<NodeEditorBase> rNodeEditor )
+	void NodeCacheSettings::OverrideFile( const std::filesystem::path& rFilepath, SharedPtr<NodeEditor> rNodeEditor )
 	{
 		SettingsFileHeader fileHeader;
 		++fileHeader.SettingsCount;
@@ -156,7 +156,7 @@ namespace Saturn {
 		fout.close();
 	}
 
-	void NodeCacheSettings::AppendFile( const std::filesystem::path& rFilepath, SharedPtr<NodeEditorBase> rNodeEditor )
+	void NodeCacheSettings::AppendFile( const std::filesystem::path& rFilepath, SharedPtr<NodeEditor> rNodeEditor )
 	{
 		std::ifstream stream( rFilepath, std::ios::binary | std::ios::in );
 
@@ -266,7 +266,36 @@ namespace Saturn {
 		return dir;
 	}
 
-	void NodeCacheEditor::WriteNodeEditorCache( SharedPtr<NodeEditorBase> nodeEditor, const std::string& rCustomName )
+	static void WriteTaskCache( const NodeTaskCache& rCache, std::ofstream& rStream )
+	{
+		// Write task cache
+		NodeCacheTaskCacheHeader tcHeader{};
+		RawSerialisation::WriteObject( tcHeader, rStream );
+
+		const auto& rTaskCacheList = rCache.GetMasterListForSerialisation();
+
+		RawSerialisation::WriteObject( rTaskCacheList.size(), rStream );
+		for( const auto& rTask : rTaskCacheList )
+		{
+			RawSerialisation::WriteObjectChecked( rTask->GetNodeID(), rStream );
+			RawSerialisation::WriteObject( rTask->GetClass()->GetHash(), rStream );
+
+			rTask->Serialise( rStream );
+		}
+
+		// Variables
+		const auto& rVarList = rCache.GetMasterVariablesListForSerialisation();
+
+		RawSerialisation::WriteObject( rVarList.size(), rStream );
+		for( const auto& [id, variable] : rVarList )
+		{
+			RawSerialisation::WriteObjectChecked( id, rStream );
+
+			NodeEditorVariable::Serialise( variable, rStream );
+		}
+	}
+
+	void NodeCacheEditor::WriteNodeEditorCache( SharedPtr<NodeEditor> nodeEditor, const std::string& rCustomName )
 	{
 		Ref<Asset> asset = AssetManager::Get()->FindAsset( nodeEditor->GetAssetID() );
 		std::string filename;
@@ -304,30 +333,11 @@ namespace Saturn {
 
 //		WriteNodeCacheEdHeader( header, fout );
 
-#if !defined(SAT_DIST)
-		constexpr bool DISTRIBUTION_SERIALSATION = false;
-#else
-		constexpr bool DISTRIBUTION_SERIALSATION = true;
-#endif
-
-		nodeEditor->SerialiseData( fout, DISTRIBUTION_SERIALSATION );
+		nodeEditor->SerialiseData( fout );
 
 		header.PositionOfTaskCache = ( uint32_t ) fout.tellp();
 
-		// Now write task cache
-		NodeCacheTaskCacheHeader tcHeader{};
-		RawSerialisation::WriteObject( tcHeader, fout );
-
-		const auto& rList = nodeEditor->m_TaskCache.GetMasterListForSerialisation();
-
-		RawSerialisation::WriteObject( rList.size(), fout );
-		for( const auto& rTask : rList )
-		{
-			RawSerialisation::WriteObjectChecked( rTask->GetNodeID(), fout );
-			RawSerialisation::WriteObject( rTask->GetClass()->GetHash(), fout );
-
-			rTask->Serialise( fout );
-		}
+		WriteTaskCache( nodeEditor->m_TaskCache, fout );
 
 		// Now write the header.
 		fout.seekp( fout.beg );
@@ -344,7 +354,7 @@ namespace Saturn {
 
 		if( std::memcmp( tcHeader.Magic, ".NTC", 4 ) != 0 )
 		{
-			SAT_CORE_ERROR( "NodeTaskCache header missmatch!" );
+			SAT_CORE_ERROR( "NodeTaskCache header mismatch!" );
 
 			// Return true here because the task cache can just be re-created after we load fully.
 			// It is not necessary for a NodeEditor to have a valid task cache*
@@ -384,11 +394,30 @@ namespace Saturn {
 				SAT_CORE_WARN( "[NodeCache]: TaskCache: ClassHash: {0}, invalid! Not creating task from an invalid class hash." );
 		}
 
+		// Variables
+		auto& rVarList = rCache.GetMasterVariablesListForSerialisation();
+
+		RawSerialisation::ReadObject( size, rStream );
+
+		rVarList.reserve( size );
+
+		for( size_t i = 0; i < size; ++i )
+		{
+			UUID varID = 0llu;
+			RawSerialisation::ReadObjectChecked( varID, rStream );
+
+			Ref<NodeEditorVariable> var = Ref<NodeEditorVariable>::Create();
+			NodeEditorVariable::Deserialise( var, rStream );
+
+			rVarList[ varID ] = var;
+		}
+
 		return true;
 	}
 
-	bool NodeCacheEditor::ReadNodeEditorCache( SharedPtr<NodeEditorBase> nodeEditor, AssetID id, const std::string& rCustomName )
+	bool NodeCacheEditor::ReadNodeEditorCache( SharedPtr<NodeEditor> nodeEditor, AssetID id, const std::string& rCustomName )
 	{
+#if !defined(SAT_DIST)
 		std::string filename;
 		
 		Ref<Asset> asset = AssetManager::Get()->FindAsset( id );
@@ -455,6 +484,10 @@ namespace Saturn {
 #endif
 
 		return true;
+#else
+		SAT_CORE_VERIFY( false, "NodeCacheEditor::ReadNodeEditorCache should not be called on Dist! Please use NodeCacheEditor::ReadNodeTaskCacheOnly." );
+		return false;
+#endif
 	}
 
 	bool NodeCacheEditor::ReadNodeTaskCacheOnly( NodeTaskCache& rNodeTaskCache, AssetID id, const std::string& rCustomName /*= "" */ )
@@ -512,44 +545,20 @@ namespace Saturn {
 			return false;
 		}
 
+#if !defined( SAT_DIST )
 		stream.seekg( header.PositionOfTaskCache );
+#endif
 
 		return ReadNodeTaskCache( rNodeTaskCache, stream );
 	}
 
-	void NodeCacheEditor::ConvertToDistNC( AssetID id, const std::string& rCustomName /*= "" */ )
+	void NodeCacheEditor::WriteTaskCacheOnlyDistNC( const NodeTaskCache& rCache, const std::filesystem::path& rPath )
 	{
-		std::string filename;
+		std::ofstream fout( rPath, std::ios::trunc | std::ios::binary );
 
-		const Ref<Asset> asset = AssetManager::Get()->FindAsset( id );
-		std::filesystem::path cachePath;
+		WriteTaskCache( rCache, fout );
 
-		if( asset )
-		{
-			filename = std::format( "{0}.{1}.nce", asset->Name, ( uint64_t ) id );
-			cachePath = asset->Path.parent_path();
-		}
-		else
-		{
-			filename = std::format( "NCEditor.{0}.nce", ( uint64_t ) id );
-			cachePath = GetDefaultCachePath();
-		}
-
-		if( !rCustomName.empty() )
-			filename = rCustomName;
-
-		cachePath /= filename;
-
-		const std::filesystem::path cachePathAbs = Project::GetActiveProject()->FilepathAbs( cachePath );
-		if( !std::filesystem::exists( cachePathAbs ) )
-			return;
-
-		// Copy for dist
-		std::filesystem::path newPath = Project::GetActiveProject()->GetTempDir();
-		newPath /= std::to_string( id );
-		newPath.replace_extension( ".vfs" );
-
-		std::filesystem::copy_file( cachePathAbs, newPath, std::filesystem::copy_options::overwrite_existing );
+		fout.close();
 	}
 
 }

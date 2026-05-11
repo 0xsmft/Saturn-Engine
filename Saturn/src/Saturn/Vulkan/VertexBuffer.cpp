@@ -86,13 +86,13 @@ namespace Saturn {
 		vkCmdBindVertexBuffers( CommandBuffer, binding, 1, &m_Buffer, Offsets );
 	}
 
-	void VertexBuffer::Reallocate( void* pData, uint32_t size, uint32_t offset /*= 0 */ )
+	void VertexBuffer::SetData( void* pData, uint32_t size, uint32_t offset /*= 0 */ )
 	{
 		auto pAllocator = VulkanContext::Get()->GetVulkanAllocator();
 
 		void* dstData = pAllocator->MapMemory< void >( m_Allocation );
 
-		memcpy( dstData, (uint8_t*)pData + offset, size );
+		std::memcpy( dstData, (uint8_t*)pData + offset, size );
 		m_pData = dstData;
 
 		pAllocator->UnmapMemory( m_Allocation );

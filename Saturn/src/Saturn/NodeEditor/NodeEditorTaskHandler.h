@@ -29,14 +29,13 @@
 #pragma once
 
 #include "NodeEditorTaskBase.h"
-#include "DataLine.h"
 #include "NodeEditorVariableLocator.h"
 
 #include <map>
 
 namespace Saturn {
 
-	class Animator;
+	class NodeTaskCache;
 
 	class NodeEditorTaskHandler : public RefTarget
 	{
@@ -48,12 +47,7 @@ namespace Saturn {
 		virtual void Tick( Timestep ts );
 
 	public:
-		void Init( SharedPtr<NodeEditorBase> nodeEditor );
-
-	public:
-		void InsertDataLine( UUID linkID, const DataLine& rLine );
-		DataLine* GetDataLine( UUID linkID );
-		bool DoesDataLineExist( UUID linkID );
+		void Init( const NodeTaskCache& rCache );
 
 	public:
 		template<typename Ty>
@@ -66,6 +60,25 @@ namespace Saturn {
 			}
 
 			rLocators[ pinIndex ].Set( pAddress );
+		}
+
+		//
+		// Register a new locator but have the Task handler own and store it.
+		// 
+		// So, it must allocate Ty on the heap!
+		//
+		template<typename Ty>
+		Ty* RegisterLocatorStorage( UUID nodeID, size_t pinIndex )
+		{
+			auto& rLocators = m_Locators[ nodeID ];
+			if( pinIndex >= rLocators.size() )
+			{
+				rLocators.resize( pinIndex + 1 );
+			}
+
+			rLocators[ pinIndex ].Set( new Ty(), true );
+
+			return ( Ty* )rLocators[ pinIndex ].Get();
 		}
 
 		template<typename Ty>
@@ -81,18 +94,27 @@ namespace Saturn {
 			return ( Ty* ) itr->second[ pinIndex ].Get();
 		}
 
+		Ref<NodeEditorVariable> GetVariable( UUID id );
+
 	protected:
 		void ResetAllTasks();
 	
 	protected:
-		// All tasks in the tree
-		//       NODE ID -> TASK*
+		// All tasks in the tree.
 		std::vector<Ref<NodeEditorTaskBase>> m_Tasks;
 		Ref<NodeEditorTaskBase> m_CurrentTask;
 		size_t m_CurrentTaskIndex = 0;
 
-		std::map<UUID, DataLine> m_Lines;
+		// Variables from the NodeEditor copied into the task handler.
+		//		           VAR ID -> VARIABLE 
+		std::unordered_map<UUID, Ref<NodeEditorVariable>> m_EditorVariables;
+
+		// Locators
+		//		NODE ID -> LOCATORS (PER OUTPUT PIN)
 		std::map<UUID, std::vector<NodeEditorVariableLocator>> m_Locators;
+	
+	private:
+		friend class NodeTaskCache;
 	};
 	
 }

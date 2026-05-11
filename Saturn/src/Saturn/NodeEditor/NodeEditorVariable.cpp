@@ -31,12 +31,14 @@
 
 #include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 
+#include "Saturn/Serialisation/Raw/RawSerialisation.h"
+
 namespace Saturn {
 
 	void NodeEditorVariable::Serialise( const Ref<NodeEditorVariable>& rObject, std::ofstream& rStream )
 	{
-		RawSerialisation::WriteObjectChecked( rObject->m_DataType, rStream );
 		RawSerialisation::WriteObjectChecked( rObject->m_VariableID, rStream );
+		RawSerialisation::WriteObjectChecked( rObject->m_DataType, rStream );
 
 		// Value
 		switch( rObject->m_DataType )
@@ -98,8 +100,8 @@ namespace Saturn {
 
 	void NodeEditorVariable::Deserialise( Ref<NodeEditorVariable>& rObject, FDependentIStream& rStream )
 	{
-		RawSerialisation::ReadObjectChecked( rObject->m_DataType, rStream );
 		RawSerialisation::ReadObjectChecked( rObject->m_VariableID, rStream );
+		RawSerialisation::ReadObjectChecked( rObject->m_DataType, rStream );
 		
 		// Value
 		switch( rObject->m_DataType )

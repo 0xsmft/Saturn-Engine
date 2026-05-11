@@ -36,9 +36,27 @@ namespace Saturn {
 
 	class StaticMesh;
 	class SkeletalMesh;
-	class MemoryAssetDependencyNotifier;
 	class Submesh;
 
+	//
+	// MaterialAsset
+	// 
+	// A MaterialAsset is an asset of a material.
+	// No, really it's that simple.
+	// 
+	// MaterialAsset assets can be created from any material (in which the material can be at any set) however,
+	// it is generally assumed that the material will be at set 0 and it is also assumed that the material is a Mesh shader.
+	// 
+	// If MaterialAsset is created not from a mesh shader than it must fulfill the following requirements:
+	//  - must have a sampler2D in set n with the name u_AlbeoTexture 
+	//  - must have a sampler2D in set n with the name u_NormalTexture 
+	//  - must have a sampler2D in set n with the name u_MatallicTexture 
+	//  - must have a sampler2D in set n with the name u_RoughnessTexture
+	//  NB: n is the set in which the material is created from!
+	//	NB: it only must fulfill the requirements if use intend to use any of the functions in class such as GetNormalMap() et al.
+	// 
+	// Access to the underlying material can be used with GetMaterial()
+	//
 	class MaterialAsset : public Asset
 	{
 	public:
@@ -47,7 +65,9 @@ namespace Saturn {
 		MaterialAsset( Ref<Material> material );
 		virtual ~MaterialAsset();
 
+#if !defined(SAT_DIST)
 		virtual void OnAssetDependencyReplace( AssetID oldID, AssetID newID ) override;
+#endif
 
 	public:
 		// Texture

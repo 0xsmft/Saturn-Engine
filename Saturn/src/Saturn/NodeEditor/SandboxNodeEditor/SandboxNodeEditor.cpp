@@ -31,6 +31,7 @@
 
 #include "SandboxNodeEditorNodes.h"
 
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui_internal.h>
 
 namespace Saturn {
@@ -47,6 +48,7 @@ namespace Saturn {
 
 	void SandboxNodeEditor::BuildTaskCache()
 	{
+#if !defined(SAT_DIST)
 		if( m_Dirty || m_TaskCache.IsListEmpty() )
 		{
 			// SHIT! Will be fixed sooner or later...
@@ -70,6 +72,7 @@ namespace Saturn {
 				SaveAndMarkClean();
 			}
 		}
+#endif
 	}
 
 	void SandboxNodeEditor::OnUpdate( Timestep ts )
@@ -80,6 +83,39 @@ namespace Saturn {
 		}
 	}
 
+	void SandboxNodeEditor::OnNodeEditorEvent( NodeEditorAction action )
+	{
+		switch( action )
+		{
+			case NodeEditorAction::PreEvaluate:
+			{
+				// SHIT! Will be fixed sooner or later...
+				const auto itr = std::find_if( m_Nodes.begin(), m_Nodes.end(),
+					[]( const auto& rKV ) -> bool
+				{
+					return rKV.second->GetClass() == SandboxNodeEditorOutputNode::StaticClass();
+				} );
+
+				if( itr != m_Nodes.end() )
+				{
+					std::vector< SharedPtr<NodeEditorNodeBase> > ids;
+					TraverseFromStart( itr->second, NodeEditorFlowDirection::GoToRootNode, [ & ]( const auto id )
+					{
+						ids.push_back( FindNode( id ) );
+					} );
+
+					std::reverse( ids.begin(), ids.end() );
+
+					m_PreCompiler->Init( ids );
+				}
+			} break;
+
+			default:
+				break;
+		}
+	}
+
+#if !defined(SAT_DIST)
 	void SandboxNodeEditor::OnImGuiRender()
 	{
 		NodeEditor::OnImGuiRender();
@@ -87,7 +123,6 @@ namespace Saturn {
 		if( m_ShowRuntimeControl ) DrawRuntimeControl();
 	}
 
-#if !defined(SAT_DIST)
 	void SandboxNodeEditor::OnTopBarRender()
 	{
 		if( ImGui::Button( "Open Runtime control" ) ) 
@@ -123,6 +158,7 @@ namespace Saturn {
 
 	void SandboxNodeEditor::DrawRuntimeControl()
 	{
+#if !defined(SAT_DIST)
 		if( ImGui::Begin( "Runtime Control##sndbxne", &m_ShowRuntimeControl, ImGuiWindowFlags_NoSavedSettings ) )
 		{
 			if( ImGui::Button( "Build NodeTaskCache" ) )
@@ -139,7 +175,13 @@ namespace Saturn {
 			if( ImGui::Button( "Simulate Runtime" ) )
 			{
 				m_TaskHandler = Ref<SandboxNodeEditorTaskHandler>::Create();
-				m_TaskHandler->Init( SharedFromThis() );
+
+				if( m_TaskCache.IsListEmpty() || m_TaskCache.IsDirty() )
+				{
+					BuildTaskCache();
+
+					m_TaskHandler->Init( m_TaskCache );
+				}
 
 				SetStateFlag( NodeEditorState_Simulating, true );
 			}
@@ -152,6 +194,7 @@ namespace Saturn {
 		}
 
 		ImGui::End();
+#endif
 	}
 
 	void SandboxNodeEditor::ClearEditor()

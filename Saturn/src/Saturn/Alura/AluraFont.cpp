@@ -96,7 +96,10 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 
 	AluraFont::AluraFont( const std::filesystem::path& rFontPath, const Ref<Asset>& rBase )
-		: Asset( rBase ), m_FontFilepath( rFontPath )
+		: Asset( rBase )
+#if !defined(SAT_DIST)
+		, m_FontFilepath( rFontPath )
+#endif
 	{
 #if !defined(SAT_DIST)
 		CreateOrLoadAtlas( true );
@@ -323,11 +326,13 @@ namespace Saturn {
 		AluraSerialiedFontHeader header{};
 		RawSerialisation::WriteObject( header, fout );
 
+#if !defined(SAT_DIST)
 		// Name of the font file
 		RawSerialisation::WriteString( m_Name, fout );
 		
 		// Write path
 		RawSerialisation::WriteString( m_FontFilepath, fout );
+#endif
 
 		// Metrics
 		RawSerialisation::WriteObject( m_AluraFontData.GetMetrics(), fout );
@@ -384,10 +389,12 @@ namespace Saturn {
 		AluraSerialiedFontHeader header{};
 		RawSerialisation::ReadObject( header, rStream );
 
+#if !defined(SAT_DIST)
 		// Name of the font file
 		m_Name = RawSerialisation::ReadString( rStream );
 
 		m_FontFilepath = RawSerialisation::ReadString( rStream );
+#endif
 
 		// Metrics
 		RawSerialisation::ReadObject( m_AluraFontData.GetMetrics(), rStream );

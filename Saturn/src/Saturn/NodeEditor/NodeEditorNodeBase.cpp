@@ -64,7 +64,7 @@ namespace Saturn {
 		Outputs.clear();
 	}
 
-	void NodeEditorNodeBase::Serialise( std::ofstream& rStream, bool isForDist ) const
+	void NodeEditorNodeBase::Serialise( std::ofstream& rStream ) const
 	{
 		RawSerialisation::WriteUUID( ID, rStream );
 		RawSerialisation::WriteString( Name, rStream );
@@ -78,7 +78,7 @@ namespace Saturn {
 		RawSerialisation::WriteString( ActiveState, rStream );
 		RawSerialisation::WriteString( SavedState, rStream );
 
-		auto* pNodeEditorBase = dynamic_cast< NodeEditorBase* >( GetParentObject() );
+		auto* pNodeEditorBase = dynamic_cast< NodeEditor* >( GetParentObject() );
 		if( pNodeEditorBase && pNodeEditorBase->GetVersion() >= NodeEditorVersion::Breakpoints )
 		{
 			bool hasBreakpoint = NodeBreakPointManager::Get().HasBreakPoint( ID );
@@ -112,7 +112,7 @@ namespace Saturn {
 		RawSerialisation::ReadUUID( ID, rStream );
 		Name = RawSerialisation::ReadString( rStream );
 
-//#if !defined(SAT_DIST)
+#if !defined(SAT_DIST)
 		ImColor col;
 		RawSerialisation::ReadObject( col, rStream );
 		RawSerialisation::ReadObject( RenderType, rStream );
@@ -129,7 +129,7 @@ namespace Saturn {
 		RawSerialisation::ReadString( rStream );
 		RawSerialisation::ReadString( rStream );
 
-		auto* pNodeEditorBase = dynamic_cast< NodeEditorBase* >( GetParentObject() );
+		auto* pNodeEditorBase = dynamic_cast< NodeEditor* >( GetParentObject() );
 		if( pNodeEditorBase && pNodeEditorBase->GetVersion() >= NodeEditorVersion::Breakpoints )
 		{
 			bool hasBreakpoint = false;
@@ -149,7 +149,7 @@ namespace Saturn {
 				SAT_CORE_INFO( "[NodeEditorNodeBase] Added breakpoint for node {0} ({1})", Name, ID );
 			}
 		}
-//#endif
+#endif
 
 		// We make sure to read the last saved pin count and not the real pin size from the Node it self,
 		// This is to make sure that if a pin was added in a newer version but has not been serialised yet, 
@@ -166,6 +166,7 @@ namespace Saturn {
 			if( i >= Inputs.size() )
 				break;
 
+			Inputs[ i ]->Node = SharedFromThis();
 			Inputs[ i ]->Deserialise( rStream );
 		}
 
@@ -174,6 +175,7 @@ namespace Saturn {
 			if( i >= Outputs.size() )
 				break;
 
+			Outputs[ i ]->Node = SharedFromThis();
 			Outputs[ i ]->Deserialise( rStream );
 		}
 	}

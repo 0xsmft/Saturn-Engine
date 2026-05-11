@@ -38,26 +38,86 @@
 
 namespace Saturn {
 
+	//
+	// Material
+	// 
+	// A material represents a certain descriptor set in it's shader
+	// By default it represents set 0.
+	// 
+	// A material must be updated and the bound before it can be used in a draw call.
+	// 
+	// Materials can be used in any type of pipeline that we support i.e. Graphics or Compute.
+	// 
+	// Materials can be used in any place where we need to supply our shader some information.
+	// For meshes (both Static and Skeletal) MaterialAssets are used and they ONLY represent set 0.
+	//
 	class Material : public RefTarget
 	{
 	public:
 		 Material( const Ref<Shader>& rShader, const std::string& rMaterialName, uint32_t set = 0 );
 		~Material();
 
-		void Initialise( const std::string& rMaterialName );
 		void Copy( Ref<Material>& rOther );
 		void SetName( const std::string& rName ) { m_Name = rName; }
 
+	public:
 		// Bind and update the material descriptor set.
+		//
+		// Calls vkCmdBindDescriptorSets
+		//
 		void Bind( VkCommandBuffer CommandBuffer, VkPipelineLayout Layout, const std::vector<std::vector<VkWriteDescriptorSet>>& rExtraWds, VkPipelineBindPoint bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS );
 
+		// Update the descriptor set.
 		void Update( const std::vector<std::vector<VkWriteDescriptorSet>>& rExtraWds );
 
+		// 
+		// Set a single texture resource.
+		// 
+		// @param Name -- the name of the resource in the SHADER e.g. u_MyTexture
+		//
 		void SetResource( const std::string& Name, const Ref<Texture2D>& Texture );
+
+		// 
+		// Set a image view resource.
+		// 
+		// NB: The texture param MUST be the same as the
+		// 
+		// @param Name -- the name of the resource in the SHADER e.g. u_MyTexture
+		// @param Texture -- the texture
+		// @param ImageViewTexture -- image view index that the image view will come from
+		//
+		void SetResourceWithVulkanInfo( const std::string& Name, Ref<Texture2D> Texture, const VkDescriptorImageInfo& rVulkanInfo );
+
+		// 
+		// Set a single texture resource in a texture array.
+		// 
+		// @param Name -- the name of the resource in the SHADER e.g. u_MyTextureArray
+		//
 		void SetResource( const std::string& Name, const Ref<Texture2D>& Texture, uint32_t Index );
+
+		// 
+		// Set a single texture cube resource in a texture.
+		// 
+		// @param Name -- the name of the resource in the SHADER e.g. u_MyTextureCube
+		//
 		void SetResource( const std::string& Name, const Ref<TextureCube>& Texture );
+
+		// 
+		// Set a Image2D resource.
+		// 
+		// NOTE: Not used by MaterialAssets! But used by other shader materials
+		// 
+		// @param Name -- the name of the resource in the SHADER e.g. u_MyTexture
+		//
 		void SetResource( const std::string& Name, Ref<Image2D> rImage );
 
+		// 
+		// Get texture2D resource.
+		// 
+		// NB: Will return null if not found!
+		// 
+		// @param Name -- the name of the resource in the SHADER e.g. u_MyTexture
+		//
 		Ref<Texture2D> GetResource( const std::string& Name );
 
 		// Set push constant data.
@@ -76,9 +136,16 @@ namespace Saturn {
 			return m_PushConstantData.Read<Ty>( offset );
 		}
 		
-		VkDescriptorSet GetDescriptorSet(uint32_t index = 0) const { return m_DescriptorSets[index]; }
+		VkDescriptorSet GetDescriptorSet( uint32_t index = 0 ) const { return m_DescriptorSets[ index ]; }
 
+		//
+		// Upload data to a uniform buffer
+		//
 		void UploadDataToUB( uint32_t Binding, void* pData, size_t size );
+
+		//
+		// Set the storage buffer
+		//
 		void SetSB( uint32_t binding, const Ref<StorageBuffer>& rInfo );
 
 	public:
@@ -92,6 +159,8 @@ namespace Saturn {
 	private:
 		std::unordered_map< std::string, Ref<Texture2D> >& GetTexturesMap() { return m_Textures; }
 		const std::unordered_map< std::string, Ref<Texture2D> >& GetTexturesMap() const { return m_Textures; }
+
+		void Initialise( const std::string& rMaterialName );
 
 		// Internal Update function without binding the descriptor set.
 		void RT_Update();

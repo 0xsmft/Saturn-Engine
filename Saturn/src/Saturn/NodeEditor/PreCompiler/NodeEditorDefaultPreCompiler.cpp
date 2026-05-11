@@ -27,6 +27,7 @@
 */
 
 #include "sppch.h"
+#include "Saturn/NodeEditor/NodeEditorBase.h"
 #include "NodeEditorDefaultPreCompiler.h"
 
 namespace Saturn {

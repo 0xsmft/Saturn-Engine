@@ -32,6 +32,9 @@
 
 namespace Saturn {
 
+	//
+	// Array of key-value pairs
+	//
 	template<typename Key, typename Value>
 	class IndexedMap 
 	{

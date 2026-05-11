@@ -34,6 +34,7 @@
 // ANIMATION EDITOR
 #include "Saturn/Animation/AssetViewer/Graph/Animation/AnimGraphOutputNode.h"
 #include "Saturn/Animation/AssetViewer/Graph/Animation/AnimGraphStateMachinePlayerNode.h"
+#include "Saturn/Animation/AssetViewer/Graph/Animation/AnimGraphNodeLibrary.h"
 
 // STATE MACHINE
 #include "Saturn/Animation/AssetViewer/Graph/StateMachine/AnimGraphStateMachineStateNode.h"
@@ -56,6 +57,7 @@
 
 #include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
 
 namespace Saturn {
@@ -74,6 +76,11 @@ namespace Saturn {
 
 	AnimGraph::~AnimGraph()
 	{
+	}
+
+	SharedPtr<NodeEditorNodeBase> AnimGraph::SetupNewNodeEditor()
+	{
+		return AnimGraphNodeLibrary::SpawnOutputNode( SharedFromThis() );
 	}
 
 	AnimGraph::AnimGraphSortMap AnimGraph::TraverseAndCreateTasks()
@@ -287,23 +294,13 @@ namespace Saturn {
 				SaveAndMarkClean();
 			} break;
 
-			case NodeEditorAction::CreateLink:
-			case NodeEditorAction::BreakLink:
-			case NodeEditorAction::CreateNode:
-			case NodeEditorAction::MoveNode:
-			case NodeEditorAction::SelectNode:
-			case NodeEditorAction::DeselectNode:
-			case NodeEditorAction::SelectLink:
-			case NodeEditorAction::DeselectLink:
-				break;
-			
 			default: break;
 		}
 	}
 
-	void AnimGraph::SerialiseData( std::ofstream& rStream, bool isForDist )
+	void AnimGraph::SerialiseData( std::ofstream& rStream )
 	{
-		FDependentNodeEditorSuper::SerialiseData( rStream, isForDist );
+		FDependentNodeEditorSuper::SerialiseData( rStream );
 
 		// We may not actually have an entry node yet, this graph might not contain any state machines yet.
 		if( m_StateMachineEntryNode )
@@ -312,7 +309,7 @@ namespace Saturn {
 			RawSerialisation::WriteObjectChecked( 0llu, rStream );
 	}
 
-	void AnimGraph::DeserialiseData( FDependentIStream& rStream )
+	void AnimGraph::DeserialiseData( std::ifstream& rStream )
 	{
 		FDependentNodeEditorSuper::DeserialiseData( rStream );
 

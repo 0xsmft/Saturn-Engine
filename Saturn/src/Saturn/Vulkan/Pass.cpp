@@ -97,6 +97,7 @@ namespace Saturn {
 
 	Pass::~Pass()
 	{
+		SAT_CORE_ASSERT( !m_Pass, "Terminate not called before the destruction of this RenderPass!" );
 	}
 
 	void Pass::Create( const PassSpecification& rPassSpec )

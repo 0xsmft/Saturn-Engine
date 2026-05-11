@@ -40,9 +40,9 @@ namespace Saturn {
 	public:
 		static NodeEditorType GetStaticType() { return NodeEditorType::AnimationController; }
 		
-		static SharedPtr<AnimGraphStateMachinePlayerNode> SpawnStateMachinePlayerNode( SharedPtr<NodeEditorBase> nodeEditor );
+		static SharedPtr<AnimGraphStateMachinePlayerNode> SpawnStateMachinePlayerNode( SharedPtr<NodeEditor> nodeEditor );
 
-		static SharedPtr<AnimGraphOutputNode> SpawnOutputNode( SharedPtr<NodeEditorBase> nodeEditor );
+		static SharedPtr<AnimGraphOutputNode> SpawnOutputNode( SharedPtr<NodeEditor> nodeEditor );
 	};
 	
 }

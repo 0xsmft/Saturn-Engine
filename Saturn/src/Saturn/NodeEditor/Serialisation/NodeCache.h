@@ -36,25 +36,27 @@ namespace Saturn {
 	class NodeCacheSettings
 	{
 	public:
-		static bool WriteEditorSettings( SharedPtr<NodeEditorBase> rNodeEditor );
-		static void ReadEditorSettings( NodeEditorBase* pNodeEditor );
+		static bool WriteEditorSettings( SharedPtr<NodeEditor> rNodeEditor );
+		static void ReadEditorSettings( NodeEditor* pNodeEditor );
 
 	private:
 		static bool CanAppendFile( const std::filesystem::path& rFilepath );
 
-		static void OverrideFile( const std::filesystem::path& rFilepath, SharedPtr<NodeEditorBase> rNodeEditor );
-		static void AppendFile( const std::filesystem::path& rFilepath, SharedPtr<NodeEditorBase> rNodeEditor );
+		static void OverrideFile( const std::filesystem::path& rFilepath, SharedPtr<NodeEditor> rNodeEditor );
+		static void AppendFile( const std::filesystem::path& rFilepath, SharedPtr<NodeEditor> rNodeEditor );
 	};
 
 	class NodeCacheEditor
 	{
 	public:
-		static void WriteNodeEditorCache( SharedPtr<NodeEditorBase> nodeEditor, const std::string& rCustomName = "" );
-		static bool ReadNodeEditorCache( SharedPtr<NodeEditorBase> nodeEditor, AssetID id, const std::string& rCustomName = "" );
+		static void WriteNodeEditorCache( SharedPtr<NodeEditor> nodeEditor, const std::string& rCustomName = "" );
+		static bool ReadNodeEditorCache( SharedPtr<NodeEditor> nodeEditor, AssetID id, const std::string& rCustomName = "" );
 
 		static bool ReadNodeTaskCacheOnly( NodeTaskCache& rNodeTaskCache, AssetID id, const std::string& rCustomName = "" );
 
 		// Dist
+		static void WriteTaskCacheOnlyDistNC( const NodeTaskCache& rCache, const std::filesystem::path& rPath );
+
 		static void ConvertToDistNC( AssetID id, const std::string& rCustomName = "" );
 	};
 	

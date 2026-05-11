@@ -28,6 +28,8 @@
 
 #pragma once
 
+#include "Saturn/Serialisation/Raw/RawSerialisationBase.h"
+
 namespace Saturn::Auxiliary {
 
 	//////////////////////////////////////////////////////////////////////////

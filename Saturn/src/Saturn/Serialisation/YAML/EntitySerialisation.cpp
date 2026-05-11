@@ -303,7 +303,9 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 			else
 				rEmitter << YAML::Key << "Asset" << YAML::Value << 0;
 
-			rEmitter << YAML::Key << "AnimationAssetType" << YAML::Value << ( std::underlying_type_t<AnimatorType> )mc.AnimatorType;
+			// We have to serialise as uint16_t or greater
+			// because if we do it as a uint8_t it may write it as "\x01" and will refuse to read it back...
+			rEmitter << YAML::Key << "AnimationAssetType" << YAML::Value << ( uint16_t )mc.AnimatorType;
 			rEmitter << YAML::Key << "AnimationAsset" << YAML::Value << mc.AnimationControllerAssetID;
 
 			rEmitter << YAML::Key << "MaterialRegistry";
@@ -858,9 +860,18 @@ pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value ); \
 			}
 
 			const auto animAsset = skm[ "AnimationAsset" ].as<uint64_t>( 0 );
-			const auto animationAssetType = skm[ "AnimationAssetType" ].as<std::underlying_type_t<AnimatorType>>( 0 );
+			const auto animationAssetType = skm[ "AnimationAssetType" ].as<uint16_t>( 0 );
+			if( animationAssetType > std::numeric_limits<std::underlying_type_t<AnimatorType>>::max() )
+			{
+				SAT_CORE_WARN( "AnimationAssetType is greater than max numerical limit! ({0} > {1})", animationAssetType, std::numeric_limits<std::underlying_type_t<AnimatorType>>::max() );
+			
+				m.AnimatorType = AnimatorType::Single;
+			}
+			else
+			{
+				m.AnimatorType = ( AnimatorType ) animationAssetType;
+			}
 
-			m.AnimatorType = ( AnimatorType ) animationAssetType;
 			m.AnimationControllerAssetID = animAsset;
 		}
 

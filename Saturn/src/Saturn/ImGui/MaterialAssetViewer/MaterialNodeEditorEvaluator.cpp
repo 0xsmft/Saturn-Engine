@@ -29,7 +29,7 @@
 #include "sppch.h"
 #include "MaterialNodeEditorEvaluator.h"
 
-#include "MaterialViewerNodes.h"
+#include "MaterialGraphNodes.h"
 
 #if !defined(SAT_DIST)
 #include "Saturn/NodeEditor/UI/NodeEditor.h"
@@ -139,7 +139,7 @@ namespace Saturn {
 				} break;
 			}
 
-			currentNode->EvaluateNode( this );
+//			currentNode->EvaluateNode( this );
 
 #if defined(SAT_DEBUG)
 			currentNode->EvaluationOrder = index;

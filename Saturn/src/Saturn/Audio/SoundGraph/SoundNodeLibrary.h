@@ -41,11 +41,11 @@ namespace Saturn {
 	class SoundNodeLibrary
 	{
 	public:
-		static SharedPtr<SoundRandomSoundNode> SpawnRandomNode( SharedPtr<NodeEditorBase> nodeEditor );
-		static SharedPtr<SoundPlayerNode>      SpawnPlayerNode( SharedPtr<NodeEditorBase> nodeEditor );
-		static SharedPtr<SoundPitchNode>       SpawnPitchNode ( SharedPtr<NodeEditorBase> nodeEditor );
-		static SharedPtr<SoundRandomPitchNode> SpawnRandPitch ( SharedPtr<NodeEditorBase> nodeEditor );
+		static SharedPtr<SoundRandomSoundNode> SpawnRandomNode( SharedPtr<NodeEditor> nodeEditor );
+		static SharedPtr<SoundPlayerNode>      SpawnPlayerNode( SharedPtr<NodeEditor> nodeEditor );
+		static SharedPtr<SoundPitchNode>       SpawnPitchNode ( SharedPtr<NodeEditor> nodeEditor );
+		static SharedPtr<SoundRandomPitchNode> SpawnRandPitch ( SharedPtr<NodeEditor> nodeEditor );
 		
-		static SharedPtr<SoundOutputNode>      SpawnOutputNode( SharedPtr<NodeEditorBase> nodeEditor );
+		static SharedPtr<SoundOutputNode>      SpawnOutputNode( SharedPtr<NodeEditor> nodeEditor );
 	};
 }

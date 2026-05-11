@@ -85,9 +85,9 @@ namespace Saturn {
 		return Inputs[ 1 ].As<FloatPin>()->Data;
 	}
 
-	void AnimGraphStateMachinePlayAnimNode::Serialise( std::ofstream& rStream, bool isForDist ) const
+	void AnimGraphStateMachinePlayAnimNode::Serialise( std::ofstream& rStream ) const
 	{
-		Super::Serialise( rStream, isForDist );
+		Super::Serialise( rStream );
 	}
 
 	void AnimGraphStateMachinePlayAnimNode::Deserialise( FDependentIStream& rStream )

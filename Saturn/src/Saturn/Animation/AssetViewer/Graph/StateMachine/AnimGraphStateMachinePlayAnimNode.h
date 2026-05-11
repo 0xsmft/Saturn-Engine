@@ -49,7 +49,7 @@ namespace Saturn {
 		[[nodiscard]] float GetPlaybackSpeed() const;
 
 	public:
-		void Serialise( std::ofstream& rStream, bool isForDist ) const override;
+		void Serialise( std::ofstream& rStream ) const override;
 		void Deserialise( FDependentIStream& rStream ) override;
 
 	private:

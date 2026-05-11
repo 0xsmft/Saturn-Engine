@@ -43,7 +43,7 @@ namespace Saturn {
 		AnimGraphTaskHandler( Ref<Animator> animator );
 		virtual ~AnimGraphTaskHandler() = default;
 
-		void InitWithCustomOrder2( SharedPtr<NodeEditorBase> nodeEditor, const IndexedMap<UUID, SGraphTask*>& rOrder );
+		void InitWithCustomOrder2( SharedPtr<NodeEditor> nodeEditor, const IndexedMap<UUID, SGraphTask*>& rOrder );
 
 		virtual void Tick( Timestep ts ) override;
 

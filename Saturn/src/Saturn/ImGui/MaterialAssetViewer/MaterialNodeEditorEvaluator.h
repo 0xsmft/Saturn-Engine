@@ -46,7 +46,7 @@ namespace Saturn {
 	};
 
 	class MaterialAsset;
-	class NodeEditorBase;
+	class NodeEditor;
 	class NodeEditorNodeBase;
 
 	class MaterialNodeEditorEvaluator : public NodeEditorRuntime

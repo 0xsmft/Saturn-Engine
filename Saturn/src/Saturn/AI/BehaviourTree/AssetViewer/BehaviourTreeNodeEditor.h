@@ -61,6 +61,8 @@ namespace Saturn {
 		BehaviourTreeNodeEditor( AssetID id );
 		virtual ~BehaviourTreeNodeEditor();
 
+		SharedPtr<NodeEditorNodeBase> SetupNewNodeEditor();
+
 	public:
 		void TraverseBehaviourTree( const SharedPtr<NodeEditorNodeBase>& rRootNode );
 
@@ -68,8 +70,8 @@ namespace Saturn {
 		Ref<BehaviourTreeMemorySpecification> GetBlackboardSpec() const { return m_BlackboardSpec; }
 
 	protected:
-		virtual void SerialiseData( std::ofstream& rStream, bool isForDist ) override;
-		virtual void DeserialiseData( FDependentIStream& rStream ) override;
+		virtual void SerialiseData( std::ofstream& rStream ) override;
+		virtual void DeserialiseData( std::ifstream& rStream ) override;
 
 #if !defined(SAT_DIST)
 	public:

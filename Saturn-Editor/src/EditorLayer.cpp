@@ -728,7 +728,7 @@ namespace Saturn {
 		m_Notifications.clear();
 
 		const Ref<Asset> asset = id == 0 ? nullptr : m_AssetManager->FindAsset( id );
-		
+
 		if( asset )
 		{
 			SceneSerialiser serialiser( newScene );
@@ -743,9 +743,8 @@ namespace Saturn {
 			m_EditorScene->Path = asset->Path;
 			m_EditorScene->ID = asset->ID;
 			m_EditorScene->Type = asset->Type;
-			m_EditorScene->Flags = asset->Flags;
 		}
-	
+
 		g_ActiveScene = m_EditorScene.Get();
 
 		hierarchyPanel->SetContext( m_EditorScene );
@@ -777,7 +776,6 @@ namespace Saturn {
 		m_RuntimeScene->Path = asset->Path;
 		m_RuntimeScene->ID = asset->ID;
 		m_RuntimeScene->Type = asset->Type;
-		m_RuntimeScene->Flags = asset->Flags;
 
 		g_ActiveScene = m_RuntimeScene.Get();
 
@@ -903,6 +901,7 @@ namespace Saturn {
 	{
 		m_ImGuiWindowManager->OnRuntimeStateChanged( RuntimeState::Ending, g_ActiveScene->GetRuntimeState() );
 
+		// Destory canvas now before the scene closes.
 		delete g_AluraCanvas;
 		g_AluraCanvas = nullptr;
 
@@ -1216,6 +1215,48 @@ namespace Saturn {
 		}
 		return false;
 	}
+	
+	bool EditorLayer::TrySelectEntityFromMouse( Mesh* mesh, SharedPtr<Entity> entity, const glm::vec3& rOrigin, const glm::vec3& rDirection )
+	{
+		bool hitAny = false;
+
+		auto& rSubmeshes = mesh->Submeshes();
+		for( uint32_t i = 0; i < rSubmeshes.size(); i++ )
+		{
+			const auto& rSubmesh = rSubmeshes[ i ];
+			const glm::mat4 transform = g_ActiveScene->GetWorldSpaceTransform( entity ).GetTransform() * rSubmesh.Transform;
+
+			const Ray ray = { .Origin = glm::inverse( transform ) * glm::vec4( rOrigin, 1.0f ), .Direction = glm::inverse( glm::mat3( transform ) ) * rDirection };
+
+			float t;
+			const bool hit = ray.IntersectsAABB( rSubmesh.BoundingBox, t );
+			if( hit )
+			{
+				const auto& rIndices = mesh->Indices();
+				const auto& rVertices = mesh->Vertices();
+
+				for( const auto& rTri : rIndices )
+				{
+					const glm::vec3& rV0 = rVertices[ rTri.V1 ].Position;
+					const glm::vec3& rV1 = rVertices[ rTri.V2 ].Position;
+					const glm::vec3& rV2 = rVertices[ rTri.V3 ].Position;
+
+					float t;
+					if( ray.IntersectsTri( rV0, rV1, rV2, t ) )
+					{
+						hitAny = hit;
+
+						m_SelectionManager->Select( entity );
+						m_SelectionManager->SetSelectionReason( ESR_Viewport );
+
+						break;
+					}
+				}
+			}
+		}
+
+		return hitAny;
+	}
 
 	bool EditorLayer::OnMousePressed( RubyMouseEvent& rEvent )
 	{
@@ -1232,43 +1273,20 @@ namespace Saturn {
 			for( const auto& rEntity : staticMeshes )
 			{
 				const auto& comp = rEntity->GetComponent<StaticMeshComponent>();
-				if( !comp.Mesh ) 
+				if( !comp.Mesh )
 					continue;
 
-				auto& rSubmeshes = comp.Mesh->Submeshes();
-				for( uint32_t i = 0; i < rSubmeshes.size(); i++ )
-				{
-					const auto& rSubmesh = rSubmeshes[ i ];
-					const glm::mat4 transform = g_ActiveScene->GetWorldSpaceTransform( rEntity ).GetTransform() * rSubmesh.Transform;
+				hitAny |= TrySelectEntityFromMouse( ( Mesh* ) comp.Mesh.Get(), rEntity, origin, dir );
+			}
 
-					const Ray ray = { .Origin = glm::inverse( transform ) * glm::vec4( origin, 1.0f ), .Direction = glm::inverse( glm::mat3( transform ) ) * dir };
+			const auto skMeshes = g_ActiveScene->GetAllEntitiesWith<SkeletalMeshComponent>();
+			for( const auto& rEntity : skMeshes )
+			{
+				const auto& comp = rEntity->GetComponent<SkeletalMeshComponent>();
+				if( !comp.Mesh )
+					continue;
 
-					float t;
-					const bool hit = ray.IntersectsAABB( rSubmesh.BoundingBox, t );
-					if( hit )
-					{
-						hitAny = hit;
-
-						const auto& rIndices = comp.Mesh->Indices();
-						const auto& rVertices = comp.Mesh->Vertices();
-
-						for( const auto& rTri : rIndices )
-						{
-							const glm::vec3& rV0 = rVertices[ rTri.V1 ].Position;
-							const glm::vec3& rV1 = rVertices[ rTri.V2 ].Position;
-							const glm::vec3& rV2 = rVertices[ rTri.V3 ].Position;
-
-							float t;
-							if( ray.IntersectsTri( rV0, rV1, rV2, t ) )
-							{
-								m_SelectionManager->Select( rEntity );
-								m_SelectionManager->SetSelectionReason( ESR_Viewport );
-
-								break;
-							}
-						}
-					}
-				}
+				hitAny |= TrySelectEntityFromMouse( ( Mesh* ) comp.Mesh.Get(), rEntity, origin, dir );
 			}
 
 			const auto billboards = g_ActiveScene->GetAllEntitiesWith<BillboardComponent>();
@@ -1276,8 +1294,17 @@ namespace Saturn {
 			{
 				const TransformComponent& rTc = g_ActiveScene->GetWorldSpaceTransform( rEntity );
 
-				if( RayIntersectsBillboard( origin, dir, std::numeric_limits<float>::max(), rTc.Position, rTc.Scale.x ) )
+				// TODO: Not sure if we should the transforms scale for sideLength arg
+				//	     because what if the mesh is scaled to 1024, but the billboard is still 1x1 (which it will)
+				//		 so for now we can just always use the 1x1 billboard and nothing else.
+				//		 So, until we have some sort of scaling that is independent from the transform, 
+				//		 1x1 will have to be used.
+				//																						  |
+				//																						  |
+				//																						  v
+				if( RayIntersectsBillboard( origin, dir, std::numeric_limits<float>::max(), rTc.Position, 1.0f ) )
 				{
+					hitAny |= true;
 					m_SelectionManager->Select( rEntity );
 					m_SelectionManager->SetSelectionReason( ESR_Viewport );
 				}
@@ -1296,7 +1323,7 @@ namespace Saturn {
 	{
 		const AssetID destinationID = rEvent.GetID();
 		const Ref<Asset> sceneAsset = m_AssetManager->FindAsset( destinationID );
-		
+
 		if( !sceneAsset )
 		{
 			SAT_CORE_ERROR( "Failed to travel as ASSET/{0} is not a valid scene ID!", destinationID );
@@ -2144,10 +2171,10 @@ namespace Saturn {
 					ImGui::TableSetColumnIndex( 4 );
 					ImGui::Text( "%i", asset->Version );
 
-					if( asset->Version != SAT_CURRENT_VERSION )
+					if( asset->Version < AssetVersion::Latest )
 					{
 						ImGui::SameLine();
-						ImGui::Text( "(Version does not match)" );
+						ImGui::Text( "(Version is older than newer)" );
 					}
 
 					ImGui::TableSetColumnIndex( 5 );

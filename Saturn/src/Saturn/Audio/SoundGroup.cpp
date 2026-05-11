@@ -104,7 +104,7 @@ namespace Saturn {
 
 		ma_sound_group* pParentSoundGroup = isMaster ? nullptr : AudioSystem::Get().GetMasterSoundGroup()->GetInternal();
 
-		MA_CHECK( ma_sound_group_init( &AudioSystem::Get().GetAudioEngine(), 0, pParentSoundGroup, m_Group ) );
+		MA_CHECK( ma_sound_group_init( AudioSystem::Get().GetAudioEngine(), 0, pParentSoundGroup, m_Group ) );
 	}
 
 }

@@ -29,14 +29,15 @@
 #include "sppch.h"
 #include "NodeEditorVariableTasks.h"
 
-#include "NodeEditorVariableNode.h"
-
 #include "Link.h"
 
-#include "NodeEditorNodeBase.h"
-#include "DataLine.h"
-#include "NodeEditorBase.h"
 #include "NodeEditorTaskHandler.h"
+
+#if !defined(SAT_DIST)
+#include "NodeEditorNodeBase.h"
+#include "NodeEditorBase.h"
+#include "NodeEditorVariableNode.h"
+#endif
 
 namespace Saturn {
 
@@ -48,6 +49,23 @@ namespace Saturn {
 	{
 	}
 
+#if !defined(SAT_DIST)
+	void SNodeEditorGetVariableTask::PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode )
+	{
+		Super::PreInitialiseTask( pEditor, pNode );
+
+		NodeEditorVariableNode* pOtherNode = dynamic_cast< NodeEditorVariableNode* >( pNode );
+		if( pOtherNode )
+		{
+			if( auto var = pOtherNode->GetVariable(); var ) 
+			{
+				m_VariableID = var->GetUUID();
+			}
+		}
+	}
+#endif
+
+	/*
 	void SNodeEditorGetVariableTask::InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
 	{
 		m_pHandler = pHandler;
@@ -128,120 +146,53 @@ namespace Saturn {
 			m_NodeID = pNode->ID;
 		}
 	}
+	*/
 
-	template<typename Ty>
-	static void WriteData( const Ty& val, UUID ID, NodeEditorTaskHandler* pHandler )
+	void SNodeEditorGetVariableTask::InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther )
 	{
-		// Write
-		auto* pData = pHandler->GetDataLine( ID );
-		if( pData )
+		Super::InitialiseTaskWithOther( pHandler, pOther );
+	
+		SNodeEditorGetVariableTask* pThisOther = dynamic_cast< SNodeEditorGetVariableTask* >( pOther );
+		if( pThisOther )
 		{
-			pData->WriteValue( val );
+			m_VariableID = pThisOther->m_VariableID;
+
+			auto var = pHandler->GetVariable( m_VariableID );
+
+			switch( var->GetType() )
+			{
+				case NodeEditorVariableDataType::Bool:
+				{
+					pHandler->RegisterLocator<bool>( m_NodeID, 0llu, var->GetPtr<bool>() );
+				} break;
+
+				default:
+					break;
+			}
 		}
 	}
 
 	NodeEditorTaskState SNodeEditorGetVariableTask::Tick( Timestep ts )
 	{
-		switch( m_Variable->GetType() )
-		{
-			case NodeEditorVariableDataType::Float:
-			{
-				const auto val = m_Variable->Get<float>();
-
-				for( const auto& rID : Outgoings )
-				{
-					WriteData( val, rID, m_pHandler );
-				}
-			} break;
-
-			case NodeEditorVariableDataType::Int:
-			{
-				const auto val = m_Variable->Get<int>();
-
-				for( const auto& rID : Outgoings )
-				{
-					WriteData( val, rID, m_pHandler );
-				}
-			} break;
-
-			case NodeEditorVariableDataType::ID:
-			{
-				const auto val = m_Variable->Get<uint64_t>();
-
-				for( const auto& rID : Outgoings )
-				{
-					WriteData( val, rID, m_pHandler );
-				}
-			} break;
-
-			case NodeEditorVariableDataType::Bool:
-			{
-				const auto val = m_Variable->Get<bool>();
-				for( const auto& rID : Outgoings )
-				{
-					WriteData( val, rID, m_pHandler );
-				}
-			} break;
-
-			case NodeEditorVariableDataType::Vec2:
-			{
-				const auto val = m_Variable->Get<glm::vec2>( );
-
-				for( const auto& rID : Outgoings )
-				{
-					WriteData( val, rID, m_pHandler );
-				}
-			} break;
-
-			case NodeEditorVariableDataType::Vec3:
-			{
-				const auto val = m_Variable->Get<glm::vec3>();
-
-				for( const auto& rID : Outgoings )
-				{
-					WriteData( val, rID, m_pHandler );
-				}
-			} break;
-
-			case NodeEditorVariableDataType::Vec4:
-			{
-				const auto val = m_Variable->Get<glm::vec4>();
-
-				for( const auto& rID : Outgoings )
-				{
-					WriteData( val, rID, m_pHandler );
-				}
-			} break;
-
-			case NodeEditorVariableDataType::Class:
-			{
-				const auto val = m_Variable->Get<SClass*>();
-
-				for( const auto& rID : Outgoings )
-				{
-					WriteData( val, rID, m_pHandler );
-				}
-			} break;
-
-			case NodeEditorVariableDataType::String:
-			{
-				const auto val = m_Variable->Get<std::string>();
-
-				for( const auto& rID : Outgoings )
-				{
-					WriteData( val, rID, m_pHandler );
-				}
-			} break;
-
-			default:
-				break;
-		}
-
 		return NodeEditorTaskState::Completed;
 	}
 
 	void SNodeEditorGetVariableTask::Reset()
 	{
+	}
+
+	void SNodeEditorGetVariableTask::Serialise( std::ofstream& rStream ) const
+	{
+		Super::Serialise( rStream );
+
+		RawSerialisation::WriteObjectChecked( m_VariableID, rStream );
+	}
+
+	void SNodeEditorGetVariableTask::Deserialise( FDependentIStream& rStream )
+	{
+		Super::Deserialise( rStream );
+
+		RawSerialisation::ReadObjectChecked( m_VariableID, rStream );
 	}
 
 }

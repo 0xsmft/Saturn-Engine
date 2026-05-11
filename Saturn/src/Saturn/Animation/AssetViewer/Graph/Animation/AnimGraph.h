@@ -47,6 +47,8 @@ namespace Saturn {
 		AnimGraph( AssetID id );
 		virtual ~AnimGraph();
 
+		SharedPtr<NodeEditorNodeBase> SetupNewNodeEditor();
+
 		AnimGraphSortMap TraverseAndCreateTasks();
 
 		void MarkNodeAsEntry( SharedPtr<NodeEditorNodeBase> node ) { m_StateMachineEntryNode = node; }
@@ -62,7 +64,7 @@ namespace Saturn {
 
 	protected:
 		//////////////////////////////////////////////////////////////////////////
-		void SerialiseData( std::ofstream& rStream, bool isForDist ) override;
+		void SerialiseData( std::ofstream& rStream ) override;
 		void DeserialiseData( FDependentIStream& rStream ) override;
 	protected:
 		virtual void DrawGraph() override;

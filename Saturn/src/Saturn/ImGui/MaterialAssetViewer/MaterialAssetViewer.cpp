@@ -34,7 +34,7 @@
 #include "Saturn/NodeEditor/Serialisation/NodeCache.h"
 
 #include "MaterialNodeEditorEvaluator.h"
-#include "MaterialViewerNodes.h"
+#include "MaterialGraphNodes.h"
 
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
 #include "Saturn/Vulkan/Renderer.h"
@@ -79,9 +79,6 @@ namespace Saturn {
 
 		m_HostMaterialAsset = nullptr;
 		m_EditingMaterial = nullptr;
-
-		m_NodeEditor->SetRuntime( nullptr );
-		m_NodeEditor = nullptr;
 	}
 
 	void MaterialAssetViewer::OnImGuiRender()
@@ -110,10 +107,12 @@ namespace Saturn {
 			}
 		}
 
+		/*
 		if( m_NodeEditor->Evaluate() != NodeEditorCompilationStatus::Success ) 
 		{
 			Application::Get()->DispatchEvent<SendEditorNotificationEvent>( "The node editor failed to evaluate." );
 		}
+		*/
 
 		m_NodeEditor->SaveAndMarkClean();
 #endif
@@ -126,7 +125,7 @@ namespace Saturn {
 		m_HostMaterialAsset = materialAsset;
 		m_EditingMaterial = Ref<Material>( m_HostMaterialAsset->GetMaterial() );
 
-		m_NodeEditor = SharedPtr<NodeEditor>::Create( m_AssetID );
+		m_NodeEditor = SharedPtr<MaterialGraph>::Create( m_AssetID );
 
 		if( NodeCacheEditor::ReadNodeEditorCache( m_NodeEditor, m_AssetID ) )
 		{
@@ -146,8 +145,8 @@ namespace Saturn {
 		auto rt = Ref<MaterialNodeEditorEvaluator>::Create( info );
 		rt->SetTargetNodeEditor( m_NodeEditor );
 
-		m_NodeEditor->SetRuntime( rt );
 		m_NodeEditor->SetWindowName( m_Name );
+		m_NodeEditor->SetHostMaterialAsset( m_HostMaterialAsset );
 
 		SetupNodeEditorCallbacks();
 
@@ -202,10 +201,10 @@ namespace Saturn {
 	{
 		std::map<uint32_t, Ref<Texture2D>> IndexToTextureIndex =
 		{
-			{ 0, m_HostMaterialAsset->GetAlbeoMap() },
-			{ 1, m_HostMaterialAsset->GetNormalMap() },
-			{ 2, m_HostMaterialAsset->GetMetallicMap() },
-			{ 3, m_HostMaterialAsset->GetRoughnessMap() }
+			{ 0u, m_HostMaterialAsset->GetAlbeoMap() },
+			{ 1u, m_HostMaterialAsset->GetNormalMap() },
+			{ 2u, m_HostMaterialAsset->GetMetallicMap() },
+			{ 3u, m_HostMaterialAsset->GetRoughnessMap() }
 		};
 
 		for( size_t i = 0; i < IndexToTextureIndex.size(); i++ )
@@ -214,10 +213,10 @@ namespace Saturn {
 		}
 	}
 
-	void MaterialAssetViewer::CreateNodesFromTexture( const Ref<Texture2D>& rTexture, int slot )
+	void MaterialAssetViewer::CreateNodesFromTexture( Ref<Texture2D> texture, int slot )
 	{
-		const auto& rPath = rTexture->GetPath();
-		const bool HasTexture = rTexture != Renderer::Get()->GetPinkTexture();
+		const auto& rPath = texture->GetPath();
+		const bool HasTexture = texture != Renderer::Get()->GetPinkTexture();
 
 		if( HasTexture )
 		{

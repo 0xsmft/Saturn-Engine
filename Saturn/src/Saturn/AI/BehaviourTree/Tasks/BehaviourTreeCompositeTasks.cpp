@@ -124,7 +124,7 @@ namespace Saturn {
 	}
 
 #if !defined(SAT_DIST)
-	void BehaviourTreeSelectorTask::PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
+	void BehaviourTreeSelectorTask::PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode )
 	{
 		Super::PreInitialiseTask( pEditor, pNode );
 
@@ -193,7 +193,7 @@ namespace Saturn {
 	}
 
 #if !defined(SAT_DIST)
-	void BehaviourTreeSequenceTask::PreInitialiseTask( NodeEditorBase* pEditor, NodeEditorNodeBase* pNode )
+	void BehaviourTreeSequenceTask::PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode )
 	{
 		Super::PreInitialiseTask( pEditor, pNode );
 

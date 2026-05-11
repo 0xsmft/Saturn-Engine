@@ -158,7 +158,7 @@ public: \
 
 #define SAT_DECLARE_MATHS2_NOT_EQUAL_TO_CLASS( NodeName, FriendlyName, CppType ) SAT_DECLARE_MATHS2_NODE( SMaths2NotEqualTo##FriendlyName##Node, NodeName, Maths2NotEqualTo##FriendlyName, CppType )
 
-	SAT_DECLARE_MATHS2_NOT_EQUAL_TO_CLASS( "bool != bool", Bool, bool );
+	SAT_DECLARE_MATHS2_NOT_EQUAL_TO_CLASS( "boolean NOT", Bool, bool );
 	SAT_DECLARE_MATHS2_NOT_EQUAL_TO_CLASS( "float != float", Float, float );
 	SAT_DECLARE_MATHS2_NOT_EQUAL_TO_CLASS( "int != int", Int, int );
 	SAT_DECLARE_MATHS2_NOT_EQUAL_TO_CLASS( "U32 != U32", UInt, uint32_t );

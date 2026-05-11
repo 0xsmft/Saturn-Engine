@@ -38,6 +38,8 @@ namespace Saturn {
 		SoundGraph( AssetID assetID );
 		virtual ~SoundGraph();
 
+		SharedPtr<NodeEditorNodeBase> SetupNewNodeEditor();
+
 #if !defined(SAT_DIST)
 	public:
 		virtual void OnImGuiRender() override;

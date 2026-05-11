@@ -68,6 +68,13 @@ namespace Saturn {
 
 		void SubmitFullscreenQuad( VkCommandBuffer CommandBuffer, Ref<Saturn::Pipeline> Pipeline, Ref<Material> material, Ref<IndexBuffer> IndexBuffer, Ref<VertexBuffer> VertexBuffer );
 
+		//
+		// Render a fullscreen "quad", it's not actually a quad it's a single triangle that extends over the screen.
+		// 
+		// see: https://www.saschawillems.de/blog/2016/08/13/vulkan-tutorial-on-rendering-a-fullscreen-quad-without-buffers/
+		//
+		void SubmitFullscreenQuad2( VkCommandBuffer CommandBuffer, Ref<Saturn::Pipeline> Pipeline, Ref<Material> material );
+
 		void SubmitFullscreenQuadPushConst( VkCommandBuffer CommandBuffer, Ref<Saturn::Pipeline> Pipeline, Ref<Material> material, Ref<IndexBuffer> IndexBuffer, Ref<VertexBuffer> VertexBuffer, Buffer PushConstData );
 
 		// Render pass helpers.

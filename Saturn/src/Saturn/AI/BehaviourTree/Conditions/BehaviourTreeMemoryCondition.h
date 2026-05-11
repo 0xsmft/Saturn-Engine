@@ -66,7 +66,7 @@ namespace Saturn {
 		//////////////////////////////////////////////////////////////////////////
 		// BehaviourTreeBaseTask
 
-		void InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+		void InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditor* pEditor, NodeEditorNodeBase* pNode ) override;
 		NodeEditorTaskState Tick( Timestep ts ) override;
 		void Reset() override;
 

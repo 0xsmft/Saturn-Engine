@@ -170,7 +170,15 @@ namespace Saturn {
 		IndexBuffer->Draw( CommandBuffer );
 	}
 
-	void Renderer::SubmitFullscreenQuadPushConst( 
+	void Renderer::SubmitFullscreenQuad2( VkCommandBuffer CommandBuffer, Ref<Saturn::Pipeline> Pipeline, Ref<Material> material )
+	{
+		Pipeline->Bind( CommandBuffer );
+		material->Bind( CommandBuffer, Pipeline->GetPipelineLayout(), {} );
+
+		vkCmdDraw( CommandBuffer, 3, 1, 0, 0 );
+	}
+
+	void Renderer::SubmitFullscreenQuadPushConst(
 		VkCommandBuffer CommandBuffer, 
 		Ref<Saturn::Pipeline> Pipeline, 
 		Ref<Material> material, 
@@ -762,6 +770,8 @@ namespace Saturn {
 								  2, 3, 0, };
 
 		index = Ref<IndexBuffer>::Create( indices, 6 * sizeof( uint32_t ) );
+
+		delete[] data;
 
 		return { vertex, index };
 	}

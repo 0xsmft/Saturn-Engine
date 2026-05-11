@@ -960,10 +960,6 @@ namespace Saturn {
 		RawSerialisation::ReadVector( m_PushConstants, rStream );
 		RawSerialisation::ReadVector( m_VulkanRanges, rStream );
 
-		// Clean up some of the data that was read.
-		for( auto&& [k, v] : m_DescriptorSets )
-			v.SetLayout = nullptr;
-
 		CreateDescriptors();
 	}
 

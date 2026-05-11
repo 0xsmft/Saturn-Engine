@@ -127,11 +127,11 @@ namespace Saturn {
 			return m_Assets->DoesIDExists( id );
 		}
 
-		void BumpAssetVersion( uint32_t newVersion ) 
+		void BumpAssetVersion()
 		{
 			for( auto& [ id, rAsset ] : m_Assets->m_Assets )
 			{
-				rAsset->Version = newVersion;
+				rAsset->Version = AssetVersion::Latest;
 			}
 		}
 
@@ -155,7 +155,7 @@ namespace Saturn {
 		// For example, when an entity needs a mesh it becomes a MemoryAssetDependency.
 		//
 		// Pure dependencies, are when an Asset needs an Asset, (asset interdependence), these are also called Pure Dependencies.
-		// So for example, when a MaterialAssets needs a TextureSourceAsset, the material, the "dependent" will hold a depednecy that texture asset.
+		// So for example, when a MaterialAssets needs a TextureSourceAsset, the material (or the "dependent") will hold a dependency for that texture asset.
 		// 
 		// NOTE: Dependency IDs are stored in the dependee's list NOT the dependent's list.
 		// So in the AssetRegistry.sreg file it would look like this:
@@ -244,11 +244,11 @@ namespace Saturn {
 			return asset.As<Ty>();
 		}
 
+#if !defined(SAT_DIST)
 	private:
 		void CreateAssetTypeTraitsTable();
 
 	private:
-#if !defined(SAT_DIST)
 		// An Asset in our registry -> unordered_set of AssetDependency who depend on Asset
 		// Memory Dependency
 		//                 AssetID                     WhatDependsOnMe

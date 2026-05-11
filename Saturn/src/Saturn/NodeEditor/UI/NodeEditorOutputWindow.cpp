@@ -27,7 +27,7 @@
 */
 
 #include "sppch.h"
-#include "NodeEditorOutput.h"
+#include "NodeEditorOutputWindow.h"
 
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
 #include "Saturn/ImGui/EditorIcons.h"
@@ -37,18 +37,18 @@
 
 namespace Saturn {
 
-	NodeEditorOutput::NodeEditorOutput( UUID outputWindowID )
+	NodeEditorOutputWindow::NodeEditorOutputWindow( UUID outputWindowID )
 		: m_OutputWindowID( outputWindowID )
 	{
 		m_WindowName = std::format( "Node Editor Output##{0}", ( uint64_t ) outputWindowID );
 	}
 
-	NodeEditorOutput::~NodeEditorOutput()
+	NodeEditorOutputWindow::~NodeEditorOutputWindow()
 	{
 		ClearOutput();
 	}
 
-	void NodeEditorOutput::Draw()
+	void NodeEditorOutputWindow::Draw()
 	{
 		ImGui::Begin( m_WindowName.data(), &m_ShowWindow );
 
@@ -97,17 +97,17 @@ namespace Saturn {
 		ImGui::End();
 	}
 
-	void NodeEditorOutput::ClearOutput()
+	void NodeEditorOutputWindow::ClearOutput()
 	{
 		m_Messages.clear();
 	}
 
-	void NodeEditorOutput::PushMessage( const NodeEditorMessage& rMessageData )
+	void NodeEditorOutputWindow::PushMessage( const NodeEditorMessage& rMessageData )
 	{
 		m_Messages.push_back( rMessageData );
 	}
 
-	void NodeEditorOutput::DrawMessage( const NodeEditorMessage& rMessage )
+	void NodeEditorOutputWindow::DrawMessage( const NodeEditorMessage& rMessage )
 	{
 		const float height = ImGui::GetTextLineHeightWithSpacing();
 
@@ -167,7 +167,7 @@ namespace Saturn {
 		ImGui::Separator();
 	}
 
-	void NodeEditorOutput::ClearMessage( UUID messageID )
+	void NodeEditorOutputWindow::ClearMessage( UUID messageID )
 	{
 		const auto Itr = std::find_if( m_Messages.begin(), m_Messages.end(), 
 			[messageID]( const auto& rMessage )

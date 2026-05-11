@@ -40,7 +40,7 @@ namespace Saturn {
 		AnimGraphTransitionTask();
 		~AnimGraphTransitionTask();
 
-		virtual	void InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+		virtual	void InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditor* pEditor, NodeEditorNodeBase* pNode ) override;
 		virtual	NodeEditorTaskState Tick( Timestep ts ) override;
 		virtual	void Reset() override;
 
@@ -60,13 +60,21 @@ namespace Saturn {
 		AnimGraphTransitionResultTask();
 		~AnimGraphTransitionResultTask();
 
-		virtual	void InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditorBase* pEditor, NodeEditorNodeBase* pNode ) override;
+#if !defined(SAT_DIST)
+		virtual	void PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode ) override;
+#endif
+		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther ) override;
+
 		virtual	NodeEditorTaskState Tick( Timestep ts ) override;
 		virtual	void Reset() override;
+
+		virtual void Serialise( std::ofstream& rStream ) const override;
+		virtual void Deserialise( FDependentIStream& rStream ) override;
 
 		bool GetResult() const { return *m_Result; }
 
 	private:
+		UUID m_IncomingNodeID = 0llu;
 		bool* m_Result = nullptr;
 	};
 

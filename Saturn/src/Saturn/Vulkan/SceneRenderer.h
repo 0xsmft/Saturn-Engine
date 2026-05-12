@@ -426,7 +426,6 @@ namespace Saturn {
 		std::array<BloomTexture, 3> BloomTextures;
 		Ref<ComputePipeline> BloomComputePipeline = nullptr;
 		Ref<Texture2D> BloomDirtTexture = nullptr;
-		Ref< DescriptorSet > BloomDS = nullptr;
 
 		Ref<Material> BloomPrefilterMaterial;
 		Ref<Material> BloomFirstUpsampleMaterial;

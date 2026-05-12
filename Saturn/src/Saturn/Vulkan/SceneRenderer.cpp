@@ -2457,7 +2457,7 @@ namespace Saturn {
 		pc_Settings.Knee = 0.1f;
 		pc_Settings.TK = pc_Settings.Threshold - pc_Settings.Knee;
 		pc_Settings.DK = pc_Settings.Knee * 2.0F;
-		pc_Settings.QK = pc_Settings.Knee / 0.25F;
+		pc_Settings.QK = 0.25f / pc_Settings.Knee;
 		pc_Settings.Lod = 0.0f;
 
 		glm::uvec3 workGroups{ 0 };
@@ -2492,8 +2492,8 @@ namespace Saturn {
 		{
 			const auto [mipW, mipH] = m_RendererData.BloomTextures[ 0 ].Texture->GetMipSize( i );
 
-			workGroups.x = ( uint32_t ) glm::ceil( static_cast< uint32_t >( mipW / m_RendererData.BloomWorkSize ) );
-			workGroups.y = ( uint32_t ) glm::ceil( static_cast< uint32_t >( mipH / m_RendererData.BloomWorkSize ) );
+			workGroups.x = ( uint32_t ) glm::ceil( mipW / ( float ) m_RendererData.BloomWorkSize );
+			workGroups.y = ( uint32_t ) glm::ceil( mipH / ( float ) m_RendererData.BloomWorkSize );
 
 			pc_Settings.Lod = static_cast< float >( i - 1.0f );
 
@@ -2526,8 +2526,8 @@ namespace Saturn {
 
 			const auto [mipW, mipH] = m_RendererData.BloomTextures[ 2 ].Texture->GetMipSize( mips - 2 );
 
-			workGroups.x = ( uint32_t ) glm::ceil( static_cast< uint32_t >( mipW / m_RendererData.BloomWorkSize ) );
-			workGroups.y = ( uint32_t ) glm::ceil( static_cast< uint32_t >( mipH / m_RendererData.BloomWorkSize ) );
+			workGroups.x = ( uint32_t ) glm::ceil( mipW / ( float ) m_RendererData.BloomWorkSize );
+			workGroups.y = ( uint32_t ) glm::ceil( mipH / ( float ) m_RendererData.BloomWorkSize );
 
 			Buffer pc( sizeof( u_Settings ), &pc_Settings );
 
@@ -2545,8 +2545,8 @@ namespace Saturn {
 			{
 				const auto [mipW, mipH] = m_RendererData.BloomTextures[ 2 ].Texture->GetMipSize( i );
 
-				workGroups.x = ( uint32_t ) glm::ceil( static_cast< uint32_t >( mipW / m_RendererData.BloomWorkSize ) );
-				workGroups.y = ( uint32_t ) glm::ceil( static_cast< uint32_t >( mipH / m_RendererData.BloomWorkSize ) );
+				workGroups.x = ( uint32_t ) glm::ceil( mipW / ( float ) m_RendererData.BloomWorkSize );
+				workGroups.y = ( uint32_t ) glm::ceil( mipH / ( float ) m_RendererData.BloomWorkSize );
 
 				pc_Settings.Lod = ( float ) i;
 				Buffer pc( sizeof( u_Settings ), &pc_Settings );
@@ -2771,12 +2771,14 @@ namespace Saturn {
 			auto& rTextureInfo = m_RendererData.BloomTextures[ i ];
 
 			rTextureInfo.Texture = Ref<Texture2D>::Create( ImageFormat::RGBA32F, bs.x, bs.y, nullptr, true );
-			rTextureInfo.Texture->SetDebugName( "Bloom Texture: " + std::to_string( i ) );
+			rTextureInfo.Texture->SetDebugName( "Bloom Texture/" + std::to_string( t ) );
 
 			for( size_t i = 0; i < rTextureInfo.Texture->GetMipMapLevels(); i++ )
 			{
 				auto ds = rTextureInfo.Texture->GetDescriptorInfo();
 				ds.imageView = rTextureInfo.Texture->GetOrCreateMipImageView( ( uint32_t ) i );
+
+				SetDebugUtilsObjectName( std::format( "Bloom Texture/{0}, mip/{1}", t, i ), ( uint64_t ) ds.imageView, VK_OBJECT_TYPE_IMAGE_VIEW );
 
 				rTextureInfo.ImageInfos.push_back( ds );
 			}
@@ -3171,8 +3173,6 @@ namespace Saturn {
 		if( !Application::Get()->HasFlag( ApplicationFlag_CreateSceneRenderer_DEPRECATED ) )
 			return;
 
-		// DescriptorSets
-		BloomDS                   = nullptr;
 
 		// Vertex and Index buffers
 		QuadVertexBuffer->Destroy();

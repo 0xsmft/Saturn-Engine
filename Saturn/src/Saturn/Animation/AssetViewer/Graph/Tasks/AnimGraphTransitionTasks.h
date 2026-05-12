@@ -40,7 +40,6 @@ namespace Saturn {
 		AnimGraphTransitionTask();
 		~AnimGraphTransitionTask();
 
-		virtual	void InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditor* pEditor, NodeEditorNodeBase* pNode ) override;
 		virtual	NodeEditorTaskState Tick( Timestep ts ) override;
 		virtual	void Reset() override;
 

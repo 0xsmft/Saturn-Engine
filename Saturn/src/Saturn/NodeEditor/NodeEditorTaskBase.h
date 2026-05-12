@@ -72,7 +72,6 @@ namespace Saturn {
 #endif
 		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther );
 
-		virtual void InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditor* pEditor, NodeEditorNodeBase* pNode ) {}
 		// Called every frame unless the node has the ConstantEvaluated flag.
 		virtual NodeEditorTaskState Tick( Timestep ts ) { return NodeEditorTaskState::Unknown; }
 		virtual void Reset() {}

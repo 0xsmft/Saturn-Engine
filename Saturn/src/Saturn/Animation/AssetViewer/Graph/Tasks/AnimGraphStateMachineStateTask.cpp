@@ -39,11 +39,6 @@ namespace Saturn {
 	{
 	}
 
-	void AnimGraphStateMachineStateTask::InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditor* pEditor, NodeEditorNodeBase* pNode )
-	{
-
-	}
-
 	NodeEditorTaskState AnimGraphStateMachineStateTask::Tick( Timestep ts )
 	{
 		return NodeEditorTaskState::Completed;

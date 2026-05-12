@@ -32,7 +32,7 @@
 
 namespace Saturn {
 
-	enum class BTMemoryConditionQueryType
+	enum class BTMemoryConditionQueryType : uint8_t
 	{
 		Set,
 		NotSet
@@ -66,7 +66,6 @@ namespace Saturn {
 		//////////////////////////////////////////////////////////////////////////
 		// BehaviourTreeBaseTask
 
-		void InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditor* pEditor, NodeEditorNodeBase* pNode ) override;
 		NodeEditorTaskState Tick( Timestep ts ) override;
 		void Reset() override;
 
@@ -82,12 +81,11 @@ namespace Saturn {
 		virtual void Deserialise( FDependentIStream& rStream ) override;
 
 	private:
-		BTMemoryConditionQueryType m_QueryType = BTMemoryConditionQueryType::Set;
-
 		// On Dist, we don't need to store our key spec, only with editor to allow us to select a target variable
 #if !defined( SAT_DIST )
 		Ref<BehaviourTreeMemoryKeySpec> m_VariableSpec;
 #endif
+		BTMemoryConditionQueryType m_QueryType = BTMemoryConditionQueryType::Set;
 	};
 
 }

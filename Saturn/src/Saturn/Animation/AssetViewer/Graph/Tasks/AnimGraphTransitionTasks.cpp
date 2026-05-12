@@ -45,16 +45,6 @@ namespace Saturn {
 	{
 	}
 
-	void AnimGraphTransitionTask::InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditor* pEditor, NodeEditorNodeBase* pNode )
-	{
-		AnimGraphStateMachineTransitionNode* pTransitionNode = dynamic_cast< AnimGraphStateMachineTransitionNode* >( pNode );
-		if( pTransitionNode )
-		{
-			m_NodeID = pTransitionNode->ID;
-			m_FinalResultNodeID = pTransitionNode->GetOutputNodeID();
-		}
-	}
-
 	NodeEditorTaskState AnimGraphTransitionTask::Tick( Timestep ts )
 	{
 		return NodeEditorTaskState::Completed;

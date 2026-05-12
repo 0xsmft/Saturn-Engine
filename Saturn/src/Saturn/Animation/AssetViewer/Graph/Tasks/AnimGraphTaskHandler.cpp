@@ -46,37 +46,6 @@ namespace Saturn {
 	{
 	}
 
-	void AnimGraphTaskHandler::InitWithCustomOrder2( SharedPtr<NodeEditor> nodeEditor, const IndexedMap<UUID, SGraphTask*>& rOrder )
-	{
-		for( auto& [id, pTask] : rOrder )
-		{
-			if( pTask )
-			{
-				pTask->InitialiseTask( this, nodeEditor.Get(), nullptr );
-
-				m_Tasks.push_back( pTask );
-			}
-		}
-
-#if defined(SAT_DEBUG)
-		SAT_CORE_INFO( "=== ALL TASKS ===" );
-		for( auto& [id, pTask] : rOrder )
-		{
-			SAT_CORE_INFO( "ID: {0} Class Name: {1}", ( uint64_t ) id, pTask->GetClass()->GetName() );
-			for( const auto& subTask : pTask->GetTasks() )
-			{
-				if( subTask.pTask )
-				{
-					SAT_CORE_INFO( " -> {0}", subTask.pTask->GetClass()->GetName() );
-				}
-				else
-					SAT_CORE_INFO( " -> <NULL>" );
-			}
-		}
-		SAT_CORE_INFO( "=================" );
-#endif
-	}
-
 	void AnimGraphTaskHandler::Tick( Timestep ts )
 	{
 		if( m_CurrentTask == nullptr )

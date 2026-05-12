@@ -50,11 +50,13 @@ namespace Saturn {
 	{
 	}
 
+	/*
 	void BehaviourTreeMemoryCondition::InitialiseTask( NodeEditorTaskHandler* pHandler, NodeEditor* pEditor, NodeEditorNodeBase* pNode )
 	{
 		BehaviourTreeNodeEditor* pBehaviourTreeNodeEditor = dynamic_cast< BehaviourTreeNodeEditor* >( pEditor );
 		m_pRTBlackboard = pBehaviourTreeNodeEditor->GetBlackboard().Get();
 	}
+	*/
 
 	NodeEditorTaskState BehaviourTreeMemoryCondition::Tick( Timestep ts )
 	{

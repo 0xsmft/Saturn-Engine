@@ -30,7 +30,7 @@
 
 namespace Saturn {
 
-	enum EntitySelectionReason : uint32_t
+	enum EntitySelectionReason : uint8_t
 	{
 		ESR_SceneHierarchyPanel = 0x01,
 		ESR_Viewport = 0x02,

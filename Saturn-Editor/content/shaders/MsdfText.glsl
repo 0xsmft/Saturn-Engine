@@ -1,4 +1,4 @@
-// Msdf Text Shader
+// Msdf Text Shader (2D Screenspace and 3D Worldspace)
 
 #type vertex
 #version 450
@@ -7,10 +7,13 @@
 layout(location = 0) in vec3 a_Position;
 layout(location = 1) in vec2 a_TexCoord;
 layout(location = 2) in vec4 a_Color;
+// Font atlas index
 layout(location = 3) in float a_TexIndex;
 
-layout(push_constant) uniform pc_ScalingAndTransfrom
+layout(push_constant) uniform pc_Transfrom
 {
+	// NOTE: On Wordspace Projection == ViewProjection
+	//		 On Screenspace Projection == Projection
 	mat4 Projection;
 } u_Transform; 
 

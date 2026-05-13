@@ -48,7 +48,7 @@ namespace SaturnBuildTool
         /// <summary>
         /// Decides if this modules needs to be linked or not if any source file was compiled successfully.
         /// 
-        /// NOTE: The module may be forced to be linked for external reasons such as a dependant .lib file being modified, 
+        /// NOTE: The module may be forced to be linked for external reasons such as a dependent .lib file being modified, 
         /// if thats thats case then this variable will NOT become true.
         /// </summary>
         public bool ShouldLink { get; set; }

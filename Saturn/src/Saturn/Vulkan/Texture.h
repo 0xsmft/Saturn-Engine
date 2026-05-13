@@ -81,7 +81,7 @@ namespace Saturn {
 	{
 	public:
 		Texture() = default;
-		Texture( uint32_t width, uint32_t height, VkFormat Format, const void* pData );
+		Texture( uint32_t width, uint32_t height, VkFormat Format, const void* pData, AddressingMode Mode = AddressingMode::Repeat );
 		Texture( std::filesystem::path Path, AddressingMode Mode ) : m_Path( Path ), m_AddressingMode( Mode ) {}
 
 		virtual ~Texture() = default;
@@ -172,7 +172,7 @@ namespace Saturn {
 	public:
 		Texture2D() = default;
 		Texture2D( const std::filesystem::path& rPath, AddressingMode Mode = AddressingMode::Repeat, bool flip = true );
-		Texture2D( ImageFormat format, uint32_t width, uint32_t height, const void* pData, bool storage = false );
+		Texture2D( ImageFormat format, uint32_t width, uint32_t height, const void* pData, bool storage = false, AddressingMode Mode = AddressingMode::Repeat );
 		
 		~Texture2D();
 

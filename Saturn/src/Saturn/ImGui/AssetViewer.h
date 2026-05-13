@@ -49,7 +49,7 @@ namespace Saturn {
 
 	protected:
 		AssetID m_AssetID = 0;
-		AssetType m_AssetType = AssetType::Unknown;
 		bool m_Dirty = false;
+		AssetType m_AssetType = AssetType::Unknown;
 	};
 }

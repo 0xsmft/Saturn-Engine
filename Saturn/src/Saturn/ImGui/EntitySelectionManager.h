@@ -86,13 +86,14 @@ namespace Saturn {
 		void SetSelectionReason( EntitySelectionReason reason ) { m_LastSelectionReason = reason; }
 
 	private:
+		// Selection map
+		//					SCENE ID -> ENTITES
+		std::unordered_map<UUID, std::vector<SharedPtr<Entity>>> m_SelectedEntities;
+
 		bool m_IsMultiSelecting = false;
 
 		// NOTE: The reason will ONLY be modified by the _main_ viewport and the _main_ SceneHierarchyPanel.
 		// Please do not modify this reason from anything other than the above.
 		EntitySelectionReason m_LastSelectionReason = ESR_Other;
-
-		//					SCENE ID -> ENTITES
-		std::unordered_map<UUID, std::vector<SharedPtr<Entity>>> m_SelectedEntities;
 	};
 }

@@ -184,9 +184,10 @@ namespace Saturn {
 		// Animation
 		MemoryAssetDependency<AssetType::AnimationController> AnimationControllerAssetID;
 
-		AnimatorType AnimatorType = AnimatorType::Single;
 		// LocalAnimator is only valid for runtime objects
 		Ref<Animator> LocalAnimator;
+
+		AnimatorType AnimatorType = AnimatorType::Single;
 
 		SkeletalMeshComponent() = default;
 		SkeletalMeshComponent( const SkeletalMeshComponent& other ) = default;
@@ -291,11 +292,11 @@ namespace Saturn {
 	{
 		PhysicsRigidBody* Rigidbody = nullptr;
 
-		PhysicsRigidBodyType BodyType = PhysicsRigidBodyType::Dynamic;
-		uint8_t LockFlags = 0;
-
 		float Mass = 2.0f;
 		float LinearDrag = 1.0f;
+
+		PhysicsRigidBodyType BodyType = PhysicsRigidBodyType::Dynamic;
+		uint8_t LockFlags = 0;
 
 		MemoryAssetDependency<AssetType::PhysicsMaterial> MaterialAssetID;
 

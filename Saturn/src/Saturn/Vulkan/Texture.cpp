@@ -85,8 +85,8 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// TEXTURE
 
-	Texture::Texture( uint32_t width, uint32_t height, VkFormat Format, const void* pData )
-		: m_Width( width ), m_Height( height ), m_ImageFormat( Format )
+	Texture::Texture( uint32_t width, uint32_t height, VkFormat Format, const void* pData, AddressingMode Mode )
+		: m_Width( width ), m_Height( height ), m_ImageFormat( Format ), m_AddressingMode( Mode )
 	{
 		m_pData = ( void* ) pData;
 	}
@@ -478,8 +478,8 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// TEXTURE 2D
 
-	Texture2D::Texture2D( ImageFormat format, uint32_t width, uint32_t height, const void* pData, bool storage )
-		: Texture( width, height, VulkanFormat( format ), pData )
+	Texture2D::Texture2D( ImageFormat format, uint32_t width, uint32_t height, const void* pData, bool storage, AddressingMode Mode )
+		: Texture( width, height, VulkanFormat( format ), pData, Mode )
 	{
 		m_Storage = storage;
 

@@ -1008,6 +1008,7 @@ namespace Saturn {
 
 				if( ImGui::Button( "Create" ) )
 				{
+#if !defined(SAT_DIST)
 					// Step 0: Create premake file if needed
 					if( !Project::GetActiveProject()->HasPremakeFile() )
 					{
@@ -1023,35 +1024,28 @@ namespace Saturn {
 					// Step 2: Update or create the project files.
 					if( Premake::Launch( Project::GetActiveProject()->GetRootDir(), L"premake5.lua", PremakeAction::VisualStudio2022 ) )
 					{
-#if !defined(SAT_DIST)
 						Application::Get()->DispatchEvent<SendEditorNotificationEvent>( "Updated project files with new source files." );
-#endif
 					}
 					else
 					{
-#if !defined(SAT_DIST)
 						Application::Get()->DispatchEvent<SendEditorNotificationEvent>( "Unable to generate project files using Premake, you may manfully have to generate them!" );
-#endif
 					}
 
 					// Step 3: Open IDE if needed.
 					if( m_OpenIDEAfterNewClass )
 					{
-#if !defined(SAT_DIST)
 						std::filesystem::path headerPath = m_CurrentPath / m_NewClassName;
 						headerPath.replace_extension( ".h" );
 						Application::Get()->DispatchEvent<RequestOpenIDEEvent>( headerPath );
-#endif
 					}
 
 					// Step 4: TODO: Temp, when I port hot reloading over to use the new BuildTool and the new /MD it will work properly.
 					// and this would no longer need to be here.
-#if !defined(SAT_DIST)
 					Application::Get()->DispatchEvent<SendEditorNotificationEvent>( "A hot reload or a recompile is needed for the class to be registered within the Game!" );
-#endif
 
 					PopupModified = true;
 					UpdateFiles( true );
+#endif
 				}
 
 				disabled.Pop();

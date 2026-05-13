@@ -41,7 +41,7 @@ namespace Saturn {
 
 	class Asset;
 
-	enum class ContentBrowserItemType
+	enum class ContentBrowserItemType : uint8_t
 	{
 		Asset,
 		Directory,
@@ -52,7 +52,7 @@ namespace Saturn {
 	{
 	public:
 		ContentBrowserItem( const std::filesystem::directory_entry& rEntry, ContentBrowserItemType type );
-		~ContentBrowserItem();
+		virtual ~ContentBrowserItem();
 
 		void Draw( ImVec2 ThumbnailSize, float Padding );
 
@@ -68,7 +68,6 @@ namespace Saturn {
 		bool IsRenaming()     const   { return m_IsRenaming;    }
 		AssetID GetAssetID()  const   { if( m_Asset ) return m_Asset->ID; else return 0; }
 		Ref<Asset> GetAsset() const   { return m_Asset;         }
-		void CanEverDrag( bool val )  { m_CanEverDrag = val;    }
 
 		std::filesystem::path& Filename() { return m_Filename; }
 		const std::filesystem::path& Filename() const { return m_Filename; }
@@ -116,14 +115,13 @@ namespace Saturn {
 		bool m_IsHovered = false;
 		bool m_IsSelected = false;
 		bool m_MultiSelected = false;
-		bool m_CanEverDrag = true;
-
 		bool m_IsRenaming = false;
 		bool m_StartingRename = false;
-
 		bool m_PendingScrollTo = false;
 
-		Ref<Asset> m_Asset = nullptr;
 		ContentBrowserItemType m_Type = ContentBrowserItemType::Asset;
+		
+		// The asset this item represents, may be null if we are a folder item or a source item.
+		Ref<Asset> m_Asset = nullptr;
 	};
 }

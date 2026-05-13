@@ -647,9 +647,9 @@ namespace Saturn {
 		{
 			RawSerialisation::WriteString( rBinding.Name, fout );
 
-			RawSerialisation::WriteObject( ( int ) rBinding.Key, fout );
-			RawSerialisation::WriteObject( ( int ) rBinding.MouseButton, fout );
-			RawSerialisation::WriteObject( ( int ) rBinding.Type, fout );
+			RawSerialisation::WriteObject( ( uint16_t ) rBinding.Key, fout );
+			RawSerialisation::WriteObject( ( uint8_t ) rBinding.MouseButton, fout );
+			RawSerialisation::WriteObject( ( uint8_t ) rBinding.Type, fout );
 		}
 
 		// Sound Groups

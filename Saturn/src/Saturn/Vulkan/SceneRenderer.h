@@ -572,10 +572,6 @@ namespace Saturn {
 		uint32_t Width() const { return m_RendererData.Width; }
 		uint32_t Height() const { return m_RendererData.Height; }
 
-		void Screenshot( const std::filesystem::path& rPath, const glm::vec2& rSize = {} );
-
-		void RenderSelectionNextFrame() { /*m_RendererData.PendingSelectionPass = true;*/ }
-
 		Ref<Renderer2D> GetRenderer2D() const;
 		Ref<AluraRenderer> GetAluraRenderer() const;
 

@@ -111,9 +111,9 @@ namespace Saturn {
 	static constexpr inline bool operator==( const ImVec2& lhs, const ImVec2& rhs ) { return lhs.x == rhs.x && lhs.y == rhs.y; }
 	static constexpr inline bool operator!=( const ImVec2& lhs, const ImVec2& rhs ) { return !( lhs == rhs ); }
 
-	EditorLayer::EditorLayer() 
-		: m_EditorCamera( 45.0f, 1280.0f, 720.0f, 0.1f, 1000.0f ), 
-		m_SuspendedEditorCamera( 45.0f, 1280.0f, 720.0f, 0.1f, 1000.0f ), 
+	EditorLayer::EditorLayer()
+		: m_EditorCamera( 45.0f, 1280.0f, 720.0f, 0.1f, 1000.0f ),
+		m_SuspendedEditorCamera( 45.0f, 1280.0f, 720.0f, 0.1f, 1000.0f ),
 		m_EditorScene( Ref<Scene>::Create() )
 	{
 #if defined( SAT_PROFILER_ENABLE )
@@ -128,7 +128,7 @@ namespace Saturn {
 
 		// Editor Application should of loaded a project but if not assert.
 		SAT_CORE_ASSERT( Project::GetActiveProject(), "No project was given." );
-		
+
 		VirtualFS::Get().MountBase( Project::GetActiveConfig().Name, Project::GetActiveProject()->GetRootDir() );
 
 		m_AssetManager = Ref<AssetManager>::Create();
@@ -296,12 +296,12 @@ namespace Saturn {
 
 		m_CameraPreviewSceneRenderer->SetCurrentScene( nullptr );
 		m_CameraPreviewSceneRenderer = nullptr;
-		
+
 		SingletonStorage::RemoveSingleton<EntitySelectionManager>( m_SelectionManager.get() );
 		m_SelectionManager.reset();
 
-		if( m_RuntimeScene ) 
-		{	
+		if( m_RuntimeScene )
+		{
 			m_RuntimeScene->OnRuntimeEnd();
 			m_RuntimeScene = nullptr;
 		}
@@ -356,7 +356,7 @@ namespace Saturn {
 					CleanupRuntimeWhenFailed();
 				}
 			}
-			else if( !m_RuntimeScene->IsRuntimeActive() ) 
+			else if( !m_RuntimeScene->IsRuntimeActive() )
 			{
 				// Because the Runtime Scene self ended runtime, we must reset the mouse because normally we wouldn't
 				// as to end runtime via the Editor requires the mouse to be in an unlocked state.
@@ -375,7 +375,7 @@ namespace Saturn {
 			}
 		}
 
-		if( m_RuntimeScene ) 
+		if( m_RuntimeScene )
 		{
 			m_SceneRenderer->PreRender();
 
@@ -405,13 +405,13 @@ namespace Saturn {
 				if( auto entity = m_RuntimeScene->GetMainCameraEntity().Access() )
 				{
 					const auto& cc = entity->GetComponent<CameraComponent>().Camera;
-					
+
 					auto renderer2D = m_SceneRenderer->GetRenderer2D();
 					cc->RenderDebugFrustum( renderer2D );
 				}
 			}
 		}
-		else 
+		else
 		{
 			// Update camera
 			m_EditorCamera.SetActive( m_AllowCameraEvents );
@@ -467,9 +467,9 @@ namespace Saturn {
 		// Render scenes in other asset viewers
 		m_ImGuiWindowManager->OnUpdate( time );
 
-		RenderThread::Get().Queue( [ = ]() 
-		{ 
-			m_SceneRenderer->RenderScene(); 
+		RenderThread::Get().Queue( [ = ]()
+		{
+			m_SceneRenderer->RenderScene();
 			if( m_ShouldRenderCameraPreview )
 				m_CameraPreviewSceneRenderer->RenderScene();
 
@@ -485,7 +485,7 @@ namespace Saturn {
 
 		// Draw dockspace.
 		ImGui::DockSpaceOverViewport( ImGui::GetWindowViewport() );
-		
+
 		if( ImGui::IsMouseClicked( ImGuiMouseButton_Left ) || ( ImGui::IsMouseClicked( ImGuiMouseButton_Right ) && !m_StartedRightClickInViewport ) )
 		{
 			if( !m_RuntimeScene )
@@ -521,7 +521,7 @@ namespace Saturn {
 			if( m_ShowCBThumbnailDebug )    ContentBrowserThumbnailCache::Get().OnImGuiRender( &m_ShowCBThumbnailDebug );
 			if( m_ShowUndoRedoDebug )       m_GlobalUndoRedoGroup->OnImGuiRender( &m_ShowUndoRedoDebug );
 		}
-		
+
 		DrawViewport();
 	}
 
@@ -536,7 +536,7 @@ namespace Saturn {
 			if( m_MouseOverViewport )
 			{
 				m_EditorCamera.OnEvent( rEvent );
-		
+
 				if( m_RequestRuntime )
 					m_SuspendedEditorCamera.OnEvent( rEvent );
 			}
@@ -550,10 +550,10 @@ namespace Saturn {
 			// We could check like this, is the mouse locked Yes: fire events regardless No: check if over viewport
 			// OR
 			// We don't handle any of this, it is the responsibly of the caller to do so.
-			
+
 //			SAT_CORE_INFO( "m_MouseOverViewport: {0}", m_MouseOverViewport );
 
-			if( /*( m_MouseOverViewport || m_ViewportFocused ) &&*/ m_RuntimeScene ) 
+			if( /*( m_MouseOverViewport || m_ViewportFocused ) &&*/ m_RuntimeScene )
 			{
 				m_RuntimeScene->OnEvent( rEvent );
 
@@ -638,7 +638,7 @@ namespace Saturn {
 				}
 			} break;
 
-			case EventType::RqOpenIDE: 
+			case EventType::RqOpenIDE:
 			{
 				const RequestOpenIDEEvent& rIDEEvent = ( RequestOpenIDEEvent& ) rEvent;
 
@@ -1333,7 +1333,7 @@ namespace Saturn {
 		if( m_EditorScene->IsDirty() )
 		{
 			m_ShowSceneDirtyModal = true;
-			m_EventAfterPopup = [this, copyID = newSceneID]() { OpenFile( copyID ); };
+			m_EventAfterPopup = [ this, copyID = newSceneID ]() { OpenFile( copyID ); };
 		}
 		else
 		{
@@ -1376,7 +1376,7 @@ namespace Saturn {
 				ImGui::Spring();
 
 				std::string temporaryVerStr = ActiveProject->GetDeveloperVersion();
-				if( Auxiliary::InputText( "##prjdevver", &temporaryVerStr ) ) 
+				if( Auxiliary::InputText( "##prjdevver", &temporaryVerStr ) )
 				{
 					ActiveProject->SetDeveloperVersion( temporaryVerStr );
 					shouldSaveProject = true;
@@ -1477,7 +1477,7 @@ namespace Saturn {
 						ImGui::Text( "Find in Content Browser" );
 						ImGui::EndTooltip();
 					}
-				} 
+				}
 			}
 			ImGui::EndHorizontal();
 
@@ -1577,11 +1577,11 @@ namespace Saturn {
 
 			ImGui::PopFont();
 
-//			ImGui::BeginHorizontal( "##prj_autosaves" );
+			//			ImGui::BeginHorizontal( "##prj_autosaves" );
 			{
 				bool enableAutoSaves = ActiveProject->IsAutoSavesEnabled();
-			
-				if( Auxiliary::DrawBoolControl( "Enable Auto Saves", enableAutoSaves ) ) 
+
+				if( Auxiliary::DrawBoolControl( "Enable Auto Saves", enableAutoSaves ) )
 				{
 					ActiveProject->EnableAutoSaves( enableAutoSaves );
 					shouldSaveProject = true;
@@ -1599,12 +1599,12 @@ namespace Saturn {
 				{
 					unit = "seconds";
 				}
-				else if( intervalSeconds < 3600.0f ) 
+				else if( intervalSeconds < 3600.0f )
 				{
 					unit = "minutes";
 					displayValue /= 60.0f;
 				}
-				else 
+				else
 				{
 					unit = "hours";
 					displayValue /= 3600.0f;
@@ -1640,7 +1640,7 @@ namespace Saturn {
 
 				disabledIfNoAutoSaves.Pop();
 			}
-//			ImGui::EndHorizontal();
+			//			ImGui::EndHorizontal();
 
 			ImGui::EndVertical();
 
@@ -1850,10 +1850,10 @@ namespace Saturn {
 					auto drawRow = []( const char* pKey, const std::string& value )
 					{
 						ImGui::TableNextRow();
-						
+
 						ImGui::TableSetColumnIndex( 0 );
 						ImGui::Text( "%s", pKey );
-						
+
 						ImGui::TableSetColumnIndex( 1 );
 						ImGui::Text( "%s", value.c_str() );
 					};
@@ -1862,7 +1862,7 @@ namespace Saturn {
 					drawRow( ".sproject Path", ActiveProject->GetConfig().Path.string() );
 					drawRow( "Asset Path", ActiveProject->GetFullAssetPath().string() );
 					drawRow( "Premake filename", ActiveProject->GetPremakeFile().string() );
-					drawRow( "Temporary Path", ActiveProject->GetTempDir().string());
+					drawRow( "Temporary Path", ActiveProject->GetTempDir().string() );
 					drawRow( "Binary Path", ActiveProject->GetBinDir().string() );
 					drawRow( "Cache Path", ActiveProject->GetFullCachePath().string() );
 
@@ -1899,8 +1899,8 @@ namespace Saturn {
 	void EditorLayer::ProjectSettings_DrawSoundGroupEdit( Ref<SoundGroup>& rSoundGroup )
 	{
 		char buffer[ 256 ];
-		memset( buffer, 0, 256 );
-		memcpy( buffer, rSoundGroup->GetName().data(), rSoundGroup->GetName().length() );
+		std::memset( buffer, 0, 256 );
+		std::memcpy( buffer, rSoundGroup->GetName().data(), rSoundGroup->GetName().length() );
 
 		// TODO: Change to unique ID
 		std::string id = "##entergrpname";
@@ -1945,7 +1945,7 @@ namespace Saturn {
 
 		// End vpSliders Horizontal
 		ImGui::EndHorizontal();
-		
+
 		// Don't end main horizontal as we might need to still draw more.
 	}
 
@@ -2077,7 +2077,7 @@ namespace Saturn {
 					ImGui::Text( AssetTypeToString( asset->Type ).data(), false );
 
 					ImGui::TableSetColumnIndex( 3 );
-					ImGui::PushID( (int)id );
+					ImGui::PushID( ( int ) id );
 					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), { ImGui::TableGetHeaderRowHeight(), ImGui::TableGetHeaderRowHeight() } ) )
 					{
 						Ref<ContentBrowserPanel> contentBrowserPanel = m_ImGuiWindowManager->GetPanel<ContentBrowserPanel>();
@@ -2239,7 +2239,7 @@ namespace Saturn {
 				}
 			}
 			ImGui::EndHorizontal();
-		
+
 			if( shouldSaveEngSettings )
 			{
 				EngineSettingsSerialiser ess;
@@ -2260,7 +2260,7 @@ namespace Saturn {
 		{
 			ImGui::Text( "Mount Bases: %i", rVirtualFS.GetMountBases() );
 			ImGui::Text( "Mounts: %i", rVirtualFS.GetMounts() );
-		
+
 			Auxiliary::EndTreeNode();
 		}
 
@@ -2810,7 +2810,7 @@ namespace Saturn {
 
 				{
 					ClassMetadataHandler::Get().EachClassNode(
-						[&]( const SClass* pClass )
+						[ & ]( const SClass* pClass )
 					{
 						ImGui::TableNextRow();
 
@@ -2845,7 +2845,7 @@ namespace Saturn {
 		ImGui::End();
 	}
 
-	void EditorLayer::DrawAssetDependencies() 
+	void EditorLayer::DrawAssetDependencies()
 	{
 		ImGui::SetNextWindowPos( ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Appearing, ImVec2( 0.5f, 0.5f ) );
 		if( ImGui::Begin( "Asset Dependencies", &m_ShowAssetDependencies, ImGuiWindowFlags_NoSavedSettings ) )
@@ -2920,8 +2920,8 @@ namespace Saturn {
 			ImGui::Separator();
 
 			ImGui::BeginHorizontal( "##SCENEDIRTHOZ" );
-			
-			if( ImGui::Button( "Save" ) ) 
+
+			if( ImGui::Button( "Save" ) )
 			{
 				SaveFile();
 
@@ -3073,7 +3073,7 @@ namespace Saturn {
 				SharedPtr<Entity> ent = g_ActiveScene->FindEntityByHandle( m_NavMeshEntityToDelete );
 				if( ent )
 				{
-					const std::string filename = std::format( "NavMesh{0}.{1}.srnc", g_ActiveScene->Name, (uint64_t)ent->GetUUID() );
+					const std::string filename = std::format( "NavMesh{0}.{1}.srnc", g_ActiveScene->Name, ( uint64_t ) ent->GetUUID() );
 
 					// Rare case, if the user deletes the file manually the deletes the entity this would crash here.
 					const std::filesystem::path path = Project::GetActiveProject()->GetFullCachePath() / filename;
@@ -3119,7 +3119,7 @@ namespace Saturn {
 	{
 		// Viewport Image & Drag and drop handling
 		ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 0.0f, 0.0f ) );
-		
+
 		if( m_PendingFullscreenChange )
 		{
 			m_FullscreenViewport ^= 1;
@@ -3131,7 +3131,7 @@ namespace Saturn {
 				m_PreVPDockedNodeID = ImGui::GetWindowDockID();
 
 				const ImVec2 size = ImVec2( Application::Get()->GetWindow()->GetWidth(), Application::Get()->GetWindow()->GetHeight() );
-				
+
 				const auto windowPosition = Application::Get()->GetWindow()->GetPosition();
 				const ImVec2 viewportPos = ImVec2( windowPosition.x, windowPosition.y );
 
@@ -3165,7 +3165,7 @@ namespace Saturn {
 			m_SceneRenderer->SetViewportSize( ( uint32_t ) m_ViewportSize.x, ( uint32_t ) m_ViewportSize.y );
 			m_EditorCamera.SetViewportSize( ( uint32_t ) m_ViewportSize.x, ( uint32_t ) m_ViewportSize.y );
 			m_SuspendedEditorCamera.SetViewportSize( ( uint32_t ) m_ViewportSize.x, ( uint32_t ) m_ViewportSize.y );
-			
+
 			if( g_AluraCanvas )
 				g_AluraCanvas->SetSize( glm::vec2{ m_ViewportSize.x, m_ViewportSize.y } );
 		}
@@ -3224,7 +3224,7 @@ namespace Saturn {
 				const UUID* pUUID = ( const UUID* ) payload->Data;
 
 				Ref<Asset> asset = m_AssetManager->FindAsset( *pUUID );
-				
+
 				DndImportPrefab( asset, true );
 			}
 
@@ -3272,7 +3272,7 @@ namespace Saturn {
 
 		if( m_ShouldRenderCameraPreview )
 			Viewport_CameraPreview();
-		
+
 		ImGui::PopStyleVar();
 
 		ImGui::End();
@@ -3313,7 +3313,7 @@ namespace Saturn {
 
 		auto showTooltip = []( const char* pText )
 		{
-			if( ImGui::BeginItemTooltip() ) 
+			if( ImGui::BeginItemTooltip() )
 			{
 				ImGui::Text( pText );
 				ImGui::EndTooltip();
@@ -3518,10 +3518,10 @@ namespace Saturn {
 
 		{
 #if !defined(SAT_RELEASE)
-		Auxiliary::ScopedDisabledFlag disabledFlag( true );
+			Auxiliary::ScopedDisabledFlag disabledFlag( true );
 #endif
-		if( Auxiliary::ImageButton( m_SyncTexture, ImVec2( 24.0f, 24.0f ) ) )
-			HotReloadGame();
+			if( Auxiliary::ImageButton( m_SyncTexture, ImVec2( 24.0f, 24.0f ) ) )
+				HotReloadGame();
 		}
 
 		if( ImGui::BeginItemTooltip() )
@@ -3550,10 +3550,10 @@ namespace Saturn {
 	{
 		const ImVec2 minBound = ImGui::GetWindowPos();
 		m_SceneRenderer->SetViewportPosition( minBound.x, minBound.y );
-		
+
 		if( g_AluraCanvas )
 			g_AluraCanvas->SetPosition( { minBound.x, minBound.y } );
-		
+
 		const ImVec2 maxBound = { minBound.x + m_ViewportSize.x, minBound.y + m_ViewportSize.y };
 
 		m_ViewportFocused = ImGui::IsWindowFocused();
@@ -3741,7 +3741,7 @@ namespace Saturn {
 			};
 
 			PushMessageBox( msgBox );
-		
+
 			return false;
 		}
 		*/
@@ -3791,7 +3791,7 @@ namespace Saturn {
 			ImGui::BeginHorizontal( "##MsgBoxOpts" );
 			int buttonIndex = 0;
 
-			if( ( rInfo.Buttons & ( uint32_t )MessageBoxButtons_Ok ) != 0 )
+			if( ( rInfo.Buttons & ( uint32_t ) MessageBoxButtons_Ok ) != 0 )
 			{
 				if( buttonIndex > 0 ) { ImGui::Spring(); ++buttonIndex; }
 
@@ -3812,7 +3812,7 @@ namespace Saturn {
 					PopMessageBox();
 				}
 			}
-			
+
 			if( ( rInfo.Buttons & ( uint32_t ) MessageBoxButtons_Exit ) != 0 )
 			{
 				if( buttonIndex > 0 ) { ImGui::Spring(); ++buttonIndex; }
@@ -3847,7 +3847,7 @@ namespace Saturn {
 			}
 
 			// TODO: Handle retries.
-			
+
 			ImGui::EndHorizontal();
 
 			ImGui::EndPopup();
@@ -3878,16 +3878,15 @@ namespace Saturn {
 
 				if( !path.empty() )
 				{
-					if( ImGui::Button( "Close" ) )
+					if( ImGui::Button( "Set" ) )
 					{
-						ImGui::CloseCurrentPopup();
-
 						Auxiliary::SetEnvironmentVariable( "SATURN_PREMAKE_PATH", path.string().c_str() );
 
+						ImGui::CloseCurrentPopup();
 						m_HasPremakePath = true;
 					}
 				}
-
+				 
 				ImGui::EndPopup();
 			}
 
@@ -3907,12 +3906,12 @@ namespace Saturn {
 		if( !built )
 		{
 			MessageBoxInfo msgBox
-			{ 
-				.Title = "Error", 
-				.Text = std::format( "Shader bundle failed to build error was: {0}", ( int ) shaderRes ), 
-				.Buttons = MessageBoxButtons_Ok 
+			{
+				.Title = "Error",
+				.Text = std::format( "Shader bundle failed to build error was: {0}", ( int ) shaderRes ),
+				.Buttons = MessageBoxButtons_Ok
 			};
-			
+
 			PushMessageBox( msgBox );
 		}
 
@@ -3920,7 +3919,7 @@ namespace Saturn {
 
 		ShaderLibrary::Get().Remove( TexturePass );
 		TexturePass = nullptr;
-	
+
 		return built;
 	}
 
@@ -3996,48 +3995,48 @@ namespace Saturn {
 	void EditorLayer::CreateShaderBundleJob()
 	{
 		JobSystem::Get().QueueJob( [ this ]()
+		{
+			if( m_ShouldCopyBuildFiles )
 			{
-				if( m_ShouldCopyBuildFiles )
-				{
-					Project::GetActiveProject()->PrepForDist();
-				}
+				Project::GetActiveProject()->PrepForDist();
+			}
 
-				m_BlockingOperation->SetStatus( "Building Shader bundle..." );
-				BuildShaderBundle();
-			} );
+			m_BlockingOperation->SetStatus( "Building Shader bundle..." );
+			BuildShaderBundle();
+		} );
 	}
 
 	void EditorLayer::CreateAssetBundleJob()
 	{
 		JobSystem::Get().QueueJob( [ this ]()
+		{
+			if( const auto result = AssetBundle::BundleAssets( m_BlockingOperation ); result != AssetBundleResult::Success )
 			{
-				if( const auto result = AssetBundle::BundleAssets( m_BlockingOperation ); result != AssetBundleResult::Success )
+				Application::Get()->GetWindow()->FlashAttention();
+
+				MessageBoxInfo msgBox
 				{
-					Application::Get()->GetWindow()->FlashAttention();
+					.Title = "Error",
+					.Text = std::format( "Asset bundle failed to build error was: {0}", result ),
+					.Buttons = MessageBoxButtons_Ok,
+					.Type = MessageBoxType::Error
+				};
 
-					MessageBoxInfo msgBox
-					{
-						.Title = "Error",
-						.Text = std::format( "Asset bundle failed to build error was: {0}", result ),
-						.Buttons = MessageBoxButtons_Ok,
-						.Type = MessageBoxType::Error
-					};
-
-					PushMessageBox( msgBox );
-				}
-				else
+				PushMessageBox( msgBox );
+			}
+			else
+			{
+				MessageBoxInfo msgBox
 				{
-					MessageBoxInfo msgBox
-					{
-						.Title = "Asset bundle successfully built",
-						.Text = "Asset Bundle successfully built. You may now compile the game in the \"Dist\" configuration.\nYou can do this in your IDE or go to Project->Distribute project in the title bar.",
-						.Buttons = MessageBoxButtons_Ok,
-						.Type = MessageBoxType::Information
-					};
+					.Title = "Asset bundle successfully built",
+					.Text = "Asset Bundle successfully built. You may now compile the game in the \"Dist\" configuration.\nYou can do this in your IDE or go to Project->Distribute project in the title bar.",
+					.Buttons = MessageBoxButtons_Ok,
+					.Type = MessageBoxType::Information
+				};
 
-					PushMessageBox( msgBox );
-				}
-			} );
+				PushMessageBox( msgBox );
+			}
+		} );
 	}
 
 	void EditorLayer::ShowOrHideContentBrowserPanel()
@@ -4058,7 +4057,7 @@ namespace Saturn {
 		mx -= m_ViewportBounds.Min.x;
 		my -= m_ViewportBounds.Min.y;
 
-		return { ( mx / m_ViewportSize.x ) * 2.0f -1.0f, ( ( my / m_ViewportSize.y ) * 2.0f - 1.0f ) * -1.0f };
+		return { ( mx / m_ViewportSize.x ) * 2.0f - 1.0f, ( ( my / m_ViewportSize.y ) * 2.0f - 1.0f ) * -1.0f };
 	}
 
 	std::pair<glm::vec3, glm::vec3> EditorLayer::RayCast( float mx, float my )
@@ -4084,12 +4083,12 @@ namespace Saturn {
 		m_EditorScene->MarkDirty();
 
 		PlaceEntityRelativeToMousePos( entity );
-	
+
 		if( select )
 		{
 			if( clearSelection )
 				m_SelectionManager->ClearSelection( m_EditorScene.Get(), true );
-		
+
 			m_SelectionManager->Select( entity );
 		}
 	}
@@ -4107,7 +4106,7 @@ namespace Saturn {
 		PlaceEntityRelativeToMousePos( entity );
 
 		m_EditorScene->MarkDirty();
-		
+
 		if( select )
 		{
 			if( clearSelection )
@@ -4229,8 +4228,8 @@ namespace Saturn {
 
 		const float easeAlpha = glm::clamp( 1.0f - glm::pow( 1.0f - t, 3.0f ), 0.0f, 1.0f );
 
-		const ImVec2 windowPos = ImVec2( 
-			workPos.x + workSize.x, 
+		const ImVec2 windowPos = ImVec2(
+			workPos.x + workSize.x,
 			workPos.y + workSize.y - 48.0f - lastYOffset );
 
 		const ImVec2 windowPivot = ImVec2( 1.0f, 1.0f );
@@ -4238,7 +4237,7 @@ namespace Saturn {
 		ImGui::SetNextWindowPos( windowPos, ImGuiCond_Always, windowPivot );
 		ImGui::PushStyleVar( ImGuiStyleVar_Alpha, easeAlpha );
 
-		const std::string windowID = std::format( "##EDITOR_NOFITICATION/{0}", (uint64_t)rInfo.ID );
+		const std::string windowID = std::format( "##EDITOR_NOFITICATION/{0}", ( uint64_t ) rInfo.ID );
 		ImGui::Begin( windowID.c_str(), nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDocking );
 
 		ImGui::BeginHorizontal( rInfo.ID );
@@ -4247,7 +4246,7 @@ namespace Saturn {
 		{
 			// TODO: Create info texture.
 			case MessageBoxType::Information:
-			case MessageBoxType::Warning: 
+			case MessageBoxType::Warning:
 			{
 				Auxiliary::Image( m_ExclamationTexture, ImVec2( 24.0f, 24.0f ) );
 			} break;
@@ -4283,7 +4282,7 @@ namespace Saturn {
 			auto& rNotification = *rIt;
 
 			yOffset = DrawSingleNotification( rNotification, yOffset );
-			
+
 			if( rNotification.Lifetime <= 0.0f )
 			{
 				rIt = m_Notifications.erase( rIt );

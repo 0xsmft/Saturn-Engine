@@ -34,7 +34,7 @@ namespace Saturn {
 
 	// RubyKey is layout-independent (in terms of physical key location as this enum is not in any order) and non-Windows specific 
 	// However, the keys that are available are based on the US keyboard.
-	enum RubyKey
+	enum RubyKey : KeyCode
 	{
 		//////////////////////////////////////////////////////////////////////////
 		// Undefined key
@@ -149,7 +149,7 @@ namespace Saturn {
 		RubyKey_EnumSize
 	};
 
-	enum RubyMouseButton : unsigned int
+	enum RubyMouseButton : uint8_t
 	{
 		RubyMouseButton_Unknown = 6,
 

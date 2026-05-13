@@ -36,9 +36,6 @@
 
 namespace Saturn {
 
-	class Entity;
-	class Scene;
-
 	class GameModule : public SObject
 	{
 		SAT_DECLARE_CLASS( GameModule, SObject );

@@ -36,13 +36,13 @@
 
 namespace Saturn {
 
-	enum class ActionBindingTriggerState
+	enum class ActionBindingTriggerState : uint8_t
 	{
 		Pressed = BIT( 0 ),
 		Released = BIT( 1 ),
 	};
 
-	enum class ActionBindingType 
+	enum class ActionBindingType : uint8_t
 	{
 		Key,
 		Mouse
@@ -60,10 +60,9 @@ namespace Saturn {
 	struct ActionBindingData
 	{
 		std::string Name = "";
-		ActionBindingType Type = ActionBindingType::Key;
-
 		RubyKey Key = RubyKey_UnknownKey;
 		RubyMouseButton MouseButton = RubyMouseButton_Unknown;
+		ActionBindingType Type = ActionBindingType::Key;
 
 #if !defined(SAT_DIST)
 		// The name of the Key/Mouse button
@@ -100,10 +99,11 @@ namespace Saturn {
 		{
 		}
 
-		ActionBindingType Type = ActionBindingType::Key;
 		RubyKey Key = RubyKey_UnknownKey;
 		RubyMouseButton MouseButton = RubyMouseButton_Unknown;
+		ActionBindingType Type = ActionBindingType::Key;
 		ActionBindingTriggerState State = ActionBindingTriggerState::Pressed;
+
 		std::function<void()> Function = nullptr;
 	};
 }

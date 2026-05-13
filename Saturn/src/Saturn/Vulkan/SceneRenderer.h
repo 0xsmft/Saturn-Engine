@@ -233,10 +233,17 @@ namespace Saturn {
 		glm::vec4 CascadeSplits;
 	};
 
-	struct RendererData
+	class RendererData
 	{
+	public:
+		RendererData() = default;
+		~RendererData() = default;
+
 		void Terminate();
-		
+		void ClearSSAOResources();
+		void ClearHBAOResources();
+
+	public:
 		//////////////////////////////////////////////////////////////////////////
 		// COMMAND POOLS & BUFFERS
 		//////////////////////////////////////////////////////////////////////////
@@ -271,6 +278,9 @@ namespace Saturn {
 		Timer PreDepthTimer;
 		Timer LightCullingTimer;
 		Timer BloomTimer;
+		Timer SSAOTimer;
+		Timer HBAOTimer;
+		Timer AOBlurTimer;
 		Timer SceneCompPPTimer;
 
 		//////////////////////////////////////////////////////////////////////////
@@ -355,12 +365,18 @@ namespace Saturn {
 		
 		//////////////////////////////////////////////////////////////////////////
 
-		// Begin AO
+		// Begin SSAO vvvv
 		Ref<Pipeline>	 SSAOPipeline   = nullptr;
 		Ref<Pass>		 SSAORenderPass = nullptr;
 		Ref<Material>	 SSAOMaterial   = nullptr;
 		Ref<Framebuffer> SSAOFramebuffer = nullptr;
 		Ref<Texture2D>	 SSAONoiseImage = nullptr;
+
+		Ref<Pipeline>	 AOBlurPipeline = nullptr;
+		Ref<Pass>		 AOBlurRenderPass = nullptr;
+		Ref<Material>	 AOBlurMaterial = nullptr;
+		Ref<Framebuffer> AOBlurFramebuffer = nullptr;
+		// End SSAO ^^^^
 
 		//////////////////////////////////////////////////////////////////////////
 
@@ -437,7 +453,7 @@ namespace Saturn {
 		uint32_t BloomWorkSize = 4;
 
 		// The value of a pixel component before it's considered to be an emissive object.
-		float BloomThreshold = 1.5f;
+		float BloomThreshold = 1.0f;
 		float BloomDirtIntensity = 20.0f;
 
 		// BDRF Lut
@@ -477,8 +493,8 @@ namespace Saturn {
 		Ref< Shader > TexturePassShader = nullptr;
 		Ref< Shader > DirShadowMapShader = nullptr;
 		Ref< Shader > DirShadowMapDynamicShader = nullptr;
-		Ref< Shader > AOShader = nullptr;
-		Ref< Shader > AOCompositeShader = nullptr;
+		Ref< Shader > SSAOShader = nullptr;
+		Ref< Shader > SSAOBlurShader = nullptr;
 		Ref< Shader > PreDepthShader = nullptr;
 		Ref< Shader > PreDepthDynamicShader = nullptr;
 		Ref< Shader > LightCullingShader = nullptr;
@@ -587,6 +603,8 @@ namespace Saturn {
 		void InitTexturePass();
 		void InitSSAO();
 		void InitHBAO();
+		void InitAO( AOTechnique oldTechnique );
+		void InitAOBlur();
 		void InitSelectionPass();
 		void InitJumpFlood();
 		void InitJmpfFirstPass();
@@ -603,6 +621,7 @@ namespace Saturn {
 		void GeometryPass();
 		void BloomPass();
 		void SSAOPass();
+		void SSAOBlurPass();
 		void SelectedGeometryPass();
 		void JumpFloodPass();
 		void SceneCompositePass();

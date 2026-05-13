@@ -672,7 +672,6 @@ namespace Saturn {
 		CreateBloomMaterials();
 
 		m_RendererData.BloomDirtTexture = Renderer::Get()->GetPinkTexture();
-		m_RendererData.BloomDS = m_RendererData.BloomShader->CreateDescriptorSet( 0 );
 	}
 
 	void SceneRenderer::InitTexturePass()
@@ -711,10 +710,10 @@ namespace Saturn {
 
 	void SceneRenderer::InitSSAO()
 	{
-		if( !m_RendererData.AOShader )
+		if( !m_RendererData.SSAOShader )
 		{
-			m_RendererData.AOShader = ShaderLibrary::Get().FindOrLoad( "SSAO", "content/shaders/SSAO.glsl" );
-			m_RendererData.SSAOMaterial = Ref<Material>::Create( m_RendererData.AOShader, "SSAO" );
+			m_RendererData.SSAOShader = ShaderLibrary::Get().FindOrLoad( "SSAO", "content/shaders/SSAO.glsl" );
+			m_RendererData.SSAOMaterial = Ref<Material>::Create( m_RendererData.SSAOShader, "SSAO" );
 		}
 
 		m_RendererData.SSAOMaterial->SetResource( "u_DepthTexture", m_RendererData.PreDepthFramebuffer->GetDepthAttachmentResource() );
@@ -759,7 +758,7 @@ namespace Saturn {
 			struct USSAOData
 			{
 				glm::vec4 Samples[ 32 ];
-				float R = 0.5f;
+				float R = 0.3f;
 			} u_Data{};
 
 			std::memcpy( u_Data.Samples, ssaoKernel.data(), ssaoKernel.size() * sizeof( glm::vec4 ) );
@@ -783,14 +782,14 @@ namespace Saturn {
 
 		if( m_RendererData.SSAOFramebuffer )
 		{
-			m_RendererData.SSAOFramebuffer->Recreate( m_RendererData.Width / 2, m_RendererData.Height / 2 );
+			m_RendererData.SSAOFramebuffer->Recreate( m_RendererData.Width, m_RendererData.Height );
 		}
 		else
 		{
 			FramebufferSpecification FBSpec;
 			FBSpec.RenderPass = m_RendererData.SSAORenderPass;
-			FBSpec.Width = m_RendererData.Width / 2;
-			FBSpec.Height = m_RendererData.Height / 2;
+			FBSpec.Width = m_RendererData.Width;
+			FBSpec.Height = m_RendererData.Height;
 			FBSpec.Attachments = { ImageFormat::RED8 };
 			FBSpec.CreateDepth = false;
 
@@ -801,14 +800,16 @@ namespace Saturn {
 			m_RendererData.SSAOPipeline = nullptr;
 
 		PipelineSpecification PipelineSpec = {};
-		PipelineSpec.Width = m_RendererData.Width / 2;
-		PipelineSpec.Height = m_RendererData.Height / 2;
+		PipelineSpec.Width = m_RendererData.Width;
+		PipelineSpec.Height = m_RendererData.Height;
 		PipelineSpec.Name = "SSAO";
-		PipelineSpec.Shader = m_RendererData.AOShader;
+		PipelineSpec.Shader = m_RendererData.SSAOShader;
 		PipelineSpec.RenderPass = m_RendererData.SSAORenderPass;
 		PipelineSpec.UseDepthTest = true;
 		PipelineSpec.CullMode = CullMode::None;
 		PipelineSpec.FrontFace = VK_FRONT_FACE_CLOCKWISE;
+		PipelineSpec.BlendMode = PipelineBlendMode::OneZero;
+		PipelineSpec.EnableBlending = false;
 		PipelineSpec.VertexLayout = {
 			{ ShaderDataType::Float3, "a_Position" },
 			{ ShaderDataType::Float2, "a_TexCoord" },
@@ -819,6 +820,108 @@ namespace Saturn {
 
 	void SceneRenderer::InitHBAO()
 	{
+	}
+
+	void SceneRenderer::InitAO( AOTechnique oldTechnique )
+	{
+		// Schedule to the beginning of the next frame.
+		AddScheduledFunction( [oldTechnique, this]() 
+		{
+			switch( oldTechnique )
+			{
+				default:
+				case AOTechnique::None:
+					break;
+
+				case AOTechnique::SSAO:
+					m_RendererData.ClearSSAOResources();
+					break;
+
+				case AOTechnique::HBAO:
+					m_RendererData.ClearHBAOResources();
+					break;
+			}
+		} );
+
+		// Init new resources now so they are ready for the next frame!
+		switch( m_AOTechnique )
+		{
+			default:
+			case AOTechnique::None:
+				break;			
+			
+			case AOTechnique::SSAO:
+				InitSSAO();
+				InitAOBlur();
+				break;
+			
+			case AOTechnique::HBAO:
+				InitHBAO();
+				break;		
+		}
+
+		BindSceneCompositeAOTexture();
+	}
+
+	void SceneRenderer::InitAOBlur()
+	{
+		if( !m_RendererData.SSAOBlurShader )
+		{
+			m_RendererData.SSAOBlurShader = ShaderLibrary::Get().FindOrLoad( "SSAO-Blur", "content/shaders/SSAO-Blur.glsl" );
+			m_RendererData.AOBlurMaterial = Ref<Material>::Create( m_RendererData.SSAOBlurShader, "SSAO" );
+		}
+
+		m_RendererData.AOBlurMaterial->SetResource( "u_AOTexture", m_RendererData.SSAOFramebuffer->GetColorAttachmentsResources()[ 0 ] );
+
+		if( m_RendererData.AOBlurRenderPass )
+		{
+			m_RendererData.AOBlurRenderPass->Recreate();
+		}
+		else
+		{
+			PassSpecification PassSpec = {};
+			PassSpec.Name = "AO-Blur RP";
+			PassSpec.Attachments = { ImageFormat::RED8 };
+
+			m_RendererData.AOBlurRenderPass = Ref<Pass>::Create( PassSpec );
+		}
+
+		if( m_RendererData.AOBlurFramebuffer )
+		{
+			m_RendererData.AOBlurFramebuffer->Recreate( m_RendererData.Width, m_RendererData.Height );
+		}
+		else
+		{
+			FramebufferSpecification FBSpec;
+			FBSpec.RenderPass = m_RendererData.AOBlurRenderPass;
+			FBSpec.Width = m_RendererData.Width;
+			FBSpec.Height = m_RendererData.Height;
+			FBSpec.Attachments = { ImageFormat::RED8 };
+			FBSpec.CreateDepth = false;
+
+			m_RendererData.AOBlurFramebuffer = Ref<Framebuffer>::Create( FBSpec );
+		}
+
+		if( m_RendererData.AOBlurPipeline )
+			m_RendererData.AOBlurPipeline = nullptr;
+
+		PipelineSpecification PipelineSpec = {};
+		PipelineSpec.Width = m_RendererData.Width;
+		PipelineSpec.Height = m_RendererData.Height;
+		PipelineSpec.Name = "AO-Blur";
+		PipelineSpec.Shader = m_RendererData.SSAOBlurShader;
+		PipelineSpec.RenderPass = m_RendererData.SSAORenderPass;
+		PipelineSpec.UseDepthTest = true;
+		PipelineSpec.CullMode = CullMode::None;
+		PipelineSpec.FrontFace = VK_FRONT_FACE_CLOCKWISE;
+		PipelineSpec.BlendMode = PipelineBlendMode::OneZero;
+		PipelineSpec.EnableBlending = false;
+		PipelineSpec.VertexLayout = {
+			{ ShaderDataType::Float3, "a_Position" },
+			{ ShaderDataType::Float2, "a_TexCoord" },
+		};
+
+		m_RendererData.AOBlurPipeline = Ref<Pipeline>::Create( PipelineSpec );
 	}
 
 	void SceneRenderer::InitSelectionPass()
@@ -1418,17 +1521,33 @@ namespace Saturn {
 				}
 			}
 
-			ImGui::Text( "Renderer::BeginFrame: %.2f ms", FrameTimings.first );
+			ImGui::Text( "Renderer::BeginFrame: %.3f ms", FrameTimings.first );
 
-			ImGui::Text( "SceneRenderer::PreDepthPass: %.2f ms", m_RendererData.PreDepthTimer.ElapsedMilliseconds() );
+			ImGui::Text( "SceneRenderer::PreDepthPass: %.3f ms", m_RendererData.PreDepthTimer.ElapsedMilliseconds() );
 
-			ImGui::Text( "SceneRenderer::ShadowMapPass: %.2f ms", shadowPassTime );
+			ImGui::Text( "SceneRenderer::ShadowMapPass: %.3f ms", shadowPassTime );
 
 			ImGui::Text( "SceneRenderer::LightCulling: %.4f ms", m_RendererData.LightCullingTimer.ElapsedMilliseconds() );
 
-			ImGui::Text( "SceneRenderer::GeometryPass: %.2f ms", m_RendererData.GeometryPassTimer.ElapsedMilliseconds() );
+			ImGui::Text( "SceneRenderer::GeometryPass: %.3f ms", m_RendererData.GeometryPassTimer.ElapsedMilliseconds() );
 
 			ImGui::Text( "SceneRenderer::BloomPass: %.3f ms", m_RendererData.BloomTimer.ElapsedMilliseconds() );
+
+			switch( m_AOTechnique )
+			{
+				default:
+				case AOTechnique::None:
+					ImGui::Text( "SceneRenderer::NullAO: 0.000 ms" );
+					break;
+
+				case Saturn::AOTechnique::SSAO:
+					ImGui::Text( "SceneRenderer::SSAOPass: %.3f ms", m_RendererData.SSAOTimer.ElapsedMilliseconds() );
+					break;
+
+				case AOTechnique::HBAO:
+					ImGui::Text( "SceneRenderer::HBAOPass: %.3f ms", m_RendererData.HBAOTimer.ElapsedMilliseconds() );
+					break;
+			}
 
 			ImGui::Text( "SceneRenderer::SceneComposite: %.2f ms", m_RendererData.SceneCompPPTimer.ElapsedMilliseconds() );
 
@@ -1454,13 +1573,80 @@ namespace Saturn {
 
 		if( Auxiliary::TreeNode( "Scene renderer data", true ) )
 		{
+			if( Auxiliary::TreeNode( "Ambient Occlusion", true ) )
+			{
+				ImGui::BeginHorizontal( "##technique" );
+				
+				ImGui::Text( "AO Technique" );
+
+				ImGui::Spring();
+
+				const auto oldAOTechnique = m_AOTechnique;
+
+				const char* pDisplayNames[ 3 ] = { "None", "SSAO", "HBAO" };
+
+				if( ImGui::BeginCombo( "##combotechao", pDisplayNames[ ( uint8_t ) m_AOTechnique ] ) )
+				{
+					if( ImGui::Selectable( "SSAO" ) )
+					{
+						m_AOTechnique = AOTechnique::SSAO;
+					}
+
+#if SAT_RENDERER_WITH_HBAO == 1
+					if( ImGui::Selectable( "HBAO" ) )
+					{
+						m_AOTechnique = AOTechnique::HBAO;
+					}
+#endif
+
+#if SAT_RENDERER_WITH_GTAO == 1
+					if( ImGui::Selectable( "GTAO" ) )
+					{
+					}
+#endif
+
+					if( ImGui::Selectable( "None" ) )
+					{
+						m_AOTechnique = AOTechnique::None;
+					}
+
+					ImGui::EndCombo();
+				}
+
+				ImGui::EndHorizontal();
+
+				switch( m_AOTechnique )
+				{
+					case AOTechnique::SSAO:
+					{
+						ImGui::Text( "Nothing here yet!" );
+					} break;
+					
+					case AOTechnique::HBAO:
+					{
+						ImGui::Text( "Nothing here yet!" );
+					} break;
+
+					case AOTechnique::None:
+					default:
+						break;
+				}
+
+				if( oldAOTechnique != m_AOTechnique )
+				{
+					InitAO( oldAOTechnique );
+				}
+
+				Auxiliary::EndTreeNode();
+			}
+
 			if( Auxiliary::TreeNode( "Shadow settings", true ) )
 			{
-				ImGui::DragFloat( "Cascade Split Lambda", &m_RendererData.CascadeSplitLambda, 1.0f, 0.01f, 1.0f );
-				ImGui::DragFloat( "Cascade Near plane", &m_RendererData.CascadeNearPlaneOffset, 1.0f, -1000.0f, 1000.0f );
-				ImGui::DragFloat( "Cascade Far plane", &m_RendererData.CascadeFarPlaneOffset, 1.0f, -1000.0f, 1000.0f );
+				Auxiliary::DrawBoolControl( "Enable", m_RendererData.EnableShadows, true, 175.0f );
 
-				ImGui::Checkbox( "Enable shadows", &m_RendererData.EnableShadows );
+				Auxiliary::DrawFloatControl( "Cascade Split Lambda", m_RendererData.CascadeSplitLambda, 0.1f, 10.0f, true, 175.0f );
+				Auxiliary::DrawFloatControl( "Cascade Near Plane", m_RendererData.CascadeNearPlaneOffset, 0.1f, 10000.0f, true, 175.0f );
+				Auxiliary::DrawFloatControl( "Cascade Far Plane", m_RendererData.CascadeFarPlaneOffset, 0.1f, -10000.0f, true, 175.0f );
 
 				static int index = 0;
 				auto framebuffer = m_RendererData.ShadowCascades[ index ].Framebuffer->GetDepthAttachmentResource();
@@ -2565,16 +2751,17 @@ namespace Saturn {
 	void SceneRenderer::SSAOPass()
 	{
 		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
-		VkExtent2D Extent = { m_RendererData.Width / 2, m_RendererData.Height / 2 };
+		VkExtent2D Extent = { m_RendererData.Width, m_RendererData.Height };
 		VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
 
+		m_RendererData.SSAOTimer.Reset();
 		m_RendererData.SSAORenderPass->BeginPass( CommandBuffer, m_RendererData.SSAOFramebuffer->GetVulkanFramebuffer(), Extent );
 
 		VkViewport Viewport = {};
 		Viewport.x = 0;
 		Viewport.y = 0;
-		Viewport.width = ( float ) m_RendererData.Width / 2;
-		Viewport.height = ( float ) m_RendererData.Height / 2;
+		Viewport.width = ( float ) m_RendererData.Width;
+		Viewport.height = ( float ) m_RendererData.Height;
 		Viewport.minDepth = 0.0f;
 		Viewport.maxDepth = 1.0f;
 
@@ -2590,7 +2777,7 @@ namespace Saturn {
 		} u_Matrices{};
 
 		u_Matrices.Projection = m_RendererData.CurrentCamera.pCamera->ProjectionMatrix();
-		u_Matrices.InvProjection = glm::inverse( u_Matrices.Projection );
+		u_Matrices.InvProjection = glm::inverse( m_RendererData.CurrentCamera.pCamera->ProjectionMatrix() );
 
 		m_RendererData.SSAOMaterial->UploadDataToUB( 0, &u_Matrices, sizeof( u_Matrices ) );
 
@@ -2601,6 +2788,41 @@ namespace Saturn {
 			m_RendererData.QuadIndexBuffer, m_RendererData.QuadVertexBuffer );
 
 		m_RendererData.SSAORenderPass->EndPass();
+		m_RendererData.SSAOTimer.Stop();
+
+		SSAOBlurPass();
+	}
+
+	void SceneRenderer::SSAOBlurPass()
+	{
+		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
+		VkExtent2D Extent = { m_RendererData.Width, m_RendererData.Height };
+		VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
+
+		m_RendererData.AOBlurTimer.Reset();
+		m_RendererData.AOBlurRenderPass->BeginPass( CommandBuffer, m_RendererData.AOBlurFramebuffer->GetVulkanFramebuffer(), Extent );
+
+		VkViewport Viewport = {};
+		Viewport.x = 0;
+		Viewport.y = 0;
+		Viewport.width = ( float ) m_RendererData.Width;
+		Viewport.height = ( float ) m_RendererData.Height;
+		Viewport.minDepth = 0.0f;
+		Viewport.maxDepth = 1.0f;
+
+		VkRect2D Scissor = { .offset = { 0, 0 }, .extent = Extent };
+
+		vkCmdSetViewport( CommandBuffer, 0, 1, &Viewport );
+		vkCmdSetScissor( CommandBuffer, 0, 1, &Scissor );
+
+		Renderer::Get()->SubmitFullscreenQuad(
+			CommandBuffer,
+			m_RendererData.AOBlurPipeline,
+			m_RendererData.AOBlurMaterial,
+			m_RendererData.QuadIndexBuffer, m_RendererData.QuadVertexBuffer );
+
+		m_RendererData.AOBlurRenderPass->EndPass();
+		m_RendererData.AOBlurTimer.Stop();
 	}
 
 	void SceneRenderer::SelectedGeometryPass()
@@ -3101,12 +3323,21 @@ namespace Saturn {
 			SelectedGeometryPass();
 		}
 
-		/*
+		switch( m_AOTechnique )
 		{
-			ScopedDebugLabel label( m_RendererData.CommandBuffer, "SSAO" );
-			SSAOPass();
+			default:
+			case AOTechnique::None:
+				break;
+			
+			case AOTechnique::SSAO:
+			{
+				ScopedDebugLabel label( m_RendererData.CommandBuffer, "SSAO" );
+				SSAOPass();
+			} break;
+		
+			case AOTechnique::HBAO:
+				break;
 		}
-		*/
 
 		{
 			ScopedDebugLabel label( m_RendererData.CommandBuffer, "JumpFlood" );
@@ -3173,6 +3404,9 @@ namespace Saturn {
 		if( !Application::Get()->HasFlag( ApplicationFlag_CreateSceneRenderer_DEPRECATED ) )
 			return;
 
+
+		ClearSSAOResources();
+		ClearHBAOResources();
 
 		// Vertex and Index buffers
 		QuadVertexBuffer->Destroy();
@@ -3242,7 +3476,7 @@ namespace Saturn {
 		SceneCompositeShader    = nullptr;
 		DirShadowMapShader      = nullptr;
 		PreethamShader          = nullptr;
-		AOCompositeShader       = nullptr;
+		SSAOBlurShader		    = nullptr;
 		PreDepthShader          = nullptr;
 		LightCullingShader      = nullptr;
 		BloomShader             = nullptr;
@@ -3260,7 +3494,7 @@ namespace Saturn {
 
 		for( auto& buffer : SubmeshTransformData )
 			delete[] buffer.pData;
-
+		
 		delete[] BoneTransformData;
 
 		// Storage buffer set
@@ -3269,6 +3503,47 @@ namespace Saturn {
 		SubmeshTransformData.clear();
 
 		MeshTransforms.clear();
+	}
+
+	void RendererData::ClearSSAOResources()
+	{
+		if( SSAOPipeline )
+		{
+			SSAOPipeline->Terminate();
+			SSAOPipeline = nullptr;
+		}
+
+		if( SSAORenderPass )
+		{
+			SSAORenderPass->Terminate();
+			SSAORenderPass = nullptr;
+		}
+
+		SSAOShader = nullptr;
+		SSAOBlurShader = nullptr;
+		SSAOFramebuffer = nullptr;
+		SSAONoiseImage = nullptr;
+		SSAOMaterial = nullptr;
+
+		if( AOBlurRenderPass )
+		{
+			AOBlurRenderPass->Terminate(); 
+			AOBlurRenderPass = nullptr;
+		}
+	
+		if( AOBlurPipeline )
+		{
+			AOBlurPipeline->Terminate();
+			AOBlurPipeline = nullptr;
+		}
+
+		AOBlurFramebuffer = nullptr;
+		AOBlurMaterial = nullptr;
+	}
+
+	void RendererData::ClearHBAOResources()
+	{
+
 	}
 
 }

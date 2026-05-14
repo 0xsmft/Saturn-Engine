@@ -54,6 +54,10 @@
 
 #include <glm/gtx/matrix_decompose.hpp>
 
+#if SAT_SSAO_OLD_KERNEL_GEN == 1
+#include <random>
+#endif
+
 constexpr auto M_PI = 3.14159265358979323846;
 constexpr auto SHADOW_MAP_SIZE = 4096.0f;
 
@@ -736,28 +740,50 @@ namespace Saturn {
 
 			m_RendererData.SSAOMaterial->SetResource( "u_NoiseTexture", m_RendererData.SSAONoiseImage );
 
-			// Sample Kernel
-			std::vector<glm::vec4> ssaoKernel( 32 );
-			for( size_t i = 0; i < ssaoKernel.size(); i++ )
+			auto xlerp = []( float a, float b, float f )
 			{
-				glm::vec3 sample(
+				return a + f * ( b - a );
+			};
+
+#if SAT_SSAO_OLD_KERNEL_GEN == 1
+			std::default_random_engine rndEngine;
+			std::uniform_real_distribution<float> rndDist( 0.0f, 1.0f );
+
+			// Sample kernel
+			std::vector<glm::vec4> ssaoKernel( 32 );
+			for( uint32_t i = 0; i < 32; ++i )
+			{
+				glm::vec3 sample( rndDist( rndEngine ) * 2.0 - 1.0, rndDist( rndEngine ) * 2.0 - 1.0, rndDist( rndEngine ) );
+				sample = glm::normalize( sample );
+				sample *= rndDist( rndEngine );
+
+				float scale = float( i ) / float( 32 );
+				scale = xlerp( 0.1f, 1.0f, scale * scale );
+				ssaoKernel[ i ] = glm::vec4( sample * scale, 0.0f );
+			}
+#else
+			std::vector<glm::vec4> ssaoKernel( 32 );
+			for( uint32_t i = 0; i < 32; ++i )
+			{
+				glm::vec3 sample( 
 					Random::RandomFloatInRange( 0.0F, 1.0F ) * 2.0F - 1.0F,
 					Random::RandomFloatInRange( 0.0F, 1.0F ) * 2.0F - 1.0F,
 					Random::RandomFloatInRange( 0.0F, 1.0F ) );
 
 				sample = glm::normalize( sample );
-				sample *= Random::RandomFloatInRange( 0.0F, 1.0F );
+				sample *= Random::RandomFloatInRange( 0.0f, 1.0f );
 
-				float scale = float( i ) / 32.0f;
-				scale = std::lerp( 0.1f, 1.0f, scale * scale );
+				float scale = ( float ) i / 32.0f;
+				scale = xlerp( 0.1f, 1.0f, scale * scale );
 
 				ssaoKernel[ i ] = glm::vec4( sample * scale, 0.0f );
 			}
+#endif
 
-			// u_Matrices
 			struct USSAOData
 			{
 				glm::vec4 Samples[ 32 ];
+				// Radius
 				float R = 0.3f;
 			} u_Data{};
 
@@ -782,14 +808,14 @@ namespace Saturn {
 
 		if( m_RendererData.SSAOFramebuffer )
 		{
-			m_RendererData.SSAOFramebuffer->Recreate( m_RendererData.Width, m_RendererData.Height );
+			m_RendererData.SSAOFramebuffer->Recreate( m_RendererData.Width / 2, m_RendererData.Height / 2 );
 		}
 		else
 		{
 			FramebufferSpecification FBSpec;
 			FBSpec.RenderPass = m_RendererData.SSAORenderPass;
-			FBSpec.Width = m_RendererData.Width;
-			FBSpec.Height = m_RendererData.Height;
+			FBSpec.Width = m_RendererData.Width / 2;
+			FBSpec.Height = m_RendererData.Height / 2;
 			FBSpec.Attachments = { ImageFormat::RED8 };
 			FBSpec.CreateDepth = false;
 
@@ -800,8 +826,8 @@ namespace Saturn {
 			m_RendererData.SSAOPipeline = nullptr;
 
 		PipelineSpecification PipelineSpec = {};
-		PipelineSpec.Width = m_RendererData.Width;
-		PipelineSpec.Height = m_RendererData.Height;
+		PipelineSpec.Width = m_RendererData.Width / 2;
+		PipelineSpec.Height = m_RendererData.Height / 2;
 		PipelineSpec.Name = "SSAO";
 		PipelineSpec.Shader = m_RendererData.SSAOShader;
 		PipelineSpec.RenderPass = m_RendererData.SSAORenderPass;
@@ -888,14 +914,14 @@ namespace Saturn {
 
 		if( m_RendererData.AOBlurFramebuffer )
 		{
-			m_RendererData.AOBlurFramebuffer->Recreate( m_RendererData.Width, m_RendererData.Height );
+			m_RendererData.AOBlurFramebuffer->Recreate( m_RendererData.Width / 2, m_RendererData.Height / 2 );
 		}
 		else
 		{
 			FramebufferSpecification FBSpec;
 			FBSpec.RenderPass = m_RendererData.AOBlurRenderPass;
-			FBSpec.Width = m_RendererData.Width;
-			FBSpec.Height = m_RendererData.Height;
+			FBSpec.Width = m_RendererData.Width / 2;
+			FBSpec.Height = m_RendererData.Height / 2;
 			FBSpec.Attachments = { ImageFormat::RED8 };
 			FBSpec.CreateDepth = false;
 
@@ -906,8 +932,8 @@ namespace Saturn {
 			m_RendererData.AOBlurPipeline = nullptr;
 
 		PipelineSpecification PipelineSpec = {};
-		PipelineSpec.Width = m_RendererData.Width;
-		PipelineSpec.Height = m_RendererData.Height;
+		PipelineSpec.Width = m_RendererData.Width / 2;
+		PipelineSpec.Height = m_RendererData.Height / 2;
 		PipelineSpec.Name = "AO-Blur";
 		PipelineSpec.Shader = m_RendererData.SSAOBlurShader;
 		PipelineSpec.RenderPass = m_RendererData.SSAORenderPass;
@@ -2618,10 +2644,6 @@ namespace Saturn {
 		m_RendererData.LightCullingTimer.Stop();
 	}
 
-	// TODO: This function needs a rework.
-	//       We are creating a new descriptor set every frame but we are recycling it at the end of frame in the Renderer.
-	//	     We could just free them in this function?
-	//       And also we aren't freeing them after the stages are complete.
 	void SceneRenderer::BloomPass()
 	{
 		SAT_PF_EVENT();
@@ -2751,7 +2773,7 @@ namespace Saturn {
 	void SceneRenderer::SSAOPass()
 	{
 		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
-		VkExtent2D Extent = { m_RendererData.Width, m_RendererData.Height };
+		VkExtent2D Extent = { m_RendererData.Width / 2, m_RendererData.Height / 2 };
 		VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
 
 		m_RendererData.SSAOTimer.Reset();
@@ -2760,8 +2782,8 @@ namespace Saturn {
 		VkViewport Viewport = {};
 		Viewport.x = 0;
 		Viewport.y = 0;
-		Viewport.width = ( float ) m_RendererData.Width;
-		Viewport.height = ( float ) m_RendererData.Height;
+		Viewport.width = ( float ) m_RendererData.Width / 2;
+		Viewport.height = ( float ) m_RendererData.Height / 2;
 		Viewport.minDepth = 0.0f;
 		Viewport.maxDepth = 1.0f;
 
@@ -2796,7 +2818,7 @@ namespace Saturn {
 	void SceneRenderer::SSAOBlurPass()
 	{
 		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
-		VkExtent2D Extent = { m_RendererData.Width, m_RendererData.Height };
+		VkExtent2D Extent = { m_RendererData.Width / 2, m_RendererData.Height / 2 };
 		VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
 
 		m_RendererData.AOBlurTimer.Reset();
@@ -2805,8 +2827,8 @@ namespace Saturn {
 		VkViewport Viewport = {};
 		Viewport.x = 0;
 		Viewport.y = 0;
-		Viewport.width = ( float ) m_RendererData.Width;
-		Viewport.height = ( float ) m_RendererData.Height;
+		Viewport.width = ( float ) m_RendererData.Width / 2;
+		Viewport.height = ( float ) m_RendererData.Height / 2;
 		Viewport.minDepth = 0.0f;
 		Viewport.maxDepth = 1.0f;
 

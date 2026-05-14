@@ -34,9 +34,9 @@ void main()
 	vec2 texelSize = 1.0 / vec2( textureSize( u_AOTexture, 0 ) );
 
 	float result = 0.0f;
-	for( int x = -blurRange; x < blurRange; ++x ) 
+	for( int x = -blurRange; x <= blurRange; ++x ) 
 	{
-		for( int y = -blurRange; y < blurRange; ++y ) 
+		for( int y = -blurRange; y <= blurRange; ++y ) 
 		{
 			vec2 offset = vec2( float( x ), float( y ) ) * texelSize;
 			result += texture( u_AOTexture, vs_UV + offset ).r;

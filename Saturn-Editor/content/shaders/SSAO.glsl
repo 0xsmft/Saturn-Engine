@@ -1,11 +1,11 @@
 // Screen-space AO
 // This implementation of SSAO is not like a traditional one, because we don't do differed rendering and such we do not
 // have a G-Buffer, we use the image from the PreDepth pass and the GeometryPass normal output as our inputs.
-// This causes the final AO result to be approximation and results in less accuracy.//
+// This causes the final AO result to be approximation and results in less accuracy.
 //
 // Resources:
 // AJ Weeks - https://github.com/ajweeks/FlexEngine/blob/master/FlexEngine/resources/shaders/vk_ssao.frag -- "ReconstructVSPosFromDepth"
-// Sascha Willems - https://github.com/SaschaWillems/Vulkan/tree/master/
+// Sascha Willems - https://github.com/SaschaWillems/Vulkan/blob/master/shaders/glsl/ssao/ssao.frag
 
 #type vertex
 #version 450
@@ -79,8 +79,8 @@ void main()
 	ivec2 depthTexSize = textureSize( u_DepthTexture, 0 ); 
 	ivec2 noiseTexSize = textureSize( u_NoiseTexture, 0 );
 
-	// SSAO is rendered at 0.5x scale : TODO
-	float renderScale = 1; 
+	// SSAO is rendered at 0.5x scale
+	float renderScale = 0.5; 
 
 	// Scale the noise texture so that its tiled across U and V.
 	vec2 noiseUV = vec2(float(depthTexSize.x)/float(noiseTexSize.x), float(depthTexSize.y)/float(noiseTexSize.y)) * o_TexCoord * renderScale;
@@ -94,33 +94,33 @@ void main()
 	float occlusion = 0.0;
 	int sampleCount = 0;
 
-	for(uint i = 0; i < 32; i++)
+	for( uint i = 0; i < 32; i++ )
 	{
 		vec3 samplePos =
-			pos + (TBN * u_Data.Samples[i].xyz)
+			pos + ( TBN * u_Data.Samples[ i ].xyz )
 			* u_Data.SSAORadius;
 
 		vec4 offset =
-			u_Matrices.Proj * vec4(samplePos, 1.0);
+			u_Matrices.Proj * vec4( samplePos, 1.0 );
 
 		offset.xyz /= offset.w;
 		offset.xy = offset.xy * 0.5 + 0.5;
 
-		if(offset.x < 0.0 || offset.x > 1.0 ||
-		   offset.y < 0.0 || offset.y > 1.0)
+		if( offset.x < 0.0 || offset.x > 1.0 ||
+		   offset.y < 0.0 || offset.y > 1.0 )
 		{
 			continue;
 		}
 
 		vec3 reconstructedPos =
-			ReconstructVSPosFromDepth(offset.xy);
+			ReconstructVSPosFromDepth( offset.xy );
 
 		float dz =
-			max(abs(pos.z - reconstructedPos.z), 0.0001);
+			max( abs( pos.z - reconstructedPos.z ), 0.0001 );
 
 		float rangeCheck =
-			smoothstep(0.0, 1.0,
-			u_Data.SSAORadius / dz);
+			smoothstep( 0.0, 1.0,
+			u_Data.SSAORadius / dz );
 
 		occlusion += smoothstep(
 			bias,

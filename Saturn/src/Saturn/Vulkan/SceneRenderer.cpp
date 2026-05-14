@@ -1497,7 +1497,7 @@ namespace Saturn {
 		if( !m_RendererData.SkyboxShader && !m_RendererData.PreethamShader )
 		{
 			m_RendererData.SkyboxShader = ShaderLibrary::Get().FindOrLoad( "Skybox", "content/shaders/Skybox.glsl" );
-			m_RendererData.PreethamShader = ShaderLibrary::Get().FindOrLoad( "Skybox_Compute", "content/shaders/Skybox_Compute.glsl" );
+			m_RendererData.PreethamShader = ShaderLibrary::Get().FindOrLoad( "Skybox-Compute", "content/shaders/Skybox-Compute.glsl" );
 
 			m_RendererData.SkyboxMaterial = Ref<Material>::Create( m_RendererData.SkyboxShader, "SkyboxComposite" );
 			m_RendererData.PreethamMaterial = Ref<Material>::Create( m_RendererData.PreethamShader, "PreethamMat" );
@@ -3161,7 +3161,7 @@ namespace Saturn {
 
 		Ref<TextureCube> Environment = Ref<TextureCube>::Create( ImageFormat::RGBA32F, cubemapSize, cubemapSize );
 
-		Ref<Shader> skyShader = ShaderLibrary::Get().Find( "Skybox_Compute" );
+		Ref<Shader> skyShader = ShaderLibrary::Get().Find( "Skybox-Compute" );
 		Ref<ComputePipeline> pipeline = Ref<ComputePipeline>::Create( skyShader );
 
 		const glm::vec3 params = { m_RendererData.SceneEnvironment->Turbidity, m_RendererData.SceneEnvironment->Azimuth, m_RendererData.SceneEnvironment->Inclination };
@@ -3207,11 +3207,6 @@ namespace Saturn {
 	void SceneRenderer::ChangeAOTechnique( AOTechnique newTechique )
 	{
 		// TODO: ChangeAOTechnique
-	}
-
-	void SceneRenderer::Screenshot( const std::filesystem::path& rPath, const glm::vec2& rSize )
-	{
-	//	m_RendererData.SceneCompositeFramebuffer->Capture( rPath, 0, rSize );
 	}
 
 	Ref<Renderer2D> SceneRenderer::GetRenderer2D() const

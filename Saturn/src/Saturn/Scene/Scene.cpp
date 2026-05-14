@@ -770,17 +770,32 @@ namespace Saturn {
 		{
 			if( auto* pStaticMeshComp = rEntity->TryGetComponent<StaticMeshComponent>() )
 			{
-				if( pStaticMeshComp->Mesh )
-				{
-					const auto transform = GetTransformRelativeToParent( rEntity );
+				if( !pStaticMeshComp->Mesh )
+					continue;
 
-					Ref<MaterialRegistry> targetMaterialRegistry = pStaticMeshComp->Mesh->GetMaterialRegistry();
+				const auto transform = GetTransformRelativeToParent( rEntity );
 
-					if( pStaticMeshComp->MaterialRegistry && pStaticMeshComp->MaterialRegistry->HasAnyOverrides() )
-						targetMaterialRegistry = pStaticMeshComp->MaterialRegistry;
+				Ref<MaterialRegistry> targetMaterialRegistry = pStaticMeshComp->Mesh->GetMaterialRegistry();
 
-					sceneRenderer->SubmitSelectedStaticMesh( rEntity, pStaticMeshComp->Mesh, targetMaterialRegistry, transform );
-				}
+				if( pStaticMeshComp->MaterialRegistry && pStaticMeshComp->MaterialRegistry->HasAnyOverrides() )
+					targetMaterialRegistry = pStaticMeshComp->MaterialRegistry;
+
+				sceneRenderer->SubmitSelectedStaticMesh( rEntity, pStaticMeshComp->Mesh, targetMaterialRegistry, transform );
+			}
+
+			if( auto* pSkMeshComp = rEntity->TryGetComponent<SkeletalMeshComponent>() )
+			{
+				if( !pSkMeshComp->Mesh )
+					continue;
+
+				const auto transform = GetTransformRelativeToParent( rEntity );
+
+				Ref<MaterialRegistry> targetMaterialRegistry = pSkMeshComp->Mesh->GetMaterialRegistry();
+
+				if( pSkMeshComp->MaterialRegistry && pSkMeshComp->MaterialRegistry->HasAnyOverrides() )
+					targetMaterialRegistry = pSkMeshComp->MaterialRegistry;
+
+				sceneRenderer->SubmitSelectedDynamicMesh( rEntity, pSkMeshComp->Mesh, targetMaterialRegistry, transform );
 			}
 		}
 	}
@@ -793,7 +808,7 @@ namespace Saturn {
 			g_ActiveScene = this;
 
 		// UNSAFE! We just assume that rScriptName will be a subclass of an entity, could lead to UB
-		SharedPtr<Entity> entity = (Entity*)ClassMetadataHandler::Get().CreateClassObject( rScriptName, this );
+		SharedPtr<Entity> entity = (Entity*)ClassMetadataHandler::Get().CreateClassObject( rScriptName, nullptr );
 
 		entity->SetName( name );
 		entity->GetComponent<IdComponent>().ID = uuid;
@@ -807,7 +822,7 @@ namespace Saturn {
 
 	SharedPtr<Entity> Scene::CreateEntity( const std::string& name /*= "" */ )
 	{
-		SharedPtr<Entity> entity = NewObject<Entity>( this );
+		SharedPtr<Entity> entity = NewObject<Entity>( nullptr );
 		entity->SetName( name );
 
 		OnEntityCreated( entity );
@@ -1368,13 +1383,12 @@ namespace Saturn {
 			
 			if( soundSpec->Type == AssetType::GraphSound )
 			{
-				Ref<GraphSound> sound = AudioSystem::Get().PlayGraphSound( rComp.SpecAssetID, rComp.UniqueID );
+				Ref<GraphSound> sound = AudioSystem::Get().PlayGraphSound( rComp.SpecAssetID, rComp.UniqueID, rComp.Spatialisation );
 
 				sound->WaitUntilLoaded();
 
 				if( rComp.Spatialisation )
 				{
-					sound->SetSpatialisation( true );
 					sound->SetPosition( entity->GetComponent<TransformComponent>().Position );
 				}
 
@@ -1424,6 +1438,7 @@ namespace Saturn {
 			AudioSystem::Get().StopSound( rComp.UniqueID );
 		}
 
+		AudioSystem::Get().StopSoundInSet( 1 );
 		AudioSystem::Get().StopSoundGroups();
 	}
 
@@ -1437,6 +1452,7 @@ namespace Saturn {
 			AudioSystem::Get().UnloadSound( rComp.UniqueID );
 		}
 
+		AudioSystem::Get().DestroySoundsInSet( 1 );
 		AudioSystem::Get().StopSoundGroups();
 	}
 

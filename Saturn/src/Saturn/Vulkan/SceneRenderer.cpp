@@ -1541,7 +1541,7 @@ namespace Saturn {
 
 			if( m_RendererData.EnableShadows )
 			{
-				for( int i = 0; i < SHADOW_CASCADE_COUNT; ++i )
+				for( uint32_t i = 0; i < SHADOW_CASCADE_COUNT; ++i )
 				{
 					shadowPassTime += m_RendererData.ShadowMapTimers[ i ].ElapsedMilliseconds();
 				}
@@ -1691,13 +1691,21 @@ namespace Saturn {
 				static int MipIndex = 0;
 				auto& img = m_RendererData.BloomTextures[ index ].Texture;
 
-				ImGui::SliderInt( "##bloom_tex", &index, 0, 2 );
-				ImGui::SliderInt( "##mip", &MipIndex, 0, img->GetMipMapLevels() - 2 );
+				if( Auxiliary::DrawBoolControl( "Enable", m_RendererData.EnableBloom ) ) 
+				{
+					DisableOrEnableBloom();
+				}
+
+				Auxiliary::DisabledFlag disabledIf( !m_RendererData.EnableBloom );
+
+				Auxiliary::DrawIntControl( "Stage", index, 0, 2 );
+				Auxiliary::DrawIntControl( "Mip", MipIndex, 0, img->GetMipMapLevels() - 2 );
+				Auxiliary::DrawFloatControl( "Bloom Threshold", m_RendererData.BloomThreshold, 0.0f, 100.0f );
 
 				const float size = ImGui::GetContentRegionAvail().x;
 				Auxiliary::Image( img, MipIndex, { size, size }, { 0, 1 }, { 1, 0 } );
 
-				ImGui::SliderFloat( "##dirtint", &m_RendererData.BloomDirtIntensity, 0, 1000.0f );
+				disabledIf.Pop();
 
 				Auxiliary::EndTreeNode();
 			}
@@ -3000,6 +3008,18 @@ namespace Saturn {
 	}
 #endif
 
+	void SceneRenderer::DisableOrEnableBloom()
+	{
+		if( m_RendererData.EnableBloom )
+		{
+			m_RendererData.SceneCompositeMaterial->SetResource( "u_BloomTexture", m_RendererData.BloomTextures[ 2 ].Texture );
+		}
+		else
+		{
+			m_RendererData.SceneCompositeMaterial->SetResource( "u_BloomTexture", Renderer::Get()->GetPinkTexture() );
+		}
+	}
+
 	void SceneRenderer::CreateBloomMaterials()
 	{
 		const glm::uvec2 viewportSize = { m_RendererData.Width, m_RendererData.Height };
@@ -3010,11 +3030,11 @@ namespace Saturn {
 		m_RendererData.BloomTextures.fill( {} );
 
 		// Create bloom textures
-		for( uint32_t i = 0; i < 3; i++ )
+		for( uint32_t t = 0; t < 3; t++ )
 		{
-			auto& rTextureInfo = m_RendererData.BloomTextures[ i ];
+			auto& rTextureInfo = m_RendererData.BloomTextures[ t ];
 
-			rTextureInfo.Texture = Ref<Texture2D>::Create( ImageFormat::RGBA32F, bs.x, bs.y, nullptr, true );
+			rTextureInfo.Texture = Ref<Texture2D>::Create( ImageFormat::RGBA32F, bs.x, bs.y, nullptr, true, AddressingMode::ClampToEdge );
 			rTextureInfo.Texture->SetDebugName( "Bloom Texture/" + std::to_string( t ) );
 
 			for( size_t i = 0; i < rTextureInfo.Texture->GetMipMapLevels(); i++ )
@@ -3335,6 +3355,7 @@ namespace Saturn {
 			GeometryPass();
 		}
 
+		if( m_RendererData.EnableBloom )
 		{
 			ScopedDebugLabel label( m_RendererData.CommandBuffer, "Bloom" );
 			BloomPass();

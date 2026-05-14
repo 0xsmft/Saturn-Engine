@@ -260,6 +260,7 @@ namespace Saturn {
 		bool Resized = false;
 		bool SSAONoiseGenerated = false;
 		bool EnableShadows = true;
+		bool EnableBloom = true;
 
 		uint32_t Width = 0;
 		uint32_t Height = 0;
@@ -634,7 +635,9 @@ namespace Saturn {
 		void OnShaderReloaded( const std::string& rName );
 #endif
 
+		void DisableOrEnableBloom();
 		void CreateBloomMaterials();
+		void BindSceneCompositeAOTexture();
 		void SendBoneDataToMap( Ref<SkeletalMesh> mesh, const StaticMeshKey& rKey, const std::vector<glm::mat4>& rBoneTransforms );
 
 		Ref<TextureCube> CreateDymanicSky();

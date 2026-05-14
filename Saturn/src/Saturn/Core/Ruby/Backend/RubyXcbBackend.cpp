@@ -41,143 +41,161 @@
 
 #include <cstring>
 
-static int HandleKeyMods()
-{
-	int Modifiers = Saturn::RubyKey_UnknownKey;
-	return Modifiers;
-}
-
-static Saturn::RubyKey ConvertWinScancodeToRuby( uint8_t scanCode )
+static Saturn::RubyKey ConvertX11KeycodeToRuby( uint8_t keycode )
 {
 	using namespace Saturn;
 
-	switch( scanCode )
-    {
-        // Letters
-        case 16: return RubyKey_Q;   // Q
-        case 17: return RubyKey_W;   // W
-        case 18: return RubyKey_E;   // E
-        case 19: return RubyKey_R;   // R
-        case 20: return RubyKey_T;   // T
-        case 21: return RubyKey_Y;   // Y
-        case 22: return RubyKey_U;   // U
-        case 23: return RubyKey_I;   // I
-        case 24: return RubyKey_O;   // O
-        case 25: return RubyKey_P;   // P
-        case 30: return RubyKey_A;   // A
-        case 31: return RubyKey_S;   // S
-        case 32: return RubyKey_D;   // D
-        case 33: return RubyKey_F;   // F
-        case 34: return RubyKey_G;   // G
-        case 35: return RubyKey_H;   // H
-        case 36: return RubyKey_J;   // J
-        case 37: return RubyKey_K;   // K
-        case 38: return RubyKey_L;   // L
-        case 44: return RubyKey_Z;   // Z
-        case 45: return RubyKey_X;   // X
-        case 46: return RubyKey_C;   // C
-        case 47: return RubyKey_V;   // V
-        case 48: return RubyKey_B;   // B
-        case 49: return RubyKey_N;   // N
-        case 50: return RubyKey_M;   // M
+	switch( keycode )
+	{
+		// Numbers row
+		case 10: return RubyKey_Num1;
+		case 11: return RubyKey_Num2;
+		case 12: return RubyKey_Num3;
+		case 13: return RubyKey_Num4;
+		case 14: return RubyKey_Num5;
+		case 15: return RubyKey_Num6;
+		case 16: return RubyKey_Num7;
+		case 17: return RubyKey_Num8;
+		case 18: return RubyKey_Num9;
+		case 19: return RubyKey_Num0;
 
-        // Numbers (top row)
-        case 2: return RubyKey_Num1;
-        case 3: return RubyKey_Num2;
-        case 4: return RubyKey_Num3;
-        case 5: return RubyKey_Num4;
-        case 6: return RubyKey_Num5;
-        case 7: return RubyKey_Num6;
-        case 8: return RubyKey_Num7;
-        case 9: return RubyKey_Num8;
-        case 10: return RubyKey_Num9;
-        case 11: return RubyKey_Num0;
+		// Symbols (top row)
+		case 20: return RubyKey_Minus;
+		case 21: return RubyKey_Equal;
+		case 22: return RubyKey_Backspace;
 
-        // Symbols
-        case 12: return RubyKey_Minus;           // -
-        case 13: return RubyKey_Equal;           // =
-        case 26: return RubyKey_LeftBracket;     // [
-        case 27: return RubyKey_RightBracket;    // ]
-        case 39: return RubyKey_Apostrophe;      // '
-        case 41: return RubyKey_Grave;           // `
-        case 43: return RubyKey_Backslash;       // \ |
-        case 51: return RubyKey_Comma;           // ,
-        case 52: return RubyKey_Period;          // .
-        case 53: return RubyKey_Slash;           // /
+		// Control row
+		case 23: return RubyKey_Tab;
+		case 24: return RubyKey_Q;
+		case 25: return RubyKey_W;
+		case 26: return RubyKey_E;
+		case 27: return RubyKey_R;
+		case 28: return RubyKey_T;
+		case 29: return RubyKey_Y;
+		case 30: return RubyKey_U;
+		case 31: return RubyKey_I;
+		case 32: return RubyKey_O;
+		case 33: return RubyKey_P;
+		case 34: return RubyKey_LeftBracket;
+		case 35: return RubyKey_RightBracket;
+		case 36: return RubyKey_Enter;
 
-        // Function keys
-        case 59: return RubyKey_F1;
-        case 60: return RubyKey_F2;
-        case 61: return RubyKey_F3;
-        case 62: return RubyKey_F4;
-        case 63: return RubyKey_F5;
-        case 64: return RubyKey_F6;
-        case 65: return RubyKey_F7;
-        case 66: return RubyKey_F8;
-        case 67: return RubyKey_F9;
-        case 68: return RubyKey_F10;
-        case 87: return RubyKey_F11;
-        case 88: return RubyKey_F12;
+		// Home row
+		case 37: return RubyKey_LeftCtrl;
+		case 38: return RubyKey_A;
+		case 39: return RubyKey_S;
+		case 40: return RubyKey_D;
+		case 41: return RubyKey_F;
+		case 42: return RubyKey_G;
+		case 43: return RubyKey_H;
+		case 44: return RubyKey_J;
+		case 45: return RubyKey_K;
+		case 46: return RubyKey_L;
+		case 47: return RubyKey_Semicolon;
+		case 48: return RubyKey_Apostrophe;
+		case 49: return RubyKey_Grave;
 
-        // Modifiers
-        case 42: return RubyKey_LeftShift;
-        case 54: return RubyKey_RightShift;
-        case 29: return RubyKey_LeftCtrl;
-        case 97: return RubyKey_RightCtrl;
-        case 56: return RubyKey_LeftAlt;
-        case 100: return RubyKey_RightAlt;
+		// Bottom row
+		case 50: return RubyKey_LeftShift;
+		case 51: return RubyKey_Backslash;
+		case 52: return RubyKey_Z;
+		case 53: return RubyKey_X;
+		case 54: return RubyKey_C;
+		case 55: return RubyKey_V;
+		case 56: return RubyKey_B;
+		case 57: return RubyKey_N;
+		case 58: return RubyKey_M;
+		case 59: return RubyKey_Comma;
+		case 60: return RubyKey_Period;
+		case 61: return RubyKey_Slash;
+		case 62: return RubyKey_RightShift;
 
-        // Lock keys
-        case 58: return RubyKey_CapsLock;
-        case 69: return RubyKey_NumLock;
-        case 70: return RubyKey_ScrollLock;
+		// Modifiers
+		case 64: return RubyKey_LeftAlt;
+		case 65: return RubyKey_Space;
+		case 66: return RubyKey_CapsLock;
+		case 108: return RubyKey_RightAlt;
+		case 105: return RubyKey_RightCtrl;
 
-        // Navigation / editing
-        case 14: return RubyKey_Backspace;
-        case 15: return RubyKey_Tab;
-        case 28: return RubyKey_Enter;
-        case 110: return RubyKey_Insert;
-        case 111: return RubyKey_Delete;
-        case 119: return RubyKey_Home;
-        case 115: return RubyKey_End;
-        case 112: return RubyKey_PageUp;
-        case 117: return RubyKey_PageDown;
+		// Function keys
+		case 67: return RubyKey_F1;
+		case 68: return RubyKey_F2;
+		case 69: return RubyKey_F3;
+		case 70: return RubyKey_F4;
+		case 71: return RubyKey_F5;
+		case 72: return RubyKey_F6;
+		case 73: return RubyKey_F7;
+		case 74: return RubyKey_F8;
+		case 75: return RubyKey_F9;
+		case 76: return RubyKey_F10;
+		case 95: return RubyKey_F11;
+		case 96: return RubyKey_F12;
 
-        // Arrows
-        case 103: return RubyKey_UpArrow;
-        case 108: return RubyKey_DownArrow;
-        case 105: return RubyKey_LeftArrow;
-        case 106: return RubyKey_RightArrow;
+		// Navigation
+		case 110: return RubyKey_Home;
+		case 111: return RubyKey_UpArrow;
+		case 112: return RubyKey_PageUp;
 
-        // Numpad
-        case 82: return RubyKey_Numpad0;
-        case 79: return RubyKey_Numpad1;
-        case 80: return RubyKey_Numpad2;
-        case 81: return RubyKey_Numpad3;
-        case 75: return RubyKey_Numpad4;
-        case 76: return RubyKey_Numpad5;
-        case 77: return RubyKey_Numpad6;
-        case 71: return RubyKey_Numpad7;
-        case 72: return RubyKey_Numpad8;
-        case 73: return RubyKey_Numpad9;
-        case 83: return RubyKey_NumpadDecimal;
-        case 78: return RubyKey_NumpadAdd;
-        case 74: return RubyKey_NumpadSubtract;
-        case 55: return RubyKey_NumpadMultiply;
-        case 181: return RubyKey_NumpadDivide;
-        case 96: return RubyKey_NumpadEnter;
+		case 113: return RubyKey_LeftArrow;
+		case 114: return RubyKey_RightArrow;
 
-        // Misc / system keys
-        case 1: return RubyKey_Esc;
-        //case 70: return RubyKey_Pause;
-        case 99: return RubyKey_PrintScreen;
-        case 127: return RubyKey_Menu;
+		case 115: return RubyKey_End;
+		case 116: return RubyKey_DownArrow;
+		case 117: return RubyKey_PageDown;
 
-        // Space
-        case 57: return RubyKey_Space;
+		case 118: return RubyKey_Insert;
+		case 119: return RubyKey_Delete;
 
-        default: return RubyKey_UnknownKey;
-    }
+		// Escape
+		case 9: return RubyKey_Esc;
+
+		// Numpad
+		case 79: return RubyKey_Numpad7;
+		case 80: return RubyKey_Numpad8;
+		case 81: return RubyKey_Numpad9;
+		case 82: return RubyKey_NumpadSubtract;
+
+		case 83: return RubyKey_Numpad4;
+		case 84: return RubyKey_Numpad5;
+		case 85: return RubyKey_Numpad6;
+		case 86: return RubyKey_NumpadAdd;
+
+		case 87: return RubyKey_Numpad1;
+		case 88: return RubyKey_Numpad2;
+		case 89: return RubyKey_Numpad3;
+
+		case 90: return RubyKey_Numpad0;
+		case 91: return RubyKey_NumpadDecimal;
+
+		case 106: return RubyKey_NumpadDivide;
+		case 63:  return RubyKey_NumpadMultiply;
+		case 104: return RubyKey_NumpadEnter;
+
+		default:
+			return RubyKey_UnknownKey;
+	}
+}
+
+static int HandleKeyMods( uint16_t state )
+{
+	int Modifiers = Saturn::RubyKey_UnknownKey;
+
+	if( state & XCB_MOD_MASK_SHIFT )
+	{
+		Modifiers |= Saturn::RubyKey_LeftShift;
+	}
+
+	if( state & XCB_MOD_MASK_1 )
+	{
+		Modifiers |= Saturn::RubyKey_LeftAlt;
+	}
+
+	if( state & XCB_MOD_MASK_CONTROL )
+	{
+		Modifiers |= Saturn::RubyKey_LeftCtrl;
+	}
+
+	return Modifiers;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -514,7 +532,7 @@ namespace Saturn {
 						break;
 
 					xcb_keysym_t keysym = xcb_key_symbols_get_keysym( pThis->GetSymbols(), ev->detail, 0 );
-					const RubyKey saturnKey = ConvertWinScancodeToRuby( keysym );
+					const RubyKey saturnKey = ConvertX11KeycodeToRuby( ev->detail );
 					
 					SAT_CORE_INFO( "Saturn Key: {0}", (uint32_t)ev->detail );
 
@@ -527,7 +545,7 @@ namespace Saturn {
 						}
 					}
 					
-					pThis->GetParent()->DispatchEvent<RubyKeyEvent>( EventType::KeyPressed, saturnKey, keysym, 0 );
+					pThis->GetParent()->DispatchEvent<RubyKeyEvent>( EventType::KeyPressed, saturnKey, saturnKey, HandleKeyMods( ev->state ) );
 				} break;
 				
 				case XCB_KEY_RELEASE: 
@@ -540,10 +558,8 @@ namespace Saturn {
 					if( !pThis )
 						break;
 
-					xcb_keysym_t keysym = xcb_key_symbols_get_keysym( pThis->GetSymbols(), ev->detail, 0 );
-
-					const RubyKey saturnKey = ConvertWinScancodeToRuby( keysym );
-					pThis->GetParent()->DispatchEvent<RubyKeyEvent>( EventType::KeyReleased, saturnKey, keysym, 0 );
+					const RubyKey saturnKey = ConvertX11KeycodeToRuby( ev->detail );
+					pThis->GetParent()->DispatchEvent<RubyKeyEvent>( EventType::KeyReleased, saturnKey, saturnKey, HandleKeyMods( ev->state ) );
 				} break;
 				
 				default: break;

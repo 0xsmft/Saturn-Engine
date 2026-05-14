@@ -26,89 +26,40 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "OnlineAPI.h"
 
-#include <stdint.h>
-#include <cstring>
+#include "Saturn/Project/Project.h"
+
+#if defined(SAT_WITH_STEAM)
+#include "Steam/SteamOnlineSystemAPI.h"
+#endif
 
 namespace Saturn {
 
-	// Buffer is not RAII safe, you must call free before this object exits the scope.
-	class Buffer
+	Ref<OnlineAPI> OnlineAPI::CreateOnlineSystemAPI( OnlineSystemAPIType type )
 	{
-	public:
-		Buffer() : Size( 0 ), Data( nullptr ) {}
-		Buffer( size_t size, uint8_t* pData ) : Size( size ), Data( pData ) {}
-		Buffer( uint32_t size, uint8_t* pData ) : Size( size ), Data( pData ) {}
-		Buffer( uint32_t size, void* pData ) : Size( size ), Data( (uint8_t*)pData ) {}
-		~Buffer() {}
-
-		void Zero_Memory()
+		switch( type )
 		{
-			if( Data )
-				memset( Data, 0, Size );
-		}
+			case OnlineSystemAPIType::Null:
+				return nullptr;
 
-		void Free() 
-		{
-			if( Data )
+			case OnlineSystemAPIType::Steam:
 			{
-				delete[] Data;
-				Data = nullptr;
-				Size = 0;
+#if defined(SAT_WITH_STEAM)
+				return Ref<SteamOnlineSystemAPI>::Create();
+#else
+				SAT_CORE_WARN( "Attempt to use Steamworks API when SAT_WITH_STEAM is not defined! Creating no online system!" );
+				return nullptr;
+#endif
 			}
+
+			default:
+				break;
 		}
 
-		template<typename Ty>
-		Ty& Read( uint32_t Offset = 0 ) const
-		{
-			return *( Ty* ) ( Data + Offset );
-		}
+		SAT_CORE_ASSERT( false, "Unhandled Online System API type!" );
+		return nullptr;
+	}
 
-		template<typename Ty>
-		Ty* As() 
-		{
-			return ( Ty* ) Data;
-		}
-
-		void Write( const void* pData, size_t size, uint32_t Offset )
-		{
-			SAT_CORE_ASSERT( Offset + size <= Size );
-
-			memcpy( Data + Offset, pData, size );
-		}
-
-		// Clears the buffer and then reallocates it to the specified size.
-		void Allocate( size_t size )
-		{
-			delete[] Data;
-			Data = nullptr;
-
-			if( size == 0 )
-				return;
-
-			Data = new uint8_t[ size ];
-			Size = size;
-		}
-
-		static Buffer Copy( const void* pData, size_t size )
-		{
-			Buffer buffer;
-			
-			// Allocate the buffer
-			buffer.Allocate( size );
-
-			memcpy( buffer.Data, pData, size );
-
-			return buffer;
-		}
-
-		operator bool() { return Data != nullptr; }
-		uint8_t& operator [] ( uint32_t Offset ) { return Data[ Offset ]; }
-		uint8_t operator [] ( uint32_t Offset ) const { return Data[ Offset ]; }
-		
-	public:
-		size_t Size;
-		uint8_t* Data;
-	};
 }

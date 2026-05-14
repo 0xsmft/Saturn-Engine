@@ -28,87 +28,23 @@
 
 #pragma once
 
-#include <stdint.h>
-#include <cstring>
+#if defined(SAT_WITH_STEAM)
+
+#include "Saturn/Online/OnlinePresence.h"
+
+#include <steam/steam_api_common.h>
+
+#include <string>
 
 namespace Saturn {
 
-	// Buffer is not RAII safe, you must call free before this object exits the scope.
-	class Buffer
+	struct SteamFriend
 	{
-	public:
-		Buffer() : Size( 0 ), Data( nullptr ) {}
-		Buffer( size_t size, uint8_t* pData ) : Size( size ), Data( pData ) {}
-		Buffer( uint32_t size, uint8_t* pData ) : Size( size ), Data( pData ) {}
-		Buffer( uint32_t size, void* pData ) : Size( size ), Data( (uint8_t*)pData ) {}
-		~Buffer() {}
-
-		void Zero_Memory()
-		{
-			if( Data )
-				memset( Data, 0, Size );
-		}
-
-		void Free() 
-		{
-			if( Data )
-			{
-				delete[] Data;
-				Data = nullptr;
-				Size = 0;
-			}
-		}
-
-		template<typename Ty>
-		Ty& Read( uint32_t Offset = 0 ) const
-		{
-			return *( Ty* ) ( Data + Offset );
-		}
-
-		template<typename Ty>
-		Ty* As() 
-		{
-			return ( Ty* ) Data;
-		}
-
-		void Write( const void* pData, size_t size, uint32_t Offset )
-		{
-			SAT_CORE_ASSERT( Offset + size <= Size );
-
-			memcpy( Data + Offset, pData, size );
-		}
-
-		// Clears the buffer and then reallocates it to the specified size.
-		void Allocate( size_t size )
-		{
-			delete[] Data;
-			Data = nullptr;
-
-			if( size == 0 )
-				return;
-
-			Data = new uint8_t[ size ];
-			Size = size;
-		}
-
-		static Buffer Copy( const void* pData, size_t size )
-		{
-			Buffer buffer;
-			
-			// Allocate the buffer
-			buffer.Allocate( size );
-
-			memcpy( buffer.Data, pData, size );
-
-			return buffer;
-		}
-
-		operator bool() { return Data != nullptr; }
-		uint8_t& operator [] ( uint32_t Offset ) { return Data[ Offset ]; }
-		uint8_t operator [] ( uint32_t Offset ) const { return Data[ Offset ]; }
-		
-	public:
-		size_t Size;
-		uint8_t* Data;
+		std::wstring Name;
+		CSteamID UserID{};
+		OnlinePresence Presence = OnlinePresence::Offline;
 	};
+	
 }
+
+#endif

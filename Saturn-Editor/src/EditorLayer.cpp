@@ -98,6 +98,11 @@
 
 #include <Saturn/Alura/AluraCanvas.h>
 
+#include <Saturn/Online/OnlineAPI.h>
+#if defined(SAT_WITH_STEAM)
+#include <Saturn/Online/Steam/SteamOnlineSystemAPI.h>
+#endif
+
 #include <ImGuizmo/ImGuizmo.h>
 
 #include <imspinner/imspinner.h>
@@ -255,6 +260,10 @@ namespace Saturn {
 		const std::string title = std::format( "{0} - Saturn", Project::GetActiveConfig().Name );
 		Application::Get()->GetWindow()->ChangeTitle( title );
 
+		// Create online API but not init it yet.
+		// Wait until runtime for that.
+		m_OnlineAPI = OnlineAPI::CreateOnlineSystemAPI( Project::GetActiveProject()->GetOnlineAPIType() );
+
 		/*
 		if( !Project::GetActiveProject()->HasThumbnail() )
 		{
@@ -380,6 +389,9 @@ namespace Saturn {
 			m_SceneRenderer->PreRender();
 
 			m_RuntimeScene->OnUpdate( time );
+
+			// Online subsystem update...
+			m_OnlineAPI->Tick();
 
 			// Suspended only, paused would be in the control of the user, so we don't switch the
 			// camera.
@@ -865,6 +877,8 @@ namespace Saturn {
 
 		g_AluraCanvas = new AluraCanvas( canvasSpecification );
 		g_AluraCanvas->SetContext( m_SceneRenderer->GetAluraRenderer() );
+
+		m_OnlineAPI->Initialise();
 	}
 
 	void EditorLayer::PostInitRuntime()
@@ -902,6 +916,8 @@ namespace Saturn {
 		m_RuntimeScene = nullptr;
 
 		m_SceneRenderer->SetCurrentScene( m_EditorScene.Get() );
+
+		m_OnlineAPI->Terminate();
 
 		const std::string title = std::format( "{0} - Saturn", Project::GetActiveConfig().Name );
 		Application::Get()->GetWindow()->ChangeTitle( title );
@@ -1574,7 +1590,6 @@ namespace Saturn {
 			ImGui::PushFont( boldFont );
 			ImGui::Text( "Autosaves" );
 			ImGui::Separator();
-
 			ImGui::PopFont();
 
 			//			ImGui::BeginHorizontal( "##prj_autosaves" );
@@ -1647,7 +1662,6 @@ namespace Saturn {
 			ImGui::PushFont( boldFont );
 			ImGui::Text( "Action Bindings" );
 			ImGui::Separator();
-
 			ImGui::PopFont();
 
 			Auxiliary::DisabledFlag disabledFlagIfRuntime( m_RequestRuntime );
@@ -1832,6 +1846,146 @@ namespace Saturn {
 
 			ImGui::PopID();
 			disabledFlagIfRuntimeForSndGrps.Pop();
+
+			ImGui::PushFont( boldFont );
+			ImGui::Text( "Online Systems" );
+			ImGui::Separator();
+			ImGui::PopFont();
+
+			ImGui::BeginHorizontal( "##selectosystem" );
+
+			ImGui::Text( "Online System SDK:" );
+			ImGui::Spring();
+
+			OnlineSystemAPIType selectedType = ActiveProject->GetOnlineAPIType();
+
+			std::string sdkDisplayName = "Null";
+			switch( selectedType )
+			{
+				case OnlineSystemAPIType::Steam:
+				{
+#if defined(SAT_WITH_STEAM)
+					sdkDisplayName = "Steam";
+#else
+					sdkDisplayName = "Steam (SAT_WITH_STEAM define missing!)";
+#endif
+				} break;
+
+				case OnlineSystemAPIType::Epic:
+				{
+#if defined(SAT_WITH_EPIC)
+					sdkDisplayName = "Epic";
+#else
+					sdkDisplayName = "Epic (SAT_WITH_EPIC define missing!)";
+#endif
+				} break;
+
+				case OnlineSystemAPIType::Null:
+				default:
+					break;
+			}
+
+			Auxiliary::DisabledFlag onlineSystemDisabledIf( m_RequestRuntime );
+			ImGui::SetNextItemWidth( ImGui::CalcTextSize( sdkDisplayName.data() ).x + 24.0f );
+			if( ImGui::BeginCombo( "##osystem", sdkDisplayName.data() ) )
+			{
+				bool selected = ( selectedType == OnlineSystemAPIType::Null );
+				if( ImGui::Selectable( "None", selected ) )
+				{
+					ActiveProject->SetOnlineSystemAPI( OnlineSystemAPIType::Null );
+
+					// If we weren't selected before this, we need to re-create the system.
+					if( !selected )
+					{
+						m_OnlineAPI = OnlineAPI::CreateOnlineSystemAPI( OnlineSystemAPIType::Null );
+						shouldSaveProject = true;
+					}
+				}
+
+#if defined(SAT_WITH_STEAM)
+				selected = ( selectedType == OnlineSystemAPIType::Steam );
+				if( ImGui::Selectable( "Steam", selected ) )
+				{
+					ActiveProject->SetOnlineSystemAPI( OnlineSystemAPIType::Steam );
+
+					// If we weren't selected before this, we need to re-create the system.
+					if( !selected )
+					{
+						m_OnlineAPI = OnlineAPI::CreateOnlineSystemAPI( OnlineSystemAPIType::Steam );
+						shouldSaveProject = true;
+					}
+				}
+#endif
+
+#if defined(SAT_WITH_EPIC)
+				selected = ( selectedType == OnlineSystemAPIType::Epic );
+				if( ImGui::Selectable( "Steam", selected ) )
+				{
+					ActiveProject->SetOnlineSystemAPI( OnlineSystemAPIType::Epic );
+
+					// If we weren't selected before this, we need to re-create the system.
+					if( !selected )
+					{
+						m_OnlineAPI = OnlineAPI::CreateOnlineSystemAPI( OnlineSystemAPIType::Epic );
+						shouldSaveProject = true;
+					}
+				}
+#endif
+				ImGui::EndCombo();
+			}
+
+			ImGui::EndHorizontal();
+
+			// Call to GetOnlineAPIType() is needed if the type has changed.
+			switch( ActiveProject->GetOnlineAPIType() )
+			{
+				default:
+				case OnlineSystemAPIType::Null:
+					break;
+
+#if defined(SAT_WITH_STEAM)
+				case Saturn::OnlineSystemAPIType::Steam:
+				{
+					ImGui::Text( "Steam Settings" );
+					ImGui::Separator();
+				
+					ImGui::BeginHorizontal( "##steamaihz" );
+
+					ImGui::Text( "Steam App ID" );
+
+					ImGui::Spring();
+
+					uint32_t id = ActiveProject->GetOnlineAppID();
+					if( ImGui::InputScalarN( "##SteamAppID", ImGuiDataType_U32, ( void* ) &id, 1 ) ) 
+					{
+						ActiveProject->SetOnlineAppID( id );
+
+						shouldSaveProject = true;
+					}
+
+					ImGui::EndHorizontal();
+
+					if( id == 480 )
+					{
+						ImGui::TextDisabled( "Note: Your application will NOT ship with an ID of 480. You must have your game approved by Valve before shipping!" );
+					}
+					else
+					{
+						ImGui::TextDisabled( "Note: If you don't have an application on Steamworks, you may use steam ID 480, which is Spacewar, a shared testing application for developers." );
+					}
+
+					// I assume that the following text below is true?
+					ImGui::TextDisabled( "It is against Steam's TOS to use any random appid that is not your own and attempt to ship the application! Or to spoof an existing ID!" );
+				} break;
+#endif
+
+#if defined(SAT_WITH_EPIC)
+				case Saturn::OnlineSystemAPIType::Epic:
+					break;	
+#endif
+			}
+
+			onlineSystemDisabledIf.Pop();
 
 			// This does not matter because the editor is not designed to run in Dist, however, right now I want to keep this in release builds.
 #if !defined(SAT_DIST)
@@ -3988,6 +4142,20 @@ namespace Saturn {
 
 			PushMessageBox( msgBox );
 		}
+
+#if defined(SAT_WITH_STEAM)
+		if( ActiveProject->GetOnlineAppID() == 480 )
+		{
+			MessageBoxInfo msgBox
+			{
+				.Title = "Warning",
+				.Text = "You are unable to ship an application with a Steam App ID of 480. (SPACEWAR)",
+				.Buttons = MessageBoxButtons_Ok
+			};
+
+			PushMessageBox( msgBox );
+		}
+#endif
 
 		return result;
 	}

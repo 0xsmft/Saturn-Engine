@@ -47,9 +47,9 @@
 #define SAT_SHOW_ERROR_DIALOG( title, text ) Saturn::Core::ShowErrorDialogBoxAndTerminate( title, text, true )
 #endif
 
-#define SAT_VERIFY_NO_MSG(cond) { if(!(cond)) { SAT_CORE_ERROR("Verify Failed: {0}, Line {1}, File {2}", #cond, __LINE__, __FILE__); SAT_SHOW_ERROR_DIALOG( "Verify Failed!", "No Message!" ); SAT_BREAK_DEBUG() } }
+#define SAT_VERIFY_NO_MSG(cond) { if(!(cond)) { SAT_CORE_ERROR("Verify Failed: {0}, Line {1}, File {2}", #cond, __LINE__, __FILE__); SAT_BREAK_DEBUG() SAT_SHOW_ERROR_DIALOG( "Verify Failed!", "No Message!" ); } }
 
-#define SAT_VERIFY_MSG(cond, ...) { if(!(cond)) { SAT_CORE_ERROR("Verify Failed: {0}, Line {1}, File {2}", __VA_ARGS__, __LINE__, __FILE__); SAT_SHOW_ERROR_DIALOG( "Verify Failed!", __VA_ARGS__ ); SAT_BREAK_DEBUG() }  }
+#define SAT_VERIFY_MSG(cond, ...) { if(!(cond)) { SAT_CORE_ERROR("Verify Failed: {0}, Line {1}, File {2}", __VA_ARGS__, __LINE__, __FILE__); SAT_BREAK_DEBUG() SAT_SHOW_ERROR_DIALOG( "Verify Failed!", __VA_ARGS__ ); }  }
 
 #define SAT_VERIFY_RESOLVE(arg1, arg2, macro, ...) macro
 #define SAT_VERIFY_GET(...) _VA_AGRS_(SAT_VERIFY_RESOLVE(__VA_ARGS__, SAT_VERIFY_MSG, SAT_VERIFY_NO_MSG))

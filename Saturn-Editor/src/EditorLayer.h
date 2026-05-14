@@ -53,6 +53,7 @@ namespace Saturn {
 	
 	class GameModule;
 	class SceneTravelEvent;
+	class OnlineAPI;
 	class SandboxNodeEditorViewer;
 
 	class EditorLayer : public Layer
@@ -231,6 +232,8 @@ namespace Saturn {
 
 		Ref<GlobalUndoRedoGroup> m_GlobalUndoRedoGroup = nullptr;
 		std::unique_ptr<EntitySelectionManager> m_SelectionManager;
+
+		Ref<OnlineAPI> m_OnlineAPI;
 
 		EditorCamera m_EditorCamera;
 		EditorCamera m_SuspendedEditorCamera;

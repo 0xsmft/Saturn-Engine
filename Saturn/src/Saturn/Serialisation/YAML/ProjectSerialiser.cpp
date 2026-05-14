@@ -32,6 +32,10 @@
 #include "YamlAux.h"
 #include "Saturn/Audio/AudioSystem.h"
 
+#if defined(SAT_WITH_STEAM)
+#include "Saturn/Online/Steam/SteamOnlineSystemAPI.h"
+#endif
+
 #include <fstream>
 #include <yaml-cpp/yaml.h>
 
@@ -70,6 +74,30 @@ namespace Saturn {
 			out << YAML::Key << "AutoSaveInterval" << YAML::Value << rProject->GetAutoSaveInterval();
 			out << YAML::Key << "DeveloperVersion" << YAML::Value << rProject->GetDeveloperVersion();
 #endif
+
+			out << YAML::Key << "Online" << YAML::Value;
+			out << YAML::BeginMap;
+			out << YAML::Key << "API" << YAML::Value << ( std::underlying_type_t<OnlineSystemAPIType> )rProject->GetOnlineAPIType();
+			out << YAML::Key << "Settings" << YAML::Value;
+			out << YAML::BeginMap;
+
+			switch( rProject->GetOnlineAPIType() )
+			{
+				case OnlineSystemAPIType::Null:
+				default:
+					out << YAML::Key << "AppID" << 0u;
+					break;
+
+#if defined(SAT_WITH_STEAM)
+				case OnlineSystemAPIType::Steam:
+				{
+					out << YAML::Key << "AppID" << YAML::Value << rProject->GetOnlineAppID();
+				} break;
+#endif
+			}
+
+			out << YAML::EndMap;
+			out << YAML::EndMap;
 
 			out << YAML::Key << "ActionBindings";
 			out << YAML::BeginSeq;
@@ -151,6 +179,38 @@ namespace Saturn {
 		newProject->SetAutoSaveInterval( project[ "AutoSavesInterval" ].as<float>( 300.0f ) );
 		newProject->SetDeveloperVersion( project[ "DeveloperVersion" ].as<std::string>( std::string() ) );
 #endif
+		
+		const auto online = project[ "Online" ];
+		if( online )
+		{
+			OnlineSystemAPIType savedType = ( OnlineSystemAPIType ) online[ "API" ].as<std::underlying_type<OnlineSystemAPIType>::type>( 0 );
+			newProject->SetOnlineSystemAPI( savedType );
+
+			const auto apiSettings = online[ "Settings" ];
+			if( apiSettings )
+			{
+				switch( savedType )
+				{
+#if defined(SAT_WITH_STEAM)
+					case OnlineSystemAPIType::Steam:
+					{
+						const auto appID = apiSettings[ "AppID" ].as<uint32_t>( 0u );
+						newProject->SetOnlineAppID( appID );
+					} break;
+#endif
+
+#if defined(SAT_WITH_EPIC)
+					case OnlineSystemAPIType::Epic:
+						break;
+#endif
+
+					case OnlineSystemAPIType::Null:
+					default:
+						break;
+				}
+
+			}
+		}
 
 		const auto actionBindings = project[ "ActionBindings" ];
 		if( actionBindings )
@@ -176,6 +236,7 @@ namespace Saturn {
 			}
 		}
 
+#if SAT_FEATURE_SOUND_GROUPS
 		AudioSystem::Get().WaitForInit();
 
 		const auto soundGroups = project[ "SoundGroups" ];
@@ -193,10 +254,13 @@ namespace Saturn {
 				newProject->AddSoundGroup( sndGrp );
 			}
 		}
+#endif
 
 		Project::SetActiveProject( newProject );
 
+#if SAT_FEATURE_SOUND_GROUPS
 		AudioSystem::Get().StartSoundGroups();
+#endif
 	}
 
 }

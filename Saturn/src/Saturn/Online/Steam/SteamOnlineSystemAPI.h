@@ -28,87 +28,58 @@
 
 #pragma once
 
-#include <stdint.h>
-#include <cstring>
+#if defined(SAT_WITH_STEAM)
+
+#include "Saturn/Online/OnlineAPI.h"
+#include "SingletonStorage.h"
+
+#include "SteamCurrentUser.h"
+#include "SteamAvatarCache.h"
 
 namespace Saturn {
 
-	// Buffer is not RAII safe, you must call free before this object exits the scope.
-	class Buffer
+	//
+	// Represents the Steamworks API as a whole.
+	// 
+	// Allows access to the current steam user and the steam client application.
+	//
+	class SteamOnlineSystemAPI : public OnlineAPI
 	{
 	public:
-		Buffer() : Size( 0 ), Data( nullptr ) {}
-		Buffer( size_t size, uint8_t* pData ) : Size( size ), Data( pData ) {}
-		Buffer( uint32_t size, uint8_t* pData ) : Size( size ), Data( pData ) {}
-		Buffer( uint32_t size, void* pData ) : Size( size ), Data( (uint8_t*)pData ) {}
-		~Buffer() {}
-
-		void Zero_Memory()
-		{
-			if( Data )
-				memset( Data, 0, Size );
-		}
-
-		void Free() 
-		{
-			if( Data )
-			{
-				delete[] Data;
-				Data = nullptr;
-				Size = 0;
-			}
-		}
-
-		template<typename Ty>
-		Ty& Read( uint32_t Offset = 0 ) const
-		{
-			return *( Ty* ) ( Data + Offset );
-		}
-
-		template<typename Ty>
-		Ty* As() 
-		{
-			return ( Ty* ) Data;
-		}
-
-		void Write( const void* pData, size_t size, uint32_t Offset )
-		{
-			SAT_CORE_ASSERT( Offset + size <= Size );
-
-			memcpy( Data + Offset, pData, size );
-		}
-
-		// Clears the buffer and then reallocates it to the specified size.
-		void Allocate( size_t size )
-		{
-			delete[] Data;
-			Data = nullptr;
-
-			if( size == 0 )
-				return;
-
-			Data = new uint8_t[ size ];
-			Size = size;
-		}
-
-		static Buffer Copy( const void* pData, size_t size )
-		{
-			Buffer buffer;
-			
-			// Allocate the buffer
-			buffer.Allocate( size );
-
-			memcpy( buffer.Data, pData, size );
-
-			return buffer;
-		}
-
-		operator bool() { return Data != nullptr; }
-		uint8_t& operator [] ( uint32_t Offset ) { return Data[ Offset ]; }
-		uint8_t operator [] ( uint32_t Offset ) const { return Data[ Offset ]; }
-		
+		[[nodiscard]] static inline Ref<SteamOnlineSystemAPI> Get() { return SingletonStorage::GetSingleton<SteamOnlineSystemAPI>(); }
 	public:
-		size_t Size;
-		uint8_t* Data;
+		SteamOnlineSystemAPI();
+		virtual ~SteamOnlineSystemAPI();
+
+	public:
+		virtual void Initialise() override;
+		virtual void Tick() override;
+		virtual void Terminate() override;
+
+	public:
+		//
+		// Set the location of the steam overlay Notification Position
+		//
+		// NOTE: You must call this every time the game opens.
+		//
+		void SetOverlayLocation( ENotificationPosition position );
+
+		// Number of seconds the steam application is active for.
+		uint32_t GetNumSecondsSinceAppActive();
+
+	public:
+		SteamCurrentUser& GetCurrentUser() { return m_CurrentUser; }
+		const SteamCurrentUser& GetCurrentUser() const { return m_CurrentUser; }
+
+		SteamAvatarCache& GetAvatarCache() { return m_SteamAvatarCache; }
+		const SteamAvatarCache& GetAvatarCache() const { return m_SteamAvatarCache; }
+
+	private:
+		SteamCurrentUser m_CurrentUser;
+		SteamAvatarCache m_SteamAvatarCache;
+		bool m_Initialised = false;
 	};
+
 }
+
+#endif

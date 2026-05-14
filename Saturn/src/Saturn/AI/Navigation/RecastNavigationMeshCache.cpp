@@ -109,7 +109,7 @@ namespace Saturn {
 
 			RawSerialisation::WriteObject( tileHeader, fout );
 
-			Buffer dataBuffer( pTile->dataSize, pTile->data );
+			Buffer dataBuffer( ( uint32_t )pTile->dataSize, pTile->data );
 			RawSerialisation::WriteSaturnBuffer( dataBuffer, fout );
 		}
 

@@ -28,87 +28,64 @@
 
 #pragma once
 
-#include <stdint.h>
-#include <cstring>
+#if defined(SAT_WITH_STEAM)
+
+#include "Saturn/Vulkan/Texture.h"
+
+#include <steam/steam_api_common.h>
+#include <steam/isteamfriends.h>
+
+#include <unordered_map>
+#include <queue>
 
 namespace Saturn {
 
-	// Buffer is not RAII safe, you must call free before this object exits the scope.
-	class Buffer
+	struct SteamAvatarTemporaryGenerationData
+	{
+		Buffer ImageBuffer;
+		uint32_t Width = 0u, Height = 0u;
+		size_t Index = 0llu;
+		uint64_t UserID = 0llu;
+	};
+
+	class SteamAvatarCache
 	{
 	public:
-		Buffer() : Size( 0 ), Data( nullptr ) {}
-		Buffer( size_t size, uint8_t* pData ) : Size( size ), Data( pData ) {}
-		Buffer( uint32_t size, uint8_t* pData ) : Size( size ), Data( pData ) {}
-		Buffer( uint32_t size, void* pData ) : Size( size ), Data( (uint8_t*)pData ) {}
-		~Buffer() {}
+		SteamAvatarCache();
+		~SteamAvatarCache();
 
-		void Zero_Memory()
-		{
-			if( Data )
-				memset( Data, 0, Size );
-		}
+		void Tick();
 
-		void Free() 
-		{
-			if( Data )
-			{
-				delete[] Data;
-				Data = nullptr;
-				Size = 0;
-			}
-		}
+		//
+		// Remove a texture from the cache.
+		//
+		// NOTE: The texture will be re-added if GetAvatarForUser() is called with the same ID
+		// 
+		// @param ID -- user ID to remove
+		//
+		void Invalidate( CSteamID ID );
 
-		template<typename Ty>
-		Ty& Read( uint32_t Offset = 0 ) const
-		{
-			return *( Ty* ) ( Data + Offset );
-		}
+		//
+		// Get or differ an avatar.
+		// 
+		// If the avatar is loaded already (i.e. steam says it is), it will be created right now
+		//
+		// However, if it's not it will be differed until the steam callbacks are handled.
+		//
+		Ref<Texture2D> GetAvatarForUser( CSteamID ID );
 
-		template<typename Ty>
-		Ty* As() 
-		{
-			return ( Ty* ) Data;
-		}
+		// Force clear everything.
+		void ClearAll();
 
-		void Write( const void* pData, size_t size, uint32_t Offset )
-		{
-			SAT_CORE_ASSERT( Offset + size <= Size );
+	private:
+		STEAM_CALLBACK( SteamAvatarCache, OnAvatarImageLoaded, AvatarImageLoaded_t );
 
-			memcpy( Data + Offset, pData, size );
-		}
+		void QueueAvatarImageCreation( size_t index, uint64_t ID );
 
-		// Clears the buffer and then reallocates it to the specified size.
-		void Allocate( size_t size )
-		{
-			delete[] Data;
-			Data = nullptr;
-
-			if( size == 0 )
-				return;
-
-			Data = new uint8_t[ size ];
-			Size = size;
-		}
-
-		static Buffer Copy( const void* pData, size_t size )
-		{
-			Buffer buffer;
-			
-			// Allocate the buffer
-			buffer.Allocate( size );
-
-			memcpy( buffer.Data, pData, size );
-
-			return buffer;
-		}
-
-		operator bool() { return Data != nullptr; }
-		uint8_t& operator [] ( uint32_t Offset ) { return Data[ Offset ]; }
-		uint8_t operator [] ( uint32_t Offset ) const { return Data[ Offset ]; }
-		
-	public:
-		size_t Size;
-		uint8_t* Data;
+	private:
+		std::unordered_map<uint64_t, Ref<Texture2D>> m_UserIDToAvatar;
+		std::queue<SteamAvatarTemporaryGenerationData> m_TemporaryGenerationData;
 	};
 }
+
+#endif

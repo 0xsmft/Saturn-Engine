@@ -94,6 +94,17 @@ project "Saturn"
 		"Saturn-SharedStorage"
 	}
 
+	filter { "options:onlineapi=steam" }
+		includedirs
+		{
+			"%{IncludeDir.Steamworks}",
+		}
+
+		defines 
+		{
+			"SAT_WITH_STEAM"
+		}
+
 	filter "files:vendor/ImGuizmo/src/ImGuizmo/**.cpp"
 		flags { "NoPCH" }
 
@@ -119,6 +130,11 @@ project "Saturn"
 			"SAT_PLATFORM_LINUX"
 		}
 
+		filter { "options:onlineapi=steam", "system:linux" }
+			links
+			{
+				"vendor/steamworks/Bin/Linux/libsteam_api.so"
+			}
 
 	filter "system:windows"
 		systemversion "latest"
@@ -139,6 +155,12 @@ project "Saturn"
 		{
 			"%{prj.name}/visualisers/*.natvis"
 		}
+
+		filter { "options:onlineapi=steam", "system:windows" }
+			links
+			{
+				"vendor/steamworks/Bin/Windows/steam_api64.lib"
+			}
 
 		filter "configurations:Debug"
 			defines "SAT_DEBUG"

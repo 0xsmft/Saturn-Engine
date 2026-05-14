@@ -1,3 +1,15 @@
+newoption {
+   trigger = "onlineapi",
+   value = "API",
+   description = "Choose a particular Online-subsystem API",
+   allowed = {
+      { "steam",    "Steamworks API" },
+--      { "epic",  "EOS (Epic Online Services)" },
+      { "none",  "No API (default)" }
+   },
+   default = "none"
+}
+
 workspace "Saturn"
 	architecture "x64"
 	startproject "Saturn-Editor"
@@ -41,6 +53,7 @@ IncludeDir["Freetype"] = "%{wks.location}/Saturn/vendor/freetype/include"
 IncludeDir["MSDF"] = "%{wks.location}/Saturn/vendor/msdf-atlas-gen/msdfgen"
 IncludeDir["MSDFAG"] = "%{wks.location}/Saturn/vendor/msdf-atlas-gen"
 IncludeDir["JoltPhys"] = "%{wks.location}/Saturn/vendor/JoltPhysics/Jolt"
+IncludeDir["Steamworks"] = "%{wks.location}/Saturn/vendor/steamworks/Include"
 
 -- // -Dependencies-- 
 group "Dependencies"

@@ -28,87 +28,52 @@
 
 #pragma once
 
-#include <stdint.h>
-#include <cstring>
+#include "Saturn/Online/OnlineAPI.h"
+
+#if defined(SAT_WITH_STEAM)
+#include "Saturn/Online/Steam/SteamOnlineSystemAPI.h"
+#endif
+
+#include "Saturn/Vulkan/Texture.h"
 
 namespace Saturn {
 
-	// Buffer is not RAII safe, you must call free before this object exits the scope.
-	class Buffer
-	{
-	public:
-		Buffer() : Size( 0 ), Data( nullptr ) {}
-		Buffer( size_t size, uint8_t* pData ) : Size( size ), Data( pData ) {}
-		Buffer( uint32_t size, uint8_t* pData ) : Size( size ), Data( pData ) {}
-		Buffer( uint32_t size, void* pData ) : Size( size ), Data( (uint8_t*)pData ) {}
-		~Buffer() {}
+	/*
+	+----------+-------------------+
+	| PREFIX   | MEANING           |
+	+----------+-------------------+
+	| Os	   | Online System	   |
+	| Oss	   | Online Sys. Steam |
+	| Ose	   | Online Sys. EOS   |
+	+---------------+--------------+
+	*/
+	
+	// Get system type.
+	extern OnlineSystemAPIType OsGetSystemType();
 
-		void Zero_Memory()
-		{
-			if( Data )
-				memset( Data, 0, Size );
-		}
+	// Get App ID.
+	extern uint32_t OsGetAppID();
 
-		void Free() 
-		{
-			if( Data )
-			{
-				delete[] Data;
-				Data = nullptr;
-				Size = 0;
-			}
-		}
+#if defined(SAT_WITH_STEAM)
+	//
+	// For documentation of this function view your subsystem API file
+	// For Steam: /Saturn/Online/Steam/SteamOnlineSystemAPI.h
+	//
+	extern SteamCurrentUser& OsGetCurrentUser();
+#endif
 
-		template<typename Ty>
-		Ty& Read( uint32_t Offset = 0 ) const
-		{
-			return *( Ty* ) ( Data + Offset );
-		}
+	//
+	// For documentation of this function view your subsystem API file
+	// Steam: /Saturn/Online/Steam/SteamCurrentUser.h
+	//
+	extern uint64_t OsGetCurrentUserID();
 
-		template<typename Ty>
-		Ty* As() 
-		{
-			return ( Ty* ) Data;
-		}
+	//
+	// For documentation of this function view your subsystem API file
+	// Steam: /Saturn/Online/Steam/SteamAvatarCache.h
+	//
+#if defined(SAT_WITH_STEAM) || defined(SAT_WITH_EPIC)
+	extern Ref<Texture2D> OsGetAvatarFromUser( uint64_t ID );
+#endif
 
-		void Write( const void* pData, size_t size, uint32_t Offset )
-		{
-			SAT_CORE_ASSERT( Offset + size <= Size );
-
-			memcpy( Data + Offset, pData, size );
-		}
-
-		// Clears the buffer and then reallocates it to the specified size.
-		void Allocate( size_t size )
-		{
-			delete[] Data;
-			Data = nullptr;
-
-			if( size == 0 )
-				return;
-
-			Data = new uint8_t[ size ];
-			Size = size;
-		}
-
-		static Buffer Copy( const void* pData, size_t size )
-		{
-			Buffer buffer;
-			
-			// Allocate the buffer
-			buffer.Allocate( size );
-
-			memcpy( buffer.Data, pData, size );
-
-			return buffer;
-		}
-
-		operator bool() { return Data != nullptr; }
-		uint8_t& operator [] ( uint32_t Offset ) { return Data[ Offset ]; }
-		uint8_t operator [] ( uint32_t Offset ) const { return Data[ Offset ]; }
-		
-	public:
-		size_t Size;
-		uint8_t* Data;
-	};
 }

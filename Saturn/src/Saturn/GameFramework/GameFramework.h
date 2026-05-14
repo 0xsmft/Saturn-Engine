@@ -43,6 +43,9 @@ namespace Saturn {
 	| As       | Audio Sys.       |
 	| Am       | Asset Mgr.       |
 	| Rc       | Runtime Ctrl.    |
+	| Os	   | Online System	  |
+	| Oss	   | Online Sys. Steam|
+	| Ose	   | Online Sys. EOS  |
 	+---------------+-------------+
 	*/
 

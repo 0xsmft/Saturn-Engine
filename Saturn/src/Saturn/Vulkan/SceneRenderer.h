@@ -211,7 +211,7 @@ namespace Saturn {
 	struct UBPointLights
 	{
 		uint32_t nbLights = 0;
-		PointLight Lights[ 512 ]{};
+		PointLight Lights[ MAX_POINT_LIGHTS ]{};
 	};
 
 	// Vertex, Binding 1
@@ -457,8 +457,8 @@ namespace Saturn {
 		float BloomThreshold = 1.0f;
 		float BloomDirtIntensity = 20.0f;
 
-		// BDRF Lut
 		//////////////////////////////////////////////////////////////////////////
+		// BRDF Lut
 		Ref<Texture2D> BRDFLUT_Texture = nullptr;
 
 		// Late Composite

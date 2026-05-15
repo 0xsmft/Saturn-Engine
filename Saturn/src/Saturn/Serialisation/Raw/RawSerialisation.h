@@ -169,6 +169,16 @@ namespace Saturn {
 			}
 		}
 
+		template<typename Ty, typename OStream>
+		static void WriteN( Ty n, OStream& rStream ) 
+		{
+			for( Ty i = 0; i < n; ++i )
+			{
+				uint8_t byte = 0;
+				WriteObject( byte, rStream );
+			}
+		}
+
 		// Write object (unchecked)
 		template<typename Ty, typename OStream/*, std::enable_if_t<std::is_trivial<Ty>::value, bool> = true*/>
 		static void WriteObject( const Ty& rObject, OStream& rStream )

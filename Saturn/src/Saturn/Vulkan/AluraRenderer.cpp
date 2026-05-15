@@ -74,11 +74,11 @@ namespace Saturn {
 
 		for( size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
 		{
-			m_VertexBuffers[ i ] = Ref<VertexBuffer>::Create( s_MaxVertices * sizeof( AluraVertex ) );
-			m_QuadVertexBase[ i ] = new AluraVertex[ s_MaxVertices ];
+			m_VertexBuffers[ i ] = Ref<VertexBuffer>::Create( s_MaxVertices * sizeof( AluraRectVertex ) );
+			m_QuadVertexBase[ i ] = new AluraRectVertex[ s_MaxVertices ];
 
-			m_TextVertexBuffers[ i ] = Ref<VertexBuffer>::Create( s_MaxVertices * sizeof( AluraVertex ) );
-			m_TextVertexBase[ i ] = new AluraVertex[ s_MaxVertices ];
+			m_TextVertexBuffers[ i ] = Ref<VertexBuffer>::Create( s_MaxVertices * sizeof( AluraTextVertex ) );
+			m_TextVertexBase[ i ] = new AluraTextVertex[ s_MaxVertices ];
 
 #if !defined(SAT_DIST)
 			m_VertexBuffers[ i ]->SetDebugName( std::format( "AluraQuadVB/{0}", i ) );
@@ -143,7 +143,7 @@ namespace Saturn {
 		PipelineSpec.Name = "Alura/Text";
 		PipelineSpec.Shader = m_TextShader;
 		PipelineSpec.VertexLayout = {
-			{ ShaderDataType::Float4, "a_Position" },
+			{ ShaderDataType::Float3, "a_Position" },
 			{ ShaderDataType::Float2, "a_TexCoord" },
 			{ ShaderDataType::Float4, "a_Color" },
 			{ ShaderDataType::Float, "a_TexIndex" },
@@ -510,25 +510,25 @@ namespace Saturn {
 			++m_CurrentTextureAtlasSlot;
 		}
 
-		m_pTextVertexPtr->Position = rCursorPos + rMin;
+		m_pTextVertexPtr->Position = glm::vec3( rCursorPos + rMin, 0.0f );
 		m_pTextVertexPtr->Color = rColor;
 		m_pTextVertexPtr->TexCoord = rTexCoordMin;
 		m_pTextVertexPtr->TextureIndex = ( float ) textureID;
 		++m_pTextVertexPtr;
 		
-		m_pTextVertexPtr->Position = rCursorPos + glm::vec2{ rMin.x, rMax.y };
+		m_pTextVertexPtr->Position = glm::vec3( rCursorPos + glm::vec2{ rMin.x, rMax.y }, 0.0f );
 		m_pTextVertexPtr->Color = rColor;
 		m_pTextVertexPtr->TexCoord = { rTexCoordMin.x, rTexCoordMax.y };
 		m_pTextVertexPtr->TextureIndex = ( float ) textureID;
 		++m_pTextVertexPtr;
 
-		m_pTextVertexPtr->Position = rCursorPos + rMax;
+		m_pTextVertexPtr->Position = glm::vec3( rCursorPos + rMax, 0.0f );
 		m_pTextVertexPtr->Color = rColor;
 		m_pTextVertexPtr->TexCoord = rTexCoordMax;
 		m_pTextVertexPtr->TextureIndex = ( float ) textureID;
 		++m_pTextVertexPtr;
 
-		m_pTextVertexPtr->Position = rCursorPos + glm::vec2{ rMax.x, rMin.y };
+		m_pTextVertexPtr->Position = glm::vec3( rCursorPos + glm::vec2{ rMax.x, rMin.y }, 0.0f );
 		m_pTextVertexPtr->Color = rColor;
 		m_pTextVertexPtr->TexCoord = { rTexCoordMax.x, rTexCoordMin.y };
 		m_pTextVertexPtr->TextureIndex = ( float ) textureID;

@@ -37,9 +37,17 @@
 
 namespace Saturn {
 
-	struct AluraVertex
+	struct AluraRectVertex
 	{
 		glm::vec2 Position;
+		glm::vec2 TexCoord;
+		glm::vec4 Color;
+		float TextureIndex;
+	};
+
+	struct AluraTextVertex
+	{
+		glm::vec3 Position;
 		glm::vec2 TexCoord;
 		glm::vec4 Color;
 		float TextureIndex;
@@ -96,11 +104,11 @@ namespace Saturn {
 
 		VkCommandBuffer m_CommandBuffer = nullptr;
 
-		std::vector< AluraVertex* > m_QuadVertexBase;
-		AluraVertex* m_pQuadVertexPtr = nullptr;
+		std::vector< AluraRectVertex* > m_QuadVertexBase;
+		AluraRectVertex* m_pQuadVertexPtr = nullptr;
 
-		std::vector< AluraVertex* > m_TextVertexBase;
-		AluraVertex* m_pTextVertexPtr = nullptr;
+		std::vector< AluraTextVertex* > m_TextVertexBase;
+		AluraTextVertex* m_pTextVertexPtr = nullptr;
 
 		uint32_t m_QuadVertexCount = 0;
 		uint32_t m_QuadIndexCount = 0;

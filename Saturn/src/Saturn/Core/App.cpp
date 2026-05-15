@@ -40,11 +40,13 @@
 
 #include "Renderer/RenderThread.h"
 
+#include "Profiler.h"
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "Profiler.h"
+#include <nativefiledialog/nfd.hpp>
 
 #if defined( SAT_PLATFORM_WINDOWS )
 #include <ShObjIdl.h>
@@ -355,34 +357,13 @@ namespace Saturn {
 
 	std::filesystem::path Application::OpenFile( const std::wstring& rFilter ) const
 	{
+		NFD::Init();
+
 		std::filesystem::path path;
 
-#if defined(SAT_PLATFORM_WINDOWS)
-		::IFileOpenDialog* pFileOpen = nullptr;
-		::PWSTR pszFilePath = 0;
-
-		if( FAILED( ::CoInitialize( nullptr ) ) )
-		{
-			SAT_CORE_ASSERT( "Unable to initialise Windows COM (COM/0/0).", false );
-		}
-
-		// Create the object.
-		::HRESULT hr = ::CoCreateInstance( CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_PPV_ARGS( &pFileOpen ) );
-		if( FAILED( hr ) )
-		{
-			SAT_CORE_ASSERT( "Unable to create Windows COM/CLSID_FileOpenDialog object", false );
-		}
-
-		::DWORD dwOptions;
-		pFileOpen->GetOptions( &dwOptions );
-		pFileOpen->SetOptions( dwOptions | FOS_NOCHANGEDIR | FOS_PATHMUSTEXIST | FOS_FILEMUSTEXIST );
-
-		// Pass in filters.
-		std::vector<COMDLG_FILTERSPEC> filters{};
+		std::vector<std::wstring> tokens;
 		std::wstringstream ss( rFilter );
 		std::wstring item;
-
-		std::vector<std::wstring> tokens;
 
 		// Split by |.
 		while( std::getline( ss, item, L'|' ) )
@@ -391,79 +372,47 @@ namespace Saturn {
 				tokens.push_back( item );
 		}
 
+		std::vector<nfdnfilteritem_t> filters;
+
 		// Expecting pairs... (description | exts)
 		for( size_t i = 0; i + 1 < tokens.size(); i += 2 )
 		{
 			filters.push_back( { tokens[ i ].c_str(), tokens[ i + 1 ].c_str() } );
 		}
 
-		// Set file types
-		pFileOpen->SetFileTypes( ( uint32_t ) filters.size(), filters.data() );
+		// UniquePathN == std::unique_ptr so it's kinda like a span of wchars
+		NFD::UniquePathN nfdPath;
 
-		// Show the dialog.
-		hr = pFileOpen->Show( m_Window->GetNativeHandle() );
-
-		// Get the file name from the dialog.
-		if( FAILED( hr ) )
-		{
-			SAT_CORE_ASSERT( "Unable to get the file name from the dialog using COM/CLSID_FileOpenDialog", false );
-		}
-
-		::IShellItem* pItem = nullptr;
-		hr = pFileOpen->GetResult( &pItem );
-
-		if( SUCCEEDED( hr ) )
-		{
-			hr = pItem->GetDisplayName( SIGDN_FILESYSPATH, &pszFilePath );
-
-			path = std::filesystem::path( pszFilePath );
-
-			::CoTaskMemFree( pszFilePath );
-		}
-
-		if( pItem )
-			pItem->Release();
-
-		pFileOpen->Release();
-		pFileOpen = nullptr;
-		::CoUninitialize();
-#elif defined(SAT_PLATFORM_LINUX) || defined(SAT_PLATFORM_MACOS)
-		Core::BreakDebug();
+		nfdwindowhandle_t parentWindow
+		{ 
+#if defined(SAT_PLATFORM_WINDOWS)
+			.type = NFD_WINDOW_HANDLE_TYPE_WINDOWS, 
+#elif defined(SAT_PLATFORM_LINUX)
+			.type = NFD_WINDOW_HANDLE_TYPE_X11, 
 #endif
+			.handle = ( void* ) m_Window->GetNativeHandle() 
+		};
+
+		if( NFD::OpenDialog( nfdPath, filters.data(), ( nfdfiltersize_t ) filters.size(), nullptr, parentWindow ) == NFD_OKAY ) 
+		{
+			path = std::filesystem::path( nfdPath.get() );
+		}
+
+
+		NFD::Quit();
 
 		return path;
 	}
 
 	std::filesystem::path Application::SaveFile( const std::wstring& rFilter ) const
 	{
+		NFD::Init();
+
 		std::filesystem::path path;
 
-#ifdef  SAT_PLATFORM_WINDOWS
-		::IFileSaveDialog* pFileSave = nullptr;
-		::PWSTR pszFilePath = 0;
-
-		if( FAILED( ::CoInitialize( nullptr ) ) )
-		{
-			SAT_CORE_ASSERT( "Unable to initialise Windows COM (COM/0/0).", false );
-		}
-
-		// Create the object.
-		::HRESULT hr = ::CoCreateInstance( CLSID_FileSaveDialog, nullptr, CLSCTX_ALL, IID_PPV_ARGS( &pFileSave ) );
-		if( FAILED( hr ) )
-		{
-			SAT_CORE_ASSERT( "Unable to create Windows COM/CLSID_FileSaveDialog object", false );
-		}
-
-		::DWORD dwOptions;
-		pFileSave->GetOptions( &dwOptions );
-		pFileSave->SetOptions( dwOptions | FOS_NOCHANGEDIR | FOS_PATHMUSTEXIST | FOS_FILEMUSTEXIST );
-
-		// Pass in filters.
-		std::vector<COMDLG_FILTERSPEC> filters{};
+		std::vector<std::wstring> tokens;
 		std::wstringstream ss( rFilter );
 		std::wstring item;
-
-		std::vector<std::wstring> tokens;
 
 		// Split by |.
 		while( std::getline( ss, item, L'|' ) )
@@ -472,46 +421,34 @@ namespace Saturn {
 				tokens.push_back( item );
 		}
 
+		std::vector<nfdnfilteritem_t> filters;
+
 		// Expecting pairs... (description | exts)
 		for( size_t i = 0; i + 1 < tokens.size(); i += 2 )
 		{
 			filters.push_back( { tokens[ i ].c_str(), tokens[ i + 1 ].c_str() } );
 		}
 
-		// Set file types
-		pFileSave->SetFileTypes( ( uint32_t ) filters.size(), filters.data() );
+		// UniquePathN == std::unique_ptr so it's kinda like a span of wchars
+		NFD::UniquePathN nfdPath;
 
-		// Show the dialog.
-		hr = pFileSave->Show( m_Window->GetNativeHandle() );
-
-		// Get the file name from the dialog.
-		if( FAILED( hr ) )
+		nfdwindowhandle_t parentWindow
 		{
-			SAT_CORE_ASSERT( "Unable to get the file name from the dialog using COM/CLSID_FileOpenDialog", false );
-		}
-
-		::IShellItem* pItem = nullptr;
-		hr = pFileSave->GetResult( &pItem );
-
-		if( SUCCEEDED( hr ) )
-		{
-			hr = pItem->GetDisplayName( SIGDN_FILESYSPATH, &pszFilePath );
-
-			path = std::filesystem::path( pszFilePath );
-
-			::CoTaskMemFree( pszFilePath );
-		}
-
-		if( pItem )
-			pItem->Release();
-
-		pFileSave->Release();
-		pFileSave = nullptr;
-		::CoUninitialize();
-
-#elif   defined(SAT_PLATFORM_LINUX) || defined(SAT_PLATFORM_MACOS)
-		SAT_CORE_ASSERT( false, "Application::SaveFile not implemented on Linux!" );
+#if defined(SAT_PLATFORM_WINDOWS)
+			.type = NFD_WINDOW_HANDLE_TYPE_WINDOWS,
+#elif defined(SAT_PLATFORM_LINUX)
+			.type = NFD_WINDOW_HANDLE_TYPE_X11,
 #endif
+			.handle = ( void* ) m_Window->GetNativeHandle()
+		};
+
+		if( NFD::SaveDialog( nfdPath, filters.data(), ( nfdfiltersize_t ) filters.size(), nullptr, nullptr, parentWindow ) == NFD_OKAY )
+		{
+			path = std::filesystem::path( nfdPath.get() );
+		}
+
+		NFD::Quit();
+
 		return path;
 	}
 
@@ -535,62 +472,28 @@ namespace Saturn {
 	{
 		std::filesystem::path path;
 
-#if defined (SAT_PLATFORM_WINDOWS)
-		::IFileOpenDialog* pFileOpen = nullptr;
-		::PWSTR pszFilePath = 0;
+		NFD::Init();
 
-		if( FAILED( ::CoInitialize( nullptr ) ) )
+		nfdwindowhandle_t parentWindow
 		{
-			SAT_CORE_ASSERT( "Unable to initialise Windows COM (COM/0/0).", false );
+#if defined(SAT_PLATFORM_WINDOWS)
+			.type = NFD_WINDOW_HANDLE_TYPE_WINDOWS,
+#elif defined(SAT_PLATFORM_LINUX)
+			.type = NFD_WINDOW_HANDLE_TYPE_X11,
+#endif
+			.handle = ( void* ) m_Window->GetNativeHandle()
+		};
+
+		// UniquePathN == std::unique_ptr so it's kinda like a span of wchars
+		NFD::UniquePathN nfdPath;
+		if( NFD::PickFolder( nfdPath, nullptr, parentWindow ) == NFD_OKAY ) 
+		{
+			path = std::filesystem::path( nfdPath.get() );
 		}
 
-		// Create the object.
-		::HRESULT hr = ::CoCreateInstance( CLSID_FileOpenDialog, NULL, CLSCTX_ALL, IID_IFileOpenDialog, ( void** ) &pFileOpen );
-
-		if( FAILED( hr ) )
-		{
-			SAT_CORE_ASSERT( "Unable to create Windows COM/IID_IFileOpenDialog object", false );
-		}
-
-		::DWORD dwOptions;
-		pFileOpen->GetOptions( &dwOptions );
-		pFileOpen->SetOptions( dwOptions | FOS_PICKFOLDERS );
-
-		// Show the dialog.
-		hr = pFileOpen->Show( m_Window->GetNativeHandle() );
-
-		// Get the file name from the dialog.
-		if( FAILED( hr ) )
-		{
-			SAT_CORE_ASSERT( "Unable to get the file name from the dialog using COM/IID_IFileOpenDialog", false );
-		}
-
-		::IShellItem* pItem;
-		hr = pFileOpen->GetResult( &pItem );
-
-		if( SUCCEEDED( hr ) )
-		{
-			hr = pItem->GetDisplayName( SIGDN_DESKTOPABSOLUTEPARSING, &pszFilePath );
-
-			path = std::filesystem::path( pszFilePath );
-
-			::CoTaskMemFree( pszFilePath );
-		}
-
-		if( pItem )
-			pItem->Release();
-
-		pFileOpen->Release();
-		pFileOpen = NULL;
-
-		::CoUninitialize();
+		NFD::Quit();
 
 		return path;
-#elif defined(SAT_PLATFORM_LINUX) || defined(SAT_PLATFORM_MACOS)
-		SAT_CORE_ASSERT( false, "Application::OpenFolder not implemented on Linux!" );
-#endif
-
-		return "";
 	}
 
 	const char* Application::GetCurrentPlatformName()

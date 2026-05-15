@@ -54,6 +54,7 @@ IncludeDir["MSDF"] = "%{wks.location}/Saturn/vendor/msdf-atlas-gen/msdfgen"
 IncludeDir["MSDFAG"] = "%{wks.location}/Saturn/vendor/msdf-atlas-gen"
 IncludeDir["JoltPhys"] = "%{wks.location}/Saturn/vendor/JoltPhysics/Jolt"
 IncludeDir["Steamworks"] = "%{wks.location}/Saturn/vendor/steamworks/Include"
+IncludeDir["NativeFileDialogExtended"] = "%{wks.location}/Saturn/vendor/nativefiledialogext/src/include"
 
 -- // -Dependencies-- 
 group "Dependencies"
@@ -66,6 +67,7 @@ group "Dependencies"
 	include "Saturn/vendor/freetype"
 	include "Saturn/vendor/msdf-atlas-gen"
 	include "Saturn/vendor/JoltPhysics"
+	include "Saturn/vendor/nativefiledialogext"
 -- // -Dependencies-- 
 
 -- // -Engine-- 

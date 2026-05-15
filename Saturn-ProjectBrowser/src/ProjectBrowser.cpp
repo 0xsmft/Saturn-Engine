@@ -37,6 +37,7 @@ public:
 	explicit ProjectBrowserApplication( const Saturn::ApplicationSpecification& spec )
 		: Application( spec )
 	{
+		LoadFonts();
 	}
 
 	~ProjectBrowserApplication() {}

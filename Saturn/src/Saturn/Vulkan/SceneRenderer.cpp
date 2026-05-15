@@ -139,20 +139,7 @@ namespace Saturn {
 
 		InitTexturePass();
 
-		switch( m_AOTechnique )
-		{
-			case AOTechnique::SSAO:
-				InitSSAO();
-				break;
-
-			case AOTechnique::HBAO:
-				InitHBAO();
-				break;
-		
-			case AOTechnique::None:
-			default:
-				break;
-		}
+		InitAO( AOTechnique::None );
 
 		m_RendererData.SceneEnvironment = Ref<EnvironmentMap>::Create();
 
@@ -848,26 +835,31 @@ namespace Saturn {
 	{
 	}
 
-	void SceneRenderer::InitAO( AOTechnique oldTechnique )
+	void SceneRenderer::InitAO( AOTechnique oldTechnique, bool skipScheduler /*=false*/ )
 	{
-		// Schedule to the beginning of the next frame.
-		AddScheduledFunction( [oldTechnique, this]() 
+		SAT_CORE_INFO( "SceneRenderer::InitAO( oldTechnique = {0} )", ( uint8_t ) oldTechnique );
+
+		if( !skipScheduler )
 		{
-			switch( oldTechnique )
+			// Schedule to the beginning of the next frame.
+			AddScheduledFunction( [ oldTechnique, this ]()
 			{
-				default:
-				case AOTechnique::None:
-					break;
+				switch( oldTechnique )
+				{
+					default:
+					case AOTechnique::None:
+						break;
 
-				case AOTechnique::SSAO:
-					m_RendererData.ClearSSAOResources();
-					break;
+					case AOTechnique::SSAO:
+						m_RendererData.ClearSSAOResources();
+						break;
 
-				case AOTechnique::HBAO:
-					m_RendererData.ClearHBAOResources();
-					break;
-			}
-		} );
+					case AOTechnique::HBAO:
+						m_RendererData.ClearHBAOResources();
+						break;
+				}
+			} );
+		}
 
 		// Init new resources now so they are ready for the next frame!
 		switch( m_AOTechnique )
@@ -1992,20 +1984,7 @@ namespace Saturn {
 		InitPreDepth();
 		InitGeometryPass();
 
-		switch( m_AOTechnique )
-		{
-			case AOTechnique::SSAO:
-				InitSSAO();
-				break;
-
-			case AOTechnique::HBAO:
-				InitHBAO();
-				break;
-
-			case AOTechnique::None:
-			default:
-				break;
-		}
+		InitAO( m_AOTechnique, true );
 
 		CreateBloomMaterials();
 
@@ -3097,20 +3076,19 @@ namespace Saturn {
 
 	void SceneRenderer::BindSceneCompositeAOTexture()
 	{
-		// TODO: TEMP u_BloomDirtTexture -> u_AOTexture
 		switch( m_AOTechnique )
 		{
 			default:
 			case AOTechnique::None:
-				m_RendererData.SceneCompositeMaterial->SetResource( "u_BloomDirtTexture", Renderer::Get()->GetPinkTexture() );
+				m_RendererData.SceneCompositeMaterial->SetResource( "u_AOTexture", Renderer::Get()->GetPinkTexture() );
 				break;
 
 			case AOTechnique::SSAO:
-				m_RendererData.SceneCompositeMaterial->SetResource( "u_BloomDirtTexture", m_RendererData.AOBlurFramebuffer->GetColorAttachmentsResources()[ 0 ] );
+				m_RendererData.SceneCompositeMaterial->SetResource( "u_AOTexture", m_RendererData.AOBlurFramebuffer->GetColorAttachmentsResources()[ 0 ] );
 				break;
 
 			case AOTechnique::HBAO:
-				m_RendererData.SceneCompositeMaterial->SetResource( "u_BloomDirtTexture", Renderer::Get()->GetPinkTexture() );
+				m_RendererData.SceneCompositeMaterial->SetResource( "u_AOTexture", Renderer::Get()->GetPinkTexture() );
 				break;
 		}
 	}
@@ -3442,6 +3420,10 @@ namespace Saturn {
 		if( !Application::Get()->HasFlag( ApplicationFlag_CreateSceneRenderer_DEPRECATED ) )
 			return;
 
+		// This whole thing should not exist!
+		// But it does because when I wrote the SceneRenderer class I was 14 years old, 
+		// and didn't care about doing a proper shutdown...
+		// Which is why some objects have Destroy()/Terminate() functions and others are just reset.
 
 		ClearSSAOResources();
 		ClearHBAOResources();

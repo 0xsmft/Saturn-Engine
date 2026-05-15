@@ -600,7 +600,7 @@ namespace Saturn {
 		void InitTexturePass();
 		void InitSSAO();
 		void InitHBAO();
-		void InitAO( AOTechnique oldTechnique );
+		void InitAO( AOTechnique oldTechnique, bool skipScheduler = false );
 		void InitAOBlur();
 		void InitSelectionPass();
 		void InitJumpFlood();
@@ -643,7 +643,7 @@ namespace Saturn {
 		Ref<TextureCube> CreateDymanicSky();
 	private:
 		SceneRendererFlags m_Flags;
-		AOTechnique m_AOTechnique = AOTechnique::None;
+		AOTechnique m_AOTechnique = AOTechnique::SSAO;
 
 		RendererData m_RendererData{};
 		Scene* m_pScene = nullptr;

@@ -325,7 +325,7 @@ namespace Saturn {
 		SamplerCreateInfo.maxAnisotropy = 1.0f;
 		SamplerCreateInfo.compareOp = VK_COMPARE_OP_NEVER;
 		SamplerCreateInfo.minLod = 0.0f;
-		SamplerCreateInfo.maxLod = 1.0f;
+		SamplerCreateInfo.maxLod = 100.0f;
 		SamplerCreateInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 
 		VK_CHECK( vkCreateSampler( VulkanContext::Get()->GetDevice(), &SamplerCreateInfo, nullptr, &m_Sampler ) );

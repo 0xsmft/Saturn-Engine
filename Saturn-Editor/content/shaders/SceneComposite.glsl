@@ -23,7 +23,7 @@ void main()
 
 layout (binding = 0) uniform sampler2D u_GeometryPassTexture;
 layout (binding = 1) uniform sampler2D u_BloomTexture;
-layout (binding = 2) uniform sampler2D u_BloomDirtTexture;
+layout (binding = 2) uniform sampler2D u_AOTexture;
 layout (binding = 3) uniform sampler2D u_DepthTexture;
 
 layout(location = 0) out vec4 FinalColor;
@@ -107,7 +107,7 @@ void main()
 	GeometryPassColor = ACES( GeometryPassColor );
 	GeometryPassColor = GammaCorrect( GeometryPassColor, GAMMA );
 
-	float ao = texture( u_BloomDirtTexture, vs_Input.TexCoord ).r;
+	float ao = texture( u_AOTexture, vs_Input.TexCoord ).r;
 	GeometryPassColor *= ao;
 
 	FinalColor = vec4( GeometryPassColor, 1.0 );

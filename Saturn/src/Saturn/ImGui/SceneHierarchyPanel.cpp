@@ -923,7 +923,11 @@ namespace Saturn {
 					uint32_t i = 0;
 					for( auto& rAsset : mc.MaterialRegistry->GetMaterialAssets() )
 					{
-						const std::string name = rAsset->Name.empty() ? rAsset->GetMaterialName() : rAsset->Name;
+						ImGui::PushID( i );
+
+						std::string name = rAsset->Name.empty() ? rAsset->GetMaterialName() : rAsset->Name;
+						name += std::format( "##{}", i );
+
 						if( ImGui::Button( name.c_str() ) )
 						{
 							m_CurrentFinderType = AssetType::Material;
@@ -942,6 +946,7 @@ namespace Saturn {
 							}
 						}
 
+						ImGui::PopID();
 						++i;
 					}
 

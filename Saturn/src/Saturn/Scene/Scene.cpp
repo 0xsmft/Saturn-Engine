@@ -73,6 +73,8 @@
 #include "Saturn/ImGui/EditorEvents.h"
 #include "Saturn/ImGui/ImGuiWindowManager.h"
 
+#include "Saturn/ImGui/UndoRedo/GlobalUndoRedoGroup.h"
+
 #include "Saturn/Audio/SoundGraph/GraphSoundAssetViewer.h"
 
 #include "Saturn/Physics/PhysicsDebugMeshes.h"
@@ -1035,6 +1037,10 @@ namespace Saturn {
 
 	void Scene::DeleteEntity( SharedPtr<Entity> entity, bool deleteChildren /*=true*/, UUID orphanParentID /*=0*/ )
 	{
+#if !defined(SAT_DIST)
+		GlobalUndoRedoGroup::Get()->RemoveIfActionHasIdentifier( ( uint64_t ) entity->GetHandle() );
+#endif
+
 		for( auto& rChild : entity->GetChildren() )
 		{
 			auto child = FindEntityByID( rChild );

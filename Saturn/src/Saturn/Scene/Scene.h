@@ -220,8 +220,24 @@ namespace Saturn {
 		void OnRenderRuntime( Timestep ts, Ref<SceneRenderer> sceneRenderer );
 
 		SharedPtr<Entity> DuplicateEntity( const SharedPtr<Entity> entity, const SharedPtr<Entity> parent = nullptr );
+
+		//
+		// Deletes an entity. 
+		// This function is editor only and not to be called during Runtime or in Dist. (Use DestroyEntity)
+		// 
+		// This function will automatically remove the entity from any undo/redo actions. (Although this is temporary as we do not yet have an undo/redo action for deleting an entity.)
+		// 
+		// @param entity - target entity to be deleted.
+		// @param deleteChildren - should the children of the entity be deleted as well
+		// @param orphanParentID - if so, what ID should their new parent be.
+		//
 		void DeleteEntity( SharedPtr<Entity> entity, bool deleteChildren = true, UUID orphanParentID = 0 );
 		
+		//
+		// Runtime variant of DeleteEntity.
+		// 
+		// NB: This will add entity into a differed queue for deletion.
+		//
 		void DestroyEntity( Entity* entity );
 
 		void OnModifyPrefab( Ref<Prefab> prefabAsset );

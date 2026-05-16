@@ -14,7 +14,8 @@ namespace SaturnBuildTool
         RECAST, // ...and detour
         FREETYPE,
         MSDF,
-        MSDFGEN
+        MSDFGEN,
+        NFD
     }
 
     public class VendorBinaries
@@ -170,6 +171,16 @@ namespace SaturnBuildTool
                         binPath = GetRootBinPath( binPath );
 
                         binPath = Path.Combine( binPath, "MSDF-Atlas-Gen" );
+                    }
+                    break;
+
+                case VendorProject.NFD:
+                    {
+                        binPath = Path.Combine( binPath, "nativefiledialogext", "bin" );
+
+                        binPath = GetRootBinPath( binPath );
+
+                        binPath = Path.Combine( binPath, "NativeFileDialogExtended" );
                     }
                     break;
             }

@@ -71,7 +71,7 @@ If the repository was previously cloned non-recursively then use `git submodule 
 
 Make sure to check that you are on the branch `vulkan`. If not you can run `git checkout vulkan`
 
-## Generating project files (Windows)
+## Generating project files
 
 In order to start you will need to download <a href="https://premake.github.io/">Premake</a>
 

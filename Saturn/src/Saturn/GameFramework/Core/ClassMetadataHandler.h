@@ -88,6 +88,7 @@ namespace Saturn {
 		[[nodiscard]] SObject* CreateClassObject( const std::string& rScriptName, SObject* pParentObject = nullptr );
 		[[nodiscard]] SObject* CreateClassObject( uint64_t classHash, SObject* pParentObject = nullptr );
 		[[nodiscard]] SObject* CreateClassObject( SClass* pClass, SObject* pParentObject = nullptr );
+		[[nodiscard]] SObject* CreateClassObject( const SClass* pClass, SObject* pParentObject = nullptr );
 
 		template<typename Ty, typename... VaArgs>
 		[[nodiscard]] Ty* CreateClassObject( SClass* pClass, SObject* pOuter, VaArgs&&... args ) 

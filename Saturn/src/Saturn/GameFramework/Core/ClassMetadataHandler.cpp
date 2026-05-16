@@ -99,6 +99,15 @@ namespace Saturn {
 		return nullptr;
 	}
 
+	SObject* ClassMetadataHandler::CreateClassObject( const SClass* pClass, SObject* pParentObject /*= nullptr */ )
+	{
+		SObject* pObject = pClass->CreateDefaultObject();
+		pObject->m_pClass = const_cast< SClass* >( pClass );
+		pObject->m_pParentObject = pParentObject;
+
+		return pObject;
+	}
+
 	SClass* ClassMetadataHandler::GetSObjectMetadata()
 	{
 		return SObject::StaticClass();

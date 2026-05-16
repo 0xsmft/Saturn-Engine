@@ -44,7 +44,6 @@ namespace Saturn {
 	ProjectSerialiser::ProjectSerialiser( const Ref< Project >& rProject )
 		: m_Project( rProject )
 	{
-
 	}
 
 	ProjectSerialiser::~ProjectSerialiser()

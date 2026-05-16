@@ -161,8 +161,19 @@ namespace Saturn {
 
 			// Fallback to newest version if no version is present.
 			// NOTE: uint16_t is on purpose... see serialisation function for more detail.
-			auto version = asset[ "Version" ].as< uint16_t >( ( uint16_t ) AssetVersion::Latest );
-			SAT_CORE_ASSERT( version < std::numeric_limits<uint8_t>::max(), "Asset version is greater than the max of 255!" );
+			uint16_t version = asset[ "Version" ].as< uint16_t >( ( uint16_t ) AssetVersion::Latest );
+			
+			// If the version is before AssetVersion is added then we do not treat it as an error
+			// however, if its greater than SAT_VERSION_A_0_2_4 i.e. after the change
+			// then it is an error.
+			if( version <= SAT_VERSION_A_0_2_4 )
+			{
+				version = ( uint16_t ) AssetVersion::Latest;
+			}
+			else
+			{
+				SAT_CORE_ASSERT( version < std::numeric_limits<uint8_t>::max(), "Asset version is greater than the max of 255!" );
+			}
 
 			assetRegistry->AddAsset( assetID );
 

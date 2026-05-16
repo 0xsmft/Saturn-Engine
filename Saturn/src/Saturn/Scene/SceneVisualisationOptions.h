@@ -30,7 +30,7 @@
 
 namespace Saturn {
 
-	enum class PhysicsColliderVisualisationOptions
+	enum class PhysicsColliderVisualisationOptions : uint8_t
 	{
 		// Do not show at all
 		Disabled,

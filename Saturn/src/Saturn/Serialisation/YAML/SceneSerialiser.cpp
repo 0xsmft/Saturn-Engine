@@ -77,7 +77,7 @@ namespace Saturn {
 		out << YAML::BeginMap;
 		out << YAML::Key << "ShowGrid" << rVisualisation.ShowGrid;
 		out << YAML::Key << "ShowGridRT" << rVisualisation.ShowGridOnRuntime;
-		out << YAML::Key << "PhysCollider" << ( std::underlying_type_t<PhysicsColliderVisualisationOptions> )rVisualisation.PhysColliderOptions;
+		out << YAML::Key << "PhysCollider" << ( uint16_t )rVisualisation.PhysColliderOptions;
 		out << YAML::EndMap;
 #endif
 
@@ -130,11 +130,23 @@ namespace Saturn {
 		{
 			auto& rVisualisation = m_Scene->GetVisualisationOptions();
 
-			using U = std::underlying_type_t<PhysicsColliderVisualisationOptions>;
+			using U = uint16_t;
 
 			rVisualisation.ShowGrid          = visualisationNode[ "ShowGrid" ].as<bool>( true );
 			rVisualisation.ShowGridOnRuntime = visualisationNode[ "ShowGridRT" ].as<bool>( false );
-			rVisualisation.PhysColliderOptions = ( PhysicsColliderVisualisationOptions )visualisationNode[ "PhysCollider" ].as<U>();
+//			rVisualisation.PhysColliderOptions = ( PhysicsColliderVisualisationOptions )
+
+			const auto visOption = visualisationNode[ "PhysCollider" ].as<U>( 0 );
+			if( visOption > std::numeric_limits<uint8_t>::max() )
+			{
+				SAT_CORE_WARN( "Physics Collider Visualisation is greater than the max of 255! Default to 0!" );
+				rVisualisation.PhysColliderOptions = PhysicsColliderVisualisationOptions::Disabled;
+			}
+			else
+			{
+				rVisualisation.PhysColliderOptions = ( PhysicsColliderVisualisationOptions ) visOption;
+			}
+
 		}
 #endif
 

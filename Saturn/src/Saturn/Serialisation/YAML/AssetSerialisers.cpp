@@ -241,7 +241,7 @@ namespace Saturn {
 			AssetManager::Get()->RegisterAssetDependency( rAsset->ID, albedoID );
 		}
 
-		auto useNormal = materialData[ "UseNormal" ].as<float>();
+		auto useNormal = materialData[ "UseNormal" ].as<bool>( false );
 		auto normalID = materialData[ "NormalTexture" ].as<uint64_t>( 0 );
 
 		materialAsset->UseNormalMap( useNormal );

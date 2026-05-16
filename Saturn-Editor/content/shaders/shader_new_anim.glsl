@@ -142,7 +142,7 @@ struct PointLight
 
 layout(push_constant) uniform pc_Materials
 {
-	vec3 AlbedoColor;
+	layout(offset = 16) vec3 AlbedoColor;
 	float UseNormalMap;
 	
 	float Metalness;

@@ -267,9 +267,9 @@ namespace Saturn {
 		*/
 	}
 
-	float MaterialAsset::IsUsingNormalMap()
+	bool MaterialAsset::IsUsingNormalMap()
 	{
-		return m_Material->Get<float>( "u_Materials.UseNormalMap" );
+		return ( bool ) m_Material->Get<float>( "u_Materials.UseNormalMap" );
 	}
 
 	float MaterialAsset::GetRoughness()

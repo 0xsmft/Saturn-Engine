@@ -78,7 +78,7 @@ namespace Saturn {
 
 		// Colors and values
 		glm::vec3 GetAlbeoColor();
-		float IsUsingNormalMap();
+		bool IsUsingNormalMap();
 		float GetRoughness();
 		float GetMetalness();
 		float GetEmissive();

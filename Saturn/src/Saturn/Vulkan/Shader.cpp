@@ -641,7 +641,16 @@ namespace Saturn {
 				SHADER_INFO( "  Size: {0}", size );
 				SHADER_INFO( "  Offset: {0}", offset );
 
-				pc.MemberOffsets[ MemberName ] = offset - OffsetFromLastPC;
+				// The following condition below is true if we have multiple push constants
+				// For example in the main shader for dynamic meshes
+				// we have a push constant in the vertex and the fragment shader
+				// so, offset == 0 and OffsetFromLastPC == 4
+				// so the offset of the data in the fragment shader will start a 4 and not 0
+				// and if we do offset - OffsetFromLastPC it will underflow and reset to UINT32_MAX.
+				if( offset < OffsetFromLastPC )
+					pc.MemberOffsets[ MemberName ] = OffsetFromLastPC - offset;
+				else
+					pc.MemberOffsets[ MemberName ] = offset - OffsetFromLastPC;
 			}
 
 			m_PushConstants.push_back( pc );

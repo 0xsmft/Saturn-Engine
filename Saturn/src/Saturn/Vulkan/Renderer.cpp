@@ -525,9 +525,25 @@ namespace Saturn {
 
 			VkDescriptorSet Set = rMaterialAsset->GetMaterial()->GetDescriptorSet( m_FrameCount );
 
-			vkCmdPushConstants( CommandBuffer, Pipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof( uint32_t ), &boneOffset );
+			// Bone index vertex push const
+			vkCmdPushConstants( 
+				CommandBuffer, 
+				Pipeline->GetPipelineLayout(), 
+				VK_SHADER_STAGE_VERTEX_BIT, 
+				0, 
+				sizeof( uint32_t ), 
+				&boneOffset 
+			);
 
-			vkCmdPushConstants( CommandBuffer, Pipeline->GetPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, sizeof( uint32_t ), ( uint32_t ) rMaterialAsset->GetPushConstantData().Size, rMaterialAsset->GetPushConstantData().Data );
+			// Material data push const, fragment
+			vkCmdPushConstants(
+				CommandBuffer,
+				Pipeline->GetPipelineLayout(),
+				VK_SHADER_STAGE_FRAGMENT_BIT,
+				16, // This offset is really really retarded... In the shader the offset of the first element is 16, when I remove the offset Vulkan complains saying that it overlaps, but when I set it to 16 it works... WTF
+				( uint32_t ) rMaterialAsset->GetPushConstantData().Size,
+				rMaterialAsset->GetPushConstantData().Data 
+			);
 
 			// Descriptor set 0, for material texture data.
 			// Descriptor set 1, for environment data.

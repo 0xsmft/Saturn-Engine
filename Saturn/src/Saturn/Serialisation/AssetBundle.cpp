@@ -51,6 +51,7 @@
 #include "Saturn/Physics/PhysicsMaterialAsset.h"
 #include "Saturn/Alura/AluraStylingProfile.h"
 #include "Saturn/Alura/AluraFont.h"
+#include "Saturn/NodeEditor/GlobalNodeEditorTaskCache.h"
 
 #include "Saturn/Serialisation/YAML/SceneSerialiser.h"
 
@@ -83,7 +84,7 @@ namespace Saturn {
 		uint64_t CompressedSize = 0;
 		uint64_t Offset = 0;
 
-		DumpFileHeader& operator=( const DumpFileHeader& rOther ) noexcept 
+		DumpFileHeader& operator=( const DumpFileHeader& rOther ) noexcept
 		{
 			if( &rOther == this )
 				return *this;
@@ -175,14 +176,14 @@ namespace Saturn {
 		Application::Get()->ResumeMainThreadCV();
 
 		SAT_CORE_INFO( "Dumped {0} asset(s)", pAssetManager->GetAssetRegistrySize() );
-				
+
 		jobProgress->SetProgress( 10.0f );
 		jobProgress->SetTitle( "Building AssetBundle" );
-		
+
 		/////////////////////////////////////
 
 		std::ofstream fout( cachePath, std::ios::binary | std::ios::trunc );
-	
+
 		AssetBundleHeader header{};
 		header.Assets = pAssetManager->GetAssetRegistrySize();
 		header.Version = SAT_CURRENT_VERSION;
@@ -193,7 +194,7 @@ namespace Saturn {
 		for( auto& [id, asset] : AssetBundleRegistry->GetAssetMap() )
 		{
 			SAT_CORE_INFO( "Writing header information for asset: ASSET/{0} ({1})", id, asset->Name );
-			const std::string status = std::format( "Writing header information for asset: ASSET/{0} ({1})", (uint64_t)id, asset->Name );
+			const std::string status = std::format( "Writing header information for asset: ASSET/{0} ({1})", ( uint64_t ) id, asset->Name );
 
 			jobProgress->SetStatus( status );
 
@@ -204,9 +205,9 @@ namespace Saturn {
 
 		jobProgress->SetProgress( 35.0f );
 		jobProgress->SetStatus( "Writing VFS" );
-		
+
 		/////////////////////////////////////
-		
+
 		VirtualFS::Get().WriteVFS( fout );
 
 		/////////////////////////////////////
@@ -237,8 +238,8 @@ namespace Saturn {
 
 			stream.seekg( 0 );
 
-			fileBuffer.Allocate( (size_t)fileSize );
-			stream.read( reinterpret_cast<char*>( fileBuffer.Data ), fileBuffer.Size );
+			fileBuffer.Allocate( ( size_t ) fileSize );
+			stream.read( reinterpret_cast< char* >( fileBuffer.Data ), fileBuffer.Size );
 
 			stream.close();
 
@@ -246,18 +247,18 @@ namespace Saturn {
 			if( fileSize > 500llu * 1024llu && path.extension() != ".vfsn" )
 			{
 				SAT_CORE_WARN( "Compressing file: {0} because file is {1} KiB", path.string(), fileSize / 1024 );
-				
+
 				jobProgress->SetStatus( std::format( "Compressing file: {0}", path.string() ) );
 
 				// Compress, file over the limit.
 				Buffer TemporaryBuffer;
-				TemporaryBuffer.Allocate( (size_t) compressBound( (uLong)fileSize ) );
+				TemporaryBuffer.Allocate( ( size_t ) compressBound( ( uLong ) fileSize ) );
 
-				uLongf compressedSize = (uLongf) TemporaryBuffer.Size;
+				uLongf compressedSize = ( uLongf ) TemporaryBuffer.Size;
 
-				int result = compress( 
-					(Bytef*) TemporaryBuffer.Data, &compressedSize,
-					(Bytef*)fileBuffer.Data, static_cast<uLong>( fileBuffer.Size ) );
+				int result = compress(
+					( Bytef* ) TemporaryBuffer.Data, &compressedSize,
+					( Bytef* ) fileBuffer.Data, static_cast< uLong >( fileBuffer.Size ) );
 
 				if( result != Z_OK )
 				{
@@ -267,7 +268,7 @@ namespace Saturn {
 					RawSerialisation::WriteSaturnBuffer( fileBuffer, fout );
 				}
 
-				SAT_CORE_INFO( "Compressed file: {0} new file size is {1} KB", path.string(), compressedSize / 1024 );
+				SAT_CORE_INFO( "Compressed file: {0} new file size is {1} KiB", path.string(), compressedSize / 1024 );
 
 				Buffer compressedData = Buffer::Copy( TemporaryBuffer.Data, compressedSize );
 				dfh.CompressedSize = compressedSize;
@@ -290,6 +291,8 @@ namespace Saturn {
 			}
 
 			jobProgress->AddProgress( ( 1.0f + jobProgress->GetProgress() ) / DumpFileToAssetID.size() );
+
+			fileBuffer.Free();
 		}
 
 		SAT_CORE_INFO( "Packaged {0} asset(s)", pAssetManager->GetAssetRegistrySize() );
@@ -371,12 +374,56 @@ namespace Saturn {
 				}
 			} break;
 
-			// TODO: GraphSound
 			case Saturn::AssetType::BehaviourTree:
+			{
+				// ...otherwise load it from disk.
+				const std::string filename = std::format( "{0}.sbt", rAsset->Name );
+
+				// Try to load without touching the disk...
+				auto& rCache = GlobalNodeEditorTaskCache::Get().GetOrCreateTaskCache( id );
+				if( rCache.IsListEmpty() )
+				{
+					// Read...
+					NodeCacheEditor::ReadNodeTaskCacheOnly( rCache, id, filename );
+				}
+
+				// Write...
+				NodeCacheEditor::WriteTaskCacheOnlyDistNC( rCache, rAsset->Path );
+			} break;
+
 			case Saturn::AssetType::AnimationController:
+			{
+				// ...otherwise load it from disk.
+				const std::string filename = std::format( "{0}.sac", rAsset->Name );
+
+				// Try to load without touching the disk...
+				auto& rCache = GlobalNodeEditorTaskCache::Get().GetOrCreateTaskCache( id );
+				if( rCache.IsListEmpty() )
+				{
+					// Read...
+					NodeCacheEditor::ReadNodeTaskCacheOnly( rCache, id, filename );
+				}
+
+				// Write...
+				NodeCacheEditor::WriteTaskCacheOnlyDistNC( rCache, rAsset->Path );
+			} break;
+
 			case Saturn::AssetType::GraphSound:
 			{
-				NodeCacheEditor::ConvertToDistNC( id, rAsset->Path.filename().string() );
+				// ...otherwise load it from disk.
+				const std::string filename = std::format( "{0}.gsnd", rAsset->Name );
+
+				// Try to load without touching the disk...
+				auto& rCache = GlobalNodeEditorTaskCache::Get().GetOrCreateTaskCache( id );
+				if( rCache.IsListEmpty() )
+				{
+					// Read...
+					NodeCacheEditor::ReadNodeTaskCacheOnly( rCache, id, filename );
+				}
+
+				// Write...
+				std::filesystem::path path = rAsset->Path;
+				NodeCacheEditor::WriteTaskCacheOnlyDistNC( rCache, path );
 			} break;
 
 			case Saturn::AssetType::Prefab:
@@ -439,7 +486,7 @@ namespace Saturn {
 				}
 			} break;
 
-			case Saturn::AssetType::StyleProfile: 
+			case Saturn::AssetType::StyleProfile:
 			{
 				Ref<AluraStylingProfile> styleProf = pAssetManager->ImportAssetAs<AluraStylingProfile>( AssetBundleRegistry, id );
 				if( styleProf )
@@ -484,11 +531,11 @@ namespace Saturn {
 		{
 			std::string decodedAssetBundleVer;
 			SAT_DECODE_VER_STRING( header.Version, decodedAssetBundleVer );
-			
+
 			SAT_CORE_ERROR( "Asset bundle version mismatch! This should not happen. Asset bundle version is: {0} while current Engine version is: {1}.", decodedAssetBundleVer, SAT_CURRENT_VERSION_STRING );
 
 			SAT_CORE_ERROR( "To developers: Have you forgot to rebuilt the Asset Bundle after rebuilding the project for disturbution or was the Asset Bundle built successfully?" );
-		
+
 			return AssetBundleResult::FileVersionMismatch;
 		}
 
@@ -537,15 +584,15 @@ namespace Saturn {
 			if( rAsset->ID != dfh.Asset )
 			{
 				SAT_CORE_ERROR( "Asset ID's do not match!" );
-			
+
 				return AssetBundleResult::AssetIDMismatch;
 			}
 
 			// The version that the file was generated in much also match the engine version.
-			if( dfh.Version != SAT_CURRENT_VERSION ) 
+			if( dfh.Version != SAT_CURRENT_VERSION )
 			{
 				SAT_CORE_ERROR( "Pack file version mismatch!" );
-			
+
 				return AssetBundleResult::PackFileVersionMismatch;
 			}
 
@@ -565,16 +612,16 @@ namespace Saturn {
 				Buffer compressedData;
 				RawSerialisation::ReadSaturnBuffer( compressedData, stream );
 
-				uLongf uncompSize = (uLongf)uncompressedData.Size;
+				uLongf uncompSize = ( uLongf ) uncompressedData.Size;
 
-				const int result = uncompress( 
-					( Bytef* ) uncompressedData.Data, &uncompSize, 
-					( Bytef* ) compressedData.Data, static_cast<const uLong>( compressedData.Size ) );
+				const int result = uncompress(
+					( Bytef* ) uncompressedData.Data, &uncompSize,
+					( Bytef* ) compressedData.Data, static_cast< const uLong >( compressedData.Size ) );
 
 				if( result != Z_OK )
 				{
 					SAT_CORE_ERROR( "Failed to uncompress data!" );
-				
+
 					return AssetBundleResult::FailedToUncompress;
 				}
 
@@ -591,7 +638,7 @@ namespace Saturn {
 
 				Buffer uncompressedData;
 				RawSerialisation::ReadSaturnBuffer( uncompressedData, stream );
-				
+
 				file->FileContent.resize( uncompressedData.Size );
 				std::memcpy( file->FileContent.data(), uncompressedData.Data, uncompressedData.Size );
 
@@ -689,7 +736,7 @@ namespace Saturn {
 			return AssetBundleResult::InvalidFileHeader;
 		}
 
-		if( header.Version != SAT_CURRENT_VERSION ) 
+		if( header.Version != SAT_CURRENT_VERSION )
 		{
 			return AssetBundleResult::FileVersionMismatch;
 		}
@@ -718,7 +765,7 @@ namespace Saturn {
 		for( size_t i = 0; i < actionBindings; i++ )
 		{
 			ActionBindingData ab;
-			
+
 			ab.Name = RawSerialisation::ReadString( stream );
 
 			RawSerialisation::ReadObject( ab.Key, stream );

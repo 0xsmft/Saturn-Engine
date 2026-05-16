@@ -83,20 +83,193 @@ namespace Saturn {
 	static std::mutex s_UpdateFilesMutex;
 
 	ContentBrowserPanel::ContentBrowserPanel()
-		: ContentBrowserBase()
+		: ImGuiWindow()
 	{
-		m_ViewMode = CBViewMode::Assets;
+		Init();
 		ContentBrowserThumbnailCache::Get().Init();
 	}
 
 	ContentBrowserPanel::ContentBrowserPanel( const std::string& rName )
-		: ContentBrowserBase()
+		: ImGuiWindow( rName )
 	{
+		Init();
+	}
+
+	void ContentBrowserPanel::Init()
+	{
+		m_BackIcon = Ref<Texture2D>::Create( "content/textures/editor/Left.png", AddressingMode::Repeat );
+		m_ForwardIcon = Ref<Texture2D>::Create( "content/textures/editor/Right.png", AddressingMode::Repeat );
 	}
 
 	ContentBrowserPanel::~ContentBrowserPanel()
 	{
 		ContentBrowserThumbnailCache::Get().Terminate();
+	}
+
+	void ContentBrowserPanel::DrawTopBar()
+	{
+		// Back button.
+		if( m_CurrentPath != m_CurrentViewModeDirectory )
+		{
+			if( Auxiliary::ImageButton( m_BackIcon, { 24, 24 } ) )
+			{
+				ChangeDirectoryAndAddQuickAction( m_CurrentPath.parent_path() );
+			}
+		}
+		else
+		{
+			ImGui::PushItemFlag( ImGuiItemFlags_Disabled, true );
+			ImGui::PushStyleVar( ImGuiStyleVar_Alpha, 0.5f );
+			Auxiliary::ImageButton( m_BackIcon, { 24, 24 } );
+			ImGui::PopStyleVar( 1 );
+			ImGui::PopItemFlag();
+		}
+
+		ImGui::SameLine();
+
+		// Forward button.
+		if( !m_FirstFolder.empty() || std::filesystem::exists( m_FirstFolder ) )
+		{
+			if( Auxiliary::ImageButton( m_ForwardIcon, { 24, 24 } ) )
+			{
+				ChangeDirectoryAndAddQuickAction( m_CurrentPath / m_FirstFolder );
+			}
+		}
+		else
+		{
+			ImGui::PushItemFlag( ImGuiItemFlags_Disabled, true );
+			ImGui::PushStyleVar( ImGuiStyleVar_Alpha, 0.5f );
+			Auxiliary::ImageButton( m_ForwardIcon, { 24, 24 } );
+			ImGui::PopStyleVar( 1 );
+			ImGui::PopItemFlag();
+		}
+
+		ImGui::PushStyleColor( ImGuiCol_Button, ImVec4( 0.0f, 0.0f, 0.0f, 0.0f ) );
+		ImGui::PushStyleColor( ImGuiCol_ButtonHovered, ImVec4( 0.3f, 0.3f, 0.3f, 0.35f ) );
+
+		ImGui::SameLine();
+
+		uint64_t i = 0llu;
+		for( auto& rFolder : m_CurrentPath )
+		{
+			const char* pName = m_ViewMode == CBViewMode::Assets ? "Assets" : "Source";
+
+			if( i == 0 && rFolder != pName )
+				continue;
+
+			++i;
+
+			if( rFolder != pName )
+			{
+				ImGui::Text( "/" );
+			}
+
+			ImGui::SameLine();
+
+			const std::string filename = rFolder.string();
+
+			const float size = ImGui::CalcTextSize( filename.c_str() ).x;
+			ImGui::Selectable( filename.c_str(), false, 0, ImVec2( size, 22.0f ) );
+
+			if( ImGui::BeginDragDropTarget() )
+			{
+				// Item to item moving
+				auto* pData = ImGui::AcceptDragDropPayload( "CB_ITEM_MOV_XX", ImGuiDragDropFlags_None );
+				if( pData && pData->Data )
+				{
+					ContentBrowserItem* pSrc = *( ContentBrowserItem** ) pData->Data;
+
+					auto pathDraggedTo = m_CurrentPath;
+					for( size_t j = 0; j < i; ++j )
+					{
+						pathDraggedTo = pathDraggedTo.parent_path();
+					}
+
+					if( std::filesystem::exists( pathDraggedTo ) )
+						MoveItemToFolder( pSrc, pathDraggedTo );
+				}
+
+				ImGui::EndDragDropTarget();
+			}
+
+			ImGui::SameLine();
+		}
+
+		ImGui::PopStyleColor( 2 );
+	}
+
+	void ContentBrowserPanel::SortFiles()
+	{
+		if( m_FilesNeedSorting )
+		{
+			auto Fn = []( Ref<ContentBrowserItem>& a, Ref<ContentBrowserItem>& b ) -> bool
+			{
+				if( a->IsDirectory() && !b->IsDirectory() )
+					return true; // sort first if a is directory.
+				else if( !a->IsDirectory() && b->IsDirectory() )
+					return false;
+				else
+					return a->Filename() < b->Filename();
+			};
+
+			std::sort( m_Files.begin(), m_Files.end(), Fn );
+			m_FilesNeedSorting = false;
+		}
+	}
+
+	Ref<ContentBrowserItem> ContentBrowserPanel::FindItem( const std::filesystem::path& rPath )
+	{
+		const auto Itr = std::find_if( m_Files.begin(), m_Files.end(), [ rPath ]( auto& rItem ) { return rItem->Path() == rPath; } );
+
+		if( Itr != m_Files.end() )
+			return *Itr;
+
+		return nullptr;
+	}
+
+	void ContentBrowserPanel::FindAndRenameItem( const std::filesystem::path& rName )
+	{
+		const auto Itr = std::find_if( m_Files.begin(), m_Files.end(),
+			[ rName ]( auto& rItem )
+		{
+			return rItem->Filename() == rName;
+		} );
+
+		if( Itr != m_Files.end() )
+			return ( *Itr )->Rename();
+	}
+
+	uint32_t ContentBrowserPanel::GetFilenameCount( const std::string& rName, bool directoriesOnly )
+	{
+		uint32_t count = 0;
+
+		for( const auto& rEntry : std::filesystem::directory_iterator( m_CurrentPath ) )
+		{
+			if( directoriesOnly && !rEntry.is_directory() )
+				continue;
+
+			const std::string filename = rEntry.path().filename().string();
+			if( filename.find( rName ) != std::string::npos )
+				++count;
+		}
+
+		return count;
+	}
+
+	void ContentBrowserPanel::AddSelected( Ref<ContentBrowserItem> item )
+	{
+		item->Select();
+		m_SelectedItems.push_back( item );
+	}
+
+	void ContentBrowserPanel::ClearSelection()
+	{
+		for( auto&& rrItem : m_SelectedItems )
+		{
+			rrItem->Deselect();
+		}
+
+		m_SelectedItems.clear();
 	}
 
 	void ContentBrowserPanel::DrawFolderTree( const std::filesystem::path& rPath )
@@ -125,7 +298,7 @@ namespace Saturn {
 			if( ImGui::BeginDragDropTarget() )
 			{
 				auto* pData = ImGui::AcceptDragDropPayload( "CB_ITEM_MOVE", ImGuiDragDropFlags_None );
-				if( pData )
+				if( false )
 				{
 					// TODO: Change this to some sort of universal ID and NOT a filesystem directory entry.
 					// very bad!
@@ -1182,6 +1355,18 @@ namespace Saturn {
 				}
 			} break;
 
+			case EventType::CBMoveItem: 
+			{
+				// TOOD: Suspend filewatcher.
+				CBMoveItemEvent& rMoveEvent = ( CBMoveItemEvent& ) rEvent;
+	
+				if( rMoveEvent.GetSourceItem() && rMoveEvent.GetDestinationItem() )
+				{
+					// Perform move action
+					MoveItemToItem( rMoveEvent.GetSourceItem(), rMoveEvent.GetDestinationItem() );
+				}
+			} break;
+
 			default:
 				break;
 		}
@@ -1660,6 +1845,42 @@ namespace Saturn {
 		FindAndRenameItem( dupedAsset->Name );
 	}
 
+	void ContentBrowserPanel::MoveItemToItem( ContentBrowserItem* pSrc, ContentBrowserItem* pDst )
+	{
+		ClearSelection();
+	
+		std::filesystem::path srcPath = pSrc->Path();
+		std::filesystem::path dstPath = pDst->Path() / srcPath.filename();
+
+		std::filesystem::rename( srcPath, dstPath );
+
+		// Find and update the asset that is linked to this path.
+		std::filesystem::path assetPath = std::filesystem::relative( srcPath, Project::GetActiveProject()->GetRootDir() );
+		Ref<Asset> target = AssetManager::Get()->FindAsset( assetPath );
+		target->SetAbsolutePath( dstPath );
+
+		AssetManager::Get()->Save();
+
+		// NB: No need to call UpdateFiles, the file watcher thread will get to it.
+	}
+
+	void ContentBrowserPanel::MoveItemToFolder( ContentBrowserItem* pSrc, const std::filesystem::path& rDst )
+	{
+		ClearSelection();
+
+		std::filesystem::path srcPath = pSrc->Path();
+
+		auto newPath = rDst / srcPath.filename();
+		std::filesystem::rename( srcPath, newPath );
+
+		if( auto asset = pSrc->GetAsset(); asset )
+		{
+			asset->SetAbsolutePath( newPath );
+		}
+
+		AssetManager::Get()->Save();
+	}
+
 	void ContentBrowserPanel::UpdateFiles( bool clear /*= false */ )
 	{
 		// Use a mutex here because when we add a new file filewatch (m_Watcher) will always get to this function first so, allow filewatch it update files then when the main thread enters this function try to lock and wait.
@@ -1692,19 +1913,23 @@ namespace Saturn {
 		UpdateFirstFolder();
 	}
 
+	void ContentBrowserPanel::ChangeDirectoryAndAddQuickAction( const std::filesystem::path& rPath )
+	{
+		AddQuickAction( m_CurrentPath, rPath );
+
+		m_CurrentPath = rPath;
+		m_ChangeDirectory = true;
+
+		ClearSelection();
+		m_Searching = false;
+	}
+
 	void ContentBrowserPanel::OnItemSelected( ContentBrowserItem* pItem, bool clicked )
 	{
 		if( pItem->IsDirectory() && clicked && !pItem->MultiSelected() ) 
 		{
 			const auto newPath = m_CurrentPath / pItem->Path();
-			AddQuickAction( m_CurrentPath, newPath );
-
-			m_CurrentPath = newPath;
-			m_ChangeDirectory = true;
-
-			ClearSelection();
-			m_Searching = false;
-
+			ChangeDirectoryAndAddQuickAction( newPath );
 		}
 		else
 		{

@@ -178,7 +178,34 @@ namespace Saturn {
 		const UUID GetID() const { return m_AssetID; }
 
 	private:
-		UUID m_AssetID;
+		UUID m_AssetID = 0llu;
+	};
+
+	//
+	// CBMoveItemEvent
+	// 
+	// This event triggers when an item is moved to another item e.g. dragging an asset over the top of a folder.
+	// 
+	// The event does not trigger when an asset is moved over the folder tree.
+	//
+	class ContentBrowserItem;
+	class CBMoveItemEvent : public Event
+	{
+		SAT_DEFINE_EVENT( CBMoveItem, EC_Editor );
+	public:
+		CBMoveItemEvent( ContentBrowserItem* pSrc, ContentBrowserItem* pDst )
+			: Event( EventType::CBMoveItem, EC_Editor ), m_pSourceItem( pSrc ), m_pDestinationItem( pDst )
+		{
+		}
+
+		virtual ~CBMoveItemEvent() = default;
+
+		ContentBrowserItem* GetSourceItem() const { return m_pSourceItem; }
+		ContentBrowserItem* GetDestinationItem() const { return m_pDestinationItem; }
+
+	private:
+		ContentBrowserItem* m_pSourceItem = nullptr;
+		ContentBrowserItem* m_pDestinationItem = nullptr;
 	};
 
 	//

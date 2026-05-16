@@ -28,15 +28,13 @@
 
 #pragma once
 
-#include "ContentBrowserBase.h"
-
-#include "Saturn/Vulkan/Texture.h"
-
-#include "Saturn/Asset/Asset.h"
-
 #include "ContentBrowserItem.h"
 
+#include "Saturn/Vulkan/Texture.h"
+#include "Saturn/Asset/Asset.h"
 #include "Saturn/GameFramework/SClass.h"
+
+#include "Saturn/ImGui/ImGuiWindow.h"
 
 #include <imgui.h>
 #include <filesystem>
@@ -46,6 +44,12 @@
 #include <filewatch/filewatch.h>
 
 namespace Saturn {
+
+	enum class CBViewMode : uint8_t
+	{
+		Assets,
+		Scripts
+	};
 
 	struct SClassExtendedMetadata;
 
@@ -58,7 +62,7 @@ namespace Saturn {
 	class Event;
 	class AssetImportPopupBase;
 
-	class ContentBrowserPanel : public ContentBrowserBase
+	class ContentBrowserPanel : public Saturn::ImGuiWindow
 	{
 	public:
 		ContentBrowserPanel();
@@ -75,14 +79,29 @@ namespace Saturn {
 			return "Content Browser Panel";
 		}
 
-		virtual void ResetPath( const std::filesystem::path& rPath ) override;
-
+		void ResetPath( const std::filesystem::path& rPath );
 		void BrowseToItem( const std::filesystem::path& rPath, AssetID id );
 
+	public:
+		const std::vector<Ref<ContentBrowserItem>>& GetSelectedItems() const { return m_SelectedItems; }
+
 	private:
-		virtual void UpdateFiles( bool clear = false ) override;
-		virtual void OnItemSelected( ContentBrowserItem* pItem, bool clicked ) override;
-		virtual void DrawItemsClipped( std::vector<Ref<ContentBrowserItem>>& rList, ImVec2 size, float padding, int columnCount ) override;
+		void DrawTopBar();
+		void SortFiles();
+
+		void UpdateFiles( bool clear = false );
+		void ChangeDirectoryAndAddQuickAction( const std::filesystem::path& rPath );
+		void OnItemSelected( ContentBrowserItem* pItem, bool clicked );
+		void DrawItemsClipped( std::vector<Ref<ContentBrowserItem>>& rList, ImVec2 size, float padding, int columnCount );
+
+		Ref<ContentBrowserItem> FindItem( const std::filesystem::path& rPath );
+		void FindAndRenameItem( const std::filesystem::path& rName );
+		uint32_t GetFilenameCount( const std::string& rName, bool directoriesOnly = false );
+
+		void AddSelected( Ref<ContentBrowserItem> item );
+		void ClearSelection();
+
+		void Init();
 
 	private:
 		void OnKeyPressed( RubyKeyEvent& rEvent );
@@ -126,6 +145,38 @@ namespace Saturn {
 		void AddQuickAction( const std::filesystem::path& rOldPath, const std::filesystem::path& rNewPath );
 
 		void DuplicateAsset( Ref<Asset> asset );
+
+		void MoveItemToItem( ContentBrowserItem* pSrc, ContentBrowserItem* pDst );
+		void MoveItemToFolder( ContentBrowserItem* pSrc, const std::filesystem::path& rDst );
+
+	private:
+		// The absolute current path
+		// Used for finding/creating assets.
+		std::filesystem::path m_CurrentPath;
+
+		// The first folder in the current directory.
+		std::filesystem::path m_FirstFolder;
+
+		// The absolute path to the current folder we are looking at.
+		std::filesystem::path m_CurrentViewModeDirectory;
+
+		// The absolute path root path for the current view mode.
+		std::filesystem::path m_RootPath;
+
+		Ref< Texture2D > m_BackIcon;
+		Ref< Texture2D > m_ForwardIcon;
+
+		// Files and folder, sorted by folders then files.
+		std::vector<Ref<ContentBrowserItem>> m_Files;
+		std::vector<Ref<ContentBrowserItem>> m_ValidSearchFiles;
+		std::vector<Ref<ContentBrowserItem>> m_SelectedItems;
+
+		CBViewMode m_ViewMode = CBViewMode::Assets;
+
+		bool m_FilesNeedSorting = false;
+		bool m_ChangeDirectory = false;
+		bool m_Searching = false;
+		bool m_MultiSelecting = false;
 
 	private:
 		std::filesystem::path m_ScriptPath;

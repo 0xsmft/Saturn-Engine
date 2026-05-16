@@ -139,6 +139,20 @@ namespace Saturn {
 			ImGui::ItemSize( ThumbnailSize, style.FramePadding.y );
 			ImGui::ItemAdd( ImRect( TopLeft, BottomRight ), ImGui::GetID( m_Path.c_str() ) );
 
+			if( ImGui::BeginDragDropTarget() )
+			{
+				// Item to item moving
+				auto* pData = ImGui::AcceptDragDropPayload( "CB_ITEM_MOV_XX", ImGuiDragDropFlags_None );
+				if( pData && pData->Data )
+				{
+					ContentBrowserItem* pSrc = *( ContentBrowserItem** )pData->Data;
+
+					Application::Get()->DispatchEvent<CBMoveItemEvent>( pSrc, this );
+				}
+
+				ImGui::EndDragDropTarget();
+			}
+
 			if( m_IsHovered && !m_IsRenaming )
 			{
 				// Draw a highlight around the button.
@@ -666,9 +680,8 @@ namespace Saturn {
 			{
 				Select();
 
-				// TODO: Change this to some sort of universal ID and NOT a filesystem directory entry.
-				// very bad!
-				ImGui::SetDragDropPayload( "CB_ITEM_MOVE", &m_Entry, sizeof( std::filesystem::directory_entry ), ImGuiCond_Once );
+				ContentBrowserItem* pThis = this;
+				ImGui::SetDragDropPayload( "CB_ITEM_MOV_XX", &pThis, sizeof( uintptr_t ), ImGuiCond_Once );
 
 				ImGui::Text( "Moving: %s", m_Filename.string().c_str() );
 			}
@@ -690,7 +703,7 @@ namespace Saturn {
 				//		 the asset ID as a dummy data,
 				//		 it should not be used! Use content browser instead for correct multi-selection data.
 				// NOTE: NDT stands for NoDaTa
-				ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_MULTI_NDT", pData, sizeof( uintptr_t ), ImGuiCond_Once );
+				ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_MULTI_NDT", pData, sizeof( UUID ), ImGuiCond_Once );
 			}
 			else
 			{
@@ -700,31 +713,31 @@ namespace Saturn {
 						break;
 					case Saturn::AssetType::StaticMesh:
 					{
-						ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_MODEL", pData, sizeof( uintptr_t ), ImGuiCond_Once );
+						ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_MODEL", pData, sizeof( UUID ), ImGuiCond_Once );
 					}	break;
 					case Saturn::AssetType::SkeletalMesh:
 					{
-						ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_SKMODEL", pData, sizeof( uintptr_t ), ImGuiCond_Once );
+						ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_SKMODEL", pData, sizeof( UUID ), ImGuiCond_Once );
 					}	break;
 					case Saturn::AssetType::Material:
 					{
-						ImGui::SetDragDropPayload( "asset_payload", pData, sizeof( uintptr_t ), ImGuiCond_Once );
+						ImGui::SetDragDropPayload( "asset_payload", pData, sizeof( UUID ), ImGuiCond_Once );
 					}	break;
 					case Saturn::AssetType::MaterialInstance:
 						break;
 					case Saturn::AssetType::Sound:
 					{
-						ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_SND", pData, sizeof( uintptr_t ), ImGuiCond_Once );
+						ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_SND", pData, sizeof( UUID ), ImGuiCond_Once );
 					} break;
 
 					case Saturn::AssetType::Scene:
 					{
-						ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_SCENE", pData, sizeof( uintptr_t ), ImGuiCond_Once );
+						ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_SCENE", pData, sizeof( UUID ), ImGuiCond_Once );
 					} break;
 
 					case Saturn::AssetType::Prefab:
 					{
-						ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_PREFAB", pData, sizeof( uintptr_t ), ImGuiCond_Once );
+						ImGui::SetDragDropPayload( "CONTENT_BROWSER_ITEM_PREFAB", pData, sizeof( UUID ), ImGuiCond_Once );
 					} break;
 
 					case Saturn::AssetType::Unknown:

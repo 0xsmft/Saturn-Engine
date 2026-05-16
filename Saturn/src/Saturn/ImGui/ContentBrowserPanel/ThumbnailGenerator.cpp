@@ -144,36 +144,39 @@ namespace Saturn {
 		// We must do this as we are going to create vulkan objects
 		RenderThread::Get().Queue( [ rData, materialAsset ]()
 		{
-			// INIT
-			RendererThumbnailCacheData cacheData{};
-			cacheData.SceneRenderer = Ref<SceneRenderer>::Create( SceneRendererFlag_NoFlags );
-			cacheData.SceneRenderer->SetDynamicSky( 2.0f, 0.0f, 0.0f );
-			cacheData.Camera.SetActive( true );
+			auto itr = s_RendererThumbnailCache.find( rData.Asset->ID );
+			if( itr == s_RendererThumbnailCache.end() )
+				return;
 
-			cacheData.Scene = Ref<Scene>::Create();
+			auto& rCacheData = itr->second;
+
+			// INIT
+			rCacheData.SceneRenderer = Ref<SceneRenderer>::Create( SceneRendererFlag_NoFlags );
+			rCacheData.SceneRenderer->SetDynamicSky( 2.0f, 0.0f, 0.0f );
+			rCacheData.Camera.SetActive( true );
+
+			rCacheData.Scene = Ref<Scene>::Create();
 #if !defined(SAT_DIST)
-			cacheData.Scene->GetVisualisationOptions().ShowGrid = false;
+			rCacheData.Scene->GetVisualisationOptions().ShowGrid = false;
 #endif
-			cacheData.SceneRenderer->SetCurrentScene( cacheData.Scene.Get() );
+			rCacheData.SceneRenderer->SetCurrentScene( rCacheData.Scene.Get() );
 
 			// Create entity
-			cacheData.SphereEntity = cacheData.Scene->CreateEntity();
-			auto& mc = cacheData.SphereEntity->AddComponent<StaticMeshComponent>();
+			rCacheData.SphereEntity = rCacheData.Scene->CreateEntity();
+			auto& mc = rCacheData.SphereEntity->AddComponent<StaticMeshComponent>();
 			mc.Mesh = Auxiliary::DefaultMeshes::CreateSphere( 1.0f );
 			mc.Mesh->GetMaterialRegistry()->AddAsset( materialAsset );
 
 			// INIT (PreRender)
-			cacheData.SceneRenderer->SetViewportSize( ( uint32_t ) THUMBNAIL_SIZE, ( uint32_t ) THUMBNAIL_SIZE );
+			rCacheData.SceneRenderer->SetViewportSize( ( uint32_t ) THUMBNAIL_SIZE, ( uint32_t ) THUMBNAIL_SIZE );
 
-			cacheData.Camera.SetViewportSize( ( uint32_t ) THUMBNAIL_SIZE, ( uint32_t ) THUMBNAIL_SIZE );
-			cacheData.Camera.SetDistance( 4.0f );
+			rCacheData.Camera.SetViewportSize( ( uint32_t ) THUMBNAIL_SIZE, ( uint32_t ) THUMBNAIL_SIZE );
+			rCacheData.Camera.SetDistance( 4.0f );
 
 			// Update to change the distance
-			cacheData.Camera.OnUpdate( Application::Get()->Time() );
+			rCacheData.Camera.OnUpdate( Application::Get()->Time() );
 
-			cacheData.AwaitingRender = true;
-
-			s_RendererThumbnailCache[ rData.Asset->ID ] = cacheData;
+			rCacheData.AwaitingRender = true;
 		} );
 	}
 
@@ -237,9 +240,16 @@ namespace Saturn {
 
 				return CreateTextureFromFBImage( rCacheData.SceneRenderer->CompositeImage() );
 			}
+
+			// Awaiting init
+			// Return no texture as it has not been generated.
+			return nullptr;
 		}
 
 		// However, if not, we prepare on the JobSystem
+		// Make sure to the cache now on the main thread.
+		s_RendererThumbnailCache.insert( { rData.Asset->ID, {} } );
+
 		// TRANSITION: JOB SYSTEM THREAD
 		JobSystem::Get().QueueJob( [&]() 
 		{
@@ -297,6 +307,8 @@ namespace Saturn {
 			// Return no texture as it has not been generated.
 			return nullptr;
 		}
+
+		s_RendererThumbnailCache.insert( { rData.Asset->ID, {} } );
 
 		// Execute init on JobSystem Thread
 		JobSystem::Get().QueueJob( [&]() 
@@ -398,6 +410,8 @@ namespace Saturn {
 			// Return no texture as it has not been generated.
 			return nullptr;
 		}
+
+		s_RendererThumbnailCache.insert( { rData.Asset->ID, {} } );
 
 		// Execute init on JobSystem Thread
 		JobSystem::Get().QueueJob( [ & ]()

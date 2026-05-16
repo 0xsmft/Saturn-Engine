@@ -33,7 +33,7 @@
 
 namespace Saturn {
 
-	enum class ThumbnailState
+	enum class ThumbnailState : uint8_t
 	{
 		Initialising, // Initial state
 		Generating, // Currently generating, this flag is only set when we need to generate the thumbnail over multiple frames
@@ -45,10 +45,10 @@ namespace Saturn {
 	struct ThumbnailCacheQueueData
 	{
 		int64_t Time = 0;
-		ThumbnailState State = ThumbnailState::Initialising;
 		Ref<Texture2D> Texture = nullptr;
-
 		Ref<Asset> Asset = nullptr;
+
+		ThumbnailState State = ThumbnailState::Initialising;
 	};
 
 }

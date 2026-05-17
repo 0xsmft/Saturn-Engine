@@ -56,8 +56,8 @@ namespace Saturn {
 		virtual void OnUpdate( Timestep ts ) override;
 		virtual void OnPhysicsUpdate( Timestep ts ) override;
 
-		Ref<StaticMesh>& GetMesh() { return m_Mesh; }
-		const Ref<StaticMesh>& GetMesh() const { return m_Mesh; }
+		Mesh* GetMesh() { return m_Mesh; }
+		const Mesh* GetMesh() const { return m_Mesh; }
 		
 	protected:
 		virtual void SetupInputBindings() {};
@@ -88,7 +88,8 @@ namespace Saturn {
 		glm::vec3 CalculateRight();
 		glm::vec3 CalculateForward();
 
-		float m_MovementSpeed = 5.0f;
+		float m_MovementSpeed = 0.0f;
+		bool m_Sprinting = false;
 
 	private:
 		float m_MouseUpMovement = 0.0f;
@@ -99,8 +100,8 @@ namespace Saturn {
 		glm::vec3 m_LastMovement{};
 
 	private:
-		// TODO: Change to a base mesh class, we don't know what the user will have.
-		Ref<StaticMesh> m_Mesh;
+		Mesh* m_Mesh = nullptr;
+		AssetID m_MeshID = 0llu;
 
 		SharedPtr<Entity> m_CameraEntity = nullptr;
 	};

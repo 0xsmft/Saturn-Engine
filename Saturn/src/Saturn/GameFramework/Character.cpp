@@ -43,14 +43,14 @@ namespace Saturn {
 		m_MouseSensitivity = 3.0f;
 		m_MouseUpMovement = 0.0f;
 
-		AddComponent<StaticMeshComponent>();
 		AddComponent<CharacterMovementComponent>();
 		AddComponent<AudioListenerComponent>();
 	}
 
 	Character::~Character()
 	{
-		GetScene()->RemoveController( m_PlayerInputController );
+		if( m_PlayerInputController )
+			GetScene()->RemoveController( m_PlayerInputController );
 
 		m_PlayerInputController = nullptr;
 		m_CameraEntity = nullptr;
@@ -108,6 +108,13 @@ namespace Saturn {
 
 			m_LastMousePos = Input::Get().MousePosition();
 		}
+
+		const auto& camera = m_CameraEntity->GetComponent<CameraComponent>().Camera;
+		auto rotation = m_CameraEntity->GetLocalRotation();
+		rotation.x = camera->GetPitch();
+		rotation.y = glm::pi<float>() - camera->GetYaw();
+
+		m_CameraEntity->SetRotation( rotation );
 	}
 
 	void Character::OnPhysicsUpdate( Timestep ts )
@@ -128,6 +135,11 @@ namespace Saturn {
 
 			glm::vec3 direction = right * m_MovementDirection.x + forward * m_MovementDirection.y;
 			direction.y = 0.0f;
+
+			if( direction == glm::zero<glm::vec3>() )
+			{
+				m_MovementSpeed = 0.0f;
+			}
 
 			if( glm::length( direction ) > 0.0f )
 			{
@@ -152,7 +164,7 @@ namespace Saturn {
 		if( Input::Get().GetCursorMode() == RubyCursorMode::Locked )
 		{
 			const auto& up = TransformComponent::Up;
-			tc.SetRotation( tc.GetRotationEuler() + glm::vec3( up * m_MouseUpMovement * 0.05f ) );
+			tc.SetRotation( m_CameraEntity->GetLocalRotationQuat() );
 		}
 	}
 
@@ -168,21 +180,25 @@ namespace Saturn {
 
 	void Character::MoveForward()
 	{
+		m_MovementSpeed = 5.0f;
 		m_MovementDirection.y = 1.0f;
 	}
 
 	void Character::MoveBack()
 	{
+		m_MovementSpeed = 5.0f;
 		m_MovementDirection.y = -1.0f;
 	}
 
 	void Character::MoveLeft()
 	{
+		m_MovementSpeed = 5.0f;
 		m_MovementDirection.x = -1.0f;
 	}
 
 	void Character::MoveRight()
 	{
+		m_MovementSpeed = 5.0f;
 		m_MovementDirection.x = 1.0f;
 	}
 
@@ -208,12 +224,20 @@ namespace Saturn {
 
 	void Character::StartSprint()
 	{
+		m_Sprinting = true;
 		m_MovementSpeed = 12.0f;
 	}
 
 	void Character::EndSprint()
 	{
-		m_MovementSpeed = 5.0f;
+		if( m_MovementDirection != glm::zero<glm::vec2>() )
+		{
+			m_MovementSpeed = 5.0f;
+		}
+		else
+			m_MovementSpeed = 0.0f;
+
+		m_Sprinting = false;
 	}
 
 }

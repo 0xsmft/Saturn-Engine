@@ -210,7 +210,7 @@ namespace Saturn {
 		m_Name = std::format( "{0}##{1}", m_Asset->Name, ( uint64_t ) m_Asset->ID );
 		
 		auto texture = m_Asset->GetTexture();
-		m_TextureDisplaySize = { texture->Width() * 0.5f, texture->Height() * 0.5f };
+		m_TextureDisplaySize = glm::min( glm::vec2{ texture->Width() * 0.5f, texture->Height() * 0.5f }, glm::vec2{ 512.0f } );
 
 		m_Open = true;
 	}

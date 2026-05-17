@@ -80,7 +80,12 @@ namespace Saturn {
 
 	SharedPtr<NodeEditorNodeBase> AnimGraph::SetupNewNodeEditor()
 	{
-		return AnimGraphNodeLibrary::SpawnOutputNode( SharedFromThis() );
+		ed::SetCurrentEditor( m_Editor );
+
+		auto node = AnimGraphNodeLibrary::SpawnOutputNode( SharedFromThis() );
+		ed::SetNodePosition( ed::NodeId( node->ID ), { 0.0f, 0.0f } );
+
+		return node;
 	}
 
 	AnimGraph::AnimGraphSortMap AnimGraph::TraverseAndCreateTasks()

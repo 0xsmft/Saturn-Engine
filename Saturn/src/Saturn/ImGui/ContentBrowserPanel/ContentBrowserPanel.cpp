@@ -784,10 +784,10 @@ namespace Saturn {
 
 				asset->SetAbsolutePath( newPath );
 
-				SharedPtr<AnimGraph> behaviourTree = SharedPtr<AnimGraph>::Create( id );
-				behaviourTree->SetupNewNodeEditor();
-				behaviourTree->NcSetCustomName( newPath.filename().string() );
-				behaviourTree->SaveAndMarkClean();
+				SharedPtr<AnimGraph> animGraph = SharedPtr<AnimGraph>::Create( id );
+				animGraph->SetupNewNodeEditor();
+				animGraph->NcSetCustomName( newPath.filename().string() );
+				animGraph->SaveAndMarkClean();
 
 				AssetManager::Get()->Save();
 

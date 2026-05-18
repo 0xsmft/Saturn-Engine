@@ -79,6 +79,20 @@ namespace Saturn {
 		//  Use WaitUntilLoaded for safety.
 		Ref<Sound> RequestNewSound( AssetID ID, UUID UniquePlayerID = Saturn::UUID(), bool PlayNow = true, Ref<SoundGroup> soundGroup = nullptr );
 
+		//
+		// Play a new Sound2D and forget about it.
+		// 
+		// @param rAssetName -- the name of the SoundSpec asset to be played.
+		//
+		void FireAndForget( const std::string& rAssetName );
+
+		//
+		// Play a new Sound2D and forget about it.
+		// 
+		// @param id -- the AssetID of the SoundSpec asset to be played.
+		//
+		void FireAndForget( AssetID id );
+
 		// Loads a new spatialised sound to be played.
 		// Set index == 1
 		// WARNING:

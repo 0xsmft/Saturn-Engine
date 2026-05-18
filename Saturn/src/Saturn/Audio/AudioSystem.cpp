@@ -245,6 +245,20 @@ namespace Saturn {
 		return newSound;
 	}
 
+	void AudioSystem::FireAndForget( const std::string& rAssetName )
+	{
+		auto asset = AssetManager::Get()->FindAsset( rAssetName );
+		if( asset )
+		{
+			FireAndForget( asset->ID );
+		}
+	}
+
+	void AudioSystem::FireAndForget( AssetID id )
+	{
+		RequestNewSound( id, UUID() );
+	}
+
 	Ref<Sound> AudioSystem::PlaySoundAtLocation( AssetID ID, UUID UniquePlayerID, const glm::vec3& rPos, bool PlayNow /*= true */, Ref<SoundGroup> soundGroup /* = nullptr */ )
 	{
 		// Load the sound spec.

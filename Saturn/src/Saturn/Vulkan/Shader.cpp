@@ -404,6 +404,7 @@ namespace Saturn {
 			std::copy( m_FileContents.begin(), m_FileContents.end(), std::back_inserter( FileCopy ) );
 			
 			const size_t TypeTokenEnd = FileCopy.find( "\r\n", TypeTokenPosition );
+			SAT_CORE_ASSERT( TypeTokenEnd != std::string::npos, "Shader must be CRLF!" );
 
 			const size_t Begin = TypeTokenPosition + TypeTokenLength + 1;
 

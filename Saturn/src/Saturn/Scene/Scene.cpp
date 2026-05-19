@@ -1245,11 +1245,6 @@ namespace Saturn {
 
 		CreatePhysicsScene();
 
-		for( auto&& [id, entity] : m_EntityIDMap )
-		{
-			entity->BeginPlay();
-		}
-
 		// Init new scene camera
 		m_pMainCameraEntity = GetMainCameraEntity( true );
 
@@ -1268,6 +1263,11 @@ namespace Saturn {
 		StartAudioPlayers();
 		StartAnimations();
 		StartBehaviourTrees();
+
+		for( auto&& [id, entity] : m_EntityIDMap )
+		{
+			entity->BeginPlay();
+		}
 
 		m_RuntimeState = RuntimeState::Running;
 

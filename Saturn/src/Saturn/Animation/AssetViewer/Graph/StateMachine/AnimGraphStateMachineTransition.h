@@ -28,28 +28,49 @@
 
 #pragma once
 
-#include "Saturn/NodeEditor/NodeEditorBlueprintNode.h"
+#include "Saturn/NodeEditor/NodeEditorTaskBase.h"
 
 namespace Saturn {
 
-	SCLASS()
-	class AnimGraphStateMachinePlayerNode : public NodeEditorBlueprintNode
+	SCLASS();
+	class AnimGraphStateMachineTransitionTask : public NodeEditorTaskBase
 	{
-		SAT_DECLARE_CLASS( AnimGraphStateMachinePlayerNode, NodeEditorBlueprintNode );
+		SAT_DECLARE_CLASS( AnimGraphStateMachineTransitionTask, NodeEditorTaskBase );
 	public:
-		AnimGraphStateMachinePlayerNode();
-		AnimGraphStateMachinePlayerNode( const std::string& rName );
-		virtual ~AnimGraphStateMachinePlayerNode();
+		AnimGraphStateMachineTransitionTask();
+		virtual ~AnimGraphStateMachineTransitionTask();
 
-		// PostPlace is only ever called after the node as been "placed", placed means it was clicked from the right-click options and the created.
-		// This function does not get called when the node deserialises as this information would already exist.
-		// In the case of a state machine player, it will create the entry node and call it's PostPlace.
-		void PostPlace();
+#if !defined(SAT_DIST)
+		virtual void PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode ) override;
+#endif
 
-		virtual NodeEditorTaskBase* ConvertToTask() override;
+		virtual NodeEditorTaskState Tick( Timestep ts ) override;
+
+		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther ) override;
+		virtual void Reset() override;
+		virtual void Serialise( std::ofstream& rStream ) const override;
+		virtual void Deserialise( FDependentIStream& rStream ) override;
+
+	public:
+		UUID GetSourceID() const { return m_Source; }
+		UUID GetDestinationID() const { return m_Destination; }
+
+#if !defined(SAT_DIST)
+	private:
+		void SortTsNodesAndConvertToTasks( NodeEditor* pEditor, UUID startingID );
+#endif
 
 	private:
-		void CreateNode();
-	};
+		// The State that we transition OUT of.
+		UUID m_Source = 0;
 
+		// The State that we transition IN TO of.
+		UUID m_Destination = 0;
+
+		size_t m_CurrentTaskIndex = 0llu;
+
+		// Tasks need for us to determine if we should transition or not.
+		std::vector<Ref<NodeEditorTaskBase>> m_InnerTasks;
+	};
+	
 }

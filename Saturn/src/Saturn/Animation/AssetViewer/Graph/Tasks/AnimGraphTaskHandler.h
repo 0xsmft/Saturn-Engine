@@ -48,7 +48,13 @@ namespace Saturn {
 	public:
 		Ref<Animator> GetAnimator() const;
 
+	protected:
+		virtual void OnInit() override;
+
 	private:
+		std::unordered_map<UUID, std::vector<Ref<SGraphTask>>> m_TasksIndexed;
+		size_t m_LocalTransitionIndex = 0;
+
 		Ref<Animator> m_Animator;
 	};
 	

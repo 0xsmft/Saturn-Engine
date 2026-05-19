@@ -97,7 +97,10 @@ namespace Saturn {
 
 	NodeEditorTaskState AnimGraphTransitionResultTask::Tick( Timestep ts )
 	{
-		return *m_Result ? NodeEditorTaskState::Completed : NodeEditorTaskState::Running;
+		if( !m_Result )
+			return NodeEditorTaskState::TransitionCannotTransition;
+
+		return *m_Result ? NodeEditorTaskState::TransitionShouldTransition : NodeEditorTaskState::TransitionCannotTransition;
 	}
 
 	void AnimGraphTransitionResultTask::Reset()

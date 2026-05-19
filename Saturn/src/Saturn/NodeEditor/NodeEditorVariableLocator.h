@@ -28,10 +28,13 @@
 
 #pragma once
 
-#include "NodeEditorVariable.h"
-
 namespace Saturn {
 
+	//
+	// Pointer to a variable
+	// 
+	// If NodeEditorVariableLocator owns the variable then it will be allocated on the heap and this class will delete it when it goes out of scope.
+	//
 	class NodeEditorVariableLocator
 	{
 	public:

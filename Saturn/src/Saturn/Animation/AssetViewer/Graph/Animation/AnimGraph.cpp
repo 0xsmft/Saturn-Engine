@@ -52,6 +52,9 @@
 // TASKS
 #include "Saturn/Animation/AssetViewer/Graph/Tasks/GraphTask.h"
 
+#include "Saturn/Animation/AssetViewer/Graph/StateMachine/AnimGraphStateMachineState.h"
+#include "Saturn/Animation/AssetViewer/Graph/StateMachine/AnimGraphStateMachineTask.h"
+
 #include "Saturn/NodeEditor/NodeEditorVariableNode.h"
 #include "Saturn/NodeEditor/NodeEditorHintNode.h"
 
@@ -110,14 +113,20 @@ namespace Saturn {
 				if( !parentToChildren[ 0llu ].size() )
 				{
 					resultToChildren[ 0llu ].pGraphTask = NewObject<SGraphTask>( this );
+					resultToChildren[ 0llu ].pGraphTask->SetDebugName( "Root SG" );
 				}
 			}
 		}
 
 		// Anim Graph
 		SortAnimGraph( resultToChildren );
-		// Entry point of state machine
-		SortStateMachineEntry( resultToChildren );
+
+		auto& rGraphTaskInfo = resultToChildren[ UUID( 0 ) ];
+
+		auto task = ( AnimGraphStateMachineTask* ) rGraphTaskInfo.pGraphTask->GetTasks()[ 0 ].pTask;
+
+		// Entry point of state machine then the rest of the state machine
+		SortStateMachineEntry( task );
 
 		return resultToChildren;
 	}
@@ -137,7 +146,11 @@ namespace Saturn {
 			const UUID subGraphID = currentNode->pParentObject ? currentNode->pParentObject->ID : UUID( 0 );
 			auto& rInfo = rMap[ subGraphID ];
 			
-			rInfo.pGraphTask->AddTask( currentID, currentNode->ConvertToTask() );
+			auto* pTask = currentNode->ConvertToTask();
+			if( pTask )
+			{
+				rInfo.pGraphTask->AddTask( currentID, pTask );
+			}
 
 			// Find neighbors from inputs and continue until there is no neighbors
 			for( const auto& rNeighbor : FindNeighborsRight( currentNode ) )
@@ -147,11 +160,12 @@ namespace Saturn {
 		}
 	}
 
-	void AnimGraph::SortStateMachineEntry( AnimGraphSortMap& rMap )
+	void AnimGraph::SortStateMachineEntry( AnimGraphStateMachineTask* pStateMachine )
 	{
 		auto stateNode = m_StateMachineEntryNode.As<AnimGraphStateMachineStateNode>();
 
 		std::vector<UUID> visited;
+		std::vector<UUID> visitedStates;
 		std::queue<UUID> temporaryStack;
 		temporaryStack.push( stateNode->ID );
 		visited.push_back( stateNode->ID );
@@ -164,22 +178,19 @@ namespace Saturn {
 			// Find neighbors from outputs and continue until there is no neighbors.
 			SharedPtr<NodeEditorNodeBase> currentNode = FindNode( currentID );
 
-#if defined(SAT_DEBUG)
-			SAT_CORE_INFO( "{0}", currentNode->Name );
-#endif
-			// Push its sub graphs before the node it self.
-			// So imagine, we want to push a state machine, we must first push its node in the sub-graph first then the node.
-			SortTransitionNodeOrStateMachineAfterEntryRec( currentID, rMap );
-
-			// Now add this node's task.
-			auto& rGraphTask = rMap[ currentNode->pParentObject->ID ];
-			if( !rGraphTask.pGraphTask )
+			// Add state machine task only if we are a state node, because we may be a transition node.
+			if( currentNode->GetClass() == AnimGraphStateMachineStateNode::StaticClass() )
 			{
-				rGraphTask.pGraphTask = NewObject<SGraphTask>( this );
-			}
+				if( std::find( visitedStates.begin(), visitedStates.end(), currentID ) == visitedStates.end() )
+				{
+					AnimGraphStateMachineState* pState = NewObject<AnimGraphStateMachineState>( nullptr );
+					pState->PreInitialiseTask( this, currentNode.Get() );
 
-			rGraphTask.Node = currentNode;
-			rGraphTask.pGraphTask->AddTask( currentID, currentNode->ConvertToTask() );
+					pStateMachine->AddState( pState );
+
+					visitedStates.push_back( currentID );
+				}
+			}
 
 			const auto& rNeighbours = FindNeighborsLeft( currentNode );
 			for( auto Itr = rNeighbours.rbegin(); Itr != rNeighbours.rend(); ++Itr )
@@ -189,50 +200,6 @@ namespace Saturn {
 					temporaryStack.push( *Itr );
 					visited.push_back( *Itr );
 				}
-			}
-		}
-	}
-
-	void AnimGraph::SortTransitionNodeOrStateMachineAfterEntryRec( UUID id, AnimGraphSortMap& rMap )
-	{
-		SharedPtr<NodeEditorNodeBase> nodeStarting = FindNode( id );
-		UUID startID = 0llu;
-
-		if( nodeStarting->GetClass() == AnimGraphStateMachineTransitionNode::StaticClass() )
-		{
-			startID = nodeStarting.As<AnimGraphStateMachineTransitionNode>()->GetOutputNodeID();
-		}
-		else if( nodeStarting->GetClass() == AnimGraphStateMachineStateNode::StaticClass() )
-		{
-			startID = nodeStarting.As<AnimGraphStateMachineStateNode>()->GetOutputNodeID();
-		}
-
-		// Push sub-graph first
-		std::stack<UUID> stack;
-		stack.push( startID );
-		while( !stack.empty() )
-		{
-			const auto currentID = stack.top();
-			stack.pop();
-
-			SharedPtr<NodeEditorNodeBase> currentNode = FindNode( currentID );
-
-			// Now add this node's task.
-			const UUID subGraphID = currentNode->pParentObject ? currentNode->pParentObject->ID : UUID( 0 );
-			auto& rGraphTask = rMap[ subGraphID ];
-			rGraphTask.Node = currentNode;
-
-			if( !rGraphTask.pGraphTask )
-			{
-				rGraphTask.pGraphTask = NewObject<SGraphTask>( this );
-			}
-
-			rGraphTask.pGraphTask->AddTask( currentID, currentNode->ConvertToTask() );
-
-			// Find neighbors from inputs and continue until there is no neighbors
-			for( const auto& rNeighbor : FindNeighborsRight( currentNode ) )
-			{
-				stack.push( rNeighbor );
 			}
 		}
 	}
@@ -482,6 +449,8 @@ namespace Saturn {
 
 					CreateLink( startNode->Outputs[ 0 ], node->Inputs[ 0 ], startNode->Outputs[ 0 ]->GetPinColor() );
 					CreateLink( node->Outputs[ 0 ], m_HoveredNode->Inputs[ 0 ], node->Outputs[ 0 ]->GetPinColor() );
+
+					node->Name = std::format( "Transition from {0} to {1}", startNode->Name, m_HoveredNode->Name );
 
 					MarkDirty();
 

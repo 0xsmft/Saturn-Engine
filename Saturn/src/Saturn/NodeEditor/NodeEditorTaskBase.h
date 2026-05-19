@@ -46,7 +46,12 @@ namespace Saturn {
 		Running,
 		Completed, // success flag
 		DebugBreakRequested,
-		Failed
+		Failed,
+
+		TransitionNotComplete,
+		TransitionCannotTransition,
+		TransitionShouldTransition,
+		TransitionShouldTransitionLast,
 	};
 
 	class NodeEditorNodeBase;
@@ -85,7 +90,15 @@ namespace Saturn {
 		[[nodiscard]] NodeEditorNodeFlags GetNodeFlags() const { return m_NodeFlags; }
 		[[nodiscard]] NodeEditorTaskState GetState() const { return m_CurrentState; }
 
+#if !defined(SAT_DIST)
+		void SetDebugName( const std::string& rName ) { m_DebugName = rName; }
+#endif
+
 	protected:
+#if !defined(SAT_DIST)
+		std::string m_DebugName;
+#endif
+
 		// The original Node ID, we need this just in case we need to access any data that is linked to a Node ID.
 		Saturn::UUID m_NodeID = 0;
 		NodeEditorTaskHandler* m_pHandler = nullptr;

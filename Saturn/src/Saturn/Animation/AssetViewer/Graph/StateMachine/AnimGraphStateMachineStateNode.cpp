@@ -35,7 +35,6 @@
 #include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 
 #include "Saturn/Animation/AssetViewer/Graph/Animation/AnimGraph.h"
-#include "Saturn/Animation/AssetViewer/Graph/Tasks/AnimGraphStateMachineStateTask.h"
 
 namespace Saturn {
 

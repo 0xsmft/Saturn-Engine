@@ -27,73 +27,117 @@
 */
 
 #include "sppch.h"
-#include "AnimGraphTaskHandler.h"
+#include "AnimGraphStateMachineTask.h"
 
-#include "GraphTask.h"
-#include "AnimGraphPlayAnimTask.h"
+#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 
-#include "Saturn/Animation/AssetViewer/Graph/Animation/AnimGraph.h"
-
-#include "Saturn/Animation/AssetViewer/Graph/Tasks/AnimGraphTransitionTasks.h"
-
-#include "Saturn/NodeEditor/NodeEditorNodeBase.h"
-#include "Saturn/NodeEditor/NodeEditorBase.h"
-
-#include "Saturn/Animation/Animator.h"
+#include "Saturn/Serialisation/Raw/RawSerialisation.h"
 
 namespace Saturn {
 
-	AnimGraphTaskHandler::AnimGraphTaskHandler( Ref<Animator> animator )
-		: m_Animator( animator )
+	AnimGraphStateMachineTask::AnimGraphStateMachineTask()
 	{
 	}
 
-	void AnimGraphTaskHandler::OnInit()
+	AnimGraphStateMachineTask::~AnimGraphStateMachineTask()
 	{
-		m_TasksIndexed.reserve( m_Tasks.size() );
+	}
 
-		for( const auto& rTask : m_Tasks )
+#if !defined(SAT_DIST)
+	void AnimGraphStateMachineTask::PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode )
+	{
+		Super::PreInitialiseTask( pEditor, pNode );
+
+		/*
+		for( auto& rState : m_States )
 		{
-			m_TasksIndexed[ rTask->GetNodeID() ].push_back( rTask.As<SGraphTask>() );
+			rState->PreInitialiseTask( pEditor, nullptr );
 		}
+		*/
 	}
+#endif
 
-	void AnimGraphTaskHandler::Tick( Timestep ts )
+	void AnimGraphStateMachineTask::InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther )
 	{
-		if( !m_CurrentTask )
-		{
-			++m_CurrentTaskIndex;
-			if( m_CurrentTaskIndex >= m_Tasks.size() )
-			{
-				// At end, restart from the root.
-				ResetAllTasks();
+		Super::InitialiseTaskWithOther( pHandler, pOther );
 
-				SAT_CORE_INFO( "Task Handler, completed" );
+		AnimGraphStateMachineTask* pThisOther = dynamic_cast< AnimGraphStateMachineTask* >( pOther );
+		if( pThisOther )
+		{
+			m_States.reserve( pThisOther->m_States.size() );
+
+			for( auto& rState : pThisOther->m_States )
+			{
+				AnimGraphStateMachineState* pNewState = NewObject<AnimGraphStateMachineState>( this );
+				pNewState->InitialiseTaskWithOther( pHandler, rState.Get() );
+
+				m_States.push_back( pNewState );
 			}
-		
-			m_CurrentTask = m_Tasks.at( m_CurrentTaskIndex );
 		}
 
-		if( m_CurrentTask )
+		m_CurrentTask = m_States.front();
+	}
+
+	NodeEditorTaskState AnimGraphStateMachineTask::Tick( Timestep ts )
+	{
+		const auto status = m_CurrentTask->Tick( ts );
+
+		switch( status )
 		{
-			const auto status = m_CurrentTask->Tick( ts );
-			switch( status )
+			case NodeEditorTaskState::TransitionShouldTransition:
 			{
-				// Completed? move on to the next sub-graph.
-				case NodeEditorTaskState::Completed:
+				auto itr = std::find_if( m_States.begin(), m_States.end(),
+					[ this ]( const auto task )
 				{
-					m_CurrentTask = nullptr;
-				} break;
+					return task->GetNodeID() == m_CurrentTask->GetNextState();
+				} );
 
-				default:
-					break;
-			}
+				if( itr != m_States.end() )
+					m_CurrentTask = *itr;
+			} break;
+
+			default:
+				break;
+		}
+
+		return NodeEditorTaskState::Completed;
+	}
+
+	void AnimGraphStateMachineTask::Reset()
+	{
+	}
+
+	void AnimGraphStateMachineTask::Serialise( std::ofstream& rStream ) const
+	{
+		Super::Serialise( rStream );
+
+		RawSerialisation::WriteObject( m_States.size(), rStream );
+		for( const auto& rState : m_States )
+		{
+			rState->Serialise( rStream );
 		}
 	}
 
-	Ref<Animator> AnimGraphTaskHandler::GetAnimator() const
+	void AnimGraphStateMachineTask::Deserialise( FDependentIStream& rStream )
 	{
-		return m_Animator;
+		Super::Deserialise( rStream );
+
+		size_t size = 0llu;
+		RawSerialisation::ReadObject( size, rStream );
+		
+		m_States.reserve( size );
+
+		for( size_t i = 0; i < size; ++i )
+		{
+			AnimGraphStateMachineState* pNewState = NewObject<AnimGraphStateMachineState>( this );
+			pNewState->Deserialise( rStream );
+
+			m_States.push_back( pNewState );
+		}
 	}
 
 }
+
+#include "Saturn/GameFramework/Core/EngineGenerated.h"
+
+SAT_X31_CREATE_AUTO_REG( AnimGraphStateMachineTask );

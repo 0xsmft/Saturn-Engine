@@ -28,12 +28,13 @@
 
 #pragma once
 
+#include "NodeEditorVariableLocator.h"
+
 #include "Saturn/GameFramework/SClass.h"
 #include "Saturn/Serialisation/Raw/RawSerialisationBase.h"
 #include "Saturn/Core/UUID.h"
 
 #include <glm/glm.hpp>
-#include <variant>
 
 namespace Saturn {
 
@@ -71,34 +72,19 @@ namespace Saturn {
 		}
 	}
 
-	using NodeEditorVariableTypes = std::variant<
-		std::monostate, // null state!
-		float,
-		int,
-		uint64_t, // ID (UUID, AssetID, etc)
-		bool, 
-		glm::vec2,
-		glm::vec3,
-		glm::vec4,
-		SClass*,
-		std::string>;
-
 	//
 	// NodeEditorVariable
 	// 
 	// Represents a user defined "variable" in the NodeEditor.
 	// 
 	// For example, the user in an AnimGraph may define "IsInAir" as a variable.
-	// 
-	// The value of the variable is stored in a type safe union i.e. std::variant.
 	//
 	class NodeEditorVariable : public RefTarget
 	{
 	public:
 		NodeEditorVariable() = default;
 		NodeEditorVariable( const NodeEditorVariable* pOther ) 
-			: m_Value( pOther->m_Value ),
-			m_Name( pOther->m_Name ),
+			: m_Name( pOther->m_Name ),
 			m_VariableID( pOther->m_VariableID ),
 			m_DataType( pOther->m_DataType )
 		{
@@ -112,27 +98,25 @@ namespace Saturn {
 		template<typename TCppType>
 		typename const TCppType Get() const 
 		{
-			if( HoldsProperType() )
-				return std::get<TCppType>( m_Value );
+			SAT_CORE_ASSERT( CheckTypeSafety() );
 
-			return TCppType{};
+			return *( TCppType* ) m_Data.Get();
 		}
 
 		template<typename TCppType>
 		typename TCppType* GetPtr()
 		{
-			if( HoldsProperType() )
-				return std::get_if<TCppType>( &m_Value );
+			SAT_CORE_ASSERT( CheckTypeSafety() );
 
-			return nullptr;
+			return ( TCppType* ) m_Data.Get();
 		}
 
 		template<typename TCppType>
-		void Set( TCppType value );
-
-		[[nodiscard]] inline bool HoldsProperType() const 
+		void Set( TCppType* pType ) 
 		{
-			return !std::holds_alternative<std::monostate>( m_Value );
+			SAT_CORE_ASSERT( CheckTypeSafety() );
+
+			m_Data.Set( pType );
 		}
 
 	public:
@@ -145,8 +129,11 @@ namespace Saturn {
 		const std::string& GetName() const { return m_Name; }
 
 	private:
-		NodeEditorVariableTypes m_Value;
+		bool CheckTypeSafety() const { return true; }
+
+	private:
 		std::string m_Name;
+		NodeEditorVariableLocator m_Data;
 		Saturn::UUID m_VariableID;
 		NodeEditorVariableDataType m_DataType = NodeEditorVariableDataType::Unknown;
 
@@ -154,18 +141,4 @@ namespace Saturn {
 		friend class NodeEditor;
 	};
 
-#define SAT_NODE_EDITOR_VAR_CREATE_SET_FN( TCppType )					\
-template<>																\
-inline void NodeEditorVariable::Set<TCppType>( TCppType val )			\
-{																		\
-m_Value = val;															\
-}	
-
-	SAT_NODE_EDITOR_VAR_CREATE_SET_FN( float );
-	SAT_NODE_EDITOR_VAR_CREATE_SET_FN( int );
-	SAT_NODE_EDITOR_VAR_CREATE_SET_FN( uint64_t );
-	SAT_NODE_EDITOR_VAR_CREATE_SET_FN( bool );
-	SAT_NODE_EDITOR_VAR_CREATE_SET_FN( glm::vec2 );
-	SAT_NODE_EDITOR_VAR_CREATE_SET_FN( glm::vec3 );
-	SAT_NODE_EDITOR_VAR_CREATE_SET_FN( glm::vec4 );
 }

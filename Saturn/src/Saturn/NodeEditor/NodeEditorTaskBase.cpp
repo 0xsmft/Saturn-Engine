@@ -42,6 +42,9 @@ namespace Saturn {
 		{
 			m_NodeFlags = ( NodeEditorNodeFlags ) pNode->Flags;
 			m_NodeID = pNode->ID;
+			
+			if( m_DebugName.empty() )
+				m_DebugName = pNode->Name;
 		}
 	}
 #endif
@@ -51,16 +54,25 @@ namespace Saturn {
 		m_pHandler = pHandler;
 		m_NodeID = pOther->m_NodeID;
 		m_NodeFlags = pOther->m_NodeFlags;
+		m_DebugName = pOther->m_DebugName;
 	}
 
 	void NodeEditorTaskBase::Serialise( std::ofstream& rStream ) const
 	{
+		RawSerialisation::WriteString( m_DebugName, rStream );
+
 		RawSerialisation::WriteObject( m_NodeID, rStream );
 		RawSerialisation::WriteObject( m_NodeFlags, rStream );
 	}
 
 	void NodeEditorTaskBase::Deserialise( FDependentIStream& rStream )
 	{
+#if !defined(SAT_DIST)
+		m_DebugName = RawSerialisation::ReadString( rStream );
+#else
+		RawSerialisation::ReadString( rStream );
+#endif
+
 		RawSerialisation::ReadObject( m_NodeID, rStream );
 		RawSerialisation::ReadObject( m_NodeFlags, rStream );
 	}

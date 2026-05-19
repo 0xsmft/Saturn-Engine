@@ -42,9 +42,6 @@ namespace Saturn {
 
 		~AnimGraphTransitionGraphResultNode();
 
-	public:
-		//////////////////////////////////////////////////////////////////////////
-		// NODE EDITOR NODE BASE
 		virtual NodeEditorTaskBase* ConvertToTask() override;
 
 	private:

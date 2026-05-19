@@ -40,8 +40,6 @@ namespace Saturn {
 		AnimGraphOutputNode();
 		virtual ~AnimGraphOutputNode();
 
-		virtual NodeEvaluationState EvaluateNode( NodeEditorRuntime* pEvaluator ) { return NodeEvaluationState::Evaluated; }
-
 	private:
 		void CreateNode();
 	};

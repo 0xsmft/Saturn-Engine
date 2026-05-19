@@ -37,146 +37,16 @@ namespace Saturn {
 
 	void NodeEditorVariable::Serialise( const Ref<NodeEditorVariable>& rObject, std::ofstream& rStream )
 	{
+		RawSerialisation::WriteString( rObject->m_Name, rStream );
 		RawSerialisation::WriteObjectChecked( rObject->m_VariableID, rStream );
 		RawSerialisation::WriteObjectChecked( rObject->m_DataType, rStream );
-
-		// Value
-		switch( rObject->m_DataType )
-		{
-			case NodeEditorVariableDataType::Float:
-			{
-				const auto value = rObject->Get<float>();
-				RawSerialisation::WriteObjectChecked( value, rStream );
-			} break;
-
-			case NodeEditorVariableDataType::Int:
-			{
-				const auto value = rObject->Get<int>();
-				RawSerialisation::WriteObjectChecked( value, rStream );
-			} break;
-
-			case NodeEditorVariableDataType::Bool:
-			{
-				const auto value = rObject->Get<bool>();
-				RawSerialisation::WriteObjectChecked( value, rStream );
-			} break;
-
-			case NodeEditorVariableDataType::Vec2:
-			{
-				const auto value = rObject->Get<glm::vec2>();
-				RawSerialisation::WriteVec2( value, rStream );
-			} break;
-
-			case NodeEditorVariableDataType::Vec3:
-			{
-				const auto value = rObject->Get<glm::vec3>();
-				RawSerialisation::WriteVec3( value, rStream );
-			} break;
-
-			case NodeEditorVariableDataType::Vec4:
-			{
-				const auto value = rObject->Get<glm::vec4>();
-				RawSerialisation::WriteObjectChecked( value, rStream );
-			} break;
-
-			case NodeEditorVariableDataType::Class:
-			{
-				const auto pClass = rObject->Get<SClass*>();
-				RawSerialisation::WriteObjectChecked( pClass->GetHash(), rStream );
-			} break;
-
-			case NodeEditorVariableDataType::String:
-			{
-				const auto value = rObject->Get<std::string>();
-				RawSerialisation::WriteString( value, rStream );
-			} break;
-
-			case NodeEditorVariableDataType::Unknown:
-			default: break;
-		}
-
-		RawSerialisation::WriteString( rObject->m_Name, rStream );
 	}
 
 	void NodeEditorVariable::Deserialise( Ref<NodeEditorVariable>& rObject, FDependentIStream& rStream )
 	{
+		rObject->m_Name = RawSerialisation::ReadString( rStream );
 		RawSerialisation::ReadObjectChecked( rObject->m_VariableID, rStream );
 		RawSerialisation::ReadObjectChecked( rObject->m_DataType, rStream );
-		
-		// Value
-		switch( rObject->m_DataType )
-		{
-			case NodeEditorVariableDataType::Float:
-			{
-				float value = 0.0f;
-				RawSerialisation::ReadObjectChecked( value, rStream );
-
-				rObject->m_Value = value;
-			} break;
-
-			case NodeEditorVariableDataType::Int:
-			{
-				int value = 0u;
-				RawSerialisation::ReadObjectChecked( value, rStream );
-
-				rObject->m_Value = value;
-			} break;
-
-			case NodeEditorVariableDataType::Bool:
-			{
-				bool value = false;
-				RawSerialisation::ReadObjectChecked( value, rStream );
-
-				rObject->m_Value = value;
-			} break;
-
-			case NodeEditorVariableDataType::Vec2:
-			{
-				glm::vec2 value{};
-				RawSerialisation::ReadObjectChecked( value, rStream );
-
-				rObject->m_Value = value;
-			} break;
-
-			case NodeEditorVariableDataType::Vec3:
-			{
-				glm::vec3 value{};
-				RawSerialisation::ReadObjectChecked( value, rStream );
-
-				rObject->m_Value = value;
-			} break;
-
-			case NodeEditorVariableDataType::Vec4:
-			{
-				glm::vec4 value{};
-				RawSerialisation::ReadObjectChecked( value, rStream );
-
-				rObject->m_Value = value;
-			} break;
-
-			case NodeEditorVariableDataType::Class:
-			{
-				uint64_t classHash = 0llu;
-				RawSerialisation::ReadObjectChecked( classHash, rStream );
-			
-				// WARNING: TODO: Shouldn't be calling RFastCheckClass
-				SClass* pClass = ClassMetadataHandler::Get().RFastCheckClass( classHash );
-				rObject->m_Value = pClass;
-			} break;
-
-			case NodeEditorVariableDataType::String:
-			{
-				std::string value{};
-				value  = RawSerialisation::ReadString( rStream );
-
-				rObject->m_Value = value;
-			} break;
-
-			case NodeEditorVariableDataType::Unknown:
-			default: break;
-		}
-
-		rObject->m_Name = RawSerialisation::ReadString( rStream );
 	}
 	
 }

@@ -51,10 +51,13 @@ namespace Saturn {
 		virtual void Render( ax::NodeEditor::Utilities::BlueprintNodeBuilder& rBuilder ) override;
 
 	public:
+		// The Final result of the animation of this state, also allows us to gain access to the sub-graph.
 		UUID GetOutputNodeID() const { return m_OutputNodeID; }
 
 	private:
 		void CreateNode();
+
+		// The Final result of the animation of this state, also allows us to gain access to the sub-graph.
 		UUID m_OutputNodeID = 0;
 	};
 

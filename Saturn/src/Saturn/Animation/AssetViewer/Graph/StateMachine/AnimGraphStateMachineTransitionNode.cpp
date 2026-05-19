@@ -35,7 +35,7 @@
 #include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 
 #include "Saturn/Animation/AssetViewer/Graph/Animation/AnimGraph.h"
-#include "Saturn/Animation/AssetViewer/Graph/Tasks/AnimGraphTransitionTasks.h"
+#include "Saturn/Animation/AssetViewer/Graph/StateMachine/AnimGraphStateMachineTransition.h"
 
 #include "Saturn/NodeEditor/NodeEditorBase.h"
 
@@ -169,8 +169,7 @@ namespace Saturn {
 
 	NodeEditorTaskBase* AnimGraphStateMachineTransitionNode::ConvertToTask()
 	{
-//		return NewObject<AnimGraphTransitionTask>();
-		return nullptr;
+		return NewObject<AnimGraphStateMachineTransitionTask>( nullptr );
 	}
 
 }

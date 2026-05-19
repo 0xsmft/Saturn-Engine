@@ -26,31 +26,44 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "AnimGraphStateMachineStateTask.h"
+#pragma once
+
+#include "AnimGraphStateMachineState.h"
 
 namespace Saturn {
 
-	AnimGraphStateMachineStateTask::AnimGraphStateMachineStateTask()
+	//
+	// AnimGraphStateMachineTask
+	// 
+	// Represents the state machine as a whole.
+	// 
+	// It holds a list of all States.
+	//
+	SCLASS()
+	class AnimGraphStateMachineTask : public NodeEditorTaskBase
 	{
-	}
+		SAT_DECLARE_CLASS( AnimGraphStateMachineTask, NodeEditorTaskBase );
+	public:
+		AnimGraphStateMachineTask();
+		virtual ~AnimGraphStateMachineTask();
 
-	AnimGraphStateMachineStateTask::~AnimGraphStateMachineStateTask()
-	{
-	}
+#if !defined(SAT_DIST)
+		virtual void PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode ) override;
+#endif
+		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther ) override;
+		virtual NodeEditorTaskState Tick( Timestep ts ) override;
+		virtual void Reset() override;
+		virtual void Serialise( std::ofstream& rStream ) const override;
+		virtual void Deserialise( FDependentIStream& rStream ) override;
 
-	NodeEditorTaskState AnimGraphStateMachineStateTask::Tick( Timestep ts )
-	{
-		return NodeEditorTaskState::Completed;
-	}
+	public:
+		void AddState( Ref<AnimGraphStateMachineState> state ) { m_States.push_back( state ); }
 
-	void AnimGraphStateMachineStateTask::Reset()
-	{
-
-	}
+	private:
+		std::vector<Ref<AnimGraphStateMachineState>> m_States;
+		
+		Ref<AnimGraphStateMachineState> m_CurrentTask = nullptr;
+		size_t m_CurrentStateIndex = 0llu;
+	};
 
 }
-
-#include "Saturn/GameFramework/Core/EngineGenerated.h"
-
-SAT_X31_CREATE_AUTO_REG( AnimGraphStateMachineStateTask );

@@ -57,7 +57,7 @@ namespace Saturn {
 		SAT_DECLARE_CLASS( AnimGraphTransitionResultTask, NodeEditorTaskBase );
 	public:
 		AnimGraphTransitionResultTask();
-		~AnimGraphTransitionResultTask();
+		virtual ~AnimGraphTransitionResultTask();
 
 #if !defined(SAT_DIST)
 		virtual	void PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode ) override;

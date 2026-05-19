@@ -233,4 +233,9 @@ namespace Saturn {
 		return ts;
 	}
 
+	Ref<AnimationController> Animator::GetAnimGraph() const
+	{
+		return m_AnimationControllerAsset;
+	}
+
 }

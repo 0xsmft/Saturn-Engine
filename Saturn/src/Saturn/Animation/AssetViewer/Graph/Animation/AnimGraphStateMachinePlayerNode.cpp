@@ -35,6 +35,10 @@
 #include "Saturn/Animation/AssetViewer/Graph/StateMachine/StateMachineNodeLibrary.h"
 #include "Saturn/Animation/AssetViewer/Graph/StateMachine/AnimGraphStateMachineStateNode.h"
 
+#include "Saturn/Animation/AssetViewer/Graph/StateMachine/AnimGraphStateMachineTask.h"
+
+#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
+
 namespace Saturn {
 
 	AnimGraphStateMachinePlayerNode::AnimGraphStateMachinePlayerNode()
@@ -77,6 +81,12 @@ namespace Saturn {
 			entryNode->PostPlace();
 		}
 	}
+
+	NodeEditorTaskBase* AnimGraphStateMachinePlayerNode::ConvertToTask()
+	{
+		return NewObject<AnimGraphStateMachineTask>( nullptr );
+	}
+
 }
 
 #include "Saturn/GameFramework/Core/EngineGenerated.h"

@@ -93,6 +93,8 @@ namespace Saturn {
 			m_Animator->m_SingleAnimationAsset = m_AnimationAsset;
 			m_Animator->m_Context.initialize( *static_cast< const acl::compressed_tracks* >( m_AnimationAsset->GetData() ) );
 			m_Animator->TickSingleAnim( 0.0f );
+	
+			SAT_CORE_INFO( "Ticking Animation: {0}", m_AnimationAsset->Name );
 		}
 
 		m_CurrentState = NodeEditorTaskState::Completed;

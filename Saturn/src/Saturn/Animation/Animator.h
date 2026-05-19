@@ -39,7 +39,7 @@
 
 namespace Saturn {
 
-	enum class AnimationState 
+	enum class AnimationState : uint8_t
 	{
 		NotInitialised, // InitAnimation not called
 		Inactive, // InitAnimation called awaiting Play or Pause
@@ -87,6 +87,8 @@ namespace Saturn {
 		float GetPlaybackSpeed() const { return m_PlaybackSpeed; }
 		float GetCurrentAnimTime() const { return m_AnimationTime; }
 		AnimationState GetAnimationState() const { return m_State; }
+
+		Ref<AnimationController> GetAnimGraph() const;
 
 	private:
 		void TickSingleAnim( Timestep ts );

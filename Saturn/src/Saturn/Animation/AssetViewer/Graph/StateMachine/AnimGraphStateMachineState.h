@@ -28,23 +28,47 @@
 
 #pragma once
 
-#include "Saturn/NodeEditor/NodeEditorTaskBase.h"
+#include "AnimGraphStateMachineTransition.h"
 
 namespace Saturn {
 
 	SCLASS()
-	class AnimGraphStateMachineStateTask : public NodeEditorTaskBase
+	class AnimGraphStateMachineState : public NodeEditorTaskBase
 	{
-		SAT_DECLARE_CLASS( AnimGraphStateMachineStateTask, NodeEditorTaskBase )
+		SAT_DECLARE_CLASS( AnimGraphStateMachineState, NodeEditorTaskBase );
 	public:
-		AnimGraphStateMachineStateTask();
-		~AnimGraphStateMachineStateTask();
+		AnimGraphStateMachineState();
+		virtual ~AnimGraphStateMachineState();
+
+#if !defined(SAT_DIST)
+		virtual void PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode ) override;
+#endif
+
+		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther ) override;
+
+		virtual	NodeEditorTaskState Tick( Timestep ts ) override;
+
+		virtual void Reset() override;
+
+		virtual void Serialise( std::ofstream& rStream ) const override;
+		virtual void Deserialise( FDependentIStream& rStream ) override;
 
 	public:
-		//////////////////////////////////////////////////////////////////////////
-		// NODE EDITOR TASK BASE
-		virtual NodeEditorTaskState Tick( Timestep ts ) override;
-		virtual void Reset() override;
-	};
+		UUID GetNextState() const { return m_NextStateToTransitionOutTo; }
+
+#if !defined(SAT_DIST)
+	private:
+		void SortAnimStateNodesAndConvertToTasks( NodeEditor* pEditor, UUID startingID );
+#endif
+
+	private:
+		// Animation
+		std::vector<Ref<NodeEditorTaskBase>> m_InnerTasks;
+		
+		// Transitions out
+		std::vector<Ref<AnimGraphStateMachineTransitionTask>> m_Transitions;
 	
+		UUID m_NextStateToTransitionOutTo = 0llu;
+	};
+
 }

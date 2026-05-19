@@ -150,6 +150,7 @@ namespace Saturn {
 
 	void SNodeEditorGetVariableTask::InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther )
 	{
+		SAT_CORE_ASSERT( pHandler );
 		Super::InitialiseTaskWithOther( pHandler, pOther );
 	
 		SNodeEditorGetVariableTask* pThisOther = dynamic_cast< SNodeEditorGetVariableTask* >( pOther );
@@ -157,23 +158,35 @@ namespace Saturn {
 		{
 			m_VariableID = pThisOther->m_VariableID;
 
-			auto var = pHandler->GetVariable( m_VariableID );
+			RefreshLocators();
+		}
+	}
 
-			switch( var->GetType() )
+	void SNodeEditorGetVariableTask::RefreshLocators() 
+	{
+		SAT_CORE_ASSERT( m_pHandler );
+
+		auto var = m_pHandler->GetVariable( m_VariableID );
+		switch( var->GetType() )
+		{
+			case NodeEditorVariableDataType::Bool:
 			{
-				case NodeEditorVariableDataType::Bool:
-				{
-					pHandler->RegisterLocator<bool>( m_NodeID, 0llu, var->GetPtr<bool>() );
-				} break;
+				m_pHandler->RegisterLocator<bool>( m_NodeID, 0llu, var->GetPtr<bool>() );
+			} break;
 
-				default:
-					break;
-			}
+			case NodeEditorVariableDataType::Float:
+			{
+				m_pHandler->RegisterLocator<float>( m_NodeID, 0llu, var->GetPtr<float>() );
+			} break;
+
+			default:
+				break;
 		}
 	}
 
 	NodeEditorTaskState SNodeEditorGetVariableTask::Tick( Timestep ts )
 	{
+		RefreshLocators();
 		return NodeEditorTaskState::Completed;
 	}
 

@@ -36,7 +36,13 @@
 namespace Saturn {
 
 	class SGraphTask;
+	class AnimGraphStateMachineTask;
 
+	//
+	// Animation Graph (Animation Controller)
+	// 
+	// This class implements the required functions and data for the AnimGraph.
+	//
 	class AnimGraph : public FDependentNodeEditorSuper
 	{
 	public:
@@ -66,6 +72,7 @@ namespace Saturn {
 		//////////////////////////////////////////////////////////////////////////
 		void SerialiseData( std::ofstream& rStream ) override;
 		void DeserialiseData( FDependentIStream& rStream ) override;
+
 	protected:
 		virtual void DrawGraph() override;
 
@@ -76,8 +83,7 @@ namespace Saturn {
 	private:
 		// Sorting
 		void SortAnimGraph( AnimGraphSortMap& rMap );
-		void SortStateMachineEntry( AnimGraphSortMap& rMap );
-		void SortTransitionNodeOrStateMachineAfterEntryRec( UUID id, AnimGraphSortMap& rMap );
+		void SortStateMachineEntry( AnimGraphStateMachineTask* pStateMachine );
 
 	private:
 		UUID m_TransitionStartNode = 0;

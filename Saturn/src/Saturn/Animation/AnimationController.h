@@ -49,6 +49,16 @@ namespace Saturn {
 
 		[[nodiscard]] Ref<Asset> GetAsset() const { return m_ControllerAsset; }
 
+		template<typename TCppType>
+		void SetVariable( const std::string& rName, TCppType* pValue ) 
+		{
+			auto var = m_TaskHandler->GetVariable( rName );
+			if( var )
+			{
+				var->Set<TCppType>( pValue );
+			}
+		}
+
 	private:
 		Ref<AnimGraphTaskHandler> m_TaskHandler;
 

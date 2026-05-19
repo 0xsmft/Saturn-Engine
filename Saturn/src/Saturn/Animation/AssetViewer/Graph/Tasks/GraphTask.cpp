@@ -29,8 +29,6 @@
 #include "sppch.h"
 #include "GraphTask.h"
 
-#include "AnimGraphTransitionTasks.h"
-
 #if !defined(SAT_DIST)
 #include "Saturn/NodeEditor/NodeEditorBase.h"
 #endif
@@ -195,25 +193,6 @@ namespace Saturn {
 				} break;
 
 				default: break;
-			}
-
-			if( pCurrentTask->pTask->GetClass() == AnimGraphTransitionResultTask::StaticClass() )
-			{
-				// Check if we should transition out.
-				const AnimGraphTransitionResultTask* pTransitionRT = ( AnimGraphTransitionResultTask* )pCurrentTask->pTask;
-				if( pTransitionRT )
-				{
-					if( pTransitionRT->GetResult() )
-					{
-#if defined(SAT_DEBUG)
-						SAT_CORE_INFO( "Transition says we should change..." );
-#endif
-
-						// Transition says we should change...
-						ResetTaskData();
-						return NodeEditorTaskState::Completed;
-					}
-				}
 			}
 		}
 

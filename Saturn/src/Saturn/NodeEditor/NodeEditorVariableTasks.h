@@ -61,8 +61,10 @@ namespace Saturn {
 		virtual void Deserialise( FDependentIStream& rStream ) override;
 
 	private:
+		void RefreshLocators();
+
+	private:
 		UUID m_VariableID = 0llu;
-		Ref<NodeEditorVariable> m_Variable;
 	};
 	
 }

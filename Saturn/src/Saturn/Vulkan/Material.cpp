@@ -225,7 +225,7 @@ namespace Saturn {
 
 		if( pendingWds.size() )
 		{
-			vkUpdateDescriptorSets( VulkanContext::Get()->GetDevice(), (uint32_t)pendingWds.size(), pendingWds.data(), 0, nullptr );
+			vkUpdateDescriptorSets( VulkanContext::Get()->GetDevice(), ( uint32_t ) pendingWds.size(), pendingWds.data(), 0, nullptr );
 		}
 	}
 

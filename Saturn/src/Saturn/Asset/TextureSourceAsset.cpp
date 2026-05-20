@@ -29,6 +29,10 @@
 #include "sppch.h"
 #include "TextureSourceAsset.h"
 
+#include "Saturn/Core/JobSystem.h"
+#include "Saturn/Core/Renderer/RenderThread.h"
+
+#include "Saturn/Vulkan/Renderer.h"
 #include "Saturn/Vulkan/Texture.h"
 
 #include "Saturn/Core/VirtualFS.h"
@@ -117,41 +121,56 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		SAT_CORE_ASSERT( std::filesystem::exists( m_AbsolutePath ), "Path does not exist!" );
 
+		// Get the width and height of the texture on the main thread.
 		int Width, Height, Channels;
+		SAT_CORE_ASSERT( stbi_info( m_AbsolutePath.string().c_str(), &Width, &Height, &Channels ), "Failed to get information about texture file." );
 
-		stbi_uc* pTextureData;
+		// Allocate dummy data.
+		uint32_t* pData = new uint32_t[ Width * Height ];
+		std::memset( pData, 0xFF80FFFF, sizeof( uint32_t ) * Width * Height );
 
-		stbi_set_flip_vertically_on_load( IsFlagSet( TextureLoadFlags_FlipVertically ) );
+		m_Texture = Ref<Texture2D>::Create( ImageFormat::RGBA8, Width, Height, pData );
 
-		m_HDR = stbi_is_hdr( m_AbsolutePath.string().c_str() );
+		// And make sure to delete it....
+		delete[] pData;
 
-		if( m_HDR )
-		{
-			SAT_CORE_INFO( "Loading HDR texture {0}", m_AbsolutePath.string() );
-			pTextureData = ( uint8_t* ) stbi_loadf( m_AbsolutePath.string().c_str(), &Width, &Height, &Channels, 4 );
-		}
-		else
-		{
-			SAT_CORE_INFO( "Loading texture {0}", m_AbsolutePath.string() );
-
-			pTextureData = stbi_load( m_AbsolutePath.string().c_str(), &Width, &Height, &Channels, 4 );
-		}
-
-		m_Width = Width;
-		m_Height = Height;
-		m_Channels = Channels;
-
-		// NOTE: We should use the proper channel count
-		//		 and stop assuming that all textures have
-		//		 an alpha channel.
-		const uint32_t ImageSize = m_Width * m_Height * 4;
-		Buffer textureBuffer = Buffer::Copy( pTextureData, static_cast<size_t>( ImageSize ) );
-		stbi_image_free( pTextureData );
-
-		m_Texture = Ref<Texture2D>::Create( ImageFormat::RGBA8, m_Width, m_Height, textureBuffer.Data );
+		// Set source ID now as well.
 		m_Texture->SetSourceID( ID );
+		
+		// Now, on the job system we load the texture and allocate the buffer.
+		JobSystem::Get().QueueJob( [ this ]()
+		{
+			int Width, Height, Channels;
+			stbi_uc* pTextureData;
 
-		textureBuffer.Free();
+			stbi_set_flip_vertically_on_load( IsFlagSet( TextureLoadFlags_FlipVertically ) );
+
+			m_HDR = stbi_is_hdr( m_AbsolutePath.string().c_str() );
+
+			if( m_HDR )
+			{
+				SAT_CORE_INFO( "Loading HDR texture {0}", m_AbsolutePath.string() );
+				pTextureData = ( uint8_t* ) stbi_loadf( m_AbsolutePath.string().c_str(), &Width, &Height, &Channels, 4 );
+			}
+			else
+			{
+				SAT_CORE_INFO( "Loading texture {0}", m_AbsolutePath.string() );
+
+				pTextureData = stbi_load( m_AbsolutePath.string().c_str(), &Width, &Height, &Channels, 4 );
+			}
+
+			m_Width = Width;
+			m_Height = Height;
+			m_Channels = Channels;
+
+			RenderThread::Get().Queue(
+				[ this, pTextureData ]() mutable
+			{
+				// CopyBuffer
+				m_Texture->CopyBufferToImageAndMips( pTextureData );
+				stbi_image_free( pTextureData );
+			} );
+		} );
 #endif
 	}
 

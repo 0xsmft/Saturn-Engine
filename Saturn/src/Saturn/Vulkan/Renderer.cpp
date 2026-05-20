@@ -523,8 +523,6 @@ namespace Saturn {
 
 			rMaterialAsset->RT_Update( wds );
 
-			VkDescriptorSet Set = rMaterialAsset->GetMaterial()->GetDescriptorSet( m_FrameCount );
-
 			// Bone index vertex push const
 			vkCmdPushConstants( 
 				CommandBuffer, 
@@ -545,8 +543,11 @@ namespace Saturn {
 				rMaterialAsset->GetPushConstantData().Data 
 			);
 
+			VkDescriptorSet Set = rMaterialAsset->GetMaterial()->GetDescriptorSet( m_FrameCount );
+
 			// Descriptor set 0, for material texture data.
 			// Descriptor set 1, for environment data.
+			// Descriptor set 2, bone vertex buffer data.
 			std::array<VkDescriptorSet, 3> DescriptorSets = {
 				Set,
 				m_RendererDescriptorSets[ m_FrameCount ],

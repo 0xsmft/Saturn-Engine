@@ -34,6 +34,8 @@ namespace Saturn {
 	{
 		TextureLoadFlags_None = 0,
 		TextureLoadFlags_FlipVertically = BIT( 0 ),
+		TextureLoadFlags_LoadOnMainThread = BIT( 1 ),
+		TextureLoadFlags_NoMips = BIT( 2 ),
 	};
 
 	enum class TextureFilteringFlags : uint8_t

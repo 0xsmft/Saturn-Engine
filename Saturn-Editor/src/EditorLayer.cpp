@@ -132,7 +132,7 @@ namespace Saturn {
 		m_PhysicsFoundation.Init();
 
 		// Editor Application should of loaded a project but if not assert.
-		SAT_CORE_ASSERT( Project::GetActiveProject(), "No project was given." );
+		SAT_CORE_VERIFY( Project::GetActiveProject(), "No project was given." );
 
 		VirtualFS::Get().MountBase( Project::GetActiveConfig().Name, Project::GetActiveProject()->GetRootDir() );
 
@@ -153,19 +153,22 @@ namespace Saturn {
 		m_SelectionManager = std::make_unique<EntitySelectionManager>();
 		m_GlobalUndoRedoGroup = Ref<GlobalUndoRedoGroup>::Create();
 
-		m_CheckerboardTexture = Ref< Texture2D >::Create( "content/textures/editor/checkerboard.tga", AddressingMode::Repeat );
+		constexpr TextureLoadFlags DEFAULT_TEXTURE_LOAD_FLAGS_NOT_FLIPPED = TextureLoadFlags_LoadOnMainThread;
+		constexpr TextureLoadFlags DEFAULT_TEXTURE_LOAD_FLAGS_FLIPPED = TextureLoadFlags ( ( uint8_t ) TextureLoadFlags_LoadOnMainThread | ( uint8_t ) TextureLoadFlags_FlipVertically );
 
-		m_StartRuntimeTexture = Ref< Texture2D >::Create( "content/textures/editor/Play.png", AddressingMode::ClampToEdge );
-		m_EndRuntimeTexture = Ref< Texture2D >::Create( "content/textures/editor/Stop.png", AddressingMode::ClampToEdge );
-		m_PauseRuntimeTexture = Ref< Texture2D >::Create( "content/textures/editor/Pause.png", AddressingMode::ClampToEdge );
+		m_CheckerboardTexture = Ref< Texture2D >::Create( "content/textures/editor/checkerboard.tga", AddressingMode::Repeat, DEFAULT_TEXTURE_LOAD_FLAGS_FLIPPED );
 
-		m_TranslationTexture = Ref< Texture2D >::Create( "content/textures/editor/Move.png", AddressingMode::ClampToEdge );
-		m_RotationTexture = Ref< Texture2D >::Create( "content/textures/editor/Rotate.png", AddressingMode::ClampToEdge );
-		m_ScaleTexture = Ref< Texture2D >::Create( "content/textures/editor/Scale.png", AddressingMode::ClampToEdge );
-		m_SyncTexture = Ref< Texture2D >::Create( "content/textures/editor/Sync.png", AddressingMode::ClampToEdge );
-		m_PointLightTexture = Ref< Texture2D >::Create( "content/textures/editor/Billboard_PointLight.png", AddressingMode::ClampToEdge, false );
-		m_ExclamationTexture = Ref< Texture2D >::Create( "content/textures/editor/Exclamation.png", AddressingMode::ClampToEdge );
-		m_StartErrorRuntimeTexture = Ref< Texture2D >::Create( "content/textures/editor/Play-Error.png", AddressingMode::ClampToEdge );
+		m_StartRuntimeTexture = Ref< Texture2D >::Create( "content/textures/editor/Play.png", AddressingMode::ClampToEdge, DEFAULT_TEXTURE_LOAD_FLAGS_FLIPPED );
+		m_EndRuntimeTexture = Ref< Texture2D >::Create( "content/textures/editor/Stop.png", AddressingMode::ClampToEdge, DEFAULT_TEXTURE_LOAD_FLAGS_FLIPPED );
+		m_PauseRuntimeTexture = Ref< Texture2D >::Create( "content/textures/editor/Pause.png", AddressingMode::ClampToEdge, DEFAULT_TEXTURE_LOAD_FLAGS_FLIPPED );
+
+		m_TranslationTexture = Ref< Texture2D >::Create( "content/textures/editor/Move.png", AddressingMode::ClampToEdge, DEFAULT_TEXTURE_LOAD_FLAGS_FLIPPED );
+		m_RotationTexture = Ref< Texture2D >::Create( "content/textures/editor/Rotate.png", AddressingMode::ClampToEdge, DEFAULT_TEXTURE_LOAD_FLAGS_FLIPPED );
+		m_ScaleTexture = Ref< Texture2D >::Create( "content/textures/editor/Scale.png", AddressingMode::ClampToEdge, DEFAULT_TEXTURE_LOAD_FLAGS_FLIPPED );
+		m_SyncTexture = Ref< Texture2D >::Create( "content/textures/editor/Sync.png", AddressingMode::ClampToEdge, DEFAULT_TEXTURE_LOAD_FLAGS_FLIPPED );
+		m_PointLightTexture = Ref< Texture2D >::Create( "content/textures/editor/Billboard_PointLight.png", AddressingMode::ClampToEdge, DEFAULT_TEXTURE_LOAD_FLAGS_NOT_FLIPPED );
+		m_ExclamationTexture = Ref< Texture2D >::Create( "content/textures/editor/Exclamation.png", AddressingMode::ClampToEdge, DEFAULT_TEXTURE_LOAD_FLAGS_FLIPPED );
+		m_StartErrorRuntimeTexture = Ref< Texture2D >::Create( "content/textures/editor/Play-Error.png", AddressingMode::ClampToEdge, DEFAULT_TEXTURE_LOAD_FLAGS_FLIPPED );
 
 		// Add all of our icons to the editor icons list so that we have use this anywhere else in the engine/editor.
 		EditorIcons::AddIcon( m_CheckerboardTexture );
@@ -179,26 +182,27 @@ namespace Saturn {
 		EditorIcons::AddIcon( m_ExclamationTexture );
 		EditorIcons::AddIcon( m_StartErrorRuntimeTexture );
 
-		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Billboard_Audio.png", AddressingMode::Repeat, false ) );
-		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Billboard_AudioLooping.png", AddressingMode::Repeat, false ) );
-		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Billboard_AudioMuted.png", AddressingMode::Repeat, false ) );
-		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Billboard_AudioListen.png", AddressingMode::Repeat, false ) );
-		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Billboard_Circle.png", AddressingMode::Repeat, false ) );
-		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Inspect.png", AddressingMode::Repeat, true ) );
-		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/NoIcon.png", AddressingMode::Repeat, true ) );
-		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Error.png", AddressingMode::Repeat, true ) );
-		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Error_Small.png", AddressingMode::Repeat, true ) );
-		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Bin.png", AddressingMode::Repeat, true ) );
-		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Exclamation_Small.png", AddressingMode::Repeat, true ) );
-		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Information_Small.png", AddressingMode::Repeat, true ) );
-		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Settings.png", AddressingMode::Repeat, true ) );
-		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/EditIcon.png", AddressingMode::Repeat, false ) );
-		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Billboard_AIAgent.png", AddressingMode::Repeat, false ) );
-		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/FastForward.png", AddressingMode::Repeat, false ) );
-		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/NextMultiMedia.png", AddressingMode::Repeat, false ) );
-		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Visible.png", AddressingMode::Repeat, false ) );
-		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Hidden.png", AddressingMode::Repeat, false ) );
+		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Billboard_Audio.png", AddressingMode::Repeat, DEFAULT_TEXTURE_LOAD_FLAGS_NOT_FLIPPED ) );
+		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Billboard_AudioLooping.png", AddressingMode::Repeat, DEFAULT_TEXTURE_LOAD_FLAGS_NOT_FLIPPED ) );
+		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Billboard_AudioMuted.png", AddressingMode::Repeat, DEFAULT_TEXTURE_LOAD_FLAGS_NOT_FLIPPED ) );
+		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Billboard_AudioListen.png", AddressingMode::Repeat, DEFAULT_TEXTURE_LOAD_FLAGS_NOT_FLIPPED ) );
+		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Billboard_Circle.png", AddressingMode::Repeat, DEFAULT_TEXTURE_LOAD_FLAGS_NOT_FLIPPED ) );
+		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Inspect.png", AddressingMode::Repeat, DEFAULT_TEXTURE_LOAD_FLAGS_FLIPPED ) );
+		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/NoIcon.png", AddressingMode::Repeat, DEFAULT_TEXTURE_LOAD_FLAGS_FLIPPED ) );
+		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Error.png", AddressingMode::Repeat, DEFAULT_TEXTURE_LOAD_FLAGS_FLIPPED ) );
+		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Error_Small.png", AddressingMode::Repeat, DEFAULT_TEXTURE_LOAD_FLAGS_FLIPPED ) );
+		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Bin.png", AddressingMode::Repeat, DEFAULT_TEXTURE_LOAD_FLAGS_FLIPPED ) );
+		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Exclamation_Small.png", AddressingMode::Repeat, DEFAULT_TEXTURE_LOAD_FLAGS_FLIPPED ) );
+		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Information_Small.png", AddressingMode::Repeat, DEFAULT_TEXTURE_LOAD_FLAGS_FLIPPED ) );
+		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Settings.png", AddressingMode::Repeat, DEFAULT_TEXTURE_LOAD_FLAGS_FLIPPED ) );
+		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/EditIcon.png", AddressingMode::Repeat, DEFAULT_TEXTURE_LOAD_FLAGS_NOT_FLIPPED ) );
+		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Billboard_AIAgent.png", AddressingMode::Repeat, DEFAULT_TEXTURE_LOAD_FLAGS_NOT_FLIPPED ) );
+		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/FastForward.png", AddressingMode::Repeat, DEFAULT_TEXTURE_LOAD_FLAGS_NOT_FLIPPED ) );
+		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/NextMultiMedia.png", AddressingMode::Repeat, DEFAULT_TEXTURE_LOAD_FLAGS_NOT_FLIPPED ) );
+		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Visible.png", AddressingMode::Repeat, DEFAULT_TEXTURE_LOAD_FLAGS_NOT_FLIPPED ) );
+		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Hidden.png", AddressingMode::Repeat, DEFAULT_TEXTURE_LOAD_FLAGS_NOT_FLIPPED ) );
 		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/SearchFolder.png", AddressingMode::Repeat ) );
+		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Compile.png", AddressingMode::Repeat ) );
 
 		// Create Panel Manager.
 		m_ImGuiWindowManager = Ref<ImGuiWindowManager>::Create();

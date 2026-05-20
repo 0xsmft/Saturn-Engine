@@ -87,6 +87,7 @@ namespace Saturn {
 		VK_CHECK( vkDeviceWaitIdle( m_LogicalDevice ) );
 
 		vkDestroyCommandPool( m_LogicalDevice, m_CommandPool, nullptr );
+		vkDestroyCommandPool( m_LogicalDevice, m_SecondaryCommandPool, nullptr );
 		vkDestroyCommandPool( m_LogicalDevice, m_ComputeCommandPool, nullptr );
 		
 		m_DefaultPass->Terminate();
@@ -483,7 +484,7 @@ namespace Saturn {
 	{
 		VkCommandBufferAllocateInfo AllocInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
 		AllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		AllocInfo.commandPool = m_CommandPool;
+		AllocInfo.commandPool = m_SecondaryCommandPool;
 		AllocInfo.commandBufferCount = 1;
 		
 		VkCommandBuffer CommandBuffer;
@@ -521,7 +522,7 @@ namespace Saturn {
 
 		// Free the command buffer.
 		vkDestroyFence( m_LogicalDevice, Fence, nullptr );
-		vkFreeCommandBuffers( m_LogicalDevice, m_CommandPool, 1, &CommandBuffer );
+		vkFreeCommandBuffers( m_LogicalDevice, m_SecondaryCommandPool, 1, &CommandBuffer );
 	}
 
 	VkCommandBuffer VulkanContext::BeginNewCommandBuffer() const
@@ -568,11 +569,13 @@ namespace Saturn {
 		PoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 		
 		VK_CHECK( vkCreateCommandPool( m_LogicalDevice, &PoolInfo, nullptr, &m_CommandPool ) );
+		VK_CHECK( vkCreateCommandPool( m_LogicalDevice, &PoolInfo, nullptr, &m_SecondaryCommandPool ) );
 
 		PoolInfo.queueFamilyIndex = m_Indices.ComputeFamily.value();
 		VK_CHECK( vkCreateCommandPool( m_LogicalDevice, &PoolInfo, nullptr, &m_ComputeCommandPool) );
 
 		SetDebugUtilsObjectName( "Context Command Pool", (uint64_t)m_CommandPool, VK_OBJECT_TYPE_COMMAND_POOL );
+		SetDebugUtilsObjectName( "Context Alt Command Pool", (uint64_t)m_SecondaryCommandPool, VK_OBJECT_TYPE_COMMAND_POOL );
 		SetDebugUtilsObjectName( "Context Compute Command Pool", (uint64_t)m_CommandPool, VK_OBJECT_TYPE_COMMAND_POOL );
 	}
 

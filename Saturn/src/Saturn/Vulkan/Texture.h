@@ -30,6 +30,7 @@
 
 #include "VulkanError.h"
 #include "Image2D.h"
+#include "Saturn/Asset/TextureLoadFlags.h"
 
 #include "Saturn/Core/UUID.h"
 #include "Saturn/Core/Buffer.h"
@@ -81,8 +82,10 @@ namespace Saturn {
 	{
 	public:
 		Texture() = default;
-		Texture( uint32_t width, uint32_t height, VkFormat Format, const void* pData, AddressingMode Mode = AddressingMode::Repeat );
-		Texture( std::filesystem::path Path, AddressingMode Mode ) : m_Path( Path ), m_AddressingMode( Mode ) {}
+		Texture( uint32_t width, uint32_t height, VkFormat Format, const void* pData, AddressingMode Mode = AddressingMode::Repeat, TextureLoadFlags flags = TextureLoadFlags_FlipVertically );
+
+		// INTERNAL USE ONLY!
+		Texture( std::filesystem::path Path, AddressingMode Mode, TextureLoadFlags flags ) : m_Path( Path ), m_AddressingMode( Mode ), m_LoadFlags( flags ) {}
 
 		virtual ~Texture() = default;
 
@@ -122,13 +125,17 @@ namespace Saturn {
 		void SetSourceID( UUID id ) { m_SourceAssetID = id; }
 		UUID GetSourceAssetID() const { return m_SourceAssetID; /*UUID( 0 );*/ }
 
-	public:
-		virtual void CreateTextureImage( bool flip ) = 0;
-		virtual void SetData( const void* pData ) = 0;
-		virtual void SetForceTerminate( bool ForceTerminate ) { m_ForceTerminate = ForceTerminate; }
-		virtual bool IsRendererTexture() { return m_IsRendererTexture; }
-		virtual void CreateMips() = 0;
+		bool HasLoadFlag( TextureLoadFlags flag ) const { return ( m_LoadFlags & flag ) != 0; }
+
+		bool IsRendererTexture() const { return m_IsRendererTexture; }
+		void SetForceTerminate( bool ForceTerminate ) { m_ForceTerminate = ForceTerminate; }
+		
 		virtual VkImageView GetOrCreateMipImageView( uint32_t mip ) = 0;
+	
+	protected:
+		virtual void CreateTextureImage() = 0;
+		virtual void SetData( const void* pData ) = 0;
+		virtual void CreateMips() = 0;
 
 	protected:
 		void Terminate();
@@ -153,6 +160,7 @@ namespace Saturn {
 		bool m_MipsCreated = false;
 		bool m_Storage = false;
 		AddressingMode m_AddressingMode = AddressingMode::Repeat;
+		TextureLoadFlags m_LoadFlags = TextureLoadFlags_None;
 		
 		void* m_pData = nullptr;
 
@@ -171,7 +179,7 @@ namespace Saturn {
 	{
 	public:
 		Texture2D() = default;
-		Texture2D( const std::filesystem::path& rPath, AddressingMode Mode = AddressingMode::Repeat, bool flip = true );
+		Texture2D( const std::filesystem::path& rPath, AddressingMode Mode = AddressingMode::Repeat, TextureLoadFlags loadFlags = TextureLoadFlags_FlipVertically );
 		Texture2D( ImageFormat format, uint32_t width, uint32_t height, const void* pData, bool storage = false, AddressingMode Mode = AddressingMode::Repeat );
 		
 		~Texture2D();
@@ -185,8 +193,14 @@ namespace Saturn {
 		Buffer X31CopyToBuffer() const;
 		Buffer GetMipTextureData( uint32_t w, uint32_t h, uint32_t mip ) const;
 
+		void CopyBufferToImageAndMips( void* pData );
+
 	private:
-		void CreateTextureImage( bool flip ) override;
+		void RT_Reset();
+		void PrepareTextureForJobSystem();
+
+	protected:
+		void CreateTextureImage() override;
 		void SetData( const void* pData ) override;
 		void CreateMips() override;
 	};
@@ -202,10 +216,10 @@ namespace Saturn {
 
 		void CreateMips() override;
 
-		VkImageView GetOrCreateMipImageView( uint32_t mip ) override;
-	private:
-
-		void CreateTextureImage(bool flip) override;
+		virtual VkImageView GetOrCreateMipImageView( uint32_t mip ) override;
+	
+	protected:
+		void CreateTextureImage() override;
 		void SetData( const void* pData ) override;
 	};
 }

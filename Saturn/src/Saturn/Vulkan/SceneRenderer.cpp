@@ -144,7 +144,7 @@ namespace Saturn {
 		m_RendererData.SceneEnvironment = Ref<EnvironmentMap>::Create();
 
 		// TODO: Package BRDF texture into AssetBundle in dist
-		m_RendererData.BRDFLUT_Texture = Ref<Texture2D>::Create( "content/textures/BRDF_LUT.tga", AddressingMode::Repeat, false );
+		m_RendererData.BRDFLUT_Texture = Ref<Texture2D>::Create( "content/textures/BRDF_LUT.tga", AddressingMode::Repeat, TextureLoadFlags_None );
 
 		constexpr size_t TransformCount = static_cast<size_t>( 1024 ) * 10;
 		m_RendererData.SubmeshTransformData.resize( MAX_FRAMES_IN_FLIGHT );
@@ -771,7 +771,7 @@ namespace Saturn {
 			{
 				glm::vec4 Samples[ 32 ];
 				// Radius
-				float R = 0.3f;
+				float R = 0.5f;
 			} u_Data{};
 
 			std::memcpy( u_Data.Samples, ssaoKernel.data(), ssaoKernel.size() * sizeof( glm::vec4 ) );

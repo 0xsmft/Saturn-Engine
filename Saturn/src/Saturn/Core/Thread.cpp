@@ -74,6 +74,8 @@ namespace Saturn {
 		{
 			std::function<void()> currentFunction = nullptr;
 
+			m_Mutex.lock();
+
 			for( auto Itr = m_CommandBuffer.begin(); Itr != m_CommandBuffer.end(); ++Itr )
 			{
 				auto& rFunc = *Itr;
@@ -81,12 +83,14 @@ namespace Saturn {
 				if( rFunc )
 				{
 					currentFunction = rFunc;
-
-					// Make sure we remove it so that it cannot be executed again.
-					m_CommandBuffer.erase( Itr );
-					break;
 				}
+
+				// Make sure we remove it so that it cannot be executed again.
+				m_CommandBuffer.erase( Itr );
+				break;
 			}
+
+			m_Mutex.unlock();
 
 			if( currentFunction )
 			{

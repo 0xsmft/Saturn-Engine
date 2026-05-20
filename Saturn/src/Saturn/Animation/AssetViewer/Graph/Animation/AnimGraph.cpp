@@ -103,6 +103,7 @@ namespace Saturn {
 		// 4. Combine into a map of sub-graph parent ID to tasks for runtime.
 
 		AnimGraphSortMap resultToChildren;
+#if !defined(SAT_DIST)
 
 		// 1: PARENT ID -> CHILDREN
 		std::unordered_map<UUID, std::vector<SharedPtr<NodeEditorNodeBase>>> parentToChildren;
@@ -113,6 +114,7 @@ namespace Saturn {
 				if( !parentToChildren[ 0llu ].size() )
 				{
 					resultToChildren[ 0llu ].pGraphTask = NewObject<SGraphTask>( this );
+
 					resultToChildren[ 0llu ].pGraphTask->SetDebugName( "Root SG" );
 				}
 			}
@@ -127,10 +129,12 @@ namespace Saturn {
 
 		// Entry point of state machine then the rest of the state machine
 		SortStateMachineEntry( task );
+#endif
 
 		return resultToChildren;
 	}
 
+#if !defined(SAT_DIST)
 	void AnimGraph::SortAnimGraph( AnimGraphSortMap& rMap )
 	{
 		std::stack<UUID> stack;
@@ -204,7 +208,6 @@ namespace Saturn {
 		}
 	}
 
-#if !defined(SAT_DIST)
 
 	void AnimGraph::BuildTaskCache()
 	{
@@ -293,9 +296,6 @@ namespace Saturn {
 			m_StateMachineEntryNode = m_Nodes[ entryID ];
 	}
 
-#endif
-
-#if !defined(SAT_DIST)
 	void AnimGraph::DrawGraph()
 	{
 		// Suspend user input if we are currently dragging.
@@ -387,8 +387,8 @@ namespace Saturn {
 				const auto rectMin = ImGui::GetCursorScreenPos() - padding;
 				const auto rectMax = ImGui::GetCursorScreenPos() + size + padding;
 
-				auto drawList = ImGui::GetWindowDrawList();
-				drawList->AddRectFilled( rectMin, rectMax, color, size.y * 0.15f );
+				auto pDrawList = ImGui::GetWindowDrawList();
+				pDrawList->AddRectFilled( rectMin, rectMax, color, size.y * 0.15f );
 				ImGui::TextUnformatted( label );
 			};
 

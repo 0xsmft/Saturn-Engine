@@ -73,7 +73,7 @@ namespace Saturn {
 		m_MainThreadID = std::this_thread::get_id();
 
 		// Lazy load.
-		RenderThread::Get().EnableIf( HasFlag( ApplicationFlag_UseGameThread_DEPPRECATED ) );
+		RenderThread::Get().EnableIf( HasFlag( ApplicationFlag_UseGameThread_DEPRECATED ) );
 		RenderThread::Get().Start();
 
 #if defined( SAT_DIST )
@@ -454,7 +454,7 @@ namespace Saturn {
 
 	void Application::OpenNativeFileExplorer( const std::filesystem::path& rPath, bool select /*= false */ )
 	{
-#if     defined(SAT_PLATFORM_WINDOWS)
+#if defined(SAT_PLATFORM_WINDOWS)
 		std::wstring CommandLine = L"";
 		
 		if( select )
@@ -463,7 +463,7 @@ namespace Saturn {
 			CommandLine = std::format( L"explorer.exe \"{0}\"", rPath.wstring() );
 
 		DeatchedProcess dp( CommandLine );
-#elif   defined(SAT_PLATFORM_LINUX) || defined(SAT_PLATFORM_MACOS)
+#elif defined(SAT_PLATFORM_LINUX) || defined(SAT_PLATFORM_MACOS)
 		SAT_CORE_ASSERT( false, "Application::OpenNativeFileExplorer not implemented on Linux!" );
 #endif
 	}

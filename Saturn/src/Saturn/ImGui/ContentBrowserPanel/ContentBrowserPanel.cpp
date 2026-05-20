@@ -65,9 +65,7 @@
 #include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 #include "Saturn/GameFramework/Core/GameModule.h"
 
-#if !defined(SAT_DIST)
 #include "Saturn/ImGui/EditorEvents.h"
-#endif
 
 #include "ContentBrowserThumbnailCache.h"
 

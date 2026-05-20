@@ -78,12 +78,12 @@ namespace Saturn {
 
 	private:
 		void DrawStateMachineNodes();
-#endif
 
 	private:
 		// Sorting
 		void SortAnimGraph( AnimGraphSortMap& rMap );
 		void SortStateMachineEntry( AnimGraphStateMachineTask* pStateMachine );
+#endif
 
 	private:
 		UUID m_TransitionStartNode = 0;

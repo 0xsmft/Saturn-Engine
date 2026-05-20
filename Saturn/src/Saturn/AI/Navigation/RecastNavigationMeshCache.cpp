@@ -66,13 +66,19 @@ namespace Saturn {
 
 		if( std::memcmp( rHeader.Magic, ".SRC", 4 ) != 0 )
 		{
-			SAT_CORE_ERROR( "[RecastNavigationMeshCache] Failed to read Recast Navigation Mesh Cache! File magic does not match" );
+			SAT_CORE_ERROR( "[RecastNavigationMeshCache]: Failed to read Recast Navigation Mesh Cache! File magic does not match" );
 			return false;
 		}
 
 		RawSerialisation::ReadObject( rHeader.Version, rStream );
 		RawSerialisation::ReadObject( rHeader.TileCount, rStream );
 		RawSerialisation::ReadObject( rHeader.NavMeshParams, rStream );
+
+		if( rHeader.Version > RecastNavMeshCacheVersion::Latest )
+		{
+			SAT_CORE_ERROR( "[RecastNavigationMeshCache]: Version number is greater than latest version number." );
+			return false;
+		}
 
 		return true;
 	}

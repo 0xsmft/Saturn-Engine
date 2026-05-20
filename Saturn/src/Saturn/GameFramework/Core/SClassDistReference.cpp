@@ -70,7 +70,6 @@
 #include "Saturn/Animation/AssetViewer/Graph/StateMachine/AnimGraphTransitionGraphNodes.h"
 
 #include "Saturn/Animation/AssetViewer/Graph/Tasks/AnimGraphPlayAnimTask.h"
-#include "Saturn/Animation/AssetViewer/Graph/Tasks/AnimGraphStateMachineStateTask.h"
 #include "Saturn/Animation/AssetViewer/Graph/Tasks/AnimGraphTransitionTasks.h"
 #include "Saturn/Animation/AssetViewer/Graph/Tasks/GraphTask.h"
 
@@ -121,7 +120,6 @@ namespace Saturn {
 		AnimGraphStateMachineTransitionNode::StaticClass();
 		AnimGraphTransitionGraphResultNode::StaticClass();
 		AnimGraphPlayAnimTask::StaticClass();
-		AnimGraphStateMachineStateTask::StaticClass();
 		AnimGraphTransitionTask::StaticClass();
 		AnimGraphTransitionResultTask::StaticClass();
 		SGraphTask::StaticClass();

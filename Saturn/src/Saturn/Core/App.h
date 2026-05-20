@@ -54,7 +54,7 @@ namespace Saturn {
 		ApplicationFlag_CreateSceneRenderer_DEPRECATED = BIT( 1 ),
 		
 		// Game thread no longer exists.
-		ApplicationFlag_UseGameThread_DEPPRECATED = BIT( 2 ),
+		ApplicationFlag_UseGameThread_DEPRECATED = BIT( 2 ),
 
 		ApplicationFlag_Titlebar = BIT( 3 ),
 

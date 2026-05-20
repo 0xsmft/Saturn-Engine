@@ -389,12 +389,10 @@ namespace Saturn {
 		AluraSerialiedFontHeader header{};
 		RawSerialisation::ReadObject( header, rStream );
 
-#if !defined(SAT_DIST)
 		// Name of the font file
-		m_Name = RawSerialisation::ReadString( rStream );
+		auto _ = RawSerialisation::ReadString( rStream );
 
-		m_FontFilepath = RawSerialisation::ReadString( rStream );
-#endif
+		_ = RawSerialisation::ReadString( rStream );
 
 		// Metrics
 		RawSerialisation::ReadObject( m_AluraFontData.GetMetrics(), rStream );

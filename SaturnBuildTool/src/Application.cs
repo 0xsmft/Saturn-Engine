@@ -52,7 +52,7 @@ namespace SaturnBuildTool
         // Engine Test -> created buildtool-x0.0.5 was very similar to engine test but it used premake instead of custom C# build rules.
         // buildtool-x0.0.5 -> created sbt-5.1 branch which is this version now.
         //
-        private readonly string StartupMessage = "Saturn Build Tool X0.0.5 \"SBT 5.1\" (Engine Version: 0.2.4 8196)";
+        private readonly string StartupMessage = "Saturn Build Tool X0.0.5 \"SBT 5.1\" (Engine Version: 0.2.5 8197)";
 
         public Application( string[] args )
         {
@@ -277,7 +277,7 @@ namespace SaturnBuildTool
             }
         }
 
-        private void SearchForFiles()
+        private bool SearchForFiles()
         {
             string targetDir = Path.GetDirectoryName( Shared.ProjectInfo.BuildRuleFile );
             foreach( var kv in Shared.CurrentBuildTarget.Modules )
@@ -329,6 +329,15 @@ namespace SaturnBuildTool
 
             // Add {project-name}.Load.cpp file
             string loadFilePath = Path.Combine( Shared.ProjectInfo.BuildDir, $"{Shared.ProjectInfo.Name}.Load.cpp" );
+
+            if( !File.Exists( loadFilePath )  )
+            {
+                Console.WriteLine( $"ERROR: Required file {loadFilePath} does not exist! Please regenerate it in the Engine." );
+
+                ExitCode = 1;
+                return false;
+            }
+
             bool modified = Shared.FileCache.HasFileBeenModified( loadFilePath );
             if( File.Exists( loadFilePath ) && ( modified || Action == ActionType.Rebuild ) )
             {
@@ -343,6 +352,15 @@ namespace SaturnBuildTool
             {
                 // Add {project-name}.Entry.cpp file
                 string entryFilePath = Path.Combine( Shared.ProjectInfo.BuildDir, $"{Shared.ProjectInfo.Name}.Entry.cpp" );
+
+                if( !File.Exists( entryFilePath ) ) 
+                {
+                    Console.WriteLine( $"ERROR: Required file {loadFilePath} does not exist! Please regenerate it in the Engine." );
+
+                    ExitCode = 1;
+                    return false;
+                }
+
                 bool entryModified = Shared.FileCache.HasFileBeenModified( entryFilePath );
                 if( File.Exists( entryFilePath ) && ( entryModified || Action == ActionType.Rebuild ) )
                 {
@@ -369,6 +387,8 @@ namespace SaturnBuildTool
             */
 
             WriteRecipe();
+
+            return true;
         }
 
         private void WriteRecipe()
@@ -676,7 +696,10 @@ namespace SaturnBuildTool
         {
             Stopwatch time = Stopwatch.StartNew();
 
-            SearchForFiles();
+            if( !SearchForFiles() )
+            {
+                return;
+            }
 
             if( !ExecuteHeaderTool() )
             {

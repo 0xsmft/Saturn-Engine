@@ -3,6 +3,9 @@
 #type vertex
 #version 450
 
+layout(location = 0) in vec3 a_Position;
+layout(location = 1) in vec2 a_TexCoord;
+
 layout(location = 1) out VertexOutput 
 {
 	vec3 Position;
@@ -11,14 +14,14 @@ layout(location = 1) out VertexOutput
 
 void main()
 {
-	vs_Output.TexCoord = vec2( ( gl_VertexIndex << 1 ) & 2, gl_VertexIndex & 2 );
+	vs_Output.Position = a_Position;
+	vs_Output.TexCoord = a_TexCoord;
 
 	// Flip textures.
-	vs_Output.TexCoord = vec2( vs_Output.TexCoord.s, 1.0 - vs_Output.TexCoord.t );
+	vs_Output.TexCoord = vec2( a_TexCoord.s, 1.0 - a_TexCoord.t );
 
-	vec4 position = vec4( vs_Output.TexCoord * 2.0 - 1.0, 0.0, 1.0 );
+	vec4 position = vec4( a_Position.xy, 0.0, 1.0 );
 	
-	vs_Output.Position = position;
 	gl_Position = position;
 	gl_Position.y *= -1.0;
 	gl_Position.z = ( gl_Position.z + gl_Position.w ) / 2.0;

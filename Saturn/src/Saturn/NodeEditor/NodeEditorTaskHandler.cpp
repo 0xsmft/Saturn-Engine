@@ -54,6 +54,18 @@ namespace Saturn {
 		return itr == m_EditorVariables.end() ? nullptr : itr->second;
 	}
 
+	Ref<NodeEditorVariable> NodeEditorTaskHandler::GetVariable( const std::string& rName )
+	{
+		auto itr = std::find_if( m_EditorVariables.begin(), m_EditorVariables.end(),
+			[ rName ]( const auto& rKV )
+		{
+			return rKV.second->GetName() == rName;
+		} );
+
+		return itr == m_EditorVariables.end() ? nullptr : itr->second;
+	}
+
+
 	void NodeEditorTaskHandler::ResetAllTasks()
 	{
 		for( auto& pTask : m_Tasks )

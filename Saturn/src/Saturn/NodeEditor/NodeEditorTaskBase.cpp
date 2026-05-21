@@ -54,12 +54,16 @@ namespace Saturn {
 		m_pHandler = pHandler;
 		m_NodeID = pOther->m_NodeID;
 		m_NodeFlags = pOther->m_NodeFlags;
+#if !defined(SAT_DIST)
 		m_DebugName = pOther->m_DebugName;
+#endif
 	}
 
 	void NodeEditorTaskBase::Serialise( std::ofstream& rStream ) const
 	{
+#if !defined(SAT_DIST)
 		RawSerialisation::WriteString( m_DebugName, rStream );
+#endif
 
 		RawSerialisation::WriteObject( m_NodeID, rStream );
 		RawSerialisation::WriteObject( m_NodeFlags, rStream );
@@ -70,7 +74,8 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		m_DebugName = RawSerialisation::ReadString( rStream );
 #else
-		RawSerialisation::ReadString( rStream );
+		// TODO: Remove this on dist.
+		auto _ = RawSerialisation::ReadString( rStream );
 #endif
 
 		RawSerialisation::ReadObject( m_NodeID, rStream );

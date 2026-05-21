@@ -165,10 +165,13 @@ namespace Saturn {
 			Ref<Scene> scene = Ref<Scene>::Create();
 			scene->Path = asset->Path;
 			scene->ID = asset->ID;
+			scene->Name = asset->Name;
 
+			// Load from disk
 			SceneSerialiser serialiser( scene );
 			serialiser.Deserialise( asset );
 
+			// Serialise
 			scene->SerialiseData();
 		}
 
@@ -349,7 +352,7 @@ namespace Saturn {
 				Ref<SkeletalMesh> skMesh = pAssetManager->ImportAssetAs<SkeletalMesh>( AssetBundleRegistry, id );
 				if( skMesh )
 				{
-					RawStaticMeshAssetSerialiser serialiser;
+					RawSkeletalMeshAssetSerialiser serialiser;
 					serialiser.DumpAndWriteToVFS( skMesh );
 				}
 			} break;
@@ -388,7 +391,11 @@ namespace Saturn {
 				}
 
 				// Write...
-				NodeCacheEditor::WriteTaskCacheOnlyDistNC( rCache, rAsset->Path );
+				std::filesystem::path out = Project::GetActiveProject()->GetTempDir();
+				out /= std::to_string( rAsset->ID );
+				out.replace_extension( ".vfs" );
+
+				NodeCacheEditor::WriteTaskCacheOnlyDistNC( rCache, out );
 			} break;
 
 			case Saturn::AssetType::AnimationController:
@@ -405,7 +412,11 @@ namespace Saturn {
 				}
 
 				// Write...
-				NodeCacheEditor::WriteTaskCacheOnlyDistNC( rCache, rAsset->Path );
+				std::filesystem::path out = Project::GetActiveProject()->GetTempDir();
+				out /= std::to_string( rAsset->ID );
+				out.replace_extension( ".vfs" );
+
+				NodeCacheEditor::WriteTaskCacheOnlyDistNC( rCache, out );
 			} break;
 
 			case Saturn::AssetType::GraphSound:
@@ -422,8 +433,11 @@ namespace Saturn {
 				}
 
 				// Write...
-				std::filesystem::path path = rAsset->Path;
-				NodeCacheEditor::WriteTaskCacheOnlyDistNC( rCache, path );
+				std::filesystem::path out = Project::GetActiveProject()->GetTempDir();
+				out /= std::to_string( rAsset->ID );
+				out.replace_extension( ".vfs" );
+
+				NodeCacheEditor::WriteTaskCacheOnlyDistNC( rCache, out );
 			} break;
 
 			case Saturn::AssetType::Prefab:

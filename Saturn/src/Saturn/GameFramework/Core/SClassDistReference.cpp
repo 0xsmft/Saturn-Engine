@@ -88,6 +88,10 @@
 #include "Saturn/NodeEditor/NodeEditorVariableNode.h"
 #include "Saturn/NodeEditor/NodeEditorVariableTasks.h"
 
+#include "Saturn/NodeEditor/NodeEditorTaskHandler.h"
+#include "Saturn/NodeEditor/Maths/M2_BooleanAlgebraTasks.h"
+#include "Saturn/NodeEditor/Maths/M2_GeneralMathsTasks.h"
+
 #include "Saturn/Scene/Entity.h"
 
 namespace Saturn {
@@ -140,6 +144,8 @@ namespace Saturn {
 		NodeEditorVariableNode::StaticClass();
 		NodeEditorSetVariableNode::StaticClass();
 		SNodeEditorGetVariableTask::StaticClass();
+
+		Maths2EquToUIntTask::StaticClass();
 
 		Entity::StaticClass();
 	}

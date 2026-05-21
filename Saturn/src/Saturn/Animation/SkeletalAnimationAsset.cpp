@@ -255,8 +255,13 @@ namespace Saturn {
 		// Note: according to Acl get_size() includes the acl::compressed_tracks size (so 16 bytes).
 		rStream.write( reinterpret_cast< const char* >( pData ), pTracks->get_size() - sizeof( acl::compressed_tracks ) );
 	}
+#endif
 
+#if !defined(SAT_DIST)
 	void SkeletalAnimationAsset::Deserialise( std::ifstream& rStream )
+#else
+	void SkeletalAnimationAsset::Deserialise( std::istream& rStream )
+#endif
 	{
 		SkeletonAssetFileHeader header{};
 		RawSerialisation::ReadObject( header, rStream );
@@ -292,10 +297,11 @@ namespace Saturn {
 
 		DeserialiseAclData( rStream );
 
+#if !defined( SAT_DIST )
 		if( skeletonID )
 			AssetManager::Get()->RegisterAssetDependency( ID, skeletonID );
-	}
 #endif
+	}
 
 #if !defined( SAT_DIST )
 	void SkeletalAnimationAsset::DeserialiseAclData( std::ifstream& rStream )

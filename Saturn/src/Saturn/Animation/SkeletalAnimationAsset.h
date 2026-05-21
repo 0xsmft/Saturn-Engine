@@ -110,7 +110,12 @@ namespace Saturn {
 		void Compress();
 
 		void Serialise( std::ofstream& rStream ) const;
+#endif
+		
+#if !defined(SAT_DIST)
 		void Deserialise( std::ifstream& rStream );
+#else
+		void Deserialise( std::istream& rStream );
 #endif
 
 	private:

@@ -148,7 +148,7 @@ namespace Saturn {
 		Ref<Asset> asset = m_Assets->FindAsset( depID );
 		bool assetWasLoadedBefore = IsAssetLoaded( depID );
 
-		if( !assetWasLoadedBefore )
+		if( !assetWasLoadedBefore && asset )
 		{
 			bool loaded = m_Importer.TryLoadData( asset );
 			if( !loaded )

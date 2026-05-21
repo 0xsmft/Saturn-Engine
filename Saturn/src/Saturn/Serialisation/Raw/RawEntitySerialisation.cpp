@@ -207,33 +207,8 @@ namespace Saturn {
 				}
 
 				RawSerialisation::WriteObject( mc.AnimationControllerAssetID, rStream );
-				RawSerialisation::WriteObject( ( std::underlying_type_t<AnimatorType> ) mc.AnimatorType, rStream );
-
-				//	MaterialRegistry::Serialise( mc.MaterialRegistry, rStream );
+				RawSerialisation::WriteObject( ( uint8_t ) mc.AnimatorType, rStream );
 			} );
-
-		// Script Component
-		/*
-		WriteComponent<DScriptComponent>( rEntity, rStream, [&]()
-			{
-				auto& sc = rEntity->GetComponent< DScriptComponent >();
-
-				RawSerialisation::WriteString( sc.ClassName, rStream );
-
-				uint8_t bit = sc.ExternalData;
-				rStream.write( reinterpret_cast< const char* >( &bit ), sizeof( bit ) );
-
-				auto& rProperties = ClassMetadataHandler::Get().GetAllProperties( sc.ClassName );
-				RawSerialisation::WriteObject( rProperties.size(), rStream );
-
-				for( auto& rProperty : rProperties ) 
-				{
-					RawSerialisation::WriteString( rProperty.GetName(), rStream );
-
-					rProperty.Serialise( rEntity.Get(), rStream );
-				}
-			} );
-			*/
 
 		// Sky light component
 		WriteComponent<SkylightComponent>( rEntity, rStream, [&]()
@@ -511,7 +486,7 @@ namespace Saturn {
 					size_t materials = 0;
 					RawSerialisation::ReadObject( materials, rStream );
 
-					for( size_t i = 0; i < materials; i++ )
+					for( size_t i = 0; i < materials; ++i )
 					{
 						AssetID materialID = 0;
 						RawSerialisation::ReadObject( materialID, rStream );
@@ -533,48 +508,19 @@ namespace Saturn {
 				{
 					mc.MaterialRegistry->Copy( mc.Mesh->GetMaterialRegistry() );
 				}
+				
+				// TODO: For some reason we don't read the same amount of data that we wrote...
+				//		 we are off by 8-bytes.
+				uint64_t x = 0;
+				RawSerialisation::ReadObject( x, rStream );
+
+				RawSerialisation::ReadObject( mc.AnimationControllerAssetID, rStream );
+				
+				uint8_t type = 0u;
+				RawSerialisation::ReadObject( type, rStream );
+
+				mc.AnimatorType = ( AnimatorType ) type;
 			} );
-
-
-		// Script Component
-		/*
-		ReadComponent<DScriptComponent>( rEntity, rStream, [&]()
-			{
-				auto& sc = rEntity->GetComponent< DScriptComponent >();
-
-				sc.ClassName = RawSerialisation::ReadString( rStream );
-
-				uint8_t tempExternalData = 0;
-				RawSerialisation::ReadObject( tempExternalData, rStream );
-				sc.ExternalData = tempExternalData ? 1 : 0;
-
-				/////////////////////////////////
-				// Read Properties
-				// We must check that the saved property information from the ScriptComponent matches with the already loaded properties from this module (this module meaning the game)
-				// We don't actually create the property we simply just load the saved data.
-
-				// Properties that are already present in the module
-				auto& rLoadedProperties = ClassMetadataHandler::Get().GetAllProperties( sc.ClassName );
-
-				size_t propertySize = 0;
-				RawSerialisation::ReadObject( propertySize, rStream );
-
-				SAT_CORE_VERIFY( propertySize == rLoadedProperties.size(), "SPROPERTY MISMATCH! Property sizes from the current module do not match with loaded sizes from the ScriptComponent." );
-
-				for( size_t i = 0; i < propertySize; i++ )
-				{
-					SProperty& rProperty = rLoadedProperties[ i ];
-
-					const std::string& rName = RawSerialisation::ReadString( rStream );
-
-					// Compare names
-					SAT_CORE_VERIFY( rProperty.GetName() == rName, "SPROPERTY MISMATCH! Property loaded from the ScriptComponent at the same index does not match with the module property name." );
-
-					// Deserialise for saved data
-					//rProperty.Deserialise( rEntity.Get(), rStream );
-				}
-			} );
-		*/
 
 		// Sky light component
 		ReadComponent<SkylightComponent>( rEntity, rStream, [&]()

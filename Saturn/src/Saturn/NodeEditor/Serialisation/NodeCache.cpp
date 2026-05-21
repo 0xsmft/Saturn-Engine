@@ -533,8 +533,10 @@ namespace Saturn {
 			return false;
 
 		std::ifstream stream( cachePathAbs, std::ios::binary | std::ios::in );
-#endif
 
+		// On non-dist builds we load the full node cache editor file, so we need to skip until the task cache,
+		// which is normally located towards the end of the file.
+		// However on dist builds when we load this from the VFS there is no Node Cache so the header will not reader nor will we have to load it.
 		NodeCacheEditorHeader header{};
 		if( !ReadNodeCacheEdHeader( header, stream ) )
 			return false;
@@ -545,7 +547,6 @@ namespace Saturn {
 			return false;
 		}
 
-#if !defined( SAT_DIST )
 		stream.seekg( header.PositionOfTaskCache );
 #endif
 

@@ -30,6 +30,7 @@
 
 #include "NodeEditorTaskBase.h"
 #include "NodeEditorVariableLocator.h"
+#include "NodeEditorVariable.h"
 
 #include <map>
 
@@ -53,6 +54,8 @@ namespace Saturn {
 		template<typename Ty>
 		void RegisterLocator( UUID nodeID, size_t pinIndex, Ty* pAddress ) 
 		{
+			SAT_CORE_ASSERT( nodeID != 0 );
+
 			auto& rLocators = m_Locators[ nodeID ];
 			if( pinIndex >= rLocators.size() )
 			{
@@ -95,6 +98,7 @@ namespace Saturn {
 		}
 
 		Ref<NodeEditorVariable> GetVariable( UUID id );
+		Ref<NodeEditorVariable> GetVariable( const std::string& rName );
 
 	protected:
 		void ResetAllTasks();

@@ -544,7 +544,7 @@ namespace Saturn {
 	void Texture2D::PrepareTextureForJobSystem() 
 	{
 		int Width, Height, Channels;
-		SAT_CORE_ASSERT( stbi_info( m_Path.string().c_str(), &Width, &Height, &Channels ), "Failed to get information about texture file." );
+		SAT_CORE_VERIFY( stbi_info( m_Path.string().c_str(), &Width, &Height, &Channels ), "Failed to get information about texture file." );
 
 		m_Width = Width;
 		m_Height = Height;

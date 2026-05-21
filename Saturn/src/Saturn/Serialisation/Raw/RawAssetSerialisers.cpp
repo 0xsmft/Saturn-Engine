@@ -646,7 +646,7 @@ namespace Saturn {
 		std::istream stream( &membuf );
 
 		auto animAsset = Ref<SkeletalAnimationAsset>::Create( rAsset );
-		animAsset->DeserialiseAclData( stream );
+		animAsset->Deserialise( stream );
 
 		// Set rAsset reference to point to our new SkeletalAnimation. 
 		rAsset = animAsset;
@@ -668,7 +668,7 @@ namespace Saturn {
 
 		std::ofstream stream( out, std::ios::binary | std::ios::trunc );
 
-		animAsset->SerialiseAclData( stream );
+		animAsset->Serialise( stream );
 
 		stream.close();
 

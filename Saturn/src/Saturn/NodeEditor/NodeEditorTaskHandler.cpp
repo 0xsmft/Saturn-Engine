@@ -45,6 +45,8 @@ namespace Saturn {
 	void NodeEditorTaskHandler::Init( const NodeTaskCache& rCache )
 	{
 		m_Tasks = rCache.InstantiateNewTaskList( this );
+
+		OnInit();
 	}
 
 	Ref<NodeEditorVariable> NodeEditorTaskHandler::GetVariable( UUID id )

@@ -102,7 +102,8 @@ namespace Saturn {
 
 	protected:
 		void ResetAllTasks();
-	
+		virtual void OnInit() {}
+
 	protected:
 		// All tasks in the tree.
 		std::vector<Ref<NodeEditorTaskBase>> m_Tasks;

@@ -82,7 +82,7 @@ namespace Saturn {
 		BehaviourTreeMoveToTask* pThisOther = dynamic_cast< BehaviourTreeMoveToTask* >( pOther );
 		if( pThisOther )
 		{
-			__debugbreak();
+			//__debugbreak();
 		}
 	}
 

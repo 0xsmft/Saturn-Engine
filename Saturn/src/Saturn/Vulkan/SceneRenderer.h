@@ -34,7 +34,6 @@
 #include "Mesh.h"
 #include "Saturn/Core/UUID.h"
 #include "Saturn/Asset/MaterialAsset.h"
-#include "Saturn/Serialisation/Raw/ImageFileAux.h"
 
 #include "Renderer.h"
 #include "EnvironmentMap.h"
@@ -47,7 +46,7 @@
 #include "Pipeline.h"
 
 constexpr uint32_t SHADOW_CASCADE_COUNT = 4u;
-constexpr int MAX_POINT_LIGHTS = 512;
+constexpr size_t MAX_POINT_LIGHTS = 32llu;
 
 namespace Saturn {
 
@@ -193,18 +192,6 @@ namespace Saturn {
 	{
 		glm::mat4 ViewProjection;
 		glm::mat4 View;
-	};
-
-	struct PCStaticMeshMaterial
-	{
-		alignas( 4 ) float UseAlbedoTexture;
-		alignas( 4 ) float UseMetallicTexture;
-		alignas( 4 ) float UseRoughnessTexture;
-		alignas( 4 ) float UseNormalTexture;
-
-		alignas( 16 ) glm::vec4 AlbedoColor;
-		alignas( 4 ) float Metalness;
-		alignas( 4 ) float Roughness;
 	};
 
 	// Fragment, Binding 13

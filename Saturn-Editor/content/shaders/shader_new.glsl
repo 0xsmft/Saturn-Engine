@@ -146,7 +146,7 @@ layout(set = 0, binding = 12) uniform DebugData
 layout(set = 0, binding = 13) uniform Lights 
 {
 	uint nbLights;
-	PointLight Lights[512];
+	PointLight Lights[32];
 } u_Lights;
 
 layout(std430, set = 0, binding = 14) buffer VisiblePointLightIndicesBuffer

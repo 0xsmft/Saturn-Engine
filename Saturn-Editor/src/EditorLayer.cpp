@@ -395,7 +395,8 @@ namespace Saturn {
 			m_RuntimeScene->OnUpdate( time );
 
 			// Online subsystem update...
-			m_OnlineAPI->Tick();
+			if( m_OnlineAPI )
+				m_OnlineAPI->Tick();
 
 			// Suspended only, paused would be in the control of the user, so we don't switch the
 			// camera.
@@ -882,7 +883,8 @@ namespace Saturn {
 		g_AluraCanvas = new AluraCanvas( canvasSpecification );
 		g_AluraCanvas->SetContext( m_SceneRenderer->GetAluraRenderer() );
 
-		m_OnlineAPI->Initialise();
+		if( m_OnlineAPI )
+			m_OnlineAPI->Initialise();
 	}
 
 	void EditorLayer::PostInitRuntime()
@@ -921,7 +923,8 @@ namespace Saturn {
 
 		m_SceneRenderer->SetCurrentScene( m_EditorScene.Get() );
 
-		m_OnlineAPI->Terminate();
+		if( m_OnlineAPI )
+			m_OnlineAPI->Terminate();
 
 		const std::string title = std::format( "{0} - Saturn", Project::GetActiveConfig().Name );
 		Application::Get()->GetWindow()->ChangeTitle( title );
@@ -959,12 +962,10 @@ namespace Saturn {
 					// What we are really doing here is freeing it from the registry and removing the children.
 					for( auto& rEntity : m_SelectionManager->GetSelectionContexts( g_ActiveScene ) )
 					{
-						m_GlobalUndoRedoGroup->RemoveIfActionHasIdentifier( ( uint64_t ) rEntity->GetHandle() );
-
 						bool canDeleteNow = true;
 
 						// Special deletion cases:
-						//  (a) NavBoundsEntity -> need to show popup to ask if the uesr want to delete the cache.
+						//  (a) NavBoundsEntity -> need to show popup to ask if the user want to delete the cache.
 						//  (b) Currently selected camera -> invalidate information about the camera.
 						if( rEntity->GetClass() == NavBoundsEntity::StaticClass() )
 						{
@@ -2550,7 +2551,7 @@ namespace Saturn {
 
 				if( ImGui::BeginItemTooltip() )
 				{
-					ImGui::Text( "Attempts to compile all shaders and bundles them all into one file.\nYou do not need to do this if you intend to prepare the project for distribution as that option will build it for you.\nOnly build the Shader Bundle if there is a problem with your shaders." );
+					ImGui::Text( "Attempts to compile all shaders and bundles them all into one file." );
 					ImGui::Text( "You do not need to do this if you intend to prepare the project for distribution as that option will build it for you." );
 					ImGui::Text( "Only build the Shader Bundle if there is a problem with your shaders." );
 					ImGui::EndTooltip();
@@ -4031,7 +4032,11 @@ namespace Saturn {
 				ImGui::SameLine();
 				if( ImGui::Button( "..." ) )
 				{
+#if defined(SAT_PLATFORM_WINDOWS)
 					path = Application::Get()->OpenFile( L"Application|*.exe" );
+#elif defined(SAT_PLATFORM_LINUX)
+					path = Application::Get()->OpenFile( L"Application|*" );
+#endif
 				}
 
 				if( !path.empty() )

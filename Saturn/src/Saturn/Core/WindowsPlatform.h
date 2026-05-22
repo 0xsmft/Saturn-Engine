@@ -48,6 +48,10 @@
 // The vulkan surface extension name.
 #define SAT_PLATFORM_VULKAN_SURFACE_NAME "VK_KHR_win32_surface"
 
+#define SAT_CLANG_TYPENAME 
+#define SAT_GCC_TYPENAME 
+#define SAT_MSVC_TYPENAME typename
+
 // We only support x86_64
 #if defined(_MSC_VER) && defined(_M_X64) || defined(__x86_64__)
 #define SAT_PLATFORM_BINARY_FOLDER "windows-x86_64"

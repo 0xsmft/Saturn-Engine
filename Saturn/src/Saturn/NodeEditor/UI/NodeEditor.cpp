@@ -87,7 +87,7 @@ namespace Saturn {
 		auto icon = EditorIcons::GetIcon( "BlueprintBackground" );
 		if( icon == nullptr )
 		{
-			const auto texture = Ref<Texture2D>::Create( "content/textures/editor/BlueprintBackground.png", AddressingMode::Repeat, false );
+			const auto texture = Ref<Texture2D>::Create( "content/textures/editor/BlueprintBackground.png", AddressingMode::Repeat, TextureLoadFlags_LoadOnMainThread );
 
 			EditorIcons::AddIcon( texture );
 
@@ -1349,6 +1349,26 @@ namespace Saturn {
 
 					if( Auxiliary::TreeNode( "Pins", false ) )
 					{
+						auto drawPinFlagText = []( uint8_t flags )
+						{
+							ImGui::Text( "Flags:" );
+
+							if( ( flags & PinFlag_DefaultSet ) != 0 )
+							{
+								ImGui::BulletText( "Default Flags" );
+							}
+
+							if( ( flags & PinFlag_AcceptMultipleLinks ) != 0 )
+							{
+								ImGui::BulletText( "Accepts Multiple Links" );
+							}
+
+							if( ( flags & PinFlag_RequiredForEvaluation ) != 0 )
+							{
+								ImGui::BulletText( "Required For Evaluation" );
+							}
+						};
+
 						if( ImGui::TreeNode( "Outputs" ) )
 						{
 							for( const auto& rOutput : rNode->Outputs )
@@ -1356,7 +1376,18 @@ namespace Saturn {
 								ImGui::Text( "%s", rOutput->Name.c_str() );
 								ImGui::Text( "ID/%llu", rOutput->ID );
 
-								ImGui::Text( "Flags %ui", rOutput->PinFlags );
+								if( IsLinked( rOutput->ID ) )
+								{
+									ImGui::TextColored( ImVec4{ 0.0F, 1.0F, 0.0, 1.0F }, "Linked" );
+								}
+								else
+								{
+									ImGui::TextColored( ImVec4{ 1.0F, 0.0F, 0.0, 1.0F }, "Not Linked" );
+								}
+
+								drawPinFlagText( rOutput->PinFlags );
+								
+								ImGui::Separator();
 							}
 
 							Auxiliary::EndTreeNode();
@@ -1369,8 +1400,19 @@ namespace Saturn {
 							{
 								ImGui::Text( "%s", rInput->Name.c_str() );
 								ImGui::Text( "ID/%llu", rInput->ID );
-								
-								ImGui::Text( "Accepts Multiple Links %ui", rInput->PinFlags );
+
+								if( IsLinked( rInput->ID ) )
+								{
+									ImGui::TextColored( ImVec4{ 0.0F, 1.0F, 0.0, 1.0F }, "Linked" );
+								}
+								else
+								{
+									ImGui::TextColored( ImVec4{ 1.0F, 0.0F, 0.0, 1.0F }, "Not Linked" );
+								}
+
+								drawPinFlagText( rInput->PinFlags );
+
+								ImGui::Separator();
 							}
 
 							Auxiliary::EndTreeNode();
@@ -1382,6 +1424,26 @@ namespace Saturn {
 
 					ImGui::PopID();
 					ImGui::Separator();
+				}
+
+				if( Auxiliary::TreeNode( "Extra extra information (may be slow)", false ) )
+				{
+					uint64_t numberOfUnlinkedInputs = 0;
+					for( const auto& [id, rNode] : m_Nodes )
+					{
+						for( const auto& rInput : rNode->Inputs )
+						{
+							if( !IsLinked( rInput->ID ) )
+							{
+								ImGui::Text( "Node %s (%llu) pin ID %llu is not linked.", rNode->Name.c_str(), id, rInput->ID );
+								++numberOfUnlinkedInputs;
+							}
+						}
+					}
+
+					ImGui::Text( "Number of unlinked inputs %llu", numberOfUnlinkedInputs );
+
+					Auxiliary::EndTreeNode();
 				}
 
 				Auxiliary::EndTreeNode();
@@ -1767,7 +1829,7 @@ namespace Saturn {
 
 #if !defined(SAT_DIST)
 		VariableGuard<ed::EditorContext*, ed::EditorContext*> guard( m_Editor );
-		//		node->PositionBeforeMove = ed::GetNodePosition( ed::NodeId( node->ID ) );
+		node->PositionBeforeMove = ed::GetNodePosition( ed::NodeId( node->ID ) );
 
 				// TODO: Currently no way for us to preemptively set a position of a node before the first frame is drawn.
 		//		if( node->Position.x != 0.0f && node->Position.y != 0.0f )

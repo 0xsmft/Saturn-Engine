@@ -76,7 +76,7 @@ namespace Saturn {
 
 			if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), { 24.0f, 24.0f } ) )
 			{
-				const std::filesystem::path path = Application::Get()->OpenFile( L"Supported asset types (*.wav, *.mp3, *.ogg)|*.wav; *.mp3; *.ogg" );
+				const std::filesystem::path path = Application::Get()->OpenFile( "Supported asset types (*.wav, *.mp3, *.ogg)|*.wav; *.mp3; *.ogg" );
 
 				if( !path.empty() )
 				{

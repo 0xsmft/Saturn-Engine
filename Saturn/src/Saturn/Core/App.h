@@ -117,11 +117,11 @@ namespace Saturn {
 
 		// Calls the OS to show an open file dialog.
 		// @param rFilter Must be "Desc1|*.txt;" with "|" being a seperator
-		std::filesystem::path OpenFile( const std::wstring& rFilter ) const;
+		std::filesystem::path OpenFile( const std::string& rFilter ) const;
 
 		// Calls the OS to show a save file dialog.
 		// @param rFilter Must be "Desc1|*.txt;" with "|" being a seperator
-		std::filesystem::path SaveFile( const std::wstring& pFilter ) const;
+		std::filesystem::path SaveFile( const std::string& pFilter ) const;
 
 		// Calls the OS to open its native file explorer app.
 		// @param rPath Path to open to

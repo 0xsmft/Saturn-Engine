@@ -355,33 +355,33 @@ namespace Saturn {
 	}
 #endif
 
-	std::filesystem::path Application::OpenFile( const std::wstring& rFilter ) const
+	std::filesystem::path Application::OpenFile( const std::string& rFilter ) const
 	{
 		NFD::Init();
 
 		std::filesystem::path path;
 
-		std::vector<std::wstring> tokens;
-		std::wstringstream ss( rFilter );
-		std::wstring item;
+		std::vector<std::string> tokens;
+		std::stringstream ss( rFilter );
+		std::string item;
 
 		// Split by |.
-		while( std::getline( ss, item, L'|' ) )
+		while( std::getline( ss, item, '|' ) )
 		{
 			if( !item.empty() )
 				tokens.push_back( item );
 		}
 
-		std::vector<nfdnfilteritem_t> filters;
+		std::vector<nfdu8filteritem_t> filters;
 
 		// Expecting pairs... (description | exts)
 		for( size_t i = 0; i + 1 < tokens.size(); i += 2 )
 		{
-			filters.push_back( { tokens[ i ].c_str(), tokens[ i + 1 ].c_str() } );
+			filters.emplace_back( tokens[ i ].c_str(), tokens[ i + 1 ].c_str() );
 		}
 
-		// UniquePathN == std::unique_ptr so it's kinda like a span of wchars
-		NFD::UniquePathN nfdPath;
+		// UniquePathN == std::unique_ptr so it's kinda like a span of chars
+		NFD::UniquePathU8 nfdPath;
 
 		nfdwindowhandle_t parentWindow
 		{ 
@@ -398,39 +398,38 @@ namespace Saturn {
 			path = std::filesystem::path( nfdPath.get() );
 		}
 
-
 		NFD::Quit();
 
 		return path;
 	}
 
-	std::filesystem::path Application::SaveFile( const std::wstring& rFilter ) const
+	std::filesystem::path Application::SaveFile( const std::string& rFilter ) const
 	{
 		NFD::Init();
 
 		std::filesystem::path path;
 
-		std::vector<std::wstring> tokens;
-		std::wstringstream ss( rFilter );
-		std::wstring item;
+		std::vector<std::string> tokens;
+		std::stringstream ss( rFilter );
+		std::string item;
 
 		// Split by |.
-		while( std::getline( ss, item, L'|' ) )
+		while( std::getline( ss, item, '|' ) )
 		{
 			if( !item.empty() )
 				tokens.push_back( item );
 		}
 
-		std::vector<nfdnfilteritem_t> filters;
+		std::vector<nfdu8filteritem_t> filters;
 
 		// Expecting pairs... (description | exts)
 		for( size_t i = 0; i + 1 < tokens.size(); i += 2 )
 		{
-			filters.push_back( { tokens[ i ].c_str(), tokens[ i + 1 ].c_str() } );
+			filters.emplace_back( tokens[ i ].c_str(), tokens[ i + 1 ].c_str() );
 		}
 
-		// UniquePathN == std::unique_ptr so it's kinda like a span of wchars
-		NFD::UniquePathN nfdPath;
+		// UniquePathN == std::unique_ptr so it's kinda like a span of chars
+		NFD::UniquePathU8 nfdPath;
 
 		nfdwindowhandle_t parentWindow
 		{

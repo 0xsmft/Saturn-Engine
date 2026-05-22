@@ -681,7 +681,7 @@ namespace Saturn {
 	void EditorLayer::SaveFileAs()
 	{
 		// TODO: Support Saving scene as!
-		const auto res = Application::Get()->SaveFile( L"Modern Saturn scene file (*.scene)|*.scene" );
+		const auto res = Application::Get()->SaveFile( "Modern Saturn scene file (*.scene)|*.scene" );
 		if( !res.empty() )
 		{
 			SceneSerialiser serialiser( m_EditorScene );
@@ -2360,7 +2360,7 @@ namespace Saturn {
 
 				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), { 24.0f, 24.0f } ) )
 				{
-					const auto filePath = Application::Get()->OpenFile( L"Saturn Project file (*.sproject)|*.sproject" );
+					const auto filePath = Application::Get()->OpenFile( "Saturn Project file (*.sproject)|*.sproject" );
 					if( !filePath.empty() )
 					{
 						rEngineSettings.StartupProject = filePath;

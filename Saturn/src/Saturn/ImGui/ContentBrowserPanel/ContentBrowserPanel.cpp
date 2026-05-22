@@ -559,7 +559,7 @@ namespace Saturn {
 			// Import externally.
 			if( ImGui::MenuItem( "Browse" ) )
 			{
-				const std::filesystem::path path = Application::Get()->OpenFile( L"Supported asset types (*.fbx *.gltf *.glb *.png *.tga *.jpeg *.jpg *wav *.ogg *.mp3 *.ttf)|*.fbx; *.gltf; *.glb; *.png; *.tga; *.jpeg; *jpg; *.wav; *.ogg; *.mp3; *.ttf" );
+				const std::filesystem::path path = Application::Get()->OpenFile( "Supported asset types (*.fbx *.gltf *.glb *.png *.tga *.jpeg *.jpg *wav *.ogg *.mp3 *.ttf)|*.fbx; *.gltf; *.glb; *.png; *.tga; *.jpeg; *jpg; *.wav; *.ogg; *.mp3; *.ttf" );
 
 				if( !path.empty() )
 				{

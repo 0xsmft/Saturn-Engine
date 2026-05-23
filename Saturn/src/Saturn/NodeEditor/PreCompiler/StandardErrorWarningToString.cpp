@@ -27,6 +27,11 @@
 */
 
 #include "sppch.h"
+
+#if !defined(SAT_COMPILER_MSVC)
+#include "Saturn/Core/UUID.h"
+#endif
+
 #include "NodeEditorPreCompilerBase.h"
 #include "StandardErrorWarningToString.h"
 

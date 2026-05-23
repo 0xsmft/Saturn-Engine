@@ -297,7 +297,7 @@ namespace Saturn {
 
 		if( ImGui::Button( "Browse", ImVec2( bottomBarHeight, bottomBarHeight ) ) ) 
 		{
-			auto filePath = Application::Get()->OpenFile( L"Saturn Project file (*.sproject)|*.sproject" );
+			auto filePath = Application::Get()->OpenFile( "Saturn Project file (*.sproject)|*.sproject" );
 
 			ImportExternalProject( filePath );
 		}

@@ -249,6 +249,8 @@ namespace Saturn {
 				if( oldState == RuntimeState::Starting || oldState == RuntimeState::NoState ) 
 				{
 					m_SelectedReferenceObject = nullptr;
+
+					m_NodeEditor->SetUserAuthorityFlag( NodeEditorUserAuthority::Editing, false );
 				}
 			} break;
 

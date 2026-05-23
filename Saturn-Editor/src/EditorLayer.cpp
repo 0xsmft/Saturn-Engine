@@ -4033,9 +4033,9 @@ namespace Saturn {
 				if( ImGui::Button( "..." ) )
 				{
 #if defined(SAT_PLATFORM_WINDOWS)
-					path = Application::Get()->OpenFile( L"Application|*.exe" );
+					path = Application::Get()->OpenFile( "Application|*.exe" );
 #elif defined(SAT_PLATFORM_LINUX)
-					path = Application::Get()->OpenFile( L"Application|*" );
+					path = Application::Get()->OpenFile( "Application|*" );
 #endif
 				}
 

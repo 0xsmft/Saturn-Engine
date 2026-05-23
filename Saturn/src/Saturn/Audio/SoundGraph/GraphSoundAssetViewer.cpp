@@ -192,10 +192,12 @@ namespace Saturn {
 
 			case RuntimeState::Running:
 			{
+				m_SoundGraph->SetUserAuthorityFlag( NodeEditorUserAuthority::Editing, false );
 			} break;
 
 			case RuntimeState::Ending:
 			{
+				m_SoundGraph->SetUserAuthorityFlag( NodeEditorUserAuthority::Editing, true );
 			} break;
 		}
 	}

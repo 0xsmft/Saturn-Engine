@@ -1159,7 +1159,7 @@ namespace Saturn {
 			PassSpecification PassSpec = {};
 			PassSpec.Name = "Jump Flood Odd pass";
 			PassSpec.LoadColor = true;
-			PassSpec.Attachments = { ImageFormat::RGBA32F };
+			PassSpec.Attachments = { ImageFormat::RGBA8 };
 
 			m_RendererData.JumpFloodOddPass = Ref< Pass >::Create( PassSpec );
 		}

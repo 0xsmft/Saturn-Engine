@@ -32,63 +32,9 @@
 #include "VulkanContext.h"
 #include "VulkanDebug.h"
 
-namespace Saturn {
+#include "VulkanImageAux.h"
 
-	static VkFormat VulkanFormat( ImageFormat format )
-	{
-		switch( format )
-		{
-			case Saturn::ImageFormat::RGBA8:
-				return VK_FORMAT_R8G8B8A8_UNORM;
-
-			case Saturn::ImageFormat::RGBA16F:
-				return VK_FORMAT_R16G16B16A16_UNORM;
-
-			case Saturn::ImageFormat::RGBA32F:
-				return VK_FORMAT_R32G32B32A32_SFLOAT;
-
-			case ImageFormat::BGRA8:
-				return VK_FORMAT_B8G8R8A8_UNORM;
-
-			case Saturn::ImageFormat::RED8:
-				return VK_FORMAT_R8_UNORM;
-
-			case Saturn::ImageFormat::DEPTH24STENCIL8:
-				return VK_FORMAT_D32_SFLOAT_S8_UINT;
-			case Saturn::ImageFormat::DEPTH32F:
-				return VK_FORMAT_D32_SFLOAT;
-		}
-
-		return VK_FORMAT_UNDEFINED;
-	}
-
-	static bool IsColorFormat( ImageFormat format )
-	{
-		switch( format )
-		{
-			case Saturn::ImageFormat::RGBA8:
-			case Saturn::ImageFormat::RGBA16F:
-			case Saturn::ImageFormat::RGBA32F:
-			case Saturn::ImageFormat::RGB32F:
-			case Saturn::ImageFormat::BGRA8:
-			case Saturn::ImageFormat::RED8:
-				return true;
-		}
-
-		return false;
-	}
-
-	static bool IsDepthFormat( ImageFormat format )
-	{
-		switch( format )
-		{
-			case Saturn::ImageFormat::DEPTH32F:
-			case Saturn::ImageFormat::DEPTH24STENCIL8:
-				return true;
-		}
-
-		return false;
-	}
+namespace Saturn {	
 
 	Pass::Pass( const PassSpecification& rPassSpec )
 	{

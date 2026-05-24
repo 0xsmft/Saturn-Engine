@@ -51,6 +51,12 @@ namespace Saturn {
 			case ImageFormat::BGRA8:
 				return VK_FORMAT_B8G8R8A8_UNORM;
 
+			case ImageFormat::RGB8:
+				return VK_FORMAT_R8G8B8_UNORM;
+
+			case ImageFormat::RG8:
+				return VK_FORMAT_R8G8_UNORM;
+
 			case ImageFormat::RED8:
 				return VK_FORMAT_R8_UNORM;
 
@@ -85,6 +91,12 @@ namespace Saturn {
 			case VK_FORMAT_R8_UNORM:
 				return ImageFormat::RED8;
 
+			case VK_FORMAT_R8G8B8_UNORM:
+				return ImageFormat::RGB8;
+
+			case VK_FORMAT_R8G8_UNORM:
+				return ImageFormat::RGB8;
+
 			case VK_FORMAT_D32_SFLOAT_S8_UINT:
 				return ImageFormat::DEPTH24STENCIL8;
 
@@ -99,32 +111,24 @@ namespace Saturn {
 	{
 		switch( format )
 		{
-			case Saturn::ImageFormat::RGBA8:
-			case Saturn::ImageFormat::RGBA16F:
-			case Saturn::ImageFormat::RGBA32F:
-			case Saturn::ImageFormat::RGB32F:
-			case Saturn::ImageFormat::BGRA8:
-			case Saturn::ImageFormat::RED8:
-				return true;
+			case Saturn::ImageFormat::DEPTH24STENCIL8:
+			case Saturn::ImageFormat::DEPTH32F:
+				return false;
 		}
 
-		return false;
+		return true;
 	}
 
 	static bool IsColorFormat( VkFormat format )
 	{
 		switch( format )
 		{
-			case VK_FORMAT_R32G32B32A32_SFLOAT:
-			case VK_FORMAT_R32G32B32_SFLOAT:
-			case VK_FORMAT_R8G8B8A8_UNORM:
-			case VK_FORMAT_R16G16B16A16_UNORM:
-			case VK_FORMAT_B8G8R8A8_UNORM:
-			case VK_FORMAT_R8_UNORM:
-				return true;
+			case VK_FORMAT_D32_SFLOAT:
+			case VK_FORMAT_D32_SFLOAT_S8_UINT:
+				return false;
 		}
 
-		return false;
+		return true;
 	}
 
 	static bool IsDepthFormat( ImageFormat format )

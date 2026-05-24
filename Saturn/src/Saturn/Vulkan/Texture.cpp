@@ -464,6 +464,7 @@ namespace Saturn {
 			case Saturn::ImageFormat::DEPTH24STENCIL8:
 			case Saturn::ImageFormat::None: break;
 
+			case Saturn::ImageFormat::BGRA8:
 			case Saturn::ImageFormat::RGBA8:
 				return width * height * 4;
 
@@ -476,11 +477,14 @@ namespace Saturn {
 			case Saturn::ImageFormat::RGB32F:
 				return width * height * 3 * sizeof( float );
 
-			case Saturn::ImageFormat::BGRA8:
-				return width * height * 4;
-
 			case Saturn::ImageFormat::RED8:
 				return width * height;
+
+			case Saturn::ImageFormat::RG8:
+				return width * height * 2;
+
+			case Saturn::ImageFormat::RGB8:
+				return width * height * 3;
 		}
 
 		SAT_CORE_ASSERT( false );

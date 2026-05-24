@@ -79,9 +79,9 @@ namespace Saturn {
 				rLocators.resize( pinIndex + 1 );
 			}
 
-			rLocators[ pinIndex ].Set( new Ty(), true );
+			rLocators[ pinIndex ].SetOwned<Ty>( new Ty() );
 
-			return ( Ty* )rLocators[ pinIndex ].Get();
+			return ( Ty* ) rLocators[ pinIndex ].Get();
 		}
 
 		template<typename Ty>

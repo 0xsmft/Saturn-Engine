@@ -48,23 +48,59 @@ namespace Saturn {
 		{
 			if( m_Owned )
 			{
-				delete m_pVariable;
+				DeleteOwned();
 			}
 
+			m_Owned = false;
 			m_pVariable = nullptr;
 		}
 
-		void Set( const void* pAddress, bool owned = false )
+		template<typename TCppType>
+		void Set( const TCppType* pAddress )
 		{
-			m_Owned = owned ? 1 : 0;
+			Reset();
+
 			m_pVariable = pAddress;
+		}
+
+		template<typename TCppType>
+		void SetOwned( TCppType* pPtr ) 
+		{
+			Reset();
+
+			m_pVariable = pPtr;
+			m_Owned = true;
+
+			m_pDeleterFunc = []( const void* pObj )
+			{
+				delete static_cast< const TCppType* >( pObj );
+			};
 		}
 
 		const void* Get() const { return m_pVariable; }
 
 	private:
+		void Reset() 
+		{
+			if( m_pVariable && m_Owned )
+			{
+				DeleteOwned();
+			}
+		}
+
+		void DeleteOwned() 
+		{
+			if( m_pDeleterFunc )
+			{
+				( m_pDeleterFunc ) ( m_pVariable );
+			}
+		}
+
+	private:
 		const void* m_pVariable = nullptr;
-		uint8_t m_Owned : 1 = false;
+		void ( *m_pDeleterFunc )( const void* ) = nullptr;
+		
+		bool m_Owned = false;
 	};
 	
 }

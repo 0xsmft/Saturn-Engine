@@ -152,6 +152,8 @@ namespace Saturn {
 
 		std::filesystem::path GetAppDataFolder() const;
 
+		std::thread::id GetMainThreadID() const { return m_MainThreadID; }
+
 		void SuspendMainThreadCV();
 		void ResumeMainThreadCV();
 

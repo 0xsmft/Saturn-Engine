@@ -30,6 +30,7 @@
 
 #include "Asset.h"
 #include "TextureLoadFlags.h"
+#include "Saturn/Vulkan/Image2DDefines.h"
 
 namespace Saturn {
 
@@ -53,7 +54,7 @@ namespace Saturn {
 		TextureSourceAsset( const Ref<Asset>& rBase );
 		TextureSourceAsset( const Ref<Asset>& rBase, std::filesystem::path AbsolutePath, TextureLoadFlags flags = TextureLoadFlags_FlipVertically );
 
-		~TextureSourceAsset();
+		virtual ~TextureSourceAsset();
 
 		void WriteToVFS();
 		void ReadFromVFS();
@@ -78,9 +79,10 @@ namespace Saturn {
 		const std::filesystem::path& GetTextureAbsolutePath() const { return m_AbsolutePath; }
 #endif
 
-		TextureLoadFlags GetFlags() const { return ( TextureLoadFlags ) m_LoadFlags; }
-		bool IsFlagSet( TextureLoadFlags flag ) const { return ( m_LoadFlags & flag ) != 0; }
-		void SetFlag( TextureLoadFlags flag, bool val ) 
+	public:
+		TextureLoadFlags GetLoadFlags() const { return ( TextureLoadFlags ) m_LoadFlags; }
+		bool IsLoadFlagSet( TextureLoadFlags flag ) const { return ( m_LoadFlags & flag ) != 0; }
+		void SetLoadFlag( TextureLoadFlags flag, bool val ) 
 		{
 			if( val )
 				m_LoadFlags |= flag;
@@ -93,7 +95,12 @@ namespace Saturn {
 
 	private:
 		void Load();
-		void LoadRawTexture();
+		void LoadFromSource();
+
+		void LoadOnJobSystem();
+		void LoadOnCurrentThread();
+
+		ImageFormat GetImageFormat() const;
 
 	private:
 #if !defined(SAT_DIST)

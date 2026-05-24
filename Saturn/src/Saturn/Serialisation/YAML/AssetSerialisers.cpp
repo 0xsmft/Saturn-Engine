@@ -80,7 +80,7 @@ namespace Saturn {
 		out << YAML::Key << "Height"   << YAML::Value <<			  textureSource->Height();
 		out << YAML::Key << "Channels" << YAML::Value <<			  textureSource->Channels();
 		out << YAML::Key << "Hdr"      << YAML::Value <<			  textureSource->IsHdr();
-		out << YAML::Key << "Flags"    << YAML::Value << ( uint32_t ) textureSource->GetFlags();
+		out << YAML::Key << "Flags"    << YAML::Value << ( uint32_t ) textureSource->GetLoadFlags();
 		out << YAML::Key << "FilteringFlags" << YAML::Value << ( uint32_t ) textureSource->GetFilteringFlags();
 
 		auto path = std::filesystem::relative( textureSource->GetTextureAbsolutePath(), Project::GetActiveProjectRootPath() );
@@ -121,15 +121,16 @@ namespace Saturn {
 
 		const auto textureData = data[ "Texture" ];
 
-		auto width = textureData[ "Width" ].as<uint32_t>();
-		auto height = textureData[ "Height" ].as<uint32_t>();
-		auto channel = textureData[ "Channels" ].as<uint32_t>();
-		auto hdr = textureData[ "Hdr" ].as<bool>();
-		auto flags = textureData[ "Flags" ].as<uint32_t>();
-		auto filteringFlags = textureData[ "FilteringFlags" ].as<uint32_t>( 0 );
+		const auto width = textureData[ "Width" ].as<uint32_t>();
+		const auto height = textureData[ "Height" ].as<uint32_t>();
+		const auto channel = textureData[ "Channels" ].as<uint32_t>();
+		const auto hdr = textureData[ "Hdr" ].as<bool>();
+		const auto flags = textureData[ "Flags" ].as<uint32_t>();
+		const auto filteringFlags = textureData[ "FilteringFlags" ].as<uint32_t>( 0 );
+		
 		auto path = textureData[ "Source Path" ].as<std::filesystem::path>();
 
-#if defined(SAT_PLATFORM_WINDOWS)
+#if defined( SAT_PLATFORM_WINDOWS )
 		std::wstring wstr = path.wstring();
 		std::replace( wstr.begin(), wstr.end(), L'/', L'\\' );
 		path = wstr;
@@ -145,7 +146,7 @@ namespace Saturn {
 		textureSrcAsset->m_AbsolutePath = GetFilepathAbs( path );
 #endif
 
-		textureSrcAsset->LoadRawTexture();
+		textureSrcAsset->LoadFromSource();
 
 		// Set rAsset reference to point to our new MaterialAsset
 		rAsset = textureSrcAsset;

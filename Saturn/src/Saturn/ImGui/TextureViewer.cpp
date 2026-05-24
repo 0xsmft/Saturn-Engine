@@ -45,7 +45,7 @@ namespace Saturn {
 		: AssetViewer( ID )
 	{
 		m_AssetType = AssetType::Texture;
-		m_Asset = AssetManager::Get()->GetAssetAs<TextureSourceAsset>( m_AssetID );
+		m_TextureAsset = AssetManager::Get()->GetAssetAs<TextureSourceAsset>( m_AssetID );
 	
 		AddTexture();
 	}
@@ -55,10 +55,10 @@ namespace Saturn {
 		if( m_Dirty )
 		{
 			TextureSourceAssetSerialiser tsas;
-			tsas.Serialise( m_Asset );
+			tsas.Serialise( m_TextureAsset );
 		}
 
-		m_Asset = nullptr;
+		m_TextureAsset = nullptr;
 	}
 
 	void TextureViewer::OnImGuiRender()
@@ -77,9 +77,20 @@ namespace Saturn {
 					if( ImGui::MenuItem( "Save" ) )
 					{
 						TextureSourceAssetSerialiser tsas;
-						tsas.Serialise( m_Asset );
+						tsas.Serialise( m_TextureAsset );
 
 						m_Dirty = false;
+					}
+
+					if( ImGui::MenuItem( "Open source in native file explorer" ) )
+					{
+						Application::Get()->OpenNativeFileExplorer( m_TextureAsset->GetTextureAbsolutePath(), true );
+					}
+
+					if( ImGui::MenuItem( "Open asset in native file explorer" ) )
+					{
+						const auto absPath = Project::GetActiveProject()->FilepathAbs( m_TextureAsset->Path );
+						Application::Get()->OpenNativeFileExplorer( absPath, true );
 					}
 
 					if( ImGui::MenuItem( "Close" ) )
@@ -94,7 +105,7 @@ namespace Saturn {
 				{
 					if( ImGui::MenuItem( "Fit 1 to 1" ) )
 					{
-						const auto texture = m_Asset->GetTexture();
+						const auto texture = m_TextureAsset->GetTexture();
 						m_TextureDisplaySize = { texture->Width(), texture->Height() };
 					}
 
@@ -117,14 +128,14 @@ namespace Saturn {
 
 			ImGui::Text( "Load Flags" );
 			{
-				bool flip = m_Asset->IsFlagSet( TextureLoadFlags_FlipVertically );
+				bool flip = m_TextureAsset->IsLoadFlagSet( TextureLoadFlags_FlipVertically );
 				
 				// We are not using columns so we must draw the text ourself.
 				ImGui::Text( "Flip Vertically" );
 				ImGui::SameLine();
 				if( Auxiliary::DrawBoolControl( "##flip", flip, false ) )
 				{
-					m_Asset->SetFlag( TextureLoadFlags_FlipVertically, flip );
+					m_TextureAsset->SetLoadFlag( TextureLoadFlags_FlipVertically, flip );
 					m_PendingTextureReload = true;
 					
 					m_Dirty = true;
@@ -136,7 +147,7 @@ namespace Saturn {
 			ImGui::Text( "Filtering flags" );
 			{
 				const char* pItems[] = { "Linear", "Optimal" };
-				static TextureFilteringFlags SelectedEnum = m_Asset->GetFilteringFlags();
+				static TextureFilteringFlags SelectedEnum = m_TextureAsset->GetFilteringFlags();
 				static const char* Selected = pItems[ ( int ) SelectedEnum ];
 				if( ImGui::BeginCombo( "##setsamplerfilter", Selected ) )
 				{
@@ -149,7 +160,7 @@ namespace Saturn {
 							SelectedEnum = ( TextureFilteringFlags ) i;
 							Selected = pItems[ i ];
 
-							m_Asset->SetFilteringFlags( SelectedEnum );
+							m_TextureAsset->SetFilteringFlags( SelectedEnum );
 							m_PendingTextureReload = true;
 							m_Dirty = true;
 						}
@@ -172,14 +183,22 @@ namespace Saturn {
 
 				// We don't actually want to make it disabled, we just want to fake it and make it look like it is.
 				ImGui::PushStyleColor( ImGuiCol_Text, ImVec4( 1.0f, 1.0f, 1.0f, 0.5f ) );
-				ImGui::InputText( "##texturepath", ( char* ) m_Asset->GetTextureAbsolutePath().string().c_str(), 4096, ImGuiInputTextFlags_ReadOnly );
+				ImGui::InputText( "##texturepath", ( char* ) m_TextureAsset->GetTextureAbsolutePath().string().c_str(), 4096, ImGuiInputTextFlags_ReadOnly );
 				ImGui::PopStyleColor();
 			}
 
-			Ref<Texture2D> texture = m_Asset->GetTexture();
+			Ref<Texture2D> texture = m_TextureAsset->GetTexture();
 
 			const std::string sizeText = std::format( "{0}x{1} Displaying as {2}x{3}", texture->Width(), texture->Height(), m_TextureDisplaySize.x, m_TextureDisplaySize.y );
 			ImGui::Text( "Texture Size: %s", sizeText.c_str() );
+
+			ImGui::Text( "Channels: %u", m_TextureAsset->Channels() );
+			{
+				Auxiliary::ScopedDisabledFlag disabled( true );
+				
+				bool hdr = m_TextureAsset->IsHdr();
+				ImGui::Checkbox( "HDR", &hdr );
+			}
 
 			Auxiliary::Image( texture, { m_TextureDisplaySize.x, m_TextureDisplaySize.y } );
 		}
@@ -200,16 +219,16 @@ namespace Saturn {
 	{
 		if( m_PendingTextureReload )
 		{
-			m_Asset->Load();
+			m_TextureAsset->Load();
 			m_PendingTextureReload = false;
 		}
 	}
 
 	void TextureViewer::AddTexture()
 	{
-		m_Name = std::format( "{0}##{1}", m_Asset->Name, ( uint64_t ) m_Asset->ID );
+		m_Name = std::format( "{0}##{1}", m_TextureAsset->Name, ( uint64_t ) m_TextureAsset->ID );
 		
-		auto texture = m_Asset->GetTexture();
+		auto texture = m_TextureAsset->GetTexture();
 		m_TextureDisplaySize = glm::min( glm::vec2{ texture->Width() * 0.5f, texture->Height() * 0.5f }, glm::vec2{ 512.0f } );
 
 		m_Open = true;
@@ -228,7 +247,7 @@ namespace Saturn {
 			if( ImGui::Button( "Save" ) )
 			{
 				TextureSourceAssetSerialiser tsas;
-				tsas.Serialise( m_Asset );
+				tsas.Serialise( m_TextureAsset );
 
 				m_Open = false;
 				m_Dirty = false;

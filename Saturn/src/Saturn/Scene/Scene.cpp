@@ -533,7 +533,7 @@ namespace Saturn {
 			if( textureAsset ) 
 			{
 				textureToSubmit = textureAsset->GetTexture();
-				flip = textureAsset->IsFlagSet( TextureLoadFlags_FlipVertically );
+				flip = textureAsset->IsLoadFlagSet( TextureLoadFlags_FlipVertically );
 			}
 			
 			// An extra step to counteract if the texture is the wrong way around,

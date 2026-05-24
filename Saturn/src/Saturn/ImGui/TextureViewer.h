@@ -51,7 +51,7 @@ namespace Saturn {
 		void DrawDirtyPopup();
 
 	private:
-		Ref<TextureSourceAsset> m_Asset = nullptr;
+		Ref<TextureSourceAsset> m_TextureAsset = nullptr;
 		glm::vec2 m_TextureDisplaySize{};
 		bool m_PendingTextureReload = false;
 		bool m_Dirty = false;

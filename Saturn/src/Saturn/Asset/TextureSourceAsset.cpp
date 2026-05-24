@@ -59,7 +59,7 @@ namespace Saturn {
 #endif
 		m_LoadFlags( flags )
 	{
-		LoadRawTexture();
+		LoadFromSource();
 	}
 
 	TextureSourceAsset::TextureSourceAsset( const Ref<Asset>& rBase )
@@ -76,74 +76,61 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		SAT_CORE_ASSERT( std::filesystem::exists( m_AbsolutePath ), "Path does not exist!" );
 
-		int Width, Height, Channels;
-		bool hdr = false;
-		stbi_uc* pTextureData;
-
-		stbi_set_flip_vertically_on_load( IsFlagSet( TextureLoadFlags_FlipVertically ) );
-
-		hdr = stbi_is_hdr( m_AbsolutePath.string().c_str() );
-		SAT_CORE_ASSERT( m_HDR == hdr, "Image hdr types don't match!" );
-
-		if( hdr )
-		{
-			SAT_CORE_INFO( "Loading HDR texture {0}", m_AbsolutePath.string() );
-			pTextureData = ( uint8_t* ) stbi_loadf( m_AbsolutePath.string().c_str(), &Width, &Height, &Channels, 4 );
-		}
-		else
-		{
-			SAT_CORE_INFO( "Loading texture {0}", m_AbsolutePath.string() );
-
-			pTextureData = stbi_load( m_AbsolutePath.string().c_str(), &Width, &Height, &Channels, 4 );
-		}
-
-		SAT_CORE_ASSERT( m_Width == Width, "Image width does not match!" );
-		SAT_CORE_ASSERT( m_Height == Height, "Image height does not match!" );
-		SAT_CORE_ASSERT( m_Channels == Channels, "Image channels does not match!" );
-
-		// NOTE: We should use the proper channel count
-		//		 and stop assuming that all textures have
-		//		 an alpha channel.
-		const uint32_t ImageSize = m_Width * m_Height * 4;
-
-		Buffer textureBuffer = Buffer::Copy( pTextureData, static_cast< size_t >( ImageSize ) );
-		stbi_image_free( pTextureData );
-
-		m_Texture = Ref<Texture2D>::Create( ImageFormat::RGBA8, m_Width, m_Height, textureBuffer.Data );
-		m_Texture->SetSourceID( ID );
-
-		textureBuffer.Free();
+		LoadOnCurrentThread();
 #endif
 	}
 
-	void TextureSourceAsset::LoadRawTexture()
+	void TextureSourceAsset::LoadFromSource()
 	{
 #if !defined(SAT_DIST)
 		SAT_CORE_ASSERT( std::filesystem::exists( m_AbsolutePath ), "Path does not exist!" );
 
-		// Get the width and height of the texture on the main thread.
-		int Width, Height, Channels;
-		SAT_CORE_ASSERT( stbi_info( m_AbsolutePath.string().c_str(), &Width, &Height, &Channels ), "Failed to get information about texture file." );
+		// Prefer to load textures on the current thread only if it's not the main thread.
+		if( std::this_thread::get_id() == Application::Get()->GetMainThreadID() )
+		{
+			int Width, Height, Channels;
+			SAT_CORE_ASSERT( stbi_info( m_AbsolutePath.string().c_str(), &Width, &Height, &Channels ), "Failed to get information about texture file." );
 
-		// Allocate dummy data.
-		uint32_t* pData = new uint32_t[ Width * Height ];
-		std::memset( pData, 0xFF80FFFF, sizeof( uint32_t ) * Width * Height );
+			// 1024*1024 texture and over could be timely to load on the main thread.
+			// So we'll load it on a job system thread (if we are not on the JobSystem already)
+			if( Width >= 1024 || Height >= 1024 )
+			{
+				// Allocate dummy data.
+				uint32_t* pData = new uint32_t[ Width * Height ];
+				std::memset( pData, 0xFF80FFFF, sizeof( uint32_t ) * Width * Height );
 
-		m_Texture = Ref<Texture2D>::Create( ImageFormat::RGBA8, Width, Height, pData );
+				m_Texture = Ref<Texture2D>::Create( GetImageFormat(), Width, Height, pData );
 
-		// And make sure to delete it....
-		delete[] pData;
+				// And make sure to delete it....
+				delete[] pData;
 
-		// Set source ID now as well.
-		m_Texture->SetSourceID( ID );
-		
+				// Set source ID now as well.
+				m_Texture->SetSourceID( ID );
+
+				// Hand off to Jobsystem to fully load the raw image data.
+				LoadOnJobSystem();
+			}
+			else
+			{
+				LoadOnCurrentThread();
+			}
+		}
+		else
+		{
+			LoadOnCurrentThread();
+		}
+#endif
+	}
+
+	void TextureSourceAsset::LoadOnJobSystem()
+	{
 		// Now, on the job system we load the texture and allocate the buffer.
 		JobSystem::Get().QueueJob( [ this ]()
 		{
 			int Width, Height, Channels;
 			stbi_uc* pTextureData;
 
-			stbi_set_flip_vertically_on_load( IsFlagSet( TextureLoadFlags_FlipVertically ) );
+			stbi_set_flip_vertically_on_load( IsLoadFlagSet( TextureLoadFlags_FlipVertically ) );
 
 			m_HDR = stbi_is_hdr( m_AbsolutePath.string().c_str() );
 
@@ -163,6 +150,7 @@ namespace Saturn {
 			m_Height = Height;
 			m_Channels = Channels;
 
+			// Must be done on the RenderThread because we are creating vulkan resources and submitting a command buffer.
 			RenderThread::Get().Queue(
 				[ this, pTextureData ]() mutable
 			{
@@ -171,7 +159,64 @@ namespace Saturn {
 				stbi_image_free( pTextureData );
 			} );
 		} );
-#endif
+	}
+
+	void TextureSourceAsset::LoadOnCurrentThread()
+	{
+		int Width, Height, Channels;
+		bool hdr = false;
+		stbi_uc* pTextureData;
+
+		stbi_set_flip_vertically_on_load( IsLoadFlagSet( TextureLoadFlags_FlipVertically ) );
+
+		hdr = stbi_is_hdr( m_AbsolutePath.string().c_str() );
+		SAT_CORE_ASSERT( m_HDR == hdr, "Image hdr types don't match!" );
+
+		if( hdr )
+		{
+			SAT_CORE_INFO( "Loading HDR texture {0}", m_AbsolutePath.string() );
+			pTextureData = ( uint8_t* ) stbi_loadf( m_AbsolutePath.string().c_str(), &Width, &Height, &Channels, 4 );
+		}
+		else
+		{
+			SAT_CORE_INFO( "Loading texture {0}", m_AbsolutePath.string() );
+
+			pTextureData = stbi_load( m_AbsolutePath.string().c_str(), &Width, &Height, &Channels, 4 );
+		}
+
+		m_Width = Width;
+		m_Height = Height;
+		m_Channels = Channels;
+
+		m_Texture = Ref<Texture2D>::Create( GetImageFormat(), m_Width, m_Height, pTextureData );
+		m_Texture->SetSourceID( ID );
+
+		stbi_image_free( pTextureData );
+	}
+
+	ImageFormat TextureSourceAsset::GetImageFormat() const
+	{
+		switch( m_Channels )
+		{
+			case 1:
+				return ImageFormat::RED8;
+
+			case 2:
+				return ImageFormat::RG8;
+
+			// Some vulkan GPUs do not support RGB8 images with the features that we need, 
+			// so instead of doing more work to check, we are just going to take the easy 
+			// way out and covert it to a RGBA8 texture.
+			case 3:
+			case 4:
+				return ImageFormat::RGBA8;
+
+			default:
+				break;
+		}
+
+		SAT_CORE_ASSERT( false );
+		return ImageFormat::None;
 	}
 
 	void TextureSourceAsset::WriteToVFS()
@@ -234,7 +279,7 @@ namespace Saturn {
 	void TextureSourceAsset::OnReimport( const std::filesystem::path& rPath )
 	{
 		m_AbsolutePath = rPath;
-		LoadRawTexture();
+		LoadFromSource();
 	}
 #endif
 }

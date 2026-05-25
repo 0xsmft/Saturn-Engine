@@ -58,6 +58,11 @@ namespace Saturn {
 					m_PinA = otherPin->Node->ID;
 				}
 			}
+			// Not linked? Read data from the Pin
+			else
+			{
+				m_DefaultValueA = pNode->Inputs[ 0 ].As<typename PinTypeTraits<Ty>::PinType>()->Data;
+			}
 
 			link = pEditor->FindLinkByPin( pNode->Inputs[ 1 ]->ID );
 			if( link && link->StartPinID )
@@ -67,6 +72,11 @@ namespace Saturn {
 				{
 					m_PinB = otherPin->Node->ID;
 				}
+			}
+			// Not linked? Read data from the Pin
+			else
+			{
+				m_DefaultValueB = pNode->Inputs[ 1 ].As<typename PinTypeTraits<Ty>::PinType>()->Data;
 			}
 		}
 #endif
@@ -81,30 +91,26 @@ namespace Saturn {
 				m_PinA = pThisOther->m_PinA;
 				m_PinB = pThisOther->m_PinB;
 
-				if( !m_PinA )
-				{
-					m_pA = pHandler->template RegisterLocatorStorage<Ty>( m_PinA, 0 );
-				}
-				else
-				{
-					m_pA = pHandler->template AccessLocator<Ty>( m_PinA, 0 );
-				}
+				m_DefaultValueA = pThisOther->m_DefaultValueA;
+				m_DefaultValueB = pThisOther->m_DefaultValueB;
 
-				if( !m_PinB )
-				{
-					m_pB = pHandler->template RegisterLocatorStorage<Ty>( m_PinB, 0 );
-				}
-				else
-				{
-					m_pB = pHandler->template AccessLocator<Ty>( m_PinB, 0 );
-				}
+				FetchLocators();
+
+				pHandler->RegisterLocator( m_NodeID, 0, &m_OutValue );
 			}
 		}
 
 		virtual NodeEditorTaskState Tick( Timestep ts ) override
 		{
-			if( !m_pA || !m_pB )
+			if( ( m_pA == nullptr || m_pB == nullptr ) && !m_AttemptedFetch )
+			{
+				FetchLocators();
+				m_AttemptedFetch = true;
+			}
+			else if( m_AttemptedFetch && ( m_pA == nullptr || m_pB == nullptr ) )
+			{
 				return NodeEditorTaskState::Failed;
+			}
 
 			return NodeEditorTaskState::Running;
 		}
@@ -115,12 +121,42 @@ namespace Saturn {
 		virtual void Serialise( std::ofstream& rStream ) const override;
 		virtual void Deserialise( FDependentIStream& rStream ) override;
 
+	private:
+		void FetchLocators() 
+		{
+			if( !m_PinA )
+			{
+				m_pA = m_pHandler->template RegisterLocatorStorage<Ty>( m_PinA, 0 );
+				*m_pA = m_DefaultValueA;
+			}
+			// If we have no value, get it
+			else if( !m_pA )
+			{
+				m_pA = m_pHandler->template AccessLocator<Ty>( m_PinA, 0 );
+			}
+
+			// If we have no PinID, get default value
+			if( !m_PinB && m_pB == nullptr )
+			{
+				m_pB = m_pHandler->template RegisterLocatorStorage<Ty>( m_PinB, 0 );
+				*m_pB = m_DefaultValueB;
+			}
+			// If we have no value, get it
+			else if( !m_pB )
+			{
+				m_pB = m_pHandler->template AccessLocator<Ty>( m_PinB, 0 );
+			}
+		}
+
 	protected:
 		UUID m_PinA = 0, m_PinB = 0;
+		
+		Ty m_DefaultValueA{}, m_DefaultValueB{};
 
 		Ty* m_pA = nullptr;
 		Ty* m_pB = nullptr;
 		bool m_OutValue = false;
+		bool m_AttemptedFetch = false;
 	};
 
 #define SAT_DECLARE_MATHS2_BOOLEAN_TASK( ClassName, BoolOperation, CppType ) \
@@ -207,5 +243,21 @@ public:																		 \
 	SAT_DECLARE_MATHS2_TASK_NOT_EQUAL_TO( Float, float );
 	SAT_DECLARE_MATHS2_TASK_NOT_EQUAL_TO( UInt, uint32_t );
 	SAT_DECLARE_MATHS2_TASK_NOT_EQUAL_TO( Int, int );
+
+	//////////////////////////////////////////////////////////////////////////
+	// AND
+
+#define SAT_DECLARE_MATHS2_TASK_AND( FriendlyName, CppType ) SAT_DECLARE_MATHS2_BOOLEAN_TASK( Maths2And##FriendlyName, &&, CppType )
+
+	// ~ Maths2And
+	SAT_DECLARE_MATHS2_TASK_AND( Bool, bool );
+
+	//////////////////////////////////////////////////////////////////////////
+	// OR
+
+#define SAT_DECLARE_MATHS2_TASK_OR( FriendlyName, CppType ) SAT_DECLARE_MATHS2_BOOLEAN_TASK( Maths2Or##FriendlyName, ||, CppType )
+
+	// ~ Maths2Or
+	SAT_DECLARE_MATHS2_TASK_OR( Bool, bool );
 
 }

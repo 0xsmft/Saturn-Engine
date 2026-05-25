@@ -131,7 +131,6 @@ namespace Saturn {
 		VkDebugUtilsMessengerEXT m_DebugMessenger = nullptr;
 		VkExtent2D m_SwapChainExtent = {};
 		VkCommandPool m_CommandPool = nullptr;
-		VkCommandPool m_SecondaryCommandPool = nullptr;
 		VkCommandPool m_ComputeCommandPool = nullptr;
 		VkCommandBuffer m_CommandBuffer = nullptr;
 

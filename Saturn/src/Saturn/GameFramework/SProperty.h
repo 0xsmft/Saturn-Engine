@@ -127,6 +127,7 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 	{  \
 		using Value = CppType;  \
 		using Reference = CppType&; \
+		using Const = const CppType; \
 		using ConstReference = const CppType&; \
 		\
 		using NeedsToBeReference = std::bool_constant<IsRef>; \
@@ -172,10 +173,9 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 
 	// Where Ty is the cpp type i.e. float, int etc
 	template<typename Ty>
-	Ty ReadPropertyInternal( const SObject* pClass, const void* const fnp )
+	Ty ReadPropertyInternal( const SObject* pClass, GetPropertyFn<Ty> fnp )
 	{
-		auto func = reinterpret_cast< GetPropertyFn<Ty> >( fnp );
-		return ( func ) ( pClass );
+		return ( fnp ) ( pClass );
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -221,13 +221,13 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 		template<SPropertyType Ty>
 		[[nodiscard]] typename PropertyTypeTraits<Ty>::Type Read( SObject* pObject ) const
 		{
-			return ReadPropertyInternal<typename PropertyTypeTraits<Ty>::Type>( pObject, pGetPropertyFunction );
+			return ReadPropertyInternal<typename PropertyTypeTraits<Ty>::Type>( pObject, ( GetPropertyFn<typename PropertyTypeTraits<Ty>::Type> )pGetPropertyFunction );
 		}
 
 		template<SPropertyType Ty>
 		[[nodiscard]] typename PropertyTypeTraits<Ty>::Type Read( const SObject* pObject ) const
 		{
-			return ReadPropertyInternal<typename PropertyTypeTraits<Ty>::Type>( pObject, pGetPropertyFunction );
+			return ReadPropertyInternal<typename PropertyTypeTraits<Ty>::Type>( pObject, ( GetPropertyFn<typename PropertyTypeTraits<Ty>::Type> )pGetPropertyFunction );
 		}
 
 		void RtCopyFromOther( SObject* pSrcObject, SObject* pObject );

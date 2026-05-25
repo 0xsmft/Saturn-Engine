@@ -195,8 +195,9 @@ namespace Saturn {
 		if( !sceneAsset )
 		{
 			SAT_CORE_ERROR( "Failed to travel as {0} is not a valid scene ID", destinationID );
+			SAT_CORE_VERIFY( false, "Failed to travel scene ID is not valid or not found in AssetRegistry" );
 		}
-
+		
 		OpenFileInRuntime( destinationID );
 	}
 

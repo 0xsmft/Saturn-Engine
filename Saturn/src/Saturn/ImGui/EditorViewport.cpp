@@ -150,8 +150,6 @@ namespace Saturn {
 
 				m_EditorCamera.SetViewportSize( ( uint32_t ) vpSize.x, ( uint32_t ) vpSize.y );
 
-//				m_SuspendedEditorCamera.SetViewportSize( ( uint32_t ) m_ViewportSize.x, ( uint32_t ) m_ViewportSize.y );
-
 				if( IsViewportFlagSet( VP_AluraCanvas ) && g_AluraCanvas )
 					g_AluraCanvas->SetSize( glm::vec2{ m_ViewportSize.x, m_ViewportSize.y } );
 

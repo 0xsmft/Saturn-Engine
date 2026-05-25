@@ -60,3 +60,5 @@ SAT_X31_CREATE_AUTO_REG( SMaths2NotEqualToBoolNode );
 SAT_X31_CREATE_AUTO_REG( SMaths2NotEqualToFloatNode );
 SAT_X31_CREATE_AUTO_REG( SMaths2NotEqualToIntNode );
 SAT_X31_CREATE_AUTO_REG( SMaths2NotEqualToUIntNode );
+SAT_X31_CREATE_AUTO_REG( SMaths2OrBoolNode );
+SAT_X31_CREATE_AUTO_REG( SMaths2AndBoolNode );

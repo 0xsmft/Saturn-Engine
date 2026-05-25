@@ -100,6 +100,12 @@ SAT_DECLARE_SPAWN_MATHS_FUNCTION( SMaths2AddFloatNode, ClassName, SpawnMathsAddF
 SAT_DECLARE_SPAWN_MATHS_FUNCTION( SMaths2AddIntNode,   ClassName, SpawnMathsAddInts )   \
 SAT_DECLARE_SPAWN_MATHS_FUNCTION( SMaths2AddUIntNode,  ClassName, SpawnMathsAddUInts )  \
 
+#define SAT_DECLARE_SPAWN_MATHS_FUNCTION_AND( ClassName ) \
+SAT_DECLARE_SPAWN_MATHS_FUNCTION( SMaths2AndBoolNode, ClassName, SpawnMathsAndBool )   \
+
+#define SAT_DECLARE_SPAWN_MATHS_FUNCTION_OR( ClassName ) \
+SAT_DECLARE_SPAWN_MATHS_FUNCTION( SMaths2OrBoolNode, ClassName, SpawnMathsOrBool )   \
+
 	SAT_DECLARE_SPAWN_MATHS_FUNCTION_LESS_THAN( Maths2BoolNodeLibrary );
 	SAT_DECLARE_SPAWN_MATHS_FUNCTION_LESS_OR_EQU_TO( Maths2BoolNodeLibrary );
 	SAT_DECLARE_SPAWN_MATHS_FUNCTION_GREATER_THAN( Maths2BoolNodeLibrary );
@@ -107,6 +113,8 @@ SAT_DECLARE_SPAWN_MATHS_FUNCTION( SMaths2AddUIntNode,  ClassName, SpawnMathsAddU
 	SAT_DECLARE_SPAWN_MATHS_FUNCTION_EQU_TO( Maths2BoolNodeLibrary );
 	SAT_DECLARE_SPAWN_MATHS_FUNCTION_NOT_EQU_TO( Maths2BoolNodeLibrary );
 	SAT_DECLARE_SPAWN_MATHS_FUNCTION_ADD( Maths2BoolNodeLibrary );
+	SAT_DECLARE_SPAWN_MATHS_FUNCTION_AND( Maths2BoolNodeLibrary );
+	SAT_DECLARE_SPAWN_MATHS_FUNCTION_OR( Maths2BoolNodeLibrary );
 
 	//////////////////////////////////////////////////////////////////////////
 
@@ -181,6 +189,12 @@ SAT_DECLARE_SPAWN_MATHS_FUNCTION( SMaths2AddUIntNode,  ClassName, SpawnMathsAddU
 			return node;
 		
 		if( node = MathsNodeContextMenuCaller<SMaths2AddUIntNode>::DoCall( nodeEditor ) )
+			return node;
+
+		if( node = MathsNodeContextMenuCaller<SMaths2AndBoolNode>::DoCall( nodeEditor ) )
+			return node;
+
+		if( node = MathsNodeContextMenuCaller<SMaths2OrBoolNode>::DoCall( nodeEditor ) )
 			return node;
 
 		return node;

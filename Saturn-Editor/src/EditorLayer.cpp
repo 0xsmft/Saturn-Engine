@@ -439,6 +439,7 @@ namespace Saturn {
 
 			m_EditorScene->OnRenderEditor( &m_EditorCamera, m_EditorCamera.ViewMatrix(), m_SceneRenderer, time );
 
+#if SAT_FEATURE_CAMERA_PREVIEW == 1
 			if( m_ShouldRenderCameraPreview && m_pSelectedCamera )
 			{
 				SceneCamera* pSceneCamera = dynamic_cast< SceneCamera* >( m_pSelectedCamera );
@@ -446,12 +447,17 @@ namespace Saturn {
 				{
 					const auto entity = m_EditorScene->FindEntityByHandle( m_SelectedCameraEntityID );
 
-					pSceneCamera->SetPosition( entity->GetComponent<TransformComponent>().Position );
+					const auto& rTc = entity->GetComponent<TransformComponent>();
 
+					pSceneCamera->SetPosition( rTc.Position );
+					pSceneCamera->SetRotation( rTc.GetRotationEuler() );
+
+					pSceneCamera->SetActive( true );
 					pSceneCamera->OnUpdate( time );
 					m_EditorScene->OnRenderEditor( pSceneCamera, pSceneCamera->ViewMatrix(), m_CameraPreviewSceneRenderer, time );
 				}
 			}
+#endif
 
 			m_LastAutoSaveTime += time;
 
@@ -487,8 +493,10 @@ namespace Saturn {
 		RenderThread::Get().Queue( [ = ]()
 		{
 			m_SceneRenderer->RenderScene();
+#if SAT_FEATURE_CAMERA_PREVIEW == 1
 			if( m_ShouldRenderCameraPreview )
 				m_CameraPreviewSceneRenderer->RenderScene();
+#endif
 
 			// Always submit Renderer2D AFTER a potential SceneRenderer has finished because we now may have new 
 			// render commands to draw after OnUpdate was called.
@@ -629,7 +637,7 @@ namespace Saturn {
 					if( const auto cc = entity->TryGetComponent<CameraComponent>(); cc )
 					{
 						m_ShouldRenderCameraPreview = true;
-						cc->Camera->SetViewportSize( 400.0f, 225.0f );
+						cc->Camera->SetViewportSize( 400u, 225u );
 
 						m_pSelectedCamera = cc->Camera.Get();
 						m_SelectedCameraEntityID = entity->GetHandle();
@@ -2949,12 +2957,16 @@ namespace Saturn {
 	{
 		if( ImGui::Begin( "Class Metadata Debug", &m_ShowMetadataDebug ) )
 		{
+			static ImGuiTextFilter s_SearchFilter;
+
 			ImGuiIO& rIO = ImGui::GetIO();
 
 			const auto italicsFont = rIO.Fonts->Fonts[ 2 ];
 			ImGui::PushFont( italicsFont );
 			ImGui::TextDisabled( "Showing all SClasses" );
 			ImGui::PopFont();
+
+			s_SearchFilter.DrawWithHint( "##classfinder", "Search for classes via name or via their hash.", 436.0f );
 
 			if( ImGui::BeginTable( "##DebugInfoClsM", 6, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_NoBordersInBody ) )
 			{
@@ -2971,25 +2983,29 @@ namespace Saturn {
 					ClassMetadataHandler::Get().EachClassNode(
 						[ & ]( const SClass* pClass )
 					{
-						ImGui::TableNextRow();
+						// TODO: Fix this shit conversion.
+						if( s_SearchFilter.PassFilter( std::to_string( pClass->GetHash() ).c_str() ) )
+						{
+							ImGui::TableNextRow();
 
-						ImGui::TableSetColumnIndex( 0 );
-						ImGui::Text( "%s", pClass->GetName().c_str() );
+							ImGui::TableSetColumnIndex( 0 );
+							ImGui::Text( "%s", pClass->GetName().c_str() );
 
-						ImGui::TableSetColumnIndex( 1 );
-						ImGui::Text( "%llu", pClass->GetSize() );
+							ImGui::TableSetColumnIndex( 1 );
+							ImGui::Text( "%llu", pClass->GetSize() );
 
-						ImGui::TableSetColumnIndex( 2 );
-						ImGui::Text( "%llu", pClass->GetAlignment() );
+							ImGui::TableSetColumnIndex( 2 );
+							ImGui::Text( "%llu", pClass->GetAlignment() );
 
-						ImGui::TableSetColumnIndex( 3 );
-						ImGui::Text( "%llu", pClass->GetHash() );
+							ImGui::TableSetColumnIndex( 3 );
+							ImGui::Text( "%llu", pClass->GetHash() );
 
-						ImGui::TableSetColumnIndex( 4 );
-						ImGui::Text( "%i", pClass->GetPropertyCount() );
+							ImGui::TableSetColumnIndex( 4 );
+							ImGui::Text( "%i", pClass->GetPropertyCount() );
 
-						ImGui::TableSetColumnIndex( 5 );
-						ImGui::Text( "%s", pClass->GetHeaderPath().string().c_str() );
+							ImGui::TableSetColumnIndex( 5 );
+							ImGui::Text( "%s", pClass->GetHeaderPath().string().c_str() );
+						}
 					} );
 				}
 
@@ -3289,13 +3305,13 @@ namespace Saturn {
 				m_PreVPFullscreenPosition = m_ViewportBounds.Min;
 				m_PreVPDockedNodeID = ImGui::GetWindowDockID();
 
-				const ImVec2 size = ImVec2( Application::Get()->GetWindow()->GetWidth(), Application::Get()->GetWindow()->GetHeight() );
+				const ImVec2 size = ImVec2( ( float ) Application::Get()->GetWindow()->GetWidth(), ( float ) Application::Get()->GetWindow()->GetHeight() );
 
 				const auto windowPosition = Application::Get()->GetWindow()->GetPosition();
-				const ImVec2 viewportPos = ImVec2( windowPosition.x, windowPosition.y );
+				const ImVec2 viewportPos = ImVec2( ( float ) windowPosition.x, ( float ) windowPosition.y );
 
 				ImGui::SetNextWindowDockID( 0, ImGuiCond_Always );
-				ImGui::SetNextWindowPos( ImVec2( windowPosition.x, windowPosition.y ) );
+				ImGui::SetNextWindowPos( ImVec2( ( float ) windowPosition.x, ( float ) windowPosition.y ) );
 				ImGui::SetNextWindowSize( size );
 			}
 			else
@@ -4417,7 +4433,7 @@ namespace Saturn {
 		const std::string windowID = std::format( "##EDITOR_NOFITICATION/{0}", ( uint64_t ) rInfo.ID );
 		ImGui::Begin( windowID.c_str(), nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDocking );
 
-		ImGui::BeginHorizontal( rInfo.ID );
+		ImGui::BeginHorizontal( ( int ) rInfo.ID );
 
 		switch( rInfo.NotificationType )
 		{

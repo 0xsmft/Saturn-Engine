@@ -61,8 +61,8 @@ namespace Saturn {
 		void CreateNode()
 		{
 			// Use PinTypeTraits to get the PinClass of CppType Ty
-			Inputs.push_back( Ref<PinTypeTraits<Ty>::PinType>::Create( "A", PinKind::Input ) );
-			Inputs.push_back( Ref<PinTypeTraits<Ty>::PinType>::Create( "B", PinKind::Input ) );
+			Inputs.push_back( Ref<SAT_CLANG_TYPENAME PinTypeTraits<Ty>::PinType>::Create( "A", PinKind::Input ) );
+			Inputs.push_back( Ref<SAT_CLANG_TYPENAME PinTypeTraits<Ty>::PinType>::Create( "B", PinKind::Input ) );
 
 			Outputs.push_back( Ref<BoolPin>::Create( "Result", PinKind::Output ) );
 		}
@@ -162,5 +162,19 @@ public: \
 	SAT_DECLARE_MATHS2_NOT_EQUAL_TO_CLASS( "float != float", Float, float );
 	SAT_DECLARE_MATHS2_NOT_EQUAL_TO_CLASS( "int != int", Int, int );
 	SAT_DECLARE_MATHS2_NOT_EQUAL_TO_CLASS( "U32 != U32", UInt, uint32_t );
+
+	//////////////////////////////////////////////////////////////////////////
+	// AND (&&)
+
+#define SAT_DECLARE_MATHS2_AND_CLASS( NodeName, FriendlyName, CppType ) SAT_DECLARE_MATHS2_NODE( SMaths2And##FriendlyName##Node, NodeName, Maths2And##FriendlyName, CppType )
+
+	SAT_DECLARE_MATHS2_AND_CLASS( "boolean AND", Bool, bool );
+
+	//////////////////////////////////////////////////////////////////////////
+	// OR (||)
+
+#define SAT_DECLARE_MATHS2_OR_CLASS( NodeName, FriendlyName, CppType ) SAT_DECLARE_MATHS2_NODE( SMaths2Or##FriendlyName##Node, NodeName, Maths2Or##FriendlyName, CppType )
+
+	SAT_DECLARE_MATHS2_OR_CLASS( "boolean OR", Bool, bool );
 
 }

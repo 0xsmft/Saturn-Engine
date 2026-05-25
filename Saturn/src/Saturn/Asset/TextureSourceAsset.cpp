@@ -92,7 +92,7 @@ namespace Saturn {
 			SAT_CORE_ASSERT( stbi_info( m_AbsolutePath.string().c_str(), &Width, &Height, &Channels ), "Failed to get information about texture file." );
 
 			// 1024*1024 texture and over could be timely to load on the main thread.
-			// So we'll load it on a job system thread (if we are not on the JobSystem already)
+			// So we'll load it on a job system thread
 			if( Width >= 1024 || Height >= 1024 )
 			{
 				// Allocate dummy data.

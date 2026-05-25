@@ -1208,7 +1208,6 @@ namespace Saturn {
 
 	void SceneRenderer::RenderGrid()
 	{
-#if !defined(SAT_DIST)
 		SAT_PF_EVENT();
 
 		// Should we show the grid?
@@ -1218,9 +1217,6 @@ namespace Saturn {
 		{
 			return;
 		}
-#else
-		return;
-#endif
 
 		// Set UB Data.
 		const glm::mat4 trans = glm::rotate( glm::mat4( 1.0f ), glm::radians( 90.0f ), glm::vec3( 1.0f, 0.0f, 0.0f ) ) * glm::scale( glm::mat4( 1.0f ), glm::vec3( 16.0f ) );
@@ -2052,11 +2048,13 @@ namespace Saturn {
 
 		CmdEndDebugLabel( m_RendererData.CommandBuffer );
 
+#if !defined(SAT_DIST)
 		CmdBeginDebugLabel( m_RendererData.CommandBuffer, "Grid" );
 
 		RenderGrid();
 
 		CmdEndDebugLabel( m_RendererData.CommandBuffer );
+#endif
 
 		CmdBeginDebugLabel( m_RendererData.CommandBuffer, "Static meshes" );
 		

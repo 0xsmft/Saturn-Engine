@@ -1431,8 +1431,8 @@ namespace ImSpinner
 				c.Value.w = ImMax( 0.05f, c.Value.w );
 			}
 
-			draw_segment( arc_num, 0.f, c, 1.f + arc_num * 0.3f, arc_num > 0 ? -1 : 1 );
-			draw_segment( arc_num, IM_PI, c, 1.f + arc_num * 0.3f, arc_num > 0 ? -1 : 1 );
+			draw_segment( ( int ) arc_num, 0.f, c, 1.f + arc_num * 0.3f, arc_num > 0 ? -1.0f : 1.0f );
+			draw_segment( ( int ) arc_num, IM_PI, c, 1.f + arc_num * 0.3f, arc_num > 0 ? -1.0f : 1.0f );
 		}
 	}
 
@@ -1524,7 +1524,7 @@ namespace ImSpinner
 
 		ImVec2 pp( centre.x - text_size.x / 2.f, centre.y - text_size.y / 2.f );
 
-		const int text_len = last_symbol - text;
+		const int text_len = static_cast<int>( last_symbol - text );
 		float out_h, out_s, out_v;
 		ImGui::ColorConvertRGBtoHSV( color.Value.x, color.Value.y, color.Value.z, out_h, out_s, out_v );
 		for( int i = 0; text != last_symbol; ++text, ++i ) {
@@ -2014,7 +2014,7 @@ namespace ImSpinner
 	{
 		SPINNER_HEADER( pos, size, centre, num_segments );
 
-		const float start = ( float ) ImFmod( ImGui::GetTime() * speed, IM_PI * 2 );
+		const float start = ( float ) ImFmod( static_cast<float>( ImGui::GetTime() ) * speed, IM_PI * 2.0f );
 		const int half_segments = num_segments / 2;
 
 		for( int i = 0; i < arcs; ++i ) {
@@ -2356,7 +2356,7 @@ namespace ImSpinner
 		{
 			const float a = -rstart + ( i * angle_offset / 2.f );
 			const ImVec2 pos = ImVec2( centre.x + ImCos( a ) * radius2, centre.y + ImSin( a ) * radius2 );
-			float t = sqrt( pow( pos.x - frontpos.x, 2 ) + pow( pos.y - frontpos.y, 2 ) ) / ( radius * 1.f ) * thickness;
+			float t = sqrt( pow( pos.x - frontpos.x, 2.0f ) + pow( pos.y - frontpos.y, 2.0f ) ) / ( radius * 1.f ) * thickness;
 			window->DrawList->AddCircleFilled( pos, t, color_alpha( color, 1.f ), num_segments );
 			window->DrawList->AddLine( pos, backpos, color_alpha( color, 0.5f ), ImMax( thickness / 2.f, 1.f ) );
 			if( i > 0 ) {
@@ -3153,7 +3153,7 @@ namespace ImSpinner
 
 		const float nextItemKoeff = 1.5f;
 		const float start = ( float ) ImGui::GetTime() * speed;
-		const int bars = radius * 2 / thickness;
+		const int bars = static_cast< int >( radius * 2.0f / thickness );
 		const float offset = PI_DIV_2 / bars;
 		for( int i = 0; i < bars; i++ )
 		{
@@ -3171,7 +3171,7 @@ namespace ImSpinner
 		SPINNER_HEADER( pos, size, centre, num_segments );
 
 		const float start = ( float ) ImGui::GetTime() * speed;
-		const int bars = radius * 2 / thickness;
+		const int bars = static_cast< int >( radius * 2.0f / thickness );
 		const float offset = PI_DIV_2 / bars;
 		for( int i = 0; i < bars; i++ )
 		{

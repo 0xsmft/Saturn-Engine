@@ -45,7 +45,7 @@
 //#define SAT_FORCE_ENABLE_VALIDATION_LAYERS
 
 namespace Saturn {
-	
+
 	VulkanContext::VulkanContext()
 	{
 		SingletonStorage::AddSingleton( this );
@@ -60,7 +60,7 @@ namespace Saturn {
 		CreateCommandPool();
 
 		m_pAllocator = new VulkanAllocator();
-	
+
 		// Create default pass.
 		PassSpecification Specification = {};
 		Specification.Name = "Swapchain render pass";
@@ -73,13 +73,13 @@ namespace Saturn {
 
 		m_DefaultPass = Ref<Pass>::Create( Specification );
 		m_SwapChain.CreateFramebuffers();
-		
+
 		Renderer* pRenderer = new Renderer();
 		pRenderer->Init();
 	}
 
 	void VulkanContext::Terminate()
-	{		
+	{
 		if( m_Terminated )
 			return;
 
@@ -87,21 +87,20 @@ namespace Saturn {
 		VK_CHECK( vkDeviceWaitIdle( m_LogicalDevice ) );
 
 		vkDestroyCommandPool( m_LogicalDevice, m_CommandPool, nullptr );
-		vkDestroyCommandPool( m_LogicalDevice, m_SecondaryCommandPool, nullptr );
 		vkDestroyCommandPool( m_LogicalDevice, m_ComputeCommandPool, nullptr );
-		
+
 		m_DefaultPass->Terminate();
 		m_DefaultPass = nullptr;
 
 		m_SwapChain.Terminate();
-		
+
 		for( auto& rFunc : m_TerminateResourceFuncs )
 			rFunc();
 
 		Renderer::Get()->Terminate();
 
 		ShaderLibrary::Get().Shutdown();
-		
+
 		delete m_pAllocator;
 
 		vkDestroyDevice( m_LogicalDevice, nullptr );
@@ -125,17 +124,17 @@ namespace Saturn {
 		SAT_CORE_ASSERT( CheckValidationLayerSupport(), "Unable to find validation layer." );
 #endif
 
-		VkApplicationInfo AppInfo  ={ VK_STRUCTURE_TYPE_APPLICATION_INFO };
-		AppInfo.pApplicationName   = "Saturn Engine";
-		AppInfo.pEngineName        = "Saturn Engine";
+		VkApplicationInfo AppInfo = { VK_STRUCTURE_TYPE_APPLICATION_INFO };
+		AppInfo.pApplicationName = "Saturn Engine";
+		AppInfo.pEngineName = "Saturn Engine";
 		AppInfo.applicationVersion = VK_MAKE_VERSION( 0, 0, 1 );
-		AppInfo.engineVersion      = VK_MAKE_VERSION( 0, 0, 1 );
-		AppInfo.apiVersion         = VK_API_VERSION_1_2;
-		
+		AppInfo.engineVersion = VK_MAKE_VERSION( 0, 0, 1 );
+		AppInfo.apiVersion = VK_API_VERSION_1_2;
+
 		auto Extensions = Application::Get()->GetWindow()->GetVulkanRequiredExtensions();
 		Extensions.push_back( VK_EXT_DEBUG_UTILS_EXTENSION_NAME );
 
-		VkInstanceCreateInfo InstanceInfo ={ VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO };
+		VkInstanceCreateInfo InstanceInfo = { VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO };
 		InstanceInfo.pApplicationInfo = &AppInfo;
 
 #if !defined( SAT_DIST ) || defined( SAT_FORCE_ENABLE_VALIDATION_LAYERS )
@@ -146,7 +145,7 @@ namespace Saturn {
 			InstanceInfo.enabledLayerCount = static_cast< uint32_t >( ValidationLayers.size() );
 			InstanceInfo.ppEnabledLayerNames = ValidationLayers.data();
 
-			VkValidationFeatureEnableEXT  Enabled[]  = { VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT };
+			VkValidationFeatureEnableEXT  Enabled[] = { VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT };
 			VkValidationFeatureDisableEXT Disabled[] = { VK_VALIDATION_FEATURE_DISABLE_UNIQUE_HANDLES_EXT };
 
 			VkValidationFeaturesEXT      Features{ VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT };
@@ -181,7 +180,7 @@ namespace Saturn {
 		uint32_t DeviceCount = 0U;
 		VK_CHECK( vkEnumeratePhysicalDevices( m_Instance, &DeviceCount, nullptr ) );
 
-		SAT_CORE_ASSERT( DeviceCount != 0U, "No device found that supports Vulkan." ); 
+		SAT_CORE_ASSERT( DeviceCount != 0U, "No device found that supports Vulkan." );
 
 		// Create a list of the physical devices.
 		std::vector< VkPhysicalDevice > PhysicalDevices( DeviceCount );
@@ -230,8 +229,8 @@ namespace Saturn {
 				}
 			}
 		}
-		
-		for ( int i = 0; i < PhysicalDevices.size(); i++ )
+
+		for( int i = 0; i < PhysicalDevices.size(); i++ )
 		{
 			m_DeviceProps.push_back( {} );
 			vkGetPhysicalDeviceProperties( m_PhysicalDevice, &m_DeviceProps[ i ].DeviceProps );
@@ -269,12 +268,12 @@ namespace Saturn {
 
 		// We only want the unique values so therefore we need to create a std::set as a set only stores unqiue values.
 		// And Vulkan only wants the unique vales anyway.
-		std::set<uint32_t> UniqueQueueFamilies = { 
+		std::set<uint32_t> UniqueQueueFamilies = {
 			m_Indices.GraphicsFamily.value(), m_Indices.PresentFamily.value(), m_Indices.ComputeFamily.value() };
 
 		for( uint32_t QueueFamily : UniqueQueueFamilies )
 		{
-			VkDeviceQueueCreateInfo QueueCreateInfo ={ VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO };
+			VkDeviceQueueCreateInfo QueueCreateInfo = { VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO };
 			QueueCreateInfo.queueFamilyIndex = QueueFamily;
 			QueueCreateInfo.queueCount = 1;
 			QueueCreateInfo.pQueuePriorities = &QueuePriority;
@@ -294,16 +293,16 @@ namespace Saturn {
 		DeviceExtensions.push_back( VK_EXT_DEBUG_MARKER_EXTENSION_NAME );
 #endif
 
-		VkDeviceCreateInfo DeviceInfo      ={ VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
-		DeviceInfo.enabledExtensionCount   = ( uint32_t ) DeviceExtensions.size();
+		VkDeviceCreateInfo DeviceInfo = { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
+		DeviceInfo.enabledExtensionCount = ( uint32_t ) DeviceExtensions.size();
 		DeviceInfo.ppEnabledExtensionNames = DeviceExtensions.data();
-		DeviceInfo.pQueueCreateInfos       = QueueCreateInfos.data();
-		DeviceInfo.queueCreateInfoCount    = ( uint32_t ) QueueCreateInfos.size();
+		DeviceInfo.pQueueCreateInfos = QueueCreateInfos.data();
+		DeviceInfo.queueCreateInfoCount = ( uint32_t ) QueueCreateInfos.size();
 		DeviceInfo.pEnabledFeatures = &Features;
 		DeviceInfo.pNext = nullptr;
 
 		VK_CHECK( vkCreateDevice( m_PhysicalDevice, &DeviceInfo, nullptr, &m_LogicalDevice ) );
-		SetDebugUtilsObjectName( "Physical Device", ( uint64_t )m_LogicalDevice, VK_OBJECT_TYPE_DEVICE );
+		SetDebugUtilsObjectName( "Physical Device", ( uint64_t ) m_LogicalDevice, VK_OBJECT_TYPE_DEVICE );
 
 		// Assign a queue to each family.
 		vkGetDeviceQueue( m_LogicalDevice, m_Indices.GraphicsFamily.value(), 0, &m_GraphicsQueue );
@@ -434,15 +433,15 @@ namespace Saturn {
 
 		return true;
 	}
-	
+
 	VkFormat VulkanContext::FindSupportedFormat( const std::vector<VkFormat>& Formats, VkImageTiling Tiling, VkFormatFeatureFlags Features ) const
 	{
-		for ( VkFormat Format : Formats )
+		for( VkFormat Format : Formats )
 		{
 			VkFormatProperties FormatProps;
 			vkGetPhysicalDeviceFormatProperties( m_PhysicalDevice, Format, &FormatProps );
 
-			if ( ( Tiling == VK_IMAGE_TILING_LINEAR && ( FormatProps.linearTilingFeatures & Features ) == Features ) ||
+			if( ( Tiling == VK_IMAGE_TILING_LINEAR && ( FormatProps.linearTilingFeatures & Features ) == Features ) ||
 				( Tiling == VK_IMAGE_TILING_OPTIMAL && ( FormatProps.optimalTilingFeatures & Features ) == Features ) )
 			{
 				return Format;
@@ -454,8 +453,8 @@ namespace Saturn {
 
 	VkFormat VulkanContext::FindDepthFormat() const
 	{
-		return FindSupportedFormat( 
-			{ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT }, 
+		return FindSupportedFormat(
+			{ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
 			VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT );
 	}
 
@@ -484,18 +483,18 @@ namespace Saturn {
 	{
 		VkCommandBufferAllocateInfo AllocInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
 		AllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		AllocInfo.commandPool = m_SecondaryCommandPool;
+		AllocInfo.commandPool = m_CommandPool;
 		AllocInfo.commandBufferCount = 1;
-		
+
 		VkCommandBuffer CommandBuffer;
 		VK_CHECK( vkAllocateCommandBuffers( m_LogicalDevice, &AllocInfo, &CommandBuffer ) );
-		
+
 		// Begin the command buffer.
 		VkCommandBufferBeginInfo BeginInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
 		BeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-		
+
 		VK_CHECK( vkBeginCommandBuffer( CommandBuffer, &BeginInfo ) );
-		
+
 		return CommandBuffer;
 	}
 
@@ -522,7 +521,7 @@ namespace Saturn {
 
 		// Free the command buffer.
 		vkDestroyFence( m_LogicalDevice, Fence, nullptr );
-		vkFreeCommandBuffers( m_LogicalDevice, m_SecondaryCommandPool, 1, &CommandBuffer );
+		vkFreeCommandBuffers( m_LogicalDevice, m_CommandPool, 1, &CommandBuffer );
 	}
 
 	VkCommandBuffer VulkanContext::BeginNewCommandBuffer() const
@@ -567,16 +566,14 @@ namespace Saturn {
 		VkCommandPoolCreateInfo PoolInfo = { VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO };
 		PoolInfo.queueFamilyIndex = m_Indices.GraphicsFamily.value();
 		PoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-		
+
 		VK_CHECK( vkCreateCommandPool( m_LogicalDevice, &PoolInfo, nullptr, &m_CommandPool ) );
-		VK_CHECK( vkCreateCommandPool( m_LogicalDevice, &PoolInfo, nullptr, &m_SecondaryCommandPool ) );
 
 		PoolInfo.queueFamilyIndex = m_Indices.ComputeFamily.value();
-		VK_CHECK( vkCreateCommandPool( m_LogicalDevice, &PoolInfo, nullptr, &m_ComputeCommandPool) );
+		VK_CHECK( vkCreateCommandPool( m_LogicalDevice, &PoolInfo, nullptr, &m_ComputeCommandPool ) );
 
-		SetDebugUtilsObjectName( "Context Command Pool", (uint64_t)m_CommandPool, VK_OBJECT_TYPE_COMMAND_POOL );
-		SetDebugUtilsObjectName( "Context Alt Command Pool", (uint64_t)m_SecondaryCommandPool, VK_OBJECT_TYPE_COMMAND_POOL );
-		SetDebugUtilsObjectName( "Context Compute Command Pool", (uint64_t)m_CommandPool, VK_OBJECT_TYPE_COMMAND_POOL );
+		SetDebugUtilsObjectName( "Context Command Pool", ( uint64_t ) m_CommandPool, VK_OBJECT_TYPE_COMMAND_POOL );
+		SetDebugUtilsObjectName( "Context Compute Command Pool", ( uint64_t ) m_CommandPool, VK_OBJECT_TYPE_COMMAND_POOL );
 	}
 
 }

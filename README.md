@@ -18,7 +18,7 @@
 | -------- | --------- | ------------ |
 | Windows 10+ | ✅ | x86_64
 | Linux | 🕗 *[SOON](https://trello.com/c/o43wueQO/9-preliminary-linux-support)* | x86_64
-| macOS | ❌ | AArch64
+| macOS 15+ (Sequoia) | ❌ | AArch64
 | Xbox | ❌ | x86_64
 | PS4/5 | ❌ | x86_64
 

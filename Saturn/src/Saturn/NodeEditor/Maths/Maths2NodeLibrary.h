@@ -61,6 +61,9 @@ namespace Saturn {
 	class SMaths2AddFloatNode;
 	class SMaths2AddIntNode;
 	class SMaths2AddUIntNode;
+	
+	class SMaths2AndBoolNode;
+	class SMaths2OrBoolNode;
 
 	class Maths2BoolNodeLibrary
 	{
@@ -89,6 +92,9 @@ namespace Saturn {
 		static SharedPtr<SMaths2AddFloatNode> SpawnMathsAddFlts( SharedPtr<NodeEditor> nodeEditor );
 		static SharedPtr<SMaths2AddIntNode>   SpawnMathsAddInts( SharedPtr<NodeEditor> nodeEditor );
 		static SharedPtr<SMaths2AddUIntNode>  SpawnMathsAddUInts( SharedPtr<NodeEditor> nodeEditor );
+		
+		static SharedPtr<SMaths2AndBoolNode>  SpawnMathsAndBool( SharedPtr<NodeEditor> nodeEditor );
+		static SharedPtr<SMaths2OrBoolNode>  SpawnMathsOrBool( SharedPtr<NodeEditor> nodeEditor );
 
 		static SharedPtr<NodeEditorNodeBase> DrawImGuiSelectionMenu( SharedPtr<NodeEditor> nodeEditor );
 	};

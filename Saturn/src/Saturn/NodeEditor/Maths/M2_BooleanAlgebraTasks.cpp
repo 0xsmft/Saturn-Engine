@@ -47,6 +47,9 @@ namespace Saturn {
 
 		RawSerialisation::WriteObjectChecked( m_PinA, rStream );
 		RawSerialisation::WriteObjectChecked( m_PinB, rStream );
+
+		RawSerialisation::WriteObjectChecked( m_DefaultValueA, rStream );
+		RawSerialisation::WriteObjectChecked( m_DefaultValueB, rStream );
 	}
 
 	template<typename Ty>
@@ -56,6 +59,9 @@ namespace Saturn {
 
 		RawSerialisation::ReadObjectChecked( m_PinA, rStream );
 		RawSerialisation::ReadObjectChecked( m_PinB, rStream );
+
+		RawSerialisation::ReadObjectChecked( m_DefaultValueA, rStream );
+		RawSerialisation::ReadObjectChecked( m_DefaultValueB, rStream );
 	}
 }
 
@@ -86,3 +92,8 @@ SAT_X31_CREATE_AUTO_REG( Maths2NotEqualToBoolTask );
 SAT_X31_CREATE_AUTO_REG( Maths2NotEqualToFloatTask );
 SAT_X31_CREATE_AUTO_REG( Maths2NotEqualToUIntTask );
 SAT_X31_CREATE_AUTO_REG( Maths2NotEqualToIntTask );
+
+SAT_X31_CREATE_AUTO_REG( Maths2AndBoolTask );
+
+SAT_X31_CREATE_AUTO_REG( Maths2OrBoolTask );
+

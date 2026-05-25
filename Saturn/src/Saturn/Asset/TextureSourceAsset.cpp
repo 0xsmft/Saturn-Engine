@@ -124,6 +124,7 @@ namespace Saturn {
 
 	void TextureSourceAsset::LoadOnJobSystem()
 	{
+#if !defined(SAT_DIST)
 		// Now, on the job system we load the texture and allocate the buffer.
 		JobSystem::Get().QueueJob( [ this ]()
 		{
@@ -159,10 +160,12 @@ namespace Saturn {
 				stbi_image_free( pTextureData );
 			} );
 		} );
+#endif
 	}
 
 	void TextureSourceAsset::LoadOnCurrentThread()
 	{
+#if !defined(SAT_DIST)
 		int Width, Height, Channels;
 		bool hdr = false;
 		stbi_uc* pTextureData;
@@ -192,6 +195,7 @@ namespace Saturn {
 		m_Texture->SetSourceID( ID );
 
 		stbi_image_free( pTextureData );
+#endif
 	}
 
 	ImageFormat TextureSourceAsset::GetImageFormat() const
@@ -262,7 +266,7 @@ namespace Saturn {
 		Buffer TemporaryBuffer;
 		RawSerialisation::ReadSaturnBuffer( TemporaryBuffer, stream );
 
-		m_Texture = Ref<Texture2D>::Create( ImageFormat::RGBA8, m_Width, m_Height, TemporaryBuffer.Data, false );
+		m_Texture = Ref<Texture2D>::Create( GetImageFormat(), m_Width, m_Height, TemporaryBuffer.Data, false );
 		m_Texture->SetSourceID( ID );
 
 		TemporaryBuffer.Free();

@@ -87,6 +87,9 @@ namespace Saturn {
 #if defined(SAT_DIST)
 		SClassDistReferencer::Reference();
 #endif
+
+		// Create online API but not init it yet.
+		m_OnlineAPI = OnlineAPI::CreateOnlineSystemAPI( Project::GetActiveProject()->GetOnlineAPIType() );
 	}
 
 	void RuntimeLayer::OnAttach()
@@ -107,6 +110,9 @@ namespace Saturn {
 
 		Application::Get()->GetWindow()->Show();
 
+		if( m_OnlineAPI )
+			m_OnlineAPI->Initialise();
+
 		SAT_CORE_VERIFY( m_RuntimeScene->OnRuntimeStart(), "Initial runtime request failed!" );
 	}
 
@@ -116,6 +122,11 @@ namespace Saturn {
 		{
 			delete g_AluraCanvas;
 			g_AluraCanvas = nullptr;
+		}
+
+		if( m_OnlineAPI )
+		{
+			m_OnlineAPI->Terminate();
 		}
 	}
 
@@ -207,6 +218,10 @@ namespace Saturn {
 
 		m_RuntimeScene->OnUpdate( time );
 		m_RuntimeScene->OnRenderRuntime( time, m_SceneRenderer );
+
+		// Online subsystem update...
+		if( m_OnlineAPI )
+			m_OnlineAPI->Tick();
 
 		RenderThread::Get().Queue( [ = ]()
 		{

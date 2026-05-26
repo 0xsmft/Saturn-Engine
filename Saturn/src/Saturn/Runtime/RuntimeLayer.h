@@ -35,6 +35,8 @@
 #include "Saturn/Vulkan/Renderer2D.h"
 #include "Saturn/Vulkan/SceneRenderer.h"
 
+#include "Saturn/Online/OnlineAPI.h"
+
 #include "Saturn/Physics/PhysicsFoundation.h"
 #include "Saturn/Asset/AssetManager.h"
 
@@ -65,6 +67,7 @@ namespace Saturn {
 		GameModule* m_GameModule = nullptr;
 		Ref<Scene> m_RuntimeScene;
 		Ref<SceneRenderer> m_SceneRenderer;
+		Ref<OnlineAPI> m_OnlineAPI;
 
 		PhysicsFoundation m_PhysicsFoundation;
 		AssetManager m_AssetManager;

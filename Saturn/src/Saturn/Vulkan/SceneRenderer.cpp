@@ -1210,6 +1210,8 @@ namespace Saturn {
 	{
 		SAT_PF_EVENT();
 
+		// On dist, Scene Visualisation Options do not exist!
+#if !defined(SAT_DIST)
 		// Should we show the grid?
 		const auto& rVisOptions = m_pScene->GetVisualisationOptions();
 		const bool isRuntimeActive = m_pScene->IsRuntimeActive();
@@ -1217,6 +1219,7 @@ namespace Saturn {
 		{
 			return;
 		}
+#endif
 
 		// Set UB Data.
 		const glm::mat4 trans = glm::rotate( glm::mat4( 1.0f ), glm::radians( 90.0f ), glm::vec3( 1.0f, 0.0f, 0.0f ) ) * glm::scale( glm::mat4( 1.0f ), glm::vec3( 16.0f ) );

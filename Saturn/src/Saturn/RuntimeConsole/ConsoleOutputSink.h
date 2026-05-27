@@ -26,63 +26,39 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "RuntimeCommandWindow.h"
+#pragma once
 
-#include "ImGuiAuxiliary.h"
-
-#include "Saturn/RuntimeConsole/ConsoleCommandManager.h"
-
-#include <imgui.h>
+#include <string>
+#include <vector>
 
 namespace Saturn {
 
-	RuntimeCommandWindow::RuntimeCommandWindow()
-		: ImGuiWindow( RuntimeCommandWindow::GetStaticName() )
+	enum class ConsoleCommandMessageType : uint8_t
 	{
-	}
+		Info,
+		Warning,
+		Error
+	};
 
-	RuntimeCommandWindow::RuntimeCommandWindow( const std::string& rName )
-		: ImGuiWindow( rName )
+	struct ConsoleMessage
 	{
-	}
-
-	void RuntimeCommandWindow::OnImGuiRender()
+		std::string FormattedMessage;
+		ConsoleCommandMessageType MessageType = ConsoleCommandMessageType::Info;
+	};
+	
+	class ConsoleOutputSink
 	{
-		if( ImGui::Begin( m_Name.c_str(), &m_Open ) )
-		{
-			if( Auxiliary::InputText( "##entercommand", &m_CommandNameBuffer, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CharsUppercase ) )
-			{
-				if( !m_CommandNameBuffer.empty() )
-				{
-					if( m_CommandNameBuffer.starts_with( "/" ) )
-					{
-						const auto cmdName = m_CommandNameBuffer.substr( 1, m_CommandNameBuffer.size() - 1 );
-						ConsoleCommandManager::Get().Execmd( cmdName );
-					}
-					else
-					{
-						ConsoleCommandManager::Get().GetSink().Sink( m_CommandNameBuffer );
-					}
+	public:
+		ConsoleOutputSink();
+		~ConsoleOutputSink();
 
-					m_CommandNameBuffer.clear();
-				}
-			}
+		void Sink( const std::string& rMessage, ConsoleCommandMessageType type = ConsoleCommandMessageType::Info );
 
-			ImGui::Separator();
-			if( ImGui::BeginChild( "##responsearea" ) )
-			{
-				auto& rMsgs = ConsoleCommandManager::Get().GetSink().GetMessages();
-				for( auto itr = rMsgs.rbegin(); itr != rMsgs.rend(); ++itr )
-				{
-					ImGui::Text( itr->FormattedMessage.c_str() );
-				}
+	public:
+		const std::vector<ConsoleMessage>& GetMessages() const { return m_Messages; }
 
-				ImGui::EndChild();
-			}
-		}
-
-		ImGui::End();
-	}
+	private:
+		std::vector<ConsoleMessage> m_Messages;
+	};
 
 }

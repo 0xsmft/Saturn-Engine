@@ -27,62 +27,68 @@
 */
 
 #include "sppch.h"
-#include "RuntimeCommandWindow.h"
+#include "ConsoleCommandManager.h"
 
-#include "ImGuiAuxiliary.h"
-
-#include "Saturn/RuntimeConsole/ConsoleCommandManager.h"
-
-#include <imgui.h>
+#include "ConsoleCommand.h"
 
 namespace Saturn {
 
-	RuntimeCommandWindow::RuntimeCommandWindow()
-		: ImGuiWindow( RuntimeCommandWindow::GetStaticName() )
+	ConsoleCommandManager::ConsoleCommandManager()
 	{
 	}
 
-	RuntimeCommandWindow::RuntimeCommandWindow( const std::string& rName )
-		: ImGuiWindow( rName )
+	static void CmmCmd_Help() 
 	{
+		ConsoleCommandManager::Get().GetSink().Sink( "Type / to enter commands, wow so helpful." );
 	}
 
-	void RuntimeCommandWindow::OnImGuiRender()
+	static void CmmCmd_Info()
 	{
-		if( ImGui::Begin( m_Name.c_str(), &m_Open ) )
+		std::string msg = std::format( "Saturn Engine, version: {}, internal number: {}", SAT_CURRENT_VERSION_STRING, SAT_CURRENT_VERSION );
+		ConsoleCommandManager::Get().GetSink().Sink( msg );
+	}
+
+	void ConsoleCommandManager::RegisterEngineDefaultCommands()
+	{
+		static const ConsoleCommandVoidRetNoArgs helpCommand( "help", CmmCmd_Help );
+		static const ConsoleCommandVoidRetNoArgs infoCommand( "info", CmmCmd_Info );
+	}
+
+	void ConsoleCommandManager::ClearAllCommands()
+	{
+		m_Commands.clear();
+	}
+
+	ConsoleCommandManager::~ConsoleCommandManager()
+	{
+		ClearAllCommands();
+	}
+
+	void ConsoleCommandManager::RegisterCommand( ConsoleCommandBase* pCmd )
+	{
+		SAT_CORE_ASSERT( pCmd );
+
+		auto nameUpper = pCmd->m_Name;
+		std::transform( nameUpper.cbegin(), nameUpper.cend(), nameUpper.begin(), ::toupper );
+
+		m_Commands[ nameUpper ] = pCmd;
+	}
+
+	void ConsoleCommandManager::UnregisterCommand( ConsoleCommandBase* pCmd )
+	{
+		const auto itr = m_Commands.find( pCmd->m_Name );
+		if( itr != m_Commands.end() )
 		{
-			if( Auxiliary::InputText( "##entercommand", &m_CommandNameBuffer, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CharsUppercase ) )
-			{
-				if( !m_CommandNameBuffer.empty() )
-				{
-					if( m_CommandNameBuffer.starts_with( "/" ) )
-					{
-						const auto cmdName = m_CommandNameBuffer.substr( 1, m_CommandNameBuffer.size() - 1 );
-						ConsoleCommandManager::Get().Execmd( cmdName );
-					}
-					else
-					{
-						ConsoleCommandManager::Get().GetSink().Sink( m_CommandNameBuffer );
-					}
-
-					m_CommandNameBuffer.clear();
-				}
-			}
-
-			ImGui::Separator();
-			if( ImGui::BeginChild( "##responsearea" ) )
-			{
-				auto& rMsgs = ConsoleCommandManager::Get().GetSink().GetMessages();
-				for( auto itr = rMsgs.rbegin(); itr != rMsgs.rend(); ++itr )
-				{
-					ImGui::Text( itr->FormattedMessage.c_str() );
-				}
-
-				ImGui::EndChild();
-			}
+			m_Commands.erase( itr );
 		}
-
-		ImGui::End();
 	}
 
+	void ConsoleCommandManager::Execmd( const std::string& rCommandName )
+	{
+		const auto itr = m_Commands.find( rCommandName );
+		if( itr != m_Commands.end() )
+		{
+			itr->second->Execute();
+		}
+	}
 }

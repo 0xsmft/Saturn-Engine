@@ -26,63 +26,70 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "RuntimeCommandWindow.h"
+#pragma once
 
-#include "ImGuiAuxiliary.h"
-
-#include "Saturn/RuntimeConsole/ConsoleCommandManager.h"
-
-#include <imgui.h>
+#include <string>
 
 namespace Saturn {
 
-	RuntimeCommandWindow::RuntimeCommandWindow()
-		: ImGuiWindow( RuntimeCommandWindow::GetStaticName() )
+	//
+	// ConsoleCommandBase
+	// 
+	// Base class for all console commands.
+	// 
+	// Please note that all Console commands must either be allocated on the heap or if they are allocated on the stack,
+	// the object must not exit it's scope as this will cause it to de-register itself.
+	//
+	//
+	class ConsoleCommandBase : public RefTarget
 	{
-	}
-
-	RuntimeCommandWindow::RuntimeCommandWindow( const std::string& rName )
-		: ImGuiWindow( rName )
-	{
-	}
-
-	void RuntimeCommandWindow::OnImGuiRender()
-	{
-		if( ImGui::Begin( m_Name.c_str(), &m_Open ) )
+	public:
+		ConsoleCommandBase( const std::string& rName )
+			: m_Name( rName )
 		{
-			if( Auxiliary::InputText( "##entercommand", &m_CommandNameBuffer, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CharsUppercase ) )
-			{
-				if( !m_CommandNameBuffer.empty() )
-				{
-					if( m_CommandNameBuffer.starts_with( "/" ) )
-					{
-						const auto cmdName = m_CommandNameBuffer.substr( 1, m_CommandNameBuffer.size() - 1 );
-						ConsoleCommandManager::Get().Execmd( cmdName );
-					}
-					else
-					{
-						ConsoleCommandManager::Get().GetSink().Sink( m_CommandNameBuffer );
-					}
-
-					m_CommandNameBuffer.clear();
-				}
-			}
-
-			ImGui::Separator();
-			if( ImGui::BeginChild( "##responsearea" ) )
-			{
-				auto& rMsgs = ConsoleCommandManager::Get().GetSink().GetMessages();
-				for( auto itr = rMsgs.rbegin(); itr != rMsgs.rend(); ++itr )
-				{
-					ImGui::Text( itr->FormattedMessage.c_str() );
-				}
-
-				ImGui::EndChild();
-			}
 		}
 
-		ImGui::End();
-	}
+		virtual ~ConsoleCommandBase() 
+		{
+			ConsoleCommandManager::Get().UnregisterCommand( this );
+		}
+
+		virtual void Execute() = 0;
+
+	protected:
+		std::string m_Name;
+
+	protected:
+		friend class ConsoleCommandManager;
+	};
+
+	//
+	// ConsoleCommandVoidRetNoArgs
+	// 
+	// A console command with no return value and no arguments.
+	//
+	template<typename TheoreticalFunctionVoidReturn>
+	class ConsoleCommandVoidRetNoArgs : public ConsoleCommandBase
+	{
+	public:
+		ConsoleCommandVoidRetNoArgs( const std::string& rName, TheoreticalFunctionVoidReturn&& rrFunctor )
+			: ConsoleCommandBase( rName ), m_Function( std::move( rrFunctor ) )
+		{
+			ConsoleCommandManager::Get().RegisterCommand( this );
+		}
+
+		virtual ~ConsoleCommandVoidRetNoArgs() = default;
+
+		virtual void Execute() override
+		{
+			m_Function();
+		}
+
+	private:
+		std::decay_t<TheoreticalFunctionVoidReturn> m_Function;
+
+	private:
+		friend class CommandList;
+	};
 
 }

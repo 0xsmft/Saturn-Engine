@@ -26,63 +26,39 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "RuntimeCommandWindow.h"
+#pragma once
 
-#include "ImGuiAuxiliary.h"
+#include "ConsoleOutputSink.h"
 
-#include "Saturn/RuntimeConsole/ConsoleCommandManager.h"
-
-#include <imgui.h>
+#include "Saturn/Core/Base.h"
 
 namespace Saturn {
 
-	RuntimeCommandWindow::RuntimeCommandWindow()
-		: ImGuiWindow( RuntimeCommandWindow::GetStaticName() )
+	class ConsoleCommandBase;
+
+	class ConsoleCommandManager
 	{
-	}
+	public:
+		SAT_SINGLETON_LAZY( ConsoleCommandManager );
+	public:
+		ConsoleCommandManager();
+		~ConsoleCommandManager();
 
-	RuntimeCommandWindow::RuntimeCommandWindow( const std::string& rName )
-		: ImGuiWindow( rName )
-	{
-	}
+		void RegisterEngineDefaultCommands();
+		void RegisterCommand( ConsoleCommandBase* pCmd );
+		void UnregisterCommand( ConsoleCommandBase* pCmd );
 
-	void RuntimeCommandWindow::OnImGuiRender()
-	{
-		if( ImGui::Begin( m_Name.c_str(), &m_Open ) )
-		{
-			if( Auxiliary::InputText( "##entercommand", &m_CommandNameBuffer, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CharsUppercase ) )
-			{
-				if( !m_CommandNameBuffer.empty() )
-				{
-					if( m_CommandNameBuffer.starts_with( "/" ) )
-					{
-						const auto cmdName = m_CommandNameBuffer.substr( 1, m_CommandNameBuffer.size() - 1 );
-						ConsoleCommandManager::Get().Execmd( cmdName );
-					}
-					else
-					{
-						ConsoleCommandManager::Get().GetSink().Sink( m_CommandNameBuffer );
-					}
+		void Execmd( const std::string& rCommandName );
 
-					m_CommandNameBuffer.clear();
-				}
-			}
+	public:
+		ConsoleOutputSink& GetSink() { return m_Sink; }
 
-			ImGui::Separator();
-			if( ImGui::BeginChild( "##responsearea" ) )
-			{
-				auto& rMsgs = ConsoleCommandManager::Get().GetSink().GetMessages();
-				for( auto itr = rMsgs.rbegin(); itr != rMsgs.rend(); ++itr )
-				{
-					ImGui::Text( itr->FormattedMessage.c_str() );
-				}
+	private:
+		void ClearAllCommands();
 
-				ImGui::EndChild();
-			}
-		}
-
-		ImGui::End();
-	}
+	private:
+		ConsoleOutputSink m_Sink;
+		std::unordered_map<std::string, ConsoleCommandBase*> m_Commands;
+	};
 
 }

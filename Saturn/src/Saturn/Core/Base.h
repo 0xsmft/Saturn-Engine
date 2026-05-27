@@ -77,7 +77,7 @@ constexpr auto SAT_VERSION_A_0_2_1 = SAT_MAKE_VERSION( 0, 2, 1 );
 constexpr auto SAT_VERSION_A_0_2_2 = SAT_MAKE_VERSION( 0, 2, 2 );
 constexpr auto SAT_VERSION_A_0_2_3 = SAT_MAKE_VERSION( 0, 2, 3 );
 constexpr auto SAT_VERSION_A_0_2_4 = SAT_MAKE_VERSION( 0, 2, 4 );
-constexpr auto SAT_VERSION_A_0_2_5_WIP = SAT_MAKE_VERSION( 0, 2, 5 );
+constexpr auto SAT_VERSION_A_0_2_5 = SAT_MAKE_VERSION( 0, 2, 5 );
 
 namespace Saturn::Core {
 

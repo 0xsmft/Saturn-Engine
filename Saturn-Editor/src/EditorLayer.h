@@ -139,6 +139,7 @@ namespace Saturn {
 
 		void ShowOrHideContentBrowserPanel();
 		void ShowOrHideSceneHierarchyPanel();
+		void ShowOrHideRTCmdWindow();
 
 		glm::vec2 ConvertMouseToViewportNDC();
 		std::pair<glm::vec3, glm::vec3> RayCast( float mx, float my );

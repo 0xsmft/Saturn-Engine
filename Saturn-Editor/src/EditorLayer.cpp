@@ -40,6 +40,7 @@
 #include <Saturn/ImGui/ContentBrowserPanel/ContentBrowserThumbnailCache.h>
 #include <Saturn/ImGui/UndoRedo/EntityUndoRedoActions.h>
 #include <Saturn/ImGui/EditorAboutWindowContents.h>
+#include <Saturn/ImGui/RuntimeCommandWindow.h>
 
 #include <Saturn/Serialisation/YAML/SceneSerialiser.h>
 #include <Saturn/Serialisation/YAML/ProjectSerialiser.h>
@@ -218,6 +219,9 @@ namespace Saturn {
 
 		// Setup content browser panel at project dir.
 		contentBrowserPanel->ResetPath( Project::GetActiveProject()->GetRootDir() );
+
+		Ref<RuntimeCommandWindow> rtConsoleWindow = m_ImGuiWindowManager->AddWindow<RuntimeCommandWindow>();
+		rtConsoleWindow->SetHideFlags( ImGuiHideWindowFlags::Hide );
 
 		m_TitleBar.AddMenuBarFunction( SAT_BIND_EVENT_FN( DrawTitlebarOptions ) );
 		m_TitleBar.AddOnExitFunction( SAT_BIND_EVENT_FN( OnTitlebarExit ) );
@@ -2618,6 +2622,7 @@ namespace Saturn {
 			if( ImGui::MenuItem( "Renderer (Vulkan Info)" ) )     m_ShowRendererWindow ^= 1;
 			if( ImGui::MenuItem( "Content Browser Panel" ) )      ShowOrHideContentBrowserPanel();
 			if( ImGui::MenuItem( "Scene Hierarchy Panel" ) )      ShowOrHideSceneHierarchyPanel();
+			if( ImGui::MenuItem( "Runtime Command Window" ) )     ShowOrHideRTCmdWindow();
 
 			ImGui::SeparatorText( "Asset Manager" );
 			if( ImGui::MenuItem( "Asset Registry Debug" ) )       m_OpenAssetRegistryDebug ^= 1;
@@ -4240,6 +4245,11 @@ namespace Saturn {
 	void EditorLayer::ShowOrHideSceneHierarchyPanel()
 	{
 		m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>()->ShowOrHide();
+	}
+
+	void EditorLayer::ShowOrHideRTCmdWindow() 
+	{
+		m_ImGuiWindowManager->GetPanel<RuntimeCommandWindow>()->ShowOrHide( ImGuiHideWindowFlags::Hide );
 	}
 
 	glm::vec2 EditorLayer::ConvertMouseToViewportNDC()

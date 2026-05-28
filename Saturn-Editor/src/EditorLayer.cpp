@@ -4239,12 +4239,12 @@ namespace Saturn {
 
 	void EditorLayer::ShowOrHideContentBrowserPanel()
 	{
-		m_ImGuiWindowManager->GetPanel<ContentBrowserPanel>()->ShowOrHide();
+		m_ImGuiWindowManager->GetPanel<ContentBrowserPanel>()->ShowOrHide( ImGuiHideWindowFlags::Hide );
 	}
 
 	void EditorLayer::ShowOrHideSceneHierarchyPanel()
 	{
-		m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>()->ShowOrHide();
+		m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>()->ShowOrHide( ImGuiHideWindowFlags::Hide );
 	}
 
 	void EditorLayer::ShowOrHideRTCmdWindow() 

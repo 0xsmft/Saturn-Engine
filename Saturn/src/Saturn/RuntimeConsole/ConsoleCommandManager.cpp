@@ -29,6 +29,9 @@
 #include "sppch.h"
 #include "ConsoleCommandManager.h"
 
+#include "Saturn/Core/App.h"
+#include "Saturn/Asset/AssetManager.h"
+
 #include "ConsoleCommand.h"
 
 namespace Saturn {
@@ -48,10 +51,44 @@ namespace Saturn {
 		ConsoleCommandManager::Get().GetSink().Sink( msg );
 	}
 
+	static void CmmCmd_Abort()
+	{
+		Application::Get()->Close();
+	}
+
+	static void CmmCmd_SaveAssetManager()
+	{
+		AssetManager::Get()->Save();
+	}
+
+	static void CmmCmd_Question()
+	{
+		// NOTE: Sink order is reversed.
+		auto& rSink = ConsoleCommandManager::Get().GetSink();
+		rSink.Sink( "====================" );
+
+		for( const auto& [name, rCommand] : ConsoleCommandManager::Get().GetAllCommands() )
+		{
+			rSink.Sink( name );
+		}
+	
+		rSink.Sink( "=== All Commands ===" );
+	}
+
+	static void CmmCmd_Add( int a, int b ) 
+	{
+		int c = + a + b;
+	}
+
 	void ConsoleCommandManager::RegisterEngineDefaultCommands()
 	{
 		static const ConsoleCommandVoidRetNoArgs helpCommand( "help", CmmCmd_Help );
 		static const ConsoleCommandVoidRetNoArgs infoCommand( "info", CmmCmd_Info );
+		static const ConsoleCommandVoidRetNoArgs abrtCommand( "abort", CmmCmd_Abort );
+		static const ConsoleCommandVoidRetNoArgs asstCommand( "saveassetman", CmmCmd_SaveAssetManager );
+		static const ConsoleCommandVoidRetNoArgs questCommand( "?", CmmCmd_Question );
+
+		static const ConsoleCommandArgsVoidRet<decltype( CmmCmd_Add ), int, int> addCommand( "add", CmmCmd_Add );
 	}
 
 	void ConsoleCommandManager::ClearAllCommands()
@@ -83,12 +120,29 @@ namespace Saturn {
 		}
 	}
 
-	void ConsoleCommandManager::Execmd( const std::string& rCommandName )
+	bool ConsoleCommandManager::Execmd( const std::string& rCommandName )
 	{
 		const auto itr = m_Commands.find( rCommandName );
 		if( itr != m_Commands.end() )
 		{
 			itr->second->Execute();
+			return true;
 		}
+
+		return false;
 	}
+
+	void ConsoleCommandManager::Execmd( ConsoleCommandBase* pCommand )
+	{
+		SAT_CORE_ASSERT( pCommand );
+
+		pCommand->Execute();
+	}
+
+	ConsoleCommandBase* ConsoleCommandManager::FindCommand( const std::string& rCommandName )
+	{
+		const auto itr = m_Commands.find( rCommandName );
+		return itr == m_Commands.end() ? nullptr : itr->second;
+	}
+
 }

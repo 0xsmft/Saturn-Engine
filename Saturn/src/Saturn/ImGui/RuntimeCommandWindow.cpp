@@ -32,6 +32,7 @@
 #include "ImGuiAuxiliary.h"
 
 #include "Saturn/RuntimeConsole/ConsoleCommandManager.h"
+#include "Saturn/RuntimeConsole/ConsoleCommand.h"
 
 #include <imgui.h>
 
@@ -47,26 +48,31 @@ namespace Saturn {
 	{
 	}
 
+	static void ParseRec( 
+		std::vector<std::string>& rArgsList, 
+		const std::string& rRemainingText )
+	{
+		const size_t pos = rRemainingText.find( ' ' );
+
+		if( pos == std::string::npos )
+		{
+			rArgsList.push_back( rRemainingText );
+			return;
+		}
+
+		const std::string token = rRemainingText.substr( 0, pos );
+		rArgsList.push_back( token );
+
+		ParseRec( rArgsList, rRemainingText.substr( pos + 1 ) );
+	}
+
 	void RuntimeCommandWindow::OnImGuiRender()
 	{
 		if( ImGui::Begin( m_Name.c_str(), &m_Open ) )
 		{
 			if( Auxiliary::InputText( "##entercommand", &m_CommandNameBuffer, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CharsUppercase ) )
 			{
-				if( !m_CommandNameBuffer.empty() )
-				{
-					if( m_CommandNameBuffer.starts_with( "/" ) )
-					{
-						const auto cmdName = m_CommandNameBuffer.substr( 1, m_CommandNameBuffer.size() - 1 );
-						ConsoleCommandManager::Get().Execmd( cmdName );
-					}
-					else
-					{
-						ConsoleCommandManager::Get().GetSink().Sink( m_CommandNameBuffer );
-					}
-
-					m_CommandNameBuffer.clear();
-				}
+				OnCommandEntered();
 			}
 
 			ImGui::Separator();
@@ -83,6 +89,66 @@ namespace Saturn {
 		}
 
 		ImGui::End();
+	}
+
+	void RuntimeCommandWindow::OnCommandEntered()
+	{
+		auto& rCommandMgr = ConsoleCommandManager::Get();
+
+		if( !m_CommandNameBuffer.empty() )
+		{
+			// Check for command if we start with /
+			if( m_CommandNameBuffer.starts_with( "/" ) )
+			{
+				// Command name without the slash
+				auto cmdName = m_CommandNameBuffer.substr( 1, m_CommandNameBuffer.size() - 1 );
+
+				// If we have a space afterwards we only want to pass in the command name
+				// e.g. a command of "add 1 2" would be "add"
+				// then the args would be "1 2"
+				
+				auto argsText = cmdName;
+				if( cmdName.contains( ' ' ) )
+				{
+					argsText = argsText.substr( cmdName.find_first_of( ' ' ) + 1 );
+					cmdName = cmdName.substr( 0, cmdName.find_first_of( ' ' ) );
+				}
+
+				ConsoleCommandBase* pCommand = rCommandMgr.FindCommand( cmdName );
+				if( !pCommand )
+				{
+					std::string errorMsg = std::format( "Unknown command \"{0}\"", m_CommandNameBuffer );
+					rCommandMgr.GetSink().Sink( errorMsg );
+				}
+				else
+				{
+					if( pCommand->IsFlagSet( ConsoleCommandFlags_RequiresArguments ) ) 
+					{
+						std::vector<std::string> argList;
+						ParseRec( argList, argsText );
+
+						if( !pCommand->Verify( argList.size() ) )
+						{
+							std::string errorMsg = std::format( "Too many or too little commands specified into '{}'", m_CommandNameBuffer );
+							rCommandMgr.GetSink().Sink( errorMsg );
+						}
+						else
+						{
+							// If we pass verification we now change the arguments into their native type.
+							pCommand->PopulateArgs( argList );
+						}
+					}
+					
+					rCommandMgr.Execmd( pCommand );
+				}
+			}
+			else
+			{
+				rCommandMgr.GetSink().Sink( m_CommandNameBuffer );
+			}
+
+			m_CommandNameBuffer.clear();
+		}
 	}
 
 }

@@ -48,10 +48,31 @@ namespace Saturn {
 		void RegisterCommand( ConsoleCommandBase* pCmd );
 		void UnregisterCommand( ConsoleCommandBase* pCmd );
 
-		void Execmd( const std::string& rCommandName );
+		//
+		// Execute a command.
+		// 
+		// @param rCommandName - command name to be executed.
+		// 
+		// returns true if the command is found.
+		//
+		bool Execmd( const std::string& rCommandName );
+
+		//
+		// Execute a command.
+		// 
+		// @param pCommand - command to be executed.
+		//
+		void Execmd( ConsoleCommandBase* pCommand );
+
+		//
+		// Find a command.
+		//
+		ConsoleCommandBase* FindCommand( const std::string& rCommandName );
 
 	public:
 		ConsoleOutputSink& GetSink() { return m_Sink; }
+
+		const std::unordered_map<std::string, ConsoleCommandBase*>& GetAllCommands() const { return m_Commands; }
 
 	private:
 		void ClearAllCommands();

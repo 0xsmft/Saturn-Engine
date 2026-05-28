@@ -28,36 +28,24 @@
 
 #pragma once
 
-#include "ImGuiWindow.h"
+#include <string>
 
-namespace Saturn {
+namespace Saturn::Auxiliary {
 
-	class RuntimeCommandWindow : public ImGuiWindow
+	template<typename Ty>
+	Ty RtConsoleCommandArgConvert( const std::string& rStringVal );
+
+	// Convert string to int
+	template<>
+	inline int RtConsoleCommandArgConvert<int>( const std::string& rStringVal ) 
 	{
-	public:
-		RuntimeCommandWindow();
-		RuntimeCommandWindow( const std::string& rName );
+		return std::stoi( rStringVal );
+	}
 
-		virtual ~RuntimeCommandWindow() = default;
-
-	public:
-		//////////////////////////////////////////////////////////////////////////
-		// ImGuiWindow
-
-		virtual void OnImGuiRender() override;
-		virtual void OnUpdate( Timestep ts ) {}
-		virtual void OnEvent( Event& rEvent ) {}
-
-		static inline const char* GetStaticName()
-		{
-			return "Command Window";
-		}
-
-	private:
-		void OnCommandEntered();
-
-	private:
-		std::string m_CommandNameBuffer;
-	};
-		
+	// Convert string to float
+	template<>
+	inline float RtConsoleCommandArgConvert<float>( const std::string& rStringVal )
+	{
+		return std::stof( rStringVal );
+	}
 }

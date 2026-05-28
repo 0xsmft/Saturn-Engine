@@ -163,8 +163,6 @@ namespace Saturn {
 				ShaderBundleHeader header{};
 				stream.read( reinterpret_cast< char* >( &header ), sizeof( ShaderBundleHeader ) );
 
-				// NB: Yes the header.Magic is 8 bytes but the real header is only 4
-				// the remaining 4 bytes is just for padding and to make sure that
 				if( std::memcmp( header.Magic, ".SB", 4 ) != 0 )
 				{
 					SAT_CORE_ERROR( "Invalid shader bundle file header!" );

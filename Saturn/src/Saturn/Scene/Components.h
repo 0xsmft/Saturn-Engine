@@ -445,7 +445,7 @@ namespace Saturn {
 		TextComponent>;
 
 	// Without TagComponent, IdComponent, RelationshipComponent
-	// We could use templates and concepts for this however that will add a new layer of complexity and ambiguity.
+	// We could use templates and concepts for this however that will add a new layer of complexity and ambiguity (and definitely not because I don't know how to).
 	using AllDuplicatableComponents = ComponentGroup<TransformComponent, PrefabComponent,
 		StaticMeshComponent, SkeletalMeshComponent,
 		DirectionalLightComponent, SkylightComponent, PointLightComponent,

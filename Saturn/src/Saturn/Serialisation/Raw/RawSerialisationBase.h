@@ -37,7 +37,7 @@ namespace Saturn {
 	using FDependentIStream = std::ifstream;
 #else
 	// In Dist, we read from a VFS file which is not an actual file so we can't use std::ifstream
-	// VFS files are just a contentious span of file data
+	// VFS files are just a continuous span of file data.
 	using FDependentIStream = std::istream;
 #endif	
 	

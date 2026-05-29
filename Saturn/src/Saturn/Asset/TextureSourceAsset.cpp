@@ -131,7 +131,7 @@ namespace Saturn {
 			int Width, Height, Channels;
 			stbi_uc* pTextureData;
 
-			stbi_set_flip_vertically_on_load( IsLoadFlagSet( TextureLoadFlags_FlipVertically ) );
+			stbi_set_flip_vertically_on_load_thread( IsLoadFlagSet( TextureLoadFlags_FlipVertically ) );
 
 			m_HDR = stbi_is_hdr( m_AbsolutePath.string().c_str() );
 

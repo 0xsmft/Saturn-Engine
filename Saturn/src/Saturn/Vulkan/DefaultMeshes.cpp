@@ -138,7 +138,7 @@ namespace Saturn::Auxiliary {
 			float z = glm::sin( float( M_PI * 2 ) * s * segIncr ) * r;
 			
 			StaticVertex& vertex = rVertices.emplace_back();
-			vertex.Position = { actual * x, actual * y, actual * z };
+			vertex.Position = { actual * x, actual * y + dy * h * 0.5f, actual * z };
 		}
 	}
 
@@ -148,7 +148,7 @@ namespace Saturn::Auxiliary {
 		constexpr size_t ringsBody = subdivisionHeight + 1;
 		constexpr size_t ringsTotal = subdivisionHeight + ringsBody;
 		constexpr size_t numSegments = 12;
-		constexpr size_t radiusMod = 0.021f;
+		constexpr float radiusMod = 0.021f;
 
 		std::vector<StaticVertex> vertices;
 		std::vector<Index> indices;
@@ -156,8 +156,8 @@ namespace Saturn::Auxiliary {
 		vertices.reserve( numSegments * ringsTotal );
 		indices.reserve( ( numSegments - 1 ) * ( ringsTotal - 1 ) * 2 );
 
-		constexpr float bodyIncr = 1.0f / ( float ) ringsBody - 1;
-		constexpr float ringIncr = 1.0f / ( float ) subdivisionHeight - 1;
+		constexpr float bodyIncr = 1.0f / ( float ) ( ringsBody - 1 );
+		constexpr float ringIncr = 1.0f / ( float ) ( subdivisionHeight - 1 );
 
 		for( int r = 0; r < subdivisionHeight / 2; r++ )
 			CalcRing( numSegments, glm::sin( float( M_PI ) * r * ringIncr ), glm::sin( float( M_PI ) * ( r * ringIncr - 0.5f ) ), -0.5f, height, radius + radiusMod, vertices );
@@ -168,9 +168,9 @@ namespace Saturn::Auxiliary {
 		for( int r = subdivisionHeight / 2; r < subdivisionHeight; r++ )
 			CalcRing( numSegments, glm::sin( float( M_PI ) * r * ringIncr ), glm::sin( float( M_PI ) * ( r * ringIncr - 0.5f ) ), 0.5f, height, radius + radiusMod, vertices );
 
-		for( int r = 0; r < ringsTotal - 1; r++ )
+		for( int r = 0; r < ringsTotal - 1; ++r )
 		{
-			for( int s = 0; s < numSegments - 1; s++ )
+			for( int s = 0; s < numSegments - 1; ++s )
 			{
 				Index& rIndex = indices.emplace_back();
 				rIndex.V1 = ( uint32_t ) r * numSegments + s + 1;
@@ -180,7 +180,7 @@ namespace Saturn::Auxiliary {
 				Index& rIndex2 = indices.emplace_back();
 				rIndex2.V1 = ( uint32_t ) ( r + 1 ) * numSegments + s;
 				rIndex2.V2 = ( uint32_t ) ( r + 1 ) * numSegments + s + 1;
-				rIndex2.V3 = ( uint32_t ) ( r * numSegments * s );
+				rIndex2.V3 = ( uint32_t ) ( r * numSegments + s );
 			}
 		}
 

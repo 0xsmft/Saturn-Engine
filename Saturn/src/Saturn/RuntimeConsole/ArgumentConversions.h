@@ -48,4 +48,43 @@ namespace Saturn::Auxiliary {
 	{
 		return std::stof( rStringVal );
 	}
+
+	// Convert string to uint64_t
+	template<>
+	inline uint64_t RtConsoleCommandArgConvert<uint64_t>( const std::string& rStringVal )
+	{
+		return std::stoull( rStringVal );
+	}
+
+	template<>
+	inline std::string RtConsoleCommandArgConvert<std::string>( const std::string& rStringVal )
+	{
+		return rStringVal;
+	}
+
+	template<>
+	inline glm::vec3 RtConsoleCommandArgConvert<glm::vec3>( const std::string& rStringVal )
+	{
+		glm::vec3 result{};
+
+		std::stringstream ss( rStringVal );
+		char spc;
+
+		ss >> result.x >> spc >> result.y >> spc >> result.z;
+
+		return result;
+	}
+
+	template<>
+	inline glm::vec2 RtConsoleCommandArgConvert<glm::vec2>( const std::string& rStringVal )
+	{
+		glm::vec2 result{};
+
+		std::stringstream ss( rStringVal );
+		char spc;
+
+		ss >> result.x >> spc >> result.y;
+
+		return result;
+	}
 }

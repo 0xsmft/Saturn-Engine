@@ -148,7 +148,7 @@ namespace Saturn {
 		template<size_t... I>
 		void PopulateArgsInternal( const std::vector<std::string>& rArgs, std::index_sequence<I...> )
 		{
-			m_Args = { Auxiliary::RtConsoleCommandArgConvert<std::decay_t<Args>>( rArgs[ I ] )... };
+			m_Args = std::make_tuple( Auxiliary::RtConsoleCommandArgConvert<std::decay_t<Args>>( rArgs[ I ] )... );
 		}
 
 		template<size_t... I>

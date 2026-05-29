@@ -67,5 +67,10 @@ namespace Saturn {
 			return {};
 #endif
 		}
+
+		inline void CovertStrToUpper( std::string& rName ) 
+		{
+			std::transform( rName.cbegin(), rName.cend(), rName.begin(), ::toupper );
+		}
 	}
 }

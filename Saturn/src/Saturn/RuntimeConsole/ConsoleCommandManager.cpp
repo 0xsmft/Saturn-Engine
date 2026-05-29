@@ -32,6 +32,9 @@
 #include "Saturn/Core/App.h"
 #include "Saturn/Asset/AssetManager.h"
 
+#include "Saturn/Scene/Entity.h"
+#include "Saturn/Scene/Scene.h"
+
 #include "ConsoleCommand.h"
 
 namespace Saturn {
@@ -39,6 +42,9 @@ namespace Saturn {
 	ConsoleCommandManager::ConsoleCommandManager()
 	{
 	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// Builtin commands
 
 	static void CmmCmd_Help() 
 	{
@@ -75,10 +81,37 @@ namespace Saturn {
 		rSink.Sink( "=== All Commands ===" );
 	}
 
-	static void CmmCmd_Add( int a, int b ) 
+	static void CmmCmd_Stat( uint64_t id ) 
 	{
-		int c = + a + b;
+		auto& rSink = ConsoleCommandManager::Get().GetSink();
+
+		const auto entity = g_ActiveScene->FindEntityByID( id );
+		if( entity )
+		{
+			const auto& rTransformComponent = entity->GetComponent<TransformComponent>();
+
+			rSink.Sink( entity->GetName() );
+
+//			rSink.Sink( std::format( "Local Position: {}, Local Rotation: {}, Local Scale: {}", rTransformComponent.Position, rTransformComponent.GetRotationEuler(), rTransformComponent.Scale ) );
+		}
+		else
+		{
+			rSink.Sink( "Entity not found" );
+		}
 	}
+
+	static void CmmCmd_Tp( uint64_t id, glm::vec3 rPosition ) 
+	{
+		auto& rSink = ConsoleCommandManager::Get().GetSink();
+
+		const auto entity = g_ActiveScene->FindEntityByID( id );
+		if( entity )
+		{
+			entity->SetPosition( rPosition );
+		}
+	}
+
+	//////////////////////////////////////////////////////////////////////////
 
 	void ConsoleCommandManager::RegisterEngineDefaultCommands()
 	{
@@ -88,7 +121,8 @@ namespace Saturn {
 		static const ConsoleCommandVoidRetNoArgs asstCommand( "saveassetman", CmmCmd_SaveAssetManager );
 		static const ConsoleCommandVoidRetNoArgs questCommand( "?", CmmCmd_Question );
 
-		static const ConsoleCommandArgsVoidRet<decltype( CmmCmd_Add ), int, int> addCommand( "add", CmmCmd_Add );
+		static const ConsoleCommandArgsVoidRet<decltype( CmmCmd_Stat ), uint64_t> statCommand( "stat", CmmCmd_Stat );
+		static const ConsoleCommandArgsVoidRet<decltype( CmmCmd_Tp ), uint64_t, glm::vec3> tpCommand( "tp", CmmCmd_Tp );
 	}
 
 	void ConsoleCommandManager::ClearAllCommands()

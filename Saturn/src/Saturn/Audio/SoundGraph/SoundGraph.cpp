@@ -45,7 +45,12 @@ namespace Saturn {
 
 	SharedPtr<NodeEditorNodeBase> SoundGraph::SetupNewNodeEditor()
 	{
-		return SoundNodeLibrary::SpawnOutputNode( SharedFromThis() );
+		ed::SetCurrentEditor( m_Editor );
+
+		auto node = SoundNodeLibrary::SpawnOutputNode( SharedFromThis() );
+		ed::SetNodePosition( ed::NodeId( node->ID ), { 0.0f, 0.0f } );
+
+		return node;
 	}
 
 #if !defined(SAT_DIST)

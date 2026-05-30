@@ -66,11 +66,13 @@ namespace Saturn {
 			// Create local copy of children from the template node.
 			m_Children.reserve( pCompositeBaseTask->m_Children.size() );
 
-			for( const auto* pTask : pCompositeBaseTask->m_Children )
+			for( const auto& rTask : pCompositeBaseTask->m_Children )
 			{
-				auto* pChildTask = ( BehaviourTreeBaseTask* ) ClassMetadataHandler::Get().CreateClassObject( pTask->GetClass() );
-				pChildTask->InitialiseTaskWithOther( pHandler, ( NodeEditorTaskBase* ) pTask );
+				auto* pChildTask = ( BehaviourTreeBaseTask* ) ClassMetadataHandler::Get().CreateClassObject( rTask->GetClass() );
 
+				pChildTask->InitialiseTaskWithOther( pHandler, ( NodeEditorTaskBase* ) rTask.Get() );
+
+				// NB: Converted to Ref!
 				m_Children.push_back( pChildTask );
 			}
 		}
@@ -142,6 +144,8 @@ namespace Saturn {
 				{
 					auto* pChildTask = ( BehaviourTreeBaseTask* ) rNode->ConvertToTask();
 					pChildTask->PreInitialiseTask( pEditor, rNode.Get() );
+
+					// NB: Converted to Ref!
 					m_Children.push_back( pChildTask );
 				}
 			}
@@ -163,11 +167,11 @@ namespace Saturn {
 				return status;
 		}
 
-		for( auto* pTask : m_Children )
+		for( auto& rTask : m_Children )
 		{
-			if( pTask )
+			if( rTask )
 			{
-				const auto status = pTask->Tick( ts );
+				const auto status = rTask->Tick( ts );
 				if( status != NodeEditorTaskState::Failed )
 				{
 					m_CurrentState = status;
@@ -190,6 +194,13 @@ namespace Saturn {
 	BehaviourTreeSequenceTask::~BehaviourTreeSequenceTask()
 	{
 		Reset();
+
+		for( auto& rChild : m_Children )
+		{
+			rChild->Reset();
+		}
+
+		m_Children.clear();
 	}
 
 #if !defined(SAT_DIST)
@@ -211,6 +222,8 @@ namespace Saturn {
 				{
 					auto* pChildTask = ( BehaviourTreeBaseTask* ) rNode->ConvertToTask();
 					pChildTask->PreInitialiseTask( pEditor, rNode.Get() );
+
+					// NB: Converted to Ref!
 					m_Children.push_back( pChildTask );
 				}
 			}
@@ -242,14 +255,14 @@ namespace Saturn {
 		// Get try current task.
 		if( m_pCurrentTask == nullptr )
 		{
-			BehaviourTreeBaseTask* pTask = m_Children[ m_CurrentTaskIndex ];
-			if( !pTask )
+			Ref<BehaviourTreeBaseTask> task = m_Children[ m_CurrentTaskIndex ];
+			if( !task )
 			{
 				Reset();
 				return NodeEditorTaskState::Failed;
 			}
 
-			m_pCurrentTask = pTask;
+			m_pCurrentTask = task.Get();
 		}
 
 		// Tick current task.

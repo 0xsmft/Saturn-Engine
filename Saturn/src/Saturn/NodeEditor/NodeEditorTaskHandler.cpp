@@ -35,11 +35,19 @@
 
 namespace Saturn {
 
-	NodeEditorTaskHandler::~NodeEditorTaskHandler()
+	void NodeEditorTaskHandler::ReleaseAll()
 	{
 		m_CurrentTask = nullptr;
 		m_CurrentTaskIndex = 0;
+
 		m_Tasks.clear();
+		m_Locators.clear();
+		m_EditorVariables.clear();
+	}
+
+	NodeEditorTaskHandler::~NodeEditorTaskHandler()
+	{
+		ReleaseAll();
 	}
 
 	void NodeEditorTaskHandler::Init( const NodeTaskCache& rCache )

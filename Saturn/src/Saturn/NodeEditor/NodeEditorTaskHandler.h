@@ -49,6 +49,7 @@ namespace Saturn {
 
 	public:
 		void Init( const NodeTaskCache& rCache );
+		void ReleaseAll();
 
 	public:
 		template<typename Ty>

@@ -61,7 +61,8 @@ namespace Saturn {
 	protected:
 		size_t m_CurrentTaskIndex = 0;
 		BehaviourTreeBaseTask* m_pCurrentTask = nullptr;
-		std::vector<BehaviourTreeBaseTask*> m_Children;
+
+		std::vector<Ref<BehaviourTreeBaseTask>> m_Children;
 
 		BehaviourTreeCondition* m_pNodeCondition = nullptr;
 	};

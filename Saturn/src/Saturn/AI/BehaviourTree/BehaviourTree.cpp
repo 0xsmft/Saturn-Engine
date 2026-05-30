@@ -45,6 +45,8 @@ namespace Saturn {
 
 	BehaviourTree::~BehaviourTree()
 	{
+		m_TaskHandler->ReleaseAll();
+		m_TaskHandler = nullptr;
 	}
 
 	void BehaviourTree::Initialise( SharedPtr<AIAgentEntity> entity )

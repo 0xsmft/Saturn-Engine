@@ -31,6 +31,11 @@
 
 #include "ImGuiAuxiliary.h"
 
+#include "Saturn/Core/StringAuxiliary.h"
+
+#include "SharedGlobals.h"
+#include "Saturn/Scene/Scene.h"
+
 #include "Saturn/RuntimeConsole/ConsoleCommandManager.h"
 #include "Saturn/RuntimeConsole/ConsoleCommand.h"
 
@@ -56,21 +61,72 @@ namespace Saturn {
 
 		if( pos == std::string::npos )
 		{
-			rArgsList.push_back( rRemainingText );
+			if( !rRemainingText.empty() )
+				rArgsList.push_back( rRemainingText );
+			
 			return;
 		}
 
 		const std::string token = rRemainingText.substr( 0, pos );
-		rArgsList.push_back( token );
+		
+		if( !token.empty() )
+			rArgsList.push_back( token );
 
 		ParseRec( rArgsList, rRemainingText.substr( pos + 1 ) );
+	}
+
+	static int EnterCommandCallbackHandler( ImGuiInputTextCallbackData* pData ) 
+	{
+		RuntimeCommandWindow* pThis = ( RuntimeCommandWindow* ) pData->UserData;
+		auto& rCommands = pThis->GetCommandHistory();
+
+		if( pData->EventFlag == ImGuiInputTextFlags_CallbackHistory )
+		{
+			if( rCommands.size() )
+			{
+				if( pData->EventKey == ImGuiKey_UpArrow )
+				{
+					const auto index = pThis->GetCmdHistoryIndex();
+					auto& rCmd = rCommands.at( index );
+
+					// Set index to the one before this command
+					// But if we are at 0 reset back to the most recent command.
+					if( index == 0 )
+						pThis->SetCmdHistoryIndex( rCommands.size() - 1 );
+					else
+						pThis->SetCmdHistoryIndex( index - 1 );
+
+					pData->DeleteChars( 0, pData->BufTextLen );
+					pData->InsertChars( 0, rCmd.data() );
+				}
+				else if( pData->EventKey == ImGuiKey_DownArrow )
+				{
+					auto index = pThis->GetCmdHistoryIndex() + 1;
+
+					// Reset back to the oldest command if the index will cause an array out of bounds error.
+					if( index >= rCommands.size() )
+					{
+						index = 0;
+					}
+					
+					auto& rCmd = rCommands.at( index );
+
+					pThis->SetCmdHistoryIndex( index );
+
+					pData->DeleteChars( 0, pData->BufTextLen );
+					pData->InsertChars( 0, rCmd.data() );
+				}
+			}
+		}
+
+		return 0;
 	}
 
 	void RuntimeCommandWindow::OnImGuiRender()
 	{
 		if( ImGui::Begin( m_Name.c_str(), &m_Open ) )
 		{
-			if( Auxiliary::InputText( "##entercommand", &m_CommandNameBuffer, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CharsUppercase ) )
+			if( Auxiliary::InputText( "##entercommand", &m_CommandNameBuffer, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackHistory, EnterCommandCallbackHandler, this ) )
 			{
 				OnCommandEntered();
 			}
@@ -102,17 +158,21 @@ namespace Saturn {
 			{
 				// Command name without the slash
 				auto cmdName = m_CommandNameBuffer.substr( 1, m_CommandNameBuffer.size() - 1 );
+				Auxiliary::CovertStrToUpper( cmdName );
 
 				// If we have a space afterwards we only want to pass in the command name
 				// e.g. a command of "add 1 2" would be "add"
 				// then the args would be "1 2"
 				
-				auto argsText = cmdName;
+				std::string argsText;
 				if( cmdName.contains( ' ' ) )
 				{
-					argsText = argsText.substr( cmdName.find_first_of( ' ' ) + 1 );
+					argsText = cmdName.substr( cmdName.find_first_of( ' ' ) + 1 );
 					cmdName = cmdName.substr( 0, cmdName.find_first_of( ' ' ) );
 				}
+
+				m_CommandHistory.push_back( m_CommandNameBuffer );
+				m_CurrentCommandHistoryIndex = m_CommandHistory.size() - 1;
 
 				ConsoleCommandBase* pCommand = rCommandMgr.FindCommand( cmdName );
 				if( !pCommand )
@@ -122,6 +182,7 @@ namespace Saturn {
 				}
 				else
 				{
+					bool canExe = true;
 					if( pCommand->IsFlagSet( ConsoleCommandFlags_RequiresArguments ) ) 
 					{
 						std::vector<std::string> argList;
@@ -131,6 +192,8 @@ namespace Saturn {
 						{
 							std::string errorMsg = std::format( "Too many or too little commands specified into '{}'", m_CommandNameBuffer );
 							rCommandMgr.GetSink().Sink( errorMsg );
+						
+							canExe = false;
 						}
 						else
 						{
@@ -138,8 +201,20 @@ namespace Saturn {
 							pCommand->PopulateArgs( argList );
 						}
 					}
+
+					if( pCommand->IsFlagSet( ConsoleCommandFlags_RuntimeOnly ) )
+					{
+						if( !g_ActiveScene->IsRuntimeActive() )
+						{
+							std::string errorMsg = std::format( "The command '{}' can only be executed during runtime!", m_CommandNameBuffer );
+							rCommandMgr.GetSink().Sink( errorMsg );
+
+							canExe = false;
+						}
+					}
 					
-					rCommandMgr.Execmd( pCommand );
+					if( canExe )
+						rCommandMgr.Execmd( pCommand );
 				}
 			}
 			else

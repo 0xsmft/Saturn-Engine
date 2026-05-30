@@ -53,11 +53,24 @@ namespace Saturn {
 			return "Command Window";
 		}
 
+	public:
+		inline size_t IncrementCmdHistoryIndex() { return ++m_CurrentCommandHistoryIndex; }
+		inline size_t DecrementCmdHistoryIndex() { if( m_CurrentCommandHistoryIndex == 0 ) return 0; else return --m_CurrentCommandHistoryIndex; }
+
+		size_t GetCmdHistoryIndex() const { return m_CurrentCommandHistoryIndex; }
+
+		inline void SetCmdHistoryIndex( size_t index ) { m_CurrentCommandHistoryIndex = index; }
+
+		std::vector<std::string>& GetCommandHistory() { return m_CommandHistory; }
+		const std::vector<std::string>& GetCommandHistory() const { return m_CommandHistory; }
+
 	private:
 		void OnCommandEntered();
 
 	private:
 		std::string m_CommandNameBuffer;
+		std::vector<std::string> m_CommandHistory;
+		size_t m_CurrentCommandHistoryIndex = 0;
 	};
 		
 }

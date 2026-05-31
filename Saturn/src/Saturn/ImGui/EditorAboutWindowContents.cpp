@@ -41,9 +41,9 @@ namespace Saturn {
 	{
 		ImGui::Text( "Saturn Engine x64 %s (%s build)", Application::GetCurrentPlatformName(), Application::GetCurrentConfigName() );
 
-		ImGui::Text( "Built on: %s %s (EditorAboutWindowContents.cpp)", __DATE__, __TIME__ );
-
 		ImGui::Text( "Saturn Engine Version: %s (Internal Number: %i)", SAT_CURRENT_VERSION_STRING, SAT_CURRENT_VERSION );
+
+		ImGui::Text( "Built on: %s %s", __DATE__, __TIME__ );
 
 		ImGui::Separator();
 
@@ -53,20 +53,30 @@ namespace Saturn {
 
 		if( Auxiliary::TreeNode( "Third Party libraries" ) )
 		{
-			ImGui::Text( "dear imgui: %s (%d)", IMGUI_VERSION, IMGUI_VERSION_NUM );
-			ImGui::Text( "SPIRV-Cross" );
-			ImGui::Text( "Tracy" );
-			ImGui::Text( "yaml-cpp" );
-			ImGui::Text( "zlib: Version 1.3.1, January 22nd, 2024" );
-			ImGui::Text( "Jolt Physics" );
-			ImGui::Text( "Recast & Detour" );
-			ImGui::Text( "glm" );
-			ImGui::Text( "entt" );
-			ImGui::Text( "vma" );
-			ImGui::Text( "miniaudio" );
 			ImGui::Text( "acl & rtm" );
-			ImGui::Text( "Freetype" );
-			ImGui::Text( "Msdfgen & Msdf Atlas Gen" );
+			ImGui::Text( "assimp" );
+			ImGui::Text( "entt" );
+			ImGui::Text( "filewatch" );
+			ImGui::Text( "freetype" );
+			ImGui::Text( "glm" );
+			ImGui::Text( "imgui: %s (%d)", IMGUI_VERSION, IMGUI_VERSION_NUM );
+			ImGui::Text( "imgui_node_editor" );
+			ImGui::Text( "ImGuizmo" );
+			ImGui::Text( "imspinner" );
+			ImGui::Text( "JoltPhysics" );
+			ImGui::Text( "miniaudio" );
+			ImGui::Text( "msdfgen" );
+			ImGui::Text( "msdf-atlas-gen" );
+			ImGui::Text( "nativefiledialog" );
+			ImGui::Text( "Recast & detour" );
+			ImGui::Text( "shaderc" );
+			ImGui::Text( "spdlog" );
+			ImGui::Text( "SPRIV-Cross" );
+			ImGui::Text( "stb" );
+			ImGui::Text( "steamworks" );
+			ImGui::Text( "tracy" );
+			ImGui::Text( "vma" );
+			ImGui::Text( "zlib: Version 1.3.1, January 22nd, 2024" );
 
 			Auxiliary::EndTreeNode();
 		}
@@ -75,17 +85,18 @@ namespace Saturn {
 
 		if( Auxiliary::TreeNode( "Past version numbers" ) )
 		{
-			ImGui::Text( "Saturn version 0.1.0 (%llu)", SAT_VERSION_A_0_1_0 );
-			ImGui::Text( "Saturn version 0.1.1 (%llu)", SAT_VERSION_A_0_1_1 );
-			ImGui::Text( "Saturn version 0.1.2 (%llu)", SAT_VERSION_A_0_1_2 );
-			ImGui::Text( "Saturn version 0.1.3 (%llu)", SAT_VERSION_A_0_1_3 );
-			ImGui::Text( "Saturn version 0.1.4 (%llu)", SAT_VERSION_A_0_1_4 );
-			ImGui::Text( "Saturn version 0.2.0 (%llu)", SAT_VERSION_A_0_2_0 );
-			ImGui::Text( "Saturn version 0.2.1 (%llu)", SAT_VERSION_A_0_2_1 );
-			ImGui::Text( "Saturn version 0.2.2 (%llu)", SAT_VERSION_A_0_2_2 );
-			ImGui::Text( "Saturn version 0.2.3 (%llu)", SAT_VERSION_A_0_2_3 );
-			ImGui::Text( "Saturn version 0.2.4 (%llu)", SAT_VERSION_A_0_2_4 );
-			ImGui::Text( "Saturn version 0.2.5 (%llu)", SAT_VERSION_A_0_2_5 );
+			ImGui::Text( "Saturn version 0.1.0 (%u)", SAT_VERSION_A_0_1_0 ); // March '24
+			ImGui::Text( "Saturn version 0.1.1 (%u)", SAT_VERSION_A_0_1_1 ); // May '24
+			ImGui::Text( "Saturn version 0.1.2 (%u)", SAT_VERSION_A_0_1_2 ); // July '24
+			ImGui::Text( "Saturn version 0.1.3 (%u)", SAT_VERSION_A_0_1_3 ); // Sept '24
+			ImGui::Text( "Saturn version 0.1.4 (%u)", SAT_VERSION_A_0_1_4 ); // Jan '25
+			ImGui::Text( "Saturn version 0.2.0 (%u)", SAT_VERSION_A_0_2_0 ); // March '25
+			ImGui::Text( "Saturn version 0.2.1 (%u)", SAT_VERSION_A_0_2_1 ); // May '25
+			ImGui::Text( "Saturn version 0.2.2 (%u)", SAT_VERSION_A_0_2_2 ); // July '25
+			ImGui::Text( "Saturn version 0.2.3 (%u)", SAT_VERSION_A_0_2_3 ); // Jan '26
+			ImGui::Text( "Saturn version 0.2.4 (%u)", SAT_VERSION_A_0_2_4 ); // March '26
+			ImGui::Text( "Saturn version 0.2.5 (%u)", SAT_VERSION_A_0_2_5 ); // May '26
+			ImGui::Text( "Saturn version 0.2.6 (%u)", SAT_VERSION_A_0_2_6_WIP ); // July '26
 
 			Auxiliary::EndTreeNode();
 		}

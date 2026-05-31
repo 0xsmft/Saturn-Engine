@@ -180,25 +180,33 @@ namespace Saturn {
 
 	void Character::MoveForward()
 	{
-		m_MovementSpeed = 5.0f;
+		if( !m_Sprinting )
+			m_MovementSpeed = 5.0f;
+
 		m_MovementDirection.y = 1.0f;
 	}
 
 	void Character::MoveBack()
 	{
-		m_MovementSpeed = 5.0f;
+		if( !m_Sprinting )
+			m_MovementSpeed = 5.0f;
+
 		m_MovementDirection.y = -1.0f;
 	}
 
 	void Character::MoveLeft()
 	{
-		m_MovementSpeed = 5.0f;
+		if( !m_Sprinting )
+			m_MovementSpeed = 5.0f;
+
 		m_MovementDirection.x = -1.0f;
 	}
 
 	void Character::MoveRight()
 	{
-		m_MovementSpeed = 5.0f;
+		if( !m_Sprinting )
+			m_MovementSpeed = 5.0f;
+
 		m_MovementDirection.x = 1.0f;
 	}
 

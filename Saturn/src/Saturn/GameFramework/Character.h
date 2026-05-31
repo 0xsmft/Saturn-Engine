@@ -35,18 +35,13 @@
 
 namespace Saturn {
 
-	// TODO: Make this an SCLASS macro as well be able to spawn this correctly.
-	//       However this is need more work because we'll need to use the Build Tool to compile the engine which is not supported right now.
 	class Character : public Entity
 	{
-		//////////////////////////////////////////////////////////////////////////
-		// This is here because we aren't using the Build Tool.
-	
 		SAT_DECLARE_CLASS( Character, Entity );
 
 	public:
 		Character();
-		~Character();
+		virtual ~Character();
 
 	public:
 		//////////////////////////////////////////////////////////////////////////
@@ -56,12 +51,37 @@ namespace Saturn {
 		virtual void OnUpdate( Timestep ts ) override;
 		virtual void OnPhysicsUpdate( Timestep ts ) override;
 
+	public:
+		// Character API
+
 		Mesh* GetMesh() { return m_Mesh; }
 		const Mesh* GetMesh() const { return m_Mesh; }
 		
-	protected:
-		virtual void SetupInputBindings() {};
+		//
+		// Gets the SkeletalMeshComponent (if any)
+		// 
+		// So it may return null if this character does not have the component.
+		//
+		SkeletalMeshComponent* GetSkeletalMeshComponent() { return TryGetComponent<SkeletalMeshComponent>(); }
+		const SkeletalMeshComponent* GetSkeletalMeshComponent() const { return TryGetComponent<SkeletalMeshComponent>(); }
+		
+		//
+		// Gets the StaticMeshComponent (if any)
+		// 
+		// So it may return null if this character does not have the component.
+		//
+		StaticMeshComponent* GetStaticMeshComponent() { return TryGetComponent<StaticMeshComponent>(); }
+		const StaticMeshComponent* GetStaticMeshComponent() const { return TryGetComponent<StaticMeshComponent>(); }
 
+	protected:
+		//
+		// This function is called during BeginPlay.
+		// 
+		// It allows the child class to setup any input bindings.
+		//
+		virtual void SetupInputBindings() {}
+
+	protected:
 		void MoveForward();
 		void MoveBack();
 		void MoveLeft();
@@ -78,8 +98,8 @@ namespace Saturn {
 	protected:
 		Ref<PlayerInputController> m_PlayerInputController = nullptr;
 
-		SharedPtr<Entity>& GetCameraEntity() { return m_CameraEntity; }
-		const SharedPtr<Entity>& GetCameraEntity() const { return m_CameraEntity; }
+		SharedPtr<Entity> GetCameraEntity() { return m_CameraEntity; }
+		const SharedPtr<Entity> GetCameraEntity() const { return m_CameraEntity; }
 
 	protected:
 		//////////////////////////////////////////////////////////////////////////

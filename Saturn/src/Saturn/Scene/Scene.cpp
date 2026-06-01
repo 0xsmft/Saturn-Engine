@@ -1216,6 +1216,11 @@ namespace Saturn {
 		// Asset props
 		NewScene->ID = ID;
 		NewScene->Name = Name;
+		
+#if !defined(SAT_DIST)
+		// Visualisation options
+		NewScene->m_VisualisationOptions = m_VisualisationOptions;
+#endif
 
 		std::unordered_map< UUID, entt::entity > EntityMap;
 		

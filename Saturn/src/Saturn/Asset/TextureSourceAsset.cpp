@@ -170,7 +170,7 @@ namespace Saturn {
 		bool hdr = false;
 		stbi_uc* pTextureData;
 
-		stbi_set_flip_vertically_on_load( IsLoadFlagSet( TextureLoadFlags_FlipVertically ) );
+		stbi_set_flip_vertically_on_load_thread( IsLoadFlagSet( TextureLoadFlags_FlipVertically ) );
 
 		hdr = stbi_is_hdr( m_AbsolutePath.string().c_str() );
 		SAT_CORE_ASSERT( m_HDR == hdr, "Image hdr types don't match!" );

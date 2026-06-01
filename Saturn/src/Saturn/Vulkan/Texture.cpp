@@ -617,7 +617,7 @@ namespace Saturn {
 			int Width, Height, Channels;
 
 			// Flip texture
-			stbi_set_flip_vertically_on_load( HasLoadFlag( TextureLoadFlags_FlipVertically ) );
+			stbi_set_flip_vertically_on_load_thread( HasLoadFlag( TextureLoadFlags_FlipVertically ) );
 
 			stbi_uc* pTextureData;
 

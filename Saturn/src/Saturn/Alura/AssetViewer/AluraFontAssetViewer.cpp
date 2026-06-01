@@ -33,6 +33,8 @@
 
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
 
+#include "Saturn/Project/Project.h"
+
 #include <imgui.h>
 
 namespace Saturn {
@@ -66,7 +68,9 @@ namespace Saturn {
 
 					if( ImGui::MenuItem( "Save" ) )
 					{
-//						m_Font->Serialise();
+						// This is a strange way to save the font....
+						const auto absolutePath = Project::GetActiveProject()->FilepathAbs( m_Font->Path );
+						m_Font->Serialise( absolutePath );
 					}
 
 					ImGui::EndMenu();

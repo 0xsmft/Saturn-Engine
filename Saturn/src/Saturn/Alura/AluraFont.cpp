@@ -314,8 +314,8 @@ namespace Saturn {
 	struct AluraSerialiedFontHeader
 	{
 		// .SAF
-		unsigned char Magic[ 4 ] = { 0x46, 0x41, 0x53, 0x2E };
-		uint32_t Version = SAT_CURRENT_VERSION;
+		const unsigned char Magic[ 4 ] = { 0x2E, 0x53, 0x41, 0x46 };
+		AluraFontAssetVersion Version = AluraFontAssetVersion::Lowest;
 	};
 
 	void AluraFont::Serialise( const std::filesystem::path& rPath ) const
@@ -324,7 +324,8 @@ namespace Saturn {
 
 		// Header
 		AluraSerialiedFontHeader header{};
-		RawSerialisation::WriteObject( header, fout );
+		RawSerialisation::WriteObject( header.Magic, fout );
+		RawSerialisation::WriteObject( ( uint8_t ) m_Version, fout );
 
 #if !defined(SAT_DIST)
 		// Name of the font file
@@ -387,12 +388,22 @@ namespace Saturn {
 	void AluraFont::Deserialise( FDependentIStream& rStream )
 	{
 		AluraSerialiedFontHeader header{};
-		RawSerialisation::ReadObject( header, rStream );
+		
+		char magic[ 4 ]{ 0 };
+		RawSerialisation::ReadObject( magic, rStream );
+
+		if( std::memcmp( header.Magic, "SAF.", 4 ) != 0 )
+		{
+			SAT_CORE_ERROR( "[AluraFont]: File magic does not match!" );
+			return;
+		}
+
+		RawSerialisation::ReadObject( header.Version, rStream );
 
 		// Name of the font file
-		auto _ = RawSerialisation::ReadString( rStream );
+		m_Name = RawSerialisation::ReadString( rStream );
 
-		_ = RawSerialisation::ReadString( rStream );
+		m_FontFilepath = RawSerialisation::ReadString( rStream );
 
 		// Metrics
 		RawSerialisation::ReadObject( m_AluraFontData.GetMetrics(), rStream );

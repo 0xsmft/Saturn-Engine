@@ -392,7 +392,7 @@ namespace Saturn {
 		char magic[ 4 ]{ 0 };
 		RawSerialisation::ReadObject( magic, rStream );
 
-		if( std::memcmp( header.Magic, "SAF.", 4 ) != 0 )
+		if( std::memcmp( header.Magic, ".SAF", 4 ) != 0 )
 		{
 			SAT_CORE_ERROR( "[AluraFont]: File magic does not match!" );
 			return;

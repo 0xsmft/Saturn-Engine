@@ -102,13 +102,14 @@ namespace Saturn {
 	//
 	// NOTE: All position parameters in drawing functions are relative to the canvas, meaning that an element placed at 
 	// 0,0 will be the top-left of the canvas even if the the canvas is moved.
+	// 
+	// Y+ == down
 	//
 	class AluraCanvas : public RefTarget
 	{
 	public:
-		// NOTE: The position must be relative to the window's position!
 		AluraCanvas( const AluraCanvasSpecification& rSpecification );
-		~AluraCanvas();
+		virtual ~AluraCanvas();
 
 		// Init
 		void NewFrame();
@@ -187,6 +188,8 @@ namespace Saturn {
 
 		const AluraStyle& GetStyle() const { return m_Style; }
 		Ref<AluraFont> GetActiveFont() const { return m_ActiveFont; }
+		
+		Ref<AluraFont> GetEditorFont() const { return m_EditorFont; }
 
 	public:
 		inline void SetPosition( const glm::vec2& rPosition ) 
@@ -225,6 +228,10 @@ namespace Saturn {
 		std::stack<AluraColorTemp> m_ColorStack;
 
 		Ref<AluraFont> m_ActiveFont = nullptr;
+		
+		// Fallback font if active font has an issue.
+		// Also used by the editor as well if we need to draw some text.
+		Ref<AluraFont> m_EditorFont = nullptr;
 
 		AluraStyle m_Style{};
 		AluraLayout m_Layout{};

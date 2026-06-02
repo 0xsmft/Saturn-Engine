@@ -61,6 +61,17 @@ namespace Saturn {
 		{
 			m_Style = stylingProf->GetStyle();
 		}
+
+		// Load editor font
+		m_EditorFont = Ref<AluraFont>::Create();
+
+		// I really really don't like this.
+		// The reason why Deserialise takes a file stream and not a path is because Deserialise is only meant to be called by the AssetSerialisers/RawAssetSerialisers
+		// and of course to reduce duplication we just use a FDependentIStream so that it changes on Dist.
+		// NB: Remember this is an editor filepath!
+		std::ifstream stream( "content/Templates/trebuc.saf", std::ios::binary | std::ios::in );
+		m_EditorFont->Deserialise( stream );
+		stream.close();
 	}
 
 	AluraCanvas::~AluraCanvas()
@@ -124,6 +135,7 @@ namespace Saturn {
 
 		m_Renderer = nullptr;
 		m_ActiveFont = nullptr;
+		m_EditorFont = nullptr;
 		m_Fonts.clear();
 	}
 

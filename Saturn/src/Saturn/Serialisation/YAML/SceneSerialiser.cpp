@@ -78,6 +78,7 @@ namespace Saturn {
 		out << YAML::Key << "ShowGrid" << rVisualisation.ShowGrid;
 		out << YAML::Key << "ShowGridRT" << rVisualisation.ShowGridOnRuntime;
 		out << YAML::Key << "PhysCollider" << ( uint16_t )rVisualisation.PhysColliderOptions;
+		out << YAML::Key << "AI" << ( uint16_t )rVisualisation.AIVisualisationOptions;
 		out << YAML::EndMap;
 #endif
 
@@ -134,7 +135,6 @@ namespace Saturn {
 
 			rVisualisation.ShowGrid          = visualisationNode[ "ShowGrid" ].as<bool>( true );
 			rVisualisation.ShowGridOnRuntime = visualisationNode[ "ShowGridRT" ].as<bool>( false );
-//			rVisualisation.PhysColliderOptions = ( PhysicsColliderVisualisationOptions )
 
 			const auto visOption = visualisationNode[ "PhysCollider" ].as<U>( 0 );
 			if( visOption > std::numeric_limits<uint8_t>::max() )
@@ -147,10 +147,20 @@ namespace Saturn {
 				rVisualisation.PhysColliderOptions = ( PhysicsColliderVisualisationOptions ) visOption;
 			}
 
+			const auto aiVisOption = visualisationNode[ "AI" ].as<U>( 0 );
+			if( aiVisOption > std::numeric_limits<uint8_t>::max() )
+			{
+				SAT_CORE_WARN( "AI Visualisation is greater than the max of 255! Default to 0!" );
+				rVisualisation.AIVisualisationOptions = AIVisualisationOptions_Disabled;
+			}
+			else
+			{
+				rVisualisation.AIVisualisationOptions = ( AIVisualisationOptions ) aiVisOption;
+			}
 		}
 #endif
 
-		SAT_CORE_INFO( "Deserialising scene SCENE/0/{0}", asset->Path.stem().string() );
+		SAT_CORE_INFO( "Deserialising scene SCENE/{0}", asset->Path.stem().string() );
 		
 		const auto entities = data[ "Entities" ];
 		if( entities.IsNull() )

@@ -101,6 +101,9 @@ namespace Saturn {
 		Ref<NodeEditorVariable> GetVariable( UUID id );
 		Ref<NodeEditorVariable> GetVariable( const std::string& rName );
 
+	public:
+		const Ref<NodeEditorTaskBase> GetCurrentTask() const { return m_CurrentTask; }
+
 	protected:
 		void ResetAllTasks();
 		virtual void OnInit() {}

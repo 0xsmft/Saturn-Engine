@@ -75,4 +75,14 @@ namespace Saturn {
 		m_TaskHandler->Tick( ts );
 	}
 
+	Ref<BehaviourTreeTaskHandler> BehaviourTree::GetTaskHandler()
+	{
+		return m_TaskHandler;
+	}
+
+	const Ref<BehaviourTreeTaskHandler> BehaviourTree::GetTaskHandler() const
+	{
+		return m_TaskHandler;
+	}
+
 }

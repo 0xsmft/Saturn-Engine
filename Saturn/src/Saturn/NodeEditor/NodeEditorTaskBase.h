@@ -92,6 +92,8 @@ namespace Saturn {
 
 #if !defined(SAT_DIST)
 		void SetDebugName( const std::string& rName ) { m_DebugName = rName; }
+
+		const std::string GetDebugName() const { return m_DebugName; }
 #endif
 
 	protected:

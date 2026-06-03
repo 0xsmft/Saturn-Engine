@@ -54,6 +54,8 @@ namespace Saturn {
 		Ref<StaticMesh> GetMesh() { return m_Mesh; }
 		const Ref<StaticMesh> GetMesh() const { return m_Mesh; }
 
+		const Ref<BehaviourTree> GetBehaviourTree() const;
+
 	public:
 		//////////////////////////////////////////////////////////////////////////
 		// AIAgentEntity API

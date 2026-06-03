@@ -55,6 +55,9 @@ namespace Saturn {
 		void Tick( Timestep ts );
 
 		Ref<Asset> GetUnderlyingAsset() const { return m_BehaviourTreeAsset; }
+		
+		Ref<BehaviourTreeTaskHandler> GetTaskHandler();
+		const Ref<BehaviourTreeTaskHandler> GetTaskHandler() const;
 
 #if !defined(SAT_DIST)
 	public:

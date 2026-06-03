@@ -67,6 +67,11 @@ namespace Saturn {
 		Super::OnPhysicsUpdate( ts );
 	}
 
+	const Ref<BehaviourTree> AIAgentEntity::GetBehaviourTree() const
+	{
+		return m_BehaviourTree;
+	}
+
 	void AIAgentEntity::StartBehaviourTree( AssetID id )
 	{
 		m_BehaviourTree = Ref<BehaviourTree>::Create( id );

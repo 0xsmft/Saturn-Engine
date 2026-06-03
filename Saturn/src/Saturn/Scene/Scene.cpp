@@ -78,6 +78,9 @@
 #include "Saturn/Audio/SoundGraph/GraphSoundAssetViewer.h"
 
 #include "Saturn/Physics/PhysicsDebugMeshes.h"
+
+#include "Saturn/AI/BehaviourTree/BehaviourTree.h"
+#include "Saturn/AI/BehaviourTree/BehaviourTreeTaskHandler.h"
 #endif
 
 #include "Saturn/AI/Navigation/NavBoundsEntity.h"
@@ -821,6 +824,8 @@ namespace Saturn {
 			auto behaviourTreeEntites = GetAllEntitiesWith<BehaviourTreeComponent>();
 			for( const auto& rEntity : behaviourTreeEntites )
 			{
+				const BehaviourTreeComponent& rBt = rEntity->GetComponent<BehaviourTreeComponent>();
+				
 				const TransformComponent& rTc = rEntity->GetComponent<TransformComponent>();
 				const glm::vec3 position( rTc.Position.x, rTc.Position.y + 2.5f, rTc.Position.z );
 
@@ -828,6 +833,21 @@ namespace Saturn {
 					position,
 					glm::vec4( 1.0f ),
 					aiAgentTexture, glm::vec2( 1.0f ) );
+
+				if( const auto aiAgent = rEntity.As<AIAgentEntity>() )
+				{
+					const auto currentBTTask = aiAgent->GetBehaviourTree()->GetTaskHandler()->GetCurrentTask();
+					if( currentBTTask )
+					{
+						const std::string text = std::format( "BehaviourTree/{0}", currentBTTask->GetDebugName() );
+
+						sceneRenderer->GetRenderer2D()->SubmitString(
+							text,
+							g_AluraCanvas->GetEditorFont(),
+							rTc.GetTransform(),
+							glm::one<glm::vec4>() );
+					}
+				}
 			}
 		}
 	}

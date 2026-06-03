@@ -146,7 +146,7 @@ namespace Saturn {
 		if( const auto result = pNavMesh->init( &header.NavMeshParams ); result != DT_SUCCESS ) 
 		{
 			std::string errorCode = Auxiliary::DetourErrorToString( result );
-			SAT_CORE_INFO( "[Detour] Detour status check failed! STATUS/{0}", errorCode );
+			SAT_CORE_INFO( "[RecastNavigationMeshCache] Detour status check failed! STATUS/{0}", errorCode );
 			return nullptr;
 		}
 

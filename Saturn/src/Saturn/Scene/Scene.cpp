@@ -382,6 +382,11 @@ namespace Saturn {
 		// Lights
 		RtSetupLights( sceneRenderer );
 
+		// AI debug visualisation happens during runtime...
+#if !defined(SAT_DIST)
+		RtDrawAIDebug( sceneRenderer );
+#endif
+
 		// Scene Renderer
 		RtBuildSceneRendererCommands( sceneRenderer );
 	}
@@ -579,7 +584,7 @@ namespace Saturn {
 
 		if( m_RuntimeState == RuntimeState::Suspended )
 		{
-			m_NavigationSystem.DebugDraw( sceneRenderer->GetRenderer2D().Get() );
+			RtDrawAIDebug( sceneRenderer );
 		}
 	}
 
@@ -801,6 +806,32 @@ namespace Saturn {
 			}
 		}
 	}
+
+	void Scene::RtDrawAIDebug( Ref<SceneRenderer> sceneRenderer )
+	{
+		if( ( m_VisualisationOptions.AIVisualisationOptions & AIVisualisationOptions_NavPaths ) != 0 )
+		{
+			m_NavigationSystem.DebugDraw( sceneRenderer->GetRenderer2D().Get() );
+		}
+		
+		if( ( m_VisualisationOptions.AIVisualisationOptions & AIVisualisationOptions_BehaviourTreeInfo ) != 0 )
+		{
+			const auto aiAgentTexture = EditorIcons::GetIcon( "Billboard_AIAgent" );
+
+			auto behaviourTreeEntites = GetAllEntitiesWith<BehaviourTreeComponent>();
+			for( const auto& rEntity : behaviourTreeEntites )
+			{
+				const TransformComponent& rTc = rEntity->GetComponent<TransformComponent>();
+				const glm::vec3 position( rTc.Position.x, rTc.Position.y + 2.5f, rTc.Position.z );
+
+				sceneRenderer->GetRenderer2D()->SubmitBillboardTextured(
+					position,
+					glm::vec4( 1.0f ),
+					aiAgentTexture, glm::vec2( 1.0f ) );
+			}
+		}
+	}
+
 #endif
 
 	SharedPtr<Entity> Scene::CreateEntityWithIDScript( UUID uuid, const std::string& name /*= "" */, const std::string& rScriptName, bool externalData )

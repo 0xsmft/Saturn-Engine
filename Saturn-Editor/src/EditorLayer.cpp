@@ -2691,6 +2691,33 @@ namespace Saturn {
 					ImGui::EndMenu();
 				}
 
+				if( ImGui::BeginMenu( "AI Options" ) )
+				{
+					bool showBTInfo = rVisualisationOptions.AIVisualisationOptions & AIVisualisationOptions_BehaviourTreeInfo;
+					if( ImGui::Checkbox( "Behaviour Tree Info", &showBTInfo ) )
+					{
+						if( showBTInfo )
+							rVisualisationOptions.AIVisualisationOptions |= AIVisualisationOptions_BehaviourTreeInfo;
+						else
+							rVisualisationOptions.AIVisualisationOptions &= ~AIVisualisationOptions_BehaviourTreeInfo;
+
+						g_ActiveScene->MarkDirty();
+					}
+
+					bool navPathsInfo = rVisualisationOptions.AIVisualisationOptions & AIVisualisationOptions_NavPaths;
+					if( ImGui::Checkbox( "Nav Paths", &navPathsInfo ) )
+					{
+						if( navPathsInfo )
+							rVisualisationOptions.AIVisualisationOptions |= AIVisualisationOptions_NavPaths;
+						else
+							rVisualisationOptions.AIVisualisationOptions &= ~AIVisualisationOptions_NavPaths;
+
+						g_ActiveScene->MarkDirty();
+					}
+
+					ImGui::EndMenu();
+				}
+
 				ImGui::EndMenu();
 			}
 

@@ -42,10 +42,24 @@ namespace Saturn {
 		SelectedOnly,
 	};
 	
+	enum AIVisualisationOptions : uint8_t
+	{
+		// Do not show at all
+		AIVisualisationOptions_Disabled,
+
+		// Show behaviour tree information
+		// shows the current task, the asset etc
+		AIVisualisationOptions_BehaviourTreeInfo = 1 << 0,
+
+		// Show all navigation paths (default, fallback value)
+		AIVisualisationOptions_NavPaths = 1 << 1,
+	};
+
 	struct SceneVisualisationOptions
 	{
 		bool ShowGrid = true;
 		bool ShowGridOnRuntime = false;
 		PhysicsColliderVisualisationOptions PhysColliderOptions = PhysicsColliderVisualisationOptions::SelectedOnly;
+		uint8_t AIVisualisationOptions = AIVisualisationOptions_Disabled;
 	};
 }

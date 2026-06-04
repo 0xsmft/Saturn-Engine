@@ -30,6 +30,7 @@
 #include "App.h"
 
 #include "Process.h"
+#include "JobSystem.h"
 
 #include "Ruby/RubyWindow.h"
 #include "Ruby/RubyMonitor.h"
@@ -149,6 +150,8 @@ namespace Saturn {
 
 			m_LastFrameTime = time;
 		}
+
+		JobSystem::Get().WaitForUnfinshedJobs();
 
 		OnShutdown();
 		

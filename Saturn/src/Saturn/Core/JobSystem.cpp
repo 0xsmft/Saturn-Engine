@@ -49,6 +49,9 @@ namespace Saturn {
 
 	void JobSystem::Stop()
 	{
+		if( !m_Running )
+			return;
+
 		SAT_CORE_INFO( "[JobSystem] Stopping threads..." );
 
 		m_Running = false;
@@ -58,6 +61,16 @@ namespace Saturn {
 	void JobSystem::SetMaxThreads( size_t maxThreads )
 	{
 		m_MaxThreads = glm::clamp( ( size_t ) maxThreads, ( size_t ) 1, ( size_t )std::thread::hardware_concurrency() );
+	}
+
+	void JobSystem::WaitForUnfinshedJobs()
+	{
+		m_Mutex.lock();
+		m_Jobs.clear();
+		m_Mutex.unlock();
+
+		// A little bit hacky...
+		Stop();
 	}
 
 	void JobSystem::CreateThreads()

@@ -62,6 +62,8 @@ namespace Saturn {
 			return newJob;
 		}
 
+		void WaitForUnfinshedJobs();
+
 	private:
 		void ThreadRun();
 		void CreateThreads();

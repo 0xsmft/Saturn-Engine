@@ -1160,7 +1160,7 @@ namespace Saturn {
 				if( ImGui::BeginListBox( "##classes", ImVec2( -FLT_MIN, 0.0f ) ) )
 				{
 					// Root Tree
-					DrawClassHierarchy( "SObject", ClassMetadataHandler::Get().GetSObjectMetadata() );
+					DrawClassHierarchy( "SObject", SObject::StaticClass() );
 
 					ImGui::EndListBox();
 				}
@@ -1261,7 +1261,7 @@ namespace Saturn {
 				if( ImGui::BeginListBox( "##CLASSES_INST", ImVec2( -FLT_MIN, 0.0f ) ) )
 				{
 					// Root Tree
-					DrawClassHierarchy( "SObject", ClassMetadataHandler::Get().GetSObjectMetadata() );
+					DrawClassHierarchy( "SObject", SObject::StaticClass() );
 
 					ImGui::EndListBox();
 				}
@@ -1370,7 +1370,6 @@ namespace Saturn {
 		}
 	}
 
-	// TODO: This is slow, we should use a linked list instead...
 	void ContentBrowserPanel::DrawClassHierarchy( const std::string& rKeyName, const SClass* pClass )
 	{
 		ImGuiTreeNodeFlags Flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
@@ -1378,24 +1377,26 @@ namespace Saturn {
 		if( m_SelectedMetadata )
 			m_SelectedMetadata->GetName() == rKeyName ? Flags |= ImGuiTreeNodeFlags_Selected : 0;
 
-		bool opened = ImGui::TreeNodeEx( rKeyName.c_str(), Flags );
+		const bool opened = ImGui::TreeNodeEx( rKeyName.c_str(), Flags );
 
 		if( ImGui::IsItemClicked() )
 		{
 			m_SelectedMetadata = pClass;
 		}
 
-		if( opened ) 
+		if( opened )
 		{
-			ClassMetadataHandler::Get().EachClassNode(
-				[&]( const auto* pNextClass )
+			ClassMetadataHandler::Get().EachClassNode2( pClass,
+				[&]( const auto pNextClassNode )
 				{
-					const auto& rParentClassName = pNextClass->GetParentClass() != nullptr ? pNextClass->GetParentClass()->GetName() : "";
+					const SClass* pClass = pNextClassNode.pClassPtr;
+
+					const auto& rParentClassName = pClass->GetParentClass() != nullptr ? pClass->GetParentClass()->GetName() : "";
 
 					// Draw next set of classes if name machetes.
 					if( rParentClassName == rKeyName )
 					{
-						DrawClassHierarchy( pNextClass->GetName(), pNextClass );
+						DrawClassHierarchy( pClass->GetName(), pClass );
 					}
 				} );
 
@@ -1750,9 +1751,11 @@ namespace Saturn {
 	void ContentBrowserPanel::GetSourceFiles( bool clear ) 
 	{
 #if !defined(SAT_DIST)
-		ClassMetadataHandler::Get().EachTreeNode( 
-			[=]( const SClass* pClass ) 
+		ClassMetadataHandler::Get().EachClassNode2( SObject::StaticClass(),
+			[=]( const auto classNode ) 
 			{
+				const auto* pClass = classNode.pClassPtr;
+
 				if( ( pClass->GetFlags() & SC_NoExtendedMetadata ) == 0 )
 				{
 					Ref<ContentBrowserItem> item = Ref<ContentBrowserItem>::Create( std::filesystem::directory_entry( pClass->GetHeaderPath() ), ContentBrowserItemType::SourceItem );

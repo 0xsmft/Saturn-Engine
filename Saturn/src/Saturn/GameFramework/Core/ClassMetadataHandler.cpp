@@ -62,6 +62,74 @@ namespace Saturn {
 	{
 	}
 
+	std::vector<SClass*> ClassMetadataHandler::FindClassInLinkedList( SClass* pParentClass )
+	{
+		std::vector<SClass*> result;
+		return result;
+	}
+
+	void ClassMetadataHandler::CreateLinkedClassList()
+	{
+		m_LinkedListClasses.pClassPtr = SObject::StaticClass();
+
+		std::unordered_map<const SClass*, std::vector<const SClass*>> childMap;
+
+		// Build parent to child map
+		// does not account for grandparents etc.
+		for( const auto& [hash, pClass] : m_Classes )
+		{
+			if( const SClass* pParent = pClass->GetParentClass() )
+			{
+				childMap[ pParent ].push_back( pClass );
+			}
+		}
+
+		// Now we build the tree.
+		BuildLinkedListRecursive( m_LinkedListClasses, childMap );
+	}
+
+	const SClassLinkedListNode* ClassMetadataHandler::FindNodeRecursive( const SClassLinkedListNode* pNode, const SClass* pClass ) const
+	{
+		if( !pNode )
+			return nullptr;
+
+		if( pNode->pClassPtr == pClass )
+			return pNode;
+
+		for( const auto& child : pNode->Children )
+		{
+			if( const SClassLinkedListNode* pFound =
+				FindNodeRecursive( child.get(), pClass ) )
+			{
+				return pFound;
+			}
+		}
+
+		return nullptr;
+	}
+
+	const SClassLinkedListNode* ClassMetadataHandler::FindNode( const SClass* pClass ) const
+	{
+		return FindNodeRecursive( &m_LinkedListClasses, pClass );
+	}
+
+	void ClassMetadataHandler::BuildLinkedListRecursive( SClassLinkedListNode& node, const std::unordered_map<const SClass*, std::vector<const SClass*>>& childMap )
+	{
+		const auto it = childMap.find( node.pClassPtr );
+		if( it == childMap.end() )
+			return;
+
+		for( const SClass* childClass : it->second )
+		{
+			auto childNode =
+				std::make_shared<SClassLinkedListNode>( childClass, &node );
+
+			BuildLinkedListRecursive( *childNode, childMap );
+
+			node.Children.push_back( std::move( childNode ) );
+		}
+	}
+
 	Saturn::SObject* ClassMetadataHandler::CreateClassObject( const std::string& rScriptName, SObject* pParentObject )
 	{
 		SObject* pObject = CreateClassObject( FNV1A64( rScriptName.c_str() ), pParentObject );
@@ -106,11 +174,6 @@ namespace Saturn {
 		pObject->m_pParentObject = pParentObject;
 
 		return pObject;
-	}
-
-	SClass* ClassMetadataHandler::GetSObjectMetadata()
-	{
-		return SObject::StaticClass();
 	}
 
 	void ClassMetadataHandler::RegisterSClass( SClass* pClass, const std::string& rModuleName )

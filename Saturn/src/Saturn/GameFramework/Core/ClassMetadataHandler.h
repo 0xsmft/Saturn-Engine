@@ -37,12 +37,24 @@
 
 namespace Saturn {
 
-#define SAT_ClassMetadataHandler_EachTreeNode_Deprecated [[deprecated( "Saturn::ClassMetadataHandler::EachTreeNode is deprecated and will be removed. Consider using \"ClassMetadataHandler::EachClassNode\" instead." )]]
-
-	struct ClassLinkedListNode
+	struct SClassLinkedListNode
 	{
-		const SClass* pClassPtr;
-		std::vector<std::unique_ptr<ClassLinkedListNode>> Children;
+		SClassLinkedListNode() = default;
+
+		SClassLinkedListNode( SClass* inClass, SClassLinkedListNode* inParentNode )
+			: pClassPtr( inClass ), pParentNode( inParentNode )
+		{
+		}
+
+		SClassLinkedListNode( const SClass* inClass, const SClassLinkedListNode* inParentNode )
+			: pClassPtr( inClass ), pParentNode( inParentNode )
+		{
+		}
+
+		const SClass* pClassPtr = nullptr;
+		const SClassLinkedListNode* pParentNode = nullptr;
+
+		std::vector<std::shared_ptr<SClassLinkedListNode>> Children;
 	};
 
 	class ClassMetadataHandler
@@ -57,16 +69,26 @@ namespace Saturn {
 		void DestroyAndFreeAllSClasses();
 
 		template<typename Fn>
-		SAT_ClassMetadataHandler_EachTreeNode_Deprecated void EachTreeNode( Fn Function )
+		void EachClassNode2( const SClass* pParentClass, Fn Function )
 		{
-			EachClassNode( Function );
+			const SClassLinkedListNode* pNode = FindNode( pParentClass );
+
+			if( !pNode )
+				return;
+
+			for( const auto& child : pNode->Children )
+			{
+				Function( *child );
+			}
 		}
 
 		template<typename Fn>
-		void EachClassNode( Fn Function )
+		void EveryClass( Fn Function )
 		{
-			for( auto&& [name, pClass] : m_Classes )
+			for( const auto& [classHash, pClass] : m_Classes )
+			{
 				Function( pClass );
+			}
 		}
 
 		template<typename Ty>
@@ -83,6 +105,41 @@ namespace Saturn {
 
 			return map;
 		}
+
+		template<typename Ty>
+		inline std::vector<SClass*> GetClassesWithParentClassOf() const
+		{
+			std::vector<SClass*> map;
+			for( const auto& [hash, pClass] : m_Classes )
+			{
+				if( pClass->GetParentClass() == Ty::StaticClass() )
+				{
+					map.push_back( pClass );
+				}
+			}
+
+			return map;
+		}
+
+		inline std::vector<SClass*> GetClassesWithParentClassOf( uint64_t classHash ) const
+		{
+			std::vector<SClass*> map;
+			for( const auto& [hash, pClass] : m_Classes )
+			{
+				if( !pClass->GetParentClass() )
+					continue;
+
+				if( pClass->GetParentClass()->GetHash() == classHash )
+				{
+					map.push_back( pClass );
+				}
+			}
+
+			return map;
+		}
+
+		void CreateLinkedClassList();
+		const SClassLinkedListNode* FindNode( const SClass* pClass ) const;
 
 	public:
 		[[nodiscard]] SObject* CreateClassObject( const std::string& rScriptName, SObject* pParentObject = nullptr );
@@ -108,19 +165,26 @@ namespace Saturn {
 		[[nodiscard]] size_t GetNumberOfClasses() const { return m_Classes.size(); }
 
 	public:
-		[[deprecated( "Saturn::ClassMetadataHandler::GetSObjectMetadata is deprecated and will be removed. Consider using \"SObject::StaticClass\" instead." )]]
-		SClass* GetSObjectMetadata();
-
-	public:
 		// Hot reload
 		void BeginHotReload();
 		void AcknowledgeHotReload();
 
+	private:
+		void BuildLinkedListRecursive( SClassLinkedListNode& node, const std::unordered_map<const SClass*, std::vector<const SClass*>>& childMap );
+		const SClassLinkedListNode* FindNodeRecursive( const SClassLinkedListNode* pNode, const SClass* pClass ) const;
+
+		std::vector<SClass*> FindClassInLinkedList( SClass* pParentClass );
+
 	private:		
 		// All of the classes that have reflection data tied to them.
 		//                 HASH    -> CLASS*
-		// TODO: Convert to a linked listed
 		std::unordered_map<uint64_t, SClass*> m_Classes;
+
+#if !defined(SAT_DIST)
+		// Linked list of SClasses (purely for informative reasons).
+		// Fist node is the SObject node which all SObjects are based from.
+		SClassLinkedListNode m_LinkedListClasses;
+#endif
 	};
 
 	//////////////////////////////////////////////////////////////////////////

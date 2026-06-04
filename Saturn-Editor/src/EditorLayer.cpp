@@ -3012,7 +3012,7 @@ namespace Saturn {
 				ImGui::TableHeadersRow();
 
 				{
-					ClassMetadataHandler::Get().EachClassNode(
+					ClassMetadataHandler::Get().EveryClass(
 						[ & ]( const SClass* pClass )
 					{
 						// TODO: Fix this shit conversion.

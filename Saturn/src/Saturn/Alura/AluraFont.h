@@ -162,8 +162,15 @@ namespace Saturn {
 	class AluraFont : public Asset
 	{
 	public:
+		// INTERNAL CONSTRUCTOR! FOR USE BY ALURACANVAS ONLY. Init empty font with no asset.
+		AluraFont() = default;
+
+		// Create a new font and reload the raw .ttf file
 		AluraFont( const std::filesystem::path& rFontPath, const Ref<Asset>& rBase );
+
+		// Init empty font asset with other
 		AluraFont( const Ref<Asset>& rBase );
+
 		virtual ~AluraFont();
 
 		void Serialise( const std::filesystem::path& rPath ) const;

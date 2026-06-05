@@ -29,7 +29,7 @@
 #include "sppch.h"
 #include "AnimGraphStateMachineState.h"
 
-#include "AnimGraphStateMachineStateNode.h"
+#include "../StateMachine/AnimGraphStateMachineStateNode.h"
 
 #include "Saturn/Serialisation/Raw/RawSerialisation.h"
 

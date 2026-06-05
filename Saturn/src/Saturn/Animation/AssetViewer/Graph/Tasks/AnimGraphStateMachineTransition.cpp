@@ -33,7 +33,7 @@
 
 #include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 
-#include "AnimGraphStateMachineTransitionNode.h"
+#include "../StateMachine/AnimGraphStateMachineTransitionNode.h"
 #include "Saturn/NodeEditor/NodeEditorBase.h"
 
 namespace Saturn {

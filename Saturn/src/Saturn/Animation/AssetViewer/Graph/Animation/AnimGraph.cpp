@@ -51,9 +51,8 @@
 
 // TASKS
 #include "Saturn/Animation/AssetViewer/Graph/Tasks/GraphTask.h"
-
-#include "Saturn/Animation/AssetViewer/Graph/StateMachine/AnimGraphStateMachineState.h"
-#include "Saturn/Animation/AssetViewer/Graph/StateMachine/AnimGraphStateMachineTask.h"
+#include "Saturn/Animation/AssetViewer/Graph/Tasks/AnimGraphStateMachineState.h"
+#include "Saturn/Animation/AssetViewer/Graph/Tasks/AnimGraphStateMachineTask.h"
 
 #include "Saturn/NodeEditor/NodeEditorVariableNode.h"
 #include "Saturn/NodeEditor/NodeEditorHintNode.h"
@@ -115,7 +114,7 @@ namespace Saturn {
 				{
 					resultToChildren[ 0llu ].pGraphTask = NewObject<SGraphTask>( this );
 
-					resultToChildren[ 0llu ].pGraphTask->SetDebugName( "Root SG" );
+					resultToChildren[ 0llu ].pGraphTask->SetDebugName( "Root AG" );
 				}
 			}
 		}
@@ -207,7 +206,6 @@ namespace Saturn {
 			}
 		}
 	}
-
 
 	void AnimGraph::BuildTaskCache()
 	{

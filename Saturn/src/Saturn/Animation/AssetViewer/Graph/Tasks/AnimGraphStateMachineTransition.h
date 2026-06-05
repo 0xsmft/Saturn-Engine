@@ -28,47 +28,61 @@
 
 #pragma once
 
-#include "AnimGraphStateMachineTransition.h"
+#include "Saturn/NodeEditor/NodeEditorTaskBase.h"
 
 namespace Saturn {
 
-	SCLASS()
-	class AnimGraphStateMachineState : public NodeEditorTaskBase
+	//
+	// AnimGraphStateMachineTransitionTask
+	// 
+	// Represents a transition into another state.
+	// 
+	// This task keeps hold of two IDs the source and the destination.
+	// 
+	// So to explain it, imagine if we have an idle state and a walk state and this transition is dictating weather to move into the walk state.
+	// 
+	// So the Source ID == Idle state ID
+	// So the Destination ID == Walk state ID
+	//
+	SCLASS();
+	class AnimGraphStateMachineTransitionTask : public NodeEditorTaskBase
 	{
-		SAT_DECLARE_CLASS( AnimGraphStateMachineState, NodeEditorTaskBase );
+		SAT_DECLARE_CLASS( AnimGraphStateMachineTransitionTask, NodeEditorTaskBase );
 	public:
-		AnimGraphStateMachineState();
-		virtual ~AnimGraphStateMachineState();
+		AnimGraphStateMachineTransitionTask();
+		virtual ~AnimGraphStateMachineTransitionTask();
 
 #if !defined(SAT_DIST)
 		virtual void PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode ) override;
 #endif
 
+		virtual NodeEditorTaskState Tick( Timestep ts ) override;
+
 		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther ) override;
-
-		virtual	NodeEditorTaskState Tick( Timestep ts ) override;
-
 		virtual void Reset() override;
-
 		virtual void Serialise( std::ofstream& rStream ) const override;
 		virtual void Deserialise( FDependentIStream& rStream ) override;
 
 	public:
-		UUID GetNextState() const { return m_NextStateToTransitionOutTo; }
+		UUID GetSourceID() const { return m_Source; }
+		UUID GetDestinationID() const { return m_Destination; }
 
 #if !defined(SAT_DIST)
 	private:
-		void SortAnimStateNodesAndConvertToTasks( NodeEditor* pEditor, UUID startingID );
+		void SortTsNodesAndConvertToTasks( NodeEditor* pEditor, UUID startingID );
 #endif
 
 	private:
-		// Animation
-		std::vector<Ref<NodeEditorTaskBase>> m_InnerTasks;
-		
-		// Transitions out
-		std::vector<Ref<AnimGraphStateMachineTransitionTask>> m_Transitions;
-	
-		UUID m_NextStateToTransitionOutTo = 0llu;
-	};
+		// The State that we transition OUT of.
+		UUID m_Source = 0;
 
+		// The State that we transition IN TO.
+		UUID m_Destination = 0;
+
+		size_t m_CurrentTaskIndex = 0llu;
+
+		// Tasks need for us to determine if we should transition or not.
+		std::vector<Ref<NodeEditorTaskBase>> m_InnerTasks;
+	};
+	
 }

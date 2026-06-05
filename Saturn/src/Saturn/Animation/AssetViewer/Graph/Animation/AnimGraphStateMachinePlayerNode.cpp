@@ -35,7 +35,7 @@
 #include "Saturn/Animation/AssetViewer/Graph/StateMachine/StateMachineNodeLibrary.h"
 #include "Saturn/Animation/AssetViewer/Graph/StateMachine/AnimGraphStateMachineStateNode.h"
 
-#include "Saturn/Animation/AssetViewer/Graph/StateMachine/AnimGraphStateMachineTask.h"
+#include "Saturn/Animation/AssetViewer/Graph/Tasks/AnimGraphStateMachineTask.h"
 
 #include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 

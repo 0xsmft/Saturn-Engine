@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using SaturnBuildTool.Auxiliary;
 
 namespace SaturnBuildTool
 {
@@ -45,6 +46,8 @@ namespace SaturnBuildTool
         /// <summary>
         /// The name that will be outputted as the final result.
         /// Example: MyGame.exe or Saturn-MyGame.dll
+        /// However, if we are in a hot-reload build the game will have the timestamp appended to the end
+        /// e.g. Saturn-MyGame_{timestamp}.dll
         /// </summary>
         public string OutputName { get; set; }
 
@@ -93,7 +96,8 @@ namespace SaturnBuildTool
             LinkerOutput outputType,
             List<string> libraryPaths,
             List<string> links,
-            List<string> dynamicBases )
+            List<string> dynamicBases,
+            int timestamp )
         {
             RemoveUnreferencedFunctions = removeUnreferencedFunctions;
             IncrementalLink = incrementalLink;
@@ -105,6 +109,11 @@ namespace SaturnBuildTool
             LibraryPaths = libraryPaths;
             Links = links;
             DynamicBases = dynamicBases;
+
+            if( CommandLineParser.Instance.FindFlag( "HOTRELOAD" ) ) 
+            {
+                OutputName += $"_{timestamp}";
+            }
 
             Name = name;
             switch( OutputType )

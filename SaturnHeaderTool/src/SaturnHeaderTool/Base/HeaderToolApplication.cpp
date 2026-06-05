@@ -130,6 +130,14 @@ namespace Saturn {
 			}
 		}
 
+		{
+			const auto itr = ParsedMap.find( "/HOTRELOAD" );
+			if( itr != ParsedMap.end() )
+			{
+				m_HeaderTool.SetIsHotReload( true );
+			}
+		}
+
 		// Get current config kind
 		{
 			auto itr = ParsedMap.find( "/DEBUG" );

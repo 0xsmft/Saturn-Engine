@@ -62,6 +62,49 @@ namespace Saturn {
 	{
 	}
 
+	SClassHotReloadChanges ClassMetadataHandler::DistinguishBetweenSClass( const SClass* const pA, const SClass* const pB )
+	{
+		SClassHotReloadChanges changes = SCHotReload_NoChange;
+
+		if( pA->GetSize() != pB->GetSize() )
+		{
+			changes = SCHotReload_ClassSizeChange;
+		}
+
+		if( pA->GetAlignment() != pB->GetAlignment() )
+		{
+			changes |= SCHotReload_AlignmentChange;
+		}
+
+		if( pA->GetParentClass() != pB->GetParentClass() )
+		{
+			changes |= SCHotReload_ParentClassChange;
+		}
+
+		if( pA->GetPropertyCount() != pB->GetPropertyCount() )
+		{
+			changes |= SCHotReload_SPropertyCountChange;
+		}
+
+		return changes;
+	}
+
+	void ClassMetadataHandler::HandleSClassChanges( const SClassHotReloadChanges changes, SClass* pExisiting, SClass* pHotReloaded )
+	{
+		// If we have no changes then its simple and we safe to transfer this class to new the hot-reloaded one.
+		if( ( changes & SCHotReload_NoChange ) != 0 )
+		{
+			SAT_CORE_INFO( "[HotReload]: HandleSClassChanges - No Change, Class Name: {0}", pExisiting->GetName() );
+
+			// Deallocate old.
+			FSObjectAllocator::DeallocateSObject<SClass>( pExisiting );
+
+			pHotReloaded->SetFlag( SC_Initialised );
+
+			m_Classes[ pHotReloaded->GetHash() ] = pHotReloaded;
+		}
+	}
+
 	std::vector<SClass*> ClassMetadataHandler::FindClassInLinkedList( SClass* pParentClass )
 	{
 		std::vector<SClass*> result;
@@ -176,7 +219,7 @@ namespace Saturn {
 		return pObject;
 	}
 
-	void ClassMetadataHandler::RegisterSClass( SClass* pClass, const std::string& rModuleName )
+	void ClassMetadataHandler::RegisterSClass( SClass* pClass )
 	{
 		m_Classes.emplace( pClass->GetHash(), pClass );
 	}

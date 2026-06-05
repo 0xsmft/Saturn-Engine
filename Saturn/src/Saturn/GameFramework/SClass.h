@@ -165,8 +165,11 @@ namespace Saturn {
 		inline std::filesystem::path GetHeaderPath() const { return std::filesystem::path{}; }
 #endif
 
+		// Static API
 	public:
 		static void RConstructClass( SClass*& outClass, const SClassSpecification& rSpec );
+		static void RConstructClassHotReloaded( SClass*& outClass, const SClassSpecification& rSpec );
+
 		static void ProcessNewlyLoadedSClasses();
 
 	public:

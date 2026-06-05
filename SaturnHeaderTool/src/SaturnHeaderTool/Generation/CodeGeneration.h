@@ -53,6 +53,7 @@ namespace Saturn {
 		HeaderTool();
 		~HeaderTool();
 
+		void SetIsHotReload( bool val ) { m_IsHotReload = val; }
 		void SetPCHPath( const std::filesystem::path& rPath ) { m_PCHPath = rPath; }
 		void SetWorkingDir( const std::filesystem::path& rPath );
 		void SubmitWorkList( const std::vector<std::filesystem::path>& rCommands, HeaderToolConfigKind config );
@@ -68,5 +69,6 @@ namespace Saturn {
 		std::vector<HeaderToolCommand> m_Commands;
 		std::filesystem::path m_WorkingDir;
 		std::filesystem::path m_PCHPath;
+		bool m_IsHotReload = false;
 	};
 }

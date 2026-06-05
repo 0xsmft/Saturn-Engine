@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using SaturnBuildTool.Auxiliary;
 
 namespace SaturnBuildTool
 {
@@ -69,6 +70,11 @@ namespace SaturnBuildTool
                         Args.Add( " /DIST" );
                     }
                     break;
+            }
+
+            if( CommandLineParser.Instance.FindFlag( "HOTRELOAD" ) ) 
+            {
+                Args.Add( " /HOTRELOAD" );
             }
 
             processStart.Arguments = string.Join( "", Args );

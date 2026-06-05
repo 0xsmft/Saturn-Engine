@@ -2122,27 +2122,28 @@ namespace Saturn {
 
 	void EditorLayer::HotReloadGame()
 	{
-#if defined(SAT_RELEASE)
-		EditorNotification notification;
-		notification.Text = "Attemping hot reload";
-		notification.Lifetime = 5.0f;
-
-		PushNotification( notification );
-
-		SAT_CORE_INFO( "Begin hot reload" );
+		PushNotification( "Attempting hot reload" );
+		SAT_CORE_INFO( "[HotReload] Begin hot reload" );
 
 		SaveFile();
 		SaveProject();
 
-		m_GameModule->BeginHotReload();
-		Project::GetActiveProject()->Build( ApplicationConfigKind::Release, "/HOTRELOAD" );
-		m_GameModule->EndHotReload();
+		// Attempt to build.
+		if( !Project::GetActiveProject()->Build( Application::GetCurrentConfigKind(), "/HOTRELOAD" ) ) 
+		{
+			MessageBoxInfo info{ .Text = "Hot-reload compilation failed!" };
+			PushMessageBox( info );
+		}
+		else
+		{
+			m_GameModule->EndHotReload();
 
-		m_EditorScene->AcknowledgeHotReload();
+			ClassMetadataHandler::Get().AcknowledgeHotReload();
 
-		notification.Text = "Hot reload complete";
-		PushNotification( notification );
-#endif
+			m_EditorScene->AcknowledgeHotReload();
+
+			PushNotification( "Hot reload complete" );
+		}
 	}
 
 	void EditorLayer::DrawAssetRegistryDebug()
@@ -2539,6 +2540,21 @@ namespace Saturn {
 				{
 					ImGui::Text( "Uses Premake5 to regenerate the project files.\nEnvironment variable \"SATURN_PREMAKE_PATH\" must be set." );
 					ImGui::EndTooltip();
+				}
+
+				{
+					Auxiliary::ScopedDisabledFlag disabledIfRT( m_RequestRuntime );
+
+					if( ImGui::MenuItem( "Hot Reload Game" ) )
+					{
+						HotReloadGame();
+					}
+
+					if( ImGui::BeginItemTooltip() )
+					{
+						ImGui::Text( "Hot-reload the game. (Alt+F5)" );
+						ImGui::EndTooltip();
+					}
 				}
 
 				if( ImGui::MenuItem( "Setup Project for Distribution & Build Asset Bundle" ) )
@@ -3724,20 +3740,15 @@ namespace Saturn {
 		ImGui::PushStyleVar( ImGuiStyleVar_ItemSpacing, ImVec2( 5.0f * 2.0f, 0 ) );
 
 		{
-#if !defined(SAT_RELEASE)
-			Auxiliary::ScopedDisabledFlag disabledFlag( true );
-#endif
+			Auxiliary::ScopedDisabledFlag disabledIfRuntime( m_RequestRuntime );
+		
 			if( Auxiliary::ImageButton( m_SyncTexture, ImVec2( 24.0f, 24.0f ) ) )
 				HotReloadGame();
 		}
 
 		if( ImGui::BeginItemTooltip() )
 		{
-#if defined(SAT_RELEASE)
 			ImGui::Text( "Hot Reload (Alt+F5)" );
-#else
-			ImGui::Text( "Hot Reload is only available when using the \"Release\" build configuration (Alt+F5)" );
-#endif
 
 			ImGui::EndTooltip();
 		}

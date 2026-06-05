@@ -53,8 +53,6 @@ namespace Saturn {
 			return;
 		}
 
-		// TODO: Objects will have their own names and Classes will have a different name
-//		std::string configName = std::format( "^{0}", rSpec.Name );
 #if defined(SAT_VERBOSE_SCLASS_REG)
 		SAT_CORE_INFO( "[SC] Registering SClass SC/{0}", rSpec.Name );
 #endif
@@ -65,7 +63,33 @@ namespace Saturn {
 
 		outClass->SetFlag( SC_Initialised );
 
-		ClassMetadataHandler::Get().RegisterSClass( outClass, "" );
+		ClassMetadataHandler::Get().RegisterSClass( outClass );
+	}
+
+	void SClass::RConstructClassHotReloaded( SClass*& outClass, const SClassSpecification& rSpec )
+	{
+		if( outClass != nullptr && ( outClass->GetFlags() & SC_Initialised ) == 0 )
+		{
+			return;
+		}
+		
+		// Allocate the object.
+		SClass* pNewClass = FSObjectAllocator::AllocateSObject<SClass>( rSpec );
+
+		// Try to find the existing class...
+		SClass* pExistingClass = ClassMetadataHandler::Get().RFastCheckClass( rSpec.Hash );
+		if( pExistingClass )
+		{
+			const auto changes = ClassMetadataHandler::Get().DistinguishBetweenSClass( pExistingClass, pNewClass );
+			ClassMetadataHandler::Get().HandleSClassChanges( changes, pExistingClass, pNewClass );
+		}
+		else
+		{
+			outClass->SetFlag( SC_Initialised );
+			ClassMetadataHandler::Get().RegisterSClass( outClass );
+		}
+	
+		outClass = pNewClass;
 	}
 
 	SProperty& SClass::GetProperty( const std::string& rPropertyName ) const

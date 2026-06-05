@@ -57,6 +57,23 @@ namespace Saturn {
 		std::vector<std::shared_ptr<SClassLinkedListNode>> Children;
 	};
 
+	// Changes that happen when a hot reload happens
+	enum SCHotReloadFlags : uint8_t
+	{
+		// No change to the SClass structure itself
+		// but obviously this could mean that a function is internally modified but thats fine because we don't care about that.
+		SCHotReload_NoChange = 0,
+
+		// The following flags means that the SClass was structurally modified...
+		SCHotReload_ClassSizeChange       = BIT( 0 ),
+		SCHotReload_AlignmentChange       = BIT( 1 ),
+		SCHotReload_ParentClassChange     = BIT( 2 ),
+		SCHotReload_SPropertyCountChange  = BIT( 3 ),
+	};
+
+	// enum SCHotReloadFlags
+	typedef	uint8_t SClassHotReloadChanges;
+
 	class ClassMetadataHandler
 	{
 	public:
@@ -159,7 +176,7 @@ namespace Saturn {
 			return pObject;
 		}
 
-		void RegisterSClass( SClass* pClass, const std::string& rModuleName );
+		void RegisterSClass( SClass* pClass );
 		SClass* RFastCheckClass( uint64_t classHash );
 
 		[[nodiscard]] size_t GetNumberOfClasses() const { return m_Classes.size(); }
@@ -168,6 +185,10 @@ namespace Saturn {
 		// Hot reload
 		void BeginHotReload();
 		void AcknowledgeHotReload();
+
+		SClassHotReloadChanges DistinguishBetweenSClass( const SClass* const pA, const SClass* const pB );
+
+		void HandleSClassChanges( const SClassHotReloadChanges changes, SClass* pExisiting, SClass* pHotReloaded );
 
 	private:
 		void BuildLinkedListRecursive( SClassLinkedListNode& node, const std::unordered_map<const SClass*, std::vector<const SClass*>>& childMap );

@@ -52,7 +52,7 @@ namespace SaturnBuildTool
         // Engine Test -> created buildtool-x0.0.5 was very similar to engine test but it used premake instead of custom C# build rules.
         // buildtool-x0.0.5 -> created sbt-5.1 branch which is this version now.
         //
-        private readonly string StartupMessage = "Saturn Build Tool X0.0.5 \"SBT 5.1\" (Engine Version: 0.2.5 8197)";
+        private readonly string StartupMessage = "Saturn Build Tool X0.0.5 \"SBT 5.1\"";
 
         public Application( string[] args )
         {
@@ -199,6 +199,7 @@ namespace SaturnBuildTool
 
             // Convert rules into proper buildable items.
             Shared.CurrentBuildTarget = BuildTarget.Create( Shared.TargetToBuild );
+            Shared.CurrentBuildTarget.Init();
 
             // TODO: Move this into CommandLineParser
             // Maybe CommandLineParser.VerifyAll
@@ -221,7 +222,6 @@ namespace SaturnBuildTool
             // TODO: We only support building for Windows
             switch( Shared.ProjectInfo.TargetPlatformKind )
             {
-                case ArchitectureKind.x86_32:
                 case ArchitectureKind.x86_64:
                     {
                         Shared.Toolchain = new MSVCToolchain();
@@ -443,54 +443,38 @@ namespace SaturnBuildTool
 
         private void CleanupFromLastHotReload()
         {
-            // Now, delete any left over files that match the pattern: {PrjName}_{Timestamp}.{dll/lib/pdb}
-            string pattern = @"^[a-zA-Z0-9]+_[a-zA-Z0-9]+\.(dll|lib|pdb|exp)";
-            Regex regex = new Regex( pattern, RegexOptions.IgnoreCase );
-
-            string[] files = Directory.GetFiles( Shared.TargetToBuild.GetBinDir() );
-
-            foreach( string file in files )
-            {
-                string stem = Path.GetFileName( file );
-
-                /*
-                if( regex.IsMatch( stem ) && !stem.Contains( Shared.TargetToBuild.Timestamp ) && stem.Contains( Shared.ProjectInfo.Name ) )
-                {
-                    try
-                    {
-                        Console.WriteLine( $"Cleaning hot reloaded dll file: {file}" );
-
-                        File.Delete( file );
-                    }
-                    catch( System.IO.IOException ex )
-                    {
-                        Console.WriteLine( $"Skipping hot reload build file... (maybe in use or unable to delete it.) {ex.Message}" );
-                    }
-                }
-                */
-            }
-        }
-
-        private bool CheckIfLastRunWasHotReload()
-        {
-            bool result = false;
-
             string filepath = Path.Combine( Shared.TargetToBuild.GetBinDir(), "Timestamp.hot" );
 
             if( File.Exists( filepath ) )
             {
+                StreamReader streamReader = new StreamReader( filepath );
+
+                string text = null;
                 try
                 {
-                    File.Delete( filepath );
-                    return true;
+                    text = streamReader.ReadLine();
                 }
-                catch( System.IO.IOException ex )
+                catch( Exception ex )
                 {
-                    Console.WriteLine( $"Failed to delete old Hot Reloaded Timestamp file: {filepath}. Error was {ex}" );
+                    Console.WriteLine( $"Warning unable to read Timestamp.hot file! Error: {ex.Message}" );
+                    return;
+                }
+                streamReader.Close();
+
+                string fileStem = Shared.TargetToBuild.Name + $"_{Shared.CurrentBuildTarget.Timestamp}";
+
+                string[] files = Directory.GetFiles( Shared.TargetToBuild.GetBinDir() );
+                foreach( string file in files )
+                {
+                    string stem = Path.GetFileNameWithoutExtension( file );
+
+                    if( stem.Contains( fileStem ) )
+                    {
+                        Console.WriteLine( $"Cleaned up file {Path.GetFileName( file )} from last hot-reload build." );
+                        File.Delete( file );
+                    }
                 }
             }
-
-            return result;
         }
 
         private void CompileModule()
@@ -614,7 +598,7 @@ namespace SaturnBuildTool
                     {
                         string searchPath = link;
 
-                        // If there is not parent i.e. "MyLink.lib" then we need to resolve the link path to this lib...
+                        // If there is no parent path i.e. "MyLink.lib" then we need to resolve the link path to this lib...
                         if( !Path.IsPathRooted( link ) ) 
                         {
                             // Only if it does not exist...
@@ -710,28 +694,6 @@ namespace SaturnBuildTool
 
             AppendGeneratedFiles();
 
-            // Compile all source files.
-            //CompileSourceFiles();
-
-            // Compile PCH if needed
-            /*
-            if( Shared.TargetToBuild.PCH.SourceFile != null )
-            {
-                if( Shared.FileCache.HasSourceFileBeenModified( Shared.TargetToBuild.PCH.SourceFile ) || !Shared.TaskCache.TaskOutputExists( Shared.TargetToBuild.PCH.SourceFile ) )
-                {
-                    CompileSingeFileUnchecked( Shared.CurrentBuildTarget.TargetCompileSettings, Shared.Toolchain, Shared.TargetToBuild.PCH.SourceFile );
-
-                    if( !HasCompiledAnyFile )
-                    {
-                        Console.WriteLine( "ERROR: Unable to compile PCH source!" );
-
-                        ExitCode = 1;
-                        return;
-                    }
-                }
-            }
-            */
-
             SortModules();
             CompileModule();
             BuildLinkCacheForModules();
@@ -739,10 +701,7 @@ namespace SaturnBuildTool
 
             Console.WriteLine( $"{NumTasksFailed} task(s) failed." );
 
-//            if( LinkFinal() )
-            {
-                CreateTimestampFile();
-            }
+            CreateTimestampFile();
 
             Shared.TaskCache.RT_WriteCache();
             Shared.LinkCache.RT_WriteCache();

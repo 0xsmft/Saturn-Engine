@@ -52,7 +52,7 @@ namespace SaturnBuildTool
             IntermediateOutputPath = Path.Combine( Shared.ProjectInfo.RootDirectory, "bin-int", Shared.Platform.GetOutputFolderName( Shared.ProjectInfo.CurrentConfigKind ), TargetRules.Name );
         }
 
-        private void Init()
+        public void Init()
         {
             TargetCompileSettings = new CompileSettings(
                 Shared.ProjectInfo.CurrentConfigKind,
@@ -82,7 +82,8 @@ namespace SaturnBuildTool
                 TargetRules.OutputType,
                 TargetRules.LibraryPaths,
                 TargetRules.Links,
-                TargetRules.DynamicBase
+                TargetRules.DynamicBase,
+                Timestamp
             );
 
             foreach( var moduleName in TargetRules.Modules )
@@ -101,9 +102,7 @@ namespace SaturnBuildTool
 
         public static BuildTarget Create( Target target )
         {
-            BuildTarget bt = new BuildTarget( target );
-            bt.Init();
-            return bt;
+            return new BuildTarget( target );
         }
     }
 }

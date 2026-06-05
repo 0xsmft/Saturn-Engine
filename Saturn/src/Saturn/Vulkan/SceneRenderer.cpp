@@ -144,7 +144,7 @@ namespace Saturn {
 		m_RendererData.SceneEnvironment = Ref<EnvironmentMap>::Create();
 
 		// TODO: Package BRDF texture into AssetBundle in dist
-		m_RendererData.BRDFLUT_Texture = Ref<Texture2D>::Create( "content/textures/BRDF_LUT.tga", AddressingMode::Repeat, TextureLoadFlags_None );
+		m_RendererData.BRDFLUT_Texture = Ref<Texture2D>::Create( "content/textures/BRDF_LUT.tga", AddressingMode::Repeat, TextureLoadFlags_LoadOnMainThread );
 
 		constexpr size_t TransformCount = static_cast<size_t>( 1024 ) * 10;
 		m_RendererData.SubmeshTransformData.resize( MAX_FRAMES_IN_FLIGHT );

@@ -1,5 +1,7 @@
 #include "__FILE_NAME__.h"
 
+#include "Saturn/Scene/Scene.h"
+
 __FILE_NAME__::__FILE_NAME__()
 {
 

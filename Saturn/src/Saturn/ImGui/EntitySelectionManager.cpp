@@ -34,7 +34,7 @@
 #include "Saturn/Asset/Asset.h"
 #include "Saturn/ImGui/EditorEvents.h"
 
-#include "Saturn/Scene/Entity.h"
+#include "Saturn/Scene/Scene.h"
 
 // define this if you want to see the callstack and why selections are getting removed/added quickly,
 // this was used during debugging of the Camera Preview...

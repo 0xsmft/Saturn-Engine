@@ -30,6 +30,8 @@
 
 #include "SceneVisualisationOptions.h"
 
+#include "Entity.h"
+
 #include "Saturn/Core/Base.h"
 #include "Saturn/Core/Log.h"
 
@@ -59,7 +61,6 @@ class dtNavMeshQuery;
 
 namespace Saturn {
 
-	class Entity;
 	class Prefab;
 	class PhysicsScene;
 	class SClass;
@@ -584,3 +585,5 @@ namespace Saturn {
 	};
 
 }
+
+#include "EntityECS.h"

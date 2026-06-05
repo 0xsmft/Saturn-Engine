@@ -42,6 +42,8 @@
 
 #include "Saturn/Serialisation/Raw/RawSerialisation.h"
 
+#include "Saturn/Scene/Scene.h"
+
 #include <Jolt/Jolt.h>
 #include <Jolt/Physics/Collision/Shape/MeshShape.h>
 #include <Jolt/Physics/Collision/Shape/StaticCompoundShape.h>

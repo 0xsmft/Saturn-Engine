@@ -37,6 +37,9 @@
 #include "Saturn/Core/Process.h"
 #include "Saturn/Core/EnvironmentVariables.h"
 
+// g_ActiveScene class type
+#include "Saturn/Scene/Scene.h"
+
 #include <Jolt/Physics/Body/BodyManager.h>
 
 namespace Saturn {

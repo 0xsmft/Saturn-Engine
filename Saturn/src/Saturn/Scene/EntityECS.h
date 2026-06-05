@@ -26,51 +26,62 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "Prefab2.h"
-
-#include "Saturn/Scene/Scene.h"
-
-#include "Saturn/Serialisation/YAML/EntitySerialisation.h"
-
-#include "Saturn/GameFramework/SClass.h"
+#pragma once
 
 namespace Saturn {
 
-	Prefab2::Prefab2()
+	template<typename T, typename... Args>
+	T& Entity::AddComponent( Args&&... args )
 	{
+		return m_Scene->AddComponent<T>( m_EntityHandle, std::forward<Args>( args )... );
 	}
 
-	Prefab2::Prefab2( const Ref<Asset>& rBase )
-		: Asset( rBase )
+	template<typename T>
+	[[nodiscard]] T& Entity::GetComponent()
 	{
+		return m_Scene->GetComponent<T>( m_EntityHandle );
 	}
 
-	Prefab2::~Prefab2()
+	template<typename T>
+	[[nodiscard]] const T& Entity::GetComponent() const
 	{
+		return m_Scene->GetComponent<T>( m_EntityHandle );
 	}
 
-	void Prefab2::CreatePrefabFromSceneEntity( SharedPtr<Entity> entity )
+	template<typename T>
+	[[nodiscard]] bool Entity::HasComponent() const
 	{
-//		YAML::Emitter em;
-//		EntitySerialisation::SerialiseEntity( em, entity );
-//		prefabEntity.SerialisedText = em.c_str();
+		return m_Scene->HasComponent<T>( m_EntityHandle );
+	}
 
-		PrefabEntity prefabEntity;
-		prefabEntity.ID = entity->GetUUID();
-		prefabEntity.ParentID = entity->GetParent();
-		prefabEntity.ClassHash = entity->GetClass()->GetHash();
+	template<typename... T>
+	[[nodiscard]] bool Entity::HasComponents() const
+	{
+		return m_Scene->template HasComponents<T...>( m_EntityHandle );
+	}
 
-		m_Entities[ ( uint32_t ) entity->GetHandle() ] = prefabEntity;
+	template<typename T>
+	void Entity::RemoveComponent()
+	{
+		m_Scene->RemoveComponent<T>( m_EntityHandle );
+	}
 
-		for( const auto& rChildId : entity->GetChildren() )
-		{
-			SharedPtr<Entity> child = entity->GetScene()->FindEntityByID( rChildId );
-			if( child )
-			{
-				CreatePrefabFromSceneEntity( child );
-			}
-		}
+	template<typename... T>
+	void Entity::RemoveComponents()
+	{
+		m_Scene->template RemoveComponents<T...>( m_EntityHandle );
+	}
+
+	template<typename T>
+	[[nodiscard]] T* Entity::TryGetComponent()
+	{
+		return m_Scene->TryGetComponent<T>( m_EntityHandle );
+	}
+
+	template<typename T>
+	[[nodiscard]] const T* Entity::TryGetComponent() const
+	{
+		return m_Scene->TryGetComponent<T>( m_EntityHandle );
 	}
 
 }

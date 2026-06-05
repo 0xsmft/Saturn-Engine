@@ -29,6 +29,8 @@
 #include "sppch.h"
 #include "Character.h"
 
+#include "Saturn/Scene/Scene.h"
+
 #include "Saturn/Physics/PhysicsRigidBody.h"
 #include "Saturn/Physics/PhysicsCharacterController.h"
 

@@ -33,7 +33,7 @@
 
 #include "Saturn/Audio/SoundGroup.h"
 
-#include "Saturn/Scene/Entity.h"
+#include "Saturn/Scene/Scene.h"
 #include "Saturn/Scene/Components.h"
 
 #include "Saturn/Asset/AssetManager.h"

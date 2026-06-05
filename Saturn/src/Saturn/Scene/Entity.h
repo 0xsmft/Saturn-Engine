@@ -29,7 +29,6 @@
 #pragma once
 
 #include "Components.h"
-#include "Scene.h"
 #include "EntityVisibility.h"
 
 #include "Saturn/GameFramework/SObject.h"
@@ -39,6 +38,8 @@
 #include "entt.hpp"
 
 namespace Saturn {
+
+	class Scene;
 
 	class Entity : public SObject, public EnabledSharedFromThis<Entity>
 	{
@@ -75,83 +76,49 @@ namespace Saturn {
 
 	public:
 		template<typename T, typename... Args>
-		inline T& AddComponent( Args&&... args )
-		{
-			return m_Scene->AddComponent<T>( m_EntityHandle, std::forward<Args>( args )... );
-		}
+		T& AddComponent( Args&&... args );
 
 		template<typename T>
-		[[nodiscard]] inline T& GetComponent()
-		{
-			return m_Scene->GetComponent<T>( m_EntityHandle );
-		}
+		[[nodiscard]] T& GetComponent();
 
 		template<typename T>
-		[[nodiscard]] inline const T& GetComponent() const
-		{
-			return m_Scene->GetComponent<T>( m_EntityHandle );
-		}
+		[[nodiscard]] const T& GetComponent() const;
 
 		template<typename T>
-		[[nodiscard]] inline bool HasComponent() const
-		{
-			return m_Scene->HasComponent<T>( m_EntityHandle );
-		}
+		[[nodiscard]] bool HasComponent() const;
 
 		template<typename... T>
-		[[nodiscard]] inline bool HasComponents() const
-		{
-			return m_Scene->template HasComponents<T...>( m_EntityHandle );
-		}
+		[[nodiscard]] bool HasComponents() const;
 
 		template<typename T>
-		inline void RemoveComponent()
-		{
-			m_Scene->RemoveComponent<T>( m_EntityHandle );
-		}
+		void RemoveComponent();
 
 		template<typename... T>
-		inline void RemoveComponents()
-		{
-			m_Scene->template RemoveComponents<T...>( m_EntityHandle );
-		}
+		void RemoveComponents();
 
 		template<typename T>
-		[[nodiscard]] inline T* TryGetComponent() 
-		{
-			return m_Scene->TryGetComponent<T>( m_EntityHandle );
-		}
+		[[nodiscard]] T* TryGetComponent();
 
 		template<typename T>
-		[[nodiscard]] inline const T* TryGetComponent() const
-		{
-			return m_Scene->TryGetComponent<T>( m_EntityHandle );
-		}
+		[[nodiscard]] const T* TryGetComponent() const;
 
 	public:
-		[[nodiscard]] bool Valid()
-		{
-			return m_EntityHandle != entt::null || m_Scene->m_Registry.valid( m_EntityHandle );
-		}
-
-		[[nodiscard]] bool Valid() const
-		{
-			return m_EntityHandle != entt::null || m_Scene->m_Registry.valid( m_EntityHandle );
-		}
+		[[nodiscard]] bool Valid();
+		[[nodiscard]] bool Valid() const;
 
 		Scene* GetScene() { return m_Scene; }
 		const Scene* GetScene() const { return m_Scene; }
 
-		glm::mat4 Transform() const { return m_Scene->m_Registry.get<TransformComponent>( m_EntityHandle ).GetTransform(); }
+		glm::mat4 Transform() const { return GetComponent<TransformComponent>().GetTransform(); }
 		
-		glm::vec3 GetLocalPosition() const { return m_Scene->m_Registry.get<TransformComponent>( m_EntityHandle ).Position; }
-		glm::vec3 GetLocalRotation() const { return m_Scene->m_Registry.get<TransformComponent>( m_EntityHandle ).GetRotationEuler(); }
-		glm::quat GetLocalRotationQuat() const { return m_Scene->m_Registry.get<TransformComponent>( m_EntityHandle ).GetRotation(); }
-		glm::vec3 GetLocalScale() const { return m_Scene->m_Registry.get<TransformComponent>( m_EntityHandle ).Scale; }
+		glm::vec3 GetLocalPosition() const { return GetComponent<TransformComponent>().Position; }
+		glm::vec3 GetLocalRotation() const { return GetComponent<TransformComponent>().GetRotationEuler(); }
+		glm::quat GetLocalRotationQuat() const { return GetComponent<TransformComponent>().GetRotation(); }
+		glm::vec3 GetLocalScale() const { return GetComponent<TransformComponent>().Scale; }
 
-		void SetPosition( const glm::vec3& rPosition ) { m_Scene->m_Registry.get<TransformComponent>( m_EntityHandle ).Position = rPosition; }
-		void SetRotation( const glm::vec3& rRotatonEuler ) { m_Scene->m_Registry.get<TransformComponent>( m_EntityHandle ).SetRotation( rRotatonEuler ); }
-		void SetScale( const glm::vec3& rScale ) { m_Scene->m_Registry.get<TransformComponent>( m_EntityHandle ).Scale = rScale; }
+		void SetPosition( const glm::vec3& rPosition ) { GetComponent<TransformComponent>().Position = rPosition; }
+		void SetRotation( const glm::vec3& rRotatonEuler ) { GetComponent<TransformComponent>().SetRotation( rRotatonEuler ); }
+		void SetScale( const glm::vec3& rScale ) { GetComponent<TransformComponent>().Scale = rScale; }
 
 		void SetName( const std::string& rName );
 

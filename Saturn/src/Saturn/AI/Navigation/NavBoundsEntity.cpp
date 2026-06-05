@@ -29,6 +29,8 @@
 #include "sppch.h"
 #include "NavBoundsEntity.h"
 
+#include "Saturn/Scene/Scene.h"
+
 #include "RecastNavigationMeshBuilder.h"
 #include "RecastInputGeometry.h"
 #include "RecastNavigationMeshCache.h"

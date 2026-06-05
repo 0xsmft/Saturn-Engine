@@ -42,6 +42,8 @@
 #include "Saturn/ImGui/UndoRedo/GlobalUndoRedoGroup.h"
 #include "Saturn/Asset/AssetManager.h"
 
+#include "Saturn/Scene/Scene.h"
+
 #include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 
 #include <imgui_internal.h>

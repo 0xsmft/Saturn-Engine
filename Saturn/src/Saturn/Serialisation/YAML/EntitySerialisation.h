@@ -33,7 +33,6 @@
 
 namespace Saturn {
 
-	class Entity;
 	struct Pf2PrefabEntity;
 
 	// YAML Entity Serialisation

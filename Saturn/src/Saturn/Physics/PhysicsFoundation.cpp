@@ -33,6 +33,8 @@
 #include "PhysicsRigidBody.h"
 #include "PhysicsMaterialAsset.h"
 
+#include "Saturn/Scene/Scene.h"
+
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Core/JobSystemThreadPool.h>
 

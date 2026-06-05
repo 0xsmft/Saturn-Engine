@@ -38,6 +38,7 @@
 #include "Saturn/Project/Project.h"
 
 #include "Saturn/AI/Navigation/RecastInputGeometry.h"
+#include "Saturn/Scene/Scene.h"
 
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>

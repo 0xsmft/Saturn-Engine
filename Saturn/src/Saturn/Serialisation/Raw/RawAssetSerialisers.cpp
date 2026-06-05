@@ -29,6 +29,8 @@
 #include "sppch.h"
 #include "RawAssetSerialisers.h"
 
+#include "Saturn/Scene/Scene.h"
+
 #include "Saturn/Asset/AssetManager.h"
 #include "Saturn/Asset/Prefab.h"
 #include "Saturn/Physics/PhysicsMaterialAsset.h"

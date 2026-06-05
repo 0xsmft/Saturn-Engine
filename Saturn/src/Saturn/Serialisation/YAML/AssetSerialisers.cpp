@@ -48,6 +48,7 @@
 
 #include "YamlAux.h"
 #include "EntitySerialisation.h"
+#include "Saturn/Scene/Scene.h"
 
 #include <glm/gtc/type_ptr.hpp>
 #include <yaml-cpp/yaml.h>

@@ -28,6 +28,7 @@
 
 #include "sppch.h"
 #include "Entity.h"
+#include "Scene.h"
 
 #include "Saturn/Serialisation/Raw/RawEntitySerialisation.h"
 
@@ -78,6 +79,16 @@ namespace Saturn {
 		m_EntityHandle = entt::null;
 
 		m_Scene = nullptr;
+	}
+
+	bool Entity::Valid()
+	{
+		return m_EntityHandle != entt::null || m_Scene->m_Registry.valid( m_EntityHandle );
+	}
+
+	bool Entity::Valid() const
+	{
+		return m_EntityHandle != entt::null || m_Scene->m_Registry.valid( m_EntityHandle );
 	}
 
 	void Entity::SetName( const std::string& rName )

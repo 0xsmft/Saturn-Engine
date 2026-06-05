@@ -84,8 +84,8 @@ namespace Saturn {
 		virtual void SetClipboardText( const std::string& rTextData ) = 0;
 		virtual void SetClipboardText( const std::wstring& rTextData ) = 0;
 
-		virtual const char* GetClipboardText() = 0;
-		virtual const wchar_t* GetClipboardTextW() = 0;
+		virtual std::string GetClipboardText() = 0;
+		virtual std::wstring GetClipboardTextW() = 0;
 
 		virtual WindowType GetNativeHandle() = 0;
 

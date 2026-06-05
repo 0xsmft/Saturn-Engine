@@ -81,8 +81,8 @@ namespace Saturn {
 		RubyGraphicsAPI GetGraphicsAPI() const { return m_GraphicsAPI; }
 		RubyStyle GetStyle() const { return m_Style; }
 
-		const char* GetClipboardText();
-		const wchar_t* GetClipboardTextW();
+		std::string  GetClipboardText();
+		std::wstring GetClipboardTextW();
 
 		[[nodiscard]] bool IsFocused();
 		[[nodiscard]] bool Minimized();

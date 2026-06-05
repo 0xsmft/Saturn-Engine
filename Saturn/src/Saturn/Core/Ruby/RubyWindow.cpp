@@ -206,12 +206,12 @@ namespace Saturn {
 		return m_pDefaultBackend->GetSize().y;
 	}
 
-	const char* RubyWindow::GetClipboardText()
+	std::string RubyWindow::GetClipboardText()
 	{
 		return m_pDefaultBackend->GetClipboardText();
 	}
 
-	const wchar_t* RubyWindow::GetClipboardTextW()
+	std::wstring RubyWindow::GetClipboardTextW()
 	{
 		return m_pDefaultBackend->GetClipboardTextW();
 	}

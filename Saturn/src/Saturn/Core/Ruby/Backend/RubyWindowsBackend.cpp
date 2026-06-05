@@ -1085,23 +1085,25 @@ namespace Saturn {
 		}
 	}
 
-	const char* RubyWindowsBackend::GetClipboardText()
+	std::string RubyWindowsBackend::GetClipboardText()
 	{
-		// TODO: Who deletes this buffer?
+		const auto wClipBoardData = GetClipboardTextW();
+		
+		if( wClipBoardData.empty() )
+			return {};
 
-		const wchar_t* pResult = nullptr;
-		pResult = GetClipboardTextW();
+		const int size = ::WideCharToMultiByte( CP_UTF8, 0, wClipBoardData.data(), -1, nullptr, 0, nullptr, nullptr );
 
-		int size = ::WideCharToMultiByte( CP_UTF8, 0, pResult, -1, NULL, 0, NULL, NULL );
-		char* pBuffer = new char[ size ];
-		::WideCharToMultiByte( CP_UTF8, 0, pResult, -1, pBuffer, size, NULL, NULL );
+		std::string result( size - 1, '\0' );
 
-		return pBuffer;
+		::WideCharToMultiByte( CP_UTF8, 0, wClipBoardData.c_str(), -1, result.data(), size, NULL, NULL );
+
+		return result;
 	}
 
-	const wchar_t* RubyWindowsBackend::GetClipboardTextW()
+	std::wstring RubyWindowsBackend::GetClipboardTextW()
 	{
-		wchar_t* result = nullptr;
+		std::wstring result;
 
 		// Try open the clipboard.
 		if( ::OpenClipboard( m_Handle ) )

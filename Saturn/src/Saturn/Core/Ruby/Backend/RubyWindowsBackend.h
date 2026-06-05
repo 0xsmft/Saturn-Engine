@@ -78,8 +78,8 @@ namespace Saturn {
 		void SetClipboardText( const std::string& rTextData ) override;
 		void SetClipboardText( const std::wstring& rTextData ) override;
 
-		const char* GetClipboardText() override;
-		const wchar_t* GetClipboardTextW() override;
+		std::string GetClipboardText() override;
+		std::wstring GetClipboardTextW() override;
 
 		static void PollEvents();
 		bool PendingClose() override;

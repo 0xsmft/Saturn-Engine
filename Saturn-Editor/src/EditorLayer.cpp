@@ -89,6 +89,7 @@
 #endif
 
 #include <Saturn/AI/Navigation/NavBoundsEntity.h>
+#include <Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeAssetViewer.h>
 
 #include <Saturn/NodeEditor/UI/NodeEditor.h>
 #include <Saturn/NodeEditor/SandboxNodeEditor/SandboxNodeEditorViewer.h>
@@ -98,6 +99,8 @@
 #include <Saturn/Runtime/RuntimeEvents.h>
 
 #include <Saturn/Alura/AluraCanvas.h>
+
+#include <Saturn/RuntimeConsole/ConsoleCommandManager.h>
 
 #include <Saturn/Online/OnlineAPI.h>
 #if defined(SAT_WITH_STEAM)
@@ -144,6 +147,8 @@ namespace Saturn {
 		SClass::ProcessNewlyLoadedSClasses();
 
 		m_GameModule = FSObjectAllocator::AllocateSObject<GameModule>();
+
+		ClassMetadataHandler::Get().CreateLinkedClassList();
 	}
 
 	void EditorLayer::OnAttach()
@@ -153,6 +158,9 @@ namespace Saturn {
 
 		m_SelectionManager = std::make_unique<EntitySelectionManager>();
 		m_GlobalUndoRedoGroup = Ref<GlobalUndoRedoGroup>::Create();
+
+		ConsoleCommandManager::Get();
+		ConsoleCommandManager::Get().RegisterEngineDefaultCommands();
 
 		constexpr TextureLoadFlags DEFAULT_TEXTURE_LOAD_FLAGS_NOT_FLIPPED = TextureLoadFlags_LoadOnMainThread;
 		constexpr TextureLoadFlags DEFAULT_TEXTURE_LOAD_FLAGS_FLIPPED = TextureLoadFlags ( ( uint8_t ) TextureLoadFlags_LoadOnMainThread | ( uint8_t ) TextureLoadFlags_FlipVertically );
@@ -271,24 +279,6 @@ namespace Saturn {
 		// Create online API but not init it yet.
 		// Wait until runtime for that.
 		m_OnlineAPI = OnlineAPI::CreateOnlineSystemAPI( Project::GetActiveProject()->GetOnlineAPIType() );
-
-		/*
-		if( !Project::GetActiveProject()->HasThumbnail() )
-		{
-			EditorNotification notification{ .Text = "Generating Project Thumbnail", .Lifetime = 5.0f };
-			PushNotification( notification );
-
-			JobSystem::Get().QueueJob( [ this ]()
-			{
-				std::this_thread::sleep_for( std::chrono::seconds( 2 ) );
-
-				RenderThread::Get().Queue( [ this ]()
-				{
-					m_SceneRenderer->Screenshot( Project::GetActiveProject()->GetThumbnailPath(), glm::vec2( 156.0f, 128.0f ) );
-				} );
-			} );
-		}
-		*/
 	}
 
 	void EditorLayer::OnDetach()
@@ -414,11 +404,6 @@ namespace Saturn {
 			else [[likely]]
 			{
 				m_RuntimeScene->OnRenderRuntime( time, m_SceneRenderer );
-
-				if( m_ShowNavMeshDebugRT )
-				{
-					m_RuntimeScene->GetNavigationSystem().DebugDraw( m_SceneRenderer->GetRenderer2D().Get() );
-				}
 			}
 
 			if( m_ShowCameraFrustum )
@@ -513,7 +498,7 @@ namespace Saturn {
 		SAT_PF_EVENT();
 
 		// Draw dockspace.
-		ImGui::DockSpaceOverViewport( ImGui::GetWindowViewport() );
+		ImGui::DockSpaceOverViewport();
 
 		if( ImGui::IsMouseClicked( ImGuiMouseButton_Left ) || ( ImGui::IsMouseClicked( ImGuiMouseButton_Right ) && !m_StartedRightClickInViewport ) )
 		{
@@ -544,7 +529,7 @@ namespace Saturn {
 			if( m_ShowMetadataDebug )       DrawMetadataDebug();
 			if( m_ShowAssetDependencies )   DrawAssetDependencies();
 			if( m_ShowSceneDirtyModal )     DrawSceneDirtyPopup();
-			if( m_JobModalOpen )            DrawBlockingActionModal();
+			if( m_JobModalOpen.load() )     DrawBlockingActionModal();
 			if( m_ShowDistBuildOptions )    DrawDistOptionsModal();
 			if( m_ShowDeleteNavMeshCachePopup ) DrawDeleteNavMeshModal();
 			if( m_ShowCBThumbnailDebug )    ContentBrowserThumbnailCache::Get().OnImGuiRender( &m_ShowCBThumbnailDebug );
@@ -569,18 +554,6 @@ namespace Saturn {
 				if( m_RequestRuntime )
 					m_SuspendedEditorCamera.OnEvent( rEvent );
 			}
-
-			// TODO: Fix this.... we want events to only fire if the mouse is over the viewport
-			// However, there are two issues to solve this problem,
-			// 1) In UI the mouse will be over the viewport but will not be locked, so the events would fire.
-			// 2) With no click able UI the cursor should be locked which means that it can drift out of the viewport, meaning that we still want events to fire because we're locked but its now no longer over the viewport.
-			//
-			// How could we solve this?
-			// We could check like this, is the mouse locked Yes: fire events regardless No: check if over viewport
-			// OR
-			// We don't handle any of this, it is the responsibly of the caller to do so.
-
-//			SAT_CORE_INFO( "m_MouseOverViewport: {0}", m_MouseOverViewport );
 
 			if( /*( m_MouseOverViewport || m_ViewportFocused ) &&*/ m_RuntimeScene )
 			{
@@ -609,6 +582,17 @@ namespace Saturn {
 				OnMousePressed( ( RubyMouseEvent& ) rEvent );
 			} break;
 
+			case EventType::HotReload:
+			{
+				m_GameModule->EndHotReload();
+
+				ClassMetadataHandler::Get().AcknowledgeHotReload();
+
+				m_EditorScene->AcknowledgeHotReload();
+
+				PushNotification( "Hot reload complete" );
+			} break;
+			
 			case EventType::SceneTravel:
 			{
 				HandleSceneTravel( ( SceneTravelEvent& ) rEvent );
@@ -684,8 +668,8 @@ namespace Saturn {
 			{
 				const SendEditorNotificationEvent& rNotificationEvent = ( SendEditorNotificationEvent& ) rEvent;
 
-				EditorNotification notification{ .Text = rNotificationEvent.GetText(), .Lifetime = 10.0f };
-				PushNotification( notification );
+				PushNotification( rNotificationEvent.GetText(), 10.0f );
+
 			} break;
 		}
 	}
@@ -727,8 +711,7 @@ namespace Saturn {
 		SceneSerialiser ss( m_EditorScene );
 		ss.Serialise( overridePath, true );
 
-		EditorNotification notification{ .Text = "AUTO SAVING, PLEASE WAIT", .Lifetime = 5.0f };
-		PushNotification( notification );
+		PushNotification( "AUTO SAVING, PLEASE WAIT", 7.5f );
 	}
 
 	void EditorLayer::OpenFile( AssetID id )
@@ -955,8 +938,7 @@ namespace Saturn {
 		m_RequestRuntime = false;
 		m_LastRuntimeAttemptFailed = true;
 
-		EditorNotification notification{ .Text = "Runtime request blocked. No camera was found after BeginPlay was called!", .Lifetime = 15.0f };
-		PushNotification( notification );
+		PushNotification( "Runtime request blocked. No camera was found after BeginPlay was called!", 15.0f );
 	}
 
 	bool EditorLayer::OnKeyPressed( RubyKeyEvent& rEvent )
@@ -1064,13 +1046,11 @@ namespace Saturn {
 					if( selections.size() > 1 )
 					{
 						const std::string text = std::format( "Duplicated {0} entities", selections.size() );
-						EditorNotification notification{ .Text = text, .Lifetime = 3.0f };
-						PushNotification( notification );
+						PushNotification( text, 3.0f );
 					}
 					else
 					{
-						EditorNotification notification{ .Text = "Duplicated 1 entity", .Lifetime = 3.0f };
-						PushNotification( notification );
+						PushNotification( "Duplicated 1 entity", 3.0f );
 					}
 				} break;
 
@@ -1102,8 +1082,7 @@ namespace Saturn {
 					if( auto action = m_GlobalUndoRedoGroup->GlobalUndoRecent(); action )
 					{
 						const std::string undoName = std::format( "Undo {0}", action->GetName() );
-						EditorNotification notification{ .Text = undoName, .Lifetime = 3.0f };
-						PushNotification( notification );
+						PushNotification( undoName, 3.0f );
 					}
 				} break;
 
@@ -1112,8 +1091,7 @@ namespace Saturn {
 					if( auto action = m_GlobalUndoRedoGroup->GlobalRedoRecent(); action )
 					{
 						const std::string redoName = std::format( "Redo {0}", action->GetName() );
-						EditorNotification notification{ .Text = redoName, .Lifetime = 3.0f };
-						PushNotification( notification );
+						PushNotification( redoName, 3.0f );
 					}
 				} break;
 
@@ -1140,12 +1118,10 @@ namespace Saturn {
 				{
 					default: break;
 
-#if defined(SAT_RELEASE)
 					case RubyKey_F5:
 					{
 						HotReloadGame();
 					} break;
-#endif
 				}
 			}
 		}
@@ -2190,7 +2166,7 @@ namespace Saturn {
 
 				for( auto&& [id, asset] : m_AssetManager->GetCombinedAssetMap() )
 				{
-					if( !Filter.PassFilter( asset->Name.c_str() ) )
+					if( !Filter.PassFilter( asset->Name.c_str() ) || !Filter.PassFilter( std::to_string( asset->ID ).c_str() ) )
 						continue;
 
 					ImGui::TableNextRow();
@@ -2213,7 +2189,7 @@ namespace Saturn {
 					if( asset->Version < AssetVersion::Latest )
 					{
 						ImGui::SameLine();
-						ImGui::Text( "(Version is older than newer)" );
+						ImGui::Text( "(Version is older than latest)" );
 					}
 
 					ImGui::TableSetColumnIndex( 5 );
@@ -2346,14 +2322,20 @@ namespace Saturn {
 			{
 				if( ImGui::Selectable( "Noto Sans", rEngineSettings.GetEditorFont() == EditorFont::NotoSans ) )
 				{
-					rEngineSettings.SetEditorFont( EditorFont::NotoSans );
-					m_FontChanged = true;
+					if( fontBeforeSelection != EditorFont::NotoSans )
+					{
+						rEngineSettings.SetEditorFont( EditorFont::NotoSans );
+						m_FontChanged = true;
+					}
 				}
 
 				if( ImGui::Selectable( "Atkinson Hyperlegible Next", rEngineSettings.GetEditorFont() == EditorFont::Atkinson ) )
 				{
-					rEngineSettings.SetEditorFont( EditorFont::Atkinson );
-					m_FontChanged = true;
+					if( fontBeforeSelection != EditorFont::Atkinson )
+					{
+						rEngineSettings.SetEditorFont( EditorFont::Atkinson );
+						m_FontChanged = true;
+					}
 				}
 
 				ImGui::EndCombo();
@@ -2485,9 +2467,8 @@ namespace Saturn {
 		if( ImGui::BeginMenu( "Edit" ) )
 		{
 			{
-				Auxiliary::ScopedDisabledFlag disabledIfRuntimeOrEmpty( m_RequestRuntime );
+				Auxiliary::ScopedDisabledFlag disabledIfRuntime( m_RequestRuntime );
 
-				// TODO: Disable if there's nothing to undo/redo.
 				{
 					Auxiliary::ScopedDisabledFlag disabledIfNoUndo( m_GlobalUndoRedoGroup->IsUndoActionsEmpty() );
 					if( ImGui::MenuItem( "Undo", "Ctrl+Z" ) )           m_GlobalUndoRedoGroup->GlobalUndoRecent();
@@ -2615,7 +2596,7 @@ namespace Saturn {
 
 					JobSystem::Get().QueueJob( [ this ]()
 					{
-						m_JobModalOpen = true;
+						m_JobModalOpen.store( true );
 						m_BlockingOperation->SetTitle( "Distributing Project" );
 
 						m_BlockingOperation->SetStatus( "Building project" );
@@ -2678,7 +2659,6 @@ namespace Saturn {
 			ImGui::SeparatorText( "Scene Renderer" );
 			if( ImGui::MenuItem( "Render Mesh AABB" ) )           m_ShowMeshAABB ^= 1;
 			if( ImGui::MenuItem( "Show Camera Frustum" ) )        m_ShowCameraFrustum ^= 1;
-			if( ImGui::MenuItem( "Show NavMesh Debug" ) )		  m_ShowNavMeshDebugRT ^= 1;
 
 			if( ImGui::BeginMenu( "Scene Visualisation Options" ) )
 			{
@@ -2921,13 +2901,11 @@ namespace Saturn {
 				{
 					if( const auto result = ShaderBundle::BundleShaders( ShaderBundleType::Editor ); result != ShaderBundleResult::Success ) 
 					{
-						EditorNotification notification{ .Text = "Failed to package editor shader bundle!", .Lifetime = 5.0f };
-						PushNotification( notification );
+						PushNotification( "Failed to package editor shader bundle!" );
 					}
 					else
 					{
-						EditorNotification notification{ .Text = "Packaged editor shader bundle!", .Lifetime = 5.0f };
-						PushNotification( notification );
+						PushNotification( "Packaged editor shader bundle!" );
 					}
 				}
 
@@ -2944,16 +2922,15 @@ namespace Saturn {
 
 				ImGui::EndHorizontal();
 
-				ImGui::BeginVertical( "shadersV" );
+				ImGui::BeginTable( "##engShaders", 3 );
+				ImGui::TableSetupColumn( "##name" );
+				ImGui::TableSetupColumn( "##recomp" );
+				ImGui::TableSetupColumn( "##view" );
 
 				for( auto& [name, shader] : ShaderLibrary::Get().GetShaders() )
 				{
-					ImGui::Columns( 2 );
-					ImGui::SetColumnWidth( 0, 125.0f );
-					ImGui::PushMultiItemsWidths( 2, ImGui::CalcItemWidth() );
-
-					ImGui::BeginHorizontal( name.c_str() );
-
+					ImGui::TableNextColumn();
+					ImGui::AlignTextToFramePadding();
 					ImGui::Text( name.c_str() );
 
 					if( ImGui::BeginItemTooltip() )
@@ -2962,9 +2939,9 @@ namespace Saturn {
 						ImGui::EndTooltip();
 					}
 
-					ImGui::PopItemWidth();
+					ImGui::TableNextColumn();
 
-					ImGui::NextColumn();
+					ImGui::PushID( ( int ) shader->GetShaderHash() );
 
 					if( ImGui::Button( "Recompile" ) )
 					{
@@ -2977,10 +2954,11 @@ namespace Saturn {
 						}
 						else
 						{
-							EditorNotification notification{ .Text = "Hot reloaded shader!", .Lifetime = 5.0f };
-							PushNotification( notification );
+							PushNotification( "Hot reloaded shader!" );
 						}
 					}
+
+					ImGui::TableNextColumn();
 
 					if( ImGui::Button( "View" ) )
 					{
@@ -2988,15 +2966,10 @@ namespace Saturn {
 						Application::Get()->OpenNativeFileExplorer( absPath, true );
 					}
 
-					ImGui::PopItemWidth();
-
-					ImGui::Columns( 1 );
-
-					ImGui::EndHorizontal();
+					ImGui::PopID();
 				}
 
-				ImGui::EndVertical();
-
+				ImGui::EndTable();
 				Auxiliary::EndTreeNode();
 			}
 		}
@@ -3208,7 +3181,7 @@ namespace Saturn {
 		// Force the popup to be open
 		ImGui::OpenPopup( "Blocking Action" );
 
-		if( ImGui::BeginPopupModal( "Blocking Action", &m_JobModalOpen, ImGuiWindowFlags_NoSavedSettings ) )
+		if( ImGui::BeginPopupModal( "Blocking Action", nullptr, ImGuiWindowFlags_NoSavedSettings ) )
 		{
 			if( m_BlockingOperation->GetTitle().empty() )
 				ImGui::Text( "Please wait for the operation to complete..." );
@@ -3239,7 +3212,7 @@ namespace Saturn {
 
 			if( m_BlockingOperation->Completed() )
 			{
-				m_JobModalOpen = false;
+				m_JobModalOpen.store( false );
 				m_BlockingOperation->Reset();
 			}
 
@@ -3269,7 +3242,7 @@ namespace Saturn {
 				if( !m_BlockingOperation )
 					m_BlockingOperation = Ref<JobProgress>::Create();
 
-				m_JobModalOpen = true;
+				m_JobModalOpen.store( true );
 				m_BlockingOperation->SetStatus( "Initialising..." );
 
 				SaveFile();
@@ -4467,6 +4440,11 @@ namespace Saturn {
 	void EditorLayer::PushNotification( EditorNotification& rInfo )
 	{
 		m_Notifications.push_back( rInfo );
+	}
+
+	void EditorLayer::PushNotification( const std::string& rName, float lifetime /*= 5.0f */ )
+	{
+		m_Notifications.emplace_back( rName, lifetime );
 	}
 
 	void EditorLayer::PopNotification()

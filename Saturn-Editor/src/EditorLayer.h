@@ -189,6 +189,11 @@ namespace Saturn {
 	private:
 		struct EditorNotification
 		{
+			EditorNotification( const std::string& rText, float lifeTime ) 
+				: Text( rText ), Lifetime( lifeTime )
+			{
+			}
+
 			std::string Text{};
 			float Lifetime = 0.0f;
 			MessageBoxType NotificationType = MessageBoxType::InformationNoIcon;
@@ -199,6 +204,8 @@ namespace Saturn {
 		};
 
 		void PushNotification( EditorNotification& rInfo );
+		void PushNotification( const std::string& rName, float lifetime = 5.0f );
+		
 		void PopNotification();
 		float DrawSingleNotification( EditorNotification& rInfo, float lastYOffset );
 		void DrawNotifications();
@@ -251,7 +258,7 @@ namespace Saturn {
 		bool m_HasPremakePath = false;
 		bool m_OpenAssetRegistryDebug = false;
 		bool m_OpenLoadedAssetDebug = false;
-		bool m_JobModalOpen = false;
+		std::atomic_bool m_JobModalOpen = false;
 		bool m_OpenAboutWindow = false;
 		bool m_ShowMetadataDebug = false;
 		bool m_ShowAssetDependencies = false;
@@ -278,9 +285,10 @@ namespace Saturn {
 		bool m_ShouldRenderCameraPreview = false;
 		bool m_DisableViewportMovement = false;
 		bool m_ShowDeleteNavMeshCachePopup = false;
-		// Show the navmesh debug while in runtime instead of while suspended.
-		bool m_ShowNavMeshDebugRT = false;
+		// Have we had a debug break event in this current frame?
+		bool m_DebugBreakAlreadyHandled = false;
 		bool m_FontChanged = false;
+		bool m_ShowRuntimeConsoleWindow = false;
 
 		// JobProgress
 		float m_OperationPercent = 0.0f;

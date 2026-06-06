@@ -21,15 +21,20 @@ namespace SaturnBuildTool
         Clean
     }
 
+    public enum ApplicationExitStatus 
+    {
+        Success = 0,
+        Failure = 1,
+        NothingTodo = 2,
+    }
+
     internal class Application
     {
-        public int ExitCode = 0;
+        public ApplicationExitStatus ExitCode = ApplicationExitStatus.Success;
         private readonly List<string> Args;
 
-        private uint NumTasksFailed = 0;
-
-        private readonly List<List<string>> FilesPerThread = new List<List<string>>();
-        private readonly List<bool> ThreadsCompleted = new List<bool>();
+        private int NumTasksFailed = 0;
+        private int AttemptedTasks = 0;
 
         private ActionType Action = ActionType.Build;
 
@@ -74,8 +79,7 @@ namespace SaturnBuildTool
             else
             {
                 Console.WriteLine( "ERROR: No appropriate action command found!, must suggest either (/BUILD or /REBUILD or /CLEAN)" );
-                ExitCode = 1;
-                return false;
+                ExitCode = ApplicationExitStatus.Failure;
             }
 
             // Handle command lines args
@@ -158,7 +162,7 @@ namespace SaturnBuildTool
                 Console.WriteLine( "You must provide more than one argument! Try running /HELP for more" );
 
                 // treat as error
-                ExitCode = 1;
+                ExitCode = ApplicationExitStatus.Failure;
                 return false;
             }
 
@@ -182,7 +186,7 @@ namespace SaturnBuildTool
             {
                 Console.WriteLine( "ERROR: Project initialisation failed." );
 
-                ExitCode = 1;
+                ExitCode = ApplicationExitStatus.Failure;
                 return false;
             }
 
@@ -193,7 +197,7 @@ namespace SaturnBuildTool
             {
                 Console.WriteLine( $"ERROR: The target file: {Shared.ProjectInfo.BuildRuleFile}, failed to compile or it doesn't exist!" );
 
-                ExitCode = 1;
+                ExitCode = ApplicationExitStatus.Failure;
                 return false;
             }
 
@@ -207,7 +211,7 @@ namespace SaturnBuildTool
             {
                 Console.WriteLine( "ERROR: \"/DISTASDBG\" was suggested however, you aren't building for Dist! \"/DISTASDBG\" is only available when \"/DIST\" is suggested" );
 
-                ExitCode = 1;
+                ExitCode = ApplicationExitStatus.Failure;
                 return false;
             }
 
@@ -215,7 +219,7 @@ namespace SaturnBuildTool
             {
                 Console.WriteLine( "ERROR: \"/SHOWCONSOLE\" was suggested however, you aren't building for Dist! \"/showconsole\" is only available when \"/DIST\" is suggested" );
 
-                ExitCode = 1;
+                ExitCode = ApplicationExitStatus.Failure;
                 return false;
             }
 
@@ -251,7 +255,7 @@ namespace SaturnBuildTool
             {
                 Console.WriteLine( "ERROR: Project initialisation failed." );
 
-                ExitCode = 1;
+                ExitCode = ApplicationExitStatus.Failure;
                 return false;
             }
 
@@ -268,7 +272,7 @@ namespace SaturnBuildTool
 
             if( exitCode != 0 )
             {
-                ++NumTasksFailed;
+                Interlocked.Increment( ref NumTasksFailed );
                 Console.WriteLine( $"SBT: ERR: UNABLE TO COMPILE FILE: CL {file}" );
             }
             else
@@ -334,7 +338,7 @@ namespace SaturnBuildTool
             {
                 Console.WriteLine( $"ERROR: Required file {loadFilePath} does not exist! Please regenerate it in the Engine." );
 
-                ExitCode = 1;
+                ExitCode = ApplicationExitStatus.Failure;
                 return false;
             }
 
@@ -357,7 +361,7 @@ namespace SaturnBuildTool
                 {
                     Console.WriteLine( $"ERROR: Required file {loadFilePath} does not exist! Please regenerate it in the Engine." );
 
-                    ExitCode = 1;
+                    ExitCode = ApplicationExitStatus.Failure;
                     return false;
                 }
 
@@ -520,6 +524,8 @@ namespace SaturnBuildTool
 
                                 Console.WriteLine( $"Running on thread: {Thread.CurrentThread.Name}" );
 
+                                Interlocked.Increment( ref AttemptedTasks );
+
                                 if( buildModule.ModuleRules.CompiledInDirectly )
                                 {
                                     CompileSingeFileUnchecked( buildModule.ModuleCompileSettings, buildModule, Shared.Toolchain, files[ j ] );
@@ -623,6 +629,7 @@ namespace SaturnBuildTool
 
                     if( shouldLink ) 
                     {
+                        ++AttemptedTasks;
                         toolchain.Link( buildModule.ModuleLinkSettings );
                     }
                 }
@@ -688,17 +695,20 @@ namespace SaturnBuildTool
             if( !ExecuteHeaderTool() )
             {
                 Console.WriteLine( "ERROR: Stopping compilation, header tool failed -- FAILED" );
-                ExitCode = 1;
+                ExitCode = ApplicationExitStatus.Failure;
                 return;
             }
 
+            // ~Pre build.
             AppendGeneratedFiles();
-
             SortModules();
+
+            // ~Build
             CompileModule();
             BuildLinkCacheForModules();
             LinkModules();
 
+            // ~Post build.
             Console.WriteLine( $"{NumTasksFailed} task(s) failed." );
 
             CreateTimestampFile();
@@ -800,6 +810,11 @@ namespace SaturnBuildTool
                 case ActionType.Rebuild:
                     {
                         ActionBuild();
+
+                        if( NumTasksFailed != 0 )
+                            ExitCode = ApplicationExitStatus.Failure;
+                        else if( AttemptedTasks == 0 )
+                            ExitCode = ApplicationExitStatus.NothingTodo;
                     }
                     break;
 

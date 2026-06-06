@@ -463,11 +463,10 @@ namespace Saturn {
 		return BuildToolDir;
 	}
 
-	bool Project::Build( ApplicationConfigKind kind, const std::string& rExtraArgs )
+	SaturnBuildToolExitCodes Project::Build( ApplicationConfigKind kind, const std::string& rExtraArgs )
 	{
-		std::filesystem::path BuildToolDir = FindBuildTool();
-
-		std::filesystem::path WorkingDir = BuildToolDir.parent_path();
+		const std::filesystem::path BuildToolDir = FindBuildTool();
+		const std::filesystem::path WorkingDir = BuildToolDir.parent_path();
 
 		std::string Args = BuildToolDir.string();
 
@@ -495,22 +494,20 @@ namespace Saturn {
 		Args += GetRootDir().string();
 
 		Args += " " + rExtraArgs;
-		std::wstring wArgs = Auxiliary::ConvertString( Args );
+		const std::wstring wArgs = Auxiliary::ConvertString( Args );
 
 		// Start the process
 		Process buildTool( wArgs, WorkingDir );
 
-		int exitCode = buildTool.ResultOfProcess();
-
-		return exitCode == 0;
+		const int exitCode = buildTool.ResultOfProcess();
+		return ( SaturnBuildToolExitCodes ) exitCode;
 	}
 
-	bool Project::Rebuild( ApplicationConfigKind kind, const std::string& rExtraArgs )
+	SaturnBuildToolExitCodes Project::Rebuild( ApplicationConfigKind kind, const std::string& rExtraArgs )
 	{
-		std::filesystem::path BuildToolDir = FindBuildTool();
-
-		std::filesystem::path WorkingDir = BuildToolDir.parent_path();
-
+		const std::filesystem::path BuildToolDir = FindBuildTool();
+		const std::filesystem::path WorkingDir = BuildToolDir.parent_path();
+		
 		std::string Args = BuildToolDir.string();
 
 		Args += " /REBUILD /NAME:";
@@ -537,14 +534,13 @@ namespace Saturn {
 		Args += GetRootDir().string();
 
 		Args += " " + rExtraArgs;
-		std::wstring wArgs = Auxiliary::ConvertString( Args );
+		const std::wstring wArgs = Auxiliary::ConvertString( Args );
 
 		// Start the process
 		Process buildTool( wArgs, WorkingDir );
 
-		int exitCode = buildTool.ResultOfProcess();
-
-		return exitCode == 0;
+		const int exitCode = buildTool.ResultOfProcess();
+		return ( SaturnBuildToolExitCodes )exitCode;
 	}
 
 	void Project::Distribute( ApplicationConfigKind kind, const std::string& rExtraArgs )

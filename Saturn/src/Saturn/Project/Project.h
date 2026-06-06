@@ -28,6 +28,8 @@
 
 #pragma once
 
+#include "SaturnBuildToolExitCodes.h"
+
 #include "Saturn/Core/Base.h"
 #include "Saturn/Core/App.h"
 
@@ -203,8 +205,8 @@ namespace Saturn {
 
 		std::filesystem::path FindBuildTool() const;
 
-		bool Build( ApplicationConfigKind kind, const std::string& rExtraArgs = "" );
-		bool Rebuild( ApplicationConfigKind kind, const std::string& rExtraArgs = "" );
+		[[nodiscard]] SaturnBuildToolExitCodes Build( ApplicationConfigKind kind, const std::string& rExtraArgs = "" );
+		[[nodiscard]] SaturnBuildToolExitCodes Rebuild( ApplicationConfigKind kind, const std::string& rExtraArgs = "" );
 		void Distribute( ApplicationConfigKind kind, const std::string& rExtraArgs = "" );
 
 		void PrepForDist() const;

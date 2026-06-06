@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 
-[assembly: AssemblyVersion( "0.0.3.0" )]
+[assembly: AssemblyVersion( "5.1.*" )]
 [assembly: AssemblyCompany( "Saturn Engine" )]
 [assembly: AssemblyCopyright( "2020 - 2023" )]
 [assembly: AssemblyProduct( "Saturn Build Tool" )]
@@ -19,7 +19,7 @@ namespace SaturnBuildTool
                 app.Run();
             }
 
-            return app.ExitCode;
+            return ( int ) app.ExitCode;
         }
     }
 }

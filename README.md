@@ -1,6 +1,10 @@
 <h3 align="center">Saturn</h3>
 
 <p align=center>
+<img src="./Saturn-Editor/content/Icons/SaturnLogov1.png" alt="Saturn Logo" width="auto" height="256">
+</p>
+
+<p align=center>
     <a href="https://github.com/BEASTSM96/Saturn-Engine/blob/vulkan/LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-green.svg"></a>
     <a href="https://img.shields.io/github/repo-size/BEASTSM96/Saturn-Engine"><img alt="Repo Size" src="https://img.shields.io/github/repo-size/BEASTSM96/Saturn-Engine"></a>
     <a href="https://github.com/BEASTSM96/Saturn-Engine/actions/workflows/Windows.yml"><img alt="Repo Size" src="https://github.com/BEASTSM96/Saturn-Engine/actions/workflows/Windows.yml/badge.svg"></a>
@@ -43,6 +47,7 @@
   - Many built in Asset Viewers
   - Autosaves
   - Project Browser
+  - Hot code reloading
 
 - Engine
   - AI Pathfinding and Navmesh generation using [Recast](https://github.com/recastnavigation/recastnavigation/tree/main)

@@ -2122,28 +2122,49 @@ namespace Saturn {
 
 	void EditorLayer::HotReloadGame()
 	{
-		PushNotification( "Attempting hot reload" );
+		PushNotification( "Waiting for JobSystem to start Hot-Reload..." );
 		SAT_CORE_INFO( "[HotReload] Begin hot reload" );
 
 		SaveFile();
 		SaveProject();
 
-		// Attempt to build.
-		if( !Project::GetActiveProject()->Build( Application::GetCurrentConfigKind(), "/HOTRELOAD" ) ) 
+		if( !m_BlockingOperation )
+			m_BlockingOperation = Ref<JobProgress>::Create();
+
+		JobSystem::Get().QueueJob( 
+			[ this ]()
 		{
-			MessageBoxInfo info{ .Text = "Hot-reload compilation failed!" };
-			PushMessageBox( info );
-		}
-		else
-		{
-			m_GameModule->EndHotReload();
+			m_JobModalOpen.store( true );
+			m_BlockingOperation->SetTitle( "Building Project" );
+			m_BlockingOperation->SetStatus( "Hot-Reloading" );
 
-			ClassMetadataHandler::Get().AcknowledgeHotReload();
+			// Attempt to build.
+			const auto status = Project::GetActiveProject()->Build( Application::GetCurrentConfigKind(), "/HOTRELOAD" );
 
-			m_EditorScene->AcknowledgeHotReload();
+			switch( status )
+			{
+				case SaturnBuildToolExitCodes::Success:
+				{
+					// It's not safe to be messing with our SClasses on a job system thread.
+					// So we'll do it next frame on the main thread.
+					Application::Get()->DispatchEvent<Event>( EventType::HotReload, EC_Editor );
+				} break;
 
-			PushNotification( "Hot reload complete" );
-		}
+				default:
+				case SaturnBuildToolExitCodes::Failure:
+				{
+					MessageBoxInfo info{ .Text = "Hot-reload compilation failed!" };
+					PushMessageBox( info );
+				} break;
+
+				case SaturnBuildToolExitCodes::NothingTodo:
+				{
+					PushNotification( "Nothing to Hot-Reload!" );
+				} break;
+			}
+
+			m_BlockingOperation->OnComplete();
+		} );
 	}
 
 	void EditorLayer::DrawAssetRegistryDebug()

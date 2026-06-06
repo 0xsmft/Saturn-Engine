@@ -516,6 +516,20 @@ namespace Saturn {
 #endif
 	}
 
+	ApplicationConfigKind Application::GetCurrentConfigKind()
+	{
+#if defined(SAT_DEBUG)
+		return ApplicationConfigKind::Debug;
+#elif defined(SAT_RELEASE)
+		return ApplicationConfigKind::Release;
+#elif defined(SAT_DIST)
+		return ApplicationConfigKind::Dist;
+#else
+#error "Application::GetCurrentConfigKind Unknown config type"
+		return ApplicationConfigKind::Debug;
+#endif
+	}
+
 	const char* Application::GetCurrentConfigName()
 	{
 #if defined(SAT_DEBUG)

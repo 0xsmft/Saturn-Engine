@@ -247,7 +247,7 @@ namespace Saturn {
 
 	void AudioSystem::FireAndForget( const std::string& rAssetName )
 	{
-		auto asset = AssetManager::Get()->FindAsset( rAssetName );
+		auto asset = AssetManager::Get()->FindAsset( rAssetName, AssetType::Sound );
 		if( asset )
 		{
 			FireAndForget( asset->ID );

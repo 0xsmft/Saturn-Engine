@@ -56,8 +56,6 @@ namespace Saturn {
 		bool m_PendingTerminate = false;
 	};
 
-	class Entity;
-
 	class AudioSystem
 	{
 	public:

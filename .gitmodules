@@ -15,3 +15,7 @@
 	path = Saturn/vendor/JoltPhysics
 	url = https://github.com/0xsmft/fork-JoltPhysics
 	branch = saturn
+[submodule "Saturn/vendor/ImTimeline"]
+	path = Saturn/vendor/ImTimeline
+	branch = saturn
+	url = https://github.com/0xsmft/fork-ImTimeline

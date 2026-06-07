@@ -75,6 +75,7 @@ project "Saturn"
 		"%{IncludeDir.MSDF}",
 		"%{IncludeDir.MSDFAG}",
 		"%{IncludeDir.NativeFileDialogExtended}",
+		"%{IncludeDir.ImTimeline}",
 
 		"%{IncludeDir.SharedStorage}"
 	}
@@ -92,6 +93,7 @@ project "Saturn"
 		"MSDF-Atlas-Gen",
 		"JoltPhysics",
 		"NativeFileDialogExtended",
+		"ImTimeline",
 
 		"Saturn-SharedStorage"
 	}

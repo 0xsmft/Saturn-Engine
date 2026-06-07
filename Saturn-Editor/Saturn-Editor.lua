@@ -53,6 +53,7 @@ project "Saturn-Editor"
 		"%{IncludeDir.freetype}",
 		"%{IncludeDir.MSDF}",
 		"%{IncludeDir.MSDFAG}",
+		"%{IncludeDir.ImTimeline}",
 
 		"%{IncludeDir.SharedStorage}"
 	}

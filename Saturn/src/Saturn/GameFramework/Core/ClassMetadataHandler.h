@@ -61,7 +61,7 @@ namespace Saturn {
 	enum SCHotReloadFlags : uint8_t
 	{
 		// No change to the SClass structure itself
-		// but obviously this could mean that a function is internally modified but thats fine because we don't care about that.
+		// but obviously this could mean that an SClass is internally modified but thats fine because we don't care about that.
 		SCHotReload_NoChange = 0,
 
 		// The following flags means that the SClass was structurally modified...

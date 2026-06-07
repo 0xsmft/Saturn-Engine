@@ -65,7 +65,6 @@ namespace Saturn {
 	SClassHotReloadChanges ClassMetadataHandler::DistinguishBetweenSClass( const SClass* const pA, const SClass* const pB )
 	{
 		SClassHotReloadChanges changes = SCHotReload_NoChange;
-
 		if( pA->GetSize() != pB->GetSize() )
 		{
 			changes = SCHotReload_ClassSizeChange;

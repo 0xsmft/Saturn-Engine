@@ -3,11 +3,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+
 using SaturnBuildTool.Auxiliary;
 using SaturnBuildTool.Cache;
 using SaturnBuildTool.Tools;
@@ -122,8 +121,10 @@ namespace SaturnBuildTool
                 Console.WriteLine( "  /SRC             -- override the Source Dir, by default its \"Source/{prj.name}\", when overriding make sure the path is relative to the .sproject path" );
                 Console.WriteLine( " Compile Options:" );
                 Console.WriteLine( "  /WIN64*          -- build for Windows x64" );
+                Console.WriteLine( "  /LINUX64*        -- build for Linux x64" );
+                Console.WriteLine( "  /APPLE*          -- build for macOS AArch64 (Apple Silicon)" );
                 Console.WriteLine( "  /HOTRELOAD       -- this is an internal command and is used for hot reloading, when this command is suggested the build tool will create a special timestamp file and output files with the timestamp suffix" );
-                Console.WriteLine( "  /DISTASDBG       -- Build for Dist but compile with debug symbols and full \"/DIST\" must be suggested" );
+                Console.WriteLine( "  /DISTASDBG       -- Build for Dist but compile with debug symbols and no optimisation. \"/DIST\" must be suggested" );
                 Console.WriteLine( "  Configuration Options:" );
                 Console.WriteLine( "   /DEBUG*         -- build the project for Debug configuration with full symbols" );
                 Console.WriteLine( "   /RELEASE*       -- build the project for Release configuration with symbols on for this project but symbols off for third party projects" );
@@ -223,17 +224,17 @@ namespace SaturnBuildTool
                 return false;
             }
 
-            // TODO: We only support building for Windows
-            switch( Shared.ProjectInfo.TargetPlatformKind )
+            switch( Shared.Platform.PlatformType )
             {
-                case ArchitectureKind.x86_64:
+                // On Windows, we force MSVC
+                case PlatformType.Windows:
                     {
                         Shared.Toolchain = new MSVCToolchain();
                     }
                     break;
 
                 default:
-                    break;
+                    return false;
             }
 
             Shared.FileCache = FileCache.Load();
@@ -478,6 +479,9 @@ namespace SaturnBuildTool
                         File.Delete( file );
                     }
                 }
+
+                // Now, we delete the Timestamp.hot file
+                File.Delete( filepath );
             }
         }
 
@@ -811,6 +815,10 @@ namespace SaturnBuildTool
                     {
                         ActionBuild();
 
+                        // Determine exit code.
+                        // If NumTasksFailed is non-zero then we have a task that is failed.
+                        // If no tasks have failed but we haven't actually done anything then we report NothingTodo.
+                        // and by default the value is Success.
                         if( NumTasksFailed != 0 )
                             ExitCode = ApplicationExitStatus.Failure;
                         else if( AttemptedTasks == 0 )

@@ -50,9 +50,9 @@
 
 // We only support x86_64
 #if defined(_MSC_VER) && defined(_M_X64) || defined(__x86_64__)
-#define SAT_PLATFORM_BINARY_FOLDER "macos-x86_64"
+#define SAT_PLATFORM_BINARY_FOLDER "macosx-x86_64"
 #elif defined(_MSC_VER) && defined(_M_ARM64)
-#define SAT_PLATFORM_BINARY_FOLDER "macos-ARM64"
+#define SAT_PLATFORM_BINARY_FOLDER "macosx-ARM64"
 #else
 #define SAT_PLATFORM_BINARY_FOLDER "macos-ArchUnk"
 #endif

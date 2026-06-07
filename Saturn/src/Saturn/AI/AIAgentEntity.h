@@ -51,8 +51,8 @@ namespace Saturn {
 		virtual void OnUpdate( Saturn::Timestep ts ) override;
 		virtual void OnPhysicsUpdate( Saturn::Timestep ts ) override;
 
-		Ref<StaticMesh> GetMesh() { return m_Mesh; }
-		const Ref<StaticMesh> GetMesh() const { return m_Mesh; }
+		Mesh* GetMesh() { return m_pMesh; }
+		const Mesh* GetMesh() const { return m_pMesh; }
 
 		const Ref<BehaviourTree> GetBehaviourTree() const;
 
@@ -63,8 +63,8 @@ namespace Saturn {
 		void StartBehaviourTree( AssetID id );
 
 	private:
-		// TODO: Change to a base mesh class, we don't know what the user will have.
-		Ref<StaticMesh> m_Mesh;
+		Mesh* m_pMesh = nullptr;
+
 		// TODO: Move this to a movement component.
 		PhysicsRigidBody* m_RigidBody = nullptr;
 

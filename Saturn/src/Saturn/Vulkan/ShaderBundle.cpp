@@ -39,17 +39,17 @@ namespace Saturn {
 	struct ShaderBundleHeader
 	{
 		//									 .SB
-		//								   | 4 BYTES			|		4 BYTES		    |
-		const unsigned char Magic[ 4 ] = { 0x2E, 0x53, 0x42, 0x00/*, 0x00, 0x00, 0x00, 0x00*/ };
-		size_t Shaders;
+		//								   | 4 BYTES
+		const unsigned char Magic[ 4 ] = { 0x2E, 0x53, 0x42, 0x00 };
+		size_t Shaders = 0llu;
 	};
 
 	struct EditorShaderBundleHeader
 	{
-		//									 .SB				 .XA
+		//									 .SB				 .LA
 		//								   | 4 BYTES			|		4 BYTES		    |
-		const unsigned char Magic[ 8 ] = { 0x2E, 0x53, 0x42, 0x00, 0x2E, 0x58, 0x41, 0x00 };
-		size_t Shaders;
+		const unsigned char Magic[ 8 ] = { 0x2E, 0x53, 0x42, 0x00, 0x2E, 0x4C, 0x41, 0x00 };
+		size_t Shaders = 0llu;
 	};
 
 	static void WriteShaderBundleHeader( std::ofstream& rStream, ShaderBundleType flags ) 
@@ -98,8 +98,8 @@ namespace Saturn {
 		{
 			SAT_CORE_INFO( "Packaging shader: {0}", name );
 
-			size_t stringSize = name.length();
-			fout.write( reinterpret_cast<char*>( &stringSize ), sizeof( size_t ) );
+			const size_t stringSize = name.length();
+			fout.write( reinterpret_cast<const char*>( &stringSize ), sizeof( size_t ) );
 
 			fout.write( name.c_str(), stringSize );
 
@@ -183,7 +183,7 @@ namespace Saturn {
 					return ShaderBundleResult::InvalidShaderHeader;
 				}
 
-				if( std::memcmp( header.Magic + 4, ".XA", 4 ) != 0 )
+				if( std::memcmp( header.Magic + 4, ".LA", 4 ) != 0 )
 				{
 					SAT_CORE_ERROR( "Invalid shader bundle file header!" );
 					return ShaderBundleResult::InvalidShaderHeader;
@@ -193,7 +193,7 @@ namespace Saturn {
 			} break;
 		}
 
-		for( size_t i = 0; i < shaderCount; i++ )
+		for( size_t i = 0; i < shaderCount; ++i )
 		{
 			Ref<Shader> shader = Ref<Shader>::Create();
 

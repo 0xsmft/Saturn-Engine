@@ -98,11 +98,16 @@ namespace Saturn {
 
 		AssetID DuplicateAsset( Ref<Asset> asset );
 
-		[[deprecated( "Saturn::AssetManager::GetCombinedAssetMap is deprecated and will be removed. Consider using \"AssetManager::GetAssetRegistry::GetAssetMap\" instead." )]]
-		inline UnorderedAssetMap GetCombinedAssetMap() { return m_Assets->GetAssetMap(); }
+		inline const UnorderedAssetMap& GetAssetMap() const { return m_Assets->GetAssetMap(); }
+		inline const UnorderedAssetMap& GetLoadedAssetMap() const { return m_Assets->GetLoadedAssetsMap(); }
 
-		[[deprecated( "Saturn::AssetManager::GetCombinedLoadedAssetMap is deprecated and will be removed. Consider using \"AssetManager::GetAssetRegistry::GetLoadedAssetMap\" instead." )]]
-		inline UnorderedAssetMap GetCombinedLoadedAssetMap() { return m_Assets->GetLoadedAssetsMap(); }
+		// Deprecated in 2024, removed in 2026
+		//[[deprecated( "Saturn::AssetManager::GetCombinedAssetMap is deprecated and will be removed. Consider using \"AssetManager::GetAssetRegistry::GetAssetMap\" instead." )]]
+		//inline UnorderedAssetMap GetCombinedAssetMap() { return m_Assets->GetAssetMap(); }
+
+		// Deprecated in 2024, removed in 2026
+		//[[deprecated( "Saturn::AssetManager::GetCombinedLoadedAssetMap is deprecated and will be removed. Consider using \"AssetManager::GetAssetRegistry::GetLoadedAssetMap\" instead." )]]
+		//inline UnorderedAssetMap GetCombinedLoadedAssetMap() { return m_Assets->GetLoadedAssetsMap(); }
 
 		Ref<AssetRegistry>& GetAssetRegistry() { return m_Assets; }
 		const Ref<AssetRegistry>& GetAssetRegistry() const { return m_Assets; }

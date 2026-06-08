@@ -2170,7 +2170,7 @@ namespace Saturn {
 
 				ImGui::TableHeadersRow();
 
-				for( auto&& [id, asset] : m_AssetManager->GetCombinedAssetMap() )
+				for( auto&& [id, asset] : m_AssetManager->GetAssetMap() )
 				{
 					if( !Filter.PassFilter( asset->Name.c_str() ) || !Filter.PassFilter( std::to_string( asset->ID ).c_str() ) )
 						continue;
@@ -2235,7 +2235,7 @@ namespace Saturn {
 
 				ImGui::TableHeadersRow();
 
-				for( auto&& [id, asset] : m_AssetManager->GetCombinedLoadedAssetMap() )
+				for( const auto& [id, asset] : m_AssetManager->GetLoadedAssetMap() )
 				{
 					if( !Filter.PassFilter( asset->Name.c_str() ) )
 						continue;

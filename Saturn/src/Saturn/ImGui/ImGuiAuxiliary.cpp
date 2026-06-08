@@ -538,9 +538,9 @@ namespace Saturn::Auxiliary {
 
 			if( ImGui::BeginListBox( "##ASSETLIST", ImVec2( -FLT_MIN, 0.0f ) ) )
 			{
-				for( const auto& [assetID, rAsset] : AssetManager::Get()->GetCombinedAssetMap() )
+				for( const auto& [assetID, rAsset] : AssetManager::Get()->GetAssetMap() )
 				{
-					bool Selected = ( rOut == assetID );
+					const bool Selected = ( rOut == assetID );
 
 					ImGui::PushID( static_cast< int >( assetID ) );
 
@@ -595,7 +595,7 @@ namespace Saturn::Auxiliary {
 			if( ImGui::BeginListBox( "##ASSETLIST", ImVec2( -FLT_MIN, 0.0f ) ) )
 			{
 				// TODO: Change with editor.
-				for( const auto& [assetID, rAsset] : AssetManager::Get()->GetCombinedAssetMap() )
+				for( const auto& [assetID, rAsset] : AssetManager::Get()->GetAssetMap() )
 				{
 					bool Selected = ( rOut == assetID );
 

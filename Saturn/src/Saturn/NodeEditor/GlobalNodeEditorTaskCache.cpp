@@ -35,6 +35,16 @@ namespace Saturn {
 	{
 	}
 
+	GlobalNodeEditorTaskCache::~GlobalNodeEditorTaskCache()
+	{
+		ClearAll();
+	}
+
+	void GlobalNodeEditorTaskCache::ClearAll()
+	{
+		m_Caches.clear();
+	}
+
 	NodeTaskCache& GlobalNodeEditorTaskCache::GetTaskCache( UUID id )
 	{
 		auto itr = m_Caches.find( id );

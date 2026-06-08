@@ -93,6 +93,7 @@
 
 #include <Saturn/NodeEditor/UI/NodeEditor.h>
 #include <Saturn/NodeEditor/SandboxNodeEditor/SandboxNodeEditorViewer.h>
+#include <Saturn/NodeEditor/GlobalNodeEditorTaskCache.h>
 
 #include <Saturn/Project/Premake.h>
 
@@ -314,6 +315,11 @@ namespace Saturn {
 		}
 
 		m_EditorScene = nullptr;
+
+		// Make sure we clear it before the game module is unloaded because the game may
+		// have tasks that it defines, and if the game module is unloaded and we delete it
+		// we will crash, because of course the address is invalid.
+		GlobalNodeEditorTaskCache::Get().ClearAll();
 
 		// Now terminate the audio system, before the asset man and the GameModule is unloaded.
 		AudioSystem::Get().Terminate();

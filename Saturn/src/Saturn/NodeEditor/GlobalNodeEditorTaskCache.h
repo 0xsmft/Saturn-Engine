@@ -42,10 +42,11 @@ namespace Saturn {
 		SAT_SINGLETON_LAZY( GlobalNodeEditorTaskCache );
 	public:
 		GlobalNodeEditorTaskCache();
-		~GlobalNodeEditorTaskCache() = default;
+		~GlobalNodeEditorTaskCache();
+
+		void ClearAll();
 
 		NodeTaskCache& GetTaskCache( UUID id );
-		
 		NodeTaskCache& GetOrCreateTaskCache( UUID id );
 
 		[[nodiscard]] bool DoesTaskCacheExist( UUID id ) const;

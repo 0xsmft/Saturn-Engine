@@ -124,37 +124,52 @@ namespace Saturn {
 	private:
 		void FetchLocators() 
 		{
-			if( !m_PinA )
+			// No locator pointer yet?
+			if( !m_pA )
 			{
-				m_pA = m_pHandler->template RegisterLocatorStorage<Ty>( m_PinA, 0 );
-				*m_pA = m_DefaultValueA;
-			}
-			// If we have no value, get it
-			else if( !m_pA )
-			{
-				m_pA = m_pHandler->template AccessLocator<Ty>( m_PinA, 0 );
+				// So, if m_PinA is valid that means that pin A is linked,
+				// so in that case we can try get the locator.
+				if( m_PinA )
+				{
+					m_pA = m_pHandler->template AccessLocator<Ty>( m_PinA, 0 );
+				}
+				// However, if it's not linked, then we can just use the value that was typed into the node itself.
+				else
+				{
+					// TODO: Const... should not be able to modify a default value.
+					m_pA = &m_DefaultValueA;
+				}
 			}
 
-			// If we have no PinID, get default value
-			if( !m_PinB && m_pB == nullptr )
+			// No locator pointer yet?
+			if( !m_pB )
 			{
-				m_pB = m_pHandler->template RegisterLocatorStorage<Ty>( m_PinB, 0 );
-				*m_pB = m_DefaultValueB;
-			}
-			// If we have no value, get it
-			else if( !m_pB )
-			{
-				m_pB = m_pHandler->template AccessLocator<Ty>( m_PinB, 0 );
+				// So, if m_PinB is valid that means that pin B is linked,
+				// so in that case we can try get the locator.
+				if( m_PinB )
+				{
+					m_pB = m_pHandler->template AccessLocator<Ty>( m_PinB, 0 );
+				}
+				// However, if it's not linked, then we can just use the value that was typed into the node itself.
+				else
+				{
+					// TODO: Const... should not be able to modify a default value.
+					m_pB = &m_DefaultValueB;
+				}
 			}
 		}
 
 	protected:
+		// Link IDs
 		UUID m_PinA = 0, m_PinB = 0;
 		
+		// Default values.
 		Ty m_DefaultValueA{}, m_DefaultValueB{};
 
+		// Pointer to locators
 		Ty* m_pA = nullptr;
 		Ty* m_pB = nullptr;
+		
 		bool m_OutValue = false;
 		bool m_AttemptedFetch = false;
 	};

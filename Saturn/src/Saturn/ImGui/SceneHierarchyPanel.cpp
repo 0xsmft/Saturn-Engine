@@ -243,6 +243,17 @@ namespace Saturn {
 				rEntity->Show();
 			}
 		}
+
+		if( ImGui::MenuItem( "Copy entity ID(s)" ) )
+		{
+			std::string text;
+			for( auto& rEntity : EntitySelectionManager::Get()->GetSelectionContexts( m_Context.Get() ) )
+			{
+				text += std::format( "{} ", ( uint64_t ) rEntity->GetUUID() );
+			}
+
+			ImGui::SetClipboardText( text.c_str() );
+		}
 	}
 
 	void SceneHierarchyPanel::PopupContextMenuNormal()

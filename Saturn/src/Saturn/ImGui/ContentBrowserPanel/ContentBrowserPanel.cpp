@@ -109,7 +109,7 @@ namespace Saturn {
 		// Back button.
 		if( m_CurrentPath != m_CurrentViewModeDirectory )
 		{
-			if( Auxiliary::ImageButton( m_BackIcon, { 24, 24 } ) )
+			if( Auxiliary::ImageButton( m_BackIcon, { 24.0f, 24.0f } ) )
 			{
 				ChangeDirectoryAndAddQuickAction( m_CurrentPath.parent_path() );
 			}
@@ -118,7 +118,7 @@ namespace Saturn {
 		{
 			ImGui::PushItemFlag( ImGuiItemFlags_Disabled, true );
 			ImGui::PushStyleVar( ImGuiStyleVar_Alpha, 0.5f );
-			Auxiliary::ImageButton( m_BackIcon, { 24, 24 } );
+			Auxiliary::ImageButton( m_BackIcon, { 24.0f, 24.0f } );
 			ImGui::PopStyleVar( 1 );
 			ImGui::PopItemFlag();
 		}
@@ -128,7 +128,7 @@ namespace Saturn {
 		// Forward button.
 		if( !m_FirstFolder.empty() || std::filesystem::exists( m_FirstFolder ) )
 		{
-			if( Auxiliary::ImageButton( m_ForwardIcon, { 24, 24 } ) )
+			if( Auxiliary::ImageButton( m_ForwardIcon, { 24.0f, 24.0f } ) )
 			{
 				ChangeDirectoryAndAddQuickAction( m_CurrentPath / m_FirstFolder );
 			}
@@ -137,7 +137,7 @@ namespace Saturn {
 		{
 			ImGui::PushItemFlag( ImGuiItemFlags_Disabled, true );
 			ImGui::PushStyleVar( ImGuiStyleVar_Alpha, 0.5f );
-			Auxiliary::ImageButton( m_ForwardIcon, { 24, 24 } );
+			Auxiliary::ImageButton( m_ForwardIcon, { 24.0f, 24.0f } );
 			ImGui::PopStyleVar( 1 );
 			ImGui::PopItemFlag();
 		}
@@ -466,6 +466,13 @@ namespace Saturn {
 				}
 
 				// TODO: Delete folders
+				if( ImGui::MenuItem( "Force Delete Folder" ) )
+				{
+					for( auto& rItem : m_SelectedItems )
+					{
+						rItem->Delete();
+					}
+				}
 			}
 			else // File actions
 			{
@@ -2010,18 +2017,18 @@ namespace Saturn {
 
 	void ContentBrowserPanel::OnKeyPressed( RubyKeyEvent& rEvent )
 	{
-		// TODO: Not the best way, the ContentBrowserPanel should know if any items are being renamed or not. 
-		const auto numberOfItemsBeingRenamed = std::count_if( m_SelectedItems.begin(), m_SelectedItems.end(),
-			[]( const auto& rItem )
-		{
-			return rItem->IsRenaming();
-		} );
-
 		switch( rEvent.GetKeycode() )
 		{
 			// Select all items.
 			case RubyKey_A:
 			{
+				// TODO: Not the best way, the ContentBrowserPanel should know if any items are being renamed or not. 
+				const auto numberOfItemsBeingRenamed = std::count_if( m_SelectedItems.begin(), m_SelectedItems.end(),
+					[]( const auto& rItem )
+				{
+					return rItem->IsRenaming();
+				} );
+
 				if( ( rEvent.GetModifers() == RubyKey_LeftCtrl || rEvent.GetModifers() == RubyKey_RightCtrl ) && numberOfItemsBeingRenamed == 0 )
 				{
 					if( m_SelectedItems.capacity() < m_Files.size() )

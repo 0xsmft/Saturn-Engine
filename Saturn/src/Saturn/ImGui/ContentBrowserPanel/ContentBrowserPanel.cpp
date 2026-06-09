@@ -552,6 +552,27 @@ namespace Saturn {
 						}
 					}
 				}
+
+				if( m_Searching )
+				{
+					if( ImGui::MenuItem( "Open item location" ) )
+					{
+						// Use the most recently selected item.
+						// because the idea is that if the user has multiple selected items then the one that is
+						// currently selected will be the most recent one at the back of the vector.
+						const auto item = m_SelectedItems.back();
+						const auto pathToDir = item->Path().parent_path();
+
+						// TODO: Make the following functions a single function.
+						m_CurrentPath = pathToDir;
+
+						ClearSelection();
+						ClearSearchQuery();
+						m_Searching = false;
+
+						UpdateFiles( true );
+					}
+				}
 			}
 		}
 		else

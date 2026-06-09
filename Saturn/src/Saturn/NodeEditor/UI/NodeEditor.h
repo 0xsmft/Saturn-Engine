@@ -124,6 +124,9 @@ namespace Saturn {
 
 		// Search via outputs
 		std::vector<UUID> FindNeighborsLeft( SharedPtr<NodeEditorNodeBase> node );
+		// Search via a single output/input pin
+		std::vector<UUID> FindNeighborsInput( SharedPtr<NodeEditorNodeBase> node, size_t index );
+		std::vector<UUID> FindNeighborsOutput( SharedPtr<NodeEditorNodeBase> node, size_t index );
 
 		template<typename Function>
 		void TraverseFromStart( const SharedPtr<NodeEditorNodeBase>& rRootNode, NodeEditorFlowDirection dir, Function func )

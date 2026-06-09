@@ -1756,6 +1756,56 @@ namespace Saturn {
 		return ids;
 	}
 
+	std::vector<UUID> NodeEditor::FindNeighborsInput( SharedPtr<NodeEditorNodeBase> node, size_t index )
+	{
+		std::vector<UUID> ids;
+
+		if( index >= node->Inputs.size() )
+			return ids;
+
+		const auto& rPin = node->Inputs[ index ];
+		if( IsLinked( rPin->ID ) )
+		{
+			// If the pin is linked find the other end of it and add it to our list.
+			const auto links = FindLinksByPin( rPin->ID );
+
+			for( const auto& rLink : links )
+			{
+				const bool isStart = rLink->StartPinID == rPin->ID;
+				SharedPtr<NodeEditorNodeBase> otherNode = FindNodeByPin( isStart ? rLink->EndPinID : rLink->StartPinID );
+
+				ids.push_back( otherNode->ID );
+			}
+		}
+
+		return ids;
+	}
+
+	std::vector<UUID> NodeEditor::FindNeighborsOutput( SharedPtr<NodeEditorNodeBase> node, size_t index )
+	{
+		std::vector<UUID> ids;
+
+		if( index >= node->Outputs.size() )
+			return ids;
+
+		const auto& rPin = node->Outputs[ index ];
+		if( IsLinked( rPin->ID ) )
+		{
+			// If the pin is linked find the other end of it and add it to our list.
+			const auto links = FindLinksByPin( rPin->ID );
+
+			for( const auto& rLink : links )
+			{
+				const bool isStart = rLink->StartPinID == rPin->ID;
+				SharedPtr<NodeEditorNodeBase> otherNode = FindNodeByPin( isStart ? rLink->EndPinID : rLink->StartPinID );
+
+				ids.push_back( otherNode->ID );
+			}
+		}
+
+		return ids;
+	}
+
 	void NodeEditor::CreateLink( const Ref<Pin>& rStart, const Ref<Pin>& rEnd, ImColor color )
 	{
 		m_Links.push_back( Ref<Link>::Create( UUID(), rStart->ID, rEnd->ID, color ) );

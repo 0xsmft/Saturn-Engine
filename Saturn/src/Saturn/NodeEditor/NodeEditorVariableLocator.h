@@ -39,68 +39,39 @@ namespace Saturn {
 	{
 	public:
 		NodeEditorVariableLocator() = default;
-		NodeEditorVariableLocator( const void* pAddress ) 
+		NodeEditorVariableLocator( void* pAddress ) 
 			: m_pVariable( pAddress )
 		{
 		}
 
 		~NodeEditorVariableLocator() 
 		{
-			if( m_Owned )
-			{
-				DeleteOwned();
-			}
-
-			m_Owned = false;
 			m_pVariable = nullptr;
 		}
 
 		template<typename TCppType>
-		void Set( const TCppType* pAddress )
+		void Set( TCppType* pAddress )
 		{
-			Reset();
-
 			m_pVariable = pAddress;
 		}
 
+		//
+		// Set the VALUE of the data to a new value
+		//
 		template<typename TCppType>
-		void SetOwned( TCppType* pPtr ) 
+		void SetValue( const TCppType& rValue )
 		{
-			Reset();
+			// Need a valid address!
+			SAT_CORE_ASSERT( m_pVariable );
 
-			m_pVariable = pPtr;
-			m_Owned = true;
-
-			m_pDeleterFunc = []( const void* pObj )
-			{
-				delete static_cast< const TCppType* >( pObj );
-			};
+			TCppType* pCppTypePtr = ( static_cast< TCppType* >( m_pVariable ) );
+			*pCppTypePtr = rValue;
 		}
 
 		const void* Get() const { return m_pVariable; }
 
 	private:
-		void Reset() 
-		{
-			if( m_pVariable && m_Owned )
-			{
-				DeleteOwned();
-			}
-		}
-
-		void DeleteOwned() 
-		{
-			if( m_pDeleterFunc )
-			{
-				( m_pDeleterFunc ) ( m_pVariable );
-			}
-		}
-
-	private:
-		const void* m_pVariable = nullptr;
-		void ( *m_pDeleterFunc )( const void* ) = nullptr;
-		
-		bool m_Owned = false;
+		/*const*/ void* m_pVariable = nullptr;
 	};
 	
 }

@@ -66,25 +66,6 @@ namespace Saturn {
 			rLocators[ pinIndex ].Set( pAddress );
 		}
 
-		//
-		// Register a new locator but have the Task handler own and store it.
-		// 
-		// So, it must allocate Ty on the heap!
-		//
-		template<typename Ty>
-		Ty* RegisterLocatorStorage( UUID nodeID, size_t pinIndex )
-		{
-			auto& rLocators = m_Locators[ nodeID ];
-			if( pinIndex >= rLocators.size() )
-			{
-				rLocators.resize( pinIndex + 1 );
-			}
-
-			rLocators[ pinIndex ].SetOwned<Ty>( new Ty() );
-
-			return ( Ty* ) rLocators[ pinIndex ].Get();
-		}
-
 		template<typename Ty>
 		Ty* AccessLocator( UUID id, size_t pinIndex ) const
 		{

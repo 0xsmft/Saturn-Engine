@@ -142,6 +142,9 @@ namespace Saturn {
 		if( AG )
 		{
 			auto outNode = StateMachineStateNodeLibrary::SpawnOutputNode( AG->SharedFromThis() );
+
+			ed::SetNodePosition( ed::NodeId( outNode->ID ), { 0.0f, 0.0f } );
+
 			outNode->pParentObject = this;
 			m_OutputNodeID = outNode->ID;
 		}

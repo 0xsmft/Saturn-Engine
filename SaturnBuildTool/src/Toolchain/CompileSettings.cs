@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
-using System.Reflection.Emit;
-using System.Runtime.Remoting.Messaging;
-using System.Text;
 
 namespace SaturnBuildTool
 {
@@ -135,7 +131,7 @@ namespace SaturnBuildTool
         /// <summary>
         /// Specify C++ Standard version to use
         /// </summary>
-        public CppVersion Version = CppVersion.Minimum;
+        public CppVersion CppStdVersion = CppVersion.Minimum;
 
         /// <summary>
         /// The current Precompiled Header (PCH) action that this settings should do.
@@ -189,7 +185,7 @@ namespace SaturnBuildTool
             WCharIsABuiltInType = wCharIsABuiltInType;
             ExperimentalFeatures = experimentalFeatures;
             Optimisation = optimisation;
-            Version = version;
+            CppStdVersion = version;
             PCHAction = precompiledHeaderAction;
             PCHInfo = precompiledHeaderInfo;
             PreprocessorDefines = preprocessorDefines;
@@ -208,7 +204,7 @@ namespace SaturnBuildTool
             WCharIsABuiltInType   = other.WCharIsABuiltInType;
             ExperimentalFeatures  = other.ExperimentalFeatures;
             Optimisation          = other.Optimisation;
-            Version               = other.Version;
+            CppStdVersion               = other.CppStdVersion;
             PreprocessorDefines   = other.PreprocessorDefines;
             Includes              = other.Includes;
             OutputPath            = other.OutputPath;

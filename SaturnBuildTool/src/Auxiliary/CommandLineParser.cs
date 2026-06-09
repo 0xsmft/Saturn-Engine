@@ -86,6 +86,10 @@ namespace SaturnBuildTool.Auxiliary
             {
                 return "LINUX64";
             }
+            else if( HasArgument( "APPLE" ) )
+            {
+                return "APPLE";
+            }
 
             return null;
         }

@@ -36,18 +36,13 @@ namespace SaturnBuildTool
                 WorkingDirectory = Shared.ProjectInfo.RootDirectory
             };
 
-            switch( Shared.ProjectInfo.TargetPlatformKind )
+            switch( Shared.ProjectInfo.TargetArchitectureKind )
             {
-                default:
+                default: return 1;
+
                 case ArchitectureKind.x86_64:
                     {
                         processStart.FileName = Path.Combine( toolsDir, "bin", "Hostx64", "x64", "link.exe" );
-                    }
-                    break;
-
-                case ArchitectureKind.x86_32:
-                    {
-                        processStart.FileName = Path.Combine( toolsDir, "bin", "Hostx86", "x86", "link.exe" );
                     }
                     break;
             }
@@ -222,17 +217,11 @@ namespace SaturnBuildTool
         {
             string CLLocation = toolchain.VCToolsPath;
 
-            switch( Shared.ProjectInfo.TargetPlatformKind )
+            switch( Shared.ProjectInfo.TargetArchitectureKind )
             {
                 case ArchitectureKind.x86_64:
                     {
                         CLLocation = Path.Combine( CLLocation, "lib", "x64" );
-                    }
-                    break;
-
-                case ArchitectureKind.x86_32:
-                    {
-                        CLLocation = Path.Combine( CLLocation, "lib", "x86" );
                     }
                     break;
             }

@@ -11,10 +11,10 @@ namespace SaturnBuildTool
         Linux,
         // ^^^^^ TODO Linux support (soon?)
 
-        // Mac Intel
+        // Mac Intel (x64)
         MacIntel,
 
-        // Mac Apple
+        // Mac Apple (AArch64)
         MacApple,
 
         // ^^^^^ TODO Mac support (maybe?)

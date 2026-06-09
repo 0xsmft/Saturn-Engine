@@ -8,7 +8,7 @@ namespace SaturnBuildTool
     public enum ArchitectureKind
     {
         x86_64,
-        x86_32,
+        AArch64,
         Unknown
     }
 
@@ -40,7 +40,7 @@ namespace SaturnBuildTool
         // The directory where the ".Build.cs" files are located.
         public string TargetDir { get; set; }
 
-        public ArchitectureKind TargetPlatformKind = ArchitectureKind.Unknown;
+        public ArchitectureKind TargetArchitectureKind = ArchitectureKind.Unknown;
 
         public ConfigKind CurrentConfigKind;
 
@@ -206,7 +206,7 @@ namespace SaturnBuildTool
 
             if( !result )
             {
-                Console.WriteLine( "Please suggested the help command (/HELP) for more information on the command line arguments." );
+                Console.WriteLine( "Please suggest the help command (/HELP) for more information on the command line arguments." );
             }
 
             return result;
@@ -232,11 +232,11 @@ namespace SaturnBuildTool
         {
             if( CommandLineParser.Instance.FindFlag( "Win64" ) )
             {
-                TargetPlatformKind = ArchitectureKind.x86_64;
+                TargetArchitectureKind = ArchitectureKind.x86_64;
             }
-            else if( CommandLineParser.Instance.FindFlag( "Win86" ) )
+            else if( CommandLineParser.Instance.FindFlag( "AArch64" ) )
             {
-                TargetPlatformKind = ArchitectureKind.x86_32;
+                TargetArchitectureKind = ArchitectureKind.AArch64;
             }
         }
 

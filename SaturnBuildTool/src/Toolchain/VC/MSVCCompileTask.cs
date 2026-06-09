@@ -28,17 +28,11 @@ namespace SaturnBuildTool
 
             ProcessStartInfo processStart = new ProcessStartInfo();
 
-            switch( Shared.ProjectInfo.TargetPlatformKind )
+            switch( Shared.ProjectInfo.TargetArchitectureKind )
             {
                 case ArchitectureKind.x86_64:
                     {
                         processStart.FileName = Path.Combine( CLLocation, "bin", "Hostx64", "x64", "cl.exe" );
-                    }
-                    break;
-
-                case ArchitectureKind.x86_32:
-                    {
-                        processStart.FileName = Path.Combine( CLLocation, "bin", "Hostx86", "x86", "cl.exe" );
                     }
                     break;
             }
@@ -67,7 +61,7 @@ namespace SaturnBuildTool
             // Most important arg here is /Zc:wchar_t, enforce that a wchar_t is a native type and not a typedef!
             Args.Add( " /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline" );
 
-            switch( CompileSettings.Version )
+            switch( CompileSettings.CppStdVersion )
             {
                 default:
                 case CompileSettings.CppVersion.Minimum:

@@ -77,12 +77,12 @@ namespace Saturn {
 
 	bool AnimGraphStateMachinePlayAnimNode::IsLooping() const
 	{
-		return Inputs[ 0 ].As<BoolPin>()->Data;
+		return Inputs[ 1 ].As<BoolPin>()->Data;
 	}
 
 	float AnimGraphStateMachinePlayAnimNode::GetPlaybackSpeed() const
 	{
-		return Inputs[ 1 ].As<FloatPin>()->Data;
+		return Inputs[ 0 ].As<FloatPin>()->Data;
 	}
 
 	void AnimGraphStateMachinePlayAnimNode::Serialise( std::ofstream& rStream ) const

@@ -29,6 +29,7 @@
 #pragma once
 
 #include "NodeEditorTaskBase.h"
+#include "NodeEditorVariableDataType.h"
 
 namespace Saturn {
 
@@ -38,7 +39,7 @@ namespace Saturn {
 	//
 	// SNodeEditorGetVariableTask
 	//
-	// This task does not tick! All it does it register a locator with an address to the variable ID.
+	// Register a locator with an address to the variable data.
 	//
 	SCLASS()
 	class SNodeEditorGetVariableTask : public NodeEditorTaskBase
@@ -66,5 +67,42 @@ namespace Saturn {
 	private:
 		UUID m_VariableID = 0llu;
 	};
-	
+
+	//
+	// SNodeEditorSetVariableTask
+	//
+	// Use a pre-registered locator and set the value to what was specified "In New Value" pin.
+	//
+	SCLASS()
+	class SNodeEditorSetVariableTask : public NodeEditorTaskBase
+	{
+		SAT_DECLARE_CLASS( SNodeEditorSetVariableTask, NodeEditorTaskBase );
+	public:
+		SNodeEditorSetVariableTask();
+		virtual ~SNodeEditorSetVariableTask();
+
+#if !defined(SAT_DIST)
+		virtual void PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode ) override;
+#endif
+
+		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther ) override;
+
+		virtual NodeEditorTaskState Tick( Timestep ts ) override;
+		virtual void Reset() override;
+
+	public:
+		virtual void Serialise( std::ofstream& rStream ) const override;
+		virtual void Deserialise( FDependentIStream& rStream ) override;
+
+	private:
+		UUID m_VariableID = 0llu;
+		// If new value pin is linked this will be the output pin id from the other node.
+		UUID m_InNewValueOtherPinID = 0llu;
+
+		NodeEditorVarTypeSafeUnion m_DefaultValueUnion{};
+		
+		bool m_IsNewValueLinked = false;
+		NodeEditorVariableDataType m_VariableType = NodeEditorVariableDataType::Unknown;
+	};
+
 }

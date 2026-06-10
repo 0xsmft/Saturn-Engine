@@ -85,14 +85,14 @@ namespace Saturn {
 			default:
 			{
 				SAT_CORE_WARN( "Unhandled variable data type to pin!, using default pin..." );
-				Outputs.push_back( Ref<Pin>::Create( "", PinType::Class, PinKind::Output ) );
+				Outputs.push_back( Ref<Pin>::Create( "", PinType::Anything, PinKind::Output ) );
 			} break;
 		}
 	}
 
 	void NodeEditorVariableNode::Serialise( std::ofstream& rStream ) const
 	{
-		// We must write the ID first, so when we deserailise we know what pin type to load back from.
+		// We must write the ID first, so when we deserialise we know what pin type to load back from.
 		if( m_Variable )
 		{
 			RawSerialisation::WriteObjectChecked( m_Variable->GetUUID(), rStream );
@@ -169,7 +169,7 @@ namespace Saturn {
 	}
 
 	NodeEditorSetVariableNode::NodeEditorSetVariableNode( const std::string& rName, Ref<NodeEditorVariable> var )
-		: Super( rName ), m_Variable( var )
+		: Super( "Set " + rName ), m_Variable( var )
 	{
 		CreateNode();
 	}
@@ -180,45 +180,97 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		Color = ImColor( 147, 226, 74 );
 #endif
-
-		switch( m_Variable->GetType() )
+		if( m_Variable )
 		{
-			case NodeEditorVariableDataType::Float:
+			InitPinsForVariable();
+		}
+	}
+
+	void NodeEditorSetVariableNode::InitPinsForVariable()
+	{
+		Inputs.reserve( 2 );
+		Outputs.reserve( 2 );
+
+		// Add exec params.
+		Inputs.push_back( Ref<Pin>::Create( "", PinType::Flow, PinKind::Input ) );
+		Outputs.push_back( Ref<Pin>::Create( "", PinType::Flow, PinKind::Output ) );
+
+		// Add in params for data.
+		if( m_Variable )
+		{
+			switch( m_Variable->GetType() )
 			{
-				Outputs.push_back( Ref<FloatPin>::Create( "", PinKind::Output ) );
+				case NodeEditorVariableDataType::Float:
+				{
+					Outputs.push_back( Ref<FloatPin>::Create( "Out New Value", PinKind::Output ) );
 
-				Inputs.push_back( Ref<FloatPin>::Create( "In Variable", PinKind::Input ) );
-				Inputs.push_back( Ref<FloatPin>::Create( "In Value", PinKind::Input ) );
-			} break;
+					Inputs.push_back( Ref<FloatPin>::Create( "In Value", PinKind::Input ) );
+				} break;
 
-			case NodeEditorVariableDataType::Int:
-			{
-				Outputs.push_back( Ref<IntPin>::Create( "", PinKind::Output ) );
+				case NodeEditorVariableDataType::Int:
+				{
+					Outputs.push_back( Ref<IntPin>::Create( "Out New Value", PinKind::Output ) );
 
-				Inputs.push_back( Ref<IntPin>::Create( "In Variable", PinKind::Input ) );
-				Inputs.push_back( Ref<IntPin>::Create( "In Value", PinKind::Input ) );
-			} break;
+					Inputs.push_back( Ref<IntPin>::Create( "In Value", PinKind::Input ) );
+				} break;
 
-			case NodeEditorVariableDataType::Bool:
-			{
-				Outputs.push_back( Ref<BoolPin>::Create( "", PinKind::Output ) );
+				case NodeEditorVariableDataType::Bool:
+				{
+					Outputs.push_back( Ref<BoolPin>::Create( "Out New Value", PinKind::Output ) );
 
-				Inputs.push_back( Ref<BoolPin>::Create( "In Variable", PinKind::Input ) );
-				Inputs.push_back( Ref<BoolPin>::Create( "In Value", PinKind::Input ) );
-			} break;
+					Inputs.push_back( Ref<BoolPin>::Create( "In Value", PinKind::Input ) );
+				} break;
 
-			default:
-			{
-				Outputs.push_back( Ref<Pin>::Create( "", PinType::Class, PinKind::Output ) );
+				default:
+				{
+					Outputs.push_back( Ref<Pin>::Create( "Out New Value", PinType::Class, PinKind::Output ) );
 
-				Inputs.push_back( Ref<Pin>::Create( "In Variable", PinType::Class, PinKind::Input ) );
-				Inputs.push_back( Ref<Pin>::Create( "In Value", PinType::Class, PinKind::Input ) );
-			} break;
+					Inputs.push_back( Ref<Pin>::Create( "In Value", PinType::Class, PinKind::Input ) );
+				} break;
+			}
+		}
+		else
+		{
+			Outputs.push_back( Ref<Pin>::Create( "Out New Value", PinType::Anything, PinKind::Output ) );
+			Inputs.push_back( Ref<Pin>::Create( "In Value", PinType::Anything, PinKind::Input ) );
 		}
 	}
 
 	NodeEditorSetVariableNode::~NodeEditorSetVariableNode()
 	{
+	}
+
+	NodeEditorTaskBase* NodeEditorSetVariableNode::ConvertToTask()
+	{
+		return NewObject<SNodeEditorSetVariableTask>( GetParentObject() );
+	}
+
+	void NodeEditorSetVariableNode::Serialise( std::ofstream& rStream ) const
+	{
+		// We must write the ID first, so when we deserialise we know what pin type to load back from.
+		if( m_Variable )
+		{
+			RawSerialisation::WriteObjectChecked( m_Variable->GetUUID(), rStream );
+		}
+		else
+			RawSerialisation::WriteObjectChecked( 0llu, rStream );
+
+		Super::Serialise( rStream );
+	}
+
+	void NodeEditorSetVariableNode::Deserialise( FDependentIStream& rStream )
+	{
+		UUID dataHandleID = 0llu;
+		RawSerialisation::ReadObjectChecked( dataHandleID, rStream );
+
+		if( dataHandleID )
+		{
+			auto* pOuter = dynamic_cast< NodeEditor* >( GetParentObject() );
+			m_Variable = pOuter->FindVariable( dataHandleID );
+			InitPinsForVariable();
+		}
+
+		Super::Deserialise( rStream );
 	}
 
 	//////////////////////////////////////////////////////////////////////////

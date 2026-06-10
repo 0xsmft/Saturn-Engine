@@ -36,7 +36,9 @@ namespace Saturn {
 	//
 	// NodeEditorVariableNode
 	//
-	// The node that represents a NodeEditorVariable
+	// The node that represents a NodeEditorVariable.
+	// 
+	// This acts as a GET variable node.
 	//
 	SCLASS();
 	class NodeEditorVariableNode : public NodeEditorNodeBase
@@ -71,6 +73,11 @@ namespace Saturn {
 		Ref<NodeEditorVariable> m_Variable;
 	};
 
+	//
+	// Set a variable.
+	//
+	// NB: This function is an exec function, this means that it takes in an exec-param and returns and exec-param.
+	//
 	SCLASS()
 	class NodeEditorSetVariableNode : public NodeEditorBlueprintNode
 	{
@@ -78,15 +85,27 @@ namespace Saturn {
 	public:
 		NodeEditorSetVariableNode();
 		NodeEditorSetVariableNode( const std::string& rName, Ref<NodeEditorVariable> var );
-		~NodeEditorSetVariableNode();
+		virtual ~NodeEditorSetVariableNode();
+
+	public:
+		//////////////////////////////////////////////////////////////////////////
+		// NodeEditorNodeBase
+		virtual NodeEditorTaskBase* ConvertToTask() override;
+		virtual void Serialise( std::ofstream& rStream ) const override;
+		virtual void Deserialise( FDependentIStream& rStream ) override;
+
+	public:
+		Ref<NodeEditorVariable> GetVariable() const { return m_Variable; }
 
 	public:
 		static SharedPtr<NodeEditorSetVariableNode> SpawnSetVariableNode( Ref<NodeEditorVariable> var, SharedPtr<NodeEditor> nodeEditor );
 
 	private:
 		void CreateNode();
+		void InitPinsForVariable();
 
 	private:
+		// Non-owning, used so we can properly create this node with the correct PinType.
 		Ref<NodeEditorVariable> m_Variable;
 	};
 }

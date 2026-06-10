@@ -156,7 +156,7 @@ namespace Saturn {
 			}
 
 			// Find neighbors from inputs and continue until there is no neighbors
-			for( const auto& rNeighbor : FindNeighborsRight( currentNode ) )
+			for( const auto& rNeighbor : FindNeighborsViaInputs( currentNode ) )
 			{
 				stack.push( rNeighbor );
 			}
@@ -195,7 +195,7 @@ namespace Saturn {
 				}
 			}
 
-			const auto& rNeighbours = FindNeighborsLeft( currentNode );
+			const auto& rNeighbours = FindNeighborsViaOutputs( currentNode );
 			for( auto Itr = rNeighbours.rbegin(); Itr != rNeighbours.rend(); ++Itr )
 			{
 				if( std::find( visited.begin(), visited.end(), *Itr ) == visited.end() )

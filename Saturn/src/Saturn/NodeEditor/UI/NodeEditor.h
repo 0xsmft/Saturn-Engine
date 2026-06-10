@@ -119,11 +119,10 @@ namespace Saturn {
 
 		std::vector<Ref<Link>> FindLinksByPin( UUID id );
 
-		// Search via inputs
-		std::vector<UUID> FindNeighborsRight( SharedPtr<NodeEditorNodeBase> node );
+		// Search via all output/input pin
+		std::vector<UUID> FindNeighborsViaInputs( SharedPtr<NodeEditorNodeBase> node );
+		std::vector<UUID> FindNeighborsViaOutputs( SharedPtr<NodeEditorNodeBase> node );
 
-		// Search via outputs
-		std::vector<UUID> FindNeighborsLeft( SharedPtr<NodeEditorNodeBase> node );
 		// Search via a single output/input pin
 		std::vector<UUID> FindNeighborsInput( SharedPtr<NodeEditorNodeBase> node, size_t index );
 		std::vector<UUID> FindNeighborsOutput( SharedPtr<NodeEditorNodeBase> node, size_t index );
@@ -149,7 +148,7 @@ namespace Saturn {
 
 						// Find neighbors from outputs and continue until there is no neighbors
 						SharedPtr<NodeEditorNodeBase> currentNode = FindNode( currentID );
-						const auto& rNeighbours = FindNeighborsLeft( currentNode );
+						const auto& rNeighbours = FindNeighborsViaOutputs( currentNode );
 
 						for( auto Itr = rNeighbours.rbegin(); Itr != rNeighbours.rend(); Itr++ )
 						{
@@ -173,7 +172,7 @@ namespace Saturn {
 
 						// Find neighbors from inputs and continue until there is no neighbors
 						SharedPtr<NodeEditorNodeBase> currentNode = FindNode( currentID );
-						for( const auto& rNeighbor : FindNeighborsRight( currentNode ) )
+						for( const auto& rNeighbor : FindNeighborsViaInputs( currentNode ) )
 						{
 							stack.push( rNeighbor );
 						}

@@ -107,7 +107,7 @@ namespace Saturn {
 			{
 				treeNode->EvaluationOrder = nodeEvaluationOrder++;
 
-				auto rNeighbours = FindNeighborsLeft( treeNode );
+				auto rNeighbours = FindNeighborsViaOutputs( treeNode );
 
 				// Behaviour tree are left to right at the composite level
 				std::sort( rNeighbours.begin(), rNeighbours.end(),

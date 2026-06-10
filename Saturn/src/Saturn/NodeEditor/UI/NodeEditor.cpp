@@ -1709,7 +1709,7 @@ namespace Saturn {
 		return result;
 	}
 
-	std::vector<UUID> NodeEditor::FindNeighborsRight( SharedPtr<NodeEditorNodeBase> node )
+	std::vector<UUID> NodeEditor::FindNeighborsViaInputs( SharedPtr<NodeEditorNodeBase> node )
 	{
 		std::vector<UUID> ids;
 
@@ -1732,7 +1732,7 @@ namespace Saturn {
 		return ids;
 	}
 
-	std::vector<UUID> NodeEditor::FindNeighborsLeft( SharedPtr<NodeEditorNodeBase> node )
+	std::vector<UUID> NodeEditor::FindNeighborsViaOutputs( SharedPtr<NodeEditorNodeBase> node )
 	{
 		std::vector<UUID> ids;
 

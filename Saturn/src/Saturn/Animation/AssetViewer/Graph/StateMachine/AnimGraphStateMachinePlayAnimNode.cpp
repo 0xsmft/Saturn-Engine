@@ -64,6 +64,9 @@ namespace Saturn {
 		Inputs.emplace_back( Ref<BoolPin>::Create( "Loop", PinKind::Input ) );
 
 		Outputs.push_back( Ref<AnimGraphAnimationPin>::Create( "Out Animation", PinKind::Output, AnimGraphAnimationPinFlags::Animation ) );
+
+		// Complete callback
+		Outputs.push_back( Ref<Pin>::Create( "On Complete", PinType::Flow, PinKind::Output ) );
 	}
 
 	AnimGraphStateMachinePlayAnimNode::~AnimGraphStateMachinePlayAnimNode()

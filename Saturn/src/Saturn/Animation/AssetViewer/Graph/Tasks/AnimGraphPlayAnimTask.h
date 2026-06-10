@@ -42,7 +42,7 @@ namespace Saturn {
 		SAT_DECLARE_CLASS( AnimGraphPlayAnimTask, NodeEditorTaskBase );
 	public:
 		AnimGraphPlayAnimTask();
-		~AnimGraphPlayAnimTask();
+		virtual ~AnimGraphPlayAnimTask();
 
 	public:
 #if !defined(SAT_DIST)
@@ -57,9 +57,24 @@ namespace Saturn {
 		virtual void Deserialise( FDependentIStream& rStream ) override;
 
 	private:
+#if !defined(SAT_DIST)
+		void SortOnCompleteTasksAndCovertToTasks( NodeEditor* pEditor, SharedPtr<NodeEditorNodeBase> firstNode );
+#endif
+
+		void TickOnCompleteTasks( Timestep ts );
+
+	private:
+		// Tasks (in the correct order) that will happen when this animation is completed.
+		std::vector<Ref<NodeEditorTaskBase>> m_OnCompleteTasks;
+
 		Ref<Animator> m_Animator;
-		UUID m_AnimationAssetID = 0llu;
 		Ref<SkeletalAnimationAsset> m_AnimationAsset;
+		
+		UUID m_AnimationAssetID = 0llu;
+		size_t m_StartingIndexForOnComplete = 0llu;
+		
+		bool m_AnimationInitialised = false;
+		bool m_ShouldLoop = false;
 	};
 
 }

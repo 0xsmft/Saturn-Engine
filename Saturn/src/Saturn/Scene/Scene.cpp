@@ -1592,12 +1592,9 @@ namespace Saturn {
 
 		for( auto&& [id, entity] : m_EntityIDMap )
 		{
-			if( entity->HasComponent<DScriptComponent>() )
+			if( entity->GetClass()->GetParentClass() != Entity::StaticClass() )
 			{
-				auto& rScriptComponent = entity->GetComponent<DScriptComponent>();
-
-				SharedPtr<Entity> newEntity = HotReloadReplaceOldEntity(entity);
-
+				SharedPtr<Entity> newEntity = HotReloadReplaceOldEntity( entity );
 				replace[ id ] = newEntity;
 			}
 		}
@@ -1606,11 +1603,15 @@ namespace Saturn {
 		{
 			auto& rOldEntity = m_EntityIDMap[ id ];
 
+			// Copy components
 			CopyComponentIfExists( AllDuplicatableComponents{}, entity->GetHandle(), rOldEntity->GetHandle(), m_Registry );
 
 			CopyComponentIfExists<RelationshipComponent>( entity->GetHandle(), rOldEntity->GetHandle(), m_Registry );
 
+			// Delete old
 			DeleteEntity( rOldEntity, false, entity->GetUUID() );
+		
+			m_EntityIDMap[ id ] = entity;
 		}
 
 		replace.clear();
@@ -1710,12 +1711,9 @@ namespace Saturn {
 		// Create new entity
 		SharedPtr<Entity> entity = ( Entity* ) ClassMetadataHandler::Get().CreateClassObject( source->GetClass()->GetHash() );
 
+		// and we give the new entity the same name and ID
 		entity->SetName( source->GetName() );
 		entity->GetComponent<IdComponent>().ID = source->GetUUID();
-
-		// We don't replace the entt handle as we only entt for the backend
-		// So just remove the source entity from entt and we will handle our map.
-		//DeleteEntity( source );
 
 		return entity;
 	}

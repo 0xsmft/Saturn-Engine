@@ -89,6 +89,7 @@ namespace Saturn {
 		UUID m_TransitionStartNode = 0;
 		SharedPtr<NodeEditorNodeBase> m_StateMachineEntryNode;
 
+		bool m_CanCreateTransitionNode = false;
 		bool m_StateNodeHovered = false;
 		bool m_CanResetHoveredNode = false;
 	};

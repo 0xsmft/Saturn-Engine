@@ -256,11 +256,6 @@ namespace Saturn {
 				}
 			} break;
 
-			case NodeEditorAction::PreEvaluate:
-			{
-
-			} break;
-
 			case NodeEditorAction::PostEvaluateSuccess:
 			{
 				BuildTaskCache();
@@ -429,11 +424,21 @@ namespace Saturn {
 
 					pDrawList->AddRectFilled( rectMin, rectMax, IM_COL32( 32, 45, 32, 180 ), size.y * 0.15f );
 					pDrawList->AddText( labelPoint, IM_COL32( 255, 255, 255, 255 ), "+ Create State" );
+
+					m_CanCreateTransitionNode = true;
+				}
+				else
+				{
+					const auto startNode = FindNode( m_TransitionStartNode );
+					if( startNode == m_HoveredNode )
+					{
+						m_CanCreateTransitionNode = false;
+					}
 				}
 			}
 			else
 			{
-				if( m_HoveredNode )
+				if( m_HoveredNode && m_CanCreateTransitionNode )
 				{
 					auto startNode = FindNode( m_TransitionStartNode );
 
@@ -453,8 +458,10 @@ namespace Saturn {
 					MarkDirty();
 
 					ed::ClearSelection();
-					m_TransitionStartNode = 0;
 				}
+
+				m_TransitionStartNode = 0;
+				m_CanCreateTransitionNode = false;
 			}
 		}
 	}

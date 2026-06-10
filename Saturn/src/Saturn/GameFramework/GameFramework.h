@@ -58,6 +58,7 @@ namespace Saturn {
 	extern Ref<Sound> AsPlaySound2D( AssetID ID );
 	extern Ref<Sound> AsPlaySoundAtLocation( AssetID ID, const glm::vec3& rPosition, bool PlayNow = true );
 	extern Ref<GraphSound> AsPlayGraphSound( AssetID ID );
+	extern void AsFireAndForget( AssetID ID );
 
 	extern Ref<Asset> AmFindAsset( AssetID ID );
 	

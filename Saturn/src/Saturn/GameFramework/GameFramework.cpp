@@ -80,6 +80,11 @@ namespace Saturn {
 		return AudioSystem::Get().PlayGraphSound( ID, UUID() );
 	}
 
+	void AsFireAndForget( AssetID ID )
+	{
+		AudioSystem::Get().FireAndForget( ID );
+	}
+
 	Ref<Asset> AmFindAsset( AssetID ID )
 	{
 		return AssetManager::Get()->FindAsset( ID );

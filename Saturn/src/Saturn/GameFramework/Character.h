@@ -73,6 +73,9 @@ namespace Saturn {
 		StaticMeshComponent* GetStaticMeshComponent() { return TryGetComponent<StaticMeshComponent>(); }
 		const StaticMeshComponent* GetStaticMeshComponent() const { return TryGetComponent<StaticMeshComponent>(); }
 
+		float GetMovementSpeed() { return m_MovementSpeed; }
+		const float GetMovementSpeed() const { return m_MovementSpeed; }
+
 	protected:
 		//
 		// This function is called during BeginPlay.

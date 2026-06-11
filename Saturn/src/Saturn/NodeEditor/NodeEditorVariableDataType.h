@@ -28,96 +28,80 @@
 
 #pragma once
 
-#include "NodeEditorVariableDataType.h"
-#include "NodeEditorVariableLocator.h"
-
-#include "Saturn/Core/UUID.h"
-
-#include "Saturn/Serialisation/Raw/RawSerialisationBase.h"
+#include <glm/glm.hpp>
+#include <variant>
 
 namespace Saturn {
 
-	//
-	// NodeEditorVariable
-	// 
-	// Represents a user defined "variable" in the NodeEditor.
-	// 
-	// For example, the user in an AnimGraph may define "IsInAir" as a variable.
-	//
-	class NodeEditorVariable : public RefTarget
+	enum class NodeEditorVariableDataType : uint8_t
 	{
-	public:
-		NodeEditorVariable() = default;
-		NodeEditorVariable( const NodeEditorVariable* pOther ) 
-			: m_Name( pOther->m_Name ),
-			m_VariableID( pOther->m_VariableID ),
-			m_DataType( pOther->m_DataType )
-		{
-		}
-
-		NodeEditorVariable( NodeEditorVariableDataType variableType ) 
-			: m_DataType( variableType )
-		{
-		}
-	public:
-
-		template<typename TCppType>
-		typename const TCppType Get() const 
-		{
-			SAT_CORE_ASSERT( CheckTypeSafety<TCppType>() );
-
-			return *( TCppType* ) m_Data.Get();
-		}
-
-		template<typename TCppType>
-		typename TCppType* GetPtr()
-		{
-			SAT_CORE_ASSERT( CheckTypeSafety<TCppType>() );
-
-			return ( TCppType* ) m_Data.Get();
-		}
-
-		template<typename TCppType>
-		void Set( TCppType* pType ) 
-		{
-			SAT_CORE_ASSERT( CheckTypeSafety<TCppType>() );
-
-			m_Data.Set( pType );
-		}
-
-		template<typename TCppType>
-		void Set( const TCppType& rValue )
-		{
-			SAT_CORE_ASSERT( CheckTypeSafety<TCppType>() );
-
-			m_Data.SetValue( rValue );
-		}
-
-	public:
-		static void Serialise( const Ref<NodeEditorVariable>& rObject, std::ofstream& rStream );
-		static void Deserialise( Ref<NodeEditorVariable>& rObject, FDependentIStream& rStream );
-
-	public:
-		NodeEditorVariableDataType GetType() const { return m_DataType; }
-		Saturn::UUID GetUUID() const { return m_VariableID; }
-		const std::string& GetName() const { return m_Name; }
-
-	private:
-		// Returns true if we are safe to get/set the type.
-		template<typename TCppType>
-		bool CheckTypeSafety() const 
-		{
-			return NodeEditorDataTypeTraits<TCppType>::GetDataType() == m_DataType;
-		}
-
-	private:
-		std::string m_Name;
-		NodeEditorVariableLocator m_Data;
-		Saturn::UUID m_VariableID;
-		NodeEditorVariableDataType m_DataType = NodeEditorVariableDataType::Unknown;
-
-	private:
-		friend class NodeEditor;
+		Float, Int, ID, Bool, Vec2, Vec3, Vec4, Class, String, Unknown
 	};
+
+	inline std::string NodeEditorVariableDataTypeToString( NodeEditorVariableDataType type )
+	{
+		switch( type )
+		{
+			case NodeEditorVariableDataType::Float:
+				return "Float";
+			case NodeEditorVariableDataType::Int:
+				return "Int32";
+			case NodeEditorVariableDataType::ID:
+				return "ID";
+			case NodeEditorVariableDataType::Bool:
+				return "Bool";
+			case NodeEditorVariableDataType::Vec2:
+				return "Vector2";
+			case NodeEditorVariableDataType::Vec3:
+				return "Vector3";
+			case NodeEditorVariableDataType::Vec4:
+				return "Vector4";
+			case NodeEditorVariableDataType::Class:
+				return "Class";
+			case NodeEditorVariableDataType::String:
+				return "String";
+
+			case NodeEditorVariableDataType::Unknown:
+			default:
+				return "Unknown Data Type";
+		}
+	}
+
+	// A type safe union of the raw C++ types that a node editor variable can hold.
+	// TODO: Class, string
+	using NodeEditorVarTypeSafeUnion = std::variant<
+		std::monostate,
+		float,
+		int,
+		uint64_t,
+		bool,
+		glm::vec2,
+		glm::vec3,
+		glm::vec4>;
+	
+	//////////////////////////////////////////////////////////////////////////
+	// Type traits mapping
+
+	template<typename Ty>
+	struct NodeEditorDataTypeTraits;
+
+#define SAT_DEFINE_NODE_EDITOR_VARIABLE_TYPE_TRAITS( EnumType, CppType )	\
+template<> struct NodeEditorDataTypeTraits<CppType>							\
+{																			\
+	using Value = CppType;													\
+	static constexpr NodeEditorVariableDataType GetDataType() { return EnumType; } \
+}
+
+	// NB: If you get an error here about use of undefined type 'Saturn::NodeEditorDataTypeTraits<TCppType>'
+	//	   with TCppType == <MyType>
+	//     then you need to add the type to the type traits table below....
+
+	SAT_DEFINE_NODE_EDITOR_VARIABLE_TYPE_TRAITS( NodeEditorVariableDataType::Float, float );
+	SAT_DEFINE_NODE_EDITOR_VARIABLE_TYPE_TRAITS( NodeEditorVariableDataType::Int,   int );
+	SAT_DEFINE_NODE_EDITOR_VARIABLE_TYPE_TRAITS( NodeEditorVariableDataType::ID,    uint64_t );
+	SAT_DEFINE_NODE_EDITOR_VARIABLE_TYPE_TRAITS( NodeEditorVariableDataType::Bool,  bool );
+	SAT_DEFINE_NODE_EDITOR_VARIABLE_TYPE_TRAITS( NodeEditorVariableDataType::Vec2,	glm::vec2 );
+	SAT_DEFINE_NODE_EDITOR_VARIABLE_TYPE_TRAITS( NodeEditorVariableDataType::Vec3,  glm::vec3 );
+	SAT_DEFINE_NODE_EDITOR_VARIABLE_TYPE_TRAITS( NodeEditorVariableDataType::Vec4,  glm::vec4 );
 
 }

@@ -79,7 +79,7 @@ namespace Saturn {
 		mutable unsigned int m_RefCount = 0;
 	};
 
-	// Ref is an intrusive, shared ownership, reference counted, smart pointer similar to std::shared_ptr
+	// Ref is an intrusive, shared ownership, reference counted, authoritative smart pointer similar to std::shared_ptr
 	// Intrusive refs do not support the usage of WeakRefs, you must use SharedPtr for that!
 	// Refs take up less space than SharedPtrs, as the Ref class it self only needs 8 bytes (on 64 bit machines) for the pointer and then T needs an additional 4 bytes (excl. vtable) for the reference count bringing it to a total of 12 bytes but only 8 bytes per ref!
 	//
@@ -529,11 +529,8 @@ namespace Saturn {
 		{
 			TryRelease();
 
-			m_pControlBlock = rrOther.m_pControlBlock;
-			m_Pointer = rrOther.m_Pointer;
-
-			rrOther.m_pControlBlock = nullptr;
-			rrOther.m_Pointer = nullptr;
+			m_pControlBlock = std::exchange( rrOther.m_pControlBlock, nullptr );
+			m_Pointer = std::exchange( rrOther.m_Pointer, nullptr );
 
 			return *this;
 		}
@@ -593,11 +590,8 @@ namespace Saturn {
 		template<typename T2>
 		void MoveFrom( SharedPtr<T2>&& rrOther ) noexcept
 		{
-			m_Pointer = rrOther.m_Pointer;
-			m_pControlBlock = rrOther.m_pControlBlock;
-
-			rrOther.m_pControlBlock = nullptr;
-			rrOther.m_Pointer = nullptr;
+			m_Pointer = std::exchange( rrOther.m_Pointer, nullptr );
+			m_pControlBlock = std::exchange( rrOther.m_pControlBlock, nullptr );
 		}
 
 	private:

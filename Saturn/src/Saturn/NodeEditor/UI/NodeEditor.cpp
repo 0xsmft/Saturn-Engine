@@ -186,10 +186,6 @@ namespace Saturn {
 				pThis->OnNodeEditorEvent( NodeEditorAction::SelectNode );
 			}
 
-#if !defined(SAT_DIST)
-			pNode->ActiveState.assign( pData, size );
-#endif
-
 			// Only mark dirty if we are not loading
 			// imgui_node_editor will call this function when initialising
 			if( !pThis->IsStateFlagSet( NodeEditorState_Loading ) )

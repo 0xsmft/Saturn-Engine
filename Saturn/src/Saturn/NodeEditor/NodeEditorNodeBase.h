@@ -148,8 +148,6 @@ namespace Saturn {
 
 		// Editor only data vvvv
 #if !defined(SAT_DIST)
-		std::string				ActiveState;
-		std::string				SavedState;
 		ImColor					Color;
 		ImVec2					Size;
 		// For Undo/Redo, the position of the node before it was moved by the user, not serialised.

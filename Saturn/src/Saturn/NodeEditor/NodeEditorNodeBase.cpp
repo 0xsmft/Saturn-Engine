@@ -75,9 +75,6 @@ namespace Saturn {
 		Auxiliary::SerialiseImVec2( ed::GetNodeSize( ed::NodeId( ID ) ), rStream );
 		Auxiliary::SerialiseImVec2( ed::GetNodePosition( ed::NodeId( ID ) ), rStream );
 
-		RawSerialisation::WriteString( ActiveState, rStream );
-		RawSerialisation::WriteString( SavedState, rStream );
-
 		auto* pNodeEditorBase = dynamic_cast< NodeEditor* >( GetParentObject() );
 		if( pNodeEditorBase && pNodeEditorBase->GetVersion() >= NodeEditorVersion::Breakpoints )
 		{
@@ -123,13 +120,15 @@ namespace Saturn {
 
 		ImVec2 position{};
 		Auxiliary::DeserialiseImVec2( position, rStream );
-	
 		ed::SetNodePosition( ed::NodeId( ID ), position );
 
-		RawSerialisation::ReadString( rStream );
-		RawSerialisation::ReadString( rStream );
-
 		auto* pNodeEditorBase = dynamic_cast< NodeEditor* >( GetParentObject() );
+		if( pNodeEditorBase && pNodeEditorBase->GetVersion() < NodeEditorVersion::RemovedState )
+		{
+			auto tmp = RawSerialisation::ReadString( rStream );
+			tmp = RawSerialisation::ReadString( rStream );
+		}
+
 		if( pNodeEditorBase && pNodeEditorBase->GetVersion() >= NodeEditorVersion::Breakpoints )
 		{
 			bool hasBreakpoint = false;
@@ -163,6 +162,7 @@ namespace Saturn {
 		//       All we do is read back the data
 		for( size_t i = 0; i < inputSize; ++i )
 		{
+			// Check in case saved pin count is greater than current pin count.
 			if( i >= Inputs.size() )
 				break;
 
@@ -172,6 +172,7 @@ namespace Saturn {
 
 		for( size_t i = 0; i < outputSize; ++i )
 		{
+			// Check in case saved pin count is greater than current pin count.
 			if( i >= Outputs.size() )
 				break;
 

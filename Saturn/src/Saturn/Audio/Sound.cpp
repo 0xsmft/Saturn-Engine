@@ -31,7 +31,7 @@
 
 #include "AudioSystem.h"
 
-#if !defined(SAT_DIST)
+#if defined(SAT_DEBUG)
 #define SAT_SND_VERBOSE_INFO(...) SAT_CORE_INFO(__VA_ARGS__)
 #else
 #define SAT_SND_VERBOSE_INFO(...)

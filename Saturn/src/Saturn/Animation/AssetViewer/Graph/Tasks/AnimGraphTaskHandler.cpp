@@ -68,7 +68,9 @@ namespace Saturn {
 				// At end, restart from the root.
 				ResetAllTasks();
 
+#if defined(SAT_VERBOSE_ANIMGRAPH_INFO)
 				SAT_CORE_INFO( "Task Handler, completed" );
+#endif
 			}
 		
 			m_CurrentTask = m_Tasks.at( m_CurrentTaskIndex );

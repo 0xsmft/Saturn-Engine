@@ -31,30 +31,13 @@
 
 #include "Saturn/NodeEditor/NodeEditorTaskHandler.h"
 
+#if !defined(SAT_DIST)
 #include "Saturn/NodeEditor/NodeEditorBase.h"
 #include "Saturn/Animation/AssetViewer/Graph/StateMachine/AnimGraphStateMachineTransitionNode.h"
 #include "Saturn/Animation/AssetViewer/Graph/StateMachine/AnimGraphTransitionGraphNodes.h"
+#endif
 
 namespace Saturn {
-
-	AnimGraphTransitionTask::AnimGraphTransitionTask()
-	{
-	}
-
-	AnimGraphTransitionTask::~AnimGraphTransitionTask()
-	{
-	}
-
-	NodeEditorTaskState AnimGraphTransitionTask::Tick( Timestep ts )
-	{
-		return NodeEditorTaskState::Completed;
-	}
-
-	void AnimGraphTransitionTask::Reset()
-	{
-	}
-	
-	//////////////////////////////////////////////////////////////////////////
 
 	AnimGraphTransitionResultTask::AnimGraphTransitionResultTask()
 	{
@@ -73,7 +56,7 @@ namespace Saturn {
 		const auto link = pEditor->FindLinkByPin( pNode->Inputs[ 0 ]->ID );
 		if( link && link->StartPinID )
 		{
-			auto otherPin = pEditor->FindPin( link->StartPinID );
+			const auto otherPin = pEditor->FindPin( link->StartPinID );
 			if( otherPin )
 			{
 				m_IncomingNodeID = otherPin->Node->ID;
@@ -91,14 +74,24 @@ namespace Saturn {
 		{
 			m_IncomingNodeID = pThisOther->m_IncomingNodeID;
 
+			// Access locator from what we are linked to.
+			// TOOD: Pin index check.
 			m_Result = pHandler->AccessLocator<bool>( m_IncomingNodeID, 0 );
 		}
 	}
 
 	NodeEditorTaskState AnimGraphTransitionResultTask::Tick( Timestep ts )
 	{
-		if( !m_Result )
-			return NodeEditorTaskState::TransitionCannotTransition;
+		// TODO: Fix this!
+		if( !m_Result ) 
+		{
+			m_Result = m_pHandler->AccessLocator<bool>( m_IncomingNodeID, 0 );
+
+			if( !m_Result )
+			{
+				return NodeEditorTaskState::TransitionCannotTransition;
+			}
+		}
 
 		return *m_Result ? NodeEditorTaskState::TransitionShouldTransition : NodeEditorTaskState::TransitionCannotTransition;
 	}
@@ -125,5 +118,4 @@ namespace Saturn {
 
 #include "Saturn/GameFramework/Core/EngineGenerated.h"
 
-SAT_X31_CREATE_AUTO_REG( AnimGraphTransitionTask );
 SAT_X31_CREATE_AUTO_REG( AnimGraphTransitionResultTask );

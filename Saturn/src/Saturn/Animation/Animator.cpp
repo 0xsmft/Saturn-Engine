@@ -123,6 +123,18 @@ namespace Saturn {
 		}
 	}
 
+	void Animator::AnimGraph_SetSingleAnim( Ref<SkeletalAnimationAsset> anim, bool loop )
+	{
+		Loop( loop );
+
+		// Reset anim time
+		m_AnimationTime = 0.0f;
+		m_Completed = false;
+
+		m_SingleAnimationAsset = anim;
+		m_Context.initialize( *static_cast< const acl::compressed_tracks* >( anim->GetData() ) );
+	}
+
 	void Animator::TickAnimation( Timestep ts )
 	{
 		SAT_PF_EVENT();
@@ -189,6 +201,12 @@ namespace Saturn {
 		m_SingleAnimationAsset = nullptr;
 		m_AnimationControllerAsset = nullptr;
 		m_State = AnimationState::Inactive;
+	}
+
+	void Animator::PlayFromStart()
+	{
+		m_AnimationTime = 0.0f;
+		m_Completed = false;
 	}
 
 	Ref<Asset> Animator::GetCurrentAnimation() const

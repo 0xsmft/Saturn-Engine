@@ -93,7 +93,7 @@ namespace Saturn {
 		}
 
 		// Transitions out are linked to the nodes output pins
-		const auto nodes = pEditor->FindNeighborsLeft( pNode->SharedFromThis() );
+		const auto nodes = pEditor->FindNeighborsViaOutputs( pNode->SharedFromThis() );
 		m_Transitions.reserve( nodes.size() );
 
 		for( const auto& rNodeID : nodes )
@@ -155,6 +155,11 @@ namespace Saturn {
 
 			if( result == NodeEditorTaskState::TransitionShouldTransition )
 			{
+				for( auto& rInnerTask : m_InnerTasks )
+				{
+					rInnerTask->Reset();
+				}
+
 				m_NextStateToTransitionOutTo = rTransition->GetDestinationID();
 				return NodeEditorTaskState::TransitionShouldTransition;
 			}

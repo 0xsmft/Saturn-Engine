@@ -53,7 +53,7 @@ namespace Saturn {
 	{
 	public:
 		Animator();
-		~Animator();
+		virtual ~Animator();
 
 		void Destroy();
 		void InitAnimation( AssetID id, Ref<SkeletalMesh> sk, AnimatorType type );
@@ -61,7 +61,8 @@ namespace Saturn {
 		void Pause();
 		void Begin();
 		void Clear();
-		void StepTo( float time ) { time; }
+		void StepTo( float time ) { m_AnimationTime = time; }
+		void PlayFromStart();
 
 		void SetPlaybackSpeed( float playbackSpeed ) { m_PlaybackSpeed = playbackSpeed; }
 		void Loop( bool shouldLoop ) { m_Looping = shouldLoop; }
@@ -92,6 +93,8 @@ namespace Saturn {
 
 	private:
 		void TickSingleAnim( Timestep ts );
+
+		void AnimGraph_SetSingleAnim( Ref<SkeletalAnimationAsset> anim, bool loop );
 
 	private:
 		float m_AnimationTime = 0.0f;

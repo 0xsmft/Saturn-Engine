@@ -32,25 +32,12 @@
 
 namespace Saturn {
 
-	SCLASS()
-	class AnimGraphTransitionTask : public NodeEditorTaskBase
-	{
-		SAT_DECLARE_CLASS( AnimGraphTransitionTask, NodeEditorTaskBase );
-	public:
-		AnimGraphTransitionTask();
-		~AnimGraphTransitionTask();
-
-		virtual	NodeEditorTaskState Tick( Timestep ts ) override;
-		virtual	void Reset() override;
-
-	private:
-		Saturn::UUID m_FinalResultNodeID = 0;
-	};
-
-	//////////////////////////////////////////////////////////////////////////
-
-	class BoolPin;
-
+	//
+	// AnimGraphTransitionResultTask
+	// 
+	// Represents the final bool condition of a transition, this task stores if this transition is able to be transitioned
+	// out of.
+	//
 	SCLASS()
 	class AnimGraphTransitionResultTask : public NodeEditorTaskBase
 	{

@@ -1259,7 +1259,7 @@ namespace Saturn {
 
 	bool EditorLayer::OnMousePressed( RubyMouseEvent& rEvent )
 	{
-		if( m_RuntimeScene || !m_MouseOverViewport || rEvent.GetButton() != ( int ) RubyMouseButton_Left || ImGuizmo::IsOver() )
+		if( ( m_RuntimeScene && m_RuntimeScene->IsRuntimeRunning() ) || !m_MouseOverViewport || rEvent.GetButton() != ( int ) RubyMouseButton_Left || ImGuizmo::IsOver() )
 			return false;
 
 		const auto viewportMouse = ConvertMouseToViewportNDC();
@@ -4312,11 +4312,25 @@ namespace Saturn {
 	{
 		const glm::vec4 mouseClipPos = { mx, my, -1.0f, 1.0f };
 
-		const auto inverseProj = glm::inverse( m_EditorCamera.ProjectionMatrix() );
-		const auto inverseView = glm::inverse( glm::mat3( m_EditorCamera.ViewMatrix() ) );
+		glm::mat4 inverseProj{};
+		glm::mat3 inverseView{};
+		glm::vec3 rayPos{};
+
+		// Use suspended editor camera if we are suspended.
+		if( ( m_RuntimeScene && m_RuntimeScene->IsPausedOrSuspended() ) )
+		{
+			inverseProj = glm::inverse( m_SuspendedEditorCamera.ProjectionMatrix() );
+			inverseView = glm::inverse( glm::mat3( m_SuspendedEditorCamera.ViewMatrix() ) );
+			rayPos = m_SuspendedEditorCamera.GetPosition();
+		}
+		else
+		{
+			inverseProj = glm::inverse( m_EditorCamera.ProjectionMatrix() );
+			inverseView = glm::inverse( glm::mat3( m_EditorCamera.ViewMatrix() ) );
+			rayPos = m_EditorCamera.GetPosition();
+		}
 
 		const glm::vec4 ray = inverseProj * mouseClipPos;
-		const glm::vec3 rayPos = m_EditorCamera.GetPosition();
 		const glm::vec3 rayDir = inverseView * glm::vec3( ray );
 
 		return { rayPos, rayDir };

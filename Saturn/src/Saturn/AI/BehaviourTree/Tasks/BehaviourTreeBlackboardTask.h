@@ -28,21 +28,32 @@
 
 #pragma once
 
-#include "BehaviourTreeNodeBase.h"
+#include "Saturn/AI/BehaviourTree/Blackboard.h"
+#include "Saturn/NodeEditor/NodeEditorTaskBase.h"
 
 namespace Saturn {
-
-	class BehaviourTreeRootNode : public BehaviourTreeNodeBase
+	
+	SCLASS()
+	class BehaviourTreeBlackboardTask : public NodeEditorTaskBase
 	{
-		SAT_DECLARE_CLASS( BehaviourTreeRootNode, BehaviourTreeNodeBase );
+		SAT_DECLARE_CLASS_MOVE( BehaviourTreeBlackboardTask, NodeEditorTaskBase );
 	public:
-		BehaviourTreeRootNode();
-		virtual ~BehaviourTreeRootNode();
+		BehaviourTreeBlackboardTask();
+		virtual ~BehaviourTreeBlackboardTask();
 
-		virtual NodeEditorTaskBase* ConvertToTask() override;
+#if !defined(SAT_DIST)
+		virtual void PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode ) override;
+#endif
+
+		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther ) override;
+
+		virtual void Serialise( std::ofstream& rStream ) const override;
+		virtual void Deserialise( FDependentIStream& rStream ) override;
 
 	private:
-		void CreateNode();
+		// ID for the specification asset that is used to create the runtime m_Blackboard.
+		UUID m_SpecBBID = 0;
+		Ref<Blackboard> m_Blackboard;
 	};
 	
 }

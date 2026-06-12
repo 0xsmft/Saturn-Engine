@@ -83,7 +83,7 @@ namespace Saturn {
 	private:
 		// On Dist, we don't need to store our key spec, only with editor to allow us to select a target variable
 #if !defined( SAT_DIST )
-		Ref<BehaviourTreeMemoryKeySpec> m_VariableSpec;
+		Ref<BlackboardVaraibleSpec> m_VariableSpec;
 #endif
 		BTMemoryConditionQueryType m_QueryType = BTMemoryConditionQueryType::Set;
 	};

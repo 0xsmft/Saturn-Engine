@@ -40,7 +40,7 @@ namespace Saturn {
 	void BehaviourTreeCondition::SetupMemVariable( AssetID memSpecID )
 	{
 #if !defined( SAT_DIST )
-		m_BlackboardSpec = AssetManager::Get()->GetAssetAs<BehaviourTreeMemorySpecification>( memSpecID );
+		m_BlackboardSpec = AssetManager::Get()->GetAssetAs<BlackboardSpecificationAsset>( memSpecID );
 #endif
 	}
 

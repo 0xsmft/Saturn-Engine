@@ -29,11 +29,11 @@
 #include "sppch.h"
 #include "BehaviourTreeRootNode.h"
 
-#if !defined( SAT_DIST )
+#include "Saturn/AI/BehaviourTree/Tasks/BehaviourTreeBlackboardTask.h"
+
 #include "Saturn/NodeEditor/UI/NodeEditor.h"
-#else
-#include "Saturn/NodeEditor/NodeEditorBase.h"
-#endif
+
+#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 
 namespace Saturn {
 
@@ -63,6 +63,11 @@ namespace Saturn {
 
 	BehaviourTreeRootNode::~BehaviourTreeRootNode()
 	{
+	}
+
+	NodeEditorTaskBase* BehaviourTreeRootNode::ConvertToTask()
+	{
+		return NewObject<BehaviourTreeBlackboardTask>( GetParentObject() );
 	}
 
 }

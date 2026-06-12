@@ -27,34 +27,69 @@
 */
 
 #include "sppch.h"
-#include "BehaviourTreeMemory.h"
+#include "BehaviourTreeBlackboardTask.h"
 
+#include "Saturn/AI/BehaviourTree/AssetViewer/Nodes/BehaviourTreeNodeBase.h"
+#include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeNodeEditor.h"
 #include "Saturn/Asset/AssetManager.h"
+
+#include "Saturn/Serialisation/Raw/RawSerialisation.h"
 
 namespace Saturn {
 
-	BehaviourTreeMemory::BehaviourTreeMemory()
+	BehaviourTreeBlackboardTask::BehaviourTreeBlackboardTask()
 	{
 	}
 
-	BehaviourTreeMemory::~BehaviourTreeMemory()
+	BehaviourTreeBlackboardTask::~BehaviourTreeBlackboardTask()
 	{
-		m_Data.clear();
 	}
 
-	bool BehaviourTreeMemory::ContainsVariable( const std::string& rName ) const
+#if !defined(SAT_DIST)
+	void BehaviourTreeBlackboardTask::PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode )
 	{
-		return m_Data.contains( rName );
-	}
+		Super::PreInitialiseTask( pEditor, pNode );
 
-	void BehaviourTreeMemory::InitialiseVariables( AssetID id )
-	{
-		const auto specification = AssetManager::Get()->GetAssetAs<BehaviourTreeMemorySpecification>( id );
-
-		for( const auto& rVariable : specification->GetKeySpecs() )
+		BehaviourTreeNodeEditor* pBehNodeEd = dynamic_cast< BehaviourTreeNodeEditor* >( pEditor );
+		if( pBehNodeEd && pBehNodeEd->GetBlackboardSpec() )
 		{
-			m_Data[ rVariable->Name ] = Ref<BehaviourTreeMemoryKey>::Create( rVariable->VariableID, rVariable->DataType );
+			m_SpecBBID = pBehNodeEd->GetBlackboardSpec()->ID;
 		}
+	}
+#endif
+
+	void BehaviourTreeBlackboardTask::InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther )
+	{
+		Super::InitialiseTaskWithOther( pHandler, pOther );
+
+		BehaviourTreeBlackboardTask* pThisOther = dynamic_cast< BehaviourTreeBlackboardTask* >( pOther );
+		if( pThisOther )
+		{
+			Ref<BlackboardSpecificationAsset> bbSpec = AssetManager::Get()->GetAssetAs<BlackboardSpecificationAsset>( pThisOther->m_SpecBBID );
+
+			if( bbSpec )
+			{
+				m_Blackboard = bbSpec->CreateBlackboard();
+			}
+		}
+	} 
+
+	void BehaviourTreeBlackboardTask::Serialise( std::ofstream& rStream ) const
+	{
+		Super::Serialise( rStream );
+
+		RawSerialisation::WriteObject( m_SpecBBID, rStream );
+	}
+
+	void BehaviourTreeBlackboardTask::Deserialise( FDependentIStream& rStream )
+	{
+		Super::Deserialise( rStream );
+
+		RawSerialisation::ReadObject( m_SpecBBID, rStream );
 	}
 
 }
+
+#include "Saturn/GameFramework/Core/EngineGenerated.h"
+
+SAT_X31_CREATE_AUTO_REG( BehaviourTreeBlackboardTask );

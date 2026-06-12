@@ -28,21 +28,76 @@
 
 #pragma once
 
-#include "BehaviourTreeNodeBase.h"
+#include "Saturn/Asset/Asset.h"
+#include "Saturn/NodeEditor/NodeEditorVariableDataType.h"
 
 namespace Saturn {
 
-	class BehaviourTreeRootNode : public BehaviourTreeNodeBase
+	// This struct specifies a variable (key) in the Behaviour Tree Memory
+	// It does not contain the actual data. It is simply a specification of what this variable should be when we convert it to a BehaviourTreeMemoryVariable struct
+	class BlackboardVaraibleSpec : public RefTarget
 	{
-		SAT_DECLARE_CLASS( BehaviourTreeRootNode, BehaviourTreeNodeBase );
 	public:
-		BehaviourTreeRootNode();
-		virtual ~BehaviourTreeRootNode();
+		BlackboardVaraibleSpec() = default;
 
-		virtual NodeEditorTaskBase* ConvertToTask() override;
+		BlackboardVaraibleSpec( const std::string& rName, NodeEditorVariableDataType dataType, UUID varID )
+			: Name( rName ), DataType( dataType ), VariableID( varID )
+		{
+		}
+
+	public:
+		// [Serialised]
+		std::string Name;
+		NodeEditorVariableDataType DataType = NodeEditorVariableDataType::Unknown;
+		UUID VariableID = 0;
+
+#if !defined(SAT_DIST)
+		UUID RenderID;
+		bool IsActive = false;
+#endif
+	};
+
+	class Blackboard;
+
+	//
+	// BlackboardSpecificationAsset
+	// 
+	// Represents the blackboard as an asset.
+	// 
+	// Then in each behaviour tree a Blackboard is then created so that each behaviour tree
+	// can modify the variables.
+	//
+	class BlackboardSpecificationAsset : public Asset
+	{
+	public:
+		BlackboardSpecificationAsset() = default;
+		BlackboardSpecificationAsset( const Ref<Asset>& rBase );
+		virtual ~BlackboardSpecificationAsset() = default;
+
+#if !defined( SAT_DIST )
+		Ref<BlackboardVaraibleSpec> DrawKeyFinder( NodeEditorVariableDataType type, Ref<BlackboardVaraibleSpec> selectedVar );
+#endif
+		Ref<BlackboardVaraibleSpec> PostInitKey( UUID variableID );
+		Ref<BlackboardVaraibleSpec> GetKeySpec( UUID variableID ) const;
+
+		Ref<Blackboard> CreateBlackboard();
+
+	public:
+		const std::vector<Ref<BlackboardVaraibleSpec>>& GetKeySpecs() const { return m_SpecificationData; }
 
 	private:
-		void CreateNode();
+		inline void AddNew( const std::string& rName, NodeEditorVariableDataType dataType, UUID varID )
+		{
+			m_SpecificationData.emplace_back( Ref<BlackboardVaraibleSpec>::Create( rName, dataType, varID ) );
+		}
+
+	private:
+		std::vector<Ref<BlackboardVaraibleSpec>> m_SpecificationData;
+
+	private:
+		friend class BlackboardAssetViewer;
+		friend class BlackboardAssetSerialiser;
+		friend class RawBlackboardSpecSerialiser;
 	};
 	
 }

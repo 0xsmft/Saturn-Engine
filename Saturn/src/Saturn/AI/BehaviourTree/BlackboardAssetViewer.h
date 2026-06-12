@@ -28,62 +28,28 @@
 
 #pragma once
 
-#include "Saturn/Asset/Asset.h"
-#include "Saturn/GameFramework/SProperty.h"
+#include "Saturn/ImGui/AssetViewer.h"
+#include "BlackboardSpecificationAsset.h"
 
 namespace Saturn {
 
-	// This struct specifies a variable (key) in the Behaviour Tree Memory
-	// It does not contain the actual data. It is simply a specification of what this variable should be when we convert it to a BehaviourTreeMemoryVariable struct
-	class BehaviourTreeMemoryKeySpec : public RefTarget
+	class BlackboardAssetViewer : public AssetViewer
 	{
 	public:
-		BehaviourTreeMemoryKeySpec() = default;
+		BlackboardAssetViewer( AssetID id );
+		~BlackboardAssetViewer();
 
-		BehaviourTreeMemoryKeySpec( const std::string& rName, SPropertyType dataType, UUID varID ) 
-			: Name( rName ), DataType( dataType ), VariableID( varID )
-		{
-		}
+		virtual void OnImGuiRender() override;
+		virtual void OnUpdate( Timestep ts ) override {}
+		virtual void OnEvent( Event& rEvent ) override {}
 
-	public:
-		// [Serialised]
-		std::string Name;
-		SPropertyType DataType = SPropertyType::Unknown;
-		UUID VariableID = 0;
+	private:
+		void DisplayErrorSection( const char* pText );
 
-#if !defined(SAT_DIST)
-		UUID RenderID;
-		bool IsActive = false;
-#endif
+	private:
+		Ref<BlackboardSpecificationAsset> m_SpecAsset;
+
+		bool m_Dirty = false;
+		bool m_CanSave = true;
 	};
-
-	class BehaviourTreeMemorySpecification : public Asset
-	{
-	public:
-		BehaviourTreeMemorySpecification() = default;
-		BehaviourTreeMemorySpecification( const Ref<Asset>& rBase );
-
-#if !defined( SAT_DIST )
-		Ref<BehaviourTreeMemoryKeySpec> DrawKeyFinder( SPropertyType type, Ref<BehaviourTreeMemoryKeySpec> selectedVar );
-#endif
-		Ref<BehaviourTreeMemoryKeySpec> PostInitKey( UUID variableID );
-		Ref<BehaviourTreeMemoryKeySpec> GetKeySpec( UUID variableID ) const;
-
-		const std::vector<Ref<BehaviourTreeMemoryKeySpec>>& GetKeySpecs() const { return m_SpecificationData; }
-
-	private:
-		inline void AddNew( const std::string& rName, SPropertyType dataType, UUID varID )
-		{
-			m_SpecificationData.emplace_back( Ref<BehaviourTreeMemoryKeySpec>::Create( rName, dataType, varID ) );
-		}
-
-	private:
-		std::vector<Ref<BehaviourTreeMemoryKeySpec>> m_SpecificationData;
-
-	private:
-		friend class BehaviourTreeMemoryAssetViewer;
-		friend class BehaviourTreeMemorySpecAssetSerialiser;
-		friend class RawBehaviourTreeMemorySpecSerialiser;
-	};
-	
 }

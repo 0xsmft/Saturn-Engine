@@ -41,7 +41,7 @@ namespace Saturn {
 	BehaviourTreeMemoryCondition::BehaviourTreeMemoryCondition()
 		: BehaviourTreeCondition( "Memory Condition", BehaviourTreeConditionType::Blackboard )
 #if !defined(SAT_DIST)
-		, m_VariableSpec( Ref<BehaviourTreeMemoryKeySpec>::Create() )
+		, m_VariableSpec( Ref<BlackboardVaraibleSpec>::Create() )
 #endif
 	{
 	}
@@ -124,7 +124,7 @@ namespace Saturn {
 		
 		if( ImGui::BeginCombo( "##condkey", m_VariableSpec->Name.c_str() ) )
 		{
-			if( auto out = m_BlackboardSpec->DrawKeyFinder( SPropertyType::Unknown, m_VariableSpec ); out )
+			if( auto out = m_BlackboardSpec->DrawKeyFinder( NodeEditorVariableDataType::Unknown, m_VariableSpec ); out )
 			{
 				m_VariableSpec = out;
 				m_RTBlackboardVariableID = out->VariableID;

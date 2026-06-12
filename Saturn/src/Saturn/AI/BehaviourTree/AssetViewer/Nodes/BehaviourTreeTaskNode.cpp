@@ -59,7 +59,7 @@ namespace Saturn {
 		CreateNode();
 
 #if !defined(SAT_DIST)
-		m_MemVariable = Ref<BehaviourTreeMemoryKeySpec>::Create();
+		m_MemVariable = Ref<BlackboardVaraibleSpec>::Create();
 #endif
 	}
 

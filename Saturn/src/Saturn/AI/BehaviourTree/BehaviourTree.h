@@ -28,7 +28,7 @@
 
 #pragma once
 
-#include "BehaviourTreeMemory.h"
+#include "Blackboard.h"
 
 #include "Saturn/AI/AIAgentEntity.h"
 

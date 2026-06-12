@@ -68,7 +68,7 @@ namespace Saturn {
 		std::string m_Title;
 
 #if !defined( SAT_DIST )
-		Ref<BehaviourTreeMemorySpecification> m_BlackboardSpec;
+		Ref<BlackboardSpecificationAsset> m_BlackboardSpec;
 #endif
 
 		BehaviourTreeConditionType m_ConditionType = BehaviourTreeConditionType::None;

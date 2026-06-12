@@ -27,7 +27,9 @@
 */
 
 #include "sppch.h"
-#include "BehaviourTreeMemorySpecification.h"
+#include "BlackboardSpecificationAsset.h"
+
+#include "Blackboard.h"
 
 #if !defined( SAT_DIST )
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
@@ -35,17 +37,17 @@
 
 namespace Saturn {
 
-	BehaviourTreeMemorySpecification::BehaviourTreeMemorySpecification( const Ref<Asset>& rBase )
+	BlackboardSpecificationAsset::BlackboardSpecificationAsset( const Ref<Asset>& rBase )
 		: Asset( rBase )
 	{
 	}
 
 #if !defined( SAT_DIST )
-	Ref<BehaviourTreeMemoryKeySpec> BehaviourTreeMemorySpecification::DrawKeyFinder( SPropertyType type, Ref<BehaviourTreeMemoryKeySpec> selectedVar )
+	Ref<BlackboardVaraibleSpec> BlackboardSpecificationAsset::DrawKeyFinder( NodeEditorVariableDataType type, Ref<BlackboardVaraibleSpec> selectedVar )
 	{
 		for( auto& rVariable : m_SpecificationData )
 		{
-			if( type != SPropertyType::Unknown && rVariable->DataType != type )
+			if( type != NodeEditorVariableDataType::Unknown && rVariable->DataType != type )
 				continue;
 
 			bool isSelected = selectedVar->VariableID == rVariable->VariableID;
@@ -63,10 +65,10 @@ namespace Saturn {
 
 #endif
 
-	Ref<BehaviourTreeMemoryKeySpec> BehaviourTreeMemorySpecification::PostInitKey( UUID variableID )
+	Ref<BlackboardVaraibleSpec> BlackboardSpecificationAsset::PostInitKey( UUID variableID )
 	{
-		const auto itr = std::find_if( m_SpecificationData.begin(), m_SpecificationData.end(), 
-			[ variableID ](const auto& rItem) 
+		const auto itr = std::find_if( m_SpecificationData.begin(), m_SpecificationData.end(),
+			[ variableID ]( const auto& rItem )
 		{
 			return rItem->VariableID == variableID;
 		} );
@@ -86,7 +88,7 @@ namespace Saturn {
 		return nullptr;
 	}
 
-	Ref<BehaviourTreeMemoryKeySpec> BehaviourTreeMemorySpecification::GetKeySpec( UUID variableID ) const
+	Ref<BlackboardVaraibleSpec> BlackboardSpecificationAsset::GetKeySpec( UUID variableID ) const
 	{
 		const auto itr = std::find_if( m_SpecificationData.begin(), m_SpecificationData.end(),
 			[ variableID ]( const auto& rItem )
@@ -95,6 +97,13 @@ namespace Saturn {
 		} );
 
 		return itr == m_SpecificationData.end() ? nullptr : *itr;
+	}
+
+	Ref<Blackboard> BlackboardSpecificationAsset::CreateBlackboard()
+	{
+		Ref<Blackboard> bb = Ref<Blackboard>::Create();
+		bb->InitialiseVariables( ID );
+		return bb;
 	}
 
 }

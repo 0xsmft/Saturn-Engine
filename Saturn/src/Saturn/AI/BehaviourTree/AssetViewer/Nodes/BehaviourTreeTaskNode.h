@@ -83,7 +83,7 @@ namespace Saturn {
 
 #if !defined(SAT_DIST)
 		// Only when in Editor, used for selecting a memory variable
-		Ref<BehaviourTreeMemoryKeySpec> m_MemVariable;
+		Ref<BlackboardVaraibleSpec> m_MemVariable;
 #endif
 	};
 		

@@ -37,7 +37,7 @@
 
 namespace Saturn {
 
-	void BehaviourTreeBaseTask::SetBlackboard( BehaviourTreeMemory* pBlackboard )
+	void BehaviourTreeBaseTask::SetBlackboard( Blackboard* pBlackboard )
 	{
 		m_pRTBlackboard = pBlackboard;
 	}

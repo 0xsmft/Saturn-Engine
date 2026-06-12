@@ -40,10 +40,10 @@ namespace Saturn {
 		BehaviourTreeTaskHandler();
 		virtual ~BehaviourTreeTaskHandler();
 
-		void SetAgent( AIAgentEntity* pAgent ) { m_pAIAgentEntity = pAgent; }
-
 		virtual void Tick( Timestep ts ) override;
 
+	public:
+		void SetAgent( AIAgentEntity* pAgent ) { m_pAIAgentEntity = pAgent; }
 		AIAgentEntity* GetTargetAgent() const { return m_pAIAgentEntity; }
 
 	private:

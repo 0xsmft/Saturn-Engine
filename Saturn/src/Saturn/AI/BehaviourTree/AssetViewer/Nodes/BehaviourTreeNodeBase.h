@@ -29,7 +29,7 @@
 #pragma once
 
 #include "Saturn/NodeEditor/NodeEditorTreeNode.h"
-#include "Saturn/AI/BehaviourTree/BehaviourTreeMemorySpecification.h"
+#include "Saturn/AI/BehaviourTree/BlackboardSpecificationAsset.h"
 #include "Saturn/AI/BehaviourTree/Conditions/BehaviourTreeCondition.h"
 
 namespace Saturn {

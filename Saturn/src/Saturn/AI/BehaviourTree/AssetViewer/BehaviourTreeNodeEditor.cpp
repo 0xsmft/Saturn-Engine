@@ -40,7 +40,7 @@
 #include "Saturn/AI/BehaviourTree/Tasks/BehaviourTreeCompositeTasks.h"
 
 #include "Saturn/AI/AIAgentEntity.h"
-#include "Saturn/AI/BehaviourTree/BehaviourTreeMemoryAssetViewer.h"
+#include "Saturn/AI/BehaviourTree/BlackboardAssetViewer.h"
 
 #include "Saturn/ImGui/ImGuiWindowManager.h"
 
@@ -181,15 +181,19 @@ namespace Saturn {
 			ImGui::EndPopup();
 		}
 
-		if( ImGui::Button( "Open Tree Memory" ) )
 		{
-			const Ref<Asset> asset = AssetManager::Get()->FindAsset( m_BehaviourTreeMemoryAssetID );
-			if( asset )
-			{
-				const std::string windowName = std::format( "{0}##{1}", asset->Name, ( uint64_t ) m_BehaviourTreeMemoryAssetID );
-				ImGuiWindowManager::Get()->OpenOrShowWindow<BehaviourTreeMemoryAssetViewer>( windowName, m_BehaviourTreeMemoryAssetID );
+			Auxiliary::ScopedDisabledFlag disabledIfZero( m_BlackboardAssetID == 0 );
 
-				ImGui::SetWindowFocus( windowName.c_str() );
+			if( ImGui::Button( "Open Blackboard" ) )
+			{
+				const Ref<Asset> asset = AssetManager::Get()->FindAsset( m_BlackboardAssetID );
+				if( asset )
+				{
+					const std::string windowName = std::format( "{0}##{1}", asset->Name, ( uint64_t ) m_BlackboardAssetID );
+					ImGuiWindowManager::Get()->OpenOrShowWindow<BlackboardAssetViewer>( windowName, m_BlackboardAssetID );
+
+					ImGui::SetWindowFocus( windowName.c_str() );
+				}
 			}
 		}
 	}
@@ -227,22 +231,22 @@ namespace Saturn {
 
 				ImGui::Spring();
 
-				UUID tempID = m_BehaviourTreeMemoryAssetID;
+				UUID tempID = m_BlackboardAssetID;
 				if( Auxiliary::DrawAssetFinder( AssetType::BehaviourTreeMemory, &open, tempID ) )
 				{
-					AssetManager::Get()->UnregisterAssetDependency( m_AssetID, m_BehaviourTreeMemoryAssetID );
+					AssetManager::Get()->UnregisterAssetDependency( m_AssetID, m_BlackboardAssetID );
 					
 					MarkDirty();
-					m_BehaviourTreeMemoryAssetID = tempID;
+					m_BlackboardAssetID = tempID;
 
-					AssetManager::Get()->RegisterAssetDependency( m_AssetID, m_BehaviourTreeMemoryAssetID );
+					AssetManager::Get()->RegisterAssetDependency( m_AssetID, m_BlackboardAssetID );
 
-					m_BlackboardSpec = AssetManager::Get()->GetAssetAs< BehaviourTreeMemorySpecification >( m_BehaviourTreeMemoryAssetID );
+					m_BlackboardSpec = AssetManager::Get()->GetAssetAs< BlackboardSpecificationAsset >( m_BlackboardAssetID );
 				}
 
-				if( m_BehaviourTreeMemoryAssetID != 0 )
+				if( m_BlackboardAssetID != 0 )
 				{
-					ImGui::InputText( "##asset", (char*)std::to_string( m_BehaviourTreeMemoryAssetID ).data(), 256, ImGuiInputTextFlags_ReadOnly );
+					ImGui::InputText( "##asset", (char*)std::to_string( m_BlackboardAssetID ).data(), 256, ImGuiInputTextFlags_ReadOnly );
 				}
 				else
 				{
@@ -367,7 +371,7 @@ namespace Saturn {
 		FDependentNodeEditorSuper::SerialiseData( rStream );
 		RawSerialisation::WriteVector( m_EvaluationOrder, rStream );
 
-		RawSerialisation::WriteObject( m_BehaviourTreeMemoryAssetID, rStream );
+		RawSerialisation::WriteObject( m_BlackboardAssetID, rStream );
 	}
 
 	void BehaviourTreeNodeEditor::DeserialiseData( std::ifstream& rStream )
@@ -375,10 +379,10 @@ namespace Saturn {
 		FDependentNodeEditorSuper::DeserialiseData( rStream );
 		RawSerialisation::ReadVector( m_EvaluationOrder, rStream );
 
-		RawSerialisation::ReadObject( m_BehaviourTreeMemoryAssetID, rStream );
+		RawSerialisation::ReadObject( m_BlackboardAssetID, rStream );
 
 #if !defined(SAT_DIST)
-		m_BlackboardSpec = AssetManager::Get()->GetAssetAs< BehaviourTreeMemorySpecification>( m_BehaviourTreeMemoryAssetID );
+		m_BlackboardSpec = AssetManager::Get()->GetAssetAs< BlackboardSpecificationAsset>( m_BlackboardAssetID );
 
 		if( m_BlackboardSpec )
 		{

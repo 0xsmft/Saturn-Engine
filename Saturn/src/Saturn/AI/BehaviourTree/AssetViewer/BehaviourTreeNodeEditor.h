@@ -29,7 +29,7 @@
 #pragma once
 
 #include "Saturn/NodeEditor/UI/NodeEditor.h"
-#include "Saturn/AI/BehaviourTree/BehaviourTreeMemory.h"
+#include "Saturn/AI/BehaviourTree/Blackboard.h"
 
 namespace Saturn {
 
@@ -66,8 +66,8 @@ namespace Saturn {
 	public:
 		void TraverseBehaviourTree( const SharedPtr<NodeEditorNodeBase>& rRootNode );
 
-		Ref<BehaviourTreeMemory> GetBlackboard() const { return	m_Blackboard; }
-		Ref<BehaviourTreeMemorySpecification> GetBlackboardSpec() const { return m_BlackboardSpec; }
+		Ref<Blackboard> GetBlackboard() const { return	m_Blackboard; }
+		Ref<BlackboardSpecificationAsset> GetBlackboardSpec() const { return m_BlackboardSpec; }
 
 	protected:
 		virtual void SerialiseData( std::ofstream& rStream ) override;
@@ -92,7 +92,7 @@ namespace Saturn {
 		void SortFrom( std::vector<SharedPtr<NodeEditorNodeBase>>& rOrder, SharedPtr<NodeEditorNodeBase> node );
 
 	private:		
-		AssetID m_BehaviourTreeMemoryAssetID = 0;
+		AssetID m_BlackboardAssetID = 0;
 
 #if !defined(SAT_DIST)
 		bool m_AutoEvaluate = true;
@@ -104,8 +104,8 @@ namespace Saturn {
 		std::vector<Ref<Link>> m_EditorLinkPath;
 #endif
 
-		Ref<BehaviourTreeMemorySpecification> m_BlackboardSpec;
-		Ref<BehaviourTreeMemory> m_Blackboard;
+		Ref<BlackboardSpecificationAsset> m_BlackboardSpec;
+		Ref<Blackboard> m_Blackboard;
 	};
 
 }

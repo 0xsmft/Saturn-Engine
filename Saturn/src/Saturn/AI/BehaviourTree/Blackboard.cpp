@@ -26,27 +26,36 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "Blackboard.h"
 
-#include "Saturn/ImGui/AssetViewer.h"
-#include "BehaviourTreeMemorySpecification.h"
+#include "Saturn/Asset/AssetManager.h"
 
 namespace Saturn {
 
-	class BehaviourTreeMemoryAssetViewer : public AssetViewer
+	Blackboard::Blackboard()
 	{
-	public:
-		BehaviourTreeMemoryAssetViewer( AssetID id );
-		~BehaviourTreeMemoryAssetViewer();
+	}
 
-		virtual void OnImGuiRender() override;
-		virtual void OnUpdate( Timestep ts ) override {}
-		virtual void OnEvent( Event& rEvent ) override {}
+	Blackboard::~Blackboard()
+	{
+		m_Data.clear();
+	}
 
-	private:
-		Ref<BehaviourTreeMemorySpecification> m_SpecAsset;
+	bool Blackboard::ContainsVariable( const std::string& rName ) const
+	{
+		return m_Data.contains( rName );
+	}
 
-		bool m_Dirty = false;
-		bool m_CanSave = true;
-	};
+	void Blackboard::InitialiseVariables( AssetID id )
+	{
+		const auto specification = AssetManager::Get()->GetAssetAs<BlackboardSpecificationAsset>( id );
+		SAT_CORE_ASSERT( specification );
+
+		for( const auto& rVariable : specification->GetKeySpecs() )
+		{
+			m_Data[ rVariable->Name ] = Ref<BlackboardVariable>::Create( rVariable->VariableID, rVariable->DataType );
+		}
+	}
+
 }

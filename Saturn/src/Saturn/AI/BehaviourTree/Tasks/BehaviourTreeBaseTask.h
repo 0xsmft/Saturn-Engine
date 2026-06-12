@@ -28,7 +28,7 @@
 
 #pragma once
 
-#include "Saturn/AI/BehaviourTree/BehaviourTreeMemory.h"
+#include "Saturn/AI/BehaviourTree/Blackboard.h"
 
 #include "Saturn/NodeEditor/NodeEditorTaskBase.h"
 
@@ -45,7 +45,7 @@ namespace Saturn {
 		BehaviourTreeBaseTask() = default;
 		virtual ~BehaviourTreeBaseTask() = default;
 
-		void SetBlackboard( BehaviourTreeMemory* pBlackboard );
+		void SetBlackboard( Blackboard* pBlackboard );
 
 #if !defined(SAT_DIST)
 	public:
@@ -70,7 +70,7 @@ namespace Saturn {
 	protected:
 		// Non owning ptr, owned by BehaviourTreeNodeEditor
 		// Runtime blackboard information
-		BehaviourTreeMemory* m_pRTBlackboard = nullptr;
+		Blackboard* m_pRTBlackboard = nullptr;
 		Saturn::UUID m_RTBlackboardVariableID = 0;
 	};
 }

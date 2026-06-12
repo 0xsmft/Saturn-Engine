@@ -124,7 +124,6 @@ namespace Saturn {
 		AnimGraphStateMachineTransitionNode::StaticClass();
 		AnimGraphTransitionGraphResultNode::StaticClass();
 		AnimGraphPlayAnimTask::StaticClass();
-		AnimGraphTransitionTask::StaticClass();
 		AnimGraphTransitionResultTask::StaticClass();
 		SGraphTask::StaticClass();
 		

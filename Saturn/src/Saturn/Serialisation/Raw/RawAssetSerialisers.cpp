@@ -37,7 +37,7 @@
 #include "Saturn/Asset/TextureSourceAsset.h"
 #include "Saturn/Asset/MaterialAsset.h"
 #include "Saturn/Audio/SoundSpecification.h"
-#include "Saturn/AI/BehaviourTree/BehaviourTreeMemorySpecification.h"
+#include "Saturn/AI/BehaviourTree/BlackboardSpecificationAsset.h"
 #include "Saturn/Animation/SkeletonAsset.h"
 #include "Saturn/Alura/AluraStylingProfile.h"
 #include "Saturn/Alura/AluraFont.h"
@@ -570,7 +570,7 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// BEHAVIOUR TREE MEMORY SPECIFICATION SERIALISER
 
-	bool RawBehaviourTreeMemorySpecSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
+	bool RawBlackboardSpecSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
 	{
 		const std::string& rMountBase = Project::GetActiveConfig().Name;
 		Ref<VFile> file = VirtualFS::Get().FindFile( rMountBase, rAsset->Path );
@@ -583,7 +583,7 @@ namespace Saturn {
 		PakFileMemoryBuffer membuf( file->FileContent );
 		std::istream stream( &membuf );
 
-		auto btMemSpecAsset = Ref<BehaviourTreeMemorySpecification>::Create( rAsset );
+		auto btMemSpecAsset = Ref<BlackboardSpecificationAsset>::Create( rAsset );
 
 		size_t mapSize = 0llu;
 		RawSerialisation::ReadObject( mapSize, stream );
@@ -592,7 +592,7 @@ namespace Saturn {
 
 		for( size_t i = 0; i < mapSize; ++i )
 		{
-			SPropertyType dataType = SPropertyType::Unknown;
+			NodeEditorVariableDataType dataType = NodeEditorVariableDataType::Unknown;
 			UUID variableID = 0;
 
 			RawSerialisation::ReadObject( dataType, stream );
@@ -606,9 +606,9 @@ namespace Saturn {
 		return true;
 	}
 
-	bool RawBehaviourTreeMemorySpecSerialiser::DumpAndWriteToVFS( const Ref<Asset>& rAsset ) const
+	bool RawBlackboardSpecSerialiser::DumpAndWriteToVFS( const Ref<Asset>& rAsset ) const
 	{
-		const auto behaviourTreeMemSpec = rAsset.As<BehaviourTreeMemorySpecification>();
+		const auto behaviourTreeMemSpec = rAsset.As<BlackboardSpecificationAsset>();
 
 		std::filesystem::path out = Project::GetActiveProject()->GetTempDir();
 		out /= std::to_string( rAsset->ID );

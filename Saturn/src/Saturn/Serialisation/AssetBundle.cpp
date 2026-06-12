@@ -45,7 +45,7 @@
 #include "Saturn/Asset/MaterialAsset.h"
 #include "Saturn/Audio/SoundSpecification.h"
 #include "Saturn/Audio/GraphSound.h"
-#include "Saturn/AI/BehaviourTree/BehaviourTreeMemorySpecification.h"
+#include "Saturn/AI/BehaviourTree/BlackboardSpecificationAsset.h"
 #include "Saturn/Animation/SkeletonAsset.h"
 #include "Saturn/Animation/SkeletalAnimationAsset.h"
 #include "Saturn/Physics/PhysicsMaterialAsset.h"
@@ -472,10 +472,10 @@ namespace Saturn {
 
 			case Saturn::AssetType::BehaviourTreeMemory:
 			{
-				Ref<BehaviourTreeMemorySpecification> btMemAsset = pAssetManager->ImportAssetAs<BehaviourTreeMemorySpecification>( AssetBundleRegistry, id );
+				Ref<BlackboardSpecificationAsset> btMemAsset = pAssetManager->ImportAssetAs<BlackboardSpecificationAsset>( AssetBundleRegistry, id );
 				if( btMemAsset )
 				{
-					RawBehaviourTreeMemorySpecSerialiser serialiser;
+					RawBlackboardSpecSerialiser serialiser;
 					serialiser.DumpAndWriteToVFS( btMemAsset );
 				}
 			} break;

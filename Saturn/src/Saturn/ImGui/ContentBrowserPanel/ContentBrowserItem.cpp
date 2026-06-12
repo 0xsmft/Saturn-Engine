@@ -50,7 +50,7 @@
 #include "Saturn/ImGui/SoundAssetViewer.h"
 #include "Saturn/Audio/SoundGraph/GraphSoundAssetViewer.h"
 #include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeAssetViewer.h"
-#include "Saturn/AI/BehaviourTree/BehaviourTreeMemoryAssetViewer.h"
+#include "Saturn/AI/BehaviourTree/BlackboardAssetViewer.h"
 #include "Saturn/Animation/AssetViewer/SkeletonAssetViewer.h"
 #include "Saturn/Animation/AssetViewer/SkeletalMeshAssetViewer.h"
 #include "Saturn/Animation/AssetViewer/SkeletalAnimationAssetViewer.h"
@@ -603,7 +603,7 @@ namespace Saturn {
 
 			case AssetType::BehaviourTreeMemory:
 			{
-				const auto viewer = Ref<BehaviourTreeMemoryAssetViewer>::Create( m_Asset->ID );
+				const auto viewer = Ref<BlackboardAssetViewer>::Create( m_Asset->ID );
 				ImGuiWindowManager::Get()->AddWindow( viewer, viewer->GetWindowName() );
 			} break;
 

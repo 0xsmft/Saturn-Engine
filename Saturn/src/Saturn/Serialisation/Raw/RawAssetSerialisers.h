@@ -95,7 +95,7 @@ namespace Saturn {
 		[[nodiscard]] virtual bool TryLoadData( Ref<Asset>& rAsset ) const override;
 	};
 
-	class RawBehaviourTreeMemorySpecSerialiser : public RawAssetSerialiser
+	class RawBlackboardSpecSerialiser : public RawAssetSerialiser
 	{
 	public:
 		virtual bool DumpAndWriteToVFS( const Ref<Asset>& rAsset ) const override;

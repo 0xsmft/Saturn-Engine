@@ -52,7 +52,7 @@ namespace Saturn {
 		m_AssetSerialisers[ AssetType::Prefab ]            = std::make_unique<RawPrefabSerialiser>();
 		m_AssetSerialisers[ AssetType::Skeleton          ] = std::make_unique<RawSkeletonAssetSerialiser>();
 		m_AssetSerialisers[ AssetType::PhysicsMaterial ]   = std::make_unique<RawPhysicsMaterialAssetSerialiser>();
-		m_AssetSerialisers[ AssetType::BehaviourTreeMemory ] = std::make_unique<RawBehaviourTreeMemorySpecSerialiser>();
+		m_AssetSerialisers[ AssetType::BehaviourTreeMemory ] = std::make_unique<RawBlackboardSpecSerialiser>();
 		m_AssetSerialisers[ AssetType::SkeletalAnimation ] = std::make_unique<RawSkeletalAnimationSerialiser>();
 		m_AssetSerialisers[ AssetType::Font ]                = std::make_unique<RawFontSerialiser>();
 		m_AssetSerialisers[ AssetType::StyleProfile ]        = std::make_unique<RawAluraStylingProfileSerialiser>();

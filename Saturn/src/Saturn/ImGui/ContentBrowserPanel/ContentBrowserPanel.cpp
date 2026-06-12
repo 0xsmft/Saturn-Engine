@@ -40,7 +40,7 @@
 #include "Saturn/Asset/Prefab.h"
 #include "Saturn/Asset/AssetManager.h"
 #include "Saturn/Asset/AssetExtensions.h"
-#include "Saturn/AI/BehaviourTree/BehaviourTreeMemorySpecification.h"
+#include "Saturn/AI/BehaviourTree/BlackboardSpecificationAsset.h"
 #include "Saturn/Alura/AluraStylingProfile.h"
 #include "Saturn/Audio/SoundGraph/SoundGraph.h"
 #include "Saturn/AI/BehaviourTree/AssetViewer/Nodes/BehaviourTreeNodeBase.h"
@@ -776,20 +776,20 @@ namespace Saturn {
 				FindAndRenameItem( asset->Name );
 			}
 
-			if( ImGui::MenuItem( "New Behaviour Tree Memory (Blackboard)" ) )
+			if( ImGui::MenuItem( "New Blackboard" ) )
 			{
 				auto id = AssetManager::Get()->CreateAsset( AssetType::BehaviourTreeMemory );
 				auto asset = AssetManager::Get()->FindAsset( id );
-				auto newPath = m_CurrentPath / "New Behaviour Tree Memory.sbtm";
-				uint32_t count = GetFilenameCount( "New Behaviour Tree Memory.sbtm" );
+				auto newPath = m_CurrentPath / "New Blackboard.sbtm";
+				uint32_t count = GetFilenameCount( "New Blackboard.sbtm" );
 
 				if( count >= 1 )
-					newPath.replace_filename( std::format( "{0} ({1}).sbtm", "New Behaviour Tree Memory", count ) );
+					newPath.replace_filename( std::format( "{0} ({1}).sbtm", "New Blackboard", count ) );
 
 				asset->SetAbsolutePath( newPath );
-				Ref<BehaviourTreeMemorySpecification> spec = Ref<BehaviourTreeMemorySpecification>::Create( asset );
+				Ref<BlackboardSpecificationAsset> spec = Ref<BlackboardSpecificationAsset>::Create( asset );
 
-				BehaviourTreeMemorySpecAssetSerialiser btms;
+				BlackboardAssetSerialiser btms;
 				btms.Serialise( spec );
 
 				AssetManager::Get()->Save();

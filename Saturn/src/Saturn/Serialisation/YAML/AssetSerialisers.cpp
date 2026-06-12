@@ -38,7 +38,7 @@
 #include "Saturn/Animation/SkeletalAnimationAsset.h"
 #include "Saturn/Audio/SoundSpecification.h"
 #include "Saturn/Audio/GraphSound.h"
-#include "Saturn/AI/BehaviourTree/BehaviourTreeMemorySpecification.h"
+#include "Saturn/AI/BehaviourTree/BlackboardSpecificationAsset.h"
 #include "Saturn/Alura/AluraFont.h"
 #include "Saturn/Alura/AluraStylingProfile.h"
 
@@ -855,9 +855,9 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// BehaviourTreeMemorySpec
 
-	void BehaviourTreeMemorySpecAssetSerialiser::Serialise( const Ref<Asset>& rAsset ) const
+	void BlackboardAssetSerialiser::Serialise( const Ref<Asset>& rAsset ) const
 	{
-		const auto btMemorySpec = rAsset.As<BehaviourTreeMemorySpecification>();
+		const auto btMemorySpec = rAsset.As<BlackboardSpecificationAsset>();
 
 		YAML::Emitter out;
 
@@ -874,7 +874,7 @@ namespace Saturn {
 			out << YAML::BeginMap;
 
 			out << YAML::Key << "Name" << YAML::Value << rData->Name;
-			out << YAML::Key << "DataType" << YAML::Value << ( std::underlying_type_t<SPropertyType> )rData->DataType;
+			out << YAML::Key << "DataType" << YAML::Value << ( uint16_t )rData->DataType;
 			out << YAML::Key << "VariableID" << YAML::Value << ( uint64_t )rData->VariableID;
 
 			out << YAML::EndMap;
@@ -893,7 +893,7 @@ namespace Saturn {
 		fout << out.c_str();
 	}
 
-	bool BehaviourTreeMemorySpecAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
+	bool BlackboardAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
 	{
 		const auto absolutePath = GetFilepathAbs( rAsset->Path );
 		std::ifstream FileIn( absolutePath );
@@ -906,22 +906,20 @@ namespace Saturn {
 		if( data.IsNull() )
 			return false;
 
-		auto specData = data[ "BehaviourTreeMemorySpecification" ];
-
+		const auto specData = data[ "BehaviourTreeMemorySpecification" ];
 		if( specData.IsNull() )
 			return false;
 
-		auto variables = specData[ "Variables" ];
-
-		auto specAsset = Ref<BehaviourTreeMemorySpecification>::Create( rAsset );
+		const auto variables = specData[ "Variables" ];
 	
-		for( auto variable : variables )
+		auto specAsset = Ref<BlackboardSpecificationAsset>::Create( rAsset );
+		for( const auto variable : variables )
 		{
-			auto name = variable[ "Name" ].as<std::string>();
-			auto dataType = variable[ "DataType" ].as<std::underlying_type_t<SPropertyType>>();
-			auto varID = variable[ "VariableID" ].as<uint64_t>( UUID() );
+			const auto name = variable[ "Name" ].as<std::string>();
+			const auto dataType = variable[ "DataType" ].as<std::underlying_type_t<NodeEditorVariableDataType>>();
+			const auto varID = variable[ "VariableID" ].as<uint64_t>( UUID() );
 
-			specAsset->AddNew( name, ( SPropertyType ) dataType, varID );
+			specAsset->AddNew( name, ( NodeEditorVariableDataType ) dataType, varID );
 		}
 
 		// Set rAsset reference to point to our new BehaviourTreeMemorySpecification

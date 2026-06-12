@@ -140,7 +140,7 @@ namespace Saturn {
 
 		Ref<PhysicsMaterialAsset> materialAsset = GetMaterial( mesh, rigidBodyMaterialID );
 
-		const glm::vec3 halfColliderSize = glm::abs( transform.Scale * halfSize );
+		const glm::vec3 halfColliderSize = bcc.AutoAdjustExtent ? halfSize : glm::abs( transform.Scale * halfSize );
 	
 		// v = lbh
 		const float volume = halfColliderSize.x * 2.0f * halfColliderSize.y * 2.0f * halfColliderSize.z * 2.0f;
@@ -389,13 +389,13 @@ namespace Saturn {
 		JPH::CapsuleShape::GetTrianglesContext context{};
 		m_Shape->GetTrianglesStart( context, boundingBox, Auxiliary::GLMToJolt( rTc.Position ), Auxiliary::GLMQToJoltQ( rTc.GetRotation() ), Auxiliary::GLMToJolt( rTc.Scale ) );
 
-		constexpr int segments = 6;
+		constexpr int SEGMENTS = 6;
 
 		int vertStart = ( int )rData.VertexBuffer.size();
-		for( size_t i = 0; i < segments; ++i )
+		for( size_t i = 0; i < SEGMENTS; ++i )
 		{
-			const float a0 = ( float ) i / segments * glm::two_pi<float>();
-			const float a1 = ( float ) ( i + 1 ) / segments * glm::two_pi< float >();
+			const float a0 = ( float ) i / SEGMENTS * glm::two_pi<float>();
+			const float a1 = ( float ) ( i + 1 ) / SEGMENTS * glm::two_pi< float >();
 
 			glm::vec3 p0( radius * glm::cos( a0 ), -halfHeight, radius * glm::sin( a0 ) );
 			glm::vec3 p1( radius * glm::cos( a1 ), -halfHeight, radius * glm::sin( a1 ) );

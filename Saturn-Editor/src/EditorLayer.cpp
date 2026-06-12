@@ -2120,7 +2120,7 @@ namespace Saturn {
 			m_BlockingOperation->SetTitle( "Building Project" );
 			m_BlockingOperation->SetStatus( "Hot-Reloading" );
 
-			// Attempt to build.
+			// Attempt to build with HOTRELOAD switch.
 			const auto status = Project::GetActiveProject()->Build( Application::GetCurrentConfigKind(), "/HOTRELOAD" );
 
 			switch( status )
@@ -2606,7 +2606,14 @@ namespace Saturn {
 						m_BlockingOperation->SetTitle( "Distributing Project" );
 
 						m_BlockingOperation->SetStatus( "Building project" );
-						Project::GetActiveProject()->Rebuild( ApplicationConfigKind::Dist );
+						if( Project::GetActiveProject()->Rebuild( ApplicationConfigKind::Dist ) == SaturnBuildToolExitCodes::Failure ) 
+						{
+							MessageBoxInfo msgBox = { .Title = "Error##MsgBox", .Text = "Failed to compile for Dist, aborting..." };
+							PushMessageBox( msgBox );
+
+							m_JobModalOpen.store( false );
+							m_BlockingOperation->OnComplete();
+						}
 
 						m_BlockingOperation->SetProgress( 50.0f );
 

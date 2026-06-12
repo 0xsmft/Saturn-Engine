@@ -2,21 +2,20 @@
 
 namespace SaturnBuildTool
 {
-    internal class LinuxToolchain : ToolchainBase
+    internal class GCCToolchain : ToolchainBase
     {
-        public LinuxToolchain()
+        public GCCToolchain()
         {
         }
 
         public override int Compile( string InputFile, CompileSettings compileSettings )
         {
-            //MSVCCompileTask compileTask = new MSVCCompileTask(InputFile, TargetToBuild);
+            GCCCompileTask compileTask = new GCCCompileTask( InputFile, compileSettings );
 
             int result = -1;
-
             try
             {
-                //result = compileTask.Execute();
+                result = compileTask.Execute( this );
             }
             catch( System.Exception excpt )
             {
@@ -28,13 +27,12 @@ namespace SaturnBuildTool
 
         public override int Link( LinkSettings linkSettings )
         {
-            //MSVCLinkTask link = new MSVCLinkTask(TargetToBuild);
+            GCCLinkTask link = new GCCLinkTask( linkSettings );
 
             int result = -1;
-
             try
             {
-                //result = link.Execute();
+                result = link.Execute( this );
             }
             catch( System.Exception excpt )
             {

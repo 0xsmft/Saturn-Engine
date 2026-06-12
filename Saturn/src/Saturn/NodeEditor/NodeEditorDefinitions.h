@@ -182,8 +182,11 @@ namespace Saturn {
 		// PinType, PinKind, PinRenderType all changed to single-bytes, 0.2.5
 		PinClassSizeChange,
 
+		// Removed old JSON state flags, 0.2.6
+		RemovedState,
+
 		//^^^ only add new versions above here.... and not below here vvv
-		Latest = PinClassSizeChange,
+		Latest = RemovedState,
 		Lowest = BeforeVersionWasAdded
 	};
 

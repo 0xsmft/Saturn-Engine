@@ -967,7 +967,7 @@ namespace Saturn {
 		ImGui::PopStyleColor();
 	}
 
-	void NodeEditor::HandleCreate() 
+	void NodeEditor::HandleCreate()
 	{
 #if !defined(SAT_DIST)
 		if( !m_CreateNewNode && HasUserAuthority( NodeEditorUserAuthority::Editing ) )
@@ -1082,6 +1082,7 @@ namespace Saturn {
 				{
 					m_NewLinkPin = FindPin( UUID( id.Get() ) );
 
+					// Show popup.
 					if( m_NewLinkPin )
 						showLabel( "+ Create Node", ImColor( 32, 45, 32, 180 ) );
 
@@ -1524,28 +1525,36 @@ namespace Saturn {
 //		Ref<UndoRedoActionCreateNode> action = Ref<UndoRedoActionCreateNode>::Create( SharedFromThis(), node );
 //		GlobalUndoRedoGroup::Get()->AddAction( action, m_AssetID );
 
-		if( auto& startPin = m_NewNodeLinkPin )
+		if( m_AcceptedNewLink )
 		{
-			auto& pins = startPin->Kind == PinKind::Input ? node->Outputs : node->Inputs;
-
-			for( auto& pin : pins )
+			if( auto& startPin = m_NewNodeLinkPin )
 			{
-				if( CanCreateLink( startPin, pin ) )
+				auto& pins = startPin->Kind == PinKind::Input ? node->Outputs : node->Inputs;
+
+				for( auto& pin : pins )
 				{
-					auto& endPin = pin;
+					if( CanCreateLink( startPin, pin ) )
+					{
+						auto& endPin = pin;
 
-					UUID startID = startPin->ID;
-					UUID endID = endPin->ID;
+						UUID startID = startPin->ID;
+						UUID endID = endPin->ID;
 
-					// Start of the link must be the output pin
-					if( startPin->Kind == PinKind::Input )
-						std::swap( startID, endID );
+						// Start of the link must be the output pin
+						if( startPin->Kind == PinKind::Input )
+							std::swap( startID, endID );
 
-					m_Links.push_back( Ref<Link>::Create( UUID(), startID, endID, startPin->GetPinColor() ) );
+						m_Links.push_back( Ref<Link>::Create( UUID(), startID, endID, startPin->GetPinColor() ) );
 
-					break;
+						break;
+					}
 				}
 			}
+		}
+		else
+		{
+			// Reset back to default state
+			m_AcceptedNewLink = true;
 		}
 
 		MarkDirty();
@@ -1982,7 +1991,7 @@ namespace Saturn {
 				SAT_CORE_WARN( "Could not find node editor node class hash {0}, so using NodeEditorBlueprintNode instead.", targetClassHash );
 			}
 
-//			AddNode( node );
+			BuildNode( node );
 
 			node->Deserialise( rStream );
 			node->PositionBeforeMove = ed::GetNodePosition( ed::NodeId( node->ID ) );

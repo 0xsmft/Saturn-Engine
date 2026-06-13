@@ -216,6 +216,11 @@ namespace Saturn {
 		[[nodiscard]] bool HasUserAuthority( NodeEditorUserAuthority privilege ) const;
 		void SetUserAuthorityFlag( NodeEditorUserAuthority privilege, bool value );
 
+		Ref<Pin> GetOriginPinForNewNode() { return m_NewNodeLinkPin; }
+		const Ref<Pin> GetOriginPinForNewNode() const { return m_NewNodeLinkPin; }
+
+		void RejectAcceptedNewLinkForNewNode() { m_AcceptedNewLink = false; }
+
 	public:
 		AssetID GetAssetID() const { return m_AssetID; }
 		NodeEditorVersion GetVersion() const { return m_Version; }
@@ -369,6 +374,10 @@ namespace Saturn {
 		bool m_ShowDataWindow = false;
 		bool m_HasPreCompileErrors = false;
 		bool m_ShowErrorPopup = false;
+		
+		// Did we accept the new link when we created a new node.
+		// Rare case but in the case of the set variable node it will always reject this.
+		bool m_AcceptedNewLink = true;
 
 		// Start in the editing state.
 		NodeEditorState m_State = NodeEditorState_Editing;

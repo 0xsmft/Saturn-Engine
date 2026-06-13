@@ -1,20 +1,5 @@
-!Saturn/vendor/assimp/bin/
-!Saturn/vendor/physx/bin/
-!Saturn/vendor/mono/bin/
-!Saturn/vendor/assimp/bin/**
-!Saturn/vendor/physx/bin/**
-!Saturn/vendor/mono/bin/**
-!Saturn/vendor/assimp/bin/*
-!Saturn/vendor/physx/bin/**
-!Saturn/vendor/mono/bin/*
-!Saturn/vendor/shaderc/bin/
-!Saturn/vendor/vulkan/bin/
-!Saturn/vendor/vulkan/bin/**
-!Saturn/vendor/vulkan/bin
-
 # Binaries
 **/bin/
-!vendor/bin/premake/
 bin-int/
 
 # log files
@@ -26,51 +11,31 @@ bin-int/
 **.vcxproj
 **.vcxproj.filters
 **.vcxproj.user
+*.csproj
+*.csproj.user
 
+# Aux
 [dD]esktop.ini
+.DS_Store
 
-**/assets/tex
-
-assets/**
-Saturn/vendor/imgui/examples/example_allegro5
-Saturn/vendor/imgui/examples/example_apple_metal
-Saturn/vendor/imgui/examples/example_apple_opengl2
+# Keep
 !Saturn/vendor/assimp/bin/
-!Saturn/vendor/physx/bin/
-!Saturn/vendor/physx/bin/Debug/**
-!Saturn/vendor/physx/bin/**/**
-!Saturn/vendor/physx/bin/Dist/**
-!Saturn/vendor/mono/bin/
-!Saturn/vendor/assimp/bin/**
-!Saturn/vendor/physx/bin/**
-!Saturn/vendor/mono/bin/**
-!Saturn/vendor/assimp/bin/*
-!Saturn/vendor/physx/bin/*
-!Saturn/vendor/mono/bin/*
-!vender/bin/premake
 !Saturn/vendor/steamworks/Bin/
+!Saturn/vendor/assimp/bin/
+!Saturn/vendor/shaderc/bin/
+!Saturn/vendor/vulkan/bin/
+
+# Makefiles
 Saturn/vendor/**/Makefile
 Saturn/Makefile
 Makefile
-*.csproj
-*.csproj.user
-Titan/assets/assembly/SaturnScript.pdb
-Titan/version-control.vcinfo
-Titan/assets/EngineSettings.eng
-Output-Build.txt
-*.scor
-*.incl
-*.t0*
-
-# Codelite files
 *.mk
+
+# Codelite files / other linux dev envs
+premake5
 *.project
 **/.codelite/
 *.workspace
-premake5
-Saturn/Saturn.txt
-Saturn/vendor/Glad/Glad.txt
-Saturn/vendor/imgui/ImGui.txt
 **/.build-*/**.**
 **/.build-debug/**.**
 **/.build-release/**.**
@@ -85,3 +50,4 @@ Saturn/vendor/imgui/ImGui.txt
 **/build
 .kdev4
 *.kdev4
+.kdev4/

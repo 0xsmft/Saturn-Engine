@@ -37,12 +37,13 @@
 #include "Saturn/Vulkan/VulkanDebug.h"
 
 #if !defined(SAT_DIST)
-#include "ImGuizmo/ImGuizmo.h"
 
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <backends/imgui_impl_vulkan.h>
 #include <backends/imgui_impl_ruby.h>
+
+#include "ImGuizmo/ImGuizmo.h"
 #endif
 
 #include <Saturn/Core/Ruby/RubyWindow.h>

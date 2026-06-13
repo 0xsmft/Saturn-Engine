@@ -48,6 +48,7 @@ Saturn/vendor/imgui/examples/example_apple_opengl2
 !Saturn/vendor/physx/bin/*
 !Saturn/vendor/mono/bin/*
 !vender/bin/premake
+!Saturn/vendor/steamworks/Bin/
 Saturn/vendor/**/Makefile
 Saturn/Makefile
 Makefile

@@ -98,6 +98,13 @@ project "Saturn"
 		"Saturn-SharedStorage"
 	}
 
+	libdirs
+	{
+		-- Add vulkan lib and bin paths to libdirs
+		os.getenv('VULKAN_SDK') .. "/Lib",
+		os.getenv('VULKAN_SDK') .. "/Bin",
+	}
+
 	filter { "options:onlineapi=steam" }
 		includedirs
 		{
@@ -111,9 +118,6 @@ project "Saturn"
 
 	filter "files:vendor/ImGuizmo/src/ImGuizmo/**.cpp"
 		flags { "NoPCH" }
-
-	filter "system:not windows"
-		systemversion "latest"
 		
 	filter "system:linux"
 		systemversion "latest"
@@ -143,10 +147,10 @@ project "Saturn"
 	filter "system:windows"
 		systemversion "latest"
 
-		links 
+		links
 		{
 			"dwmapi",
-			"vendor/vulkan/bin/vulkan-1.lib"
+			"vulkan-1"
 		}
 
 		defines
@@ -175,10 +179,11 @@ project "Saturn"
 			{
 				"vendor/assimp/bin/Debug/assimp-vc143-mtd.lib",
 
-				"vendor/shaderc/bin/Debug-Windows/shaderc.lib",
-				"vendor/shaderc/bin/Debug-Windows/shaderc_util.lib",
-				"vendor/shaderc/bin/Debug-Windows/glslangd.lib",
-				"vendor/shaderc/bin/Debug-Windows/SPIRV-Tools.lib",
+				-- NOTE: These come from the Vulkan SDK
+				"shaderc_sharedd",
+				"shaderc_utild",
+				"glslangd",
+				"SPIRV-Toolsd",
 			}
 
 		filter "configurations:Release"
@@ -187,10 +192,12 @@ project "Saturn"
 			links
 			{
 				"vendor/assimp/bin/Release/assimp-vc143-mt.lib",
-				"vendor/shaderc/bin/Release-Windows/shaderc.lib",
-				"vendor/shaderc/bin/Release-Windows/shaderc_util.lib",
-				"vendor/shaderc/bin/Release-Windows/glslang.lib",
-				"vendor/shaderc/bin/Release-Windows/SPIRV-Tools.lib"
+
+				-- NOTE: These come from the Vulkan SDK
+				"shaderc_shared",
+				"shaderc_util",
+				"glslang",
+				"SPIRV-Tools",
 			}
 
 		filter "configurations:Dist"

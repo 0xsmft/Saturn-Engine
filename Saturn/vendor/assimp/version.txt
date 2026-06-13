@@ -1,0 +1,1 @@
+Assimp 5.4.2342441806 amd64 msvc shared singlethreadedsingle

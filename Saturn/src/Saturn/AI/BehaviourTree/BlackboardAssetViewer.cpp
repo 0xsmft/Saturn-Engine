@@ -60,6 +60,8 @@ namespace Saturn {
 		const ImGuiWindowFlags flags = m_Dirty ? ImGuiWindowFlags_UnsavedDocument : 0;
 		if( ImGui::Begin( m_Name.c_str(), &m_Open, flags ) )
 		{
+			if( m_ShowDirtyPopup ) DrawDirtyPopupModal();
+
 			if( Auxiliary::TreeNode( "Variables" ) )
 			{
 				for( auto& rData : m_SpecAsset->m_SpecificationData )
@@ -159,7 +161,7 @@ namespace Saturn {
 
 					if( count >= 1 )
 					{
-						name += std::format( " ({0})", count );
+						name += std::format( "{0}", count );
 					}
 
 					m_SpecAsset->AddNew( name, NodeEditorVariableDataType::Unknown, UUID() );
@@ -172,15 +174,10 @@ namespace Saturn {
 			ImGui::End();
 		}
 
-		if( !m_Open && m_CanSave )
+		if( !m_Open && m_Dirty )
 		{
-			BlackboardAssetSerialiser btms;
-			btms.Serialise( m_SpecAsset );
-		}
-		else if( !m_CanSave )
-		{
-			// Keep open until we can save.
 			m_Open = true;
+			m_ShowDirtyPopup = true;
 		}
 #endif
 	}
@@ -197,6 +194,60 @@ namespace Saturn {
 		ImGui::GetWindowDrawList()->AddRectFilled( min, max, IM_COL32( 200, 30, 60, 255 ), 2.0f, ImDrawFlags_RoundCornersAll );
 
 		ImGui::TextUnformatted( pText );
+	}
+
+	void BlackboardAssetViewer::DrawDirtyPopupModal()
+	{
+		ImGui::OpenPopup( "Blackboard is dirty##bbdirtypopup" );
+
+		if( ImGui::BeginPopupModal( "Blackboard is dirty##bbdirtypopup", nullptr, ImGuiWindowFlags_NoSavedSettings ) )
+		{
+			if( m_CanSave )
+				ImGui::Text( "There are unsaved changes to this Blackboard, what would you like to do?" );
+			else
+				ImGui::Text( "You cannot save, there are errors that need to be fixed before saving." );
+
+			ImGui::Separator();
+
+			ImGui::BeginHorizontal( "##optsbbhz" );
+
+			Auxiliary::DisabledFlag disabledIfUnableToSave( !m_CanSave );
+			
+			if( ImGui::Button( "Save" ) ) 
+			{
+				BlackboardAssetSerialiser btms;
+				btms.Serialise( m_SpecAsset );
+
+				m_Open = m_Dirty = m_ShowDirtyPopup = false;
+
+				ImGui::CloseCurrentPopup();
+			}
+
+			disabledIfUnableToSave.Pop();
+
+			ImGui::Spring();
+
+			if( ImGui::Button( "Discard Changes" ) )
+			{
+				m_Open = m_Dirty = m_ShowDirtyPopup = false;
+
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::Spring();
+
+			if( ImGui::Button( "Cancel" ) )
+			{
+				m_Open = true;
+				m_ShowDirtyPopup = false;
+
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndHorizontal();
+
+			ImGui::EndPopup();
+		}
 	}
 
 }

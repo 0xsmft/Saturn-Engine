@@ -45,11 +45,13 @@ namespace Saturn {
 
 	private:
 		void DisplayErrorSection( const char* pText );
+		void DrawDirtyPopupModal();
 
 	private:
 		Ref<BlackboardSpecificationAsset> m_SpecAsset;
 
 		bool m_Dirty = false;
+		bool m_ShowDirtyPopup = false;
 		bool m_CanSave = true;
 	};
 }

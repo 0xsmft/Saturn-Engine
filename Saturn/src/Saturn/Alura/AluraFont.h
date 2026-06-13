@@ -165,7 +165,7 @@ namespace Saturn {
 		// INTERNAL CONSTRUCTOR! FOR USE BY ALURACANVAS ONLY. Init empty font with no asset.
 		AluraFont() = default;
 
-		// Create a new font and reload the raw .ttf file
+		// Create a new font and load the raw .ttf file and generate the real Alura Font data
 		AluraFont( const std::filesystem::path& rFontPath, const Ref<Asset>& rBase );
 
 		// Init empty font asset with other
@@ -175,6 +175,9 @@ namespace Saturn {
 
 		void Serialise( const std::filesystem::path& rPath ) const;
 		void Deserialise( FDependentIStream& rStream );
+		
+		// FOR USE BY ALURACANVAS ONLY!
+		void Deserialise_ForAluraCanvas( const std::filesystem::path& rPath );
 
 		Ref<Texture2D> GetTexture() const { return m_TextureAtlas; }
 

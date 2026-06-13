@@ -448,7 +448,6 @@ namespace Saturn {
 			RawSerialisation::ReadObject( rGlyph.AtlasTop, rStream );
 		}
 
-		// Now write the texture atlas image
 		uint32_t width = 0u, height = 0u;
 
 		RawSerialisation::ReadObject( width, rStream );
@@ -458,6 +457,13 @@ namespace Saturn {
 		RawSerialisation::ReadSaturnBuffer( imageData, rStream );
 		m_TextureAtlas = Ref<Texture2D>::Create( ImageFormat::RGBA32F, width, height, imageData.Data );
 		imageData.Free();
+	}
+
+	void AluraFont::Deserialise_ForAluraCanvas( const std::filesystem::path& rPath )
+	{
+		std::ifstream stream( rPath, std::ios::binary | std::ios::in );
+		Deserialise( stream );
+		stream.close();
 	}
 
 	glm::vec2 AluraFont::CalcTextSize( float fontSize, const std::string& rText )

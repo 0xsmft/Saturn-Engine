@@ -27,105 +27,109 @@
 */
 
 #include "sppch.h"
-#include "ShaderBundle.h"
+#include "EditorShaderBundle.h"
 
-#include "Saturn/Project/Project.h"
-#include "Shader.h"
+#include "Saturn/Core/App.h"
 
-#include "Saturn/Serialisation/Raw/RawSerialisation.h"
+#include "Saturn/Vulkan/Shader.h"
+
+#include "Raw/RawSerialisation.h"
 
 namespace Saturn {
 
-	struct ShaderBundleHeader
+	struct EditorShaderBundleHeader
 	{
-		//  .SB
-		const unsigned char Magic[ 4 ] = { 0x2E, 0x53, 0x42, 0x00 };
+		//									.LA
+		const unsigned char Magic[ 4 ] = { 0x2E, 0x4C, 0x41, 0x00 };
 		size_t Shaders = 0llu;
 	};
 
-	static void WriteShaderBundleHeader( std::ofstream& rStream ) 
+	static void WriteHeader( std::ofstream& rStream ) 
 	{
-		ShaderBundleHeader header{};
-		header.Shaders = ShaderLibrary::Get().GetShaders().size();
+		EditorShaderBundleHeader header{};
+		header.Shaders = ShaderLibrary::Get().GetShaderCount();
 
-		rStream.write( reinterpret_cast< char* >( &header ), sizeof( ShaderBundleHeader ) );
+		rStream.write( reinterpret_cast< const char* >( &header.Magic ), 4 );
+		rStream.write( reinterpret_cast< const char* >( &header.Shaders ), sizeof( size_t ) );
 	}
 
-	ShaderBundleResult ShaderBundle::BundleShaders()
+	static bool ReadHeader( EditorShaderBundleHeader& header, std::ifstream& rStream )
 	{
-		std::filesystem::path cachePath = Project::GetActiveProject()->GetFullCachePath();
-		
-		// Editor shader bundle built into a different directory.
-		if( !std::filesystem::exists( cachePath ) )
-			std::filesystem::create_directories( cachePath );
+		unsigned char magic[ 4 ]{ 0 };
 
-		cachePath /= "ShaderBundle.ssb";
+		rStream.read( reinterpret_cast< char* >( &magic ), 4 );
+		rStream.read( reinterpret_cast< char* >( &header.Shaders ), sizeof( size_t ) );
+
+		if( std::memcmp( magic, ".LA", 4 ) != 0 )
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	bool EditorShaderBundle::BundleShaders()
+	{
+		const std::filesystem::path cachePath = Application::Get()->GetAppDataFolder() / "EditorShaderBundle.ssb";
 
 		std::ofstream fout( cachePath, std::ios::binary | std::ios::trunc );
 
-		WriteShaderBundleHeader( fout );
+		WriteHeader( fout );
 
 		for( auto&& [name, shader] : ShaderLibrary::Get().GetShaders() )
 		{
 			SAT_CORE_INFO( "Packaging shader: {0}", name );
 
-			RawSerialisation::WriteString( name, fout );
-			shader->SerialiseShaderData( fout );
+			const auto& path = shader->GetFilepath();
+			const auto lwt = std::filesystem::last_write_time( path );
+			const auto epochTime = lwt.time_since_epoch().count();
+
+			RawSerialisation::WriteObject( epochTime, fout );
+
+			shader->SerialiseShaderDataForEditor( fout );
 		}
 
 		fout.close();
-	
-		return ShaderBundleResult::Success;
+
+		return true;
 	}
 
-	static ShaderBundleResult ReadShaderBundleHeader( std::ifstream& rStream )
+	bool EditorShaderBundle::ReadBundle()
 	{
-		ShaderBundleHeader header{};
-		rStream.read( reinterpret_cast< char* >( &header ), sizeof( ShaderBundleHeader ) );
-
-		if( std::memcmp( header.Magic, ".SB", 4 ) != 0 )
-		{
-			SAT_CORE_ERROR( "Invalid shader bundle file header!" );
-			return ShaderBundleResult::InvalidShaderHeader;
-		}
-
-		return ShaderBundleResult::Success;
-	}
-
-	ShaderBundleResult ShaderBundle::ReadBundle()
-	{
-		std::filesystem::path cachePath = Project::GetActiveProject()->GetFullCachePath();
-		cachePath /= "ShaderBundle.ssb";
-
-		if( !std::filesystem::exists( cachePath ) )
-			return ShaderBundleResult::FileNotFound;
+		const std::filesystem::path cachePath = Application::Get()->GetAppDataFolder() / "EditorShaderBundle.ssb";
 
 		std::ifstream stream( cachePath, std::ios::binary | std::ios::in );
 
-		ShaderBundleHeader header{};
-		stream.read( reinterpret_cast< char* >( &header ), sizeof( ShaderBundleHeader ) );
-
-		if( std::memcmp( header.Magic, ".SB", 4 ) != 0 )
-		{
-			SAT_CORE_ERROR( "Invalid shader bundle file header!" );
-			return ShaderBundleResult::InvalidShaderHeader;
-		}
+		EditorShaderBundleHeader header{};
+		if( !ReadHeader( header, stream ) )
+			return false;
 
 		for( size_t i = 0; i < header.Shaders; ++i )
 		{
+			std::chrono::system_clock::rep savedLastWriteTime = 0ll;
+			RawSerialisation::ReadObject( savedLastWriteTime, stream );
+
 			Ref<Shader> shader = Ref<Shader>::Create();
+			shader->DeserialiseShaderDataForEditor( stream );
 
-			std::string name = RawSerialisation::ReadString( stream );
-			shader->m_Name = name;
+			const auto lwt = std::filesystem::last_write_time( shader->GetFilepath() );
+			const auto fsLastWriteTime = lwt.time_since_epoch().count();
 
-			shader->DeserialiseShaderData( stream );
-
-			ShaderLibrary::Get().Add( shader );
+			// This is a bit hacky but will work fine.
+			// so, if our times match we add it to the library
+			// if not we do, then not we do nothing because when the shader 
+			// is needed it will then load it from the .glsl file
+			// because it does not exist in the map.
+			// 
+			if( fsLastWriteTime == savedLastWriteTime )
+			{
+				ShaderLibrary::Get().Add( shader );
+			}
 		}
 
-		// We are done with the file buffer.
 		stream.close();
 
-		return ShaderBundleResult::Success;
+		return true;
 	}
+
 }

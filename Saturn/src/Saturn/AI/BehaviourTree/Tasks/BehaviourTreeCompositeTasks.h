@@ -34,7 +34,7 @@
 
 namespace Saturn {
 
-	class BehaviourTreeCondition;
+	class BehaviourTreeConditionTask;
 
 	// The base class for all composite tasks
 	SCLASS()
@@ -64,7 +64,7 @@ namespace Saturn {
 
 		std::vector<Ref<BehaviourTreeBaseTask>> m_Children;
 
-		BehaviourTreeCondition* m_pNodeCondition = nullptr;
+		BehaviourTreeConditionTask* m_pNodeCondition = nullptr;
 	};
 
 	// Selector

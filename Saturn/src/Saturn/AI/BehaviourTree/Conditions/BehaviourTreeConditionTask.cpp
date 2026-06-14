@@ -27,7 +27,7 @@
 */
 
 #include "sppch.h"
-#include "BehaviourTreeCondition.h"
+#include "BehaviourTreeConditionTask.h"
 
 #include "Saturn/Serialisation/Raw/RawSerialisation.h"
 
@@ -37,7 +37,7 @@
 
 namespace Saturn {
 
-	void BehaviourTreeCondition::SetupMemVariable( AssetID memSpecID )
+	void BehaviourTreeConditionTask::SetupMemVariable( AssetID memSpecID )
 	{
 #if !defined( SAT_DIST )
 		m_BlackboardSpec = AssetManager::Get()->GetAssetAs<BlackboardSpecificationAsset>( memSpecID );
@@ -46,16 +46,16 @@ namespace Saturn {
 
 	//////////////////////////////////////////////////////////////////////////
 
-	void BehaviourTreeCondition::Serialise( std::ofstream& rStream ) const
+	void BehaviourTreeConditionTask::Serialise( std::ofstream& rStream ) const
 	{
 		RawSerialisation::WriteObject( m_RTBlackboardVariableID, rStream );
-		RawSerialisation::WriteObject( (std::underlying_type_t<BehaviourTreeConditionType>)m_ConditionType, rStream );
+		RawSerialisation::WriteObject( ( std::underlying_type_t<BehaviourTreeConditionType> )m_ConditionType, rStream );
 #if !defined(SAT_DIST)
 		RawSerialisation::WriteString( m_Title, rStream );
 #endif
 	}
 
-	void BehaviourTreeCondition::Deserialise( FDependentIStream& rStream )
+	void BehaviourTreeConditionTask::Deserialise( FDependentIStream& rStream )
 	{
 		RawSerialisation::ReadObject( m_RTBlackboardVariableID, rStream );
 		RawSerialisation::ReadObject( m_ConditionType, rStream );
@@ -71,4 +71,4 @@ namespace Saturn {
 
 #include "Saturn/GameFramework/Core/EngineGenerated.h"
 
-SAT_X31_CREATE_AUTO_REG( BehaviourTreeCondition );
+SAT_X31_CREATE_AUTO_REG( BehaviourTreeConditionTask );

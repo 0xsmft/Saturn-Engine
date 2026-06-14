@@ -31,7 +31,7 @@
 
 #include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 
-#include "Saturn/AI/BehaviourTree/Conditions/BehaviourTreeCondition.h"
+#include "Saturn/AI/BehaviourTree/Conditions/BehaviourTreeConditionTask.h"
 
 #include "Saturn/AI/AIAgentEntity.h"
 

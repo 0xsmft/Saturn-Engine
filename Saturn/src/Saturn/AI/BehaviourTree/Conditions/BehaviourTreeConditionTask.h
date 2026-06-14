@@ -28,64 +28,50 @@
 
 #pragma once
 
-#include "BehaviourTreeCondition.h"
+#include "Saturn/AI/BehaviourTree/Tasks/BehaviourTreeBaseTask.h"
+#include "BehaviourTreeConditionInfo.h"
 
 namespace Saturn {
 
-	enum class BTMemoryConditionQueryType : uint8_t
+	SCLASS()
+	class BehaviourTreeConditionTask : public BehaviourTreeBaseTask
 	{
-		Set,
-		NotSet
-	};
-
-	inline std::string BTMemoryConditionQueryTypeToString( BTMemoryConditionQueryType type ) 
-	{
-		switch( type )
+		SAT_DECLARE_CLASS_MOVE( BehaviourTreeConditionTask, BehaviourTreeBaseTask )
+	public:
+		BehaviourTreeConditionTask() = default;
+		BehaviourTreeConditionTask( const std::string& rTitle, BehaviourTreeConditionType type ) 
+			: m_Title( rTitle ), m_ConditionType( type )
 		{
-			case BTMemoryConditionQueryType::Set:
-				return "Is Set";
-
-			case BTMemoryConditionQueryType::NotSet:
-				return "Is Not Set";
-
-			default: return "Unknown";
 		}
-	}
 
-	// BehaviourTreeMemoryCondition
-	//
-	// Condition if a blackboard key has a valid value or not, determined by the QueryType (BTMemoryConditionQueryType)
-	//
-	class BehaviourTreeMemoryCondition : public BehaviourTreeCondition
-	{
-		SAT_DECLARE_CLASS_MOVE( BehaviourTreeMemoryCondition, BehaviourTreeCondition )
-	public:
-		BehaviourTreeMemoryCondition();
-		~BehaviourTreeMemoryCondition();
-
-		//////////////////////////////////////////////////////////////////////////
-		// BehaviourTreeBaseTask
-
-		NodeEditorTaskState Tick( Timestep ts ) override;
-		void Reset() override;
-
-	public:
-		//////////////////////////////////////////////////////////////////////////
-		// BehaviourTreeCondition
+		~BehaviourTreeConditionTask() = default;
 
 #if !defined( SAT_DIST )
-		virtual void RenderDetails() override;
-		virtual std::string GetTitleText() const override;
-#endif
-		virtual void Serialise( std::ofstream& rStream ) const override;
-		virtual void Deserialise( FDependentIStream& rStream ) override;
+		virtual void RenderDetails() {}
+		virtual std::string GetTitleText() const { return m_Title; }
 
-	private:
-		// On Dist, we don't need to store our key spec, only with editor to allow us to select a target variable
-#if !defined( SAT_DIST )
-		Ref<BlackboardVaraibleSpec> m_VariableSpec;
+		[[nodiscard]] virtual bool IsSpawnableNode() const override final { return false; }
+		virtual const char* GetTaskName() const override final { return ""; }
+		virtual void OnRenderExtra() override final {}
 #endif
-		BTMemoryConditionQueryType m_QueryType = BTMemoryConditionQueryType::Set;
+
+		BehaviourTreeConditionType GetConditionType() const { return m_ConditionType; }
+
+	public:
+		void SetupMemVariable( AssetID memSpecID );
+
+	public:
+		virtual void Serialise( std::ofstream& rStream ) const;
+		virtual void Deserialise( FDependentIStream& rStream );
+
+	protected:
+		std::string m_Title;
+
+#if !defined( SAT_DIST )
+		Ref<BlackboardSpecificationAsset> m_BlackboardSpec;
+#endif
+
+		BehaviourTreeConditionType m_ConditionType = BehaviourTreeConditionType::None;
 	};
 
 }

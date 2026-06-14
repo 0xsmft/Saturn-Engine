@@ -27,7 +27,7 @@
 */
 
 #include "sppch.h"
-#include "BehaviourTreeMemoryCondition.h"
+#include "BehaviourTreeBlackboardCondition.h"
 
 #include "Saturn/AI/AIAgentEntity.h"
 #include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeNodeEditor.h"
@@ -38,15 +38,15 @@
 
 namespace Saturn {
 
-	BehaviourTreeMemoryCondition::BehaviourTreeMemoryCondition()
-		: BehaviourTreeCondition( "Memory Condition", BehaviourTreeConditionType::Blackboard )
+	BehaviourTreeBlackboardCondition::BehaviourTreeBlackboardCondition()
+		: BehaviourTreeConditionTask( "Blackboard Condition", BehaviourTreeConditionType::Blackboard )
 #if !defined(SAT_DIST)
 		, m_VariableSpec( Ref<BlackboardVaraibleSpec>::Create() )
 #endif
 	{
 	}
 
-	BehaviourTreeMemoryCondition::~BehaviourTreeMemoryCondition()
+	BehaviourTreeBlackboardCondition::~BehaviourTreeBlackboardCondition()
 	{
 	}
 
@@ -58,7 +58,7 @@ namespace Saturn {
 	}
 	*/
 
-	NodeEditorTaskState BehaviourTreeMemoryCondition::Tick( Timestep ts )
+	NodeEditorTaskState BehaviourTreeBlackboardCondition::Tick( Timestep ts )
 	{
 		const auto key = m_pRTBlackboard->GetKey( m_RTBlackboardVariableID );
 		if( !key )
@@ -67,24 +67,24 @@ namespace Saturn {
 		const bool hasValue = key->HoldsAnyValue();
 		switch( m_QueryType )
 		{
-			case BTMemoryConditionQueryType::Set:
+			case BTBlackboardConditionQueryType::Set:
 				return hasValue ? NodeEditorTaskState::Completed : NodeEditorTaskState::Failed;
 
-			case BTMemoryConditionQueryType::NotSet:
+			case BTBlackboardConditionQueryType::NotSet:
 				return hasValue ? NodeEditorTaskState::Failed : NodeEditorTaskState::Completed;
 
 			default: return NodeEditorTaskState::Failed;
 		}
 	}
 
-	void BehaviourTreeMemoryCondition::Reset()
+	void BehaviourTreeBlackboardCondition::Reset()
 	{
 	}
 
 #if !defined( SAT_DIST )
-	void BehaviourTreeMemoryCondition::RenderDetails()
+	void BehaviourTreeBlackboardCondition::RenderDetails()
 	{
-		ImGui::Text( "Memory Condition" );
+		ImGui::Text( "Blackboard Condition" );
 		ImGui::Separator();
 
 		ImGui::Columns( 2 );
@@ -94,16 +94,16 @@ namespace Saturn {
 
 		ImGui::NextColumn();
 
-		if( ImGui::BeginCombo( "##condition", BTMemoryConditionQueryTypeToString( m_QueryType ).c_str() ) )
+		if( ImGui::BeginCombo( "##condition", BTBlackboardConditionQueryTypeToString( m_QueryType ).c_str() ) )
 		{
 			if( ImGui::Selectable( "Is Set" ) )
 			{
-				m_QueryType = BTMemoryConditionQueryType::Set;
+				m_QueryType = BTBlackboardConditionQueryType::Set;
 			}
 
 			if( ImGui::Selectable( "Is Not Set" ) )
 			{
-				m_QueryType = BTMemoryConditionQueryType::NotSet;
+				m_QueryType = BTBlackboardConditionQueryType::NotSet;
 			}
 
 			ImGui::EndCombo();
@@ -136,22 +136,22 @@ namespace Saturn {
 		disabledIfNoBBSpec.Pop();
 	}
 
-	std::string BehaviourTreeMemoryCondition::GetTitleText() const
+	std::string BehaviourTreeBlackboardCondition::GetTitleText() const
 	{
-		std::string text = std::format( "{0} | If {1} {2}", m_Title, m_VariableSpec->Name.empty() ? "<NULL>" : m_VariableSpec->Name, BTMemoryConditionQueryTypeToString( m_QueryType ) );
+		std::string text = std::format( "{0} | If {1} {2}", m_Title, m_VariableSpec->Name.empty() ? "<NULL>" : m_VariableSpec->Name, BTBlackboardConditionQueryTypeToString( m_QueryType ) );
 		return text;
 	}
 
 #endif
 
-	void BehaviourTreeMemoryCondition::Serialise( std::ofstream& rStream ) const
+	void BehaviourTreeBlackboardCondition::Serialise( std::ofstream& rStream ) const
 	{
 		Super::Serialise( rStream );
 
-		RawSerialisation::WriteObject( ( std::underlying_type_t<BTMemoryConditionQueryType> )m_QueryType, rStream );
+		RawSerialisation::WriteObject( ( std::underlying_type_t<BTBlackboardConditionQueryType> )m_QueryType, rStream );
 	}
 
-	void BehaviourTreeMemoryCondition::Deserialise( FDependentIStream& rStream )
+	void BehaviourTreeBlackboardCondition::Deserialise( FDependentIStream& rStream )
 	{
 		Super::Deserialise( rStream );
 
@@ -162,4 +162,4 @@ namespace Saturn {
 
 #include "Saturn/GameFramework/Core/EngineGenerated.h"
 
-SAT_X31_CREATE_AUTO_REG( BehaviourTreeMemoryCondition );
+SAT_X31_CREATE_AUTO_REG( BehaviourTreeBlackboardCondition );

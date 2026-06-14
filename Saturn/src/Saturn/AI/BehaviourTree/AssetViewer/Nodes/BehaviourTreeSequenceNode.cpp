@@ -38,7 +38,7 @@
 
 #include "Saturn/AI/BehaviourTree/Tasks/BehaviourTreeCompositeTasks.h"
 
-#include "Saturn/AI/BehaviourTree/Conditions/BehaviourTreeMemoryCondition.h"
+#include "Saturn/AI/BehaviourTree/Conditions/BehaviourTreeBlackboardCondition.h"
 
 #if !defined(SAT_DIST)
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
@@ -109,7 +109,7 @@ namespace Saturn {
 		{
 			std::string className = RawSerialisation::ReadString( rStream );
 
-			auto* pCondition = dynamic_cast<BehaviourTreeCondition*>( ClassMetadataHandler::Get().CreateClassObject( className ) );
+			auto* pCondition = dynamic_cast<BehaviourTreeConditionTask*>( ClassMetadataHandler::Get().CreateClassObject( className ) );
 
 			if( pCondition )
 			{
@@ -158,7 +158,7 @@ namespace Saturn {
 		{
 			if( ImGui::MenuItem( "Blackboard" ) )
 			{
-				auto* pCond = ( BehaviourTreeMemoryCondition* )ClassMetadataHandler::Get().CreateClassObject( BehaviourTreeMemoryCondition::StaticClass() );
+				auto* pCond = ( BehaviourTreeBlackboardCondition* )ClassMetadataHandler::Get().CreateClassObject( BehaviourTreeBlackboardCondition::StaticClass() );
 				
 				if( GetParentAsBTNodeEditor()->GetBlackboardSpec() )
 				{

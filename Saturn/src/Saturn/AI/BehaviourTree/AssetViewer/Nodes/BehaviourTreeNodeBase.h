@@ -30,7 +30,7 @@
 
 #include "Saturn/NodeEditor/NodeEditorTreeNode.h"
 #include "Saturn/AI/BehaviourTree/BlackboardSpecificationAsset.h"
-#include "Saturn/AI/BehaviourTree/Conditions/BehaviourTreeCondition.h"
+#include "Saturn/AI/BehaviourTree/Conditions/BehaviourTreeConditionTask.h"
 
 namespace Saturn {
 
@@ -75,7 +75,7 @@ namespace Saturn {
 
 	public:
 		// TODO: Weak Ref #ReplaceRawPtrOrRefWithWeakRef
-		Ref<BehaviourTreeCondition> NodeCondition;
+		Ref<BehaviourTreeConditionTask> NodeCondition;
 
 	protected:
 		[[nodiscard]] BehaviourTreeNodeEditor* GetParentAsBTNodeEditor();

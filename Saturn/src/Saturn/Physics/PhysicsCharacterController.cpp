@@ -169,7 +169,16 @@ namespace Saturn {
 		settings->mInnerBodyShape = m_Shape->GetShape();
 		settings->mInnerBodyLayer = PhysLayerMoving;
 
-		m_Controller = new JPH::CharacterVirtual( settings, Auxiliary::GLMToJolt( rTc.Position ), Auxiliary::GLMQToJoltQ( rTc.GetRotation() ), PhysicsFoundation::Get()->GetPhysicsSystem() );
+		m_Controller = new JPH::CharacterVirtual( 
+			settings, 
+			Auxiliary::GLMToJolt( rTc.Position ), 
+			Auxiliary::GLMQToJoltQ( rTc.GetRotation() ), 
+			PhysicsFoundation::Get()->GetPhysicsSystem() 
+		);
+
+		m_Controller->SetListener( PhysicsFoundation::Get()->GetCharacterContact().get() );
+
+		m_Controller->SetUserData( ( uint64_t ) entity->GetHandle() );
 
 		// FIXME: Might not be viable to use the handle! (Entity ID may be better, however it's faster to use the handle)
 		//		  If we ever crash tell me to revise this!

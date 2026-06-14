@@ -34,10 +34,11 @@
 #include <Jolt/Jolt.h>
 #include <Jolt/Physics/PhysicsSystem.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
+#include <Jolt/Physics/Character/CharacterVirtual.h>
 
 namespace Saturn {
 
-	enum class PhysicsContactType 
+	enum class PhysicsContactType : uint8_t
 	{
 		Unknown,
 		Hit,
@@ -48,9 +49,44 @@ namespace Saturn {
 
 	struct PhysicsContactEventInfo
 	{
-		PhysicsContactType Type = PhysicsContactType::Unknown;
 		Entity* pA = nullptr;
 		Entity* pB = nullptr;
+		PhysicsContactType Type = PhysicsContactType::Unknown;
+	};
+
+	class PhysicsCharacterContact : public JPH::CharacterContactListener
+	{
+	public:
+		PhysicsCharacterContact( const JPH::BodyLockInterfaceNoLock* pBody )
+			: m_pBodyInterface( pBody )
+		{
+		}
+
+		virtual ~PhysicsCharacterContact() = default;
+
+	public:
+		virtual void OnContactAdded( 
+			const JPH::CharacterVirtual* inCharacter, 
+			const JPH::BodyID& inBodyID2, 
+			const JPH::SubShapeID& inSubShapeID2, 
+			JPH::RVec3Arg inContactPosition, 
+			JPH::Vec3Arg inContactNormal, 
+			JPH::CharacterContactSettings& ioSettings 
+		) override;
+	
+		virtual void OnContactRemoved( 
+			const JPH::CharacterVirtual* inCharacter, 
+			const JPH::BodyID& inBodyID2, 
+			const JPH::SubShapeID& inSubShapeID2 
+		) override;
+
+	public:
+		void DispatchAllContactEvents();
+		void IgnoreAll();
+
+	private:
+		std::vector<PhysicsContactEventInfo> m_PendingEvents;
+		const JPH::BodyLockInterfaceNoLock* m_pBodyInterface = nullptr;
 	};
 
 	class PhysicsContact : public JPH::ContactListener
@@ -76,7 +112,6 @@ namespace Saturn {
 
 	private:
 		std::vector<PhysicsContactEventInfo> m_PendingEvents;
-
 		const JPH::BodyLockInterfaceNoLock* m_pBodyInterface = nullptr;
 	};
 
@@ -130,6 +165,9 @@ namespace Saturn {
 		JPH::BroadPhaseLayer m_ObjectToBroadPhase[ PhysicsBroadPhaseLayer::PhysBPL_COUNT ];
 	};
 
+	//////////////////////////////////////////////////////////////////////////
+	// PHYSICS FOUNDATION
+
 	class PhysicsFoundation
 	{
 	public:
@@ -150,6 +188,7 @@ namespace Saturn {
 		const PhysicsCooking& GetCooking() const { return m_Cooking; }
 
 		std::shared_ptr<PhysicsContact> GetContactHandler() { return m_ContactHandler; }
+		std::shared_ptr<PhysicsCharacterContact> GetCharacterContact() { return m_CharacterContactHandler; }
 
 	private:
 		JPH::JobSystem* m_pJobSystem = nullptr;
@@ -159,6 +198,7 @@ namespace Saturn {
 
 		PhysicsCooking m_Cooking;
 		std::shared_ptr<PhysicsContact> m_ContactHandler;
+		std::shared_ptr<PhysicsCharacterContact> m_CharacterContactHandler;
 		JoltBodyActivationListener m_BodyActivationListener;
 		JoltObjectVsBroadPhaseLayerFilter m_ObjectVsBPLayerFilter{};
 		JoltObjectLayerPairFilter m_ObjectVsObjectLayerFilter{};

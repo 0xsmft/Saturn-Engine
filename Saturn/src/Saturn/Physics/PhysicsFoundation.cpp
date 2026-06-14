@@ -132,7 +132,6 @@ namespace Saturn {
 			rEventB.pB = entityA.Get();
 		}
 	}
-
 	void PhysicsContact::DispatchAllContactEvents()
 	{
 		for( const auto& rAwatingEvent : m_PendingEvents )
@@ -143,12 +142,16 @@ namespace Saturn {
 				case PhysicsContactType::HitTrigger:
 				{
 					rAwatingEvent.pA->OnEntityHit( rAwatingEvent.pB, rAwatingEvent.Type == PhysicsContactType::HitTrigger );
+					
+					rAwatingEvent.pB->OnEntityHit( rAwatingEvent.pA, rAwatingEvent.Type == PhysicsContactType::HitTrigger );
 				} break;
 
 				case PhysicsContactType::Leave:
 				case PhysicsContactType::LeaveTrigger:
 				{
 					rAwatingEvent.pA->OnEntityLeave( rAwatingEvent.pB, rAwatingEvent.Type == PhysicsContactType::LeaveTrigger );
+
+					rAwatingEvent.pB->OnEntityLeave( rAwatingEvent.pA, rAwatingEvent.Type == PhysicsContactType::LeaveTrigger );
 				} break;
 
 				default:
@@ -165,6 +168,110 @@ namespace Saturn {
 	}
 
 	//////////////////////////////////////////////////////////////////////////
+	// PhysicsCharacterContact
+
+	void PhysicsCharacterContact::OnContactAdded( const JPH::CharacterVirtual* inCharacter, const JPH::BodyID& inBodyID2, const JPH::SubShapeID& inSubShapeID2, JPH::RVec3Arg inContactPosition, JPH::Vec3Arg inContactNormal, JPH::CharacterContactSettings& ioSettings )
+	{
+		auto* pBodyB = m_pBodyInterface->TryGetBody( inBodyID2 );
+
+		if( !pBodyB )
+			return;
+
+		SharedPtr<Entity> entityA = g_ActiveScene->FindEntityByHandle( ( entt::entity ) inCharacter->GetUserData() );
+		SharedPtr<Entity> entityB = g_ActiveScene->FindEntityByHandle( ( entt::entity ) pBodyB->GetUserData() );
+
+		if( !entityA || !entityB )
+			return;
+
+		if( entityA && entityB )
+		{
+			auto& rEventA = m_PendingEvents.emplace_back();
+
+			// Handle entity A
+			rEventA.Type = PhysicsContactType::Hit;
+			rEventA.pA = entityA.Get();
+			rEventA.pB = entityB.Get();
+
+			auto& rEventB = m_PendingEvents.emplace_back();
+
+			// Handle entity B
+			rEventB.Type = PhysicsContactType::Hit;
+			rEventB.pA = entityB.Get();
+			rEventB.pB = entityA.Get();
+		}
+	}
+
+	void PhysicsCharacterContact::OnContactRemoved(
+		const JPH::CharacterVirtual* inCharacter,
+		const JPH::BodyID& inBodyID2,
+		const JPH::SubShapeID& inSubShapeID2 )
+	{
+		auto* pBodyB = m_pBodyInterface->TryGetBody( inBodyID2 );
+
+		if( !pBodyB )
+			return;
+
+		SharedPtr<Entity> entityA = g_ActiveScene->FindEntityByHandle( ( entt::entity ) inCharacter->GetUserData() );
+		SharedPtr<Entity> entityB = g_ActiveScene->FindEntityByHandle( ( entt::entity ) pBodyB->GetUserData() );
+
+		if( !entityA || !entityB )
+			return;
+
+		if( entityA && entityB )
+		{
+			auto& rEventA = m_PendingEvents.emplace_back();
+
+			// Handle entity A
+			rEventA.Type = PhysicsContactType::Leave;
+			rEventA.pA = entityA.Get();
+			rEventA.pB = entityB.Get();
+
+			auto& rEventB = m_PendingEvents.emplace_back();
+
+			// Handle entity B
+			rEventB.Type = PhysicsContactType::Leave;
+			rEventB.pA = entityB.Get();
+			rEventB.pB = entityA.Get();
+		}
+	}
+
+	void PhysicsCharacterContact::DispatchAllContactEvents()
+	{
+		for( const auto& rAwatingEvent : m_PendingEvents )
+		{
+			switch( rAwatingEvent.Type )
+			{
+				case PhysicsContactType::Hit:
+				case PhysicsContactType::HitTrigger:
+				{
+					rAwatingEvent.pA->OnEntityHit( rAwatingEvent.pB, rAwatingEvent.Type == PhysicsContactType::HitTrigger );
+
+					rAwatingEvent.pB->OnEntityHit( rAwatingEvent.pA, rAwatingEvent.Type == PhysicsContactType::HitTrigger );
+				} break;
+
+				case PhysicsContactType::Leave:
+				case PhysicsContactType::LeaveTrigger:
+				{
+					rAwatingEvent.pA->OnEntityLeave( rAwatingEvent.pB, rAwatingEvent.Type == PhysicsContactType::LeaveTrigger );
+
+					rAwatingEvent.pB->OnEntityLeave( rAwatingEvent.pA, rAwatingEvent.Type == PhysicsContactType::LeaveTrigger );
+				} break;
+
+				default:
+					break;
+			}
+		}
+
+		IgnoreAll();
+	}
+
+	void PhysicsCharacterContact::IgnoreAll()
+	{
+		m_PendingEvents.clear();
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// JoltBodyActivationListener
 
 	void JoltBodyActivationListener::OnBodyActivated( const JPH::BodyID& inBodyID, uint64_t inBodyUserData )
 	{
@@ -281,6 +388,7 @@ namespace Saturn {
 		m_pPhysicsSystem->Init( 1024, 0, 1024, 1024, m_BPLayerInterface, m_ObjectVsBPLayerFilter, m_ObjectVsObjectLayerFilter );
 
 		m_ContactHandler = std::make_shared<PhysicsContact>( &m_pPhysicsSystem->GetBodyLockInterfaceNoLock() );
+		m_CharacterContactHandler = std::make_shared<PhysicsCharacterContact>( &m_pPhysicsSystem->GetBodyLockInterfaceNoLock() );
 
 		m_pPhysicsSystem->SetContactListener( m_ContactHandler.get() );
 		m_pPhysicsSystem->SetBodyActivationListener( &m_BodyActivationListener );

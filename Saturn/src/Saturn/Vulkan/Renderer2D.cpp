@@ -96,7 +96,7 @@ namespace Saturn {
 		AddTextBuffer();
 		m_CurrentTextPtr.resize( 1 );
 
-		for( int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++ )
+		for( int i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
 		{
 			m_QuadVertexBuffers[ 0 ][ i ] = Ref<VertexBuffer>::Create( s_MaxVertices * sizeof( QuadVertex ) );
 			m_CurrentQuadBases[ 0 ][ i ] = new QuadVertex[ s_MaxVertices ];
@@ -294,7 +294,7 @@ namespace Saturn {
 
 	void Renderer2D::ReplaceTexture( Ref<Texture2D> old, Ref<Texture2D> newTexture )
 	{
-		for( size_t i = 0; i < m_Textures.size(); i++ )
+		for( size_t i = 0; i < m_Textures.size(); ++i )
 		{
 			if( m_Textures[ i ] == old )
 				m_Textures[ i ] = newTexture;
@@ -325,7 +325,7 @@ namespace Saturn {
 		rNewVB.resize( MAX_FRAMES_IN_FLIGHT );
 		rNewBase.resize( MAX_FRAMES_IN_FLIGHT );
 
-		for( auto i = 0; i < MAX_FRAMES_IN_FLIGHT; i++ )
+		for( auto i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
 		{
 			const uint64_t allocSize = s_MaxIndices * sizeof( QuadVertex );
 			rNewVB[ i ] = Ref<VertexBuffer>::Create( allocSize );
@@ -346,7 +346,7 @@ namespace Saturn {
 		rNewVB.resize( MAX_FRAMES_IN_FLIGHT );
 		rNewBase.resize( MAX_FRAMES_IN_FLIGHT );
 
-		for( auto i = 0; i < MAX_FRAMES_IN_FLIGHT; i++ )
+		for( auto i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
 		{
 			const uint64_t allocSize = s_MaxLineIndices * sizeof( LineVertex );
 			rNewVB[ i ] = Ref<VertexBuffer>::Create( allocSize );
@@ -362,7 +362,7 @@ namespace Saturn {
 		rNewVB.resize( MAX_FRAMES_IN_FLIGHT );
 		rNewBase.resize( MAX_FRAMES_IN_FLIGHT );
 
-		for( auto i = 0; i < MAX_FRAMES_IN_FLIGHT; i++ )
+		for( auto i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
 		{
 			const uint64_t allocSize = s_MaxSolidLineIndices * sizeof( LineVertex );
 			rNewVB[ i ] = Ref<VertexBuffer>::Create( allocSize );
@@ -378,7 +378,7 @@ namespace Saturn {
 		rNewVB.resize( MAX_FRAMES_IN_FLIGHT );
 		rNewBase.resize( MAX_FRAMES_IN_FLIGHT );
 
-		for( auto i = 0; i < MAX_FRAMES_IN_FLIGHT; i++ )
+		for( auto i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
 		{
 			const uint64_t allocSize = s_MaxIndices * sizeof( TextVertex );
 			rNewVB[ i ] = Ref<VertexBuffer>::Create( allocSize );
@@ -784,15 +784,15 @@ namespace Saturn {
 		*/
 
 		// Top (0 -> 1, 1 -> 2, 2 -> 3, 3 -> 0)
-		for( uint32_t i = 0; i < 4; i++ )
+		for( uint32_t i = 0; i < 4; ++i )
 			SubmitLine( corners[ i ], corners[ ( i + 1 ) % 4 ], rColor );
 
 		// Bottom ( 4 -> 5, 5 -> 6, 6 -> 7, 7 -> 4 )
-		for( uint32_t i = 0; i < 4; i++ )
+		for( uint32_t i = 0; i < 4; ++i )
 			SubmitLine( corners[ i + 4 ], corners[ ( ( i + 1 ) % 4 ) + 4 ], rColor );
 
 		// Vertical ( 0 -> 4, 1 -> 5, 2 -> 6, 3 -> 7 )
-		for( uint32_t i = 0; i < 4; i++ )
+		for( uint32_t i = 0; i < 4; ++i )
 			SubmitLine( corners[ i ], corners[ i + 4 ], rColor );
 	}
 
@@ -825,15 +825,15 @@ namespace Saturn {
 		*/
 
 		// Top (0 -> 1, 1 -> 2, 2 -> 3, 3 -> 0)
-		for( uint32_t i = 0; i < 4; i++ )
+		for( uint32_t i = 0; i < 4; ++i )
 			SubmitLine( corners[ i ], corners[ ( i + 1 ) % 4 ], rColor );
 
 		// Bottom ( 4 -> 5, 5 -> 6, 6 -> 7, 7 -> 4 )
-		for( uint32_t i = 0; i < 4; i++ )
+		for( uint32_t i = 0; i < 4; ++i )
 			SubmitLine( corners[ i + 4 ], corners[ ( ( i + 1 ) % 4 ) + 4 ], rColor );
 
 		// Vertical ( 0 -> 4, 1 -> 5, 2 -> 6, 3 -> 7 )
-		for( uint32_t i = 0; i < 4; i++ )
+		for( uint32_t i = 0; i < 4; ++i )
 			SubmitLine( corners[ i ], corners[ i + 4 ], rColor );
 	}
 
@@ -869,7 +869,7 @@ namespace Saturn {
 		const double fsScale = 1 / rMetrics.EmSize;
 
 		double y = fsScale * rMetrics.AscenderY;
-		for( size_t i = 0; i < rText.size(); i++ )
+		for( size_t i = 0; i < rText.size(); ++i )
 		{
 			const char character = rText[ i ];
 			if( character == '\r' ) continue;
@@ -1003,19 +1003,19 @@ namespace Saturn {
 		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
 
 		m_QuadIndexCount = 0;
-		for( size_t i = 0; i < m_pCurrentQuadPtr.size(); i++ )
+		for( size_t i = 0; i < m_pCurrentQuadPtr.size(); ++i )
 			m_pCurrentQuadPtr[ i ] = m_CurrentQuadBases[ i ][ frame ];
 
 		m_LineIndexCount = 0;
-		for( size_t i = 0; i < m_CurrentLineVertexBufferPtr.size(); i++ )
+		for( size_t i = 0; i < m_CurrentLineVertexBufferPtr.size(); ++i )
 			m_CurrentLineVertexBufferPtr[ i ] = m_CurrentLineBases[ i ][ frame ];
 
 		m_TriangleIndexCount = 0;
-		for( size_t i = 0; i < m_CurrentTrianglePtr.size(); i++ )
+		for( size_t i = 0; i < m_CurrentTrianglePtr.size(); ++i )
 			m_CurrentTrianglePtr[ i ] = m_CurrentTriangleBases[ i ][ frame ];
 
 		m_TextIndexCount = 0;
-		for( size_t i = 0; i < m_CurrentTextPtr.size(); i++ )
+		for( size_t i = 0; i < m_CurrentTextPtr.size(); ++i )
 			m_CurrentTextPtr[ i ] = m_CurrentTextBases[ i ][ frame ];
 
 		// Not great... but, we want to clear the textures and reset the slot.
@@ -1065,7 +1065,7 @@ namespace Saturn {
 
 		m_QuadMaterial->UploadDataToUB( 0, &u_Matrices, sizeof( u_Matrices ) );
 
-		for( size_t i = 0; i <= m_QuadBufferIndex; i++ )
+		for( size_t i = 0; i <= m_QuadBufferIndex; ++i )
 		{
 			const uint32_t dataSize = ( uint32_t ) ( ( uint8_t* ) m_pCurrentQuadPtr[ i ] - ( uint8_t* ) m_CurrentQuadBases[ i ][ frame ] );
 
@@ -1111,7 +1111,7 @@ namespace Saturn {
 
 		m_LineMaterial->UploadDataToUB( 0, &u_Matrices, sizeof( u_Matrices ) );
 
-		for( size_t i = 0; i <= m_LineBufferIndex; i++ )
+		for( size_t i = 0; i <= m_LineBufferIndex; ++i )
 		{
 			const uint32_t dataSize = ( uint32_t ) ( ( uint8_t* ) m_CurrentLineVertexBufferPtr[ i ] - ( uint8_t* ) m_CurrentLineBases[ i ][ frame ] );
 			if( dataSize )
@@ -1144,7 +1144,7 @@ namespace Saturn {
 			}
 		}
 
-		for( size_t i = 0; i <= m_LineTriangleBufferIndex; i++ )
+		for( size_t i = 0; i <= m_LineTriangleBufferIndex; ++i )
 		{
 			// solid
 			const uint32_t dataSize = ( uint32_t ) ( ( uint8_t* ) m_CurrentTrianglePtr[ i ] - ( uint8_t* ) m_CurrentTriangleBases[ i ][ frame ] );
@@ -1170,7 +1170,7 @@ namespace Saturn {
 	{
 		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
 
-		for( size_t i = 0; i <= m_TextBufferIndex; i++ )
+		for( size_t i = 0; i <= m_TextBufferIndex; ++i )
 		{
 			const uint32_t dataSize = ( uint32_t ) ( ( uint8_t* ) m_CurrentTextPtr[ i ] - ( uint8_t* ) m_CurrentTextBases[ i ][ frame ] );
 

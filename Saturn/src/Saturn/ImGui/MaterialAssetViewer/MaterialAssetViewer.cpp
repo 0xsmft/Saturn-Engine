@@ -207,7 +207,7 @@ namespace Saturn {
 			{ 3u, m_HostMaterialAsset->GetRoughnessMap() }
 		};
 
-		for( size_t i = 0; i < IndexToTextureIndex.size(); i++ )
+		for( size_t i = 0; i < IndexToTextureIndex.size(); ++i )
 		{
 			CreateNodesFromTexture( IndexToTextureIndex[ static_cast<uint32_t>( i ) ], static_cast<int>( i ) );
 		}

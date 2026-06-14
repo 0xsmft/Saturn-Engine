@@ -93,9 +93,9 @@ namespace Saturn {
 		const uint32_t width = 3 * rPrimaryMonitor.MonitorSize.x / 4;
 		const uint32_t height = 3 * rPrimaryMonitor.MonitorSize.y / 4;
 
-		RubyStyle windowStyle = HasFlag( ApplicationFlag_Titlebar ) ? RubyStyle::Default : m_Specification.WindowStyle;
+		const RubyStyle windowStyle = HasFlag( ApplicationFlag_Titlebar ) ? RubyStyle::Default : m_Specification.WindowStyle;
 
-		RubyWindowSpecification windowSpec{ .Name = L"Saturn", .Width = width, .Height = height, .GraphicsAPI = RubyGraphicsAPI::Vulkan, .Style = windowStyle, .ShowNow = false };
+		const RubyWindowSpecification windowSpec{ .Name = L"Saturn", .Width = width, .Height = height, .GraphicsAPI = RubyGraphicsAPI::Vulkan, .Style = windowStyle, .ShowNow = false };
 
 		m_Window = new RubyWindow( windowSpec );
 		m_Window->SetEventTarget( this );
@@ -174,7 +174,6 @@ namespace Saturn {
 		} );
 		
 		delete m_VulkanContext;
-
 		delete m_Window;
 	}
 
@@ -510,7 +509,7 @@ namespace Saturn {
 #elif defined(SAT_PLATFORM_LINUX) || __linux__
 		return "linux";
 #elif defined(SAT_PLATFORM_MACOS) || __APPLE__
-		return "mac";
+		return "macosx";
 #else
 		return "Unknown";
 #endif

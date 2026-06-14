@@ -256,7 +256,7 @@ namespace Saturn {
 			m_VertexBuffers[ frame ]->SetData( m_QuadVertexBase[ frame ], dataSize );
 			m_VertexBuffers[ frame ]->Bind( m_CommandBuffer );
 
-			for( uint32_t i = 0; i < 16; i++ )
+			for( uint32_t i = 0; i < 16; ++i )
 			{
 				if( m_Textures[ i ] )
 					m_Material->SetResource( "u_InputTexture", m_Textures[ i ], i );
@@ -282,7 +282,7 @@ namespace Saturn {
 			m_TextVertexBuffers[ frame ]->SetData( m_TextVertexBase[ frame ], textDataSize );
 			m_TextVertexBuffers[ frame ]->Bind( m_CommandBuffer );
 
-			for( uint32_t textureIndex = 17, i = 0; textureIndex < m_Textures.size(); i++, textureIndex++ )
+			for( uint32_t textureIndex = 17, i = 0; textureIndex < m_Textures.size(); ++i, ++textureIndex )
 			{
 				if( m_Textures[ textureIndex ] )
 					m_TextMaterial->SetResource( "u_FontAtlases", m_Textures[ textureIndex ], i );
@@ -407,7 +407,7 @@ namespace Saturn {
 		const double fsScale = fontSizePx / rMetrics.EmSize;
 
 		double y = fsScale * rMetrics.AscenderY;
-		for( size_t i = 0; i < rText.size(); i++ )
+		for( size_t i = 0; i < rText.size(); ++i )
 		{
 			const char character = rText[ i ];
 			if( character == '\r' ) continue;

@@ -60,7 +60,7 @@ namespace Saturn {
 
 	void StorageBufferSet::Set( Ref<StorageBuffer>& rBuffer, uint32_t set, uint32_t binding )
 	{
-		for( int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++ )
+		for( int i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
 		{
 			m_Buffers[ set ][ binding ][ i ] = rBuffer;
 		}
@@ -73,7 +73,7 @@ namespace Saturn {
 
 	void StorageBufferSet::Resize( uint32_t set, uint32_t binding, size_t newSize )
 	{
-		for( int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++ )
+		for( int i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
 		{
 			m_Buffers.at( set ).at( binding ).at( i )->Resize( ( uint32_t ) newSize );
 		}

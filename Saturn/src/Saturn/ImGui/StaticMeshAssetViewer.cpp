@@ -136,7 +136,7 @@ namespace Saturn {
 
 			if( ImGui::BeginCombo( "##setshape", pSelected ) )
 			{
-				for( unsigned int i = 0u; i < IM_ARRAYSIZE( pItems ); i++ )
+				for( unsigned int i = 0u; i < IM_ARRAYSIZE( pItems ); ++i )
 				{
 					const bool isSelected = ( pSelected == pItems[ i ] );
 					if( ImGui::Selectable( pItems[ i ], isSelected ) ) 

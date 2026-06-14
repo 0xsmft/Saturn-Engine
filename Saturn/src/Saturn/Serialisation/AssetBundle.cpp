@@ -776,7 +776,7 @@ namespace Saturn {
 
 		newProject->GetActionBindings().reserve( actionBindings );
 
-		for( size_t i = 0; i < actionBindings; i++ )
+		for( size_t i = 0; i < actionBindings; ++i )
 		{
 			ActionBindingData ab;
 

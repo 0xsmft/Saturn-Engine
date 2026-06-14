@@ -388,7 +388,7 @@ namespace Saturn {
 
 		m_Cache.reserve( header.Thumbnails );
 
-		for( size_t i = 0; i < header.Thumbnails; i++ )
+		for( size_t i = 0; i < header.Thumbnails; ++i )
 		{
 			CacheData data{};
 			data.ExistsOnFS = true;

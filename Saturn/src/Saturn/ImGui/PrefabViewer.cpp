@@ -174,7 +174,7 @@ namespace Saturn {
 					continue;
 
 				auto& rSubmeshes = comp.Mesh->Submeshes();
-				for( uint32_t i = 0; i < rSubmeshes.size(); i++ )
+				for( uint32_t i = 0; i < rSubmeshes.size(); ++i )
 				{
 					const auto& rSubmesh = rSubmeshes[ i ];
 					const glm::mat4 transform = activeScene->GetWorldSpaceTransform( rEntity ).GetTransform() * rSubmesh.Transform;

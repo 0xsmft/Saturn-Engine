@@ -118,7 +118,7 @@ namespace Saturn {
 		size_t mapSize = 0;
 		rStream.read( reinterpret_cast< char* >( &mapSize ), sizeof( size_t ) );
 
-		for( size_t i = 0; i < mapSize; i++ )
+		for( size_t i = 0; i < mapSize; ++i )
 		{
 			std::string K{};
 			K = RawSerialisation::ReadString( rStream );
@@ -134,7 +134,7 @@ namespace Saturn {
 		mapSize = 0;
 		rStream.read( reinterpret_cast< char* >( &mapSize ), sizeof( size_t ) );
 
-		for( size_t i = 0; i < mapSize; i++ )
+		for( size_t i = 0; i < mapSize; ++i )
 		{
 			std::string K{};
 			K = RawSerialisation::ReadString( rStream );

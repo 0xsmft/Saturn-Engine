@@ -80,7 +80,7 @@ namespace Saturn {
 			glm::vec3 min = MaxBounds.Min;
 			glm::vec3 max = MaxBounds.Max;
 
-			for( int i = 0; i < 8; i++ )
+			for( int i = 0; i < 8; ++i )
 			{
 				glm::vec3 newMin = { ( i & 1 ) ? center.x : min.x, ( i & 2 ) ? center.x : min.x, ( i & 4 ) ? center.x : min.x };
 				glm::vec3 newMax = { ( i & 1 ) ? max.x : center.x, ( i & 2 ) ? max.x : center.x, ( i & 4 ) ? max.x : center.x };

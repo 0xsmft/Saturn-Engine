@@ -263,7 +263,7 @@ namespace Saturn {
 
 		PROCESS_INFORMATION ProcessInfo;
 		bool result = ::CreateProcessW(
-			nullptr, (LPWSTR)rCommandLine.data(), nullptr, nullptr, FALSE, DETACHED_PROCESS, nullptr,
+			nullptr, ( LPWSTR ) rCommandLine.data(), nullptr, nullptr, FALSE, DETACHED_PROCESS, nullptr,
 			rWorkingDir.empty() ? nullptr : rWorkingDir.data(), &StartupInfo, &ProcessInfo );
 
 		::CloseHandle( ProcessInfo.hThread );

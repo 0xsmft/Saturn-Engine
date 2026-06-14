@@ -126,7 +126,7 @@ namespace Saturn {
 		
 		{
 			VkShaderModuleCreateInfo CreateInfo ={ VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO };
-			CreateInfo.codeSize = 4 * VertexCode.size();
+			CreateInfo.codeSize = sizeof( uint32_t ) * VertexCode.size();
 			CreateInfo.pCode = ( uint32_t* ) VertexCode.data();
 
 			VK_CHECK( vkCreateShaderModule( VulkanContext::Get()->GetDevice(), &CreateInfo, nullptr, &VertexModule ) );
@@ -137,7 +137,7 @@ namespace Saturn {
 			std::vector<uint32_t> FragmentCode = SpvSrc.at( { ShaderType::Fragment, 0 } );
 			{
 				VkShaderModuleCreateInfo FCreateInfo = { VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO };
-				FCreateInfo.codeSize = 4 * FragmentCode.size();
+				FCreateInfo.codeSize = sizeof( uint32_t ) * FragmentCode.size();
 				FCreateInfo.pCode = ( uint32_t* ) FragmentCode.data();
 
 				VK_CHECK( vkCreateShaderModule( VulkanContext::Get()->GetDevice(), &FCreateInfo, nullptr, &FragmentModule ) );
@@ -270,7 +270,7 @@ namespace Saturn {
 		
 		std::vector<VkPipelineColorBlendAttachmentState> ColorBlendAttachmentStates;
 		
-		for( size_t i = 0; i < m_Specification.RenderPass->GetColorAttachmetSize(); i++ )
+		for( size_t i = 0; i < m_Specification.RenderPass->GetColorAttachmetSize(); ++i )
 		{
 			VkPipelineColorBlendAttachmentState ColorBlendAttachmentState = {};
 			ColorBlendAttachmentState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;

@@ -440,7 +440,7 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 
 		m_MaterialRegistry->GetMaterialAssets().reserve( materials );
 
-		for( size_t i = 0; i < materials; i++ )
+		for( size_t i = 0; i < materials; ++i )
 		{
 			UUID materialID = 0;
 			RawSerialisation::ReadObject( materialID, rStream );
@@ -859,7 +859,7 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 
 		m_MaterialRegistry->GetMaterialAssets().reserve( materials );
 
-		for( size_t i = 0; i < materials; i++ )
+		for( size_t i = 0; i < materials; ++i )
 		{
 			UUID materialID = 0;
 			RawSerialisation::ReadObject( materialID, rStream );
@@ -1159,7 +1159,7 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 			{
 				bool FoundMetalness = false;
 
-				for( uint32_t i = 0; i < material->mNumProperties; i++ )
+				for( uint32_t i = 0; i < material->mNumProperties; ++i )
 				{
 					auto prop = material->mProperties[ i ];
 
@@ -1362,7 +1362,7 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 		SkeletonAssetSerialiser sas;
 		sas.Serialise( sk );
 
-		for( unsigned int i = 0; i < m_Scene->mNumAnimations; i++ )
+		for( unsigned int i = 0; i < m_Scene->mNumAnimations; ++i )
 		{
 			aiAnimation* pAnimation = m_Scene->mAnimations[ i ];
 
@@ -1385,13 +1385,13 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 			animAsset->SetTicks( ( float ) ( pAnimation->mTicksPerSecond == 0 ? 25.0f : pAnimation->mTicksPerSecond ) );
 
 			std::unordered_map<std::string_view, uint32_t> boneIndices;
-			for( uint32_t i = 0; i < sk->GetBonePositions().size(); i++ )
+			for( uint32_t i = 0; i < sk->GetBonePositions().size(); ++i )
 			{
 				boneIndices.emplace( sk->GetBoneName( i ), i );
 			}
 
 			std::map<uint32_t, aiNodeAnim*> validChannels;
-			for( uint32_t i = 0; i < pAnimation->mNumChannels; i++ )
+			for( uint32_t i = 0; i < pAnimation->mNumChannels; ++i )
 			{
 				aiNodeAnim* pAnim = pAnimation->mChannels[ i ];
 				if( const auto itr = boneIndices.find( pAnim->mNodeName.C_Str() ); itr != boneIndices.end() )

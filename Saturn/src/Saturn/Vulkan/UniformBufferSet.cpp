@@ -42,7 +42,7 @@ namespace Saturn {
 
 	void UniformBufferSet::CreateBuffer( size_t size, uint32_t binding )
 	{
-		for( int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++ )
+		for( int i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
 		{
 			Ref<UniformBuffer> ub = Ref<UniformBuffer>::Create( 0, binding, size );
 			m_Buffers[ 0 ][ binding ][ i ] = ub;

@@ -488,7 +488,7 @@ namespace Saturn {
 				const auto propCount = entity->GetClass()->GetPropertyCount();
 				auto properties = entity->GetClass()->GetProperties();
 
-				for( int i = 0; i < propCount; i++ )
+				for( int i = 0; i < propCount; ++i )
 				{
 					SPropertyEditor* pProperty = ( SPropertyEditor* ) properties[ i ];
 
@@ -1199,7 +1199,7 @@ namespace Saturn {
 
 			if( ImGui::BeginCombo( "##type", pSelected ) )
 			{
-				for( unsigned int i = 0u; i < IM_ARRAYSIZE( pItems ); i++ )
+				for( unsigned int i = 0u; i < IM_ARRAYSIZE( pItems ); ++i )
 				{
 					const bool isSelected = ( pSelected == pItems[ i ] );
 					if( ImGui::Selectable( pItems[ i ], isSelected ) )

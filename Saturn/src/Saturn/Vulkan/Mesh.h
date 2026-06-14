@@ -164,7 +164,7 @@ namespace Saturn {
 			}
 			if( weight > 0.0f )
 			{
-				for( size_t i = 0; i < 4; i++ )
+				for( size_t i = 0; i < 4; ++i )
 				{
 					if( BoneWeights[ i ] == 0.0f )
 					{

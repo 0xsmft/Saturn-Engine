@@ -106,7 +106,7 @@ namespace Saturn {
 
 				m_PathPoints.reserve( straightPathCount );
 
-				for( size_t i = 0; i < straightPathCount; i++ )
+				for( size_t i = 0; i < straightPathCount; ++i )
 				{
 					float* pPath = &straightPath[ i * 3 ];
 					m_PathPoints.emplace_back( pPath[ 0 ], pPath[ 1 ], pPath[ 2 ] );

@@ -98,7 +98,7 @@ namespace Saturn {
 		// 1024 max animated meshes
 		m_RendererData.BoneTransformData = new glm::mat4[ 1 * 1024 ]{};
 
-		for( size_t i = 0; i < 1024; i++ )
+		for( size_t i = 0; i < 1024; ++i )
 		{
 			m_RendererData.BoneTransformData[ i ] = glm::mat4( 1.0f ); // identity
 		}
@@ -356,7 +356,7 @@ namespace Saturn {
 		PassSpec.Name = "Dir Shadow Map";
 		PassSpec.Attachments = { ImageFormat::Depth };
 
-		for( size_t i = 0; i < SHADOW_CASCADE_COUNT; i++ )
+		for( size_t i = 0; i < SHADOW_CASCADE_COUNT; ++i )
 		{
 			m_RendererData.DirShadowMapPasses[ i ] = Ref<Pass>::Create( PassSpec );
 
@@ -381,7 +381,7 @@ namespace Saturn {
 
 		PassSpec.Name = "Dir Shadow Map-Dynamic";
 		PassSpec.Attachments = { ImageFormat::Depth };
-		for( size_t i = 0; i < SHADOW_CASCADE_COUNT; i++ )
+		for( size_t i = 0; i < SHADOW_CASCADE_COUNT; ++i )
 		{
 			PipelineSpec.RenderPass = m_RendererData.DirShadowMapPasses[ i ];
 			m_RendererData.DirShadowMapDynamicPipelines[ i ] = Ref< Pipeline >::Create( PipelineSpec );
@@ -489,7 +489,7 @@ namespace Saturn {
 
 		m_RendererData.PreDepthDynamicPipeline = Ref<Pipeline>::Create( PipelineSpec );
 
-		for( size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++ )
+		for( size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
 		{
 			m_RendererData.PreDepthDynamicMaterialSet2->SetSB( 15u, m_RendererData.SBBoneTransforms->Get( 2u, 15u, ( uint32_t ) i ) );
 		}
@@ -713,7 +713,7 @@ namespace Saturn {
 		if( !m_RendererData.SSAONoiseGenerated || !m_RendererData.SSAONoiseImage )
 		{
 			std::vector<glm::vec4> ssaoNoise( 4 * 4 );
-			for( size_t i = 0; i < ssaoNoise.size(); i++ )
+			for( size_t i = 0; i < ssaoNoise.size(); ++i )
 			{
 				ssaoNoise[ i ] = glm::vec4(
 					Random::RandomFloatInRange( 0.0F, 1.0F ) * 2.0F - 1.0F,
@@ -837,8 +837,6 @@ namespace Saturn {
 
 	void SceneRenderer::InitAO( AOTechnique oldTechnique, bool skipScheduler /*=false*/ )
 	{
-		SAT_CORE_INFO( "SceneRenderer::InitAO( oldTechnique = {0} )", ( uint8_t ) oldTechnique );
-
 		if( !skipScheduler )
 		{
 			// Schedule to the beginning of the next frame.
@@ -1354,7 +1352,7 @@ namespace Saturn {
 
 		// Calculate split depths based on view camera frustum
 		// Based on method presented in https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch10.html
-		for( uint32_t i = 0; i < SHADOW_CASCADE_COUNT; i++ )
+		for( uint32_t i = 0; i < SHADOW_CASCADE_COUNT; ++i )
 		{
 			const float p = ( i + 1 ) / static_cast< float >( SHADOW_CASCADE_COUNT );
 			const float log = minZ * std::pow( RATIO, p );
@@ -1367,7 +1365,7 @@ namespace Saturn {
 
 		// Calculate orthographic projection matrix for each cascade
 		float lastSplitDist = 0.0;
-		for( uint32_t i = 0; i < SHADOW_CASCADE_COUNT; i++ )
+		for( uint32_t i = 0; i < SHADOW_CASCADE_COUNT; ++i )
 		{
 			float splitDist = cascadeSplits[ i ];
 
@@ -1758,7 +1756,7 @@ namespace Saturn {
 		glm::vec3 newMin( corners[ 0 ] );
 		glm::vec3 newMax( corners[ 0 ] );
 
-		for( int i = 0; i < 8; i++ )
+		for( int i = 0; i < 8; ++i )
 		{
 			const glm::vec3 transformed = glm::vec3( corners[ i ] );
 			newMin = glm::min( newMin, transformed );
@@ -1826,7 +1824,7 @@ namespace Saturn {
 		const auto& id = mesh->ID;
 
 		auto& submeshes = mesh->Submeshes();
-		for( size_t i = 0; i < submeshes.size(); i++ )
+		for( size_t i = 0; i < submeshes.size(); ++i )
 		{
 			const glm::mat4 submeshTransform = transform * submeshes[ i ].Transform;
 
@@ -1873,7 +1871,7 @@ namespace Saturn {
 		SAT_PF_EVENT();
 
 		const auto& submeshes = mesh->Submeshes();
-		for( size_t i = 0; i < submeshes.size(); i++ )
+		for( size_t i = 0; i < submeshes.size(); ++i )
 		{
 			StaticMeshKey key = { mesh->ID, materialRegistry, ( uint32_t ) i };
 
@@ -3017,7 +3015,7 @@ namespace Saturn {
 			rTextureInfo.Texture = Ref<Texture2D>::Create( ImageFormat::RGBA32F, bs.x, bs.y, nullptr, true, AddressingMode::ClampToEdge );
 			rTextureInfo.Texture->SetDebugName( "Bloom Texture/" + std::to_string( t ) );
 
-			for( size_t i = 0; i < rTextureInfo.Texture->GetMipMapLevels(); i++ )
+			for( size_t i = 0; i < rTextureInfo.Texture->GetMipMapLevels(); ++i )
 			{
 				auto ds = rTextureInfo.Texture->GetDescriptorInfo();
 				ds.imageView = rTextureInfo.Texture->GetOrCreateMipImageView( ( uint32_t ) i );

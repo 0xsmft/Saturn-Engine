@@ -434,7 +434,7 @@ namespace Saturn {
 					size_t materials = 0;
 					RawSerialisation::ReadObject( materials, rStream );
 
-					for( size_t i = 0; i < materials; i++ )
+					for( size_t i = 0; i < materials; ++i )
 					{
 						AssetID materialID = 0;
 						RawSerialisation::ReadObject( materialID, rStream );

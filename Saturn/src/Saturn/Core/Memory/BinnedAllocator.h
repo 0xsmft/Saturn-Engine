@@ -83,7 +83,7 @@ namespace Saturn {
 	private:
 		size_t GetBinIndex( size_t blockSize ) 
 		{
-			for( size_t i = 0; i < NUM_BINS; i++ )
+			for( size_t i = 0; i < NUM_BINS; ++i )
 			{
 				if( blockSize <= BIN_SIZES[ i ] )
 					return i;
@@ -103,7 +103,7 @@ namespace Saturn {
 			m_AllocatedPages.push_back( pPage );
 
 			uint8_t* pCurrent = static_cast< uint8_t* >( pPage );
-			for( size_t i = 0; i < blocksPerPage; i++ )
+			for( size_t i = 0; i < blocksPerPage; ++i )
 			{
 				void* pNext = ( i + 1 < blocksPerPage ) ? ( pCurrent + blockSize ) : nullptr;
 

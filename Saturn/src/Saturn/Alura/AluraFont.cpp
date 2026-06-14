@@ -415,7 +415,7 @@ namespace Saturn {
 		size_t mapSize = 0llu;
 		RawSerialisation::ReadObject( mapSize, rStream );
 
-		for( size_t i = 0; i < mapSize; i++ )
+		for( size_t i = 0; i < mapSize; ++i )
 		{
 			uint32_t a, b;
 			double kerning;

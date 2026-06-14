@@ -501,7 +501,7 @@ namespace Saturn {
 
 		rRegistry->m_Materials.reserve( mapSize );
 
-		for( size_t i = 0; i < mapSize; i++ )
+		for( size_t i = 0; i < mapSize; ++i )
 		{
 			UUID MaterialID;
 			RawSerialisation::ReadObject( MaterialID, rStream );

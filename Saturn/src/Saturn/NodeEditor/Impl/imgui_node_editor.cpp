@@ -178,7 +178,7 @@ static void ImDrawListSplitter_Grow(ImDrawList* draw_list, ImDrawListSplitter* s
 	int old_used_channels_count = splitter->_Count;
 	splitter->_Count = channels_count;
 
-	for (int i = old_used_channels_count; i < channels_count; i++)
+	for (int i = old_used_channels_count; i < channels_count; ++i)
 	{
 		if (i >= old_channels_count)
 		{

@@ -617,7 +617,7 @@ namespace Saturn {
 			SHADER_INFO( " Set: {0}", ( uint32_t ) set );
 			SHADER_INFO( " Stage: {0}", ( uint32_t )shaderType );
 
-			for( int i = 0; i < MemberCount; i++ )
+			for( int i = 0; i < MemberCount; ++i )
 			{
 				auto type = Compiler.get_type( BufferType.member_types[ i ] );
 				const auto& memberName = Compiler.get_member_name( BufferType.self, i );

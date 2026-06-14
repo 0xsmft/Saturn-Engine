@@ -279,7 +279,7 @@ namespace Saturn {
 			if( count == 0 )
 				break;
 
-			for( int i = 0; i < count; i++ )
+			for( int i = 0; i < count; ++i )
 			{
 				JPH::Float3 v0 = data[ i * 3 + 0 ];
 				JPH::Float3 v1 = data[ i * 3 + 1 ];
@@ -507,7 +507,7 @@ namespace Saturn {
 			if( count == 0 )
 				break;
 
-			for( int i = 0; i < count; i++ )
+			for( int i = 0; i < count; ++i )
 			{
 				JPH::Float3 v0 = data[ i * 3 + 0 ];
 				JPH::Float3 v1 = data[ i * 3 + 1 ];
@@ -599,7 +599,7 @@ namespace Saturn {
 					auto* pVertexBuffer = pMesh->getVertices();
 					auto* pIndexBuffer = pMesh->getIndexBuffer();
 
-					for( physx::PxU32 i = 0; i < triCount; i++ )
+					for( physx::PxU32 i = 0; i < triCount; ++i )
 					{
 						physx::PxHullPolygon poly{};
 						if( pMesh->getPolygonData( i, poly ) ) continue;

@@ -199,7 +199,7 @@ namespace Saturn {
 			// Get the queue family properties again but fill QueueProps' data.
 			vkGetPhysicalDeviceQueueFamilyProperties( rDevice, &FamilyCount, QueueProps.data() );
 
-			for( uint32_t i = 0; i < FamilyCount; i++ )
+			for( uint32_t i = 0; i < FamilyCount; ++i )
 			{
 				if( QueueProps[ i ].queueFlags & VK_QUEUE_GRAPHICS_BIT )
 				{
@@ -316,7 +316,7 @@ namespace Saturn {
 		VkPhysicalDeviceMemoryProperties MemProperties;
 		vkGetPhysicalDeviceMemoryProperties( m_PhysicalDevice, &MemProperties );
 
-		for( uint32_t i = 0; i < MemProperties.memoryTypeCount; i++ )
+		for( uint32_t i = 0; i < MemProperties.memoryTypeCount; ++i )
 		{
 			if( ( TypeFilter & ( 1 << i ) ) &&
 				( MemProperties.memoryTypes[ i ].propertyFlags & Properties ) == Properties )

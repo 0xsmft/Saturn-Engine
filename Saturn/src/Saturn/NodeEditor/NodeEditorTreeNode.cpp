@@ -82,7 +82,7 @@ namespace Saturn {
 			const float radius = 10.0f;
 
 			ImVec2 hex[ 6 ];
-			for( int i = 0; i < 6; i++ )
+			for( int i = 0; i < 6; ++i )
 			{
 				const float angle = IM_PI / 3.0f * i; // 60 deg per segment.
 				hex[ i ] = ImVec2(

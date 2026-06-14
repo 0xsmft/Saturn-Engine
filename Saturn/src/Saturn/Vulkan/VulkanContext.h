@@ -134,12 +134,12 @@ namespace Saturn {
 		VkCommandPool m_ComputeCommandPool = nullptr;
 		VkCommandBuffer m_CommandBuffer = nullptr;
 
-		VulkanDebugMessenger* m_pDebugMessenger;
-		VulkanAllocator* m_pAllocator;
+		VulkanDebugMessenger* m_pDebugMessenger = nullptr;
+		VulkanAllocator* m_pAllocator = nullptr;
 
 		VkQueue m_GraphicsQueue = nullptr, m_PresentQueue = nullptr, m_ComputeQueue = nullptr;
 
-		VkSurfaceFormatKHR m_SurfaceFormat;
+		VkSurfaceFormatKHR m_SurfaceFormat{ VK_FORMAT_UNDEFINED, VK_COLOR_SPACE_MAX_ENUM_KHR };
 
 		QueueFamilyIndices m_Indices;
 

@@ -89,7 +89,7 @@ namespace Saturn {
 			rEmitter << YAML::BeginSeq;
 
 			const auto* pProperties = entity->GetClass()->GetProperties();
-			for( int i = 0; i < propCount; i++ )
+			for( int i = 0; i < propCount; ++i )
 			{
 #define SAT_SERIALISE_PROPERTY_YAML( PropertyType ) \
 { \
@@ -629,7 +629,7 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 			std::vector<std::string> compiledInPropertyNames;
 			compiledInPropertyNames.reserve( SClassPropCount );
 
-			for( size_t i = 0; i < SClassPropCount; i++ )
+			for( size_t i = 0; i < SClassPropCount; ++i )
 			{
 				SProperty* pProperty = ( SProperty* ) SClassProps[ i ];
 
@@ -644,7 +644,7 @@ pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value ); \
 } break
 
 			// Now, we must make sure we use the compiled in SProperties
-			for( size_t i = 0; i < SClassPropCount; i++ )
+			for( size_t i = 0; i < SClassPropCount; ++i )
 			{
 				// Try to find the name at i, in both maps
 				const auto savedNameItr = std::find( savedPropertyNames.begin(), savedPropertyNames.end(), compiledInPropertyNames[ i ] );

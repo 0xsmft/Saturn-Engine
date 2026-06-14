@@ -333,7 +333,7 @@ namespace Saturn {
 		if( !ncid )
 			return false;
 
-		for( int i = 0; i < ncid; i++ )
+		for( int i = 0; i < ncid; ++i )
 		{
 			const rcChunkyTriMeshNode& rNode = pChunkyTriMesh->nodes[ cid[ i ] ];
 			const int* pTris = &pChunkyTriMesh->tris[ rNode.i * 3 ];

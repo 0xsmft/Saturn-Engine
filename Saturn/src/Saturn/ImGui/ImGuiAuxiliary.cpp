@@ -754,7 +754,7 @@ namespace Saturn::Auxiliary {
 
 		float lowestDistance = FLT_MAX;
 		int32_t closestPointIdx = -1;
-		for( auto i = 0; i < 4; i++ )
+		for( auto i = 0; i < 4; ++i )
 		{
 			if( distancesSq[ i ] < lowestDistance )
 			{

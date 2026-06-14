@@ -51,7 +51,7 @@ namespace Saturn {
 		vkFreeMemory( VulkanContext::Get()->GetDevice(), m_Memory, nullptr );
 		vkDestroyImageView( VulkanContext::Get()->GetDevice(), m_ImageView, nullptr );
 
-		for( size_t i = 0; i < m_ArrayLevels; i++ )
+		for( size_t i = 0; i < m_ArrayLevels; ++i )
 		{
 			vkDestroyImageView( VulkanContext::Get()->GetDevice(), m_ImageViews[ i ], nullptr );
 			m_ImageViews[ i ] = nullptr;
@@ -74,7 +74,7 @@ namespace Saturn {
 		vkDestroyImageView( VulkanContext::Get()->GetDevice(), m_ImageView, nullptr );
 		vkFreeMemory( VulkanContext::Get()->GetDevice(), m_Memory, nullptr );
 
-		for( size_t i = 0; i < m_ArrayLevels; i++ )
+		for( size_t i = 0; i < m_ArrayLevels; ++i )
 			vkDestroyImageView( VulkanContext::Get()->GetDevice(), m_ImageViews[ i ], nullptr );
 
 		m_Width = Width;
@@ -335,7 +335,7 @@ namespace Saturn {
 		m_DescriptorImageInfo.imageView = m_ImageView;
 
 		m_ImageViews.resize( m_ArrayLevels );
-		for( size_t i = 0; i < m_ArrayLevels; i++ )
+		for( size_t i = 0; i < m_ArrayLevels; ++i )
 		{
 			// Create image view.
 			VkImageViewCreateInfo ImageViewCreateInfo = { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };

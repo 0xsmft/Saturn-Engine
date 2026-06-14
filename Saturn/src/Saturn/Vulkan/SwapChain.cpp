@@ -97,7 +97,7 @@ namespace Saturn {
 
 		m_Framebuffers.resize( m_ImageViews.size() );
 		
-		for( int i = 0; i < m_ImageViews.size(); i++ )
+		for( int i = 0; i < m_ImageViews.size(); ++i )
 		{
 			std::vector< VkImageView > Attachments;
 			Attachments.push_back( m_ImageViews[ i ] );
@@ -206,7 +206,7 @@ namespace Saturn {
 
 		m_ImageViews.resize( SwapchainData.ImageCount );
 
-		for( size_t i = 0; i < SwapchainData.ImageCount; i++ )
+		for( size_t i = 0; i < SwapchainData.ImageCount; ++i )
 		{
 			ImageViewCreateInfo.image = m_Images[ i ];
 

@@ -61,7 +61,7 @@ namespace Saturn {
 
 		m_FlightFences.resize( MAX_FRAMES_IN_FLIGHT );
 
-		for( int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++ )
+		for( int i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
 		{
 			VK_CHECK( vkCreateFence( VulkanContext::Get()->GetDevice(), &FenceCreateInfo, nullptr, &m_FlightFences[ i ] ) );
 		}
@@ -75,7 +75,7 @@ namespace Saturn {
 		uint32_t* pData = new uint32_t[ 1 * 1 ];
 		std::memset( pData, 0, sizeof( uint32_t ) * 1 * 1 );
 
-		for( uint32_t i = 0; i < 1 * 1; i++ )
+		for( uint32_t i = 0; i < 1 * 1; ++i )
 		{
 			pData[ i ] |= 0xFFFFFFFF;
 		}
@@ -104,7 +104,7 @@ namespace Saturn {
 		PoolSizes.emplace_back( VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 );
 		PoolSizes.emplace_back( VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 );
 
-		for( int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++ )
+		for( int i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
 		{
 			m_RendererDescriptorPools[ i ] = Ref<DescriptorPool>::Create( PoolSizes, 100000 );
 		}
@@ -122,7 +122,7 @@ namespace Saturn {
 		m_AcquireSemaphore = nullptr;
 		m_SubmitSemaphore = nullptr;
 
-		for( size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++ )
+		for( size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
 		{
 			m_RendererDescriptorSets[ i ] = nullptr;
 			m_RendererDescriptorPools[ i ] = nullptr;
@@ -130,7 +130,7 @@ namespace Saturn {
 
 		if( m_FlightFences.size() )
 		{
-			for( int i = 0; i < m_FlightFences.size(); i++ )
+			for( int i = 0; i < m_FlightFences.size(); ++i )
 			{
 				vkDestroyFence( VulkanContext::Get()->GetDevice(), m_FlightFences[ i ], nullptr );
 			}
@@ -253,7 +253,7 @@ namespace Saturn {
 				{
 					const auto& StorageWriteDescriptors = GetStorageBufferWriteDescriptors( sbSet, material );
 
-					for( size_t i = 0; i < MAX_FRAMES_IN_FLIGHT && StorageWriteDescriptors.size(); i++ )
+					for( size_t i = 0; i < MAX_FRAMES_IN_FLIGHT && StorageWriteDescriptors.size(); ++i )
 					{
 						// Add StorageWriteDescriptors onto wds
 						externalWds[ i ].reserve( externalWds[ i ].size() + StorageWriteDescriptors[ i ].size() );
@@ -317,7 +317,7 @@ namespace Saturn {
 				{
 					const auto& StorageWriteDescriptors = GetStorageBufferWriteDescriptors( sbSet, material );
 
-					for( size_t i = 0; i < MAX_FRAMES_IN_FLIGHT && StorageWriteDescriptors.size(); i++ )
+					for( size_t i = 0; i < MAX_FRAMES_IN_FLIGHT && StorageWriteDescriptors.size(); ++i )
 					{
 						// Add StorageWriteDescriptors onto wds
 						externalWds[ i ].reserve( externalWds[ i ].size() + StorageWriteDescriptors[ i ].size() );
@@ -371,7 +371,7 @@ namespace Saturn {
 			auto& wd = m_StorageBufferSets[ rStorageBufferSet.Get() ][ shaderHash ];
 			wd.resize( MAX_FRAMES_IN_FLIGHT );
 
-			for( size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++ )
+			for( size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
 			{
 				Ref<StorageBuffer> ub = rStorageBufferSet->Get( 0u, binding, ( uint32_t ) i );
 
@@ -413,7 +413,7 @@ namespace Saturn {
 			auto& wd = m_UniformBufferSets[ rUniformBufferSet.Get() ][ shaderHash ];
 			wd.resize( MAX_FRAMES_IN_FLIGHT );
 
-			for( size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++ )
+			for( size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
 			{
 				Ref<UniformBuffer> ub = rUniformBufferSet->Get( 0u, binding, ( uint32_t ) i );
 
@@ -513,7 +513,7 @@ namespace Saturn {
 			{
 				const auto& StorageWriteDescriptors = GetStorageBufferWriteDescriptors( rStorageBufferSet, mat );
 
-				for( size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++ )
+				for( size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
 				{
 					// Add StorageWriteDescriptors onto wds
 					wds[ i ].reserve( wds[ i ].size() + StorageWriteDescriptors[ i ].size() );

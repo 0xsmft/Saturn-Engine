@@ -31,8 +31,6 @@
 
 #include "Mesh.h"
 
-constexpr auto M_PI = 3.14159265358979323846;
-
 namespace Saturn::Auxiliary {
 
 	Ref<StaticMesh> DefaultMeshes::CreateSphere( float radius )
@@ -40,18 +38,18 @@ namespace Saturn::Auxiliary {
 		std::vector<StaticVertex> vertices;
 		std::vector<Index> indices;
 
-		constexpr float latitudeBands = 30;
-		constexpr float longitudeBands = 30;
+		constexpr float latitudeBands = 30.0f;
+		constexpr float longitudeBands = 30.0f;
 
 		for( float latNumber = 0; latNumber <= latitudeBands; latNumber++ )
 		{
-			const float theta = latNumber * M_PI / latitudeBands;
+			const float theta = latNumber * glm::pi<float>() / latitudeBands;
 			const float sinTheta = glm::sin( theta );
 			const float cosTheta = glm::cos( theta );
 
 			for( float longNumber = 0; longNumber <= longitudeBands; longNumber++ )
 			{
-				const float phi = longNumber * 2 * M_PI / longitudeBands;
+				const float phi = longNumber * 2 * glm::pi<float>() / longitudeBands;
 				const float sinPhi = glm::sin( phi );
 				const float cosPhi = glm::cos( phi );
 
@@ -74,8 +72,8 @@ namespace Saturn::Auxiliary {
 		{
 			for( uint32_t longNumber = 0; longNumber < longitudeBands; longNumber++ )
 			{
-				uint32_t first = ( latNumber * ( longitudeBands + 1 ) ) + longNumber;
-				uint32_t second = first + longitudeBands + 1;
+				uint32_t first = ( latNumber * static_cast< uint32_t >( longitudeBands + 1.0f ) ) + longNumber;
+				uint32_t second = first + static_cast< uint32_t >( longitudeBands + 1.0f );
 
 				indices.push_back( { first, second, first + 1 } );
 				indices.push_back( { second, second + 1, first + 1 } );
@@ -134,8 +132,8 @@ namespace Saturn::Auxiliary {
 		float segIncr = 1.0f / ( float ) ( seg - 1 );
 		for( size_t s = 0; s < seg; s++ )
 		{
-			float x = glm::cos( float( M_PI * 2 ) * s * segIncr ) * r;
-			float z = glm::sin( float( M_PI * 2 ) * s * segIncr ) * r;
+			float x = glm::cos( float( glm::pi<float>() * 2.0f ) * s * segIncr ) * r;
+			float z = glm::sin( float( glm::pi<float>() * 2.0f ) * s * segIncr ) * r;
 			
 			StaticVertex& vertex = rVertices.emplace_back();
 			vertex.Position = { actual * x, actual * y + dy * h * 0.5f, actual * z };
@@ -160,13 +158,13 @@ namespace Saturn::Auxiliary {
 		constexpr float ringIncr = 1.0f / ( float ) ( subdivisionHeight - 1 );
 
 		for( int r = 0; r < subdivisionHeight / 2; r++ )
-			CalcRing( numSegments, glm::sin( float( M_PI ) * r * ringIncr ), glm::sin( float( M_PI ) * ( r * ringIncr - 0.5f ) ), -0.5f, height, radius + radiusMod, vertices );
+			CalcRing( numSegments, glm::sin( glm::pi<float>() * r * ringIncr ), glm::sin( glm::pi<float>() * ( r * ringIncr - 0.5f ) ), -0.5f, height, radius + radiusMod, vertices );
 
 		for( int r = 0; r < ringsBody; r++ )
 			CalcRing( numSegments, 1.0f, 0.0f, r * bodyIncr - 0.5f, height, radius + radiusMod, vertices );
 
 		for( int r = subdivisionHeight / 2; r < subdivisionHeight; r++ )
-			CalcRing( numSegments, glm::sin( float( M_PI ) * r * ringIncr ), glm::sin( float( M_PI ) * ( r * ringIncr - 0.5f ) ), 0.5f, height, radius + radiusMod, vertices );
+			CalcRing( numSegments, glm::sin( glm::pi<float>() * r * ringIncr ), glm::sin( glm::pi<float>() * ( r * ringIncr - 0.5f ) ), 0.5f, height, radius + radiusMod, vertices );
 
 		for( int r = 0; r < ringsTotal - 1; ++r )
 		{

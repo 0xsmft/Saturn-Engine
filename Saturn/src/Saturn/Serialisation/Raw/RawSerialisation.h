@@ -293,7 +293,7 @@ namespace Saturn {
 			rStream.read( reinterpret_cast< char* >( &size ), sizeof( size_t ) );
 			rMap.resize( size );
 
-			for( size_t i = 0; i < size; i++ )
+			for( size_t i = 0; i < size; ++i )
 			{
 				Ty value{};
 				ReadObjectChecked<Ty>( value, rStream );
@@ -311,7 +311,7 @@ namespace Saturn {
 			size_t size = 0;
 			rStream.read( reinterpret_cast< char* >( &size ), sizeof( size_t ) );
 
-			for( size_t i = 0; i < size; i++ )
+			for( size_t i = 0; i < size; ++i )
 			{
 				K key{};
 				ReadObjectChecked<K>( key, rStream );
@@ -331,7 +331,7 @@ namespace Saturn {
 			size_t mapSize = 0;
 			rStream.read( reinterpret_cast< char* >( &mapSize ), sizeof( size_t ) );
 
-			for( size_t i = 0; i < mapSize; i++ )
+			for( size_t i = 0; i < mapSize; ++i )
 			{
 				std::string K{};
 				std::filesystem::path V{};
@@ -352,7 +352,7 @@ namespace Saturn {
 			size_t size = 0;
 			rStream.read( reinterpret_cast< char* >( &size ), sizeof( size_t ) );
 
-			for( size_t i = 0; i < size; i++ )
+			for( size_t i = 0; i < size; ++i )
 			{
 				K key{};
 				ReadObjectChecked<K>( key, rStream );
@@ -373,7 +373,7 @@ namespace Saturn {
 			size_t size = 0;
 			rStream.read( reinterpret_cast< char* >( &size ), sizeof( size_t ) );
 
-			for( size_t i = 0; i < size; i++ )
+			for( size_t i = 0; i < size; ++i )
 			{
 				K key{};
 				ReadObjectChecked<K>( key, rStream );

@@ -151,7 +151,7 @@ namespace Saturn {
 				static const char* Selected = pItems[ ( int ) SelectedEnum ];
 				if( ImGui::BeginCombo( "##setsamplerfilter", Selected ) )
 				{
-					for( unsigned int i = 0; i < IM_ARRAYSIZE( pItems ); i++ )
+					for( unsigned int i = 0; i < IM_ARRAYSIZE( pItems ); ++i )
 					{
 						bool IsSelected = ( Selected == pItems[ i ] );
 

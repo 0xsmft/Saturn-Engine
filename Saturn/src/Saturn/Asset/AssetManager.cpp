@@ -146,6 +146,9 @@ namespace Saturn {
 	{
 #if !defined(SAT_DIST)
 		Ref<Asset> asset = m_Assets->FindAsset( depID );
+		if( !asset )
+			return;
+
 		bool assetWasLoadedBefore = IsAssetLoaded( depID );
 
 		if( !assetWasLoadedBefore && asset )

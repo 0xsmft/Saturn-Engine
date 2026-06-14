@@ -105,7 +105,6 @@ namespace Saturn {
 	{
 		std::vector<AssetID> result;
 
-		// There is a better way of doing this however we'll just keep it for now.
 		for( const auto& [id, asset] : m_Assets )
 		{
 			if( asset->Type == type )

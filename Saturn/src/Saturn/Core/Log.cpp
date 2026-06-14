@@ -60,7 +60,7 @@ namespace Saturn {
 		logSinks.emplace_back( std::make_shared< spdlog::sinks::basic_file_sink_mt >( "Application-Dist-x64.log", true ) );
 #endif
 
-		for( size_t i = 0; i < logSinks.size(); i++ )
+		for( size_t i = 0; i < logSinks.size(); ++i )
 		{
 			logSinks[ i ]->set_pattern( "%^[%T] %n: %v%$" );
 		}

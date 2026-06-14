@@ -32,7 +32,7 @@
 
 namespace Saturn {
 
-	SCLASS();
+	SCLASS()
 	class SMaterialGraphColorPickerTask : public NodeEditorTaskBase
 	{
 		SAT_DECLARE_CLASS( SMaterialGraphColorPickerTask, NodeEditorTaskBase );
@@ -55,7 +55,7 @@ namespace Saturn {
 		glm::vec3 m_Color{ 1.0f };
 	};
 	
-	SCLASS();
+	SCLASS()
 	class SMaterialGraphOutputNodeTask : public NodeEditorTaskBase
 	{
 		SAT_DECLARE_CLASS( SMaterialGraphOutputNodeTask, NodeEditorTaskBase );

@@ -78,6 +78,8 @@ namespace Saturn {
 		{
 			SAT_CORE_WARN( "No physics shape component was found! Box shape will be attached." );
 		
+			m_Entity->AddComponent<BoxColliderComponent>();
+
 			AttachPhysicsShape( PhysicsShapeType::Box );
 		}
 

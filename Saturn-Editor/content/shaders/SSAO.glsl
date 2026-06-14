@@ -90,7 +90,7 @@ void main()
 	vec3 bitangent = cross( normal, tangent );
 	mat3 TBN = mat3(tangent, bitangent, normal);
 
-	float bias = 0.05;
+	float bias = 0.02 * u_Data.SSAORadius;
 	float occlusion = 0.0;
 	int sampleCount = 0;
 

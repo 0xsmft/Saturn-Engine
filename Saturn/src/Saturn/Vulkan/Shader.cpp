@@ -973,4 +973,22 @@ namespace Saturn {
 		CreateDescriptors();
 	}
 
+#if !defined(SAT_DIST)
+	void Shader::SerialiseShaderDataForEditor( std::ofstream& rStream ) const
+	{
+		RawSerialisation::WriteString( m_Name, rStream );
+		RawSerialisation::WriteString( m_Filepath, rStream );
+
+		SerialiseShaderData( rStream );
+	}
+
+	void Shader::DeserialiseShaderDataForEditor( std::ifstream& rStream )
+	{
+		m_Name = RawSerialisation::ReadString( rStream );
+		m_Filepath = RawSerialisation::ReadString( rStream );
+
+		DeserialiseShaderData( rStream );
+	}
+#endif
+
 }

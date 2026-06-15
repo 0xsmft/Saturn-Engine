@@ -452,6 +452,12 @@ namespace Saturn {
 		void SerialiseShaderData( std::ofstream& rStream ) const;
 		void DeserialiseShaderData( std::ifstream& rStream );
 
+#if !defined(SAT_DIST)
+		// For use by EditorShaderBundle only!
+		void SerialiseShaderDataForEditor( std::ofstream& rStream ) const;
+		void DeserialiseShaderDataForEditor( std::ifstream& rStream );
+#endif
+
 		[[nodiscard]] bool TryRecompile();
 
 		const UUID GetShaderHash() const;
@@ -514,6 +520,8 @@ namespace Saturn {
 
 		std::unordered_map<std::string, Ref<Shader>>& GetShaders() { return m_Shaders; }
 		const std::unordered_map<std::string, Ref<Shader>>& GetShaders() const { return m_Shaders; }
+
+		size_t GetShaderCount() const { return m_Shaders.size(); }
 
 		void Shutdown();
 	private:

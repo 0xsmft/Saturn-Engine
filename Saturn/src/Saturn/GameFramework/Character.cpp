@@ -170,6 +170,16 @@ namespace Saturn {
 		}
 	}
 
+	Ref<Animator> Character::GetAnimator()
+	{
+		if( auto* pSk = GetSkeletalMeshComponent() ) 
+		{
+			return pSk->LocalAnimator;
+		}
+
+		return nullptr;
+	}
+
 	glm::vec3 Character::CalculateRight()
 	{
 		return m_CameraEntity->GetComponent<CameraComponent>().Camera->GetRightDirection();

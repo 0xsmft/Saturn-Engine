@@ -73,6 +73,12 @@ namespace Saturn {
 		StaticMeshComponent* GetStaticMeshComponent() { return TryGetComponent<StaticMeshComponent>(); }
 		const StaticMeshComponent* GetStaticMeshComponent() const { return TryGetComponent<StaticMeshComponent>(); }
 
+		// Gets the animation graph (if any)
+		//
+		// So it may return null if this character does have an animator.
+		//
+		Ref<Animator> GetAnimator();
+
 		float GetMovementSpeed() { return m_MovementSpeed; }
 		const float GetMovementSpeed() const { return m_MovementSpeed; }
 

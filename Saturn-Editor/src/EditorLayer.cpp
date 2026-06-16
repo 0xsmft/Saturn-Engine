@@ -48,6 +48,7 @@
 #include <Saturn/Serialisation/YAML/AssetManagerSerialiser.h>
 #include <Saturn/Serialisation/YAML/AssetSerialisers.h>
 #include <Saturn/Serialisation/AssetBundle.h>
+#include <Saturn/Serialisation/EditorShaderBundle.h>
 
 #include <Saturn/Vulkan/SceneRenderer.h>
 #include <Saturn/Vulkan/ShaderBundle.h>
@@ -241,14 +242,13 @@ namespace Saturn {
 
 		if( std::filesystem::exists( editorShaderBundlePath ) )
 		{
-			if( const auto result = ShaderBundle::ReadBundle( ShaderBundleType::Editor ); result != ShaderBundleResult::Success )
+			if( EditorShaderBundle::ReadBundle() )
 			{
-				SAT_CORE_WARN( "Failed to read editor shader bundle! Engine will compile them." );
+				SAT_CORE_INFO( "Read engine shader bundle!" );
 			}
 			else
 			{
-				SAT_CORE_INFO( "Read engine shader bundle!" );
-				SAT_CORE_WARN( "NB: No shaders will be reloaded! Please reload the shaders from the editor!" );
+				SAT_CORE_WARN( "Failed to read editor shader bundle! Engine will compile them." );
 			}
 		}
 		else
@@ -2912,13 +2912,13 @@ namespace Saturn {
 
 				if( ImGui::Button( "Force package engine shaders" ) )
 				{
-					if( const auto result = ShaderBundle::BundleShaders( ShaderBundleType::Editor ); result != ShaderBundleResult::Success ) 
+					if( EditorShaderBundle::BundleShaders() )
 					{
-						PushNotification( "Failed to package editor shader bundle!" );
+						PushNotification( "Packaged editor shader bundle!" );
 					}
 					else
 					{
-						PushNotification( "Packaged editor shader bundle!" );
+						PushNotification( "Failed to package editor shader bundle!" );
 					}
 				}
 

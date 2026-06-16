@@ -37,7 +37,7 @@ namespace Saturn {
 	// 
 	// Boolean Algebra node
 	// 
-	// Takes in Ty and outputs a bool.
+	// Takes in 2 of Ty and outputs a bool.
 	//
 	template<typename Ty>
 	class Maths2GeneralBoolAlgebraNode : public NodeEditorBlueprintNode
@@ -67,6 +67,36 @@ namespace Saturn {
 			Outputs.push_back( Ref<BoolPin>::Create( "Result", PinKind::Output ) );
 		}
 	};
+
+	//
+	// Maths2BoolOnlyAlgebraNode
+	// 
+	// Takes in bool and outputs a bool.
+	//
+	class Maths2BoolOnlyAlgebraNode : public NodeEditorBlueprintNode
+	{
+	public:
+		Maths2BoolOnlyAlgebraNode()
+			: NodeEditorBlueprintNode( "Maths2BoolOnlyAlgebraNode" )
+		{
+			CreateNode();
+		}
+
+		Maths2BoolOnlyAlgebraNode( const std::string& rName )
+			: NodeEditorBlueprintNode( rName )
+		{
+			CreateNode();
+		}
+
+		virtual ~Maths2BoolOnlyAlgebraNode() = default;
+
+	protected:
+		void CreateNode()
+		{
+			Inputs.push_back( Ref<BoolPin>::Create( "In Value", PinKind::Input ) );
+			Outputs.push_back( Ref<BoolPin>::Create( "Result", PinKind::Output ) );
+		}
+	};
 	
 /**
  * Register a boolean algebra node.
@@ -91,6 +121,44 @@ public: \
 	} \
 	ClassName( const std::string& rName ) \
 		: Maths2GeneralBoolAlgebraNode( NodeName ) \
+	{ \
+	} \
+	\
+	virtual ~ClassName() = default; \
+	\
+	virtual NodeEditorTaskBase* ConvertToTask() override \
+	{ \
+		return NewObject<TaskNamePlusFriendlyName##Task>( nullptr ); \
+	}\
+	\
+	static const char* M2_GetNodeName() \
+	{\
+		return NodeName; \
+	}\
+}
+
+/**
+ * Register a boolean algebra node only taking in a bool.
+ * Useful for the NOT node
+ * 
+ * ClassName: The class name e.g. SMaths2NotBool
+ * NodeName:  The node name e.g. boolean NOT
+ * TaskNamePlusFriendlyName:  The task name + friendly name e.g. SMaths2Not + Bool
+ * CppType:   e.g. bool
+ * 
+*/
+#define SAT_DECLARE_MATHS2_BOOL_ONLY_NODE( ClassName, NodeName, TaskNamePlusFriendlyName, CppType ) \
+SCLASS() \
+class ClassName : public Maths2BoolOnlyAlgebraNode \
+{ \
+	SAT_DECLARE_CLASS( ClassName, Maths2BoolOnlyAlgebraNode ) \
+public: \
+	ClassName() \
+		: Maths2BoolOnlyAlgebraNode( NodeName ) \
+	{ \
+	} \
+	ClassName( const std::string& rName ) \
+		: Maths2BoolOnlyAlgebraNode( NodeName ) \
 	{ \
 	} \
 	\
@@ -158,10 +226,15 @@ public: \
 
 #define SAT_DECLARE_MATHS2_NOT_EQUAL_TO_CLASS( NodeName, FriendlyName, CppType ) SAT_DECLARE_MATHS2_NODE( SMaths2NotEqualTo##FriendlyName##Node, NodeName, Maths2NotEqualTo##FriendlyName, CppType )
 
-	SAT_DECLARE_MATHS2_NOT_EQUAL_TO_CLASS( "boolean NOT", Bool, bool );
+	// Special case for bool
+#define SAT_DECLARE_MATHS2_NOT_BOOL_CLASS( NodeName, FriendlyName, CppType ) SAT_DECLARE_MATHS2_BOOL_ONLY_NODE( SMaths2NotEqualTo##FriendlyName##Node, NodeName, Maths2NotEqualTo##FriendlyName, CppType )
+
 	SAT_DECLARE_MATHS2_NOT_EQUAL_TO_CLASS( "float != float", Float, float );
 	SAT_DECLARE_MATHS2_NOT_EQUAL_TO_CLASS( "int != int", Int, int );
 	SAT_DECLARE_MATHS2_NOT_EQUAL_TO_CLASS( "U32 != U32", UInt, uint32_t );
+
+	// Special case for bool (inverter)
+	SAT_DECLARE_MATHS2_NOT_BOOL_CLASS( "boolean NOT", Bool, bool );
 
 	//////////////////////////////////////////////////////////////////////////
 	// AND (&&)

@@ -43,8 +43,10 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		virtual void PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode ) override
 		{
-			if( !pNode || !pNode->Inputs.size() )
+			if( !pNode )
 				return;
+
+			SAT_CORE_ASSERT( pNode->Inputs.size(), "[Maths2GeneralBooleanTask] needs at least one pin!" );
 
 			m_NodeFlags = ( NodeEditorNodeFlags ) pNode->Flags;
 			m_NodeID = pNode->ID;
@@ -64,19 +66,24 @@ namespace Saturn {
 				m_DefaultValueA = pNode->Inputs[ 0 ].As<typename PinTypeTraits<Ty>::PinType>()->Data;
 			}
 
-			link = pEditor->FindLinkByPin( pNode->Inputs[ 1 ]->ID );
-			if( link && link->StartPinID )
+			// If we do not have a second input pin then m_DefaultValueB will be equal to m_DefaultValueB{}.
+			// and when this task ticks the locator will point to the memory address of m_DefaultValueB.
+			if( pNode->Inputs.size() > 1 )
 			{
-				auto otherPin = pEditor->FindPin( link->StartPinID );
-				if( otherPin )
+				link = pEditor->FindLinkByPin( pNode->Inputs[ 1 ]->ID );
+				if( link && link->StartPinID )
 				{
-					m_PinB = otherPin->Node->ID;
+					auto otherPin = pEditor->FindPin( link->StartPinID );
+					if( otherPin )
+					{
+						m_PinB = otherPin->Node->ID;
+					}
 				}
-			}
-			// Not linked? Read data from the Pin
-			else
-			{
-				m_DefaultValueB = pNode->Inputs[ 1 ].As<typename PinTypeTraits<Ty>::PinType>()->Data;
+				// Not linked? Try Read data from the Pin
+				else
+				{
+					m_DefaultValueB = pNode->Inputs[ 1 ].As<typename PinTypeTraits<Ty>::PinType>()->Data;
+				}
 			}
 		}
 #endif
@@ -197,6 +204,29 @@ public:																		 \
 	}																							\
 }
 
+#define SAT_DECLARE_MATHS2_BOOLEAN_NOT_TASK( ClassName )					 \
+SCLASS()																	 \
+class ClassName##Task : public Maths2GeneralBooleanTask<bool>				 \
+{																			 \
+	SAT_DECLARE_CLASS( ClassName##Task, Maths2GeneralBooleanTask<bool> );	 \
+public:																		 \
+	ClassName##Task() = default;											 \
+	virtual ~ClassName##Task() = default;									 \
+																			 \
+public:																		 \
+	virtual NodeEditorTaskState Tick( Timestep ts ) override				 \
+	{																		 \
+		if( m_CurrentState = Super::Tick( ts ); m_CurrentState != NodeEditorTaskState::Failed ) \
+		{																						\
+			m_OutValue = ( *m_pA ) != true;														\
+																								\
+			m_CurrentState = NodeEditorTaskState::Completed;									\
+		}																						\
+																								\
+		return m_CurrentState;																	\
+	}																							\
+}
+
 	//////////////////////////////////////////////////////////////////////////
 	// Less than
 
@@ -251,10 +281,14 @@ public:																		 \
 	//////////////////////////////////////////////////////////////////////////
 	// NOT Equal to
 
-#define SAT_DECLARE_MATHS2_TASK_NOT_EQUAL_TO( FriendlyName, CppType ) SAT_DECLARE_MATHS2_BOOLEAN_TASK( Maths2NotEqualTo##FriendlyName, >, CppType )
+#define SAT_DECLARE_MATHS2_TASK_NOT_EQUAL_TO( FriendlyName, CppType ) SAT_DECLARE_MATHS2_BOOLEAN_TASK( Maths2NotEqualTo##FriendlyName, !=, CppType )
 
+#define SAT_DECLARE_MATHS2_TASK_NOT_BOOL( FriendlyName ) SAT_DECLARE_MATHS2_BOOLEAN_NOT_TASK( Maths2NotEqualTo##FriendlyName )
+
+	// Special case for booleans
+	SAT_DECLARE_MATHS2_TASK_NOT_BOOL( Bool );
+	
 	// ~ Maths2NotEqualTo
-	SAT_DECLARE_MATHS2_TASK_NOT_EQUAL_TO( Bool, bool );
 	SAT_DECLARE_MATHS2_TASK_NOT_EQUAL_TO( Float, float );
 	SAT_DECLARE_MATHS2_TASK_NOT_EQUAL_TO( UInt, uint32_t );
 	SAT_DECLARE_MATHS2_TASK_NOT_EQUAL_TO( Int, int );

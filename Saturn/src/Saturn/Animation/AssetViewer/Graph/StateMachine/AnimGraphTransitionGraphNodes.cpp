@@ -57,7 +57,7 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		Color = ImColor( 48, 128, 255, 100 );
 		RenderType = NodeRenderType::Blueprint;
-		Flags |= NodeFlags_Irremovable;
+		Flags |= NodeFlags_Irremovable | NodeFlags_RejectCopyPaste;
 #endif
 
 		Inputs.push_back( Ref<BoolPin>::Create( "Out", PinKind::Input ) );

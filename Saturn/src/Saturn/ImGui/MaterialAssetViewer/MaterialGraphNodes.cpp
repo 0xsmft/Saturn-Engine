@@ -196,7 +196,7 @@ namespace Saturn {
 
 #if !defined(SAT_DIST)
 		Color = ImColor( 255, 128, 128 );
-		Flags |= NodeFlags_Irremovable;
+		Flags |= NodeFlags_Irremovable | NodeFlags_RejectCopyPaste;
 #endif
 
 		// Inputs

@@ -39,6 +39,7 @@
 #include "Saturn/Asset/Asset.h"
 
 #include "Saturn/Core/Event.h"
+#include "Saturn/Core/Ruby/RubyEvent.h"
 
 #include "NodeEditorOutputWindow.h"
 
@@ -335,6 +336,8 @@ namespace Saturn {
 		void DrawBeginSearchWindow();
 		void DrawSearchResultsWindow();
 
+		void OnKeyPressed( RubyKeyEvent& rKeyEvent );
+
 		virtual void DrawGraph();
 
 	protected:
@@ -350,6 +353,10 @@ namespace Saturn {
 		std::unordered_map<UUID, Ref<NodeEditorVariable>> m_EditorVariables;
 		std::map<UUID, SharedPtr<NodeEditorNodeBase>> m_Nodes;
 		std::vector<Ref<Link>> m_Links;
+
+		// List of node SClasses that will be pasted upon a Ctrl+V command
+		// gets filled by the Ctrl+C command.
+		std::vector<const SClass*> m_CopyPasteNodeClasses;
 
 		// Temporary task cache, only exists for serialisation.
 		// or for editor simulation.

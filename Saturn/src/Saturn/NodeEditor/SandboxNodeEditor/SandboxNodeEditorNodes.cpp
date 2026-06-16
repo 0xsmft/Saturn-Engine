@@ -47,7 +47,7 @@ namespace Saturn {
 	void SandboxNodeEditorOutputNode::CreateNode()
 	{
 		Name = "Output Node";
-		Flags |= NodeFlags_Irremovable;
+		Flags |= NodeFlags_Irremovable | NodeFlags_RejectCopyPaste;
 
 		Inputs.push_back( Ref<UInt32Pin>::Create( "Result", PinKind::Input, PinFlag_RequiredForEvaluation ) );
 	}

@@ -567,6 +567,16 @@ namespace Saturn {
 
 	void NodeEditor::OnEvent( Event& rEvent )
 	{
+		switch( rEvent.Type )
+		{
+			case EventType::KeyPressed:
+			{
+				OnKeyPressed( ( RubyKeyEvent& ) rEvent );
+			} break;
+
+			default:
+				break;
+		}
 	}
 
 #if !defined(SAT_DIST)
@@ -1514,6 +1524,54 @@ namespace Saturn {
 		}
 
 		ImGui::End();
+	}
+
+	void NodeEditor::OnKeyPressed( RubyKeyEvent& rKeyEvent )
+	{
+		if( Input::Get().KeyPressed( RubyKey_LeftCtrl ) || Input::Get().KeyPressed( RubyKey_RightCtrl ) )
+		{
+			switch( rKeyEvent.GetKeycode() )
+			{
+				case RubyKey_C:
+				{
+					const auto nodes = GetSelectedNodes();
+
+					m_CopyPasteNodeClasses.clear();
+					m_CopyPasteNodeClasses.reserve( nodes.size() );
+
+					for( const auto& rNodeID : nodes )
+					{
+						const auto node = FindNode( rNodeID );
+						SAT_CORE_ASSERT( node );
+						
+						if( node->IsFlagSet( NodeFlags_RejectCopyPaste ) )
+							continue;
+
+						m_CopyPasteNodeClasses.push_back( node->GetClass() );
+					}
+				} break;
+
+				case RubyKey_V:
+				{
+					auto& rIO = ImGui::GetIO();
+					const auto canvasMousePos = ed::ScreenToCanvas( rIO.MousePos );
+
+					for( const auto* pNodeSClass : m_CopyPasteNodeClasses )
+					{
+						auto* newObject = ClassMetadataHandler::Get().CreateClassObject( pNodeSClass, this );
+						SharedPtr<NodeEditorNodeBase> spNode = ( NodeEditorNodeBase* )newObject;
+
+						AddNode( spNode );
+					}
+
+					// Don't clear out list because we may want to paste the same set of nodes again.
+//					m_CopyPasteNodeClasses.clear();
+				} break;
+
+				default:
+					break;
+			}
+		}
 	}
 
 	void NodeEditor::OnChooseNewNode( SharedPtr<NodeEditorNodeBase> node )

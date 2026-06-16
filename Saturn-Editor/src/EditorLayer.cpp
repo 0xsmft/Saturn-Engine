@@ -538,6 +538,8 @@ namespace Saturn {
 			if( m_JobModalOpen.load() )     DrawBlockingActionModal();
 			if( m_ShowDistBuildOptions )    DrawDistOptionsModal();
 			if( m_ShowDeleteNavMeshCachePopup ) DrawDeleteNavMeshModal();
+			if( m_ShowDebugMsgBoxWindow )   DrawDebugMsgBoxWindow();
+			if( m_ShowEditorDebugWindow )   DrawEditorDebugWindow();
 			if( m_ShowCBThumbnailDebug )    ContentBrowserThumbnailCache::Get().OnImGuiRender( &m_ShowCBThumbnailDebug );
 			if( m_ShowUndoRedoDebug )       m_GlobalUndoRedoGroup->OnImGuiRender( &m_ShowUndoRedoDebug );
 		}
@@ -2785,6 +2787,9 @@ namespace Saturn {
 				m_ImGuiWindowManager->AddWindow( m_SandboxNodeEditorViewer, "SndboxVwr" );
 			}
 
+			if( ImGui::MenuItem( "Open message box & notification test" ) ) m_ShowDebugMsgBoxWindow ^= 1;
+			if( ImGui::MenuItem( "Open editor debug window" ) )				m_ShowEditorDebugWindow ^= 1;
+
 			ImGui::EndMenu();
 		}
 
@@ -3343,6 +3348,81 @@ namespace Saturn {
 
 			ImGui::EndPopup();
 		}
+	}
+
+	void EditorLayer::DrawDebugMsgBoxWindow()
+	{
+		if( ImGui::Begin( "Debug message box & notification window", &m_ShowDebugMsgBoxWindow ) )
+		{
+			if( ImGui::Button( "Show debug message box" ) )
+			{
+				MessageBoxInfo info{ "Dummy msg box", "This is a test" };
+				PushMessageBox( info );
+			}
+
+			if( ImGui::Button( "Add dummy notification" ) )
+			{
+				const std::string name = std::format( "This is a test: idx {0}", m_Notifications.size() );
+				PushNotification( name );
+			}
+		}
+
+		ImGui::End();
+	}
+
+#define SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( var ) ImGui::Text( #var " %d", var )
+
+	void EditorLayer::DrawEditorDebugWindow()
+	{
+		if( ImGui::Begin( "Editor debug", &m_ShowEditorDebugWindow ) )
+		{
+			ImGui::SeparatorText( "Internal state" );
+
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_AllowCameraEvents );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_StartedRightClickInViewport );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_ViewportFocused );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_MouseOverViewport );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_OpenEditorSettings );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_ShowImGuiDemoWindow );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_ShowVFSDebug );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_HasPremakePath );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_OpenAssetRegistryDebug );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_OpenLoadedAssetDebug );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_OpenAboutWindow );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_ShowMetadataDebug );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_ShowAssetDependencies );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_ShowRendererWindow );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_ShowSceneRendererWindow );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_ShowSceneDirtyModal );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_ShowUserSettings );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_RequestRuntime );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_ShowCameraFrustum );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_ShowMeshAABB );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_ShowCBThumbnailDebug );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_ShowUndoRedoDebug );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_ShowOperation );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_ShowDistBuildOptions );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_ShouldBuildShaderBundle );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_ShouldBuildAssetBundle );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_ShouldCopyBuildFiles );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_WasGizmoUsed );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_LastRuntimeAttemptFailed );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_FullscreenViewport );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_PendingFullscreenChange );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_ShouldRenderCameraPreview );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_DisableViewportMovement );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_ShowDeleteNavMeshCachePopup );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_DebugBreakAlreadyHandled );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_FontChanged );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_ShowRuntimeConsoleWindow );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_ShowDebugMsgBoxWindow );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_ShowEditorDebugWindow );
+
+			ImGui::Text( "m_LastAutoSaveTime %.2f seconds", m_LastAutoSaveTime );
+			ImGui::Text( "m_AutoSaveCount %u", m_AutoSaveCount );
+		}
+
+		ImGui::End();
 	}
 
 	void EditorLayer::DrawViewport()

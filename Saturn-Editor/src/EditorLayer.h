@@ -110,6 +110,8 @@ namespace Saturn {
 		void DrawBlockingActionModal();
 		void DrawDistOptionsModal();
 		void DrawDeleteNavMeshModal();
+		void DrawDebugMsgBoxWindow();
+		void DrawEditorDebugWindow();
 
 		// Viewport
 		void DrawViewport();
@@ -289,11 +291,13 @@ namespace Saturn {
 		bool m_DebugBreakAlreadyHandled = false;
 		bool m_FontChanged = false;
 		bool m_ShowRuntimeConsoleWindow = false;
+		bool m_ShowDebugMsgBoxWindow = false;
+		bool m_ShowEditorDebugWindow = false;
 
 		// JobProgress
 		float m_OperationPercent = 0.0f;
 		// Translate as default
-		int m_GizmoOperation = 7 /* ImGuizmo::OPERATION::TRANSLATE */;
+		uint32_t m_GizmoOperation = 7u /* ImGuizmo::OPERATION::TRANSLATE */;
 
 		float m_LastAutoSaveTime = 0.0f;
 		uint32_t m_AutoSaveCount = 0u;

@@ -43,7 +43,7 @@ namespace SaturnBuildTool
         {
             if( Shared.Platform.PlatformType == PlatformType.Windows )
             {
-                PreprocessorDefines.AddRange( new string[] { "UNICODE", "_UNICODE", "SAT_PLATFORM_WINDOWS" } );
+                PreprocessorDefines.AddRange( new string[] { "UNICODE", "_UNICODE", "SAT_PLATFORM_WINDOWS", "_CRT_SECURE_NO_WARNINGS" } );
             }
         }
 

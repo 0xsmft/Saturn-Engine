@@ -61,6 +61,8 @@ namespace Saturn {
 		SharedPtr<NodeEditorNodeBase> DrawStateMachineStateNewNodeOptions();
 		SharedPtr<NodeEditorNodeBase> DrawTransitionNewNodeOptions();
 
+		SharedPtr<NodeEditorNodeBase> DrawVariableNodeOptions();
+
 	private:
 		Ref<Asset> m_Asset = nullptr;
 		SharedPtr<AnimGraph> m_NodeEditor = nullptr;

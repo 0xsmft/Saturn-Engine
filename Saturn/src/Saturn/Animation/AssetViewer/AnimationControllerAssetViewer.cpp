@@ -159,18 +159,6 @@ namespace Saturn {
 			result = stateMachinePlayer;
 		}
 
-		ImGui::SeparatorText( "Variables" );
-		for( const auto& [id, rVariable] : m_NodeEditor->GetVariables() )
-		{
-			if( ImGui::MenuItem( rVariable->GetName().c_str() ) )
-			{
-				result = ( SharedPtr<NodeEditorVariableNode> )NodeEditorVariableNode::SpawnVariableNode( rVariable, m_NodeEditor );
-			}
-
-			if( ImGui::MenuItem( "Set Variable" ) )
-				result = ( SharedPtr<NodeEditorSetVariableNode> )NodeEditorSetVariableNode::SpawnSetVariableNode( rVariable, m_NodeEditor );
-		}
-
 		return result;
 	}
 
@@ -180,7 +168,6 @@ namespace Saturn {
 
 		ImGui::SeparatorText( "State Machine" );
 
-		// #FixSharedPtrEquT2Op
 		if( ImGui::MenuItem( "New State" ) ) 
 		{
 			auto stateNode = StateMachineNodeLibrary::SpawnStateNode( m_NodeEditor );
@@ -202,15 +189,6 @@ namespace Saturn {
 		if( ImGui::MenuItem( "Play Animation" ) )
 			result = ( SharedPtr<NodeEditorNodeBase> )StateMachineStateNodeLibrary::SpawnPlayAnimNode( m_NodeEditor );
 
-		ImGui::SeparatorText( "Variables" );
-		for( const auto& [id, rVariable] : m_NodeEditor->GetVariables() )
-		{
-			if( ImGui::MenuItem( rVariable->GetName().c_str() ) )
-			{
-				result = ( SharedPtr<NodeEditorVariableNode> )NodeEditorVariableNode::SpawnVariableNode( rVariable, m_NodeEditor );
-			}
-		}
-
 		return result;
 	}
 
@@ -231,6 +209,37 @@ namespace Saturn {
 		if( auto mathsResult = Maths2BoolNodeLibrary::DrawImGuiSelectionMenu( m_NodeEditor ); mathsResult )
 		{
 			result = mathsResult;
+		}
+
+		return result;
+	}
+
+	SharedPtr<NodeEditorNodeBase> AnimationControllerAssetViewer::DrawVariableNodeOptions()
+	{
+		SharedPtr<NodeEditorNodeBase> result;
+
+		ImGui::SeparatorText( "Variables" );
+		for( const auto& [id, rVariable] : m_NodeEditor->GetVariables() )
+		{
+			if( ImGui::MenuItem( rVariable->GetName().c_str() ) )
+			{
+				result = ( SharedPtr<NodeEditorVariableNode> )NodeEditorVariableNode::SpawnVariableNode( rVariable, m_NodeEditor );
+			}
+		}
+
+		// If we dragged off from a variable node, then we can add the option to set it.
+		if( const auto pin = m_NodeEditor->GetOriginPinForNewNode(); pin && pin->Node->ExecutionType == NodeExecutionType::VariableNode )
+		{
+			SharedPtr<NodeEditorVariableNode> getVariableNode = pin->Node.As<NodeEditorVariableNode>();
+			auto var = getVariableNode->GetVariable();
+
+			const std::string itemName = std::format( "Set {}", var->GetName() );
+			if( ImGui::MenuItem( itemName.c_str() ) )
+			{
+				result = ( SharedPtr<NodeEditorSetVariableNode> )NodeEditorSetVariableNode::SpawnSetVariableNode( var, m_NodeEditor );
+			}
+
+			m_NodeEditor->RejectAcceptedNewLinkForNewNode();
 		}
 
 		return result;
@@ -263,6 +272,11 @@ namespace Saturn {
 			else if( m_NodeEditor->GetActiveSubGraph()->GetClass() == AnimGraphStateMachineTransitionNode::StaticClass() )
 			{
 				result = DrawTransitionNewNodeOptions();
+			}
+
+			if( auto variableResult = DrawVariableNodeOptions() ) 
+			{
+				result = variableResult;
 			}
 
 			ImGui::SeparatorText( "Auxiliary" );

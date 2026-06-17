@@ -41,16 +41,16 @@ namespace Saturn {
 	struct MathsNodeContextMenuCaller;
 
 #define SAT_DECLARE_SPAWN_MATHS_FUNCTION( ClassType, ClassName, FunctionName )			\
-SharedPtr<ClassType> ClassName::FunctionName( SharedPtr<NodeEditor> nodeEditor )	\
+SharedPtr<ClassType> ClassName::FunctionName( SharedPtr<NodeEditor> nodeEditor )		\
 {																						\
-	SharedPtr<ClassType> node = NewObject<ClassType>( nodeEditor.Get() );				\
+	SharedPtr<ClassType> node( NewObject<ClassType>( nodeEditor.Get() ) );				\
 	nodeEditor->AddNode( node );														\
 																						\
 	return node;																		\
 }																						\
 template<> struct MathsNodeContextMenuCaller<ClassType>									\
 {																						\
-	static SharedPtr<ClassType> DoCall( SharedPtr<NodeEditor> nodeEditor )			\
+	static SharedPtr<ClassType> DoCall( SharedPtr<NodeEditor> nodeEditor )				\
 	{																					\
 		SharedPtr<ClassType> node;														\
 		if( ImGui::MenuItem( ClassType::M2_GetNodeName() ) )							\

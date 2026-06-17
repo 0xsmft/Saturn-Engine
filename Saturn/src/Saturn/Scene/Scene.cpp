@@ -861,7 +861,7 @@ namespace Saturn {
 			g_ActiveScene = this;
 
 		// UNSAFE! We just assume that rScriptName will be a subclass of an entity, could lead to UB
-		SharedPtr<Entity> entity = (Entity*)ClassMetadataHandler::Get().CreateClassObject( rScriptName, nullptr );
+		SharedPtr<Entity> entity( ( Entity* ) ClassMetadataHandler::Get().CreateClassObject( rScriptName, nullptr ) );
 
 		entity->SetName( name );
 		entity->GetComponent<IdComponent>().ID = uuid;
@@ -875,7 +875,7 @@ namespace Saturn {
 
 	SharedPtr<Entity> Scene::CreateEntity( const std::string& name /*= "" */ )
 	{
-		SharedPtr<Entity> entity = NewObject<Entity>( nullptr );
+		SharedPtr<Entity> entity( NewObject<Entity>( nullptr ) );
 		entity->SetName( name );
 
 		OnEntityCreated( entity );
@@ -888,7 +888,7 @@ namespace Saturn {
 		if( !rParams.pClass->IsChildOf( Entity::StaticClass() ) || rParams.pClass == nullptr ) 
 			return nullptr;
 
-		SharedPtr<Entity> entity = dynamic_cast<Entity*>( ClassMetadataHandler::Get().CreateClassObject( rParams.pClass ) );
+		SharedPtr<Entity> entity( dynamic_cast< Entity* >( ClassMetadataHandler::Get().CreateClassObject( rParams.pClass ) ) );
 		entity->SetName( rParams.Tag );
 		entity->GetComponent<IdComponent>().ID = rParams.ID;
 
@@ -1049,7 +1049,7 @@ namespace Saturn {
 
 	SharedPtr<Entity> Scene::DuplicateEntity( const SharedPtr<Entity> entity, const SharedPtr<Entity> parent )
 	{
-		SharedPtr<Entity> newEntity = dynamic_cast<Entity*>( ClassMetadataHandler::Get().CreateClassObject( (SClass*)entity->GetClass() ) );
+		SharedPtr<Entity> newEntity( dynamic_cast< Entity* >( ClassMetadataHandler::Get().CreateClassObject( ( SClass* ) entity->GetClass() ) ) );
 		newEntity->SetName( entity->GetComponent<TagComponent>().Tag );
 
 		OnEntityCreated( newEntity );
@@ -1709,7 +1709,7 @@ namespace Saturn {
 	SharedPtr<Entity> Scene::HotReloadReplaceOldEntity( SharedPtr<Entity> source )
 	{
 		// Create new entity
-		SharedPtr<Entity> entity = ( Entity* ) ClassMetadataHandler::Get().CreateClassObject( source->GetClass()->GetHash() );
+		SharedPtr<Entity> entity( ( Entity* ) ClassMetadataHandler::Get().CreateClassObject( source->GetClass()->GetHash() ) );
 
 		// and we give the new entity the same name and ID
 		entity->SetName( source->GetName() );
@@ -1789,8 +1789,7 @@ namespace Saturn {
 			uint64_t classHash = 0llu;
 			RawSerialisation::ReadObject( classHash, rStream );
 
-			SharedPtr<Entity> V = nullptr;
-			V = ( Entity* ) ClassMetadataHandler::Get().CreateClassObject( classHash );
+			SharedPtr<Entity> V( ( Entity* )ClassMetadataHandler::Get().CreateClassObject( classHash ) );
 
 			// V is always non-trivial
 			Entity::Deserialise( V, rStream );

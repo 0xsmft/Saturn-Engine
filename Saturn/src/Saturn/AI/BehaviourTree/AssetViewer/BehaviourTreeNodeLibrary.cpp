@@ -39,8 +39,7 @@ namespace Saturn {
 
 	SharedPtr<BehaviourTreeSelectorNode> BehaviourTreeNodeLibrary::SpawnSelectorNode( SharedPtr<NodeEditor> nodeEditor )
 	{
-		BehaviourTreeSelectorNode* pNode = NewObject<BehaviourTreeSelectorNode>( nodeEditor.Get() );
-		SharedPtr<BehaviourTreeSelectorNode> sp = pNode;
+		SharedPtr<BehaviourTreeSelectorNode> sp( NewObject<BehaviourTreeSelectorNode>( nodeEditor.Get() ) );
 
 		nodeEditor->AddNode( sp );
 		return sp;
@@ -48,8 +47,7 @@ namespace Saturn {
 
 	SharedPtr<BehaviourTreeSequenceNode> BehaviourTreeNodeLibrary::SpawnSequenceNode( SharedPtr<NodeEditor> nodeEditor )
 	{
-		BehaviourTreeSequenceNode* pNode = NewObject<BehaviourTreeSequenceNode>( nodeEditor.Get() );
-		SharedPtr<BehaviourTreeSequenceNode> sp = pNode;
+		SharedPtr<BehaviourTreeSequenceNode> sp( NewObject<BehaviourTreeSequenceNode>( nodeEditor.Get() ) );
 
 		nodeEditor->AddNode( sp );
 		return sp;
@@ -57,8 +55,7 @@ namespace Saturn {
 
 	SharedPtr<BehaviourTreeRootNode> BehaviourTreeNodeLibrary::SpawnRootNode( SharedPtr<NodeEditor> nodeEditor )
 	{
-		BehaviourTreeRootNode* pNode = NewObject<BehaviourTreeRootNode>( nodeEditor.Get() );
-		SharedPtr<BehaviourTreeRootNode> sp = pNode;
+		SharedPtr<BehaviourTreeRootNode> sp( NewObject<BehaviourTreeRootNode>( nodeEditor.Get() ) );
 
 		nodeEditor->AddNode( sp );
 		return sp;

@@ -36,7 +36,8 @@ namespace Saturn {
 
 	SharedPtr<AnimGraphTransitionGraphResultNode> TransitionNodeLibrary::SpawnOutputNode( SharedPtr<NodeEditor> nodeEditor )
 	{
-		SharedPtr<AnimGraphTransitionGraphResultNode> node = NewObject<AnimGraphTransitionGraphResultNode>( nodeEditor.Get() );
+		SharedPtr<AnimGraphTransitionGraphResultNode> node( NewObject<AnimGraphTransitionGraphResultNode>( nodeEditor.Get() ) );
+
 		nodeEditor->AddNode( node );
 		return node;
 	}

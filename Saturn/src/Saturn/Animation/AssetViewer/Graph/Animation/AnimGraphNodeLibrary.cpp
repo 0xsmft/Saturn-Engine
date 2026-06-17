@@ -38,10 +38,7 @@ namespace Saturn {
 
 	SharedPtr<AnimGraphStateMachinePlayerNode> AnimGraphNodeLibrary::SpawnStateMachinePlayerNode( SharedPtr<NodeEditor> nodeEditor )
 	{
-		AnimGraphStateMachinePlayerNode* pNode = NewObject<AnimGraphStateMachinePlayerNode>( nodeEditor.Get() );
-
-		// Create shared pointer here, to avoid creating a new one when we call AddNode and then another new one when this function returns, would result in two control blocks.
-		SharedPtr<AnimGraphStateMachinePlayerNode> sp = pNode;
+		SharedPtr<AnimGraphStateMachinePlayerNode> sp( NewObject<AnimGraphStateMachinePlayerNode>( nodeEditor.Get() ) );
 		nodeEditor->AddNode( sp );
 
 		return sp;
@@ -49,10 +46,7 @@ namespace Saturn {
 
 	SharedPtr<AnimGraphOutputNode> AnimGraphNodeLibrary::SpawnOutputNode( SharedPtr<NodeEditor> nodeEditor )
 	{
-		AnimGraphOutputNode* pNode = NewObject<AnimGraphOutputNode>( nodeEditor.Get() );
-
-		// Create shared pointer here, to avoid creating a new one when we call AddNode and then another new one when this function returns, would result in two control blocks.
-		SharedPtr<AnimGraphOutputNode> sp = pNode;
+		SharedPtr<AnimGraphOutputNode> sp( NewObject<AnimGraphOutputNode>( nodeEditor.Get() ) );
 
 		nodeEditor->AddNode( sp );
 		return sp;

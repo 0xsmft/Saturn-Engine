@@ -152,8 +152,7 @@ namespace Saturn {
 
 	SharedPtr<NodeEditorVariableNode> NodeEditorVariableNode::SpawnVariableNode( Ref<NodeEditorVariable> var, SharedPtr<NodeEditor> nodeEditor )
 	{
-		NodeEditorVariableNode* pNode = NewObject<NodeEditorVariableNode>( nodeEditor.Get(), var->GetName(), var );
-		SharedPtr<NodeEditorVariableNode> sp = pNode;
+		SharedPtr<NodeEditorVariableNode> sp( NewObject<NodeEditorVariableNode>( nodeEditor.Get(), var->GetName(), var ) );
 
 		nodeEditor->AddNode( sp );
 		return sp;
@@ -278,9 +277,7 @@ namespace Saturn {
 
 	SharedPtr<NodeEditorSetVariableNode> NodeEditorSetVariableNode::SpawnSetVariableNode( Ref<NodeEditorVariable> var, SharedPtr<NodeEditor> nodeEditor )
 	{
-		NodeEditorSetVariableNode* pNode = NewObject<NodeEditorSetVariableNode>( nodeEditor.Get(), var->GetName(), var );
-
-		SharedPtr<NodeEditorSetVariableNode> sp = pNode;
+		SharedPtr<NodeEditorSetVariableNode> sp( NewObject<NodeEditorSetVariableNode>( nodeEditor.Get(), var->GetName(), var ) );
 		nodeEditor->AddNode( sp );
 		return sp;
 	}

@@ -2041,11 +2041,11 @@ namespace Saturn {
 			SharedPtr<NodeEditorNodeBase> node;
 			if( pNode )
 			{
-				node = pNode;
+				node = SharedPtr<NodeEditorNodeBase>( pNode );
 			}
 			else
 			{
-				node = NewObject<NodeEditorBlueprintNode>( this );
+				node = SharedPtr<NodeEditorNodeBase>( NewObject<NodeEditorBlueprintNode>( this ) );
 				SAT_CORE_WARN( "Could not find node editor node class hash {0}, so using NodeEditorBlueprintNode instead.", targetClassHash );
 			}
 

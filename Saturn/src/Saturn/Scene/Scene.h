@@ -208,7 +208,7 @@ namespace Saturn {
 		{
 			static_assert( std::is_base_of<Entity, Ty>::value, "Ty must be based from an entity!" );
 
-			SharedPtr<Ty> entity = dynamic_cast<Ty*>( ClassMetadataHandler::Get().CreateClassObject( Ty::StaticClass() ) );
+			SharedPtr<Ty> entity( dynamic_cast<Ty*>( ClassMetadataHandler::Get().CreateClassObject( Ty::StaticClass() ) ) );
 			entity->SetName( rEntityName );
 
 			OnEntityCreated( entity );

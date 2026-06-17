@@ -131,7 +131,7 @@ namespace Saturn {
 
 	SharedPtr<NodeEditorHintNode> NodeEditorHintNode::SpawnHintNode( SharedPtr<NodeEditor> nodeEditor )
 	{
-		SharedPtr<NodeEditorHintNode> node = ( NodeEditorHintNode* ) ClassMetadataHandler::Get().CreateClassObject( NodeEditorHintNode::StaticClass() );
+		SharedPtr<NodeEditorHintNode> node( NewObject<NodeEditorHintNode>( nullptr ) );
 
 		nodeEditor->AddNode( node );
 

@@ -53,7 +53,7 @@ namespace Saturn {
 
 	SharedPtr<MaterialOutputNode> MaterialNodeLibrary::SpawnOutputNode( SharedPtr<NodeEditor> nodeEditor )
 	{
-		SharedPtr<MaterialOutputNode> node = NewObject<MaterialOutputNode>( nodeEditor.Get() );
+		SharedPtr<MaterialOutputNode> node( NewObject<MaterialOutputNode>( nodeEditor.Get() ) );
 		nodeEditor->AddNode( node );
 
 		return node;
@@ -61,7 +61,7 @@ namespace Saturn {
 
 	SharedPtr<MaterialGetAssetNode> MaterialNodeLibrary::SpawnGetAsset( SharedPtr<NodeEditor> nodeEditor )
 	{
-		SharedPtr<MaterialGetAssetNode> node = NewObject<MaterialGetAssetNode>( nodeEditor.Get() );
+		SharedPtr<MaterialGetAssetNode> node( NewObject<MaterialGetAssetNode>( nodeEditor.Get() ) );
 		nodeEditor->AddNode( node );
 
 		return node;
@@ -69,7 +69,7 @@ namespace Saturn {
 
 	SharedPtr<MaterialColorPickerNode> MaterialNodeLibrary::SpawnColorPicker( SharedPtr<NodeEditor> nodeEditor )
 	{
-		SharedPtr<MaterialColorPickerNode> node = NewObject<MaterialColorPickerNode>( nodeEditor.Get() );
+		SharedPtr<MaterialColorPickerNode> node( NewObject<MaterialColorPickerNode>( nodeEditor.Get() ) );
 		nodeEditor->AddNode( node );
 
 		return node;
@@ -77,7 +77,7 @@ namespace Saturn {
 
 	SharedPtr<MaterialSampler2DNode> MaterialNodeLibrary::SpawnSampler2D( SharedPtr<NodeEditor> nodeEditor )
 	{
-		SharedPtr<MaterialSampler2DNode> node = NewObject<MaterialSampler2DNode>( nodeEditor.Get() );
+		SharedPtr<MaterialSampler2DNode> node( NewObject<MaterialSampler2DNode>( nodeEditor.Get() ) );
 		nodeEditor->AddNode( node );
 
 		return node;
@@ -85,7 +85,7 @@ namespace Saturn {
 
 	SharedPtr<MaterialSeparateColorRGBNode> MaterialNodeLibrary::SpawnSeparateColorRGB( SharedPtr<NodeEditor> nodeEditor )
 	{
-		SharedPtr<MaterialSeparateColorRGBNode> node = NewObject<MaterialSeparateColorRGBNode>( nodeEditor.Get() );
+		SharedPtr<MaterialSeparateColorRGBNode> node( NewObject<MaterialSeparateColorRGBNode>( nodeEditor.Get() ) );
 		nodeEditor->AddNode( node );
 
 		return node;
@@ -93,7 +93,7 @@ namespace Saturn {
 
 	SharedPtr<MaterialColorMixerNode> MaterialNodeLibrary::SpawnMixColors( SharedPtr<NodeEditor> nodeEditor )
 	{
-		SharedPtr<MaterialColorMixerNode> node = NewObject<MaterialColorMixerNode>( nodeEditor.Get() );
+		SharedPtr<MaterialColorMixerNode> node( NewObject<MaterialColorMixerNode>( nodeEditor.Get() ) );
 		nodeEditor->AddNode( node );
 
 		return node;

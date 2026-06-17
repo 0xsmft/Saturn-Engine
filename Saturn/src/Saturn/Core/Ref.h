@@ -414,7 +414,7 @@ namespace Saturn {
 		SharedPtr() noexcept = default;
 		SharedPtr( std::nullptr_t ) noexcept {}
 
-		SharedPtr( Ty* pPointer )
+		explicit SharedPtr( Ty* pPointer )
 			: m_Pointer( pPointer ), m_pControlBlock( new ReferenceControlBlock<Ty>( pPointer ) )
 		{
 			// no need to inc ref count... it's already at one

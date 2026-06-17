@@ -443,7 +443,7 @@ namespace Saturn {
 					auto startNode = FindNode( m_TransitionStartNode );
 
 					// Create transition node
-					SharedPtr<AnimGraphStateMachineTransitionNode> node = NewObject<AnimGraphStateMachineTransitionNode>( this );
+					SharedPtr<AnimGraphStateMachineTransitionNode> node( NewObject<AnimGraphStateMachineTransitionNode>( this ) );
 
 					node->pParentObject = m_ActiveSubGraph.Get();
 					AddNode( node );

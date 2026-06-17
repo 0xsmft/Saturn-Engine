@@ -172,9 +172,7 @@ namespace Saturn {
 					SObject* pNewTaskObject = ClassMetadataHandler::Get().CreateClassObject( pClass->GetClass()->GetHash() );
 
 					// Then, create the new node
-					BehaviourTreeTaskNode* pNode = NewObject<BehaviourTreeTaskNode>( m_NodeEditor.Get(), ( BehaviourTreeBaseTask* ) pNewTaskObject );
-
-					SharedPtr<BehaviourTreeTaskNode> sp = pNode;
+					SharedPtr<BehaviourTreeTaskNode> sp( NewObject<BehaviourTreeTaskNode>( m_NodeEditor.Get(), ( BehaviourTreeBaseTask* ) pNewTaskObject ) );
 
 					result = sp;
 					m_NodeEditor->AddNode( sp );

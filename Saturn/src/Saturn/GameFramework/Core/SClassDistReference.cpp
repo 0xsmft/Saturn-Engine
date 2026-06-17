@@ -52,8 +52,8 @@
 #include "Saturn/AI/BehaviourTree/AssetViewer/Nodes/BehaviourTreeSelectorNode.h"
 #include "Saturn/AI/BehaviourTree/AssetViewer/Nodes/BehaviourTreeSequenceNode.h"
 #include "Saturn/AI/BehaviourTree/AssetViewer/Nodes/BehaviourTreeTaskNode.h"
-#include "Saturn/AI/BehaviourTree/Conditions/BehaviourTreeCondition.h"
-#include "Saturn/AI/BehaviourTree/Conditions/BehaviourTreeMemoryCondition.h"
+#include "Saturn/AI/BehaviourTree/Conditions/BehaviourTreeConditionTask.h"
+#include "Saturn/AI/BehaviourTree/Conditions/BehaviourTreeBlackboardCondition.h"
 #include "Saturn/AI/BehaviourTree/Tasks/BehaviourTreeBaseTask.h"
 #include "Saturn/AI/BehaviourTree/Tasks/BehaviourTreeCompositeTasks.h"
 #include "Saturn/AI/BehaviourTree/Tasks/BehaviourTreeMoveToTask.h"
@@ -104,8 +104,8 @@ namespace Saturn {
 		BehaviourTreeSelectorNode::StaticClass();
 		BehaviourTreeSequenceNode::StaticClass();
 		BehaviourTreeTaskNode::StaticClass();
-		BehaviourTreeCondition::StaticClass();
-		BehaviourTreeMemoryCondition::StaticClass();
+		BehaviourTreeConditionTask::StaticClass();
+		BehaviourTreeBlackboardCondition::StaticClass();
 		BehaviourTreeWaitTask::StaticClass();
 		BehaviourTreePlaySoundTask::StaticClass();
 		BehaviourTreeMoveToTask::StaticClass();

@@ -98,6 +98,22 @@ namespace SaturnBuildTool
             {
                 kv.Value.PostInit( this );
             }
+
+            ResolveLinks();
+        }
+
+        private void ResolveLinks()
+        {
+            for( int i = 0; i < TargetLinkSettings.Links.Count; ++i )
+            {
+                var link = TargetLinkSettings.Links[ i ];
+                
+                // If we do not have an extension then we add it.
+                if( !Path.HasExtension( link ) ) 
+                {
+                    TargetLinkSettings.Links[ i ] += Shared.Platform.StaticLibraryExtension;
+                }
+            }
         }
 
         public static BuildTarget Create( Target target )

@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 
 namespace SaturnBuildTool
 {
@@ -8,7 +9,8 @@ namespace SaturnBuildTool
         YAML_CPP,
         IMGUI,
         SPIRVCROSS,
-        SHADERC,
+        VULKANLIBS, // shaderc
+        VULKANSDK, // vulkan-1
         TRACY,
         ZLIB,
         RECAST, // ...and detour
@@ -99,18 +101,36 @@ namespace SaturnBuildTool
                     break;
 
 
-                case VendorProject.SHADERC:
+                case VendorProject.VULKANLIBS:
                     {
-                        binPath = Path.Combine( binPath, "shaderc", "bin" );
+                        binPath = Environment.GetEnvironmentVariable( "VULKAN_SDK_PATH" );
+                        if( binPath == null )
+                        {
+                            binPath = Environment.GetEnvironmentVariable( "VK_SDK_PATH" );
+                            if( binPath == null )
+                            {
+                                break;
+                            }
+                        }
 
-                        if( Shared.ProjectInfo.CurrentConfigKind == ConfigKind.Debug )
+                        binPath = Path.Combine( binPath, "Lib" );
+                    }
+                    break;
+
+
+                case VendorProject.VULKANSDK:
+                    {
+                        binPath = Environment.GetEnvironmentVariable( "VULKAN_SDK_PATH" );
+                        if( binPath == null )
                         {
-                            binPath = Path.Combine( binPath, "Debug-Windows" );
+                            binPath = Environment.GetEnvironmentVariable( "VK_SDK_PATH" );
+                            if( binPath == null )
+                            {
+                                break;
+                            }
                         }
-                        else
-                        {
-                            binPath = Path.Combine( binPath, "Release-Windows" );
-                        }
+
+                        binPath = Path.Combine( binPath, "Bin" );
                     }
                     break;
 

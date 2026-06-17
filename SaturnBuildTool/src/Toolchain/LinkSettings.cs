@@ -139,6 +139,27 @@ namespace SaturnBuildTool
 
             OutputDirectory = outputPath;
             OutputPath = Path.Combine( OutputDirectory, OutputName );
+
+            ResolveLinks();
+        }
+
+        private void ResolveLinks() 
+        {
+            for( int i = 0; i < Links.Count; ++i )
+            {
+                var link = Links[ i ];
+
+                // Add missing extension
+                // take for example "MyLib"
+                // on windows that would become
+                // MyLib.lib
+                // and on Linux MyLib.so
+                // (the compiler will add lib as a prefix)
+                if( !Path.HasExtension( link ) ) 
+                {
+                    Links[ i ] += Shared.Platform.StaticLibraryExtension;
+                }
+            }
         }
     }
 }

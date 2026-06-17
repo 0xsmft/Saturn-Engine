@@ -188,7 +188,7 @@ namespace Saturn {
 		const PhysicsCooking& GetCooking() const { return m_Cooking; }
 
 		std::shared_ptr<PhysicsContact> GetContactHandler() { return m_ContactHandler; }
-		std::shared_ptr<PhysicsCharacterContact> GetCharacterContact() { return m_CharacterContactHandler; }
+		std::shared_ptr<PhysicsCharacterContact> GetCharacterContactHandler() { return m_CharacterContactHandler; }
 
 	private:
 		JPH::JobSystem* m_pJobSystem = nullptr;

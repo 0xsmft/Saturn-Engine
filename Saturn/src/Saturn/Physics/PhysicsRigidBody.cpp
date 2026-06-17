@@ -66,7 +66,7 @@ namespace Saturn {
 		{
 			AttachPhysicsShape( PhysicsShapeType::Sphere );
 		}
-		else if ( m_Entity->HasComponent<CapsuleColliderComponent>() )
+		else if( m_Entity->HasComponent<CapsuleColliderComponent>() )
 		{
 			AttachPhysicsShape( PhysicsShapeType::Capusle );
 		}
@@ -77,7 +77,8 @@ namespace Saturn {
 		else
 		{
 			SAT_CORE_WARN( "No physics shape component was found! Box shape will be attached." );
-		
+
+			// Make sure we add the component so that we don't assert.
 			m_Entity->AddComponent<BoxColliderComponent>();
 
 			AttachPhysicsShape( PhysicsShapeType::Box );
@@ -90,21 +91,21 @@ namespace Saturn {
 		}
 
 		// Create body after the shape.
-		JPH::BodyCreationSettings settings( 
-			m_Shape->GetShape(), 
-			Auxiliary::GLMToJolt( tc.Position ), 
-			Auxiliary::GLMQToJoltQ( glm::normalize( tc.GetRotation() ) ), 
-			( JPH::EMotionType ) m_Type, 
-			m_Type == PhysicsRigidBodyType::Static ? PhysLayerNotMoving : PhysLayerMoving 
+		JPH::BodyCreationSettings settings(
+			m_Shape->GetShape(),
+			Auxiliary::GLMToJolt( tc.Position ),
+			Auxiliary::GLMQToJoltQ( glm::normalize( tc.GetRotation() ) ),
+			( JPH::EMotionType ) m_Type,
+			m_Type == PhysicsRigidBodyType::Static ? PhysLayerNotMoving : PhysLayerMoving
 		);
 		settings.mIsSensor = m_Shape->IsTrigger();
-		
+
 		auto* pBody = PhysicsFoundation::Get()->GetBodyInterface()->CreateBody( settings );
 		m_BodyID = pBody->GetID();
 
-		PhysicsFoundation::Get()->GetBodyInterface()->AddBody( 
+		PhysicsFoundation::Get()->GetBodyInterface()->AddBody(
 			m_BodyID,
-			m_Type == PhysicsRigidBodyType::Static ? JPH::EActivation::DontActivate : JPH::EActivation::Activate 
+			m_Type == PhysicsRigidBodyType::Static ? JPH::EActivation::DontActivate : JPH::EActivation::Activate
 		);
 
 		// FIXME: Might not be viable to use the handle! (Entity ID may be better, however it's faster to use the handle)
@@ -144,7 +145,7 @@ namespace Saturn {
 			default:
 				break;
 
-			case Saturn::PhysicsShapeType::Box: 
+			case Saturn::PhysicsShapeType::Box:
 			{
 				m_Shape = Ref<BoxShape>::Create( m_Entity );
 			} break;
@@ -170,12 +171,12 @@ namespace Saturn {
 			} break;
 		}
 
-		if( m_Shape ) 
+		if( m_Shape )
 		{
 			const RigidbodyComponent& rb = m_Entity->GetComponent<RigidbodyComponent>();
 			m_Shape->Create( rb.Mass );
 		}
-		
+
 		// If not shape is created create a box shape and warn.
 		if( m_Shape == nullptr || m_Shape->GetShape() == nullptr )
 		{
@@ -229,7 +230,7 @@ namespace Saturn {
 
 			settings.mPosition2 = rBody.GetPosition();
 
-			m_DOFConstraint = static_cast<JPH::SixDOFConstraint*>( settings.Create( JPH::Body::sFixedToWorld, rBody ) );
+			m_DOFConstraint = static_cast< JPH::SixDOFConstraint* >( settings.Create( JPH::Body::sFixedToWorld, rBody ) );
 
 			PhysicsFoundation::Get()->GetPhysicsSystem()->AddConstraint( m_DOFConstraint );
 		}
@@ -369,17 +370,17 @@ namespace Saturn {
 			case PhysicsRigidBodyType::Static:
 				SAT_CORE_WARN( "[PhysicsRigidBody]: Cannot move immovable rigid body!" );
 				break;
-			
-			case PhysicsRigidBodyType::Kinematic: 
+
+			case PhysicsRigidBodyType::Kinematic:
 			{
 				PhysicsFoundation::Get()->GetBodyInterface()->MoveKinematic( m_BodyID, Auxiliary::GLMToJolt( rPosition ), JPH::Quat::sIdentity(), 0.0f );
 			} break;
-			
+
 			case PhysicsRigidBodyType::Dynamic:
 			{
 				PhysicsFoundation::Get()->GetBodyInterface()->SetPosition( m_BodyID, Auxiliary::GLMToJolt( rPosition ), JPH::EActivation::Activate );
 			} break;
-		
+
 			default:
 				break;
 		}

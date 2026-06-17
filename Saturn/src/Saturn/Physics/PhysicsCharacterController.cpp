@@ -66,8 +66,8 @@ namespace Saturn {
 		m_Velocity = m_Displacement / ts.Seconds();
 		m_Controller->UpdateGroundVelocity();
 		
-		JPH::Vec3 currentVerticalVelocity = JPH::Vec3( 0.0f, m_Controller->GetLinearVelocity().GetY(), 0.0f );
-		JPH::Vec3 groundVelocity = m_Controller->GetGroundVelocity();
+		const JPH::Vec3 currentVerticalVelocity = JPH::Vec3( 0.0f, m_Controller->GetLinearVelocity().GetY(), 0.0f );
+		const JPH::Vec3 groundVelocity = m_Controller->GetGroundVelocity();
 
 		const bool jumping = ( currentVerticalVelocity.GetY() - groundVelocity.GetY() ) >= 0.01f;
 
@@ -176,7 +176,7 @@ namespace Saturn {
 			PhysicsFoundation::Get()->GetPhysicsSystem() 
 		);
 
-		m_Controller->SetListener( PhysicsFoundation::Get()->GetCharacterContact().get() );
+		m_Controller->SetListener( PhysicsFoundation::Get()->GetCharacterContactHandler().get() );
 
 		m_Controller->SetUserData( ( uint64_t ) entity->GetHandle() );
 

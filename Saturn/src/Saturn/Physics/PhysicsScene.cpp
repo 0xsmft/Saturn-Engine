@@ -121,7 +121,7 @@ namespace Saturn {
 
 		// post sim
 		PhysicsFoundation::Get()->GetContactHandler()->DispatchAllContactEvents();
-		PhysicsFoundation::Get()->GetCharacterContact()->DispatchAllContactEvents();
+		PhysicsFoundation::Get()->GetCharacterContactHandler()->DispatchAllContactEvents();
 	}
 
 	class JoltSelfFilter : public JPH::ShapeFilter

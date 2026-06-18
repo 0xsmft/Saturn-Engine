@@ -9,15 +9,9 @@ namespace SaturnBuildTool
 
         // Linux x64
         Linux,
-        // ^^^^^ TODO Linux support (soon?)
-
-        // Mac Intel (x64)
-        MacIntel,
 
         // Mac Apple (AArch64)
         MacApple,
-
-        // ^^^^^ TODO Mac support (maybe?)
 
         Unknown,
     }
@@ -48,6 +42,10 @@ namespace SaturnBuildTool
             {
                 InitForLinux();
             }
+            else if( rawPlatformStr == "APPLE" )
+            {
+                InitForMacOS();
+            }
             else
             {
                 Console.WriteLine( "ERROR: Unknown platform!" );
@@ -72,10 +70,22 @@ namespace SaturnBuildTool
             StaticLibraryExtension = ".a";
             SharedLibraryExtension = ".so";
             ExecutableExtension = string.Empty;
-            // Most debug applicaitons on Linux have embedded pdbs...
+            // Most debug applications on Linux have embedded pdbs...
             ProgramDebugDatabaseExtension = string.Empty;
             PlatformType = PlatformType.Linux;
             PlatformName = "Linux";
+        }
+
+        private void InitForMacOS() 
+        {
+            ObjectFileExtension = ".o";
+            StaticLibraryExtension = ".a";
+            SharedLibraryExtension = ".dylib";
+
+            ExecutableExtension = ".app";
+            ProgramDebugDatabaseExtension = ".dsym";
+            PlatformType = PlatformType.MacApple;
+            PlatformName = "macosx";
         }
 
         public string GetOutputFolderName( ConfigKind configKind )

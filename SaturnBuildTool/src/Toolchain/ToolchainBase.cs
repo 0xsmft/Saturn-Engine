@@ -2,6 +2,14 @@
 
 namespace SaturnBuildTool
 {
+    public enum ToolchainType 
+    {
+        Unknown,
+        MSVC,
+        GCC,
+        Clang
+    }
+
     public class ToolchainBase
     {
         /// <summary>

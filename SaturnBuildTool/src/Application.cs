@@ -120,9 +120,11 @@ namespace SaturnBuildTool
                 Console.WriteLine( "  /SATURNDIR       -- override the Saturn Root Directory by default the build tool will use the \"SATURN_DIR\" environment variable" );
                 Console.WriteLine( "  /SRC             -- override the Source Dir, by default its \"Source/{prj.name}\", when overriding make sure the path is relative to the .sproject path" );
                 Console.WriteLine( " Compile Options:" );
-                Console.WriteLine( "  /WIN64*          -- build for Windows x64" );
-                Console.WriteLine( "  /LINUX64*        -- build for Linux x64" );
-                Console.WriteLine( "  /APPLE*          -- build for macOS AArch64 (Apple Silicon)" );
+                Console.WriteLine( "  Platform Options:" );
+                Console.WriteLine( "   /WIN64*          -- build for Windows x64" );
+                Console.WriteLine( "   /LINUX64*        -- build for Linux x64" );
+                Console.WriteLine( "   /APPLE*          -- build for macOS AArch64 (Apple Silicon)" );
+                Console.WriteLine( "  /CC              -- specify toolchain to use. On Windows by default this is set to MSVC, on linux and macOS this is set to CLANG. Options are /CC={MSVC|GCC|CLANG}" );
                 Console.WriteLine( "  /HOTRELOAD       -- this is an internal command and is used for hot reloading, when this command is suggested the build tool will create a special timestamp file and output files with the timestamp suffix" );
                 Console.WriteLine( "  /DISTASDBG       -- Build for Dist but compile with debug symbols and no optimisation. \"/DIST\" must be suggested" );
                 Console.WriteLine( "  Configuration Options:" );
@@ -224,12 +226,17 @@ namespace SaturnBuildTool
                 return false;
             }
 
-            switch( Shared.Platform.PlatformType )
+            switch( Shared.ProjectInfo.ToolchainTypeToUse )
             {
-                // On Windows, we force MSVC
-                case PlatformType.Windows:
+                case ToolchainType.MSVC:
                     {
                         Shared.Toolchain = new MSVCToolchain();
+                    }
+                    break;
+
+                case ToolchainType.Clang:
+                    {
+                        Shared.Toolchain = new ClangToolchain();
                     }
                     break;
 
@@ -823,6 +830,8 @@ namespace SaturnBuildTool
                             ExitCode = ApplicationExitStatus.Failure;
                         else if( AttemptedTasks == 0 )
                             ExitCode = ApplicationExitStatus.NothingTodo;
+
+                        Console.WriteLine( ExitCode.ToString() );
                     }
                     break;
 

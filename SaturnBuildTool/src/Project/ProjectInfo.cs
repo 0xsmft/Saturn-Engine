@@ -44,6 +44,8 @@ namespace SaturnBuildTool
 
         public ConfigKind CurrentConfigKind;
 
+        public ToolchainType ToolchainTypeToUse = ToolchainType.Unknown;
+
         public string FileCacheLocation { get; set; }
 
         public string LinkCacheLocation { get; set; }
@@ -57,12 +59,6 @@ namespace SaturnBuildTool
         public string SaturnDir { get; set; }
 
         // Setup the ProjectInfo
-        // Args:
-        // 0: The Action, BUILD, REBULD, CLEAN. TODO
-        // 1: The project name
-        // 2: The target platform, Win64
-        // 3: The configuration, Debug, Release, Dist
-        // 4: The project location
         public bool Setup()
         {
             if( !CheckAllArgs() ) return false;
@@ -74,7 +70,6 @@ namespace SaturnBuildTool
 
             // Source
             // Default to "Source" unless specified, /SRC={...}
-
             if( CommandLineParser.Instance.HasArgument( "SRC" ) )
             {
                 // Source dir passed in from the CLI is relative to the .sln file / .sproject file
@@ -116,6 +111,8 @@ namespace SaturnBuildTool
 
             GetTargetPlatform();
             GetConfigKind();
+
+            if( !GetToolchainType() ) return false;
 
             // Filecache
             FileCacheLocation = Path.Combine( BuildDir, $"Filecache-{CurrentConfigKind}.fc" );
@@ -186,6 +183,16 @@ namespace SaturnBuildTool
                 result = false;
             }
 
+            if(
+                ( CommandLineParser.Instance.HasArgument( "WIN64" ) ? 1 : 0 ) +
+                ( CommandLineParser.Instance.HasArgument( "LINUX64" ) ? 1 : 0 ) +
+                ( CommandLineParser.Instance.HasArgument( "APPLE" ) ? 1 : 0 ) != 1
+            )
+            {
+                Console.WriteLine( "Exactly one operating system command must be suggested! (/WIN64, /LINUX64, /APPLE)" );
+                result = false;
+            }
+
             if( !CommandLineParser.Instance.HasArgument( "NAME" ) )
             {
                 Console.WriteLine( "Missing project name command! (/NAME)" );
@@ -228,13 +235,67 @@ namespace SaturnBuildTool
             }
         }
 
+        private bool GetToolchainType() 
+        {
+            string toolchainSpecifiedInCmd = CommandLineParser.Instance.FindValueFromKey( "CC" );
+
+            // If its null, then /CC isn't suggested so we pick the best depending on the target OS.
+            if( toolchainSpecifiedInCmd == null ) 
+            {
+                switch( Shared.Platform.PlatformType ) 
+                {
+                    case PlatformType.Unknown:
+                        {
+                            Console.WriteLine( "ERROR: Trying to get tool-chain via the OS but Shared.TargetOperatingSystem is unknown!" );
+                        } return false;
+
+                    case PlatformType.Windows:
+                        {
+                            ToolchainTypeToUse = ToolchainType.MSVC;
+                        } break;
+
+                    case PlatformType.Linux:
+                    case PlatformType.MacApple:
+                        {
+                            ToolchainTypeToUse = ToolchainType.Clang;
+                        } break;
+                }
+            }
+            else
+            {
+                if( toolchainSpecifiedInCmd == "MSVC" )
+                {
+                    ToolchainTypeToUse = ToolchainType.MSVC;
+                }
+                else if( toolchainSpecifiedInCmd == "CLANG" )
+                {
+                    ToolchainTypeToUse = ToolchainType.Clang;
+                }
+                else if( toolchainSpecifiedInCmd == "GCC" )
+                {
+                    ToolchainTypeToUse = ToolchainType.GCC;
+                }
+                else 
+                {
+                    Console.WriteLine( $"ERROR: '{toolchainSpecifiedInCmd}' is not a valid toolchain type!" );
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         private void GetTargetPlatform()
         {
             if( CommandLineParser.Instance.FindFlag( "Win64" ) )
             {
                 TargetArchitectureKind = ArchitectureKind.x86_64;
             }
-            else if( CommandLineParser.Instance.FindFlag( "AArch64" ) )
+            else if( CommandLineParser.Instance.FindFlag( "LINUX64" ) )
+            {
+                TargetArchitectureKind = ArchitectureKind.AArch64;
+            }
+            else if( CommandLineParser.Instance.FindFlag( "APPLE" ) )
             {
                 TargetArchitectureKind = ArchitectureKind.AArch64;
             }

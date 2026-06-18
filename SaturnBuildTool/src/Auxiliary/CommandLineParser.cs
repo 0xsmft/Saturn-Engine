@@ -13,7 +13,7 @@ namespace SaturnBuildTool.Auxiliary
         public void Parse( List<string> args )
         {
             CultureInfo culture = CultureInfo.InvariantCulture;
-            for( int i = 0; i < args.Count; i++ )
+            for( int i = 0; i < args.Count; ++i )
             {
                 string arg = args[ i ];
 
@@ -46,9 +46,11 @@ namespace SaturnBuildTool.Auxiliary
 
         public string FindValueFromKey( string key )
         {
-            if( ParsedMap.ContainsKey( key.ToUpper( CultureInfo.InvariantCulture ) ) )
+            string upperKey = key.ToUpper( CultureInfo.InvariantCulture );
+
+            if( ParsedMap.ContainsKey( upperKey ) )
             {
-                return ParsedMap[ key.ToUpper( CultureInfo.InvariantCulture ) ];
+                return ParsedMap[ upperKey ];
             }
 
             return null;

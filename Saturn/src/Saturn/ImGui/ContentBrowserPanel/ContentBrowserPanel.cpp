@@ -64,6 +64,7 @@
 #include "Saturn/GameFramework/Core/ClassTemplateFileHelper.h"
 #include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 #include "Saturn/GameFramework/Core/GameModule.h"
+#include "Saturn/GameFramework/Character.h"
 
 #include "Saturn/ImGui/EditorEvents.h"
 
@@ -1158,116 +1159,9 @@ namespace Saturn {
 				}
 			}
 
-//			DrawImportSoundPopup();
-//			DrawImportMeshPopup();
 			DrawDeleteAssetPopup();
 
-			if( m_OpenScriptsPopup )
-				ImGui::OpenPopup( "Create New Class##Create_Script" );
-
-			ImGui::SetNextWindowSize( { 350.0F, 0.0F } );
-			if( ImGui::BeginPopupModal( "Create New Class##Create_Script", &m_OpenScriptsPopup, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings ) )
-			{
-				bool PopupModified = false;
-
-				ImGui::BeginVertical( "##inputv" );
-				ImGui::BeginHorizontal( "##inputh" );
-
-				ImGui::Text( "Name:" );
-				Auxiliary::InputText( "##newclassname", &m_NewClassName );
-
-				ImGui::EndHorizontal();
-
-				ImGuiIO& rIO = ImGui::GetIO();
-				auto boldFont = rIO.Fonts->Fonts[ 1 ];
-
-				ImGui::PushFont( boldFont );
-				ImGui::Text( "Choose a parent class" );
-				ImGui::PopFont();
-
-				if( ImGui::BeginListBox( "##classes", ImVec2( -FLT_MIN, 0.0f ) ) )
-				{
-					// Root Tree
-					DrawClassHierarchy( "SObject", SObject::StaticClass() );
-
-					ImGui::EndListBox();
-				}
-
-				ImGui::EndVertical();
-
-				Auxiliary::DisabledFlag disabled( m_NewClassName.empty() || m_SelectedMetadata == nullptr );
-
-				ImGui::Separator();
-
-				ImGui::Checkbox( "Open IDE after creation", &m_OpenIDEAfterNewClass );
-
-				ImGui::Separator();
-
-				ImGui::BeginHorizontal( "##cncoptions" );
-
-				if( ImGui::Button( "Create" ) )
-				{
-#if !defined(SAT_DIST)
-					// Step 0: Create premake file if needed
-					if( !Project::GetActiveProject()->HasPremakeFile() )
-					{
-						Project::GetActiveProject()->CreatePremakeFile();
-					}
-
-					// Step 0.5: Copy over C# files if needed
-					Project::GetActiveProject()->TryCopyCSharpTargetFiles();
-
-					// Step 1: Copy over the actual .cpp and .h files and amend the content.
-					ClassTemplateFileHelper::CreateAndAmendTemplateFile( m_SelectedMetadata, m_CurrentPath, m_NewClassName.c_str() );
-
-					// Step 2: Update or create the project files.
-					if( Premake::Launch( Project::GetActiveProject()->GetRootDir(), L"premake5.lua", PremakeAction::VisualStudio2022 ) )
-					{
-						Application::Get()->DispatchEvent<SendEditorNotificationEvent>( "Updated project files with new source files." );
-					}
-					else
-					{
-						Application::Get()->DispatchEvent<SendEditorNotificationEvent>( "Unable to generate project files using Premake, you may manfully have to generate them!" );
-					}
-
-					// Step 3: Open IDE if needed.
-					if( m_OpenIDEAfterNewClass )
-					{
-						std::filesystem::path headerPath = m_CurrentPath / m_NewClassName;
-						headerPath.replace_extension( ".h" );
-						Application::Get()->DispatchEvent<RequestOpenIDEEvent>( headerPath );
-					}
-
-					// Step 4: TODO: Temp, when I port hot reloading over to use the new BuildTool and the new /MD it will work properly.
-					// and this would no longer need to be here.
-					Application::Get()->DispatchEvent<SendEditorNotificationEvent>( "A hot reload or a recompile is needed for the class to be registered within the Game!" );
-
-					PopupModified = true;
-					UpdateFiles( true );
-#endif
-				}
-
-				disabled.Pop();
-
-				if( ImGui::Button( "Cancel" ) )
-				{
-					PopupModified = true;
-				}
-
-				ImGui::EndHorizontal();
-
-				if( PopupModified )
-				{
-					m_NewClassName = "";
-					m_SelectedMetadata = nullptr;
-					// I like the idea of saving what the last choice was so for now we wont reset it.
-//					m_OpenIDEAfterNewClass = false;
-					m_OpenScriptsPopup = false;
-					ImGui::CloseCurrentPopup();
-				}
-
-				ImGui::EndPopup();
-			}
+			if( m_OpenScriptsPopup ) DrawCreateNewClassPopupModal();
 
 			if( m_OpenClassInstancePopup )
 				ImGui::OpenPopup( "Create New Class Instance (Prefab)##Create_ClassIns" );
@@ -1315,7 +1209,7 @@ namespace Saturn {
 					// Create the source entity.
 					SharedPtr<Entity> sourceEntity = nullptr;
 
-					sourceEntity = g_ActiveScene->CreateEntityWithIDScript( UUID(), m_ClassInstanceName, m_SelectedMetadata->GetName(), false );
+					sourceEntity = g_ActiveScene->CreateEntityWithIDScript( UUID(), m_ClassInstanceName, m_pSelectedMetadata->GetName(), false );
 
 					prefab->InitPrefab( sourceEntity );
 
@@ -1402,14 +1296,14 @@ namespace Saturn {
 	{
 		ImGuiTreeNodeFlags Flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
 		
-		if( m_SelectedMetadata )
-			m_SelectedMetadata->GetName() == rKeyName ? Flags |= ImGuiTreeNodeFlags_Selected : 0;
+		if( m_pSelectedMetadata )
+			m_pSelectedMetadata->GetName() == rKeyName ? Flags |= ImGuiTreeNodeFlags_Selected : 0;
 
 		const bool opened = ImGui::TreeNodeEx( rKeyName.c_str(), Flags );
 
 		if( ImGui::IsItemClicked() )
 		{
-			m_SelectedMetadata = pClass;
+			m_pSelectedMetadata = pClass;
 		}
 
 		if( opened )
@@ -1779,11 +1673,9 @@ namespace Saturn {
 	void ContentBrowserPanel::GetSourceFiles( bool clear ) 
 	{
 #if !defined(SAT_DIST)
-		ClassMetadataHandler::Get().EachClassNode2( SObject::StaticClass(),
-			[=]( const auto classNode ) 
+		ClassMetadataHandler::Get().EveryClass(
+			[=]( const auto* pClass )
 			{
-				const auto* pClass = classNode.pClassPtr;
-
 				if( ( pClass->GetFlags() & SC_NoExtendedMetadata ) == 0 )
 				{
 					Ref<ContentBrowserItem> item = Ref<ContentBrowserItem>::Create( std::filesystem::directory_entry( pClass->GetHeaderPath() ), ContentBrowserItemType::SourceItem );
@@ -1908,6 +1800,198 @@ namespace Saturn {
 		}
 
 		AssetManager::Get()->Save();
+	}
+
+	void ContentBrowserPanel::DrawCreateNewClassPopupModal()
+	{
+		ImGui::OpenPopup( "Create New Class##Create_Script" );
+
+		if( ImGui::BeginPopupModal( "Create New Class##Create_Script", &m_OpenScriptsPopup, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize ) )
+		{
+			bool PopupModified = false;
+
+			ImGui::BeginVertical( "##inputv" );
+			ImGui::BeginHorizontal( "##inputh" );
+
+			ImGui::Text( "Name:" );
+			
+			if( Auxiliary::InputText( "##newclassname", &m_NewClassName ) ) 
+			{
+				m_IllegalClassName = CheckIllegalClassName();
+			}
+
+			ImGui::EndHorizontal();
+
+			if( m_IllegalClassName )
+			{
+				const char* pWarningText = "Illegal class name!";
+
+				const ImVec2 padding = ImGui::GetStyle().FramePadding;
+				const ImVec2 textPosition = ImGui::GetCursorScreenPos();
+				const ImVec2 textSize = ImGui::CalcTextSize( pWarningText );
+
+				const ImVec2 min = ImVec2( textPosition.x - padding.x, textPosition.y - padding.y );
+				const ImVec2 max = ImVec2( textPosition.x + padding.x + textSize.x, textPosition.y + padding.y + textSize.y );
+
+				ImGui::GetWindowDrawList()->AddRectFilled( min, max,
+					IM_COL32( 200, 30, 60, 255 ), 2.0f, ImDrawFlags_RoundCornersAll );
+
+				ImGui::TextUnformatted( pWarningText );
+			}
+
+			ImGuiIO& rIO = ImGui::GetIO();
+			const auto boldFont = rIO.Fonts->Fonts[ 1 ];
+		
+			if( m_IsSimpleClassLayout )
+			{
+				ImGui::PushFont( boldFont );
+				ImGui::Text( "Choose a parent class (simple)" );
+				ImGui::PopFont();
+
+				const auto drawOptionButton = []( const char* pHeadingText, const char* pDesc ) -> bool 
+				{
+					ImGui::Text( pHeadingText );
+					ImGui::Text( pDesc );
+
+					return ImGui::Button( "Select" );
+				};
+
+				{
+					if( drawOptionButton( "Default SClass", "A simple class that has reflection data tied to it." ) ) 
+					{
+						m_pSelectedMetadata = SObject::StaticClass();
+					}
+				}
+				
+				ImGui::Separator();
+
+				{
+					if( drawOptionButton( "Entity", "An entity that can be spawned into the world with custom behaviour defined in C++." ) ) 
+					{
+						m_pSelectedMetadata = Entity::StaticClass();
+					}
+				}
+
+				ImGui::Separator();
+
+				{
+					if( drawOptionButton( "Character", "An entity that has the ability to walk, jump and sprint. A camera will be created if non is specified." ) ) 
+					{
+						m_pSelectedMetadata = Character::StaticClass();
+					}
+				}
+
+				ImGui::Separator();
+			}
+			else
+			{
+				ImGui::PushFont( boldFont );
+				ImGui::Text( "Choose a parent class" );
+				ImGui::PopFont();
+
+				if( ImGui::BeginListBox( "##classes", ImVec2( -FLT_MIN, 0.0f ) ) )
+				{
+					// Root Tree
+					DrawClassHierarchy( "SObject", SObject::StaticClass() );
+
+					ImGui::EndListBox();
+				}
+			}
+
+			ImGui::EndVertical();
+
+			ImGui::Checkbox( "Show simple class list", &m_IsSimpleClassLayout );
+	
+			Auxiliary::DisabledFlag disabled( m_NewClassName.empty() || m_pSelectedMetadata == nullptr );
+
+			ImGui::Separator();
+
+			ImGui::Checkbox( "Hot reload after creation", &m_HotReloadAfterNewClass );
+			ImGui::Checkbox( "Open IDE after creation", &m_OpenIDEAfterNewClass );
+
+			ImGui::Separator();
+
+			ImGui::BeginHorizontal( "##cncoptions" );
+
+			if( ImGui::Button( "Create" ) )
+			{
+#if !defined(SAT_DIST)
+				// Step 0: Create premake file if needed
+				if( !Project::GetActiveProject()->HasPremakeFile() )
+				{
+					Project::GetActiveProject()->CreatePremakeFile();
+				}
+
+				// Step 0.5: Copy over C# files if needed
+				Project::GetActiveProject()->TryCopyCSharpTargetFiles();
+
+				// Step 1: Copy over the actual .cpp and .h files and amend the content.
+				ClassTemplateFileHelper::CreateAndAmendTemplateFile( m_pSelectedMetadata, m_CurrentPath, m_NewClassName.c_str() );
+
+				// Step 2: Update or create the project files.
+				if( Premake::Launch( Project::GetActiveProject()->GetRootDir(), L"premake5.lua", PREFERED_PREMAKE_ACTION_FOR_OS ) )
+				{
+					Application::Get()->DispatchEvent<SendEditorNotificationEvent>( "Updated project files with new source files." );
+				}
+				else
+				{
+					Application::Get()->DispatchEvent<SendEditorNotificationEvent>( "Unable to generate project files using Premake, you may manfully have to generate them!" );
+				}
+
+				// Step 3: Open IDE if needed.
+				if( m_OpenIDEAfterNewClass )
+				{
+					std::filesystem::path headerPath = m_CurrentPath / m_NewClassName;
+					headerPath.replace_extension( ".h" );
+					Application::Get()->DispatchEvent<RequestOpenIDEEvent>( headerPath );
+				}
+
+				// Step 4: TODO: Temp, when I port hot reloading over to use the new BuildTool and the new /MD it will work properly.
+				// and this would no longer need to be here.
+				Application::Get()->DispatchEvent<SendEditorNotificationEvent>( "A hot reload or a recompile is needed for the class to be registered within the Game!" );
+
+				PopupModified = true;
+				UpdateFiles( true );
+#endif
+			}
+
+			disabled.Pop();
+
+			if( ImGui::Button( "Cancel" ) )
+			{
+				PopupModified = true;
+			}
+
+			ImGui::EndHorizontal();
+
+			if( PopupModified )
+			{
+				m_NewClassName = "";
+				m_pSelectedMetadata = nullptr;
+				// I like the idea of saving what the last choice was so for now we wont reset it.
+//				m_OpenIDEAfterNewClass = false;
+				m_OpenScriptsPopup = false;
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndPopup();
+		}
+	}
+
+	bool ContentBrowserPanel::CheckIllegalClassName()
+	{
+		if( m_NewClassName.empty() )
+			return false;
+
+		bool illegalClassName = false;
+
+		// C++ forbids the use of a digit for the first character of a class.
+		char& rFirstChar = m_NewClassName.front();
+		illegalClassName = std::isdigit( rFirstChar );
+
+		illegalClassName |= m_NewClassName.contains( ' ' );
+
+		return illegalClassName;
 	}
 
 	void ContentBrowserPanel::UpdateFiles( bool clear /*= false */ )

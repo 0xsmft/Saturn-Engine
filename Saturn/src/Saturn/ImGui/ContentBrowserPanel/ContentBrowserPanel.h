@@ -149,6 +149,9 @@ namespace Saturn {
 		void MoveItemToItem( ContentBrowserItem* pSrc, ContentBrowserItem* pDst );
 		void MoveItemToFolder( ContentBrowserItem* pSrc, const std::filesystem::path& rDst );
 
+		void DrawCreateNewClassPopupModal();
+		bool CheckIllegalClassName();
+
 	private:
 		// The absolute current path
 		// Used for finding/creating assets.
@@ -190,7 +193,7 @@ namespace Saturn {
 		};
 
 		// This used to be SClassExtendedMetadata hence the name
-		const SClass* m_SelectedMetadata = SObject::StaticClass();
+		const SClass* m_pSelectedMetadata = SObject::StaticClass();
 
 		std::unique_ptr<filewatch::FileWatch<std::wstring>> m_Watcher;
 
@@ -216,6 +219,12 @@ namespace Saturn {
 		bool m_RenderCreateWindow = false;
 		bool m_ShowFolderPopupMenu = false;
 		bool m_WindowFocused = false;
+		
+		// NewClass popup items... which should be in their own class...
 		bool m_OpenIDEAfterNewClass = false;
+		bool m_HotReloadAfterNewClass = false;
+		bool m_IsSimpleClassLayout = true;
+		bool m_IllegalClassName = false;
 	};
+
 }

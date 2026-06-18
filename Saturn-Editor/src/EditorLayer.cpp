@@ -454,13 +454,16 @@ namespace Saturn {
 			}
 #endif
 
-			m_LastAutoSaveTime += time;
-
-			if( const auto prj = Project::GetActiveProject(); prj->IsAutoSavesEnabled() && m_LastAutoSaveTime >= prj->GetAutoSaveInterval() )
+			if( const auto prj = Project::GetActiveProject(); prj->IsAutoSavesEnabled() )
 			{
-				SaveFileAuto();
+				m_LastAutoSaveTime += time;
+			
+				if( m_LastAutoSaveTime >= prj->GetAutoSaveInterval() )
+				{
+					SaveFileAuto();
 
-				m_LastAutoSaveTime = 0.0f;
+					m_LastAutoSaveTime = 0.0f;
+				}
 			}
 		}
 

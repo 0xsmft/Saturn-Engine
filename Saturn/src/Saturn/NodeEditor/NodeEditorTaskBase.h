@@ -48,10 +48,8 @@ namespace Saturn {
 		DebugBreakRequested,
 		Failed,
 
-		TransitionNotComplete,
 		TransitionCannotTransition,
 		TransitionShouldTransition,
-		TransitionShouldTransitionLast,
 	};
 
 	class NodeEditorNodeBase;

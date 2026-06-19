@@ -142,6 +142,7 @@ namespace Saturn {
 		void ShowOrHideContentBrowserPanel();
 		void ShowOrHideSceneHierarchyPanel();
 		void ShowOrHideRTCmdWindow();
+		void ShowOrHideMemStatsWindow();
 
 		glm::vec2 ConvertMouseToViewportNDC();
 		std::pair<glm::vec3, glm::vec3> RayCast( float mx, float my );
@@ -293,6 +294,7 @@ namespace Saturn {
 		bool m_ShowRuntimeConsoleWindow = false;
 		bool m_ShowDebugMsgBoxWindow = false;
 		bool m_ShowEditorDebugWindow = false;
+		bool m_ShowMemStatsWindow = false;
 
 		// JobProgress
 		float m_OperationPercent = 0.0f;

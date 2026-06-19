@@ -41,6 +41,7 @@
 #include <Saturn/ImGui/UndoRedo/EntityUndoRedoActions.h>
 #include <Saturn/ImGui/EditorAboutWindowContents.h>
 #include <Saturn/ImGui/RuntimeCommandWindow.h>
+#include <Saturn/ImGui/MemoryStatisticsWindow.h>
 
 #include <Saturn/Serialisation/YAML/SceneSerialiser.h>
 #include <Saturn/Serialisation/YAML/ProjectSerialiser.h>
@@ -230,8 +231,13 @@ namespace Saturn {
 		// Setup content browser panel at project dir.
 		contentBrowserPanel->ResetPath( Project::GetActiveProject()->GetRootDir() );
 
+		// Command window
 		Ref<RuntimeCommandWindow> rtConsoleWindow = m_ImGuiWindowManager->AddWindow<RuntimeCommandWindow>();
 		rtConsoleWindow->SetHideFlags( ImGuiHideWindowFlags::Hide );
+
+		// Mem stats window
+		Ref<MemoryStatisticsWindow> memStatWindow = m_ImGuiWindowManager->AddWindow<MemoryStatisticsWindow>();
+		memStatWindow->SetHideFlags( ImGuiHideWindowFlags::Hide );
 
 		m_TitleBar.AddMenuBarFunction( SAT_BIND_EVENT_FN( DrawTitlebarOptions ) );
 		m_TitleBar.AddOnExitFunction( SAT_BIND_EVENT_FN( OnTitlebarExit ) );
@@ -2659,6 +2665,7 @@ namespace Saturn {
 			if( ImGui::MenuItem( "Content Browser Panel" ) )      ShowOrHideContentBrowserPanel();
 			if( ImGui::MenuItem( "Scene Hierarchy Panel" ) )      ShowOrHideSceneHierarchyPanel();
 			if( ImGui::MenuItem( "Runtime Command Window" ) )     ShowOrHideRTCmdWindow();
+			if( ImGui::MenuItem( "Memory Statistics" ) )		  ShowOrHideMemStatsWindow();
 
 			ImGui::SeparatorText( "Asset Manager" );
 			if( ImGui::MenuItem( "Asset Registry Debug" ) )       m_OpenAssetRegistryDebug ^= 1;
@@ -4378,6 +4385,11 @@ namespace Saturn {
 	void EditorLayer::ShowOrHideRTCmdWindow() 
 	{
 		m_ImGuiWindowManager->GetPanel<RuntimeCommandWindow>()->ShowOrHide( ImGuiHideWindowFlags::Hide );
+	}
+
+	void EditorLayer::ShowOrHideMemStatsWindow()
+	{
+		m_ImGuiWindowManager->GetPanel<MemoryStatisticsWindow>()->ShowOrHide( ImGuiHideWindowFlags::Hide );
 	}
 
 	glm::vec2 EditorLayer::ConvertMouseToViewportNDC()

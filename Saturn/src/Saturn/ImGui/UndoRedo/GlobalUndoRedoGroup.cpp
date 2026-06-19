@@ -150,18 +150,32 @@ namespace Saturn {
 
 			// Undo actions
 			ImGui::Text( "Undo Actions:" );
-			for( size_t i = 0; i < m_UndoActions.size(); ++i )
+			if( m_UndoActions.empty() )
 			{
-				ImGui::Text( "%i: %s", i, m_UndoActions[ i ]->GetName().c_str() );
+				ImGui::Text( "<empty>" );
+			}
+			else
+			{
+				for( size_t i = 0; i < m_UndoActions.size(); ++i )
+				{
+					ImGui::Text( "%i: %s", i, m_UndoActions[ i ]->GetName().c_str() );
+				}
 			}
 
 			// Redo actions
 			ImGui::Text( "Redo Actions:" );
-			for( size_t i = 0; i < m_RedoActions.size(); ++i )
+			if( m_RedoActions.empty() )
 			{
-				ImGui::Text( "%i: %s", i, m_RedoActions[ i ]->GetName().c_str() );
+				ImGui::Text( "<empty>" );
 			}
-
+			else
+			{
+				for( size_t i = 0; i < m_RedoActions.size(); ++i )
+				{
+					ImGui::Text( "%i: %s", i, m_RedoActions[ i ]->GetName().c_str() );
+				}
+			}
+			
 			ImGui::BeginHorizontal( "##ACTIONRC" );
 
 			if( ImGui::Button( "Undo" ) )

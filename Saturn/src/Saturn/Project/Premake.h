@@ -34,7 +34,7 @@
 
 namespace Saturn {
 
-	enum class PremakeAction
+	enum class PremakeAction : uint8_t
 	{
 		Other, // other specified elsewhere
 		Clean,
@@ -44,6 +44,14 @@ namespace Saturn {
 		Xcode,
 		Codelite,
 	};
+
+#if defined(SAT_PLATFORM_WINDOWS)
+	static constexpr PremakeAction PREFERED_PREMAKE_ACTION_FOR_OS = PremakeAction::VisualStudio2022;
+#elif defined(SAT_PLATFORM_MACOS)
+	static constexpr PremakeAction PREFERED_PREMAKE_ACTION_FOR_OS = PremakeAction::Xcode;
+#else // any other OS use make files
+	static constexpr PremakeAction PREFERED_PREMAKE_ACTION_FOR_OS = PremakeAction::Makefile;
+#endif
 
 	class Premake
 	{

@@ -2547,11 +2547,7 @@ namespace Saturn {
 						if( !Project::GetActiveProject()->HasPremakeFile() )
 							Project::GetActiveProject()->CreatePremakeFile();
 
-#if defined(SAT_PLATFORM_WINDOWS)
-						Premake::Launch( Project::GetActiveProject()->GetRootDir().wstring(), L"premake5.lua", PremakeAction::VisualStudio2022 );
-#else
-						Premake::Launch( Project::GetActiveProject()->GetRootDir().wstring(), L"premake5.lua", PremakeAction::Makefile );
-#endif
+						Premake::Launch( Project::GetActiveProject()->GetRootDir().wstring(), L"premake5.lua", PREFERED_PREMAKE_ACTION_FOR_OS );
 					} );
 				}
 

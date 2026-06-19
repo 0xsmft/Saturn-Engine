@@ -55,6 +55,7 @@ namespace Saturn {
 		void Restore();
 		void Resize( uint32_t Width, uint32_t Height );
 		void Show( RubyWindowShowCmd Command = RubyWindowShowCmd::Default );
+		void Hide();
 		void SetPosition( int x, int y );
 		void SetMousePos( double x, double y );
 		RubyVec2 GetMousePos();

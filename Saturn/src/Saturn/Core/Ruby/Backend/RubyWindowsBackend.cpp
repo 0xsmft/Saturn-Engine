@@ -943,6 +943,11 @@ namespace Saturn {
 		}
 	}
 
+	void RubyWindowsBackend::HideWindow()
+	{
+		::ShowWindow( m_Handle, SW_HIDE );
+	}
+
 	void RubyWindowsBackend::ResizeWindow( uint32_t Width, uint32_t Height )
 	{
 		RECT newWindowRect{ 0, 0, ( long ) Width, ( long ) Height };

@@ -146,6 +146,11 @@ namespace Saturn {
 		m_pDefaultBackend->PresentWindow( Command );
 	}
 
+	void RubyWindow::Hide()
+	{
+		m_pDefaultBackend->HideWindow();
+	}
+
 	void RubyWindow::SetPosition( int x, int y )
 	{
 		m_pDefaultBackend->MoveWindow( x, y );

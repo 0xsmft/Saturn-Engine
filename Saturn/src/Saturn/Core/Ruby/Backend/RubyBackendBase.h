@@ -65,6 +65,7 @@ namespace Saturn {
 
 		virtual void CloseWindow() = 0;
 		virtual void PresentWindow( RubyWindowShowCmd Command = RubyWindowShowCmd::Default ) = 0;
+		virtual void HideWindow() = 0;
 
 		virtual void ResizeWindow( uint32_t Width, uint32_t Height ) = 0;
 		virtual RubyIVec2 GetSize() = 0;

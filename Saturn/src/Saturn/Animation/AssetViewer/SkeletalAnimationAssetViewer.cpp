@@ -45,6 +45,11 @@
 
 #include "Saturn/Scene/Components.h"
 
+#include "Saturn/Animation/SkeletonAsset.h"
+
+#include <ImTimeline/TimelineCore/TimelinePlayer.h>
+#include <ImTimeline/ImTimeline.h>
+
 namespace Saturn {
 
 	SkeletalAnimationAssetViewer::SkeletalAnimationAssetViewer( AssetID id )
@@ -86,46 +91,9 @@ namespace Saturn {
 
 		//////////////////////////////////////////////////////////////////////////
 
-		ImGui::Begin( "Sidebar" );
-
-		ImGui::BeginHorizontal( "##setpreviewmesh" );
-
-		ImGui::Text( "Preview Mesh" );
-
-		ImGui::TextDisabled( "%s", m_Mesh == nullptr ? "<NULL>" : m_Mesh->Name.c_str() );
-
-		bool open = false;
-
-		if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
+		if( ImGui::Begin( "Sidebar" ) ) 
 		{
-			open = true;
-		}
-
-		ImGui::Spring();
-
-		ImGui::EndHorizontal();
-
-		if( Auxiliary::DrawAssetFinder( AssetType::SkeletalMesh, &open, m_AssetFinderOut, 0 ) )
-		{
-			m_Mesh = AssetManager::Get()->GetAssetAs<SkeletalMesh>( m_AssetFinderOut );
-
-			auto& mc = m_Entity->GetComponent<SkeletalMeshComponent>();
-
-			mc.Mesh = m_Mesh;
-			mc.LocalAnimator = Ref<Animator>::Create();
-			m_Animator = mc.LocalAnimator;
-			mc.LocalAnimator->InitAnimation( m_Asset->ID, m_Mesh, AnimatorType::Single );
-		}
-
-		if( Auxiliary::TreeNode( "Root Motion" ) )
-		{
-			bool value = m_Asset->IsUsingRootMotion();
-			if( Auxiliary::DrawBoolControl( "Use Root Motion", value ) ) 
-			{
-				m_Asset->UseRootMotion( value );
-			}
-
-			Auxiliary::EndTreeNode();
+			DrawSidebar();
 		}
 
 		ImGui::End();
@@ -134,20 +102,18 @@ namespace Saturn {
 		{
 			if( !m_Animator )
 			{
-				ImGui::Text( "<no animation is currenly playing...>" );
+				ImGui::Text( "<Animator is null, select a mesh!>" );
 			}
 			else
 			{
-				ImGui::PushStyleColor( ImGuiCol_ChildBg, ImVec4( 0.0f, 0.0f, 0.0f, 0.0f ) );
+				ImGui::BeginHorizontal( "##anmimcrtl" );
 
-				ImGui::BeginChild( "Top Bar", ImVec2( 0.0f, 30.0f ), false, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoSavedSettings );
-
-				ImGui::BeginHorizontal( "##tbvert" );
-
-				ImGui::PushID( "##back" );
+				ImGui::PushID( "##backall" );
 				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "FastForward" ), { 24.0f, 24.0f }, { 1, 0 }, { 0, 1 } ) )
 				{
-					m_Animator->StepTo( 0 );
+					m_Timeline->GetPlayer()->Stop();
+					m_Animator->PlayFromStart();
+					m_Animator->Pause();
 				}
 				ImGui::PopID();
 
@@ -160,16 +126,17 @@ namespace Saturn {
 				}
 				ImGui::PopID();
 
-				Ref<Texture2D> texture = m_Animator->IsPlaying() ? EditorIcons::GetIcon( "Stop" ) : EditorIcons::GetIcon( "Play" );
-				if( Auxiliary::ImageButton( texture, { 24.0f, 24.0f } ) )
+				if( Auxiliary::ImageButton( m_Animator->IsPlaying() ? EditorIcons::GetIcon( "Stop" ) : EditorIcons::GetIcon( "Play" ), { 24.0f, 24.0f } ) )
 				{
-					if( !m_Animator->IsPlaying() )
+					if( m_Animator->IsPlaying() )
 					{
-						m_Animator->Begin();
+						m_Timeline->GetPlayer()->Stop();
+						m_Animator->Pause();
 					}
 					else
 					{
-						m_Animator->Pause();
+						m_Timeline->GetPlayer()->Play();
+						m_Animator->Begin();
 					}
 				}
 
@@ -185,57 +152,15 @@ namespace Saturn {
 				ImGui::PushID( "##ff" );
 				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "FastForward" ), { 24.0f, 24.0f } ) )
 				{
+					m_Timeline->GetPlayer()->SetStartTimestamp( m_Asset->GetDuration() );
 					m_Animator->StepTo( m_Asset->GetDuration() );
 				}
 				ImGui::PopID();
 
 				ImGui::EndHorizontal();
 
-				ImGui::EndChild();
-				ImGui::PopStyleColor();
-
-				ImVec2 size = ImGui::GetContentRegionAvail();
-				ImDrawList* pDrawList = ImGui::GetWindowDrawList();
-
-				ImVec2 cursor = ImGui::GetCursorScreenPos();
-				ImVec2 end = ImVec2( cursor.x + size.x, cursor.y + size.y );
-
-				ImGui::InvisibleButton( "scrubber", size );
-				if( ImGui::IsItemHovered() && ImGui::IsMouseDown( ImGuiMouseButton_Left ) )
-				{
-					const float mouseX = ImGui::GetIO().MousePos.x;
-					float t = ( mouseX - cursor.x ) / ( size.x );
-					t = std::clamp( t, 0.0f, 1.0f );
-
-					m_Animator->StepTo( t * m_Asset->GetDuration() );
-					m_Animator->Pause();
-				}
-
-				// Draw background
-				pDrawList->AddRectFilled( cursor, end, IM_COL32( 40, 40, 40, 255 ), 4.0f );
-
-				// Draw ticks
-				constexpr int SRUB_NUM_TICKS = 10;
-				for( int i = 0; i <= SRUB_NUM_TICKS; ++i )
-				{
-					const float t = i / ( float ) SRUB_NUM_TICKS;
-					const float x = cursor.x + t * size.x;
-					pDrawList->AddLine( ImVec2( x, cursor.y ), ImVec2( x, cursor.y + size.y ), IM_COL32( 80, 80, 80, 255 ) );
-				}
-
-				// Draw scrubber line
-				const float srubberX = cursor.x + ( m_Animator->GetCurrentAnimTime() / m_Asset->GetDuration() ) * size.x;
-				pDrawList->AddLine( ImVec2( srubberX, cursor.y ),
-					ImVec2( srubberX, cursor.y + size.y ),
-					IM_COL32( 255, 200, 0, 255 ), 2.0f );
-
-				// Draw playhead triangle
-				pDrawList->AddTriangleFilled(
-					ImVec2( srubberX - 5.0F, cursor.y - 8.0F ),
-					ImVec2( srubberX + 5.0F, cursor.y - 8.0F ),
-					ImVec2( srubberX, cursor.y ),
-					IM_COL32( 255, 200, 0, 255 )
-				);
+				// ~Timelime draw
+				m_Timeline->DrawTimeline();
 			}
 
 			ImGui::End();
@@ -246,16 +171,58 @@ namespace Saturn {
 		if( m_Open == false )
 		{
 			m_Asset->PortToNewestVersion();
+
 			SkeletalAnimationAssetSerialiser skAnimSerialiser;
 			skAnimSerialiser.Serialise( m_Asset );
+		}
+	}
 
-			/*
-			* #FixEditorViewportSceneRendererClose
-			RenderThread::Get().Queue( [ = ]()
+	void SkeletalAnimationAssetViewer::DrawSidebar()
+	{
+		ImGui::BeginHorizontal( "##setpreviewmesh" );
+
+		ImGui::Text( "Preview Mesh" );
+
+		ImGui::TextDisabled( "%s", m_Mesh == nullptr ? "<NULL>" : m_Mesh->Name.c_str() );
+
+		bool open = false;
+		if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
+		{
+			open = true;
+		}
+
+		ImGui::Spring();
+
+		ImGui::EndHorizontal();
+
+		if( Auxiliary::DrawAssetFinder( AssetType::SkeletalMesh, &open, m_AssetFinderOut, 0 ) )
+		{
+			InitMeshAndAnimator( m_AssetFinderOut );
+		}
+
+		if( Auxiliary::TreeNode( "Root Motion" ) )
+		{
+			bool value = m_Asset->IsUsingRootMotion();
+			if( Auxiliary::DrawBoolControl( "Use Root Motion", value ) )
 			{
-				m_SceneRenderer = nullptr;
-			} );
-			*/
+				m_Asset->UseRootMotion( value );
+			}
+
+			Auxiliary::EndTreeNode();
+		}
+	}
+
+	void SkeletalAnimationAssetViewer::InitMeshAndAnimator( UUID id )
+	{
+		m_Mesh = AssetManager::Get()->GetAssetAs<SkeletalMesh>( id );
+		if( m_Mesh )
+		{
+			auto& mc = m_Entity->GetComponent<SkeletalMeshComponent>();
+
+			mc.Mesh = m_Mesh;
+			mc.LocalAnimator = Ref<Animator>::Create();
+			m_Animator = mc.LocalAnimator;
+			mc.LocalAnimator->InitAnimation( m_Asset->ID, m_Mesh, AnimatorType::Single );
 		}
 	}
 
@@ -273,9 +240,34 @@ namespace Saturn {
 	void SkeletalAnimationAssetViewer::ImportMeshAndAnimation()
 	{
 		m_Asset = AssetManager::Get()->GetAssetAs<SkeletalAnimationAsset>( m_AssetID );
-
+		
 		m_Entity = m_Scene->CreateEntity( "InternalViewerEntity" );
-		m_Entity->AddComponent<SkeletalMeshComponent>();
+		SkeletalMeshComponent& rSkComp = m_Entity->AddComponent<SkeletalMeshComponent>();
+
+		if( const auto asset = AssetManager::Get()->GetAssetAs<SkeletonAsset>( m_Asset->GetSkeletonID() ) )
+		{
+			if( asset->GetCompatibleMeshes().size() )
+			{
+				// Just pick the first compatible mesh.
+				InitMeshAndAnimator( asset->GetCompatibleMeshes()[ 0 ] );
+			}
+		}
+
+		// Create timeline object
+		m_Timeline = std::make_unique<ImTimeline::Timeline>();
+		m_Timeline->SetMaxFrame( m_Asset->GetDuration() );
+
+		// Add animation node
+		auto& rNode = m_Timeline->AddNewNode( 0, 0.0f, m_Asset->GetDuration() );
+		rNode.Flags.set( ImTimelineNodeFlags_CannotBeDragged );
+		rNode.Flags.set( ImTimelineNodeFlags_CannotBeDeleted );
+
+		// Set display props
+		m_Timeline->SetTimelineName( 0, m_Asset->Name );
+
+		ImTimeline::TimelineStyle timelineStyle{};
+		timelineStyle.HeaderHeight = 25;
+		m_Timeline->SetTimelineStyle( timelineStyle );
 
 		m_Open = true;
 	}

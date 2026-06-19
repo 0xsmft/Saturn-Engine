@@ -31,6 +31,10 @@
 #include "Saturn/ImGui/AssetViewer.h"
 #include "Saturn/ImGui/EditorViewport.h"
 
+namespace ImTimeline {
+	class Timeline;
+}
+
 namespace Saturn {
 
 	class SkeletalAnimationAssetViewer : public AssetViewer
@@ -45,9 +49,14 @@ namespace Saturn {
 
 	private:
 		void ImportMeshAndAnimation();
+		void DrawSidebar();
+		void InitMeshAndAnimator( UUID id );
 
 	private:
 		SharedPtr<Entity> m_Entity;
+		// std::unique_ptr because I don't want to leak ImTimeline into other files.
+		// So if we allocate it on the heap we can forward declare the type.
+		std::unique_ptr<ImTimeline::Timeline> m_Timeline;
 		std::unique_ptr<EditorViewport> m_Viewport;
 		Ref<SkeletalAnimationAsset> m_Asset;
 		Ref<Scene> m_Scene;

@@ -296,7 +296,7 @@ namespace Saturn {
 		m_NodeEditor->SetBreadCrumbsFunction( 
 			[&]() -> void 
 		{
-			ImGui::SetCursorPos( { ImGui::GetStyle().WindowPadding.x + 2.0f, 20.0f + 64.0f } );
+			ImGui::SetCursorPos( { ImGui::GetStyle().WindowPadding.x + 2.0f, 94.0f } );
 			ImGui::Text( "%s", m_Asset->Name.c_str() );
 			const ImRect textRect = ImRect( ImGui::GetItemRectMin(), ImGui::GetItemRectMax() );
 			if( ImGui::IsItemHovered() )

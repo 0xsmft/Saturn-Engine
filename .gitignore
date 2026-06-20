@@ -24,6 +24,7 @@ bin-int/
 !Saturn/vendor/assimp/bin/
 !Saturn/vendor/shaderc/bin/
 !Saturn/vendor/vulkan/bin/
+!Saturn/vendor/libzip/bin/
 
 # Makefiles
 Saturn/vendor/**/Makefile

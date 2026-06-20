@@ -830,7 +830,7 @@ namespace Saturn {
 	void EditorLayer::SaveProject()
 	{
 		ProjectSerialiser ps( Project::GetActiveProject() );
-		ps.Serialise( Project::GetActiveProject()->GetConfig().Path );
+		ps.Serialise();
 
 		AssetManagerSerialiser ars;
 		ars.Serialise();
@@ -2054,7 +2054,7 @@ namespace Saturn {
 		if( shouldSaveProject && !m_ShowUserSettings )
 		{
 			ProjectSerialiser ps;
-			ps.Serialise( Project::GetActiveProject()->GetRootDir().string() );
+			ps.Serialise();
 
 			shouldSaveProject = false;
 		}

@@ -576,7 +576,7 @@ namespace Saturn {
 		outputPath /= newProject->GetConfig().Name;
 
 		ProjectSerialiser ps;
-		ps.Serialise( outputPath );
+		ps.Serialise();
 
 		Project::SetActiveProject( nullptr );
 	}

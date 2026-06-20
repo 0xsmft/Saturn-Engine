@@ -37,10 +37,10 @@ namespace Saturn {
 	public:
 		ProjectSerialiser() = default;
 		ProjectSerialiser( const Ref<Project>& rProject );
-
 		~ProjectSerialiser();
 
-		void Serialise( const std::filesystem::path& rFilePath );
+	public:
+		void Serialise();
 		void Deserialise( const std::filesystem::path& rFilePath );
 
 	private:

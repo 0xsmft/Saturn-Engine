@@ -50,7 +50,7 @@ namespace Saturn {
 	{
 	}
 
-	void ProjectSerialiser::Serialise( const std::filesystem::path& rFilePath )
+	void ProjectSerialiser::Serialise()
 	{
 		const Ref<Project> rProject = Project::GetActiveProject();
 

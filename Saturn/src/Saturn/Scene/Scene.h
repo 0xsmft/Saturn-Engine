@@ -417,9 +417,6 @@ namespace Saturn {
 		template<typename Ty, typename... Args>
 		Ty& AddComponent(entt::entity entity, Args&&... args )
 		{
-#if defined( SAT_ENABLE_GAMETHREAD )
-			std::unique_lock<std::mutex> Lock( m_Mutex, std::try_to_lock );
-#endif
 			if( !HasComponent<Ty>( entity ) ) 
 			{
 				return m_Registry.emplace<Ty>( entity, std::forward<Args>( args )... );
@@ -431,27 +428,18 @@ namespace Saturn {
 		template<typename Ty>
 		[[nodiscard]] bool HasComponent( entt::entity entity ) const
 		{
-#if defined( SAT_ENABLE_GAMETHREAD )
-			std::unique_lock<std::mutex> Lock( m_Mutex, std::try_to_lock );
-#endif
 			return m_Registry.any_of<Ty>( entity );
 		}
 
 		template<typename... Ty>
 		[[nodiscard]] bool HasComponents( entt::entity entity ) const
 		{
-#if defined( SAT_ENABLE_GAMETHREAD )
-			std::unique_lock<std::mutex> Lock( m_Mutex, std::try_to_lock );
-#endif
 			return m_Registry.any_of<Ty...>( entity );
 		}
 
 		template<typename Ty>
 		void RemoveComponent( entt::entity entity )
 		{
-#if defined( SAT_ENABLE_GAMETHREAD )
-			std::unique_lock<std::mutex> Lock( m_Mutex, std::try_to_lock );
-#endif
 			if( HasComponent<Ty>( entity ) )
 			{
 				m_Registry.remove<Ty>( entity );
@@ -461,9 +449,6 @@ namespace Saturn {
 		template<typename... Ty>
 		void RemoveComponents( entt::entity entity )
 		{
-#if defined( SAT_ENABLE_GAMETHREAD )
-			std::unique_lock<std::mutex> Lock( m_Mutex, std::try_to_lock );
-#endif
 			if( HasComponents<Ty...>( entity ) )
 			{
 				m_Registry.remove<Ty...>( entity );
@@ -473,9 +458,6 @@ namespace Saturn {
 		template<typename Ty>
 		[[nodiscard]] Ty& GetComponent( entt::entity entity )
 		{
-#if defined( SAT_ENABLE_GAMETHREAD )
-			std::unique_lock<std::mutex> Lock( m_Mutex, std::try_to_lock );
-#endif
 			SAT_CORE_ASSERT( HasComponent<Ty>( entity ), "Entity does not have component!" );
 
 			return m_Registry.get<Ty>( entity );
@@ -484,9 +466,6 @@ namespace Saturn {
 		template<typename Ty>
 		[[nodiscard]] const Ty& GetComponent( entt::entity entity ) const
 		{
-#if defined( SAT_ENABLE_GAMETHREAD )
-			std::unique_lock<std::mutex> Lock( m_Mutex, std::try_to_lock );
-#endif
 			SAT_CORE_ASSERT( HasComponent<Ty>( entity ), "Entity does not have component!" );
 
 			return m_Registry.get<Ty>( entity );
@@ -495,18 +474,12 @@ namespace Saturn {
 		template<typename Ty>
 		[[nodiscard]] Ty* TryGetComponent( entt::entity entity )
 		{
-#if defined( SAT_ENABLE_GAMETHREAD )
-			std::unique_lock<std::mutex> Lock( m_Mutex, std::try_to_lock );
-#endif
 			return m_Registry.try_get<Ty>( entity );
 		}
 
 		template<typename Ty>
 		[[nodiscard]] const Ty* TryGetComponent( entt::entity entity ) const
 		{
-#if defined( SAT_ENABLE_GAMETHREAD )
-			std::unique_lock<std::mutex> Lock( m_Mutex, std::try_to_lock );
-#endif
 			return m_Registry.try_get<Ty>( entity );
 		}
 
@@ -555,10 +528,6 @@ namespace Saturn {
 		
 		SharedPtr<NavBoundsEntity> m_NavBoundsEntity = nullptr;
 
-#if defined( SAT_ENABLE_GAMETHREAD )
-		std::mutex m_Mutex;
-#endif
-
 		RendererCamera m_RendererCamera;
 
 		std::shared_ptr<PhysicsScene> m_PhysicsScene;
@@ -566,12 +535,11 @@ namespace Saturn {
 		NavigationSystem m_NavigationSystem;
 
 		UUID m_InternalID;
-#if !defined(SAT_DIST)
-		bool m_Dirty = false;
-#endif
+
 		RuntimeState m_RuntimeState = RuntimeState::NoState;
 
 #if !defined(SAT_DIST)
+		bool m_Dirty = false;
 		SceneVisualisationOptions m_VisualisationOptions{};
 #endif
 

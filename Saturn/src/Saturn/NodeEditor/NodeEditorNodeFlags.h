@@ -43,6 +43,12 @@ namespace Saturn {
 
 		// Debug flag: temporary flag to let the debugging system know that this Node broke debug.
 		NodeFlags_BrokeDebug = BIT( 2 ),
+
+		// If this flag is set then the node cannot be copy pasted, useful if we have an output node.
+		// because there is only meant to be output node.
+		// If the node does not have this flag then it's assumed that it's safe to always allow this node
+		// to be pasted again.
+		NodeFlags_RejectCopyPaste = BIT( 3 ),
 	};
 	
 }

@@ -49,6 +49,8 @@ namespace Saturn {
 		NodeTaskCache();
 		~NodeTaskCache();
 
+		// The following functions are not available on Dist because in Dist configs the task cache is read only.
+	public:
 #if !defined(SAT_DIST)
 		//
 		// Build the master task list for this cache.
@@ -90,6 +92,7 @@ namespace Saturn {
 		NodeTaskCacheMap InstantiateNewTaskList( NodeEditorTaskHandler* pHandler ) const;
 
 #if !defined(SAT_DIST)
+	public:
 		[[nodiscard]] bool IsDirty() const { return m_IsDirty; }
 		void MarkDirty() { m_IsDirty = true; }
 		void MarkClean() { m_IsDirty = false; }

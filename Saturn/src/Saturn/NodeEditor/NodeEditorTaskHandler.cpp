@@ -60,7 +60,6 @@ namespace Saturn {
 	Ref<NodeEditorVariable> NodeEditorTaskHandler::GetVariable( UUID id )
 	{
 		auto itr = m_EditorVariables.find( id );
-
 		return itr == m_EditorVariables.end() ? nullptr : itr->second;
 	}
 

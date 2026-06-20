@@ -71,8 +71,10 @@ namespace Saturn {
 
 	public:
 #if !defined(SAT_DIST)
+		// TODO: const pNode
 		virtual void PreInitialiseTask( NodeEditor* pEditor, NodeEditorNodeBase* pNode );
 #endif
+		// TODO: const pOther
 		virtual void InitialiseTaskWithOther( NodeEditorTaskHandler* pHandler, NodeEditorTaskBase* pOther );
 
 		// Called every frame unless the node has the ConstantEvaluated flag.

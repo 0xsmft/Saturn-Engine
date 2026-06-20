@@ -79,6 +79,7 @@ namespace Saturn {
 		}
 	}
 
+	// Register our output pin as a locator.
 #define SAT_GETVARTASK_REFRESHLOCATOR( CppType )								\
 m_pHandler->RegisterLocator<CppType>( m_NodeID, 0llu, var->GetPtr<CppType>() )  \
 

@@ -72,7 +72,9 @@ namespace Saturn {
 		Vec3,
 		Vec4,
 		U64,
-		U32
+		U32,
+		// Undetermined type, it could be anything! This is used in the SetVariable node.
+		Anything,
 	};
 
 	enum class PinKind : uint8_t
@@ -156,7 +158,7 @@ template<> struct PinTypeTraits<CppType>				\
 	using PinType = PinClass;							\
 	using PinRefType = Ref<PinType>;					\
 	using Value = CppType;								\
-};
+}
 
 	// 
 	// FloatPin, carries across a single floating-point number.

@@ -47,7 +47,7 @@ namespace Saturn {
 
 	NodeTaskCache::~NodeTaskCache()
 	{
-		m_Tasks.clear();
+		Clear();
 	}
 
 #if !defined(SAT_DIST)

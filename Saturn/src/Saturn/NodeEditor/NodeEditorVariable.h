@@ -43,6 +43,9 @@ namespace Saturn {
 	// Represents a user defined "variable" in the NodeEditor.
 	// 
 	// For example, the user in an AnimGraph may define "IsInAir" as a variable.
+	// 
+	// A NodeEditorVariable does not hold the value in place. It's a wrapper around a pointer to another variable.
+	// 
 	//
 	class NodeEditorVariable : public RefTarget
 	{
@@ -59,8 +62,8 @@ namespace Saturn {
 			: m_DataType( variableType )
 		{
 		}
-	public:
 
+	public:
 		template<typename TCppType>
 		typename const TCppType Get() const 
 		{

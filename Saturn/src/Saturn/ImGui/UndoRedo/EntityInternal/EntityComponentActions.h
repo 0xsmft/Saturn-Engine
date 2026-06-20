@@ -28,9 +28,77 @@
 
 #pragma once
 
-#include "UndoRedoActionBase.h"
+// Include "EntityUndoRedoActions" if you want to use the items in the file. Do not include this file by itself.
 
-#include "Saturn/Scene/Entity.h"
+namespace Saturn {
 
-#include "EntityInternal/EntityComponentActions.h"
-#include "EntityInternal/EntityTransformActions.h"
+	enum class UndoRedoActionEntityComponentOp : uint8_t
+	{
+		AddComponent,
+		RemoveComponent,
+	};
+
+	template<UndoRedoActionEntityComponentOp ComponentActionType, typename C>
+	class UndoRedoActionEntityComponent : public UndoRedoActionBase
+	{
+	public:
+		UndoRedoActionEntityComponent( const std::string& rName, SharedPtr<Entity> entity )
+			: UndoRedoActionBase( rName ),
+			m_EntityHandle( entity->GetHandle() ),
+			m_pScene( entity->GetScene() )
+		{
+		}
+
+		UndoRedoActionEntityComponent( SharedPtr<Entity> entity )
+			: UndoRedoActionBase(
+				ComponentActionType == UndoRedoActionEntityComponentOp::AddComponent ? "Add Component" : "Remove Component" ),
+			m_EntityHandle( entity->GetHandle() ),
+			m_pScene( entity->GetScene() )
+		{
+		}
+
+	public:
+		inline virtual void Undo() override
+		{
+			if constexpr( ComponentActionType == UndoRedoActionEntityComponentOp::AddComponent )
+			{
+				// Remove
+				if( m_pScene )
+					m_pScene->RemoveComponent<C>( m_EntityHandle );
+			}
+			else if constexpr( ComponentActionType == UndoRedoActionEntityComponentOp::RemoveComponent )
+			{
+				// Add
+				if( m_pScene )
+					m_pScene->AddComponent<C>( m_EntityHandle );
+			}
+		}
+
+		inline virtual void Redo() override
+		{
+			if constexpr( ComponentActionType == UndoRedoActionEntityComponentOp::AddComponent )
+			{
+				// Add
+				if( m_pScene )
+					m_pScene->AddComponent<C>( m_EntityHandle );
+			}
+			else if constexpr( ComponentActionType == UndoRedoActionEntityComponentOp::RemoveComponent )
+			{
+				// Remove
+				if( m_pScene )
+					m_pScene->RemoveComponent<C>( m_EntityHandle );
+			}
+		}
+
+	private:
+		entt::entity m_EntityHandle;
+		Scene* m_pScene = nullptr;
+	};
+
+	template<typename Component>
+	using UndoRedoActionAddComponent = UndoRedoActionEntityComponent<UndoRedoActionEntityComponentOp::AddComponent, Component>;
+
+	template<typename Component>
+	using UndoRedoActionRemoveComponent = UndoRedoActionEntityComponent<UndoRedoActionEntityComponentOp::RemoveComponent, Component>;
+	
+}

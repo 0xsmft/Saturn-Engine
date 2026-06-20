@@ -28,9 +28,49 @@
 
 #pragma once
 
-#include "UndoRedoActionBase.h"
+namespace Saturn {
 
-#include "Saturn/Scene/Entity.h"
+	//////////////////////////////////////////////////////////////////////////
+	// MODIFY TRANSFORMATION
 
-#include "EntityInternal/EntityComponentActions.h"
-#include "EntityInternal/EntityTransformActions.h"
+	class UndoRedoActionModifyEntityTransformation : public UndoRedoActionBase
+	{
+	public:
+		UndoRedoActionModifyEntityTransformation() = default;
+
+		UndoRedoActionModifyEntityTransformation( SharedPtr<Entity> entity, const glm::mat4& rOriginalRotation, const glm::mat4& rCurrentValue )
+			: UndoRedoActionBase( "Modify Entity Transformation" ), m_OriginalTransform( rOriginalRotation ), m_CurrentTransform( rCurrentValue )
+		{
+			m_pTransformComponent = &entity->GetComponent<TransformComponent>();
+		}
+
+		~UndoRedoActionModifyEntityTransformation()
+		{
+			m_pTransformComponent = nullptr;
+		}
+
+	public:
+		void Undo() override
+		{
+			if( m_pTransformComponent )
+			{
+				m_pTransformComponent->SetTransform( m_OriginalTransform );
+			}
+		}
+
+		void Redo() override
+		{
+			if( m_pTransformComponent )
+			{
+				m_pTransformComponent->SetTransform( m_CurrentTransform );
+			}
+		}
+
+	private:
+		TransformComponent* m_pTransformComponent = nullptr;
+
+		glm::mat4 m_OriginalTransform{};
+		glm::mat4 m_CurrentTransform{};
+	};
+	
+}

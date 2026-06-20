@@ -47,7 +47,7 @@ namespace Saturn {
 		const std::string& GetTitle() const { return m_Title; }
 		bool Completed() const { return m_Done.load(); }
 
-		inline void OnComplete() { m_Done.store( true ); }
+		inline void OnComplete() { Reset(); m_Done.store( true ); }
 
 		template<typename Func>
 		inline void SetJobFunc( Func&& rrFunc ) 

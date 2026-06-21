@@ -56,6 +56,7 @@ IncludeDir["JoltPhys"] = "%{wks.location}/Saturn/vendor/JoltPhysics/Jolt"
 IncludeDir["Steamworks"] = "%{wks.location}/Saturn/vendor/steamworks/Include"
 IncludeDir["NativeFileDialogExtended"] = "%{wks.location}/Saturn/vendor/nativefiledialogext/src/include"
 IncludeDir["ImTimeline"] = "%{wks.location}/Saturn/vendor/ImTimeline/ImTimeline/src"
+IncludeDir["libzip"] = "%{wks.location}/Saturn/vendor/libzip/include"
 
 -- // -Dependencies-- 
 group "Dependencies"

@@ -127,6 +127,8 @@ namespace Saturn {
 
 		void ProjectSettings_DrawSoundGroupEdit( Ref<SoundGroup>& rSoundGroup );
 
+		void PrepZipProject();
+
 		// Close editor and open the project browser.
 		void CloseEditorAndOpenPB();
 		bool OnTitlebarExit();

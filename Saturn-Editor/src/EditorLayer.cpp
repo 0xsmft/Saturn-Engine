@@ -117,6 +117,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "Editor/TextEditors.h"
+#include "Editor/ProjectZipper.h"
 
 namespace Saturn {
 
@@ -2113,6 +2114,27 @@ namespace Saturn {
 		// Don't end main horizontal as we might need to still draw more.
 	}
 
+	void EditorLayer::PrepZipProject()
+	{
+		// Ask the user to select a folder where the zip archive will be made.
+		const auto& rOutPath = Application::Get()->OpenFolder();
+	
+		if( !m_BlockingOperation )
+			m_BlockingOperation = Ref<JobProgress>::Create();
+
+		JobSystem::Get().QueueJob(
+			[ this, rOutPath ]()
+		{
+			m_JobModalOpen.store( true );
+			m_BlockingOperation->SetTitle( "Zipping project" );
+			m_BlockingOperation->SetStatus( "Zipping... please wait" );
+
+			ProjectZipper::ZipActiveProject( rOutPath );
+	
+			m_BlockingOperation->OnComplete();
+		} );
+	}
+
 	void EditorLayer::HotReloadGame()
 	{
 		PushNotification( "Waiting for JobSystem to start Hot-Reload..." );
@@ -2472,6 +2494,7 @@ namespace Saturn {
 			if( ImGui::MenuItem( "Save Scene As", "Ctrl+Shift+S" ) ) SaveFileAs();
 
 			if( ImGui::MenuItem( "Save Project", "Alt+Shift+S" ) )   SaveProject();
+			if( ImGui::MenuItem( "Zip Project", "Alt+Shift+Z" ) )    PrepZipProject();
 			if( ImGui::MenuItem( "Close Project", "Ctrl+W" ) )       CloseEditorAndOpenPB();
 
 			disabledIfRuntime.Pop();

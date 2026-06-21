@@ -54,6 +54,7 @@ project "Saturn-Editor"
 		"%{IncludeDir.MSDF}",
 		"%{IncludeDir.MSDFAG}",
 		"%{IncludeDir.ImTimeline}",
+		"%{IncludeDir.libzip}",
 
 		"%{IncludeDir.SharedStorage}"
 	}
@@ -101,21 +102,33 @@ project "Saturn-Editor"
 			runtime "Debug"
 			symbols "on"
 
-			postbuildcommands 
-			{ 
-				'{COPYFILE} "../Saturn/vendor/assimp/bin/Debug/assimp-vc143-mtd.dll" "%{cfg.targetdir}"',
-				'{COPYFILE} "../bin/Debug-windows-x86_64/Saturn-SharedStorage/Saturn-SharedStorage.dll" "%{cfg.targetdir}"',
-			}
+			filter { "configurations:Debug", "system:windows" }
+				postbuildcommands 
+				{ 
+					'{COPYFILE} "../Saturn/vendor/assimp/bin/Debug/assimp-vc143-mtd.dll" "%{cfg.targetdir}"',
+					'{COPYFILE} "../bin/Debug-windows-x86_64/Saturn-SharedStorage/Saturn-SharedStorage.dll" "%{cfg.targetdir}"',
+				}
+
+				links 
+				{
+					"../Saturn/vendor/libzip/bin/Debug-Windows/libzip.lib"					
+				}
 
 		filter "configurations:Release"
 			defines "SAT_RELEASE"
 			runtime "Release"
 		--	optimize "on"
 
-			postbuildcommands 
-			{ 
-				'{COPYFILE} "../bin/Release-windows-x86_64/Saturn-SharedStorage/Saturn-SharedStorage.dll" "%{cfg.targetdir}"',
-			}
+			filter { "configurations:Release", "system:windows" }
+				postbuildcommands 
+				{ 
+					'{COPYFILE} "../bin/Release-windows-x86_64/Saturn-SharedStorage/Saturn-SharedStorage.dll" "%{cfg.targetdir}"',
+				}
+
+				links 
+				{
+					"../Saturn/vendor/libzip/bin/Release-Windows/libzip.lib"					
+				}
 
 		filter "configurations:Dist"
 			defines "SAT_DIST"

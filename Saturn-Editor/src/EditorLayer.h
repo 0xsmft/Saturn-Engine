@@ -75,6 +75,8 @@ namespace Saturn {
 		void NewFile();
 		void SaveFile();
 		void SaveFileAuto();
+		void RevertFile();
+		void MarkSceneAsStartupFromTitlebar();
 
 		void SaveProject();
 

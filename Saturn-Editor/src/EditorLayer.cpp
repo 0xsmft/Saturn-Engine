@@ -732,6 +732,35 @@ namespace Saturn {
 		PushNotification( "AUTO SAVING, PLEASE WAIT", 7.5f );
 	}
 
+	void EditorLayer::RevertFile()
+	{
+		if( m_EditorScene->Path.empty() )
+		{
+			MessageBoxInfo info{ .Text = "You are attempting to revert to a scene that has no restore point! Please save and try again." };
+			PushMessageBox( info );
+
+			return;
+		}
+
+		OpenFile( m_EditorScene->ID );
+	}
+
+	void EditorLayer::MarkSceneAsStartupFromTitlebar()
+	{
+		if( m_EditorScene->Path.empty() )
+		{
+			MessageBoxInfo info{ .Text = "You are attempting a mark a scene as startup when the scene asset hasn't been created yet! Please save and try again." };
+			PushMessageBox( info );
+		
+			return;
+		}
+
+		Project::GetActiveConfig().StartupSceneID = m_EditorScene->ID;
+
+		ProjectSerialiser ps;
+		ps.Serialise();
+	}
+
 	void EditorLayer::OpenFile( AssetID id )
 	{
 		Ref<SceneHierarchyPanel> hierarchyPanel = m_ImGuiWindowManager->GetPanel<SceneHierarchyPanel>();
@@ -2492,6 +2521,10 @@ namespace Saturn {
 			if( ImGui::MenuItem( "New Scene", "Alt+Shift+N" ) )		 NewFile();
 			if( ImGui::MenuItem( "Save Scene", "Ctrl+S" ) )          SaveFile();
 			if( ImGui::MenuItem( "Save Scene As", "Ctrl+Shift+S" ) ) SaveFileAs();
+			if( ImGui::MenuItem( "Mark Scene as startup"  ) )        MarkSceneAsStartupFromTitlebar();
+			if( ImGui::MenuItem( "Revert" ) )						 RevertFile();
+
+			ImGui::Separator();
 
 			if( ImGui::MenuItem( "Save Project", "Alt+Shift+S" ) )   SaveProject();
 			if( ImGui::MenuItem( "Zip Project", "Alt+Shift+Z" ) )    PrepZipProject();

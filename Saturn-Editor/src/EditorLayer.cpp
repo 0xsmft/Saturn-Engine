@@ -1156,6 +1156,11 @@ namespace Saturn {
 					{
 						SaveFileAs();
 					} break;
+
+					case RubyKey_Z:
+					{
+						PrepZipProject();
+					} break;
 				}
 			}
 
@@ -2147,7 +2152,9 @@ namespace Saturn {
 	{
 		// Ask the user to select a folder where the zip archive will be made.
 		const auto& rOutPath = Application::Get()->OpenFolder();
-	
+		if( rOutPath.empty() )
+			return;
+
 		if( !m_BlockingOperation )
 			m_BlockingOperation = Ref<JobProgress>::Create();
 

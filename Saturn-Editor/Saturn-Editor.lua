@@ -9,6 +9,9 @@ project "Saturn-Editor"
 	targetdir ("../bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("../bin-int/" .. outputdir .. "/%{prj.name}")
 
+	pchheader "sppch.h"
+	pchsource "../Saturn/src/sppch.cpp"
+
 	defines
 	{
 		"SAT_HAS_EDITOR",
@@ -20,7 +23,9 @@ project "Saturn-Editor"
 	files
 	{
 		"src/**.h",
-		"src/**.cpp"
+		"src/**.cpp",
+
+		"../Saturn/src/sppch.cpp"
 	}
 
 	includedirs

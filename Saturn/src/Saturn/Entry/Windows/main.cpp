@@ -26,6 +26,8 @@
 *********************************************************************************************
 */
 
+#include "sppch.h"
+
 #if defined( _WIN32 )
 #include <Windows.h>
 #endif // SAT_PLATFORM_WINDOWS

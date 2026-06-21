@@ -61,20 +61,24 @@
   - ECS
   - Keybindings
   - Online subsystem (Steamworks API)
+  - Texture streaming
 
 ## Roadmap
 
 For upcoming features and a general status of Saturn it is best to view the [Trello](https://trello.com/b/baqP3fvB/saturn-engine)
 
-## Getting Started
+## Getting Started & Prerequisites
 
-Visual Studio 2022 is recommended as Saturn is officially untested on other development environments whilst we focus on a Windows build.
+Before anything please make sure you have the [Vulkan SDK](https://vulkan.lunarg.com/sdk/home) installed.
+If you do not have the Vulkan SDK the project will **not** build.
+Saturn uses vulkan version 1.2, however any newer version should "just work". When installing if there's an option about debug binaries make sure to tick that.
 
-First, start by cloning the repository with `git clone --recursive https://github.com/BEASTSM96/Saturn-Engine`.
+
+Now, start by cloning the repository with `git clone --recursive https://github.com/0xsmft/Saturn-Engine`.
 
 If the repository was previously cloned non-recursively then use `git submodule update --init` to clone the necessary submodules.
 
-Make sure to check that you are on the branch `vulkan`. If not you can run `git checkout vulkan`
+Make sure to check that you are on the branch `vulkan`. If not you can run `git checkout vulkan` 
 
 ## Generating project files
 
@@ -83,9 +87,9 @@ In order to start you will need to download <a href="https://premake.github.io/"
 <a href="https://premake.github.io/download">Download</a> ·
 <a href="https://premake.github.io/docs/What-Is-Premake">Learn More</a>
 
-*You may have to add the premake executable to you PATH environment variable.*
+*You may want to add the premake executable to you PATH environment variable.*
 
-To generate the project files, you can run the premake executable that you downloaded, if you already have premake installed make sure it can support generating Visual Studio 2022 project files (premake version v5.0.0-beta1 onwards).
+On Windows, Visual Studio 2022 is recommended as Saturn is officially untested on other development environments.
 
 So for generating the project files on Visual Studio 2022 you'd do `premake5.exe vs2022` or on Linux use `premake5 gmake2`.
 

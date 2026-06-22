@@ -348,8 +348,19 @@ namespace Saturn {
 	{
 		SAT_PF_EVENT();
 
-		if( Input::Get().MouseButtonPressed( RubyMouseButton_Right ) && !m_StartedRightClickInViewport && m_ViewportFocused && m_MouseOverViewport )
-			m_StartedRightClickInViewport = true;
+		if( Input::Get().MouseButtonPressed( RubyMouseButton_Right ) && m_MouseOverViewport ) 
+		{
+			// If we right click over the viewport but we are not focused, the we focus the window.
+			if( !m_ViewportFocused )
+			{
+				ImGui::FocusWindow( GImGui->HoveredWindow );
+			}
+
+			if( !m_StartedRightClickInViewport && m_ViewportFocused )
+			{
+				m_StartedRightClickInViewport = true;
+			}
+		}
 
 		if( !Input::Get().MouseButtonPressed( RubyMouseButton_Right ) )
 			m_StartedRightClickInViewport = false;
@@ -1305,7 +1316,11 @@ namespace Saturn {
 
 	bool EditorLayer::OnMousePressed( RubyMouseEvent& rEvent )
 	{
-		if( ( m_RuntimeScene && m_RuntimeScene->IsRuntimeRunning() ) || !m_MouseOverViewport || rEvent.GetButton() != ( int ) RubyMouseButton_Left || ImGuizmo::IsOver() )
+		if( 
+			( m_RuntimeScene && m_RuntimeScene->IsRuntimeRunning() ) || 
+			!m_MouseOverViewport || 
+			rEvent.GetButton() != ( int ) RubyMouseButton_Left || 
+			ImGuizmo::IsOver() )
 			return false;
 
 		const auto viewportMouse = ConvertMouseToViewportNDC();

@@ -509,10 +509,20 @@ namespace Saturn {
 	{
 		if( m_IsDirectory )
 		{
+			// Search through the asset manager to find assets that have this path, in it's path.
+			// And we need to make sure to close asset viewers and remove asset dependencies.
 			AssetManager::Get()->Each( [&]( Ref<Asset> asset ) 
 				{
 					if( asset->Path.string().contains( m_Path.string() ) ) 
 					{
+						const std::string windowName = std::format( "{0}##{1}", asset->Name, ( uint64_t ) asset->ID );
+						Ref<ImGuiWindow> window = ImGuiWindowManager::Get()->GetWindow<ImGuiWindow>( windowName );
+						if( window )
+						{
+							window->CloseWindow();
+						}
+
+						AssetManager::Get()->UnregisterAllAssetDependencies( asset->ID );
 						AssetManager::Get()->RemoveAsset( asset->ID );
 					}
 				} );
@@ -526,7 +536,7 @@ namespace Saturn {
 			AssetManager::Get()->RemoveAsset( m_Asset->ID );
 		}
 
-		// Delete the file.
+		// Delete the file/folder.
 		std::filesystem::remove( m_Path );
 
 		return true;

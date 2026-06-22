@@ -13,7 +13,7 @@ class __FILE_NAME__ : public Character
 	GENERATED_BODY()
 public:
 	__FILE_NAME__();
-	~__FILE_NAME__();
+	virtual ~__FILE_NAME__();
 
 	virtual void BeginPlay() override;
 	virtual void OnUpdate( Saturn::Timestep ts ) override;

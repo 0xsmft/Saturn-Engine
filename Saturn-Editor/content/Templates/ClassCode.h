@@ -15,6 +15,6 @@ class __FILE_NAME__ : public __SUPER_CLASS__
 	GENERATED_BODY()
 public:
 	__FILE_NAME__();
-	~__FILE_NAME__();
+	virtual ~__FILE_NAME__();
 
 };

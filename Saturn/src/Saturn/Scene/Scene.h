@@ -235,6 +235,11 @@ namespace Saturn {
 		void DeleteEntity( SharedPtr<Entity> entity, bool deleteChildren = true, UUID orphanParentID = 0 );
 		
 		//
+		// For information on this function please look at  DeleteEntity( SharedPtr<Entity> entity, ... )
+		//
+		void DeleteEntity( const entt::entity handle, bool deleteChildren = true, UUID orphanParentID = 0 );
+
+		//
 		// Runtime variant of DeleteEntity.
 		// 
 		// NB: This will add entity into a differed queue for deletion.
@@ -245,6 +250,7 @@ namespace Saturn {
 
 		void TravelToScene( AssetID newSceneID );
 
+	public:
 		void OnUpdate( Timestep ts );
 		void OnUpdateEntities( Timestep ts );
 		void OnUpdatePhysics( Timestep ts );

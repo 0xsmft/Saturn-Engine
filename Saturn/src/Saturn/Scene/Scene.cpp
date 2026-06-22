@@ -1116,6 +1116,15 @@ namespace Saturn {
 		m_Registry.destroy( handle );
 	}
 
+	void Scene::DeleteEntity( const entt::entity handle, bool deleteChildren /*= true*/, UUID orphanParentID /*= 0 */ )
+	{
+		auto entity = FindEntityByHandle( handle );
+		if( entity )
+		{
+			DeleteEntity( entity, deleteChildren, orphanParentID );
+		}
+	}
+
 	void Scene::DestroyEntity( Entity* entity )
 	{
 		m_EntitiesToDestroy.push_back( entity );

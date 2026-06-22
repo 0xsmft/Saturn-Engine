@@ -449,8 +449,6 @@ namespace SaturnBuildTool
 
             sw.Close();
             fs.Close();
-
-            CleanupFromLastHotReload();
         }
 
         private void CleanupFromLastHotReload()
@@ -473,7 +471,7 @@ namespace SaturnBuildTool
                 }
                 streamReader.Close();
 
-                string fileStem = Shared.TargetToBuild.Name + $"_{Shared.CurrentBuildTarget.Timestamp}";
+                string fileStem = Shared.TargetToBuild.Name + $"_{text}";
 
                 string[] files = Directory.GetFiles( Shared.TargetToBuild.GetBinDir() );
                 foreach( string file in files )
@@ -711,6 +709,8 @@ namespace SaturnBuildTool
             }
 
             // ~Pre build.
+            CleanupFromLastHotReload();
+
             AppendGeneratedFiles();
             SortModules();
 
@@ -733,8 +733,6 @@ namespace SaturnBuildTool
             {
                 FileCache.RT_WriteCacheHumanReadable( Shared.FileCache );
             }
-
-            CleanupFromLastHotReload();
 
             Console.WriteLine( $"Done building in {time.Elapsed}" );
         }

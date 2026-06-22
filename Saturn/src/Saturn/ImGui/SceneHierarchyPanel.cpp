@@ -190,6 +190,13 @@ namespace Saturn {
 			{
 				DrawComponents( selections.back() );
 			}
+			else
+			{
+				Auxiliary::ScopedStyleColor col( ImGuiCol_Text, ImGui::GetColorU32( ImGuiCol_TextDisabled ) );
+				const ImVec2 textSize = ImGui::CalcTextSize( "Click to select an entity." );
+				ImGui::SetCursorPos( ImVec2( ( ImGui::GetWindowSize() - textSize ) * 0.5f ) );
+				ImGui::Text( "Click to select an entity." );
+			}
 
 			ImGui::End();
 		}

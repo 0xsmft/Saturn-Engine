@@ -318,32 +318,6 @@ namespace Saturn {
 		float Falloff = 1.f;
 	};
 
-	// DEPRECATED IN 0.2.1
-	// This component was deprecated in 0.2.1 in favour of using GetStaticClass() and GetClass()
-	// There is not a direct replacement to this component. Try use GetStaticClass() or GetClass()
-	// ----
-	// This is an internal component use for identification
-	// This component cannot be added/removed from the Editor
-	// The usage of this class is so that we know what class this entity is based from and from this when we are loading and/or spawning in entities we know what class to create
-	// Example:
-	//  ClassName = Character
-	//  ExternalData = 0 (false)
-	// 
-	// NOTE: This class uses a bitfield!
-	//       - Serialising, you must convert ExternalData to byte
-	//       - Deserialising, you must convert it from a byte back into a bitfield (var ? 1 : 0)
-	// Saturn::ScriptComponent is deprecated and will be removed. There is no direct replacement to the ScriptComponent, try to use SClass instead.
-	struct DScriptComponent
-	{
-		std::string ClassName;
-		// Does the class (script) come from the game or the engine, true if comes from the Game
-		unsigned int ExternalData : 1 = false;
-
-		DScriptComponent() = default;
-		DScriptComponent( const DScriptComponent& other ) = default;
-		DScriptComponent( unsigned int externalData ) : ExternalData( externalData ) {}
-	};
-
 	struct RelationshipComponent
 	{
 		UUID Parent = 0;

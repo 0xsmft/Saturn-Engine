@@ -100,7 +100,7 @@ namespace Saturn::Auxiliary {
 			commandLine += rOptions.ChildArgs;
 		}
 
-		DeatchedProcess dp( commandLine );
+		DetachedProcess dp( commandLine );
 
 		return true;
 	}

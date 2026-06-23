@@ -30,10 +30,11 @@
 
 namespace Saturn {
 
-	enum class ProcessCreateFlags
+	enum class ProcessCreateFlags : uint8_t
 	{
+		// Normal child process.
 		Normal,
-		DelayedStart,
+
 		RedirectedStreams
 	};
 
@@ -73,11 +74,14 @@ namespace Saturn {
 		void* m_WriteHandle = nullptr;
 	};
 
-	class DeatchedProcess
+	//
+	// Represents a detached non-child process. Completely independent of the main Saturn process.
+	//
+	class DetachedProcess
 	{
 	public:
-		DeatchedProcess( const std::wstring& rCommandLine, const std::wstring& rWorkingDir = L"" );
-		~DeatchedProcess();
+		DetachedProcess( const std::wstring& rCommandLine, const std::wstring& rWorkingDir = L"" );
+		~DetachedProcess();
 
 	private:
 		void Create( const std::wstring& rCommandLine, const std::wstring& rWorkingDir );

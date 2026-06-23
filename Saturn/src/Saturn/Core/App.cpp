@@ -463,7 +463,7 @@ namespace Saturn {
 		else
 			CommandLine = std::format( L"explorer.exe \"{0}\"", rPath.wstring() );
 
-		DeatchedProcess dp( CommandLine );
+		DetachedProcess dp( CommandLine );
 #elif defined(SAT_PLATFORM_LINUX) || defined(SAT_PLATFORM_MACOS)
 		SAT_CORE_ASSERT( false, "Application::OpenNativeFileExplorer not implemented on Linux!" );
 #endif

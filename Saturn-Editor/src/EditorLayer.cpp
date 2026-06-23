@@ -4111,7 +4111,7 @@ namespace Saturn {
 #else
 		SaturnDir /= L"Saturn-ProjectBrowser";
 #endif
-		DeatchedProcess dp( SaturnDir.wstring(), WorkingDir );
+		DetachedProcess dp( SaturnDir.wstring(), WorkingDir );
 		Application::Get()->Close();
 	}
 

@@ -241,7 +241,7 @@ namespace Saturn {
 
 #if !defined(SAT_DIST)
 		std::filesystem::path m_ThumbnailImagePath;
-		// This is the version that is local to the developer, it has nothing to do with Saturn Versions.
+		// This is the version that is local to the developer, it has nothing to do with Saturn versions.
 		// It is purely informative.
 		std::string m_DeveloperProjectVersion;
 #endif

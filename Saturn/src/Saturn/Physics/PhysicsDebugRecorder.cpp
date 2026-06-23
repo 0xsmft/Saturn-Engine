@@ -136,7 +136,7 @@ namespace Saturn {
 		joltViewerPath += " ";
 		joltViewerPath += outPath;
 
-		DeatchedProcess dp( joltViewerPath );
+		DetachedProcess dp( joltViewerPath );
 	}
 
 }

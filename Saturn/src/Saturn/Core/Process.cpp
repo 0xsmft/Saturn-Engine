@@ -203,9 +203,6 @@ namespace Saturn {
 
 	std::wstring Process::StartAndGetOutput( const std::wstring& rWorkingDir )
 	{
-		if( m_Flags != ProcessCreateFlags::DelayedStart ) 
-			return std::wstring();
-
 		CreateRedirectedStream( rWorkingDir );
 
 		// Wait
@@ -236,7 +233,7 @@ namespace Saturn {
 		m_WriteHandle = nullptr;
 		m_ExitCode = exitCode;
 
-		int wideLen = ::MultiByteToWideChar( CP_ACP, 0, tempBuffer.data(), ( int ) tempBuffer.size(), nullptr, 0 );
+		const int wideLen = ::MultiByteToWideChar( CP_ACP, 0, tempBuffer.data(), ( int ) tempBuffer.size(), nullptr, 0 );
 		std::wstring output( wideLen, L'\0' );
 		::MultiByteToWideChar( CP_ACP, 0, tempBuffer.data(), ( int ) tempBuffer.size(), output.data(), wideLen );
 
@@ -244,18 +241,18 @@ namespace Saturn {
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	// DEATCHED PROCESS
+	// DETACHED PROCESS
 
-	DeatchedProcess::DeatchedProcess( const std::wstring& rCommandLine, const std::wstring& rWorkingDir /*= L"" */ )
+	DetachedProcess::DetachedProcess( const std::wstring& rCommandLine, const std::wstring& rWorkingDir /*= L"" */ )
 	{
 		Create( rCommandLine, rWorkingDir );
 	}
 
-	DeatchedProcess::~DeatchedProcess()
+	DetachedProcess::~DetachedProcess()
 	{
 	}
 
-	void DeatchedProcess::Create( const std::wstring& rCommandLine, const std::wstring& rWorkingDir )
+	void DetachedProcess::Create( const std::wstring& rCommandLine, const std::wstring& rWorkingDir )
 	{
 #if defined( SAT_PLATFORM_WINDOWS )
 		STARTUPINFOW StartupInfo = {};
@@ -266,8 +263,11 @@ namespace Saturn {
 			nullptr, ( LPWSTR ) rCommandLine.data(), nullptr, nullptr, FALSE, DETACHED_PROCESS, nullptr,
 			rWorkingDir.empty() ? nullptr : rWorkingDir.data(), &StartupInfo, &ProcessInfo );
 
-		::CloseHandle( ProcessInfo.hThread );
-		::CloseHandle( ProcessInfo.hProcess );
+		if( result )
+		{
+			::CloseHandle( ProcessInfo.hThread );
+			::CloseHandle( ProcessInfo.hProcess );
+		}
 #endif
 	}
 

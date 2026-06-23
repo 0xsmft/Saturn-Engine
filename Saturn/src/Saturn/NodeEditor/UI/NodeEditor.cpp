@@ -119,7 +119,7 @@ namespace Saturn {
 		Close();
 
 		//if( m_AssetID != 0 )
-			GlobalUndoRedoGroup::Get()->RemoveIfActionHasIdentifier( m_AssetID );
+		GlobalUndoRedoGroup::Get()->RemoveIfActionHasIdentifier( m_AssetID );
 
 		m_ZoomTexture = nullptr;
 		m_CompileTexture = nullptr;
@@ -143,11 +143,11 @@ namespace Saturn {
 		config.UserPointer = this;
 		config.CustomZoomLevels = zoomLvls;
 
-		config.SaveNodeSettings = []( 
-			ed::NodeId nodeId, 
-			const char* pData, 
-			size_t size, 
-			ed::SaveReasonFlags reason, 
+		config.SaveNodeSettings = [](
+			ed::NodeId nodeId,
+			const char* pData,
+			size_t size,
+			ed::SaveReasonFlags reason,
 			void* pUserPointer ) -> bool
 		{
 			auto* pThis = static_cast< NodeEditor* >( pUserPointer );
@@ -157,8 +157,8 @@ namespace Saturn {
 				return false;
 
 			// Ignore events if we are debugging, simulating or suspended.
-			if( 
-				pThis->IsStateFlagSet( NodeEditorState_Debugging ) || 
+			if(
+				pThis->IsStateFlagSet( NodeEditorState_Debugging ) ||
 				pThis->IsStateFlagSet( NodeEditorState_Simulating ) ||
 				pThis->IsStateFlagSet( NodeEditorState_Suspended ) )
 			{
@@ -201,13 +201,13 @@ namespace Saturn {
 
 		m_ZoomTexture = EditorIcons::GetIcon( "Inspect" );
 		m_CompileTexture = EditorIcons::GetIcon( "Compile" );
-		
+
 		const auto texture = GetBlueprintBackground();
 		m_Builder = util::BlueprintNodeBuilder( ( ImTextureID ) texture->GetDescriptorSet(), texture->Width(), texture->Height() );
 
 		m_OutputWindow.PushMessage( { .MessageText = "Initialised new editor!", .Type = NodeEditorMessageSeverity::Info } );
 
-		m_InternalEditorID = std::format( "Nc##{0}", (uint64_t)m_AssetID );
+		m_InternalEditorID = std::format( "Nc##{0}", ( uint64_t ) m_AssetID );
 	}
 
 	void NodeEditor::Reload()
@@ -233,6 +233,8 @@ namespace Saturn {
 		ed::DestroyEditor( m_Editor );
 		ed::SetCurrentEditor( nullptr );
 		m_Editor = nullptr;
+
+		m_CopyPasteNodeClasses.clear();
 
 		for( auto& [id, rNode] : m_Nodes )
 		{
@@ -419,7 +421,7 @@ namespace Saturn {
 			m_CreateNewNode = false;
 
 		ImGui::PopStyleVar();
-		
+
 		// Node context window popup
 		if( ImGui::BeginPopup( "NE_NodeAction" ) )
 		{
@@ -521,7 +523,7 @@ namespace Saturn {
 		}
 
 		ed::Resume();
-		
+
 		ed::End();
 
 		if( m_BreadCrumbsFunction )
@@ -539,7 +541,7 @@ namespace Saturn {
 		if( !m_WindowOpen && m_Dirty )
 		{
 			m_WindowOpen = true;
-		
+
 			if( m_HasPreCompileErrors )
 				m_ShowErrorPopup = true;
 
@@ -559,6 +561,68 @@ namespace Saturn {
 			ed::Link( ed::LinkId( rLink->ID ), ed::PinId( rLink->StartPinID ), ed::PinId( rLink->EndPinID ), rLink->Color );
 
 		HandleCreate();
+	}
+
+	SharedPtr<NodeEditorNodeBase> NodeEditor::CopyNode( const SharedPtr<const NodeEditorNodeBase> originalNode )
+	{
+		SObject* newObject = ClassMetadataHandler::Get().CreateClassObject( originalNode->GetClass(), this );
+		if( !newObject )
+			return nullptr;
+
+		SharedPtr<NodeEditorNodeBase> spNode( ( NodeEditorNodeBase* ) newObject );
+		AddNode( spNode );
+
+		// Copy name
+		// TOOD: Make a function for this? OnNodePasted?
+		spNode->Name = originalNode->Name;
+
+		ed::SetNodePosition( ed::NodeId( spNode->ID ), ed::GetNodePosition( ed::NodeId( originalNode->ID ) ) );
+
+		return spNode;
+	}
+
+	SharedPtr<NodeEditorNodeBase> NodeEditor::CopyPaste_CopyNode( const NodeEditorCopyPasteInformation& rCopyInfo )
+	{
+		const auto nodeToCopy = rCopyInfo.Node.Access();
+		if( !nodeToCopy )
+			return nullptr;
+
+		// Copy the parent node.
+		auto newlyCreatedNode = CopyNode( nodeToCopy );
+		if( !newlyCreatedNode )
+			return nullptr;
+
+		for( const auto& [parentNode, childrenInfo] : rCopyInfo.Children )
+		{
+			for( const auto& childInfo : childrenInfo )
+			{
+				auto childNode = CopyPaste_CopyNode( childInfo );
+				if( childNode )
+				{
+					childNode->pParentObject = newlyCreatedNode.Get();
+				}
+			}
+		}
+
+		return newlyCreatedNode;
+	}
+
+	void NodeEditor::CopyPasteBuildChildrenList( SharedPtr<NodeEditorNodeBase> parentNode, NodeEditorCopyPasteInformation& rInfo )
+	{
+		// TODO: FIX THIS, ITS SLOW, m_Nodes is the list of _all_ nodes!
+		//		 maybe we should have a map that allows us to only get the nodes at a certain sub-graph parent id.
+		for( const auto& [id, rCandidate] : m_Nodes )
+		{
+			// IsDirectDescendantOf
+			if( rCandidate->pParentObject == parentNode.Get() )
+			{
+				auto& rChildInfo = rInfo.Children.emplace_back();
+				rChildInfo.Node = rCandidate;
+
+				// Now get the child's children and so on.
+				CopyPasteBuildChildrenList( rCandidate, rChildInfo );
+			}
+		}
 	}
 
 	void NodeEditor::OnUpdate( Timestep ts )
@@ -608,12 +672,12 @@ namespace Saturn {
 
 	void NodeEditor::DeleteDeadLinks( UUID nodeID )
 	{
-		const auto wasConnectedToTheNode = [&]( const Ref<Link>& link )
-			{
-				return ( !FindPin( link->StartPinID ) ) || ( !FindPin( link->EndPinID ) )
-					|| FindPin( link->StartPinID )->Node->ID == nodeID
-					|| FindPin( link->EndPinID )->Node->ID == nodeID;
-			};
+		const auto wasConnectedToTheNode = [ & ]( const Ref<Link>& link )
+		{
+			return ( !FindPin( link->StartPinID ) ) || ( !FindPin( link->EndPinID ) )
+				|| FindPin( link->StartPinID )->Node->ID == nodeID
+				|| FindPin( link->EndPinID )->Node->ID == nodeID;
+		};
 
 		const auto removeIt = std::remove_if( m_Links.begin(), m_Links.end(), wasConnectedToTheNode );
 		m_Links.erase( removeIt, m_Links.end() );
@@ -643,10 +707,10 @@ namespace Saturn {
 	void NodeEditor::DeleteLink( UUID id, bool skipUndoRedo )
 	{
 		const auto Itr = std::find_if( m_Links.begin(), m_Links.end(),
-			[id]( const auto& rLink )
-			{
-				return rLink->ID == id;
-			} );
+			[ id ]( const auto& rLink )
+		{
+			return rLink->ID == id;
+		} );
 
 		if( Itr != m_Links.end() )
 		{
@@ -668,11 +732,11 @@ namespace Saturn {
 	void NodeEditor::DeleteNode( UUID id, bool skipUndoRedo /*= false */ )
 	{
 #if !defined(SAT_DIST)
-		auto isDescendantOf = [](NodeEditorNodeBase* pTarget, const auto& rNode) -> bool
+		auto isDescendantOf = []( NodeEditorNodeBase* pTarget, const auto& rCandidate ) -> bool
 		{
 			if( !pTarget ) return false;
 
-			NodeEditorNodeBase* pCurrentParent = rNode->pParentObject;
+			NodeEditorNodeBase* pCurrentParent = rCandidate->pParentObject;
 			while( pCurrentParent )
 			{
 				if( pCurrentParent == pTarget )
@@ -682,7 +746,7 @@ namespace Saturn {
 
 				pCurrentParent = pCurrentParent->pParentObject;
 			}
-			
+
 			return false;
 		};
 
@@ -716,11 +780,11 @@ namespace Saturn {
 
 					children.clear();
 				}
-				
+
 				if( !skipUndoRedo )
 				{
-//					Ref<UndoRedoActionDeleteNode> action = Ref<UndoRedoActionDeleteNode>::Create( SharedFromThis(), rNode );
-//					GlobalUndoRedoGroup::Get()->AddAction( action, m_AssetID );
+					//					Ref<UndoRedoActionDeleteNode> action = Ref<UndoRedoActionDeleteNode>::Create( SharedFromThis(), rNode );
+					//					GlobalUndoRedoGroup::Get()->AddAction( action, m_AssetID );
 				}
 
 				// Remove breakpoints, if any.
@@ -1202,7 +1266,7 @@ namespace Saturn {
 			m_PreCompiler = Ref<NodeEditorDefaultPreCompiler>::Create( SharedFromThis() );
 
 		OnNodeEditorEvent( NodeEditorAction::PreEvaluate );
-			
+
 		const auto& result = m_PreCompiler->PreCompile();
 		m_HasPreCompileErrors = !result.Succeeded;
 
@@ -1393,7 +1457,7 @@ namespace Saturn {
 								}
 
 								drawPinFlagText( rOutput->PinFlags );
-								
+
 								ImGui::Separator();
 							}
 
@@ -1462,7 +1526,7 @@ namespace Saturn {
 
 	void NodeEditor::DrawBeginSearchWindow()
 	{
-		if( ImGui::Begin( "Find##NE_SEARCH", &m_IsSearching, ImGuiWindowFlags_NoSavedSettings ) ) 
+		if( ImGui::Begin( "Find##NE_SEARCH", &m_IsSearching, ImGuiWindowFlags_NoSavedSettings ) )
 		{
 			if( ImGui::IsWindowAppearing() )
 			{
@@ -1474,7 +1538,7 @@ namespace Saturn {
 			if( ImGui::Button( "Go" ) )
 			{
 				m_SearchCacher.NodeNames.reserve( m_Nodes.size() );
-				
+
 				for( const auto& [ID, rNode] : m_Nodes )
 				{
 					m_SearchCacher.NodeNames.emplace_back( rNode->Name );
@@ -1506,9 +1570,9 @@ namespace Saturn {
 		{
 			for( const auto& rNodeName : m_SearchCacher.PassedNodeNames )
 			{
-				if( ImGui::Selectable( rNodeName.c_str() ) ) 
+				if( ImGui::Selectable( rNodeName.c_str() ) )
 				{
-					auto node = FindNode( rNodeName );
+					const auto node = FindNode( rNodeName );
 					if( node )
 					{
 						ed::SelectNode( ed::NodeId( node->ID ) );
@@ -1543,11 +1607,13 @@ namespace Saturn {
 					{
 						const auto node = FindNode( rNodeID );
 						SAT_CORE_ASSERT( node );
-						
+
+						// Ignore any nodes that are not meant to be pasted.
 						if( node->IsFlagSet( NodeFlags_RejectCopyPaste ) )
 							continue;
 
-						m_CopyPasteNodeClasses.push_back( node->GetClass() );
+						auto& rInfo = m_CopyPasteNodeClasses.emplace_back( node );
+						CopyPasteBuildChildrenList( node, rInfo );
 					}
 				} break;
 
@@ -1556,12 +1622,12 @@ namespace Saturn {
 					auto& rIO = ImGui::GetIO();
 					const auto canvasMousePos = ed::ScreenToCanvas( rIO.MousePos );
 
-					for( const auto* pNodeSClass : m_CopyPasteNodeClasses )
+					for( const auto& rCopyInfo : m_CopyPasteNodeClasses )
 					{
-						auto* newObject = ClassMetadataHandler::Get().CreateClassObject( pNodeSClass, this );
-						SharedPtr<NodeEditorNodeBase> spNode = ( NodeEditorNodeBase* )newObject;
-
-						AddNode( spNode );
+						if( const auto newlyCreatedNode = CopyPaste_CopyNode( rCopyInfo ) ) 
+						{
+							ed::SetNodePosition( ed::NodeId( newlyCreatedNode->ID ), canvasMousePos );
+						}
 					}
 
 					// Don't clear out list because we may want to paste the same set of nodes again.
@@ -1580,8 +1646,8 @@ namespace Saturn {
 
 		m_CreateNewNode = false;
 
-//		Ref<UndoRedoActionCreateNode> action = Ref<UndoRedoActionCreateNode>::Create( SharedFromThis(), node );
-//		GlobalUndoRedoGroup::Get()->AddAction( action, m_AssetID );
+		//		Ref<UndoRedoActionCreateNode> action = Ref<UndoRedoActionCreateNode>::Create( SharedFromThis(), node );
+		//		GlobalUndoRedoGroup::Get()->AddAction( action, m_AssetID );
 
 		if( m_AcceptedNewLink )
 		{
@@ -1621,11 +1687,11 @@ namespace Saturn {
 
 	std::vector<UUID> NodeEditor::GetSelectedNodes()
 	{
-		auto maxSize = m_Nodes.size();
-		
+		const auto maxSize = m_Nodes.size();
+
 		std::vector<ed::NodeId> temporary( maxSize );
 
-		int selected = ed::GetSelectedNodes( temporary.data(), static_cast<int>( m_Nodes.size() ) );
+		const int selected = ed::GetSelectedNodes( temporary.data(), static_cast< int >( m_Nodes.size() ) );
 
 		// Shrink to selected size
 		temporary.resize( selected );
@@ -1944,16 +2010,16 @@ namespace Saturn {
 		VariableGuard<ed::EditorContext*, ed::EditorContext*> guard( m_Editor );
 		node->PositionBeforeMove = ed::GetNodePosition( ed::NodeId( node->ID ) );
 
-				// TODO: Currently no way for us to preemptively set a position of a node before the first frame is drawn.
-		//		if( node->Position.x != 0.0f && node->Position.y != 0.0f )
-		//			ed::SetNodePosition( ed::NodeId( node->ID ), node->Position );
+		// TODO: Currently no way for us to preemptively set a position of a node before the first frame is drawn.
+//		if( node->Position.x != 0.0f && node->Position.y != 0.0f )
+//			ed::SetNodePosition( ed::NodeId( node->ID ), node->Position );
 #endif
 
 //		node->pOuter = this;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	// SERIALISATION (DEBUG AND RELEASE)
+	// SERIALISATION (DEBUG AND RELEASE, ON DIST NODE EDITORS DO NOT EXIST)
 
 	void NodeEditor::SerialiseData( std::ofstream& rStream )
 	{
@@ -2101,7 +2167,7 @@ namespace Saturn {
 	{
 		// TODO: Yea, this could be slow, we could either find a new way or 
 		// use the job system for this.
-		
+
 		// Assume we'll eliminate half of the nodes...
 		PassedNodeNames.reserve( NodeNames.size() / 2 );
 

@@ -82,6 +82,25 @@ namespace Saturn {
 
 	class Texture2D;
 
+	struct NodeEditorCopyPasteInformation
+	{
+	public:
+		// The selected node that was copied.
+		WeakRef<const NodeEditorNodeBase> Node;
+
+		// And it's children as well.
+		std::vector<NodeEditorCopyPasteInformation> Children;
+
+	public:
+		NodeEditorCopyPasteInformation() = default;
+	
+		// Construct from strong reference.
+		NodeEditorCopyPasteInformation( const SharedPtr<NodeEditorNodeBase> node ) 
+			: Node( node )
+		{
+		}
+	};
+
 	class NodeEditor : public SObject, public EnabledSharedFromThis<NodeEditor>
 	{
 	public:
@@ -340,6 +359,13 @@ namespace Saturn {
 
 		virtual void DrawGraph();
 
+		SharedPtr<NodeEditorNodeBase> CopyNode( const SharedPtr<const NodeEditorNodeBase> originalNode );
+
+		// For use by copy and paste only!
+		SharedPtr<NodeEditorNodeBase> CopyPaste_CopyNode( const NodeEditorCopyPasteInformation& rCopyInfo );
+
+		void CopyPasteBuildChildrenList( SharedPtr<NodeEditorNodeBase> parentNode, NodeEditorCopyPasteInformation& rInfo );
+
 	protected:
 		std::string m_Name;
 		// Internal imgui_node_editor ID, NOT to be confused with the Window Name (m_Name)
@@ -354,9 +380,9 @@ namespace Saturn {
 		std::map<UUID, SharedPtr<NodeEditorNodeBase>> m_Nodes;
 		std::vector<Ref<Link>> m_Links;
 
-		// List of node SClasses that will be pasted upon a Ctrl+V command
+		// List of nodes that will be pasted upon a Ctrl+V command
 		// gets filled by the Ctrl+C command.
-		std::vector<const SClass*> m_CopyPasteNodeClasses;
+		std::vector<NodeEditorCopyPasteInformation> m_CopyPasteNodeClasses;
 
 		// Temporary task cache, only exists for serialisation.
 		// or for editor simulation.

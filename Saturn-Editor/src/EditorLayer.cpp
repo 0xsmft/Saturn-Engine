@@ -611,13 +611,16 @@ namespace Saturn {
 				OnMousePressed( ( RubyMouseEvent& ) rEvent );
 			} break;
 
-			case EventType::HotReload:
+			case EventType::HotReloadComplete:
 			{
-				m_GameModule->EndHotReload();
-
-				ClassMetadataHandler::Get().AcknowledgeHotReload();
+				// Load the new compiled module.
+				ClassMetadataHandler::Get().BeginHotReload();
+				m_GameModule->BeginHotReload();
 
 				m_EditorScene->AcknowledgeHotReload();
+
+				ClassMetadataHandler::Get().AcknowledgeHotReload();
+				m_GameModule->EndHotReloadAndSwap();
 
 				PushNotification( "Hot reload complete" );
 			} break;
@@ -785,6 +788,7 @@ namespace Saturn {
 		// Clear old notifications from the old scene.
 		m_Notifications.clear();
 
+		// load new scene.....
 		const Ref<Asset> asset = id == 0 ? nullptr : m_AssetManager->FindAsset( id );
 
 		if( asset )
@@ -1183,7 +1187,8 @@ namespace Saturn {
 
 					case RubyKey_F5:
 					{
-						HotReloadGame();
+						if( m_GameModule->HasModule() )
+							HotReloadGame();
 					} break;
 				}
 			}
@@ -2207,13 +2212,15 @@ namespace Saturn {
 			// Attempt to build with HOTRELOAD switch.
 			const auto status = Project::GetActiveProject()->Build( Application::GetCurrentConfigKind(), "/HOTRELOAD" );
 
+			SAT_CORE_INFO( "[HotReload] SaturnBuildTool exited with code {0}", ( uint8_t ) status );
+
 			switch( status )
 			{
 				case SaturnBuildToolExitCodes::Success:
 				{
 					// It's not safe to be messing with our SClasses on a job system thread.
 					// So we'll do it next frame on the main thread.
-					Application::Get()->DispatchEvent<Event>( EventType::HotReload, EC_Editor );
+					Application::Get()->DispatchEvent<Event>( EventType::HotReloadComplete, EC_Editor );
 				} break;
 
 				default:
@@ -2225,7 +2232,7 @@ namespace Saturn {
 
 				case SaturnBuildToolExitCodes::NothingTodo:
 				{
-					PushNotification( "Nothing to Hot-Reload!" );
+					PushNotification( "Nothing to Hot-Reload! Project is up to date." );
 				} break;
 			}
 
@@ -2636,7 +2643,7 @@ namespace Saturn {
 				}
 
 				{
-					Auxiliary::ScopedDisabledFlag disabledIfRT( m_RequestRuntime );
+					Auxiliary::ScopedDisabledFlag disabledIfRT( m_RequestRuntime || !m_GameModule->HasModule() );
 
 					if( ImGui::MenuItem( "Hot Reload Game" ) )
 					{
@@ -3911,7 +3918,7 @@ namespace Saturn {
 		ImGui::PushStyleVar( ImGuiStyleVar_ItemSpacing, ImVec2( 5.0f * 2.0f, 0 ) );
 
 		{
-			Auxiliary::ScopedDisabledFlag disabledIfRuntime( m_RequestRuntime );
+			Auxiliary::ScopedDisabledFlag disabledIfRuntime( m_RequestRuntime || !m_GameModule->HasModule() );
 		
 			if( Auxiliary::ImageButton( m_SyncTexture, ImVec2( 24.0f, 24.0f ) ) )
 				HotReloadGame();

@@ -56,10 +56,12 @@ namespace Saturn {
 
 	void ClassMetadataHandler::BeginHotReload()
 	{
+		m_RegisterNewClassAsHotReload = true;
 	}
 
 	void ClassMetadataHandler::AcknowledgeHotReload()
 	{
+		m_RegisterNewClassAsHotReload = false;
 	}
 
 	SClassHotReloadChanges ClassMetadataHandler::DistinguishBetweenSClass( const SClass* const pA, const SClass* const pB )

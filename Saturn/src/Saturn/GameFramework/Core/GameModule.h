@@ -45,20 +45,20 @@ namespace Saturn {
 
 	public:
 		GameModule();
-		~GameModule();
+		virtual ~GameModule();
 
 		void Reload();
 
-		bool HasModule() const { return m_ModuleHandle; }
-
 	public:		
 		const std::filesystem::path& GetModulePath() const { return m_ModuleHandle->m_Path; }
+
+		bool HasModule() const { return m_ModuleHandle; }
 
 #if defined(SAT_DEBUG) || defined(SAT_RELEASE)
 		const std::string& GetTimestamp() const { return m_LastTimestamp; }
 
 		void BeginHotReload();
-		void EndHotReload();
+		void EndHotReloadAndSwap();
 #endif
 
 	private:
@@ -67,6 +67,7 @@ namespace Saturn {
 
 	private:
 		Ref<Module> m_ModuleHandle;
+		Ref<Module> m_HotReloadedModuleHandle;
 
 #if defined(SAT_DEBUG) || defined(SAT_RELEASE)
 		std::string m_LastTimestamp;

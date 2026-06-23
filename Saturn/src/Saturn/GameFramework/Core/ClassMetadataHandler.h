@@ -85,6 +85,8 @@ namespace Saturn {
 
 		void DestroyAndFreeAllSClasses();
 
+		// Iterate over children of pParentClass
+		// does not do an extensive search of the family tree.
 		template<typename Fn>
 		void EachClassNode2( const SClass* pParentClass, Fn Function )
 		{
@@ -190,6 +192,8 @@ namespace Saturn {
 
 		void HandleSClassChanges( const SClassHotReloadChanges changes, SClass* pExisiting, SClass* pHotReloaded );
 
+		bool IsHotReload() const { return m_RegisterNewClassAsHotReload; }
+
 	private:
 		void BuildLinkedListRecursive( SClassLinkedListNode& node, const std::unordered_map<const SClass*, std::vector<const SClass*>>& childMap );
 		const SClassLinkedListNode* FindNodeRecursive( const SClassLinkedListNode* pNode, const SClass* pClass ) const;
@@ -205,6 +209,9 @@ namespace Saturn {
 		// Linked list of SClasses (purely for informative reasons).
 		// Fist node is the SObject node which all SObjects are based from.
 		SClassLinkedListNode m_LinkedListClasses;
+
+		// Becomes true when a hot reload has completed, and we are creating the new SClasses
+		bool m_RegisterNewClassAsHotReload = false;
 #endif
 	};
 

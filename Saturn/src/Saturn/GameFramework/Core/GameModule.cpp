@@ -53,12 +53,18 @@ namespace Saturn {
 
 	void GameModule::BeginHotReload()
 	{
-		m_ModuleHandle = nullptr;
+		// Load the hot reloaded module
+		LoadModule( true );
 	}
 
-	void GameModule::EndHotReload()
+	void GameModule::EndHotReloadAndSwap()
 	{
-		LoadModule( true );
+		// Unload the non-hotreloaded module.
+		Unload();
+
+		// And swap out refs.
+		m_ModuleHandle = m_HotReloadedModuleHandle;
+		m_HotReloadedModuleHandle = nullptr;
 	}
 
 #endif
@@ -99,13 +105,26 @@ namespace Saturn {
 
 			//////////////////////////////////////////////////////////////////////////
 
-			m_ModuleHandle = Ref<Module>::Create( DllPath, Project::GetActiveConfig().Name );
-			m_ModuleHandle->Load();
+			Ref<Module> loadedModule;
+			if( wasHotReloaded )
+			{
+				m_HotReloadedModuleHandle = Ref<Module>::Create( DllPath, Project::GetActiveConfig().Name );
+				m_HotReloadedModuleHandle->Load();
+			
+				loadedModule = m_HotReloadedModuleHandle;
+			}
+			else
+			{
+				m_ModuleHandle = Ref<Module>::Create( DllPath, Project::GetActiveConfig().Name );
+				m_ModuleHandle->Load();
+
+				loadedModule = m_ModuleHandle;
+			}
 
 			//////////////////////////////////////////////////////////////////////////
 
 			// Find the init function.
-			InitModuleFn initModFn = ( InitModuleFn ) m_ModuleHandle->m_Library.GetSymbol( "InitializeModule" );
+			const InitModuleFn initModFn = ( InitModuleFn ) loadedModule->m_Library.GetSymbol( "InitializeModule" );
 
 			SAT_CORE_VERIFY( initModFn, "Failed to find \"InitializeModule\" function in Game Module!" );
 
@@ -119,7 +138,7 @@ namespace Saturn {
 	void GameModule::Unload()
 	{
 #if !defined(SAT_DIST)
-		m_ModuleHandle = nullptr;
+		m_ModuleHandle.Reset();
 #endif
 	}
 

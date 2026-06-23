@@ -34,18 +34,49 @@
 
 #include "Saturn/Core/Memory/SObjectAllocator.h"
 
+#define SAT_FORCE_VERBOSE_SCLASS_REG
+
+#if defined(SAT_DEBUG) || defined(SAT_FORCE_VERBOSE_SCLASS_REG)
+#define SAT_VERBOSE_SCLASS_REG
+#endif
+
 namespace Saturn {
 
 	void SClass::RConstructClass( SClass*& outClass, const SClassSpecification& rSpec )
 	{
-		if( outClass != nullptr && ( outClass ->GetFlags() & SC_Initialised ) == 0 )
+		// Skip if null or already initialised.
+		if( outClass != nullptr && ( outClass->GetFlags() & SC_Initialised ) == 0 )
 		{
 			return;
 		}
 
+		// Now, we need to check if the class already exists.
+		// This may happen because in the Game module it will register the same set of classes
+		// as the engine it self, and we want the engine to own it's classes.
+		// 
+		// It may also happen if this is a hot-reload because of course the class would of already
+		// been loaded.
+		//
 		SClass* pFoundClass = ClassMetadataHandler::Get().RFastCheckClass( rSpec.Hash );
 		if( pFoundClass )
 		{
+			// If we are a hold-reload, we need to handle this differently.
+			if( ClassMetadataHandler::Get().IsHotReload() )
+			{
+				// Allocate the new class...
+				SClass* pNewClass = FSObjectAllocator::AllocateSObject<SClass>( rSpec );
+
+				const auto changes = ClassMetadataHandler::Get().DistinguishBetweenSClass( pFoundClass, pNewClass );
+				ClassMetadataHandler::Get().HandleSClassChanges( changes, pFoundClass, pNewClass );
+
+#if defined(SAT_VERBOSE_SCLASS_REG)
+				SAT_CORE_INFO( "[SC] Hot-Reloading class with the same name {0}", rSpec.Name );
+#endif
+
+				outClass = pNewClass;
+				return;
+			}
+
 #if defined(SAT_VERBOSE_SCLASS_REG)
 			SAT_CORE_WARN( "[SC] An exisiting class with the same name ({0}) already exists!", rSpec.Name );
 #endif

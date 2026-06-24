@@ -76,7 +76,6 @@ namespace Saturn {
 	};
 
 	// Represents a Vulkan Image, ImageView and Sampler
-	// Texture holds an Image2D internally and is used to create a texture from a file path
 	// This is different from the Image2D class as the Image2D as this has to be created by a filepath
 	class Texture : public RefTarget
 	{
@@ -180,7 +179,7 @@ namespace Saturn {
 	public:
 		Texture2D() = default;
 		Texture2D( const std::filesystem::path& rPath, AddressingMode Mode = AddressingMode::Repeat, TextureLoadFlags loadFlags = TextureLoadFlags_FlipVertically );
-		Texture2D( ImageFormat format, uint32_t width, uint32_t height, const void* pData, bool storage = false, AddressingMode Mode = AddressingMode::Repeat );
+		Texture2D( ImageFormat format, uint32_t width, uint32_t height, const void* pData, bool storage = false, AddressingMode Mode = AddressingMode::Repeat, TextureLoadFlags flags = TextureLoadFlags_None );
 		
 		~Texture2D();
 
@@ -200,8 +199,13 @@ namespace Saturn {
 		void PrepareTextureForJobSystem();
 
 	protected:
+		// Load from raw texture file e.g. .png, .tga etc
 		void CreateTextureImage() override;
+
+		// Create texture via data buf.
+		// CreateTextureImage calls this function after loading the texture data.
 		void SetData( const void* pData ) override;
+		
 		void CreateMips() override;
 	};
 

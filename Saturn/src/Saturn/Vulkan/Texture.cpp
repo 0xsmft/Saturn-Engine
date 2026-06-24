@@ -247,6 +247,9 @@ namespace Saturn {
 
 	uint32_t Texture::GetMipMapLevels() const
 	{
+		if( ( m_LoadFlags & TextureLoadFlags_NoMips ) != 0 )
+			return 1;
+
 		// Based from https://www.oreilly.com/library/view/opengl-programming-guide/9780132748445/ch06lev2sec20.html
 		return static_cast<uint32_t>( std::floor( std::log2( glm::min( m_Width, m_Height ) ) ) + 1 );
 	}
@@ -494,8 +497,8 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// TEXTURE 2D
 
-	Texture2D::Texture2D( ImageFormat format, uint32_t width, uint32_t height, const void* pData, bool storage, AddressingMode Mode )
-		: Texture( width, height, VulkanFormat( format ), pData, Mode )
+	Texture2D::Texture2D( ImageFormat format, uint32_t width, uint32_t height, const void* pData, bool storage, AddressingMode Mode, TextureLoadFlags flags /*= TextureLoadFlags_None*/ )
+		: Texture( width, height, VulkanFormat( format ), pData, Mode, flags )
 	{
 		m_Storage = storage;
 
@@ -554,7 +557,7 @@ namespace Saturn {
 		m_Height = Height;
 
 		m_pData = new uint32_t[ Width * Height ];
-		std::memset( m_pData, 0xFF80FFFF, sizeof( uint32_t ) * Width * Height );
+		std::memset( m_pData, 0xFF00FFFF, sizeof( uint32_t ) * Width * Height );
 
 		SetData( m_pData );
 

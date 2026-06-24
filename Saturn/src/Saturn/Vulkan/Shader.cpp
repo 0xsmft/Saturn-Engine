@@ -677,7 +677,7 @@ namespace Saturn {
 			if( m_DescriptorSets[ set ].Set == UINT32_MAX )
 				m_DescriptorSets[ set ] = ShaderDescriptorSetTemplate( set );
 
-			m_DescriptorSets[ set ].SampledImages.push_back( { Name, shaderType, set, binding, arraySizes } );
+			m_DescriptorSets[ set ].SampledImages.emplace_back( Name, shaderType, set, binding, arraySizes );
 		}
 
 		for ( const auto& Resource : Resources.storage_images )
@@ -700,7 +700,57 @@ namespace Saturn {
 			if( m_DescriptorSets[ set ].Set == UINT32_MAX )
 				m_DescriptorSets[ set ] = ShaderDescriptorSetTemplate( set );
 
-			m_DescriptorSets[ set ].StorageImages.push_back( { Name, shaderType, set, binding, arraySizes } );
+			m_DescriptorSets[ set ].StorageImages.emplace_back( Name, shaderType, set, binding, arraySizes );
+		}
+
+		// A separate image, is like this in the GLSL shader
+		// uniform texture2D u_MyTexture
+		//
+		// essentially it's a texture without a sampler.
+		for( const auto& si : Resources.separate_images )
+		{
+			const auto& Name = si.name;
+			auto& BaseType = Compiler.get_type( si.base_type_id );
+			auto& RealType = Compiler.get_type( si.type_id );
+	
+			uint32_t set = Compiler.get_decoration( si.id, spv::DecorationDescriptorSet );
+			uint32_t binding = Compiler.get_decoration( si.id, spv::DecorationBinding );
+			uint32_t arraySize = RealType.array[ 0 ];
+
+			SHADER_INFO( "Seperate (non-sampled) image: {0}", Name );
+			SHADER_INFO( " Binding: {0}", binding );
+			SHADER_INFO( " Set: {0}", set );
+
+			if( arraySize == 0u )
+				arraySize = 1u;
+
+			if( m_DescriptorSets[ set ].Set == UINT32_MAX )
+				m_DescriptorSets[ set ] = ShaderDescriptorSetTemplate( set );
+
+			m_DescriptorSets[ set ].SampledImages.emplace_back( Name, shaderType, set, binding, arraySize );
+		}
+
+		for( const auto& ss : Resources.separate_samplers )
+		{
+			const auto& Name = ss.name;
+			const auto& BaseType = Compiler.get_type( ss.base_type_id );
+			const auto& RealType = Compiler.get_type( ss.type_id );
+
+			const uint32_t set = Compiler.get_decoration( ss.id, spv::DecorationDescriptorSet );
+			const uint32_t binding = Compiler.get_decoration( ss.id, spv::DecorationBinding );
+			uint32_t arraySize = RealType.array[ 0 ];
+
+			SHADER_INFO( "Sampler: {0}", Name );
+			SHADER_INFO( " Binding: {0}", binding );
+			SHADER_INFO( " Set: {0}", set );
+
+			if( arraySize == 0u )
+				arraySize = 1u;
+
+			if( m_DescriptorSets[ set ].Set == UINT32_MAX )
+				m_DescriptorSets[ set ] = ShaderDescriptorSetTemplate( set );
+
+			m_DescriptorSets[ set ].SampledImages.emplace_back( Name, shaderType, set, binding, arraySize );
 		}
 #endif
 	}

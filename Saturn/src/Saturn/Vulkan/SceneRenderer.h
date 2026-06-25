@@ -464,8 +464,16 @@ namespace Saturn {
 		//////////////////////////////////////////////////////////////////////////
 
 		Ref<ComputePipeline> SMAAEdgeDetectionPipeline;
+		Ref<ComputePipeline> SMAAFinalPipeline;
+
 		Ref<Material> SMAAEdgingMaterial;
 		Ref<Image2D> SMAAEdgeDetectionOutImage;
+
+		Ref<Material> SMAAFinalMaterial;
+		Ref<Image2D> SMAAFinalImage;
+
+		Ref<Texture2D> SMAASearchTexture;
+		Ref<Texture2D> SMAAAreaTexture;
 
 		Ref<Sampler> SMAAPointSampler;
 
@@ -505,6 +513,7 @@ namespace Saturn {
 		Ref< Shader > JmpFloodEvenShader;
 		Ref< Shader > JmpFloodOddShader;
 		Ref< Shader > SMAAEdgeDetectionShader;
+		Ref< Shader > SMAABlendingShader;
 	};
 
 	class Renderer2D;
@@ -608,6 +617,7 @@ namespace Saturn {
 		void InitJmpfOddPass();
 		void InitSMAAPass();
 		void InitSMAAEdge();
+		void InitSMAABlending();
 
 		void InitBuffers();
 		void InitRenderer2D();
@@ -625,6 +635,7 @@ namespace Saturn {
 		void SceneCompositePass();
 		void LateCompPhysicsOutline();
 		void JumpFloodLatePass();
+		void SMAABlendingPass();
 		void SMAAEdgePass();
 		void SMAAPass();
 		void TexturePass();

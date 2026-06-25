@@ -58,6 +58,9 @@
 #include <random>
 #endif
 
+// SMAA
+#include "Embedded/SMAA_SearchTex.embed"
+
 constexpr auto M_PI = 3.14159265358979323846;
 constexpr auto SHADOW_MAP_SIZE = 4096.0f;
 
@@ -1209,6 +1212,7 @@ namespace Saturn {
 	void SceneRenderer::InitSMAAPass()
 	{
 		InitSMAAEdge();
+		InitSMAABlending();
 	}
 
 	void SceneRenderer::InitSMAAEdge()
@@ -1239,6 +1243,40 @@ namespace Saturn {
 		m_RendererData.SMAAEdgingMaterial->SetResource( "o_OutEdges",     m_RendererData.SMAAEdgeDetectionOutImage );
 		m_RendererData.SMAAEdgingMaterial->SetSeparateImage( "u_InFinalColor", CompositeImage() );
 		m_RendererData.SMAAEdgingMaterial->SetResource( "s_PointSampler", m_RendererData.SMAAPointSampler );
+	}
+
+	void SceneRenderer::InitSMAABlending()
+	{
+		if( !m_RendererData.SMAABlendingShader )
+		{
+			m_RendererData.SMAABlendingShader = ShaderLibrary::Get().FindOrLoad( "SMAA-BlendAndDoWeights", "content/shaders/SMAA-BlendAndDoWeights.glsl" );
+
+			constexpr TextureLoadFlags loadFlags = TextureLoadFlags( TextureLoadFlags_LoadOnMainThread | TextureLoadFlags_NoMips );
+
+			m_RendererData.SMAASearchTexture = Ref<Texture2D>::Create( 
+				ImageFormat::RED8, 
+				SAT_SMAA_SEARCHTEX_WIDTH,
+				SAT_SMAA_SEARCHTEX_HEIGHT,
+				&GSMAA_SearchTexBytes,
+				true );
+
+			m_RendererData.SMAAAreaTexture = Ref<Texture2D>::Create( "content/textures/SMAA_AreaTex.tga",
+				AddressingMode::Repeat, loadFlags );
+		}
+
+		m_RendererData.SMAAFinalImage = Ref<Image2D>::Create( ImageFormat::RGBA16F, m_RendererData.Width, m_RendererData.Height, 1, 1, 1, ImageTiling::Optimal, true );
+
+		m_RendererData.SMAAFinalPipeline = Ref<ComputePipeline>::Create( m_RendererData.SMAABlendingShader );
+	
+		m_RendererData.SMAAFinalMaterial = Ref<Material>::Create( m_RendererData.SMAABlendingShader, "SMAABlending" );
+
+		m_RendererData.SMAAFinalMaterial->SetResource( "o_Output", m_RendererData.SMAAFinalImage );
+		
+		m_RendererData.SMAAFinalMaterial->SetSeparateImage( "u_InputColorTexture", CompositeImage() );
+		m_RendererData.SMAAFinalMaterial->SetSeparateImage( "u_EdgesTexture", m_RendererData.SMAAEdgeDetectionOutImage );
+		m_RendererData.SMAAFinalMaterial->SetSeparateImage( "u_SearchTexture", m_RendererData.SMAASearchTexture );
+		m_RendererData.SMAAFinalMaterial->SetSeparateImage( "u_AreaTexture", m_RendererData.SMAAAreaTexture );
+		m_RendererData.SMAAFinalMaterial->SetResource( "s_LinearSampler", m_RendererData.SMAAPointSampler );
 	}
 
 	void SceneRenderer::RenderGrid()
@@ -1602,6 +1640,8 @@ namespace Saturn {
 			}
 
 			ImGui::Text( "SceneRenderer::SceneComposite: %.2f ms", m_RendererData.SceneCompPPTimer.ElapsedMilliseconds() );
+
+			ImGui::Text( "SceneRenderer::SMAAPass: %.2f ms", m_RendererData.SMAAPassTimer.ElapsedMilliseconds() );
 
 			ImGui::Text( "Renderer::EndFrame - Queue Present: %.2f ms", Renderer::Get()->GetQueuePresentTime() );
 			ImGui::Text( "Renderer::EndFrame - Queue Wait: %.2f ms", Renderer::Get()->GetQueueWaitTime() );
@@ -2580,9 +2620,56 @@ namespace Saturn {
 			workGroups.z );
 	}
 
+	void SceneRenderer::SMAABlendingPass()
+	{
+		struct u_Params
+		{
+			glm::vec4 Metrics{};
+			float Threshold = 0.0f;
+			float CornerRoundingNorm = 0.0f;
+			float LocalContrastAdaptation = 0.0f;
+		} pc_Params;
+
+		pc_Params.Metrics = glm::vec4(
+			1.0f / static_cast< float >( m_RendererData.Width ),
+			1.0f / static_cast< float >( m_RendererData.Height ),
+			m_RendererData.Width, m_RendererData.Height );
+
+		pc_Params.Threshold = 0.1f;
+		pc_Params.CornerRoundingNorm = 0.25f;
+		pc_Params.LocalContrastAdaptation = 2.0f;
+
+		m_RendererData.SMAAFinalPipeline->BindWithCommandBuffer( m_RendererData.CommandBuffer );
+
+		glm::uvec3 workGroups{ 1 };
+		workGroups.x = ( uint32_t ) glm::ceil( static_cast< float >( m_RendererData.Width ) / 32.0f );
+		workGroups.y = ( uint32_t ) glm::ceil( static_cast< float >( m_RendererData.Height ) / 32.0f );
+
+		Buffer pc( sizeof( u_Params ), &pc_Params );
+
+		m_RendererData.SMAAFinalPipeline->ExecuteWithExternalPC( m_RendererData.SMAAFinalMaterial, pc,
+			workGroups.x,
+			workGroups.y,
+			workGroups.z );
+	}
+
 	void SceneRenderer::SMAAPass()
 	{
+		SAT_PF_EVENT();
+		
+		m_RendererData.SMAAPassTimer.Reset();
+
+		const VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
+
+		CmdBeginDebugLabel( CommandBuffer, "EdgeDetection" );
 		SMAAEdgePass();
+		CmdEndDebugLabel( CommandBuffer );
+
+		CmdBeginDebugLabel( CommandBuffer, "Blending,Weights" );
+		SMAABlendingPass();
+		CmdEndDebugLabel( CommandBuffer );
+
+		m_RendererData.SMAAPassTimer.Stop();
 	}
 
 	void SceneRenderer::TexturePass()
@@ -2641,7 +2728,6 @@ namespace Saturn {
 		}
 
 		// UBs
-		// Heres the big fucker again, 24,592 bytes of stack.
 		UBPointLights u_Lights;
 
 		struct

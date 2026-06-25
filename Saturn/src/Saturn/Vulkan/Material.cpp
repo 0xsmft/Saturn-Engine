@@ -382,6 +382,21 @@ namespace Saturn {
 		}
 	}
 
+	void Material::SetSeparateImage( const std::string& Name, const Ref<Texture2D> texture )
+	{
+		const auto Itr = std::find_if( m_DescriptorSetTemplate.SeparateImages.begin(), m_DescriptorSetTemplate.SeparateImages.end(),
+			[ Name ]( const ShaderSampledImage& rImage )
+		{
+			return rImage.Name == Name;
+		} );
+
+		if( Itr != m_DescriptorSetTemplate.SeparateImages.end() )
+		{
+			const ShaderSampledImage& ssi = *( Itr );
+			m_DescriptorSetTemplate.WriteDescriptorSets[ ssi.Binding ].pImageInfo = &texture->GetDescriptorInfo();
+		}
+	}
+
 	void Material::SetResourceWithVulkanInfo( const std::string& Name, Ref<Texture2D> Texture, const VkDescriptorImageInfo& rVulkanInfo )
 	{
 		m_Textures[ Name ] = Texture;

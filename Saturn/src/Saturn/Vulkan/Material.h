@@ -129,6 +129,7 @@ namespace Saturn {
 		// @param Name -- the name of the resource in the SHADER e.g. s_MySampler
 		//
 		void SetSeparateImage( const std::string& Name, const Ref<Image2D> image );
+		void SetSeparateImage( const std::string& Name, const Ref<Texture2D> texture );
 
 		// 
 		// Get texture2D resource.

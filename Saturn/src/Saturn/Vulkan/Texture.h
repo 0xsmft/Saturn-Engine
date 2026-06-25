@@ -28,6 +28,7 @@
 
 #pragma once
 
+#include "AddressingMode.h"
 #include "VulkanError.h"
 #include "Image2D.h"
 #include "Saturn/Asset/TextureLoadFlags.h"
@@ -67,14 +68,19 @@ namespace Saturn {
 						VkImageLayout OldLayout, 
 						VkImageLayout NewLayout );
 
-	enum class AddressingMode : uint8_t
+	/*
+	struct TextureSpecification
 	{
-		Repeat,
-		MirroredRepeat,
-		ClampToEdge,
-		ClampToBorder
-	};
+		uint32_t Width = 0;
+		uint32_t Height = 0;
 
+		ImageFormat Format = ImageFormat::None;
+		AddressingMode AddressingMode = AddressingMode::Repeat;
+		TextureLoadFlags LoadFlags = TextureLoadFlags_FlipVertically;
+	};
+	*/
+
+	// Base class for all textures.
 	// Represents a Vulkan Image, ImageView and Sampler
 	// This is different from the Image2D class as the Image2D as this has to be created by a filepath
 	class Texture : public RefTarget

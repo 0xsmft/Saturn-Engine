@@ -42,6 +42,7 @@
 #include "ComputePipeline.h"
 #include "StorageBufferSet.h"
 #include "UniformBufferSet.h"
+#include "Sampler.h"
 
 #include "Pipeline.h"
 
@@ -269,6 +270,7 @@ namespace Saturn {
 		Timer SSAOTimer;
 		Timer HBAOTimer;
 		Timer AOBlurTimer;
+		Timer SMAAPassTimer;
 		Timer SceneCompPPTimer;
 
 		//////////////////////////////////////////////////////////////////////////
@@ -280,8 +282,8 @@ namespace Saturn {
 
 		//////////////////////////////////////////////////////////////////////////
 		// Quad Vertex and Index buffers
-		Ref<VertexBuffer> QuadVertexBuffer = nullptr;
-		Ref<IndexBuffer> QuadIndexBuffer = nullptr;
+		Ref<VertexBuffer> QuadVertexBuffer;
+		Ref<IndexBuffer> QuadIndexBuffer;
 
 		// DirShadowMap
 		//////////////////////////////////////////////////////////////////////////
@@ -301,24 +303,24 @@ namespace Saturn {
 		// PreDepth + Light culling
 		//////////////////////////////////////////////////////////////////////////
 
-		Ref<Pass> PreDepthPass = nullptr;
-		Ref<Pipeline> PreDepthPipeline = nullptr;
-		Ref<Pipeline> PreDepthDynamicPipeline = nullptr;
-		Ref<Framebuffer> PreDepthFramebuffer = nullptr;
-		Ref<Material> PreDepthMaterial = nullptr;
-		Ref<Material> PreDepthDynamicMaterial = nullptr;
-		Ref<Material> PreDepthDynamicMaterialSet2 = nullptr;
+		Ref<Pass> PreDepthPass;
+		Ref<Pipeline> PreDepthPipeline;
+		Ref<Pipeline> PreDepthDynamicPipeline;
+		Ref<Framebuffer> PreDepthFramebuffer;
+		Ref<Material> PreDepthMaterial;
+		Ref<Material> PreDepthDynamicMaterial;
+		Ref<Material> PreDepthDynamicMaterialSet2;
 
-		Ref<ComputePipeline> LightCullingPipeline = nullptr;
-		Ref<Material> LightCullingMaterial = nullptr;
+		Ref<ComputePipeline> LightCullingPipeline;
+		Ref<Material> LightCullingMaterial;
 		glm::vec3 LightCullingWorkGroups{};
 
 		// Geometry
 		//////////////////////////////////////////////////////////////////////////
 
 		// Render pass for all grid, skybox and meshes.
-		Ref<Pass> GeometryPass = nullptr;
-		Ref<Framebuffer> GeometryFramebuffer = nullptr;
+		Ref<Pass> GeometryPass;
+		Ref<Framebuffer> GeometryFramebuffer;
 
 		// STATIC MESHES
 
@@ -333,16 +335,16 @@ namespace Saturn {
 		Ref<Material> DynamicMeshMaterial;
 
 		// GRID
-		Ref<Pipeline> GridPipeline = nullptr;
-		Ref<Material> GridMaterial = nullptr;
+		Ref<Pipeline> GridPipeline;
+		Ref<Material> GridMaterial;
 
 		// SKYBOX
-		Ref<EnvironmentMap> SceneEnvironment = nullptr;
+		Ref<EnvironmentMap> SceneEnvironment;
 
-		Ref<Pipeline> SkyboxPipeline = nullptr;
-		Ref<Material> SkyboxMaterial = nullptr;
+		Ref<Pipeline> SkyboxPipeline;
+		Ref<Material> SkyboxMaterial;
 
-		Ref<Material> PreethamMaterial = nullptr;
+		Ref<Material> PreethamMaterial;
 
 		float SkyboxLod = 0.0f;
 		float Intensity = 1.0f;
@@ -354,16 +356,16 @@ namespace Saturn {
 		//////////////////////////////////////////////////////////////////////////
 
 		// Begin SSAO vvvv
-		Ref<Pipeline>	 SSAOPipeline   = nullptr;
-		Ref<Pass>		 SSAORenderPass = nullptr;
-		Ref<Material>	 SSAOMaterial   = nullptr;
-		Ref<Framebuffer> SSAOFramebuffer = nullptr;
-		Ref<Texture2D>	 SSAONoiseImage = nullptr;
+		Ref<Pipeline>	 SSAOPipeline;
+		Ref<Pass>		 SSAORenderPass;
+		Ref<Material>	 SSAOMaterial;
+		Ref<Framebuffer> SSAOFramebuffer;
+		Ref<Texture2D>	 SSAONoiseImage;
 
-		Ref<Pipeline>	 AOBlurPipeline = nullptr;
-		Ref<Pass>		 AOBlurRenderPass = nullptr;
-		Ref<Material>	 AOBlurMaterial = nullptr;
-		Ref<Framebuffer> AOBlurFramebuffer = nullptr;
+		Ref<Pipeline>	 AOBlurPipeline;
+		Ref<Pass>		 AOBlurRenderPass;
+		Ref<Material>	 AOBlurMaterial;
+		Ref<Framebuffer> AOBlurFramebuffer;
 		// End SSAO ^^^^
 
 		//////////////////////////////////////////////////////////////////////////
@@ -372,20 +374,20 @@ namespace Saturn {
 
 		// Begin Scene Composite
 		
-		Ref<Pass> SceneComposite = nullptr;
-		Ref< Framebuffer > SceneCompositeFramebuffer = nullptr;
+		Ref<Pass> SceneComposite;
+		Ref< Framebuffer > SceneCompositeFramebuffer;
 
-		Ref<Pipeline> SceneCompositePipeline = nullptr;
+		Ref<Pipeline> SceneCompositePipeline;
 		
 		// Input
-		Ref<Material> SceneCompositeMaterial = nullptr;
+		Ref<Material> SceneCompositeMaterial;
 		
 		// Texture pass
 		//////////////////////////////////////////////////////////////////////////
-		Ref<Pass> TexturePass = nullptr;
-		Ref<Pipeline> TexturePassPipeline = nullptr;
+		Ref<Pass> TexturePass;
+		Ref<Pipeline> TexturePassPipeline;
 		// Input
-		Ref<Material> TexturePassMaterial = nullptr;
+		Ref<Material> TexturePassMaterial;
 
 		//////////////////////////////////////////////////////////////////////////
 		// End Scene Composite
@@ -394,29 +396,29 @@ namespace Saturn {
 		// Selected Geometry
 		//////////////////////////////////////////////////////////////////////////
 
-		Ref<Pass> SelectedGeometryPass = nullptr;
-		Ref<Framebuffer> SelectedGeometryFramebuffer = nullptr;
-		Ref<Pipeline> SelectedGeometryPipeline = nullptr;
-		Ref<Pipeline> SelectedGeometryDynamicPipeline = nullptr;
-		Ref<Material> SelectedGeometryMaterial = nullptr;
+		Ref<Pass> SelectedGeometryPass;
+		Ref<Framebuffer> SelectedGeometryFramebuffer;
+		Ref<Pipeline> SelectedGeometryPipeline;
+		Ref<Pipeline> SelectedGeometryDynamicPipeline;
+		Ref<Material> SelectedGeometryMaterial;
 
 		// Jumpflooding
 		//////////////////////////////////////////////////////////////////////////
 
-		Ref<Framebuffer> JumpFloodFirstPassFB = nullptr;
-		Ref<Pass> JumpFloodFirstPass = nullptr;
-		Ref<Material> JumpFloodFirstMaterial = nullptr;
-		Ref<Pipeline> JumpFloodFirstPipeline = nullptr;
+		Ref<Framebuffer> JumpFloodFirstPassFB;
+		Ref<Pass> JumpFloodFirstPass;
+		Ref<Material> JumpFloodFirstMaterial;
+		Ref<Pipeline> JumpFloodFirstPipeline;
 
-		Ref<Pass> JumpFloodEvenPass = nullptr;
-		Ref<Framebuffer> JumpFloodEvenFB = nullptr;
-		Ref<Material> JumpFloodEvenMaterial = nullptr;
-		Ref<Pipeline> JumpFloodEvenPipeline = nullptr;
+		Ref<Pass> JumpFloodEvenPass;
+		Ref<Framebuffer> JumpFloodEvenFB;
+		Ref<Material> JumpFloodEvenMaterial;
+		Ref<Pipeline> JumpFloodEvenPipeline;
 
-		Ref<Framebuffer> JumpFloodOddFB = nullptr;
-		Ref<Pass> JumpFloodOddPass = nullptr;
-		Ref<Material> JumpFloodOddMaterial = nullptr;
-		Ref<Pipeline> JumpFloodOddPipeline = nullptr;
+		Ref<Framebuffer> JumpFloodOddFB;
+		Ref<Pass> JumpFloodOddPass;
+		Ref<Material> JumpFloodOddMaterial;
+		Ref<Pipeline> JumpFloodOddPipeline;
 
 		// Bloom
 		//////////////////////////////////////////////////////////////////////////
@@ -428,8 +430,8 @@ namespace Saturn {
 		};
 
 		std::array<BloomTexture, 3> BloomTextures;
-		Ref<ComputePipeline> BloomComputePipeline = nullptr;
-		Ref<Texture2D> BloomDirtTexture = nullptr;
+		Ref<ComputePipeline> BloomComputePipeline;
+		Ref<Texture2D> BloomDirtTexture;
 
 		Ref<Material> BloomPrefilterMaterial;
 		Ref<Material> BloomFirstUpsampleMaterial;
@@ -446,17 +448,26 @@ namespace Saturn {
 
 		//////////////////////////////////////////////////////////////////////////
 		// BRDF Lut
-		Ref<Texture2D> BRDFLUT_Texture = nullptr;
+		Ref<Texture2D> BRDFLUT_Texture;
 
 		// Late Composite
 		//////////////////////////////////////////////////////////////////////////
-		Ref<Pass> LateCompositePass = nullptr;
-		Ref<Framebuffer> LateCompositeFramebuffer = nullptr;
+		Ref<Pass> LateCompositePass;
+		Ref<Framebuffer> LateCompositeFramebuffer;
 
 		// Physics Outline
 		//////////////////////////////////////////////////////////////////////////
-		Ref<Pipeline> PhysicsOutlinePipeline = nullptr;
-		Ref<Material> PhysicsOutlineMaterial = nullptr;
+		Ref<Pipeline> PhysicsOutlinePipeline;
+		Ref<Material> PhysicsOutlineMaterial;
+
+		// SMAA
+		//////////////////////////////////////////////////////////////////////////
+
+		Ref<ComputePipeline> SMAAEdgeDetectionPipeline;
+		Ref<Material> SMAAEdgingMaterial;
+		Ref<Image2D> SMAAEdgeDetectionOutImage;
+
+		Ref<Sampler> SMAAPointSampler;
 
 		// Instanced Rendering
 		//////////////////////////////////////////////////////////////////////////
@@ -472,27 +483,28 @@ namespace Saturn {
 		//////////////////////////////////////////////////////////////////////////
 		// SHADERS
 
-		Ref< Shader > GridShader = nullptr;
-		Ref< Shader > SkyboxShader = nullptr;
-		Ref< Shader > PreethamShader = nullptr;
-		Ref< Shader > StaticMeshShader = nullptr;
-		Ref< Shader > DynamicMeshShader = nullptr;
-		Ref< Shader > SceneCompositeShader = nullptr;
-		Ref< Shader > TexturePassShader = nullptr;
-		Ref< Shader > DirShadowMapShader = nullptr;
-		Ref< Shader > DirShadowMapDynamicShader = nullptr;
-		Ref< Shader > SSAOShader = nullptr;
-		Ref< Shader > SSAOBlurShader = nullptr;
-		Ref< Shader > PreDepthShader = nullptr;
-		Ref< Shader > PreDepthDynamicShader = nullptr;
-		Ref< Shader > LightCullingShader = nullptr;
-		Ref< Shader > BloomShader = nullptr;
-		Ref< Shader > PhysicsOutlineShader = nullptr;
-		Ref< Shader > SelectionShader = nullptr;
-		Ref< Shader > SelectionDynamicShader = nullptr;
-		Ref< Shader > JmpFloodFirstShader = nullptr;
-		Ref< Shader > JmpFloodEvenShader = nullptr;
-		Ref< Shader > JmpFloodOddShader = nullptr;
+		Ref< Shader > GridShader;
+		Ref< Shader > SkyboxShader;
+		Ref< Shader > PreethamShader;
+		Ref< Shader > StaticMeshShader;
+		Ref< Shader > DynamicMeshShader;
+		Ref< Shader > SceneCompositeShader;
+		Ref< Shader > TexturePassShader;
+		Ref< Shader > DirShadowMapShader;
+		Ref< Shader > DirShadowMapDynamicShader;
+		Ref< Shader > SSAOShader;
+		Ref< Shader > SSAOBlurShader;
+		Ref< Shader > PreDepthShader;
+		Ref< Shader > PreDepthDynamicShader;
+		Ref< Shader > LightCullingShader;
+		Ref< Shader > BloomShader;
+		Ref< Shader > PhysicsOutlineShader;
+		Ref< Shader > SelectionShader;
+		Ref< Shader > SelectionDynamicShader;
+		Ref< Shader > JmpFloodFirstShader;
+		Ref< Shader > JmpFloodEvenShader;
+		Ref< Shader > JmpFloodOddShader;
+		Ref< Shader > SMAAEdgeDetectionShader;
 	};
 
 	class Renderer2D;
@@ -594,6 +606,8 @@ namespace Saturn {
 		void InitJmpfFirstPass();
 		void InitJmpfEvenPass();
 		void InitJmpfOddPass();
+		void InitSMAAPass();
+		void InitSMAAEdge();
 
 		void InitBuffers();
 		void InitRenderer2D();
@@ -611,6 +625,8 @@ namespace Saturn {
 		void SceneCompositePass();
 		void LateCompPhysicsOutline();
 		void JumpFloodLatePass();
+		void SMAAEdgePass();
+		void SMAAPass();
 		void TexturePass();
 
 		void RenderStaticMeshes();

@@ -141,6 +141,8 @@ namespace Saturn {
 
 		InitAO( AOTechnique::None );
 
+		InitSMAAPass();
+
 		m_RendererData.SceneEnvironment = Ref<EnvironmentMap>::Create();
 
 		// TODO: Package BRDF texture into AssetBundle in dist
@@ -723,7 +725,7 @@ namespace Saturn {
 
 			m_RendererData.SSAONoiseGenerated = true;
 
-			m_RendererData.SSAONoiseImage = Ref<Texture2D>::Create( ImageFormat::RGBA32F, 4, 4, ssaoNoise.data() );
+			m_RendererData.SSAONoiseImage = Ref<Texture2D>::Create( ImageFormat::RGBA32F, 4, 4, ssaoNoise.data(), false, AddressingMode::Repeat, TextureLoadFlags_NoMips );
 
 			m_RendererData.SSAOMaterial->SetResource( "u_NoiseTexture", m_RendererData.SSAONoiseImage );
 
@@ -1202,6 +1204,41 @@ namespace Saturn {
 		m_RendererData.JumpFloodOddPipeline = Ref<Pipeline>::Create( PipelineSpec );
 
 		m_RendererData.JumpFloodOddMaterial->SetResource( "u_InputTexture", m_RendererData.JumpFloodEvenFB->GetColorAttachmentsResources()[ 0 ] );
+	}
+
+	void SceneRenderer::InitSMAAPass()
+	{
+		InitSMAAEdge();
+	}
+
+	void SceneRenderer::InitSMAAEdge()
+	{
+		if( !m_RendererData.SMAAEdgeDetectionShader )
+		{
+			m_RendererData.SMAAEdgeDetectionShader = ShaderLibrary::Get().FindOrLoad( "SMAA-EdgeDetection", "content/shaders/SMAA-EdgeDetection.glsl" );
+		}
+		
+		m_RendererData.SMAAEdgeDetectionOutImage = Ref<Image2D>::Create( ImageFormat::RG8, m_RendererData.Width, m_RendererData.Height, 1, 1, 1, ImageTiling::Optimal, true );
+
+		SamplerSpecification samplerSpec;
+		samplerSpec.MinFilter = samplerSpec.MagFilter = SamplerFilter::Linear;
+		samplerSpec.MipFilter = SamplerFilter::Linear;
+		samplerSpec.AddressingMode = AddressingMode::ClampToEdge;
+		samplerSpec.MaxAnisotropy = 8.0f;
+		samplerSpec.CompareOperation = CompareOp::Less;
+		samplerSpec.MinLod = 0.0f;
+		samplerSpec.MaxLod = FLT_MAX;
+
+		m_RendererData.SMAAPointSampler = Ref<Sampler>::Create( samplerSpec );
+
+		m_RendererData.SMAAEdgeDetectionPipeline = Ref<ComputePipeline>::Create( m_RendererData.SMAAEdgeDetectionShader );
+
+		m_RendererData.SMAAEdgingMaterial = Ref<Material>::Create( m_RendererData.SMAAEdgeDetectionShader, "SMAAEdge" );
+	
+		// Write the output image.
+		m_RendererData.SMAAEdgingMaterial->SetResource( "o_OutEdges",     m_RendererData.SMAAEdgeDetectionOutImage );
+		m_RendererData.SMAAEdgingMaterial->SetSeparateImage( "u_InFinalColor", CompositeImage() );
+		m_RendererData.SMAAEdgingMaterial->SetResource( "s_PointSampler", m_RendererData.SMAAPointSampler );
 	}
 
 	void SceneRenderer::RenderGrid()
@@ -2001,6 +2038,7 @@ namespace Saturn {
 		InitJumpFlood();
 
 		InitTexturePass();
+		InitSMAAPass();
 
 		CreateSkyboxComponents();
 		CreateGridComponents();
@@ -2509,6 +2547,42 @@ namespace Saturn {
 		);
 
 		m_RendererData.JumpFloodOddPass->EndPass();
+	}
+
+	void SceneRenderer::SMAAEdgePass()
+	{
+		struct u_Params
+		{
+			glm::vec4 Metrics{};
+			float Threshold = 0.0f;
+			float LocalContrastAdaptation = 0.0f;
+		} pc_Params;
+
+		pc_Params.Metrics = glm::vec4(
+			1.0f / static_cast< float >( m_RendererData.Width ),
+			1.0f / static_cast< float >( m_RendererData.Height ),
+			m_RendererData.Width, m_RendererData.Height );
+
+		pc_Params.Threshold = 0.1f;
+		pc_Params.LocalContrastAdaptation = 2.0f;
+
+		m_RendererData.SMAAEdgeDetectionPipeline->BindWithCommandBuffer( m_RendererData.CommandBuffer );
+
+		glm::uvec3 workGroups{ 1 };
+		workGroups.x = ( uint32_t ) glm::ceil( static_cast< float >( m_RendererData.Width ) / 8.0f );
+		workGroups.y = ( uint32_t ) glm::ceil( static_cast< float >( m_RendererData.Height ) / 8.0f );
+
+		Buffer pc( sizeof( u_Params ), &pc_Params );
+
+		m_RendererData.SMAAEdgeDetectionPipeline->ExecuteWithExternalPC( m_RendererData.SMAAEdgingMaterial, pc,
+			workGroups.x,
+			workGroups.y,
+			workGroups.z );
+	}
+
+	void SceneRenderer::SMAAPass()
+	{
+		SMAAEdgePass();
 	}
 
 	void SceneRenderer::TexturePass()
@@ -3372,6 +3446,11 @@ namespace Saturn {
 		{
 			ScopedDebugLabel label( m_RendererData.CommandBuffer, "Late Composite/JmpFlood" );
 			JumpFloodLatePass();
+		}
+
+		{
+			ScopedDebugLabel label( m_RendererData.CommandBuffer, "SMAA" );
+			SMAAPass();
 		}
 
 		if( m_AluraRenderer )

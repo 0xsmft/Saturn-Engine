@@ -230,7 +230,13 @@ namespace Saturn {
 			}
 		}
 
-		for( int i = 0; i < PhysicalDevices.size(); i++ )
+		const uint32_t major = VK_API_VERSION_MAJOR( VK_HEADER_VERSION_COMPLETE ), 
+			minor = VK_API_VERSION_MINOR( VK_HEADER_VERSION_COMPLETE ), 
+			patch = VK_API_VERSION_PATCH( VK_HEADER_VERSION_COMPLETE ), 
+			variant = VK_API_VERSION_VARIANT( VK_HEADER_VERSION_COMPLETE );
+		SAT_CORE_INFO( "Vulkan Header verison: {}.{}.{}.{}", major, minor, patch, variant );
+
+		for( int i = 0; i < PhysicalDevices.size(); ++i )
 		{
 			m_DeviceProps.push_back( {} );
 			vkGetPhysicalDeviceProperties( m_PhysicalDevice, &m_DeviceProps[ i ].DeviceProps );

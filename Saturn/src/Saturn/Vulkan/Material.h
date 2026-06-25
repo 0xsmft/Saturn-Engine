@@ -30,6 +30,7 @@
 
 #include "Texture.h"
 #include "Shader.h"
+#include "Sampler.h"
 
 #include "UniformBuffer.h"
 #include "StorageBuffer.h"
@@ -55,7 +56,7 @@ namespace Saturn {
 	{
 	public:
 		 Material( const Ref<Shader>& rShader, const std::string& rMaterialName, uint32_t set = 0 );
-		~Material();
+		virtual ~Material();
 
 		void Copy( Ref<Material>& rOther );
 		void SetName( const std::string& rName ) { m_Name = rName; }
@@ -110,6 +111,24 @@ namespace Saturn {
 		// @param Name -- the name of the resource in the SHADER e.g. u_MyTexture
 		//
 		void SetResource( const std::string& Name, Ref<Image2D> rImage );
+
+		// 
+		// Set a Sampler resource.
+		// 
+		// NOTE: Not used by MaterialAssets! But used by other shader materials
+		// 
+		// @param Name -- the name of the resource in the SHADER e.g. s_MySampler
+		//
+		void SetResource( const std::string& Name, const Ref<Sampler> sampler );
+
+		//
+		// Set an image i.e. (VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE) with no sampler
+		// 
+		// NOTE: Not used by MaterialAssets! But used by other shader materials
+		//
+		// @param Name -- the name of the resource in the SHADER e.g. s_MySampler
+		//
+		void SetSeparateImage( const std::string& Name, const Ref<Image2D> image );
 
 		// 
 		// Get texture2D resource.

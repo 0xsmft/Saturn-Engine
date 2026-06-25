@@ -56,6 +56,7 @@ namespace Saturn {
 		Buffer CopyToBufferPixel( int x, int y );
 
 		VkDescriptorImageInfo& GetDescriptorInfo() { return m_DescriptorImageInfo; }
+		const VkDescriptorImageInfo& GetDescriptorInfo() const { return m_DescriptorImageInfo; }
 
 		VkImage GetImage() const { return m_Image; }
 		VkImageView GetImageView( size_t index = 0 ) { return m_ImageViews[ index ]; }

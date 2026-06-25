@@ -119,7 +119,7 @@ namespace Saturn {
 
 	void Material::Bind( VkCommandBuffer CommandBuffer, VkPipelineLayout Layout, const std::vector<std::vector<VkWriteDescriptorSet>>& rExtraWds, VkPipelineBindPoint bindPoint )
 	{
-		uint32_t frame = Renderer::Get()->GetCurrentFrame();
+		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
 		Update( rExtraWds );
 
 		VkDescriptorSet Set = m_DescriptorSets[ frame ];
@@ -128,7 +128,7 @@ namespace Saturn {
 
 	void Material::Update( const std::vector<std::vector<VkWriteDescriptorSet>>& rExtraWds )
 	{
-		uint32_t frame = Renderer::Get()->GetCurrentFrame();
+		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
 
 		if( rExtraWds.size() )
 		{
@@ -148,7 +148,7 @@ namespace Saturn {
 		// This material has no descriptor sets
 		if( m_DescriptorSetTemplate.Set == UINT32_MAX ) return;
 
-		uint32_t frame = Renderer::Get()->GetCurrentFrame();
+		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
 
 		m_DescriptorSets[ frame ] = m_Shader->AllocateDescriptorSet( m_Set, true );
 
@@ -176,6 +176,22 @@ namespace Saturn {
 			m_DescriptorSetTemplate.WriteDescriptorSets[ texture.Binding ].dstSet = m_DescriptorSets[ frame ];
 
 			pendingWds.push_back( m_DescriptorSetTemplate.WriteDescriptorSets[ texture.Binding ] );
+		}
+
+		// Separate samplers
+		for( auto& sampler : m_DescriptorSetTemplate.SeparateSamplers )
+		{
+			m_DescriptorSetTemplate.WriteDescriptorSets[ sampler.Binding ].dstSet = m_DescriptorSets[ frame ];
+
+			pendingWds.emplace_back( m_DescriptorSetTemplate.WriteDescriptorSets[ sampler.Binding ] );
+		}
+
+		// Separate images
+		for( auto& texture : m_DescriptorSetTemplate.SeparateImages )
+		{
+			m_DescriptorSetTemplate.WriteDescriptorSets[ texture.Binding ].dstSet = m_DescriptorSets[ frame ];
+
+			pendingWds.emplace_back( m_DescriptorSetTemplate.WriteDescriptorSets[ texture.Binding ] );
 		}
 
 		// Uniform buffers
@@ -246,7 +262,7 @@ namespace Saturn {
 
 		if( Itr != m_DescriptorSetTemplate.SampledImages.end() )
 		{
-			ShaderSampledImage ssi = *( Itr );
+			const ShaderSampledImage& ssi = *( Itr );
 			m_DescriptorSetTemplate.WriteDescriptorSets[ ssi.Binding ].pImageInfo = &Texture->GetDescriptorInfo();
 		}
 		else
@@ -260,7 +276,7 @@ namespace Saturn {
 
 			if( Itr != m_DescriptorSetTemplate.StorageImages.end() )
 			{
-				ShaderSampledImage ssi = *( Itr );
+				const ShaderSampledImage& ssi = *( Itr );
 				m_DescriptorSetTemplate.WriteDescriptorSets[ ssi.Binding ].pImageInfo = &Texture->GetDescriptorInfo();
 			}
 		}
@@ -286,7 +302,7 @@ namespace Saturn {
 
 		if( Itr != m_DescriptorSetTemplate.SampledImages.end() )
 		{
-			ShaderSampledImage ssi = *( Itr );
+			const ShaderSampledImage& ssi = *( Itr );
 			m_DescriptorSetTemplate.WriteDescriptorSets[ ssi.Binding ].pImageInfo = &rImage->GetDescriptorInfo();
 		}
 		else
@@ -300,7 +316,7 @@ namespace Saturn {
 
 			if( Itr != m_DescriptorSetTemplate.StorageImages.end() )
 			{
-				ShaderSampledImage ssi = *( Itr );
+				const ShaderSampledImage& ssi = *( Itr );
 				m_DescriptorSetTemplate.WriteDescriptorSets[ ssi.Binding ].pImageInfo = &rImage->GetDescriptorInfo();
 			}
 		}
@@ -316,7 +332,7 @@ namespace Saturn {
 
 		if( Itr != m_DescriptorSetTemplate.SampledImages.end() )
 		{
-			ShaderSampledImage ssi = *( Itr );
+			const ShaderSampledImage& ssi = *( Itr );
 			m_DescriptorSetTemplate.WriteDescriptorSets[ ssi.Binding ].pImageInfo = &Texture->GetDescriptorInfo();
 		}
 		else
@@ -330,9 +346,39 @@ namespace Saturn {
 
 			if( Itr != m_DescriptorSetTemplate.StorageImages.end() )
 			{
-				ShaderSampledImage ssi = *( Itr );
+				const ShaderSampledImage& ssi = *( Itr );
 				m_DescriptorSetTemplate.WriteDescriptorSets[ ssi.Binding ].pImageInfo = &Texture->GetDescriptorInfo();
 			}
+		}
+	}
+
+	void Material::SetResource( const std::string& Name, const Ref<Sampler> sampler )
+	{
+		const auto Itr = std::find_if( m_DescriptorSetTemplate.SeparateSamplers.begin(), m_DescriptorSetTemplate.SeparateSamplers.end(),
+			[ Name ]( const ShaderSampledImage& rImage )
+		{
+			return rImage.Name == Name;
+		} );
+
+		if( Itr != m_DescriptorSetTemplate.SeparateSamplers.end() )
+		{
+			const ShaderSampledImage& ssi = *( Itr );
+			m_DescriptorSetTemplate.WriteDescriptorSets[ ssi.Binding ].pImageInfo = &sampler->GetDescriptorImageInfo();
+		}
+	}
+
+	void Material::SetSeparateImage( const std::string& Name, const Ref<Image2D> image )
+	{
+		const auto Itr = std::find_if( m_DescriptorSetTemplate.SeparateImages.begin(), m_DescriptorSetTemplate.SeparateImages.end(),
+			[ Name ]( const ShaderSampledImage& rImage )
+		{
+			return rImage.Name == Name;
+		} );
+
+		if( Itr != m_DescriptorSetTemplate.SeparateImages.end() )
+		{
+			const ShaderSampledImage& ssi = *( Itr );
+			m_DescriptorSetTemplate.WriteDescriptorSets[ ssi.Binding ].pImageInfo = &image->GetDescriptorInfo();
 		}
 	}
 
@@ -348,7 +394,7 @@ namespace Saturn {
 
 		if( Itr != m_DescriptorSetTemplate.SampledImages.end() )
 		{
-			ShaderSampledImage ssi = *( Itr );
+			const ShaderSampledImage& ssi = *( Itr );
 			m_DescriptorSetTemplate.WriteDescriptorSets[ ssi.Binding ].pImageInfo = &rVulkanInfo;
 		}
 		else
@@ -362,7 +408,7 @@ namespace Saturn {
 
 			if( Itr != m_DescriptorSetTemplate.StorageImages.end() )
 			{
-				ShaderSampledImage ssi = *( Itr );
+				const ShaderSampledImage& ssi = *( Itr );
 				m_DescriptorSetTemplate.WriteDescriptorSets[ ssi.Binding ].pImageInfo = &rVulkanInfo;
 			}
 		}

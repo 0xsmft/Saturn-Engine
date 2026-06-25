@@ -244,7 +244,7 @@ namespace Saturn {
 	// SampledImages = 1 (u_AlbedoTexture [ShaderSampledImage])
 	// UniformBuffers = 1 (u_Matrices [ShaderUniformBuffer])
 	// StorageBuffers = 1 (s_VisiblePointLightIndicesBuffer [ShaderStorageBuffer])
-	// WriteDescriptorSets = 2 (u_AlbedoTexture image wds, u_Matrices texture wds, s_VisiblePointLightIndicesBuffer wds )
+	// WriteDescriptorSets = 3 (u_AlbedoTexture image wds, u_Matrices texture wds, s_VisiblePointLightIndicesBuffer wds )
 	// 
 	// ShaderDescriptorSetTemplate do not own or create a Vulkan DescriptorSet it is simply used for information about the descriptor set. 
 	// To allocate a descriptor set with such information you'd need to use the shader to create it with the correct set.
@@ -265,6 +265,8 @@ namespace Saturn {
 			StorageImages       = rOther.StorageImages;
 			UniformBuffers      = rOther.UniformBuffers;
 			StorageBuffers      = rOther.StorageBuffers;
+			SeparateImages      = rOther.SeparateImages;
+			SeparateSamplers    = rOther.SeparateSamplers;
 		}
 
 		ShaderDescriptorSetTemplate( const ShaderDescriptorSetTemplate* pOther )
@@ -277,6 +279,8 @@ namespace Saturn {
 			StorageImages = pOther->StorageImages;
 			UniformBuffers = pOther->UniformBuffers;
 			StorageBuffers = pOther->StorageBuffers;
+			SeparateImages = pOther->SeparateImages;
+			SeparateSamplers = pOther->SeparateSamplers;
 		}
 
 		~ShaderDescriptorSetTemplate() = default;
@@ -293,6 +297,10 @@ namespace Saturn {
 
 		std::vector< ShaderSampledImage > SampledImages;
 		std::vector< ShaderSampledImage > StorageImages;
+
+		// Images without a sampler i.e. texture2D specifier in GLSL.
+		std::vector< ShaderSampledImage > SeparateImages;
+		std::vector< ShaderSampledImage > SeparateSamplers;
 
 	public:
 		static void Serialise( const ShaderDescriptorSetTemplate& rObject, std::ofstream& rStream )

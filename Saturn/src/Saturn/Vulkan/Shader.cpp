@@ -717,7 +717,7 @@ namespace Saturn {
 			uint32_t binding = Compiler.get_decoration( si.id, spv::DecorationBinding );
 			uint32_t arraySize = RealType.array[ 0 ];
 
-			SHADER_INFO( "Seperate (non-sampled) image: {0}", Name );
+			SHADER_INFO( "Separate (non-sampled) image: {0}", Name );
 			SHADER_INFO( " Binding: {0}", binding );
 			SHADER_INFO( " Set: {0}", set );
 
@@ -727,7 +727,7 @@ namespace Saturn {
 			if( m_DescriptorSets[ set ].Set == UINT32_MAX )
 				m_DescriptorSets[ set ] = ShaderDescriptorSetTemplate( set );
 
-			m_DescriptorSets[ set ].SampledImages.emplace_back( Name, shaderType, set, binding, arraySize );
+			m_DescriptorSets[ set ].SeparateImages.emplace_back( Name, shaderType, set, binding, arraySize );
 		}
 
 		for( const auto& ss : Resources.separate_samplers )
@@ -750,7 +750,7 @@ namespace Saturn {
 			if( m_DescriptorSets[ set ].Set == UINT32_MAX )
 				m_DescriptorSets[ set ] = ShaderDescriptorSetTemplate( set );
 
-			m_DescriptorSets[ set ].SampledImages.emplace_back( Name, shaderType, set, binding, arraySize );
+			m_DescriptorSets[ set ].SeparateSamplers.emplace_back( Name, shaderType, set, binding, arraySize );
 		}
 #endif
 	}
@@ -846,6 +846,64 @@ namespace Saturn {
 					.dstArrayElement = 0,
 					.descriptorCount = 1,
 					.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+					.pImageInfo = nullptr,
+					.pBufferInfo = nullptr,
+					.pTexelBufferView = nullptr
+				};
+			}
+
+			// Separate images
+			for( auto& texture : descriptorSet.SeparateImages )
+			{
+				VkDescriptorSetLayoutBinding Binding = {};
+				Binding.binding = texture.Binding;
+				Binding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+				Binding.descriptorCount = texture.ArraySize;
+				Binding.stageFlags = texture.Stage == ShaderType::Vertex ? VK_SHADER_STAGE_VERTEX_BIT : ( texture.Stage == ShaderType::All ? VK_SHADER_STAGE_ALL : ( texture.Stage == ShaderType::Compute ? VK_SHADER_STAGE_COMPUTE_BIT : VK_SHADER_STAGE_FRAGMENT_BIT ) );
+				Binding.pImmutableSamplers = nullptr;
+
+				PoolSizes.emplace_back( VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 250 );
+
+				Bindings.push_back( Binding );
+
+				descriptorSet.WriteDescriptorSets[ texture.Binding ] =
+				{
+					.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+					.pNext = nullptr,
+					.dstSet = nullptr,
+					.dstBinding = texture.Binding,
+					.dstArrayElement = 0,
+					.descriptorCount = 1,
+					.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+					.pImageInfo = nullptr,
+					.pBufferInfo = nullptr,
+					.pTexelBufferView = nullptr
+				};
+			}
+
+			// Separate images
+			for( auto& texture : descriptorSet.SeparateSamplers )
+			{
+				VkDescriptorSetLayoutBinding Binding = {};
+				Binding.binding = texture.Binding;
+				Binding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+				Binding.descriptorCount = texture.ArraySize;
+				Binding.stageFlags = texture.Stage == ShaderType::Vertex ? VK_SHADER_STAGE_VERTEX_BIT : ( texture.Stage == ShaderType::All ? VK_SHADER_STAGE_ALL : ( texture.Stage == ShaderType::Compute ? VK_SHADER_STAGE_COMPUTE_BIT : VK_SHADER_STAGE_FRAGMENT_BIT ) );
+				Binding.pImmutableSamplers = nullptr;
+
+				PoolSizes.emplace_back( VK_DESCRIPTOR_TYPE_SAMPLER, 250 );
+
+				Bindings.push_back( Binding );
+
+				descriptorSet.WriteDescriptorSets[ texture.Binding ] =
+				{
+					.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+					.pNext = nullptr,
+					.dstSet = nullptr,
+					.dstBinding = texture.Binding,
+					.dstArrayElement = 0,
+					.descriptorCount = 1,
+					.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
 					.pImageInfo = nullptr,
 					.pBufferInfo = nullptr,
 					.pTexelBufferView = nullptr

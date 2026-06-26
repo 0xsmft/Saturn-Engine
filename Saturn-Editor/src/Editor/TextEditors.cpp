@@ -50,7 +50,7 @@ namespace Saturn::Auxiliary {
 			commandLine += std::format( L"-version {}", rVersion );
 		}
 
-		Process vsWhereProcess( commandLine, {}, ProcessCreateFlags::DelayedStart );
+		Process vsWhereProcess( commandLine, {} );
 
 		auto out = vsWhereProcess.StartAndGetOutput( {} );
 		

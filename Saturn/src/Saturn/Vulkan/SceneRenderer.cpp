@@ -1228,10 +1228,18 @@ namespace Saturn {
 		samplerSpec.MinFilter = samplerSpec.MagFilter = SamplerFilter::Linear;
 		samplerSpec.MipFilter = SamplerFilter::Linear;
 		samplerSpec.AddressingMode = AddressingMode::ClampToEdge;
-		samplerSpec.MaxAnisotropy = 8.0f;
 		samplerSpec.CompareOperation = CompareOp::Less;
 		samplerSpec.MinLod = 0.0f;
 		samplerSpec.MaxLod = FLT_MAX;
+
+		{
+			// We don't know the max anisotropy level, so we'll need to get it from the properties of the physical device.
+			// We do this as this is the best way to get the max anisotropy level as it can be different on other devices.
+			VkPhysicalDeviceProperties Properties = {};
+			vkGetPhysicalDeviceProperties( VulkanContext::Get()->GetPhysicalDevice(), &Properties );
+
+			samplerSpec.MaxAnisotropy = Properties.limits.maxSamplerAnisotropy;
+		}
 
 		m_RendererData.SMAAPointSampler = Ref<Sampler>::Create( samplerSpec );
 

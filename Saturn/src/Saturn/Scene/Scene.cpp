@@ -74,6 +74,7 @@
 #include "Saturn/ImGui/ImGuiWindowManager.h"
 
 #include "Saturn/ImGui/UndoRedo/GlobalUndoRedoGroup.h"
+#include "Saturn/ImGui/UndoRedo/EntityUndoRedoActions.h"
 
 #include "Saturn/Audio/SoundGraph/GraphSoundAssetViewer.h"
 
@@ -110,11 +111,6 @@ namespace Saturn {
 	{
 		m_SceneEntity = m_Registry.create();
 		m_Registry.emplace<SceneComponent>( m_SceneEntity, m_InternalID );
-
-		/*
-		m_Registry.on_construct<NavigationMeshSpecificationComponent>().connect<&Scene::OnNavMeshBuildCompAdded> ( *this );
-		m_Registry.on_destroy<NavigationMeshSpecificationComponent>().connect<&Scene::OnNavMeshBuildCompRemoved>( *this );
-		*/
 	}
 
 	void Scene::OnNavMeshBuildCompAdded( entt::registry& reg, entt::entity entity )
@@ -198,6 +194,8 @@ namespace Saturn {
 		// TODO: We might want to change the order of this update cycle.
 		if( IsRuntimeRunning() ) 
 		{
+			DestroyPendingEntities();
+
 			// Simulate the physics scene.
 			m_PhysicsScene->Simulate( ts );
 			OnUpdatePhysics( ts );
@@ -207,8 +205,6 @@ namespace Saturn {
 			OnUpdateAnimators( ts );
 
 			UpdateAudioListeners();
-
-			DestroyPendingEntities();
 		}
 	}
 	
@@ -252,16 +248,6 @@ namespace Saturn {
 			{
 				// SyncTransform
 				rEntity->GetComponent<TransformComponent>().Position = pController->GetPosition();
-
-				/*
-				auto& rb = rEntity->GetComponent<RigidbodyComponent>();
-
-				// rb.Rigidbody will be null if it's just been spawned into the world.
-				if( rb.Rigidbody )
-				{
-					rb.Rigidbody->SetPosition( pController->GetPosition() );
-				}
-				*/
 			}
 			else
 			{
@@ -426,17 +412,6 @@ namespace Saturn {
 				for( const auto& e : points )
 				{
 					const auto [transformComponent, lightComponent] = points.get<TransformComponent, PointLightComponent>( e );
-
-					/*
-					PointLight pl = {
-						.Position = transformComponent.Position,
-						.Radiance = lightComponent.Radiance,
-						.Multiplier = lightComponent.Multiplier,
-						.LightSize = lightComponent.LightSize,
-						.Radius = lightComponent.Radius,
-						.MinRadius = lightComponent.MinRadius,
-						.Falloff = lightComponent.Falloff };
-					*/
 
 					m_Lights.PointLights.emplace_back( 
 						transformComponent.Position, 

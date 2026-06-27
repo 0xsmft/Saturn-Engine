@@ -436,16 +436,17 @@ namespace Saturn {
 		std::istream stream( &membuf );
 
 		glm::vec2 FrictionRestitution{};
-		uint32_t assetFlags = 0;
 
 		RawSerialisation::ReadObject( FrictionRestitution.x, stream );
 		RawSerialisation::ReadObject( FrictionRestitution.y, stream );
 
-		RawSerialisation::ReadObject( assetFlags, stream );
-
+		const auto surfaceName = RawSerialisation::ReadString( stream );
+		
 		auto physMaterialAsset = Ref<PhysicsMaterialAsset>::Create( rAsset, 
 			FrictionRestitution.x,
 			FrictionRestitution.y );
+
+		physMaterialAsset->SetSurfaceName( surfaceName );
 
 		// Set rAsset reference to point to our new PhysicsMaterial.
 		rAsset = physMaterialAsset;
@@ -465,6 +466,7 @@ namespace Saturn {
 
 		RawSerialisation::WriteObject( physMaterialAsset->GetFriction(), stream );
 		RawSerialisation::WriteObject( physMaterialAsset->GetRestitution(), stream );
+		RawSerialisation::WriteString( physMaterialAsset->GetSurfaceName(), stream );
 
 		stream.close();
 

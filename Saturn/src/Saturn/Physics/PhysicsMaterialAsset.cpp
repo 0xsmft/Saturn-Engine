@@ -58,4 +58,9 @@ namespace Saturn {
 		m_JoltMaterial->SetRestitution( val );
 	}
 
+	void PhysicsMaterialAsset::SetSurfaceName( const std::string& rName )
+	{
+		m_SurfaceName = rName;
+	}
+
 }

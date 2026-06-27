@@ -77,12 +77,16 @@ namespace Saturn {
 	public:
 		void SetFriction( float val );
 		void SetRestitution( float val );
-		 
+		void SetSurfaceName( const std::string& rName );
+
 		float GetFriction()   const { return m_JoltMaterial->GetFriction(); }
 		float GetRestitution() const { return m_JoltMaterial->GetRestitution(); }
 
+		const std::string& GetSurfaceName() const { return m_SurfaceName; }
+
 	private:
 		JPH::Ref<PhysicsInternalMaterial> m_JoltMaterial;
+		std::string m_SurfaceName;
 
 	private:
 		friend class PhysicsMaterialAssetViewer;

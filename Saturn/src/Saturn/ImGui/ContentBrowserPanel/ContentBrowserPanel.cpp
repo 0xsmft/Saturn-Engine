@@ -36,6 +36,7 @@
 
 #include "Saturn/Asset/MaterialAsset.h"
 #include "Saturn/Physics/PhysicsMaterialAsset.h"
+#include "Saturn/Physics/PhysicsSurfaceRegistryAsset.h"
 #include "Saturn/Asset/AssetImporter.h"
 #include "Saturn/Asset/Prefab.h"
 #include "Saturn/Asset/AssetManager.h"
@@ -74,7 +75,7 @@
 #include <ranges>
 
 namespace Saturn {
-	
+
 	static inline ImVec2 operator+( const ImVec2& lhs, const ImVec2& rhs ) { return ImVec2( lhs.x + rhs.x, lhs.y + rhs.y ); }
 	static inline ImVec2 operator-( const ImVec2& lhs, const ImVec2& rhs ) { return ImVec2( lhs.x - rhs.x, lhs.y - rhs.y ); }
 	static inline ImVec2 operator*( const ImVec2& lhs, float rhs ) { return ImVec2( lhs.x * rhs, lhs.y * rhs ); }
@@ -307,7 +308,7 @@ namespace Saturn {
 					std::filesystem::path dstPath = entryPath / srcPath.filename();
 
 					std::filesystem::path assetPath = std::filesystem::relative( srcPath, Project::GetActiveProject()->GetRootDir() );
-					
+
 					std::filesystem::copy_file( entry, dstPath );
 					std::filesystem::remove( entry );
 
@@ -336,7 +337,7 @@ namespace Saturn {
 			}
 		}
 	}
-	
+
 	void ContentBrowserPanel::DrawAssetsFolderTree()
 	{
 		DrawFolderTree( m_CurrentViewModeDirectory );
@@ -351,7 +352,7 @@ namespace Saturn {
 	{
 		switch( type )
 		{
-			case CBViewMode::Assets: 
+			case CBViewMode::Assets:
 			{
 				ImGui::PushID( "PrjAssets" );
 
@@ -376,7 +377,7 @@ namespace Saturn {
 				ImGui::PopID();
 			} break;
 
-			case CBViewMode::Scripts: 
+			case CBViewMode::Scripts:
 			{
 				ImGui::PushID( "PrjScripts" );
 
@@ -385,7 +386,7 @@ namespace Saturn {
 				if( ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked( ImGuiMouseButton_Left ) )
 				{
 					ClearSelection();
-				
+
 					// Switch and set path to the game source.
 					m_ViewMode = CBViewMode::Scripts;
 					ResetPath( Project::GetActiveProject()->GetRootDir() );
@@ -405,11 +406,11 @@ namespace Saturn {
 				break;
 		}
 	}
-	
+
 	void ContentBrowserPanel::DrawAssetOpenRenamePopup()
 	{
 		/* May not be needed at this point in time.
-		* 
+		*
 		if( m_OpenRenameAssetOpenPopup )
 			ImGui::OpenPopup( "Close Asset Viewers##ClsAv" );
 
@@ -535,7 +536,7 @@ namespace Saturn {
 						Application::Get()->OpenNativeFileExplorer( rItem->Path(), true );
 					}
 				}
-			
+
 				// TODO: Allow for more than one
 				if( m_SelectedItems.size() == 1 )
 				{
@@ -844,7 +845,30 @@ namespace Saturn {
 				FindAndRenameItem( asset->Name );
 			}
 
-			if( ImGui::MenuItem( "New Class Instance" ) ) 
+			if( ImGui::MenuItem( "New Physics Surface Registry" ) )
+			{
+				const auto id = AssetManager::Get()->CreateAsset( AssetType::PhysSurfaceRegistry );
+				auto asset = AssetManager::Get()->FindAsset( id );
+				auto newPath = m_CurrentPath / "New Surface Registry.spsr";
+				uint32_t count = GetFilenameCount( "New Surface Registry.spsr" );
+
+				if( count >= 1 )
+					newPath.replace_filename( std::format( "{0} ({1}).spsr", "New Surface Registry", count ) );
+
+				asset->SetAbsolutePath( newPath );
+
+				Ref<PhysicsSurfaceRegistryAsset> registry = Ref<PhysicsSurfaceRegistryAsset>::Create( asset );
+
+				PhysicsSurfaceRegistryAssetSerialiser psras;
+				psras.Serialise( registry );
+
+				AssetManager::Get()->Save();
+
+				UpdateFiles( true );
+				FindAndRenameItem( asset->Name );
+			}
+
+			if( ImGui::MenuItem( "New Class Instance" ) )
 			{
 				m_OpenClassInstancePopup = true;
 			}
@@ -875,7 +899,7 @@ namespace Saturn {
 	{
 		switch( Event )
 		{
-			case filewatch::Event::added: 
+			case filewatch::Event::added:
 			case filewatch::Event::removed:
 			{
 				ClearSearchQuery();
@@ -884,14 +908,14 @@ namespace Saturn {
 
 			case filewatch::Event::modified:
 			{
-				
+
 			} break;
 
 			case filewatch::Event::renamed_new:
 			case filewatch::Event::renamed_old:
 			{
-//				ClearSearchQuery();
-//				UpdateFiles( true );
+				//				ClearSearchQuery();
+				//				UpdateFiles( true );
 			} break;
 
 			default:
@@ -944,7 +968,7 @@ namespace Saturn {
 
 	void ContentBrowserPanel::OnImGuiRender()
 	{
-		if( ImGui::Begin( "Content Browser", &m_Open ) ) 
+		if( ImGui::Begin( "Content Browser", &m_Open ) )
 		{
 			if( m_ChangeDirectory )
 			{
@@ -995,7 +1019,7 @@ namespace Saturn {
 			ImGui::PushStyleColor( ImGuiCol_Button, ImVec4( 0.0f, 0.0f, 0.0f, 0.0f ) );
 			ImGui::PushStyleColor( ImGuiCol_ButtonHovered, ImVec4( 0.3f, 0.3f, 0.3f, 0.35f ) );
 
-			auto drawTextCentredForNoAssets = [](const char* pText) 
+			auto drawTextCentredForNoAssets = []( const char* pText )
 			{
 				Auxiliary::ScopedStyleColor col( ImGuiCol_Text, ImGui::GetColorU32( ImGuiCol_TextDisabled ) );
 				const ImVec2 textSize = ImGui::CalcTextSize( pText );
@@ -1010,11 +1034,11 @@ namespace Saturn {
 					case Saturn::CBViewMode::Scripts:
 						drawTextCentredForNoAssets( "You may need to compile the game in order for classes to show up in the Content Browser Panel." );
 						break;
-				
+
 					case CBViewMode::Assets:
 						drawTextCentredForNoAssets( "Right click to create/import assets." );
 						break;
-	
+
 					default:
 						break;
 				}
@@ -1064,7 +1088,7 @@ namespace Saturn {
 			}
 			else
 			{
-				if( m_RenderUnclipped ) 
+				if( m_RenderUnclipped )
 				{
 					DrawItemsUnclipped( m_Files, { thumbnailSizeX, thumbnailSizeY }, padding );
 				}
@@ -1082,9 +1106,9 @@ namespace Saturn {
 				const auto& map = m_Searching ? m_ValidSearchFiles : m_Files;
 				const auto hoveredItems = std::count_if( map.begin(), map.end(),
 					[]( const auto& rItem )
-					{
-						return rItem->IsHovered();
-					} );
+				{
+					return rItem->IsHovered();
+				} );
 
 				if( m_SelectedItems.size() && hoveredItems == 0 )
 				{
@@ -1149,7 +1173,7 @@ namespace Saturn {
 						}
 					}
 				}
-				else if( m_CurrentImportPopup->HasError() ) 
+				else if( m_CurrentImportPopup->HasError() )
 				{
 					DrawErrorImportPopup();
 				}
@@ -1261,7 +1285,7 @@ namespace Saturn {
 				OnKeyPressed( ( RubyKeyEvent& ) rEvent );
 			} break;
 
-			case EventType::MousePressed: 
+			case EventType::MousePressed:
 			{
 				RubyMouseEvent& mouseEvent = ( RubyMouseEvent& ) rEvent;
 
@@ -1275,11 +1299,11 @@ namespace Saturn {
 				}
 			} break;
 
-			case EventType::CBMoveItem: 
+			case EventType::CBMoveItem:
 			{
 				// TOOD: Suspend filewatcher.
 				CBMoveItemEvent& rMoveEvent = ( CBMoveItemEvent& ) rEvent;
-	
+
 				if( rMoveEvent.GetSourceItem() && rMoveEvent.GetDestinationItem() )
 				{
 					// Perform move action
@@ -1295,7 +1319,7 @@ namespace Saturn {
 	void ContentBrowserPanel::DrawClassHierarchy( const std::string& rKeyName, const SClass* pClass )
 	{
 		ImGuiTreeNodeFlags Flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
-		
+
 		if( m_pSelectedMetadata )
 			m_pSelectedMetadata->GetName() == rKeyName ? Flags |= ImGuiTreeNodeFlags_Selected : 0;
 
@@ -1309,18 +1333,18 @@ namespace Saturn {
 		if( opened )
 		{
 			ClassMetadataHandler::Get().EachClassNode2( pClass,
-				[&]( const auto pNextClassNode )
+				[ & ]( const auto pNextClassNode )
+			{
+				const SClass* pClass = pNextClassNode.pClassPtr;
+
+				const auto& rParentClassName = pClass->GetParentClass() != nullptr ? pClass->GetParentClass()->GetName() : "";
+
+				// Draw next set of classes if name machetes.
+				if( rParentClassName == rKeyName )
 				{
-					const SClass* pClass = pNextClassNode.pClassPtr;
-
-					const auto& rParentClassName = pClass->GetParentClass() != nullptr ? pClass->GetParentClass()->GetName() : "";
-
-					// Draw next set of classes if name machetes.
-					if( rParentClassName == rKeyName )
-					{
-						DrawClassHierarchy( pClass->GetName(), pClass );
-					}
-				} );
+					DrawClassHierarchy( pClass->GetName(), pClass );
+				}
+			} );
 
 			Auxiliary::EndTreeNode();
 		}
@@ -1394,7 +1418,7 @@ namespace Saturn {
 			ImGui::PopFont();
 
 			ImGui::Text( "%s has %i Asset Dependencies and %i memory dependencies.", assetToDelete->Name.c_str(), rPureDependencies.size(), rMemoryDependencies.size() );
-			
+
 			ImGui::Text( "Deleting the asset cause everything that depends on \"%s\" to be invalid unless a replacement is given.", assetToDelete->Name.c_str() );
 
 			ImGui::Text( "Because this Asset may have memory dependencies the Undo/Redo history will be cleared." );
@@ -1569,12 +1593,12 @@ namespace Saturn {
 
 		switch( m_ViewMode )
 		{
-			case Saturn::CBViewMode::Assets: 
+			case Saturn::CBViewMode::Assets:
 			{
 				m_CurrentViewModeDirectory = rProjectRootPath / "Assets";
 			} break;
 
-			case Saturn::CBViewMode::Scripts: 
+			case Saturn::CBViewMode::Scripts:
 			{
 				m_CurrentViewModeDirectory = m_ScriptPath;
 			} break;
@@ -1588,10 +1612,10 @@ namespace Saturn {
 			m_RootPath = m_CurrentViewModeDirectory;
 
 			m_Watcher = std::make_unique<filewatch::FileWatch<std::wstring>>( m_RootPath.wstring(),
-				[this]( const std::wstring& path, const filewatch::Event event )
-				{
-					OnFilewatchEvent( path, event );
-				} );
+				[ this ]( const std::wstring& path, const filewatch::Event event )
+			{
+				OnFilewatchEvent( path, event );
+			} );
 		}
 		else
 			m_RootPath = m_CurrentViewModeDirectory;
@@ -1614,7 +1638,7 @@ namespace Saturn {
 		if( m_CurrentPath != fullPath )
 		{
 			m_CurrentPath /= fullPath;
-		
+
 			ClearSelection();
 			ClearSearchQuery();
 			m_Searching = false;
@@ -1670,21 +1694,21 @@ namespace Saturn {
 		}
 	}
 
-	void ContentBrowserPanel::GetSourceFiles( bool clear ) 
+	void ContentBrowserPanel::GetSourceFiles( bool clear )
 	{
 #if !defined(SAT_DIST)
 		ClassMetadataHandler::Get().EveryClass(
-			[=]( const auto* pClass )
+			[ = ]( const auto* pClass )
+		{
+			if( ( pClass->GetFlags() & SC_NoExtendedMetadata ) == 0 )
 			{
-				if( ( pClass->GetFlags() & SC_NoExtendedMetadata ) == 0 )
-				{
-					Ref<ContentBrowserItem> item = Ref<ContentBrowserItem>::Create( std::filesystem::directory_entry( pClass->GetHeaderPath() ), ContentBrowserItemType::SourceItem );
-					item->SetSelectedFn( SAT_BIND_EVENT_FN( ContentBrowserPanel::OnItemSelected ) );
+				Ref<ContentBrowserItem> item = Ref<ContentBrowserItem>::Create( std::filesystem::directory_entry( pClass->GetHeaderPath() ), ContentBrowserItemType::SourceItem );
+				item->SetSelectedFn( SAT_BIND_EVENT_FN( ContentBrowserPanel::OnItemSelected ) );
 
-					m_Files.push_back( item );
-					m_FilesNeedSorting = true;
-				}
-			} );
+				m_Files.push_back( item );
+				m_FilesNeedSorting = true;
+			}
+		} );
 #endif
 	}
 
@@ -1753,7 +1777,7 @@ namespace Saturn {
 		const std::string fileExt = asset->Path.extension().string();
 		const auto count = GetFilenameCount( asset->Name );
 		const std::string newName = std::format( "{0} ({1}){2}", asset->Name, count, fileExt );
-		
+
 		std::filesystem::path absPath = Project::GetActiveProject()->FilepathAbs( dupedAsset->Path.parent_path() / newName );
 		dupedAsset->SetAbsolutePath( absPath );
 
@@ -1769,7 +1793,7 @@ namespace Saturn {
 	void ContentBrowserPanel::MoveItemToItem( ContentBrowserItem* pSrc, ContentBrowserItem* pDst )
 	{
 		ClearSelection();
-	
+
 		std::filesystem::path srcPath = pSrc->Path();
 		std::filesystem::path dstPath = pDst->Path() / srcPath.filename();
 
@@ -1814,8 +1838,8 @@ namespace Saturn {
 			ImGui::BeginHorizontal( "##inputh" );
 
 			ImGui::Text( "Name:" );
-			
-			if( Auxiliary::InputText( "##newclassname", &m_NewClassName ) ) 
+
+			if( Auxiliary::InputText( "##newclassname", &m_NewClassName ) )
 			{
 				m_IllegalClassName = CheckIllegalClassName();
 			}
@@ -1841,14 +1865,14 @@ namespace Saturn {
 
 			ImGuiIO& rIO = ImGui::GetIO();
 			const auto boldFont = rIO.Fonts->Fonts[ 1 ];
-		
+
 			if( m_IsSimpleClassLayout )
 			{
 				ImGui::PushFont( boldFont );
 				ImGui::Text( "Choose a parent class (simple)" );
 				ImGui::PopFont();
 
-				const auto drawOptionButton = []( const char* pHeadingText, const char* pDesc ) -> bool 
+				const auto drawOptionButton = []( const char* pHeadingText, const char* pDesc ) -> bool
 				{
 					ImGui::Text( pHeadingText );
 					ImGui::Text( pDesc );
@@ -1857,16 +1881,16 @@ namespace Saturn {
 				};
 
 				{
-					if( drawOptionButton( "Default SClass", "A simple class that has reflection data tied to it." ) ) 
+					if( drawOptionButton( "Default SClass", "A simple class that has reflection data tied to it." ) )
 					{
 						m_pSelectedMetadata = SObject::StaticClass();
 					}
 				}
-				
+
 				ImGui::Separator();
 
 				{
-					if( drawOptionButton( "Entity", "An entity that can be spawned into the world with custom behaviour defined in C++." ) ) 
+					if( drawOptionButton( "Entity", "An entity that can be spawned into the world with custom behaviour defined in C++." ) )
 					{
 						m_pSelectedMetadata = Entity::StaticClass();
 					}
@@ -1875,7 +1899,7 @@ namespace Saturn {
 				ImGui::Separator();
 
 				{
-					if( drawOptionButton( "Character", "An entity that has the ability to walk, jump and sprint. A camera will be created if non is specified." ) ) 
+					if( drawOptionButton( "Character", "An entity that has the ability to walk, jump and sprint. A camera will be created if non is specified." ) )
 					{
 						m_pSelectedMetadata = Character::StaticClass();
 					}
@@ -1901,7 +1925,7 @@ namespace Saturn {
 			ImGui::EndVertical();
 
 			ImGui::Checkbox( "Show simple class list", &m_IsSimpleClassLayout );
-	
+
 			Auxiliary::DisabledFlag disabled( m_NewClassName.empty() || m_pSelectedMetadata == nullptr );
 
 			ImGui::Separator();
@@ -1946,9 +1970,14 @@ namespace Saturn {
 					Application::Get()->DispatchEvent<RequestOpenIDEEvent>( headerPath );
 				}
 
-				// Step 4: TODO: Temp, when I port hot reloading over to use the new BuildTool and the new /MD it will work properly.
-				// and this would no longer need to be here.
-				Application::Get()->DispatchEvent<SendEditorNotificationEvent>( "A hot reload or a recompile is needed for the class to be registered within the Game!" );
+				if( m_HotReloadAfterNewClass )
+				{
+					// todo... hot-reload
+				}
+				else
+				{
+					Application::Get()->DispatchEvent<SendEditorNotificationEvent>( "A hot reload or a recompile is needed for the class to be registered within the Game!" );
+				}
 
 				PopupModified = true;
 				UpdateFiles( true );
@@ -2039,7 +2068,7 @@ namespace Saturn {
 
 	void ContentBrowserPanel::OnItemSelected( ContentBrowserItem* pItem, bool clicked )
 	{
-		if( pItem->IsDirectory() && clicked && !pItem->MultiSelected() ) 
+		if( pItem->IsDirectory() && clicked && !pItem->MultiSelected() )
 		{
 			const auto newPath = m_CurrentPath / pItem->Path();
 			ChangeDirectoryAndAddQuickAction( newPath );
@@ -2067,7 +2096,7 @@ namespace Saturn {
 	void ContentBrowserPanel::DrawItemsClipped( std::vector<Ref<ContentBrowserItem>>& rList, ImVec2 size, float padding, int columnCount )
 	{
 		ImGuiListClipper clipper;
-		clipper.Begin( (int)glm::ceil( ( float ) rList.size() / ( float ) columnCount ) );
+		clipper.Begin( ( int ) glm::ceil( ( float ) rList.size() / ( float ) columnCount ) );
 
 		// TODO: This is slow
 		//		 With 600+ items we start to see a frame drop.

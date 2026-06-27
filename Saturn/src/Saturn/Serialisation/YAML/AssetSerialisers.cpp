@@ -32,6 +32,7 @@
 #include "Saturn/Asset/AssetManager.h"
 #include "Saturn/Asset/Prefab.h"
 #include "Saturn/Physics/PhysicsMaterialAsset.h"
+#include "Saturn/Physics/PhysicsSurfaceRegistryAsset.h"
 #include "Saturn/Asset/TextureSourceAsset.h"
 #include "Saturn/Asset/MaterialAsset.h"
 #include "Saturn/Animation/SkeletonAsset.h"
@@ -1118,6 +1119,85 @@ namespace Saturn {
 
 		// Set rAsset reference to point to our new AluraStylingProfile
 		rAsset = stylingProfAsset;
+
+		return true;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// PhysicsSurfaceRegistryAssetSerialiser
+
+	void PhysicsSurfaceRegistryAssetSerialiser::Serialise( const Ref<Asset>& rAsset ) const
+	{
+		const auto physSurfaceReg = rAsset.As<PhysicsSurfaceRegistryAsset>();
+
+		YAML::Emitter out;
+
+		out << YAML::BeginMap;
+
+		out << YAML::Key << "PhysicsSurfaceRegistry" << YAML::Value;
+		out << YAML::BeginMap;
+
+		out << YAML::Key << "Count" << YAML::Value << physSurfaceReg->GetNamesList().size();
+
+		out << YAML::Key << "Names" << YAML::Value;
+		out << YAML::BeginSeq;
+
+#if defined( SAT_DIST )
+		for( const auto& [rName] : physSurfaceReg->GetNamesList() )
+#else
+		for( const auto& [rName, rId] : physSurfaceReg->GetNamesList() )
+#endif
+		{
+			out << YAML::BeginMap;
+			out << YAML::Key << "Name" << YAML::Value << rName;
+			out << YAML::EndMap; // Name
+		}
+
+		out << YAML::EndSeq; // Names
+
+		out << YAML::EndMap; // Asset
+
+		out << YAML::EndMap; // Root
+
+		const auto& basePath = rAsset->Path;
+		const auto fullPath = GetFilepathAbs( basePath );
+
+		std::ofstream fout( fullPath );
+		fout << out.c_str();
+	}
+
+	bool PhysicsSurfaceRegistryAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
+	{
+		const auto absolutePath = GetFilepathAbs( rAsset->Path );
+		std::ifstream FileIn( absolutePath );
+
+		std::stringstream ss;
+		ss << FileIn.rdbuf();
+
+		YAML::Node data = YAML::Load( ss.str() );
+
+		if( data.IsNull() )
+			return false;
+
+		const auto regData = data[ "PhysicsSurfaceRegistry" ];
+
+		if( regData.IsNull() )
+			return false;
+
+		auto physSurfaceReg = Ref<PhysicsSurfaceRegistryAsset>::Create( rAsset );
+
+		const auto namesCount = regData[ "Count" ].as<size_t>( 0llu );
+		physSurfaceReg->m_Surfaces.reserve( namesCount );
+
+		const auto names = regData[ "Names" ];
+		for( const auto nameNode : names )
+		{
+			const auto name = nameNode[ "Name" ].as<std::string>();
+			physSurfaceReg->m_Surfaces.emplace_back( name );
+		}
+
+		// Set rAsset reference to point to our new PhysicsSurfaceRegistryAsset
+		rAsset = physSurfaceReg;
 
 		return true;
 	}

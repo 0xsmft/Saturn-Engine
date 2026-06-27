@@ -34,6 +34,7 @@
 #include "Saturn/Asset/AssetManager.h"
 #include "Saturn/Asset/Prefab.h"
 #include "Saturn/Physics/PhysicsMaterialAsset.h"
+#include "Saturn/Physics/PhysicsSurfaceRegistryAsset.h"
 #include "Saturn/Asset/TextureSourceAsset.h"
 #include "Saturn/Asset/MaterialAsset.h"
 #include "Saturn/Audio/SoundSpecification.h"
@@ -808,6 +809,64 @@ namespace Saturn {
 		for( const auto& rColor : rStyle.Colors )
 		{
 			RawSerialisation::WriteVec4( rColor, stream );
+		}
+
+		stream.close();
+
+		return true;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// PHYSICS SURFACE REGISTRY
+
+	bool RawPhysicsSurfaceRegistryAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
+	{
+		const std::string& rMountBase = Project::GetActiveConfig().Name;
+		Ref<VFile> file = VirtualFS::Get().FindFile( rMountBase, rAsset->Path );
+
+		if( !file )
+			return false;
+
+		/////////////////////////////////////
+
+		PakFileMemoryBuffer membuf( file->FileContent );
+		std::istream stream( &membuf );
+
+		auto physSurfaceReg = Ref<PhysicsSurfaceRegistryAsset>::Create( rAsset );
+
+		size_t namesSize = 0llu;
+		RawSerialisation::ReadObject( namesSize, stream );
+
+		physSurfaceReg->m_Surfaces.reserve( namesSize );
+
+		for( size_t i = 0; i < namesSize; ++i )
+		{
+			const std::string name = RawSerialisation::ReadString( stream );
+			physSurfaceReg->m_Surfaces.emplace_back( name );
+		}
+
+		rAsset = physSurfaceReg;
+
+		return true;
+	}
+
+	bool RawPhysicsSurfaceRegistryAssetSerialiser::DumpAndWriteToVFS( const Ref<Asset>& rAsset ) const
+	{
+		const auto physSurfaceReg = rAsset.As<PhysicsSurfaceRegistryAsset>();
+
+		std::filesystem::path out = Project::GetActiveProject()->GetTempDir();
+		out /= std::to_string( rAsset->ID );
+		out.replace_extension( ".vfs" );
+
+		std::ofstream stream( out, std::ios::binary | std::ios::trunc );
+
+		const auto& rSurfaces = physSurfaceReg->GetNamesList();
+
+		RawSerialisation::WriteObject( rSurfaces.size(), stream );
+
+		for( const auto& rSurface : rSurfaces )
+		{
+			RawSerialisation::WriteString( rSurface.Name, stream );
 		}
 
 		stream.close();

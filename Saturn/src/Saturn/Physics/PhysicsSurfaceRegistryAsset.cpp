@@ -1,4 +1,3 @@
-
 /********************************************************************************************
 *                                                                                           *
 *                                                                                           *
@@ -28,39 +27,38 @@
 */
 
 #include "sppch.h"
-#include "VFSAssetImporter.h"
+#include "PhysicsSurfaceRegistryAsset.h"
 
 namespace Saturn {
 
-	VFSAssetImporter::VFSAssetImporter()
+	PhysicsSurfaceRegistryAsset::PhysicsSurfaceRegistryAsset()
 	{
-		Init();
 	}
 
-	VFSAssetImporter::~VFSAssetImporter()
+	PhysicsSurfaceRegistryAsset::PhysicsSurfaceRegistryAsset( const Ref<Asset>& rBase )
+		: Asset( rBase )
 	{
-		m_AssetSerialisers.clear();
 	}
 
-	void VFSAssetImporter::Init()
+	PhysicsSurfaceRegistryAsset::~PhysicsSurfaceRegistryAsset()
 	{
-		m_AssetSerialisers[ AssetType::Texture ]           = std::make_unique<RawTextureSourceAssetSerialiser>();
-		m_AssetSerialisers[ AssetType::StaticMesh ]        = std::make_unique<RawStaticMeshAssetSerialiser>();
-		m_AssetSerialisers[ AssetType::SkeletalMesh      ] = std::make_unique<RawSkeletalMeshAssetSerialiser>();
-		m_AssetSerialisers[ AssetType::Material ]          = std::make_unique<RawMaterialAssetSerialiser>();
-		m_AssetSerialisers[ AssetType::Sound ]             = std::make_unique<RawSoundSpecAssetSerialiser>();
-		m_AssetSerialisers[ AssetType::Prefab ]            = std::make_unique<RawPrefabSerialiser>();
-		m_AssetSerialisers[ AssetType::Skeleton          ] = std::make_unique<RawSkeletonAssetSerialiser>();
-		m_AssetSerialisers[ AssetType::PhysicsMaterial ]   = std::make_unique<RawPhysicsMaterialAssetSerialiser>();
-		m_AssetSerialisers[ AssetType::BehaviourTreeMemory ] = std::make_unique<RawBlackboardSpecSerialiser>();
-		m_AssetSerialisers[ AssetType::SkeletalAnimation ] = std::make_unique<RawSkeletalAnimationSerialiser>();
-		m_AssetSerialisers[ AssetType::Font ]                = std::make_unique<RawFontSerialiser>();
-		m_AssetSerialisers[ AssetType::StyleProfile ]        = std::make_unique<RawAluraStylingProfileSerialiser>();
-		m_AssetSerialisers[ AssetType::PhysSurfaceRegistry ]        = std::make_unique<RawPhysicsSurfaceRegistryAssetSerialiser>();
 	}
 
-	bool VFSAssetImporter::TryLoadData( Ref<Asset>& rAsset )
+	void PhysicsSurfaceRegistryAsset::AddSurfaceType( const std::string& rName )
 	{
-		return m_AssetSerialisers[ rAsset->Type ]->TryLoadData( rAsset );
+		if( !DoesSurfaceTypeExist( rName ) )
+		{
+			m_Surfaces.emplace_back( rName );
+		}
 	}
+
+	bool PhysicsSurfaceRegistryAsset::DoesSurfaceTypeExist( const std::string& rName )
+	{
+		return std::find_if( m_Surfaces.begin(), m_Surfaces.end(), 
+			[ rName ]( const auto& rCandidate )
+		{ 
+			return rCandidate.Name == rName;
+		} ) != m_Surfaces.end();
+	}
+
 }

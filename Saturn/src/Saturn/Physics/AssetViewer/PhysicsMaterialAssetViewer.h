@@ -37,7 +37,7 @@ namespace Saturn {
 	{
 	public:
 		PhysicsMaterialAssetViewer( AssetID id );
-		~PhysicsMaterialAssetViewer();
+		virtual ~PhysicsMaterialAssetViewer();
 
 		virtual void OnImGuiRender() override;
 		virtual void OnUpdate( Timestep ts ) override {}

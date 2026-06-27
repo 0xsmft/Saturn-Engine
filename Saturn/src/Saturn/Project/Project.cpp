@@ -288,6 +288,9 @@ namespace Saturn {
 
 		if( m_DefaultFontAsset == assetID )
 			m_DefaultFontAsset = 0llu;
+
+		if( m_DefaultPhysSurfaceRegistryAsset == assetID )
+			m_DefaultPhysSurfaceRegistryAsset = 0llu;
 	}
 
 	bool Project::HasPremakeFile() const

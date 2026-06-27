@@ -1652,6 +1652,51 @@ namespace Saturn {
 			}
 			ImGui::EndHorizontal();
 
+			ImGui::BeginHorizontal( "##prj_defphysreg" );
+			{
+				auto defaultPhysReg = ActiveProject->GetDefaultPhysRegAsset();
+
+				ImGui::Text( "Default Physics Surface Registry Asset:" );
+				defaultPhysReg == 0 ? ImGui::TextColored( ImVec4( 1.0f, 0.0f, 0.0f, 1.0f ), "None" ) : ImGui::Text( "%llu", defaultPhysReg );
+
+				ImGui::Spring();
+
+				Auxiliary::DisabledFlag inspectDisabledFlag( m_RequestRuntime );
+
+				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), { 24.0f, 24.0f } ) )
+					s_OpenAssetFinderPopup = true;
+
+				if( Auxiliary::DrawAssetFinder( AssetType::PhysSurfaceRegistry, &s_OpenAssetFinderPopup, defaultPhysReg ) )
+				{
+					ActiveProject->SetDefaultPhysRegAsset( defaultPhysReg );
+					shouldSaveProject = true;
+				}
+
+				inspectDisabledFlag.Pop();
+
+				{
+					Auxiliary::ScopedDisabledFlag disabledFlag( defaultPhysReg == 0 );
+
+					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "SearchFolder" ), { 24.0f, 24.0f } ) )
+					{
+						const Ref<Asset> target = m_AssetManager->FindAsset( defaultPhysReg );
+
+						if( target )
+						{
+							Ref<ContentBrowserPanel> contentBrowserPanel = m_ImGuiWindowManager->GetPanel<ContentBrowserPanel>();
+							contentBrowserPanel->BrowseToItem( target->Path, defaultPhysReg );
+						}
+					}
+
+					if( ImGui::BeginItemTooltip() )
+					{
+						ImGui::Text( "Find in Content Browser" );
+						ImGui::EndTooltip();
+					}
+				}
+			}
+			ImGui::EndHorizontal();
+
 			ImGui::PushFont( boldFont );
 			ImGui::Text( "Autosaves" );
 			ImGui::Separator();

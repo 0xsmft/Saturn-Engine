@@ -56,6 +56,7 @@ namespace Saturn {
 		AnimationController,
 		Font, // Alura
 		StyleProfile, // Alura
+		PhysSurfaceRegistry,
 		// ^^^ ADD NEW ASSET TYPES HERE ^^^
 		Unknown,
 		COUNT,
@@ -99,6 +100,9 @@ namespace Saturn {
 				return "Font";
 			case Saturn::AssetType::StyleProfile:
 				return "StyleProfile";
+			case Saturn::AssetType::PhysSurfaceRegistry:
+				return "PhysSurfaceRegistry";
+
 			default:
 			case Saturn::AssetType::Unknown:
 				return "Unknown";
@@ -153,6 +157,9 @@ namespace Saturn {
 				return COLOR_32( 92, 100, 112, 255 );
 			case Saturn::AssetType::StyleProfile:
 				return COLOR_32( 22, 74, 12, 255 );
+			case Saturn::AssetType::PhysSurfaceRegistry:
+				return COLOR_32( 84, 33, 58, 255 );
+
 			default:
 			case Saturn::AssetType::Unknown:
 				return COLOR_32( 255, 255, 255, 255 );
@@ -195,6 +202,8 @@ namespace Saturn {
 			return AssetType::Font;
 		else if( str == "StyleProfile" )
 			return AssetType::StyleProfile;
+		else if( str == "PhysSurfaceRegistry" )
+			return AssetType::PhysSurfaceRegistry;
 		else
 			return AssetType::Unknown;
 	}
@@ -233,6 +242,8 @@ namespace Saturn {
 			return AssetType::Font;
 		else if( str == ".ssp" )
 			return AssetType::StyleProfile;
+		else if( str == ".spsr" )
+			return AssetType::PhysSurfaceRegistry;
 		else
 			return AssetType::Unknown;
 	}

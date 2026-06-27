@@ -35,6 +35,9 @@
 
 namespace Saturn {
 
+	//
+	// Internal class for PhysicsMaterialAsset, do not use!
+	//
 	class PhysicsInternalMaterial : public JPH::PhysicsMaterial
 	{
 	public:

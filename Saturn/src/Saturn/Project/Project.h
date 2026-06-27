@@ -166,6 +166,9 @@ namespace Saturn {
 		const UUID GetDefaultFontAsset() const { return m_DefaultFontAsset; }
 		void SetDefaultFontAsset( UUID newID ) { m_DefaultFontAsset = newID; }
 
+		const UUID GetDefaultPhysRegAsset() const { return m_DefaultPhysSurfaceRegistryAsset; }
+		void SetDefaultPhysRegAsset( UUID newID ) { m_DefaultPhysSurfaceRegistryAsset = newID; }
+
 		void RemoveAssetFromDefaults( /*AssetID*/ UUID assetID );
 
 		//////////////////////////////////////////////////////////////////////////
@@ -223,6 +226,7 @@ namespace Saturn {
 		UUID m_DefaultMaterialAsset = 0;
 		UUID m_DefaultPhysicsMaterialAsset = 0;
 		UUID m_DefaultFontAsset = 0;
+		UUID m_DefaultPhysSurfaceRegistryAsset = 0;
 
 		OnlineSystemAPIType m_OnlineAPIType = OnlineSystemAPIType::Steam;
 

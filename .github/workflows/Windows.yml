@@ -19,6 +19,8 @@ jobs:
     
     - name: Install Vulkan SDK
       uses: jakoch/install-vulkan-sdk-action@v1.5.5
+      with:
+        - optional_components: com.lunarg.vulkan.debug
 
     - name: Download Premake
       uses: BEASTSM96/premake-action@v1.5.1

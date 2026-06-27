@@ -148,8 +148,8 @@ namespace Saturn {
 
 		for( auto attachment : m_PassSpec.Attachments )
 		{
-			VkAttachmentLoadOp clrOp = m_PassSpec.LoadColor ? VK_ATTACHMENT_LOAD_OP_LOAD : VK_ATTACHMENT_LOAD_OP_CLEAR;
-			VkAttachmentLoadOp dptOp = m_PassSpec.LoadDepth ? VK_ATTACHMENT_LOAD_OP_LOAD : VK_ATTACHMENT_LOAD_OP_CLEAR;
+			const VkAttachmentLoadOp clrOp = m_PassSpec.LoadColor ? VK_ATTACHMENT_LOAD_OP_LOAD : VK_ATTACHMENT_LOAD_OP_CLEAR;
+			const VkAttachmentLoadOp dptOp = m_PassSpec.LoadDepth ? VK_ATTACHMENT_LOAD_OP_LOAD : VK_ATTACHMENT_LOAD_OP_CLEAR;
 
 			if( m_PassSpec.IsSwapchainTarget )
 			{

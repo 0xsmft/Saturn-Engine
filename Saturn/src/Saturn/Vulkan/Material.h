@@ -122,7 +122,7 @@ namespace Saturn {
 		void SetResource( const std::string& Name, const Ref<Sampler> sampler );
 
 		//
-		// Set an image i.e. (VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE) with no sampler
+		// Set an image (i.e. VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE) with no sampler
 		// 
 		// NOTE: Not used by MaterialAssets! But used by other shader materials
 		//

@@ -50,8 +50,7 @@ namespace Saturn {
 	{
 		if( rMaterialName.empty() )
 		{
-			std::string NewName = std::format( "{0} Unknown Material {1}", m_Shader->GetName(), std::to_string( UUID() ) );
-			m_Name = NewName;
+			m_Name = std::format( "{0} Unknown Material {1}", m_Shader->GetName(), std::to_string( UUID() ) );
 		}
 		else
 			m_Name = rMaterialName;
@@ -152,7 +151,12 @@ namespace Saturn {
 
 		m_DescriptorSets[ frame ] = m_Shader->AllocateDescriptorSet( m_Set, true );
 
-		const size_t reservedSize = m_DescriptorSetTemplate.SampledImages.size() + m_DescriptorSetTemplate.StorageImages.size() + m_DescriptorSetTemplate.UniformBuffers.size() + m_DescriptorSetTemplate.StorageBuffers.size();
+		const size_t reservedSize = m_DescriptorSetTemplate.SampledImages.size() 
+			+ m_DescriptorSetTemplate.StorageImages.size() 
+			+ m_DescriptorSetTemplate.UniformBuffers.size() 
+			+ m_DescriptorSetTemplate.StorageBuffers.size()
+			+ m_DescriptorSetTemplate.SeparateImages.size()
+			+ m_DescriptorSetTemplate.SeparateSamplers.size();
 
 		std::vector<VkWriteDescriptorSet> pendingWds;
 		pendingWds.reserve( reservedSize );

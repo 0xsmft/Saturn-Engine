@@ -110,6 +110,16 @@ namespace Saturn {
 		HBAO,
 	};
 
+	// Anti-Aliasing techniques
+	enum class AATechnique : uint8_t
+	{
+		None,
+
+		SubpixelMorphological,
+
+		FastApproximate,
+	};
+
 	struct StaticMeshKey
 	{
 		AssetID MeshID = 0;
@@ -462,7 +472,6 @@ namespace Saturn {
 
 		// SMAA
 		//////////////////////////////////////////////////////////////////////////
-
 		Ref<ComputePipeline> SMAAEdgeDetectionPipeline;
 		Ref<ComputePipeline> SMAAFinalPipeline;
 
@@ -470,12 +479,18 @@ namespace Saturn {
 		Ref<Image2D> SMAAEdgeDetectionOutImage;
 
 		Ref<Material> SMAAFinalMaterial;
-		Ref<Image2D> SMAAFinalImage;
+		Ref<Image2D> SMAAFinalOutImage;
 
 		Ref<Texture2D> SMAASearchTexture;
 		Ref<Texture2D> SMAAAreaTexture;
 
 		Ref<Sampler> SMAAPointSampler;
+
+		// SMAA Composition
+		Ref<Pipeline> SMAACompPipeline;
+		Ref<Material> SMAACompMaterial;
+		Ref<Framebuffer> SMAACompFB;
+		Ref<Pass> SMAACompPass;
 
 		// Instanced Rendering
 		//////////////////////////////////////////////////////////////////////////
@@ -514,6 +529,7 @@ namespace Saturn {
 		Ref< Shader > JmpFloodOddShader;
 		Ref< Shader > SMAAEdgeDetectionShader;
 		Ref< Shader > SMAABlendingShader;
+		Ref< Shader > SMAACompositionShader;
 	};
 
 	class Renderer2D;
@@ -618,6 +634,7 @@ namespace Saturn {
 		void InitSMAAPass();
 		void InitSMAAEdge();
 		void InitSMAABlending();
+		void InitSMAAComposition();
 
 		void InitBuffers();
 		void InitRenderer2D();
@@ -635,6 +652,7 @@ namespace Saturn {
 		void SceneCompositePass();
 		void LateCompPhysicsOutline();
 		void JumpFloodLatePass();
+		void SMAACompositionPass();
 		void SMAABlendingPass();
 		void SMAAEdgePass();
 		void SMAAPass();

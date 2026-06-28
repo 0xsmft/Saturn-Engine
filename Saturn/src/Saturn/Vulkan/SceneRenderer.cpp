@@ -136,6 +136,8 @@ namespace Saturn {
 
 		InitLateComposite();
 
+		InitSMAAPass();
+
 		InitSelectionPass();
 
 		InitJumpFlood();
@@ -143,8 +145,6 @@ namespace Saturn {
 		InitTexturePass();
 
 		InitAO( AOTechnique::None );
-
-		InitSMAAPass();
 
 		m_RendererData.SceneEnvironment = Ref<EnvironmentMap>::Create();
 
@@ -519,8 +519,7 @@ namespace Saturn {
 			// Create the scene composite render pass.
 			PassSpecification PassSpec = {};
 			PassSpec.Name = "Scene Composite (PP) pass";
-
-			PassSpec.Attachments = { ImageFormat::RGBA8, ImageFormat::Depth };
+			PassSpec.Attachments = { ImageFormat::RGBA8 };
 
 			m_RendererData.SceneComposite = Ref< Pass >::Create( PassSpec );
 		}
@@ -533,8 +532,9 @@ namespace Saturn {
 			FBSpec.RenderPass = m_RendererData.SceneComposite;
 			FBSpec.Width = m_RendererData.Width;
 			FBSpec.Height = m_RendererData.Height;
+			FBSpec.CreateDepth = false;
 
-			FBSpec.Attachments = { ImageFormat::RGBA8, ImageFormat::Depth };
+			FBSpec.Attachments = { ImageFormat::RGBA8 };
 
 			m_RendererData.SceneCompositeFramebuffer = Ref< Framebuffer >::Create( FBSpec );
 		}
@@ -595,7 +595,7 @@ namespace Saturn {
 		{
 			FramebufferSpecification NewSpec;
 
-			NewSpec.ExistingImages[ 0 ] = m_RendererData.SceneCompositeFramebuffer->GetColorAttachmentsResources()[ 0 ];
+			NewSpec.ExistingImages[ 0 ] = CompositeImage();
 			NewSpec.ExistingImages[ 1 ] = m_RendererData.PreDepthFramebuffer->GetDepthAttachmentResource();
 
 			m_RendererData.LateCompositeFramebuffer->Recreate( m_RendererData.Width, m_RendererData.Height, NewSpec );
@@ -607,7 +607,7 @@ namespace Saturn {
 			FBSpec.Width = m_RendererData.Width;
 			FBSpec.Height = m_RendererData.Height;
 
-			FBSpec.ExistingImages[ 0 ] = m_RendererData.SceneCompositeFramebuffer->GetColorAttachmentsResources()[ 0 ];
+			FBSpec.ExistingImages[ 0 ] = CompositeImage();
 			FBSpec.ExistingImages[ 1 ] = m_RendererData.PreDepthFramebuffer->GetDepthAttachmentResource();
 
 			m_RendererData.LateCompositeFramebuffer = Ref<Framebuffer>::Create( FBSpec );
@@ -1213,6 +1213,7 @@ namespace Saturn {
 	{
 		InitSMAAEdge();
 		InitSMAABlending();
+		InitSMAAComposition();
 	}
 
 	void SceneRenderer::InitSMAAEdge()
@@ -1247,9 +1248,20 @@ namespace Saturn {
 
 		m_RendererData.SMAAEdgingMaterial = Ref<Material>::Create( m_RendererData.SMAAEdgeDetectionShader, "SMAAEdge" );
 	
+		m_RendererData.SMAAFinalOutImage = Ref<Image2D>::Create(
+			ImageFormat::RGBA8,
+			m_RendererData.Width, m_RendererData.Height,
+			1, 1, 1,
+			ImageTiling::Optimal, true
+		);
+		m_RendererData.SMAAFinalOutImage->SetDebugName( "SMAAFinalOutImage" );
+
 		// Write the output image.
-		m_RendererData.SMAAEdgingMaterial->SetResource( "o_OutEdges",     m_RendererData.SMAAEdgeDetectionOutImage );
-		m_RendererData.SMAAEdgingMaterial->SetSeparateImage( "u_InFinalColor", CompositeImage() );
+		m_RendererData.SMAAEdgingMaterial->SetResource( "o_OutEdges",  m_RendererData.SMAAEdgeDetectionOutImage );
+
+		m_RendererData.SMAAEdgingMaterial->SetSeparateImage( "u_InFinalColor", 
+			m_RendererData.SceneCompositeFramebuffer->GetColorAttachmentsResources()[ 0 ] );
+
 		m_RendererData.SMAAEdgingMaterial->SetResource( "s_PointSampler", m_RendererData.SMAAPointSampler );
 	}
 
@@ -1272,19 +1284,77 @@ namespace Saturn {
 				AddressingMode::Repeat, loadFlags );
 		}
 
-		m_RendererData.SMAAFinalImage = Ref<Image2D>::Create( ImageFormat::RGBA16F, m_RendererData.Width, m_RendererData.Height, 1, 1, 1, ImageTiling::Optimal, true );
-
 		m_RendererData.SMAAFinalPipeline = Ref<ComputePipeline>::Create( m_RendererData.SMAABlendingShader );
 	
 		m_RendererData.SMAAFinalMaterial = Ref<Material>::Create( m_RendererData.SMAABlendingShader, "SMAABlending" );
 
-		m_RendererData.SMAAFinalMaterial->SetResource( "o_Output", m_RendererData.SMAAFinalImage );
+		m_RendererData.SMAAFinalMaterial->SetResource( "o_Output", m_RendererData.SMAAFinalOutImage );
 		
-		m_RendererData.SMAAFinalMaterial->SetSeparateImage( "u_InputColorTexture", CompositeImage() );
+		m_RendererData.SMAAFinalMaterial->SetSeparateImage( "u_InputColorTexture", m_RendererData.SceneCompositeFramebuffer->GetColorAttachmentsResources()[ 0 ] );
 		m_RendererData.SMAAFinalMaterial->SetSeparateImage( "u_EdgesTexture", m_RendererData.SMAAEdgeDetectionOutImage );
 		m_RendererData.SMAAFinalMaterial->SetSeparateImage( "u_SearchTexture", m_RendererData.SMAASearchTexture );
 		m_RendererData.SMAAFinalMaterial->SetSeparateImage( "u_AreaTexture", m_RendererData.SMAAAreaTexture );
 		m_RendererData.SMAAFinalMaterial->SetResource( "s_LinearSampler", m_RendererData.SMAAPointSampler );
+	}
+
+	void SceneRenderer::InitSMAAComposition()
+	{
+		if( m_RendererData.SMAACompPass )
+			m_RendererData.SMAACompPass->Recreate();
+		else
+		{
+			// Create the scene composite render pass.
+			PassSpecification PassSpec = {};
+			PassSpec.Name = "SMMA Comp Pass";
+			PassSpec.LoadColor = true;
+			PassSpec.Attachments = { ImageFormat::RGBA8 };
+
+			m_RendererData.SMAACompPass = Ref< Pass >::Create( PassSpec );
+		}
+
+		if( m_RendererData.SMAACompFB )
+		{
+			FramebufferSpecification FBSpec = {};
+			FBSpec.ExistingImages[ 0 ] = m_RendererData.SceneCompositeFramebuffer->GetColorAttachmentsResources()[ 0 ];
+
+			m_RendererData.SMAACompFB->Recreate( m_RendererData.Width, m_RendererData.Height, FBSpec );
+		}
+		else
+		{
+			FramebufferSpecification FBSpec = {};
+			FBSpec.RenderPass = m_RendererData.SMAACompPass;
+			FBSpec.Width = m_RendererData.Width;
+			FBSpec.Height = m_RendererData.Height;
+			FBSpec.CreateDepth = false;
+			FBSpec.ExistingImages[ 0 ] = m_RendererData.SceneCompositeFramebuffer->GetColorAttachmentsResources()[ 0 ];
+
+			m_RendererData.SMAACompFB = Ref<Framebuffer>::Create( FBSpec );
+		}
+
+		if( !m_RendererData.SMAACompositionShader )
+		{
+			m_RendererData.SMAACompositionShader = ShaderLibrary::Get().FindOrLoad( "SMAA-Composition", "content/shaders/SMAA-Composition.glsl" );
+		}
+
+		m_RendererData.SMAACompMaterial = Ref<Material>::Create( m_RendererData.SMAACompositionShader, "SMAABlending" );
+		m_RendererData.SMAACompMaterial->SetResource( "u_SMAAOutTexture", m_RendererData.SMAAFinalOutImage );
+
+		PipelineSpecification PipelineSpec = {};
+		PipelineSpec.Width = m_RendererData.Width;
+		PipelineSpec.Height = m_RendererData.Height;
+		PipelineSpec.Name = "Late Composite (SMAA)";
+		PipelineSpec.Shader = m_RendererData.SMAACompositionShader;
+		PipelineSpec.RenderPass = m_RendererData.SMAACompPass;
+		PipelineSpec.UseDepthTest = true;
+		PipelineSpec.CullMode = CullMode::Back;
+		PipelineSpec.FrontFace = VK_FRONT_FACE_CLOCKWISE;
+		PipelineSpec.PolygonMode = VK_POLYGON_MODE_FILL;
+		PipelineSpec.VertexLayout = {
+			{ ShaderDataType::Float3, "a_Position" },
+			{ ShaderDataType::Float2, "a_TexCoord" }
+		};
+
+		m_RendererData.SMAACompPipeline = Ref<Pipeline>::Create( PipelineSpec );
 	}
 
 	void SceneRenderer::RenderGrid()
@@ -2081,12 +2151,12 @@ namespace Saturn {
 
 		InitSceneComposite();
 		InitLateComposite();
-		InitPhysicsOutline();
+		
+		InitSMAAPass();
+
 		InitSelectionPass();
 		InitJumpFlood();
-
 		InitTexturePass();
-		InitSMAAPass();
 
 		CreateSkyboxComponents();
 		CreateGridComponents();
@@ -2178,7 +2248,6 @@ namespace Saturn {
 		UBLightData u_LightData = {};
 //		std::unique_ptr<UBPointLights> u_Lights = std::make_unique<UBPointLights>();
 
-		// This uses 24,592 bytes of stack... oh well...
 		UBPointLights u_Lights = {};
 
 		u_Lights.nbLights = ( uint32_t ) m_pScene->m_Lights.PointLights.size();
@@ -2597,6 +2666,36 @@ namespace Saturn {
 		m_RendererData.JumpFloodOddPass->EndPass();
 	}
 
+	void SceneRenderer::SMAACompositionPass()
+	{
+		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
+		const VkExtent2D Extent = { m_RendererData.Width, m_RendererData.Height };
+		const VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
+
+		m_RendererData.SMAACompPass->BeginPass( CommandBuffer, m_RendererData.SMAACompFB->GetVulkanFramebuffer(), Extent );
+
+		VkViewport Viewport = {};
+		Viewport.x = 0;
+		Viewport.y = 0;
+		Viewport.width = ( float ) m_RendererData.Width;
+		Viewport.height = ( float ) m_RendererData.Height;
+		Viewport.minDepth = 0.0f;
+		Viewport.maxDepth = 1.0f;
+
+		const VkRect2D Scissor = { .offset = { 0, 0 }, .extent = Extent };
+
+		vkCmdSetViewport( CommandBuffer, 0, 1, &Viewport );
+		vkCmdSetScissor( CommandBuffer, 0, 1, &Scissor );
+
+		Renderer::Get()->SubmitFullscreenQuad(
+			CommandBuffer,
+			m_RendererData.SMAACompPipeline,
+			m_RendererData.SMAACompMaterial, 
+			m_RendererData.QuadIndexBuffer, m_RendererData.QuadVertexBuffer );
+
+		m_RendererData.SMAACompPass->EndPass();
+	}
+
 	void SceneRenderer::SMAAEdgePass()
 	{
 		struct u_Params
@@ -2673,8 +2772,12 @@ namespace Saturn {
 		SMAAEdgePass();
 		CmdEndDebugLabel( CommandBuffer );
 
-		CmdBeginDebugLabel( CommandBuffer, "Blending,Weights" );
+		CmdBeginDebugLabel( CommandBuffer, "Weights,Blending" );
 		SMAABlendingPass();
+		CmdEndDebugLabel( CommandBuffer );
+
+		CmdBeginDebugLabel( CommandBuffer, "CompositionPass" );
+		SMAACompositionPass();
 		CmdEndDebugLabel( CommandBuffer );
 
 		m_RendererData.SMAAPassTimer.Stop();
@@ -3210,17 +3313,20 @@ namespace Saturn {
 
 		for( uint32_t i = 0; i < mips; ++i )
 		{
-			m_RendererData.BloomDownsampleAMaterials[ i ] = Ref<Material>::Create( m_RendererData.BloomShader, "Bloom Downsample A" );
+			Ref<Material> aMaterial = Ref<Material>::Create( m_RendererData.BloomShader, "Bloom Downsample A" );
 
-			m_RendererData.BloomDownsampleAMaterials[ i ]->SetResourceWithVulkanInfo( "o_Image", m_RendererData.BloomTextures[ 1 ].Texture, m_RendererData.BloomTextures[ 1 ].ImageInfos[ i ] );
-			m_RendererData.BloomDownsampleAMaterials[ i ]->SetResource( "u_InputTexture", m_RendererData.BloomTextures[ 0 ].Texture );
-			m_RendererData.BloomDownsampleAMaterials[ i ]->SetResource( "u_BloomTexture", m_RendererData.GeometryFramebuffer->GetColorAttachmentsResources()[ 0 ] );
+			aMaterial->SetResourceWithVulkanInfo( "o_Image", m_RendererData.BloomTextures[ 1 ].Texture, m_RendererData.BloomTextures[ 1 ].ImageInfos[ i ] );
+			aMaterial->SetResource( "u_InputTexture", m_RendererData.BloomTextures[ 0 ].Texture );
+			aMaterial->SetResource( "u_BloomTexture", m_RendererData.GeometryFramebuffer->GetColorAttachmentsResources()[ 0 ] );
 
-			m_RendererData.BloomDownsampleBMaterials[ i ] = Ref<Material>::Create( m_RendererData.BloomShader, "Bloom Downsample B" );
+			Ref<Material> bMaterial = Ref<Material>::Create( m_RendererData.BloomShader, "Bloom Downsample B" );
 
-			m_RendererData.BloomDownsampleBMaterials[ i ]->SetResourceWithVulkanInfo( "o_Image", m_RendererData.BloomTextures[ 0 ].Texture, m_RendererData.BloomTextures[ 0 ].ImageInfos[ i ] );
-			m_RendererData.BloomDownsampleBMaterials[ i ]->SetResource( "u_InputTexture", m_RendererData.BloomTextures[ 1 ].Texture );
-			m_RendererData.BloomDownsampleBMaterials[ i ]->SetResource( "u_BloomTexture", m_RendererData.GeometryFramebuffer->GetColorAttachmentsResources()[ 0 ] );
+			bMaterial->SetResourceWithVulkanInfo( "o_Image", m_RendererData.BloomTextures[ 0 ].Texture, m_RendererData.BloomTextures[ 0 ].ImageInfos[ i ] );
+			bMaterial->SetResource( "u_InputTexture", m_RendererData.BloomTextures[ 1 ].Texture );
+			bMaterial->SetResource( "u_BloomTexture", m_RendererData.GeometryFramebuffer->GetColorAttachmentsResources()[ 0 ] );
+		
+			m_RendererData.BloomDownsampleAMaterials[ i ] = aMaterial;
+			m_RendererData.BloomDownsampleBMaterials[ i ] = bMaterial;
 		}
 
 		// Upsampling
@@ -3532,6 +3638,7 @@ namespace Saturn {
 			SceneCompositePass();
 		}
 
+
 		{
 			ScopedDebugLabel label( m_RendererData.CommandBuffer, "Late Composite/SceneRenderer" );
 			LateCompPhysicsOutline();
@@ -3609,6 +3716,7 @@ namespace Saturn {
 		SceneCompositeFramebuffer = nullptr;
 		PreDepthFramebuffer       = nullptr;
 		LateCompositeFramebuffer  = nullptr;
+		SMAACompFB				  = nullptr;
 
 		BloomTextures.fill( {} );
 
@@ -3646,6 +3754,9 @@ namespace Saturn {
 		JumpFloodOddPass = nullptr;
 		JumpFloodFirstPass = nullptr;
 		JumpFloodEvenPass = nullptr;
+
+		SMAACompPass->Terminate();
+		SMAACompPass = nullptr;
 
 		// Pipelines
 		SceneCompositePipeline = nullptr;

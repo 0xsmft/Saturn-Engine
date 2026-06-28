@@ -1,4 +1,4 @@
-// Subpixel Morphological Anti-Aliasing (Blending and weights stage + final composition)
+// Subpixel Morphological Anti-Aliasing (Weights and blending stage + final composition)
 //
 // Copyright (C) 2013 Jorge Jimenez (jorge@iryoku.com)
 // Copyright (C) 2013 Jose I. Echevarria (joseignacioechevarria@gmail.com)
@@ -29,7 +29,7 @@ layout(push_constant) uniform Params
 
 // Outputs
 // I don't even know what restrict does.
-layout(set = 0, binding = 0, rgba16f) restrict writeonly uniform image2D o_Output;
+layout(set = 0, binding = 0, rgba8) restrict writeonly uniform image2D o_Output;
 
 layout(set = 0, binding = 1) uniform texture2D u_InputColorTexture;
 layout(set = 0, binding = 2) uniform texture2D u_EdgesTexture;

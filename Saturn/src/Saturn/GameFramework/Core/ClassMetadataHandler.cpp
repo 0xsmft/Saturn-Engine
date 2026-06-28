@@ -56,12 +56,16 @@ namespace Saturn {
 
 	void ClassMetadataHandler::BeginHotReload()
 	{
+#if !defined(SAT_DIST)
 		m_RegisterNewClassAsHotReload = true;
+#endif
 	}
 
 	void ClassMetadataHandler::AcknowledgeHotReload()
 	{
+#if !defined(SAT_DIST)
 		m_RegisterNewClassAsHotReload = false;
+#endif
 	}
 
 	SClassHotReloadChanges ClassMetadataHandler::DistinguishBetweenSClass( const SClass* const pA, const SClass* const pB )
@@ -114,6 +118,7 @@ namespace Saturn {
 
 	void ClassMetadataHandler::CreateLinkedClassList()
 	{
+#if !defined(SAT_DIST)
 		m_LinkedListClasses.pClassPtr = SObject::StaticClass();
 
 		std::unordered_map<const SClass*, std::vector<const SClass*>> childMap;
@@ -130,6 +135,7 @@ namespace Saturn {
 
 		// Now we build the tree.
 		BuildLinkedListRecursive( m_LinkedListClasses, childMap );
+#endif
 	}
 
 	const SClassLinkedListNode* ClassMetadataHandler::FindNodeRecursive( const SClassLinkedListNode* pNode, const SClass* pClass ) const
@@ -154,7 +160,11 @@ namespace Saturn {
 
 	const SClassLinkedListNode* ClassMetadataHandler::FindNode( const SClass* pClass ) const
 	{
+#if !defined(SAT_DIST)
 		return FindNodeRecursive( &m_LinkedListClasses, pClass );
+#else
+		return nullptr;
+#endif
 	}
 
 	void ClassMetadataHandler::BuildLinkedListRecursive( SClassLinkedListNode& node, const std::unordered_map<const SClass*, std::vector<const SClass*>>& childMap )

@@ -37,6 +37,8 @@
 #include "Saturn/Animation/AssetViewer/Graph/StateMachine/AnimGraphTransitionGraphNodes.h"
 #endif
 
+#include "Saturn/Serialisation/Raw/RawSerialisation.h"
+
 namespace Saturn {
 
 	AnimGraphTransitionResultTask::AnimGraphTransitionResultTask()

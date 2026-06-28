@@ -81,12 +81,12 @@ namespace Saturn {
 		if( cacheVariables )
 			CacheVariables( pEditor );
 	}
+#endif
 
 	void NodeTaskCache::Clear()
 	{
 		m_Tasks.clear();
 	}
-#endif
 
 	NodeTaskCache::NodeTaskCacheMap NodeTaskCache::InstantiateNewTaskList( NodeEditorTaskHandler* pHandler ) const
 	{

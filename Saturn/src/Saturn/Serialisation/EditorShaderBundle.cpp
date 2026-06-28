@@ -70,6 +70,9 @@ namespace Saturn {
 
 	bool EditorShaderBundle::BundleShaders()
 	{
+#if defined(SAT_DIST)
+		return false;
+#else
 		const std::filesystem::path cachePath = Application::Get()->GetAppDataFolder() / "EditorShaderBundle.ssb";
 
 		std::ofstream fout( cachePath, std::ios::binary | std::ios::trunc );
@@ -92,10 +95,14 @@ namespace Saturn {
 		fout.close();
 
 		return true;
+#endif
 	}
 
 	bool EditorShaderBundle::ReadBundle()
 	{
+#if defined(SAT_DIST)
+		return false;
+#else
 		const std::filesystem::path cachePath = Application::Get()->GetAppDataFolder() / "EditorShaderBundle.ssb";
 
 		std::ifstream stream( cachePath, std::ios::binary | std::ios::in );
@@ -130,6 +137,7 @@ namespace Saturn {
 		stream.close();
 
 		return true;
+#endif
 	}
 
 }

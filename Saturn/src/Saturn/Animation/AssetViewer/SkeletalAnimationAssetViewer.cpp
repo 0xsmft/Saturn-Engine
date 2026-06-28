@@ -244,6 +244,7 @@ namespace Saturn {
 		m_Entity = m_Scene->CreateEntity( "InternalViewerEntity" );
 		SkeletalMeshComponent& rSkComp = m_Entity->AddComponent<SkeletalMeshComponent>();
 
+#if !defined(SAT_DIST)
 		if( const auto asset = AssetManager::Get()->GetAssetAs<SkeletonAsset>( m_Asset->GetSkeletonID() ) )
 		{
 			if( asset->GetCompatibleMeshes().size() )
@@ -252,6 +253,7 @@ namespace Saturn {
 				InitMeshAndAnimator( asset->GetCompatibleMeshes()[ 0 ] );
 			}
 		}
+#endif
 
 		// Create timeline object
 		m_Timeline = std::make_unique<ImTimeline::Timeline>();

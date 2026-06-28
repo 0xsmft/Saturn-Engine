@@ -192,7 +192,11 @@ namespace Saturn {
 
 		void HandleSClassChanges( const SClassHotReloadChanges changes, SClass* pExisiting, SClass* pHotReloaded );
 
+#if defined(SAT_DIST)
+		bool IsHotReload() const { return false; }
+#else
 		bool IsHotReload() const { return m_RegisterNewClassAsHotReload; }
+#endif
 
 	private:
 		void BuildLinkedListRecursive( SClassLinkedListNode& node, const std::unordered_map<const SClass*, std::vector<const SClass*>>& childMap );

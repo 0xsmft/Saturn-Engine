@@ -72,12 +72,13 @@ namespace Saturn {
 		// Builds the master list for an animation graph.
 		//
 		void BuildMasterListForAnimGraph( NodeEditor* pEditor, const IndexedMap<UUID, AnimGraphNodeAndTaskInfo>& rOrder, bool cacheVariables = true );
+#endif
 
+	public:
 		//
 		// Clear the list.
 		//
 		void Clear();
-#endif
 
 	public:
 		[[nodiscard]] bool IsListEmpty() const { return m_Tasks.empty(); }

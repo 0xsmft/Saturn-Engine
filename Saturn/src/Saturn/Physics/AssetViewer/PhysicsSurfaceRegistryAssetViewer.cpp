@@ -50,6 +50,7 @@ namespace Saturn {
 
 	void PhysicsSurfaceRegistryAssetViewer::OnImGuiRender()
 	{
+#if !defined(SAT_DIST)
 		const ImGuiWindowFlags flags = m_Dirty ? ImGuiWindowFlags_UnsavedDocument : 0;
 		if( ImGui::Begin( m_Name.c_str(), &m_Open ) )
 		{
@@ -134,6 +135,7 @@ namespace Saturn {
 			m_Open = true;
 			m_ShowDirtyPopup = true;
 		}
+#endif
 	}
 
 	void PhysicsSurfaceRegistryAssetViewer::DisplayErrorSection( const char* pText )

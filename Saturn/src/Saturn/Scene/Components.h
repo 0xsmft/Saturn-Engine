@@ -240,9 +240,7 @@ namespace Saturn {
 		glm::vec3 Offset = { 0.0f, 0.0f, 0.0f };
 
 		bool IsTrigger = false;
-#if !defined(SAT_DIST) /* SAT_WITH_EDITOR */
 		bool AutoAdjustExtent = false;
-#endif
 
 		BoxColliderComponent() = default;
 		BoxColliderComponent( const glm::vec3& extents ) : HalfExtents( extents ) { }

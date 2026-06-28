@@ -257,6 +257,7 @@ namespace Saturn {
 				RawSerialisation::WriteVec3( bcc.HalfExtents, rStream );
 				RawSerialisation::WriteVec3( bcc.Offset, rStream );
 				RawSerialisation::WriteObject( bcc.IsTrigger, rStream );
+				RawSerialisation::WriteObject( bcc.AutoAdjustExtent, rStream );
 			} );
 		
 		// Sphere collider
@@ -569,6 +570,7 @@ namespace Saturn {
 				RawSerialisation::ReadVec3( bcc.HalfExtents, rStream );
 				RawSerialisation::ReadVec3( bcc.Offset, rStream );
 				RawSerialisation::ReadObject( bcc.IsTrigger, rStream );
+				RawSerialisation::ReadObject( bcc.AutoAdjustExtent, rStream );
 			} );
 		
 		// Sphere collider

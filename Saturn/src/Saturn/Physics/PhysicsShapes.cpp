@@ -131,11 +131,7 @@ namespace Saturn {
 		glm::vec3 halfSize = bcc.HalfExtents;
 
 		// Very rare path, only happens if something else modifies the scale.
-#if !defined(SAT_DIST)
 		if( bcc.AutoAdjustExtent && halfSize != transform.Scale )
-#else
-		if( halfSize != ( transform.Scale * 0.5f ) )
-#endif
 			halfSize = transform.Scale * 0.5f;
 
 		Ref<PhysicsMaterialAsset> materialAsset = GetMaterial( mesh, rigidBodyMaterialID );

@@ -1136,7 +1136,6 @@ namespace Saturn {
 
 		DrawComponent<BoxColliderComponent>( "Box Collider", entity, [&]( auto& bc )
 		{
-#if !defined(SAT_DIST)
 			bool modified = false;
 
 			{
@@ -1158,7 +1157,6 @@ namespace Saturn {
 			}
 
 			if( modified ) m_Context->MarkDirty();
-#endif
 		} );
 
 		DrawComponent<SphereColliderComponent>( "Sphere Collider", entity, [&]( auto& sc )

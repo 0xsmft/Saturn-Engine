@@ -34,7 +34,7 @@ layout(push_constant) uniform Params
 
 vec4 SamplePoint( texture2D tex, vec2 coord )
 {
-    return textureLod( sampler2D( tex, s_PointSampler ), coord, 1.0 );
+    return textureLod( sampler2D( tex, s_PointSampler ), coord, 0.0 );
 }
 
 layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;

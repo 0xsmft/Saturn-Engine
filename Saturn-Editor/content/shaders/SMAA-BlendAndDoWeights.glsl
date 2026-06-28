@@ -69,16 +69,16 @@ void SMAAMovc( bvec4 cond, inout vec4 variable, vec4 value )
 
 float SMAASearchLength( vec2 e, float offset )
 {
-	vec2 scale = vec2( 66.0, 33.0 ) * vec2( 0.5, -1.0 );
-	vec2 bias = vec2( 66.0, 33.0 ) * vec2( offset, 1.0 );
+    vec2 scale = vec2( 33.0, -33.0 );
+    vec2 bias = vec2( 66.0, 33.0 ) * vec2( offset, 1.0 );
 
-	scale += vec2( -1.0,  1.0 );
-	bias  += vec2(  0.5, -0.5 );
+    scale += vec2( -1.0, 1.0 );
+    bias += vec2( 0.5, -0.5 );
 
-	scale *= 1.0 / vec2( 64.0, 16.0 );
-	bias  *= 1.0 / vec2( 64.0, 16.0 );
+    scale *= 1.0 / vec2( 64, 16 );
+    bias *= 1.0 / vec2( 64, 16 );
 
-	return SampleLinearZero( u_SearchTexture, fma( scale, bias, e ) ).x;
+	return SampleLinearZero( u_SearchTexture, fma( scale, e, bias ) ).x;
 }
 
 vec2 SMAADecodeDiagBilinearAccess( vec2 e )
@@ -113,7 +113,7 @@ float SMAASearchXLeft( vec2 texCoord, float end )
 	while( texCoord.x > end && e.g > 0.8281 && e.r == 0.0 )
 	{
 		e = SampleEdge( texCoord ).rg;
-		texCoord = fma( vec2( -2.0, -0.0 ), pc_Params.Metrics.xy, texCoord );
+		texCoord = fma( -vec2( 2.0, 0.0 ), pc_Params.Metrics.xy, texCoord );
 	}
 
 	float off = fma( -( 255.0 / 127.0 ), SMAASearchLength( e, 0.0 ), 3.25 );
@@ -141,7 +141,7 @@ float SMAASearchYUp( vec2 texCoord, float end )
 	while( texCoord.y > end && e.r > 0.8281 && e.g == 0.0 )
 	{
 		e = SampleEdge( texCoord ).rg;
-		texCoord = fma( vec2( -0.0, -2.0 ), pc_Params.Metrics.xy, texCoord );
+		texCoord = fma( -vec2( 0.0, 2.0 ), pc_Params.Metrics.xy, texCoord );
 	}
 
 	float offset = fma( -( 255.0 / 127.0 ), SMAASearchLength( e.gr, 0.0 ), 3.25 );
@@ -264,9 +264,9 @@ vec2 SMAACalculateDiagWeights( vec2 texCoord, vec2 e, vec4 subSampleIndices )
 
 	d.xy = SMAASearchDiag2( texCoord, vec2( -1.0, -1.0 ), end );
 
-	if( SampleEdgeOffset( texCoord, vec2( 1.0, 0.0 ) ).x > 0.0 ) 
+	if( SampleEdgeOffset( texCoord, vec2( 1.0, 0.0 ) ).r > 0.0 ) 
 	{
-		d.yw = SMAASearchDiag2( texCoord, vec2( 1.0 ), end );
+		d.yw = SMAASearchDiag2( texCoord, vec2( 1.0, 1.0 ), end );
 		d.y += float( end.y > 0.9 );
 	}
 	else
@@ -286,7 +286,7 @@ vec2 SMAACalculateDiagWeights( vec2 texCoord, vec2 e, vec4 subSampleIndices )
 
 		SMAAMovc( bvec2( step( 0.9, d.zw ) ), cc, vec2( 0.0 ) );
 
-		weights += SMAAAreaDiag( d.xy, cc, subSampleIndices.z );
+		weights += SMAAAreaDiag( d.xy, cc, subSampleIndices.w ).gr;
 	}
 
 	return weights;
@@ -461,8 +461,8 @@ void main()
 	vec4 loadedWeights = LoadWeights( localID.y, localID.x );
 
 	vec4 a;
-	a.w = loadedWeights.xz.x;
-	a.z = loadedWeights.xz.y;
+	a.w = loadedWeights.x;
+	a.z = loadedWeights.z;
 	a.x = LoadWeights( localID.y, localID.x + 1u ).w;
 	a.y = LoadWeights( localID.y + 1u, localID.x ).y;
 

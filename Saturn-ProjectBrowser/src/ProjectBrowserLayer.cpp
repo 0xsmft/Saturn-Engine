@@ -195,6 +195,12 @@ namespace Saturn {
 		} );
 
 		m_NoIconTexture = Ref<Texture2D>::Create( "content/textures/NoIcon.png" );
+
+		// Centre window.
+		const auto& rMonitorSize = RubyLibrary::Get().GetPrimaryMonitor().WorkSize;
+		const auto& rWindowSize = Application::Get()->GetWindow()->GetSize();
+
+		Application::Get()->GetWindow()->SetPosition( ( rMonitorSize.x - rWindowSize.x ) * 0.5f, ( rMonitorSize.y - rWindowSize.y ) * 0.5f );
 	}
 
 	ProjectBrowserLayer::~ProjectBrowserLayer()
@@ -238,7 +244,7 @@ namespace Saturn {
 				ImGui::Text( "No Saturn directory set. Please set the SATURN_DIR environment variable." );
 				ImGui::Text( "The directory that you pick must point to the root directory of Saturn, it should contain /bin, /Saturn, /Saturn-Editor etc" );
 				
-				ImGui::InputText( "", ( char* )m_SaturnDir.c_str(), 1024, ImGuiInputTextFlags_ReadOnly );
+				ImGui::InputText( "##enterpath", ( char* )m_SaturnDir.c_str(), 1024, ImGuiInputTextFlags_ReadOnly );
 				ImGui::SameLine();
 				if( ImGui::Button( "...##dir" ) )
 				{
@@ -246,8 +252,13 @@ namespace Saturn {
 					m_SaturnDir = res;
 				}
 				
-				if( !m_SaturnDir.empty() && std::filesystem::exists( m_SaturnDir ) )
+				ImGui::Separator();
+				
+				ImGui::BeginHorizontal( "##options" );
+
 				{
+					Auxiliary::ScopedDisabledFlag disabledIfInvalid( m_SaturnDir.empty() && !std::filesystem::exists( m_SaturnDir ) );
+
 					if( ImGui::Button( "Set" ) )
 					{
 						Auxiliary::SetEnvironmentVariable( "SATURN_DIR", m_SaturnDir.string() );
@@ -256,6 +267,13 @@ namespace Saturn {
 						ImGui::CloseCurrentPopup();
 					}
 				}
+
+				if( ImGui::Button( "Exit" ) )
+				{
+					Application::Get()->Close();
+				}
+
+				ImGui::EndHorizontal();
 
 				ImGui::EndPopup();
 			}
@@ -268,7 +286,7 @@ namespace Saturn {
 		ImGui::Begin( "##project_browser", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollbar );
 		ImGui::SetWindowDock( ImGui::GetCurrentWindow(), dockspaceID, ImGuiCond_FirstUseEver );
 
-		auto boldFont = ImGui::GetIO().Fonts->Fonts[ 1 ];
+		const auto boldFont = ImGui::GetIO().Fonts->Fonts[ 1 ];
 		ImGui::PushFont( boldFont );
 		ImGui::Text( "Recent Projects" );
 		ImGui::Separator();
@@ -297,8 +315,7 @@ namespace Saturn {
 
 		if( ImGui::Button( "Browse", ImVec2( bottomBarHeight, bottomBarHeight ) ) ) 
 		{
-			auto filePath = Application::Get()->OpenFile( "Saturn Project file (*.sproject)|*.sproject" );
-
+			const auto filePath = Application::Get()->OpenFile( "Saturn Project file (*.sproject)|*.sproject" );
 			ImportExternalProject( filePath );
 		}
 
@@ -325,7 +342,7 @@ namespace Saturn {
 			ImGui::SameLine();
 			ImGui::Text( ".sproject" );
 
-			ImGui::InputTextWithHint( "##project_loc", "Project location", (char*)m_ProjectFilePath.string().c_str(), 1024, ImGuiInputTextFlags_ReadOnly );
+			ImGui::InputTextWithHint( "##project_loc", "Project location", ( char* ) m_ProjectFilePath.string().c_str(), 1024, ImGuiInputTextFlags_ReadOnly );
 			ImGui::SameLine();
 
 			if( ImGui::SmallButton( "...##location" ) )

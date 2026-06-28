@@ -721,7 +721,7 @@ namespace Saturn {
 		out /= std::to_string( rAsset->ID );
 		out.replace_extension( ".vfs" );
 
-		aluraFont->Serialise( out );
+		aluraFont->Serialise( out, true );
 
 		return true;
 	}

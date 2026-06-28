@@ -318,7 +318,7 @@ namespace Saturn {
 		AluraFontAssetVersion Version = AluraFontAssetVersion::Lowest;
 	};
 
-	void AluraFont::Serialise( const std::filesystem::path& rPath ) const
+	void AluraFont::Serialise( const std::filesystem::path& rPath, bool isForDist /*=false*/ ) const
 	{
 		std::ofstream fout( rPath, std::ios::binary | std::ios::trunc );
 
@@ -328,11 +328,14 @@ namespace Saturn {
 		RawSerialisation::WriteObject( ( uint8_t ) m_Version, fout );
 
 #if !defined(SAT_DIST)
-		// Name of the font file
-		RawSerialisation::WriteString( m_Name, fout );
-		
-		// Write path
-		RawSerialisation::WriteString( m_FontFilepath, fout );
+		if( !isForDist )
+		{
+			// Name of the font file
+			RawSerialisation::WriteString( m_Name, fout );
+
+			// Write path
+			RawSerialisation::WriteString( m_FontFilepath, fout );
+		}
 #endif
 
 		// Metrics
@@ -400,10 +403,12 @@ namespace Saturn {
 
 		RawSerialisation::ReadObject( header.Version, rStream );
 
+#if !defined(SAT_DIST)
 		// Name of the font file
 		m_Name = RawSerialisation::ReadString( rStream );
 
 		m_FontFilepath = RawSerialisation::ReadString( rStream );
+#endif
 
 		// Metrics
 		RawSerialisation::ReadObject( m_AluraFontData.GetMetrics(), rStream );

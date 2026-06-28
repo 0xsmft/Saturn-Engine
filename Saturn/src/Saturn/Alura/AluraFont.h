@@ -173,7 +173,7 @@ namespace Saturn {
 
 		virtual ~AluraFont();
 
-		void Serialise( const std::filesystem::path& rPath ) const;
+		void Serialise( const std::filesystem::path& rPath, bool isForDist = false ) const;
 		void Deserialise( FDependentIStream& rStream );
 		
 		// FOR USE BY ALURACANVAS ONLY!

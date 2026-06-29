@@ -96,6 +96,7 @@ namespace Saturn {
 	void Pipeline::Create()
 	{
 		SAT_CORE_ASSERT( m_Specification.Shader, "Shader can not ever be null when create a Pipeline!" );
+		SAT_CORE_ASSERT( m_Specification.RenderPass, "RenderPass can not ever be null when create a Pipeline!" );
 
 		// Create the layout.
 		VkPipelineLayoutCreateInfo PipelineLayoutCreateInfo = { VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO };

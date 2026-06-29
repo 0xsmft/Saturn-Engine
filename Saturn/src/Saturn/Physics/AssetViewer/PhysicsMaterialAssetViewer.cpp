@@ -29,8 +29,13 @@
 #include "sppch.h"
 #include "PhysicsMaterialAssetViewer.h"
 
+#include "Saturn/Physics/PhysicsSurfaceRegistryAsset.h"
+
 #include "Saturn/Asset/AssetManager.h"
+#include "Saturn/Project/Project.h"
+
 #include "Saturn/Serialisation/YAML/AssetSerialisers.h"
+#include "Saturn/ImGui/ImGuiAuxiliary.h"
 
 #include <imgui.h>
 
@@ -60,6 +65,12 @@ namespace Saturn {
 
 		m_Open = true;
 		m_Name = std::format( "{0}##PhysicsMaterial", m_MaterialAsset->Name );
+
+		// Load the master registry.
+		m_MasterPhysRegID = Project::GetActiveProject()->GetDefaultPhysRegAsset();
+		
+		// And try load.
+		Ref<PhysicsSurfaceRegistryAsset> asset = AssetManager::Get()->GetAssetAs<PhysicsSurfaceRegistryAsset>( m_MasterPhysRegID );
 	}
 
 	void PhysicsMaterialAssetViewer::DrawInternal()
@@ -88,6 +99,31 @@ namespace Saturn {
 		if( ImGui::InputFloat( "##Restitution", &restitution, 0.0f, 1000.0f ) ) 
 		{
 			m_MaterialAsset->SetRestitution( restitution );
+		}
+
+		ImGui::Text( "Surface Name" );
+		
+		if( ImGui::BeginCombo( "##surfaceopts", m_MaterialAsset->GetSurfaceName().c_str() ) )
+		{
+			Ref<PhysicsSurfaceRegistryAsset> asset = AssetManager::Get()->GetAssetAs<PhysicsSurfaceRegistryAsset>( m_MasterPhysRegID );
+			if( asset )
+			{
+				for( const auto& rSurface : asset->GetNamesList() )
+				{
+					const bool selected = rSurface.Name == m_MaterialAsset->GetSurfaceName();
+
+					if( ImGui::Selectable( rSurface.Name.c_str(), selected ) )
+					{
+						m_MaterialAsset->SetSurfaceName( rSurface.Name );
+					}
+				}
+			}
+			else
+			{
+				ImGui::Selectable( "No master asset is set in the Project Settings." );
+			}
+			
+			ImGui::EndCombo();
 		}
 
 		ImGui::EndVertical();

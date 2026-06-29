@@ -49,5 +49,6 @@ namespace Saturn {
 
 	private:
 		Ref<PhysicsMaterialAsset> m_MaterialAsset;
+		AssetID m_MasterPhysRegID = 0;
 	};
 }

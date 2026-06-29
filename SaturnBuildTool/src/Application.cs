@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -46,22 +47,28 @@ namespace SaturnBuildTool
         private Queue<string> SortedModules = new Queue<string>();
         private HashSet<string> _vistedModules = new HashSet<string>();
 
-        // The build tool version is 0.0.5,
-        // however, SBT 5.1 means that is the modular, task-cache, dependency tracking version and C# build rules,
-        // as there is a version before this that was private and shipped with Saturn 0.2.2 that had initial dependency tracking and task-cache but that version
-        // was superseded by this one.
-        //
-        // To sum it up:
-        // 0.0.4 -> created a private "engine test" version with the features listed above, this version shipped in Saturn 0.2.2 although source code was SBT 0.0.4, this of the BuildTool was started before 0.2.2 was due to release.
-        // Engine Test -> created buildtool-x0.0.5 was very similar to engine test but it used premake instead of custom C# build rules.
-        // buildtool-x0.0.5 -> created sbt-5.1 branch which is this version now.
-        //
-        private readonly string StartupMessage = "Saturn Build Tool X0.0.5 \"SBT 5.1\"";
+        // Default startup message.
+        private string StartupMessage = null;
 
         public Application( string[] args )
         {
             Args = new List<string>();
             Args.AddRange( args );
+
+            Assembly thisAsm = Assembly.GetExecutingAssembly();
+            System.Diagnostics.FileVersionInfo version = System.Diagnostics.FileVersionInfo.GetVersionInfo( thisAsm.Location );
+
+            // The build tool version is 0.0.5,
+            // however, SBT 5.1 means that is the modular, task-cache, dependency tracking version and C# build rules,
+            // as there is a version before this that was private and shipped with Saturn 0.2.2 that had initial dependency tracking and task-cache but that version
+            // was superseded by this one.
+            //
+            // To sum it up:
+            // 0.0.4 -> created a private "engine test" version with the features listed above, this version shipped in Saturn 0.2.2 although source code was SBT 0.0.4, this version of the BuildTool was started before 0.2.2 was due to release.
+            // Engine Test -> created buildtool-x0.0.5 was very similar to engine test but it used premake instead of custom C# build rules.
+            // buildtool-x0.0.5 -> created sbt-5.1 branch which is this version now.
+            //
+            StartupMessage = $"Saturn Build Tool X{version.FileMajorPart}.{version.FileMinorPart}.{version.FileBuildPart} \"SBT 5.1\"";
         }
 
         public bool Init()
@@ -339,12 +346,13 @@ namespace SaturnBuildTool
                 RecipeFiles.AddRange( headerFiles );
             }
 
-            // Add {project-name}.Load.cpp file
-            string loadFilePath = Path.Combine( Shared.ProjectInfo.BuildDir, $"{Shared.ProjectInfo.Name}.Load.cpp" );
+            // Add {project-name}.Load.cpp file aka ModuleInitialisation.cpp in >0.2.6
+            string loadFilePath = Path.Combine( Shared.ProjectInfo.SaturnDir, "Saturn-Editor", "content", "Templates", "ModuleInitialisation.cpp" );
 
             if( !File.Exists( loadFilePath )  )
             {
-                Console.WriteLine( $"ERROR: Required file {loadFilePath} does not exist! Please regenerate it in the Engine." );
+                Console.WriteLine( $"ERROR: ModuleInitialisation ({loadFilePath}) no such file exists. Please verify your engine installation." );
+                Console.WriteLine( $"ModuleInitialisation.cpp was introduced in Saturn 0.2.6 and it replaced {Shared.ProjectInfo.Name}.Load.cpp. If the file doesn't exist your engine version may not match this BuildTool version." );
 
                 ExitCode = ApplicationExitStatus.Failure;
                 return false;

@@ -244,12 +244,13 @@ namespace Saturn {
 				ImGui::Text( "No Saturn directory set. Please set the SATURN_DIR environment variable." );
 				ImGui::Text( "The directory that you pick must point to the root directory of Saturn, it should contain /bin, /Saturn, /Saturn-Editor etc" );
 				
-				ImGui::InputText( "##enterpath", ( char* )m_SaturnDir.c_str(), 1024, ImGuiInputTextFlags_ReadOnly );
+				const auto str = m_SaturnDir.string();
+
+				ImGui::InputText( "##enterpath", ( char* ) str.c_str(), str.size(), ImGuiInputTextFlags_ReadOnly );
 				ImGui::SameLine();
 				if( ImGui::Button( "...##dir" ) )
 				{
-					auto res = Application::Get()->OpenFolder();
-					m_SaturnDir = res;
+					m_SaturnDir = Application::Get()->OpenFolder();
 				}
 				
 				ImGui::Separator();
@@ -571,21 +572,6 @@ namespace Saturn {
 		std::filesystem::create_directory( ProjectFolderPath / "Cache" );
 
 		std::filesystem::create_directories( ProjectFolderPath / "Source" / newProject->GetConfig().Name );
-
-		{
-			std::filesystem::path targetFilePath = m_SaturnDir;
-			targetFilePath /= "Saturn-Editor";
-			targetFilePath /= "content";
-			targetFilePath /= "Templates";
-			targetFilePath /= "%PROJECT_NAME%.Load.cpp";
-
-			std::filesystem::copy( targetFilePath, ProjectFolderPath / "Build" );
-			
-			std::string filename = "%PROJECT_NAME%.Load.cpp";
-			std::string newName = std::format( "{0}.Load.cpp", newProject->GetConfig().Name );
-
-			std::filesystem::rename( ProjectFolderPath / "Build" / filename, ProjectFolderPath / "Build" / newName );
-		}
 
 		Project::SetActiveProject( newProject );
 

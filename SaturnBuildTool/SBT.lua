@@ -12,10 +12,10 @@ project "SaturnBuildTool"
 		"src/**.cs"
 	}
 
---	postbuildcommands
---	{
---		'{COPY} "../../../SaturnBuildTool/RT" "RT/"'
---	}
+	postbuildcommands
+	{
+		'{COPY} "../../../SaturnBuildTool/RT" "RT/"'
+	}
 
 	filter { "configurations:Debug" }
 		symbols "On"

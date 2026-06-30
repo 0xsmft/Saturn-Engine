@@ -126,6 +126,26 @@ namespace Saturn {
 		}
 	}
 
+	UUID Entity::GetPhysicsMaterialID()
+	{
+		if( const auto* pRb = TryGetComponent<RigidbodyComponent>() )
+		{
+			return pRb->MaterialAssetID;
+		}
+		else if( const auto* pStaticMesh = TryGetComponent<StaticMeshComponent>(); pStaticMesh && pStaticMesh->Mesh )
+		{
+			return pStaticMesh->Mesh->GetPhysicsMaterial();
+		}
+		else if( const auto* pSkMesh = TryGetComponent<SkeletalMeshComponent>(); pSkMesh && pSkMesh->Mesh )
+		{
+			return pSkMesh->Mesh->GetPhysicsMaterial();
+		}
+		else
+		{
+			return 0llu;
+		}
+	}
+
 	void Entity::Serialise( const SharedPtr<Entity>& rObject, std::ofstream& rStream )
 	{
 		RawEntitySerialisation::SerialiseEntity( rObject, rStream );

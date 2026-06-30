@@ -193,6 +193,15 @@ namespace Saturn {
 		}
 
 	public:
+		//
+		// @returns the physics material ID.
+		// 
+		// Priority is given to the RigidBody then the Static/Skeletal Meshes.
+		// May return zero if no ID is set or could be found.
+		//
+		UUID GetPhysicsMaterialID();
+
+	public:
 		operator entt::entity() const { return m_EntityHandle; }
 		operator uint32_t() const { return ( uint32_t ) m_EntityHandle; }
 

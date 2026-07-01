@@ -29,22 +29,16 @@
 #include "sppch.h"
 #include "ProjectBrowserLayer.h"
 
-#include <Saturn/ImGui/ImGuiWindow.h>
-#include <Saturn/ImGui/ImGuiWindowManager.h>
 #include <Saturn/ImGui/ImGuiAuxiliary.h>
 #include <Saturn/ImGui/EditorAboutWindowContents.h>
 
 #include <Saturn/Core/Ruby/RubyWindow.h>
-#include <Saturn/Core/StringAuxiliary.h>
 #include <Saturn/Core/EnvironmentVariables.h>
 #include <Saturn/Core/Process.h>
-#include <Saturn/Core/JobSystem.h>
 #include <Saturn/Core/Profiler.h>
 
 #include <Saturn/Serialisation/YAML/ProjectSerialiser.h>
 #include <Saturn/Serialisation/YAML/EngineSettingsSerialiser.h>
-
-#include <glm/gtc/type_ptr.hpp>
 
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui.h> 
@@ -225,7 +219,6 @@ namespace Saturn {
 
 	void ProjectBrowserLayer::OnUpdate( Timestep time )
 	{
-
 	}
 
 	void ProjectBrowserLayer::OnImGuiRender()
@@ -314,10 +307,11 @@ namespace Saturn {
 
 		ImGui::BeginHorizontal( "##project_browser_bottom" );
 
-		if( ImGui::Button( "Browse", ImVec2( bottomBarHeight, bottomBarHeight ) ) ) 
+		if( ImGui::Button( "Import", ImVec2( bottomBarHeight, bottomBarHeight ) ) ) 
 		{
 			const auto filePath = Application::Get()->OpenFile( "Saturn Project file (*.sproject)|*.sproject" );
-			ImportExternalProject( filePath );
+			if( !filePath.empty() )
+				ImportExternalProject( filePath );
 		}
 
 		ImGui::Spring();
@@ -500,6 +494,7 @@ namespace Saturn {
 			info.AssetPath = activeProject->GetFullAssetPath();
 			info.LastWriteTime = std::format( "{0}", std::filesystem::last_write_time( rPath ) );
 			info.LastWriteTime = info.LastWriteTime.substr( 0, info.LastWriteTime.find_first_of( " " ) );
+			info.ThumbnailTexture = m_NoIconTexture;
 
 			m_RecentProjects.push_back( info );
 		}

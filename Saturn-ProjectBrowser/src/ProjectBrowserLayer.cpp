@@ -223,9 +223,6 @@ namespace Saturn {
 
 	void ProjectBrowserLayer::OnImGuiRender()
 	{
-		ImGuiViewport* pViewport = ImGui::GetMainViewport();
-		ImGuiID dockspaceID = ImGui::DockSpaceOverViewport( pViewport, ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoWindowMenuButton | ImGuiDockNodeFlags_NoDockingOverMe | ImGuiDockNodeFlags_NoUndocking );
-
 		// --- Title bar
 		m_TitleBar.OnImGuiRender();
 
@@ -277,6 +274,9 @@ namespace Saturn {
 
 		if( m_OpenAboutWindow ) ShowAboutWindow();
 
+		const ImGuiViewport* pViewport = ImGui::GetMainViewport();
+		const ImGuiID dockspaceID = ImGui::DockSpaceOverViewport( pViewport, ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoWindowMenuButton | ImGuiDockNodeFlags_NoDockingOverMe | ImGuiDockNodeFlags_NoUndocking );
+
 		ImGui::Begin( "##project_browser", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollbar );
 		ImGui::SetWindowDock( ImGui::GetCurrentWindow(), dockspaceID, ImGuiCond_FirstUseEver );
 
@@ -289,7 +289,7 @@ namespace Saturn {
 		// Recent Projects
 		ImGui::BeginHorizontal( "##recentProjects" );
 
-		for( auto& rProjectInfo : m_RecentProjects )
+		for( const auto& rProjectInfo : m_RecentProjects )
 		{
 			DrawRecentProject( rProjectInfo );
 		

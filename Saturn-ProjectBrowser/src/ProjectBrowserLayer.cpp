@@ -566,6 +566,16 @@ namespace Saturn {
 		std::filesystem::create_directory( ProjectFolderPath / "Build" );
 		std::filesystem::create_directory( ProjectFolderPath / "Cache" );
 
+		{
+			const auto editorScriptsPath = templatesPath / "ScriptsForCopy";
+
+			if( std::filesystem::exists( editorScriptsPath ) )
+			{
+				// Copy to project directory.
+				std::filesystem::copy( ProjectFolderPath / "Scripts", editorScriptsPath, std::filesystem::copy_options::overwrite_existing );
+			}
+		}
+
 		std::filesystem::create_directories( ProjectFolderPath / "Source" / newProject->GetConfig().Name );
 
 		Project::SetActiveProject( newProject );
@@ -616,11 +626,6 @@ namespace Saturn {
 			
 			ImGui::End();
 		}
-	}
-
-	bool ProjectBrowserLayer::OnKeyPressed( RubyKeyEvent& rEvent )
-	{
-		return true;
 	}
 
 }

@@ -63,8 +63,6 @@ namespace Saturn {
 	private:
 		void ShowAboutWindow();
 
-		bool OnKeyPressed( RubyKeyEvent& rEvent );
-
 		void OpenEditorWithProject( const ProjectInformation& rProject );
 		void CreateProject( const std::filesystem::path& rPath );
 		void DrawRecentProject( const ProjectInformation& rProject );

@@ -2223,6 +2223,9 @@ namespace Saturn {
 		if( !m_BlockingOperation )
 			m_BlockingOperation = Ref<JobProgress>::Create();
 
+		SaveProject();
+		SaveFile();
+
 		JobSystem::Get().QueueJob(
 			[ this, rOutPath ]()
 		{

@@ -1277,7 +1277,7 @@ namespace Saturn {
 				ImageFormat::RED8, 
 				SAT_SMAA_SEARCHTEX_WIDTH,
 				SAT_SMAA_SEARCHTEX_HEIGHT,
-				&GSMAA_SearchTexBytes,
+				&s_SMAASearchTexBytes,
 				true );
 
 			m_RendererData.SMAAAreaTexture = Ref<Texture2D>::Create( "content/textures/SMAA_AreaTex.tga",

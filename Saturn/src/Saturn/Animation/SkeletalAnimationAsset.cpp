@@ -57,6 +57,12 @@ namespace Saturn {
 
 	SkeletalAnimationAsset::~SkeletalAnimationAsset()
 	{
+		acl::compressed_tracks* pTracks = reinterpret_cast< acl::compressed_tracks* >( m_pData );
+		if( pTracks )
+		{
+			acl::iallocator& rAllocator = ACLCore::GetAllocator();
+			rAllocator.deallocate( m_pData, pTracks->get_size() );
+		}
 	}
 
 	struct SkeletonAssetFileHeader

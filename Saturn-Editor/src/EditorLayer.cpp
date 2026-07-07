@@ -291,6 +291,8 @@ namespace Saturn {
 
 	void EditorLayer::OnDetach()
 	{
+		EditorShaderBundle::TryPackageIfNeeded();
+
 		PhysicsDebugMeshes::Get().Terminate();
 
 		EditorIcons::Clear();

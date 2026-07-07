@@ -37,6 +37,8 @@
 
 namespace Saturn {
 
+	static bool s_PendingWrite = false;
+
 	struct EditorShaderBundleHeader
 	{
 		//									.LA
@@ -132,12 +134,29 @@ namespace Saturn {
 			{
 				ShaderLibrary::Get().Add( shader );
 			}
+			else
+			{
+				s_PendingWrite = true;
+			}
 		}
 
 		stream.close();
 
 		return true;
 #endif
+	}
+
+	void EditorShaderBundle::TryPackageIfNeeded()
+	{
+		if( s_PendingWrite )
+		{
+			if( BundleShaders() )
+			{
+				s_PendingWrite = false;
+			}
+			else
+				SAT_CORE_WARN( "Failed to package editor shader bundle!" );
+		}
 	}
 
 }

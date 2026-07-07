@@ -35,6 +35,7 @@ namespace Saturn {
 	public:
 		[[nodiscard]] static bool BundleShaders();
 		[[nodiscard]] static bool ReadBundle();
+		static void TryPackageIfNeeded();
 	};
 	
 }

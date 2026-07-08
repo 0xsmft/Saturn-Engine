@@ -30,13 +30,18 @@
 
 namespace Saturn {
 
-	template<typename RefTy, typename AssignedTy>
+	//
+	// Scoped variable guard
+	// temporarily set a variable and restore it back to it's original value.
+	//
+	template<typename RefTy, typename AssignedTy = RefTy>
 	class VariableGuard
 	{
 	public:
 		VariableGuard( RefTy& rVariable, const AssignedTy& temporaryValue )
-			: m_Variable( temporaryValue ), m_OldValue( rVariable )
+			: m_Variable( rVariable ), m_OldValue( rVariable )
 		{
+			m_Variable = temporaryValue;
 		}
 
 		~VariableGuard() 

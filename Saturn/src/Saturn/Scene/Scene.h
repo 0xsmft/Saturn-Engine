@@ -45,6 +45,7 @@
 #include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 
 #include "Saturn/Core/Renderer/EditorCamera.h"
+#include "Saturn/Core/VariableGuard.h"
 
 #include "Saturn/Core/UUID.h"
 #include "Saturn/Core/Timestep.h"
@@ -201,11 +202,15 @@ namespace Saturn {
 		// Spawn an entity, with custom parameters
 		[[nodiscard]] SharedPtr<Entity> CreateEntity( CreateEntityParameters& rParams );
 
+		// Spawn an entity with a set ID, name and a class name, only really used by serialisation.
 		[[nodiscard]] SharedPtr<Entity> CreateEntityWithIDScript( UUID uuid, const std::string& name = "", const std::string& rScriptName = "", bool externalData = true );
 
+		// Create class from SClass, providing a name for it.
 		template<typename Ty>
 		[[nodiscard]] SharedPtr<Ty> CreateEntityFromClass( const std::string& rEntityName = "" )
 		{
+			VariableGuard<Scene*> sceneGuard( g_ActiveScene, this );
+
 			static_assert( std::is_base_of<Entity, Ty>::value, "Ty must be based from an entity!" );
 
 			SharedPtr<Ty> entity( dynamic_cast<Ty*>( ClassMetadataHandler::Get().CreateClassObject( Ty::StaticClass() ) ) );
@@ -221,6 +226,12 @@ namespace Saturn {
 		void OnRenderRuntime( Timestep ts, Ref<SceneRenderer> sceneRenderer );
 
 		SharedPtr<Entity> DuplicateEntity( const SharedPtr<Entity> entity, const SharedPtr<Entity> parent = nullptr );
+
+		//
+		// Duplicate an Entity but place the new entity into a new scene
+		// specified in targetScene
+		//
+		SharedPtr<Entity> DuplicateEntityBetweenScene( Ref<Scene> targetScene, const SharedPtr<Entity> entity, const SharedPtr<Entity> parent = nullptr );
 
 		//
 		// Deletes an entity. 
@@ -246,7 +257,7 @@ namespace Saturn {
 		//
 		void DestroyEntity( Entity* entity );
 
-		void OnModifyPrefab( Ref<Prefab> prefabAsset );
+		void OnModifyPrefab( AssetID prefabAssetID );
 
 		void TravelToScene( AssetID newSceneID );
 

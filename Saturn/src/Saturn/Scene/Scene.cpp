@@ -46,7 +46,6 @@
 #include "Saturn/Core/VirtualFS.h"
 #include "Saturn/Core/MemoryStream.h"
 #include "Saturn/Core/Renderer/SceneFlyCamera.h"
-#include "Saturn/Core/VariableGuard.h"
 
 #include "Saturn/Physics/PhysicsScene.h"
 #include "Saturn/Physics/PhysicsRigidBody.h"
@@ -831,9 +830,7 @@ namespace Saturn {
 
 	SharedPtr<Entity> Scene::CreateEntityWithIDScript( UUID uuid, const std::string& name /*= "" */, const std::string& rScriptName, bool externalData )
 	{
-		Scene* ActiveScene = g_ActiveScene;
-		if( g_ActiveScene != this )
-			g_ActiveScene = this;
+		VariableGuard<Scene*> sceneGuard( g_ActiveScene, this );
 
 		// UNSAFE! We just assume that rScriptName will be a subclass of an entity, could lead to UB
 		SharedPtr<Entity> entity( ( Entity* ) ClassMetadataHandler::Get().CreateClassObject( rScriptName, nullptr ) );
@@ -843,13 +840,13 @@ namespace Saturn {
 
 		OnEntityCreated( entity );
 
-		g_ActiveScene = ActiveScene;
-
 		return entity;
 	}
 
 	SharedPtr<Entity> Scene::CreateEntity( const std::string& name /*= "" */ )
 	{
+		VariableGuard<Scene*> sceneGuard( g_ActiveScene, this );
+
 		SharedPtr<Entity> entity( NewObject<Entity>( nullptr ) );
 		entity->SetName( name );
 
@@ -860,6 +857,8 @@ namespace Saturn {
 
 	SharedPtr<Entity> Scene::CreateEntity( CreateEntityParameters& rParams )
 	{
+		VariableGuard<Scene*> sceneGuard( g_ActiveScene, this );
+
 		if( !rParams.pClass->IsChildOf( Entity::StaticClass() ) || rParams.pClass == nullptr ) 
 			return nullptr;
 
@@ -1024,18 +1023,26 @@ namespace Saturn {
 
 	SharedPtr<Entity> Scene::DuplicateEntity( const SharedPtr<Entity> entity, const SharedPtr<Entity> parent )
 	{
+		return DuplicateEntityBetweenScene( this, entity, parent );
+	}
+
+	SharedPtr<Entity> Scene::DuplicateEntityBetweenScene( 
+		Ref<Scene> targetScene,
+		const SharedPtr<Entity> entity, 
+		const SharedPtr<Entity> parent /*= nullptr*/ )
+	{
 		SharedPtr<Entity> newEntity( dynamic_cast< Entity* >( ClassMetadataHandler::Get().CreateClassObject( ( SClass* ) entity->GetClass() ) ) );
 		newEntity->SetName( entity->GetComponent<TagComponent>().Tag );
 
-		OnEntityCreated( newEntity );
+		targetScene->OnEntityCreated( newEntity );
 
-		CopyComponentIfExists( AllDuplicatableComponents{}, newEntity->GetHandle(), entity->GetHandle(), m_Registry );
+		CopyComponentIfExists( AllDuplicatableComponents{}, newEntity->GetHandle(), entity->GetHandle(), targetScene->GetRegistry() );
 
 		auto& relationshipComponent = newEntity->GetComponent<RelationshipComponent>();
 		const auto& sourceRelationship = entity->GetComponent<RelationshipComponent>();
-		
+
 		relationshipComponent.ChildrenID.resize( entity->GetChildren().size() );
-		
+
 		// parent should only be a valid pointer if we are calling this recursively.
 		if( parent )
 		{
@@ -1044,16 +1051,16 @@ namespace Saturn {
 
 		if( entity->HasParent() && !parent )
 		{
-			SharedPtr<Entity> xparent = FindEntityByID( entity->GetParent() );
-			SharedPtr<Entity> newParent = DuplicateEntity( xparent, nullptr );
+			SharedPtr<Entity> xparent = targetScene->FindEntityByID( entity->GetParent() );
+			SharedPtr<Entity> newParent = targetScene->DuplicateEntity( xparent, nullptr );
 
 			newEntity->SetParent( newParent->GetUUID() );
 		}
 
 		for( const auto& rID : sourceRelationship.ChildrenID )
 		{
-			const SharedPtr<Entity> child = FindEntityByID( rID );
-			SharedPtr<Entity> newChild = DuplicateEntity( child, newEntity );
+			const SharedPtr<Entity> child = targetScene->FindEntityByID( rID );
+			SharedPtr<Entity> newChild = targetScene->DuplicateEntity( child, newEntity );
 
 			newEntity->GetChildren().push_back( newChild->GetUUID() );
 		}
@@ -1105,72 +1112,26 @@ namespace Saturn {
 		m_EntitiesToDestroy.push_back( entity );
 	}
 
-	void Scene::OnModifyPrefab( Ref<Prefab> prefabAsset )
+	void Scene::OnModifyPrefab( AssetID prefabAssetID )
 	{
-		std::unordered_map<entt::entity, SharedPtr<Entity>> replace;
+		Ref<Prefab> prefabAsset = AssetManager::Get()->GetAssetAs<Prefab>( prefabAssetID );
+		if( !prefabAsset ) return;
 
-		auto entities = GetAllEntitiesWith<PrefabComponent>();
-		for( auto& rEntity : entities )
+		const auto allPrefabEntities = GetAllEntitiesWith<PrefabComponent>();
+		for( auto& rEntity : allPrefabEntities )
 		{
-			const auto& rPrefabComp = rEntity->GetComponent<PrefabComponent>();
+			const auto& rPrefabComponent = rEntity->GetComponent<PrefabComponent>();
 
-			if( rPrefabComp.AssetID != prefabAsset->ID )
+			// We only want entities with the same ID as the modified one.
+			if( rPrefabComponent.AssetID != prefabAssetID )
 				continue;
 
-			if( rPrefabComp.Modified )
-			{
-				// merge
-			}
-			else
-			{
-				CreateEntityParameters cep;
-				replace[ rEntity->GetHandle() ] = CreatePrefab( prefabAsset, cep );
-			}
-		}
-
-		for( auto& [id, rEntity] : replace )
-		{
-			auto& rOldEntity = m_EntityIDMap[ id ];
-
-			// Copy over core data
-			CopyComponentIfExists<RelationshipComponent>( rEntity->GetHandle(), rOldEntity->GetHandle(), m_Registry );
-			CopyComponentIfExists<IdComponent>( rEntity->GetHandle(), rOldEntity->GetHandle(), m_Registry );
-			CopyComponentIfExists<TagComponent>( rEntity->GetHandle(), rOldEntity->GetHandle(), m_Registry );
-			CopyComponentIfExists<TransformComponent>( rEntity->GetHandle(), rOldEntity->GetHandle(), m_Registry );
-
-			SAT_CORE_WARN( "Rebasing prefab entity {0}! (ASSET/{1})", rEntity->GetName(), prefabAsset->Name );
-
-			DeleteEntity( rOldEntity, false, rEntity->GetUUID() );
+			// Preform merge...
 		}
 	}
 
 	void Scene::TransferModifiedProperties( const SharedPtr<Entity>& rSourceEntity, SharedPtr<Entity>& rEntity, const std::string& rMetadataName )
 	{
-		/*
-		auto& rProperties = ClassMetadataHandler::Get().GetAllProperties( rMetadataName );
-
-		for( auto& rProperty : rProperties )
-		{
-			if( rProperty.GetType() == SPropertyType::Entity )
-			{
-				SharedPtr<Entity>& currentEntity = rProperty.Read<SPropertyType::Entity>( const_cast< Entity* >( rSourceEntity.Get() ) );
-
-				if( currentEntity != nullptr )
-				{
-					UUID id = currentEntity->GetUUID();
-
-					// Find the same entity but in our scene
-					SharedPtr<Entity> ourEntity = FindEntityByID( id );
-
-					rProperty.SetProperty( rEntity.Get(), ourEntity );
-				}
-			}
-			else
-			{
-				rProperty.RtCopyFromOther( const_cast< Entity* >( rSourceEntity.Get() ), rEntity.Get() );
-			}
-		}
-		*/
 	}
 
 	void Scene::DestroyPendingEntities()
@@ -1186,6 +1147,9 @@ namespace Saturn {
 
 	void Scene::DeleteEntityChecked( Entity* pEntity )
 	{
+		if( !m_Registry.valid( pEntity->GetHandle() ) )
+			return;
+
 		// Could use GetClass()
 		if( m_NavBoundsEntity->GetUUID() == pEntity->GetUUID() )
 			m_NavBoundsEntity = nullptr;
@@ -1540,9 +1504,9 @@ namespace Saturn {
 
 	SharedPtr<Entity> Scene::CreatePrefab( Ref<Prefab> prefabAsset, CreateEntityParameters& rEntityParameters )
 	{
-		SharedPtr<Entity> prefabEntity = prefabAsset->PrefabToEntity( this );
+		SharedPtr<Entity> prefabEntity = prefabAsset->InstantiatePrefab( this );
 
-		SAT_CORE_ASSERT( !rEntityParameters.pClass, "It is invalid for the creation parameters to have a valid SClass, you must not change the SClass as that is controlled by the Prefab asset!" );
+		SAT_CORE_ASSERT( !rEntityParameters.pClass, "It is invalid for the creation parameters to have a valid SClass, you must not change the SClass that is controlled by the Prefab asset!" );
 
 		if( !rEntityParameters.Tag.empty() )
 		{
@@ -1572,30 +1536,37 @@ namespace Saturn {
 
 	void Scene::AcknowledgeHotReload()
 	{
+		// A map of the old entities that will be deleted.
 		std::unordered_map<entt::entity, SharedPtr<Entity>> replace;
 
-		for( auto&& [id, entity] : m_EntityIDMap )
+		for( auto&& [hnd, entity] : m_EntityIDMap )
 		{
-			if( entity->GetClass()->GetParentClass() != Entity::StaticClass() )
+			if( entity->GetClass() != Entity::StaticClass() )
 			{
-				SharedPtr<Entity> newEntity = HotReloadReplaceOldEntity( entity );
-				replace[ id ] = newEntity;
+				const auto newEntity = HotReloadReplaceOldEntity( entity );
+				
+				SAT_CORE_INFO( "[Hot-Reload]: Will replace Handle {0}", ( ENTT_ID_TYPE ) hnd );
+
+				replace[ hnd ] = newEntity;
 			}
 		}
 
-		for( auto& [id, entity] : replace )
+		for( auto& [hnd, entity] : replace )
 		{
-			auto& rOldEntity = m_EntityIDMap[ id ];
+			// Get the old entity.
+			auto& rOldEntity = m_EntityIDMap[ hnd ];
 
-			// Copy components
+			// Copy over components.
 			CopyComponentIfExists( AllDuplicatableComponents{}, entity->GetHandle(), rOldEntity->GetHandle(), m_Registry );
-
 			CopyComponentIfExists<RelationshipComponent>( entity->GetHandle(), rOldEntity->GetHandle(), m_Registry );
 
 			// Delete old
 			DeleteEntity( rOldEntity, false, entity->GetUUID() );
 		
-			m_EntityIDMap[ id ] = entity;
+			// And insert the new entity into the map with it's new handle.
+			m_EntityIDMap[ entity->GetHandle() ] = entity;
+
+			SAT_CORE_INFO( "[Hot-Reload]: Replacing Handle {0}", ( ENTT_ID_TYPE ) hnd );
 		}
 
 		replace.clear();
@@ -1627,7 +1598,7 @@ namespace Saturn {
 	void Scene::PostDeserialise()
 	{
 		// Find and load the nav mesh
-		auto entities = GetAllEntitiesWith<NavigationMeshSpecificationComponent>();
+		const auto entities = GetAllEntitiesWith<NavigationMeshSpecificationComponent>();
 
 		SAT_CORE_ASSERT( entities.size() <= 1, "There can only be one entity with a NavigationMeshSpecificationComponent in the scene!" );
 
@@ -1725,8 +1696,7 @@ namespace Saturn {
 		Lights::Serialise( m_Lights, rStream );
 
 		// Serialise the map manually.
-		size_t mapSize = m_EntityIDMap.size();
-		rStream.write( reinterpret_cast< char* >( &mapSize ), sizeof( size_t ) );
+		RawSerialisation::WriteObject( m_EntityIDMap.size(), rStream );
 
 		for( auto& [k, v] : m_EntityIDMap )
 		{
@@ -1759,15 +1729,14 @@ namespace Saturn {
 	template<typename IStream>
 	void Scene::DeserialiseInternal( IStream& rStream )
 	{
-//		VariableGuard<Scene*> activeScene( g_ActiveScene, this );
-		auto* pOldScene = g_ActiveScene;
-		g_ActiveScene = this;
+		VariableGuard<Scene*> activeScene( g_ActiveScene, this );
 
 		Lights::Deserialise( m_Lights, rStream );
 
 		// Read the map manually.
 		size_t mapSize = 0;
-		rStream.read( reinterpret_cast< char* >( &mapSize ), sizeof( size_t ) );
+		RawSerialisation::ReadObject( mapSize, rStream );
+
 		for( size_t i = 0; i < mapSize; ++i )
 		{
 			uint64_t classHash = 0llu;
@@ -1783,8 +1752,6 @@ namespace Saturn {
 
 		Name = Path.stem().string();
 		PostDeserialise();
-
-		g_ActiveScene = pOldScene;
 	}
 
 }

@@ -405,6 +405,66 @@ namespace Saturn {
 		return path;
 	}
 
+	std::vector<std::filesystem::path> Application::OpenMultipleFiles( const std::string& rFilter ) const
+	{
+		std::vector<std::filesystem::path> paths;
+
+		NFD::Init();
+
+		std::vector<std::string> tokens;
+		std::stringstream ss( rFilter );
+		std::string item;
+
+		// Split by |.
+		while( std::getline( ss, item, '|' ) )
+		{
+			if( !item.empty() )
+				tokens.push_back( item );
+		}
+
+		std::vector<nfdu8filteritem_t> filters;
+
+		// Expecting pairs... (description | exts)
+		for( size_t i = 0; i + 1 < tokens.size(); i += 2 )
+		{
+			filters.emplace_back( tokens[ i ].c_str(), tokens[ i + 1 ].c_str() );
+		}
+
+		nfdwindowhandle_t parentWindow
+		{
+#if defined(SAT_PLATFORM_WINDOWS)
+			.type = NFD_WINDOW_HANDLE_TYPE_WINDOWS,
+#elif defined(SAT_PLATFORM_LINUX)
+			.type = NFD_WINDOW_HANDLE_TYPE_X11,
+#endif
+			.handle = ( void* ) m_Window->GetNativeHandle()
+		};
+
+		// This is a unique ptr, so we do not have to worry about freeing it.
+		NFD::UniquePathSet nfdPaths;
+		if( NFD::OpenDialogMultiple( nfdPaths, filters.data(), ( nfdfiltersize_t ) filters.size(), nullptr, parentWindow ) == NFD_OKAY )
+		{
+			nfdpathsetsize_t count;
+			if( NFD::PathSet::Count( nfdPaths, count ) == NFD_OKAY )
+			{
+				paths.reserve( count );
+				
+				for( nfdpathsetsize_t i = 0; i < count; ++i )
+				{
+					NFD::UniquePathSetPathU8 nfdPath;
+					if( NFD::PathSet::GetPath( nfdPaths, i, nfdPath ) == NFD_OKAY )
+					{
+						paths.push_back( std::filesystem::path( nfdPath.get() ) );
+					}
+				}
+			}
+		}
+
+		NFD::Quit();
+
+		return paths;
+	}
+
 	std::filesystem::path Application::SaveFile( const std::string& rFilter ) const
 	{
 		NFD::Init();

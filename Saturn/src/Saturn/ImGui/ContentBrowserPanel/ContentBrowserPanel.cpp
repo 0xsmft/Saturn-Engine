@@ -593,43 +593,19 @@ namespace Saturn {
 
 				if( !path.empty() )
 				{
-					std::string extensionLower = path.extension().string();
-					std::transform( extensionLower.begin(), extensionLower.end(), extensionLower.begin(), ::tolower );
+					m_PendingAssetPathsToImport.push_back( path );
+				}
+			}
 
-					bool textureAssetImported = false;
-					if( AssetExtensions::IsTexture( extensionLower ) )
-					{
-						m_CurrentImportPopup = std::make_shared<TextureSourceAssetImportPopup>( path, m_CurrentPath );
-						m_CurrentImportPopup->Initialise();
-					}
+			if( ImGui::MenuItem( "Bulk Import" ) )
+			{
+				const auto paths = Application::Get()->OpenMultipleFiles( "Supported asset types (*.fbx *.gltf *.glb *.png *.tga *.jpeg *.jpg *wav *.ogg *.mp3 *.ttf)|fbx,gltf,glb,png,tga,jpeg,jpg,wav,ogg,mp3,ttf" );
 
-					// Meshes
-					if( AssetExtensions::IsModel( extensionLower ) )
-					{
-						m_CurrentImportPopup = std::make_shared<MeshImportPopup>( path, m_CurrentPath );
-						m_CurrentImportPopup->Initialise();
-					}
+				m_PendingAssetPathsToImport.reserve( paths.size() );
 
-					// Audio
-					if( AssetExtensions::IsAudio( extensionLower ) )
-					{
-						m_CurrentImportPopup = std::make_shared<SoundImportPopup>( path, m_CurrentPath );
-						m_CurrentImportPopup->Initialise();
-					}
-
-					// Font
-					if( AssetExtensions::IsFont( extensionLower ) )
-					{
-						m_CurrentImportPopup = std::make_shared<FontImportPopup>( path, m_CurrentPath );
-						m_CurrentImportPopup->Initialise();
-					}
-
-					// Still no import popup? means that we have an unknown extension (file type).
-					if( !m_CurrentImportPopup && !textureAssetImported )
-					{
-						m_CurrentImportPopup = std::make_shared<UnknownImportPopup>( path );
-						m_CurrentImportPopup->Initialise();
-					}
+				for( const auto& rPath : paths )
+				{
+					m_PendingAssetPathsToImport.push_back( rPath );
 				}
 			}
 
@@ -1138,6 +1114,16 @@ namespace Saturn {
 
 				disabledIfRuntime.Pop();
 				ImGui::EndPopup();
+			}
+
+			// If we have a pending asset and if we do not have an import popup, we need to resolve that.
+			if( !m_PendingAssetPathsToImport.empty() && !m_CurrentImportPopup )
+			{
+				// Resolve to get the current import popup.
+				ResolveAssetImporterBasedOnExt( m_PendingAssetPathsToImport.front() );
+
+				// Remove this asset from the queue.
+				m_PendingAssetPathsToImport.erase( m_PendingAssetPathsToImport.begin() );
 			}
 
 			if( m_CurrentImportPopup )
@@ -2021,6 +2007,47 @@ namespace Saturn {
 		illegalClassName |= m_NewClassName.contains( ' ' );
 
 		return illegalClassName;
+	}
+
+	void ContentBrowserPanel::ResolveAssetImporterBasedOnExt( const std::filesystem::path& rPath )
+	{
+		std::string extensionLower = rPath.extension().string();
+		std::transform( extensionLower.begin(), extensionLower.end(), extensionLower.begin(), ::tolower );
+
+		bool textureAssetImported = false;
+		if( AssetExtensions::IsTexture( extensionLower ) )
+		{
+			m_CurrentImportPopup = std::make_shared<TextureSourceAssetImportPopup>( rPath, m_CurrentPath );
+			m_CurrentImportPopup->Initialise();
+		}
+
+		// Meshes
+		if( AssetExtensions::IsModel( extensionLower ) )
+		{
+			m_CurrentImportPopup = std::make_shared<MeshImportPopup>( rPath, m_CurrentPath );
+			m_CurrentImportPopup->Initialise();
+		}
+
+		// Audio
+		if( AssetExtensions::IsAudio( extensionLower ) )
+		{
+			m_CurrentImportPopup = std::make_shared<SoundImportPopup>( rPath, m_CurrentPath );
+			m_CurrentImportPopup->Initialise();
+		}
+
+		// Font
+		if( AssetExtensions::IsFont( extensionLower ) )
+		{
+			m_CurrentImportPopup = std::make_shared<FontImportPopup>( rPath, m_CurrentPath );
+			m_CurrentImportPopup->Initialise();
+		}
+
+		// Still no import popup? means that we have an unknown extension (file type).
+		if( !m_CurrentImportPopup && !textureAssetImported )
+		{
+			m_CurrentImportPopup = std::make_shared<UnknownImportPopup>( rPath );
+			m_CurrentImportPopup->Initialise();
+		}
 	}
 
 	void ContentBrowserPanel::UpdateFiles( bool clear /*= false */ )

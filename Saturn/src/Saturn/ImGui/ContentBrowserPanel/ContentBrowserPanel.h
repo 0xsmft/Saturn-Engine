@@ -152,6 +152,8 @@ namespace Saturn {
 		void DrawCreateNewClassPopupModal();
 		bool CheckIllegalClassName();
 
+		void ResolveAssetImporterBasedOnExt( const std::filesystem::path& rPath );
+
 	private:
 		// The absolute current path
 		// Used for finding/creating assets.
@@ -209,6 +211,9 @@ namespace Saturn {
 		std::vector<Ref<ContentBrowserItem>> m_ItemsToDelete;
 
 		std::shared_ptr<AssetImportPopupBase> m_CurrentImportPopup;
+
+		// Pending asset paths to import.
+		std::vector<std::filesystem::path> m_PendingAssetPathsToImport;
 
 		// Should be handled by the editor.
 		bool m_OpenRenameAssetOpenPopup = false;

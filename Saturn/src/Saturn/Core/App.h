@@ -116,8 +116,13 @@ namespace Saturn {
 		float Framerate() const { return m_Framerate; }
 
 		// Calls the OS to show an open file dialog.
+		// NB: For multiple files please use OpenMultipleFiles
 		// @param rFilter Must be "Desc1|*.txt;" with "|" being a seperator
 		std::filesystem::path OpenFile( const std::string& rFilter ) const;
+
+		// Calls the OS to show an open file dialog allowing the user to select more than one file.
+		// @param rFilter Must be "Desc1|*.txt;" with "|" being a seperator
+		std::vector<std::filesystem::path> OpenMultipleFiles( const std::string& rFilter ) const;
 
 		// Calls the OS to show a save file dialog.
 		// @param rFilter Must be "Desc1|*.txt;" with "|" being a seperator

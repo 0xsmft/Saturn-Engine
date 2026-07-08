@@ -309,7 +309,7 @@ namespace Saturn {
 
 		if( ImGui::Button( "Import", ImVec2( bottomBarHeight, bottomBarHeight ) ) ) 
 		{
-			const auto filePath = Application::Get()->OpenFile( "Saturn Project file (*.sproject)|*.sproject" );
+			const auto filePath = Application::Get()->OpenFile( "Saturn Project file (*.sproject)|sproject" );
 			if( !filePath.empty() )
 				ImportExternalProject( filePath );
 		}

@@ -2523,7 +2523,7 @@ namespace Saturn {
 
 				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), { 24.0f, 24.0f } ) )
 				{
-					const auto filePath = Application::Get()->OpenFile( "Saturn Project file (*.sproject)|*.sproject" );
+					const auto filePath = Application::Get()->OpenFile( "Saturn Project file (*.sproject)|sproject" );
 					if( !filePath.empty() )
 					{
 						rEngineSettings.StartupProject = filePath;

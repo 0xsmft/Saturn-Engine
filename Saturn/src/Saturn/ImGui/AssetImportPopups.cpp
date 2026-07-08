@@ -261,7 +261,7 @@ namespace Saturn {
 
 			if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
 			{
-				m_AssetToImportPath = Application::Get()->OpenFile( "Supported asset types (*.png *.jpg *.jpeg)|*.png; *.jpg; *.jpeg" );
+				m_AssetToImportPath = Application::Get()->OpenFile( "Supported asset types (*.png *.jpg *.jpeg)|png,jpg,jpeg" );
 			}
 
 			ImGui::EndHorizontal();
@@ -453,7 +453,7 @@ namespace Saturn {
 
 			if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
 			{
-				m_AssetToImportPath = Application::Get()->OpenFile( "Supported asset types (*.fbx *.gltf *.glb)|*.fbx; *.gltf; *.glb" );
+				m_AssetToImportPath = Application::Get()->OpenFile( "Supported asset types (*.fbx *.gltf *.glb)|fbx,gltf,glb" );
 			}
 
 			ImGui::EndHorizontal();
@@ -528,7 +528,7 @@ namespace Saturn {
 
 			if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
 			{
-				m_GLTFBinPath = Application::Get()->OpenFile( "Supported asset types (*.glb *.bin)|*.glb; *.bin" );
+				m_GLTFBinPath = Application::Get()->OpenFile( "Supported asset types (*.glb *.bin)|glb,bin" );
 
 				m_UseBinFile = m_GLTFBinFileExists = std::filesystem::exists( m_GLTFBinPath );
 			}
@@ -934,7 +934,7 @@ namespace Saturn {
 
 			if( ImGui::Button( "Browse" ) )
 			{
-				m_AssetToImportPath = Application::Get()->OpenFile("Supported asset types (*.wav *.mp3)|*.wav; *.mp3" );
+				m_AssetToImportPath = Application::Get()->OpenFile("Supported asset types (*.wav *.mp3)|wav,mp3" );
 			}
 
 			ImGui::EndHorizontal();
@@ -1063,7 +1063,7 @@ namespace Saturn {
 
 			if( ImGui::Button( "Change" ) )
 			{
-				m_AssetToImportPath = Application::Get()->OpenFile("Supported asset types (*.ttf)|*.ttf" );
+				m_AssetToImportPath = Application::Get()->OpenFile("Supported asset types (*.ttf)|ttf" );
 			}
 
 			ImGui::EndHorizontal();

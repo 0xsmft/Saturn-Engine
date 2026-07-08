@@ -29,14 +29,13 @@
 #include "sppch.h"
 #include "Prefab.h"
 
+// Fuckass include
 #include "Saturn/Audio/SoundGroup.h"
-
-#include "Saturn/Asset/AssetManager.h"
-
-#include "Saturn/Serialisation/YAML/YamlAux.h"
 
 #include "Saturn/Scene/Scene.h"
 #include "Saturn/Scene/Entity.h"
+
+#include "Saturn/Core/VariableGuard.h"
 
 #include "Saturn/GameFramework/SClass.h"
 
@@ -63,17 +62,8 @@ namespace Saturn {
 		CopyComponentIfExists<V...>( dst, src, rRegistry, rDstRegistry );
 	}
 
-	static void SwapActiveScene( Scene* pScene ) 
-	{
-		if( g_ActiveScene != pScene )
-			g_ActiveScene = pScene;
-	}
-
-	static void RestoreActiveScene( Scene* pNewScene ) 
-	{
-		if( g_ActiveScene != pNewScene )
-			g_ActiveScene = pNewScene;
-	}
+	//////////////////////////////////////////////////////////////////////////
+	// PREFAB
 
 	Prefab::Prefab()
 	{
@@ -89,22 +79,14 @@ namespace Saturn {
 	{
 	}
 
-	void Prefab::InitPrefab( const SharedPtr<Entity>& srcEntity )
+	void Prefab::InitPrefab( const SharedPtr<Entity> srcEntity )
 	{
 		m_Scene = Ref<Scene>::Create();
 
-		Scene* pCurrentScene = g_ActiveScene;
-		SwapActiveScene( m_Scene.Get() );
+		VariableGuard<Scene*> sceneGuard( g_ActiveScene, m_Scene.Get() );
 
-		// TODO: (Entities using refs) Fix this
 		if( srcEntity->Valid() )
 			m_Entity = CreateFromEntity( srcEntity );
-
-		RestoreActiveScene( pCurrentScene );
-	}
-
-	void Prefab::ConvertSceneEntityIntoPrefabEntity( const SharedPtr<Entity> srcEntity )
-	{
 	}
 
 	SharedPtr<Entity> Prefab::CreateFromEntity( SharedPtr<Entity> srcEntity )
@@ -113,10 +95,10 @@ namespace Saturn {
 		params.pClass = ( SClass* ) srcEntity->GetClass();
 
 		SharedPtr<Entity> result = g_ActiveScene->CreateEntity( params );
+
+		// Make sure that all entities in this prefab have the PrefabComponent.
 		result->AddComponent<PrefabComponent>().AssetID = ID;
 		
-		auto& rc = srcEntity->GetComponent<RelationshipComponent>();
-
 		CopyComponentIfExists( AllComponents{}, 
 			result->m_EntityHandle, srcEntity->m_EntityHandle,
 			srcEntity->m_Scene->m_Registry, m_Scene->m_Registry );
@@ -134,14 +116,41 @@ namespace Saturn {
 		return result;
 	}
 
+	SharedPtr<Entity> Prefab::InstantiatePrefab( Ref<Scene> SceneToSpawnIn )
+	{
+		CreateEntityParameters params{};
+		params.pClass = ( SClass* ) m_Entity->GetClass();
+
+		SharedPtr<Entity> result = SceneToSpawnIn->CreateEntity( params );
+		result->AddComponent<PrefabComponent>().AssetID = ID;
+
+		// Copy components over.
+		CopyComponentIfExists( AllComponents{},
+			result->m_EntityHandle, m_Entity->m_EntityHandle,
+			m_Scene->m_Registry, SceneToSpawnIn->m_Registry );
+
+		// We don't want the same id, what if we spawn this prefab and it has the same id as an 
+		// already existing entity in the target scene?
+		result->GetComponent<IdComponent>().ID = {};
+
+		for( auto& childId : m_Entity->GetChildren() )
+		{
+			SharedPtr<Entity> child = CreateChildren( m_Scene->FindEntityByID( childId ), SceneToSpawnIn );
+
+			child->SetParent( result->GetComponent<IdComponent>().ID );
+		}
+
+		return result;
+	}
+
 	SharedPtr<Entity> Prefab::CreateChildren( const SharedPtr<Entity>& parent, Ref<Scene> Scene )
 	{
 		// Create the child in the new scene.
 		SharedPtr<Entity> child = g_ActiveScene->CreateEntity();
-		
+
 		// Copy Components, from our child in the scene.
-		CopyComponentIfExists( AllComponents{}, 
-			child->m_EntityHandle, parent->m_EntityHandle, 
+		CopyComponentIfExists( AllComponents{},
+			child->m_EntityHandle, parent->m_EntityHandle,
 			m_Scene->m_Registry, Scene->m_Registry );
 
 		// Check if this entity has any children.
@@ -150,54 +159,11 @@ namespace Saturn {
 			SharedPtr<Entity> c = CreateChildren( child, Scene );
 
 			c->SetParent( child->GetComponent<IdComponent>().ID );
-			
+
 			child->GetComponent<RelationshipComponent>().ChildrenID.push_back( c->GetComponent<IdComponent>().ID );
 		}
 
 		return child;
-	}
-
-
-	SharedPtr<Entity> Prefab::PrefabToEntity( Ref<Scene> SceneToSpawnIn )
-	{
-		CreateEntityParameters params{};
-		params.pClass = ( SClass* ) m_Entity->GetClass();
-
-		SharedPtr<Entity> result = SceneToSpawnIn->CreateEntity( params );
-		result->AddComponent<PrefabComponent>().AssetID = ID;
-
-		// Now we need to find the root entity of the prefab.
-		auto entities = m_Scene->GetAllEntitiesWith<RelationshipComponent>();
-
-		SharedPtr<Entity> RootEntity = nullptr;
-
-		for( auto& entity : entities )
-		{
-			if( entity->GetParent() == 0 )
-			{
-				RootEntity = entity;
-				break;
-			}
-		}
-
-		if( !RootEntity )
-			RootEntity = m_Entity;
-
-		CopyComponentIfExists( AllComponents{},
-			result->m_EntityHandle, RootEntity->m_EntityHandle,
-			m_Scene->m_Registry, SceneToSpawnIn->m_Registry );
-
-		// We don't want the same id, what if we spawn this prefab and it has the same id?
-		result->GetComponent<IdComponent>().ID = {};
-
-		for( auto& childId : RootEntity->GetChildren() )
-		{
-			SharedPtr<Entity> child = CreateChildren( m_Scene->FindEntityByID( childId ), SceneToSpawnIn );
-
-			child->SetParent( result->GetComponent<IdComponent>().ID );
-		}
-
-		return result;
 	}
 
 	void Prefab::SerialisePrefab( std::ofstream& rStream )
@@ -209,18 +175,18 @@ namespace Saturn {
 	{
 		m_Scene->DeserialiseInternal( rStream );
 		
-		// Find root entity
-		SharedPtr<Entity> RootEntity = nullptr;
+		// Find root entity.
+		SharedPtr<Entity> RootEntity;
 
 		for( const auto& entity : m_Scene->GetAllEntitiesWith<RelationshipComponent>() )
 		{
 			if( entity->GetComponent<RelationshipComponent>().Parent != 0 )
 				continue;
 
-			if( entity->GetChildren().size() > 0 )
-				continue;
-
+			SAT_CORE_ASSERT( RootEntity, "A root entity was already found! A prefab can only have one root entity (root entity means an entity with no parent)." );
 			RootEntity = entity;
+			
+			break;
 		}
 
 		m_Entity = RootEntity;

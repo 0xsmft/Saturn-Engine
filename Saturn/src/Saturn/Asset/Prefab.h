@@ -31,8 +31,6 @@
 #include "Asset.h"
 #include "Saturn/Scene/Entity.h"
 
-#include <entt.hpp>
-
 namespace Saturn {
 
 	class Scene;
@@ -42,7 +40,7 @@ namespace Saturn {
 	//
 	// This is not like a normal prefab. Think of this like an instance of another class (class means Entity or type defined in the game).
 	// Prefabs can only represent one root entity however, that entity can have children
-	// Prefabs can not depend on other prefabs, this means that any child must not have a prefab component, only the root entity can (which would point to this prefab instance)
+	// Prefabs can not depend on other prefabs.
 	class Prefab : public Asset
 	{
 	public:
@@ -51,9 +49,9 @@ namespace Saturn {
 		virtual ~Prefab();
 
 		// Convert an entity into a prefab
-		void InitPrefab( const SharedPtr<Entity>& srcEntity );
+		void InitPrefab( const SharedPtr<Entity> srcEntity );
 		
-		SharedPtr<Entity> PrefabToEntity( Ref<Scene> SceneToSpawnIn );
+		SharedPtr<Entity> InstantiatePrefab( Ref<Scene> SceneToSpawnIn );
 
 		Ref<Scene> GetScene() { return m_Scene; }
 		const Ref<Scene> GetScene() const { return m_Scene; }
@@ -69,14 +67,10 @@ namespace Saturn {
 		SharedPtr<Entity> CreateFromEntity( SharedPtr<Entity> srcEntity );
 		SharedPtr<Entity> CreateChildren( const SharedPtr<Entity>& parent, Ref<Scene> Scene );
 
-		void ConvertSceneEntityIntoPrefabEntity( const SharedPtr<Entity> srcEntity );
-
 	private:
 		SharedPtr<Entity> m_Entity;
 
 		Ref<Scene> m_Scene;
-
-//		UUID m_ModificationID;
 
 	private:
 		friend class PrefabSerialiser;

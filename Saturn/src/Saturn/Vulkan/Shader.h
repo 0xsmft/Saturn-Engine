@@ -310,6 +310,9 @@ namespace Saturn {
 			RawSerialisation::WriteVector( rObject.SampledImages, rStream );
 			RawSerialisation::WriteVector( rObject.StorageImages, rStream );
 
+			RawSerialisation::WriteVector( rObject.SeparateImages, rStream );
+			RawSerialisation::WriteVector( rObject.SeparateSamplers, rStream );
+
 			RawSerialisation::WriteUnorderedMap( rObject.UniformBuffers, rStream );
 			RawSerialisation::WriteUnorderedMap( rObject.StorageBuffers, rStream );
 		}
@@ -320,6 +323,9 @@ namespace Saturn {
 
 			RawSerialisation::ReadVector( rObject.SampledImages, rStream );
 			RawSerialisation::ReadVector( rObject.StorageImages, rStream );
+
+			RawSerialisation::ReadVector( rObject.SeparateImages, rStream );
+			RawSerialisation::ReadVector( rObject.SeparateSamplers, rStream );
 
 			RawSerialisation::ReadUnorderedMap( rObject.UniformBuffers, rStream );
 			RawSerialisation::ReadUnorderedMap( rObject.StorageBuffers, rStream );

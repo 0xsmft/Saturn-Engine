@@ -77,6 +77,7 @@ static inline EventCategory GetStaticCategory() { return EventCategory::Category
 		SendEditorNotification,
 		AddComponent,
 		RemoveComponent,
+		PrefabModified,
 
 		//////////////////////////////////////////////////////////////////////////
 		// Runtime

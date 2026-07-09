@@ -253,4 +253,25 @@ namespace Saturn {
 		std::string m_Text{};
 	};
 
+	//
+	// OnPrefabModifiedEvent 
+	// 
+	// Fires when a prefab asset has been modified and the changes have been confirmed (i.e. saved)
+	//
+	class OnPrefabModifiedEvent : public Event
+	{
+		SAT_DEFINE_EVENT( PrefabModified, EC_Editor );
+	public:
+		OnPrefabModifiedEvent( AssetID id ) 
+			: Event( EventType::PrefabModified, EC_Editor ), m_ModifiedPrefabID( id )
+		{
+		}
+
+		virtual ~OnPrefabModifiedEvent() = default;
+
+		AssetID GetPrefabID() const { return m_ModifiedPrefabID; }
+
+	private:
+		AssetID m_ModifiedPrefabID = 0llu;
+	};
 }

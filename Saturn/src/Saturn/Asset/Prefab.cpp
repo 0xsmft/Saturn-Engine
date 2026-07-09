@@ -44,7 +44,11 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 
 	template<typename... V>
-	static void CopyComponentIfExists( entt::entity dst, entt::entity src, entt::registry& rRegistry, entt::registry& rDstRegistry )
+	static void CopyComponentIfExists( 
+		entt::entity dst, 
+		entt::entity src, 
+
+		entt::registry& rRegistry, entt::registry& rDstRegistry )
 	{
 		( [&]()
 			{
@@ -57,7 +61,9 @@ namespace Saturn {
 	}
 
 	template<typename... V>
-	static void CopyComponentIfExists( ComponentGroup<V...>, entt::entity dst, entt::entity src, entt::registry& rRegistry, entt::registry& rDstRegistry )
+	static void CopyComponentIfExists( ComponentGroup<V...>, 
+		entt::entity dst, entt::entity src, 
+		entt::registry& rRegistry, entt::registry& rDstRegistry )
 	{
 		CopyComponentIfExists<V...>( dst, src, rRegistry, rDstRegistry );
 	}
@@ -164,6 +170,39 @@ namespace Saturn {
 		}
 
 		return child;
+	}
+
+	template<typename... V>
+	static void IterateOverAllComponents( entt::entity entity, entt::registry& reg, std::vector<entt::id_type>& rMap )
+	{
+		( [ & ]()
+		{
+			if( reg.any_of<V>( entity ) )
+			{
+				rMap.push_back( entt::type_id<V>().hash() );
+			}
+		} ( ), ... );
+	}
+
+	template<typename... V>
+	static void IterateOverAllComponents( 
+		ComponentGroup<V...>, 
+		entt::entity entity, entt::registry& reg, 
+		std::vector<entt::id_type>& rMap )
+	{
+		IterateOverAllComponents<V...>( entity, reg, rMap );
+	}
+
+	void Prefab::RebuildComponentCache()
+	{
+		m_ComponentCaches.clear();
+
+		m_Scene->Each( [this]( const auto entity ) 
+		{
+			auto& rCachesList = m_ComponentCaches[ entity->GetUUID() ];
+
+			IterateOverAllComponents( AllComponents{}, entity->GetHandle(), m_Scene->GetRegistry(), rCachesList );
+		} );
 	}
 
 	void Prefab::SerialisePrefab( std::ofstream& rStream )

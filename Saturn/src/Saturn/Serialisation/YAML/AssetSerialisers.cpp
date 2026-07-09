@@ -347,6 +347,29 @@ namespace Saturn {
 			} );
 
 		out << YAML::EndSeq;
+
+		out << YAML::Key << "ComponentCache";
+		out << YAML::BeginSeq;
+
+		for( const auto& [entityID, rHashes] : prefabAsset->GetComponentMap() )
+		{
+			out << YAML::BeginMap;
+			out << YAML::Key << "EntityID" << YAML::Value << entityID;
+
+			out << YAML::Key << "Count" << YAML::Value << rHashes.size();
+			
+			out << YAML::Key << "Hashes";
+			out << YAML::Flow;
+			out << YAML::BeginSeq;
+			for( const auto& rHash : rHashes )
+			{
+				out << rHash;
+			}
+			out << YAML::EndSeq;
+			out << YAML::EndMap;
+		}
+		out << YAML::EndSeq;
+
 		out << YAML::EndMap;
 
 		std::ofstream fout( fullPath );
@@ -382,22 +405,53 @@ namespace Saturn {
 
 		const auto view = prefabAsset->m_Scene->GetAllEntitiesWith<RelationshipComponent>();
 
+		// Root entity.
+		const auto rootEntityID = data[ "Root Entity" ].as<uint64_t>( 0 );
+
 		// Find root entity
-		SharedPtr<Entity> RootEntity = nullptr;
+		SharedPtr<Entity> RootEntity = prefabAsset->m_Scene->FindEntityByID( rootEntityID );
 
-		for( const auto& entity : view )
+		// Preform manual search if not found.
+		if( !RootEntity )
 		{
-			if( entity->GetComponent<RelationshipComponent>().Parent != 0 )
-				continue;
+			for( const auto& entity : view )
+			{
+				if( entity->GetComponent<RelationshipComponent>().Parent != 0 )
+					continue;
 
-			if( entity->GetChildren().size() > 0 )
-				continue;
+				if( entity->GetChildren().size() > 0 )
+					continue;
 
-			RootEntity = entity;
+				RootEntity = entity;
+			}
 		}
 
 		prefabAsset->m_Entity = RootEntity;
 		Scene::SetActiveScene( CurrentScene );
+
+		// Component cache
+		const auto componentCacheNode = data[ "ComponentCache" ];
+		if( !componentCacheNode.IsNull() )
+		{
+			// TODO
+//			const auto numberOfCaches = componentCacheNode[ "Count" ].as<size_t>( 0llu );
+//			prefabAsset->m_ComponentCaches.reserve( numberOfCaches );
+
+			for( const auto& rEntityNode : componentCacheNode )
+			{
+				const auto entityID = rEntityNode[ "EntityID" ].as<uint64_t>( 0llu );
+				const auto cacheCount = rEntityNode[ "Count" ].as<size_t>( 0llu );
+				const auto hashesNode = rEntityNode[ "Hashes" ];
+
+				auto& rCacheList = prefabAsset->m_ComponentCaches[ entityID ];
+				rCacheList.reserve( cacheCount );
+
+				for( const auto& rHash : hashesNode )
+				{
+					rCacheList.push_back( rHash.as<entt::id_type>( 0u ) );
+				}
+			}
+		}
 
 		rAsset = prefabAsset;
 

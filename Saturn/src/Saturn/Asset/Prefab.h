@@ -44,6 +44,9 @@ namespace Saturn {
 	class Prefab : public Asset
 	{
 	public:
+		using ComponentCacheMap = std::unordered_map< UUID, std::vector< entt::id_type > >;
+
+	public:
 		Prefab();
 		Prefab( const Ref<Asset>& rBase );
 		virtual ~Prefab();
@@ -55,6 +58,11 @@ namespace Saturn {
 
 		Ref<Scene> GetScene() { return m_Scene; }
 		const Ref<Scene> GetScene() const { return m_Scene; }
+
+		void RebuildComponentCache();
+
+	public:
+		const ComponentCacheMap& GetComponentMap() { return m_ComponentCaches; }
 
 	public:
 		//////////////////////////////////////////////////////////////////////////
@@ -68,8 +76,10 @@ namespace Saturn {
 		SharedPtr<Entity> CreateChildren( const SharedPtr<Entity>& parent, Ref<Scene> Scene );
 
 	private:
-		SharedPtr<Entity> m_Entity;
+		// Entity ID -> Component Hash
+		ComponentCacheMap m_ComponentCaches;
 
+		SharedPtr<Entity> m_Entity;
 		Ref<Scene> m_Scene;
 
 	private:

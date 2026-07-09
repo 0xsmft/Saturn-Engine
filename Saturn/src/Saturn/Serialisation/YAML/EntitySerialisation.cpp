@@ -37,7 +37,6 @@
 #include "Saturn/Scene/Components.h"
 
 #include "Saturn/Asset/AssetManager.h"
-#include "Saturn/Asset/Prefab2.h"
 
 #include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 

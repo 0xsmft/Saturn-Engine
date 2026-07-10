@@ -423,6 +423,8 @@ namespace Saturn {
 		void DestroyPendingEntities();
 		void DeleteEntityChecked( Entity* pEntity );
 
+		std::vector<entt::id_type> BuildComponentHash( SharedPtr<Entity> entity );
+
 	protected:
 		void OnEntityCreated( SharedPtr<Entity> entity );
 

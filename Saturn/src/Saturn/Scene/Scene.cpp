@@ -105,11 +105,52 @@ namespace Saturn {
 
 		return { translation, orientation, scale };
 	}
+	
+	template<typename V>
+	struct ComponentRefl
+	{
+		static void Add( entt::registry* pReg, const entt::entity e ) 
+		{
+			pReg->emplace_or_replace<V>( e );
+		}
+
+		static void Remove( entt::registry* pReg, const entt::entity e )
+		{
+			pReg->remove<V>( e );
+		}
+
+		static void Test() 
+		{
+			Core::BreakDebug();
+		}
+	};
+
+	template<typename... V>
+	static void BuildComponentRefl()
+	{
+		( [ & ]()
+		{
+			entt::meta<V>()
+				.type( entt::type_id<V>().hash() )
+				.func<&ComponentRefl<V>::Add>( entt::hashed_string( "Add" ) )
+				.func<&ComponentRefl<V>::Test>( entt::hashed_string( "Test" ) )
+				.func<&ComponentRefl<V>::Remove>( entt::hashed_string( "Remove" ) );
+		}( ), ... );
+	}
+
+	template<typename... V>
+	static void BuildComponentRefl(
+		ComponentGroup<V...> )
+	{
+		BuildComponentRefl<V...>();
+	}
 
 	Scene::Scene()
 	{
 		m_SceneEntity = m_Registry.create();
 		m_Registry.emplace<SceneComponent>( m_SceneEntity, m_InternalID );
+
+		BuildComponentRefl( AllComponents{} );
 	}
 
 	void Scene::OnNavMeshBuildCompAdded( entt::registry& reg, entt::entity entity )
@@ -1112,10 +1153,47 @@ namespace Saturn {
 		m_EntitiesToDestroy.push_back( entity );
 	}
 
+	template<typename... V>
+	static void BuildComponentHashInternal(
+		entt::registry& rReg,
+		entt::entity entity,
+		std::vector<entt::id_type>& rMap )
+	{
+		( [ & ]()
+		{
+			if( rReg.any_of<V>( entity ) )
+			{
+				rMap.push_back( entt::type_id<V>().hash() );
+			}
+		}( ), ... );
+	}
+
+	template<typename... V>
+	static void BuildComponentHashInternal( 
+		ComponentGroup<V...>, 
+		entt::registry& rReg, 
+		entt::entity entity, 
+		std::vector<entt::id_type>& rMap ) 
+	{
+		// Ensure no realloc needs to be done by simply reserving the max size of the component group.
+		rMap.reserve( sizeof...( V ) );
+
+		BuildComponentHashInternal<V...>( rReg, entity, rMap );
+	}
+
+	std::vector<entt::id_type> Scene::BuildComponentHash( SharedPtr<Entity> entity )
+	{
+		std::vector<entt::id_type> res;
+		BuildComponentHashInternal( AllComponents{}, m_Registry, entity->GetHandle(), res );
+		return res;
+	}
+
 	void Scene::OnModifyPrefab( AssetID prefabAssetID )
 	{
 		Ref<Prefab> prefabAsset = AssetManager::Get()->GetAssetAs<Prefab>( prefabAssetID );
 		if( !prefabAsset ) return;
+
+		const auto& rComponentMap = prefabAsset->GetComponentMap();
 
 		const auto allPrefabEntities = GetAllEntitiesWith<PrefabComponent>();
 		for( auto& rEntity : allPrefabEntities )
@@ -1126,7 +1204,32 @@ namespace Saturn {
 			if( rPrefabComponent.AssetID != prefabAssetID )
 				continue;
 
-			// Preform merge...
+			const auto& rPrefabComponentHashesItr = rComponentMap.find( rPrefabComponent.EntityIDInPrefab );
+			if( rPrefabComponentHashesItr != rComponentMap.end() )
+			{
+				const auto& rPrefabComponentHashes = rPrefabComponentHashesItr->second;
+
+				// Preform merge...
+				// Right so we need to figure out first if any components where added, if so we also respect that change
+				// and add it to ourself.
+				const std::vector<entt::id_type> componentHashes = BuildComponentHash( rEntity );
+
+				// Find any missing in our entity.
+				for( const auto& rPrefabHash : rPrefabComponentHashes )
+				{
+					// Doesn't exist, add it.
+					if( std::find( componentHashes.begin(), componentHashes.end(), rPrefabHash ) == componentHashes.end() )
+					{
+						// Add component via hash using the lovely entt meta system.
+						if( const auto reflectedType = entt::resolve( rPrefabHash ) )
+						{
+							const auto add = reflectedType.func( entt::hashed_string( "Add" ) );
+							if( add )
+								add.invoke( {}, &m_Registry, rEntity->GetHandle() );
+						}
+					}
+				}
+			}
 		}
 	}
 

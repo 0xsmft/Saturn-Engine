@@ -103,8 +103,10 @@ namespace Saturn {
 		SharedPtr<Entity> result = g_ActiveScene->CreateEntity( params );
 
 		// Make sure that all entities in this prefab have the PrefabComponent.
-		result->AddComponent<PrefabComponent>().AssetID = ID;
-		
+		auto& rPrefabComp = result->AddComponent<PrefabComponent>();
+		rPrefabComp.AssetID = ID;
+		rPrefabComp.EntityIDInPrefab = srcEntity->GetUUID();
+
 		CopyComponentIfExists( AllComponents{}, 
 			result->m_EntityHandle, srcEntity->m_EntityHandle,
 			srcEntity->m_Scene->m_Registry, m_Scene->m_Registry );
@@ -128,7 +130,9 @@ namespace Saturn {
 		params.pClass = ( SClass* ) m_Entity->GetClass();
 
 		SharedPtr<Entity> result = SceneToSpawnIn->CreateEntity( params );
-		result->AddComponent<PrefabComponent>().AssetID = ID;
+		auto& pc = result->AddComponent<PrefabComponent>();
+		pc.AssetID = ID;
+		pc.EntityIDInPrefab = m_Entity->GetUUID();
 
 		// Copy components over.
 		CopyComponentIfExists( AllComponents{},
@@ -153,6 +157,9 @@ namespace Saturn {
 	{
 		// Create the child in the new scene.
 		SharedPtr<Entity> child = g_ActiveScene->CreateEntity();
+		auto& pc = child->AddComponent<PrefabComponent>();
+		pc.AssetID = ID;
+		pc.EntityIDInPrefab = parent->GetUUID();
 
 		// Copy Components, from our child in the scene.
 		CopyComponentIfExists( AllComponents{},

@@ -235,6 +235,7 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 			rEmitter << YAML::BeginMap;
 
 			rEmitter << YAML::Key << "AssetID" << YAML::Value << entity->GetComponent< PrefabComponent >().AssetID;
+			rEmitter << YAML::Key << "EntityIDInPrefab" << YAML::Value << entity->GetComponent< PrefabComponent >().EntityIDInPrefab;
 			rEmitter << YAML::Key << "Modified" << YAML::Value << entity->GetComponent< PrefabComponent >().Modified;
 
 			rEmitter << YAML::EndMap;
@@ -743,6 +744,12 @@ pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value ); \
 			auto& p = DeserialisedEntity->AddComponent< PrefabComponent >();
 
 			p.AssetID = pc[ "AssetID" ].as< uint64_t >();
+
+			const auto ogPrefabIDNode = pc[ "EntityIDInPrefab" ];
+			if( !ogPrefabIDNode.IsNull() )
+			{
+				p.EntityIDInPrefab = ogPrefabIDNode.as<uint64_t>();
+			}
 		}
 
 		auto tc = rEntityNode[ "TransformComponent" ];

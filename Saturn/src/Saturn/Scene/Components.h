@@ -331,6 +331,10 @@ namespace Saturn {
 	{
 		MemoryAssetDependency<AssetType::Prefab> AssetID;
 
+		// The ID of the OG entity that is held in the prefab asset,
+		// because when a prefab is created a new ID is generated.
+		UUID EntityIDInPrefab = 0;
+
 		bool Modified = false;
 
 		PrefabComponent() = default;

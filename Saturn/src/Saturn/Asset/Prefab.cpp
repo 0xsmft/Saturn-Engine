@@ -212,6 +212,11 @@ namespace Saturn {
 		} );
 	}
 
+	SharedPtr<Entity> Prefab::FindEntityInPrefab( UUID id )
+	{
+		return GetScene()->FindEntityByID( id );
+	}
+
 	void Prefab::SerialisePrefab( std::ofstream& rStream )
 	{
 		m_Scene->SerialiseInternal( rStream );

@@ -36,7 +36,6 @@
 #include "Saturn/Vulkan/AluraRenderer.h"
 #include "Saturn/Vulkan/Renderer2D.h"
 #include "Saturn/Vulkan/SceneRenderer.h"
-#include "Saturn/Vulkan/VulkanContext.h"
 
 #include "Saturn/Asset/Prefab.h"
 #include "Saturn/Asset/AssetManager.h"
@@ -45,7 +44,6 @@
 #include "Saturn/Core/Profiler.h"
 #include "Saturn/Core/VirtualFS.h"
 #include "Saturn/Core/MemoryStream.h"
-#include "Saturn/Core/Renderer/SceneFlyCamera.h"
 
 #include "Saturn/Physics/PhysicsScene.h"
 #include "Saturn/Physics/PhysicsRigidBody.h"
@@ -53,11 +51,8 @@
 
 #include "Saturn/Project/Project.h"
 
-#include "Saturn/GameFramework/Core/GameModule.h"
 #include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 #include "Saturn/GameFramework/PlayerInputController.h"
-
-#include "Saturn/Serialisation/YAML/SceneSerialiser.h"
 
 #include "Saturn/Audio/AudioSystem.h"
 
@@ -68,7 +63,6 @@
 #if !defined(SAT_DIST)
 #include "Saturn/ImGui/EditorIcons.h"
 #include "Saturn/ImGui/EntitySelectionManager.h"
-#include "Saturn/ImGui/ImGuiWindow.h"
 #include "Saturn/ImGui/EditorEvents.h"
 #include "Saturn/ImGui/ImGuiWindowManager.h"
 
@@ -88,11 +82,8 @@
 
 #include "Saturn/Runtime/RuntimeEvents.h"
 
-#include <Detour/DetourNavMeshQuery.h>
-
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
-#include <glm/gtc/type_ptr.hpp>
 
 namespace Saturn {
 
@@ -114,6 +105,19 @@ namespace Saturn {
 			pReg->emplace_or_replace<V>( e );
 		}
 
+		static void CopyFromPrefab( 
+			entt::registry* pReg, 
+			entt::registry* pPrefReg, 
+			const entt::entity e, 
+			const entt::entity ep )
+		{
+			if( pPrefReg->any_of<V>( ep ) )
+			{
+				V& rOgComponent = pPrefReg->get<V>( ep );
+				pReg->emplace_or_replace<V>( e, rOgComponent );
+			}
+		}
+
 		static void Remove( entt::registry* pReg, const entt::entity e )
 		{
 			pReg->remove<V>( e );
@@ -133,6 +137,7 @@ namespace Saturn {
 			entt::meta<V>()
 				.type( entt::type_id<V>().hash() )
 				.func<&ComponentRefl<V>::Add>( entt::hashed_string( "Add" ) )
+				.func<&ComponentRefl<V>::CopyFromPrefab>( entt::hashed_string( "CopyFromPrefab" ) )
 				.func<&ComponentRefl<V>::Test>( entt::hashed_string( "Test" ) )
 				.func<&ComponentRefl<V>::Remove>( entt::hashed_string( "Remove" ) );
 		}( ), ... );
@@ -1159,6 +1164,8 @@ namespace Saturn {
 		entt::entity entity,
 		std::vector<entt::id_type>& rMap )
 	{
+		// Most readable C++ code be like:
+		// But this is a fold expression.
 		( [ & ]()
 		{
 			if( rReg.any_of<V>( entity ) )
@@ -1181,6 +1188,7 @@ namespace Saturn {
 		BuildComponentHashInternal<V...>( rReg, entity, rMap );
 	}
 
+	// Builds a list of all of given component hashes that "entity" has.
 	std::vector<entt::id_type> Scene::BuildComponentHash( SharedPtr<Entity> entity )
 	{
 		std::vector<entt::id_type> res;
@@ -1190,6 +1198,8 @@ namespace Saturn {
 
 	void Scene::OnModifyPrefab( AssetID prefabAssetID )
 	{
+		SAT_CORE_INFO( "[Prefab2]: Prefab modified -- OnModifyPrefab -- {0}", prefabAssetID );
+
 		Ref<Prefab> prefabAsset = AssetManager::Get()->GetAssetAs<Prefab>( prefabAssetID );
 		if( !prefabAsset ) return;
 
@@ -1203,6 +1213,13 @@ namespace Saturn {
 			// We only want entities with the same ID as the modified one.
 			if( rPrefabComponent.AssetID != prefabAssetID )
 				continue;
+
+			const SharedPtr<Entity> entityInPrefab = prefabAsset->FindEntityInPrefab( rPrefabComponent.EntityIDInPrefab );
+			if( !entityInPrefab )
+			{
+				SAT_CORE_ERROR( "[Prefab2]: Unable to find the original entity stored in the prefab! Looking for {0}, skipping and will not update.", rPrefabComponent.EntityIDInPrefab );
+				break;
+			}
 
 			const auto& rPrefabComponentHashesItr = rComponentMap.find( rPrefabComponent.EntityIDInPrefab );
 			if( rPrefabComponentHashesItr != rComponentMap.end() )
@@ -1223,9 +1240,15 @@ namespace Saturn {
 						// Add component via hash using the lovely entt meta system.
 						if( const auto reflectedType = entt::resolve( rPrefabHash ) )
 						{
-							const auto add = reflectedType.func( entt::hashed_string( "Add" ) );
-							if( add )
-								add.invoke( {}, &m_Registry, rEntity->GetHandle() );
+							auto& rPrefabRegistry = prefabAsset->GetScene()->GetRegistry();
+
+							const auto cfp = reflectedType.func( entt::hashed_string( "CopyFromPrefab" ) );
+							if( cfp )
+								cfp.invoke( {}, 
+									&m_Registry, 
+									&rPrefabRegistry, 
+									rEntity->GetHandle(), 
+									entityInPrefab->GetHandle() );
 						}
 					}
 				}

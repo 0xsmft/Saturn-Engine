@@ -59,7 +59,11 @@ namespace Saturn {
 		Ref<Scene> GetScene() { return m_Scene; }
 		const Ref<Scene> GetScene() const { return m_Scene; }
 
+		// Modification helpers...
+	public:
 		void RebuildComponentCache();
+
+		SharedPtr<Entity> FindEntityInPrefab( UUID id );
 
 	public:
 		const ComponentCacheMap& GetComponentMap() { return m_ComponentCaches; }

@@ -195,7 +195,6 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 
 			rEmitter << YAML::Key << "Position" << YAML::Value << tc.Position;
 			rEmitter << YAML::Key << "Rotation" << YAML::Value << glm::degrees( tc.GetRotationEuler() );
-			rEmitter << YAML::Key << "Quaternion" << YAML::Value << tc.GetRotation();
 			rEmitter << YAML::Key << "Scale" << YAML::Value << tc.Scale;
 
 			rEmitter << YAML::EndMap;
@@ -758,12 +757,7 @@ pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value ); \
 			auto& t = DeserialisedEntity->GetComponent< TransformComponent >();
 
 			t.Position = tc[ "Position" ].as< glm::vec3 >();
-
 			t.SetRotation( glm::radians( tc[ "Rotation" ].as< glm::vec3 >() ) );
-
-			// This might not be needed.
-			//t.SetRotation( tc[ "Quaternion" ].as< glm::quat >() );
-
 			t.Scale = tc[ "Scale" ].as< glm::vec3 >();
 		}
 

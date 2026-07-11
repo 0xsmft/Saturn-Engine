@@ -64,6 +64,8 @@ namespace Saturn {
 
 			if( Auxiliary::TreeNode( "Variables" ) )
 			{
+				Auxiliary::ScopedDisabledFlag disabledIfReadOnly( m_IsReadOnly );
+				
 				for( auto& rData : m_SpecAsset->m_SpecificationData )
 				{
 					const std::string id = std::format( "##{}", ( uint64_t ) rData->RenderID );
@@ -106,7 +108,7 @@ namespace Saturn {
 					if( ImGui::SmallButton( "-" ) )
 					{
 						// This is not the best way to do this,
-						// we really should be using begin/end for our loop
+						// we really should be using begin()/end() for our loop
 						// and then we'd call m_SpecAsset->m_SpecificationData.erase
 						// but doing it this way allows to make this code a little less 
 						// complex.

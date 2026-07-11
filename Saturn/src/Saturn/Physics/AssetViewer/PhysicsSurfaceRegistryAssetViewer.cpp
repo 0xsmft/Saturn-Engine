@@ -59,6 +59,8 @@ namespace Saturn {
 			ImGui::Text( "Physics Surface Registry" );
 			ImGui::Separator();
 
+			Auxiliary::DisabledFlag disabledIfRo( m_IsReadOnly );
+
 			for( auto itr = m_RegistryAsset->m_Surfaces.begin(); itr != m_RegistryAsset->m_Surfaces.end(); )
 			{
 				auto& rSurface = *itr;
@@ -125,6 +127,8 @@ namespace Saturn {
 
 				m_Dirty = true;
 			}
+
+			disabledIfRo.Pop();
 		}
 
 		ImGui::End();

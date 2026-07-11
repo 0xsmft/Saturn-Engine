@@ -98,8 +98,11 @@ namespace Saturn {
 
 				if( ImGui::MenuItem( "Save" ) )
 				{
-					StaticMeshAssetSerialiser sma;
-					sma.Serialise( m_Mesh );
+					if( !m_IsReadOnly || m_Dirty )
+					{
+						StaticMeshAssetSerialiser sma;
+						sma.Serialise( m_Mesh );
+					}
 				}
 
 				ImGui::EndMenu();
@@ -109,8 +112,6 @@ namespace Saturn {
 		}
 
 		//////////////////////////////////////////////////////////////////////////
-
-		//RenderViewport();
 
 		m_EditorViewport->Draw();
 
@@ -125,6 +126,8 @@ namespace Saturn {
 
 		if( Auxiliary::TreeNode( "Physics" ) )
 		{
+			Auxiliary::ScopedDisabledFlag disabledIfRo( m_IsReadOnly );
+
 			PhysicsShapeType type = m_Mesh->GetAttachedShape();
 			
 			const char* pItems[] = { "None", "Box", "Sphere", "Capsule", "Convex Mesh", "Triangle Mesh" };
@@ -200,6 +203,8 @@ namespace Saturn {
 
 		if( Auxiliary::TreeNode( "Materials" ) )
 		{
+			Auxiliary::DisabledFlag disabledIfRo( m_IsReadOnly );
+
 			const bool canResetMaterialsNow = ( Project::GetActiveProject()->GetDefaultMaterialAsset() != 0 && AssetManager::Get()->FindAsset( Project::GetActiveProject()->GetDefaultMaterialAsset() ) );
 
 			if( ImGui::Button( "Reset All" ) )
@@ -226,6 +231,8 @@ namespace Saturn {
 				}
 			}
 
+			disabledIfRo.Pop();
+
 			ImGui::Separator();
 
 			int i = 0;
@@ -235,6 +242,8 @@ namespace Saturn {
 
 				if( ImGui::TreeNodeEx( rMaterial->Name.c_str(), ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_FramePadding ) )
 				{
+					Auxiliary::ScopedDisabledFlag disabledIfReadOnly( m_IsReadOnly );
+
 					ImGui::BeginHorizontal( i );
 
 					ImGui::TextDisabled( "%s", rMaterial->Name.empty() ? "<NULL>" : rMaterial->Name.c_str() );
@@ -265,7 +274,7 @@ namespace Saturn {
 
 					if( Auxiliary::DrawAssetFinder( AssetType::Material, &open, m_AssetFinderOut, 0 ) )
 					{
-						// Update Pure Dependencies & Update ADN Dependencies
+						// Update Pure Dependencies
 						AssetManager::Get()->UnregisterAssetDependency( m_AssetID, rMaterial->ID );
 
 						m_Mesh->GetMaterialRegistry()->SetMaterial( ( uint32_t ) i, m_AssetFinderOut );
@@ -290,14 +299,6 @@ namespace Saturn {
 		if( m_Open == false )
 		{
 			m_Open = false;
-
-			/*
-			* #FixEditorViewportSceneRendererClose
-			RenderThread::Get().Queue( [=]()
-			{
-				m_SceneRenderer = nullptr;
-			} );
-			*/
 		}
 	}
 
@@ -308,7 +309,7 @@ namespace Saturn {
 
 	void StaticMeshAssetViewer::OnEvent( Event& rEvent )
 	{
-		if( rEvent.Category == EC_Ruby )
+		if( rEvent.Category & EC_Ruby )
 			m_EditorViewport->OnEvent( rEvent );
 	}
 
@@ -367,6 +368,8 @@ namespace Saturn {
 
 			if( ImGui::Button( "Confirm" ) ) 
 			{
+				m_Dirty = true;
+
 				while( !m_ResetIndices.empty() )
 				{
 					const auto index = m_ResetIndices.front();

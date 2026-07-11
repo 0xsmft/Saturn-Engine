@@ -83,6 +83,11 @@ namespace Saturn {
 
 		ImGui::BeginVertical( "##material_settingsV" );
 
+		//////////////////////////////////////////////////////////////////////////
+		// Modifiable properties vvv
+
+		Auxiliary::DisabledFlag disabledIfRo( m_IsReadOnly );
+
 		ImGui::Text( "Friction" );
 
 		float friction = m_MaterialAsset->GetFriction();
@@ -130,6 +135,7 @@ namespace Saturn {
 
 		ImGui::EndHorizontal();
 
+		disabledIfRo.Pop();
 		ImGui::End();
 
 		ImGui::PopID();

@@ -76,10 +76,13 @@ namespace Saturn {
 				{
 					if( ImGui::MenuItem( "Save" ) )
 					{
-						TextureSourceAssetSerialiser tsas;
-						tsas.Serialise( m_TextureAsset );
+						if( m_Dirty )
+						{
+							TextureSourceAssetSerialiser tsas;
+							tsas.Serialise( m_TextureAsset );
 
-						m_Dirty = false;
+							m_Dirty = false;
+						}
 					}
 
 					if( ImGui::MenuItem( "Open source in native file explorer" ) )
@@ -125,6 +128,11 @@ namespace Saturn {
 
 				ImGui::EndMenuBar();
 			}
+
+			//////////////////////////////////////////////////////////////////////////
+			// Editable props
+
+			Auxiliary::DisabledFlag disabledIfRo( m_IsReadOnly );
 
 			ImGui::Text( "Load Flags" );
 			{
@@ -174,6 +182,8 @@ namespace Saturn {
 					ImGui::EndCombo();
 				}
 			}
+
+			disabledIfRo.Pop();
 
 			ImGui::Separator();
 

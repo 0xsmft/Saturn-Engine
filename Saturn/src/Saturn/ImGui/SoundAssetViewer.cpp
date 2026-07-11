@@ -74,6 +74,7 @@ namespace Saturn {
 
 			ImGui::BeginHorizontal( "##srcsndfile" );
 
+			Auxiliary::DisabledFlag disabledIfRo( m_IsReadOnly );
 			if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), { 24.0f, 24.0f } ) )
 			{
 				const std::filesystem::path path = Application::Get()->OpenFile( "Supported asset types (*.wav, *.mp3, *.ogg)|wav,mp3,ogg" );
@@ -95,6 +96,7 @@ namespace Saturn {
 					// TODO: Show an editor dialog message if the user would like to delete the old source.
 				}
 			}
+			disabledIfRo.Pop();
 
 			ImGui::PushStyleColor( ImGuiCol_Text, ImVec4( 1.0f, 1.0f, 1.0f, 0.5f ) );
 			ImGui::InputText( "##filepath", ( char* ) m_SoundAsset->SoundSourcePath.string().c_str(), 4096, ImGuiInputTextFlags_ReadOnly );

@@ -64,6 +64,8 @@ namespace Saturn {
 		inline void CloseWindow() { m_Open = false; }
 		inline void SetHideFlags( ImGuiHideWindowFlags flags ) { m_HideFlags = flags; }
 
+		inline void SetReadOnly( bool ro ) { m_IsReadOnly = ro; }
+
 		inline void ShowOrHide( ImGuiHideWindowFlags flags = ImGuiHideWindowFlags::Destroy )
 		{ 
 			if( m_Open ) 
@@ -83,6 +85,7 @@ namespace Saturn {
 		std::string m_Name;
 		ImGuiHideWindowFlags m_HideFlags = ImGuiHideWindowFlags::Destroy;
 		bool m_Open = false;
+		bool m_IsReadOnly = false;
 	};
 
 }

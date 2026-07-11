@@ -921,6 +921,7 @@ namespace Saturn {
 
 	void EditorLayer::PreInitRuntime()
 	{
+		m_ImGuiWindowManager->MarkAllWindowsAsReadOnly();
 		m_ImGuiWindowManager->OnRuntimeStateChanged( RuntimeState::Starting, RuntimeState::NoState );
 
 		m_RuntimeScene = Ref<Scene>::Create();
@@ -989,6 +990,7 @@ namespace Saturn {
 		Application::Get()->GetWindow()->ChangeTitle( title );
 
 		m_ImGuiWindowManager->OnRuntimeStateChanged( RuntimeState::NoState, RuntimeState::Ending );
+		m_ImGuiWindowManager->ResetReadOnlyState();
 	}
 
 	void EditorLayer::CleanupRuntimeWhenFailed( RuntimeState lastState /*=RuntimeState::Starting*/ )
@@ -2918,7 +2920,7 @@ namespace Saturn {
 			}
 
 			ImGui::SeparatorText( "Debug" );
-			if( ImGui::MenuItem( "Open sandbox node editor" ) )
+			if( ImGui::MenuItem( "DEBUG: Open sandbox node editor" ) )
 			{
 				if( !m_SandboxNodeEditorViewer )
 					m_SandboxNodeEditorViewer = Ref<SandboxNodeEditorViewer>::Create();
@@ -2928,8 +2930,10 @@ namespace Saturn {
 				m_ImGuiWindowManager->AddWindow( m_SandboxNodeEditorViewer, "SndboxVwr" );
 			}
 
-			if( ImGui::MenuItem( "Open message box & notification test" ) ) m_ShowDebugMsgBoxWindow ^= 1;
-			if( ImGui::MenuItem( "Open editor debug window" ) )				m_ShowEditorDebugWindow ^= 1;
+			if( ImGui::MenuItem( "DEBUG: Open message box & notification test" ) )  m_ShowDebugMsgBoxWindow ^= 1;
+			if( ImGui::MenuItem( "DEBUG: Open editor debug window" ) )				m_ShowEditorDebugWindow ^= 1;
+			if( ImGui::MenuItem( "DEBUG: Simulate Read Only state" ) )				m_ImGuiWindowManager->MarkAllWindowsAsReadOnly();
+			if( ImGui::MenuItem( "DEBUG: Reset Read Only state" ) )					m_ImGuiWindowManager->ResetReadOnlyState();
 
 			ImGui::EndMenu();
 		}

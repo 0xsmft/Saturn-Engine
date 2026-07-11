@@ -67,8 +67,13 @@ namespace Saturn {
 
 					if( ImGui::MenuItem( "Save" ) )
 					{
-						AluraStylingProfileAssetSerialiser ssp;
-						ssp.Serialise( m_StylingProfile );
+						if( m_Dirty )
+						{
+							AluraStylingProfileAssetSerialiser ssp;
+							ssp.Serialise( m_StylingProfile );
+
+							m_Dirty = false;
+						}
 					}
 
 					ImGui::EndMenu();
@@ -78,7 +83,10 @@ namespace Saturn {
 				{
 					if( ImGui::MenuItem( "Reset to Defaults" ) )
 					{
-						m_StylingProfile->GetStyle().Default();
+						if( !m_IsReadOnly )
+						{
+							m_StylingProfile->GetStyle().Default();
+						}
 					}
 
 					ImGui::EndMenu();
@@ -89,32 +97,36 @@ namespace Saturn {
 
 			ImGui::Text( "Alura Styling Profile" );
 
-			ImGui::SeparatorText( "General Style" );
-			auto& rStyle = m_StylingProfile->GetStyle();
+			{
+				Auxiliary::ScopedDisabledFlag disabledIfReadOnly( m_IsReadOnly );
+			
+				ImGui::SeparatorText( "General Style" );
+				auto& rStyle = m_StylingProfile->GetStyle();
 
-			Auxiliary::DrawFloatControl( "Alpha", rStyle.Alpha );
-			Auxiliary::DrawFloatControl( "Disabled Alpha", rStyle.DisabledAlpha );
+				Auxiliary::DrawFloatControl( "Alpha", rStyle.Alpha );
+				Auxiliary::DrawFloatControl( "Disabled Alpha", rStyle.DisabledAlpha );
 
-			Auxiliary::DrawVec2Control( "Window Padding", rStyle.WindowPadding );
-			Auxiliary::DrawVec2Control( "Item Spacing", rStyle.ItemSpacing );
+				Auxiliary::DrawVec2Control( "Window Padding", rStyle.WindowPadding );
+				Auxiliary::DrawVec2Control( "Item Spacing", rStyle.ItemSpacing );
 
-			Auxiliary::DrawFloatControl( "Indent Spacing", rStyle.IndentSpacing );
-			Auxiliary::DrawFloatControl( "Window Border Size", rStyle.WindowBorderSize );
-			Auxiliary::DrawFloatControl( "Font Size", rStyle.CurrentFontSize );
+				Auxiliary::DrawFloatControl( "Indent Spacing", rStyle.IndentSpacing );
+				Auxiliary::DrawFloatControl( "Window Border Size", rStyle.WindowBorderSize );
+				Auxiliary::DrawFloatControl( "Font Size", rStyle.CurrentFontSize );
 
-			ImGui::SeparatorText( "Colors" );
-			ImGui::ColorEdit4( "Text", glm::value_ptr( rStyle.Colors[ 0 ] ) );
-			ImGui::ColorEdit4( "Text Disabled", glm::value_ptr( rStyle.Colors[ 1 ] ) );
-			ImGui::ColorEdit4( "Button", glm::value_ptr( rStyle.Colors[ 2 ] ) );
-			ImGui::ColorEdit4( "Button Hovered", glm::value_ptr( rStyle.Colors[ 3 ] ) );
-			ImGui::ColorEdit4( "Frame Border", glm::value_ptr( rStyle.Colors[ 4 ] ) );
-			ImGui::ColorEdit4( "Frame Background", glm::value_ptr( rStyle.Colors[ 5 ] ) );
-			ImGui::ColorEdit4( "Progress bar Color", glm::value_ptr( rStyle.Colors[ 6 ] ) );
+				ImGui::SeparatorText( "Colors" );
+				ImGui::ColorEdit4( "Text", glm::value_ptr( rStyle.Colors[ 0 ] ) );
+				ImGui::ColorEdit4( "Text Disabled", glm::value_ptr( rStyle.Colors[ 1 ] ) );
+				ImGui::ColorEdit4( "Button", glm::value_ptr( rStyle.Colors[ 2 ] ) );
+				ImGui::ColorEdit4( "Button Hovered", glm::value_ptr( rStyle.Colors[ 3 ] ) );
+				ImGui::ColorEdit4( "Frame Border", glm::value_ptr( rStyle.Colors[ 4 ] ) );
+				ImGui::ColorEdit4( "Frame Background", glm::value_ptr( rStyle.Colors[ 5 ] ) );
+				ImGui::ColorEdit4( "Progress bar Color", glm::value_ptr( rStyle.Colors[ 6 ] ) );
+			}
 		}
 
 		ImGui::End();
 	
-		if( !m_Open )
+		if( !m_Open && !m_IsReadOnly )
 		{
 			AluraStylingProfileAssetSerialiser ssp;
 			ssp.Serialise( m_StylingProfile );

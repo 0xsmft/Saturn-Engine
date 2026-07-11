@@ -40,7 +40,7 @@ namespace Saturn {
 	{
 	public:
 		TextureViewer( AssetID ID );
-		~TextureViewer();
+		virtual ~TextureViewer();
 
 		virtual void OnImGuiRender() override;
 		virtual void OnUpdate( Timestep ts ) override;

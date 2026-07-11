@@ -145,125 +145,6 @@ namespace Saturn {
 			//////////////////////////////////////////////////////////////////////////
 
 			m_Viewport->Draw();
-
-			/*
-			ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 0.0f, 0.0f ) );
-
-			const auto viewportPosition = ImGui::GetWindowPos();
-			const auto viewportSize = m_Viewport->GetSize();
-
-			if( auto* pSelectedNode = m_BoneHierarchyPanel.GetSelectedItem() )
-			{
-				if( pSelectedNode->pItem->Type == SkelItemType::AttachmentPoint )
-				{
-					SkelAttachmentPoint* pAttachmentPoint = dynamic_cast< SkelAttachmentPoint* >( pSelectedNode->pItem );
-					if( pAttachmentPoint )
-					{
-						glm::mat4 offsetTransform = glm::mat4( 1.0f );
-						glm::mat4 ts = glm::translate( glm::mat4( 1.0f ), pAttachmentPoint->pBoneJoint->GetRelativePosition() ) * glm::toMat4( pAttachmentPoint->pBoneJoint->GetRelativeRotation() ) * glm::scale( glm::mat4( 1.0f ), pAttachmentPoint->pBoneJoint->GetRelativeScale() );
-
-						ts = pAttachmentPoint->pBoneJoint->GetBoneMatrixPreview( m_SkeletalMesh );
-
-						ImGuizmo::SetOrthographic( false );
-						ImGuizmo::SetDrawlist();
-						ImGuizmo::SetRect( viewportPosition.x, viewportPosition.y, viewportSize.x, viewportSize.y );
-
-						ImGuizmo::Manipulate(
-							glm::value_ptr( m_Camera.ViewMatrix() ),
-							glm::value_ptr( m_Camera.ProjectionMatrix() ),
-							ImGuizmo::TRANSLATE,
-							ImGuizmo::LOCAL,
-							glm::value_ptr( ts ),
-							glm::value_ptr( offsetTransform )
-						);
-
-						// Figure out what window needs it's movement disabled
-						// Four possible options:
-						//  1) The main window is not docked and the viewport is    -> freeze main window
-						//  2) The main window is docked but the viewport isn't     -> freeze viewport window
-						//  3) No windows are docked                                -> freeze viewport window
-						//  4) All windows are docked								-> nothing to do
-						// Outcome 1
-						if( !mainWindowDocked && ImGui::IsWindowDocked() && ImGuizmo::IsOver() )
-						{
-							m_DisableWindowMovement = true;
-						}
-						// Outcome 2
-						else if( !ImGui::IsWindowDocked() && ImGuizmo::IsOver() )
-						{
-							m_DisableViewportMovement = true;
-						}
-						// Outcome 3
-						else if( ( !mainWindowDocked && !ImGui::IsWindowDocked() ) && ImGuizmo::IsOver() ) 
-						{
-							// Only disable viewport, no need to disable main window...
-							m_DisableViewportMovement = true;
-						}
-						// Outcome 4
-						else if( ( m_DisableViewportMovement || m_DisableWindowMovement ) && !ImGuizmo::IsOver() )
-						{
-							m_DisableViewportMovement = false;
-							m_DisableWindowMovement = false;
-						}
-
-						if( ImGuizmo::IsUsing() )
-						{
-							glm::vec3 translation;
-							glm::vec3 rotation;
-							glm::vec3 scale;
-							Maths::DecomposeTransform( ts * offsetTransform, translation, rotation, scale );
-
-							const glm::vec3 DeltaRotation = rotation - glm::eulerAngles( pAttachmentPoint->pBoneJoint->GetRelativeRotation() );
-
-							pAttachmentPoint->pBoneJoint->SetRelativePosition( translation );
-							pAttachmentPoint->pBoneJoint->SetRelativeRotation( glm::eulerAngles( pAttachmentPoint->pBoneJoint->GetRelativeRotation() ) += DeltaRotation );
-							pAttachmentPoint->pBoneJoint->SetRelativeScale( scale );
-						}
-						else
-						{
-						#if OLD
-							if( ( !mainWindowDocked || !ImGui::IsWindowDocked() ) || m_DisableViewportMovement || m_DisableWindowMovement )
-							{
-								m_DisableViewportMovement = false;
-								m_DisableWindowMovement = false;
-							}
-						#endif
-						}
-					}
-				}
-				else
-				{
-					SkelBoneItem* pBoneItem = dynamic_cast< SkelBoneItem* >( pSelectedNode->pItem );
-					if( pBoneItem )
-					{
-						if( m_SkeletalMesh )
-						{
-							const auto& rBoneTransform = m_SkeletalMesh->GetDefaultBoneTransforms()[ pBoneItem->BoneIndex ];
-
-							glm::mat4 offsetTransform = glm::mat4( 1.0f );
-							glm::mat4 ts = rBoneTransform;
-
-							ImGuizmo::SetOrthographic( false );
-							ImGuizmo::SetDrawlist();
-							ImGuizmo::SetRect( viewportPosition.x, viewportPosition.y, viewportSize.x, viewportSize.y );
-
-							ImGuizmo::Manipulate(
-								glm::value_ptr( m_Camera.ViewMatrix() ),
-								glm::value_ptr( m_Camera.ProjectionMatrix() ),
-								ImGuizmo::TRANSLATE,
-								ImGuizmo::LOCAL,
-								glm::value_ptr( ts ),
-								glm::value_ptr( offsetTransform )
-							);
-						}
-					}
-				}
-			}
-
-			ImGui::PopStyleVar();
-
-			End();
-			*/
 		}
 
 		ImGui::End();
@@ -282,6 +163,8 @@ namespace Saturn {
 		{
 			if( Auxiliary::TreeNode( "Bone Joints", false ) )
 			{
+				Auxiliary::ScopedDisabledFlag disabledIfReadOnly( m_IsReadOnly );
+
 				auto& rBoneJoints = m_SkeletonAsset->GetBoneJoints();
 				for( auto itr = rBoneJoints.begin(); itr != rBoneJoints.end(); )
 				{
@@ -310,29 +193,34 @@ namespace Saturn {
 	{
 #if !defined(SAT_DIST)
 		// Compatibility Information
-		ImGui::Begin( "Compatible Meshes" );
-		for( const auto& rMeshID : m_SkeletonAsset->GetCompatibleMeshes() )
+		if( ImGui::Begin( "Compatible Meshes", &m_ShowCompatibleMeshes ) ) 
 		{
-			ImGui::BeginHorizontal( ( int ) rMeshID );
+			Auxiliary::ScopedDisabledFlag disabledIfReadOnly( m_IsReadOnly );
 
-			ImGui::Text( "%llu", rMeshID );
-			if( ImGui::SmallButton( "-" ) )
+			for( const auto& rMeshID : m_SkeletonAsset->GetCompatibleMeshes() )
 			{
-				m_SkeletonAsset->MarkAsUncompatibleMesh( rMeshID );
+				ImGui::BeginHorizontal( ( int ) rMeshID );
 
-				// Not great having this here, but will be fine for the time being.
+				ImGui::Text( "%llu", rMeshID );
+				if( ImGui::SmallButton( "-" ) )
+				{
+					m_SkeletonAsset->MarkAsUncompatibleMesh( rMeshID );
+
+					// Not great having this here, but will be fine for the time being.
+					ImGui::EndHorizontal();
+					break;
+				}
+
 				ImGui::EndHorizontal();
-				break;
 			}
 
-			ImGui::EndHorizontal();
+			if( ImGui::SmallButton( "+" ) )
+			{
+				m_ShowFinderModal = true;
+				ImGui::OpenPopup( "PickMesh##CompSk" );
+			}
 		}
 
-		if( ImGui::SmallButton( "+" ) )
-		{
-			m_ShowFinderModal = true;
-			ImGui::OpenPopup( "PickMesh##CompSk" );
-		}
 		ImGui::End();
 #endif
 	}

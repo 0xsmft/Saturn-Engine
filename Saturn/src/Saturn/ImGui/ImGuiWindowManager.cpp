@@ -97,6 +97,8 @@ namespace Saturn {
 	void ImGuiWindowManager::AddWindow( Ref<ImGuiWindow> window, const std::string& rCustomName )
 	{
 		m_Panels[ rCustomName ] = window;
+
+		window->SetReadOnly( m_IsReadOnly );
 	}
 
 	void ImGuiWindowManager::OnRuntimeStateChanged( RuntimeState newState, RuntimeState oldState )
@@ -105,6 +107,26 @@ namespace Saturn {
 		{
 			if( panel->IsOpen() )
 				panel->OnRuntimeStateChanged( newState, oldState );
+		}
+	}
+
+	void ImGuiWindowManager::MarkAllWindowsAsReadOnly()
+	{
+		m_IsReadOnly = true;
+
+		for( auto&& [name, panel] : m_Panels )
+		{
+			panel->SetReadOnly( true );
+		}
+	}
+
+	void ImGuiWindowManager::ResetReadOnlyState()
+	{
+		m_IsReadOnly = false;
+
+		for( auto&& [name, panel] : m_Panels )
+		{
+			panel->SetReadOnly( false );
 		}
 	}
 

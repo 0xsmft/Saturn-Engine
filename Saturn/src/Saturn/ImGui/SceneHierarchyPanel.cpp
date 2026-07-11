@@ -158,6 +158,8 @@ namespace Saturn {
 
 			if( ImGui::BeginPopupContextWindow( 0, ImGuiPopupFlags_MouseButtonRight ) )
 			{
+				Auxiliary::DisabledFlag disabledIfReadOnly( m_IsReadOnly );
+
 				// For Prefab Hierarchies we cannot have two entities that are the root,
 				// only one entity can be the root.
 				// so the only possible way to create an entity is to select another one first
@@ -177,6 +179,8 @@ namespace Saturn {
 
 					SelectedEntityPopup();
 				}
+
+				disabledIfReadOnly.Pop();
 
 				ImGui::EndPopup();
 			}
@@ -336,9 +340,12 @@ namespace Saturn {
 
 		DrawEntityComponents( selections[ 0 ] );
 
-		if( ImGui::Button( "Add Component" ) )
-			ImGui::OpenPopup( "AddComponentPanel" );
+		{
+			Auxiliary::ScopedDisabledFlag disabledIfReadOnly( m_IsReadOnly );
 
+			if( ImGui::Button( "Add Component" ) )
+				ImGui::OpenPopup( "AddComponentPanel" );
+		}
 
 		if( ImGui::BeginPopup( "AddComponentPanel" ) )
 		{
@@ -435,7 +442,7 @@ namespace Saturn {
 				ImGui::EndTooltip();
 			}
 
-			if( ImGui::BeginDragDropSource( ImGuiDragDropFlags_SourceAllowNullID ) ) 
+			if( !m_IsReadOnly && ImGui::BeginDragDropSource( ImGuiDragDropFlags_SourceAllowNullID ) )
 			{
 				ImGui::Text( rTag.c_str() );
 
@@ -708,6 +715,8 @@ namespace Saturn {
 
 		ImGui::SameLine();
 		
+		// I'm not going to make this disabled when ReadOnly because I like the idea of temporarily setting
+		// the visibility of an entity.
 		if( Auxiliary::ImageButton( entity->IsVisible() ? EditorIcons::GetIcon( "Visible" ) : EditorIcons::GetIcon( "Hidden" ), ImVec2( 24.0f, 24.0f ) ) ) 
 		{
 			entity->ShowOrHide();
@@ -1319,7 +1328,7 @@ namespace Saturn {
 				case PhysicsRigidBodyType::Dynamic:
 				case PhysicsRigidBodyType::Kinematic:
 				{
-					if( !m_Context->IsRuntimeRunning() )
+					if( m_Context->IsRuntimeRunning() )
 					{
 						modified |= Auxiliary::DrawFloatControl( "Mass", rb.Mass, 0.0f, FLT_MAX );
 						modified |= Auxiliary::DrawFloatControl( "Linear Drag", rb.LinearDrag );
@@ -1598,7 +1607,7 @@ namespace Saturn {
 				bool open = false;			
 				
 				// Push disabled flag if runtime running
-				Auxiliary::ScopedDisabledFlag disabledFlag( m_Context->IsRuntimeRunning() );
+				Auxiliary::ScopedDisabledFlag disabledFlag( m_IsReadOnly );
 
 				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24, 24 ) ) )
 				{
@@ -1627,7 +1636,7 @@ namespace Saturn {
 				ImGui::PopID();
 			}
 
-			if( m_Context->IsRuntimeRunning() )
+			if( m_IsReadOnly )
 			{
 				Ref<SoundBase> sound = AudioSystem::Get().FindSound( ap.UniqueID );
 				if( sound )
@@ -1784,7 +1793,7 @@ namespace Saturn {
 				bool open = false;
 
 				// Push disabled flag if runtime running
-				Auxiliary::ScopedDisabledFlag disabledFlag( m_Context->IsRuntimeRunning() );
+				Auxiliary::ScopedDisabledFlag disabledFlag( m_IsReadOnly );
 
 				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
 				{
@@ -1831,7 +1840,7 @@ namespace Saturn {
 			{
 				bool open = false;
 
-				Auxiliary::ScopedDisabledFlag disabledIfRT( m_Context->IsRuntimeRunning() );
+				Auxiliary::ScopedDisabledFlag disabledIfRT( m_IsReadOnly );
 
 				ImGui::TextDisabled( "%llu", rTextComp.FontAssetID.AssetID );
 
@@ -1882,6 +1891,8 @@ namespace Saturn {
 
 			if( ImGui::BeginPopup( "ComponentSettings" ) )
 			{
+				Auxiliary::DisabledFlag disabledIfReadOnly( m_IsReadOnly );
+
 				// TODO: Add compile time flags to this
 				if constexpr( 
 					!std::is_same<T, TransformComponent>() && 
@@ -1897,15 +1908,10 @@ namespace Saturn {
 					ImGui::Separator();
 				}
 
-				if( ImGui::MenuItem( "Copy component" ) )
+				if( ImGui::MenuItem( "Reset component" ) )
 				{
-					if( m_CopyComponentData.Buffer.Size > 0 )
-						m_CopyComponentData.Buffer.Free();
-
-					m_CopyComponentData.Hash = entt::type_id<T>().hash();
-
-					m_CopyComponentData.Buffer.Allocate( sizeof( T ) );
-					m_CopyComponentData.Buffer.Write( reinterpret_cast< void* >( &component ), sizeof( T ), 0 );
+					entity->RemoveComponent<T>();
+					entity->AddComponent<T>();
 				}
 
 				if( ImGui::MenuItem( "Paste component" ) )
@@ -1916,10 +1922,17 @@ namespace Saturn {
 					}
 				}
 
-				if( ImGui::MenuItem( "Reset component" ) )
+				disabledIfReadOnly.Pop();
+
+				if( ImGui::MenuItem( "Copy component" ) )
 				{
-					entity->RemoveComponent<T>();
-					entity->AddComponent<T>();
+					if( m_CopyComponentData.Buffer.Size > 0 )
+						m_CopyComponentData.Buffer.Free();
+
+					m_CopyComponentData.Hash = entt::type_id<T>().hash();
+
+					m_CopyComponentData.Buffer.Allocate( sizeof( T ) );
+					m_CopyComponentData.Buffer.Write( reinterpret_cast< void* >( &component ), sizeof( T ), 0 );
 				}
 
 				ImGui::EndPopup();

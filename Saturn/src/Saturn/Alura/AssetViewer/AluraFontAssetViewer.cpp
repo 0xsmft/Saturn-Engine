@@ -68,9 +68,12 @@ namespace Saturn {
 
 					if( ImGui::MenuItem( "Save" ) )
 					{
-						// This is a strange way to save the font....
-						const auto absolutePath = Project::GetActiveProject()->FilepathAbs( m_Font->Path );
-						m_Font->Serialise( absolutePath );
+						if( !m_IsReadOnly )
+						{
+							// This is a strange way to save the font....
+							const auto absolutePath = Project::GetActiveProject()->FilepathAbs( m_Font->Path );
+							m_Font->Serialise( absolutePath );
+						}
 					}
 
 					ImGui::EndMenu();
@@ -78,10 +81,14 @@ namespace Saturn {
 
 				if( ImGui::BeginMenu( "Font" ) )
 				{
-					if( ImGui::MenuItem( "Regenerate" ) )
 					{
-						m_pLoadedImGuiFont = nullptr;
-						m_Font->CreateOrLoadAtlas( true );
+						Auxiliary::ScopedDisabledFlag disabledIfReadOnly( m_IsReadOnly );
+						
+						if( ImGui::MenuItem( "Regenerate" ) )
+						{
+							m_pLoadedImGuiFont = nullptr;
+							m_Font->CreateOrLoadAtlas( true );
+						}
 					}
 
 					ImGui::EndMenu();

@@ -58,6 +58,7 @@ namespace Saturn {
 			static_assert( std::is_base_of<ImGuiWindow, Ty>::value, "Ty must be a child class of Panel!" );
 
 			auto panel = Ref<Ty>::Create( std::forward<VaArgs>( rrArgs )... );
+			panel->SetReadOnly( m_IsReadOnly );
 			m_Panels[ Ty::GetStaticName() ] = panel;
 			return panel;
 		}
@@ -119,11 +120,17 @@ namespace Saturn {
 
 		void OnRuntimeStateChanged( RuntimeState newState, RuntimeState oldState );
 
+		void MarkAllWindowsAsReadOnly();
+		void ResetReadOnlyState();
+
 	private:
 		void Terminate();
 
 	private:
 		//                        NAME -> Window
 		std::unordered_map<std::string, Ref<ImGuiWindow>> m_Panels;
+
+		// Global read only flag for all windows.
+		bool m_IsReadOnly = false;
 	};
 }

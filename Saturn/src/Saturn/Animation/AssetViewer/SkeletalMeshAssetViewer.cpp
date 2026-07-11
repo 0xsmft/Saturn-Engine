@@ -31,8 +31,6 @@
 
 #include "SkeletonAssetViewer.h"
 
-#include "Saturn/Core/Renderer/RenderThread.h"
-
 #include "Saturn/Asset/AssetManager.h"
 
 // TOOD: #FixSceneRendererIncludes
@@ -92,8 +90,11 @@ namespace Saturn {
 
 				if( ImGui::MenuItem( "Save" ) )
 				{
-					SkeletalMeshAssetSerialiser sma;
-					sma.Serialise( m_Mesh );
+					if( !m_IsReadOnly || m_Dirty )
+					{
+						SkeletalMeshAssetSerialiser sma;
+						sma.Serialise( m_Mesh );
+					}
 				}
 
 				ImGui::EndMenu();
@@ -135,14 +136,6 @@ namespace Saturn {
 		if( m_Open == false )
 		{
 			m_Open = false;
-
-			/*
-			* #FixEditorViewportSceneRendererClose
-			RenderThread::Get().Queue( [ = ]()
-			{
-				m_SceneRenderer = nullptr;
-			} );
-			*/
 		}
 	}
 
@@ -160,6 +153,8 @@ namespace Saturn {
 
 				if( ImGui::TreeNodeEx( rMaterial->Name.c_str(), ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_FramePadding ) )
 				{
+					Auxiliary::ScopedDisabledFlag disabledIfRo( m_IsReadOnly );
+
 					ImGui::BeginHorizontal( i );
 
 					ImGui::TextDisabled( "%s", rMaterial->Name.empty() ? "<NULL>" : rMaterial->Name.c_str() );

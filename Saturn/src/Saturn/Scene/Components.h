@@ -327,6 +327,26 @@ namespace Saturn {
 		RelationshipComponent( UUID parent ) : Parent( parent ) {}
 	};
 
+	enum PrefabUpdateFlags : uint8_t
+	{
+		// Default flags, adds new components and updates the overrides flags.
+		PrefabUpdateFlag_NoFlags = 0,
+		
+		// This prefab is read only and is controlled by the master instance.
+		PrefabUpdateFlag_ReadOnly = BIT( 0 ),
+		
+		// When a component is removed in our local instance, do not respect the change done in the master
+		// prefab and keep the component removed.
+		PrefabUpdateFlag_DoNotAddRemovedComponents = BIT( 1 ),
+
+		// When a component is added in the master instance, we do not respect that change
+		// and keep the component out of our instance.
+		PrefabUpdateFlag_DoNotAddAddedComponents   = BIT( 2 ),
+
+		// I literally don't care about anything that the master instance does just let me be me ahh flag.
+		PrefabUpdateFlag_IgnoreEverything		   = BIT( 3 ),
+	};
+
 	struct PrefabComponent
 	{
 		MemoryAssetDependency<AssetType::Prefab> AssetID;
@@ -336,6 +356,8 @@ namespace Saturn {
 		UUID EntityIDInPrefab = 0;
 
 		bool Modified = false;
+
+		uint8_t Flags = PrefabUpdateFlag_NoFlags;
 
 		PrefabComponent() = default;
 		PrefabComponent( PrefabComponent& other ) = default;

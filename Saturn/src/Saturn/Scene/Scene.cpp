@@ -97,6 +97,9 @@ namespace Saturn {
 		return { translation, orientation, scale };
 	}
 	
+	//////////////////////////////////////////////////////////////////////////
+	// Prefab2
+
 	template<typename V>
 	struct ComponentRefl
 	{
@@ -132,6 +135,7 @@ namespace Saturn {
 	template<typename... V>
 	static void BuildComponentRefl()
 	{
+		// Fold expression and unpack V, gain meta types for every component in the component group.
 		( [ & ]()
 		{
 			entt::meta<V>()
@@ -149,6 +153,8 @@ namespace Saturn {
 	{
 		BuildComponentRefl<V...>();
 	}
+
+	//////////////////////////////////////////////////////////////////////////
 
 	Scene::Scene()
 	{
@@ -1244,12 +1250,17 @@ namespace Saturn {
 
 							const auto cfp = reflectedType.func( entt::hashed_string( "CopyFromPrefab" ) );
 							if( cfp )
-								cfp.invoke( {}, 
-									&m_Registry, 
-									&rPrefabRegistry, 
-									rEntity->GetHandle(), 
+							{
+								// Call the function.
+								cfp.invoke( {},
+									&m_Registry,
+									&rPrefabRegistry,
+									rEntity->GetHandle(),
 									entityInPrefab->GetHandle() );
+							}
 						}
+						else
+							SAT_CORE_ERROR( "[Prefab2]: Internal Error: EnTT was unable to find the meta type for a component with hash: {0}", rPrefabHash );
 					}
 				}
 			}
@@ -1630,9 +1641,9 @@ namespace Saturn {
 
 	SharedPtr<Entity> Scene::CreatePrefab( Ref<Prefab> prefabAsset, CreateEntityParameters& rEntityParameters )
 	{
-		SharedPtr<Entity> prefabEntity = prefabAsset->InstantiatePrefab( this );
-
 		SAT_CORE_ASSERT( !rEntityParameters.pClass, "It is invalid for the creation parameters to have a valid SClass, you must not change the SClass that is controlled by the Prefab asset!" );
+
+		SharedPtr<Entity> prefabEntity = prefabAsset->InstantiatePrefab( this );
 
 		if( !rEntityParameters.Tag.empty() )
 		{

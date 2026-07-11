@@ -37,32 +37,18 @@
 #include "Saturn/Core/App.h"
 
 #include "Saturn/Vulkan/Mesh.h"
-#include "Saturn/Vulkan/VulkanContext.h"
 
 #include "Saturn/Scene/Entity.h"
 
-#include "Saturn/Audio/Sound.h"
 #include "Saturn/Audio/AudioSystem.h"
 
-#include "Saturn/Asset/Prefab.h"
-
-#include "Saturn/Animation/SkeletonAsset.h"
-
 #include "Saturn/Physics/PhysicsRigidBody.h"
-
-#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
-
-#include "Saturn/Project/Project.h"
 
 #include "UndoRedo/GlobalUndoRedoGroup.h"
 #include "UndoRedo/EntityUndoRedoActions.h"
 
 #include "Saturn/AI/Navigation/NavBoundsEntity.h"
 #include "Saturn/AI/AIAgentEntity.h"
-
-#include <glm/gtx/quaternion.hpp>
-#include <glm/gtx/matrix_decompose.hpp>
-#include <glm/gtc/type_ptr.hpp>
 
 //#include <imgui.h>
 #include <imgui_internal.h>
@@ -124,6 +110,8 @@ namespace Saturn {
 			{
 				selections[ 0 ]->AddComponent<Ty>();
 
+				m_Context->MarkDirty();
+
 				Ref<UndoRedoActionAddComponent<Ty>> action = Ref<UndoRedoActionAddComponent<Ty>>::Create( entity );
 				GlobalUndoRedoGroup::Get()->AddAction( action, ( uint64_t ) entity->GetHandle() );
 
@@ -136,8 +124,7 @@ namespace Saturn {
 	{
 		ImGui::PushID( static_cast<int>( m_CustomID == 0 ? m_Context->ID : m_CustomID ) );
 
-		if( !m_IsPrefabScene )
-			ImGui::Begin( m_Name.c_str(), &m_Open );
+		ImGui::Begin( m_Name.c_str(), &m_Open );
 
 		m_WindowFocused = ImGui::IsWindowFocused();
 
@@ -167,11 +154,22 @@ namespace Saturn {
 				EntitySelectionManager::Get()->ClearSelection( m_Context.Get() );
 			}
 
-			auto selections = EntitySelectionManager::Get()->GetSelectionContexts( m_Context.Get() );
+			const auto selections = EntitySelectionManager::Get()->GetSelectionContexts( m_Context.Get() );
 
 			if( ImGui::BeginPopupContextWindow( 0, ImGuiPopupFlags_MouseButtonRight ) )
 			{
-				PopupContextMenuNormal();
+				// For Prefab Hierarchies we cannot have two entities that are the root,
+				// only one entity can be the root.
+				// so the only possible way to create an entity is to select another one first
+				// and then create it as a child.
+				if( !m_IsPrefabScene )
+				{
+					PopupContextMenuNormal();
+				}
+				else
+				{
+					ImGui::Text( "A prefab scene can only have one root entity. So to create a new entity select the root entity and create it as a child." );
+				}
 
 				if( selections.size() )
 				{
@@ -201,8 +199,7 @@ namespace Saturn {
 			ImGui::End();
 		}
 
-		if( !m_IsPrefabScene )
-			ImGui::End();
+		ImGui::End();
 
 		if( Input::Get().KeyPressed( RubyKey_LeftCtrl ) || Input::Get().KeyPressed( RubyKey_RightCtrl ) )
 		{
@@ -218,16 +215,16 @@ namespace Saturn {
 
 	void SceneHierarchyPanel::SelectedEntityPopup()
 	{
+		SharedPtr<Entity> mostRecentSelection = EntitySelectionManager::Get()->GetSelectionContexts( m_Context.Get() ).back();
+
 		if( ImGui::MenuItem( "Create Empty Entity as child" ) )
 		{
 			SharedPtr<Entity> child = m_Context->CreateEntity( "Unnamed Entity" );
 			
-			// Only add to most recent selection.
-			SharedPtr<Entity> parent = EntitySelectionManager::Get()->GetSelectionContexts( m_Context.Get() ).back();
-			if( parent )
+			if( mostRecentSelection )
 			{
-				parent->GetComponent<RelationshipComponent>().ChildrenID.push_back( child->GetUUID() );
-				child->SetParent( parent->GetUUID() );
+				mostRecentSelection->GetComponent<RelationshipComponent>().ChildrenID.push_back( child->GetUUID() );
+				child->SetParent( mostRecentSelection->GetUUID() );
 			}
 
 			SetSelected( child );
@@ -260,6 +257,15 @@ namespace Saturn {
 			}
 
 			ImGui::SetClipboardText( text.c_str() );
+		}
+
+		// Only add to most recent selection.
+		if( mostRecentSelection && mostRecentSelection->HasComponent<PrefabComponent>() )
+		{
+			if( ImGui::MenuItem( "Update Prefab" ) )
+			{
+				Application::Get()->DispatchEvent<OnPrefabModifiedEvent>( mostRecentSelection->GetComponent<PrefabComponent>().AssetID );
+			}
 		}
 	}
 
@@ -336,6 +342,20 @@ namespace Saturn {
 
 		if( ImGui::BeginPopup( "AddComponentPanel" ) )
 		{
+			bool disabled = false;
+			if( const auto* pPrefabComponent = selections[ 0 ]->TryGetComponent<PrefabComponent>() )
+			{
+				if( pPrefabComponent->Flags & PrefabUpdateFlag_ReadOnly )
+				{
+					ImGui::Text( "Cannot modify read only prefab" );
+					ImGui::Separator();
+
+					disabled = true;
+				}
+			}
+
+			Auxiliary::DisabledFlag disabledIfReadOnly( disabled );
+
 			DrawAddComponents<StaticMeshComponent>( "Static Mesh", selections[ 0 ] );
 
 			DrawAddComponents<SkeletalMeshComponent>( "Skeletal Mesh", selections[ 0 ] );
@@ -368,6 +388,8 @@ namespace Saturn {
 			}
 
 			DrawAddComponents<TextComponent>( "Text", selections[ 0 ] );
+
+			disabledIfReadOnly.Pop();
 
 			ImGui::EndPopup();
 		}
@@ -735,6 +757,69 @@ namespace Saturn {
 
 		//////////////////////////////////////////////////////////////////////////
 		// Components
+
+		DrawComponent<PrefabComponent>( "Prefab", entity, [ & ]( PrefabComponent& pc )
+		{
+			ImGui::Columns( 2 );
+			// Arbitrary numbers...
+			ImGui::SetColumnWidth( 0, 100.0f );
+			ImGui::SetColumnWidth( 1, 300.0f );
+			ImGui::Text( "Prefab ID" );
+			ImGui::NextColumn();
+			ImGui::PushItemWidth( -1.0f );
+
+			{
+				Auxiliary::ScopedDisabledFlag disabled( true );
+				std::string id = std::to_string( pc.AssetID );
+				Auxiliary::InputText( "##meshfilepath", &id, ImGuiInputTextFlags_ReadOnly );
+			}
+
+			if( ImGui::BeginItemTooltip() )
+			{
+				const Ref<Asset> prefabAsset = AssetManager::Get()->FindAsset( pc.AssetID );
+				if( prefabAsset )
+				{
+					ImGui::Text( "Prefab: %s", prefabAsset->Name );
+				}
+
+				ImGui::EndTooltip();
+			}
+
+			ImGui::NextColumn();
+
+			{
+				Auxiliary::ScopedDisabledFlag disabled( true );
+				Auxiliary::DrawBoolControl( "Modified", pc.Modified );
+			}
+
+			ImGui::SeparatorText( "Flags" );
+
+			const auto drawFlagControl = [&]( const char* pFlagName, PrefabUpdateFlags flagBit, bool clearAll = false ) 
+			{
+				bool tempValue = pc.Flags & flagBit;
+				if( Auxiliary::DrawBoolControl( pFlagName, tempValue ) )
+				{
+					if( tempValue )
+					{
+						clearAll ? pc.Flags = flagBit : pc.Flags |= flagBit;
+					}
+					else
+					{
+						pc.Flags &= ~flagBit;
+					}
+				}
+			};
+
+			drawFlagControl( "Read Only", PrefabUpdateFlag_ReadOnly, true );
+
+			{
+				Auxiliary::ScopedDisabledFlag disabledIfReadOnly( pc.Flags & PrefabUpdateFlag_ReadOnly );
+
+				drawFlagControl( "Do not add removed components", PrefabUpdateFlag_DoNotAddRemovedComponents );
+				drawFlagControl( "Do not add components", PrefabUpdateFlag_DoNotAddAddedComponents );
+				drawFlagControl( "Ignore all changes", PrefabUpdateFlag_IgnoreEverything, true );
+			}
+		} );
 
 		DrawComponent<TransformComponent>( "Transform", entity, [&]( auto& tc )
 		{
@@ -1798,7 +1883,10 @@ namespace Saturn {
 			if( ImGui::BeginPopup( "ComponentSettings" ) )
 			{
 				// TODO: Add compile time flags to this
-				if constexpr( !std::is_same<T, TransformComponent>() && !std::is_same<T, NavigationMeshSpecificationComponent>() )
+				if constexpr( 
+					!std::is_same<T, TransformComponent>() && 
+					!std::is_same<T, NavigationMeshSpecificationComponent>() && 
+					!std::is_same<T, PrefabComponent>() )
 				{
 					if( ImGui::MenuItem( "Remove component" ) )
 						removeComponent = true;

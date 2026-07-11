@@ -233,9 +233,14 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 			rEmitter << YAML::Key << "PrefabComponent";
 			rEmitter << YAML::BeginMap;
 
-			rEmitter << YAML::Key << "AssetID" << YAML::Value << entity->GetComponent< PrefabComponent >().AssetID;
-			rEmitter << YAML::Key << "EntityIDInPrefab" << YAML::Value << entity->GetComponent< PrefabComponent >().EntityIDInPrefab;
-			rEmitter << YAML::Key << "Modified" << YAML::Value << entity->GetComponent< PrefabComponent >().Modified;
+			const auto& pc = entity->GetComponent< PrefabComponent >();
+
+			rEmitter << YAML::Key << "AssetID" << YAML::Value << pc.AssetID;
+			rEmitter << YAML::Key << "EntityIDInPrefab" << YAML::Value << pc.EntityIDInPrefab;
+
+			rEmitter << YAML::Key << "Flags" << YAML::Value << ( uint16_t ) pc.Flags;
+			
+			rEmitter << YAML::Key << "Modified" << YAML::Value << pc.Modified;
 
 			rEmitter << YAML::EndMap;
 		}
@@ -745,13 +750,31 @@ pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value ); \
 			p.AssetID = pc[ "AssetID" ].as< uint64_t >();
 
 			const auto ogPrefabIDNode = pc[ "EntityIDInPrefab" ];
-			if( !ogPrefabIDNode.IsNull() )
+			if( ogPrefabIDNode )
 			{
 				p.EntityIDInPrefab = ogPrefabIDNode.as<uint64_t>();
 			}
+
+			const auto flagsNode = pc[ "Flags" ];
+			if( flagsNode )
+			{
+				auto byteFlags = flagsNode.as< uint16_t >( 0 );
+
+				// Clamp to zero and warn.
+				// We don't really have to set it to zero because this behaviour is defined and would result in
+				// a warp-around, however I'll still set it to zero.
+				if( byteFlags > std::numeric_limits<uint8_t>::max() )
+				{
+					byteFlags = 0u;
+
+					SAT_CORE_WARN( "[ComponentSerialisation]: Prefab: Prefab flags is greater than max, clamping to zero!" );
+				}
+
+				p.Flags = ( uint8_t ) byteFlags;
+			}
 		}
 
-		auto tc = rEntityNode[ "TransformComponent" ];
+		const auto tc = rEntityNode[ "TransformComponent" ];
 		if( tc )
 		{
 			auto& t = DeserialisedEntity->GetComponent< TransformComponent >();

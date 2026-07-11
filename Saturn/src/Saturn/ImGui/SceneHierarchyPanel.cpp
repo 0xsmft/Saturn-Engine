@@ -1868,7 +1868,7 @@ namespace Saturn {
 
 			auto& component = entity->GetComponent<T>();
 
-			bool open = ImGui::TreeNodeEx( ( void* ) ( ( uintptr_t ) entity.Get() | typeid( T ).hash_code() ), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_AllowItemOverlap, name.c_str() );
+			const bool open = ImGui::TreeNodeEx( ( void* ) ( ( uintptr_t ) entity.Get() | typeid( T ).hash_code() ), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_AllowItemOverlap, name.c_str() );
 
 			ImGui::SameLine();
 			ImGui::PushStyleColor( ImGuiCol_Button, ImVec4( 0, 0, 0, 0 ) );
@@ -1902,7 +1902,7 @@ namespace Saturn {
 					if( m_CopyComponentData.Buffer.Size > 0 )
 						m_CopyComponentData.Buffer.Free();
 
-					m_CopyComponentData.Name = name;
+					m_CopyComponentData.Hash = entt::type_id<T>().hash();
 
 					m_CopyComponentData.Buffer.Allocate( sizeof( T ) );
 					m_CopyComponentData.Buffer.Write( reinterpret_cast< void* >( &component ), sizeof( T ), 0 );
@@ -1910,10 +1910,16 @@ namespace Saturn {
 
 				if( ImGui::MenuItem( "Paste component" ) )
 				{
-					if( m_CopyComponentData.Buffer.Size > 0 && m_CopyComponentData.Name == name )
+					if( m_CopyComponentData.Buffer.Size > 0 && m_CopyComponentData.Hash == entt::type_id<T>().hash() )
 					{
 						component = m_CopyComponentData.Buffer.Read<T>( 0 );
 					}
+				}
+
+				if( ImGui::MenuItem( "Reset component" ) )
+				{
+					entity->RemoveComponent<T>();
+					entity->AddComponent<T>();
 				}
 
 				ImGui::EndPopup();

@@ -49,7 +49,7 @@ namespace Saturn {
 	public:
 		SceneHierarchyPanel();
 		SceneHierarchyPanel( const std::string& rWindowName );
-		~SceneHierarchyPanel();
+		virtual ~SceneHierarchyPanel();
 
 		void SetContext( const Ref<Scene>& scene );
 
@@ -109,7 +109,7 @@ namespace Saturn {
 		struct CopyComponentData
 		{
 			Buffer Buffer;
-			std::string Name;
+			uint32_t Hash = 0u;
 		};
 
 		CopyComponentData m_CopyComponentData{};

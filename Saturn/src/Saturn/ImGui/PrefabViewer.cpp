@@ -29,6 +29,10 @@
 #include "sppch.h"
 #include "PrefabViewer.h"
 
+#include "ImGuiAuxiliary.h"
+
+#include "Saturn/ImGui/EditorEvents.h"
+
 #include "Saturn/Core/Renderer/RenderThread.h"
 
 #include "Saturn/Asset/AssetRegistry.h"
@@ -36,12 +40,8 @@
 #include "Saturn/Vulkan/Renderer2D.h"
 #include "Saturn/Vulkan/SceneRenderer.h"
 
-#include "ImGuiAuxiliary.h"
-
 #include "EntitySelectionReason.h"
 #include "EntitySelectionManager.h"
-
-#include "ContentBrowserPanel/ContentBrowserThumbnailCache.h"
 
 #include "Saturn/Core/AABB/Ray.h"
 
@@ -60,6 +60,7 @@ namespace Saturn {
 		m_SceneHierarchyPanel = Ref<SceneHierarchyPanel>::Create( name );
 		m_SceneHierarchyPanel->SetCustomID( m_AssetID );
 		m_SceneHierarchyPanel->OpenWindow();
+		m_SceneHierarchyPanel->SetIsPrefabScene( true );
 
 		AddPrefab();
 
@@ -218,6 +219,46 @@ namespace Saturn {
 		return false;
 	}
 
+	void PrefabViewer::DrawDirtyPopup()
+	{
+		ImGui::OpenPopup( "Prefab is dirty" );
+
+		if( ImGui::BeginPopupModal( "Prefab is dirty", nullptr, ImGuiWindowFlags_NoSavedSettings ) )
+		{
+			ImGui::Text( "There is unsaved changes to this Prefab Asset, what would you like to do?" );
+			ImGui::Separator();
+
+			ImGui::BeginHorizontal( "##optionhzpd" );
+
+			if( ImGui::Button( "Save" ) )
+			{
+				m_ShowDirtyPopup = m_Dirty = m_Open = false;
+
+				m_Prefab->RebuildComponentCache();
+
+				PrefabSerialiser ps;
+				ps.Serialise( m_Prefab );
+
+				// Fire the event.
+				Application::Get()->DispatchEvent<OnPrefabModifiedEvent>( m_Prefab->ID );
+			}
+
+			if( ImGui::Button( "Discard changes" ) )
+			{
+				m_ShowDirtyPopup = m_Dirty = m_Open = false;
+			}
+
+			if( ImGui::Button( "Cancel" ) )
+			{
+				m_ShowDirtyPopup = false;
+			}
+
+			ImGui::EndHorizontal();
+
+			ImGui::EndPopup();
+		}
+	}
+
 	void PrefabViewer::OnImGuiRender()
 	{
 #if !defined(SAT_DIST)
@@ -301,6 +342,8 @@ namespace Saturn {
 
 			ImGui::EndMenuBar();
 		}
+
+		if( m_ShowDirtyPopup ) DrawDirtyPopup();
 
 		//////////////////////////////////////////////////////////////////////////
 
@@ -462,16 +505,17 @@ namespace Saturn {
 
 		ImGui::End(); // Root window
 
-		if( m_Open == false )
+		if( m_Dirty && !m_Open )
 		{
-			PrefabSerialiser ps;
-			ps.Serialise( m_Prefab );
+			m_Open = m_ShowDirtyPopup = true;
 		}
 #endif
 	}
 
 	void PrefabViewer::OnUpdate( Timestep ts )
 	{
+		m_Dirty = m_Prefab->GetScene()->IsDirty();
+
 		m_Camera.SetActive( m_AllowCameraEvents );
 		m_Camera.OnUpdate( ts );
 

@@ -711,6 +711,8 @@ namespace Saturn {
 				HandlePrefabModification( rPrefabModifiedEvent.GetPrefabID() );
 			} break;
 
+			case EventType::NodeEditorDebugBreak:
+			{
 			} break;
 		}
 	}

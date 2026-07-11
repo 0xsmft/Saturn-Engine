@@ -431,7 +431,7 @@ namespace Saturn {
 
 		// Component cache
 		const auto componentCacheNode = data[ "ComponentCache" ];
-		if( !componentCacheNode.IsNull() )
+		if( componentCacheNode )
 		{
 			// TODO
 //			const auto numberOfCaches = componentCacheNode[ "Count" ].as<size_t>( 0llu );

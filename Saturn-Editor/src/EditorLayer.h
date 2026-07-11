@@ -159,6 +159,8 @@ namespace Saturn {
 		void PlaceEntityRelativeToMousePos( SharedPtr<Entity> entity );
 		bool TrySelectEntityFromMouse( Mesh* mesh, SharedPtr<Entity> entity, const glm::vec3& rOrigin, const glm::vec3& rDirection );
 
+		void HandlePrefabModification( AssetID prefabID );
+
 	private:
 		enum MessageBoxButtons_
 		{

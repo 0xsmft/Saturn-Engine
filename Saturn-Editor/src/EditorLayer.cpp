@@ -703,6 +703,13 @@ namespace Saturn {
 				const SendEditorNotificationEvent& rNotificationEvent = ( SendEditorNotificationEvent& ) rEvent;
 
 				PushNotification( rNotificationEvent.GetText(), 10.0f );
+			} break;
+
+			case EventType::PrefabModified: 
+			{
+				const OnPrefabModifiedEvent& rPrefabModifiedEvent = ( OnPrefabModifiedEvent& ) rEvent;
+				HandlePrefabModification( rPrefabModifiedEvent.GetPrefabID() );
+			} break;
 
 			} break;
 		}
@@ -1321,6 +1328,13 @@ namespace Saturn {
 		}
 
 		return hitAny;
+	}
+
+	void EditorLayer::HandlePrefabModification( AssetID prefabID )
+	{
+		SAT_CORE_ASSERT( !g_ActiveScene->IsRuntimeActive(), "Remind me to check and queue a prefab modification if runtime is active" );
+
+		g_ActiveScene->OnModifyPrefab( prefabID );
 	}
 
 	bool EditorLayer::OnMousePressed( RubyMouseEvent& rEvent )

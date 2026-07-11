@@ -144,6 +144,9 @@ namespace Saturn::Auxiliary {
 	
 	// NOTE: When not using columns you MUST draw the text before calling this function!
 	extern bool DrawBoolControl( const std::string& rLabel, bool& value, bool useColumns = true, float columnWidth = 125.0f );
+
+	extern bool DrawBoolControl( const char* pLabel, bool& value, bool useColumns = true, float columnWidth = 125.0f );
+
 	extern bool DrawDisabledBoolControl( const std::string& rLabel, bool& value, bool useColumns = true, float columnWidth = 125.0f );
 	
 	extern bool DrawInt8Control( const std::string& rLabel, uint8_t& values, int min = 0.0f, int max = 500.0f, float columnWidth = 125.0f );

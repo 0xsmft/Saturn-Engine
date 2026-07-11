@@ -232,15 +232,7 @@ namespace Saturn {
 
 			if( ImGui::Button( "Save" ) )
 			{
-				m_ShowDirtyPopup = m_Dirty = m_Open = false;
-
-				m_Prefab->RebuildComponentCache();
-
-				PrefabSerialiser ps;
-				ps.Serialise( m_Prefab );
-
-				// Fire the event.
-				Application::Get()->DispatchEvent<OnPrefabModifiedEvent>( m_Prefab->ID );
+				FullySave();
 			}
 
 			if( ImGui::Button( "Discard changes" ) )
@@ -257,6 +249,19 @@ namespace Saturn {
 
 			ImGui::EndPopup();
 		}
+	}
+
+	void PrefabViewer::FullySave()
+	{
+		m_ShowDirtyPopup = m_Dirty = m_Open = false;
+
+		m_Prefab->RebuildComponentCache();
+
+		PrefabSerialiser ps;
+		ps.Serialise( m_Prefab );
+
+		// Fire the event.
+		Application::Get()->DispatchEvent<OnPrefabModifiedEvent>( m_Prefab->ID );
 	}
 
 	void PrefabViewer::OnImGuiRender()
@@ -277,6 +282,22 @@ namespace Saturn {
 
 		if( ImGui::BeginMenuBar() )
 		{
+			if( ImGui::BeginMenu( "File" ) )
+			{
+				if( ImGui::MenuItem( "Save" ) )
+				{
+					if( m_Dirty )
+						FullySave();
+				}
+
+				if( ImGui::MenuItem( "Close" ) )
+				{
+					m_Open = false;
+				}
+
+				ImGui::EndMenu();
+			}
+
 			if( ImGui::BeginMenu( "Window" ) )
 			{
 				if( ImGui::MenuItem( "Reset Dock space" ) ) 

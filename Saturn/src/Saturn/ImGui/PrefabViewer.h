@@ -65,6 +65,8 @@ namespace Saturn {
 	
 		void DrawDirtyPopup();
 
+		void FullySave();
+
 		glm::vec2 ConvertMouseToViewportNDC();
 		std::pair<glm::vec3, glm::vec3> RayCast( float mx, float my );
 

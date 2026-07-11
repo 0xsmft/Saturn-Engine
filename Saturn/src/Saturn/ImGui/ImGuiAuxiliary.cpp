@@ -329,20 +329,25 @@ namespace Saturn::Auxiliary {
 		return DrawIntControl( rLabel, values, min, max, useColumns, columnWidth );
 	}
 
-	extern bool DrawBoolControl( const std::string& rLabel, bool& value, bool useColumns /*= true*/, float columnWidth /*= 125.0f */ )
+	bool DrawBoolControl( const std::string& rLabel, bool& value, bool useColumns /*= true*/, float columnWidth /*= 125.0f */ )
+	{
+		return DrawBoolControl( rLabel.c_str(), value, useColumns, columnWidth );
+	}
+
+	bool DrawBoolControl( const char* pLabel, bool& value, bool useColumns /*= true*/, float columnWidth /*= 125.0f */ )
 	{
 		bool modified = false;
 
 		ImGuiIO& io = ImGui::GetIO();
 
-		ImGui::PushID( rLabel.c_str() );
+		ImGui::PushID( pLabel );
 
 		if( useColumns )
 		{
 			ImGui::Columns( 2 );
 			ImGui::SetColumnWidth( 0, columnWidth );
 
-			ImGui::Text( rLabel.c_str() );
+			ImGui::Text( pLabel );
 
 			ImGui::NextColumn();
 		}

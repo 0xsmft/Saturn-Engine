@@ -39,7 +39,6 @@
 #include "Material.h"
 #include "ComputePipeline.h"
 #include "Renderer2D.h"
-#include "DefaultMeshes.h"
 #include "AluraRenderer.h"
 
 #include "Saturn/Animation/SkeletonAsset.h"
@@ -96,7 +95,7 @@ namespace Saturn {
 
 		m_RendererData.SBBoneTransforms = Ref<StorageBufferSet>::Create( 0, 0 );
 		m_RendererData.SBBoneTransforms->Create( 2, 15, false ); // Create bone transform buffers.
-		m_RendererData.SBBoneTransforms->Resize( 2, 15, sizeof( glm::mat4 ) * 10240 );
+		m_RendererData.SBBoneTransforms->Resize( 2, 15, sizeof( glm::mat4 ) * 1024 );
 
 		// 1024 max animated meshes
 		m_RendererData.BoneTransformData = new glm::mat4[ 1 * 1024 ]{};
@@ -800,14 +799,14 @@ namespace Saturn {
 
 		if( m_RendererData.SSAOFramebuffer )
 		{
-			m_RendererData.SSAOFramebuffer->Recreate( m_RendererData.Width / 2, m_RendererData.Height / 2 );
+			m_RendererData.SSAOFramebuffer->Recreate( m_RendererData.Width, m_RendererData.Height );
 		}
 		else
 		{
 			FramebufferSpecification FBSpec;
 			FBSpec.RenderPass = m_RendererData.SSAORenderPass;
-			FBSpec.Width = m_RendererData.Width / 2;
-			FBSpec.Height = m_RendererData.Height / 2;
+			FBSpec.Width = m_RendererData.Width;
+			FBSpec.Height = m_RendererData.Height;
 			FBSpec.Attachments = { ImageFormat::RED8 };
 			FBSpec.CreateDepth = false;
 
@@ -818,8 +817,8 @@ namespace Saturn {
 			m_RendererData.SSAOPipeline = nullptr;
 
 		PipelineSpecification PipelineSpec = {};
-		PipelineSpec.Width = m_RendererData.Width / 2;
-		PipelineSpec.Height = m_RendererData.Height / 2;
+		PipelineSpec.Width = m_RendererData.Width;
+		PipelineSpec.Height = m_RendererData.Height;
 		PipelineSpec.Name = "SSAO";
 		PipelineSpec.Shader = m_RendererData.SSAOShader;
 		PipelineSpec.RenderPass = m_RendererData.SSAORenderPass;
@@ -909,14 +908,14 @@ namespace Saturn {
 
 		if( m_RendererData.AOBlurFramebuffer )
 		{
-			m_RendererData.AOBlurFramebuffer->Recreate( m_RendererData.Width / 2, m_RendererData.Height / 2 );
+			m_RendererData.AOBlurFramebuffer->Recreate( m_RendererData.Width, m_RendererData.Height );
 		}
 		else
 		{
 			FramebufferSpecification FBSpec;
 			FBSpec.RenderPass = m_RendererData.AOBlurRenderPass;
-			FBSpec.Width = m_RendererData.Width / 2;
-			FBSpec.Height = m_RendererData.Height / 2;
+			FBSpec.Width = m_RendererData.Width;
+			FBSpec.Height = m_RendererData.Height;
 			FBSpec.Attachments = { ImageFormat::RED8 };
 			FBSpec.CreateDepth = false;
 
@@ -927,8 +926,8 @@ namespace Saturn {
 			m_RendererData.AOBlurPipeline = nullptr;
 
 		PipelineSpecification PipelineSpec = {};
-		PipelineSpec.Width = m_RendererData.Width / 2;
-		PipelineSpec.Height = m_RendererData.Height / 2;
+		PipelineSpec.Width = m_RendererData.Width;
+		PipelineSpec.Height = m_RendererData.Height;
 		PipelineSpec.Name = "AO-Blur";
 		PipelineSpec.Shader = m_RendererData.SSAOBlurShader;
 		PipelineSpec.RenderPass = m_RendererData.SSAORenderPass;
@@ -1239,7 +1238,7 @@ namespace Saturn {
 			VkPhysicalDeviceProperties Properties = {};
 			vkGetPhysicalDeviceProperties( VulkanContext::Get()->GetPhysicalDevice(), &Properties );
 
-			samplerSpec.MaxAnisotropy = Properties.limits.maxSamplerAnisotropy;
+			samplerSpec.MaxAnisotropy = glm::min( Properties.limits.maxSamplerAnisotropy, 8.0f );
 		}
 
 		m_RendererData.SMAAPointSampler = Ref<Sampler>::Create( samplerSpec );
@@ -3030,7 +3029,7 @@ namespace Saturn {
 	void SceneRenderer::SSAOPass()
 	{
 		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
-		VkExtent2D Extent = { m_RendererData.Width / 2, m_RendererData.Height / 2 };
+		VkExtent2D Extent = { m_RendererData.Width, m_RendererData.Height };
 		VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
 
 		m_RendererData.SSAOTimer.Reset();
@@ -3039,8 +3038,8 @@ namespace Saturn {
 		VkViewport Viewport = {};
 		Viewport.x = 0;
 		Viewport.y = 0;
-		Viewport.width = ( float ) m_RendererData.Width / 2;
-		Viewport.height = ( float ) m_RendererData.Height / 2;
+		Viewport.width = ( float ) m_RendererData.Width;
+		Viewport.height = ( float ) m_RendererData.Height;
 		Viewport.minDepth = 0.0f;
 		Viewport.maxDepth = 1.0f;
 
@@ -3075,7 +3074,7 @@ namespace Saturn {
 	void SceneRenderer::SSAOBlurPass()
 	{
 		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
-		VkExtent2D Extent = { m_RendererData.Width / 2, m_RendererData.Height / 2 };
+		VkExtent2D Extent = { m_RendererData.Width, m_RendererData.Height };
 		VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
 
 		m_RendererData.AOBlurTimer.Reset();
@@ -3084,8 +3083,8 @@ namespace Saturn {
 		VkViewport Viewport = {};
 		Viewport.x = 0;
 		Viewport.y = 0;
-		Viewport.width = ( float ) m_RendererData.Width / 2;
-		Viewport.height = ( float ) m_RendererData.Height / 2;
+		Viewport.width = ( float ) m_RendererData.Width;
+		Viewport.height = ( float ) m_RendererData.Height;
 		Viewport.minDepth = 0.0f;
 		Viewport.maxDepth = 1.0f;
 
@@ -3455,11 +3454,6 @@ namespace Saturn {
 		return ( m_Flags & flag ) != 0;
 	}
 
-	void SceneRenderer::ChangeAOTechnique( AOTechnique newTechique )
-	{
-		// TODO: ChangeAOTechnique
-	}
-
 	Ref<Renderer2D> SceneRenderer::GetRenderer2D() const
 	{
 		return m_Renderer2D;
@@ -3634,7 +3628,7 @@ namespace Saturn {
 		}
 
 		{
-			ScopedDebugLabel label( m_RendererData.CommandBuffer, "Scene Composite/Post Processing" );
+			ScopedDebugLabel label( m_RendererData.CommandBuffer, "Scene Composite/PostProcessing" );
 			SceneCompositePass();
 		}
 

@@ -590,7 +590,6 @@ namespace Saturn {
 		bool HasFlag( SceneRendererFlags flag ) const;
 
 		void SetSwapchainTarget( bool target ) { m_RendererData.IsSwapchainTarget = target; }
-		void ChangeAOTechnique( AOTechnique newTechique );
 
 		AOTechnique GetAOTechnique() const { return m_AOTechnique; }
 

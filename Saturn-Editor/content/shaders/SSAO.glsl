@@ -48,9 +48,9 @@ layout( set = 0, binding = 4 ) uniform sampler2D u_NoiseTexture;
 
 layout( location = 0 ) in vec2 o_TexCoord;
 
-vec3 ReconstructVSPosFromDepth(vec2 uv)
+vec3 ReconstructVSPosFromDepth( vec2 uv )
 {
-	float depth = texture(u_DepthTexture, uv).r;
+	float depth = texture( u_DepthTexture, uv ).r;
 
 	vec4 clipPos = vec4(
 		uv * 2.0 - 1.0,
@@ -80,21 +80,20 @@ void main()
 	ivec2 noiseTexSize = textureSize( u_NoiseTexture, 0 );
 
 	// SSAO is rendered at 0.5x scale
-	float renderScale = 0.5; 
+	float renderScale = 1; 
 
-	// Scale the noise texture so that its tiled across U and V.
-	vec2 noiseUV = vec2(float(depthTexSize.x)/float(noiseTexSize.x), float(depthTexSize.y)/float(noiseTexSize.y)) * o_TexCoord * renderScale;
-	vec3 randomVec = texture(u_NoiseTexture, noiseUV).xyz;
+	vec2 noiseScale = vec2( depthTexSize ) * renderScale / vec2( noiseTexSize );
+	vec3 randomVec = texture( u_NoiseTexture, o_TexCoord * noiseScale ).xyz;
 	
-	vec3 tangent = normalize(randomVec - normal * dot(randomVec, normal));
+	vec3 tangent = normalize( randomVec - normal * dot( randomVec, normal ) );
 	vec3 bitangent = cross( normal, tangent );
-	mat3 TBN = mat3(tangent, bitangent, normal);
+	mat3 TBN = mat3( tangent, bitangent, normal );
 
 	float bias = 0.02 * u_Data.SSAORadius;
 	float occlusion = 0.0;
 	int sampleCount = 0;
 
-	for( uint i = 0; i < 32; i++ )
+	for( uint i = 0; i < 32; ++i )
 	{
 		vec3 samplePos =
 			pos + ( TBN * u_Data.Samples[ i ].xyz )
@@ -131,6 +130,6 @@ void main()
 		++sampleCount;
 	}
 
-	occlusion = 1.0 - (occlusion / float( max( sampleCount, 1 ) ) );
+	occlusion = 1.0 - ( occlusion / float( max( sampleCount, 1 ) ) );
 	FinalColorR = occlusion;
 }

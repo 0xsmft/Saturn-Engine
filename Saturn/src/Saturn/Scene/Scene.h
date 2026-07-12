@@ -311,9 +311,9 @@ namespace Saturn {
 		// #ReplaceRawPtrOrRefWithWeakRef
 		[[nodiscard]] WeakRef<Entity> GetMainCameraEntity( bool force = false );
 		
-		[[nodiscard]] SharedPtr<Entity> FindEntityByTag( const std::string& tag );
-		[[nodiscard]] SharedPtr<Entity> FindEntityByID( const UUID& id );
-		[[nodiscard]] SharedPtr<Entity> FindEntityByHandle( entt::entity handle );
+		[[nodiscard]] SharedPtr<Entity> FindEntityByTag( const std::string& tag ) const;
+		[[nodiscard]] SharedPtr<Entity> FindEntityByID( const UUID& id ) const;
+		[[nodiscard]] SharedPtr<Entity> FindEntityByHandle( entt::entity handle ) const;
 
 		// Convert the local space transformation into world space
 		glm::mat4 GetTransformRelativeToParent( const SharedPtr<Entity> entity );
@@ -423,6 +423,7 @@ namespace Saturn {
 		void DestroyPendingEntities();
 		void DeleteEntityChecked( Entity* pEntity );
 
+		void OnModifyPrefab_AddNewlyAddedComponents( const Ref<Prefab> prefabAsset, SharedPtr<Entity> entity, const SharedPtr<Entity> entityInPrefab );
 		std::vector<entt::id_type> BuildComponentHash( SharedPtr<Entity> entity );
 
 	protected:

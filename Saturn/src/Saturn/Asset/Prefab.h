@@ -38,9 +38,12 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// Prefab also known as ClassInstance
 	//
-	// This is not like a normal prefab. Think of this like an instance of another class (class means Entity or type defined in the game).
+	// This is not like a normal prefab. 
+	// Think of this like an instance of another class (class means Entity or type defined in the game).
+	//
 	// Prefabs can only represent one root entity however, that entity can have children
 	// Prefabs can not depend on other prefabs.
+	//
 	class Prefab : public Asset
 	{
 	public:
@@ -64,9 +67,11 @@ namespace Saturn {
 		void RebuildComponentCache();
 
 		SharedPtr<Entity> FindEntityInPrefab( UUID id );
+		const SharedPtr<Entity> FindEntityInPrefab( UUID id ) const;
 
 	public:
 		const ComponentCacheMap& GetComponentMap() { return m_ComponentCaches; }
+		const ComponentCacheMap& GetComponentMap() const { return m_ComponentCaches; }
 
 	public:
 		//////////////////////////////////////////////////////////////////////////

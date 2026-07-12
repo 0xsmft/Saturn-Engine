@@ -126,7 +126,7 @@ namespace Saturn {
 			pReg->remove<V>( e );
 		}
 
-		static void Test() 
+		static void Break() 
 		{
 			Core::BreakDebug();
 		}
@@ -142,7 +142,7 @@ namespace Saturn {
 				.type( entt::type_id<V>().hash() )
 				.func<&ComponentRefl<V>::Add>( entt::hashed_string( "Add" ) )
 				.func<&ComponentRefl<V>::CopyFromPrefab>( entt::hashed_string( "CopyFromPrefab" ) )
-				.func<&ComponentRefl<V>::Test>( entt::hashed_string( "Test" ) )
+				.func<&ComponentRefl<V>::Break>( entt::hashed_string( "Break" ) )
 				.func<&ComponentRefl<V>::Remove>( entt::hashed_string( "Remove" ) );
 		}( ), ... );
 	}
@@ -934,7 +934,7 @@ namespace Saturn {
 		return entity;
 	}
 
-	SharedPtr<Entity> Scene::FindEntityByTag( const std::string& tag )
+	SharedPtr<Entity> Scene::FindEntityByTag( const std::string& tag ) const
 	{
 		for( auto&& [handle, entity] : m_EntityIDMap )
 		{
@@ -945,7 +945,7 @@ namespace Saturn {
 		return nullptr;
 	}
 
-	SharedPtr<Entity> Scene::FindEntityByID( const UUID& id )
+	SharedPtr<Entity> Scene::FindEntityByID( const UUID& id ) const
 	{
 		for( auto&& [handle, entity] : m_EntityIDMap )
 		{
@@ -956,7 +956,7 @@ namespace Saturn {
 		return nullptr;
 	}
 
-	SharedPtr<Entity> Scene::FindEntityByHandle( entt::entity handle )
+	SharedPtr<Entity> Scene::FindEntityByHandle( entt::entity handle ) const
 	{
 		const auto Itr = m_EntityIDMap.find( handle );
 		if( Itr != m_EntityIDMap.end() )
@@ -1202,14 +1202,61 @@ namespace Saturn {
 		return res;
 	}
 
+	void Scene::OnModifyPrefab_AddNewlyAddedComponents( 
+		const Ref<Prefab> prefabAsset, 
+		SharedPtr<Entity> entity, 
+		const SharedPtr<Entity> entityInPrefab )
+	{
+		const auto& rPrefabComponent = entity->GetComponent<PrefabComponent>();
+		const auto& rComponentMap = prefabAsset->GetComponentMap();
+
+		const auto& rPrefabComponentHashesItr = rComponentMap.find( rPrefabComponent.EntityIDInPrefab );
+		if( rPrefabComponentHashesItr != rComponentMap.end() )
+		{
+			const auto& rPrefabComponentHashes = rPrefabComponentHashesItr->second;
+
+			// Preform merge...
+			// Right so we need to figure out first if any components where added,
+			// if so we also respect that change and add it to ourself.
+
+			// Build component hash list for comparison.
+			const std::vector<entt::id_type> componentHashes = BuildComponentHash( entity );
+
+			// Find any missing in our entity.
+			for( const auto& rPrefabHash : rPrefabComponentHashes )
+			{
+				// Doesn't exist? Add it.
+				if( std::find( componentHashes.begin(), componentHashes.end(), rPrefabHash ) == componentHashes.end() )
+				{
+					// Add component via hash using the lovely entt::meta system.
+					if( const auto reflectedType = entt::resolve( rPrefabHash ) )
+					{
+						auto& rPrefabRegistry = prefabAsset->GetScene()->GetRegistry();
+
+						const auto copyFunc = reflectedType.func( entt::hashed_string( "CopyFromPrefab" ) );
+						if( copyFunc )
+						{
+							// Copy component from master instance in prefab asset into our local entity.
+							copyFunc.invoke( {},
+								&m_Registry,
+								&rPrefabRegistry,
+								entity->GetHandle(),
+								entityInPrefab->GetHandle() );
+						}
+					}
+					else
+						SAT_CORE_ERROR( "[Prefab2]: Internal Error: EnTT was unable to find the meta type for a component with hash: {0}", rPrefabHash );
+				}
+			}
+		}
+	}
+
 	void Scene::OnModifyPrefab( AssetID prefabAssetID )
 	{
 		SAT_CORE_INFO( "[Prefab2]: Prefab modified -- OnModifyPrefab -- {0}", prefabAssetID );
 
-		Ref<Prefab> prefabAsset = AssetManager::Get()->GetAssetAs<Prefab>( prefabAssetID );
+		const Ref<Prefab> prefabAsset = AssetManager::Get()->GetAssetAs<Prefab>( prefabAssetID );
 		if( !prefabAsset ) return;
-
-		const auto& rComponentMap = prefabAsset->GetComponentMap();
 
 		const auto allPrefabEntities = GetAllEntitiesWith<PrefabComponent>();
 		for( auto& rEntity : allPrefabEntities )
@@ -1220,6 +1267,7 @@ namespace Saturn {
 			if( rPrefabComponent.AssetID != prefabAssetID )
 				continue;
 
+			// Find the OG entity in the prefab itself.
 			const SharedPtr<Entity> entityInPrefab = prefabAsset->FindEntityInPrefab( rPrefabComponent.EntityIDInPrefab );
 			if( !entityInPrefab )
 			{
@@ -1227,42 +1275,10 @@ namespace Saturn {
 				break;
 			}
 
-			const auto& rPrefabComponentHashesItr = rComponentMap.find( rPrefabComponent.EntityIDInPrefab );
-			if( rPrefabComponentHashesItr != rComponentMap.end() )
+			// Add newly added components from the asset into the local entity in our scene.
+			if( ( rPrefabComponent.Flags & PrefabUpdateFlag_DoNotAddAddedComponents ) != 0 )
 			{
-				const auto& rPrefabComponentHashes = rPrefabComponentHashesItr->second;
-
-				// Preform merge...
-				// Right so we need to figure out first if any components where added, if so we also respect that change
-				// and add it to ourself.
-				const std::vector<entt::id_type> componentHashes = BuildComponentHash( rEntity );
-
-				// Find any missing in our entity.
-				for( const auto& rPrefabHash : rPrefabComponentHashes )
-				{
-					// Doesn't exist, add it.
-					if( std::find( componentHashes.begin(), componentHashes.end(), rPrefabHash ) == componentHashes.end() )
-					{
-						// Add component via hash using the lovely entt meta system.
-						if( const auto reflectedType = entt::resolve( rPrefabHash ) )
-						{
-							auto& rPrefabRegistry = prefabAsset->GetScene()->GetRegistry();
-
-							const auto cfp = reflectedType.func( entt::hashed_string( "CopyFromPrefab" ) );
-							if( cfp )
-							{
-								// Call the function.
-								cfp.invoke( {},
-									&m_Registry,
-									&rPrefabRegistry,
-									rEntity->GetHandle(),
-									entityInPrefab->GetHandle() );
-							}
-						}
-						else
-							SAT_CORE_ERROR( "[Prefab2]: Internal Error: EnTT was unable to find the meta type for a component with hash: {0}", rPrefabHash );
-					}
-				}
+				OnModifyPrefab_AddNewlyAddedComponents( prefabAsset, rEntity, entityInPrefab );
 			}
 		}
 	}

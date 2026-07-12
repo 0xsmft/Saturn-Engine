@@ -329,22 +329,20 @@ namespace Saturn {
 
 	enum PrefabUpdateFlags : uint8_t
 	{
-		// Default flags, adds new components and updates the overrides flags.
+		// Default flags, adds new components, updates the overrides flags and removes 
+		// any removed components.
 		PrefabUpdateFlag_NoFlags = 0,
-		
-		// This prefab is read only and is controlled by the master instance.
-		PrefabUpdateFlag_ReadOnly = BIT( 0 ),
 		
 		// When a component is removed in our local instance, do not respect the change done in the master
 		// prefab and keep the component removed.
-		PrefabUpdateFlag_DoNotAddRemovedComponents = BIT( 1 ),
+		PrefabUpdateFlag_DoNotAddRemovedComponents = BIT( 0 ),
 
 		// When a component is added in the master instance, we do not respect that change
 		// and keep the component out of our instance.
-		PrefabUpdateFlag_DoNotAddAddedComponents   = BIT( 2 ),
+		PrefabUpdateFlag_DoNotAddAddedComponents   = BIT( 1 ),
 
-		// I literally don't care about anything that the master instance does just let me be me ahh flag.
-		PrefabUpdateFlag_IgnoreEverything		   = BIT( 3 ),
+		// Do not resepect any updates from the master instance.
+		PrefabUpdateFlag_IgnoreEverything		   = BIT( 2 ),
 	};
 
 	struct PrefabComponent

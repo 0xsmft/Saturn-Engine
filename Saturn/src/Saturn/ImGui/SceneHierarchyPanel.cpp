@@ -349,20 +349,6 @@ namespace Saturn {
 
 		if( ImGui::BeginPopup( "AddComponentPanel" ) )
 		{
-			bool disabled = false;
-			if( const auto* pPrefabComponent = selections[ 0 ]->TryGetComponent<PrefabComponent>() )
-			{
-				if( pPrefabComponent->Flags & PrefabUpdateFlag_ReadOnly )
-				{
-					ImGui::Text( "Cannot modify read only prefab" );
-					ImGui::Separator();
-
-					disabled = true;
-				}
-			}
-
-			Auxiliary::DisabledFlag disabledIfReadOnly( disabled );
-
 			DrawAddComponents<StaticMeshComponent>( "Static Mesh", selections[ 0 ] );
 
 			DrawAddComponents<SkeletalMeshComponent>( "Skeletal Mesh", selections[ 0 ] );
@@ -395,8 +381,6 @@ namespace Saturn {
 			}
 
 			DrawAddComponents<TextComponent>( "Text", selections[ 0 ] );
-
-			disabledIfReadOnly.Pop();
 
 			ImGui::EndPopup();
 		}
@@ -819,15 +803,9 @@ namespace Saturn {
 				}
 			};
 
-			drawFlagControl( "Read Only", PrefabUpdateFlag_ReadOnly, true );
-
-			{
-				Auxiliary::ScopedDisabledFlag disabledIfReadOnly( pc.Flags & PrefabUpdateFlag_ReadOnly );
-
-				drawFlagControl( "Do not add removed components", PrefabUpdateFlag_DoNotAddRemovedComponents );
-				drawFlagControl( "Do not add components", PrefabUpdateFlag_DoNotAddAddedComponents );
-				drawFlagControl( "Ignore all changes", PrefabUpdateFlag_IgnoreEverything, true );
-			}
+			drawFlagControl( "Do not add removed components", PrefabUpdateFlag_DoNotAddRemovedComponents );
+			drawFlagControl( "Do not add components", PrefabUpdateFlag_DoNotAddAddedComponents );
+			drawFlagControl( "Ignore all changes", PrefabUpdateFlag_IgnoreEverything, true );
 		} );
 
 		DrawComponent<TransformComponent>( "Transform", entity, [&]( auto& tc )

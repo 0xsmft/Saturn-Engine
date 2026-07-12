@@ -514,6 +514,12 @@ namespace Saturn {
 		// Image infos for GTAO out image, one image info per image mip.
 		std::vector<VkDescriptorImageInfo> GTAOImageInfos;
 
+		// Main Pass
+		Ref<ComputePipeline> GTAOMainPipeline;
+		Ref<Material> GTAOMainMaterial;
+		Ref<Image2D> GTAOEdgesImage;
+		Ref<Image2D> GTAONoisyOut;
+
 		// Instanced Rendering
 		//////////////////////////////////////////////////////////////////////////
 		// 		
@@ -553,6 +559,7 @@ namespace Saturn {
 		Ref< Shader > SMAABlendingShader;
 		Ref< Shader > SMAACompositionShader;
 		Ref< Shader > GTAOPrefilterShader;
+		Ref< Shader > GTAOMainPassShader;
 	};
 
 	class Renderer2D;
@@ -661,6 +668,7 @@ namespace Saturn {
 		void InitSMAAComposition();
 		void InitGTAOPass();
 		void InitGTAOPrefilter();
+		void InitGTAOMainPass();
 
 		void InitBuffers();
 		void InitRenderer2D();
@@ -675,6 +683,7 @@ namespace Saturn {
 		void SSAOBlurPass();
 		void GTAOPass();
 		void GTAOPrefilterPass();
+		void GTAOMainPass();
 		void SelectedGeometryPass();
 		void JumpFloodPass();
 		void SceneCompositePass();

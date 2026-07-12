@@ -1346,6 +1346,7 @@ namespace Saturn {
 	void SceneRenderer::InitGTAOPass()
 	{
 		InitGTAOPrefilter();
+		InitGTAOMainPass();
 	}
 
 	void SceneRenderer::InitGTAOPrefilter()
@@ -1381,6 +1382,35 @@ namespace Saturn {
 		
 			++mip;
 		}
+	}
+
+	void SceneRenderer::InitGTAOMainPass()
+	{
+		if( !m_RendererData.GTAOMainPassShader )
+		{
+			m_RendererData.GTAOMainPassShader = ShaderLibrary::Get().FindOrLoad( "GTAO-MainPass", "content/shaders/GTAO-MainPass.glsl" );
+		}
+
+		m_RendererData.GTAOEdgesImage = Ref<Image2D>::Create( 
+			ImageFormat::RED8, 
+			m_RendererData.Width, m_RendererData.Height, 
+			1u, 1u, 1u, ImageTiling::Optimal, true );
+
+		m_RendererData.GTAONoisyOut = Ref<Image2D>::Create( 
+			ImageFormat::RED32F, 
+			m_RendererData.Width, m_RendererData.Height, 
+			1u, 1u, 1u, ImageTiling::Optimal, true );
+
+		m_RendererData.GTAOMainPipeline = Ref<ComputePipeline>::Create( m_RendererData.GTAOMainPassShader );
+
+		m_RendererData.GTAOMainMaterial = Ref<Material>::Create( m_RendererData.GTAOMainPassShader, "GTAOMainMat" );
+
+		m_RendererData.GTAOMainMaterial->SetSeparateImage( "u_InDepthPreDepth", m_RendererData.PreDepthFramebuffer->GetDepthAttachmentResource() );
+		m_RendererData.GTAOMainMaterial->SetSeparateImage( "u_InDepthGTAO", m_RendererData.GTAOPrefilterOutImage );
+		m_RendererData.GTAOMainMaterial->SetResource( "s_LinearSampler", m_RendererData.GeneralUsePointSampler );
+	
+		m_RendererData.GTAOMainMaterial->SetResource( "o_Edges", m_RendererData.GTAOEdgesImage );
+		m_RendererData.GTAOMainMaterial->SetResource( "o_NoisyGTAO", m_RendererData.GTAONoisyOut );
 	}
 
 	void SceneRenderer::RenderGrid()
@@ -3160,10 +3190,16 @@ namespace Saturn {
 	{
 		m_RendererData.GTAOTimer.Reset();
 
-		CmdBeginDebugLabel( Renderer::Get()->ActiveCommandBuffer(), "GTAO-Prefilter" );
+		const auto commandBuffer = Renderer::Get()->ActiveCommandBuffer();
+
+		CmdBeginDebugLabel( commandBuffer, "GTAO-Prefilter" );
 		GTAOPrefilterPass();
-		CmdEndDebugLabel( Renderer::Get()->ActiveCommandBuffer() );
-		
+		CmdEndDebugLabel( commandBuffer );
+
+		CmdBeginDebugLabel( commandBuffer, "GTAO-MainPass" );
+		GTAOMainPass();
+		CmdEndDebugLabel( commandBuffer );
+
 		m_RendererData.GTAOTimer.Stop();
 	}
 
@@ -3196,6 +3232,72 @@ namespace Saturn {
 		Buffer pc( sizeof( u_Params ), &pc_Params );
 
 		m_RendererData.GTAOPrefilterPipeline->ExecuteWithExternalPC( m_RendererData.GTAOPrefilterMaterial, pc,
+			workGroups.x,
+			workGroups.y,
+			workGroups.z );
+	}
+
+	void SceneRenderer::GTAOMainPass()
+	{
+		struct u_Params
+		{
+			float EffectRadius = 0.0f;
+			float EffectFalloffRange = 0.0f;
+			float RadiusMultiplier = 0.0f;
+
+			float _pad = 0.0f;
+
+			glm::vec2 NDCToViewMul_x_PixelSize{};
+			float FinalValuePower = 0.0f;
+			float SampleDistributionPower = 0.0f;
+			float ThinOccluderCompensation = 0.0f;
+			float DepthMipSamplingOffset = 0.0f;
+			float SliceCount = 0.0f;
+			float StepsPerSlice = 0.0f;
+		} pc_Params;
+
+		pc_Params.EffectRadius = m_RendererData.GTAOEffectRadius;
+		pc_Params.EffectFalloffRange = m_RendererData.GTAOEffectFalloffRange;
+		pc_Params.RadiusMultiplier = m_RendererData.GTAORadiusMultiplier;
+		pc_Params.FinalValuePower = 2.2f;
+		pc_Params.SampleDistributionPower = 2.0f;
+		pc_Params.ThinOccluderCompensation = 0.0f;
+		pc_Params.DepthMipSamplingOffset = 3.0f;
+		pc_Params.SliceCount = 3.0f;
+		pc_Params.StepsPerSlice = 3.0f;
+
+		struct UNdcData
+		{
+			glm::ivec2 ViewportSize{};
+			glm::vec2 ViewportPixelSize{};
+			glm::vec2 NDCToViewMul{};
+			glm::vec2 NDCToViewAdd{};
+			glm::vec2 DepthUnpackConsts{};
+		} u_ExtraData{};
+		
+		const auto& rProjection = m_RendererData.CurrentCamera.pCamera->ProjectionMatrix();
+		const float halfTanFovX = glm::tan( m_RendererData.CurrentCamera.pCamera->GetFov() * 0.5f );
+		const float halfTanFovY = halfTanFovX * m_RendererData.CurrentCamera.pCamera->GetAspectRatio();
+
+		u_ExtraData.ViewportSize = { ( int ) m_RendererData.Width, ( int ) m_RendererData.Height };
+		u_ExtraData.ViewportPixelSize = { 1.0f / ( float ) m_RendererData.Width, 1.0f / ( float ) m_RendererData.Height };
+		u_ExtraData.NDCToViewMul = { halfTanFovX * 2.0f, halfTanFovY * -2.0f };
+		u_ExtraData.NDCToViewAdd = { halfTanFovX * -1.0f, halfTanFovY * 1.0f };
+		u_ExtraData.DepthUnpackConsts = { rProjection[ 3 ][ 2 ], rProjection[ 2 ][ 2 ] };
+
+		pc_Params.NDCToViewMul_x_PixelSize = { u_ExtraData.NDCToViewMul.x * u_ExtraData.ViewportPixelSize.x, u_ExtraData.NDCToViewMul.y * u_ExtraData.ViewportPixelSize.y };
+
+		m_RendererData.GTAOMainMaterial->UploadDataToUB( 5u, &u_ExtraData, sizeof( UNdcData ) );
+
+		m_RendererData.GTAOMainPipeline->BindWithCommandBuffer( m_RendererData.CommandBuffer );
+
+		glm::uvec3 workGroups{ 1 };
+		workGroups.x = ( uint32_t ) glm::ceil( static_cast< float >( m_RendererData.Width ) / 8.0f );
+		workGroups.y = ( uint32_t ) glm::ceil( static_cast< float >( m_RendererData.Height ) / 8.0f );
+
+		Buffer pc( sizeof( u_Params ), &pc_Params );
+
+		m_RendererData.GTAOMainPipeline->ExecuteWithExternalPC( m_RendererData.GTAOMainMaterial, pc,
 			workGroups.x,
 			workGroups.y,
 			workGroups.z );

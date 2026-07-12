@@ -129,9 +129,6 @@ namespace Saturn {
 		m_SuspendedEditorCamera( 45.0f, 1280.0f, 720.0f, 0.1f, 1000.0f ),
 		m_EditorScene( Ref<Scene>::Create() )
 	{
-#if defined( SAT_PROFILER_ENABLE )
-		tracy::StartupProfiler();
-#endif
 		Scene::SetActiveScene( m_EditorScene.Get() );
 
 		m_EditorCamera.SetActive( true );
@@ -337,9 +334,6 @@ namespace Saturn {
 
 		VirtualFS::Get().UnmountBase( Project::GetActiveConfig().Name );
 
-#if defined( SAT_PROFILER_ENABLE )
-		tracy::ShutdownProfiler();
-#endif
 		ClassMetadataHandler::Get().DestroyAndFreeAllSClasses();
 
 		FSObjectAllocator::DeallocateSObject<GameModule>( m_GameModule );

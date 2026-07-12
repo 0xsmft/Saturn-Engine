@@ -84,6 +84,10 @@ namespace Saturn {
 		m_ImGuiLayer->OnAttach();
 		m_Window->Show();
 #endif
+
+#if defined( SAT_PROFILER_ENABLE )
+		tracy::StartupProfiler();
+#endif
 	}
 
 	void Application::InitWindow()
@@ -152,6 +156,10 @@ namespace Saturn {
 		}
 
 		JobSystem::Get().WaitForUnfinshedJobs();
+
+#if defined( SAT_PROFILER_ENABLE )
+		tracy::ShutdownProfiler();
+#endif
 
 		OnShutdown();
 		

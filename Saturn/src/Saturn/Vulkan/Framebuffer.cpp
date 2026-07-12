@@ -62,7 +62,7 @@ namespace Saturn {
 				case Saturn::ImageFormat::RGBA8:
 					return VK_FORMAT_R8G8B8A8_UNORM;
 
-				case Saturn::ImageFormat::RGBA16F:
+				case Saturn::ImageFormat::RGBA16:
 					return VK_FORMAT_R16G16B16A16_UNORM;
 
 				case Saturn::ImageFormat::RGBA32F:

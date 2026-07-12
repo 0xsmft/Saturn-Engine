@@ -3,8 +3,14 @@
 #type compute
 #version 460
 
-layout(set = 0, binding = 0) uniform sampler2D u_InDepth;
-layout(set = 0, binding = 1, r32f) uniform writeonly image2D o_OutDepths[5];
+layout(set = 0, binding = 0) uniform texture2D u_InDepth;
+layout(set = 0, binding = 1) uniform sampler   s_LinearSampler;
+
+layout(set = 0, binding = 2, r32f) uniform writeonly image2D o_OutDepths0;
+layout(set = 0, binding = 3, r32f) uniform writeonly image2D o_OutDepths1;
+layout(set = 0, binding = 4, r32f) uniform writeonly image2D o_OutDepths2;
+layout(set = 0, binding = 5, r32f) uniform writeonly image2D o_OutDepths3;
+layout(set = 0, binding = 6, r32f) uniform writeonly image2D o_OutDepths4;
 
 layout(push_constant) uniform Params
 {
@@ -15,7 +21,7 @@ layout(push_constant) uniform Params
 	float RadiusMultiplier;
 } pc_Params;
 
-shared float g_ScratchDepth[8][8];
+shared float g_ScratchDepths[ 8 ][ 8 ];
 
 float XeGTAO_ClampDepth( float depth )
 {
@@ -33,7 +39,7 @@ float XeGTAO_DepthMIPFilter( float depth0, float depth1, float depth2, float dep
 	float effectRadius = depthRangeScaleFactor * pc_Params.EffectRadius * pc_Params.RadiusMultiplier;
 	float falloffRange = pc_Params.EffectFalloffRange * effectRadius;
 	float falloffFrom  = effectRadius * ( 1.0 - pc_Params.EffectFalloffRange );
-	float falloffMul = -1.0 / fallofRange;
+	float falloffMul = -1.0 / falloffRange;
 	float falloffAdd = falloffFrom / falloffRange + 1.0;
 
 	float w0 = clamp( ( maxDepth - depth0 ) * falloffMul + falloffAdd, 0.0, 1.0 );
@@ -48,6 +54,14 @@ float XeGTAO_DepthMIPFilter( float depth0, float depth1, float depth2, float dep
 			 w3 * depth3 ) / sumOfWeights;
 }
 
+// Because the depth from our PreDepth pass will be linear 0-1, we need to convert that 
+// to useful values from 0-far-clip, this allows us to gain better information on how far
+// away objects are.
+float ConvertPreDepthToViewSpace( float depth ) 
+{
+	return abs( pc_Params.DepthUnpackConsts.y / ( depth + pc_Params.DepthUnpackConsts.y ) );
+}
+
 layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 void main()
 {
@@ -55,35 +69,41 @@ void main()
 	ivec2 groupThreadID = ivec2( gl_LocalInvocationID.xy );
 	ivec2 viewportMax = ivec2( pc_Params.ViewportPixelSize ) - 1;
 
-	ivec2 pixCoord = dispatchThradID * 2;
+	ivec2 pixCoord = dispatchThreadID * 2;
 	ivec2 p0 = clamp( pixCoord + ivec2( 0, 0 ), ivec2( 0 ), viewportMax );
 	ivec2 p1 = clamp( pixCoord + ivec2( 1, 0 ), ivec2( 0 ), viewportMax );
 	ivec2 p2 = clamp( pixCoord + ivec2( 0, 1 ), ivec2( 0 ), viewportMax );
 	ivec2 p3 = clamp( pixCoord + ivec2( 1, 1 ), ivec2( 0 ), viewportMax );
 
-	float d0 = XeGTAO_ClampDepth( texelFetch( texture( u_InDepth ), p0, 0 ).r );
-	float d1 = XeGTAO_ClampDepth( texelFetch( texture( u_InDepth ), p1, 0 ).r );
-	float d2 = XeGTAO_ClampDepth( texelFetch( texture( u_InDepth ), p2, 0 ).r );
-	float d3 = XeGTAO_ClampDepth( texelFetch( texture( u_InDepth ), p3, 0 ).r );
+	// Covert hardware depth into view-space depth.
+	vec4 screenDepth0 = texelFetch( sampler2D( u_InDepth, s_LinearSampler ), p0, 0 );
+	vec4 screenDepth1 = texelFetch( sampler2D( u_InDepth, s_LinearSampler ), p1, 0 );
+	vec4 screenDepth2 = texelFetch( sampler2D( u_InDepth, s_LinearSampler ), p2, 0 );
+	vec4 screenDepth3 = texelFetch( sampler2D( u_InDepth, s_LinearSampler ), p3, 0 );
+
+	float d0 = XeGTAO_ClampDepth( ConvertPreDepthToViewSpace( screenDepth0.r ) );
+	float d1 = XeGTAO_ClampDepth( ConvertPreDepthToViewSpace( screenDepth1.r ) );
+	float d2 = XeGTAO_ClampDepth( ConvertPreDepthToViewSpace( screenDepth2.r ) );
+	float d3 = XeGTAO_ClampDepth( ConvertPreDepthToViewSpace( screenDepth3.r ) );
 
 	if( all( lessThan( pixCoord + ivec2( 0, 0 ), ivec2( pc_Params.ViewportPixelSize ) ) ) ) 
 	{
-		imageStore( o_OutDepths[ 0 ], pixCoord + ivec2( 0, 0 ), vec4( d0, 0.0, 0.0, 0.0 ) );
+		imageStore( o_OutDepths0, pixCoord + ivec2( 0, 0 ), vec4( d0, 0.0, 0.0, 0.0 ) );
 	}
 
 	if( all( lessThan( pixCoord + ivec2( 1, 0 ), ivec2( pc_Params.ViewportPixelSize ) ) ) ) 
 	{
-		imageStore( o_OutDepths[ 0 ], pixCoord + ivec2( 1, 0 ), vec4( d1, 0.0, 0.0, 0.0 ) );
+		imageStore( o_OutDepths0, pixCoord + ivec2( 1, 0 ), vec4( d1, 0.0, 0.0, 0.0 ) );
 	}
 	
 	if( all( lessThan( pixCoord + ivec2( 0, 1 ), ivec2( pc_Params.ViewportPixelSize ) ) ) ) 
 	{
-		imageStore( o_OutDepths[ 0 ], pixCoord + ivec2( 0, 1 ), vec4( d2, 0.0, 0.0, 0.0 ) );
+		imageStore( o_OutDepths0, pixCoord + ivec2( 0, 1 ), vec4( d2, 0.0, 0.0, 0.0 ) );
 	}
 
 	if( all( lessThan( pixCoord + ivec2( 1, 1 ), ivec2( pc_Params.ViewportPixelSize ) ) ) ) 
 	{
-		imageStore( o_OutDepths[ 0 ], pixCoord + ivec2( 1, 1 ), vec4( d3, 0.0, 0.0, 0.0 ) );
+		imageStore( o_OutDepths0, pixCoord + ivec2( 1, 1 ), vec4( d3, 0.0, 0.0, 0.0 ) );
 	}
 
 	// Every thread produces one mip-1 candidate (always stored in
@@ -92,7 +112,7 @@ void main()
 	float dm1 = XeGTAO_DepthMIPFilter( d0, d1, d2, d3 );
 	if( all( lessThan( dispatchThreadID, ivec2( pc_Params.ViewportPixelSize ) ) ) ) 
 	{
-		imageStore( o_OutDepths[ 1 ], dispatchThreadID, vec4( dm1, 0.0, 0.0, 0.0 ) );
+		imageStore( o_OutDepths1, dispatchThreadID, vec4( dm1, 0.0, 0.0, 0.0 ) );
 	}
 
 	g_ScratchDepths[ groupThreadID.x ][ groupThreadID.y ] = dm1;
@@ -113,7 +133,7 @@ void main()
 		ivec2 dispatchID2 = ivec2( uvec2( dispatchThreadID ) >> 1u );
 		if( all( lessThan( dispatchID2, ivec2( pc_Params.ViewportPixelSize ) ) ) ) 
 		{
-			imageStore( o_OutDepths[ 2 ], dispatchID2, vec4( dm2, 0.0, 0.0, 0.0 ) );
+			imageStore( o_OutDepths2, dispatchID2, vec4( dm2, 0.0, 0.0, 0.0 ) );
 		}
 
 		g_ScratchDepths[ groupThreadID.x ][ groupThreadID.y ] = dm2;
@@ -135,7 +155,7 @@ void main()
 		ivec2 dispatchID4 = ivec2( uvec2( dispatchThreadID ) >> 2u );
 		if( all( lessThan( dispatchID4, ivec2( pc_Params.ViewportPixelSize ) ) ) ) 
 		{
-			imageStore( o_OutDepths[ 3 ], dispatchID4, vec4( dm3, 0.0, 0.0, 0.0 ) );
+			imageStore( o_OutDepths3, dispatchID4, vec4( dm3, 0.0, 0.0, 0.0 ) );
 		}
 
 		g_ScratchDepths[ groupThreadID.x ][ groupThreadID.y ] = dm3;
@@ -155,7 +175,7 @@ void main()
 		ivec2 dispatchID8 = ivec2( uvec2( dispatchThreadID ) >> 3u );
 		if( all( lessThan( dispatchID8, ivec2( pc_Params.ViewportPixelSize ) ) ) ) 
 		{
-			imageStore( o_OutDepths[ 4 ], dispatchID4, vec4( dm4, 0.0, 0.0, 0.0 ) );
+			imageStore( o_OutDepths4, dispatchID8, vec4( dm4, 0.0, 0.0, 0.0 ) );
 		}
 	}
 }

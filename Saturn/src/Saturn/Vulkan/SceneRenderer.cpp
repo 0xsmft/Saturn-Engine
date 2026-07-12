@@ -135,6 +135,8 @@ namespace Saturn {
 
 		InitLateComposite();
 
+		InitGeneralUseComponents();
+
 		InitSMAAPass();
 
 		InitSelectionPass();
@@ -196,7 +198,7 @@ namespace Saturn {
 		{
 			PassSpecification PassSpec = {};
 			PassSpec.Name = "Geometry Pass";
-			PassSpec.Attachments = { ImageFormat::RGBA32F, ImageFormat::RGBA16F, ImageFormat::RGBA16F, ImageFormat::DEPTH24STENCIL8 };
+			PassSpec.Attachments = { ImageFormat::RGBA32F, ImageFormat::RGBA16, ImageFormat::RGBA16, ImageFormat::DEPTH24STENCIL8 };
 			PassSpec.LoadDepth = true;
 
 			m_RendererData.GeometryPass = Ref< Pass >::Create( PassSpec );
@@ -212,7 +214,7 @@ namespace Saturn {
 		FBSpec.Height = m_RendererData.Height;
 		FBSpec.ExistingImages[ 3 ] = m_RendererData.PreDepthFramebuffer->GetDepthAttachmentResource();
 		// Depth will be the PreDepth image.
-		FBSpec.Attachments = { ImageFormat::RGBA32F, ImageFormat::RGBA16F, ImageFormat::RGBA16F };
+		FBSpec.Attachments = { ImageFormat::RGBA32F, ImageFormat::RGBA16, ImageFormat::RGBA16 };
 
 		m_RendererData.GeometryFramebuffer = Ref< Framebuffer >::Create( FBSpec );
 
@@ -877,7 +879,11 @@ namespace Saturn {
 			
 			case AOTechnique::HBAO:
 				InitHBAO();
-				break;		
+				break;
+
+			case AOTechnique::GTAO:
+				InitGTAOPass();
+				break;
 		}
 
 		BindSceneCompositeAOTexture();
@@ -1224,25 +1230,6 @@ namespace Saturn {
 		
 		m_RendererData.SMAAEdgeDetectionOutImage = Ref<Image2D>::Create( ImageFormat::RG8, m_RendererData.Width, m_RendererData.Height, 1, 1, 1, ImageTiling::Optimal, true );
 
-		SamplerSpecification samplerSpec;
-		samplerSpec.MinFilter = samplerSpec.MagFilter = SamplerFilter::Linear;
-		samplerSpec.MipFilter = SamplerFilter::Linear;
-		samplerSpec.AddressingMode = AddressingMode::ClampToEdge;
-		samplerSpec.CompareOperation = CompareOp::Less;
-		samplerSpec.MinLod = 0.0f;
-		samplerSpec.MaxLod = FLT_MAX;
-
-		{
-			// We don't know the max anisotropy level, so we'll need to get it from the properties of the physical device.
-			// We do this as this is the best way to get the max anisotropy level as it can be different on other devices.
-			VkPhysicalDeviceProperties Properties = {};
-			vkGetPhysicalDeviceProperties( VulkanContext::Get()->GetPhysicalDevice(), &Properties );
-
-			samplerSpec.MaxAnisotropy = glm::min( Properties.limits.maxSamplerAnisotropy, 8.0f );
-		}
-
-		m_RendererData.SMAAPointSampler = Ref<Sampler>::Create( samplerSpec );
-
 		m_RendererData.SMAAEdgeDetectionPipeline = Ref<ComputePipeline>::Create( m_RendererData.SMAAEdgeDetectionShader );
 
 		m_RendererData.SMAAEdgingMaterial = Ref<Material>::Create( m_RendererData.SMAAEdgeDetectionShader, "SMAAEdge" );
@@ -1261,7 +1248,7 @@ namespace Saturn {
 		m_RendererData.SMAAEdgingMaterial->SetSeparateImage( "u_InFinalColor", 
 			m_RendererData.SceneCompositeFramebuffer->GetColorAttachmentsResources()[ 0 ] );
 
-		m_RendererData.SMAAEdgingMaterial->SetResource( "s_PointSampler", m_RendererData.SMAAPointSampler );
+		m_RendererData.SMAAEdgingMaterial->SetResource( "s_PointSampler", m_RendererData.GeneralUsePointSampler );
 	}
 
 	void SceneRenderer::InitSMAABlending()
@@ -1293,7 +1280,7 @@ namespace Saturn {
 		m_RendererData.SMAAFinalMaterial->SetSeparateImage( "u_EdgesTexture", m_RendererData.SMAAEdgeDetectionOutImage );
 		m_RendererData.SMAAFinalMaterial->SetSeparateImage( "u_SearchTexture", m_RendererData.SMAASearchTexture );
 		m_RendererData.SMAAFinalMaterial->SetSeparateImage( "u_AreaTexture", m_RendererData.SMAAAreaTexture );
-		m_RendererData.SMAAFinalMaterial->SetResource( "s_LinearSampler", m_RendererData.SMAAPointSampler );
+		m_RendererData.SMAAFinalMaterial->SetResource( "s_LinearSampler", m_RendererData.GeneralUsePointSampler );
 	}
 
 	void SceneRenderer::InitSMAAComposition()
@@ -1354,6 +1341,46 @@ namespace Saturn {
 		};
 
 		m_RendererData.SMAACompPipeline = Ref<Pipeline>::Create( PipelineSpec );
+	}
+
+	void SceneRenderer::InitGTAOPass()
+	{
+		InitGTAOPrefilter();
+	}
+
+	void SceneRenderer::InitGTAOPrefilter()
+	{
+		if( !m_RendererData.GTAOPrefilterShader )
+		{
+			m_RendererData.GTAOPrefilterShader = ShaderLibrary::Get().FindOrLoad( "GTAO-Prefilter", "content/shaders/GTAO-Prefilter.glsl" );
+		}
+
+		m_RendererData.GTAOPrefilterOutImage = Ref<Texture2D>::Create( ImageFormat::RED32F, m_RendererData.Width, m_RendererData.Height, nullptr, true, AddressingMode::ClampToEdge );
+
+		m_RendererData.GTAOPrefilterPipeline = Ref<ComputePipeline>::Create( m_RendererData.GTAOPrefilterShader );
+
+		m_RendererData.GTAOPrefilterMaterial = Ref<Material>::Create( m_RendererData.GTAOPrefilterShader, "GTAOPrefilter" );
+		m_RendererData.GTAOPrefilterMaterial->SetSeparateImage( "u_InDepth", m_RendererData.PreDepthFramebuffer->GetDepthAttachmentResource() );
+		m_RendererData.GTAOPrefilterMaterial->SetResource( "s_LinearSampler", m_RendererData.GeneralUsePointSampler );
+
+		m_RendererData.GTAOImageInfos.resize( m_RendererData.GTAOPrefilterOutImage->GetMipMapLevels() );
+
+		uint32_t mip = 0;
+		for( auto& rImageInfo : m_RendererData.GTAOImageInfos )
+		{
+			rImageInfo = m_RendererData.GTAOPrefilterOutImage->GetDescriptorInfo();
+			rImageInfo.imageView = m_RendererData.GTAOPrefilterOutImage->GetOrCreateMipImageView( mip );
+
+			SetDebugUtilsObjectName( std::format( "GTA Pref, mip/{}", mip ), ( uint64_t ) rImageInfo.imageView, VK_OBJECT_TYPE_IMAGE_VIEW );
+
+			const std::string descriptorName = std::format( "o_OutDepths{}", mip );
+
+			m_RendererData.GTAOPrefilterMaterial->SetResourceWithVulkanInfo( 
+				descriptorName, 
+				m_RendererData.GTAOPrefilterOutImage, rImageInfo );
+		
+			++mip;
+		}
 	}
 
 	void SceneRenderer::RenderGrid()
@@ -1665,6 +1692,28 @@ namespace Saturn {
 		m_RendererData.SkyboxPipeline = Ref<Pipeline>::Create( PipelineSpec );
 	}
 
+	void SceneRenderer::InitGeneralUseComponents()
+	{
+		SamplerSpecification samplerSpec;
+		samplerSpec.MinFilter = samplerSpec.MagFilter = SamplerFilter::Linear;
+		samplerSpec.MipFilter = SamplerFilter::Linear;
+		samplerSpec.AddressingMode = AddressingMode::ClampToEdge;
+		samplerSpec.CompareOperation = CompareOp::Less;
+		samplerSpec.MinLod = 0.0f;
+		samplerSpec.MaxLod = FLT_MAX;
+
+		{
+			// We don't know the max anisotropy level, so we'll need to get it from the properties of the physical device.
+			// We do this as this is the best way to get the max anisotropy level as it can be different on other devices.
+			VkPhysicalDeviceProperties Properties = {};
+			vkGetPhysicalDeviceProperties( VulkanContext::Get()->GetPhysicalDevice(), &Properties );
+
+			samplerSpec.MaxAnisotropy = glm::min( Properties.limits.maxSamplerAnisotropy, 8.0f );
+		}
+
+		m_RendererData.GeneralUsePointSampler = Ref<Sampler>::Create( samplerSpec );
+	}
+
 	void SceneRenderer::ImGuiRender()
 	{
 #if !defined(SAT_DIST)
@@ -1714,6 +1763,10 @@ namespace Saturn {
 				case AOTechnique::HBAO:
 					ImGui::Text( "SceneRenderer::HBAOPass: %.3f ms", m_RendererData.HBAOTimer.ElapsedMilliseconds() );
 					break;
+
+				case AOTechnique::GTAO:
+					ImGui::Text( "SceneRenderer::GTAOPass: %.3f ms", m_RendererData.GTAOTimer.ElapsedMilliseconds() );
+					break;
 			}
 
 			ImGui::Text( "SceneRenderer::SceneComposite: %.2f ms", m_RendererData.SceneCompPPTimer.ElapsedMilliseconds() );
@@ -1752,7 +1805,7 @@ namespace Saturn {
 
 				const auto oldAOTechnique = m_AOTechnique;
 
-				const char* pDisplayNames[ 3 ] = { "None", "SSAO", "HBAO" };
+				const char* pDisplayNames[ 4 ] = { "None", "SSAO", "HBAO", "GTAO" };
 
 				if( ImGui::BeginCombo( "##combotechao", pDisplayNames[ ( uint8_t ) m_AOTechnique ] ) )
 				{
@@ -1768,11 +1821,10 @@ namespace Saturn {
 					}
 #endif
 
-#if SAT_RENDERER_WITH_GTAO == 1
 					if( ImGui::Selectable( "GTAO" ) )
 					{
+						m_AOTechnique = AOTechnique::GTAO;
 					}
-#endif
 
 					if( ImGui::Selectable( "None" ) )
 					{
@@ -1792,6 +1844,7 @@ namespace Saturn {
 					} break;
 					
 					case AOTechnique::HBAO:
+					case AOTechnique::GTAO:
 					{
 						ImGui::Text( "Nothing here yet!" );
 					} break;
@@ -3103,6 +3156,51 @@ namespace Saturn {
 		m_RendererData.AOBlurTimer.Stop();
 	}
 
+	void SceneRenderer::GTAOPass()
+	{
+		m_RendererData.GTAOTimer.Reset();
+
+		CmdBeginDebugLabel( Renderer::Get()->ActiveCommandBuffer(), "GTAO-Prefilter" );
+		GTAOPrefilterPass();
+		CmdEndDebugLabel( Renderer::Get()->ActiveCommandBuffer() );
+		
+		m_RendererData.GTAOTimer.Stop();
+	}
+
+	void SceneRenderer::GTAOPrefilterPass()
+	{
+		struct u_Params
+		{
+			glm::vec2 DepthUnpackConsts{};
+			glm::vec2 ViewportPixelSize{};
+			float EffectRadius = 0.0f;
+			float EffectFalloffRange = 0.0f;
+			float RadiusMultiplier = 0.0f;
+		} pc_Params;
+
+		const auto& projectionMatrix = m_RendererData.CurrentCamera.pCamera->ProjectionMatrix();
+
+		pc_Params.DepthUnpackConsts = { projectionMatrix[ 3 ][ 2 ], projectionMatrix[ 2 ][ 2 ] };
+
+		pc_Params.ViewportPixelSize = { m_RendererData.Width, m_RendererData.Height };
+		pc_Params.EffectRadius = m_RendererData.GTAOEffectRadius;
+		pc_Params.EffectFalloffRange = m_RendererData.GTAOEffectFalloffRange;
+		pc_Params.RadiusMultiplier = m_RendererData.GTAORadiusMultiplier;
+
+		m_RendererData.GTAOPrefilterPipeline->BindWithCommandBuffer( m_RendererData.CommandBuffer );
+
+		glm::uvec3 workGroups{ 1 };
+		workGroups.x = ( uint32_t ) glm::ceil( static_cast< float >( m_RendererData.Width ) / 16.0f );
+		workGroups.y = ( uint32_t ) glm::ceil( static_cast< float >( m_RendererData.Height ) / 16.0f );
+
+		Buffer pc( sizeof( u_Params ), &pc_Params );
+
+		m_RendererData.GTAOPrefilterPipeline->ExecuteWithExternalPC( m_RendererData.GTAOPrefilterMaterial, pc,
+			workGroups.x,
+			workGroups.y,
+			workGroups.z );
+	}
+
 	void SceneRenderer::SelectedGeometryPass()
 	{
 		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
@@ -3360,6 +3458,10 @@ namespace Saturn {
 				break;
 
 			case AOTechnique::HBAO:
+				m_RendererData.SceneCompositeMaterial->SetResource( "u_AOTexture", Renderer::Get()->GetPinkTexture() );
+				break;
+
+			case AOTechnique::GTAO:
 				m_RendererData.SceneCompositeMaterial->SetResource( "u_AOTexture", Renderer::Get()->GetPinkTexture() );
 				break;
 		}
@@ -3620,6 +3722,12 @@ namespace Saturn {
 		
 			case AOTechnique::HBAO:
 				break;
+
+			case AOTechnique::GTAO:
+			{
+				ScopedDebugLabel label( m_RendererData.CommandBuffer, "GTAO" );
+				GTAOPass();
+			} break;
 		}
 
 		{

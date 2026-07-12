@@ -108,6 +108,9 @@ namespace Saturn {
 
 		// Horizon Based AO+
 		HBAO,
+
+		// Ground-Truth AO
+		GTAO,
 	};
 
 	// Anti-Aliasing techniques
@@ -279,6 +282,7 @@ namespace Saturn {
 		Timer BloomTimer;
 		Timer SSAOTimer;
 		Timer HBAOTimer;
+		Timer GTAOTimer;
 		Timer AOBlurTimer;
 		Timer SMAAPassTimer;
 		Timer SceneCompPPTimer;
@@ -470,6 +474,11 @@ namespace Saturn {
 		Ref<Pipeline> PhysicsOutlinePipeline;
 		Ref<Material> PhysicsOutlineMaterial;
 
+		// General use samplers.
+		//////////////////////////////////////////////////////////////////////////
+		
+		Ref<Sampler> GeneralUsePointSampler;
+
 		// SMAA
 		//////////////////////////////////////////////////////////////////////////
 		Ref<ComputePipeline> SMAAEdgeDetectionPipeline;
@@ -484,13 +493,26 @@ namespace Saturn {
 		Ref<Texture2D> SMAASearchTexture;
 		Ref<Texture2D> SMAAAreaTexture;
 
-		Ref<Sampler> SMAAPointSampler;
-
 		// SMAA Composition
 		Ref<Pipeline> SMAACompPipeline;
 		Ref<Material> SMAACompMaterial;
 		Ref<Framebuffer> SMAACompFB;
 		Ref<Pass> SMAACompPass;
+
+		// GTAO
+		//////////////////////////////////////////////////////////////////////////
+
+		float GTAOEffectRadius = 0.50f;
+		float GTAOEffectFalloffRange = 0.62f;
+		float GTAORadiusMultiplier = 1.46f;
+
+		// Prefilter
+		Ref<ComputePipeline> GTAOPrefilterPipeline;
+		Ref<Material> GTAOPrefilterMaterial;
+		Ref<Texture2D> GTAOPrefilterOutImage;
+
+		// Image infos for GTAO out image, one image info per image mip.
+		std::vector<VkDescriptorImageInfo> GTAOImageInfos;
 
 		// Instanced Rendering
 		//////////////////////////////////////////////////////////////////////////
@@ -530,6 +552,7 @@ namespace Saturn {
 		Ref< Shader > SMAAEdgeDetectionShader;
 		Ref< Shader > SMAABlendingShader;
 		Ref< Shader > SMAACompositionShader;
+		Ref< Shader > GTAOPrefilterShader;
 	};
 
 	class Renderer2D;
@@ -613,6 +636,8 @@ namespace Saturn {
 
 		void CreateSkyboxComponents();
 
+		void InitGeneralUseComponents();
+
 		void InitGeometryPass();
 		void InitDirShadowMap();
 		void InitPreDepth();
@@ -634,6 +659,8 @@ namespace Saturn {
 		void InitSMAAEdge();
 		void InitSMAABlending();
 		void InitSMAAComposition();
+		void InitGTAOPass();
+		void InitGTAOPrefilter();
 
 		void InitBuffers();
 		void InitRenderer2D();
@@ -646,6 +673,8 @@ namespace Saturn {
 		void BloomPass();
 		void SSAOPass();
 		void SSAOBlurPass();
+		void GTAOPass();
+		void GTAOPrefilterPass();
 		void SelectedGeometryPass();
 		void JumpFloodPass();
 		void SceneCompositePass();

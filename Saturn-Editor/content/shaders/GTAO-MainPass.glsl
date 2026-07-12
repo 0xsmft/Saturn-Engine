@@ -73,7 +73,7 @@ float XeGTAO_FastACos( float inX )
 
 float XeGTAO_ScreenSpaceToViewSpaceDepth( float screenDepth, GTAOConsts consts )
 {
-	return abs( u_ExtraData.DepthUnpackConsts.y / ( screenDepth + u_ExtraData.DepthUnpackConsts.y ) );
+	return abs( u_ExtraData.DepthUnpackConsts.x / ( screenDepth + u_ExtraData.DepthUnpackConsts.y ) );
 }
 
 vec3 XeGTAO_ComputeViewspacePosition( vec2 screenPos, float viewspaceDepth, GTAOConsts consts )

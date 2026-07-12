@@ -59,7 +59,7 @@ float XeGTAO_DepthMIPFilter( float depth0, float depth1, float depth2, float dep
 // away objects are.
 float ConvertPreDepthToViewSpace( float depth ) 
 {
-	return abs( pc_Params.DepthUnpackConsts.y / ( depth + pc_Params.DepthUnpackConsts.y ) );
+	return abs( pc_Params.DepthUnpackConsts.x / ( depth + pc_Params.DepthUnpackConsts.y ) );
 }
 
 layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;

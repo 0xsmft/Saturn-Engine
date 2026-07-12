@@ -1347,6 +1347,7 @@ namespace Saturn {
 	{
 		InitGTAOPrefilter();
 		InitGTAOMainPass();
+		InitGTAODenoisePass();
 	}
 
 	void SceneRenderer::InitGTAOPrefilter()
@@ -1411,6 +1412,39 @@ namespace Saturn {
 	
 		m_RendererData.GTAOMainMaterial->SetResource( "o_Edges", m_RendererData.GTAOEdgesImage );
 		m_RendererData.GTAOMainMaterial->SetResource( "o_NoisyGTAO", m_RendererData.GTAONoisyOut );
+	}
+
+	void SceneRenderer::InitGTAODenoisePass()
+	{
+		if( !m_RendererData.GTAODenoiseShader )
+		{
+			m_RendererData.GTAODenoiseShader = ShaderLibrary::Get().FindOrLoad( "GTAO-Denoise", "content/shaders/GTAO-Denoise.glsl" );
+		}
+
+		m_RendererData.GTAODenoisePipeline = Ref<ComputePipeline>::Create( m_RendererData.GTAODenoiseShader );
+
+		m_RendererData.GTAODenoisePassesInformation.reserve( m_RendererData.GTAODenoisePassCount );
+
+		for( size_t i = 0; i < m_RendererData.GTAODenoisePassCount; ++i )
+		{
+			auto& rPassInfo = m_RendererData.GTAODenoisePassesInformation.emplace_back();
+			rPassInfo.OutImage = Ref<Image2D>::Create( ImageFormat::RED32F, m_RendererData.Width, m_RendererData.Height, 1u, 1u, 1u, ImageTiling::Optimal, true );
+
+			rPassInfo.Material = Ref<Material>::Create( m_RendererData.GTAODenoiseShader, "GTAODenoise" );
+			
+			if( i == 0 )
+			{
+				rPassInfo.Material->SetSeparateImage( "u_GTAOIn", m_RendererData.GTAONoisyOut );
+			}
+			else
+			{
+				rPassInfo.Material->SetSeparateImage( "u_GTAOIn", m_RendererData.GTAODenoisePassesInformation[ i - 1 ].OutImage );
+			}
+
+			rPassInfo.Material->SetSeparateImage( "u_EdgesIn", m_RendererData.GTAOEdgesImage );
+			rPassInfo.Material->SetResource( "s_LinearSampler", m_RendererData.GeneralUsePointSampler );
+			rPassInfo.Material->SetResource( "o_GTAOOut", rPassInfo.OutImage );
+		}
 	}
 
 	void SceneRenderer::RenderGrid()
@@ -3200,6 +3234,10 @@ namespace Saturn {
 		GTAOMainPass();
 		CmdEndDebugLabel( commandBuffer );
 
+		CmdBeginDebugLabel( commandBuffer, "GTAO-DenoiseEntry" );
+		GTAODenoisePass();
+		CmdEndDebugLabel( commandBuffer );
+
 		m_RendererData.GTAOTimer.Stop();
 	}
 
@@ -3301,6 +3339,48 @@ namespace Saturn {
 			workGroups.x,
 			workGroups.y,
 			workGroups.z );
+	}
+
+	void SceneRenderer::GTAODenoisePass()
+	{
+		const auto commandBuffer = Renderer::Get()->ActiveCommandBuffer();
+
+		struct u_Params
+		{
+			glm::ivec2 ViewportSize{};
+			float DenoiseBeta = 0.0f;
+			uint32_t HalfRes = 0u;
+			uint32_t FinalApply = 0u;
+		} pc_Params;
+
+		pc_Params.ViewportSize = { m_RendererData.Width, m_RendererData.Height };
+		pc_Params.DenoiseBeta = 1.20f;
+		pc_Params.HalfRes = 0u;
+
+		for( size_t i = 0; i < m_RendererData.GTAODenoisePassCount; ++i )
+		{
+			CmdBeginDebugLabel( commandBuffer, "Denoise" );
+
+			const auto& rInformation = m_RendererData.GTAODenoisePassesInformation[ i ];
+
+			m_RendererData.GTAODenoisePipeline->BindWithCommandBuffer( m_RendererData.CommandBuffer );
+
+			glm::uvec3 workGroups{ 1 };
+			workGroups.x = ( uint32_t ) glm::ceil( static_cast< float >( m_RendererData.Width ) / 16.0f );
+			workGroups.y = ( uint32_t ) glm::ceil( static_cast< float >( m_RendererData.Height ) / 8.0f );
+
+			if( i == m_RendererData.GTAODenoisePassCount - 1 )
+				pc_Params.FinalApply = 1u;
+
+			Buffer pc( sizeof( u_Params ), &pc_Params );
+
+			m_RendererData.GTAODenoisePipeline->ExecuteWithExternalPC( rInformation.Material, pc,
+				workGroups.x,
+				workGroups.y,
+				workGroups.z );
+
+			CmdEndDebugLabel( commandBuffer );
+		}
 	}
 
 	void SceneRenderer::SelectedGeometryPass()

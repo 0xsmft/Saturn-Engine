@@ -520,6 +520,18 @@ namespace Saturn {
 		Ref<Image2D> GTAOEdgesImage;
 		Ref<Image2D> GTAONoisyOut;
 
+		// Denoise pass
+		Ref<ComputePipeline> GTAODenoisePipeline;
+
+		struct PerDenoisePassInformation
+		{
+			Ref<Material> Material;
+			Ref<Image2D>  OutImage;
+		};
+
+		size_t GTAODenoisePassCount = 5llu;
+		std::vector<PerDenoisePassInformation> GTAODenoisePassesInformation;
+
 		// Instanced Rendering
 		//////////////////////////////////////////////////////////////////////////
 		// 		
@@ -560,6 +572,7 @@ namespace Saturn {
 		Ref< Shader > SMAACompositionShader;
 		Ref< Shader > GTAOPrefilterShader;
 		Ref< Shader > GTAOMainPassShader;
+		Ref< Shader > GTAODenoiseShader;
 	};
 
 	class Renderer2D;
@@ -669,6 +682,7 @@ namespace Saturn {
 		void InitGTAOPass();
 		void InitGTAOPrefilter();
 		void InitGTAOMainPass();
+		void InitGTAODenoisePass();
 
 		void InitBuffers();
 		void InitRenderer2D();
@@ -684,6 +698,7 @@ namespace Saturn {
 		void GTAOPass();
 		void GTAOPrefilterPass();
 		void GTAOMainPass();
+		void GTAODenoisePass();
 		void SelectedGeometryPass();
 		void JumpFloodPass();
 		void SceneCompositePass();

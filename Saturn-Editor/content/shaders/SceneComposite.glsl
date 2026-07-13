@@ -90,6 +90,14 @@ vec3 ACES( vec3 colr )
 	return clamp(m2 * (a / b), 0.0, 1.0);
 }
 
+layout(push_constant) uniform u_Params 
+{
+	uint Flags;
+} pc_Params;
+
+const uint SceneCompositeFlag_GTAO = 0x1;
+const uint SceneCompositeFlag_NoBloom = 0x2;
+
 void main()
 {
 	const float GAMMA = 2.2;
@@ -99,17 +107,29 @@ void main()
 	// Bloom Composite
 	float sampleScale = 0.5;
 	ivec2 texSize = textureSize(u_BloomTexture, 0);
-	vec2 fTexSize = vec2(float(texSize.x), float(texSize.y));
-	vec3 bloom = UpsampleTent9( u_BloomTexture, 0, vs_Input.TexCoord, 1.0f / fTexSize, sampleScale );
 
-	GeometryPassColor += bloom;
+	if( ( pc_Params.Flags & SceneCompositeFlag_NoBloom ) == 0 )
+	{
+		vec2 fTexSize = vec2( float( texSize.x ), float( texSize.y ) );
+		vec3 bloom = UpsampleTent9( u_BloomTexture, 0, vs_Input.TexCoord, 1.0f / fTexSize, sampleScale );
+
+		GeometryPassColor += bloom;
+	}
 
 	GeometryPassColor = ACES( GeometryPassColor );
 	GeometryPassColor = GammaCorrect( GeometryPassColor, GAMMA );
 
-	float ao = clamp( texture( u_AOTexture, vs_Input.TexCoord ).r, 0.0, 1.0 );
-	ao = min( ao * 1.5, 1.0 );
-	GeometryPassColor *= ao;
+	if( ( pc_Params.Flags & SceneCompositeFlag_GTAO ) != 0 )
+	{
+		float ao = clamp( texture( u_AOTexture, vs_Input.TexCoord ).r, 0.0, 1.0 );
+		ao = min( ao * 1.5, 1.0 );
+		GeometryPassColor *= ao;
+	}
+	else
+	{
+		float ao = texture( u_AOTexture, vs_Input.TexCoord ).r; 
+		GeometryPassColor *= ao;
+	}
 
 	FinalColor = vec4( GeometryPassColor, 1.0 );
 }

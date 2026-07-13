@@ -234,6 +234,17 @@ namespace Saturn {
 		glm::vec4 CascadeSplits;
 	};
 
+	enum SceneCompositeFlags
+	{
+		SceneCompositeFlag_Default = 0,
+		
+		// Composite AO for GTAO
+		SceneCompositeFlag_GTAO  = BIT( 0 ),
+
+		// Do not composite bloom
+		SceneCompositeFlag_NoBloom = BIT( 1 ),
+	};
+
 	class RendererData
 	{
 		RendererData( RendererData& ) = delete;
@@ -271,6 +282,11 @@ namespace Saturn {
 
 		glm::vec2 ViewportPos{};
 		uint32_t FrameCount = 0;
+
+		//////////////////////////////////////////////////////////////////////////
+		// Scene comp flags (placed here for better memory layout)
+
+		uint32_t SceneCompositeFlags = SceneCompositeFlag_Default;
 
 		//////////////////////////////////////////////////////////////////////////
 
@@ -390,7 +406,6 @@ namespace Saturn {
 		//////////////////////////////////////////////////////////////////////////
 
 		// Begin Scene Composite
-		
 		Ref<Pass> SceneComposite;
 		Ref< Framebuffer > SceneCompositeFramebuffer;
 

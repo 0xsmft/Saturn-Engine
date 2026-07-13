@@ -863,8 +863,11 @@ namespace Saturn {
 						break;
 
 					case AOTechnique::GTAO:
+					{
+						// Remove GTAO Flag
+						m_RendererData.SceneCompositeFlags &= ~SceneCompositeFlag_GTAO;
 						m_RendererData.ClearGTAOResources();
-						break;
+					} break;
 				}
 			} );
 		}
@@ -877,17 +880,21 @@ namespace Saturn {
 				break;			
 			
 			case AOTechnique::SSAO:
+			{
 				InitSSAO();
 				InitAOBlur();
-				break;
+			} break;
 			
 			case AOTechnique::HBAO:
+			{
 				InitHBAO();
-				break;
+			} break;
 
-			case AOTechnique::GTAO:
+			case AOTechnique::GTAO: 
+			{
+				m_RendererData.SceneCompositeFlags |= SceneCompositeFlag_GTAO;
 				InitGTAOPass();
-				break;
+			} break;
 		}
 
 		BindSceneCompositeAOTexture();
@@ -2702,6 +2709,22 @@ namespace Saturn {
 		vkCmdSetViewport( CommandBuffer, 0, 1, &Viewport );
 		vkCmdSetScissor( CommandBuffer, 0, 1, &Scissor );
 
+		struct UParams
+		{
+			uint32_t Flags = 0u;
+		} pc_Params{};
+
+		pc_Params.Flags = m_RendererData.SceneCompositeFlags;
+
+		Buffer pc( sizeof( UParams ), &pc_Params );
+
+		vkCmdPushConstants( 
+			CommandBuffer, 
+			m_RendererData.SceneCompositePipeline->GetPipelineLayout(),
+			VK_SHADER_STAGE_FRAGMENT_BIT, 
+			0, 
+			( uint32_t ) pc.Size, pc.Data );
+
 		// Actual scene composite pass.
 		Renderer::Get()->SubmitFullscreenQuad2(
 			CommandBuffer, 
@@ -3564,10 +3587,12 @@ namespace Saturn {
 	{
 		if( m_RendererData.EnableBloom )
 		{
+			m_RendererData.SceneCompositeFlags &= ~SceneCompositeFlag_NoBloom;
 			m_RendererData.SceneCompositeMaterial->SetResource( "u_BloomTexture", m_RendererData.BloomTextures[ 2 ].Texture );
 		}
 		else
 		{
+			m_RendererData.SceneCompositeFlags |= SceneCompositeFlag_NoBloom;
 			m_RendererData.SceneCompositeMaterial->SetResource( "u_BloomTexture", Renderer::Get()->GetPinkTexture() );
 		}
 	}
@@ -3943,7 +3968,6 @@ namespace Saturn {
 			ScopedDebugLabel label( m_RendererData.CommandBuffer, "Scene Composite/PostProcessing" );
 			SceneCompositePass();
 		}
-
 
 		{
 			ScopedDebugLabel label( m_RendererData.CommandBuffer, "Late Composite/SceneRenderer" );

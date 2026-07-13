@@ -471,7 +471,7 @@ namespace Saturn {
 			case Saturn::ImageFormat::RGBA8:
 				return width * height * 4;
 
-			case Saturn::ImageFormat::RGBA16F:
+			case Saturn::ImageFormat::RGBA16:
 				return width * height * 4 * sizeof( uint16_t );
 
 			case Saturn::ImageFormat::RGBA32F:
@@ -485,6 +485,9 @@ namespace Saturn {
 
 			case Saturn::ImageFormat::RG8:
 				return width * height * 2;
+
+			case Saturn::ImageFormat::RED32F:
+				return width * height * sizeof( float );
 
 			case Saturn::ImageFormat::RGB8:
 				return width * height * 3;

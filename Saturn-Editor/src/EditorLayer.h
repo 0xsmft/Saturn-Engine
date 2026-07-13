@@ -114,6 +114,7 @@ namespace Saturn {
 		void DrawDeleteNavMeshModal();
 		void DrawDebugMsgBoxWindow();
 		void DrawEditorDebugWindow();
+		void DrawSetPremakePathModal();
 
 		// Viewport
 		void DrawViewport();
@@ -130,6 +131,7 @@ namespace Saturn {
 		void ProjectSettings_DrawSoundGroupEdit( Ref<SoundGroup>& rSoundGroup );
 
 		void PrepZipProject();
+		void QueuePremakeJob();
 
 		// Close editor and open the project browser.
 		void CloseEditorAndOpenPB();
@@ -301,6 +303,8 @@ namespace Saturn {
 		bool m_ShowDebugMsgBoxWindow = false;
 		bool m_ShowEditorDebugWindow = false;
 		bool m_ShowMemStatsWindow = false;
+		bool m_ShowSetPremakePathModal = false;
+		bool m_PendingPremakeJobAfterPathIsSet = false;
 
 		// JobProgress
 		float m_OperationPercent = 0.0f;

@@ -559,6 +559,7 @@ namespace Saturn {
 			if( m_ShowEditorDebugWindow )   DrawEditorDebugWindow();
 			if( m_ShowCBThumbnailDebug )    ContentBrowserThumbnailCache::Get().OnImGuiRender( &m_ShowCBThumbnailDebug );
 			if( m_ShowUndoRedoDebug )       m_GlobalUndoRedoGroup->OnImGuiRender( &m_ShowUndoRedoDebug );
+			if( m_ShowSetPremakePathModal ) DrawSetPremakePathModal();
 		}
 
 		DrawViewport();
@@ -2253,6 +2254,24 @@ namespace Saturn {
 		} );
 	}
 
+	void EditorLayer::QueuePremakeJob()
+	{
+		JobSystem::Get().QueueJob( [ this ]()
+		{
+			if( !Project::GetActiveProject()->HasPremakeFile() )
+				Project::GetActiveProject()->CreatePremakeFile();
+
+			if( Premake::Launch( Project::GetActiveProject()->GetRootDir().wstring(), L"premake5.lua", PREFERED_PREMAKE_ACTION_FOR_OS ) )
+			{
+				PushNotification( "Generated project files." );
+			}
+			else
+			{
+				PushNotification( "Failed to generated project files!" );
+			}
+		} );
+	}
+
 	void EditorLayer::HotReloadGame()
 	{
 		PushNotification( "Waiting for JobSystem to start Hot-Reload..." );
@@ -2623,6 +2642,8 @@ namespace Saturn {
 
 			disabledIfRuntime.Pop();
 
+			ImGui::Separator();
+			
 			if( ImGui::MenuItem( "Exit", "Alt+F4" ) )                if( OnTitlebarExit() ) Application::Get()->Close();
 
 			ImGui::EndMenu();
@@ -2687,20 +2708,19 @@ namespace Saturn {
 
 				if( ImGui::MenuItem( "Recreate project files" ) )
 				{
-					m_HasPremakePath = Auxiliary::HasEnvironmentVariable( "SATURN_PREMAKE_PATH" );
-
-					JobSystem::Get().QueueJob( []()
+					if( !( m_HasPremakePath = Auxiliary::HasEnvironmentVariable( "SATURN_PREMAKE_PATH" ) ) )
 					{
-						if( !Project::GetActiveProject()->HasPremakeFile() )
-							Project::GetActiveProject()->CreatePremakeFile();
-
-						Premake::Launch( Project::GetActiveProject()->GetRootDir().wstring(), L"premake5.lua", PREFERED_PREMAKE_ACTION_FOR_OS );
-					} );
+						m_PendingPremakeJobAfterPathIsSet = m_ShowSetPremakePathModal = true;
+					}
+					else
+					{
+						QueuePremakeJob();
+					}
 				}
 
 				if( ImGui::BeginItemTooltip() )
 				{
-					ImGui::Text( "Uses Premake5 to regenerate the project files.\nEnvironment variable \"SATURN_PREMAKE_PATH\" must be set." );
+					ImGui::Text( "Uses premake5 to regenerate the project files.\nEnvironment variable \"SATURN_PREMAKE_PATH\" must be set." );
 					ImGui::EndTooltip();
 				}
 
@@ -3578,6 +3598,67 @@ namespace Saturn {
 		}
 
 		ImGui::End();
+	}
+
+	void EditorLayer::DrawSetPremakePathModal()
+	{
+		static std::filesystem::path s_PremakePath;
+
+		ImGui::OpenPopup( "Premake path not set" );
+
+		if( ImGui::BeginPopupModal( "Premake path not set", nullptr, ImGuiWindowFlags_NoSavedSettings ) )
+		{
+			ImGui::Text( "The environment variable SAT_PREMAKE_PATH is not set. Saturn needs to know the path of premake in other to build projects." );
+			ImGui::Separator();
+
+			const auto pathStr = s_PremakePath.string();
+			ImGui::InputText( "##path", ( char* ) pathStr.c_str(), pathStr.size(), ImGuiInputTextFlags_ReadOnly );
+			ImGui::SameLine();
+			if( ImGui::Button( "..." ) )
+			{
+#if defined(SAT_PLATFORM_WINDOWS)
+				const auto path = Application::Get()->OpenFile( "Application|*.exe" );
+#else
+				const auto path = Application::Get()->OpenFile( "Application|*" );
+#endif
+				s_PremakePath = path;
+			}
+
+			ImGui::Separator();
+
+			ImGui::BeginHorizontal( "##opthz" );
+
+			{
+				// TODO: Check for existence after "..." is pressed.
+				Auxiliary::ScopedDisabledFlag disabledIf( s_PremakePath.empty() || !std::filesystem::exists( s_PremakePath ) );
+
+				if( ImGui::Button( "Set" ) )
+				{
+					Auxiliary::SetEnvironmentVariable( "SATURN_PREMAKE_PATH", s_PremakePath.string() );
+
+					if( m_PendingPremakeJobAfterPathIsSet )
+					{
+						QueuePremakeJob();
+						m_PendingPremakeJobAfterPathIsSet = false;
+					}
+
+					m_ShowSetPremakePathModal = false;
+					s_PremakePath = L"";
+					ImGui::CloseCurrentPopup();
+				}
+			}
+
+			if( ImGui::Button( "Cancel" ) )
+			{
+				m_ShowSetPremakePathModal = false;
+				s_PremakePath = L"";
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndHorizontal();
+
+			ImGui::EndPopup();
+		}
 	}
 
 	void EditorLayer::DrawViewport()

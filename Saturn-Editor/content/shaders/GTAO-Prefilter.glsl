@@ -1,4 +1,11 @@
 // GTAO (Ground-Truth Ambient Occlusion) Prefilter
+//
+// This implementation is based from the following items:
+//
+// - Erin Catto, box3d (https://github.com/erincatto/box3d), MIT
+// - Bobby Anguelov, Esoterica Engine (https://github.com/BobbyAnguelov/Esoterica), MIT
+// - Intel Corporation, XeGTAO (https://github.com/GameTechDev/XeGTAO), MIT
+//
 
 #type compute
 #version 460

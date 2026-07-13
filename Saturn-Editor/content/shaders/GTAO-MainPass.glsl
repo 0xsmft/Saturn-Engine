@@ -1,4 +1,11 @@
 // GTAO (Ground-Truth Ambient Occlusion) Main pass
+//
+// This implementation is based from the following items:
+//
+// - Erin Catto, box3d (https://github.com/erincatto/box3d), MIT
+// - Bobby Anguelov, Esoterica Engine (https://github.com/BobbyAnguelov/Esoterica), MIT
+// - Intel Corporation, XeGTAO (https://github.com/GameTechDev/XeGTAO), MIT
+//
 
 #type compute
 #version 460
@@ -118,7 +125,7 @@ vec3 XeGTAO_CalculateNormal(
 	vec3 pixLPos, 
 	vec3 pixRPos, 
 	vec3 pixTPos, 
-	vec3 pixBPos)
+	vec3 pixBPos )
 {
 	vec4 acceptedNormals = clamp( vec4(
 			edgesLRTB.x * edgesLRTB.z,
@@ -219,6 +226,7 @@ float XeGTAO_MainPass( ivec2 pixCoord,
 {
 	vec2 normalisedScreenPos = ( vec2( pixCoord ) + 0.5 ) * consts.ViewportPixelSize;
 	float viewspaceZ = centerViewspaceZ;
+	viewspaceZ *= 0.99999;
 
 	// Store edges
 	imageStore( o_Edges, pixCoord, vec4( XeGTAO_PackEdges( edgesLRTB ), 0.0, 0.0, 0.0 ) );
@@ -302,11 +310,17 @@ float XeGTAO_MainPass( ivec2 pixCoord,
 				sampleOffset = round( sampleOffset ) * consts.ViewportPixelSize;
 
 				vec2 sampleScreenPos0 = normalisedScreenPos + sampleOffset;
-				float SZ0 = textureLod( sampler2D( u_InDepthGTAO, s_LinearSampler ),  sampleScreenPos0, mipLevel ).x;
+
+				float SZ0 = 
+					textureLod( sampler2D( u_InDepthGTAO, s_LinearSampler ),  sampleScreenPos0, mipLevel ).x;
+				
 				vec3 samplePos0 = XeGTAO_ComputeViewspacePosition( sampleScreenPos0, SZ0, consts );
 
 				vec2 sampleScreenPos1 = normalisedScreenPos - sampleOffset;
-				float SZ1 = textureLod( sampler2D( u_InDepthGTAO, s_LinearSampler ), sampleScreenPos1, mipLevel ).x;
+				
+				float SZ1 =
+					textureLod( sampler2D( u_InDepthGTAO, s_LinearSampler ), sampleScreenPos1, mipLevel ).x;
+				
 				vec3 samplePos1 = XeGTAO_ComputeViewspacePosition( sampleScreenPos1, SZ1, consts );
 
 				vec3 sampleDelta0 = samplePos0 - pixCentrePos;

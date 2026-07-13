@@ -1,4 +1,11 @@
 // GTAO (Ground-Truth Ambient Occlusion) Denoising
+//
+// This implementation is based from the following items:
+//
+// - Erin Catto, box3d (https://github.com/erincatto/box3d), MIT
+// - Bobby Anguelov, Esoterica Engine (https://github.com/BobbyAnguelov/Esoterica), MIT
+// - Intel Corporation, XeGTAO (https://github.com/GameTechDev/XeGTAO), MIT
+//
 
 #type compute
 #version 460
@@ -109,9 +116,6 @@ void main()
 
 		edgesC_LRTB *= vec4( edgesL_LRTB.y, edgesR_LRTB.x, edgesT_LRTB.w, edgesB_LRTB.z );
 
-		// Leak, XeGTAO.esh:839-843 (`#if 1` branch is the default and
-		// only path Esoterica ships). Allows a small amount of bleed
-		// when a pixel is surrounded by 3-4 edges, reducing aliasing.
 		const float leakThreshold = 2.5;
 		const float leakStrength = 0.5;
 		float edginess =
@@ -153,7 +157,5 @@ void main()
 
 		float aoTerm = sum / sumWeight;
 		XeGTAO_Output( pixCoord, aoTerm, finalApply );
-
-		imageStore( o_GTAOOut, pixCoord, vec4( aoTerm, 0, 0, 0 ) );
 	}
 }

@@ -1373,7 +1373,7 @@ namespace Saturn {
 			rImageInfo = m_RendererData.GTAOPrefilterOutImage->GetDescriptorInfo();
 			rImageInfo.imageView = m_RendererData.GTAOPrefilterOutImage->GetOrCreateMipImageView( mip );
 
-			SetDebugUtilsObjectName( std::format( "GTA Pref, mip/{}", mip ), ( uint64_t ) rImageInfo.imageView, VK_OBJECT_TYPE_IMAGE_VIEW );
+			SetDebugUtilsObjectName( std::format( "GTAOO Prefilter mip{}", mip ), ( uint64_t ) rImageInfo.imageView, VK_OBJECT_TYPE_IMAGE_VIEW );
 
 			const std::string descriptorName = std::format( "o_OutDepths{}", mip );
 
@@ -1397,10 +1397,14 @@ namespace Saturn {
 			m_RendererData.Width, m_RendererData.Height, 
 			1u, 1u, 1u, ImageTiling::Optimal, true );
 
+		m_RendererData.GTAOEdgesImage->SetDebugName( "GTAOEdgesImage" );
+
 		m_RendererData.GTAONoisyOut = Ref<Image2D>::Create( 
 			ImageFormat::RED32F, 
 			m_RendererData.Width, m_RendererData.Height, 
 			1u, 1u, 1u, ImageTiling::Optimal, true );
+		
+		m_RendererData.GTAONoisyOut->SetDebugName( "GTAONoisyOut" );
 
 		m_RendererData.GTAOMainPipeline = Ref<ComputePipeline>::Create( m_RendererData.GTAOMainPassShader );
 
@@ -1429,6 +1433,8 @@ namespace Saturn {
 		{
 			auto& rPassInfo = m_RendererData.GTAODenoisePassesInformation.emplace_back();
 			rPassInfo.OutImage = Ref<Image2D>::Create( ImageFormat::RED32F, m_RendererData.Width, m_RendererData.Height, 1u, 1u, 1u, ImageTiling::Optimal, true );
+
+			rPassInfo.OutImage->SetDebugName( std::format( "GTAO-DenoiseImageOut{}", i ) );
 
 			rPassInfo.Material = Ref<Material>::Create( m_RendererData.GTAODenoiseShader, "GTAODenoise" );
 			
@@ -3314,8 +3320,8 @@ namespace Saturn {
 		} u_ExtraData{};
 		
 		const auto& rProjection = m_RendererData.CurrentCamera.pCamera->ProjectionMatrix();
-		const float halfTanFovX = glm::tan( m_RendererData.CurrentCamera.pCamera->GetFov() * 0.5f );
-		const float halfTanFovY = halfTanFovX * m_RendererData.CurrentCamera.pCamera->GetAspectRatio();
+		const float halfTanFovX = 1.0f / rProjection[ 0 ][ 0 ];
+		const float halfTanFovY = 1.0f / rProjection[ 1 ][ 1 ];
 
 		u_ExtraData.ViewportSize = { ( int ) m_RendererData.Width, ( int ) m_RendererData.Height };
 		u_ExtraData.ViewportPixelSize = { 1.0f / ( float ) m_RendererData.Width, 1.0f / ( float ) m_RendererData.Height };
@@ -3323,7 +3329,9 @@ namespace Saturn {
 		u_ExtraData.NDCToViewAdd = { halfTanFovX * -1.0f, halfTanFovY * 1.0f };
 		u_ExtraData.DepthUnpackConsts = { rProjection[ 3 ][ 2 ], rProjection[ 2 ][ 2 ] };
 
-		pc_Params.NDCToViewMul_x_PixelSize = { u_ExtraData.NDCToViewMul.x * u_ExtraData.ViewportPixelSize.x, u_ExtraData.NDCToViewMul.y * u_ExtraData.ViewportPixelSize.y };
+		pc_Params.NDCToViewMul_x_PixelSize = { 
+			u_ExtraData.NDCToViewMul.x * u_ExtraData.ViewportPixelSize.x, 
+			u_ExtraData.NDCToViewMul.y * u_ExtraData.ViewportPixelSize.y };
 
 		m_RendererData.GTAOMainMaterial->UploadDataToUB( 5u, &u_ExtraData, sizeof( UNdcData ) );
 
@@ -3644,7 +3652,7 @@ namespace Saturn {
 				break;
 
 			case AOTechnique::GTAO:
-				m_RendererData.SceneCompositeMaterial->SetResource( "u_AOTexture", Renderer::Get()->GetPinkTexture() );
+				m_RendererData.SceneCompositeMaterial->SetResource( "u_AOTexture", m_RendererData.GTAODenoisePassesInformation.back().OutImage );
 				break;
 		}
 	}

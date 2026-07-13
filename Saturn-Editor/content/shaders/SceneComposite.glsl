@@ -107,7 +107,8 @@ void main()
 	GeometryPassColor = ACES( GeometryPassColor );
 	GeometryPassColor = GammaCorrect( GeometryPassColor, GAMMA );
 
-	float ao = texture( u_AOTexture, vs_Input.TexCoord ).r;
+	float ao = clamp( texture( u_AOTexture, vs_Input.TexCoord ).r, 0.0, 1.0 );
+	ao = min( ao * 1.5, 1.0 );
 	GeometryPassColor *= ao;
 
 	FinalColor = vec4( GeometryPassColor, 1.0 );

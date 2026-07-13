@@ -78,6 +78,7 @@ static inline EventCategory GetStaticCategory() { return EventCategory::Category
 		AddComponent,
 		RemoveComponent,
 		PrefabModified,
+		NodeEditorDebugBreak,
 
 		//////////////////////////////////////////////////////////////////////////
 		// Runtime

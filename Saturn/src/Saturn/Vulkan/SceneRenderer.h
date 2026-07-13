@@ -236,6 +236,8 @@ namespace Saturn {
 
 	class RendererData
 	{
+		RendererData( RendererData& ) = delete;
+		RendererData& operator=( RendererData& ) = delete;
 	public:
 		RendererData() = default;
 		~RendererData() = default;
@@ -243,6 +245,7 @@ namespace Saturn {
 		void Terminate();
 		void ClearSSAOResources();
 		void ClearHBAOResources();
+		void ClearGTAOResources();
 
 	public:
 		//////////////////////////////////////////////////////////////////////////

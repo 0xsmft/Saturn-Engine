@@ -861,6 +861,10 @@ namespace Saturn {
 					case AOTechnique::HBAO:
 						m_RendererData.ClearHBAOResources();
 						break;
+
+					case AOTechnique::GTAO:
+						m_RendererData.ClearGTAOResources();
+						break;
 				}
 			} );
 		}
@@ -1908,15 +1912,25 @@ namespace Saturn {
 
 				switch( m_AOTechnique )
 				{
+					case AOTechnique::HBAO:
 					case AOTechnique::SSAO:
 					{
 						ImGui::Text( "Nothing here yet!" );
 					} break;
 					
-					case AOTechnique::HBAO:
 					case AOTechnique::GTAO:
 					{
-						ImGui::Text( "Nothing here yet!" );
+						Auxiliary::DrawFloatControl( "Effect Radius", 
+							m_RendererData.GTAOEffectRadius, 
+							0.1f, 10.0f, true, 175.0f );
+
+						Auxiliary::DrawFloatControl( "Effect Falloff range", 
+							m_RendererData.GTAOEffectFalloffRange, 
+							0.1f, 10.0f, true, 175.0f );
+
+						Auxiliary::DrawFloatControl( "Radius Multiplier", 
+							m_RendererData.GTAORadiusMultiplier, 
+							0.1f, 10.0f, true, 175.0f );
 					} break;
 
 					case AOTechnique::None:
@@ -3191,7 +3205,9 @@ namespace Saturn {
 		m_RendererData.SSAORenderPass->EndPass();
 		m_RendererData.SSAOTimer.Stop();
 
+		CmdBeginDebugLabel( CommandBuffer, "SSAO-Blur" );
 		SSAOBlurPass();
+		CmdEndDebugLabel( CommandBuffer );
 	}
 
 	void SceneRenderer::SSAOBlurPass()
@@ -3902,16 +3918,14 @@ namespace Saturn {
 		{
 			default:
 			case AOTechnique::None:
+			case AOTechnique::HBAO:
 				break;
-			
+
 			case AOTechnique::SSAO:
 			{
 				ScopedDebugLabel label( m_RendererData.CommandBuffer, "SSAO" );
 				SSAOPass();
 			} break;
-		
-			case AOTechnique::HBAO:
-				break;
 
 			case AOTechnique::GTAO:
 			{
@@ -3998,6 +4012,7 @@ namespace Saturn {
 
 		ClearSSAOResources();
 		ClearHBAOResources();
+		ClearGTAOResources();
 
 		// Vertex and Index buffers
 		QuadVertexBuffer->Destroy();
@@ -4139,6 +4154,12 @@ namespace Saturn {
 	void RendererData::ClearHBAOResources()
 	{
 
+	}
+
+	void RendererData::ClearGTAOResources()
+	{
+		GTAOImageInfos.clear();
+		GTAODenoisePassesInformation.clear();
 	}
 
 }

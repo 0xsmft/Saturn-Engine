@@ -10,9 +10,9 @@
 #type compute
 #version 460
 
-layout(set = 0, binding = 0) uniform texture2D u_InDepthPreDepth; // Linear depth
+layout(set = 0, binding = 0) uniform texture2D u_InDepthPreDepth; // Hardware depth
 layout(set = 0, binding = 1) uniform texture2D u_InDepthGTAO;	  // GTAO prefilterd depth
-layout(set = 0, binding = 2) uniform sampler   s_LinearSampler;
+layout(set = 0, binding = 2) uniform sampler   s_PointSampler;
 
 layout(set = 0, binding = 3, r8)   uniform writeonly image2D o_Edges;
 layout(set = 0, binding = 4, r32f) uniform writeonly image2D o_NoisyGTAO;
@@ -86,7 +86,7 @@ float XeGTAO_ScreenSpaceToViewSpaceDepth( float screenDepth, GTAOConsts consts )
 vec3 XeGTAO_ComputeViewspacePosition( vec2 screenPos, float viewspaceDepth, GTAOConsts consts )
 {
 	vec3 ret;
-	ret.xy = ( consts.NDCToViewMul * screenPos + consts.NDCToViewAdd ) * viewspaceDepth;
+	ret.xy = fma( consts.NDCToViewMul, screenPos, consts.NDCToViewAdd ) * viewspaceDepth;
 	ret.z = -viewspaceDepth;
 	return ret;
 }
@@ -97,7 +97,7 @@ vec4 XeGTAO_CalculateEdges( float centerZ, float leftZ, float rightZ, float topZ
 	
 	float slopeLR = ( edgesLRTB.y - edgesLRTB.x ) * 0.5;
 	float slopeTB = ( edgesLRTB.w - edgesLRTB.z ) * 0.5;
-	vec4 edgesLRTBSlopeAdjusted = edgesLRTB + vec4( slopeLR, -slopeLR, slopeTB, - slopeTB );
+	vec4 edgesLRTBSlopeAdjusted = edgesLRTB + vec4( slopeLR, -slopeLR, slopeTB, -slopeTB );
 	edgesLRTB = min( abs( edgesLRTB ), abs( edgesLRTBSlopeAdjusted ) );
 	return vec4( clamp( ( 1.25 - edgesLRTB / ( centerZ * 0.011 ) ), 0.0, 1.0 ) );
 }
@@ -138,7 +138,8 @@ vec3 XeGTAO_CalculateNormal(
 	pixTPos = normalize( pixTPos - pixCenterPos );
 	pixBPos = normalize( pixBPos - pixCenterPos );
 	
-	vec3 pixelNormal = acceptedNormals.x * cross( pixTPos, pixLPos )
+	vec3 pixelNormal = 
+		  acceptedNormals.x * cross( pixTPos, pixLPos )
 		+ acceptedNormals.y * cross( pixRPos, pixTPos )
 		+ acceptedNormals.z * cross( pixBPos, pixRPos )
 		+ acceptedNormals.w * cross( pixLPos, pixBPos );
@@ -192,12 +193,12 @@ vec3 XeGTAO_ComputeViewspaceNormal( ivec2 pixCoord, GTAOConsts consts )
 	ivec2 cT = clamp( pixCoord + ivec2( 0, -1 ), ivec2( 0 ), vmax );
 	ivec2 cB = clamp( pixCoord + ivec2( 0, 1 ), ivec2( 0 ), vmax );
 
-	float viewspaceZ = XeGTAO_ScreenSpaceToViewSpaceDepth( texelFetch( sampler2D( u_InDepthPreDepth, s_LinearSampler ), cC, 0 ).r, consts );
+	float viewspaceZ = XeGTAO_ScreenSpaceToViewSpaceDepth( texelFetch( sampler2D( u_InDepthPreDepth, s_PointSampler ), cC, 0 ).r, consts );
 	
-	float pixLZ = XeGTAO_ScreenSpaceToViewSpaceDepth( texelFetch( sampler2D( u_InDepthPreDepth, s_LinearSampler ), cL, 0 ).r, consts );
-	float pixRZ = XeGTAO_ScreenSpaceToViewSpaceDepth( texelFetch( sampler2D( u_InDepthPreDepth, s_LinearSampler ), cR, 0 ).r, consts );
-	float pixTZ = XeGTAO_ScreenSpaceToViewSpaceDepth( texelFetch( sampler2D( u_InDepthPreDepth, s_LinearSampler ), cT, 0 ).r, consts );
-	float pixBZ = XeGTAO_ScreenSpaceToViewSpaceDepth( texelFetch( sampler2D( u_InDepthPreDepth, s_LinearSampler ), cB, 0 ).r, consts );
+	float pixLZ = XeGTAO_ScreenSpaceToViewSpaceDepth( texelFetch( sampler2D( u_InDepthPreDepth, s_PointSampler ), cL, 0 ).r, consts );
+	float pixRZ = XeGTAO_ScreenSpaceToViewSpaceDepth( texelFetch( sampler2D( u_InDepthPreDepth, s_PointSampler ), cR, 0 ).r, consts );
+	float pixTZ = XeGTAO_ScreenSpaceToViewSpaceDepth( texelFetch( sampler2D( u_InDepthPreDepth, s_PointSampler ), cT, 0 ).r, consts );
+	float pixBZ = XeGTAO_ScreenSpaceToViewSpaceDepth( texelFetch( sampler2D( u_InDepthPreDepth, s_PointSampler ), cB, 0 ).r, consts );
 
 	vec4 edgesLRTB = XeGTAO_CalculateEdges( viewspaceZ, pixLZ, pixRZ, pixTZ, pixBZ );
 
@@ -251,15 +252,18 @@ float XeGTAO_MainPass( ivec2 pixCoord,
 		const float noiseSample = localNoise.y;
 		const float pixelTooCloseThreshold = 1.3;
 
-		// Approx viewspace pixel size at pixCoord. XeGTAO.esh:377.
 		vec2 pixelDirRBViewspaceSizeAtCenterZ = vec2( viewspaceZ, viewspaceZ ) * consts.NDCToViewMul_x_PixelSize;
 		float screenspaceRadius = effectRadius / pixelDirRBViewspaceSizeAtCenterZ.x;
 
 		// Fade out for small screen radii, XeGTAO.esh:382.
 		visibility += clamp( ( 10.0 - screenspaceRadius ) / 100.0, 0.0, 1.0 ) * 0.5;
 
-		float minS = pixelTooCloseThreshold / screenspaceRadius;
+		if( screenspaceRadius < pixelTooCloseThreshold )
+		{
+			return XeGTAO_OutputWorkingTerm( pixCoord, 1 );
+		}
 
+		const float minS = pixelTooCloseThreshold / screenspaceRadius;
 		for( float slice = 0.0; slice < sliceCount; slice += 1.0 )
 		{
 			float sliceK = ( slice + noiseSlice ) / sliceCount;
@@ -289,37 +293,44 @@ float XeGTAO_MainPass( ivec2 pixCoord,
 
 			for( float step_ = 0.0; step_ < stepsPerSlice; step_ += 1.0 )
 			{
-				// R1 sequence, XeGTAO.esh:459.
+				// R1 sequence.
 				float stepBaseNoise = ( slice + step_ * stepsPerSlice ) * 0.6180339887498948482;
 				float stepNoise = fract( noiseSample + stepBaseNoise );
 
 				float s = ( step_ + stepNoise ) / stepsPerSlice;
-				// step_, stepNoise (=fract(.)), stepsPerSlice are all >= 0
-				// by construction, max(0, .) is redundant at runtime but
-				// silences HLSL's pow(negative, n) warning (X3571).
-				s = pow( max( 0.0, s ), sampleDistributionPower );
+				s = pow( s, sampleDistributionPower );
 				s += minS;
 
 				vec2 sampleOffset = s * omega;
 				float sampleOffsetLength = length( sampleOffset );
 
-				float mipLevel =
-					clamp( log2( sampleOffsetLength ) - consts.DepthMIPSamplingOffset, 0.0, XE_GTAO_DEPTH_MIP_LEVELS );
+				const float mipCount = log2( sampleOffsetLength ) - consts.DepthMIPSamplingOffset;
+				const float mipLevel = clamp( mipCount, 0.0, XE_GTAO_DEPTH_MIP_LEVELS );
+
+				// TODO: This is hack, but like lowkey it works so...
+				// like this shit should be here but for some reason mipLevel just doesnt get clamped or something
+				// because when we go super close to an object and without this check, the object would turn black,
+				// with this check the object is fine.
+				// but even so, mipLevel should be clamped to 5.0, because we only have 5 mips. Black magic.
+				if( mipLevel >= 5.0 )
+				{
+					return XeGTAO_OutputWorkingTerm( pixCoord, 0.67 );
+				}
 
 				// Snap to pixel centers, XeGTAO.esh:481.
 				sampleOffset = round( sampleOffset ) * consts.ViewportPixelSize;
 
 				vec2 sampleScreenPos0 = normalisedScreenPos + sampleOffset;
 
-				float SZ0 = 
-					textureLod( sampler2D( u_InDepthGTAO, s_LinearSampler ),  sampleScreenPos0, mipLevel ).x;
+				float SZ0 = ( 
+					textureLod( sampler2D( u_InDepthGTAO, s_PointSampler ),  sampleScreenPos0, mipLevel ).x );
 				
 				vec3 samplePos0 = XeGTAO_ComputeViewspacePosition( sampleScreenPos0, SZ0, consts );
 
 				vec2 sampleScreenPos1 = normalisedScreenPos - sampleOffset;
 				
-				float SZ1 =
-					textureLod( sampler2D( u_InDepthGTAO, s_LinearSampler ), sampleScreenPos1, mipLevel ).x;
+				float SZ1 = (
+					textureLod( sampler2D( u_InDepthGTAO, s_PointSampler ), sampleScreenPos1, mipLevel ).x );
 				
 				vec3 samplePos1 = XeGTAO_ComputeViewspacePosition( sampleScreenPos1, SZ1, consts );
 
@@ -327,6 +338,9 @@ float XeGTAO_MainPass( ivec2 pixCoord,
 				vec3 sampleDelta1 = samplePos1 - pixCentrePos;
 				float sampleDist0 = length( sampleDelta0 );
 				float sampleDist1 = length( sampleDelta1 );
+
+				if (sampleDist0 < 0.0001 || sampleDist1 < 0.0001)
+					continue;
 
 				vec3 sampleHorizonVec0 = sampleDelta0 / sampleDist0;
 				vec3 sampleHorizonVec1 = sampleDelta1 / sampleDist1;
@@ -359,13 +373,10 @@ float XeGTAO_MainPass( ivec2 pixCoord,
 		}
 
 		visibility /= sliceCount;
-		// visibility is summed from non-negative localVisibility terms and
-		// divided by positive sliceCount, so always >= 0. max(0, .) is a
-		// no-op at runtime, silences HLSL's pow(negative, n) warning.
 		visibility = pow( max( 0.0, visibility ), consts.FinalValuePower );
-		// Disallow total occlusion, XeGTAO.esh:597.
 		visibility = max( 0.03, visibility );
 	}
+
 
 	return XeGTAO_OutputWorkingTerm( pixCoord, visibility );
 }
@@ -396,31 +407,31 @@ void main()
 	consts.StepsPerSlice = pc_Params.StepsPerSlice;
 
 	vec3 viewspaceNormal = XeGTAO_ComputeViewspaceNormal( pixCoord, consts );
-
+	
 	ivec2 vmax = u_ExtraData.ViewportSize - 1;
 
 	float centreZ = XeGTAO_ScreenSpaceToViewSpaceDepth( 
-		texelFetch( sampler2D( u_InDepthPreDepth, s_LinearSampler ), 
+		texelFetch( sampler2D( u_InDepthPreDepth, s_PointSampler ), 
 		clamp( pixCoord, ivec2( 0 ), vmax ), 0 ).r, consts 
 	);
 
 	float leftZ = XeGTAO_ScreenSpaceToViewSpaceDepth( 
-		texelFetch( sampler2D( u_InDepthPreDepth, s_LinearSampler ), 
+		texelFetch( sampler2D( u_InDepthPreDepth, s_PointSampler ), 
 		clamp( pixCoord + ivec2( -1.0, 0.0 ), ivec2( 0 ), vmax ), 0 ).r, consts 
 	);
 
 	float rightZ = XeGTAO_ScreenSpaceToViewSpaceDepth( 
-		texelFetch( sampler2D( u_InDepthPreDepth, s_LinearSampler ), 
+		texelFetch( sampler2D( u_InDepthPreDepth, s_PointSampler ), 
 		clamp( pixCoord + ivec2( 1.0, 0.0 ), ivec2( 0 ), vmax ), 0 ).r, consts 
 	);
 
 	float topZ = XeGTAO_ScreenSpaceToViewSpaceDepth( 
-		texelFetch( sampler2D( u_InDepthPreDepth, s_LinearSampler ), 
+		texelFetch( sampler2D( u_InDepthPreDepth, s_PointSampler ), 
 		clamp( pixCoord + ivec2( 0.0, -1.0 ), ivec2( 0 ), vmax ), 0 ).r, consts 
 	);
 
 	float bottomZ = XeGTAO_ScreenSpaceToViewSpaceDepth( 
-		texelFetch( sampler2D( u_InDepthPreDepth, s_LinearSampler ), 
+		texelFetch( sampler2D( u_InDepthPreDepth, s_PointSampler ), 
 		clamp( pixCoord + ivec2( 0.0, 1.0 ), ivec2( 0 ), vmax ), 0 ).r, consts 
 	);
 

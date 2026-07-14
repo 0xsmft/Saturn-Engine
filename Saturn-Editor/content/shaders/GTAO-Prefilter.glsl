@@ -64,9 +64,9 @@ float XeGTAO_DepthMIPFilter( float depth0, float depth1, float depth2, float dep
 // Because the depth from our PreDepth pass will be linear 0-1, we need to convert that 
 // to useful values from 0-far-clip, this allows us to gain better information on how far
 // away objects are.
-float ConvertPreDepthToViewSpace( float depth ) 
+float ConvertPreDepthToViewSpace( float screenDepth )
 {
-	return abs( pc_Params.DepthUnpackConsts.x / ( depth + pc_Params.DepthUnpackConsts.y ) );
+	return abs( pc_Params.DepthUnpackConsts.x / ( screenDepth + pc_Params.DepthUnpackConsts.y ) );
 }
 
 layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;

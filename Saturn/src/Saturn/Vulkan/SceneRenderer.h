@@ -495,6 +495,7 @@ namespace Saturn {
 		// General use samplers.
 		//////////////////////////////////////////////////////////////////////////
 		
+		Ref<Sampler> GeneralUseLinearSampler;
 		Ref<Sampler> GeneralUsePointSampler;
 
 		// SMAA

@@ -866,7 +866,7 @@ namespace Saturn {
 					{
 						// Remove GTAO Flag
 						m_RendererData.SceneCompositeFlags &= ~SceneCompositeFlag_GTAO;
-						m_RendererData.ClearGTAOResources();
+//						m_RendererData.ClearGTAOResources();
 					} break;
 				}
 			} );
@@ -1259,7 +1259,7 @@ namespace Saturn {
 		m_RendererData.SMAAEdgingMaterial->SetSeparateImage( "u_InFinalColor", 
 			m_RendererData.SceneCompositeFramebuffer->GetColorAttachmentsResources()[ 0 ] );
 
-		m_RendererData.SMAAEdgingMaterial->SetResource( "s_PointSampler", m_RendererData.GeneralUsePointSampler );
+		m_RendererData.SMAAEdgingMaterial->SetResource( "s_PointSampler", m_RendererData.GeneralUseLinearSampler );
 	}
 
 	void SceneRenderer::InitSMAABlending()
@@ -1291,7 +1291,7 @@ namespace Saturn {
 		m_RendererData.SMAAFinalMaterial->SetSeparateImage( "u_EdgesTexture", m_RendererData.SMAAEdgeDetectionOutImage );
 		m_RendererData.SMAAFinalMaterial->SetSeparateImage( "u_SearchTexture", m_RendererData.SMAASearchTexture );
 		m_RendererData.SMAAFinalMaterial->SetSeparateImage( "u_AreaTexture", m_RendererData.SMAAAreaTexture );
-		m_RendererData.SMAAFinalMaterial->SetResource( "s_LinearSampler", m_RendererData.GeneralUsePointSampler );
+		m_RendererData.SMAAFinalMaterial->SetResource( "s_LinearSampler", m_RendererData.GeneralUseLinearSampler );
 	}
 
 	void SceneRenderer::InitSMAAComposition()
@@ -1356,6 +1356,8 @@ namespace Saturn {
 
 	void SceneRenderer::InitGTAOPass()
 	{
+		m_RendererData.ClearGTAOResources();
+
 		InitGTAOPrefilter();
 		InitGTAOMainPass();
 		InitGTAODenoisePass();
@@ -1374,7 +1376,7 @@ namespace Saturn {
 
 		m_RendererData.GTAOPrefilterMaterial = Ref<Material>::Create( m_RendererData.GTAOPrefilterShader, "GTAOPrefilter" );
 		m_RendererData.GTAOPrefilterMaterial->SetSeparateImage( "u_InDepth", m_RendererData.PreDepthFramebuffer->GetDepthAttachmentResource() );
-		m_RendererData.GTAOPrefilterMaterial->SetResource( "s_LinearSampler", m_RendererData.GeneralUsePointSampler );
+		m_RendererData.GTAOPrefilterMaterial->SetResource( "s_LinearSampler", m_RendererData.GeneralUseLinearSampler );
 
 		m_RendererData.GTAOImageInfos.resize( m_RendererData.GTAOPrefilterOutImage->GetMipMapLevels() );
 
@@ -1384,7 +1386,7 @@ namespace Saturn {
 			rImageInfo = m_RendererData.GTAOPrefilterOutImage->GetDescriptorInfo();
 			rImageInfo.imageView = m_RendererData.GTAOPrefilterOutImage->GetOrCreateMipImageView( mip );
 
-			SetDebugUtilsObjectName( std::format( "GTAOO Prefilter mip{}", mip ), ( uint64_t ) rImageInfo.imageView, VK_OBJECT_TYPE_IMAGE_VIEW );
+			SetDebugUtilsObjectName( std::format( "GTAO Prefilter mip{}", mip ), ( uint64_t ) rImageInfo.imageView, VK_OBJECT_TYPE_IMAGE_VIEW );
 
 			const std::string descriptorName = std::format( "o_OutDepths{}", mip );
 
@@ -1423,7 +1425,7 @@ namespace Saturn {
 
 		m_RendererData.GTAOMainMaterial->SetSeparateImage( "u_InDepthPreDepth", m_RendererData.PreDepthFramebuffer->GetDepthAttachmentResource() );
 		m_RendererData.GTAOMainMaterial->SetSeparateImage( "u_InDepthGTAO", m_RendererData.GTAOPrefilterOutImage );
-		m_RendererData.GTAOMainMaterial->SetResource( "s_LinearSampler", m_RendererData.GeneralUsePointSampler );
+		m_RendererData.GTAOMainMaterial->SetResource( "s_PointSampler", m_RendererData.GeneralUsePointSampler );
 	
 		m_RendererData.GTAOMainMaterial->SetResource( "o_Edges", m_RendererData.GTAOEdgesImage );
 		m_RendererData.GTAOMainMaterial->SetResource( "o_NoisyGTAO", m_RendererData.GTAONoisyOut );
@@ -1459,7 +1461,7 @@ namespace Saturn {
 			}
 
 			rPassInfo.Material->SetSeparateImage( "u_EdgesIn", m_RendererData.GTAOEdgesImage );
-			rPassInfo.Material->SetResource( "s_LinearSampler", m_RendererData.GeneralUsePointSampler );
+			rPassInfo.Material->SetResource( "s_LinearSampler", m_RendererData.GeneralUseLinearSampler );
 			rPassInfo.Material->SetResource( "o_GTAOOut", rPassInfo.OutImage );
 		}
 	}
@@ -1782,6 +1784,7 @@ namespace Saturn {
 		samplerSpec.CompareOperation = CompareOp::Less;
 		samplerSpec.MinLod = 0.0f;
 		samplerSpec.MaxLod = FLT_MAX;
+		samplerSpec.DebugName = "GenUse-Linear";
 
 		{
 			// We don't know the max anisotropy level, so we'll need to get it from the properties of the physical device.
@@ -1792,6 +1795,10 @@ namespace Saturn {
 			samplerSpec.MaxAnisotropy = glm::min( Properties.limits.maxSamplerAnisotropy, 8.0f );
 		}
 
+		m_RendererData.GeneralUseLinearSampler = Ref<Sampler>::Create( samplerSpec );
+
+		samplerSpec.DebugName = "GenUse-Nearest-Point";
+		samplerSpec.MinFilter = samplerSpec.MagFilter = samplerSpec.MipFilter = SamplerFilter::Nearest;
 		m_RendererData.GeneralUsePointSampler = Ref<Sampler>::Create( samplerSpec );
 	}
 
@@ -3345,7 +3352,7 @@ namespace Saturn {
 		pc_Params.FinalValuePower = 2.2f;
 		pc_Params.SampleDistributionPower = 2.0f;
 		pc_Params.ThinOccluderCompensation = 0.0f;
-		pc_Params.DepthMipSamplingOffset = 3.0f;
+		pc_Params.DepthMipSamplingOffset = 3.3f;
 		pc_Params.SliceCount = 3.0f;
 		pc_Params.StepsPerSlice = 3.0f;
 
@@ -3368,9 +3375,7 @@ namespace Saturn {
 		u_ExtraData.NDCToViewAdd = { halfTanFovX * -1.0f, halfTanFovY * 1.0f };
 		u_ExtraData.DepthUnpackConsts = { rProjection[ 3 ][ 2 ], rProjection[ 2 ][ 2 ] };
 
-		pc_Params.NDCToViewMul_x_PixelSize = { 
-			u_ExtraData.NDCToViewMul.x * u_ExtraData.ViewportPixelSize.x, 
-			u_ExtraData.NDCToViewMul.y * u_ExtraData.ViewportPixelSize.y };
+		pc_Params.NDCToViewMul_x_PixelSize = u_ExtraData.NDCToViewMul * u_ExtraData.ViewportPixelSize;
 
 		m_RendererData.GTAOMainMaterial->UploadDataToUB( 5u, &u_ExtraData, sizeof( UNdcData ) );
 

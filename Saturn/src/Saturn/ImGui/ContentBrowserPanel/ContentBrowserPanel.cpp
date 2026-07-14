@@ -72,7 +72,6 @@
 #include "ContentBrowserThumbnailCache.h"
 
 #include <imgui_internal.h>
-#include <ranges>
 
 namespace Saturn {
 
@@ -1099,7 +1098,7 @@ namespace Saturn {
 			// CONTEXT MENU (RIGHT CLICK MENU)
 			if( ImGui::BeginPopupContextWindow( "CB_ItemAction", ImGuiPopupFlags_MouseButtonRight ) )
 			{
-				Auxiliary::DisabledFlag disabledIfRuntime( g_ActiveScene->IsRuntimeActive() );
+				Auxiliary::DisabledFlag disabledIfReadOnly( m_IsReadOnly );
 
 				switch( m_ViewMode )
 				{
@@ -1112,7 +1111,7 @@ namespace Saturn {
 						break;
 				}
 
-				disabledIfRuntime.Pop();
+				disabledIfReadOnly.Pop();
 				ImGui::EndPopup();
 			}
 

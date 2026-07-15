@@ -42,6 +42,8 @@ namespace Saturn {
 	ImGuiWindowManager::~ImGuiWindowManager()
 	{
 		Terminate();
+	
+		SingletonStorage::RemoveSingleton( this );
 	}
 
 	void ImGuiWindowManager::Terminate()

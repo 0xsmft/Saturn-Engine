@@ -121,6 +121,12 @@ namespace Saturn {
 			Ref<Shader> shader = Ref<Shader>::Create();
 			shader->DeserialiseShaderDataForEditor( stream );
 
+			if( !std::filesystem::exists( shader->GetFilepath() ) )
+			{
+				SAT_CORE_WARN( "Skipping shader: {} as the file path does not exist!", shader->GetName() );
+				continue;
+			}
+
 			const auto lwt = std::filesystem::last_write_time( shader->GetFilepath() );
 			const auto fsLastWriteTime = lwt.time_since_epoch().count();
 

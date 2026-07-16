@@ -55,6 +55,7 @@ namespace Saturn {
 		void Move( const glm::vec3& rDisplacement );
 		void Rotate( const glm::quat& rRotation );
 		void Jump( float pwr );
+		void StopMovementImmediately();
 
 	public:
 		[[nodiscard]] bool IsGrounded() const;

@@ -33,8 +33,14 @@ namespace Saturn {
 	// NOTE: This enum is separated because it's best for the animator class not to include Components.h which is where it was defined originally.
 	enum class AnimatorType : uint8_t
 	{
+		// One asset.
 		Single,
-		AnimationControllerGraph
+		
+		// aka AnimGraph.
+		AnimationControllerGraph,
+
+		// Sentinel value, if a function returns this it means that the entity doesn't have a SkeletalMeshComponent.
+		Unknown = 0xff
 	};	
 
 }

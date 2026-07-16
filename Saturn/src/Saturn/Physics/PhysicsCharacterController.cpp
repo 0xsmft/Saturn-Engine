@@ -206,6 +206,11 @@ namespace Saturn {
 		m_JumpPower = pwr;
 	}
 
+	void PhysicsCharacterController::StopMovementImmediately()
+	{
+		m_Controller->SetLinearVelocity( JPH::Vec3( 0.0f, 0.0f, 0.0f ) );
+	}
+
 	void PhysicsCharacterController::Teleport( const glm::vec3& rPosition )
 	{
 		m_Controller->SetPosition( Auxiliary::GLMToJolt( rPosition ) );

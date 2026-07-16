@@ -91,6 +91,8 @@ namespace Saturn {
 
 		Ref<AnimationController> GetAnimGraph() const;
 
+		void ChangeType( AnimatorType type );
+
 	private:
 		void TickSingleAnim( Timestep ts );
 

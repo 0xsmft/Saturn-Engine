@@ -82,6 +82,81 @@ namespace Saturn {
 		float GetMovementSpeed() { return m_MovementSpeed; }
 		const float GetMovementSpeed() const { return m_MovementSpeed; }
 
+		[[nodiscard]] bool IsSprinting() const { return m_Sprinting; }
+
+		//
+		// Change the animation mode from an AnimationController to a single asset.
+		//
+		void ChangeAnimationMode( AnimatorType type );
+
+		//
+		// Get Current Animation mode
+		// 
+		// @returns the current AnimationMode, you MUST check if the return value
+		// is not equal to AnimatorType::Unknown, as Unknown means that this character
+		// doesn't have a SkeletalMeshComponent!
+		//
+		[[nodiscard]] AnimatorType GetCurrentAnimationMode() const;
+
+		// Phys character controller wrappers
+
+		//
+		// Get the movement component.
+		// 
+		// @returns the movement component, it should never be null. TODO: Maybe assert that.
+		//
+		CharacterMovementComponent* GetMovementComponent();
+		const CharacterMovementComponent* GetMovementComponent() const;
+
+		//
+		// Jump
+		//
+		// @param pwr - power to jump.
+		//
+		void Jump( float pwr = 1.0f );
+
+		//
+		// @returns -- if the character is considered to be "grounded".
+		//
+		[[nodiscard]] bool IsGrounded() const;
+
+		//
+		// Move the character controller (and by extension the entity itself) 
+		// by a certain amount. This value is then added.
+		//
+		// @param rDisplacement - displacement vector.
+		//
+		void DisplaceCharacterBy( const glm::vec3& rDisplacement );
+
+		//
+		// Stop movement now.
+		// 
+		// Set's the linear velocity to zero.
+		//
+		void StopMovementImmediately();
+		
+		// Audio listener
+
+		//
+		// Get the AudioListenerComponent.
+		// 
+		// @returns the AudioListenerComponent, it should never be null. TODO: Maybe assert that.
+		//
+		AudioListenerComponent* GetAudioListenerComponent();
+		const AudioListenerComponent* GetAudioListenerComponent() const;
+
+		//
+		// Update the direction this should be after the rotation of the character has changed.
+		// 
+		// @param rDirection -- the new direction.
+		//
+		void UpdateAudioListenerDirection( const glm::vec3& rDirection );
+
+		//
+		// @returns if the audio listener is the primary one.
+		//
+		[[nodiscard]] bool IsPrimaryAudioListener();
+
 	protected:
 		//
 		// This function is called during BeginPlay.

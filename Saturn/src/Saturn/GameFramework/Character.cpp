@@ -180,6 +180,98 @@ namespace Saturn {
 		return nullptr;
 	}
 
+	void Character::ChangeAnimationMode( AnimatorType type )
+	{
+		if( auto* pSk = GetSkeletalMeshComponent() )
+		{
+			pSk->AnimatorType = type;
+			pSk->LocalAnimator->ChangeType( type );
+		}
+	}
+
+	AnimatorType Character::GetCurrentAnimationMode() const
+	{
+		if( auto* pSk = GetSkeletalMeshComponent() )
+		{
+			return pSk->AnimatorType;
+		}
+
+		// Sentinel value
+		return AnimatorType::Unknown;
+	}
+
+	CharacterMovementComponent* Character::GetMovementComponent()
+	{
+		return TryGetComponent<CharacterMovementComponent>();
+	}
+
+	const CharacterMovementComponent* Character::GetMovementComponent() const
+	{
+		return TryGetComponent<CharacterMovementComponent>();
+	}
+
+	void Character::Jump( float pwr /*= 1.0f */ )
+	{
+		if( auto* pMovementComp = GetMovementComponent() )
+		{
+			pMovementComp->CharacterMovement->Jump( pwr );
+		}
+	}
+
+	bool Character::IsGrounded() const
+	{
+		if( const auto* pMovementComp = GetMovementComponent() )
+		{
+			return pMovementComp->CharacterMovement->IsGrounded();
+		}
+
+		return false;
+	}
+
+	void Character::DisplaceCharacterBy( const glm::vec3& rDisplacement )
+	{
+		if( auto* pMovementComp = GetMovementComponent() )
+		{
+			pMovementComp->CharacterMovement->Move( rDisplacement );
+		}
+	}
+
+	void Character::StopMovementImmediately()
+	{
+		if( auto* pMovementComp = GetMovementComponent() )
+		{
+			pMovementComp->CharacterMovement->StopMovementImmediately();
+		}
+	}
+
+	AudioListenerComponent* Character::GetAudioListenerComponent()
+	{
+		return TryGetComponent<AudioListenerComponent>();
+	}
+
+	const AudioListenerComponent* Character::GetAudioListenerComponent() const
+	{
+		return TryGetComponent<AudioListenerComponent>();
+	}
+
+	void Character::UpdateAudioListenerDirection( const glm::vec3& rDirection )
+	{
+		if( auto* pAlc = GetAudioListenerComponent() )
+		{
+			pAlc->Direction = rDirection;
+		}
+	}
+
+	bool Character::IsPrimaryAudioListener()
+	{
+		if( auto* pAlc = GetAudioListenerComponent() )
+		{
+			return pAlc->Primary;
+		}
+
+		return false;
+	}
+
 	glm::vec3 Character::CalculateRight()
 	{
 		return m_CameraEntity->GetComponent<CameraComponent>().Camera->GetRightDirection();

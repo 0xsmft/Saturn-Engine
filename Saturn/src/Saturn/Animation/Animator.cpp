@@ -256,4 +256,11 @@ namespace Saturn {
 		return m_AnimationControllerAsset;
 	}
 
+	void Animator::ChangeType( AnimatorType type )
+	{
+		// Ignore sentinel value.
+		if( type == AnimatorType::Unknown )
+			m_AnimatorType = type;
+	}
+
 }

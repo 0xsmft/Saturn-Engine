@@ -39,11 +39,7 @@
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
 #include "Saturn/ImGui/EditorIcons.h"
 
-#include "Saturn/Core/Renderer/EditorCamera.h"
-
 #include <imgui.h>
-#include <ImGuizmo/ImGuizmo.h>
-#include <glm/gtc/type_ptr.hpp>
 
 namespace Saturn {
 

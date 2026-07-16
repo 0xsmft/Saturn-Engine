@@ -75,12 +75,12 @@ namespace Saturn {
 		uint32_t* pData = new uint32_t[ 1 * 1 ];
 		std::memset( pData, 0, sizeof( uint32_t ) * 1 * 1 );
 
+		// It's really a white texture...
 		for( uint32_t i = 0; i < 1 * 1; ++i )
 		{
 			pData[ i ] |= 0xFFFFFFFF;
 		}
 
-		// It's really a white texture...
 		m_PinkTexture = Ref< Texture2D >::Create( ImageFormat::RGBA8, 1, 1, pData );
 		m_PinkTexture->SetIsRendererTexture( true );
 

@@ -241,37 +241,6 @@ namespace Saturn {
 		VK_CHECK( vkAllocateMemory( VulkanContext::Get()->GetDevice(), &MemoryAllocateInfo, nullptr, &m_Memory ) );
 		VK_CHECK( vkBindImageMemory( VulkanContext::Get()->GetDevice(), m_Image, m_Memory, 0 ) );
 
-		/*
-		if( false ) 
-		{
-			// TRANSITION: Initial layout to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
-			TransitionImageLayout( VulkanFormat( m_Format ), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL );
-
-			VkBuffer ImgBuffer;
-
-			VkDeviceSize ImageSize = m_Width * m_Height * 4;
-
-			VkBufferCreateInfo BufferCreateInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
-			BufferCreateInfo.size = m_DataSize;
-			BufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-			BufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-			auto pAllocator = VulkanContext::Get()->GetVulkanAllocator();
-			auto BufferAlloc = pAllocator->AllocateBuffer( BufferCreateInfo, VMA_MEMORY_USAGE_CPU_ONLY, &ImgBuffer );
-
-			void* pDstData = pAllocator->MapMemory<void*>( BufferAlloc );
-
-			memcpy( pDstData, m_pData, m_DataSize );
-
-			pAllocator->UnmapMemory( BufferAlloc );
-
-			CopyBufferToImage( ImgBuffer );
-
-			// TRANSITION: VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL to descriptor image layout.
-			TransitionImageLayout( VulkanFormat( m_Format ), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, m_DescriptorImageInfo.imageLayout );
-		}
-		*/
-
 		if( IsColorFormat( m_Format ) )
 			m_DescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		else

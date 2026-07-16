@@ -88,11 +88,7 @@ namespace Saturn {
 		const auto entity = g_ActiveScene->FindEntityByID( id );
 		if( entity )
 		{
-			const auto& rTransformComponent = entity->GetComponent<TransformComponent>();
-
 			rSink.Sink( entity->GetName() );
-
-//			rSink.Sink( std::format( "Local Position: {}, Local Rotation: {}, Local Scale: {}", rTransformComponent.Position, rTransformComponent.GetRotationEuler(), rTransformComponent.Scale ) );
 		}
 		else
 		{

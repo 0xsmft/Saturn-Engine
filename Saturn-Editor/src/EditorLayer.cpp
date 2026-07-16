@@ -33,7 +33,6 @@
 
 #include <Saturn/ImGui/ImGuiAuxiliary.h>
 #include <Saturn/ImGui/TitleBar.h>
-#include <Saturn/ImGui/MaterialAssetViewer/MaterialAssetViewer.h>
 #include <Saturn/ImGui/PrefabViewer.h>
 #include <Saturn/ImGui/EditorIcons.h>
 #include <Saturn/ImGui/EditorEvents.h>
@@ -54,12 +53,9 @@
 #include <Saturn/Vulkan/SceneRenderer.h>
 #include <Saturn/Vulkan/ShaderBundle.h>
 #include <Saturn/Vulkan/Renderer2D.h>
-#include <Saturn/Vulkan/VulkanImageAux.h>
-#include <Saturn/Vulkan/DefaultMeshes.h>
 #include <Saturn/Vulkan/AluraRenderer.h>
 
 #include <Saturn/Core/Maths.h>
-#include <Saturn/Core/StringAuxiliary.h>
 #include <Saturn/Core/EngineSettings.h>
 #include <Saturn/Core/Profiler.h>
 #include <Saturn/Core/Ruby/RubyWindow.h>
@@ -71,11 +67,8 @@
 #include <Saturn/Core/Memory/SObjectAllocator.h>
 #include <Saturn/Core/AABB/Ray.h>
 
-#include <Saturn/Asset/AssetRegistry.h>
 #include <Saturn/Asset/AssetManager.h>
 #include <Saturn/Asset/Prefab.h>
-
-#include <Saturn/Animation/SkeletonAsset.h>
 
 #include <Saturn/GameFramework/Core/GameModule.h>
 #include <Saturn/GameFramework/Core/ClassMetadataHandler.h>

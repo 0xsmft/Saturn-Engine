@@ -108,7 +108,7 @@ namespace Saturn {
 			std::filesystem::create_directories( tempDir );
 	}
 
-	AssetBundleResult AssetBundle::BundleAssets( Ref<JobProgress>& jobProgress )
+	AssetBundleResult AssetBundle::BundleAssets( Ref<JobProgress> jobProgress )
 	{
 		jobProgress->Reset();
 		jobProgress->SetTitle( "AssetBundle - Init (Minimal)" );

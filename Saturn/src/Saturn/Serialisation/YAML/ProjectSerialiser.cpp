@@ -107,14 +107,14 @@ namespace Saturn {
 				out << YAML::BeginMap;
 
 				out << YAML::Key << "ActionBinding" << YAML::Value << rBinding.Name;
-				
+
 #if !defined(SAT_DIST)
 				out << YAML::Key << "ActionName" << YAML::Value << rBinding.ActionName;
-				out << YAML::Key << "ID" << YAML::Value << (uint64_t)rBinding.ID;
+				out << YAML::Key << "ID" << YAML::Value << ( uint64_t ) rBinding.ID;
 #endif
-				out << YAML::Key << "Key" << YAML::Value << (int)rBinding.Key;
-				out << YAML::Key << "MouseButton" << YAML::Value << (int)rBinding.MouseButton;
-				out << YAML::Key << "Type" << YAML::Value << (int)rBinding.Type;
+				out << YAML::Key << "Key" << YAML::Value << ( int ) rBinding.Key;
+				out << YAML::Key << "MouseButton" << YAML::Value << ( int ) rBinding.MouseButton;
+				out << YAML::Key << "Type" << YAML::Value << ( int ) rBinding.Type;
 
 				out << YAML::EndMap;
 			}
@@ -131,7 +131,7 @@ namespace Saturn {
 				out << YAML::Key << "SoundGroup" << YAML::Value << rSoundGroup->GetName();
 
 				out << YAML::Key << "Volume" << YAML::Value << rSoundGroup->GetVolume();
-				out << YAML::Key << "Pitch"  << YAML::Value << rSoundGroup->GetPitch();
+				out << YAML::Key << "Pitch" << YAML::Value << rSoundGroup->GetPitch();
 
 				out << YAML::EndMap;
 			}
@@ -157,7 +157,7 @@ namespace Saturn {
 		YAML::Node data = YAML::Load( ss.str() );
 
 		if( data.IsNull() )
-			return;	
+			return;
 
 		const auto project = data[ "Project" ];
 
@@ -180,7 +180,7 @@ namespace Saturn {
 		newProject->SetAutoSaveInterval( project[ "AutoSavesInterval" ].as<float>( 300.0f ) );
 		newProject->SetDeveloperVersion( project[ "DeveloperVersion" ].as<std::string>( std::string() ) );
 #endif
-		
+
 		const auto online = project[ "Online" ];
 		if( online )
 		{

@@ -77,7 +77,7 @@ namespace Saturn {
 	class AssetBundle
 	{
 	public:
-		[[nodiscard]] static AssetBundleResult BundleAssets( Ref<JobProgress>& jobProgress );
+		[[nodiscard]] static AssetBundleResult BundleAssets( Ref<JobProgress> jobProgress );
 		[[nodiscard]] static AssetBundleResult ReadBundle();
 
 					  static AssetBundleResult BundleMinimal();

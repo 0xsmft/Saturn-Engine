@@ -35,6 +35,8 @@
 #include "Saturn/Scene/Entity.h"
 #include "Saturn/Scene/Scene.h"
 
+#include "Saturn/Runtime/RuntimeEvents.h"
+
 #include "ConsoleCommand.h"
 
 namespace Saturn {
@@ -107,6 +109,15 @@ namespace Saturn {
 		}
 	}
 
+	// obfuscated -> ke == scene renderer options
+	// example: ke ao gtao
+	// example: ke fps true
+	static void CmmCmd_Ke( const std::string key, const std::string value )
+	{
+		Application::Get()->DispatchEvent<RuntimeSceneRendererKeCommand>( 
+			std::move( key ), std::move( value ) );
+	}
+
 	//////////////////////////////////////////////////////////////////////////
 
 	void ConsoleCommandManager::RegisterEngineDefaultCommands()
@@ -119,6 +130,8 @@ namespace Saturn {
 
 		static const ConsoleCommandArgsVoidRet<decltype( CmmCmd_Stat ), uint64_t> statCommand( "stat", CmmCmd_Stat );
 		static const ConsoleCommandArgsVoidRet<decltype( CmmCmd_Tp ), uint64_t, glm::vec3> tpCommand( "tp", CmmCmd_Tp );
+		
+		static const ConsoleCommandArgsVoidRet<decltype( CmmCmd_Ke ), std::string, std::string> keCommand( "ke", CmmCmd_Ke );
 	}
 
 	void ConsoleCommandManager::ClearAllCommands()

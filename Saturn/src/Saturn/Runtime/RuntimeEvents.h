@@ -71,5 +71,31 @@ namespace Saturn {
 		RuntimeState m_CurrentState = RuntimeState::NoState;
 		RuntimeState m_OldState = RuntimeState::NoState;
 	};
+	
+	//
+	// Occurs when a "/Ke" command is entered, Ke means scene renderer options.
+	// 
+	// Technically, this may be an editor command as well but if the developer has
+	// the runtime console on dist, then this is a runtime command.
+	//
+	class RuntimeSceneRendererKeCommand : public Event
+	{
+		SAT_DEFINE_EVENT( SceneRendererOptionCommandEntered, EC_Runtime );
+	public:
+		RuntimeSceneRendererKeCommand( const std::string&& rrKey, const std::string&& rrValue )
+			: Event( EventType::SceneRendererOptionCommandEntered, EC_Runtime ), 
+			m_Key( std::move( rrKey ) ), 
+			m_Value( std::move( rrValue ) )
+		{
+		}
+
+		virtual ~RuntimeSceneRendererKeCommand() = default;
+
+		const std::string GetKey() const { return m_Key; }
+		const std::string GetValue() const { return m_Value; }
+
+	private:
+		std::string m_Key, m_Value;
+	};
 
 }

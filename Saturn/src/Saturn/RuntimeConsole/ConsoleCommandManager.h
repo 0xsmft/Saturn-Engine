@@ -79,6 +79,7 @@ namespace Saturn {
 
 	private:
 		ConsoleOutputSink m_Sink;
+		// NAME -> COMMAND PTR (Non-owning ptr, commands are registerd on the stack)
 		std::unordered_map<std::string, ConsoleCommandBase*> m_Commands;
 	};
 

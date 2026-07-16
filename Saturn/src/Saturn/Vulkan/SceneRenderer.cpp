@@ -4017,6 +4017,78 @@ namespace Saturn {
 		m_RendererData.BoneTransformMap.clear();
 	}
 
+	void SceneRenderer::HandleKeCommand( const std::string& rKey, const std::string& rValue )
+	{
+		if( rKey == "FPS" )
+		{
+			if( rValue == "TRUE" )
+			{
+				// todo
+			}
+			else // anything else assume false
+			{
+				// todo
+			}
+		}
+		else if( rKey == "AO" )
+		{
+			if( rValue == "SSAO" )
+			{
+				if( m_AOTechnique != AOTechnique::SSAO )
+				{
+					const auto oldTechnique = m_AOTechnique;
+
+					m_AOTechnique = AOTechnique::SSAO;
+					InitAO( oldTechnique );
+				}
+			}
+			else if( rValue == "GTAO" )
+			{
+				if( m_AOTechnique != AOTechnique::GTAO ) 
+				{
+					const auto oldTechnique = m_AOTechnique;
+					
+					m_AOTechnique = AOTechnique::GTAO;
+					InitAO( oldTechnique );
+				}
+			}
+			else if( rValue == "NONE" )
+			{
+				if( m_AOTechnique != AOTechnique::None ) 
+				{
+					const auto oldTechnique = m_AOTechnique;
+					
+					m_AOTechnique = AOTechnique::None;
+					InitAO( oldTechnique );
+				}
+			}
+		}
+		else if( rKey == "SHADOWS" )
+		{
+			if( rValue == "TRUE" )
+			{
+				m_RendererData.EnableShadows = true;
+			}
+			else
+			{
+				m_RendererData.EnableShadows = false;
+			}
+		}
+		else if( rKey == "BLOOM" )
+		{
+			if( rValue == "TRUE" )
+			{
+				m_RendererData.EnableBloom = true;
+				m_RendererData.SceneCompositeFlags &= ~SceneCompositeFlag_NoBloom;
+			}
+			else
+			{
+				m_RendererData.EnableBloom = false;
+				m_RendererData.SceneCompositeFlags |= SceneCompositeFlag_NoBloom;
+			}
+		}
+	}
+
 	void SceneRenderer::SetCamera( const RendererCamera& Camera )
 	{
 		m_RendererData.CurrentCamera = Camera;

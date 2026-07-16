@@ -702,6 +702,12 @@ namespace Saturn {
 			case EventType::NodeEditorDebugBreak:
 			{
 			} break;
+
+			case EventType::SceneRendererOptionCommandEntered:
+			{
+				const RuntimeSceneRendererKeCommand& rKeEvent = ( RuntimeSceneRendererKeCommand& ) rEvent;
+				m_SceneRenderer->HandleKeCommand( rKeEvent.GetKey(), rKeEvent.GetValue() );
+			} break;
 		}
 	}
 

@@ -626,6 +626,8 @@ namespace Saturn {
 		void SetViewportSize( uint32_t w, uint32_t h );
 		void SetViewportPosition( float x, float y ) { m_RendererData.ViewportPos = glm::vec2( x, y ); }
 
+		void HandleKeCommand( const std::string& rKey, const std::string& rValue );
+
 		void FlushDrawList();
 
 		void Recreate();

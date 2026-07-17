@@ -149,16 +149,53 @@ namespace Saturn::Auxiliary {
 
 	extern bool DrawDisabledBoolControl( const std::string& rLabel, bool& value, bool useColumns = true, float columnWidth = 125.0f );
 	
-	extern bool DrawInt8Control( const std::string& rLabel, uint8_t& values, int min = 0.0f, int max = 500.0f, float columnWidth = 125.0f );
-	extern bool DrawInt16Control( const std::string& rLabel, uint16_t& values, int min = 0.0f, int max = 500.0f, float columnWidth = 125.0f );
-	extern bool DrawInt64Control( const std::string& rLabel, uint64_t& values, int min = 0.0f, int max = 500.0f, float columnWidth = 125.0f );
+	extern bool DrawInt8Control( const std::string& rLabel, 
+		int8_t& values, 
+		int8_t min = 0i8, int8_t max = 0x7F,
+		float columnWidth = 125.0f );
 
-	extern bool DrawUInt8Control( const std::string& rLabel, int8_t& values, int min = 0.0f, int max = 500.0f, float columnWidth = 125.0f );
-	extern bool DrawUInt16Control( const std::string& rLabel, int16_t& values, int min = 0.0f, int max = 500.0f, float columnWidth = 125.0f );
-	extern bool DrawUInt64Control( const std::string& rLabel, int32_t& values, int min = 0.0f, int max = 500.0f, float columnWidth = 125.0f );
+	extern bool DrawInt16Control( const std::string& rLabel, 
+		int16_t& values, 
+		int16_t min = 0i16, int16_t max = 500i16,
+		float columnWidth = 125.0f );
+	
+	extern bool DrawInt32Control( const std::string& rLabel, 
+		int32_t& values, 
+		int32_t min = 02, int32_t max = 500, 
+		float columnWidth = 125.0f );
+	
+	extern bool DrawInt64Control( const std::string& rLabel, 
+		int64_t& values, 
+		int64_t min = 0i64, int64_t max = 500i64,
+		float columnWidth = 125.0f );
+
+	extern bool DrawUInt8Control( const std::string& rLabel, 
+		uint8_t& values, 
+		uint8_t min = 0u, uint8_t max = 0xFF, 
+		float columnWidth = 125.0f );
+	
+	extern bool DrawUInt16Control( const std::string& rLabel, 
+		uint16_t& values, 
+		uint16_t min = 0u, uint16_t max = 500u, 
+		float columnWidth = 125.0f );
+	
+	extern bool DrawUInt32Control( const std::string& rLabel, 
+		uint32_t& values, 
+		uint32_t min = 0u, uint32_t max = 500u, 
+		float columnWidth = 125.0f );
+	
+	extern bool DrawUInt64Control( const std::string& rLabel, 
+		uint64_t& values, 
+		uint64_t min = 0u, uint64_t max = 500u, 
+		float columnWidth = 125.0f );
 	
 	// NOTE: When not using columns you MUST draw the text before calling this function!
-	extern bool DrawDoubleControl( const std::string& rLabel, double& values, int min = 0.0f, int max = 500.0f, bool useColumns = true, float columnWidth = 125.0f );
+	extern bool DrawDoubleControl( const std::string& rLabel,
+		double& values, 
+		int min = 0.0f, 
+		int max = 500.0f, 
+		bool useColumns = true, 
+		float columnWidth = 125.0f );
 
 	extern void DrawDisabledButton( const std::string& rLabel );
 

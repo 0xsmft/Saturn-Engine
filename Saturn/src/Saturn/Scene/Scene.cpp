@@ -609,12 +609,12 @@ namespace Saturn {
 
 			sceneRenderer->GetRenderer2D()->SubmitString( rTextComp.Text, font, rTc.GetTransform(), rTextComp.Color );
 		}
-#endif
 
 		if( m_RuntimeState == RuntimeState::Suspended )
 		{
 			RtDrawAIDebug( sceneRenderer );
 		}
+#endif
 	}
 
 	void Scene::RtBuildSceneRendererCommands( Ref<SceneRenderer> sceneRenderer )

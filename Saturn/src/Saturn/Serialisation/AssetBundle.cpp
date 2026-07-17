@@ -49,6 +49,7 @@
 #include "Saturn/Animation/SkeletonAsset.h"
 #include "Saturn/Animation/SkeletalAnimationAsset.h"
 #include "Saturn/Physics/PhysicsMaterialAsset.h"
+#include "Saturn/Physics/PhysicsSurfaceRegistryAsset.h"
 #include "Saturn/Alura/AluraStylingProfile.h"
 #include "Saturn/Alura/AluraFont.h"
 #include "Saturn/NodeEditor/GlobalNodeEditorTaskCache.h"
@@ -507,6 +508,16 @@ namespace Saturn {
 				{
 					RawSkeletalAnimationSerialiser serialiser;
 					serialiser.DumpAndWriteToVFS( styleProf );
+				}
+			} break;
+
+			case Saturn::AssetType::PhysSurfaceRegistry:
+			{
+				Ref<PhysicsSurfaceRegistryAsset> physSurfaceReg = pAssetManager->ImportAssetAs<PhysicsSurfaceRegistryAsset>( AssetBundleRegistry, id );
+				if( physSurfaceReg )
+				{
+					RawPhysicsSurfaceRegistryAssetSerialiser serialiser;
+					serialiser.DumpAndWriteToVFS( physSurfaceReg );
 				}
 			} break;
 

@@ -84,8 +84,8 @@ namespace Saturn {
 	public:
 		RuntimeSceneRendererKeCommand( const std::string&& rrKey, const std::string&& rrValue )
 			: Event( EventType::SceneRendererOptionCommandEntered, EC_Runtime ), 
-			m_Key( std::move( rrKey ) ), 
-			m_Value( std::move( rrValue ) )
+			m_Key( rrKey ), 
+			m_Value( rrValue )
 		{
 		}
 

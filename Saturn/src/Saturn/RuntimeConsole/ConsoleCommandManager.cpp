@@ -112,7 +112,7 @@ namespace Saturn {
 	// obfuscated -> ke == scene renderer options
 	// example: ke ao gtao
 	// example: ke fps true
-	static void CmmCmd_Ke( const std::string key, const std::string value )
+	static void CmmCmd_Ke( std::string key, std::string value )
 	{
 		Application::Get()->DispatchEvent<RuntimeSceneRendererKeCommand>( 
 			std::move( key ), std::move( value ) );

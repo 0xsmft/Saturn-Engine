@@ -295,11 +295,9 @@ namespace Saturn {
 		m_IsRendererTexture = RendererTexture; 
 		m_Path = "Renderer Pink Texture";
 		
-#if defined( SAT_DEBUG )
-		SetDebugUtilsObjectName( std::format( "Texture Sampler (FN/SetData) PATH/{0} PINK/{1}", m_Path.stem().string(), m_IsRendererTexture ), ( uint64_t ) m_Sampler, VK_OBJECT_TYPE_SAMPLER );
-		SetDebugUtilsObjectName( std::format( "Texture Image (FN/SetData) PATH/{0} PINK/{1}", m_Path.stem().string(), m_IsRendererTexture ), ( uint64_t ) m_Image, VK_OBJECT_TYPE_IMAGE );
-		SetDebugUtilsObjectName( std::format( "Texture Image View (FN/SetData) PATH/{0} PINK/{1}", m_Path.stem().string(), m_IsRendererTexture ), ( uint64_t ) m_ImageView, VK_OBJECT_TYPE_IMAGE_VIEW );
-#endif
+		SetDebugUtilsObjectName( "RendererPinkTexture-Sampler", ( uint64_t ) m_Sampler, VK_OBJECT_TYPE_SAMPLER );
+		SetDebugUtilsObjectName( "RendererPinkTexture-Img", ( uint64_t ) m_Image, VK_OBJECT_TYPE_IMAGE );
+		SetDebugUtilsObjectName( "RendererPinkTexture-View", ( uint64_t ) m_ImageView, VK_OBJECT_TYPE_IMAGE_VIEW );
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -497,6 +495,28 @@ namespace Saturn {
 		return 0;
 	}
 
+	static VkFormat GetVulkanFormatFromChannelCount( uint32_t channel ) 
+	{
+		switch( channel )
+		{
+			case 1:
+				return VK_FORMAT_R8_UNORM;
+
+			case 2:
+				return VK_FORMAT_R8G8_UNORM;
+
+			// Some vulkan GPUs do not support RGB8 images with the features that we need, 
+			// so instead of doing more work to check, we are just going to take the easy 
+			// way out and covert it to a RGBA8 texture.
+			case 3:
+			case 4:
+				return VK_FORMAT_R8G8B8A8_UNORM;
+
+			default:
+				return VK_FORMAT_UNDEFINED;
+		}
+	}
+
 	//////////////////////////////////////////////////////////////////////////
 	// TEXTURE 2D
 
@@ -558,9 +578,10 @@ namespace Saturn {
 
 		m_Width = Width;
 		m_Height = Height;
+		m_ImageFormat = GetVulkanFormatFromChannelCount( Channels );
 
 		m_pData = new uint32_t[ Width * Height ];
-		std::memset( m_pData, 0xFF00FFFF, sizeof( uint32_t ) * Width * Height );
+		std::memset( m_pData, 0xFFFF00FF, sizeof( uint32_t ) * Width * Height );
 
 		SetData( m_pData );
 
@@ -609,10 +630,8 @@ namespace Saturn {
 	// Create a texture 2D
 	void Texture2D::CreateTextureImage()
 	{
-		SAT_CORE_ASSERT( std::filesystem::exists( m_Path ), "Path does not exist!" );
+		SAT_CORE_VERIFY( std::filesystem::exists( m_Path ), "Fucking texture path does not exist!" );
 		SAT_CORE_ASSERT( m_Path.extension().string() != ".stx", "You cannot load a Saturn Texture Source Asset (.stx) you must use the Texture Source Asset to load it's raw image file, you've passed in the path of the Asset not the image file." );
-
-		m_ImageFormat = VK_FORMAT_R8G8B8A8_UNORM;
 
 		if( !HasLoadFlag( TextureLoadFlags_LoadOnMainThread ) )
 		{
@@ -646,6 +665,7 @@ namespace Saturn {
 			m_pData = pTextureData;
 			m_Width = Width;
 			m_Height = Height;
+			m_ImageFormat = GetVulkanFormatFromChannelCount( Channels );
 
 			SetData( pTextureData );
 

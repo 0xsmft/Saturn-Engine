@@ -198,6 +198,11 @@ namespace Saturn {
 		void SetOnlineAppID( uint32_t id ) { m_OnlineAppID = id; }
 		uint32_t GetOnlineAppID() const { return m_OnlineAppID; }
 
+		//////////////////////////////////////////////////////////////////////////
+		// Asset Bundle
+		uint64_t GetCompressionThresholdForAssetBundle() { return m_MininumCompressedThresholdInAB; }
+		void SetCompressionThresholdForAssetBundle( uint64_t threshold ) { m_MininumCompressedThresholdInAB = threshold; }
+
 	public:
 		//////////////////////////////////////////////////////////////////////////
 		// Premake, Building & Preparation for Distribution (Used in Editor)
@@ -227,7 +232,8 @@ namespace Saturn {
 		UUID m_DefaultPhysicsMaterialAsset = 0;
 		UUID m_DefaultFontAsset = 0;
 		UUID m_DefaultPhysSurfaceRegistryAsset = 0;
-
+		// The minimum file size for a file in the asset bundle before it needs to be compressed, in kilobytes.
+		uint64_t m_MininumCompressedThresholdInAB = 512llu;
 		OnlineSystemAPIType m_OnlineAPIType = OnlineSystemAPIType::Steam;
 
 		// TODO: This makes sense to be in the project, however, should be suited to be in the OnlineSystem.

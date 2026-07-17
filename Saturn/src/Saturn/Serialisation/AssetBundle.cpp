@@ -216,6 +216,8 @@ namespace Saturn {
 
 		/////////////////////////////////////
 
+		const auto compressionThreshold = ActiveProject->GetCompressionThresholdForAssetBundle();
+
 		uint64_t offset = 0;
 
 		// Next, now that we have dumped all of the assets we can now pack and compress the assets.
@@ -225,11 +227,12 @@ namespace Saturn {
 			if( !rEntry.is_regular_file() )
 				continue;
 
-			std::filesystem::path path = rEntry.path();
+			const std::filesystem::path path = rEntry.path();
 
 			Buffer fileBuffer;
 			std::ifstream stream( path, std::ios::binary | std::ios::in | std::ios::ate );
 
+			// File size in bytes
 			const uint64_t fileSize = stream.tellg();
 
 			DumpFileHeader dfh;
@@ -247,8 +250,8 @@ namespace Saturn {
 
 			stream.close();
 
-			// Compression, allow for files under 500KB (0.5MB) to not be compressed.
-			if( fileSize > 500llu * 1024llu && path.extension() != ".vfsn" )
+			// Compression
+			if( ( fileSize / 1024llu ) > compressionThreshold && path.extension() != ".vfsn" )
 			{
 				SAT_CORE_WARN( "Compressing file: {0} because file is {1} KiB", path.string(), fileSize / 1024 );
 
@@ -287,8 +290,8 @@ namespace Saturn {
 			{
 				dfh.CompressedSize = dfh.OrginalSize;
 
-				SAT_CORE_WARN( "Not compressing file: {0} because file size is less than 500 KiB", path.string() );
-				jobProgress->SetStatus( std::format( "Not Compressing file because file size is less than 500 KiB: {0}", path.string() ) );
+				SAT_CORE_WARN( "Not compressing file: {0} because file size is less than the compression threshold KiB", path.string() );
+				jobProgress->SetStatus( std::format( "Not Compressing file because file size is less than the compression threshold: {0}", path.string() ) );
 
 				RawSerialisation::WriteObject( dfh, fout );
 				RawSerialisation::WriteSaturnBuffer( fileBuffer, fout );

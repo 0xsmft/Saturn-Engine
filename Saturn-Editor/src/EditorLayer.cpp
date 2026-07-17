@@ -971,7 +971,7 @@ namespace Saturn {
 	{
 		m_ImGuiWindowManager->OnRuntimeStateChanged( RuntimeState::Ending, g_ActiveScene->GetRuntimeState() );
 
-		// Destory canvas now before the scene closes.
+		// Destroy canvas now before the scene closes.
 		delete g_AluraCanvas;
 		g_AluraCanvas = nullptr;
 
@@ -1783,6 +1783,25 @@ namespace Saturn {
 			//			ImGui::EndHorizontal();
 
 			ImGui::EndVertical();
+
+			ImGui::PushFont( boldFont );
+			ImGui::Text( "Asset Bundle" );
+			ImGui::Separator();
+			ImGui::PopFont();
+
+			{
+				auto abCompressionThreshold = ActiveProject->GetCompressionThresholdForAssetBundle();
+				if( Auxiliary::DrawUInt64Control( "Compression Threshold (KiB)", abCompressionThreshold, 0, 10240, 210.0f ) )
+				{
+					ActiveProject->SetCompressionThresholdForAssetBundle( abCompressionThreshold );
+				}
+
+				if( ImGui::BeginItemTooltip() )
+				{
+					ImGui::Text( "Any file above %llu KiB will get compressed, anything below will not.", abCompressionThreshold );
+					ImGui::EndTooltip();
+				}
+			}
 
 			ImGui::PushFont( boldFont );
 			ImGui::Text( "Action Bindings" );
@@ -3608,7 +3627,7 @@ namespace Saturn {
 
 		if( ImGui::BeginPopupModal( "Premake path not set", nullptr, ImGuiWindowFlags_NoSavedSettings ) )
 		{
-			ImGui::Text( "The environment variable SAT_PREMAKE_PATH is not set. Saturn needs to know the path of premake in other to build projects." );
+			ImGui::Text( "The environment variable SAT_PREMAKE_PATH is not set. Saturn needs to know the path of premake in order to build projects." );
 			ImGui::Separator();
 
 			const auto pathStr = s_PremakePath.string();

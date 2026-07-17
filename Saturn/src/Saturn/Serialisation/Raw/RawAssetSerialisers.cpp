@@ -146,6 +146,10 @@ namespace Saturn {
 		if( !materialAsset )
 			return false;
 
+		// Hack, if a material is loaded but never rendered and by extension never updated
+		// it will be stuck at it's default state, so we change that here.
+		materialAsset->ForceUpdate();
+
 		std::filesystem::path out = Project::GetActiveProject()->GetTempDir();
 		out /= std::to_string( rAsset->ID );
 		out.replace_extension( ".vfs" );

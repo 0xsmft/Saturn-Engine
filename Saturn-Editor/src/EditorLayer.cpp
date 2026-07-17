@@ -461,7 +461,8 @@ namespace Saturn {
 			}
 #endif
 
-			if( const auto prj = Project::GetActiveProject(); prj->IsAutoSavesEnabled() )
+			// Do not accumulate auto save time during playtime.
+			if( const auto prj = Project::GetActiveProject(); prj->IsAutoSavesEnabled() && !m_RequestRuntime )
 			{
 				m_LastAutoSaveTime += time;
 			

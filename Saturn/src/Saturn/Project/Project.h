@@ -200,7 +200,7 @@ namespace Saturn {
 
 		//////////////////////////////////////////////////////////////////////////
 		// Asset Bundle
-		uint64_t GetCompressionThresholdForAssetBundle() { return m_MininumCompressedThresholdInAB; }
+		uint64_t GetCompressionThresholdForAssetBundle() const { return m_MininumCompressedThresholdInAB; }
 		void SetCompressionThresholdForAssetBundle( uint64_t threshold ) { m_MininumCompressedThresholdInAB = threshold; }
 
 	public:

@@ -38,12 +38,17 @@
 
 // Standard defines
 #define SAT_NOVTABLE  
-#define SAT_DLLEXPORT  __attribute__((visibility("default")))
 #define SAT_DLLIMPORT 
 #define SAT_NOINLINE  __attribute__(("noinline"))
 // Windows only defines, however defined on all platforms for compatibility 
 #define SAT_ALLOCATOR_ATTR __attribute__(("malloc"))
 #define SAT_PLATFORM_FRIENDLY_NAME "macOS"
+
+#if !defined(SAT_DIST)
+#define SAT_DLLEXPORT __attribute__((visibility("default")))
+#else
+#define SAT_DLLEXPORT
+#endif
 
 // The vulkan surface extension name.
 #define SAT_PLATFORM_VULKAN_SURFACE_NAME "VK_EXT_metal_surface"

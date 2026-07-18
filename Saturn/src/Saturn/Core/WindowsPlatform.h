@@ -38,12 +38,18 @@
 
 // Standard defines
 #define SAT_NOVTABLE  __declspec(novtable)
-#define SAT_DLLEXPORT __declspec(dllexport)
-#define SAT_DLLIMPORT __declspec(dllimport)
 #define SAT_NOINLINE  __declspec(noinline) 
 // Windows only defines, however defined on all platforms for compatibility 
 #define SAT_ALLOCATOR_ATTR __declspec(allocator)
 #define SAT_PLATFORM_FRIENDLY_NAME "Windows"
+
+#if !defined(SAT_DIST)
+#define SAT_DLLEXPORT __declspec(dllexport)
+#define SAT_DLLIMPORT __declspec(dllimport)
+#else
+#define SAT_DLLEXPORT
+#define SAT_DLLIMPORT
+#endif
 
 // The vulkan surface extension name.
 #define SAT_PLATFORM_VULKAN_SURFACE_NAME "VK_KHR_win32_surface"

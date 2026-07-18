@@ -67,6 +67,7 @@ namespace Saturn {
 		void SetClipboardText( const std::wstring& rTextData );
 		void Focus();
 		void FlashAttention();
+		void CentreWindowXYInMonitor();
 
 		RubyIVec2 GetPosition() { return m_pDefaultBackend->GetWindowPos(); }
 		RubyIVec2 GetLastMousePos()  const   { return m_LastMousePosition; }

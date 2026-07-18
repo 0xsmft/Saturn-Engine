@@ -268,6 +268,15 @@ namespace Saturn {
 		m_pDefaultBackend->FlashAttention();
 	}
 
+	void RubyWindow::CentreWindowXYInMonitor()
+	{
+		// Centre window.
+		const auto& rMonitorSize = RubyLibrary::Get().GetPrimaryMonitor().WorkSize;
+		const auto& rWindowSize = GetSize();
+
+		SetPosition( ( rMonitorSize.x - rWindowSize.x ) / 2, ( rMonitorSize.y - rWindowSize.y ) / 2 );
+	}
+
 	bool RubyWindow::IsKeyDown( RubyKey key )
 	{
 		return RubyLibrary::Get().IsKeyDown( key );

@@ -190,11 +190,7 @@ namespace Saturn {
 
 		m_NoIconTexture = Ref<Texture2D>::Create( "content/textures/NoIcon.png" );
 
-		// Centre window.
-		const auto& rMonitorSize = RubyLibrary::Get().GetPrimaryMonitor().WorkSize;
-		const auto& rWindowSize = Application::Get()->GetWindow()->GetSize();
-
-		Application::Get()->GetWindow()->SetPosition( ( rMonitorSize.x - rWindowSize.x ) * 0.5f, ( rMonitorSize.y - rWindowSize.y ) * 0.5f );
+		Application::Get()->GetWindow()->CentreWindowXYInMonitor();
 	}
 
 	ProjectBrowserLayer::~ProjectBrowserLayer()

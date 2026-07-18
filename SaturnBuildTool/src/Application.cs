@@ -68,7 +68,7 @@ namespace SaturnBuildTool
             // Engine Test -> created buildtool-x0.0.5 was very similar to engine test but it used premake instead of custom C# build rules.
             // buildtool-x0.0.5 -> created sbt-5.1 branch which is this version now.
             //
-            StartupMessage = $"Saturn Build Tool X{version.FileMajorPart}.{version.FileMinorPart}.{version.FileBuildPart} \"SBT 5.1\"";
+            StartupMessage = $"Saturn Build Tool X{version.ProductVersion} \"SBT 5.1\"";
         }
 
         public bool Init()
@@ -370,8 +370,8 @@ namespace SaturnBuildTool
 
             if( Shared.ProjectInfo.CurrentConfigKind == ConfigKind.Dist )
             {
-                // Add {project-name}.Entry.cpp file
-                string entryFilePath = Path.Combine( Shared.ProjectInfo.BuildDir, $"{Shared.ProjectInfo.Name}.Entry.cpp" );
+                // Add {project-name}.Entry.cpp file aka SaturnGameEntry.cpp in >0.2.6
+                string entryFilePath = Path.Combine( Shared.ProjectInfo.SaturnDir, "Saturn-Editor", "content", "Templates", "SaturnGameEntry.cpp" );
 
                 if( !File.Exists( entryFilePath ) ) 
                 {

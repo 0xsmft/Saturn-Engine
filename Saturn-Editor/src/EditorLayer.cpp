@@ -3596,7 +3596,6 @@ namespace Saturn {
 			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_ShowDistBuildOptions );
 			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_ShouldBuildShaderBundle );
 			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_ShouldBuildAssetBundle );
-			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_ShouldCopyBuildFiles );
 			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_WasGizmoUsed );
 			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_LastRuntimeAttemptFailed );
 			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_FullscreenViewport );

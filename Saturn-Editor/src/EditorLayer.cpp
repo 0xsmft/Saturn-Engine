@@ -2768,7 +2768,7 @@ namespace Saturn {
 
 				if( ImGui::BeginItemTooltip() )
 				{
-					ImGui::Text( "Attempts to build the Shader Bundle and the Asset Bundle and copies important build files for distribution." );
+					ImGui::Text( "Attempts to build the Shader Bundle and the Asset Bundle." );
 					ImGui::Text( "You must run this before clicking the \"Distribute project\" button." );
 					ImGui::EndTooltip();
 				}
@@ -3440,8 +3440,6 @@ namespace Saturn {
 		{
 			ImGui::Text( "What would you like to do?" );
 
-			// NOTE: We aren't going to reset these values, which means that the next time the developer wants to build, the options that were selected will still be there.
-			Auxiliary::DrawBoolControl( "Copy build files", m_ShouldCopyBuildFiles );
 			Auxiliary::DrawBoolControl( "Build Shader Bundle", m_ShouldBuildShaderBundle );
 			Auxiliary::DrawBoolControl( "Build Asset Bundle", m_ShouldBuildAssetBundle );
 
@@ -4574,11 +4572,6 @@ namespace Saturn {
 	{
 		JobSystem::Get().QueueJob( [ this ]()
 		{
-			if( m_ShouldCopyBuildFiles )
-			{
-				Project::GetActiveProject()->PrepForDist();
-			}
-
 			m_BlockingOperation->SetStatus( "Building Shader bundle..." );
 			BuildShaderBundle();
 		} );

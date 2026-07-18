@@ -396,56 +396,6 @@ namespace Saturn {
 		fout << fileData;
 	}
 
-	void Project::PrepForDist() const
-	{
-		// Copy over the runtime build file.
-		auto BuildFilePath = GetRootDir() / "Source";
-		BuildFilePath /= m_Config.Name + ".Distribution.cs";
-
-		if( !std::filesystem::exists( BuildFilePath ) )
-			std::filesystem::copy( "content/Templates/%PROJECT_NAME%.Distribution.cs", BuildFilePath );
-
-		// Copy over the client main file
-		auto BuildPath = GetFullAssetPath().parent_path() / "Build";
-		BuildPath /= m_Config.Name + ".Entry.cpp";
-
-		if( std::filesystem::exists( BuildPath ) )
-			std::filesystem::remove( BuildPath );
-
-		std::filesystem::create_directory( GetFullAssetPath().parent_path() / "Build" );
-
-		std::filesystem::copy( "content/Templates/%PROJECT_NAME%.Entry.cpp", BuildPath );
-
-		std::ifstream ifs( BuildPath );
-
-		std::string fileData;
-
-		if( ifs )
-		{
-			ifs.seekg( 0, std::ios_base::end );
-			auto size = static_cast< size_t >( ifs.tellg() );
-			ifs.seekg( 0, std::ios_base::beg );
-
-			fileData.reserve( size );
-			fileData.assign( std::istreambuf_iterator<char>( ifs ), std::istreambuf_iterator<char>() );
-		}
-
-		size_t pos = fileData.find( "%PROJECT_NAME%" );
-
-		while( pos != std::string::npos )
-		{
-			std::string projectPath = m_Config.Name;
-			std::replace( projectPath.begin(), projectPath.end(), '\\', '/' );
-
-			fileData.replace( pos, 14, projectPath );
-
-			pos = fileData.find( "%PROJECT_NAME%" );
-		}
-
-		std::ofstream fout( BuildPath );
-		fout << fileData;
-	}
-
 	std::filesystem::path Project::FindBuildTool() const
 	{
 		const std::filesystem::path SaturnRootDir = Auxiliary::GetEnvironmentVariable( "SATURN_DIR" );

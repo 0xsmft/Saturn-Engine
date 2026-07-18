@@ -288,7 +288,6 @@ namespace Saturn {
 		bool m_ShowDistBuildOptions = false;
 		bool m_ShouldBuildShaderBundle = false;
 		bool m_ShouldBuildAssetBundle = false;
-		bool m_ShouldCopyBuildFiles = false;
 		bool m_WasGizmoUsed = false;
 		bool m_LastRuntimeAttemptFailed = false;
 		bool m_FullscreenViewport = false;

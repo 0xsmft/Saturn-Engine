@@ -36,13 +36,11 @@
 
 namespace Saturn {
 
-//	class SkeletalMesh;
-
 	class BoneJoint : public RefTarget
 	{
 	public:
 		BoneJoint();
-		BoneJoint( const std::string& rBoneName, const std::string& rName );
+		BoneJoint( const uint64_t boneIdx, const std::string& rBoneName, const std::string& rName );
 		virtual ~BoneJoint();
 
 	public:
@@ -51,15 +49,18 @@ namespace Saturn {
 		[[nodiscard]] const glm::vec3 GetRelativeScale()    const { return m_Scale; }
 		[[nodiscard]] const std::string& GetBoneName()      const { return m_BoneName; }
 		[[nodiscard]] const std::string& GetName()          const { return m_Name; }
+		[[nodiscard]] uint64_t GetBoneIndex()				const { return m_BoneIndex; }
 
 		void SetRelativePosition( const glm::vec3& rPosition )    { m_Position = rPosition; }
 		void SetRelativeRotation( const glm::vec3& rEulerAngles ) { m_Rotation = glm::quat( rEulerAngles ); }
-		void SetRelativeScale( const glm::vec3& rScale )         { m_Scale = rScale; }
+		void SetRelativeRotation( const glm::quat& rQuat )		  { m_Rotation = rQuat; }
+		void SetRelativeScale( const glm::vec3& rScale )          { m_Scale = rScale; }
 
 		glm::mat4 GetBoneMatrix( Ref<class Animator> animator ) const;
 		glm::mat4 GetBoneMatrixPreview( Ref<class SkeletalMesh> animator ) const;
 
 	private:
+		uint64_t m_BoneIndex = ~0u;
 		std::string m_BoneName;
 		std::string m_Name;
 

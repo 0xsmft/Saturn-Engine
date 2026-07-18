@@ -404,9 +404,19 @@ namespace Saturn {
 		NavigationMeshSpecificationComponent( const NavigationMeshSpecificationComponent& other ) = default;
 	};
 
-	struct AttachmentPointComponent
+	//
+	// Internal component only added by the Scene system
+	// upon calls to AttachToBone, removed when detached.
+	// 
+	// This component is not duplicatable and can not be added via the SceneHierarchyPanel.
+	//
+	struct BoneAttachmentInfoComponent
 	{
-		BoneJoint* pBoneJoint = nullptr;
+		std::string AttachmentName;
+
+		BoneAttachmentInfoComponent() = default;
+		BoneAttachmentInfoComponent( const BoneAttachmentInfoComponent& other ) = default;
+		BoneAttachmentInfoComponent( const std::string& rName ) : AttachmentName( rName ) {}
 	};
 
 	struct BehaviourTreeComponent
@@ -436,7 +446,7 @@ namespace Saturn {
 		AudioPlayerComponent, AudioListenerComponent,
 		BillboardComponent,
 		NavigationMeshSpecificationComponent,
-		AttachmentPointComponent, 
+		BoneAttachmentInfoComponent,
 		BehaviourTreeComponent,
 		TextComponent>;
 
@@ -450,7 +460,6 @@ namespace Saturn {
 		AudioPlayerComponent, AudioListenerComponent,
 		BillboardComponent,
 		NavigationMeshSpecificationComponent,
-		AttachmentPointComponent, 
 		BehaviourTreeComponent,
 		TextComponent>;
 }

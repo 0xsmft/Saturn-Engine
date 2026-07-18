@@ -980,14 +980,6 @@ namespace Saturn {
 			if( parent )
 			{
 				transform = GetTransformRelativeToParent( parent );
-				
-				if( auto* pAttachmentComp = entity->TryGetComponent<AttachmentPointComponent>(); pAttachmentComp && pAttachmentComp->pBoneJoint ) 
-				{
-					if( const auto& anim = parent->GetComponent<SkeletalMeshComponent>().LocalAnimator ) 
-					{
-						transform *= pAttachmentComp->pBoneJoint->GetBoneMatrix( anim );
-					}
-				}
 			}
 		}
 

@@ -63,9 +63,8 @@ namespace Saturn {
 
 			m_BoneTree[ i ] = new SkelItemNode( pBoneItem );
 
-#if SAT_FEATURE_BONE_ATTACHMENT
 			// Add bone joint if the bone has one.
-			if( auto* pBone = m_SkeletonAsset->FindBoneJoint( pBoneItem->pBone->BoneName ) )
+			if( auto* pBone = m_SkeletonAsset->FindBoneJoint( m_SkeletonAsset->GetBoneName( pBoneItem->BoneIndex ) ) )
 			{
 				SkelAttachmentPoint* pAttachmentPoint = new SkelAttachmentPoint();
 				pAttachmentPoint->Type = SkelItemType::AttachmentPoint;
@@ -76,7 +75,6 @@ namespace Saturn {
 
 				m_BoneTree[ i ]->Children.push_back( pNode );
 			}
-#endif
 		}
 
 		for( size_t i = 0; i < m_SkeletonAsset->GetBoneNames().size(); ++i )
@@ -218,18 +216,21 @@ namespace Saturn {
 
 	void SkeletonBoneHierarchyPanel::DrawContextOptionsBone()
 	{
-#if SAT_FEATURE_BONE_ATTACHMENT
-		ImGui::SeparatorText( "BONE OPTIONS" );
-		if( ImGui::MenuItem( "Create new attachment point" ) )
+		ImGui::SeparatorText( "Bone Options" );
+		if( ImGui::MenuItem( "Create new attachment point (socket)" ) )
 		{
+			// Get the bone node data.
 			const SkelBoneItem* pBoneItem = dynamic_cast< const SkelBoneItem* >( m_pSelectedBone->pItem );
 			if( pBoneItem )
 			{
-				auto& rBone = m_SkeletonAsset->AddNewBoneJoint( pBoneItem->pBone->BoneName, "New Attachment" );
+				// Find bone.
+				const auto& rBoneInfo = m_SkeletonAsset->GetBoneName( pBoneItem->BoneIndex );
+
+				auto& rBoneJoint = m_SkeletonAsset->AddNewBoneJoint( pBoneItem->BoneIndex, rBoneInfo, "New Attachment Point" );
 
 				SkelAttachmentPoint* pAttachmentPoint = new SkelAttachmentPoint();
 				pAttachmentPoint->Type = SkelItemType::AttachmentPoint;
-				pAttachmentPoint->pBoneJoint = &rBone;
+				pAttachmentPoint->pBoneJoint = &rBoneJoint;
 
 				SkelItemNode* pNode = new SkelItemNode( pAttachmentPoint );
 				pNode->pParent = m_pSelectedBone;
@@ -237,12 +238,11 @@ namespace Saturn {
 				m_pSelectedBone->Children.push_back( pNode );
 			}
 		}
-#endif
 	}
 
 	void SkeletonBoneHierarchyPanel::DrawContextOptionsAP()
 	{
-		ImGui::SeparatorText( "ATTACHMENT POINT OPTIONS" );
+		ImGui::SeparatorText( "Attachment Point Options" );
 		if( ImGui::MenuItem( "Delete" ) )
 		{
 			SkelAttachmentPoint* pAttachmentPoint = dynamic_cast< SkelAttachmentPoint* >( m_pSelectedBone->pItem );

@@ -146,6 +146,48 @@ namespace Saturn {
 		}
 	}
 
+	void Entity::RemoveFromParent()
+	{
+		auto parent = GetScene()->FindEntityByID( GetParent() );
+		if( !parent )
+			return;
+
+		auto& rChildren = parent->GetChildren();
+		rChildren.erase( std::remove( rChildren.begin(), rChildren.end(), GetUUID() ), rChildren.end() );
+
+		SetParent( 0 );
+	}
+
+	void Entity::ChangeToNewParent( SharedPtr<Entity> parent )
+	{
+		RemoveFromParent();
+		SetParent( parent->GetUUID() );
+
+		parent->AddChild( GetUUID() );
+	}
+
+	void Entity::AttachToBone( const std::string& rAttachmentName )
+	{
+		auto parent = GetScene()->FindEntityByID( GetParent() );
+		if( !parent )
+			return;
+
+		AddComponent<BoneAttachmentInfoComponent>( rAttachmentName );
+	}
+
+	void Entity::AttachToBone( SharedPtr<Entity> parent, const std::string& rAttachmentName )
+	{
+		RemoveFromParent();
+		ChangeToNewParent( parent );
+
+		AttachToBone( rAttachmentName );
+	}
+
+	void Entity::DetachFromBone()
+	{
+		RemoveComponent<BoneAttachmentInfoComponent>();
+	}
+
 	void Entity::Serialise( const SharedPtr<Entity>& rObject, std::ofstream& rStream )
 	{
 		RawEntitySerialisation::SerialiseEntity( rObject, rStream );

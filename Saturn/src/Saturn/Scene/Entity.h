@@ -149,6 +149,13 @@ namespace Saturn {
 		UUID GetUUID() const { return GetComponent<IdComponent>().ID; }
 		[[nodiscard]] const std::string& GetName() const { return GetComponent<TagComponent>().Tag; }
 
+		//
+		// Set the parent ID only! (semi-internal function!)
+		// 
+		// For a more easy to use function see ChangeToNewParent, 
+		// which will tell the parent that their child has be removed.
+		// This function does not.
+		//
 		inline void SetParent( const UUID& rID )
 		{
 			GetComponent<RelationshipComponent>().Parent = rID;
@@ -200,6 +207,28 @@ namespace Saturn {
 		// May return zero if no ID is set or could be found.
 		//
 		UUID GetPhysicsMaterialID();
+
+		//
+		// Helper to remove this entity from it's parent.
+		//
+		void RemoveFromParent();
+
+		//
+		// Move to a new parent and remove from the old parents list.
+		//
+		void ChangeToNewParent( SharedPtr<Entity> parent );
+
+		//
+		// Attach this entity to a bone in it's parent.
+		//
+		void AttachToBone( const std::string& rAttachmentName );
+
+		//
+		// Attach this entity to a bone in a new parent.
+		//
+		void AttachToBone( SharedPtr<Entity> parent, const std::string& rAttachmentName );
+
+		void DetachFromBone();
 
 	public:
 		operator entt::entity() const { return m_EntityHandle; }

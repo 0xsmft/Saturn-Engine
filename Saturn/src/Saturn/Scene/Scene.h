@@ -179,7 +179,7 @@ namespace Saturn {
 	struct CreateEntityParameters
 	{
 		UUID ID;
-		std::string Tag;
+		std::string Tag = "Empty Entity";
 		SharedPtr<Entity> Parent;
 		// TODO: We could use Entity::StaticClass but then we have to include Entity.h, not really ideal
 		SClass* pClass = nullptr;

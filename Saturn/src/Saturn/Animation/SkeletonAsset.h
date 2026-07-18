@@ -80,6 +80,9 @@ namespace Saturn {
 		// AttachmentPoints (BoneJoints)
 		AttachmentPoints,
 
+		// AttachmentPoints reworked... 
+		AttachmentPointsV2,
+
 		//^^^ only add new versions above here....
 		Latest,
 		Lowest = BeforeVersionWasAdded
@@ -109,7 +112,7 @@ namespace Saturn {
 		void Deserialise( std::filesystem::path& rPath );
 
 	public:
-		BoneJoint& AddNewBoneJoint( const std::string& rBoneName, const std::string& rName );
+		BoneJoint& AddNewBoneJoint( const uint64_t boneIndex, const std::string& rBoneName, const std::string& rName );
 
 		// INTERNAL, Adds a bone to the skeleton.
 		uint64_t SkAddBone( const std::string& rName, uint32_t parentIndex, const glm::mat4& rTransform );

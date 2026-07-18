@@ -40,6 +40,9 @@ namespace Saturn {
 		AttachmentPoint
 	};
 
+	//
+	// Base class for an item in the skeleton tree
+	//
 	class SkelItem
 	{
 	public:
@@ -48,6 +51,9 @@ namespace Saturn {
 		SkelItemType Type = SkelItemType::Unknown;
 	};
 
+	//
+	// Represents a bone in the skeleton tree.
+	//
 	class SkelBoneItem : public SkelItem
 	{
 	public:
@@ -56,11 +62,15 @@ namespace Saturn {
 		uint32_t BoneIndex = ~0u;
 	};
 
+	//
+	// Represents a bone attachment point in the skeleton tree.
+	//
 	class SkelAttachmentPoint : public SkelItem
 	{
 	public:
 		virtual ~SkelAttachmentPoint() = default;
 
+		// The underlying bone joint stored in the Asset.
 		BoneJoint* pBoneJoint = nullptr;
 	};
 

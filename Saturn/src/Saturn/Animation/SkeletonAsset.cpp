@@ -118,7 +118,7 @@ namespace Auxiliary {
 	void SkeletonBoneHierarchy::BuildHierarchyBone( const aiNode* pNode, uint32_t parentIndex )
 	{
 		const auto index = m_pSkeleton->SkAddBone( pNode->mName.C_Str(), parentIndex, Auxiliary::Mat4FromAssimpMat4( pNode->mTransformation )  );
-		for( uint32_t i = 0; i < pNode->mNumChildren; i++ )
+		for( uint32_t i = 0; i < pNode->mNumChildren; ++i )
 		{
 			if( m_Names.find( pNode->mChildren[ i ]->mName.C_Str() ) != m_Names.end() )
 			{
@@ -223,6 +223,50 @@ namespace Auxiliary {
 		const unsigned char Magic[ 3 ] = { 0x2E, 0x53, 0x4B };
 	};
 
+	static void SerialiseBoneJoints( const std::vector<BoneJoint>& rBoneJoints, std::ofstream& rStream ) 
+	{
+		RawSerialisation::WriteObject( rBoneJoints.size(), rStream );
+
+		for( const auto& rJoint : rBoneJoints )
+		{
+			RawSerialisation::WriteObject( rJoint.GetBoneIndex(), rStream );
+			RawSerialisation::WriteString( rJoint.GetBoneName(), rStream );
+			RawSerialisation::WriteString( rJoint.GetName(), rStream );
+			RawSerialisation::WriteVec3( rJoint.GetRelativePosition(), rStream );
+			RawSerialisation::WriteObject( rJoint.GetRelativeRotation(), rStream );
+			RawSerialisation::WriteVec3( rJoint.GetRelativeScale(), rStream );
+		}
+	}
+
+	static void DeserialiseBoneJoints( std::vector<BoneJoint>& rBoneJoints, std::ifstream& rStream )
+	{
+		size_t size = 0llu;
+		RawSerialisation::ReadObject( size, rStream );
+
+		rBoneJoints.reserve( size );
+
+		for( size_t i = 0; i < size; ++i )
+		{
+			uint64_t boneIndex = 0llu;
+			RawSerialisation::ReadObject( boneIndex, rStream );
+			const auto boneName = RawSerialisation::ReadString( rStream );
+			const auto jointName = RawSerialisation::ReadString( rStream );
+
+			auto& rBoneJoint = rBoneJoints.emplace_back( boneIndex, boneName, jointName );
+
+			glm::vec3 pos{}, scale{};
+			glm::quat rot{};
+
+			RawSerialisation::ReadVec3( pos, rStream );
+			RawSerialisation::ReadObject( rot, rStream );
+			RawSerialisation::ReadVec3( scale, rStream );
+
+			rBoneJoint.SetRelativePosition( pos );
+			rBoneJoint.SetRelativeRotation( rot );
+			rBoneJoint.SetRelativeScale( scale );
+		}
+	}
+
 	void SkeletonAsset::Serialise( const std::filesystem::path& rPath ) const
 	{
 		std::ofstream fout( rPath, std::ios::binary | std::ios::trunc );
@@ -239,6 +283,8 @@ namespace Auxiliary {
 #if !defined(SAT_DIST)
 		RawSerialisation::WriteVector( m_CompatibleMeshes, fout );
 #endif
+		SerialiseBoneJoints( m_BoneJoints, fout );
+
 		RawSerialisation::WriteVector( m_BonePositions, fout );
 		RawSerialisation::WriteVector( m_BoneRotations, fout );
 		RawSerialisation::WriteVector( m_BoneScales, fout );
@@ -263,17 +309,26 @@ namespace Auxiliary {
 #if !defined(SAT_DIST)
 		RawSerialisation::ReadVector( m_CompatibleMeshes, FileIn );
 #endif
+		if( skVersion >= SkeletonAssetVersion::AttachmentPointsV2 )
+		{
+			DeserialiseBoneJoints( m_BoneJoints, FileIn );
+		}
+
 		RawSerialisation::ReadVector( m_BonePositions, FileIn );
 		RawSerialisation::ReadVector( m_BoneRotations, FileIn );
 		RawSerialisation::ReadVector( m_BoneScales, FileIn );
 
-		FileIn.close();
+		m_LocalVersion = skVersion;
 
+		FileIn.close();
 	}
 
-	BoneJoint& SkeletonAsset::AddNewBoneJoint( const std::string& rBoneName, const std::string& rName )
+	BoneJoint& SkeletonAsset::AddNewBoneJoint( 
+		const uint64_t boneIndex, 
+		const std::string& rBoneName, 
+		const std::string& rName )
 	{
-		return m_BoneJoints.emplace_back( rBoneName, rName );
+		return m_BoneJoints.emplace_back( boneIndex, rBoneName, rName );
 	}
 
 	uint64_t SkeletonAsset::SkAddBone( const std::string& rName, uint32_t parentIndex, const glm::mat4& rTransform )
@@ -286,7 +341,7 @@ namespace Auxiliary {
 
 		const auto index = m_BoneNames.size();
 		m_BoneNames.emplace_back( rName );
-		m_ParentBoneIndices.push_back( parentIndex );
+		m_ParentBoneIndices.push_back( ( uint64_t )parentIndex );
 
 		m_BonePositions.emplace_back();
 		m_BoneRotations.emplace_back();
@@ -312,8 +367,8 @@ namespace Auxiliary {
 
 	BoneJoint* SkeletonAsset::FindBoneJoint( const std::string& rBoneName )
 	{
-		auto itr = std::find_if( m_BoneJoints.begin(), m_BoneJoints.end(), 
-			[rBoneName](const auto& rItem) 
+		auto itr = std::find_if( m_BoneJoints.begin(), m_BoneJoints.end(),
+			[ rBoneName ]( const auto& rItem )
 		{
 			return rItem.GetBoneName() == rBoneName;
 		} );

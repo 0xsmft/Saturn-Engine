@@ -64,7 +64,7 @@ namespace Saturn {
 			m_BoneTree[ i ] = new SkelItemNode( pBoneItem );
 
 			// Add bone joint if the bone has one.
-			if( auto* pBone = m_SkeletonAsset->FindBoneJoint( m_SkeletonAsset->GetBoneName( pBoneItem->BoneIndex ) ) )
+			if( auto* pBone = m_SkeletonAsset->FindBoneJointViaBoneName( m_SkeletonAsset->GetBoneName( pBoneItem->BoneIndex ) ) )
 			{
 				SkelAttachmentPoint* pAttachmentPoint = new SkelAttachmentPoint();
 				pAttachmentPoint->Type = SkelItemType::AttachmentPoint;

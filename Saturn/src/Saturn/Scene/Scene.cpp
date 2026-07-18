@@ -56,6 +56,7 @@
 
 #include "Saturn/Audio/AudioSystem.h"
 
+#include "Saturn/Animation/SkeletonAsset.h"
 #include "Saturn/Animation/BoneJoint.h"
 
 #include "Saturn/Alura/AluraCanvas.h"
@@ -317,6 +318,29 @@ namespace Saturn {
 			if( meshComponent.Mesh && meshComponent.LocalAnimator )
 			{
 				meshComponent.LocalAnimator->TickAnimation( ts );
+			}
+		}
+
+		const auto boneAttachments = GetAllEntitiesWith<BoneAttachmentInfoComponent>();
+		for( const auto& entity : boneAttachments )
+		{
+			auto& boneAttachment = entity->GetComponent<BoneAttachmentInfoComponent>();
+			auto& tc = entity->GetComponent<TransformComponent>();
+
+			const auto parent = FindEntityByID( entity->GetParent() );
+			if( parent )
+			{
+				const auto& rSk = parent->GetComponent<SkeletalMeshComponent>();
+
+				const auto skeleton = rSk.Mesh->GetSkeletonAsset();
+				if( skeleton )
+				{
+					if( const auto* pBoneJoint = skeleton->FindBoneJoint( boneAttachment.AttachmentName ) ) 
+					{
+						// Update transform.
+						tc.SetTransform( pBoneJoint->GetBoneMatrix( rSk.LocalAnimator ) );
+					}
+				}
 			}
 		}
 	}

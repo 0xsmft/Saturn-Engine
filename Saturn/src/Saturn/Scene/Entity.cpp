@@ -168,10 +168,6 @@ namespace Saturn {
 
 	void Entity::AttachToBone( const std::string& rAttachmentName )
 	{
-		auto parent = GetScene()->FindEntityByID( GetParent() );
-		if( !parent )
-			return;
-
 		AddComponent<BoneAttachmentInfoComponent>( rAttachmentName );
 	}
 

@@ -159,7 +159,7 @@ namespace Saturn {
 		{
 			if( weight < 0.0f || weight > 1.0f )
 			{
-				SAT_CORE_WARN( "Vertex bone weight is out of range. We will clamp it to [0, 1] (BoneID={0}, Weight={1})", id, weight );
+				SAT_CORE_WARN( "Vertex bone weight is out of range. Clamped to [0, 1] (BoneID/{0}, Weight/{1})", id, weight );
 				weight = std::clamp( weight, 0.0f, 1.0f );
 			}
 			if( weight > 0.0f )
@@ -177,7 +177,7 @@ namespace Saturn {
 				// Note: when importing from assimp we are passing aiProcess_LimitBoneWeights which automatically keeps only the top N (where N defaults to 4)
 				//       bone weights (and normalizes the sum to 1), which is exactly what we want.
 				//       So, we should never get here.
-				SAT_CORE_WARN( "Vertex has more than four bones affecting it, extra bone influences will be discarded (BoneID={0}, Weight={1})", id, weight );
+				SAT_CORE_WARN( "Vertex has more than four bones affecting it, extra bone influences will be discarded (BoneID/{0}, Weight/{1})", id, weight );
 			}
 		}
 
@@ -185,15 +185,12 @@ namespace Saturn {
 		{
 			float sumWeights = 0.0f;
 			for( size_t i = 0; i < 4; ++i )
-			{
 				sumWeights += BoneWeights[ i ];
-			}
+
 			if( sumWeights > 0.0f )
 			{
 				for( size_t i = 0; i < 4; ++i )
-				{
 					BoneWeights[ i ] /= sumWeights;
-				}
 			}
 		}
 

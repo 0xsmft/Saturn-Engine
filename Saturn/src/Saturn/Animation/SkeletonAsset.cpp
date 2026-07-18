@@ -365,7 +365,7 @@ namespace Auxiliary {
 		return ~0u;
 	}
 
-	BoneJoint* SkeletonAsset::FindBoneJoint( const std::string& rBoneName )
+	BoneJoint* SkeletonAsset::FindBoneJointViaBoneName( const std::string& rBoneName )
 	{
 		auto itr = std::find_if( m_BoneJoints.begin(), m_BoneJoints.end(),
 			[ rBoneName ]( const auto& rItem )
@@ -381,12 +381,44 @@ namespace Auxiliary {
 		return &*itr;
 	}
 
-	const BoneJoint* SkeletonAsset::FindBoneJoint( const std::string& rBoneName ) const
+	const BoneJoint* SkeletonAsset::FindBoneJointViaBoneName( const std::string& rBoneName ) const
 	{
 		const auto itr = std::find_if( m_BoneJoints.begin(), m_BoneJoints.end(),
 			[ rBoneName ]( const auto& rItem )
 		{
 			return rItem.GetBoneName() == rBoneName;
+		} );
+
+		if( itr == m_BoneJoints.end() )
+		{
+			return nullptr;
+		}
+
+		return &*itr;
+	}
+
+	BoneJoint* SkeletonAsset::FindBoneJoint( const std::string& rName )
+	{
+		const auto itr = std::find_if( m_BoneJoints.begin(), m_BoneJoints.end(),
+			[ rName ]( const auto& rItem )
+		{
+			return rItem.GetName() == rName;
+		} );
+
+		if( itr == m_BoneJoints.end() )
+		{
+			return nullptr;
+		}
+
+		return &*itr;
+	}
+
+	const BoneJoint* SkeletonAsset::FindBoneJoint( const std::string& rName ) const
+	{
+		const auto itr = std::find_if( m_BoneJoints.begin(), m_BoneJoints.end(),
+			[ rName ]( const auto& rItem )
+		{
+			return rItem.GetName() == rName;
 		} );
 
 		if( itr == m_BoneJoints.end() )

@@ -131,8 +131,11 @@ namespace Saturn {
 			return m_BoneNames[ index ];
 		}
 
-		BoneJoint* FindBoneJoint( const std::string& rBoneName );
-		const BoneJoint* FindBoneJoint( const std::string& rBoneName ) const;
+		BoneJoint* FindBoneJointViaBoneName( const std::string& rBoneName );
+		const BoneJoint* FindBoneJointViaBoneName( const std::string& rBoneName ) const;
+
+		BoneJoint* FindBoneJoint( const std::string& rName );
+		const BoneJoint* FindBoneJoint( const std::string& rName ) const;
 
 	public:
 		const std::vector<SkeletalMeshBoneInfo>& GetBoneInfo() const { return m_BoneInfos; }

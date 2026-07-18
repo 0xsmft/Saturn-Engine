@@ -63,9 +63,6 @@ namespace Saturn {
 
 	ProjectBrowserLayer::ProjectBrowserLayer()
 	{
-#if defined(SAT_PROFILER_ENABLE)
-		tracy::StartupProfiler();
-#endif
 
 		m_HasSaturnDir = Auxiliary::HasEnvironmentVariable( "SATURN_DIR" );
 
@@ -196,10 +193,6 @@ namespace Saturn {
 	ProjectBrowserLayer::~ProjectBrowserLayer()
 	{
 		m_NoIconTexture = nullptr;
-	
-#if defined(SAT_PROFILER_ENABLE)
-		tracy::ShutdownProfiler();
-#endif
 	}
 	
 	void ProjectBrowserLayer::OnDetach()
@@ -496,6 +489,23 @@ namespace Saturn {
 		}
 	}
 
+	void ProjectBrowserLayer::AddNewlyCreatedProjectToRecentProjects()
+	{
+		Ref<Project> activeProject = Project::GetActiveProject();
+		if( activeProject )
+		{
+			ProjectInformation info{};
+			info.Filepath = Project::GetActiveProjectPath();
+			info.Name = activeProject->GetConfig().Name;
+			info.AssetPath = activeProject->GetFullAssetPath();
+			info.LastWriteTime = std::format( "{0}", std::filesystem::last_write_time( info.Filepath ) );
+			info.LastWriteTime = info.LastWriteTime.substr( 0, info.LastWriteTime.find_first_of( " " ) );
+			info.ThumbnailTexture = m_NoIconTexture;
+
+			m_RecentProjects.push_back( info );
+		}
+	}
+
 	void ProjectBrowserLayer::CreateProject( const std::filesystem::path& rPath )
 	{
 		const std::string ProjectName = rPath.filename().string();
@@ -561,6 +571,7 @@ namespace Saturn {
 		std::filesystem::create_directory( ProjectFolderPath / "Source" );
 		std::filesystem::create_directory( ProjectFolderPath / "Build" );
 		std::filesystem::create_directory( ProjectFolderPath / "Cache" );
+		std::filesystem::create_directory( ProjectFolderPath / "Scripts" );
 
 		{
 			const auto editorScriptsPath = templatesPath / "ScriptsForCopy";
@@ -568,7 +579,7 @@ namespace Saturn {
 			if( std::filesystem::exists( editorScriptsPath ) )
 			{
 				// Copy to project directory.
-				std::filesystem::copy( ProjectFolderPath / "Scripts", editorScriptsPath, std::filesystem::copy_options::overwrite_existing );
+				std::filesystem::copy( editorScriptsPath, ProjectFolderPath / "Scripts", std::filesystem::copy_options::overwrite_existing );
 			}
 		}
 
@@ -581,6 +592,8 @@ namespace Saturn {
 
 		ProjectSerialiser ps;
 		ps.Serialise();
+
+		AddNewlyCreatedProjectToRecentProjects();
 
 		Project::SetActiveProject( nullptr );
 	}

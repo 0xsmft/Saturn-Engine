@@ -69,6 +69,8 @@ namespace Saturn {
 
 		void ImportExternalProject( const std::filesystem::path& rPath );
 
+		void AddNewlyCreatedProjectToRecentProjects();
+
 	private:
 		TitleBar m_TitleBar;
 

@@ -57,6 +57,7 @@ namespace Saturn {
 		void SetupNewNodeEditor();
 		void SetupNodesFromMaterial();
 		void CreateNodesFromTexture( Ref<Texture2D> texture, int slot );
+		void DrawSimpleEditor();
 
 	private:
 		SharedPtr<MaterialGraph> m_NodeEditor = nullptr;
@@ -64,5 +65,7 @@ namespace Saturn {
 		Ref<Material> m_EditingMaterial = nullptr;
 
 		UUID m_OutputNodeID = 0;
+		AssetID m_SimpleEditorFinderID = 0;
+		bool m_OpenSimpleEditor = false;
 	};
 }

@@ -181,6 +181,12 @@ namespace Saturn {
 
 				return node;
 			} );
+
+		m_NodeEditor->SetTopBarFunction( 
+		[ & ]() -> void 
+		{
+			if( ImGui::Button( "Open simple editor" ) ) m_OpenSimpleEditor ^= 1;
+		} );
 	}
 
 	void MaterialAssetViewer::SetupNewNodeEditor()
@@ -250,11 +256,116 @@ namespace Saturn {
 		}
 	}
 
+	void MaterialAssetViewer::DrawSimpleEditor()
+	{
+		if( ImGui::Begin( "Simple Editor", &m_OpenSimpleEditor, ImGuiWindowFlags_NoSavedSettings ) )
+		{
+			bool open = false;
+
+			const auto drawTextureInfo = [ & ]( const char* pTextureName, Ref<Texture2D> texture, int slot )
+			{
+				ImGui::PushID( slot );
+
+				ImGui::BeginHorizontal( "##textinfo" );
+
+				ImGui::Text( pTextureName );
+
+				ImGui::Spring();
+
+				if( texture )
+				{
+					if( Auxiliary::ImageButton( texture, ImVec2( 64.0F, 64.0F ) ) )
+					{
+						open ^= 1;
+					}
+				}
+
+				ImGui::Spring();
+
+				ImGui::Text( "%s", texture->GetPath().string().c_str() );
+
+				ImGui::EndHorizontal();
+				ImGui::PopID();
+
+				if( Auxiliary::DrawAssetFinder( AssetType::Texture, &open, m_SimpleEditorFinderID ) )
+				{
+					switch( slot )
+					{
+						case 0: // albedo
+						{
+							m_HostMaterialAsset->SetAlbeoMap( m_SimpleEditorFinderID );
+						} break;
+
+						case 1: // normal
+						{
+							m_HostMaterialAsset->SetNormalMap( m_SimpleEditorFinderID );
+						} break;
+
+						case 2: // roughness
+						{
+							m_HostMaterialAsset->SetRoughnessMap( m_SimpleEditorFinderID );
+						} break;
+
+						case 3: // metallic
+						{
+							m_HostMaterialAsset->SetMetallicMap( m_SimpleEditorFinderID );
+						} break;
+					}
+
+					m_HostMaterialAsset->ForceUpdate();
+				}
+			};
+
+			ImGui::SeparatorText( "Albedo" );
+
+			auto color = m_HostMaterialAsset->GetAlbeoColor();
+			if( Auxiliary::DrawColorVec3Control( "Albedo Color", color ) )
+			{
+				m_HostMaterialAsset->SetAlbeoColor( color );
+			}
+
+			drawTextureInfo( "Albedo Texture", m_HostMaterialAsset->GetAlbeoMap(), 0 );
+
+			ImGui::SeparatorText( "Normal" );
+			drawTextureInfo( "Normal Texture", m_HostMaterialAsset->GetNormalMap(), 1 );
+
+			ImGui::SeparatorText( "Roughness" );
+			drawTextureInfo( "Roughness Texture", m_HostMaterialAsset->GetRoughnessMap(), 2 );
+
+			float roughness = m_HostMaterialAsset->GetRoughness();
+			if( Auxiliary::DrawFloatControl( "Roughness", roughness ) )
+			{
+				m_HostMaterialAsset->SetMetalness( roughness );
+			}
+
+			ImGui::SeparatorText( "Metallic " );
+			drawTextureInfo( "Metallic Texture", m_HostMaterialAsset->GetMetallicMap(), 3 );
+
+			float metalness = m_HostMaterialAsset->GetMetalness();
+			if( Auxiliary::DrawFloatControl( "Metalness", metalness ) ) 
+			{
+				m_HostMaterialAsset->SetMetalness( metalness );
+			}
+
+			ImGui::SeparatorText( "Emissive" );
+
+			float emissive = m_HostMaterialAsset->GetEmissive();
+			if( Auxiliary::DrawFloatControl( "Emissive", emissive ) )
+			{
+				m_HostMaterialAsset->SetEmissive( emissive );
+			}
+		}
+
+		ImGui::End();
+	}
+
 	void MaterialAssetViewer::DrawInternal()
 	{
 		if( m_NodeEditor->IsOpen() )
 		{
 			m_NodeEditor->OnImGuiRender();
+
+			if( m_OpenSimpleEditor ) DrawSimpleEditor();
 		}
 		else if( m_HostMaterialAsset )
 		{

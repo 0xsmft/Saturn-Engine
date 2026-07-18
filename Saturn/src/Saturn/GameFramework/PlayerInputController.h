@@ -35,7 +35,6 @@
 
 #include <functional>
 #include <unordered_map>
-#include <unordered_set>
 
 namespace Saturn {
 
@@ -53,7 +52,7 @@ namespace Saturn {
 		using ActionFunction = std::function<void()>;
 	public:
 		PlayerInputController();
-		~PlayerInputController();
+		virtual ~PlayerInputController();
 
 		// Binds an action to a function with a specific trigger state.
 		//

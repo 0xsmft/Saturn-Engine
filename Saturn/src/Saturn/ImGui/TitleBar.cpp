@@ -61,7 +61,7 @@ namespace Saturn {
 			{
 				m_Height = height;
 
-				pWindow->SetTiltebarHeight( (uint32_t)height );
+				pWindow->SetTiltebarHeight( ( uint32_t ) height );
 			}
 
 			pWindow->SetTitlebarCondition( ImGui::IsAnyItemHovered() );

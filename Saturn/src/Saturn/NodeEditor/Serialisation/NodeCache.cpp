@@ -391,7 +391,7 @@ namespace Saturn {
 				rList.emplace_back( taskObj );
 			}
 			else
-				SAT_CORE_WARN( "[NodeCache, TaskCache]: ClassHash: {0}, invalid! Not creating task from an invalid class hash." );
+				SAT_CORE_WARN( "[NodeCache, TaskCache]: ClassHash: {0} invalid! Not creating task from an invalid class hash." );
 		}
 
 		// Variables

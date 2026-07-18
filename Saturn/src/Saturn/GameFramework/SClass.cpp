@@ -34,8 +34,6 @@
 
 #include "Saturn/Core/Memory/SObjectAllocator.h"
 
-#define SAT_FORCE_VERBOSE_SCLASS_REG
-
 #if defined(SAT_DEBUG) || defined(SAT_FORCE_VERBOSE_SCLASS_REG)
 #define SAT_VERBOSE_SCLASS_REG
 #endif

@@ -30,7 +30,9 @@
 
 #include "Asset.h"
 
+#if SAT_WITH_MEMORY_ASSET_DEPENDENCY_NOTIFIER == 1
 #include <functional>
+#endif
 
 namespace Saturn {
 
@@ -116,8 +118,8 @@ namespace Saturn {
 #endif
 	};
 
-#if MEMORY_ASSET_DEPENDENCY_NOTIFIER
-	// MemoryAssetDependencyNotifier
+#if SAT_WITH_MEMORY_ASSET_DEPENDENCY_NOTIFIER == 1
+	// MemoryAssetDependencyNotifiSer
 	// This class is a wrapper for an AssetID with additional support for registering asset dependencies
 	// This class is very similar to AssetDependency<> however, it does not give compile time asset types.
 	// The usage of this class is similar to MemoryAssetDependency<> however, it should be used when you don't actually care about the asset ids but you still need to depend on them. (See: AssetRegistry)

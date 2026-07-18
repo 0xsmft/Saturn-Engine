@@ -204,7 +204,7 @@ namespace Saturn {
 	{
 		m_ComponentCaches.clear();
 
-		m_Scene->Each( [this]( const auto entity ) 
+		m_Scene->Each( [ this ]( const auto entity )
 		{
 			auto& rCachesList = m_ComponentCaches[ entity->GetUUID() ];
 

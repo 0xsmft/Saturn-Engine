@@ -107,13 +107,6 @@ namespace Saturn {
 			}
 		}
 
-		/*
-		if( m_NodeEditor->Evaluate() != NodeEditorCompilationStatus::Success ) 
-		{
-			Application::Get()->DispatchEvent<SendEditorNotificationEvent>( "The node editor failed to evaluate." );
-		}
-		*/
-
 		m_NodeEditor->SaveAndMarkClean();
 #endif
 	}

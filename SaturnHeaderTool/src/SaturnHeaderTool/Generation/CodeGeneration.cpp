@@ -599,7 +599,7 @@ namespace Saturn {
 			const auto& rClassName = rGClass.ClassName;
 
 			fout << std::format( "void LinkSymbol{0}() {{}}\n", rClassName );
-			fout << std::format( "__declspec(dllexport) Saturn::SClass* RStaticLnk{0}();\n\n", rClassName );
+			fout << std::format( "SAT_DLLEXPORT Saturn::SClass* RStaticLnk{0}();\n\n", rClassName );
 
 			// [BEGIN INTERNAL CLASS]
 			const std::string internalClassName = std::format( "{0}Int", rClassName );

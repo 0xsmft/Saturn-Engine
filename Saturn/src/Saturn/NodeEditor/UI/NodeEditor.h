@@ -45,9 +45,6 @@
 
 #include "builders.h"
 
-#include <stack>
-#include <queue>
-
 namespace Saturn {
 
 	enum class NodeEditorAction : uint8_t

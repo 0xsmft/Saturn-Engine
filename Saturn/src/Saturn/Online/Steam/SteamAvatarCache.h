@@ -36,7 +36,6 @@
 #include <steam/isteamfriends.h>
 
 #include <unordered_map>
-#include <queue>
 
 namespace Saturn {
 

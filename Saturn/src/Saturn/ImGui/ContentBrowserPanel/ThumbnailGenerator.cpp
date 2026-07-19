@@ -51,8 +51,6 @@
 
 #include "Saturn/Project/Project.h"
 
-#include <queue>
-
 namespace Saturn {
 
 	constexpr auto THUMBNAIL_SIZE = 512.0F;

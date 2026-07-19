@@ -30,8 +30,6 @@
 
 #include "ThumbnailGenerator.h"
 
-#include <queue>
-
 namespace Saturn {
 
 	constexpr int CB_DIRECTORY_ICON = 0;

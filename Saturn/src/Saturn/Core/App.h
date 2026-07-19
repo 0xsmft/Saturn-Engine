@@ -38,8 +38,6 @@
 
 #include "SingletonStorage.h"
 
-#include <vector>
-#include <queue>
 #include <functional>
 #include <thread>
 #include <mutex>

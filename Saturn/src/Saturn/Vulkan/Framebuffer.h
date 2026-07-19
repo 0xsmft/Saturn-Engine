@@ -41,7 +41,8 @@ namespace Saturn {
 		FramebufferTextureSpecification() = default;
 		FramebufferTextureSpecification( ImageFormat format ) : TextureFormat( format ) { }
 
-		ImageFormat TextureFormat;
+		ImageFormat TextureFormat = ImageFormat::None;
+		bool StorageImage = false;
 	};
 
 	struct FramebufferAttachmentSpecification
@@ -63,11 +64,19 @@ namespace Saturn {
 
 		bool CreateDepth = true;
 
+		//
 		// Existing Images
+		//
 		// This allows framebuffers to use existing images that could of been created in a earlier stage.
-		// You do not need to specify the Image Attachment for these existing images in the "Attachment" variable because this image already exists so there is no point to recreate it.
-		// However, make sure that if this Framebuffer gets reconstructed that you specify the new existing images because the framebuffer (by default) does not reset the existing images because it does not know what they could be. 
+		// You do not need to specify the Image Attachment for these existing images in the "Attachment" 
+		// variable because this image already exists so there is no point to recreate it.
+		//
+		// However, make sure that if this Framebuffer gets reconstructed that you specify the new existing images 
+		// because the framebuffer (by default) does not reset the existing images because it does not know 
+		// what they could be. 
+		//
 		// This is partly because the "Attachments" variable are indirectly linked to an image.
+		//
 		// Existing Image Index (in the render pass) -> ExistingImage
 		std::unordered_map< uint32_t, Ref< Image2D > > ExistingImages;
 
@@ -84,7 +93,7 @@ namespace Saturn {
 	{
 	public:
 		Framebuffer( const FramebufferSpecification& Specification );
-		~Framebuffer();
+		virtual ~Framebuffer();
 		
 		// "newSpec" can be null, "newSpec" should only be used to reassign Existing images in the framebuffer.
 		void Recreate( uint32_t Width, uint32_t Height, const FramebufferSpecification& newSpec = {} );

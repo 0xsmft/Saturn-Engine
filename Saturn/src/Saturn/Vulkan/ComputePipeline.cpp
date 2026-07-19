@@ -118,7 +118,11 @@ namespace Saturn {
 		Info.commandBufferCount = 1;
 		Info.pCommandBuffers = &m_CommandBuffer;
 
-		VK_CHECK( vkQueueSubmit( ComputeQueue, 1, &Info, s_ComputeFence ) );
+		{
+			VulkanContext::Get()->LockQueue( true );
+			VK_CHECK( vkQueueSubmit( ComputeQueue, 1, &Info, s_ComputeFence ) );
+			VulkanContext::Get()->UnlockQueue( true );
+		}
 
 		// Wait for shader execution.
 		vkWaitForFences( LogicalDevice, 1, &s_ComputeFence, VK_TRUE, UINT64_MAX );

@@ -195,13 +195,23 @@ namespace Saturn {
 		// New attachments
 
 		// Color
-		int i = 0;
+		size_t i = 0llu;
 		for( auto format : m_ColorAttachmentsFormats )
 		{
-			Ref<Image2D> image = Ref<Image2D>::Create( format, m_Specification.Width, m_Specification.Height, m_Specification.ArrayLevels, 1, m_Specification.MSAASamples );
+			const auto& rTextureSpec = m_Specification.Attachments.Attachments[ i ];
 
-			std::string imageDebugName = std::format( "Color Attachment for FB/{0}@({1})", m_Specification.RenderPass->GetName(), i );
-			SetDebugUtilsObjectName( imageDebugName.c_str(), (uint64_t)image->GetImage(), VK_OBJECT_TYPE_IMAGE );
+			Ref<Image2D> image = Ref<Image2D>::Create( 
+				format, 
+				m_Specification.Width, m_Specification.Height, 
+				m_Specification.ArrayLevels, 
+				1, 
+				m_Specification.MSAASamples, 
+				ImageTiling::Optimal, 
+				rTextureSpec.StorageImage 
+			);
+
+			const std::string imageDebugName = std::format( "Color Attachment for FB/{0}@({1})", m_Specification.RenderPass->GetName(), i );
+			SetDebugUtilsObjectName( imageDebugName.c_str(), ( uint64_t ) image->GetImage(), VK_OBJECT_TYPE_IMAGE );
 
 			if( imageDebugName == "Color Attachment for FB/Late Composite pass@(0)" )
 				Core::BreakDebug();
@@ -219,7 +229,15 @@ namespace Saturn {
 		// Depth
 		if( !m_DepthAttachmentResource && m_Specification.CreateDepth ) 
 		{
-			m_DepthAttachmentResource = Ref<Image2D>::Create( m_DepthFormat, m_Specification.Width, m_Specification.Height, m_Specification.ArrayLevels, 1, m_Specification.MSAASamples );
+			m_DepthAttachmentResource = Ref<Image2D>::Create(
+				m_DepthFormat,
+				m_Specification.Width, m_Specification.Height,
+				m_Specification.ArrayLevels,
+				1,
+				m_Specification.MSAASamples,
+				ImageTiling::Optimal,
+				false
+			);
 
 			const std::string imageDebugName = std::format( "Depth Attachment for FB/{0}", m_Specification.RenderPass->GetName() );
 			SetDebugUtilsObjectName( imageDebugName.c_str(), ( uint64_t ) m_DepthAttachmentResource->GetImage(), VK_OBJECT_TYPE_IMAGE );

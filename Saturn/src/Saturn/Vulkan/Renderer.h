@@ -157,19 +157,18 @@ namespace Saturn {
 		float m_BeginFrameTime   = 0.0f;
 		float m_EndFrameTime     = 0.0f;
 		float m_QueuePresentTime = 0.0f;
-		float m_QueueWaitTime    = 0.0f;
 
 		Timer m_BeginFrameTimer;
 		Timer m_EndFrameTimer;
 		Timer m_QueuePresentTimer;
-		Timer m_QueueWaitTimer;
 
 		std::vector<VkFence> m_FlightFences;
 		
 		std::vector< std::function<void()> > m_TerminateResourceFuncs;
 		
-		VkSemaphore m_AcquireSemaphore = nullptr;
-		VkSemaphore m_SubmitSemaphore = nullptr;
+		// One pair per flight in frame.
+		std::vector<VkSemaphore> m_AcquireSemaphores;
+		std::vector<VkSemaphore> m_SubmitSemaphores;
 
 		VkCommandBuffer m_CommandBuffer = nullptr;
 		

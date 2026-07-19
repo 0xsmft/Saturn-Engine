@@ -69,13 +69,16 @@ namespace Saturn {
 		bool FormatOptimalBlitSupported( VkFormat Format, bool source = false ) const;
 
 		VkCommandBuffer BeginSingleTimeCommands() const;
-		void EndSingleTimeCommands( VkCommandBuffer CommandBuffer ) const;
+		void EndSingleTimeCommands( VkCommandBuffer CommandBuffer );
 		
 		VkCommandBuffer BeginNewCommandBuffer() const;
 		VkCommandBuffer CreateComputeCommandBuffer() const;
 
 		Ref<Pass> GetDefaultPass() const { return m_DefaultPass; }
 		VkRenderPass GetDefaultVulkanPass() const { return m_DefaultPass->GetVulkanPass(); }
+
+		void LockQueue( bool compute = false );
+		void UnlockQueue( bool compute = false );
 
 	public:
 		VkInstance GetInstance() const { return m_Instance; }
@@ -155,6 +158,8 @@ namespace Saturn {
 		std::vector<const char*> DeviceExtensions  ={ VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME };
 
 		std::vector<const char*> ValidationLayers ={ "VK_LAYER_KHRONOS_validation" };
+
+		std::mutex m_GraphicsQueueMutex, m_ComputeQueueMutex;
 
 	private:
 		friend class Swapchain;

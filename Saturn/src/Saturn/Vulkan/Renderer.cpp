@@ -60,17 +60,22 @@ namespace Saturn {
 		FenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
 		m_FlightFences.resize( MAX_FRAMES_IN_FLIGHT );
+		m_AcquireSemaphores.resize( MAX_FRAMES_IN_FLIGHT );
+		m_SubmitSemaphores.resize( MAX_FRAMES_IN_FLIGHT );
 
 		for( int i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
 		{
 			VK_CHECK( vkCreateFence( VulkanContext::Get()->GetDevice(), &FenceCreateInfo, nullptr, &m_FlightFences[ i ] ) );
+		
+			VK_CHECK( vkCreateSemaphore( VulkanContext::Get()->GetDevice(), &SemaphoreCreateInfo, nullptr, &m_AcquireSemaphores[ i ] ) );
+			VK_CHECK( vkCreateSemaphore( VulkanContext::Get()->GetDevice(), &SemaphoreCreateInfo, nullptr, &m_SubmitSemaphores[ i ] ) );
+
+			SetDebugUtilsObjectName( "Acquire Semaphore", 
+				( uint64_t ) m_AcquireSemaphores[ i ], VK_OBJECT_TYPE_SEMAPHORE );
+
+			SetDebugUtilsObjectName( "Submit Semaphore", 
+				( uint64_t ) m_AcquireSemaphores[ i ], VK_OBJECT_TYPE_SEMAPHORE );
 		}
-
-		VK_CHECK( vkCreateSemaphore( VulkanContext::Get()->GetDevice(), &SemaphoreCreateInfo, nullptr, &m_AcquireSemaphore ) );
-		VK_CHECK( vkCreateSemaphore( VulkanContext::Get()->GetDevice(), &SemaphoreCreateInfo, nullptr, &m_SubmitSemaphore ) );
-
-		SetDebugUtilsObjectName( "Acquire Semaphore", ( uint64_t ) m_AcquireSemaphore, VK_OBJECT_TYPE_SEMAPHORE );
-		SetDebugUtilsObjectName( "Submit Semaphore", ( uint64_t ) m_SubmitSemaphore, VK_OBJECT_TYPE_SEMAPHORE );
 
 		uint32_t* pData = new uint32_t[ 1 * 1 ];
 		std::memset( pData, 0, sizeof( uint32_t ) * 1 * 1 );
@@ -112,18 +117,11 @@ namespace Saturn {
 
 	void Renderer::Terminate()
 	{
-		// Terminate Semaphores.
-		if( m_AcquireSemaphore )
-			vkDestroySemaphore( VulkanContext::Get()->GetDevice(), m_AcquireSemaphore, nullptr );
-
-		if( m_SubmitSemaphore )
-			vkDestroySemaphore( VulkanContext::Get()->GetDevice(), m_SubmitSemaphore, nullptr );
-
-		m_AcquireSemaphore = nullptr;
-		m_SubmitSemaphore = nullptr;
-
 		for( size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
 		{
+			vkDestroySemaphore( VulkanContext::Get()->GetDevice(), m_AcquireSemaphores[ i ], nullptr );
+			vkDestroySemaphore( VulkanContext::Get()->GetDevice(), m_SubmitSemaphores[ i ], nullptr );
+		
 			m_RendererDescriptorSets[ i ] = nullptr;
 			m_RendererDescriptorPools[ i ] = nullptr;
 		}
@@ -142,6 +140,10 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		m_ShaderReloadedCB.clear();
 #endif
+
+		m_FlightFences.clear();
+		m_SubmitSemaphores.clear();
+		m_AcquireSemaphores.clear();
 
 		m_PinkTextureSourceAsset = nullptr;
 
@@ -644,7 +646,6 @@ namespace Saturn {
 
 		// ^^^ cleanup from last frame
 		// Actual Begin frame vvvv
-
 		m_CommandBuffer = AllocateCommandBuffer( VulkanContext::Get()->GetCommandPool() );
 
 		// Wait for last frame.
@@ -655,7 +656,7 @@ namespace Saturn {
 
 		// Acquire next image.
 		uint32_t ImageIndex = UINT32_MAX;
-		VulkanContext::Get()->GetSwapchain().AcquireNextImage( UINT32_MAX, m_AcquireSemaphore, VK_NULL_HANDLE, &ImageIndex );
+		VulkanContext::Get()->GetSwapchain().AcquireNextImage( UINT32_MAX, m_AcquireSemaphores[ m_FrameCount ], VK_NULL_HANDLE, &ImageIndex );
 
 		m_ImageIndex = ImageIndex;
 
@@ -683,11 +684,11 @@ namespace Saturn {
 		SubmitInfo.pWaitDstStageMask = &WaitStage;
 
 		// SIGNAL the SubmitSemaphore
-		SubmitInfo.pSignalSemaphores = &m_SubmitSemaphore;
+		SubmitInfo.pSignalSemaphores = &m_SubmitSemaphores[ m_FrameCount ];
 		SubmitInfo.signalSemaphoreCount = 1;
 
 		// WAIT for AcquireSemaphore
-		SubmitInfo.pWaitSemaphores = &m_AcquireSemaphore;
+		SubmitInfo.pWaitSemaphores = &m_AcquireSemaphores[ m_FrameCount ];
 		SubmitInfo.waitSemaphoreCount = 1;
 
 		VK_CHECK( vkResetFences( LogicalDevice, 1, &m_FlightFences[ m_FrameCount ] ) );
@@ -702,7 +703,7 @@ namespace Saturn {
 		PresentInfo.pImageIndices = &m_ImageIndex;
 
 		// WAIT for SubmitSemaphore
-		PresentInfo.pWaitSemaphores = &m_SubmitSemaphore;
+		PresentInfo.pWaitSemaphores = &m_SubmitSemaphores[ m_FrameCount ];
 		PresentInfo.waitSemaphoreCount = 1;
 
 		{
@@ -710,7 +711,9 @@ namespace Saturn {
 
 			m_QueuePresentTimer.Reset();
 
+			VulkanContext::Get()->LockQueue();
 			VkResult Result = vkQueuePresentKHR( VulkanContext::Get()->GetGraphicsQueue(), &PresentInfo );
+			VulkanContext::Get()->UnlockQueue();
 
 			if( Result == VK_ERROR_OUT_OF_DATE_KHR )
 			{
@@ -720,25 +723,21 @@ namespace Saturn {
 
 				PresentInfo.pSwapchains = &VulkanContext::Get()->GetSwapchain().GetSwapchain();
 
+				VulkanContext::Get()->LockQueue();
 				VK_CHECK( vkQueuePresentKHR( VulkanContext::Get()->GetGraphicsQueue(), &PresentInfo ) );
+				VulkanContext::Get()->UnlockQueue();
 			}
 
 			m_QueuePresentTime = m_QueuePresentTimer.ElapsedMilliseconds();
 		}
 
-		{
-			m_QueueWaitTimer.Reset();
-			SAT_PF_EVENT_N( "Saturn::Renderer::QueueWait" );
-			VK_CHECK( vkQueueWaitIdle( VulkanContext::Get()->GetPresentQueue() ) );
-			m_QueueWaitTimer.Stop();
-			m_QueueWaitTime = m_QueuePresentTimer.ElapsedMilliseconds();
-		}
+		VK_CHECK( vkWaitForFences( LogicalDevice, 1, &m_FlightFences[ m_FrameCount ], VK_TRUE, UINT64_MAX ) );
 
 		vkFreeCommandBuffers( LogicalDevice, VulkanContext::Get()->GetCommandPool(), 1, &m_CommandBuffer );
 
 		m_FrameCount = ( m_FrameCount + 1 ) % MAX_FRAMES_IN_FLIGHT;
 
-		m_EndFrameTime = m_QueueWaitTime + ( m_EndFrameTimer.ElapsedMilliseconds() + m_QueuePresentTime );
+		m_EndFrameTime = ( m_EndFrameTimer.ElapsedMilliseconds() + m_QueuePresentTime );
 
 		// Clear storage buffer sets. Reallocated next frame.
 		// Not ideal but for now we will do this as in the LightCulling pass we resize the buffer every frame meaning we have to update our cache.

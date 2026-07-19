@@ -504,7 +504,7 @@ namespace Saturn {
 		return CommandBuffer;
 	}
 
-	void VulkanContext::EndSingleTimeCommands( VkCommandBuffer CommandBuffer ) const
+	void VulkanContext::EndSingleTimeCommands( VkCommandBuffer CommandBuffer )
 	{
 		constexpr uint64_t FENCE_TIMEOUT = 100000000000;
 
@@ -521,7 +521,11 @@ namespace Saturn {
 		VkFence Fence;
 		VK_CHECK( vkCreateFence( m_LogicalDevice, &FenceCreateInfo, nullptr, &Fence ) );
 
-		VK_CHECK( vkQueueSubmit( m_GraphicsQueue, 1, &SubmitInfo, Fence ) );
+		{
+			LockQueue();
+			VK_CHECK( vkQueueSubmit( m_GraphicsQueue, 1, &SubmitInfo, Fence ) );
+			UnlockQueue();
+		}
 
 		VK_CHECK( vkWaitForFences( m_LogicalDevice, 1, &Fence, VK_TRUE, FENCE_TIMEOUT ) );
 
@@ -567,6 +571,22 @@ namespace Saturn {
 		return CommandBuffer;
 	}
 
+	void VulkanContext::LockQueue( bool compute /*= false */ )
+	{
+		if( compute )
+			m_ComputeQueueMutex.lock();
+		else
+			m_GraphicsQueueMutex.lock();
+	}
+
+	void VulkanContext::UnlockQueue( bool compute /*= false */ )
+	{
+		if( compute )
+			m_ComputeQueueMutex.unlock();
+		else
+			m_GraphicsQueueMutex.unlock();
+	}
+
 	void VulkanContext::CreateCommandPool()
 	{
 		VkCommandPoolCreateInfo PoolInfo = { VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO };
@@ -579,7 +599,6 @@ namespace Saturn {
 		VK_CHECK( vkCreateCommandPool( m_LogicalDevice, &PoolInfo, nullptr, &m_ComputeCommandPool ) );
 
 		SetDebugUtilsObjectName( "Context Command Pool", ( uint64_t ) m_CommandPool, VK_OBJECT_TYPE_COMMAND_POOL );
-		SetDebugUtilsObjectName( "Context Compute Command Pool", ( uint64_t ) m_CommandPool, VK_OBJECT_TYPE_COMMAND_POOL );
 	}
 
 }

@@ -135,6 +135,8 @@ namespace Saturn {
 
 		// Close editor and open the project browser.
 		void CloseEditorAndOpenPB();
+		void CloseEditorAndOpenNewProj( const std::filesystem::path& rProjectPath );
+
 		bool OnTitlebarExit();
 
 		void CheckMissingEnv();

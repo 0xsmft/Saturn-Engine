@@ -2657,6 +2657,35 @@ namespace Saturn {
 
 			if( ImGui::MenuItem( "Save Project", "Alt+Shift+S" ) )   SaveProject();
 			if( ImGui::MenuItem( "Zip Project", "Alt+Shift+Z" ) )    PrepZipProject();
+			
+			if( ImGui::BeginMenu( "Open Recent Projects" ) ) 
+			{
+				for( const auto& rRecentProject : EngineSettings::Get().GetAllRecentProjects() ) 
+				{
+					const std::string& rFilepathStr = rRecentProject.string();
+					if( ImGui::MenuItem( rFilepathStr.c_str() ) )
+					{
+						SaveProject();
+
+						if( m_EditorScene->IsDirty() )
+						{
+							Application::Get()->GetWindow()->FlashAttention();
+
+							m_ShowSceneDirtyModal = true;
+							m_EventAfterPopup = [ & ]() { CloseEditorAndOpenNewProj( rRecentProject ); };
+						}
+						else
+						{
+							CloseEditorAndOpenNewProj( rRecentProject );
+						}
+
+						break;
+					}
+				}
+
+				ImGui::EndMenu();
+			}
+			
 			if( ImGui::MenuItem( "Close Project", "Ctrl+W" ) )       CloseEditorAndOpenPB();
 
 			disabledIfRuntime.Pop();
@@ -2983,6 +3012,7 @@ namespace Saturn {
 			if( ImGui::MenuItem( "DEBUG: Open editor debug window" ) )				m_ShowEditorDebugWindow ^= 1;
 			if( ImGui::MenuItem( "DEBUG: Simulate Read Only state" ) )				m_ImGuiWindowManager->MarkAllWindowsAsReadOnly();
 			if( ImGui::MenuItem( "DEBUG: Reset Read Only state" ) )					m_ImGuiWindowManager->ResetReadOnlyState();
+			if( ImGui::MenuItem( "DEBUG: Mark scene as dirty" ) )					m_EditorScene->MarkDirty();
 
 			ImGui::EndMenu();
 		}
@@ -4891,6 +4921,31 @@ namespace Saturn {
 				++rIt;
 			}
 		}
+	}
+
+	void EditorLayer::CloseEditorAndOpenNewProj( const std::filesystem::path& rProjectPath )
+	{
+		std::filesystem::path args = Auxiliary::GetEnvironmentVariableWs( L"SATURN_DIR" );
+		std::filesystem::path workingDir = args / "Saturn-Editor";
+
+		const std::string binaryFolderName = std::format( "{0}-{1}-x86_64", Application::GetCurrentConfigName(), Application::GetCurrentPlatformBinaryName() );
+
+		args /= L"bin";
+		args /= binaryFolderName;
+		args /= L"Saturn-Editor";
+
+#if defined( SAT_PLATFORM_WINDOWS )
+		args /= L"Saturn-Editor.exe";
+#elif defined( SAT_PLATFORM_MACOS )
+		args /= L"Saturn-Editor.app";
+#else
+		args /= L"Saturn-Editor";
+#endif
+
+		args += std::format( " {}", rProjectPath.string() );
+
+		DetachedProcess dp( args.wstring(), workingDir );
+		Application::Get()->Close();
 	}
 
 }

@@ -59,7 +59,9 @@ namespace Saturn {
 #endif
 		m_LoadFlags( flags )
 	{
-		LoadFromSource();
+		// Always load on current thread, we'll be on the main thread here, however
+		// it's part of the load process here.
+		LoadOnCurrentThread();
 	}
 
 	TextureSourceAsset::TextureSourceAsset( const Ref<Asset>& rBase )
@@ -91,13 +93,16 @@ namespace Saturn {
 			int Width, Height, Channels;
 			SAT_CORE_ASSERT( stbi_info( m_AbsolutePath.string().c_str(), &Width, &Height, &Channels ), "Failed to get information about texture file." );
 
+			// Channels needs to be set for GetImageFormat(), a bit screwy.
+			m_Channels = Channels;
+
 			// 1024*1024 texture and over could be timely to load on the main thread.
 			// So we'll load it on a job system thread
 			if( Width >= 1024 || Height >= 1024 )
 			{
 				// Allocate dummy data.
 				uint32_t* pData = new uint32_t[ Width * Height ];
-				std::memset( pData, 0xFF80FFFF, sizeof( uint32_t ) * Width * Height );
+				std::memset( pData, 0xFFFF00FF, sizeof( uint32_t ) * Width * Height );
 
 				m_Texture = Ref<Texture2D>::Create( GetImageFormat(), Width, Height, pData );
 

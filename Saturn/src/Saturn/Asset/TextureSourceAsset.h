@@ -52,6 +52,8 @@ namespace Saturn {
 	public:
 		TextureSourceAsset();
 		TextureSourceAsset( const Ref<Asset>& rBase );
+
+		// Internal use, for use by the first asset import popup.
 		TextureSourceAsset( const Ref<Asset>& rBase, std::filesystem::path AbsolutePath, TextureLoadFlags flags = TextureLoadFlags_FlipVertically );
 
 		virtual ~TextureSourceAsset();

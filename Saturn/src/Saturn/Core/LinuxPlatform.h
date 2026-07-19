@@ -61,7 +61,7 @@
 #if defined(_MSC_VER) && defined(_M_X64)
 #define SAT_PLATFORM_BINARY_FOLDER "linux-x86_64"
 #elif defined(_MSC_VER) && defined(_M_ARM64)
-#define SAT_PLATFORM_BINARY_FOLDER "linux-ARM64"
+#define SAT_PLATFORM_BINARY_FOLDER "linux-AARCH64"
 #else
 #define SAT_PLATFORM_BINARY_FOLDER "linux-ArchUnk"
 #endif

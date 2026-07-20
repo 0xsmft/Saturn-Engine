@@ -496,6 +496,13 @@ namespace Saturn {
 
 	void ContentBrowserItem::Deselect()
 	{
+		// Stop renaming if selection is lost.
+		if( m_IsRenaming )
+		{
+			m_IsRenaming = false;
+			std::memset( s_RenameBuffer, 0, 1024 );
+		}
+
 		m_IsSelected = false;
 		m_MultiSelected = false;
 	}

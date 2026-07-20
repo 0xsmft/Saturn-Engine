@@ -1,3 +1,4 @@
+#include "sppch.h"
 #include "__FILE_NAME__.h"
 
 #include "Saturn/Scene/Scene.h"

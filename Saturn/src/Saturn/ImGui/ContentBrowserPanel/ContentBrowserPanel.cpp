@@ -2182,7 +2182,7 @@ namespace Saturn {
 			// Select all items.
 			case RubyKey_A:
 			{
-				// TODO: Not the best way, the ContentBrowserPanel should know if any items are being renamed or not. 
+				// TODO: Not the best way, we should know if any items are being renamed or not, instead of having to count. 
 				const auto numberOfItemsBeingRenamed = std::count_if( m_SelectedItems.begin(), m_SelectedItems.end(),
 					[]( const auto& rItem )
 				{
@@ -2199,6 +2199,15 @@ namespace Saturn {
 						rItem->Select( true );
 						m_SelectedItems.push_back( rItem );
 					}
+				}
+			} break;
+
+			case RubyKey_F2:
+			{
+				if( m_SelectedItems.size() )
+				{
+					Ref<ContentBrowserItem> mostRecentItem = m_SelectedItems.back();
+					mostRecentItem->Rename();
 				}
 			} break;
 

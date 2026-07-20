@@ -257,13 +257,11 @@ namespace Saturn {
 
 			const auto drawTextureInfo = [ & ]( const char* pTextureName, Ref<Texture2D> texture, int slot )
 			{
-				ImGui::PushID( slot );
-
-				ImGui::BeginHorizontal( "##textinfo" );
+				ImGui::PushID( pTextureName );
 
 				ImGui::Text( pTextureName );
 
-				ImGui::Spring();
+				ImGui::SameLine();
 
 				if( texture )
 				{
@@ -273,12 +271,9 @@ namespace Saturn {
 					}
 				}
 
-				ImGui::Spring();
+				ImGui::SameLine();
 
 				ImGui::Text( "%s", texture->GetPath().string().c_str() );
-
-				ImGui::EndHorizontal();
-				ImGui::PopID();
 
 				if( Auxiliary::DrawAssetFinder( AssetType::Texture, &open, m_SimpleEditorFinderID ) )
 				{
@@ -307,6 +302,8 @@ namespace Saturn {
 
 					m_HostMaterialAsset->ForceUpdate();
 				}
+
+				ImGui::PopID();
 			};
 
 			ImGui::SeparatorText( "Albedo" );

@@ -286,32 +286,32 @@ namespace Saturn {
 		return m_Material->Get<float>( "u_Materials.Emissive" );
 	}
 
-	void MaterialAsset::SetAlbeoMap( Ref<Texture2D>& rTexture )
+	void MaterialAsset::SetAlbeoMap( const Ref<Texture2D> texture )
 	{
 		MarkDirty();
 
-		m_PendingTextureChanges[ "u_AlbedoTexture" ] = rTexture;
+		m_PendingTextureChanges[ "u_AlbedoTexture" ] = texture;
 	}
 
-	void MaterialAsset::SetNormalMap( Ref<Texture2D>& rTexture )
+	void MaterialAsset::SetNormalMap( const Ref<Texture2D> texture )
 	{
 		MarkDirty();
 
-		m_PendingTextureChanges[ "u_NormalTexture" ] = rTexture;
+		m_PendingTextureChanges[ "u_NormalTexture" ] = texture;
 	}
 
-	void MaterialAsset::SetMetallicMap( Ref<Texture2D>& rTexture )
+	void MaterialAsset::SetMetallicMap( const Ref<Texture2D> texture )
 	{
 		MarkDirty();
 
-		m_PendingTextureChanges[ "u_MetallicTexture" ] = rTexture;
+		m_PendingTextureChanges[ "u_MetallicTexture" ] = texture;
 	}
 
-	void MaterialAsset::SetRoughnessMap( Ref<Texture2D>& rTexture )
+	void MaterialAsset::SetRoughnessMap( const Ref<Texture2D> texture )
 	{
 		MarkDirty();
 
-		m_PendingTextureChanges[ "u_RoughnessTexture" ] = rTexture;
+		m_PendingTextureChanges[ "u_RoughnessTexture" ] = texture;
 	}
 
 	void MaterialAsset::ForceUpdate()
@@ -327,6 +327,8 @@ namespace Saturn {
 			m_TextureCache[ name ] = texture->GetDescriptorInfo();
 			m_Material->SetResource( name, texture );
 		}
+
+		m_PendingTextureChanges.clear();
 	}
 
 	void MaterialAsset::SetAlbeoMap( UUID AssetID )
@@ -359,12 +361,12 @@ namespace Saturn {
 	{
 		if( AssetID == 0 )
 		{
-			m_PendingTextureChanges[ "u_MetalnessTexture" ] = Renderer::Get()->GetPinkTexture();
+			m_PendingTextureChanges[ "u_MetallicTexture" ] = Renderer::Get()->GetPinkTexture();
 		}
 		else
 		{
 			Ref<TextureSourceAsset> sourceAsset = AssetManager::Get()->GetAssetAs<TextureSourceAsset>( AssetID );
-			m_PendingTextureChanges[ "u_MetalnessTexture" ] = sourceAsset->GetTexture();
+			m_PendingTextureChanges[ "u_MetallicTexture" ] = sourceAsset->GetTexture();
 		}
 	}
 

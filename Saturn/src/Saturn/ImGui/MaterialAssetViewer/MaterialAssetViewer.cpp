@@ -303,6 +303,36 @@ namespace Saturn {
 					m_HostMaterialAsset->ForceUpdate();
 				}
 
+				ImGui::SameLine();
+
+				if( ImGui::Button( "Reset" ) )
+				{
+					switch( slot )
+					{
+						case 0: // albedo
+						{
+							m_HostMaterialAsset->SetAlbeoMap( Renderer::Get()->GetPinkTexture() );
+						} break;
+
+						case 1: // normal
+						{
+							m_HostMaterialAsset->SetNormalMap( Renderer::Get()->GetPinkTexture() );
+						} break;
+
+						case 2: // roughness
+						{
+							m_HostMaterialAsset->SetRoughnessMap( Renderer::Get()->GetPinkTexture() );
+						} break;
+
+						case 3: // metallic
+						{
+							m_HostMaterialAsset->SetMetallicMap( Renderer::Get()->GetPinkTexture() );
+						} break;
+					}
+
+					m_HostMaterialAsset->ForceUpdate();
+				}
+
 				ImGui::PopID();
 			};
 
@@ -328,7 +358,7 @@ namespace Saturn {
 				m_HostMaterialAsset->SetMetalness( roughness );
 			}
 
-			ImGui::SeparatorText( "Metallic " );
+			ImGui::SeparatorText( "Metallic" );
 			drawTextureInfo( "Metallic Texture", m_HostMaterialAsset->GetMetallicMap(), 3 );
 
 			float metalness = m_HostMaterialAsset->GetMetalness();

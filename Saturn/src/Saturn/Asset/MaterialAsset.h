@@ -86,10 +86,10 @@ namespace Saturn {
 		std::string& GetMaterialName() { return m_Material->GetName(); }
 		const std::string& GetMaterialName() const { return m_Material->GetName(); }
 
-		void SetAlbeoMap( Ref<Texture2D>& rTexture );
-		void SetNormalMap( Ref<Texture2D>& rTexture );
-		void SetMetallicMap( Ref<Texture2D>& rTexture );
-		void SetRoughnessMap( Ref<Texture2D>& rTexture );
+		void SetAlbeoMap( const  Ref<Texture2D> texture );
+		void SetNormalMap( const Ref<Texture2D> texture );
+		void SetMetallicMap( const Ref<Texture2D> texture );
+		void SetRoughnessMap( const Ref<Texture2D> texture );
 
 		void SetAlbeoColor( const glm::vec3& color );
 		void UseNormalMap( bool val );

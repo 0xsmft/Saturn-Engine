@@ -293,7 +293,7 @@ namespace Saturn {
 		// We may not always need to do this because most of the time this material will be bound meaning will change the textures.
 		// However, we don't always know if it will ever be bound, for instance if we open a material in the material asset viewer, the material will not bound.
 		// Meaning that the textures will not be updated.
-//		materialAsset->ForceUpdate();
+		materialAsset->ForceUpdate();
 		materialAsset->SetName( rAsset->Name );
 
 		// Set rAsset reference to point to our new MaterialAsset
@@ -327,9 +327,6 @@ namespace Saturn {
 		for( const auto& entity : view )
 		{
 			if( entity->GetComponent<RelationshipComponent>().Parent != 0 )
-				continue;
-
-			if( entity->GetChildren().size() > 0 )
 				continue;
 
 			RootEntity = entity;

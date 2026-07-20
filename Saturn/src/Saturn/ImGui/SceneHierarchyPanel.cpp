@@ -242,6 +242,25 @@ namespace Saturn {
 			m_Context->MarkDirty();
 		}
 
+		if( ImGui::MenuItem( "Create same Class type entity as child" ) )
+		{
+			CreateEntityParameters cep;
+			cep.Parent = mostRecentSelection;
+			cep.pClass = const_cast< SClass* >( mostRecentSelection->GetClass() );
+
+			SharedPtr<Entity> child = m_Context->CreateEntity( cep );
+
+			if( m_IsPrefabScene )
+			{
+				auto& rPrefabComponent = child->AddComponent<PrefabComponent>();
+				rPrefabComponent.AssetID = mostRecentSelection->GetComponent<PrefabComponent>().AssetID;
+			}
+
+			SetSelected( child );
+
+			m_Context->MarkDirty();
+		}
+
 		if( ImGui::MenuItem( "Hide" ) )
 		{
 			for( auto& rEntity : EntitySelectionManager::Get()->GetSelectionContexts( m_Context.Get() ) )

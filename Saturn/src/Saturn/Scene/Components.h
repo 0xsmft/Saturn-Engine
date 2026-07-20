@@ -42,8 +42,6 @@
 // TODO: Should not be included...
 #include "Saturn/Animation/Animator.h"
 
-#include "Saturn/Animation/BoneJoint.h"
-
 #include <string>
 
 #include <glm/glm.hpp>
@@ -341,7 +339,7 @@ namespace Saturn {
 		// and keep the component out of our instance.
 		PrefabUpdateFlag_DoNotAddAddedComponents   = BIT( 1 ),
 
-		// Do not resepect any updates from the master instance.
+		// Do not respect any updates from the master instance.
 		PrefabUpdateFlag_IgnoreEverything		   = BIT( 2 ),
 	};
 

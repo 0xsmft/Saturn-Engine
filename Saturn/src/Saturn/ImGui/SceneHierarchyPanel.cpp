@@ -229,6 +229,12 @@ namespace Saturn {
 			{
 				mostRecentSelection->GetComponent<RelationshipComponent>().ChildrenID.push_back( child->GetUUID() );
 				child->SetParent( mostRecentSelection->GetUUID() );
+				
+				if( m_IsPrefabScene )
+				{
+					auto& rPrefabComponent = child->AddComponent<PrefabComponent>();
+					rPrefabComponent.AssetID = mostRecentSelection->GetComponent<PrefabComponent>().AssetID;
+				}
 			}
 
 			SetSelected( child );
@@ -695,7 +701,7 @@ namespace Saturn {
 		const bool isPrefab = entity->HasComponent<PrefabComponent>();
 		const auto& id = entity->GetComponent<IdComponent>().ID;
 
-		ImGui::Image( m_EditIcon->GetDescriptorSet(), ImVec2( 24.0f, 24.0f ) );
+		Auxiliary::Image( m_EditIcon, ImVec2( 24.0f, 24.0f ) );
 
 		ImGui::SameLine();
 		

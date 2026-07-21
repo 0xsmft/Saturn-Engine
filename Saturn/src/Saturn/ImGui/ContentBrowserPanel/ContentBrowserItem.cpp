@@ -346,10 +346,15 @@ namespace Saturn {
 
 				if( ImGui::InputText( "##renamefolder", s_RenameBuffer, 1024, ImGuiInputTextFlags_EnterReturnsTrue ) )
 				{
-					m_IsRenaming = false;
-					OnRenameCommittedFolder( s_RenameBuffer );
+					m_RenameErrors = IsSafeToRename( s_RenameBuffer );
 
-					std::memset( s_RenameBuffer, 0, 1024 );
+					if( ( m_RenameErrors & RenameError_NoError ) != 0 )
+					{
+						m_IsRenaming = false;
+						OnRenameCommittedFolder( s_RenameBuffer );
+
+						std::memset( s_RenameBuffer, 0, 1024 );
+					}
 				}
 			}
 			else
@@ -361,6 +366,35 @@ namespace Saturn {
 
 			ImGui::Spring();
 			ImGui::EndHorizontal();
+
+			const auto drawErrorBox = []( const char* pText )
+			{
+				const ImVec2 padding = ImGui::GetStyle().FramePadding;
+
+				ImGui::Dummy( ImVec2( 0.0f, ImGui::GetFontSize() + padding.y ) );
+
+				const ImVec2 textPosition = ImGui::GetCursorScreenPos();
+				const ImVec2 textSize = ImGui::CalcTextSize( pText );
+
+				const ImVec2 min = ImVec2( textPosition.x - padding.x, textPosition.y - padding.y );
+				const ImVec2 max = ImVec2( textPosition.x + padding.x + textSize.x, textPosition.y + padding.y + textSize.y );
+
+				ImGui::GetWindowDrawList()->AddRectFilled( min, max,
+					IM_COL32( 200, 30, 60, 255 ), 2.0f, ImDrawFlags_RoundCornersAll );
+
+				ImGui::TextUnformatted( pText );
+			};
+
+			if( ( m_RenameErrors & RenameError_AlreadyExists ) != 0 )
+			{
+				drawErrorBox( "File Already exists!" );
+			}
+
+			if( ( m_RenameErrors & RenameError_InvalidCharacters ) != 0 )
+			{
+				drawErrorBox( "Invalid characters!" );
+			}
+
 			ImGui::Spring();
 			ImGui::EndVertical();
 		}
@@ -388,27 +422,16 @@ namespace Saturn {
 
 				if( ImGui::InputText( "##renamefile", s_RenameBuffer, 1024, ImGuiInputTextFlags_EnterReturnsTrue ) )
 				{
-					m_IsRenaming = false;
-					OnRenameCommitted( s_RenameBuffer );
+					m_RenameErrors = IsSafeToRename( s_RenameBuffer );
 
-					std::memset( s_RenameBuffer, 0, 1024 );
-				}
+					if( ( m_RenameErrors & RenameError_NoError ) != 0 )
+					{
+						m_IsRenaming = false;
+						OnRenameCommitted( s_RenameBuffer );
 
-				/*
-				// TODO: Check for invalid characters and follow OS rules
-				// Windows does not allow \ / : ? * <> | "
-				// Linux does not allow /
-				// Windows does not allow files to end in a space or a dot
-				// Windows does not allow files to be called CON, AUX, PRN, NUL, COM1-9, LPT1-9
-				// Linux does not allow files to be called .., .
-				char c = s_RenameBuffer[ 0 ];
-				while(  c != '\0' )
-				{
-					if( c == '\\' || c == '/' || c == ':' || c == '?' || c == '*'  || c == '<' || c == '>' || c == '|' || c == '\"' )
-						break;
-					++c;
+						std::memset( s_RenameBuffer, 0, 1024 );
+					}
 				}
-				*/
 			}
 			else
 			{
@@ -422,6 +445,34 @@ namespace Saturn {
 
 			ImGui::EndHorizontal();
 
+			const auto drawErrorBox = []( const char* pText ) 
+			{
+				const ImVec2 padding = ImGui::GetStyle().FramePadding;
+
+				ImGui::Dummy( ImVec2( 0.0f, ImGui::GetFontSize() + padding.y ) );
+
+				const ImVec2 textPosition = ImGui::GetCursorScreenPos();
+				const ImVec2 textSize = ImGui::CalcTextSize( pText );
+
+				const ImVec2 min = ImVec2( textPosition.x - padding.x, textPosition.y - padding.y );
+				const ImVec2 max = ImVec2( textPosition.x + padding.x + textSize.x, textPosition.y + padding.y + textSize.y );
+
+				ImGui::GetWindowDrawList()->AddRectFilled( min, max,
+					IM_COL32( 200, 30, 60, 255 ), 2.0f, ImDrawFlags_RoundCornersAll );
+
+				ImGui::TextUnformatted( pText );
+			};
+
+			if( ( m_RenameErrors & RenameError_AlreadyExists ) != 0 )
+			{
+				drawErrorBox( "File Already exists!" );
+			}
+
+			if( ( m_RenameErrors & RenameError_InvalidCharacters ) != 0 )
+			{
+				drawErrorBox( "Invalid characters!" );
+			}
+
 			ImGui::Spring();
 			ImGui::EndVertical();
 		}
@@ -432,8 +483,18 @@ namespace Saturn {
 		ImGui::PopID();
 	}
 
-	void ContentBrowserItem::OnRenameCommitted( const std::string& rName )
+	ContentBrowserItem::RenameErrors ContentBrowserItem::IsSafeToRename( const std::string& rName )
 	{
+		uint8_t err = RenameError_NoError;
+
+		const std::string extension = m_Path.extension().string();
+		std::filesystem::path newPath = m_Path.parent_path();
+		newPath /= rName;
+		newPath.replace_extension( extension );
+
+		if( std::filesystem::exists( newPath ) )
+			err = RenameError_AlreadyExists;
+	
 		// TODO: Check for invalid characters and follow OS rules
 		// Windows does not allow \ / : ? * <> | "
 		// Linux does not allow /
@@ -444,10 +505,14 @@ namespace Saturn {
 		std::regex invalidCharacterRegex( "[\\\\/:?*<>|\\\"]" );
 		if( std::regex_search( rName, invalidCharacterRegex ) )
 		{
-			SAT_CORE_INFO( "Invalid chars" );
-			return;
+			err |= RenameError_InvalidCharacters;
 		}
 
+		return ( ContentBrowserItem::RenameErrors )err;
+	}
+
+	void ContentBrowserItem::OnRenameCommitted( const std::string& rName )
+	{
 		m_Filename = rName;
 
 		const std::string extension = m_Path.extension().string();

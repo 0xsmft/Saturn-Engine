@@ -99,6 +99,16 @@ namespace Saturn {
 		void CloseAssetViewersBeforeDeletion();
 
 	private:
+		enum RenameErrors : uint8_t
+		{
+			RenameError_NoError = 0,
+			RenameError_AlreadyExists = 0x1,
+			RenameError_InvalidCharacters = 0x2,
+		};
+
+		[[nodiscard]] RenameErrors IsSafeToRename( const std::string& rName );
+
+	private:
 		std::filesystem::directory_entry m_Entry;
 		
 		// The filename without the extension.
@@ -118,6 +128,7 @@ namespace Saturn {
 		bool m_IsRenaming = false;
 		bool m_StartingRename = false;
 		bool m_PendingScrollTo = false;
+		RenameErrors m_RenameErrors = RenameError_NoError;
 
 		ContentBrowserItemType m_Type = ContentBrowserItemType::Asset;
 		

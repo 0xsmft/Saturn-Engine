@@ -103,6 +103,7 @@ namespace Saturn {
 		// Allocate command buffer.
 		VkCommandBuffer AllocateCommandBuffer( VkCommandPool CommandPool );
 		VkCommandBuffer AllocateCommandBuffer( VkCommandBufferLevel CmdLevel );
+		VkDescriptorSet AllocateDescriptorSetInCurrentPool( VkDescriptorSetAllocateInfo& rInfo );
 
 		//////////////////////////////////////////////////////////////////////////
 		// FRAME BEGINGING AND ENDING.
@@ -112,7 +113,7 @@ namespace Saturn {
 		void EndFrame();
 		
 		uint32_t GetImageIndex()   const { return m_ImageIndex; }
-		uint32_t GetCurrentFrame() const { return m_FrameCount; }
+		uint32_t GetCurrentFrame() const { return m_FrameInFlightIndex; }
 
 		std::pair< float, float > GetFrameTimings() { return std::make_pair( m_BeginFrameTime, m_EndFrameTime ); }
 		float GetQueuePresentTime() const { return m_QueuePresentTime; }
@@ -126,7 +127,7 @@ namespace Saturn {
 
 		std::pair< Ref<VertexBuffer>, Ref<IndexBuffer>> CreateFullscreenQuad();
 		
-		Ref<DescriptorPool> GetDescriptorPool() { return m_RendererDescriptorPools[ m_FrameCount ]; }
+		Ref<DescriptorPool> GetDescriptorPool() { return m_RendererDescriptorPools[ m_FrameInFlightIndex ]; }
 
 #if !defined(SAT_DIST)
 		void AddShaderReloadCB( const std::function<void( const std::string& )>& rFunc );
@@ -143,16 +144,16 @@ namespace Saturn {
 #endif
 
 	public:
-		VkCommandBuffer ActiveCommandBuffer() const { return m_CommandBuffer; };
+		VkCommandBuffer ActiveCommandBuffer() const { return m_CommandBuffers[ m_FrameInFlightIndex ]; };
 
 	private:
 		void Init();
 		void Terminate();
 
 	private:
-		uint32_t m_ImageIndex = 0;
-		uint32_t m_ImageCount = 0;
-		uint32_t m_FrameCount = 0;
+		uint32_t m_ImageIndex = 0u;
+		uint32_t m_ImageCount = 0u;
+		uint32_t m_FrameInFlightIndex = 0u;
 
 		float m_BeginFrameTime   = 0.0f;
 		float m_EndFrameTime     = 0.0f;
@@ -170,7 +171,7 @@ namespace Saturn {
 		std::vector<VkSemaphore> m_AcquireSemaphores;
 		std::vector<VkSemaphore> m_SubmitSemaphores;
 
-		VkCommandBuffer m_CommandBuffer = nullptr;
+		std::array<VkCommandBuffer, MAX_FRAMES_IN_FLIGHT> m_CommandBuffers;
 		
 		Ref<Texture2D> m_PinkTexture;
 		Ref<TextureCube> m_PinkTextureCube;

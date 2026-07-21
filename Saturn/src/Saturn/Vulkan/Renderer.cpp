@@ -70,6 +70,9 @@ namespace Saturn {
 			VK_CHECK( vkCreateSemaphore( VulkanContext::Get()->GetDevice(), &SemaphoreCreateInfo, nullptr, &m_AcquireSemaphores[ i ] ) );
 			VK_CHECK( vkCreateSemaphore( VulkanContext::Get()->GetDevice(), &SemaphoreCreateInfo, nullptr, &m_SubmitSemaphores[ i ] ) );
 
+			SetDebugUtilsObjectName( "Flight Fence",
+				( uint64_t ) m_FlightFences[ i ], VK_OBJECT_TYPE_FENCE );
+
 			SetDebugUtilsObjectName( "Acquire Semaphore", 
 				( uint64_t ) m_AcquireSemaphores[ i ], VK_OBJECT_TYPE_SEMAPHORE );
 
@@ -77,19 +80,19 @@ namespace Saturn {
 				( uint64_t ) m_AcquireSemaphores[ i ], VK_OBJECT_TYPE_SEMAPHORE );
 		}
 
-		uint32_t* pData = new uint32_t[ 1 * 1 ];
-		std::memset( pData, 0, sizeof( uint32_t ) * 1 * 1 );
+		uint32_t* pData = new uint32_t[ 1u * 1u ];
+		std::memset( pData, 0, sizeof( uint32_t ) * 1u * 1u );
 
 		// It's really a white texture...
 		for( uint32_t i = 0; i < 1 * 1; ++i )
 		{
-			pData[ i ] |= 0xFFFFFFFF;
+			pData[ i ] |= 0xFFFFFFFFu;
 		}
 
-		m_PinkTexture = Ref< Texture2D >::Create( ImageFormat::RGBA8, 1, 1, pData );
+		m_PinkTexture = Ref< Texture2D >::Create( ImageFormat::RGBA8, 1u, 1u, pData );
 		m_PinkTexture->SetIsRendererTexture( true );
 
-		m_PinkTextureCube = Ref< TextureCube >::Create( ImageFormat::BGRA8, 1, 1, pData );
+		m_PinkTextureCube = Ref< TextureCube >::Create( ImageFormat::BGRA8, 1u, 1u, pData );
 		m_PinkTextureCube->SetIsRendererTexture( true );
 
 		m_PinkTextureSourceAsset = Ref<TextureSourceAsset>::Create();
@@ -98,20 +101,22 @@ namespace Saturn {
 		delete[] pData;
 
 		std::vector<VkDescriptorPoolSize> PoolSizes;
-		PoolSizes.emplace_back( VK_DESCRIPTOR_TYPE_SAMPLER, 1000 );
-		PoolSizes.emplace_back( VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 );
-		PoolSizes.emplace_back( VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 );
-		PoolSizes.emplace_back( VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 );
-		PoolSizes.emplace_back( VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 );
-		PoolSizes.emplace_back( VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 );
-		PoolSizes.emplace_back( VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 );
-		PoolSizes.emplace_back( VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 );
-		PoolSizes.emplace_back( VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 );
-		PoolSizes.emplace_back( VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 );
+		PoolSizes.emplace_back( VK_DESCRIPTOR_TYPE_SAMPLER, 1000u );
+		PoolSizes.emplace_back( VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000u );
+		PoolSizes.emplace_back( VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000u );
+		PoolSizes.emplace_back( VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000u );
+		PoolSizes.emplace_back( VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000u );
+		PoolSizes.emplace_back( VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000u );
+		PoolSizes.emplace_back( VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000u );
+		PoolSizes.emplace_back( VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000u );
+		PoolSizes.emplace_back( VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000u );
+		PoolSizes.emplace_back( VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000u );
 
-		for( int i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
+		for( size_t i = 0llu; i < ( size_t )MAX_FRAMES_IN_FLIGHT; ++i )
 		{
-			m_RendererDescriptorPools[ i ] = Ref<DescriptorPool>::Create( PoolSizes, 100000 );
+			m_RendererDescriptorPools[ i ] = Ref<DescriptorPool>::Create( PoolSizes, 100000u );
+
+			m_CommandBuffers[ i ] = AllocateCommandBuffer( VK_COMMAND_BUFFER_LEVEL_PRIMARY );
 		}
 	}
 
@@ -333,8 +338,8 @@ namespace Saturn {
 			// Descriptor set 0, for material texture data.
 			// Descriptor set 1, for environment data.
 			std::array<VkDescriptorSet, 2> DescriptorSets = {
-				material->GetDescriptorSet( m_FrameCount ),
-				set2Material->GetDescriptorSet( m_FrameCount )
+				material->GetDescriptorSet( m_FrameInFlightIndex ),
+				set2Material->GetDescriptorSet( m_FrameInFlightIndex )
 			};
 
 			vkCmdBindDescriptorSets( CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -469,7 +474,7 @@ namespace Saturn {
 
 			rMaterialAsset->RT_Update( wds );
 
-			VkDescriptorSet Set = rMaterialAsset->GetMaterial()->GetDescriptorSet( m_FrameCount );
+			VkDescriptorSet Set = rMaterialAsset->GetMaterial()->GetDescriptorSet( m_FrameInFlightIndex );
 
 			vkCmdPushConstants( CommandBuffer, Pipeline->GetPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, ( uint32_t ) rMaterialAsset->GetPushConstantData().Size, rMaterialAsset->GetPushConstantData().Data );
 
@@ -477,7 +482,7 @@ namespace Saturn {
 			// Descriptor set 1, for environment data.
 			std::array<VkDescriptorSet, 2> DescriptorSets = {
 				Set,
-				m_RendererDescriptorSets[ m_FrameCount ]
+				m_RendererDescriptorSets[ m_FrameInFlightIndex ]
 			};
 
 			vkCmdBindDescriptorSets( CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -545,15 +550,15 @@ namespace Saturn {
 				rMaterialAsset->GetPushConstantData().Data 
 			);
 
-			VkDescriptorSet Set = rMaterialAsset->GetMaterial()->GetDescriptorSet( m_FrameCount );
+			VkDescriptorSet Set = rMaterialAsset->GetMaterial()->GetDescriptorSet( m_FrameInFlightIndex );
 
 			// Descriptor set 0, for material texture data.
 			// Descriptor set 1, for environment data.
 			// Descriptor set 2, bone vertex buffer data.
 			std::array<VkDescriptorSet, 3> DescriptorSets = {
 				Set,
-				m_RendererDescriptorSets[ m_FrameCount ],
-				dynamicMeshMaterial->GetDescriptorSet( m_FrameCount )
+				m_RendererDescriptorSets[ m_FrameInFlightIndex ],
+				dynamicMeshMaterial->GetDescriptorSet( m_FrameInFlightIndex )
 			};
 
 			vkCmdBindDescriptorSets( CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -569,27 +574,25 @@ namespace Saturn {
 
 		Ref<Shader> shader = ShaderLibrary::Get().Find( "shader_new" );
 
-		m_RendererDescriptorSets[ m_FrameCount ] = shader->AllocateDescriptorSet( 1, true );
+		m_RendererDescriptorSets[ m_FrameInFlightIndex ] = shader->AllocateDescriptorSet( 1, true );
 
-		shader->WriteDescriptor( "u_ShadowMap", ShadowMap->GetDescriptorInfo(), m_RendererDescriptorSets[ m_FrameCount ] );
-		shader->WriteDescriptor( "u_BRDFLUTTexture", BRDF->GetDescriptorInfo(), m_RendererDescriptorSets[ m_FrameCount ] );
+		shader->WriteDescriptor( "u_ShadowMap", ShadowMap->GetDescriptorInfo(), m_RendererDescriptorSets[ m_FrameInFlightIndex ] );
+		shader->WriteDescriptor( "u_BRDFLUTTexture", BRDF->GetDescriptorInfo(), m_RendererDescriptorSets[ m_FrameInFlightIndex ] );
 
 		if( Environment && Environment->RadianceMap && Environment->IrradianceMap )
 		{
-			shader->WriteDescriptor( "u_EnvRadianceTex", Environment->RadianceMap->GetDescriptorInfo(), m_RendererDescriptorSets[ m_FrameCount ] );
-			shader->WriteDescriptor( "u_EnvIrradianceTex", Environment->IrradianceMap->GetDescriptorInfo(), m_RendererDescriptorSets[ m_FrameCount ] );
+			shader->WriteDescriptor( "u_EnvRadianceTex", Environment->RadianceMap->GetDescriptorInfo(), m_RendererDescriptorSets[ m_FrameInFlightIndex ] );
+			shader->WriteDescriptor( "u_EnvIrradianceTex", Environment->IrradianceMap->GetDescriptorInfo(), m_RendererDescriptorSets[ m_FrameInFlightIndex ] );
 		}
 		else
 		{
-			shader->WriteDescriptor( "u_EnvRadianceTex", m_PinkTextureCube->GetDescriptorInfo(), m_RendererDescriptorSets[ m_FrameCount ] );
-			shader->WriteDescriptor( "u_EnvIrradianceTex", m_PinkTextureCube->GetDescriptorInfo(), m_RendererDescriptorSets[ m_FrameCount ] );
+			shader->WriteDescriptor( "u_EnvRadianceTex", m_PinkTextureCube->GetDescriptorInfo(), m_RendererDescriptorSets[ m_FrameInFlightIndex ] );
+			shader->WriteDescriptor( "u_EnvIrradianceTex", m_PinkTextureCube->GetDescriptorInfo(), m_RendererDescriptorSets[ m_FrameInFlightIndex ] );
 		}
 	}
 
 	VkCommandBuffer Renderer::AllocateCommandBuffer( VkCommandPool CommandPool )
 	{
-		SAT_PF_EVENT();
-
 		VkCommandBufferAllocateInfo AllocateInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
 		AllocateInfo.commandPool = VulkanContext::Get()->GetCommandPool();
 		AllocateInfo.commandBufferCount = 1;
@@ -608,8 +611,6 @@ namespace Saturn {
 
 	VkCommandBuffer Renderer::AllocateCommandBuffer( VkCommandBufferLevel CmdLevel )
 	{
-		SAT_PF_EVENT();
-
 		VkCommandBufferAllocateInfo AllocateInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
 		AllocateInfo.commandPool = VulkanContext::Get()->GetCommandPool();
 		AllocateInfo.commandBufferCount = 1;
@@ -625,11 +626,9 @@ namespace Saturn {
 	{
 		SAT_PF_EVENT();
 
-		VkDevice LogicalDevice = VulkanContext::Get()->GetDevice();
+		const VkDevice LogicalDevice = VulkanContext::Get()->GetDevice();
 
 		m_BeginFrameTimer.Reset();
-
-		VK_CHECK( vkResetDescriptorPool( LogicalDevice, m_RendererDescriptorPools[ m_FrameCount ]->GetVulkanPool(), 0 ) );
 
 #if !defined(SAT_DIST)
 		if( m_PendingShaderReloads.size() )
@@ -646,23 +645,28 @@ namespace Saturn {
 
 		// ^^^ cleanup from last frame
 		// Actual Begin frame vvvv
-		m_CommandBuffer = AllocateCommandBuffer( VulkanContext::Get()->GetCommandPool() );
 
 		// Wait for last frame.
-		VK_CHECK( vkWaitForFences( LogicalDevice, 1, &m_FlightFences[ m_FrameCount ], VK_TRUE, UINT32_MAX ) );
+		VK_CHECK( vkWaitForFences( LogicalDevice, 1, &m_FlightFences[ m_FrameInFlightIndex ], VK_TRUE, UINT32_MAX ) );
 
-		// Reset current fence.
-		VK_CHECK( vkResetFences( LogicalDevice, 1, &m_FlightFences[ m_FrameCount ] ) );
+		VK_CHECK( vkResetDescriptorPool( LogicalDevice, m_RendererDescriptorPools[ m_FrameInFlightIndex ]->GetVulkanPool(), 0 ) );
+
+		VK_CHECK( vkResetCommandBuffer( m_CommandBuffers[ m_FrameInFlightIndex ], 0u ) );
 
 		// Acquire next image.
 		uint32_t ImageIndex = UINT32_MAX;
-		VulkanContext::Get()->GetSwapchain().AcquireNextImage( UINT32_MAX, m_AcquireSemaphores[ m_FrameCount ], VK_NULL_HANDLE, &ImageIndex );
+		VulkanContext::Get()->GetSwapchain().AcquireNextImage( UINT32_MAX, m_AcquireSemaphores[ m_FrameInFlightIndex ], VK_NULL_HANDLE, &ImageIndex );
 
 		m_ImageIndex = ImageIndex;
 
 		SAT_CORE_ASSERT( ImageIndex != UINT32_MAX );
 
 		m_BeginFrameTime = m_BeginFrameTimer.ElapsedMilliseconds();
+
+		// Start the command buffer
+		VkCommandBufferBeginInfo cmdBufferBeginInfo{};
+		cmdBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		VK_CHECK( vkBeginCommandBuffer( m_CommandBuffers[ m_FrameInFlightIndex ], &cmdBufferBeginInfo ) );
 	}
 
 	void Renderer::EndFrame()
@@ -671,30 +675,30 @@ namespace Saturn {
 
 		m_EndFrameTimer.Reset();
 
-		VkDevice LogicalDevice = VulkanContext::Get()->GetDevice();
+		const VkDevice LogicalDevice = VulkanContext::Get()->GetDevice();
 
-		VK_CHECK( vkEndCommandBuffer( m_CommandBuffer ) );
+		VK_CHECK( vkEndCommandBuffer( m_CommandBuffers[ m_FrameInFlightIndex ] ) );
 
 		// Rendering Queue
-		VkPipelineStageFlags WaitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		const VkPipelineStageFlags WaitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
 		VkSubmitInfo SubmitInfo = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
 		SubmitInfo.commandBufferCount = 1;
-		SubmitInfo.pCommandBuffers = &m_CommandBuffer;
+		SubmitInfo.pCommandBuffers = &m_CommandBuffers[ m_FrameInFlightIndex ];
 		SubmitInfo.pWaitDstStageMask = &WaitStage;
 
 		// SIGNAL the SubmitSemaphore
-		SubmitInfo.pSignalSemaphores = &m_SubmitSemaphores[ m_FrameCount ];
+		SubmitInfo.pSignalSemaphores = &m_SubmitSemaphores[ m_FrameInFlightIndex ];
 		SubmitInfo.signalSemaphoreCount = 1;
 
 		// WAIT for AcquireSemaphore
-		SubmitInfo.pWaitSemaphores = &m_AcquireSemaphores[ m_FrameCount ];
+		SubmitInfo.pWaitSemaphores = &m_AcquireSemaphores[ m_FrameInFlightIndex ];
 		SubmitInfo.waitSemaphoreCount = 1;
 
-		VK_CHECK( vkResetFences( LogicalDevice, 1, &m_FlightFences[ m_FrameCount ] ) );
+		VK_CHECK( vkResetFences( LogicalDevice, 1, &m_FlightFences[ m_FrameInFlightIndex ] ) );
 
 		// Use current fence to be signaled.
-		VK_CHECK( vkQueueSubmit( VulkanContext::Get()->GetGraphicsQueue(), 1, &SubmitInfo, m_FlightFences[ m_FrameCount ] ) );
+		VK_CHECK( vkQueueSubmit( VulkanContext::Get()->GetGraphicsQueue(), 1, &SubmitInfo, m_FlightFences[ m_FrameInFlightIndex ] ) );
 
 		// Present info.
 		VkPresentInfoKHR PresentInfo = { VK_STRUCTURE_TYPE_PRESENT_INFO_KHR };
@@ -703,7 +707,7 @@ namespace Saturn {
 		PresentInfo.pImageIndices = &m_ImageIndex;
 
 		// WAIT for SubmitSemaphore
-		PresentInfo.pWaitSemaphores = &m_SubmitSemaphores[ m_FrameCount ];
+		PresentInfo.pWaitSemaphores = &m_SubmitSemaphores[ m_FrameInFlightIndex ];
 		PresentInfo.waitSemaphoreCount = 1;
 
 		{
@@ -731,18 +735,16 @@ namespace Saturn {
 			m_QueuePresentTime = m_QueuePresentTimer.ElapsedMilliseconds();
 		}
 
-		VK_CHECK( vkWaitForFences( LogicalDevice, 1, &m_FlightFences[ m_FrameCount ], VK_TRUE, UINT64_MAX ) );
-
-		vkFreeCommandBuffers( LogicalDevice, VulkanContext::Get()->GetCommandPool(), 1, &m_CommandBuffer );
-
-		m_FrameCount = ( m_FrameCount + 1 ) % MAX_FRAMES_IN_FLIGHT;
-
+		VK_CHECK( vkWaitForFences( LogicalDevice, 1, &m_FlightFences[ m_FrameInFlightIndex ], VK_TRUE, UINT64_MAX ) );
 		m_EndFrameTime = ( m_EndFrameTimer.ElapsedMilliseconds() + m_QueuePresentTime );
 
 		// Clear storage buffer sets. Reallocated next frame.
 		// Not ideal but for now we will do this as in the LightCulling pass we resize the buffer every frame meaning we have to update our cache.
 		m_StorageBufferSets.clear();
 		m_UniformBufferSets.clear();
+
+		// Move on to the next frame in flight index.
+		m_FrameInFlightIndex = ( m_FrameInFlightIndex + 1 ) % MAX_FRAMES_IN_FLIGHT;
 	}
 
 	void Renderer::SubmitTerminateResource( std::function<void()>&& rrFunction )

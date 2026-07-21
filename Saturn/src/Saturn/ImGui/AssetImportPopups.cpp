@@ -57,6 +57,56 @@
 namespace Saturn {
 	
 	//////////////////////////////////////////////////////////////////////////
+
+	static uint32_t GetFilenameCount( 
+		const std::filesystem::path& rPathToSearchIn, 
+		const std::filesystem::path& rName )
+	{
+		const std::string& rFilenameStr = rName.string();
+
+		uint32_t count = 0u;
+
+		for( const auto& rEntry : std::filesystem::directory_iterator( rPathToSearchIn ) )
+		{
+			const std::string filename = rEntry.path().filename().string();
+			if( filename.find( rFilenameStr ) != std::string::npos )
+				++count;
+		}
+
+		return count;
+	}
+
+	//
+	// If we have a path such as /path/to/my/file/MyFile.txt,
+	// this function will scan the directory
+	// passed in via rPath and count how many
+	// other files have the same name.
+	// 
+	// If the file occurs more than once:
+	//  --> Output will be /path/to/my/file/MyFile (N).txt {where N is the number occurances} 
+	// Else:
+	//  --> Output will be /path/to/my/file/MyFile.txt
+	//
+	static std::filesystem::path AddFilecountToPathIfNeeded( 
+		const std::filesystem::path& rPath, 
+		const std::filesystem::path& rName )
+	{
+		std::filesystem::path path = rPath / rName;
+
+		const auto count = GetFilenameCount( rPath, rName );
+		if( count >= 1 )
+		{
+			std::filesystem::path newFilename =
+				std::format( L"{} ({})", rName.stem().wstring(), count );
+
+			newFilename += rName.extension();
+			path.replace_filename( newFilename );
+		}
+
+		return path;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
 	// BASE
 
 	void AssetImportPopupBase::DrawErrorTextAndDescription()
@@ -342,18 +392,20 @@ namespace Saturn {
 	{
 		const auto id = AssetManager::Get()->CreateAsset( AssetType::Texture );
 		auto asset = AssetManager::Get()->FindAsset( id );
-		const auto assetPath = m_DestinationPath / m_AssetToImportPath.filename();
+
+		const auto srcPath = AddFilecountToPathIfNeeded( m_DestinationPath, m_AssetToImportPath.filename() );
 
 		// Copy the source:
-		std::filesystem::copy_file( m_AssetToImportPath, assetPath, std::filesystem::copy_options::overwrite_existing );
+		std::filesystem::copy_file( m_AssetToImportPath, srcPath, std::filesystem::copy_options::overwrite_existing );
 
 		// Replace Extension for texture asset
-		auto stxPath = assetPath;
+		auto stxPath = srcPath;
 		stxPath.replace_extension( ".stx" );
+		stxPath = AddFilecountToPathIfNeeded( m_DestinationPath, stxPath.filename() );
 		asset->SetAbsolutePath( stxPath );
 
 		// Create the asset.
-		const auto texAsset = Ref<TextureSourceAsset>::Create( asset, assetPath, ( TextureLoadFlags ) m_ImportBehaviour );
+		const auto texAsset = Ref<TextureSourceAsset>::Create( asset, srcPath, ( TextureLoadFlags ) m_ImportBehaviour );
 
 		// Save the asset
 		TextureSourceAssetSerialiser tsas;
@@ -731,11 +783,19 @@ namespace Saturn {
 	{
 		if( ( m_ImportBehaviour & MeshImportBehaviour_SK_ImportMesh ) != 0 )
 		{
-			// Copy the raw mesh file:
-			std::filesystem::copy_file( m_AssetToImportPath, m_DestinationPath / m_AssetToImportPath.filename(), std::filesystem::copy_options::overwrite_existing );
+			const auto modelFileSrcPath = AddFilecountToPathIfNeeded( m_DestinationPath, m_AssetToImportPath.filename() );
 
-			if( m_UseBinFile )
-				std::filesystem::copy_file( m_GLTFBinPath, m_DestinationPath / m_GLTFBinPath.filename(), std::filesystem::copy_options::overwrite_existing );
+			// Copy the raw mesh file:
+			std::filesystem::copy_file( m_AssetToImportPath, 
+				modelFileSrcPath, std::filesystem::copy_options::overwrite_existing );
+
+			if( m_UseBinFile ) 
+			{
+				const auto binFileSrcPath = AddFilecountToPathIfNeeded( m_DestinationPath, m_GLTFBinPath.filename() );
+
+				std::filesystem::copy_file( m_GLTFBinPath, 
+					binFileSrcPath, std::filesystem::copy_options::overwrite_existing );
+			}
 		}
 
 		//////////////////////////////////////////////////////////////////////////
@@ -765,6 +825,8 @@ namespace Saturn {
 		{
 			auto assetPath = m_DestinationPath / m_AssetToImportPath.filename();
 			assetPath.replace_extension( ".skmesh" );
+
+			assetPath = AddFilecountToPathIfNeeded( m_DestinationPath, assetPath.filename() );
 
 			const auto id = AssetManager::Get()->CreateAsset( AssetType::SkeletalMesh );
 			auto asset = AssetManager::Get()->FindAsset( id );
@@ -815,10 +877,23 @@ namespace Saturn {
 	{
 		// NB: Copy even if this is a reimport, the purpose of a reimport is reload the raw mesh!
 		// Copy the raw mesh file:
-		std::filesystem::copy_file( m_AssetToImportPath, m_DestinationPath / m_AssetToImportPath.filename(), std::filesystem::copy_options::overwrite_existing );
+		{
+			const std::filesystem::path srcPath = AddFilecountToPathIfNeeded( m_DestinationPath, m_AssetToImportPath.filename() );
 
-		if( m_UseBinFile )
-			std::filesystem::copy_file( m_GLTFBinPath, m_DestinationPath / m_GLTFBinPath.filename(), std::filesystem::copy_options::overwrite_existing );
+			std::filesystem::copy_file( m_AssetToImportPath, 
+				srcPath,
+				std::filesystem::copy_options::overwrite_existing );
+
+		}
+
+		if( m_UseBinFile ) 
+		{
+			const std::filesystem::path binFile = AddFilecountToPathIfNeeded( m_DestinationPath, m_GLTFBinPath.filename() );
+			
+			std::filesystem::copy_file( 
+				m_GLTFBinPath, 
+				binFile, std::filesystem::copy_options::overwrite_existing );
+		}
 
 		//////////////////////////////////////////////////////////////////////////
 		// Preform import
@@ -855,8 +930,11 @@ namespace Saturn {
 		{
 			const auto id = AssetManager::Get()->CreateAsset( AssetType::StaticMesh );
 			auto asset = AssetManager::Get()->FindAsset( id );
-			auto assetPath = m_DestinationPath / m_AssetToImportPath.filename();
+			
+			auto assetPath = m_AssetToImportPath.filename();
 			assetPath.replace_extension( ".stmesh" );
+			assetPath = AddFilecountToPathIfNeeded( m_DestinationPath, assetPath );
+
 			asset->SetAbsolutePath( assetPath );
 
 			auto staticMesh = asset.As<StaticMesh>();
@@ -950,6 +1028,7 @@ namespace Saturn {
 				}
 				else
 				{
+					SAT_CORE_ASSERT( false, "TODO: Add reimport for sound." );
 				}
 
 				PopupModified = true;
@@ -979,20 +1058,25 @@ namespace Saturn {
 	{
 		const auto id = AssetManager::Get()->CreateAsset( AssetType::Sound );
 		auto asset = AssetManager::Get()->FindAsset( id );
-		auto assetPath = m_DestinationPath / m_AssetToImportPath.filename();
+		
+		// If we are importing the same source file, make sure we append the file count so that we do not
+		// overwrite the existing file.
+		const auto soundSrcPath = AddFilecountToPathIfNeeded( m_DestinationPath, m_AssetToImportPath.filename() );
 
 		// Copy the audio source.
-		std::filesystem::copy_file( m_AssetToImportPath, assetPath, std::filesystem::copy_options::overwrite_existing );
+		std::filesystem::copy_file( m_AssetToImportPath, soundSrcPath, std::filesystem::copy_options::overwrite_existing );
 
-		// Replace Extension for sound asset
+		// Now, we'll build the path for the Saturn Sound Asset, aka .snd
+		// Check if the file exists and add a count if needed.
+		auto assetPath = AddFilecountToPathIfNeeded( m_DestinationPath, m_AssetToImportPath.stem() / ".snd" );
 		assetPath.replace_extension( ".snd" );
+		
 		asset->SetAbsolutePath( assetPath );
 
 		// Create the asset.
 		auto sound = Ref<SoundSpecification>::Create( asset );
-
 		sound->OriginalImportPath = m_AssetToImportPath;
-		sound->SoundSourcePath = m_DestinationPath / m_AssetToImportPath.filename();
+		sound->SoundSourcePath = soundSrcPath;
 
 #if !defined(SAT_DIST)
 		sound->LastWriteTime = GetLastModificationDate();
@@ -1120,7 +1204,8 @@ namespace Saturn {
 	{
 		const auto id = AssetManager::Get()->CreateAsset( AssetType::Font );
 		auto asset = AssetManager::Get()->FindAsset( id );
-		auto assetPath = m_DestinationPath / m_AssetToImportPath.filename();
+
+		auto assetPath = AddFilecountToPathIfNeeded( m_DestinationPath, m_AssetToImportPath.filename() );
 
 		// Replace Extension for font asset
 		assetPath.replace_extension( ".saf" );

@@ -115,6 +115,9 @@ namespace Saturn {
 
 	class Texture2D;
 
+	//
+	// Imports a raw texture source file and create a TextureSourceAsset (.stx)
+	//
 	class TextureSourceAssetImportPopup : public AssetImportPopupBase
 	{
 	public:
@@ -162,6 +165,13 @@ namespace Saturn {
 		AssetID m_CurrentAssetIDForSkeleton = 0;
 	};
 
+	//
+	// SoundImportPopup
+	// 
+	// This popup handles the importation of a sound asset.
+	// 
+	// It will always take in a raw sound source file e.g. MySound.mp3
+	//
 	class SoundImportPopup : public AssetImportPopupBase
 	{
 	public:

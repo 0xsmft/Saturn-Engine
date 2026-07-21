@@ -232,7 +232,7 @@ namespace Saturn {
 		UUID m_DefaultPhysSurfaceRegistryAsset = 0;
 		// The minimum file size for a file in the asset bundle before it needs to be compressed, in kilobytes.
 		uint64_t m_MininumCompressedThresholdInAB = 512llu;
-		OnlineSystemAPIType m_OnlineAPIType = OnlineSystemAPIType::Steam;
+		OnlineSystemAPIType m_OnlineAPIType = OnlineSystemAPIType::Null;
 
 		// TODO: This makes sense to be in the project, however, should be suited to be in the OnlineSystem.
 		//		 Fine for now, or forever...

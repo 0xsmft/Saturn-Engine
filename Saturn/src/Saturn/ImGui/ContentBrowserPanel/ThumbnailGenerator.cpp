@@ -86,6 +86,10 @@ namespace Saturn {
 		if( textureAsset->Type != AssetType::Texture )
 			return nullptr;
 
+		// We cannot generate whilst the texture isn't even loaded yet.
+		if( textureAsset->IsBeingLoaded() )
+			return nullptr;
+
 		Ref<Texture2D> texture = textureAsset->GetTexture();
 		const uint32_t textureWidth = texture->Width();
 		const uint32_t textureHeight = texture->Height();

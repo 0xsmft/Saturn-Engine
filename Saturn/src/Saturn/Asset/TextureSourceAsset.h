@@ -42,7 +42,7 @@ namespace Saturn {
 	// instead you should hold a reference to this class it self.
 	//
 	// This is because the texture that is held by this asset can change entirely or it's flags could change causing
-	// the texture to be reloaded from disk (if load flags changed) or recreated internally (if filtering flags changed).
+	// the texture to be reloaded from disk (if load flags changed) or structurally modified (e.g. filtering flags changed).
 	//
 	// If you must hold a reference to the texture it self then do so, but you've be warned...
 	// It is perfectly fine to hold a reference to the texture it self on Dist because the texture is immutable.
@@ -50,14 +50,17 @@ namespace Saturn {
 	class TextureSourceAsset : public Asset
 	{
 	public:
-		TextureSourceAsset();
-		TextureSourceAsset( const Ref<Asset>& rBase );
+		TextureSourceAsset() = default;
+		TextureSourceAsset( const Ref<Asset>& rBase ) 
+			: Asset( rBase )
+		{
+		}
 
-		// Internal use, for use by the first asset import popup.
+		// Internal use, for use by the first asset import popup. Always loads the texture on the main thread.
 		TextureSourceAsset( const Ref<Asset>& rBase, std::filesystem::path AbsolutePath, TextureLoadFlags flags = TextureLoadFlags_FlipVertically );
-
 		virtual ~TextureSourceAsset();
 
+	public:
 		void WriteToVFS();
 		void ReadFromVFS();
 
@@ -75,6 +78,7 @@ namespace Saturn {
 		uint32_t Height() const { return m_Height; }
 		uint32_t Channels() const { return m_Channels; }
 		bool IsHdr() const { return m_HDR; }
+		bool IsBeingLoaded() const { return m_Loading.load(); }
 		Ref<Texture2D> GetTexture() const { return m_Texture; }
 
 #if !defined(SAT_DIST)
@@ -97,7 +101,7 @@ namespace Saturn {
 
 	private:
 		void Load();
-		void LoadFromSource();
+		void LoadOnMostSuitableThread();
 
 		void LoadOnJobSystem();
 		void LoadOnCurrentThread();
@@ -118,6 +122,10 @@ namespace Saturn {
 		std::underlying_type_t<TextureLoadFlags> m_LoadFlags = TextureLoadFlags_FlipVertically;
 		TextureFilteringFlags m_SamplerFliteringFlags = TextureFilteringFlags::Linear;
 		bool m_HDR = false;
+
+		// Thread safe loading bool, only set if this texture is being loaded on a JobSystem
+		// if we load on the main thread, then this is always false.
+		std::atomic_bool m_Loading{ false };
 
 		Ref<Texture2D> m_Texture;
 

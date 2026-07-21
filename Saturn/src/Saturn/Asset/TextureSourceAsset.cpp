@@ -48,10 +48,6 @@
 
 namespace Saturn {
 
-	TextureSourceAsset::TextureSourceAsset()
-	{
-	}
-
 	TextureSourceAsset::TextureSourceAsset( const Ref<Asset>& rBase, std::filesystem::path AbsolutePath, TextureLoadFlags flags )
 		: Asset( rBase ), 
 #if !defined(SAT_DIST)
@@ -62,11 +58,6 @@ namespace Saturn {
 		// Always load on current thread, we'll be on the main thread here, however
 		// it's part of the load process here.
 		LoadOnCurrentThread();
-	}
-
-	TextureSourceAsset::TextureSourceAsset( const Ref<Asset>& rBase )
-		: Asset( rBase )
-	{
 	}
 
 	TextureSourceAsset::~TextureSourceAsset()
@@ -82,7 +73,7 @@ namespace Saturn {
 #endif
 	}
 
-	void TextureSourceAsset::LoadFromSource()
+	void TextureSourceAsset::LoadOnMostSuitableThread()
 	{
 #if !defined(SAT_DIST)
 		SAT_CORE_ASSERT( std::filesystem::exists( m_AbsolutePath ), "Path does not exist!" );
@@ -111,6 +102,8 @@ namespace Saturn {
 
 				// Set source ID now as well.
 				m_Texture->SetSourceID( ID );
+
+				m_Loading.store( true );
 
 				// Hand off to Jobsystem to fully load the raw image data.
 				LoadOnJobSystem();
@@ -163,6 +156,9 @@ namespace Saturn {
 				// CopyBuffer
 				m_Texture->CopyBufferToImageAndMips( pTextureData );
 				stbi_image_free( pTextureData );
+
+				// Loading complete...
+				m_Loading.store( false );
 			} );
 		} );
 #endif
@@ -288,7 +284,7 @@ namespace Saturn {
 	void TextureSourceAsset::OnReimport( const std::filesystem::path& rPath )
 	{
 		m_AbsolutePath = rPath;
-		LoadFromSource();
+		LoadOnMostSuitableThread();
 	}
 #endif
 }

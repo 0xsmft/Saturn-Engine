@@ -148,7 +148,7 @@ namespace Saturn {
 		textureSrcAsset->m_AbsolutePath = GetFilepathAbs( path );
 #endif
 
-		textureSrcAsset->LoadFromSource();
+		textureSrcAsset->LoadOnMostSuitableThread();
 
 		// Set rAsset reference to point to our new MaterialAsset
 		rAsset = textureSrcAsset;

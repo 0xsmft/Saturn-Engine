@@ -28,6 +28,8 @@
 
 #pragma once
 
+#include "SkeletonBoneHierarchyPanel.h"
+
 #include "Saturn/ImGui/AssetViewer.h"
 #include "Saturn/ImGui/EditorViewport.h"
 
@@ -53,6 +55,8 @@ namespace Saturn {
 		void InitMeshAndAnimator( UUID id );
 
 	private:
+		SkeletonBoneHierarchyPanel m_BoneHierarchyPanel;
+
 		SharedPtr<Entity> m_Entity;
 		// std::unique_ptr because I don't want to leak ImTimeline into other files.
 		// So if we allocate it on the heap we can forward declare the type.

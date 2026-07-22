@@ -65,6 +65,10 @@ namespace Saturn {
 
 		ImportMeshAndAnimation();
 		m_Name = std::format( "{0}##{1}", m_Asset->Name, ( uint64_t ) m_AssetID );
+
+		m_BoneHierarchyPanel.Initialise( m_Asset->GetSkeletonID() );
+		// Make sure this panel has a unique name.
+		m_BoneHierarchyPanel.AppendToName( std::format( "##{}", ( uint64_t )m_AssetID ) );
 	}
 
 	SkeletalAnimationAssetViewer::~SkeletalAnimationAssetViewer()
@@ -79,7 +83,7 @@ namespace Saturn {
 		ImGui::SetNextWindowPos( ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 350.0f, 350.0f ), ImGuiCond_FirstUseEver );
 
-		ImGui::Begin( m_Name.c_str(), &m_Open, ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoCollapse );
+		ImGui::Begin( m_Name.c_str(), &m_Open, ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_MenuBar );
 
 		// Create custom dockspace.
 		const ImGuiID dockID = ImGui::GetID( "SkMeshDckspc" );
@@ -87,7 +91,38 @@ namespace Saturn {
 
 		//////////////////////////////////////////////////////////////////////////
 
+		if( ImGui::BeginMenuBar() )
+		{
+			if( ImGui::BeginMenu( "File" ) )
+			{
+				if( ImGui::MenuItem( "Close" ) )
+				{
+					m_Open = false;
+				}
+
+				ImGui::EndMenu();
+			}
+
+			if( ImGui::BeginMenu( "View" ) )
+			{
+				if( ImGui::MenuItem( "Bone Hierarchy Panel" ) )
+				{
+					m_BoneHierarchyPanel.ShowOrHide();
+				}
+
+				ImGui::EndMenu();
+			}
+
+			ImGui::EndMenuBar();
+		}
+
+		//////////////////////////////////////////////////////////////////////////
+
 		m_Viewport->Draw();
+
+		//////////////////////////////////////////////////////////////////////////
+
+		if( m_BoneHierarchyPanel.IsOpen() ) m_BoneHierarchyPanel.OnImGuiRender();
 
 		//////////////////////////////////////////////////////////////////////////
 

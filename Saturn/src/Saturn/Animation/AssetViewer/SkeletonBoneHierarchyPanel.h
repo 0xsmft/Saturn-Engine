@@ -107,8 +107,9 @@ namespace Saturn {
 
 	public:
 		SkeletonBoneHierarchyPanel();
-		~SkeletonBoneHierarchyPanel();
+		virtual ~SkeletonBoneHierarchyPanel();
 
+		void AppendToName( const std::string& rName );
 		void Initialise( AssetID id );
 
 		//////////////////////////////////////////////////////////////////////////

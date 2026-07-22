@@ -55,7 +55,9 @@ namespace Saturn {
 		m_Name = std::format( "{0}##{1}", m_SkeletonAsset->Name, std::to_string( m_SkeletonAsset->ID ) );
 
 		m_BoneHierarchyPanel.Initialise( id );
-	
+		// Make sure this panel has a unique name.
+		m_BoneHierarchyPanel.AppendToName( std::format( "##{}", ( uint64_t ) m_AssetID ) );
+
 		m_Scene = Ref<Scene>::Create();
 		m_Viewport = std::make_unique<EditorViewport>( VP_DefaultSub );
 		

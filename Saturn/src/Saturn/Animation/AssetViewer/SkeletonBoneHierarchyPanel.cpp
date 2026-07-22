@@ -108,6 +108,11 @@ namespace Saturn {
 		ClearTree();
 	}
 
+	void SkeletonBoneHierarchyPanel::AppendToName( const std::string& rName )
+	{
+		m_Name += rName;
+	}
+
 	void SkeletonBoneHierarchyPanel::OnImGuiRender()
 	{
 		if( ImGui::Begin( m_Name.c_str(), &m_Open ) )

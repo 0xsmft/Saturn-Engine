@@ -57,7 +57,9 @@ namespace Saturn {
 		void SetRelativeScale( const glm::vec3& rScale )          { m_Scale = rScale; }
 
 		glm::mat4 GetBoneMatrix( Ref<class Animator> animator ) const;
-		glm::mat4 GetBoneMatrixPreview( Ref<class SkeletalMesh> animator ) const;
+
+		// For use by the SkeletonAssetViewer only.
+		glm::mat4 GetBoneMatrixPreview( Ref<class SkeletalMesh> mesh ) const;
 
 	private:
 		uint64_t m_BoneIndex = ~0u;

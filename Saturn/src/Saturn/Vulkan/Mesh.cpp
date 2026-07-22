@@ -478,7 +478,7 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 		return m_SkeletonAsset;
 	}
 
-	const std::vector<glm::mat4> SkeletalMesh::GetDefaultBoneTransforms()
+	const std::vector<glm::mat4>& SkeletalMesh::GetDefaultBoneTransforms()
 	{
 		return m_DefaultBoneTransforms;
 	}

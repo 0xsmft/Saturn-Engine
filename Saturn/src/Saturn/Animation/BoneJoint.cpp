@@ -51,10 +51,9 @@ namespace Saturn {
 
 	glm::mat4 BoneJoint::GetBoneMatrix( Ref<Animator> animator ) const
 	{
-		const auto boneIndex = animator->GetSkeletalMesh()->GetSkeletonAsset()->FindBoneIndex( m_BoneName );
-		if( boneIndex != ~0u )
+		if( m_BoneIndex != ~0u )
 		{
-			const auto& boneTransform = animator->GetBoneTransforms().at( boneIndex );
+			const auto boneTransform = animator->GetBoneTransforms().at( m_BoneIndex );
 			const auto ts = glm::translate( glm::mat4( 1.0f ), m_Position )
 				* glm::toMat4( m_Rotation );
 
@@ -64,12 +63,11 @@ namespace Saturn {
 		return glm::one<glm::mat4>();
 	}
 
-	glm::mat4 BoneJoint::GetBoneMatrixPreview( Ref<class SkeletalMesh> animator ) const
+	glm::mat4 BoneJoint::GetBoneMatrixPreview( Ref<class SkeletalMesh> mesh ) const
 	{
-		const auto boneIndex = animator->GetSkeletonAsset()->FindBoneIndex( m_BoneName );
-		if( boneIndex != ~0u )
+		if( m_BoneIndex != ~0u )
 		{
-			const auto& boneTransform = animator->GetDefaultBoneTransforms().at( boneIndex );
+			const auto& boneTransform = mesh->GetDefaultBoneTransforms().at( m_BoneIndex );
 			const auto ts = glm::translate( glm::mat4( 1.0f ), m_Position )
 				* glm::toMat4( m_Rotation );
 

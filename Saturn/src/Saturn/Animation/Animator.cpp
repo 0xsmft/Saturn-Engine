@@ -33,7 +33,6 @@
 #include "SkeletonAsset.h"
 
 #include "Saturn/Asset/AssetManager.h"
-#include "Saturn/Core/App.h"
 #include "Saturn/Core/Profiler.h"
 
 #include <acl/decompression/decompress.h>

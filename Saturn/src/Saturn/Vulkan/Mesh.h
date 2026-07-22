@@ -402,7 +402,7 @@ namespace Saturn {
 
 		Ref<SkeletonAsset> GetSkeletonAsset() const;
 
-		const std::vector<glm::mat4> GetDefaultBoneTransforms();
+		const std::vector<glm::mat4>& GetDefaultBoneTransforms();
 
 		Ref<VertexBuffer> GetBoneVertexBuffer() { return m_BoneVertexBuffer; }
 

@@ -64,8 +64,22 @@ namespace Saturn {
 		void Initialise( SceneRendererFlags sceneRendererFlags, Ref<Scene> scene, const std::string& rName, UUID ID, bool* pRequestRuntimeVal = nullptr, bool* pLastRuntimeAttemptFailedVal = nullptr );
 
 		void OnUpdate( Timestep ts );
-		void Draw();
 		void OnEvent( Event& rEvent );
+
+		//
+		// Draw the viewport window.
+		// 
+		// @param autoEnd - by default this is true, which means a call to Draw() will also call ImGui::End()
+		//					if it's disabled you must call EditorViewport::End() once your done.
+		//
+		void Draw( bool autoEnd = true );
+
+		//
+		// End the viewport drawing.
+		// 
+		// #NOTE: You only need to call this if the call to Draw was passed in without autoEnd disabled.
+		//
+		void EndDrawing();
 
 	public:
 		[[nodiscard]] bool IsViewportFlagSet( ViewportFlags flag ) const
@@ -78,6 +92,11 @@ namespace Saturn {
 
 		glm::vec2 GetPosition() const { return m_ViewportBoundsMin; }
 		glm::vec2 GetSize() const { return m_ViewportSize; }
+
+		void DisableViewportMovement( bool val ) { m_DisableViewportMovement = val; }
+		bool IsViewportMovementDisabled() const { return m_DisableViewportMovement; }
+
+		int GetGizmoOperation() const { return m_GizmoOperation; }
 
 	private:
 		bool OnKeyPressed( RubyKeyEvent& rEvent );
@@ -125,7 +144,7 @@ namespace Saturn {
 		// Translate as default
 		int m_GizmoOperation = 7 /* ImGuizmo::OPERATION::TRANSLATE */;
 
-		// NOTE: Separated by 4 bytes... not Separated in an order.
+		// NOTE: Separated by 4 bytes... not separated in an order.
 		ViewportFlags m_ViewportFlags = VP_None;
 		bool m_PrimaryViewport = false;
 		bool m_AllowCameraEvents = false;

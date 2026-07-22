@@ -40,6 +40,8 @@
 #include "Saturn/ImGui/EditorIcons.h"
 
 #include <imgui.h>
+#include <ImGuizmo/ImGuizmo.h>
+#include <glm/gtc/type_ptr.hpp>
 
 namespace Saturn {
 
@@ -142,7 +144,132 @@ namespace Saturn {
 
 			//////////////////////////////////////////////////////////////////////////
 
-			m_Viewport->Draw();
+			m_Viewport->Draw( false );
+
+			const auto viewportPosition = ImGui::GetWindowPos();
+			const auto viewportSize = m_Viewport->GetSize();
+
+			if( auto* pSelectedNode = m_BoneHierarchyPanel.GetSelectedItem() )
+			{
+				if( pSelectedNode->pItem->Type == SkelItemType::AttachmentPoint )
+				{
+					SkelAttachmentPoint* pAttachmentPoint = dynamic_cast< SkelAttachmentPoint* >( pSelectedNode->pItem );
+					if( pAttachmentPoint )
+					{
+						auto* pBoneJoint = pAttachmentPoint->pBoneJoint;
+
+						// Get world space transform.
+						glm::mat4 ts = glm::translate( glm::mat4( 1.0f ), pBoneJoint->GetRelativePosition() )
+							* glm::toMat4( pBoneJoint->GetRelativeRotation() );
+
+						auto boneTransform = m_SkeletalMesh->GetDefaultBoneTransforms().at( pBoneJoint->GetBoneIndex() );
+
+						ImGuizmo::SetOrthographic( false );
+						ImGuizmo::SetDrawlist();
+						ImGuizmo::SetRect( viewportPosition.x, viewportPosition.y, viewportSize.x, viewportSize.y );
+
+						ImGuizmo::Manipulate(
+							glm::value_ptr( m_Viewport->GetCamera().ViewMatrix() ),
+							glm::value_ptr( m_Viewport->GetCamera().ProjectionMatrix() ),
+							( ImGuizmo::OPERATION ) m_Viewport->GetGizmoOperation(),
+							ImGuizmo::LOCAL,
+							glm::value_ptr( ts ),
+							glm::value_ptr( boneTransform )
+						);
+
+						// Figure out what window needs it's movement disabled
+						// Four possible options:
+						//  1) The main window is not docked and the viewport is    -> freeze main window
+						//  2) The main window is docked but the viewport isn't     -> freeze viewport window
+						//  3) No windows are docked                                -> freeze viewport window
+						//  4) All windows are docked								-> nothing to do
+						// Outcome 1
+						if( !mainWindowDocked && ImGui::IsWindowDocked() && ImGuizmo::IsOver() )
+						{
+							m_DisableWindowMovement = true;
+						}
+						// Outcome 2
+						else if( !ImGui::IsWindowDocked() && ImGuizmo::IsOver() )
+						{
+							m_Viewport->DisableViewportMovement( true );
+						}
+						// Outcome 3
+						else if( ( !mainWindowDocked && !ImGui::IsWindowDocked() ) && ImGuizmo::IsOver() )
+						{
+							// Only disable viewport, no need to disable main window...
+							m_Viewport->DisableViewportMovement( true );
+						}
+						// Outcome 4
+						else if( ( m_Viewport->IsViewportMovementDisabled() || m_DisableWindowMovement ) && !ImGuizmo::IsOver() )
+						{
+							m_Viewport->DisableViewportMovement( false );
+							m_DisableWindowMovement = false;
+						}
+
+						if( ImGuizmo::IsUsing() )
+						{
+							glm::vec3 translation;
+							glm::vec3 rotation;
+							glm::vec3 scale;
+							Maths::DecomposeTransform( ts, translation, rotation, scale );
+
+							switch( m_Viewport->GetGizmoOperation() )
+							{
+								case ImGuizmo::OPERATION::TRANSLATE:
+								{
+									pBoneJoint->SetRelativePosition( translation );
+								} break;
+
+								case ImGuizmo::OPERATION::ROTATE:
+								{
+									const glm::vec3 DeltaRotation = rotation - glm::eulerAngles( pBoneJoint->GetRelativeRotation() );
+
+									pBoneJoint->SetRelativeRotation( glm::eulerAngles( pBoneJoint->GetRelativeRotation() ) += DeltaRotation );
+								} break;
+
+								default:
+									break;
+							}
+						}
+						else
+						{
+							/*
+							if( ( !mainWindowDocked || !ImGui::IsWindowDocked() ) || m_DisableViewportMovement || m_DisableWindowMovement )
+							{
+								m_DisableViewportMovement = false;
+								m_DisableWindowMovement = false;
+							}
+							*/
+						}
+					}
+				}
+				else
+				{
+					SkelBoneItem* pBoneItem = dynamic_cast< SkelBoneItem* >( pSelectedNode->pItem );
+					if( pBoneItem )
+					{
+						const auto& rBoneTransform = m_SkeletalMesh->GetDefaultBoneTransforms()[ pBoneItem->BoneIndex ];
+
+						glm::mat4 offsetTransform = glm::mat4( 1.0f );
+						glm::mat4 ts = rBoneTransform;
+
+						ImGuizmo::SetOrthographic( false );
+						ImGuizmo::SetDrawlist();
+						ImGuizmo::SetRect( viewportPosition.x, viewportPosition.y, viewportSize.x, viewportSize.y );
+
+						ImGuizmo::Manipulate(
+							glm::value_ptr( m_Viewport->GetCamera().ViewMatrix() ),
+							glm::value_ptr( m_Viewport->GetCamera().ProjectionMatrix() ),
+							ImGuizmo::TRANSLATE,
+							ImGuizmo::LOCAL,
+							glm::value_ptr( ts ),
+							glm::value_ptr( offsetTransform )
+						);
+					}
+				}
+			}
+
+			m_Viewport->EndDrawing();
 		}
 
 		ImGui::End();

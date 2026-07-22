@@ -90,6 +90,11 @@ namespace Saturn {
 		m_SceneRenderer->SetDynamicSky( 2.0f, 0.0f, 0.0f );
 		m_SceneRenderer->SetCurrentScene( scene.Get() );
 
+		if( IsViewportFlagSet( VP_DefaultSub ) )
+		{
+			m_SceneRenderer->DisableOrEnableBloom();
+		}
+
 		m_Scene = scene;
 
 		if( IsViewportFlagSet( VP_DisplayRuntimeControl ) )
@@ -128,7 +133,7 @@ namespace Saturn {
 		} );
 	}
 
-	void EditorViewport::Draw()
+	void EditorViewport::Draw( bool autoEnd )
 	{
 		ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse;
 		if( m_FullscreenViewport )
@@ -185,6 +190,15 @@ namespace Saturn {
 			}
 		}
 
+		if( autoEnd )
+		{
+			ImGui::End();
+			ImGui::PopStyleVar();
+		}
+	}
+
+	void EditorViewport::EndDrawing()
+	{
 		ImGui::End();
 		ImGui::PopStyleVar();
 	}

@@ -31,6 +31,7 @@
 
 #include "Saturn/Core/Renderer/RenderThread.h"
 #include "Saturn/Core/Random.h"
+#include "Saturn/Core/App.h"
 
 #include "VulkanContext.h"
 #include "VulkanDebug.h"
@@ -2799,6 +2800,8 @@ namespace Saturn {
 
 	void SceneRenderer::JumpFloodLatePass()
 	{
+		SAT_PF_EVENT();
+
 		const VkExtent2D Extent = { m_RendererData.Width, m_RendererData.Height };
 		const VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
 
@@ -3195,6 +3198,8 @@ namespace Saturn {
 
 	void SceneRenderer::SSAOPass()
 	{
+		SAT_PF_EVENT();
+
 		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
 		VkExtent2D Extent = { m_RendererData.Width, m_RendererData.Height };
 		VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
@@ -3274,6 +3279,8 @@ namespace Saturn {
 
 	void SceneRenderer::GTAOPass()
 	{
+		SAT_PF_EVENT();
+
 		m_RendererData.GTAOTimer.Reset();
 
 		const auto commandBuffer = Renderer::Get()->ActiveCommandBuffer();
@@ -3437,6 +3444,8 @@ namespace Saturn {
 
 	void SceneRenderer::SelectedGeometryPass()
 	{
+		SAT_PF_EVENT();
+
 		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
 		VkExtent2D Extent = { m_RendererData.Width, m_RendererData.Height };
 		VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
@@ -3508,6 +3517,8 @@ namespace Saturn {
 
 	void SceneRenderer::JumpFloodPass()
 	{
+		SAT_PF_EVENT();
+
 		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
 		VkExtent2D Extent = { m_RendererData.Width, m_RendererData.Height };
 		VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;

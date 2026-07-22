@@ -602,6 +602,14 @@ namespace Saturn {
 				OnMousePressed( ( RubyMouseEvent& ) rEvent );
 			} break;
 
+			case EventType::HotReloadRequested:
+			{
+				if( m_GameModule->HasModule() && !m_RequestRuntime )
+				{
+					HotReloadGame();
+				}
+			} break;
+
 			case EventType::HotReloadComplete:
 			{
 				// Load the new compiled module.

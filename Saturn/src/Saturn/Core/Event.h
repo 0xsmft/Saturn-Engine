@@ -65,6 +65,7 @@ static inline EventCategory GetStaticCategory() { return EventCategory::Category
 		//////////////////////////////////////////////////////////////////////////
 		// Editor
 
+		HotReloadRequested,
 		HotReloadComplete,
 		SkylightEntityModified,
 		AssetDeleted,

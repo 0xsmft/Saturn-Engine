@@ -37,7 +37,6 @@
 #include "Saturn/Asset/MaterialAsset.h"
 #include "Saturn/Physics/PhysicsMaterialAsset.h"
 #include "Saturn/Physics/PhysicsSurfaceRegistryAsset.h"
-#include "Saturn/Asset/AssetImporter.h"
 #include "Saturn/Asset/Prefab.h"
 #include "Saturn/Asset/AssetManager.h"
 #include "Saturn/Asset/AssetExtensions.h"
@@ -53,18 +52,14 @@
 #include "Saturn/Serialisation/YAML/AssetManagerSerialiser.h"
 
 #include "Saturn/Core/App.h"
-#include "Saturn/Core/Process.h"
 
 #include "Saturn/Project/Project.h"
 #include "Saturn/Project/Premake.h"
 
 #include "Saturn/Vulkan/Mesh.h"
 
-#include "Saturn/Audio/Sound.h"
-
 #include "Saturn/GameFramework/Core/ClassTemplateFileHelper.h"
 #include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
-#include "Saturn/GameFramework/Core/GameModule.h"
 #include "Saturn/GameFramework/Character.h"
 
 #include "Saturn/ImGui/EditorEvents.h"
@@ -1957,7 +1952,7 @@ namespace Saturn {
 
 				if( m_HotReloadAfterNewClass )
 				{
-					// todo... hot-reload
+					Application::Get()->DispatchEvent<Event>( EventType::HotReloadRequested, EC_Editor );
 				}
 				else
 				{

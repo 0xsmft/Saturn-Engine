@@ -2289,7 +2289,7 @@ namespace Saturn {
 			if( !Project::GetActiveProject()->HasPremakeFile() )
 				Project::GetActiveProject()->CreatePremakeFile();
 
-			if( Premake::Launch( Project::GetActiveProject()->GetRootDir().wstring(), L"premake5.lua", PREFERED_PREMAKE_ACTION_FOR_OS ) )
+			if( Premake::Launch( Project::GetActiveProject()->GetRootDir(), L"premake5.lua", PREFERED_PREMAKE_ACTION_FOR_OS ) )
 			{
 				PushNotification( "Generated project files." );
 			}
@@ -2782,18 +2782,29 @@ namespace Saturn {
 				}
 
 				{
-					Auxiliary::ScopedDisabledFlag disabledIfRT( m_RequestRuntime || !m_GameModule->HasModule() );
-
+					Auxiliary::ScopedDisabledFlag disabledIfNoMod( !m_GameModule->HasModule() );
 					if( ImGui::MenuItem( "Hot Reload Game" ) )
 					{
 						HotReloadGame();
 					}
+				}
 
-					if( ImGui::BeginItemTooltip() )
+				if( ImGui::BeginItemTooltip() )
+				{
+					if( m_RequestRuntime )
+					{
+						ImGui::Text( "Cannot hot-reload during runtime." );
+					}
+					else if( !m_GameModule->HasModule() )
+					{
+						ImGui::Text( "No module exists to be hot-reloaded." );
+					}
+					else
 					{
 						ImGui::Text( "Hot-reload the game. (Alt+F5)" );
-						ImGui::EndTooltip();
 					}
+
+					ImGui::EndTooltip();
 				}
 
 				if( ImGui::MenuItem( "Setup Project for Distribution & Build Asset Bundle" ) )
@@ -3289,7 +3300,8 @@ namespace Saturn {
 						[ & ]( const SClass* pClass )
 					{
 						// TODO: Fix this shit conversion.
-						if( s_SearchFilter.PassFilter( std::to_string( pClass->GetHash() ).c_str() ) )
+						if( s_SearchFilter.PassFilter( std::to_string( pClass->GetHash() ).c_str() ) || 
+							s_SearchFilter.PassFilter( pClass->GetName().c_str() ) )
 						{
 							ImGui::TableNextRow();
 
@@ -3659,6 +3671,9 @@ namespace Saturn {
 			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_ShowRuntimeConsoleWindow );
 			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_ShowDebugMsgBoxWindow );
 			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_ShowEditorDebugWindow );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_ShowMemStatsWindow );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_ShowSetPremakePathModal );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_PendingPremakeJobAfterPathIsSet );
 
 			ImGui::Text( "m_LastAutoSaveTime %.2f seconds", m_LastAutoSaveTime );
 			ImGui::Text( "m_AutoSaveCount %u", m_AutoSaveCount );
@@ -4224,9 +4239,6 @@ namespace Saturn {
 						m_GizmoOrignalTransforms[ rEntity->GetHandle() ] = tc.GetTransform();
 					}
 
-					// Set new transform
-					glm::mat4 transform = g_ActiveScene->GetTransformRelativeToParent( rEntity );
-
 					glm::vec3 translation;
 					glm::vec3 rotation;
 					glm::vec3 scale;
@@ -4607,7 +4619,7 @@ namespace Saturn {
 			MessageBoxInfo msgBox
 			{
 				.Title = "Warning",
-				.Text = "You are unable to ship an application with a Steam App ID of 480. (SPACEWAR)",
+				.Text = "You are unable to ship an application with a Steam App ID of 480. (Spacewar)",
 				.Buttons = MessageBoxButtons_Ok
 			};
 

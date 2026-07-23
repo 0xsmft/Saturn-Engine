@@ -162,7 +162,7 @@ namespace Auxiliary {
 			if( !hasNonZeroWeight )
 				continue;
 
-			uint32_t boneSkelIndex = FindBoneIndex( boneName );
+			const uint32_t boneSkelIndex = FindBoneIndex( boneName );
 
 			uint32_t boneIndex = ~0;
 			for( size_t i = 0; i < m_BoneInfos.size(); ++i )

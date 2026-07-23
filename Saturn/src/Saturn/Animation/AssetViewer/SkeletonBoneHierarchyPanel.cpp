@@ -131,6 +131,8 @@ namespace Saturn {
 			{
 				if( m_pSelectedBone )
 				{
+					Auxiliary::ScopedDisabledFlag disabledIfRo( m_IsReadOnly );
+
 					switch( m_pSelectedBone->pItem->Type )
 					{
 						case SkelItemType::Bone:
@@ -201,6 +203,8 @@ namespace Saturn {
 			BoneJoint* pBoneJoint = pAttachmentPoint->pBoneJoint;
 
 			ImGui::Text( "Bone Name: %s", pBoneJoint->GetBoneName().c_str() );
+
+			Auxiliary::ScopedDisabledFlag disabledIfRo( m_IsReadOnly );
 
 			ImGui::BeginHorizontal( "##nameinput" );
 			ImGui::Text( "Name" );

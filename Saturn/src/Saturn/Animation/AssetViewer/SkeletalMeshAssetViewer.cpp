@@ -63,6 +63,7 @@ namespace Saturn {
 
 		// Make sure this panel has a unique name.
 		m_BoneHierarchyPanel.AppendToName( std::format( "##{}", ( uint64_t ) m_AssetID ) );
+		m_BoneHierarchyPanel.SetReadOnly( true );
 	}
 
 	SkeletalMeshAssetViewer::~SkeletalMeshAssetViewer()

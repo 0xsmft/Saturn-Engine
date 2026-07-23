@@ -162,6 +162,7 @@ namespace Saturn {
 						glm::mat4 ts = glm::translate( glm::mat4( 1.0f ), pBoneJoint->GetRelativePosition() )
 							* glm::toMat4( pBoneJoint->GetRelativeRotation() );
 
+						// Horrid copy.
 						auto boneTransform = m_SkeletalMesh->GetDefaultBoneTransforms().at( pBoneJoint->GetBoneIndex() );
 
 						ImGuizmo::SetOrthographic( false );

@@ -28,6 +28,8 @@
 
 #pragma once
 
+#include "SkeletonBoneHierarchyPanel.h"
+
 #include "Saturn/ImGui/AssetViewer.h"
 #include "Saturn/ImGui/EditorViewport.h"
 
@@ -37,7 +39,7 @@ namespace Saturn {
 	{
 	public:
 		SkeletalMeshAssetViewer( AssetID id );
-		~SkeletalMeshAssetViewer();
+		virtual ~SkeletalMeshAssetViewer();
 
 		virtual void OnImGuiRender() override;
 		virtual void OnUpdate( Timestep ts ) override;
@@ -48,6 +50,8 @@ namespace Saturn {
 		void RenderSidebar();
 
 	private:
+		SkeletonBoneHierarchyPanel m_BoneHierarchyPanel;
+
 		std::unique_ptr<EditorViewport> m_Viewport;
 		Ref<Scene> m_Scene;
 		Ref<SkeletalMesh> m_Mesh;

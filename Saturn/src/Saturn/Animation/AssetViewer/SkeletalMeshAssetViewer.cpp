@@ -58,6 +58,11 @@ namespace Saturn {
 
 		AddMesh();
 		m_Name = std::format( "{0}##{1}", m_Mesh->Name, std::to_string( m_AssetID ) );
+
+		m_BoneHierarchyPanel.Initialise( m_Mesh->GetSkeletonAsset()->ID );
+
+		// Make sure this panel has a unique name.
+		m_BoneHierarchyPanel.AppendToName( std::format( "##{}", ( uint64_t ) m_AssetID ) );
 	}
 
 	SkeletalMeshAssetViewer::~SkeletalMeshAssetViewer()
@@ -115,6 +120,11 @@ namespace Saturn {
 					}
 				}
 
+				if( ImGui::MenuItem( "Open Bone Hierarchy Panel" ) )
+				{
+					m_BoneHierarchyPanel.ShowOrHide();
+				}
+
 				ImGui::EndMenu();
 			}
 
@@ -124,6 +134,10 @@ namespace Saturn {
 		//////////////////////////////////////////////////////////////////////////
 
 		m_Viewport->Draw();
+
+		//////////////////////////////////////////////////////////////////////////
+
+		if( m_BoneHierarchyPanel.IsOpen() ) m_BoneHierarchyPanel.OnImGuiRender();
 
 		//////////////////////////////////////////////////////////////////////////
 

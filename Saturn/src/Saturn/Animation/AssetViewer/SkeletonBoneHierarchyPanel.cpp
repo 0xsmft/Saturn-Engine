@@ -159,23 +159,25 @@ namespace Saturn {
 
 	void SkeletonBoneHierarchyPanel::DrawInspector()
 	{
-		ImGui::Begin( "Inspector##skel", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse );
-		if( m_pSelectedBone )
+		if( ImGui::Begin( "Inspector##skel", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse ) ) 
 		{
-			switch( m_pSelectedBone->pItem->Type )
+			if( m_pSelectedBone )
 			{
-				case SkelItemType::Bone:
-					DrawInspectorForBone();
-					break;
+				switch( m_pSelectedBone->pItem->Type )
+				{
+					case SkelItemType::Bone:
+						DrawInspectorForBone();
+						break;
 
-				case SkelItemType::AttachmentPoint:
-					DrawInspectorForAP();
-					break;
+					case SkelItemType::AttachmentPoint:
+						DrawInspectorForAP();
+						break;
 
-				default:
-					break;
+					default:
+						break;
+				}
+
 			}
-
 		}
 		ImGui::End();
 	}

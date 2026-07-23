@@ -60,6 +60,7 @@ project "Saturn-Editor"
 		"%{IncludeDir.MSDFAG}",
 		"%{IncludeDir.ImTimeline}",
 		"%{IncludeDir.libzip}",
+		"%{IncludeDir.ImGuiColorTextEdit}",
 
 		"%{IncludeDir.SharedStorage}"
 	}

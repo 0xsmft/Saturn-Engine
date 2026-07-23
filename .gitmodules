@@ -19,3 +19,7 @@
 	path = Saturn/vendor/ImTimeline
 	branch = saturn
 	url = https://github.com/0xsmft/fork-ImTimeline
+[submodule "Saturn/vendor/ImGuiColorTextEdit"]
+	path = Saturn/vendor/ImGuiColorTextEdit
+	url = https://github.com/0xsmft/fork-ImGuiColorTextEdit
+	branch = saturn

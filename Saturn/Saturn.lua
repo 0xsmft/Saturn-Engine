@@ -76,6 +76,7 @@ project "Saturn"
 		"%{IncludeDir.MSDFAG}",
 		"%{IncludeDir.NativeFileDialogExtended}",
 		"%{IncludeDir.ImTimeline}",
+		"%{IncludeDir.ImGuiColorTextEdit}",
 
 		"%{IncludeDir.SharedStorage}"
 	}

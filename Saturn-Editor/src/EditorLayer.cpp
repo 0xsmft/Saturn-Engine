@@ -41,6 +41,7 @@
 #include <Saturn/ImGui/EditorAboutWindowContents.h>
 #include <Saturn/ImGui/RuntimeCommandWindow.h>
 #include <Saturn/ImGui/MemoryStatisticsWindow.h>
+#include <Saturn/ImGui/ShaderViewerWindow.h>
 
 #include <Saturn/Serialisation/YAML/SceneSerialiser.h>
 #include <Saturn/Serialisation/YAML/ProjectSerialiser.h>
@@ -3172,10 +3173,11 @@ namespace Saturn {
 
 				ImGui::EndHorizontal();
 
-				ImGui::BeginTable( "##engShaders", 3 );
+				ImGui::BeginTable( "##engShaders", 4 );
 				ImGui::TableSetupColumn( "##name" );
 				ImGui::TableSetupColumn( "##recomp" );
 				ImGui::TableSetupColumn( "##view" );
+				ImGui::TableSetupColumn( "##edit" );
 
 				for( auto& [name, shader] : ShaderLibrary::Get().GetShaders() )
 				{
@@ -3210,10 +3212,21 @@ namespace Saturn {
 
 					ImGui::TableNextColumn();
 
-					if( ImGui::Button( "View" ) )
+					if( ImGui::Button( "Show in Explorer" ) )
 					{
 						std::filesystem::path absPath = std::filesystem::absolute( shader->GetFilepath() );
 						Application::Get()->OpenNativeFileExplorer( absPath, true );
+					}
+
+					ImGui::TableNextColumn();
+
+					if( ImGui::Button( "Edit/View" ) )
+					{
+						std::filesystem::path absPath = std::filesystem::absolute( shader->GetFilepath() );
+						
+						auto wind = Ref<ShaderViewerWindow>::Create( absPath );
+						wind->OpenWindow();
+						m_ImGuiWindowManager->AddWindow( wind, wind->GetWindowName() );
 					}
 
 					ImGui::PopID();

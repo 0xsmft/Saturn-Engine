@@ -228,6 +228,11 @@ namespace Saturn {
 									pBoneJoint->SetRelativeRotation( glm::eulerAngles( pBoneJoint->GetRelativeRotation() ) += DeltaRotation );
 								} break;
 
+								case ImGuizmo::OPERATION::SCALE:
+								{
+									pBoneJoint->SetRelativeScale( scale );
+								} break;
+
 								default:
 									break;
 							}

@@ -55,7 +55,8 @@ namespace Saturn {
 		{
 			const auto boneTransform = animator->GetBoneTransforms().at( m_BoneIndex );
 			const auto ts = glm::translate( glm::mat4( 1.0f ), m_Position )
-				* glm::toMat4( m_Rotation );
+				* glm::toMat4( m_Rotation )
+				* glm::scale( glm::mat4( 1.0f ), m_Scale );
 
 			return ts * boneTransform;
 		}
@@ -69,7 +70,8 @@ namespace Saturn {
 		{
 			const auto& boneTransform = mesh->GetDefaultBoneTransforms().at( m_BoneIndex );
 			const auto ts = glm::translate( glm::mat4( 1.0f ), m_Position )
-				* glm::toMat4( m_Rotation );
+				* glm::toMat4( m_Rotation )
+				* glm::scale( glm::mat4( 1.0f ), m_Scale );
 
 			return ts * boneTransform;
 		}

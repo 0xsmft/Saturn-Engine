@@ -1418,19 +1418,6 @@ namespace Saturn {
 
 		CreatePhysicsScene();
 
-		// Init new scene camera
-		m_pMainCameraEntity = GetMainCameraEntity( true );
-
-		if( m_pMainCameraEntity.Expired() )
-		{
-			// Reject runtime, no camera was found after BeginPlay was called
-			OnRuntimeEnd();
-
-			SAT_CORE_ERROR( "Runtime request blocked. No camera was found after BeginPlay was called!" );
-		
-			return false;
-		}
-
 		m_NavigationSystem.Initialise();
 
 		StartAudioPlayers();
@@ -1440,6 +1427,18 @@ namespace Saturn {
 		for( auto&& [id, entity] : m_EntityIDMap )
 		{
 			entity->BeginPlay();
+		}
+
+		// Init new scene camera
+		m_pMainCameraEntity = GetMainCameraEntity( true );
+		if( m_pMainCameraEntity.Expired() )
+		{
+			// Reject runtime, no camera was found after BeginPlay was called
+			OnRuntimeEnd();
+
+			SAT_CORE_ERROR( "Runtime request blocked. No camera was found after BeginPlay was called!" );
+
+			return false;
 		}
 
 		m_RuntimeState = RuntimeState::Running;

@@ -175,7 +175,7 @@ namespace Saturn {
 		newProject->SetDefaultPhysicsMaterialAsset( project[ "DefaultPhyMaterialAsset" ].as<uint64_t>( 0 ) );
 		newProject->SetDefaultFontAsset( project[ "DefaultFontAsset" ].as<uint64_t>( 0 ) );
 		newProject->SetDefaultPhysRegAsset( project[ "DefaultPhysRegAsset" ].as<uint64_t>( 0 ) );
-		newProject->SetCompressionThresholdForAssetBundle( project[ "ABCompressThreshold" ].as<uint64_t>( 0 ) );
+		newProject->SetCompressionThresholdForAssetBundle( project[ "ABCompressThreshold" ].as<uint64_t>( 512llu ) );
 
 #if !defined(SAT_DIST)
 		newProject->EnableAutoSaves( project[ "IsAutoSavesEnabled" ].as<bool>( false ) );

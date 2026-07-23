@@ -13,12 +13,16 @@
 #include <Saturn/Project/Project.h>
 #include <Saturn/Core/Profiler.h>
 
+#include <Jolt/Jolt.h>
+
 extern "C" {
 
 	SAT_DLLEXPORT void InitializeModule( Saturn::Project* pProject, const void* pTracyData )
 	{
 		Saturn::Project::SetActiveProject( pProject );
 		tracy::InitializeModule( pTracyData );
+
+		JPH::RegisterDefaultAllocator();
 	}
 };
 

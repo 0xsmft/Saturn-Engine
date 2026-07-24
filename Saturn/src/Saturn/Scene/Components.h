@@ -112,6 +112,12 @@ namespace Saturn {
 			RotationQuat = glm::quat( rotation );
 		}
 
+		void SetRotationInDeg( const glm::vec3& rotation )
+		{
+			Rotation = glm::radians( rotation );
+			RotationQuat = glm::quat( Rotation );
+		}
+
 		// Rotational values must be radians.
 		void SetRotation( const glm::quat& rotation )
 		{

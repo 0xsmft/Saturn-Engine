@@ -94,7 +94,7 @@ namespace Saturn {
 		}
 	};
 
-	class VertexBufferLayout : public RefTarget
+	class VertexBufferLayout
 	{
 	public:
 		VertexBufferLayout() = default;

@@ -29,6 +29,7 @@
 #include "sppch.h"
 #include "ShaderBundle.h"
 
+#include "Saturn/Core/App.h"
 #include "Saturn/Project/Project.h"
 #include "Shader.h"
 

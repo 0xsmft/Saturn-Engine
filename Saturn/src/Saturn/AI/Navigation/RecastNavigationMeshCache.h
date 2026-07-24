@@ -29,7 +29,6 @@
 #pragma once
 
 #include <Detour/DetourNavMesh.h>
-#include <filesystem>
 
 namespace Saturn {
 

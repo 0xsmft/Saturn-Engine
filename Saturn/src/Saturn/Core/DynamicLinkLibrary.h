@@ -28,8 +28,6 @@
 
 #pragma once
 
-#include <filesystem>
-
 #if defined(_WIN32)
 #include <Windows.h>
 using LibraryHandle = HMODULE;

@@ -33,9 +33,11 @@
 
 #include "Saturn/ImGui/EditorEvents.h"
 
+#include "Saturn/Core/App.h"
 #include "Saturn/Core/Renderer/RenderThread.h"
 
 #include "Saturn/Asset/AssetRegistry.h"
+
 #include "Saturn/Vulkan/AluraRenderer.h"
 #include "Saturn/Vulkan/Renderer2D.h"
 #include "Saturn/Vulkan/SceneRenderer.h"

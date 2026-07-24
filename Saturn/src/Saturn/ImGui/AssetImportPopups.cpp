@@ -37,17 +37,11 @@
 #include "Saturn/Animation/SkeletonAsset.h"
 #include "Saturn/Asset/TextureSourceAsset.h"
 
-#include "Saturn/Serialisation/YAML/AssetManagerSerialiser.h"
-
 #include "Saturn/Audio/Sound.h"
 
 #include "Saturn/Vulkan/Mesh.h"
 
-#include "Saturn/Project/Project.h"
-
 #include "Saturn/Alura/AluraFont.h"
-
-#include "Saturn/Core/Renderer/RenderThread.h"
 
 #include "ImGuiAuxiliary.h"
 #include "EditorIcons.h"
@@ -83,7 +77,7 @@ namespace Saturn {
 	// other files have the same name.
 	// 
 	// If the file occurs more than once:
-	//  --> Output will be /path/to/my/file/MyFile (N).txt {where N is the number occurances} 
+	//  --> Output will be /path/to/my/file/MyFile (N).txt {where N is the number of occurances} 
 	// Else:
 	//  --> Output will be /path/to/my/file/MyFile.txt
 	//

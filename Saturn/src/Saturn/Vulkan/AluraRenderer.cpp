@@ -33,10 +33,13 @@
 #include "VulkanDebug.h"
 
 #include "Saturn/Core/Ruby/RubyWindow.h"
+#include "Saturn/Core/App.h"
 
 #include "Saturn/Alura/AluraMSDFGenerationData.h"
 #include "Saturn/Alura/AluraFont.h"
 #include "Saturn/Alura/AluraRect.h"
+
+#include "Saturn/Core/Profiler.h"
 
 namespace Saturn {
 
@@ -203,6 +206,8 @@ namespace Saturn {
 
 	void AluraRenderer::Render()
 	{
+		SAT_PF_EVENT();
+
 		if( m_Resized )
 		{
 			OnResize();

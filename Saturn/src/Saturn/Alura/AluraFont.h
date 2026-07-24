@@ -33,9 +33,6 @@
 
 #include "Saturn/Serialisation/Raw/RawSerialisationBase.h"
 
-#include <filesystem>
-#include <map>
-
 namespace Saturn {
 
 	class AluraSerialisedGlyph

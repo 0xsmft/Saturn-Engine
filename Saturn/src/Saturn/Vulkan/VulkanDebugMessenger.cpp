@@ -29,6 +29,9 @@
 #include "sppch.h"
 #include "VulkanDebugMessenger.h"
 
+#include "Saturn/Core/App.h"
+#include "VulkanContext.h"
+
 // Vulkan Message callback
 static VKAPI_ATTR VkBool32 VKAPI_CALL vkDebugCB(
 	VkDebugUtilsMessageSeverityFlagBitsEXT             MessageSeverity,

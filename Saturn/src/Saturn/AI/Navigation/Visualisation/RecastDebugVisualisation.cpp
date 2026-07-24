@@ -31,10 +31,6 @@
 
 #include "Saturn/Vulkan/Renderer2D.h"
 
-#include "Recast/Recast.h"
-
-#include <glm/gtc/type_ptr.hpp>
-
 namespace Saturn {
 	
 	RecastDebugVisualisation::RecastDebugVisualisation()

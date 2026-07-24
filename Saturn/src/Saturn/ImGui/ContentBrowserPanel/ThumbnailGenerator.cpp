@@ -29,14 +29,11 @@
 #include "sppch.h"
 #include "ThumbnailGenerator.h"
 
-#include "ContentBrowserThumbnailCache.h"
-
-#include "Saturn/Core/Ruby/RubyWindow.h"
+#include "Saturn/Core/App.h"
 #include "Saturn/Core/JobSystem.h"
 #include "Saturn/Core/Renderer/RenderThread.h"
 #include "Saturn/Core/Renderer/EditorCamera.h"
 
-#include "Saturn/Asset/Prefab.h"
 #include "Saturn/Asset/TextureSourceAsset.h"
 #include "Saturn/Asset/AssetManager.h"
 
@@ -48,8 +45,6 @@
 #include "Saturn/Vulkan/SceneRenderer.h"
 
 #include "Saturn/Scene/Scene.h"
-
-#include "Saturn/Project/Project.h"
 
 namespace Saturn {
 

@@ -28,8 +28,6 @@
 
 #pragma once
 
-#include <filesystem>
-
 namespace Saturn::Auxiliary {
 
 	class TextEditors

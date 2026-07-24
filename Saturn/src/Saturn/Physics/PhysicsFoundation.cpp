@@ -30,7 +30,6 @@
 #include "PhysicsFoundation.h"
 
 #include "PhysicsAuxiliary.h"
-#include "PhysicsRigidBody.h"
 #include "PhysicsMaterialAsset.h"
 
 #include "Saturn/Scene/Scene.h"

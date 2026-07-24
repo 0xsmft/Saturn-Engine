@@ -32,7 +32,6 @@
 #include "DynamicLinkLibrary.h"
 #include "Log.h"
 
-#include <filesystem>
 #include <unordered_map>
 
 namespace Saturn {

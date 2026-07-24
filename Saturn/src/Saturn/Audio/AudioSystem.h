@@ -36,8 +36,6 @@
 #include "SoundGroup.h"
 #include "GraphSound.h"
 
-#include <filesystem>
-
 namespace Saturn {
 
 	class AudioThread : public Thread

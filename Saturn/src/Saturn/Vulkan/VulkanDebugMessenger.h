@@ -28,11 +28,7 @@
 
 #pragma once
 
-#include "VulkanContext.h"
-
 #include <vulkan.h>
-#include <vector>
-#include <optional>
 
 namespace Saturn {
 

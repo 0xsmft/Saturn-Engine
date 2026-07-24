@@ -33,11 +33,6 @@
 #include "Saturn/Core/Buffer.h"
 #include "Saturn/Core/UUID.h"
 
-#include <fstream>
-#include <unordered_map>
-#include <map>
-#include <filesystem>
-
 namespace Saturn {
 
 	template<typename Ty, typename OStream>

@@ -34,14 +34,7 @@
 #include "RecastNavigationMeshBuilder.h"
 #include "RecastInputGeometry.h"
 #include "RecastNavigationMeshCache.h"
-#include "NavigationOctree.h"
-
-#include "Detour/DetourNavMeshQuery.h"
-
 #include "Saturn/Project/Project.h"
-
-#include "Saturn/Vulkan/VertexBuffer.h"
-#include "Saturn/Vulkan/IndexBuffer.h"
 
 #if !defined(SAT_DIST)
 #include "Saturn/Vulkan/Renderer2D.h"

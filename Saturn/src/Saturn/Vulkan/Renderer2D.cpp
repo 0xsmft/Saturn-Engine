@@ -32,6 +32,7 @@
 #include "Renderer.h"
 #include "VulkanDebug.h"
 
+#include "Saturn/Core/App.h"
 #include "Saturn/Core/Ruby/RubyWindow.h"
 
 // This 2D Renderer is mostly based from Hazel's 2D renderer (https://github.com/TheCherno/Hazel/blob/master/Hazel/src/Hazel/Renderer/Renderer2D.cpp)

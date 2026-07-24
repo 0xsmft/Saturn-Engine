@@ -31,8 +31,6 @@
 #include "Saturn/Core/UUID.h"
 #include "Saturn/Core/Ref.h"
 
-#include <filesystem>
-
 namespace Saturn {
 
 	using AssetID = UUID;

@@ -66,8 +66,8 @@ namespace Saturn {
 		void AddRecentProject( const std::filesystem::path& rPath );
 		void ClearAllRecentProjects();
 
-		std::deque<std::filesystem::path> GetAllRecentProjects() { return m_RecentProjects; }
-		const std::deque<std::filesystem::path> GetAllRecentProjects() const { return m_RecentProjects; }
+		std::deque<std::filesystem::path>& GetAllRecentProjects() { return m_RecentProjects; }
+		const std::deque<std::filesystem::path>& GetAllRecentProjects() const { return m_RecentProjects; }
 
 		void SetEditorFont( EditorFont font ) { m_EditorFont = font; }
 		EditorFont GetEditorFont() const { return m_EditorFont; }

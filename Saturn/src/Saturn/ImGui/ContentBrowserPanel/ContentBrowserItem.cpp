@@ -348,7 +348,7 @@ namespace Saturn {
 				{
 					m_RenameErrors = IsSafeToRename( s_RenameBuffer );
 
-					if( ( m_RenameErrors & RenameError_NoError ) != 0 )
+					if( ( m_RenameErrors & RenameError_NoError ) == 0 )
 					{
 						m_IsRenaming = false;
 						OnRenameCommittedFolder( s_RenameBuffer );
@@ -424,7 +424,7 @@ namespace Saturn {
 				{
 					m_RenameErrors = IsSafeToRename( s_RenameBuffer );
 
-					if( ( m_RenameErrors & RenameError_NoError ) != 0 )
+					if( ( m_RenameErrors & RenameError_NoError ) == 0 )
 					{
 						m_IsRenaming = false;
 						OnRenameCommitted( s_RenameBuffer );

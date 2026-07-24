@@ -189,6 +189,7 @@ namespace Saturn {
 		SProperty& GetProperty( const std::string& rPropertyName ) const;
 
 		bool IsChildOf( const SClass* pBase ) const;
+		bool IsChildOfOrIs( const SClass* pBase ) const;
 
 	private:
 		std::string m_Name;

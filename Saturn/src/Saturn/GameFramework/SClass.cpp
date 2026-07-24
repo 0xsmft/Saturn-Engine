@@ -159,7 +159,13 @@ namespace Saturn {
 		return false;
 	}
 
-	typedef SClass* ( __stdcall* RClassFunc )();
+	bool SClass::IsChildOfOrIs( const SClass* pBase ) const
+	{
+		if( this == pBase ) return true;
+		return IsChildOf( pBase );
+	}
+
+	typedef SClass* ( __stdcall* RClassFunc )( );
 
 	/* TODO: Pre-alloc */
 	// WARNING: Module local..., game module will have it's own copy of this, which is not great

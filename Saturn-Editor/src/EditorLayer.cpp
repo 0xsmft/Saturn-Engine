@@ -555,6 +555,7 @@ namespace Saturn {
 			if( m_ShowCBThumbnailDebug )    ContentBrowserThumbnailCache::Get().OnImGuiRender( &m_ShowCBThumbnailDebug );
 			if( m_ShowUndoRedoDebug )       m_GlobalUndoRedoGroup->OnImGuiRender( &m_ShowUndoRedoDebug );
 			if( m_ShowSetPremakePathModal ) DrawSetPremakePathModal();
+			if( m_ShowInvalidRecentProjectPathModal ) DrawInvalidRecentProjectModal();
 		}
 
 		DrawViewport();
@@ -2674,18 +2675,27 @@ namespace Saturn {
 					const std::string& rFilepathStr = rRecentProject.string();
 					if( ImGui::MenuItem( rFilepathStr.c_str() ) )
 					{
-						SaveProject();
-
-						if( m_EditorScene->IsDirty() )
+						// has_extension check just in case for whatever reason the path is invalid.
+						if( std::filesystem::exists( rRecentProject ) && rRecentProject.has_extension() )
 						{
-							Application::Get()->GetWindow()->FlashAttention();
+							SaveProject();
 
-							m_ShowSceneDirtyModal = true;
-							m_EventAfterPopup = [ & ]() { CloseEditorAndOpenNewProj( rRecentProject ); };
+							if( m_EditorScene->IsDirty() )
+							{
+								Application::Get()->GetWindow()->FlashAttention();
+
+								m_ShowSceneDirtyModal = true;
+								m_EventAfterPopup = [ & ]() { CloseEditorAndOpenNewProj( rRecentProject ); };
+							}
+							else
+							{
+								CloseEditorAndOpenNewProj( rRecentProject );
+							}
 						}
 						else
 						{
-							CloseEditorAndOpenNewProj( rRecentProject );
+							m_InvalidRecentProjectPath = rRecentProject;
+							m_ShowInvalidRecentProjectPathModal = true;
 						}
 
 						break;
@@ -3674,6 +3684,7 @@ namespace Saturn {
 			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_ShowMemStatsWindow );
 			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_ShowSetPremakePathModal );
 			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_PendingPremakeJobAfterPathIsSet );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_ShowInvalidRecentProjectPathModal );
 
 			ImGui::Text( "m_LastAutoSaveTime %.2f seconds", m_LastAutoSaveTime );
 			ImGui::Text( "m_AutoSaveCount %u", m_AutoSaveCount );
@@ -3734,6 +3745,45 @@ namespace Saturn {
 			{
 				m_ShowSetPremakePathModal = false;
 				s_PremakePath = L"";
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndHorizontal();
+
+			ImGui::EndPopup();
+		}
+	}
+
+	void EditorLayer::DrawInvalidRecentProjectModal()
+	{
+		ImGui::OpenPopup( "Recent Project Path Invalid##invalidrp" );
+
+		if( ImGui::BeginPopupModal( "Recent Project Path Invalid##invalidrp", &m_ShowInvalidRecentProjectPathModal, ImGuiWindowFlags_NoSavedSettings ) )
+		{
+			const auto recentPrjStr = m_InvalidRecentProjectPath.string();
+			ImGui::Text( "The path %s is an invalid startup project path or the path is does not exist.", recentPrjStr.c_str() );
+			ImGui::Text( "A recent project path must contain the full path to the .sproject file." );
+
+			ImGui::BeginHorizontal( "##optionhz" );
+
+			if( ImGui::Button( "Okay" ) )
+			{
+				m_InvalidRecentProjectPath.clear();
+				m_ShowInvalidRecentProjectPathModal = false;
+				ImGui::CloseCurrentPopup();
+			}
+
+			if( ImGui::Button( "Remove from recent projects" ) )
+			{
+				auto& rRecentProjects = EngineSettings::Get().GetAllRecentProjects();
+
+				std::erase_if( rRecentProjects, 
+					[ this ]( const auto& rCandidate ) -> bool
+				{
+					return rCandidate == m_InvalidRecentProjectPath;
+				});
+
+				m_ShowInvalidRecentProjectPathModal = false;
 				ImGui::CloseCurrentPopup();
 			}
 

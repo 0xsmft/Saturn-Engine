@@ -46,7 +46,6 @@
 
 #include <Saturn/Physics/PhysicsFoundation.h>
 
-#include <queue>
 #include <imgui_internal.h>
 
 namespace Saturn {
@@ -115,6 +114,7 @@ namespace Saturn {
 		void DrawDebugMsgBoxWindow();
 		void DrawEditorDebugWindow();
 		void DrawSetPremakePathModal();
+		void DrawInvalidRecentProjectModal();
 
 		// Viewport
 		void DrawViewport();
@@ -306,6 +306,7 @@ namespace Saturn {
 		bool m_ShowMemStatsWindow = false;
 		bool m_ShowSetPremakePathModal = false;
 		bool m_PendingPremakeJobAfterPathIsSet = false;
+		bool m_ShowInvalidRecentProjectPathModal = false;
 
 		// JobProgress
 		float m_OperationPercent = 0.0f;
@@ -332,6 +333,9 @@ namespace Saturn {
 		std::unordered_map<entt::entity, std::tuple<glm::vec3, glm::vec3, glm::vec3>> m_GizmoModifiedTransforms;
 
 		std::function<void()> m_EventAfterPopup;
+		
+		// Only valid if user tried to open an invalid recent project via the titlebar.
+		std::filesystem::path m_InvalidRecentProjectPath;
 
 		Ref<Scene> m_EditorScene = nullptr;
 		Ref<Scene> m_RuntimeScene = nullptr;

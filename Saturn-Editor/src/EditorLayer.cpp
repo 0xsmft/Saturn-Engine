@@ -3796,6 +3796,9 @@ namespace Saturn {
 					return rCandidate == m_InvalidRecentProjectPath;
 				});
 
+				EngineSettingsSerialiser ess;
+				ess.Serialise();
+
 				m_ShowInvalidRecentProjectPathModal = false;
 				ImGui::CloseCurrentPopup();
 			}

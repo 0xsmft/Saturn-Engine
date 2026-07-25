@@ -663,6 +663,9 @@ namespace Saturn {
 		Ref<Renderer2D> GetRenderer2D() const;
 		Ref<AluraRenderer> GetAluraRenderer() const;
 
+		void DisableOrEnableBloom();
+		void DisableAO();
+
 	private:
 		void Init();
 		void Terminate();
@@ -740,7 +743,6 @@ namespace Saturn {
 		void OnShaderReloaded( const std::string& rName );
 #endif
 
-		void DisableOrEnableBloom();
 		void CreateBloomMaterials();
 		void BindSceneCompositeAOTexture();
 		void SendBoneDataToMap( Ref<SkeletalMesh> mesh, const StaticMeshKey& rKey, const std::vector<glm::mat4>& rBoneTransforms );

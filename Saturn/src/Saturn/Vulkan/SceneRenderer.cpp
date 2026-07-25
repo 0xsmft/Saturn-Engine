@@ -3618,6 +3618,14 @@ namespace Saturn {
 		}
 	}
 
+	void SceneRenderer::DisableAO()
+	{
+		const auto oldTechnique = m_AOTechnique;
+
+		m_AOTechnique = AOTechnique::None;
+		InitAO( oldTechnique );
+	}
+
 	void SceneRenderer::CreateBloomMaterials()
 	{
 		const glm::uvec2 viewportSize = { m_RendererData.Width, m_RendererData.Height };
@@ -4072,10 +4080,7 @@ namespace Saturn {
 			{
 				if( m_AOTechnique != AOTechnique::None ) 
 				{
-					const auto oldTechnique = m_AOTechnique;
-					
-					m_AOTechnique = AOTechnique::None;
-					InitAO( oldTechnique );
+					DisableAO();
 				}
 			}
 		}

@@ -39,9 +39,6 @@
 
 #include "Saturn/Vulkan/DefaultMeshes.h"
 
-// TOOD: #FixSceneRendererIncludes
-#include "Saturn/Vulkan/Renderer2D.h"
-#include "Saturn/Vulkan/AluraRenderer.h"
 #include "Saturn/Vulkan/SceneRenderer.h"
 
 #include "Saturn/Scene/Scene.h"

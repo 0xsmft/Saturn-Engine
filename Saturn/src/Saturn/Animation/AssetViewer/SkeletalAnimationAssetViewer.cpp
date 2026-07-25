@@ -35,10 +35,6 @@
 
 #include "Saturn/Asset/AssetManager.h"
 
-// #FixSceneRendererIncludes
-#include "Saturn/Vulkan/Renderer2D.h"
-#include "Saturn/Vulkan/AluraRenderer.h"
-
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
 #include "Saturn/ImGui/EditorIcons.h"
 #include "Saturn/ImGui/ImGuiWindowManager.h"

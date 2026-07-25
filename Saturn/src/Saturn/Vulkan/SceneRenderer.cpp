@@ -74,6 +74,11 @@ namespace Saturn {
 		Init();
 	}
 
+	SceneRenderer::~SceneRenderer()
+	{
+		Terminate();
+	}
+
 	//////////////////////////////////////////////////////////////////////////
 
 	void SceneRenderer::Init()

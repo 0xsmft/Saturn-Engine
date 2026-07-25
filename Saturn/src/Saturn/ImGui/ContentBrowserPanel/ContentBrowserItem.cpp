@@ -29,11 +29,6 @@
 #include "sppch.h"
 #include "ContentBrowserItem.h"
 
-// TODO: Remove this include
-// TOOD: #FixSceneRendererIncludes
-#include "Saturn/Vulkan/Renderer2D.h"
-#include "Saturn/Vulkan/AluraRenderer.h"
-
 #include "Saturn/Asset/AssetImporter.h"
 #include "Saturn/Asset/Asset.h"
 

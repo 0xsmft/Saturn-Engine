@@ -603,7 +603,7 @@ namespace Saturn {
 	public:
 		SceneRenderer() = default;
 		SceneRenderer( SceneRendererFlags flags );
-		~SceneRenderer() { Terminate(); }
+		virtual ~SceneRenderer();
 
 		void ImGuiRender();
 

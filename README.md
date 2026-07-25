@@ -31,6 +31,8 @@
 - Renderer
   - PBR Rendering
   - SSAO
+  - GTAO
+  - SMAA
   - Bloom *[(done the proper way)](https://www.iryoku.com/next-generation-post-processing-in-call-of-duty-advanced-warfare/)*
   - Shadow Mapping
   - Forward+
@@ -44,7 +46,7 @@
   - Undo/Redo tracking
   - Asset Browser
   - World outliner panel
-  - Many built in Asset Viewers
+  - Many built-in Asset Viewers
   - Autosaves
   - Project Browser
   - Hot code reloading

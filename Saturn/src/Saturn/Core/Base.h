@@ -102,6 +102,8 @@ constexpr unsigned int MAX_FRAMES_IN_FLIGHT = 3u;
 #define SAT_SINGLETON_LAZY( x ) static inline x& Get() { static x _; return _; }
 #endif
 
+#define SAT_DISABLE_COPY( x ) x( const x& ) = delete; x& operator=( const x& ) = delete
+
 // Inject asserts
 #define __CORE_INCLUDED__
 #include "Asserts.h"

@@ -1238,6 +1238,19 @@ namespace Saturn {
 					} break;
 				}
 			}
+			else
+			{
+				switch( rEvent.GetKeycode() )
+				{
+					case RubyKey_F4:
+					{
+						Application::Get()->Close();
+					} break;
+
+					default:
+						break;
+				}
+			}
 		}
 
 		return true;

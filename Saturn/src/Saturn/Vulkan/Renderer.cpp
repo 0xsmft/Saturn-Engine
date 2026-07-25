@@ -29,8 +29,6 @@
 #include "sppch.h"
 #include "Renderer.h"
 
-#include "Saturn/Core/Renderer/RenderThread.h"
-
 #include "VulkanDebug.h"
 #include "DescriptorSet.h"
 #include "Shader.h"

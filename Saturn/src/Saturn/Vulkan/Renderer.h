@@ -58,7 +58,7 @@ namespace Saturn {
 		}
 	};
 
-	class Renderer : public RefTarget
+	class Renderer
 	{
 	public:
 		static inline Renderer* Get() { return SingletonStorage::GetSingleton<Renderer>(); }
@@ -103,7 +103,6 @@ namespace Saturn {
 		// Allocate command buffer.
 		VkCommandBuffer AllocateCommandBuffer( VkCommandPool CommandPool );
 		VkCommandBuffer AllocateCommandBuffer( VkCommandBufferLevel CmdLevel );
-		VkDescriptorSet AllocateDescriptorSetInCurrentPool( VkDescriptorSetAllocateInfo& rInfo );
 
 		//////////////////////////////////////////////////////////////////////////
 		// FRAME BEGINGING AND ENDING.

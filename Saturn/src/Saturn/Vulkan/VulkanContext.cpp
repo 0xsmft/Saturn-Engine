@@ -35,19 +35,26 @@
 #include "VulkanDebug.h"
 
 #include "Renderer.h"
-#include "Helpers.h"
 
 #include <vulkan.h>
 #include <set>
 
-// Define this to force enable validation layers even in dist builds.
-//#define SAT_FORCE_ENABLE_VALIDATION_LAYERS
+#if defined(SAT_DEBUG) || defined(SAT_RELEASE) && !defined(SAT_WITH_VALIDATION_LAYERS)
+#define SAT_WITH_VALIDATION_LAYERS 1
+#else
+#define SAT_WITH_VALIDATION_LAYERS 0
+#endif
 
 namespace Saturn {
 
 	VulkanContext::VulkanContext()
 	{
 		SingletonStorage::AddSingleton( this );
+	}
+
+	VulkanContext::~VulkanContext()
+	{
+		Terminate();
 	}
 
 	void VulkanContext::Init()
@@ -58,7 +65,7 @@ namespace Saturn {
 		CreateSwapChain();
 		CreateCommandPool();
 
-		m_pAllocator = new VulkanAllocator();
+		m_Allocator = std::make_unique<VulkanAllocator>();
 
 		// Create default pass.
 		PassSpecification Specification = {};
@@ -73,8 +80,8 @@ namespace Saturn {
 		m_DefaultPass = Ref<Pass>::Create( Specification );
 		m_SwapChain.CreateFramebuffers();
 
-		Renderer* pRenderer = new Renderer();
-		pRenderer->Init();
+		m_Renderer = std::make_unique<Renderer>();
+		m_Renderer->Init();
 	}
 
 	void VulkanContext::Terminate()
@@ -96,17 +103,17 @@ namespace Saturn {
 		for( auto& rFunc : m_TerminateResourceFuncs )
 			rFunc();
 
-		Renderer::Get()->Terminate();
-
 		ShaderLibrary::Get().Shutdown();
+		
+		m_Renderer->Terminate();
+		m_Renderer.reset();
 
-		delete m_pAllocator;
+		m_Allocator.reset();
 
 		vkDestroyDevice( m_LogicalDevice, nullptr );
 
-#if !defined(SAT_DIST) || defined( SAT_FORCE_ENABLE_VALIDATION_LAYERS )
-		delete m_pDebugMessenger;
-		m_pDebugMessenger = nullptr;
+#if SAT_WITH_VALIDATION_LAYERS
+		m_DebugMessenger.reset();
 #endif
 
 		vkDestroySurfaceKHR( m_Instance, m_Surface, nullptr );
@@ -119,7 +126,7 @@ namespace Saturn {
 
 	void VulkanContext::CreateInstance()
 	{
-#if !defined( SAT_DIST ) || defined( SAT_FORCE_ENABLE_VALIDATION_LAYERS )
+#if SAT_WITH_VALIDATION_LAYERS
 		SAT_CORE_ASSERT( CheckValidationLayerSupport(), "Unable to find validation layer." );
 #endif
 
@@ -136,13 +143,13 @@ namespace Saturn {
 		VkInstanceCreateInfo InstanceInfo = { VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO };
 		InstanceInfo.pApplicationInfo = &AppInfo;
 
-#if !defined( SAT_DIST ) || defined( SAT_FORCE_ENABLE_VALIDATION_LAYERS )
+#if SAT_WITH_VALIDATION_LAYERS
 		Extensions.push_back( VK_EXT_DEBUG_REPORT_EXTENSION_NAME );
 
 		{
 			// Include validation layer names and count.
-			InstanceInfo.enabledLayerCount = static_cast< uint32_t >( ValidationLayers.size() );
-			InstanceInfo.ppEnabledLayerNames = ValidationLayers.data();
+			InstanceInfo.enabledLayerCount = static_cast< uint32_t >( m_ValidationLayers.size() );
+			InstanceInfo.ppEnabledLayerNames = m_ValidationLayers.data();
 
 			VkValidationFeatureEnableEXT  Enabled[] = { VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT };
 			VkValidationFeatureDisableEXT Disabled[] = { VK_VALIDATION_FEATURE_DISABLE_UNIQUE_HANDLES_EXT };
@@ -164,8 +171,8 @@ namespace Saturn {
 
 		CreateSurface();
 
-#if !defined(SAT_DIST) || defined( SAT_FORCE_ENABLE_VALIDATION_LAYERS )
-		m_pDebugMessenger = new VulkanDebugMessenger( m_Instance );
+#if SAT_WITH_VALIDATION_LAYERS
+		m_DebugMessenger = std::make_unique<VulkanDebugMessenger>( m_Instance );
 #endif
 	}
 
@@ -259,7 +266,6 @@ namespace Saturn {
 					SAT_CORE_INFO( "   {0}", rExtension.extensionName );
 				}
 			}
-
 		}
 
 		SAT_CORE_INFO( "======================================== " );
@@ -294,13 +300,13 @@ namespace Saturn {
 
 		Features.samplerAnisotropy = VK_TRUE;
 
-#if !defined( SAT_DIST )
-		DeviceExtensions.push_back( VK_EXT_DEBUG_MARKER_EXTENSION_NAME );
+#if SAT_WITH_VALIDATION_LAYERS
+		m_DeviceExtensions.push_back( VK_EXT_DEBUG_MARKER_EXTENSION_NAME );
 #endif
 
 		VkDeviceCreateInfo DeviceInfo = { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
-		DeviceInfo.enabledExtensionCount = ( uint32_t ) DeviceExtensions.size();
-		DeviceInfo.ppEnabledExtensionNames = DeviceExtensions.data();
+		DeviceInfo.enabledExtensionCount = ( uint32_t ) m_DeviceExtensions.size();
+		DeviceInfo.ppEnabledExtensionNames = m_DeviceExtensions.data();
 		DeviceInfo.pQueueCreateInfos = QueueCreateInfos.data();
 		DeviceInfo.queueCreateInfoCount = ( uint32_t ) QueueCreateInfos.size();
 		DeviceInfo.pEnabledFeatures = &Features;
@@ -417,7 +423,7 @@ namespace Saturn {
 		vkEnumerateInstanceLayerProperties( &LayerCount, AvailableLayers.data() );
 
 		// Check if all layers in VailationLayers exists in the AvailableLayers list.
-		for( const char* pLayerName : ValidationLayers )
+		for( const char* pLayerName : m_ValidationLayers )
 		{
 			bool LayerFound = false;
 
@@ -566,6 +572,19 @@ namespace Saturn {
 		cmdBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 		cmdBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 		VK_CHECK( vkBeginCommandBuffer( CommandBuffer, &cmdBufferBeginInfo ) );
+
+		return CommandBuffer;
+	}
+
+	VkCommandBuffer VulkanContext::CreateSubCommandBuffer() const
+	{
+		VkCommandBufferAllocateInfo cmdBufAllocateInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
+		cmdBufAllocateInfo.commandPool = m_CommandPool;
+		cmdBufAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_SECONDARY;
+		cmdBufAllocateInfo.commandBufferCount = 1;
+
+		VkCommandBuffer CommandBuffer;
+		VK_CHECK( vkAllocateCommandBuffers( m_LogicalDevice, &cmdBufAllocateInfo, &CommandBuffer ) );
 
 		return CommandBuffer;
 	}

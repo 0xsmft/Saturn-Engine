@@ -13,9 +13,6 @@
 #include <optional>
 
 namespace Saturn {
-
-	class VulkanDebugMessenger;
-	class VulkanAllocator;
 	
 	struct QueueFamilyIndices
 	{
@@ -43,6 +40,8 @@ namespace Saturn {
 		VkPhysicalDeviceProperties DeviceProps ={};
 	};
 
+	class Renderer;
+
 	class VulkanContext
 	{
 	public:
@@ -50,7 +49,7 @@ namespace Saturn {
 
 	public:
 		VulkanContext();
-		~VulkanContext() { Terminate(); }
+		~VulkanContext();
 
 		void Init();
 		void ResizeEvent();
@@ -71,6 +70,7 @@ namespace Saturn {
 		
 		VkCommandBuffer BeginNewCommandBuffer() const;
 		VkCommandBuffer CreateComputeCommandBuffer() const;
+		VkCommandBuffer CreateSubCommandBuffer() const;
 
 		Ref<Pass> GetDefaultPass() const { return m_DefaultPass; }
 		VkRenderPass GetDefaultVulkanPass() const { return m_DefaultPass->GetVulkanPass(); }
@@ -101,7 +101,7 @@ namespace Saturn {
 
 		Swapchain& GetSwapchain() { return m_SwapChain; }
 
-		VulkanAllocator* GetVulkanAllocator() { return m_pAllocator; }
+		VulkanAllocator* GetVulkanAllocator() { return m_Allocator.get(); }
 
 		// "rrFunction" will be called just before the device is destroyed.
 		void SubmitTerminateResource( std::function<void()>&& rrFunction ) { m_TerminateResourceFuncs.push_back( std::move( rrFunction ) ); }
@@ -129,14 +129,14 @@ namespace Saturn {
 		VkPhysicalDevice m_PhysicalDevice = nullptr;
 		VkDevice m_LogicalDevice = nullptr;
 		Swapchain m_SwapChain ={};
-		VkDebugUtilsMessengerEXT m_DebugMessenger = nullptr;
 		VkExtent2D m_SwapChainExtent = {};
 		VkCommandPool m_CommandPool = nullptr;
 		VkCommandPool m_ComputeCommandPool = nullptr;
 		VkCommandBuffer m_CommandBuffer = nullptr;
 
-		VulkanDebugMessenger* m_pDebugMessenger = nullptr;
-		VulkanAllocator* m_pAllocator = nullptr;
+		std::unique_ptr<VulkanDebugMessenger> m_DebugMessenger;
+		std::unique_ptr<VulkanAllocator> m_Allocator;
+		std::unique_ptr<class Renderer> m_Renderer;
 
 		VkQueue m_GraphicsQueue = nullptr, m_PresentQueue = nullptr, m_ComputeQueue = nullptr;
 
@@ -153,9 +153,9 @@ namespace Saturn {
 		
 		std::vector<std::function<void()>> m_TerminateResourceFuncs;
 
-		std::vector<const char*> DeviceExtensions  ={ VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME };
+		std::vector<const char*> m_DeviceExtensions  ={ VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME };
 
-		std::vector<const char*> ValidationLayers ={ "VK_LAYER_KHRONOS_validation" };
+		std::array<const char*, 1> m_ValidationLayers ={ "VK_LAYER_KHRONOS_validation" };
 
 		std::mutex m_GraphicsQueueMutex, m_ComputeQueueMutex;
 

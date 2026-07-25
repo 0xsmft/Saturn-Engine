@@ -128,7 +128,13 @@ namespace Saturn {
 
 			SAT_CORE_VERIFY( initModFn, "Failed to find \"InitializeModule\" function in Game Module!" );
 
-			( initModFn ) ( Project::GetActiveProject().Get(), tracy::GetProfilerDataPtr() );
+			( initModFn ) ( Project::GetActiveProject().Get(),
+#if defined(SAT_PROFILER_ENABLE)
+				tracy::GetProfilerDataPtr()
+#else
+				nullptr
+#endif
+				);
 		}
 		else
 			SAT_CORE_WARN( "Timestamp file does not exists! Please rebuild the game in your IDE." );

@@ -33,6 +33,29 @@
 #endif
 
 #if defined (SAT_PROFILER_ENABLE)
+
+// Please view, chapter "2.1.5 On-demand profiling" of the Tracy Manual,
+// by default Tracy will always accumulate profiling events, even when 
+// the Tracy client is not open, this means that we basically have to have
+// the client open or deal with the leak.
+// 
+// We could have the profiler off by default and only enable it when needed
+// but I think we'd forget to do that sometimes.
+// 
+// However, TRACY_ON_DEMAND breaks 0.9.1 of Tracy, but stops the leak
+// so, in the future I will update Tracy Client to a newer version.
+//
+// On demand profiling also has has performance hits:
+// 
+// "The client with on-demand profiling enabled needs to perform additional 
+// bookkeeping to present a coherent application state to the profiler. 
+// This incurs additional time costs for each profiling event."
+// 
+// So maybe disable TRACY_ON_DEMAND if you want and then keep SAT_PROFILER_ENABLE
+// off when not profiling.
+//
+#define TRACY_ON_DEMAND
+
 #include <tracy/Tracy.hpp>
 
 #define SAT_PF_EVENT()       ZoneScoped

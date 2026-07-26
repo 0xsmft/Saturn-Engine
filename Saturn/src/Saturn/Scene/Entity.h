@@ -219,6 +219,14 @@ namespace Saturn {
 		void ChangeToNewParent( SharedPtr<Entity> parent );
 
 		//
+		// Try to get the parent.
+		// 
+		// @returns -- the parent (if any, may be null if not found.)
+		//
+		[[nodiscard]] SharedPtr<Entity> TryGetParent();
+		[[nodiscard]] const SharedPtr<Entity> TryGetParent() const;
+
+		//
 		// Attach this entity to a bone in it's parent.
 		//
 		void AttachToBone( const std::string& rAttachmentName );

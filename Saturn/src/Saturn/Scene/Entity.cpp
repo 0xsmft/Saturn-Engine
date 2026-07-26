@@ -166,6 +166,16 @@ namespace Saturn {
 		parent->AddChild( GetUUID() );
 	}
 
+	SharedPtr<Entity> Entity::TryGetParent()
+	{
+		return GetScene()->FindEntityByID( GetParent() );
+	}
+
+	const SharedPtr<Entity> Entity::TryGetParent() const
+	{
+		return GetScene()->FindEntityByID( GetParent() );
+	}
+
 	void Entity::AttachToBone( const std::string& rAttachmentName )
 	{
 		AddComponent<BoneAttachmentInfoComponent>( rAttachmentName );

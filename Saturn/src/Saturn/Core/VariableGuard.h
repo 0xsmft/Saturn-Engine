@@ -37,6 +37,7 @@ namespace Saturn {
 	template<typename RefTy, typename AssignedTy = RefTy>
 	class VariableGuard
 	{
+		SAT_DISABLE_COPY( VariableGuard );
 	public:
 		VariableGuard( RefTy& rVariable, const AssignedTy& temporaryValue )
 			: m_Variable( rVariable ), m_OldValue( rVariable )
@@ -48,10 +49,6 @@ namespace Saturn {
 		{
 			m_Variable = m_OldValue;
 		}
-
-	private:
-		VariableGuard( const VariableGuard& ) = delete;
-		VariableGuard& operator=( const VariableGuard& ) = delete;
 
 	private:
 		RefTy& m_Variable;

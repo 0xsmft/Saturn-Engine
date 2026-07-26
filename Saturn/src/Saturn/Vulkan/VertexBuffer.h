@@ -161,11 +161,11 @@ namespace Saturn {
 	// A vulkan vertex buffer.
 	class VertexBuffer : public RefTarget
 	{
+		SAT_DISABLE_COPY( VertexBuffer );
 	public:
 		VertexBuffer() : m_pData( nullptr ) { }
 		VertexBuffer( void* pData, VkDeviceSize Size, VkBufferUsageFlags Usage = 0 );
 		VertexBuffer( VkDeviceSize Size, VkBufferUsageFlags Usage = 0 );
-		VertexBuffer( const VertexBuffer& ) = delete;
 		~VertexBuffer();
 
 		void Destroy();

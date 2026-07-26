@@ -4295,14 +4295,32 @@ namespace Saturn {
 
 			if( ImGuizmo::IsUsing() )
 			{
-				for( SharedPtr<Entity>& rEntity : selectedEntities )
+				if( selectedEntities.size() == 1 )
 				{
-					auto& tc = rEntity->GetComponent<TransformComponent>();
+					SharedPtr<Entity> entity = selectedEntities[ 0 ];
+					auto& tc = entity->GetComponent<TransformComponent>();
+
+					// Convert world-space to parent-local space:
+					//
+					// Right, imagine we have:
+					// 
+					// Parent at [0, 10, 10] (world)
+					// Child at [0, 12, 12] (world)
+					// 
+					// then after the following code below it would become:
+					// centerPoint = [0, 2, 2]
+					//
+					if( SharedPtr<Entity> parent = entity->TryGetParent() )
+					{
+						// But, make sure we get the parent's world space if that parent has a parent and so on.
+						const glm::mat4 parentTransform = g_ActiveScene->GetWorldSpaceTransform( parent );
+						centerPoint = glm::inverse( parentTransform ) * centerPoint;
+					}
 
 					// Store original transform for undo/redo
 					if( !m_WasGizmoUsed )
 					{
-						m_GizmoOrignalTransforms[ rEntity->GetHandle() ] = tc.GetTransform();
+						m_GizmoOrignalTransforms[ entity->GetHandle() ] = tc.GetTransform();
 					}
 
 					glm::vec3 translation;
@@ -4340,11 +4358,13 @@ namespace Saturn {
 							tc.Scale = scale;
 						} break;
 					}
+				}
+				else
+				{
+					for( SharedPtr<Entity>& rEntity : selectedEntities )
+					{
 
-					/*
-					// Store modified transform for undo/redo
-					m_GizmoModifiedTransforms[ rEntity->GetHandle() ] = std::make_tuple( tc.Position, tc.GetRotationEuler(), tc.Scale );
-					*/
+					}
 				}
 
 				m_WasGizmoUsed = true;

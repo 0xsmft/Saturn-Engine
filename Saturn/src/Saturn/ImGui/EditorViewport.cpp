@@ -337,12 +337,27 @@ namespace Saturn {
 
 			if( ImGuizmo::IsUsing() )
 			{
-				for( SharedPtr<Entity>& rEntity : selectedEntities )
+				if( selectedEntities.size() == 1 )
 				{
-					auto& tc = rEntity->GetComponent<TransformComponent>();
+					SharedPtr<Entity> entity = selectedEntities[ 0 ];
+					auto& tc = entity->GetComponent<TransformComponent>();
 
-					// Set new transform
-					glm::mat4 transform = m_Scene->GetTransformRelativeToParent( rEntity );
+					// Convert world-space to parent-local space:
+					//
+					// Right, imagine we have:
+					// 
+					// Parent at [0, 10, 10] (world)
+					// Child at [0, 12, 12] (world)
+					// 
+					// then after the following code below it would become:
+					// centerPoint = [0, 2, 2]
+					//
+					if( SharedPtr<Entity> parent = entity->TryGetParent() )
+					{
+						// But, make sure we get the parent's world space if that parent has a parent and so on.
+						const glm::mat4 parentTransform = g_ActiveScene->GetWorldSpaceTransform( parent );
+						centerPoint = glm::inverse( parentTransform ) * centerPoint;
+					}
 
 					glm::vec3 translation;
 					glm::vec3 rotation;
@@ -378,6 +393,13 @@ namespace Saturn {
 						{
 							tc.Scale = scale;
 						} break;
+					}
+				}
+				else
+				{
+					for( SharedPtr<Entity>& rEntity : selectedEntities )
+					{
+
 					}
 				}
 

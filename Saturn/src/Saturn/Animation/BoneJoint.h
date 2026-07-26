@@ -36,7 +36,7 @@
 
 namespace Saturn {
 
-	class BoneJoint : public RefTarget
+	class BoneJoint
 	{
 	public:
 		BoneJoint();

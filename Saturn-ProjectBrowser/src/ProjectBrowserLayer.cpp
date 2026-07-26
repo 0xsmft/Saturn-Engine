@@ -35,7 +35,6 @@
 #include <Saturn/Core/Ruby/RubyWindow.h>
 #include <Saturn/Core/EnvironmentVariables.h>
 #include <Saturn/Core/Process.h>
-#include <Saturn/Core/Profiler.h>
 
 #include <Saturn/Serialisation/YAML/ProjectSerialiser.h>
 #include <Saturn/Serialisation/YAML/EngineSettingsSerialiser.h>
@@ -487,6 +486,9 @@ namespace Saturn {
 
 			m_RecentProjects.push_back( info );
 		}
+
+		EngineSettingsSerialiser ess;
+		ess.Serialise();
 	}
 
 	void ProjectBrowserLayer::AddNewlyCreatedProjectToRecentProjects()

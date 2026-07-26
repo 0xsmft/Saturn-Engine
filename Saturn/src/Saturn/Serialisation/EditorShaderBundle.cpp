@@ -75,7 +75,7 @@ namespace Saturn {
 #if defined(SAT_DIST)
 		return false;
 #else
-		const std::filesystem::path cachePath = Application::Get()->GetAppDataFolder() / "EditorShaderBundle.ssb";
+		const std::filesystem::path cachePath = Application::Get()->GetAppDataFolder() / "EditorShaderBundle-" SAT_CURRENT_VERSION_BUILD_TAG ".ssb";
 
 		std::ofstream fout( cachePath, std::ios::binary | std::ios::trunc );
 
@@ -105,13 +105,17 @@ namespace Saturn {
 #if defined(SAT_DIST)
 		return false;
 #else
-		const std::filesystem::path cachePath = Application::Get()->GetAppDataFolder() / "EditorShaderBundle.ssb";
+		const std::filesystem::path cachePath = Application::Get()->GetAppDataFolder() / "EditorShaderBundle-" SAT_CURRENT_VERSION_BUILD_TAG ".ssb";
 
 		std::ifstream stream( cachePath, std::ios::binary | std::ios::in );
 
 		EditorShaderBundleHeader header{};
 		if( !ReadHeader( header, stream ) )
+		{
+			// If we failed to read, then we know the editor will re-package it so make sure we mark this as a pending write.
+			s_PendingWrite = true;
 			return false;
+		}
 
 		for( size_t i = 0; i < header.Shaders; ++i )
 		{

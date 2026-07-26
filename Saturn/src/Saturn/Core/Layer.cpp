@@ -29,7 +29,7 @@
 #include "sppch.h"
 #include "Layer.h"
 
-#include "Saturn/Core/Renderer/RenderThread.h"
+#include "Saturn/Core/App.h"
 
 #include "Saturn/ImGui/Styles.h"
 #include "Saturn/Vulkan/VulkanContext.h"

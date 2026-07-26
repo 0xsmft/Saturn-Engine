@@ -242,7 +242,10 @@ namespace Saturn {
 
 		// However, if not, we prepare on the JobSystem
 		// Make sure to the cache now on the main thread.
-		s_RendererThumbnailCache.insert( { rData.Asset->ID, {} } );
+		s_RendererThumbnailCache.emplace( 
+			std::piecewise_construct,
+			std::forward_as_tuple( rData.Asset->ID ), 
+			std::forward_as_tuple() );
 
 		// TRANSITION: JOB SYSTEM THREAD
 		JobSystem::Get().QueueJob( [&]() 
@@ -302,7 +305,10 @@ namespace Saturn {
 			return nullptr;
 		}
 
-		s_RendererThumbnailCache.insert( { rData.Asset->ID, {} } );
+		s_RendererThumbnailCache.emplace(
+			std::piecewise_construct,
+			std::forward_as_tuple( rData.Asset->ID ),
+			std::forward_as_tuple() );
 
 		// Execute init on JobSystem Thread
 		JobSystem::Get().QueueJob( [&]() 
@@ -405,7 +411,10 @@ namespace Saturn {
 			return nullptr;
 		}
 
-		s_RendererThumbnailCache.insert( { rData.Asset->ID, {} } );
+		s_RendererThumbnailCache.emplace(
+			std::piecewise_construct,
+			std::forward_as_tuple( rData.Asset->ID ),
+			std::forward_as_tuple() );
 
 		// Execute init on JobSystem Thread
 		JobSystem::Get().QueueJob( [ & ]()

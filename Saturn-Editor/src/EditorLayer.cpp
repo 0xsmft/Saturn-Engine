@@ -4801,7 +4801,9 @@ namespace Saturn {
 	{
 		Ref<Prefab> prefabAsset = m_AssetManager->GetAssetAs<Prefab>( asset->ID );
 
-		CreateEntityParameters createEntityParameters;
+		CreateEntityParameters createEntityParameters{};
+		createEntityParameters.Tag = asset->Name;
+
 		auto entity = m_EditorScene->CreatePrefab( prefabAsset, createEntityParameters );
 		m_EditorScene->MarkDirty();
 

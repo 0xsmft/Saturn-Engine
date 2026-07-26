@@ -72,11 +72,11 @@ namespace Saturn {
 			--m_RefCount;
 		}
 
-		inline uint32_t GetRefCount() const { return m_RefCount; }
+		inline uint32_t GetRefCount() const { return m_RefCount.load(); }
 
 	private:
 		// Maximum references for a single object is 4294967295
-		mutable unsigned int m_RefCount = 0;
+		mutable std::atomic_uint m_RefCount{ 0u };
 	};
 
 	// Ref is an intrusive, shared ownership, reference counted, authoritative smart pointer similar to std::shared_ptr

@@ -1560,7 +1560,7 @@ namespace Saturn {
 				auto defaultMaterialID = ActiveProject->GetDefaultMaterialAsset();
 
 				ImGui::Text( "Default Material Asset:" );
-				defaultMaterialID == 0 ? ImGui::TextColored( ImVec4( 1.0f, 0.0f, 0.0f, 1.0f ), "None" ) : ImGui::Text( "%llu", defaultMaterialID );
+				defaultMaterialID == 0 ? ImGui::TextColored( ImVec4( 1.0f, 0.0f, 0.0f, 1.0f ), "None" ) : ImGui::Text( "%" PRIu64, defaultMaterialID );
 
 				ImGui::Spring();
 
@@ -1605,7 +1605,7 @@ namespace Saturn {
 				auto defaultMaterialID = ActiveProject->GetDefaultPhysicsMaterialAsset();
 
 				ImGui::Text( "Default Physics Material Asset:" );
-				defaultMaterialID == 0 ? ImGui::TextColored( ImVec4( 1.0f, 0.0f, 0.0f, 1.0f ), "None" ) : ImGui::Text( "%llu", defaultMaterialID );
+				defaultMaterialID == 0 ? ImGui::TextColored( ImVec4( 1.0f, 0.0f, 0.0f, 1.0f ), "None" ) : ImGui::Text( "%" PRIu64, defaultMaterialID );
 
 				ImGui::Spring();
 
@@ -1650,7 +1650,7 @@ namespace Saturn {
 				auto defaultFontAsset = ActiveProject->GetDefaultFontAsset();
 
 				ImGui::Text( "Default Font Asset:" );
-				defaultFontAsset == 0 ? ImGui::TextColored( ImVec4( 1.0f, 0.0f, 0.0f, 1.0f ), "None" ) : ImGui::Text( "%llu", defaultFontAsset );
+				defaultFontAsset == 0 ? ImGui::TextColored( ImVec4( 1.0f, 0.0f, 0.0f, 1.0f ), "None" ) : ImGui::Text( "%" PRIu64, defaultFontAsset );
 
 				ImGui::Spring();
 
@@ -1695,7 +1695,7 @@ namespace Saturn {
 				auto defaultPhysReg = ActiveProject->GetDefaultPhysRegAsset();
 
 				ImGui::Text( "Default Physics Surface Registry Asset:" );
-				defaultPhysReg == 0 ? ImGui::TextColored( ImVec4( 1.0f, 0.0f, 0.0f, 1.0f ), "None" ) : ImGui::Text( "%llu", defaultPhysReg );
+				defaultPhysReg == 0 ? ImGui::TextColored( ImVec4( 1.0f, 0.0f, 0.0f, 1.0f ), "None" ) : ImGui::Text( "%" PRIu64, defaultPhysReg );
 
 				ImGui::Spring();
 
@@ -1821,7 +1821,7 @@ namespace Saturn {
 
 				if( ImGui::BeginItemTooltip() )
 				{
-					ImGui::Text( "Any file above %llu KiB will get compressed, anything below will not.", abCompressionThreshold );
+					ImGui::Text( "Any file above %" PRIu64 "KiB will get compressed, anything below will not.", abCompressionThreshold );
 					ImGui::EndTooltip();
 				}
 			}
@@ -2395,7 +2395,7 @@ namespace Saturn {
 					ImGui::Selectable( asset->Name.c_str(), false );
 
 					ImGui::TableSetColumnIndex( 1 );
-					ImGui::Text( "%llu", id );
+					ImGui::Text( "%" PRIu64, id );
 
 					ImGui::TableSetColumnIndex( 2 );
 					ImGui::Text( AssetTypeToString( asset->Type ).data(), false );
@@ -2460,7 +2460,7 @@ namespace Saturn {
 					ImGui::Selectable( asset->Name.c_str(), false );
 
 					ImGui::TableSetColumnIndex( 1 );
-					ImGui::Text( "%llu", id );
+					ImGui::Text( "%" PRIu64, id );
 
 					ImGui::TableSetColumnIndex( 2 );
 					ImGui::Text( AssetTypeToString( asset->Type ).data(), false );
@@ -3221,7 +3221,7 @@ namespace Saturn {
 
 					if( ImGui::BeginItemTooltip() )
 					{
-						ImGui::Text( "Hash: %llu", shader->GetShaderHash() );
+						ImGui::Text( "Hash: %" PRIu64, shader->GetShaderHash() );
 						ImGui::EndTooltip();
 					}
 
@@ -3332,13 +3332,13 @@ namespace Saturn {
 							ImGui::Text( "%s", pClass->GetName().c_str() );
 
 							ImGui::TableSetColumnIndex( 1 );
-							ImGui::Text( "%llu", pClass->GetSize() );
+							ImGui::Text( "%" PRIu64, pClass->GetSize() );
 
 							ImGui::TableSetColumnIndex( 2 );
-							ImGui::Text( "%llu", pClass->GetAlignment() );
+							ImGui::Text( "%" PRIu64, pClass->GetAlignment() );
 
 							ImGui::TableSetColumnIndex( 3 );
-							ImGui::Text( "%llu", pClass->GetHash() );
+							ImGui::Text( "%" PRIu64, pClass->GetHash() );
 
 							ImGui::TableSetColumnIndex( 4 );
 							ImGui::Text( "%i", pClass->GetPropertyCount() );
@@ -3403,9 +3403,9 @@ namespace Saturn {
 									ImGui::Separator();
 
 									ImGui::Text( "%s", dependency->Path.string().c_str() );
-									ImGui::Text( "Asset: %llu", dependency->ID );
+									ImGui::Text( "Asset: %" PRIu64, dependency->ID );
 									ImGui::Text( "Asset Name: %s", dependency->Name.c_str() );
-									ImGui::Text( "Asset Version: %llu", dependency->Version );
+									ImGui::Text( "Asset Version: %" PRIu64, dependency->Version );
 
 									ImGui::EndTooltip();
 								}

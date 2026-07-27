@@ -56,9 +56,9 @@ namespace Saturn {
 			ImGui::Text( "Statistics update every second." );
 			ImGui::Separator();
 
-			ImGui::Text( "Page faults: %llu", m_CurrentMemoryStatistics.PageFaultCount );
-			ImGui::Text( "Current working set: %lluMB", m_CurrentMemoryStatistics.CurrentWorkingSet / 1024 / 1024 );
-			ImGui::Text( "Peak working set: %lluMB", m_CurrentMemoryStatistics.PeakWorkingSet / 1024 / 1024 );
+			ImGui::Text( "Page faults: %" PRIu64, m_CurrentMemoryStatistics.PageFaultCount );
+			ImGui::Text( "Current working set: %" PRIu64 "MB", m_CurrentMemoryStatistics.CurrentWorkingSet / 1024 / 1024 );
+			ImGui::Text( "Peak working set: %" PRIu64 "MB", m_CurrentMemoryStatistics.PeakWorkingSet / 1024 / 1024 );
 		}
 
 		ImGui::End();

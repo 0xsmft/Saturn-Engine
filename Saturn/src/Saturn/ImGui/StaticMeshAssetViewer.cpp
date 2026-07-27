@@ -339,7 +339,7 @@ namespace Saturn {
 					ImGui::BulletText( "Because there was no ID set in the Project." );
 
 				if( noIdInProject )
-					ImGui::BulletText( "Because the ID could not be found in the AssetRegistry looking for: %llu", ( uint64_t ) prjDefAsset );
+					ImGui::BulletText( "Because the ID could not be found in the AssetRegistry looking for: %" PRIu64, ( uint64_t ) prjDefAsset );
 			}
 
 			ImGui::Separator();
@@ -347,7 +347,7 @@ namespace Saturn {
 			if( m_FallbackID == 0 )
 				ImGui::TextDisabled( "<NULL>" );
 			else
-				ImGui::TextDisabled( "%llu", ( uint64_t ) m_FallbackID );
+				ImGui::TextDisabled( "%" PRIu64, ( uint64_t ) m_FallbackID );
 
 			ImGui::SameLine();
 

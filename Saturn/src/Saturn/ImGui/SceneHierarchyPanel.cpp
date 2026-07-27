@@ -759,7 +759,7 @@ namespace Saturn {
 		// Draw ID and entity class type.
 		{
 			// ID
-			ImGui::TextDisabled( "%llu", id );
+			ImGui::TextDisabled( "%" PRIu64, id );
 
 			ImGui::SameLine();
 			ImGui::TextDisabled( "%s", entity->GetClass()->GetName().c_str() );
@@ -1614,7 +1614,8 @@ namespace Saturn {
 				else
 				{
 					ImGui::Text( "Sound could not be found in active scene. This should not happen and may indicate a bug in the application." );
-					ImGui::Text( "Looking for: %llu (ASSET/%llu). Was it marked for destruction?", ap.UniqueID, ap.SpecAssetID );
+
+					ImGui::Text( "Looking for: %" PRIu64 "(ASSET/%" PRIu64 "). Was it marked for destruction?", ap.UniqueID, ap.SpecAssetID );
 				}
 			}
 			else

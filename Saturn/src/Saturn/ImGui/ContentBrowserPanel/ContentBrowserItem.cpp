@@ -252,9 +252,9 @@ namespace Saturn {
 
 					if( m_Asset )
 					{
-						ImGui::Text( "Asset: %llu", m_Asset->ID );
+						ImGui::Text( "Asset: %" PRIu64, m_Asset->ID );
 						ImGui::Text( "Asset Name: %s", m_Asset->Name.c_str() );
-						ImGui::Text( "Asset Version: %llu", m_Asset->Version );
+						ImGui::Text( "Asset Version: %" PRIu64, m_Asset->Version );
 					}
 
 					ImGui::EndTooltip();

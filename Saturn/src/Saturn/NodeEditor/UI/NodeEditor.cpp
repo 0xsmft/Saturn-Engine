@@ -506,7 +506,7 @@ namespace Saturn {
 				ImGui::SeparatorText( "Debug Info" );
 				Auxiliary::ScopedDisabledFlag disabled( true );
 
-				ImGui::Text( "NC/%llu", m_HoveredNode->ID );
+				ImGui::Text( "NC/%" PRIu64, m_HoveredNode->ID );
 				ImGui::Text( "%s", m_HoveredNode->Name.c_str() );
 
 				ImGui::Separator();
@@ -1406,7 +1406,7 @@ namespace Saturn {
 
 			if( Auxiliary::TreeNode( "Nodes" ) )
 			{
-				ImGui::Text( "Node Count %llu", m_Nodes.size() );
+				ImGui::Text( "Node Count %" PRIu64, m_Nodes.size() );
 				ImGui::Separator();
 
 				for( const auto& [id, rNode] : m_Nodes )
@@ -1414,7 +1414,7 @@ namespace Saturn {
 					ImGui::PushID( ( int ) id );
 
 					ImGui::Text( "%s", rNode->Name.c_str() );
-					ImGui::Text( "ID/%llu", id );
+					ImGui::Text( "ID/%" PRIu64, id );
 					ImGui::Text( "Parent Object Name (if any) %s", rNode->pParentObject ? rNode->pParentObject->Name.c_str() : "<null>" );
 					ImGui::Text( "SClass: %s", rNode->GetClass()->GetName().c_str() );
 
@@ -1445,7 +1445,7 @@ namespace Saturn {
 							for( const auto& rOutput : rNode->Outputs )
 							{
 								ImGui::Text( "%s", rOutput->Name.c_str() );
-								ImGui::Text( "ID/%llu", rOutput->ID );
+								ImGui::Text( "ID/%" PRIu64, rOutput->ID );
 
 								if( IsLinked( rOutput->ID ) )
 								{
@@ -1470,7 +1470,7 @@ namespace Saturn {
 							for( const auto& rInput : rNode->Inputs )
 							{
 								ImGui::Text( "%s", rInput->Name.c_str() );
-								ImGui::Text( "ID/%llu", rInput->ID );
+								ImGui::Text( "ID/%" PRIu64, rInput->ID );
 
 								if( IsLinked( rInput->ID ) )
 								{
@@ -1506,13 +1506,13 @@ namespace Saturn {
 						{
 							if( !IsLinked( rInput->ID ) )
 							{
-								ImGui::Text( "Node %s (%llu) pin ID %llu is not linked.", rNode->Name.c_str(), id, rInput->ID );
+								ImGui::Text( "Node %s (%" PRIu64 ") pin ID %" PRIu64 "is not linked.", rNode->Name.c_str(), id, rInput->ID );
 								++numberOfUnlinkedInputs;
 							}
 						}
 					}
 
-					ImGui::Text( "Number of unlinked inputs %llu", numberOfUnlinkedInputs );
+					ImGui::Text( "Number of unlinked inputs %" PRIu64, numberOfUnlinkedInputs );
 
 					Auxiliary::EndTreeNode();
 				}

@@ -31,7 +31,6 @@
 
 #include <backends/imgui_impl_vulkan.h>
 #include <glm/gtc/type_ptr.hpp>
-#include <cinttypes>
 
 namespace Saturn::Auxiliary {
 

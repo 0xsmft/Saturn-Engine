@@ -269,13 +269,13 @@ namespace Saturn {
 					ImGui::TableNextRow();
 
 					ImGui::TableNextColumn();
-					ImGui::Text( "%llu", rData.Time );
+					ImGui::Text( "%" PRIu64, rData.Time );
 
 					ImGui::TableNextColumn();
 					ImGui::Text( "%s", rData.ExistsOnFS ? "true" : "false" );
 
 					ImGui::TableNextColumn();
-					ImGui::Text( "%llu", rID );
+					ImGui::Text( "%" PRIu64, rID );
 
 					ImGui::TableNextColumn();
 					Auxiliary::Image( rData.Texture == nullptr ? m_FileIcon : rData.Texture, ImVec2( 24.0f, 24.0f ) );

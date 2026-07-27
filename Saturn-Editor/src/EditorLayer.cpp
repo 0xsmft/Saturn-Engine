@@ -2053,7 +2053,15 @@ namespace Saturn {
 			}
 
 			Auxiliary::DisabledFlag onlineSystemDisabledIf( m_RequestRuntime );
-			ImGui::SetNextItemWidth( ImGui::CalcTextSize( sdkDisplayName.data() ).x + 24.0f );
+			
+			const auto& rStyle = ImGui::GetStyle();
+			const float comboWidth = glm::max(
+				200.0f,
+				ImGui::CalcTextSize( sdkDisplayName.c_str() ).x +
+				rStyle.FramePadding.x * 2.0f +
+				ImGui::GetFrameHeight() );
+
+			ImGui::SetNextItemWidth( comboWidth );
 			if( ImGui::BeginCombo( "##osystem", sdkDisplayName.data() ) )
 			{
 				bool selected = ( selectedType == OnlineSystemAPIType::Null );

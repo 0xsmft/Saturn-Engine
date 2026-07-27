@@ -32,21 +32,29 @@
 #include "ThumbnailGenerator.h"
 
 #include "Saturn/Asset/Asset.h"
-#include "Saturn/Asset/TextureSourceAsset.h"
 
 #include "Saturn/Project/Project.h"
 
 #include "Saturn/Serialisation/Raw/RawSerialisation.h"
 
-#include "Saturn/Core/JobSystem.h"
-
 #include "Saturn/ImGui/EditorIcons.h"
-#include "Saturn/ImGui/ImGuiAuxiliary.h"
 
+#if !defined(SAT_DIST)
+#include "Saturn/ImGui/ImGuiAuxiliary.h"
 #include <imgui.h>
+#endif
 
 namespace Saturn {
 	
+	//////////////////////////////////////////////////////////////////////////
+
+	static bool IsValidAssetTypeForGeneration( AssetType type )
+	{
+		return type == AssetType::Texture || type == AssetType::Material || type == AssetType::StaticMesh || type == AssetType::SkeletalMesh || type == AssetType::Prefab;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+
 	void ContentBrowserThumbnailCache::Init()
 	{
 		DeserialiseManifest();
@@ -87,7 +95,7 @@ namespace Saturn {
 		{
 			auto& rData = m_GenerationQueue.front();
 
-			if( rData.Asset->Type == AssetType::Texture || rData.Asset->Type == AssetType::Material || rData.Asset->Type == AssetType::StaticMesh || rData.Asset->Type == AssetType::SkeletalMesh )
+			if( IsValidAssetTypeForGeneration( rData.Asset->Type ) )
 			{
 				// If it's somehow already in the cache pop it and move on to the next thumbnail
 				const auto Itr = m_Cache.find( rData.Asset->ID );
@@ -170,7 +178,7 @@ namespace Saturn {
 				if( rData.Time != timestamp || !DeserialiseSingleThumbnail( Itr->first, rData ) )
 				{
 					// Failed to load from cache, regenerate the image next frame.
-					// We can do this by removing the image from the cache
+					// We can do this by removing the image from the cache.
 					m_Cache.erase( Itr );
 				}
 
@@ -178,8 +186,8 @@ namespace Saturn {
 			}
 		}
 
-		// Generate texture & pass in needed information for cache data
-		if( asset->Type == AssetType::Texture || asset->Type == AssetType::Material || asset->Type == AssetType::StaticMesh || asset->Type == AssetType::SkeletalMesh )
+		// Generate texture & pass in needed information for cache data.
+		if( IsValidAssetTypeForGeneration( asset->Type ) )
 			m_GenerationQueue.push( { .Time = timestamp, .Texture = nullptr, .Asset = asset } );
 
 		return texture;
@@ -191,6 +199,7 @@ namespace Saturn {
 
 	void ContentBrowserThumbnailCache::Invalidate( Ref<Asset> asset )
 	{
+		// Remove from cache if present...
 		const auto Itr = m_Cache.find( asset->ID );
 		if( Itr != m_Cache.end() )
 		{
@@ -208,10 +217,10 @@ namespace Saturn {
 			m_Cache.erase( asset->ID );
 
 			// No need to remove from manifest because we will rewrite it again when its generated.
-
-			// Generate texture & pass in needed information for cache data
-			if( asset->Type == AssetType::Texture || asset->Type == AssetType::Material || asset->Type == AssetType::StaticMesh || asset->Type == AssetType::SkeletalMesh )
-				m_GenerationQueue.push( { .Time = timestamp, .Texture = nullptr, .Asset = asset } );
+		
+			// Generate texture & pass in needed information for cache data.
+			if( IsValidAssetTypeForGeneration( asset->Type ) )
+				m_GenerationQueue.emplace( timestamp, nullptr, asset );
 		}
 	}
 
@@ -240,6 +249,8 @@ namespace Saturn {
 	{
 		if( ImGui::Begin( "ContentBrowserThumbnailCache", pOpen ) ) 
 		{
+			ImGui::Text( "Pending Queue count: %" PRIu64, m_GenerationQueue.size() );
+
 			if( ImGui::BeginTable( "##DebugCBThumbnails", 6, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollX | ImGuiTableFlags_NoBordersInBody ) )
 			{
 				ImGui::TableSetupColumn( "Last Write Time" );

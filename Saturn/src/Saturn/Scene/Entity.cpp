@@ -194,6 +194,13 @@ namespace Saturn {
 		RemoveComponent<BoneAttachmentInfoComponent>();
 	}
 
+	glm::vec3 Entity::CalculateForwardVectorFromRotation()
+	{
+		return GetLocalRotationQuat() * TransformComponent::Forward;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+
 	void Entity::Serialise( const SharedPtr<Entity>& rObject, std::ofstream& rStream )
 	{
 		RawEntitySerialisation::SerialiseEntity( rObject, rStream );

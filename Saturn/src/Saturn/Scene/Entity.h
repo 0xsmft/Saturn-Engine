@@ -236,7 +236,16 @@ namespace Saturn {
 		//
 		void AttachToBone( SharedPtr<Entity> parent, const std::string& rAttachmentName );
 
+		//
+		// Remove this entity from a bone attachment.
+		//
 		void DetachFromBone();
+
+		//
+		// Calculate forward vector based from the
+		// entity's _local_ rotation.
+		//
+		glm::vec3 CalculateForwardVectorFromRotation();
 
 	public:
 		operator entt::entity() const { return m_EntityHandle; }

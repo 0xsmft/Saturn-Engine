@@ -189,7 +189,18 @@ namespace Saturn {
 		//////////////////////////////////////////////////////////////////////////
 		// Movement
 
+		//
+		// Calculate the forward vector
+		// based from the camera's
+		// orientation.
+		//
 		glm::vec3 CalculateRight();
+
+		//
+		// Calculate the forward vector
+		// based from the camera's
+		// orientation.
+		//
 		glm::vec3 CalculateForward();
 
 		float m_MovementSpeed = 0.0f;

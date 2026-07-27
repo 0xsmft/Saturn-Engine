@@ -453,7 +453,7 @@ namespace Saturn {
 
 		{
 			Submesh& rSubmesh = mesh->Submeshes()[ SubmeshIndex ];
-			SAT_CORE_ASSERT( rSubmesh.MaterialIndex < materialRegistry->GetMaterialAssets().size() );
+			SAT_CORE_ASSERT( rSubmesh.MaterialIndex < materialRegistry->GetMaterialAssets().size(), "MaterialIndex is too big for the number of MaterialAssets!" );
 			auto& rMaterialAsset = materialRegistry->GetMaterialAssets()[ rSubmesh.MaterialIndex ];
 			Ref<Material> mat = rMaterialAsset->GetMaterial();
 

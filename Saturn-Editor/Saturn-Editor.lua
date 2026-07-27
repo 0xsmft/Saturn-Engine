@@ -61,6 +61,7 @@ project "Saturn-Editor"
 		"%{IncludeDir.ImTimeline}",
 		"%{IncludeDir.libzip}",
 		"%{IncludeDir.ImGuiColorTextEdit}",
+		"%{IncludeDir.CrashCatch}",
 
 		"%{IncludeDir.SharedStorage}"
 	}

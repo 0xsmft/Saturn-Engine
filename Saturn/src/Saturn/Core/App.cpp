@@ -54,6 +54,11 @@
 #include <ShlObj.h>
 #endif
 
+#define SAT_WITH_CRASHCATCH 1
+#if SAT_WITH_CRASHCATCH
+#include <CrashCatch/CrashCatch.hpp>
+#endif
+
 #define APP_BIND_EVENT_FN(_) std::bind(&Application::_, this, std::placeholders::_1)
 
 namespace Saturn {
@@ -62,6 +67,17 @@ namespace Saturn {
 		: m_Specification( spec )
 	{
 		SingletonStorage::AddSingleton( this );
+
+#if	SAT_WITH_CRASHCATCH
+		CrashCatch::Config config;
+		config.appVersion = std::format( "{} {} " SAT_CURRENT_VERSION_BUILD_TAG, SAT_CURRENT_VERSION, SAT_CURRENT_VERSION_STRING );
+		config.buildConfig = GetCurrentConfigName();
+		config.dumpFileName = "Saturn_Engine";
+		config.dumpFolder = std::filesystem::current_path() / "Dumps";
+		config.showCrashDialog = true;
+
+		CrashCatch::initialize( config );
+#endif
 
 		InitWindow();
 		InitGraphics();

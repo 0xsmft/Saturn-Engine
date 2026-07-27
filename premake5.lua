@@ -58,6 +58,7 @@ IncludeDir["NativeFileDialogExtended"] = "%{wks.location}/Saturn/vendor/nativefi
 IncludeDir["ImTimeline"] = "%{wks.location}/Saturn/vendor/ImTimeline/ImTimeline/src"
 IncludeDir["libzip"] = "%{wks.location}/Saturn/vendor/libzip/include"
 IncludeDir["ImGuiColorTextEdit"] = "%{wks.location}/Saturn/vendor/ImGuiColorTextEdit/src"
+IncludeDir["CrashCatch"] = "%{wks.location}/Saturn/vendor/CrashCatch/src"
 
 -- // -Dependencies-- 
 group "Dependencies"

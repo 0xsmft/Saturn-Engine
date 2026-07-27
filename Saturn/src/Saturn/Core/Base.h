@@ -51,7 +51,8 @@ consteval auto SAT_MAKE_VERSION( Ty major, Ty minor, Ty patch ) { return ( ( ( (
 // Current version is Alpha 0.2.7 (Alpha 2.7)
 constexpr auto SAT_CURRENT_VERSION = SAT_MAKE_VERSION( 0, 2, 7 );
 constexpr auto SAT_CURRENT_VERSION_STRING = "0.2.7";
-constexpr auto SAT_CURRENT_VERSION_BUILD_TAG = "D17KF";
+
+#define SAT_CURRENT_VERSION_BUILD_TAG "D17KF"
 
 #define SAT_DECODE_VERSION(source, major, minor, patch) \
 patch = (source) & 0xFF; \

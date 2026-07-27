@@ -3883,22 +3883,22 @@ namespace Saturn {
 					{
 						case AssetType::Prefab:
 						{
-							DndImportPrefab( rItem->GetAsset(), true, false );
+							DndImportPrefab( rItem->GetAsset(), DndFlags_Select );
 						} break;
 
 						case AssetType::StaticMesh:
 						{
-							DndImportStaticMesh( rItem->GetAsset(), true, false );
+							DndImportStaticMesh( rItem->GetAsset(), DndFlags_Select );
 						} break;
 
 						case AssetType::SkeletalMesh:
 						{
-							DndImportSkeletalMesh( rItem->GetAsset(), true, false );
+							DndImportSkeletalMesh( rItem->GetAsset(), DndFlags_Select );
 						} break;
 
 						case AssetType::Sound:
 						{
-							DndImportSound( rItem->GetAsset(), true, false );
+							DndImportSound( rItem->GetAsset(), DndFlags_Select );
 						} break;
 
 						default:
@@ -3919,7 +3919,7 @@ namespace Saturn {
 
 				Ref<Asset> asset = m_AssetManager->FindAsset( *pUUID );
 
-				DndImportPrefab( asset, true );
+				DndImportPrefab( asset, DndFlags_Select );
 			}
 
 			if( auto payload = ImGui::AcceptDragDropPayload( "CONTENT_BROWSER_ITEM_MODEL" ) )
@@ -3927,7 +3927,7 @@ namespace Saturn {
 				const UUID* pUUID = ( const UUID* ) payload->Data;
 
 				Ref<Asset> asset = m_AssetManager->FindAsset( *pUUID );
-				DndImportStaticMesh( asset, true );
+				DndImportStaticMesh( asset, DndFlags_Select );
 			}
 
 			if( auto payload = ImGui::AcceptDragDropPayload( "CONTENT_BROWSER_ITEM_SKMODEL" ) )
@@ -3936,7 +3936,7 @@ namespace Saturn {
 
 				Ref<Asset> asset = m_AssetManager->FindAsset( *pUUID );
 
-				DndImportSkeletalMesh( asset, true );
+				DndImportSkeletalMesh( asset, DndFlags_Select );
 			}
 
 			if( auto payload = ImGui::AcceptDragDropPayload( "CONTENT_BROWSER_ITEM_SND" ) )
@@ -3944,7 +3944,7 @@ namespace Saturn {
 				const UUID* pUUID = ( const UUID* ) payload->Data;
 
 				Ref<Asset> asset = m_AssetManager->FindAsset( *pUUID );
-				DndImportSound( asset, true );
+				DndImportSound( asset, DndFlags_Select );
 			}
 
 			ImGui::EndDragDropTarget();
@@ -4245,10 +4245,10 @@ namespace Saturn {
 
 		const ImVec2 maxBound = { minBound.x + m_ViewportSize.x, minBound.y + m_ViewportSize.y };
 
-		m_ViewportFocused = ImGui::IsWindowFocused();
+		m_ViewportFocused   = ImGui::IsWindowFocused();
 		m_MouseOverViewport = ImGui::IsWindowHovered();
 		m_AllowCameraEvents = ImGui::IsMouseHoveringRect( minBound, maxBound ) && m_ViewportFocused || m_StartedRightClickInViewport;
-		m_ViewportBounds = ImRect( minBound, maxBound );
+		m_ViewportBounds    = ImRect( minBound, maxBound );
 
 		std::vector<SharedPtr<Entity>> selectedEntities = m_SelectionManager->GetSelectionContexts( g_ActiveScene );
 
@@ -4308,7 +4308,9 @@ namespace Saturn {
 					// Child at [0, 12, 12] (world)
 					// 
 					// then after the following code below it would become:
-					// centerPoint = [0, 2, 2]
+					// centerPoint * inverse( parent ) = [0, 2, 2]
+					// 
+					// as the inverse acts as a subtraction here.
 					//
 					if( SharedPtr<Entity> parent = entity->TryGetParent() )
 					{
@@ -4817,7 +4819,7 @@ namespace Saturn {
 		return { rayPos, rayDir };
 	}
 
-	void EditorLayer::DndImportPrefab( Ref<Asset> asset, bool select /*= false*/, bool clearSelection /*= true*/ )
+	void EditorLayer::DndImportPrefab( Ref<Asset> asset, DragNDropAssetFlags flags /*= DndFlags_ClearSelection*/ )
 	{
 		Ref<Prefab> prefabAsset = m_AssetManager->GetAssetAs<Prefab>( asset->ID );
 
@@ -4829,16 +4831,14 @@ namespace Saturn {
 
 		PlaceEntityRelativeToMousePos( entity );
 
-		if( select )
-		{
-			if( clearSelection )
-				m_SelectionManager->ClearSelection( m_EditorScene.Get(), true );
+		if( ( flags & DndFlags_ClearSelection ) )
+			m_SelectionManager->ClearSelection( m_EditorScene.Get(), true );
 
+		if( ( flags & DndFlags_Select ) )
 			m_SelectionManager->Select( entity );
-		}
 	}
 
-	void EditorLayer::DndImportStaticMesh( Ref<Asset> asset, bool select /*= false*/, bool clearSelection /*= true*/ )
+	void EditorLayer::DndImportStaticMesh( Ref<Asset> asset, DragNDropAssetFlags flags /*= DndFlags_ClearSelection*/ )
 	{
 		Ref<StaticMesh> meshAsset = m_AssetManager->GetAssetAs<StaticMesh>( asset->ID );
 
@@ -4852,16 +4852,14 @@ namespace Saturn {
 
 		m_EditorScene->MarkDirty();
 
-		if( select )
-		{
-			if( clearSelection )
-				m_SelectionManager->ClearSelection( m_EditorScene.Get(), true );
+		if( ( flags & DndFlags_ClearSelection ) )
+			m_SelectionManager->ClearSelection( m_EditorScene.Get(), true );
 
+		if( ( flags & DndFlags_Select ) )
 			m_SelectionManager->Select( entity );
-		}
 	}
 
-	void EditorLayer::DndImportSkeletalMesh( Ref<Asset> asset, bool select /*= false*/, bool clearSelection /*= true*/ )
+	void EditorLayer::DndImportSkeletalMesh( Ref<Asset> asset, DragNDropAssetFlags flags /*= DndFlags_ClearSelection*/ )
 	{
 		Ref<SkeletalMesh> meshAsset = m_AssetManager->GetAssetAs<SkeletalMesh>( asset->ID );
 
@@ -4875,16 +4873,14 @@ namespace Saturn {
 
 		m_EditorScene->MarkDirty();
 
-		if( select )
-		{
-			if( clearSelection )
-				m_SelectionManager->ClearSelection( m_EditorScene.Get(), true );
+		if( ( flags & DndFlags_ClearSelection ) )
+			m_SelectionManager->ClearSelection( m_EditorScene.Get(), true );
 
+		if( ( flags & DndFlags_Select ) )
 			m_SelectionManager->Select( entity );
-		}
 	}
 
-	void EditorLayer::DndImportSound( Ref<Asset> asset, bool select /*= false*/, bool clearSelection /*= true */ )
+	void EditorLayer::DndImportSound( Ref<Asset> asset, DragNDropAssetFlags flags /*= DndFlags_ClearSelection*/ )
 	{
 		SharedPtr<Entity> entity = m_EditorScene->CreateEntity( asset->Name );
 
@@ -4895,13 +4891,11 @@ namespace Saturn {
 
 		m_EditorScene->MarkDirty();
 
-		if( select )
-		{
-			if( clearSelection )
-				m_SelectionManager->ClearSelection( m_EditorScene.Get(), true );
+		if( ( flags & DndFlags_ClearSelection ) )
+			m_SelectionManager->ClearSelection( m_EditorScene.Get(), true );
 
+		if( ( flags & DndFlags_Select ) )
 			m_SelectionManager->Select( entity );
-		}
 	}
 
 	void EditorLayer::PlaceEntityRelativeToMousePos( SharedPtr<Entity> entity )

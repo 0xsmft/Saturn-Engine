@@ -155,10 +155,17 @@ namespace Saturn {
 		glm::vec2 ConvertMouseToViewportNDC();
 		std::pair<glm::vec3, glm::vec3> RayCast( float mx, float my );
 
-		void DndImportPrefab( Ref<Asset> asset, bool select = false, bool clearSelection = true );
-		void DndImportStaticMesh( Ref<Asset> asset, bool select = false, bool clearSelection = true );
-		void DndImportSkeletalMesh( Ref<Asset> asset, bool select = false, bool clearSelection = true );
-		void DndImportSound( Ref<Asset> asset, bool select = false, bool clearSelection = true );
+		enum DragNDropAssetFlags
+		{
+			DndFlags_None,
+			DndFlags_Select = 0x1,
+			DndFlags_ClearSelection = 0x2,
+		};
+
+		void DndImportPrefab( Ref<Asset> asset, DragNDropAssetFlags flags = DndFlags_ClearSelection );
+		void DndImportStaticMesh( Ref<Asset> asset, DragNDropAssetFlags flags = DndFlags_ClearSelection );
+		void DndImportSkeletalMesh( Ref<Asset> asset, DragNDropAssetFlags flags = DndFlags_ClearSelection );
+		void DndImportSound( Ref<Asset> asset, DragNDropAssetFlags flags = DndFlags_ClearSelection );
 
 		void PlaceEntityRelativeToMousePos( SharedPtr<Entity> entity );
 		bool TrySelectEntityFromMouse( Mesh* mesh, SharedPtr<Entity> entity, const glm::vec3& rOrigin, const glm::vec3& rDirection );

@@ -153,8 +153,6 @@ namespace Saturn {
 
 		InitAO( AOTechnique::None );
 
-		m_RendererData.SceneEnvironment = Ref<EnvironmentMap>::Create();
-
 		// TODO: Package BRDF texture into AssetBundle in dist
 		m_RendererData.BRDFLUT_Texture = Ref<Texture2D>::Create( "content/textures/BRDF_LUT.tga", AddressingMode::Repeat, TextureLoadFlags_LoadOnMainThread );
 
@@ -1518,14 +1516,14 @@ namespace Saturn {
 		auto& rSceneEnvironment = m_RendererData.SceneEnvironment;
 
 		// We have no skybox.
-		if( rSceneEnvironment->Azimuth == 0 && rSceneEnvironment->Inclination == 0 && rSceneEnvironment->Turbidity == 0 )
+		if( rSceneEnvironment.Azimuth == 0 && rSceneEnvironment.Inclination == 0 && rSceneEnvironment.Turbidity == 0 )
 		{
 			// I don't really like this.
 			// TODO: Come back to this.
-			if( rSceneEnvironment->IrradianceMap && rSceneEnvironment->RadianceMap )
+			if( rSceneEnvironment.IrradianceMap && rSceneEnvironment.RadianceMap )
 			{
-				rSceneEnvironment->RadianceMap = nullptr;
-				rSceneEnvironment->IrradianceMap = nullptr;
+				rSceneEnvironment.RadianceMap = nullptr;
+				rSceneEnvironment.IrradianceMap = nullptr;
 			}
 
 			return;
@@ -1535,7 +1533,7 @@ namespace Saturn {
 		CheckInvalidSkybox();
 
 		VkCommandBuffer CommandBuffer = m_RendererData.CommandBuffer;
-		m_RendererData.SkyboxMaterial->SetResource( "u_CubeTexture", m_RendererData.SceneEnvironment->IrradianceMap );
+		m_RendererData.SkyboxMaterial->SetResource( "u_CubeTexture", m_RendererData.SceneEnvironment.IrradianceMap );
 
 		UBSkyboxMatrices SkyboxMatricesObject = {};
 		SkyboxMatricesObject.InverseVP = glm::inverse( m_RendererData.CurrentCamera.pCamera->ProjectionMatrix() * m_RendererData.CurrentCamera.ViewMatrix );
@@ -1568,7 +1566,7 @@ namespace Saturn {
 			return;
 
 		// Invalid skybox, maybe null from loading a new scene? This only happens on the first frames so this is a hack.
-		if( m_RendererData.SceneEnvironment->IrradianceMap == nullptr && m_RendererData.SceneEnvironment->RadianceMap == nullptr )
+		if( m_RendererData.SceneEnvironment.IrradianceMap == nullptr && m_RendererData.SceneEnvironment.RadianceMap == nullptr )
 		{
 			SharedPtr<Entity> SkylightEntity = nullptr;
 
@@ -1586,17 +1584,17 @@ namespace Saturn {
 				if( !Skylight.DynamicSky )
 					return;
 
-				if( Skylight.DynamicSky && !m_RendererData.SceneEnvironment->IrradianceMap && !m_RendererData.SceneEnvironment->RadianceMap )
+				if( Skylight.DynamicSky && !m_RendererData.SceneEnvironment.IrradianceMap && !m_RendererData.SceneEnvironment.RadianceMap )
 				{
-					m_RendererData.SceneEnvironment->Turbidity = Skylight.Turbidity;
-					m_RendererData.SceneEnvironment->Azimuth = Skylight.Azimuth;
-					m_RendererData.SceneEnvironment->Inclination = Skylight.Inclination;
+					m_RendererData.SceneEnvironment.Turbidity = Skylight.Turbidity;
+					m_RendererData.SceneEnvironment.Azimuth = Skylight.Azimuth;
+					m_RendererData.SceneEnvironment.Inclination = Skylight.Inclination;
 
 					// We can call this directly, we should be on the render thread.
 					Ref<TextureCube> map = CreateDymanicSky();
 
-					m_RendererData.SceneEnvironment->IrradianceMap = map;
-					m_RendererData.SceneEnvironment->RadianceMap = map;
+					m_RendererData.SceneEnvironment.IrradianceMap = map;
+					m_RendererData.SceneEnvironment.RadianceMap = map;
 				}
 			}
 		}
@@ -2025,12 +2023,10 @@ namespace Saturn {
 
 		m_pScene = pScene;
 
-		if( m_RendererData.SceneEnvironment )
-		{
-			m_RendererData.SceneEnvironment->Turbidity = 0.0f;
-			m_RendererData.SceneEnvironment->Azimuth = 0.0f;
-			m_RendererData.SceneEnvironment->Inclination = 0.0f;
-		}
+		// Reset now, just incase the new scene doesn't have skylight.
+		m_RendererData.SceneEnvironment.Turbidity = 0.0f;
+		m_RendererData.SceneEnvironment.Azimuth = 0.0f;
+		m_RendererData.SceneEnvironment.Inclination = 0.0f;
 
 		// Find the skylight entity and set the turbidity, azimuth, inclination.
 		auto view = m_pScene->GetAllEntitiesWith<SkylightComponent>();
@@ -2039,12 +2035,9 @@ namespace Saturn {
 		{
 			auto& skylight = entity->GetComponent<SkylightComponent>();
 
-			if( !m_RendererData.SceneEnvironment )
-				m_RendererData.SceneEnvironment = Ref<EnvironmentMap>::Create();
-
-			m_RendererData.SceneEnvironment->Turbidity = skylight.Turbidity;
-			m_RendererData.SceneEnvironment->Azimuth = skylight.Azimuth;
-			m_RendererData.SceneEnvironment->Inclination = skylight.Inclination;
+			m_RendererData.SceneEnvironment.Turbidity = skylight.Turbidity;
+			m_RendererData.SceneEnvironment.Azimuth = skylight.Azimuth;
+			m_RendererData.SceneEnvironment.Inclination = skylight.Inclination;
 		}
 	}
 
@@ -3776,7 +3769,7 @@ namespace Saturn {
 		Ref<Shader> skyShader = ShaderLibrary::Get().Find( "Skybox-Compute" );
 		Ref<ComputePipeline> pipeline = Ref<ComputePipeline>::Create( skyShader );
 
-		const glm::vec3 params = { m_RendererData.SceneEnvironment->Turbidity, m_RendererData.SceneEnvironment->Azimuth, m_RendererData.SceneEnvironment->Inclination };
+		const glm::vec3 params = { m_RendererData.SceneEnvironment.Turbidity, m_RendererData.SceneEnvironment.Azimuth, m_RendererData.SceneEnvironment.Inclination };
 
 		m_RendererData.PreethamMaterial->SetResource( "o_CubeMap", Environment );
 		m_RendererData.PreethamMaterial->SetPC( "pc_Params.Params", params );
@@ -3796,17 +3789,17 @@ namespace Saturn {
 	{
 		AddScheduledFunction([&, turbidity = Turbidity, azimuth = Azimuth, inclination = Inclination]()
 			{
-				m_RendererData.SceneEnvironment->Turbidity = turbidity;
-				m_RendererData.SceneEnvironment->Azimuth = azimuth;
-				m_RendererData.SceneEnvironment->Inclination = inclination;
+				m_RendererData.SceneEnvironment.Turbidity = turbidity;
+				m_RendererData.SceneEnvironment.Azimuth = azimuth;
+				m_RendererData.SceneEnvironment.Inclination = inclination;
 
-				m_RendererData.SceneEnvironment->IrradianceMap = nullptr;
-				m_RendererData.SceneEnvironment->RadianceMap = nullptr;
+				m_RendererData.SceneEnvironment.IrradianceMap = nullptr;
+				m_RendererData.SceneEnvironment.RadianceMap = nullptr;
 
 				Ref<TextureCube> map = CreateDymanicSky();
 
-				m_RendererData.SceneEnvironment->IrradianceMap = map;
-				m_RendererData.SceneEnvironment->RadianceMap = map;
+				m_RendererData.SceneEnvironment.IrradianceMap = map;
+				m_RendererData.SceneEnvironment.RadianceMap = map;
 
 			} );
 	}
@@ -4221,8 +4214,6 @@ namespace Saturn {
 		// Textures
 		BRDFLUT_Texture         = nullptr;
 		BloomDirtTexture        = nullptr;
-
-		SceneEnvironment        = nullptr;
 
 		for( auto& buffer : SubmeshTransformData )
 			delete[] buffer.pData;

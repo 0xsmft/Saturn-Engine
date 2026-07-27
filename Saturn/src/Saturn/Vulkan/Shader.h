@@ -436,7 +436,7 @@ namespace Saturn {
 		const SpvSourceMap& GetSpvCode() const { return m_SpvCode; }
 		SpvSourceMap& GetSpvCode() { return m_SpvCode; }
 		
-		void WriteDescriptor( const std::string& rName, VkDescriptorImageInfo& rImageInfo, VkDescriptorSet desSet );
+		void WriteDescriptor( const std::string& rName, const VkDescriptorImageInfo& rImageInfo, VkDescriptorSet desSet );
 
 		Ref< DescriptorPool >& GetDescriptorPool() { return m_SetPool; }
 		const Ref< DescriptorPool >& GetDescriptorPool() const { return m_SetPool; }

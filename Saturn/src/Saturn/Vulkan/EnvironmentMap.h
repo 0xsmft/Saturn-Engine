@@ -28,12 +28,11 @@
 
 #pragma once
 
-#include "Saturn/Core/Ref.h"
 #include "Texture.h"
 
 namespace Saturn {
 
-	class EnvironmentMap : public RefTarget
+	class EnvironmentMap
 	{
 	public:
 		Ref< TextureCube > RadianceMap = nullptr;

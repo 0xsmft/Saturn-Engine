@@ -566,7 +566,7 @@ namespace Saturn {
 		}
 	}
 
-	void Renderer::SetSceneEnvironment( Ref<Image2D> ShadowMap, Ref<EnvironmentMap> Environment, Ref<Texture2D> BRDF )
+	void Renderer::SetSceneEnvironment( Ref<Image2D> ShadowMap, const EnvironmentMap& rEnvironment, Ref<Texture2D> BRDF )
 	{
 		SAT_PF_EVENT();
 
@@ -577,10 +577,10 @@ namespace Saturn {
 		shader->WriteDescriptor( "u_ShadowMap", ShadowMap->GetDescriptorInfo(), m_RendererDescriptorSets[ m_FrameInFlightIndex ] );
 		shader->WriteDescriptor( "u_BRDFLUTTexture", BRDF->GetDescriptorInfo(), m_RendererDescriptorSets[ m_FrameInFlightIndex ] );
 
-		if( Environment && Environment->RadianceMap && Environment->IrradianceMap )
+		if( rEnvironment.RadianceMap && rEnvironment.IrradianceMap )
 		{
-			shader->WriteDescriptor( "u_EnvRadianceTex", Environment->RadianceMap->GetDescriptorInfo(), m_RendererDescriptorSets[ m_FrameInFlightIndex ] );
-			shader->WriteDescriptor( "u_EnvIrradianceTex", Environment->IrradianceMap->GetDescriptorInfo(), m_RendererDescriptorSets[ m_FrameInFlightIndex ] );
+			shader->WriteDescriptor( "u_EnvRadianceTex", rEnvironment.RadianceMap->GetDescriptorInfo(), m_RendererDescriptorSets[ m_FrameInFlightIndex ] );
+			shader->WriteDescriptor( "u_EnvIrradianceTex", rEnvironment.IrradianceMap->GetDescriptorInfo(), m_RendererDescriptorSets[ m_FrameInFlightIndex ] );
 		}
 		else
 		{

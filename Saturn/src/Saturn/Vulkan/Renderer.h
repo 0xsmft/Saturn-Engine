@@ -98,7 +98,7 @@ namespace Saturn {
 
 		const std::vector<std::vector<VkWriteDescriptorSet>>& GetUniformBufferWriteDescriptors( Ref<UniformBufferSet>& rUniformBufferSet, Ref<Material>& rMaterialAsset );
 
-		void SetSceneEnvironment( Ref<Image2D> ShadowMap, Ref<EnvironmentMap> Environment, Ref<Texture2D> BRDF );
+		void SetSceneEnvironment( Ref<Image2D> ShadowMap, const EnvironmentMap& rEnvironment, Ref<Texture2D> BRDF );
 
 		// Allocate command buffer.
 		VkCommandBuffer AllocateCommandBuffer( VkCommandPool CommandPool );

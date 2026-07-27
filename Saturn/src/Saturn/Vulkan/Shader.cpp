@@ -304,7 +304,7 @@ namespace Saturn {
 #endif
 	}
 
-	void Shader::WriteDescriptor( const std::string& rName, VkDescriptorImageInfo& rImageInfo, VkDescriptorSet desSet )
+	void Shader::WriteDescriptor( const std::string& rName, const VkDescriptorImageInfo& rImageInfo, VkDescriptorSet desSet )
 	{
 		for( auto& [set, descriptorSet] : m_DescriptorSets )
 		{

@@ -372,7 +372,7 @@ namespace Saturn {
 		Ref<Material> GridMaterial;
 
 		// SKYBOX
-		Ref<EnvironmentMap> SceneEnvironment;
+		EnvironmentMap SceneEnvironment;
 
 		Ref<Pipeline> SkyboxPipeline;
 		Ref<Material> SkyboxMaterial;

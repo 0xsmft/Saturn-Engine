@@ -170,8 +170,6 @@ namespace Saturn {
 
 			auto& rCacheData = itr->second;
 
-			++s_CurrentActiveSceneRenderers;
-
 			// INIT
 			rCacheData.SceneRenderer = CreateSceneRendererForThumbnail();
 			rCacheData.Camera.SetActive( true );
@@ -308,24 +306,29 @@ namespace Saturn {
 				// Render has never happened.
 			case RendererThumbnailResult::NotPresent:
 			{
-				// However, if not, we prepare on the JobSystem
-				// Make sure to the cache now on the main thread.
-				s_RendererThumbnailCache.emplace(
-					std::piecewise_construct,
-					std::forward_as_tuple( rData.Asset->ID ),
-					std::forward_as_tuple() );
-
-				// TRANSITION: JOB SYSTEM THREAD
-				JobSystem::Get().QueueJob( [ & ]()
+				if( s_CurrentActiveSceneRenderers.load() < 2 )
 				{
-					// Load material.
-					Ref<MaterialAsset> materialAsset = AssetManager::Get()->GetAssetAs<MaterialAsset>( rData.Asset->ID );
+					++s_CurrentActiveSceneRenderers;
 
-					// Init
-					InitNewRenderThumbnail( rData, materialAsset );
-					rData.State = ThumbnailState::Generating;
-					rData.Asset = materialAsset;
-				} );
+					// However, if not, we prepare on the JobSystem
+					// Make sure to the cache now on the main thread.
+					s_RendererThumbnailCache.emplace(
+						std::piecewise_construct,
+						std::forward_as_tuple( rData.Asset->ID ),
+						std::forward_as_tuple() );
+
+					// TRANSITION: JOB SYSTEM THREAD
+					JobSystem::Get().QueueJob( [ & ]()
+					{
+						// Load material.
+						Ref<MaterialAsset> materialAsset = AssetManager::Get()->GetAssetAs<MaterialAsset>( rData.Asset->ID );
+
+						// Init
+						InitNewRenderThumbnail( rData, materialAsset );
+						rData.State = ThumbnailState::Generating;
+						rData.Asset = materialAsset;
+					} );
+				}
 
 				// Return no texture as it has not been generated.
 				return nullptr;

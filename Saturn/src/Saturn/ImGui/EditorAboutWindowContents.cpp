@@ -41,7 +41,7 @@ namespace Saturn {
 	{
 		ImGui::Text( "Saturn Engine x64 %s (%s build)", Application::GetCurrentPlatformName(), Application::GetCurrentConfigName() );
 
-		ImGui::Text( "Saturn Engine Version: %s (Internal Number: %i)", SAT_CURRENT_VERSION_STRING, SAT_CURRENT_VERSION );
+		ImGui::Text( "Saturn Engine Version: %s (Internal Number: %i ident: %s)", SAT_CURRENT_VERSION_STRING, SAT_CURRENT_VERSION, SAT_CURRENT_VERSION_BUILD_TAG );
 
 		ImGui::Text( "Built on: %s %s", __DATE__, __TIME__ );
 
@@ -96,7 +96,7 @@ namespace Saturn {
 			ImGui::Text( "Saturn version 0.2.3 (%u)", SAT_VERSION_A_0_2_3 ); // Jan '26
 			ImGui::Text( "Saturn version 0.2.4 (%u)", SAT_VERSION_A_0_2_4 ); // March '26
 			ImGui::Text( "Saturn version 0.2.5 (%u)", SAT_VERSION_A_0_2_5 ); // May '26
-			ImGui::Text( "Saturn version 0.2.6 (%u)", SAT_VERSION_A_0_2_6_WIP ); // July '26
+			ImGui::Text( "Saturn version 0.2.6 (%u)", SAT_VERSION_A_0_2_6 ); // July '26
 
 			Auxiliary::EndTreeNode();
 		}

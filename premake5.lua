@@ -95,6 +95,11 @@ group "Tools"
 	include "Saturn-SharedStorage/Saturn-SharedStorage"
 -- // -Shared Storage-- 
 
+-- // -Crash Reporter-- 
+group "Tools"
+	include "Saturn-CrashReporter/Saturn-CrashReporter"
+-- // -Crash Reporter-- 
+
 -- // -Saturn Build Tool-- 
 group "Trinity"
 	include "SaturnBuildTool/SBT"

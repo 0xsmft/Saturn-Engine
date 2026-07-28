@@ -50,7 +50,6 @@
 #include <ShlObj.h>
 #endif
 
-#define SAT_WITH_CRASHCATCH 1 
 #if defined(SAT_DIST) && !defined(SAT_WITH_CRASHCATCH)
 #define SAT_WITH_CRASHCATCH 1
 #endif

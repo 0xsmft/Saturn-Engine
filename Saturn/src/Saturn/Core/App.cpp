@@ -43,10 +43,6 @@
 
 #include "Profiler.h"
 
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
 #include <nativefiledialog/nfd.hpp>
 
 #if defined( SAT_PLATFORM_WINDOWS )
@@ -54,9 +50,14 @@
 #include <ShlObj.h>
 #endif
 
+#define SAT_WITH_CRASHCATCH 1 
+#if defined(SAT_DIST) && !defined(SAT_WITH_CRASHCATCH)
 #define SAT_WITH_CRASHCATCH 1
+#endif
+
 #if SAT_WITH_CRASHCATCH
 #include <CrashCatch/CrashCatch.hpp>
+#include "EnvironmentVariables.h"
 #endif
 
 #define APP_BIND_EVENT_FN(_) std::bind(&Application::_, this, std::placeholders::_1)
@@ -74,7 +75,28 @@ namespace Saturn {
 		config.buildConfig = GetCurrentConfigName();
 		config.dumpFileName = "Saturn_Engine";
 		config.dumpFolder = std::filesystem::current_path() / "Dumps";
-		config.showCrashDialog = true;
+		config.showCrashDialog = false;
+		config.onCrash = []( const CrashCatch::CrashContext& rContext )
+		{
+			std::filesystem::path SaturnDir = Auxiliary::GetEnvironmentVariableWs( L"SATURN_DIR" );
+			std::filesystem::path WorkingDir = SaturnDir / "Saturn-CrashReporter";
+
+			const std::string binaryFolderName = std::format( "{0}-{1}-x86_64", Application::GetCurrentConfigName(), Application::GetCurrentPlatformBinaryName() );
+
+			SaturnDir /= L"bin";
+			SaturnDir /= binaryFolderName;
+			SaturnDir /= L"Saturn-CrashReporter";
+
+#if defined( SAT_PLATFORM_WINDOWS )
+			SaturnDir /= L"Saturn-CrashReporter.exe";
+#else
+			SaturnDir /= L"Saturn-CrashReporter";
+#endif
+			SaturnDir += L" ";
+			SaturnDir += rContext.logFilePath;
+
+			DetachedProcess dp( SaturnDir.wstring(), WorkingDir );
+		};
 
 		CrashCatch::initialize( config );
 #endif

@@ -32,6 +32,8 @@
 #include "Saturn/Core/App.h"
 #include "Saturn/Core/Ruby/RubyWindow.h"
 
+#include "Saturn/ImGui/ImGuiAuxiliary.h"
+
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui.h> 
 #include <imgui_internal.h>
@@ -108,9 +110,13 @@ namespace Saturn {
 			Application::Get()->Close();
 		}
 
-		if( ImGui::Button( "Show in explorer" ) )
 		{
-			Application::Get()->OpenNativeFileExplorer( m_ErrorLogPath, true );
+			Auxiliary::ScopedDisabledFlag disabledIf( m_ErrorLogPath.empty() );
+
+			if( ImGui::Button( "Show in explorer" ) )
+			{
+				Application::Get()->OpenNativeFileExplorer( m_ErrorLogPath, true );
+			}
 		}
 
 		ImGui::EndHorizontal();

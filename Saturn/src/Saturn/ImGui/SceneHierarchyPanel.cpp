@@ -314,7 +314,7 @@ namespace Saturn {
 				SharedPtr<Entity> entity = m_Context->CreateEntity( "Directional Light" );
 
 				entity->AddComponent<DirectionalLightComponent>();
-				entity->GetComponent<TransformComponent>().SetRotation( glm::radians( glm::vec3( 80.0f, 10.0f, 0.0f ) ) );
+				entity->GetComponent<TransformComponent>().SetRotationInDeg( glm::vec3( 80.0f, 10.0f, 0.0f ) );
 
 				SetSelected( entity );
 				m_Context->MarkDirty();
@@ -346,7 +346,7 @@ namespace Saturn {
 				navEntity->GatherGeometryAndBuild();
 
 				SetSelected( navEntity );
-				m_Context->MarkDirty();
+				m_Context->MarkDirty(); 
 			}
 		}
 
@@ -1200,7 +1200,7 @@ namespace Saturn {
 			if( Auxiliary::DrawBoolControl( "Auto Adjust Extent", bc.AutoAdjustExtent ) || bc.AutoAdjustExtent )
 			{
 				auto& transform = entity->GetComponent<TransformComponent>();
-				bc.HalfExtents = transform.Scale;
+				bc.HalfExtents = ( transform.Scale * 0.5f );
 
 				modified |= true;
 			}

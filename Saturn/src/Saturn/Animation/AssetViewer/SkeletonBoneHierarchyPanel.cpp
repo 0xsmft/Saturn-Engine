@@ -90,6 +90,8 @@ namespace Saturn {
 				m_BoneTree[ i ]->pParent = m_BoneTree[ parentIndex ];
 			}
 		}
+
+		m_InspectorName = std::format( "Inspector##{}", ( uint64_t ) id );
 	}
 
 	void SkeletonBoneHierarchyPanel::ClearTree()
@@ -161,7 +163,7 @@ namespace Saturn {
 
 	void SkeletonBoneHierarchyPanel::DrawInspector()
 	{
-		if( ImGui::Begin( "Inspector##skel", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse ) ) 
+		if( ImGui::Begin( m_InspectorName.c_str(), nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse ) )
 		{
 			if( m_pSelectedBone )
 			{

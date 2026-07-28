@@ -134,6 +134,8 @@ namespace Saturn {
 		void DrawContextOptionsAP();
 
 	private:
+		std::string m_InspectorName = "Inspector##skel";
+
 		Ref<SkeletonAsset> m_SkeletonAsset;
 
 		SkelItemNode* m_pSelectedBone = nullptr;

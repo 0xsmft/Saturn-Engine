@@ -35,8 +35,19 @@ namespace Saturn {
 
 	enum class ThumbnailState : uint8_t
 	{
-		Initialising, // Initial state
-		Generating, // Currently generating, this flag is only set when we need to generate the thumbnail over multiple frames
+		// Initial state
+		Initialising, 
+		
+		// Currently generating, this flag is only set when we need to generate 
+		// the thumbnail over multiple frames.
+		Generating, 
+		
+		// The generation failed or was rejected.
+		// For example in SkeletonAsset generation phases if we cannot find a
+		// suitable skeletal mesh to use the generation will be rejected and
+		// the default image will be used.
+		Rejected,
+		
 		Generated
 	};
 

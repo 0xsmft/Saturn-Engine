@@ -50,7 +50,12 @@ namespace Saturn {
 
 	static bool IsValidAssetTypeForGeneration( AssetType type )
 	{
-		return type == AssetType::Texture || type == AssetType::Material || type == AssetType::StaticMesh || type == AssetType::SkeletalMesh || type == AssetType::Prefab;
+		return type == AssetType::Texture ||
+			type == AssetType::Material ||
+			type == AssetType::StaticMesh ||
+			type == AssetType::SkeletalMesh ||
+			type == AssetType::Prefab ||
+			type == AssetType::SkeletalAnimation;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -111,6 +116,12 @@ namespace Saturn {
 
 				// Generate texture if not already in cache
 				rData.Texture = m_Generator.GenerateForAssetType( rData );
+
+				// If we got rejected, the set the thumbnail to the default image.
+				if( rData.State == ThumbnailState::Rejected )
+				{
+					rData.Texture = m_FileIcon;
+				}
 
 				// Try again next frame (could be still generating), move on to the next thumbnail
 				if( !rData.Texture )

@@ -88,7 +88,7 @@ namespace Saturn {
 
 		if( m_CrashReportFileContent.empty() )
 		{
-			ImGui::Text( "unable to load the log." );
+			ImGui::Text( "Unable to load the log." );
 		}
 		else
 		{

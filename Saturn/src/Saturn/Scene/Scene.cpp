@@ -701,15 +701,13 @@ namespace Saturn {
 
 		auto submitBoxCollider = [ this, &sceneRenderer ]( SharedPtr<Entity> entity, Ref<StaticMesh> dbgMesh, Ref<MaterialRegistry> materialRegistry )
 		{
-			const auto& rTransform = GetWorldSpaceTransform( entity );
-			glm::mat4 finalTransform = glm::one<glm::mat4>();
+			glm::mat4 transform = GetTransformRelativeToParent( entity );
 			const auto& rComponent = entity->GetComponent<BoxColliderComponent>();
 
-			finalTransform = glm::translate( glm::mat4( 1.0f ), rTransform.Position + rComponent.Offset ) 
-				* glm::toMat4( rTransform.GetRotation() ) 
+			auto colliderTransform = glm::translate( glm::mat4( 1.0f ),rComponent.Offset )
 				* glm::scale( glm::mat4( 1.0f ), rComponent.HalfExtents * 2.0f );
 
-			sceneRenderer->SubmitPhysicsCollider( entity, dbgMesh, materialRegistry, finalTransform );
+			sceneRenderer->SubmitPhysicsCollider( entity, dbgMesh, materialRegistry, transform * colliderTransform );
 		};
 
 		auto submitSphereCollider = [ this, &sceneRenderer ]( SharedPtr<Entity> entity, Ref<StaticMesh> dbgMesh, Ref<MaterialRegistry> materialRegistry )

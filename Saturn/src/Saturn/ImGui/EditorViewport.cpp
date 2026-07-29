@@ -86,13 +86,20 @@ namespace Saturn {
 		m_ViewportName = rName;
 		m_ViewportID = ID;
 
-		m_SceneRenderer = Ref<SceneRenderer>::Create( sceneRendererFlags );
+		SceneRendererSpecification spec{ 
+			.Width = 512u, 
+			.Height = 512u, 
+			.AOTechnique = AOTechnique::SSAO,
+			.Flags = sceneRendererFlags,
+			.TargetScene = scene };
+
+		m_SceneRenderer = Ref<SceneRenderer>::Create( spec );
 		m_SceneRenderer->SetDynamicSky( 2.0f, 0.0f, 0.0f );
-		m_SceneRenderer->SetCurrentScene( scene.Get() );
 
 		if( IsViewportFlagSet( VP_DefaultSub ) )
 		{
 			m_SceneRenderer->DisableOrEnableBloom();
+			m_SceneRenderer->DisableAO();
 		}
 
 		m_Scene = scene;

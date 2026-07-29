@@ -148,9 +148,16 @@ namespace Saturn {
 
 	static Ref<SceneRenderer> CreateSceneRendererForThumbnail()
 	{
-		Ref<SceneRenderer> renderer = Ref<SceneRenderer>::Create( SceneRendererFlag_NoFlags );
+		SceneRendererSpecification spec{
+			.Width = 512u,
+			.Height = 512u,
+			.AOTechnique = AOTechnique::None,
+			.Flags = SceneRendererFlag_NoFlags,
+			.TargetScene = nullptr
+		};
+
+		Ref<SceneRenderer> renderer = Ref<SceneRenderer>::Create( spec );
 		renderer->SetDynamicSky( 2.0f, 0.0f, 0.0f );
-		renderer->DisableAO();
 		renderer->DisableOrEnableBloom();
 
 		renderer->SetViewportSize( ( uint32_t ) THUMBNAIL_SIZE, ( uint32_t ) THUMBNAIL_SIZE );

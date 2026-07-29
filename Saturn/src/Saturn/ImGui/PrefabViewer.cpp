@@ -66,9 +66,16 @@ namespace Saturn {
 
 		AddPrefab();
 
-		m_SceneRenderer = Ref<SceneRenderer>::Create( SceneRendererFlag_RenderGrid_DEPRECATED );
+		SceneRendererSpecification spec{
+			.Width = 512u,
+			.Height = 512u,
+			.AOTechnique = AOTechnique::SSAO,
+			.Flags = SceneRendererFlag_RenderGrid_DEPRECATED,
+			.TargetScene = m_Prefab->GetScene()
+		};
+
+		m_SceneRenderer = Ref<SceneRenderer>::Create( spec );
 		m_SceneRenderer->SetDynamicSky( 2.0f, 0.0f, 0.0f );
-		m_SceneRenderer->SetCurrentScene( m_Prefab->GetScene().Get() );
 
 		m_Camera.SetActive( true );
 	}

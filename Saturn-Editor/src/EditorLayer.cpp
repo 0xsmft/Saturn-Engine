@@ -254,18 +254,25 @@ namespace Saturn {
 
 		//////////////////////////////////////////////////////////////////////////
 		// Scene loading and Scene Renderer
-		m_SceneRenderer = Ref<SceneRenderer>::Create( SceneRendererFlag_MasterInstance | SceneRendererFlag_RenderGrid_DEPRECATED );
+		SceneRendererSpecification spec{ 
+			.Width = 0u, 
+			.Height = 0u, 
+			.AOTechnique = AOTechnique::SSAO, 
+			.Flags = SceneRendererFlag_MasterInstance,
+			.TargetScene = m_EditorScene };
 
-		m_SceneRenderer->SetCurrentScene( m_EditorScene.Get() );
+		m_SceneRenderer = Ref<SceneRenderer>::Create( spec );
 
 		// Now open the startup scene
 		OpenFile( Project::GetActiveProject()->GetConfig().StartupSceneID );
 
 		// Create camera preview scene renderer
 		// NOTE: We have to create a Renderer2D due to us rendering this scene as an Editor Scene, not really ideal.
-		m_CameraPreviewSceneRenderer = Ref<SceneRenderer>::Create( /*SceneRendererFlag_NoRenderer2D*/ SceneRendererFlag_NoFlags );
-		m_CameraPreviewSceneRenderer->SetCurrentScene( m_EditorScene.Get() );
-		m_CameraPreviewSceneRenderer->SetViewportSize( 512, 512 );
+		spec.Width = spec.Height = 512u;
+		spec.TargetScene = m_EditorScene.Get();
+		spec.AOTechnique = AOTechnique::None;
+		spec.Flags = SceneRendererFlag_NoFlags;
+		m_CameraPreviewSceneRenderer = Ref<SceneRenderer>::Create( spec );
 
 		// Force init debug meshes, would be better if we didn't lazy load :(
 		// and this kinda beats the whole purpose of this class being lazy loaded.

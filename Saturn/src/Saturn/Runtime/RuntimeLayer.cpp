@@ -74,7 +74,14 @@ namespace Saturn {
 		// "Load" the Game Module
 		m_GameModule = new GameModule();
 
-		m_SceneRenderer = Ref<SceneRenderer>::Create( SceneRendererFlag_MasterInstance | SceneRendererFlag_SwapchainTarget );
+		SceneRendererSpecification spec{
+			.Width = Application::Get()->GetWindow()->GetWidth(),
+			.Height = Application::Get()->GetWindow()->GetHeight(),
+			.AOTechnique = AOTechnique::SSAO,
+			.Flags = SceneRendererFlag_MasterInstance | SceneRendererFlag_SwapchainTarget,
+			.TargetScene = m_RuntimeScene };
+
+		m_SceneRenderer = Ref<SceneRenderer>::Create( spec );
 
 #if defined(SAT_DIST)
 		SClassDistReferencer::Reference();

@@ -68,10 +68,21 @@ namespace Saturn {
 
 	//////////////////////////////////////////////////////////////////////////
 
-	SceneRenderer::SceneRenderer( SceneRendererFlags flags )
-		: m_Flags( flags )
+	SceneRenderer::SceneRenderer( /*const*/ SceneRendererSpecification& rSpec )
+		: m_Flags( rSpec.Flags ), m_AOTechnique( rSpec.AOTechnique )
 	{
+		if( rSpec.Width != 0 || rSpec.Height != 0 )
+		{
+			m_RendererData.Width = rSpec.Width;
+			m_RendererData.Height = rSpec.Height;
+		}
+
 		Init();
+
+		if( rSpec.TargetScene )
+		{
+			SetCurrentScene( rSpec.TargetScene.Get() );
+		}
 	}
 
 	SceneRenderer::~SceneRenderer()

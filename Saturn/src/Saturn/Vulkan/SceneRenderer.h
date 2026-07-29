@@ -594,6 +594,17 @@ namespace Saturn {
 		Ref< Shader > GTAODenoiseShader;
 	};
 
+	struct SceneRendererSpecification
+	{
+		// If these are left zero, the SceneRenderer will change these to match
+		// the current window's size.
+		uint32_t Width = 0, Height = 0;
+
+		AOTechnique AOTechnique = AOTechnique::SSAO;
+		SceneRendererFlags Flags = SceneRendererFlag_NoFlags;
+		Ref<Scene> TargetScene = nullptr;
+	};
+
 	class Renderer2D;
 	class AluraRenderer;
 
@@ -602,7 +613,7 @@ namespace Saturn {
 		using ScheduledFunc = std::function<void()>;
 	public:
 		SceneRenderer() = default;
-		SceneRenderer( SceneRendererFlags flags );
+		SceneRenderer( SceneRendererSpecification& rSpec );
 		virtual ~SceneRenderer();
 
 		void ImGuiRender();

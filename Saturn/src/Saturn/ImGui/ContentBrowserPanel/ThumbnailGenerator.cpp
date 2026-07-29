@@ -210,9 +210,12 @@ namespace Saturn {
 	// Render a single frame.
 	static void StartFirstRender( RendererThumbnailCacheData& rCacheData )
 	{
+		auto ts = Application::Get()->Time();
+
 		// Start the render
-		rCacheData.Camera.OnUpdate( Application::Get()->Time() );
-		rCacheData.Scene->OnRenderEditor( &rCacheData.Camera, rCacheData.Camera.ViewMatrix(), rCacheData.SceneRenderer, Application::Get()->Time() );
+		rCacheData.Camera.OnUpdate( ts );
+		rCacheData.Scene->OnUpdateAnimators( ts );
+		rCacheData.Scene->OnRenderEditor( &rCacheData.Camera, rCacheData.Camera.ViewMatrix(), rCacheData.SceneRenderer, ts );
 		
 		rCacheData.AwaitingRender.store( false );
 
@@ -713,7 +716,11 @@ namespace Saturn {
 				mc.Mesh = mesh;
 				mc.AnimationControllerAssetID = skAnim->ID;
 				mc.LocalAnimator = Ref<Animator>::Create();
-				mc.LocalAnimator->InitAnimation( skAnim->ID, sk, AnimatorType::Single );
+				mc.LocalAnimator->InitAnimation( skAnim->ID, mesh, AnimatorType::Single );
+				
+				// Step halfway into the animation.
+				mc.LocalAnimator->StepTo( skAnim->GetDuration() * 0.5f );
+				mc.LocalAnimator->Begin();
 
 				cacheData.Camera.SetViewportSize( ( uint32_t ) THUMBNAIL_SIZE, ( uint32_t ) THUMBNAIL_SIZE );
 

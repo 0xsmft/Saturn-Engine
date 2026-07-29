@@ -106,12 +106,16 @@ project "Saturn-CrashReporter"
 			optimize "on"
 			symbols "Off"
 			kind "WindowedApp"
-
+			defines { "SAT_WITH_VALIDATION_LAYERS=0" }
+			
 			filter { "configurations:Release", "system:windows" }
-				postbuildcommands 
-				{ 
-					'{COPYFILE} "../bin/Release-windows-x86_64/Saturn-SharedStorage/Saturn-SharedStorage.dll" "%{cfg.targetdir}"',
-				}
+			postbuildcommands
+			{ 
+				'{COPYFILE} "../Saturn/vendor/assimp/bin/Release/assimp-vc143-mt.dll" "%{cfg.targetdir}"',
+				'{COPYFILE} "../bin/Release-windows-x86_64/Saturn-SharedStorage/Saturn-SharedStorage.dll" "%{cfg.targetdir}"',
+			}
+		
+			defines { "SAT_WINDOWS_USE_WINMAIN" }
 
 		filter "configurations:Dist"
 			defines "SAT_DIST"

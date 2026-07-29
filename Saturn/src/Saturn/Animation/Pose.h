@@ -49,7 +49,7 @@ namespace Saturn {
 	struct Pose
 	{
 		AnimatorLocalTransfrom RootMotion;
-		std::array<AnimatorLocalTransfrom, 100 /*SK_MAX_BONES*/> LocalTransforms;
+		std::array<AnimatorLocalTransfrom, SK_MAX_BONES> LocalTransforms;
 		float Duration = 0.0f;
 		float Timestamp = 0.0f;
 		// Number of bones

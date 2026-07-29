@@ -97,6 +97,7 @@ namespace Saturn::Core {
 }
 
 constexpr unsigned int MAX_FRAMES_IN_FLIGHT = 3u;
+constexpr unsigned int SK_MAX_BONES = 100u;
 
 #if defined( SAT_DEBUG ) || defined( SAT_RELEASE )
 #define SAT_SINGLETON_LAZY( x ) static inline x& Get() { return *SingletonStorage::GetOrCreateSingleton<x>(); }

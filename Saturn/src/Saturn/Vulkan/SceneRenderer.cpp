@@ -3733,6 +3733,8 @@ namespace Saturn {
 
 	void SceneRenderer::SendBoneDataToMap( Ref<SkeletalMesh> mesh, const StaticMeshKey& rKey, const std::vector<glm::mat4>& rBoneTransforms )
 	{
+		SAT_PF_EVENT();
+
 		// [DRAW CALL 0], 64 bones, 3 instances
 		//  instance 0
 		//  [bone transform data] from 0-63
@@ -3746,7 +3748,7 @@ namespace Saturn {
 		// [DRAW CALL 1], 64 bones, 3 instances
 		// same as above but start at 300...
 
-		// Every submesh is to have 100 bone transforms.
+		// Every submesh is to have 100 (or elsewhere in SK_MAX_BONES) bone transforms.
 		// However, not every mesh actually has 100 bones for example, the mesh that this code was debugged with has 64 bones
 		// So, thats why we have to do a workaround to ensure that the bones transforms is correct because if we don't set them (and use the Meshes' bone count) we will end up reading garbage data.
 		// This could be solved if we simply was able to fill the whole buffer with glm::mat4{0.0f} 
@@ -3754,13 +3756,13 @@ namespace Saturn {
 		auto& rBoneTransformMap = m_RendererData.BoneTransformMap[ rKey ];
 
 		const size_t boneCount = rBoneTransformMap.Data.size();
-		const size_t stride = 100 + boneCount;
+		const size_t stride = SK_MAX_BONES + boneCount;
 
 		rBoneTransformMap.Stride = ( uint32_t ) stride;
 
 		if( rBoneTransformMap.Data.empty() )
 		{
-			rBoneTransformMap.Data.resize( 100 );
+			rBoneTransformMap.Data.resize( SK_MAX_BONES );
 		}
 
 		auto skeleton = mesh->GetSkeletonAsset();

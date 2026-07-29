@@ -37,6 +37,8 @@
 #include "Saturn/Asset/TextureSourceAsset.h"
 #include "Saturn/Asset/AssetManager.h"
 #include "Saturn/Asset/Prefab.h"
+#include "Saturn/Animation/SkeletalAnimationAsset.h"
+#include "Saturn/Animation/SkeletonAsset.h"
 
 #include "Saturn/Vulkan/DefaultMeshes.h"
 
@@ -53,11 +55,12 @@ namespace Saturn {
 
 	void ContentBrowserThumbnailGenerator::Initialise()
 	{
-		m_Generators[ AssetType::Texture    ] = std::make_unique<TextureAssetThumbnailGenerator>();
-		m_Generators[ AssetType::Material   ] = std::make_unique<MaterialAssetThumbnailGenerator>();
-		m_Generators[ AssetType::StaticMesh ] = std::make_unique<StaticMeshAssetThumbnailGenerator>();
-		m_Generators[ AssetType::SkeletalMesh ] = std::make_unique<SkeletalMeshAssetThumbnailGenerator>();
-		m_Generators[ AssetType::Prefab ]	    = std::make_unique<PrefabThumbnailGenerator>();
+		m_Generators[ AssetType::Texture    ]        = std::make_unique<TextureAssetThumbnailGenerator>();
+		m_Generators[ AssetType::Material   ]        = std::make_unique<MaterialAssetThumbnailGenerator>();
+		m_Generators[ AssetType::StaticMesh ]        = std::make_unique<StaticMeshAssetThumbnailGenerator>();
+		m_Generators[ AssetType::SkeletalMesh ]      = std::make_unique<SkeletalMeshAssetThumbnailGenerator>();
+		m_Generators[ AssetType::Prefab ]	         = std::make_unique<PrefabThumbnailGenerator>();
+		m_Generators[ AssetType::SkeletalAnimation ] = std::make_unique<SkeletalAnimationThumbnailGenerator>();
 	}
 
 	Ref<Texture2D> ContentBrowserThumbnailGenerator::GenerateForAssetType( ThumbnailCacheQueueData& rData )
@@ -649,6 +652,144 @@ namespace Saturn {
 			}
 
 			// Waiting... cannot do much here, so just return null.
+			case RendererThumbnailResult::AwaitingInit:
+			case RendererThumbnailResult::RenderedFirstFrame:
+				return nullptr;
+
+			case RendererThumbnailResult::Complete:
+			{
+				return tex;
+			}
+		}
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// Sk Anim
+
+	static void InitSceneRendererForSkAnim( ThumbnailCacheQueueData& rQueueCacheData )
+	{
+		// The job system needs to load the asset, we do this to avoid a stutter on the main thread...
+		// TRANSITION: JobSystem Thread
+		JobSystem::Get().QueueJob( [ & ]()
+		{
+			// ...but the main thread needs to init all of the scene renderers because Vulkan will complain if it's not done
+			// on the correct thread, it also just makes it easier.
+			// TRANSITION: Main thread.
+			RenderThread::Get().Queue( [ & ]()
+			{
+				Ref<SkeletalAnimationAsset> skAnim = AssetManager::Get()->GetAssetAs<SkeletalAnimationAsset>( rQueueCacheData.Asset->ID );
+				
+				Ref<SkeletonAsset> sk = AssetManager::Get()->GetAssetAs<SkeletonAsset>( skAnim->GetSkeletonID() );
+				
+				Ref<SkeletalMesh> mesh;
+				if( sk->GetCompatibleMeshes().size() ) 
+				{
+					mesh = AssetManager::Get()->GetAssetAs<SkeletalMesh>( sk->GetCompatibleMeshes().back() );
+				}
+				else
+				{
+					SAT_CORE_INFO( "[ThumbnailGenerator]: Rejected thumbnail for SkeletalAnimationAsset... no suitable meshes to be used." );
+
+					// Unable to generate without a suitable mesh.
+					rQueueCacheData.State = ThumbnailState::Rejected;
+					return;
+				}
+
+				auto& cacheData = s_RendererThumbnailCache[ rQueueCacheData.Asset->ID ];
+
+				cacheData.SceneRenderer = CreateSceneRendererForThumbnail();
+
+				cacheData.Camera.SetActive( true );
+
+				cacheData.Scene = Ref<Scene>::Create();
+#if !defined(SAT_DIST)
+				cacheData.Scene->GetVisualisationOptions().ShowGrid = false;
+#endif
+				cacheData.SceneRenderer->SetCurrentScene( cacheData.Scene.Get() );
+
+				// Create entity with the static mesh
+				cacheData.Subject = cacheData.Scene->CreateEntity();
+				auto& mc = cacheData.Subject->AddComponent<SkeletalMeshComponent>();
+				mc.Mesh = mesh;
+				mc.AnimationControllerAssetID = skAnim->ID;
+				mc.LocalAnimator = Ref<Animator>::Create();
+				mc.LocalAnimator->InitAnimation( skAnim->ID, sk, AnimatorType::Single );
+
+				cacheData.Camera.SetViewportSize( ( uint32_t ) THUMBNAIL_SIZE, ( uint32_t ) THUMBNAIL_SIZE );
+
+				float distance = 4.0f;
+
+				auto& rBoundingBox = mesh->GetBoundingBox();
+
+				// Set the distance based on the bounding box and make sure that we are not too close so the min is 4.0f
+				const glm::vec3 size = rBoundingBox.Extent();
+				const float maxSize = std::max( size.x, std::max( size.y, size.z ) );
+
+				distance = maxSize * 2.0f;
+				distance = std::max( distance + 4.0f, 4.0f );
+
+				cacheData.Camera.SetDistance( distance );
+
+				// Greater than the far clip
+				if( distance > 1000.0f )
+				{
+					cacheData.Camera.SetProjectionMatrix( 45.0f, THUMBNAIL_SIZE, THUMBNAIL_SIZE, 0.1f, distance * 10.0f );
+				}
+
+				cacheData.AwaitingRender.store( true );
+
+				SAT_CORE_INFO( "Awaiting render for {0}", rQueueCacheData.Asset->Name );
+			} );
+
+			Ref<SkeletalAnimationAsset> skAnim = AssetManager::Get()->GetAssetAs<SkeletalAnimationAsset>( rQueueCacheData.Asset->ID );
+			rQueueCacheData.Asset = skAnim;
+		} );
+	}
+
+	static void QueueSkAnimGeneration( ThumbnailCacheQueueData& rData )
+	{
+		if( s_CurrentActiveSceneRenderers.load() < 2 )
+		{
+			++s_CurrentActiveSceneRenderers;
+
+			InitSceneRendererForSkAnim( rData );
+
+			// Add to renderer queue after successful initialisation.
+			s_RendererThumbnailCache.emplace(
+				std::piecewise_construct,
+				std::forward_as_tuple( rData.Asset->ID ),
+				std::forward_as_tuple() );
+
+			// Mark as generating after successful initialisation.
+			// Ready to render next frame by the MainThread (RenderThread)
+			rData.State = ThumbnailState::Generating;
+
+			SAT_CORE_INFO( "Kicked off render for {0}", rData.Asset->Name );
+		}
+		else
+			SAT_CORE_WARN( "Too many active SceneRenderers... waiting until one is free, {0}", rData.Asset->Name );
+	}
+
+	Ref<Texture2D> SkeletalAnimationThumbnailGenerator::Generate( ThumbnailCacheQueueData& rData )
+	{
+		// Invalid type
+		if( rData.Asset->Type != AssetType::SkeletalAnimation )
+			return nullptr;
+
+		// Try to complete the current render, or start it
+		// or if we've never even started it, we will do so.
+		const auto [result, tex] = StartRenderOrCompleteRender( rData );
+
+		switch( result )
+		{
+			default: SAT_CORE_ASSERT( false, "Unhanded RendererThumbnailResult result!" ); return nullptr;
+
+			// Render has never happened.
+			case RendererThumbnailResult::NotPresent:
+			{
+				QueueSkAnimGeneration( rData );
+			} return nullptr;
+
 			case RendererThumbnailResult::AwaitingInit:
 			case RendererThumbnailResult::RenderedFirstFrame:
 				return nullptr;

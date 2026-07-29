@@ -209,6 +209,7 @@ namespace Saturn {
 		void OnWindowResize( RubyWindowResizeEvent& e );
 		
 		void BuildRenderCommands();
+		void InitCrashReporter();
 		void InitWindow();
 		void InitGraphics();
 

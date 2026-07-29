@@ -46,6 +46,7 @@
 #include <nativefiledialog/nfd.hpp>
 
 #if defined( SAT_PLATFORM_WINDOWS )
+// Needed for FOLDERID_RoamingAppData et al.
 #include <ShObjIdl.h>
 #include <ShlObj.h>
 #endif
@@ -69,35 +70,7 @@ namespace Saturn {
 		SingletonStorage::AddSingleton( this );
 
 #if	SAT_WITH_CRASHCATCH
-		CrashCatch::Config config;
-		config.appVersion = std::format( "{} {} " SAT_CURRENT_VERSION_BUILD_TAG, SAT_CURRENT_VERSION, SAT_CURRENT_VERSION_STRING );
-		config.buildConfig = GetCurrentConfigName();
-		config.dumpFileName = "Saturn_Engine";
-		config.dumpFolder = std::filesystem::current_path() / "Dumps";
-		config.showCrashDialog = false;
-		config.onCrash = []( const CrashCatch::CrashContext& rContext )
-		{
-			std::filesystem::path SaturnDir = Auxiliary::GetEnvironmentVariableWs( L"SATURN_DIR" );
-			std::filesystem::path WorkingDir = SaturnDir / "Saturn-CrashReporter";
-
-			const std::string binaryFolderName = std::format( "{0}-{1}-x86_64", Application::GetCurrentConfigName(), Application::GetCurrentPlatformBinaryName() );
-
-			SaturnDir /= L"bin";
-			SaturnDir /= binaryFolderName;
-			SaturnDir /= L"Saturn-CrashReporter";
-
-#if defined( SAT_PLATFORM_WINDOWS )
-			SaturnDir /= L"Saturn-CrashReporter.exe";
-#else
-			SaturnDir /= L"Saturn-CrashReporter";
-#endif
-			SaturnDir += L" ";
-			SaturnDir += rContext.logFilePath;
-
-			DetachedProcess dp( SaturnDir.wstring(), WorkingDir );
-		};
-
-		CrashCatch::initialize( config );
+		InitCrashReporter();
 #endif
 
 		InitWindow();
@@ -644,6 +617,52 @@ namespace Saturn {
 		return "Dist";
 #else
 		return "Unknown";
+#endif
+	}
+
+	void Application::InitCrashReporter()
+	{
+#if SAT_WITH_CRASHCATCH
+		CrashCatch::Config config;
+		config.appVersion = std::format( "{} {} " SAT_CURRENT_VERSION_BUILD_TAG, SAT_CURRENT_VERSION, SAT_CURRENT_VERSION_STRING );
+		config.buildConfig = GetCurrentConfigName();
+		config.dumpFileName = "Saturn_Engine";
+		config.dumpFolder = std::filesystem::current_path() / "Dumps";
+		config.showCrashDialog = false;
+		config.onCrash = []( const CrashCatch::CrashContext& rContext )
+		{
+			std::filesystem::path SaturnDir = Auxiliary::GetEnvironmentVariableWs( L"SATURN_DIR" );
+			std::filesystem::path WorkingDir = SaturnDir / "Saturn-CrashReporter";
+
+			// This check is important because if the client has never installed a source build of Saturn then this
+			// environment variable is never set.
+			// So, if it's empty we just use the current working directory, as when a distribution game is shipped
+			// the crash reporter is placed in the same directory.
+			if( SaturnDir.empty() )
+			{
+				WorkingDir = SaturnDir = std::filesystem::current_path();
+			}
+			else
+			{
+				const std::string binaryFolderName = std::format( "{0}-{1}-x86_64", Application::GetCurrentConfigName(), Application::GetCurrentPlatformBinaryName() );
+
+				SaturnDir /= L"bin";
+				SaturnDir /= binaryFolderName;
+				SaturnDir /= L"Saturn-CrashReporter";
+			}
+
+#if defined( SAT_PLATFORM_WINDOWS )
+			SaturnDir /= L"Saturn-CrashReporter.exe";
+#else
+			SaturnDir /= L"Saturn-CrashReporter";
+#endif
+			SaturnDir += L" ";
+			SaturnDir += rContext.logFilePath;
+
+			DetachedProcess dp( SaturnDir.wstring(), WorkingDir );
+		};
+
+		CrashCatch::initialize( config );
 #endif
 	}
 

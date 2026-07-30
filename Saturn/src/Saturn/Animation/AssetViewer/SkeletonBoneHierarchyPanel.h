@@ -37,7 +37,8 @@ namespace Saturn {
 	{
 		Unknown,
 		Bone,
-		AttachmentPoint
+		AttachmentPoint,
+		AttachmentPoint_PreviewMesh
 	};
 
 	//
@@ -74,9 +75,24 @@ namespace Saturn {
 		BoneJoint* pBoneJoint = nullptr;
 	};
 
+	//
+	// Represents a preview mesh attached to a bone attachment.
+	//
+	class SkelPreviewMesh : public SkelItem
+	{
+	public:
+		virtual ~SkelPreviewMesh() = default;
+	
+		std::string Name;
+		AssetID MeshID = 0llu;
+	};
+
 	class SkeletonBoneHierarchyPanel : public ImGuiWindow
 	{
 	public:
+		//
+		// Internal node for the skeleton linked list, non-visual part.
+		//
 		struct SkelItemNode
 		{
 			~SkelItemNode() 
@@ -129,9 +145,11 @@ namespace Saturn {
 		void DrawInspector();
 		void DrawInspectorForAP();
 		void DrawInspectorForBone();
+		void DrawInspectorForPreviewMesh();
 
 		void DrawContextOptionsBone();
 		void DrawContextOptionsAP();
+		void DrawContextOptionsPreviewMesh();
 
 	private:
 		std::string m_InspectorName = "Inspector##skel";

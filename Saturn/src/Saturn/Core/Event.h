@@ -80,6 +80,12 @@ static inline EventCategory GetStaticCategory() { return EventCategory::Category
 		RemoveComponent,
 		PrefabModified,
 		NodeEditorDebugBreak,
+		BoneHierarchyPanel_AddAttachment,
+		BoneHierarchyPanel_RemoveAttachment,
+		BoneHierarchyPanel_RenameAttachment,
+		BoneHierarchyPanel_AddPreviewMesh,
+		BoneHierarchyPanel_RemovePreviewMesh,
+		BoneHierarchyPanel_PreviewMeshStructurallyModified,
 
 		//////////////////////////////////////////////////////////////////////////
 		// Runtime

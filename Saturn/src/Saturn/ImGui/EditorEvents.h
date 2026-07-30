@@ -274,4 +274,119 @@ namespace Saturn {
 	private:
 		AssetID m_ModifiedPrefabID = 0llu;
 	};
+
+	//
+	// BoneHierarchyPanel, fires when a preview mesh is added.
+	//
+	class OnPreviewMeshAdded : public Event
+	{
+		SAT_DEFINE_EVENT( BoneHierarchyPanel_AddPreviewMesh, EC_Editor );
+	public:
+		OnPreviewMeshAdded( AssetID skeleID, const std::string& rBoneJointName, const std::string& rPreviewName )
+			: Event( EventType::BoneHierarchyPanel_AddPreviewMesh, EC_Editor ), 
+			m_SkeletonID( skeleID ), 
+			m_BoneJointName( rBoneJointName ),
+			m_PreviewName( rPreviewName )
+		{
+		}
+
+		virtual ~OnPreviewMeshAdded() = default;
+
+		AssetID GetSkeletonAssetID() const { return m_SkeletonID; }
+		const std::string& GetBoneJointName() const { return m_BoneJointName; }
+
+		// @returns the name of the preview mesh node in the BoneHierarchyPanel
+		const std::string& GetPreviewName() const { return m_PreviewName; }
+
+	private:
+		AssetID m_SkeletonID = 0llu;
+		const std::string m_BoneJointName;
+		const std::string m_PreviewName;
+	};
+
+	//
+	// BoneHierarchyPanel, fires when a preview mesh's mesh is changed.
+	//
+	class OnPreviewMeshMeshChange : public Event
+	{
+		SAT_DEFINE_EVENT( BoneHierarchyPanel_PreviewMeshStructurallyModified, EC_Editor );
+	public:
+		OnPreviewMeshMeshChange( 
+			AssetID skeleID, 
+			AssetID meshID, 
+			const std::string& rBoneJointName,
+			const std::string& rPreviewMeshNodeName 
+		)
+			: Event( EventType::BoneHierarchyPanel_PreviewMeshStructurallyModified, EC_Editor ),
+			m_SkeletonID( skeleID ),
+			m_MeshID( meshID ),
+			m_BoneJointName( rBoneJointName ),
+			m_PreviewMeshNodeName( rPreviewMeshNodeName )
+		{
+		}
+
+		virtual ~OnPreviewMeshMeshChange() = default;
+
+		AssetID GetSkeletonAssetID() const { return m_SkeletonID; }
+		AssetID GetMeshID() const { return m_MeshID; }
+
+		const std::string& GetBoneJointName() const { return m_BoneJointName; }
+		const std::string& GetPreviewName() const { return m_PreviewMeshNodeName; }
+
+	private:
+		AssetID m_SkeletonID = 0llu;
+		AssetID m_MeshID = 0llu;
+		const std::string m_BoneJointName;
+		const std::string m_PreviewMeshNodeName;
+	};
+
+	//
+	// BoneHierarchyPanel, fires when a preview mesh is removed.
+	//
+	class OnPreviewMeshRemoved : public Event
+	{
+		SAT_DEFINE_EVENT( BoneHierarchyPanel_RemovePreviewMesh, EC_Editor );
+	public:
+		OnPreviewMeshRemoved( AssetID skeleID, const std::string& rBoneJointName )
+			: Event( EventType::BoneHierarchyPanel_RemovePreviewMesh, EC_Editor ),
+			m_SkeletonID( skeleID ),
+			m_BoneJointName( rBoneJointName )
+		{
+		}
+
+		virtual ~OnPreviewMeshRemoved() = default;
+
+		AssetID GetSkeletonAssetID() const { return m_SkeletonID; }
+		const std::string& GetBoneJointName() const { return m_BoneJointName; }
+
+	private:
+		AssetID m_SkeletonID = 0llu;
+		std::string m_BoneJointName;
+	};
+
+	//
+	// NodeEditorDebugBreakEvent
+	//
+	// Fires when a debugbreak instruction e.g. from a node editor is called.
+	//
+	class NodeEditor;
+	class NodeEditorDebugBreakEvent : public Event
+	{
+		SAT_DEFINE_EVENT( NodeEditorDebugBreak, EC_Editor );
+	public:
+		NodeEditorDebugBreakEvent( AssetID id, NodeEditor* pNodeEditor )
+			: Event( EventType::NodeEditorDebugBreak, EC_Editor ), m_AssetID( id ), m_pNodeEditor( pNodeEditor )
+		{
+		}
+
+		virtual ~NodeEditorDebugBreakEvent() = default;
+
+		NodeEditor* GetNodeEditor() const { return m_pNodeEditor; }
+		AssetID GetAssetID() const { return m_AssetID; }
+
+	private:
+		// The asset that has the breakpoint, only used as an identification so we know what AssetViewer to find.
+		AssetID m_AssetID = 0;
+		NodeEditor* m_pNodeEditor = nullptr;
+	};
 }

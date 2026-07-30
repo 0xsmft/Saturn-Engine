@@ -59,6 +59,7 @@ namespace Saturn {
 		Ref<SkeletonAsset> m_SkeletonAsset;
 		Ref<Scene> m_Scene;
 		Ref<SkeletalMesh> m_SkeletalMesh;
+		SharedPtr<Entity> m_MeshEntity;
 
 		SkeletonBoneHierarchyPanel m_BoneHierarchyPanel;
 

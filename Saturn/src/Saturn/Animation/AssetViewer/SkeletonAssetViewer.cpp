@@ -35,6 +35,7 @@
 
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
 #include "Saturn/ImGui/EditorIcons.h"
+#include "Saturn/ImGui/EditorEvents.h"
 
 #include <imgui.h>
 #include <ImGuizmo/ImGuizmo.h>
@@ -68,6 +69,7 @@ namespace Saturn {
 
 	SkeletonAssetViewer::~SkeletonAssetViewer()
 	{
+		m_MeshEntity = nullptr;
 	}
 
 	void SkeletonAssetViewer::OnImGuiRender()
@@ -426,6 +428,50 @@ namespace Saturn {
 	{
 		if( ( rEvent.Category & EC_Ruby ) != 0 )
 			m_Viewport->OnEvent( rEvent );
+
+		if( ( rEvent.Category & EC_Editor ) != 0 )
+		{
+			switch( rEvent.Type )
+			{
+				case EventType::BoneHierarchyPanel_AddPreviewMesh:
+				{
+					OnPreviewMeshAdded& rAddedEvent = ( OnPreviewMeshAdded& ) rEvent;
+
+					// Check if the in-coming event is our asset, because multiple
+					// assets viewers may be open at once.
+					if( rAddedEvent.GetSkeletonAssetID() == m_SkeletalMesh->GetSkeletonAsset()->ID )
+					{
+						const std::string entityName = rAddedEvent.GetPreviewName() + rAddedEvent.GetBoneJointName();
+
+						SharedPtr<Entity> entity = m_Scene->CreateEntity( entityName );
+						entity->AttachToBone( m_MeshEntity, rAddedEvent.GetBoneJointName() );
+						entity->AddComponent<StaticMeshComponent>();
+					}
+				} break;
+
+				case EventType::BoneHierarchyPanel_PreviewMeshStructurallyModified: 
+				{
+					OnPreviewMeshMeshChange& rMeshChanged = ( OnPreviewMeshMeshChange& ) rEvent;
+
+					// Check if the in-coming event is our asset, because multiple
+					// assets viewers may be open at once.
+					if( rMeshChanged.GetSkeletonAssetID() == m_SkeletalMesh->GetSkeletonAsset()->ID )
+					{
+						const std::string entityName = rMeshChanged.GetPreviewName() + rMeshChanged.GetBoneJointName();
+
+						if( auto entity = m_Scene->FindEntityByTag( entityName ) )
+						{
+							auto& mc = entity->GetComponent<StaticMeshComponent>();
+							mc.Mesh = AssetManager::Get()->GetAssetAs<StaticMesh>( rMeshChanged.GetMeshID() );
+							mc.MaterialRegistry = Ref<MaterialRegistry>::Create( mc.Mesh );
+						}
+					}
+				} break;
+
+				default:
+					break;
+			}
+		}
 	}
 
 	void SkeletonAssetViewer::PickBestMesh()
@@ -433,8 +479,10 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		for( const auto& rMeshID : m_SkeletonAsset->GetCompatibleMeshes() )
 		{
+			m_MeshEntity = m_Scene->CreateEntity();
+
 			// Pick the first one
-			auto& skComp = m_Scene->CreateEntity()->AddComponent<SkeletalMeshComponent>();
+			auto& skComp = m_MeshEntity->AddComponent<SkeletalMeshComponent>();
 			skComp.Mesh = AssetManager::Get()->GetAssetAs<SkeletalMesh>( rMeshID );
 			skComp.MaterialRegistry = Ref<MaterialRegistry>::Create();
 			skComp.LocalAnimator = Ref<Animator>::Create();

@@ -719,7 +719,7 @@ namespace Saturn {
 				mc.LocalAnimator->InitAnimation( skAnim->ID, mesh, AnimatorType::Single );
 				
 				// Step halfway into the animation.
-				mc.LocalAnimator->StepTo( skAnim->GetDuration() * 0.5f );
+				mc.LocalAnimator->StepTo( std::min( skAnim->GetDuration() * 0.5f, skAnim->GetDuration() ) );
 				mc.LocalAnimator->Begin();
 
 				cacheData.Camera.SetViewportSize( ( uint32_t ) THUMBNAIL_SIZE, ( uint32_t ) THUMBNAIL_SIZE );

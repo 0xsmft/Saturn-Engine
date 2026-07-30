@@ -291,6 +291,19 @@ namespace Saturn {
 					ImGui::TableNextColumn();
 					Auxiliary::Image( rData.Texture == nullptr ? m_FileIcon : rData.Texture, ImVec2( 24.0f, 24.0f ) );
 
+					if( ImGui::BeginItemTooltip() )
+					{
+						Auxiliary::Image( rData.Texture == nullptr ? m_FileIcon : rData.Texture, ImVec2( 512.0f, 512.0f ) );
+
+						Ref<Asset> asset = AssetManager::Get()->FindAsset( rID );
+						if( asset )
+						{
+							ImGui::Text( "%s", asset->Name.c_str() );
+						}
+
+						ImGui::EndTooltip();
+					}
+
 					ImGui::TableNextColumn();
 					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Bin" ), { 24.0f, 24.0f } ) )
 					{

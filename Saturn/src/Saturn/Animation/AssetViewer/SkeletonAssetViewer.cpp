@@ -468,6 +468,41 @@ namespace Saturn {
 					}
 				} break;
 
+				case EventType::BoneHierarchyPanel_RemovePreviewMesh:
+				{
+					OnPreviewMeshRemoved& rPreviewMeshRemoved = ( OnPreviewMeshRemoved& ) rEvent;
+
+					// Check if the in-coming event is our asset, because multiple
+					// assets viewers may be open at once.
+					if( rPreviewMeshRemoved.GetSkeletonAssetID() == m_SkeletalMesh->GetSkeletonAsset()->ID )
+					{
+						const std::string entityName = rPreviewMeshRemoved.GetPreviewName() + rPreviewMeshRemoved.GetBoneJointName();
+						
+						if( auto entity = m_Scene->FindEntityByTag( entityName ) )
+						{
+							m_Scene->DeleteEntity( entity, true );
+						}
+					}
+				} break;
+
+				case EventType::BoneHierarchyPanel_PreviewMeshRenamed:
+				{
+					OnPreviewMeshRenamed& rPreviewMeshRenamed = ( OnPreviewMeshRenamed& ) rEvent;
+
+					// Check if the in-coming event is our asset, because multiple
+					// assets viewers may be open at once.
+					if( rPreviewMeshRenamed.GetSkeletonAssetID() == m_SkeletalMesh->GetSkeletonAsset()->ID )
+					{
+						const std::string entityName = rPreviewMeshRenamed.GetOldName() + rPreviewMeshRenamed.GetBoneJointName();
+
+						if( auto entity = m_Scene->FindEntityByTag( entityName ) )
+						{
+							// Rename to the new name.
+							entity->SetName( rPreviewMeshRenamed.GetNewName() + rPreviewMeshRenamed.GetBoneJointName() );
+						}
+					}
+				} break;
+
 				default:
 					break;
 			}

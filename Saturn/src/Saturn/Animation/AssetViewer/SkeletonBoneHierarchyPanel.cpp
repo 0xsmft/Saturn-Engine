@@ -216,7 +216,16 @@ namespace Saturn {
 
 			ImGui::BeginHorizontal( "##nameinput" );
 			ImGui::Text( "Name" );
-			Auxiliary::InputText( "##setname", &pPreviewMesh->Name );
+			if( Auxiliary::InputText( "##setname", &pPreviewMesh->Name, ImGuiInputTextFlags_EnterReturnsTrue ) ) 
+			{
+				OnRenameCommittedPreviewMesh( pPreviewMesh );
+			}
+
+			if( ImGui::IsItemDeactivatedAfterEdit() )
+			{
+				OnRenameCommittedPreviewMesh( pPreviewMesh );
+			}
+
 			ImGui::EndHorizontal();
 
 			ImGui::Columns( 3 );
@@ -330,6 +339,7 @@ namespace Saturn {
 				SkelPreviewMesh* pPreviewMesh = new SkelPreviewMesh();
 				pPreviewMesh->Type = SkelItemType::AttachmentPoint_PreviewMesh;
 				pPreviewMesh->Name = "New Preview Mesh";
+				pPreviewMesh->OldName = pPreviewMesh->Name;
 
 				SkelItemNode* pNode = new SkelItemNode();
 				pNode->pItem = pPreviewMesh;
@@ -376,8 +386,20 @@ namespace Saturn {
 			SkelPreviewMesh* pPrewviewMesh = dynamic_cast< SkelPreviewMesh* >( m_pSelectedBone->pItem );
 			if( pPrewviewMesh )
 			{
+				SkelAttachmentPoint* pParentBoneJoint = dynamic_cast< SkelAttachmentPoint* >( m_pSelectedBone->pParent->pItem );
+				if( pParentBoneJoint )
+				{
+					// Differ event.
+					Application::Get()->DispatchEvent<OnPreviewMeshRemoved>(
+						m_SkeletonAsset->ID,
+						pParentBoneJoint->pBoneJoint->GetName(),
+						pPrewviewMesh->Name );
+				}
+				
+				// Remove from bone tree.
 				m_BoneTree.erase( std::remove( m_BoneTree.begin(), m_BoneTree.end(), m_pSelectedBone ), m_BoneTree.end() );
 
+				// Remove from our parent's map of the children.
 				m_pSelectedBone->pParent->Children.erase(
 					std::remove(
 						m_pSelectedBone->pParent->Children.begin(),
@@ -386,13 +408,28 @@ namespace Saturn {
 					m_pSelectedBone->pParent->Children.end()
 				);
 
+				// Delete and set selected to parent.
 				auto* pOldSelected = m_pSelectedBone;
 				m_pSelectedBone = m_pSelectedBone->pParent;
 
 				delete pOldSelected;
-
-//				Application::Get()->DispatchEvent<Event>( EventType::BoneHierarchyPanel_RemovePreviewMesh );
 			}
+		}
+	}
+
+	void SkeletonBoneHierarchyPanel::OnRenameCommittedPreviewMesh( SkelPreviewMesh* pPreviewMeshNode )
+	{
+		SkelAttachmentPoint* pParentBoneJoint = dynamic_cast< SkelAttachmentPoint* >( m_pSelectedBone->pParent->pItem );
+		if( pParentBoneJoint )
+		{
+			Application::Get()->DispatchEvent<OnPreviewMeshRenamed>(
+				m_SkeletonAsset->ID,
+				pParentBoneJoint->pBoneJoint->GetName(),
+				pPreviewMeshNode->OldName,
+				pPreviewMeshNode->Name );
+
+			// After the event the names can now match.
+			pPreviewMeshNode->OldName = pPreviewMeshNode->Name;
 		}
 	}
 

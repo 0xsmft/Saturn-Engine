@@ -347,21 +347,68 @@ namespace Saturn {
 	{
 		SAT_DEFINE_EVENT( BoneHierarchyPanel_RemovePreviewMesh, EC_Editor );
 	public:
-		OnPreviewMeshRemoved( AssetID skeleID, const std::string& rBoneJointName )
+		// Copy on purpose, data will be deleted by the time the event system processes this event.
+		OnPreviewMeshRemoved( 
+			AssetID skeleID, 
+			const std::string boneJointName,
+			const std::string previewMeshName
+		)
 			: Event( EventType::BoneHierarchyPanel_RemovePreviewMesh, EC_Editor ),
 			m_SkeletonID( skeleID ),
-			m_BoneJointName( rBoneJointName )
+			m_BoneJointName( boneJointName ),
+			m_PreviewMeshName( previewMeshName )
 		{
 		}
 
 		virtual ~OnPreviewMeshRemoved() = default;
 
 		AssetID GetSkeletonAssetID() const { return m_SkeletonID; }
+
 		const std::string& GetBoneJointName() const { return m_BoneJointName; }
+		const std::string& GetPreviewName() const { return m_PreviewMeshName; }
 
 	private:
 		AssetID m_SkeletonID = 0llu;
-		std::string m_BoneJointName;
+		const std::string m_BoneJointName;
+		const std::string m_PreviewMeshName;
+	};
+
+	//
+	// BoneHierarchyPanel, fires when a preview mesh is renamed.
+	//
+	class OnPreviewMeshRenamed : public Event
+	{
+		SAT_DEFINE_EVENT( BoneHierarchyPanel_PreviewMeshRenamed, EC_Editor );
+	public:
+		// Copy on purpose, data will be deleted by the time the event system processes this event.
+		OnPreviewMeshRenamed(
+			AssetID skeleID,
+			const std::string& rBoneJointName,
+			const std::string& rOldPreviewMeshName,
+			const std::string& rNewPreviewMeshName
+		)
+			: Event( EventType::BoneHierarchyPanel_PreviewMeshRenamed, EC_Editor ),
+			m_SkeletonID( skeleID ),
+			m_BoneJointName( rBoneJointName ),
+			m_OldPreviewMeshName( rOldPreviewMeshName ),
+			m_NewPreviewMeshName( rNewPreviewMeshName )
+		{
+		}
+
+		virtual ~OnPreviewMeshRenamed() = default;
+
+		AssetID GetSkeletonAssetID() const { return m_SkeletonID; }
+
+		const std::string& GetBoneJointName() const { return m_BoneJointName; }
+
+		const std::string& GetOldName() const { return m_OldPreviewMeshName; }
+		const std::string& GetNewName() const { return m_NewPreviewMeshName; }
+
+	private:
+		AssetID m_SkeletonID = 0llu;
+		const std::string m_BoneJointName;
+		const std::string m_OldPreviewMeshName;
+		const std::string m_NewPreviewMeshName;
 	};
 
 	//

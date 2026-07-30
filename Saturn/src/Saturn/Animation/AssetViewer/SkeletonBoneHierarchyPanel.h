@@ -84,6 +84,12 @@ namespace Saturn {
 		virtual ~SkelPreviewMesh() = default;
 	
 		std::string Name;
+		
+		// Used for renaming only.
+		// Only differs while a rename is in progress and will
+		// match the CurrentName when the rename is done.
+		std::string OldName;
+
 		AssetID MeshID = 0llu;
 	};
 
@@ -150,6 +156,8 @@ namespace Saturn {
 		void DrawContextOptionsBone();
 		void DrawContextOptionsAP();
 		void DrawContextOptionsPreviewMesh();
+
+		void OnRenameCommittedPreviewMesh( SkelPreviewMesh* pPreviewMeshNode );
 
 	private:
 		std::string m_InspectorName = "Inspector##skel";

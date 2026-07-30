@@ -64,7 +64,7 @@ namespace Saturn {
 		void OpenFileInRuntime( AssetID id );
 
 	private:
-		GameModule* m_GameModule = nullptr;
+		std::unique_ptr<class GameModule> m_GameModule;
 		Ref<Scene> m_RuntimeScene;
 		Ref<SceneRenderer> m_SceneRenderer;
 		Ref<OnlineAPI> m_OnlineAPI;

@@ -72,7 +72,7 @@ namespace Saturn {
 		}
 
 		// "Load" the Game Module
-		m_GameModule = new GameModule();
+		m_GameModule = std::make_unique<class GameModule>();
 
 		SceneRendererSpecification spec{
 			.Width = Application::Get()->GetWindow()->GetWidth(),
@@ -135,8 +135,6 @@ namespace Saturn {
 		m_RuntimeScene = nullptr;
 
 		m_SceneRenderer = nullptr;
-
-		delete m_GameModule;
 	}
 
 	void RuntimeLayer::OpenFile( AssetID id )

@@ -1,4 +1,4 @@
-// Subpixel Morphological Anti-Aliasing (Weights and blending stage + final composition)
+// Subpixel Morphological Anti-Aliasing (Weights and blending stage)
 //
 // Copyright (C) 2013 Jorge Jimenez (jorge@iryoku.com)
 // Copyright (C) 2013 Jose I. Echevarria (joseignacioechevarria@gmail.com)
@@ -10,7 +10,7 @@
 // https://github.com/iryoku/smaa/blob/master/SMAA.hlsl
 
 #type compute
-#version 460
+#version 450 core
 
 layout(push_constant) uniform Params
 {
@@ -426,6 +426,9 @@ void main()
 
 	ivec2 myPixel = groupBase + ivec2( localID );
 	
+	if( myPixel.x >= size.x || myPixel.y >= size.y )
+	    return;
+
 	vec4 weights = SMAABlendingWeightCalculation( myPixel );
 	StoreWeights( localID.y, localID.x, weights );
 

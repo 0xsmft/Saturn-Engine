@@ -19,7 +19,7 @@ void main()
 #type fragment
 #version 450
 
-layout( location = 0 ) in vec2 vs_UV;
+layout( location = 0 ) in vec2 vs_TexCoord;
 
 layout( set = 0, binding = 1 ) uniform sampler2D u_AOTexture;
 
@@ -27,7 +27,7 @@ layout( location = 0 ) out float FinalColorR;
 
 void main() 
 {
-	const int blurRange = 2;
+	const int blurRange = 4;
 
 	int n = 0;
 
@@ -39,11 +39,12 @@ void main()
 		for( int y = -blurRange; y <= blurRange; ++y ) 
 		{
 			vec2 offset = vec2( float( x ), float( y ) ) * texelSize;
-			result += texture( u_AOTexture, vs_UV + offset ).r;
+			result += texture( u_AOTexture, vs_TexCoord + offset ).r;
 
 			++n;
 		}
 	}
 
-	FinalColorR = result / (float(n));
+	// Make sure to avoid divison by zero.
+	FinalColorR = result / max( float( n ), 1 );
 }

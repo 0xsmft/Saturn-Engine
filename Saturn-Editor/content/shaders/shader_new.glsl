@@ -421,6 +421,8 @@ void main()
 {
 	vec4 AlbedoColor = texture( u_AlbedoTexture, vs_Input.TexCoord );
 	m_Params.Albedo = AlbedoColor.rgb * u_Materials.AlbedoColor;
+	
+	OutAlbedo = vec4( m_Params.Albedo, 1.0 );
 
 	m_Params.Metalness = texture( u_MetallicTexture, vs_Input.TexCoord ).r * u_Materials.Metalness;
 	m_Params.Roughness = texture( u_RoughnessTexture, vs_Input.TexCoord ).r * u_Materials.Roughness;
@@ -470,6 +472,4 @@ void main()
 	LightingContribution += m_Params.Albedo * u_Materials.Emissive;
 
 	FinalColor = vec4( iblContribution + LightingContribution, 1.0 );
-
-	OutAlbedo = vec4( m_Params.Albedo, 1.0 );
 }

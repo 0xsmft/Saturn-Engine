@@ -30,12 +30,11 @@
 #include "EditorCamera.h"
 
 #include "Saturn/Core/Input.h"
+#include "Saturn/Core/App.h"
 
 #include <glm/glm.hpp>
 
 #include <glm/gtx/quaternion.hpp>
-#include <glm/gtx/matrix_decompose.hpp>
-#include <glm/gtc/type_ptr.hpp>
 
 constexpr auto M_PI = glm::pi<float>();
 
@@ -157,10 +156,13 @@ namespace Saturn {
 		m_Distance = glm::distance( m_Position, m_FocalPoint );
 		m_ViewMatrix = glm::lookAt( m_Position, lookAt, glm::vec3{ 0.f, yawSign, 0.f } );
 
-		//damping for smooth camera
+		constexpr float dampingForMovement = 5.0f;
+		const float movementFactor = glm::exp( -dampingForMovement * Application::Get()->Time() );
+
+		// Damping for smooth camera
 		m_YawDelta *= 0.6f;
 		m_PitchDelta *= 0.6f;
-		m_PositionDelta *= 0.8f;
+		m_PositionDelta *= movementFactor;
 
 		UpdateFrustum( ViewProjection() );
 	}

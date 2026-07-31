@@ -378,6 +378,32 @@ namespace Saturn {
 		}
 	}
 
+	void Scene::OnUpdateAnimators_Preview( Timestep ts )
+	{
+		const auto boneAttachments = GetAllEntitiesWith<BoneAttachmentInfoComponent>();
+		for( const auto& entity : boneAttachments )
+		{
+			auto& boneAttachment = entity->GetComponent<BoneAttachmentInfoComponent>();
+			auto& tc = entity->GetComponent<TransformComponent>();
+
+			const auto parent = FindEntityByID( entity->GetParent() );
+			if( parent )
+			{
+				const auto& rSk = parent->GetComponent<SkeletalMeshComponent>();
+
+				const auto skeleton = rSk.Mesh->GetSkeletonAsset();
+				if( skeleton )
+				{
+					if( const auto* pBoneJoint = skeleton->FindBoneJoint( boneAttachment.AttachmentName ) )
+					{
+						// Update transform.
+						tc.SetTransform( pBoneJoint->GetBoneMatrixPreview( rSk.Mesh ) );
+					}
+				}
+			}
+		}
+	}
+
 	void Scene::OnRenderEditor( Camera* pCamera, const glm::mat4& rViewMartix, Ref<SceneRenderer> sceneRenderer, Timestep ts )
 	{
 		SAT_PF_EVENT();
@@ -416,8 +442,6 @@ namespace Saturn {
 		if( auto entity = m_pMainCameraEntity.Access() )
 		{
 			const auto tc = GetWorldSpaceTransform( entity );
-
-			const auto view = glm::inverse( tc.GetTransform() );
 
 			auto& rCamera = entity->GetComponent<CameraComponent>().Camera;
 			rCamera->SetViewportSize( sceneRenderer->Width(), sceneRenderer->Height() );
@@ -932,7 +956,7 @@ namespace Saturn {
 	{
 		VariableGuard<Scene*> sceneGuard( g_ActiveScene, this );
 
-		if( !rParams.pClass->IsChildOf( Entity::StaticClass() ) || rParams.pClass == nullptr ) 
+		if( !rParams.pClass->IsChildOfOrIs( Entity::StaticClass() ) || rParams.pClass == nullptr ) 
 			return nullptr;
 
 		SharedPtr<Entity> entity( dynamic_cast< Entity* >( ClassMetadataHandler::Get().CreateClassObject( rParams.pClass ) ) );
@@ -1532,7 +1556,7 @@ namespace Saturn {
 			auto& rComp = entity->GetComponent<BehaviourTreeComponent>();
 			if( rComp.BehaviourTreeAssetID == 0 ) continue;
 
-			if( entity->GetClass()->IsChildOf( AIAgentEntity::StaticClass() ) )
+			if( entity->GetClass()->IsChildOfOrIs( AIAgentEntity::StaticClass() ) )
 			{
 				auto agent = entity.As<AIAgentEntity>();
 				agent->StartBehaviourTree( rComp.BehaviourTreeAssetID );
@@ -1687,7 +1711,7 @@ namespace Saturn {
 		}
 
 		// TODO: Temp! should create somesort of OnEntitySpawned() function so we can start animations, behaviour trees etc.
-		if( prefabEntity->GetClass()->IsChildOf( AIAgentEntity::StaticClass() ) )
+		if( prefabEntity->GetClass()->IsChildOfOrIs( AIAgentEntity::StaticClass() ) )
 		{
 			if( const auto* pComp = prefabEntity->TryGetComponent<BehaviourTreeComponent>(); pComp )
 			{

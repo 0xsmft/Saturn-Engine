@@ -267,6 +267,10 @@ namespace Saturn {
 		void OnUpdatePhysics( Timestep ts );
 		void OnUpdateAnimators( Timestep ts );
 		void OnEvent( Event& rEvent );
+		
+		// Internal use only! For use by SkeletonAssetView only!
+		// Update bone joints but as previews.
+		void OnUpdateAnimators_Preview( Timestep ts );
 
 	public:
 		template<typename T>

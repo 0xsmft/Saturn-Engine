@@ -2022,7 +2022,7 @@ namespace Saturn {
 			disabledFlagIfRuntimeForSndGrps.Pop();
 
 			ImGui::PushFont( boldFont );
-			ImGui::Text( "Online Systems" );
+			ImGui::Text( "Online" );
 			ImGui::Separator();
 			ImGui::PopFont();
 
@@ -2796,8 +2796,7 @@ namespace Saturn {
 				if( ImGui::MenuItem( "Upgrade assets" ) ) Project::GetActiveProject()->UpgradeAssets();
 			}
 
-			ImGui::SeparatorText( "Building and Distribution" );
-
+			ImGui::SeparatorText( "Development" );
 			{
 				Auxiliary::ScopedDisabledFlag disabled( m_RequestRuntime );
 
@@ -2825,27 +2824,30 @@ namespace Saturn {
 					{
 						HotReloadGame();
 					}
+
+					if( ImGui::BeginItemTooltip() )
+					{
+						if( m_RequestRuntime )
+						{
+							ImGui::Text( "Cannot hot-reload during runtime." );
+						}
+						else if( !m_GameModule->HasModule() )
+						{
+							ImGui::Text( "No module exists to be hot-reloaded." );
+						}
+						else
+						{
+							ImGui::Text( "Hot-reload the game. (Alt+F5)" );
+						}
+
+						ImGui::EndTooltip();
+					}
 				}
+			}
 
-				if( ImGui::BeginItemTooltip() )
-				{
-					if( m_RequestRuntime )
-					{
-						ImGui::Text( "Cannot hot-reload during runtime." );
-					}
-					else if( !m_GameModule->HasModule() )
-					{
-						ImGui::Text( "No module exists to be hot-reloaded." );
-					}
-					else
-					{
-						ImGui::Text( "Hot-reload the game. (Alt+F5)" );
-					}
-
-					ImGui::EndTooltip();
-				}
-
-				if( ImGui::MenuItem( "Setup Project for Distribution & Build Asset Bundle" ) )
+			ImGui::SeparatorText( "Distribution" );
+			{
+				if( ImGui::MenuItem( "Build Bundles" ) )
 				{
 					if( ValidateProjectDefaults() )
 					{
@@ -2855,25 +2857,11 @@ namespace Saturn {
 
 				if( ImGui::BeginItemTooltip() )
 				{
-					ImGui::Text( "Attempts to build the Shader Bundle and the Asset Bundle." );
-					ImGui::Text( "You must run this before clicking the \"Distribute project\" button." );
+					ImGui::Text( "Distribution requires a Shader Bundle and an Asset Bundle in order for the runtime to build." );
 					ImGui::EndTooltip();
 				}
-
-				if( ImGui::MenuItem( "Build Shader Bundle" ) )
-				{
-					BuildShaderBundle();
-				}
-
-				if( ImGui::BeginItemTooltip() )
-				{
-					ImGui::Text( "Attempts to compile all shaders and bundles them all into one file." );
-					ImGui::Text( "You do not need to do this if you intend to prepare the project for distribution as that option will build it for you." );
-					ImGui::Text( "Only build the Shader Bundle if there is a problem with your shaders." );
-					ImGui::EndTooltip();
-				}
-
-				if( ImGui::MenuItem( "Distribute project" ) )
+				
+				if( ImGui::MenuItem( "Compile project as distribution target" ) )
 				{
 					m_HasPremakePath = Auxiliary::HasEnvironmentVariable( "SATURN_PREMAKE_PATH" );
 
@@ -2908,7 +2896,6 @@ namespace Saturn {
 				if( ImGui::BeginItemTooltip() )
 				{
 					ImGui::Text( "Attempts to compile the project and fully setup the project for Distribution." );
-					ImGui::Text( "Make sure you have prepare the project before attempting to distribute the project." );
 					ImGui::EndTooltip();
 				}
 			}

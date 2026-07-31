@@ -257,7 +257,7 @@ namespace Saturn {
 		SceneRendererSpecification spec{ 
 			.Width = 0u, 
 			.Height = 0u, 
-			.AOTechnique = AOTechnique::SSAO, 
+			.AOTechnique = AOTechnique::GTAO, 
 			.Flags = SceneRendererFlag_MasterInstance,
 			.TargetScene = m_EditorScene };
 

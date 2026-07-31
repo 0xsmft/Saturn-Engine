@@ -31,6 +31,10 @@
 
 #include "Saturn/Core/Memory/SObjectAllocator.h"
 
+#if !defined(SAT_DIST)
+#include "Saturn/GameFramework/Core/GameModule.h"
+#endif
+
 namespace Saturn {
 
 	//////////////////////////////////////////////////////////////////////////
@@ -190,6 +194,12 @@ namespace Saturn {
 
 		if( !pObject )
 		{
+#if !defined(SAT_DIST)
+			// If you get here then the game module doesn't exist, double check if the configuration you are currently
+			// on is also built for the Game.
+			SAT_CORE_VERIFY( GameModule::Get()->HasModule(), "Game Module doesn't exist" );
+#endif
+
 			const std::string message = std::format( "Class/{0} does not exist in any module! Unable to continue!", rScriptName );
 			SAT_CORE_VERIFY( false, message );
 		}

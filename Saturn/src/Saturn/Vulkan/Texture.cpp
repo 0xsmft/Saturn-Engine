@@ -345,7 +345,7 @@ namespace Saturn {
 
 		VK_CHECK( vkAllocateMemory( VulkanContext::Get()->GetDevice(), &AllocInfo, nullptr, &rDeviceMemory ) );
 
-		vkBindImageMemory( VulkanContext::Get()->GetDevice(), rImage, rDeviceMemory, 0 );
+		VK_CHECK( vkBindImageMemory( VulkanContext::Get()->GetDevice(), rImage, rDeviceMemory, 0 ) );
 	}
 
 	VkImageView CreateImageView( VkImage Image, VkFormat Format )
@@ -1174,15 +1174,15 @@ namespace Saturn {
 
 		VK_CHECK( vkAllocateMemory( VulkanContext::Get()->GetDevice(), &AllocInfo, nullptr, &m_ImageMemory ) );
 
-		vkBindImageMemory( VulkanContext::Get()->GetDevice(), m_Image, m_ImageMemory, 0 );
+		VK_CHECK( vkBindImageMemory( VulkanContext::Get()->GetDevice(), m_Image, m_ImageMemory, 0 ) );
 
 		//////////////////////////////////////////////////////////////////////////
 
 		VkImageSubresourceRange subresourceRange = {};
 		subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		subresourceRange.baseMipLevel = 0;
+		subresourceRange.baseMipLevel = 0u;
 		subresourceRange.levelCount = GetMipMapLevels();
-		subresourceRange.layerCount = 6;
+		subresourceRange.layerCount = 6u;
 
 		// No need to transition image layout as the image layout will become VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL while creating mips.
 		// TRANSITION: VK_IMAGE_LAYOUT_UNDEFINED to VK_IMAGE_LAYOUT_GENERAL (temporary until mips are generated).

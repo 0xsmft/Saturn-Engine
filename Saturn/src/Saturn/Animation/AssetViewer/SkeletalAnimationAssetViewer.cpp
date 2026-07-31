@@ -65,7 +65,7 @@ namespace Saturn {
 		m_BoneHierarchyPanel.Initialise( m_Asset->GetSkeletonID() );
 		
 		// Make sure this panel has a unique name.
-		m_BoneHierarchyPanel.AppendToName( std::format( "##{}", ( uint64_t ) m_AssetID ) );
+		m_BoneHierarchyPanel.AppendToName( std::format( "##{}0", ( uint64_t ) m_AssetID ) );
 	}
 
 	SkeletalAnimationAssetViewer::~SkeletalAnimationAssetViewer()

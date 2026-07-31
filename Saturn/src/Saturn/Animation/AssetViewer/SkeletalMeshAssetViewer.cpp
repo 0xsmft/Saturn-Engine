@@ -58,7 +58,7 @@ namespace Saturn {
 		m_BoneHierarchyPanel.Initialise( m_Mesh->GetSkeletonAsset()->ID );
 
 		// Make sure this panel has a unique name.
-		m_BoneHierarchyPanel.AppendToName( std::format( "##{}", ( uint64_t ) m_AssetID ) );
+		m_BoneHierarchyPanel.AppendToName( std::format( "##{}2", ( uint64_t ) m_AssetID ) );
 		m_BoneHierarchyPanel.SetReadOnly( true );
 	}
 

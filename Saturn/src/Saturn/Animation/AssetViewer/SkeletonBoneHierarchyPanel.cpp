@@ -114,6 +114,7 @@ namespace Saturn {
 	void SkeletonBoneHierarchyPanel::AppendToName( const std::string& rName )
 	{
 		m_Name += rName;
+		m_InspectorName = std::format( "Inspector{}", rName );
 	}
 
 	void SkeletonBoneHierarchyPanel::OnImGuiRender()

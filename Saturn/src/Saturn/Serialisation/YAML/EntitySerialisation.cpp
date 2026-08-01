@@ -88,7 +88,7 @@ namespace Saturn {
 			rEmitter << YAML::BeginSeq;
 
 			const auto* pProperties = entity->GetClass()->GetProperties();
-			for( int i = 0; i < propCount; ++i )
+			for( size_t i = 0; i < propCount; ++i )
 			{
 #define SAT_SERIALISE_PROPERTY_YAML( PropertyType ) \
 { \
@@ -604,7 +604,7 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 		const auto classInfo = rEntityNode[ "ClassInformation" ];
 		if( classInfo )
 		{
-			const auto propertyCount = classInfo[ "LastPropertyCount" ].as<int>();
+			const auto propertyCount = classInfo[ "LastPropertyCount" ].as<size_t>();
 
 			if( propertyCount != DeserialisedEntity->GetClass()->GetPropertyCount() )
 			{

@@ -7,24 +7,22 @@
 <p align=center>
     <a href="https://github.com/BEASTSM96/Saturn-Engine/blob/vulkan/LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-green.svg"></a>
     <a href="https://img.shields.io/github/repo-size/BEASTSM96/Saturn-Engine"><img alt="Repo Size" src="https://img.shields.io/github/repo-size/BEASTSM96/Saturn-Engine"></a>
-    <a href="https://github.com/BEASTSM96/Saturn-Engine/actions/workflows/Windows.yml"><img alt="Repo Size" src="https://github.com/BEASTSM96/Saturn-Engine/actions/workflows/Windows.yml/badge.svg"></a>
     <a href="https://trello.com/b/baqP3fvB/saturn-engine"><img alt="Trello" src="https://img.shields.io/badge/Trello-saturn--engine-blue"></a>
+    <a href="https://app.codacy.com/gh/BEASTSM96/Saturn-Engine"><img alt="Codacy" src="https://app.codacy.com/project/badge/Grade/e794ca79348e47b195785a39efcc6261"></a>
 </p>
 
 <p align=center>
-    Saturn is primarily an early-stage game engine for Windows with a Linux implemention in the works.
+    Saturn is primarily an early-stage 3D game engine for Windows.
     <br>
 </p>
 
 ## Platforms
 
-| Platform | Supported | Architecture |
-| -------- | --------- | ------------ |
-| Windows 10+ | ✅ | x86_64
-| Linux | 🕗 *[SOON](https://trello.com/c/o43wueQO/9-preliminary-linux-support)* | x86_64
-| macOS 15+ (Sequoia) | ❌ | AArch64
-| Xbox | ❌ | x86_64
-| PS4/5 | ❌ | x86_64
+| Platform | Supported | Architecture | Build Status |
+| -------- | --------- | ------------ | ------------ |
+| Windows 10+ | ✅ | x86_64 |     <a href="https://github.com/BEASTSM96/Saturn-Engine/actions/workflows/Windows.yml"><img alt="Repo Size" src="https://github.com/BEASTSM96/Saturn-Engine/actions/workflows/Windows.yml/badge.svg"></a>
+| Linux | 🕗 *[SOON](https://trello.com/c/o43wueQO/9-preliminary-linux-support)* | x86_64 | No CI yet.
+| macOS 15+ (Sequoia) | ❌ | AArch64 | No CI yet.
 
 ## Features
 

@@ -582,16 +582,21 @@ namespace Saturn {
 					const auto& mc = entity->GetComponent<StaticMeshComponent>();
 					const auto mesh = mc.Mesh;
 
-					auto& rBoundingBox = mesh->GetBoundingBox();
+					// We may not have a mesh, in some cases if the prefab hasn't had a mesh assigned in C++
+					// and the user hasn't selected one yet in the prefab then we'll crash here.
+					if( mesh )
+					{
+						auto& rBoundingBox = mesh->GetBoundingBox();
 
-					// Set the distance based on the bounding box and make sure that we are not too close so the min is 4.0f
-					const glm::vec3 size = rBoundingBox.Extent();
-					const float maxSize = std::max( size.x, std::max( size.y, size.z ) );
+						// Set the distance based on the bounding box and make sure that we are not too close so the min is 4.0f
+						const glm::vec3 size = rBoundingBox.Extent();
+						const float maxSize = std::max( size.x, std::max( size.y, size.z ) );
 
-					distance = maxSize * 2.0f;
-					distance = std::max( distance + 4.0f, 4.0f );
+						distance = maxSize * 2.0f;
+						distance = std::max( distance + 4.0f, 4.0f );
 
-					cacheData.Camera.SetDistance( distance );
+						cacheData.Camera.SetDistance( distance );
+					}
 				}
 
 				// Greater than the far clip

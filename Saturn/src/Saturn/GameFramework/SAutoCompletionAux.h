@@ -53,7 +53,7 @@ namespace Saturn {
 	enum XSP 
 	{
 		ReadOnlyInEditor,
-		AssetType,
+		AssetFinderType,
 	};
 
 #endif

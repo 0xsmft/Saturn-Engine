@@ -313,15 +313,4 @@ namespace Saturn {
 		friend class AssetRegistry;
 	};
 
-	class AssetReference
-	{
-	public:
-		AssetID ID = 0;
-		Ref<Asset> LoadedAsset = nullptr;
-
-		AssetType ExpectedType = AssetType::Unknown;
-
-		Ref<Asset> operator->() { return LoadedAsset; }
-		const Ref<Asset> operator->() const { return LoadedAsset; }
-	};
 }

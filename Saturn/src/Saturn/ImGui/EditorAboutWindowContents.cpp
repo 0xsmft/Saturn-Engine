@@ -55,6 +55,7 @@ namespace Saturn {
 		{
 			ImGui::Text( "acl & rtm" );
 			ImGui::Text( "assimp" );
+			ImGui::Text( "CrashCatch" );
 			ImGui::Text( "entt" );
 			ImGui::Text( "filewatch" );
 			ImGui::Text( "freetype" );
@@ -63,7 +64,9 @@ namespace Saturn {
 			ImGui::Text( "imgui_node_editor" );
 			ImGui::Text( "ImGuizmo" );
 			ImGui::Text( "imspinner" );
+			ImGui::Text( "ImTimeline" );
 			ImGui::Text( "JoltPhysics" );
+			ImGui::Text( "libzip" );
 			ImGui::Text( "miniaudio" );
 			ImGui::Text( "msdfgen" );
 			ImGui::Text( "msdf-atlas-gen" );
@@ -76,6 +79,7 @@ namespace Saturn {
 			ImGui::Text( "steamworks" );
 			ImGui::Text( "tracy" );
 			ImGui::Text( "vma" );
+			ImGui::Text( "yaml-cpp" );
 			ImGui::Text( "zlib: Version 1.3.1, January 22nd, 2024" );
 
 			Auxiliary::EndTreeNode();

@@ -422,7 +422,7 @@ namespace Saturn {
 
 		SharedPtr<Entity> HotReloadReplaceOldEntity( SharedPtr<Entity> source );
 
-		void TransferModifiedProperties( const SharedPtr<Entity>& rSourceEntity, SharedPtr<Entity>& rEntity, const std::string& rMetadataName );
+		void TransferModifiedProperties( const SharedPtr<Entity> sourceEntity, SharedPtr<Entity> targetEntity );
 
 		void DestroyPendingEntities();
 		void DeleteEntityChecked( Entity* pEntity );

@@ -37,12 +37,12 @@
 
 namespace Saturn {
 
-	void SProperty::RtCopyFromOther( SObject* pSrcObject, SObject* pObject )
+	void SProperty::RtCopyFromOther( const SObject* pSrcObject, SObject* pDstObject ) const
 	{
 #define SAT_HANDLE_TYPE( PropertyType ) \
 {\
 typename PropertyTypeTraits<Saturn::SPropertyType::PropertyType>::Type value = Read<Saturn::SPropertyType::PropertyType>( pSrcObject ); \
-SetProperty<typename PropertyTypeTraits<Saturn::SPropertyType::PropertyType>::Type>( pObject, value ); \
+SetPropertyInternal<typename PropertyTypeTraits<Saturn::SPropertyType::PropertyType>::Type>( pDstObject, value ); \
 } break
 
 		switch( m_Type )
@@ -80,25 +80,25 @@ SetProperty<typename PropertyTypeTraits<Saturn::SPropertyType::PropertyType>::Ty
 			case Saturn::SPropertyType::Vector2:
 			{
 				const glm::vec2& rValue = Read<Saturn::SPropertyType::Vector2>( pSrcObject );
-				SetProperty<const glm::vec2&>( pObject, rValue );
+				SetPropertyInternal<const glm::vec2&>( pDstObject, rValue );
 			} break;
 
 			case Saturn::SPropertyType::Vector3:
 			{
 				const glm::vec3& rValue = Read<Saturn::SPropertyType::Vector3>( pSrcObject );
-				SetProperty<const glm::vec3&>( pObject, rValue );
+				SetPropertyInternal<const glm::vec3&>( pDstObject, rValue );
 			} break;
 
 			case Saturn::SPropertyType::Vector4:
 			{
 				const glm::vec4& rValue = Read<Saturn::SPropertyType::Vector4>( pSrcObject );
-				SetProperty<const glm::vec4&>( pObject, rValue );
+				SetPropertyInternal<const glm::vec4&>( pDstObject, rValue );
 			} break;
 
 			case Saturn::SPropertyType::Asset:
 			{
 				const uint64_t value = Read<Saturn::SPropertyType::Asset>( pSrcObject );
-				SetProperty<AssetID>( pObject, value );
+				SetPropertyInternal<AssetID>( pDstObject, value );
 			} break;
 
 			case Saturn::SPropertyType::EntityType:

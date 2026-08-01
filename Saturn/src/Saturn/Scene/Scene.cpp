@@ -1320,8 +1320,19 @@ namespace Saturn {
 		}
 	}
 
-	void Scene::TransferModifiedProperties( const SharedPtr<Entity>& rSourceEntity, SharedPtr<Entity>& rEntity, const std::string& rMetadataName )
+	void Scene::TransferModifiedProperties( 
+		const SharedPtr<Entity> sourceEntity, 
+		SharedPtr<Entity> targetEntity )
 	{
+		SAT_CORE_ASSERT( sourceEntity->GetClass() == targetEntity->GetClass() );
+
+		const SClass* pSClass = sourceEntity->GetClass();
+
+		for( size_t i = 0; i < pSClass->GetPropertyCount(); ++i )
+		{
+			const SProperty* pProperty = pSClass->GetProperties()[ i ];
+			pProperty->RtCopyFromOther( sourceEntity.Get(), targetEntity.Get() );
+		}
 	}
 
 	void Scene::DestroyPendingEntities()
@@ -1392,12 +1403,16 @@ namespace Saturn {
 	void Scene::CopyScene( Ref<Scene>& NewScene )
 	{
 		// Copy entities
-		// I know we can just use the "=" operator, but we need to recreate the entities from the game.
+		// I know we can just use the "=" operator, 
+		// but we need to recreate the entities from the game,
+		// and not just copy them.
 		for( auto&& [hnd, originalEntity] : m_EntityIDMap )
 		{
 			NewScene->m_EntityIDMap[ hnd ] = NewScene->CreateEntityWithIDScript( originalEntity->GetUUID(), originalEntity->GetName(), originalEntity->GetClass()->GetName(), false );
 
-			TransferModifiedProperties( originalEntity, NewScene->m_EntityIDMap[ hnd ], originalEntity->GetClass()->GetName() );
+			TransferModifiedProperties( 
+				originalEntity, 
+				NewScene->m_EntityIDMap[ hnd ] );
 		}
 
 		NewScene->m_Lights = m_Lights;

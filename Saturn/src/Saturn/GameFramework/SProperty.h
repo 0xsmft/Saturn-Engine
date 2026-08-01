@@ -255,7 +255,7 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 			return ReadPropertyInternal<Ty>( pObject, ( GetPropertyFn<Ty> )m_pGetPropertyFunction );
 		}
 
-		void RtCopyFromOther( SObject* pSrcObject, SObject* pObject );
+		void RtCopyFromOther( const SObject* pSrcObject, SObject* pDstObject ) const;
 
 	public:
 		void Serialise( const SObject* pObject, std::ofstream& rStream ) const;
@@ -285,6 +285,13 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 
 	protected:
 		virtual void OnPropertyModified() {}
+
+		template<typename CppType>
+		void SetPropertyInternal( SObject* pObject, CppType value ) const
+		{
+			// TODO: Check if CppType is the same as our current type
+			ModifyPropertyInternal<CppType>( pObject, m_pSetPropertyFunction, value );
+		}
 
 	protected:
 		std::string m_Name;

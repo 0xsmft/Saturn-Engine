@@ -282,7 +282,7 @@ namespace Saturn {
 
 	static void WriteSClassSpecification( std::ofstream& fout, const HeaderToolCommand& rCommand, uint64_t hash, const GClass& rClass, const std::string& rPropPointersName )
 	{
-		const int propSize = ( int ) rClass.Properties.size();
+		const size_t propSize = rClass.Properties.size();
 
 #if defined(SAT_PLATFORM_WINDOWS)
 		std::string realPath = rCommand.Filepath.string();
@@ -309,13 +309,13 @@ namespace Saturn {
 			case HeaderToolConfigKind::Debug:
 			case HeaderToolConfigKind::Release: 
 			{
-				fout << std::vformat( "\t\tconst SClassSpecification spec{{ \"{0}\", ( SClassFlags ) {1}, {2}, sizeof( {0} ), alignof( {0} ), {5}llu, {0}::Super::StaticClass(), Saturn::RInternalConstructor<{0}>, RStaticLnk{0}, {4}, Saturn::SClassExtendedMetadata{{ \"{3}\" }} }};\n",
+				fout << std::vformat( "\t\tconst SClassSpecification spec{{ \"{0}\", ( SClassFlags ) {1}, {2}llu, sizeof( {0} ), alignof( {0} ), {5}llu, {0}::Super::StaticClass(), Saturn::RInternalConstructor<{0}>, RStaticLnk{0}, {4}, Saturn::SClassExtendedMetadata{{ \"{3}\" }} }};\n",
 					std::make_format_args( rClass.ClassName, rClass.ClassFlags, propSize, realPath, rPropPointersName, hash ) );
 			} break;
 
 			case HeaderToolConfigKind::Dist:
 			{
-				fout << std::vformat( "\t\tconst SClassSpecification spec{{ \"{0}\", ( SClassFlags ) {1}, {2}, sizeof( {0} ), alignof( {0} ), {4}llu, {0}::Super::StaticClass(), Saturn::RInternalConstructor<{0}>, RStaticLnk{0}, {3}, Saturn::SClassExtendedMetadata{{ }} }};\n",
+				fout << std::vformat( "\t\tconst SClassSpecification spec{{ \"{0}\", ( SClassFlags ) {1}, {2}llu, sizeof( {0} ), alignof( {0} ), {4}llu, {0}::Super::StaticClass(), Saturn::RInternalConstructor<{0}>, RStaticLnk{0}, {3}, Saturn::SClassExtendedMetadata{{ }} }};\n",
 					std::make_format_args( rClass.ClassName, rClass.ClassFlags, propSize, rPropPointersName, hash ) );
 			} break;
 		}

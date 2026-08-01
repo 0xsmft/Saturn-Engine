@@ -80,10 +80,10 @@ namespace Saturn {
 	{
 		std::string Name;
 		std::underlying_type_t<SClassFlags> Flags = SClassFlags::SC_None;
-		int Properties = 0;
-		size_t Size = 0;
-		size_t Alignment = 0;
-		uint64_t Hash = 0;
+		size_t Properties = 0llu;
+		size_t Size = 0llu;
+		size_t Alignment = 0llu;
+		uint64_t Hash = 0llu;
 
 		SClass* pParentClass = nullptr;
 
@@ -167,7 +167,7 @@ namespace Saturn {
 		}
 
 		inline const SClass* GetParentClass() const { return m_pParentClass; }
-		inline int GetPropertyCount() const { return m_PropertyCount; }
+		inline size_t GetPropertyCount() const { return m_PropertyCount; }
 
 		// Pointer to the first element
 		inline const SProperty* const* GetProperties() const { return m_Properties; }
@@ -194,10 +194,10 @@ namespace Saturn {
 	private:
 		std::string m_Name;
 		SClassFlags m_Flags = SClassFlags::SC_None;
-		int m_PropertyCount = 0;
-		size_t m_Size = 0;
-		size_t m_Alignment = 0;
-		uint64_t m_ClassHash = 0;
+		size_t m_PropertyCount = 0llu;
+		size_t m_Size = 0llu;
+		size_t m_Alignment = 0llu;
+		uint64_t m_ClassHash = 0llu;
 
 		SObject* ( *m_pClassConstructor )( ) = nullptr;
 		SClass* ( *m_pStaticLinkFunction )( ) = nullptr;

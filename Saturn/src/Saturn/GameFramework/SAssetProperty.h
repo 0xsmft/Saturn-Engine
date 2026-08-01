@@ -26,89 +26,44 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "GenerationRecipe.h"
+#pragma once
 
-#include "Saturn/Serialisation/Raw/RawSerialisation.h"
+#include "SProperty.h"
 
-#include <glm/glm.hpp>
-#include <iostream>
+#include "Saturn/Asset/Asset.h"
 
 namespace Saturn {
 
-	FGenerationRecipe::FGenerationRecipe( const std::filesystem::path& rCacheLocation )
-		: m_Location( rCacheLocation )
+	//
+	// SProperty class for handling Assets.
+	// 
+	// This class holds the required AssetType
+	// that can be specified as part of the 
+	// SPROPERTY() macro.
+	// 
+	// By default it's AssetType::Unknown
+	// meaning all assets will show up
+	// in the Editor.
+	//
+	class SAssetProperty : public SProperty
 	{
-	}
-
-	FGenerationRecipe::~FGenerationRecipe()
-	{
-		m_FilesInCache.clear();
-	}
-
-	void FGenerationRecipe::Load()
-	{
-		if( !std::filesystem::exists( m_Location ) ) 
+		SAssetProperty() = default;
+	public:
+		SAssetProperty( const std::string& rName, SPropertyType propType, const void* pGetFnp, void* pSetFnp, AssetType assetType )
+			: SProperty( rName, propType, pGetFnp, pSetFnp ), m_AssetType( assetType )
 		{
-			std::cout << "Filecache at location: " << m_Location << " does not exist! You may need to run the Build Tool before running the header tool!\n";
-			return;
 		}
 
-		std::ifstream stream( m_Location, std::ios::binary | std::ios::in );
+		virtual ~SAssetProperty() = default;
 
-		std::streampos size = 0;
-		size = stream.tellg();
-		stream.seekg( 0, std::ios::end );
-		size = stream.tellg() - size;
+		uint64_t GetProperty( SObject* pObject ) const;
+		uint64_t GetProperty( const SObject* pObject ) const;
 
-		if( size == 0 )
-		{
-			return;
-		}
+	public:
+		AssetType GetAssetType() const { return m_AssetType; }
 
-		stream.seekg( 0 );
-
-		size_t modules = 0;
-		RawSerialisation::ReadObject( modules, stream );
-
-		m_FilesInCache.reserve( modules );
-
-		for( int i = 0; i < modules; ++i )
-		{
-			std::string key;
-			key = RawSerialisation::ReadString( stream );
-
-			m_FilesInCache.push_back( key );
-		}
-
-		stream.close();
-	}
-
-	void FGenerationRecipe::SetLocation( const std::filesystem::path& rCacheLocation )
-	{
-		m_Location = rCacheLocation;
-	}
-
-	bool FGenerationRecipe::IsCppFile( const std::filesystem::path& rFile )
-	{
-		const auto ext = rFile.extension();
-		return ext == ".cpp" || ext == ".h" || ext == ".hpp";
-	}
-
-	bool FGenerationRecipe::IsSourceFile( const std::filesystem::path& rFile )
-	{
-		const auto ext = rFile.extension();
-		return ext == ".cpp";
-	}
-
-	bool FGenerationRecipe::HasFileBeenModifed( const std::filesystem::path& rFile )
-	{
-		return false;
-	}
-
-	std::vector<std::filesystem::path> FGenerationRecipe::Analyse()
-	{
-		return m_FilesInCache;
-	}
+	private:
+		AssetType m_AssetType = AssetType::Unknown;
+	};
 
 }

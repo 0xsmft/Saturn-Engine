@@ -39,35 +39,36 @@ namespace Saturn {
 
 	class SObject;
 	class SClass;
-
 	class Entity;
-	class AssetReference;
 
 	// If you modify this enum you must ditto to XSP auto completion enum
 	enum SPropertyFlags_
 	{
-		SPropertyFlags_None = BIT( 0 ),
-		SPropertyFlags_ReadOnlyInEditor = BIT( 1 ), // NOTE: ReadOnlyInEditor is only available with the editor
-		SPropertyFlags_AssetType = BIT( 2 ),
-		SPropertyFlags_Serialised = BIT( 3 ),
-		SPropertyFlags_EntityType = BIT( 4 )
+		SPropertyFlags_None,
+
+		// NOTE: ReadOnlyInEditor is only available with the editor
+		SPropertyFlags_ReadOnlyInEditor = BIT( 0 ),
+
+		// Help out the build tool, if a Saturn type is in the namespace.
+		SPropertyFlags_UsingSaturnNamespace = BIT( 1 ), 
 	};
 
 	typedef int SPropertyFlags;
 
+	//
+	// Valid data types for an SProperty
+	//
 	enum class SPropertyType
 	{
-		Char,
-		Float,
-		Int,
 		Double,
+		Float,
 		Uint8,
 		Uint16,
 		Uint32,
 		Uint64,
 		Int8,
 		Int16,
-		//Int32, /* same as int*/
+		Int32,
 		Int64,
 		Vector2, /* glm::vec3 */
 		Vector3, /* glm::vec2 */
@@ -79,14 +80,13 @@ namespace Saturn {
 		Unknown
 	};
 
-	// NOTE: The build tool has its own function of this however it is the full enum name (so, SPropertyType::Char instead of Char)
+	// NOTE: The build tool has its own function of this 
+	// however it is the full enum name (so, SPropertyType::Char instead of Char)
 	inline std::string SPropertyTypeToStringInNamespace( SPropertyType type )
 	{
 		switch( type )
 		{
-			case SPropertyType::Char: return "Char";
 			case SPropertyType::Float: return "Float";
-			case SPropertyType::Int: return "Int";
 			case SPropertyType::Double: return "Double";
 			case SPropertyType::Uint8: return "Uint8";
 			case SPropertyType::Uint16: return "Uint16";
@@ -94,6 +94,7 @@ namespace Saturn {
 			case SPropertyType::Uint64: return "Uint64";
 			case SPropertyType::Int8: return "Int8";
 			case SPropertyType::Int16: return "Int16";
+			case SPropertyType::Int32: return "Int";
 			case SPropertyType::Int64: return "Int64";
 			case SPropertyType::Vector2: return "Vector2";
 			case SPropertyType::Vector3: return "Vector3";
@@ -107,7 +108,7 @@ namespace Saturn {
 			default: break;
 		}
 
-		return "";
+		return "<unhandled>";
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -136,9 +137,7 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 	}
 
 	//								SType    Type         IsRef  PrefConstRef 
-	SAT_CREATE_PROPERTY_TYPE_TRAIT( Char,    char,        false, false );
 	SAT_CREATE_PROPERTY_TYPE_TRAIT( Double,  double,      false, false );
-	SAT_CREATE_PROPERTY_TYPE_TRAIT( Int,     int,         false, false );
 	SAT_CREATE_PROPERTY_TYPE_TRAIT( Float,   float,       false, false );
 
 	SAT_CREATE_PROPERTY_TYPE_TRAIT( Uint8,   uint8_t ,    false, false );
@@ -148,7 +147,7 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 
 	SAT_CREATE_PROPERTY_TYPE_TRAIT( Int8,    int8_t,      false, false );
 	SAT_CREATE_PROPERTY_TYPE_TRAIT( Int16,   int16_t,     false, false );
-	//SAT_CREATE_PROPERTY_TYPE_TRAIT( Int32, int32_t,     false, false ); -- same as int
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Int32,   int32_t,     false, false );
 	SAT_CREATE_PROPERTY_TYPE_TRAIT( Int64,   int64_t,     false, false );
 
 	SAT_CREATE_PROPERTY_TYPE_TRAIT( Vector2, glm::vec2,   true, true );
@@ -157,7 +156,7 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 
 	SAT_CREATE_PROPERTY_TYPE_TRAIT( String,  std::string, true, true ); 
 
-	SAT_CREATE_PROPERTY_TYPE_TRAIT( Asset,  AssetReference, true, false );
+	SAT_CREATE_PROPERTY_TYPE_TRAIT( Asset,  uint64_t,	  false, false );
 
 	SAT_CREATE_PROPERTY_TYPE_TRAIT( EntityType,  SharedPtr<Entity>, true, false );
 	SAT_CREATE_PROPERTY_TYPE_TRAIT( Class,   SClass*,     false, false );
@@ -165,23 +164,37 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 
 	// Where Ty is the cpp type i.e. float, int etc
 	template<typename Ty>
-	void ModifyPropertyInternal( SObject* pClass, const void* const fnp, Ty value )
+	void ModifyPropertyInternal( SObject* pObject, const void* const fnp, Ty value )
 	{
 		auto func = reinterpret_cast< SetPropertyFn<Ty> >( fnp );
-		( func ) ( pClass, value );
+		( func ) ( pObject, value );
 	}
 
 	// Where Ty is the cpp type i.e. float, int etc
 	template<typename Ty>
-	Ty ReadPropertyInternal( const SObject* pClass, GetPropertyFn<Ty> fnp )
+	Ty ReadPropertyInternal( const SObject* pObject, GetPropertyFn<Ty> fnp )
 	{
-		return ( fnp ) ( pClass );
+		return fnp( pObject );
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 
+	//
+	// An SProperty wraps a reflected C++ type.
+	// 
+	// Any value that is preceeded with the SPROPERTY() macro
+	// will be picked up by the HeaderTool and the value will
+	// become reflected.
+	// 
+	// A value that's like:
+	// 
+	// SPROPERTY()
+	// float m_spHealth = 0.0f;
+	//
 	class SProperty
 	{
+		using SPropertyGetFunc = void( * )( const SObject*, void* );
+		using SPropertySetFunc = void( * )( SObject*, const void* );
 	public:
 		// INTERNAL, FOR USE BY HEADER TOOL ONLY!
 		SProperty( const std::string& rName, const std::string& rNativeType, SPropertyType PropType )
@@ -189,8 +202,8 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 		{
 		}
 
-		SProperty( const std::string& rName, SPropertyType propType, const void* pGetFnp, const void* pSetFnp )
-			: m_Name( rName ), m_Type( propType ), pGetPropertyFunction( pGetFnp ), pSetPropertyFunction( pSetFnp )
+		SProperty( const std::string& rName, SPropertyType propType, const void* pGetFnp, void* pSetFnp )
+			: m_Name( rName ), m_Type( propType ), m_pGetPropertyFunction( pGetFnp ), m_pSetPropertyFunction( pSetFnp )
 		{
 		}
 
@@ -215,19 +228,31 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 
 			// Convert cpp type to SPropertyType
 			// TODO: Check if CppType is the same as our current type
-			ModifyPropertyInternal<CppType>( pObject, pSetPropertyFunction, value );
+			ModifyPropertyInternal<CppType>( pObject, m_pSetPropertyFunction, value );
 		}
 
 		template<SPropertyType Ty>
 		[[nodiscard]] typename PropertyTypeTraits<Ty>::Type Read( SObject* pObject ) const
 		{
-			return ReadPropertyInternal<typename PropertyTypeTraits<Ty>::Type>( pObject, ( GetPropertyFn<typename PropertyTypeTraits<Ty>::Type> )pGetPropertyFunction );
+			return ReadPropertyInternal<typename PropertyTypeTraits<Ty>::Type>( pObject, ( GetPropertyFn<typename PropertyTypeTraits<Ty>::Type> )m_pGetPropertyFunction );
 		}
 
 		template<SPropertyType Ty>
 		[[nodiscard]] typename PropertyTypeTraits<Ty>::Type Read( const SObject* pObject ) const
 		{
-			return ReadPropertyInternal<typename PropertyTypeTraits<Ty>::Type>( pObject, ( GetPropertyFn<typename PropertyTypeTraits<Ty>::Type> )pGetPropertyFunction );
+			return ReadPropertyInternal<typename PropertyTypeTraits<Ty>::Type>( pObject, ( GetPropertyFn<typename PropertyTypeTraits<Ty>::Type> )m_pGetPropertyFunction );
+		}
+
+		template<typename Ty>
+		[[nodiscard]] Ty GetCopy( SObject* pObject ) const 
+		{
+			return ReadPropertyInternal<Ty>( pObject, ( GetPropertyFn<Ty> )m_pGetPropertyFunction );
+		}
+
+		template<typename Ty>
+		[[nodiscard]] const Ty GetCopy( const SObject* pObject ) const
+		{
+			return ReadPropertyInternal<Ty>( pObject, ( GetPropertyFn<Ty> )m_pGetPropertyFunction );
 		}
 
 		void RtCopyFromOther( SObject* pSrcObject, SObject* pObject );
@@ -270,10 +295,9 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 		SPropertyFlags m_Flags = SPropertyFlags_None;
 
 	private:
-		const void* pSetPropertyFunction = nullptr;
-		const void* pGetPropertyFunction = nullptr;
+		const void* m_pGetPropertyFunction = nullptr;
+		const void* m_pSetPropertyFunction = nullptr;
 	};
-
 
 	using SPropertyEditor = SProperty;
 

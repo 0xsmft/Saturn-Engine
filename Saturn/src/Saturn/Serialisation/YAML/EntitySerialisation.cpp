@@ -105,14 +105,11 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 
 				switch( pProperty->GetType() )
 				{
-					case SPropertyType::Char:
-						SAT_SERIALISE_PROPERTY_YAML( Char );
-
 					case SPropertyType::Float:
 						SAT_SERIALISE_PROPERTY_YAML( Float );
 
-					case SPropertyType::Int:
-						SAT_SERIALISE_PROPERTY_YAML( Int );
+					case SPropertyType::Int32:
+						SAT_SERIALISE_PROPERTY_YAML( Int32 );
 
 					case SPropertyType::Double:
 						SAT_SERIALISE_PROPERTY_YAML( Double );
@@ -171,10 +168,9 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 
 					case SPropertyType::Asset:
 					{
-						const AssetReference& rAssetReference = pProperty->Read<Saturn::SPropertyType::Asset>( entity.Get() );
+						const uint64_t assetID = pProperty->Read<Saturn::SPropertyType::Asset>( entity.Get() );
 
-						rEmitter << YAML::Key << "Value" << YAML::Value << rAssetReference.ID;
-						rEmitter << YAML::Key << "ExpectedType" << YAML::Value << ( int ) rAssetReference.ExpectedType;
+						rEmitter << YAML::Key << "Value" << YAML::Value << assetID;
 					} break;
 				}
 
@@ -663,14 +659,11 @@ pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value ); \
 						// Set current (compiled in) value to saved value.
 						switch( savedType )
 						{
-							case SPropertyType::Char:
-								SAT_DESERIALISE_PROPERTY_YAML( Char );
-
 							case SPropertyType::Float:
 								SAT_DESERIALISE_PROPERTY_YAML( Float );
 
-							case SPropertyType::Int:
-								SAT_DESERIALISE_PROPERTY_YAML( Int );
+							case SPropertyType::Int32:
+								SAT_DESERIALISE_PROPERTY_YAML( Int32 );
 
 							case SPropertyType::Double:
 								SAT_DESERIALISE_PROPERTY_YAML( Double );
@@ -723,12 +716,7 @@ pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value ); \
 							case SPropertyType::Asset:
 							{
 								auto value = property[ "Value" ].as<uint64_t>();
-								auto expectedType = property[ "ExpectedType" ].as<int>();
-
-								AssetReference& rAssetReference = pCompiledInProperty->Read<SPropertyType::Asset>( DeserialisedEntity.Get() );
-
-								rAssetReference.ID = value;
-								rAssetReference.ExpectedType = ( AssetType ) expectedType;
+								pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value );
 							} break;
 						}
 
@@ -737,7 +725,7 @@ pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value ); \
 				}
 				else
 				{
-					SAT_CORE_WARN( "SProperty \"{0}\" could not be found!", *savedNameItr );
+					SAT_CORE_WARN( "SProperty could not be found!" );
 				}
 			}
 		}

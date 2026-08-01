@@ -38,7 +38,7 @@ namespace Saturn {
 	enum class HeaderToolParseResult
 	{
 		ParseSkipped = 1 << 0, // No SClass/GENERATED_BODY
-		NoSClass = 1 << 1, // GENERATED_BODY was implied however no GENERATED_BODY
+		NoSClass = 1 << 1, // GENERATED_BODY was implied however no SCLASS
 		NoGeneratedBody = 1 << 2, // SCLASS was implied but no GENERATED_BODY 
 		FailedToParse = 1 << 3, // General error -- more detailed one would of been outputted
 		ClassAlreadyExists = 1 << 4, // A class with the same name was already found in the current file.

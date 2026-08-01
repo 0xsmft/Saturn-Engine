@@ -730,7 +730,7 @@ namespace Saturn::Auxiliary {
 				break;
 		}
 
-		modified |= ImGui::DragScalarN( "##sclx", Type, ( void* )values, 1, 0.0f, &min, &max, pFormat, ImGuiSliderFlags_AlwaysClamp );
+		modified |= ImGui::DragScalarN( "##sclx", Type, ( void* )values, 1, 1.0f, &min, &max, pFormat, ImGuiSliderFlags_AlwaysClamp );
 
 		ImGui::PopItemWidth();
 		ImGui::PopStyleVar();
@@ -795,8 +795,8 @@ namespace Saturn::Auxiliary {
 			default:
 				break;
 		}
-
-		modified |= ImGui::DragScalarN( "##sclx", Type, ( void* ) values, 1, 0.0f, &min, &max, pFormat, ImGuiSliderFlags_AlwaysClamp );
+		
+		modified |= ImGui::DragScalarN( "##sclx", Type, ( void* ) values, 1, 1.0f, &min, &max, pFormat, ImGuiSliderFlags_AlwaysClamp );
 
 		ImGui::PopItemWidth();
 		ImGui::PopStyleVar();

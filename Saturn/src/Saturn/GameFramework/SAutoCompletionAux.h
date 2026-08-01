@@ -53,9 +53,7 @@ namespace Saturn {
 	enum XSP 
 	{
 		ReadOnlyInEditor,
-		AssetRef,
-		Serialised,
-		EntityType
+		AssetType,
 	};
 
 #endif

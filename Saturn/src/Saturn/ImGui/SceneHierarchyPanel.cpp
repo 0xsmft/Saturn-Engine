@@ -50,6 +50,8 @@
 #include "Saturn/AI/Navigation/NavBoundsEntity.h"
 #include "Saturn/AI/AIAgentEntity.h"
 
+#include "Saturn/GameFramework/SPropertyExtras.h"
+
 //#include <imgui.h>
 #include <imgui_internal.h>
 
@@ -553,10 +555,59 @@ namespace Saturn {
 								pProperty->SetProperty( entity.Get(), temporaryValue );
 						} break;
 
-						case SPropertyType::Int:
+						case SPropertyType::Int8:
 						{
-							auto temporaryValue = pProperty->Read<SPropertyType::Int>( entity.Get() );
-							if( Auxiliary::DrawIntControl( name, temporaryValue ) )
+							auto temporaryValue = pProperty->Read<SPropertyType::Int8>( entity.Get() );
+							if( Auxiliary::DrawInt8Control( name, temporaryValue, INT8_MIN, INT8_MAX ) )
+								pProperty->SetProperty( entity.Get(), temporaryValue );
+						} break;
+
+						case SPropertyType::Int16:
+						{
+							auto temporaryValue = pProperty->Read<SPropertyType::Int16>( entity.Get() );
+							if( Auxiliary::DrawInt16Control( name, temporaryValue, INT16_MIN, INT16_MAX ) )
+								pProperty->SetProperty( entity.Get(), temporaryValue );
+						} break;
+
+						case SPropertyType::Int32:
+						{
+							auto temporaryValue = pProperty->Read<SPropertyType::Int32>( entity.Get() );
+							if( Auxiliary::DrawIntControl( name, temporaryValue, INT32_MIN, INT32_MAX ) )
+								pProperty->SetProperty( entity.Get(), temporaryValue );
+						} break;
+
+						case SPropertyType::Int64:
+						{
+							auto temporaryValue = pProperty->Read<SPropertyType::Int64>( entity.Get() );
+							if( Auxiliary::DrawInt64Control( name, temporaryValue, INT64_MIN, INT64_MAX ) )
+								pProperty->SetProperty( entity.Get(), temporaryValue );
+						} break;
+
+						case SPropertyType::Uint8:
+						{
+							auto temporaryValue = pProperty->Read<SPropertyType::Uint8>( entity.Get() );
+							if( Auxiliary::DrawUInt8Control( name, temporaryValue, 0u, UINT8_MAX ) )
+								pProperty->SetProperty( entity.Get(), temporaryValue );
+						} break;
+
+						case SPropertyType::Uint16:
+						{
+							auto temporaryValue = pProperty->Read<SPropertyType::Uint16>( entity.Get() );
+							if( Auxiliary::DrawUInt16Control( name, temporaryValue, 0u, UINT16_MAX ) )
+								pProperty->SetProperty( entity.Get(), temporaryValue );
+						} break;
+
+						case SPropertyType::Uint32:
+						{
+							auto temporaryValue = pProperty->Read<SPropertyType::Uint32>( entity.Get() );
+							if( Auxiliary::DrawUInt32Control( name, temporaryValue, 0u, UINT32_MAX ) )
+								pProperty->SetProperty( entity.Get(), temporaryValue );
+						} break;
+
+						case SPropertyType::Uint64:
+						{
+							auto temporaryValue = pProperty->Read<SPropertyType::Uint64>( entity.Get() );
+							if( Auxiliary::DrawUInt64Control( name, temporaryValue, 0llu, UINT64_MAX ) )
 								pProperty->SetProperty( entity.Get(), temporaryValue );
 						} break;
 
@@ -653,57 +704,52 @@ namespace Saturn {
 
 						case SPropertyType::Asset:
 						{
-							static bool open = false;
-
-							auto& rRef = pProperty->Read<SPropertyType::Asset>( entity.Get() );
-
-							ImGui::PushID( name.c_str() );
-
-							ImGui::Columns( 2 );
-							ImGui::SetColumnWidth( 0, 125.0f );
-							ImGui::Text( name.c_str() );
-							ImGui::NextColumn();
-
-							ImGui::PushMultiItemsWidths( 1, ImGui::CalcItemWidth() );
-							ImGui::PushStyleVar( ImGuiStyleVar_ItemSpacing, ImVec2{ 0, 0 } );
-
-							if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), { 24.0f, 24.0f } ) )
+							SAssetProperty* pAssetProperty = dynamic_cast< SAssetProperty* >( pProperty );
+							if( pAssetProperty )
 							{
-								open ^= 1;
+								ImGui::Text( "%s", pAssetProperty->GetName().c_str() );
 
-								m_CurrentFinderType = AssetType::Unknown;
+								ImGui::SameLine();
 
-								m_CurrentAssetID = rRef.ID;
-							}
-
-							ImGui::SameLine();
-							std::string assetName = " <no asset set>";
-
-							if( rRef.ID != 0 )
-							{
-								if( Ref<Asset> asset = AssetManager::Get()->FindAsset( rRef.ID ); asset )
+								bool open = false;
+								if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
 								{
-									assetName = " " + asset->Name;
+									open = !open;
+									m_CurrentFinderType = pAssetProperty->GetAssetType();
+								
+									m_CurrentAssetID = pAssetProperty->GetProperty( entity.Get() );
 								}
-								else
+
+								ImGui::SameLine();
+
+								std::string idStr = std::to_string( m_CurrentAssetID );
+								Auxiliary::InputText( "##assetid", &idStr, ImGuiInputTextFlags_ReadOnly );
+
+								if( ImGui::BeginItemTooltip() )
 								{
-									assetName = " <asset missing!>";
+									Ref<Asset> asset = AssetManager::Get()->FindAsset( m_CurrentAssetID );
+									if( asset )
+									{
+										ImGui::Text( "%s", asset->Name );
+									}
+									else
+									{
+										ImGui::TextColored( ImVec4{ 1.0F, 0.0F, 0.0F, 1.0F }, "Unable to find Asset" );
+									}
+
+									ImGui::EndTooltip();
+								}
+
+								if( Auxiliary::DrawAssetFinder( m_CurrentFinderType, &open, m_CurrentAssetID ) )
+								{
+									pAssetProperty->SetProperty( entity.Get(), ( uint64_t ) m_CurrentAssetID );
 								}
 							}
+						} break;
 
-							ImGui::Text( assetName.c_str() );
-
-							ImGui::PopItemWidth();
-							ImGui::PopStyleVar();
-
-							ImGui::Columns( 1 );
-
-							if( Auxiliary::DrawAssetFinder( m_CurrentFinderType, &open, m_CurrentAssetID ) )
-							{
-								pProperty->SetProperty( entity.Get(), m_CurrentAssetID );
-							}
-
-							ImGui::PopID();
+						default:
+						{
+							ImGui::Text( "This type cannot be displayed... %s", SPropertyTypeToStringInNamespace( pProperty->GetType() ).c_str() );
 						} break;
 					}
 				}

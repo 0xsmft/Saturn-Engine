@@ -27,88 +27,18 @@
 */
 
 #include "sppch.h"
-#include "GenerationRecipe.h"
-
-#include "Saturn/Serialisation/Raw/RawSerialisation.h"
-
-#include <glm/glm.hpp>
-#include <iostream>
+#include "SAssetProperty.h"
 
 namespace Saturn {
 
-	FGenerationRecipe::FGenerationRecipe( const std::filesystem::path& rCacheLocation )
-		: m_Location( rCacheLocation )
+	uint64_t SAssetProperty::GetProperty( SObject* pObject ) const
 	{
+		return GetCopy<uint64_t>( pObject );
 	}
 
-	FGenerationRecipe::~FGenerationRecipe()
+	uint64_t SAssetProperty::GetProperty( const SObject* pObject ) const
 	{
-		m_FilesInCache.clear();
-	}
-
-	void FGenerationRecipe::Load()
-	{
-		if( !std::filesystem::exists( m_Location ) ) 
-		{
-			std::cout << "Filecache at location: " << m_Location << " does not exist! You may need to run the Build Tool before running the header tool!\n";
-			return;
-		}
-
-		std::ifstream stream( m_Location, std::ios::binary | std::ios::in );
-
-		std::streampos size = 0;
-		size = stream.tellg();
-		stream.seekg( 0, std::ios::end );
-		size = stream.tellg() - size;
-
-		if( size == 0 )
-		{
-			return;
-		}
-
-		stream.seekg( 0 );
-
-		size_t modules = 0;
-		RawSerialisation::ReadObject( modules, stream );
-
-		m_FilesInCache.reserve( modules );
-
-		for( int i = 0; i < modules; ++i )
-		{
-			std::string key;
-			key = RawSerialisation::ReadString( stream );
-
-			m_FilesInCache.push_back( key );
-		}
-
-		stream.close();
-	}
-
-	void FGenerationRecipe::SetLocation( const std::filesystem::path& rCacheLocation )
-	{
-		m_Location = rCacheLocation;
-	}
-
-	bool FGenerationRecipe::IsCppFile( const std::filesystem::path& rFile )
-	{
-		const auto ext = rFile.extension();
-		return ext == ".cpp" || ext == ".h" || ext == ".hpp";
-	}
-
-	bool FGenerationRecipe::IsSourceFile( const std::filesystem::path& rFile )
-	{
-		const auto ext = rFile.extension();
-		return ext == ".cpp";
-	}
-
-	bool FGenerationRecipe::HasFileBeenModifed( const std::filesystem::path& rFile )
-	{
-		return false;
-	}
-
-	std::vector<std::filesystem::path> FGenerationRecipe::Analyse()
-	{
-		return m_FilesInCache;
+		return GetCopy<uint64_t>( pObject );
 	}
 
 }

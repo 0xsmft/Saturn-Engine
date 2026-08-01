@@ -40,6 +40,7 @@ namespace Saturn {
 		CG002,
 		CG003,
 		CG004,
+		CG005,
 
 		/* Header tool errors  */
 		TR000, /* internal error */
@@ -62,6 +63,7 @@ namespace Saturn {
 		{ HeaderToolError::CG002,  ":error (CG002) | GENERATED_BODY macro was found in header file! Valid usage may follow: GENERATED_BODY()" },
 		{ HeaderToolError::CG003,  ":error (CG003) | Expected variable definition after SPROPERTY macro." },
 		{ HeaderToolError::CG004,  ":error (CG004) | GENERATED_BODY/SCLASS was used, however no base class was specified. You must specifiy a base class driving from Saturn::SObject" },
+		{ HeaderToolError::CG005,  ":error (CG005) | Invalid object type for SPROPERTY!" },
 
 		// Header tool errors must have "ERROR:" so that VS picks it up as an error can will actually display it in error list, using ":error" sometimes works, however "ERROR:" will flag it as an execution error.
 		{ HeaderToolError::TR000,  "ERROR: (TR000) | Internal Error." },

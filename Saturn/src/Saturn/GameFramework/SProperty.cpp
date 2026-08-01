@@ -47,14 +47,11 @@ SetProperty<typename PropertyTypeTraits<Saturn::SPropertyType::PropertyType>::Ty
 
 		switch( m_Type )
 		{
-			case Saturn::SPropertyType::Char:
-				SAT_HANDLE_TYPE( Char );
-
 			case Saturn::SPropertyType::Float:
 				SAT_HANDLE_TYPE( Float );
 
-			case Saturn::SPropertyType::Int:
-				SAT_HANDLE_TYPE( Int );
+			case Saturn::SPropertyType::Int32:
+				SAT_HANDLE_TYPE( Int32 );
 
 			case Saturn::SPropertyType::Double:
 				SAT_HANDLE_TYPE( Double );
@@ -100,8 +97,8 @@ SetProperty<typename PropertyTypeTraits<Saturn::SPropertyType::PropertyType>::Ty
 
 			case Saturn::SPropertyType::Asset:
 			{
-				AssetReference& rValue = Read<Saturn::SPropertyType::Asset>( pSrcObject );
-				SetProperty<AssetID>( pObject, rValue.ID );
+				const uint64_t value = Read<Saturn::SPropertyType::Asset>( pSrcObject );
+				SetProperty<AssetID>( pObject, value );
 			} break;
 
 			case Saturn::SPropertyType::EntityType:
@@ -126,14 +123,11 @@ RawSerialisation::WriteObject( value, rStream ); \
 
 		switch( m_Type )
 		{
-			case Saturn::SPropertyType::Char:
-				SAT_SERIALISE_PROPERTY( Char );
-
 			case Saturn::SPropertyType::Float:
 				SAT_SERIALISE_PROPERTY( Float );
 
-			case Saturn::SPropertyType::Int:
-				SAT_SERIALISE_PROPERTY( Int );
+			case Saturn::SPropertyType::Int32:
+				SAT_SERIALISE_PROPERTY( Int32 );
 
 			case Saturn::SPropertyType::Double:
 				SAT_SERIALISE_PROPERTY( Double );
@@ -196,10 +190,8 @@ RawSerialisation::WriteObject( value, rStream ); \
 
 			case Saturn::SPropertyType::Asset:
 			{
-				AssetReference& rAssetReference = Read<Saturn::SPropertyType::Asset>( pObject );
-
-				RawSerialisation::WriteObject( rAssetReference.ID, rStream );
-				RawSerialisation::WriteObject( rAssetReference.ExpectedType, rStream );
+				uint64_t id = Read<Saturn::SPropertyType::Asset>( pObject );
+				RawSerialisation::WriteObject( id, rStream );
 			} break;
 
 			case Saturn::SPropertyType::Class:
@@ -227,14 +219,11 @@ SetProperty( pObject, value );\
 
 		switch( m_Type )
 		{
-			case Saturn::SPropertyType::Char:
-				SAT_DESERIALISE_PROPERTY( Char );
-
 			case Saturn::SPropertyType::Float:
 				SAT_DESERIALISE_PROPERTY( Float );
 
-			case Saturn::SPropertyType::Int:
-				SAT_DESERIALISE_PROPERTY( Int );
+			case Saturn::SPropertyType::Int32:
+				SAT_DESERIALISE_PROPERTY( Int32 );
 
 			case Saturn::SPropertyType::Double:
 				SAT_DESERIALISE_PROPERTY( Double );
@@ -293,15 +282,9 @@ SetProperty( pObject, value );\
 			case Saturn::SPropertyType::Asset:
 			{
 				uint64_t id = 0;
-				int expectedType = 0;
-
 				RawSerialisation::ReadObject( id, rStream );
-				RawSerialisation::ReadObject( expectedType, rStream );
 
-				AssetReference& rAssetReference = Read<SPropertyType::Asset>( pObject );
-
-				rAssetReference.ID = id;
-				rAssetReference.ExpectedType = ( AssetType ) expectedType;
+				SetProperty( pObject, id );
 			} break;
 
 			case Saturn::SPropertyType::EntityType:

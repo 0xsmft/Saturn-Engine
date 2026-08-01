@@ -157,9 +157,8 @@ namespace Saturn {
 	{
 		if( usingNamespace )
 		{
-			if( str == "char" )             return SPropertyType::Char;
-			else if( str == "float" )       return SPropertyType::Float;
-			else if( str == "int" )         return SPropertyType::Int;
+			if( str == "float" )       return SPropertyType::Float;
+			else if( str == "int" )         return SPropertyType::Int32;
 			else if( str == "double" )      return SPropertyType::Double;
 			else if( str == "uint8_t" )     return SPropertyType::Uint8;
 			else if( str == "uint16_t" )    return SPropertyType::Uint16;
@@ -172,18 +171,16 @@ namespace Saturn {
 			else if( str == "glm::vec3" )   return SPropertyType::Vector3;
 			else if( str == "glm::vec4" )   return SPropertyType::Vector4;
 			else if( str == "std::string" ) return SPropertyType::String;
-			else if( str == "AssetID" )     return SPropertyType::Uint64;
+			else if( str == "AssetID" )     return SPropertyType::Asset;
 			else if( str == "UUID" )        return SPropertyType::Uint64;
-			else if( str == "AssetReference" ) return SPropertyType::Asset;
 			else if( IsValidPointer( str ) ) return SPropertyType::Class;
-			else if( "Ref<Entity>" ) return SPropertyType::EntityType;
+			else if( str == "Ref<Entity>" ) return SPropertyType::EntityType;
 			else /*if( str == "Saturn::SPropertyType::Unknown" )*/ return SPropertyType::Unknown;
 		}
 		else
 		{
-			if( str == "char" )							return SPropertyType::Char;
-			else if( str == "float" )					return SPropertyType::Float;
-			else if( str == "int" )						return SPropertyType::Int;
+			if( str == "float" )					return SPropertyType::Float;
+			else if( str == "int" )						return SPropertyType::Int32;
 			else if( str == "double" )					return SPropertyType::Double;
 			else if( str == "uint8_t" )					return SPropertyType::Uint8;
 			else if( str == "uint16_t" )				return SPropertyType::Uint16;
@@ -196,11 +193,10 @@ namespace Saturn {
 			else if( str == "glm::vec3" )				return SPropertyType::Vector3;
 			else if( str == "glm::vec4" )				return SPropertyType::Vector4;
 			else if( str == "std::string" )				return SPropertyType::String;
-			else if( str == "Saturn::AssetID" )			return SPropertyType::Uint64;
+			else if( str == "Saturn::AssetID" )			return SPropertyType::Asset;
 			else if( str == "Saturn::UUID" )			return SPropertyType::Uint64;
-			else if( str == "Saturn::AssetReference" )  return SPropertyType::Asset;
 			else if( IsValidPointer( str ) )            return SPropertyType::Class;
-			else if( "Saturn::Ref<Saturn::Entity>" )    return SPropertyType::EntityType;
+			else if( str == "Saturn::Ref<Saturn::Entity>" )    return SPropertyType::EntityType;
 			else /*if( str == "Saturn::SPropertyType::Unknown" )*/ return SPropertyType::Unknown;
 		}
 	}
@@ -209,9 +205,8 @@ namespace Saturn {
 	{
 		switch( type )
 		{
-			case SPropertyType::Char: return "Saturn::SPropertyType::Char";
 			case SPropertyType::Float: return "Saturn::SPropertyType::Float";
-			case SPropertyType::Int: return "Saturn::SPropertyType::Int";
+			case SPropertyType::Int32: return "Saturn::SPropertyType::Int32";
 			case SPropertyType::Double: return "Saturn::SPropertyType::Double";
 			case SPropertyType::Uint8: return "Saturn::SPropertyType::Uint8";
 			case SPropertyType::Uint16: return "Saturn::SPropertyType::Uint16";
@@ -257,11 +252,11 @@ namespace Saturn {
 		// Set property function
 		fout << std::format( "\tstatic void Set{0}( {1}* pClass, Saturn::AssetID _ASSETID_ )\n", rProperty.GetName(), rClassName );
 		fout << "\t{\n";
-		fout << "\t\tpClass->" << rProperty.GetName() << ".ID = _ASSETID_;\n";
+		fout << "\t\tpClass->" << rProperty.GetName() << " = _ASSETID_;\n";
 		fout << "\t}\n";
 
 		// Get property function
-		fout << std::format( "\tstatic const Saturn::AssetReference& Get{0}( const {1}* pClass )\n", rProperty.GetName(), rClassName );
+		fout << std::format( "\tstatic const Saturn::AssetID Get{0}( const {1}* pClass )\n", rProperty.GetName(), rClassName );
 		fout << "\t{\n";
 		fout << "\t\treturn pClass->" << rProperty.GetName() << ";\n";
 		fout << "\t}\n";
@@ -326,6 +321,15 @@ namespace Saturn {
 		}
 	}
 
+	//
+	// @returns - {filepath}({linenumber})
+	//
+	static std::string FormatPathForOutput( HeaderToolCommand& rCommand, uint64_t lineNumber )
+	{
+		std::string filepathStr = rCommand.Filepath.string();
+		return filepathStr + std::format( "({})", lineNumber );
+	}
+
 	HeaderToolParseResult HeaderTool::ParseHeaderFile( HeaderToolCommand& rCommand )
 	{
 		HeaderToolParseResult result = HeaderToolParseResult::Success;
@@ -340,7 +344,7 @@ namespace Saturn {
 		uint64_t pendingClassFlags = 0llu;
 
 		std::string line;
-		uint32_t lineNumber = 0;
+		uint64_t lineNumber = 0llu;
 		while( std::getline( headerFile, line ) )
 		{
 			++lineNumber;
@@ -390,14 +394,22 @@ namespace Saturn {
 
 					const SPropertyType realType = StringToSPropertyType( type, UsingSaturnNamespace );
 
-					rCommand.GClassInfos[ classHash ].Properties.emplace(
-						std::piecewise_construct,
-						std::forward_as_tuple( lineNumber - 1 ),
-						std::forward_as_tuple( name, type, realType ) );
+					if( realType == SPropertyType::Unknown )
+					{
+						std::cout << FormatPathForOutput( rCommand, lineNumber ) << s_ErrorsMaps[ HeaderToolError::CG005 ] << " " << type << " is unknown!" << "\n";
+						result = HeaderToolParseResult::FailedToParse;
+					}
+					else
+					{
+						rCommand.GClassInfos[ classHash ].Properties.emplace(
+							std::piecewise_construct,
+							std::forward_as_tuple( lineNumber - 1 ),
+							std::forward_as_tuple( name, type, realType ) );
+					}
 				}
 				else
 				{
-					std::cout << rCommand.Filepath.string() << s_ErrorsMaps[ HeaderToolError::CG003 ] << "\n";
+					std::cout << FormatPathForOutput( rCommand, lineNumber ) << s_ErrorsMaps[ HeaderToolError::CG003 ] << "\n";
 					result = HeaderToolParseResult::FailedToParse;
 				}
 
@@ -439,24 +451,18 @@ namespace Saturn {
 					else
 					{
 						// Expected variable definition after SPROPERTY macro.
-						std::cout << rCommand.Filepath.string() << s_ErrorsMaps[ HeaderToolError::CG003 ] << "\n";
+						std::cout << FormatPathForOutput( rCommand, lineNumber ) << s_ErrorsMaps[ HeaderToolError::CG003 ] << "\n";
 						result = HeaderToolParseResult::FailedToParse;
 					}
 				}
 
-
-				// SPROPERTY(Asset)
-				// [AssetID, UUID, uint64_t, unsigned long long] m_Asset;
-				// OR
-				// [Saturn::AssetID, Saturn::UUID, uint64_t, unsigned long long] m_Asset;
-
 				// Parse SProperty args
 				if( !args.empty() )
 				{
-					if( args.contains( "Entity" ) )
+					if( args.contains( "AssetType" ) )
 					{
-						rCommand.GClassInfos[ classHash ].Properties[ lineNumber ].SetFlag( SPropertyFlags_EntityType, true );
-						rCommand.GClassInfos[ classHash ].Properties[ lineNumber ].SetType( SPropertyType::EntityType );
+						auto& rProperty = rCommand.GClassInfos[ classHash ].Properties[ lineNumber ];
+						// TODO: Set AssetType...
 					}
 				}
 			}
@@ -494,7 +500,7 @@ namespace Saturn {
 
 					if( !args.empty() )
 					{
-						std::cout << rCommand.Filepath.string() << s_WarningMaps[ HeaderToolWarning::CG002A ] << "\n";
+						std::cout << FormatPathForOutput( rCommand, lineNumber ) << s_WarningMaps[ HeaderToolWarning::CG002A ] << "\n";
 					}
 
 					rCommand.GClassInfos[ classHash ].LineNumberForGeneratedBody = lineNumber;
@@ -507,17 +513,17 @@ namespace Saturn {
 
 		if( SClassFound && !GeneratedBodyFound )
 		{
-			std::cout << rCommand.Filepath.string() << s_ErrorsMaps[ HeaderToolError::CG002 ] << "\n";
+			std::cout << FormatPathForOutput( rCommand, lineNumber ) << s_ErrorsMaps[ HeaderToolError::CG002 ] << "\n";
 			result = HeaderToolParseResult::NoGeneratedBody;
 
 			if( rCommand.GClassInfos[ classHash ].BaseClass.empty() )
 			{
-				std::cout << rCommand.Filepath.string() << s_ErrorsMaps[ HeaderToolError::CG004 ] << "\n";
+				std::cout << FormatPathForOutput( rCommand, lineNumber ) << s_ErrorsMaps[ HeaderToolError::CG004 ] << "\n";
 			}
 		}
 		else if( !SClassFound && GeneratedBodyFound )
 		{
-			std::cout << rCommand.Filepath.string() << s_ErrorsMaps[ HeaderToolError::CG001 ] << "\n";
+			std::cout << FormatPathForOutput( rCommand, lineNumber ) << s_ErrorsMaps[ HeaderToolError::CG001 ] << "\n";
 			result = HeaderToolParseResult::NoSClass;
 		}
 		else if( !SClassFound && !GeneratedBodyFound )
@@ -578,8 +584,9 @@ namespace Saturn {
 			fout << "#include \"sppch.h\"\n";
 		}
 		fout << "#include \"Saturn/GameFramework/Core/GameScript.h\"\n";
-		fout << "#include \"Saturn/GameFramework/SClass.h\"\n";
 		fout << "#include \"Saturn/GameFramework/Core/ClassMetadataHandler.h\"\n";
+		fout << "#include \"Saturn/GameFramework/SClass.h\"\n";
+		fout << "#include \"Saturn/GameFramework/SPropertyExtras.h\"\n";
 		fout << "#include \"Saturn/Scene/Entity.h\"\n";
 
 		std::filesystem::path sourceDir = m_WorkingDir.parent_path().parent_path();
@@ -618,24 +625,33 @@ namespace Saturn {
 					CreateGetSetForClassProp( rProperty, rClassName, fout );
 					continue;
 				}
+				/*
 				else if( rProperty.GetType() == SPropertyType::Asset )
 				{
 					CreateGetSetForAssetProp( rProperty, rClassName, fout );
 					continue;
 				}
+				*/
 
 				const std::string stringType = SPropertyTypeToString( rProperty.GetType() );
 
 				// Set property function
-				fout << "\tstatic void Set" << rProperty.GetName() << "( " << rClassName << "* pClass, " << "typename Saturn::PropertyTypeTraits< " << stringType << ">::Type" << " value )\n";
+				fout << "\tstatic void Set" << rProperty.GetName() << "( " << "SObject" << "* pClass, " << "typename Saturn::PropertyTypeTraits< " << stringType << " >::Type" << " value )\n";
 				fout << "\t{\n";
-				fout << "\t\tpClass->" << rProperty.GetName() << " = value;\n";
+				fout << "\t\t" << rClassName << "* pDynaClass = dynamic_cast<" << rClassName << "*>(pClass);""\n";
+				fout << "\t\tif(pDynaClass)\n";
+				fout << "\t\t{\n";
+				fout << "\t\t\tpDynaClass->" << rProperty.GetName() << " = value;\n";
+				fout << "\t\t}\n";
 				fout << "\t}\n";
 
 				// Get property function
-				fout << "\tstatic typename Saturn::PropertyTypeTraits<" << stringType << ">::Type" << " Get" << rProperty.GetName() << "( const " << rClassName << "* pClass )\n";
+				fout << "\tstatic typename Saturn::PropertyTypeTraits< " << stringType << " >::Type" << " Get" << rProperty.GetName() << "( const " << "SObject" << "* pClass )\n";
 				fout << "\t{\n";
-				fout << "\t\treturn pClass->" << rProperty.GetName() << ";\n";
+
+				fout << "\t\t" << "const " << rClassName << "* pDynaClass = dynamic_cast<const " << rClassName << "*>(pClass);""\n";
+				fout << "\t\tSAT_ASSERT(pDynaClass);\n";
+				fout << "\t\treturn pDynaClass->" << rProperty.GetName() << ";\n";
 				fout << "\t}\n";
 
 				fout << "\n";
@@ -652,11 +668,22 @@ namespace Saturn {
 				{
 					const std::string stringType = SPropertyTypeToString( rProperty.GetType() );
 
-					fout << std::format( "const Saturn::SProperty Prop_{0}( \"{0}\", {1}, &{2}::Get{0}, &{2}::Set{0} );\n", rProperty.GetName(), stringType, internalClassName );
+					switch( rProperty.GetType() )
+					{
+						case SPropertyType::Asset:
+						{
+							fout << std::format( "const Saturn::SAssetProperty Prop_{0}( \"{0}\", {1}, &{2}::Get{0}, &{2}::Set{0}, AssetType::Unknown );\n", rProperty.GetName(), stringType, internalClassName );
+						} break;
+
+						default:
+						{
+							fout << std::format( "const Saturn::SProperty Prop_{0}( \"{0}\", {1}, &{2}::Get{0}, &{2}::Set{0} );\n", rProperty.GetName(), stringType, internalClassName );
+						} break;
+					}
 				}
 
 				// PropertyPointers array
-				fout << "const Saturn::SProperty* const PropertyPointers[] =\n{";
+				fout << "const Saturn::SProperty* const PropertyPointers[] =\n{\n";
 				for( const auto& [lineNumber, rProperty] : rGClass.Properties )
 				{
 					fout << std::format( "\t(const Saturn::SProperty*)&Prop_{0},\n", rProperty.GetName() );

@@ -161,7 +161,7 @@ namespace Saturn::Auxiliary {
 	
 	extern bool DrawInt32Control( const std::string& rLabel, 
 		int32_t& values, 
-		int32_t min = 02, int32_t max = 500, 
+		int32_t min = 0i32, int32_t max = 500i32, 
 		float columnWidth = 125.0f );
 	
 	extern bool DrawInt64Control( const std::string& rLabel, 

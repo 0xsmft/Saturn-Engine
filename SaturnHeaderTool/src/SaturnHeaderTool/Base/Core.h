@@ -48,9 +48,9 @@ namespace Saturn {
 		std::string ClassName;
 		std::string BaseClass;
 		uint64_t ClassFlags = 0 /* SClassFlags::None */;
-		uint32_t LineNumberForGeneratedBody = 0;
+		uint64_t LineNumberForGeneratedBody = 0;
 
-		std::map<uint32_t, SProperty> Properties;
+		std::map<uint64_t, SProperty> Properties;
 	};
 
 	struct HeaderToolCommand

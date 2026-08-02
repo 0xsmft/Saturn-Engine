@@ -36,7 +36,6 @@
 
 #include "Saturn/Core/Ref.h"
 
-#include <string_view>
 #include <unordered_set>
 
 namespace Saturn {
@@ -68,6 +67,9 @@ namespace Saturn {
 		void Focus();
 		void FlashAttention();
 		void CentreWindowXYInMonitor();
+		
+		// Set a 32x32 (preferred) RGBA texture that is not flipped vertically.
+		void SetIcon( Ref<class Texture2D> icon );
 
 		RubyIVec2 GetPosition() { return m_pDefaultBackend->GetWindowPos(); }
 		RubyIVec2 GetLastMousePos()  const   { return m_LastMousePosition; }

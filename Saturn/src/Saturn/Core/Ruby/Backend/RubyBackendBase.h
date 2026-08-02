@@ -30,9 +30,6 @@
 
 #include "Saturn/Core/Ruby/RubyCore.h"
 
-#include <string>
-#include <stdint.h>
-
 #if defined( SAT_RBY_INCLUDE_VULKAN )
 #include <vulkan.h>
 #endif
@@ -104,6 +101,8 @@ namespace Saturn {
 		virtual bool MouseInRect() = 0;
 
 		virtual void FlashAttention() = 0;
+
+		virtual void SetIcon( Ref<class Texture2D> icon ) = 0;
 
 	public:
 		virtual bool PendingClose() = 0;

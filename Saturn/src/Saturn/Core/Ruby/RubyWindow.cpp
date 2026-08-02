@@ -30,6 +30,7 @@
 #include "RubyWindow.h"
 
 #include "Saturn/Core/StringAuxiliary.h"
+#include "Saturn/Vulkan/Texture.h"
 
 #if defined(_WIN32)
 #include "Backend/RubyWindowsBackend.h"
@@ -275,6 +276,11 @@ namespace Saturn {
 		const auto& rWindowSize = GetSize();
 
 		SetPosition( ( rMonitorSize.x - rWindowSize.x ) / 2, ( rMonitorSize.y - rWindowSize.y ) / 2 );
+	}
+
+	void RubyWindow::SetIcon( Ref<Texture2D> icon )
+	{
+		m_pDefaultBackend->SetIcon( icon );
 	}
 
 	bool RubyWindow::IsKeyDown( RubyKey key )

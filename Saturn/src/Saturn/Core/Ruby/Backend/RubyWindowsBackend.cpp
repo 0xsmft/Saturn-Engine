@@ -32,6 +32,8 @@
 #include "Saturn/Core/Ruby/RubyWindow.h"
 #include "Saturn/Core/StringAuxiliary.h"
 
+#include "Saturn/Vulkan/Texture.h"
+
 #if defined( SAT_RBY_INCLUDE_VULKAN )
 #include <vulkan_win32.h>
 #endif
@@ -562,7 +564,7 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 				}
 				else
 				{
-					if( MousePos.y < WindowRect.top + pThis->GetParent()->GetTitlebarHeight() && !::IsZoomed( Handle ) && !pThis->GetParent()->GetTitlebarCond() )
+					if( ( uint32_t ) MousePos.y < uint32_t( WindowRect.top + pThis->GetParent()->GetTitlebarHeight() ) && !::IsZoomed( Handle ) && !pThis->GetParent()->GetTitlebarCond() )
 						return HTCAPTION;
 				}
 
@@ -631,7 +633,7 @@ namespace Saturn {
 			WindowStyle, 
 			CW_USEDEFAULT, CW_USEDEFAULT, 
 			( int ) m_WindowSpecification.Width, ( int ) m_WindowSpecification.Height,
-			ParentHWND, nullptr, GetModuleHandle( nullptr ), nullptr );
+			ParentHWND, nullptr, ::GetModuleHandle( nullptr ), nullptr );
 
 		::SetPropW( m_Handle, L"RubyData", this );
 
@@ -1050,7 +1052,67 @@ namespace Saturn {
 
 	void RubyWindowsBackend::FlashAttention()
 	{
-		::FlashWindow( m_Handle, FALSE );
+		::FlashWindow( m_Handle, TRUE );
+	}
+
+	void RubyWindowsBackend::SetIcon( Ref<class Texture2D> icon )
+	{
+		BITMAPV5HEADER bitmapHeader{};
+		bitmapHeader.bV5Size = sizeof( BITMAPV5HEADER );
+		bitmapHeader.bV5Width = icon->Width();
+		bitmapHeader.bV5Height = -static_cast<LONG>( icon->Height() );
+		bitmapHeader.bV5Planes = 1;
+		bitmapHeader.bV5BitCount = 32;
+		bitmapHeader.bV5Compression = BI_BITFIELDS;
+		// Input data from icon is always in RGBA, not BGRA
+		// little-endian, so format is ABGR
+		bitmapHeader.bV5RedMask    = 0x000000FF;
+		bitmapHeader.bV5GreenMask  = 0x0000FF00;
+		bitmapHeader.bV5BlueMask   = 0x00FF0000;
+		bitmapHeader.bV5AlphaMask  = 0xFF000000;
+
+		HDC dc = ::GetDC( m_Handle );
+
+		void* dibPix = nullptr;
+		HBITMAP color = ::CreateDIBSection( 
+			dc, 
+			( BITMAPINFO* ) &bitmapHeader,
+			DIB_RGB_COLORS, 
+			&dibPix, 
+			nullptr, 0 
+		);
+
+		::ReleaseDC( m_Handle, dc );
+
+		if( !color )
+			return;
+
+		std::memcpy( dibPix, icon->GetData(), icon->Width() * icon->Height() * 4 );
+
+		// Create bitmap...
+		HBITMAP mask = ::CreateBitmap( icon->Width(), icon->Height(), 1, 1, nullptr );
+
+		if( !mask )
+		{
+			::DeleteObject( mask );
+			return;
+		}
+
+		ICONINFO iconInfo{};
+		iconInfo.fIcon    = TRUE;
+		iconInfo.hbmColor = color;
+		iconInfo.hbmMask  = mask;
+	
+		// And finally the icon...
+		HICON hIcon = ::CreateIconIndirect( &iconInfo );
+
+		// Release the other objects.
+		::DeleteObject( color );
+		::DeleteObject( mask );
+
+		// Send messages.
+		::SendMessageW( m_Handle, WM_SETICON, ICON_BIG,   ( LPARAM ) hIcon );
+		::SendMessageW( m_Handle, WM_SETICON, ICON_SMALL, ( LPARAM ) hIcon );
 	}
 
 	void RubyWindowsBackend::SetClipboardText( const std::string& rTextData )

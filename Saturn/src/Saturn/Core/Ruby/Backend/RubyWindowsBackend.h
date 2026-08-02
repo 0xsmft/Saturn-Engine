@@ -42,56 +42,42 @@ namespace Saturn {
 
 		RubyWindow* GetParent() { return m_pWindow; }
 
+	public:
+		static void PollEvents();
+
+	public:
 		virtual void Maximize() override;
 		virtual void Minimize() override;
 		virtual void Restore() override;
-
 		virtual bool Minimized() override;
 		virtual bool Maximized() override;
 		virtual bool Focused() override;
-
 		virtual WindowType GetNativeHandle() override;
-
-	public:
 		virtual void Create() override;
 		virtual void DestroyWindow() override;
-
 		virtual void CloseWindow() override;
 		virtual void PresentWindow( RubyWindowShowCmd Command = RubyWindowShowCmd::Default ) override;
 		virtual void HideWindow() override;
-
 		virtual void ResizeWindow( uint32_t Width, uint32_t Height ) override;
 		virtual RubyIVec2 GetSize() override;
-
 		virtual void MoveWindow( int x, int y ) override;
-
 		virtual void SetTitle( const std::string& rTitle ) override;
 		virtual void SetTitle( const std::wstring& rTitle ) override;
-
 		virtual void SetMousePos( double x, double y ) override;
 		virtual RubyVec2 GetMousePos() override;
-
 		virtual VkResult CreateVulkanWindowSurface( VkInstance Instance, VkSurfaceKHR* pOutSurface ) override;
-
 		virtual void SetMouseCursor( RubyCursorType Cursor, RubyMouseCursorSetReason Reason = RubyMouseCursorSetReason::User ) override;
 		virtual void SetMouseCursorMode( RubyCursorMode mode ) override;
-
 		virtual void SetClipboardText( const std::string& rTextData ) override;
 		virtual void SetClipboardText( const std::wstring& rTextData ) override;
-
 		virtual std::string GetClipboardText() override;
 		virtual std::wstring GetClipboardTextW() override;
-
-		static void PollEvents();
-		
 		virtual bool PendingClose() override;
-
 		virtual void Focus() override;
 		virtual RubyIVec2 GetWindowPos() override;
-
 		virtual bool MouseInRect() override;
-
 		virtual void FlashAttention() override;
+		virtual void SetIcon( Ref<class Texture2D> icon ) override;
 
 	public:
 		void BlockMouseCursor() { m_BlockMouseCursor = true; }

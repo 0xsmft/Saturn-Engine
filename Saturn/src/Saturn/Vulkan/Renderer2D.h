@@ -82,14 +82,14 @@ namespace Saturn {
 		void SubmitBillboardTextured( const glm::vec3& position, const glm::vec4& color, const Ref<Texture2D>& rTexture, const glm::vec2& rSize );
 		void SubmitBillboardTexturedFlipped( const glm::vec3& position, const glm::vec4& color, const Ref<Texture2D>& rTexture, const glm::vec2& rSize );
 
-		void SubmitLine( const glm::vec3& rStart, const glm::vec3& rEnd, const glm::vec4& rColor );
+		void SubmitLine( const glm::vec3& rStart, const glm::vec3& rEnd, const glm::vec4& rColor, bool onTop = false );
 		void SubmitLine( const glm::vec3& rStart, const glm::vec3& rEnd, const glm::vec4& rColor, float Thinkness );
 
 		void SubmitArrow( const glm::vec3& rStart, const glm::vec3& rEnd, const glm::vec4& rColor, float headLength = 10.0f, float headAngle = 0.5f );
 
 		void SubmitDiamond( const glm::vec3& rCenter, float size, const glm::vec4& rColor );
 
-		void SubmitSingleLine( const glm::vec3& rStart, const glm::vec4& rColor );
+		void SubmitSingleLine( const glm::vec3& rStart, const glm::vec4& rColor, bool onTop = false );
 
 		void SubmitAABB( const AABB& rAABB, const glm::mat4& rTransform, const glm::vec4& rColor );
 		void SubmitAABB( const AABB& rAABB, const glm::vec4& rColor );
@@ -121,11 +121,13 @@ namespace Saturn {
 
 		void AddQuadBuffer();
 		void AddLineBuffer();
+		void AddLineOnTopBuffer();
 		void AddTriangleLineBuffer();
 		void AddTextBuffer();
 
 		QuadVertex*& GetQuadBuffer();
 		LineVertex*& GetLineBuffer();
+		LineVertex*& GetLineOnTopBuffer();
 		LineVertex*& GetTriangleLineBuffer();
 		TextVertex*& GetTextBuffer();
 
@@ -154,6 +156,13 @@ namespace Saturn {
 
 		size_t m_LineBufferIndex = 0llu;
 
+		// On top lines
+		std::vector< VertexBufferPerFrame > m_OnTopLineVertexBuffers;
+		std::vector< std::vector< LineVertex* > > m_CurrentLineOnTopBases;
+		std::vector<LineVertex*> m_CurrentLineOnTopVertexBufferPtr;
+
+		size_t m_OnTopLineBufferIndex = 0llu;
+
 		// Triangle (part of the lines)
 		std::vector< VertexBufferPerFrame > m_TriangleVertexBuffers;
 		std::vector< std::vector<LineVertex*> > m_CurrentTriangleBases;
@@ -174,6 +183,7 @@ namespace Saturn {
 		// Counts
 		uint32_t m_QuadIndexCount = 0;
 		uint32_t m_LineIndexCount = 0;
+		uint32_t m_LineOnTopIndexCount = 0;
 		uint32_t m_TriangleIndexCount = 0;
 		uint32_t m_TextIndexCount = 0;
 
@@ -214,6 +224,10 @@ namespace Saturn {
 		// Line fill (triangle)
 		Ref<Pipeline> m_TrianglePipeline = nullptr;
 		Ref<IndexBuffer> m_TriangleIndexBuffer = nullptr;
+
+		// Line on top
+		Ref<Pipeline> m_LineOnTopPipeline = nullptr;
+		Ref<IndexBuffer> m_LineOnTopIndexBuffer = nullptr;
 
 		// Text
 		Ref<Pipeline> m_TextPipeline = nullptr;

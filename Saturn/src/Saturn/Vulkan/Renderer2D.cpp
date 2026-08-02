@@ -90,6 +90,9 @@ namespace Saturn {
 		AddLineBuffer();
 		m_CurrentLineVertexBufferPtr.resize( 1 );
 
+		AddLineOnTopBuffer();
+		m_CurrentLineOnTopVertexBufferPtr.resize( 1 );
+
 		AddTriangleLineBuffer();
 		m_CurrentTrianglePtr.resize( 1 );
 
@@ -130,6 +133,8 @@ namespace Saturn {
 			pLineBuffer[ i ] = i;
 
 		m_LineIndexBuffer = Ref<IndexBuffer>::Create( pLineBuffer, s_MaxLineIndices * sizeof( uint32_t ) );
+		m_LineOnTopIndexBuffer = Ref<IndexBuffer>::Create( pLineBuffer, s_MaxLineIndices * sizeof( uint32_t ) );
+
 		delete[] pLineBuffer;
 
 		pLineBuffer = new uint32_t[ s_MaxSolidLineIndices ];
@@ -216,6 +221,14 @@ namespace Saturn {
 
 		m_TrianglePipeline = Ref<Pipeline>::Create( PipelineSpec );
 
+		PipelineSpec.Name = "Renderer2D(Lines|OnTop)";
+		PipelineSpec.PolygonMode = VK_POLYGON_MODE_LINE;
+		PipelineSpec.Topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+		PipelineSpec.UseDepthTest = false;
+		PipelineSpec.DepthCompareOp = VK_COMPARE_OP_NEVER;
+
+		m_LineOnTopPipeline = Ref<Pipeline>::Create( PipelineSpec );
+
 		PipelineSpec.Name = "Renderer2D(Text)";
 		PipelineSpec.Shader = m_TextShader;
 		PipelineSpec.RenderPass = targetPass == nullptr ? m_TempRenderPass : targetPass;
@@ -250,6 +263,9 @@ namespace Saturn {
 		m_LineMaterial = nullptr;
 		m_LineIndexBuffer = nullptr;
 
+		m_LineOnTopPipeline = nullptr;
+		m_LineOnTopIndexBuffer = nullptr;
+
 		m_TriangleIndexBuffer = nullptr;
 		m_TrianglePipeline = nullptr;
 
@@ -262,6 +278,7 @@ namespace Saturn {
 		m_LineVertexBuffers.clear();
 		m_TriangleVertexBuffers.clear();
 		m_TextVertexBuffers.clear();
+		m_OnTopLineVertexBuffers.clear();
 
 		for( auto& texture : m_Textures )
 			texture = nullptr;
@@ -271,6 +288,10 @@ namespace Saturn {
 				delete[] buffer;
 
 		for( auto& rBuffers : m_CurrentLineBases )
+			for( auto buffer : rBuffers )
+				delete[] buffer;
+
+		for( auto& rBuffers : m_CurrentLineOnTopBases )
 			for( auto buffer : rBuffers )
 				delete[] buffer;
 
@@ -355,6 +376,22 @@ namespace Saturn {
 		}
 	}
 
+	void Renderer2D::AddLineOnTopBuffer()
+	{
+		std::vector< Ref<VertexBuffer> >& rNewVB = m_OnTopLineVertexBuffers.emplace_back();
+		std::vector< LineVertex* >& rNewBase = m_CurrentLineOnTopBases.emplace_back();
+
+		rNewVB.resize( MAX_FRAMES_IN_FLIGHT );
+		rNewBase.resize( MAX_FRAMES_IN_FLIGHT );
+
+		for( auto i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
+		{
+			const uint64_t allocSize = s_MaxLineIndices * sizeof( LineVertex );
+			rNewVB[ i ] = Ref<VertexBuffer>::Create( allocSize );
+			rNewBase[ i ] = new LineVertex[ s_MaxLineIndices ];
+		}
+	}
+
 	void Renderer2D::AddTriangleLineBuffer()
 	{
 		std::vector< Ref<VertexBuffer> >& rNewVB = m_TriangleVertexBuffers.emplace_back();
@@ -418,6 +455,22 @@ namespace Saturn {
 		}
 
 		return m_CurrentLineVertexBufferPtr[ m_LineBufferIndex ];
+	}
+
+	LineVertex*& Renderer2D::GetLineOnTopBuffer()
+	{
+		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
+
+		m_OnTopLineBufferIndex = m_LineOnTopIndexCount / s_MaxLineIndices;
+
+		if( m_OnTopLineBufferIndex >= m_OnTopLineVertexBuffers.size() )
+		{
+			AddLineOnTopBuffer();
+			m_CurrentLineOnTopVertexBufferPtr.emplace_back();
+			m_CurrentLineOnTopVertexBufferPtr[ m_OnTopLineBufferIndex ] = m_CurrentTriangleBases[ m_OnTopLineBufferIndex ][ frame ];
+		}
+
+		return m_CurrentLineOnTopVertexBufferPtr[ m_OnTopLineBufferIndex ];
 	}
 
 	LineVertex*& Renderer2D::GetTriangleLineBuffer()
@@ -640,9 +693,9 @@ namespace Saturn {
 		m_QuadIndexCount += 6;
 	}
 
-	void Renderer2D::SubmitLine( const glm::vec3& rStart, const glm::vec3& rEnd, const glm::vec4& rColor )
+	void Renderer2D::SubmitLine( const glm::vec3& rStart, const glm::vec3& rEnd, const glm::vec4& rColor, bool onTop /*=false*/ )
 	{
-		auto& prCurrentLinePtr = GetLineBuffer();
+		auto& prCurrentLinePtr = onTop ? GetLineOnTopBuffer() : GetLineBuffer();
 
 		prCurrentLinePtr->Position = rStart;
 		prCurrentLinePtr->Color = rColor;
@@ -654,7 +707,7 @@ namespace Saturn {
 
 		++prCurrentLinePtr;
 
-		m_LineIndexCount += 2;
+		onTop ? m_LineOnTopIndexCount += 2 : m_LineIndexCount += 2;
 	}
 
 	void Renderer2D::SubmitLine( const glm::vec3& rStart, const glm::vec3& rEnd, const glm::vec4& rColor, float Thinkness )
@@ -674,14 +727,14 @@ namespace Saturn {
 		m_LineIndexCount += 2;
 	}
 
-	void Renderer2D::SubmitSingleLine( const glm::vec3& rStart, const glm::vec4& rColor )
+	void Renderer2D::SubmitSingleLine( const glm::vec3& rStart, const glm::vec4& rColor, bool onTop /*=false*/ )
 	{
-		auto& prCurrentLinePtr = GetLineBuffer();
+		auto& prCurrentLinePtr = onTop ? GetLineOnTopBuffer() : GetLineBuffer();
 		prCurrentLinePtr->Position = rStart;
 		prCurrentLinePtr->Color = rColor;
 
 		++prCurrentLinePtr;
-		++m_LineIndexCount;
+		onTop ? ++m_LineOnTopIndexCount : ++m_LineIndexCount;
 	}
 
 	void Renderer2D::SubmitArrow( const glm::vec3& rStart, const glm::vec3& rEnd, const glm::vec4& rColor, float headLength /*= 10.0f*/, float headAngle /*= 0.5f */ )
@@ -1011,6 +1064,10 @@ namespace Saturn {
 		for( size_t i = 0; i < m_CurrentLineVertexBufferPtr.size(); ++i )
 			m_CurrentLineVertexBufferPtr[ i ] = m_CurrentLineBases[ i ][ frame ];
 
+		m_LineOnTopIndexCount = 0;
+		for( size_t i = 0; i < m_CurrentLineOnTopVertexBufferPtr.size(); ++i )
+			m_CurrentLineOnTopVertexBufferPtr[ i ] = m_CurrentLineOnTopBases[ i ][ frame ];
+
 		m_TriangleIndexCount = 0;
 		for( size_t i = 0; i < m_CurrentTrianglePtr.size(); ++i )
 			m_CurrentTrianglePtr[ i ] = m_CurrentTriangleBases[ i ][ frame ];
@@ -1141,6 +1198,27 @@ namespace Saturn {
 					indexCount = s_MaxLineIndices;
 				}
 
+				vkCmdDrawIndexed( m_CommandBuffer, indexCount, 1, 0, 0, 0 );
+			}
+		}
+
+		for( size_t i = 0; i <= m_OnTopLineBufferIndex; ++i )
+		{
+			// on top
+			const uint32_t dataSize = ( uint32_t ) ( ( uint8_t* ) m_CurrentLineOnTopVertexBufferPtr[ i ] - ( uint8_t* ) m_CurrentLineOnTopBases[ i ][ frame ] );
+			if( dataSize )
+			{
+				m_OnTopLineVertexBuffers[ i ][ frame ]->SetData( m_CurrentLineOnTopBases[ i ][ frame ], dataSize );
+
+				m_LineMaterial->Bind( m_CommandBuffer, m_LineOnTopPipeline->GetPipelineLayout(), {} );
+
+				m_LineOnTopPipeline->Bind( m_CommandBuffer );
+
+				m_LineOnTopIndexBuffer->Bind( m_CommandBuffer );
+
+				m_OnTopLineVertexBuffers[ i ][ frame ]->Bind( m_CommandBuffer );
+
+				const uint32_t indexCount = i == m_OnTopLineBufferIndex ? m_LineOnTopIndexCount - ( s_MaxLineIndices * ( uint32_t ) i ) : s_MaxLineIndices;
 				vkCmdDrawIndexed( m_CommandBuffer, indexCount, 1, 0, 0, 0 );
 			}
 		}

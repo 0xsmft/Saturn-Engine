@@ -162,16 +162,19 @@ namespace Saturn {
 		// All bone positions are in bone space.
 		// 
 		std::vector<glm::vec3>& GetBonePositions() { return m_BonePositions; }
+		const std::vector<glm::vec3>& GetBonePositions() const { return m_BonePositions; }
 
 		// 
 		// All bone rotations are in bone space. Rotations are returned as a quaternion.
 		// 
 		std::vector<glm::quat>& GetBoneRotations() { return m_BoneRotations; }
+		const std::vector<glm::quat>& GetBoneRotations() const { return m_BoneRotations; }
 		
 		// 
 		// All bone scales are in bone space.
 		// 
 		std::vector<glm::vec3>& GetBoneScales() { return m_BoneScales; }
+		const std::vector<glm::vec3>& GetBoneScales() const { return m_BoneScales; }
 
 		//
 		// The global transform for this skeleton.

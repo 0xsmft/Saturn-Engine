@@ -426,6 +426,8 @@ namespace Saturn {
 
 		// Scene Renderer (main geometry)
 		RtBuildSceneRendererCommands( sceneRenderer );
+
+		RtDrawSkDebug( sceneRenderer );
 	}
 
 	void Scene::OnRenderRuntime( Timestep ts, Ref<SceneRenderer> sceneRenderer )
@@ -472,6 +474,7 @@ namespace Saturn {
 		// AI debug visualisation happens during runtime...
 #if !defined(SAT_DIST)
 		RtDrawAIDebug( sceneRenderer );
+		RtDrawSkDebug( sceneRenderer );
 #endif
 
 		// Scene Renderer
@@ -917,6 +920,38 @@ namespace Saturn {
 							g_AluraCanvas->GetEditorFont(),
 							rTc.GetTransform(),
 							glm::one<glm::vec4>() );
+					}
+				}
+			}
+		}
+	}
+
+	void Scene::RtDrawSkDebug( Ref<SceneRenderer> sceneRenderer )
+	{
+		if( ( m_VisualisationOptions.SkeletonVisualisationOptions & SkeletonVisualisationOptions_BoneLines ) != 0 )
+		{
+			const auto skeletalMeshEntites = GetAllEntitiesWith<SkeletalMeshComponent>();
+			for( const auto& rEntity : skeletalMeshEntites )
+			{
+				const auto& tc = rEntity->GetComponent<TransformComponent>();
+				const auto& mc = rEntity->GetComponent<SkeletalMeshComponent>();
+				const auto skMesh = mc.Mesh;
+
+				if( skMesh )
+				{
+					const auto sk = skMesh->GetSkeletonAsset();
+					if( sk )
+					{
+						const auto& rBonePositions = sk->GetBonePositions();
+
+						for( const auto& rBoneInfo : sk->GetBoneInfo() )
+						{
+							const auto& rTransform = skMesh->GetDefaultBoneTransforms().at( rBoneInfo.BoneIndex );
+							
+							sceneRenderer->GetRenderer2D()->SubmitSingleLine( 
+								glm::vec3( rTransform[ 3 ] ) + tc.Position, 
+								glm::one<glm::vec4>() );
+						}
 					}
 				}
 			}

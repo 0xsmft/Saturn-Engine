@@ -533,6 +533,7 @@ namespace Saturn {
 		void RtBuildSceneRendererCommands( Ref<SceneRenderer> sceneRenderer );
 		void RtBuildSelectedMeshesCmds( Ref<SceneRenderer> sceneRenderer );
 		void RtDrawAIDebug( Ref<SceneRenderer> sceneRenderer );
+		void RtDrawSkDebug( Ref<SceneRenderer> sceneRenderer );
 
 	private:
 		std::map<entt::entity, SharedPtr<Entity>> m_EntityIDMap;

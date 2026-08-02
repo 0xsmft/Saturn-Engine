@@ -79,6 +79,7 @@ namespace Saturn {
 		out << YAML::Key << "ShowGridRT" << rVisualisation.ShowGridOnRuntime;
 		out << YAML::Key << "PhysCollider" << ( uint16_t )rVisualisation.PhysColliderOptions;
 		out << YAML::Key << "AI" << ( uint16_t )rVisualisation.AIVisualisationOptions;
+		out << YAML::Key << "Skel" << ( uint16_t )rVisualisation.SkeletonVisualisationOptions;
 		out << YAML::EndMap;
 #endif
 
@@ -156,6 +157,17 @@ namespace Saturn {
 			else
 			{
 				rVisualisation.AIVisualisationOptions = ( AIVisualisationOptions ) aiVisOption;
+			}
+
+			const auto skVisOptions = visualisationNode[ "Skel" ].as<U>( 0 );
+			if( skVisOptions > std::numeric_limits<uint8_t>::max() )
+			{
+				SAT_CORE_WARN( "Skeleton Visualisation is greater than the max of 255! Default to 0!" );
+				rVisualisation.SkeletonVisualisationOptions = SkeletonVisualisationOptions_Disabled;
+			}
+			else
+			{
+				rVisualisation.SkeletonVisualisationOptions = ( SkeletonVisualisationOptions ) skVisOptions;
 			}
 		}
 #endif

@@ -55,11 +55,24 @@ namespace Saturn {
 		AIVisualisationOptions_NavPaths = 1 << 1,
 	};
 
+	// Visualisation options for skeletal meshes
+	enum SkeletonVisualisationOptions : uint8_t 
+	{
+		SkeletonVisualisationOptions_Disabled,
+
+		// Draw lines between each bone.
+		SkeletonVisualisationOptions_BoneLines = 1 << 0,
+
+		// Draw the bone name at the joint.
+		SkeletonVisualisationOptions_Names = 1 << 1
+	};
+
 	struct SceneVisualisationOptions
 	{
 		bool ShowGrid = true;
 		bool ShowGridOnRuntime = false;
 		PhysicsColliderVisualisationOptions PhysColliderOptions = PhysicsColliderVisualisationOptions::SelectedOnly;
 		uint8_t AIVisualisationOptions = AIVisualisationOptions_Disabled;
+		uint8_t SkeletonVisualisationOptions = SkeletonVisualisationOptions_Disabled;
 	};
 }

@@ -199,7 +199,7 @@ namespace Saturn {
 		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Exclamation_Small.png", AddressingMode::Repeat, DEFAULT_TEXTURE_LOAD_FLAGS_FLIPPED ) );
 		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Information_Small.png", AddressingMode::Repeat, DEFAULT_TEXTURE_LOAD_FLAGS_FLIPPED ) );
 		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Settings.png", AddressingMode::Repeat, DEFAULT_TEXTURE_LOAD_FLAGS_FLIPPED ) );
-		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/EditIcon.png", AddressingMode::Repeat, DEFAULT_TEXTURE_LOAD_FLAGS_NOT_FLIPPED ) );
+		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/EditIcon.png", AddressingMode::Repeat, DEFAULT_TEXTURE_LOAD_FLAGS_FLIPPED ) );
 		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/Billboard_AIAgent.png", AddressingMode::Repeat, DEFAULT_TEXTURE_LOAD_FLAGS_NOT_FLIPPED ) );
 		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/FastForward.png", AddressingMode::Repeat, DEFAULT_TEXTURE_LOAD_FLAGS_NOT_FLIPPED ) );
 		EditorIcons::AddIcon( Ref<Texture2D>::Create( "content/textures/editor/NextMultiMedia.png", AddressingMode::Repeat, DEFAULT_TEXTURE_LOAD_FLAGS_NOT_FLIPPED ) );

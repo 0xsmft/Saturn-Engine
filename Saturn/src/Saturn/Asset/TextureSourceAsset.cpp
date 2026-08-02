@@ -35,14 +35,14 @@
 #include "Saturn/Vulkan/Renderer.h"
 #include "Saturn/Vulkan/Texture.h"
 
-#include "Saturn/Core/VirtualFS.h"
-#include "Saturn/Core/MemoryStream.h"
-
 #include "Saturn/Project/Project.h"
 
 #include "Saturn/Serialisation/Raw/RawSerialisation.h"
 
-#if !defined(SAT_DIST)
+#if defined(SAT_DIST)
+#include "Saturn/Core/VirtualFS.h"
+#include "Saturn/Core/MemoryStream.h"
+#else
 #include <stb_image.h>
 #endif
 

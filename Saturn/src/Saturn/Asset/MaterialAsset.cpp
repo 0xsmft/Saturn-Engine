@@ -29,7 +29,6 @@
 #include "sppch.h"
 #include "MaterialAsset.h"
 
-#include "MemoryAssetDependency.h"
 #include "AssetManager.h"
 
 #include "Saturn/Core/Renderer/RenderThread.h"

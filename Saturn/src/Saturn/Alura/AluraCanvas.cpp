@@ -32,6 +32,8 @@
 #include "AluraRect.h"
 #include "AluraStylingProfile.h"
 
+#include "Saturn/Core/Input.h"
+
 #include "Saturn/Vulkan/AluraRenderer.h"
 #include "Saturn/Asset/AssetManager.h"
 

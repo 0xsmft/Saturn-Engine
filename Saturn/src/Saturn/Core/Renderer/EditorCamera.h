@@ -29,7 +29,6 @@
 #pragma once
 
 #include "Saturn/Core/Timestep.h"
-#include "Saturn/Core/Input.h"
 #include "Saturn/Core/Ruby/RubyEvent.h"
 #include "Camera.h"
 

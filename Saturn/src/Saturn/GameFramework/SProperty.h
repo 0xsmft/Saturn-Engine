@@ -30,8 +30,6 @@
 
 #include "Saturn/Core/Base.h"
 
-#include "SAutoCompletionAux.h"
-
 #include <string>
 #include <glm/glm.hpp>
 

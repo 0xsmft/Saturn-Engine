@@ -29,16 +29,12 @@
 #include "sppch.h"
 #include "Mesh.h"
 
-#include "VulkanContext.h"
-#include "Renderer.h"
-
-#include "Saturn/Serialisation/YAML/AssetManagerSerialiser.h"
 #include "Saturn/Serialisation/YAML/AssetSerialisers.h"
 
 #include "Saturn/Asset/AssetManager.h"
 #include "Saturn/Asset/Asset.h"
 #include "Saturn/Asset/MaterialAsset.h"
-#include "Saturn/Asset/AssetImporter.h"
+#include "Saturn/Asset/TextureSourceAsset.h"
 
 #include "Saturn/Animation/SkeletonAsset.h"
 #include "Saturn/Animation/SkeletalAnimationAsset.h"
@@ -49,7 +45,6 @@
 #include <glm/gtc/quaternion.hpp>
 
 #include <glm/gtx/quaternion.hpp>
-#include <glm/gtx/matrix_decompose.hpp>
 
 #if !defined(SAT_DIST)
 #include "Saturn/Core/Maths.h"

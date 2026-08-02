@@ -29,12 +29,11 @@
 #include "sppch.h"
 #include "Character.h"
 
+#include "Saturn/Core/Input.h"
 #include "Saturn/Scene/Scene.h"
 
-#include "Saturn/Physics/PhysicsRigidBody.h"
+#include "Saturn/Physics/PhysicsShapes.h"
 #include "Saturn/Physics/PhysicsCharacterController.h"
-
-#include "Core/ClassMetadataHandler.h"
 
 #include "Saturn/Audio/AudioSystem.h"
 

@@ -478,6 +478,11 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 		return m_DefaultBoneTransforms;
 	}
 
+	const std::vector<glm::mat4>& SkeletalMesh::GetDefaultBoneTransforms() const
+	{
+		return m_DefaultBoneTransforms;
+	}
+
 	void SkeletalMesh::Import_InitSkeleton( AssetID id )
 	{
 		// TODO: Not the best way, a bit screwy

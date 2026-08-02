@@ -124,7 +124,7 @@ namespace Saturn {
 	struct SkeletalMeshBoneInfo
 	{
 		// The real index of this bone.
-		// Bone Infos may be added to the skeleton in a different order than they should be from the DCC,
+		// Bone Infos may be added to the skeleton in a different order than they would be from the DCC,
 		// This may happen because if we have sub-meshes a bone that would come before another bone now may be added after.
 		// To solve this BoneIndex provides the correct bone index into the Bone T,R,S and names map.
 		// So, this must be used when getting the bone transforms!
@@ -403,6 +403,7 @@ namespace Saturn {
 		Ref<SkeletonAsset> GetSkeletonAsset() const;
 
 		const std::vector<glm::mat4>& GetDefaultBoneTransforms();
+		const std::vector<glm::mat4>& GetDefaultBoneTransforms() const;
 
 		Ref<VertexBuffer> GetBoneVertexBuffer() { return m_BoneVertexBuffer; }
 

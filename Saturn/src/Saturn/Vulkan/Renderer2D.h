@@ -213,13 +213,13 @@ namespace Saturn {
 		Ref<Pipeline> m_QuadPipeline = nullptr;
 		Ref<IndexBuffer> m_QuadIndexBuffer = nullptr;
 		Ref<Shader> m_QuadShader = nullptr;
-		Ref<Material> m_QuadMaterial = nullptr;
+		std::array<Ref<Material>, MAX_FRAMES_IN_FLIGHT> m_QuadMaterials{ nullptr };
 
 		// Lines
 		Ref<Pipeline> m_LinePipeline = nullptr;
 		Ref<IndexBuffer> m_LineIndexBuffer = nullptr;
 		Ref<Shader> m_LineShader = nullptr;
-		Ref<Material> m_LineMaterial = nullptr;
+		std::array<Ref<Material>, MAX_FRAMES_IN_FLIGHT> m_LineMaterials{ nullptr };
 		
 		// Line fill (triangle)
 		Ref<Pipeline> m_TrianglePipeline = nullptr;
@@ -233,6 +233,6 @@ namespace Saturn {
 		Ref<Pipeline> m_TextPipeline = nullptr;
 		Ref<IndexBuffer> m_TextIndexBuffer = nullptr;
 		Ref<Shader> m_TextShader = nullptr;
-		Ref<Material> m_TextMaterial = nullptr;
+		std::array<Ref<Material>, MAX_FRAMES_IN_FLIGHT> m_TextMaterials{ nullptr };
 	};
 }

@@ -170,19 +170,23 @@ namespace Saturn {
 		if( !m_QuadShader )
 		{
 			m_QuadShader = ShaderLibrary::Get().FindOrLoad( "Renderer2D", "content/shaders/Renderer2D.glsl" );
-			m_QuadMaterial = Ref<Material>::Create( m_QuadShader, "QuadMaterial" );
 		}
 
 		if( !m_LineShader )
 		{
 			m_LineShader = ShaderLibrary::Get().FindOrLoad( "DebugLine", "content/shaders/DebugLine.glsl" );
-			m_LineMaterial = Ref<Material>::Create( m_LineShader, "DebugLineMaterial" );
 		}
 
 		if( !m_TextShader )
 		{
 			m_TextShader = ShaderLibrary::Get().FindOrLoad( "MsdfText", "content/shaders/MsdfText.glsl" );
-			m_TextMaterial = Ref<Material>::Create( m_TextShader, "MsdfText" );
+		}
+
+		for( auto i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
+		{
+			m_LineMaterials[ i ] = Ref<Material>::Create( m_LineShader, "DebugLineMaterial" );
+			m_QuadMaterials[ i ] = Ref<Material>::Create( m_QuadShader, "QuadMaterial" );
+			m_TextMaterials[ i ] = Ref<Material>::Create( m_TextShader, "MsdfText" );
 		}
 
 		PipelineSpecification PipelineSpec{};
@@ -256,11 +260,11 @@ namespace Saturn {
 		m_QuadPipeline = nullptr;
 		m_QuadIndexBuffer = nullptr;
 		m_QuadShader = nullptr;
-		m_QuadMaterial = nullptr;
+		m_QuadMaterials.fill( nullptr );
 
 		m_LinePipeline = nullptr;
 		m_LineShader = nullptr;
-		m_LineMaterial = nullptr;
+		m_LineMaterials.fill( nullptr );
 		m_LineIndexBuffer = nullptr;
 
 		m_LineOnTopPipeline = nullptr;
@@ -272,7 +276,7 @@ namespace Saturn {
 		m_TextPipeline = nullptr;
 		m_TextIndexBuffer = nullptr;
 		m_TextShader = nullptr;
-		m_TextMaterial = nullptr;
+		m_TextMaterials.fill( nullptr );
 
 		m_QuadVertexBuffers.clear();
 		m_LineVertexBuffers.clear();
@@ -1121,7 +1125,7 @@ namespace Saturn {
 
 		u_Matrices.ViewProjection = m_CameraViewProjection;
 
-		m_QuadMaterial->UploadDataToUB( 0, &u_Matrices, sizeof( u_Matrices ) );
+		m_QuadMaterials[ frame ]->UploadDataToUB( 0, &u_Matrices, sizeof( u_Matrices ) );
 
 		for( size_t i = 0; i <= m_QuadBufferIndex; ++i )
 		{
@@ -1134,12 +1138,12 @@ namespace Saturn {
 				for( uint32_t j = 0; j < 16; ++j )
 				{
 					if( m_Textures[ j ] )
-						m_QuadMaterial->SetResource( "u_InputTexture", m_Textures[ j ], j );
+						m_QuadMaterials[ frame ]->SetResource( "u_InputTexture", m_Textures[ j ], j );
 					else
-						m_QuadMaterial->SetResource( "u_InputTexture", Renderer::Get()->GetPinkTexture(), j );
+						m_QuadMaterials[ frame ]->SetResource( "u_InputTexture", Renderer::Get()->GetPinkTexture(), j );
 				}
 
-				m_QuadMaterial->Bind( m_CommandBuffer, m_QuadPipeline->GetPipelineLayout(), {} );
+				m_QuadMaterials[ frame ]->Bind( m_CommandBuffer, m_QuadPipeline->GetPipelineLayout(), {} );
 
 				m_QuadPipeline->Bind( m_CommandBuffer );
 
@@ -1162,12 +1166,12 @@ namespace Saturn {
 
 		struct QuadMatricesObject
 		{
-			glm::mat4 ViewProjection = glm::mat4( 1.0f );
-		} u_Matrices;
+			glm::mat4 ViewProjection;
+		} u_Matrices{};
 
 		u_Matrices.ViewProjection = m_CameraViewProjection;
 
-		m_LineMaterial->UploadDataToUB( 0, &u_Matrices, sizeof( u_Matrices ) );
+		m_LineMaterials[ frame ]->UploadDataToUB( 0, &u_Matrices, sizeof( u_Matrices ) );
 
 		for( size_t i = 0; i <= m_LineBufferIndex; ++i )
 		{
@@ -1176,7 +1180,7 @@ namespace Saturn {
 			{
 				m_LineVertexBuffers[ i ][ frame ]->SetData( m_CurrentLineBases[ i ][ frame ], dataSize );
 
-				m_LineMaterial->Bind( m_CommandBuffer, m_LinePipeline->GetPipelineLayout(), {} );
+				m_LineMaterials[ frame ]->Bind( m_CommandBuffer, m_LinePipeline->GetPipelineLayout(), {} );
 
 				m_LinePipeline->Bind( m_CommandBuffer );
 
@@ -1210,7 +1214,7 @@ namespace Saturn {
 			{
 				m_OnTopLineVertexBuffers[ i ][ frame ]->SetData( m_CurrentLineOnTopBases[ i ][ frame ], dataSize );
 
-				m_LineMaterial->Bind( m_CommandBuffer, m_LineOnTopPipeline->GetPipelineLayout(), {} );
+				m_LineMaterials[ frame ]->Bind( m_CommandBuffer, m_LineOnTopPipeline->GetPipelineLayout(), {} );
 
 				m_LineOnTopPipeline->Bind( m_CommandBuffer );
 
@@ -1231,7 +1235,7 @@ namespace Saturn {
 			{
 				m_TriangleVertexBuffers[ i ][ frame ]->SetData( m_CurrentTriangleBases[ i ][ frame ], dataSize );
 
-				m_LineMaterial->Bind( m_CommandBuffer, m_TrianglePipeline->GetPipelineLayout(), {} );
+				m_LineMaterials[ frame ]->Bind( m_CommandBuffer, m_TrianglePipeline->GetPipelineLayout(), {} );
 
 				m_TrianglePipeline->Bind( m_CommandBuffer );
 
@@ -1260,17 +1264,17 @@ namespace Saturn {
 				for( uint32_t textureIndex = 17, j = 0; textureIndex < m_Textures.size(); j++, textureIndex++ )
 				{
 					if( m_Textures[ textureIndex ] )
-						m_TextMaterial->SetResource( "u_FontAtlases", m_Textures[ textureIndex ], j );
+						m_TextMaterials[ frame ]->SetResource( "u_FontAtlases", m_Textures[ textureIndex ], j );
 					else
-						m_TextMaterial->SetResource( "u_FontAtlases", Renderer::Get()->GetPinkTexture(), j );
+						m_TextMaterials[ frame ]->SetResource( "u_FontAtlases", Renderer::Get()->GetPinkTexture(), j );
 				}
 
-				m_TextMaterial->SetPC( "u_Transform.Projection", m_CameraViewProjection );
-				m_TextMaterial->Bind( m_CommandBuffer, m_TextPipeline->GetPipelineLayout(), {} );
+				m_TextMaterials[ frame ]->SetPC( "u_Transform.Projection", m_CameraViewProjection );
+				m_TextMaterials[ frame ]->Bind( m_CommandBuffer, m_TextPipeline->GetPipelineLayout(), {} );
 
 				m_TextPipeline->Bind( m_CommandBuffer );
 
-				vkCmdPushConstants( m_CommandBuffer, m_TextPipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, ( uint32_t ) m_TextMaterial->GetPushConstantData().Size, m_TextMaterial->GetPushConstantData().Data );
+				vkCmdPushConstants( m_CommandBuffer, m_TextPipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, ( uint32_t ) m_TextMaterials[ frame ]->GetPushConstantData().Size, m_TextMaterials[ frame ]->GetPushConstantData().Data );
 
 				m_TextVertexBuffers[ i ][ frame ]->Bind( m_CommandBuffer );
 				m_TextIndexBuffer->Bind( m_CommandBuffer );

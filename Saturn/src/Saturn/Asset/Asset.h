@@ -301,6 +301,12 @@ namespace Saturn {
 		virtual void OnAssetDependencyReplace( AssetID oldID, AssetID newID ) {}
 #endif
 
+		//
+		// Returns true if this asset can be purged
+		// and can be unloaded.
+		//
+		virtual bool CanPurge() const { return false; }
+
 	public:
 		//////////////////////////////////////////////////////////////////////////
 		// #WARNING This should not be confused with AssetSerialisers. This is for raw binary serialisation! (see: AssetBundle)

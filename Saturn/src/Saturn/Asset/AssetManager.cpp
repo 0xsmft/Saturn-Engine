@@ -62,6 +62,35 @@ namespace Saturn {
 #endif
 	}
 
+	AssetManager::~AssetManager()
+	{
+		Terminate();
+	}
+
+	void AssetManager::Tick( Timestep ts )
+	{
+		// Update purge time, only purge if no assets are being loaded.
+		if( ( m_LastLoadedAssetPurgeTime += ts.Seconds() ) >= m_LoadedAssetPurgeInterval && !m_IsAnyAssetCurrentlyLoading.load() )
+		{
+			// Erase any loaded assets with a RefCount of 1.
+			// A ref count of 1 means that the only reference
+			// to this asset is the LoadedMap itself.
+			std::erase_if( m_Assets->GetLoadedAssetsMap(), 
+				[](const auto& kv) -> bool 
+			{
+				const auto& [candidateID, loadedAsset] = kv;
+				const bool shouldRem = loadedAsset->GetRefCount() == 1 && loadedAsset->CanPurge();
+
+				if( shouldRem )
+				{
+					SAT_CORE_INFO( "Would remove asset: {0} RC: {1}", loadedAsset->Name, loadedAsset->GetRefCount() );
+				}
+
+				return shouldRem;
+			} );
+		}
+	}
+
 #if !defined(SAT_DIST)
 	void AssetManager::CreateAssetTypeTraitsTable()
 	{

@@ -374,6 +374,8 @@ namespace Saturn {
 		virtual void OnAssetDependencyReplace( AssetID oldID, AssetID newID ) override;
 #endif
 
+		virtual bool CanPurge() const override;
+
 	public:
 		void SerialiseData( std::ofstream& rStream ) const;
 		void DeserialiseData( std::istream& rStream );

@@ -270,6 +270,11 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 		AssetManager::Get()->Save();
 	}
 
+	bool StaticMesh::CanPurge() const
+	{
+		return true;
+	}
+
 	void StaticMesh::CreateVertices()
 	{
 		m_Submeshes.reserve( m_Scene->mNumMeshes );

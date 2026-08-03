@@ -46,9 +46,9 @@ namespace Saturn {
 		static inline AssetManager* Get() { return SingletonStorage::GetSingleton<AssetManager>(); }
 	public:
 		AssetManager();
-		~AssetManager() { Terminate(); }
+		virtual ~AssetManager();
 
-		void Terminate();
+		void Tick( Timestep ts );
 
 	public:
 		AssetID CreateAsset( AssetType type );
@@ -228,8 +228,7 @@ namespace Saturn {
 		template<typename Ty>
 		Ref<Ty> ImportAssetAs( Ref<AssetRegistry> TargetRegistry, AssetID id )
 		{
-			auto AssetItr = TargetRegistry->m_Assets.find( id );
-
+			const auto AssetItr = TargetRegistry->m_Assets.find( id );
 			if( AssetItr == TargetRegistry->m_Assets.end() )
 				return nullptr;
 
@@ -237,17 +236,27 @@ namespace Saturn {
 
 			if( !TargetRegistry->IsAssetLoaded( id ) )
 			{
-				bool loaded = m_Importer.TryLoadData( asset );
-				if( !loaded )
+				m_IsAnyAssetCurrentlyLoading.store( true );
+
+				const bool loaded = m_Importer.TryLoadData( asset );
+				if( !loaded ) 
+				{
+					m_IsAnyAssetCurrentlyLoading.store( false );
 					return nullptr;
+				}
 
 				TargetRegistry->m_LoadedAssets[ id ] = asset;
+
+				m_IsAnyAssetCurrentlyLoading.store( false );
 			}
 			else
 				asset = TargetRegistry->m_LoadedAssets.at( id );
 
 			return asset.As<Ty>();
 		}
+
+	private:
+		void Terminate();
 
 #if !defined(SAT_DIST)
 	private:
@@ -270,9 +279,14 @@ namespace Saturn {
 #else
 		VFSAssetImporter m_Importer;
 #endif
-
-
 		Ref<AssetRegistry> m_Assets = nullptr;
+
+		std::atomic_bool m_IsAnyAssetCurrentlyLoading{ false };
+		float m_LastLoadedAssetPurgeTime = 0.0f;
+
+		// Time in seconds, default is x seconds.
+		float m_LoadedAssetPurgeInterval = 5.0f;
+
 	private:
 		friend class AssetBundle;
 	};

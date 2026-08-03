@@ -368,6 +368,8 @@ namespace Saturn {
 
 		///////////////////////////////
 
+		m_AssetManager->Tick( time );
+
 		// Start runtime if needed
 		if( m_RequestRuntime )
 		{

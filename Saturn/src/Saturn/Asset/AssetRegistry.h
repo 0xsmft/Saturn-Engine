@@ -44,9 +44,9 @@ namespace Saturn {
 	public:
 		AssetRegistry();
 		AssetRegistry( const AssetRegistry& rOther );
+		virtual ~AssetRegistry();
 
-		~AssetRegistry();
-
+	public:
 		// Copies the other asset registry asset map, path and loaded assets into this.
 		// NOTE: This will not copy the assets, this means that assets will still "shared" between them however loading assets into this asset registry will not affect the other.
 		void CopyFrom( const Ref<AssetRegistry>& rOther );
@@ -77,6 +77,9 @@ namespace Saturn {
 	private:
 		void AddAsset( AssetID id );
 		bool IsAssetLoaded( AssetID id ) const;
+
+		// Private non-const version just for AssetManager. How nice.
+		UnorderedAssetMap& GetLoadedAssetsMap() { return m_LoadedAssets; }
 
   	private:
 		UnorderedAssetMap m_Assets;

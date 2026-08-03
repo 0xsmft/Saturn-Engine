@@ -3016,6 +3016,33 @@ namespace Saturn {
 					ImGui::EndMenu();
 				}
 
+				if( ImGui::BeginMenu( "Skeleton Options" ) )
+				{
+					bool showLines = rVisualisationOptions.SkeletonVisualisationOptions & SkeletonVisualisationOptions_BoneLines;
+					if( ImGui::Checkbox( "Lines", &showLines ) )
+					{
+						if( showLines )
+							rVisualisationOptions.SkeletonVisualisationOptions |= SkeletonVisualisationOptions_BoneLines;
+						else
+							rVisualisationOptions.SkeletonVisualisationOptions &= ~SkeletonVisualisationOptions_BoneLines;
+
+						g_ActiveScene->MarkDirty();
+					}
+
+					bool showNames = rVisualisationOptions.SkeletonVisualisationOptions & SkeletonVisualisationOptions_Names;
+					if( ImGui::Checkbox( "Names", &showNames ) )
+					{
+						if( showNames )
+							rVisualisationOptions.SkeletonVisualisationOptions |= SkeletonVisualisationOptions_Names;
+						else
+							rVisualisationOptions.SkeletonVisualisationOptions &= ~SkeletonVisualisationOptions_Names;
+
+						g_ActiveScene->MarkDirty();
+					}
+
+					ImGui::EndMenu();
+				}
+
 				ImGui::EndMenu();
 			}
 

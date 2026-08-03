@@ -89,7 +89,7 @@ namespace SaturnBuildTool
 
                 case PlatformType.Windows:
                 {
-                    Links.AddRange( new string[] { "ole32", "kernel32", "comdlg32", "shell32" } );
+                    Links.AddRange( new string[] { "ole32", "kernel32", "comdlg32", "Gdi32", "shell32", "Advapi32" } );
                 } break;
             }
         }

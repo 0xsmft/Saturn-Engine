@@ -339,6 +339,7 @@ namespace SaturnBuildTool
 
                 List<string> headerFiles = allCppFilesModule.Where( f => headerFileExts.Any( ext => f.EndsWith( ext, StringComparison.OrdinalIgnoreCase ) ) ).ToList();
 
+                // Only check for modification if we are on Build.
                 if( Action == ActionType.Build )
                     sourceFilesModule = Shared.FileCache.Analyse( sourceFilesModule );
 
@@ -832,12 +833,8 @@ namespace SaturnBuildTool
                         // If NumTasksFailed is non-zero then we have a task that is failed.
                         // If no tasks have failed but we haven't actually done anything then we report NothingTodo.
                         // and by default the value is Success.
-                        if( NumTasksFailed != 0 )
-                            ExitCode = ApplicationExitStatus.Failure;
-                        else if( AttemptedTasks == 0 )
+                        if( ExitCode != ApplicationExitStatus.Failure && AttemptedTasks == 0 )
                             ExitCode = ApplicationExitStatus.NothingTodo;
-
-                        Console.WriteLine( ExitCode.ToString() );
                     }
                     break;
 

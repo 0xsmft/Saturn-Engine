@@ -412,9 +412,7 @@ namespace Saturn {
 		m_RendererCamera.ViewMatrix = rViewMartix;
 
 		sceneRenderer->SetCamera( m_RendererCamera );
-		sceneRenderer->GetRenderer2D()->PreRender();
-		if( sceneRenderer->GetAluraRenderer() )
-			sceneRenderer->GetAluraRenderer()->PreRender();
+		sceneRenderer->PreRender();
 
 		//////////////////////////////////////////////////////////////////////////
 
@@ -943,14 +941,34 @@ namespace Saturn {
 					if( sk )
 					{
 						const auto& rBonePositions = sk->GetBonePositions();
+						const auto& rBoneNames	   = sk->GetBoneNames();
 
-						for( const auto& rBoneInfo : sk->GetBoneInfo() )
+						const auto& rBoneInfos = sk->GetBoneInfo();
+						for( size_t i = 0; i < rBoneInfos.size(); ++i )
 						{
-							const auto& rTransform = skMesh->GetDefaultBoneTransforms().at( rBoneInfo.BoneIndex );
-							
-							sceneRenderer->GetRenderer2D()->SubmitSingleLine( 
-								glm::vec3( rTransform[ 3 ] ) + tc.Position, 
-								glm::one<glm::vec4>() );
+
+							const auto& rCurrent = rBoneInfos[ i ];
+							const auto parentIndex = skMesh->GetSkeletonAsset()->GetParentIndex( i );
+
+							if( parentIndex == ~0u )
+							{
+								const auto& rTransformCurrent = skMesh->GetDefaultBoneTransforms().at( i );
+								sceneRenderer->GetRenderer2D()->SubmitLine(
+									tc.Position,
+									glm::vec3( rTransformCurrent[ 3 ] ) + tc.Position,
+									glm::one<glm::vec4>(), true );
+
+							}
+							else
+							{
+								const auto& rTransformCurrent = skMesh->GetDefaultBoneTransforms().at( i );
+								const auto& rTransformParent = skMesh->GetDefaultBoneTransforms().at( parentIndex );
+
+								sceneRenderer->GetRenderer2D()->SubmitLine(
+									glm::vec3( rTransformParent[ 3 ] ) + tc.Position,
+									glm::vec3( rTransformCurrent[ 3 ] ) + tc.Position,
+									glm::one<glm::vec4>(), true );
+							}
 						}
 					}
 				}

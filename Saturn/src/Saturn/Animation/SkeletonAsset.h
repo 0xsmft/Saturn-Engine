@@ -99,18 +99,14 @@ namespace Saturn {
 		SkeletonAsset( const Ref<Asset>& rBase );
 		virtual ~SkeletonAsset();
 
-	public:
 #if !defined(SAT_DIST)
+	public:
 		void AppendBonesFromMesh( const aiMesh* pMesh );
 		void AddCompatibleMesh( UUID id );
 		void MarkAsUncompatibleMesh( UUID meshID );
 
 		void SetTransform( const glm::mat4& rTransform ) { m_Transform = rTransform; }
 #endif
-	public:
-		void Serialise( const std::filesystem::path& rPath ) const;
-		void Deserialise( std::filesystem::path& rPath );
-
 	public:
 		BoneJoint& AddNewBoneJoint( const uint64_t boneIndex, const std::string& rBoneName, const std::string& rName );
 
@@ -151,12 +147,16 @@ namespace Saturn {
 		// 
 		// @note Asserts on invalid index.
 		// 
-		uint64_t GetParentIndex( uint32_t index ) { SAT_CORE_ASSERT( index < m_ParentBoneIndices.size() ); return m_ParentBoneIndices[ index ]; }
+		uint64_t GetParentIndex( uint32_t index ) const { SAT_CORE_ASSERT( index < m_ParentBoneIndices.size() ); return m_ParentBoneIndices[ index ]; }
 
 		const std::vector<BoneJoint>& GetBoneJoints() const { return m_BoneJoints; }
 		std::vector<BoneJoint>& GetBoneJoints() { return m_BoneJoints; }
 
+		// Do not access via the BoneInfo's BoneIndex.
 		std::vector<std::string>& GetBoneNames() { return m_BoneNames; }
+		
+		// Do not access via the BoneInfo's BoneIndex.
+		const std::vector<std::string>& GetBoneNames() const { return m_BoneNames; }
 
 		// 
 		// All bone positions are in bone space.
@@ -187,17 +187,24 @@ namespace Saturn {
 		// TODO: We don't want to expose this function publicly.
 		void PortToNewestVersion() { m_LocalVersion = SkeletonAssetVersion::Latest; }
 
+	public:
+		void Serialise( const std::filesystem::path& rPath ) const;
+		void Deserialise( std::filesystem::path& rPath );
+
 	private:
 		SkeletonAssetVersion m_LocalVersion = SkeletonAssetVersion::Lowest;
 
+		// List of all bones.
+		// NOTE: The index in the vector doesn't correspond with the real 
+		// bone indices.
 		std::vector<SkeletalMeshBoneInfo> m_BoneInfos;
 
 		// Linear map of bone parent indices
 		// Will look like
-		// 0 : ~0u
-		// 1 : 0
-		// 2 : 0
-		// 3 : 1
+		// 0 : ~0u (no parent)
+		// 1 : 0 (parent is bone 0)
+		// 2 : 0 (parent is bone 0)
+		// 3 : 1 (parent is bone 1)
 		// ...
 		std::vector<uint64_t> m_ParentBoneIndices;
 		std::vector<std::string> m_BoneNames;

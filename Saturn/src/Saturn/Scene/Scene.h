@@ -521,6 +521,14 @@ namespace Saturn {
 #endif
 
 		void DestroyPhysicsScene();
+
+	public:
+		// Asset overrides.
+
+		// Scene can never be purged because only one scene asset is loaded
+		// at a time and the parent layer handles it.
+		virtual bool CanPurge() const override { return false; }
+
 	private:
 		void CreatePhysicsScene();
 

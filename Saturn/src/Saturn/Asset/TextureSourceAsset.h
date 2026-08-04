@@ -73,6 +73,11 @@ namespace Saturn {
 		void OnReimport( const std::filesystem::path& rPath );
 #endif
 
+		// A texture source asset can purge if 
+		// the underlying texture is not
+		// being used.
+		virtual bool CanPurge() const override;
+
 	public:
 		uint32_t Width()  const { return m_Width; }
 		uint32_t Height() const { return m_Height; }

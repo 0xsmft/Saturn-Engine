@@ -304,8 +304,14 @@ namespace Saturn {
 		//
 		// Returns true if this asset can be purged
 		// and can be unloaded.
+		// 
+		// NB: Do not check the ref-count if this asset
+		// the AssetManager already does that before
+		// this is even called, so if this is called
+		// the ref-count is 1 and the AssetManager
+		// needs confirmation.
 		//
-		virtual bool CanPurge() const { return false; }
+		virtual bool CanPurge() const { return true; }
 
 	public:
 		//////////////////////////////////////////////////////////////////////////

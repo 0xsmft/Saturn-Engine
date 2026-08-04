@@ -287,4 +287,10 @@ namespace Saturn {
 		LoadOnMostSuitableThread();
 	}
 #endif
+
+	bool TextureSourceAsset::CanPurge() const
+	{
+		return m_Texture->GetRefCount() == 1u;
+	}
+
 }

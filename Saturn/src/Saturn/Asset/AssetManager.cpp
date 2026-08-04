@@ -88,6 +88,8 @@ namespace Saturn {
 
 				return shouldRem;
 			} );
+
+			m_LastLoadedAssetPurgeTime = 0.0f;
 		}
 	}
 

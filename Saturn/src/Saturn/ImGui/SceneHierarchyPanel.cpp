@@ -522,15 +522,15 @@ namespace Saturn {
 	{
 		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_AllowItemOverlap;
 
-		const bool hasScript = entity->GetClass()->GetPropertyCount();
+		const bool hasProps = entity->GetClass()->GetPropertyCount() > 0;
 
-		if( hasScript )
+		if( hasProps )
 			flags |= ImGuiTreeNodeFlags_DefaultOpen;
 
 		// Draw properties
 		if( ImGui::TreeNodeEx( ( void* )entity.Get(), flags, "Properties" ) )
 		{
-			if( hasScript )
+			if( hasProps )
 			{
 				const auto propCount = entity->GetClass()->GetPropertyCount();
 				auto properties = entity->GetClass()->GetProperties();
@@ -538,13 +538,9 @@ namespace Saturn {
 				for( int i = 0; i < propCount; ++i )
 				{
 					SPropertyEditor* pProperty = ( SPropertyEditor* ) properties[ i ];
+					const std::string name = pProperty->GetName();
 
-					std::string name = pProperty->GetName();
-					if( /*pProperty->IsDirty()*/ false )
-					{
-						name += "*";
-					}
-
+					Auxiliary::DisabledFlag disabledIfPropIsReadOnly( pProperty->IsFlagSet( SPropertyFlags_ReadOnlyInEditor ) );
 					switch( pProperty->GetType() )
 					{
 						case SPropertyType::Float:
@@ -722,7 +718,7 @@ namespace Saturn {
 
 								ImGui::SameLine();
 
-								std::string idStr = std::to_string( m_CurrentAssetID );
+								std::string idStr = std::to_string( m_CurrentAssetID == 0 ? pAssetProperty->GetProperty( entity.Get() ) : ( uint64_t ) m_CurrentAssetID );
 								Auxiliary::InputText( "##assetid", &idStr, ImGuiInputTextFlags_ReadOnly );
 
 								if( ImGui::BeginItemTooltip() )
@@ -752,6 +748,7 @@ namespace Saturn {
 							ImGui::Text( "This type cannot be displayed... %s", SPropertyTypeToStringInNamespace( pProperty->GetType() ).c_str() );
 						} break;
 					}
+					disabledIfPropIsReadOnly.Pop();
 				}
 			}
 

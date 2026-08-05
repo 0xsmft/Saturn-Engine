@@ -138,7 +138,7 @@ namespace Saturn {
 		// 
 		// @param Name -- the name of the resource in the SHADER e.g. u_MyTexture
 		//
-		Ref<Texture2D> GetResource( const std::string& Name );
+		Ref<Texture2D> GetResource( const std::string& Name ) const;
 
 		// Set push constant data.
 		template<typename Ty>
@@ -190,10 +190,10 @@ namespace Saturn {
 
 	private:
 		uint32_t m_Set = 0;
-		std::string m_Name = "";
 		Ref<Shader> m_Shader;
-
 		Buffer m_PushConstantData;
+
+		std::string m_Name;
 		
 		// Binding -> UniformBuffers (per frame in flight)
 		std::unordered_map< uint32_t, std::array< Ref<UniformBuffer>, MAX_FRAMES_IN_FLIGHT > > m_UniformBuffers;

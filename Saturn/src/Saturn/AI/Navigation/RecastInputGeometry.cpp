@@ -64,7 +64,7 @@ namespace Saturn {
 
 	void PhysicsSceneExporter::Export( RecastInputGeometry& rInputGeom, AABB& rNavMeshBounds )
 	{
-		g_ActiveScene->GetPhysicsScene()->ExportRc( rInputGeom.GetExportData(), rNavMeshBounds );
+		g_ActiveScene->GetPhysicsScene()->BuildNavMesh( rInputGeom.GetExportData(), rNavMeshBounds );
 	}
 
 }

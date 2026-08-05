@@ -98,7 +98,7 @@ namespace Saturn {
 
 		RecastInputGeometry input;
 		input.BeginImport();
-		input.GetExportData().Bounds = m_MaxBounds;
+		input.GetExportData().DesiredBounds = m_MaxBounds;
 
 		AABB navMeshBounds;
 		navMeshBounds.Min = { FLT_MAX, FLT_MAX, FLT_MAX };

@@ -47,7 +47,7 @@ namespace Saturn {
 		//       we may have a 10x10 AABB but the real size of the navmesh may only 
 		//       be the size of a couple of small tiles... it all depends on the geometry
 		//		 supplied into the export.
-		AABB Bounds;
+		AABB DesiredBounds;
 	};
 
 	class RecastInputGeometry : public RefTarget

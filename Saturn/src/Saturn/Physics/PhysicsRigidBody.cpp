@@ -35,8 +35,6 @@
 #include "PhysicsAuxiliary.h"
 #include "PhysicsCharacterController.h"
 
-#include "Saturn/AI/Navigation/RecastInputGeometry.h"
-
 namespace Saturn {
 
 	PhysicsRigidBody::PhysicsRigidBody( SharedPtr<Entity> entity )
@@ -269,14 +267,6 @@ namespace Saturn {
 
 		m_Shape = nullptr;
 		m_Entity = nullptr;
-	}
-
-	void PhysicsRigidBody::ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds )
-	{
-		if( m_Shape )
-		{
-			m_Shape->ExportRc( rData, rNavMeshBounds );
-		}
 	}
 
 	void PhysicsRigidBody::SetMass( float val )

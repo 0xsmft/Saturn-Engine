@@ -29,12 +29,9 @@
 #include "sppch.h"
 #include "Material.h"
 
-#include "Mesh.h"
-#include "DescriptorSet.h"
 #include "Renderer.h"
 #include "Texture.h"
 #include "VulkanContext.h"
-#include "VulkanDebug.h"
 
 #include "Saturn/Core/Profiler.h"
 
@@ -433,7 +430,7 @@ namespace Saturn {
 		}
 	}
 
-	Ref<Texture2D> Material::GetResource( const std::string& Name )
+	Ref<Texture2D> Material::GetResource( const std::string& Name ) const
 	{
 		if( m_Textures.size() > 0 )
 			return m_Textures.at( Name );

@@ -28,7 +28,40 @@
 
 #pragma once
 
-// Helper file to include all specialised types of SProperties.
+#include "SProperty.h"
 
-#include "SAssetProperty.h"
-#include "SMathsProperties.h"
+namespace Saturn {
+
+	//
+	// Simple SProperty helper class for a vector of N components.
+	//
+	template<typename Ty>
+	class SVecNProperty : public SProperty
+	{
+		SVecNProperty() = default;
+	public:
+		SVecNProperty( const std::string& rName, SPropertyType propType, const void* pGetFnp, void* pSetFnp )
+			: SProperty( rName, propType, pGetFnp, pSetFnp )
+		{
+		}
+
+		virtual ~SVecNProperty() = default;
+
+		Ty& GetProperty( SObject* pObject ) const 
+		{
+			// Read via Ty's type traits.
+			return Read<Ty>( pObject );
+		}
+
+		const Ty& GetProperty( const SObject* pObject ) const 
+		{
+			// Read via Ty's type traits.
+			return Read<Ty>( pObject );
+		}
+	};
+
+	using SVec2Property = SVecNProperty<glm::vec2>;
+	using SVec3Property = SVecNProperty<glm::vec3>;
+	using SVec4Property = SVecNProperty<glm::vec4>;
+	
+}

@@ -188,6 +188,11 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 	// 
 	// SPROPERTY()
 	// float m_spHealth = 0.0f;
+	// 
+	// SProperty's are set via the SObject's internal class.
+	// 
+	// For example: If we have a class such as Player. SProperty
+	// will use PlayerInt to get/set the property.
 	//
 	class SProperty
 	{
@@ -206,15 +211,15 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 		}
 
 		SProperty() = default;
-		~SProperty() = default;
+		virtual ~SProperty() = default;
 	
 	public:
 		template<typename CppType>
 		void SetProperty( SObject* pObject, CppType value )
 		{
-			// SPropertyFlags_ReadOnlyInEditor is only available with the editor
+			// SPropertyFlags_ReadOnlyInEditor is only available with the editor.
 #if !defined(SAT_DIST)
-			// SPropertyFlags_ReadOnlyInEditor will be defined in Ds
+			// SPropertyFlags_ReadOnlyInEditor will be defined in Dist.
 			if( IsFlagSet( SPropertyFlags_ReadOnlyInEditor ) ) 
 			{
 				// Unable to modify read only property!
@@ -304,6 +309,7 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 		const void* m_pSetPropertyFunction = nullptr;
 	};
 
+	// For backwards compatibility with older code.
 	using SPropertyEditor = SProperty;
 
 }

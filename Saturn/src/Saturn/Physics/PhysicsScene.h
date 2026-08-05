@@ -61,7 +61,7 @@ namespace Saturn {
 
 		[[nodiscard]] bool RaycastIgnoringSelf( SharedPtr<Entity> entity, const glm::vec3& rOrigin, const glm::vec3& rDirection, float maxDistance, RaycastHitResult* pOut );
 
-		void ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
+		void BuildNavMesh( RecastInputGeometryExpData& rData, AABB& rReflectiveBounds );
 
 	private:
 		void InitialiseNewBody( SharedPtr<Entity>& rEntity, RigidbodyComponent& rRigidbodyComponent );

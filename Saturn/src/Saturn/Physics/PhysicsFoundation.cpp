@@ -406,4 +406,11 @@ namespace Saturn {
 		SAT_JPH_TERMINATE_ITEM( JPH::Factory::sInstance );
 	}
 
+	const JPH::NarrowPhaseQuery& PhysicsFoundation::GetNarrowPhaseQuery() const
+	{
+		SAT_CORE_ASSERT( m_pPhysicsSystem, "GetNarrowPhaseQuery called while there is no physics system created!" );
+
+		return m_pPhysicsSystem->GetNarrowPhaseQuery();
+	}
+
 }

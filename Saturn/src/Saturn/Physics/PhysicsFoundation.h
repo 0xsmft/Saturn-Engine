@@ -183,6 +183,7 @@ namespace Saturn {
 		JPH::PhysicsSystem* GetPhysicsSystem() const { return m_pPhysicsSystem; }
 		JPH::BodyInterface* GetBodyInterface() const { return m_pBodyInterface; }
 		JPH::TempAllocator* GetTempAllocator() const { return m_pTempAllocator; }
+		const JPH::NarrowPhaseQuery& GetNarrowPhaseQuery() const;
 
 		PhysicsCooking& GetCooking() { return m_Cooking; }
 		const PhysicsCooking& GetCooking() const { return m_Cooking; }

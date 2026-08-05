@@ -49,7 +49,6 @@ namespace Saturn {
 
 	public:
 		virtual void Create( float mass ) = 0;
-		virtual void ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds ) = 0;
 
 	public:
 		// Runtime only!
@@ -73,11 +72,10 @@ namespace Saturn {
 	{
 	public:
 		BoxShape( SharedPtr<Entity> entity );
-		~BoxShape();
+		virtual ~BoxShape();
 
 	public:
 		void Create( float mass ) override;
-		void ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
 
 	public:
 		// Runtime only!
@@ -89,11 +87,10 @@ namespace Saturn {
 	{
 	public:
 		SphereShape( SharedPtr<Entity> entity );
-		~SphereShape();
+		virtual ~SphereShape();
 
 	public:
 		void Create( float mass ) override;
-		void ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
 	
 	public:
 		// Runtime only!
@@ -105,11 +102,10 @@ namespace Saturn {
 	{
 	public:
 		CapsuleShape( SharedPtr<Entity> entity );
-		~CapsuleShape();
+		virtual ~CapsuleShape();
 
 	public:
 		void Create( float mass ) override;
-		void ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
 
 	public:
 		// Runtime only!
@@ -121,19 +117,15 @@ namespace Saturn {
 	{
 	public:
 		TriangleMeshShape( SharedPtr<Entity> entity );
-		~TriangleMeshShape();
+		virtual ~TriangleMeshShape();
 
 	public:
 		// This assumes the the mesh collider has already been cooked.
 		virtual void Create( float mass ) override;
-		virtual void ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds ) override;
 
 	public:
 		virtual void SetTrigger( bool t ) { }
 		[[nodiscard]] virtual bool IsTrigger() override;
-
-	private:
-		void ExportRcScaledShaped( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds );
 	};
 
 	//
@@ -143,12 +135,11 @@ namespace Saturn {
 	{
 	public:
 		ConvexMeshShape( SharedPtr<Entity> entity );
-		~ConvexMeshShape();
+		virtual ~ConvexMeshShape();
 
 	public:
 		// This assumes the the mesh collider has already been cooked.
 		virtual void Create( float mass ) override;
-		virtual void ExportRc( RecastInputGeometryExpData& rData, AABB& rNavMeshBounds ) override;
 
 	public:
 		virtual void SetTrigger( bool t ) {}

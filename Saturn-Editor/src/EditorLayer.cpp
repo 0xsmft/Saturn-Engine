@@ -2457,11 +2457,12 @@ namespace Saturn {
 			ImGui::SameLine();
 			Filter.Draw( "##search" );
 
-			if( ImGui::BeginTable( "##FileTable", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollX | ImGuiTableFlags_NoBordersInBody, ImVec2( ImGui::GetWindowSize().x, ImGui::GetWindowSize().y * 0.85f ) ) )
+			if( ImGui::BeginTable( "##FileTable", 5, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollX | ImGuiTableFlags_NoBordersInBody, ImVec2( ImGui::GetWindowSize().x, ImGui::GetWindowSize().y * 0.85f ) ) )
 			{
 				ImGui::TableSetupColumn( "Asset Name" );
 				ImGui::TableSetupColumn( "ID" );
 				ImGui::TableSetupColumn( "Type" );
+				ImGui::TableSetupColumn( "Ref Count" );
 				ImGui::TableSetupColumn( "Find Asset", ImGuiTableColumnFlags_NoHeaderLabel );
 
 				ImGui::TableHeadersRow();
@@ -2480,9 +2481,12 @@ namespace Saturn {
 					ImGui::Text( "%" PRIu64, id );
 
 					ImGui::TableSetColumnIndex( 2 );
-					ImGui::Text( AssetTypeToString( asset->Type ).data(), false );
+					ImGui::Text( AssetTypeToString( asset->Type ).data() );
 
 					ImGui::TableSetColumnIndex( 3 );
+					ImGui::Text( "%" PRIu32, asset->GetRefCount() );
+
+					ImGui::TableSetColumnIndex( 4 );
 					ImGui::PushID( ( int ) id );
 					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), { ImGui::TableGetHeaderRowHeight(), ImGui::TableGetHeaderRowHeight() } ) )
 					{
@@ -4372,7 +4376,10 @@ namespace Saturn {
 						{
 							glm::vec3 rotationEuler = tc.GetRotationEuler();
 
-							// Normalise the angle to [-180 to 180]
+							// Normalise the angle to [-180 to 180],
+							// this stops us from adding the rotation over and over again,
+							// and avoid us having rotational values of 600 degrees when we
+							// convert this to degrees.
 							rotationEuler.x = fmodf( rotationEuler.x + glm::pi<float>(), glm::two_pi<float>() ) - glm::pi<float>();
 							rotationEuler.y = fmodf( rotationEuler.y + glm::pi<float>(), glm::two_pi<float>() ) - glm::pi<float>();
 							rotationEuler.z = fmodf( rotationEuler.z + glm::pi<float>(), glm::two_pi<float>() ) - glm::pi<float>();

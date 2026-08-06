@@ -246,7 +246,19 @@ namespace Saturn {
 		rNarrowPhaseQuery.CollectTransformedShapes( box, collector );
 
 		for( const auto& rTransformedShape : collector.mHits )
-		{
+		{			
+			// Check if the body is a sensor (trigger shape), if it is we skip.
+			auto& rBodyInterface = PhysicsFoundation::Get()->GetPhysicsSystem()->GetBodyLockInterface();
+			{
+				JPH::BodyLockRead lock( rBodyInterface, rTransformedShape.mBodyID );
+				if( lock.Succeeded() )
+				{
+					const JPH::Body& rBody = lock.GetBody();
+
+					if( rBody.IsSensor() ) continue;
+				}
+			}
+
 			// The division here is important because, we ant the vertex
 			// indices not the float indices.
 			// rData.VertexBuffer is a flat buffer of vertices

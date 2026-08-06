@@ -37,6 +37,8 @@
 #include "Saturn/Vulkan/AluraRenderer.h"
 #include "Saturn/Asset/AssetManager.h"
 
+#include "SharedGlobals.h"
+
 namespace Saturn {
 
 	void AluraLayout::Reset()
@@ -52,6 +54,8 @@ namespace Saturn {
 	AluraCanvas::AluraCanvas( const AluraCanvasSpecification& rSpecification )
 		: m_Size( rSpecification.Size ), m_Position( rSpecification.Position )
 	{
+		SAT_CORE_ASSERT( !g_AluraCanvas, "Another canvas already exists!" );
+
 		m_ActiveFont = AssetManager::Get()->GetAssetAs<AluraFont>( rSpecification.MasterFontAssetID );
 
 		// Reserve some space for fonts so assume, regular, bold, italics...
@@ -188,7 +192,7 @@ namespace Saturn {
 
 		m_Renderer->SubmitRect( posDependingLastCall, { posDependingLastCall + rSize }, rColor );
 
-		AdvanceCursor( rSize );
+		ItemSize( rSize );
 	}
 
 	void AluraCanvas::AddImage( const glm::vec2& rSize, Ref<Texture2D> image, const glm::vec4& rColor, const glm::vec2& rUV1, const glm::vec2& rUV2 )
@@ -202,7 +206,8 @@ namespace Saturn {
 			m_WantToSetItemPosition = false;
 		}
 
-		AdvanceCursor( rSize );
+		AluraRect bb( posDependingLastCall, posDependingLastCall + rSize );
+		ItemSize( bb.GetSize() );
 		
 		m_Renderer->SubmitRect( posDependingLastCall, { posDependingLastCall + rSize }, image, rColor, rUV1, rUV2 );
 	}
@@ -218,24 +223,27 @@ namespace Saturn {
 			m_WantToSetItemPosition = false;
 		}
 
-		const glm::vec2 frameThickness = glm::vec2{ 10.0f };
-		glm::vec4 frameColor = rColor;
-		
-		// Hit test on the frame
 		const bool hovered = IsMouseHoveringRect( posDependingLastCall, { posDependingLastCall + rSize } );
-		if( hovered )
-		{
-			frameColor = m_Style.Colors[ AluraColor_ButtonHovered ];
-		}
+		const glm::vec4 frameColor = hovered ? m_Style.Colors[ AluraColor_ButtonHovered ] : rColor;
 
 		// Submit frame
-		m_Renderer->SubmitRect( { posDependingLastCall - frameThickness }, { posDependingLastCall + rSize + frameThickness }, frameColor );
+		const glm::vec2 padding = m_Style.WindowPadding;
+		m_Renderer->SubmitRect( 
+			{ posDependingLastCall + padding }, 
+			{ posDependingLastCall + rSize - padding },
+			frameColor );
 
 		// Submit image
-		m_Renderer->SubmitRect( posDependingLastCall, { posDependingLastCall + rSize }, image, rColor, rUV1, rUV2 );
+		m_Renderer->SubmitRect( 
+			posDependingLastCall, 
+			{ posDependingLastCall + rSize }, 
+			image, 
+			rColor, 
+			rUV1, 
+			rUV2 );
 
 		// Move on
-		AdvanceCursor( rSize );
+		ItemSize( rSize );
 		
 		return Input::Get().MouseButtonPressed( RubyMouseButton_Left ) && hovered;
 	}
@@ -262,13 +270,13 @@ namespace Saturn {
 		m_Renderer->SubmitRectFrame( boundingBox.Min, boundingBox.Max, 1.0f, m_Style.Colors[ AluraColor_FrameBorder ] );
 		
 		// Move on.
-		AdvanceCursor( boundingBox.GetSize() );
+		ItemSize( boundingBox.GetSize() );
 	}
 
 	void AluraCanvas::AddText( const std::string& rText, const glm::vec4& rColor )
 	{
 		// Handle SetNextItemPosition
-		glm::vec2 posDependingLastCall = m_Layout.CursorPos;
+		glm::vec2 posDependingLastCall = { m_Layout.CursorPos.x, m_Layout.CursorPos.y + m_Layout.CurrLineTextBaseOffset };
 
 		if( m_WantToSetItemPosition )
 		{
@@ -280,7 +288,11 @@ namespace Saturn {
 		
 		const auto textSize = m_ActiveFont->CalcTextSize( m_Style.CurrentFontSize, rText );
 
-		AdvanceCursor( textSize );
+#if defined(SAT_ALURA_SHOW_TEXT_BB)
+		m_Renderer->SubmitRect( posDependingLastCall, { posDependingLastCall + textSize }, { 1.0f, 0.0f, 0.0f, 1.0f } );
+#endif
+
+		ItemSize( textSize );
 	}
 
 	bool AluraCanvas::AddButton( const glm::vec2& rSize, const glm::vec4& rColor )
@@ -300,7 +312,7 @@ namespace Saturn {
 		glm::vec2 size = rSize;
 		size += m_Style.WindowPadding * 2.0f;
 
-		AdvanceCursor( size );
+		ItemSize( size );
 
 		// Hit tests
 		const bool hovered = IsMouseHoveringRect( posDependingLastCall, { posDependingLastCall + size } );
@@ -327,26 +339,22 @@ namespace Saturn {
 
 		//////////////////////////////////////////////////////////////////////////
 
-		const auto textSize = m_ActiveFont->CalcTextSize( m_Style.CurrentFontSize, rText );
-		glm::vec2 size = CalcItemSize( rSize, textSize.x + m_Style.WindowPadding.x * 2.0f, textSize.y + m_Style.WindowPadding.y * 2.0f );
+		const glm::vec2 textSize = m_ActiveFont->CalcTextSize( m_Style.CurrentFontSize, rText );
+		const glm::vec2 rectSize = { textSize.x + ( m_Style.WindowPadding.x * 2.0f ), textSize.y };
 
 		// Hit tests
-		glm::vec4 buttonColor = m_Style.Colors[ AluraColor_Button ];
-		const bool hovered = IsMouseHoveringRect( posDependingLastCall, { posDependingLastCall + size } );
-		if( hovered )
-		{
-			buttonColor = m_Style.Colors[ AluraColor_ButtonHovered ];
-		}
+		const bool hovered = IsMouseHoveringRect( posDependingLastCall, { posDependingLastCall + rectSize } );
+		glm::vec4 buttonColor = hovered ? m_Style.Colors[ AluraColor_ButtonHovered ] : m_Style.Colors[ AluraColor_Button ];
 
 		// Button Rect
-		m_Renderer->SubmitRect( posDependingLastCall, { posDependingLastCall + size }, buttonColor );
+		m_Renderer->SubmitRect( posDependingLastCall, { posDependingLastCall + rectSize }, buttonColor );
 
 		// Submit Text centred inside the button.
-		const glm::vec2 position = posDependingLastCall;
-		m_Renderer->SubmitString( rText, m_ActiveFont, m_Style.CurrentFontSize, position, m_Style.Colors[ AluraColor_Text ] );
+		const glm::vec2 textPos = { posDependingLastCall.x + m_Style.WindowPadding.x, posDependingLastCall.y };
+		m_Renderer->SubmitString( rText, m_ActiveFont, m_Style.CurrentFontSize, textPos, m_Style.Colors[ AluraColor_Text ] );
 
 		// Move on
-		AdvanceCursor( size );
+		ItemSize( rectSize );
 
 		return Input::Get().MouseButtonPressed(  RubyMouseButton_Left ) && hovered;
 	}
@@ -362,7 +370,48 @@ namespace Saturn {
 			m_WantToSetItemPosition = false;
 		}
 
-		m_Renderer->SubmitCircle( posDependingLastCall + radius * 2.0f, radius, thinkness, rColor );
+		m_Renderer->SubmitCircle( posDependingLastCall, radius, thinkness, rColor );
+	}
+
+	void AluraCanvas::DrawDemo()
+	{
+		AddText( "Alura Demo" );
+		ItemSize( glm::vec2( 0.0f ) );
+
+		bool clicked = AddButton( "Click Me!!!" );
+
+		{
+			AddText( "Image button" );
+			SameLine();
+			clicked = AddImageButton( { 24, 24 }, Renderer::Get()->GetPinkTexture(), { 1.0f, 0.0f, 0.0f, 1.0f } );
+		}
+
+		{
+			AddText( "Text A" );
+			SameLine();
+			AddText( "Text B" );
+			SameLine();
+			AddText( "Text C" );
+		}
+
+		{
+			AddText( "Image" );
+			SameLine();
+			AddImage( { 512, 512 }, Renderer::Get()->GetPinkTexture() );
+			SameLine();
+			AddImage( { 24, 24 }, Renderer::Get()->GetPinkTexture() );
+
+		}
+
+		{
+			AddRect( { 24, 24 } );
+			SameLine();
+			AddImage( { 24, 24 }, Renderer::Get()->GetPinkTexture() );
+			SameLine();
+			AddImage( { 24, 24 }, Renderer::Get()->GetPinkTexture() );
+			SameLine();
+			AddProgressBar( 0.5f, { 24.0f, 24.0f } );
+		}
 	}
 
 	void AluraCanvas::SetNextItemPosition( const glm::vec2& rPosition )
@@ -450,7 +499,7 @@ namespace Saturn {
 	}
 #endif
 
-	void AluraCanvas::AdvanceCursor( const glm::vec2& rSize )
+	void AluraCanvas::ItemSize( const glm::vec2& rSize, float textBaselineY )
 	{
 		//
 		// TODO: Y layout only!
@@ -458,15 +507,23 @@ namespace Saturn {
 		//
 		// Adding support for X layout would be very simple, we'd just need to check if out current layout type is horizontal and if so move along the X coord instead of the Y
 		//
-		const float offsetInlineWithBaselineY = glm::max( 0.0f, m_Layout.CurrLineTextBaseOffset );
+		const float offsetInlineWithBaselineY = ( textBaselineY >= 0.0f ) ? glm::max( 0.0f, m_Layout.CurrLineTextBaseOffset - textBaselineY ) : 0.0f;
 		const float lineY = m_Layout.IsSameLine ? m_Layout.CursorPosPrevLine.y : m_Layout.CursorPos.y;
 		const float lineHeight = glm::max( m_Layout.CurrLineSize.y, m_Layout.CursorPos.y - lineY + rSize.y + offsetInlineWithBaselineY );
+
+#if defined(SAT_ALURA_SHOW_TEXT_BB)
+		m_Renderer->SubmitRect( m_Layout.CursorPos, { m_Layout.CursorPos + 10.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } );
+#endif
 
 		m_Layout.CursorPosPrevLine.x = m_Layout.CursorPos.x + rSize.x;
 		m_Layout.CursorPosPrevLine.y = lineY;
 		m_Layout.CursorPos.x = glm::trunc( m_Layout.CurrentIndent );
 		m_Layout.CursorPos.y = glm::trunc( lineY + lineHeight + m_Style.ItemSpacing.y );
 		m_Layout.IsSameLine = false;
+
+#if defined(SAT_ALURA_SHOW_TEXT_BB)
+		m_Renderer->SubmitRect( m_Layout.CursorPos, { m_Layout.CursorPos + 10.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } );
+#endif
 	}
 	
 	bool AluraCanvas::IsMouseHoveringRect( const glm::vec2& rMin, const glm::vec2& rMax ) const

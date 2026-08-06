@@ -28,14 +28,12 @@
 
 #pragma once
 
-#include "AluraElement.h"
 #include "AluraStyle.h"
 #include "AluraFont.h"
 #include "AluraDrawer.h"
 
 #include "Saturn/Core/Base.h"
 #include "Saturn/Core/UUID.h"
-#include "Saturn/Core/Ruby/RubyEventType.h"
 
 #include <glm/glm.hpp>
 #include <stack>
@@ -104,6 +102,9 @@ namespace Saturn {
 	// 0,0 will be the top-left of the canvas even if the the canvas is moved.
 	// 
 	// Y+ == down
+	// 
+	// Only one AluraCanvas can exist and at a time, an attempt to create a new canvas while there is already an
+	// existing one will result in an assert.
 	//
 	class AluraCanvas : public RefTarget
 	{
@@ -151,6 +152,8 @@ namespace Saturn {
 		[[nodiscard]] bool AddButton( const std::string& rText, const glm::vec2& rSize = glm::zero<glm::vec2>() );
 
 		void AddCircle( float radius, float thinkness = 1.0f, bool filled = false, const glm::vec4& rColor = glm::one<glm::vec4>() );
+
+		void DrawDemo();
 
 	public:
 		// Widget control, style control and hit testing
@@ -203,7 +206,7 @@ namespace Saturn {
 		}
 
 	private:
-		void AdvanceCursor( const glm::vec2& rSize );
+		void ItemSize( const glm::vec2& rSize, float textBaselineY = -1.0f );
 		bool IsMouseHoveringRect( const glm::vec2& rMin, const glm::vec2& rMax ) const;
 		
 		glm::vec2 CalcItemSize( glm::vec2 usrSize, float w, float h );

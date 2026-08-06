@@ -29,6 +29,7 @@
 #pragma once
 
 #include "Saturn/Vulkan/Material.h"
+#include "Saturn/Asset/TextureSourceAsset.h"
 
 #include "Asset.h"
 
@@ -65,16 +66,19 @@ namespace Saturn {
 		MaterialAsset( Ref<Material> material );
 		virtual ~MaterialAsset();
 
+		// Asset overrides
 #if !defined(SAT_DIST)
 		virtual void OnAssetDependencyReplace( AssetID oldID, AssetID newID ) override;
 #endif
 
+		virtual bool CanPurge() const override;
+
 	public:
 		// Texture
-		Ref<Texture2D> GetAlbeoMap();
-		Ref<Texture2D> GetNormalMap();
-		Ref<Texture2D> GetMetallicMap();
-		Ref<Texture2D> GetRoughnessMap();
+		Ref<Texture2D> GetAlbeoMap() const;
+		Ref<Texture2D> GetNormalMap() const;
+		Ref<Texture2D> GetMetallicMap() const;
+		Ref<Texture2D> GetRoughnessMap() const;
 
 		// Colors and values
 		glm::vec3 GetAlbeoColor();
@@ -86,10 +90,10 @@ namespace Saturn {
 		std::string& GetMaterialName() { return m_Material->GetName(); }
 		const std::string& GetMaterialName() const { return m_Material->GetName(); }
 
-		void SetAlbeoMap( const  Ref<Texture2D> texture );
-		void SetNormalMap( const Ref<Texture2D> texture );
-		void SetMetallicMap( const Ref<Texture2D> texture );
-		void SetRoughnessMap( const Ref<Texture2D> texture );
+		void SetAlbeoMap( const Ref<TextureSourceAsset> texture );
+		void SetNormalMap( const Ref<TextureSourceAsset> texture );
+		void SetMetallicMap( const Ref<TextureSourceAsset> texture );
+		void SetRoughnessMap( const Ref<TextureSourceAsset> texture );
 
 		void SetAlbeoColor( const glm::vec3& color );
 		void UseNormalMap( bool val );
@@ -146,6 +150,23 @@ namespace Saturn {
 	private:
 		std::unordered_map< std::string, VkDescriptorImageInfo > m_TextureCache;
 		std::unordered_map< std::string, Ref<Texture2D> > m_PendingTextureChanges;
+
+		// A list of the texture source assets that we use,
+		// this is kinda a bit hacky, but the material uses
+		// Texture2Ds because it's part of the Renderer and
+		// not the Asset system, this class is part of the
+		// Asset system, so we hold a list of the assets we
+		// use to ensure. It also helps stop these assets
+		// from being purged as we'll keep the ref count
+		// above 1.
+		//
+		// Index access:
+		// 0 - Albedo
+		// 1 - Normal
+		// 2 - Metallic
+		// 3 - Roughness
+		//
+		std::array< Ref<TextureSourceAsset>, 4llu > m_TextureSourceAssets{ nullptr };
 
 		Ref<Material> m_Material = nullptr;
 

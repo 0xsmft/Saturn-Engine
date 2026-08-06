@@ -89,11 +89,11 @@ namespace Saturn {
 
 			// 1024*1024 texture and over could be timely to load on the main thread.
 			// So we'll load it on a job system thread
-			if( Width >= 1024 || Height >= 1024 )
+			if( Width >= 1024u || Height >= 1024u )
 			{
 				// Allocate dummy data.
 				uint32_t* pData = new uint32_t[ Width * Height ];
-				std::memset( pData, 0xFFFF00FF, sizeof( uint32_t ) * Width * Height );
+				std::memset( pData, 0xFFFF00FFu, sizeof( uint32_t ) * Width * Height );
 
 				m_Texture = Ref<Texture2D>::Create( GetImageFormat(), Width, Height, pData );
 

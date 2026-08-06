@@ -69,6 +69,23 @@ namespace Saturn {
 			m_Material->Copy( material );
 	}
 
+	void MaterialAsset::Default()
+	{
+		if( m_Material == nullptr )
+			return;
+
+		m_Material->SetResource( "u_AlbedoTexture", Renderer::Get()->GetPinkTexture() );
+		m_Material->SetResource( "u_NormalTexture", Renderer::Get()->GetPinkTexture() );
+		m_Material->SetResource( "u_MetallicTexture", Renderer::Get()->GetPinkTexture() );
+		m_Material->SetResource( "u_RoughnessTexture", Renderer::Get()->GetPinkTexture() );
+
+		m_Material->SetPC<glm::vec3>( "u_Materials.AlbedoColor", { 1.0f, 1.0f, 1.0f } );
+		m_Material->SetPC<float>( "u_Materials.Metalness", 1.0f );
+		m_Material->SetPC<float>( "u_Materials.Roughness", 1.0f );
+		m_Material->SetPC<float>( "u_Materials.UseNormalMap", 0.0f );
+		m_Material->SetPC<float>( "u_Materials.Emissive", 0.0f );
+	}
+
 	MaterialAsset::~MaterialAsset()
 	{
 		m_TextureCache.clear();
@@ -87,39 +104,28 @@ namespace Saturn {
 	}
 #endif
 
-	void MaterialAsset::Default()
+	bool MaterialAsset::CanPurge() const
 	{
-		if( m_Material == nullptr )
-			return;
-
-		m_Material->SetResource( "u_AlbedoTexture", Renderer::Get()->GetPinkTexture() );
-		m_Material->SetResource( "u_NormalTexture", Renderer::Get()->GetPinkTexture() );
-		m_Material->SetResource( "u_MetallicTexture", Renderer::Get()->GetPinkTexture() );
-		m_Material->SetResource( "u_RoughnessTexture", Renderer::Get()->GetPinkTexture() );
-
-		m_Material->SetPC<glm::vec3>( "u_Materials.AlbedoColor", { 1.0f, 1.0f, 1.0f } );
-		m_Material->SetPC<float>( "u_Materials.Metalness", 1.0f );
-		m_Material->SetPC<float>( "u_Materials.Roughness", 1.0f );
-		m_Material->SetPC<float>( "u_Materials.UseNormalMap", 0.0f );
-		m_Material->SetPC<float>( "u_Materials.Emissive", 0.0f );
+		// We can purge if all our textures have a ref-count of 2.
+		return true;
 	}
 
-	Saturn::Ref<Saturn::Texture2D> MaterialAsset::GetAlbeoMap()
+	Saturn::Ref<Saturn::Texture2D> MaterialAsset::GetAlbeoMap() const
 	{
 		return m_Material->GetResource( "u_AlbedoTexture" );
 	}
 
-	Saturn::Ref<Saturn::Texture2D> MaterialAsset::GetNormalMap()
+	Saturn::Ref<Saturn::Texture2D> MaterialAsset::GetNormalMap() const
 	{
 		return m_Material->GetResource( "u_NormalTexture" );
 	}
 
-	Saturn::Ref<Saturn::Texture2D> MaterialAsset::GetMetallicMap()
+	Saturn::Ref<Saturn::Texture2D> MaterialAsset::GetMetallicMap() const
 	{
 		return m_Material->GetResource( "u_MetallicTexture" );
 	}
 
-	Saturn::Ref<Saturn::Texture2D> MaterialAsset::GetRoughnessMap()
+	Saturn::Ref<Saturn::Texture2D> MaterialAsset::GetRoughnessMap() const
 	{
 		return m_Material->GetResource( "u_RoughnessTexture" );
 	}
@@ -193,6 +199,9 @@ namespace Saturn {
 			m_Material->SetResource( "u_NormalTexture", Renderer::Get()->GetPinkTexture() );
 			m_Material->SetResource( "u_MetallicTexture", Renderer::Get()->GetPinkTexture() );
 			m_Material->SetResource( "u_RoughnessTexture", Renderer::Get()->GetPinkTexture() );
+			
+			// No longer using texture source assets.
+			m_TextureSourceAssets.fill( nullptr );
 		} );
 	}
 
@@ -285,32 +294,36 @@ namespace Saturn {
 		return m_Material->Get<float>( "u_Materials.Emissive" );
 	}
 
-	void MaterialAsset::SetAlbeoMap( const Ref<Texture2D> texture )
+	void MaterialAsset::SetAlbeoMap( const Ref<TextureSourceAsset> texture )
 	{
 		MarkDirty();
 
-		m_PendingTextureChanges[ "u_AlbedoTexture" ] = texture;
+		m_PendingTextureChanges[ "u_AlbedoTexture" ] = texture->GetTexture();
+		m_TextureSourceAssets[ 0 ] = texture;
 	}
 
-	void MaterialAsset::SetNormalMap( const Ref<Texture2D> texture )
+	void MaterialAsset::SetNormalMap( const Ref<TextureSourceAsset> texture )
 	{
 		MarkDirty();
 
-		m_PendingTextureChanges[ "u_NormalTexture" ] = texture;
+		m_PendingTextureChanges[ "u_NormalTexture" ] = texture->GetTexture();
+		m_TextureSourceAssets[ 1 ] = texture;
 	}
 
-	void MaterialAsset::SetMetallicMap( const Ref<Texture2D> texture )
+	void MaterialAsset::SetMetallicMap( const Ref<TextureSourceAsset> texture )
 	{
 		MarkDirty();
 
-		m_PendingTextureChanges[ "u_MetallicTexture" ] = texture;
+		m_PendingTextureChanges[ "u_MetallicTexture" ] = texture->GetTexture();
+		m_TextureSourceAssets[ 2 ] = texture;
 	}
 
-	void MaterialAsset::SetRoughnessMap( const Ref<Texture2D> texture )
+	void MaterialAsset::SetRoughnessMap( const Ref<TextureSourceAsset> texture )
 	{
 		MarkDirty();
 
-		m_PendingTextureChanges[ "u_RoughnessTexture" ] = texture;
+		m_PendingTextureChanges[ "u_RoughnessTexture" ] = texture->GetTexture();
+		m_TextureSourceAssets[ 3 ] = texture;
 	}
 
 	void MaterialAsset::ForceUpdate()
@@ -335,6 +348,7 @@ namespace Saturn {
 		if( AssetID == 0 )
 		{
 			m_PendingTextureChanges[ "u_AlbedoTexture" ] = Renderer::Get()->GetPinkTexture();
+			m_TextureSourceAssets[ 0 ] = nullptr;
 		}
 		else
 		{
@@ -348,11 +362,13 @@ namespace Saturn {
 		if( AssetID == 0 )
 		{
 			m_PendingTextureChanges[ "u_NormalTexture" ] = Renderer::Get()->GetPinkTexture();
+			m_TextureSourceAssets[ 1 ] = nullptr;
 		}
 		else
 		{
 			Ref<TextureSourceAsset> sourceAsset = AssetManager::Get()->GetAssetAs<TextureSourceAsset>( AssetID );
 			m_PendingTextureChanges[ "u_NormalTexture" ] = sourceAsset->GetTexture();
+			m_TextureSourceAssets[ 1 ] = sourceAsset;
 		}
 	}
 
@@ -361,11 +377,13 @@ namespace Saturn {
 		if( AssetID == 0 )
 		{
 			m_PendingTextureChanges[ "u_MetallicTexture" ] = Renderer::Get()->GetPinkTexture();
+			m_TextureSourceAssets[ 2 ] = nullptr;
 		}
 		else
 		{
 			Ref<TextureSourceAsset> sourceAsset = AssetManager::Get()->GetAssetAs<TextureSourceAsset>( AssetID );
 			m_PendingTextureChanges[ "u_MetallicTexture" ] = sourceAsset->GetTexture();
+			m_TextureSourceAssets[ 2 ] = sourceAsset;
 		}
 	}
 
@@ -374,12 +392,13 @@ namespace Saturn {
 		if( AssetID == 0 )
 		{
 			m_PendingTextureChanges[ "u_RoughnessTexture" ] = Renderer::Get()->GetPinkTexture();
+			m_TextureSourceAssets[ 3 ] = nullptr;
 		}
 		else
 		{
 			Ref<TextureSourceAsset> sourceAsset = AssetManager::Get()->GetAssetAs<TextureSourceAsset>( AssetID );
-
 			m_PendingTextureChanges[ "u_RoughnessTexture" ] = sourceAsset->GetTexture();
+			m_TextureSourceAssets[ 3 ] = sourceAsset;
 		}
 	}
 

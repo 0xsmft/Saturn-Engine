@@ -1495,6 +1495,7 @@ namespace Saturn {
 			return;
 		}
 #endif
+		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
 
 		// Set UB Data.
 		const glm::mat4 trans = glm::rotate( glm::mat4( 1.0f ), glm::radians( 90.0f ), glm::vec3( 1.0f, 0.0f, 0.0f ) ) * glm::scale( glm::mat4( 1.0f ), glm::vec3( 16.0f ) );
@@ -1506,12 +1507,12 @@ namespace Saturn {
 		GridMatricesObject.Res = 0.025f;
 		GridMatricesObject.Scale = 16.025f;
 
-		m_RendererData.GridMaterial->UploadDataToUB( 0, &GridMatricesObject, sizeof( GridMatricesObject ) );
+		m_RendererData.GridMaterials[ frame ]->UploadDataToUB( 0u, &GridMatricesObject, sizeof( UBGridMatrices ) );
 
 		Renderer::Get()->SubmitFullscreenQuad(
 			m_RendererData.CommandBuffer,
 			m_RendererData.GridPipeline, 
-			m_RendererData.GridMaterial, 
+			m_RendererData.GridMaterials[ frame ], 
 			m_RendererData.QuadIndexBuffer, m_RendererData.QuadVertexBuffer 
 		);
 	}
@@ -1729,7 +1730,10 @@ namespace Saturn {
 		{
 			m_RendererData.GridShader = ShaderLibrary::Get().FindOrLoad( "Grid", "content/shaders/Grid.glsl" );
 		
-			m_RendererData.GridMaterial = Ref<Material>::Create( m_RendererData.GridShader, "Grid" );
+			for( auto i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
+			{
+				m_RendererData.GridMaterials[ i ] = Ref<Material>::Create( m_RendererData.GridShader, "Grid" );
+			}
 		}
 
 		if( m_RendererData.GridPipeline )

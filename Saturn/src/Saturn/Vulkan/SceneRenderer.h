@@ -369,7 +369,7 @@ namespace Saturn {
 
 		// GRID
 		Ref<Pipeline> GridPipeline;
-		Ref<Material> GridMaterial;
+		std::array<Ref<Material>, MAX_FRAMES_IN_FLIGHT> GridMaterials;
 
 		// SKYBOX
 		EnvironmentMap SceneEnvironment;

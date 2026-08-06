@@ -460,7 +460,7 @@ namespace Saturn {
 
 		Buffer imageData;
 		RawSerialisation::ReadSaturnBuffer( imageData, rStream );
-		m_TextureAtlas = Ref<Texture2D>::Create( ImageFormat::RGBA32F, width, height, imageData.Data );
+		m_TextureAtlas = Ref<Texture2D>::Create( ImageFormat::RGBA32F, width, height, imageData.Data, false, AddressingMode::Repeat, TextureLoadFlags_NoMips );
 		imageData.Free();
 	}
 
@@ -473,34 +473,28 @@ namespace Saturn {
 
 	glm::vec2 AluraFont::CalcTextSize( float fontSize, const std::string& rText )
 	{
-		if( rText.empty() ) return { 0.0f, 0.0f };
+		if( rText.empty() )
+			return { 0.0f, 0.0f };
 
-		const float scale = fontSize / 1.0F;
+		const auto& metrics = m_AluraFontData.GetMetrics();
 
-		float minX = FLT_MAX, maxX = -FLT_MAX;
-		float minY = FLT_MAX, maxY = -FLT_MAX;
+		const float scale = fontSize / metrics.EmSize;
 
-		float cursorX = 0.0f;
+		float width = 0.0f;
+
 		for( char character : rText )
 		{
-			const auto glyph = m_AluraFontData.GetGlyph( character );
-			if( !glyph ) continue;
+			auto glyph = m_AluraFontData.GetGlyph( character );
+			if( !glyph )
+				continue;
 
-			float pl, pb, pr, pt;
-			glyph->GetQuadPlaneBounds( pl, pb, pr, pt );
-
-			// Horizontal bounds.
-			minX = glm::min( minX, cursorX + pl );
-			maxX = glm::max( maxX, cursorX + pr );
-
-			// Vertical bounds.
-			minY = glm::min( minY, pb );
-			maxY = glm::max( maxY, pt );
-
-			cursorX += glyph->GetAdvance();
+			width += glyph->GetAdvance() * scale;
 		}
 
-		return { ( maxX - minX ) * scale, ( maxY - minY ) * scale };
+		const float height =
+			( metrics.AscenderY - metrics.DescenderY ) * scale;
+
+		return { width, height };
 	}
 
 }

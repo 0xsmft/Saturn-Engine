@@ -40,7 +40,7 @@
   - Instanced Rendering
 
 - Editor
-  - Node Editors for Materials, Sounds, Animation and Behaviour Trees.
+  - Node Editors for Materials, Sounds, Animation Graphs and Behaviour Trees.
   - Undo/Redo tracking
   - Asset Browser
   - World outliner panel
@@ -52,13 +52,13 @@
 - Engine
   - AI Pathfinding and Navmesh generation using [Recast](https://github.com/recastnavigation/recastnavigation/tree/main)
   - Behaviour Trees (Node Editor and Custom Tasks via C++)
-  - C++ Scripting, using an Unreal-like `UClass` and `UObject` reflection system with a Custom Build Tool.
+  - C++ Scripting, using an Unreal-like `UClass` and `UObject` reflection system with a Custom Build Tool, with support for SProperties. 
   - Physics System via [JoltPhysics](https://github.com/jrouwe/JoltPhysics)
   - Distribution i.e. shipping the game as a standalone executable via our Asset Bundle system
-  - Audio System with a SoundGraph
-  - Game UI system (Alura)
+  - Audio System via [MiniAudio](https://miniaud.io/)
+  - Game UI system (called Alura)
   - Job system
-  - ECS
+  - ECS via [EnTT](https://github.com/skypjack/entt)
   - Keybindings
   - Online subsystem (Steamworks API)
   - Texture streaming

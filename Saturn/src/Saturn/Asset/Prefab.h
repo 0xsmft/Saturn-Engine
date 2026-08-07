@@ -80,6 +80,10 @@ namespace Saturn {
 		void SerialisePrefab( std::ofstream& rStream );
 		void DeserialisePrefab( std::istream& rStream );
 
+	public:
+		// ~Asset
+		virtual bool CanPurge() const override { return false; }
+
 	private:
 		SharedPtr<Entity> CreateFromEntity( SharedPtr<Entity> srcEntity );
 		SharedPtr<Entity> CreateChildren( const SharedPtr<Entity>& parent, Ref<Scene> Scene );

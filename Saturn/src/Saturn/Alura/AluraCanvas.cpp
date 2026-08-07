@@ -495,6 +495,7 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 	void AluraCanvas::EdClearCanvas()
 	{
+		m_Layout.Reset();
 		m_Renderer->EdClearCommands();
 	}
 #endif

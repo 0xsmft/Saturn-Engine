@@ -276,7 +276,8 @@ namespace Saturn {
 	void AluraCanvas::AddText( const std::string& rText, const glm::vec4& rColor )
 	{
 		// Handle SetNextItemPosition
-		glm::vec2 posDependingLastCall = { m_Layout.CursorPos.x, m_Layout.CursorPos.y + m_Layout.CurrLineTextBaseOffset };
+		glm::vec2 posDependingLastCall = glm::vec2{ m_Layout.CursorPos.x, m_Layout.CursorPos.y } + m_Style.WindowPadding;
+		posDependingLastCall.y += m_Style.WindowPadding.y;
 
 		if( m_WantToSetItemPosition )
 		{

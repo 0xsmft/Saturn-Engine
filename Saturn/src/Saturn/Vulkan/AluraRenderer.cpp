@@ -400,18 +400,31 @@ namespace Saturn {
 		SubmitRect( { rMax.x - thickness, rMin.y + thickness }, { rMax.x, rMax.y - thickness }, rColor );
 	}
 
-	void AluraRenderer::SubmitString( const std::string& rText, Ref<AluraFont> font, float fontSizePx, const glm::vec2& rCursorPos, const glm::vec4& rColor )
+	void AluraRenderer::SubmitString( 
+		const std::string& rText, 
+		const Ref<AluraFont> font,
+		const float fontSizePx,
+		const glm::vec2& rStartingPosition, 
+		const glm::vec4& rColor )
+	{
+		glm::mat4 scale = glm::scale( glm::mat4( 1.0f ), glm::vec3( fontSizePx ) );
+		glm::mat4 ts = glm::translate( glm::mat4( 1.0f ), glm::vec3( rStartingPosition, 0.0f ) ) * scale;
+		SubmitString( rText, font, ts, rColor );
+	}
+
+	void AluraRenderer::SubmitString( 
+		const std::string& rText, 
+		const Ref<AluraFont> font,
+		const glm::mat4& rTransform, 
+		const glm::vec4& rColor )
 	{
 		auto& rFontGeo = font->GetFontData();
 		const auto& rMetrics = font->GetFontData().GetMetrics();
 
+		const double fsScale = 1 / ( rMetrics.AscenderY - rMetrics.DescenderY );
+
 		double x = 0.0;
-
-		// One EM is equivalent to 16px, so 0.5 em is 8px 2 em is 24px
-		// By default most fonts use emSize = 1 (16px)
-		const double fsScale = fontSizePx / rMetrics.EmSize;
-
-		double y = fsScale * rMetrics.AscenderY;
+		double y = 0.0;
 		for( size_t i = 0; i < rText.size(); ++i )
 		{
 			const char character = rText[ i ];
@@ -446,32 +459,14 @@ namespace Saturn {
 			float atlasLeft, atlasBottom, atlasRight, atlasTop;
 			pGlyph->GetQuadAtlasBounds( atlasLeft, atlasBottom, atlasRight, atlasTop );
 
-			// NOTE: Vulkan: We have to flip the atlasTop and atlasBottom because in the Editor the UI origin is the bottom-left
-			// the reason why it's the bottom-left is because when this image gets flipped in the viewport, 
-			// the elements at the bottom-left will be at the top-left, which is correct 
-			// as the real origin is actually at the top-left.
 			glm::vec2 texCoordMin( atlasLeft, atlasTop );
 			glm::vec2 texCoordMax( atlasRight, atlasBottom );
 
-			float planeLeft, planeBottom, planeRight, planeTop;
-			// Get plane bounds (offsets/bearings)
-			pGlyph->GetQuadPlaneBounds( planeLeft, planeBottom, planeRight, planeTop );
+			float pl, pb, pr, pt;
+			pGlyph->GetQuadPlaneBounds( pl, pb, pr, pt );
 
-			/*
-			planeLeft *= fsScale;
-			planeBottom *= fsScale;
-			planeRight *= fsScale;
-			planeTop *= fsScale;
-
-			planeLeft += x;
-			planeBottom -= y;
-			planeRight += x;
-			planeTop -= y;
-			*/
-
-			// NOTE: Vulkan: Same as above.
-			glm::vec2 quadMin( x + planeLeft * fsScale, y - planeTop * fsScale );
-			glm::vec2 quadMax( x + planeRight * fsScale, y - planeBottom * fsScale );
+			glm::vec2 quadMin( x + pl * fsScale, y - pt * fsScale );
+			glm::vec2 quadMax( x + pr * fsScale, y - pb * fsScale );
 
 			const float texelWidth = 1.0f / font->GetTexture()->Width();
 			const float texelHeight = 1.0f / font->GetTexture()->Height();
@@ -479,7 +474,7 @@ namespace Saturn {
 			texCoordMin *= glm::vec2( texelWidth, texelHeight );
 			texCoordMax *= glm::vec2( texelWidth, texelHeight );
 
-			SubmitTextGlyph( quadMin, quadMax, texCoordMin, texCoordMax, rColor, font->GetTexture(), rCursorPos );
+			SubmitTextGlyph( quadMin, quadMax, texCoordMin, texCoordMax, rColor, font->GetTexture(), rTransform );
 
 			// Next character spacing
 			if( i < rText.size() - 1 )
@@ -493,7 +488,14 @@ namespace Saturn {
 		}
 	}
 
-	void AluraRenderer::SubmitTextGlyph( const glm::vec2& rMin, const glm::vec2& rMax, const glm::vec2& rTexCoordMin, const glm::vec2& rTexCoordMax, const glm::vec4& rColor, Ref<Texture2D> atlasTexture, const glm::vec2& rCursorPos )
+	void AluraRenderer::SubmitTextGlyph( 
+		const glm::vec2& rMin, 
+		const glm::vec2& rMax, 
+		const glm::vec2& rTexCoordMin, 
+		const glm::vec2& rTexCoordMax, 
+		const glm::vec4& rColor, 
+		const Ref<Texture2D> atlasTexture, 
+		const glm::mat4& rTransform )
 	{
 		uint32_t textureID = 0u;
 		uint32_t fullTextureIndex = 0u;
@@ -515,25 +517,25 @@ namespace Saturn {
 			++m_CurrentTextureAtlasSlot;
 		}
 
-		m_pTextVertexPtr->Position = glm::vec3( rCursorPos + rMin, 0.0f );
+		m_pTextVertexPtr->Position = rTransform * glm::vec4( rMin, 0.0f, 1.0f );
 		m_pTextVertexPtr->Color = rColor;
 		m_pTextVertexPtr->TexCoord = rTexCoordMin;
 		m_pTextVertexPtr->TextureIndex = ( float ) textureID;
 		++m_pTextVertexPtr;
 		
-		m_pTextVertexPtr->Position = glm::vec3( rCursorPos + glm::vec2{ rMin.x, rMax.y }, 0.0f );
+		m_pTextVertexPtr->Position = rTransform * glm::vec4( rMin.x, rMax.y, 0.0f, 1.0f );
 		m_pTextVertexPtr->Color = rColor;
 		m_pTextVertexPtr->TexCoord = { rTexCoordMin.x, rTexCoordMax.y };
 		m_pTextVertexPtr->TextureIndex = ( float ) textureID;
 		++m_pTextVertexPtr;
 
-		m_pTextVertexPtr->Position = glm::vec3( rCursorPos + rMax, 0.0f );
+		m_pTextVertexPtr->Position = rTransform *  glm::vec4( rMax, 0.0f, 1.0f );
 		m_pTextVertexPtr->Color = rColor;
 		m_pTextVertexPtr->TexCoord = rTexCoordMax;
 		m_pTextVertexPtr->TextureIndex = ( float ) textureID;
 		++m_pTextVertexPtr;
 
-		m_pTextVertexPtr->Position = glm::vec3( rCursorPos + glm::vec2{ rMax.x, rMin.y }, 0.0f );
+		m_pTextVertexPtr->Position = rTransform * glm::vec4( rMax.x, rMin.y, 0.0f, 1.0f );
 		m_pTextVertexPtr->Color = rColor;
 		m_pTextVertexPtr->TexCoord = { rTexCoordMax.x, rTexCoordMin.y };
 		m_pTextVertexPtr->TextureIndex = ( float ) textureID;
@@ -544,7 +546,6 @@ namespace Saturn {
 
 	void AluraRenderer::SubmitCircleFilled( const glm::vec2& rPosition, float size, float thickness, const glm::vec4& rColor )
 	{
-
 	}
 
 	void AluraRenderer::SubmitCircle( const glm::vec2& rCentre, float radius, float thickness, const glm::vec4& rColor )

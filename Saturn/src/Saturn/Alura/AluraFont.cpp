@@ -60,19 +60,29 @@ namespace Saturn {
 		m_Kerning = rMap;
 	}
 
-	AluraSerialisedGlyph* AluraFontData::GetGlyph( uint32_t codepoint )
+	const AluraSerialisedGlyph* AluraFontData::GetGlyph( uint32_t codepoint ) const
 	{
 		if( auto itr = m_CodepointToGlyph.find( codepoint ); itr != m_CodepointToGlyph.end() )
 		{
-			return &m_AluraGlyphs[ itr->second ];
+			return &m_AluraGlyphs.at( itr->second );
 		}
 
 		return nullptr;
 	}
 
-	bool AluraFontData::GetAdvance( double& adv, uint32_t a, uint32_t b )
+	AluraSerialisedGlyph* AluraFontData::GetGlyph( uint32_t codepoint )
 	{
-		AluraSerialisedGlyph* pGlyph1, * pGlyph2;
+		if( auto itr = m_CodepointToGlyph.find( codepoint ); itr != m_CodepointToGlyph.end() )
+		{
+			return &m_AluraGlyphs.at( itr->second );
+		}
+
+		return nullptr;
+	}
+
+	bool AluraFontData::GetAdvance( double& adv, uint32_t a, uint32_t b ) const
+	{
+		AluraSerialisedGlyph const* pGlyph1, * pGlyph2;
 		if( ( pGlyph1 = GetGlyph( a ) ) == nullptr || ( pGlyph2 = GetGlyph( b ) ) == nullptr )
 			return false;
 

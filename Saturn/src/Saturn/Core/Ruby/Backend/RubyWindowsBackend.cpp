@@ -399,7 +399,7 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 				::SetCapture( Handle );
 
 			pThis->GetParent()->IntrnlSetMouseState( btn );
-			pThis->GetParent()->DispatchEvent<RubyMouseEvent>( EventType::MousePressed, ( int ) btn );
+			pThis->GetParent()->DispatchEvent<RubyMouseEvent>( EventType::MousePressed, btn );
 		} return 0;
 
 		case WM_XBUTTONDOWN:
@@ -410,7 +410,7 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 				::SetCapture( Handle );
 
 			pThis->GetParent()->IntrnlSetMouseState( xbtn );
-			pThis->GetParent()->DispatchEvent<RubyMouseEvent>( EventType::MousePressed, ( int ) xbtn );
+			pThis->GetParent()->DispatchEvent<RubyMouseEvent>( EventType::MousePressed, xbtn );
 		} return 0;
 
 		case WM_LBUTTONUP:
@@ -420,7 +420,7 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 			const RubyMouseButton btn = ( Msg == WM_LBUTTONUP ? RubyMouseButton_Left : Msg == WM_RBUTTONUP ? RubyMouseButton_Right : RubyMouseButton_Middle );
 
 			pThis->GetParent()->IntrnlSetMouseState( btn, false );
-			pThis->GetParent()->DispatchEvent<RubyMouseEvent>( EventType::MouseReleased, ( int )btn );
+			pThis->GetParent()->DispatchEvent<RubyMouseEvent>( EventType::MouseReleased, btn );
 			
 			if( ::GetCapture() == Handle && pThis->GetParent()->GetCurrentMouseButtons().size() == 0 )
 				::ReleaseCapture();
@@ -431,7 +431,7 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 			const RubyMouseButton xbtn = GET_XBUTTON_WPARAM( WParam ) == XBUTTON1 ? RubyMouseButton_Extra1 : RubyMouseButton_Extra2;
 
 			pThis->GetParent()->IntrnlSetMouseState( xbtn, false );
-			pThis->GetParent()->DispatchEvent<RubyMouseEvent>( EventType::MouseReleased, ( int ) xbtn );
+			pThis->GetParent()->DispatchEvent<RubyMouseEvent>( EventType::MouseReleased, xbtn );
 
 			if( ::GetCapture() == Handle && pThis->GetParent()->GetCurrentMouseButtons().size() == 0 )
 				::ReleaseCapture();

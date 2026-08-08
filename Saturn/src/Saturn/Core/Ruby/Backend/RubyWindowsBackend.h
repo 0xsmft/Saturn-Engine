@@ -34,11 +34,14 @@
 
 namespace Saturn {
 
+	//
+	// Win32 window backend.
+	//
 	class RubyWindowsBackend : public RubyBackendBase
 	{
 	public:
 		RubyWindowsBackend( const RubyWindowSpecification& rSpec, RubyWindow* pWindow );
-		~RubyWindowsBackend();
+		virtual ~RubyWindowsBackend();
 
 		RubyWindow* GetParent() { return m_pWindow; }
 

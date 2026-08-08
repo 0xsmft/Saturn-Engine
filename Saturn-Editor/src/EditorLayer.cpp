@@ -1371,7 +1371,7 @@ namespace Saturn {
 		if( 
 			( m_RuntimeScene && m_RuntimeScene->IsRuntimeRunning() ) || 
 			!m_MouseOverViewport || 
-			rEvent.GetButton() != ( int ) RubyMouseButton_Left || 
+			rEvent.GetButton() != RubyMouseButton_Left || 
 			ImGuizmo::IsOver() )
 			return false;
 

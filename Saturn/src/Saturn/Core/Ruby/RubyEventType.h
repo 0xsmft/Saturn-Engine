@@ -151,12 +151,13 @@ namespace Saturn {
 
 	enum RubyMouseButton : uint8_t
 	{
-		RubyMouseButton_Unknown = 6,
-
-		RubyMouseButton_Left = 0,
-		RubyMouseButton_Right = 1,
+		RubyMouseButton_Left   = 0,
+		RubyMouseButton_Right  = 1,
 		RubyMouseButton_Middle = 2,
 		RubyMouseButton_Extra1 = 3,
-		RubyMouseButton_Extra2 = 4
+		RubyMouseButton_Extra2 = 4,
+
+		RubyMouseButton_Unknown = 6,
+		RubyMouseButton_EnumSize = RubyMouseButton_Unknown - 1,
 	};
 }

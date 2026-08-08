@@ -165,7 +165,7 @@ namespace Saturn {
 
 	bool PrefabViewer::OnMousePressed( RubyMouseEvent& rEvent )
 	{
-		if( !m_MouseOverViewport || rEvent.GetButton() != ( int ) RubyMouseButton_Left || ImGuizmo::IsOver() )
+		if( !m_MouseOverViewport || rEvent.GetButton() != RubyMouseButton_Left || ImGuizmo::IsOver() )
 			return false;
 
 		auto activeScene = m_Prefab->GetScene();

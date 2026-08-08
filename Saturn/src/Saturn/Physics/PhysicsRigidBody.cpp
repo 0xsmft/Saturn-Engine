@@ -177,7 +177,7 @@ namespace Saturn {
 			m_Shape->Create( rb.Mass );
 		}
 
-		// If not shape is created create a box shape and warn.
+		// If not shape is created, create a box shape and warn.
 		if( m_Shape == nullptr || m_Shape->GetShape() == nullptr )
 		{
 			if( !m_Entity->HasComponent<BoxColliderComponent>() )
@@ -388,11 +388,6 @@ namespace Saturn {
 		auto eular = glm::eulerAngles( Auxiliary::JoltQToGLMQ( PhysicsFoundation::Get()->GetBodyInterface()->GetRotation( m_BodyID ) ) );
 
 		return eular;
-	}
-
-	glm::mat4 PhysicsRigidBody::GetTransform()
-	{
-		return glm::mat4{};
 	}
 
 	glm::vec3 PhysicsRigidBody::GetLinearVelocity() const

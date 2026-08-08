@@ -94,17 +94,13 @@ namespace Saturn {
 
 		// Calculate mouse position relative to this canvas' position.
 		m_MousePosition = Input::Get().MousePosition() - m_Position;
-	
-		if( m_FirstFrameEver ) 
-		{
-			m_Layout.CursorStartingPos = m_Style.WindowPadding;
-			m_Layout.CurrentIndent = m_Style.WindowPadding.x;
 
-			m_Layout.CursorPos = m_Layout.CursorStartingPos;
-			m_Layout.CursorPosPrevLine = m_Layout.CursorStartingPos;
-
-			m_FirstFrameEver = false;
-		}
+		// Setup layout
+		m_Hot = 0llu;
+		m_Layout.CursorStartingPos = m_Style.WindowPadding;
+		m_Layout.CurrentIndent     = m_Style.WindowPadding.x;
+		m_Layout.CursorPos         = m_Layout.CursorStartingPos;
+		m_Layout.CursorPosPrevLine = m_Layout.CursorStartingPos;
 	}
 
 	void AluraCanvas::DrawAllDrawers( Timestep ts )
@@ -258,18 +254,18 @@ namespace Saturn {
 			m_WantToSetItemPosition = false;
 		}
 
-		AluraRect boundingBox( posDependingLastCall, posDependingLastCall + rSize );
+		const AluraRect bb( posDependingLastCall, posDependingLastCall + rSize );
 
 		fraction = glm::clamp( fraction, 0.0f, 1.0f );
 		
-		glm::vec2 fillMax( std::lerp( boundingBox.Min.x, boundingBox.Max.x, fraction ), boundingBox.Max.y );
+		glm::vec2 fillMax( std::lerp( bb.Min.x, bb.Max.x, fraction ), bb.Max.y );
 
-		m_Renderer->SubmitRect( boundingBox.Min, boundingBox.Max, m_Style.Colors[ AluraColor_FrameBackground ] );
-		m_Renderer->SubmitRect( boundingBox.Min, fillMax, m_Style.Colors[ AluraColor_ProgressColor ] );
-		m_Renderer->SubmitRectFrame( boundingBox.Min, boundingBox.Max, 1.0f, m_Style.Colors[ AluraColor_FrameBorder ] );
+		m_Renderer->SubmitRect( bb, m_Style.Colors[ AluraColor_FrameBackground ] );
+		m_Renderer->SubmitRect( bb.Min, fillMax, m_Style.Colors[ AluraColor_ProgressColor ] );
+		m_Renderer->SubmitRectFrame( bb.Min, bb.Max, 1.0f, m_Style.Colors[ AluraColor_FrameBorder ] );
 		
 		// Move on.
-		ItemSize( boundingBox.GetSize() );
+		ItemSize( bb.GetSize() );
 	}
 
 	void AluraCanvas::AddText( const std::string& rText, const glm::vec4& rColor )
@@ -345,9 +341,15 @@ namespace Saturn {
 		const glm::vec2 rectSize = { textSize.x + m_Style.WindowPadding.x * 2.0f, textSize.y };
 
 		const AluraRect bb( posDependingLastCall, posDependingLastCall + rectSize );
+		const UUID currentItemID = FNV1A64( rText.c_str() );
 
 		// Hit tests
 		const bool hovered = IsMouseHoveringRect( bb );
+		if( hovered )
+		{
+			m_Hot = currentItemID;
+		}
+
 		const glm::vec4 buttonColor = 
 			hovered ? m_Style.Colors[ AluraColor_ButtonHovered ] : m_Style.Colors[ AluraColor_Button ];
 
@@ -362,7 +364,17 @@ namespace Saturn {
 		// Move on
 		ItemSize( bb.GetSize() );
 
-		return Input::Get().MouseButtonPressed(  RubyMouseButton_Left ) && hovered;
+		const bool clicked = Input::Get().MouseButtonPressed( RubyMouseButton_Left ) && hovered;
+		if( clicked )
+		{
+			m_Active = currentItemID;
+		}
+		else if( hovered )
+		{
+			m_Active = false;
+		}
+
+		return clicked;
 	}
 
 	void AluraCanvas::AddCircle( float radius, float thinkness, bool filled /*= false*/, const glm::vec4& rColor /*= glm::one<glm::vec4>() */ )
@@ -406,10 +418,15 @@ namespace Saturn {
 		TextFormatted( "This is formatted sint text, value: {}", mySInt );
 
 		bool clicked = AddButton( "Yep" );
-		PopFontSize();
 
 		AddImage( { 24.0f, 24.0f }, Renderer::Get()->GetPinkTexture() );
 
+		TextFormatted( "Hot: {}", ( uint64_t ) m_Hot );
+		TextFormatted( "Active: {}", ( uint64_t ) m_Active );
+		TextFormatted( "Focused: {}", ( uint64_t ) m_Focused );
+		TextFormatted( "Selected: {}", ( uint64_t ) m_Selected );
+
+		PopFontSize();
 		PopFont();
 	}
 

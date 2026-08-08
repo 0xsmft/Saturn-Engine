@@ -99,7 +99,7 @@ namespace Saturn {
 			{
 				if( rBinding.Type != ActionBindingType::Mouse ) continue;
 
-				if( rBinding.MouseButton == ( RubyMouseButton ) rEvent.GetButton() && rBinding.State == s_EventTypeToActionType[ rEvent.Type ] )
+				if( rBinding.MouseButton == rEvent.GetButton() && rBinding.State == s_EventTypeToActionType[ rEvent.Type ] )
 				{
 					EventsToFire.push_back( rBinding );
 				}

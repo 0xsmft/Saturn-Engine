@@ -79,13 +79,13 @@ namespace Saturn {
 	{
 	public:
 		RubyMouseEvent() = default;
-		RubyMouseEvent( EventType type, int ButtonCode ) : Event( type, EC_Ruby ), m_ButtonCode( ButtonCode ) {}
+		RubyMouseEvent( EventType type, uint8_t ButtonCode ) : Event( type, EC_Ruby ), m_ButtonCode( ButtonCode ) {}
 		~RubyMouseEvent() {}
 
-		int GetButton() const { return m_ButtonCode; }
+		RubyMouseButton GetButton() const { return ( RubyMouseButton )m_ButtonCode; }
 
 	private:
-		int m_ButtonCode = 0;
+		uint8_t m_ButtonCode = 0u;
 	};
 
 	class RubyMouseScrollEvent : public Event

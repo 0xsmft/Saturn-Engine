@@ -488,7 +488,7 @@ namespace Saturn {
 
 		const auto& metrics = m_AluraFontData.GetMetrics();
 
-		const float scale = fontSize / metrics.EmSize;
+		const float scale = fontSize / ( metrics.AscenderY - metrics.DescenderY );
 
 		float width = 0.0f;
 

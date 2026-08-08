@@ -58,14 +58,29 @@ namespace Saturn {
 	{
 	public:
 		// Note when adding new styling options ditto to the serialiser as well!
+
+		// Default alpha for items.
 		float Alpha;
+
+		// Default disabled alpha for items.
 		float DisabledAlpha;
+		
+		// Spacing between the first element and the canvas.
 		glm::vec2 WindowPadding;
+
+		// Spacing between each item.
 		glm::vec2 ItemSpacing;
+
+		// Indent offset
 		float IndentSpacing;
+
+		// Border size of the canvas.
 		float WindowBorderSize;
+
+		// Current font size.
 		float CurrentFontSize;
 
+		// Fonts array
 		std::array<glm::vec4, ( std::underlying_type_t<AluraColor> )AluraColor_Count> Colors;
 
 	public:

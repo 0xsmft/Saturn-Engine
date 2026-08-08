@@ -65,4 +65,20 @@ namespace std {
 			return hash<uint64_t>()( ( uint64_t )uuid );
 		}
 	};
+
+	template<>
+	struct formatter<Saturn::UUID>
+	{
+		constexpr auto parse( format_parse_context& ctx )
+		{
+			return ctx.begin();
+		}
+
+		template<typename FormatContext>
+		auto format( Saturn::UUID result, FormatContext& ctx ) const
+		{
+			return std::format_to( ctx.out(), "{}", static_cast< uint64_t >( result ) );
+		}
+	};
+
 }

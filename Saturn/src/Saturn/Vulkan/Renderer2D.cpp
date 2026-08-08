@@ -238,6 +238,9 @@ namespace Saturn {
 		PipelineSpec.RenderPass = targetPass == nullptr ? m_TempRenderPass : targetPass;
 		PipelineSpec.CullMode = CullMode::None;
 		PipelineSpec.FrontFace = VK_FRONT_FACE_CLOCKWISE;
+		PipelineSpec.PolygonMode = VK_POLYGON_MODE_FILL;
+		PipelineSpec.Topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+		PipelineSpec.DepthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
 		PipelineSpec.UseDepthTest = true;
 		PipelineSpec.VertexLayout = {
 			{ ShaderDataType::Float3, "a_Position" },
@@ -926,7 +929,7 @@ namespace Saturn {
 		// By default most fonts use emSize = 1 (16px)
 		const double fsScale = 1 / rMetrics.EmSize;
 
-		double y = fsScale * rMetrics.AscenderY;
+		double y = 0.0;
 		for( size_t i = 0; i < rText.size(); ++i )
 		{
 			const char character = rText[ i ];

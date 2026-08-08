@@ -29,7 +29,6 @@
 #include "sppch.h"
 #include "AluraCanvas.h"
 
-#include "AluraRect.h"
 #include "AluraStylingProfile.h"
 
 #include "Saturn/Core/Input.h"
@@ -209,7 +208,7 @@ namespace Saturn {
 		AluraRect bb( posDependingLastCall, posDependingLastCall + rSize );
 		ItemSize( bb.GetSize() );
 		
-		m_Renderer->SubmitRect( posDependingLastCall, { posDependingLastCall + rSize }, image, rColor, rUV1, rUV2 );
+		m_Renderer->SubmitRect( bb, image, rColor, rUV1, rUV2 );
 	}
 
 	bool AluraCanvas::AddImageButton( const glm::vec2& rSize, Ref<Texture2D> image, const glm::vec4& rColor /*= glm::one<glm::vec4>()*/, const glm::vec2& rUV1 /*= { 0.0F, 1.0F }*/, const glm::vec2& rUV2 /*= { 1.0F, 0.0F } */ )
@@ -276,8 +275,7 @@ namespace Saturn {
 	void AluraCanvas::AddText( const std::string& rText, const glm::vec4& rColor )
 	{
 		// Handle SetNextItemPosition
-		glm::vec2 posDependingLastCall = glm::vec2{ m_Layout.CursorPos.x, m_Layout.CursorPos.y } + m_Style.WindowPadding;
-		posDependingLastCall.y += m_Style.WindowPadding.y;
+		glm::vec2 posDependingLastCall = m_Layout.CursorPos;
 
 		if( m_WantToSetItemPosition )
 		{
@@ -285,15 +283,16 @@ namespace Saturn {
 			m_WantToSetItemPosition = false;
 		}
 
+		const auto textSize = m_ActiveFont->CalcTextSize( m_Style.CurrentFontSize, rText );
+		AluraRect bb( posDependingLastCall, posDependingLastCall + textSize );
+		
 		m_Renderer->SubmitString( rText, m_ActiveFont, m_Style.CurrentFontSize, posDependingLastCall, rColor );
 		
-		const auto textSize = m_ActiveFont->CalcTextSize( m_Style.CurrentFontSize, rText );
-
 #if defined(SAT_ALURA_SHOW_TEXT_BB)
-		m_Renderer->SubmitRect( posDependingLastCall, { posDependingLastCall + textSize }, { 1.0f, 0.0f, 0.0f, 1.0f } );
+		m_Renderer->SubmitRect( bb, { 1.0f, 0.0f, 0.0f, 1.0f } );
 #endif
 
-		ItemSize( textSize );
+		ItemSize( bb.GetSize() );
 	}
 
 	bool AluraCanvas::AddButton( const glm::vec2& rSize, const glm::vec4& rColor )
@@ -341,21 +340,27 @@ namespace Saturn {
 		//////////////////////////////////////////////////////////////////////////
 
 		const glm::vec2 textSize = m_ActiveFont->CalcTextSize( m_Style.CurrentFontSize, rText );
-		const glm::vec2 rectSize = { textSize.x + ( m_Style.WindowPadding.x * 2.0f ), textSize.y };
+		
+		// The button rectangle, needs to accommodate the inner padding of the text in the X and Y
+		const glm::vec2 rectSize = { textSize.x + m_Style.WindowPadding.x * 2.0f, textSize.y };
+
+		const AluraRect bb( posDependingLastCall, posDependingLastCall + rectSize );
 
 		// Hit tests
-		const bool hovered = IsMouseHoveringRect( posDependingLastCall, { posDependingLastCall + rectSize } );
-		glm::vec4 buttonColor = hovered ? m_Style.Colors[ AluraColor_ButtonHovered ] : m_Style.Colors[ AluraColor_Button ];
+		const bool hovered = IsMouseHoveringRect( bb );
+		const glm::vec4 buttonColor = 
+			hovered ? m_Style.Colors[ AluraColor_ButtonHovered ] : m_Style.Colors[ AluraColor_Button ];
 
 		// Button Rect
-		m_Renderer->SubmitRect( posDependingLastCall, { posDependingLastCall + rectSize }, buttonColor );
+		m_Renderer->SubmitRect( bb, buttonColor );
 
 		// Submit Text centred inside the button.
+		// and bring it in by the padding on the X coord.
 		const glm::vec2 textPos = { posDependingLastCall.x + m_Style.WindowPadding.x, posDependingLastCall.y };
 		m_Renderer->SubmitString( rText, m_ActiveFont, m_Style.CurrentFontSize, textPos, m_Style.Colors[ AluraColor_Text ] );
 
 		// Move on
-		ItemSize( rectSize );
+		ItemSize( bb.GetSize() );
 
 		return Input::Get().MouseButtonPressed(  RubyMouseButton_Left ) && hovered;
 	}
@@ -376,43 +381,36 @@ namespace Saturn {
 
 	void AluraCanvas::DrawDemo()
 	{
-		AddText( "Alura Demo" );
-		ItemSize( glm::vec2( 0.0f ) );
+		PushFontAndSetActive( m_EditorFont );
 
-		bool clicked = AddButton( "Click Me!!!" );
+		PushFontSize( 32.0f );
+		AddText( "This is text at size 32px" );
+		PopFontSize();
 
-		{
-			AddText( "Image button" );
-			SameLine();
-			clicked = AddImageButton( { 24, 24 }, Renderer::Get()->GetPinkTexture(), { 1.0f, 0.0f, 0.0f, 1.0f } );
-		}
+		PushFontSize( 16.0f );
+		AddText( "This is text at size 16px" );
+		PopFontSize();
 
-		{
-			AddText( "Text A" );
-			SameLine();
-			AddText( "Text B" );
-			SameLine();
-			AddText( "Text C" );
-		}
+		PushFontSize( 12.0f );
+		AddText( "This is text at size 12px" );
+		PopFontSize();
 
-		{
-			AddText( "Image" );
-			SameLine();
-			AddImage( { 512, 512 }, Renderer::Get()->GetPinkTexture() );
-			SameLine();
-			AddImage( { 24, 24 }, Renderer::Get()->GetPinkTexture() );
+		constexpr float myFloat = 21.1234567f;
+		constexpr uint64_t myUInt = 21lu;
+		constexpr int64_t mySInt = -21;
 
-		}
+		PushFontSize( 32.0f );
+		TextFormatted( "This is formatted floating point text, value: {}", myFloat );
+		TextFormatted( "This is formatted floating point text w. 2 dps, value: {:.2f}", myFloat );
+		TextFormatted( "This is formatted uint text, value: {}", myUInt );
+		TextFormatted( "This is formatted sint text, value: {}", mySInt );
 
-		{
-			AddRect( { 24, 24 } );
-			SameLine();
-			AddImage( { 24, 24 }, Renderer::Get()->GetPinkTexture() );
-			SameLine();
-			AddImage( { 24, 24 }, Renderer::Get()->GetPinkTexture() );
-			SameLine();
-			AddProgressBar( 0.5f, { 24.0f, 24.0f } );
-		}
+		bool clicked = AddButton( "Yep" );
+		PopFontSize();
+
+		AddImage( { 24.0f, 24.0f }, Renderer::Get()->GetPinkTexture() );
+
+		PopFont();
 	}
 
 	void AluraCanvas::SetNextItemPosition( const glm::vec2& rPosition )
@@ -532,6 +530,11 @@ namespace Saturn {
 	{
 		AluraRect rect( rMin, rMax );
 		return rect.Contains( m_MousePosition );
+	}
+
+	bool AluraCanvas::IsMouseHoveringRect( const AluraRect& rRect ) const
+	{
+		return rRect.Contains( m_MousePosition );
 	}
 
 	// @see imgui.cpp - CalcItemSize

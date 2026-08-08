@@ -31,6 +31,7 @@
 #include "AluraStyle.h"
 #include "AluraFont.h"
 #include "AluraDrawer.h"
+#include "AluraRect.h"
 
 #include "Saturn/Core/Base.h"
 #include "Saturn/Core/UUID.h"
@@ -60,6 +61,7 @@ namespace Saturn {
 
 		glm::vec2 CurrLineSize{ 0.0f };
 		glm::vec2 PrevLineSize{ 0.0f };
+		// Baseline offset (0.0f by default on a new line, generally == style.FramePadding.y when a framed item has been added).
 		float     CurrLineTextBaseOffset{ 0.0f };
 		float     PrevLineTextBaseOffset{ 0.0f };
 		float     CurrentIndent{ 0.0f };
@@ -217,6 +219,7 @@ namespace Saturn {
 	private:
 		void ItemSize( const glm::vec2& rSize, float textBaselineY = -1.0f );
 		bool IsMouseHoveringRect( const glm::vec2& rMin, const glm::vec2& rMax ) const;
+		bool IsMouseHoveringRect( const AluraRect& rRect ) const;
 		
 		glm::vec2 CalcItemSize( glm::vec2 usrSize, float w, float h );
 

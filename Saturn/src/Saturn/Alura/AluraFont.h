@@ -116,7 +116,9 @@ namespace Saturn {
 		void SetKerning( const std::map<std::pair<int, int>, double>& rMap );
 
 		AluraSerialisedGlyph* GetGlyph( uint32_t codepoint );
-		bool GetAdvance( double& adv, uint32_t a, uint32_t b );
+		const AluraSerialisedGlyph* GetGlyph( uint32_t codepoint ) const;
+
+		bool GetAdvance( double& adv, uint32_t a, uint32_t b ) const;
 
 		void ClearData();
 

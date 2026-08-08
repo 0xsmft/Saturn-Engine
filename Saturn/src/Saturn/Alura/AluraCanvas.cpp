@@ -72,7 +72,7 @@ namespace Saturn {
 		m_EditorFont = Ref<AluraFont>::Create();
 
 		// NB: Remember this is an editor filepath!
-		m_EditorFont->Deserialise_ForAluraCanvas( "content/Templates/trebuc.saf" );
+		m_EditorFont->Deserialise_ForAluraCanvas( Passkey<AluraCanvas>(), "content/Templates/NotoSansMono-Regular.saf" );
 	}
 
 	AluraCanvas::~AluraCanvas()

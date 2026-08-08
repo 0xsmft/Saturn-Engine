@@ -145,6 +145,15 @@ namespace Saturn {
 
 		void AddText( const std::string& rText, const glm::vec4& rColor = glm::one<glm::vec4>() );
 		
+		template<typename... Args>
+		void TextFormatted( std::format_string<Args...> fmt, Args&&... rrArgs ) 
+		{
+			std::string text;
+			std::format_to( std::back_inserter( text ), fmt, std::forward<Args>( rrArgs )... );
+
+			AddText( text );
+		}
+
 		[[nodiscard]] bool AddButton( const glm::vec2& rSize, const glm::vec4& rColor = glm::one<glm::vec4>() );
 		
 		// Add a button with text.

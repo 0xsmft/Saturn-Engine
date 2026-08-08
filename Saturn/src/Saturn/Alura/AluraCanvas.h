@@ -37,7 +37,6 @@
 #include "Saturn/Core/UUID.h"
 
 #include <glm/glm.hpp>
-#include <stack>
 
 namespace Saturn {
 
@@ -185,6 +184,11 @@ namespace Saturn {
 
 		[[nodiscard]] glm::vec2 CalcTextSize( const std::string& rText );
 
+		[[nodiscard]] bool IsAnyItemHot() const      { return m_Hot != 0llu; }
+		[[nodiscard]] bool IsAnyItemActive() const   { return m_Active != 0llu; }
+		[[nodiscard]] bool IsAnyItemFocused() const  { return m_Focused != 0llu; }
+		[[nodiscard]] bool IsAnyItemSelected() const { return m_Selected != 0llu; }
+
 	public:
 #if !defined(SAT_DIST)
 		// Editor only function, clears the users drawing commands to allow us to draw on top of it.
@@ -247,6 +251,18 @@ namespace Saturn {
 		// Fallback font if active font has an issue.
 		// Also used by the editor as well if we need to draw some text.
 		Ref<AluraFont> m_EditorFont = nullptr;
+
+		// Hovered item.
+		UUID m_Hot = 0llu;
+
+		// Active item, may be come active if clicked, or if typing.
+		UUID m_Active = 0llu;
+
+		// Keyboard focus or gamepad.
+		UUID m_Focused = 0llu;
+
+		// Persistent selection.
+		UUID m_Selected = 0llu;
 
 		AluraStyle m_Style{};
 		AluraLayout m_Layout{};

@@ -174,7 +174,7 @@ namespace Saturn {
 		void Deserialise( FDependentIStream& rStream );
 		
 		// FOR USE BY ALURACANVAS ONLY!
-		void Deserialise_ForAluraCanvas( const std::filesystem::path& rPath );
+		void Deserialise_ForAluraCanvas( Passkey<class AluraCanvas> pk, const std::filesystem::path& rPath );
 
 		Ref<Texture2D> GetTexture() const { return m_TextureAtlas; }
 

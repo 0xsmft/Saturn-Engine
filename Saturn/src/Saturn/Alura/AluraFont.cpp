@@ -474,7 +474,7 @@ namespace Saturn {
 		imageData.Free();
 	}
 
-	void AluraFont::Deserialise_ForAluraCanvas( const std::filesystem::path& rPath )
+	void AluraFont::Deserialise_ForAluraCanvas( Passkey<class AluraCanvas> pk, const std::filesystem::path& rPath )
 	{
 		std::ifstream stream( rPath, std::ios::binary | std::ios::in );
 		Deserialise( stream );

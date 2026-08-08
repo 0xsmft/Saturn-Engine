@@ -58,7 +58,6 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		m_DebugRecorder.EndRecord();
 #endif
-
 		const auto view = m_Scene->GetAllEntitiesWith<RigidbodyComponent>();
 		for( auto& rEntity : view )
 		{
@@ -66,6 +65,15 @@ namespace Saturn {
 
 			delete rb.Rigidbody;
 			rb.Rigidbody = nullptr;
+		}
+
+		const auto physCharView = m_Scene->GetAllEntitiesWith<CharacterMovementComponent>();
+		for( auto& rEntity : physCharView )
+		{
+			auto& rMovementComp = rEntity->GetComponent<CharacterMovementComponent>();
+
+			delete rMovementComp.CharacterMovement;
+			rMovementComp.CharacterMovement = nullptr;
 		}
 
 		m_Scene = nullptr;

@@ -29,9 +29,6 @@
 #include "sppch.h"
 #include "PhysicsMaterialAsset.h"
 
-#include "PhysicsAuxiliary.h"
-#include "PhysicsFoundation.h"
-
 namespace Saturn {
 
 	PhysicsMaterialAsset::PhysicsMaterialAsset( float Friction, float Restitution )

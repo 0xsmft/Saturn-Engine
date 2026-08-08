@@ -64,7 +64,6 @@ namespace Saturn {
 
 		glm::vec3 GetPosition() const;
 		glm::vec3 GetRotation() const;
-		glm::mat4 GetTransform();
 
 		glm::vec3 GetLinearVelocity() const;
 

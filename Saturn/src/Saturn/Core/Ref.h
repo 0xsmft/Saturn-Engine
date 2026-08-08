@@ -49,7 +49,7 @@ namespace Saturn {
 	/*
 	* NOTE: You may see throughout the Engine that we use Ref<Ty> and SharedPtr<Ty> in the same place,
 	* The reason why is using Ref is the preferred way and should be picked over SharedPtr,
-	* SharedPtr should only be used if we know that we are going to need to use a WeakRef or if we just want to reference count non-intrusively, or we know that an object could be used over different threads (as Ref is not thread safe atm)
+	* SharedPtr should only be used if we know that we are going to need to use a WeakRef or if we just want to reference count non-intrusively.
 	*/
 
 	//////////////////////////////////////////////////////////////////////////

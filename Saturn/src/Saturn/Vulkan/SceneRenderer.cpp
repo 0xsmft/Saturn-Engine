@@ -4018,6 +4018,11 @@ namespace Saturn {
 			JumpFloodLatePass();
 		}
 
+		if( m_Renderer2D )
+		{
+			m_Renderer2D->Render();
+		}
+
 		{
 			ScopedDebugLabel label( m_RendererData.CommandBuffer, "SMAA" );
 			SMAAPass();

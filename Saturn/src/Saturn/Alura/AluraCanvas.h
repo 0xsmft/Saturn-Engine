@@ -127,6 +127,7 @@ namespace Saturn {
 		void DrawAllDrawers( Timestep ts );
 		void HandleDrawerEvents( Event& rEvent );
 		void Destroy();
+		void OnSceneChange();
 		void EndFrame();
 
 		void AddDrawer( Ref<AluraDrawer> drawer );
@@ -175,6 +176,8 @@ namespace Saturn {
 		[[nodiscard]] bool AddCheckbox( const std::string& rLabel, bool* pValue );
 		[[nodiscard]] bool AddCheckboxRight( const std::string& rLabel, bool* pValue );
 
+		void AddDummy( const glm::vec2& rSize );
+
 		void DrawDemo();
 
 	public:
@@ -185,6 +188,10 @@ namespace Saturn {
 		void Unindent( float width = 0.0f );
 
 		void AlignNextItemCenterXY( const glm::vec2& rSize );
+		void AlignNextItemCenterX( const glm::vec2& rSize );
+
+		// Add rOffset to the next item position.
+		void NudgeNextItemPosition( const glm::vec2& rOffset, bool addItemSpacing = true );
 
 		void SameLine( float offset = 0.0f, float spacing = -1.0f );
 
@@ -211,10 +218,10 @@ namespace Saturn {
 
 	public:
 		glm::vec2 GetPosition() const { return m_Position; }
-		glm::vec2 GetSize() const { return m_Size; }
+		glm::vec2 GetSize() const { return m_CanvasSize; }
 		
-		float GetWidth() const { return m_Size.x; }
-		float GetHeight() const { return m_Size.y; }
+		float GetWidth() const { return m_CanvasSize.x; }
+		float GetHeight() const { return m_CanvasSize.y; }
 
 		glm::vec2 GetCursorPosition() const { return m_Layout.CursorPos; }
 
@@ -235,7 +242,7 @@ namespace Saturn {
 
 		inline void SetSize( const glm::vec2& rSize )
 		{
-			m_Size = rSize;
+			m_CanvasSize = rSize;
 		}
 
 	private:
@@ -257,7 +264,7 @@ namespace Saturn {
 
 	private:
 		UUID m_ID;
-		glm::vec2 m_Size;
+		glm::vec2 m_CanvasSize;
 		glm::vec2 m_Position;
 
 		glm::vec2 m_PendingNextItemPosition{};

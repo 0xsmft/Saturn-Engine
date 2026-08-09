@@ -876,6 +876,11 @@ namespace Saturn {
 		m_SelectionManager->ClearSelection( g_ActiveScene, true );
 		hierarchyPanel->SetContext( nullptr );
 
+		// Let Alura release it's references to the AluraDrawers
+		// before the scene cleanup.
+		g_AluraCanvas->OnSceneChange();
+		m_AluraLayer->RelinquishControl();
+
 		m_RuntimeScene->OnRuntimeEnd();
 
 		const Ref<Asset> asset = m_AssetManager->FindAsset( id );

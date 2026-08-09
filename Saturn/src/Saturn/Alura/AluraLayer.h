@@ -52,6 +52,7 @@ namespace Saturn {
 		virtual ~AluraLayer();
 
 		[[nodiscard]] bool AluraWantsControl() const { return m_AluraWantsControl; }
+		void RelinquishControl() { m_AluraWantsControl = false; }
 
 	public:
 		virtual void OnAttach() override {}

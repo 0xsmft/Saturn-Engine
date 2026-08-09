@@ -172,6 +172,8 @@ namespace Saturn {
 
 		void AddCircle( float radius, float thinkness = 1.0f, bool filled = false, const glm::vec4& rColor = glm::one<glm::vec4>() );
 
+		[[nodiscard]] bool AddCheckbox( const std::string& rLabel, bool* pValue );
+
 		void DrawDemo();
 
 	public:
@@ -190,6 +192,8 @@ namespace Saturn {
 
 		void PushFontSize( float newSize );
 		void PopFontSize();
+
+		float GetFrameHeight() const;
 
 		[[nodiscard]] glm::vec2 CalcTextSize( const std::string& rText );
 
@@ -240,6 +244,7 @@ namespace Saturn {
 		
 		glm::vec2 CalcItemSize( glm::vec2 usrSize, float w, float h );
 
+		bool ButtonBehaviour( const AluraRect& rRect, uint64_t id, bool* pOutHovered, bool* pOutHeld );
 
 		void ResetInputStates();
 

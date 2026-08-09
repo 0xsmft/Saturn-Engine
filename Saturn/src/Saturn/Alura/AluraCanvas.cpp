@@ -206,9 +206,9 @@ namespace Saturn {
 		}
 
 		AluraRect bb( posDependingLastCall, posDependingLastCall + rSize );
-		ItemSize( bb.GetSize() );
-		
 		m_Renderer->SubmitRect( bb, image, rColor, rUV1, rUV2 );
+		
+		ItemSize( bb.GetSize() );
 	}
 
 	bool AluraCanvas::AddImageButton( const glm::vec2& rSize, Ref<Texture2D> image, const glm::vec4& rColor /*= glm::one<glm::vec4>()*/, const glm::vec2& rUV1 /*= { 0.0F, 1.0F }*/, const glm::vec2& rUV2 /*= { 1.0F, 0.0F } */ )
@@ -222,14 +222,18 @@ namespace Saturn {
 			m_WantToSetItemPosition = false;
 		}
 
-		const bool hovered = IsMouseHoveringRect( posDependingLastCall, { posDependingLastCall + rSize } );
+		const glm::vec2 padding = m_Style.WindowPadding;
+		const AluraRect bb( posDependingLastCall, posDependingLastCall + rSize + padding );
+		const UUID currentItemID = FNV1A64( "imgbtn" );
+
+		bool hovered, held;
+		bool pressed = ButtonBehaviour( bb, currentItemID, &hovered, &held );
+		
 		const glm::vec4 frameColor = hovered ? m_Style.Colors[ AluraColor_ButtonHovered ] : rColor;
 
 		// Submit frame
-		const glm::vec2 padding = m_Style.WindowPadding;
 		m_Renderer->SubmitRect( 
-			{ posDependingLastCall + padding }, 
-			{ posDependingLastCall + rSize - padding },
+			bb,
 			frameColor );
 
 		// Submit image
@@ -244,7 +248,7 @@ namespace Saturn {
 		// Move on
 		ItemSize( rSize );
 		
-		return Input::Get().MouseButtonPressed( RubyMouseButton_Left ) && hovered;
+		return pressed;
 	}
 
 	void AluraCanvas::AddProgressBar( float fraction, const glm::vec2& rSize )
@@ -341,18 +345,14 @@ namespace Saturn {
 
 		const glm::vec2 textSize = m_ActiveFont->CalcTextSize( m_Style.CurrentFontSize, rText );
 		
-		// The button rectangle, needs to accommodate the inner padding of the text in the X and Y
-		const glm::vec2 rectSize = { textSize.x + m_Style.WindowPadding.x * 2.0f, textSize.y };
+		// The button rectangle, needs to accommodate the inner spacing of the text in the X and Y
+		const glm::vec2 rectSize = { textSize.x + m_Style.ItemInnerSpacing.x * 2.0f, textSize.y + m_Style.ItemInnerSpacing.y };
 
 		const AluraRect bb( posDependingLastCall, posDependingLastCall + rectSize );
 		const UUID currentItemID = FNV1A64( rText.c_str() );
 
-		// Hit tests
-		const bool hovered = IsMouseHoveringRect( bb );
-		if( hovered )
-		{
-			m_Hot = currentItemID;
-		}
+		bool hovered, held;
+		bool pressed = ButtonBehaviour( bb, currentItemID, &hovered, &held );
 
 		const glm::vec4 buttonColor = 
 			hovered ? m_Style.Colors[ AluraColor_ButtonHovered ] : m_Style.Colors[ AluraColor_Button ];
@@ -362,23 +362,13 @@ namespace Saturn {
 
 		// Submit Text centred inside the button.
 		// and bring it in by the padding on the X coord.
-		const glm::vec2 textPos = { posDependingLastCall.x + m_Style.WindowPadding.x, posDependingLastCall.y };
+		const glm::vec2 textPos = { posDependingLastCall.x + m_Style.ItemInnerSpacing.x, posDependingLastCall.y };
 		m_Renderer->SubmitString( rText, m_ActiveFont, m_Style.CurrentFontSize, textPos, m_Style.Colors[ AluraColor_Text ] );
 
 		// Move on
 		ItemSize( bb.GetSize() );
 
-		const bool clicked = Input::Get().MouseButtonPressed( RubyMouseButton_Left ) && hovered;
-		if( clicked )
-		{
-			m_Active = currentItemID;
-		}
-		else if( hovered )
-		{
-			m_Active = false;
-		}
-
-		return clicked;
+		return pressed;
 	}
 
 	void AluraCanvas::AddCircle( float radius, float thinkness, bool filled /*= false*/, const glm::vec4& rColor /*= glm::one<glm::vec4>() */ )
@@ -393,6 +383,53 @@ namespace Saturn {
 		}
 
 		m_Renderer->SubmitCircle( posDependingLastCall, radius, thinkness, rColor );
+	}
+
+	bool AluraCanvas::AddCheckbox( const std::string& rLabel, bool* pValue )
+	{
+		SAT_CORE_ASSERT( pValue );
+
+		// Handle NextItemPosition
+		glm::vec2 posDependingLastCall = m_Layout.CursorPos;
+
+		if( m_WantToSetItemPosition )
+		{
+			posDependingLastCall = m_PendingNextItemPosition;
+			m_WantToSetItemPosition = false;
+		}
+
+		const auto offsetToBeInLineWithText = m_ActiveFont->GetStartingYCoord();
+		const auto offsetPosition = glm::vec2{ posDependingLastCall.x, posDependingLastCall.y + offsetToBeInLineWithText };
+
+		const glm::vec2 textSize = m_ActiveFont->CalcTextSize( m_Style.CurrentFontSize, rLabel );
+
+		glm::vec2 squareSize = glm::vec2( textSize.y );
+
+		AluraRect bb( offsetPosition,
+			offsetPosition + glm::vec2( squareSize.x + ( textSize.x > 0.0f ? m_Style.ItemInnerSpacing.x + textSize.x : 0.0f ), textSize.y ) );
+
+		const auto min = glm::vec2{ offsetPosition.x, offsetPosition.y };
+		const AluraRect checkBoxBB( min, min + squareSize );
+
+		bool hovered = false;
+		const bool pressed = ButtonBehaviour( checkBoxBB, FNV1A64( rLabel.c_str() ), &hovered, nullptr );
+
+		if( pressed )
+		{
+			*pValue ^= 1;
+		}
+
+		const glm::vec4 checkBoxColor = hovered ? m_Style.Colors[ AluraColor_Button ] : m_Style.Colors[ AluraColor_ButtonHovered ];
+		m_Renderer->SubmitRect( bb, glm::vec4{ 1.0f, 0.0f, 0.0f, 1.0f } );
+		
+		m_Renderer->SubmitRect( checkBoxBB, checkBoxColor );
+
+		const glm::vec2 textPos = { posDependingLastCall.x + squareSize.x + m_Style.ItemInnerSpacing.x, posDependingLastCall.y };
+		m_Renderer->SubmitString( rLabel, m_ActiveFont, m_Style.CurrentFontSize, textPos, m_Style.Colors[ AluraColor_Text ] );
+
+		ItemSize( bb.GetSize() );
+
+		return false;
 	}
 
 	void AluraCanvas::DrawDemo()
@@ -425,10 +462,20 @@ namespace Saturn {
 
 		AddImage( { 24.0f, 24.0f }, Renderer::Get()->GetPinkTexture() );
 
-		TextFormatted( "Hot: {}", ( uint64_t ) m_Hot );
-		TextFormatted( "Active: {}", ( uint64_t ) m_Active );
-		TextFormatted( "Focused: {}", ( uint64_t ) m_Focused );
-		TextFormatted( "Selected: {}", ( uint64_t ) m_Selected );
+		static bool test = false;
+		AddCheckbox( "Testing checkbox", &test );
+
+		TextFormatted( "Tests: {}", test );
+
+		TextFormatted( "Hot: {}", m_Hot );
+		TextFormatted( "Active: {}", m_Active );
+		TextFormatted( "Focused: {}", m_Focused );
+		TextFormatted( "Selected: {}", m_Selected );
+		
+		TextFormatted( "Left Mouse button state: {}", ( uint8_t ) m_MouseInputStates[ RubyMouseButton_Left ] );
+		TextFormatted( "Right Mouse button state: {}", ( uint8_t ) m_MouseInputStates[ RubyMouseButton_Right ] );
+
+		TextFormatted( "A Key state: {}", ( uint8_t ) m_KeyInputStates[ RubyKey_A ] );
 
 		PopFontSize();
 		PopFont();
@@ -504,6 +551,11 @@ namespace Saturn {
 	{
 		m_Style.CurrentFontSize = m_PushedFontSize;
 		m_PushedFontSize = 0.0f;
+	}
+
+	float AluraCanvas::GetFrameHeight() const
+	{
+		return m_Style.CurrentFontSize + m_Style.WindowPadding.y * 2.0f;
 	}
 
 	glm::vec2 AluraCanvas::CalcTextSize( const std::string& rText )
@@ -583,6 +635,34 @@ namespace Saturn {
 
 		return size;
 	}
+
+	bool AluraCanvas::ButtonBehaviour( const AluraRect& rRect, uint64_t id, bool* pOutHovered, bool* pOutHeld )
+	{
+		bool clicked = false, hovered = false, held = false;
+		hovered = IsMouseHoveringRect( rRect );
+	
+		if( hovered )
+		{
+			m_Hot = id;
+			clicked = MouseButtonPressed( RubyMouseButton_Left );
+		}
+
+		if( clicked )
+		{
+			m_Active = id;
+		}
+		
+		if( m_Active == id && MouseButtonReleased( RubyMouseButton_Left ) )
+		{
+			m_Active = 0llu;
+		}
+
+		if( pOutHovered ) *pOutHovered = hovered;
+		if( pOutHeld )	  *pOutHeld = held;
+
+		return clicked;
+	}
+
 	void AluraCanvas::ResetInputStates()
 	{
 		for( size_t i = 0llu; i < m_MouseInputStates.size(); ++i )

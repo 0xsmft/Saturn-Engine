@@ -31,6 +31,7 @@
 
 #include "Process.h"
 #include "JobSystem.h"
+#include "AuxiliaryEvents.h"
 
 #include "Ruby/RubyWindow.h"
 #include "Ruby/RubyMonitor.h"

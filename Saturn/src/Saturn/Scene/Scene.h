@@ -259,7 +259,16 @@ namespace Saturn {
 
 		void OnModifyPrefab( AssetID prefabAssetID );
 
+		// Queue a scene travel event based on the
+		// new scene ID.
 		void TravelToScene( AssetID newSceneID );
+		
+		//
+		// Travel to a new scene via a scene name.
+		// 
+		// @returns if the scene was found in the AssetManager.
+		//
+		bool TravelToScene( const std::string& rSceneName );
 
 	public:
 		void OnUpdate( Timestep ts );

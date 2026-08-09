@@ -1496,6 +1496,18 @@ namespace Saturn {
 		Application::Get()->DispatchEvent<SceneTravelEvent>( newSceneID );
 	}
 
+	bool Scene::TravelToScene( const std::string& rSceneName )
+	{
+		Ref<Asset> sceneAsset = AssetManager::Get()->FindAsset( rSceneName, AssetType::Scene );
+		if( sceneAsset )
+		{
+			TravelToScene( sceneAsset->ID );
+			return true;
+		}
+
+		return false;
+	}
+
 	bool Scene::IsPausedOrSuspended() const
 	{
 		return m_RuntimeState == RuntimeState::Suspended || m_RuntimeState == RuntimeState::Paused;

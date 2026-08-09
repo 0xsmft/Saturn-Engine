@@ -69,16 +69,40 @@ namespace Saturn {
 		void Render();
 		void EndFrame();
 
-		void SubmitRect( const glm::vec2& rMin, const glm::vec2& rMax, const glm::vec4& rColor );
-		void SubmitRectFrame( const glm::vec2& rMin, const glm::vec2& rMax, float thickness, const glm::vec4& rColor );
-		void SubmitRect( const glm::vec2& rMin, const glm::vec2& rMax, Ref<Texture2D> texture, const glm::vec4& rColor, const glm::vec2& rUV1 = { 0.0f, 1.0f }, const glm::vec2& rUV2 = { 1.0f, 1.0f } );
-	
-		void SubmitString( const std::string& rText, Ref<AluraFont> font, float fontSizePx, const glm::vec2& rCursorPos, const glm::vec4& rColor );
+		void SubmitRect( const AluraRect& rRect, const glm::vec4& rColor );
+		void SubmitRect( const AluraRect& rRect, 
+			Ref<Texture2D> texture, 
+			const glm::vec4& rColor,
+			const glm::vec2& rUV1 = { 0.0f, 1.0f }, const glm::vec2& rUV2 = { 1.0f, 1.0f } );
 
-		void SubmitTextGlyph( const glm::vec2& rMin, const glm::vec2& rMax, const glm::vec2& rTexCoordMin, const glm::vec2& rTexCoordMax, const glm::vec4& rColor, Ref<Texture2D> atlasTexture, const glm::vec2& rCursorPos );
+		void SubmitRect( const glm::vec2& rMin, const glm::vec2& rMax, const glm::vec4& rColor );
+		void SubmitRect( 
+			const glm::vec2& rMin, const glm::vec2& rMax, 
+			Ref<Texture2D> texture, 
+			const glm::vec4& rColor, 
+			const glm::vec2& rUV1 = { 0.0f, 1.0f }, const glm::vec2& rUV2 = { 1.0f, 1.0f } );
+
+		void SubmitRectFrame( const glm::vec2& rMin, const glm::vec2& rMax, float thickness, const glm::vec4& rColor );
+	
+		void SubmitString( 
+			const std::string& rText, 
+			const Ref<AluraFont> font,
+			const glm::mat4& rTransform, 
+			const glm::vec4& rColor );
+
+		void SubmitString( 
+			const std::string& rText, 
+			const Ref<AluraFont> font, 
+			const float fontSizePx, 
+			const glm::vec2& rStartingPosition,
+			const glm::vec4& rColor );
 
 		void SubmitCircleFilled( const glm::vec2& rPosition, float size, float thickness, const glm::vec4& rColor );
 		void SubmitCircle( const glm::vec2& rCentre, float radius, float thickness, const glm::vec4& rColor );
+
+		void SubmitCheckMark( const glm::vec2& rPosition, const glm::vec4& rColor, float size );
+
+		void SubmitLine( const glm::vec2& rA, const glm::vec2& rB, float thickness, const glm::vec4& rColor );
 
 #if !defined(SAT_DIST)
 		// Editor only function, clears the users drawing commands to allow us to draw on top of it.
@@ -94,6 +118,15 @@ namespace Saturn {
 		void RenderProper();
 		void InitBuffers();
 		void InitPhase2();
+
+		void SubmitTextGlyph( 
+			const glm::vec2& rMin, 
+			const glm::vec2& rMax, 
+			const glm::vec2& rTexCoordMin, 
+			const glm::vec2& rTexCoordMax, 
+			const glm::vec4& rColor, 
+			const Ref<Texture2D> atlasTexture, 
+			const glm::mat4& rTransform );
 
 	private:
 		uint32_t m_Width = 0;

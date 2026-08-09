@@ -470,7 +470,7 @@ namespace Saturn {
 
 		Buffer imageData;
 		RawSerialisation::ReadSaturnBuffer( imageData, rStream );
-		m_TextureAtlas = Ref<Texture2D>::Create( ImageFormat::RGBA32F, width, height, imageData.Data, false, AddressingMode::Repeat, TextureLoadFlags_NoMips );
+		m_TextureAtlas = Ref<Texture2D>::Create( ImageFormat::RGBA32F, width, height, imageData.Data, false, AddressingMode::ClampToEdge, TextureLoadFlags_NoMips );
 		imageData.Free();
 	}
 

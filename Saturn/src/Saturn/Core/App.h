@@ -135,7 +135,23 @@ namespace Saturn {
 
 		ApplicationSpecification& GetSpecification() { return m_Specification; }
 
+		// Push a layer onto the application layer stack.
+		// When a layer is pushed the application does NOT
+		// take ownership of the layer,
+		// you must call PopLayer before the application
+		// quits, failure to do so will result in an
+		// assert.
 		void PushLayer( Layer* pLayer );
+
+		// Pop a layer.
+		// The layer will NOT be deleted (freed)
+		// you must do that yourself because the application
+		// doesn't own layers.
+		//
+		// Calling pop layer while the application is updating 
+		// layers will result in a crash. If you want to pop
+		// a layer during the update phase, use 
+		// OnRequestRemoveApplicationLayer event.
 		void PopLayer( Layer* pLayer );
 
 		RubyWindow* GetWindow() const { return m_Window; }

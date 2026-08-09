@@ -507,4 +507,14 @@ namespace Saturn {
 		return { width, height };
 	}
 
+	float AluraFont::GetStartingYCoord() const
+	{
+		const auto& rMetrics = m_AluraFontData.GetMetrics();
+
+		const double fsScale = 1 / ( rMetrics.AscenderY - rMetrics.DescenderY );
+		const double y = fsScale * rMetrics.AscenderY;
+	
+		return static_cast< float >( y );
+	}
+
 }

@@ -71,6 +71,10 @@ namespace Saturn {
 		// Spacing between each item.
 		glm::vec2 ItemSpacing;
 
+		// The spacing between items and their inner elements
+		// e.g. button and the text inside of the button.
+		glm::vec2 ItemInnerSpacing;
+
 		// Indent offset
 		float IndentSpacing;
 
@@ -97,6 +101,7 @@ namespace Saturn {
 			DisabledAlpha = 0.5f;
 			WindowPadding = glm::vec2( 8.0f, 8.0f );
 			ItemSpacing = glm::vec2( 8.0f, 4.0f );
+			ItemInnerSpacing = glm::vec2( 4.0f, 4.0f );
 			IndentSpacing = 21.0f;
 			WindowBorderSize = 1.0f;
 			CurrentFontSize = 16.0f; // == 1 em

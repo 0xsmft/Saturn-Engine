@@ -173,6 +173,7 @@ namespace Saturn {
 		void AddCircle( float radius, float thinkness = 1.0f, bool filled = false, const glm::vec4& rColor = glm::one<glm::vec4>() );
 
 		[[nodiscard]] bool AddCheckbox( const std::string& rLabel, bool* pValue );
+		[[nodiscard]] bool AddCheckboxRight( const std::string& rLabel, bool* pValue );
 
 		void DrawDemo();
 

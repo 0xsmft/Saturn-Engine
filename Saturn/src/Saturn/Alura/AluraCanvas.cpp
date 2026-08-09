@@ -441,6 +441,62 @@ namespace Saturn {
 		return false;
 	}
 
+	bool AluraCanvas::AddCheckboxRight( const std::string& rLabel, bool* pValue )
+	{
+		SAT_CORE_ASSERT( pValue );
+
+		// Handle NextItemPosition
+		glm::vec2 posDependingLastCall = m_Layout.CursorPos;
+
+		if( m_WantToSetItemPosition )
+		{
+			posDependingLastCall = m_PendingNextItemPosition;
+			m_WantToSetItemPosition = false;
+		}
+
+		const auto offsetToBeInLineWithText = m_ActiveFont->GetStartingYCoord();
+		const auto offsetPosition = glm::vec2{ posDependingLastCall.x, posDependingLastCall.y + offsetToBeInLineWithText };
+
+		const glm::vec2 textSize = m_ActiveFont->CalcTextSize( m_Style.CurrentFontSize, rLabel );
+
+		const glm::vec2 squareSize = glm::vec2( textSize.y );
+
+		const AluraRect bb( offsetPosition,
+			offsetPosition + glm::vec2( squareSize.x + ( textSize.x > 0.0f ? m_Style.ItemInnerSpacing.x + textSize.x : 0.0f ), textSize.y ) );
+
+		const auto min = glm::vec2{ offsetPosition.x + textSize.x + m_Style.ItemInnerSpacing.x, offsetPosition.y };
+		const AluraRect checkBoxBB( min, min + squareSize );
+
+		bool hovered = false;
+		const bool pressed = ButtonBehaviour( checkBoxBB, FNV1A64( rLabel.c_str() ), &hovered, nullptr );
+
+		if( pressed )
+		{
+			*pValue ^= 1;
+		}
+
+		const glm::vec4 checkBoxColor = hovered ? m_Style.Colors[ AluraColor_Button ] : m_Style.Colors[ AluraColor_ButtonHovered ];
+
+#if defined(SAT_ALURA_SHOW_TEXT_BB)
+		m_Renderer->SubmitRect( bb, glm::vec4{ 1.0f, 0.0f, 0.0f, 1.0f } );
+#endif
+
+		const glm::vec2 textPos = { posDependingLastCall.x, posDependingLastCall.y };
+		m_Renderer->SubmitString( rLabel, m_ActiveFont, m_Style.CurrentFontSize, textPos, m_Style.Colors[ AluraColor_Text ] );
+
+		m_Renderer->SubmitRect( checkBoxBB, checkBoxColor );
+
+		if( *pValue )
+		{
+			const float pad = glm::max( 1.0f, glm::trunc( squareSize.x / 6.0f ) );
+			m_Renderer->SubmitCheckMark( checkBoxBB.Min + pad, glm::one<glm::vec4>(), squareSize.x - pad * 2.0f );
+		}
+
+		ItemSize( bb.GetSize() );
+
+		return false;
+	}
+
 	void AluraCanvas::DrawDemo()
 	{
 		PushFontAndSetActive( m_EditorFont );
@@ -473,6 +529,7 @@ namespace Saturn {
 
 		static bool test = false;
 		AddCheckbox( "Testing checkbox", &test );
+		AddCheckboxRight( "Testing checkbox RHS", &test );
 
 		TextFormatted( "Tests: {}", test );
 

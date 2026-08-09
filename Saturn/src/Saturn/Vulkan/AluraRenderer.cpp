@@ -385,6 +385,20 @@ namespace Saturn {
 		m_QuadIndexCount += 6;
 	}
 
+	void AluraRenderer::SubmitRect( const AluraRect& rRect, const glm::vec4& rColor )
+	{
+		SubmitRect( rRect.Min, rRect.Max, rColor );
+	}
+
+	void AluraRenderer::SubmitRect( 
+		const AluraRect& rRect, 
+		Ref<Texture2D> texture, 
+		const glm::vec4& rColor, 
+		const glm::vec2& rUV1 /*= { 0.0f, 1.0f }*/, const glm::vec2& rUV2 /*= { 1.0f, 1.0f } */ )
+	{
+		SubmitRect( rRect.Min, rRect.Max, texture, rColor, rUV1, rUV2 );
+	}
+
 	void AluraRenderer::SubmitRectFrame( const glm::vec2& rMin, const glm::vec2& rMax, float thickness, const glm::vec4& rColor )
 	{
 		// Top
@@ -424,7 +438,7 @@ namespace Saturn {
 		const double fsScale = 1 / ( rMetrics.AscenderY - rMetrics.DescenderY );
 
 		double x = 0.0;
-		double y = 0.0;
+		double y = fsScale * rMetrics.AscenderY;
 		for( size_t i = 0; i < rText.size(); ++i )
 		{
 			const char character = rText[ i ];
@@ -590,6 +604,94 @@ namespace Saturn {
 			m_QuadVertexCount += 4;
 			m_QuadIndexCount += 6;
 		}
+	}
+
+	void AluraRenderer::SubmitCheckMark( const glm::vec2& rPosition, const glm::vec4& rColor, float size )
+	{
+		float thickness = std::max( size / 5.0f, 1.0f );
+		size -= thickness * 0.5f;
+
+		glm::vec2 position = rPosition;
+		position += glm::vec2(
+			thickness * 0.25f,
+			thickness * 0.25f
+		);
+
+		const float third = size / 3.0f;
+		const float bx = position.x + third;
+		const float by = position.y + size - third * 0.5f;
+
+		glm::vec2 a{
+			bx - third,
+			by - third
+		};
+
+		glm::vec2 b{
+			bx,
+			by
+		};
+
+		glm::vec2 c{
+			bx + third * 2.0f,
+			by - third * 2.0f
+		};
+
+		SubmitLine( a, b, thickness, rColor );
+		SubmitLine( b, c, thickness, rColor );
+	}
+
+	void AluraRenderer::SubmitLine(
+		const glm::vec2& rA,
+		const glm::vec2& rB,
+		float thickness,
+		const glm::vec4& rColor )
+	{
+		glm::vec2 direction = rB - rA;
+		const float length = glm::length( direction );
+
+		if( length <= 0.0f )
+			return;
+
+		direction /= length;
+
+		glm::vec2 normal{
+			-direction.y,
+			 direction.x
+		};
+
+		normal *= thickness * 0.5f;
+
+		const glm::vec2 v0 = rA + normal;
+		const glm::vec2 v1 = rA - normal;
+		const glm::vec2 v2 = rB - normal;
+		const glm::vec2 v3 = rB + normal;
+
+		m_pQuadVertexPtr->Position = v0;
+		m_pQuadVertexPtr->Color = rColor;
+		m_pQuadVertexPtr->TexCoord = { 0.0f, 0.0f };
+		m_pQuadVertexPtr->TextureIndex = 0.0f;
+		++m_pQuadVertexPtr;
+
+		m_pQuadVertexPtr->Position = v1;
+		m_pQuadVertexPtr->Color = rColor;
+		m_pQuadVertexPtr->TexCoord = { 0.0f, 0.0f };
+		m_pQuadVertexPtr->TextureIndex = 0.0f;
+		++m_pQuadVertexPtr;
+
+		m_pQuadVertexPtr->Position = v2;
+		m_pQuadVertexPtr->Color = rColor;
+		m_pQuadVertexPtr->TexCoord = { 0.0f, 0.0f };
+		m_pQuadVertexPtr->TextureIndex = 0.0f;
+		++m_pQuadVertexPtr;
+
+		m_pQuadVertexPtr->Position = v3;
+		m_pQuadVertexPtr->Color = rColor;
+		m_pQuadVertexPtr->TexCoord = { 0.0f, 0.0f };
+		m_pQuadVertexPtr->TextureIndex = 0.0f;
+		++m_pQuadVertexPtr;
+
+		m_QuadVertexCount += 4;
+		m_QuadIndexCount += 6;
 	}
 
 #if !defined(SAT_DIST)

@@ -403,9 +403,9 @@ namespace Saturn {
 
 		const glm::vec2 textSize = m_ActiveFont->CalcTextSize( m_Style.CurrentFontSize, rLabel );
 
-		glm::vec2 squareSize = glm::vec2( textSize.y );
+		const glm::vec2 squareSize = glm::vec2( textSize.y );
 
-		AluraRect bb( offsetPosition,
+		const AluraRect bb( offsetPosition,
 			offsetPosition + glm::vec2( squareSize.x + ( textSize.x > 0.0f ? m_Style.ItemInnerSpacing.x + textSize.x : 0.0f ), textSize.y ) );
 
 		const auto min = glm::vec2{ offsetPosition.x, offsetPosition.y };
@@ -420,9 +420,18 @@ namespace Saturn {
 		}
 
 		const glm::vec4 checkBoxColor = hovered ? m_Style.Colors[ AluraColor_Button ] : m_Style.Colors[ AluraColor_ButtonHovered ];
+
+#if defined(SAT_ALURA_SHOW_TEXT_BB)
 		m_Renderer->SubmitRect( bb, glm::vec4{ 1.0f, 0.0f, 0.0f, 1.0f } );
-		
+#endif
+
 		m_Renderer->SubmitRect( checkBoxBB, checkBoxColor );
+
+		if( *pValue )
+		{
+			const float pad = glm::max( 1.0f, glm::trunc( squareSize.x / 6.0f ) );
+			m_Renderer->SubmitCheckMark( checkBoxBB.Min + pad, glm::one<glm::vec4>(), squareSize.x - pad * 2.0f );
+		}
 
 		const glm::vec2 textPos = { posDependingLastCall.x + squareSize.x + m_Style.ItemInnerSpacing.x, posDependingLastCall.y };
 		m_Renderer->SubmitString( rLabel, m_ActiveFont, m_Style.CurrentFontSize, textPos, m_Style.Colors[ AluraColor_Text ] );

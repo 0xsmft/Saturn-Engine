@@ -520,6 +520,16 @@ namespace Saturn {
 	}
 #endif
 
+	void AluraCanvas::UpdateMouseInputState( const RubyMouseButton btn, const AluraInputState state )
+	{
+		m_MouseInputStates[ btn ] = state;
+	}
+
+	void AluraCanvas::UpdateKeyInputState( const RubyKey btn, const AluraInputState state )
+	{
+		m_KeyInputStates[ btn ] = state;
+	}
+
 	void AluraCanvas::ItemSize( const glm::vec2& rSize, float textBaselineY )
 	{
 		//

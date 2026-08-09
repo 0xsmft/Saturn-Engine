@@ -533,10 +533,6 @@ namespace Saturn {
 			if( m_ShouldRenderCameraPreview )
 				m_CameraPreviewSceneRenderer->RenderScene();
 #endif
-
-			// Always submit Renderer2D AFTER a potential SceneRenderer has finished because we now may have new 
-			// render commands to draw after OnUpdate was called.
-			m_SceneRenderer->GetRenderer2D()->Render();
 		} );
 	}
 

@@ -51,7 +51,7 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 
 	AluraCanvas::AluraCanvas( const AluraCanvasSpecification& rSpecification )
-		: m_Size( rSpecification.Size ), m_Position( rSpecification.Position )
+		: m_CanvasSize( rSpecification.Size ), m_Position( rSpecification.Position )
 	{
 		SAT_CORE_ASSERT( !g_AluraCanvas, "Another canvas already exists!" );
 
@@ -133,6 +133,19 @@ namespace Saturn {
 		m_ActiveFont = nullptr;
 		m_EditorFont = nullptr;
 		m_Fonts.clear();
+	}
+
+	void AluraCanvas::OnSceneChange()
+	{
+		for( auto& rDrawer : m_Drawers )
+		{
+			rDrawer->OnDestroy();
+		}
+
+		m_Drawers.clear();
+
+		// Rest persistent states.
+		m_Hot = m_Active = m_Focused = m_Selected = 0llu;
 	}
 
 	void AluraCanvas::EndFrame()
@@ -318,8 +331,13 @@ namespace Saturn {
 
 		ItemSize( size );
 
+		const AluraRect bb( posDependingLastCall, posDependingLastCall + size );
+		uint64_t id = FNV1A64( "btnnoname" );
+
+		bool hovered, held;
+		bool pressed = ButtonBehaviour( bb, id, &hovered, &held );
+
 		// Hit tests
-		const bool hovered = IsMouseHoveringRect( posDependingLastCall, { posDependingLastCall + size } );
 		if( hovered )
 		{
 			color = m_Style.Colors[ AluraColor_ButtonHovered ];
@@ -327,7 +345,7 @@ namespace Saturn {
 
 		m_Renderer->SubmitRect( posDependingLastCall, { posDependingLastCall + size }, color );
 
-		return Input::Get().MouseButtonPressed( RubyMouseButton_Left ) && hovered;
+		return pressed;
 	}
 
 	bool AluraCanvas::AddButton( const std::string& rText, const glm::vec2& rSize /*= glm::zero<glm::vec2>()*/ )
@@ -497,6 +515,21 @@ namespace Saturn {
 		return false;
 	}
 
+	void AluraCanvas::AddDummy( const glm::vec2& rSize )
+	{
+		// Handle NextItemPosition
+		glm::vec2 posDependingLastCall = m_Layout.CursorPos;
+
+		if( m_WantToSetItemPosition )
+		{
+			posDependingLastCall = m_PendingNextItemPosition;
+			m_WantToSetItemPosition = false;
+		}
+
+		const AluraRect bb( posDependingLastCall, posDependingLastCall + rSize );
+		ItemSize( bb.GetSize() );
+	}
+
 	void AluraCanvas::DrawDemo()
 	{
 		PushFontAndSetActive( m_EditorFont );
@@ -522,6 +555,8 @@ namespace Saturn {
 		TextFormatted( "This is formatted floating point text w. 2 dps, value: {:.2f}", myFloat );
 		TextFormatted( "This is formatted uint text, value: {}", myUInt );
 		TextFormatted( "This is formatted sint text, value: {}", mySInt );
+
+		AddText( "Long Text:\nUhm im testing this shit okay...\npenis" );
 
 		bool clicked = AddButton( "Yep" );
 
@@ -567,10 +602,25 @@ namespace Saturn {
 
 	void AluraCanvas::AlignNextItemCenterXY( const glm::vec2& rSize )
 	{
-		glm::vec2 position = { ( m_Size.x - rSize.x ) * 0.5f, ( m_Size.y - rSize.y ) * 0.5f };
+		const glm::vec2 position = { ( m_CanvasSize.x - rSize.x ) * 0.5f, ( m_CanvasSize.y - rSize.y ) * 0.5f };
 		SetNextItemPosition( position );
 	}
 	
+	void AluraCanvas::AlignNextItemCenterX( const glm::vec2& rSize )
+	{
+		const glm::vec2 position = { ( m_CanvasSize.x - rSize.x ) * 0.5f, m_Layout.CursorPos.y };
+		SetNextItemPosition( position );
+	}
+
+	void AluraCanvas::NudgeNextItemPosition( const glm::vec2& rOffset, bool addItemSpacing )
+	{
+		m_WantToSetItemPosition = true;
+		m_PendingNextItemPosition += rOffset;
+
+		if( addItemSpacing )
+			m_PendingNextItemPosition += glm::vec2{ 0.0f, m_Style.ItemSpacing.y };
+	}
+
 	void AluraCanvas::SameLine( float offset /*= 0.0f*/, float spacing /*= -1.0f */ )
 	{
 		if( offset != 0.0f )

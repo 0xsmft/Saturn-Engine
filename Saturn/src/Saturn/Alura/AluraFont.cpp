@@ -487,19 +487,19 @@ namespace Saturn {
 			return { 0.0f, 0.0f };
 
 		const auto& metrics = m_AluraFontData.GetMetrics();
-		const float scale = fontSize / ( metrics.AscenderY - metrics.DescenderY );
+		const float scale = fontSize / static_cast<float>( metrics.AscenderY - metrics.DescenderY );
 
 		bool multipleLines = false;
 		float width = 0.0f;
 		
-		float lineCount = scale * metrics.LineHeight;
+		float lineCount = scale * static_cast<float>( metrics.LineHeight );
 		for( char character : rText )
 		{
 			const auto glyph = m_AluraFontData.GetGlyph( character );
 			if( character == '\n' )
 			{
 				multipleLines = true;
-				lineCount += scale * metrics.LineHeight;
+				lineCount += scale * static_cast<float>( metrics.LineHeight );
 				continue;
 			}
 
@@ -510,7 +510,7 @@ namespace Saturn {
 		}
 
 		const float height = multipleLines ? lineCount :
-			( metrics.AscenderY - metrics.DescenderY ) * scale;
+			static_cast<float>( metrics.AscenderY - metrics.DescenderY ) * scale;
 
 		return { width, height };
 	}

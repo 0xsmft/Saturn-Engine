@@ -51,9 +51,9 @@ namespace Saturn {
 
 		if( ( rEvent.Category & EC_Ruby ) != 0 )
 		{
-			if( 
+			if(
 				g_AluraCanvas->IsAnyItemHot() ||
-				g_AluraCanvas->IsAnyItemActive() || 
+				g_AluraCanvas->IsAnyItemActive() ||
 				g_AluraCanvas->IsAnyItemFocused() ||
 				g_AluraCanvas->IsAnyItemSelected() )
 			{

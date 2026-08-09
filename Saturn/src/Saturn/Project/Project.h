@@ -48,7 +48,15 @@ namespace Saturn {
 	struct ProjectConfig
 	{
 		std::string Name;
-		UUID StartupSceneID;
+
+		// Game startup scene.
+		UUID StartupSceneID = 0llu;
+
+		// Editor startup scene.
+		// This is only used for Editor
+		// and will not be included in distribution checking
+		// or even packaged into the AssetBundle.
+		UUID EditorStartupSceneID = 0llu;
 
 		// Path to the .sproject file
 		std::filesystem::path Path;

@@ -280,6 +280,9 @@ namespace Saturn {
 		if( m_Config.StartupSceneID == assetID )
 			m_Config.StartupSceneID = 0llu;
 
+		if( m_Config.EditorStartupSceneID == assetID )
+			m_Config.EditorStartupSceneID = 0llu;
+
 		if( m_DefaultMaterialAsset == assetID )
 			m_DefaultMaterialAsset = 0llu;
 

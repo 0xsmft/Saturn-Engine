@@ -266,7 +266,11 @@ namespace Saturn {
 		m_SceneRenderer = Ref<SceneRenderer>::Create( spec );
 
 		// Now open the startup scene
-		OpenFile( Project::GetActiveProject()->GetConfig().StartupSceneID );
+		const auto& rConfig = Project::GetActiveProject()->GetConfig();
+
+		// Try load the editor startup scene, if thats zero load the game startup scene.
+		const auto startupID = rConfig.EditorStartupSceneID == 0 ? rConfig.StartupSceneID : rConfig.EditorStartupSceneID;
+		OpenFile( startupID );
 
 		// Create camera preview scene renderer
 		// NOTE: We have to create a Renderer2D due to us rendering this scene as an Editor Scene, not really ideal.
@@ -1593,6 +1597,51 @@ namespace Saturn {
 						{
 							Ref<ContentBrowserPanel> contentBrowserPanel = m_ImGuiWindowManager->GetPanel<ContentBrowserPanel>();
 							contentBrowserPanel->BrowseToItem( target->Path, rConfig.StartupSceneID );
+						}
+					}
+
+					if( ImGui::BeginItemTooltip() )
+					{
+						ImGui::Text( "Find in Content Browser" );
+						ImGui::EndTooltip();
+					}
+				}
+			}
+			ImGui::EndHorizontal();
+
+			ImGui::BeginHorizontal( "##prj_edstrtscene" );
+			{
+				auto edStartupScene = rConfig.EditorStartupSceneID;
+				Ref<Asset> edStartupSceneAsset = m_AssetManager->FindAsset( edStartupScene );
+
+				ImGui::Text( "Editor Startup Scene:" );
+				edStartupScene == 0 ? ImGui::TextColored( ImVec4( 1.0f, 0.0f, 0.0f, 1.0f ), "None" ) : ImGui::Text( edStartupSceneAsset->Name.c_str() );
+
+				ImGui::Spring();
+
+				Auxiliary::DisabledFlag inspectDisabledFlag( m_RequestRuntime );
+
+				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), { 24.0f, 24.0f } ) )
+					s_OpenAssetFinderPopup = true;
+
+				if( Auxiliary::DrawAssetFinder( AssetType::Scene, &s_OpenAssetFinderPopup, rConfig.EditorStartupSceneID ) )
+				{
+					shouldSaveProject = true;
+				}
+
+				inspectDisabledFlag.Pop();
+
+				{
+					Auxiliary::ScopedDisabledFlag disabledFlag( rConfig.EditorStartupSceneID == 0 && !m_RequestRuntime );
+
+					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "SearchFolder" ), { 24.0f, 24.0f } ) )
+					{
+						Ref<Asset> target = m_AssetManager->FindAsset( rConfig.EditorStartupSceneID );
+
+						if( target )
+						{
+							Ref<ContentBrowserPanel> contentBrowserPanel = m_ImGuiWindowManager->GetPanel<ContentBrowserPanel>();
+							contentBrowserPanel->BrowseToItem( target->Path, rConfig.EditorStartupSceneID );
 						}
 					}
 

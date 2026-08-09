@@ -177,19 +177,16 @@ namespace Saturn {
 		// However "Terminate" is used to destroy any data in the class but will not remove it from the singleton list, it is also used because we don't own the class so we can just implicitly destroy them.
 		RenderThread::Get().RequestJoin();
 
+#if !defined( SAT_DIST )
 		m_VulkanContext->SubmitTerminateResource( [&]()
 		{
-			for ( auto& rLayer : m_Layers )
-			{
-				delete rLayer;
-			}
+			SAT_CORE_ASSERT( m_Layers.empty(), "Not all layers have been removed prior to the Application shutdown. The applicaition is not responsible for cleaning up layers it doesn't own." );
 
-#if !defined( SAT_DIST )
 			m_ImGuiLayer->OnDetach();
 			delete m_ImGuiLayer;
 			m_ImGuiLayer = nullptr;
-#endif
 		} );
+#endif
 		
 		delete m_VulkanContext;
 		delete m_Window;
@@ -245,19 +242,19 @@ namespace Saturn {
 		const auto itr = std::find( m_Layers.begin(), m_Layers.end(), pLayer );
 		if( itr != m_Layers.end() )
 		{
-			m_Layers.erase( itr );
 			pLayer->OnDetach();
+			m_Layers.erase( itr );
 		}
 	}
 
 	void Application::ProcessAllEvents()
 	{
-		// Poll all windows owned by the main thread
+		// Poll all windows owned by the main thread.
 		RubyLibrary::PollEvents();
 
 		std::scoped_lock<std::mutex> lock( m_Mutex );
 
-		// After that, process any events that queued
+		// After that, process any events that queued.
 		while( m_DeferredEventQueue.size() )
 		{
 			auto& rEvent = m_DeferredEventQueue.front();
@@ -310,6 +307,21 @@ namespace Saturn {
 
 	void Application::OnCustomEvent( Event& rEvent )
 	{
+		switch( rEvent.Type )
+		{
+			// This event is only handled by the application so
+			// we'll not pass this on.
+			case EventType::RequestRemoveLayer:
+			{
+				const auto& rRemoveLayerEvent = ( OnRequestRemoveApplicationLayer& ) rEvent;
+				PopLayer( rRemoveLayerEvent.GetLayer() );
+
+				DispatchEvent<OnRequestRemoveApplicationLayerReply, true>( rRemoveLayerEvent.GetLayer() );
+			} return;
+
+			default: break;
+		}
+
 		// Pass events to layers, this is the only place in the engine where we actually care if an event is handled or not.
 		// Process Events backwards. 
 		// This is because if we are in a game and we click a button if the first layer gets that event it might shoot in the game however we wanted to click a button not shoot.

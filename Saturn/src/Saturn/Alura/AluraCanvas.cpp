@@ -138,6 +138,10 @@ namespace Saturn {
 	void AluraCanvas::EndFrame()
 	{
 		m_FirstFrameEver = true;
+
+		// If any keys are "released" from the previous frame, we
+		// reset them.
+		ResetInputStates();
 	}
 
 	void AluraCanvas::AddDrawer( Ref<AluraDrawer> drawer )
@@ -569,6 +573,67 @@ namespace Saturn {
 
 		return size;
 	}
+	void AluraCanvas::ResetInputStates()
+	{
+		for( size_t i = 0llu; i < m_MouseInputStates.size(); ++i )
+		{
+			// Any mouse buttons that were pressed are not released.
+			// Ruby doesn't keep track of mouse buttons being held yet...
+			if( m_MouseInputStates[ i ] == AluraInputState::Pressed )
+			{
+				m_MouseInputStates[ i ] = AluraInputState::Released;
+			}
+
+			// Any keys that were released are now cleared to no-state.
+			if( m_MouseInputStates[ i ] == AluraInputState::Released )
+			{
+				m_MouseInputStates[ i ] = AluraInputState::NoState;
+			}
+		}
+
+		for( size_t i = 0llu; i < m_KeyInputStates.size(); ++i )
+		{
+			// Any keys that were pressed at the start of the frame will now be
+			// set to release, the AluraLayer will also send this event,
+			// if the key is still physically down AluraLayer will send the Held event.
+			if( m_KeyInputStates[ i ] == AluraInputState::Pressed )
+			{
+				m_KeyInputStates[ i ] = AluraInputState::Released;
+			}
+
+			// Any keys that were released are now cleared to no-state.
+			if( m_KeyInputStates[ i ] == AluraInputState::Released )
+			{
+				m_KeyInputStates[ i ] = AluraInputState::NoState;
+			}
+		}
+	}
+
+	bool AluraCanvas::MouseButtonPressed( RubyMouseButton btn )
+	{
+		return m_MouseInputStates[ btn ] == AluraInputState::Pressed;
+	}
+
+	bool AluraCanvas::MouseButtonReleased( RubyMouseButton btn )
+	{
+		return m_MouseInputStates[ btn ] == AluraInputState::Released;
+	}
+
+	bool AluraCanvas::KeyPressed( RubyMouseButton btn )
+	{
+		return m_KeyInputStates[ btn ] == AluraInputState::Pressed;
+	}
+
+	bool AluraCanvas::KeyReleased( RubyMouseButton btn )
+	{
+		return m_KeyInputStates[ btn ] == AluraInputState::Released;
+	}
+
+	bool AluraCanvas::KeyHeld( RubyMouseButton btn )
+	{
+		return m_KeyInputStates[ btn ] == AluraInputState::Held;
+	}
+
 }
 
 #include "Saturn/GameFramework/Core/EngineGenerated.h"

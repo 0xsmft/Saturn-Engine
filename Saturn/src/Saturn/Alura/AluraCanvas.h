@@ -35,6 +35,7 @@
 
 #include "Saturn/Core/Base.h"
 #include "Saturn/Core/UUID.h"
+#include "Saturn/Core/Ruby/RubyEventType.h"
 
 #include <glm/glm.hpp>
 
@@ -91,6 +92,14 @@ namespace Saturn {
 
 		// Specify the main styling profile to be used, you don't need to have a styling profile asset as Alura will automatically default the style if no profile is specified.
 		AssetID  StylingProfile = 0;
+	};
+
+	enum class AluraInputState : uint8_t
+	{
+		NoState  = 0,
+		Pressed  = 1,
+		Held	 = 2,
+		Released = 3,
 	};
 
 	//
@@ -210,6 +219,10 @@ namespace Saturn {
 		Ref<AluraFont> GetEditorFont() const { return m_EditorFont; }
 
 	public:
+		void UpdateMouseInputState( const RubyMouseButton btn, const AluraInputState state );
+		void UpdateKeyInputState( const RubyKey btn, const AluraInputState state );
+
+	public:
 		inline void SetPosition( const glm::vec2& rPosition ) 
 		{
 			m_Position = rPosition;
@@ -226,6 +239,15 @@ namespace Saturn {
 		bool IsMouseHoveringRect( const AluraRect& rRect ) const;
 		
 		glm::vec2 CalcItemSize( glm::vec2 usrSize, float w, float h );
+
+
+		void ResetInputStates();
+
+		[[nodiscard]] bool MouseButtonPressed( RubyMouseButton btn );
+		[[nodiscard]] bool MouseButtonReleased( RubyMouseButton btn );
+		[[nodiscard]] bool KeyPressed( RubyMouseButton btn );
+		[[nodiscard]] bool KeyReleased( RubyMouseButton btn );
+		[[nodiscard]] bool KeyHeld( RubyMouseButton btn );
 
 	private:
 		UUID m_ID;
@@ -245,6 +267,9 @@ namespace Saturn {
 		std::vector<Ref<AluraDrawer>> m_Drawers;
 		std::vector<Ref<AluraFont>> m_Fonts;
 		std::stack<AluraColorTemp> m_ColorStack;
+
+		std::array<AluraInputState, RubyMouseButton_EnumSize> m_MouseInputStates{ AluraInputState::NoState };
+		std::array<AluraInputState, RubyKey_EnumSize> m_KeyInputStates{ AluraInputState::NoState };
 
 		Ref<AluraFont> m_ActiveFont = nullptr;
 		

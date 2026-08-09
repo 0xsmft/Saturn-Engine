@@ -54,6 +54,7 @@ namespace Saturn {
 	class SceneTravelEvent;
 	class OnlineAPI;
 	class SandboxNodeEditorViewer;
+	class AluraLayer;
 
 	class EditorLayer : public Layer
 	{
@@ -172,6 +173,10 @@ namespace Saturn {
 
 		void HandlePrefabModification( AssetID prefabID );
 
+		void PushAluraLayer();
+		void PopAluraLayer();
+		void PopAluraLayerImmediately();
+
 	private:
 		enum MessageBoxButtons_
 		{
@@ -260,6 +265,8 @@ namespace Saturn {
 
 		Ref<GlobalUndoRedoGroup> m_GlobalUndoRedoGroup = nullptr;
 		std::unique_ptr<EntitySelectionManager> m_SelectionManager;
+
+		std::shared_ptr<AluraLayer> m_AluraLayer;
 
 		Ref<OnlineAPI> m_OnlineAPI;
 

@@ -94,6 +94,11 @@ static inline EventCategory GetStaticCategory() { return EventCategory::Category
 		SceneTravel,
 		RuntimeStateChanged,
 		SceneRendererOptionCommandEntered,
+
+		//////////////////////////////////////////////////////////////////////////
+		// Auxiliary
+		RequestRemoveLayer,
+		RequestRemoveLayerReply,
 	};
 
 	enum EventCategory

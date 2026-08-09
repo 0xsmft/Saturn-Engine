@@ -59,11 +59,12 @@
 #include <Saturn/Core/Maths.h>
 #include <Saturn/Core/EngineSettings.h>
 #include <Saturn/Core/Profiler.h>
+#include <Saturn/Core/Process.h>
+#include <Saturn/Core/VirtualFS.h>
+#include <Saturn/Core/AuxiliaryEvents.h>
 #include <Saturn/Core/Ruby/RubyWindow.h>
 #include <Saturn/Core/Ruby/RubyAuxiliary.h>
-#include <Saturn/Core/Process.h>
 #include <Saturn/Core/Renderer/RenderThread.h>
-#include <Saturn/Core/VirtualFS.h>
 #include <Saturn/Core/EnvironmentVariables.h>
 #include <Saturn/Core/Memory/SObjectAllocator.h>
 #include <Saturn/Core/AABB/Ray.h>
@@ -96,6 +97,7 @@
 #include <Saturn/Runtime/RuntimeEvents.h>
 
 #include <Saturn/Alura/AluraCanvas.h>
+#include <Saturn/Alura/AluraLayer.h>
 
 #include <Saturn/RuntimeConsole/ConsoleCommandManager.h>
 
@@ -317,6 +319,7 @@ namespace Saturn {
 
 		if( m_RuntimeScene )
 		{
+			PopAluraLayerImmediately();
 			m_RuntimeScene->OnRuntimeEnd();
 			m_RuntimeScene = nullptr;
 		}
@@ -362,7 +365,24 @@ namespace Saturn {
 		if( !Input::Get().MouseButtonPressed( RubyMouseButton_Right ) )
 			m_StartedRightClickInViewport = false;
 
-		const bool canSetCursorMode = m_RuntimeScene == nullptr ? m_AllowCameraEvents : m_RuntimeScene->GetRuntimeState() == RuntimeState::Suspended ? m_AllowCameraEvents : m_MouseOverViewport;
+		bool canSetCursorMode = m_MouseOverViewport;
+		if( m_RuntimeScene )
+		{
+			if( m_RuntimeScene->GetRuntimeState() == RuntimeState::Suspended )
+			{
+				canSetCursorMode = m_AllowCameraEvents;
+			}
+			else
+			{
+				canSetCursorMode = !m_AluraLayer->AluraWantsControl();
+			}
+		}
+		else
+		{
+			canSetCursorMode = m_AllowCameraEvents;
+		}
+
+//		const bool canSetCursorMode = m_RuntimeScene == nullptr ? m_AllowCameraEvents : m_RuntimeScene->GetRuntimeState() == RuntimeState::Suspended && !m_AluraLayer->AluraWantsControl() ? m_AllowCameraEvents : m_MouseOverViewport;
 
 		Input::Get().SetCanSetCursorMode( canSetCursorMode );
 
@@ -719,6 +739,12 @@ namespace Saturn {
 				HandlePrefabModification( rPrefabModifiedEvent.GetPrefabID() );
 			} break;
 
+			// This will work for now....
+			case EventType::RequestRemoveLayerReply:
+			{
+				m_AluraLayer.reset();
+			} break;
+
 			case EventType::NodeEditorDebugBreak:
 			{
 			} break;
@@ -968,6 +994,8 @@ namespace Saturn {
 
 		if( m_OnlineAPI )
 			m_OnlineAPI->Initialise();
+
+		PushAluraLayer();
 	}
 
 	void EditorLayer::PostInitRuntime()
@@ -989,6 +1017,8 @@ namespace Saturn {
 	void EditorLayer::EndRuntime()
 	{
 		m_ImGuiWindowManager->OnRuntimeStateChanged( RuntimeState::Ending, g_ActiveScene->GetRuntimeState() );
+
+		PopAluraLayer();
 
 		// Destroy canvas now before the scene closes.
 		delete g_AluraCanvas;
@@ -1364,6 +1394,23 @@ namespace Saturn {
 		SAT_CORE_ASSERT( !g_ActiveScene->IsRuntimeActive(), "Remind me to check and queue a prefab modification if runtime is active" );
 
 		g_ActiveScene->OnModifyPrefab( prefabID );
+	}
+
+	void EditorLayer::PushAluraLayer()
+	{
+		m_AluraLayer = std::make_shared<AluraLayer>();
+		Application::Get()->PushLayer( m_AluraLayer.get() );
+	}
+
+	void EditorLayer::PopAluraLayer()
+	{
+		Application::Get()->DispatchEvent<OnRequestRemoveApplicationLayer>( m_AluraLayer.get() );
+	}
+
+	void EditorLayer::PopAluraLayerImmediately()
+	{
+		Application::Get()->PopLayer( m_AluraLayer.get() );
+		m_AluraLayer.reset();
 	}
 
 	bool EditorLayer::OnMousePressed( RubyMouseEvent& rEvent )
@@ -3733,6 +3780,7 @@ namespace Saturn {
 			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_ShowSetPremakePathModal );
 			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_PendingPremakeJobAfterPathIsSet );
 			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( m_ShowInvalidRecentProjectPathModal );
+			SAT_ED_DBG_ADD_TEXT_FOR_INTRL_BOOL_STATE( Input::Get().CanSetCursorMode() );
 
 			ImGui::Text( "m_LastAutoSaveTime %.2f seconds", m_LastAutoSaveTime );
 			ImGui::Text( "m_AutoSaveCount %u", m_AutoSaveCount );

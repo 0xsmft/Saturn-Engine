@@ -198,7 +198,7 @@ namespace Saturn {
 		//////////////////////////////////////////////////////////////////////////
 		// Internal! Called by Ruby, we know that any event that is passed in here is a Window Event
 		// Private
-		bool OnEvent( Event& rEvent ) override;
+		virtual bool OnEvent( Event& rEvent ) override;
 
 		//////////////////////////////////////////////////////////////////////////
 		// This is different to OnEvent as this only handles events that were deferred by us and not the Window

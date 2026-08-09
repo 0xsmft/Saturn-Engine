@@ -419,7 +419,7 @@ namespace Saturn {
 			*pValue ^= 1;
 		}
 
-		const glm::vec4 checkBoxColor = hovered ? m_Style.Colors[ AluraColor_Button ] : m_Style.Colors[ AluraColor_ButtonHovered ];
+		const glm::vec4 checkBoxColor = hovered ? m_Style.Colors[ AluraColor_ButtonHovered ] : m_Style.Colors[ AluraColor_Button ];
 
 #if defined(SAT_ALURA_SHOW_TEXT_BB)
 		m_Renderer->SubmitRect( bb, glm::vec4{ 1.0f, 0.0f, 0.0f, 1.0f } );
@@ -475,7 +475,7 @@ namespace Saturn {
 			*pValue ^= 1;
 		}
 
-		const glm::vec4 checkBoxColor = hovered ? m_Style.Colors[ AluraColor_Button ] : m_Style.Colors[ AluraColor_ButtonHovered ];
+		const glm::vec4 checkBoxColor = hovered ? m_Style.Colors[ AluraColor_ButtonHovered ] : m_Style.Colors[ AluraColor_Button ];
 
 #if defined(SAT_ALURA_SHOW_TEXT_BB)
 		m_Renderer->SubmitRect( bb, glm::vec4{ 1.0f, 0.0f, 0.0f, 1.0f } );
@@ -528,8 +528,8 @@ namespace Saturn {
 		AddImage( { 24.0f, 24.0f }, Renderer::Get()->GetPinkTexture() );
 
 		static bool test = false;
-		AddCheckbox( "Testing checkbox", &test );
-		AddCheckboxRight( "Testing checkbox RHS", &test );
+		clicked = AddCheckbox( "Testing checkbox", &test );
+		clicked = AddCheckboxRight( "Testing checkbox RHS", &test );
 
 		TextFormatted( "Tests: {}", test );
 

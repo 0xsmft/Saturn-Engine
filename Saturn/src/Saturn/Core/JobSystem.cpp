@@ -32,13 +32,20 @@
 #include "sppch.h"
 #include "JobSystem.h"
 
+#if !defined(SAT_DIST)
 constexpr size_t MAX_THREADS_COUNT = 2;
+#endif
 
 namespace Saturn {
 
 	JobSystem::JobSystem()
 	{
+#if !defined(SAT_DIST)
 		SetMaxThreads( MAX_THREADS_COUNT );
+#else
+		SetMaxThreads( std::thread::hardware_concurrency() / 2 );
+#endif
+
 		CreateThreads();
 	}
 
@@ -52,7 +59,7 @@ namespace Saturn {
 		if( !m_Running )
 			return;
 
-		SAT_CORE_INFO( "[JobSystem] Stopping threads..." );
+		SAT_CORE_INFO( "[JobSystem]: Stopping threads..." );
 
 		m_Running = false;
 		TerminateThreads();
@@ -94,7 +101,7 @@ namespace Saturn {
 		size_t index = 0;
 		for( auto& rThread : m_Threads )
 		{
-			SAT_CORE_INFO( "[JobSystem] Attempt join of thread {0}...", index );
+			SAT_CORE_INFO( "[JobSystem]: Attempt join of thread {0}...", index );
 
 			if( rThread.joinable() )
 			{

@@ -145,6 +145,8 @@ namespace Saturn {
 		m_Drawers.clear();
 
 		// Rest persistent states.
+		// Setting m_Hot here is me being a bit pedantic as AluraLayer
+		// will lose it control over input after this function.
 		m_Hot = m_Active = m_Focused = m_Selected = 0llu;
 	}
 
@@ -363,7 +365,7 @@ namespace Saturn {
 
 		const glm::vec2 textSize = m_ActiveFont->CalcTextSize( m_Style.CurrentFontSize, rText );
 		
-		// The button rectangle, needs to accommodate the inner spacing of the text in the X and Y
+		// The button rectangle needs to accommodate the inner spacing of the text in the X and Y
 		const glm::vec2 rectSize = { textSize.x + m_Style.ItemInnerSpacing.x * 2.0f, textSize.y + m_Style.ItemInnerSpacing.y };
 
 		const AluraRect bb( posDependingLastCall, posDependingLastCall + rectSize );

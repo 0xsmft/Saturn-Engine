@@ -191,6 +191,11 @@ namespace Saturn {
 	{
 		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
 		
+		m_DrawCommands.clear();
+
+		const VkExtent2D Extent = { m_Width, m_Height };
+		m_CurrentScissor = { .offset = { 0,0 }, .extent = Extent };
+
 		m_QuadVertexCount = 0;
 		m_QuadIndexCount = 0;
 		m_pQuadVertexPtr = m_QuadVertexBase[ frame ];
@@ -246,9 +251,6 @@ namespace Saturn {
 		Viewport.minDepth = 0.0f;
 		Viewport.maxDepth = 1.0f;
 
-		const VkRect2D Scissor = { .offset = { 0,0 }, .extent = Extent };
-
-		vkCmdSetScissor( m_CommandBuffer, 0, 1, &Scissor );
 		vkCmdSetViewport( m_CommandBuffer, 0, 1, &Viewport );
 
 		const uint32_t frame = Renderer::Get()->GetCurrentFrame();
@@ -276,9 +278,17 @@ namespace Saturn {
 
 			m_Material->Bind( m_CommandBuffer, m_Pipeline->GetPipelineLayout(), {} );
 
-			vkCmdPushConstants( m_CommandBuffer, m_Pipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, ( uint32_t ) m_Material->GetPushConstantData().Size, m_Material->GetPushConstantData().Data );
+			for( const auto& rDrawCommand : m_DrawCommands )
+			{
+				if( rDrawCommand.PipelineType != AluraDrawPipelineType::Quad )
+					continue;
 
-			vkCmdDrawIndexed( m_CommandBuffer, m_QuadIndexCount, 1, 0, 0, 0 );
+				vkCmdSetScissor( m_CommandBuffer, 0, 1, &rDrawCommand.Scissor );
+
+				vkCmdPushConstants( m_CommandBuffer, m_Pipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, ( uint32_t ) m_Material->GetPushConstantData().Size, m_Material->GetPushConstantData().Data );
+
+				vkCmdDrawIndexed( m_CommandBuffer, rDrawCommand.IndexCount, 1, rDrawCommand.IndexOffset, 0, 0 );
+			}
 		}
 
 		const uint32_t textDataSize = ( uint32_t ) ( ( uint8_t* ) m_pTextVertexPtr - ( uint8_t* ) m_TextVertexBase[ frame ] );
@@ -300,9 +310,17 @@ namespace Saturn {
 			m_TextMaterial->Bind( m_CommandBuffer, m_TextPipeline->GetPipelineLayout(), {} );
 			m_TextPipeline->Bind( m_CommandBuffer );
 
-			vkCmdPushConstants( m_CommandBuffer, m_TextPipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, ( uint32_t ) m_TextMaterial->GetPushConstantData().Size, m_TextMaterial->GetPushConstantData().Data );
+			for( const auto& rDrawCommand : m_DrawCommands )
+			{
+				if( rDrawCommand.PipelineType != AluraDrawPipelineType::Text )
+					continue;
 
-			vkCmdDrawIndexed( m_CommandBuffer, m_TextIndexCount, 1, 0, 0, 0 );
+				vkCmdSetScissor( m_CommandBuffer, 0, 1, &rDrawCommand.Scissor );
+
+				vkCmdPushConstants( m_CommandBuffer, m_TextPipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, ( uint32_t ) m_TextMaterial->GetPushConstantData().Size, m_TextMaterial->GetPushConstantData().Data );
+
+				vkCmdDrawIndexed( m_CommandBuffer, rDrawCommand.IndexCount, 1, rDrawCommand.IndexOffset, 0, 0 );
+			}
 		}
 
 		m_TargetRenderPass->EndPass();
@@ -334,6 +352,9 @@ namespace Saturn {
 		m_pQuadVertexPtr->TextureIndex = 0.0f;
 		++m_pQuadVertexPtr;
 
+		auto& rDC = GetOrCreateDrawCommand( AluraDrawPipelineType::Quad, m_QuadIndexCount );
+
+		rDC.IndexCount += 6;
 		m_QuadVertexCount += 4;
 		m_QuadIndexCount += 6;
 	}
@@ -380,6 +401,9 @@ namespace Saturn {
 		m_pQuadVertexPtr->TexCoord = glm::vec2{ rUV1.x, rUV2.y };
 		m_pQuadVertexPtr->TextureIndex = ( float ) textureID;
 		++m_pQuadVertexPtr;
+
+		auto& rDC = GetOrCreateDrawCommand( AluraDrawPipelineType::Quad, m_QuadIndexCount );
+		rDC.IndexCount += 6;
 
 		m_QuadVertexCount += 4;
 		m_QuadIndexCount += 6;
@@ -555,7 +579,35 @@ namespace Saturn {
 		m_pTextVertexPtr->TextureIndex = ( float ) textureID;
 		++m_pTextVertexPtr;
 
+		auto& rDC = GetOrCreateDrawCommand( AluraDrawPipelineType::Text, m_TextIndexCount );
+
+		rDC.IndexCount += 6;
 		m_TextIndexCount += 6;
+	}
+
+	AluraDrawCommand& AluraRenderer::GetOrCreateDrawCommand( AluraDrawPipelineType pipelineType, uint32_t indexOffset )
+	{
+		if( m_DrawCommands.size() )
+		{
+			AluraDrawCommand& rCurrentDC = m_DrawCommands.back();
+
+			if(
+				rCurrentDC.PipelineType == pipelineType &&
+				rCurrentDC.Scissor.extent.width == m_CurrentScissor.extent.width &&
+				rCurrentDC.Scissor.extent.height == m_CurrentScissor.extent.height &&
+				rCurrentDC.Scissor.offset.x == m_CurrentScissor.offset.x &&
+				rCurrentDC.Scissor.offset.y == m_CurrentScissor.offset.y )
+			{
+				return rCurrentDC;
+			}
+		}
+
+		AluraDrawCommand& rNewDC = m_DrawCommands.emplace_back();
+		rNewDC.PipelineType = pipelineType;
+		rNewDC.IndexOffset = indexOffset;
+		rNewDC.Scissor = m_CurrentScissor;
+
+		return rNewDC;
 	}
 
 	void AluraRenderer::SubmitCircleFilled( const glm::vec2& rPosition, float size, float thickness, const glm::vec4& rColor )
@@ -601,6 +653,9 @@ namespace Saturn {
 			m_pQuadVertexPtr->TextureIndex = 0.0f; 
 			++m_pQuadVertexPtr;
 
+			auto& rDC = GetOrCreateDrawCommand( AluraDrawPipelineType::Quad, m_QuadIndexCount );
+			rDC.IndexCount += 6;
+
 			m_QuadVertexCount += 4;
 			m_QuadIndexCount += 6;
 		}
@@ -630,6 +685,7 @@ namespace Saturn {
 			bx,
 			by
 		};
+
 
 		glm::vec2 c{
 			bx + third * 2.0f,
@@ -690,8 +746,19 @@ namespace Saturn {
 		m_pQuadVertexPtr->TextureIndex = 0.0f;
 		++m_pQuadVertexPtr;
 
+		auto& rDC = GetOrCreateDrawCommand( AluraDrawPipelineType::Quad, m_QuadIndexCount );
+		rDC.IndexCount += 6;
+
 		m_QuadVertexCount += 4;
 		m_QuadIndexCount += 6;
+	}
+
+	void AluraRenderer::SubmitClipRect( const AluraRect& rRect )
+	{
+		m_CurrentScissor.offset.x = ( int32_t ) rRect.GetBL().x;
+		m_CurrentScissor.offset.y = ( int32_t ) rRect.GetBL().y;
+		m_CurrentScissor.extent.width = ( uint32_t ) rRect.GetWidth();
+		m_CurrentScissor.extent.height = ( uint32_t ) rRect.GetHeight();
 	}
 
 #if !defined(SAT_DIST)

@@ -93,10 +93,100 @@ vec3 ACES( vec3 colr )
 layout(push_constant) uniform u_Params 
 {
 	uint Flags;
+	uint ColourBlindMode;
 } pc_Params;
 
-const uint SceneCompositeFlag_GTAO = 0x1;
-const uint SceneCompositeFlag_NoBloom = 0x2;
+const uint SceneCompositeFlag_GTAO = 0x1u;
+const uint SceneCompositeFlag_NoBloom = 0x2u;
+
+const uint ColourBlindMode_None = 0u;
+const uint ColourBlindMode_Protanope = 1u;
+const uint ColourBlindMode_Deuteranope = 2u;
+const uint ColourBlindMode_Tritanope = 3u;
+
+// https://gist.github.com/jcdickinson/580b7fb5cc145cee8740
+vec3 ColourBlind( vec3 color ) 
+{
+	float L = 17.8824 * color.r +
+			  43.5161 * color.g +
+			  4.11935 * color.b;
+
+	float M = 3.45565 * color.r +
+			  27.1554 * color.g +
+			  3.86714 * color.b;
+
+	float S = 0.0299566 * color.r +
+			  0.184309 * color.g +
+			  1.46709 * color.b;
+
+	float l;
+	float m;
+	float s;
+
+	switch( pc_Params.ColourBlindMode )
+	{
+		case ColourBlindMode_None: 
+			return color;
+
+		case ColourBlindMode_Protanope:
+		{
+			l = 2.02344 * M - 2.52581 * S;
+			m = M;
+			s = S;
+		} break;
+
+		case ColourBlindMode_Deuteranope:
+		{
+			l = L;
+			m = 0.494207 * L + 1.24827 * S;
+			s = S;
+		} break;
+
+		case ColourBlindMode_Tritanope:
+		{
+			l = L;
+			m = M;
+			s = -0.395913 * L + 0.801109 * M;
+		} break;
+	}
+
+	vec3 simulated;
+
+	simulated.r =
+		0.0809444479 * l -
+		0.130504409  * m +
+		0.116721066  * s;
+
+	simulated.g =
+		-0.0102485335 * l +
+		0.0540193266  * m -
+		0.113614708   * s;
+
+	simulated.b =
+		-0.000365296938 * l -
+		0.00412161469  * m +
+		0.693511405    * s;
+
+	vec3 error = color.rgb - simulated;
+
+	// Daltonization correction
+	vec3 correction;
+
+	correction.r = 0.0;
+
+	correction.g =
+		error.r * 0.7 +
+		error.g * 1.0;
+
+	correction.b =
+		error.r * 0.7 +
+		error.b * 1.0;
+
+	// Apply correction
+	vec3 result = color.rgb + correction;
+
+	return vec3( clamp( result, 0.0, 1.0 ) );
+}
 
 void main()
 {
@@ -130,6 +220,8 @@ void main()
 		float ao = texture( u_AOTexture, vs_Input.TexCoord ).r; 
 		GeometryPassColor *= ao;
 	}
+
+	GeometryPassColor = ColourBlind( GeometryPassColor );
 
 	FinalColor = vec4( GeometryPassColor, 1.0 );
 }

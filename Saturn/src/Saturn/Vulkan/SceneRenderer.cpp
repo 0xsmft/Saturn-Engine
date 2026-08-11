@@ -2023,6 +2023,48 @@ namespace Saturn {
 				Auxiliary::EndTreeNode();
 			}
 
+			if( Auxiliary::TreeNode( "Accessibility", false ) )
+			{
+				ImGui::BeginHorizontal( "##colrblind" );
+
+				ImGui::Text( "Colour blind correction" );
+
+				ImGui::Spring();
+
+				const auto oldMode = m_ColourBlindMode;
+
+				const char* pDisplayNames[ 4 ] = { "None", "Protanope", "Deuteranope", "Tritanope" };
+
+				if( ImGui::BeginCombo( "##comboclb", pDisplayNames[ ( uint8_t ) m_ColourBlindMode ] ) )
+				{
+					if( ImGui::Selectable( "Protanope" ) )
+					{
+						m_ColourBlindMode = ColourBlindMode::Protanope;
+					}
+
+					if( ImGui::Selectable( "Deuteranope" ) )
+					{
+						m_ColourBlindMode = ColourBlindMode::Deuteranope;
+					}
+
+					if( ImGui::Selectable( "Tritanope" ) )
+					{
+						m_ColourBlindMode = ColourBlindMode::Tritanope;
+					}
+
+					if( ImGui::Selectable( "None" ) )
+					{
+						m_ColourBlindMode = ColourBlindMode::None;
+					}
+
+					ImGui::EndCombo();
+				}
+
+				ImGui::EndHorizontal();
+
+				Auxiliary::EndTreeNode();
+			}
+
 			Auxiliary::EndTreeNode();
 		}
 #endif
@@ -2733,9 +2775,11 @@ namespace Saturn {
 		struct UParams
 		{
 			uint32_t Flags = 0u;
+			uint32_t ColorBlindMode = 0u;
 		} pc_Params{};
 
 		pc_Params.Flags = m_RendererData.SceneCompositeFlags;
+		pc_Params.ColorBlindMode = ( uint32_t ) m_ColourBlindMode;
 
 		Buffer pc( sizeof( UParams ), &pc_Params );
 

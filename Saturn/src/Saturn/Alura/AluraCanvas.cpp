@@ -40,6 +40,9 @@
 
 namespace Saturn {
 
+	//////////////////////////////////////////////////////////////////////////
+	// ALURA LAYOUT
+
 	void AluraLayout::Reset()
 	{
 		CursorPos = CursorPosPrevLine = CurrLineSize = PrevLineSize = glm::zero<glm::vec2>();
@@ -49,6 +52,7 @@ namespace Saturn {
 	}
 
 	//////////////////////////////////////////////////////////////////////////
+	// ALURA CANVAS
 
 	AluraCanvas::AluraCanvas( const AluraCanvasSpecification& rSpecification )
 		: m_CanvasSize( rSpecification.Size ), m_Position( rSpecification.Position )
@@ -86,6 +90,9 @@ namespace Saturn {
 
 		// Forgot to call PopStyle()
 		SAT_CORE_ASSERT( m_ColorStack.size() == 0 );
+
+		// Forgor to call EndRegion()
+		SAT_CORE_ASSERT( m_RegionStack.size() == 0 );
 
 		// Forgot to call PopFontSize()
 		SAT_CORE_ASSERT( m_PushedFontSize == 0.0f );
@@ -517,6 +524,54 @@ namespace Saturn {
 		return false;
 	}
 
+
+	void AluraCanvas::BeginRegion( const std::string& rID, const glm::vec2& rBounds )
+	{
+		// Handle NextItemPosition
+		glm::vec2 posDependingLastCall = m_Layout.CursorPos;
+
+		if( m_WantToSetItemPosition )
+		{
+			posDependingLastCall = m_PendingNextItemPosition;
+			m_WantToSetItemPosition = false;
+		}
+
+		const uint64_t itemID = FNV1A64( rID.c_str() );
+
+		const AluraRect bb( posDependingLastCall, posDependingLastCall + rBounds );
+
+		m_Renderer->SubmitRect( bb, m_Style.Colors[ AluraColor_FrameBackground ] );
+
+		AluraRegionData& rData = m_RegionStack.emplace();
+		rData.ID = itemID;
+		rData.StartingPosition = posDependingLastCall;
+		rData.Size = rBounds;
+		rData.ParentID = 0llu;
+
+		m_Layout.CursorPos += m_Style.ItemInnerSpacing;
+
+		// Bit of a hack here, but this ensures that the following items
+		// are inline with the region.
+		m_Layout.CurrentIndent += m_Style.ItemInnerSpacing.x;
+	}
+
+	void AluraCanvas::EndRegion()
+	{
+		SAT_CORE_ASSERT( m_RegionStack.size(), "Alura: Forgot to call BeginRegion or called EndRegion too many times. (m_RegionStack is empty!)" );
+
+		const auto& rRegion = m_RegionStack.top();
+		
+		// Go back to the start so when we do ItemSize,
+		// it will just "work".
+		m_Layout.CursorPos = rRegion.StartingPosition;
+		m_Layout.CurrentIndent -= m_Style.ItemInnerSpacing.x;
+
+		// Push this item.
+		ItemSize( rRegion.Size );
+
+		m_RegionStack.pop();
+	}
+
 	void AluraCanvas::AddDummy( const glm::vec2& rSize )
 	{
 		// Handle NextItemPosition
@@ -535,6 +590,16 @@ namespace Saturn {
 	void AluraCanvas::DrawDemo()
 	{
 		PushFontAndSetActive( m_EditorFont );
+
+		BeginRegion( "##testing", { 250.0f, 250.0f } );
+
+		PushStyle( AluraColor_FrameBackground, { 1.0f, 1.0f, 1.0f, 1.0f } );
+		BeginRegion( "##testing1", { 250.0f / 2.0f, 250.0f / 2.0f } );
+		AddText( "This text will be outside of the region :(" );
+		EndRegion();
+		PopStyle();
+
+		EndRegion();
 
 		PushFontSize( 32.0f );
 		AddText( "This is text at size 32px" );
@@ -574,11 +639,6 @@ namespace Saturn {
 		TextFormatted( "Active: {}", m_Active );
 		TextFormatted( "Focused: {}", m_Focused );
 		TextFormatted( "Selected: {}", m_Selected );
-		
-		TextFormatted( "Left Mouse button state: {}", ( uint8_t ) m_MouseInputStates[ RubyMouseButton_Left ] );
-		TextFormatted( "Right Mouse button state: {}", ( uint8_t ) m_MouseInputStates[ RubyMouseButton_Right ] );
-
-		TextFormatted( "A Key state: {}", ( uint8_t ) m_KeyInputStates[ RubyKey_A ] );
 
 		PopFontSize();
 		PopFont();
@@ -654,6 +714,8 @@ namespace Saturn {
 
 	void AluraCanvas::PopStyle()
 	{
+		SAT_CORE_ASSERT( m_ColorStack.size(), "Alura: Forgot to call PushStyle or PopStyle called too many times (m_ColorStack is empty)!" );
+
 		const auto& rBackupData = m_ColorStack.top();
 		m_Style.Colors[ rBackupData.Index ] = rBackupData.OldValue;
 		m_ColorStack.pop();

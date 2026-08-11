@@ -79,6 +79,14 @@ namespace Saturn {
 		std::underlying_type_t<AluraColor> Index;
 	};
 	
+	struct AluraRegionData
+	{
+		glm::vec2 StartingPosition;
+		glm::vec2 Size;
+		uint64_t ID = 0llu;
+		uint64_t ParentID = 0llu;
+	};
+
 	struct AluraCanvasSpecification
 	{
 		glm::vec2 Size{};
@@ -175,6 +183,10 @@ namespace Saturn {
 
 		[[nodiscard]] bool AddCheckbox( const std::string& rLabel, bool* pValue );
 		[[nodiscard]] bool AddCheckboxRight( const std::string& rLabel, bool* pValue );
+
+
+		void BeginRegion( const std::string& rID, const glm::vec2& rBounds );
+		void EndRegion();
 
 		void AddDummy( const glm::vec2& rSize );
 
@@ -280,6 +292,7 @@ namespace Saturn {
 		std::vector<Ref<AluraDrawer>> m_Drawers;
 		std::vector<Ref<AluraFont>> m_Fonts;
 		std::stack<AluraColorTemp> m_ColorStack;
+		std::stack<AluraRegionData> m_RegionStack;
 
 		std::array<AluraInputState, RubyMouseButton_EnumSize> m_MouseInputStates{ AluraInputState::NoState };
 		std::array<AluraInputState, RubyKey_EnumSize> m_KeyInputStates{ AluraInputState::NoState };

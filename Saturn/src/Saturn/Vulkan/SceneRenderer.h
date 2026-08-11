@@ -31,18 +31,18 @@
 #include "SceneRendererFlags.h"
 #include "Saturn/Scene/Scene.h"
 #include "Saturn/Scene/Entity.h"
-#include "Mesh.h"
 #include "Saturn/Core/UUID.h"
 #include "Saturn/Asset/MaterialAsset.h"
 
+#include "Mesh.h"
 #include "Renderer.h"
 #include "EnvironmentMap.h"
-#include "DescriptorSet.h"
 #include "Framebuffer.h"
 #include "ComputePipeline.h"
 #include "StorageBufferSet.h"
 #include "UniformBufferSet.h"
 #include "Sampler.h"
+#include "SceneRendererTiering.h"
 
 #include "Pipeline.h"
 
@@ -121,6 +121,20 @@ namespace Saturn {
 		SubpixelMorphological,
 
 		FastApproximate,
+	};
+
+	enum class ColourBlindMode : uint8_t
+	{
+		None,
+
+		// Red-Green, lack of red cones
+		Protanope,
+
+		// Red-Green, lack of green cones
+		Deuteranope,
+
+		// Blues are hard to see, lack of S-Cones
+		Tritanope,
 	};
 
 	struct StaticMeshKey
@@ -762,6 +776,7 @@ namespace Saturn {
 	private:
 		SceneRendererFlags m_Flags;
 		AOTechnique m_AOTechnique = AOTechnique::SSAO;
+		ColourBlindMode m_ColourBlindMode = ColourBlindMode::Deuteranope;
 
 		RendererData m_RendererData{};
 		Scene* m_pScene = nullptr;

@@ -30,6 +30,8 @@
 
 #include "Saturn/Core/Ref.h"
 
+#include "Saturn/Alura/AluraRect.h"
+
 #include "Pass.h"
 #include "Texture.h"
 #include "Framebuffer.h"
@@ -53,13 +55,33 @@ namespace Saturn {
 		float TextureIndex;
 	};
 
+	enum class AluraDrawPipelineType
+	{
+		NotSet,
+
+		// Use the quad pipeline
+		Quad,
+
+		// Use the text pipeline
+		Text
+	};
+
+	struct AluraDrawCommand
+	{
+		AluraDrawPipelineType PipelineType = AluraDrawPipelineType::NotSet;
+		uint32_t IndexCount = 0u;
+		uint32_t IndexOffset = 0u;
+		uint64_t TextureIndex = 0llu;
+		VkRect2D Scissor{};
+	};
+
 	class AluraFont;
 
 	class AluraRenderer : public RefTarget
 	{
 	public:
 		AluraRenderer();
-		~AluraRenderer();
+		virtual ~AluraRenderer();
 
 		void Init( Ref<Pass> targetPass, Ref<Framebuffer> targetFramebuffer );
 		void Terminate();
@@ -103,6 +125,7 @@ namespace Saturn {
 		void SubmitCheckMark( const glm::vec2& rPosition, const glm::vec4& rColor, float size );
 
 		void SubmitLine( const glm::vec2& rA, const glm::vec2& rB, float thickness, const glm::vec4& rColor );
+		void SubmitClipRect( const AluraRect& rRect );
 
 #if !defined(SAT_DIST)
 		// Editor only function, clears the users drawing commands to allow us to draw on top of it.
@@ -128,6 +151,8 @@ namespace Saturn {
 			const Ref<Texture2D> atlasTexture, 
 			const glm::mat4& rTransform );
 
+		AluraDrawCommand& GetOrCreateDrawCommand( AluraDrawPipelineType pipelineType, uint32_t indexOffset );
+
 	private:
 		uint32_t m_Width = 0;
 		uint32_t m_Height = 0;
@@ -136,12 +161,15 @@ namespace Saturn {
 		bool m_Resized = false;
 
 		VkCommandBuffer m_CommandBuffer = nullptr;
+		VkRect2D m_CurrentScissor{};
 
 		std::vector< AluraRectVertex* > m_QuadVertexBase;
 		AluraRectVertex* m_pQuadVertexPtr = nullptr;
 
 		std::vector< AluraTextVertex* > m_TextVertexBase;
 		AluraTextVertex* m_pTextVertexPtr = nullptr;
+
+		std::vector< AluraDrawCommand > m_DrawCommands;
 
 		uint32_t m_QuadVertexCount = 0;
 		uint32_t m_QuadIndexCount = 0;

@@ -193,9 +193,6 @@ namespace Saturn {
 		
 		m_DrawCommands.clear();
 
-		const VkExtent2D Extent = { m_Width, m_Height };
-		m_CurrentScissor = { .offset = { 0,0 }, .extent = Extent };
-
 		m_QuadVertexCount = 0;
 		m_QuadIndexCount = 0;
 		m_pQuadVertexPtr = m_QuadVertexBase[ frame ];
@@ -590,13 +587,14 @@ namespace Saturn {
 		if( m_DrawCommands.size() )
 		{
 			AluraDrawCommand& rCurrentDC = m_DrawCommands.back();
+			const VkRect2D& rCurrentClipRect = m_ScissorStack.top();
 
 			if(
 				rCurrentDC.PipelineType == pipelineType &&
-				rCurrentDC.Scissor.extent.width == m_CurrentScissor.extent.width &&
-				rCurrentDC.Scissor.extent.height == m_CurrentScissor.extent.height &&
-				rCurrentDC.Scissor.offset.x == m_CurrentScissor.offset.x &&
-				rCurrentDC.Scissor.offset.y == m_CurrentScissor.offset.y )
+				rCurrentDC.Scissor.extent.width == rCurrentClipRect.extent.width &&
+				rCurrentDC.Scissor.extent.height == rCurrentClipRect.extent.height &&
+				rCurrentDC.Scissor.offset.x == rCurrentClipRect.offset.x &&
+				rCurrentDC.Scissor.offset.y == rCurrentClipRect.offset.y )
 			{
 				return rCurrentDC;
 			}
@@ -605,7 +603,7 @@ namespace Saturn {
 		AluraDrawCommand& rNewDC = m_DrawCommands.emplace_back();
 		rNewDC.PipelineType = pipelineType;
 		rNewDC.IndexOffset = indexOffset;
-		rNewDC.Scissor = m_CurrentScissor;
+		rNewDC.Scissor = m_ScissorStack.top();
 
 		return rNewDC;
 	}
@@ -753,12 +751,44 @@ namespace Saturn {
 		m_QuadIndexCount += 6;
 	}
 
-	void AluraRenderer::SubmitClipRect( const AluraRect& rRect )
+	void AluraRenderer::PushClipRect( const AluraRect& rRect )
 	{
-		m_CurrentScissor.offset.x = ( int32_t ) rRect.GetBL().x;
-		m_CurrentScissor.offset.y = ( int32_t ) rRect.GetBL().y;
-		m_CurrentScissor.extent.width = ( uint32_t ) rRect.GetWidth();
-		m_CurrentScissor.extent.height = ( uint32_t ) rRect.GetHeight();
+		auto& rClipRect = m_ScissorStack.emplace();
+
+		rClipRect.offset.x = ( int32_t ) rRect.Min.x;
+		// Vulkan coordinate system shit...
+		// In short: because we want vulkan to submit items at the bottom left we need to do this.
+		// Long version:
+		// Because Alura uses the same coordinate system as Vulkan, where origin is top left and X+ is towards the right
+		// and Y+ goes down, we need to take an extra step to cauterizes the Y, this is because the Renderer uses
+		// an OpenGL coordinate system where origin is bottom left and X+ is towards the right
+		// and Y+ goes up and Alura draws on top of SceneComposite texture so our projection matrix is built like an
+		// OpenGL one so that when the texture is flipped the UI items are position at the right place.
+		//
+		// Submitting just rRect.Min.y would cause the rect to be correct in the Vulkan space, not the OpenGL space
+		// so, we need to "move" the clip rect down to the bottom of screen by doing "m_Height - rRect.GetHeight()"
+		// then we subtract the position of the bottom right to align it properly.
+		//
+		rClipRect.offset.y = ( int32_t ) ( m_Height - rRect.GetHeight() ) - rRect.Min.y;
+		rClipRect.extent.width = ( uint32_t ) rRect.GetWidth();
+		rClipRect.extent.height = ( uint32_t ) rRect.GetHeight();
+	}
+
+	void AluraRenderer::PushClipRect( const glm::vec2& rSize )
+	{
+		auto& rClipRect = m_ScissorStack.emplace();
+
+		rClipRect.offset.x = 0u;
+		rClipRect.offset.y = 0u;
+		rClipRect.extent.width = ( uint32_t ) rSize.x;
+		rClipRect.extent.height = ( uint32_t ) rSize.y;
+	}
+
+	void AluraRenderer::PopClipRect()
+	{
+		SAT_CORE_ASSERT( m_ScissorStack.size(), "[AluraRenderer]: Called PopClipRect() too many times or never called PushClipRect(). (m_ScissorStack is empty)" );
+
+		m_ScissorStack.pop();
 	}
 
 #if !defined(SAT_DIST)

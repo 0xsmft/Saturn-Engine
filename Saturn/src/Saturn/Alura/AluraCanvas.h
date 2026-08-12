@@ -81,8 +81,14 @@ namespace Saturn {
 	
 	struct AluraRegionData
 	{
-		glm::vec2 StartingPosition;
-		glm::vec2 Size;
+		glm::vec2 StartingPosition{};
+		glm::vec2 Size{};
+		glm::vec2 Scroll{};
+		
+		AluraRect WorkingRect{};
+		AluraRect InnerRect{};
+		AluraRect Rect{};
+
 		uint64_t ID = 0llu;
 		uint64_t ParentID = 0llu;
 	};
@@ -215,6 +221,9 @@ namespace Saturn {
 
 		float GetFrameHeight() const;
 
+		// An active region must be pushed before calling this.
+		glm::vec2 GetContentRegionAvail();
+
 		[[nodiscard]] glm::vec2 CalcTextSize( const std::string& rText );
 
 		[[nodiscard]] bool IsAnyItemHot() const      { return m_Hot != 0llu; }
@@ -259,6 +268,8 @@ namespace Saturn {
 
 	private:
 		void ItemSize( const glm::vec2& rSize, float textBaselineY = -1.0f );
+		bool CanAddItem( const AluraRect& rBoundingBox );
+
 		bool IsMouseHoveringRect( const glm::vec2& rMin, const glm::vec2& rMax ) const;
 		bool IsMouseHoveringRect( const AluraRect& rRect ) const;
 		

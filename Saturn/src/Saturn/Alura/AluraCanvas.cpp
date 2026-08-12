@@ -214,7 +214,14 @@ namespace Saturn {
 			m_WantToSetItemPosition = false;
 		}
 
-		m_Renderer->SubmitRect( posDependingLastCall, { posDependingLastCall + rSize }, rColor );
+		const AluraRect bb( posDependingLastCall, posDependingLastCall + rSize );
+		if( !CanAddItem( bb ) )
+			return;
+
+		m_Renderer->SubmitRect( bb, rColor );
+
+		ItemSize( rSize );
+	}
 
 		ItemSize( rSize );
 	}
@@ -231,6 +238,9 @@ namespace Saturn {
 		}
 
 		AluraRect bb( posDependingLastCall, posDependingLastCall + rSize );
+		if( !CanAddItem( bb ) )
+			return;
+
 		m_Renderer->SubmitRect( bb, image, rColor, rUV1, rUV2 );
 		
 		ItemSize( bb.GetSize() );
@@ -249,6 +259,9 @@ namespace Saturn {
 
 		const glm::vec2 padding = m_Style.WindowPadding;
 		const AluraRect bb( posDependingLastCall, posDependingLastCall + rSize + padding );
+		if( !CanAddItem( bb ) )
+			return false;
+
 		const UUID currentItemID = FNV1A64( "imgbtn" );
 
 		bool hovered, held;
@@ -288,6 +301,8 @@ namespace Saturn {
 		}
 
 		const AluraRect bb( posDependingLastCall, posDependingLastCall + rSize );
+		if( !CanAddItem( bb ) )
+			return;
 
 		fraction = glm::clamp( fraction, 0.0f, 1.0f );
 		
@@ -315,6 +330,9 @@ namespace Saturn {
 		const auto textSize = m_ActiveFont->CalcTextSize( m_Style.CurrentFontSize, rText );
 		AluraRect bb( posDependingLastCall, posDependingLastCall + textSize );
 		
+		if( !CanAddItem( bb ) )
+			return;
+
 		m_Renderer->SubmitString( rText, m_ActiveFont, m_Style.CurrentFontSize, posDependingLastCall, rColor );
 		
 #if defined(SAT_ALURA_SHOW_TEXT_BB)
@@ -340,10 +358,13 @@ namespace Saturn {
 		// Adjust size for padding
 		glm::vec2 size = rSize;
 		size += m_Style.WindowPadding * 2.0f;
+		const AluraRect bb( posDependingLastCall, posDependingLastCall + size );
+
+		if( !CanAddItem( bb ) )
+			return false;
 
 		ItemSize( size );
 
-		const AluraRect bb( posDependingLastCall, posDependingLastCall + size );
 		uint64_t id = FNV1A64( "btnnoname" );
 
 		bool hovered, held;
@@ -379,6 +400,10 @@ namespace Saturn {
 		const glm::vec2 rectSize = { textSize.x + m_Style.ItemInnerSpacing.x * 2.0f, textSize.y + m_Style.ItemInnerSpacing.y };
 
 		const AluraRect bb( posDependingLastCall, posDependingLastCall + rectSize );
+
+		if( !CanAddItem( bb ) )
+			return false;
+			
 		const UUID currentItemID = FNV1A64( rText.c_str() );
 
 		bool hovered, held;
@@ -437,6 +462,9 @@ namespace Saturn {
 
 		const AluraRect bb( offsetPosition,
 			offsetPosition + glm::vec2( squareSize.x + ( textSize.x > 0.0f ? m_Style.ItemInnerSpacing.x + textSize.x : 0.0f ), textSize.y ) );
+		
+		if( !CanAddItem( bb ) )
+			return false;
 
 		const auto min = glm::vec2{ offsetPosition.x, offsetPosition.y };
 		const AluraRect checkBoxBB( min, min + squareSize );
@@ -494,6 +522,9 @@ namespace Saturn {
 		const AluraRect bb( offsetPosition,
 			offsetPosition + glm::vec2( squareSize.x + ( textSize.x > 0.0f ? m_Style.ItemInnerSpacing.x + textSize.x : 0.0f ), textSize.y ) );
 
+		if( !CanAddItem( bb ) )
+			return false;
+
 		const auto min = glm::vec2{ offsetPosition.x + textSize.x + m_Style.ItemInnerSpacing.x, offsetPosition.y };
 		const AluraRect checkBoxBB( min, min + squareSize );
 
@@ -539,9 +570,11 @@ namespace Saturn {
 			m_WantToSetItemPosition = false;
 		}
 
-		const uint64_t itemID = FNV1A64( rID.c_str() );
-
 		const AluraRect bb( posDependingLastCall, posDependingLastCall + rBounds );
+		if( !CanAddItem( bb ) )
+			return;
+
+		const uint64_t itemID = FNV1A64( rID.c_str() );
 
 		m_Renderer->PushClipRect( bb );
 		m_Renderer->SubmitRect( bb, m_Style.Colors[ AluraColor_FrameBackground ] );
@@ -551,6 +584,11 @@ namespace Saturn {
 		rData.StartingPosition = posDependingLastCall;
 		rData.Size = rBounds;
 		rData.ParentID = 0llu;
+		rData.Rect = bb;
+		// TODO: When we have proper scrolling, this would change. For now will work just fine.
+		rData.InnerRect = bb;
+		// Initial working rect is the full size of the rect, because nothing has been drawn. 
+		rData.WorkingRect = bb;
 
 		m_Layout.CursorPos += m_Style.ItemInnerSpacing;
 
@@ -590,6 +628,9 @@ namespace Saturn {
 		}
 
 		const AluraRect bb( posDependingLastCall, posDependingLastCall + rSize );
+		if( !CanAddItem( bb ) )
+			return;
+
 		ItemSize( bb.GetSize() );
 	}
 
@@ -601,7 +642,14 @@ namespace Saturn {
 
 		PushStyle( AluraColor_FrameBackground, { 1.0f, 1.0f, 1.0f, 1.0f } );
 		BeginRegion( "##testing1", { 250.0f / 2.0f, 250.0f / 2.0f } );
-		AddText( "This text will be outside of the region :(" );
+		m_Renderer->SubmitRect( m_RegionStack.top().WorkingRect, glm::vec4{ 1.0f, 1.0f, 0.0f, 1.0f } );
+		AddButton( "A" );
+		AddButton( "A" );
+		AddButton( "A" );
+		AddButton( "A" );
+		AddButton( "A" );
+		AddButton( "A" );
+		m_Renderer->SubmitRect( m_RegionStack.top().WorkingRect, glm::vec4{ 1.0f, 0.0f, 0.0f, 1.0f } );
 		EndRegion();
 		PopStyle();
 
@@ -640,7 +688,6 @@ namespace Saturn {
 		clicked = AddCheckboxRight( "Testing checkbox RHS", &test );
 
 		TextFormatted( "Tests: {}", test );
-
 		TextFormatted( "Hot: {}", m_Hot );
 		TextFormatted( "Active: {}", m_Active );
 		TextFormatted( "Focused: {}", m_Focused );
@@ -793,8 +840,45 @@ namespace Saturn {
 #if defined(SAT_ALURA_SHOW_TEXT_BB)
 		m_Renderer->SubmitRect( m_Layout.CursorPos, { m_Layout.CursorPos + 10.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } );
 #endif
+
+		// TODO: What if rSize is bigger than the object size?
+		// TODO: Do not remove working rect from self
+		//		 "self" meaning the region itself because the region will
+		//		 submit itself to the layout system.
+		if( !m_RegionStack.empty() )
+		{
+			auto& rRegion = m_RegionStack.top();
+
+			const float consumedY = rSize.y + m_Style.ItemSpacing.y;
+			rRegion.WorkingRect.Min.y += consumedY;
+
+			// Element was too big...
+			if( rRegion.WorkingRect.Min.y > rRegion.WorkingRect.Max.y )
+			{
+				rRegion.WorkingRect.Min.y = rRegion.WorkingRect.Max.y;
+			}
+		}
 	}
 	
+	bool AluraCanvas::CanAddItem( const AluraRect& rBoundingBox )
+	{
+		if( !m_RegionStack.empty() )
+		{
+			const auto& rRegion = m_RegionStack.top();
+			const auto workingRectSize = rRegion.WorkingRect.GetSize();
+			const auto itemSize = rBoundingBox.GetSize();
+
+			if( itemSize.x > workingRectSize.x || itemSize.y > workingRectSize.y )
+			{
+				return false;
+			}
+		}
+
+		// TODO: Support for CanAddItem when drawing on the directly on the viewport.
+
+		return true;
+	}
+
 	bool AluraCanvas::IsMouseHoveringRect( const glm::vec2& rMin, const glm::vec2& rMax ) const
 	{
 		AluraRect rect( rMin, rMax );

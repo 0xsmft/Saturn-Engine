@@ -776,7 +776,7 @@ namespace Saturn {
 	private:
 		SceneRendererFlags m_Flags;
 		AOTechnique m_AOTechnique = AOTechnique::SSAO;
-		ColourBlindMode m_ColourBlindMode = ColourBlindMode::Deuteranope;
+		ColourBlindMode m_ColourBlindMode = ColourBlindMode::None;
 
 		RendererData m_RendererData{};
 		Scene* m_pScene = nullptr;

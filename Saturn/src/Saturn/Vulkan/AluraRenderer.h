@@ -39,20 +39,20 @@
 
 namespace Saturn {
 
-	struct AluraRectVertex
+	struct AluraQuadVertex
 	{
-		glm::vec2 Position;
-		glm::vec2 TexCoord;
-		glm::vec4 Color;
-		float TextureIndex;
+		glm::vec2 Position{};
+		glm::vec2 TexCoord{};
+		glm::vec4 Color{};
+		float TextureIndex = 0.0f;
 	};
 
 	struct AluraTextVertex
 	{
-		glm::vec3 Position;
-		glm::vec2 TexCoord;
-		glm::vec4 Color;
-		float TextureIndex;
+		glm::vec3 Position{};
+		glm::vec2 TexCoord{};
+		glm::vec4 Color{};
+		float TextureIndex = 0.0f;
 	};
 
 	enum class AluraDrawPipelineType
@@ -71,7 +71,6 @@ namespace Saturn {
 		AluraDrawPipelineType PipelineType = AluraDrawPipelineType::NotSet;
 		uint32_t IndexCount = 0u;
 		uint32_t IndexOffset = 0u;
-		uint64_t TextureIndex = 0llu;
 		VkRect2D Scissor{};
 	};
 
@@ -163,8 +162,8 @@ namespace Saturn {
 		VkCommandBuffer m_CommandBuffer = nullptr;
 		VkRect2D m_CurrentScissor{};
 
-		std::vector< AluraRectVertex* > m_QuadVertexBase;
-		AluraRectVertex* m_pQuadVertexPtr = nullptr;
+		std::vector< AluraQuadVertex* > m_QuadVertexBase;
+		AluraQuadVertex* m_pQuadVertexPtr = nullptr;
 
 		std::vector< AluraTextVertex* > m_TextVertexBase;
 		AluraTextVertex* m_pTextVertexPtr = nullptr;

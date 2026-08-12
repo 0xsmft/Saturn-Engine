@@ -108,6 +108,9 @@ namespace Saturn {
 		m_Layout.CurrentIndent     = m_Style.WindowPadding.x;
 		m_Layout.CursorPos         = m_Layout.CursorStartingPos;
 		m_Layout.CursorPosPrevLine = m_Layout.CursorStartingPos;
+
+		// Push default clipping rect.
+		m_Renderer->PushClipRect( m_CanvasSize );
 	}
 
 	void AluraCanvas::DrawAllDrawers( Timestep ts )
@@ -159,7 +162,7 @@ namespace Saturn {
 
 	void AluraCanvas::EndFrame()
 	{
-		m_FirstFrameEver = true;
+		m_Renderer->PopClipRect();
 
 		// If any keys are "released" from the previous frame, we
 		// reset them.
@@ -540,6 +543,7 @@ namespace Saturn {
 
 		const AluraRect bb( posDependingLastCall, posDependingLastCall + rBounds );
 
+		m_Renderer->PushClipRect( bb );
 		m_Renderer->SubmitRect( bb, m_Style.Colors[ AluraColor_FrameBackground ] );
 
 		AluraRegionData& rData = m_RegionStack.emplace();
@@ -565,6 +569,8 @@ namespace Saturn {
 		// it will just "work".
 		m_Layout.CursorPos = rRegion.StartingPosition;
 		m_Layout.CurrentIndent -= m_Style.ItemInnerSpacing.x;
+
+		m_Renderer->PopClipRect();
 
 		// Push this item.
 		ItemSize( rRegion.Size );

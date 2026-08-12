@@ -124,7 +124,10 @@ namespace Saturn {
 		void SubmitCheckMark( const glm::vec2& rPosition, const glm::vec4& rColor, float size );
 
 		void SubmitLine( const glm::vec2& rA, const glm::vec2& rB, float thickness, const glm::vec4& rColor );
-		void SubmitClipRect( const AluraRect& rRect );
+	
+		void PushClipRect( const AluraRect& rRect );
+		void PushClipRect( const glm::vec2& rSize );
+		void PopClipRect();
 
 #if !defined(SAT_DIST)
 		// Editor only function, clears the users drawing commands to allow us to draw on top of it.
@@ -160,7 +163,8 @@ namespace Saturn {
 		bool m_Resized = false;
 
 		VkCommandBuffer m_CommandBuffer = nullptr;
-		VkRect2D m_CurrentScissor{};
+		
+		std::stack<VkRect2D> m_ScissorStack;
 
 		std::vector< AluraQuadVertex* > m_QuadVertexBase;
 		AluraQuadVertex* m_pQuadVertexPtr = nullptr;

@@ -77,8 +77,8 @@ namespace Saturn {
 
 		for( size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
 		{
-			m_VertexBuffers[ i ] = Ref<VertexBuffer>::Create( s_MaxVertices * sizeof( AluraRectVertex ) );
-			m_QuadVertexBase[ i ] = new AluraRectVertex[ s_MaxVertices ];
+			m_VertexBuffers[ i ] = Ref<VertexBuffer>::Create( s_MaxVertices * sizeof( AluraQuadVertex ) );
+			m_QuadVertexBase[ i ] = new AluraQuadVertex[ s_MaxVertices ];
 
 			m_TextVertexBuffers[ i ] = Ref<VertexBuffer>::Create( s_MaxVertices * sizeof( AluraTextVertex ) );
 			m_TextVertexBase[ i ] = new AluraTextVertex[ s_MaxVertices ];

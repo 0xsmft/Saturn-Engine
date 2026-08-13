@@ -51,6 +51,7 @@ namespace Saturn {
 		AluraColor_FrameBorder,
 		AluraColor_FrameBackground,
 		AluraColor_ProgressColor,
+		AluraColor_Separator,
 		AluraColor_Count,
 	};
 
@@ -113,6 +114,7 @@ namespace Saturn {
 			Colors[ AluraColor_FrameBorder ] = glm::vec4( 0.0f, 0.0f, 0.0f, 1.0f );
 			Colors[ AluraColor_FrameBackground ] = glm::vec4( 0.2f, 0.2f, 0.20f, 1.0f );
 			Colors[ AluraColor_ProgressColor ] = glm::vec4( 0.0f, 1.0f, 0.0f, 1.0f );
+			Colors[ AluraColor_Separator ] = glm::vec4( 0.1882f, 0.1882f, 0.1882f, 1.0f );
 		}
 	};
 	

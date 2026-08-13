@@ -199,6 +199,8 @@ namespace Saturn {
 		[[nodiscard]] bool AddCheckboxRight( const std::string& rLabel, bool* pValue );
 
 
+		void AddSeparator();
+
 		[[nodiscard]] bool BeginRegion( const std::string& rID, const glm::vec2& rBounds );
 		void EndRegion();
 

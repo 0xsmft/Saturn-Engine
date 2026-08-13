@@ -556,6 +556,24 @@ namespace Saturn {
 	}
 
 
+	void AluraCanvas::AddSeparator()
+	{
+		SAT_CORE_ASSERT( m_ActiveRegions.size(), "Alura: AddSeparator needs to be called inside of an active region, call BeginRegion before calling this. (m_ActiveRegions is empty)" );
+
+		// Draw horizontal line until the end of the current region.
+		
+		const auto* pRegion = m_ActiveRegions.top();
+
+		const glm::vec2 size( GetContentRegionAvail().x - ( m_Style.ItemInnerSpacing.x * 2.0f ), 1.0f );
+		const AluraRect bb( m_Layout.CursorPos, m_Layout.CursorPos + size );
+		if( !CanAddItem( bb ) )
+			return;
+
+		m_Renderer->SubmitRect( bb, glm::one<glm::vec4>() );
+
+		ItemSize( bb.GetSize() );
+	}
+
 	bool AluraCanvas::BeginRegion( const std::string& rID, const glm::vec2& rBounds )
 	{
 		// Handle NextItemPosition

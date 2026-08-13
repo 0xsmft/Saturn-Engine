@@ -567,7 +567,7 @@ namespace Saturn {
 		if( !CanAddItem( bb ) )
 			return;
 
-		m_Renderer->SubmitRect( bb, glm::one<glm::vec4>() );
+		m_Renderer->SubmitRect( bb, m_Style.Colors[ AluraColor_Separator ] );
 
 		ItemSize( bb.GetSize() );
 	}

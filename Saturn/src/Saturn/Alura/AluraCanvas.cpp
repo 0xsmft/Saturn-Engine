@@ -560,11 +560,9 @@ namespace Saturn {
 	{
 		SAT_CORE_ASSERT( m_ActiveRegions.size(), "Alura: AddSeparator needs to be called inside of an active region, call BeginRegion before calling this. (m_ActiveRegions is empty)" );
 
-		// Draw horizontal line until the end of the current region.
-		
 		const auto* pRegion = m_ActiveRegions.top();
 
-		const glm::vec2 size( GetContentRegionAvail().x - ( m_Style.ItemInnerSpacing.x * 2.0f ), 1.0f );
+		const glm::vec2 size( GetContentRegionAvail().x, 1.0f );
 		const AluraRect bb( m_Layout.CursorPos, m_Layout.CursorPos + size );
 		if( !CanAddItem( bb ) )
 			return;
@@ -610,6 +608,11 @@ namespace Saturn {
 
 		// Initial working rect is the full size of the rect, because nothing has been drawn. 
 		rData.PerFrame.WorkingRect = bb;
+
+		// Shrink the initial working rect to not include the padding,
+		// we use ItemInnerSpacing because items are padded differently
+		// when they are in a region, I might change that though.
+		rData.PerFrame.WorkingRect.ShrinkX( m_Style.ItemInnerSpacing.x );
 
 		// LAYOUT
 		m_Layout.CursorPos += m_Style.ItemInnerSpacing;

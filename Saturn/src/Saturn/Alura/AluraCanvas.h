@@ -79,18 +79,26 @@ namespace Saturn {
 		std::underlying_type_t<AluraColor> Index;
 	};
 	
-	struct AluraRegionData
+	struct AluraRegionDataTemporary 
 	{
 		glm::vec2 StartingPosition{};
+		AluraRect WorkingRect{};
+	};
+
+	struct AluraRegionData
+	{
 		glm::vec2 Size{};
 		glm::vec2 Scroll{};
 		
-		AluraRect WorkingRect{};
 		AluraRect InnerRect{};
 		AluraRect Rect{};
 
 		uint64_t ID = 0llu;
 		uint64_t ParentID = 0llu;
+
+		bool JustCreated = false;
+
+		AluraRegionDataTemporary PerFrame{};
 	};
 
 	struct AluraCanvasSpecification
@@ -191,7 +199,7 @@ namespace Saturn {
 		[[nodiscard]] bool AddCheckboxRight( const std::string& rLabel, bool* pValue );
 
 
-		void BeginRegion( const std::string& rID, const glm::vec2& rBounds );
+		[[nodiscard]] bool BeginRegion( const std::string& rID, const glm::vec2& rBounds );
 		void EndRegion();
 
 		void AddDummy( const glm::vec2& rSize );
@@ -285,6 +293,9 @@ namespace Saturn {
 		[[nodiscard]] bool KeyReleased( RubyMouseButton btn );
 		[[nodiscard]] bool KeyHeld( RubyMouseButton btn );
 
+
+		AluraRegionData& GetOrCreateRegion( uint64_t itemID );
+
 	private:
 		UUID m_ID;
 		glm::vec2 m_CanvasSize;
@@ -303,7 +314,10 @@ namespace Saturn {
 		std::vector<Ref<AluraDrawer>> m_Drawers;
 		std::vector<Ref<AluraFont>> m_Fonts;
 		std::stack<AluraColorTemp> m_ColorStack;
-		std::stack<AluraRegionData> m_RegionStack;
+		
+		// Regions
+		std::vector<AluraRegionData> m_Regions;
+		std::stack<AluraRegionData*> m_ActiveRegions;
 
 		std::array<AluraInputState, RubyMouseButton_EnumSize> m_MouseInputStates{ AluraInputState::NoState };
 		std::array<AluraInputState, RubyKey_EnumSize> m_KeyInputStates{ AluraInputState::NoState };

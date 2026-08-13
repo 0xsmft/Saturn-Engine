@@ -91,9 +91,6 @@ namespace Saturn {
 		// Forgot to call PopStyle()
 		SAT_CORE_ASSERT( m_ColorStack.size() == 0 );
 
-		// Forgor to call EndRegion()
-		SAT_CORE_ASSERT( m_RegionStack.size() == 0 );
-
 		// Forgot to call PopFontSize()
 		SAT_CORE_ASSERT( m_PushedFontSize == 0.0f );
 
@@ -559,7 +556,7 @@ namespace Saturn {
 	}
 
 
-	void AluraCanvas::BeginRegion( const std::string& rID, const glm::vec2& rBounds )
+	bool AluraCanvas::BeginRegion( const std::string& rID, const glm::vec2& rBounds )
 	{
 		// Handle NextItemPosition
 		glm::vec2 posDependingLastCall = m_Layout.CursorPos;
@@ -572,48 +569,61 @@ namespace Saturn {
 
 		const AluraRect bb( posDependingLastCall, posDependingLastCall + rBounds );
 		if( !CanAddItem( bb ) )
-			return;
+			return false;
 
 		const uint64_t itemID = FNV1A64( rID.c_str() );
 
 		m_Renderer->PushClipRect( bb );
 		m_Renderer->SubmitRect( bb, m_Style.Colors[ AluraColor_FrameBackground ] );
 
-		AluraRegionData& rData = m_RegionStack.emplace();
-		rData.ID = itemID;
-		rData.StartingPosition = posDependingLastCall;
-		rData.Size = rBounds;
-		rData.ParentID = 0llu;
-		rData.Rect = bb;
-		// TODO: When we have proper scrolling, this would change. For now will work just fine.
-		rData.InnerRect = bb;
-		// Initial working rect is the full size of the rect, because nothing has been drawn. 
-		rData.WorkingRect = bb;
+		AluraRegionData& rData = GetOrCreateRegion( itemID );
+		if( rData.JustCreated )
+		{
+			rData.Size = rBounds;
+			rData.ParentID = 0llu;
+			rData.Rect = bb;
+			// TODO: When we have proper scrolling, this would change. For now will work just fine.
+			rData.InnerRect = bb;
+		}
+	
+		// Set up per-frame data.
+		// Round up cursor position to nearest pixel.
+		rData.PerFrame.StartingPosition = glm::ceil( posDependingLastCall );
 
+		// Initial working rect is the full size of the rect, because nothing has been drawn. 
+		rData.PerFrame.WorkingRect = bb;
+
+		// LAYOUT
 		m_Layout.CursorPos += m_Style.ItemInnerSpacing;
 
 		// Bit of a hack here, but this ensures that the following items
 		// are inline with the region.
 		m_Layout.CurrentIndent += m_Style.ItemInnerSpacing.x;
+
+		// Set active.
+		m_ActiveRegions.push( &rData );
+
+		return true;
 	}
 
 	void AluraCanvas::EndRegion()
 	{
-		SAT_CORE_ASSERT( m_RegionStack.size(), "Alura: Forgot to call BeginRegion or called EndRegion too many times. (m_RegionStack is empty!)" );
+		SAT_CORE_ASSERT( m_ActiveRegions.size(), "Alura: Forgot to call BeginRegion or called EndRegion too many times. (m_ActiveRegions is empty!)" );
 
-		const auto& rRegion = m_RegionStack.top();
+		const auto* pRegion = m_ActiveRegions.top();
 		
 		// Go back to the start so when we do ItemSize,
 		// it will just "work".
-		m_Layout.CursorPos = rRegion.StartingPosition;
+		m_Layout.CursorPos = pRegion->PerFrame.StartingPosition;
 		m_Layout.CurrentIndent -= m_Style.ItemInnerSpacing.x;
 
 		m_Renderer->PopClipRect();
 
 		// Push this item.
-		ItemSize( rRegion.Size );
+		ItemSize( pRegion->Size );
 
-		m_RegionStack.pop();
+		// Remove from active.
+		m_ActiveRegions.pop();
 	}
 
 	void AluraCanvas::AddDummy( const glm::vec2& rSize )
@@ -638,22 +648,24 @@ namespace Saturn {
 	{
 		PushFontAndSetActive( m_EditorFont );
 
-		BeginRegion( "##testing", { 250.0f, 250.0f } );
-
-		PushStyle( AluraColor_FrameBackground, { 1.0f, 1.0f, 1.0f, 1.0f } );
-		BeginRegion( "##testing1", { 250.0f / 2.0f, 250.0f / 2.0f } );
-		m_Renderer->SubmitRect( m_RegionStack.top().WorkingRect, glm::vec4{ 1.0f, 1.0f, 0.0f, 1.0f } );
-		AddButton( "A" );
-		AddButton( "A" );
-		AddButton( "A" );
-		AddButton( "A" );
-		AddButton( "A" );
-		AddButton( "A" );
-		m_Renderer->SubmitRect( m_RegionStack.top().WorkingRect, glm::vec4{ 1.0f, 0.0f, 0.0f, 1.0f } );
-		EndRegion();
-		PopStyle();
-
-		EndRegion();
+		if( BeginRegion( "##testing", { 250.0f, 250.0f } ) ) 
+		{
+			PushStyle( AluraColor_FrameBackground, { 1.0f, 1.0f, 1.0f, 1.0f } );
+			if( BeginRegion( "##testing1", { 250.0f / 2.0f, 250.0f / 2.0f } ) )
+			{
+				m_Renderer->SubmitRect( m_Regions.back().PerFrame.WorkingRect, glm::vec4{ 1.0f, 1.0f, 0.0f, 1.0f } );
+				AddButton( "A" );
+				AddButton( "A" );
+				AddButton( "A" );
+				AddButton( "A" );
+				AddButton( "A" );
+				AddButton( "A" );
+				m_Renderer->SubmitRect( m_Regions.back().PerFrame.WorkingRect, glm::vec4{ 1.0f, 0.0f, 0.0f, 1.0f } );
+				EndRegion();
+			}
+			PopStyle();
+			EndRegion();
+		}
 
 		PushFontSize( 32.0f );
 		AddText( "This is text at size 32px" );
@@ -791,6 +803,15 @@ namespace Saturn {
 		return m_Style.CurrentFontSize + m_Style.WindowPadding.y * 2.0f;
 	}
 
+	glm::vec2 AluraCanvas::GetContentRegionAvail()
+	{
+		SAT_CORE_ASSERT( m_ActiveRegions.size(), "Alura: GetContentRegionAvail needs to be called inside of an active region, call BeginRegion before calling this. (m_ActiveRegions is empty)" );
+
+		const auto* pRegion = m_ActiveRegions.top();
+
+		return pRegion->PerFrame.WorkingRect.GetSize();
+	}
+
 	glm::vec2 AluraCanvas::CalcTextSize( const std::string& rText )
 	{
 		SAT_CORE_ASSERT( m_ActiveFont );
@@ -845,27 +866,27 @@ namespace Saturn {
 		// TODO: Do not remove working rect from self
 		//		 "self" meaning the region itself because the region will
 		//		 submit itself to the layout system.
-		if( !m_RegionStack.empty() )
+		if( !m_ActiveRegions.empty() )
 		{
-			auto& rRegion = m_RegionStack.top();
+			auto* pRegion = m_ActiveRegions.top();
 
 			const float consumedY = rSize.y + m_Style.ItemSpacing.y;
-			rRegion.WorkingRect.Min.y += consumedY;
+			pRegion->PerFrame.WorkingRect.Min.y += consumedY;
 
 			// Element was too big...
-			if( rRegion.WorkingRect.Min.y > rRegion.WorkingRect.Max.y )
+			if( pRegion->PerFrame.WorkingRect.Min.y > pRegion->PerFrame.WorkingRect.Max.y )
 			{
-				rRegion.WorkingRect.Min.y = rRegion.WorkingRect.Max.y;
+				pRegion->PerFrame.WorkingRect.Min.y = pRegion->PerFrame.WorkingRect.Max.y;
 			}
 		}
 	}
 	
 	bool AluraCanvas::CanAddItem( const AluraRect& rBoundingBox )
 	{
-		if( !m_RegionStack.empty() )
+		if( !m_ActiveRegions.empty() )
 		{
-			const auto& rRegion = m_RegionStack.top();
-			const auto workingRectSize = rRegion.WorkingRect.GetSize();
+			const auto* pRegion = m_ActiveRegions.top();
+			const auto workingRectSize = pRegion->PerFrame.WorkingRect.GetSize();
 			const auto itemSize = rBoundingBox.GetSize();
 
 			if( itemSize.x > workingRectSize.x || itemSize.y > workingRectSize.y )
@@ -992,6 +1013,28 @@ namespace Saturn {
 	bool AluraCanvas::KeyHeld( RubyMouseButton btn )
 	{
 		return m_KeyInputStates[ btn ] == AluraInputState::Held;
+	}
+
+	AluraRegionData& AluraCanvas::GetOrCreateRegion( uint64_t itemID )
+	{
+		const auto itr = std::find_if( m_Regions.begin(), m_Regions.end(), 
+			[ itemID ](const auto& rCandidate)
+		{
+			return rCandidate.ID == itemID;
+		} );
+
+		if( itr != m_Regions.end() )
+		{
+			AluraRegionData& rRegion = *itr;
+			rRegion.JustCreated = false;
+			return *itr;
+		}
+		else
+		{
+			AluraRegionData& rNewRegion = m_Regions.emplace_back();
+			rNewRegion.ID = itemID;
+			return rNewRegion;
+		}
 	}
 
 }

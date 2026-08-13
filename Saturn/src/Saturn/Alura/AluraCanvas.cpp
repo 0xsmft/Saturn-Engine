@@ -1054,6 +1054,7 @@ namespace Saturn {
 		{
 			AluraRegionData& rNewRegion = m_Regions.emplace_back();
 			rNewRegion.ID = itemID;
+			rNewRegion.JustCreated = true;
 			return rNewRegion;
 		}
 	}

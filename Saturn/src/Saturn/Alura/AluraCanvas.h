@@ -82,7 +82,14 @@ namespace Saturn {
 	struct AluraRegionDataTemporary 
 	{
 		glm::vec2 StartingPosition{};
+		glm::vec2 ContentSize{};
 		AluraRect WorkingRect{};
+		AluraRect ClippingRect{};
+
+		// Scrolling is dependent on what is being drawn
+		// into the region, CanScroll only becomes true
+		// if an element is drawn off the region.
+		bool CanScroll = false;
 	};
 
 	struct AluraRegionData
@@ -96,9 +103,9 @@ namespace Saturn {
 		uint64_t ID = 0llu;
 		uint64_t ParentID = 0llu;
 
-		bool JustCreated = false;
-
 		AluraRegionDataTemporary PerFrame{};
+
+		bool JustCreated = false;
 	};
 
 	struct AluraCanvasSpecification
@@ -230,6 +237,7 @@ namespace Saturn {
 		void PopFontSize();
 
 		float GetFrameHeight() const;
+		float GetRegionMaxScroll( const AluraRegionData& rData ) const;
 
 		// An active region must be pushed before calling this.
 		glm::vec2 GetContentRegionAvail();
@@ -264,6 +272,7 @@ namespace Saturn {
 	public:
 		void UpdateMouseInputState( const RubyMouseButton btn, const AluraInputState state );
 		void UpdateKeyInputState( const RubyKey btn, const AluraInputState state );
+		void UpdateMouseScroll( const glm::vec2& rScrollOffset );
 
 	public:
 		inline void SetPosition( const glm::vec2& rPosition ) 
@@ -288,6 +297,8 @@ namespace Saturn {
 		bool ButtonBehaviour( const AluraRect& rRect, uint64_t id, bool* pOutHovered, bool* pOutHeld );
 
 		void ResetInputStates();
+
+		void ClampRegionScroll( AluraRegionData& rData );
 
 		[[nodiscard]] bool MouseButtonPressed( RubyMouseButton btn );
 		[[nodiscard]] bool MouseButtonReleased( RubyMouseButton btn );

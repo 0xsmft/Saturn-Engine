@@ -55,10 +55,13 @@ namespace Saturn {
 		glm::vec2      GetBR() const { return Max; }
 		bool           Contains( const glm::vec2& p ) const { return p.x >= Min.x && p.y >= Min.y && p.x < Max.x && p.y < Max.y; }
 		bool           Contains( const AluraRect& r ) const { return r.Min.x >= Min.x && r.Min.y >= Min.y && r.Max.x <= Max.x && r.Max.y <= Max.y; }
+		bool           Overlaps( const AluraRect& r ) const { return r.Min.y <  Max.y && r.Max.y >  Min.y && r.Min.x <  Max.x && r.Max.x >  Min.x; }
+
 		glm::vec4      ToVec4() const { return glm::vec4( Min.x, Min.y, Max.x, Max.y ); }
 
 		// Shrink symmetrically on the X axis.
 		void			ShrinkX( float x ) { Min.x += x; Max.x -= x; };
+		void			ShrinkY( float y ) { Min.y += y; Max.y -= y; };
 	};
 	
 }

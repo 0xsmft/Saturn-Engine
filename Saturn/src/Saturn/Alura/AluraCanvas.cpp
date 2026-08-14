@@ -833,6 +833,14 @@ namespace Saturn {
 		return m_Style.CurrentFontSize + m_Style.WindowPadding.y * 2.0f;
 	}
 
+	float AluraCanvas::GetRegionMaxScroll( const AluraRegionData& rData ) const
+	{
+		const float visibleHeight = rData.Rect.GetHeight();
+		const float contentHeight = rData.PerFrame.ContentSize.y + m_Style.ItemInnerSpacing.y * 2.0f;
+
+		return glm::max( 0.0f, contentHeight - visibleHeight );
+	}
+
 	glm::vec2 AluraCanvas::GetContentRegionAvail()
 	{
 		SAT_CORE_ASSERT( m_ActiveRegions.size(), "Alura: GetContentRegionAvail needs to be called inside of an active region, call BeginRegion before calling this. (m_ActiveRegions is empty)" );

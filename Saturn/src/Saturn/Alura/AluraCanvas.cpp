@@ -307,7 +307,7 @@ namespace Saturn {
 
 		m_Renderer->SubmitRect( bb, m_Style.Colors[ AluraColor_FrameBackground ] );
 		m_Renderer->SubmitRect( bb.Min, fillMax, m_Style.Colors[ AluraColor_ProgressColor ] );
-		m_Renderer->SubmitRectFrame( bb.Min, bb.Max, 1.0f, m_Style.Colors[ AluraColor_FrameBorder ] );
+		m_Renderer->SubmitRectFrame( bb.Min, bb.Max, 1.0f, m_Style.Colors[ AluraColor_Border ] );
 	}
 
 	void AluraCanvas::AddText( const std::string& rText, const glm::vec4& rColor )
@@ -368,7 +368,8 @@ namespace Saturn {
 			color = m_Style.Colors[ AluraColor_ButtonHovered ];
 		}
 
-		m_Renderer->SubmitRect( posDependingLastCall, { posDependingLastCall + size }, color );
+		m_Renderer->SubmitRect( bb, color );
+		m_Renderer->SubmitRectFrame( bb, 1.0f, m_Style.Colors[ AluraColor_Border ] );
 
 		return pressed;
 	}
@@ -408,6 +409,7 @@ namespace Saturn {
 
 		// Button Rect
 		m_Renderer->SubmitRect( bb, buttonColor );
+		m_Renderer->SubmitRectFrame( bb, 1.0f, m_Style.Colors[ AluraColor_Border ] );
 
 		// Submit Text centred inside the button.
 		// and bring it in by the padding on the X coord.
@@ -476,6 +478,7 @@ namespace Saturn {
 #endif
 
 		m_Renderer->SubmitRect( checkBoxBB, checkBoxColor );
+		m_Renderer->SubmitRectFrame( checkBoxBB, 1.0f, m_Style.Colors[ AluraColor_Border ] );
 
 		if( *pValue )
 		{
@@ -537,6 +540,7 @@ namespace Saturn {
 		m_Renderer->SubmitString( rLabel, m_ActiveFont, m_Style.CurrentFontSize, textPos, m_Style.Colors[ AluraColor_Text ] );
 
 		m_Renderer->SubmitRect( checkBoxBB, checkBoxColor );
+		m_Renderer->SubmitRectFrame( checkBoxBB, 1.0f, m_Style.Colors[ AluraColor_Border ] );
 
 		if( *pValue )
 		{

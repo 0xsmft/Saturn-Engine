@@ -1201,6 +1201,29 @@ namespace Saturn {
 		}
 	}
 
+	AluraPopupData& AluraCanvas::GetOrCreatePopup( uint64_t itemID )
+	{
+		const auto itr = std::find_if( m_Popups.begin(), m_Popups.end(),
+			[ itemID ]( const auto& rCandidate )
+		{
+			return rCandidate.ID == itemID;
+		} );
+
+		if( itr != m_Popups.end() )
+		{
+			AluraPopupData& rPopup = *itr;
+			rPopup.JustCreated = false;
+			return *itr;
+		}
+		else
+		{
+			AluraPopupData& rNewPopup = m_Popups.emplace_back();
+			rNewPopup.ID = itemID;
+			rNewPopup.JustCreated = true;
+			return rNewPopup;
+		}
+	}
+
 }
 
 #include "Saturn/GameFramework/Core/EngineGenerated.h"

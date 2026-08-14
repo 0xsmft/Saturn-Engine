@@ -32,6 +32,8 @@
 #include "AluraStylingProfile.h"
 
 #include "Saturn/Core/Input.h"
+#include "Saturn/Core/App.h"
+#include "Saturn/Core/Ruby/RubyWindow.h"
 
 #include "Saturn/Vulkan/AluraRenderer.h"
 #include "Saturn/Asset/AssetManager.h"
@@ -217,8 +219,6 @@ namespace Saturn {
 			return;
 
 		m_Renderer->SubmitRect( bb, rColor );
-
-		ItemSize( rSize );
 	}
 
 		ItemSize( rSize );
@@ -592,6 +592,7 @@ namespace Saturn {
 			rData.Rect = bb;
 			// TODO: When we have proper scrolling, this would change. For now will work just fine.
 			rData.InnerRect = bb;
+			rData.ParentID = m_ActiveRegions.empty() ? 0llu : m_ActiveRegions.top()->ID;
 		}
 	
 		// Set up per-frame data.
@@ -600,14 +601,20 @@ namespace Saturn {
 
 		// Initial working rect is the full size of the rect, because nothing has been drawn. 
 		rData.PerFrame.WorkingRect = bb;
+		rData.PerFrame.ClippingRect = bb;
+		rData.PerFrame.ContentSize = glm::zero<glm::vec2>();
+
+		rData.PerFrame.CanScroll = false;
 
 		// Shrink the initial working rect to not include the padding,
 		// we use ItemInnerSpacing because items are padded differently
 		// when they are in a region, I might change that though.
 		rData.PerFrame.WorkingRect.ShrinkX( m_Style.ItemInnerSpacing.x );
+		rData.PerFrame.WorkingRect.ShrinkY( m_Style.ItemInnerSpacing.y );
 
 		// LAYOUT
 		m_Layout.CursorPos += m_Style.ItemInnerSpacing;
+		m_Layout.CursorPos.y -= rData.Scroll.y;
 
 		// Bit of a hack here, but this ensures that the following items
 		// are inline with the region.
@@ -616,6 +623,12 @@ namespace Saturn {
 		// Set active.
 		m_ActiveRegions.push( &rData );
 
+		// Mouse testing.
+		if( bb.Contains( m_MousePosition ) )
+		{
+			m_Hot = m_ID;
+		}
+
 		return true;
 	}
 
@@ -623,8 +636,9 @@ namespace Saturn {
 	{
 		SAT_CORE_ASSERT( m_ActiveRegions.size(), "Alura: Forgot to call BeginRegion or called EndRegion too many times. (m_ActiveRegions is empty!)" );
 
-		const auto* pRegion = m_ActiveRegions.top();
-		
+		auto* pRegion = m_ActiveRegions.top();
+		ClampRegionScroll( *pRegion );
+
 		// Go back to the start so when we do ItemSize,
 		// it will just "work".
 		m_Layout.CursorPos = pRegion->PerFrame.StartingPosition;
@@ -659,27 +673,31 @@ namespace Saturn {
 	void AluraCanvas::DrawDemo()
 	{
 		PushFontAndSetActive( m_EditorFont );
+		PushFontSize( 32.0f );
 
-		if( BeginRegion( "##testing", { 250.0f, 250.0f } ) ) 
+		if( BeginRegion( "##testing", { 250.0f, 250.0f } ) )
 		{
+			AddSeparator();
+
 			PushStyle( AluraColor_FrameBackground, { 1.0f, 1.0f, 1.0f, 1.0f } );
 			if( BeginRegion( "##testing1", { 250.0f / 2.0f, 250.0f / 2.0f } ) )
 			{
-				m_Renderer->SubmitRect( m_Regions.back().PerFrame.WorkingRect, glm::vec4{ 1.0f, 1.0f, 0.0f, 1.0f } );
-				AddButton( "A" );
-				AddButton( "A" );
-				AddButton( "A" );
-				AddButton( "A" );
-				AddButton( "A" );
-				AddButton( "A" );
-				m_Renderer->SubmitRect( m_Regions.back().PerFrame.WorkingRect, glm::vec4{ 1.0f, 0.0f, 0.0f, 1.0f } );
+				bool clicked = AddButton( "1" );
+				clicked = AddButton( "2" );
+				clicked = AddButton( "3" );
+				clicked = AddButton( "4" );
+				clicked = AddButton( "5" );
+				clicked = AddButton( "6" );
+				clicked = AddButton( "7" );
+				clicked = AddButton( "8" );
+				clicked = AddButton( "9" );
+
 				EndRegion();
 			}
 			PopStyle();
 			EndRegion();
 		}
 
-		PushFontSize( 32.0f );
 		AddText( "This is text at size 32px" );
 		PopFontSize();
 
@@ -848,6 +866,39 @@ namespace Saturn {
 		m_KeyInputStates[ btn ] = state;
 	}
 
+	void AluraCanvas::UpdateMouseScroll( const glm::vec2& rScrollOffset )
+	{
+		// Must use m_Regions here, as no matter what there are
+		// not active regions at this point,
+		// polling events happens way before Alura even begins a frame.
+		for( auto itr = m_Regions.rbegin(); itr != m_Regions.rend(); ++itr )
+		{
+			auto& rRegion = *itr;
+
+			if( !rRegion.Rect.Contains( m_MousePosition ) )
+				continue;
+
+			if( !rRegion.PerFrame.CanScroll )
+				continue;
+
+			if( rScrollOffset.x != 0.0f )
+			{
+			}
+
+			if( rScrollOffset.y != 0.0f )
+			{
+				const float scrollStep = glm::max( 1.0f, m_Style.CurrentFontSize );
+				rRegion.Scroll.y -= rScrollOffset.y * scrollStep;
+				ClampRegionScroll( rRegion );
+			}
+
+			SAT_CORE_INFO( "Scrolling in region: {}", rRegion.ID );
+			SAT_CORE_INFO( "Scrolling vector: {}", rRegion.Scroll );
+
+			break;
+		}
+	}
+
 	void AluraCanvas::ItemSize( const glm::vec2& rSize, float textBaselineY )
 	{
 		//
@@ -882,8 +933,11 @@ namespace Saturn {
 		{
 			auto* pRegion = m_ActiveRegions.top();
 
+			const float consumedX = rSize.x + m_Style.ItemSpacing.x;
 			const float consumedY = rSize.y + m_Style.ItemSpacing.y;
+
 			pRegion->PerFrame.WorkingRect.Min.y += consumedY;
+			pRegion->PerFrame.ContentSize += glm::vec2{ consumedX, consumedY };
 
 			// Element was too big...
 			if( pRegion->PerFrame.WorkingRect.Min.y > pRegion->PerFrame.WorkingRect.Max.y )
@@ -897,14 +951,23 @@ namespace Saturn {
 	{
 		if( !m_ActiveRegions.empty() )
 		{
-			const auto* pRegion = m_ActiveRegions.top();
+			auto* pRegion = m_ActiveRegions.top();
 			const auto workingRectSize = pRegion->PerFrame.WorkingRect.GetSize();
 			const auto itemSize = rBoundingBox.GetSize();
 
-			if( itemSize.x > workingRectSize.x || itemSize.y > workingRectSize.y )
+			if( !rBoundingBox.Overlaps( pRegion->PerFrame.ClippingRect ) )
 			{
+				pRegion->PerFrame.CanScroll = true;
 				return false;
 			}
+
+			/*
+			if( itemSize.x > workingRectSize.x || itemSize.y > workingRectSize.y )
+			{
+				pRegion->PerFrame.CanScroll = true;
+				return false;
+			}
+			*/
 		}
 
 		// TODO: Support for CanAddItem when drawing on the directly on the viewport.
@@ -1000,6 +1063,15 @@ namespace Saturn {
 				m_KeyInputStates[ i ] = AluraInputState::NoState;
 			}
 		}
+	}
+
+	void AluraCanvas::ClampRegionScroll( AluraRegionData& rData )
+	{
+		const float maxScroll = GetRegionMaxScroll( rData );
+
+		rData.Scroll.y = glm::clamp( rData.Scroll.y, 0.0f, maxScroll );
+
+		rData.PerFrame.CanScroll = maxScroll > 0.0f;
 	}
 
 	bool AluraCanvas::MouseButtonPressed( RubyMouseButton btn )

@@ -31,6 +31,7 @@
 
 #include "Saturn/Core/Ruby/RubyEvent.h"
 
+#include "AluraInputTextState.h"
 #include "AluraCanvas.h"
 
 #include "SharedGlobals.h"
@@ -87,6 +88,12 @@ namespace Saturn {
 					{
 						const RubyKeyEvent& rKeyEvent = ( RubyKeyEvent& ) rEvent;
 						g_AluraCanvas->UpdateKeyInputState( rKeyEvent.GetKeycode(), AluraInputState::Held );
+					} break;
+
+					case EventType::MouseScroll:
+					{
+						const RubyMouseScrollEvent& rScrollEvent = ( RubyMouseScrollEvent& ) rEvent;
+						g_AluraCanvas->UpdateMouseScroll( { rScrollEvent.GetOffsetX(), rScrollEvent.GetOffsetY() } );
 					} break;
 
 					default:

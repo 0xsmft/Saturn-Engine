@@ -681,6 +681,25 @@ namespace Saturn {
 		rData.PerFrame.ClippingRect = bb;
 		rData.PerFrame.ContentSize = glm::zero<glm::vec2>();
 
+		if( m_ActiveRegions.size() )
+		{
+			const auto* pParent = m_ActiveRegions.top();
+
+			// Take the smallest clipping rect to make sure that a sub-region doesnt
+			// extend over the parent.
+			rData.PerFrame.ClippingRect.Min = glm::max(
+				rData.PerFrame.ClippingRect.Min,
+				pParent->PerFrame.ClippingRect.Min
+			);
+
+			rData.PerFrame.ClippingRect.Max = glm::min(
+				rData.PerFrame.ClippingRect.Max,
+				pParent->PerFrame.ClippingRect.Max
+			);
+		}
+
+		m_Renderer->PushClipRect( rData.PerFrame.ClippingRect );
+
 		rData.PerFrame.CanScroll = false;
 
 		// Shrink the initial working rect to not include the padding,

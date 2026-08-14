@@ -212,6 +212,7 @@ namespace Saturn {
 		}
 
 		const AluraRect bb( posDependingLastCall, posDependingLastCall + rSize );
+		ItemSize( rSize );
 		if( !CanAddItem( bb ) )
 			return;
 
@@ -234,13 +235,12 @@ namespace Saturn {
 			m_WantToSetItemPosition = false;
 		}
 
-		AluraRect bb( posDependingLastCall, posDependingLastCall + rSize );
+		const AluraRect bb( posDependingLastCall, posDependingLastCall + rSize );
+		ItemSize( bb.GetSize() );
 		if( !CanAddItem( bb ) )
 			return;
 
 		m_Renderer->SubmitRect( bb, image, rColor, rUV1, rUV2 );
-		
-		ItemSize( bb.GetSize() );
 	}
 
 	bool AluraCanvas::AddImageButton( const glm::vec2& rSize, Ref<Texture2D> image, const glm::vec4& rColor /*= glm::one<glm::vec4>()*/, const glm::vec2& rUV1 /*= { 0.0F, 1.0F }*/, const glm::vec2& rUV2 /*= { 1.0F, 0.0F } */ )
@@ -256,6 +256,8 @@ namespace Saturn {
 
 		const glm::vec2 padding = m_Style.WindowPadding;
 		const AluraRect bb( posDependingLastCall, posDependingLastCall + rSize + padding );
+
+		ItemSize( rSize );
 		if( !CanAddItem( bb ) )
 			return false;
 
@@ -280,9 +282,6 @@ namespace Saturn {
 			rUV1, 
 			rUV2 );
 
-		// Move on
-		ItemSize( rSize );
-		
 		return pressed;
 	}
 
@@ -298,6 +297,7 @@ namespace Saturn {
 		}
 
 		const AluraRect bb( posDependingLastCall, posDependingLastCall + rSize );
+		ItemSize( bb.GetSize() );
 		if( !CanAddItem( bb ) )
 			return;
 
@@ -308,9 +308,6 @@ namespace Saturn {
 		m_Renderer->SubmitRect( bb, m_Style.Colors[ AluraColor_FrameBackground ] );
 		m_Renderer->SubmitRect( bb.Min, fillMax, m_Style.Colors[ AluraColor_ProgressColor ] );
 		m_Renderer->SubmitRectFrame( bb.Min, bb.Max, 1.0f, m_Style.Colors[ AluraColor_FrameBorder ] );
-		
-		// Move on.
-		ItemSize( bb.GetSize() );
 	}
 
 	void AluraCanvas::AddText( const std::string& rText, const glm::vec4& rColor )
@@ -327,6 +324,7 @@ namespace Saturn {
 		const auto textSize = m_ActiveFont->CalcTextSize( m_Style.CurrentFontSize, rText );
 		AluraRect bb( posDependingLastCall, posDependingLastCall + textSize );
 		
+		ItemSize( bb.GetSize() );
 		if( !CanAddItem( bb ) )
 			return;
 
@@ -335,8 +333,6 @@ namespace Saturn {
 #if defined(SAT_ALURA_SHOW_TEXT_BB)
 		m_Renderer->SubmitRect( bb, { 1.0f, 0.0f, 0.0f, 1.0f } );
 #endif
-
-		ItemSize( bb.GetSize() );
 	}
 
 	bool AluraCanvas::AddButton( const glm::vec2& rSize, const glm::vec4& rColor )
@@ -357,10 +353,9 @@ namespace Saturn {
 		size += m_Style.WindowPadding * 2.0f;
 		const AluraRect bb( posDependingLastCall, posDependingLastCall + size );
 
+		ItemSize( size );
 		if( !CanAddItem( bb ) )
 			return false;
-
-		ItemSize( size );
 
 		uint64_t id = FNV1A64( "btnnoname" );
 
@@ -398,6 +393,8 @@ namespace Saturn {
 
 		const AluraRect bb( posDependingLastCall, posDependingLastCall + rectSize );
 
+		// Move on
+		ItemSize( bb.GetSize() );
 		if( !CanAddItem( bb ) )
 			return false;
 			
@@ -416,9 +413,6 @@ namespace Saturn {
 		// and bring it in by the padding on the X coord.
 		const glm::vec2 textPos = { posDependingLastCall.x + m_Style.ItemInnerSpacing.x, posDependingLastCall.y };
 		m_Renderer->SubmitString( rText, m_ActiveFont, m_Style.CurrentFontSize, textPos, m_Style.Colors[ AluraColor_Text ] );
-
-		// Move on
-		ItemSize( bb.GetSize() );
 
 		return pressed;
 	}
@@ -460,6 +454,7 @@ namespace Saturn {
 		const AluraRect bb( offsetPosition,
 			offsetPosition + glm::vec2( squareSize.x + ( textSize.x > 0.0f ? m_Style.ItemInnerSpacing.x + textSize.x : 0.0f ), textSize.y ) );
 		
+		ItemSize( bb.GetSize() );
 		if( !CanAddItem( bb ) )
 			return false;
 
@@ -491,8 +486,6 @@ namespace Saturn {
 		const glm::vec2 textPos = { posDependingLastCall.x + squareSize.x + m_Style.ItemInnerSpacing.x, posDependingLastCall.y };
 		m_Renderer->SubmitString( rLabel, m_ActiveFont, m_Style.CurrentFontSize, textPos, m_Style.Colors[ AluraColor_Text ] );
 
-		ItemSize( bb.GetSize() );
-
 		return false;
 	}
 
@@ -519,6 +512,7 @@ namespace Saturn {
 		const AluraRect bb( offsetPosition,
 			offsetPosition + glm::vec2( squareSize.x + ( textSize.x > 0.0f ? m_Style.ItemInnerSpacing.x + textSize.x : 0.0f ), textSize.y ) );
 
+		ItemSize( bb.GetSize() );
 		if( !CanAddItem( bb ) )
 			return false;
 
@@ -550,8 +544,6 @@ namespace Saturn {
 			m_Renderer->SubmitCheckMark( checkBoxBB.Min + pad, glm::one<glm::vec4>(), squareSize.x - pad * 2.0f );
 		}
 
-		ItemSize( bb.GetSize() );
-
 		return false;
 	}
 
@@ -564,12 +556,12 @@ namespace Saturn {
 
 		const glm::vec2 size( GetContentRegionAvail().x, 1.0f );
 		const AluraRect bb( m_Layout.CursorPos, m_Layout.CursorPos + size );
+		
+		ItemSize( bb.GetSize() );
 		if( !CanAddItem( bb ) )
 			return;
 
 		m_Renderer->SubmitRect( bb, m_Style.Colors[ AluraColor_Separator ] );
-
-		ItemSize( bb.GetSize() );
 	}
 
 	bool AluraCanvas::BeginRegion( const std::string& rID, const glm::vec2& rBounds )
@@ -659,10 +651,9 @@ namespace Saturn {
 		}
 
 		const AluraRect bb( posDependingLastCall, posDependingLastCall + rSize );
+		ItemSize( bb.GetSize() );
 		if( !CanAddItem( bb ) )
 			return;
-
-		ItemSize( bb.GetSize() );
 	}
 
 	void AluraCanvas::DrawDemo()

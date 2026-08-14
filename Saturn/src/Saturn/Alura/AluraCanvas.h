@@ -108,6 +108,21 @@ namespace Saturn {
 		bool JustCreated = false;
 	};
 
+	struct AluraPopupData
+	{
+		AluraRegionData* pRegionData = nullptr;
+		uint32_t ItemCount = 0u;
+		uint64_t ID = 0llu;
+		glm::vec2 OpeningPosition{};
+		glm::vec2 MeasuredSize{};
+		std::string PopupName;
+
+		bool JustCreated = false;
+		bool Closed = false;
+		bool NeedsMeasured = true;
+		bool AlreadyMeasured = false;
+	};
+
 	struct AluraCanvasSpecification
 	{
 		glm::vec2 Size{};
@@ -205,6 +220,11 @@ namespace Saturn {
 		[[nodiscard]] bool AddCheckbox( const std::string& rLabel, bool* pValue );
 		[[nodiscard]] bool AddCheckboxRight( const std::string& rLabel, bool* pValue );
 
+		
+		[[nodiscard]] bool AddPopup( const std::string& rLabel );
+		void CloseCurrentPopup();
+		inline void MarkPopupAsClosed() { CloseCurrentPopup(); }
+		void EndPopup();
 
 		void AddSeparator();
 
@@ -308,6 +328,7 @@ namespace Saturn {
 
 
 		AluraRegionData& GetOrCreateRegion( uint64_t itemID );
+		AluraPopupData& GetOrCreatePopup( uint64_t itemID );
 
 	private:
 		UUID m_ID;
@@ -331,6 +352,10 @@ namespace Saturn {
 		// Regions
 		std::vector<AluraRegionData> m_Regions;
 		std::stack<AluraRegionData*> m_ActiveRegions;
+
+		// Popups
+		std::vector<AluraPopupData> m_Popups;
+		std::stack<AluraPopupData*> m_OpenPopups;
 
 		std::array<AluraInputState, RubyMouseButton_EnumSize> m_MouseInputStates{ AluraInputState::NoState };
 		std::array<AluraInputState, RubyKey_EnumSize> m_KeyInputStates{ AluraInputState::NoState };

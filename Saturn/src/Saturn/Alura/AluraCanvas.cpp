@@ -547,6 +547,77 @@ namespace Saturn {
 		return false;
 	}
 
+	bool AluraCanvas::AddPopup( const std::string& rLabel )
+	{
+		// Handle NextItemPosition
+		// NB: Popups open from where the mouse is.
+		glm::vec2 posDependingLastCall = m_MousePosition;
+
+		if( m_WantToSetItemPosition )
+		{
+			posDependingLastCall = m_PendingNextItemPosition;
+			m_WantToSetItemPosition = false;
+		}
+
+		const std::string popupName = rLabel + "AlrPopup";
+		const auto itemID = FNV1A64( rLabel.c_str() );
+		
+		auto& rPopupData = GetOrCreatePopup( itemID );
+		if( rPopupData.JustCreated )
+		{
+			rPopupData.PopupName = popupName;
+			rPopupData.OpeningPosition = m_MousePosition;
+		}
+
+		SetNextItemPosition( posDependingLastCall );
+		bool visible = BeginRegion( rLabel, rPopupData.AlreadyMeasured ? rPopupData.MeasuredSize : glm::vec2{ 1.0f, 1.0f } );
+		if( visible )
+		{
+			rPopupData.pRegionData = m_ActiveRegions.top();
+			m_OpenPopups.push( &rPopupData );
+		}
+
+		return visible;
+	}
+
+	void AluraCanvas::CloseCurrentPopup()
+	{
+		SAT_CORE_ASSERT( m_OpenPopups.size(), "Alura: CloseCurrentPopup needs to be called inside of an active popup, call AddPopup before calling this. (m_OpenPopups is empty)" );
+
+		auto* pPopup = m_OpenPopups.top();
+		pPopup->Closed = true;
+	}
+
+	void AluraCanvas::EndPopup()
+	{
+		SAT_CORE_ASSERT( m_OpenPopups.size(), "Alura: EndPopup needs to be called inside of an active popup, call AddPopup before calling this. (m_OpenPopups is empty)" );
+
+		// End inner region.
+		EndRegion();
+
+		auto* pPopup = m_OpenPopups.top();
+
+		if( pPopup->NeedsMeasured && !pPopup->AlreadyMeasured )
+		{
+			pPopup->MeasuredSize = pPopup->pRegionData->PerFrame.ContentSize;
+			pPopup->NeedsMeasured = false;
+			pPopup->AlreadyMeasured = true;
+		}
+
+		if( pPopup->Closed )
+		{
+			const auto targetID = pPopup->ID;
+			std::erase_if( m_Popups,
+				[ targetID ]( const auto& rCandidate ) -> bool
+			{
+				return rCandidate.ID == targetID;
+			} );
+
+			pPopup = nullptr;
+		}
+	
+		m_OpenPopups.pop();
+	}
 
 	void AluraCanvas::AddSeparator()
 	{

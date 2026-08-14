@@ -656,21 +656,23 @@ namespace Saturn {
 
 		const uint64_t itemID = FNV1A64( rID.c_str() );
 
+		m_Renderer->SubmitRect( bb, m_Style.Colors[ AluraColor_RegionBackground ] );
+		m_Renderer->SubmitRectFrame( bb, 1.0f, m_Style.Colors[ AluraColor_Border ] );
 		m_Renderer->PushClipRect( bb );
-		m_Renderer->SubmitRect( bb, m_Style.Colors[ AluraColor_FrameBackground ] );
 
 		AluraRegionData& rData = GetOrCreateRegion( itemID );
 		if( rData.JustCreated )
 		{
-			rData.Size = rBounds;
 			rData.ParentID = 0llu;
-			rData.Rect = bb;
 			// TODO: When we have proper scrolling, this would change. For now will work just fine.
-			rData.InnerRect = bb;
 			rData.ParentID = m_ActiveRegions.empty() ? 0llu : m_ActiveRegions.top()->ID;
 		}
 	
 		// Set up per-frame data.
+		rData.Size = rBounds;
+		rData.Rect = bb;
+		rData.InnerRect = bb;
+
 		// Round up cursor position to nearest pixel.
 		rData.PerFrame.StartingPosition = glm::ceil( posDependingLastCall );
 
@@ -688,6 +690,7 @@ namespace Saturn {
 		rData.PerFrame.WorkingRect.ShrinkY( m_Style.ItemInnerSpacing.y );
 
 		// LAYOUT
+		m_Layout.CursorPos = posDependingLastCall;
 		m_Layout.CursorPos += m_Style.ItemInnerSpacing;
 		m_Layout.CursorPos.y -= rData.Scroll.y;
 

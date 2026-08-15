@@ -221,7 +221,23 @@ namespace Saturn {
 		m_Renderer->SubmitRect( bb, rColor );
 	}
 
+	void AluraCanvas::AddRect( const glm::vec2& rSize, float rounding, const glm::vec4& rColor /*= glm::one<glm::vec4>() */ )
+	{
+		// Handle SetNextItemPosition
+		glm::vec2 posDependingLastCall = m_Layout.CursorPos;
+
+		if( m_WantToSetItemPosition )
+		{
+			posDependingLastCall = m_PendingNextItemPosition;
+			m_WantToSetItemPosition = false;
+		}
+
+		const AluraRect bb( posDependingLastCall, posDependingLastCall + rSize );
 		ItemSize( rSize );
+		if( !CanAddItem( bb ) )
+			return;
+
+		m_Renderer->SubmitRoundedRect( bb, rounding, rColor );
 	}
 
 	void AluraCanvas::AddImage( const glm::vec2& rSize, Ref<Texture2D> image, const glm::vec4& rColor, const glm::vec2& rUV1, const glm::vec2& rUV2 )

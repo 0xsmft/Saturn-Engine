@@ -43,8 +43,10 @@ namespace Saturn {
 	{
 		glm::vec2 Position{};
 		glm::vec2 TexCoord{};
+		glm::vec2 RectSize{};
 		glm::vec4 Color{};
 		float TextureIndex = 0.0f;
+		float Radius = 0.0f;
 	};
 
 	struct AluraTextVertex
@@ -103,7 +105,20 @@ namespace Saturn {
 			const glm::vec4& rColor, 
 			const glm::vec2& rUV1 = { 0.0f, 1.0f }, const glm::vec2& rUV2 = { 1.0f, 1.0f } );
 
-		void SubmitRectFrame( const glm::vec2& rMin, const glm::vec2& rMax, float thickness, const glm::vec4& rColor );
+		void SubmitRoundedRect( 
+			const glm::vec2& rMin, 
+			const glm::vec2& rMax, 
+			float rounding = 5.0f,
+			const glm::vec4& rColor = glm::one<glm::vec4>() );
+
+		void SubmitRoundedRect(
+			const AluraRect& rRect,
+			float rounding = 5.0f,
+			const glm::vec4& rColor = glm::one<glm::vec4>() );
+
+		void SubmitRectFrame( const glm::vec2& rMin, const glm::vec2& rMax, float thickness, const glm::vec4& rColor = glm::one<glm::vec4>() );
+
+		void SubmitRectFrame( const AluraRect& rRect, float thickness, const glm::vec4& rColor = glm::one<glm::vec4>() );
 	
 		void SubmitString( 
 			const std::string& rText, 

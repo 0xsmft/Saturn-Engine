@@ -103,6 +103,7 @@ namespace Saturn {
 
 		// Setup layout
 		m_Hot = 0llu;
+		m_HotRegion = 0llu;
 		m_Layout.CursorStartingPos = m_Style.WindowPadding;
 		m_Layout.CurrentIndent     = m_Style.WindowPadding.x;
 		m_Layout.CursorPos         = m_Layout.CursorStartingPos;
@@ -328,7 +329,7 @@ namespace Saturn {
 		m_Renderer->SubmitString( rText, m_ActiveFont, m_Style.CurrentFontSize, posDependingLastCall, rColor );
 		
 #if defined(SAT_ALURA_SHOW_TEXT_BB)
-		m_Renderer->SubmitRect( bb, { 1.0f, 0.0f, 0.0f, 1.0f } );
+		m_Renderer->SubmitRectFrame( bb, 1.0f, { 1.0f, 0.0f, 0.0f, 1.0f } );
 #endif
 	}
 
@@ -354,7 +355,7 @@ namespace Saturn {
 		if( !CanAddItem( bb ) )
 			return false;
 
-		uint64_t id = FNV1A64( "btnnoname" );
+		const uint64_t id = FNV1A64( "btnnoname" );
 
 		bool hovered, held;
 		bool pressed = ButtonBehaviour( bb, id, &hovered, &held );
@@ -471,7 +472,7 @@ namespace Saturn {
 		const glm::vec4 checkBoxColor = hovered ? m_Style.Colors[ AluraColor_ButtonHovered ] : m_Style.Colors[ AluraColor_Button ];
 
 #if defined(SAT_ALURA_SHOW_TEXT_BB)
-		m_Renderer->SubmitRect( bb, glm::vec4{ 1.0f, 0.0f, 0.0f, 1.0f } );
+		m_Renderer->SubmitRectFrame( bb, 1.0f, glm::vec4{ 1.0f, 0.0f, 0.0f, 1.0f } );
 #endif
 
 		m_Renderer->SubmitRect( checkBoxBB, checkBoxColor );
@@ -530,7 +531,7 @@ namespace Saturn {
 		const glm::vec4 checkBoxColor = hovered ? m_Style.Colors[ AluraColor_ButtonHovered ] : m_Style.Colors[ AluraColor_Button ];
 
 #if defined(SAT_ALURA_SHOW_TEXT_BB)
-		m_Renderer->SubmitRect( bb, glm::vec4{ 1.0f, 0.0f, 0.0f, 1.0f } );
+		m_Renderer->SubmitRectFrame( bb, 1.0f, glm::vec4{ 1.0f, 0.0f, 0.0f, 1.0f } );
 #endif
 
 		const glm::vec2 textPos = { posDependingLastCall.x, posDependingLastCall.y };
@@ -548,11 +549,15 @@ namespace Saturn {
 		return false;
 	}
 
-	bool AluraCanvas::AddPopup( const std::string& rLabel )
 	{
 		// Handle NextItemPosition
 		// NB: Popups open from where the mouse is.
 		glm::vec2 posDependingLastCall = m_MousePosition;
+
+	bool AluraCanvas::BeginComboBox( const std::string& rLabel, const std::string& rPreviewName, float maxSize /*= 0.0f */ )
+	{
+		// Handle NextItemPosition
+		glm::vec2 posDependingLastCall = m_Layout.CursorPos;
 
 		if( m_WantToSetItemPosition )
 		{
@@ -560,6 +565,57 @@ namespace Saturn {
 			m_WantToSetItemPosition = false;
 		}
 
+		const auto itemID = FNV1A64( rLabel.c_str() );
+
+		const glm::vec2 textSize = CalcTextSize( rLabel );
+		const glm::vec2 previewAreaSize = glm::vec2( maxSize > 0.0f ? maxSize : textSize.x, textSize.y );
+		const glm::vec2 previewAreaPosition = { posDependingLastCall.x + textSize.x + m_Style.ItemInnerSpacing.x, posDependingLastCall.y };
+		const glm::vec2 totalSize = { textSize.x + previewAreaSize.x, textSize.y };
+
+		// Size calc.
+		const AluraRect textBB( posDependingLastCall, posDependingLastCall + textSize );
+		const AluraRect previewAreaBB( previewAreaPosition, previewAreaPosition + previewAreaSize );
+		const AluraRect fullBB( textBB.Min, textBB.Min + totalSize );
+
+		ItemSize( fullBB.GetSize() );
+		if( !CanAddItem( fullBB ) )
+			return false;
+
+		// Label text
+		m_Renderer->SubmitString( rLabel, m_ActiveFont, m_Style.CurrentFontSize, posDependingLastCall, m_Style.Colors[ AluraColor_Text ] );
+
+		bool hovered;
+		bool pressed = ButtonBehaviour( previewAreaBB, itemID, &hovered, nullptr );
+
+		m_Renderer->SubmitRect( previewAreaBB, 
+			hovered ? m_Style.Colors[ AluraColor_ButtonHovered ] : m_Style.Colors[ AluraColor_FrameBackground ] );
+		m_Renderer->SubmitRectFrame( previewAreaBB, 1.0f, m_Style.Colors[ AluraColor_Border ] );
+
+		if( pressed )
+		{
+			const std::string comboPopupName = rLabel + "AluraCombo";
+			if( !AddPopup( comboPopupName ) )
+				return false;
+		}
+		else
+		{
+			const std::string comboPopupName = rLabel + "AluraCombo";
+			if( IsPopupOpenAndVisible( comboPopupName ) ) 
+			{
+				return AddPopup( comboPopupName );
+			}
+		}
+
+		return pressed;
+	}
+
+	void AluraCanvas::EndComboBox()
+	{
+		EndPopup();
+	}
+
+	bool AluraCanvas::AddPopup( const std::string& rLabel )
+	{
 		const std::string popupName = rLabel + "AlrPopup";
 		const auto itemID = FNV1A64( rLabel.c_str() );
 		
@@ -568,17 +624,34 @@ namespace Saturn {
 		{
 			rPopupData.PopupName = popupName;
 			rPopupData.OpeningPosition = m_MousePosition;
+			rPopupData.PositionBeforeOpening = m_Layout.CursorPos;
+		}
+
+		// Handle NextItemPosition
+		// NB: Popups open from where the mouse is.
+		glm::vec2 posDependingLastCall = rPopupData.OpeningPosition;
+
+		if( m_WantToSetItemPosition )
+		{
+			posDependingLastCall = m_PendingNextItemPosition;
+			m_WantToSetItemPosition = false;
 		}
 
 		SetNextItemPosition( posDependingLastCall );
-		bool visible = BeginRegion( rLabel, rPopupData.AlreadyMeasured ? rPopupData.MeasuredSize : glm::vec2{ 1.0f, 1.0f } );
-		if( visible )
+		rPopupData.Visible = BeginRegion( rLabel, rPopupData.AlreadyMeasured ? rPopupData.MeasuredSize : glm::vec2{ 1.0f, 1.0f } );
+		if( rPopupData.Visible )
 		{
 			rPopupData.pRegionData = m_ActiveRegions.top();
+			rPopupData.pRegionData->Floating = true;
 			m_OpenPopups.push( &rPopupData );
 		}
 
-		return visible;
+		if( m_HotRegion != itemID && MouseButtonPressed( RubyMouseButton_Left ) && rPopupData.Visible )
+		{
+			rPopupData.Closed = true;
+		}
+
+		return rPopupData.Visible;
 	}
 
 	void AluraCanvas::CloseCurrentPopup()
@@ -597,6 +670,7 @@ namespace Saturn {
 		EndRegion();
 
 		auto* pPopup = m_OpenPopups.top();
+		m_Layout.CursorPos = pPopup->PositionBeforeOpening;
 
 		if( pPopup->NeedsMeasured && !pPopup->AlreadyMeasured )
 		{
@@ -618,6 +692,62 @@ namespace Saturn {
 		}
 	
 		m_OpenPopups.pop();
+	}
+
+	bool AluraCanvas::IsPopupOpenAndVisible( const std::string& rName ) const
+	{
+		// TODO: This does not need to be here.
+		const std::string popupName = rName + "AlrPopup";
+
+		for( const auto& rPopup : m_Popups )
+		{
+			if( rPopup.PopupName == popupName && !rPopup.Closed && rPopup.Visible )
+				return true;
+		}
+
+		return false;
+	}
+
+	bool AluraCanvas::IsPopupOpen( const std::string& rName ) const
+	{
+		// TODO: This does not need to be here.
+		const std::string popupName = rName + "AlrPopup";
+
+		for( const auto& rPopup : m_Popups )
+		{
+			if( rPopup.PopupName == popupName && !rPopup.Closed )
+				return true;
+		}
+
+		return false;
+	}
+
+	bool AluraCanvas::IsPopupVisible( const std::string& rName ) const
+	{
+		// TODO: This does not need to be here.
+		const std::string popupName = rName + "AlrPopup";
+
+		for( const auto& rPopup : m_Popups )
+		{
+			if( rPopup.PopupName == popupName && rPopup.Visible )
+				return true;
+		}
+
+		return false;
+	}
+
+	void AluraCanvas::OpenPopup( const std::string& rName )
+	{
+		// TODO: This does not need to be here.
+		const std::string popupName = rName + "AlrPopup";
+
+		for( auto& rPopup : m_Popups )
+		{
+			if( rPopup.PopupName == popupName )
+			{
+				m_OpenPopups.push( &rPopup );
+			}
+		}
 	}
 
 	void AluraCanvas::AddSeparator()
@@ -715,7 +845,7 @@ namespace Saturn {
 		// Mouse testing.
 		if( bb.Contains( m_MousePosition ) )
 		{
-			m_Hot = m_ID;
+			m_HotRegion = itemID;
 		}
 
 		return true;
@@ -731,14 +861,19 @@ namespace Saturn {
 		// Go back to the start so when we do ItemSize,
 		// it will just "work".
 		m_Layout.CursorPos = pRegion->PerFrame.StartingPosition;
-		m_Layout.CurrentIndent -= m_Style.ItemInnerSpacing.x;
 
 		m_Renderer->PopClipRect();
 
-		// Push this item.
-		ItemSize( pRegion->Size );
-
 		// Remove from active.
+		const auto regionSize = pRegion->Size;
+
+		// Push this item.
+		// Don't push our-self to the content size...
+		if( !pRegion->Floating )
+		{
+			ItemSize( regionSize, true );
+		}
+
 		m_ActiveRegions.pop();
 	}
 
@@ -993,7 +1128,7 @@ namespace Saturn {
 		}
 	}
 
-	void AluraCanvas::ItemSize( const glm::vec2& rSize, float textBaselineY )
+	void AluraCanvas::ItemSize( const glm::vec2& rSize, bool floatingItem, float textBaselineY )
 	{
 		//
 		// TODO: Y layout only!
@@ -1006,7 +1141,7 @@ namespace Saturn {
 		const float lineHeight = glm::max( m_Layout.CurrLineSize.y, m_Layout.CursorPos.y - lineY + rSize.y + offsetInlineWithBaselineY );
 
 #if defined(SAT_ALURA_SHOW_TEXT_BB)
-		m_Renderer->SubmitRect( m_Layout.CursorPos, { m_Layout.CursorPos + 10.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } );
+		m_Renderer->SubmitRectFrame( m_Layout.CursorPos, { m_Layout.CursorPos + 10.0f }, 1.0f, { 0.0f, 1.0f, 0.0f, 1.0f } );
 #endif
 
 		m_Layout.CursorPosPrevLine.x = m_Layout.CursorPos.x + rSize.x;
@@ -1016,14 +1151,14 @@ namespace Saturn {
 		m_Layout.IsSameLine = false;
 
 #if defined(SAT_ALURA_SHOW_TEXT_BB)
-		m_Renderer->SubmitRect( m_Layout.CursorPos, { m_Layout.CursorPos + 10.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } );
+		m_Renderer->SubmitRectFrame( m_Layout.CursorPos, { m_Layout.CursorPos + 10.0f }, 1.0f, { 0.0f, 0.0f, 1.0f, 1.0f } );
 #endif
 
 		// TODO: What if rSize is bigger than the object size?
 		// TODO: Do not remove working rect from self
 		//		 "self" meaning the region itself because the region will
 		//		 submit itself to the layout system.
-		if( !m_ActiveRegions.empty() )
+		if( !m_ActiveRegions.empty() && !floatingItem )
 		{
 			auto* pRegion = m_ActiveRegions.top();
 
@@ -1085,6 +1220,16 @@ namespace Saturn {
 		return rRect.Contains( m_MousePosition );
 	}
 
+	bool AluraCanvas::IsRectHoverable( const AluraRect& rRect, uint64_t id )
+	{
+		if( m_Hot == 0llu || m_Hot == id )
+		{
+			return IsMouseHoveringRect( rRect );
+		}
+
+		return false;
+	}
+
 	// @see imgui.cpp - CalcItemSize
 	glm::vec2 AluraCanvas::CalcItemSize( glm::vec2 size, float w, float h )
 	{
@@ -1104,7 +1249,7 @@ namespace Saturn {
 	bool AluraCanvas::ButtonBehaviour( const AluraRect& rRect, uint64_t id, bool* pOutHovered, bool* pOutHeld )
 	{
 		bool clicked = false, hovered = false, held = false;
-		hovered = IsMouseHoveringRect( rRect );
+		hovered = IsRectHoverable( rRect, id );
 	
 		if( hovered )
 		{

@@ -185,6 +185,8 @@ namespace Saturn {
 	public:
 		// Drawing and widgets
 		void AddRect( const glm::vec2& rSize, const glm::vec4& rColor = glm::one<glm::vec4>() );
+		
+		void AddRect( const glm::vec2& rSize, float rounding, const glm::vec4& rColor = glm::one<glm::vec4>() );
 
 #if !defined(SAT_DIST)
 		void AddImage( const glm::vec2& rSize, Ref<Texture2D> image, const glm::vec4& rColor = glm::one<glm::vec4>(), const glm::vec2& rUV1 = { 0.0F, 1.0F }, const glm::vec2& rUV2 = { 1.0F, 0.0F } );

@@ -136,8 +136,10 @@ namespace Saturn {
 		PipelineSpec.VertexLayout = {
 			{ ShaderDataType::Float2, "a_Position" },
 			{ ShaderDataType::Float2, "a_TexCoord" },
+			{ ShaderDataType::Float2, "a_RectSize" },
 			{ ShaderDataType::Float4, "a_Color" },
 			{ ShaderDataType::Float, "a_TextureIndex" },
+			{ ShaderDataType::Float, "a_Rounding" },
 		};
 
 		m_Pipeline = Ref<Pipeline>::Create( PipelineSpec );
@@ -325,27 +327,33 @@ namespace Saturn {
 
 	void AluraRenderer::SubmitRect( const glm::vec2& rMin, const glm::vec2& rMax, const glm::vec4& rColor )
 	{
+		const glm::vec2 rectSize = { rMax.x - rMin.x, rMax.y - rMin.y };
+
 		m_pQuadVertexPtr->Position = { rMin.x, rMin.y };
 		m_pQuadVertexPtr->Color = rColor;
 		m_pQuadVertexPtr->TexCoord = glm::vec2{ 0.0f, 0.0f };		
+		m_pQuadVertexPtr->RectSize = rectSize;
 		m_pQuadVertexPtr->TextureIndex = 0.0f;
 		++m_pQuadVertexPtr;
 
 		m_pQuadVertexPtr->Position = { rMax.x, rMin.y };
 		m_pQuadVertexPtr->Color = rColor;
 		m_pQuadVertexPtr->TexCoord = glm::vec2{ 1.0f, 0.0f };
+		m_pQuadVertexPtr->RectSize = rectSize;
 		m_pQuadVertexPtr->TextureIndex = 0.0f;
 		++m_pQuadVertexPtr;
 
 		m_pQuadVertexPtr->Position = { rMax.x, rMax.y };
 		m_pQuadVertexPtr->Color = rColor;
 		m_pQuadVertexPtr->TexCoord = glm::vec2{ 1.0f, 1.0f };
+		m_pQuadVertexPtr->RectSize = rectSize;
 		m_pQuadVertexPtr->TextureIndex = 0.0f;
 		++m_pQuadVertexPtr;
 
 		m_pQuadVertexPtr->Position = { rMin.x, rMax.y };
 		m_pQuadVertexPtr->Color = rColor;
 		m_pQuadVertexPtr->TexCoord = glm::vec2{ 0.0f, 1.0f };
+		m_pQuadVertexPtr->RectSize = rectSize;
 		m_pQuadVertexPtr->TextureIndex = 0.0f;
 		++m_pQuadVertexPtr;
 
@@ -375,27 +383,33 @@ namespace Saturn {
 			++m_CurrentTextureSlot;
 		}
 
+		const glm::vec2 rectSize = { rMax.x - rMin.x, rMax.y - rMin.y };
+
 		m_pQuadVertexPtr->Position = { rMin.x, rMin.y };
 		m_pQuadVertexPtr->Color = rColor;
 		m_pQuadVertexPtr->TexCoord = glm::vec2{ rUV1.x, rUV1.y };
+		m_pQuadVertexPtr->RectSize = rectSize;
 		m_pQuadVertexPtr->TextureIndex = ( float ) textureID;
 		++m_pQuadVertexPtr;
 
 		m_pQuadVertexPtr->Position = { rMax.x, rMin.y };
 		m_pQuadVertexPtr->Color = rColor;
 		m_pQuadVertexPtr->TexCoord = glm::vec2{ rUV2.x, rUV1.y };
+		m_pQuadVertexPtr->RectSize = rectSize;
 		m_pQuadVertexPtr->TextureIndex = ( float ) textureID;
 		++m_pQuadVertexPtr;
 
 		m_pQuadVertexPtr->Position = { rMax.x, rMax.y };
 		m_pQuadVertexPtr->Color = rColor;
 		m_pQuadVertexPtr->TexCoord = glm::vec2{ rUV2.x, rUV2.y };
+		m_pQuadVertexPtr->RectSize = rectSize;
 		m_pQuadVertexPtr->TextureIndex = ( float ) textureID;
 		++m_pQuadVertexPtr;
 
 		m_pQuadVertexPtr->Position = { rMin.x, rMax.y };
 		m_pQuadVertexPtr->Color = rColor;
 		m_pQuadVertexPtr->TexCoord = glm::vec2{ rUV1.x, rUV2.y };
+		m_pQuadVertexPtr->RectSize = rectSize;
 		m_pQuadVertexPtr->TextureIndex = ( float ) textureID;
 		++m_pQuadVertexPtr;
 
@@ -420,6 +434,75 @@ namespace Saturn {
 		SubmitRect( rRect.Min, rRect.Max, texture, rColor, rUV1, rUV2 );
 	}
 
+	void AluraRenderer::SubmitRoundedRect( 
+		const glm::vec2& rMin, 
+		const glm::vec2& rMax, 
+		float rounding,
+		const glm::vec4& rColor )
+	{
+		// Just so I don't forget:
+		// Triangle 1:
+		//  V0 = ( 0, 0 )
+		//  V1 = ( 1, 0 )
+		//  V2 = ( 1, 1 )
+		// 
+		// Triangle 2:
+		//	V3 = ( 0, 0 )
+		// 	V4 = ( 1, 1 )
+		// 	V5 = ( 0, 1 )
+
+		const glm::vec2 rectSize = { rMax.x - rMin.x, rMax.y - rMin.y };
+		
+		rounding = std::min( rounding, std::min( rectSize.x, rectSize.y ) * 0.5f );
+
+		// Top left
+		m_pQuadVertexPtr->Position = { rMin.x, rMin.y };
+		m_pQuadVertexPtr->Color = rColor;
+		m_pQuadVertexPtr->TexCoord = glm::vec2{ 0.0f, 0.0f };
+		m_pQuadVertexPtr->RectSize = rectSize;
+		m_pQuadVertexPtr->TextureIndex = 0.0f;
+		m_pQuadVertexPtr->Radius = rounding;
+		++m_pQuadVertexPtr;
+
+		// Top right
+		m_pQuadVertexPtr->Position = { rMax.x, rMin.y };
+		m_pQuadVertexPtr->Color = rColor;
+		m_pQuadVertexPtr->TexCoord = glm::vec2{ 1.0f, 0.0f };
+		m_pQuadVertexPtr->RectSize = rectSize;
+		m_pQuadVertexPtr->TextureIndex = 0.0f;
+		m_pQuadVertexPtr->Radius = rounding;
+		++m_pQuadVertexPtr;
+
+		// Bottom right
+		m_pQuadVertexPtr->Position = { rMax.x, rMax.y };
+		m_pQuadVertexPtr->Color = rColor;
+		m_pQuadVertexPtr->TexCoord = glm::vec2{ 1.0f, 1.0f };
+		m_pQuadVertexPtr->RectSize = rectSize;
+		m_pQuadVertexPtr->TextureIndex = 0.0f;
+		m_pQuadVertexPtr->Radius = rounding;
+		++m_pQuadVertexPtr;
+
+		// Bottom left
+		m_pQuadVertexPtr->Position = { rMin.x, rMax.y };
+		m_pQuadVertexPtr->Color = rColor;
+		m_pQuadVertexPtr->TexCoord = glm::vec2{ 0.0f, 1.0f };
+		m_pQuadVertexPtr->RectSize = rectSize;
+		m_pQuadVertexPtr->TextureIndex = 0.0f;
+		m_pQuadVertexPtr->Radius = rounding;
+		++m_pQuadVertexPtr;
+
+		auto& rDC = GetOrCreateDrawCommand( AluraDrawPipelineType::Quad, m_QuadIndexCount );
+		rDC.IndexCount += 6;
+
+		m_QuadVertexCount += 4;
+		m_QuadIndexCount += 6;
+	}
+
+	void AluraRenderer::SubmitRoundedRect( const AluraRect& rRect, float rounding, const glm::vec4& rColor )
+	{
+		SubmitRoundedRect( rRect.Min, rRect.Max, rounding, rColor );
+	}
+
 	void AluraRenderer::SubmitRectFrame( const glm::vec2& rMin, const glm::vec2& rMax, float thickness, const glm::vec4& rColor )
 	{
 		// Top
@@ -435,7 +518,12 @@ namespace Saturn {
 		SubmitRect( { rMax.x - thickness, rMin.y + thickness }, { rMax.x, rMax.y - thickness }, rColor );
 	}
 
-	void AluraRenderer::SubmitString( 
+	void AluraRenderer::SubmitRectFrame( const AluraRect& rRect, float thickness, const glm::vec4& rColor /*= glm::one<glm::vec4>() */ )
+	{
+		SubmitRectFrame( rRect.Min, rRect.Max, thickness, rColor );
+	}
+
+	void AluraRenderer::SubmitString(
 		const std::string& rText, 
 		const Ref<AluraFont> font,
 		const float fontSizePx,
@@ -769,7 +857,7 @@ namespace Saturn {
 		// so, we need to "move" the clip rect down to the bottom of screen by doing "m_Height - rRect.GetHeight()"
 		// then we subtract the position of the bottom right to align it properly.
 		//
-		rClipRect.offset.y = ( int32_t ) ( m_Height - rRect.GetHeight() ) - rRect.Min.y;
+		rClipRect.offset.y = ( int32_t ) ( m_Height - rRect.GetHeight() ) - static_cast<int32_t>( rRect.Min.y );
 		rClipRect.extent.width = ( uint32_t ) rRect.GetWidth();
 		rClipRect.extent.height = ( uint32_t ) rRect.GetHeight();
 	}

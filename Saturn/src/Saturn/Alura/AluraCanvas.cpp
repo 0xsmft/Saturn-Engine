@@ -99,7 +99,7 @@ namespace Saturn {
 		m_Layout.Reset();
 
 		// Calculate mouse position relative to this canvas' position.
-		m_MousePosition = Input::Get().MousePosition() - m_Position;
+		m_MousePosition = Input::Get().MousePositionRelativeToAppWindow() - m_Position;
 
 		// Setup layout
 		m_Hot = 0llu;

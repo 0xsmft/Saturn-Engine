@@ -51,6 +51,7 @@ namespace Saturn {
 		float MouseY();
 
 		glm::vec2 MousePosition();
+		glm::vec2 MousePositionRelativeToAppWindow();
 
 		void SetCursorMode( RubyCursorMode mode, bool bypassGuard = false );
 		RubyCursorMode GetCursorMode();

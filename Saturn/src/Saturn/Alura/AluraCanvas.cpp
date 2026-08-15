@@ -1032,11 +1032,14 @@ namespace Saturn {
 
 			m_Layout.CursorPos.x += glm::trunc( pRegion->PerFrame.StartingPosition.x );
 
-			const float consumedX = rSize.x + m_Style.ItemSpacing.x;
+			const float consumedX = rSize.x + ( m_Style.ItemSpacing.x * 2.0f );
 			const float consumedY = rSize.y + m_Style.ItemSpacing.y;
 
+			pRegion->PerFrame.ContentSize.x = glm::max( pRegion->PerFrame.ContentSize.x, consumedX );
+			pRegion->PerFrame.ContentSize.y += consumedY;
+			
+			// Reduce working rect.
 			pRegion->PerFrame.WorkingRect.Min.y += consumedY;
-			pRegion->PerFrame.ContentSize += glm::vec2{ consumedX, consumedY };
 
 			// Element was too big...
 			if( pRegion->PerFrame.WorkingRect.Min.y > pRegion->PerFrame.WorkingRect.Max.y )

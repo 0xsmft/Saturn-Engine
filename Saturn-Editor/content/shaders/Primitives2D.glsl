@@ -63,7 +63,7 @@ layout( location = 0 ) out vec4 FinalColor;
 // Do I know what this does? No.
 // But if you want to read up:
 // Use - https://medium.com/@solidalloy/drawing-rounded-corners-and-borders-with-sdf-part-1-rounded-corners-8017bb6ce6f9
-// and search for "Let’s start with the canonical form of the rounded corner SDF function:"
+// and search for "Let's start with the canonical form of the rounded corner SDF function:"
 float SDRoundBox( vec2 p, vec2 halfSize, float radius )
 {
 	vec2 q = abs( p ) - halfSize + radius;

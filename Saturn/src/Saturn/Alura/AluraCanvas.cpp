@@ -672,8 +672,8 @@ namespace Saturn {
 
 		const uint64_t itemID = FNV1A64( rID.c_str() );
 
-		m_Renderer->SubmitRect( bb, m_Style.Colors[ AluraColor_RegionBackground ] );
-		m_Renderer->SubmitRectFrame( bb, 1.0f, m_Style.Colors[ AluraColor_Border ] );
+		m_Renderer->SubmitRoundedRect( bb, m_Style.RegionRounding, m_Style.Colors[ AluraColor_RegionBackground ] );
+		m_Renderer->SubmitRoundedRectFrame( bb, m_Style.RegionRounding, 1.0f, m_Style.Colors[ AluraColor_Border ] );
 
 		AluraRegionData& rData = GetOrCreateRegion( itemID );
 		if( rData.JustCreated )

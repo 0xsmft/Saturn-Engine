@@ -658,13 +658,10 @@ namespace Saturn {
 
 		m_Renderer->SubmitRect( bb, m_Style.Colors[ AluraColor_RegionBackground ] );
 		m_Renderer->SubmitRectFrame( bb, 1.0f, m_Style.Colors[ AluraColor_Border ] );
-		m_Renderer->PushClipRect( bb );
 
 		AluraRegionData& rData = GetOrCreateRegion( itemID );
 		if( rData.JustCreated )
 		{
-			rData.ParentID = 0llu;
-			// TODO: When we have proper scrolling, this would change. For now will work just fine.
 			rData.ParentID = m_ActiveRegions.empty() ? 0llu : m_ActiveRegions.top()->ID;
 		}
 	
@@ -685,7 +682,7 @@ namespace Saturn {
 		{
 			const auto* pParent = m_ActiveRegions.top();
 
-			// Take the smallest clipping rect to make sure that a sub-region doesnt
+			// Take the smallest clipping rect to make sure that a sub-region doesn't
 			// extend over the parent.
 			rData.PerFrame.ClippingRect.Min = glm::max(
 				rData.PerFrame.ClippingRect.Min,
@@ -699,6 +696,10 @@ namespace Saturn {
 		}
 
 		m_Renderer->PushClipRect( rData.PerFrame.ClippingRect );
+
+#if defined( SAT_ALURA_SHOW_TEXT_BB )
+		m_Renderer->SubmitRectFrame( rData.PerFrame.ClippingRect, 1.0f, glm::vec4{ 1.0f, 0.0f, 0.0f, 1.0f } );
+#endif
 
 		rData.PerFrame.CanScroll = false;
 
@@ -990,9 +991,6 @@ namespace Saturn {
 				rRegion.Scroll.y -= rScrollOffset.y * scrollStep;
 				ClampRegionScroll( rRegion );
 			}
-
-			SAT_CORE_INFO( "Scrolling in region: {}", rRegion.ID );
-			SAT_CORE_INFO( "Scrolling vector: {}", rRegion.Scroll );
 
 			break;
 		}

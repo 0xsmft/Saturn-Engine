@@ -106,6 +106,7 @@ namespace Saturn {
 		AluraRegionDataTemporary PerFrame{};
 
 		bool JustCreated = false;
+		bool Floating = false;
 	};
 
 	struct AluraPopupData
@@ -113,12 +114,14 @@ namespace Saturn {
 		AluraRegionData* pRegionData = nullptr;
 		uint32_t ItemCount = 0u;
 		uint64_t ID = 0llu;
+		glm::vec2 PositionBeforeOpening{};
 		glm::vec2 OpeningPosition{};
 		glm::vec2 MeasuredSize{};
 		std::string PopupName;
 
 		bool JustCreated = false;
 		bool Closed = false;
+		bool Visible = false;
 		bool NeedsMeasured = true;
 		bool AlreadyMeasured = false;
 	};
@@ -184,10 +187,8 @@ namespace Saturn {
 
 	public:
 		// Drawing and widgets
-		void AddRect( const glm::vec2& rSize, const glm::vec4& rColor = glm::one<glm::vec4>() );
+		void AddRect( const glm::vec2& rSize, float rounding = 0.0f, const glm::vec4& rColor = glm::one<glm::vec4>() );
 		
-		void AddRect( const glm::vec2& rSize, float rounding, const glm::vec4& rColor = glm::one<glm::vec4>() );
-
 #if !defined(SAT_DIST)
 		void AddImage( const glm::vec2& rSize, Ref<Texture2D> image, const glm::vec4& rColor = glm::one<glm::vec4>(), const glm::vec2& rUV1 = { 0.0F, 1.0F }, const glm::vec2& rUV2 = { 1.0F, 0.0F } );
 		
@@ -222,11 +223,20 @@ namespace Saturn {
 		[[nodiscard]] bool AddCheckbox( const std::string& rLabel, bool* pValue );
 		[[nodiscard]] bool AddCheckboxRight( const std::string& rLabel, bool* pValue );
 
+
+		[[nodiscard]] bool BeginComboBox( const std::string& rLabel, const std::string& rPreviewName, float maxSize = 0.0f );
+		void EndComboBox();
 		
 		[[nodiscard]] bool AddPopup( const std::string& rLabel );
 		void CloseCurrentPopup();
 		inline void MarkPopupAsClosed() { CloseCurrentPopup(); }
 		void EndPopup();
+
+		[[nodiscard]] bool IsPopupOpenAndVisible( const std::string& rName ) const;
+		[[nodiscard]] bool IsPopupOpen( const std::string& rName ) const;
+		[[nodiscard]] bool IsPopupVisible( const std::string& rName ) const;
+
+		void OpenPopup( const std::string& rName );
 
 		void AddSeparator();
 
@@ -267,6 +277,7 @@ namespace Saturn {
 		[[nodiscard]] glm::vec2 CalcTextSize( const std::string& rText );
 
 		[[nodiscard]] bool IsAnyItemHot() const      { return m_Hot != 0llu; }
+		[[nodiscard]] bool IsAnyRegionHot() const    { return m_HotRegion != 0llu; }
 		[[nodiscard]] bool IsAnyItemActive() const   { return m_Active != 0llu; }
 		[[nodiscard]] bool IsAnyItemFocused() const  { return m_Focused != 0llu; }
 		[[nodiscard]] bool IsAnyItemSelected() const { return m_Selected != 0llu; }
@@ -308,11 +319,12 @@ namespace Saturn {
 		}
 
 	private:
-		void ItemSize( const glm::vec2& rSize, float textBaselineY = -1.0f );
+		void ItemSize( const glm::vec2& rSize, bool floatingItem = false, float textBaselineY = -1.0f );
 		bool CanAddItem( const AluraRect& rBoundingBox );
 
 		bool IsMouseHoveringRect( const glm::vec2& rMin, const glm::vec2& rMax ) const;
 		bool IsMouseHoveringRect( const AluraRect& rRect ) const;
+		bool IsRectHoverable( const AluraRect& rRect, uint64_t id );
 		
 		glm::vec2 CalcItemSize( glm::vec2 usrSize, float w, float h );
 
@@ -370,6 +382,7 @@ namespace Saturn {
 
 		// Hovered item.
 		UUID m_Hot = 0llu;
+		UUID m_HotRegion = 0llu;
 
 		// Active item, may be come active if clicked, or if typing.
 		UUID m_Active = 0llu;

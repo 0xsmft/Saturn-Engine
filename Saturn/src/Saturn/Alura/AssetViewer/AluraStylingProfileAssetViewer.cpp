@@ -105,6 +105,7 @@ namespace Saturn {
 
 				Auxiliary::DrawFloatControl( "Alpha", rStyle.Alpha );
 				Auxiliary::DrawFloatControl( "Disabled Alpha", rStyle.DisabledAlpha );
+				Auxiliary::DrawFloatControl( "Region Rounding", rStyle.RegionRounding );
 
 				Auxiliary::DrawVec2Control( "Window Padding", rStyle.WindowPadding );
 				Auxiliary::DrawVec2Control( "Item Spacing", rStyle.ItemSpacing );

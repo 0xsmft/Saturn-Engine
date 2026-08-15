@@ -1101,6 +1101,7 @@ namespace Saturn {
 
 		out << YAML::Key << "Alpha" << YAML::Value << rStyle.Alpha;
 		out << YAML::Key << "DisabledAlpha" << YAML::Value << rStyle.DisabledAlpha;
+		out << YAML::Key << "RegionRounding" << YAML::Value << rStyle.RegionRounding;
 		out << YAML::Key << "WindowPadding" << YAML::Value << rStyle.WindowPadding;
 		out << YAML::Key << "ItemSpacing" << YAML::Value << rStyle.ItemSpacing;
 		out << YAML::Key << "IndentSpacing" << YAML::Value << rStyle.IndentSpacing;
@@ -1158,6 +1159,7 @@ namespace Saturn {
 		auto& rStyle = stylingProfAsset->GetStyle();
 		rStyle.Alpha = stylingData[ "Alpha" ].as<float>( 1.0f );
 		rStyle.DisabledAlpha = stylingData[ "DisabledAlpha" ].as<float>( 1.0f );
+		rStyle.RegionRounding = stylingData[ "RegionRounding" ].as<float>( 0.0f );
 		rStyle.WindowPadding = stylingData[ "WindowPadding" ].as<glm::vec2>( glm::one<glm::vec2>() );
 		rStyle.ItemSpacing = stylingData[ "ItemSpacing" ].as<glm::vec2>( glm::one<glm::vec2>() );
 		rStyle.IndentSpacing = stylingData[ "IndentSpacing" ].as<float>( 1.0f );

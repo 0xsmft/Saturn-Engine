@@ -702,20 +702,14 @@ namespace Saturn {
 
 		rData.PerFrame.CanScroll = false;
 
-		// Shrink the initial working rect to not include the padding,
-		// we use ItemInnerSpacing because items are padded differently
-		// when they are in a region, I might change that though.
-		rData.PerFrame.WorkingRect.ShrinkX( m_Style.ItemInnerSpacing.x );
-		rData.PerFrame.WorkingRect.ShrinkY( m_Style.ItemInnerSpacing.y );
+		// Shrink the initial working rect to not include the padding.
+		rData.PerFrame.WorkingRect.ShrinkX( m_Style.WindowPadding.x );
+		rData.PerFrame.WorkingRect.ShrinkY( m_Style.WindowPadding.y );
 
 		// LAYOUT
 		m_Layout.CursorPos = posDependingLastCall;
-		m_Layout.CursorPos += m_Style.ItemInnerSpacing;
+		m_Layout.CursorPos += m_Style.WindowPadding;
 		m_Layout.CursorPos.y -= rData.Scroll.y;
-
-		// Bit of a hack here, but this ensures that the following items
-		// are inline with the region.
-		m_Layout.CurrentIndent += m_Style.ItemInnerSpacing.x;
 
 		// Set active.
 		m_ActiveRegions.push( &rData );
@@ -1037,6 +1031,8 @@ namespace Saturn {
 		if( !m_ActiveRegions.empty() )
 		{
 			auto* pRegion = m_ActiveRegions.top();
+
+			m_Layout.CursorPos.x += glm::trunc( pRegion->PerFrame.StartingPosition.x );
 
 			const float consumedX = rSize.x + m_Style.ItemSpacing.x;
 			const float consumedY = rSize.y + m_Style.ItemSpacing.y;

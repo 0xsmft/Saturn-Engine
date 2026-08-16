@@ -525,6 +525,11 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 
 		case WM_NCHITTEST: 
 		{
+			// If we are in fullscreen mode, no resizing can be done.
+			if( pThis->GetParent()->GetCurrentShowCommand() == RubyWindowShowCmd::Fullscreen )
+				break;
+
+			// Now, lets check if we are in borderless mode
 			if( pThis->GetParent()->GetStyle() != RubyStyle::Borderless || pThis->GetParent()->GetCursorMode() == RubyCursorMode::Locked )
 				break;
 

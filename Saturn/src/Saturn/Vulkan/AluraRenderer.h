@@ -119,7 +119,20 @@ namespace Saturn {
 		void SubmitRectFrame( const glm::vec2& rMin, const glm::vec2& rMax, float thickness, const glm::vec4& rColor = glm::one<glm::vec4>() );
 
 		void SubmitRectFrame( const AluraRect& rRect, float thickness, const glm::vec4& rColor = glm::one<glm::vec4>() );
-	
+
+		void SubmitRoundedRectFrame(
+			const glm::vec2& rMin, 
+			const glm::vec2& rMax, 
+			float rounding,
+			float thickness, 
+			const glm::vec4& rColor = glm::one<glm::vec4>() );
+
+		void SubmitRoundedRectFrame( 
+			const AluraRect& rRect, 
+			float rounding,
+			float thickness, 
+			const glm::vec4& rColor = glm::one<glm::vec4>() );
+
 		void SubmitString( 
 			const std::string& rText, 
 			const Ref<AluraFont> font,

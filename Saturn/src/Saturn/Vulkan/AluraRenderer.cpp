@@ -523,6 +523,26 @@ namespace Saturn {
 		SubmitRectFrame( rRect.Min, rRect.Max, thickness, rColor );
 	}
 
+	void AluraRenderer::SubmitRoundedRectFrame( const glm::vec2& rMin, const glm::vec2& rMax, float rounding, float thickness, const glm::vec4& rColor /*= glm::one<glm::vec4>() */ )
+	{
+		// Top
+		SubmitRoundedRect( rMin, { rMax.x, rMin.y + thickness }, rounding, rColor );
+
+		// Bottom
+		SubmitRoundedRect( { rMin.x, rMax.y - thickness }, rMax, rounding, rColor );
+
+		// Left
+		SubmitRoundedRect( { rMin.x, rMin.y + thickness }, { rMin.x + thickness, rMax.y - thickness }, rounding, rColor );
+
+		// Right
+		SubmitRoundedRect( { rMax.x - thickness, rMin.y + thickness }, { rMax.x, rMax.y - thickness }, rounding, rColor );
+	}
+
+	void AluraRenderer::SubmitRoundedRectFrame( const AluraRect& rRect, float rounding, float thickness, const glm::vec4& rColor /*= glm::one<glm::vec4>() */ )
+	{
+		SubmitRoundedRectFrame( rRect.Min, rRect.Max, rounding, thickness, rColor );
+	}
+
 	void AluraRenderer::SubmitString(
 		const std::string& rText, 
 		const Ref<AluraFont> font,

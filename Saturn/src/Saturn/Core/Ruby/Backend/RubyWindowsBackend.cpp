@@ -530,7 +530,10 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 				break;
 
 			// Now, lets check if we are in borderless mode
-			if( pThis->GetParent()->GetStyle() != RubyStyle::Borderless || pThis->GetParent()->GetCursorMode() == RubyCursorMode::Locked )
+			if( pThis->GetParent()->GetStyle() != RubyStyle::Borderless )
+				break;
+
+			if( pThis->GetParent()->GetCursorMode() == RubyCursorMode::Locked )
 				break;
 
 			POINT MousePos;
@@ -644,7 +647,7 @@ namespace Saturn {
 
 		if( m_WindowSpecification.Style == RubyStyle::Borderless ) 
 		{
-			::SetWindowLong( m_Handle, GWL_STYLE, GetWindowLong( m_Handle, GWL_STYLE ) | WS_CAPTION );
+			::SetWindowLongPtr( m_Handle, GWL_STYLE, GetWindowLong( m_Handle, GWL_STYLE ) | WS_CAPTION );
 			::SetWindowPos( m_Handle, nullptr, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED );
 		}
 	}
@@ -940,12 +943,23 @@ namespace Saturn {
 			{
 				const HMONITOR Monitor = ::MonitorFromWindow( m_Handle, MONITOR_DEFAULTTONEAREST );
 
+				if( GetParent()->GetStyle() == RubyStyle::Borderless )
+				{
+					::SetWindowLongPtr( m_Handle, GWL_STYLE, WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS );
+					::SetWindowPos( m_Handle, nullptr, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED );
+				}
+
 				MONITORINFO Info = { .cbSize = sizeof( MONITORINFO ) };
 				::GetMonitorInfo( Monitor, &Info );
 
-				::MoveWindow( m_Handle, Info.rcMonitor.left, Info.rcMonitor.top,
-					Info.rcMonitor.right - Info.rcMonitor.left, Info.rcMonitor.bottom - Info.rcMonitor.top, TRUE );
-				::ShowWindow( m_Handle, SW_SHOW );
+				::SetWindowPos( 
+					m_Handle, 
+					HWND_NOTOPMOST,
+					Info.rcMonitor.left, 
+					Info.rcMonitor.top,
+					Info.rcMonitor.right - Info.rcMonitor.left, 
+					Info.rcMonitor.bottom - Info.rcMonitor.top, 
+					SWP_FRAMECHANGED | SWP_SHOWWINDOW );
 			} break;
 		}
 	}

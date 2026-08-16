@@ -30,6 +30,7 @@
 #include "EngineSettingsSerialiser.h"
 
 #include "Saturn/Core/App.h"
+#include "Saturn/Core/EngineSettings.h"
 
 #include <fstream>
 #include <yaml-cpp/yaml.h>

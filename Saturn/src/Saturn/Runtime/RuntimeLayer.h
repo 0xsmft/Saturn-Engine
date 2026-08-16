@@ -43,12 +43,13 @@
 namespace Saturn {
 
 	class GameModule;
+	class AluraLayer;
 
 	class RuntimeLayer : public Layer
 	{
 	public:
 		RuntimeLayer();
-		~RuntimeLayer();
+		virtual ~RuntimeLayer();
 
 		void OnUpdate( Timestep time ) override;
 		void OnEvent( Event& rEvent ) override;
@@ -65,6 +66,7 @@ namespace Saturn {
 
 	private:
 		std::unique_ptr<class GameModule> m_GameModule;
+		std::shared_ptr<AluraLayer> m_AluraLayer;
 		Ref<Scene> m_RuntimeScene;
 		Ref<SceneRenderer> m_SceneRenderer;
 		Ref<OnlineAPI> m_OnlineAPI;

@@ -50,14 +50,19 @@ struct RubyWindowRegister
 {
 	RubyWindowRegister() 
 	{
-		WNDCLASSW wc = { .style = CS_VREDRAW | CS_HREDRAW | CS_OWNDC, .lpfnWndProc = RubyWindowProc, .hInstance = GetModuleHandle( nullptr ), .hCursor = LoadCursor( nullptr, IDC_ARROW ), .lpszClassName = DEFAULT_WINDOW_CLASS_NAME };
+		WNDCLASSW wc = { 
+			.style = CS_VREDRAW | CS_HREDRAW | CS_OWNDC, 
+			.lpfnWndProc = RubyWindowProc, 
+			.hInstance = ::GetModuleHandle( nullptr ), 
+			.hCursor = ::LoadCursor( nullptr, IDC_ARROW ), 
+			.lpszClassName = DEFAULT_WINDOW_CLASS_NAME };
 
 		::RegisterClassW( &wc );
 	}
 
 	~RubyWindowRegister()
 	{
-		::UnregisterClassW( DEFAULT_WINDOW_CLASS_NAME, GetModuleHandle( nullptr ) );
+		::UnregisterClassW( DEFAULT_WINDOW_CLASS_NAME, ::GetModuleHandle( nullptr ) );
 	}
 } static s_RubyWindowRegister;
 
@@ -650,6 +655,25 @@ namespace Saturn {
 			::SetWindowLongPtr( m_Handle, GWL_STYLE, GetWindowLong( m_Handle, GWL_STYLE ) | WS_CAPTION );
 			::SetWindowPos( m_Handle, nullptr, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED );
 		}
+
+		// Now if we are meant to be a full-screen window lets resize to that.
+		if( m_WindowSpecification.Style == RubyStyle::BorderlessFullscreen )
+		{
+			const HMONITOR Monitor = ::MonitorFromWindow( m_Handle, MONITOR_DEFAULTTONEAREST );
+			MONITORINFO Info = { .cbSize = sizeof( MONITORINFO ) };
+			::GetMonitorInfo( Monitor, &Info );
+
+			::SetWindowPos(
+				m_Handle,
+				nullptr,
+				Info.rcMonitor.left,
+				Info.rcMonitor.top,
+				Info.rcMonitor.right - Info.rcMonitor.left,
+				Info.rcMonitor.bottom - Info.rcMonitor.top,
+				SWP_FRAMECHANGED );
+
+			::SetCursor( ::LoadCursor( nullptr, IDC_ARROW ) );
+		}
 	}
 
 	DWORD RubyWindowsBackend::ChooseStyle()
@@ -661,6 +685,9 @@ namespace Saturn {
 
 			case RubyStyle::BorderlessNoResize:
 				return WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_SYSMENU | WS_MINIMIZEBOX | WS_POPUP;
+
+			case RubyStyle::BorderlessFullscreen:
+				return WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS;
 
 			case RubyStyle::Borderless:
 				// Create the borderless window as a normal window however we will then set the required styles.

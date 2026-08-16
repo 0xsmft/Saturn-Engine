@@ -111,6 +111,7 @@ Saturn::Application* Saturn::CreateApplication( int argc, char** argv )
 
 	Saturn::ApplicationSpecification spec{};
 	spec.Flags = Saturn::ApplicationFlag_UseVFS | Saturn::ApplicationFlag_CreateSceneRenderer_DEPRECATED;
+	spec.WindowStyle = RubyStyle::BorderlessFullscreen;
 
 	return new FBootstrapDistApplication( spec );
 }

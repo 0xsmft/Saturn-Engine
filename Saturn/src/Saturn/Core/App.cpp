@@ -89,7 +89,7 @@ namespace Saturn {
 		RenderThread::Get().Start();
 
 #if defined( SAT_DIST )
-		m_Window->Show( RubyWindowShowCmd::Fullscreen );
+		m_Window->Show();
 #else
 		m_ImGuiLayer = new ImGuiLayer();
 		m_ImGuiLayer->OnAttach();

@@ -35,6 +35,7 @@
 #include <Saturn/Core/Ruby/RubyWindow.h>
 #include <Saturn/Core/EnvironmentVariables.h>
 #include <Saturn/Core/Process.h>
+#include <Saturn/Core/EngineSettings.h>
 
 #include <Saturn/Serialisation/YAML/ProjectSerialiser.h>
 #include <Saturn/Serialisation/YAML/EngineSettingsSerialiser.h>
@@ -62,7 +63,6 @@ namespace Saturn {
 
 	ProjectBrowserLayer::ProjectBrowserLayer()
 	{
-
 		m_HasSaturnDir = Auxiliary::HasEnvironmentVariable( "SATURN_DIR" );
 
 		if( m_HasSaturnDir )
@@ -320,7 +320,7 @@ namespace Saturn {
 
 		if( ImGui::BeginPopupModal( "New project", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove ) )
 		{
-			ImGui::InputTextWithHint( "##project_name", "Project name", m_ProjectNameBuffer, 1024 );
+			ImGui::InputTextWithHint( "##project_name", "Project name", m_ProjectNameBuffer, 32 );
 
 			ImGui::SameLine();
 			ImGui::Text( ".sproject" );

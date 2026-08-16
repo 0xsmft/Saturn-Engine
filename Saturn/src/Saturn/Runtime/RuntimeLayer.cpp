@@ -39,7 +39,9 @@
 
 #include "Saturn/GameFramework/Core/GameModule.h"
 
+#include "Saturn/Alura/AluraInputTextState.h"
 #include "Saturn/Alura/AluraCanvas.h"
+#include "Saturn/Alura/AluraLayer.h"
 
 #include "Saturn/Vulkan/AluraRenderer.h"
 #include "Saturn/Vulkan/SceneRenderer.h"
@@ -89,6 +91,9 @@ namespace Saturn {
 
 		// Create online API but not init it yet.
 		m_OnlineAPI = OnlineAPI::CreateOnlineSystemAPI( Project::GetActiveProject()->GetOnlineAPIType() );
+
+		m_AluraLayer = std::make_shared<AluraLayer>();
+		Application::Get()->PushLayer( m_AluraLayer.get() );
 	}
 
 	void RuntimeLayer::OnAttach()
@@ -106,8 +111,6 @@ namespace Saturn {
 		g_AluraCanvas->SetContext( m_SceneRenderer->GetAluraRenderer() );
 
 		OpenFile( Project::GetActiveProject()->GetConfig().StartupSceneID );
-
-		Application::Get()->GetWindow()->Show();
 
 		if( m_OnlineAPI )
 			m_OnlineAPI->Initialise();
@@ -131,6 +134,9 @@ namespace Saturn {
 
 	RuntimeLayer::~RuntimeLayer()
 	{
+		Application::Get()->PopLayer( m_AluraLayer.get() );
+		m_AluraLayer.reset();
+
 		m_RuntimeScene->OnRuntimeEnd();
 		m_RuntimeScene = nullptr;
 
@@ -165,33 +171,39 @@ namespace Saturn {
 
 	void RuntimeLayer::OpenFileInRuntime( AssetID id )
 	{
-		Ref<Scene> temporaryScene = Ref<Scene>::Create();
-		Scene::SetActiveScene( temporaryScene.Get() );
+		Ref<Scene> newlyLoadedScene = Ref<Scene>::Create();
+		Scene::SetActiveScene( newlyLoadedScene.Get() );
 
-		m_RuntimeScene->OnRuntimeEnd();
+		g_AluraCanvas->OnSceneChange();
+		m_AluraLayer->RelinquishControl();
 
 		const Ref<Asset> asset = AssetManager::Get()->FindAsset( id );
 
-		SceneSerialiser serialiser( temporaryScene );
-		serialiser.Deserialise( asset );
+		newlyLoadedScene->Name = asset->Name;
+		newlyLoadedScene->Path = asset->Path;
+		newlyLoadedScene->ID = asset->ID;
+		newlyLoadedScene->Type = asset->Type;
+		
+		newlyLoadedScene->DeserialiseData();
 
-		m_RuntimeScene = temporaryScene;
-
-		m_RuntimeScene->Name = asset->Name;
-		m_RuntimeScene->Path = asset->Path;
-		m_RuntimeScene->ID = asset->ID;
-		m_RuntimeScene->Type = asset->Type;
-
-		Scene::SetActiveScene( m_RuntimeScene.Get() );
-
-		temporaryScene = nullptr;
-
-		m_SceneRenderer->SetCurrentScene( m_RuntimeScene.Get() );
-
-		// If we fail to start runtime, terminate it for good.
-		if( !m_RuntimeScene->OnRuntimeStart() )
+		// If we fail to start runtime, do not change into the new scene
+		// instead keep the current scene active.
+		if( !newlyLoadedScene->OnRuntimeStart() )
 		{
-//			CleanupRuntimeWhenFailed( RuntimeState::Running );
+			newlyLoadedScene->OnRuntimeEnd();
+			newlyLoadedScene = nullptr;
+		}
+		// Otherwise, end runtime of current scene.
+		else
+		{
+			m_RuntimeScene->OnRuntimeEnd();
+			m_RuntimeScene = nullptr;
+	
+			m_RuntimeScene = newlyLoadedScene;
+
+			// Context switch.
+			Scene::SetActiveScene( m_RuntimeScene.Get() );
+			m_SceneRenderer->SetCurrentScene( m_RuntimeScene.Get() );
 		}
 	}
 

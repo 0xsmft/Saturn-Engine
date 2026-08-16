@@ -748,8 +748,11 @@ namespace Saturn {
 	{
 		std::filesystem::path cachePath = std::filesystem::current_path() / "Cache" / "AssetBundle-Minimal.sab";
 
-		if( !std::filesystem::exists( cachePath ) )
+		if( !std::filesystem::exists( cachePath ) ) 
+		{
+			SAT_CORE_ERROR( "[AssetBundle]: File not found. {0}", cachePath );
 			return AssetBundleResult::FileNotFound;
+		}
 
 		ProjectConfig newConfig{};
 
@@ -760,7 +763,7 @@ namespace Saturn {
 
 		if( std::memcmp( header.Magic, ".AB", 4 ) != 0 )
 		{
-			SAT_CORE_ERROR( "Invalid AB-Minimal file header or corrupt asset bundle file!" );
+			SAT_CORE_ERROR( "[AssetBundle]: Invalid AB-Minimal file header or corrupt asset bundle file!" );
 			return AssetBundleResult::InvalidFileHeader;
 		}
 

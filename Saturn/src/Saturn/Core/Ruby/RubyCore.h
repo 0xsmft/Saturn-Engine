@@ -67,7 +67,8 @@ namespace Saturn {
 		Default,
 		Borderless,
 		// Draws the same as Borderless however with no resize support or titlebar
-		BorderlessNoResize, 
+		BorderlessNoResize,
+		BorderlessFullscreen,
 	};
 
 	enum class RubyCursorType
@@ -99,7 +100,11 @@ namespace Saturn {
 		Default,
 		// Show the window but do not activate it
 		NoActivate, 
+		
 		// Show the window as full screen and activate it
+		// This is only applicable if the window is not a
+		// borderless window. For borderless windows see
+		// RubyStyle::BorderlessFullscreen
 		Fullscreen
 	};
 

@@ -74,7 +74,7 @@ public:
 
 		if( const auto result = Saturn::AssetBundle::ReadMinimal(); result != Saturn::AssetBundleResult::Success ) 
 		{
-			std::string errorMessage = std::format( "Failed to load AB-Minimal bundle! Error Code: {0}", ( int ) result );
+			std::string errorMessage = std::format( "Failed to load AB-Minimal bundle! Error Code: {0}", result );
 			SAT_CORE_VERIFY( false, errorMessage );
 		}
 
@@ -83,7 +83,7 @@ public:
 		// Load the shader bundle.
 		if( const auto result = Saturn::ShaderBundle::ReadBundle(); result != Saturn::ShaderBundleResult::Success )
 		{
-			std::string errorMessage = std::format( "Failed to load shader bundle! Error Code: {0}", ( int ) result );
+			std::string errorMessage = std::format( "Failed to load shader bundle! Error Code: {0}", result );
 			SAT_CORE_VERIFY( false, errorMessage );
 		}
 	}

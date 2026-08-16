@@ -238,9 +238,8 @@ namespace Saturn {
 		if( AssetManager::Get()->DoesAssetIDExist( albedoID ) )
 		{
 			Ref<TextureSourceAsset> textureAsset = AssetManager::Get()->GetAssetAs<TextureSourceAsset>( albedoID );
-			texture = textureAsset->GetTexture();
 
-			materialAsset->SetAlbeoMap( texture );
+			materialAsset->SetAlbeoMap( textureAsset );
 			AssetManager::Get()->RegisterAssetDependency( rAsset->ID, albedoID );
 		}
 
@@ -252,9 +251,8 @@ namespace Saturn {
 		if( AssetManager::Get()->DoesAssetIDExist( normalID ) )
 		{
 			Ref<TextureSourceAsset> textureAsset = AssetManager::Get()->GetAssetAs<TextureSourceAsset>( normalID );
-			texture = textureAsset->GetTexture();
 
-			materialAsset->SetNormalMap( texture );
+			materialAsset->SetNormalMap( textureAsset );
 			AssetManager::Get()->RegisterAssetDependency( rAsset->ID, normalID );
 		}
 
@@ -266,10 +264,8 @@ namespace Saturn {
 		if( AssetManager::Get()->DoesAssetIDExist( metallicID ) )
 		{
 			Ref<TextureSourceAsset> textureAsset = AssetManager::Get()->GetAssetAs<TextureSourceAsset>( metallicID );
-			texture = textureAsset->GetTexture();
 
-
-			materialAsset->SetMetallicMap( texture );
+			materialAsset->SetMetallicMap( textureAsset );
 			AssetManager::Get()->RegisterAssetDependency( rAsset->ID, metallicID );
 		}
 
@@ -281,9 +277,8 @@ namespace Saturn {
 		if( AssetManager::Get()->DoesAssetIDExist( roughnessID ) )
 		{
 			Ref<TextureSourceAsset> textureAsset = AssetManager::Get()->GetAssetAs<TextureSourceAsset>( roughnessID );
-			texture = textureAsset->GetTexture();
 
-			materialAsset->SetRoughnessMap( texture );
+			materialAsset->SetRoughnessMap( textureAsset );
 			AssetManager::Get()->RegisterAssetDependency( rAsset->ID, roughnessID );
 		}
 

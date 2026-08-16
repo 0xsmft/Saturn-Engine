@@ -30,6 +30,11 @@
 
 namespace Saturn {
 	
+	//
+	// Per-user engine settings.
+	// 
+	// This class used to be called UserSettingsSerialiser.
+	//
 	class EngineSettingsSerialiser
 	{
 	public:

@@ -31,14 +31,11 @@
 
 #include "YamlAux.h"
 
-#include "Saturn/Audio/SoundGroup.h"
-
 #include "Saturn/Scene/Scene.h"
+#include "Saturn/Audio/SoundGroup.h"
 #include "Saturn/Scene/Components.h"
 
 #include "Saturn/Asset/AssetManager.h"
-
-#include "Saturn/GameFramework/Core/ClassMetadataHandler.h"
 
 namespace Saturn {
 
@@ -719,8 +716,6 @@ pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value ); \
 								pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value );
 							} break;
 						}
-
-						//						pCompiledInProperty->MarkClean();
 					}
 				}
 				else

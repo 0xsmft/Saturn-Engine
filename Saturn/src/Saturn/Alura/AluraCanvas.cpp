@@ -40,6 +40,10 @@
 
 #include "SharedGlobals.h"
 
+#if !defined(SAT_DIST)
+#include <imgui.h> // Needed for ImGui::SetMouseCursor(...)
+#endif
+
 namespace Saturn {
 
 	//////////////////////////////////////////////////////////////////////////
@@ -549,10 +553,110 @@ namespace Saturn {
 		return false;
 	}
 
+	bool AluraCanvas::AddInputText( const std::string& rLabel, std::string* pStr )
 	{
+		SAT_CORE_VERIFY( pStr );
+
 		// Handle NextItemPosition
-		// NB: Popups open from where the mouse is.
-		glm::vec2 posDependingLastCall = m_MousePosition;
+		glm::vec2 posDependingLastCall = m_Layout.CursorPos;
+
+		if( m_WantToSetItemPosition )
+		{
+			posDependingLastCall = m_PendingNextItemPosition;
+			m_WantToSetItemPosition = false;
+		}
+
+		const uint64_t itemID = FNV1A64( rLabel.c_str() );
+
+		const glm::vec2 textSize = CalcTextSize( rLabel );
+		const glm::vec2 editAreaSize = glm::vec2( 128.0f, textSize.y );
+		const glm::vec2 editAreaPosition = { posDependingLastCall.x + textSize.x + m_Style.ItemInnerSpacing.x, posDependingLastCall.y };
+		const glm::vec2 totalSize = { textSize.x + editAreaSize.x, textSize.y };
+
+		// Size calc.
+		const AluraRect textBB( posDependingLastCall, posDependingLastCall + textSize );
+		const AluraRect editAreaBB( editAreaPosition, editAreaPosition + editAreaSize );
+		const AluraRect fullBB( textBB.Min, textBB.Min + totalSize );
+
+		ItemSize( fullBB.GetSize() );
+		if( !CanAddItem( fullBB ) )
+			return false;
+
+		AluraTextInputA* pState = GetInputTextStateForItem( itemID );
+
+		// Draw text.
+		m_Renderer->SubmitString( rLabel, m_ActiveFont, m_Style.CurrentFontSize, posDependingLastCall, m_Style.Colors[ AluraColor_Text ] );
+
+		// Edit area.
+		m_Renderer->SubmitRect( editAreaBB, glm::vec4{ 0.0f, 0.0f, 0.0f, 1.0f } );
+		m_Renderer->SubmitRectFrame( editAreaBB, 1.0f, m_Style.Colors[ AluraColor_Border ] );
+
+		m_Renderer->PushClipRect( editAreaBB );
+		m_Renderer->SubmitString( *pStr, m_ActiveFont, m_Style.CurrentFontSize, editAreaBB.Min, m_Style.Colors[ AluraColor_Text ] );
+
+#if defined(SAT_ALURA_SHOW_TEXT_BB)
+		m_Renderer->SubmitRectFrame( fullBB, 1.0f, glm::vec4{ 1.0f, 0.0f, 0.0f, 1.0f } );
+		m_Renderer->SubmitRectFrame( textBB, 1.0f, glm::vec4{ 0.0f, 1.0f, 0.0f, 1.0f } );
+		m_Renderer->SubmitRectFrame( editAreaBB, 1.0f, glm::vec4{ 0.0f, 0.0f, 1.0f, 1.0f } );
+#endif
+
+		bool hovered;
+		bool pressed = ButtonBehaviour( editAreaBB, itemID, &hovered, nullptr );
+
+		if( hovered )
+		{
+#if defined(SAT_DIST)
+			Application::Get()->GetWindow()->SetMouseCursor( RubyCursorType::IBeam );
+#else
+			// I don't like this but upon a call to ImGui::NewFrame()
+			// the mouse cursor is reset back to default, so if we do
+			// and using ImGui::SetMouseCursor stops Alura and ImGui
+			// trying to fight over the cursor.
+			ImGui::SetMouseCursor( ImGuiMouseCursor_TextInput );
+#endif
+		}
+
+		// Consume keyboard input when pressed and access state.
+		if( pressed )
+		{
+			pState = &m_InputTextState;
+			AluraTextInputSpecification spec;
+			spec.AcceptUnicode = false;
+			spec.MaxCharacters = 32llu;
+			spec.ItemID = itemID;
+			spec.pString = pStr;
+
+			pState->Init( spec );
+
+			m_Focused = itemID;
+		}
+
+		// Draw cursor...
+		if( pState )
+		{
+			const auto cursorIndex = pState->GetCursorIndex();
+			const glm::vec2 textSize = CalcTextSizeN( *pStr, cursorIndex );
+			const glm::vec2 cursorPosition = { editAreaBB.Min.x + textSize.x, editAreaBB.Min.y };
+			const glm::vec2 cursorSize = glm::vec2{ 1.0f, textSize.y == 0.0f ? editAreaBB.GetHeight() : textSize.y };
+
+			pState->IncrementCursorTime( Application::Get()->Time() );
+			if( pState->CursorIsVisible() )
+			{
+				const AluraRect cursorRect( cursorPosition, cursorPosition + cursorSize );
+				m_Renderer->SubmitRect( cursorRect, m_Style.Colors[ AluraColor_Text ] );
+			}
+		}
+
+		m_Renderer->PopClipRect();
+
+		// User has clicked on something else...
+		if( ( m_Focused == itemID && m_Active != itemID ) && m_Hot != itemID )
+		{
+			m_Focused = 0llu;
+		}
+
+		return pState ? pState->IsModifiedAndAcknowledgeModification() : false;
+	}
 
 	bool AluraCanvas::BeginComboBox( const std::string& rLabel, const std::string& rPreviewName, float maxSize /*= 0.0f */ )
 	{
@@ -922,6 +1026,9 @@ namespace Saturn {
 			EndRegion();
 		}
 
+		static std::string str;
+		AddInputText( "Testing", &str );
+
 		AddText( "This is text at size 32px" );
 		PopFontSize();
 
@@ -1080,6 +1187,12 @@ namespace Saturn {
 		return m_ActiveFont->CalcTextSize( m_Style.CurrentFontSize, rText );
 	}
 
+	glm::vec2 AluraCanvas::CalcTextSizeN( const std::string& rText, size_t n )
+	{
+		SAT_CORE_ASSERT( m_ActiveFont );
+		return m_ActiveFont->CalcTextSizeN( m_Style.CurrentFontSize, rText, n );
+	}
+
 #if !defined(SAT_DIST)
 	void AluraCanvas::EdClearCanvas()
 	{
@@ -1096,6 +1209,21 @@ namespace Saturn {
 	void AluraCanvas::UpdateKeyInputState( const RubyKey btn, const AluraInputState state )
 	{
 		m_KeyInputStates[ btn ] = state;
+
+		auto* pTextInput = GetInputTextStateForItem( m_Focused );
+		if( pTextInput )
+		{
+			pTextInput->OnKeyPressed( btn );
+		}
+	}
+
+	void AluraCanvas::UpdateKeyInputState_ForInputText( const wchar_t wc )
+	{
+		auto* pTextInput = GetInputTextStateForItem( m_Focused );
+		if( pTextInput )
+		{
+			pTextInput->OnCharacter( wc );
+		}
 	}
 
 	void AluraCanvas::UpdateMouseScroll( const glm::vec2& rScrollOffset )
@@ -1341,6 +1469,11 @@ namespace Saturn {
 	bool AluraCanvas::KeyHeld( RubyMouseButton btn )
 	{
 		return m_KeyInputStates[ btn ] == AluraInputState::Held;
+	}
+
+	AluraTextInputA* AluraCanvas::GetInputTextStateForItem( uint64_t itemID )
+	{
+		return m_InputTextState.GetItemID() == itemID ? &m_InputTextState : nullptr;
 	}
 
 	AluraRegionData& AluraCanvas::GetOrCreateRegion( uint64_t itemID )

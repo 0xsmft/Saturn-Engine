@@ -69,7 +69,7 @@ namespace Saturn {
 			}
 		}
 
-		void ResetCursorTime() { m_CursorBlinkingTime = 0.0f; }
+		void ResetCursorTime() { m_CursorBlinkingTime = -m_Specification.CursorAnimDuration; }
 
 		bool IsModifiedAndAcknowledgeModification() { bool modified = m_ModifiedSinceLastRender; m_ModifiedSinceLastRender = false; return modified; }
 		bool CursorIsVisible() const { return m_CursorBlinkingTime <= 0.0f; }

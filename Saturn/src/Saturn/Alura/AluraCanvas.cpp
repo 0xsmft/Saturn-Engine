@@ -568,15 +568,17 @@ namespace Saturn {
 
 		const uint64_t itemID = FNV1A64( rLabel.c_str() );
 
-		const glm::vec2 textSize = CalcTextSize( rLabel );
-		const glm::vec2 editAreaSize = glm::vec2( 128.0f, textSize.y );
-		const glm::vec2 editAreaPosition = { posDependingLastCall.x + textSize.x + m_Style.ItemInnerSpacing.x, posDependingLastCall.y };
-		const glm::vec2 totalSize = { textSize.x + editAreaSize.x, textSize.y };
+		const glm::vec2 labelSize = glm::ceil( CalcTextSize( rLabel ) );
+		const glm::vec2 editAreaSize = glm::vec2( 128.0f, labelSize.y );
+		const glm::vec2 editAreaPosition = { posDependingLastCall.x + labelSize.x + m_Style.ItemInnerSpacing.x, posDependingLastCall.y };
+		const glm::vec2 totalSize = { labelSize.x + editAreaSize.x + m_Style.ItemInnerSpacing.x, labelSize.y };
 
 		// Size calc.
-		const AluraRect textBB( posDependingLastCall, posDependingLastCall + textSize );
+		const AluraRect labelBB( posDependingLastCall, posDependingLastCall + labelSize );
 		const AluraRect editAreaBB( editAreaPosition, editAreaPosition + editAreaSize );
-		const AluraRect fullBB( textBB.Min, textBB.Min + totalSize );
+		const AluraRect fullBB( posDependingLastCall, labelBB.Min + totalSize );
+
+		const glm::vec2 textStartingPosition = glm::vec2{ editAreaBB.Min.x + m_Style.ItemInnerSpacing.x, editAreaBB.Min.y };
 
 		ItemSize( fullBB.GetSize() );
 		if( !CanAddItem( fullBB ) )
@@ -592,13 +594,7 @@ namespace Saturn {
 		m_Renderer->SubmitRectFrame( editAreaBB, 1.0f, m_Style.Colors[ AluraColor_Border ] );
 
 		m_Renderer->PushClipRect( editAreaBB );
-		m_Renderer->SubmitString( *pStr, m_ActiveFont, m_Style.CurrentFontSize, editAreaBB.Min, m_Style.Colors[ AluraColor_Text ] );
-
-#if defined(SAT_ALURA_SHOW_TEXT_BB)
-		m_Renderer->SubmitRectFrame( fullBB, 1.0f, glm::vec4{ 1.0f, 0.0f, 0.0f, 1.0f } );
-		m_Renderer->SubmitRectFrame( textBB, 1.0f, glm::vec4{ 0.0f, 1.0f, 0.0f, 1.0f } );
-		m_Renderer->SubmitRectFrame( editAreaBB, 1.0f, glm::vec4{ 0.0f, 0.0f, 1.0f, 1.0f } );
-#endif
+		m_Renderer->SubmitString( *pStr, m_ActiveFont, m_Style.CurrentFontSize, textStartingPosition, m_Style.Colors[ AluraColor_Text ] );
 
 		bool hovered;
 		bool pressed = ButtonBehaviour( editAreaBB, itemID, &hovered, nullptr );
@@ -636,7 +632,7 @@ namespace Saturn {
 		{
 			const auto cursorIndex = pState->GetCursorIndex();
 			const glm::vec2 textSize = CalcTextSizeN( *pStr, cursorIndex );
-			const glm::vec2 cursorPosition = { editAreaBB.Min.x + textSize.x, editAreaBB.Min.y };
+			const glm::vec2 cursorPosition = { textStartingPosition.x + textSize.x, editAreaBB.Min.y };
 			const glm::vec2 cursorSize = glm::vec2{ 1.0f, textSize.y == 0.0f ? editAreaBB.GetHeight() : textSize.y };
 
 			pState->IncrementCursorTime( Application::Get()->Time() );
@@ -648,6 +644,12 @@ namespace Saturn {
 		}
 
 		m_Renderer->PopClipRect();
+
+#if defined(SAT_ALURA_SHOW_TEXT_BB)
+		m_Renderer->SubmitRectFrame( labelBB, 1.0f, glm::vec4{ 0.0f, 1.0f, 0.0f, 1.0f } ); // Green
+		m_Renderer->SubmitRectFrame( editAreaBB, 1.0f, glm::vec4{ 0.0f, 0.0f, 1.0f, 1.0f } ); // Blue
+		m_Renderer->SubmitRectFrame( fullBB, 1.0f, glm::vec4{ 1.0f, 0.0f, 0.0f, 1.0f } ); // Red
+#endif
 
 		// User has clicked on something else...
 		if( ( m_Focused == itemID && m_Active != itemID ) && m_Hot != itemID )

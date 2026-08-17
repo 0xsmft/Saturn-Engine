@@ -29,6 +29,8 @@
 #include "sppch.h"
 #include "AluraTextInput.h"
 
+#include "Saturn/Core/Input.h"
+
 namespace Saturn {
 
 	AluraTextInputA::AluraTextInputA()
@@ -69,7 +71,14 @@ namespace Saturn {
 		{
 			case RubyKey_Backspace:
 			{
-				EraseAtCursor();
+				m_TextDeletionDirection = AluraTextDeletionDirection::Backwards;
+				EraseAtCursorOrSelection();
+			} break;
+
+			case RubyKey_Delete:
+			{
+				m_TextDeletionDirection = AluraTextDeletionDirection::Forwards;
+				EraseAtCursorOrSelection();
 			} break;
 
 			case RubyKey_LeftArrow:
@@ -87,6 +96,50 @@ namespace Saturn {
 				m_EnterPressed = true;
 			} break;
 
+			case RubyKey_LeftShift:
+			case RubyKey_RightShift:
+			{
+				if( m_SelectionBegin == std::string::npos )
+				{
+					m_SelectionBegin = m_CursorIndex;
+					m_SelectionEnd = 0;
+					m_IsSelecting = true;
+				}
+
+				m_ShiftDown = true;
+			} break;
+
+			default:
+				break;
+		}
+
+		if( Input::Get().KeyPressed( RubyKey_LeftCtrl ) || Input::Get().KeyPressed( RubyKey_RightCtrl ) )
+		{
+			switch( key )
+			{
+				case RubyKey_A:
+				{
+					m_IsSelecting = true;
+					m_SelectionBegin = 0;
+					m_SelectionEnd = m_Specification.pString->size();
+				} break;
+
+				default:
+					break;
+			}
+		}
+	}
+
+	void AluraTextInputA::OnKeyReleased( RubyKey key )
+	{
+		switch( key )
+		{
+			case RubyKey_LeftShift:
+			case RubyKey_RightShift:
+			{
+				m_ShiftDown = false;
+			} break;
+
 			default:
 				break;
 		}
@@ -101,8 +154,23 @@ namespace Saturn {
 	{
 		if( m_CursorIndex > 0 ) 
 		{
-			--m_CursorIndex;
+			if( m_IsSelecting )
+			{
+				if( m_ShiftDown )
+				{
+					--m_SelectionEnd;
+				}
+				else
+				{
+					m_CursorIndex = m_SelectionBegin;
+					ResetSelection();
+					ResetCursorTime();
+					
+					return;
+				}
+			}
 			
+			--m_CursorIndex;
 			ResetCursorTime();
 		}
 	}
@@ -111,20 +179,72 @@ namespace Saturn {
 	{
 		if( m_CursorIndex < m_Specification.pString->size() )
 		{
+			if( m_IsSelecting )
+			{
+				if( m_ShiftDown )
+				{
+					++m_SelectionEnd;
+				}
+				else
+				{
+					m_CursorIndex = m_SelectionEnd;
+					ResetSelection();
+				}
+			}
+
 			++m_CursorIndex;
 			ResetCursorTime();
 		}
 	}
 
-	void AluraTextInputA::EraseAtCursor()
+	void AluraTextInputA::EraseAtCursorOrSelection()
 	{
 		if( m_Specification.pString->empty() || m_CursorIndex == std::string::npos )
 			return;
 
-		m_Specification.pString->erase( m_CursorIndex );
-		--m_CursorIndex;
+		if( m_IsSelecting )
+		{
+			const auto deletionAmount = std::max( m_SelectionBegin, m_SelectionEnd );
+
+			m_Specification.pString->erase( m_Specification.pString->size() - deletionAmount );
+
+			m_CursorIndex = m_Specification.pString->size();
+
+			ResetSelection();
+		}
+		else
+		{
+			switch( m_TextDeletionDirection )
+			{
+				case AluraTextDeletionDirection::Forwards:
+				{
+					if( m_CursorIndex + 1 <= m_Specification.pString->size() )
+					{
+						m_Specification.pString->erase( m_CursorIndex );
+					}
+				} break;
+				
+				case AluraTextDeletionDirection::Backwards: 
+				{
+					if( m_CursorIndex > 0 )
+					{
+						m_Specification.pString->erase( --m_CursorIndex );
+					}
+				} break;
+		
+				default:
+					break;
+			}
+		}
 
 		ResetCursorTime();
+	}
+
+	void AluraTextInputA::ResetSelection()
+	{
+		m_SelectionBegin = std::string::npos;
+		m_SelectionEnd = std::string::npos;
+		m_IsSelecting = false;
 	}
 
 }

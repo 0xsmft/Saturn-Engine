@@ -41,6 +41,15 @@ namespace Saturn {
 		float CursorAnimDuration = 0.5f;
 
 		bool AcceptUnicode = true;
+
+	enum class AluraTextDeletionDirection : uint8_t
+	{
+		// Delete key, cursor position remains in the same
+		// place.
+		Forwards,
+
+		// Backspace key, cursor moves back.
+		Backwards
 	};
 
 	class AluraTextInputA
@@ -53,6 +62,7 @@ namespace Saturn {
 
 		void OnCharacter( uint32_t wc );
 		void OnKeyPressed( RubyKey key );
+		void OnKeyReleased( RubyKey key );
 
 		void DeleteAll();
 		void MoveLeft();
@@ -73,21 +83,33 @@ namespace Saturn {
 
 		bool IsModifiedAndAcknowledgeModification() { bool modified = m_ModifiedSinceLastRender; m_ModifiedSinceLastRender = false; return modified; }
 		bool CursorIsVisible() const { return m_CursorBlinkingTime <= 0.0f; }
+		void ResetSelection();
 
 	public:
 		uint64_t GetItemID() const { return m_Specification.ItemID; }
 		size_t GetCursorIndex() const { return m_CursorIndex; }
 		float GetBlinkingTime() const { return m_CursorBlinkingTime; }
+		float GetScrollX() const { return m_ScrollX; }
+
+		bool IsSelecting() const { return m_IsSelecting; }
+		size_t GetSelectionMin() const { if( m_IsSelecting ) return std::min( m_SelectionBegin, m_SelectionEnd ); return 0llu; }
+		size_t GetSelectionMax() const { if( m_IsSelecting ) return std::max( m_SelectionBegin, m_SelectionEnd ); return 0llu; }
 
 	private:
-		void EraseAtCursor();
+		void EraseAtCursorOrSelection();
 
 	private:
 		bool m_EnterPressed = false;
 		bool m_ModifiedSinceLastRender = false;
 
 		AluraTextInputSpecification m_Specification{};
-		size_t m_CursorIndex = std::u32string::npos;
+
+		size_t m_CursorIndex = std::string::npos;
+		size_t m_SelectionBegin = std::string::npos;
+		size_t m_SelectionEnd = std::string::npos;
+		bool m_IsSelecting = false;
+		bool m_ShiftDown = false;
+		AluraTextDeletionDirection m_TextDeletionDirection = AluraTextDeletionDirection::Backwards;
 
 		//
 		// Cursor blinking time...

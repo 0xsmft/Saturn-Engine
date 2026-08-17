@@ -1213,7 +1213,7 @@ namespace Saturn {
 		m_KeyInputStates[ btn ] = state;
 
 		auto* pTextInput = GetInputTextStateForItem( m_Focused );
-		if( pTextInput )
+		if( pTextInput && state == AluraInputState::Pressed )
 		{
 			pTextInput->OnKeyPressed( btn );
 		}

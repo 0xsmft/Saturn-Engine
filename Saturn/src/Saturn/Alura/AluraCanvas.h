@@ -32,6 +32,7 @@
 #include "AluraFont.h"
 #include "AluraDrawer.h"
 #include "AluraRect.h"
+#include "AluraTextInput.h"
 
 #include "Saturn/Core/Base.h"
 #include "Saturn/Core/UUID.h"
@@ -223,6 +224,7 @@ namespace Saturn {
 		[[nodiscard]] bool AddCheckbox( const std::string& rLabel, bool* pValue );
 		[[nodiscard]] bool AddCheckboxRight( const std::string& rLabel, bool* pValue );
 
+		[[nodiscard]] bool AddInputText( const std::string& rLabel, std::string* pStr );
 
 		[[nodiscard]] bool BeginComboBox( const std::string& rLabel, const std::string& rPreviewName, float maxSize = 0.0f );
 		void EndComboBox();
@@ -275,6 +277,7 @@ namespace Saturn {
 		glm::vec2 GetContentRegionAvail();
 
 		[[nodiscard]] glm::vec2 CalcTextSize( const std::string& rText );
+		[[nodiscard]] glm::vec2 CalcTextSizeN( const std::string& rText, size_t n );
 
 		[[nodiscard]] bool IsAnyItemHot() const      { return m_Hot != 0llu; }
 		[[nodiscard]] bool IsAnyRegionHot() const    { return m_HotRegion != 0llu; }
@@ -305,6 +308,7 @@ namespace Saturn {
 	public:
 		void UpdateMouseInputState( const RubyMouseButton btn, const AluraInputState state );
 		void UpdateKeyInputState( const RubyKey btn, const AluraInputState state );
+		void UpdateKeyInputState_ForInputText( const wchar_t wc );
 		void UpdateMouseScroll( const glm::vec2& rScrollOffset );
 
 	public:
@@ -340,6 +344,7 @@ namespace Saturn {
 		[[nodiscard]] bool KeyReleased( RubyMouseButton btn );
 		[[nodiscard]] bool KeyHeld( RubyMouseButton btn );
 
+		AluraTextInputA* GetInputTextStateForItem( uint64_t itemID );
 
 		AluraRegionData& GetOrCreateRegion( uint64_t itemID );
 		AluraPopupData& GetOrCreatePopup( uint64_t itemID );
@@ -373,6 +378,8 @@ namespace Saturn {
 
 		std::array<AluraInputState, RubyMouseButton_EnumSize> m_MouseInputStates{ AluraInputState::NoState };
 		std::array<AluraInputState, RubyKey_EnumSize> m_KeyInputStates{ AluraInputState::NoState };
+
+		AluraTextInputA m_InputTextState;
 
 		Ref<AluraFont> m_ActiveFont = nullptr;
 		

@@ -1313,6 +1313,12 @@ namespace Saturn {
 	
 	bool AluraCanvas::CanAddItem( const AluraRect& rBoundingBox )
 	{
+		// Skip off-screen elements.
+		if( rBoundingBox.Min.x > m_CanvasSize.x || rBoundingBox.Min.y > m_CanvasSize.y )
+		{
+			return false;
+		}
+
 		if( !m_ActiveRegions.empty() )
 		{
 			auto* pRegion = m_ActiveRegions.top();

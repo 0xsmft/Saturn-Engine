@@ -184,6 +184,8 @@ namespace Saturn {
 		const AluraFontData& GetFontData() const { return m_AluraFontData; }
 
 		glm::vec2 CalcTextSize( float fontSize, const std::string& rText );
+		glm::vec2 CalcTextSizeN( float fontSize, const std::string& rText, size_t n );
+	
 		float GetStartingYCoord() const;
 
 #if !defined(SAT_DIST)

@@ -483,23 +483,30 @@ namespace Saturn {
 
 	glm::vec2 AluraFont::CalcTextSize( float fontSize, const std::string& rText )
 	{
-		if( rText.empty() )
+		return CalcTextSizeN( fontSize, rText, rText.size() );
+	}
+
+	glm::vec2 AluraFont::CalcTextSizeN( float fontSize, const std::string& rText, size_t n )
+	{
+		if( rText.empty() || n > rText.size() )
 			return { 0.0f, 0.0f };
 
 		const auto& metrics = m_AluraFontData.GetMetrics();
-		const float scale = fontSize / static_cast<float>( metrics.AscenderY - metrics.DescenderY );
+		const float scale = fontSize / static_cast< float >( metrics.AscenderY - metrics.DescenderY );
 
 		bool multipleLines = false;
 		float width = 0.0f;
-		
-		float lineCount = scale * static_cast<float>( metrics.LineHeight );
-		for( char character : rText )
+
+		float lineCount = scale * static_cast< float >( metrics.LineHeight );
+		for( size_t i = 0; i < n; ++i )
 		{
+			const auto character = rText[ i ];
+
 			const auto glyph = m_AluraFontData.GetGlyph( character );
 			if( character == '\n' )
 			{
 				multipleLines = true;
-				lineCount += scale * static_cast<float>( metrics.LineHeight );
+				lineCount += scale * static_cast< float >( metrics.LineHeight );
 				continue;
 			}
 
@@ -510,7 +517,7 @@ namespace Saturn {
 		}
 
 		const float height = multipleLines ? lineCount :
-			static_cast<float>( metrics.AscenderY - metrics.DescenderY ) * scale;
+			static_cast< float >( metrics.AscenderY - metrics.DescenderY ) * scale;
 
 		return { width, height };
 	}

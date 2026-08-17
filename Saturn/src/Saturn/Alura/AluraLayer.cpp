@@ -31,7 +31,6 @@
 
 #include "Saturn/Core/Ruby/RubyEvent.h"
 
-#include "AluraInputTextState.h"
 #include "AluraCanvas.h"
 
 #include "SharedGlobals.h"
@@ -56,7 +55,8 @@ namespace Saturn {
 				g_AluraCanvas->IsAnyItemHot() ||
 				g_AluraCanvas->IsAnyItemActive() ||
 				g_AluraCanvas->IsAnyItemFocused() ||
-				g_AluraCanvas->IsAnyItemSelected() )
+				g_AluraCanvas->IsAnyItemSelected() ||
+				g_AluraCanvas->IsAnyRegionHot() )
 			{
 				switch( rEvent.Type )
 				{
@@ -88,6 +88,12 @@ namespace Saturn {
 					{
 						const RubyKeyEvent& rKeyEvent = ( RubyKeyEvent& ) rEvent;
 						g_AluraCanvas->UpdateKeyInputState( rKeyEvent.GetKeycode(), AluraInputState::Held );
+					} break;
+
+					case EventType::InputCharacter:
+					{
+						const RubyCharacterEvent& rCharEvent = ( RubyCharacterEvent& ) rEvent;
+						g_AluraCanvas->UpdateKeyInputState_ForInputText( rCharEvent.GetCharacter() );
 					} break;
 
 					case EventType::MouseScroll:

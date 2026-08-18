@@ -41,6 +41,7 @@ namespace Saturn {
 		float CursorAnimDuration = 0.5f;
 
 		bool AcceptUnicode = true;
+	};
 
 	enum class AluraTextDeletionDirection : uint8_t
 	{
@@ -83,6 +84,9 @@ namespace Saturn {
 
 		bool IsModifiedAndAcknowledgeModification() { bool modified = m_ModifiedSinceLastRender; m_ModifiedSinceLastRender = false; return modified; }
 		bool CursorIsVisible() const { return m_CursorBlinkingTime <= 0.0f; }
+		void SetScrollX( float x ) { m_ScrollX = x; }
+		void SetCursorShouldFollow( bool follow ) { m_CursorFollow = follow; }
+		
 		void ResetSelection();
 
 	public:
@@ -91,6 +95,7 @@ namespace Saturn {
 		float GetBlinkingTime() const { return m_CursorBlinkingTime; }
 		float GetScrollX() const { return m_ScrollX; }
 
+		bool CursorShouldFollow() const { return m_CursorFollow; }
 		bool IsSelecting() const { return m_IsSelecting; }
 		size_t GetSelectionMin() const { if( m_IsSelecting ) return std::min( m_SelectionBegin, m_SelectionEnd ); return 0llu; }
 		size_t GetSelectionMax() const { if( m_IsSelecting ) return std::max( m_SelectionBegin, m_SelectionEnd ); return 0llu; }
@@ -113,6 +118,7 @@ namespace Saturn {
 		bool m_ModifiedSinceLastRender = false;
 		bool m_IsSelecting = false;
 		bool m_ShiftDown = false;
+		bool m_CursorFollow = false;
 
 		AluraTextDeletionDirection m_TextDeletionDirection = AluraTextDeletionDirection::Backwards;
 
@@ -126,6 +132,7 @@ namespace Saturn {
 		// m_Specification.CursorAnimDuration.
 		//
 		float m_CursorBlinkingTime = 0.0f;
+		float m_ScrollX = 0.0f;
 	};
 
 }

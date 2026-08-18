@@ -61,7 +61,8 @@ namespace Saturn {
 		m_Specification.pString->insert( m_Specification.pString->size(), 1, wc );
 		++m_CursorIndex;
 		m_ModifiedSinceLastRender = true;
-		
+		m_CursorFollow = true;
+
 		ResetCursorTime();
 	}
 
@@ -156,6 +157,8 @@ namespace Saturn {
 	{
 		if( m_CursorIndex > 0 ) 
 		{
+			m_CursorFollow = true;
+
 			// Handle selection...
 			if( m_IsSelecting )
 			{
@@ -197,6 +200,8 @@ namespace Saturn {
 	{
 		if( m_CursorIndex < m_Specification.pString->size() )
 		{
+			m_CursorFollow = true;
+
 			if( m_IsSelecting )
 			{
 				if( m_ShiftDown )
@@ -268,6 +273,8 @@ namespace Saturn {
 				default:
 					break;
 			}
+
+			m_CursorFollow = true;
 		}
 
 		ResetCursorTime();

@@ -615,14 +615,24 @@ namespace Saturn {
 		// Consume keyboard input when pressed and access state.
 		if( pressed )
 		{
-			pState = &m_InputTextState;
-			AluraTextInputSpecification spec;
-			spec.AcceptUnicode = false;
-			spec.MaxCharacters = 32llu;
-			spec.ItemID = itemID;
-			spec.pString = pStr;
+			if( !pState || pState->GetItemID() != itemID )
+			{
+				pState = &m_InputTextState;
+				AluraTextInputSpecification spec;
+				spec.AcceptUnicode = false;
+				spec.MaxCharacters = 32llu;
+				spec.ItemID = itemID;
+				spec.pString = pStr;
 
-			pState->Init( spec );
+				pState->Init( spec );
+			}
+
+			// Upon press if we are selected
+			// we will deselect.
+			if( pState->IsSelecting() )
+			{
+				pState->ResetSelection();
+			}
 
 			m_Focused = itemID;
 		}
@@ -631,8 +641,8 @@ namespace Saturn {
 		if( pState )
 		{
 			const auto cursorIndex = pState->GetCursorIndex();
-			const glm::vec2 textSize = CalcTextSizeN( *pStr, cursorIndex );
-			const glm::vec2 cursorPosition = { textStartingPosition.x + textSize.x, editAreaBB.Min.y };
+			const glm::vec2 textSize = glm::ceil( CalcTextSizeN( *pStr, cursorIndex ) );
+			const glm::vec2 cursorPosition = { textStartingPosition.x + textSize.x + pState->GetScrollX(), editAreaBB.Min.y };
 			const glm::vec2 cursorSize = glm::vec2{ 1.0f, textSize.y == 0.0f ? editAreaBB.GetHeight() : textSize.y };
 
 			pState->IncrementCursorTime( Application::Get()->Time() );
@@ -640,6 +650,26 @@ namespace Saturn {
 			{
 				const AluraRect cursorRect( cursorPosition, cursorPosition + cursorSize );
 				m_Renderer->SubmitRect( cursorRect, m_Style.Colors[ AluraColor_Text ] );
+			}
+
+			// Draw selection
+			if( pState->IsSelecting() )
+			{
+				const size_t selectionStart = pState->GetSelectionStart();
+				const size_t selectionEnd   = pState->GetSelectionEnd();
+				const auto selectionDiff = selectionEnd - selectionStart;
+
+				SAT_CORE_INFO( "selection: {} {}, {}", selectionStart, selectionEnd, selectionDiff );
+
+				const glm::vec2 selectionToTextSize = glm::ceil( CalcTextSizeN( *pStr, selectionStart ) );
+				const glm::vec2 selectionPosition = { textStartingPosition.x + selectionToTextSize.x + pState->GetScrollX(), editAreaBB.Min.y };
+
+				const glm::vec2 selectionRectStartPos = { selectionPosition.x, editAreaBB.Min.y };
+				const auto selectionTextSize = glm::ceil( CalcTextSizeNAtOffset( *pStr, selectionDiff, selectionStart ) );
+				const glm::vec2 selectionRectSize = { selectionTextSize.x, selectionTextSize.y };
+
+				const AluraRect selectionRect( selectionRectStartPos, selectionRectStartPos + selectionRectSize );
+				m_Renderer->SubmitRect( selectionRect, glm::one<glm::vec4>() );
 			}
 		}
 
@@ -1193,6 +1223,12 @@ namespace Saturn {
 	{
 		SAT_CORE_ASSERT( m_ActiveFont );
 		return m_ActiveFont->CalcTextSizeN( m_Style.CurrentFontSize, rText, n );
+	}
+
+	glm::vec2 AluraCanvas::CalcTextSizeNAtOffset( const std::string& rText, size_t n, size_t off )
+	{
+		SAT_CORE_ASSERT( m_ActiveFont );
+		return m_ActiveFont->CalcTextSizeNAtOffset( m_Style.CurrentFontSize, rText, n, off );
 	}
 
 #if !defined(SAT_DIST)

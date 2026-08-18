@@ -95,6 +95,9 @@ namespace Saturn {
 		size_t GetSelectionMin() const { if( m_IsSelecting ) return std::min( m_SelectionBegin, m_SelectionEnd ); return 0llu; }
 		size_t GetSelectionMax() const { if( m_IsSelecting ) return std::max( m_SelectionBegin, m_SelectionEnd ); return 0llu; }
 
+		size_t GetSelectionStart() const { return m_SelectionBegin; }
+		size_t GetSelectionEnd() const { return m_SelectionEnd; }
+
 	private:
 		void EraseAtCursorOrSelection();
 

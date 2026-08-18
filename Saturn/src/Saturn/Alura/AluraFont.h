@@ -185,6 +185,7 @@ namespace Saturn {
 
 		glm::vec2 CalcTextSize( float fontSize, const std::string& rText );
 		glm::vec2 CalcTextSizeN( float fontSize, const std::string& rText, size_t n );
+		glm::vec2 CalcTextSizeNAtOffset( float fontSize, const std::string& rText, size_t n, size_t off );
 	
 		float GetStartingYCoord() const;
 

@@ -220,7 +220,7 @@ namespace Saturn {
 				{
 					if( m_CursorIndex + 1 <= m_Specification.pString->size() )
 					{
-						m_Specification.pString->erase( m_CursorIndex );
+						m_Specification.pString->erase( m_CursorIndex, 1llu );
 					}
 				} break;
 				
@@ -228,7 +228,7 @@ namespace Saturn {
 				{
 					if( m_CursorIndex > 0 )
 					{
-						m_Specification.pString->erase( --m_CursorIndex );
+						m_Specification.pString->erase( --m_CursorIndex, 1llu );
 					}
 				} break;
 		

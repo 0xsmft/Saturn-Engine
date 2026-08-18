@@ -53,6 +53,7 @@ namespace Saturn {
 		AluraColor_ProgressColor,
 		AluraColor_Separator,
 		AluraColor_RegionBackground,
+		AluraColor_TextSelected,
 		AluraColor_Count,
 	};
 
@@ -104,7 +105,7 @@ namespace Saturn {
 		{
 			Alpha = 1.0f;
 			DisabledAlpha = 0.5f;
-			RegionRounding = 5.0f;
+			RegionRounding = 10.0f;
 			WindowPadding = glm::vec2( 8.0f, 8.0f );
 			ItemSpacing = glm::vec2( 8.0f, 4.0f );
 			ItemInnerSpacing = glm::vec2( 4.0f, 4.0f );
@@ -121,6 +122,7 @@ namespace Saturn {
 			Colors[ AluraColor_ProgressColor ] = glm::vec4( 0.0f, 1.0f, 0.0f, 1.0f );
 			Colors[ AluraColor_Separator ] = glm::vec4( 0.1882f, 0.1882f, 0.1882f, 1.0f );
 			Colors[ AluraColor_RegionBackground ] = glm::vec4( 0.0824f, 0.0824f, 0.0824f, 1.0f );
+			Colors[ AluraColor_TextSelected ] = glm::vec4( 1.0f, 1.0f, 1.0f, 0.4f );
 		}
 	};
 	

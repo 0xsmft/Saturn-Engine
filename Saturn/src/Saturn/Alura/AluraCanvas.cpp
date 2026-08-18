@@ -688,7 +688,7 @@ namespace Saturn {
 				const glm::vec2 selectionRectSize = { selectionTextSize.x, selectionTextSize.y };
 
 				const AluraRect selectionRect( selectionRectStartPos, selectionRectStartPos + selectionRectSize );
-				m_Renderer->SubmitRect( selectionRect, glm::one<glm::vec4>() );
+				m_Renderer->SubmitRect( selectionRect, m_Style.Colors[ AluraColor_TextSelected ] );
 			}
 
 			m_Renderer->PopClipRect();

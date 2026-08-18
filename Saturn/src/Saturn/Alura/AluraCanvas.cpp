@@ -593,9 +593,6 @@ namespace Saturn {
 		m_Renderer->SubmitRect( editAreaBB, glm::vec4{ 0.0f, 0.0f, 0.0f, 1.0f } );
 		m_Renderer->SubmitRectFrame( editAreaBB, 1.0f, m_Style.Colors[ AluraColor_Border ] );
 
-		m_Renderer->PushClipRect( editAreaBB );
-		m_Renderer->SubmitString( *pStr, m_ActiveFont, m_Style.CurrentFontSize, textStartingPosition, m_Style.Colors[ AluraColor_Text ] );
-
 		bool hovered;
 		bool pressed = ButtonBehaviour( editAreaBB, itemID, &hovered, nullptr );
 
@@ -640,9 +637,33 @@ namespace Saturn {
 		// Draw cursor...
 		if( pState )
 		{
+			const auto fullTextSize = CalcTextSizeN( *pStr, pState->GetCursorIndex() );
+			const float cursorOffset = glm::ceil( fullTextSize.x );
+
+			if( pState->CursorShouldFollow() )
+			{
+				const float scrollAmountX = editAreaBB.GetWidth() * 0.25f;
+				const float visibleWidth = editAreaBB.GetWidth() - m_Style.ItemInnerSpacing.x;
+
+				if( cursorOffset < pState->GetScrollX() )
+				{
+					pState->SetScrollX( glm::trunc( glm::max( 0.0f, cursorOffset - scrollAmountX ) ) );
+				}
+				else if( cursorOffset - visibleWidth >= pState->GetScrollX() )
+				{
+					pState->SetScrollX( glm::trunc( cursorOffset - visibleWidth + scrollAmountX ) );
+				}
+
+				pState->SetCursorShouldFollow( false );
+			}
+
+			m_Renderer->PushClipRect( editAreaBB );
+			m_Renderer->SubmitString( *pStr, m_ActiveFont, m_Style.CurrentFontSize, { textStartingPosition.x - pState->GetScrollX(), textStartingPosition.y }, m_Style.Colors[ AluraColor_Text ] );
+
+			const glm::vec2 textStartingPosition = glm::vec2{ editAreaBB.Min.x + m_Style.ItemInnerSpacing.x, editAreaBB.Min.y };
 			const auto cursorIndex = pState->GetCursorIndex();
 			const glm::vec2 textSize = glm::ceil( CalcTextSizeN( *pStr, cursorIndex ) );
-			const glm::vec2 cursorPosition = { textStartingPosition.x + textSize.x + pState->GetScrollX(), editAreaBB.Min.y };
+			const glm::vec2 cursorPosition = { textStartingPosition.x + textSize.x - pState->GetScrollX(), editAreaBB.Min.y };
 			const glm::vec2 cursorSize = glm::vec2{ 1.0f, textSize.y == 0.0f ? editAreaBB.GetHeight() : textSize.y };
 
 			pState->IncrementCursorTime( Application::Get()->Time() );
@@ -659,10 +680,8 @@ namespace Saturn {
 				const size_t selectionEnd   = pState->GetSelectionEnd();
 				const auto selectionDiff = selectionEnd - selectionStart;
 
-				SAT_CORE_INFO( "selection: {} {}, {}", selectionStart, selectionEnd, selectionDiff );
-
 				const glm::vec2 selectionToTextSize = glm::ceil( CalcTextSizeN( *pStr, selectionStart ) );
-				const glm::vec2 selectionPosition = { textStartingPosition.x + selectionToTextSize.x + pState->GetScrollX(), editAreaBB.Min.y };
+				const glm::vec2 selectionPosition = { textStartingPosition.x + selectionToTextSize.x - pState->GetScrollX(), editAreaBB.Min.y };
 
 				const glm::vec2 selectionRectStartPos = { selectionPosition.x, editAreaBB.Min.y };
 				const auto selectionTextSize = glm::ceil( CalcTextSizeNAtOffset( *pStr, selectionDiff, selectionStart ) );
@@ -671,9 +690,9 @@ namespace Saturn {
 				const AluraRect selectionRect( selectionRectStartPos, selectionRectStartPos + selectionRectSize );
 				m_Renderer->SubmitRect( selectionRect, glm::one<glm::vec4>() );
 			}
-		}
 
-		m_Renderer->PopClipRect();
+			m_Renderer->PopClipRect();
+		}
 
 #if defined(SAT_ALURA_SHOW_TEXT_BB)
 		m_Renderer->SubmitRectFrame( labelBB, 1.0f, glm::vec4{ 0.0f, 1.0f, 0.0f, 1.0f } ); // Green

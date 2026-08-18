@@ -27,88 +27,42 @@
 */
 
 #include "sppch.h"
-#include "AluraStylingProfileAssetViewer.h"
-
-#include "Saturn/Asset/AssetManager.h"
-
 #include "AluraStyleEditor.h"
 
+#include "Saturn/ImGui/ImGuiAuxiliary.h"
+
 #include <imgui.h>
+#include <glm/gtc/type_ptr.hpp>
 
 namespace Saturn {
 
-	AluraStylingProfileAssetViewer::AluraStylingProfileAssetViewer( AssetID id )
-		: AssetViewer( id )
+	void AluraStyleEditor::Draw( AluraStyle& rStyle, bool readOnly )
 	{
-		m_AssetType = AssetType::StyleProfile;
-		m_Open = true;
+		Auxiliary::ScopedDisabledFlag disabledIfReadOnly( readOnly );
 
-		m_StylingProfile = AssetManager::Get()->GetAssetAs<AluraStylingProfile>( m_AssetID );
-		m_Name = std::format( "{0} - Alura Styling Profile##{1}", m_StylingProfile->Name, ( uint64_t ) m_AssetID );
+		ImGui::SeparatorText( "General Style" );
+
+		Auxiliary::DrawFloatControl( "Alpha", rStyle.Alpha );
+		Auxiliary::DrawFloatControl( "Disabled Alpha", rStyle.DisabledAlpha );
+		Auxiliary::DrawFloatControl( "Region Rounding", rStyle.RegionRounding );
+
+		Auxiliary::DrawVec2Control( "Window Padding", rStyle.WindowPadding );
+		Auxiliary::DrawVec2Control( "Item Spacing", rStyle.ItemSpacing );
+
+		Auxiliary::DrawFloatControl( "Indent Spacing", rStyle.IndentSpacing );
+		Auxiliary::DrawFloatControl( "Window Border Size", rStyle.WindowBorderSize );
+		Auxiliary::DrawFloatControl( "Font Size", rStyle.CurrentFontSize );
+
+		ImGui::SeparatorText( "Colors" );
+		ImGui::ColorEdit4( "Text", glm::value_ptr( rStyle.Colors[ 0 ] ) );
+		ImGui::ColorEdit4( "Text Disabled", glm::value_ptr( rStyle.Colors[ 1 ] ) );
+		ImGui::ColorEdit4( "Button", glm::value_ptr( rStyle.Colors[ 2 ] ) );
+		ImGui::ColorEdit4( "Button Hovered", glm::value_ptr( rStyle.Colors[ 3 ] ) );
+		ImGui::ColorEdit4( "Border", glm::value_ptr( rStyle.Colors[ 4 ] ) );
+		ImGui::ColorEdit4( "Frame Background", glm::value_ptr( rStyle.Colors[ 5 ] ) );
+		ImGui::ColorEdit4( "Progress bar Color", glm::value_ptr( rStyle.Colors[ 6 ] ) );
+		ImGui::ColorEdit4( "Separator", glm::value_ptr( rStyle.Colors[ 7 ] ) );
+		ImGui::ColorEdit4( "Region Background", glm::value_ptr( rStyle.Colors[ 8 ] ) );
+		ImGui::ColorEdit4( "Text Selected", glm::value_ptr( rStyle.Colors[ 9 ] ) );
 	}
-
-	AluraStylingProfileAssetViewer::~AluraStylingProfileAssetViewer()
-	{
-	}
-
-	void AluraStylingProfileAssetViewer::OnImGuiRender()
-	{
-		if( ImGui::Begin( m_Name.c_str(), &m_Open, ImGuiWindowFlags_MenuBar ) )
-		{
-			if( ImGui::BeginMenuBar() )
-			{
-				if( ImGui::BeginMenu( "File" ) )
-				{
-					if( ImGui::MenuItem( "Close" ) )
-					{
-						m_Open = false;
-					}
-
-					if( ImGui::MenuItem( "Save" ) )
-					{
-						if( m_Dirty )
-						{
-							AluraStylingProfileAssetSerialiser ssp;
-							ssp.Serialise( m_StylingProfile );
-
-							m_Dirty = false;
-						}
-					}
-
-					ImGui::EndMenu();
-				}
-
-				if( ImGui::BeginMenu( "Styling Profile" ) )
-				{
-					if( ImGui::MenuItem( "Reset to Defaults" ) )
-					{
-						if( !m_IsReadOnly )
-						{
-							m_StylingProfile->GetStyle().Default();
-						}
-					}
-
-					ImGui::EndMenu();
-				}
-
-				ImGui::EndMenuBar();
-			}
-
-			ImGui::Text( "Alura Styling Profile" );
-
-			{
-				auto& rStyle = m_StylingProfile->GetStyle();
-				AluraStyleEditor::Draw( rStyle, m_IsReadOnly );
-			}
-		}
-
-		ImGui::End();
-	
-		if( !m_Open && !m_IsReadOnly )
-		{
-			AluraStylingProfileAssetSerialiser ssp;
-			ssp.Serialise( m_StylingProfile );
-		}
-	}
-
 }

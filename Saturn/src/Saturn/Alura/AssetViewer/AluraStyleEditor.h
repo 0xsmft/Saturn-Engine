@@ -26,89 +26,22 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "AluraStylingProfileAssetViewer.h"
+#pragma once
 
-#include "Saturn/Asset/AssetManager.h"
-
-#include "AluraStyleEditor.h"
-
-#include <imgui.h>
+#include "Saturn/Alura/AluraCanvas.h"
 
 namespace Saturn {
 
-	AluraStylingProfileAssetViewer::AluraStylingProfileAssetViewer( AssetID id )
-		: AssetViewer( id )
+	//
+	// Needs to be used within another window
+	// e.g. AluraStylingProfileAssetViewer or
+	// the editor runtime version.
+	// 
+	//
+	class AluraStyleEditor
 	{
-		m_AssetType = AssetType::StyleProfile;
-		m_Open = true;
-
-		m_StylingProfile = AssetManager::Get()->GetAssetAs<AluraStylingProfile>( m_AssetID );
-		m_Name = std::format( "{0} - Alura Styling Profile##{1}", m_StylingProfile->Name, ( uint64_t ) m_AssetID );
-	}
-
-	AluraStylingProfileAssetViewer::~AluraStylingProfileAssetViewer()
-	{
-	}
-
-	void AluraStylingProfileAssetViewer::OnImGuiRender()
-	{
-		if( ImGui::Begin( m_Name.c_str(), &m_Open, ImGuiWindowFlags_MenuBar ) )
-		{
-			if( ImGui::BeginMenuBar() )
-			{
-				if( ImGui::BeginMenu( "File" ) )
-				{
-					if( ImGui::MenuItem( "Close" ) )
-					{
-						m_Open = false;
-					}
-
-					if( ImGui::MenuItem( "Save" ) )
-					{
-						if( m_Dirty )
-						{
-							AluraStylingProfileAssetSerialiser ssp;
-							ssp.Serialise( m_StylingProfile );
-
-							m_Dirty = false;
-						}
-					}
-
-					ImGui::EndMenu();
-				}
-
-				if( ImGui::BeginMenu( "Styling Profile" ) )
-				{
-					if( ImGui::MenuItem( "Reset to Defaults" ) )
-					{
-						if( !m_IsReadOnly )
-						{
-							m_StylingProfile->GetStyle().Default();
-						}
-					}
-
-					ImGui::EndMenu();
-				}
-
-				ImGui::EndMenuBar();
-			}
-
-			ImGui::Text( "Alura Styling Profile" );
-
-			{
-				auto& rStyle = m_StylingProfile->GetStyle();
-				AluraStyleEditor::Draw( rStyle, m_IsReadOnly );
-			}
-		}
-
-		ImGui::End();
+	public:
+		static void Draw( AluraStyle& rStyle, bool readOnly = false );
+	};
 	
-		if( !m_Open && !m_IsReadOnly )
-		{
-			AluraStylingProfileAssetSerialiser ssp;
-			ssp.Serialise( m_StylingProfile );
-		}
-	}
-
 }

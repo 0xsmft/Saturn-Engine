@@ -102,16 +102,18 @@ namespace Saturn {
 		void EraseAtCursorOrSelection();
 
 	private:
-		bool m_EnterPressed = false;
-		bool m_ModifiedSinceLastRender = false;
-
 		AluraTextInputSpecification m_Specification{};
 
 		size_t m_CursorIndex = std::string::npos;
 		size_t m_SelectionBegin = std::string::npos;
 		size_t m_SelectionEnd = std::string::npos;
+		size_t m_SelectionAnchor = std::string::npos;
+
+		bool m_EnterPressed = false;
+		bool m_ModifiedSinceLastRender = false;
 		bool m_IsSelecting = false;
 		bool m_ShiftDown = false;
+
 		AluraTextDeletionDirection m_TextDeletionDirection = AluraTextDeletionDirection::Backwards;
 
 		//

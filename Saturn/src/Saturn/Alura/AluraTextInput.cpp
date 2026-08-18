@@ -102,7 +102,7 @@ namespace Saturn {
 				if( m_SelectionBegin == std::string::npos )
 				{
 					m_SelectionBegin = m_CursorIndex;
-					m_SelectionEnd = 0;
+					m_SelectionEnd = m_SelectionBegin;
 					m_IsSelecting = true;
 				}
 

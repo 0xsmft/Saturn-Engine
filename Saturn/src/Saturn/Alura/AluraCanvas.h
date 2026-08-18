@@ -278,6 +278,7 @@ namespace Saturn {
 
 		[[nodiscard]] glm::vec2 CalcTextSize( const std::string& rText );
 		[[nodiscard]] glm::vec2 CalcTextSizeN( const std::string& rText, size_t n );
+		[[nodiscard]] glm::vec2 CalcTextSizeNAtOffset( const std::string& rText, size_t n, size_t off );
 
 		[[nodiscard]] bool IsAnyItemHot() const      { return m_Hot != 0llu; }
 		[[nodiscard]] bool IsAnyRegionHot() const    { return m_HotRegion != 0llu; }

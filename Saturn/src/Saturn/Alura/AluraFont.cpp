@@ -488,7 +488,12 @@ namespace Saturn {
 
 	glm::vec2 AluraFont::CalcTextSizeN( float fontSize, const std::string& rText, size_t n )
 	{
-		if( rText.empty() || n > rText.size() )
+		return CalcTextSizeNAtOffset( fontSize, rText, n, 0llu );
+	}
+
+	glm::vec2 AluraFont::CalcTextSizeNAtOffset( float fontSize, const std::string& rText, size_t n, size_t off )
+	{
+		if( rText.empty() || off > rText.size() || n > rText.size() - off )
 			return { 0.0f, 0.0f };
 
 		const auto& metrics = m_AluraFontData.GetMetrics();
@@ -498,7 +503,7 @@ namespace Saturn {
 		float width = 0.0f;
 
 		float lineCount = scale * static_cast< float >( metrics.LineHeight );
-		for( size_t i = 0; i < n; ++i )
+		for( size_t i = off; i < off + n; ++i )
 		{
 			const auto character = rText[ i ];
 

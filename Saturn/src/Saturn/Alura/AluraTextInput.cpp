@@ -101,6 +101,7 @@ namespace Saturn {
 			{
 				if( m_SelectionBegin == std::string::npos )
 				{
+					m_SelectionAnchor = m_CursorIndex;
 					m_SelectionBegin = m_CursorIndex;
 					m_SelectionEnd = m_SelectionBegin;
 					m_IsSelecting = true;
@@ -120,7 +121,8 @@ namespace Saturn {
 				case RubyKey_A:
 				{
 					m_IsSelecting = true;
-					m_SelectionBegin = 0;
+					m_SelectionAnchor = 0llu;
+					m_SelectionBegin = 0llu;
 					m_SelectionEnd = m_Specification.pString->size();
 				} break;
 
@@ -154,11 +156,19 @@ namespace Saturn {
 	{
 		if( m_CursorIndex > 0 ) 
 		{
+			// Handle selection...
 			if( m_IsSelecting )
 			{
+				// Continue selecting...
 				if( m_ShiftDown )
 				{
-					--m_SelectionEnd;
+					--m_CursorIndex;
+
+					m_SelectionBegin = std::min( m_SelectionAnchor, m_CursorIndex );
+					m_SelectionEnd = std::max( m_SelectionAnchor, m_CursorIndex );
+					
+					ResetCursorTime();
+					return;
 				}
 				else
 				{
@@ -170,7 +180,15 @@ namespace Saturn {
 				}
 			}
 			
+			// No selection so we just move back.
 			--m_CursorIndex;
+			ResetCursorTime();
+		}
+		// We are at the start but we attempt to move left
+		// we now end the selection.
+		else if( m_IsSelecting && !m_ShiftDown )
+		{
+			ResetSelection();
 			ResetCursorTime();
 		}
 	}
@@ -183,16 +201,32 @@ namespace Saturn {
 			{
 				if( m_ShiftDown )
 				{
-					++m_SelectionEnd;
+					++m_CursorIndex;
+					ResetCursorTime();
+
+					m_SelectionBegin = std::min( m_SelectionAnchor, m_CursorIndex );
+					m_SelectionEnd = std::max( m_SelectionAnchor, m_CursorIndex );
+
+					return;
 				}
 				else
 				{
 					m_CursorIndex = m_SelectionEnd;
 					ResetSelection();
+					ResetCursorTime();
+					
+					return;
 				}
 			}
 
 			++m_CursorIndex;
+			ResetCursorTime();
+		}
+		// We are at the end but we attempt to move right
+		// we now end the selection.
+		else if( m_IsSelecting && !m_ShiftDown )
+		{
+			ResetSelection();
 			ResetCursorTime();
 		}
 	}
@@ -204,10 +238,9 @@ namespace Saturn {
 
 		if( m_IsSelecting )
 		{
-			const auto deletionAmount = std::max( m_SelectionBegin, m_SelectionEnd );
+			const auto deletionAmount = m_SelectionEnd - m_SelectionBegin;
 
-			m_Specification.pString->erase( m_Specification.pString->size() - deletionAmount );
-
+			m_Specification.pString->erase( m_SelectionBegin, deletionAmount );
 			m_CursorIndex = m_Specification.pString->size();
 
 			ResetSelection();
@@ -244,6 +277,7 @@ namespace Saturn {
 	{
 		m_SelectionBegin = std::string::npos;
 		m_SelectionEnd = std::string::npos;
+		m_SelectionAnchor = std::string::npos;
 		m_IsSelecting = false;
 	}
 

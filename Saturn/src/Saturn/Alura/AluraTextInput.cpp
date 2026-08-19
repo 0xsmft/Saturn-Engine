@@ -46,17 +46,69 @@ namespace Saturn {
 		m_Specification = rSpecification;
 		m_CursorIndex = 0llu;
 		m_CursorBlinkingTime = m_Specification.CursorAnimDuration;
+	
+		if( ( m_Specification.Flags & AluraTextInputFlags_CharsToLower ) && 
+			( m_Specification.Flags & AluraTextInputFlags_CharsToUpper ) )
+		{
+			SAT_CORE_ASSERT( false, "[AluraTextInputA]: Invalid flag combination, cannot have AluraTextInputFlags_CharsToLower and AluraTextInputFlags_CharsToUpper set at the same time!" );
+		}
 
 		SAT_CORE_ASSERT( m_Specification.pString, "No string." );
 	}
 
+	void AluraTextInputA::Reset()
+	{
+		m_Specification = {};
+		m_CursorIndex = m_SelectionBegin = m_SelectionEnd = m_SelectionAnchor = std::string::npos;
+		m_EnterPressed = m_ModifiedSinceLastRender = m_IsSelecting = m_ShiftDown = m_CursorFollow = false;
+		m_TextDeletionDirection = AluraTextDeletionDirection::Backwards;
+		m_CursorBlinkingTime = 0.0f;
+		m_ScrollX = 0.0f;
+	}
+
+	bool AluraTextInputA::FilterCharacter( uint32_t wc )
+	{
+		// Skip non-printable characters.
+		if( wc < 32 )
+			return false;
+
+		// If outside of ASCII range and we aren't unicode, we reject.
+		if( !m_Specification.AcceptUnicode && wc > 0x7f )
+			return false;
+
+		bool shouldInsert = true;
+
+		// Allow only 0 to 9 and "."
+		if( ( m_Specification.Flags & AluraTextInputFlags_NumbersOnly ) )
+		{
+			if( ( wc >= '0' && wc <= '9' ) || wc == '.' )
+				shouldInsert = true;
+			else
+				shouldInsert = false;
+		}
+
+		if( ( m_Specification.Flags & AluraTextInputFlags_NoSpacesOrTabs ) )
+		{
+			if( wc == ' ' || wc == '\t' )
+				shouldInsert = false;
+		}
+
+		return shouldInsert;
+	}
+
 	void AluraTextInputA::OnCharacter( uint32_t wc )
 	{
-		if( wc < 32 )
+		if( !FilterCharacter( wc ) )
 			return;
 
-		if( !m_Specification.AcceptUnicode && wc > 0x7f )
-			return;
+		if( ( m_Specification.Flags & AluraTextInputFlags_CharsToLower ) )
+		{
+			wc = ( uint32_t ) std::tolower( wc );
+		}
+		if( ( m_Specification.Flags & AluraTextInputFlags_CharsToUpper ) )
+		{
+			wc = ( uint32_t ) std::toupper( wc );
+		}
 
 		m_Specification.pString->insert( m_Specification.pString->size(), 1, wc );
 		++m_CursorIndex;

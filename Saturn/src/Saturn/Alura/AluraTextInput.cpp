@@ -98,6 +98,9 @@ namespace Saturn {
 
 	void AluraTextInputA::OnCharacter( uint32_t wc )
 	{
+		if( m_Specification.pString->size() + 1 > m_Specification.MaxCharacters )
+			return;
+
 		if( !FilterCharacter( wc ) )
 			return;
 

@@ -553,7 +553,7 @@ namespace Saturn {
 		return false;
 	}
 
-	bool AluraCanvas::AddInputText( const std::string& rLabel, std::string* pStr )
+	bool AluraCanvas::AddInputText( const std::string& rLabel, std::string* pStr, AluraTextInputFlags flags /*= AluraTextInputFlags_NoFlags*/ )
 	{
 		SAT_CORE_VERIFY( pStr );
 
@@ -620,6 +620,7 @@ namespace Saturn {
 				spec.MaxCharacters = 32llu;
 				spec.ItemID = itemID;
 				spec.pString = pStr;
+				spec.Flags = flags;
 
 				pState->Init( spec );
 			}

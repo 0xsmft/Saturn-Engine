@@ -224,7 +224,7 @@ namespace Saturn {
 		[[nodiscard]] bool AddCheckbox( const std::string& rLabel, bool* pValue );
 		[[nodiscard]] bool AddCheckboxRight( const std::string& rLabel, bool* pValue );
 
-		[[nodiscard]] bool AddInputText( const std::string& rLabel, std::string* pStr );
+		[[nodiscard]] bool AddInputText( const std::string& rLabel, std::string* pStr, AluraTextInputFlags flags = AluraTextInputFlags_NoFlags );
 
 		[[nodiscard]] bool BeginComboBox( const std::string& rLabel, const std::string& rPreviewName, float maxSize = 0.0f );
 		void EndComboBox();

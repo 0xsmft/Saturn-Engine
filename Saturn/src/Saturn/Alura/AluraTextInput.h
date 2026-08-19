@@ -32,6 +32,32 @@
 
 namespace Saturn {
 
+	enum AluraTextInputFlags_
+	{
+		AluraTextInputFlags_NoFlags = 0u,
+
+		// Convert all characters to upper case
+		// upon insertion.
+		// Mutually exclusive with 
+		// AluraTextInputFlags_CharsToLower.
+		AluraTextInputFlags_CharsToUpper = BIT( 0 ),
+		
+		// Convert all characters to lower case
+		// upon insertion.
+		// Mutually exclusive with 
+		// AluraTextInputFlags_CharsToUpper.
+		AluraTextInputFlags_CharsToLower = BIT( 1 ),
+
+		// Allow 0 to 9 and "."
+		AluraTextInputFlags_NumbersOnly = BIT( 2 ),
+		
+		// Do not allow spaces and/or tabs
+		AluraTextInputFlags_NoSpacesOrTabs = BIT( 3 ),
+	};
+
+	// enum AluraTextInputFlags_
+	typedef uint8_t AluraTextInputFlags;
+
 	struct AluraTextInputSpecification
 	{
 		std::string* pString = nullptr;
@@ -39,6 +65,7 @@ namespace Saturn {
 		uint64_t ItemID = 0llu;
 		size_t MaxCharacters = 1024llu;
 		float CursorAnimDuration = 0.5f;
+		AluraTextInputFlags Flags = AluraTextInputFlags_NoFlags;
 
 		bool AcceptUnicode = true;
 	};
@@ -60,6 +87,7 @@ namespace Saturn {
 		~AluraTextInputA();
 
 		void Init( const AluraTextInputSpecification& rSpecification );
+		void Reset();
 
 		void OnCharacter( uint32_t wc );
 		void OnKeyPressed( RubyKey key );
@@ -105,6 +133,7 @@ namespace Saturn {
 
 	private:
 		void EraseAtCursorOrSelection();
+		[[nodiscard]] bool FilterCharacter( uint32_t wc );
 
 	private:
 		AluraTextInputSpecification m_Specification{};

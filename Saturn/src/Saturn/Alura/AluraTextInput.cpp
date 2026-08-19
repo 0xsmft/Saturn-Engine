@@ -97,6 +97,22 @@ namespace Saturn {
 				m_EnterPressed = true;
 			} break;
 
+			case RubyKey_Home:
+			{
+				ResetSelection();
+				ResetCursorTime();
+
+				m_CursorIndex = 0llu;
+			} break;
+
+			case RubyKey_End: 
+			{
+				ResetSelection();
+				ResetCursorTime();
+
+				m_CursorIndex = m_Specification.pString->size();
+			} break;
+
 			case RubyKey_LeftShift:
 			case RubyKey_RightShift:
 			{

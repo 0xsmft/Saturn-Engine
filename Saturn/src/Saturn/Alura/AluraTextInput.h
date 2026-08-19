@@ -51,8 +51,11 @@ namespace Saturn {
 		// Allow 0 to 9 and "."
 		AluraTextInputFlags_NumbersOnly = BIT( 2 ),
 		
-		// Do not allow spaces and/or tabs
+		// Do not allow spaces and/or tabs.
 		AluraTextInputFlags_NoSpacesOrTabs = BIT( 3 ),
+
+		// Return true on enter.
+		AluraTextInputFlags_EnterReturnsTrue = BIT( 4 ),
 	};
 
 	// enum AluraTextInputFlags_
@@ -131,6 +134,8 @@ namespace Saturn {
 		size_t GetSelectionStart() const { return m_SelectionBegin; }
 		size_t GetSelectionEnd() const { return m_SelectionEnd; }
 
+		const AluraTextInputSpecification& GetSpecification() const { return m_Specification; }
+
 	private:
 		void EraseAtCursorOrSelection();
 		[[nodiscard]] bool FilterCharacter( uint32_t wc );
@@ -147,6 +152,7 @@ namespace Saturn {
 		bool m_ModifiedSinceLastRender = false;
 		bool m_IsSelecting = false;
 		bool m_ShiftDown = false;
+		bool m_ControlDown = false;
 		bool m_CursorFollow = false;
 
 		AluraTextDeletionDirection m_TextDeletionDirection = AluraTextDeletionDirection::Backwards;

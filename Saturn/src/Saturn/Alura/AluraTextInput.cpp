@@ -179,6 +179,12 @@ namespace Saturn {
 				m_ShiftDown = true;
 			} break;
 
+			case RubyKey_LeftCtrl:
+			case RubyKey_RightCtrl:
+			{
+				m_ControlDown = true;
+			} break;
+
 			default:
 				break;
 		}
@@ -211,6 +217,12 @@ namespace Saturn {
 				m_ShiftDown = false;
 			} break;
 
+			case RubyKey_LeftCtrl:
+			case RubyKey_RightCtrl:
+			{
+				m_ControlDown = false;
+			} break;
+
 			default:
 				break;
 		}
@@ -226,6 +238,32 @@ namespace Saturn {
 		if( m_CursorIndex > 0 ) 
 		{
 			m_CursorFollow = true;
+
+			// Move to the next word before the space.
+			if( m_ControlDown )
+			{
+				--m_CursorIndex;
+				ResetCursorTime();
+
+				const auto spacePos = m_Specification.pString->find_last_of( ' ', m_CursorIndex );
+				if( spacePos == std::string::npos )
+				{
+					m_CursorIndex = 0llu;
+				}
+				else
+				{
+					m_CursorIndex = spacePos + 1;
+				}
+
+				// Make sure we don't go beyond the string range if we are selecting,
+				// so we'll just set the selection like so.
+				if( m_CursorIndex == 0 && m_IsSelecting )
+				{
+					m_SelectionBegin = std::min( m_SelectionAnchor, m_CursorIndex );
+					m_SelectionEnd = std::max( m_SelectionAnchor, m_CursorIndex );
+					return;
+				}
+			}
 
 			// Handle selection...
 			if( m_IsSelecting )
@@ -269,6 +307,28 @@ namespace Saturn {
 		if( m_CursorIndex < m_Specification.pString->size() )
 		{
 			m_CursorFollow = true;
+
+			// Move to the next word after the space.
+			if( m_ControlDown )
+			{
+				auto spacePos = m_Specification.pString->find_first_of( ' ', m_CursorIndex );
+
+				if( spacePos == std::string::npos )
+				{
+					m_CursorIndex = m_Specification.pString->empty() ? 0 : m_Specification.pString->size() - 1;
+				}
+				else
+				{
+					// Now we found the first space but there may be like 10 spaces between the words
+					// so find_first_not_of of space characters.
+					spacePos = m_Specification.pString->find_first_not_of( ' ', spacePos );
+
+					if( spacePos == std::string::npos )
+						m_CursorIndex = m_Specification.pString->empty() ? 0 : m_Specification.pString->size() - 1;
+					else
+						m_CursorIndex = spacePos - 1;
+				}
+			}
 
 			if( m_IsSelecting )
 			{
@@ -314,7 +374,7 @@ namespace Saturn {
 			const auto deletionAmount = m_SelectionEnd - m_SelectionBegin;
 
 			m_Specification.pString->erase( m_SelectionBegin, deletionAmount );
-			m_CursorIndex = m_Specification.pString->size();
+			m_CursorIndex = m_Specification.pString->size() - 1;
 
 			ResetSelection();
 		}

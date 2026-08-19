@@ -690,6 +690,7 @@ namespace Saturn {
 				Ref<SkeletonAsset> sk = AssetManager::Get()->GetAssetAs<SkeletonAsset>( skAnim->GetSkeletonID() );
 				
 				Ref<SkeletalMesh> mesh;
+#if !defined(SAT_DIST)
 				if( sk->GetCompatibleMeshes().size() ) 
 				{
 					mesh = AssetManager::Get()->GetAssetAs<SkeletalMesh>( sk->GetCompatibleMeshes().back() );
@@ -702,6 +703,7 @@ namespace Saturn {
 					rQueueCacheData.State = ThumbnailState::Rejected;
 					return;
 				}
+#endif
 
 				auto& cacheData = s_RendererThumbnailCache[ rQueueCacheData.Asset->ID ];
 

@@ -51,7 +51,8 @@ namespace Saturn {
 	private:
 		void ThreadRun();
 
-		bool m_PendingTerminate = false;
+	private:
+		std::atomic_bool m_PendingTerminate{ false };
 	};
 
 	class AudioSystem

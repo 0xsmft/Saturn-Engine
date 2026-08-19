@@ -32,7 +32,7 @@
 namespace Saturn {
 
 	Thread::Thread()
-		: m_Running( std::make_shared<std::atomic_bool>() )
+		: m_Running( false )
 	{
 	}
 
@@ -45,14 +45,14 @@ namespace Saturn {
 		{
 			{
 				std::lock_guard<std::mutex> Lock( m_Mutex );
-				m_Running->store( false );
+				m_Running.store( false );
 
 				m_QueueCV.notify_all();
 				m_SignalCV.notify_all();
 			}
 
 			// Wait until our thread has done it's work.
-			while( m_Running->load() )
+			while( m_Running.load() )
 			{
 				std::this_thread::yield();
 			}

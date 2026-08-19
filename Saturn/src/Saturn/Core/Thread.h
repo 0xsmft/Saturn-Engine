@@ -46,7 +46,7 @@ namespace Saturn {
 		template<typename Fn, typename... Args>
 		void Queue( Fn&& rrFunc, Args&&... rrArgs )
 		{
-			std::unique_lock<std::mutex> Lock( m_Mutex, std::try_to_lock );
+			std::unique_lock<std::mutex> Lock( m_Mutex );
 			m_QueueCV.notify_one();
 
 			m_CommandBuffer.push_back( std::move( rrFunc ) );
@@ -68,7 +68,7 @@ namespace Saturn {
 		std::thread m_Thread;
 		std::thread::id m_ThreadID;
 		std::mutex m_Mutex;
-		std::shared_ptr<std::atomic_bool> m_Running;
+		std::atomic_bool m_Running{ false };
 
 		// What state is the queue in, empty or not empty.
 		std::condition_variable m_QueueCV;

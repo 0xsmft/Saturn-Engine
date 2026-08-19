@@ -47,7 +47,7 @@ namespace Saturn {
 		if( !m_Enabled )
 			return;
 
-		m_Running->store( m_Enabled );
+		m_Running.store( m_Enabled );
 		m_Thread = std::thread( &RenderThread::ThreadRun, this );
 	}
 
@@ -55,7 +55,7 @@ namespace Saturn {
 	{
 		std::lock_guard<std::mutex> Lock( m_Mutex );
 
-		m_Running->store( false );
+		m_Running.store( false );
 		m_SignalCV.notify_one();
 	}
 
@@ -114,16 +114,16 @@ namespace Saturn {
 			// Wait for main thread signal
 			m_SignalCV.wait( Lock, [this] 
 				{
-					return !m_Running->load() || m_ExecuteAll || m_ExecuteOne;
+					return !m_Running.load() || m_ExecuteAll || m_ExecuteOne;
 				} );
 
 			// Wait for the queue to not be empty.
 			m_QueueCV.wait( Lock, [this]
 				{
-					return !m_Running->load() || !m_CommandBuffer.empty();
+					return !m_Running.load() || !m_CommandBuffer.empty();
 				} );
 
-			if( !m_Running->load() ) break;
+			if( !m_Running.load() ) break;
 
 			Lock.unlock();
 
@@ -149,7 +149,7 @@ namespace Saturn {
 			m_QueueCV.notify_one();
 		}
 
-		m_Running->store( false );
+		m_Running.store( false );
 	}
 
 }

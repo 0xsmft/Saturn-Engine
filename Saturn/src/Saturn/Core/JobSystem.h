@@ -33,7 +33,6 @@
 
 #include <mutex>
 #include <thread>
-#include <span>
 
 namespace Saturn {
 
@@ -52,10 +51,9 @@ namespace Saturn {
 		template<typename Func>
 		Ref<Job> QueueJob( Func&& rrFunc )
 		{
-			std::unique_lock<std::mutex>( m_Mutex );
+			std::scoped_lock<std::mutex> lock( m_Mutex );
 
 			Ref<Job> newJob = Ref<Job>::Create( rrFunc );
-
 			// TODO: ADD DEPENDENCIES!
 			m_Jobs.push_back( newJob );
 		
@@ -70,7 +68,7 @@ namespace Saturn {
 		void TerminateThreads();
 
 	private:
-		bool m_Running = false;
+		std::atomic_bool m_Running{ false };
 		size_t m_MaxThreads = 0;
 
 		std::mutex m_Mutex;

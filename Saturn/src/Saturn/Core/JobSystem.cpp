@@ -61,7 +61,7 @@ namespace Saturn {
 
 		SAT_CORE_INFO( "[JobSystem]: Stopping threads..." );
 
-		m_Running = false;
+		m_Running.store( false );
 		TerminateThreads();
 	}
 
@@ -85,7 +85,7 @@ namespace Saturn {
 		// Clear last threads if any.
 		TerminateThreads();
 
-		m_Running = true;
+		m_Running.store( true );
 
 		SetMaxThreads( m_MaxThreads );
 		m_Threads.resize( m_MaxThreads );

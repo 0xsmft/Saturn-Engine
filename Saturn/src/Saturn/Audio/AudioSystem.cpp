@@ -50,7 +50,7 @@ namespace Saturn {
 
 	void AudioThread::Start()
 	{
-		m_Running->store( true );
+		m_Running.store( true );
 		m_Thread = std::thread( &AudioThread::ThreadRun, this );
 	}
 
@@ -58,7 +58,7 @@ namespace Saturn {
 	{
 		std::unique_lock<std::mutex> Lock( m_Mutex );
 		
-		m_Running->store( false );
+		m_Running.store( false );
 		m_SignalCV.notify_one();
 		
 		Lock.unlock();
@@ -76,10 +76,10 @@ namespace Saturn {
 			// Wait for the queue to not be empty.
 			m_QueueCV.wait( Lock, [this]
 				{
-					return !m_Running->load() || !m_CommandBuffer.empty();
+					return !m_Running.load() || !m_CommandBuffer.empty();
 				} );
 
-			if( !m_Running->load() ) break;
+			if( !m_Running.load() ) break;
 
 			Lock.unlock();
 
@@ -88,7 +88,7 @@ namespace Saturn {
 			m_QueueCV.notify_all();
 		}
 
-		m_Running->store( false );
+		m_Running.store( false );
 	}
 
 	//////////////////////////////////////////////////////////////////////////

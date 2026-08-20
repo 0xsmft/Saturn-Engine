@@ -228,6 +228,8 @@ namespace Saturn {
 
 		[[nodiscard]] bool BeginComboBox( const std::string& rLabel, const std::string& rPreviewName, float maxSize = 0.0f );
 		void EndComboBox();
+	
+		[[nodiscard]] bool AddSlider( const std::string& rLabel, float& rPercent, float minValue = 0.0f, float maxValue = 100.0f, float maxSliderSize = 0.0f );
 		
 		[[nodiscard]] bool AddPopup( const std::string& rLabel );
 		void CloseCurrentPopup();

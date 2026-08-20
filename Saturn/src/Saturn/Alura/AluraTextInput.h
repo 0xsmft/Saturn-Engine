@@ -138,7 +138,11 @@ namespace Saturn {
 
 	private:
 		void EraseAtCursorOrSelection();
+		void TryInsertCharacterAtInsertionPoint( uint32_t wc, size_t insertionPoint );
+		void CopyPaste_InsertBulk( const std::string& rText, size_t insertionPoint );
+
 		[[nodiscard]] bool FilterCharacter( uint32_t wc );
+		std::string GetTextBetweenSelection();
 
 	private:
 		AluraTextInputSpecification m_Specification{};

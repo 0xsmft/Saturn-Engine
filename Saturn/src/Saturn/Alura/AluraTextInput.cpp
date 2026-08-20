@@ -31,6 +31,9 @@
 
 #include "Saturn/Core/Input.h"
 
+#include "Saturn/Core/App.h"
+#include "Saturn/Core/Ruby/RubyWindow.h"
+
 namespace Saturn {
 
 	AluraTextInputA::AluraTextInputA()
@@ -96,7 +99,7 @@ namespace Saturn {
 		return shouldInsert;
 	}
 
-	void AluraTextInputA::OnCharacter( uint32_t wc )
+	void AluraTextInputA::TryInsertCharacterAtInsertionPoint( uint32_t wc, size_t insertionPoint )
 	{
 		if( m_Specification.pString->size() + 1 > m_Specification.MaxCharacters )
 			return;
@@ -113,12 +116,22 @@ namespace Saturn {
 			wc = ( uint32_t ) std::toupper( wc );
 		}
 
-		m_Specification.pString->insert( m_Specification.pString->size(), 1, wc );
+		m_Specification.pString->insert( insertionPoint, 1, wc );
 		++m_CursorIndex;
 		m_ModifiedSinceLastRender = true;
 		m_CursorFollow = true;
 
 		ResetCursorTime();
+	}
+
+	void AluraTextInputA::OnCharacter( uint32_t wc )
+	{
+		TryInsertCharacterAtInsertionPoint( wc, m_Specification.pString->size() );
+	}
+
+	std::string AluraTextInputA::GetTextBetweenSelection()
+	{
+		return m_Specification.pString->substr( m_SelectionBegin, m_SelectionBegin - m_SelectionEnd );
 	}
 
 	void AluraTextInputA::OnKeyPressed( RubyKey key )
@@ -202,6 +215,35 @@ namespace Saturn {
 					m_SelectionAnchor = 0llu;
 					m_SelectionBegin = 0llu;
 					m_SelectionEnd = m_Specification.pString->size();
+				} break;
+
+				case RubyKey_C:
+				{
+					if( m_IsSelecting )
+					{
+						const auto str = GetTextBetweenSelection();
+						Application::Get()->GetWindow()->SetClipboardText( str );
+					}
+				} break;
+
+				case RubyKey_V:
+				{
+					const auto clipboardText = Application::Get()->GetWindow()->GetClipboardText();
+
+					// Insert string at cursor position.
+					CopyPaste_InsertBulk( clipboardText, m_CursorIndex );
+				} break;
+
+				case RubyKey_X:
+				{
+					if( m_IsSelecting )
+					{
+						const auto str = GetTextBetweenSelection();
+						Application::Get()->GetWindow()->SetClipboardText( str );
+					
+						// Erase
+						EraseAtCursorOrSelection();
+					}
 				} break;
 
 				default:
@@ -377,7 +419,7 @@ namespace Saturn {
 			const auto deletionAmount = m_SelectionEnd - m_SelectionBegin;
 
 			m_Specification.pString->erase( m_SelectionBegin, deletionAmount );
-			m_CursorIndex = m_Specification.pString->size() - 1;
+			m_CursorIndex = m_Specification.pString->size();
 
 			ResetSelection();
 		}
@@ -417,6 +459,29 @@ namespace Saturn {
 		m_SelectionEnd = std::string::npos;
 		m_SelectionAnchor = std::string::npos;
 		m_IsSelecting = false;
+	}
+
+	void AluraTextInputA::CopyPaste_InsertBulk( const std::string& rText, size_t insertionPoint )
+	{
+		std::string filteredText = rText;
+
+		std::erase_if( filteredText, 
+			[this]( auto c ) 
+		{
+			return !FilterCharacter( ( uint32_t ) c );
+		} );
+
+		if( filteredText.empty() )
+			return;
+
+		// Now we can bulk insert.
+		m_Specification.pString->insert( m_Specification.pString->begin() + insertionPoint, filteredText.cbegin(), filteredText.cend() );
+
+		m_CursorIndex += filteredText.size();
+
+		m_ModifiedSinceLastRender = true;
+		m_CursorFollow = true;
+		ResetCursorTime();
 	}
 
 }

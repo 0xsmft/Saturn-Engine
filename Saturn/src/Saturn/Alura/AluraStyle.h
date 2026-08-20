@@ -42,19 +42,21 @@ namespace Saturn {
 		Count,
 	};
 
-	enum AluraColor
+	enum AluraColour
 	{
-		AluraColor_Text,
-		AluraColor_TextDisabled,
-		AluraColor_Button,
-		AluraColor_ButtonHovered,
-		AluraColor_Border,
-		AluraColor_FrameBackground,
-		AluraColor_ProgressColor,
-		AluraColor_Separator,
-		AluraColor_RegionBackground,
-		AluraColor_TextSelected,
-		AluraColor_Count,
+		AluraColour_Text,
+		AluraColour_TextDisabled,
+		AluraColour_Button,
+		AluraColour_ButtonHovered,
+		AluraColour_Border,
+		AluraColour_FrameBackground,
+		AluraColour_ProgressColour,
+		AluraColour_Separator,
+		AluraColour_RegionBackground,
+		AluraColour_TextSelected,
+		AluraColour_SliderGrab,
+		AluraColour_SliderGrabActive,
+		AluraColour_Count,
 	};
 
 	class AluraStyle
@@ -90,13 +92,13 @@ namespace Saturn {
 		// Current font size.
 		float CurrentFontSize;
 
-		// Fonts array
-		std::array<glm::vec4, ( std::underlying_type_t<AluraColor> )AluraColor_Count> Colors;
+		// Colors
+		std::array<glm::vec4, ( std::underlying_type_t<AluraColour> )AluraColour_Count> Colours;
 
 	public:
 		AluraStyle() 
 		{
-			Colors.fill( glm::one<glm::vec4>() );
+			Colours.fill( glm::one<glm::vec4>() );
 			Default();
 		}
 
@@ -113,16 +115,18 @@ namespace Saturn {
 			WindowBorderSize = 1.0f;
 			CurrentFontSize = 16.0f; // == 1 em
 
-			Colors[ AluraColor_Text ] = glm::one<glm::vec4>();
-			Colors[ AluraColor_TextDisabled ] = glm::vec4( 0.5f, 0.5f, 0.5f, 1.0f );
-			Colors[ AluraColor_Button ] = glm::vec4( 0.26f, 0.59f, 0.98f, 0.40f );
-			Colors[ AluraColor_ButtonHovered ] = glm::vec4( 0.26f, 0.59f, 0.98f, 1.0f );
-			Colors[ AluraColor_Border ] = glm::vec4( 0.1216f, 0.1216f, 0.1216f, 1.0f );
-			Colors[ AluraColor_FrameBackground ] = glm::vec4( 0.2f, 0.2f, 0.20f, 1.0f );
-			Colors[ AluraColor_ProgressColor ] = glm::vec4( 0.0f, 1.0f, 0.0f, 1.0f );
-			Colors[ AluraColor_Separator ] = glm::vec4( 0.1882f, 0.1882f, 0.1882f, 1.0f );
-			Colors[ AluraColor_RegionBackground ] = glm::vec4( 0.0824f, 0.0824f, 0.0824f, 1.0f );
-			Colors[ AluraColor_TextSelected ] = glm::vec4( 1.0f, 1.0f, 1.0f, 0.4f );
+			Colours[ AluraColour_Text ] = glm::one<glm::vec4>();
+			Colours[ AluraColour_TextDisabled ] = glm::vec4( 0.5f, 0.5f, 0.5f, 1.0f );
+			Colours[ AluraColour_Button ] = glm::vec4( 0.26f, 0.59f, 0.98f, 0.40f );
+			Colours[ AluraColour_ButtonHovered ] = glm::vec4( 0.26f, 0.59f, 0.98f, 1.0f );
+			Colours[ AluraColour_Border ] = glm::vec4( 0.1216f, 0.1216f, 0.1216f, 1.0f );
+			Colours[ AluraColour_FrameBackground ] = glm::vec4( 0.2f, 0.2f, 0.20f, 1.0f );
+			Colours[ AluraColour_ProgressColour ] = glm::vec4( 0.0f, 1.0f, 0.0f, 1.0f );
+			Colours[ AluraColour_Separator ] = glm::vec4( 0.1882f, 0.1882f, 0.1882f, 1.0f );
+			Colours[ AluraColour_RegionBackground ] = glm::vec4( 0.0824f, 0.0824f, 0.0824f, 1.0f );
+			Colours[ AluraColour_TextSelected ] = glm::vec4( 1.0f, 1.0f, 1.0f, 0.4f );
+			Colours[ AluraColour_SliderGrab ] = glm::vec4( 0.3922f, 0.3922f, 0.3922f, 1.0f );
+			Colours[ AluraColour_SliderGrabActive ] = glm::vec4( 1.0f, 0.3922f, 0.0f, 1.0f );
 		}
 	};
 	

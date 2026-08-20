@@ -95,10 +95,10 @@ namespace Saturn {
 //		SAT_CORE_ASSERT( m_ActiveFont );
 
 		// Forgot to call PopStyle()
-		SAT_CORE_ASSERT( m_ColorStack.size() == 0 );
+		SAT_CORE_ASSERT( m_ColourStack.size() == 0 );
 
 		// Forgot to call PopFontSize()
-		SAT_CORE_ASSERT( m_PushedFontSize == 0.0f );
+		SAT_CORE_ASSERT( m_BackupOfFontSize == 0.0f );
 
 		m_Layout.Reset();
 
@@ -207,7 +207,7 @@ namespace Saturn {
 		}
 	}
 
-	void AluraCanvas::AddRect( const glm::vec2& rSize, float rounding, const glm::vec4& rColor )
+	void AluraCanvas::AddRect( const glm::vec2& rSize, float rounding, const glm::vec4& rColour )
 	{
 		// Handle SetNextItemPosition
 		glm::vec2 posDependingLastCall = m_Layout.CursorPos;
@@ -223,10 +223,10 @@ namespace Saturn {
 		if( !CanAddItem( bb ) )
 			return;
 
-		m_Renderer->SubmitRoundedRect( bb, rounding, rColor );
+		m_Renderer->SubmitRoundedRect( bb, rounding, rColour );
 	}
 
-	void AluraCanvas::AddImage( const glm::vec2& rSize, Ref<Texture2D> image, const glm::vec4& rColor, const glm::vec2& rUV1, const glm::vec2& rUV2 )
+	void AluraCanvas::AddImage( const glm::vec2& rSize, Ref<Texture2D> image, const glm::vec4& rColour, const glm::vec2& rUV1, const glm::vec2& rUV2 )
 	{
 		// Handle SetNextItemPosition
 		glm::vec2 posDependingLastCall = m_Layout.CursorPos;
@@ -242,10 +242,10 @@ namespace Saturn {
 		if( !CanAddItem( bb ) )
 			return;
 
-		m_Renderer->SubmitRect( bb, image, rColor, rUV1, rUV2 );
+		m_Renderer->SubmitRect( bb, image, rColour, rUV1, rUV2 );
 	}
 
-	bool AluraCanvas::AddImageButton( const glm::vec2& rSize, Ref<Texture2D> image, const glm::vec4& rColor /*= glm::one<glm::vec4>()*/, const glm::vec2& rUV1 /*= { 0.0F, 1.0F }*/, const glm::vec2& rUV2 /*= { 1.0F, 0.0F } */ )
+	bool AluraCanvas::AddImageButton( const glm::vec2& rSize, Ref<Texture2D> image, const glm::vec4& rColour /*= glm::one<glm::vec4>()*/, const glm::vec2& rUV1 /*= { 0.0F, 1.0F }*/, const glm::vec2& rUV2 /*= { 1.0F, 0.0F } */ )
 	{
 		// Handle SetNextItemPosition
 		glm::vec2 posDependingLastCall = m_Layout.CursorPos;
@@ -268,7 +268,7 @@ namespace Saturn {
 		bool hovered, held;
 		bool pressed = ButtonBehaviour( bb, currentItemID, &hovered, &held );
 		
-		const glm::vec4 frameColor = hovered ? m_Style.Colors[ AluraColor_ButtonHovered ] : rColor;
+		const glm::vec4 frameColor = hovered ? m_Style.Colours[ AluraColour_ButtonHovered ] : rColour;
 
 		// Submit frame
 		m_Renderer->SubmitRect( 
@@ -280,7 +280,7 @@ namespace Saturn {
 			posDependingLastCall, 
 			{ posDependingLastCall + rSize }, 
 			image, 
-			rColor, 
+			rColour, 
 			rUV1, 
 			rUV2 );
 
@@ -307,12 +307,12 @@ namespace Saturn {
 		
 		glm::vec2 fillMax( std::lerp( bb.Min.x, bb.Max.x, fraction ), bb.Max.y );
 
-		m_Renderer->SubmitRect( bb, m_Style.Colors[ AluraColor_FrameBackground ] );
-		m_Renderer->SubmitRect( bb.Min, fillMax, m_Style.Colors[ AluraColor_ProgressColor ] );
-		m_Renderer->SubmitRectFrame( bb.Min, bb.Max, 1.0f, m_Style.Colors[ AluraColor_Border ] );
+		m_Renderer->SubmitRect( bb, m_Style.Colours[ AluraColour_FrameBackground ] );
+		m_Renderer->SubmitRect( bb.Min, fillMax, m_Style.Colours[ AluraColour_ProgressColour ] );
+		m_Renderer->SubmitRectFrame( bb.Min, bb.Max, 1.0f, m_Style.Colours[ AluraColour_Border ] );
 	}
 
-	void AluraCanvas::AddText( const std::string& rText, const glm::vec4& rColor )
+	void AluraCanvas::AddText( const std::string& rText )
 	{
 		// Handle SetNextItemPosition
 		glm::vec2 posDependingLastCall = m_Layout.CursorPos;
@@ -330,14 +330,21 @@ namespace Saturn {
 		if( !CanAddItem( bb ) )
 			return;
 
-		m_Renderer->SubmitString( rText, m_ActiveFont, m_Style.CurrentFontSize, posDependingLastCall, rColor );
+		m_Renderer->SubmitString( rText, m_ActiveFont, m_Style.CurrentFontSize, posDependingLastCall, m_Style.Colours[ AluraColour_Text ] );
 		
 #if defined(SAT_ALURA_SHOW_TEXT_BB)
 		m_Renderer->SubmitRectFrame( bb, 1.0f, { 1.0f, 0.0f, 0.0f, 1.0f } );
 #endif
 	}
 
-	bool AluraCanvas::AddButton( const glm::vec2& rSize, const glm::vec4& rColor )
+	void AluraCanvas::AddTextColoured( const std::string& rText, const glm::vec4& rColour )
+	{
+		PushStyle( AluraColour_Text, rColour );
+		AddText( rText );
+		PopStyle();
+	}
+
+	bool AluraCanvas::AddButton( const glm::vec2& rSize, const glm::vec4& rColour )
 	{
 		// Handle NextItemPosition
 		glm::vec2 posDependingLastCall = m_Layout.CursorPos;
@@ -348,7 +355,7 @@ namespace Saturn {
 			m_WantToSetItemPosition = false;
 		}
 
-		glm::vec4 color = rColor;
+		glm::vec4 color = rColour;
 
 		// Adjust size for padding
 		glm::vec2 size = rSize;
@@ -367,11 +374,11 @@ namespace Saturn {
 		// Hit tests
 		if( hovered )
 		{
-			color = m_Style.Colors[ AluraColor_ButtonHovered ];
+			color = m_Style.Colours[ AluraColour_ButtonHovered ];
 		}
 
 		m_Renderer->SubmitRect( bb, color );
-		m_Renderer->SubmitRectFrame( bb, 1.0f, m_Style.Colors[ AluraColor_Border ] );
+		m_Renderer->SubmitRectFrame( bb, 1.0f, m_Style.Colours[ AluraColour_Border ] );
 
 		return pressed;
 	}
@@ -407,21 +414,21 @@ namespace Saturn {
 		bool pressed = ButtonBehaviour( bb, currentItemID, &hovered, &held );
 
 		const glm::vec4 buttonColor = 
-			hovered ? m_Style.Colors[ AluraColor_ButtonHovered ] : m_Style.Colors[ AluraColor_Button ];
+			hovered ? m_Style.Colours[ AluraColour_ButtonHovered ] : m_Style.Colours[ AluraColour_Button ];
 
 		// Button Rect
 		m_Renderer->SubmitRect( bb, buttonColor );
-		m_Renderer->SubmitRectFrame( bb, 1.0f, m_Style.Colors[ AluraColor_Border ] );
+		m_Renderer->SubmitRectFrame( bb, 1.0f, m_Style.Colours[ AluraColour_Border ] );
 
 		// Submit Text centred inside the button.
 		// and bring it in by the padding on the X coord.
 		const glm::vec2 textPos = { posDependingLastCall.x + m_Style.ItemInnerSpacing.x, posDependingLastCall.y };
-		m_Renderer->SubmitString( rText, m_ActiveFont, m_Style.CurrentFontSize, textPos, m_Style.Colors[ AluraColor_Text ] );
+		m_Renderer->SubmitString( rText, m_ActiveFont, m_Style.CurrentFontSize, textPos, m_Style.Colours[ AluraColour_Text ] );
 
 		return pressed;
 	}
 
-	void AluraCanvas::AddCircle( float radius, float thinkness, bool filled /*= false*/, const glm::vec4& rColor /*= glm::one<glm::vec4>() */ )
+	void AluraCanvas::AddCircle( float radius, float thinkness, bool filled /*= false*/, const glm::vec4& rColour /*= glm::one<glm::vec4>() */ )
 	{
 		// Handle NextItemPosition
 		glm::vec2 posDependingLastCall = m_Layout.CursorPos;
@@ -432,7 +439,7 @@ namespace Saturn {
 			m_WantToSetItemPosition = false;
 		}
 
-		m_Renderer->SubmitCircle( posDependingLastCall, radius, thinkness, rColor );
+		m_Renderer->SubmitCircle( posDependingLastCall, radius, thinkness, rColour );
 	}
 
 	bool AluraCanvas::AddCheckbox( const std::string& rLabel, bool* pValue )
@@ -473,14 +480,14 @@ namespace Saturn {
 			*pValue ^= 1;
 		}
 
-		const glm::vec4 checkBoxColor = hovered ? m_Style.Colors[ AluraColor_ButtonHovered ] : m_Style.Colors[ AluraColor_Button ];
+		const glm::vec4 checkBoxColor = hovered ? m_Style.Colours[ AluraColour_ButtonHovered ] : m_Style.Colours[ AluraColour_Button ];
 
 #if defined(SAT_ALURA_SHOW_TEXT_BB)
 		m_Renderer->SubmitRectFrame( bb, 1.0f, glm::vec4{ 1.0f, 0.0f, 0.0f, 1.0f } );
 #endif
 
 		m_Renderer->SubmitRect( checkBoxBB, checkBoxColor );
-		m_Renderer->SubmitRectFrame( checkBoxBB, 1.0f, m_Style.Colors[ AluraColor_Border ] );
+		m_Renderer->SubmitRectFrame( checkBoxBB, 1.0f, m_Style.Colours[ AluraColour_Border ] );
 
 		if( *pValue )
 		{
@@ -489,7 +496,7 @@ namespace Saturn {
 		}
 
 		const glm::vec2 textPos = { posDependingLastCall.x + squareSize.x + m_Style.ItemInnerSpacing.x, posDependingLastCall.y };
-		m_Renderer->SubmitString( rLabel, m_ActiveFont, m_Style.CurrentFontSize, textPos, m_Style.Colors[ AluraColor_Text ] );
+		m_Renderer->SubmitString( rLabel, m_ActiveFont, m_Style.CurrentFontSize, textPos, m_Style.Colours[ AluraColour_Text ] );
 
 		return false;
 	}
@@ -532,17 +539,17 @@ namespace Saturn {
 			*pValue ^= 1;
 		}
 
-		const glm::vec4 checkBoxColor = hovered ? m_Style.Colors[ AluraColor_ButtonHovered ] : m_Style.Colors[ AluraColor_Button ];
+		const glm::vec4 checkBoxColor = hovered ? m_Style.Colours[ AluraColour_ButtonHovered ] : m_Style.Colours[ AluraColour_Button ];
 
 #if defined(SAT_ALURA_SHOW_TEXT_BB)
 		m_Renderer->SubmitRectFrame( bb, 1.0f, glm::vec4{ 1.0f, 0.0f, 0.0f, 1.0f } );
 #endif
 
 		const glm::vec2 textPos = { posDependingLastCall.x, posDependingLastCall.y };
-		m_Renderer->SubmitString( rLabel, m_ActiveFont, m_Style.CurrentFontSize, textPos, m_Style.Colors[ AluraColor_Text ] );
+		m_Renderer->SubmitString( rLabel, m_ActiveFont, m_Style.CurrentFontSize, textPos, m_Style.Colours[ AluraColour_Text ] );
 
 		m_Renderer->SubmitRect( checkBoxBB, checkBoxColor );
-		m_Renderer->SubmitRectFrame( checkBoxBB, 1.0f, m_Style.Colors[ AluraColor_Border ] );
+		m_Renderer->SubmitRectFrame( checkBoxBB, 1.0f, m_Style.Colours[ AluraColour_Border ] );
 
 		if( *pValue )
 		{
@@ -587,11 +594,11 @@ namespace Saturn {
 		AluraTextInputA* pState = GetInputTextStateForItem( itemID );
 
 		// Draw text.
-		m_Renderer->SubmitString( rLabel, m_ActiveFont, m_Style.CurrentFontSize, posDependingLastCall, m_Style.Colors[ AluraColor_Text ] );
+		m_Renderer->SubmitString( rLabel, m_ActiveFont, m_Style.CurrentFontSize, posDependingLastCall, m_Style.Colours[ AluraColour_Text ] );
 
 		// Edit area.
 		m_Renderer->SubmitRect( editAreaBB, glm::vec4{ 0.0f, 0.0f, 0.0f, 1.0f } );
-		m_Renderer->SubmitRectFrame( editAreaBB, 1.0f, m_Style.Colors[ AluraColor_Border ] );
+		m_Renderer->SubmitRectFrame( editAreaBB, 1.0f, m_Style.Colours[ AluraColour_Border ] );
 
 		bool hovered;
 		bool pressed = ButtonBehaviour( editAreaBB, itemID, &hovered, nullptr );
@@ -615,6 +622,7 @@ namespace Saturn {
 			if( !pState || pState->GetItemID() != itemID )
 			{
 				pState = &m_InputTextState;
+
 				AluraTextInputSpecification spec;
 				spec.AcceptUnicode = false;
 				spec.MaxCharacters = 32llu;
@@ -659,7 +667,7 @@ namespace Saturn {
 			}
 
 			m_Renderer->PushClipRect( editAreaBB );
-			m_Renderer->SubmitString( *pStr, m_ActiveFont, m_Style.CurrentFontSize, { textStartingPosition.x - pState->GetScrollX(), textStartingPosition.y }, m_Style.Colors[ AluraColor_Text ] );
+			m_Renderer->SubmitString( *pStr, m_ActiveFont, m_Style.CurrentFontSize, { textStartingPosition.x - pState->GetScrollX(), textStartingPosition.y }, m_Style.Colours[ AluraColour_Text ] );
 
 			const glm::vec2 textStartingPosition = glm::vec2{ editAreaBB.Min.x + m_Style.ItemInnerSpacing.x, editAreaBB.Min.y };
 			const auto cursorIndex = pState->GetCursorIndex();
@@ -671,7 +679,7 @@ namespace Saturn {
 			if( pState->CursorIsVisible() )
 			{
 				const AluraRect cursorRect( cursorPosition, cursorPosition + cursorSize );
-				m_Renderer->SubmitRect( cursorRect, m_Style.Colors[ AluraColor_Text ] );
+				m_Renderer->SubmitRect( cursorRect, m_Style.Colours[ AluraColour_Text ] );
 			}
 
 			// Draw selection
@@ -689,7 +697,7 @@ namespace Saturn {
 				const glm::vec2 selectionRectSize = { selectionTextSize.x, selectionTextSize.y };
 
 				const AluraRect selectionRect( selectionRectStartPos, selectionRectStartPos + selectionRectSize );
-				m_Renderer->SubmitRect( selectionRect, m_Style.Colors[ AluraColor_TextSelected ] );
+				m_Renderer->SubmitRect( selectionRect, m_Style.Colours[ AluraColour_TextSelected ] );
 			}
 
 			m_Renderer->PopClipRect();
@@ -702,7 +710,8 @@ namespace Saturn {
 #endif
 
 		// User has clicked on something else...
-		if( ( m_Focused == itemID && m_Active != itemID ) && m_Hot != itemID )
+		// TODO: Not a viable solution... will work for now though.
+		if( ( m_Focused == itemID && m_Active != itemID ) && m_Hot != itemID && MouseButtonPressed( RubyMouseButton_Left ) )
 		{
 			m_Focused = 0llu;
 		}
@@ -738,14 +747,14 @@ namespace Saturn {
 			return false;
 
 		// Label text
-		m_Renderer->SubmitString( rLabel, m_ActiveFont, m_Style.CurrentFontSize, posDependingLastCall, m_Style.Colors[ AluraColor_Text ] );
+		m_Renderer->SubmitString( rLabel, m_ActiveFont, m_Style.CurrentFontSize, posDependingLastCall, m_Style.Colours[ AluraColour_Text ] );
 
 		bool hovered;
 		bool pressed = ButtonBehaviour( previewAreaBB, itemID, &hovered, nullptr );
 
 		m_Renderer->SubmitRect( previewAreaBB, 
-			hovered ? m_Style.Colors[ AluraColor_ButtonHovered ] : m_Style.Colors[ AluraColor_FrameBackground ] );
-		m_Renderer->SubmitRectFrame( previewAreaBB, 1.0f, m_Style.Colors[ AluraColor_Border ] );
+			hovered ? m_Style.Colours[ AluraColour_ButtonHovered ] : m_Style.Colours[ AluraColour_FrameBackground ] );
+		m_Renderer->SubmitRectFrame( previewAreaBB, 1.0f, m_Style.Colours[ AluraColour_Border ] );
 
 		if( pressed )
 		{
@@ -789,30 +798,39 @@ namespace Saturn {
 
 		const glm::vec2 textSize = glm::trunc( CalcTextSize( rLabel ) );
 		const glm::vec2 sliderSize = { maxSliderSize > 0.0f ? maxSliderSize : GetContentRegionAvail().x, 4.0f };
-		const glm::vec2 squareSize = glm::vec2{ sliderSize.y * 2.0f };
-		const glm::vec2 totalSize = { textSize.x + sliderSize.x + m_Style.ItemInnerSpacing.x + squareSize.x, textSize.y };
+		const glm::vec2 grabSize = glm::vec2{ sliderSize.y * 2.0f };
+		const glm::vec2 totalSize = { textSize.x + sliderSize.x + m_Style.ItemInnerSpacing.x + grabSize.x, textSize.y };
 
-		const glm::vec2 sliderPosition = { posDependingLastCall.x + textSize.x + m_Style.ItemInnerSpacing.x + squareSize.x, posDependingLastCall.y + ( textSize.y * 0.5f ) };
+		const glm::vec2 sliderPosition = { posDependingLastCall.x + textSize.x + m_Style.ItemInnerSpacing.x + grabSize.x, posDependingLastCall.y + ( textSize.y * 0.5f ) };
 
 		const AluraRect textRect( posDependingLastCall, posDependingLastCall + textSize );
 		const AluraRect sliderRect( sliderPosition, sliderPosition + sliderSize );
-		const AluraRect fullBB( textRect.Min, textRect.Min + totalSize + squareSize );
+		const AluraRect fullBB( textRect.Min, textRect.Min + totalSize + grabSize );
 
 		ItemSize( fullBB.GetSize() );
 		if( !CanAddItem( fullBB ) )
 			return false;
 
 		// Drawing...
-		m_Renderer->SubmitString( rLabel, m_ActiveFont, m_Style.CurrentFontSize, posDependingLastCall, m_Style.Colors[ AluraColor_Text ] );
+		m_Renderer->SubmitString( rLabel, m_ActiveFont, m_Style.CurrentFontSize, posDependingLastCall, m_Style.Colours[ AluraColour_Text ] );
 
 		// Submit slider line
-		m_Renderer->SubmitRect( sliderRect, glm::one<glm::vec4>() );
+		m_Renderer->SubmitRect( sliderRect, m_Style.Colours[ AluraColour_Separator ] );
 
-		bool hovered = false, held = false;
-		bool pressed = ButtonBehaviour( sliderRect, itemID, &hovered, &held );
+		bool sliderhovered = false, sliderHeld = false;
+		bool sliderPressed = ButtonBehaviour( sliderRect, itemID, &sliderhovered, &sliderHeld );
+	
+		const glm::vec2 grabPosition = { sliderPosition.x + ( rPercent * sliderRect.GetWidth() ) - grabSize.x, sliderPosition.y - glm::ceil( sliderSize.y * 0.5f ) };
+		const AluraRect grabRect( grabPosition, grabPosition + grabSize );
+		
+		bool grabHovered = false, grabHeld = false;
+		bool grabPressed = ButtonBehaviour( grabRect, itemID, &grabHovered, &grabHeld );
+
+		const bool anyItemPressed = sliderPressed || grabPressed;
+		const bool anyItemHeld = grabHeld || sliderHeld;
 
 		bool modified = false;
-		if( pressed || held )
+		if( anyItemPressed || anyItemHeld )
 		{
 			float relativeX = m_MousePosition.x - sliderPosition.x;
 			if( relativeX < 0.0f ) relativeX = 0.0f;
@@ -822,8 +840,10 @@ namespace Saturn {
 			modified = true;
 		}
 
-		const glm::vec2 squarePosition = { sliderPosition.x + ( rPercent * sliderRect.GetWidth() ) - squareSize.x, sliderPosition.y - glm::ceil( sliderSize.y * 0.5f ) };
-		m_Renderer->SubmitRect( squarePosition, squarePosition + squareSize, m_Style.Colors[ AluraColor_Separator ] );
+		// Grab rect
+		m_Renderer->SubmitRect( 
+			grabRect, 
+			grabPressed || grabHovered ? m_Style.Colours[ AluraColour_SliderGrabActive ] : m_Style.Colours[ AluraColour_SliderGrab ] );
 
 #if defined(SAT_ALURA_SHOW_TEXT_BB)
 		m_Renderer->SubmitRectFrame( textRect, 1.0f, glm::vec4{ 1.0f, 0.0f, 0.0f, 1.0f } ); // Red
@@ -974,8 +994,6 @@ namespace Saturn {
 	{
 		SAT_CORE_ASSERT( m_ActiveRegions.size(), "Alura: AddSeparator needs to be called inside of an active region, call BeginRegion before calling this. (m_ActiveRegions is empty)" );
 
-		const auto* pRegion = m_ActiveRegions.top();
-
 		const glm::vec2 size( GetContentRegionAvail().x, 1.0f );
 		const AluraRect bb( m_Layout.CursorPos, m_Layout.CursorPos + size );
 		
@@ -983,7 +1001,7 @@ namespace Saturn {
 		if( !CanAddItem( bb ) )
 			return;
 
-		m_Renderer->SubmitRect( bb, m_Style.Colors[ AluraColor_Separator ] );
+		m_Renderer->SubmitRect( bb, m_Style.Colours[ AluraColour_Separator ] );
 	}
 
 	bool AluraCanvas::BeginRegion( const std::string& rID, const glm::vec2& rBounds )
@@ -1003,8 +1021,8 @@ namespace Saturn {
 
 		const uint64_t itemID = FNV1A64( rID.c_str() );
 
-		m_Renderer->SubmitRoundedRect( bb, m_Style.RegionRounding, m_Style.Colors[ AluraColor_RegionBackground ] );
-		m_Renderer->SubmitRoundedRectFrame( bb, m_Style.RegionRounding, 1.0f, m_Style.Colors[ AluraColor_Border ] );
+		m_Renderer->SubmitRoundedRect( bb, m_Style.RegionRounding, m_Style.Colours[ AluraColour_RegionBackground ] );
+		m_Renderer->SubmitRoundedRectFrame( bb, m_Style.RegionRounding, 1.0f, m_Style.Colours[ AluraColour_Border ] );
 
 		AluraRegionData& rData = GetOrCreateRegion( itemID );
 		if( rData.JustCreated )
@@ -1136,7 +1154,7 @@ namespace Saturn {
 
 			AddSeparator();
 
-			PushStyle( AluraColor_FrameBackground, { 1.0f, 1.0f, 1.0f, 1.0f } );
+			PushStyle( AluraColour_FrameBackground, { 1.0f, 1.0f, 1.0f, 1.0f } );
 			if( BeginRegion( "##testing1", { 250.0f / 2.0f, 250.0f / 2.0f } ) )
 			{
 				bool clicked = AddButton( "1" );
@@ -1266,31 +1284,31 @@ namespace Saturn {
 		m_Layout.IsSameLine = true;
 	}
 
-	void AluraCanvas::PushStyle( std::underlying_type_t<AluraColor> index, const glm::vec4& rNewValue )
+	void AluraCanvas::PushStyle( std::underlying_type_t<AluraColour> index, const glm::vec4& rNewValue )
 	{
-		m_ColorStack.emplace( m_Style.Colors[ index ], index );
-		m_Style.Colors[ index ] = rNewValue;
+		m_ColourStack.emplace( m_Style.Colours[ index ], index );
+		m_Style.Colours[ index ] = rNewValue;
 	}
 
 	void AluraCanvas::PopStyle()
 	{
-		SAT_CORE_ASSERT( m_ColorStack.size(), "Alura: Forgot to call PushStyle or PopStyle called too many times (m_ColorStack is empty)!" );
+		SAT_CORE_ASSERT( m_ColourStack.size(), "Alura: Forgot to call PushStyle or PopStyle called too many times (m_ColourStack is empty)!" );
 
-		const auto& rBackupData = m_ColorStack.top();
-		m_Style.Colors[ rBackupData.Index ] = rBackupData.OldValue;
-		m_ColorStack.pop();
+		const auto& rBackupData = m_ColourStack.top();
+		m_Style.Colours[ rBackupData.Index ] = rBackupData.OldValue;
+		m_ColourStack.pop();
 	}
 
 	void AluraCanvas::PushFontSize( float newSize )
 	{
-		m_PushedFontSize = m_Style.CurrentFontSize;
+		m_BackupOfFontSize = m_Style.CurrentFontSize;
 		m_Style.CurrentFontSize = newSize;
 	}
 
 	void AluraCanvas::PopFontSize()
 	{
-		m_Style.CurrentFontSize = m_PushedFontSize;
-		m_PushedFontSize = 0.0f;
+		m_Style.CurrentFontSize = m_BackupOfFontSize;
+		m_BackupOfFontSize = 0.0f;
 	}
 
 	float AluraCanvas::GetFrameHeight() const

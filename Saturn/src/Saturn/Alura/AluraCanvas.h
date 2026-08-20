@@ -74,10 +74,10 @@ namespace Saturn {
 	};
 
 	// Backup data when PushStyle is called
-	struct AluraColorTemp
+	struct AluraColourTemp
 	{
 		glm::vec4 OldValue{};
-		std::underlying_type_t<AluraColor> Index;
+		std::underlying_type_t<AluraColour> Index;
 	};
 	
 	struct AluraRegionDataTemporary 
@@ -188,21 +188,22 @@ namespace Saturn {
 
 	public:
 		// Drawing and widgets
-		void AddRect( const glm::vec2& rSize, float rounding = 0.0f, const glm::vec4& rColor = glm::one<glm::vec4>() );
+		void AddRect( const glm::vec2& rSize, float rounding = 0.0f, const glm::vec4& rColour = glm::one<glm::vec4>() );
 		
 #if !defined(SAT_DIST)
-		void AddImage( const glm::vec2& rSize, Ref<Texture2D> image, const glm::vec4& rColor = glm::one<glm::vec4>(), const glm::vec2& rUV1 = { 0.0F, 1.0F }, const glm::vec2& rUV2 = { 1.0F, 0.0F } );
+		void AddImage( const glm::vec2& rSize, Ref<Texture2D> image, const glm::vec4& rColour = glm::one<glm::vec4>(), const glm::vec2& rUV1 = { 0.0F, 1.0F }, const glm::vec2& rUV2 = { 1.0F, 0.0F } );
 		
-		[[nodiscard]] bool AddImageButton( const glm::vec2& rSize, Ref<Texture2D> image, const glm::vec4& rColor = glm::one<glm::vec4>(), const glm::vec2& rUV1 = { 0.0F, 1.0F }, const glm::vec2& rUV2 = { 1.0F, 0.0F } );
+		[[nodiscard]] bool AddImageButton( const glm::vec2& rSize, Ref<Texture2D> image, const glm::vec4& rColour = glm::one<glm::vec4>(), const glm::vec2& rUV1 = { 0.0F, 1.0F }, const glm::vec2& rUV2 = { 1.0F, 0.0F } );
 #else
-		void AddImage( const glm::vec2& rSize, Ref<Texture2D> image, const glm::vec4& rColor = glm::one<glm::vec4>(), const glm::vec2& rUV1 = { 1.0F, 0.0F }, const glm::vec2& rUV2 = { 0.0F, 1.0F } );
-		[[nodiscard]] bool AddImageButton( const glm::vec2& rSize, Ref<Texture2D> image, const glm::vec4& rColor = glm::one<glm::vec4>(), const glm::vec2& rUV1 = { 1.0F, 0.0F }, const glm::vec2& rUV2 = { 0.0F, 1.0F } );
+		void AddImage( const glm::vec2& rSize, Ref<Texture2D> image, const glm::vec4& rColour = glm::one<glm::vec4>(), const glm::vec2& rUV1 = { 1.0F, 0.0F }, const glm::vec2& rUV2 = { 0.0F, 1.0F } );
+		[[nodiscard]] bool AddImageButton( const glm::vec2& rSize, Ref<Texture2D> image, const glm::vec4& rColour = glm::one<glm::vec4>(), const glm::vec2& rUV1 = { 1.0F, 0.0F }, const glm::vec2& rUV2 = { 0.0F, 1.0F } );
 #endif
 
 		// NOTE: fraction is a normalised value between 0.0 - 1.0, because we are working with the percent in decimal from.
 		void AddProgressBar( float fraction, const glm::vec2& rSize );
 
-		void AddText( const std::string& rText, const glm::vec4& rColor = glm::one<glm::vec4>() );
+		void AddText( const std::string& rText );
+		void AddTextColoured( const std::string& rText, const glm::vec4& rColour );
 		
 		template<typename... Args>
 		void TextFormatted( std::format_string<Args...> fmt, Args&&... rrArgs ) 
@@ -213,13 +214,13 @@ namespace Saturn {
 			AddText( text );
 		}
 
-		[[nodiscard]] bool AddButton( const glm::vec2& rSize, const glm::vec4& rColor = glm::one<glm::vec4>() );
+		[[nodiscard]] bool AddButton( const glm::vec2& rSize, const glm::vec4& rColour = glm::one<glm::vec4>() );
 		
 		// Add a button with text.
 		// If no size is specified then Alura will calculate the spacing needed.
 		[[nodiscard]] bool AddButton( const std::string& rText, const glm::vec2& rSize = glm::zero<glm::vec2>() );
 
-		void AddCircle( float radius, float thinkness = 1.0f, bool filled = false, const glm::vec4& rColor = glm::one<glm::vec4>() );
+		void AddCircle( float radius, float thinkness = 1.0f, bool filled = false, const glm::vec4& rColour = glm::one<glm::vec4>() );
 
 		[[nodiscard]] bool AddCheckbox( const std::string& rLabel, bool* pValue );
 		[[nodiscard]] bool AddCheckboxRight( const std::string& rLabel, bool* pValue );
@@ -266,7 +267,7 @@ namespace Saturn {
 
 		void SameLine( float offset = 0.0f, float spacing = -1.0f );
 
-		void PushStyle( std::underlying_type_t<AluraColor> index, const glm::vec4& rNewValue );
+		void PushStyle( std::underlying_type_t<AluraColour> index, const glm::vec4& rNewValue );
 		void PopStyle();
 
 		void PushFontSize( float newSize );
@@ -304,6 +305,7 @@ namespace Saturn {
 		glm::vec2 GetCursorPosition() const { return m_Layout.CursorPos; }
 
 		const AluraStyle& GetStyle() const { return m_Style; }
+		AluraStyle& GetStyle() { return m_Style; }
 		Ref<AluraFont> GetActiveFont() const { return m_ActiveFont; }
 		
 		Ref<AluraFont> GetEditorFont() const { return m_EditorFont; }
@@ -358,7 +360,7 @@ namespace Saturn {
 		glm::vec2 m_Position;
 
 		glm::vec2 m_PendingNextItemPosition{};
-		float m_PushedFontSize = 0.0f;
+		float m_BackupOfFontSize = 0.0f;
 		bool m_WantToSetItemPosition = false;
 		bool m_FirstFrameEver = true;
 
@@ -369,7 +371,7 @@ namespace Saturn {
 
 		std::vector<Ref<AluraDrawer>> m_Drawers;
 		std::vector<Ref<AluraFont>> m_Fonts;
-		std::stack<AluraColorTemp> m_ColorStack;
+		std::stack<AluraColourTemp> m_ColourStack;
 		
 		// Regions
 		std::vector<AluraRegionData> m_Regions;

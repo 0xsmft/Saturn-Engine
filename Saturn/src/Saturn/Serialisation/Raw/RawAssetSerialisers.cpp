@@ -758,26 +758,26 @@ namespace Saturn {
 		RawSerialisation::ReadObject( rStyle.WindowBorderSize, stream );
 		RawSerialisation::ReadObject( rStyle.CurrentFontSize, stream );
 
-		int numberOfColors = 0;
-		RawSerialisation::ReadObject( numberOfColors, stream );
+		int numberOfColours = 0;
+		RawSerialisation::ReadObject( numberOfColours, stream );
 
 		// If the styling profile is old and it had a larger amount of colors than the AluraColor enum has now
 		// We must only read the amount of colors we currently have now.
 		// TODO: This method is not great, what if we remove a color but then colors below it never get read...
-		if( numberOfColors > AluraColor_Count )
+		if( numberOfColours > AluraColour_Count )
 		{
 			// Set to the current number of colors not the older, larger value.
-			numberOfColors = AluraColor_Count;
+			numberOfColours = AluraColour_Count;
 		}
-//		else if( numberOfColors < AluraColor_Count )
+//		else if( numberOfColours < AluraColor_Count )
 //			SAT_CORE_WARN( "[RawAluraStylingProfileSerialiser] Styling profile has less colors than the AluraColor enum itself!" );
 
-		for( size_t i = 0; i < numberOfColors; ++i )
+		for( size_t i = 0; i < numberOfColours; ++i )
 		{
 			glm::vec4 color = glm::one<glm::vec4>();
 			RawSerialisation::ReadVec4( color, stream );
 
-			rStyle.Colors[ i ] = color;
+			rStyle.Colours[ i ] = color;
 		}
 
 		rAsset = stylingProf;
@@ -811,10 +811,10 @@ namespace Saturn {
 		// If a new color was added we can load just fine
 		// However, if the styling profile has more colors than the current AluraColor enum does then we have a problem and we need to make sure we read using the current AluraColor_Count value.
 		// If the structure of the enum was changed then we have the worse case and the AssetBundle would need to rebuilt.
-		const int numberOfColors = AluraColor_Count;
+		const int numberOfColors = AluraColour_Count;
 		RawSerialisation::WriteObject( numberOfColors, stream );
 
-		for( const auto& rColor : rStyle.Colors )
+		for( const auto& rColor : rStyle.Colours )
 		{
 			RawSerialisation::WriteVec4( rColor, stream );
 		}

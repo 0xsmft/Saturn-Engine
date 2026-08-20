@@ -1107,7 +1107,7 @@ namespace Saturn {
 		out << YAML::BeginSeq;
 
 		uint32_t index = 0;
-		for( const auto& rColorVar : rStyle.Colors )
+		for( const auto& rColorVar : rStyle.Colours )
 		{
 			out << YAML::BeginMap;
 
@@ -1167,7 +1167,7 @@ namespace Saturn {
 			const auto index = color[ "Index" ].as<uint64_t>();
 			const auto value = color[ "Value" ].as<glm::vec4>();
 
-			rStyle.Colors[ index ] = value;
+			rStyle.Colours[ index ] = value;
 		}
 
 		// Set rAsset reference to point to our new AluraStylingProfile

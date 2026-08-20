@@ -53,16 +53,18 @@ namespace Saturn {
 		Auxiliary::DrawFloatControl( "Window Border Size", rStyle.WindowBorderSize );
 		Auxiliary::DrawFloatControl( "Font Size", rStyle.CurrentFontSize );
 
-		ImGui::SeparatorText( "Colors" );
-		ImGui::ColorEdit4( "Text", glm::value_ptr( rStyle.Colors[ 0 ] ) );
-		ImGui::ColorEdit4( "Text Disabled", glm::value_ptr( rStyle.Colors[ 1 ] ) );
-		ImGui::ColorEdit4( "Button", glm::value_ptr( rStyle.Colors[ 2 ] ) );
-		ImGui::ColorEdit4( "Button Hovered", glm::value_ptr( rStyle.Colors[ 3 ] ) );
-		ImGui::ColorEdit4( "Border", glm::value_ptr( rStyle.Colors[ 4 ] ) );
-		ImGui::ColorEdit4( "Frame Background", glm::value_ptr( rStyle.Colors[ 5 ] ) );
-		ImGui::ColorEdit4( "Progress bar Color", glm::value_ptr( rStyle.Colors[ 6 ] ) );
-		ImGui::ColorEdit4( "Separator", glm::value_ptr( rStyle.Colors[ 7 ] ) );
-		ImGui::ColorEdit4( "Region Background", glm::value_ptr( rStyle.Colors[ 8 ] ) );
-		ImGui::ColorEdit4( "Text Selected", glm::value_ptr( rStyle.Colors[ 9 ] ) );
+		ImGui::SeparatorText( "Colours" );
+		ImGui::ColorEdit4( "Text", glm::value_ptr( rStyle.Colours[ 0 ] ) );
+		ImGui::ColorEdit4( "Text Disabled", glm::value_ptr( rStyle.Colours[ 1 ] ) );
+		ImGui::ColorEdit4( "Button", glm::value_ptr( rStyle.Colours[ 2 ] ) );
+		ImGui::ColorEdit4( "Button Hovered", glm::value_ptr( rStyle.Colours[ 3 ] ) );
+		ImGui::ColorEdit4( "Border", glm::value_ptr( rStyle.Colours[ 4 ] ) );
+		ImGui::ColorEdit4( "Frame Background", glm::value_ptr( rStyle.Colours[ 5 ] ) );
+		ImGui::ColorEdit4( "Progress bar Color", glm::value_ptr( rStyle.Colours[ 6 ] ) );
+		ImGui::ColorEdit4( "Separator", glm::value_ptr( rStyle.Colours[ 7 ] ) );
+		ImGui::ColorEdit4( "Region Background", glm::value_ptr( rStyle.Colours[ 8 ] ) );
+		ImGui::ColorEdit4( "Text Selected", glm::value_ptr( rStyle.Colours[ 9 ] ) );
+		ImGui::ColorEdit4( "Slider Grab", glm::value_ptr( rStyle.Colours[ 10 ] ) );
+		ImGui::ColorEdit4( "Slider Grab Active", glm::value_ptr( rStyle.Colours[ 11 ] ) );
 	}
 }

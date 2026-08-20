@@ -770,6 +770,70 @@ namespace Saturn {
 		EndPopup();
 	}
 
+	bool AluraCanvas::AddSlider( 
+		const std::string& rLabel, 
+		float& rPercent, 
+		float minValue /*=0.0f*/, float maxValue /*=100.0f*/, 
+		float maxSliderSize /*= 0.0f */ )
+	{
+		// Handle NextItemPosition
+		glm::vec2 posDependingLastCall = m_Layout.CursorPos;
+
+		if( m_WantToSetItemPosition )
+		{
+			posDependingLastCall = m_PendingNextItemPosition;
+			m_WantToSetItemPosition = false;
+		}
+
+		const auto itemID = FNV1A64( rLabel.c_str() );
+
+		const glm::vec2 textSize = glm::trunc( CalcTextSize( rLabel ) );
+		const glm::vec2 sliderSize = { maxSliderSize > 0.0f ? maxSliderSize : GetContentRegionAvail().x, 4.0f };
+		const glm::vec2 squareSize = glm::vec2{ sliderSize.y * 2.0f };
+		const glm::vec2 totalSize = { textSize.x + sliderSize.x + m_Style.ItemInnerSpacing.x + squareSize.x, textSize.y };
+
+		const glm::vec2 sliderPosition = { posDependingLastCall.x + textSize.x + m_Style.ItemInnerSpacing.x + squareSize.x, posDependingLastCall.y + ( textSize.y * 0.5f ) };
+
+		const AluraRect textRect( posDependingLastCall, posDependingLastCall + textSize );
+		const AluraRect sliderRect( sliderPosition, sliderPosition + sliderSize );
+		const AluraRect fullBB( textRect.Min, textRect.Min + totalSize + squareSize );
+
+		ItemSize( fullBB.GetSize() );
+		if( !CanAddItem( fullBB ) )
+			return false;
+
+		// Drawing...
+		m_Renderer->SubmitString( rLabel, m_ActiveFont, m_Style.CurrentFontSize, posDependingLastCall, m_Style.Colors[ AluraColor_Text ] );
+
+		// Submit slider line
+		m_Renderer->SubmitRect( sliderRect, glm::one<glm::vec4>() );
+
+		bool hovered = false, held = false;
+		bool pressed = ButtonBehaviour( sliderRect, itemID, &hovered, &held );
+
+		bool modified = false;
+		if( pressed || held )
+		{
+			float relativeX = m_MousePosition.x - sliderPosition.x;
+			if( relativeX < 0.0f ) relativeX = 0.0f;
+			if( relativeX > sliderRect.GetWidth() ) relativeX = sliderRect.GetWidth();
+
+			rPercent = relativeX / sliderRect.GetWidth();
+			modified = true;
+		}
+
+		const glm::vec2 squarePosition = { sliderPosition.x + ( rPercent * sliderRect.GetWidth() ) - squareSize.x, sliderPosition.y - glm::ceil( sliderSize.y * 0.5f ) };
+		m_Renderer->SubmitRect( squarePosition, squarePosition + squareSize, m_Style.Colors[ AluraColor_Separator ] );
+
+#if defined(SAT_ALURA_SHOW_TEXT_BB)
+		m_Renderer->SubmitRectFrame( textRect, 1.0f, glm::vec4{ 1.0f, 0.0f, 0.0f, 1.0f } ); // Red
+		m_Renderer->SubmitRectFrame( sliderRect, 1.0f, glm::vec4{ 0.0f, 1.0f, 0.0f, 1.0f } ); // Green
+		m_Renderer->SubmitRectFrame( fullBB, 1.0f, glm::vec4{ 0.0f, 0.0f, 1.0f, 1.0f } ); // Blue
+#endif
+
+		return modified;
+	}
+
 	bool AluraCanvas::AddPopup( const std::string& rLabel )
 	{
 		const std::string popupName = rLabel + "AlrPopup";
@@ -1055,8 +1119,21 @@ namespace Saturn {
 		PushFontAndSetActive( m_EditorFont );
 		PushFontSize( 32.0f );
 
-		if( BeginRegion( "##testing", { 250.0f, 250.0f } ) )
+		if( BeginRegion( "##testing", { 512.0f, 250.0f } ) )
 		{
+			static float val = 0.0f;
+			bool used = AddSlider( "Drag the value", val, 0.0f, 100.0f, 100.0f );
+			
+			TextFormatted( "{}%", val * 100.0f );
+
+			if( BeginComboBox( "Combo Box", "" ) ) 
+			{
+				bool clicked = AddButton( "None" );
+				clicked = AddButton( "GTAO" );
+				clicked = AddButton( "SSAO" );
+				EndComboBox();
+			}
+
 			AddSeparator();
 
 			PushStyle( AluraColor_FrameBackground, { 1.0f, 1.0f, 1.0f, 1.0f } );
@@ -1078,8 +1155,14 @@ namespace Saturn {
 			EndRegion();
 		}
 
+		TextFormatted( "Hot: {}", m_Hot );
+		TextFormatted( "Hot Region: {}", m_HotRegion );
+		TextFormatted( "Active: {}", m_Active );
+		TextFormatted( "Focused: {}", m_Focused );
+		TextFormatted( "Selected: {}", m_Selected );
+
 		static std::string str;
-		AddInputText( "Testing", &str );
+		bool used = AddInputText( "Testing", &str );
 
 		AddText( "This is text at size 32px" );
 		PopFontSize();
@@ -1104,6 +1187,9 @@ namespace Saturn {
 
 		AddText( "Long Text:\nUhm im testing this shit okay...\npenis" );
 
+		static std::string buf;
+		used = AddInputText( "Go on, type...", &buf );
+
 		bool clicked = AddButton( "Yep" );
 
 		AddImage( { 24.0f, 24.0f }, Renderer::Get()->GetPinkTexture() );
@@ -1113,10 +1199,6 @@ namespace Saturn {
 		clicked = AddCheckboxRight( "Testing checkbox RHS", &test );
 
 		TextFormatted( "Tests: {}", test );
-		TextFormatted( "Hot: {}", m_Hot );
-		TextFormatted( "Active: {}", m_Active );
-		TextFormatted( "Focused: {}", m_Focused );
-		TextFormatted( "Selected: {}", m_Selected );
 
 		PopFontSize();
 		PopFont();

@@ -781,7 +781,7 @@ namespace Saturn {
 
 	bool AluraCanvas::AddSlider( 
 		const std::string& rLabel, 
-		float& rPercent, 
+		float& rValue, 
 		float minValue /*=0.0f*/, float maxValue /*=100.0f*/, 
 		float maxSliderSize /*= 0.0f */ )
 	{
@@ -799,17 +799,24 @@ namespace Saturn {
 		const glm::vec2 textSize = glm::trunc( CalcTextSize( rLabel ) );
 		const glm::vec2 sliderSize = { maxSliderSize > 0.0f ? maxSliderSize : GetContentRegionAvail().x, 4.0f };
 		const glm::vec2 grabSize = glm::vec2{ sliderSize.y * 2.0f };
-		const glm::vec2 totalSize = { textSize.x + sliderSize.x + m_Style.ItemInnerSpacing.x + grabSize.x, textSize.y };
+		const glm::vec2 totalSize = { textSize.x + sliderSize.x + m_Style.ItemInnerSpacing.x + ( grabSize.x * 2.0f ), textSize.y };
 
 		const glm::vec2 sliderPosition = { posDependingLastCall.x + textSize.x + m_Style.ItemInnerSpacing.x + grabSize.x, posDependingLastCall.y + ( textSize.y * 0.5f ) };
 
 		const AluraRect textRect( posDependingLastCall, posDependingLastCall + textSize );
 		const AluraRect sliderRect( sliderPosition, sliderPosition + sliderSize );
-		const AluraRect fullBB( textRect.Min, textRect.Min + totalSize + grabSize );
+
+		const glm::vec2 sliderBoundingBoxPos = { sliderPosition.x, sliderPosition.y - glm::ceil( sliderSize.y * 0.5f ) };
+		const glm::vec2 sliderBoundingBoxSize = { sliderSize.x, grabSize.y };
+
+		const AluraRect sliderBB( sliderBoundingBoxPos, sliderBoundingBoxPos + sliderBoundingBoxSize );
+		const AluraRect fullBB( textRect.Min, textRect.Min + totalSize );
 
 		ItemSize( fullBB.GetSize() );
 		if( !CanAddItem( fullBB ) )
 			return false;
+
+		const float normalisedValue = rValue / maxValue;
 
 		// Drawing...
 		m_Renderer->SubmitString( rLabel, m_ActiveFont, m_Style.CurrentFontSize, posDependingLastCall, m_Style.Colours[ AluraColour_Text ] );
@@ -818,9 +825,19 @@ namespace Saturn {
 		m_Renderer->SubmitRect( sliderRect, m_Style.Colours[ AluraColour_Separator ] );
 
 		bool sliderhovered = false, sliderHeld = false;
-		bool sliderPressed = ButtonBehaviour( sliderRect, itemID, &sliderhovered, &sliderHeld );
+		bool sliderPressed = ButtonBehaviour( sliderBB, itemID, &sliderhovered, &sliderHeld );
 	
-		const glm::vec2 grabPosition = { sliderPosition.x + ( rPercent * sliderRect.GetWidth() ) - grabSize.x, sliderPosition.y - glm::ceil( sliderSize.y * 0.5f ) };
+		const float grabHalfWidth = glm::ceil( grabSize.x * 0.5f );
+		const float sliderWidth = sliderRect.GetWidth();
+		const float minX = sliderPosition.x + grabHalfWidth;
+		const float maxX = sliderPosition.x + sliderWidth - grabHalfWidth;
+
+		const float grabCenterX = minX + normalisedValue * ( maxX - minX );
+
+		const glm::vec2 grabPosition = { 
+			grabCenterX - grabHalfWidth, 
+			sliderPosition.y - ( grabHalfWidth * 0.5f ) };
+
 		const AluraRect grabRect( grabPosition, grabPosition + grabSize );
 		
 		bool grabHovered = false, grabHeld = false;
@@ -830,14 +847,14 @@ namespace Saturn {
 		const bool anyItemHeld = grabHeld || sliderHeld;
 
 		bool modified = false;
-		if( anyItemPressed || anyItemHeld )
-		{
-			float relativeX = m_MousePosition.x - sliderPosition.x;
-			if( relativeX < 0.0f ) relativeX = 0.0f;
-			if( relativeX > sliderRect.GetWidth() ) relativeX = sliderRect.GetWidth();
+		if( sliderPressed )
+		{	
+			const float mouseX = glm::clamp( m_MousePosition.x, minX, maxX );
+			const float t = ( mouseX - minX ) / ( maxX - minX );
+			const float newValue = t;
 
-			rPercent = relativeX / sliderRect.GetWidth();
-			modified = true;
+			rValue = t * maxValue;
+			modified = !glm::epsilonEqual( rValue, newValue * maxValue, 0.0001f );
 		}
 
 		// Grab rect
@@ -848,8 +865,48 @@ namespace Saturn {
 #if defined(SAT_ALURA_SHOW_TEXT_BB)
 		m_Renderer->SubmitRectFrame( textRect, 1.0f, glm::vec4{ 1.0f, 0.0f, 0.0f, 1.0f } ); // Red
 		m_Renderer->SubmitRectFrame( sliderRect, 1.0f, glm::vec4{ 0.0f, 1.0f, 0.0f, 1.0f } ); // Green
+		m_Renderer->SubmitRectFrame( sliderBB, 1.0f, glm::vec4{ 1.0f, 0.0f, 1.0f, 1.0f } ); // Pink
 		m_Renderer->SubmitRectFrame( fullBB, 1.0f, glm::vec4{ 0.0f, 0.0f, 1.0f, 1.0f } ); // Blue
 #endif
+
+		const float maxValueNormalised = maxValue / 100.0f;
+		const float minValueNormalised = minValue / 100.0f;
+
+		// Handle keys
+		if( m_Hot == itemID )
+		{
+			if( KeyPressed( RubyKey_LeftArrow ) )
+			{
+				const bool shiftDown = Input::Get().KeyPressed( RubyKey_LeftShift ) || Input::Get().KeyPressed( RubyKey_RightShift );
+
+				const float range = maxValueNormalised - minValueNormalised;
+				const float step = range * ( shiftDown ? 0.10f : 0.01f );
+
+				rValue = std::max( 0.0f, normalisedValue - step ) * maxValue;
+				m_Focused = itemID;
+			}
+
+			if( KeyPressed( RubyKey_RightArrow ) )
+			{
+				const bool shiftDown = Input::Get().KeyPressed( RubyKey_LeftShift ) || Input::Get().KeyPressed( RubyKey_RightShift );
+
+				const float range = maxValueNormalised - minValueNormalised;
+				const float step = range * ( shiftDown ? 0.10f : 0.01f );
+
+				rValue = std::min( 1.0f, normalisedValue + step ) * maxValue;
+				m_Focused = itemID;
+			}
+
+			if( KeyPressed( RubyKey_Home ) )
+			{
+				rValue = minValue;
+			}
+
+			if( KeyPressed( RubyKey_End ) )
+			{
+				rValue = maxValue;
+			}
+		}
 
 		return modified;
 	}
@@ -1140,9 +1197,9 @@ namespace Saturn {
 		if( BeginRegion( "##testing", { 512.0f, 250.0f } ) )
 		{
 			static float val = 0.0f;
-			bool used = AddSlider( "Drag the value", val, 0.0f, 100.0f, 100.0f );
+			bool used = AddSlider( "Drag the value", val, 0.0f, 512.0f, 100.0f );
 			
-			TextFormatted( "{}%", val * 100.0f );
+			TextFormatted( "{:.2f}", val );
 
 			if( BeginComboBox( "Combo Box", "" ) ) 
 			{

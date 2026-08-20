@@ -230,7 +230,18 @@ namespace Saturn {
 		[[nodiscard]] bool BeginComboBox( const std::string& rLabel, const std::string& rPreviewName, float maxSize = 0.0f );
 		void EndComboBox();
 	
-		[[nodiscard]] bool AddSlider( const std::string& rLabel, float& rPercent, float minValue = 0.0f, float maxValue = 100.0f, float maxSliderSize = 0.0f );
+		//
+		// Draw a slider value
+		// 
+		// @param rLabel - the label to appear on the left hand side of the slider
+		// @param rPercent - the value
+		// @param maxSliderSize - the maximum extent of the slider on the X axis, by default this value
+		// is zero meaning that a region must be used to calculate the content size, if you aren't using a 
+		// region the you _must_ specify a size!
+		// 
+		// @returns - if the slider value was modified.
+		//
+		[[nodiscard]] bool AddSlider( const std::string& rLabel, float& rValue, float minValue = 0.0f, float maxValue = 100.0f, float maxSliderSize = 0.0f );
 		
 		[[nodiscard]] bool AddPopup( const std::string& rLabel );
 		void CloseCurrentPopup();

@@ -420,7 +420,9 @@ namespace Saturn {
 		// Scene Renderer (main geometry)
 		RtBuildSceneRendererCommands( sceneRenderer );
 
+#if !defined(SAT_DIST)
 		RtDrawSkDebug( sceneRenderer );
+#endif
 	}
 
 	void Scene::OnRenderRuntime( Timestep ts, Ref<SceneRenderer> sceneRenderer )

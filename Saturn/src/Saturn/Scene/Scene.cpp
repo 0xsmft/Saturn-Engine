@@ -184,22 +184,17 @@ namespace Saturn {
 			rESM->ClearSelection( this, true );
 #endif
 		{
-
-			// TODO: Is really needed? As the physics scene will destroy all of this.
-			auto rigidBodies = GetAllEntitiesWith<RigidbodyComponent>();
+			// The physics scene will cleanup all of the rigid bodies, shapes, etc
+			// however, on Debug double we'll check that.
+#if defined(SAT_DEBUG)
+			const auto rigidBodies = GetAllEntitiesWith<RigidbodyComponent>();
 			for( auto& entity : rigidBodies )
 			{
-				if( entity->GetComponent<RigidbodyComponent>().Rigidbody ) 
-				{
-					delete entity->GetComponent<RigidbodyComponent>().Rigidbody;
-					entity->GetComponent<RigidbodyComponent>().Rigidbody = nullptr;
-				}
+				SAT_CORE_ASSERT( !entity->GetComponent<RigidbodyComponent>().Rigidbody );
 			}
+#endif
 
-			StopAudioPlayers();
-
-			// Only true if we are the editor scene or if OnRuntimeEnd was not called.
-			DestroyPhysicsScene();
+			DestroyAudioPlayers();
 		}
 
 		m_Controllers.clear();

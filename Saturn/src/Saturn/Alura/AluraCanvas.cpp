@@ -1633,6 +1633,9 @@ namespace Saturn {
 
 	AluraTextInputA* AluraCanvas::GetInputTextStateForItem( uint64_t itemID )
 	{
+		if( itemID == 0llu )
+			return nullptr;
+
 		return m_InputTextState.GetItemID() == itemID ? &m_InputTextState : nullptr;
 	}
 

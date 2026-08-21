@@ -47,7 +47,7 @@ namespace Saturn {
 	void AluraTextInputA::Init( const AluraTextInputSpecification& rSpecification )
 	{
 		m_Specification = rSpecification;
-		m_CursorIndex = 0llu;
+		m_OffsetFromStart = 0llu;
 		m_CursorBlinkingTime = m_Specification.CursorAnimDuration;
 	
 		if( ( m_Specification.Flags & AluraTextInputFlags_CharsToLower ) && 
@@ -62,7 +62,7 @@ namespace Saturn {
 	void AluraTextInputA::Reset()
 	{
 		m_Specification = {};
-		m_CursorIndex = m_SelectionBegin = m_SelectionEnd = m_SelectionAnchor = std::string::npos;
+		m_OffsetFromStart = m_SelectionBegin = m_SelectionEnd = m_SelectionAnchor = std::string::npos;
 		m_EnterPressed = m_ModifiedSinceLastRender = m_IsSelecting = m_ShiftDown = m_CursorFollow = false;
 		m_TextDeletionDirection = AluraTextDeletionDirection::Backwards;
 		m_CursorBlinkingTime = 0.0f;
@@ -119,7 +119,7 @@ namespace Saturn {
 		// Insert the fucking character right here.
 		m_Specification.pString->insert( insertionPoint, 1, wc );
 
-		++m_CursorIndex;
+		++m_OffsetFromStart;
 		m_CursorFollow = true;
 
 		m_ModifiedSinceLastRender = true;
@@ -172,7 +172,7 @@ namespace Saturn {
 				ResetSelection();
 				ResetCursorTime();
 
-				m_CursorIndex = 0llu;
+				m_OffsetFromStart = 0llu;
 			} break;
 
 			case RubyKey_End: 
@@ -180,7 +180,7 @@ namespace Saturn {
 				ResetSelection();
 				ResetCursorTime();
 
-				m_CursorIndex = m_Specification.pString->size();
+				m_OffsetFromStart = m_Specification.pString->size();
 			} break;
 
 			case RubyKey_LeftShift:
@@ -188,8 +188,8 @@ namespace Saturn {
 			{
 				if( m_SelectionBegin == std::string::npos )
 				{
-					m_SelectionAnchor = m_CursorIndex;
-					m_SelectionBegin = m_CursorIndex;
+					m_SelectionAnchor = m_OffsetFromStart;
+					m_SelectionBegin = m_OffsetFromStart;
 					m_SelectionEnd = m_SelectionBegin;
 					m_IsSelecting = true;
 				}
@@ -233,7 +233,7 @@ namespace Saturn {
 					const auto clipboardText = Application::Get()->GetWindow()->GetClipboardText();
 
 					// Insert string at cursor position.
-					CopyPaste_InsertBulk( clipboardText, m_CursorIndex );
+					CopyPaste_InsertBulk( clipboardText, m_OffsetFromStart );
 				} break;
 
 				case RubyKey_X:
@@ -287,32 +287,32 @@ namespace Saturn {
 
 	void AluraTextInputA::MoveLeft()
 	{
-		if( m_CursorIndex > 0 ) 
+		if( m_OffsetFromStart > 0 ) 
 		{
 			m_CursorFollow = true;
 
 			// Move to the next word before the space.
 			if( m_ControlDown )
 			{
-				--m_CursorIndex;
+				--m_OffsetFromStart;
 				ResetCursorTime();
 
-				const auto spacePos = m_Specification.pString->find_last_of( ' ', m_CursorIndex );
+				const auto spacePos = m_Specification.pString->find_last_of( ' ', m_OffsetFromStart );
 				if( spacePos == std::string::npos )
 				{
-					m_CursorIndex = 0llu;
+					m_OffsetFromStart = 0llu;
 				}
 				else
 				{
-					m_CursorIndex = spacePos + 1;
+					m_OffsetFromStart = spacePos + 1;
 				}
 
 				// Make sure we don't go beyond the string range if we are selecting,
 				// so we'll just set the selection like so.
-				if( m_CursorIndex == 0 && m_IsSelecting )
+				if( m_OffsetFromStart == 0 && m_IsSelecting )
 				{
-					m_SelectionBegin = std::min( m_SelectionAnchor, m_CursorIndex );
-					m_SelectionEnd = std::max( m_SelectionAnchor, m_CursorIndex );
+					m_SelectionBegin = std::min( m_SelectionAnchor, m_OffsetFromStart );
+					m_SelectionEnd = std::max( m_SelectionAnchor, m_OffsetFromStart );
 					return;
 				}
 			}
@@ -323,17 +323,17 @@ namespace Saturn {
 				// Continue selecting...
 				if( m_ShiftDown )
 				{
-					--m_CursorIndex;
+					--m_OffsetFromStart;
 
-					m_SelectionBegin = std::min( m_SelectionAnchor, m_CursorIndex );
-					m_SelectionEnd = std::max( m_SelectionAnchor, m_CursorIndex );
+					m_SelectionBegin = std::min( m_SelectionAnchor, m_OffsetFromStart );
+					m_SelectionEnd = std::max( m_SelectionAnchor, m_OffsetFromStart );
 					
 					ResetCursorTime();
 					return;
 				}
 				else
 				{
-					m_CursorIndex = m_SelectionBegin;
+					m_OffsetFromStart = m_SelectionBegin;
 					ResetSelection();
 					ResetCursorTime();
 					
@@ -342,7 +342,7 @@ namespace Saturn {
 			}
 			
 			// No selection so we just move back.
-			--m_CursorIndex;
+			--m_OffsetFromStart;
 			ResetCursorTime();
 		}
 		// We are at the start but we attempt to move left
@@ -356,18 +356,18 @@ namespace Saturn {
 
 	void AluraTextInputA::MoveRight()
 	{
-		if( m_CursorIndex < m_Specification.pString->size() )
+		if( m_OffsetFromStart < m_Specification.pString->size() )
 		{
 			m_CursorFollow = true;
 
 			// Move to the next word after the space.
 			if( m_ControlDown )
 			{
-				auto spacePos = m_Specification.pString->find_first_of( ' ', m_CursorIndex );
+				auto spacePos = m_Specification.pString->find_first_of( ' ', m_OffsetFromStart );
 
 				if( spacePos == std::string::npos )
 				{
-					m_CursorIndex = m_Specification.pString->empty() ? 0 : m_Specification.pString->size() - 1;
+					m_OffsetFromStart = m_Specification.pString->empty() ? 0 : m_Specification.pString->size() - 1;
 				}
 				else
 				{
@@ -376,9 +376,9 @@ namespace Saturn {
 					spacePos = m_Specification.pString->find_first_not_of( ' ', spacePos );
 
 					if( spacePos == std::string::npos )
-						m_CursorIndex = m_Specification.pString->empty() ? 0 : m_Specification.pString->size() - 1;
+						m_OffsetFromStart = m_Specification.pString->empty() ? 0 : m_Specification.pString->size() - 1;
 					else
-						m_CursorIndex = spacePos - 1;
+						m_OffsetFromStart = spacePos - 1;
 				}
 			}
 
@@ -386,17 +386,17 @@ namespace Saturn {
 			{
 				if( m_ShiftDown )
 				{
-					++m_CursorIndex;
+					++m_OffsetFromStart;
 					ResetCursorTime();
 
-					m_SelectionBegin = std::min( m_SelectionAnchor, m_CursorIndex );
-					m_SelectionEnd = std::max( m_SelectionAnchor, m_CursorIndex );
+					m_SelectionBegin = std::min( m_SelectionAnchor, m_OffsetFromStart );
+					m_SelectionEnd = std::max( m_SelectionAnchor, m_OffsetFromStart );
 
 					return;
 				}
 				else
 				{
-					m_CursorIndex = m_SelectionEnd;
+					m_OffsetFromStart = m_SelectionEnd;
 					ResetSelection();
 					ResetCursorTime();
 					
@@ -404,7 +404,7 @@ namespace Saturn {
 				}
 			}
 
-			++m_CursorIndex;
+			++m_OffsetFromStart;
 			ResetCursorTime();
 		}
 		// We are at the end but we attempt to move right
@@ -432,7 +432,7 @@ namespace Saturn {
 
 	void AluraTextInputA::EraseAtCursorOrSelection()
 	{
-		if( m_Specification.pString->empty() || m_CursorIndex == std::string::npos )
+		if( m_Specification.pString->empty() || m_OffsetFromStart == std::string::npos )
 			return;
 
 		if( m_IsSelecting )
@@ -440,7 +440,7 @@ namespace Saturn {
 			const auto deletionAmount = m_SelectionEnd - m_SelectionBegin;
 
 			m_Specification.pString->erase( m_SelectionBegin, deletionAmount );
-			m_CursorIndex = m_Specification.pString->size();
+			m_OffsetFromStart = m_Specification.pString->size();
 
 			ResetSelection();
 		}
@@ -450,17 +450,17 @@ namespace Saturn {
 			{
 				case AluraTextDeletionDirection::Forwards:
 				{
-					if( m_CursorIndex + 1 <= m_Specification.pString->size() )
+					if( m_OffsetFromStart + 1 <= m_Specification.pString->size() )
 					{
-						m_Specification.pString->erase( m_CursorIndex, 1llu );
+						m_Specification.pString->erase( m_OffsetFromStart, 1llu );
 					}
 				} break;
 				
 				case AluraTextDeletionDirection::Backwards: 
 				{
-					if( m_CursorIndex > 0 )
+					if( m_OffsetFromStart > 0 )
 					{
-						m_Specification.pString->erase( --m_CursorIndex, 1llu );
+						m_Specification.pString->erase( --m_OffsetFromStart, 1llu );
 					}
 				} break;
 		
@@ -498,7 +498,7 @@ namespace Saturn {
 		// Now we can bulk insert.
 		m_Specification.pString->insert( m_Specification.pString->begin() + insertionPoint, filteredText.cbegin(), filteredText.cend() );
 
-		m_CursorIndex += filteredText.size();
+		m_OffsetFromStart += filteredText.size();
 
 		m_ModifiedSinceLastRender = true;
 		m_CursorFollow = true;

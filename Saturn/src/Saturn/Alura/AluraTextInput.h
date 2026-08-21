@@ -122,14 +122,12 @@ namespace Saturn {
 
 	public:
 		uint64_t GetItemID() const { return m_Specification.ItemID; }
-		size_t GetCursorIndex() const { return m_CursorIndex; }
+		size_t GetCursorIndex() const { return m_OffsetFromStart; }
 		float GetBlinkingTime() const { return m_CursorBlinkingTime; }
 		float GetScrollX() const { return m_ScrollX; }
 
 		bool CursorShouldFollow() const { return m_CursorFollow; }
 		bool IsSelecting() const { return m_IsSelecting; }
-		size_t GetSelectionMin() const { if( m_IsSelecting ) return std::min( m_SelectionBegin, m_SelectionEnd ); return 0llu; }
-		size_t GetSelectionMax() const { if( m_IsSelecting ) return std::max( m_SelectionBegin, m_SelectionEnd ); return 0llu; }
 
 		size_t GetSelectionStart() const { return m_SelectionBegin; }
 		size_t GetSelectionEnd() const { return m_SelectionEnd; }
@@ -149,10 +147,28 @@ namespace Saturn {
 	private:
 		AluraTextInputSpecification m_Specification{};
 
-		size_t m_CursorIndex = std::string::npos;
+		//////////////////////////////////////////////////////////////////////////
+		// Selection madness
+
+		// The number of characters from the start of the string.
+		// so if the cursor is in front of the first character we
+		// are one character from the start.
+		// 
+		// This is NOT the cursor index into the string array!
+		size_t m_OffsetFromStart = std::string::npos;
+
+		// The number of characters in which the selection begins, volatile.
+		// but will always be less than the beginning.
 		size_t m_SelectionBegin = std::string::npos;
+
+		// The number of characters in which the selection end, volatile.
+		// but will always be greater than the beginning.
 		size_t m_SelectionEnd = std::string::npos;
+		
+		// The origin point of the selection, fixed, does not change.
 		size_t m_SelectionAnchor = std::string::npos;
+
+		//////////////////////////////////////////////////////////////////////////
 
 		bool m_EnterPressed = false;
 		bool m_ModifiedSinceLastRender = false;

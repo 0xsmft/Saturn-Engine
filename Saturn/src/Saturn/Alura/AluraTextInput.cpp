@@ -116,11 +116,13 @@ namespace Saturn {
 			wc = ( uint32_t ) std::toupper( wc );
 		}
 
+		// Insert the fucking character right here.
 		m_Specification.pString->insert( insertionPoint, 1, wc );
+
 		++m_CursorIndex;
-		m_ModifiedSinceLastRender = true;
 		m_CursorFollow = true;
 
+		m_ModifiedSinceLastRender = true;
 		ResetCursorTime();
 	}
 
@@ -268,6 +270,11 @@ namespace Saturn {
 				m_ControlDown = false;
 			} break;
 
+			case RubyKey_Enter:
+			{
+				m_EnterPressed = false;
+			} break;
+
 			default:
 				break;
 		}
@@ -406,6 +413,20 @@ namespace Saturn {
 		{
 			ResetSelection();
 			ResetCursorTime();
+		}
+	}
+
+	bool AluraTextInputA::GetReturnValue()
+	{
+		if( ( m_Specification.Flags & AluraTextInputFlags_EnterReturnsTrue ) )
+		{
+			// Release enter, because it may take a few frames for the user to release
+			// the enter button and we don't want to report enter held as modified.
+			return std::exchange( m_EnterPressed, false );
+		}
+		else
+		{
+			return std::exchange( m_ModifiedSinceLastRender, false );
 		}
 	}
 

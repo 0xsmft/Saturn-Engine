@@ -482,6 +482,18 @@ namespace Saturn {
 		m_IsSelecting = false;
 	}
 
+
+	void AluraTextInputA::MoveCursorTo( size_t numberOfCharacters )
+	{
+		if( numberOfCharacters > m_Specification.pString->size() )
+			return;
+
+		m_OffsetFromStart = numberOfCharacters;
+
+		ResetSelection();
+		ResetCursorTime();
+	}
+
 	void AluraTextInputA::CopyPaste_InsertBulk( const std::string& rText, size_t insertionPoint )
 	{
 		std::string filteredText = rText;

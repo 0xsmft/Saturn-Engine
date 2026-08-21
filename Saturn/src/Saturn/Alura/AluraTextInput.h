@@ -119,6 +119,7 @@ namespace Saturn {
 		void SetCursorShouldFollow( bool follow ) { m_CursorFollow = follow; }
 		
 		void ResetSelection();
+		void MoveCursorTo( size_t numberOfCharacters );
 
 	public:
 		uint64_t GetItemID() const { return m_Specification.ItemID; }

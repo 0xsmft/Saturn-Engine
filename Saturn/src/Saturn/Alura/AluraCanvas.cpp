@@ -779,7 +779,7 @@ namespace Saturn {
 		EndPopup();
 	}
 
-	bool AluraCanvas::AddSlider( 
+	bool AluraCanvas::AddSliderFloat( 
 		const std::string& rLabel, 
 		float& rValue, 
 		float minValue /*=0.0f*/, float maxValue /*=100.0f*/, 
@@ -1194,10 +1194,10 @@ namespace Saturn {
 		PushFontAndSetActive( m_EditorFont );
 		PushFontSize( 32.0f );
 
-		if( BeginRegion( "##testing", { 512.0f, 250.0f } ) )
+		if( BeginRegion( "##demoregion", { 512.0f, 250.0f } ) )
 		{
 			static float val = 0.0f;
-			bool used = AddSlider( "Drag the value", val, 0.0f, 512.0f, 100.0f );
+			bool used = AddSliderFloat( "Drag the value", val, 0.0f, 512.0f, 100.0f );
 			
 			TextFormatted( "{:.2f}", val );
 
@@ -1227,57 +1227,52 @@ namespace Saturn {
 				EndRegion();
 			}
 			PopStyle();
+
+			TextFormatted( "Hot: {}", m_Hot );
+			TextFormatted( "Hot Region: {}", m_HotRegion );
+			TextFormatted( "Active: {}", m_Active );
+			TextFormatted( "Focused: {}", m_Focused );
+			TextFormatted( "Selected: {}", m_Selected );
+
+			static std::string str;
+			if( AddInputText( "Testing", &str ) ) 
+			{
+				SAT_CORE_INFO( "Modified!" );
+			}
+
+			AddText( "This is text at size 32px" );
+			PopFontSize();
+
+			PushFontSize( 16.0f );
+			AddText( "This is text at size 16px" );
+			PopFontSize();
+
+			constexpr float myFloat = 21.1234567f;
+			constexpr uint64_t myUInt = 21lu;
+			constexpr int64_t mySInt = -21;
+
+			PushFontSize( 32.0f );
+			TextFormatted( "This is formatted floating point text, value: {}", myFloat );
+			TextFormatted( "This is formatted floating point text w. 2 dps, value: {:.2f}", myFloat );
+			TextFormatted( "This is formatted uint text, value: {}", myUInt );
+			TextFormatted( "This is formatted sint text, value: {}", mySInt );
+
+			AddText( "Long Text:\nUhm im testing this shit okay...\npenis" );
+
+			static std::string buf;
+			used = AddInputText( "Go on, type...", &buf );
+
+			bool clicked = AddButton( "Yep" );
+
+			AddImage( { 24.0f, 24.0f }, Renderer::Get()->GetPinkTexture() );
+
+			static bool test = false;
+			clicked = AddCheckbox( "Testing checkbox", &test );
+			clicked = AddCheckboxRight( "Testing checkbox RHS", &test );
+
+			TextFormatted( "Tests: {}", test );
 			EndRegion();
 		}
-
-		TextFormatted( "Hot: {}", m_Hot );
-		TextFormatted( "Hot Region: {}", m_HotRegion );
-		TextFormatted( "Active: {}", m_Active );
-		TextFormatted( "Focused: {}", m_Focused );
-		TextFormatted( "Selected: {}", m_Selected );
-
-		static std::string str;
-		if( AddInputText( "Testing", &str ) ) 
-		{
-			SAT_CORE_INFO( "Modified!" );
-		}
-
-		AddText( "This is text at size 32px" );
-		PopFontSize();
-
-		PushFontSize( 16.0f );
-		AddText( "This is text at size 16px" );
-		PopFontSize();
-
-		PushFontSize( 12.0f );
-		AddText( "This is text at size 12px" );
-		PopFontSize();
-
-		constexpr float myFloat = 21.1234567f;
-		constexpr uint64_t myUInt = 21lu;
-		constexpr int64_t mySInt = -21;
-
-		PushFontSize( 32.0f );
-		TextFormatted( "This is formatted floating point text, value: {}", myFloat );
-		TextFormatted( "This is formatted floating point text w. 2 dps, value: {:.2f}", myFloat );
-		TextFormatted( "This is formatted uint text, value: {}", myUInt );
-		TextFormatted( "This is formatted sint text, value: {}", mySInt );
-
-		AddText( "Long Text:\nUhm im testing this shit okay...\npenis" );
-
-		static std::string buf;
-		bool used = AddInputText( "Go on, type...", &buf );
-
-		bool clicked = AddButton( "Yep" );
-
-		AddImage( { 24.0f, 24.0f }, Renderer::Get()->GetPinkTexture() );
-
-		static bool test = false;
-		clicked = AddCheckbox( "Testing checkbox", &test );
-		clicked = AddCheckboxRight( "Testing checkbox RHS", &test );
-
-		TextFormatted( "Tests: {}", test );
-
 		PopFontSize();
 		PopFont();
 	}

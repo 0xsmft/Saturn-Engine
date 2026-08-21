@@ -909,7 +909,7 @@ namespace Saturn {
 		const bool anyItemHeld = grabHeld || sliderHeld;
 
 		bool modified = false;
-		if( sliderPressed )
+		if( sliderPressed || grabHeld )
 		{	
 			const float mouseX = glm::clamp( m_MousePosition.x, minX, maxX );
 			const float t = ( mouseX - minX ) / ( maxX - minX );

@@ -241,7 +241,7 @@ namespace Saturn {
 		// 
 		// @returns - if the slider value was modified.
 		//
-		[[nodiscard]] bool AddSlider( const std::string& rLabel, float& rValue, float minValue = 0.0f, float maxValue = 100.0f, float maxSliderSize = 0.0f );
+		[[nodiscard]] bool AddSliderFloat( const std::string& rLabel, float& rValue, float minValue = 0.0f, float maxValue = 100.0f, float maxSliderSize = 0.0f );
 		
 		[[nodiscard]] bool AddPopup( const std::string& rLabel );
 		void CloseCurrentPopup();

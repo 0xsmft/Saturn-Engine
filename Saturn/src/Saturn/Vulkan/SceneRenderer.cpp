@@ -104,9 +104,6 @@ namespace Saturn {
 		// Geometry 
 		//////////////////////////////////////////////////////////////////////////
 
-		if( !Application::Get()->HasFlag( ApplicationFlag_CreateSceneRenderer_DEPRECATED ) )
-			return;
-
 		m_RendererData.StorageBufferSet = Ref<StorageBufferSet>::Create( 0, 0 );
 		m_RendererData.StorageBufferSet->Create( 0, 14 ); // Create Light culling buffer.
 

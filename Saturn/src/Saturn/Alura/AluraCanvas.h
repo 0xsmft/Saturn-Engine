@@ -365,6 +365,9 @@ namespace Saturn {
 		AluraRegionData& GetOrCreateRegion( uint64_t itemID );
 		AluraPopupData& GetOrCreatePopup( uint64_t itemID );
 
+		void PushClipRect_ForItem( const AluraRect& bb );
+		void PopClipRect_ForItem();
+
 	private:
 		UUID m_ID;
 		glm::vec2 m_CanvasSize;

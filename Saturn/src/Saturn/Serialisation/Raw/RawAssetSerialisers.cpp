@@ -754,6 +754,7 @@ namespace Saturn {
 		RawSerialisation::ReadObject( rStyle.RegionRounding, stream );
 		RawSerialisation::ReadVec2( rStyle.WindowPadding, stream );
 		RawSerialisation::ReadVec2( rStyle.ItemSpacing, stream );
+		RawSerialisation::ReadVec2( rStyle.ItemInnerSpacing, stream );
 		RawSerialisation::ReadObject( rStyle.IndentSpacing, stream );
 		RawSerialisation::ReadObject( rStyle.WindowBorderSize, stream );
 		RawSerialisation::ReadObject( rStyle.CurrentFontSize, stream );
@@ -802,6 +803,7 @@ namespace Saturn {
 		RawSerialisation::WriteObject( rStyle.RegionRounding, stream );
 		RawSerialisation::WriteVec2( rStyle.WindowPadding, stream );
 		RawSerialisation::WriteVec2( rStyle.ItemSpacing, stream );
+		RawSerialisation::WriteObject( rStyle.ItemInnerSpacing, stream );
 		RawSerialisation::WriteObject( rStyle.IndentSpacing, stream );
 		RawSerialisation::WriteObject( rStyle.WindowBorderSize, stream );
 		RawSerialisation::WriteObject( rStyle.CurrentFontSize, stream );

@@ -1099,6 +1099,7 @@ namespace Saturn {
 		out << YAML::Key << "RegionRounding" << YAML::Value << rStyle.RegionRounding;
 		out << YAML::Key << "WindowPadding" << YAML::Value << rStyle.WindowPadding;
 		out << YAML::Key << "ItemSpacing" << YAML::Value << rStyle.ItemSpacing;
+		out << YAML::Key << "InnerItemSpacing" << YAML::Value << rStyle.ItemInnerSpacing;
 		out << YAML::Key << "IndentSpacing" << YAML::Value << rStyle.IndentSpacing;
 		out << YAML::Key << "WindowBorderSize" << YAML::Value << rStyle.WindowBorderSize;
 		out << YAML::Key << "CurrentFontSize" << YAML::Value << rStyle.CurrentFontSize;
@@ -1157,6 +1158,7 @@ namespace Saturn {
 		rStyle.RegionRounding = stylingData[ "RegionRounding" ].as<float>( 0.0f );
 		rStyle.WindowPadding = stylingData[ "WindowPadding" ].as<glm::vec2>( glm::one<glm::vec2>() );
 		rStyle.ItemSpacing = stylingData[ "ItemSpacing" ].as<glm::vec2>( glm::one<glm::vec2>() );
+		rStyle.ItemInnerSpacing = stylingData[ "InnerItemSpacing" ].as<glm::vec2>( glm::one<glm::vec2>() );
 		rStyle.IndentSpacing = stylingData[ "IndentSpacing" ].as<float>( 1.0f );
 		rStyle.WindowBorderSize = stylingData[ "WindowBorderSize" ].as<float>( 1.0f );
 		rStyle.CurrentFontSize = stylingData[ "CurrentFontSize" ].as<float>( 1.0f );

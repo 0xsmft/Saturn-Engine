@@ -113,6 +113,34 @@ namespace Saturn {
 		m_Layout.CursorPos         = m_Layout.CursorStartingPos;
 		m_Layout.CursorPosPrevLine = m_Layout.CursorStartingPos;
 
+		const auto ts = Application::Get()->Time();
+
+		// Handle double-clicking and mouse down timing
+		for( auto& rMouseInputState : m_MouseInputStates )
+		{
+			switch( rMouseInputState.ButtonState )
+			{
+				case AluraInputActionState::Pressed:
+				case AluraInputActionState::Held:
+				{
+					rMouseInputState.HeldTime += ts.Seconds();
+					if( rMouseInputState.HeldTime >= 0.012f )
+					{
+						rMouseInputState.ButtonState = AluraInputActionState::Held;
+					}
+				} break;
+
+				// Start grace period cooldown.
+				case AluraInputActionState::Released:
+				{
+					rMouseInputState.GracePeriod -= ts.Seconds();
+				} break;
+
+				default:
+					break;
+			}
+		}
+
 		// Push default clipping rect.
 		m_Renderer->PushClipRect( m_CanvasSize );
 	}
@@ -157,6 +185,8 @@ namespace Saturn {
 		}
 
 		m_Drawers.clear();
+
+		m_InputTextState.Reset();
 
 		// Rest persistent states.
 		// Setting m_Hot here is me being a bit pedantic as AluraLayer
@@ -671,6 +701,13 @@ namespace Saturn {
 		// Draw cursor...
 		if( pState )
 		{
+			SAT_CORE_ASSERT( pState->GetSpecification().Flags == flags, "[AluraCanvas]: InputText flag mismatch!" );
+
+			if( MouseButtonDoubleClicked( RubyMouseButton_Left ) )
+			{
+				pState->SelectWord();
+			}
+
 			const auto fullTextSize = CalcTextSizeN( *pStr, pState->GetCursorIndex() );
 			const float cursorOffset = glm::ceil( fullTextSize.x );
 
@@ -1294,8 +1331,35 @@ namespace Saturn {
 			static bool test = false;
 			clicked = AddCheckbox( "Testing checkbox", &test );
 			clicked = AddCheckboxRight( "Testing checkbox RHS", &test );
-
 			TextFormatted( "Tests: {}", test );
+
+			TextFormatted( "Left MB State: {}, held for {:.2f}",
+				( uint8_t ) m_MouseInputStates[ RubyMouseButton_Left ].ButtonState,
+				m_MouseInputStates[ RubyMouseButton_Left ].HeldTime );
+
+			TextFormatted( "Middle MB State: {}, held for {:.2f}",
+				( uint8_t ) m_MouseInputStates[ RubyMouseButton_Middle ].ButtonState,
+				m_MouseInputStates[ RubyMouseButton_Middle ].HeldTime );
+
+			TextFormatted( "Right MB State: {}, held for {:.2f}",
+				( uint8_t ) m_MouseInputStates[ RubyMouseButton_Right ].ButtonState,
+				m_MouseInputStates[ RubyMouseButton_Right ].HeldTime );
+
+			TextFormatted( "X1 MB State: {}, held for {:.2f}",
+				( uint8_t ) m_MouseInputStates[ RubyMouseButton_Extra1 ].ButtonState,
+				m_MouseInputStates[ RubyMouseButton_Extra1 ].HeldTime );
+
+			TextFormatted( "X2 MB State: {}, held for {:.2f}", 
+				( uint8_t ) m_MouseInputStates[ RubyMouseButton_Extra2 ].ButtonState,
+				m_MouseInputStates[ RubyMouseButton_Extra2 ].HeldTime );
+
+			TextFormatted( "Double clicked MB State: ( L:{0}, M:{1}, R:{2}, X1:{3}, X2:{4} )", 
+				m_DoubleClickedMouseButton[ RubyMouseButton_Left ],
+				m_DoubleClickedMouseButton[ RubyMouseButton_Middle ],
+				m_DoubleClickedMouseButton[ RubyMouseButton_Right ],
+				m_DoubleClickedMouseButton[ RubyMouseButton_Extra1 ],
+				m_DoubleClickedMouseButton[ RubyMouseButton_Extra2 ] );
+
 			EndRegion();
 		}
 		PopFontSize();
@@ -1439,12 +1503,33 @@ namespace Saturn {
 	}
 #endif
 
-	void AluraCanvas::UpdateMouseInputState( const RubyMouseButton btn, const AluraInputState state )
+	void AluraCanvas::UpdateMouseInputState( const RubyMouseButton btn, const AluraInputActionState state )
 	{
-		m_MouseInputStates[ btn ] = state;
+		auto& rMouseButton = m_MouseInputStates[ btn ];
+
+		switch( state )
+		{
+			case AluraInputActionState::Pressed:
+			{
+				if( rMouseButton.HeldTime > 0.001f )
+				{
+					m_DoubleClickedMouseButton[ btn ] = true;
+				}
+			} break;
+
+			case AluraInputActionState::Released:
+			{
+				rMouseButton.GracePeriod = 0.15f;
+			} break;
+
+			default:
+				break;
+		}
+
+		rMouseButton.ButtonState = state;
 	}
 
-	void AluraCanvas::UpdateKeyInputState( const RubyKey btn, const AluraInputState state )
+	void AluraCanvas::UpdateKeyInputState( const RubyKey btn, const AluraInputActionState state )
 	{
 		m_KeyInputStates[ btn ] = state;
 
@@ -1453,12 +1538,12 @@ namespace Saturn {
 		{
 			switch( state )
 			{
-				case AluraInputState::Pressed:
+				case AluraInputActionState::Pressed:
 				{
 					pTextInput->OnKeyPressed( btn );
 				} break;
 
-				case AluraInputState::Released:
+				case AluraInputActionState::Released:
 				{
 					pTextInput->OnKeyReleased( btn );
 				} break;
@@ -1580,17 +1665,7 @@ namespace Saturn {
 				pRegion->PerFrame.CanScroll = true;
 				return false;
 			}
-
-			/*
-			if( itemSize.x > workingRectSize.x || itemSize.y > workingRectSize.y )
-			{
-				pRegion->PerFrame.CanScroll = true;
-				return false;
-			}
-			*/
 		}
-
-		// TODO: Support for CanAddItem when drawing on the directly on the viewport.
 
 		return true;
 	}
@@ -1641,8 +1716,10 @@ namespace Saturn {
 		{
 			m_Hot = id;
 			clicked = MouseButtonPressed( RubyMouseButton_Left );
+			held = MouseButtonHeld( RubyMouseButton_Left );
 		}
 
+		// On click...
 		if( clicked )
 		{
 			m_Active = id;
@@ -1663,17 +1740,41 @@ namespace Saturn {
 	{
 		for( size_t i = 0llu; i < m_MouseInputStates.size(); ++i )
 		{
-			// Any mouse buttons that were pressed are not released.
-			// Ruby doesn't keep track of mouse buttons being held yet...
-			if( m_MouseInputStates[ i ] == AluraInputState::Pressed )
-			{
-				m_MouseInputStates[ i ] = AluraInputState::Released;
-			}
+			auto& rInputState = m_MouseInputStates[ i ];
 
-			// Any keys that were released are now cleared to no-state.
-			if( m_MouseInputStates[ i ] == AluraInputState::Released )
+			switch( rInputState.ButtonState )
 			{
-				m_MouseInputStates[ i ] = AluraInputState::NoState;
+				// Any mouse buttons that were pressed are not released.
+				// Ruby doesn't keep track of mouse buttons being held yet...
+				case AluraInputActionState::Pressed:
+				{
+					if( rInputState.HeldTime < 0.007f )
+					{
+						rInputState.ButtonState = AluraInputActionState::Released;
+					}
+					else
+					{
+						if( m_DoubleClickedMouseButton[ i ] )
+						{
+							m_DoubleClickedMouseButton[ i ] = false;
+						}
+					}
+				} break;
+
+				// Any keys that were released are now cleared to no-state.
+				case AluraInputActionState::Released:
+				{
+					if( rInputState.GracePeriod <= 0.0f || m_DoubleClickedMouseButton[ i ] )
+					{
+						rInputState.GracePeriod = 0.15f;
+						rInputState.HeldTime = 0.0f;
+						m_DoubleClickedMouseButton[ i ] = false;
+						rInputState.ButtonState = AluraInputActionState::NoState;
+					}
+				} break;
+
+				default:
+					break;
 			}
 		}
 
@@ -1682,15 +1783,17 @@ namespace Saturn {
 			// Any keys that were pressed at the start of the frame will now be
 			// set to release, the AluraLayer will also send this event,
 			// if the key is still physically down AluraLayer will send the Held event.
-			if( m_KeyInputStates[ i ] == AluraInputState::Pressed )
+			if( m_KeyInputStates[ i ] == AluraInputActionState::Pressed )
 			{
-				m_KeyInputStates[ i ] = AluraInputState::Released;
+				m_KeyInputStates[ i ] = AluraInputActionState::Released;
+				
+				continue;
 			}
 
 			// Any keys that were released are now cleared to no-state.
-			if( m_KeyInputStates[ i ] == AluraInputState::Released )
+			if( m_KeyInputStates[ i ] == AluraInputActionState::Released )
 			{
-				m_KeyInputStates[ i ] = AluraInputState::NoState;
+				m_KeyInputStates[ i ] = AluraInputActionState::NoState;
 			}
 		}
 	}
@@ -1706,27 +1809,37 @@ namespace Saturn {
 
 	bool AluraCanvas::MouseButtonPressed( RubyMouseButton btn )
 	{
-		return m_MouseInputStates[ btn ] == AluraInputState::Pressed;
+		return m_MouseInputStates[ btn ].ButtonState == AluraInputActionState::Pressed;
 	}
 
 	bool AluraCanvas::MouseButtonReleased( RubyMouseButton btn )
 	{
-		return m_MouseInputStates[ btn ] == AluraInputState::Released;
+		return m_MouseInputStates[ btn ].ButtonState == AluraInputActionState::Released;
 	}
 
-	bool AluraCanvas::KeyPressed( RubyMouseButton btn )
+	bool AluraCanvas::MouseButtonDoubleClicked( RubyMouseButton btn )
 	{
-		return m_KeyInputStates[ btn ] == AluraInputState::Pressed;
+		return m_DoubleClickedMouseButton[ btn ];
 	}
 
-	bool AluraCanvas::KeyReleased( RubyMouseButton btn )
+	bool AluraCanvas::MouseButtonHeld( RubyMouseButton btn )
 	{
-		return m_KeyInputStates[ btn ] == AluraInputState::Released;
+		return m_MouseInputStates[ btn ].ButtonState == AluraInputActionState::Held;
 	}
 
-	bool AluraCanvas::KeyHeld( RubyMouseButton btn )
+	bool AluraCanvas::KeyPressed( RubyKey btn )
 	{
-		return m_KeyInputStates[ btn ] == AluraInputState::Held;
+		return m_KeyInputStates[ btn ] == AluraInputActionState::Pressed;
+	}
+
+	bool AluraCanvas::KeyReleased( RubyKey btn )
+	{
+		return m_KeyInputStates[ btn ] == AluraInputActionState::Released;
+	}
+
+	bool AluraCanvas::KeyHeld( RubyKey btn )
+	{
+		return m_KeyInputStates[ btn ] == AluraInputActionState::Held;
 	}
 
 	AluraTextInputA* AluraCanvas::GetInputTextStateForItem( uint64_t itemID )

@@ -50,8 +50,6 @@
 
 #include "Saturn/Physics/PhysicsShapeTypes.h"
 
-#include "Saturn/Vulkan/Renderer.h"
-
 #include "Saturn/Project/Project.h"
 
 #include "RawSerialisation.h"
@@ -83,9 +81,10 @@ namespace Saturn {
 
 		// ALBEO COLOR
 
-		glm::vec3 albeoColor = glm::vec3( 0.0f );
-		RawSerialisation::ReadVec3( albeoColor, stream );
+		uint32_t packedAlbedoColor = 0u;
+		RawSerialisation::ReadObject( packedAlbedoColor, stream );
 
+		const glm::vec3 albeoColor = glm::unpackUnorm4x8( packedAlbedoColor );
 		materialAsset->SetAlbeoColor( albeoColor );
 
 		// ALBEO MAP
@@ -158,7 +157,8 @@ namespace Saturn {
 
 		/////////////////////////////////////
 
-		RawSerialisation::WriteVec3( materialAsset->GetAlbeoColor(), fout );
+		const auto packedAlbedoColor = glm::packUnorm4x8( glm::vec4{ materialAsset->GetAlbeoColor(), 1.0f } );
+		RawSerialisation::WriteObject( packedAlbedoColor, fout );
 		
 		auto writeTextureID = []( const Ref<Texture2D> targetTexture, std::ofstream& rStream ) 
 		{
@@ -775,10 +775,9 @@ namespace Saturn {
 
 		for( size_t i = 0; i < numberOfColours; ++i )
 		{
-			glm::vec4 color = glm::one<glm::vec4>();
-			RawSerialisation::ReadVec4( color, stream );
-
-			rStyle.Colours[ i ] = color;
+			uint32_t packedColour = 0u;
+			RawSerialisation::ReadObject( packedColour, stream );
+			rStyle.Colours[ i ] = glm::unpackUnorm4x8( packedColour );
 		}
 
 		rAsset = stylingProf;
@@ -818,7 +817,8 @@ namespace Saturn {
 
 		for( const auto& rColor : rStyle.Colours )
 		{
-			RawSerialisation::WriteVec4( rColor, stream );
+			const uint32_t packedColor = glm::packUnorm4x8( rColor );
+			RawSerialisation::WriteObject( packedColor, stream );
 		}
 
 		stream.close();

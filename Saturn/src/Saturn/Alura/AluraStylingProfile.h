@@ -42,7 +42,7 @@ namespace Saturn {
 		{
 		}
 
-		~AluraStylingProfile() = default;
+		virtual ~AluraStylingProfile() = default;
 
 		AluraStyle& GetStyle() { return m_Style; }
 		const AluraStyle& GetStyle() const { return m_Style; }

@@ -48,6 +48,7 @@ namespace Saturn {
 
 		Auxiliary::DrawVec2Control( "Window Padding", rStyle.WindowPadding );
 		Auxiliary::DrawVec2Control( "Item Spacing", rStyle.ItemSpacing );
+		Auxiliary::DrawVec2Control( "Inner Item Spacing", rStyle.ItemInnerSpacing );
 
 		Auxiliary::DrawFloatControl( "Indent Spacing", rStyle.IndentSpacing );
 		Auxiliary::DrawFloatControl( "Window Border Size", rStyle.WindowBorderSize );

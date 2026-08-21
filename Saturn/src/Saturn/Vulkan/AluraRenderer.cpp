@@ -334,6 +334,7 @@ namespace Saturn {
 		m_pQuadVertexPtr->TexCoord = glm::vec2{ 0.0f, 0.0f };		
 		m_pQuadVertexPtr->RectSize = rectSize;
 		m_pQuadVertexPtr->TextureIndex = 0.0f;
+		m_pQuadVertexPtr->Radius = 0.0f;
 		++m_pQuadVertexPtr;
 
 		m_pQuadVertexPtr->Position = { rMax.x, rMin.y };
@@ -341,6 +342,7 @@ namespace Saturn {
 		m_pQuadVertexPtr->TexCoord = glm::vec2{ 1.0f, 0.0f };
 		m_pQuadVertexPtr->RectSize = rectSize;
 		m_pQuadVertexPtr->TextureIndex = 0.0f;
+		m_pQuadVertexPtr->Radius = 0.0f;
 		++m_pQuadVertexPtr;
 
 		m_pQuadVertexPtr->Position = { rMax.x, rMax.y };
@@ -348,6 +350,7 @@ namespace Saturn {
 		m_pQuadVertexPtr->TexCoord = glm::vec2{ 1.0f, 1.0f };
 		m_pQuadVertexPtr->RectSize = rectSize;
 		m_pQuadVertexPtr->TextureIndex = 0.0f;
+		m_pQuadVertexPtr->Radius = 0.0f;
 		++m_pQuadVertexPtr;
 
 		m_pQuadVertexPtr->Position = { rMin.x, rMax.y };
@@ -355,6 +358,7 @@ namespace Saturn {
 		m_pQuadVertexPtr->TexCoord = glm::vec2{ 0.0f, 1.0f };
 		m_pQuadVertexPtr->RectSize = rectSize;
 		m_pQuadVertexPtr->TextureIndex = 0.0f;
+		m_pQuadVertexPtr->Radius = 0.0f;
 		++m_pQuadVertexPtr;
 
 		auto& rDC = GetOrCreateDrawCommand( AluraDrawPipelineType::Quad, m_QuadIndexCount );
@@ -390,6 +394,7 @@ namespace Saturn {
 		m_pQuadVertexPtr->TexCoord = glm::vec2{ rUV1.x, rUV1.y };
 		m_pQuadVertexPtr->RectSize = rectSize;
 		m_pQuadVertexPtr->TextureIndex = ( float ) textureID;
+		m_pQuadVertexPtr->Radius = 0.0f;
 		++m_pQuadVertexPtr;
 
 		m_pQuadVertexPtr->Position = { rMax.x, rMin.y };
@@ -397,6 +402,7 @@ namespace Saturn {
 		m_pQuadVertexPtr->TexCoord = glm::vec2{ rUV2.x, rUV1.y };
 		m_pQuadVertexPtr->RectSize = rectSize;
 		m_pQuadVertexPtr->TextureIndex = ( float ) textureID;
+		m_pQuadVertexPtr->Radius = 0.0f;
 		++m_pQuadVertexPtr;
 
 		m_pQuadVertexPtr->Position = { rMax.x, rMax.y };
@@ -404,6 +410,7 @@ namespace Saturn {
 		m_pQuadVertexPtr->TexCoord = glm::vec2{ rUV2.x, rUV2.y };
 		m_pQuadVertexPtr->RectSize = rectSize;
 		m_pQuadVertexPtr->TextureIndex = ( float ) textureID;
+		m_pQuadVertexPtr->Radius = 0.0f;
 		++m_pQuadVertexPtr;
 
 		m_pQuadVertexPtr->Position = { rMin.x, rMax.y };
@@ -411,6 +418,7 @@ namespace Saturn {
 		m_pQuadVertexPtr->TexCoord = glm::vec2{ rUV1.x, rUV2.y };
 		m_pQuadVertexPtr->RectSize = rectSize;
 		m_pQuadVertexPtr->TextureIndex = ( float ) textureID;
+		m_pQuadVertexPtr->Radius = 0.0f;
 		++m_pQuadVertexPtr;
 
 		auto& rDC = GetOrCreateDrawCommand( AluraDrawPipelineType::Quad, m_QuadIndexCount );
@@ -736,27 +744,31 @@ namespace Saturn {
 			const glm::vec2 p3 = rCentre + glm::vec2( glm::cos( a0 ), glm::sin( a0 ) ) * ( radius + thickness );
 
 			m_pQuadVertexPtr->Position = p0;
-			m_pQuadVertexPtr->Color = rColor; 
+			m_pQuadVertexPtr->Color = rColor;
 			m_pQuadVertexPtr->TexCoord = { 0,0 };
-			m_pQuadVertexPtr->TextureIndex = 0.0f; 
+			m_pQuadVertexPtr->TextureIndex = 0.0f;
+			m_pQuadVertexPtr->Radius = 0.0f;
 			++m_pQuadVertexPtr;
 			
 			m_pQuadVertexPtr->Position = p1;
-			m_pQuadVertexPtr->Color = rColor; 
+			m_pQuadVertexPtr->Color = rColor;
 			m_pQuadVertexPtr->TexCoord = { 1,0 };
-			m_pQuadVertexPtr->TextureIndex = 0.0f; 
+			m_pQuadVertexPtr->TextureIndex = 0.0f;
+			m_pQuadVertexPtr->Radius = 0.0f;
 			++m_pQuadVertexPtr;
 			
 			m_pQuadVertexPtr->Position = p2;
-			m_pQuadVertexPtr->Color = rColor; 
-			m_pQuadVertexPtr->TexCoord = { 1,1 }; 
-			m_pQuadVertexPtr->TextureIndex = 0.0f; 
+			m_pQuadVertexPtr->Color = rColor;
+			m_pQuadVertexPtr->TexCoord = { 1,1 };
+			m_pQuadVertexPtr->TextureIndex = 0.0f;
+			m_pQuadVertexPtr->Radius = 0.0f;
 			++m_pQuadVertexPtr;
 			
 			m_pQuadVertexPtr->Position = p3;
-			m_pQuadVertexPtr->Color = rColor; 
-			m_pQuadVertexPtr->TexCoord = { 0,1 }; 
-			m_pQuadVertexPtr->TextureIndex = 0.0f; 
+			m_pQuadVertexPtr->Color = rColor;
+			m_pQuadVertexPtr->TexCoord = { 0,1 };
+			m_pQuadVertexPtr->TextureIndex = 0.0f;
+			m_pQuadVertexPtr->Radius = 0.0f;
 			++m_pQuadVertexPtr;
 
 			auto& rDC = GetOrCreateDrawCommand( AluraDrawPipelineType::Quad, m_QuadIndexCount );
@@ -832,24 +844,28 @@ namespace Saturn {
 		m_pQuadVertexPtr->Color = rColor;
 		m_pQuadVertexPtr->TexCoord = { 0.0f, 0.0f };
 		m_pQuadVertexPtr->TextureIndex = 0.0f;
+		m_pQuadVertexPtr->Radius = 0.0f;
 		++m_pQuadVertexPtr;
 
 		m_pQuadVertexPtr->Position = v1;
 		m_pQuadVertexPtr->Color = rColor;
 		m_pQuadVertexPtr->TexCoord = { 0.0f, 0.0f };
 		m_pQuadVertexPtr->TextureIndex = 0.0f;
+		m_pQuadVertexPtr->Radius = 0.0f;
 		++m_pQuadVertexPtr;
 
 		m_pQuadVertexPtr->Position = v2;
 		m_pQuadVertexPtr->Color = rColor;
 		m_pQuadVertexPtr->TexCoord = { 0.0f, 0.0f };
 		m_pQuadVertexPtr->TextureIndex = 0.0f;
+		m_pQuadVertexPtr->Radius = 0.0f;
 		++m_pQuadVertexPtr;
 
 		m_pQuadVertexPtr->Position = v3;
 		m_pQuadVertexPtr->Color = rColor;
 		m_pQuadVertexPtr->TexCoord = { 0.0f, 0.0f };
 		m_pQuadVertexPtr->TextureIndex = 0.0f;
+		m_pQuadVertexPtr->Radius = 0.0f;
 		++m_pQuadVertexPtr;
 
 		auto& rDC = GetOrCreateDrawCommand( AluraDrawPipelineType::Quad, m_QuadIndexCount );

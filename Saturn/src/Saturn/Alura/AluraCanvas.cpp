@@ -560,6 +560,26 @@ namespace Saturn {
 		return false;
 	}
 
+	static size_t InputText_FindCharacterAtX( const std::string& rText, float x )
+	{
+		if( x < 0.0f )
+			return 0llu;
+
+		for( size_t i = 0; i < rText.size(); ++i )
+		{
+			// TOOD: This is slow, O(N^2).... but fine for now...
+			const float left = glm::ceil( g_AluraCanvas->CalcTextSizeN( rText, i ).x );
+			const float right = glm::ceil( g_AluraCanvas->CalcTextSizeN( rText, i + 1 ).x );
+
+			const float middle = ( left + right ) * 0.5f;
+
+			if( x < middle )
+				return i;
+		}
+
+		return rText.size();
+	}
+
 	bool AluraCanvas::AddInputText( const std::string& rLabel, std::string* pStr, AluraTextInputFlags flags /*= AluraTextInputFlags_NoFlags*/ )
 	{
 		SAT_CORE_VERIFY( pStr );
@@ -639,6 +659,11 @@ namespace Saturn {
 			{
 				pState->ResetSelection();
 			}
+
+			// Handle click to select.
+			const float localX = ( m_MousePosition.x - editAreaPosition.x ) + pState->GetScrollX();
+			const auto offsetFromStart = InputText_FindCharacterAtX( *pStr, localX );
+			pState->MoveCursorTo( offsetFromStart );
 
 			m_Focused = itemID;
 		}

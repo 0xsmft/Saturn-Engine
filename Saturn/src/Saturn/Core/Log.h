@@ -118,6 +118,18 @@ OStream& operator<<( OStream& os, glm::mat4& matrix )
 	return os << matrix[ 0 ] << matrix[ 1 ] << matrix[ 2 ] << matrix[ 3 ];
 }
 
+template<typename OStream>
+OStream& operator<<( OStream& os, const glm::vec4& vec )
+{
+	return os << '(' << vec.x << ", " << vec.y << ", " << vec.z << ", " << vec.w << ')';
+}
+
+template<typename OStream>
+OStream& operator<<( OStream& os, const glm::mat4& matrix )
+{
+	return os << matrix[ 0 ] << matrix[ 1 ] << matrix[ 2 ] << matrix[ 3 ];
+}
+
 // Core log macros
 #define SAT_CORE_TRACE(...)				Saturn::Log::Get().CoreLogger()->trace(__VA_ARGS__)
 #define SAT_CORE_INFO(...)				Saturn::Log::Get().CoreLogger()->info(__VA_ARGS__)

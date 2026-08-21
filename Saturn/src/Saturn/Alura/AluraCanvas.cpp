@@ -666,7 +666,7 @@ namespace Saturn {
 				pState->SetCursorShouldFollow( false );
 			}
 
-			m_Renderer->PushClipRect( editAreaBB );
+			PushClipRect_ForItem( editAreaBB );
 			m_Renderer->SubmitString( *pStr, m_ActiveFont, m_Style.CurrentFontSize, { textStartingPosition.x - pState->GetScrollX(), textStartingPosition.y }, m_Style.Colours[ AluraColour_Text ] );
 
 			const glm::vec2 textStartingPosition = glm::vec2{ editAreaBB.Min.x + m_Style.ItemInnerSpacing.x, editAreaBB.Min.y };
@@ -700,7 +700,7 @@ namespace Saturn {
 				m_Renderer->SubmitRect( selectionRect, m_Style.Colours[ AluraColour_TextSelected ] );
 			}
 
-			m_Renderer->PopClipRect();
+			PopClipRect_ForItem();
 		}
 
 #if defined(SAT_ALURA_SHOW_TEXT_BB)
@@ -1756,6 +1756,30 @@ namespace Saturn {
 			rNewPopup.JustCreated = true;
 			return rNewPopup;
 		}
+	}
+
+	void AluraCanvas::PushClipRect_ForItem( const AluraRect& bb )
+	{
+		SAT_CORE_ASSERT( m_ActiveRegions.size(), "Alura: PushClipRect_ForItem needs an active region." );
+		const auto* pRegion = m_ActiveRegions.top();
+
+		AluraRect newBB = bb;
+		newBB.Min = glm::max(
+			newBB.Min,
+			pRegion->PerFrame.ClippingRect.Min
+		);
+
+		newBB.Max = glm::min(
+			newBB.Max,
+			pRegion->PerFrame.ClippingRect.Max
+		);
+
+		m_Renderer->PushClipRect( newBB );
+	}
+
+	void AluraCanvas::PopClipRect_ForItem()
+	{
+		m_Renderer->PopClipRect();
 	}
 
 }

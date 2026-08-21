@@ -112,8 +112,8 @@ namespace Saturn {
 		}
 
 		void ResetCursorTime() { m_CursorBlinkingTime = -m_Specification.CursorAnimDuration; }
+		void ResetModificationStatus() { m_ModifiedSinceLastRender = false; }
 
-		bool IsModifiedAndAcknowledgeModification() { bool modified = m_ModifiedSinceLastRender; m_ModifiedSinceLastRender = false; return modified; }
 		bool CursorIsVisible() const { return m_CursorBlinkingTime <= 0.0f; }
 		void SetScrollX( float x ) { m_ScrollX = x; }
 		void SetCursorShouldFollow( bool follow ) { m_CursorFollow = follow; }
@@ -133,6 +133,8 @@ namespace Saturn {
 
 		size_t GetSelectionStart() const { return m_SelectionBegin; }
 		size_t GetSelectionEnd() const { return m_SelectionEnd; }
+
+		[[nodiscard]] bool GetReturnValue();
 
 		const AluraTextInputSpecification& GetSpecification() const { return m_Specification; }
 

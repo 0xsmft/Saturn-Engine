@@ -716,7 +716,7 @@ namespace Saturn {
 			m_Focused = 0llu;
 		}
 
-		return pState ? pState->IsModifiedAndAcknowledgeModification() : false;
+		return pState ? pState->GetReturnValue() : false;
 	}
 
 	bool AluraCanvas::BeginComboBox( const std::string& rLabel, const std::string& rPreviewName, float maxSize /*= 0.0f */ )
@@ -1237,7 +1237,10 @@ namespace Saturn {
 		TextFormatted( "Selected: {}", m_Selected );
 
 		static std::string str;
-		bool used = AddInputText( "Testing", &str );
+		if( AddInputText( "Testing", &str ) ) 
+		{
+			SAT_CORE_INFO( "Modified!" );
+		}
 
 		AddText( "This is text at size 32px" );
 		PopFontSize();
@@ -1263,7 +1266,7 @@ namespace Saturn {
 		AddText( "Long Text:\nUhm im testing this shit okay...\npenis" );
 
 		static std::string buf;
-		used = AddInputText( "Go on, type...", &buf );
+		bool used = AddInputText( "Go on, type...", &buf );
 
 		bool clicked = AddButton( "Yep" );
 

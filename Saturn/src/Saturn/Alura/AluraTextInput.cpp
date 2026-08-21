@@ -482,6 +482,40 @@ namespace Saturn {
 		m_IsSelecting = false;
 	}
 
+	void AluraTextInputA::SelectWord()
+	{
+		if( m_Specification.pString->empty() )
+			return;
+
+		const std::string& rString = *m_Specification.pString;
+
+		// If we are on a space, we do nothing.
+		if( m_OffsetFromStart < rString.size() && rString[ m_OffsetFromStart ] == ' ' )
+			return;
+
+		size_t begin = m_OffsetFromStart;
+
+		while( begin > 0 && rString[ begin - 1 ] != ' ' )
+		{
+			--begin;
+		}
+		
+		size_t end = m_OffsetFromStart;
+
+		while( end < rString.size() && rString[ end ] != ' ' )
+		{
+			++end;
+		}
+
+		if( begin == end )
+			return;
+
+		m_IsSelecting = true;
+		m_OffsetFromStart = end;
+		m_SelectionBegin = begin;
+		m_SelectionAnchor = begin;
+		m_SelectionEnd = end;
+	}
 
 	void AluraTextInputA::MoveCursorTo( size_t numberOfCharacters )
 	{

@@ -80,6 +80,9 @@ namespace Saturn {
 		std::underlying_type_t<AluraColour> Index;
 	};
 	
+	//
+	// Per frame volatile data for a region.
+	//
 	struct AluraRegionDataTemporary 
 	{
 		glm::vec2 StartingPosition{};
@@ -93,6 +96,9 @@ namespace Saturn {
 		bool CanScroll = false;
 	};
 
+	//
+	// Region data.
+	//
 	struct AluraRegionData
 	{
 		glm::vec2 Size{};
@@ -110,8 +116,12 @@ namespace Saturn {
 		bool Floating = false;
 	};
 
+	//
+	// Popup data.
+	//
 	struct AluraPopupData
 	{
+		// Non-owning pointer, allocated on the stack, just like a normal popup.
 		AluraRegionData* pRegionData = nullptr;
 		uint32_t ItemCount = 0u;
 		uint64_t ID = 0llu;
@@ -127,27 +137,35 @@ namespace Saturn {
 		bool AlreadyMeasured = false;
 	};
 
+	enum class AluraInputActionState : uint8_t
+	{
+		NoState = 0,
+		Pressed = 1,
+		Held = 2,
+		Released = 3,
+	};
+
+	struct AluraInputState
+	{
+		AluraInputActionState ButtonState = AluraInputActionState::NoState;
+		// In seconds.
+		float HeldTime = 0.0f;
+		float GracePeriod = 0.15f;
+	};
+
 	struct AluraCanvasSpecification
 	{
 		glm::vec2 Size{};
-	
+
 		// Position should be relative to the main window's position.
 		glm::vec2 Position{};
-		
-		// TODO: Be a bit nicer to the user and have an embedded default font.
-		// Specify the main font for this canvas to use, you *must* have a font in order for the canvas to be created.
+
+		// Specify the main font for this canvas to use.
 		AssetID   MasterFontAssetID = 0;
 
-		// Specify the main styling profile to be used, you don't need to have a styling profile asset as Alura will automatically default the style if no profile is specified.
+		// Specify the main styling profile to be used, you don't need to have a styling profile asset
+		// as Alura will automatically default the style if no profile is specified.
 		AssetID  StylingProfile = 0;
-	};
-
-	enum class AluraInputState : uint8_t
-	{
-		NoState  = 0,
-		Pressed  = 1,
-		Held	 = 2,
-		Released = 3,
 	};
 
 	//
@@ -161,8 +179,8 @@ namespace Saturn {
 	// 
 	// Y+ == down
 	// 
-	// Only one AluraCanvas can exist and at a time, an attempt to create a new canvas while there is already an
-	// existing one will result in an assert.
+	// Only one AluraCanvas can exist and at a time, an attempt to create a new canvas while there is
+	// already an existing canvas will result in an assert.
 	//
 	class AluraCanvas : public RefTarget
 	{
@@ -227,7 +245,17 @@ namespace Saturn {
 
 		[[nodiscard]] bool AddInputText( const std::string& rLabel, std::string* pStr, AluraTextInputFlags flags = AluraTextInputFlags_NoFlags );
 
+		//
+		// Begin a combo box
+		// 
+		// A combo box is a small popup that automatically calculates it's size upon the first frame
+		// 
+		// NB: You must check the return value of this function, if it succeeds you call 
+		// EndComboBox() after.
+		//
 		[[nodiscard]] bool BeginComboBox( const std::string& rLabel, const std::string& rPreviewName, float maxSize = 0.0f );
+
+		// End the current combo box.
 		void EndComboBox();
 	
 		//
@@ -254,8 +282,21 @@ namespace Saturn {
 
 		void OpenPopup( const std::string& rName );
 
+		//
+		// Horizontal line from start to end taking up the whole region size on the X axis.
+		//
+		// NB: An active region must exist.
+		//
 		void AddSeparator();
 
+		//
+		// Begin a region.
+		// 
+		// A region is an area where all widgets can be drawn on.
+		//
+		// You must check the return value if it succeeds you call 
+		// EndRegion() after.
+		//
 		[[nodiscard]] bool BeginRegion( const std::string& rID, const glm::vec2& rBounds );
 		void EndRegion();
 
@@ -322,8 +363,8 @@ namespace Saturn {
 		Ref<AluraFont> GetEditorFont() const { return m_EditorFont; }
 
 	public:
-		void UpdateMouseInputState( const RubyMouseButton btn, const AluraInputState state );
-		void UpdateKeyInputState( const RubyKey btn, const AluraInputState state );
+		void UpdateMouseInputState( const RubyMouseButton btn, const AluraInputActionState state );
+		void UpdateKeyInputState( const RubyKey btn, const AluraInputActionState state );
 		void UpdateKeyInputState_ForInputText( const wchar_t wc );
 		void UpdateMouseScroll( const glm::vec2& rScrollOffset );
 
@@ -356,9 +397,11 @@ namespace Saturn {
 
 		[[nodiscard]] bool MouseButtonPressed( RubyMouseButton btn );
 		[[nodiscard]] bool MouseButtonReleased( RubyMouseButton btn );
-		[[nodiscard]] bool KeyPressed( RubyMouseButton btn );
-		[[nodiscard]] bool KeyReleased( RubyMouseButton btn );
-		[[nodiscard]] bool KeyHeld( RubyMouseButton btn );
+		[[nodiscard]] bool MouseButtonDoubleClicked( RubyMouseButton btn );
+		[[nodiscard]] bool MouseButtonHeld( RubyMouseButton btn );
+		[[nodiscard]] bool KeyPressed( RubyKey btn );
+		[[nodiscard]] bool KeyReleased( RubyKey btn );
+		[[nodiscard]] bool KeyHeld( RubyKey btn );
 
 		AluraTextInputA* GetInputTextStateForItem( uint64_t itemID );
 
@@ -395,8 +438,10 @@ namespace Saturn {
 		std::vector<AluraPopupData> m_Popups;
 		std::stack<AluraPopupData*> m_OpenPopups;
 
-		std::array<AluraInputState, RubyMouseButton_EnumSize> m_MouseInputStates{ AluraInputState::NoState };
-		std::array<AluraInputState, RubyKey_EnumSize> m_KeyInputStates{ AluraInputState::NoState };
+		std::array<bool, RubyMouseButton_EnumSize> m_DoubleClickedMouseButton{};
+		std::array<AluraInputState, RubyMouseButton_EnumSize> m_MouseInputStates{};
+
+		std::array<AluraInputActionState, RubyKey_EnumSize> m_KeyInputStates{ AluraInputActionState::NoState };
 
 		AluraTextInputA m_InputTextState;
 

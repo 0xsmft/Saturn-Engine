@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 
 using System.Reflection;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 
 #if SAT_BUILDTOOOL_NETFRAMEWORK
 using System.CodeDom.Compiler;

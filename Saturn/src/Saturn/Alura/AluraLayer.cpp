@@ -63,31 +63,31 @@ namespace Saturn {
 					case EventType::MousePressed:
 					{
 						const RubyMouseEvent& rMouseEvent = ( RubyMouseEvent& ) rEvent;
-						g_AluraCanvas->UpdateMouseInputState( rMouseEvent.GetButton(), AluraInputState::Pressed );
+						g_AluraCanvas->UpdateMouseInputState( rMouseEvent.GetButton(), AluraInputActionState::Pressed );
 					} break;
 
 					case EventType::MouseReleased:
 					{
 						const RubyMouseEvent& rMouseEvent = ( RubyMouseEvent& ) rEvent;
-						g_AluraCanvas->UpdateMouseInputState( rMouseEvent.GetButton(), AluraInputState::Released );
+						g_AluraCanvas->UpdateMouseInputState( rMouseEvent.GetButton(), AluraInputActionState::Released );
 					} break;
 
 					case EventType::KeyPressed:
 					{
 						const RubyKeyEvent& rKeyEvent = ( RubyKeyEvent& ) rEvent;
-						g_AluraCanvas->UpdateKeyInputState( rKeyEvent.GetKeycode(), AluraInputState::Pressed );
+						g_AluraCanvas->UpdateKeyInputState( rKeyEvent.GetKeycode(), AluraInputActionState::Pressed );
 					} break;
 
 					case EventType::KeyReleased:
 					{
 						const RubyKeyEvent& rKeyEvent = ( RubyKeyEvent& ) rEvent;
-						g_AluraCanvas->UpdateKeyInputState( rKeyEvent.GetKeycode(), AluraInputState::Released );
+						g_AluraCanvas->UpdateKeyInputState( rKeyEvent.GetKeycode(), AluraInputActionState::Released );
 					} break;
 
 					case EventType::KeyHeld:
 					{
 						const RubyKeyEvent& rKeyEvent = ( RubyKeyEvent& ) rEvent;
-						g_AluraCanvas->UpdateKeyInputState( rKeyEvent.GetKeycode(), AluraInputState::Held );
+						g_AluraCanvas->UpdateKeyInputState( rKeyEvent.GetKeycode(), AluraInputActionState::Held );
 					} break;
 
 					case EventType::InputCharacter:

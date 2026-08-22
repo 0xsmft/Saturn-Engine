@@ -34,6 +34,20 @@
 
 namespace Saturn {
 
+	//
+	// Class to allow custom drawing onto the AluraCanvas
+	// 
+	// It's main usage is for HUDs where an entity may create
+	// an AluraDrawer to draw the HUD instead of having the
+	// drawing code inside of the entity.
+	// 
+	// Using an AluraDrawer has the advantage of having a 
+	// dedicated OnEvent() function.
+	// 
+	// It's best to not place any initialisation code in the
+	// constuctor and place it in the OnInit() function.
+	// Same rules applies for OnDestroy()
+	//
 	SCLASS()
 	class AluraDrawer : public SObject
 	{
@@ -54,11 +68,27 @@ namespace Saturn {
 
 	public:
 		AluraDrawer() = default;
-		~AluraDrawer() = default;
+		virtual ~AluraDrawer() = default;
 
+		//
+		// Called when the AluraDrawer is
+		// initialised.
+		//
 		virtual void OnInit() = 0;
+
+		//
+		// Main drawing function.
+		//
 		virtual void OnDraw( Timestep ts ) = 0;
+
+		//
+		// Called upon destroy.
+		//
 		virtual void OnDestroy() = 0;
+		
+		//
+		// Called upon an event.
+		//
 		virtual void OnEvent( Event& rEvent ) = 0;
 	};
 	

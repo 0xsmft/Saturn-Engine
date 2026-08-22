@@ -36,7 +36,10 @@ namespace Saturn {
 	class AluraRect
 	{
 	public:
+		// Upper-left
 		glm::vec2 Min;
+
+		// Bottom-right
 		glm::vec2 Max;
 	
 		constexpr AluraRect() : Min( 0.0f, 0.0f ), Max( 0.0f, 0.0f ) {}

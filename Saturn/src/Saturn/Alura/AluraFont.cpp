@@ -534,7 +534,7 @@ namespace Saturn {
 		const double fsScale = 1 / ( rMetrics.AscenderY - rMetrics.DescenderY );
 		const double y = fsScale * rMetrics.AscenderY;
 	
-		return static_cast< float >( y );
+		return glm::ceil( static_cast< float >( y ) );
 	}
 
 }

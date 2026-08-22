@@ -35,6 +35,9 @@
 
 namespace Saturn {
 
+	//
+	// Alura compliant font glyph.
+	//
 	class AluraSerialisedGlyph
 	{
 	public:
@@ -72,7 +75,7 @@ namespace Saturn {
 
 		[[nodiscard]] inline float GetAdvance() const { return Advance; }
 
-		void GetQuadPlaneBounds( float& rLeft, float& rBottom, float& rRight, float& rTop ) const
+		inline void GetQuadPlaneBounds( float& rLeft, float& rBottom, float& rRight, float& rTop ) const
 		{
 			rLeft   = PlaneLeft;
 			rBottom = PlaneBottom;
@@ -80,7 +83,7 @@ namespace Saturn {
 			rTop    = PlaneTop;
 		}
 		
-		void GetQuadAtlasBounds( float& rLeft, float& rBottom, float& rRight, float& rTop ) const
+		inline void GetQuadAtlasBounds( float& rLeft, float& rBottom, float& rRight, float& rTop ) const
 		{
 			rLeft = AtlasLeft;
 			rBottom = AtlasBottom;
@@ -106,6 +109,9 @@ namespace Saturn {
 
 	static_assert( std::is_trivially_copyable_v<AluraFontMetrics>, "AluraFontMetrics must be a POD type!" );
 
+	//
+	// Internal class.
+	//
 	class AluraFontData
 	{
 	public:
@@ -158,6 +164,9 @@ namespace Saturn {
 		Latest = VersionAdded
 	};
 
+	//
+	// AluraFont asset
+	//
 	class AluraFont : public Asset
 	{
 	public:
@@ -172,12 +181,7 @@ namespace Saturn {
 
 		virtual ~AluraFont();
 
-		void Serialise( const std::filesystem::path& rPath, bool isForDist = false ) const;
-		void Deserialise( FDependentIStream& rStream );
-		
-		// FOR USE BY ALURACANVAS ONLY!
-		void Deserialise_ForAluraCanvas( Passkey<class AluraCanvas> pk, const std::filesystem::path& rPath );
-
+	public:
 		Ref<Texture2D> GetTexture() const { return m_TextureAtlas; }
 
 		AluraFontData& GetFontData() { return m_AluraFontData; }
@@ -187,6 +191,7 @@ namespace Saturn {
 		glm::vec2 CalcTextSizeN( float fontSize, const std::string& rText, size_t n );
 		glm::vec2 CalcTextSizeNAtOffset( float fontSize, const std::string& rText, size_t n, size_t off );
 	
+		// Starting YCoord rounded to the nearest whole number.
 		float GetStartingYCoord() const;
 
 #if !defined(SAT_DIST)
@@ -198,6 +203,13 @@ namespace Saturn {
 		std::filesystem::path GetFontFilepath() const { return ""; }
 		std::string GetFontName() const { return ""; }
 #endif
+
+	public:
+		void Serialise( const std::filesystem::path& rPath, bool isForDist = false ) const;
+		void Deserialise( FDependentIStream& rStream );
+
+		// FOR USE BY ALURACANVAS ONLY!
+		void Deserialise_ForAluraCanvas( Passkey<class AluraCanvas> pk, const std::filesystem::path& rPath );
 
 	private:
 		void CreateOrLoadAtlas( bool overrideCache = false );

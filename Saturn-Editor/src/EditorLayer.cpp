@@ -3300,6 +3300,20 @@ namespace Saturn {
 		{
 			m_SceneRenderer->ImGuiRender();
 
+			if( Auxiliary::TreeNode( "Alura" ) )
+			{
+				if( g_AluraCanvas )
+				{
+					ImGui::Text( "AluraCanvas::FrameTime: %.3f ms", g_AluraCanvas->GetFrameTiming() );
+				}
+				else
+				{
+					ImGui::TextDisabled( "No Alura Canvas exists!" );
+				}
+
+				Auxiliary::EndTreeNode();
+			}
+
 			if( Auxiliary::TreeNode( "Editor Camera" ) )
 			{
 				ImGui::Text( "Width %i, Height %i, Ratio %i", m_EditorCamera.GetViewportWidth(), m_EditorCamera.GetViewportHeight(), m_EditorCamera.GetAspectRatio() );

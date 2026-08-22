@@ -341,6 +341,8 @@ namespace Saturn {
 		[[nodiscard]] bool IsAnyItemFocused() const  { return m_Focused != 0llu; }
 		[[nodiscard]] bool IsAnyItemSelected() const { return m_Selected != 0llu; }
 
+		float GetFrameTiming() const { return m_FrameTiming.ElapsedMilliseconds(); }
+
 	public:
 #if !defined(SAT_DIST)
 		// Editor only function, clears the users drawing commands to allow us to draw on top of it.
@@ -415,6 +417,9 @@ namespace Saturn {
 		UUID m_ID;
 		glm::vec2 m_CanvasSize;
 		glm::vec2 m_Position;
+		
+		// CPU Timing
+		Timer m_FrameTiming;
 
 		glm::vec2 m_PendingNextItemPosition{};
 		float m_BackupOfFontSize = 0.0f;

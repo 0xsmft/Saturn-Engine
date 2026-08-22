@@ -165,6 +165,7 @@ namespace Saturn {
 	public:
 		[[nodiscard]] uint32_t Width() const { return m_Width; }
 		[[nodiscard]] uint32_t Height() const { return m_Height; }
+		float GetFrameTime() const { return m_FrameTime.ElapsedMilliseconds(); }
 
 	private:
 		void OnResize();
@@ -187,6 +188,7 @@ namespace Saturn {
 		uint32_t m_Width = 0;
 		uint32_t m_Height = 0;
 		glm::mat4 m_Projection{};
+		Timer m_FrameTime;
 
 		bool m_Resized = false;
 

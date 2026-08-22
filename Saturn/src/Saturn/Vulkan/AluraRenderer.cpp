@@ -211,6 +211,7 @@ namespace Saturn {
 	void AluraRenderer::Render()
 	{
 		SAT_PF_EVENT();
+		m_FrameTime.Reset();
 
 		if( m_Resized )
 		{
@@ -225,6 +226,8 @@ namespace Saturn {
 			RenderProper();
 		}
 		CmdEndDebugLabel( m_CommandBuffer );
+		
+		m_FrameTime.Stop();
 	}
 
 	void AluraRenderer::EndFrame()
@@ -460,8 +463,6 @@ namespace Saturn {
 		// 	V5 = ( 0, 1 )
 
 		const glm::vec2 rectSize = { rMax.x - rMin.x, rMax.y - rMin.y };
-		
-		rounding = std::min( rounding, std::min( rectSize.x, rectSize.y ) * 0.5f );
 
 		// Top left
 		m_pQuadVertexPtr->Position = { rMin.x, rMin.y };

@@ -1877,6 +1877,9 @@ namespace Saturn {
 
 			ImGui::Text( "SceneRenderer::SMAAPass: %.2f ms", m_RendererData.SMAAPassTimer.ElapsedMilliseconds() );
 
+			if( m_AluraRenderer )
+				ImGui::Text( "AluraRenderer::RenderProper: %.2f ms", m_AluraRenderer->GetFrameTime() );
+
 			ImGui::Text( "Renderer::EndFrame - Queue Present: %.2f ms", Renderer::Get()->GetQueuePresentTime() );
 			ImGui::Text( "Renderer::EndFrame - Queue Wait: %.2f ms", Renderer::Get()->GetQueueWaitTime() );
 

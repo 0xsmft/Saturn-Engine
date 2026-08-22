@@ -100,6 +100,8 @@ namespace Saturn {
 		// Forgot to call PopFontSize()
 		SAT_CORE_ASSERT( m_BackupOfFontSize == 0.0f );
 
+		m_FrameTiming.Reset();
+
 		m_Layout.Reset();
 
 		// Calculate mouse position relative to this canvas' position.
@@ -201,6 +203,8 @@ namespace Saturn {
 		// If any keys are "released" from the previous frame, we
 		// reset them.
 		ResetInputStates();
+	
+		m_FrameTiming.Stop();
 	}
 
 	void AluraCanvas::AddDrawer( Ref<AluraDrawer> drawer )

@@ -11,7 +11,6 @@ newoption {
 }
 
 workspace "Saturn"
-	architecture "x64"
 	startproject "Saturn-Editor"
 	warnings "Default"
 
@@ -20,6 +19,9 @@ workspace "Saturn"
 	flags { "MultiProcessorCompile" }
 	editandcontinue "Off"
 	debugformat "c7"
+
+	filter "language:C++ or language:C"
+		architecture "x86_64"
 
 	filter "action:vs*"
 		linkoptions { "/ignore:4006" }

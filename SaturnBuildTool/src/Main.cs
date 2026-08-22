@@ -1,10 +1,6 @@
 ﻿using System.Reflection;
 
-[assembly: AssemblyVersion( "5.1.*" )]
-[assembly: AssemblyCompany( "Saturn Engine" )]
 [assembly: AssemblyCopyright( "2020 - 2023" )]
-[assembly: AssemblyProduct( "Saturn Build Tool" )]
-[assembly: AssemblyDescription( "Saturn Build Tool used for compiling games." )]
 
 namespace SaturnBuildTool
 {

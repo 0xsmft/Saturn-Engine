@@ -585,6 +585,7 @@ namespace Saturn {
 			if( m_ShowUndoRedoDebug )       m_GlobalUndoRedoGroup->OnImGuiRender( &m_ShowUndoRedoDebug );
 			if( m_ShowSetPremakePathModal ) DrawSetPremakePathModal();
 			if( m_ShowInvalidRecentProjectPathModal ) DrawInvalidRecentProjectModal();
+			if( m_ShowLiveAluraStyleEditor ) DrawLiveAluraEditorWindow();
 		}
 
 		DrawViewport();
@@ -3188,6 +3189,7 @@ namespace Saturn {
 			if( ImGui::MenuItem( "DEBUG: Simulate Read Only state" ) )				m_ImGuiWindowManager->MarkAllWindowsAsReadOnly();
 			if( ImGui::MenuItem( "DEBUG: Reset Read Only state" ) )					m_ImGuiWindowManager->ResetReadOnlyState();
 			if( ImGui::MenuItem( "DEBUG: Mark scene as dirty" ) )					m_EditorScene->MarkDirty();
+			if( ImGui::MenuItem( "DEBUG: Show Alura Style live edit" ) )			m_ShowLiveAluraStyleEditor ^= 1;
 
 			ImGui::EndMenu();
 		}
@@ -3953,6 +3955,24 @@ namespace Saturn {
 			ImGui::EndHorizontal();
 
 			ImGui::EndPopup();
+		}
+	}
+
+	void EditorLayer::DrawLiveAluraEditorWindow()
+	{
+		if( ImGui::Begin( "Alura live style editor", &m_ShowLiveAluraStyleEditor ) )
+		{
+			if( !g_AluraCanvas )
+			{
+				ImGui::Text( "An Alura canvas must exist!" );
+			}
+			else
+			{
+				auto& rStyle = g_AluraCanvas->GetStyle();
+				AluraStyleEditor::Draw( rStyle, false );
+			}
+
+			ImGui::End();
 		}
 	}
 

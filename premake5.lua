@@ -11,7 +11,6 @@ newoption {
 }
 
 workspace "Saturn"
-	architecture "x64"
 	startproject "Saturn-Editor"
 	warnings "Default"
 

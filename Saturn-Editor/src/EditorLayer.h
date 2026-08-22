@@ -116,6 +116,7 @@ namespace Saturn {
 		void DrawEditorDebugWindow();
 		void DrawSetPremakePathModal();
 		void DrawInvalidRecentProjectModal();
+		void DrawLiveAluraEditorWindow();
 
 		// Viewport
 		void DrawViewport();
@@ -321,6 +322,7 @@ namespace Saturn {
 		bool m_ShowSetPremakePathModal = false;
 		bool m_PendingPremakeJobAfterPathIsSet = false;
 		bool m_ShowInvalidRecentProjectPathModal = false;
+		bool m_ShowLiveAluraStyleEditor = false;
 
 		// JobProgress
 		float m_OperationPercent = 0.0f;

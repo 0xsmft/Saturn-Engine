@@ -300,6 +300,13 @@ namespace Saturn {
 		[[nodiscard]] bool BeginRegion( const std::string& rID, const glm::vec2& rBounds );
 		void EndRegion();
 
+		//
+		// Key button. A button that has a key code and text to the right of it.
+		// 
+		// e.g. [F] To pay respects.
+		//
+		[[nodiscard]] bool AddKeyButton( const std::string& rLabel, RubyKey key );
+
 		void AddDummy( const glm::vec2& rSize );
 
 		void DrawDemo();

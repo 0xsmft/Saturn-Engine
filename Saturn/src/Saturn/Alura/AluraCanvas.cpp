@@ -34,6 +34,7 @@
 #include "Saturn/Core/Input.h"
 #include "Saturn/Core/App.h"
 #include "Saturn/Core/Ruby/RubyWindow.h"
+#include "Saturn/Core/Ruby/RubyAuxiliary.h"
 
 #include "Saturn/Vulkan/AluraRenderer.h"
 #include "Saturn/Asset/AssetManager.h"
@@ -1238,6 +1239,74 @@ namespace Saturn {
 		m_ActiveRegions.pop();
 	}
 
+	bool AluraCanvas::AddKeyButton( 
+		const std::string& rLabel, 
+		RubyKey key )
+	{
+		// Handle NextItemPosition
+		glm::vec2 posDependingLastCall = m_Layout.CursorPos;
+
+		if( m_WantToSetItemPosition )
+		{
+			posDependingLastCall = m_PendingNextItemPosition;
+			m_WantToSetItemPosition = false;
+		}
+
+		const auto& rKeyLabel = RubyKeyToString( key );
+		const glm::vec2 keyTextSize = CalcTextSize( rKeyLabel.data() );
+		const glm::vec2 keyTextPosition = posDependingLastCall + m_Style.ItemInnerSpacing;
+		const glm::vec2 buttonSize = { m_Style.ItemInnerSpacing.x * 2 + keyTextSize.x, m_Style.ItemInnerSpacing.y * 2 + keyTextSize.y };
+		
+		const AluraRect keyButtonBB( posDependingLastCall, posDependingLastCall + buttonSize );
+		
+		const glm::vec2 labelSize = CalcTextSize( rLabel );
+		const glm::vec2 labelPosition = { posDependingLastCall.x + buttonSize.x + m_Style.ItemInnerSpacing.x, posDependingLastCall.y + m_Style.ItemInnerSpacing.y };
+		const AluraRect textBB( labelPosition, labelPosition + labelSize );
+
+		const glm::vec2 totalSize = { buttonSize.x + m_Style.ItemSpacing.x + labelSize.x, buttonSize.y };
+		const AluraRect fullBB( keyButtonBB.Min, keyButtonBB.Min + totalSize );
+
+		ItemSize( fullBB.GetSize() );
+		if( !CanAddItem( fullBB ) )
+			return false;
+
+		const auto itemID = FNV1A64( rLabel.c_str() );
+
+		bool hovered;
+		bool pressed = ButtonBehaviour( fullBB, itemID, &hovered, nullptr );
+
+		m_Renderer->SubmitRect( 
+			keyButtonBB, 
+			hovered ? m_Style.Colours[ AluraColour_ButtonHovered ] : m_Style.Colours[ AluraColour_Button ] );
+
+		m_Renderer->SubmitString(
+			rKeyLabel.data(),
+			m_ActiveFont,
+			m_Style.CurrentFontSize,
+			keyTextPosition,
+			m_Style.Colours[ AluraColour_Text ] );
+
+		m_Renderer->SubmitString(
+			rLabel,
+			m_ActiveFont,
+			m_Style.CurrentFontSize,
+			labelPosition,
+			m_Style.Colours[ AluraColour_Text ] );
+
+		if( hovered && KeyPressed( key ) )
+		{
+			return true;
+		}
+
+#if defined( SAT_ALURA_SHOW_TEXT_BB )
+		m_Renderer->SubmitRectFrame( keyButtonBB, 1.0f, glm::vec4{ 0.0f, 0.0f, 1.0f, 1.0f } );
+		m_Renderer->SubmitRectFrame( textBB, 1.0f, glm::vec4{ 0.0f, 1.0f, 0.0f, 1.0f } );
+		m_Renderer->SubmitRectFrame( fullBB, 1.0f, glm::vec4{ 1.0f, 0.0f, 0.0f, 1.0f } );
+#endif
+
+		return pressed;
+	}
+
 	void AluraCanvas::AddDummy( const glm::vec2& rSize )
 	{
 		// Handle NextItemPosition
@@ -1276,6 +1345,10 @@ namespace Saturn {
 			}
 
 			AddSeparator();
+
+			if( AddKeyButton( "To Pay respects", RubyKey_F ) ) 
+			{
+			}
 
 			PushStyle( AluraColour_FrameBackground, { 1.0f, 1.0f, 1.0f, 1.0f } );
 			if( BeginRegion( "##testing1", { 250.0f / 2.0f, 250.0f / 2.0f } ) )

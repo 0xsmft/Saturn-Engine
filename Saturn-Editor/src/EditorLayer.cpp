@@ -3677,6 +3677,13 @@ namespace Saturn {
 			Auxiliary::DrawBoolControl( "Build Shader Bundle", m_ShouldBuildShaderBundle );
 			Auxiliary::DrawBoolControl( "Build Asset Bundle", m_ShouldBuildAssetBundle );
 
+			if( Auxiliary::TreeNode( "Advanced" ) )
+			{
+				Auxiliary::DrawBoolControl( "Build Asset Bundle Minimal only", m_BuildABMinimalOnly );
+
+				Auxiliary::EndTreeNode();
+			}
+
 			ImGui::Separator();
 
 			ImGui::BeginHorizontal( "##SboOptions" );
@@ -3696,9 +3703,20 @@ namespace Saturn {
 					CreateShaderBundleJob();
 
 				// TODO: Think of a better way for this... checking the sizes of the message boxes is not a good thing.
-				if( m_MessageBoxes.size() == 0 && m_ShouldBuildAssetBundle )
+				if( m_MessageBoxes.size() == 0 )
 				{
-					CreateAssetBundleJob();
+					if( m_ShouldBuildAssetBundle )
+					{
+						CreateAssetBundleJob();
+					}
+					else if( m_BuildABMinimalOnly )
+					{
+						// Bundle minimal now on current thread.
+						AssetBundle::BundleMinimal();
+
+						m_BlockingOperation->Reset();
+						m_JobModalOpen.store( false );
+					}
 				}
 
 				m_ShowDistBuildOptions = false;
@@ -4894,6 +4912,8 @@ namespace Saturn {
 		{
 			m_BlockingOperation->SetStatus( "Building Shader bundle..." );
 			BuildShaderBundle();
+
+			m_BlockingOperation->OnComplete();
 		} );
 	}
 

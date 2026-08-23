@@ -73,6 +73,7 @@ namespace Saturn {
 		// .AB + null
 		const unsigned char Magic[ 4 ] = { 0x2E, 0x41, 0x42, 0x00 };
 		uint32_t Version = 0u;
+		uint64_t BuildTime = 0llu;
 	};
 
 	struct DumpFileHeader
@@ -702,8 +703,11 @@ namespace Saturn {
 
 		std::ofstream fout( cachePath, std::ios::binary | std::ios::trunc );
 
+		const auto unixTimeMs = std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::system_clock::now().time_since_epoch() );
+
 		AssetBundleMinimalHeader header{};
 		header.Version = SAT_CURRENT_VERSION;
+		header.BuildTime = unixTimeMs.count();
 
 		RawSerialisation::WriteObject( header, fout );
 
@@ -777,6 +781,10 @@ namespace Saturn {
 
 		// Create project
 		Ref<Project> newProject = Ref<Project>::Create( newConfig );
+
+#if defined(SAT_DIST)
+		newProject->SetAssetBundleBuildTime( header.BuildTime );
+#endif
 
 		UUID defMatAsset = 0;
 		RawSerialisation::ReadObject( defMatAsset, stream );

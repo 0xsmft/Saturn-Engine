@@ -211,6 +211,11 @@ namespace Saturn {
 		uint64_t GetCompressionThresholdForAssetBundle() const { return m_MininumCompressedThresholdInAB; }
 		void SetCompressionThresholdForAssetBundle( uint64_t threshold ) { m_MininumCompressedThresholdInAB = threshold; }
 
+#if defined(SAT_DIST)
+		uint64_t GetAssetBundleBuildTime() const { return m_AssetBundleBuildTime; }
+		void SetAssetBundleBuildTime( uint64_t buildTime ) { m_AssetBundleBuildTime = buildTime; }
+#endif
+
 	public:
 		//////////////////////////////////////////////////////////////////////////
 		// Premake, Building & Preparation for Distribution (Used in Editor)
@@ -260,6 +265,8 @@ namespace Saturn {
 		// This is the version that is local to the developer, it has nothing to do with Saturn versions.
 		// It is purely informative.
 		std::string m_DeveloperProjectVersion;
+#else
+		uint64_t m_AssetBundleBuildTime = 0llu;
 #endif
 
 	private:

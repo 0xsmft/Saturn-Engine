@@ -39,7 +39,6 @@
 
 #include "Saturn/GameFramework/Core/GameModule.h"
 
-#include "Saturn/Alura/AluraInputTextState.h"
 #include "Saturn/Alura/AluraCanvas.h"
 #include "Saturn/Alura/AluraLayer.h"
 

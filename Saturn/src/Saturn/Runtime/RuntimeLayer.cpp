@@ -232,6 +232,8 @@ namespace Saturn {
 		if( m_OnlineAPI )
 			m_OnlineAPI->Tick();
 
+		m_AssetManager.Tick( time );
+
 		RenderThread::Get().Queue( [ = ]()
 		{
 			m_SceneRenderer->RenderScene();

@@ -166,6 +166,8 @@ namespace Saturn {
 			m_LastFrameTime = time;
 		}
 
+		m_Window->Hide();
+
 		JobSystem::Get().WaitForUnfinshedJobs();
 
 #if defined( SAT_PROFILER_ENABLE )

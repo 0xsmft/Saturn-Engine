@@ -144,10 +144,12 @@ namespace Saturn {
 
 	NodeEditorTaskState AnimGraphPlayAnimTask::Tick( Timestep ts )
 	{
-		if( m_AnimationAsset && m_Animator && !m_AnimationInitialised )
+		if( !m_Animator || !m_AnimationAsset )
+			return m_CurrentState;
+
+		if( !m_AnimationInitialised || m_Animator->m_SingleAnimationAsset != m_AnimationAsset )
 		{
 			m_Animator->AnimGraph_SetSingleAnim( m_AnimationAsset, m_ShouldLoop );
-
 			m_AnimationInitialised = true;
 		}
 

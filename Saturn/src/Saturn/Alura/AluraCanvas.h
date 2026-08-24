@@ -204,6 +204,12 @@ namespace Saturn {
 		// NOTE: There must always be an active font, so if you pop the last remaining font, Saturn will assert.
 		void PopFont();
 
+		//
+		// Clears the drawer list
+		// and calls OnDestroy()
+		//
+		void RemoveAllDrawers();
+
 	public:
 		// Drawing and widgets
 		void AddRect( const glm::vec2& rSize, float rounding = 0.0f, const glm::vec4& rColour = glm::one<glm::vec4>() );

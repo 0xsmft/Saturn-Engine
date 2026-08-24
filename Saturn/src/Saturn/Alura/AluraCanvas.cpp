@@ -167,12 +167,7 @@ namespace Saturn {
 
 	void AluraCanvas::Destroy()
 	{
-		for( auto& rDrawer : m_Drawers )
-		{
-			rDrawer->OnDestroy();
-		}
-
-		m_Drawers.clear();
+		RemoveAllDrawers();
 
 		m_Renderer = nullptr;
 		m_ActiveFont = nullptr;
@@ -182,12 +177,7 @@ namespace Saturn {
 
 	void AluraCanvas::OnSceneChange()
 	{
-		for( auto& rDrawer : m_Drawers )
-		{
-			rDrawer->OnDestroy();
-		}
-
-		m_Drawers.clear();
+		RemoveAllDrawers();
 
 		m_InputTextState.Reset();
 
@@ -240,6 +230,16 @@ namespace Saturn {
 			// Font is null! Must have an active font
 			SAT_CORE_ASSERT( m_ActiveFont );
 		}
+	}
+
+	void AluraCanvas::RemoveAllDrawers()
+	{
+		for( auto& rDrawer : m_Drawers )
+		{
+			rDrawer->OnDestroy();
+		}
+
+		m_Drawers.clear();
 	}
 
 	void AluraCanvas::AddRect( const glm::vec2& rSize, float rounding, const glm::vec4& rColour )
@@ -1256,7 +1256,7 @@ namespace Saturn {
 		const glm::vec2 keyTextSize = CalcTextSize( rKeyLabel.data() );
 		const glm::vec2 keyTextPosition = posDependingLastCall + m_Style.ItemInnerSpacing;
 		const glm::vec2 buttonSize = { m_Style.ItemInnerSpacing.x * 2 + keyTextSize.x, m_Style.ItemInnerSpacing.y * 2 + keyTextSize.y };
-		
+
 		const AluraRect keyButtonBB( posDependingLastCall, posDependingLastCall + buttonSize );
 		
 		const glm::vec2 labelSize = CalcTextSize( rLabel );

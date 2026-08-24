@@ -61,6 +61,7 @@ namespace Saturn {
 	//
 	class Animator : public RefTarget
 	{
+		SAT_DISABLE_COPY( Animator );
 	public:
 		Animator();
 		virtual ~Animator();

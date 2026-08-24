@@ -378,15 +378,13 @@ namespace Saturn {
 			}
 			else
 			{
-				canSetCursorMode = !m_AluraLayer->AluraWantsControl();
+				canSetCursorMode = m_MouseOverViewport && !m_AluraLayer->AluraWantsControl();
 			}
 		}
 		else
 		{
 			canSetCursorMode = m_AllowCameraEvents;
 		}
-
-//		const bool canSetCursorMode = m_RuntimeScene == nullptr ? m_AllowCameraEvents : m_RuntimeScene->GetRuntimeState() == RuntimeState::Suspended && !m_AluraLayer->AluraWantsControl() ? m_AllowCameraEvents : m_MouseOverViewport;
 
 		Input::Get().SetCanSetCursorMode( canSetCursorMode );
 

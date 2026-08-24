@@ -49,6 +49,16 @@ namespace Saturn {
 
 	class AnimationController;
 
+	//
+	// The animator control the skeletal animation
+	// system in an Entity.
+	// 
+	// The animator is responsible for Ticking any animation graphs
+	// and single animation assets.
+	// 
+	// Animator has two animation modes, 
+	// Single and AnimationControllerGraph.
+	//
 	class Animator : public RefTarget
 	{
 	public:
@@ -89,13 +99,25 @@ namespace Saturn {
 		float GetCurrentAnimTime() const { return m_AnimationTime; }
 		AnimationState GetAnimationState() const { return m_State; }
 
+		//
+		// NB: May return null if no anim graph or AnimatorType is not
+		// AnimationControllerGraph
+		//
 		Ref<AnimationController> GetAnimGraph() const;
 
 		void ChangeType( AnimatorType type );
 
+		//
+		// Play an animation and return back to the animation graph.
+		//
+		// NB: This will cause the AnimGraph to rest and start back from
+		// the beginning.
+		//
+		void QuickFireAnimation( AssetID id );
+		void QuickFireAnimation( const std::string& rName );
+
 	private:
 		void TickSingleAnim( Timestep ts );
-
 		void AnimGraph_SetSingleAnim( Ref<SkeletalAnimationAsset> anim, bool loop );
 
 	private:
@@ -105,6 +127,8 @@ namespace Saturn {
 		AnimatorType m_AnimatorType = AnimatorType::Single;
 		bool m_Looping = false;
 		bool m_Completed = false;
+		bool m_QuickFireAnimPlaying = false;
+		bool m_BackupOfLooping = false;
 
 		Ref<SkeletalAnimationAsset> m_SingleAnimationAsset;
 		Ref<AnimationController> m_AnimationControllerAsset;

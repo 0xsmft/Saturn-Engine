@@ -109,6 +109,15 @@ namespace Saturn {
 						{
 							m_AnimationTime = 1.0f;
 							m_Completed = true;
+
+							// Reset back
+							if( m_QuickFireAnimPlaying )
+							{
+								m_AnimatorType = AnimatorType::AnimationControllerGraph;
+								m_Looping = m_BackupOfLooping;
+								m_BackupOfLooping = false;
+								m_QuickFireAnimPlaying = false;
+							}
 						}
 					}
 				}
@@ -144,13 +153,17 @@ namespace Saturn {
 				TickSingleAnim( ts );
 				break;
 
-			case AnimatorType::AnimationControllerGraph:
+			case AnimatorType::AnimationControllerGraph: 
+			{
+				// Tick AnimGraph
 				m_AnimationControllerAsset->Tick( ts );
+				
+				// Tick single anim asset... a bit screwy :(
 				if( m_SingleAnimationAsset )
 				{
 					TickSingleAnim( ts );
 				}
-				break;
+			} break;
 
 			default: break;
 		}
@@ -260,6 +273,29 @@ namespace Saturn {
 		// Ignore sentinel value.
 		if( type == AnimatorType::Unknown )
 			m_AnimatorType = type;
+	}
+
+	void Animator::QuickFireAnimation( AssetID id )
+	{
+		if( id == 0llu )
+			return;
+
+		m_SingleAnimationAsset = AssetManager::Get()->GetAssetAs<SkeletalAnimationAsset>( id );
+		m_AnimatorType = AnimatorType::Single;
+		m_AnimationTime = 0.0f;
+		m_Completed = false;
+
+		m_Context.initialize( *static_cast< const acl::compressed_tracks* >( m_SingleAnimationAsset->GetData() ) );
+		
+		m_BackupOfLooping = m_Looping;
+		m_Looping = false;
+
+		m_QuickFireAnimPlaying = true;
+	}
+
+	void Animator::QuickFireAnimation( const std::string& rName )
+	{
+		QuickFireAnimation( AssetManager::Get()->FindAsset( rName, AssetType::SkeletalAnimation )->ID );
 	}
 
 }

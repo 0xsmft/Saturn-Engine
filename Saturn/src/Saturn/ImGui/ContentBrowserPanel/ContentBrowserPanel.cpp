@@ -1235,7 +1235,7 @@ namespace Saturn {
 				if( PopupModified )
 				{
 					m_OpenClassInstancePopup = false;
-					m_ClassInstanceName = "";
+					m_ClassInstanceName.clear();
 
 					ImGui::CloseCurrentPopup();
 				}
@@ -1854,16 +1854,21 @@ namespace Saturn {
 
 				const auto drawOptionButton = []( const char* pHeadingText, const char* pDesc ) -> bool
 				{
+					ImGui::PushID( pHeadingText );
 					ImGui::Text( pHeadingText );
 					ImGui::Text( pDesc );
 
-					return ImGui::Button( "Select" );
+					bool pressed = ImGui::Button( "Select" );
+
+					ImGui::PopID();
+					return pressed;
 				};
 
 				{
 					if( drawOptionButton( "Default SClass", "A simple class that has reflection data tied to it." ) )
 					{
 						m_pSelectedMetadata = SObject::StaticClass();
+						m_IsBlankFile = false;
 					}
 				}
 
@@ -1873,18 +1878,36 @@ namespace Saturn {
 					if( drawOptionButton( "Entity", "An entity that can be spawned into the world with custom behaviour defined in C++." ) )
 					{
 						m_pSelectedMetadata = Entity::StaticClass();
+						m_IsBlankFile = false;
 					}
 				}
 
 				ImGui::Separator();
 
 				{
-					if( drawOptionButton( "Character", "An entity that has the ability to walk, jump and sprint. A camera will be created if non is specified." ) )
+					if( drawOptionButton( "Character", "An entity that has the ability to walk, jump and sprint. A camera will be created if none is specified." ) )
 					{
 						m_pSelectedMetadata = Character::StaticClass();
+						m_IsBlankFile = false;
 					}
 				}
 
+				ImGui::Separator();
+
+				{
+					if( drawOptionButton( "Blank file", "An empty file." ) )
+					{
+						m_pSelectedMetadata = nullptr;
+						m_IsBlankFile = true;
+					}
+
+					if( m_IsBlankFile )
+					{
+						ImGui::Text( "File Extension (without the .)" );
+						Auxiliary::InputText( "##simpleblankclass", &m_BlankFileExtension );
+					}
+				}
+				
 				ImGui::Separator();
 			}
 			else
@@ -1906,7 +1929,7 @@ namespace Saturn {
 
 			ImGui::Checkbox( "Show simple class list", &m_IsSimpleClassLayout );
 
-			Auxiliary::DisabledFlag disabled( m_NewClassName.empty() || m_pSelectedMetadata == nullptr );
+			Auxiliary::DisabledFlag disabled( m_NewClassName.empty() || ( !m_IsBlankFile && m_pSelectedMetadata == nullptr ) );
 
 			ImGui::Separator();
 
@@ -1929,8 +1952,26 @@ namespace Saturn {
 				// Step 0.5: Copy over C# files if needed
 				Project::GetActiveProject()->TryCopyCSharpTargetFiles();
 
-				// Step 1: Copy over the actual .cpp and .h files and amend the content.
-				ClassTemplateFileHelper::CreateAndAmendTemplateFile( m_pSelectedMetadata, m_CurrentPath, m_NewClassName.c_str() );
+				if( m_IsBlankFile )
+				{
+					// If we are a blank file all we need to do is create the file.
+					std::filesystem::path blankFilepath = m_CurrentPath / ( m_NewClassName + "." + m_BlankFileExtension );
+					if( std::filesystem::exists( blankFilepath ) )
+					{
+						blankFilepath = m_CurrentPath / ( GetFilenameCount( m_NewClassName ) + "." + m_BlankFileExtension );
+					}
+
+					std::ofstream stream( blankFilepath );
+					stream.close();
+
+					// Rest for next opening.
+					m_IsBlankFile = false;
+				}
+				else
+				{
+					// Step 1: Copy over the actual .cpp and .h files and amend the content.
+					ClassTemplateFileHelper::CreateAndAmendTemplateFile( m_pSelectedMetadata, m_CurrentPath, m_NewClassName.c_str() );
+				}
 
 				// Step 2: Update or create the project files.
 				if( Premake::Launch( Project::GetActiveProject()->GetRootDir(), L"premake5.lua", PREFERED_PREMAKE_ACTION_FOR_OS ) )

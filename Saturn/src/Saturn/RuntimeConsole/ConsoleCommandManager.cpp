@@ -43,6 +43,9 @@ namespace Saturn {
 
 	ConsoleCommandManager::ConsoleCommandManager()
 	{
+		SAT_CORE_ASSERT( !SingletonStorage::GetSingleton<ConsoleCommandManager>(), "A command manager already exists!" );
+
+		SingletonStorage::AddSingleton<ConsoleCommandManager>( this );
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -50,13 +53,13 @@ namespace Saturn {
 
 	static void CmmCmd_Help() 
 	{
-		ConsoleCommandManager::Get().GetSink().Sink( "Type / to enter commands, wow so helpful." );
+		ConsoleCommandManager::Get()->GetSink().Sink( "Type / to enter commands, wow so helpful." );
 	}
 
 	static void CmmCmd_Info()
 	{
 		std::string msg = std::format( "Saturn Engine, version: {}, internal number: {} ident: {}", SAT_CURRENT_VERSION_STRING, SAT_CURRENT_VERSION, SAT_CURRENT_VERSION_BUILD_TAG );
-		ConsoleCommandManager::Get().GetSink().Sink( msg );
+		ConsoleCommandManager::Get()->GetSink().Sink( msg );
 	}
 
 	static void CmmCmd_Abort()
@@ -72,10 +75,10 @@ namespace Saturn {
 	static void CmmCmd_Question()
 	{
 		// NOTE: Sink order is reversed.
-		auto& rSink = ConsoleCommandManager::Get().GetSink();
+		auto& rSink = ConsoleCommandManager::Get()->GetSink();
 		rSink.Sink( "====================" );
 
-		for( const auto& [name, rCommand] : ConsoleCommandManager::Get().GetAllCommands() )
+		for( const auto& [name, rCommand] : ConsoleCommandManager::Get()->GetAllCommands() )
 		{
 			rSink.Sink( name );
 		}
@@ -85,7 +88,7 @@ namespace Saturn {
 
 	static void CmmCmd_Stat( uint64_t id ) 
 	{
-		auto& rSink = ConsoleCommandManager::Get().GetSink();
+		auto& rSink = ConsoleCommandManager::Get()->GetSink();
 
 		const auto entity = g_ActiveScene->FindEntityByID( id );
 		if( entity )
@@ -100,7 +103,7 @@ namespace Saturn {
 
 	static void CmmCmd_Tp( uint64_t id, glm::vec3 rPosition ) 
 	{
-		auto& rSink = ConsoleCommandManager::Get().GetSink();
+		auto& rSink = ConsoleCommandManager::Get()->GetSink();
 
 		const auto entity = g_ActiveScene->FindEntityByID( id );
 		if( entity )
@@ -142,6 +145,8 @@ namespace Saturn {
 	ConsoleCommandManager::~ConsoleCommandManager()
 	{
 		ClearAllCommands();
+
+		SingletonStorage::RemoveSingleton( this );
 	}
 
 	void ConsoleCommandManager::RegisterCommand( ConsoleCommandBase* pCmd )
@@ -156,7 +161,10 @@ namespace Saturn {
 
 	void ConsoleCommandManager::UnregisterCommand( ConsoleCommandBase* pCmd )
 	{
-		const auto itr = m_Commands.find( pCmd->m_Name );
+		auto nameUpper = pCmd->m_Name;
+		std::transform( nameUpper.cbegin(), nameUpper.cend(), nameUpper.begin(), ::toupper );
+
+		const auto itr = m_Commands.find( nameUpper );
 		if( itr != m_Commands.end() )
 		{
 			m_Commands.erase( itr );

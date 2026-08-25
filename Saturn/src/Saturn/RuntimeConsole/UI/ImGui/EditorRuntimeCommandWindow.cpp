@@ -27,9 +27,9 @@
 */
 
 #include "sppch.h"
-#include "RuntimeCommandWindow.h"
+#include "EditorRuntimeCommandWindow.h"
 
-#include "ImGuiAuxiliary.h"
+#include "Saturn/ImGui/ImGuiAuxiliary.h"
 
 #include "Saturn/Core/StringAuxiliary.h"
 
@@ -43,12 +43,12 @@
 
 namespace Saturn {
 
-	RuntimeCommandWindow::RuntimeCommandWindow()
-		: ImGuiWindow( RuntimeCommandWindow::GetStaticName() )
+	EditorRuntimeCommandWindow::EditorRuntimeCommandWindow()
+		: ImGuiWindow( EditorRuntimeCommandWindow::GetStaticName() )
 	{
 	}
 
-	RuntimeCommandWindow::RuntimeCommandWindow( const std::string& rName )
+	EditorRuntimeCommandWindow::EditorRuntimeCommandWindow( const std::string& rName )
 		: ImGuiWindow( rName )
 	{
 	}
@@ -77,7 +77,7 @@ namespace Saturn {
 
 	static int EnterCommandCallbackHandler( ImGuiInputTextCallbackData* pData ) 
 	{
-		RuntimeCommandWindow* pThis = ( RuntimeCommandWindow* ) pData->UserData;
+		EditorRuntimeCommandWindow* pThis = ( EditorRuntimeCommandWindow* ) pData->UserData;
 		auto& rCommands = pThis->GetCommandHistory();
 
 		if( pData->EventFlag == ImGuiInputTextFlags_CallbackHistory )
@@ -122,19 +122,21 @@ namespace Saturn {
 		return 0;
 	}
 
-	void RuntimeCommandWindow::OnImGuiRender()
+	void EditorRuntimeCommandWindow::OnImGuiRender()
 	{
 		if( ImGui::Begin( m_Name.c_str(), &m_Open ) )
 		{
 			if( Auxiliary::InputText( "##entercommand", &m_CommandNameBuffer, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackHistory, EnterCommandCallbackHandler, this ) )
 			{
 				OnCommandEntered();
+			
+				ImGui::SetKeyboardFocusHere( 0 );
 			}
 
 			ImGui::Separator();
 			if( ImGui::BeginChild( "##responsearea" ) )
 			{
-				auto& rMsgs = ConsoleCommandManager::Get().GetSink().GetMessages();
+				auto& rMsgs = ConsoleCommandManager::Get()->GetSink().GetMessages();
 				for( auto itr = rMsgs.rbegin(); itr != rMsgs.rend(); ++itr )
 				{
 					ImGui::Text( itr->FormattedMessage.c_str() );
@@ -147,9 +149,9 @@ namespace Saturn {
 		ImGui::End();
 	}
 
-	void RuntimeCommandWindow::OnCommandEntered()
+	void EditorRuntimeCommandWindow::OnCommandEntered()
 	{
-		auto& rCommandMgr = ConsoleCommandManager::Get();
+		auto* pCommandMgr = ConsoleCommandManager::Get();
 
 		if( !m_CommandNameBuffer.empty() )
 		{
@@ -174,11 +176,11 @@ namespace Saturn {
 				m_CommandHistory.push_back( m_CommandNameBuffer );
 				m_CurrentCommandHistoryIndex = m_CommandHistory.size() - 1;
 
-				ConsoleCommandBase* pCommand = rCommandMgr.FindCommand( cmdName );
+				ConsoleCommandBase* pCommand = pCommandMgr->FindCommand( cmdName );
 				if( !pCommand )
 				{
 					std::string errorMsg = std::format( "Unknown command \"{0}\"", m_CommandNameBuffer );
-					rCommandMgr.GetSink().Sink( errorMsg );
+					pCommandMgr->GetSink().Sink( errorMsg );
 				}
 				else
 				{
@@ -191,7 +193,7 @@ namespace Saturn {
 						if( !pCommand->Verify( argList.size() ) )
 						{
 							std::string errorMsg = std::format( "Too many or too little commands specified into '{}'", m_CommandNameBuffer );
-							rCommandMgr.GetSink().Sink( errorMsg );
+							pCommandMgr->GetSink().Sink( errorMsg );
 						
 							canExe = false;
 						}
@@ -207,19 +209,19 @@ namespace Saturn {
 						if( !g_ActiveScene->IsRuntimeActive() )
 						{
 							std::string errorMsg = std::format( "The command '{}' can only be executed during runtime!", m_CommandNameBuffer );
-							rCommandMgr.GetSink().Sink( errorMsg );
+							pCommandMgr->GetSink().Sink( errorMsg );
 
 							canExe = false;
 						}
 					}
 					
 					if( canExe )
-						rCommandMgr.Execmd( pCommand );
+						pCommandMgr->Execmd( pCommand );
 				}
 			}
 			else
 			{
-				rCommandMgr.GetSink().Sink( m_CommandNameBuffer );
+				pCommandMgr->GetSink().Sink( m_CommandNameBuffer );
 			}
 
 			m_CommandNameBuffer.clear();

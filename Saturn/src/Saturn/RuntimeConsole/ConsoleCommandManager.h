@@ -36,10 +36,10 @@ namespace Saturn {
 
 	class ConsoleCommandBase;
 
-	class ConsoleCommandManager
+	class ConsoleCommandManager : public RefTarget
 	{
 	public:
-		SAT_SINGLETON_LAZY( ConsoleCommandManager );
+		static inline ConsoleCommandManager* Get() { return SingletonStorage::GetSingleton<ConsoleCommandManager>(); }
 	public:
 		ConsoleCommandManager();
 		~ConsoleCommandManager();

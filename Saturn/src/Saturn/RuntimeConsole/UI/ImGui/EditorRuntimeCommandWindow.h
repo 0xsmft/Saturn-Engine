@@ -28,17 +28,17 @@
 
 #pragma once
 
-#include "ImGuiWindow.h"
+#include "Saturn/ImGui/ImGuiWindow.h"
 
 namespace Saturn {
 
-	class RuntimeCommandWindow : public ImGuiWindow
+	class EditorRuntimeCommandWindow : public ImGuiWindow
 	{
 	public:
-		RuntimeCommandWindow();
-		RuntimeCommandWindow( const std::string& rName );
+		EditorRuntimeCommandWindow();
+		EditorRuntimeCommandWindow( const std::string& rName );
 
-		virtual ~RuntimeCommandWindow() = default;
+		virtual ~EditorRuntimeCommandWindow() = default;
 
 	public:
 		//////////////////////////////////////////////////////////////////////////

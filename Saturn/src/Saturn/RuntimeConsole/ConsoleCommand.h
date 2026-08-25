@@ -58,7 +58,10 @@ namespace Saturn {
 
 		virtual ~ConsoleCommandBase() 
 		{
-			ConsoleCommandManager::Get().UnregisterCommand( this );
+			if( auto* pCmm = ConsoleCommandManager::Get() ) 
+			{
+				pCmm->UnregisterCommand( this );
+			}
 		}
 
 		virtual void Execute() = 0;
@@ -89,7 +92,7 @@ namespace Saturn {
 		ConsoleCommandVoidRetNoArgs( const std::string& rName, TheoreticalFunctionVoidReturn&& rrFunctor )
 			: ConsoleCommandBase( rName ), m_Function( std::move( rrFunctor ) )
 		{
-			ConsoleCommandManager::Get().RegisterCommand( this );
+			ConsoleCommandManager::Get()->RegisterCommand( this );
 		}
 
 		virtual ~ConsoleCommandVoidRetNoArgs() = default;
@@ -124,7 +127,7 @@ namespace Saturn {
 		{
 			static_assert( sizeof...( Args ) < MAX_NUMBER_OF_ARGS, "Too many arguments passed into ConsoleCommandArgs<>!" );
 
-			ConsoleCommandManager::Get().RegisterCommand( this );
+			ConsoleCommandManager::Get()->RegisterCommand( this );
 		}
 
 		virtual ~ConsoleCommandArgsVoidRet() = default;

@@ -33,13 +33,12 @@
 
 #include <Saturn/ImGui/ImGuiAuxiliary.h>
 #include <Saturn/ImGui/TitleBar.h>
-#include <Saturn/ImGui/PrefabViewer.h>
 #include <Saturn/ImGui/EditorIcons.h>
 #include <Saturn/ImGui/EditorEvents.h>
 #include <Saturn/ImGui/ContentBrowserPanel/ContentBrowserThumbnailCache.h>
 #include <Saturn/ImGui/UndoRedo/EntityUndoRedoActions.h>
 #include <Saturn/ImGui/EditorAboutWindowContents.h>
-#include <Saturn/ImGui/RuntimeCommandWindow.h>
+#include <Saturn/RuntimeConsole/UI/ImGui/EditorRuntimeCommandWindow.h>
 #include <Saturn/ImGui/MemoryStatisticsWindow.h>
 #include <Saturn/ImGui/ShaderViewerWindow.h>
 
@@ -143,6 +142,9 @@ namespace Saturn {
 
 		SClass::ProcessNewlyLoadedSClasses();
 
+		m_ConsoleCommandManager = Ref<ConsoleCommandManager>::Create();
+		m_ConsoleCommandManager->RegisterEngineDefaultCommands();
+
 		m_GameModule = FSObjectAllocator::AllocateSObject<GameModule>();
 
 		ClassMetadataHandler::Get().CreateLinkedClassList();
@@ -155,9 +157,6 @@ namespace Saturn {
 
 		m_SelectionManager = std::make_unique<EntitySelectionManager>();
 		m_GlobalUndoRedoGroup = Ref<GlobalUndoRedoGroup>::Create();
-
-		ConsoleCommandManager::Get();
-		ConsoleCommandManager::Get().RegisterEngineDefaultCommands();
 
 		constexpr TextureLoadFlags DEFAULT_TEXTURE_LOAD_FLAGS_NOT_FLIPPED = TextureLoadFlags_LoadOnMainThread;
 		constexpr TextureLoadFlags DEFAULT_TEXTURE_LOAD_FLAGS_FLIPPED = TextureLoadFlags ( ( uint8_t ) TextureLoadFlags_LoadOnMainThread | ( uint8_t ) TextureLoadFlags_FlipVertically );
@@ -226,7 +225,7 @@ namespace Saturn {
 		contentBrowserPanel->ResetPath( Project::GetActiveProject()->GetRootDir() );
 
 		// Command window
-		Ref<RuntimeCommandWindow> rtConsoleWindow = m_ImGuiWindowManager->AddWindow<RuntimeCommandWindow>();
+		Ref<EditorRuntimeCommandWindow> rtConsoleWindow = m_ImGuiWindowManager->AddWindow<EditorRuntimeCommandWindow>();
 		rtConsoleWindow->SetHideFlags( ImGuiHideWindowFlags::Hide );
 
 		// Mem stats window
@@ -344,8 +343,12 @@ namespace Saturn {
 
 		ClassMetadataHandler::Get().DestroyAndFreeAllSClasses();
 
+		// Unload game module.
 		FSObjectAllocator::DeallocateSObject<GameModule>( m_GameModule );
 		m_GameModule = nullptr;
+
+		// Free Console command manager.
+		m_ConsoleCommandManager = nullptr;
 	}
 
 	void EditorLayer::OnUpdate( Timestep time )

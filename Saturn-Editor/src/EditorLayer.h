@@ -55,6 +55,7 @@ namespace Saturn {
 	class OnlineAPI;
 	class SandboxNodeEditorViewer;
 	class AluraLayer;
+	class ConsoleCommandManager;
 
 	class EditorLayer : public Layer
 	{
@@ -265,6 +266,7 @@ namespace Saturn {
 		Ref<SandboxNodeEditorViewer> m_SandboxNodeEditorViewer;
 
 		Ref<GlobalUndoRedoGroup> m_GlobalUndoRedoGroup = nullptr;
+		Ref<ConsoleCommandManager> m_ConsoleCommandManager = nullptr;
 		std::unique_ptr<EntitySelectionManager> m_SelectionManager;
 
 		std::shared_ptr<AluraLayer> m_AluraLayer;

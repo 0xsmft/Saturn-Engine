@@ -230,6 +230,8 @@ namespace Saturn {
 		bool m_HotReloadAfterNewClass = false;
 		bool m_IsSimpleClassLayout = true;
 		bool m_IllegalClassName = false;
+		bool m_IsBlankFile = false;
+		std::string m_BlankFileExtension;
 	};
 
 }

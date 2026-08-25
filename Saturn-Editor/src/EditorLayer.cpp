@@ -4963,7 +4963,7 @@ namespace Saturn {
 
 	void EditorLayer::ShowOrHideRTCmdWindow() 
 	{
-		m_ImGuiWindowManager->GetPanel<RuntimeCommandWindow>()->ShowOrHide( ImGuiHideWindowFlags::Hide );
+		m_ImGuiWindowManager->GetPanel<EditorRuntimeCommandWindow>()->ShowOrHide( ImGuiHideWindowFlags::Hide );
 	}
 
 	void EditorLayer::ShowOrHideMemStatsWindow()

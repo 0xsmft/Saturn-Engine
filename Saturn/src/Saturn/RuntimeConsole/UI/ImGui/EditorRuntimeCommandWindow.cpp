@@ -179,8 +179,7 @@ namespace Saturn {
 				ConsoleCommandBase* pCommand = pCommandMgr->FindCommand( cmdName );
 				if( !pCommand )
 				{
-					std::string errorMsg = std::format( "Unknown command \"{0}\"", m_CommandNameBuffer );
-					pCommandMgr->GetSink().Sink( errorMsg );
+					pCommandMgr->GetSink().SinkFormatted( "Unknown command \"{0}\"", ConsoleCommandMessageType::Info, m_CommandNameBuffer );
 				}
 				else
 				{
@@ -192,8 +191,7 @@ namespace Saturn {
 
 						if( !pCommand->Verify( argList.size() ) )
 						{
-							std::string errorMsg = std::format( "Too many or too little commands specified into '{}'", m_CommandNameBuffer );
-							pCommandMgr->GetSink().Sink( errorMsg );
+							pCommandMgr->GetSink().SinkFormatted( "Too many or too little commands specified into '{}'", ConsoleCommandMessageType::Info, m_CommandNameBuffer );
 						
 							canExe = false;
 						}
@@ -208,8 +206,7 @@ namespace Saturn {
 					{
 						if( !g_ActiveScene->IsRuntimeActive() )
 						{
-							std::string errorMsg = std::format( "The command '{}' can only be executed during runtime!", m_CommandNameBuffer );
-							pCommandMgr->GetSink().Sink( errorMsg );
+							pCommandMgr->GetSink().SinkFormatted( "The command '{}' can only be executed during runtime!", ConsoleCommandMessageType::Info, m_CommandNameBuffer );
 
 							canExe = false;
 						}

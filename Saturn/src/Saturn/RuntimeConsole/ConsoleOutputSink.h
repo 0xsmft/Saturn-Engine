@@ -52,6 +52,15 @@ namespace Saturn {
 		ConsoleOutputSink();
 		~ConsoleOutputSink();
 
+		template<typename... Args>
+		void SinkFormatted( const std::format_string<Args...> fmt, ConsoleCommandMessageType type = ConsoleCommandMessageType::Info, Args&&... rrArgs )
+		{
+			std::string text;
+			std::format_to( std::back_inserter( text ), fmt, std::forward< Args >( rrArgs )... );
+
+			Sink( text, type );
+		}
+
 		void Sink( const std::string& rMessage, ConsoleCommandMessageType type = ConsoleCommandMessageType::Info );
 
 	public:

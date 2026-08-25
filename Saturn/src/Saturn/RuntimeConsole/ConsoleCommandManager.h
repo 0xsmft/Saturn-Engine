@@ -42,7 +42,7 @@ namespace Saturn {
 		static inline ConsoleCommandManager* Get() { return SingletonStorage::GetSingleton<ConsoleCommandManager>(); }
 	public:
 		ConsoleCommandManager();
-		~ConsoleCommandManager();
+		virtual ~ConsoleCommandManager();
 
 		void RegisterEngineDefaultCommands();
 		void RegisterCommand( ConsoleCommandBase* pCmd );

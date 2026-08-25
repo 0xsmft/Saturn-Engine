@@ -54,7 +54,7 @@ namespace Saturn {
 	using WindowType = void*;
 #endif
 
-	enum class RubyGraphicsAPI
+	enum class RubyGraphicsAPI : uint8_t
 	{
 		Vulkan,
 		DirectX11,
@@ -62,7 +62,7 @@ namespace Saturn {
 		None
 	};
 
-	enum class RubyStyle
+	enum class RubyStyle : uint8_t
 	{
 		Default,
 		Borderless,
@@ -71,7 +71,7 @@ namespace Saturn {
 		BorderlessFullscreen,
 	};
 
-	enum class RubyCursorType
+	enum class RubyCursorType : uint8_t
 	{
 		None,
 		Arrow,
@@ -85,7 +85,7 @@ namespace Saturn {
 		Custom
 	};
 
-	enum class RubyCursorMode
+	enum class RubyCursorMode : uint8_t
 	{
 		Normal,
 		// Mouse is hidden but still uses real OS mouse positions
@@ -94,7 +94,7 @@ namespace Saturn {
 		Locked
 	};
 
-	enum class RubyWindowShowCmd
+	enum class RubyWindowShowCmd : uint8_t
 	{
 		// Show and activate the window
 		Default,

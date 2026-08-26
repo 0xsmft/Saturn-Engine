@@ -5242,8 +5242,6 @@ namespace Saturn {
 
 #if defined( SAT_PLATFORM_WINDOWS )
 		args /= L"Saturn-Editor.exe";
-#elif defined( SAT_PLATFORM_MACOS )
-		args /= L"Saturn-Editor.app";
 #else
 		args /= L"Saturn-Editor";
 #endif

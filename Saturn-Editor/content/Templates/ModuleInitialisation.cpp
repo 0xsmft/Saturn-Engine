@@ -14,13 +14,15 @@
 #include <Saturn/Core/Profiler.h>
 
 #include <Jolt/Jolt.h>
+#include <imgui.h>
 
 extern "C" {
 
-	SAT_DLLEXPORT void InitializeModule( Saturn::Project* pProject, const void* pTracyData )
+	SAT_DLLEXPORT void InitializeModule( Saturn::Project* pProject, const void* pTracyData, const void* pImGuiContext )
 	{
 		Saturn::Project::SetActiveProject( pProject );
 		tracy::InitializeModule( pTracyData );
+		ImGui::SetCurrentContext( ( ImGuiContext* ) pImGuiContext );
 
 		JPH::RegisterDefaultAllocator();
 	}

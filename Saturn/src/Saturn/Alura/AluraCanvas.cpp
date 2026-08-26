@@ -92,6 +92,8 @@ namespace Saturn {
 
 	void AluraCanvas::NewFrame()
 	{
+		m_FrameTiming.Reset();
+
 		// Font is null! Must have an active font.
 //		SAT_CORE_ASSERT( m_ActiveFont );
 
@@ -101,7 +103,8 @@ namespace Saturn {
 		// Forgot to call PopFontSize()
 		SAT_CORE_ASSERT( m_BackupOfFontSize == 0.0f );
 
-		m_FrameTiming.Reset();
+		// Impossible! Font size must always be above 1px.
+		SAT_CORE_ASSERT( m_Style.CurrentFontSize != 0 );
 
 		m_Layout.Reset();
 
@@ -1522,12 +1525,16 @@ namespace Saturn {
 
 	void AluraCanvas::PushFontSize( float newSize )
 	{
+		SAT_CORE_ASSERT( newSize != 0, "Alura: Font size must be atleast 1px!" );
+
 		m_BackupOfFontSize = m_Style.CurrentFontSize;
 		m_Style.CurrentFontSize = newSize;
 	}
 
 	void AluraCanvas::PopFontSize()
 	{
+		SAT_CORE_ASSERT( m_BackupOfFontSize != 0, "Alura: Attempt to call PopFontSize() when PushFontSize was never called!" );
+		
 		m_Style.CurrentFontSize = m_BackupOfFontSize;
 		m_BackupOfFontSize = 0.0f;
 	}

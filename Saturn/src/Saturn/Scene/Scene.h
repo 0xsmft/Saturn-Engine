@@ -531,6 +531,8 @@ namespace Saturn {
 
 		void DestroyPhysicsScene();
 
+		void ShowOrHideAluraRtDebug() { m_ShowAluraRtDebug ^= 1; }
+
 	public:
 		// Asset overrides.
 
@@ -551,6 +553,7 @@ namespace Saturn {
 		void RtBuildSelectedMeshesCmds( Ref<SceneRenderer> sceneRenderer );
 		void RtDrawAIDebug( Ref<SceneRenderer> sceneRenderer );
 		void RtDrawSkDebug( Ref<SceneRenderer> sceneRenderer );
+		void RtDrawRTDebugAlura( Ref<SceneRenderer> sceneRenderer );
 
 	private:
 		std::map<entt::entity, SharedPtr<Entity>> m_EntityIDMap;
@@ -584,6 +587,8 @@ namespace Saturn {
 		bool m_Dirty = false;
 		SceneVisualisationOptions m_VisualisationOptions{};
 #endif
+
+		bool m_ShowAluraRtDebug = false;
 
 	private:
 		friend class PhysicsSceneExporter;

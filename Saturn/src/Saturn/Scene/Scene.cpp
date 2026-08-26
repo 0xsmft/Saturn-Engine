@@ -461,6 +461,12 @@ namespace Saturn {
 
 		g_AluraCanvas->NewFrame();
 		g_AluraCanvas->DrawAllDrawers( ts );
+
+		if( m_ShowAluraRtDebug )
+			RtDrawRTDebugAlura( sceneRenderer );
+		else
+			g_AluraCanvas->DrawAllDrawers( ts );
+
 		g_AluraCanvas->EndFrame();
 
 		// Lights
@@ -973,7 +979,23 @@ namespace Saturn {
 		}
 	}
 
+	void Scene::RtDrawRTDebugAlura( Ref<SceneRenderer> sceneRenderer )
+	{
+		g_AluraCanvas->TextFormatted( "Saturn Version {} ({}) " SAT_CURRENT_VERSION_BUILD_TAG, SAT_CURRENT_VERSION_STRING, SAT_CURRENT_VERSION );
+		g_AluraCanvas->TextFormatted( "FPS: {}", Application::Get()->Framerate() );
+		g_AluraCanvas->TextFormatted( "Timestep: {:.2f}ms", Application::Get()->Time().Milliseconds() );
+
+		g_AluraCanvas->TextFormatted( "SceneRenderer::ShadowMapPass: {:.2f}ms", Application::Get()->Time().Milliseconds() );
+		g_AluraCanvas->TextFormatted( "SceneRenderer::GeometryPass: {:.2f}ms", sceneRenderer->m_RendererData.GeometryPassTimer.ElapsedMilliseconds() );
+
+		g_AluraCanvas->TextFormatted( "Queue Wait: {:.2f}ms", Renderer::Get()->GetQueueWaitTime() );
+		g_AluraCanvas->TextFormatted( "Queue Present: {:.2f}ms", Renderer::Get()->GetQueuePresentTime() );
+		g_AluraCanvas->TextFormatted( "Render Thread: {:.2f}ms", RenderThread::Get().GetWaitTime() );
+
+#if defined(SAT_DIST)
+		g_AluraCanvas->TextFormatted( "AB: {}", Project::GetActiveProject()->GetAssetBundleBuildTime() );
 #endif
+	}
 
 	SharedPtr<Entity> Scene::CreateEntityWithIDScript( UUID uuid, const std::string& name /*= "" */, const std::string& rScriptName, bool externalData )
 	{

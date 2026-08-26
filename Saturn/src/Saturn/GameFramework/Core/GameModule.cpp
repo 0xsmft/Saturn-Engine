@@ -29,11 +29,12 @@
 #include "sppch.h"
 #include "GameModule.h"
 
-#include "ClassMetadataHandler.h"
-
-#include "Saturn/Scene/Entity.h"
 #include "Saturn/Project/Project.h"
+
+#if !defined(SAT_DIST)
 #include "Saturn/Core/Profiler.h"
+#include <imgui.h>
+#endif
 
 namespace Saturn {
 
@@ -130,10 +131,11 @@ namespace Saturn {
 
 			( initModFn ) ( Project::GetActiveProject().Get(),
 #if defined(SAT_PROFILER_ENABLE)
-				tracy::GetProfilerDataPtr()
+				tracy::GetProfilerDataPtr(),
 #else
-				nullptr
+				nullptr,
 #endif
+				ImGui::GetCurrentContext()
 				);
 		}
 		else

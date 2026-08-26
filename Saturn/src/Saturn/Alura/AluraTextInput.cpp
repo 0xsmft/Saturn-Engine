@@ -342,8 +342,11 @@ namespace Saturn {
 			}
 			
 			// No selection so we just move back.
-			--m_OffsetFromStart;
-			ResetCursorTime();
+			if( m_OffsetFromStart > 0llu )
+			{
+				--m_OffsetFromStart;
+				ResetCursorTime();
+			}
 		}
 		// We are at the start but we attempt to move left
 		// we now end the selection.

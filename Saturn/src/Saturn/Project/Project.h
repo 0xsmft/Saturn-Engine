@@ -190,12 +190,9 @@ namespace Saturn {
 #endif
 
 		//////////////////////////////////////////////////////////////////////////
-		// Information, Editor only
-#if !defined(SAT_DIST)
+		// Project version
 		inline std::string GetDeveloperVersion() const { return m_DeveloperProjectVersion; }
-
 		inline void SetDeveloperVersion( const std::string& ver ) { m_DeveloperProjectVersion = ver; }
-#endif
 
 		//////////////////////////////////////////////////////////////////////////
 		// Online System API
@@ -257,14 +254,14 @@ namespace Saturn {
 		bool m_EnableAutoSaves = false;
 #endif
 
+		// Project version set by the developer.
+		std::string m_DeveloperProjectVersion;
+		
 		// Absolute root path
 		std::filesystem::path m_RootPath;
 
 #if !defined(SAT_DIST)
 		std::filesystem::path m_ThumbnailImagePath;
-		// This is the version that is local to the developer, it has nothing to do with Saturn versions.
-		// It is purely informative.
-		std::string m_DeveloperProjectVersion;
 #else
 		uint64_t m_AssetBundleBuildTime = 0llu;
 #endif

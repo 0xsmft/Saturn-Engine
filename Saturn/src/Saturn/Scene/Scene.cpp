@@ -732,7 +732,7 @@ namespace Saturn {
 			glm::mat4 transform = GetTransformRelativeToParent( entity );
 			const auto& rComponent = entity->GetComponent<BoxColliderComponent>();
 
-			auto colliderTransform = glm::translate( glm::mat4( 1.0f ),rComponent.Offset )
+			auto colliderTransform = glm::translate( glm::mat4( 1.0f ), rComponent.Offset )
 				* glm::scale( glm::mat4( 1.0f ), rComponent.HalfExtents * 2.0f );
 
 			sceneRenderer->SubmitPhysicsCollider( entity, dbgMesh, materialRegistry, transform * colliderTransform );
@@ -949,9 +949,8 @@ namespace Saturn {
 						const auto& rBoneInfos = sk->GetBoneInfo();
 						for( size_t i = 0; i < rBoneInfos.size(); ++i )
 						{
-
 							const auto& rCurrent = rBoneInfos[ i ];
-							const auto parentIndex = skMesh->GetSkeletonAsset()->GetParentIndex( i );
+							const auto parentIndex = skMesh->GetSkeletonAsset()->GetParentIndex( ( uint32_t ) i );
 
 							if( parentIndex == ~0u )
 							{
@@ -978,6 +977,7 @@ namespace Saturn {
 			}
 		}
 	}
+#endif
 
 	void Scene::RtDrawRTDebugAlura( Ref<SceneRenderer> sceneRenderer )
 	{

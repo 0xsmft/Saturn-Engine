@@ -43,9 +43,11 @@ namespace Saturn {
 
 	ConsoleCommandManager::ConsoleCommandManager()
 	{
+#if !defined(SAT_DIST)
 		SAT_CORE_ASSERT( !SingletonStorage::GetSingleton<ConsoleCommandManager>(), "A command manager already exists!" );
 
 		SingletonStorage::AddSingleton<ConsoleCommandManager>( this );
+#endif
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -146,7 +148,9 @@ namespace Saturn {
 	{
 		ClearAllCommands();
 
+#if !defined(SAT_DIST)
 		SingletonStorage::RemoveSingleton( this );
+#endif
 	}
 
 	void ConsoleCommandManager::RegisterCommand( ConsoleCommandBase* pCmd )

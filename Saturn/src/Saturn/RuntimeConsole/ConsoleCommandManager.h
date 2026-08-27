@@ -39,7 +39,17 @@ namespace Saturn {
 	class ConsoleCommandManager : public RefTarget
 	{
 	public:
+		// On Dist, the CommandManager will be lazily loaded, this is because
+		// if a game has a command that is register upon the start up of the
+		// application the CommandManager needs to exist when the command is registered.
+		// This is the opposite on Development configs as the ConsoleCommandManager
+		// is owned by the EditorLayer and commands will be registered after it
+		// starts up.
+#if defined(SAT_DIST)
+		static inline ConsoleCommandManager* Get() { static ConsoleCommandManager _; return &_; }
+#else
 		static inline ConsoleCommandManager* Get() { return SingletonStorage::GetSingleton<ConsoleCommandManager>(); }
+#endif
 	public:
 		ConsoleCommandManager();
 		virtual ~ConsoleCommandManager();

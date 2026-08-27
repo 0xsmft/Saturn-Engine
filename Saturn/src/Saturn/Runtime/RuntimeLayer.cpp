@@ -258,6 +258,22 @@ namespace Saturn {
 			{
 				HandleSceneTravel( ( SceneTravelEvent& ) rEvent );
 			} break;
+
+			case EventType::KeyPressed:
+			{
+				RubyKeyEvent& rKeyEvent = ( RubyKeyEvent& ) rEvent;
+
+				switch( rKeyEvent.GetKeycode() )
+				{
+					case RubyKey_F6:
+					{
+						m_RuntimeScene->ShowOrHideAluraRtDebug();
+					} break;
+
+					default:
+						break;
+				}
+			} break;
 		}
 	}
 

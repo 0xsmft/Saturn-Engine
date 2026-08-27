@@ -714,6 +714,7 @@ namespace Saturn {
 		// Write Project file & write Startup scene
 		RawSerialisation::WriteString( rConfig.Name, fout );
 		RawSerialisation::WriteObject( rConfig.StartupSceneID, fout );
+		RawSerialisation::WriteString( ActiveProject->GetDeveloperVersion(), fout );
 		RawSerialisation::WriteObject( ActiveProject->GetDefaultMaterialAsset(), fout );
 		RawSerialisation::WriteObject( ActiveProject->GetDefaultPhysicsMaterialAsset(), fout );
 		RawSerialisation::WriteObject( ActiveProject->GetDefaultFontAsset(), fout );
@@ -785,6 +786,9 @@ namespace Saturn {
 #if defined(SAT_DIST)
 		newProject->SetAssetBundleBuildTime( header.BuildTime );
 #endif
+
+		std::string developerVersion = RawSerialisation::ReadString( stream );
+		newProject->SetDeveloperVersion( developerVersion );
 
 		UUID defMatAsset = 0;
 		RawSerialisation::ReadObject( defMatAsset, stream );

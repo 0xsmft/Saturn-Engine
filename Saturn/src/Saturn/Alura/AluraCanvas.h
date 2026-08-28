@@ -238,6 +238,9 @@ namespace Saturn {
 			AddText( text );
 		}
 
+		void AddTextU32( const std::u32string& rText );
+		void AddTextColouredU32( const std::u32string& rText, const glm::vec4& rColour );
+
 		[[nodiscard]] bool AddButton( const glm::vec2& rSize, const glm::vec4& rColour = glm::one<glm::vec4>() );
 		
 		// Add a button with text.

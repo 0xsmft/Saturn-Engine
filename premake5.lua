@@ -40,6 +40,10 @@ end
 		sanitize { "Address" }
 		buildoptions { "/fsanitize=address" }
 
+	filter "configurations:Debug-ASan"
+		sanitize { "Address" }
+		buildoptions { "/fsanitize=address" }
+
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 -- Include directories relative to root folder (solution directory)

@@ -107,6 +107,9 @@ project "Saturn"
 		os.getenv('VULKAN_SDK') .. "/Bin",
 	}
 
+	filter "configurations:Debug-ASan"
+		sanitize { "Address" }
+
 	filter { "options:onlineapi=steam" }
 		includedirs
 		{
@@ -172,7 +175,7 @@ project "Saturn"
 				"vendor/steamworks/Bin/Windows/steam_api64.lib"
 			}
 
-		filter "configurations:Debug"
+		filter { "configurations:Debug or configurations:Debug-ASan" }
 			defines "SAT_DEBUG"
 			runtime "Debug"
 			symbols "on"
@@ -215,7 +218,7 @@ project "Saturn"
 			defines { "SATURN_SS_STATIC" }
 			links { "Saturn-SharedStorage" }
 	
-	filter "configurations:Debug or configurations:Release"
+	filter "configurations:Debug or configurations:Release or configurations:Debug-ASan"
 		defines
 		{
 		    "JPH_DEBUG_RENDERER",

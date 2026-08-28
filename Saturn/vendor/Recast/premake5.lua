@@ -29,7 +29,7 @@ project "Recast"
 		cppdialect "C++2a"
 		staticruntime "off"
 
-	filter "configurations:Debug"
+	filter "configurations:Debug or configurations:Debug-ASan"
 		runtime "Debug"
 		symbols "on"
 

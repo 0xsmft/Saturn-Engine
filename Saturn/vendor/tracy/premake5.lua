@@ -47,7 +47,7 @@ project "Tracy"
 			"src/libbacktrace"
 		}
 
-	filter "configurations:Debug"
+	filter "configurations:Debug or configurations:Debug-ASan"
 		runtime "Debug"
 		symbols "on"
 		defines { "TRACY_ENABLE", "TRACY_MANUAL_LIFETIME", "TRACY_DELAYED_INIT" }

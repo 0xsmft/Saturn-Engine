@@ -36,7 +36,7 @@ project "NativeFileDialogExtended"
             "src/nfd_gtk.cpp"
 	    }
 
-	filter "configurations:Debug"
+	filter "configurations:Debug or configurations:Debug-ASan"
 		runtime "Debug"
 		symbols "on"
 

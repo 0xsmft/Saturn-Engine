@@ -17,7 +17,7 @@ project "SaturnBuildTool"
 		'{COPY} "../../../SaturnBuildTool/RT" "RT/"'
 	}
 
-	filter { "configurations:Debug" }
+	filter { "configurations:Debug or configurations:Debug-ASan" }
 		symbols "On"
 
  	filter { "configurations:Release" }

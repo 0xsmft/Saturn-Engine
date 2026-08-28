@@ -54,6 +54,10 @@
 // The vulkan surface extension name.
 #define SAT_PLATFORM_VULKAN_SURFACE_NAME "VK_KHR_win32_surface"
 
+#define SAT_PLATFORM_DYNALIB_FILE_EXT ".dll"
+#define SAT_PLATFORM_STLIB_FILE_EXT ".lib"
+#define SAT_PLATFORM_EXE_FILE_EXT ".exe"
+
 #define SAT_CLANG_TYPENAME 
 #define SAT_GCC_TYPENAME 
 #define SAT_MSVC_TYPENAME typename

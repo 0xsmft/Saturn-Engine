@@ -408,13 +408,7 @@ namespace Saturn {
 		BuildToolDir /= std::format( "{0}-{1}", Application::Get()->GetCurrentConfigName(), SAT_PLATFORM_BINARY_FOLDER );
 		BuildToolDir /= "SaturnBuildTool";
 
-#if defined( SAT_PLATFORM_WINDOWS )
-		BuildToolDir /= "SaturnBuildTool.exe";
-#elif defined( SAT_PLATFORM_LINUX )
-		BuildToolDir /= "SaturnBuildTool";
-#else
-		BuildToolDir /= "SaturnBuildTool.app";
-#endif
+		BuildToolDir /= "SaturnBuildTool" SAT_PLATFORM_EXE_FILE_EXT;
 
 		return BuildToolDir;
 	}
@@ -531,7 +525,7 @@ namespace Saturn {
 			auto& path = rEntry.path();
 
 			// TODO: Change for other platforms.
-			if( path.extension() != ".dll" ) 
+			if( path.extension() != SAT_PLATFORM_DYNALIB_FILE_EXT )
 				continue;
 
 			std::filesystem::path dstPath = binDir / path.filename();

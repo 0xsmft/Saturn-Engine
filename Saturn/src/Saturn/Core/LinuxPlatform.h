@@ -53,6 +53,10 @@
 // The vulkan surface extension name.
 #define SAT_PLATFORM_VULKAN_SURFACE_NAME "VK_KHR_xcb_surface"
 
+#define SAT_PLATFORM_DYNALIB_FILE_EXT ".so"
+#define SAT_PLATFORM_STLIB_FILE_EXT ".a"
+#define SAT_PLATFORM_EXE_FILE_EXT ""
+
 #define SAT_CLANG_TYPENAME typename
 #define SAT_GCC_TYPENAME typename
 #define SAT_MSVC_TYPENAME

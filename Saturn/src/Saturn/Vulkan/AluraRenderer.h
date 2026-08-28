@@ -146,6 +146,19 @@ namespace Saturn {
 			const glm::vec2& rStartingPosition,
 			const glm::vec4& rColor );
 
+		void SubmitStringU32(
+			const std::u32string& rText,
+			const Ref<AluraFont> font,
+			const glm::mat4& rTransform,
+			const glm::vec4& rColor );
+
+		void SubmitStringU32(
+			const std::u32string& rText,
+			const Ref<AluraFont> font,
+			const float fontSizePx,
+			const glm::vec2& rStartingPosition,
+			const glm::vec4& rColor );
+
 		void SubmitCircleFilled( const glm::vec2& rPosition, float size, float thickness, const glm::vec4& rColor );
 		void SubmitCircle( const glm::vec2& rCentre, float radius, float thickness, const glm::vec4& rColor );
 
@@ -181,6 +194,12 @@ namespace Saturn {
 			const glm::vec4& rColor, 
 			const Ref<Texture2D> atlasTexture, 
 			const glm::mat4& rTransform );
+
+		template<typename Ty>
+		void SubmitStringT( const Ty& rText,
+			const Ref<AluraFont> font,
+			const glm::mat4& rTransform,
+			const glm::vec4& rColor );
 
 		AluraDrawCommand& GetOrCreateDrawCommand( AluraDrawPipelineType pipelineType, uint32_t indexOffset );
 

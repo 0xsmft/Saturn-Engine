@@ -552,22 +552,12 @@ namespace Saturn {
 		SubmitRoundedRectFrame( rRect.Min, rRect.Max, rounding, thickness, rColor );
 	}
 
-	void AluraRenderer::SubmitString(
-		const std::string& rText, 
+	// Templated type to take any string type.
+	template<typename Ty>
+	void AluraRenderer::SubmitStringT(
+		const Ty& rText,
 		const Ref<AluraFont> font,
-		const float fontSizePx,
-		const glm::vec2& rStartingPosition, 
-		const glm::vec4& rColor )
-	{
-		glm::mat4 scale = glm::scale( glm::mat4( 1.0f ), glm::vec3( fontSizePx ) );
-		glm::mat4 ts = glm::translate( glm::mat4( 1.0f ), glm::vec3( rStartingPosition, 0.0f ) ) * scale;
-		SubmitString( rText, font, ts, rColor );
-	}
-
-	void AluraRenderer::SubmitString( 
-		const std::string& rText, 
-		const Ref<AluraFont> font,
-		const glm::mat4& rTransform, 
+		const glm::mat4& rTransform,
 		const glm::vec4& rColor )
 	{
 		auto& rFontGeo = font->GetFontData();
@@ -579,7 +569,7 @@ namespace Saturn {
 		double y = fsScale * rMetrics.AscenderY;
 		for( size_t i = 0; i < rText.size(); ++i )
 		{
-			const char character = rText[ i ];
+			const auto character = rText[ i ];
 			if( character == '\r' ) continue;
 
 			if( character == '\n' )
@@ -632,12 +622,54 @@ namespace Saturn {
 			if( i < rText.size() - 1 )
 			{
 				double advance = pGlyph->GetAdvance();
-				char next = rText[ i + 1 ];
+				const auto next = rText[ i + 1 ];
 				rFontGeo.GetAdvance( advance, character, next );
 
 				x += fsScale * advance + 0.0f /* <-- kerning */;
 			}
 		}
+	}
+
+	void AluraRenderer::SubmitString(
+		const std::string& rText, 
+		const Ref<AluraFont> font,
+		const float fontSizePx,
+		const glm::vec2& rStartingPosition, 
+		const glm::vec4& rColor )
+	{
+		glm::mat4 scale = glm::scale( glm::mat4( 1.0f ), glm::vec3( fontSizePx ) );
+		glm::mat4 ts = glm::translate( glm::mat4( 1.0f ), glm::vec3( rStartingPosition, 0.0f ) ) * scale;
+		SubmitString( rText, font, ts, rColor );
+	}
+
+	void AluraRenderer::SubmitString( 
+		const std::string& rText, 
+		const Ref<AluraFont> font,
+		const glm::mat4& rTransform, 
+		const glm::vec4& rColor )
+	{
+		SubmitStringT<std::string>( rText, font, rTransform, rColor );
+	}
+
+	void AluraRenderer::SubmitStringU32(
+		const std::u32string& rText,
+		const Ref<AluraFont> font,
+		const float fontSizePx,
+		const glm::vec2& rStartingPosition,
+		const glm::vec4& rColor )
+	{
+		glm::mat4 scale = glm::scale( glm::mat4( 1.0f ), glm::vec3( fontSizePx ) );
+		glm::mat4 ts = glm::translate( glm::mat4( 1.0f ), glm::vec3( rStartingPosition, 0.0f ) ) * scale;
+		SubmitStringU32( rText, font, ts, rColor );
+	}
+
+	void AluraRenderer::SubmitStringU32(
+		const std::u32string& rText,
+		const Ref<AluraFont> font,
+		const glm::mat4& rTransform,
+		const glm::vec4& rColor )
+	{
+		SubmitStringT<std::u32string>( rText, font, rTransform, rColor );
 	}
 
 	void AluraRenderer::SubmitTextGlyph( 

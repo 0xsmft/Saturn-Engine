@@ -68,7 +68,7 @@ project "SaturnHeaderTool"
 			"SAT_PLATFORM_MACOS"
 		}
 
-	filter "configurations:Debug"
+	filter "configurations:Debug or configurations:Debug-ASan"
 		defines "SAT_DEBUG"
 		runtime "Debug"
 		symbols "on"

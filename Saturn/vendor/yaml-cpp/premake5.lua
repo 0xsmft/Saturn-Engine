@@ -32,7 +32,7 @@ project "yaml-cpp"
 		pic "On"
 		systemversion "latest"
 
-	filter "configurations:Debug"
+	filter "configurations:Debug or configurations:Debug-ASan"
 		runtime "Debug"
 		symbols "on"
 

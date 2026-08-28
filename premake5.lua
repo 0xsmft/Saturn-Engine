@@ -14,7 +14,7 @@ workspace "Saturn"
 	startproject "Saturn-Editor"
 	warnings "Default"
 
-	configurations { "Debug", "Release", "Dist" }
+	configurations { "Debug-ASan", "Debug", "Release", "Dist" }
 
 	flags { "MultiProcessorCompile" }
 	editandcontinue "Off"
@@ -25,6 +25,10 @@ workspace "Saturn"
 
 	filter "action:vs*"
 		linkoptions { "/ignore:4006" }
+
+	filter "configurations:Debug-ASan"
+		sanitize { "Address" }
+		buildoptions { "/fsanitize=address" }
 
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 

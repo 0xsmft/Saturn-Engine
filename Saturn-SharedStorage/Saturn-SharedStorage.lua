@@ -46,11 +46,14 @@ project "Saturn-SharedStorage"
 		"%{IncludeDir.MSDF}",
 		"%{IncludeDir.MSDFAG}",
 	}
+
+	filter "configurations:Debug-ASan"
+		sanitize { "Address" }
 	
 	filter "system:windows or system:linux or system:Mac"
 		systemversion "latest"
 		
-		filter "configurations:Debug"
+		filter "configurations:Debug or configurations:Debug-ASan"
 			runtime "Debug"
 			symbols "on"
 		

@@ -82,6 +82,9 @@ project "Saturn-Editor"
 			"SAT_WITH_STEAM"
 		}
 
+	filter "configurations:Debug-ASan"
+		sanitize { "Address" }
+
 	filter "system:windows"
 		systemversion "latest"
 
@@ -104,12 +107,12 @@ project "Saturn-Editor"
 				'{COPYFILE} "../Saturn/vendor/steamworks/Bin/Windows/steam_api64.dll" "%{cfg.targetdir}"'
 			}
 
-		filter "configurations:Debug"
+		filter { "configurations:Debug or configurations:Debug-ASan" }
 			defines "SAT_DEBUG"
 			runtime "Debug"
 			symbols "on"
 
-			filter { "configurations:Debug", "system:windows" }
+			filter { "configurations:Debug or configurations:Debug-ASan", "system:windows" }
 				postbuildcommands 
 				{ 
 					'{COPYFILE} "../Saturn/vendor/assimp/bin/Debug/assimp-vc143-mtd.dll" "%{cfg.targetdir}"',

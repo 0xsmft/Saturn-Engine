@@ -28,7 +28,7 @@ project "SPIRV-Cross"
 		systemversion "latest"
 		staticruntime "off"
 
-	filter "configurations:Debug"
+	filter "configurations:Debug or configurations:Debug-ASan"
 		runtime "Debug"
 		symbols "on"
 

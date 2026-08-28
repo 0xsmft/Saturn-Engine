@@ -61,6 +61,9 @@ project "Saturn-ProjectBrowser"
 		"Saturn"
 	}
 
+	filter "configurations:Debug-ASan"
+		sanitize { "Address" }
+
 	filter "system:windows"
 		systemversion "latest"
 
@@ -75,7 +78,7 @@ project "Saturn-ProjectBrowser"
 			"../Saturn/src/Saturn/Entry/Windows/**.cpp",
 		}
 
-		filter "configurations:Debug"
+		filter "configurations:Debug or configurations:Debug-ASan"
 			defines "SAT_DEBUG"
 			runtime "Debug"
 			symbols "on"

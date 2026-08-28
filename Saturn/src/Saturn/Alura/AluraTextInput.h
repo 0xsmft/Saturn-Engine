@@ -85,6 +85,7 @@ namespace Saturn {
 
 	class AluraTextInputA
 	{
+		SAT_DISABLE_COPY( AluraTextInputA );
 	public:
 		AluraTextInputA();
 		~AluraTextInputA();

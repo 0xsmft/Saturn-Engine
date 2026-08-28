@@ -50,6 +50,10 @@
 #define SAT_DLLEXPORT
 #endif
 
+#define SAT_PLATFORM_DYNALIB_FILE_EXT ".dylib"
+#define SAT_PLATFORM_STLIB_FILE_EXT ".a"
+#define SAT_PLATFORM_EXE_FILE_EXT ""
+
 // The vulkan surface extension name.
 #define SAT_PLATFORM_VULKAN_SURFACE_NAME "VK_EXT_metal_surface"
 

@@ -3890,11 +3890,7 @@ namespace Saturn {
 			ImGui::SameLine();
 			if( ImGui::Button( "..." ) )
 			{
-#if defined(SAT_PLATFORM_WINDOWS)
-				const auto path = Application::Get()->OpenFile( "Application|*.exe" );
-#else
-				const auto path = Application::Get()->OpenFile( "Application|*" );
-#endif
+				const auto path = Application::Get()->OpenFile( "Application|*" SAT_PLATFORM_EXE_FILE_EXT );
 				s_PremakePath = path;
 			}
 
@@ -4613,12 +4609,8 @@ namespace Saturn {
 		SaturnDir /= L"bin";
 		SaturnDir /= binaryFolderName;
 		SaturnDir /= L"Saturn-ProjectBrowser";
-
-#if defined( SAT_PLATFORM_WINDOWS )
-		SaturnDir /= L"Saturn-ProjectBrowser.exe";
-#else
-		SaturnDir /= L"Saturn-ProjectBrowser";
-#endif
+		SaturnDir /= L"Saturn-ProjectBrowser" SAT_PLATFORM_EXE_FILE_EXT;
+	
 		DetachedProcess dp( SaturnDir.wstring(), WorkingDir );
 		Application::Get()->Close();
 	}
@@ -4770,11 +4762,7 @@ namespace Saturn {
 				ImGui::SameLine();
 				if( ImGui::Button( "..." ) )
 				{
-#if defined(SAT_PLATFORM_WINDOWS)
-					path = Application::Get()->OpenFile( "Application|*.exe" );
-#elif defined(SAT_PLATFORM_LINUX)
-					path = Application::Get()->OpenFile( "Application|*" );
-#endif
+					path = Application::Get()->OpenFile( "Application|*" SAT_PLATFORM_EXE_FILE_EXT );
 				}
 
 				if( !path.empty() )
@@ -5239,12 +5227,7 @@ namespace Saturn {
 		args /= L"bin";
 		args /= binaryFolderName;
 		args /= L"Saturn-Editor";
-
-#if defined( SAT_PLATFORM_WINDOWS )
-		args /= L"Saturn-Editor.exe";
-#else
-		args /= L"Saturn-Editor";
-#endif
+		args /= L"Saturn-Editor" SAT_PLATFORM_EXE_FILE_EXT;
 
 		args += std::format( " {}", rProjectPath.string() );
 

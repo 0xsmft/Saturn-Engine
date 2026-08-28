@@ -190,7 +190,11 @@ namespace Saturn {
 		glm::vec2 CalcTextSize( float fontSize, const std::string& rText );
 		glm::vec2 CalcTextSizeN( float fontSize, const std::string& rText, size_t n );
 		glm::vec2 CalcTextSizeNAtOffset( float fontSize, const std::string& rText, size_t n, size_t off );
-	
+
+		glm::vec2 CalcTextSizeU32( float fontSize, const std::u32string& rText );
+		glm::vec2 CalcTextSizeNU32( float fontSize, const std::u32string& rText, size_t n );
+		glm::vec2 CalcTextSizeNAtOffsetU32( float fontSize, const std::u32string& rText, size_t n, size_t off );
+
 		// Starting YCoord rounded to the nearest whole number.
 		float GetStartingYCoord() const;
 
@@ -227,6 +231,10 @@ namespace Saturn {
 		Ref<Texture2D> m_TextureAtlas;
 		
 		AluraFontAssetVersion m_Version = AluraFontAssetVersion::Latest;
+
+	private:
+		template<typename Ty>
+		glm::vec2 CalcTextSizeNAtOffsetT( float fontSize, const Ty& rText, size_t n, size_t off );
 
 	private:
 		friend class AluraFontAssetViewer;

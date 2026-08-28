@@ -382,6 +382,38 @@ namespace Saturn {
 		PopStyle();
 	}
 
+	void AluraCanvas::AddTextU32( const std::u32string& rText )
+	{
+		// Handle SetNextItemPosition
+		glm::vec2 posDependingLastCall = m_Layout.CursorPos;
+
+		if( m_WantToSetItemPosition )
+		{
+			posDependingLastCall = m_PendingNextItemPosition;
+			m_WantToSetItemPosition = false;
+		}
+
+		const auto textSize = m_ActiveFont->CalcTextSizeU32( m_Style.CurrentFontSize, rText );
+		AluraRect bb( posDependingLastCall, posDependingLastCall + textSize );
+
+		ItemSize( bb.GetSize() );
+		if( !CanAddItem( bb ) )
+			return;
+
+		m_Renderer->SubmitStringU32( rText, m_ActiveFont, m_Style.CurrentFontSize, posDependingLastCall, m_Style.Colours[ AluraColour_Text ] );
+
+#if defined(SAT_ALURA_SHOW_TEXT_BB)
+		m_Renderer->SubmitRectFrame( bb, 1.0f, { 1.0f, 0.0f, 0.0f, 1.0f } );
+#endif
+	}
+
+	void AluraCanvas::AddTextColouredU32( const std::u32string& rText, const glm::vec4& rColour )
+	{
+		PushStyle( AluraColour_Text, rColour );
+		AddTextU32( rText );
+		PopStyle();
+	}
+
 	bool AluraCanvas::AddButton( const glm::vec2& rSize, const glm::vec4& rColour )
 	{
 		// Handle NextItemPosition

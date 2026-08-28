@@ -481,17 +481,15 @@ namespace Saturn {
 		stream.close();
 	}
 
-	glm::vec2 AluraFont::CalcTextSize( float fontSize, const std::string& rText )
-	{
-		return CalcTextSizeN( fontSize, rText, rText.size() );
-	}
+	//////////////////////////////////////////////////////////////////////////
+	// TEXT SIZE
 
-	glm::vec2 AluraFont::CalcTextSizeN( float fontSize, const std::string& rText, size_t n )
-	{
-		return CalcTextSizeNAtOffset( fontSize, rText, n, 0llu );
-	}
-
-	glm::vec2 AluraFont::CalcTextSizeNAtOffset( float fontSize, const std::string& rText, size_t n, size_t off )
+	template<typename Ty>
+	glm::vec2 AluraFont::CalcTextSizeNAtOffsetT( 
+		float fontSize, 
+		const Ty& rText,
+		size_t n, 
+		size_t off )
 	{
 		if( rText.empty() || off > rText.size() || n > rText.size() - off )
 			return { 0.0f, 0.0f };
@@ -525,6 +523,36 @@ namespace Saturn {
 			static_cast< float >( metrics.AscenderY - metrics.DescenderY ) * scale;
 
 		return { width, height };
+	}
+
+	glm::vec2 AluraFont::CalcTextSize( float fontSize, const std::string& rText )
+	{
+		return CalcTextSizeN( fontSize, rText, rText.size() );
+	}
+
+	glm::vec2 AluraFont::CalcTextSizeN( float fontSize, const std::string& rText, size_t n )
+	{
+		return CalcTextSizeNAtOffset( fontSize, rText, n, 0llu );
+	}
+
+	glm::vec2 AluraFont::CalcTextSizeNAtOffset( float fontSize, const std::string& rText, size_t n, size_t off )
+	{
+		return CalcTextSizeNAtOffsetT<std::string>( fontSize, rText, n, off );
+	}
+
+	glm::vec2 AluraFont::CalcTextSizeU32( float fontSize, const std::u32string& rText )
+	{
+		return CalcTextSizeNU32( fontSize, rText, rText.size() );
+	}
+
+	glm::vec2 AluraFont::CalcTextSizeNU32( float fontSize, const std::u32string& rText, size_t n )
+	{
+		return CalcTextSizeNAtOffsetU32( fontSize, rText, n, 0llu );
+	}
+
+	glm::vec2 AluraFont::CalcTextSizeNAtOffsetU32( float fontSize, const std::u32string& rText, size_t n, size_t off )
+	{
+		return CalcTextSizeNAtOffsetT<std::u32string>( fontSize, rText, n, off );
 	}
 
 	float AluraFont::GetStartingYCoord() const

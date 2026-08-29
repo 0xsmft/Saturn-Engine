@@ -60,8 +60,7 @@ namespace Saturn {
 
 	static void CmmCmd_Info()
 	{
-		std::string msg = std::format( "Saturn Engine, version: {}, internal number: {} ident: {}", SAT_CURRENT_VERSION_STRING, SAT_CURRENT_VERSION, SAT_CURRENT_VERSION_BUILD_TAG );
-		ConsoleCommandManager::Get()->GetSink().Sink( msg );
+		ConsoleCommandManager::Get()->GetSink().SinkFormatted( "Saturn Engine, version: {}, internal number: {} ident: {}", ConsoleCommandMessageType::Info, SAT_CURRENT_VERSION_STRING, SAT_CURRENT_VERSION, SAT_CURRENT_VERSION_BUILD_TAG );
 	}
 
 	static void CmmCmd_Abort()

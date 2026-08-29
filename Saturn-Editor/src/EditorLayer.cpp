@@ -97,6 +97,7 @@
 
 #include <Saturn/Alura/AluraCanvas.h>
 #include <Saturn/Alura/AluraLayer.h>
+#include <Saturn/Alura/AssetViewer/AluraStyleEditor.h>
 
 #include <Saturn/RuntimeConsole/ConsoleCommandManager.h>
 
@@ -4245,7 +4246,7 @@ namespace Saturn {
 		ImGui::PushStyleColor( ImGuiCol_Button, { 0.0f, 0.0f, 0.0f, 0.0f } );
 		ImGui::PushStyleVar( ImGuiStyleVar_ItemSpacing, ImVec2( 5.0f * 2.0f, 0 ) );
 
-		if( m_RequestRuntime )
+		if( m_RequestRuntime && m_RuntimeScene )
 			Viewport_RTControls_Running();
 		else
 			Viewport_RTControls_Default();
@@ -4871,7 +4872,7 @@ namespace Saturn {
 			MessageBoxInfo msgBox
 			{
 				.Title = "Warning",
-				.Text = "No font default font asset was selected in the Project Defaults, you can still build only if this project does not contain any UI!, if the project does use Alura and no font is selected the Distribution application will verify.",
+				.Text = "No font default font asset was selected in the Project Defaults, the engine will bundle a default font, which may increase the package size. You can still build.",
 				.Buttons = MessageBoxButtons_Ok
 			};
 

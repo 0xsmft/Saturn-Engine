@@ -44,6 +44,8 @@
 #include "Saturn/Core/VirtualFS.h"
 #include "Saturn/Core/MemoryStream.h"
 
+#include "Saturn/Core/Renderer/RenderThread.h"
+
 #include "Saturn/Physics/PhysicsScene.h"
 #include "Saturn/Physics/PhysicsRigidBody.h"
 #include "Saturn/Physics/PhysicsCharacterController.h"

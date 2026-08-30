@@ -1434,8 +1434,9 @@ namespace Saturn {
 		if( m_NavBoundsEntity->GetUUID() == pEntity->GetUUID() )
 			m_NavBoundsEntity = nullptr;
 
-//		if( pEntity == m_pMainCameraEntity )
-//			m_pMainCameraEntity = nullptr;
+		// Release reference to main camera entity.
+		if( m_pMainCameraEntity.Access().Get() == pEntity )
+			m_pMainCameraEntity.Reset();
 
 		if( pEntity->HasComponent<StaticMeshComponent>() )
 		{

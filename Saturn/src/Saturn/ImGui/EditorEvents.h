@@ -436,4 +436,29 @@ namespace Saturn {
 		AssetID m_AssetID = 0;
 		NodeEditor* m_pNodeEditor = nullptr;
 	};
+
+	//
+	// CBBrowseToItemEvent
+	// 
+	// Request the content browser to browse to an item.
+	//
+	class CBBrowseToItemEvent : public Event
+	{
+		SAT_DEFINE_EVENT( CBBrowseToItem, EC_Editor );
+	public:
+		CBBrowseToItemEvent( const std::filesystem::path& rPath, AssetID ID )
+			: Event( EventType::CBBrowseToItem, EC_Editor ), m_Path( rPath ), m_ID( ID )
+		{
+		}
+
+		virtual ~CBBrowseToItemEvent() = default;
+
+		const std::filesystem::path& GetPath() const { return m_Path; }
+		AssetID GetAssetID() const { return m_ID; }
+
+	private:
+		const std::filesystem::path m_Path;
+		const AssetID m_ID = 0llu;
+	};
+
 }

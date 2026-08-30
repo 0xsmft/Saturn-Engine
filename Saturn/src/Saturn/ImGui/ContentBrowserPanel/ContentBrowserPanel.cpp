@@ -1255,40 +1255,52 @@ namespace Saturn {
 
 	void ContentBrowserPanel::OnEvent( Event& rEvent )
 	{
-		if( !m_WindowFocused )
-			return;
-
 		switch( rEvent.Type )
 		{
 			case EventType::KeyPressed:
 			{
-				OnKeyPressed( ( RubyKeyEvent& ) rEvent );
+				if( m_WindowFocused )
+				{
+					OnKeyPressed( ( RubyKeyEvent& ) rEvent );
+				}
 			} break;
 
 			case EventType::MousePressed:
 			{
-				RubyMouseEvent& mouseEvent = ( RubyMouseEvent& ) rEvent;
+				if( m_WindowFocused )
+				{
+					RubyMouseEvent& mouseEvent = ( RubyMouseEvent& ) rEvent;
 
-				if( mouseEvent.GetButton() == RubyMouseButton_Extra1 )
-				{
-					UndoQuickAction();
-				}
-				else if( mouseEvent.GetButton() == RubyMouseButton_Extra2 )
-				{
-					RedoQuickAction();
+					if( mouseEvent.GetButton() == RubyMouseButton_Extra1 )
+					{
+						UndoQuickAction();
+					}
+					else if( mouseEvent.GetButton() == RubyMouseButton_Extra2 )
+					{
+						RedoQuickAction();
+					}
 				}
 			} break;
 
 			case EventType::CBMoveItem:
 			{
-				// TOOD: Suspend filewatcher.
-				CBMoveItemEvent& rMoveEvent = ( CBMoveItemEvent& ) rEvent;
-
-				if( rMoveEvent.GetSourceItem() && rMoveEvent.GetDestinationItem() )
+				if( m_WindowFocused )
 				{
-					// Perform move action
-					MoveItemToItem( rMoveEvent.GetSourceItem(), rMoveEvent.GetDestinationItem() );
+					// TOOD: Suspend filewatcher.
+					CBMoveItemEvent& rMoveEvent = ( CBMoveItemEvent& ) rEvent;
+
+					if( rMoveEvent.GetSourceItem() && rMoveEvent.GetDestinationItem() )
+					{
+						// Perform move action
+						MoveItemToItem( rMoveEvent.GetSourceItem(), rMoveEvent.GetDestinationItem() );
+					}
 				}
+			} break;
+
+			case EventType::CBBrowseToItem:
+			{
+				CBBrowseToItemEvent& rBrowseEvent = ( CBBrowseToItemEvent& ) rEvent;
+				BrowseToItem( rBrowseEvent.GetPath(), rBrowseEvent.GetAssetID() );
 			} break;
 
 			default:

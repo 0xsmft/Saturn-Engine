@@ -37,6 +37,7 @@
 #include "MaterialGraphNodes.h"
 
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
+#include "Saturn/ImGui/EditorIcons.h"
 #include "Saturn/Vulkan/Renderer.h"
 
 #include "Saturn/Asset/AssetManager.h"
@@ -126,7 +127,7 @@ namespace Saturn {
 		}
 		else
 		{
-			SetupNewNodeEditor();
+//			SetupNewNodeEditor();
 		}
 
 		m_Name = std::format( "{0}##{1}", m_HostMaterialAsset->Name, ( uint64_t ) m_AssetID );
@@ -269,6 +270,17 @@ namespace Saturn {
 					{
 						open ^= 1;
 					}
+
+					if( ImGui::BeginItemTooltip() )
+					{
+						ImGui::Text( "%" PRIu64, texture->GetSourceAssetID() );
+						if( Ref<Asset> asset = AssetManager::Get()->FindAsset( texture->GetSourceAssetID() ) )
+						{
+							ImGui::Text( "%s", asset->Name.c_str() );
+						}
+
+						ImGui::EndTooltip();
+					}
 				}
 
 				ImGui::SameLine();
@@ -331,6 +343,22 @@ namespace Saturn {
 					}
 
 					m_HostMaterialAsset->ForceUpdate();
+				}
+
+				ImGui::SameLine();
+
+				{
+					Auxiliary::ScopedDisabledFlag disabledIf( texture == Renderer::Get()->GetPinkTexture() );
+
+					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "SearchFolder" ), ImVec2{ 24.0f, 24.0f } ) )
+					{
+						Ref<Asset> textureSourceAsset = AssetManager::Get()->FindAsset( texture->GetSourceAssetID() );
+						if( textureSourceAsset )
+						{
+							Application::Get()->DispatchEvent<CBBrowseToItemEvent>( 
+								textureSourceAsset->Path, textureSourceAsset->ID );
+						}
+					}
 				}
 
 				ImGui::PopID();

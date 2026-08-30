@@ -87,6 +87,7 @@ static inline EventCategory GetStaticCategory() { return EventCategory::Category
 		BoneHierarchyPanel_RemovePreviewMesh,
 		BoneHierarchyPanel_PreviewMeshStructurallyModified,
 		BoneHierarchyPanel_PreviewMeshRenamed,
+		CBBrowseToItem,
 
 		//////////////////////////////////////////////////////////////////////////
 		// Runtime

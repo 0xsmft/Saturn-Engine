@@ -52,6 +52,8 @@ namespace Saturn {
 	[[nodiscard]] extern bool IptIsMouseLocked();
 	[[nodiscard]] extern bool IptIsMouseButtonPressed( RubyMouseButton btn );
 	[[nodiscard]] extern bool IptIsKeyPressed( RubyKey key );
+	[[nodiscard]] extern void IptShowMouseCursor();
+	[[nodiscard]] extern void IptHideMouseCursor();
 	[[nodiscard]] extern glm::vec2 IptGetMousePosition();
 
 	extern Ref<Sound> AsRequestSound2D( AssetID ID );

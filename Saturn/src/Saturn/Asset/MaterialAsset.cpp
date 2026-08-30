@@ -326,6 +326,30 @@ namespace Saturn {
 		m_TextureSourceAssets[ 3 ] = texture;
 	}
 
+	void MaterialAsset::ResetAlbedoMap()
+	{
+		m_PendingTextureChanges[ "u_AlbedoTexture" ] = Renderer::Get()->GetPinkTexture();
+		m_TextureSourceAssets[ 0 ] = nullptr;
+	}
+
+	void MaterialAsset::ResetNormalMap()
+	{
+		m_PendingTextureChanges[ "u_NormalTexture" ] = Renderer::Get()->GetPinkTexture();
+		m_TextureSourceAssets[ 1 ] = nullptr;
+	}
+
+	void MaterialAsset::ResetMetallicMap()
+	{
+		m_PendingTextureChanges[ "u_MetallicTexture" ] = Renderer::Get()->GetPinkTexture();
+		m_TextureSourceAssets[ 2 ] = nullptr;
+	}
+
+	void MaterialAsset::ResetRoughnessMap()
+	{
+		m_PendingTextureChanges[ "u_RoughnessTexture" ] = Renderer::Get()->GetPinkTexture();
+		m_TextureSourceAssets[ 3 ] = nullptr;
+	}
+
 	void MaterialAsset::ForceUpdate()
 	{
 		for( auto& [name, texture] : m_PendingTextureChanges )

@@ -139,7 +139,7 @@ namespace Saturn {
 	}
 
 	Texture::Texture( const TextureSpecification& rSpecification )
-		: m_Specification( rSpecification )
+		: m_Specification( rSpecification ), m_ImageFormat( VulkanFormat( rSpecification.Format ) )
 	{
 	}
 

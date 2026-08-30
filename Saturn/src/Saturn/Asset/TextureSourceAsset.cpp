@@ -95,7 +95,16 @@ namespace Saturn {
 				uint32_t* pData = new uint32_t[ Width * Height ];
 				std::memset( pData, 0xFFFF00FFu, sizeof( uint32_t ) * Width * Height );
 
-				m_Texture = Ref<Texture2D>::Create( GetImageFormat(), Width, Height, pData );
+				TextureSpecification spec{};
+				spec.Width = Width;
+				spec.Height = Height;
+				spec.CreateFromMemory = true;
+				spec.pData = pData;
+				spec.Format = GetImageFormat();
+				spec.FilteringFlags = m_SamplerFliteringFlags;
+				spec.LoadFlags = ( TextureLoadFlags ) m_LoadFlags;
+
+				m_Texture = Ref<Texture2D>::Create( spec );
 
 				// And make sure to delete it....
 				delete[] pData;
@@ -192,7 +201,16 @@ namespace Saturn {
 		m_Height = Height;
 		m_Channels = Channels;
 
-		m_Texture = Ref<Texture2D>::Create( GetImageFormat(), m_Width, m_Height, pTextureData );
+		TextureSpecification spec{};
+		spec.Width = Width;
+		spec.Height = Height;
+		spec.CreateFromMemory = true;
+		spec.pData = pTextureData;
+		spec.Format = GetImageFormat();
+		spec.FilteringFlags = m_SamplerFliteringFlags;
+		spec.LoadFlags = ( TextureLoadFlags ) m_LoadFlags;
+
+		m_Texture = Ref<Texture2D>::Create( spec );
 		m_Texture->SetSourceID( ID );
 
 		stbi_image_free( pTextureData );

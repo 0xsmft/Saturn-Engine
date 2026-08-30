@@ -68,17 +68,20 @@ namespace Saturn {
 						VkImageLayout OldLayout, 
 						VkImageLayout NewLayout );
 
-	/*
 	struct TextureSpecification
 	{
-		uint32_t Width = 0;
-		uint32_t Height = 0;
+		uint32_t Width = 0u;
+		uint32_t Height = 0u;
+		bool CreateFromMemory = false;
+		bool Storage = false;
+		const void* pData = nullptr;
 
+		std::filesystem::path TexturePath;
 		ImageFormat Format = ImageFormat::None;
 		AddressingMode AddressingMode = AddressingMode::Repeat;
 		TextureLoadFlags LoadFlags = TextureLoadFlags_FlipVertically;
+		TextureFilteringFlags FilteringFlags = TextureFilteringFlags::Linear;
 	};
-	*/
 
 	// Base class for all textures.
 	// Represents a Vulkan Image, ImageView and Sampler
@@ -87,10 +90,12 @@ namespace Saturn {
 	{
 	public:
 		Texture() = default;
+		Texture( const TextureSpecification& rSpecification );
+
 		Texture( uint32_t width, uint32_t height, VkFormat Format, const void* pData, AddressingMode Mode = AddressingMode::Repeat, TextureLoadFlags flags = TextureLoadFlags_FlipVertically );
 
 		// INTERNAL USE ONLY!
-		Texture( std::filesystem::path Path, AddressingMode Mode, TextureLoadFlags flags ) : m_Path( Path ), m_AddressingMode( Mode ), m_LoadFlags( flags ) {}
+		Texture( std::filesystem::path Path, AddressingMode Mode, TextureLoadFlags flags );
 
 		virtual ~Texture() = default;
 
@@ -100,8 +105,6 @@ namespace Saturn {
 		uint32_t GetMipMapLevels() const;
 
 		std::pair<uint32_t, uint32_t> GetMipSize( uint32_t mip ) const;
-
-		void SetPath( const std::filesystem::path& rPath ) { m_Path = rPath; };
 
 	public:
 		VkSampler GetSampler()					   const { return m_Sampler; }
@@ -116,21 +119,21 @@ namespace Saturn {
 
 		const VkDescriptorImageInfo& GetDescriptorInfo() const { return m_DescriptorImageInfo; }
 
-		std::filesystem::path GetPath() { return m_Path; }
-		const std::filesystem::path& GetPath() const { return m_Path; }
+		std::filesystem::path GetPath() { return m_Specification.TexturePath; }
+		const std::filesystem::path& GetPath() const { return m_Specification.TexturePath; }
 
 		void SetIsRendererTexture( bool RendererTexture );
 
-		uint32_t Width() const { return m_Width; }
-		uint32_t Height() const { return m_Height; }
+		uint32_t Width() const { return m_Specification.Width; }
+		uint32_t Height() const { return m_Specification.Height; }
 
-		void* GetData() const { return m_pData; }
+		const void* GetData() const { return m_Specification.pData; }
 
 		// We may want to place this in the constructor and a function.
 		void SetSourceID( UUID id ) { m_SourceAssetID = id; }
 		UUID GetSourceAssetID() const { return m_SourceAssetID; /*UUID( 0 );*/ }
 
-		bool HasLoadFlag( TextureLoadFlags flag ) const { return ( m_LoadFlags & flag ) != 0; }
+		bool HasLoadFlag( TextureLoadFlags flag ) const { return ( m_Specification.LoadFlags & flag ) != 0; }
 
 		bool IsRendererTexture() const { return m_IsRendererTexture; }
 		void SetForceTerminate( bool ForceTerminate ) { m_ForceTerminate = ForceTerminate; }
@@ -146,9 +149,9 @@ namespace Saturn {
 		void Terminate();
 		void CopyBufferToImage( VkBuffer Buffer );
 
-	protected:
-		std::filesystem::path m_Path = "";
-		
+	protected:	
+		TextureSpecification m_Specification{};
+
 		VkImage m_Image = VK_NULL_HANDLE;
 		VkDeviceMemory m_ImageMemory = VK_NULL_HANDLE;
 		VkImageView m_ImageView = VK_NULL_HANDLE;
@@ -163,16 +166,10 @@ namespace Saturn {
 		bool m_IsRendererTexture = false;
 		bool m_ForceTerminate = false;
 		bool m_MipsCreated = false;
-		bool m_Storage = false;
-		AddressingMode m_AddressingMode = AddressingMode::Repeat;
-		TextureLoadFlags m_LoadFlags = TextureLoadFlags_None;
 		
-		void* m_pData = nullptr;
-
 		std::unordered_map<uint32_t, VkImageView> m_MipToImageViewMap;
 
-		uint32_t m_Width = 0u;
-		uint32_t m_Height = 0u;
+		void* m_pWorkingData = nullptr;
 
 		// The asset that this texture comes from.
 		// The ID can be zero because not all textures come from an asset.
@@ -184,6 +181,8 @@ namespace Saturn {
 	{
 	public:
 		Texture2D() = default;
+		Texture2D( const TextureSpecification& rSpecification );
+
 		Texture2D( const std::filesystem::path& rPath, AddressingMode Mode = AddressingMode::Repeat, TextureLoadFlags loadFlags = TextureLoadFlags_FlipVertically );
 		Texture2D( ImageFormat format, uint32_t width, uint32_t height, const void* pData, bool storage = false, AddressingMode Mode = AddressingMode::Repeat, TextureLoadFlags flags = TextureLoadFlags_None );
 		

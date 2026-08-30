@@ -311,22 +311,22 @@ namespace Saturn {
 					{
 						case 0: // albedo
 						{
-							m_HostMaterialAsset->SetAlbeoMap( Renderer::Get()->GetPinkTexture() );
+							m_HostMaterialAsset->ResetAlbedoMap();
 						} break;
 
 						case 1: // normal
 						{
-							m_HostMaterialAsset->SetNormalMap( Renderer::Get()->GetPinkTexture() );
+							m_HostMaterialAsset->ResetNormalMap();
 						} break;
 
 						case 2: // roughness
 						{
-							m_HostMaterialAsset->SetRoughnessMap( Renderer::Get()->GetPinkTexture() );
+							m_HostMaterialAsset->ResetRoughnessMap();
 						} break;
 
 						case 3: // metallic
 						{
-							m_HostMaterialAsset->SetMetallicMap( Renderer::Get()->GetPinkTexture() );
+							m_HostMaterialAsset->ResetMetallicMap();
 						} break;
 					}
 

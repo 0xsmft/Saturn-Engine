@@ -46,7 +46,7 @@
 
 namespace Saturn {
 
-	static VkSamplerAddressMode SaturnToVulkanAdressingMode( AddressingMode mode ) 
+	static VkSamplerAddressMode SaturnToVulkanAdressingMode( AddressingMode mode )
 	{
 		switch( mode )
 		{
@@ -62,15 +62,16 @@ namespace Saturn {
 				break;
 		}
 
+		SAT_CORE_ASSERT( false );
 		return VK_SAMPLER_ADDRESS_MODE_MAX_ENUM;
 	}
 
-	static bool VulkanIsDepth( VkFormat format ) 
+	static bool VulkanIsDepth( VkFormat format )
 	{
 		return ( format == VK_FORMAT_D32_SFLOAT ) || ( format == VK_FORMAT_D32_SFLOAT_S8_UINT );
 	}
 
-	static void ImagePipelineBarrier( 
+	static void ImagePipelineBarrier(
 		VkCommandBuffer CommandBuffer, VkImage Image, VkAccessFlags SrcMask, VkAccessFlags DstMask, VkImageLayout OldImageLayout, VkImageLayout NewImageLayout, VkPipelineStageFlags SrcStage, VkPipelineStageFlags DstStage, VkImageSubresourceRange Range )
 	{
 		VkImageMemoryBarrier ImageMemoryBarrier = { VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
@@ -86,13 +87,68 @@ namespace Saturn {
 		vkCmdPipelineBarrier( CommandBuffer, SrcStage, DstStage, 0, 0, nullptr, 0, nullptr, 1, &ImageMemoryBarrier );
 	}
 
+	static VkFilter SaturnFilterToVulkan( TextureFilteringFlags flags )
+	{
+		switch( flags )
+		{
+			case TextureFilteringFlags::Linear:
+				return VK_FILTER_LINEAR;
+
+			case TextureFilteringFlags::Nearest:
+				return VK_FILTER_NEAREST;
+
+			default:
+				break;
+		}
+
+		SAT_CORE_ASSERT( false );
+		return VK_FILTER_MAX_ENUM;
+	}
+
+	static VkSamplerMipmapMode SaturnFilterToVulkanMipMap( TextureFilteringFlags flags )
+	{
+		switch( flags )
+		{
+			case TextureFilteringFlags::Linear:
+				return VK_SAMPLER_MIPMAP_MODE_LINEAR;
+
+			case TextureFilteringFlags::Nearest:
+				return VK_SAMPLER_MIPMAP_MODE_NEAREST;
+
+			default:
+				break;
+		}
+
+		SAT_CORE_ASSERT( false );
+		return VK_SAMPLER_MIPMAP_MODE_MAX_ENUM;
+	}
+
 	//////////////////////////////////////////////////////////////////////////
 	// TEXTURE
 
 	Texture::Texture( uint32_t width, uint32_t height, VkFormat Format, const void* pData, AddressingMode Mode, TextureLoadFlags flags )
-		: m_Width( width ), m_Height( height ), m_ImageFormat( Format ), m_AddressingMode( Mode ), m_LoadFlags( flags )
+		: m_ImageFormat( Format )
 	{
-		m_pData = ( void* ) pData;
+		m_Specification.CreateFromMemory = true;
+		m_Specification.AddressingMode = Mode;
+		m_Specification.LoadFlags = flags;
+		m_Specification.pData = pData;
+		m_Specification.Width = width;
+		m_Specification.Height = height;
+		m_Specification.Format = SaturnFormat( Format );
+	}
+
+	Texture::Texture( const TextureSpecification& rSpecification )
+		: m_Specification( rSpecification )
+	{
+	}
+
+	Texture::Texture( std::filesystem::path Path, AddressingMode Mode, TextureLoadFlags flags )
+	{
+		m_Specification.CreateFromMemory = false;
+		m_Specification.TexturePath = Path;
+		m_Specification.AddressingMode = Mode;
+		m_Specification.LoadFlags = flags;
 	}
 
 	void Texture::Terminate()
@@ -114,7 +170,7 @@ namespace Saturn {
 		m_ImageView = nullptr;
 		m_Sampler = nullptr;
 
-		for ( auto&& [mip, view] : m_MipToImageViewMap )
+		for( auto&& [mip, view] : m_MipToImageViewMap )
 			vkDestroyImageView( VulkanContext::Get()->GetDevice(), view, nullptr );
 
 		m_MipToImageViewMap.clear();
@@ -155,7 +211,7 @@ namespace Saturn {
 			SrcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 			DstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		}
-		else if( OldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && NewLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL ) 
+		else if( OldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && NewLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL )
 		{
 			ImageBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 			ImageBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
@@ -191,7 +247,7 @@ namespace Saturn {
 		{
 			ImageBarrier.srcAccessMask = 0;
 			ImageBarrier.dstAccessMask = 0;
-	
+
 			SrcStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 			DstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 		}
@@ -232,7 +288,7 @@ namespace Saturn {
 			SrcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 			DstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		}
-		else if( OldLayout == VK_IMAGE_LAYOUT_UNDEFINED  && NewLayout == VK_IMAGE_LAYOUT_GENERAL ) 
+		else if( OldLayout == VK_IMAGE_LAYOUT_UNDEFINED && NewLayout == VK_IMAGE_LAYOUT_GENERAL )
 		{
 			ImageBarrier.srcAccessMask = 0;
 
@@ -247,17 +303,17 @@ namespace Saturn {
 
 	uint32_t Texture::GetMipMapLevels() const
 	{
-		if( ( m_LoadFlags & TextureLoadFlags_NoMips ) != 0 )
+		if( ( m_Specification.LoadFlags & TextureLoadFlags_NoMips ) != 0 )
 			return 1;
 
 		// Based from https://www.oreilly.com/library/view/opengl-programming-guide/9780132748445/ch06lev2sec20.html
-		return static_cast<uint32_t>( std::floor( std::log2( glm::min( m_Width, m_Height ) ) ) + 1 );
+		return static_cast< uint32_t >( std::floor( std::log2( glm::min( Width(), Height() ) ) ) + 1 );
 	}
 
 	std::pair<uint32_t, uint32_t> Texture::GetMipSize( uint32_t mip ) const
 	{
-		uint32_t width = m_Width;
-		uint32_t height = m_Height;
+		uint32_t width = Width();
+		uint32_t height = Height();
 		while( mip != 0 )
 		{
 			width /= 2;
@@ -283,7 +339,7 @@ namespace Saturn {
 		Region.imageSubresource.layerCount = 1;
 
 		Region.imageOffset = { 0, 0, 0 };
-		Region.imageExtent = { ( uint32_t ) m_Width, ( uint32_t ) m_Height, 1 };
+		Region.imageExtent = { Width(), Height(), 1 };
 
 		vkCmdCopyBufferToImage( CommandBuffer, Buffer, m_Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &Region );
 
@@ -292,12 +348,12 @@ namespace Saturn {
 
 	void Texture::SetIsRendererTexture( bool RendererTexture )
 	{
-		m_IsRendererTexture = RendererTexture; 
-		m_Path = "Renderer Pink Texture";
-		
-		SetDebugUtilsObjectName( "RendererPinkTexture-Sampler", ( uint64_t ) m_Sampler, VK_OBJECT_TYPE_SAMPLER );
-		SetDebugUtilsObjectName( "RendererPinkTexture-Img", ( uint64_t ) m_Image, VK_OBJECT_TYPE_IMAGE );
-		SetDebugUtilsObjectName( "RendererPinkTexture-View", ( uint64_t ) m_ImageView, VK_OBJECT_TYPE_IMAGE_VIEW );
+		m_IsRendererTexture = RendererTexture;
+		m_Specification.TexturePath = "RPT";
+
+		SetDebugUtilsObjectName( "RPT-Sampler", ( uint64_t ) m_Sampler, VK_OBJECT_TYPE_SAMPLER );
+		SetDebugUtilsObjectName( "RPT-Img", ( uint64_t ) m_Image, VK_OBJECT_TYPE_IMAGE );
+		SetDebugUtilsObjectName( "RPT-View", ( uint64_t ) m_ImageView, VK_OBJECT_TYPE_IMAGE_VIEW );
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -456,7 +512,7 @@ namespace Saturn {
 		VulkanContext::Get()->EndSingleTimeCommands( CommandBuffer );
 	}
 
-	static size_t GetImageMemorySize( ImageFormat format, uint32_t width, uint32_t height ) 
+	static size_t GetImageMemorySize( ImageFormat format, uint32_t width, uint32_t height )
 	{
 		switch( format )
 		{
@@ -495,7 +551,7 @@ namespace Saturn {
 		return 0;
 	}
 
-	static VkFormat GetVulkanFormatFromChannelCount( uint32_t channel ) 
+	static VkFormat GetVulkanFormatFromChannelCount( uint32_t channel )
 	{
 		switch( channel )
 		{
@@ -505,9 +561,9 @@ namespace Saturn {
 			case 2:
 				return VK_FORMAT_R8G8_UNORM;
 
-			// Some vulkan GPUs do not support RGB8 images with the features that we need, 
-			// so instead of doing more work to check, we are just going to take the easy 
-			// way out and covert it to a RGBA8 texture.
+				// Some vulkan GPUs do not support RGB8 images with the features that we need, 
+				// so instead of doing more work to check, we are just going to take the easy, 
+				// way out and covert it to a RGBA8 texture.
 			case 3:
 			case 4:
 				return VK_FORMAT_R8G8B8A8_UNORM;
@@ -523,8 +579,7 @@ namespace Saturn {
 	Texture2D::Texture2D( ImageFormat format, uint32_t width, uint32_t height, const void* pData, bool storage, AddressingMode Mode, TextureLoadFlags flags /*= TextureLoadFlags_None*/ )
 		: Texture( width, height, VulkanFormat( format ), pData, Mode, flags )
 	{
-		m_Storage = storage;
-
+		m_Specification.Storage = storage;
 		SetData( pData );
 	}
 
@@ -532,6 +587,19 @@ namespace Saturn {
 		: Texture( rPath, Mode, loadFlags )
 	{
 		CreateTextureImage();
+	}
+
+	Texture2D::Texture2D( const TextureSpecification& rSpecification )
+		: Texture( rSpecification )
+	{
+		if( rSpecification.CreateFromMemory )
+		{
+			SetData( rSpecification.pData );
+		}
+		else
+		{
+			CreateTextureImage();
+		}
 	}
 
 	Texture2D::~Texture2D()
@@ -555,7 +623,7 @@ namespace Saturn {
 #endif
 	}
 
-	void Texture2D::RT_Reset() 
+	void Texture2D::RT_Reset()
 	{
 		m_Image = nullptr;
 		m_ImageMemory = nullptr;
@@ -571,19 +639,19 @@ namespace Saturn {
 #endif
 	}
 
-	void Texture2D::PrepareTextureForJobSystem() 
+	void Texture2D::PrepareTextureForJobSystem()
 	{
 		int Width, Height, Channels;
-		SAT_CORE_VERIFY( stbi_info( m_Path.string().c_str(), &Width, &Height, &Channels ), "Failed to get information about texture file." );
+		SAT_CORE_VERIFY( stbi_info( m_Specification.TexturePath.string().c_str(), &Width, &Height, &Channels ), "Failed to get information about texture file." );
 
-		m_Width = Width;
-		m_Height = Height;
+		m_Specification.Width = Width;
+		m_Specification.Height = Height;
 		m_ImageFormat = GetVulkanFormatFromChannelCount( Channels );
 
-		m_pData = new uint32_t[ Width * Height ];
-		std::memset( m_pData, 0xFFFF00FF, sizeof( uint32_t ) * Width * Height );
+		m_pWorkingData = new uint32_t[ Width * Height ];
+		std::memset( m_pWorkingData, 0xFFFF00FF, sizeof( uint32_t ) * Width * Height );
 
-		SetData( m_pData );
+		SetData( m_pWorkingData );
 
 		JobSystem::Get().QueueJob( [ this ]()
 		{
@@ -594,34 +662,37 @@ namespace Saturn {
 
 			stbi_uc* pTextureData;
 
-			if( stbi_is_hdr( m_Path.string().c_str() ) )
+			const auto texturePathStr = m_Specification.TexturePath.string();
+
+			if( stbi_is_hdr( texturePathStr.c_str() ) )
 			{
-				SAT_CORE_INFO( "Loading HDR texture {0}", m_Path.string() );
-				pTextureData = ( uint8_t* ) stbi_loadf( m_Path.string().c_str(), &Width, &Height, &Channels, 4 );
+				SAT_CORE_INFO( "Loading HDR texture {0}", texturePathStr );
+				pTextureData = ( uint8_t* ) stbi_loadf( texturePathStr.c_str(), &Width, &Height, &Channels, 4 );
 
 				m_HDR = true;
 			}
 			else
 			{
-				SAT_CORE_INFO( "Loading texture {0}", m_Path.string() );
+				SAT_CORE_INFO( "Loading texture {0}", texturePathStr );
 
-				pTextureData = stbi_load( m_Path.string().c_str(), &Width, &Height, &Channels, 4 );
+				pTextureData = stbi_load( texturePathStr.c_str(), &Width, &Height, &Channels, 4 );
 
 				m_HDR = false;
 			}
 
-			if( m_pData )
-				delete[] m_pData;
+			if( m_pWorkingData )
+				delete[] m_pWorkingData;
 
-			m_pData = pTextureData;
+			m_pWorkingData = pTextureData;
 
-			m_Width = Width;
-			m_Height = Height;
+			m_Specification.Width = Width;
+			m_Specification.Height = Height;
 
 			RenderThread::Get().Queue( [ this, pTextureData ]()
 			{
-				SetData( m_pData );
+				SetData( m_pWorkingData );
 				stbi_image_free( pTextureData );
+				m_pWorkingData = nullptr;
 			} );
 		} );
 	}
@@ -630,8 +701,8 @@ namespace Saturn {
 	// Create a texture 2D
 	void Texture2D::CreateTextureImage()
 	{
-		SAT_CORE_VERIFY( std::filesystem::exists( m_Path ), "Fucking texture path does not exist!" );
-		SAT_CORE_ASSERT( m_Path.extension().string() != ".stx", "You cannot load a Saturn Texture Source Asset (.stx) you must use the Texture Source Asset to load it's raw image file, you've passed in the path of the Asset not the image file." );
+		SAT_CORE_VERIFY( std::filesystem::exists( m_Specification.TexturePath ), "Fucking texture path does not exist!" );
+		SAT_CORE_ASSERT( m_Specification.TexturePath.extension().string() != ".stx", "You cannot load a Saturn Texture Source Asset (.stx) you must use the Texture Source Asset to load it's raw image file, you've passed in the path of the Asset not the image file." );
 
 		if( !HasLoadFlag( TextureLoadFlags_LoadOnMainThread ) )
 		{
@@ -639,32 +710,33 @@ namespace Saturn {
 		}
 		else
 		{
-			int Width, Height, Channels;
+			const auto texturePathStr = m_Specification.TexturePath.string();
+
+			int Width = 0, Height = 0, Channels = 0;
 
 			// Flip texture
 			stbi_set_flip_vertically_on_load_thread( HasLoadFlag( TextureLoadFlags_FlipVertically ) );
 
 			stbi_uc* pTextureData;
 
-			if( stbi_is_hdr( m_Path.string().c_str() ) )
+			if( stbi_is_hdr( texturePathStr.c_str() ) )
 			{
-				SAT_CORE_INFO( "Loading HDR texture {0}", m_Path.string() );
-				pTextureData = ( uint8_t* ) stbi_loadf( m_Path.string().c_str(), &Width, &Height, &Channels, 4 );
+				SAT_CORE_INFO( "Loading HDR texture {0}", texturePathStr );
+				pTextureData = ( uint8_t* ) stbi_loadf( texturePathStr.c_str(), &Width, &Height, &Channels, 4 );
 
 				m_HDR = true;
 			}
 			else
 			{
-				SAT_CORE_INFO( "Loading texture {0}", m_Path.string() );
+				SAT_CORE_INFO( "Loading texture {0}", texturePathStr );
 
-				pTextureData = stbi_load( m_Path.string().c_str(), &Width, &Height, &Channels, 4 );
+				pTextureData = stbi_load( texturePathStr.c_str(), &Width, &Height, &Channels, 4 );
 
 				m_HDR = false;
 			}
-			
-			m_pData = pTextureData;
-			m_Width = Width;
-			m_Height = Height;
+
+			m_Specification.Width = Width;
+			m_Specification.Height = Height;
 			m_ImageFormat = GetVulkanFormatFromChannelCount( Channels );
 
 			SetData( pTextureData );
@@ -691,15 +763,15 @@ namespace Saturn {
 			imageBlit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 			imageBlit.srcSubresource.layerCount = 1;
 			imageBlit.srcSubresource.mipLevel = ( uint32_t ) i - 1;
-			imageBlit.srcOffsets[ 1 ].x = int32_t( m_Width >> ( i - 1 ) );
-			imageBlit.srcOffsets[ 1 ].y = int32_t( m_Height >> ( i - 1 ) );
+			imageBlit.srcOffsets[ 1 ].x = int32_t( Width() >> ( i - 1 ) );
+			imageBlit.srcOffsets[ 1 ].y = int32_t( Height() >> ( i - 1 ) );
 			imageBlit.srcOffsets[ 1 ].z = 1;
 
 			imageBlit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 			imageBlit.dstSubresource.layerCount = 1;
 			imageBlit.dstSubresource.mipLevel = ( uint32_t ) i;
-			imageBlit.dstOffsets[ 1 ].x = int32_t( m_Width >> i );
-			imageBlit.dstOffsets[ 1 ].y = int32_t( m_Height >> i );
+			imageBlit.dstOffsets[ 1 ].x = int32_t( Width() >> i );
+			imageBlit.dstOffsets[ 1 ].y = int32_t( Height() >> i );
 			imageBlit.dstOffsets[ 1 ].z = 1;
 
 			VkImageSubresourceRange mipSubRange = {};
@@ -724,7 +796,7 @@ namespace Saturn {
 			.layerCount = 1
 		};
 
-		if( !m_Storage )
+		if( !m_Specification.Storage )
 		{
 			ImagePipelineBarrier( CommandBuffer, m_Image, VK_ACCESS_TRANSFER_READ_BIT, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, range );
 
@@ -742,7 +814,7 @@ namespace Saturn {
 
 	VkImageView Texture2D::GetOrCreateMipImageView( uint32_t mip )
 	{
-		if( m_MipToImageViewMap.find( mip ) == m_MipToImageViewMap.end() ) 
+		if( m_MipToImageViewMap.find( mip ) == m_MipToImageViewMap.end() )
 		{
 			VkImageView view;
 
@@ -763,9 +835,9 @@ namespace Saturn {
 
 	void Texture2D::SetDebugName( const std::string& rName )
 	{
-		SetDebugUtilsObjectName( rName.c_str(), (uint64_t)m_Image, VK_OBJECT_TYPE_IMAGE );
-		SetDebugUtilsObjectName( rName.c_str(), (uint64_t)m_ImageView, VK_OBJECT_TYPE_IMAGE_VIEW );
-		SetDebugUtilsObjectName( rName.c_str(), (uint64_t)m_Sampler, VK_OBJECT_TYPE_SAMPLER );
+		SetDebugUtilsObjectName( rName.c_str(), ( uint64_t ) m_Image, VK_OBJECT_TYPE_IMAGE );
+		SetDebugUtilsObjectName( rName.c_str(), ( uint64_t ) m_ImageView, VK_OBJECT_TYPE_IMAGE_VIEW );
+		SetDebugUtilsObjectName( rName.c_str(), ( uint64_t ) m_Sampler, VK_OBJECT_TYPE_SAMPLER );
 	}
 
 	static void X31TransitionImageLayout(
@@ -830,7 +902,7 @@ namespace Saturn {
 
 	Buffer Texture2D::X31CopyToBuffer() const
 	{
-		VkDeviceSize ImageSize = GetImageMemorySize( SaturnFormat( m_ImageFormat ), m_Width, m_Height );
+		VkDeviceSize ImageSize = GetImageMemorySize( SaturnFormat( m_ImageFormat ), Width(), Height() );
 
 		// Copy image to vulkan buffer
 		VkBufferCreateInfo BufferCreateInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
@@ -861,7 +933,7 @@ namespace Saturn {
 		Region.imageSubresource.baseArrayLayer = 0;
 		Region.imageSubresource.layerCount = 1;
 		Region.imageOffset = { 0, 0, 0 };
-		Region.imageExtent = { ( uint32_t ) m_Width, ( uint32_t ) m_Height, 1 };
+		Region.imageExtent = { Width(), Height(), 1 };
 
 		vkCmdCopyImageToBuffer( CommandBuffer, m_Image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, ImgBuffer, 1, &Region );
 
@@ -886,7 +958,7 @@ namespace Saturn {
 
 	Buffer Texture2D::GetMipTextureData( uint32_t w, uint32_t h, uint32_t mip ) const
 	{
-		const VkDeviceSize ImageSize = GetImageMemorySize( SaturnFormat( m_ImageFormat ), m_Width, m_Height );
+		const VkDeviceSize ImageSize = GetImageMemorySize( SaturnFormat( m_ImageFormat ), Width(), Height() );
 
 		// Copy image to vulkan buffer
 		VkBufferCreateInfo BufferCreateInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
@@ -949,7 +1021,7 @@ namespace Saturn {
 
 		if( pData )
 		{
-			VkDeviceSize ImageSize = GetImageMemorySize( SaturnFormat( m_ImageFormat ), m_Width, m_Height );
+			VkDeviceSize ImageSize = GetImageMemorySize( SaturnFormat( m_ImageFormat ), Width(), Height() );
 
 			VkBufferCreateInfo BufferCreateInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
 			BufferCreateInfo.size = ImageSize;
@@ -974,10 +1046,10 @@ namespace Saturn {
 		// TRANSITION (based on following conditions):
 		// TRANSFER_DST_OPTIMAL to TRANSFER_SRC_OPTIMAL if we have mips
 		// TRANSFER_DST_OPTIMAL to SHADER_READ_ONLY_OPTIMAL if we do not mips and we are not a storage image
-		if( MipCount > 1 ) 
+		if( MipCount > 1 )
 		{
 			TransitionImageLayout( m_ImageFormat, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL );
-		
+
 			CreateMips();
 
 			//TransitionImageLayout( m_ImageFormat, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, m_DescriptorImageInfo.imageLayout );
@@ -992,7 +1064,7 @@ namespace Saturn {
 	{
 		auto pAllocator = VulkanContext::Get()->GetVulkanAllocator();
 
-		const VkDeviceSize ImageSize = GetImageMemorySize( SaturnFormat( m_ImageFormat ), m_Width, m_Height );
+		const VkDeviceSize ImageSize = GetImageMemorySize( SaturnFormat( m_ImageFormat ), Width(), Height() );
 
 		const auto MipCount = GetMipMapLevels();
 
@@ -1024,20 +1096,19 @@ namespace Saturn {
 
 		VkImageUsageFlags usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 
-		if( m_Storage )
+		if( m_Specification.Storage )
 			usage |= VK_IMAGE_USAGE_STORAGE_BIT;
 
-		CreateImage( m_Width, m_Height, m_ImageFormat, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_Image, m_ImageMemory, MipCount, 1 );
+		CreateImage( Width(), Height(), m_ImageFormat, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_Image, m_ImageMemory, MipCount, 1 );
 
 		//if( m_Storage )
 		//	TransitionImageLayout( m_ImageFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL );
 		//else
-			TransitionImageLayout( m_ImageFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL );
+		TransitionImageLayout( m_ImageFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL );
 
-		if( m_pData ) 
+		if( pData )
 		{
 			CopyBufferToImage( StagingBuffer );
-		
 			pAllocator->DestroyBuffer( StagingBuffer );
 		}
 
@@ -1047,7 +1118,7 @@ namespace Saturn {
 		// TRANSFER_DST_OPTIMAL to GENERAL if do not have mips and we are a storage image.
 		if( MipCount > 1 )
 			TransitionImageLayout( m_ImageFormat, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL );
-		else if( !m_Storage )
+		else if( !m_Specification.Storage )
 			TransitionImageLayout( m_ImageFormat, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL );
 		else
 			TransitionImageLayout( m_ImageFormat, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL );
@@ -1066,21 +1137,27 @@ namespace Saturn {
 		m_ImageView = CreateImageView( range, m_Image, m_ImageFormat );
 
 		// Create sampler
-		VkSamplerCreateInfo SamplerCreateInfo = { VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
-		SamplerCreateInfo.magFilter = VK_FILTER_LINEAR;
-		SamplerCreateInfo.minFilter = VK_FILTER_LINEAR;
-		SamplerCreateInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+		const auto magMinFilter = SaturnFilterToVulkan( m_Specification.FilteringFlags );
+		const auto mipMapFilter = SaturnFilterToVulkanMipMap( m_Specification.FilteringFlags );
 
-		SamplerCreateInfo.addressModeU = SaturnToVulkanAdressingMode( m_AddressingMode );
-		SamplerCreateInfo.addressModeV = SaturnToVulkanAdressingMode( m_AddressingMode );
-		SamplerCreateInfo.addressModeW = SaturnToVulkanAdressingMode( m_AddressingMode );
+		VkSamplerCreateInfo SamplerCreateInfo = { VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
+		SamplerCreateInfo.magFilter = magMinFilter;
+		SamplerCreateInfo.minFilter = magMinFilter;
+		SamplerCreateInfo.mipmapMode = mipMapFilter;
+
+		const auto addressingMode = SaturnToVulkanAdressingMode( m_Specification.AddressingMode );
+		SamplerCreateInfo.addressModeU = addressingMode;
+		SamplerCreateInfo.addressModeV = addressingMode;
+		SamplerCreateInfo.addressModeW = addressingMode;
 
 		SamplerCreateInfo.anisotropyEnable = VK_FALSE;
 
+#if SAT_ANISOTROPIC_TEXTURES
 		// We don't know the max anisotropy level, so we'll need to get it from the properties of the physical device.
 		// We do this as this is the best way to get the max anisotropy level as it can be different on other devices.
 		VkPhysicalDeviceProperties Properties = {};
 		vkGetPhysicalDeviceProperties( VulkanContext::Get()->GetPhysicalDevice(), &Properties );
+#endif
 
 		SamplerCreateInfo.maxAnisotropy = 1;
 
@@ -1097,18 +1174,18 @@ namespace Saturn {
 
 		VK_CHECK( vkCreateSampler( VulkanContext::Get()->GetDevice(), &SamplerCreateInfo, nullptr, &m_Sampler ) );
 #if defined(SAT_DEBUG)
-		SetDebugUtilsObjectName( std::format( "Texture Sampler (FN/SetData) PATH/{0} PINK/{1}", m_Path.stem().string(), m_IsRendererTexture ), ( uint64_t ) m_Sampler, VK_OBJECT_TYPE_SAMPLER );
+		SetDebugUtilsObjectName( std::format( "Texture Sampler (FN/SetData) PATH/{0} PINK/{1}", m_Specification.TexturePath.stem().string(), m_IsRendererTexture ), ( uint64_t ) m_Sampler, VK_OBJECT_TYPE_SAMPLER );
 #else
 		SetDebugUtilsObjectName( "Texture Sampler", ( uint64_t ) m_Sampler, VK_OBJECT_TYPE_SAMPLER );
 #endif
 
 		m_DescriptorImageInfo = {};
-		m_DescriptorImageInfo.imageLayout = m_Storage ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		m_DescriptorImageInfo.imageLayout = m_Specification.Storage ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		m_DescriptorImageInfo.imageView = m_ImageView;
 		m_DescriptorImageInfo.sampler = m_Sampler;
 
 #if !defined(SAT_DIST)
-		m_DescriptorSet = ( VkDescriptorSet ) ImGui_ImplVulkan_AddTexture( m_Sampler, m_ImageView, m_Storage ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL );
+		m_DescriptorSet = ( VkDescriptorSet ) ImGui_ImplVulkan_AddTexture( m_Sampler, m_ImageView, m_Specification.Storage ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL );
 #endif
 
 		if( MipCount > 1 )
@@ -1122,8 +1199,7 @@ namespace Saturn {
 	TextureCube::TextureCube( ImageFormat Format, uint32_t width, uint32_t height, const void* pData /*= nullptr */ )
 		: Texture( width, height, VulkanFormat( Format ), pData )
 	{
-		m_pData = ( void* ) pData;
-
+		m_Specification.pData = pData;
 		CreateTextureImage();
 	}
 
@@ -1149,8 +1225,8 @@ namespace Saturn {
 
 		VkImageCreateInfo ImageCreateInfo = { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
 		ImageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
-		ImageCreateInfo.extent.width = m_Width;
-		ImageCreateInfo.extent.height = m_Height;
+		ImageCreateInfo.extent.width = Width();
+		ImageCreateInfo.extent.height = Height();
 		ImageCreateInfo.extent.depth = 1;
 		ImageCreateInfo.mipLevels = GetMipMapLevels();
 		ImageCreateInfo.arrayLayers = 6;
@@ -1264,8 +1340,8 @@ namespace Saturn {
 				imageBlit.srcSubresource.layerCount = 1;
 				imageBlit.srcSubresource.mipLevel = i - 1;
 				imageBlit.srcSubresource.baseArrayLayer = face;
-				imageBlit.srcOffsets[ 1 ].x = int32_t( m_Width >> ( i - 1 ) );
-				imageBlit.srcOffsets[ 1 ].y = int32_t( m_Height >> ( i - 1 ) );
+				imageBlit.srcOffsets[ 1 ].x = int32_t( Width() >> ( i - 1 ) );
+				imageBlit.srcOffsets[ 1 ].y = int32_t( Height() >> ( i - 1 ) );
 				imageBlit.srcOffsets[ 1 ].z = 1;
 
 				// Destination
@@ -1273,8 +1349,8 @@ namespace Saturn {
 				imageBlit.dstSubresource.layerCount = 1;
 				imageBlit.dstSubresource.mipLevel = i;
 				imageBlit.dstSubresource.baseArrayLayer = face;
-				imageBlit.dstOffsets[ 1 ].x = int32_t( m_Width >> i );
-				imageBlit.dstOffsets[ 1 ].y = int32_t( m_Height >> i );
+				imageBlit.dstOffsets[ 1 ].x = int32_t( Width() >> i );
+				imageBlit.dstOffsets[ 1 ].y = int32_t( Height() >> i );
 				imageBlit.dstOffsets[ 1 ].z = 1;
 
 				VkImageSubresourceRange mipSubRange = {};

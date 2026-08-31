@@ -118,178 +118,189 @@ namespace Saturn {
 
 		//////////////////////////////////////////////////////////////////////////
 
-		ImGui::Begin( "Sidebar" );
-
-		if( Auxiliary::TreeNode( "Physics" ) )
+		if( ImGui::Begin( "Sidebar" ) ) 
 		{
-			Auxiliary::ScopedDisabledFlag disabledIfRo( m_IsReadOnly );
-
-			PhysicsShapeType type = m_Mesh->GetAttachedShape();
-			
-			const char* pItems[] = { "None", "Box", "Sphere", "Capsule", "Convex Mesh", "Triangle Mesh" };
-			static PhysicsShapeType selectedEnum = type;
-			static const char* pSelected = pItems[ ( int ) selectedEnum ];
-
-			ImGui::Text( "Select Physics Shape Type:" );
-			ImGui::SameLine();
-
-			if( ImGui::BeginCombo( "##setshape", pSelected ) )
+			if( Auxiliary::TreeNode( "Physics" ) )
 			{
-				for( unsigned int i = 0u; i < IM_ARRAYSIZE( pItems ); ++i )
+				Auxiliary::ScopedDisabledFlag disabledIfRo( m_IsReadOnly );
+
+				PhysicsShapeType type = m_Mesh->GetAttachedShape();
+
+				const char* pItems[] = { "None", "Box", "Sphere", "Capsule", "Convex Mesh", "Triangle Mesh" };
+				static PhysicsShapeType selectedEnum = type;
+				static const char* pSelected = pItems[ ( int ) selectedEnum ];
+
+				ImGui::Text( "Select Physics Shape Type:" );
+				ImGui::SameLine();
+
+				if( ImGui::BeginCombo( "##setshape", pSelected ) )
 				{
-					const bool isSelected = ( pSelected == pItems[ i ] );
-					if( ImGui::Selectable( pItems[ i ], isSelected ) ) 
+					for( unsigned int i = 0u; i < IM_ARRAYSIZE( pItems ); ++i )
 					{
-						selectedEnum = ( PhysicsShapeType ) i;
-						pSelected = pItems[ i ];
-
-						m_Mesh->SetAttachedShape( selectedEnum );
-					}
-
-					if( isSelected )
-					{
-						ImGui::SetItemDefaultFocus();
-					}
-				}
-
-				ImGui::EndCombo();
-			}
-
-			if( selectedEnum == PhysicsShapeType::TriangleMesh || selectedEnum == PhysicsShapeType::ConvexMesh )
-			{
-				if( ImGui::Button( "Generate Mesh Collider" ) )
-				{
-					const auto Result = PhysicsFoundation::Get()->GetCooking().CookMeshCollider( m_Mesh, selectedEnum );
-					if( Result != PhysicsCookingResult::Success )
-					{
-						m_ShowCookingErrorPopup = true;
-						m_CookingError = ( uint8_t ) Result;
-					}
-					else
-					{
-#if !defined(SAT_DIST)
-						Application::Get()->DispatchEvent<SendEditorNotificationEvent>( "Successfully cooked mesh collider!" );
-#endif
-					}
-				}
-			}
-
-			ImGui::Text( "Set Physics Material" );
-			ImGui::SameLine();
-			
-			bool s_Open = false;
-
-			if( ImGui::Button( "...##openmesh", ImVec2( 50.0f, 20.0f ) ) )
-			{
-				s_Open = !s_Open;
-			}
-			
-			if( Auxiliary::DrawAssetFinder( AssetType::PhysicsMaterial, &s_Open, m_AssetFinderOutPhys, 0 ) )
-			{
-				AssetManager::Get()->UnregisterAssetDependency( m_AssetID, m_Mesh->GetPhysicsMaterial() );
-
-				m_Mesh->SetPhysicsMaterial( m_AssetFinderOutPhys );
-
-				if( m_AssetFinderOutPhys )
-					AssetManager::Get()->RegisterAssetDependency( m_AssetID, m_AssetFinderOutPhys );
-			}
-
-			Auxiliary::EndTreeNode();
-		}
-
-		if( Auxiliary::TreeNode( "Materials" ) )
-		{
-			Auxiliary::DisabledFlag disabledIfRo( m_IsReadOnly );
-
-			const bool canResetMaterialsNow = ( Project::GetActiveProject()->GetDefaultMaterialAsset() != 0 && AssetManager::Get()->FindAsset( Project::GetActiveProject()->GetDefaultMaterialAsset() ) );
-
-			if( ImGui::Button( "Reset All" ) )
-			{
-				if( canResetMaterialsNow )
-				{
-					uint32_t idx = 0u;
-					for( auto& rMaterial : m_Mesh->GetMaterialAssets() )
-					{
-						m_Mesh->GetMaterialRegistry()->SetMaterial( idx, Project::GetActiveProject()->GetDefaultMaterialAsset() );
-						++idx;
-					}
-				}
-				else
-				{
-					uint32_t idx = 0u;
-					for( auto& rMaterial : m_Mesh->GetMaterialAssets() )
-					{
-						m_ResetIndices.push( idx );
-						++idx;
-					}
-					
-					m_ShowNoFallbackPopup = true;
-				}
-			}
-
-			disabledIfRo.Pop();
-
-			ImGui::Separator();
-
-			int i = 0;
-			for( auto& rMaterial : m_Mesh->GetMaterialAssets() )
-			{
-				ImGui::PushID( i );
-
-				if( ImGui::TreeNodeEx( rMaterial->Name.c_str(), ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_FramePadding ) )
-				{
-					Auxiliary::ScopedDisabledFlag disabledIfReadOnly( m_IsReadOnly );
-
-					ImGui::BeginHorizontal( i );
-
-					ImGui::TextDisabled( "%s", rMaterial->Name.empty() ? "<NULL>" : rMaterial->Name.c_str() );
-
-					bool open = false;
-
-					if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
-					{
-						open = true;
-					}
-
-					ImGui::Spring();
-
-					if( ImGui::Button( "Reset" ) ) 
-					{
-						if( canResetMaterialsNow )
+						const bool isSelected = ( pSelected == pItems[ i ] );
+						if( ImGui::Selectable( pItems[ i ], isSelected ) )
 						{
-							m_Mesh->GetMaterialRegistry()->SetMaterial( i, Project::GetActiveProject()->GetDefaultMaterialAsset() );
+							selectedEnum = ( PhysicsShapeType ) i;
+							pSelected = pItems[ i ];
+
+							m_Mesh->SetAttachedShape( selectedEnum );
+						}
+
+						if( isSelected )
+						{
+							ImGui::SetItemDefaultFocus();
+						}
+					}
+
+					ImGui::EndCombo();
+				}
+
+				if( selectedEnum == PhysicsShapeType::TriangleMesh || selectedEnum == PhysicsShapeType::ConvexMesh )
+				{
+					if( ImGui::Button( "Generate Mesh Collider" ) )
+					{
+						const auto Result = PhysicsFoundation::Get()->GetCooking().CookMeshCollider( m_Mesh, selectedEnum );
+						if( Result != PhysicsCookingResult::Success )
+						{
+							m_ShowCookingErrorPopup = true;
+							m_CookingError = ( uint8_t ) Result;
 						}
 						else
 						{
-							m_ResetIndices.push( i );
-							m_ShowNoFallbackPopup = true;
+#if !defined(SAT_DIST)
+							Application::Get()->DispatchEvent<SendEditorNotificationEvent>( "Successfully cooked mesh collider!" );
+#endif
 						}
 					}
-
-					ImGui::EndHorizontal();
-
-					if( Auxiliary::DrawAssetFinder( AssetType::Material, &open, m_AssetFinderOut, 0 ) )
-					{
-						// Update Pure Dependencies
-						AssetManager::Get()->UnregisterAssetDependency( m_AssetID, rMaterial->ID );
-
-						m_Mesh->GetMaterialRegistry()->SetMaterial( ( uint32_t ) i, m_AssetFinderOut );
-
-						AssetManager::Get()->RegisterAssetDependency( m_AssetID, m_AssetFinderOut );
-					}
-
-					Auxiliary::EndTreeNode();
 				}
 
-				ImGui::PopID();
+				ImGui::Text( "Set Physics Material" );
+				ImGui::SameLine();
 
-				++i;
+				bool s_Open = false;
+
+				if( ImGui::Button( "...##openmesh", ImVec2( 50.0f, 20.0f ) ) )
+				{
+					s_Open = !s_Open;
+				}
+
+				if( Auxiliary::DrawAssetFinder( AssetType::PhysicsMaterial, &s_Open, m_AssetFinderOutPhys, 0 ) )
+				{
+					AssetManager::Get()->UnregisterAssetDependency( m_AssetID, m_Mesh->GetPhysicsMaterial() );
+
+					m_Mesh->SetPhysicsMaterial( m_AssetFinderOutPhys );
+
+					if( m_AssetFinderOutPhys )
+						AssetManager::Get()->RegisterAssetDependency( m_AssetID, m_AssetFinderOutPhys );
+				}
+
+				Auxiliary::EndTreeNode();
 			}
 
-			Auxiliary::EndTreeNode();
+			if( Auxiliary::TreeNode( "Materials" ) )
+			{
+				Auxiliary::DisabledFlag disabledIfRo( m_IsReadOnly );
+
+				const bool canResetMaterialsNow = ( Project::GetActiveProject()->GetDefaultMaterialAsset() != 0 && AssetManager::Get()->FindAsset( Project::GetActiveProject()->GetDefaultMaterialAsset() ) );
+
+				if( ImGui::Button( "Reset All" ) )
+				{
+					if( canResetMaterialsNow )
+					{
+						uint32_t idx = 0u;
+						for( auto& rMaterial : m_Mesh->GetMaterialAssets() )
+						{
+							m_Mesh->GetMaterialRegistry()->SetMaterial( idx, Project::GetActiveProject()->GetDefaultMaterialAsset() );
+							++idx;
+						}
+					}
+					else
+					{
+						uint32_t idx = 0u;
+						for( auto& rMaterial : m_Mesh->GetMaterialAssets() )
+						{
+							m_ResetIndices.push( idx );
+							++idx;
+						}
+
+						m_ShowNoFallbackPopup = true;
+					}
+				}
+
+				disabledIfRo.Pop();
+
+				ImGui::Separator();
+
+				int i = 0;
+				for( auto& rMaterial : m_Mesh->GetMaterialAssets() )
+				{
+					ImGui::PushID( i );
+
+					if( ImGui::TreeNodeEx( rMaterial->Name.c_str(), ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_FramePadding ) )
+					{
+						Auxiliary::ScopedDisabledFlag disabledIfReadOnly( m_IsReadOnly );
+
+						ImGui::BeginHorizontal( i );
+
+						ImGui::TextDisabled( "%s", rMaterial->Name.empty() ? "<NULL>" : rMaterial->Name.c_str() );
+
+						bool open = false;
+
+						if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24.0f, 24.0f ) ) )
+						{
+							open = true;
+						}
+
+						ImGui::Spring();
+
+						if( ImGui::Button( "Reset" ) )
+						{
+							if( canResetMaterialsNow )
+							{
+								m_Mesh->GetMaterialRegistry()->SetMaterial( i, Project::GetActiveProject()->GetDefaultMaterialAsset() );
+							}
+							else
+							{
+								m_ResetIndices.push( i );
+								m_ShowNoFallbackPopup = true;
+							}
+						}
+
+						ImGui::EndHorizontal();
+
+						if( Auxiliary::DrawAssetFinder( AssetType::Material, &open, m_AssetFinderOut, 0 ) )
+						{
+							// Update Pure Dependencies
+							AssetManager::Get()->UnregisterAssetDependency( m_AssetID, rMaterial->ID );
+
+							m_Mesh->GetMaterialRegistry()->SetMaterial( ( uint32_t ) i, m_AssetFinderOut );
+
+							AssetManager::Get()->RegisterAssetDependency( m_AssetID, m_AssetFinderOut );
+						}
+
+						Auxiliary::EndTreeNode();
+					}
+
+					ImGui::PopID();
+
+					++i;
+				}
+
+				Auxiliary::EndTreeNode();
+			}
+
+			if( Auxiliary::TreeNode( "Statistics" ) )
+			{
+				ImGui::Text( "Vertices: %" PRIu64, m_Mesh->GetVertexCount() );
+				ImGui::Text( "Indices: %" PRIu64, m_Mesh->GetIndexCount() );
+				ImGui::Text( "Faces: %" PRIu64, m_Mesh->GetFaceCount() );
+
+				Auxiliary::EndTreeNode();
+			}
+
+			ImGui::End();
 		}
 
-		ImGui::End();
 		ImGui::End(); // Root Window
 
 		if( m_Open == false )

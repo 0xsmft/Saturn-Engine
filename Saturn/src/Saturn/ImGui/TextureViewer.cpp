@@ -154,7 +154,7 @@ namespace Saturn {
 
 			ImGui::Text( "Filtering flags" );
 			{
-				const char* pItems[] = { "Linear", "Optimal" };
+				const char* pItems[] = { "Linear", "Nearest (Closest)" };
 				static TextureFilteringFlags SelectedEnum = m_TextureAsset->GetFilteringFlags();
 				static const char* Selected = pItems[ ( int ) SelectedEnum ];
 				if( ImGui::BeginCombo( "##setsamplerfilter", Selected ) )

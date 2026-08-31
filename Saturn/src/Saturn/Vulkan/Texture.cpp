@@ -595,9 +595,11 @@ namespace Saturn {
 		if( rSpecification.CreateFromMemory )
 		{
 			SetData( rSpecification.pData );
+			m_Specification.pData = nullptr;
 		}
 		else
 		{
+			SAT_CORE_ASSERT( !rSpecification.pData, "No data should be specified in the specification when creating from a texture path!" );
 			CreateTextureImage();
 		}
 	}

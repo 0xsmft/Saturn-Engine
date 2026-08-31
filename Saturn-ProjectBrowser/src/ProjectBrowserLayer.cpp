@@ -37,6 +37,8 @@
 #include <Saturn/Core/Process.h>
 #include <Saturn/Core/EngineSettings.h>
 
+#include <Saturn/Vulkan/Renderer.h>
+
 #include <Saturn/Serialisation/YAML/ProjectSerialiser.h>
 #include <Saturn/Serialisation/YAML/EngineSettingsSerialiser.h>
 
@@ -80,8 +82,6 @@ namespace Saturn {
 #endif
 			auto& rUserSettings = EngineSettings::Get();
 
-			bool projectsNeedSorting = false;
-
 			while( !m_ShouldThreadTerminate )
 			{
 				for( auto& path : rUserSettings.GetAllRecentProjects() )
@@ -122,23 +122,23 @@ namespace Saturn {
 							// Reset.
 							Project::SetActiveProject( nullptr );
 						
-							projectsNeedSorting = true;
+							m_ProjectsNeedSorting.store( true );
 						}
 					}
+				}
 
-					if( projectsNeedSorting )
+				if( m_ProjectsNeedSorting.load() )
+				{
+					std::sort( m_RecentProjects.begin(), m_RecentProjects.end(),
+						[]( const auto& rA, const auto& rB )
 					{
-						std::sort( m_RecentProjects.begin(), m_RecentProjects.end(), 
-							[]( const auto& rA, const auto& rB )
-							{
-								if( rA.LastWriteTime > rB.LastWriteTime )
-									return true;
-								else
-									return false;
-							} );
+						if( rA.LastWriteTime > rB.LastWriteTime )
+							return true;
+						else
+							return false;
+					} );
 
-						projectsNeedSorting = false;
-					}
+					m_ProjectsNeedSorting.store( false );
 				}
 
 				// Sleep to avoid exhausting this thread.
@@ -150,9 +150,9 @@ namespace Saturn {
 		{
 			if( ImGui::BeginMenu( "File" ) )
 			{
-				if( ImGui::MenuItem( "Close", "Alt+F4" ) ) Application::Get()->Close();
-
 				if( ImGui::MenuItem( "About" ) ) m_OpenAboutWindow ^= 1;
+
+				if( ImGui::MenuItem( "Close", "Alt+F4" ) ) Application::Get()->Close();
 
 				ImGui::EndMenu();
 			}
@@ -447,7 +447,7 @@ namespace Saturn {
 			buttonBoundingBox.Min.y );
 
 		pDrawList->AddImage( 
-			rProject.ThumbnailTexture->GetDescriptorSet(), 
+			rProject.ThumbnailTexture ? rProject.ThumbnailTexture->GetDescriptorSet() : Renderer::Get()->GetPinkTexture()->GetDescriptorSet(),
 			imagePos, 
 			ImVec2( imagePos.x + imageSize.x, imagePos.y + imageSize.y ), { 0, 1 }, { 1, 0 } );
 
@@ -485,6 +485,8 @@ namespace Saturn {
 			info.ThumbnailTexture = m_NoIconTexture;
 
 			m_RecentProjects.push_back( info );
+
+			m_ProjectsNeedSorting.store( true );
 		}
 
 		EngineSettingsSerialiser ess;
@@ -505,6 +507,8 @@ namespace Saturn {
 			info.ThumbnailTexture = m_NoIconTexture;
 
 			m_RecentProjects.push_back( info );
+
+			m_ProjectsNeedSorting.store( true );
 		}
 	}
 
@@ -552,7 +556,7 @@ namespace Saturn {
 			out.close();
 
 			newProject->GetConfig().Name = ProjectNameNoExt;
-			newProject->GetConfig().Path = ProjectFolderPath.string();
+			newProject->GetConfig().Path = ProjectFolderPath / ProjectName;
 
 			std::filesystem::rename( ProjectFolderPath / "Project.sproject", ProjectFolderPath / ProjectName );
 		}

@@ -87,6 +87,7 @@ namespace Saturn {
 		bool m_CreateHelpfulFolders = true;
 		bool m_HasSaturnDir = false;
 		bool m_OpenAboutWindow = false;
+		std::atomic_bool m_ProjectsNeedSorting{ false };
 
 		std::vector<ProjectInformation> m_RecentProjects;
 		std::thread m_RecentProjectThread;

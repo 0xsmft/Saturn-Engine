@@ -43,8 +43,6 @@
 #include "Saturn/Alura/AluraFont.h"
 #include "Saturn/Alura/AluraStylingProfile.h"
 
-#include "Saturn/Vulkan/Renderer.h"
-
 #include "Saturn/Project/Project.h"
 
 #include "YamlAux.h"
@@ -129,7 +127,7 @@ namespace Saturn {
 		const auto hdr = textureData[ "Hdr" ].as<bool>();
 		const auto flags = textureData[ "Flags" ].as<uint32_t>();
 		const auto filteringFlags = textureData[ "FilteringFlags" ].as<uint32_t>( 0 );
-		
+	
 		auto path = textureData[ "Source Path" ].as<std::filesystem::path>();
 
 #if defined( SAT_PLATFORM_WINDOWS )
@@ -788,7 +786,15 @@ namespace Saturn {
 
 		out << YAML::BeginMap;
 
-		out << YAML::Key << "SourcePath" << YAML::Value << std::filesystem::relative( sound->SoundSourcePath, Project::GetActiveProject()->GetRootDir() );
+		auto sourcePath = std::filesystem::relative( sound->SoundSourcePath, Project::GetActiveProject()->GetRootDir() );
+
+#if defined( SAT_PLATFORM_WINDOWS )
+		std::wstring wstr = sourcePath.wstring();
+		std::replace( wstr.begin(), wstr.end(), L'\\', L'/' );
+		sourcePath = wstr;
+#endif
+
+		out << YAML::Key << "SourcePath" << YAML::Value << sourcePath;
 
 		out << YAML::Key << "ImportPath" << YAML::Value << sound->OriginalImportPath;
 		
@@ -820,11 +826,16 @@ namespace Saturn {
 		if( data.IsNull() )
 			return false;
 
-		auto soundData = data[ "Sound" ];
-		auto filepath = soundData[ "SourcePath" ].as<std::string>();
-		auto importPath = soundData[ "ImportPath" ].as<std::string>();
+		const auto soundData = data[ "Sound" ];
+		const auto filepath = soundData[ "SourcePath" ].as<std::string>();
+		const auto importPath = soundData[ "ImportPath" ].as<std::string>();
 
 		auto realPath = Project::GetActiveProject()->FilepathAbs( filepath );
+#if defined( SAT_PLATFORM_WINDOWS )
+		std::wstring wstr = realPath.wstring();
+		std::replace( wstr.begin(), wstr.end(), L'/', L'\\' );
+		realPath = wstr;
+#endif
 
 		auto soundSpec = Ref<SoundSpecification>::Create( rAsset );
 		soundSpec->SoundSourcePath = realPath;

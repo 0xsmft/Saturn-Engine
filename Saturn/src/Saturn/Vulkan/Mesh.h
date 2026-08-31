@@ -313,6 +313,8 @@ namespace Saturn {
 		// Return the number of faces
 		size_t GetFaceCount() const { return m_Indices.size(); }
 
+		size_t GetVertexCount() const { return m_Vertices.size(); }
+
 		std::vector<StaticVertex>& Vertices() { return m_Vertices; }
 		const std::vector<StaticVertex>& Vertices() const { return m_Vertices; }
 

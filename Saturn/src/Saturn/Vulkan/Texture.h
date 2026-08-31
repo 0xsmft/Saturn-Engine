@@ -169,6 +169,9 @@ namespace Saturn {
 		
 		std::unordered_map<uint32_t, VkImageView> m_MipToImageViewMap;
 
+		// Temporary data pointer, when this texture is being loaded
+		// on the JobSystem. Will be deleted and reset back to null
+		// once the JobSystem has loaded fully loaded the texture.
 		void* m_pWorkingData = nullptr;
 
 		// The asset that this texture comes from.

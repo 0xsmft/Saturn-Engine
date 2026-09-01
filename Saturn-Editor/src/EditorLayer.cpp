@@ -4604,7 +4604,7 @@ namespace Saturn {
 		SaturnDir /= L"Saturn-ProjectBrowser";
 		SaturnDir /= L"Saturn-ProjectBrowser" SAT_PLATFORM_EXE_FILE_EXT;
 	
-		DetachedProcess dp( SaturnDir.wstring(), WorkingDir );
+		DetachedProcess dp( SaturnDir.wstring(), WorkingDir.wstring() );
 		Application::Get()->Close();
 	}
 
@@ -5224,7 +5224,7 @@ namespace Saturn {
 
 		args += std::format( " {}", rProjectPath.string() );
 
-		DetachedProcess dp( args.wstring(), workingDir );
+		DetachedProcess dp( args.wstring(), workingDir.wstring() );
 		Application::Get()->Close();
 	}
 

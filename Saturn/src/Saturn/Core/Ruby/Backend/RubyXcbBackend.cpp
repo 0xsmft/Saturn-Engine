@@ -868,6 +868,16 @@ namespace Saturn {
 	{
 	}
 
+	void RubyXcbBackend::HideWindow()
+	{
+
+	}
+
+	void RubyXcbBackend::SetIcon( Ref<class Texture2D> icon )
+	{
+
+	}
+
 	void RubyXcbBackend::ResizeWindow( uint32_t Width, uint32_t Height )
 	{
 		uint32_t values[] = { Width, Height };
@@ -953,14 +963,14 @@ namespace Saturn {
 	{
 	}
 
-	const char* RubyXcbBackend::GetClipboardText()
+	std::string RubyXcbBackend::GetClipboardText()
 	{
-		return nullptr;
+		return {};
 	}
 
-	const wchar_t* RubyXcbBackend::GetClipboardTextW()
+	std::wstring RubyXcbBackend::GetClipboardTextW()
 	{
-		return nullptr;
+		return {};
 	}
 
 }

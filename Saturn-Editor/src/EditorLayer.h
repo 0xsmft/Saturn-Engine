@@ -266,7 +266,7 @@ namespace Saturn {
 		Ref<SandboxNodeEditorViewer> m_SandboxNodeEditorViewer;
 
 		Ref<GlobalUndoRedoGroup> m_GlobalUndoRedoGroup = nullptr;
-		Ref<ConsoleCommandManager> m_ConsoleCommandManager = nullptr;
+		Ref<ConsoleCommandManager> m_ConsoleCommandManager;
 		std::unique_ptr<EntitySelectionManager> m_SelectionManager;
 
 		std::shared_ptr<AluraLayer> m_AluraLayer;

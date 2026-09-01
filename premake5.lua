@@ -37,7 +37,7 @@ workspace "Saturn"
 
 	filter "toolset:gcc"
 		defines { "SAT_COMPILER_GCC" }
-		buildoptions { "-fno-ms-extensions", "-Wno-changes-meaning", "-fpermissive" }
+		buildoptions { "-fno-ms-extensions", "-Wno-changes-meaning", "-fpermissive", "-fext-numeric-literals" }
 
 
 

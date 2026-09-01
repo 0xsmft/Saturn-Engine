@@ -151,22 +151,22 @@ namespace Saturn::Auxiliary {
 	
 	extern bool DrawInt8Control( const std::string& rLabel, 
 		int8_t& values, 
-		int8_t min = 0i8, int8_t max = 0x7F,
+		int8_t min = 0, int8_t max = 0x7F,
 		float columnWidth = 125.0f );
 
 	extern bool DrawInt16Control( const std::string& rLabel, 
 		int16_t& values, 
-		int16_t min = 0i16, int16_t max = 500i16,
+		int16_t min = 0, int16_t max = 500,
 		float columnWidth = 125.0f );
 	
 	extern bool DrawInt32Control( const std::string& rLabel, 
 		int32_t& values, 
-		int32_t min = 0i32, int32_t max = 500i32, 
+		int32_t min = 0, int32_t max = 500, 
 		float columnWidth = 125.0f );
 	
 	extern bool DrawInt64Control( const std::string& rLabel, 
 		int64_t& values, 
-		int64_t min = 0i64, int64_t max = 500i64,
+		int64_t min = 0, int64_t max = 500,
 		float columnWidth = 125.0f );
 
 	extern bool DrawUInt8Control( const std::string& rLabel, 

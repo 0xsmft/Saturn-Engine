@@ -41,6 +41,8 @@ namespace SaturnBuildTool
 
         public virtual void Init()
         {
+            PreprocessorDefines.Add( "SPDLOG_USE_STD_FORMAT" );
+
             if( Shared.Platform.PlatformType == PlatformType.Windows )
             {
                 PreprocessorDefines.AddRange( new string[] { "UNICODE", "_UNICODE", "SAT_PLATFORM_WINDOWS", "_CRT_SECURE_NO_WARNINGS" } );

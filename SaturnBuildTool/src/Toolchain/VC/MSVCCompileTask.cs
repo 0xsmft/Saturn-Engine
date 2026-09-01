@@ -55,8 +55,9 @@ namespace SaturnBuildTool
             // GS: Buffer Security Check,
             // MP: Build with multiple processes,
             // GF: Eliminate Duplicate Strings,
-            // EHsc: Exception handling (EH) -- Unwind stack (s) extern "C" function can't throw a C++ exception (c).
-            Args.Add( " /nologo /c /errorreport:prompt /Gy /GS /MP /GF /EHsc" );
+            // EHsc: Exception handling (EH) -- Unwind stack (s) extern "C" function can't throw a C++ exception (c),
+            // utf-8: Set source and execution character sets to UTF-8.
+            Args.Add( " /nologo /c /errorreport:prompt /Gy /GS /MP /GF /EHsc /utf-8" );
 
             // Most important arg here is /Zc:wchar_t, enforce that a wchar_t is a native type and not a typedef!
             Args.Add( " /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline" );

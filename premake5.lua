@@ -21,8 +21,11 @@ workspace "Saturn"
 	editandcontinue "Off"
 	debugformat "c7"
 
+	defines { "SPDLOG_USE_STD_FORMAT" }
+
 	filter "action:vs*"
 		linkoptions { "/ignore:4006" }
+		buildoptions { "/utf-8" }
 
 	filter "configurations:Debug-ASan"
 		sanitize { "Address" }

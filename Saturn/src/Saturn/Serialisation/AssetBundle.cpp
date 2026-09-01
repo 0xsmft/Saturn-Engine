@@ -755,7 +755,7 @@ namespace Saturn {
 
 		if( !std::filesystem::exists( cachePath ) ) 
 		{
-			SAT_CORE_ERROR( "[AssetBundle]: File not found. {0}", cachePath );
+			SAT_CORE_ERROR( "[AssetBundle]: File not found. {0}", cachePath.string() );
 			return AssetBundleResult::FileNotFound;
 		}
 

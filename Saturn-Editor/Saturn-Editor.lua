@@ -180,9 +180,9 @@ project "Saturn-Editor"
 
 		libdirs
 		{
-			"../Saturn/vendor/assimp/bin"
+			"../Saturn/vendor/assimp/bin",
+			os.getenv('VULKAN_SDK') .. "/lib",
 		}
-
 
 		filter "configurations:Debug"
 			links

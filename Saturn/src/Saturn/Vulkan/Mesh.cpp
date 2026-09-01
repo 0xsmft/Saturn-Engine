@@ -179,11 +179,11 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 
 		if( !std::filesystem::exists( m_FilePath ) )
 		{
-			SAT_CORE_ERROR( "Failed to load mesh file (file does not exists): {0}", m_FilePath );
+			SAT_CORE_ERROR( "Failed to load mesh file (file does not exists): {0}", m_FilePath.string() );
 			return;
 		}
 		else
-			SAT_CORE_INFO( "Loading mesh: {0}", m_FilePath.string().c_str() );
+			SAT_CORE_INFO( "Loading mesh: {0}", m_FilePath.string() );
 
 		Assimp::Importer importer;
 
@@ -195,7 +195,7 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 		const aiScene* scene = importer.ReadFile( m_FilePath.string(), flags );
 		if( scene == nullptr || !scene->HasMeshes() )
 		{
-			SAT_CORE_ERROR( "Failed to load mesh file (does the file have meshes?): {0}", m_FilePath );
+			SAT_CORE_ERROR( "Failed to load mesh file (does the file have meshes?): {0}", m_FilePath.string() );
 			SAT_CORE_ERROR( "=== Debug Info ===" );
 			const std::string hex = std::format( "{:08X}", ( uintptr_t ) scene );
 			SAT_CORE_ERROR( " Scene Ptr=0x{0}", hex );
@@ -499,7 +499,7 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 
 		if( !std::filesystem::exists( m_FilePath ) )
 		{
-			SAT_CORE_ERROR( "Failed to load mesh file (file does not exists): {0}", m_FilePath );
+			SAT_CORE_ERROR( "Failed to load mesh file (file does not exists): {0}", m_FilePath.string() );
 			return;
 		}
 		else
@@ -516,7 +516,7 @@ static constexpr uint32_t s_DefaultLogStream = aiDefaultLogStream_STDOUT;
 		const aiScene* scene = importer.ReadFile( m_FilePath.string(), flags );
 		if( scene == nullptr || !scene->HasMeshes() )
 		{
-			SAT_CORE_ERROR( "Failed to load mesh file (does the file have meshes?): {0}", m_FilePath );
+			SAT_CORE_ERROR( "Failed to load mesh file (does the file have meshes?): {0}", m_FilePath.string() );
 			SAT_CORE_ERROR( "=== Debug Info ===" );
 			const std::string hex = std::format( "{:08X}", ( uintptr_t ) scene );
 			SAT_CORE_ERROR( " Scene Ptr=0x{0}", hex );

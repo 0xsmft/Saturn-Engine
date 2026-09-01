@@ -139,7 +139,7 @@ namespace Saturn {
 				SAT_CORE_INFO( " Channels: {0}", m_pDevice->playback.channels );
 				SAT_CORE_INFO( " Sample Rate: {0}", m_pDevice->playback.internalSampleRate );
 				SAT_CORE_INFO( " Buffer Cap: {0}", m_pDevice->playback.intermediaryBufferCap );
-				SAT_CORE_INFO( " Format: {0}", m_pDevice->playback.format );
+				SAT_CORE_INFO( " Format: {0}", ( uint32_t )m_pDevice->playback.format );
 				SAT_CORE_INFO( "==============" );
 
 				m_MasterSoundGroup = Ref<SoundGroup>::Create( "Master" );

@@ -104,9 +104,9 @@ namespace Saturn {
 	void Application::InitWindow()
 	{
 		// Setup default width and height
-		//const RubyMonitor& rPrimaryMonitor = RubyLibrary::Get().GetPrimaryMonitor();
-		//const uint32_t width = 3 * rPrimaryMonitor.MonitorSize.x / 4;
-		//const uint32_t height = 3 * rPrimaryMonitor.MonitorSize.y / 4;
+		const RubyMonitor& rPrimaryMonitor = RubyLibrary::Get().GetPrimaryMonitor();
+		const uint32_t width = 3 * rPrimaryMonitor.MonitorSize.x / 4;
+		const uint32_t height = 3 * rPrimaryMonitor.MonitorSize.y / 4;
 
 		const RubyStyle windowStyle = HasFlag( ApplicationFlag_Titlebar ) ? RubyStyle::Default : m_Specification.WindowStyle;
 

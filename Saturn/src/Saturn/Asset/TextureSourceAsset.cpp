@@ -176,7 +176,7 @@ namespace Saturn {
 	void TextureSourceAsset::LoadOnCurrentThread()
 	{
 #if !defined(SAT_DIST)
-		int Width, Height, Channels;
+		int Width = 0, Height = 0, Channels = 0;
 		bool hdr = false;
 		stbi_uc* pTextureData;
 
@@ -199,7 +199,10 @@ namespace Saturn {
 
 		m_Width = Width;
 		m_Height = Height;
-		m_Channels = Channels;
+		// TODO: This is bad, forcing every texture to have 4 channels is a waste of CPU and GPU space,
+		// but when I set it to the correct number of channels some textures (i.e. 1 channel textures)
+		// don't seem to work and have a strange grid pattern.
+		m_Channels = 4;
 
 		TextureSpecification spec{};
 		spec.Width = Width;

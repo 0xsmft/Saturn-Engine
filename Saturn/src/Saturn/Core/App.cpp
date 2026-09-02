@@ -366,15 +366,15 @@ namespace Saturn {
 			return;
 		}
 
-		bool complete = false;
+		std::atomic_bool complete{ false };
 		SubmitOnMainThread( [&]() 
 			{
 				std::unique_lock<std::mutex> lock( m_Mutex );
-				complete = true;
+				complete.store( true );
 				m_BlockCV.wait( lock );
 			} );
 
-		while( !complete ) std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
+		while( !complete.load() ) std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
 	}
 
 	void Application::ResumeMainThreadCV()

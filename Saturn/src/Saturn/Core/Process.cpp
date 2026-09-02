@@ -203,6 +203,7 @@ namespace Saturn {
 
 	std::wstring Process::StartAndGetOutput( const std::wstring& rWorkingDir )
 	{
+#if defined( SAT_PLATFORM_WINDOWS )
 		CreateRedirectedStream( rWorkingDir );
 
 		// Wait
@@ -238,6 +239,9 @@ namespace Saturn {
 		::MultiByteToWideChar( CP_ACP, 0, tempBuffer.data(), ( int ) tempBuffer.size(), output.data(), wideLen );
 
 		return output;
+#else
+		return std::wstring();
+#endif
 	}
 
 	//////////////////////////////////////////////////////////////////////////

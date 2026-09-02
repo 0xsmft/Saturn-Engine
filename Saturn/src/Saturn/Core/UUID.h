@@ -28,7 +28,9 @@
 
 #pragma once
 
+#if defined(SAT_PLATFORM_WINDOWS)
 #include <xhash>
+#endif
 
 namespace Saturn {
 

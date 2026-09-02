@@ -358,7 +358,8 @@ namespace acl
 	RTM_FORCE_INLINE void memory_prefetch(const void* ptr)
 	{
 #if defined(RTM_SSE2_INTRINSICS)
-		_mm_prefetch(acl_impl::bit_cast<const char*>(ptr), _MM_HINT_T0);
+//		_mm_prefetch(acl_impl::bit_cast<const char*>(ptr), _MM_HINT_T0);
+__builtin_prefetch(ptr, 0, 3);
 #elif defined(RTM_COMPILER_GCC) || defined(RTM_COMPILER_CLANG)
 		__builtin_prefetch(ptr, 0, 3);
 #elif defined(RTM_NEON64_INTRINSICS) && defined(RTM_COMPILER_MSVC)

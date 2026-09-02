@@ -403,14 +403,14 @@ namespace Saturn {
 			
 			std::copy( m_FileContents.begin(), m_FileContents.end(), std::back_inserter( FileCopy ) );
 			
-			const size_t TypeTokenEnd = FileCopy.find( "\r\n", TypeTokenPosition );
+			const size_t TypeTokenEnd = FileCopy.find( "\n", TypeTokenPosition );
 			SAT_CORE_ASSERT( TypeTokenEnd != std::string::npos, "Shader must be CRLF!" );
 
 			const size_t Begin = TypeTokenPosition + TypeTokenLength + 1;
 
 			const std::string Type = FileCopy.substr( Begin, TypeTokenEnd - Begin );
 			
-			const size_t NextLinePos = FileCopy.find_first_not_of( "\r\n", TypeTokenEnd );
+			const size_t NextLinePos = FileCopy.find_first_not_of( "\n", TypeTokenEnd );
 			TypeTokenPosition = FileCopy.find( TypeToken, NextLinePos );
 			
 			const auto RawShaderCode = FileCopy.substr( NextLinePos, TypeTokenPosition - ( NextLinePos == std::string::npos ? FileCopy.size() - 1 : NextLinePos ) );
@@ -592,11 +592,11 @@ namespace Saturn {
 		for ( const auto& pc : Resources.push_constant_buffers )
 		{
 			const auto& Name = pc.name;
-			auto& BufferType = Compiler.get_type( pc.base_type_id );
-			int MemberCount = ( int )BufferType.member_types.size();
-			uint32_t set = Compiler.get_decoration( pc.id, spv::DecorationDescriptorSet );
+			const auto& BufferType = Compiler.get_type( pc.base_type_id );
+			const int MemberCount = ( int )BufferType.member_types.size();
+			const uint32_t set = Compiler.get_decoration( pc.id, spv::DecorationDescriptorSet );
 
-			uint32_t Size = ( uint32_t ) Compiler.get_declared_struct_size( BufferType );
+			const uint32_t Size = ( uint32_t ) Compiler.get_declared_struct_size( BufferType );
 			uint32_t OffsetFromLastPC = 0;
 
 			SAT_CORE_ASSERT( Size < maxPushConstantSize, "Declared push constant is bigger than the device maximum!" );
@@ -605,10 +605,10 @@ namespace Saturn {
 			if( m_VulkanRanges.size() )
 				OffsetFromLastPC = m_VulkanRanges.back().offset + m_VulkanRanges.back().size;
 
-			ShaderPushConstantTemplate pc;
-			pc.Name = Name;
-			pc.Size = Size;
-			pc.Stage = shaderType;
+			ShaderPushConstantTemplate shaderPCTemplate;
+			shaderPCTemplate.Name = Name;
+			shaderPCTemplate.Size = Size;
+			shaderPCTemplate.Stage = shaderType;
 			m_VulkanRanges.push_back( { .stageFlags = ShaderTypeToVulkan( shaderType ), .offset = OffsetFromLastPC , .size = ( uint32_t ) Size } );
 
 			SHADER_INFO( "Push constant buffer: {0}", Name );
@@ -649,12 +649,12 @@ namespace Saturn {
 				// so the offset of the data in the fragment shader will start a 4 and not 0
 				// and if we do offset - OffsetFromLastPC it will underflow and reset to UINT32_MAX.
 				if( offset < OffsetFromLastPC )
-					pc.MemberOffsets[ MemberName ] = OffsetFromLastPC - offset;
+					shaderPCTemplate.MemberOffsets[ MemberName ] = OffsetFromLastPC - offset;
 				else
-					pc.MemberOffsets[ MemberName ] = offset - OffsetFromLastPC;
+					shaderPCTemplate.MemberOffsets[ MemberName ] = offset - OffsetFromLastPC;
 			}
 
-			m_PushConstants.push_back( pc );
+			m_PushConstants.push_back( shaderPCTemplate );
 		}
 
 		for( const auto& Resource : Resources.sampled_images )
@@ -766,7 +766,7 @@ namespace Saturn {
 			std::vector< VkDescriptorSetLayoutBinding > Bindings;
 
 			// Iterate over uniform buffers
-			for( auto& [ Binding, ub ] : descriptorSet.UniformBuffers )
+			for( auto& [ bindingNumber, ub ] : descriptorSet.UniformBuffers )
 			{
 				VkDescriptorSetLayoutBinding Binding = {};
 				Binding.binding = ub.Binding;
@@ -795,7 +795,7 @@ namespace Saturn {
 			}
 
 			// Iterate over storage buffers
-			for( auto& [Binding, sb] : descriptorSet.StorageBuffers )
+			for( auto& [bindingNumber, sb] : descriptorSet.StorageBuffers )
 			{
 				VkDescriptorSetLayoutBinding Binding = {};
 				Binding.binding = sb.Binding;

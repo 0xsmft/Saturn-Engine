@@ -1,3 +1,20 @@
+function AppendPkgConfigLibraries(Package) 
+	local Result, Err = os.outputof("pkg-config --libs " .. Package) 
+	if not Result or Result == "" then 
+		error("pkg-config failed for '" .. Package .. "': " .. (Err or "unknown error")) 
+	end
+	
+	local Libraries = {} 
+	
+	for Token in Result:gmatch("%S+") do 
+		if Token:sub(1, 2) == "-l" then 
+			table.insert(Libraries, Token:sub(3)) 
+		end
+	end 
+	
+	links(Libraries) 
+end
+
 project "Saturn-Editor"
 	location ""
 	language "C++"
@@ -18,6 +35,7 @@ project "Saturn-Editor"
 		"TRACY_ENABLE",
 		"TRACY_DELAYED_INIT",
 		"TRACY_MANUAL_LIFETIME",
+		"SATURN_SS_IMPORT"
 	}
 
 	files
@@ -91,7 +109,6 @@ project "Saturn-Editor"
 		defines
 		{
 			"SAT_PLATFORM_WINDOWS",
-			"SATURN_SS_IMPORT",
 			"_CRT_SECURE_NO_WARNINGS",
 		}
 
@@ -141,10 +158,6 @@ project "Saturn-Editor"
 				}
 
 		filter "configurations:Dist"
-			defines "SAT_DIST"
-			runtime "Release"
-			optimize "on"
-			symbols "Off"
 			kind "WindowedApp"
 
 			removedefines { "SATURN_SS_IMPORT" }
@@ -152,31 +165,66 @@ project "Saturn-Editor"
 
 	filter "system:linux"
 		systemversion "latest"
+		linkgroups "On"
 
 		defines
 		{
 			"SAT_PLATFORM_LINUX"
 		}
 
+		links
+		{
+			"pthread",
+			"dl",
+			"m",
+			"xcb",
+			"xcb-keysyms",
+			"Xrandr",
+			"xcb-randr",
+			"vulkan",
+		}
+
+		libdirs
+		{
+			"../Saturn/vendor/assimp/bin",
+			os.getenv('VULKAN_SDK') .. "/lib",
+		}
+
+		links 
+		{
+			"ImGui",
+			"SPIRV-Cross",
+			"yaml-cpp",
+			"Tracy",
+			"zlib",
+			"Recast",
+			"MSDF-Atlas-Gen",
+			"MSDFGen",
+			"Freetype",
+			"JoltPhysics",
+			"NativeFileDialogExtended",
+			"ImTimeline",
+
+			"Saturn-SharedStorage",
+		}
+
+		AppendPkgConfigLibraries("gtk+-3.0")
+
+		filter "configurations:Debug"
+			links
+			{
+				"assimp",
+				"shaderc_shared",
+				"zip",
+				"SPIRV"
+			}
+
 		files 
 		{
 			"../Saturn/src/Saturn/Entry/Unix/**.cpp",
 		}
 
-		filter "configurations:Debug"
-			defines "SAT_DEBUG"
-			runtime "Debug"
-			symbols "on"
-
-		filter "configurations:Release"
-			defines "SAT_RELEASE"
-			runtime "Release"
-			optimize "on"
-
-		filter "configurations:Dist"
-			defines "SAT_DIST"
-			runtime "Release"
-			optimize "on"
+		buildoptions { "-fno-ms-extensions", "-Wno-changes-meaning", "-fpermissive" }
 
 	filter "system:Mac"
 		systemversion "latest"
@@ -190,17 +238,19 @@ project "Saturn-Editor"
 		{
 		}
 
-		filter "configurations:Debug"
-			defines "SAT_DEBUG"
-			runtime "Debug"
-			symbols "on"
+	filter "configurations:Debug"
+		defines "SAT_DEBUG"
+		runtime "Debug"
+		symbols "on"
 
-		filter "configurations:Release"
-			defines "SAT_RELEASE"
-			runtime "Release"
-			optimize "on"
+	filter "configurations:Release"
+		defines "SAT_RELEASE"
+		runtime "Release"
+		optimize "off"
+		symbols "on"
 
-		filter "configurations:Dist"
-			defines "SAT_DIST"
-			runtime "Release"
-			optimize "on"
+	filter "configurations:Dist"
+		defines "SAT_DIST"
+		runtime "Release"
+		optimize "on"
+		symbols "off"

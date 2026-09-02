@@ -74,6 +74,7 @@ namespace Saturn {
 			rEmitter << YAML::EndMap;
 		}
 
+		/*
 		{
 			rEmitter << YAML::Key << "ClassInformation";
 			rEmitter << YAML::BeginMap;
@@ -177,6 +178,7 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 			rEmitter << YAML::EndSeq;
 			rEmitter << YAML::EndMap;
 		}
+		*/
 
 		// Transform Component
 		if( entity->HasComponent<TransformComponent>() )
@@ -608,6 +610,7 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 				SAT_CORE_WARN( "Property count does not match!, Last/{0}, Current/{1}", propertyCount, DeserialisedEntity->GetClass()->GetPropertyCount() );
 			}
 
+			/*
 			std::vector<std::string> savedPropertyNames;
 
 			const auto lastProperties = classInfo[ "Properties" ];
@@ -723,6 +726,7 @@ pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value ); \
 					SAT_CORE_WARN( "SProperty could not be found!" );
 				}
 			}
+			*/
 		}
 
 		const auto pc = rEntityNode[ "PrefabComponent" ];

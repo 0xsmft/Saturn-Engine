@@ -43,6 +43,20 @@
 // Windows only defines, however defined on all platforms for compatibility
 #define SAT_ALLOCATOR_ATTR __attribute__(("malloc"))
 #define SAT_PLATFORM_FRIENDLY_NAME "Linux"
+#define SAT_MSVC_TYPENAME
+#define SAT_MSVC_STDCALL
+
+#if defined(SAT_COMPILER_GCC)
+#define SAT_GCC_TEMPLATE template
+#else
+#define SAT_GCC_TEMPLATE
+#endif
+
+#if defined(SAT_COMPILER_GCC) || defined(SAT_COMPILER_CLANG)
+#define SAT_GCC_CLANG_TEMPLATE template
+#else
+#define SAT_GCC_CLANG_TEMPLATE
+#endif
 
 #if !defined(SAT_DIST)
 #define SAT_DLLEXPORT __attribute__((visibility("default")))

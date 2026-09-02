@@ -78,7 +78,7 @@ project "Saturn-ProjectBrowser"
 			"../Saturn/src/Saturn/Entry/Windows/**.cpp",
 		}
 
-		filter "configurations:Debug or configurations:Debug-ASan"
+		filter { "system:windows", "configurations:Debug or configurations:Debug-ASan" }
 			defines "SAT_DEBUG"
 			runtime "Debug"
 			symbols "on"
@@ -86,30 +86,19 @@ project "Saturn-ProjectBrowser"
 			postbuildcommands 
 			{
 				'{COPYFILE} "../Saturn/vendor/assimp/bin/Debug/assimp-vc143-mtd.dll" "%{cfg.targetdir}"',
-				
 				'{COPYFILE} "../bin/Debug-windows-x86_64/Saturn-SharedStorage/Saturn-SharedStorage.dll" "%{cfg.targetdir}"'
 			}
 
-		filter "configurations:Release"
-			defines "SAT_RELEASE"
-			runtime "Release"
-			optimize "on"
-
+		filter { "system:windows", "configurations:Release" }
 			postbuildcommands 
 			{ 
 				'{COPYFILE} "../bin/Release-windows-x86_64/Saturn-SharedStorage/Saturn-SharedStorage.dll" "%{cfg.targetdir}"'
 			}
 
 		filter "configurations:Dist"
-			defines "SAT_DIST"
-			runtime "Release"
-			optimize "on"
-			symbols "Off"
 			kind "WindowedApp"
 
-			removedefines { "TRACY_ENABLE", "TRACY_DELAYED_INIT", "TRACY_MANUAL_LIFETIME" }
-
-		filter "configurations:Release or configurations:Dist"
+		filter { "system:windows", "configurations:Release or configurations:Dist" }
 			postbuildcommands 
 			{ 
 				'{COPYFILE} "../Saturn/vendor/assimp/bin/Release/assimp-vc143-mt.dll" "%{cfg.targetdir}"',
@@ -123,25 +112,53 @@ project "Saturn-ProjectBrowser"
 			"SAT_PLATFORM_LINUX"
 		}
 
+		links
+		{
+			"pthread",
+			"dl",
+			"m",
+			"xcb",
+			"xcb-keysyms",
+			"Xrandr",
+			"xcb-randr",
+			"vulkan",
+
+			"ImGui",
+			"SPIRV-Cross",
+			"yaml-cpp",
+			"Tracy",
+			"zlib",
+			"Recast",
+			"MSDF-Atlas-Gen",
+			"MSDFGen",
+			"Freetype",
+			"JoltPhysics",
+			"NativeFileDialogExtended",
+			"ImTimeline",
+
+			"Saturn-SharedStorage",
+		}
+
+		libdirs
+		{
+			"../Saturn/vendor/assimp/bin",
+			os.getenv('VULKAN_SDK') .. "/lib",
+		}
+
+		AppendPkgConfigLibraries("gtk+-3.0")
+
+		filter "configurations:Debug"
+			links
+			{
+				"assimp",
+				"shaderc_shared",
+				"SPIRV"
+			}
+
 		files 
 		{
 			"../Saturn/src/Saturn/Entry/Unix/**.cpp",
 		}
-
-		filter "configurations:Debug"
-			defines "SAT_DEBUG"
-			runtime "Debug"
-			symbols "on"
-
-		filter "configurations:Release"
-			defines "SAT_RELEASE"
-			runtime "Release"
-			optimize "on"
-
-		filter "configurations:Dist"
-			defines "SAT_DIST"
-			runtime "Release"
-			optimize "on"
 
 	filter "system:Mac"
 		systemversion "latest"
@@ -156,17 +173,19 @@ project "Saturn-ProjectBrowser"
 			"../Saturn/src/Saturn/Entry/Unix/**.cpp",
 		}
 
-		filter "configurations:Debug"
-			defines "SAT_DEBUG"
-			runtime "Debug"
-			symbols "on"
+	filter "configurations:Debug"
+		defines "SAT_DEBUG"
+		runtime "Debug"
+		symbols "on"
 
-		filter "configurations:Release"
-			defines "SAT_RELEASE"
-			runtime "Release"
-			optimize "on"
+	filter "configurations:Release"
+		defines "SAT_RELEASE"
+		runtime "Release"
+		optimize "on"
 
-		filter "configurations:Dist"
-			defines "SAT_DIST"
-			runtime "Release"
-			optimize "on"
+	filter "configurations:Dist"
+		defines "SAT_DIST"
+		runtime "Release"
+		optimize "on"
+		symbols "Off"
+		removedefines { "TRACY_ENABLE", "TRACY_DELAYED_INIT", "TRACY_MANUAL_LIFETIME" }

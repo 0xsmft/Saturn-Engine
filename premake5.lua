@@ -31,6 +31,16 @@ workspace "Saturn"
 		sanitize { "Address" }
 		buildoptions { "/fsanitize=address" }
 
+	filter "toolset:clang"
+		defines { "SAT_COMPILER_CLANG" }
+		buildoptions { "-Wno-missing-template-arg-list-after-template-kw", "-Wno-non-pod-varargs" }
+
+	filter "toolset:gcc"
+		defines { "SAT_COMPILER_GCC" }
+		buildoptions { "-fno-ms-extensions", "-Wno-changes-meaning", "-fpermissive", "-fext-numeric-literals" }
+
+
+
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 -- Include directories relative to root folder (solution directory)
@@ -49,7 +59,7 @@ IncludeDir["yaml_cpp"] = "%{wks.location}/Saturn/vendor/yaml-cpp/include/"
 IncludeDir["ImguiNodeEditor"] = "%{wks.location}/Saturn/vendor/imgui_node_editor"
 IncludeDir["ImSpinner"] = "%{wks.location}/Saturn/vendor/imspinner/src"
 IncludeDir["Tracy"] = "%{wks.location}/Saturn/vendor/tracy/src"
-IncludeDir["Filewatch"] = "%{wks.location}/Saturn/vendor/Filewatch/src"
+IncludeDir["Filewatch"] = "%{wks.location}/Saturn/vendor/filewatch/src"
 IncludeDir["MiniAudio"] = "%{wks.location}/Saturn/vendor/miniaudio/src"
 IncludeDir["SharedStorage"] = "%{wks.location}/Saturn-SharedStorage/src"
 IncludeDir["zlib"] = "%{wks.location}/Saturn/vendor/zlib"

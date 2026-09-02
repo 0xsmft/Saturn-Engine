@@ -54,6 +54,10 @@
 
 #include <glm/gtx/matrix_decompose.hpp>
 
+#if defined(SAT_PLATFORM_LINUX)
+#undef M_PI
+#endif
+
 #if SAT_SSAO_OLD_KERNEL_GEN == 1
 #include <random>
 #endif
@@ -3091,7 +3095,7 @@ namespace Saturn {
 
 		std::memcpy( u_Lights.Lights, m_pScene->m_Lights.PointLights.data(), m_pScene->m_Lights.GetPointLightSize() );
 
-		m_RendererData.LightCullingMaterial->UploadDataToUB( 0, &u_Lights, 16ull + sizeof PointLight * u_Lights.nbLights );
+		m_RendererData.LightCullingMaterial->UploadDataToUB( 0, &u_Lights, 16ull + sizeof( PointLight ) * u_Lights.nbLights );
 		m_RendererData.LightCullingMaterial->UploadDataToUB( 3, &u_ScreenData, sizeof( u_ScreenData ) );
 		m_RendererData.LightCullingMaterial->UploadDataToUB( 4, &u_Matrices, sizeof( u_Matrices ) );
 

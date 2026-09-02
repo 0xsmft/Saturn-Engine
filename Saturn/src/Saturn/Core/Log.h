@@ -138,8 +138,8 @@ OStream& operator<<( OStream& os, const glm::mat4& matrix )
 #define SAT_CORE_FATAL(...)				Saturn::Log::Get().CoreLogger()->critical(__VA_ARGS__)
 
 // Client log macros
-#define SAT_TRACE(...)					Saturn::Log::Get().ClientLogger()->trace(__VA_ARGS__)
-#define SAT_INFO(...)					Saturn::Log::Get().ClientLogger()->info(__VA_ARGS__)
-#define SAT_WARN(...)					Saturn::Log::Get().ClientLogger()->warn(__VA_ARGS__)
-#define SAT_ERROR(...)					Saturn::Log::Get().ClientLogger()->error(__VA_ARGS__)
-#define SAT_FATAL(...)					Saturn::Log::Get().ClientLogger()->critical(__VA_ARGS__)
+#define SAT_TRACE(...)					//Saturn::Log::Get().ClientLogger()->trace(__VA_ARGS__)
+#define SAT_INFO(...)					//Saturn::Log::Get().ClientLogger()->info(__VA_ARGS__)
+#define SAT_WARN(...)					//Saturn::Log::Get().ClientLogger()->warn(__VA_ARGS__)
+#define SAT_ERROR(...)					//Saturn::Log::Get().ClientLogger()->error(__VA_ARGS__)
+#define SAT_FATAL(...)					//Saturn::Log::Get().ClientLogger()->critical(__VA_ARGS__)

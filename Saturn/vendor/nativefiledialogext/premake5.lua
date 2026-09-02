@@ -31,6 +31,11 @@ project "NativeFileDialogExtended"
 		systemversion "latest"
 		staticruntime "off"
 
+		links { "gtk-3" }
+
+		result, err = os.outputof("pkg-config --cflags gtk+-3.0")
+		buildoptions { result }
+
         files
     	{
             "src/nfd_gtk.cpp"

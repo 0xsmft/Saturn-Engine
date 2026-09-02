@@ -162,7 +162,7 @@ namespace Saturn {
 		constexpr TextureLoadFlags DEFAULT_TEXTURE_LOAD_FLAGS_NOT_FLIPPED = TextureLoadFlags_LoadOnMainThread;
 		constexpr TextureLoadFlags DEFAULT_TEXTURE_LOAD_FLAGS_FLIPPED = TextureLoadFlags ( ( uint8_t ) TextureLoadFlags_LoadOnMainThread | ( uint8_t ) TextureLoadFlags_FlipVertically );
 
-		m_CheckerboardTexture = Ref< Texture2D >::Create( "content/textures/editor/checkerboard.tga", AddressingMode::Repeat, DEFAULT_TEXTURE_LOAD_FLAGS_FLIPPED );
+		m_CheckerboardTexture = Ref< Texture2D >::Create( "content/textures/editor/Checkerboard.tga", AddressingMode::Repeat, DEFAULT_TEXTURE_LOAD_FLAGS_FLIPPED );
 
 		m_StartRuntimeTexture = Ref< Texture2D >::Create( "content/textures/editor/Play.png", AddressingMode::ClampToEdge, DEFAULT_TEXTURE_LOAD_FLAGS_FLIPPED );
 		m_EndRuntimeTexture = Ref< Texture2D >::Create( "content/textures/editor/Stop.png", AddressingMode::ClampToEdge, DEFAULT_TEXTURE_LOAD_FLAGS_FLIPPED );

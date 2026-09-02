@@ -1,3 +1,20 @@
+function AppendPkgConfigLibraries(Package) 
+	local Result, Err = os.outputof("pkg-config --libs " .. Package) 
+	if not Result or Result == "" then 
+		error("pkg-config failed for '" .. Package .. "': " .. (Err or "unknown error")) 
+	end
+	
+	local Libraries = {} 
+	
+	for Token in Result:gmatch("%S+") do 
+		if Token:sub(1, 2) == "-l" then 
+			table.insert(Libraries, Token:sub(3)) 
+		end
+	end 
+	
+	links(Libraries) 
+end
+
 project "Saturn-Editor"
 	location ""
 	language "C++"
@@ -148,6 +165,7 @@ project "Saturn-Editor"
 
 	filter "system:linux"
 		systemversion "latest"
+		linkgroups "On"
 
 		defines
 		{
@@ -162,8 +180,18 @@ project "Saturn-Editor"
 			"xcb",
 			"xcb-keysyms",
 			"Xrandr",
+			"xcb-randr",
 			"vulkan",
+		}
 
+		libdirs
+		{
+			"../Saturn/vendor/assimp/bin",
+			os.getenv('VULKAN_SDK') .. "/lib",
+		}
+
+		links 
+		{
 			"ImGui",
 			"SPIRV-Cross",
 			"yaml-cpp",
@@ -174,24 +202,22 @@ project "Saturn-Editor"
 			"MSDFGen",
 			"Freetype",
 			"JoltPhysics",
+			"NativeFileDialogExtended",
+			"ImTimeline",
 
 			"Saturn-SharedStorage",
 		}
 
-		libdirs
-		{
-			"../Saturn/vendor/assimp/bin",
-			os.getenv('VULKAN_SDK') .. "/lib",
-		}
+		AppendPkgConfigLibraries("gtk+-3.0")
 
 		filter "configurations:Debug"
 			links
 			{
 				"assimp",
 				"shaderc_shared",
+				"zip",
 				"SPIRV"
 			}
-
 
 		files 
 		{

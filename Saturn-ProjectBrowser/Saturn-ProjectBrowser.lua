@@ -78,7 +78,7 @@ project "Saturn-ProjectBrowser"
 			"../Saturn/src/Saturn/Entry/Windows/**.cpp",
 		}
 
-		filter "configurations:Debug or configurations:Debug-ASan"
+		filter { "system:windows", "configurations:Debug or configurations:Debug-ASan" }
 			defines "SAT_DEBUG"
 			runtime "Debug"
 			symbols "on"
@@ -86,11 +86,10 @@ project "Saturn-ProjectBrowser"
 			postbuildcommands 
 			{
 				'{COPYFILE} "../Saturn/vendor/assimp/bin/Debug/assimp-vc143-mtd.dll" "%{cfg.targetdir}"',
-				
 				'{COPYFILE} "../bin/Debug-windows-x86_64/Saturn-SharedStorage/Saturn-SharedStorage.dll" "%{cfg.targetdir}"'
 			}
 
-		filter "configurations:Release"
+		filter { "system:windows", "configurations:Release" }
 			postbuildcommands 
 			{ 
 				'{COPYFILE} "../bin/Release-windows-x86_64/Saturn-SharedStorage/Saturn-SharedStorage.dll" "%{cfg.targetdir}"'
@@ -99,7 +98,7 @@ project "Saturn-ProjectBrowser"
 		filter "configurations:Dist"
 			kind "WindowedApp"
 
-		filter "configurations:Release or configurations:Dist"
+		filter { "system:windows", "configurations:Release or configurations:Dist" }
 			postbuildcommands 
 			{ 
 				'{COPYFILE} "../Saturn/vendor/assimp/bin/Release/assimp-vc143-mt.dll" "%{cfg.targetdir}"',
@@ -134,14 +133,19 @@ project "Saturn-ProjectBrowser"
 			"MSDFGen",
 			"Freetype",
 			"JoltPhysics",
+			"NativeFileDialogExtended",
+			"ImTimeline",
 
 			"Saturn-SharedStorage",
 		}
 
 		libdirs
 		{
-			"../Saturn/vendor/assimp/bin"
+			"../Saturn/vendor/assimp/bin",
+			os.getenv('VULKAN_SDK') .. "/lib",
 		}
+
+		AppendPkgConfigLibraries("gtk+-3.0")
 
 		filter "configurations:Debug"
 			links

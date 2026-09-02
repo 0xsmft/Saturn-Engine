@@ -54,6 +54,7 @@
 #include "Saturn/Alura/AssetViewer/AluraStylingProfileAssetViewer.h"
 #include "Saturn/Physics/AssetViewer/PhysicsMaterialAssetViewer.h"
 #include "Saturn/Physics/AssetViewer/PhysicsSurfaceRegistryAssetViewer.h"
+#include "Saturn/MaterialGraph/AssetViewer/MaterialGraphAssetViewer.h"
 
 #include "Saturn/Project/Project.h"
 
@@ -724,6 +725,12 @@ namespace Saturn {
 			case AssetType::PhysSurfaceRegistry: 
 			{
 				const auto viewer = Ref<PhysicsSurfaceRegistryAssetViewer>::Create( m_Asset->ID );
+				ImGuiWindowManager::Get()->AddWindow( viewer, viewer->GetWindowName() );
+			} break;
+
+			case AssetType::MaterialGraph: 
+			{
+				const auto viewer = Ref<MaterialGraph2AssetViewer>::Create( m_Asset->ID );
 				ImGuiWindowManager::Get()->AddWindow( viewer, viewer->GetWindowName() );
 			} break;
 

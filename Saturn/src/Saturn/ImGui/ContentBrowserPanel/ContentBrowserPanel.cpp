@@ -46,6 +46,7 @@
 #include "Saturn/AI/BehaviourTree/AssetViewer/Nodes/BehaviourTreeNodeBase.h"
 #include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeNodeEditor.h"
 #include "Saturn/Animation/AssetViewer/Graph/Animation/AnimGraph.h"
+#include "Saturn/MaterialGraph/Graph/MatGraph2_Graph.h"
 
 #include "Saturn/Serialisation/YAML/AssetSerialisers.h"
 #include "Saturn/Serialisation/YAML/SceneSerialiser.h"
@@ -786,6 +787,29 @@ namespace Saturn {
 				animGraph->SetupNewNodeEditor();
 				animGraph->NcSetCustomName( newPath.filename().string() );
 				animGraph->SaveAndMarkClean();
+
+				AssetManager::Get()->Save();
+
+				UpdateFiles( true );
+				FindAndRenameItem( asset->Name );
+			}
+
+			if( ImGui::MenuItem( "New Material Graph" ) )
+			{
+				const auto id = AssetManager::Get()->CreateAsset( AssetType::MaterialGraph );
+				auto asset = AssetManager::Get()->FindAsset( id );
+				auto newPath = m_CurrentPath / "New Material Graph.smg";
+				const uint32_t count = GetFilenameCount( "New Material Graph.smg" );
+
+				if( count >= 1 )
+					newPath.replace_filename( std::format( "{0} ({1}).smg", "New Material Graph", count ) );
+
+				asset->SetAbsolutePath( newPath );
+
+				SharedPtr<MatGraph2_Graph> matGraph = SharedPtr<MatGraph2_Graph>::Create( id );
+				matGraph->SetupNewNodeEditor();
+				matGraph->NcSetCustomName( newPath.filename().string() );
+				matGraph->SaveAndMarkClean();
 
 				AssetManager::Get()->Save();
 

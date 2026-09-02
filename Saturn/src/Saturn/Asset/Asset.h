@@ -55,6 +55,7 @@ namespace Saturn {
 		Font, // Alura
 		StyleProfile, // Alura
 		PhysSurfaceRegistry,
+		MaterialGraph,
 		// ^^^ ADD NEW ASSET TYPES HERE ^^^
 		Unknown,
 		COUNT,
@@ -100,6 +101,8 @@ namespace Saturn {
 				return "StyleProfile";
 			case Saturn::AssetType::PhysSurfaceRegistry:
 				return "PhysSurfaceRegistry";
+			case Saturn::AssetType::MaterialGraph:
+				return "MaterialGraph";
 
 			default:
 			case Saturn::AssetType::Unknown:
@@ -157,6 +160,8 @@ namespace Saturn {
 				return COLOR_32( 22, 74, 12, 255 );
 			case Saturn::AssetType::PhysSurfaceRegistry:
 				return COLOR_32( 84, 33, 58, 255 );
+			case Saturn::AssetType::MaterialGraph:
+				return COLOR_32( 114, 245, 66, 255 );
 
 			default:
 			case Saturn::AssetType::Unknown:
@@ -202,6 +207,8 @@ namespace Saturn {
 			return AssetType::StyleProfile;
 		else if( str == "PhysSurfaceRegistry" )
 			return AssetType::PhysSurfaceRegistry;
+		else if( str == "MaterialGraph" )
+			return AssetType::MaterialGraph;
 		else
 			return AssetType::Unknown;
 	}
@@ -242,6 +249,8 @@ namespace Saturn {
 			return AssetType::StyleProfile;
 		else if( str == ".spsr" )
 			return AssetType::PhysSurfaceRegistry;
+		else if( str == ".smg" )
+			return AssetType::MaterialGraph;
 		else
 			return AssetType::Unknown;
 	}

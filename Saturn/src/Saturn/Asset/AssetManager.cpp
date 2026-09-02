@@ -113,6 +113,7 @@ namespace Saturn {
 		m_AssetTypeTraits[ AssetType::Font ]                = { .CanBeReimported = true, .HasLoadSettings = false };
 		m_AssetTypeTraits[ AssetType::StyleProfile ]        = { .CanBeReimported = false, .HasLoadSettings = true };
 		m_AssetTypeTraits[ AssetType::PhysSurfaceRegistry ] = { .CanBeReimported = false, .HasLoadSettings = false };
+		m_AssetTypeTraits[ AssetType::MaterialGraph ]       = { .CanBeReimported = false, .HasLoadSettings = false };
 
 		const size_t count = ( size_t ) AssetType::Unknown - 1;
 		SAT_CORE_ASSERT( count == m_AssetTypeTraits.size(), "An AssetType is missing! You may have forgotten to add it to the type traits map to begin with." );

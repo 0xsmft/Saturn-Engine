@@ -45,5 +45,35 @@ namespace Saturn {
 	private:
 		void CreateNode();
 	};
-	
+
+	SCLASS()
+	class SMatGraph2_TextureSampleNode : public NodeEditorBlueprintNode
+	{
+		SAT_DECLARE_CLASS( SMatGraph2_TextureSampleNode, NodeEditorBlueprintNode );
+	public:
+		SMatGraph2_TextureSampleNode();
+		virtual ~SMatGraph2_TextureSampleNode();
+
+		virtual NodeEditorTaskBase* ConvertToTask() override;
+
+	private:
+		void CreateNode();
+	};
+
+	SCLASS()
+	class SMatGraph2_ConstantColourNode : public NodeEditorBlueprintNode
+	{
+		SAT_DECLARE_CLASS( SMatGraph2_ConstantColourNode, NodeEditorBlueprintNode );
+	public:
+		SMatGraph2_ConstantColourNode();
+		virtual ~SMatGraph2_ConstantColourNode();
+
+		virtual NodeEditorTaskBase* ConvertToTask() override;
+
+	public:
+		void SetColour( const glm::vec3& rColor );
+
+	private:
+		void CreateNode();
+	};
 }

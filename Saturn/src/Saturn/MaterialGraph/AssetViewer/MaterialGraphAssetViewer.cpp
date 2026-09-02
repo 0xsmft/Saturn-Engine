@@ -31,6 +31,8 @@
 
 #include "Saturn/Asset/AssetManager.h"
 
+#include "Saturn/MaterialGraph/Graph/MatGraph2_NodeLibrary.h"
+
 namespace Saturn {
 
 	MaterialGraph2AssetViewer::MaterialGraph2AssetViewer( AssetID id )
@@ -79,6 +81,8 @@ namespace Saturn {
 		m_MaterialGraph->OpenWindow( true );
 
 		m_Open = true;
+
+		SetupNodeEditorCallbacks();
 	}
 
 	void MaterialGraph2AssetViewer::SetupNewNodeEditor()
@@ -90,6 +94,23 @@ namespace Saturn {
 
 	void MaterialGraph2AssetViewer::SetupNodeEditorCallbacks()
 	{
+#if !defined(SAT_DIST)
+		m_MaterialGraph->SetCreateNewNodeFunction(
+			[ & ]() -> SharedPtr<NodeEditorNodeBase>
+		{
+			SharedPtr<NodeEditorNodeBase> result = nullptr;
+
+			ImGui::SeparatorText( "Basic" );
+
+			if( ImGui::MenuItem( "Constant Colour" ) )
+				result = ( SharedPtr<NodeEditorNodeBase> ) MatGraph2_NodeLibrary::SpawnConstantColourNode( m_MaterialGraph );
+
+			if( ImGui::MenuItem( "Sample Texture" ) )
+				result = ( SharedPtr<NodeEditorNodeBase> ) MatGraph2_NodeLibrary::SpawnTextureSampleNode( m_MaterialGraph );
+
+			return result;
+		} );
+#endif
 	}
 
 #if !defined(SAT_DIST)

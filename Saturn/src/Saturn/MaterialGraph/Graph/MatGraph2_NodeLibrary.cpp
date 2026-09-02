@@ -34,6 +34,22 @@
 
 namespace Saturn {
 
+	SharedPtr<SMatGraph2_ConstantColourNode> MatGraph2_NodeLibrary::SpawnConstantColourNode( SharedPtr<NodeEditor> nodeEditor )
+	{
+		SharedPtr<SMatGraph2_ConstantColourNode> sp( NewObject<SMatGraph2_ConstantColourNode>( nodeEditor.Get() ) );
+		nodeEditor->AddNode( sp );
+
+		return sp;
+	}
+
+	SharedPtr<SMatGraph2_TextureSampleNode> MatGraph2_NodeLibrary::SpawnTextureSampleNode( SharedPtr<NodeEditor> nodeEditor )
+	{
+		SharedPtr<SMatGraph2_TextureSampleNode> sp( NewObject<SMatGraph2_TextureSampleNode>( nodeEditor.Get() ) );
+		nodeEditor->AddNode( sp );
+
+		return sp;
+	}
+
 	SharedPtr<SMatGraph2_OutputNode> MatGraph2_NodeLibrary::SpawnOutputNode( SharedPtr<NodeEditor> nodeEditor )
 	{
 		SharedPtr<SMatGraph2_OutputNode> sp( NewObject<SMatGraph2_OutputNode>( nodeEditor.Get() ) );

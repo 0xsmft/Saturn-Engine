@@ -33,11 +33,16 @@
 namespace Saturn {
 
 	class SMatGraph2_OutputNode;
+	class SMatGraph2_ConstantColourNode;
+	class SMatGraph2_TextureSampleNode;
 
 	class MatGraph2_NodeLibrary
 	{
 	public:
 		static NodeEditorType GetStaticType() { return NodeEditorType::Default; }
+
+		static SharedPtr<SMatGraph2_ConstantColourNode> SpawnConstantColourNode( SharedPtr<NodeEditor> nodeEditor );
+		static SharedPtr<SMatGraph2_TextureSampleNode>  SpawnTextureSampleNode( SharedPtr<NodeEditor> nodeEditor );
 
 		static SharedPtr<SMatGraph2_OutputNode> SpawnOutputNode( SharedPtr<NodeEditor> nodeEditor );
 	};

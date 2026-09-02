@@ -154,7 +154,7 @@ namespace Saturn {
 		m_NodeEditor->SetCreateNewNodeFunction(
 			[&]() -> SharedPtr<NodeEditorNodeBase>
 			{
-				SharedPtr<NodeEditorNodeBase> node = nullptr;
+				SharedPtr<NodeEditorNodeBase> node;
 
 				ImGui::SeparatorText( "Material" );
 

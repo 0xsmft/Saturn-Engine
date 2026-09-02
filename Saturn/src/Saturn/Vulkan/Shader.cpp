@@ -403,14 +403,14 @@ namespace Saturn {
 			
 			std::copy( m_FileContents.begin(), m_FileContents.end(), std::back_inserter( FileCopy ) );
 			
-			const size_t TypeTokenEnd = FileCopy.find( "\r\n", TypeTokenPosition );
+			const size_t TypeTokenEnd = FileCopy.find( "\n", TypeTokenPosition );
 			SAT_CORE_ASSERT( TypeTokenEnd != std::string::npos, "Shader must be CRLF!" );
 
 			const size_t Begin = TypeTokenPosition + TypeTokenLength + 1;
 
 			const std::string Type = FileCopy.substr( Begin, TypeTokenEnd - Begin );
 			
-			const size_t NextLinePos = FileCopy.find_first_not_of( "\r\n", TypeTokenEnd );
+			const size_t NextLinePos = FileCopy.find_first_not_of( "\n", TypeTokenEnd );
 			TypeTokenPosition = FileCopy.find( TypeToken, NextLinePos );
 			
 			const auto RawShaderCode = FileCopy.substr( NextLinePos, TypeTokenPosition - ( NextLinePos == std::string::npos ? FileCopy.size() - 1 : NextLinePos ) );

@@ -29,6 +29,8 @@
 #include "sppch.h"
 #include "MatGraph2_Nodes.h"
 
+#include "Saturn/MaterialGraph/Graph/Pins/MatGraph2_Pins.h"
+
 #include "Saturn/NodeEditor/AssetIDPin.h"
 
 namespace Saturn {
@@ -120,7 +122,7 @@ namespace Saturn {
 		ExecutionType = NodeExecutionType::ColorPicker;
 		Flags = NodeFlags_ConstantEvaluated;
 
-		Outputs.push_back( Ref<Vec3Pin>::Create( "RGB", PinKind::Output ) );
+		Outputs.push_back( Ref<MatGraph2_ColorPin>::Create( "RGB", PinKind::Output ) );
 	}
 
 	SMatGraph2_ConstantColourNode::~SMatGraph2_ConstantColourNode()
@@ -134,7 +136,7 @@ namespace Saturn {
 
 	void SMatGraph2_ConstantColourNode::SetColour( const glm::vec3& rColor )
 	{
-
+		Outputs[ 0 ].As<MatGraph2_ColorPin>()->SetColor( rColor );
 	}
 
 }

@@ -27,9 +27,7 @@
 */
 
 #include "sppch.h"
-#include "MaterialGraphColorPin.h"
-
-#include "Saturn/NodeEditor/NodeEditorNodeBase.h"
+#include "MatGraph2_Pins.h"
 
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
 
@@ -38,26 +36,22 @@
 
 namespace Saturn {
 
-	MaterialViewerColorPin::MaterialViewerColorPin( const std::string& rName, PinKind kind, bool readonly, bool accpetOnlyTextures )
-		: Pin( rName, accpetOnlyTextures ? PinType::Material_TextureColor : PinType::Material_Color, kind ), m_ReadOnly( readonly ), m_AccpetOnlyTextures( accpetOnlyTextures )
+	MatGraph2_ColorPin::MatGraph2_ColorPin( const std::string& rName, PinKind kind )
+		: Pin( rName, PinType::Vec3, kind )
 	{
-		if( accpetOnlyTextures )
-			Type = PinType::Material_TextureColor;
 	}
 
-	MaterialViewerColorPin::MaterialViewerColorPin( UUID id, const std::string& rName, PinType type, UUID nodeID )
+	MatGraph2_ColorPin::MatGraph2_ColorPin( UUID id, const std::string& rName, PinType type, UUID nodeID )
 		: Pin( id, rName, type, nodeID )
 	{
 	}
 
-	MaterialViewerColorPin::~MaterialViewerColorPin()
+	MatGraph2_ColorPin::~MatGraph2_ColorPin()
 	{
 	}
 
-	void MaterialViewerColorPin::OnRenderOutput()
+	void MatGraph2_ColorPin::OnRenderOutput()
 	{
-		if( m_ReadOnly ) return;
-
 		bool OpenAssetColorPicker = false;
 
 		ImGui::BeginHorizontal( "PickerH" );
@@ -75,7 +69,7 @@ namespace Saturn {
 			OpenAssetColorPicker = true;
 		}
 
-		Auxiliary::DrawColoredRect( buttonSize, ImVec4( Data.x, Data.y, Data.z, 255.0f ) );
+		Auxiliary::DrawColoredRect( buttonSize, ImVec4( m_Data.x, m_Data.y, m_Data.z, 255.0f ) );
 
 		ImGui::EndHorizontal();
 
@@ -89,11 +83,11 @@ namespace Saturn {
 		ImGui::SetNextWindowSize( { 350.0f, 0.0f } );
 		if( ImGui::BeginPopup( "AssetColorPicker", ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize ) )
 		{
-			ImVec4 color = ImVec4( Data.x, Data.y, Data.z, 255.0f );
+			ImVec4 color = ImVec4( m_Data.x, m_Data.y, m_Data.z, 255.0f );
 
 			if( ImGui::ColorPicker3( "Color Picker", ( float* ) &color ) )
 			{
-				Data = glm::vec3( color.x, color.y, color.z );
+				m_Data = glm::vec3( color.x, color.y, color.z );
 			}
 
 			ImGui::EndPopup();
@@ -101,21 +95,15 @@ namespace Saturn {
 
 		ed::Resume();
 	}
-
-	//////////////////////////////////////////////////////////////////////////
-
-	void MaterialViewerColorPin::Serialise( std::ofstream& rStream ) const
+	
+	void MatGraph2_ColorPin::Serialise( std::ofstream& rStream ) const
 	{
 		Pin::Serialise( rStream );
-
-		RawSerialisation::WriteVec3( Data, rStream );
 	}
 
-	void MaterialViewerColorPin::Deserialise( FDependentIStream& rStream )
+	void MatGraph2_ColorPin::Deserialise( FDependentIStream& rStream )
 	{
 		Pin::Deserialise( rStream );
-
-		RawSerialisation::ReadVec3( Data, rStream );
 	}
 
 }

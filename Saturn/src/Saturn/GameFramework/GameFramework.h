@@ -53,6 +53,7 @@ namespace Saturn {
 	[[nodiscard]] extern bool IptIsMouseButtonPressed( RubyMouseButton btn );
 	[[nodiscard]] extern bool IptIsKeyPressed( RubyKey key );
 	[[nodiscard]] extern void IptShowMouseCursor();
+	[[nodiscard]] extern void IptForceShowMouseCursor();
 	[[nodiscard]] extern void IptHideMouseCursor();
 	[[nodiscard]] extern glm::vec2 IptGetMousePosition();
 

@@ -60,6 +60,11 @@ namespace Saturn {
 		Input::Get().SetCursorMode( RubyCursorMode::Normal );
 	}
 
+	void IptForceShowMouseCursor()
+	{
+		Input::Get().SetCursorMode( RubyCursorMode::Normal, true );
+	}
+
 	void IptHideMouseCursor()
 	{
 		Input::Get().SetCursorMode( RubyCursorMode::Locked );

@@ -587,6 +587,7 @@ namespace Saturn {
 		: Texture( rPath, Mode, loadFlags )
 	{
 		CreateTextureImage();
+		SetDebugName( m_Specification.TexturePath.stem().string() );
 	}
 
 	Texture2D::Texture2D( const TextureSpecification& rSpecification )
@@ -594,6 +595,7 @@ namespace Saturn {
 	{
 		if( rSpecification.CreateFromMemory )
 		{
+			SAT_CORE_ASSERT( rSpecification.pData, "No data specified but CreateFromMemory was set to true! Please ensure you set a valid texture data pointer." );
 			SetData( rSpecification.pData );
 			m_Specification.pData = nullptr;
 		}
@@ -601,6 +603,8 @@ namespace Saturn {
 		{
 			SAT_CORE_ASSERT( !rSpecification.pData, "No data should be specified in the specification when creating from a texture path!" );
 			CreateTextureImage();
+
+			SetDebugName( m_Specification.TexturePath.stem().string() );
 		}
 	}
 

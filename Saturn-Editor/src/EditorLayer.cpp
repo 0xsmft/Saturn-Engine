@@ -2895,12 +2895,14 @@ namespace Saturn {
 
 			if( ImGui::MenuItem( "Project settings" ) ) m_ShowUserSettings ^= 1;
 
+			/*
 			ImGui::SeparatorText( "Compatibility" );
 
 			{
 				Auxiliary::ScopedDisabledFlag disabled( m_RequestRuntime );
 				if( ImGui::MenuItem( "Upgrade assets" ) ) Project::GetActiveProject()->UpgradeAssets();
 			}
+			*/
 
 			ImGui::SeparatorText( "Development" );
 			{
@@ -2925,7 +2927,7 @@ namespace Saturn {
 				}
 
 				{
-					Auxiliary::ScopedDisabledFlag disabledIfNoMod( !m_GameModule->HasModule() );
+					Auxiliary::ScopedDisabledFlag disabledIfNoModOrRt( !m_GameModule->HasModule() || m_RequestRuntime );
 					if( ImGui::MenuItem( "Hot Reload Game" ) )
 					{
 						HotReloadGame();
@@ -2953,6 +2955,8 @@ namespace Saturn {
 
 			ImGui::SeparatorText( "Distribution" );
 			{
+				Auxiliary::ScopedDisabledFlag disabled( m_RequestRuntime );
+
 				if( ImGui::MenuItem( "Build Bundles" ) )
 				{
 					if( ValidateProjectDefaults() )
@@ -2979,7 +2983,8 @@ namespace Saturn {
 						m_JobModalOpen.store( true );
 						m_BlockingOperation->SetTitle( "Distributing Project" );
 
-						m_BlockingOperation->SetStatus( "Building project" );
+						m_BlockingOperation->SetStatus( "Building for Dist..." );
+
 						if( Project::GetActiveProject()->Rebuild( ApplicationConfigKind::Dist ) == SaturnBuildToolExitCodes::Failure ) 
 						{
 							MessageBoxInfo msgBox = { .Title = "Error##MsgBox", .Text = "Failed to compile for Dist, aborting..." };
@@ -2987,6 +2992,7 @@ namespace Saturn {
 
 							m_JobModalOpen.store( false );
 							m_BlockingOperation->OnComplete();
+							return;
 						}
 
 						m_BlockingOperation->SetProgress( 50.0f );

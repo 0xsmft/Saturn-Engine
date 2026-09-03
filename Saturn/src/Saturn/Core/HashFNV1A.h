@@ -28,10 +28,11 @@
 
 #pragma once
 
-#include <stdint.h>
-
 namespace Saturn {
 
+	//
+	// Fowler-Noll-Vo hash, 64 bits
+	//
 	static constexpr uint64_t FNV1A64( const char* pStr )
 	{
 		constexpr uint64_t offset = 14695981039346656037ull;
@@ -47,6 +48,9 @@ namespace Saturn {
 		return hash;
 	}
 	
+	//
+	// Fowler-Noll-Vo hash, 32 bits
+	//
 	static constexpr uint32_t FNV1A32( const char* pStr ) 
 	{
 		constexpr uint32_t offset = 2166136261;

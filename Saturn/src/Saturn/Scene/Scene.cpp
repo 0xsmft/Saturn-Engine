@@ -182,8 +182,8 @@ namespace Saturn {
 	void Scene::Empty()
 	{
 #if !defined(SAT_DIST)
-		if( auto* rESM = EntitySelectionManager::Get(); rESM )
-			rESM->ClearSelection( this, true );
+		if( auto* pESM = EntitySelectionManager::Get(); pESM )
+			pESM->ClearSelection( this, true );
 #endif
 		{
 			// The physics scene will cleanup all of the rigid bodies, shapes, etc
@@ -238,8 +238,6 @@ namespace Saturn {
 		// Update Cycle.
 		// Step 1: Update and simulate the physics scene.
 		// Step 2: Update all entities.
-
-		// TODO: We might want to change the order of this update cycle.
 		if( IsRuntimeRunning() ) 
 		{
 			DestroyPendingEntities();
@@ -462,7 +460,6 @@ namespace Saturn {
 		//////////////////////////////////////////////////////////////////////////
 
 		g_AluraCanvas->NewFrame();
-		g_AluraCanvas->DrawAllDrawers( ts );
 
 		if( m_ShowAluraRtDebug )
 			RtDrawRTDebugAlura( sceneRenderer );
@@ -1490,6 +1487,20 @@ namespace Saturn {
 		{
 			NewScene->m_EntityIDMap[ hnd ] = NewScene->CreateEntityWithIDScript( originalEntity->GetUUID(), originalEntity->GetName(), originalEntity->GetClass()->GetName(), false );
 
+#if defined(SAT_SCENE_EXTRA_VERBOSE)
+			{
+				const std::string hexA =
+					std::format( "{:016X}", reinterpret_cast< uintptr_t >( originalEntity.Get() ) );
+
+				const std::string hexB =
+					std::format( "{:016X}", reinterpret_cast< uintptr_t >(
+						NewScene->m_EntityIDMap[ hnd ].Get()
+						) );
+
+				SAT_CORE_INFO( "Created new copy of entity: {0} vs {1} (0x{2} vs 0x{3})", originalEntity->GetName(), NewScene->m_EntityIDMap[ hnd ]->GetName(), hexA, hexB );
+			}
+#endif
+
 			TransferModifiedProperties( 
 				originalEntity, 
 				NewScene->m_EntityIDMap[ hnd ] );
@@ -1637,6 +1648,8 @@ namespace Saturn {
 			{
 				auto& rTransform = entity->GetComponent<TransformComponent>();
 				AudioSystem::Get().SetPrimaryListenerPos( rTransform.Position );
+			
+				break;
 			}
 		}
 	}

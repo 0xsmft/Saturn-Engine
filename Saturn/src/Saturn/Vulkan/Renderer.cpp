@@ -61,7 +61,7 @@ namespace Saturn {
 		m_AcquireSemaphores.resize( MAX_FRAMES_IN_FLIGHT );
 		m_SubmitSemaphores.resize( MAX_FRAMES_IN_FLIGHT );
 
-		for( int i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
+		for( auto i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
 		{
 			VK_CHECK( vkCreateFence( VulkanContext::Get()->GetDevice(), &FenceCreateInfo, nullptr, &m_FlightFences[ i ] ) );
 		
@@ -84,6 +84,7 @@ namespace Saturn {
 		// It's really a white texture...
 		for( uint32_t i = 0; i < 1 * 1; ++i )
 		{
+			// Data format is 0xAARRGGBB aka BGRA, vulkan texture format will be RGBA
 			pData[ i ] |= 0xFFFFFFFFu;
 		}
 

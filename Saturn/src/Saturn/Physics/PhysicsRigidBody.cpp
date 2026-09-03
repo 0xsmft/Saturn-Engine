@@ -33,7 +33,6 @@
 
 #include "PhysicsFoundation.h"
 #include "PhysicsAuxiliary.h"
-#include "PhysicsCharacterController.h"
 
 namespace Saturn {
 

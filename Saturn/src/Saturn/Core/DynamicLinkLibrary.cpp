@@ -45,17 +45,13 @@ namespace Saturn {
 		if( m_Handle ) 
 			Free();
 
-		bool result = false;
-
 #if defined(_WIN32)
 		m_Handle = ::LoadLibraryW( rPath.wstring().data() );
-		result = ( bool ) m_Handle;
 #else
 		m_Handle = dlopen( rPath.data(), RTLD_LAZY );
-		result = ( bool ) m_Handle;
 #endif
 
-		return result;
+		return m_Handle != nullptr;
 	}
 
 	void DynamicLinkLibrary::Free()

@@ -35,6 +35,9 @@ namespace Saturn {
 	class EnvironmentMap
 	{
 	public:
+		EnvironmentMap() = default;
+		virtual ~EnvironmentMap() = default;
+
 		Ref< TextureCube > RadianceMap = nullptr;
 		Ref< TextureCube > IrradianceMap = nullptr;
 

@@ -79,9 +79,12 @@ namespace Saturn {
 		mutable std::atomic_uint m_RefCount{ 0u };
 	};
 
-	// Ref is an intrusive, shared ownership, reference counted, authoritative smart pointer similar to std::shared_ptr
+	// Ref is an intrusive, thread safe, shared ownership, reference counted, authoritative smart pointer 
+	// similar to std::shared_ptr
 	// Intrusive refs do not support the usage of WeakRefs, you must use SharedPtr for that!
-	// Refs take up less space than SharedPtrs, as the Ref class it self only needs 8 bytes (on 64 bit machines) for the pointer and then T needs an additional 4 bytes (excl. vtable) for the reference count bringing it to a total of 12 bytes but only 8 bytes per ref!
+	// Refs take up less space than SharedPtrs, as the Ref class it self only needs 8 bytes (on 64 bit machines) for the
+	// pointer and then T needs an additional 4 bytes (excl. vtable) for the reference count bringing it to a total
+	// of 12 bytes but only 8 bytes per ref!
 	//
 	// NOTE: Any class that must use Ref must be a child of RefTarget
 	template<typename T>

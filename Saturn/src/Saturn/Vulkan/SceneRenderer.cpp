@@ -121,8 +121,9 @@ namespace Saturn {
 
 		m_RendererData.IsSwapchainTarget = HasFlag( SceneRendererFlag_SwapchainTarget );
 
+		// Shared geometry UBs
 		m_RendererData.UniformBufferSet = Ref<UniformBufferSet>::Create();
-		// Fill out UBS
+		// Fill out UBs
 		//																	SIZE -> BINDING
 		m_RendererData.UniformBufferSet->CreateBuffer( sizeof( UBStaticMeshMatrices ), 0u );
 		m_RendererData.UniformBufferSet->CreateBuffer( sizeof( UBLightData ), 1u );
@@ -368,7 +369,7 @@ namespace Saturn {
 		FBSpec.Width = ( uint32_t ) SHADOW_MAP_SIZE;
 		FBSpec.Height = ( uint32_t ) SHADOW_MAP_SIZE;
 		FBSpec.ArrayLevels = SHADOW_CASCADE_COUNT;
-		FBSpec.ExistingImages[0] = shadowImage;
+		FBSpec.ExistingImages[ 0 ] = shadowImage;
 
 		PassSpecification PassSpec = {};
 		PassSpec.Name = "Dir Shadow Map";
@@ -1823,7 +1824,8 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		SAT_PF_EVENT();
 
-		ImGui::Text( "Viewport size, %i, %i", ( int ) m_RendererData.Width, ( int ) m_RendererData.Height );
+		ImGui::Text( "Viewport size, %" PRIu32 ", %" PRIu32, m_RendererData.Width, m_RendererData.Height );
+		ImGui::Text( "Viewport pixels, %" PRIu32, m_RendererData.Width * m_RendererData.Height );
 
 		ImGui::Text( "FPS: %.1f", ImGui::GetIO().Framerate );
 
@@ -4263,7 +4265,7 @@ namespace Saturn {
 		// Shaders
 		GridShader              = nullptr;
 		SkyboxShader            = nullptr;
-		StaticMeshShader        = nullptr; 
+		StaticMeshShader        = nullptr;
 		SceneCompositeShader    = nullptr;
 		DirShadowMapShader      = nullptr;
 		PreethamShader          = nullptr;

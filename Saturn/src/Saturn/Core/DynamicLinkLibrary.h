@@ -41,11 +41,10 @@ namespace Saturn {
 	// DynamicLinkLibrary
 	// 
 	// Encapsulates the low level loading and unloading of dynamic libraries.
-	// NOTE: This class by it self should not be used, you should create the appropriate SModule/Module for it.
 	//
 	class DynamicLinkLibrary
 	{
-		DynamicLinkLibrary( const DynamicLinkLibrary& ) = delete;
+		SAT_DISABLE_COPY( DynamicLinkLibrary );
 	public:
 		DynamicLinkLibrary();
 

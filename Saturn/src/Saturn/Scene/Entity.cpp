@@ -50,10 +50,10 @@ namespace Saturn {
 		m_Scene = g_ActiveScene;
 		m_EntityHandle = m_Scene->CreateHandle();
 
-		AddComponent<IdComponent>().ID = Id;
+		AddComponent<IdComponent>( Id );
 		AddComponent<RelationshipComponent>();
 		AddComponent<TransformComponent>();
-		AddComponent<TagComponent>().Tag = rName;
+		AddComponent<TagComponent>( rName );
 	}
 
 	Entity::Entity( const Entity& other )

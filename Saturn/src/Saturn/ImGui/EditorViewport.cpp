@@ -29,10 +29,6 @@
 #include "sppch.h"
 #include "EditorViewport.h"
 
-#include "EntitySelectionManager.h"
-
-#include "ImGuiAuxiliary.h"
-
 #include "Saturn/Core/App.h"
 #include "Saturn/Core/Ruby/RubyWindow.h"
 #include "Saturn/Core/Renderer/RenderThread.h"
@@ -42,10 +38,15 @@
 #include "Saturn/Vulkan/Renderer2D.h"
 #include "Saturn/Vulkan/AluraRenderer.h"
 
+#include "Saturn/Alura/AluraCanvas.h"
+
 #include "Saturn/ImGui/EditorIcons.h"
 
+#include "EntitySelectionManager.h"
+
 #include "SharedGlobals.h"
-#include "Saturn/Alura/AluraCanvas.h"
+
+#include "ImGuiAuxiliary.h"
 
 #include <ImGuizmo/ImGuizmo.h>
 
@@ -129,7 +130,7 @@ namespace Saturn {
 		m_EditorCamera.SetActive( m_AllowCameraEvents );
 		m_EditorCamera.OnUpdate( ts );
 
-		m_Scene->OnUpdateAnimators( ts );
+		m_Scene->OnUpdateAnimators_Preview( ts );
 
 		// Update Scene for rendering (on main thread).
 		m_Scene->OnRenderEditor( &m_EditorCamera, m_EditorCamera.ViewMatrix(), m_SceneRenderer, ts );

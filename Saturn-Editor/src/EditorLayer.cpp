@@ -238,7 +238,7 @@ namespace Saturn {
 
 		//////////////////////////////////////////////////////////////////////////
 		// Load shader bundle (if possible)
-		const std::filesystem::path editorShaderBundlePath = Application::Get()->GetAppDataFolder() / "EditorShaderBundle.ssb";
+		const std::filesystem::path editorShaderBundlePath = Application::Get()->GetAppDataFolder() / "EditorShaderBundle-" SAT_CURRENT_VERSION_BUILD_TAG ".ssb";
 
 		if( std::filesystem::exists( editorShaderBundlePath ) )
 		{

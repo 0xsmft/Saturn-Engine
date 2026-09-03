@@ -510,8 +510,9 @@ namespace Saturn {
 		// Remove if it already exists...
 		if( std::filesystem::exists( dstCache ) )
 			std::filesystem::remove_all( dstCache );
-		else
-			std::filesystem::create_directories( dstCache );
+		
+		// And then create..
+		std::filesystem::create_directories( dstCache );
 
 		// Copying over the required files for dist means that we
 		// can't just copy over the whole Cache folder because

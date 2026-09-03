@@ -2997,8 +2997,8 @@ namespace Saturn {
 
 						m_BlockingOperation->SetProgress( 50.0f );
 
-						m_BlockingOperation->SetStatus( "Copying for Distribution" );
-						Project::GetActiveProject()->Distribute( ApplicationConfigKind::Dist );
+						m_BlockingOperation->SetStatus( "Copying for Distribution..." );
+						Project::GetActiveProject()->Dist_CopyAssetBundleIntoBin();
 
 						m_BlockingOperation->SetProgress( 100.0f );
 						m_BlockingOperation->OnComplete();
@@ -3008,6 +3008,20 @@ namespace Saturn {
 				if( ImGui::BeginItemTooltip() )
 				{
 					ImGui::Text( "Attempts to compile the project and fully setup the project for Distribution." );
+					ImGui::EndTooltip();
+				}
+
+				ImGui::SeparatorText( "Auxiliary" );
+
+				if( ImGui::MenuItem( "Copy distribution files" ) )
+				{
+					Project::GetActiveProject()->Dist_CopyAssetBundleIntoBin();
+				}
+
+				if( ImGui::BeginItemTooltip() )
+				{
+					ImGui::Text( "This is an auxiliary option, if you use \"Compile project as distribution target\" option then this is already done for you" );
+					ImGui::Text( "Only use this option if you've built the AssetBundle in Saturn and haven't copied it over yet." );
 					ImGui::EndTooltip();
 				}
 			}

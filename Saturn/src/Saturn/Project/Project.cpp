@@ -29,18 +29,13 @@
 #include "sppch.h"
 #include "Project.h"
 
-#include "Saturn/Core/EngineSettings.h"
 #include "Saturn/Core/EnvironmentVariables.h"
 #include "Saturn/Core/StringAuxiliary.h"
 #include "Saturn/Core/Process.h"
 
-#include "Saturn/Serialisation/YAML/EngineSettingsSerialiser.h"
-#include "Saturn/Serialisation/YAML/ProjectSerialiser.h"
 #include "Saturn/Serialisation/YAML/AssetManagerSerialiser.h"
 
 #include "Saturn/Asset/AssetManager.h"
-
-#include "SharedGlobals.h"
 
 namespace Saturn {
 	
@@ -219,7 +214,7 @@ namespace Saturn {
 		auto rootDir = GetRootDir();
 		rootDir /= "bin";
 
-		rootDir /= std::format( "{0}-{1}", Application::Get()->GetCurrentConfigName(), SAT_PLATFORM_BINARY_FOLDER );
+		rootDir /= std::format( "{0}-" SAT_PLATFORM_BINARY_FOLDER, Application::Get()->GetCurrentConfigName() );
 		rootDir /= m_Config.Name;
 
 		return rootDir;
@@ -493,70 +488,68 @@ namespace Saturn {
 		return ( SaturnBuildToolExitCodes )exitCode;
 	}
 
-	void Project::Distribute( ApplicationConfigKind kind, const std::string& rExtraArgs )
+	void Project::Dist_CopyAssetBundleIntoBin()
 	{
-		std::filesystem::path SaturnBinDir = Auxiliary::GetEnvironmentVariable( "SATURN_DIR" );
-		std::filesystem::path binDir = GetRootDir();
+		std::filesystem::path SaturnDir = Auxiliary::GetEnvironmentVariable( "SATURN_DIR" );
 
-		SaturnBinDir /= "bin";
-		binDir /= "bin";
-		
-		switch( kind )
-		{
-			case Saturn::ApplicationConfigKind::Debug:
-				SaturnBinDir /= std::format( "Debug-{0}", SAT_PLATFORM_BINARY_FOLDER );
-				binDir /= std::format( "Debug-{0}", SAT_PLATFORM_BINARY_FOLDER );
-				break;
+		// We need to build the path to the bin dir
+		// so projectBinDir will look something like:
+		//
+		// D:\MyProjects\MyProject1\bin\Dist-windows-x86_64\MyProject1Game
+		//
+		std::filesystem::path projectBinDir = GetRootDir();
+		projectBinDir /= "bin";
+		projectBinDir /= "Dist-" SAT_PLATFORM_BINARY_FOLDER;
+		// NB: On dist projects always have Game appended to the end of their
+		// names.
+		projectBinDir /= std::format( "{}Game", m_Config.Name );
 
-				// Use editor release DLLs -- same as release ones
-			case Saturn::ApplicationConfigKind::Dist:
-			case Saturn::ApplicationConfigKind::Release:
-				SaturnBinDir /= std::format( "Release-{0}", SAT_PLATFORM_BINARY_FOLDER );
-				binDir /= std::format( "Release-{0}", SAT_PLATFORM_BINARY_FOLDER );
-				break;
-		}
+		// Cache path
+		const std::filesystem::path dstCache = projectBinDir / "Cache";
 
-		// We use the editor because the editor will have the DLLs that we need to copy over.
-		SaturnBinDir /= "Saturn-Editor";
-		binDir /= m_Config.Name;
-
-		for( const auto& rEntry : std::filesystem::directory_iterator( SaturnBinDir ) )
-		{
-			auto& path = rEntry.path();
-
-			// TODO: Change for other platforms.
-			if( path.extension() != SAT_PLATFORM_DYNALIB_FILE_EXT )
-				continue;
-
-			std::filesystem::path dstPath = binDir / path.filename();
-
-			if( std::filesystem::exists( dstPath ) )
-				std::filesystem::remove( dstPath );
-
-			std::filesystem::copy_file( path, dstPath );
-		}
-
-		std::filesystem::path dstCache = binDir / "Cache";
-
+		// Remove if it already exists...
 		if( std::filesystem::exists( dstCache ) )
 			std::filesystem::remove_all( dstCache );
+		else
+			std::filesystem::create_directories( dstCache );
 
-		std::filesystem::copy( GetRootDir() / "Cache", dstCache, std::filesystem::copy_options::recursive );
+		// Copying over the required files for dist means that we
+		// can't just copy over the whole Cache folder because
+		// that folder contains some editor files and
+		// some per user data.
+		// so we are only interested files with the following exts:
+		// *.sab
+		// *.ssb
+		// *.srnc
+		// *.smcs
+		std::vector<std::filesystem::path> validExts{ ".sab", ".ssb", ".srnc", ".smcs" };
+		std::vector<std::filesystem::path> filesToCopy;
 
-		// Copy the project file over
-		std::filesystem::path projectFilePathBin = binDir / std::filesystem::path( m_Config.Name ).replace_extension(".sproject");
+		for( const auto& rEntry : std::filesystem::directory_iterator( GetRootDir() / "Cache" ) )
+		{
+			if( rEntry.is_directory() )
+				continue;
 
-		if( std::filesystem::exists( projectFilePathBin ) )
-			std::filesystem::remove( projectFilePathBin );
+			const auto& path = rEntry.path();
+			const auto ext = path.extension();
+			if( std::find( validExts.begin(), validExts.end(), ext ) != validExts.end() )
+			{
+				filesToCopy.push_back( path );
+			}
+		}
 
-		std::filesystem::copy_file( m_Config.Path, projectFilePathBin );
-		
+		for( const auto& rPath : filesToCopy )
+		{
+			std::filesystem::copy_file( rPath, dstCache / rPath.stem() );
+		}
+
 		// TEMP: Copy over the editor assets
+		// This will soon be removed when we package/embed the editor assets.
 		std::filesystem::path contentDir = Application::Get()->GetRootContentDir();
 		
-		if( std::filesystem::exists( binDir / "content" ) )
-			std::filesystem::remove_all( binDir / "content" );
+		if( std::filesystem::exists( projectBinDir / "content" ) )
+			std::filesystem::remove_all( projectBinDir / "content" );
 
-		std::filesystem::copy( contentDir, binDir / "content", std::filesystem::copy_options::recursive );
+		std::filesystem::copy( contentDir, projectBinDir / "content", std::filesystem::copy_options::recursive );
 	}
 }

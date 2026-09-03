@@ -225,7 +225,7 @@ namespace Saturn {
 
 		[[nodiscard]] SaturnBuildToolExitCodes Build( ApplicationConfigKind kind, const std::string& rExtraArgs = "" );
 		[[nodiscard]] SaturnBuildToolExitCodes Rebuild( ApplicationConfigKind kind, const std::string& rExtraArgs = "" );
-		void Distribute( ApplicationConfigKind kind, const std::string& rExtraArgs = "" );
+		void Dist_CopyAssetBundleIntoBin();
 
 	private:
 		void CheckNewAssets();

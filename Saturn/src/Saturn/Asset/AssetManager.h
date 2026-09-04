@@ -246,7 +246,8 @@ namespace Saturn {
 				}
 
 				TargetRegistry->m_LoadedAssets[ id ] = asset;
-
+				
+				++m_ImportAssetCount[ id ];
 				m_IsAnyAssetCurrentlyLoading.store( false );
 			}
 			else
@@ -279,6 +280,9 @@ namespace Saturn {
 #else
 		VFSAssetImporter m_Importer;
 #endif
+		// Number of times an asset was purged.
+		std::unordered_map<AssetID, std::atomic_ullong> m_PurgeAssetCount;
+
 		Ref<AssetRegistry> m_Assets = nullptr;
 
 		std::atomic_bool m_IsAnyAssetCurrentlyLoading{ false };

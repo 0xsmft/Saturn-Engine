@@ -76,14 +76,21 @@ namespace Saturn {
 			// A ref count of 1 means that the only reference
 			// to this asset is the LoadedMap itself.
 			std::erase_if( m_Assets->GetLoadedAssetsMap(),
-				[]( const auto& kv ) -> bool
+				[this]( const auto& kv ) -> bool
 			{
 				const auto& [candidateID, loadedAsset] = kv;
 				const bool shouldRem = loadedAsset->GetRefCount() == 1 && loadedAsset->CanPurge();
 
 				if( shouldRem )
 				{
+					if( m_PurgeAssetCount[ candidateID ].load() >= 5 )
+					{
+						SAT_CORE_WARN( "Asset has been loaded and then purged over 5 times! Considering holding a reference to this asset." );
+					}
+
 					SAT_CORE_INFO( "[AssetManager]: Purging asset: {0} as ref-count is: {1}", loadedAsset->Name, loadedAsset->GetRefCount() );
+
+					++m_PurgeAssetCount[ candidateID ];
 				}
 
 				return shouldRem;

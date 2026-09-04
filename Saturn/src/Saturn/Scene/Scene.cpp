@@ -987,7 +987,6 @@ namespace Saturn {
 		g_AluraCanvas->TextFormatted( "FPS: {}", Application::Get()->Framerate() );
 		g_AluraCanvas->TextFormatted( "Timestep: {:.2f}ms", Application::Get()->Time().Milliseconds() );
 
-		g_AluraCanvas->TextFormatted( "SceneRenderer::ShadowMapPass: {:.2f}ms", Application::Get()->Time().Milliseconds() );
 		g_AluraCanvas->TextFormatted( "SceneRenderer::GeometryPass: {:.2f}ms", sceneRenderer->m_RendererData.GeometryPassTimer.ElapsedMilliseconds() );
 
 		g_AluraCanvas->TextFormatted( "Queue Wait: {:.2f}ms", Renderer::Get()->GetQueueWaitTime() );

@@ -929,6 +929,11 @@ namespace Saturn {
 		rClipRect.offset.y = ( int32_t ) ( m_Height - rRect.GetHeight() ) - static_cast<int32_t>( rRect.Min.y );
 		rClipRect.extent.width = ( uint32_t ) rRect.GetWidth();
 		rClipRect.extent.height = ( uint32_t ) rRect.GetHeight();
+
+		if( rClipRect.offset.y < 0.0f )
+		{
+			Core::BreakDebug();
+		}
 	}
 
 	void AluraRenderer::PushClipRect( const glm::vec2& rSize )

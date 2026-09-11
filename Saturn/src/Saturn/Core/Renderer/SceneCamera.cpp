@@ -37,7 +37,7 @@
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#if defined(SAT_PLATFORM_LINUX)
+#if defined (SAT_PLATFORM_LINUX) || defined(SAT_PLATFORM_MACOS)
 #undef M_PI
 #endif
 

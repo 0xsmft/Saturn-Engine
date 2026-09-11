@@ -160,7 +160,7 @@ inline void BlackboardVariable::Set<CppType>( CppType val )				\
 
 			if( itr != m_Data.end() )
 			{
-				itr->second->Set<TCppType>( newValue );
+				itr->second->SAT_GCC_CLANG_TEMPLATE Set<TCppType>( newValue );
 			}
 		}
 

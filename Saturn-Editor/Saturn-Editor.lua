@@ -1,4 +1,7 @@
 function AppendPkgConfigLibraries(Package) 
+
+	print(debug.traceback())
+
 	local Result, Err = os.outputof("pkg-config --libs " .. Package) 
 	if not Result or Result == "" then 
 		error("pkg-config failed for '" .. Package .. "': " .. (Err or "unknown error")) 
@@ -208,7 +211,9 @@ project "Saturn-Editor"
 			"Saturn-SharedStorage",
 		}
 
-		AppendPkgConfigLibraries("gtk+-3.0")
+		if os.target() == "linux" then
+			AppendPkgConfigLibraries("gtk+-3.0")
+		end
 
 		filter "configurations:Debug"
 			links
@@ -226,7 +231,7 @@ project "Saturn-Editor"
 
 		buildoptions { "-fno-ms-extensions", "-Wno-changes-meaning", "-fpermissive" }
 
-	filter "system:Mac"
+	filter "system:macosx"
 		systemversion "latest"
 
 		defines

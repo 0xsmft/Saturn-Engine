@@ -144,7 +144,7 @@ namespace Saturn {
 		ImGui::SameLine();
 
 		uint64_t i = 0llu;
-		for( auto& rFolder : m_CurrentPath )
+		for( const auto& rFolder : m_CurrentPath )
 		{
 			const char* pName = m_ViewMode == CBViewMode::Assets ? "Assets" : "Source";
 

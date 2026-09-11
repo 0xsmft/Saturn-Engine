@@ -28,6 +28,7 @@
 
 #pragma once
 
+#if defined(SAT_PLATFORM_LINUX)
 #include "RubyBackendBase.h"
 
 #include <xcb/xcb.h>
@@ -127,3 +128,5 @@ namespace Saturn {
 		bool m_MouseTracked = false;
 	};
 }
+
+#endif

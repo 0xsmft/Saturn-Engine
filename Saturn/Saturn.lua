@@ -49,7 +49,7 @@ project "Saturn"
 		"src",
 		"vendor/stb",
 		"vendor/spdlog/include",
-		"vendor/vulkan/include",
+		os.getenv('VULKAN_SDK') .. "/include/vulkan",
 		"%{IncludeDir.ImGui}",
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.entt}",
@@ -205,18 +205,49 @@ project "Saturn"
 				"SPIRV-Tools",
 			}
 
-		filter "configurations:Dist"
-			defines "SAT_DIST"
-			runtime "Release"
-			optimize "on"
-			symbols "off"
+	filter "system:macosx"
+		links
+		{
+			"vulkan",
+			"Cocoa.framework",
+			"CoreFoundation.framework",
+			"IOKit.framework",
+			"CoreVideo.framework",
+			"QuartzCore.framework",
+			"UniformTypeIdentifiers.framework",
+		}
 
-			removelinks { "Tracy", "Freetype", "MSDFGen", "MSDF-Atlas-Gen", "SPIRV-Cross" }
-			removedefines { "TRACY_ENABLE", "TRACY_DELAYED_INIT", "TRACY_MANUAL_LIFETIME", "SATURN_SS_IMPORT" }
-			removefiles { "vendor/ImGuizmo/src/**.cpp", "vendor/ImGuizmo/src/**.h" }
+		files 
+		{
+			"src/**.mm",
+		}
 
-			defines { "SATURN_SS_STATIC" }
-			links { "Saturn-SharedStorage" }
+		filter "files:**.mm"
+   			flags { "NoPCH" }
+
+		defines
+		{
+			"SAT_PLATFORM_MACOS",
+		}
+
+		filter { "options:onlineapi=steam", "system:macosx" }
+			links
+			{
+				"vendor/steamworks/Bin/macOS/libsteam_api.dylib"
+			}
+
+	filter "configurations:Dist"
+		defines "SAT_DIST"
+		runtime "Release"
+		optimize "on"
+		symbols "off"
+
+		removelinks { "Tracy", "Freetype", "MSDFGen", "MSDF-Atlas-Gen", "SPIRV-Cross" }
+		removedefines { "TRACY_ENABLE", "TRACY_DELAYED_INIT", "TRACY_MANUAL_LIFETIME", "SATURN_SS_IMPORT" }
+		removefiles { "vendor/ImGuizmo/src/**.cpp", "vendor/ImGuizmo/src/**.h" }
+
+		defines { "SATURN_SS_STATIC" }
+		links { "Saturn-SharedStorage" }
 	
 	filter "configurations:Debug or configurations:Release or configurations:Debug-ASan"
 		defines

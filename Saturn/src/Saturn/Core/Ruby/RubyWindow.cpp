@@ -36,9 +36,9 @@
 #include "Backend/RubyWindowsBackend.h"
 #elif defined(__linux__)
 #include "Backend/RubyXcbBackend.h"
+#elif defined(SAT_PLATFORM_MACOS)
+#include "Backend/RubyCocoaBackend.h"
 #endif
-
-#define SAT_PLATFORM_VULKAN_SURFACE_NAME "VK_KHR_xcb_surface"
 
 namespace Saturn {
 
@@ -49,7 +49,11 @@ namespace Saturn {
 		m_pDefaultBackend = std::make_unique<RubyWindowsBackend>( rSpec, this );
 #elif defined (SAT_PLATFORM_LINUX) || defined(__linux__)
 		m_pDefaultBackend = std::make_unique<RubyXcbBackend>( rSpec, this );
+#elif defined( SAT_PLATFORM_MACOS )
+		m_pDefaultBackend = std::make_unique<RubyCocoaBackend>( rSpec, this );
 #endif
+
+		SAT_CORE_ASSERT( m_pDefaultBackend );
 
 		m_pDefaultBackend->Create();
 

@@ -36,7 +36,7 @@
 
 #include <glm/gtx/quaternion.hpp>
 
-#if defined (SAT_PLATFORM_LINUX)
+#if defined (SAT_PLATFORM_LINUX) || defined(SAT_PLATFORM_MACOS)
 #undef M_PI
 #endif
 

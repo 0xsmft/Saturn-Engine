@@ -27,6 +27,8 @@
  */
 
 #include "sppch.h"
+
+#if defined(SAT_PLATFORM_LINUX)
 #include "RubyXcbBackend.h"
 
 #include "Saturn/Core/Ruby/RubyWindow.h"
@@ -974,3 +976,5 @@ namespace Saturn {
 	}
 
 }
+
+#endif

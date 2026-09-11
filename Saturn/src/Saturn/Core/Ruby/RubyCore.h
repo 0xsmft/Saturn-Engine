@@ -50,8 +50,10 @@ namespace Saturn {
 	// I did not want to include windows.h here, but we will need to in order to use the HWND handle.
 #include <Windows.h>
 	using WindowType = HWND;
-#else
+#elif defined(SAT_PLATFORM_LINUX)
 	using WindowType = uint32_t;
+#elif defined(SAT_PLATFORM_MACOS)
+	using WindowType = void*;
 #endif
 
 	enum class RubyGraphicsAPI : uint8_t

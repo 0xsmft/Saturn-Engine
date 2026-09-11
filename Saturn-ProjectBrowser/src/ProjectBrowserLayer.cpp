@@ -186,7 +186,7 @@ namespace Saturn {
 
 		m_NoIconTexture = Ref<Texture2D>::Create( "content/textures/NoIcon.png" );
 
-		Application::Get()->GetWindow()->CentreWindowXYInMonitor();
+		//Application::Get()->GetWindow()->CentreWindowXYInMonitor();
 	}
 
 	ProjectBrowserLayer::~ProjectBrowserLayer()
@@ -215,7 +215,7 @@ namespace Saturn {
 		m_TitleBar.OnImGuiRender();
 
 		// --- Check if Saturn directory is set, if not show prompt to set it
-		if( !m_HasSaturnDir )
+		if( false )
 		{
 			if( ImGui::BeginPopupModal( "Saturn directory not set", nullptr, ImGuiWindowFlags_AlwaysAutoResize ) ) 
 			{
@@ -314,6 +314,8 @@ namespace Saturn {
 			ImGui::OpenPopup( "New project" );
 			m_ShowNewProjectPopup = false;
 		}
+
+		ImGui::ShowDemoWindow();
 
 		const auto center = pViewport->GetCenter();
 		ImGui::SetNextWindowPos( center, ImGuiCond_FirstUseEver, ImVec2( 0.5f, 0.5f ) );

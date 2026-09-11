@@ -36,6 +36,10 @@
 #include "RubyWindow.h"
 #include "Backend/RubyXcbBackend.h"
 #include <xcb/randr.h>
+#elif defined(SAT_PLATFORM_MACOS)
+#include "RubyWindow.h"
+#include "Backend/RubyCocoaBackend.h"
+#include "Backend/RubyNSApp.h"
 #endif
 
 namespace Saturn {
@@ -79,6 +83,11 @@ namespace Saturn {
 	{
 #if defined( SAT_PLATFORM_WINDOWS )
 		GetAllMonitors();
+#elif defined( SAT_PLATFORM_MACOS )
+		GetAllMonitors();
+
+		m_pMacOSData = new RubyNSApplicationData(); 
+		m_pMacOSData->Init();
 #endif
 	}
 
@@ -93,6 +102,8 @@ namespace Saturn {
 		RubyWindowsBackend::PollEvents();
 #elif defined(SAT_PLATFORM_LINUX)
 		RubyXcbBackend::PollEvents();
+#elif defined( SAT_PLATFORM_MACOS )
+		RubyCocoaBackend::PollEvents();
 #endif
 	}
 
@@ -133,8 +144,9 @@ namespace Saturn {
 		}
 
 		std::free(reply);
+#elif defined(SAT_PLATFORM_MACOS)
+		m_Monitors = RubyCocoaBackend::GetMonitors();
 #endif
-
 		return m_Monitors;
 	}
 
@@ -166,6 +178,13 @@ namespace Saturn {
 		m_pConnection = xcb_connect( 0, 0 );
 
 		return m_pConnection != nullptr;
+	}
+#endif
+
+#if defined(SAT_PLATFORM_MACOS)
+	RubyNSApplicationData* RubyLibrary::GetMacOSData() 
+	{
+		return m_pMacOSData;
 	}
 #endif
 }

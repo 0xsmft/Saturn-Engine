@@ -42,6 +42,7 @@ namespace Saturn {
 	
 	class RubyWindow;
 	class RubyXcbBackend;
+	struct RubyNSApplicationData;
 
 	class RubyLibrary final
 	{
@@ -121,6 +122,11 @@ namespace Saturn {
 		xcb_connection_t* GetConnection() const { return m_pConnection; }
 #endif
 
+#if defined(SAT_PLATFORM_MACOS)
+	public:
+		RubyNSApplicationData* GetMacOSData();
+#endif
+
 	private:
 		std::unordered_set<RubyKey> m_Keys;
 		std::unordered_set<RubyMouseButton> m_CurrentMouseButtons;
@@ -129,6 +135,8 @@ namespace Saturn {
 #if defined(SAT_PLATFORM_LINUX)
 		std::unordered_map<xcb_window_t, RubyXcbBackend*> m_Windows;
 		xcb_connection_t* m_pConnection = NULL;
+#elif defined(SAT_PLATFORM_MACOS)
+		RubyNSApplicationData* m_pMacOSData;
 #endif
 	};
 }

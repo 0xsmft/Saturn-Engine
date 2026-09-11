@@ -43,6 +43,19 @@
 // Windows only defines, however defined on all platforms for compatibility 
 #define SAT_ALLOCATOR_ATTR __attribute__(("malloc"))
 #define SAT_PLATFORM_FRIENDLY_NAME "macOS"
+#define SAT_MSVC_STDCALL
+
+#if defined(SAT_COMPILER_GCC)
+#define SAT_GCC_TEMPLATE template
+#else
+#define SAT_GCC_TEMPLATE
+#endif
+
+#if defined(SAT_COMPILER_GCC) || defined(SAT_COMPILER_CLANG)
+#define SAT_GCC_CLANG_TEMPLATE template
+#else
+#define SAT_GCC_CLANG_TEMPLATE
+#endif
 
 #if !defined(SAT_DIST)
 #define SAT_DLLEXPORT __attribute__((visibility("default")))
@@ -53,6 +66,10 @@
 #define SAT_PLATFORM_DYNALIB_FILE_EXT ".dylib"
 #define SAT_PLATFORM_STLIB_FILE_EXT ".a"
 #define SAT_PLATFORM_EXE_FILE_EXT ""
+
+#define SAT_CLANG_TYPENAME typename
+#define SAT_GCC_TYPENAME typename
+#define SAT_MSVC_TYPENAME
 
 // The vulkan surface extension name.
 #define SAT_PLATFORM_VULKAN_SURFACE_NAME "VK_EXT_metal_surface"

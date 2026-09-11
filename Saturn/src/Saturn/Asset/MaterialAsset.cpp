@@ -506,7 +506,7 @@ namespace Saturn {
 
 	void MaterialRegistry::Serialise( const MaterialRegistry& rRegistry, std::ofstream& rStream )
 	{
-		RawSerialisation::WriteVector( rRegistry.m_HasOverridden, rStream );
+		//RawSerialisation::WriteVector( rRegistry.m_HasOverridden, rStream );
 
 		size_t mapSize = rRegistry.m_Materials.size();
 		RawSerialisation::WriteObject( mapSize, rStream );
@@ -522,7 +522,7 @@ namespace Saturn {
 
 	void MaterialRegistry::Serialise( const Ref<MaterialRegistry>& rRegistry, std::ofstream& rStream )
 	{
-		RawSerialisation::WriteVector( rRegistry->m_HasOverridden, rStream );
+		//RawSerialisation::WriteVector( rRegistry->m_HasOverridden, rStream );
 		
 		size_t mapSize = rRegistry->m_Materials.size();
 		RawSerialisation::WriteObject( mapSize, rStream );
@@ -538,7 +538,7 @@ namespace Saturn {
 
 	void MaterialRegistry::Deserialise( Ref<MaterialRegistry>& rRegistry, std::istream& rStream )
 	{
-		RawSerialisation::ReadVector( rRegistry->m_HasOverridden, rStream );
+		//RawSerialisation::ReadVector( rRegistry->m_HasOverridden, rStream );
 
 		size_t mapSize = 0;
 		RawSerialisation::ReadObject( mapSize, rStream );

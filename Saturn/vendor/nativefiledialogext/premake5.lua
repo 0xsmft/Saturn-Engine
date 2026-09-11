@@ -41,6 +41,19 @@ project "NativeFileDialogExtended"
             "src/nfd_gtk.cpp"
 	    }
 
+	filter "system:macosx"
+		staticruntime "off"
+
+        files
+    	{
+            "src/nfd_cocoa.m"
+	    }
+
+		links 
+		{
+			"UniformTypeIdentifiers.framework"
+		}
+
 	filter "configurations:Debug or configurations:Debug-ASan"
 		runtime "Debug"
 		symbols "on"

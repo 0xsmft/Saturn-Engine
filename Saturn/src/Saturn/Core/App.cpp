@@ -359,6 +359,8 @@ namespace Saturn {
 
 		path /= ".config";
 		path /= "Saturn";
+#elif defined(SAT_PLATFORM_MACOS)
+		return std::filesystem::current_path() / "Saturn";
 #endif
 
 		if( !std::filesystem::exists( path ) )

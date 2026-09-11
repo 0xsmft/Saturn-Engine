@@ -130,6 +130,27 @@ namespace Saturn {
 		SAT_CORE_ASSERT( CheckValidationLayerSupport(), "Unable to find validation layer." );
 #endif
 
+		uint32_t extensionCount = 0;
+
+		VkResult result = vkEnumerateInstanceExtensionProperties(
+			nullptr,
+			&extensionCount,
+			nullptr
+		);
+
+		std::vector<VkExtensionProperties> extensions(extensionCount);
+
+		vkEnumerateInstanceExtensionProperties(
+			nullptr,
+			&extensionCount,
+			extensions.data()
+		);
+
+		for(const auto& extension : extensions)
+		{
+			SAT_CORE_INFO( "{}", extension.extensionName );
+		}
+
 		VkApplicationInfo AppInfo = { VK_STRUCTURE_TYPE_APPLICATION_INFO };
 		AppInfo.pApplicationName = "Saturn Engine";
 		AppInfo.pEngineName = "Saturn Engine";
@@ -140,8 +161,16 @@ namespace Saturn {
 		auto Extensions = Application::Get()->GetWindow()->GetVulkanRequiredExtensions();
 		Extensions.push_back( VK_EXT_DEBUG_UTILS_EXTENSION_NAME );
 
+#if defined(SAT_PLATFORM_MACOS)
+		Extensions.push_back( VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME );
+#endif
+
 		VkInstanceCreateInfo InstanceInfo = { VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO };
 		InstanceInfo.pApplicationInfo = &AppInfo;
+
+#if defined(SAT_PLATFORM_MACOS)
+		InstanceInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+#endif
 
 #if SAT_WITH_VALIDATION_LAYERS
 		Extensions.push_back( VK_EXT_DEBUG_REPORT_EXTENSION_NAME );
@@ -302,6 +331,10 @@ namespace Saturn {
 
 #if SAT_WITH_VALIDATION_LAYERS
 		m_DeviceExtensions.push_back( VK_EXT_DEBUG_MARKER_EXTENSION_NAME );
+#endif
+
+#if defined(SAT_PLATFORM_MACOS)
+		m_DeviceExtensions.push_back( "VK_KHR_portability_subset" );
 #endif
 
 		VkDeviceCreateInfo DeviceInfo = { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };

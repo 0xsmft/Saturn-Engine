@@ -145,9 +145,11 @@ project "Saturn-ProjectBrowser"
 			os.getenv('VULKAN_SDK') .. "/lib",
 		}
 
-		AppendPkgConfigLibraries("gtk+-3.0")
+		if os.target() == "linux" then
+			AppendPkgConfigLibraries("gtk+-3.0")
+		end
 
-		filter "configurations:Debug"
+		filter { "system:linux", "configurations:Debug" }
 			links
 			{
 				"assimp",
@@ -160,8 +162,13 @@ project "Saturn-ProjectBrowser"
 			"../Saturn/src/Saturn/Entry/Unix/**.cpp",
 		}
 
-	filter "system:Mac"
-		systemversion "latest"
+	filter "system:macosx"
+		runpathdirs 
+		{
+			"%{cfg.targetdir}",
+			os.getenv('VULKAN_SDK') .. "/lib",
+			"../Saturn/vendor/assimp/bin/"
+		}
 
 		defines
 		{
@@ -172,6 +179,53 @@ project "Saturn-ProjectBrowser"
 		{
 			"../Saturn/src/Saturn/Entry/Unix/**.cpp",
 		}
+
+		libdirs
+		{
+			"../Saturn/vendor/assimp/bin",
+			os.getenv('VULKAN_SDK') .. "/lib",
+		}
+
+		links 
+		{
+			"vulkan",
+			"assimp",
+			"shaderc_shared",
+
+			"ImGui",
+			"SPIRV-Cross",
+			"yaml-cpp",
+			"Tracy",
+			"zlib",
+			"Recast",
+			"MSDF-Atlas-Gen",
+			"MSDFGen",
+			"Freetype",
+			"JoltPhysics",
+			"NativeFileDialogExtended",
+			"ImTimeline",
+
+			"Saturn-SharedStorage",
+
+			"Cocoa.framework",
+			"CoreFoundation.framework",
+			"IOKit.framework",
+			"CoreVideo.framework",
+			"QuartzCore.framework",
+			"UniformTypeIdentifiers.framework",
+		}
+
+		filter { "system:macosx", "configurations:Debug" }
+			postbuildcommands 
+			{
+				'{COPYFILE} "../bin/Debug-macosx-AARCH64/Saturn-SharedStorage/libSaturn-SharedStorage.dylib" "%{cfg.targetdir}"',
+			}
+
+		filter { "system:macosx", "configurations:Release" }
+			postbuildcommands 
+			{
+				'{COPYFILE} "../bin/Release-macosx-AARCH64/Saturn-SharedStorage/libSaturn-SharedStorage.dylib" "%{cfg.targetdir}"',
+			}
 
 	filter "configurations:Debug"
 		defines "SAT_DEBUG"

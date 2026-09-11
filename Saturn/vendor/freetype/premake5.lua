@@ -77,7 +77,10 @@ project "Freetype"
 	filter "system:linux"
 		pic "On"
 		systemversion "latest"
-		staticruntime "On"
+		staticruntime "off"
+
+	filter "system:macosx"
+		staticruntime "off"
 
 	filter "configurations:Debug"
 		runtime "Debug"

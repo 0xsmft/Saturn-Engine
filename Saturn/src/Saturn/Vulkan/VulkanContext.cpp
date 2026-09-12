@@ -129,28 +129,6 @@ namespace Saturn {
 #if SAT_WITH_VALIDATION_LAYERS
 		SAT_CORE_ASSERT( CheckValidationLayerSupport(), "Unable to find validation layer." );
 #endif
-
-		uint32_t extensionCount = 0;
-
-		VkResult result = vkEnumerateInstanceExtensionProperties(
-			nullptr,
-			&extensionCount,
-			nullptr
-		);
-
-		std::vector<VkExtensionProperties> extensions(extensionCount);
-
-		vkEnumerateInstanceExtensionProperties(
-			nullptr,
-			&extensionCount,
-			extensions.data()
-		);
-
-		for(const auto& extension : extensions)
-		{
-			SAT_CORE_INFO( "{}", extension.extensionName );
-		}
-
 		VkApplicationInfo AppInfo = { VK_STRUCTURE_TYPE_APPLICATION_INFO };
 		AppInfo.pApplicationName = "Saturn Engine";
 		AppInfo.pEngineName = "Saturn Engine";

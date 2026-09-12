@@ -804,7 +804,7 @@ namespace Saturn {
 		// Draw ID and entity class type.
 		{
 			// ID
-			ImGui::TextDisabled( "%" PRIu64, id );
+			ImGui::TextDisabled( "%" PRIu64, (uint64_t)id );
 
 			ImGui::SameLine();
 			ImGui::TextDisabled( "%s", entity->GetClass()->GetName().c_str() );

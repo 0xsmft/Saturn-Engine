@@ -1,7 +1,4 @@
-function AppendPkgConfigLibraries(Package) 
-
-	print(debug.traceback())
-
+function AppendPkgConfigLibraries(Package)
 	local Result, Err = os.outputof("pkg-config --libs " .. Package) 
 	if not Result or Result == "" then 
 		error("pkg-config failed for '" .. Package .. "': " .. (Err or "unknown error")) 
@@ -232,7 +229,15 @@ project "Saturn-Editor"
 		buildoptions { "-fno-ms-extensions", "-Wno-changes-meaning", "-fpermissive" }
 
 	filter "system:macosx"
-		systemversion "latest"
+		runpathdirs 
+		{
+			"%{cfg.targetdir}",
+			os.getenv('VULKAN_SDK') .. "/lib",
+			"../Saturn/vendor/assimp/bin/",
+			"/System/Library/Frameworks",
+			"/System/Library/PrivateFrameworks",
+			"/Users/smft/Library/Frameworks",
+		}
 
 		defines
 		{
@@ -241,7 +246,58 @@ project "Saturn-Editor"
 
 		files 
 		{
+			"../Saturn/src/Saturn/Entry/Unix/**.cpp",
 		}
+
+		libdirs
+		{
+			"../Saturn/vendor/assimp/bin",
+			"../Saturn/vendor/libzip/bin/macOS-AArch64",
+			os.getenv('VULKAN_SDK') .. "/lib",
+		}
+
+		links 
+		{
+			"vulkan",
+			"assimp",
+			"shaderc_shared",
+			"zip",
+
+			"ImGui",
+			"SPIRV-Cross",
+			"yaml-cpp",
+			"Tracy",
+			"zlib",
+			"Recast",
+			"MSDF-Atlas-Gen",
+			"MSDFGen",
+			"Freetype",
+			"JoltPhysics",
+			"NativeFileDialogExtended",
+			"ImTimeline",
+
+			"Saturn-SharedStorage",
+
+			"Cocoa.framework",
+			"CoreFoundation.framework",
+			"IOKit.framework",
+			"CoreVideo.framework",
+			"CoreAudio.framework",
+			"QuartzCore.framework",
+			"UniformTypeIdentifiers.framework",
+		}
+
+		filter { "system:macosx", "configurations:Debug" }
+			postbuildcommands 
+			{
+				'{COPYFILE} "../bin/Debug-macosx-AARCH64/Saturn-SharedStorage/libSaturn-SharedStorage.dylib" "%{cfg.targetdir}"',
+			}
+
+		filter { "system:macosx", "configurations:Release" }
+			postbuildcommands 
+			{
+				'{COPYFILE} "../bin/Release-macosx-AARCH64/Saturn-SharedStorage/libSaturn-SharedStorage.dylib" "%{cfg.targetdir}"',
+			}
 
 	filter "configurations:Debug"
 		defines "SAT_DEBUG"

@@ -71,6 +71,7 @@
 @interface RubyEventResponder : NSView<NSTextInputClient>
 {
     Saturn::RubyCocoaBackend* pThis;
+    NSTrackingArea* m_pTrackingArea;
 }
 
 - (instancetype)initForRuby:(Saturn::RubyCocoaBackend*)initEventResponder;
@@ -95,6 +96,7 @@ namespace Saturn {
     if (self != nil)
     {
         pThis = initEventResponder;
+        m_pTrackingArea = nil;
 
         [self updateTrackingAreas];
         [self registerForDraggedTypes:@[NSPasteboardTypeURL]];
@@ -105,7 +107,23 @@ namespace Saturn {
 
 - (void)dealloc
 {
+    [m_pTrackingArea release];
     [super dealloc];
+}
+
+-(BOOL)isOpaque
+{
+    return [pThis->GetData()->m_pWindow isOpaque];
+}
+
+-(BOOL)canBecomeKeyView
+{
+    return YES;
+}
+
+-(BOOL)wantsUpdateLayer
+{
+    return YES;
 }
 
 - (BOOL)acceptsFirstResponder
@@ -118,12 +136,33 @@ namespace Saturn {
     return YES;
 }
 
+-(void)updateTrackingAreas
+{
+    if (m_pTrackingArea != nil)
+    {
+        [self removeTrackingArea:m_pTrackingArea];
+        [m_pTrackingArea release];
+    }
+
+    const NSTrackingAreaOptions options = NSTrackingMouseEnteredAndExited | 
+                                          NSTrackingMouseMoved |
+                                        NSTrackingActiveInKeyWindow;
+
+    m_pTrackingArea = [[NSTrackingArea alloc] initWithRect:[self bounds]
+                                                   options:options
+                                                     owner:self
+                                                  userInfo:nil];
+
+    [self addTrackingArea:m_pTrackingArea];
+    [super updateTrackingAreas];
+}
+
 - (void)mouseMoved:(NSEvent*)event
 {
     const NSPoint position = [event locationInWindow];
     const NSRect contentRect = [pThis->GetData()->m_pView frame];
 
-    pThis->GetParent()->DispatchEvent<Saturn::RubyMouseMoveEvent>( Saturn::EventType::MouseMoved, ( float ) position.x, contentRect.size.height - ( float ) position.y );
+    pThis->GetParent()->DispatchEvent<Saturn::RubyMouseMoveEvent>( Saturn::EventType::MouseMoved, ( float ) position.x,  contentRect.size.height - ( float ) position.y );
 }
 
 - (void)mouseDown:(NSEvent*)event
@@ -160,6 +199,23 @@ namespace Saturn {
     pThis->GetParent()->DispatchEvent<Saturn::Event>( Saturn::EventType::MouseLeaveWindow, Saturn::EventCategory::EC_Ruby );
 }
 
+- (void)scrollWheel:(NSEvent*)event
+{
+    float xOffset = [event scrollingDeltaX];
+    float yOffset = [event scrollingDeltaY];
+
+    if( [event hasPreciseScrollingDeltas] )
+    {
+        xOffset *= 0.1f;
+        yOffset *= 0.1f;
+    }
+
+    if( fabs( xOffset ) > 0.0f || fabs( yOffset ) > 0.0f )
+    {
+        pThis->GetParent()->DispatchEvent<Saturn::RubyMouseScrollEvent>( Saturn::EventType::MouseScroll, xOffset, yOffset );
+    }
+}
+
 static int TranslateMacOSModifiers(NSUInteger flags) 
 {
     int mods = Saturn::RubyKey_UnknownKey;
@@ -183,12 +239,99 @@ static Saturn::RubyKey ConvertMacOSVkToRuby( uint16_t vk )
 {
     using namespace Saturn;
 
-    switch( vk ) 
+	const std::string hex = std::format( "{:08X}", vk );
+	SAT_CORE_WARN( "[Ruby] Unknown Key!, Win32 scan code: WSC/0x{}", hex );
+
+    switch( vk )
     {
         default: return RubyKey_UnknownKey;
 
         case 0x0: return RubyKey_A;
-    }
+        case 0xB: return RubyKey_B;
+        case 0x8: return RubyKey_C;
+        case 0x2: return RubyKey_D;
+        case 0xE: return RubyKey_E;
+        case 0x3: return RubyKey_F;
+        case 0x5: return RubyKey_G;
+        case 0x4: return RubyKey_H;
+        case 0x22: return RubyKey_I;
+        case 0x26: return RubyKey_J;
+        case 0x28: return RubyKey_K;
+        case 0x25: return RubyKey_L;
+        case 0x2E: return RubyKey_M;
+        case 0x2D: return RubyKey_N;
+        case 0x1F: return RubyKey_O;
+        case 0x23: return RubyKey_P;
+        case 0x0C: return RubyKey_Q;
+        case 0x0F: return RubyKey_R;
+        case 0x01: return RubyKey_S;
+        case 0x11: return RubyKey_T;
+        case 0x20: return RubyKey_U;
+        case 0x09: return RubyKey_V;
+        case 0x0D: return RubyKey_W;
+        case 0x07: return RubyKey_X;
+        case 0x10: return RubyKey_Y;
+        case 0x06: return RubyKey_Z;
+
+        case 0x12: return RubyKey_Num1;
+        case 0x13: return RubyKey_Num2;
+        case 0x14: return RubyKey_Num3;
+        case 0x15: return RubyKey_Num4;
+        case 0x17: return RubyKey_Num5;
+        case 0x16: return RubyKey_Num6;
+        case 0x1A: return RubyKey_Num7;
+        case 0x1C: return RubyKey_Num8;
+        case 0x19: return RubyKey_Num9;
+        case 0x1D: return RubyKey_Num0;
+
+        case 0x33: return RubyKey_Backspace;
+        case 0x30: return RubyKey_Tab;
+        case 0x24: return RubyKey_Enter;
+        case 0x31: return RubyKey_Space;
+
+        case 0x35: return RubyKey_Esc;
+
+        case 0x7B: return RubyKey_LeftArrow;
+        case 0x7C: return RubyKey_RightArrow;
+        case 0x7E: return RubyKey_UpArrow;
+        case 0x7D: return RubyKey_DownArrow;
+
+        case 0x72: return RubyKey_F1;
+        case 0x78: return RubyKey_F2;
+        case 0x63: return RubyKey_F3;
+        case 0x76: return RubyKey_F4;
+        case 0x60: return RubyKey_F5;
+        case 0x61: return RubyKey_F6;
+        case 0x62: return RubyKey_F7;
+        case 0x64: return RubyKey_F8;
+        case 0x65: return RubyKey_F9;
+        case 0x6D: return RubyKey_F10;
+        case 0x67: return RubyKey_F11;
+        case 0x6F: return RubyKey_F12;
+
+        case 0x73: return RubyKey_CapsLock;
+        case 0x39: return RubyKey_LeftShift;
+        case 0x3C: return RubyKey_RightShift;
+        case 0x3B: return RubyKey_LeftCtrl;
+        case 0x3E: return RubyKey_RightCtrl;
+        case 0x3A: return RubyKey_LeftAlt;
+        case 0x3D: return RubyKey_RightAlt;
+
+        case 0x29: return RubyKey_Semicolon;
+        case 0x27: return RubyKey_Apostrophe;
+        case 0x2A: return RubyKey_Backslash;
+        case 0x1B: return RubyKey_Minus;
+        case 0x18: return RubyKey_Equal;
+        case 0x1E: return RubyKey_RightBracket;
+        case 0x21: return RubyKey_LeftBracket;
+        case 0x2B: return RubyKey_Comma;
+        case 0x2C: return RubyKey_Slash;
+        case 0x2F: return RubyKey_Period;
+        case 0x32: return RubyKey_Backslash;
+        case 0x0A: return RubyKey_Grave;
+
+        case 0x47: return RubyKey_NumLock;
+   }
 }
 
 - (void) keyDown:(NSEvent*) event 
@@ -198,6 +341,8 @@ static Saturn::RubyKey ConvertMacOSVkToRuby( uint16_t vk )
 
 	pThis->GetParent()->IntrnlSetKeyDown( saturnKey, true );
 	pThis->GetParent()->DispatchEvent<Saturn::RubyKeyEvent>( Saturn::EventType::KeyPressed, saturnKey, [event keyCode], Modifiers );
+
+    [self interpretKeyEvents:@[event]];
 }
 
 - (void) keyUp:(NSEvent*) event 
@@ -207,6 +352,44 @@ static Saturn::RubyKey ConvertMacOSVkToRuby( uint16_t vk )
 
 	pThis->GetParent()->IntrnlSetKeyDown( saturnKey, false );
 	pThis->GetParent()->DispatchEvent<Saturn::RubyKeyEvent>( Saturn::EventType::KeyReleased, saturnKey, [event keyCode], Modifiers );
+}
+
+- (void)insertText:(id)aString replacementRange:(NSRange)replacementRange
+{
+    NSString* pCharacters;
+    if( [aString isKindOfClass:[NSAttributedString class]] )
+        pCharacters = [aString string];
+    else
+        pCharacters = (NSString*)aString;
+
+    for( NSUInteger i = 0; i < [pCharacters length]; ++i )
+    {
+        uint16_t wc = [pCharacters characterAtIndex:i];
+        pThis->GetParent()->DispatchEvent<Saturn::RubyCharacterEvent>( Saturn::EventType::InputCharacter, wc );
+    }
+}
+
+- (BOOL)hasMarkedText
+{
+    return NO;
+}
+
+- (NSRange)markedRange
+{
+    return NSMakeRange(NSNotFound, 0);
+}
+
+- (NSRange)selectedRange
+{
+    return NSMakeRange(NSNotFound, 0);
+}
+
+- (void)setMarkedText:(nonnull id)string selectedRange:(NSRange)selectedRange replacementRange:(NSRange)replacementRange
+{
+}
+
+- (void)unmarkText
+{
 }
 
 - (NSArray<NSAttributedStringKey>*)validAttributesForMarkedText
@@ -246,6 +429,12 @@ static Saturn::RubyKey ConvertMacOSVkToRuby( uint16_t vk )
 }
 
 @end
+
+// Stolen from GLFW.
+static float RubyTransformYCocoa( float y )
+{
+    return CGDisplayBounds(CGMainDisplayID()).size.height - y - 1;
+}
 
 namespace Saturn {
 
@@ -302,15 +491,7 @@ namespace Saturn {
         [m_pData->m_pWindow setTitle:nsTitle];
 
         // Create the view.
-        m_pData->m_pView = [[RubyEventResponder alloc]
-            initForRuby:this];
-
-        m_pData->m_pView.frame =
-            [[m_pData->m_pWindow contentView] bounds];
-
-        // Make the view resize with the window.
-        [m_pData->m_pView setAutoresizingMask:
-            NSViewWidthSizable | NSViewHeightSizable];
+        m_pData->m_pView = [[RubyEventResponder alloc] initForRuby:this];
 
         [m_pData->m_pWindow setContentView:m_pData->m_pView];
         [m_pData->m_pWindow makeFirstResponder:m_pData->m_pView];
@@ -398,7 +579,23 @@ namespace Saturn {
 
 	void RubyCocoaBackend::PresentWindow( RubyWindowShowCmd Command /*= RubyWindowShowCmd::Default */ )
 	{
-        [m_pData->m_pWindow orderFront:nil];
+        switch( Command ) 
+        {
+            case RubyWindowShowCmd::Default:
+            {
+                [m_pData->m_pWindow makeKeyAndOrderFront:nil];
+            } break;
+
+            case RubyWindowShowCmd::NoActivate:
+            {
+                [m_pData->m_pWindow orderFront:nil];
+            } break;
+
+            case RubyWindowShowCmd::Fullscreen:
+            {
+                [m_pData->m_pWindow toggleFullScreen:nil];
+            } break;
+        }
 	}
 
 	void RubyCocoaBackend::HideWindow()
@@ -408,6 +605,11 @@ namespace Saturn {
 
 	void RubyCocoaBackend::ResizeWindow( uint32_t Width, uint32_t Height )
 	{
+        NSRect frame = [m_pData->m_pWindow frame];
+        frame.size.width = Width;
+        frame.size.height = Height;
+
+        [m_pData->m_pWindow setFrame:frame display:YES animate:NO];
 	}
 
 	RubyIVec2 RubyCocoaBackend::GetSize()
@@ -422,10 +624,22 @@ namespace Saturn {
 
 	void RubyCocoaBackend::MoveWindow( int x, int y )
 	{
+        NSRect frame = [m_pData->m_pWindow frame];
+        frame.origin.x = x;
+
+        // Flip the y coordinate because macOS uses a 
+        // different coordinate system than most other
+        // platforms.
+        CGFloat screenHeight = [[NSScreen mainScreen] frame].size.height;
+        y = screenHeight - y - frame.size.height;
+        frame.origin.y = y;
+
+        [m_pData->m_pWindow setFrame:frame display:YES animate:NO];
 	}
 
 	void RubyCocoaBackend::SetTitle( const std::string& rTitle )
 	{
+
 	}
 
 	void RubyCocoaBackend::SetTitle( const std::wstring& rTitle )
@@ -439,8 +653,16 @@ namespace Saturn {
 
 	RubyVec2 RubyCocoaBackend::GetMousePos()
 	{
-        NSPoint pos = [NSEvent mouseLocation];
-		return { static_cast<float>( pos.x ), static_cast<float>( pos.y ) };
+        NSPoint pos = [m_pData->m_pWindow mouseLocationOutsideOfEventStream];
+        NSRect contentRect = [m_pData->m_pView frame];
+
+        // NB: macOS uses a different coordinate system 
+        // than most other platforms, so we need to 
+        // flip the y coordinate.
+//        CGFloat screenHeight = [[NSScreen mainScreen] frame].size.height;
+//        pos.y = screenHeight - pos.y;
+
+		return { static_cast<float>( pos.x ), static_cast<float>( contentRect.size.height - pos.y ) };
 	}
 
 	VkResult RubyCocoaBackend::CreateVulkanWindowSurface( VkInstance Instance, VkSurfaceKHR* pOutSurface )
@@ -490,9 +712,9 @@ namespace Saturn {
 
 	RubyIVec2 RubyCocoaBackend::GetWindowPos()
 	{
-        NSPoint pos = [m_pData->m_pWindow frame].origin;
-
-		return { (int)pos.x, (int)pos.y };
+        const NSRect contectRect = [m_pData->m_pWindow contentRectForFrameRect:[m_pData->m_pWindow frame]];
+        
+        return { static_cast<int>( contectRect.origin.x ), static_cast<int>( RubyTransformYCocoa( contectRect.origin.y + contectRect.size.height - 1 ) ) };
 	}
 
 	bool RubyCocoaBackend::MouseInRect()

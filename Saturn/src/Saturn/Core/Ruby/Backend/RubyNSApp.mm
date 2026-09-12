@@ -32,6 +32,9 @@
 
 #include "RubyNSApp.h"
 
+#include "Saturn/Core/App.h"
+#include "Saturn/Core/Ruby/RubyWindow.h"
+
 @interface RubyNSApplicationDelegate : NSObject <NSApplicationDelegate>
 @end
 
@@ -52,6 +55,13 @@ namespace Saturn {
     [NSApp stop:nil];
 }
 
+- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender
+{
+    NSLog(@"QUIT REQUESTED");
+    Saturn::Application::Get()->GetWindow()->FlashAttention();
+    return NSTerminateCancel;
+}
+
 @end
 
 namespace Saturn {
@@ -69,11 +79,9 @@ namespace Saturn {
 
         [NSApplication sharedApplication];
         [NSApp setDelegate:pImpl->pAppDelegateMgr];
-
         [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
-
-        if (![[NSRunningApplication currentApplication] isFinishedLaunching])
-            [NSApp run];
+        [NSApp finishLaunching];
+        [NSApp activateIgnoringOtherApps:YES];
     }
 
 }

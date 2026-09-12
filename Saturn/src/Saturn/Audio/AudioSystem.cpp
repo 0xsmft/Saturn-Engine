@@ -119,7 +119,13 @@ namespace Saturn {
 				MA_CHECK( ma_engine_init( nullptr, m_pEngine ) );
 
 				// Init context.
+#if defined(SAT_PLATFORM_WINDOWS)
 				ma_backend backends[ 1 ] = { ma_backend_wasapi };
+#elif defined(SAT_PLATFORM_LINUX)
+				ma_backend backends[ 1 ] = { ma_backend_alsa };
+#elif defined(SAT_PLATFORM_MACOS)
+				ma_backend backends[ 1 ] = { ma_backend_coreaudio };
+#endif
 				MA_CHECK( ma_context_init( backends, 1, nullptr, m_pContext ) );
 
 				ma_device_info deviceInfo;

@@ -28,8 +28,6 @@
 
 #pragma once
 
-#include <string>
-
 #define SAT_RBY_DISABLE_COPY( x ) x(const x&) = delete
 
 // Deprecated

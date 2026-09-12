@@ -34,7 +34,7 @@
 
 #if defined(_WIN32)
 #include <Windows.h>
-#elif defined(SAT_PLATFORM_LINUX)
+#elif defined(SAT_PLATFORM_LINUX) || defined(SAT_PLATFORM_MACOS)
 #include <unistd.h>
 #include <sys/time.h>
 #endif
@@ -49,7 +49,7 @@ namespace Saturn {
 #if defined( _WIN32 )
 			QueryPerformanceFrequency( ( LARGE_INTEGER* ) &m_Frequency );
 			QueryPerformanceCounter( ( LARGE_INTEGER* ) &m_InitTime );
-#elif defined( SAT_PLATFORM_LINUX )
+#elif defined( SAT_PLATFORM_LINUX ) || defined( SAT_PLATFORM_MACOS )
 			m_Frequency = 1000000000;
 			struct timespec time;
 			clock_gettime( CLOCK_MONOTONIC, &time );
@@ -63,7 +63,7 @@ namespace Saturn {
 			uint64_t ticks;
 			QueryPerformanceCounter( ( LARGE_INTEGER* ) &ticks );
 			return ( double ) ( ticks - m_InitTime ) / m_Frequency;
-#elif defined( SAT_PLATFORM_LINUX )
+#elif defined( SAT_PLATFORM_LINUX ) || defined( SAT_PLATFORM_MACOS )
 			struct timespec time;
 			clock_gettime(CLOCK_MONOTONIC, &time);
 			uint64_t currentTicks = (uint64_t)time.tv_sec * m_Frequency + time.tv_nsec;

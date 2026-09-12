@@ -200,6 +200,10 @@ namespace Saturn {
 
 #if defined(_WIN32)
 		friend class RubyWindowsBackend;
+#elif defined(SAT_PLATFORM_LINUX) || defined(__linux__)
+		friend class RubyXcbBackend;
+#elif defined(SAT_PLATFORM_MACOS)
+		friend class RubyCocoaBackend;
 #endif
 	};
 

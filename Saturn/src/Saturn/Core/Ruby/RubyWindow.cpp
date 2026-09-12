@@ -78,13 +78,11 @@ namespace Saturn {
 		}
 #endif
 		
-		/*
 		if( !m_pDefaultBackend->Focused() && m_CursorMode >= RubyCursorMode::Hidden )
 		{
 			SetMouseCursorMode( RubyCursorMode::Normal );
 			SetMouseCursor( RubyCursorType::Arrow );
 		}
-		*/
 	}
 
 	bool RubyWindow::ShouldClose()

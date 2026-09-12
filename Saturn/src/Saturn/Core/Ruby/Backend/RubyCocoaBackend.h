@@ -88,8 +88,20 @@ namespace Saturn {
     public:
         RubyMacOSData* GetData();
 
+		void ConfigureClipRect();
+		void RecenterMousePos();
+
+	private:
+		void DisableCursor();
+		void FindRestorePoint();
+		void UpdateCursorIcon();
+
     private:
-        RubyMacOSData* m_pData;
+		// For disabled mouse mode.
+		RubyIVec2 m_MouseRestorePoint{};
+
+		RubyMacOSData* m_pData = nullptr;
         bool m_WindowClosed = false;
+		RubyCursorType m_CurrentCursorType = RubyCursorType::None;
 	};
 }

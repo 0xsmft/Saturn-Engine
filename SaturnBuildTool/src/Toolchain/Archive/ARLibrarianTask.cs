@@ -2,9 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Runtime.InteropServices;
-using SaturnBuildTool.Auxiliary;
-using SaturnBuildTool.Tools;
 
 namespace SaturnBuildTool
 {
@@ -114,22 +111,6 @@ namespace SaturnBuildTool
             }
 
             return clProcess.ExitCode;
-        }
-
-        private string GetMSVCLibraryPath( MSVCToolchain toolchain )
-        {
-            string CLLocation = toolchain.VCToolsPath;
-
-            switch( Shared.ProjectInfo.TargetArchitectureKind )
-            {
-                case ArchitectureKind.x86_64:
-                    {
-                        CLLocation = Path.Combine( CLLocation, "lib", "x64" );
-                    }
-                    break;
-            }
-
-            return CLLocation;
         }
     }
 }

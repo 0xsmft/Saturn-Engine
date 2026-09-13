@@ -668,14 +668,21 @@ namespace Saturn {
 
 			uint32_t binding = Compiler.get_decoration( Resource.id, spv::DecorationBinding );
 			uint32_t set = Compiler.get_decoration( Resource.id, spv::DecorationDescriptorSet );
-			uint32_t arraySizes = RealType.array[ 0 ];
+
+			// New spriv change.... since we updated spriv in September '26 they have changed
+			// the way that this works, before we updated and we had a build from Apr '22
+			// we could simply do:
+			// arraySizes = RealType.array[ 0 ];
+			// no matter what but now we must check if it's an array before doing so.
+			uint32_t arraySizes = 1;
+			if( !RealType.array.empty() )
+			{
+				arraySizes = RealType.array[ 0 ];
+			}
 
 			SHADER_INFO( "Sampled image: {0}", Name );
 			SHADER_INFO( " Binding: {0}", binding );
 			SHADER_INFO( " Set: {0}", set );
-
-			if( arraySizes == 0 )
-				arraySizes = 1;
 
 			if( m_DescriptorSets[ set ].Set == UINT32_MAX )
 				m_DescriptorSets[ set ] = ShaderDescriptorSetTemplate( set );
@@ -691,14 +698,16 @@ namespace Saturn {
 
 			uint32_t binding = Compiler.get_decoration( Resource.id, spv::DecorationBinding );
 			uint32_t set = Compiler.get_decoration( Resource.id, spv::DecorationDescriptorSet );
-			uint32_t arraySizes = RealType.array[ 0 ];
+			
+			uint32_t arraySizes = 1;
+			if( !RealType.array.empty() )
+			{
+				arraySizes = RealType.array[ 0 ];
+			}
 
 			SHADER_INFO( "Storage image: {0}", Name );
 			SHADER_INFO( " Binding: {0}", binding );
 			SHADER_INFO( " Set: {0}", set );
-
-			if( arraySizes == 0 )
-				arraySizes = 1;
 
 			if( m_DescriptorSets[ set ].Set == UINT32_MAX )
 				m_DescriptorSets[ set ] = ShaderDescriptorSetTemplate( set );
@@ -718,19 +727,21 @@ namespace Saturn {
 	
 			uint32_t set = Compiler.get_decoration( si.id, spv::DecorationDescriptorSet );
 			uint32_t binding = Compiler.get_decoration( si.id, spv::DecorationBinding );
-			uint32_t arraySize = RealType.array[ 0 ];
-
+			
+			uint32_t arraySizes = 1;
+			if( !RealType.array.empty() )
+			{
+				arraySizes = RealType.array[ 0 ];
+			}
+			
 			SHADER_INFO( "Separate (non-sampled) image: {0}", Name );
 			SHADER_INFO( " Binding: {0}", binding );
 			SHADER_INFO( " Set: {0}", set );
 
-			if( arraySize == 0u )
-				arraySize = 1u;
-
 			if( m_DescriptorSets[ set ].Set == UINT32_MAX )
 				m_DescriptorSets[ set ] = ShaderDescriptorSetTemplate( set );
 
-			m_DescriptorSets[ set ].SeparateImages.emplace_back( Name, shaderType, set, binding, arraySize );
+			m_DescriptorSets[ set ].SeparateImages.emplace_back( Name, shaderType, set, binding, arraySizes );
 		}
 
 		for( const auto& ss : Resources.separate_samplers )
@@ -741,19 +752,21 @@ namespace Saturn {
 
 			const uint32_t set = Compiler.get_decoration( ss.id, spv::DecorationDescriptorSet );
 			const uint32_t binding = Compiler.get_decoration( ss.id, spv::DecorationBinding );
-			uint32_t arraySize = RealType.array[ 0 ];
+			
+			uint32_t arraySizes = 1;
+			if( !RealType.array.empty() )
+			{
+				arraySizes = RealType.array[ 0 ];
+			}
 
 			SHADER_INFO( "Sampler: {0}", Name );
 			SHADER_INFO( " Binding: {0}", binding );
 			SHADER_INFO( " Set: {0}", set );
 
-			if( arraySize == 0u )
-				arraySize = 1u;
-
 			if( m_DescriptorSets[ set ].Set == UINT32_MAX )
 				m_DescriptorSets[ set ] = ShaderDescriptorSetTemplate( set );
 
-			m_DescriptorSets[ set ].SeparateSamplers.emplace_back( Name, shaderType, set, binding, arraySize );
+			m_DescriptorSets[ set ].SeparateSamplers.emplace_back( Name, shaderType, set, binding, arraySizes );
 		}
 #endif
 	}

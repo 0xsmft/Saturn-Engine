@@ -26,6 +26,7 @@
 *********************************************************************************************
 */
 
+#include "sppch.h"
 #include "Saturn/Entry/General/EntryPoint.h"
 
 int main( int count, char** args )

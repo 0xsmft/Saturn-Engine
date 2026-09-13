@@ -212,7 +212,7 @@ project "Saturn-Editor"
 			AppendPkgConfigLibraries("gtk+-3.0")
 		end
 
-		filter "configurations:Debug"
+		filter { "system:linux", "configurations:Debug" }
 			links
 			{
 				"assimp",
@@ -221,12 +221,11 @@ project "Saturn-Editor"
 				"SPIRV"
 			}
 
-		files 
-		{
-			"../Saturn/src/Saturn/Entry/Unix/**.cpp",
-		}
-
-		buildoptions { "-fno-ms-extensions", "-Wno-changes-meaning", "-fpermissive" }
+		filter "system:linux"
+			files 
+			{
+				"../Saturn/src/Saturn/Entry/Unix/**.cpp",
+			}
 
 	filter "system:macosx"
 		runpathdirs 

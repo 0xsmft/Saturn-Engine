@@ -112,6 +112,7 @@ namespace Saturn {
 
 - (void)dealloc
 {
+    pThis = nil;
     [m_pTrackingArea release];
     [super dealloc];
 }
@@ -170,13 +171,14 @@ namespace Saturn {
     if( pThis->GetParent()->GetCursorMode() == Saturn::RubyCursorMode::Locked )
     {
         const auto lastPos = pThis->GetParent()->GetLastMousePos();
+        const auto deltaPos = pThis->GetLockedMouseDelta();
 
-        const Saturn::RubyIVec2 deltaPos = { 
-            ( int )( position.x - lastPos.x ), 
-            ( int )( contentRect.size.height - position.y - lastPos.y ) };
+        const Saturn::RubyIVec2 eventDeltaPos = { 
+            ( int )( [ event deltaX ] - deltaPos.x ), 
+            ( int )( [ event deltaY ] - deltaPos.y ) };
         
         auto deltaLocked = pThis->GetParent()->GetVirtualMousePos();
-        deltaLocked += deltaPos;
+        deltaLocked += eventDeltaPos;
 
         pThis->GetParent()->DispatchEvent<Saturn::RubyMouseMoveEvent>( 
             Saturn::EventType::MouseMoved, 
@@ -189,6 +191,8 @@ namespace Saturn {
     {
         pThis->GetParent()->DispatchEvent<Saturn::RubyMouseMoveEvent>( Saturn::EventType::MouseMoved, ( float ) position.x,  contentRect.size.height - ( float ) position.y );
     }
+
+    pThis->SetLockedMouseDelta( 0.0f, 0.0f );
 
     pThis->GetParent()->IntrnlSetLastMousePos( { static_cast<int>(position.x),  static_cast<int>(contentRect.size.height - position.y)} );
 }
@@ -208,6 +212,11 @@ namespace Saturn {
 {
 	pThis->GetParent()->IntrnlSetMouseState( Saturn::RubyMouseButton_Left, false );
 	pThis->GetParent()->DispatchEvent<Saturn::RubyMouseEvent>( Saturn::EventType::MouseReleased, ( int )Saturn::RubyMouseButton_Left );
+}
+
+- (void)rightMouseDragged:(NSEvent *)event
+{
+    [self mouseMoved:event];
 }
 
 - (void)rightMouseDown:(NSEvent*)event
@@ -647,9 +656,13 @@ namespace Saturn {
             m_pData->m_pNotificationMgr = nil;
 
             [m_pData->m_pView release];
+            m_pData->m_pView = nil;
+
             [m_pData->m_pMetalLayer release];
+            m_pData->m_pMetalLayer = nil;
 
             [m_pData->m_pWindow release];
+            m_pData->m_pWindow = nil;
 
             // GLFW does this, so we will too.
             PollEvents();
@@ -736,9 +749,25 @@ namespace Saturn {
 
 	void RubyCocoaBackend::SetMousePos( double x, double y )
 	{
+        NSPoint pos = [m_pData->m_pWindow mouseLocationOutsideOfEventStream];
+        const NSRect contentRect = [m_pData->m_pView frame];
+
+        const NSRect localRect     = NSMakeRect(x, contentRect.size.height - y - 1, 0, 0);
+        const NSRect globalRect    = [m_pData->m_pWindow convertRectToScreen:localRect];
+        const NSPoint globalPoint  = globalRect.origin;
+
+        m_LockedMouseDelta.x += x - pos.x;
+        m_LockedMouseDelta.x += y - contentRect.size.height + pos.y;
+
+        CGWarpMouseCursorPosition(CGPointMake(globalPoint.x,
+                                              RubyTransformYCocoa(globalPoint.y)));
+
 		m_pWindow->IntrnlSetLastMousePos( { ( int ) x, ( int ) y } );
 
-        CGWarpMouseCursorPosition( CGPointMake( x, y ) );
+        if( m_pWindow->GetCursorMode() != RubyCursorMode::Locked )
+        {
+            CGAssociateMouseAndMouseCursorPosition( true );
+        }
 	}
 
 	RubyVec2 RubyCocoaBackend::GetMousePos()
@@ -849,6 +878,8 @@ namespace Saturn {
         RecenterMousePos();
         ConfigureClipRect();
         UpdateCursorIcon();
+
+        CGAssociateMouseAndMouseCursorPosition(false);
     }
 
     void RubyCocoaBackend::FindRestorePoint() 
@@ -870,6 +901,16 @@ namespace Saturn {
     {
     }
 
+    void RubyCocoaBackend::SetLockedMouseDelta( float x, float y ) 
+    {
+        SetLockedMouseDelta( { x, y } );
+    }
+
+    void RubyCocoaBackend::SetLockedMouseDelta( const RubyVec2& rPosition ) 
+    {
+        m_LockedMouseDelta = rPosition;
+    }
+
 	void RubyCocoaBackend::SetMouseCursorMode( RubyCursorMode mode )
 	{
         @autoreleasepool 
@@ -878,7 +919,7 @@ namespace Saturn {
             {
                 case RubyCursorMode::Normal:
                 {
-                    if( m_pWindow->GetLastCursorMode() == RubyCursorMode::Hidden ) 
+                    if( m_pWindow->GetLastCursorMode() == RubyCursorMode::Locked ) 
                     {
                         SetMousePos( m_MouseRestorePoint.x, m_MouseRestorePoint.y );
 

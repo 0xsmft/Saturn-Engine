@@ -51,7 +51,7 @@ namespace Saturn {
 
 	public:
 		RubyLibrary();
-		~RubyLibrary() = default;
+		~RubyLibrary();
 
 		void PollEvents();
 

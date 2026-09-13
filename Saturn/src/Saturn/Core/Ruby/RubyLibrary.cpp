@@ -80,15 +80,25 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 
 	RubyLibrary::RubyLibrary()
+#if defined( SAT_PLATFORM_MACOS )
+		: m_pMacOSData(new RubyNSApplicationData())
+#endif
 	{
 #if defined( SAT_PLATFORM_WINDOWS )
 		GetAllMonitors();
 #elif defined( SAT_PLATFORM_MACOS )
 		GetAllMonitors();
-
-		m_pMacOSData = new RubyNSApplicationData(); 
 		m_pMacOSData->Init();
 #endif
+	}
+
+	RubyLibrary::~RubyLibrary() 
+	{
+		if( m_pMacOSData )
+		{
+			delete m_pMacOSData;
+			m_pMacOSData = nullptr;
+		}
 	}
 
 	void RubyLibrary::AddMonintor( const RubyMonitor& rMonitor )

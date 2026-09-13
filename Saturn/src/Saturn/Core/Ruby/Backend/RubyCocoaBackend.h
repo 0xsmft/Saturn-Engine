@@ -90,6 +90,11 @@ namespace Saturn {
 
 		void ConfigureClipRect();
 		void RecenterMousePos();
+		void SetLockedMouseDelta( float x, float y );
+		void SetLockedMouseDelta( const RubyVec2& rPosition );
+
+		const RubyVec2& GetLockedMouseDelta() const { return m_LockedMouseDelta; }
+		RubyVec2& GetLockedMouseDelta() { return m_LockedMouseDelta; }
 
 	private:
 		void DisableCursor();
@@ -99,6 +104,7 @@ namespace Saturn {
     private:
 		// For disabled mouse mode.
 		RubyIVec2 m_MouseRestorePoint{};
+		RubyVec2 m_LockedMouseDelta{};
 
 		RubyMacOSData* m_pData = nullptr;
         bool m_WindowClosed = false;

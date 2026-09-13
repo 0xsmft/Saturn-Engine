@@ -51,7 +51,7 @@ namespace Saturn::Auxiliary {
 		}
 
 		return lResult == ERROR_SUCCESS;
-#elif defined(SAT_PLATFORM_LINUX)
+#elif defined(SAT_PLATFORM_LINUX) || defined(SAT_PLATFORM_MACOS)
 		const char* pValue = getenv( rKey.c_str() );
 		return pValue != nullptr;
 #endif
@@ -104,7 +104,7 @@ namespace Saturn::Auxiliary {
 				Error = NULL;
 			}
 		}
-#elif defined(SAT_PLATFORM_LINUX)
+#elif defined(SAT_PLATFORM_LINUX) || defined(SAT_PLATFORM_MACOS)
 		const char* pValue = getenv( rKey.c_str() );
 		if( pValue )
 			return pValue;
@@ -225,7 +225,7 @@ namespace Saturn::Auxiliary {
 			::LocalFree( Error );
 			Error = NULL;
 		}
-#elif defined(SAT_PLATFORM_LINUX)
+#elif defined(SAT_PLATFORM_LINUX) || defined(SAT_PLATFORM_MACOS)
 		if( !setenv( rKey.c_str(), rValue.c_str(), 1 ) )
 			SAT_CORE_ASSERT( false, "Unable to set environment variable!" );
 #endif

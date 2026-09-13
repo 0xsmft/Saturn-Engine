@@ -50,6 +50,8 @@
 // Needed for FOLDERID_RoamingAppData et al.
 #include <ShObjIdl.h>
 #include <ShlObj.h>
+#elif defined( SAT_PLATFORM_MACOS )
+#include "MacOSAuxiliary/MacOSAuxiliary.h"
 #endif
 
 #if defined(SAT_DIST) && !defined(SAT_WITH_CRASHCATCH)
@@ -360,7 +362,8 @@ namespace Saturn {
 		path /= ".config";
 		path /= "Saturn";
 #elif defined(SAT_PLATFORM_MACOS)
-		return std::filesystem::current_path() / "Saturn";
+		path = Auxiliary::MacOS::GetAppDataPath();
+		path /= "Saturn";
 #endif
 
 		if( !std::filesystem::exists( path ) )
@@ -435,6 +438,8 @@ namespace Saturn {
 			.type = NFD_WINDOW_HANDLE_TYPE_WINDOWS, 
 #elif defined(SAT_PLATFORM_LINUX)
 			.type = NFD_WINDOW_HANDLE_TYPE_X11, 
+#elif defined(SAT_PLATFORM_MACOS)
+			.type = NFD_WINDOW_HANDLE_TYPE_COCOA,
 #endif
 			.handle = ( void* ) m_Window->GetNativeHandle() 
 		};
@@ -480,6 +485,8 @@ namespace Saturn {
 			.type = NFD_WINDOW_HANDLE_TYPE_WINDOWS,
 #elif defined(SAT_PLATFORM_LINUX)
 			.type = NFD_WINDOW_HANDLE_TYPE_X11,
+#elif defined(SAT_PLATFORM_MACOS)
+			.type = NFD_WINDOW_HANDLE_TYPE_COCOA,
 #endif
 			.handle = ( void* ) m_Window->GetNativeHandle()
 		};
@@ -543,6 +550,8 @@ namespace Saturn {
 			.type = NFD_WINDOW_HANDLE_TYPE_WINDOWS,
 #elif defined(SAT_PLATFORM_LINUX)
 			.type = NFD_WINDOW_HANDLE_TYPE_X11,
+#elif defined(SAT_PLATFORM_MACOS)
+			.type = NFD_WINDOW_HANDLE_TYPE_COCOA,
 #endif
 			.handle = ( void* ) m_Window->GetNativeHandle()
 		};
@@ -568,8 +577,10 @@ namespace Saturn {
 			CommandLine = std::format( L"explorer.exe \"{0}\"", rPath.wstring() );
 
 		DetachedProcess dp( CommandLine );
-#elif defined(SAT_PLATFORM_LINUX) || defined(SAT_PLATFORM_MACOS)
+#elif defined(SAT_PLATFORM_LINUX)
 		SAT_CORE_ASSERT( false, "Application::OpenNativeFileExplorer not implemented on Linux!" );
+#elif defined(SAT_PLATFORM_MACOS)
+		Auxiliary::MacOS::OpenFolderInExplorer( rPath, select );
 #endif
 	}
 
@@ -585,6 +596,8 @@ namespace Saturn {
 			.type = NFD_WINDOW_HANDLE_TYPE_WINDOWS,
 #elif defined(SAT_PLATFORM_LINUX)
 			.type = NFD_WINDOW_HANDLE_TYPE_X11,
+#elif defined(SAT_PLATFORM_MACOS)
+			.type = NFD_WINDOW_HANDLE_TYPE_COCOA,
 #endif
 			.handle = ( void* ) m_Window->GetNativeHandle()
 		};

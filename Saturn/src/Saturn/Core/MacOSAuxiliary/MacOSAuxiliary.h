@@ -26,38 +26,16 @@
 *********************************************************************************************
 */
 
-#include "sppch.h"
-#include "ErrorDialog.h"
+namespace Saturn::Auxiliary {
 
-#if defined( SAT_PLATFORM_WINDOWS )
-#include <Windows.h>
-#elif defined( SAT_PLATFORM_MACOS )
-#include "MacOSAuxiliary/MacOSAuxiliary.h"
-#endif
+    class MacOS 
+    {
+    public:
+        static void OpenFolderInExplorer( const std::filesystem::path& rPath, bool select = false );
+        static void ShowErrorDialogBox( const std::string& rText, const std::string& rTitle );
 
-namespace Saturn::Core {
+        static const std::filesystem::path GetAppDataPath();
+    };
 
-	int ShowErrorDialogBox( const std::string& rTitle, const std::string& rText )
-	{
-#if defined(SAT_PLATFORM_WINDOWS)
-		return MessageBoxA( nullptr, rText.data(), rTitle.data(), MB_ICONSTOP | MB_OK );
-#elif defined(SAT_PLATFORM_MACOS)
-		Auxiliary::MacOS::ShowErrorDialogBox( rTitle, rText );
-		return 0;
-#else
-		return 0;
-#endif
-	}
-
-	[[noreturn]] void ShowErrorDialogBoxAndTerminate( const std::string& rTitle, const std::string& rText, bool Terminate )
-	{
-#if defined(SAT_PLATFORM_WINDOWS)
-		MessageBoxA( nullptr, rText.data(), rTitle.data(), MB_ICONSTOP | MB_OK );
-#elif defined(SAT_PLATFORM_MACOS)
-		Auxiliary::MacOS::ShowErrorDialogBox( rTitle, rText );
-#endif
-		std::exit( 1 );
-		std::unreachable();
-	}
-	
 }
+

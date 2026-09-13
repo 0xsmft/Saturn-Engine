@@ -46,7 +46,7 @@ namespace SaturnBuildTool
 
             var Args = new List<string>();
             
-            // Intput
+            // Input
             Args.Add( $" -c \"{InputFile}\" -m64" );
 
             switch( CompileSettings.CppStdVersion )

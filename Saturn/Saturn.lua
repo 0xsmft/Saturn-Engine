@@ -9,8 +9,15 @@ project "Saturn"
 	targetdir ("../bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("../bin-int/" .. outputdir .. "/%{prj.name}")
 
-	pchheader "sppch.h"
 	pchsource "src/sppch.cpp"
+
+	filter "action:xcode4"
+   		pchheader "src/sppch.h"
+
+	filter "not action:xcode4"
+		pchheader "sppch.h"
+
+	filter {}
 
 	files
 	{
@@ -215,20 +222,59 @@ project "Saturn"
 			"CoreVideo.framework",
 			"QuartzCore.framework",
 			"UniformTypeIdentifiers.framework",
+			"CoreAudio.framework",
 		}
 
 		files 
 		{
 			"src/**.mm",
 		}
-
-		filter "files:**.mm"
-   			flags { "NoPCH" }
-
+		
 		defines
 		{
 			"SAT_PLATFORM_MACOS",
 		}
+
+		externalincludedirs
+		{
+			"src",
+			"vendor/stb",
+			"vendor/spdlog/include",
+			os.getenv('VULKAN_SDK') .. "/include/vulkan",
+			"%{IncludeDir.ImGui}",
+			"%{IncludeDir.glm}",
+			"%{IncludeDir.entt}",
+			"%{IncludeDir.assimp}",
+			"%{IncludeDir.glslc}",
+			"%{IncludeDir.shaderc}",
+			"%{IncludeDir.SPIRV_Cross}",
+			"%{IncludeDir.vma}",
+			"%{IncludeDir.yaml_cpp}",
+			"%{IncludeDir.ImGuizmo}",
+			"%{IncludeDir.ImguiNodeEditor}",
+			"%{IncludeDir.ImSpinner}",
+			"%{IncludeDir.Tracy}",
+			"%{IncludeDir.MiniAudio}",
+			"%{IncludeDir.Filewatch}",
+			"%{IncludeDir.zlib}",
+			"%{IncludeDir.JoltPhys}",
+			"%{IncludeDir.KTX_Software}",
+			"%{IncludeDir.Recast}",
+			"%{IncludeDir.acl}",
+			"%{IncludeDir.rtm}",
+			"%{IncludeDir.freetype}",
+			"%{IncludeDir.MSDF}",
+			"%{IncludeDir.MSDFAG}",
+			"%{IncludeDir.NativeFileDialogExtended}",
+			"%{IncludeDir.ImTimeline}",
+			"%{IncludeDir.ImGuiColorTextEdit}",
+			"%{IncludeDir.CrashCatch}",
+
+			"%{IncludeDir.SharedStorage}"
+		}
+
+		filter "files:**.mm"
+   			flags { "NoPCH" }
 
 		filter { "options:onlineapi=steam", "system:macosx" }
 			links

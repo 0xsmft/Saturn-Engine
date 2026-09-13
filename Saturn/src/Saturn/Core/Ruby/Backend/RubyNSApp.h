@@ -36,12 +36,16 @@ namespace Saturn {
 
     class RubyNSApplicationData
     {
-        // todo disable copy.
+        RubyNSApplicationData operator=( RubyNSApplicationData& ) = delete;
     public:
-        ~RubyNSApplicationData();
-    
         RubyNSApplicationDataImpl* pImpl = nullptr;
 
+    public:
+        ~RubyNSApplicationData();
+
         void Init();
+
+    private:
+        void Cleanup();
     };
 }

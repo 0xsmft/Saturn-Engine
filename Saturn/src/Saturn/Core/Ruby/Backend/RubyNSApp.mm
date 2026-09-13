@@ -42,7 +42,6 @@ namespace Saturn {
 
     struct RubyNSApplicationDataImpl
     {
-        NSApplication* pApplication = nil;
         RubyNSApplicationDelegate* pAppDelegateMgr = nil;
     };
 
@@ -57,7 +56,6 @@ namespace Saturn {
 
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender
 {
-    NSLog(@"QUIT REQUESTED");
     Saturn::Application::Get()->GetWindow()->FlashAttention();
     return NSTerminateCancel;
 }
@@ -65,23 +63,42 @@ namespace Saturn {
 @end
 
 namespace Saturn {
-
+  
     RubyNSApplicationData::~RubyNSApplicationData() 
     {
-        delete pImpl;
+        Cleanup();
     }
 
     void RubyNSApplicationData::Init() 
     {
-        pImpl = new RubyNSApplicationDataImpl();
+        @autoreleasepool
+        {
+            pImpl = new RubyNSApplicationDataImpl();
 
-        pImpl->pAppDelegateMgr = [[RubyNSApplicationDelegate alloc] init];
+            pImpl->pAppDelegateMgr = [[RubyNSApplicationDelegate alloc] init];
 
-        [NSApplication sharedApplication];
-        [NSApp setDelegate:pImpl->pAppDelegateMgr];
-        [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
-        [NSApp finishLaunching];
-        [NSApp activateIgnoringOtherApps:YES];
+            [NSApplication sharedApplication];
+            [NSApp setDelegate:pImpl->pAppDelegateMgr];
+            [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
+            [NSApp finishLaunching];
+            [NSApp activateIgnoringOtherApps:YES];
+        }
+    }
+
+    void RubyNSApplicationData::Cleanup() 
+    {
+        @autoreleasepool
+        {
+            if( pImpl ) 
+            {
+                [NSApp setDelegate:nil];
+                [pImpl->pAppDelegateMgr release];
+                pImpl->pAppDelegateMgr = nil;
+
+                delete pImpl;
+                pImpl = nullptr;
+            }
+        }
     }
 
 }

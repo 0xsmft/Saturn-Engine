@@ -1,4 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Security.Cryptography;
+using System.Text;
+
+using SaturnBuildTool.Auxiliary;
 
 namespace SaturnBuildTool
 {
@@ -61,7 +67,7 @@ namespace SaturnBuildTool
                         Args.Add( " -arch x86_64" );
                     } break;
 
-                case ArchitectureKind.x86_64:
+                case ArchitectureKind.AArch64:
                     {
                         Args.Add( " -arch arm64" );
                     } break;

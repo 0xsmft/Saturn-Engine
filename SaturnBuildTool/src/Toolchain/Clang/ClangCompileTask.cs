@@ -231,7 +231,7 @@ namespace SaturnBuildTool
 
             if( clProcess.ExitCode == 0 )
             {
-                gccToolchain.ProducedItems.Add( outFile );
+                clangToolchain.ProducedItems.Add( outFile );
                 Shared.TaskCache.CacheTask( InputFile, Path.Combine( CompileSettings.OutputPath, outFile ) );
             }
             else

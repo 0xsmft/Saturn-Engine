@@ -32,6 +32,8 @@ namespace SaturnBuildTool
 
         public string PlatformName { get; private set; }
 
+        public string ArchName { get; private set; }
+
         public Platform( string rawPlatformStr )
         {
             if( rawPlatformStr == "WIN64" )
@@ -61,6 +63,7 @@ namespace SaturnBuildTool
             ProgramDebugDatabaseExtension = ".pdb";
             PlatformType = PlatformType.Windows;
             PlatformName = "Windows";
+            ArchName = "x64_86";
         }
 
         private void InitForLinux()
@@ -74,6 +77,7 @@ namespace SaturnBuildTool
             ProgramDebugDatabaseExtension = string.Empty;
             PlatformType = PlatformType.Linux;
             PlatformName = "Linux";
+            ArchName = "x64_86";
         }
 
         private void InitForMacOS() 
@@ -86,12 +90,12 @@ namespace SaturnBuildTool
             ProgramDebugDatabaseExtension = ".dsym";
             PlatformType = PlatformType.MacApple;
             PlatformName = "macosx";
+            ArchName = "AARCH64";
         }
 
         public string GetOutputFolderName( ConfigKind configKind )
         {
-            // TODO: #Archs
-            return string.Format( "{0}-{1}-x86_64", configKind.ToString(), PlatformName.ToLowerInvariant() );
+            return string.Format( "{0}-{1}-{2}", configKind.ToString(), PlatformName.ToLowerInvariant(), ArchName );
         }
     }
 }

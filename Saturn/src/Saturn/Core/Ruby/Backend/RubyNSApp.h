@@ -28,24 +28,22 @@
 
 #pragma once
 
-// THIS FILE CAN ONLY BE TOUCHED BY THE OBJECTIVE C COMPILER!
-
 namespace Saturn {
 
-    struct RubyNSApplicationDataImpl;
+	struct RubyNSApplicationDataImpl;
 
-    class RubyNSApplicationData
-    {
-        RubyNSApplicationData operator=( RubyNSApplicationData& ) = delete;
-    public:
-        RubyNSApplicationDataImpl* pImpl = nullptr;
+	class RubyNSApplicationData
+	{
+		RubyNSApplicationData operator=( RubyNSApplicationData& ) = delete;
+	public:
+		RubyNSApplicationDataImpl* pImpl = nullptr;
 
-    public:
-        ~RubyNSApplicationData();
+	public:
+		~RubyNSApplicationData();
 
-        void Init();
+		void Init();
 
-    private:
-        void Cleanup();
-    };
+	private:
+		void Cleanup();
+	};
 }

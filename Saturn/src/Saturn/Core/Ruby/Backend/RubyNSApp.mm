@@ -40,10 +40,10 @@
 
 namespace Saturn {
 
-    struct RubyNSApplicationDataImpl
-    {
-        RubyNSApplicationDelegate* pAppDelegateMgr = nil;
-    };
+	struct RubyNSApplicationDataImpl
+	{
+		RubyNSApplicationDelegate* pAppDelegateMgr = nil;
+	};
 
 }
 
@@ -51,54 +51,54 @@ namespace Saturn {
 
 - (void)applicationDidFinishLaunching:(NSNotification *)notification
 {
-    [NSApp stop:nil];
+	[NSApp stop:nil];
 }
 
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender
 {
-    Saturn::Application::Get()->GetWindow()->FlashAttention();
-    return NSTerminateCancel;
+	Saturn::Application::Get()->GetWindow()->FlashAttention();
+	return NSTerminateCancel;
 }
 
 @end
 
 namespace Saturn {
   
-    RubyNSApplicationData::~RubyNSApplicationData() 
-    {
-        Cleanup();
-    }
+	RubyNSApplicationData::~RubyNSApplicationData() 
+	{
+		Cleanup();
+	}
 
-    void RubyNSApplicationData::Init() 
-    {
-        @autoreleasepool
-        {
-            pImpl = new RubyNSApplicationDataImpl();
+	void RubyNSApplicationData::Init() 
+	{
+		@autoreleasepool
+		{
+			pImpl = new RubyNSApplicationDataImpl();
 
-            pImpl->pAppDelegateMgr = [[RubyNSApplicationDelegate alloc] init];
+			pImpl->pAppDelegateMgr = [[RubyNSApplicationDelegate alloc] init];
 
-            [NSApplication sharedApplication];
-            [NSApp setDelegate:pImpl->pAppDelegateMgr];
-            [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
-            [NSApp finishLaunching];
-            [NSApp activateIgnoringOtherApps:YES];
-        }
-    }
+			[NSApplication sharedApplication];
+			[NSApp setDelegate:pImpl->pAppDelegateMgr];
+			[NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
+			[NSApp finishLaunching];
+			[NSApp activateIgnoringOtherApps:YES];
+		}
+	}
 
-    void RubyNSApplicationData::Cleanup() 
-    {
-        @autoreleasepool
-        {
-            if( pImpl ) 
-            {
-                [NSApp setDelegate:nil];
-                [pImpl->pAppDelegateMgr release];
-                pImpl->pAppDelegateMgr = nil;
+	void RubyNSApplicationData::Cleanup() 
+	{
+		@autoreleasepool
+		{
+			if( pImpl ) 
+			{
+				[NSApp setDelegate:nil];
+				[pImpl->pAppDelegateMgr release];
+				pImpl->pAppDelegateMgr = nil;
 
-                delete pImpl;
-                pImpl = nullptr;
-            }
-        }
-    }
+				delete pImpl;
+				pImpl = nullptr;
+			}
+		}
+	}
 
 }

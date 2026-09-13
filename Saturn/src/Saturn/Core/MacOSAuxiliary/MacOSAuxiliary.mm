@@ -34,66 +34,66 @@
 
 namespace Saturn::Auxiliary {
 
-    void MacOS::OpenFolderInExplorer( const std::filesystem::path& rPath, bool select ) 
-    {
-        @autoreleasepool 
-        {
-            const std::wstring& rPathW = rPath.wstring();
+	void MacOS::OpenFolderInExplorer( const std::filesystem::path& rPath, bool select ) 
+	{
+		@autoreleasepool 
+		{
+			const std::wstring& rPathW = rPath.wstring();
 
-            NSString* nsStringPath =
-                [[NSString alloc]
-                    initWithBytes:rPathW.data()
-                        length:rPathW.size() * sizeof(wchar_t)
-                        encoding:NSUTF32LittleEndianStringEncoding];
+			NSString* nsStringPath =
+				[[NSString alloc]
+					initWithBytes:rPathW.data()
+						length:rPathW.size() * sizeof(wchar_t)
+						encoding:NSUTF32LittleEndianStringEncoding];
 
-            NSURL* nsPath = [NSURL fileURLWithPath:nsStringPath isDirectory:YES];
+			NSURL* nsPath = [NSURL fileURLWithPath:nsStringPath isDirectory:YES];
 
-            if( select ) 
-            {
-                [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:@[nsPath]];
-            }
-            else
-            {
-                [[NSWorkspace sharedWorkspace] openURL:nsPath];
-            }
-        }
-    }
+			if( select ) 
+			{
+				[[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:@[nsPath]];
+			}
+			else
+			{
+				[[NSWorkspace sharedWorkspace] openURL:nsPath];
+			}
+		}
+	}
 
-    void MacOS::ShowErrorDialogBox( const std::string& rText, const std::string& rTitle ) 
-    {
-        @autoreleasepool 
-        {
-            NSString* nsText = [NSString stringWithUTF8String:rText.c_str()];
-            NSString* nsTitle = [NSString stringWithUTF8String:rTitle.c_str()];
+	void MacOS::ShowErrorDialogBox( const std::string& rText, const std::string& rTitle ) 
+	{
+		@autoreleasepool 
+		{
+			NSString* nsText = [NSString stringWithUTF8String:rText.c_str()];
+			NSString* nsTitle = [NSString stringWithUTF8String:rTitle.c_str()];
 
-            NSAlert* pAlert = [[NSAlert alloc] init];
-            [pAlert setMessageText:nsText];
-            [pAlert setInformativeText:nsTitle];
-            [pAlert setAlertStyle:NSAlertStyleCritical];
-            [pAlert addButtonWithTitle:@"OK"];
-            [pAlert runModal];
-        }
-    }
+			NSAlert* pAlert = [[NSAlert alloc] init];
+			[pAlert setMessageText:nsText];
+			[pAlert setInformativeText:nsTitle];
+			[pAlert setAlertStyle:NSAlertStyleCritical];
+			[pAlert addButtonWithTitle:@"OK"];
+			[pAlert runModal];
+		}
+	}
 
-    const std::filesystem::path MacOS::GetAppDataPath() 
-    {
-        std::filesystem::path appDataPath;
+	const std::filesystem::path MacOS::GetAppDataPath() 
+	{
+		std::filesystem::path appDataPath;
 
-        @autoreleasepool 
-        {
-            // TODO: Use NSBundle.
-            NSArray* pPaths = NSSearchPathForDirectoriesInDomains(
-                NSApplicationSupportDirectory,
-                NSUserDomainMask,
-                YES
-            );
+		@autoreleasepool 
+		{
+			// TODO: Use NSBundle.
+			NSArray* pPaths = NSSearchPathForDirectoriesInDomains(
+				NSApplicationSupportDirectory,
+				NSUserDomainMask,
+				YES
+			);
 
-            NSString* appSupportPath = pPaths.firstObject;
+			NSString* appSupportPath = pPaths.firstObject;
 
-            appDataPath = [appSupportPath fileSystemRepresentation];
-        }
+			appDataPath = [appSupportPath fileSystemRepresentation];
+		}
 
-        return appDataPath;
-    }
+		return appDataPath;
+	}
 
 }

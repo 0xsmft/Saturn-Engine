@@ -81,7 +81,7 @@ namespace Saturn {
 
 	RubyLibrary::RubyLibrary()
 #if defined( SAT_PLATFORM_MACOS )
-		: m_pMacOSData(new RubyNSApplicationData())
+		: m_pMacOSData( new RubyNSApplicationData() )
 #endif
 	{
 #if defined( SAT_PLATFORM_WINDOWS )
@@ -92,13 +92,15 @@ namespace Saturn {
 #endif
 	}
 
-	RubyLibrary::~RubyLibrary() 
+	RubyLibrary::~RubyLibrary()
 	{
+#if defined( SAT_PLATFORM_MACOS )
 		if( m_pMacOSData )
 		{
 			delete m_pMacOSData;
 			m_pMacOSData = nullptr;
 		}
+#endif
 	}
 
 	void RubyLibrary::AddMonintor( const RubyMonitor& rMonitor )
@@ -127,22 +129,22 @@ namespace Saturn {
 			m_Monitors.clear();
 			m_Monitors.reserve( static_cast< size_t >( Monitors ) );
 
-			LPARAM userData = (LPARAM)this;
+			LPARAM userData = ( LPARAM ) this;
 			::EnumDisplayMonitors( NULL, NULL, MonitorEnumProc, userData );
 		}
 #elif defined(SAT_PLATFORM_LINUX)
 		xcb_window_t rootWindow = m_Windows.begin()->second->GetNativeHandle();
-		xcb_randr_get_monitors_cookie_t cookie = xcb_randr_get_monitors(m_pConnection, rootWindow, 1);
+		xcb_randr_get_monitors_cookie_t cookie = xcb_randr_get_monitors( m_pConnection, rootWindow, 1 );
 
-		xcb_randr_get_monitors_reply_t* reply = xcb_randr_get_monitors_reply(m_pConnection, cookie, nullptr);
+		xcb_randr_get_monitors_reply_t* reply = xcb_randr_get_monitors_reply( m_pConnection, cookie, nullptr );
 
-		int n = xcb_randr_get_monitors_monitors_length(reply);
-		auto it =  xcb_randr_get_monitors_monitors_iterator(reply);
+		int n = xcb_randr_get_monitors_monitors_length( reply );
+		auto it = xcb_randr_get_monitors_monitors_iterator( reply );
 
 		m_Monitors.clear();
-		m_Monitors.reserve(n);
+		m_Monitors.reserve( n );
 
-		for (int i = 0; i < n; i++, xcb_randr_monitor_info_next(&it))
+		for( int i = 0; i < n; i++, xcb_randr_monitor_info_next( &it ) )
 		{
 			const xcb_randr_monitor_info_t& monitorInfo = *it.data;
 
@@ -153,7 +155,7 @@ namespace Saturn {
 			rMonitor.WorkSize = rMonitor.MonitorSize; // no separate work area in X11
 		}
 
-		std::free(reply);
+		std::free( reply );
 #elif defined(SAT_PLATFORM_MACOS)
 		m_Monitors = RubyCocoaBackend::GetMonitors();
 #endif
@@ -166,10 +168,10 @@ namespace Saturn {
 			GetAllMonitors();
 
 		auto Itr = std::find_if( m_Monitors.begin(), m_Monitors.end(),
-			[]( auto& rMonitor ) 
-			{ 
-				return rMonitor.Primary; 
-			} );
+			[]( auto& rMonitor )
+		{
+			return rMonitor.Primary;
+		} );
 
 		return *( Itr );
 	}
@@ -192,7 +194,7 @@ namespace Saturn {
 #endif
 
 #if defined(SAT_PLATFORM_MACOS)
-	RubyNSApplicationData* RubyLibrary::GetMacOSData() 
+	RubyNSApplicationData* RubyLibrary::GetMacOSData()
 	{
 		return m_pMacOSData;
 	}

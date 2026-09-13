@@ -34,7 +34,7 @@
 
 namespace Saturn {
 
-    struct RubyMacOSData;
+	struct RubyMacOSData;
 
 	//
 	// Cococa window backend.
@@ -49,7 +49,7 @@ namespace Saturn {
 
 	public:
 		static void PollEvents();
-        static std::vector<RubyMonitor> GetMonitors();
+		static std::vector<RubyMonitor> GetMonitors();
 
 	public:
 		virtual void Maximize() override;
@@ -85,8 +85,8 @@ namespace Saturn {
 		virtual void FlashAttention() override;
 		virtual void SetIcon( Ref<class Texture2D> icon ) override;
 
-    public:
-        RubyMacOSData* GetData();
+	public:
+		RubyMacOSData* GetData();
 
 		void ConfigureClipRect();
 		void RecenterMousePos();
@@ -101,13 +101,13 @@ namespace Saturn {
 		void FindRestorePoint();
 		void UpdateCursorIcon();
 
-    private:
+	private:
 		// For disabled mouse mode.
 		RubyIVec2 m_MouseRestorePoint{};
 		RubyVec2 m_LockedMouseDelta{};
 
 		RubyMacOSData* m_pData = nullptr;
-        bool m_WindowClosed = false;
+		bool m_WindowClosed = false;
 		RubyCursorType m_CurrentCursorType = RubyCursorType::None;
 	};
 }

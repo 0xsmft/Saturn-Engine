@@ -48,20 +48,20 @@
 
 - (BOOL)canBecomeKeyWindow
 {
-    // Required for NSWindowStyleMaskBorderless windows
-    return YES;
+	// Required for NSWindowStyleMaskBorderless windows
+	return YES;
 }
 
 - (BOOL)canBecomeMainWindow
 {
-    return YES;
+	return YES;
 }
 
 @end
 
 @interface RubyWindowNotificationMgr : NSObject <NSWindowDelegate>
 {
-    Saturn::RubyCocoaBackend* pThis;
+	Saturn::RubyCocoaBackend* pThis;
 }
 
 - (instancetype)initForRuby:(Saturn::RubyCocoaBackend*)pBackend;
@@ -70,8 +70,8 @@
 
 @interface RubyEventResponder : NSView<NSTextInputClient>
 {
-    Saturn::RubyCocoaBackend* pThis;
-    NSTrackingArea* m_pTrackingArea;
+	Saturn::RubyCocoaBackend* pThis;
+	NSTrackingArea* m_pTrackingArea;
 }
 
 - (instancetype)initForRuby:(Saturn::RubyCocoaBackend*)initEventResponder;
@@ -79,127 +79,127 @@
 @end
 
 namespace Saturn {
-    struct RubyMacOSData
-    {
-        RubyMacWindow* m_pWindow = nil;
-        RubyEventResponder* m_pView = nil;
-        RubyWindowNotificationMgr* m_pNotificationMgr = nil;
-       
-        // May be null, only valid when the user has
-        // set the cursor to a custom image OR
-        // the cursor is locked and hidden.
-        NSCursor* m_pCursor = nil;
-        CAMetalLayer* m_pMetalLayer = nil;
-    };
+	struct RubyMacOSData
+	{
+		RubyMacWindow* m_pWindow = nil;
+		RubyEventResponder* m_pView = nil;
+		RubyWindowNotificationMgr* m_pNotificationMgr = nil;
+	   
+		// May be null, only valid when the user has
+		// set the cursor to a custom image OR
+		// the cursor is locked and hidden.
+		NSCursor* m_pCursor = nil;
+		CAMetalLayer* m_pMetalLayer = nil;
+	};
 }
 
 @implementation RubyEventResponder
 
 - (instancetype)initForRuby:(Saturn::RubyCocoaBackend*)initEventResponder
 {
-    self = [super init];
-    if (self != nil)
-    {
-        pThis = initEventResponder;
-        m_pTrackingArea = nil;
+	self = [super init];
+	if (self != nil)
+	{
+		pThis = initEventResponder;
+		m_pTrackingArea = nil;
 
-        [self updateTrackingAreas];
-        [self registerForDraggedTypes:@[NSPasteboardTypeURL]];
-    }
+		[self updateTrackingAreas];
+		[self registerForDraggedTypes:@[NSPasteboardTypeURL]];
+	}
 
-    return self;
+	return self;
 }
 
 - (void)dealloc
 {
-    pThis = nil;
-    [m_pTrackingArea release];
-    [super dealloc];
+	pThis = nil;
+	[m_pTrackingArea release];
+	[super dealloc];
 }
 
 -(BOOL)isOpaque
 {
-    return [pThis->GetData()->m_pWindow isOpaque];
+	return [pThis->GetData()->m_pWindow isOpaque];
 }
 
 -(BOOL)canBecomeKeyView
 {
-    return YES;
+	return YES;
 }
 
 -(BOOL)wantsUpdateLayer
 {
-    return YES;
+	return YES;
 }
 
 - (BOOL)acceptsFirstResponder
 {
-    return YES;
+	return YES;
 }
 
 - (BOOL)becomeFirstResponder
 {
-    return YES;
+	return YES;
 }
 
 -(void)updateTrackingAreas
 {
-    if (m_pTrackingArea != nil)
-    {
-        [self removeTrackingArea:m_pTrackingArea];
-        [m_pTrackingArea release];
-    }
+	if (m_pTrackingArea != nil)
+	{
+		[self removeTrackingArea:m_pTrackingArea];
+		[m_pTrackingArea release];
+	}
 
-    const NSTrackingAreaOptions options = NSTrackingMouseEnteredAndExited | 
-                                          NSTrackingMouseMoved |
-                                        NSTrackingActiveInKeyWindow;
+	const NSTrackingAreaOptions options = NSTrackingMouseEnteredAndExited | 
+										  NSTrackingMouseMoved |
+										NSTrackingActiveInKeyWindow;
 
-    m_pTrackingArea = [[NSTrackingArea alloc] initWithRect:[self bounds]
-                                                   options:options
-                                                     owner:self
-                                                  userInfo:nil];
+	m_pTrackingArea = [[NSTrackingArea alloc] initWithRect:[self bounds]
+												   options:options
+													 owner:self
+												  userInfo:nil];
 
-    [self addTrackingArea:m_pTrackingArea];
-    [super updateTrackingAreas];
+	[self addTrackingArea:m_pTrackingArea];
+	[super updateTrackingAreas];
 }
 
 - (void)mouseMoved:(NSEvent*)event
 {
-    const NSPoint position = [event locationInWindow];
-    const NSRect contentRect = [pThis->GetData()->m_pView frame];
+	const NSPoint position = [event locationInWindow];
+	const NSRect contentRect = [pThis->GetData()->m_pView frame];
 
-    if( pThis->GetParent()->GetCursorMode() == Saturn::RubyCursorMode::Locked )
-    {
-        const auto lastPos = pThis->GetParent()->GetLastMousePos();
-        const auto deltaPos = pThis->GetLockedMouseDelta();
+	if( pThis->GetParent()->GetCursorMode() == Saturn::RubyCursorMode::Locked )
+	{
+		const auto lastPos = pThis->GetParent()->GetLastMousePos();
+		const auto deltaPos = pThis->GetLockedMouseDelta();
 
-        const Saturn::RubyIVec2 eventDeltaPos = { 
-            ( int )( [ event deltaX ] - deltaPos.x ), 
-            ( int )( [ event deltaY ] - deltaPos.y ) };
-        
-        auto deltaLocked = pThis->GetParent()->GetVirtualMousePos();
-        deltaLocked += eventDeltaPos;
+		const Saturn::RubyIVec2 eventDeltaPos = { 
+			( int )( [ event deltaX ] - deltaPos.x ), 
+			( int )( [ event deltaY ] - deltaPos.y ) };
+		
+		auto deltaLocked = pThis->GetParent()->GetVirtualMousePos();
+		deltaLocked += eventDeltaPos;
 
-        pThis->GetParent()->DispatchEvent<Saturn::RubyMouseMoveEvent>( 
-            Saturn::EventType::MouseMoved, 
-            ( float ) deltaLocked.x,  
-            ( float ) deltaLocked.y );
+		pThis->GetParent()->DispatchEvent<Saturn::RubyMouseMoveEvent>( 
+			Saturn::EventType::MouseMoved, 
+			( float ) deltaLocked.x,  
+			( float ) deltaLocked.y );
 
-        pThis->GetParent()->IntrnlSetLockedMousePos( deltaLocked );
-    }
-    else
-    {
-        pThis->GetParent()->DispatchEvent<Saturn::RubyMouseMoveEvent>( Saturn::EventType::MouseMoved, ( float ) position.x,  contentRect.size.height - ( float ) position.y );
-    }
+		pThis->GetParent()->IntrnlSetLockedMousePos( deltaLocked );
+	}
+	else
+	{
+		pThis->GetParent()->DispatchEvent<Saturn::RubyMouseMoveEvent>( Saturn::EventType::MouseMoved, ( float ) position.x,  contentRect.size.height - ( float ) position.y );
+	}
 
-    pThis->SetLockedMouseDelta( 0.0f, 0.0f );
+	pThis->SetLockedMouseDelta( 0.0f, 0.0f );
 
-    pThis->GetParent()->IntrnlSetLastMousePos( { static_cast<int>(position.x),  static_cast<int>(contentRect.size.height - position.y)} );
+	pThis->GetParent()->IntrnlSetLastMousePos( { static_cast<int>(position.x),  static_cast<int>(contentRect.size.height - position.y)} );
 }
 
 - (void)mouseDragged:(NSEvent *)event
 {
-    [self mouseMoved:event];
+	[self mouseMoved:event];
 }
 
 - (void)mouseDown:(NSEvent*)event
@@ -216,7 +216,7 @@ namespace Saturn {
 
 - (void)rightMouseDragged:(NSEvent *)event
 {
-    [self mouseMoved:event];
+	[self mouseMoved:event];
 }
 
 - (void)rightMouseDown:(NSEvent*)event
@@ -233,169 +233,169 @@ namespace Saturn {
 
 - (void)mouseEntered:(NSEvent*)event
 {
-    pThis->GetParent()->DispatchEvent<Saturn::Event>( Saturn::EventType::MouseEnterWindow, Saturn::EventCategory::EC_Ruby );
+	pThis->GetParent()->DispatchEvent<Saturn::Event>( Saturn::EventType::MouseEnterWindow, Saturn::EventCategory::EC_Ruby );
 }
 
 - (void)mouseExited:(NSEvent*)event
 {
-    if( pThis->GetParent()->GetCursorMode() == Saturn::RubyCursorMode::Locked )
+	if( pThis->GetParent()->GetCursorMode() == Saturn::RubyCursorMode::Locked )
 	{
 		pThis->SetMouseCursor( Saturn::RubyCursorType::Arrow );
 	}
 
-    pThis->GetParent()->DispatchEvent<Saturn::Event>( Saturn::EventType::MouseLeaveWindow, Saturn::EventCategory::EC_Ruby );
+	pThis->GetParent()->DispatchEvent<Saturn::Event>( Saturn::EventType::MouseLeaveWindow, Saturn::EventCategory::EC_Ruby );
 }
 
 - (void)scrollWheel:(NSEvent*)event
 {
-    float xOffset = [event scrollingDeltaX];
-    float yOffset = [event scrollingDeltaY];
+	float xOffset = [event scrollingDeltaX];
+	float yOffset = [event scrollingDeltaY];
 
-    if( [event hasPreciseScrollingDeltas] )
-    {
-        xOffset *= 0.1f;
-        yOffset *= 0.1f;
-    }
+	if( [event hasPreciseScrollingDeltas] )
+	{
+		xOffset *= 0.1f;
+		yOffset *= 0.1f;
+	}
 
-    if( fabs( xOffset ) > 0.0f || fabs( yOffset ) > 0.0f )
-    {
-        pThis->GetParent()->DispatchEvent<Saturn::RubyMouseScrollEvent>( Saturn::EventType::MouseScroll, xOffset, yOffset );
-    }
+	if( fabs( xOffset ) > 0.0f || fabs( yOffset ) > 0.0f )
+	{
+		pThis->GetParent()->DispatchEvent<Saturn::RubyMouseScrollEvent>( Saturn::EventType::MouseScroll, xOffset, yOffset );
+	}
 }
 
 static int TranslateMacOSModifiers(NSUInteger flags) 
 {
-    int mods = Saturn::RubyKey_UnknownKey;
+	int mods = Saturn::RubyKey_UnknownKey;
 
-    if( flags & NSEventModifierFlagShift )
-        mods |= Saturn::RubyKey_LeftShift;
+	if( flags & NSEventModifierFlagShift )
+		mods |= Saturn::RubyKey_LeftShift;
 
-    if( flags & NSEventModifierFlagCommand )
-        mods |= Saturn::RubyKey_LeftCtrl;
+	if( flags & NSEventModifierFlagCommand )
+		mods |= Saturn::RubyKey_LeftCtrl;
 
-    if( flags & NSEventModifierFlagOption )
-        mods |= Saturn::RubyKey_LeftAlt;
+	if( flags & NSEventModifierFlagOption )
+		mods |= Saturn::RubyKey_LeftAlt;
 
-    if( flags & NSEventModifierFlagControl )
-        mods |= Saturn::RubyKey_LeftCtrl;
+	if( flags & NSEventModifierFlagControl )
+		mods |= Saturn::RubyKey_LeftCtrl;
 
-    return mods;
+	return mods;
 }
 
 static Saturn::RubyKey ConvertMacOSVkToRuby( uint16_t vk ) 
 {
-    using namespace Saturn;
+	using namespace Saturn;
 
 	const std::string hex = std::format( "{:08X}", vk );
 	SAT_CORE_WARN( "[Ruby] Unknown Key!, Win32 scan code: WSC/0x{}", hex );
 
-    switch( vk )
-    {
-        default: return RubyKey_UnknownKey;
+	switch( vk )
+	{
+		default: return RubyKey_UnknownKey;
 
-        case 0x0: return RubyKey_A;
-        case 0xB: return RubyKey_B;
-        case 0x8: return RubyKey_C;
-        case 0x2: return RubyKey_D;
-        case 0xE: return RubyKey_E;
-        case 0x3: return RubyKey_F;
-        case 0x5: return RubyKey_G;
-        case 0x4: return RubyKey_H;
-        case 0x22: return RubyKey_I;
-        case 0x26: return RubyKey_J;
-        case 0x28: return RubyKey_K;
-        case 0x25: return RubyKey_L;
-        case 0x2E: return RubyKey_M;
-        case 0x2D: return RubyKey_N;
-        case 0x1F: return RubyKey_O;
-        case 0x23: return RubyKey_P;
-        case 0x0C: return RubyKey_Q;
-        case 0x0F: return RubyKey_R;
-        case 0x01: return RubyKey_S;
-        case 0x11: return RubyKey_T;
-        case 0x20: return RubyKey_U;
-        case 0x09: return RubyKey_V;
-        case 0x0D: return RubyKey_W;
-        case 0x07: return RubyKey_X;
-        case 0x10: return RubyKey_Y;
-        case 0x06: return RubyKey_Z;
+		case 0x0: return RubyKey_A;
+		case 0xB: return RubyKey_B;
+		case 0x8: return RubyKey_C;
+		case 0x2: return RubyKey_D;
+		case 0xE: return RubyKey_E;
+		case 0x3: return RubyKey_F;
+		case 0x5: return RubyKey_G;
+		case 0x4: return RubyKey_H;
+		case 0x22: return RubyKey_I;
+		case 0x26: return RubyKey_J;
+		case 0x28: return RubyKey_K;
+		case 0x25: return RubyKey_L;
+		case 0x2E: return RubyKey_M;
+		case 0x2D: return RubyKey_N;
+		case 0x1F: return RubyKey_O;
+		case 0x23: return RubyKey_P;
+		case 0x0C: return RubyKey_Q;
+		case 0x0F: return RubyKey_R;
+		case 0x01: return RubyKey_S;
+		case 0x11: return RubyKey_T;
+		case 0x20: return RubyKey_U;
+		case 0x09: return RubyKey_V;
+		case 0x0D: return RubyKey_W;
+		case 0x07: return RubyKey_X;
+		case 0x10: return RubyKey_Y;
+		case 0x06: return RubyKey_Z;
 
-        case 0x12: return RubyKey_Num1;
-        case 0x13: return RubyKey_Num2;
-        case 0x14: return RubyKey_Num3;
-        case 0x15: return RubyKey_Num4;
-        case 0x17: return RubyKey_Num5;
-        case 0x16: return RubyKey_Num6;
-        case 0x1A: return RubyKey_Num7;
-        case 0x1C: return RubyKey_Num8;
-        case 0x19: return RubyKey_Num9;
-        case 0x1D: return RubyKey_Num0;
+		case 0x12: return RubyKey_Num1;
+		case 0x13: return RubyKey_Num2;
+		case 0x14: return RubyKey_Num3;
+		case 0x15: return RubyKey_Num4;
+		case 0x17: return RubyKey_Num5;
+		case 0x16: return RubyKey_Num6;
+		case 0x1A: return RubyKey_Num7;
+		case 0x1C: return RubyKey_Num8;
+		case 0x19: return RubyKey_Num9;
+		case 0x1D: return RubyKey_Num0;
 
-        case 0x33: return RubyKey_Backspace;
-        case 0x30: return RubyKey_Tab;
-        case 0x24: return RubyKey_Enter;
-        case 0x31: return RubyKey_Space;
+		case 0x33: return RubyKey_Backspace;
+		case 0x30: return RubyKey_Tab;
+		case 0x24: return RubyKey_Enter;
+		case 0x31: return RubyKey_Space;
 
-        case 0x35: return RubyKey_Esc;
+		case 0x35: return RubyKey_Esc;
 
-        case 0x7B: return RubyKey_LeftArrow;
-        case 0x7C: return RubyKey_RightArrow;
-        case 0x7E: return RubyKey_UpArrow;
-        case 0x7D: return RubyKey_DownArrow;
+		case 0x7B: return RubyKey_LeftArrow;
+		case 0x7C: return RubyKey_RightArrow;
+		case 0x7E: return RubyKey_UpArrow;
+		case 0x7D: return RubyKey_DownArrow;
 
-        case 0x72: return RubyKey_F1;
-        case 0x78: return RubyKey_F2;
-        case 0x63: return RubyKey_F3;
-        case 0x76: return RubyKey_F4;
-        case 0x60: return RubyKey_F5;
-        case 0x61: return RubyKey_F6;
-        case 0x62: return RubyKey_F7;
-        case 0x64: return RubyKey_F8;
-        case 0x65: return RubyKey_F9;
-        case 0x6D: return RubyKey_F10;
-        case 0x67: return RubyKey_F11;
-        case 0x6F: return RubyKey_F12;
+		case 0x72: return RubyKey_F1;
+		case 0x78: return RubyKey_F2;
+		case 0x63: return RubyKey_F3;
+		case 0x76: return RubyKey_F4;
+		case 0x60: return RubyKey_F5;
+		case 0x61: return RubyKey_F6;
+		case 0x62: return RubyKey_F7;
+		case 0x64: return RubyKey_F8;
+		case 0x65: return RubyKey_F9;
+		case 0x6D: return RubyKey_F10;
+		case 0x67: return RubyKey_F11;
+		case 0x6F: return RubyKey_F12;
 
-        case 0x73: return RubyKey_CapsLock;
-        case 0x39: return RubyKey_LeftShift;
-        case 0x3C: return RubyKey_RightShift;
-        case 0x3B: return RubyKey_LeftCtrl;
-        case 0x3E: return RubyKey_RightCtrl;
-        case 0x3A: return RubyKey_LeftAlt;
-        case 0x3D: return RubyKey_RightAlt;
+		case 0x73: return RubyKey_CapsLock;
+		case 0x39: return RubyKey_LeftShift;
+		case 0x3C: return RubyKey_RightShift;
+		case 0x3B: return RubyKey_LeftCtrl;
+		case 0x3E: return RubyKey_RightCtrl;
+		case 0x3A: return RubyKey_LeftAlt;
+		case 0x3D: return RubyKey_RightAlt;
 
-        case 0x29: return RubyKey_Semicolon;
-        case 0x27: return RubyKey_Apostrophe;
-        case 0x2A: return RubyKey_Backslash;
-        case 0x1B: return RubyKey_Minus;
-        case 0x18: return RubyKey_Equal;
-        case 0x1E: return RubyKey_RightBracket;
-        case 0x21: return RubyKey_LeftBracket;
-        case 0x2B: return RubyKey_Comma;
-        case 0x2C: return RubyKey_Slash;
-        case 0x2F: return RubyKey_Period;
-        case 0x32: return RubyKey_Backslash;
-        case 0x0A: return RubyKey_Grave;
+		case 0x29: return RubyKey_Semicolon;
+		case 0x27: return RubyKey_Apostrophe;
+		case 0x2A: return RubyKey_Backslash;
+		case 0x1B: return RubyKey_Minus;
+		case 0x18: return RubyKey_Equal;
+		case 0x1E: return RubyKey_RightBracket;
+		case 0x21: return RubyKey_LeftBracket;
+		case 0x2B: return RubyKey_Comma;
+		case 0x2C: return RubyKey_Slash;
+		case 0x2F: return RubyKey_Period;
+		case 0x32: return RubyKey_Backslash;
+		case 0x0A: return RubyKey_Grave;
 
-        case 0x47: return RubyKey_NumLock;
+		case 0x47: return RubyKey_NumLock;
    }
 }
 
 - (void) keyDown:(NSEvent*) event 
 {
-    const Saturn::RubyKey saturnKey = ConvertMacOSVkToRuby( [event keyCode] );
-    const int Modifiers = TranslateMacOSModifiers( [event modifierFlags] );
+	const Saturn::RubyKey saturnKey = ConvertMacOSVkToRuby( [event keyCode] );
+	const int Modifiers = TranslateMacOSModifiers( [event modifierFlags] );
 
 	pThis->GetParent()->IntrnlSetKeyDown( saturnKey, true );
 	pThis->GetParent()->DispatchEvent<Saturn::RubyKeyEvent>( Saturn::EventType::KeyPressed, saturnKey, [event keyCode], Modifiers );
 
-    [self interpretKeyEvents:@[event]];
+	[self interpretKeyEvents:@[event]];
 }
 
 - (void) keyUp:(NSEvent*) event 
 {
-    const Saturn::RubyKey saturnKey = ConvertMacOSVkToRuby( [event keyCode] );
-    const int Modifiers = TranslateMacOSModifiers( [event modifierFlags] );
+	const Saturn::RubyKey saturnKey = ConvertMacOSVkToRuby( [event keyCode] );
+	const int Modifiers = TranslateMacOSModifiers( [event modifierFlags] );
 
 	pThis->GetParent()->IntrnlSetKeyDown( saturnKey, false );
 	pThis->GetParent()->DispatchEvent<Saturn::RubyKeyEvent>( Saturn::EventType::KeyReleased, saturnKey, [event keyCode], Modifiers );
@@ -403,32 +403,32 @@ static Saturn::RubyKey ConvertMacOSVkToRuby( uint16_t vk )
 
 - (void)insertText:(id)aString replacementRange:(NSRange)replacementRange
 {
-    NSString* pCharacters;
-    if( [aString isKindOfClass:[NSAttributedString class]] )
-        pCharacters = [aString string];
-    else
-        pCharacters = (NSString*)aString;
+	NSString* pCharacters;
+	if( [aString isKindOfClass:[NSAttributedString class]] )
+		pCharacters = [aString string];
+	else
+		pCharacters = (NSString*)aString;
 
-    for( NSUInteger i = 0; i < [pCharacters length]; ++i )
-    {
-        uint16_t wc = [pCharacters characterAtIndex:i];
-        pThis->GetParent()->DispatchEvent<Saturn::RubyCharacterEvent>( Saturn::EventType::InputCharacter, wc );
-    }
+	for( NSUInteger i = 0; i < [pCharacters length]; ++i )
+	{
+		uint16_t wc = [pCharacters characterAtIndex:i];
+		pThis->GetParent()->DispatchEvent<Saturn::RubyCharacterEvent>( Saturn::EventType::InputCharacter, wc );
+	}
 }
 
 - (BOOL)hasMarkedText
 {
-    return NO;
+	return NO;
 }
 
 - (NSRange)markedRange
 {
-    return NSMakeRange(NSNotFound, 0);
+	return NSMakeRange(NSNotFound, 0);
 }
 
 - (NSRange)selectedRange
 {
-    return NSMakeRange(NSNotFound, 0);
+	return NSMakeRange(NSNotFound, 0);
 }
 
 - (void)setMarkedText:(nonnull id)string selectedRange:(NSRange)selectedRange replacementRange:(NSRange)replacementRange
@@ -440,26 +440,26 @@ static Saturn::RubyKey ConvertMacOSVkToRuby( uint16_t vk )
 }
 
 - (NSAttributedString*)attributedSubstringForProposedRange:(NSRange)range 
-                       actualRange:(NSRangePointer)actualRange
+					   actualRange:(NSRangePointer)actualRange
 {
-    return nil;
+	return nil;
 }
 
 - (NSUInteger)characterIndexForPoint:(NSPoint)point
 {
-    return 0;
+	return 0;
 }
 
 - (NSRect)firstRectForCharacterRange:(NSRange)range
-                         actualRange:(NSRangePointer)actualRange
+						 actualRange:(NSRangePointer)actualRange
 {
-    const NSRect frame = [pThis->GetData()->m_pView frame];
-    return NSMakeRect(frame.origin.x, frame.origin.y, 0.0, 0.0);
+	const NSRect frame = [pThis->GetData()->m_pView frame];
+	return NSMakeRect(frame.origin.x, frame.origin.y, 0.0, 0.0);
 }
 
 - (NSArray<NSAttributedStringKey>*)validAttributesForMarkedText
 {
-    return @[];
+	return @[];
 }
 
 @end
@@ -468,35 +468,35 @@ static Saturn::RubyKey ConvertMacOSVkToRuby( uint16_t vk )
 
 - (instancetype)initForRuby:(Saturn::RubyCocoaBackend*)pBackend
 {
-    self = [super init];
-    if (self != nil)
-        pThis = pBackend;
+	self = [super init];
+	if (self != nil)
+		pThis = pBackend;
 
-    return self;
+	return self;
 }
 
 - (BOOL)windowShouldClose:(id)sender
 {
-    pThis->GetParent()->DispatchEvent<Saturn::Event>( Saturn::EventType::Close, Saturn::EventCategory::EC_Ruby );
+	pThis->GetParent()->DispatchEvent<Saturn::Event>( Saturn::EventType::Close, Saturn::EventCategory::EC_Ruby );
 	pThis->CloseWindow();
 
-    return NO;
+	return NO;
 }
 
 - (void)windowDidBecomeKey:(NSNotification*)notification
 {
-    pThis->GetParent()->DispatchEvent<Saturn::RubyFocusEvent>( Saturn::EventType::WindowFocus, true );
+	pThis->GetParent()->DispatchEvent<Saturn::RubyFocusEvent>( Saturn::EventType::WindowFocus, true );
 }
 
 - (void)windowDidResignKey:(NSNotification *)notification
 {
-    pThis->GetParent()->DispatchEvent<Saturn::RubyFocusEvent>( Saturn::EventType::WindowFocus, false );
+	pThis->GetParent()->DispatchEvent<Saturn::RubyFocusEvent>( Saturn::EventType::WindowFocus, false );
 }
 
 - (void)windowDidResize:(NSNotification *)notification
 {
-    const NSRect contentRect = [pThis->GetData()->m_pView frame];
-    const NSRect framebufferRect = [pThis->GetData()->m_pView convertRectToBacking:contentRect];
+	const NSRect contentRect = [pThis->GetData()->m_pView frame];
+	const NSRect framebufferRect = [pThis->GetData()->m_pView convertRectToBacking:contentRect];
 
 	pThis->GetParent()->DispatchEvent<Saturn::RubyWindowResizeEvent>( Saturn::EventType::Resize, static_cast< uint32_t >( framebufferRect.size.width ), static_cast< uint32_t >( framebufferRect.size.height ) );
 }
@@ -506,7 +506,7 @@ static Saturn::RubyKey ConvertMacOSVkToRuby( uint16_t vk )
 // Stolen from GLFW.
 static float RubyTransformYCocoa( float y )
 {
-    return CGDisplayBounds(CGMainDisplayID()).size.height - y - 1;
+	return CGDisplayBounds(CGMainDisplayID()).size.height - y - 1;
 }
 
 namespace Saturn {
@@ -515,113 +515,113 @@ namespace Saturn {
 	{
 		m_WindowSpecification = rSpec;
 		m_pWindow = pWindow;
-        m_pData = new RubyMacOSData();
+		m_pData = new RubyMacOSData();
 	}
 
-    static NSWindowStyleMask ChooseStyle( RubyStyle rubyStyle ) 
-    {
-        switch( rubyStyle )
-        {
-            default:
-            case RubyStyle::Default:
-            {
-                return NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable;   
-            };
+	static NSWindowStyleMask ChooseStyle( RubyStyle rubyStyle ) 
+	{
+		switch( rubyStyle )
+		{
+			default:
+			case RubyStyle::Default:
+			{
+				return NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable;   
+			};
 
-            case RubyStyle::Borderless:
-            {
-                return NSWindowStyleMaskBorderless | NSWindowStyleMaskResizable;
-            };
+			case RubyStyle::Borderless:
+			{
+				return NSWindowStyleMaskBorderless | NSWindowStyleMaskResizable;
+			};
 
-            case RubyStyle::BorderlessFullscreen:
-            case RubyStyle::BorderlessNoResize:
-            {
-                return NSWindowStyleMaskBorderless;
-            };
-        }
-    }
+			case RubyStyle::BorderlessFullscreen:
+			case RubyStyle::BorderlessNoResize:
+			{
+				return NSWindowStyleMaskBorderless;
+			};
+		}
+	}
 
 	void RubyCocoaBackend::Create()
 	{
-        @autoreleasepool
-        {
-            NSRect frame = NSMakeRect( 0, 0, m_WindowSpecification.Width, m_WindowSpecification.Height );
-            const auto style = ChooseStyle( m_WindowSpecification.Style );
+		@autoreleasepool
+		{
+			NSRect frame = NSMakeRect( 0, 0, m_WindowSpecification.Width, m_WindowSpecification.Height );
+			const auto style = ChooseStyle( m_WindowSpecification.Style );
 
-            m_pData->m_pNotificationMgr = [[RubyWindowNotificationMgr alloc] initForRuby:this];
+			m_pData->m_pNotificationMgr = [[RubyWindowNotificationMgr alloc] initForRuby:this];
 
-            m_pData->m_pWindow =
-                [[RubyMacWindow alloc]
-                    initWithContentRect:frame
-                    styleMask:style
-                    backing:NSBackingStoreBuffered
-                    defer:NO];
+			m_pData->m_pWindow =
+				[[RubyMacWindow alloc]
+					initWithContentRect:frame
+					styleMask:style
+					backing:NSBackingStoreBuffered
+					defer:NO];
 
-            NSString* nsTitle =
-                [[NSString alloc]
-                    initWithBytes:m_WindowSpecification.Name.data()
-                        length:m_WindowSpecification.Name.size() * sizeof(wchar_t)
-                        encoding:NSUTF32LittleEndianStringEncoding];
+			NSString* nsTitle =
+				[[NSString alloc]
+					initWithBytes:m_WindowSpecification.Name.data()
+						length:m_WindowSpecification.Name.size() * sizeof(wchar_t)
+						encoding:NSUTF32LittleEndianStringEncoding];
 
-            [m_pData->m_pWindow setTitle:nsTitle];
+			[m_pData->m_pWindow setTitle:nsTitle];
 
-            // Create the view.
-            m_pData->m_pView = [[RubyEventResponder alloc] initForRuby:this];
+			// Create the view.
+			m_pData->m_pView = [[RubyEventResponder alloc] initForRuby:this];
 
-            [m_pData->m_pWindow setContentView:m_pData->m_pView];
-            [m_pData->m_pWindow makeFirstResponder:m_pData->m_pView];
-            [m_pData->m_pWindow setDelegate:m_pData->m_pNotificationMgr];
-            [m_pData->m_pWindow setAcceptsMouseMovedEvents:YES];
-            [m_pData->m_pWindow setRestorable:NO];
+			[m_pData->m_pWindow setContentView:m_pData->m_pView];
+			[m_pData->m_pWindow makeFirstResponder:m_pData->m_pView];
+			[m_pData->m_pWindow setDelegate:m_pData->m_pNotificationMgr];
+			[m_pData->m_pWindow setAcceptsMouseMovedEvents:YES];
+			[m_pData->m_pWindow setRestorable:NO];
 
-            m_pData->m_pMetalLayer = [CAMetalLayer layer];
-            [m_pData->m_pView setWantsLayer:YES];
-            [m_pData->m_pView setLayer:m_pData->m_pMetalLayer];
+			m_pData->m_pMetalLayer = [CAMetalLayer layer];
+			[m_pData->m_pView setWantsLayer:YES];
+			[m_pData->m_pView setLayer:m_pData->m_pMetalLayer];
 
-            if( m_WindowSpecification.ShowNow )
-                PresentWindow();
-        }
+			if( m_WindowSpecification.ShowNow )
+				PresentWindow();
+		}
 	}
 
 	RubyCocoaBackend::~RubyCocoaBackend()
 	{
-        SAT_CORE_ASSERT( m_pData == nullptr, "DestroyWindow() must be called before destroying the backend!" );
+		SAT_CORE_ASSERT( m_pData == nullptr, "DestroyWindow() must be called before destroying the backend!" );
 	}
 
 	void RubyCocoaBackend::PollEvents()
 	{
-        @autoreleasepool 
-        {
-            while(true) 
-            {
-                NSEvent* pEvent = [NSApp nextEventMatchingMask:NSEventMaskAny
-                                        untilDate:[NSDate distantPast]
-                                        inMode:NSDefaultRunLoopMode
-                                        dequeue:YES];
+		@autoreleasepool 
+		{
+			while(true) 
+			{
+				NSEvent* pEvent = [NSApp nextEventMatchingMask:NSEventMaskAny
+										untilDate:[NSDate distantPast]
+										inMode:NSDefaultRunLoopMode
+										dequeue:YES];
 
-                if (pEvent == nil)
-                    break;
+				if (pEvent == nil)
+					break;
 
-                [NSApp sendEvent:pEvent];
-            }
-        }
+				[NSApp sendEvent:pEvent];
+			}
+		}
 	}
 
 	void RubyCocoaBackend::Maximize()
 	{
-        [m_pData->m_pWindow zoom:nil];
+		[m_pData->m_pWindow zoom:nil];
 	}
 
 	void RubyCocoaBackend::Minimize()
 	{
-        if (![m_pData->m_pWindow isMiniaturized])
-            [m_pData->m_pWindow miniaturize:nil];
+		if (![m_pData->m_pWindow isMiniaturized])
+			[m_pData->m_pWindow miniaturize:nil];
 	}
 
 	void RubyCocoaBackend::Restore()
 	{
-        if( [m_pData->m_pWindow isZoomed] )
-            [m_pData->m_pWindow zoom:nil];
+		if( [m_pData->m_pWindow isZoomed] )
+			[m_pData->m_pWindow zoom:nil];
 	}
 
 	bool RubyCocoaBackend::Minimized()
@@ -635,7 +635,7 @@ namespace Saturn {
 	}
 
 	bool RubyCocoaBackend::Focused()
-    {
+	{
 		return [m_pData->m_pWindow isVisible] && [ m_pData->m_pWindow isKeyWindow];
 	}
 
@@ -646,96 +646,96 @@ namespace Saturn {
 
 	void RubyCocoaBackend::DestroyWindow()
 	{
-        @autoreleasepool
-        {
-            [m_pData->m_pWindow orderOut:nil];
-            [m_pData->m_pWindow setDelegate:nil];
+		@autoreleasepool
+		{
+			[m_pData->m_pWindow orderOut:nil];
+			[m_pData->m_pWindow setDelegate:nil];
 
-            // Clean up NS data.
-            [m_pData->m_pNotificationMgr release];
-            m_pData->m_pNotificationMgr = nil;
+			// Clean up NS data.
+			[m_pData->m_pNotificationMgr release];
+			m_pData->m_pNotificationMgr = nil;
 
-            [m_pData->m_pView release];
-            m_pData->m_pView = nil;
+			[m_pData->m_pView release];
+			m_pData->m_pView = nil;
 
-            [m_pData->m_pMetalLayer release];
-            m_pData->m_pMetalLayer = nil;
+			[m_pData->m_pMetalLayer release];
+			m_pData->m_pMetalLayer = nil;
 
-            [m_pData->m_pWindow release];
-            m_pData->m_pWindow = nil;
+			[m_pData->m_pWindow release];
+			m_pData->m_pWindow = nil;
 
-            // GLFW does this, so we will too.
-            PollEvents();
+			// GLFW does this, so we will too.
+			PollEvents();
 
-            delete m_pData;
-            m_pData = nullptr;
-        }
+			delete m_pData;
+			m_pData = nullptr;
+		}
 	}
 
 	void RubyCocoaBackend::CloseWindow()
 	{
-        [m_pData->m_pWindow close];
-        m_WindowClosed = true;
+		[m_pData->m_pWindow close];
+		m_WindowClosed = true;
 	}
 
 	void RubyCocoaBackend::PresentWindow( RubyWindowShowCmd Command /*= RubyWindowShowCmd::Default */ )
 	{
-        switch( Command ) 
-        {
-            case RubyWindowShowCmd::Default:
-            {
-                [m_pData->m_pWindow makeKeyAndOrderFront:nil];
-            } break;
+		switch( Command ) 
+		{
+			case RubyWindowShowCmd::Default:
+			{
+				[m_pData->m_pWindow makeKeyAndOrderFront:nil];
+			} break;
 
-            case RubyWindowShowCmd::NoActivate:
-            {
-                [m_pData->m_pWindow orderFront:nil];
-            } break;
+			case RubyWindowShowCmd::NoActivate:
+			{
+				[m_pData->m_pWindow orderFront:nil];
+			} break;
 
-            case RubyWindowShowCmd::Fullscreen:
-            {
-                [m_pData->m_pWindow toggleFullScreen:nil];
-            } break;
-        }
+			case RubyWindowShowCmd::Fullscreen:
+			{
+				[m_pData->m_pWindow toggleFullScreen:nil];
+			} break;
+		}
 	}
 
 	void RubyCocoaBackend::HideWindow()
 	{
-        [m_pData->m_pWindow orderOut:nil];
+		[m_pData->m_pWindow orderOut:nil];
 	}
 
 	void RubyCocoaBackend::ResizeWindow( uint32_t Width, uint32_t Height )
 	{
-        NSRect frame = [m_pData->m_pWindow frame];
-        frame.size.width = Width;
-        frame.size.height = Height;
+		NSRect frame = [m_pData->m_pWindow frame];
+		frame.size.width = Width;
+		frame.size.height = Height;
 
-        [m_pData->m_pWindow setFrame:frame display:YES animate:NO];
+		[m_pData->m_pWindow setFrame:frame display:YES animate:NO];
 	}
 
 	RubyIVec2 RubyCocoaBackend::GetSize()
 	{
-        NSRect contentFrame = [[m_pData->m_pWindow contentView] frame];
+		NSRect contentFrame = [[m_pData->m_pWindow contentView] frame];
 
-        CGFloat width  = contentFrame.size.width;
-        CGFloat height = contentFrame.size.height;
+		CGFloat width  = contentFrame.size.width;
+		CGFloat height = contentFrame.size.height;
 
 		return { static_cast<int>( width ), static_cast<int>( height ) };
 	}
 
 	void RubyCocoaBackend::MoveWindow( int x, int y )
 	{
-        NSRect frame = [m_pData->m_pWindow frame];
-        frame.origin.x = x;
+		NSRect frame = [m_pData->m_pWindow frame];
+		frame.origin.x = x;
 
-        // Flip the y coordinate because macOS uses a 
-        // different coordinate system than most other
-        // platforms.
-        CGFloat screenHeight = [[NSScreen mainScreen] frame].size.height;
-        y = screenHeight - y - frame.size.height;
-        frame.origin.y = y;
+		// Flip the y coordinate because macOS uses a 
+		// different coordinate system than most other
+		// platforms.
+		CGFloat screenHeight = [[NSScreen mainScreen] frame].size.height;
+		y = screenHeight - y - frame.size.height;
+		frame.origin.y = y;
 
-        [m_pData->m_pWindow setFrame:frame display:YES animate:NO];
+		[m_pData->m_pWindow setFrame:frame display:YES animate:NO];
 	}
 
 	void RubyCocoaBackend::SetTitle( const std::string& rTitle )
@@ -749,35 +749,35 @@ namespace Saturn {
 
 	void RubyCocoaBackend::SetMousePos( double x, double y )
 	{
-        NSPoint pos = [m_pData->m_pWindow mouseLocationOutsideOfEventStream];
-        const NSRect contentRect = [m_pData->m_pView frame];
+		NSPoint pos = [m_pData->m_pWindow mouseLocationOutsideOfEventStream];
+		const NSRect contentRect = [m_pData->m_pView frame];
 
-        const NSRect localRect     = NSMakeRect(x, contentRect.size.height - y - 1, 0, 0);
-        const NSRect globalRect    = [m_pData->m_pWindow convertRectToScreen:localRect];
-        const NSPoint globalPoint  = globalRect.origin;
+		const NSRect localRect     = NSMakeRect(x, contentRect.size.height - y - 1, 0, 0);
+		const NSRect globalRect    = [m_pData->m_pWindow convertRectToScreen:localRect];
+		const NSPoint globalPoint  = globalRect.origin;
 
-        m_LockedMouseDelta.x += x - pos.x;
-        m_LockedMouseDelta.x += y - contentRect.size.height + pos.y;
+		m_LockedMouseDelta.x += x - pos.x;
+		m_LockedMouseDelta.x += y - contentRect.size.height + pos.y;
 
-        CGWarpMouseCursorPosition(CGPointMake(globalPoint.x,
-                                              RubyTransformYCocoa(globalPoint.y)));
+		CGWarpMouseCursorPosition(CGPointMake(globalPoint.x,
+											  RubyTransformYCocoa(globalPoint.y)));
 
 		m_pWindow->IntrnlSetLastMousePos( { ( int ) x, ( int ) y } );
 
-        if( m_pWindow->GetCursorMode() != RubyCursorMode::Locked )
-        {
-            CGAssociateMouseAndMouseCursorPosition( true );
-        }
+		if( m_pWindow->GetCursorMode() != RubyCursorMode::Locked )
+		{
+			CGAssociateMouseAndMouseCursorPosition( true );
+		}
 	}
 
 	RubyVec2 RubyCocoaBackend::GetMousePos()
 	{
-        NSPoint pos = [m_pData->m_pWindow mouseLocationOutsideOfEventStream];
-        NSRect contentRect = [m_pData->m_pView frame];
+		NSPoint pos = [m_pData->m_pWindow mouseLocationOutsideOfEventStream];
+		NSRect contentRect = [m_pData->m_pView frame];
 
-        // NB: macOS uses a different coordinate system 
-        // than most other platforms, so we need to 
-        // flip the y coordinate.
+		// NB: macOS uses a different coordinate system 
+		// than most other platforms, so we need to 
+		// flip the y coordinate.
 //        CGFloat screenHeight = [[NSScreen mainScreen] frame].size.height;
 //        pos.y = screenHeight - pos.y;
 
@@ -786,169 +786,169 @@ namespace Saturn {
 
 	VkResult RubyCocoaBackend::CreateVulkanWindowSurface( VkInstance Instance, VkSurfaceKHR* pOutSurface )
 	{
-        VkMetalSurfaceCreateInfoEXT CreateInfo{ VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT };
-        CreateInfo.pLayer = m_pData->m_pMetalLayer;
+		VkMetalSurfaceCreateInfoEXT CreateInfo{ VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT };
+		CreateInfo.pLayer = m_pData->m_pMetalLayer;
 
 		return vkCreateMetalSurfaceEXT( Instance, &CreateInfo, nullptr, pOutSurface );
 	}
 
 	void RubyCocoaBackend::SetMouseCursor( RubyCursorType Cursor, RubyMouseCursorSetReason Reason /*= RubyMouseCursorSetReason::User */ )
 	{
-        @autoreleasepool 
-        {
-            if( m_CurrentCursorType == Cursor )
-                return;
+		@autoreleasepool 
+		{
+			if( m_CurrentCursorType == Cursor )
+				return;
 
-            m_CurrentCursorType = Cursor;
+			m_CurrentCursorType = Cursor;
 
-            switch( Cursor ) 
-            {
-                case RubyCursorType::None:
-                {
-                    m_pData->m_pCursor = nil;
-                    [NSCursor hide];
-                } break;
+			switch( Cursor ) 
+			{
+				case RubyCursorType::None:
+				{
+					m_pData->m_pCursor = nil;
+					[NSCursor hide];
+				} break;
 
-                case RubyCursorType::Arrow:
-                {
-                    m_pData->m_pCursor = [NSCursor arrowCursor];
-                } break;
+				case RubyCursorType::Arrow:
+				{
+					m_pData->m_pCursor = [NSCursor arrowCursor];
+				} break;
 
-                case RubyCursorType::IBeam:
-                {
-                    m_pData->m_pCursor = [NSCursor IBeamCursor];
-                } break;
+				case RubyCursorType::IBeam:
+				{
+					m_pData->m_pCursor = [NSCursor IBeamCursor];
+				} break;
 
-                case RubyCursorType::ResizeEW:
-                {
-                    m_pData->m_pCursor = [NSCursor resizeLeftRightCursor];
-                } break;
+				case RubyCursorType::ResizeEW:
+				{
+					m_pData->m_pCursor = [NSCursor resizeLeftRightCursor];
+				} break;
 
-                case RubyCursorType::ResizeNS:
-                {
-                    m_pData->m_pCursor = [NSCursor resizeUpDownCursor];
-                } break;
+				case RubyCursorType::ResizeNS:
+				{
+					m_pData->m_pCursor = [NSCursor resizeUpDownCursor];
+				} break;
 
-                case RubyCursorType::ResizeNWSE:
-                {
-                    m_pData->m_pCursor = [NSCursor resizeDiagonalCursor];
-                } break;
+				case RubyCursorType::ResizeNWSE:
+				{
+					m_pData->m_pCursor = [NSCursor resizeDiagonalCursor];
+				} break;
 
-                case RubyCursorType::ResizeNESW:
-                {
-                    m_pData->m_pCursor = [NSCursor resizeDiagonalCursor];
-                } break;
+				case RubyCursorType::ResizeNESW:
+				{
+					m_pData->m_pCursor = [NSCursor resizeDiagonalCursor];
+				} break;
 
-                case RubyCursorType::Hand:
-                {
-                    m_pData->m_pCursor = [NSCursor pointingHandCursor];
-                } break;
+				case RubyCursorType::Hand:
+				{
+					m_pData->m_pCursor = [NSCursor pointingHandCursor];
+				} break;
 
-                case RubyCursorType::NotAllowed:
-                {
-                    m_pData->m_pCursor = [NSCursor operationNotAllowedCursor];
-                } break;
-            }
+				case RubyCursorType::NotAllowed:
+				{
+					m_pData->m_pCursor = [NSCursor operationNotAllowedCursor];
+				} break;
+			}
 
-            UpdateCursorIcon();
-        }
+			UpdateCursorIcon();
+		}
 	}
 
-    void RubyCocoaBackend::UpdateCursorIcon() 
-    {
-        if( m_pWindow->GetCursorMode() == RubyCursorMode::Locked )
-        {
-            [NSCursor hide];
-        }
-        else if( m_pData->m_pCursor != nil ) 
-        {
-            [m_pData->m_pCursor set];
-        }
-        else
-        {
-            // Set cursor to default arrow.
-            [NSCursor arrowCursor];
-            m_pData->m_pCursor = [NSCursor arrowCursor];
-        }
-    }
+	void RubyCocoaBackend::UpdateCursorIcon() 
+	{
+		if( m_pWindow->GetCursorMode() == RubyCursorMode::Locked )
+		{
+			[NSCursor hide];
+		}
+		else if( m_pData->m_pCursor != nil ) 
+		{
+			[m_pData->m_pCursor set];
+		}
+		else
+		{
+			// Set cursor to default arrow.
+			[NSCursor arrowCursor];
+			m_pData->m_pCursor = [NSCursor arrowCursor];
+		}
+	}
 
-    void RubyCocoaBackend::DisableCursor() 
-    {
-        FindRestorePoint();
-        RecenterMousePos();
-        ConfigureClipRect();
-        UpdateCursorIcon();
+	void RubyCocoaBackend::DisableCursor() 
+	{
+		FindRestorePoint();
+		RecenterMousePos();
+		ConfigureClipRect();
+		UpdateCursorIcon();
 
-        CGAssociateMouseAndMouseCursorPosition(false);
-    }
+		CGAssociateMouseAndMouseCursorPosition(false);
+	}
 
-    void RubyCocoaBackend::FindRestorePoint() 
-    {
-        if( m_pWindow->GetLastCursorMode() < RubyCursorMode::Locked ) 
-        {
-            const auto mousePos = GetMousePos();
-            m_MouseRestorePoint = { ( int ) mousePos.x, ( int ) mousePos.y };
-        }
-    }
+	void RubyCocoaBackend::FindRestorePoint() 
+	{
+		if( m_pWindow->GetLastCursorMode() < RubyCursorMode::Locked ) 
+		{
+			const auto mousePos = GetMousePos();
+			m_MouseRestorePoint = { ( int ) mousePos.x, ( int ) mousePos.y };
+		}
+	}
 
-    void RubyCocoaBackend::RecenterMousePos() 
-    {
-        const RubyIVec2 size = GetSize();
-        SetMousePos( size.x / 2.0, size.y / 2.0 );
-    }
+	void RubyCocoaBackend::RecenterMousePos() 
+	{
+		const RubyIVec2 size = GetSize();
+		SetMousePos( size.x / 2.0, size.y / 2.0 );
+	}
 
-    void RubyCocoaBackend::ConfigureClipRect() 
-    {
-    }
+	void RubyCocoaBackend::ConfigureClipRect() 
+	{
+	}
 
-    void RubyCocoaBackend::SetLockedMouseDelta( float x, float y ) 
-    {
-        SetLockedMouseDelta( { x, y } );
-    }
+	void RubyCocoaBackend::SetLockedMouseDelta( float x, float y ) 
+	{
+		SetLockedMouseDelta( { x, y } );
+	}
 
-    void RubyCocoaBackend::SetLockedMouseDelta( const RubyVec2& rPosition ) 
-    {
-        m_LockedMouseDelta = rPosition;
-    }
+	void RubyCocoaBackend::SetLockedMouseDelta( const RubyVec2& rPosition ) 
+	{
+		m_LockedMouseDelta = rPosition;
+	}
 
 	void RubyCocoaBackend::SetMouseCursorMode( RubyCursorMode mode )
 	{
-        @autoreleasepool 
-        {
-            switch( mode ) 
-            {
-                case RubyCursorMode::Normal:
-                {
-                    if( m_pWindow->GetLastCursorMode() == RubyCursorMode::Locked ) 
-                    {
-                        SetMousePos( m_MouseRestorePoint.x, m_MouseRestorePoint.y );
+		@autoreleasepool 
+		{
+			switch( mode ) 
+			{
+				case RubyCursorMode::Normal:
+				{
+					if( m_pWindow->GetLastCursorMode() == RubyCursorMode::Locked ) 
+					{
+						SetMousePos( m_MouseRestorePoint.x, m_MouseRestorePoint.y );
 
-                        // Rest the restore point and the locked mouse position.
-                        m_MouseRestorePoint = {};
-                        m_pWindow->m_LockedMousePosition = {};
+						// Rest the restore point and the locked mouse position.
+						m_MouseRestorePoint = {};
+						m_pWindow->m_LockedMousePosition = {};
 
-                        [NSCursor unhide];
-                    }
+						[NSCursor unhide];
+					}
 
-                    SetMouseCursor( RubyCursorType::Arrow );
-                } break;
+					SetMouseCursor( RubyCursorType::Arrow );
+				} break;
 
-                case RubyCursorMode::Hidden:
-                {
-                    [NSCursor hide];
-                } break;
+				case RubyCursorMode::Hidden:
+				{
+					[NSCursor hide];
+				} break;
 
-                case RubyCursorMode::Locked:
-                {
-                    if( !Focused() )
-                        break;
+				case RubyCursorMode::Locked:
+				{
+					if( !Focused() )
+						break;
 
-                    GetParent()->IntrnlSetLockedMousePos( GetMousePos().To<RubyIVec2>() );
+					GetParent()->IntrnlSetLockedMousePos( GetMousePos().To<RubyIVec2>() );
 
-                    DisableCursor();
-                } break;
-            }
-        }
+					DisableCursor();
+				} break;
+			}
+		}
 	}
 
 	void RubyCocoaBackend::SetClipboardText( const std::string& rTextData )
@@ -976,71 +976,71 @@ namespace Saturn {
 
 	void RubyCocoaBackend::Focus()
 	{
-        [NSApp activateIgnoringOtherApps:YES];
-        [m_pData->m_pWindow makeKeyAndOrderFront:nil];
+		[NSApp activateIgnoringOtherApps:YES];
+		[m_pData->m_pWindow makeKeyAndOrderFront:nil];
 	}
 
 	RubyIVec2 RubyCocoaBackend::GetWindowPos()
 	{
-        const NSRect contectRect = [m_pData->m_pWindow contentRectForFrameRect:[m_pData->m_pWindow frame]];
-        
-        return { static_cast<int>( contectRect.origin.x ), static_cast<int>( RubyTransformYCocoa( contectRect.origin.y + contectRect.size.height - 1 ) ) };
+		const NSRect contectRect = [m_pData->m_pWindow contentRectForFrameRect:[m_pData->m_pWindow frame]];
+		
+		return { static_cast<int>( contectRect.origin.x ), static_cast<int>( RubyTransformYCocoa( contectRect.origin.y + contectRect.size.height - 1 ) ) };
 	}
 
 	bool RubyCocoaBackend::MouseInRect()
 	{
-        NSPoint mouse = [NSEvent mouseLocation];
-        for (NSWindow *window in [NSApp orderedWindows]) 
-        {
-            if (![window isVisible])
-                continue;
+		NSPoint mouse = [NSEvent mouseLocation];
+		for (NSWindow *window in [NSApp orderedWindows]) 
+		{
+			if (![window isVisible])
+				continue;
 
-            if (NSPointInRect(mouse, window.frame)) 
-            {
-                return true;
-            }
-        }
+			if (NSPointInRect(mouse, window.frame)) 
+			{
+				return true;
+			}
+		}
 
 		return false;
 	}
 
-    RubyMacOSData* RubyCocoaBackend::GetData() 
-    {
-        return m_pData;
-    }
+	RubyMacOSData* RubyCocoaBackend::GetData() 
+	{
+		return m_pData;
+	}
 
 	void RubyCocoaBackend::FlashAttention()
 	{
-        [NSApp requestUserAttention:NSCriticalRequest];
+		[NSApp requestUserAttention:NSCriticalRequest];
 	}
 
 	void RubyCocoaBackend::SetIcon( Ref<class Texture2D> icon )
 	{
 	}
 
-    std::vector<RubyMonitor> RubyCocoaBackend::GetMonitors() 
-    {
-        std::vector<RubyMonitor> monitors;
+	std::vector<RubyMonitor> RubyCocoaBackend::GetMonitors() 
+	{
+		std::vector<RubyMonitor> monitors;
 
-        @autoreleasepool
-        {
-            NSArray< NSScreen* >* pScreens = [ NSScreen screens ];
+		@autoreleasepool
+		{
+			NSArray< NSScreen* >* pScreens = [ NSScreen screens ];
 
-            for( NSScreen* pScreen in pScreens )
-            {
-                NSRect frame = [pScreen frame];
-                NSRect workArea = [pScreen visibleFrame];
-                NSString* pName = [pScreen localizedName];
+			for( NSScreen* pScreen in pScreens )
+			{
+				NSRect frame = [pScreen frame];
+				NSRect workArea = [pScreen visibleFrame];
+				NSString* pName = [pScreen localizedName];
 
-                auto& rMonitor = monitors.emplace_back();
-                rMonitor.WorkSize = { static_cast<int>( workArea.size.width ), static_cast<int>( workArea.size.height ) };
-                rMonitor.MonitorSize = { static_cast<int>( frame.size.width ), static_cast<int>( frame.size.height ) };
-                rMonitor.MonitorPosition = { static_cast<int>( frame.origin.x ), static_cast<int>( frame.origin.y ) };
-                rMonitor.Primary = true;
-            }
-        }
+				auto& rMonitor = monitors.emplace_back();
+				rMonitor.WorkSize = { static_cast<int>( workArea.size.width ), static_cast<int>( workArea.size.height ) };
+				rMonitor.MonitorSize = { static_cast<int>( frame.size.width ), static_cast<int>( frame.size.height ) };
+				rMonitor.MonitorPosition = { static_cast<int>( frame.origin.x ), static_cast<int>( frame.origin.y ) };
+				rMonitor.Primary = true;
+			}
+		}
 
-        return monitors;
-    }
+		return monitors;
+	}
 
 }

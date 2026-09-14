@@ -142,6 +142,9 @@ namespace Saturn {
 
 			m_MainThreadQueue.clear();
 
+			// Execute render thread (last frame).
+			RenderThread::Get().WaitAll();
+
 			if( !m_Window->Minimized() )
 			{
 				Renderer::Get()->BeginFrame();
@@ -153,9 +156,6 @@ namespace Saturn {
 			}
 			else
 				std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
-
-			// Execute render thread (last frame).
-			RenderThread::Get().WaitAll();
 
 			const float time = ( float ) m_Window->GetTime();
 			const float frametime = time - m_LastFrameTime;
@@ -215,11 +215,11 @@ namespace Saturn {
 		// Render ImGui.
 
 #if !defined(SAT_DIST)
-		// Begin on main thread.
-		m_ImGuiLayer->Begin();
-
 		RenderThread::Get().Queue( [=]
 			{
+				// Begin on main thread.
+				m_ImGuiLayer->Begin();
+
 				for( auto& rLayer : m_Layers )
 				{
 					rLayer->OnImGuiRender();

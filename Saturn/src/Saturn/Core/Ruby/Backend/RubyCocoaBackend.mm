@@ -829,15 +829,15 @@ namespace Saturn {
 					m_pData->m_pCursor = [NSCursor resizeUpDownCursor];
 				} break;
 
-				case RubyCursorType::ResizeNWSE:
-				{
-					m_pData->m_pCursor = [NSCursor resizeDiagonalCursor];
-				} break;
+                case RubyCursorType::ResizeNWSE:
+                {
+                    //m_pData->m_pCursor = [NSCursor resizeDiagonalCursor];
+                } break;
 
-				case RubyCursorType::ResizeNESW:
-				{
-					m_pData->m_pCursor = [NSCursor resizeDiagonalCursor];
-				} break;
+                case RubyCursorType::ResizeNESW:
+                {
+                    //m_pData->m_pCursor = [NSCursor resizeDiagonalCursor];
+                } break;
 
 				case RubyCursorType::Hand:
 				{

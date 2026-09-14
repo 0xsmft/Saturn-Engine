@@ -1,0 +1,35 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "(lldb) Launch-Editor",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/bin/Debug-macosx-AARCH64/Saturn-Editor/Saturn-Editor",
+            "args": ["/Users/smft/dev/test/test.sproject"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}/Saturn-Editor",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "targetArchitecture": "arm64"
+        },
+        {
+            "name": "(lldb) Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/bin/Debug-macosx-AARCH64/Saturn-ProjectBrowser/Saturn-ProjectBrowser",
+            "args": [],
+            "stopAtEntry": true,
+            "cwd": "${workspaceRoot}/Saturn-ProjectBrowser",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "targetArchitecture": "arm64"
+        }
+
+    ]
+}

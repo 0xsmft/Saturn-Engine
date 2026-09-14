@@ -4501,6 +4501,7 @@ namespace Saturn {
 
 			if( ImGuizmo::IsUsing() )
 			{
+				// Single selection
 				if( selectedEntities.size() == 1 )
 				{
 					SharedPtr<Entity> entity = selectedEntities[ 0 ];
@@ -4521,7 +4522,7 @@ namespace Saturn {
 					if( SharedPtr<Entity> parent = entity->TryGetParent() )
 					{
 						// But, make sure we get the parent's world space if that parent has a parent and so on.
-						const glm::mat4 parentTransform = g_ActiveScene->GetWorldSpaceTransform( parent );
+						const glm::mat4 parentTransform = g_ActiveScene->GetTransformRelativeToParent( parent );
 						centerPoint = glm::inverse( parentTransform ) * centerPoint;
 					}
 

@@ -136,9 +136,6 @@ namespace Saturn {
 		{
 			return Rotation;
 		}
-
-		operator glm::mat4 ( ) { return GetTransform(); }
-		operator const glm::mat4& ( ) const { return GetTransform(); }
 	};
 
 	struct TagComponent

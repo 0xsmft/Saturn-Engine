@@ -363,7 +363,7 @@ namespace Saturn {
 					if( SharedPtr<Entity> parent = entity->TryGetParent() )
 					{
 						// But, make sure we get the parent's world space if that parent has a parent and so on.
-						const glm::mat4 parentTransform = g_ActiveScene->GetWorldSpaceTransform( parent );
+						const glm::mat4 parentTransform = g_ActiveScene->GetTransformRelativeToParent( parent );
 						centerPoint = glm::inverse( parentTransform ) * centerPoint;
 					}
 

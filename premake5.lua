@@ -3,9 +3,9 @@ newoption {
    value = "API",
    description = "Choose a particular Online-subsystem API",
    allowed = {
-      { "steam",    "Steamworks API" },
+	  { "steam",    "Steamworks API" },
 --      { "epic",  "EOS (Epic Online Services)" },
-      { "none",  "No API (default)" }
+	  { "none",  "No API (default)" }
    },
    default = "none"
 }

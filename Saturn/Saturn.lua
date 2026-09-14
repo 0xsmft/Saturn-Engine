@@ -298,9 +298,9 @@ project "Saturn"
 	filter "configurations:Debug or configurations:Release or configurations:Debug-ASan"
 		defines
 		{
-		    "JPH_DEBUG_RENDERER",
-            "JPH_FLOATING_POINT_EXCEPTIONS_ENABLED",
-            "JPH_EXTERNAL_PROFILE",
+			"JPH_DEBUG_RENDERER",
+			"JPH_FLOATING_POINT_EXCEPTIONS_ENABLED",
+			"JPH_EXTERNAL_PROFILE",
 			"JPH_ENABLE_ASSERTS"
 		}
 	

@@ -86,7 +86,7 @@ namespace SaturnBuildTool
             StaticLibraryExtension = ".a";
             SharedLibraryExtension = ".dylib";
 
-            ExecutableExtension = ".app";
+            ExecutableExtension = string.Empty;
             ProgramDebugDatabaseExtension = ".dsym";
             PlatformType = PlatformType.MacApple;
             PlatformName = "macosx";

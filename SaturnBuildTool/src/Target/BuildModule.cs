@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
-using System.Linq.Expressions;
+using System.Linq;
+
 using SaturnBuildTool.Tools;
 
 namespace SaturnBuildTool
@@ -131,16 +132,43 @@ namespace SaturnBuildTool
         private void AppendLinkForSubModuleCID( BuildTarget parent, BuildModule module )
         {
             parent.TargetLinkSettings.LibraryPaths.Add( module.ModuleLinkSettings.OutputDirectory );
-            string libFilename = Path.ChangeExtension( module.ModuleLinkSettings.OutputName, Shared.Platform.StaticLibraryExtension );
-            parent.TargetLinkSettings.Links.Add( libFilename );
+
+            switch( Shared.ProjectInfo.ToolchainTypeToUse )
+            {
+                case ToolchainType.GCC:
+                case ToolchainType.Clang:
+                    {
+                        parent.TargetLinkSettings.Links.Add( module.ModuleLinkSettings.OutputName );
+                    } break;
+                
+                default:
+                case ToolchainType.MSVC:
+                    {
+                        string libFilename = Path.ChangeExtension( module.ModuleLinkSettings.OutputName, Shared.Platform.StaticLibraryExtension );
+                        parent.TargetLinkSettings.Links.Add( libFilename );
+                    } break;
+            }
         }
 
         private void AppendLinkForSubModuleNonCID( BuildModule module )
         {
             ModuleLinkSettings.LibraryPaths.Add( module.ModuleLinkSettings.OutputDirectory );
 
-            string libFilename = Path.ChangeExtension( module.ModuleLinkSettings.OutputName, Shared.Platform.StaticLibraryExtension );
-            ModuleLinkSettings.Links.Add( libFilename );
+            switch( Shared.ProjectInfo.ToolchainTypeToUse )
+            {
+                case ToolchainType.GCC:
+                case ToolchainType.Clang:
+                    {
+                        ModuleLinkSettings.Links.Add( module.ModuleLinkSettings.OutputName );
+                    } break;
+                
+                default:
+                case ToolchainType.MSVC:
+                    {
+                        string libFilename = Path.ChangeExtension( module.ModuleLinkSettings.OutputName, Shared.Platform.StaticLibraryExtension );
+                        ModuleLinkSettings.Links.Add( libFilename );
+                    } break;
+            }
         }
 
         private void InitCompileSettings( BuildTarget parent )

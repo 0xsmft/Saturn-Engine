@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.IO;
 
@@ -45,9 +46,6 @@ namespace SaturnBuildTool
             };
 
             var Args = new List<string>();
-
-            // Input
-            Args.Add( $" -c \"{InputFile}\"" );
 
             switch( Shared.ProjectInfo.TargetArchitectureKind )
             {
@@ -98,18 +96,25 @@ namespace SaturnBuildTool
             {
                 switch( CompileSettings.PCHAction )
                 {
-                    default: break;
+                    default:
+                        {
+                            Args.Add( $" -c \"{InputFile}\"" );
+                        } break;
 
                     case CompileSettings.PrecompiledHeaderAction.Create:
                         {
                             outFile += ".pch";
-                            Args.Add( " -emit-pch" );
+                            Args.Add( $" -x c++-header -c \"{InputFile}\" -Xclang -emit-pch" );
                         }
                         break;
 
                     case CompileSettings.PrecompiledHeaderAction.Use: 
                         {
-                            Args.Add( $" -include-pch \"{CompileSettings.PCHInfo.HeaderFile}\"" );
+                            string pchFilepath = Path.Combine( CompileSettings.OutputPath, CompileSettings.PCHInfo.HeaderFile );
+                            pchFilepath = Path.ChangeExtension( pchFilepath, ".o.pch" );
+
+                            Args.Add( $" -c \"{InputFile}\"" );
+                            Args.Add( $" -include-pch \"{pchFilepath}\"" );
                         } break;
                 }
             }
@@ -188,6 +193,10 @@ namespace SaturnBuildTool
             {
                 Args.Add( string.Format( " -I\"{0}\"", include ) );
             }
+
+            // Auxiliary
+            Args.Add( " -Wno-missing-template-arg-list-after-template-kw -Wno-non-pod-varargs" );
+            Args.Add( " -DSAT_COMPILER_CLANG" );
 
             // Start the compile
             processStart.Arguments = string.Join( "", Args );

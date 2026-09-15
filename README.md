@@ -21,8 +21,8 @@
 | Platform | Supported | Architecture | Build Status |
 | -------- | --------- | ------------ | ------------ |
 | Windows 10+ | ✅ | x86_64 |     <a href="https://github.com/BEASTSM96/Saturn-Engine/actions/workflows/Windows.yml"><img alt="Repo Size" src="https://github.com/BEASTSM96/Saturn-Engine/actions/workflows/Windows.yml/badge.svg"></a>
-| Linux | 🕗 *[SOON](https://trello.com/c/o43wueQO/9-preliminary-linux-support)* | x86_64 | No CI yet.
-| macOS 15+ (Sequoia) | 🕗 | AArch64 | No CI yet.
+| Linux | 🕗 *[Progress](https://trello.com/c/o43wueQO/9-preliminary-linux-support)* | x86_64 | No CI yet.
+| macOS 15+ (Sequoia) | 🕗 *[Progress](https://trello.com/c/bOjSj8Od/272-preliminary-macos-support)*| AArch64 | No CI yet.
 
 ## Features
 

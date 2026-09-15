@@ -138,8 +138,11 @@ namespace Saturn {
 				ImGui::GetCurrentContext()
 				);
 		}
-		else
+		else 
+		{
 			SAT_CORE_WARN( "Timestamp file does not exists! Please rebuild the game in your IDE." );
+			SAT_CORE_WARN( "Looking for, {0}", timestampFile.string() );
+		}
 #endif
 	}
 

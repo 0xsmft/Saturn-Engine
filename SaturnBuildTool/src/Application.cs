@@ -329,7 +329,7 @@ namespace SaturnBuildTool
                     allCppFilesModule.AddRange( DirectoryTools.CppSourceSearch( Path.Combine( Shared.ProjectInfo.RootDirectory, path ), true ) );
                 }
 
-                ModuleToToolchain.Add( kv.Key, new MSVCToolchain() );
+                ModuleToToolchain.Add( kv.Key, ( ToolchainBase ) Activator.CreateInstance( Shared.Toolchain.GetType() ) );
 
                 string[] sourceFileExts = { ".cpp", ".cc", ".cxx", ".c" };
                 string[] headerFileExts = { ".h", ".hpp" };

@@ -48,7 +48,8 @@ namespace Saturn {
 #if defined(_WIN32)
 		m_Handle = ::LoadLibraryW( rPath.wstring().data() );
 #else
-		m_Handle = dlopen( rPath.data(), RTLD_LAZY );
+		m_Handle = dlopen( rPath.string().data(), RTLD_NOW );
+		result = ( bool ) m_Handle;
 #endif
 
 		return m_Handle != nullptr;

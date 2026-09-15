@@ -44,6 +44,14 @@ namespace SaturnBuildTool
 
             Args.Add( $" -o \"{LinkSettings.OutputPath}\"" );
 
+            switch( LinkSettings.OutputType )
+            {
+                case LinkerOutput.SharedLibrary:
+                    {
+                        Args.Add( $" -dynamiclib -Wl,-install_name,@rpath/{LinkSettings.OutputName}" );
+                    } break;
+            }
+
             // Object files
             foreach( string file in LinkSettings.ObjectFiles )
             {
@@ -57,7 +65,18 @@ namespace SaturnBuildTool
 
             foreach( string link in LinkSettings.Links )
             {
-                Args.Add( string.Format( " \"{0}\"", link ) );
+                Args.Add( string.Format( " -l\"{0}\"", link ) );
+            }
+
+            // TODO: This should not be hard coded... works for now.
+            switch( Shared.Platform.PlatformType )
+            {
+                default: break;
+                
+                case PlatformType.MacApple:
+                    {
+                        Args.Add( " -framework Cocoa -framework CoreFoundation -framework IOKit -framework CoreVideo -framework CoreAudio -framework QuartzCore -framework UniformTypeIdentifiers" );
+                    } break;
             }
 
             switch( Shared.ProjectInfo.TargetArchitectureKind )

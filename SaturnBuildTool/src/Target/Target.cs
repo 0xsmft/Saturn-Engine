@@ -47,6 +47,11 @@ namespace SaturnBuildTool
             {
                 PreprocessorDefines.AddRange( new string[] { "UNICODE", "_UNICODE", "SAT_PLATFORM_WINDOWS", "_CRT_SECURE_NO_WARNINGS" } );
             }
+
+            if( Shared.Platform.PlatformType == PlatformType.MacApple )
+            {
+                PreprocessorDefines.AddRange( new string[] { "SAT_PLATFORM_MACOS" } );
+            }
         }
 
         public List<string> GetIntermediateFiles()
@@ -83,19 +88,19 @@ namespace SaturnBuildTool
             {
                 case ConfigKind.Debug:
                     {
-                        BinDir = Path.Combine( BinDir, "Debug-windows-x86_64" );
+                        BinDir = Path.Combine( BinDir, $"Debug-{Shared.Platform.PlatformName}-{Shared.Platform.ArchName}" );
                     }
                     break;
 
                 case ConfigKind.Release:
                     {
-                        BinDir = Path.Combine( BinDir, "Release-windows-x86_64" );
+                        BinDir = Path.Combine( BinDir, $"Release-{Shared.Platform.PlatformName}-{Shared.Platform.ArchName}" );
                     }
                     break;
 
                 case ConfigKind.Dist:
                     {
-                        BinDir = Path.Combine( BinDir, "Dist-windows-x86_64" );
+                        BinDir = Path.Combine( BinDir, $"Dist-{Shared.Platform.PlatformName}-{Shared.Platform.ArchName}" );
                     }
                     break;
             }

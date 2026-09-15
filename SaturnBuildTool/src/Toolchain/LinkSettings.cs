@@ -140,11 +140,17 @@ namespace SaturnBuildTool
             OutputDirectory = outputPath;
             OutputPath = Path.Combine( OutputDirectory, OutputName );
 
+            if( !Directory.Exists( OutputDirectory ) )
+                Directory.CreateDirectory( OutputDirectory );
+
             ResolveLinks();
         }
 
         private void ResolveLinks() 
         {
+            if( Shared.ProjectInfo.ToolchainTypeToUse != ToolchainType.MSVC )
+                return;
+
             for( int i = 0; i < Links.Count; ++i )
             {
                 var link = Links[ i ];

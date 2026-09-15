@@ -75,9 +75,9 @@
 #define SAT_PLATFORM_VULKAN_SURFACE_NAME "VK_EXT_metal_surface"
 
 // We only support x86_64
-#if defined(_MSC_VER) && defined(_M_X64) || defined(__x86_64__)
+#if defined(__x86_64__)
 #define SAT_PLATFORM_BINARY_FOLDER "macosx-x86_64"
-#elif defined(_MSC_VER) && defined(_M_ARM64)
+#elif defined(__aarch64__)
 #define SAT_PLATFORM_BINARY_FOLDER "macosx-AARCH64"
 #else
 #define SAT_PLATFORM_BINARY_FOLDER "macos-ArchUnk"

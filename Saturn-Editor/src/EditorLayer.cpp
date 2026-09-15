@@ -2515,7 +2515,7 @@ namespace Saturn {
 					ImGui::Selectable( asset->Name.c_str(), false );
 
 					ImGui::TableSetColumnIndex( 1 );
-					ImGui::Text( "%" PRIu64, id );
+					ImGui::Text( "%" PRIu64, ( uint64_t ) id );
 
 					ImGui::TableSetColumnIndex( 2 );
 					ImGui::Text( AssetTypeToString( asset->Type ).data(), false );

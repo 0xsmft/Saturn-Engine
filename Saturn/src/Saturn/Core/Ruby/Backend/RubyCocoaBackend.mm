@@ -72,9 +72,19 @@
 {
 	Saturn::RubyCocoaBackend* pThis;
 	NSTrackingArea* m_pTrackingArea;
+
+	// Borderless window only...
+	NSButton* m_pCloseButton;
+	NSButton* m_pMinimiseButton;
+	NSButton* m_pMaximiseButton;
+	BOOL m_MouseInStandardButtons;
+	BOOL m_MovingWindow;
+	NSTimeInterval m_LastTitlebarClickTime;
+	NSPoint m_LastTitlebarClickLocation;
 }
 
 - (instancetype)initForRuby:(Saturn::RubyCocoaBackend*)initEventResponder;
+- (void)postInit;
 
 @end
 
@@ -90,6 +100,10 @@ namespace Saturn {
 		// the cursor is locked and hidden.
 		NSCursor* m_pCursor = nil;
 		CAMetalLayer* m_pMetalLayer = nil;
+
+		~RubyMacOSData() 
+		{
+		}
 	};
 }
 
@@ -105,13 +119,55 @@ namespace Saturn {
 
 		[self updateTrackingAreas];
 		[self registerForDraggedTypes:@[NSPasteboardTypeURL]];
+
+		if( pThis->GetParent()->GetStyle() == Saturn::RubyStyle::Borderless )
+		{
+			NSWindowStyleMask buttonStyle =
+				NSWindowStyleMaskTitled |
+				NSWindowStyleMaskClosable |
+				NSWindowStyleMaskMiniaturizable |
+				NSWindowStyleMaskResizable;
+
+			// Thank You: https://github.com/Geno-IDE/Geno/blob/master/src/Geno/C%2B%2B/GUI/Platform/macOS/macOSContentView.mm
+			m_pCloseButton       = [ NSWindow standardWindowButton:NSWindowCloseButton       forStyleMask:buttonStyle];
+			m_pMinimiseButton    = [ NSWindow standardWindowButton:NSWindowMiniaturizeButton forStyleMask:buttonStyle];
+			m_pMaximiseButton    = [ NSWindow standardWindowButton:NSWindowZoomButton        forStyleMask:buttonStyle];
+		}
 	}
 
 	return self;
 }
 
+- (void)postInit
+{
+	CGFloat y = self.bounds.size.height - 22.0f;
+	[ m_pCloseButton       setFrameOrigin:{  7.0f, y } ];
+	[ m_pMinimiseButton    setFrameOrigin:{ 27.0f, y } ];
+	[ m_pMaximiseButton    setFrameOrigin:{ 47.0f, y } ];
+
+	[ self addSubview:m_pCloseButton    ];
+	[ self addSubview:m_pMinimiseButton ];
+	[ self addSubview:m_pMaximiseButton ];
+}
+
+- (BOOL)_mouseInGroup:(NSButton *)button
+{
+    return m_MouseInStandardButtons;
+}
+
 - (void)dealloc
 {
+	if( pThis->GetParent()->GetStyle() == Saturn::RubyStyle::Borderless )
+	{
+		[m_pCloseButton release];
+		[m_pMinimiseButton release];
+		[m_pMaximiseButton release];
+
+		m_pCloseButton = nil;
+		m_pMinimiseButton = nil;
+		m_pMaximiseButton = nil;
+	}
+
 	pThis = nil;
 	[m_pTrackingArea release];
 	[super dealloc];
@@ -163,8 +219,25 @@ namespace Saturn {
 	[super updateTrackingAreas];
 }
 
+- (void)updateButtons:(NSEvent*)pEvent 
+{
+	if( pThis->GetParent()->GetStyle() != Saturn::RubyStyle::Borderless )
+		return;
+
+	const NSPoint location = [ pEvent locationInWindow ];
+	const NSRect windowRect = [ self frame ];
+
+	m_MouseInStandardButtons = location.y > ( windowRect.size.height - pThis->GetParent()->GetTitlebarHeight() ) && location.x < 67.0f;
+	m_pCloseButton.needsDisplay    = YES;
+	m_pMinimiseButton.needsDisplay = YES;
+	m_pMaximiseButton.needsDisplay = YES;
+}
+
 - (void)mouseMoved:(NSEvent*)event
 {
+	if( m_MovingWindow )
+		return;
+
 	const NSPoint position = [event locationInWindow];
 	const NSRect contentRect = [pThis->GetData()->m_pView frame];
 
@@ -195,6 +268,8 @@ namespace Saturn {
 	pThis->SetLockedMouseDelta( 0.0f, 0.0f );
 
 	pThis->GetParent()->IntrnlSetLastMousePos( { static_cast<int>(position.x),  static_cast<int>(contentRect.size.height - position.y)} );
+
+	[ self updateButtons:event ];
 }
 
 - (void)mouseDragged:(NSEvent *)event
@@ -204,12 +279,56 @@ namespace Saturn {
 
 - (void)mouseDown:(NSEvent*)event
 {
+	if( pThis->GetParent()->GetStyle() == Saturn::RubyStyle::Borderless )
+	{
+		const NSPoint location = [ event locationInWindow ];
+		const NSRect windowRect = [ self frame ];
+
+		// Check if we are over the titlebar... if we are we then we have 2 cases.
+		// (1): we should drag is the mouse has been down for a long enough time.
+		// (2): we should maximise if we have been double clicked.
+		if( !pThis->GetParent()->GetTitlebarCond() && ( location.y > ( windowRect.size.height - pThis->GetParent()->GetTitlebarHeight() ) ) ) 
+		{
+			const NSPoint mouseScreenPos = [ NSEvent mouseLocation ];
+			const NSTimeInterval interval = [ event timestamp ];
+
+			// Outcome (2)... check for double click
+			if( ( interval - m_LastTitlebarClickTime ) < 1.0 && NSEqualPoints( mouseScreenPos, m_LastTitlebarClickLocation ) ) 
+			{
+				pThis->GetParent()->Maximize();
+
+				m_MovingWindow = NO;
+				m_LastTitlebarClickTime = 0;
+				m_LastTitlebarClickLocation = { 0.0f, 0.0f };
+			}
+			else
+			{
+				// Outcome (1)...
+				m_MovingWindow = true;
+				m_LastTitlebarClickTime = interval;
+				m_LastTitlebarClickLocation = mouseScreenPos;
+
+				// Call native event.
+				[ self.window performWindowDragWithEvent:event ];
+			}
+		}
+		else
+		{
+			m_MovingWindow = NO;
+		}
+	}
+
 	pThis->GetParent()->IntrnlSetMouseState( Saturn::RubyMouseButton_Left, true );
 	pThis->GetParent()->DispatchEvent<Saturn::RubyMouseEvent>( Saturn::EventType::MousePressed, ( int )Saturn::RubyMouseButton_Left );
 }
 
 - (void)mouseUp:(NSEvent*)event
 {
+	if( m_MovingWindow )
+	{
+		m_MovingWindow = NO;
+	}
+
 	pThis->GetParent()->IntrnlSetMouseState( Saturn::RubyMouseButton_Left, false );
 	pThis->GetParent()->DispatchEvent<Saturn::RubyMouseEvent>( Saturn::EventType::MouseReleased, ( int )Saturn::RubyMouseButton_Left );
 }
@@ -381,6 +500,11 @@ static Saturn::RubyKey ConvertMacOSVkToRuby( uint16_t vk )
    }
 }
 
+- (void)flagsChanged:(NSEvent *)event
+{
+	[self updateButtons:event];
+}
+
 - (void) keyDown:(NSEvent*) event 
 {
 	const Saturn::RubyKey saturnKey = ConvertMacOSVkToRuby( [event keyCode] );
@@ -486,17 +610,42 @@ static Saturn::RubyKey ConvertMacOSVkToRuby( uint16_t vk )
 - (void)windowDidBecomeKey:(NSNotification*)notification
 {
 	pThis->GetParent()->DispatchEvent<Saturn::RubyFocusEvent>( Saturn::EventType::WindowFocus, true );
+
+	if( pThis->GetParent()->GetStyle() == Saturn::RubyStyle::Borderless )
+	{
+		[ [ pThis->GetData()->m_pWindow standardWindowButton:NSWindowCloseButton ]       setEnabled:YES ];
+		[ [ pThis->GetData()->m_pWindow standardWindowButton:NSWindowMiniaturizeButton ] setEnabled:YES ];
+		[ [ pThis->GetData()->m_pWindow standardWindowButton:NSWindowZoomButton ]        setEnabled:YES ];
+	}
 }
 
 - (void)windowDidResignKey:(NSNotification *)notification
 {
 	pThis->GetParent()->DispatchEvent<Saturn::RubyFocusEvent>( Saturn::EventType::WindowFocus, false );
+
+	if( pThis->GetParent()->GetStyle() == Saturn::RubyStyle::Borderless )
+	{
+		[ [ pThis->GetData()->m_pWindow standardWindowButton:NSWindowCloseButton ]       setEnabled:NO ];
+		[ [ pThis->GetData()->m_pWindow standardWindowButton:NSWindowMiniaturizeButton ] setEnabled:NO ];
+		[ [ pThis->GetData()->m_pWindow standardWindowButton:NSWindowZoomButton ]        setEnabled:NO ];
+	}
 }
 
 - (void)windowDidResize:(NSNotification *)notification
 {
 	const NSRect contentRect = [pThis->GetData()->m_pView frame];
 	const NSRect framebufferRect = [pThis->GetData()->m_pView convertRectToBacking:contentRect];
+
+	if( pThis->GetParent()->GetStyle() == Saturn::RubyStyle::Borderless )
+	{
+		NSButton* pCloseButton       = [ pThis->GetData()->m_pWindow standardWindowButton:NSWindowCloseButton ];
+		NSButton* pMinimiseButton    = [ pThis->GetData()->m_pWindow standardWindowButton:NSWindowMiniaturizeButton ];
+		NSButton* pMaximiseButton    = [ pThis->GetData()->m_pWindow standardWindowButton:NSWindowZoomButton ];
+
+		[ pCloseButton       setFrameOrigin:{  7.0f, [ pThis->GetData()->m_pView frame ].size.height - 22.0f } ];
+		[ pMinimiseButton    setFrameOrigin:{ 27.0f, [ pThis->GetData()->m_pView frame ].size.height - 22.0f } ];
+		[ pMaximiseButton    setFrameOrigin:{ 47.0f, [ pThis->GetData()->m_pView frame ].size.height - 22.0f } ];
+	}
 
 	pThis->GetParent()->DispatchEvent<Saturn::RubyWindowResizeEvent>( Saturn::EventType::Resize, static_cast< uint32_t >( framebufferRect.size.width ), static_cast< uint32_t >( framebufferRect.size.height ) );
 }
@@ -530,7 +679,7 @@ namespace Saturn {
 
 			case RubyStyle::Borderless:
 			{
-				return NSWindowStyleMaskBorderless | NSWindowStyleMaskResizable;
+				return NSWindowStyleMaskBorderless | NSWindowStyleMaskResizable | NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskClosable;
 			};
 
 			case RubyStyle::BorderlessFullscreen:
@@ -577,6 +726,7 @@ namespace Saturn {
 			m_pData->m_pMetalLayer = [CAMetalLayer layer];
 			[m_pData->m_pView setWantsLayer:YES];
 			[m_pData->m_pView setLayer:m_pData->m_pMetalLayer];
+			[m_pData->m_pView postInit];
 
 			if( m_WindowSpecification.ShowNow )
 				PresentWindow();
@@ -609,7 +759,8 @@ namespace Saturn {
 
 	void RubyCocoaBackend::Maximize()
 	{
-		[m_pData->m_pWindow zoom:nil];
+		if (![m_pData->m_pWindow isZoomed])
+        	[m_pData->m_pWindow zoom:nil];
 	}
 
 	void RubyCocoaBackend::Minimize()
@@ -620,8 +771,10 @@ namespace Saturn {
 
 	void RubyCocoaBackend::Restore()
 	{
-		if( [m_pData->m_pWindow isZoomed] )
-			[m_pData->m_pWindow zoom:nil];
+		if ([m_pData->m_pWindow isMiniaturized])
+       		[m_pData->m_pWindow deminiaturize:nil];
+    	else if ([m_pData->m_pWindow isZoomed])
+        	[m_pData->m_pWindow zoom:nil];
 	}
 
 	bool RubyCocoaBackend::Minimized()
@@ -953,20 +1106,81 @@ namespace Saturn {
 
 	void RubyCocoaBackend::SetClipboardText( const std::string& rTextData )
 	{
+		@autoreleasepool 
+		{
+			NSPasteboard* pPasteboard = [NSPasteboard generalPasteboard];
+			[pPasteboard declareTypes:@[NSPasteboardTypeString] owner:nil];
+			[pPasteboard setString:[NSString stringWithUTF8String:rTextData.data()] forType:NSPasteboardTypeString];
+		}
 	}
 
 	void RubyCocoaBackend::SetClipboardText( const std::wstring& rTextData )
 	{
+		@autoreleasepool 
+		{
+			NSPasteboard* pPasteboard = [NSPasteboard generalPasteboard];
+			[pPasteboard declareTypes:@[NSPasteboardTypeString] owner:nil];
+        	
+			NSString* string = [[NSString alloc] initWithBytes:rTextData.data()
+										length:rTextData.size() * sizeof(wchar_t)
+										encoding:NSUTF32LittleEndianStringEncoding];
+
+        	[pPasteboard setString:string forType:NSPasteboardTypeString];
+		}
 	}
 
 	std::string RubyCocoaBackend::GetClipboardText()
 	{
-		return {};
+		std::string result;
+
+		@autoreleasepool 
+		{
+			NSPasteboard* pPasteboard = [NSPasteboard generalPasteboard];
+			NSString* pAvailable = [pPasteboard availableTypeFromArray: [NSArray arrayWithObject:NSPasteboardTypeString]];
+			
+			if( ![pAvailable isEqualToString:NSPasteboardTypeString] )
+				return result;
+
+			NSString* pText = [pPasteboard stringForType:NSPasteboardTypeString];
+			if( pText == nil )
+				return result;
+
+			const char* utf8Text = [pText UTF8String];
+
+			if( utf8Text != nullptr )
+				result = std::string( utf8Text );
+		}
+
+		return result;
 	}
 
 	std::wstring RubyCocoaBackend::GetClipboardTextW()
 	{
-		return {};
+		std::wstring result;
+		@autoreleasepool 
+		{
+			NSPasteboard* pPasteboard = [NSPasteboard generalPasteboard];
+			NSString* pAvailable = [pPasteboard availableTypeFromArray: [NSArray arrayWithObject:NSPasteboardTypeString]];
+			
+			if( ![pAvailable isEqualToString:NSPasteboardTypeString] )
+				return result;
+
+			NSString* pText = [pPasteboard stringForType:NSPasteboardTypeString];
+			if( pText == nil )
+				return result;
+
+			NSData* data = [pText dataUsingEncoding:NSUTF32LittleEndianStringEncoding];
+
+			if( data == nil )
+				return result;
+
+			const wchar_t* pChars = static_cast< const wchar_t* >( [ data bytes ] );
+
+			const size_t count = [ data length ] / sizeof( wchar_t );
+			result.assign( pChars, pChars + count );
+		}
+
+		return result;
 	}
 
 	bool RubyCocoaBackend::PendingClose()
@@ -990,12 +1204,12 @@ namespace Saturn {
 	bool RubyCocoaBackend::MouseInRect()
 	{
 		NSPoint mouse = [NSEvent mouseLocation];
-		for (NSWindow *window in [NSApp orderedWindows]) 
+		for( NSWindow *window in [ NSApp orderedWindows ]) 
 		{
-			if (![window isVisible])
+			if ( ![ window isVisible ] )
 				continue;
 
-			if (NSPointInRect(mouse, window.frame)) 
+			if ( NSPointInRect( mouse, window.frame ) ) 
 			{
 				return true;
 			}
@@ -1011,7 +1225,7 @@ namespace Saturn {
 
 	void RubyCocoaBackend::FlashAttention()
 	{
-		[NSApp requestUserAttention:NSCriticalRequest];
+		[ NSApp requestUserAttention:NSCriticalRequest ];
 	}
 
 	void RubyCocoaBackend::SetIcon( Ref<class Texture2D> icon )

@@ -578,7 +578,7 @@ namespace Saturn {
 			.handle = ( void* ) m_Window->GetNativeHandle()
 		};
 
-		// UniquePathN == std::unique_ptr so it's kinda like a span of wchars
+		// UniquePathN == std::unique_ptr so it's kinda like a span of wchars.
 		NFD::UniquePathN nfdPath;
 		if( NFD::PickFolder( nfdPath, nullptr, parentWindow ) == NFD_OKAY ) 
 		{

@@ -3271,8 +3271,10 @@ namespace Saturn {
 			ImGui::EndMenu();
 		}
 
+#if !defined(SAT_PLATFORM_MACOS)
 		// Draw Project name text and box.
 		ImGui::SeparatorEx( ImGuiSeparatorFlags_Vertical );
+#endif
 
 #if defined(SAT_DEBUG) || 1
 		const std::string prjName = Project::GetActiveConfig().Name;
@@ -3291,7 +3293,16 @@ namespace Saturn {
 		ImDrawList* pDrawList = ImGui::GetWindowDrawList();
 		const float frameHeight = ImGui::GetFrameHeight();
 
+#if !defined(SAT_PLATFORM_MACOS)
 		const ImVec2 min = ImGui::GetWindowPos() + ImGui::GetCursorPos();
+#else
+		// 7.0f == button offset in RubyCocoaBackend
+		const ImVec2 osOffset = ImVec2( ImGui::GetWindowSize().x - textSize.x - frameHeight - 7.0f, ImGui::GetCursorPos().y );
+		const ImVec2 min = ImGui::GetWindowPos() + osOffset;
+		
+		ImGui::SetCursorPos( osOffset );
+#endif
+
 		const ImVec2 max = min + ImVec2( textSize.x + frameHeight, frameHeight );
 		const ImRect buttonRect( min, max );
 

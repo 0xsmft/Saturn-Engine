@@ -49,7 +49,6 @@ namespace Saturn {
 		m_Handle = ::LoadLibraryW( rPath.wstring().data() );
 #else
 		m_Handle = dlopen( rPath.string().data(), RTLD_NOW );
-		result = ( bool ) m_Handle;
 #endif
 
 		return m_Handle != nullptr;

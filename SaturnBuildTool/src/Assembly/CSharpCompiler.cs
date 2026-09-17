@@ -10,8 +10,6 @@ using Microsoft.CodeAnalysis.CSharp;
 using System.CodeDom.Compiler;
 #else
 using System.IO;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 #endif
 
 namespace SaturnBuildTool

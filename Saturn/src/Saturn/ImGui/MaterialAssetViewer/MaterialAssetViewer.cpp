@@ -355,8 +355,10 @@ namespace Saturn {
 						Ref<Asset> textureSourceAsset = AssetManager::Get()->FindAsset( texture->GetSourceAssetID() );
 						if( textureSourceAsset )
 						{
+#if !defined(SAT_DIST)
 							Application::Get()->DispatchEvent<CBBrowseToItemEvent>( 
 								textureSourceAsset->Path, textureSourceAsset->ID );
+#endif
 						}
 					}
 				}

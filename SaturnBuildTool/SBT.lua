@@ -1,8 +1,8 @@
 project "SaturnBuildTool"
-	location ""
 	language "C#"
 	kind "ConsoleApp"
 	links { "System" }
+	defines { "SAT_BUILDTOOOL_NETFRAMEWORK" }
 
 	targetdir ("../bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("../bin-int/" .. outputdir .. "/%{prj.name}")
@@ -17,7 +17,7 @@ project "SaturnBuildTool"
 		'{COPY} "../../../SaturnBuildTool/RT" "RT/"'
 	}
 
-	filter { "configurations:Debug or configurations:Debug-ASan" }
+	filter { "configurations:Debug" }
 		symbols "On"
 
  	filter { "configurations:Release" }

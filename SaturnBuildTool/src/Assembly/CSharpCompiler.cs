@@ -1,17 +1,16 @@
-﻿#if SAT_BUILDTOOOL_NETFRAMEWORK
-using System;
-using System.CodeDom.Compiler;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-#endif
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Reflection;
+
+#if SAT_BUILDTOOOL_NETFRAMEWORK
+using System.CodeDom.Compiler;
+#else
+using System.IO;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+#endif
 
 namespace SaturnBuildTool
 {

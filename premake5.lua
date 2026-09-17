@@ -22,6 +22,16 @@ workspace "Saturn"
 
 	defines { "SPDLOG_USE_STD_FORMAT" }
 
+-- For C#, on Windows we build as .NET framework, so we
+-- can only usde x86_64,
+-- on other platforms we use .NET Core which has a universal binary.
+if os.host() == "windows" then
+	architecture "x86_64"
+else
+	filter "language:C++ or language:C"
+		architecture "x86_64"
+end
+
 	filter "action:vs*"
 		linkoptions { "/ignore:4006" }
 		buildoptions { "/utf-8" }
@@ -107,11 +117,18 @@ group "Tools"
 -- // -Crash Reporter-- 
 
 -- // -Saturn Build Tool-- 
-group "Trinity"
+group "Tools"
+
+-- On Windows, the build tool is built as a .NET Framework application
+-- on other platforms it's build as a .NET Core application.
+if os.target() == "windows" then	
 	include "SaturnBuildTool/SBT"
+else
+	include "SaturnBuildTool/SBT-ForNonWindows"
+end
 -- // -Saturn Build Tool-- 
 
 -- // -Saturn Header Tool-- 
-group "Trinity"
+group "Tools"
 	include "SaturnHeaderTool/SaturnHeaderTool"
 -- // -Saturn Header Tool-- 

@@ -1105,7 +1105,7 @@ namespace Saturn {
 		if( m_Specification.Storage )
 			usage |= VK_IMAGE_USAGE_STORAGE_BIT;
 
-		CreateImage( Width(), Height(), m_ImageFormat, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_Image, m_ImageMemory, MipCount, 1 );
+		CreateImage( Width(), Height(), m_ImageFormat, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, usage, m_Specification.CPUOnly ? VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT : VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_Image, m_ImageMemory, MipCount, 1 );
 
 		//if( m_Storage )
 		//	TransitionImageLayout( m_ImageFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL );

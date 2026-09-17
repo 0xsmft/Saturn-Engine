@@ -74,6 +74,19 @@ namespace Saturn {
 		uint32_t Height = 0u;
 		bool CreateFromMemory = false;
 		bool Storage = false;
+
+		// If this texture is on the CPU,
+		// then the entire texture data is
+		// stored on the CPU and will never
+		// touch the GPU.
+		bool CPUOnly = false;
+
+		// Temporary data pointer, in most cases
+		// this will be the data coming from stbi
+		// the data buffer provided in pData
+		// is _not_ deleted by the texture.
+		// after the data has been used to create
+		// the texture it should be freed.
 		const void* pData = nullptr;
 
 		std::filesystem::path TexturePath;
@@ -127,6 +140,11 @@ namespace Saturn {
 		uint32_t Width() const { return m_Specification.Width; }
 		uint32_t Height() const { return m_Specification.Height; }
 
+		//
+		// NB: This will only return a valid pointer if the texture
+		//	   is a CPU only texture, otherwise it will always return
+		//	   nullptr.
+		//
 		const void* GetData() const { return m_Specification.pData; }
 
 		// We may want to place this in the constructor and a function.
@@ -170,7 +188,8 @@ namespace Saturn {
 		std::unordered_map<uint32_t, VkImageView> m_MipToImageViewMap;
 
 		// Temporary data pointer, when this texture is being loaded
-		// on the JobSystem. Will be deleted and reset back to null
+		// on the JobSystem we need a pointer to the temporary
+		// placeholder data. This will be deleted and reset back to null
 		// once the JobSystem has loaded fully loaded the texture.
 		void* m_pWorkingData = nullptr;
 
@@ -189,7 +208,7 @@ namespace Saturn {
 		Texture2D( const std::filesystem::path& rPath, AddressingMode Mode = AddressingMode::Repeat, TextureLoadFlags loadFlags = TextureLoadFlags_FlipVertically );
 		Texture2D( ImageFormat format, uint32_t width, uint32_t height, const void* pData, bool storage = false, AddressingMode Mode = AddressingMode::Repeat, TextureLoadFlags flags = TextureLoadFlags_None );
 		
-		~Texture2D();
+		virtual ~Texture2D();
 
 		void Copy( Ref<Texture2D> rOther );
 
@@ -224,7 +243,7 @@ namespace Saturn {
 		TextureCube( const std::filesystem::path& rPath, AddressingMode Mode );
 		TextureCube( ImageFormat Format, uint32_t width, uint32_t height, const void* pData = nullptr );
 
-		~TextureCube();
+		virtual ~TextureCube();
 
 		void CreateMips() override;
 

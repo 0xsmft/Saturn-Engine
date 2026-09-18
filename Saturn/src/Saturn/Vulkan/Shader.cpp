@@ -180,30 +180,30 @@ namespace Saturn {
 		}
 		else if( override )
 		{
-			SAT_CORE_WARN("Shader already exists and \"override\" was set overriding shader...");
+			SAT_CORE_WARN( "Shader already exists and \"override\" was set overriding shader..." );
 			
 			m_Shaders[ rName ] = shader;
 		}
 	}
 
-	void ShaderLibrary::Load( const std::string& path )
+	Ref<Shader> ShaderLibrary::Load( const std::filesystem::path& path )
 	{
-		if( Find( path ) != nullptr )
-			return;
+		if( Find( path.stem().string() ) != nullptr )
+			return nullptr;
 
 		Ref<Shader> shader = Ref<Shader>::Create( path );
-	
 		Add( shader );
+
+		return shader;
 	}
 
 	void ShaderLibrary::Load( const std::string& name, const std::string& path )
 	{
 #if !defined(SAT_DIST)
 		SAT_CORE_ASSERT( m_Shaders.find( name ) == m_Shaders.end() );
-
 		m_Shaders[ name ] = Ref<Shader>::Create( path );
 #else
-		SAT_CORE_VERIFY( m_Shaders.find( name ) != m_Shaders.end(), "Shader is unable to be found in the ShaderBundle! It must exist! Dist cannot load shaders from disk. This may indicate that the ShaderBuundle is outdated! Please rebuild the it." );
+		SAT_CORE_VERIFY( m_Shaders.find( name ) != m_Shaders.end(), "Shader is unable to be found in the ShaderBundle! It must exist! Dist cannot load shaders from disk. This may indicate that the ShaderBundle is outdated! Please rebuild the it." );
 #endif
 	}
 
@@ -211,6 +211,30 @@ namespace Saturn {
 	{
 		m_Shaders[ shader->GetName() ] = nullptr;
 		m_Shaders.erase( shader->GetName() );
+	}
+
+	std::vector<Ref<Shader>> ShaderLibrary::LoadAllInShadersDirectory()
+	{
+		std::vector<Ref<Shader>> loadedShaders;
+
+		const std::filesystem::path shadersPath = std::filesystem::current_path() / "content" / "shaders";
+
+		if( !std::filesystem::exists( shadersPath ) )
+			return loadedShaders;
+
+		for( const auto& rEntry : std::filesystem::directory_iterator( shadersPath ) )
+		{
+			if( rEntry.is_directory() )
+				continue;
+
+			const auto& rPath = rEntry.path();
+			if( const auto shader = Load( rPath ) ) 
+			{
+				loadedShaders.push_back( shader );
+			}
+		}
+
+		return loadedShaders;
 	}
 
 	const Ref<Shader>& ShaderLibrary::FindOrLoad( const std::string& name, const std::string& path )
@@ -241,8 +265,6 @@ namespace Saturn {
 		if( m_Shaders.find( name ) == m_Shaders.end() ) 
 		{
 			SAT_CORE_ERROR( "Failed to find shader \"{0}\"", name );
-			SAT_CORE_ASSERT(false);
-
 			return nullptr;
 		}
 

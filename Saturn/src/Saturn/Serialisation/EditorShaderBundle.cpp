@@ -87,9 +87,10 @@ namespace Saturn {
 
 			const auto& path = shader->GetFilepath();
 			const auto lwt = std::filesystem::last_write_time( path );
-			const auto epochTime = lwt.time_since_epoch().count();
+			const auto systemTime = std::chrono::clock_cast< std::chrono::system_clock >( lwt );
+			const auto unixTimeMs = std::chrono::duration_cast< std::chrono::milliseconds >( systemTime.time_since_epoch() ).count();
 
-			RawSerialisation::WriteObject( epochTime, fout );
+			RawSerialisation::WriteObject( unixTimeMs, fout );
 
 			shader->SerialiseShaderDataForEditor( fout );
 		}
@@ -119,7 +120,7 @@ namespace Saturn {
 
 		for( size_t i = 0; i < header.Shaders; ++i )
 		{
-			std::chrono::system_clock::rep savedLastWriteTime = 0ll;
+			uint64_t savedLastWriteTime = 0llu;
 			RawSerialisation::ReadObject( savedLastWriteTime, stream );
 
 			Ref<Shader> shader = Ref<Shader>::Create();
@@ -132,7 +133,8 @@ namespace Saturn {
 			}
 
 			const auto lwt = std::filesystem::last_write_time( shader->GetFilepath() );
-			const auto fsLastWriteTime = lwt.time_since_epoch().count();
+			const auto systemTime = std::chrono::clock_cast< std::chrono::system_clock >( lwt );
+			const auto fsLastWriteTimeMs = std::chrono::duration_cast< std::chrono::milliseconds >( systemTime.time_since_epoch() ).count();
 
 			// This is a bit hacky but will work fine.
 			// so, if our times match we add it to the library
@@ -140,7 +142,7 @@ namespace Saturn {
 			// is needed it will then load it from the .glsl file
 			// because it does not exist in the map.
 			// 
-			if( fsLastWriteTime == savedLastWriteTime )
+			if( fsLastWriteTimeMs == savedLastWriteTime )
 			{
 				ShaderLibrary::Get().Add( shader );
 			}

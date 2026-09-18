@@ -419,7 +419,13 @@ namespace Saturn {
 		
 		Args += m_Config.Name;
 		
+#if defined( SAT_PLATFORM_WINDOWS )
 		Args += " /WIN64";
+#elif defined( SAT_PLATFORM_LINUX )
+		Args += " /LINUX64";
+#else
+		Args += " /APPLE";
+#endif
 		
 		switch( kind )
 		{
@@ -459,7 +465,13 @@ namespace Saturn {
 
 		Args += m_Config.Name;
 
+#if defined( SAT_PLATFORM_WINDOWS )
 		Args += " /WIN64";
+#elif defined( SAT_PLATFORM_LINUX )
+		Args += " /LINUX64";
+#else
+		Args += " /APPLE";
+#endif
 
 		switch( kind )
 		{

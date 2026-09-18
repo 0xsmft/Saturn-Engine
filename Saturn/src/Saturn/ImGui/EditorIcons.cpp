@@ -29,7 +29,14 @@
 #include "sppch.h"
 #include "EditorIcons.h"
 
-#if defined(SAT_DIST)
+// My version of clang does not support stacktrace...
+#if defined(SAT_DIST) && !defined(SAT_COMPILER_CLANG)
+#define SAT_HAS_STACKTRACE 1
+#else
+#define SAT_HAS_STACKTRACE 0
+#endif
+
+#if SAT_HAS_STACKTRACE
 #include <stacktrace>
 #endif
 
@@ -45,9 +52,12 @@ namespace Saturn {
 		const auto Itr = s_Textures.find( rName );
 
 		return Itr == s_Textures.end() ? nullptr : Itr->second;
-#else
+#endif
+
+#if SAT_HAS_STACKTRACE && defined(SAT_DIST)
 		std::string message = std::format( "EditorIcons::GetIcon should not be called in Dist! Please check the stacktrace below and debug!\n{0}", std::stacktrace::current() );
 		SAT_CORE_VERIFY( false, message );
+#else
 		return nullptr;
 #endif
 	}

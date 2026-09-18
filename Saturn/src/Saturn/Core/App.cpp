@@ -698,7 +698,7 @@ namespace Saturn {
 			SaturnDir += L" ";
 			SaturnDir += rContext.logFilePath;
 
-			DetachedProcess dp( SaturnDir.wstring(), WorkingDir );
+			DetachedProcess dp( SaturnDir.wstring(), WorkingDir.wstring() );
 		};
 
 		CrashCatch::initialize( config );

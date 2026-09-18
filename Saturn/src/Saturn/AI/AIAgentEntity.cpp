@@ -36,6 +36,8 @@
 #include "Saturn/ImGui/ImGuiWindowManager.h"
 #endif
 
+#include "Saturn/Scene/Scene.h"
+
 namespace Saturn {
 
 	AIAgentEntity::AIAgentEntity()

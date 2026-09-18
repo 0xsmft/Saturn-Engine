@@ -541,7 +541,7 @@ namespace Saturn {
 
 		for( const auto& rPath : filesToCopy )
 		{
-			std::filesystem::copy_file( rPath, dstCache / rPath.stem() );
+			std::filesystem::copy_file( rPath, dstCache / rPath.filename() );
 		}
 
 		// TEMP: Copy over the editor assets

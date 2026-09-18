@@ -182,9 +182,12 @@ namespace SaturnBuildTool
 
                 case PlatformType.MacApple:
                     {
-                        string saturnDir = Shared.ProjectInfo.SaturnDir;
-                        LibraryPaths.Add( Path.Combine( saturnDir, "Saturn/vendor/assimp/bin" ) );
-                        Links.Add( "assimp" );
+                        if( Shared.ProjectInfo.CurrentConfigKind != ConfigKind.Dist )
+                        {
+                            string saturnDir = Shared.ProjectInfo.SaturnDir;
+                            LibraryPaths.Add( Path.Combine( saturnDir, "Saturn/vendor/assimp/bin" ) );
+                            Links.Add( "assimp" );   
+                        }
                     } break;
             }
         }

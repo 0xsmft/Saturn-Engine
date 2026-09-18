@@ -65,6 +65,11 @@ namespace SaturnBuildTool
         public List<string> LibraryPaths { get; set; }
 
         /// <summary>
+        /// Runtime search paths to libraries
+        /// </summary>
+        public List<string> RTLibraryPaths { get; set; }
+
+        /// <summary>
         /// All .lib files
         /// </summary>
         public List<string> Links { get; set; }
@@ -97,6 +102,7 @@ namespace SaturnBuildTool
             List<string> libraryPaths,
             List<string> links,
             List<string> dynamicBases,
+            List<string> rtLibraryPaths,
             int timestamp )
         {
             RemoveUnreferencedFunctions = removeUnreferencedFunctions;
@@ -109,6 +115,7 @@ namespace SaturnBuildTool
             LibraryPaths = libraryPaths;
             Links = links;
             DynamicBases = dynamicBases;
+            RTLibraryPaths = rtLibraryPaths;
 
             if( CommandLineParser.Instance.FindFlag( "HOTRELOAD" ) ) 
             {

@@ -68,6 +68,11 @@ namespace SaturnBuildTool
                 Args.Add( string.Format( " -l\"{0}\"", link ) );
             }
 
+            foreach( string rpath in LinkSettings.RTLibraryPaths )
+            {
+                Args.Add( string.Format( " -Wl,-rpath,{0}", rpath ) );
+            }
+
             // TODO: This should not be hard coded... works for now.
             switch( Shared.Platform.PlatformType )
             {

@@ -83,6 +83,7 @@ namespace SaturnBuildTool
                 TargetRules.LibraryPaths,
                 TargetRules.Links,
                 TargetRules.DynamicBase,
+                TargetRules.RTLibraryPaths,
                 Timestamp
             );
 

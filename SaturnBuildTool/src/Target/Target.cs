@@ -34,6 +34,9 @@ namespace SaturnBuildTool
         // Library search paths
         public List<string> LibraryPaths = new List<string>();
 
+        // Runtime library search paths (for Cland and GCC only, rpaths)
+        public List<string> RTLibraryPaths = new List<string>();
+
         /// <summary>
         /// The name of modules that this target needs in order to compile successfully.
         /// </summary>
@@ -51,7 +54,11 @@ namespace SaturnBuildTool
             if( Shared.Platform.PlatformType == PlatformType.MacApple )
             {
                 PreprocessorDefines.AddRange( new string[] { "SAT_PLATFORM_MACOS" } );
+                RTLibraryPaths.Add( "/System/Library/Frameworks" );
+                RTLibraryPaths.Add( "/System/Library/PrivateFrameworks" );
             }
+
+            RTLibraryPaths.Add( "@loader_path" );
         }
 
         public List<string> GetIntermediateFiles()

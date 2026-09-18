@@ -219,6 +219,7 @@ namespace SaturnBuildTool
                 ModuleRules.LibraryPaths,
                 fullLinks,
                 ModuleRules.DynamicBase,
+                parent.TargetRules.RTLibraryPaths,
                 Shared.CurrentBuildTarget.Timestamp
             );
         }

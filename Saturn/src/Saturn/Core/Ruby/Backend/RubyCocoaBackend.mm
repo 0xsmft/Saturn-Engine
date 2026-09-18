@@ -59,7 +59,7 @@
 
 @end
 
-@interface RubyWindowNotificationMgr : NSObject <NSWindowDelegate>
+@interface RubyWindowNotificationMgr : NSObject<NSWindowDelegate>
 {
 	Saturn::RubyCocoaBackend* pThis;
 }
@@ -129,9 +129,9 @@ namespace Saturn {
 				NSWindowStyleMaskResizable;
 
 			// Thank You: https://github.com/Geno-IDE/Geno/blob/master/src/Geno/C%2B%2B/GUI/Platform/macOS/macOSContentView.mm
-			m_pCloseButton       = [ NSWindow standardWindowButton:NSWindowCloseButton       forStyleMask:buttonStyle];
-			m_pMinimiseButton    = [ NSWindow standardWindowButton:NSWindowMiniaturizeButton forStyleMask:buttonStyle];
-			m_pMaximiseButton    = [ NSWindow standardWindowButton:NSWindowZoomButton        forStyleMask:buttonStyle];
+			m_pCloseButton       = [ NSWindow standardWindowButton:NSWindowCloseButton       forStyleMask:buttonStyle ];
+			m_pMinimiseButton    = [ NSWindow standardWindowButton:NSWindowMiniaturizeButton forStyleMask:buttonStyle ];
+			m_pMaximiseButton    = [ NSWindow standardWindowButton:NSWindowZoomButton        forStyleMask:buttonStyle ];
 		}
 	}
 

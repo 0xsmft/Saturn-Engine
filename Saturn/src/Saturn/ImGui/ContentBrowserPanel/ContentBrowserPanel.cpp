@@ -1602,11 +1602,16 @@ namespace Saturn {
 		if( m_RootPath != m_CurrentViewModeDirectory )
 		{
 			m_RootPath = m_CurrentViewModeDirectory;
+
+			// TODO: Need to modify filewatch to fix some compile errors
+			//		 but that can be done later.
+#if defined(SAT_COMPILER_MSVC)
 			m_Watcher = std::make_unique<filewatch::FileWatch<std::wstring>>( m_RootPath.wstring(),
-				[this]( const std::wstring& path, const filewatch::Event event )
+				[this]( const auto& path, const filewatch::Event event )
 				{
 					OnFilewatchEvent( path, event );
 				} );
+#endif
 		}
 		else
 			m_RootPath = m_CurrentViewModeDirectory;

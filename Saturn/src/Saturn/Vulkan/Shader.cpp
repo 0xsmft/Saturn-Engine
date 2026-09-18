@@ -50,7 +50,7 @@
 #endif
 
 namespace Saturn {
-	
+
 	static ShaderType VulkanStageToSaturn( VkShaderStageFlags Flags )
 	{
 		switch( Flags )
@@ -68,7 +68,7 @@ namespace Saturn {
 		}
 	}
 
-	static VkShaderStageFlags ShaderTypeToVulkan( ShaderType type ) 
+	static VkShaderStageFlags ShaderTypeToVulkan( ShaderType type )
 	{
 		switch( type )
 		{
@@ -97,7 +97,7 @@ namespace Saturn {
 			case spirv_cross::SPIRType::Boolean: return ShaderDataType::Bool;
 			case spirv_cross::SPIRType::Int: return ShaderDataType::Int;
 
-			case spirv_cross::SPIRType::Float: 
+			case spirv_cross::SPIRType::Float:
 			{
 				if( type.vecsize == 1 ) return ShaderDataType::Int;
 				if( type.vecsize == 2 ) return ShaderDataType::Int2;
@@ -173,15 +173,15 @@ namespace Saturn {
 	void ShaderLibrary::Add( const Ref<Shader>& shader, bool override /* =false*/ )
 	{
 		auto& rName = shader->GetName();
-		
-		if( m_Shaders.find( rName ) == m_Shaders.end() ) 
+
+		if( m_Shaders.find( rName ) == m_Shaders.end() )
 		{
 			m_Shaders[ rName ] = shader;
 		}
 		else if( override )
 		{
 			SAT_CORE_WARN( "Shader already exists and \"override\" was set overriding shader..." );
-			
+
 			m_Shaders[ rName ] = shader;
 		}
 	}
@@ -228,7 +228,7 @@ namespace Saturn {
 				continue;
 
 			const auto& rPath = rEntry.path();
-			if( const auto shader = Load( rPath ) ) 
+			if( const auto shader = Load( rPath ) )
 			{
 				loadedShaders.push_back( shader );
 			}
@@ -240,7 +240,7 @@ namespace Saturn {
 	const Ref<Shader>& ShaderLibrary::FindOrLoad( const std::string& name, const std::string& path )
 	{
 		// Does the shader exists?
-		if( m_Shaders.find( name ) == m_Shaders.end() ) 
+		if( m_Shaders.find( name ) == m_Shaders.end() )
 		{
 			// No, we'll add it.
 			Load( name, path );
@@ -262,7 +262,7 @@ namespace Saturn {
 
 	Ref<Shader> ShaderLibrary::Find( const std::string& name )
 	{
-		if( m_Shaders.find( name ) == m_Shaders.end() ) 
+		if( m_Shaders.find( name ) == m_Shaders.end() )
 		{
 			SAT_CORE_ERROR( "Failed to find shader \"{0}\"", name );
 			return nullptr;
@@ -270,7 +270,7 @@ namespace Saturn {
 
 		return m_Shaders.at( name );
 	}
-	
+
 	//////////////////////////////////////////////////////////////////////////
 	// SHADER
 
@@ -286,11 +286,11 @@ namespace Saturn {
 		ReadFile();
 		DetermineShaderTypes();
 
-		if( !CompileGlslToSpvAssembly() ) 
+		if( !CompileGlslToSpvAssembly() )
 		{
 			SAT_CORE_ERROR( "Shader failed to compile!" );
 			SAT_CORE_ASSERT( false );
-			
+
 			return;
 		}
 
@@ -300,7 +300,7 @@ namespace Saturn {
 		}
 
 		CreateDescriptors();
-	
+
 		Renderer::Get()->AddShaderReference( m_ShaderHash );
 	}
 #else
@@ -314,7 +314,7 @@ namespace Saturn {
 #if !defined(SAT_DIST)
 		m_ShaderSources.clear();
 #endif
-		for( auto& [ set, descriptorSet ] : m_DescriptorSets )
+		for( auto& [set, descriptorSet] : m_DescriptorSets )
 		{
 			vkDestroyDescriptorSetLayout( VulkanContext::Get()->GetDevice(), descriptorSet.SetLayout, nullptr );
 		}
@@ -417,14 +417,14 @@ namespace Saturn {
 
 		constexpr std::string_view typeToken = "#type";
 		constexpr size_t typeTokenLength = typeToken.size();
-		
+
 		size_t typeTokenPosition = m_FileContents.find( typeToken, 0 );
-		
+
 		while( typeTokenPosition != std::string::npos )
 		{
 			std::string temporaryFileCopy;
 			std::copy( m_FileContents.begin(), m_FileContents.end(), std::back_inserter( temporaryFileCopy ) );
-			
+
 			// On windows we'll use CRLF...
 #if defined(SAT_PLATFORM_WINDOWS)
 			const size_t typeTokenEnd = temporaryFileCopy.find( "\r\n", typeTokenPosition );
@@ -441,14 +441,14 @@ namespace Saturn {
 
 			const size_t begin = typeTokenPosition + typeTokenLength + 1;
 			const std::string type = temporaryFileCopy.substr( begin, typeTokenEnd - begin );
-			
+
 			const size_t nextLinePos = temporaryFileCopy.find_first_not_of( "\r\n", typeTokenEnd );
 			typeTokenPosition = temporaryFileCopy.find( typeToken, nextLinePos );
-			
+
 			const auto rawShaderCode = temporaryFileCopy.substr( nextLinePos, typeTokenPosition - ( nextLinePos == std::string::npos ? temporaryFileCopy.size() - 1 : nextLinePos ) );
 
 			const auto shaderType = ShaderTypeFromString( type );
-		
+
 			const auto index = shaderType == ShaderType::Vertex ? vertexShaderIndex++ : ( shaderType == ShaderType::Fragment ? fragmentShaderIndex++ : computeShaderIndex++ );
 
 			ShaderSource src = ShaderSource( rawShaderCode, shaderType, index );
@@ -464,7 +464,7 @@ namespace Saturn {
 		auto Resources = Compiler.get_shader_resources();
 
 		// Sort the descriptors by set and binding.
-		auto Fn = [&]( const auto& a, const auto& b ) -> bool
+		auto Fn = [ & ]( const auto& a, const auto& b ) -> bool
 		{
 			const uint32_t aSet = Compiler.get_decoration( a.id, spv::DecorationDescriptorSet );
 			const uint32_t bSet = Compiler.get_decoration( b.id, spv::DecorationDescriptorSet );
@@ -484,7 +484,7 @@ namespace Saturn {
 		{
 			const auto& Name = sb.name;
 			auto& BufferType = Compiler.get_type( sb.base_type_id );
-			int MemberCount = ( int ) BufferType.member_types.size();
+			auto MemberCount = BufferType.member_types.size();
 			uint32_t Binding = Compiler.get_decoration( sb.id, spv::DecorationBinding );
 			uint32_t Set = Compiler.get_decoration( sb.id, spv::DecorationDescriptorSet );
 
@@ -526,9 +526,10 @@ namespace Saturn {
 
 			m_DescriptorSets[ Set ].StorageBuffers[ Binding ] = Storage;
 
-			for( int i = 0; i < MemberCount; ++i )
+#if OLD
+			for( auto i = 0; i < MemberCount; ++i )
 			{
-				auto type = Compiler.get_type( BufferType.member_types[ i ] );
+				const auto& type = Compiler.get_type( BufferType.member_types[ i ] );
 				const auto& memberName = Compiler.get_member_name( BufferType.self, i );
 				size_t size = Compiler.get_declared_struct_member_size( BufferType, i );
 				auto offset = Compiler.type_struct_member_offset( BufferType, i );
@@ -542,13 +543,14 @@ namespace Saturn {
 				// Use Binding as location it does not matter.
 //				m_Uniforms.push_back( { MemberName, ( int ) Binding, SpvToSaturn( type ), size, offset } );
 			}
+#endif
 		}
 
-		for ( const auto& ub : Resources.uniform_buffers )
+		for( const auto& ub : Resources.uniform_buffers )
 		{
 			const auto& Name = ub.name;
 			auto& BufferType = Compiler.get_type( ub.base_type_id );
-			int MemberCount = ( int ) BufferType.member_types.size();
+			auto MemberCount = BufferType.member_types.size();
 			uint32_t Binding = Compiler.get_decoration( ub.id, spv::DecorationBinding );
 			uint32_t Set = Compiler.get_decoration( ub.id, spv::DecorationDescriptorSet );
 
@@ -557,7 +559,7 @@ namespace Saturn {
 			SHADER_INFO( "Uniform Buffer: {0}", Name );
 			SHADER_INFO( " Size: {0}", Size );
 			SHADER_INFO( " Binding: {0}", Binding );
-			SHADER_INFO( " Set: {0}", Set);
+			SHADER_INFO( " Set: {0}", Set );
 
 			if( m_DescriptorSets[ Set ].Set == -1 )
 				m_DescriptorSets[ Set ] = ShaderDescriptorSetTemplate( Set );
@@ -572,13 +574,13 @@ namespace Saturn {
 
 			// Check if the same element already exists if so the stage "All"
 			// is used to represent all stages.
-			auto It = std::find_if( UniformBuffers.begin(), UniformBuffers.end(), [&]( const auto& a )
+			auto It = std::find_if( UniformBuffers.begin(), UniformBuffers.end(), [ & ]( const auto& a )
 			{
 				auto&& [k, v] = a;
 
 				return v == Uniform;
 			} );
-			
+
 			if( It != std::end( UniformBuffers ) )
 			{
 				auto&& [Binding, ub] = ( *It );
@@ -590,9 +592,10 @@ namespace Saturn {
 
 			m_DescriptorSets[ Set ].UniformBuffers[ Binding ] = Uniform;
 
+#if OLD
 			for( int i = 0; i < MemberCount; ++i )
 			{
-				auto& type = Compiler.get_type( BufferType.member_types[i] );
+				auto& type = Compiler.get_type( BufferType.member_types[ i ] );
 				const auto& memberName = Compiler.get_member_name( BufferType.self, i );
 				size_t size = Compiler.get_declared_struct_member_size( BufferType, i );
 				auto offset = Compiler.type_struct_member_offset( BufferType, i );
@@ -606,6 +609,7 @@ namespace Saturn {
 				// Use Binding as location it does not matter.
 //				m_Uniforms.push_back( { MemberName, (int)Binding, SpvToSaturn( type ), size, offset } );
 			}
+#endif
 		}
 
 		uint32_t maxPushConstantSize = 0;
@@ -614,11 +618,11 @@ namespace Saturn {
 			maxPushConstantSize = glm::max( maxPushConstantSize, rDeviceProp.DeviceProps.limits.maxPushConstantsSize );
 		}
 
-		for ( const auto& pc : Resources.push_constant_buffers )
+		for( const auto& pc : Resources.push_constant_buffers )
 		{
 			const auto& Name = pc.name;
 			auto& BufferType = Compiler.get_type( pc.base_type_id );
-			int MemberCount = ( int )BufferType.member_types.size();
+			auto MemberCount = BufferType.member_types.size();
 			uint32_t set = Compiler.get_decoration( pc.id, spv::DecorationDescriptorSet );
 
 			uint32_t Size = ( uint32_t ) Compiler.get_declared_struct_size( BufferType );
@@ -640,15 +644,15 @@ namespace Saturn {
 			SHADER_INFO( " Size: {0}", Size );
 			SHADER_INFO( " Offset: {0}", OffsetFromLastPC );
 			SHADER_INFO( " Set: {0}", ( uint32_t ) set );
-			SHADER_INFO( " Stage: {0}", ( uint32_t )shaderType );
+			SHADER_INFO( " Stage: {0}", ( uint32_t ) shaderType );
 
-			for( int i = 0; i < MemberCount; ++i )
+			for( auto i = 0; i < MemberCount; ++i )
 			{
-				auto type = Compiler.get_type( BufferType.member_types[ i ] );
+				const auto& rType = Compiler.get_type( BufferType.member_types[ i ] );
 				const auto& memberName = Compiler.get_member_name( BufferType.self, i );
 				size_t size = Compiler.get_declared_struct_member_size( BufferType, i );
 				auto offset = Compiler.type_struct_member_offset( BufferType, i );
-				
+
 				std::string MemberName;
 
 				if( Name.empty() )
@@ -705,7 +709,7 @@ namespace Saturn {
 			m_DescriptorSets[ set ].SampledImages.emplace_back( Name, shaderType, set, binding, arraySizes );
 		}
 
-		for ( const auto& Resource : Resources.storage_images )
+		for( const auto& Resource : Resources.storage_images )
 		{
 			const auto& Name = Resource.name;
 			auto& BaseType = Compiler.get_type( Resource.base_type_id );
@@ -737,7 +741,7 @@ namespace Saturn {
 			const auto& Name = si.name;
 			auto& BaseType = Compiler.get_type( si.base_type_id );
 			auto& RealType = Compiler.get_type( si.type_id );
-	
+
 			uint32_t set = Compiler.get_decoration( si.id, spv::DecorationDescriptorSet );
 			uint32_t binding = Compiler.get_decoration( si.id, spv::DecorationBinding );
 			uint32_t arraySize = RealType.array[ 0 ];
@@ -786,12 +790,12 @@ namespace Saturn {
 		std::vector< VkDescriptorPoolSize > PoolSizes;
 
 		// Iterate over descriptor sets
-		for( auto& [ set, descriptorSet ] : m_DescriptorSets )
+		for( auto& [set, descriptorSet] : m_DescriptorSets )
 		{
 			std::vector< VkDescriptorSetLayoutBinding > Bindings;
 
 			// Iterate over uniform buffers
-			for( auto& [ Binding, ub ] : descriptorSet.UniformBuffers )
+			for( auto& [Binding, ub] : descriptorSet.UniformBuffers )
 			{
 				VkDescriptorSetLayoutBinding Binding = {};
 				Binding.binding = ub.Binding;
@@ -990,8 +994,8 @@ namespace Saturn {
 
 		// TODO: Shader cache.
 		Timer CompileTimer;
-	
-		for ( auto&& [key, src] : m_ShaderSources )
+
+		for( auto&& [key, src] : m_ShaderSources )
 		{
 			const std::string& rShaderSrcCode = src.Source;
 
@@ -1001,7 +1005,7 @@ namespace Saturn {
 				m_Filepath.string().c_str(),
 				CompilerOptions );
 
-			if( Res.GetCompilationStatus() != shaderc_compilation_status_success ) 
+			if( Res.GetCompilationStatus() != shaderc_compilation_status_success )
 			{
 				SAT_CORE_ERROR( "Shader Error status {0}", ( uint32_t ) Res.GetCompilationStatus() );
 				SAT_CORE_ERROR( "Shader Error at shader stage: {0}", ShaderTypeToString( key.Type ) );
@@ -1017,7 +1021,7 @@ namespace Saturn {
 		}
 
 		SHADER_INFO( "Shader Compilation took {0} ms", CompileTimer.ElapsedMilliseconds() );
-		
+
 		return true;
 #else
 		return false;
@@ -1031,8 +1035,8 @@ namespace Saturn {
 		std::string OldfileContents = m_FileContents;
 		size_t OldFileSize = m_FileSize;
 
-		auto OldSpvMap          = m_SpvCode;
-		auto OldDescriptorSets  = m_DescriptorSets;
+		auto OldSpvMap = m_SpvCode;
+		auto OldDescriptorSets = m_DescriptorSets;
 		auto OldPushConstsRange = m_VulkanRanges;
 		auto OldPushContsts = m_PushConstants;
 
@@ -1051,12 +1055,12 @@ namespace Saturn {
 		{
 			// ... actually never mind, we didn't compile successfully
 			// so set it back to what it was beforehand.
-			m_SpvCode              = OldSpvMap;
-			m_DescriptorSets       = OldDescriptorSets;
-			m_VulkanRanges         = OldPushConstsRange;
-			m_PushConstants        = OldPushContsts;
-			m_FileContents		   = OldfileContents;
-			m_FileSize			   = OldFileSize;
+			m_SpvCode = OldSpvMap;
+			m_DescriptorSets = OldDescriptorSets;
+			m_VulkanRanges = OldPushConstsRange;
+			m_PushConstants = OldPushContsts;
+			m_FileContents = OldfileContents;
+			m_FileSize = OldFileSize;
 
 			SAT_CORE_ERROR( "Shader hot reloading failed. Shader did not compile successfully!" );
 

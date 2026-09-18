@@ -92,6 +92,7 @@ project "Saturn-ProjectBrowser"
 		filter { "system:windows", "configurations:Release" }
 			postbuildcommands 
 			{ 
+				'{COPYFILE} "../Saturn/vendor/assimp/bin/Release/assimp-vc143-mt.dll" "%{cfg.targetdir}"',
 				'{COPYFILE} "../bin/Release-windows-x86_64/Saturn-SharedStorage/Saturn-SharedStorage.dll" "%{cfg.targetdir}"'
 			}
 

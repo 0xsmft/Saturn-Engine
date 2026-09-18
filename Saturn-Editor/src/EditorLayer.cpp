@@ -4789,9 +4789,8 @@ namespace Saturn {
 
 	bool EditorLayer::BuildShaderBundle()
 	{
-		// Make sure we include the Texture Pass shader.
-		// Texture Pass shader is only ever loaded in Dist and we are not on Dist at this point, so load it now.
-		Ref<Shader> TexturePass = ShaderLibrary::Get().FindOrLoad( "TexturePass", "content/shaders/TexturePass.glsl" );
+		// Before doing anything, lets load all the shaders in the directory.
+		const auto newlyLoadedShaders = ShaderLibrary::Get().LoadAllInShadersDirectory();
 
 		const auto shaderRes = ShaderBundle::BundleShaders();
 		const bool built = shaderRes == ShaderBundleResult::Success;
@@ -4810,8 +4809,10 @@ namespace Saturn {
 
 		Application::Get()->GetWindow()->FlashAttention();
 
-		ShaderLibrary::Get().Remove( TexturePass );
-		TexturePass = nullptr;
+		for( const auto& rShader : newlyLoadedShaders )
+		{
+			ShaderLibrary::Get().Remove( rShader );
+		}
 
 		return built;
 	}

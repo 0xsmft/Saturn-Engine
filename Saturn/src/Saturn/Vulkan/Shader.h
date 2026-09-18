@@ -531,9 +531,14 @@ namespace Saturn {
 		~ShaderLibrary();
 		
 		void Add( const Ref<Shader>& shader, bool override = false );
-		void Load( const std::string& path );
+		Ref<Shader> Load( const std::filesystem::path& path );
 		void Load( const std::string& name, const std::string& path );
 		void Remove( const Ref<Shader>& shader );
+
+		//
+		// Loads all the shaders in content/shaders
+		//
+		std::vector<Ref<Shader>> LoadAllInShadersDirectory();
 
 		// If the shader does not exist, it will load it.
 		const Ref<Shader>& FindOrLoad( const std::string& name, const std::string& path );

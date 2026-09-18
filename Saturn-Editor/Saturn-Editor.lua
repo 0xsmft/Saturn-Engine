@@ -150,6 +150,7 @@ project "Saturn-Editor"
 				postbuildcommands 
 				{ 
 					'{COPYFILE} "../bin/Release-windows-x86_64/Saturn-SharedStorage/Saturn-SharedStorage.dll" "%{cfg.targetdir}"',
+					'{COPYFILE} "../Saturn/vendor/assimp/bin/Release/assimp-vc143-mt.dll" "%{cfg.targetdir}"',
 				}
 
 				links 

@@ -887,7 +887,7 @@ namespace Saturn {
 			[m_pData->m_pMetalLayer release];
 			m_pData->m_pMetalLayer = nil;
 
-			[m_pData->m_pWindow release];
+			[m_pData->m_pWindow close];
 			m_pData->m_pWindow = nil;
 
 			// GLFW does this, so we will too.

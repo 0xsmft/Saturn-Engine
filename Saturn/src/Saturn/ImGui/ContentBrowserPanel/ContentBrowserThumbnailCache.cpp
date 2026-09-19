@@ -107,7 +107,7 @@ namespace Saturn {
 				if( Itr != m_Cache.end() )
 				{
 					const auto& rData = Itr->second;
-					if( rData.Time == rData.Time && rData.Texture != nullptr )
+					if( rData.Texture != nullptr )
 					{
 						m_GenerationQueue.pop();
 						continue;
@@ -286,7 +286,7 @@ namespace Saturn {
 					ImGui::Text( "%s", rData.ExistsOnFS ? "true" : "false" );
 
 					ImGui::TableNextColumn();
-					ImGui::Text( "%" PRIu64, rID );
+					ImGui::Text( "%" PRIu64, ( uint64_t ) rID );
 
 					ImGui::TableNextColumn();
 					Auxiliary::Image( rData.Texture == nullptr ? m_FileIcon : rData.Texture, ImVec2( 24.0f, 24.0f ) );

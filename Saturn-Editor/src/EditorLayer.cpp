@@ -1672,7 +1672,7 @@ namespace Saturn {
 				auto defaultMaterialID = ActiveProject->GetDefaultMaterialAsset();
 
 				ImGui::Text( "Default Material Asset:" );
-				defaultMaterialID == 0 ? ImGui::TextColored( ImVec4( 1.0f, 0.0f, 0.0f, 1.0f ), "None" ) : ImGui::Text( "%" PRIu64, defaultMaterialID );
+				defaultMaterialID == 0 ? ImGui::TextColored( ImVec4( 1.0f, 0.0f, 0.0f, 1.0f ), "None" ) : ImGui::Text( "%" PRIu64, ( uint64_t ) defaultMaterialID );
 
 				ImGui::Spring();
 
@@ -1717,7 +1717,7 @@ namespace Saturn {
 				auto defaultMaterialID = ActiveProject->GetDefaultPhysicsMaterialAsset();
 
 				ImGui::Text( "Default Physics Material Asset:" );
-				defaultMaterialID == 0 ? ImGui::TextColored( ImVec4( 1.0f, 0.0f, 0.0f, 1.0f ), "None" ) : ImGui::Text( "%" PRIu64, defaultMaterialID );
+				defaultMaterialID == 0 ? ImGui::TextColored( ImVec4( 1.0f, 0.0f, 0.0f, 1.0f ), "None" ) : ImGui::Text( "%" PRIu64, ( uint64_t ) defaultMaterialID );
 
 				ImGui::Spring();
 
@@ -1762,7 +1762,7 @@ namespace Saturn {
 				auto defaultFontAsset = ActiveProject->GetDefaultFontAsset();
 
 				ImGui::Text( "Default Font Asset:" );
-				defaultFontAsset == 0 ? ImGui::TextColored( ImVec4( 1.0f, 0.0f, 0.0f, 1.0f ), "None" ) : ImGui::Text( "%" PRIu64, defaultFontAsset );
+				defaultFontAsset == 0 ? ImGui::TextColored( ImVec4( 1.0f, 0.0f, 0.0f, 1.0f ), "None" ) : ImGui::Text( "%" PRIu64, ( uint64_t ) defaultFontAsset );
 
 				ImGui::Spring();
 
@@ -1807,7 +1807,7 @@ namespace Saturn {
 				auto defaultPhysReg = ActiveProject->GetDefaultPhysRegAsset();
 
 				ImGui::Text( "Default Physics Surface Registry Asset:" );
-				defaultPhysReg == 0 ? ImGui::TextColored( ImVec4( 1.0f, 0.0f, 0.0f, 1.0f ), "None" ) : ImGui::Text( "%" PRIu64, defaultPhysReg );
+				defaultPhysReg == 0 ? ImGui::TextColored( ImVec4( 1.0f, 0.0f, 0.0f, 1.0f ), "None" ) : ImGui::Text( "%" PRIu64, ( uint64_t ) defaultPhysReg );
 
 				ImGui::Spring();
 
@@ -2581,7 +2581,7 @@ namespace Saturn {
 					ImGui::Selectable( asset->Name.c_str(), false );
 
 					ImGui::TableSetColumnIndex( 1 );
-					ImGui::Text( "%" PRIu64, id );
+					ImGui::Text( "%" PRIu64, ( uint64_t ) id );
 
 					ImGui::TableSetColumnIndex( 2 );
 					ImGui::Text( AssetTypeToString( asset->Type ).data() );
@@ -3215,6 +3215,7 @@ namespace Saturn {
 			if( ImGui::MenuItem( "DEBUG: Reset Read Only state" ) )					m_ImGuiWindowManager->ResetReadOnlyState();
 			if( ImGui::MenuItem( "DEBUG: Mark scene as dirty" ) )					m_EditorScene->MarkDirty();
 			if( ImGui::MenuItem( "DEBUG: Show Alura Style live edit" ) )			m_ShowLiveAluraStyleEditor ^= 1;
+			if( ImGui::MenuItem( "DEBUG: Show attention" ) )						Application::Get()->GetWindow()->FlashAttention();
 
 			ImGui::EndMenu();
 		}
@@ -3587,7 +3588,7 @@ namespace Saturn {
 									ImGui::Separator();
 
 									ImGui::Text( "%s", dependency->Path.string().c_str() );
-									ImGui::Text( "Asset: %" PRIu64, dependency->ID );
+									ImGui::Text( "Asset: %" PRIu64, ( uint64_t ) dependency->ID );
 									ImGui::Text( "Asset Name: %s", dependency->Name.c_str() );
 									ImGui::Text( "Asset Version: %" PRIu64, dependency->Version );
 

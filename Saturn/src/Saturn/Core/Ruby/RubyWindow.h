@@ -67,6 +67,7 @@ namespace Saturn {
 		void Focus();
 		void FlashAttention();
 		void CentreWindowXYInMonitor();
+		void Close();
 		
 		// Set a 32x32 (preferred) RGBA texture that is not flipped vertically.
 		void SetIcon( Ref<class Texture2D> icon );

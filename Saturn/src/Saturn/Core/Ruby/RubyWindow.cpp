@@ -287,6 +287,11 @@ namespace Saturn {
 		m_pDefaultBackend->FlashAttention();
 	}
 
+	void RubyWindow::Close() 
+	{
+		m_pDefaultBackend->CloseWindow();
+	}
+
 	void RubyWindow::CentreWindowXYInMonitor()
 	{
 		// Centre window.

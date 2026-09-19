@@ -390,13 +390,16 @@ static int TranslateMacOSModifiers(NSUInteger flags)
 		mods |= Saturn::RubyKey_LeftShift;
 
 	if( flags & NSEventModifierFlagCommand )
-		mods |= Saturn::RubyKey_LeftCtrl;
+		mods |= Saturn::RubyKey_OSKey;
 
 	if( flags & NSEventModifierFlagOption )
 		mods |= Saturn::RubyKey_LeftAlt;
 
 	if( flags & NSEventModifierFlagControl )
 		mods |= Saturn::RubyKey_LeftCtrl;
+
+	if( flags & NSEventModifierFlagCapsLock )
+		mods |= Saturn::RubyKey_CapsLock;
 
 	return mods;
 }
@@ -405,12 +408,14 @@ static Saturn::RubyKey ConvertMacOSVkToRuby( uint16_t vk )
 {
 	using namespace Saturn;
 
-	const std::string hex = std::format( "{:08X}", vk );
-	SAT_CORE_WARN( "[Ruby] Unknown Key!, Win32 scan code: WSC/0x{}", hex );
-
 	switch( vk )
 	{
-		default: return RubyKey_UnknownKey;
+		default:
+		{
+			const std::string hex = std::format( "{:08X}", vk );
+			SAT_CORE_WARN( "[Ruby] Unknown Key!, Cocoa scan code: CSC/0x{}", hex );
+			return RubyKey_UnknownKey;
+		}
 
 		case 0x0: return RubyKey_A;
 		case 0xB: return RubyKey_B;
@@ -451,6 +456,8 @@ static Saturn::RubyKey ConvertMacOSVkToRuby( uint16_t vk )
 		case 0x1D: return RubyKey_Num0;
 
 		case 0x33: return RubyKey_Backspace;
+		case 0x37: return RubyKey_OSKey;
+		case 0x38: return RubyKey_LeftShift;
 		case 0x30: return RubyKey_Tab;
 		case 0x24: return RubyKey_Enter;
 		case 0x31: return RubyKey_Space;
@@ -476,12 +483,12 @@ static Saturn::RubyKey ConvertMacOSVkToRuby( uint16_t vk )
 		case 0x6F: return RubyKey_F12;
 
 		case 0x73: return RubyKey_CapsLock;
-		case 0x39: return RubyKey_LeftShift;
 		case 0x3C: return RubyKey_RightShift;
 		case 0x3B: return RubyKey_LeftCtrl;
 		case 0x3E: return RubyKey_RightCtrl;
 		case 0x3A: return RubyKey_LeftAlt;
 		case 0x3D: return RubyKey_RightAlt;
+//		case 0x3F: return RubyKey_FunctionKey;
 
 		case 0x29: return RubyKey_Semicolon;
 		case 0x27: return RubyKey_Apostrophe;
@@ -500,8 +507,69 @@ static Saturn::RubyKey ConvertMacOSVkToRuby( uint16_t vk )
    }
 }
 
+static NSUInteger RubyModifierKeyToNS( Saturn::RubyKey key )
+{
+	switch( key )
+	{
+		default: return 0u;
+
+		case Saturn::RubyKey_LeftCtrl:
+		case Saturn::RubyKey_RightCtrl:
+		{
+			return NSEventModifierFlagControl;
+		}
+
+		case Saturn::RubyKey_LeftShift:
+		case Saturn::RubyKey_RightShift:
+		{
+			return NSEventModifierFlagShift;
+		}
+
+		case Saturn::RubyKey_LeftAlt:
+		case Saturn::RubyKey_RightAlt:
+		{
+			return NSEventModifierFlagOption;
+		}
+
+		case Saturn::RubyKey_OSKey:
+		{
+			return NSEventModifierFlagCommand;
+		}
+
+		case Saturn::RubyKey_CapsLock:
+		{
+			return NSEventModifierFlagCapsLock;
+		}
+   }
+}
+
 - (void)flagsChanged:(NSEvent *)event
 {
+	const Saturn::RubyKey saturnKey = ConvertMacOSVkToRuby( [event keyCode] );
+	const int Modifiers = TranslateMacOSModifiers( [event modifierFlags] );
+	const uint32_t modifierFlags = [event modifierFlags] & NSEventModifierFlagDeviceIndependentFlagsMask;
+	const auto NSEventFlag = RubyModifierKeyToNS( saturnKey );
+
+	bool isPressed = false;
+	if( NSEventFlag & modifierFlags ) 
+	{
+		if( Saturn::RubyLibrary::Get().IsKeyDown( saturnKey ) )
+		{
+			pThis->GetParent()->IntrnlSetKeyDown( saturnKey, false );
+			pThis->GetParent()->DispatchEvent<Saturn::RubyKeyEvent>( Saturn::EventType::KeyReleased, saturnKey, [event keyCode], Modifiers );
+		}
+		else 
+		{
+			pThis->GetParent()->IntrnlSetKeyDown( saturnKey, true );
+			pThis->GetParent()->DispatchEvent<Saturn::RubyKeyEvent>( Saturn::EventType::KeyPressed, saturnKey, [event keyCode], Modifiers );
+		}
+	}
+	else
+	{
+		pThis->GetParent()->IntrnlSetKeyDown( saturnKey, false );
+		pThis->GetParent()->DispatchEvent<Saturn::RubyKeyEvent>( Saturn::EventType::KeyReleased, saturnKey, [event keyCode], Modifiers );
+	}
+
 	[self updateButtons:event];
 }
 
@@ -539,6 +607,11 @@ static Saturn::RubyKey ConvertMacOSVkToRuby( uint16_t vk )
 		pThis->GetParent()->DispatchEvent<Saturn::RubyCharacterEvent>( Saturn::EventType::InputCharacter, wc );
 	}
 }
+
+- (void)doCommandBySelector:(SEL)selector
+{
+}
+
 
 - (BOOL)hasMarkedText
 {

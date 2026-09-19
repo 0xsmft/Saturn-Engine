@@ -41,6 +41,11 @@
 #import <QuartzCore/QuartzCore.h>
 #import "RubyNSApp.h"
 
+@interface NSCursor()
++ (id)_windowResizeNorthWestSouthEastCursor;
++ (id)_windowResizeNorthEastSouthWestCursor;
+@end
+
 @interface RubyMacWindow : NSWindow {}
 @end
 
@@ -1066,12 +1071,12 @@ namespace Saturn {
 
                 case RubyCursorType::ResizeNWSE:
                 {
-                    //m_pData->m_pCursor = [NSCursor resizeDiagonalCursor];
+                    m_pData->m_pCursor = [NSCursor respondsToSelector:@selector(_windowResizeNorthWestSouthEastCursor)] ? [NSCursor _windowResizeNorthWestSouthEastCursor] : [NSCursor closedHandCursor];
                 } break;
 
                 case RubyCursorType::ResizeNESW:
                 {
-                    //m_pData->m_pCursor = [NSCursor resizeDiagonalCursor];
+                    m_pData->m_pCursor = [NSCursor respondsToSelector:@selector(_windowResizeNorthEastSouthWestCursor)] ? [NSCursor _windowResizeNorthEastSouthWestCursor] : [NSCursor closedHandCursor];
                 } break;
 
 				case RubyCursorType::Hand:

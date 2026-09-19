@@ -50,6 +50,8 @@
 // Needed for FOLDERID_RoamingAppData et al.
 #include <ShObjIdl.h>
 #include <ShlObj.h>
+#elif defined( SAT_PLATFORM_MACOS )
+#include "MacOSAuxiliary/MacOSAuxiliary.h"
 #endif
 
 #if defined(SAT_DIST) && !defined(SAT_WITH_CRASHCATCH)
@@ -152,7 +154,7 @@ namespace Saturn {
 					BuildRenderCommands();
 				}
 				// End this frame on render thread.
-				RenderThread::Get().Queue( [=] { Renderer::Get()->EndFrame(); } );
+				RenderThread::Get().Queue( [ = ] { Renderer::Get()->EndFrame(); } );
 			}
 			else
 				std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
@@ -175,13 +177,13 @@ namespace Saturn {
 #endif
 
 		OnShutdown();
-		
+
 		// So the difference between "Terminate" and delete is delete will completely destroy the class and remove it from the singleton list. 
 		// However "Terminate" is used to destroy any data in the class but will not remove it from the singleton list, it is also used because we don't own the class so we can just implicitly destroy them.
 		RenderThread::Get().RequestJoin();
 
 #if !defined( SAT_DIST )
-		m_VulkanContext->SubmitTerminateResource( [&]()
+		m_VulkanContext->SubmitTerminateResource( [ & ]()
 		{
 			SAT_CORE_ASSERT( m_Layers.empty(), "Not all layers have been removed prior to the Application shutdown. The applicaition is not responsible for cleaning up layers it doesn't own." );
 
@@ -190,7 +192,7 @@ namespace Saturn {
 			m_ImGuiLayer = nullptr;
 		} );
 #endif
-		
+
 		delete m_VulkanContext;
 		delete m_Window;
 	}
@@ -226,10 +228,10 @@ namespace Saturn {
 				}
 			} );
 
-		RenderThread::Get().Queue( [=]
-			{
-				m_ImGuiLayer->End( Renderer::Get()->ActiveCommandBuffer() );
-			} );
+		RenderThread::Get().Queue( [ = ]
+		{
+			m_ImGuiLayer->End( Renderer::Get()->ActiveCommandBuffer() );
+		} );
 #endif
 	}
 
@@ -252,8 +254,8 @@ namespace Saturn {
 
 	void Application::ProcessAllEvents()
 	{
-		// Poll all windows owned by the main thread.
-		RubyLibrary::PollEvents();
+		// Poll all windows owned by the main thread
+		RubyLibrary::Get().PollEvents();
 
 		std::scoped_lock<std::mutex> lock( m_Mutex );
 
@@ -349,7 +351,19 @@ namespace Saturn {
 
 		::CoTaskMemFree( nativePath );
 #elif defined(SAT_PLATFORM_LINUX)
-		Core::BreakDebug();
+		const char* pHomeDir = std::getenv( "HOME" );
+		if( !pHomeDir )
+		{
+			pHomeDir = std::getenv( "XDG_CONFIG_HOME" );
+		}
+
+		path = pHomeDir;
+
+		path /= ".config";
+		path /= "Saturn";
+#elif defined(SAT_PLATFORM_MACOS)
+		path = Auxiliary::MacOS::GetAppDataPath();
+		path /= "Saturn";
 #endif
 
 		if( !std::filesystem::exists( path ) )
@@ -419,16 +433,18 @@ namespace Saturn {
 		NFD::UniquePathU8 nfdPath;
 
 		nfdwindowhandle_t parentWindow
-		{ 
+		{
 #if defined(SAT_PLATFORM_WINDOWS)
-			.type = NFD_WINDOW_HANDLE_TYPE_WINDOWS, 
+			.type = NFD_WINDOW_HANDLE_TYPE_WINDOWS,
 #elif defined(SAT_PLATFORM_LINUX)
-			.type = NFD_WINDOW_HANDLE_TYPE_X11, 
+			.type = NFD_WINDOW_HANDLE_TYPE_X11,
+#elif defined(SAT_PLATFORM_MACOS)
+			.type = NFD_WINDOW_HANDLE_TYPE_COCOA,
 #endif
-			.handle = ( void* ) m_Window->GetNativeHandle() 
+			.handle = ( void* ) m_Window->GetNativeHandle()
 		};
 
-		if( NFD::OpenDialog( nfdPath, filters.data(), ( nfdfiltersize_t ) filters.size(), nullptr, parentWindow ) == NFD_OKAY ) 
+		if( NFD::OpenDialog( nfdPath, filters.data(), ( nfdfiltersize_t ) filters.size(), nullptr, parentWindow ) == NFD_OKAY )
 		{
 			path = std::filesystem::path( nfdPath.get() );
 		}
@@ -469,6 +485,8 @@ namespace Saturn {
 			.type = NFD_WINDOW_HANDLE_TYPE_WINDOWS,
 #elif defined(SAT_PLATFORM_LINUX)
 			.type = NFD_WINDOW_HANDLE_TYPE_X11,
+#elif defined(SAT_PLATFORM_MACOS)
+			.type = NFD_WINDOW_HANDLE_TYPE_COCOA,
 #endif
 			.handle = ( void* ) m_Window->GetNativeHandle()
 		};
@@ -481,7 +499,7 @@ namespace Saturn {
 			if( NFD::PathSet::Count( nfdPaths, count ) == NFD_OKAY )
 			{
 				paths.reserve( count );
-				
+
 				for( nfdpathsetsize_t i = 0; i < count; ++i )
 				{
 					NFD::UniquePathSetPathU8 nfdPath;
@@ -532,6 +550,8 @@ namespace Saturn {
 			.type = NFD_WINDOW_HANDLE_TYPE_WINDOWS,
 #elif defined(SAT_PLATFORM_LINUX)
 			.type = NFD_WINDOW_HANDLE_TYPE_X11,
+#elif defined(SAT_PLATFORM_MACOS)
+			.type = NFD_WINDOW_HANDLE_TYPE_COCOA,
 #endif
 			.handle = ( void* ) m_Window->GetNativeHandle()
 		};
@@ -550,15 +570,17 @@ namespace Saturn {
 	{
 #if defined(SAT_PLATFORM_WINDOWS)
 		std::wstring CommandLine = L"";
-		
+
 		if( select )
 			CommandLine = std::format( L"explorer.exe /select,\"{0}\"", rPath.wstring() );
 		else
 			CommandLine = std::format( L"explorer.exe \"{0}\"", rPath.wstring() );
 
 		DetachedProcess dp( CommandLine );
-#elif defined(SAT_PLATFORM_LINUX) || defined(SAT_PLATFORM_MACOS)
+#elif defined(SAT_PLATFORM_LINUX)
 		SAT_CORE_ASSERT( false, "Application::OpenNativeFileExplorer not implemented on Linux!" );
+#elif defined(SAT_PLATFORM_MACOS)
+		Auxiliary::MacOS::OpenFolderInExplorer( rPath, select );
 #endif
 	}
 
@@ -574,13 +596,15 @@ namespace Saturn {
 			.type = NFD_WINDOW_HANDLE_TYPE_WINDOWS,
 #elif defined(SAT_PLATFORM_LINUX)
 			.type = NFD_WINDOW_HANDLE_TYPE_X11,
+#elif defined(SAT_PLATFORM_MACOS)
+			.type = NFD_WINDOW_HANDLE_TYPE_COCOA,
 #endif
 			.handle = ( void* ) m_Window->GetNativeHandle()
 		};
 
 		// UniquePathN == std::unique_ptr so it's kinda like a span of wchars.
 		NFD::UniquePathN nfdPath;
-		if( NFD::PickFolder( nfdPath, nullptr, parentWindow ) == NFD_OKAY ) 
+		if( NFD::PickFolder( nfdPath, nullptr, parentWindow ) == NFD_OKAY )
 		{
 			path = std::filesystem::path( nfdPath.get() );
 		}
@@ -674,7 +698,7 @@ namespace Saturn {
 			SaturnDir += L" ";
 			SaturnDir += rContext.logFilePath;
 
-			DetachedProcess dp( SaturnDir.wstring(), WorkingDir );
+			DetachedProcess dp( SaturnDir.wstring(), WorkingDir.wstring() );
 		};
 
 		CrashCatch::initialize( config );

@@ -7,7 +7,7 @@
 
 #include <AppKit/AppKit.h>
 #include <Availability.h>
-#include "nfd.h"
+#include "nativefiledialog/nfd.h"
 
 // MacOS is deprecating the allowedFileTypes property in favour of allowedContentTypes, so we have
 // to introduce this breaking change.  Define NFD_MACOS_ALLOWEDCONTENTTYPES to 1 to have it set the

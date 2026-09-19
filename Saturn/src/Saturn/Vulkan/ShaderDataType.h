@@ -66,34 +66,25 @@ namespace Saturn {
 		{
 			case ShaderDataType::Float:
 				return VK_FORMAT_R32_SFLOAT;
-				break;
 			case ShaderDataType::Float2:
 				return VK_FORMAT_R32G32_SFLOAT;
-				break;
 			case ShaderDataType::Float3:
 				return VK_FORMAT_R32G32B32_SFLOAT;
-				break;
 			case ShaderDataType::Sampler2D:
 			case ShaderDataType::Mat4:
 			case ShaderDataType::Float4:
 				return VK_FORMAT_R32G32B32A32_SFLOAT;
-				break;
 			case ShaderDataType::Bool:
 			case ShaderDataType::Int:
 				return VK_FORMAT_R32_SINT;
-				break;
 			case ShaderDataType::Int2:
 				return VK_FORMAT_R32G32_SINT;
-				break;
 			case ShaderDataType::Int3:
 				return VK_FORMAT_R32G32B32_SINT;
-				break;
 			case ShaderDataType::Int4:
 				return VK_FORMAT_R32G32B32A32_SINT;
-				break;
 			case ShaderDataType::Mat3:
 				return VK_FORMAT_R32G32B32_SFLOAT;
-				break;
 			default:
 				break;
 		}
@@ -107,34 +98,27 @@ namespace Saturn {
 		{
 			case VK_FORMAT_R32_SFLOAT:
 				return ShaderDataType::Float;
-				break;
 			case VK_FORMAT_R32G32_SFLOAT:
 				return ShaderDataType::Float2;
-				break;
 			case VK_FORMAT_R32G32B32_SFLOAT:
 				return ShaderDataType::Float3;
-				break;
 			case VK_FORMAT_R32G32B32A32_SFLOAT:
 				return ShaderDataType::Float4;
-				break;
 			case VK_FORMAT_R32_SINT:
 				return ShaderDataType::Int;
-				break;
 			case VK_FORMAT_R32G32_SINT:
 				return ShaderDataType::Int2;
-				break;
 			case VK_FORMAT_R32G32B32_SINT:
 				return ShaderDataType::Int3;
-				break;
 			case VK_FORMAT_R32G32B32A32_SINT:
 				return ShaderDataType::Int4;
-				break;
 			case VK_FORMAT_R8_UNORM:
 				return ShaderDataType::Bool;
-				break;
 			default:
 				break;
 		}
+		
+		return ShaderDataType::None;
 	}
 
 	static ShaderDataType VulkanDescriptorToShaderDataType( VkDescriptorType Type )

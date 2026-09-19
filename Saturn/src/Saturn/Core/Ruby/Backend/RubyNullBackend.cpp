@@ -103,7 +103,7 @@ namespace Saturn {
 	{
 	}
 
-	RubyIVec2 RubyNullBackend::GetSize()
+	RubyIVec2 RubyNullBackend::GetSize() const
 	{
 		return { 0, 0 };
 	}
@@ -187,4 +187,13 @@ namespace Saturn {
 	{
 	}
 
+    RubyVec2 RubyNullBackend::GetFramebufferScale() const
+    {
+        return { 1.0f, 1.0f };
+    }
+
+    RubyIVec2 RubyNullBackend::GetFramebufferSize() const
+    {
+        return { 0u, 0u };
+    }
 }

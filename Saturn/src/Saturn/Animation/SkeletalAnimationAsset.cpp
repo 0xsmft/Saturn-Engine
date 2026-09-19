@@ -136,7 +136,7 @@ namespace Saturn {
 
 	void SkeletalAnimationAsset::MakeUniformAndCompress( aiAnimation* pAnimation )
 	{
-		uint64_t highestSample = 2;
+		size_t highestSample = 2;
 		for( const auto& rChannel : m_Bones )
 		{
 			// Pick highest.

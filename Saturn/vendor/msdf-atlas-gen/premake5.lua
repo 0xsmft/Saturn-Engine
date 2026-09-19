@@ -8,6 +8,11 @@ project "MSDF-Atlas-Gen"
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
 
+	links
+	{
+		"MSDFGen"
+	}
+
 	files
 	{
 		"msdf-atlas-gen/*.h",
@@ -34,6 +39,9 @@ project "MSDF-Atlas-Gen"
 	filter "system:linux"
 		pic "On"
 		systemversion "latest"
+		staticruntime "off"
+
+	filter "system:macosx"
 		staticruntime "off"
 
 	filter "configurations:Debug or configurations:Debug-ASan"

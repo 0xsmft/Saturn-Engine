@@ -60,7 +60,16 @@
 
 #define SAT_CLANG_TYPENAME 
 #define SAT_GCC_TYPENAME 
+#define SAT_GCC_TEMPLATE
+#define SAT_GCC_CLANG_TEMPLATE
+
+#if defined(_MSC_VER)
 #define SAT_MSVC_TYPENAME typename
+#define SAT_MSVC_STDCALL __stdcall
+#else
+#define SAT_MSVC_TYPENAME
+#define SAT_MSVC_STDCALL
+#endif
 
 // We only support x86_64
 #if defined(_MSC_VER) && defined(_M_X64) || defined(__x86_64__)

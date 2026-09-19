@@ -42,7 +42,7 @@ namespace Saturn {
 	public:
 		struct RuntimeData
 		{
-			Ref<MaterialAsset> MaterialAsset = nullptr;
+			Ref<MaterialAsset> MaterialAsset;
 		};
 	public:
 		MaterialOutputNode();

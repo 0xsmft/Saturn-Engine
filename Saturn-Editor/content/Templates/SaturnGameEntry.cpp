@@ -46,7 +46,7 @@
 
 #include <Saturn/Entry/General/EntryPoint.h>
 
-#if !defined(SAT_DIST) || defined( __X31_SHOWCONSOLE__ )
+#if !defined(_WIN32) || defined( __X31_SHOWCONSOLE__ )
 int main( int count, char** args )
 {
 	// Hand it off to Saturn:

@@ -80,7 +80,20 @@ namespace SaturnBuildTool
             PCH = new PCHInfo( "sppch.h", Path.Combine( saturnDir, "Saturn/src/sppch.cpp" ) );
 
             // LIBARIES
-            Links.Add( "vulkan-1" );
+            switch(Shared.Platform.PlatformType)
+            {
+                default:
+                case PlatformType.Windows:
+                case PlatformType.Linux:
+                    {
+                        Links.Add( "vulkan-1" );
+                    } break;
+
+                case PlatformType.MacApple:
+                    {
+                        Links.Add( "vulkan.1" );
+                    } break;
+            }
 
             AddConfigLinks();
             AddPlatformLinks();
@@ -94,22 +107,54 @@ namespace SaturnBuildTool
 
                 case ConfigKind.Debug:
                     {
-                        Links.AddRange( new string[] {
-                            "shaderc_sharedd",
-                            "shaderc_utild",
-                            "glslangd",
-                            "SPIRV-Toolsd",
-                        } );
+                        switch( Shared.Platform.PlatformType )
+                        {
+                            case PlatformType.Windows:
+                                {
+                                    Links.AddRange( new string[] {
+                                        "shaderc_sharedd",
+                                        "shaderc_utild",
+                                        "glslangd",
+                                        "SPIRV-Toolsd",
+                                    } );
+                                } break;
+
+                            case PlatformType.Linux:
+                                {
+                                    // TODO:
+                                } break;
+                            
+                            case PlatformType.MacApple:
+                                {
+                                    Links.Add( "shaderc_shared" );
+                                } break;
+                        }
                     } break;
 
                 case ConfigKind.Release:
                     {
-                        Links.AddRange( new string[] {
-                            "shaderc_shared",
-                            "shaderc_util",
-                            "glslang",
-                            "SPIRV-Tools",
-                        } );
+                        switch( Shared.Platform.PlatformType )
+                        {
+                            case PlatformType.Windows:
+                                {
+                                    Links.AddRange( new string[] {
+                                        "shaderc_shared",
+                                        "shaderc_util",
+                                        "glslang",
+                                        "SPIRV-Tools",
+                                    } );
+                                } break;
+
+                            case PlatformType.Linux:
+                                {
+                                    // TODO:
+                                } break;
+                            
+                            case PlatformType.MacApple:
+                                {
+                                    Links.Add( "shaderc_shared" );
+                                } break;
+                        }
                     } break;
             }
         }
@@ -134,6 +179,16 @@ namespace SaturnBuildTool
                         Links.Add( Path.Combine( saturnDir, "Saturn/vendor/assimp/bin/Release/assimp-vc143-mt.lib" ) );
                     }
                 } break;
+
+                case PlatformType.MacApple:
+                    {
+                        if( Shared.ProjectInfo.CurrentConfigKind != ConfigKind.Dist )
+                        {
+                            string saturnDir = Shared.ProjectInfo.SaturnDir;
+                            LibraryPaths.Add( Path.Combine( saturnDir, "Saturn/vendor/assimp/bin" ) );
+                            Links.Add( "assimp" );   
+                        }
+                    } break;
             }
         }
     }

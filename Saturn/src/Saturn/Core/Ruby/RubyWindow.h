@@ -49,6 +49,7 @@ namespace Saturn {
 
 		// FOR USE BY RUBYLIBRARY ONLY!
 		void PollEvents();
+
 		void Maximize();
 		void Minimize();
 		void Restore();
@@ -80,14 +81,29 @@ namespace Saturn {
 		RubyCursorMode GetLastCursorMode() const { return m_LastCursorMode; }
 
 		RubyIVec2 GetSize()   const;
+
+		//
+		// Window size in pixels
+		//
+		// This may be the same as the size returned in GetSize()
+		// however on Retina displays this will be the window size
+		// multiplied by the framebuffer scale factor.
+		//
+		RubyIVec2 GetFramebufferSize() const;
+
 		uint32_t  GetWidth()  const;
 		uint32_t  GetHeight() const;
+
+		uint32_t  GetFramebufferWidth()  const;
+		uint32_t  GetFramebufferHeight() const;
 
 		RubyGraphicsAPI GetGraphicsAPI() const { return m_GraphicsAPI; }
 		RubyStyle GetStyle() const { return m_Style; }
 
 		std::string  GetClipboardText();
 		std::wstring GetClipboardTextW();
+
+		RubyVec2 GetFramebufferScale() const;
 
 		[[nodiscard]] bool IsFocused();
 		[[nodiscard]] bool Minimized();

@@ -1007,7 +1007,7 @@ namespace Saturn {
 		::SetWindowPos( m_Handle, HWND_TOP, 0, 0, newWindowRect.right - newWindowRect.left, newWindowRect.bottom - newWindowRect.top, SWP_NOACTIVATE | SWP_NOOWNERZORDER | SWP_NOMOVE | SWP_NOZORDER );
 	}
 
-	RubyIVec2 RubyWindowsBackend::GetSize()
+	RubyIVec2 RubyWindowsBackend::GetSize() const
 	{
 		RECT size;
 		::GetClientRect( m_Handle, &size );
@@ -1167,7 +1167,17 @@ namespace Saturn {
 		::SendMessageW( m_Handle, WM_SETICON, ICON_SMALL, ( LPARAM ) hIcon );
 	}
 
-	void RubyWindowsBackend::SetClipboardText( const std::string& rTextData )
+    RubyVec2 RubyWindowsBackend::GetFramebufferScale() const
+    {
+        return RubyVec2( 1.0f, 1.0f );
+    }
+
+    RubyIVec2 RubyWindowsBackend::GetFramebufferSize() const
+    {
+        return GetSize();
+    }
+
+    void RubyWindowsBackend::SetClipboardText( const std::string& rTextData )
 	{
 		const std::wstring textDataW = Auxiliary::ConvertString( rTextData );
 		SetClipboardText( textDataW );

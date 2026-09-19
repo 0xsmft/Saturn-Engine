@@ -939,7 +939,7 @@ namespace Saturn {
 		[m_pData->m_pWindow setFrame:frame display:YES animate:NO];
 	}
 
-	RubyIVec2 RubyCocoaBackend::GetSize()
+	RubyIVec2 RubyCocoaBackend::GetSize() const
 	{
 		NSRect contentFrame = [[m_pData->m_pWindow contentView] frame];
 
@@ -1253,6 +1253,22 @@ namespace Saturn {
 	bool RubyCocoaBackend::PendingClose()
 	{
 		return m_WindowClosed;
+	}
+
+	RubyVec2 RubyCocoaBackend::GetFramebufferScale() const
+	{
+		return {1.0f, 1.0f};
+
+		const float scale = ( float ) [ m_pData->m_pWindow backingScaleFactor ];
+		return RubyVec2( scale, scale );
+	}
+
+	RubyIVec2 RubyCocoaBackend::GetFramebufferSize() const
+	{
+		const float scale = ( float ) [ m_pData->m_pWindow backingScaleFactor ];
+		const auto windowSize = GetSize();
+
+		return { ( int ) windowSize.x * ( int ) scale, ( int ) windowSize.y * ( int ) scale };
 	}
 
 	void RubyCocoaBackend::Focus()

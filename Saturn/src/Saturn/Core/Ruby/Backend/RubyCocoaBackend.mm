@@ -1255,6 +1255,15 @@ namespace Saturn {
 				rMonitor.MonitorSize = { static_cast<int>( frame.size.width ), static_cast<int>( frame.size.height ) };
 				rMonitor.MonitorPosition = { static_cast<int>( frame.origin.x ), static_cast<int>( frame.origin.y ) };
 				rMonitor.Primary = ( pMainScreen == pScreen );
+				
+				NSData* data = [pName dataUsingEncoding:NSUTF32LittleEndianStringEncoding];
+				if( data != nil )
+				{
+					const wchar_t* pChars = static_cast< const wchar_t* >( [ data bytes ] );
+
+					const size_t count = [ data length ] / sizeof( wchar_t );
+					rMonitor.Name.assign( pChars, pChars + count );
+				}
 			}
 		}
 

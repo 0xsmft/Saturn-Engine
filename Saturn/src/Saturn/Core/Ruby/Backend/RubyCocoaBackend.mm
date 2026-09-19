@@ -966,11 +966,26 @@ namespace Saturn {
 
 	void RubyCocoaBackend::SetTitle( const std::string& rTitle )
 	{
+		@autoreleasepool 
+		{
+			NSString* pNSText = @( rTitle.data() );
 
+			[m_pData->m_pWindow setTitle:pNSText];
+			[m_pData->m_pWindow setMiniwindowTitle:pNSText];
+		}
 	}
 
 	void RubyCocoaBackend::SetTitle( const std::wstring& rTitle )
 	{
+		@autoreleasepool 
+		{			
+			NSString* pNSText = [[NSString alloc] initWithBytes:rTitle.data()
+										length:rTitle.size() * sizeof(wchar_t)
+										encoding:NSUTF32LittleEndianStringEncoding];
+
+			[m_pData->m_pWindow setTitle:pNSText];
+			[m_pData->m_pWindow setMiniwindowTitle:pNSText];
+		}
 	}
 
 	void RubyCocoaBackend::SetMousePos( double x, double y )

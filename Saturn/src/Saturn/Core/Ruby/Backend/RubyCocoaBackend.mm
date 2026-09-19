@@ -941,10 +941,10 @@ namespace Saturn {
 
 	RubyIVec2 RubyCocoaBackend::GetSize() const
 	{
-		NSRect contentFrame = [[m_pData->m_pWindow contentView] frame];
+		const NSRect contentRect = [m_pData->m_pView frame];
 
-		CGFloat width  = contentFrame.size.width;
-		CGFloat height = contentFrame.size.height;
+		const CGFloat width  = contentRect.size.width;
+		const CGFloat height = contentRect.size.height;
 
 		return { static_cast<int>( width ), static_cast<int>( height ) };
 	}

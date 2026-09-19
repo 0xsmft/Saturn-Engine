@@ -37,30 +37,33 @@
 
 static void InitMenuBar()
 {
-	NSMenu* pBar = [[NSMenu alloc] init];
-	[NSApp setMainMenu:pBar];
+	@autoreleasepool 
+	{
+		NSMenu* pBar = [[NSMenu alloc] init];
+		[NSApp setMainMenu:pBar];
 
-	// App menu item.
-	NSMenuItem* pAppMenuItem = [pBar addItemWithTitle:@"" action:NULL keyEquivalent:@""];
-	NSMenu* pAppMenu = [[NSMenu alloc] init];
-	[pAppMenuItem setSubmenu:pAppMenu];
+		// App menu item.
+		NSMenuItem* pAppMenuItem = [pBar addItemWithTitle:@"" action:NULL keyEquivalent:@""];
+		NSMenu* pAppMenu = [[NSMenu alloc] init];
+		[pAppMenuItem setSubmenu:pAppMenu];
 
-	// About.
-	[pAppMenu addItemWithTitle:@"About Saturn"
-				action:@selector(orderFrontStandardAboutPanel:)
-				keyEquivalent:@""];
-	
-	// Separator.
-	[pAppMenu addItem:[NSMenuItem separatorItem]];
+		// About.
+		[pAppMenu addItemWithTitle:@"About Saturn"
+					action:@selector(orderFrontStandardAboutPanel:)
+					keyEquivalent:@""];
+		
+		// Separator.
+		[pAppMenu addItem:[NSMenuItem separatorItem]];
 
-	// Quit.
-	[pAppMenu addItemWithTitle:@"Quit Saturn"
-				action:@selector(terminate:)
-				keyEquivalent:@"q"];
+		// Quit.
+		[pAppMenu addItemWithTitle:@"Quit Saturn"
+					action:@selector(terminate:)
+					keyEquivalent:@"q"];
 
-	// Black magic.
-	SEL setAppleMenuSelector = NSSelectorFromString( @"setAppleMenu" );
-	[NSApp performSelector:setAppleMenuSelector withObject:pAppMenu];
+		// Black magic.
+		SEL setAppleMenuSelector = NSSelectorFromString( @"setAppleMenu" );
+		[NSApp performSelector:setAppleMenuSelector withObject:pAppMenu];
+	}
 }
 
 @interface RubyNSApplicationDelegate : NSObject <NSApplicationDelegate>

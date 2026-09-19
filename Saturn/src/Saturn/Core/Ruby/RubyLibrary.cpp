@@ -152,7 +152,7 @@ namespace Saturn {
 			rMonitor.Primary = monitorInfo.primary != 0;
 			rMonitor.MonitorPosition = { monitorInfo.x, monitorInfo.y };
 			rMonitor.MonitorSize = { monitorInfo.width, monitorInfo.height };
-			rMonitor.WorkSize = rMonitor.MonitorSize; // no separate work area in X11
+			rMonitor.WorkSize = rMonitor.MonitorSize;
 		}
 
 		std::free( reply );

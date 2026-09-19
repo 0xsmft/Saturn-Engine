@@ -928,12 +928,6 @@ namespace Saturn {
 		NSPoint pos = [m_pData->m_pWindow mouseLocationOutsideOfEventStream];
 		NSRect contentRect = [m_pData->m_pView frame];
 
-		// NB: macOS uses a different coordinate system 
-		// than most other platforms, so we need to 
-		// flip the y coordinate.
-//        CGFloat screenHeight = [[NSScreen mainScreen] frame].size.height;
-//        pos.y = screenHeight - pos.y;
-
 		return { static_cast<float>( pos.x ), static_cast<float>( contentRect.size.height - pos.y ) };
 	}
 

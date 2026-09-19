@@ -59,10 +59,6 @@ static void InitMenuBar()
 		[pAppMenu addItemWithTitle:@"Quit Saturn"
 					action:@selector(terminate:)
 					keyEquivalent:@"q"];
-
-		// Black magic.
-		SEL setAppleMenuSelector = NSSelectorFromString( @"setAppleMenu" );
-		[NSApp performSelector:setAppleMenuSelector withObject:pAppMenu];
 	}
 }
 

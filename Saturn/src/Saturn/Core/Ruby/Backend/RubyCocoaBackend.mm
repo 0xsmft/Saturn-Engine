@@ -1240,6 +1240,10 @@ namespace Saturn {
 		{
 			NSArray< NSScreen* >* pScreens = [ NSScreen screens ];
 
+			// This is not good, but I am unsure of a better way so this will work for now.
+			// See more: https://developer.apple.com/documentation/appkit/nsscreen/main?language=objc#Discussion
+			NSScreen* pMainScreen = [ NSScreen mainScreen ];
+
 			for( NSScreen* pScreen in pScreens )
 			{
 				NSRect frame = [pScreen frame];
@@ -1250,7 +1254,7 @@ namespace Saturn {
 				rMonitor.WorkSize = { static_cast<int>( workArea.size.width ), static_cast<int>( workArea.size.height ) };
 				rMonitor.MonitorSize = { static_cast<int>( frame.size.width ), static_cast<int>( frame.size.height ) };
 				rMonitor.MonitorPosition = { static_cast<int>( frame.origin.x ), static_cast<int>( frame.origin.y ) };
-				rMonitor.Primary = true;
+				rMonitor.Primary = ( pMainScreen == pScreen );
 			}
 		}
 

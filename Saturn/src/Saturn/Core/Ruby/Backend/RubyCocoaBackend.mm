@@ -381,7 +381,7 @@ namespace Saturn {
 		yOffset *= 0.1f;
 	}
 
-	if( fabs( xOffset ) > 0.0f || fabs( yOffset ) > 0.0f )
+	if( xOffset != 0.0f || yOffset != 0.0f )
 	{
 		pThis->GetParent()->DispatchEvent<Saturn::RubyMouseScrollEvent>( Saturn::EventType::MouseScroll, xOffset, yOffset );
 	}

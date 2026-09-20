@@ -93,15 +93,15 @@ namespace Saturn {
 		SAT_DEFINE_EVENT( MouseScroll, EC_Ruby )
 	public:
 		RubyMouseScrollEvent() = default;
-		RubyMouseScrollEvent( EventType type, int x, int y ) : Event( type, EC_Ruby ), m_MouseOffsetX( x ), m_MouseOffsetY( y ) {}
-		~RubyMouseScrollEvent() {}
+		RubyMouseScrollEvent( EventType type, float x, float y ) : Event( type, EC_Ruby ), m_MouseOffsetX( x ), m_MouseOffsetY( y ) {}
+		virtual ~RubyMouseScrollEvent() = default;
 
-		int GetOffsetX() const { return m_MouseOffsetX; }
-		int GetOffsetY() const { return m_MouseOffsetY; }
+		float GetOffsetX() const { return m_MouseOffsetX; }
+		float GetOffsetY() const { return m_MouseOffsetY; }
 
 	private:
-		int m_MouseOffsetX = 0;
-		int m_MouseOffsetY = 0;
+		float m_MouseOffsetX = 0.0f;
+		float m_MouseOffsetY = 0.0f;
 	};
 
 	class RubyKeyEvent : public Event

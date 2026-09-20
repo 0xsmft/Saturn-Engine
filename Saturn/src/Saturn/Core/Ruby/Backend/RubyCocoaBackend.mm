@@ -205,6 +205,7 @@ namespace Saturn {
 
 -(void)updateTrackingAreas
 {
+	// Thanks GLFW: https://github.com/glfw/glfw/blob/92dcf4ce74f2e2554a98fea09be7c705c17daa5a/src/cocoa_window.m#L539
 	if (m_pTrackingArea != nil)
 	{
 		[self removeTrackingArea:m_pTrackingArea];
@@ -212,8 +213,11 @@ namespace Saturn {
 	}
 
 	const NSTrackingAreaOptions options = NSTrackingMouseEnteredAndExited | 
-										  NSTrackingMouseMoved |
-										NSTrackingActiveInKeyWindow;
+											NSTrackingActiveInKeyWindow |
+											NSTrackingEnabledDuringMouseDrag |
+											NSTrackingCursorUpdate |
+											NSTrackingInVisibleRect |
+											NSTrackingAssumeInside;
 
 	m_pTrackingArea = [[NSTrackingArea alloc] initWithRect:[self bounds]
 												   options:options
@@ -728,6 +732,10 @@ static NSUInteger RubyModifierKeyToNS( Saturn::RubyKey key )
 	pThis->GetParent()->DispatchEvent<Saturn::RubyWindowResizeEvent>( Saturn::EventType::Resize, static_cast< uint32_t >( framebufferRect.size.width ), static_cast< uint32_t >( framebufferRect.size.height ) );
 }
 
+- (void) windowDidEnterFullScreen:(NSNotification *) notification
+{
+}
+
 @end
 
 // Stolen from GLFW.
@@ -927,6 +935,7 @@ namespace Saturn {
 
 			case RubyWindowShowCmd::Fullscreen:
 			{
+				[m_pData->m_pWindow makeKeyAndOrderFront:nil];
 				[m_pData->m_pWindow toggleFullScreen:nil];
 			} break;
 		}

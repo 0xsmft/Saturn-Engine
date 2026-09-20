@@ -1,6 +1,6 @@
 buildtooloutputdir = "%{cfg.buildcfg}-%{cfg.system}-AnyCPU"
 
-include (path.join( "Saturn-Editor", "content", "Templates", "PremakeCSExtensions.lua"))
+include (path.join( "../Saturn-Editor", "content", "Templates", "PremakeCSExtensions.lua"))
 
 workspace "SaturnBuildTool"
 	startproject "SaturnBuildTool"

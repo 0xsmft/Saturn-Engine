@@ -1,0 +1,30 @@
+name: CI(macOS)
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+jobs:
+  build:
+    runs-on: macos-15
+    defaults:
+      run:
+        shell: bash
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v6.0.2
+      with:
+        submodules: recursive
+    
+    - name: Install Vulkan SDK
+      uses: jakoch/install-vulkan-sdk-action@v1.5.5
+
+    - name: Download Premake
+      uses: BEASTSM96/premake-action@v1.5.1
+
+    - name: Generate Project Files
+      run: premake5 xcode4 --arch=arm64
+
+    - name: Build Solution
+      run: xcodebuild build -workspace "Saturn.xcworkspace" -scheme "Saturn-Editor" -configuration Debug

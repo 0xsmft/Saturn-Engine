@@ -36,7 +36,7 @@ jobs:
       run: xcodebuild build -workspace "Saturn-AArch.xcworkspace" -scheme "Saturn-Editor" -configuration Debug
 
     - name: Generate SaturnBuildTool
-      run: premake5 vs2022 --file=SaturnBuildTool/STB-ForNonWindows.lua
+      run: premake5 vs2022 --file=SaturnBuildTool/SBT-ForNonWindows.lua
     
     - name: Build SaturnBuildTool
       run: dotnet build -c Debug SaturnBuildTool/SaturnBuildTool.sln

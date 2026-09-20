@@ -122,14 +122,7 @@ group "Tools"
 
 -- // -Saturn Build Tool-- 
 group "Tools"
-
--- On Windows, the build tool is built as a .NET Framework application
--- on other platforms it's build as a .NET Core application.
-if os.target() == "windows" then
 	include "SaturnBuildTool/SBT"
-else
-	include "SaturnBuildTool/SBT-ForNonWindows"
-end
 -- // -Saturn Build Tool-- 
 
 -- // -Saturn Header Tool-- 

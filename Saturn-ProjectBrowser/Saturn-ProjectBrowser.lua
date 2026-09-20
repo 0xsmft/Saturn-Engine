@@ -216,6 +216,39 @@ project "Saturn-ProjectBrowser"
 			"UniformTypeIdentifiers.framework",
 		}
 
+		externalincludedirs
+		{
+			"../Saturn/vendor/spdlog/include",
+			"../Saturn/src",
+			"../Saturn/vendor",
+			"%{IncludeDir.ImGui}",
+			"%{IncludeDir.glm}",
+			"%{IncludeDir.entt}",
+			"%{IncludeDir.assimp}",
+			"%{IncludeDir.glslc}",
+			"%{IncludeDir.shaderc}",
+			"%{IncludeDir.SPIRV_Cross}",
+			"%{IncludeDir.vma}",
+			"%{IncludeDir.JoltPhys}",
+			"%{IncludeDir.Optick}",
+			"../Saturn/vendor/vulkan/include",
+			"%{IncludeDir.ImGuizmo}",
+			"%{IncludeDir.ImSpinner}",
+			"%{IncludeDir.Filewatch}",
+			"%{IncludeDir.MiniAudio}",
+			"%{IncludeDir.ImguiNodeEditor}",
+			"%{IncludeDir.Tracy}",
+			"%{IncludeDir.KTX_Software}",
+			"%{IncludeDir.Recast}",
+			"%{IncludeDir.freetype}",
+			"%{IncludeDir.MSDF}",
+			"%{IncludeDir.MSDFAG}",
+			"%{IncludeDir.acl}",
+			"%{IncludeDir.rtm}",
+
+			"%{IncludeDir.SharedStorage}"
+		}
+
 		filter { "system:macosx", "configurations:Debug" }
 			postbuildcommands 
 			{

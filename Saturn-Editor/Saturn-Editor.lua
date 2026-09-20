@@ -26,8 +26,13 @@ project "Saturn-Editor"
 	targetdir ("../bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("../bin-int/" .. outputdir .. "/%{prj.name}")
 
-	pchheader "sppch.h"
-	pchsource "../Saturn/src/sppch.cpp"
+	filter "action:xcode4"
+   		pchheader "../Saturn/src/sppch.h"
+
+	filter "not action:xcode4"
+		pchheader "sppch.h"
+
+	filter {}
 
 	defines
 	{
@@ -285,6 +290,44 @@ project "Saturn-Editor"
 			"CoreAudio.framework",
 			"QuartzCore.framework",
 			"UniformTypeIdentifiers.framework",
+		}
+
+		externalincludedirs
+		{
+			"../Saturn/vendor/spdlog/include",
+			"../Saturn/src",
+			"../Saturn/vendor",
+			"../Saturn/vendor/vulkan/include",
+			"%{IncludeDir.ImGui}",
+			"%{IncludeDir.glm}",
+			"%{IncludeDir.entt}",
+			"%{IncludeDir.assimp}",
+			"%{IncludeDir.glslc}",
+			"%{IncludeDir.shaderc}",
+			"%{IncludeDir.SPIRV_Cross}",
+			"%{IncludeDir.vma}",
+			"%{IncludeDir.JoltPhys}",
+			"%{IncludeDir.Optick}",
+			"%{IncludeDir.ImGuizmo}",
+			"%{IncludeDir.ImSpinner}",
+			"%{IncludeDir.Filewatch}",
+			"%{IncludeDir.MiniAudio}",
+			"%{IncludeDir.yaml_cpp}",
+			"%{IncludeDir.ImguiNodeEditor}",
+			"%{IncludeDir.Tracy}",
+			"%{IncludeDir.KTX_Software}",
+			"%{IncludeDir.Recast}",
+			"%{IncludeDir.acl}",
+			"%{IncludeDir.rtm}",
+			"%{IncludeDir.freetype}",
+			"%{IncludeDir.MSDF}",
+			"%{IncludeDir.MSDFAG}",
+			"%{IncludeDir.ImTimeline}",
+			"%{IncludeDir.libzip}",
+			"%{IncludeDir.ImGuiColorTextEdit}",
+			"%{IncludeDir.CrashCatch}",
+
+			"%{IncludeDir.SharedStorage}"
 		}
 
 		filter { "system:macosx", "configurations:Debug" }

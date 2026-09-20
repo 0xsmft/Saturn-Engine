@@ -56,3 +56,12 @@ project "MSDF-Atlas-Gen"
 		runtime "Release"
 		optimize "on"
 		symbols "off"
+
+	filter "action:xcode4"
+		externalincludedirs 
+		{
+			 "msdf-atlas-gen",
+        	"msdfgen",
+        	"msdfgen/include"
+		}
+

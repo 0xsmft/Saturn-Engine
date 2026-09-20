@@ -54,6 +54,7 @@ namespace Saturn {
 			: m_WindowSpecification( rSpec ), m_pWindow( pWindow )
 		{
 		}
+	
 		virtual ~RubyBackendBase() = default;
 
 	public:
@@ -65,7 +66,7 @@ namespace Saturn {
 		virtual void HideWindow() = 0;
 
 		virtual void ResizeWindow( uint32_t Width, uint32_t Height ) = 0;
-		virtual RubyIVec2 GetSize() = 0;
+		virtual RubyIVec2 GetSize() const = 0;
 
 		virtual void SetTitle( const std::string& rTitle ) = 0;
 		virtual void SetTitle( const std::wstring& rTitle ) = 0;
@@ -103,6 +104,9 @@ namespace Saturn {
 		virtual void FlashAttention() = 0;
 
 		virtual void SetIcon( Ref<class Texture2D> icon ) = 0;
+
+		virtual RubyVec2 GetFramebufferScale() const = 0;
+		virtual RubyIVec2 GetFramebufferSize() const = 0;
 
 	public:
 		virtual bool PendingClose() = 0;

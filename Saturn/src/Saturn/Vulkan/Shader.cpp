@@ -625,7 +625,7 @@ namespace Saturn {
 			auto MemberCount = BufferType.member_types.size();
 			uint32_t set = Compiler.get_decoration( pc.id, spv::DecorationDescriptorSet );
 
-			uint32_t Size = ( uint32_t ) Compiler.get_declared_struct_size( BufferType );
+			const uint32_t Size = ( uint32_t ) Compiler.get_declared_struct_size( BufferType );
 			uint32_t OffsetFromLastPC = 0;
 
 			SAT_CORE_ASSERT( Size < maxPushConstantSize, "Declared push constant is bigger than the device maximum!" );
@@ -634,10 +634,10 @@ namespace Saturn {
 			if( m_VulkanRanges.size() )
 				OffsetFromLastPC = m_VulkanRanges.back().offset + m_VulkanRanges.back().size;
 
-			ShaderPushConstantTemplate pc;
-			pc.Name = Name;
-			pc.Size = Size;
-			pc.Stage = shaderType;
+			ShaderPushConstantTemplate shaderPCTemplate;
+			shaderPCTemplate.Name = Name;
+			shaderPCTemplate.Size = Size;
+			shaderPCTemplate.Stage = shaderType;
 			m_VulkanRanges.push_back( { .stageFlags = ShaderTypeToVulkan( shaderType ), .offset = OffsetFromLastPC , .size = ( uint32_t ) Size } );
 
 			SHADER_INFO( "Push constant buffer: {0}", Name );
@@ -678,12 +678,12 @@ namespace Saturn {
 				// so the offset of the data in the fragment shader will start a 4 and not 0
 				// and if we do offset - OffsetFromLastPC it will underflow and reset to UINT32_MAX.
 				if( offset < OffsetFromLastPC )
-					pc.MemberOffsets[ MemberName ] = OffsetFromLastPC - offset;
+					shaderPCTemplate.MemberOffsets[ MemberName ] = OffsetFromLastPC - offset;
 				else
-					pc.MemberOffsets[ MemberName ] = offset - OffsetFromLastPC;
+					shaderPCTemplate.MemberOffsets[ MemberName ] = offset - OffsetFromLastPC;
 			}
 
-			m_PushConstants.push_back( pc );
+			m_PushConstants.push_back( shaderPCTemplate );
 		}
 
 		for( const auto& Resource : Resources.sampled_images )
@@ -694,14 +694,21 @@ namespace Saturn {
 
 			uint32_t binding = Compiler.get_decoration( Resource.id, spv::DecorationBinding );
 			uint32_t set = Compiler.get_decoration( Resource.id, spv::DecorationDescriptorSet );
-			uint32_t arraySizes = RealType.array[ 0 ];
+
+			// New spriv change.... since we updated spriv in September '26 they have changed
+			// the way that this works, before we updated and we had a build from Apr '22
+			// we could simply do:
+			// arraySizes = RealType.array[ 0 ];
+			// no matter what but now we must check if it's an array before doing so.
+			uint32_t arraySizes = 1;
+			if( !RealType.array.empty() )
+			{
+				arraySizes = RealType.array[ 0 ];
+			}
 
 			SHADER_INFO( "Sampled image: {0}", Name );
 			SHADER_INFO( " Binding: {0}", binding );
 			SHADER_INFO( " Set: {0}", set );
-
-			if( arraySizes == 0 )
-				arraySizes = 1;
 
 			if( m_DescriptorSets[ set ].Set == UINT32_MAX )
 				m_DescriptorSets[ set ] = ShaderDescriptorSetTemplate( set );
@@ -717,14 +724,16 @@ namespace Saturn {
 
 			uint32_t binding = Compiler.get_decoration( Resource.id, spv::DecorationBinding );
 			uint32_t set = Compiler.get_decoration( Resource.id, spv::DecorationDescriptorSet );
-			uint32_t arraySizes = RealType.array[ 0 ];
+			
+			uint32_t arraySizes = 1;
+			if( !RealType.array.empty() )
+			{
+				arraySizes = RealType.array[ 0 ];
+			}
 
 			SHADER_INFO( "Storage image: {0}", Name );
 			SHADER_INFO( " Binding: {0}", binding );
 			SHADER_INFO( " Set: {0}", set );
-
-			if( arraySizes == 0 )
-				arraySizes = 1;
 
 			if( m_DescriptorSets[ set ].Set == UINT32_MAX )
 				m_DescriptorSets[ set ] = ShaderDescriptorSetTemplate( set );
@@ -744,19 +753,21 @@ namespace Saturn {
 
 			uint32_t set = Compiler.get_decoration( si.id, spv::DecorationDescriptorSet );
 			uint32_t binding = Compiler.get_decoration( si.id, spv::DecorationBinding );
-			uint32_t arraySize = RealType.array[ 0 ];
-
+			
+			uint32_t arraySizes = 1;
+			if( !RealType.array.empty() )
+			{
+				arraySizes = RealType.array[ 0 ];
+			}
+			
 			SHADER_INFO( "Separate (non-sampled) image: {0}", Name );
 			SHADER_INFO( " Binding: {0}", binding );
 			SHADER_INFO( " Set: {0}", set );
 
-			if( arraySize == 0u )
-				arraySize = 1u;
-
 			if( m_DescriptorSets[ set ].Set == UINT32_MAX )
 				m_DescriptorSets[ set ] = ShaderDescriptorSetTemplate( set );
 
-			m_DescriptorSets[ set ].SeparateImages.emplace_back( Name, shaderType, set, binding, arraySize );
+			m_DescriptorSets[ set ].SeparateImages.emplace_back( Name, shaderType, set, binding, arraySizes );
 		}
 
 		for( const auto& ss : Resources.separate_samplers )
@@ -767,19 +778,21 @@ namespace Saturn {
 
 			const uint32_t set = Compiler.get_decoration( ss.id, spv::DecorationDescriptorSet );
 			const uint32_t binding = Compiler.get_decoration( ss.id, spv::DecorationBinding );
-			uint32_t arraySize = RealType.array[ 0 ];
+			
+			uint32_t arraySizes = 1;
+			if( !RealType.array.empty() )
+			{
+				arraySizes = RealType.array[ 0 ];
+			}
 
 			SHADER_INFO( "Sampler: {0}", Name );
 			SHADER_INFO( " Binding: {0}", binding );
 			SHADER_INFO( " Set: {0}", set );
 
-			if( arraySize == 0u )
-				arraySize = 1u;
-
 			if( m_DescriptorSets[ set ].Set == UINT32_MAX )
 				m_DescriptorSets[ set ] = ShaderDescriptorSetTemplate( set );
 
-			m_DescriptorSets[ set ].SeparateSamplers.emplace_back( Name, shaderType, set, binding, arraySize );
+			m_DescriptorSets[ set ].SeparateSamplers.emplace_back( Name, shaderType, set, binding, arraySizes );
 		}
 #endif
 	}
@@ -795,7 +808,7 @@ namespace Saturn {
 			std::vector< VkDescriptorSetLayoutBinding > Bindings;
 
 			// Iterate over uniform buffers
-			for( auto& [Binding, ub] : descriptorSet.UniformBuffers )
+			for( auto& [ bindingNumber, ub ] : descriptorSet.UniformBuffers )
 			{
 				VkDescriptorSetLayoutBinding Binding = {};
 				Binding.binding = ub.Binding;
@@ -824,7 +837,7 @@ namespace Saturn {
 			}
 
 			// Iterate over storage buffers
-			for( auto& [Binding, sb] : descriptorSet.StorageBuffers )
+			for( auto& [bindingNumber, sb] : descriptorSet.StorageBuffers )
 			{
 				VkDescriptorSetLayoutBinding Binding = {};
 				Binding.binding = sb.Binding;

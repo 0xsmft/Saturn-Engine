@@ -397,7 +397,7 @@ namespace Saturn {
 	public:
 		SkeletalMesh() = default;
 		SkeletalMesh( const Ref<Asset>& rBase, const std::filesystem::path& rFilepath, AssetID skeletonID );
-		~SkeletalMesh() = default;
+		virtual ~SkeletalMesh();
 
 		std::vector<Submesh>& Submeshes() { return m_Submeshes; }
 		const std::vector<Submesh>& Submeshes() const { return m_Submeshes; }

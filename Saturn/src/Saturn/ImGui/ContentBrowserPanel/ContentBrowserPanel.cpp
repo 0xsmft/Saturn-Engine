@@ -144,7 +144,7 @@ namespace Saturn {
 		ImGui::SameLine();
 
 		uint64_t i = 0llu;
-		for( auto& rFolder : m_CurrentPath )
+		for( const auto& rFolder : m_CurrentPath )
 		{
 			const char* pName = m_ViewMode == CBViewMode::Assets ? "Assets" : "Source";
 
@@ -1603,11 +1603,15 @@ namespace Saturn {
 		{
 			m_RootPath = m_CurrentViewModeDirectory;
 
+			// TODO: Need to modify filewatch to fix some compile errors
+			//		 but that can be done later.
+#if defined(SAT_COMPILER_MSVC)
 			m_Watcher = std::make_unique<filewatch::FileWatch<std::wstring>>( m_RootPath.wstring(),
-				[ this ]( const std::wstring& path, const filewatch::Event event )
-			{
-				OnFilewatchEvent( path, event );
-			} );
+				[this]( const auto& path, const filewatch::Event event )
+				{
+					OnFilewatchEvent( path, event );
+				} );
+#endif
 		}
 		else
 			m_RootPath = m_CurrentViewModeDirectory;

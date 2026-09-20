@@ -52,3 +52,12 @@ premake5
 .kdev4
 *.kdev4
 .kdev4/
+
+*.pbxproj
+*.xcworkspace
+*.xcworkspacedata
+*.xcuserstate
+*.xcsettings
+**/xcschemes
+.vscode/
+**.gputrace

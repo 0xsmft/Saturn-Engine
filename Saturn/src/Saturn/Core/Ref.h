@@ -245,6 +245,7 @@ namespace Saturn {
 
 	private:
 		// Fix cannot access private member declared in class
+		template<typename T2>
 		friend class Ref;
 	};
 
@@ -602,6 +603,7 @@ namespace Saturn {
 		ReferenceControlBlockBase* m_pControlBlock = nullptr;
 
 	private:
+		template<typename T2>
 		friend class SharedPtr;
 		friend class WeakRef<Ty>;
 	};

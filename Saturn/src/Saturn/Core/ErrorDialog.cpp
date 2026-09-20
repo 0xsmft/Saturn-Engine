@@ -31,6 +31,8 @@
 
 #if defined( SAT_PLATFORM_WINDOWS )
 #include <Windows.h>
+#elif defined( SAT_PLATFORM_MACOS )
+#include "MacOSAuxiliary/MacOSAuxiliary.h"
 #endif
 
 namespace Saturn::Core {
@@ -39,6 +41,9 @@ namespace Saturn::Core {
 	{
 #if defined(SAT_PLATFORM_WINDOWS)
 		return MessageBoxA( nullptr, rText.data(), rTitle.data(), MB_ICONSTOP | MB_OK );
+#elif defined(SAT_PLATFORM_MACOS)
+		Auxiliary::MacOS::ShowErrorDialogBox( rTitle, rText );
+		return 0;
 #else
 		return 0;
 #endif
@@ -48,7 +53,8 @@ namespace Saturn::Core {
 	{
 #if defined(SAT_PLATFORM_WINDOWS)
 		MessageBoxA( nullptr, rText.data(), rTitle.data(), MB_ICONSTOP | MB_OK );
-#else
+#elif defined(SAT_PLATFORM_MACOS)
+		Auxiliary::MacOS::ShowErrorDialogBox( rTitle, rText );
 #endif
 		std::exit( 1 );
 		std::unreachable();

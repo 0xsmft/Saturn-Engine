@@ -315,6 +315,8 @@ namespace Saturn {
 			m_ShowNewProjectPopup = false;
 		}
 
+		ImGui::ShowDemoWindow();
+
 		const auto center = pViewport->GetCenter();
 		ImGui::SetNextWindowPos( center, ImGuiCond_FirstUseEver, ImVec2( 0.5f, 0.5f ) );
 
@@ -622,7 +624,7 @@ namespace Saturn {
 #endif
 		commandLine += " " + rProject.Filepath.string();
 
-		DetachedProcess dp( commandLine, workingDir );
+		DetachedProcess dp( commandLine.wstring(), workingDir.wstring() );
 
 		EngineSettings::Get().AddRecentProject( rProject.Filepath );
 

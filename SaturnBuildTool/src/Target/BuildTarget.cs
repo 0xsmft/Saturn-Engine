@@ -83,6 +83,7 @@ namespace SaturnBuildTool
                 TargetRules.LibraryPaths,
                 TargetRules.Links,
                 TargetRules.DynamicBase,
+                TargetRules.RTLibraryPaths,
                 Timestamp
             );
 
@@ -104,6 +105,9 @@ namespace SaturnBuildTool
 
         private void ResolveLinks()
         {
+            if( Shared.ProjectInfo.ToolchainTypeToUse != ToolchainType.MSVC )
+                return;
+
             for( int i = 0; i < TargetLinkSettings.Links.Count; ++i )
             {
                 var link = TargetLinkSettings.Links[ i ];

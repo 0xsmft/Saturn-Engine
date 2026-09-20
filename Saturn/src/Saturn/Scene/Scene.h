@@ -286,10 +286,9 @@ namespace Saturn {
 		std::vector<SharedPtr<Entity>> GetAllEntitiesWith( void )
 		{
 			std::vector<SharedPtr<Entity>> result;
-
 			for( const auto& [ id, entity ] : m_EntityIDMap )
 			{
-				if( entity->HasComponent<T>() )
+				if( entity->SAT_GCC_TEMPLATE HasComponent<T>() )
 					result.push_back( entity );
 			}
 
@@ -300,7 +299,7 @@ namespace Saturn {
 		std::vector<SharedPtr<T>> GetAllEntitiesWithClass( void )
 		{
 			std::vector<SharedPtr<T>> result;
-
+			
 			for( const auto& [id, entity] : m_EntityIDMap )
 			{
 				if( entity->GetClass() == T::StaticClass() )

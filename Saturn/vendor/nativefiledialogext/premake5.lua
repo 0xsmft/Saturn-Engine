@@ -31,10 +31,28 @@ project "NativeFileDialogExtended"
 		systemversion "latest"
 		staticruntime "off"
 
+		links { "gtk-3" }
+
+		result, err = os.outputof("pkg-config --cflags gtk+-3.0")
+		buildoptions { result }
+
         files
     	{
             "src/nfd_gtk.cpp"
 	    }
+
+	filter "system:macosx"
+		staticruntime "off"
+
+        files
+    	{
+            "src/nfd_cocoa.m"
+	    }
+
+		links 
+		{
+			"UniformTypeIdentifiers.framework"
+		}
 
 	filter "configurations:Debug or configurations:Debug-ASan"
 		runtime "Debug"

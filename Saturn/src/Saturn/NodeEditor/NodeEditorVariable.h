@@ -65,7 +65,7 @@ namespace Saturn {
 
 	public:
 		template<typename TCppType>
-		typename const TCppType Get() const 
+		SAT_MSVC_TYPENAME const TCppType Get() const 
 		{
 			SAT_CORE_ASSERT( CheckTypeSafety<TCppType>() );
 
@@ -73,7 +73,7 @@ namespace Saturn {
 		}
 
 		template<typename TCppType>
-		typename TCppType* GetPtr()
+		SAT_MSVC_TYPENAME TCppType* GetPtr()
 		{
 			SAT_CORE_ASSERT( CheckTypeSafety<TCppType>() );
 

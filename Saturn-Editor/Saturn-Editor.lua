@@ -26,6 +26,8 @@ project "Saturn-Editor"
 	targetdir ("../bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("../bin-int/" .. outputdir .. "/%{prj.name}")
 
+	pchsource "sppch.cpp"
+
 	filter "action:xcode4"
    		pchheader "../Saturn/src/sppch.h"
 

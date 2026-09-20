@@ -21,12 +21,6 @@ project "SaturnBuildTool"
 		'{COPY} "../../../SaturnBuildTool/RT" "RT/"'
 	}
 
-	propertytags {
-        { "AppendTargetFrameworkToOutputPath", "false" },
-        { "Version", "5.1.0" },
-        { "Company", "Saturn" }
-	}
-
 	filter { "configurations:Debug" }
 		symbols "On"
 

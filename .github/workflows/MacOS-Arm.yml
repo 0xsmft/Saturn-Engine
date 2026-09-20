@@ -33,7 +33,7 @@ jobs:
       run: premake5 xcode4 --arch=arm64 --file=premake5-AArch.lua
 
     - name: Generate SaturnBuildTool
-      run: premake5 vs2022 --file=SaturnBuildTool/SBT-ForNonWindows.lua --arch=arm64
+      run: premake5 vs2022 --file=SaturnBuildTool/SBT-ForNonWindows.lua --arch=arm64 --os=macosx
 
     - name: Build Solution
       run: xcodebuild build -workspace "Saturn-AArch.xcworkspace" -scheme "Saturn-Editor" -configuration Debug

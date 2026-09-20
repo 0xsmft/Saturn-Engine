@@ -2,9 +2,9 @@ name: CI(macOS)
 
 on:
   push:
-    branches: [ master ]
+    branches: [ vulkan, apple-merge ]
   pull_request:
-    branches: [ master ]
+    branches: [ vulkan ]
 jobs:
   build:
     runs-on: macos-15

@@ -806,7 +806,9 @@ namespace Saturn {
 			[m_pData->m_pView setLayer:m_pData->m_pMetalLayer];
 			[m_pData->m_pView postInit];
 
-			if( m_WindowSpecification.ShowNow )
+			if( m_WindowSpecification.Style == RubyStyle::BorderlessFullscreen ) 
+				PresentWindow( RubyWindowShowCmd::Fullscreen );
+			else if( m_WindowSpecification.ShowNow )
 				PresentWindow();
 		}
 	}

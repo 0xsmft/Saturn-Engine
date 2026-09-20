@@ -65,3 +65,12 @@ project "MSDFGen"
 		runtime "Release"
 		optimize "on"
 		symbols "off"
+
+	filter "action:xcode4"
+		externalincludedirs 
+		{
+			"core",
+			"include",
+			"../../freetype/include"
+		}
+

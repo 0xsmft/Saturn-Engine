@@ -94,3 +94,10 @@ project "Freetype"
 		runtime "Release"
 		optimize "on"
 		symbols "off"
+
+	filter "action:xcode4"
+		externalincludedirs 
+		{
+			"include"
+		}
+

@@ -53,11 +53,14 @@ premake5
 *.kdev4
 .kdev4/
 
+# Xcode files
 *.pbxproj
 *.xcworkspace
 *.xcworkspacedata
 *.xcuserstate
 *.xcsettings
 **/xcschemes
-.vscode/
 **.gputrace
+
+# VS code
+.vscode/

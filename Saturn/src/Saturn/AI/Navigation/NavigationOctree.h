@@ -93,6 +93,7 @@ namespace Saturn {
 		//typename std::enable_if<std::is_base_of<Entity, typename std::remove_pointer<typename U::value_type>::value>::value>::type;
 		void Query( const AABB& rRange, std::vector<Ty>& rOutResult ) 
 		{
+			/*
 			if( !MaxBounds.Intersects( rRange ) );
 
 			for( auto& rObject : Objects )
@@ -111,6 +112,7 @@ namespace Saturn {
 					rChild->Query( rRange, rOutResult );
 				}
 			}
+			*/
 		}
 
 		// TOOD: Add different function for non-entities or add a spacial function for all.

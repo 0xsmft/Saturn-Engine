@@ -113,10 +113,10 @@ namespace Saturn {
 	// FUNCTION POINTERS
 
 	template<typename Ty>
-	using SetPropertyFn = void( __stdcall* )( SObject*, Ty );
+	using SetPropertyFn = void( SAT_MSVC_STDCALL* )( SObject*, Ty );
 
 	template<typename Ty>
-	using GetPropertyFn = Ty( __stdcall* )( const SObject* );
+	using GetPropertyFn = Ty( SAT_MSVC_STDCALL* )( const SObject* );
 
 	template<SPropertyType Type>
 	struct PropertyTypeTraits;
@@ -162,10 +162,9 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 
 	// Where Ty is the cpp type i.e. float, int etc
 	template<typename Ty>
-	void ModifyPropertyInternal( SObject* pObject, const void* const fnp, Ty value )
+	void ModifyPropertyInternal( SObject* pObject, SetPropertyFn<Ty> fnp, Ty value )
 	{
-		auto func = reinterpret_cast< SetPropertyFn<Ty> >( fnp );
-		( func ) ( pObject, value );
+		( fnp ) ( pObject, value );
 	}
 
 	// Where Ty is the cpp type i.e. float, int etc
@@ -231,7 +230,7 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 
 			// Convert cpp type to SPropertyType
 			// TODO: Check if CppType is the same as our current type
-			ModifyPropertyInternal<CppType>( pObject, m_pSetPropertyFunction, value );
+			ModifyPropertyInternal<CppType>( pObject, ( SetPropertyFn<CppType> ) m_pSetPropertyFunction, value );
 		}
 
 		template<SPropertyType Ty>
@@ -293,7 +292,7 @@ template<> struct PropertyTypeTraits<SPropertyType::PropertyType> \
 		void SetPropertyInternal( SObject* pObject, CppType value ) const
 		{
 			// TODO: Check if CppType is the same as our current type
-			ModifyPropertyInternal<CppType>( pObject, m_pSetPropertyFunction, value );
+			ModifyPropertyInternal<CppType>( pObject, ( SetPropertyFn<CppType> ) m_pSetPropertyFunction, value );
 		}
 
 	protected:

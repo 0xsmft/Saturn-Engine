@@ -444,7 +444,7 @@ namespace Saturn {
 
 	uint64_t Sound::GetDurationInPCM()
 	{
-		uint64_t d = 0;
+		ma_uint64 d = 0;
 		ma_sound_get_length_in_pcm_frames( m_pSound, &d );
 	
 		return d;
@@ -452,7 +452,7 @@ namespace Saturn {
 
 	uint64_t Sound::GetCursorInPCM()
 	{
-		uint64_t c = 0;
+		ma_uint64 c = 0;
 		ma_sound_get_cursor_in_pcm_frames( m_pSound, &c );
 	
 		return c;
@@ -460,7 +460,7 @@ namespace Saturn {
 
 	void Sound::SeekTo( uint64_t pcmFrame )
 	{
-		ma_sound_seek_to_pcm_frame( m_pSound, pcmFrame );
+		ma_sound_seek_to_pcm_frame( m_pSound, ( ma_uint64 )pcmFrame );
 	}
 
 	void Sound::PlayOrRestart( uint64_t pcmFrame /*= 0u */ )

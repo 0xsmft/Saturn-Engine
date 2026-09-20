@@ -1,0 +1,136 @@
+/********************************************************************************************
+*                                                                                           *
+*                                                                                           *
+*                                                                                           *
+* MIT License                                                                               *
+*                                                                                           *
+* Copyright (c) 2020 - 2026 BEAST                                                           *
+*                                                                                           *
+* Permission is hereby granted, free of charge, to any person obtaining a copy              *
+* of this software and associated documentation files (the "Software"), to deal             *
+* in the Software without restriction, including without limitation the rights              *
+* to use, copy, modify, merge, publish, distribute, sublicense, and/or sell                 *
+* copies of the Software, and to permit persons to whom the Software is                     *
+* furnished to do so, subject to the following conditions:                                  *
+*                                                                                           *
+* The above copyright notice and this permission notice shall be included in all            *
+* copies or substantial portions of the Software.                                           *
+*                                                                                           *
+* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR                *
+* IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,                  *
+* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE               *
+* AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER                    *
+* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,             *
+* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE             *
+* SOFTWARE.                                                                                 *
+*********************************************************************************************
+*/
+
+#include "sppch.h"
+
+#import <Cocoa/Cocoa.h>
+
+#include "RubyNSApp.h"
+
+#include "Saturn/Core/App.h"
+#include "Saturn/Core/Ruby/RubyWindow.h"
+
+static void InitMenuBar()
+{
+	@autoreleasepool 
+	{
+		NSMenu* pBar = [[NSMenu alloc] init];
+		[NSApp setMainMenu:pBar];
+
+		// App menu item.
+		NSMenuItem* pAppMenuItem = [pBar addItemWithTitle:@"" action:NULL keyEquivalent:@""];
+		NSMenu* pAppMenu = [[NSMenu alloc] init];
+		[pAppMenuItem setSubmenu:pAppMenu];
+
+		// About.
+		[pAppMenu addItemWithTitle:@"About Saturn"
+					action:@selector(orderFrontStandardAboutPanel:)
+					keyEquivalent:@""];
+		
+		// Separator.
+		[pAppMenu addItem:[NSMenuItem separatorItem]];
+
+		// Quit.
+		[pAppMenu addItemWithTitle:@"Quit Saturn"
+					action:@selector(terminate:)
+					keyEquivalent:@"q"];
+	}
+}
+
+@interface RubyNSApplicationDelegate : NSObject <NSApplicationDelegate>
+@end
+
+namespace Saturn {
+
+	struct RubyNSApplicationDataImpl
+	{
+		RubyNSApplicationDelegate* pAppDelegateMgr = nil;
+	};
+
+}
+
+@implementation RubyNSApplicationDelegate
+
+- (void)applicationDidFinishLaunching:(NSNotification *)notification
+{
+	[NSApp stop:nil];
+}
+
+- (void)applicationWillFinishLaunching:(NSNotification *)notification
+{
+	InitMenuBar();
+}
+
+- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender
+{
+	Saturn::Application::Get()->Close();
+	return NSTerminateCancel;
+}
+
+@end
+
+namespace Saturn {
+  
+	RubyNSApplicationData::~RubyNSApplicationData() 
+	{
+		Cleanup();
+	}
+
+	void RubyNSApplicationData::Init() 
+	{
+		@autoreleasepool
+		{
+			pImpl = new RubyNSApplicationDataImpl();
+
+			pImpl->pAppDelegateMgr = [[RubyNSApplicationDelegate alloc] init];
+
+			[NSApplication sharedApplication];
+			[NSApp setDelegate:pImpl->pAppDelegateMgr];
+			[NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
+			[NSApp finishLaunching];
+			[NSApp activateIgnoringOtherApps:YES];
+		}
+	}
+
+	void RubyNSApplicationData::Cleanup() 
+	{
+		@autoreleasepool
+		{
+			if( pImpl ) 
+			{
+				[NSApp setDelegate:nil];
+				[pImpl->pAppDelegateMgr release];
+				pImpl->pAppDelegateMgr = nil;
+
+				delete pImpl;
+				pImpl = nullptr;
+			}
+		}
+	}
+
+}

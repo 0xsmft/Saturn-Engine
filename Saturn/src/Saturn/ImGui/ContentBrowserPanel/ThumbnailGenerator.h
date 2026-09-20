@@ -35,6 +35,8 @@ namespace Saturn {
 	class ContentBrowserThumbnailGeneratorBase
 	{
 	public:
+		virtual ~ContentBrowserThumbnailGeneratorBase() = default;
+
 		virtual Ref<Texture2D> Generate( ThumbnailCacheQueueData& rData ) = 0;
 	};
 	

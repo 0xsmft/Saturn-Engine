@@ -227,9 +227,9 @@ namespace Saturn {
 
 	private:
 		std::vector< Ref<MaterialAsset> > m_Materials;
-
-		// This may not be the best way.
-		std::vector<bool> m_HasOverridden;
+		// 0 or 1, if a material in the index has been overriden,
+		// please never replace this with std::vector<bool>
+		std::vector<uint8_t> m_HasOverridden;
 
 		// We want to keep an ID so this is unique to any other material registry.
 		// But really it's because I want to use in the hash function for StaticMeshKey.

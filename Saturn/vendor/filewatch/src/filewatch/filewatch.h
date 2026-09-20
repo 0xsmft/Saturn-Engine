@@ -627,7 +627,7 @@ namespace filewatch {
         void monitor_directory()
         {
 			char threadName[ 16 ] = "MonitorThrd";
-			pthread_setname_np( pthread_self(), threadName, 16 );
+//			pthread_setname_np( pthread_self(), threadName, 16 );
 
             std::vector<char> buffer( _buffer_size );
 
@@ -1220,7 +1220,7 @@ namespace filewatch {
 
         void monitor_directory() {
 			char threadName[ 16 ] = "MonitorThrd";
-			pthread_setname_np( pthread_self(), threadName, 16 );
+			//pthread_setname_np( pthread_self(), threadName, 16 );
 
             _run_loop = CFRunLoopGetCurrent();
             FSEventStreamScheduleWithRunLoop( _directory,
@@ -1236,7 +1236,7 @@ namespace filewatch {
         {
 #if FILEWATCH_PLATFORM_MAC || __unix__
             char threadName[ 16 ] = "CallbackThread";
-            pthread_setname_np( pthread_self(), threadName, 16 );
+            //pthread_setname_np( pthread_self(), threadName, 16 );
 #elif _WIN32
             SetThreadDescription( GetCurrentThread(), L"FileWatcher Callback Thread" );
 #endif

@@ -332,7 +332,7 @@ namespace Saturn {
 			{
 				ImGui::BeginHorizontal( ( int ) rMeshID );
 
-				ImGui::Text( "%" PRIu64, rMeshID );
+				ImGui::Text( "%" PRIu64, ( uint64_t ) rMeshID );
 				if( ImGui::SmallButton( "-" ) )
 				{
 					m_SkeletonAsset->MarkAsUncompatibleMesh( rMeshID );

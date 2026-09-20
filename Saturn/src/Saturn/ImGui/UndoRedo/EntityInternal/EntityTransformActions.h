@@ -36,8 +36,6 @@ namespace Saturn {
 	class UndoRedoActionModifyEntityTransformation : public UndoRedoActionBase
 	{
 	public:
-		UndoRedoActionModifyEntityTransformation() = default;
-
 		UndoRedoActionModifyEntityTransformation( SharedPtr<Entity> entity, const glm::mat4& rOriginalRotation, const glm::mat4& rCurrentValue )
 			: UndoRedoActionBase( "Modify Entity Transformation" ), m_OriginalTransform( rOriginalRotation ), m_CurrentTransform( rCurrentValue )
 		{

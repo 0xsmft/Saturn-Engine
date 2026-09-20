@@ -21,6 +21,7 @@ namespace SaturnBuildTool
             Links.Add( "Saturn" );
 
             AddPlatformRequirements();
+            AddSaturnDepsForNonMSVC();
         }
 
         private void AddPlatformRequirements() 
@@ -33,6 +34,32 @@ namespace SaturnBuildTool
                 {
                     Links.AddRange( new string[] { "ole32", "kernel32", "comdlg32", "Gdi32", "shell32", "Advapi32" } );
                 } break;
+            }
+        }
+
+        private void AddSaturnDepsForNonMSVC()
+        {
+            switch( Shared.ProjectInfo.ToolchainTypeToUse )
+            {
+                default: break;
+
+                case ToolchainType.Clang:
+                case ToolchainType.GCC:
+                    {
+                        Links.AddRange( new string[] {
+                            "ImGui",
+                            "SPIRV-Cross",
+                            "yaml-cpp",
+                            "zlib",
+                            "Recast",
+                            "Freetype",
+                            "MSDFGen",
+                            "MSDF-Atlas-Gen",
+                            "JoltPhysics",
+                            "NativeFileDialogExtended",
+                            "Saturn-SharedStorage"
+                        } );
+                    } break;
             }
         }
     }

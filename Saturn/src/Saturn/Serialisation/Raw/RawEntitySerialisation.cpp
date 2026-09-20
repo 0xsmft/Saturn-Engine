@@ -29,6 +29,8 @@
 #include "sppch.h"
 #include "RawEntitySerialisation.h"
 
+#include "Saturn/Scene/Scene.h"
+
 #include "RawSerialisation.h"
 
 #include "Saturn/Audio/SoundGroup.h"

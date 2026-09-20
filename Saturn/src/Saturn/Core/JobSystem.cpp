@@ -67,7 +67,7 @@ namespace Saturn {
 
 	void JobSystem::SetMaxThreads( size_t maxThreads )
 	{
-		m_MaxThreads = glm::clamp( ( size_t ) maxThreads, 1llu, ( size_t )std::thread::hardware_concurrency() );
+		m_MaxThreads = glm::clamp( ( size_t ) maxThreads, ( size_t )1llu, ( size_t )std::thread::hardware_concurrency() );
 	}
 
 	void JobSystem::WaitForUnfinshedJobs()

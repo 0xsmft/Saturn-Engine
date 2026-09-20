@@ -87,7 +87,7 @@ namespace Saturn::Auxiliary {
 			return false;
 		}
 
-		std::wstring commandLine = rDevenvPath;
+		std::wstring commandLine = rDevenvPath.wstring();
 		commandLine += std::format( L" \"{}\"", rPath.wstring() );
 
 		if( !rOptions.TextFilePath.empty() )
@@ -97,7 +97,7 @@ namespace Saturn::Auxiliary {
 
 		if( !rOptions.ChildArgs.empty() )
 		{
-			commandLine += rOptions.ChildArgs;
+			commandLine += rOptions.ChildArgs.wstring();
 		}
 
 		DetachedProcess dp( commandLine );

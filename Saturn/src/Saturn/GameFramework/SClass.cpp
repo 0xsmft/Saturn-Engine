@@ -165,7 +165,7 @@ namespace Saturn {
 		return IsChildOf( pBase );
 	}
 
-	typedef SClass* ( __stdcall* RClassFunc )( );
+	typedef SClass* ( SAT_MSVC_STDCALL* RClassFunc )();
 
 	/* TODO: Pre-alloc */
 	// WARNING: Module local..., game module will have it's own copy of this, which is not great

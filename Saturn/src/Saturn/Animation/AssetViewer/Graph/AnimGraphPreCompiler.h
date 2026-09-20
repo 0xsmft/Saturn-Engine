@@ -28,6 +28,7 @@
 
 #pragma once
 
+#include "Saturn/Core/UUID.h"
 #include "Saturn/NodeEditor/PreCompiler/NodeEditorPreCompilerBase.h"
 #include "Saturn/Core/IndexedMap.h"
 

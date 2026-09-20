@@ -802,7 +802,7 @@ namespace Saturn {
 		// Draw ID and entity class type.
 		{
 			// ID
-			ImGui::TextDisabled( "%" PRIu64, id );
+			ImGui::TextDisabled( "%" PRIu64, ( uint64_t ) id );
 
 			ImGui::SameLine();
 			ImGui::TextDisabled( "%s", entity->GetClass()->GetName().c_str() );
@@ -1658,7 +1658,9 @@ namespace Saturn {
 				{
 					ImGui::Text( "Sound could not be found in active scene. This should not happen and may indicate a bug in the application." );
 
-					ImGui::Text( "Looking for: %" PRIu64 "(ASSET/%" PRIu64 "). Was it marked for destruction?", ap.UniqueID, ap.SpecAssetID );
+					ImGui::Text( "Looking for: %" PRIu64 "(ASSET/%" PRIu64 "). Was it marked for destruction?", 
+						( uint64_t ) ap.UniqueID, 
+						( uint64_t ) ap.SpecAssetID );
 				}
 			}
 			else
@@ -1841,7 +1843,7 @@ namespace Saturn {
 
 				Auxiliary::ScopedDisabledFlag disabledIfRT( m_IsReadOnly );
 
-				ImGui::TextDisabled( "%llu", rTextComp.FontAssetID.AssetID );
+				ImGui::TextDisabled( "%" PRIu64, ( uint64_t ) rTextComp.FontAssetID.AssetID );
 
 				ImGui::SameLine();
 

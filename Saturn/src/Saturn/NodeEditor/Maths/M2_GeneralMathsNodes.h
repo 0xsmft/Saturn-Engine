@@ -62,10 +62,10 @@ namespace Saturn {
 	protected:
 		void CreateNode()
 		{
-			Inputs.push_back( Ref<PinTypeTraits<Ty>::PinType>::Create( "A", PinKind::Input ) );
-			Inputs.push_back( Ref<PinTypeTraits<Ty>::PinType>::Create( "B", PinKind::Input ) );
+			Inputs.push_back( Ref<SAT_CLANG_TYPENAME PinTypeTraits<Ty>::PinType>::Create( "A", PinKind::Input ) );
+			Inputs.push_back( Ref<SAT_CLANG_TYPENAME PinTypeTraits<Ty>::PinType>::Create( "B", PinKind::Input ) );
 
-			Outputs.push_back( Ref<PinTypeTraits<Ty>::PinType>::Create( "Result", PinKind::Output ) );
+			Outputs.push_back( Ref<SAT_CLANG_TYPENAME PinTypeTraits<Ty>::PinType>::Create( "Result", PinKind::Output ) );
 		}
 	};
 

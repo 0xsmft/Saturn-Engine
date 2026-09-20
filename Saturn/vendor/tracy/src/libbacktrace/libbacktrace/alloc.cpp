@@ -39,7 +39,7 @@ POSSIBILITY OF SUCH DAMAGE.  */
 #include "backtrace.hpp"
 #include "internal.hpp"
 
-#include "../common/TracyAlloc.hpp"
+#include "../../tracy/common/TracyAlloc.hpp"
 
 namespace tracy
 {

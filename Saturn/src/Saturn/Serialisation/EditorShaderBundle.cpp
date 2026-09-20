@@ -87,9 +87,18 @@ namespace Saturn {
 
 			const auto& path = shader->GetFilepath();
 			const auto lwt = std::filesystem::last_write_time( path );
+ 
+			// Seems like AppleClang doesnt support clock_cast
+			// and using lwt.time_since_epoch() works fine on macOS
+			// but on Windows we get the wrong time
+			// so using a clock_cast is needed because I want all
+			// shaders to be the unix epoch time and not the system file clock time.
+#if defined(SAT_PLATFORM_WINDOWS) || defined(SAT_COMPILER_MSVC)
 			const auto systemTime = std::chrono::clock_cast< std::chrono::system_clock >( lwt );
 			const auto unixTimeMs = std::chrono::duration_cast< std::chrono::milliseconds >( systemTime.time_since_epoch() ).count();
-
+#else
+			const auto unixTimeMs = std::chrono::duration_cast< std::chrono::milliseconds >( lwt.time_since_epoch() ).count();
+#endif
 			RawSerialisation::WriteObject( unixTimeMs, fout );
 
 			shader->SerialiseShaderDataForEditor( fout );
@@ -133,9 +142,13 @@ namespace Saturn {
 			}
 
 			const auto lwt = std::filesystem::last_write_time( shader->GetFilepath() );
+
+#if defined(SAT_PLATFORM_WINDOWS) || defined(SAT_COMPILER_MSVC)
 			const auto systemTime = std::chrono::clock_cast< std::chrono::system_clock >( lwt );
 			const auto fsLastWriteTimeMs = std::chrono::duration_cast< std::chrono::milliseconds >( systemTime.time_since_epoch() ).count();
-
+#else
+		const auto fsLastWriteTimeMs = std::chrono::duration_cast< std::chrono::milliseconds >( lwt.time_since_epoch() ).count();
+#endif
 			// This is a bit hacky but will work fine.
 			// so, if our times match we add it to the library
 			// if not we do, then not we do nothing because when the shader 

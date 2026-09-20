@@ -26,7 +26,7 @@
 #include <assert.h>
 
 using namespace std;
-using namespace spv;
+using namespace SPIRV_CROSS_SPV_HEADER_NAMESPACE;
 
 namespace SPIRV_CROSS_NAMESPACE
 {
@@ -49,36 +49,40 @@ ParsedIR::ParsedIR()
 	pool_group->pools[TypeAccessChain].reset(new ObjectPool<SPIRAccessChain>);
 	pool_group->pools[TypeUndef].reset(new ObjectPool<SPIRUndef>);
 	pool_group->pools[TypeString].reset(new ObjectPool<SPIRString>);
+	pool_group->pools[TypeDebugLocalVariable].reset(new ObjectPool<SPIRDebugLocalVariable>);
 }
 
 // Should have been default-implemented, but need this on MSVC 2013.
 ParsedIR::ParsedIR(ParsedIR &&other) SPIRV_CROSS_NOEXCEPT
 {
-	*this = move(other);
+	*this = std::move(other);
 }
 
 ParsedIR &ParsedIR::operator=(ParsedIR &&other) SPIRV_CROSS_NOEXCEPT
 {
 	if (this != &other)
 	{
-		pool_group = move(other.pool_group);
-		spirv = move(other.spirv);
-		meta = move(other.meta);
+		pool_group = std::move(other.pool_group);
+		spirv = std::move(other.spirv);
+		meta = std::move(other.meta);
 		for (int i = 0; i < TypeCount; i++)
-			ids_for_type[i] = move(other.ids_for_type[i]);
-		ids_for_constant_or_type = move(other.ids_for_constant_or_type);
-		ids_for_constant_or_variable = move(other.ids_for_constant_or_variable);
-		declared_capabilities = move(other.declared_capabilities);
-		declared_extensions = move(other.declared_extensions);
-		block_meta = move(other.block_meta);
-		continue_block_to_loop_header = move(other.continue_block_to_loop_header);
-		entry_points = move(other.entry_points);
-		ids = move(other.ids);
+			ids_for_type[i] = std::move(other.ids_for_type[i]);
+		ids_for_constant_undef_or_type = std::move(other.ids_for_constant_undef_or_type);
+		ids_for_constant_or_variable = std::move(other.ids_for_constant_or_variable);
+		declared_capabilities = std::move(other.declared_capabilities);
+		declared_extensions = std::move(other.declared_extensions);
+		block_meta = std::move(other.block_meta);
+		continue_block_to_loop_header = std::move(other.continue_block_to_loop_header);
+		entry_points = std::move(other.entry_points);
+		ids = std::move(other.ids);
 		addressing_model = other.addressing_model;
 		memory_model = other.memory_model;
 
 		default_entry_point = other.default_entry_point;
-		source = other.source;
+		is_library_module = other.is_library_module;
+		library_exports = std::move(other.library_exports);
+		library_exported_functions = std::move(other.library_exported_functions);
+		sources = std::move(other.sources);
 		loop_iteration_depth_hard = other.loop_iteration_depth_hard;
 		loop_iteration_depth_soft = other.loop_iteration_depth_soft;
 
@@ -102,7 +106,7 @@ ParsedIR &ParsedIR::operator=(const ParsedIR &other)
 		meta = other.meta;
 		for (int i = 0; i < TypeCount; i++)
 			ids_for_type[i] = other.ids_for_type[i];
-		ids_for_constant_or_type = other.ids_for_constant_or_type;
+		ids_for_constant_undef_or_type = other.ids_for_constant_undef_or_type;
 		ids_for_constant_or_variable = other.ids_for_constant_or_variable;
 		declared_capabilities = other.declared_capabilities;
 		declared_extensions = other.declared_extensions;
@@ -110,7 +114,10 @@ ParsedIR &ParsedIR::operator=(const ParsedIR &other)
 		continue_block_to_loop_header = other.continue_block_to_loop_header;
 		entry_points = other.entry_points;
 		default_entry_point = other.default_entry_point;
-		source = other.source;
+		is_library_module = other.is_library_module;
+		library_exports = other.library_exports;
+		library_exported_functions = other.library_exported_functions;
+		sources = other.sources;
 		loop_iteration_depth_hard = other.loop_iteration_depth_hard;
 		loop_iteration_depth_soft = other.loop_iteration_depth_soft;
 		addressing_model = other.addressing_model;
@@ -330,6 +337,10 @@ void ParsedIR::fixup_reserved_names()
 {
 	for (uint32_t id : meta_needing_name_fixup)
 	{
+		// Don't rename remapped variables like 'gl_LastFragDepthARM'.
+		if (ids[id].get_type() == TypeVariable && get<SPIRVariable>(id).remapped_variable)
+			continue;
+
 		auto &m = meta[id];
 		sanitize_identifier(m.decoration.alias, false, false);
 		for (auto &memb : m.members)
@@ -349,7 +360,7 @@ void ParsedIR::set_name(ID id, const string &name)
 void ParsedIR::set_member_name(TypeID id, uint32_t index, const string &name)
 {
 	auto &m = meta[id];
-	m.members.resize(max(meta[id].members.size(), size_t(index) + 1));
+	m.members.resize(max(m.members.size(), size_t(index) + 1));
 	m.members[index].alias = name;
 	if (!is_valid_identifier(name) || is_reserved_identifier(name, true, false))
 		meta_needing_name_fixup.insert(id);
@@ -362,8 +373,12 @@ void ParsedIR::set_decoration_string(ID id, Decoration decoration, const string 
 
 	switch (decoration)
 	{
-	case DecorationHlslSemanticGOOGLE:
-		dec.hlsl_semantic = argument;
+	case DecorationUserSemantic:
+		dec.user_semantic = argument;
+		break;
+
+	case DecorationUserTypeGOOGLE:
+		dec.user_type = argument;
 		break;
 
 	default:
@@ -395,6 +410,10 @@ void ParsedIR::set_decoration(ID id, Decoration decoration, uint32_t argument)
 		dec.offset = argument;
 		break;
 
+	case DecorationOffsetIdEXT:
+		dec.offset_id = argument;
+		break;
+
 	case DecorationXfbBuffer:
 		dec.xfb_buffer = argument;
 		break;
@@ -409,6 +428,10 @@ void ParsedIR::set_decoration(ID id, Decoration decoration, uint32_t argument)
 
 	case DecorationArrayStride:
 		dec.array_stride = argument;
+		break;
+
+	case DecorationArrayStrideIdEXT:
+		dec.array_stride_id = argument;
 		break;
 
 	case DecorationMatrixStride:
@@ -444,6 +467,10 @@ void ParsedIR::set_decoration(ID id, Decoration decoration, uint32_t argument)
 		dec.fp_rounding_mode = static_cast<FPRoundingMode>(argument);
 		break;
 
+	case DecorationFPFastMathMode:
+		dec.fp_fast_math_mode = static_cast<FPFastMathModeMask>(argument);
+		break;
+
 	default:
 		break;
 	}
@@ -451,8 +478,9 @@ void ParsedIR::set_decoration(ID id, Decoration decoration, uint32_t argument)
 
 void ParsedIR::set_member_decoration(TypeID id, uint32_t index, Decoration decoration, uint32_t argument)
 {
-	meta[id].members.resize(max(meta[id].members.size(), size_t(index) + 1));
-	auto &dec = meta[id].members[index];
+	auto &m = meta[id];
+	m.members.resize(max(m.members.size(), size_t(index) + 1));
+	auto &dec = m.members[index];
 	dec.decoration_flags.set(decoration);
 
 	switch (decoration)
@@ -476,6 +504,10 @@ void ParsedIR::set_member_decoration(TypeID id, uint32_t index, Decoration decor
 
 	case DecorationOffset:
 		dec.offset = argument;
+		break;
+
+	case DecorationOffsetIdEXT:
+		dec.offset_id = argument;
 		break;
 
 	case DecorationXfbBuffer:
@@ -514,8 +546,27 @@ void ParsedIR::mark_used_as_array_length(ID id)
 	switch (ids[id].get_type())
 	{
 	case TypeConstant:
-		get<SPIRConstant>(id).is_used_as_array_length = true;
+	{
+		auto &c = get<SPIRConstant>(id);
+		c.is_used_as_array_length = true;
+
+		// Mark composite dependencies as well.
+		for (auto &sub_id: c.m.id)
+			if (sub_id)
+				mark_used_as_array_length(sub_id);
+
+		for (uint32_t col = 0; col < c.m.columns; col++)
+		{
+			for (auto &sub_id : c.m.c[col].id)
+				if (sub_id)
+					mark_used_as_array_length(sub_id);
+		}
+
+		for (auto &sub_id : c.subconstants)
+			if (sub_id)
+				mark_used_as_array_length(sub_id);
 		break;
+	}
 
 	case TypeConstantOp:
 	{
@@ -555,7 +606,8 @@ Bitset ParsedIR::get_buffer_block_type_flags(const SPIRType &type) const
 Bitset ParsedIR::get_buffer_block_flags(const SPIRVariable &var) const
 {
 	auto &type = get<SPIRType>(var.basetype);
-	assert(type.basetype == SPIRType::Struct);
+	if (type.basetype != SPIRType::Struct)
+		SPIRV_CROSS_THROW("Cannot get buffer block flags for non-buffer variable.");
 
 	// Some flags like non-writable, non-readable are actually found
 	// as member decorations. If all members have a decoration set, propagate
@@ -611,6 +663,8 @@ uint32_t ParsedIR::get_decoration(ID id, Decoration decoration) const
 		return dec.component;
 	case DecorationOffset:
 		return dec.offset;
+	case DecorationOffsetIdEXT:
+		return dec.offset_id;
 	case DecorationXfbBuffer:
 		return dec.xfb_buffer;
 	case DecorationXfbStride:
@@ -627,12 +681,16 @@ uint32_t ParsedIR::get_decoration(ID id, Decoration decoration) const
 		return dec.spec_id;
 	case DecorationArrayStride:
 		return dec.array_stride;
+	case DecorationArrayStrideIdEXT:
+		return dec.array_stride_id;
 	case DecorationMatrixStride:
 		return dec.matrix_stride;
 	case DecorationIndex:
 		return dec.index;
 	case DecorationFPRoundingMode:
 		return dec.fp_rounding_mode;
+	case DecorationFPFastMathMode:
+		return dec.fp_fast_math_mode;
 	default:
 		return 1;
 	}
@@ -651,8 +709,11 @@ const string &ParsedIR::get_decoration_string(ID id, Decoration decoration) cons
 
 	switch (decoration)
 	{
-	case DecorationHlslSemanticGOOGLE:
-		return dec.hlsl_semantic;
+	case DecorationUserSemantic:
+		return dec.user_semantic;
+
+	case DecorationUserTypeGOOGLE:
+		return dec.user_type;
 
 	default:
 		return empty_string;
@@ -679,6 +740,10 @@ void ParsedIR::unset_decoration(ID id, Decoration decoration)
 
 	case DecorationOffset:
 		dec.offset = 0;
+		break;
+
+	case DecorationOffsetIdEXT:
+		dec.offset_id = 0;
 		break;
 
 	case DecorationXfbBuffer:
@@ -709,12 +774,16 @@ void ParsedIR::unset_decoration(ID id, Decoration decoration)
 		dec.spec_id = 0;
 		break;
 
-	case DecorationHlslSemanticGOOGLE:
-		dec.hlsl_semantic.clear();
+	case DecorationUserSemantic:
+		dec.user_semantic.clear();
 		break;
 
 	case DecorationFPRoundingMode:
 		dec.fp_rounding_mode = FPRoundingModeMax;
+		break;
+
+	case DecorationFPFastMathMode:
+		dec.fp_fast_math_mode = FPFastMathModeMaskNone;
 		break;
 
 	case DecorationHlslCounterBufferGOOGLE:
@@ -763,6 +832,8 @@ uint32_t ParsedIR::get_member_decoration(TypeID id, uint32_t index, Decoration d
 		return dec.binding;
 	case DecorationOffset:
 		return dec.offset;
+	case DecorationOffsetIdEXT:
+		return dec.offset_id;
 	case DecorationXfbBuffer:
 		return dec.xfb_buffer;
 	case DecorationXfbStride:
@@ -771,6 +842,8 @@ uint32_t ParsedIR::get_member_decoration(TypeID id, uint32_t index, Decoration d
 		return dec.stream;
 	case DecorationSpecId:
 		return dec.spec_id;
+	case DecorationMatrixStride:
+		return dec.matrix_stride;
 	case DecorationIndex:
 		return dec.index;
 	default:
@@ -792,14 +865,15 @@ const Bitset &ParsedIR::get_decoration_bitset(ID id) const
 
 void ParsedIR::set_member_decoration_string(TypeID id, uint32_t index, Decoration decoration, const string &argument)
 {
-	meta[id].members.resize(max(meta[id].members.size(), size_t(index) + 1));
+	auto &m = meta[id];
+	m.members.resize(max(m.members.size(), size_t(index) + 1));
 	auto &dec = meta[id].members[index];
 	dec.decoration_flags.set(decoration);
 
 	switch (decoration)
 	{
-	case DecorationHlslSemanticGOOGLE:
-		dec.hlsl_semantic = argument;
+	case DecorationUserSemantic:
+		dec.user_semantic = argument;
 		break;
 
 	default:
@@ -819,8 +893,8 @@ const string &ParsedIR::get_member_decoration_string(TypeID id, uint32_t index, 
 
 		switch (decoration)
 		{
-		case DecorationHlslSemanticGOOGLE:
-			return dec.hlsl_semantic;
+		case DecorationUserSemantic:
+			return dec.user_semantic;
 
 		default:
 			return empty_string;
@@ -857,6 +931,10 @@ void ParsedIR::unset_member_decoration(TypeID id, uint32_t index, Decoration dec
 		dec.offset = 0;
 		break;
 
+	case DecorationOffsetIdEXT:
+		dec.offset_id = 0;
+		break;
+
 	case DecorationXfbBuffer:
 		dec.xfb_buffer = 0;
 		break;
@@ -873,8 +951,8 @@ void ParsedIR::unset_member_decoration(TypeID id, uint32_t index, Decoration dec
 		dec.spec_id = 0;
 		break;
 
-	case DecorationHlslSemanticGOOGLE:
-		dec.hlsl_semantic.clear();
+	case DecorationUserSemantic:
+		dec.user_semantic.clear();
 		break;
 
 	default:
@@ -912,6 +990,8 @@ void ParsedIR::reset_all_of_type(Types type)
 
 void ParsedIR::add_typed_id(Types type, ID id)
 {
+	assert(id < ids.size());
+
 	if (loop_iteration_depth_hard != 0)
 		SPIRV_CROSS_THROW("Cannot add typed ID while looping over it.");
 
@@ -928,7 +1008,7 @@ void ParsedIR::add_typed_id(Types type, ID id)
 		{
 		case TypeConstant:
 			ids_for_constant_or_variable.push_back(id);
-			ids_for_constant_or_type.push_back(id);
+			ids_for_constant_undef_or_type.push_back(id);
 			break;
 
 		case TypeVariable:
@@ -937,7 +1017,8 @@ void ParsedIR::add_typed_id(Types type, ID id)
 
 		case TypeType:
 		case TypeConstantOp:
-			ids_for_constant_or_type.push_back(id);
+		case TypeUndef:
+			ids_for_constant_undef_or_type.push_back(id);
 			break;
 
 		default:
@@ -999,7 +1080,7 @@ ParsedIR::LoopLock::LoopLock(uint32_t *lock_)
 
 ParsedIR::LoopLock::LoopLock(LoopLock &&other) SPIRV_CROSS_NOEXCEPT
 {
-	*this = move(other);
+	*this = std::move(other);
 }
 
 ParsedIR::LoopLock &ParsedIR::LoopLock::operator=(LoopLock &&other) SPIRV_CROSS_NOEXCEPT
@@ -1013,6 +1094,8 @@ ParsedIR::LoopLock &ParsedIR::LoopLock::operator=(LoopLock &&other) SPIRV_CROSS_
 
 void ParsedIR::make_constant_null(uint32_t id, uint32_t type, bool add_to_typed_id_set)
 {
+	assert(id < ids.size());
+
 	auto &constant_type = get<SPIRType>(type);
 
 	if (constant_type.pointer)
@@ -1029,16 +1112,21 @@ void ParsedIR::make_constant_null(uint32_t id, uint32_t type, bool add_to_typed_
 		uint32_t parent_id = increase_bound_by(1);
 		make_constant_null(parent_id, constant_type.parent_type, add_to_typed_id_set);
 
-		if (!constant_type.array_size_literal.back())
-			SPIRV_CROSS_THROW("Array size of OpConstantNull must be a literal.");
+		// The array size of OpConstantNull can be either literal or specialization constant.
+		// In the latter case, we cannot take the value as-is, as it can be changed to anything.
+		// Rather, we assume it to be *one* for the sake of initializer.
+		bool is_literal_array_size = constant_type.array_size_literal.back();
+		uint32_t count = is_literal_array_size ? constant_type.array.back() : 1;
 
-		SmallVector<uint32_t> elements(constant_type.array.back());
-		for (uint32_t i = 0; i < constant_type.array.back(); i++)
+		SmallVector<uint32_t> elements(count);
+		for (uint32_t i = 0; i < count; i++)
 			elements[i] = parent_id;
 
 		if (add_to_typed_id_set)
 			add_typed_id(TypeConstant, id);
-		variant_set<SPIRConstant>(ids[id], type, elements.data(), uint32_t(elements.size()), false).self = id;
+		auto& constant = variant_set<SPIRConstant>(ids[id], type, elements.data(), uint32_t(elements.size()), false);
+		constant.self = id;
+		constant.is_null_array_specialized_length = !is_literal_array_size;
 	}
 	else if (!constant_type.member_types.empty())
 	{

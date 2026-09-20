@@ -47,7 +47,7 @@ namespace Saturn {
 
 			return result;
 #else
-#error "ConvertString not implemented on other platforms yet!"
+//#error "ConvertString not implemented on other platforms yet!"
 			return {};
 #endif
 		}
@@ -63,7 +63,7 @@ namespace Saturn {
 
 			return result;
 #else
-#error "ConvertWString not implemented on other platforms yet!"
+//#error "ConvertWString not implemented on other platforms yet!"
 			return {};
 #endif
 		}

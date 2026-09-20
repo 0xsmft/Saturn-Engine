@@ -501,7 +501,7 @@ namespace Saturn {
 
 	bool MaterialRegistry::HasAnyOverrides() const
 	{
-		return std::any_of( m_HasOverridden.begin(), m_HasOverridden.end(), []( bool x ) { return x; } );
+		return std::any_of( m_HasOverridden.begin(), m_HasOverridden.end(), []( const auto x ) { return x; } );
 	}
 
 	void MaterialRegistry::Serialise( const MaterialRegistry& rRegistry, std::ofstream& rStream )

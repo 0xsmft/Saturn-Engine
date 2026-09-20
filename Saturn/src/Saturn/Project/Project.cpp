@@ -419,7 +419,13 @@ namespace Saturn {
 		
 		Args += m_Config.Name;
 		
+#if defined( SAT_PLATFORM_WINDOWS )
 		Args += " /WIN64";
+#elif defined( SAT_PLATFORM_LINUX )
+		Args += " /LINUX64";
+#else
+		Args += " /APPLE";
+#endif
 		
 		switch( kind )
 		{
@@ -442,7 +448,7 @@ namespace Saturn {
 		const std::wstring wArgs = Auxiliary::ConvertString( Args );
 
 		// Start the process
-		Process buildTool( wArgs, WorkingDir );
+		Process buildTool( wArgs, WorkingDir.wstring() );
 
 		const int exitCode = buildTool.ResultOfProcess();
 		return ( SaturnBuildToolExitCodes ) exitCode;
@@ -459,7 +465,13 @@ namespace Saturn {
 
 		Args += m_Config.Name;
 
+#if defined( SAT_PLATFORM_WINDOWS )
 		Args += " /WIN64";
+#elif defined( SAT_PLATFORM_LINUX )
+		Args += " /LINUX64";
+#else
+		Args += " /APPLE";
+#endif
 
 		switch( kind )
 		{
@@ -482,7 +494,7 @@ namespace Saturn {
 		const std::wstring wArgs = Auxiliary::ConvertString( Args );
 
 		// Start the process
-		Process buildTool( wArgs, WorkingDir );
+		Process buildTool( wArgs, WorkingDir.wstring() );
 
 		const int exitCode = buildTool.ResultOfProcess();
 		return ( SaturnBuildToolExitCodes )exitCode;

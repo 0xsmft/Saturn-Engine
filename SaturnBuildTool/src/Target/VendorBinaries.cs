@@ -28,19 +28,19 @@ namespace SaturnBuildTool
             {
                 case ConfigKind.Debug:
                     {
-                        path = Path.Combine( path, "Debug-windows-x86_64" );
+                        path = Path.Combine( path, $"Debug-{Shared.Platform.PlatformName}-{Shared.Platform.ArchName}" );
                     }
                     break;
 
                 case ConfigKind.Release:
                     {
-                        path = Path.Combine( path, "Release-windows-x86_64" );
+                        path = Path.Combine( path, $"Release-{Shared.Platform.PlatformName}-{Shared.Platform.ArchName}" );
                     }
                     break;
 
                 case ConfigKind.Dist:
                     {
-                        path = Path.Combine( path, "Dist-windows-x86_64" );
+                        path = Path.Combine( path, $"Dist-{Shared.Platform.PlatformName}-{Shared.Platform.ArchName}" );
                     }
                     break;
             }
@@ -109,7 +109,11 @@ namespace SaturnBuildTool
                             binPath = Environment.GetEnvironmentVariable( "VK_SDK_PATH" );
                             if( binPath == null )
                             {
-                                break;
+                                binPath = Environment.GetEnvironmentVariable( "VULKAN_SDK" );
+                                if( binPath == null )
+                                {
+                                    break;
+                                }
                             }
                         }
 
@@ -126,7 +130,11 @@ namespace SaturnBuildTool
                             binPath = Environment.GetEnvironmentVariable( "VK_SDK_PATH" );
                             if( binPath == null )
                             {
-                                break;
+                                binPath = Environment.GetEnvironmentVariable( "VULKAN_SDK" );
+                                if( binPath == null )
+                                {
+                                    break;
+                                }
                             }
                         }
 

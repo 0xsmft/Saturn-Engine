@@ -142,10 +142,10 @@ namespace Saturn {
 		{
 			entt::meta<V>()
 				.type( entt::type_id<V>().hash() )
-				.func<&ComponentRefl<V>::Add>( entt::hashed_string( "Add" ) )
-				.func<&ComponentRefl<V>::CopyFromPrefab>( entt::hashed_string( "CopyFromPrefab" ) )
-				.func<&ComponentRefl<V>::Break>( entt::hashed_string( "Break" ) )
-				.func<&ComponentRefl<V>::Remove>( entt::hashed_string( "Remove" ) );
+				.template func<&ComponentRefl<V>::Add>( entt::hashed_string( "Add" ) )
+				.template func<&ComponentRefl<V>::CopyFromPrefab>( entt::hashed_string( "CopyFromPrefab" ) )
+				.template func<&ComponentRefl<V>::Break>( entt::hashed_string( "Break" ) )
+				.template func<&ComponentRefl<V>::Remove>( entt::hashed_string( "Remove" ) );
 		}( ), ... );
 	}
 

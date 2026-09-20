@@ -34,6 +34,10 @@
 
 #if defined(_WIN32)
 #include "Backend/RubyWindowsBackend.h"
+#elif defined(__linux__)
+#include "Backend/RubyXcbBackend.h"
+#elif defined(SAT_PLATFORM_MACOS)
+#include "Backend/RubyCocoaBackend.h"
 #endif
 
 namespace Saturn {
@@ -43,7 +47,13 @@ namespace Saturn {
 	{
 #if defined(_WIN32)
 		m_pDefaultBackend = std::make_unique<RubyWindowsBackend>( rSpec, this );
+#elif defined (SAT_PLATFORM_LINUX) || defined(__linux__)
+		m_pDefaultBackend = std::make_unique<RubyXcbBackend>( rSpec, this );
+#elif defined( SAT_PLATFORM_MACOS )
+		m_pDefaultBackend = std::make_unique<RubyCocoaBackend>( rSpec, this );
 #endif
+
+		SAT_CORE_ASSERT( m_pDefaultBackend );
 
 		m_pDefaultBackend->Create();
 
@@ -54,12 +64,19 @@ namespace Saturn {
 	RubyWindow::~RubyWindow()
 	{
 		m_pEventTarget = nullptr;
-
 		m_pDefaultBackend->DestroyWindow();
 	}
 
 	void RubyWindow::PollEvents()
 	{
+#if defined(SAT_PLATFORM_LINUX)
+		auto* pXcbBackend = dynamic_cast<RubyXcbBackend*>( m_pDefaultBackend.get() );
+		if( pXcbBackend ) 
+		{
+			pXcbBackend->PollEvents();
+		}
+#endif
+		
 		if( !m_pDefaultBackend->Focused() && m_CursorMode >= RubyCursorMode::Hidden )
 		{
 			SetMouseCursorMode( RubyCursorMode::Normal );
@@ -202,8 +219,13 @@ namespace Saturn {
 		return m_pDefaultBackend->GetSize();
 	}
 
-	uint32_t RubyWindow::GetWidth() const
-	{
+    RubyIVec2 RubyWindow::GetFramebufferSize() const
+    {
+		return m_pDefaultBackend->GetFramebufferSize();
+    }
+
+    uint32_t RubyWindow::GetWidth() const
+    {
 		return m_pDefaultBackend->GetSize().x;
 	}
 
@@ -212,7 +234,17 @@ namespace Saturn {
 		return m_pDefaultBackend->GetSize().y;
 	}
 
-	std::string RubyWindow::GetClipboardText()
+    uint32_t RubyWindow::GetFramebufferWidth() const
+    {
+        return m_pDefaultBackend->GetFramebufferSize().x;
+    }
+
+    uint32_t RubyWindow::GetFramebufferHeight() const
+    {
+        return m_pDefaultBackend->GetFramebufferSize().y;
+    }
+
+    std::string RubyWindow::GetClipboardText()
 	{
 		return m_pDefaultBackend->GetClipboardText();
 	}
@@ -222,7 +254,12 @@ namespace Saturn {
 		return m_pDefaultBackend->GetClipboardTextW();
 	}
 
-	bool RubyWindow::IsFocused()
+    RubyVec2 RubyWindow::GetFramebufferScale() const
+	{
+		return m_pDefaultBackend->GetFramebufferScale();
+    }
+
+    bool RubyWindow::IsFocused()
 	{
 		return m_pDefaultBackend->Focused();
 	}
@@ -267,6 +304,11 @@ namespace Saturn {
 	void RubyWindow::FlashAttention()
 	{
 		m_pDefaultBackend->FlashAttention();
+	}
+
+	void RubyWindow::Close() 
+	{
+		m_pDefaultBackend->CloseWindow();
 	}
 
 	void RubyWindow::CentreWindowXYInMonitor()

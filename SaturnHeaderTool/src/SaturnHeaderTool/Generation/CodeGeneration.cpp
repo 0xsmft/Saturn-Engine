@@ -26,6 +26,7 @@
 *********************************************************************************************
 */
 
+#include "sppch.h"
 #include "CodeGeneration.h"
 #include "SaturnHeaderTool/Base/Errors.h"
 

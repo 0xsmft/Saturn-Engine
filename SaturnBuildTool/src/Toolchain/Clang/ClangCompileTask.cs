@@ -23,7 +23,41 @@ namespace SaturnBuildTool
         {
             ClangToolchain clangToolchain = toolchainBase as ClangToolchain;
 
+            ProcessStartInfo processStart = new ProcessStartInfo();
+            switch( Shared.ProjectInfo.TargetArchitectureKind )
+            {
+                default:
+                    {
+                        processStart.FileName = "clang++";
+                    }
+                    break;
+            }
+
+            processStart.CreateNoWindow = true;
+            processStart.RedirectStandardOutput = true;
+            processStart.RedirectStandardError = true;
+            processStart.UseShellExecute = false;
+            processStart.WorkingDirectory = Shared.ProjectInfo.RootDirectory;
+
+            Process clProcess = new Process
+            {
+                StartInfo = processStart
+            };
+
             var Args = new List<string>();
+
+            switch( Shared.ProjectInfo.TargetArchitectureKind )
+            {
+                case ArchitectureKind.x86_64:
+                    {
+                        Args.Add( " -arch x86_64" );
+                    } break;
+
+                case ArchitectureKind.AArch64:
+                    {
+                        Args.Add( " -arch arm64" );
+                    } break;
+            }
 
             switch( CompileSettings.CppStdVersion ) 
             {
@@ -47,13 +81,173 @@ namespace SaturnBuildTool
                     break;
             }
 
+            if( CommandLineParser.Instance.FindFlag( "xw+" ) )
+            {
+                // Treat warnings as errors
+                Args.Add( " -Werror" );
+            }
+
+            string outFile = Path.GetFileName( Path.ChangeExtension( InputFile, ".o" ) );
+
+            // Precompiled headers
+            // PCHs are set from the target and NOT the module.
+            if( CompileSettings.PCHInfo.Valid() )
+            {
+                switch( CompileSettings.PCHAction )
+                {
+                    default:
+                        {
+                            Args.Add( $" -c \"{InputFile}\"" );
+                        } break;
+
+                    case CompileSettings.PrecompiledHeaderAction.Create:
+                        {
+                            outFile += ".pch";
+                            Args.Add( $" -x c++-header -c \"{InputFile}\" -Xclang -emit-pch" );
+                        }
+                        break;
+
+                    case CompileSettings.PrecompiledHeaderAction.Use: 
+                        {
+                            string pchFilepath = Path.Combine( CompileSettings.OutputPath, CompileSettings.PCHInfo.HeaderFile );
+                            pchFilepath = Path.ChangeExtension( pchFilepath, ".o.pch" );
+
+                            Args.Add( $" -c \"{InputFile}\"" );
+                            Args.Add( $" -include-pch \"{pchFilepath}\"" );
+                        } break;
+                }
+            }
+
+            // Output
+            Args.Add( string.Format( " -o\"{0}\"", Path.Combine( CompileSettings.OutputPath, outFile ) ) );
+
+            if( CompileSettings.X31ShowConsole || CommandLineParser.Instance.FindFlag( "showconsole" ) )
+                Args.Add( " -D\"__X31_SHOWCONSOLE__\"" );
+
+            // Learn more: https://clang.llvm.org/docs/CommandGuide/clang.html#code-generation-options
+            switch( CompileSettings.Optimisation )
+            {
+                default:
+                case CompileSettings.CppOptimisation.Off:
+                    {
+                        Args.Add( " -O0" );
+                    }
+                    break;
+
+                case CompileSettings.CppOptimisation.Debug:
+                    {
+                        Args.Add( " -O0" );
+                    }
+                    break;
+
+                case CompileSettings.CppOptimisation.Size:
+                    {
+                        Args.Add( " -Os" );
+                    }
+                    break;
+
+                case CompileSettings.CppOptimisation.Speed:
+                    {
+                        Args.Add( " -O3" );
+                    }
+                    break;
+
+                case CompileSettings.CppOptimisation.Full:
+                    {
+                        Args.Add( " -Oz" );
+                    } break;
+            }
+
+            // Configuration specific
+            switch( Shared.ProjectInfo.CurrentConfigKind )
+            {
+                case ConfigKind.Debug:
+                    Args.Add( " -D\"SAT_DEBUG\" -g" );
+                    break;
+    
+                case ConfigKind.Release:
+                    Args.Add( " -D\"SAT_RELEASE\" -g" );
+                    break;
+
+                case ConfigKind.Dist:
+                    {
+                        Args.Add( " -D\"SAT_DIST\"" );
+
+                        if( CommandLineParser.Instance.FindFlag( "DISTASDBG" ) )
+                        {
+                            Args.Add( " -g" );
+                        }
+                    }
+                    break;
+            }
+
             // Preprocessor defines
             foreach( string name in CompileSettings.PreprocessorDefines )
             {
                 Args.Add( string.Format( " -D \"{0}\"", name ) );
             }
 
-            throw new NotImplementedException();
+            // Includes
+            foreach( string include in CompileSettings.Includes )
+            {
+                Args.Add( string.Format( " -I\"{0}\"", include ) );
+            }
+
+            // Auxiliary
+            Args.Add( " -Wno-missing-template-arg-list-after-template-kw -Wno-non-pod-varargs" );
+            Args.Add( " -DSAT_COMPILER_CLANG" );
+
+            // Start the compile
+            processStart.Arguments = string.Join( "", Args );
+
+            Console.WriteLine( "Building " + Path.GetFileName( InputFile ) );
+
+            // Enable this for Debugging
+            clProcess.EnableRaisingEvents = true;
+
+            if( CommandLineParser.Instance.FindFlag( "args+" ) )
+            {
+                Console.WriteLine( "Command Line: {0}", processStart.Arguments );
+            }
+
+            clProcess.OutputDataReceived += new DataReceivedEventHandler( ( _, e ) =>
+            {
+                if( e.Data != null )
+                {
+                    Console.WriteLine( e.Data );
+                }
+            } );
+
+            clProcess.ErrorDataReceived += new DataReceivedEventHandler( ( _, e ) =>
+            {
+                if( e.Data != null )
+                {
+                    Console.WriteLine( e.Data );
+                }
+            } );
+
+            clProcess.Start();
+
+            // Debugging
+            clProcess.BeginErrorReadLine();
+            clProcess.BeginOutputReadLine();
+
+            clProcess.WaitForExit();
+
+            // Write error output (disable this when using synchronous output)
+            //Console.WriteLine(clProcess.StandardOutput.ReadToEnd().Trim());
+
+            if( clProcess.ExitCode == 0 )
+            {
+                clangToolchain.ProducedItems.Add( outFile );
+                Shared.TaskCache.CacheTask( InputFile, Path.Combine( CompileSettings.OutputPath, outFile ) );
+            }
+            else
+            {
+                Shared.TaskCache.RemoveTask( InputFile );
+            }
+
+            return clProcess.ExitCode;
         }
     }
 }

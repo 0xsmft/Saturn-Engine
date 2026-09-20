@@ -32,28 +32,14 @@ project "SaturnBuildTool"
 	}
 
 	nuget { "Microsoft.CodeAnalysis.CSharp:5.9.0" }
-	
-	filter { "configurations:Debug-ASan" }
-		buildcommands
-		{
-			"dotnet build -c Debug-ASan SaturnBuildTool.sln"
-		}
 
 	filter { "configurations:Debug" }
-		buildcommands
-		{
-			"dotnet build -c Debug SaturnBuildTool.sln"
-		}
+		symbols "On"
 
  	filter { "configurations:Release" }
-		buildcommands
-		{
-			"dotnet build -c Release SaturnBuildTool.sln"
-		}
+		optimize "On"
+   		symbols "On"
 
 	filter { "configurations:Dist" }
-		buildcommands
-		{
-			"dotnet build -c Dist SaturnBuildTool.sln"
-		}
-
+		optimize "On"
+  		symbols "Off"

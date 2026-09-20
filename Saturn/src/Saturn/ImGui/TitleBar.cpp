@@ -66,12 +66,17 @@ namespace Saturn {
 
 			pWindow->SetTitlebarCondition( ImGui::IsAnyItemHovered() );
 
+#if defined( SAT_PLATFORM_MACOS )
+			ImGui::SetCursorPosX( 67.0f );
+#endif
+
 			for( auto&& rrFunc : m_MenuBarFunctions )
 			{
 				if( rrFunc )
 					rrFunc();
 			}
 
+#if !defined( SAT_PLATFORM_MACOS )
 			// System buttons
 			{
 				const float  buttonSize = ImGui::GetFrameHeight();
@@ -188,6 +193,7 @@ namespace Saturn {
 					buttonRect.Max.x -= buttonSize;
 				}
 			}
+#endif
 
 			ImGui::EndMainMenuBar();
 		}

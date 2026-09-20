@@ -37,7 +37,7 @@ static Saturn::SClass* RStaticLnk()																				\
 	static Saturn::SClass* pClass = nullptr;																	\
 	if( !pClass )																								\
 	{																											\
-		const auto spec = Saturn::SClassSpecification{ #ClassName, (Saturn::SClassFlags) Saturn::SC_Spawnable | Saturn::SC_VisibleInEditor | Saturn::SC_NoExtendedMetadata, 0, sizeof( Saturn::##ClassName ), alignof( Saturn::##ClassName ), Saturn::FNV1A64( #ClassName ), Saturn::ClassName::Super::StaticClass(), Saturn::RInternalConstructor<Saturn::##ClassName>, RStaticLnk, nullptr, {} };\
+		const auto spec = Saturn::SClassSpecification{ #ClassName, (Saturn::SClassFlags) Saturn::SC_Spawnable | Saturn::SC_VisibleInEditor | Saturn::SC_NoExtendedMetadata, 0, sizeof( Saturn::ClassName ), alignof( Saturn::ClassName ), Saturn::FNV1A64( #ClassName ), Saturn::ClassName::Super::StaticClass(), Saturn::RInternalConstructor<Saturn::ClassName>, RStaticLnk, nullptr, {} };\
 		Saturn::SClass::RConstructClass( pClass, spec );														\
 	}																											\
 																												\
@@ -56,7 +56,7 @@ static Saturn::SClass* RStaticLnk##ClassName()																	\
 	static Saturn::SClass* pClass = nullptr;																	\
 	if( !pClass )																								\
 	{																											\
-		const auto spec = Saturn::SClassSpecification{ #ClassName, (Saturn::SClassFlags) Saturn::SC_VisibleInEditor | Saturn::SC_NoExtendedMetadata, 0, sizeof( Saturn::##ClassName ), alignof( Saturn::##ClassName ), Saturn::FNV1A64( #ClassName ), Saturn::ClassName::Super::StaticClass(), Saturn::RInternalConstructor<Saturn::##ClassName>, RStaticLnk##ClassName, nullptr, {} };\
+		const auto spec = Saturn::SClassSpecification{ #ClassName, (Saturn::SClassFlags) Saturn::SC_VisibleInEditor | Saturn::SC_NoExtendedMetadata, 0, sizeof( Saturn::ClassName ), alignof( Saturn::ClassName ), Saturn::FNV1A64( #ClassName ), Saturn::ClassName::Super::StaticClass(), Saturn::RInternalConstructor<Saturn::ClassName>, RStaticLnk##ClassName, nullptr, {} };\
 		Saturn::SClass::RConstructClass( pClass, spec );														\
 	}																											\
 																												\

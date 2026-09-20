@@ -39,11 +39,8 @@ namespace Saturn {
 		bool Primary = false;
 		std::wstring Name;
 
-		int BBP = 0;
-		int DPI = 0;
-
-		RubyIVec2 WorkSize;
-		RubyIVec2 MonitorSize;
-		RubyIVec2 MonitorPosition;
+		RubyIVec2 WorkSize{};
+		RubyIVec2 MonitorSize{};
+		RubyIVec2 MonitorPosition{};
 	};
 }

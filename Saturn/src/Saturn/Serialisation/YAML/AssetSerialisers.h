@@ -43,6 +43,8 @@ namespace Saturn {
 	class AssetSerialiser
 	{
 	public:
+		virtual ~AssetSerialiser() = default;
+
 		virtual void Serialise   ( const Ref<Asset>& rAsset ) const = 0;
 		[[nodiscard]] virtual bool TryLoadData (       Ref<Asset>& rAsset ) const = 0;
 	};
@@ -57,7 +59,7 @@ namespace Saturn {
 	class MaterialAssetSerialiser : public AssetSerialiser
 	{
 	public:
-		virtual void Serialise  ( const Ref<Asset>& rAsset ) const;
+		virtual void Serialise  ( const Ref<Asset>& rAsset ) const override;
 		[[nodiscard]] virtual bool TryLoadData(       Ref<Asset>& rAsset ) const override;
 	};
 

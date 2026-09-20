@@ -143,7 +143,7 @@ namespace SaturnBuildTool
             {
                 case ConfigKind.Debug:
                     {
-                        HeaderToolExePath = Path.Combine( SaturnDir, "bin", "Debug-windows-x86_64", "SaturnHeaderTool", "SaturnHeaderTool.exe" );
+                        HeaderToolExePath = Path.Combine( SaturnDir, "bin", $"{Shared.Platform.GetOutputFolderName( CurrentConfigKind )}", "SaturnHeaderTool", $"SaturnHeaderTool{Shared.Platform.ExecutableExtension}" );
                     }
                     break;
 
@@ -151,7 +151,7 @@ namespace SaturnBuildTool
                 case ConfigKind.Release:
                     {
                         // Always use the release build on Dist
-                        HeaderToolExePath = Path.Combine( SaturnDir, "bin", "Release-windows-x86_64", "SaturnHeaderTool", "SaturnHeaderTool.exe" );
+                        HeaderToolExePath = Path.Combine( SaturnDir, "bin", $"{Shared.Platform.GetOutputFolderName( ConfigKind.Release )}", "SaturnHeaderTool", $"SaturnHeaderTool{Shared.Platform.ExecutableExtension}" );
                     }
                     break;
             }
@@ -196,12 +196,6 @@ namespace SaturnBuildTool
             if( !CommandLineParser.Instance.HasArgument( "NAME" ) )
             {
                 Console.WriteLine( "Missing project name command! (/NAME)" );
-                result = false;
-            }
-
-            if( !CommandLineParser.Instance.HasArgument( "WIN64" ) )
-            {
-                Console.WriteLine( "Missing target platform command! (/Win64)" );
                 result = false;
             }
 

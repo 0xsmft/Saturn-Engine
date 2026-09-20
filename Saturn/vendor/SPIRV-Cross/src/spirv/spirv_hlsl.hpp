@@ -29,6 +29,7 @@
 
 namespace SPIRV_CROSS_NAMESPACE
 {
+using namespace SPIRV_CROSS_SPV_HEADER_NAMESPACE;
 // Interface which remaps vertex inputs to a fixed semantic name to make linking easier.
 struct HLSLVertexAttributeRemap
 {
@@ -87,7 +88,7 @@ using HLSLBindingFlags = uint32_t;
 // For deeper control of push constants, set_root_constant_layouts() can be used instead.
 struct HLSLResourceBinding
 {
-	spv::ExecutionModel stage = spv::ExecutionModelMax;
+	ExecutionModel stage = ExecutionModelMax;
 	uint32_t desc_set = 0;
 	uint32_t binding = 0;
 
@@ -98,6 +99,11 @@ struct HLSLResourceBinding
 	} cbv, uav, srv, sampler;
 };
 
+enum HLSLAuxBinding
+{
+	HLSL_AUX_BINDING_BASE_VERTEX_INSTANCE = 0
+};
+
 class CompilerHLSL : public CompilerGLSL
 {
 public:
@@ -105,7 +111,7 @@ public:
 	{
 		uint32_t shader_model = 30; // TODO: map ps_4_0_level_9_0,... somehow
 
-		// Allows the PointSize builtin, and ignores it, as PointSize is not supported in HLSL.
+		// Allows the PointSize builtin in SM 4.0+, and ignores it, as PointSize is not supported in SM 4+.
 		bool point_size_compat = false;
 
 		// Allows the PointCoord builtin, returns float2(0.5, 0.5), as PointCoord is not supported in HLSL.
@@ -121,7 +127,7 @@ public:
 		// By default, a readonly storage buffer will be declared as ByteAddressBuffer (SRV) instead.
 		// Alternatively, use set_hlsl_force_storage_buffer_as_uav to specify individually.
 		bool force_storage_buffer_as_uav = false;
-
+	
 		// Forces any storage image type marked as NonWritable to be considered an SRV instead.
 		// For this to work with function call parameters, NonWritable must be considered to be part of the type system
 		// so that NonWritable image arguments are also translated to Texture rather than RWTexture.
@@ -137,6 +143,17 @@ public:
 		// If add_vertex_attribute_remap is used and this feature is used,
 		// the semantic name will be queried once per active location.
 		bool flatten_matrix_vertex_input_semantics = false;
+
+		// Rather than emitting main() for the entry point, use the name in SPIR-V.
+		bool use_entry_point_name = false;
+
+		// Preserve (RW)StructuredBuffer types if the input source was HLSL.
+		// This relies on UserTypeGOOGLE to encode the buffer type either as "structuredbuffer" or "rwstructuredbuffer"
+		// whereas the type can be extended with an optional subtype, e.g. "structuredbuffer:int".
+		bool preserve_structured_buffers = false;
+
+		// Use UserSemantic decoration info (if specified), otherwise use default mechanism (such as add_vertex_attribute_remap or TEXCOORD#).
+		bool user_semantic = false;
 	};
 
 	explicit CompilerHLSL(std::vector<uint32_t> spirv_)
@@ -203,28 +220,33 @@ public:
 	// is_hlsl_resource_binding_used() will return true after calling ::compile() if
 	// the set/binding combination was used by the HLSL code.
 	void add_hlsl_resource_binding(const HLSLResourceBinding &resource);
-	bool is_hlsl_resource_binding_used(spv::ExecutionModel model, uint32_t set, uint32_t binding) const;
+	bool is_hlsl_resource_binding_used(ExecutionModel model, uint32_t set, uint32_t binding) const;
 
 	// Controls which storage buffer bindings will be forced to be declared as UAVs.
 	void set_hlsl_force_storage_buffer_as_uav(uint32_t desc_set, uint32_t binding);
+
+	// By default, these magic buffers are not assigned a specific binding.
+	void set_hlsl_aux_buffer_binding(HLSLAuxBinding binding, uint32_t register_index, uint32_t register_space);
+	void unset_hlsl_aux_buffer_binding(HLSLAuxBinding binding);
+	bool is_hlsl_aux_buffer_binding_used(HLSLAuxBinding binding) const;
 
 private:
 	std::string type_to_glsl(const SPIRType &type, uint32_t id = 0) override;
 	std::string image_type_hlsl(const SPIRType &type, uint32_t id);
 	std::string image_type_hlsl_modern(const SPIRType &type, uint32_t id);
 	std::string image_type_hlsl_legacy(const SPIRType &type, uint32_t id);
+	uint32_t input_vertices_from_execution_mode(SPIREntryPoint &execution) const;
 	void emit_function_prototype(SPIRFunction &func, const Bitset &return_flags) override;
 	void emit_hlsl_entry_point();
 	void emit_header() override;
 	void emit_resources();
-	void declare_undefined_values() override;
 	void emit_interface_block_globally(const SPIRVariable &type);
 	void emit_interface_block_in_struct(const SPIRVariable &var, std::unordered_set<uint32_t> &active_locations);
-	void emit_interface_block_member_in_struct(const SPIRVariable &var, uint32_t member_index,
-	                                           uint32_t location,
+	void emit_interface_block_member_in_struct(const SPIRVariable &var, uint32_t member_index, uint32_t location,
 	                                           std::unordered_set<uint32_t> &active_locations);
 	void emit_builtin_inputs_in_struct();
 	void emit_builtin_outputs_in_struct();
+	void emit_builtin_primitive_outputs_in_struct();
 	void emit_texture_op(const Instruction &i, bool sparse) override;
 	void emit_instruction(const Instruction &instruction) override;
 	void emit_glsl_op(uint32_t result_type, uint32_t result_id, uint32_t op, const uint32_t *args,
@@ -237,11 +259,13 @@ private:
 	void emit_specialization_constants_and_structs();
 	void emit_composite_constants();
 	void emit_fixup() override;
-	std::string builtin_to_glsl(spv::BuiltIn builtin, spv::StorageClass storage) override;
+	std::string builtin_to_glsl(BuiltIn builtin, StorageClass storage) override;
 	std::string layout_for_member(const SPIRType &type, uint32_t index) override;
 	std::string to_interpolation_qualifiers(const Bitset &flags) override;
 	std::string bitcast_glsl_op(const SPIRType &result_type, const SPIRType &argument_type) override;
 	bool emit_complex_bitcast(uint32_t result_type, uint32_t id, uint32_t op0) override;
+	void append_global_func_args(const SPIRFunction &func, uint32_t index, SmallVector<std::string> &arglist) override;
+
 	std::string to_func_call_arg(const SPIRFunction::Parameter &arg, uint32_t id) override;
 	std::string to_sampler_expression(uint32_t id);
 	std::string to_resource_binding(const SPIRVariable &var);
@@ -261,17 +285,23 @@ private:
 	                              const SmallVector<uint32_t> &composite_chain);
 	std::string write_access_chain_value(uint32_t value, const SmallVector<uint32_t> &composite_chain, bool enclose);
 	void emit_store(const Instruction &instruction);
-	void emit_atomic(const uint32_t *ops, uint32_t length, spv::Op op);
+	void emit_atomic(const uint32_t *ops, uint32_t length, Op op);
 	void emit_subgroup_op(const Instruction &i) override;
 	void emit_block_hints(const SPIRBlock &block) override;
 
 	void emit_struct_member(const SPIRType &type, uint32_t member_type_id, uint32_t index, const std::string &qualifier,
 	                        uint32_t base_offset = 0) override;
+	void emit_rayquery_function(const char *commited, const char *candidate, const uint32_t *ops);
+	void emit_mesh_tasks(SPIRBlock &block) override;
+	void emit_geometry_stream_append();
 
 	const char *to_storage_qualifiers_glsl(const SPIRVariable &var) override;
 	void replace_illegal_names() override;
 
+	SPIRType::BaseType get_builtin_basetype(BuiltIn builtin, SPIRType::BaseType default_type) override;
+
 	bool is_hlsl_force_storage_buffer_as_uav(ID id) const;
+	bool is_hidden_io_variable(const SPIRVariable &var) const;
 
 	Options hlsl_options;
 
@@ -341,6 +371,10 @@ private:
 		TypeUnpackUint64
 	};
 
+	void analyze_meshlet_writes();
+	void analyze_meshlet_writes(uint32_t func_id, uint32_t id_per_vertex, uint32_t id_per_primitive,
+	                            std::unordered_set<uint32_t> &processed_func_ids);
+
 	BitcastType get_bitcast_type(uint32_t result_type, uint32_t op0);
 
 	void emit_builtin_variables();
@@ -350,7 +384,7 @@ private:
 
 	uint32_t type_to_consumed_locations(const SPIRType &type) const;
 
-	std::string to_semantic(uint32_t location, spv::ExecutionModel em, spv::StorageClass sc);
+	std::string to_semantic(uint32_t location, ExecutionModel em, StorageClass sc);
 
 	uint32_t num_workgroups_builtin = 0;
 	HLSLBindingFlags resource_binding_flags = 0;
@@ -369,10 +403,22 @@ private:
 
 	std::unordered_set<SetBindingPair, InternalHasher> force_uav_buffer_bindings;
 
-	// Returns true for BuiltInSampleMask because gl_SampleMask[] is an array in SPIR-V, but SV_Coverage is a scalar in HLSL.
-	bool builtin_translates_to_nonarray(spv::BuiltIn builtin) const override;
+	struct
+	{
+		uint32_t register_index = 0;
+		uint32_t register_space = 0;
+		bool explicit_binding = false;
+		bool used = false;
+	} base_vertex_info;
+
+	// Returns true if the specified ID has a UserTypeGOOGLE decoration for StructuredBuffer or RWStructuredBuffer resources.
+	bool is_user_type_structured(uint32_t id) const override;
 
 	std::vector<TypeID> composite_selection_workaround_types;
+
+	std::string get_inner_entry_point_name() const;
+
+	void cast_to_variable_store(uint32_t target_id, std::string &expr, const SPIRType &expr_type) override;
 };
 } // namespace SPIRV_CROSS_NAMESPACE
 

@@ -273,7 +273,7 @@ namespace Saturn {
 
 					if( ImGui::BeginItemTooltip() )
 					{
-						ImGui::Text( "%" PRIu64, texture->GetSourceAssetID() );
+						ImGui::Text( "%" PRIu64, ( uint64_t ) texture->GetSourceAssetID() );
 						if( Ref<Asset> asset = AssetManager::Get()->FindAsset( texture->GetSourceAssetID() ) )
 						{
 							ImGui::Text( "%s", asset->Name.c_str() );
@@ -355,8 +355,10 @@ namespace Saturn {
 						Ref<Asset> textureSourceAsset = AssetManager::Get()->FindAsset( texture->GetSourceAssetID() );
 						if( textureSourceAsset )
 						{
+#if !defined(SAT_DIST)
 							Application::Get()->DispatchEvent<CBBrowseToItemEvent>( 
 								textureSourceAsset->Path, textureSourceAsset->ID );
+#endif
 						}
 					}
 				}

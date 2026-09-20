@@ -50,9 +50,10 @@ project "Saturn-SharedStorage"
 	filter "configurations:Debug-ASan"
 		sanitize { "Address" }
 	
-	filter "system:windows or system:linux or system:Mac"
+	filter "system:windows or system:linux"
 		systemversion "latest"
 		
+	filter "system:windows or system:linux or system:macosx"
 		filter "configurations:Debug or configurations:Debug-ASan"
 			runtime "Debug"
 			symbols "on"

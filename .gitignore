@@ -60,3 +60,4 @@ premake5
 *.xcsettings
 **/xcschemes
 .vscode/
+**.gputrace

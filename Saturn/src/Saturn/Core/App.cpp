@@ -110,12 +110,20 @@ namespace Saturn {
 		const uint32_t width = 3 * rPrimaryMonitor.MonitorSize.x / 4;
 		const uint32_t height = 3 * rPrimaryMonitor.MonitorSize.y / 4;
 
+#if !defined(SAT_DIST)
 		const RubyStyle windowStyle = HasFlag( ApplicationFlag_Titlebar ) ? RubyStyle::Default : m_Specification.WindowStyle;
+#else
+		const RubyStyle windowStyle = RubyStyle::BorderlessFullscreen;
+#endif
 
 		const RubyWindowSpecification windowSpec{ .Name = L"Saturn", .Width = width, .Height = height, .GraphicsAPI = RubyGraphicsAPI::Vulkan, .Style = windowStyle, .ShowNow = false };
 
 		m_Window = new RubyWindow( windowSpec );
 		m_Window->SetEventTarget( this );
+
+#if !defined(SAT_DIST)
+		m_Window->CentreWindowXYInMonitor();
+#endif
 	}
 
 	void Application::InitGraphics()

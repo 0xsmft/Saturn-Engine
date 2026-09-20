@@ -27,8 +27,6 @@ project "SaturnBuildTool"
         { "Company", "Saturn" }
 	}
 
-	nuget { "Microsoft.CodeAnalysis.CSharp:5.9.0" }
-
 	filter { "configurations:Debug" }
 		symbols "On"
 

@@ -20,6 +20,12 @@ jobs:
     - name: Install Vulkan SDK
       uses: jakoch/install-vulkan-sdk-action@v1.5.5
 
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@v6
+      with:
+        dotnet-version: | 
+          9.0.x
+
     - name: Download Premake
       uses: BEASTSM96/premake-action@v1.5.1
 
@@ -27,4 +33,10 @@ jobs:
       run: premake5 xcode4 --arch=arm64 --file=premake5-AArch.lua
 
     - name: Build Solution
-      run: xcodebuild build -workspace "Saturn.xcworkspace" -scheme "Saturn-Editor" -configuration Debug
+      run: xcodebuild build -workspace "Saturn-AArch.xcworkspace" -scheme "Saturn-Editor" -configuration Debug
+
+    - name: Generate SaturnBuildTool
+      run: premake5 vs2022 --file=SaturnBuildTool/STB-ForNonWindows.lua
+    
+    - name: Build SaturnBuildTool
+      run: dotnet build -c Debug SaturnBuildTool/SaturnBuildTool.sln

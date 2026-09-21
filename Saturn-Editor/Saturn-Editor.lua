@@ -243,7 +243,6 @@ project "Saturn-Editor"
 			"../Saturn/vendor/assimp/bin/",
 			"/System/Library/Frameworks",
 			"/System/Library/PrivateFrameworks",
-			"/Users/smft/Library/Frameworks",
 		}
 
 		defines

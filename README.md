@@ -12,7 +12,7 @@
 </p>
 
 <p align=center>
-    Saturn is primarily an early-stage 3D game engine for Windows.
+    Saturn is primarily an early-stage 3D game engine.
     <br>
 </p>
 
@@ -20,9 +20,9 @@
 
 | Platform | Supported | Architecture | Build Status | Stability |
 | -------- | --------- | ------------ | ------------ | --------- |
-| Windows 10+ | ✅ | x86_64 |     <a href="https://github.com/BEASTSM96/Saturn-Engine/actions/workflows/Windows.yml"><img alt="Repo Size" src="https://github.com/BEASTSM96/Saturn-Engine/actions/workflows/Windows.yml/badge.svg"></a> | Very stable
+| Windows 10+ | ✅ | x86_64 |     <a href="https://github.com/BEASTSM96/Saturn-Engine/actions/workflows/Windows.yml"><img alt="Windows CI" src="https://github.com/BEASTSM96/Saturn-Engine/actions/workflows/Windows.yml/badge.svg"></a> | Very stable
 | Linux | 🕗 *[Progress](https://trello.com/c/o43wueQO/9-preliminary-linux-support)* | x86_64 | No CI yet. | N/A
-| macOS 15+ (Sequoia) | 🕗 *[Progress](https://trello.com/c/bOjSj8Od/272-preliminary-macos-support)*| AArch64 | No CI yet. | Unstable
+| macOS 15+ (Sequoia) | ✅ | AArch64 (Apple M-Series) | <a href="https://github.com/BEASTSM96/Saturn-Engine/actions/workflows/Windows.yml"><img alt="macOS CI" src="https://github.com/BEASTSM96/Saturn-Engine/actions/workflows/MacOS-Arm.yml/badge.svg"></a> | Unstable
 
 ## Features
 
@@ -65,7 +65,7 @@
 
 ## Roadmap
 
-For upcoming features and a general status of Saturn it is best to view the [Trello](https://trello.com/b/baqP3fvB/saturn-engine)
+For upcoming features and a general status of Saturn it is best to view the [Trello](https://trello.com/b/baqP3fvB/saturn-engine).
 
 ## Getting Started & Prerequisites
 
@@ -73,34 +73,17 @@ Before anything please make sure you have the [Vulkan SDK](https://vulkan.lunarg
 If you do not have the Vulkan SDK the project will **not** build.
 Saturn uses vulkan version 1.2, however any newer version should "just work". When installing if there's an option about debug binaries make sure to tick that.
 
+If you are on macOS or Linux you should check if your system has the .NET SDK installed, if you do not, you can download it from [here](https://dotnet.microsoft.com/en-us/download/dotnet/10.0).
 
 Now, start by cloning the repository with `git clone --recursive https://github.com/0xsmft/Saturn-Engine`.
 
 If the repository was previously cloned non-recursively then use `git submodule update --init` to clone the necessary submodules.
 
-Make sure to check that you are on the branch `vulkan`. If not you can run `git checkout vulkan` 
+Make sure to check that you are on the branch `vulkan`. If not you can run `git checkout vulkan`.
 
-## Generating project files
+## Building
 
-In order to start you will need to download <a href="https://premake.github.io/">Premake</a>
-
-<a href="https://premake.github.io/download">Download</a> ·
-<a href="https://premake.github.io/docs/What-Is-Premake">Learn More</a>
-
-*You may want to add the premake executable to you PATH environment variable.*
-
-On Windows, Visual Studio 2022 is recommended as Saturn is officially untested on other development environments.
-
-So for generating the project files on Visual Studio 2022 you'd do `premake5.exe vs2022` or on Linux use `premake5 gmake2`.
-
-## Compiling the engine (Windows)
-
-To compile the engine simply open the newly generated project files and build the entire solution.
-
-### Running the engine
-
-Before launching the editor you must create a new project as this repo does not contain a default project.
-So, set the project browser as the startup project and run (F5), create a new project and launch it from the browser. After that you can set the Editor (Saturn-Editor) as the startup project and it will automatically load the most recent project. Or a project file specified in the command line argument.
+See [BUILDING.md](/BUILDING.md)
 
 ## License
 

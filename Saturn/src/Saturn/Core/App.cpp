@@ -691,7 +691,7 @@ namespace Saturn {
 			}
 			else
 			{
-				const std::string binaryFolderName = std::format( "{0}-{1}-x86_64", Application::GetCurrentConfigName(), Application::GetCurrentPlatformBinaryName() );
+				const std::string binaryFolderName = std::format( "{0}-{1}-" SAT_PLATFORM_ARCHITECTURE_NAME, Application::GetCurrentConfigName(), Application::GetCurrentPlatformBinaryName() );
 
 				SaturnDir /= L"bin";
 				SaturnDir /= binaryFolderName;

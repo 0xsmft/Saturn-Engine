@@ -74,13 +74,14 @@
 // The vulkan surface extension name.
 #define SAT_PLATFORM_VULKAN_SURFACE_NAME "VK_EXT_metal_surface"
 
-// We only support x86_64
-#if defined(__x86_64__)
-#define SAT_PLATFORM_BINARY_FOLDER "macosx-x86_64"
-#elif defined(__aarch64__)
+#if defined(__aarch64__)
 #define SAT_PLATFORM_BINARY_FOLDER "macosx-AARCH64"
+// Name must match with output binary path name.
+#define SAT_PLATFORM_ARCHITECTURE_NAME "AARCH64"
 #else
 #define SAT_PLATFORM_BINARY_FOLDER "macos-ArchUnk"
+// Name must match with output binary path name.
+#define SAT_PLATFORM_ARCHITECTURE_NAME "ArchUnk"
 #endif
 
 // SAT_PLATFORM_MACOS is defined from CLI

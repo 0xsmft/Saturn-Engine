@@ -71,13 +71,16 @@
 #define SAT_MSVC_STDCALL
 #endif
 
-// We only support x86_64
 #if defined(_MSC_VER) && defined(_M_X64) || defined(__x86_64__)
 #define SAT_PLATFORM_BINARY_FOLDER "windows-x86_64"
+// Name must match with output binary path name.
+#define SAT_PLATFORM_ARCHITECTURE_NAME "x86_64"
 #elif defined(_MSC_VER) && defined(_M_ARM64)
 #define SAT_PLATFORM_BINARY_FOLDER "windows-AARCH64"
+#define SAT_PLATFORM_ARCHITECTURE_NAME "AARCH64"
 #else
 #define SAT_PLATFORM_BINARY_FOLDER "windows-ArchUnk"
+#define SAT_PLATFORM_ARCHITECTURE_NAME "ArchUnk"
 #endif
 
 // SAT_PLATFORM_WINDOWS is defined from CLI

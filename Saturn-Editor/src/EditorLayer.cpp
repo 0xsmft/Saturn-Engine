@@ -4609,7 +4609,7 @@ namespace Saturn {
 		std::filesystem::path SaturnDir = Auxiliary::GetEnvironmentVariableWs( L"SATURN_DIR" );
 		std::filesystem::path WorkingDir = SaturnDir / "Saturn-ProjectBrowser";
 
-		const std::string binaryFolderName = std::format( "{0}-{1}-x86_64", Application::GetCurrentConfigName(), Application::GetCurrentPlatformBinaryName() );
+		const std::string binaryFolderName = std::format( "{0}-{1}-" SAT_PLATFORM_ARCHITECTURE_NAME, Application::GetCurrentConfigName(), Application::GetCurrentPlatformBinaryName() );
 
 		SaturnDir /= L"bin";
 		SaturnDir /= binaryFolderName;
@@ -5228,7 +5228,7 @@ namespace Saturn {
 		std::filesystem::path args = Auxiliary::GetEnvironmentVariableWs( L"SATURN_DIR" );
 		std::filesystem::path workingDir = args / "Saturn-Editor";
 
-		const std::string binaryFolderName = std::format( "{0}-{1}-x86_64", Application::GetCurrentConfigName(), Application::GetCurrentPlatformBinaryName() );
+		const std::string binaryFolderName = std::format( "{0}-{1}-" SAT_PLATFORM_ARCHITECTURE_NAME, Application::GetCurrentConfigName(), Application::GetCurrentPlatformBinaryName() );
 
 		args /= L"bin";
 		args /= binaryFolderName;

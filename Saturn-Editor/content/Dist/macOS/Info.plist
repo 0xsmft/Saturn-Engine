@@ -3,22 +3,22 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleIdentifier</key>
-	<string>dev.0xsmft.SaturnEditor</string>
+	<string>dev.0xsmft.Saturn</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
 	<string>Saturn-Editor</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>Copyright (c) 2026 smft</string>
+	<string>Copyright (c) 2020 - 2026 0xsmft</string>
 	<key>CFBundleIconFile</key>
-	<string>Saturn-Editor/content/Icons/SaturnIcon.icon</string>
+	<string>SaturnIcon</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleVersion</key>
-	<string>1</string>
+	<string>X31AP</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0.0.0</string>
+	<string>0.2.7</string>
 </dict>
 </plist>

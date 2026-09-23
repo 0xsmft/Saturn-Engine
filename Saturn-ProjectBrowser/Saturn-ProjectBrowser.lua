@@ -164,6 +164,8 @@ project "Saturn-ProjectBrowser"
 		}
 
 	filter "system:macosx"
+		kind "WindowedApp"
+
 		runpathdirs 
 		{
 			"%{cfg.targetdir}",
@@ -249,16 +251,60 @@ project "Saturn-ProjectBrowser"
 			"%{IncludeDir.SharedStorage}"
 		}
 
+		filter "action:xcode4"
+			files 
+			{
+				"Dist/macOS/Info.plist",
+				"Dist/macOS/Entitlements.plist",
+			}
+
+			xcodebuildsettings
+			{
+				["PRODUCT_BUNDLE_IDENTIFIER"] = 'dev.0xsmft.Saturn',
+				["CODE_SIGN_STYLE"] = "Automatic",
+				["INFOPLIST_FILE"] = "Dist/macOS/Info.plist",
+				["CODE_SIGN_ENTITLEMENTS"] = "Dist/macOS/Entitlements.plist",
+				["LD_RUNPATH_SEARCH_PATHS"] = "$(inherited) @executable_path/../Frameworks @rpath /System/Library/Frameworks",
+			}
+
+		filter {}
+
 		filter { "system:macosx", "configurations:Debug" }
+			local vulkanSDKPath = os.getenv('VULKAN_SDK')
+
 			postbuildcommands 
 			{
-				'{COPYFILE} "../bin/Debug-macosx-AARCH64/Saturn-SharedStorage/libSaturn-SharedStorage.dylib" "%{cfg.targetdir}"',
+				'{MKDIR} "%{cfg.targetdir}/Saturn-ProjectBrowser.app/Contents/Frameworks"',
+				'{MKDIR} "%{cfg.targetdir}/Saturn-ProjectBrowser.app/Contents/Resources"',
+
+				"cp -Rv ../Saturn-ProjectBrowser/content %{cfg.targetdir}/Saturn-ProjectBrowser.app/Contents/Resources/",
+
+			    '{COPYFILE} "../Saturn-Editor/content/Icons/SaturnIcon.icns" "%{cfg.targetdir}/Saturn-ProjectBrowser.app/Contents/Resources/"',
+
+				'{COPYFILE} "../bin/Debug-macosx-AARCH64/Saturn-SharedStorage/libSaturn-SharedStorage.dylib" "%{cfg.targetdir}/Saturn-ProjectBrowser.app/Contents/Frameworks/"',
+				'{COPYFILE} "../Saturn/vendor/assimp/bin/libassimp.dylib" "%{cfg.targetdir}/Saturn-ProjectBrowser.app/Contents/Frameworks/"',
+				'{COPYFILE} "../Saturn/vendor/assimp/bin/libassimp.5.dylib" "%{cfg.targetdir}/Saturn-ProjectBrowser.app/Contents/Frameworks/"',
+				'{COPYFILE} "' .. vulkanSDKPath .. '/lib/libshaderc_shared.1.dylib" "%{cfg.targetdir}/Saturn-ProjectBrowser.app/Contents/Frameworks/"',
+				'{COPYFILE} "' .. vulkanSDKPath .. '/lib/libvulkan.1.dylib" "%{cfg.targetdir}/Saturn-ProjectBrowser.app/Contents/Frameworks/"',
 			}
 
 		filter { "system:macosx", "configurations:Release" }
+			local vulkanSDKPath = os.getenv('VULKAN_SDK')
+
 			postbuildcommands 
 			{
-				'{COPYFILE} "../bin/Release-macosx-AARCH64/Saturn-SharedStorage/libSaturn-SharedStorage.dylib" "%{cfg.targetdir}"',
+				'{MKDIR} "%{cfg.targetdir}/Saturn-ProjectBrowser.app/Contents/Frameworks"',
+				'{MKDIR} "%{cfg.targetdir}/Saturn-ProjectBrowser.app/Contents/Resources"',
+				
+				"cp -Rv ../Saturn-ProjectBrowser/content %{cfg.targetdir}/Saturn-ProjectBrowser.app/Contents/Resources/",
+
+			    '{COPYFILE} "../Saturn-Editor/content/Icons/SaturnIcon.icns" "%{cfg.targetdir}/Saturn-ProjectBrowser.app/Contents/Resources/"',
+
+				'{COPYFILE} "../bin/Release-macosx-AARCH64/Saturn-SharedStorage/libSaturn-SharedStorage.dylib" "%{cfg.targetdir}/Saturn-ProjectBrowser.app/Contents/Frameworks/"',
+				'{COPYFILE} "../Saturn/vendor/assimp/bin/libassimp.dylib" "%{cfg.targetdir}/Saturn-ProjectBrowser.app/Contents/Frameworks/"',
+				'{COPYFILE} "../Saturn/vendor/assimp/bin/libassimp.5.dylib" "%{cfg.targetdir}/Saturn-ProjectBrowser.app/Contents/Frameworks/"',
+				'{COPYFILE} "' .. vulkanSDKPath .. '/lib/libshaderc_shared.1.dylib" "%{cfg.targetdir}/Saturn-ProjectBrowser.app/Contents/Frameworks/"',
+				'{COPYFILE} "' .. vulkanSDKPath .. '/lib/libvulkan.1.dylib" "%{cfg.targetdir}/Saturn-ProjectBrowser.app/Contents/Frameworks/"',
 			}
 
 	filter "configurations:Debug"

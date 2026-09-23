@@ -102,3 +102,7 @@ project "Saturn-SharedStorage"
 			"%{IncludeDir.MSDFAG}",
 		}
 
+		xcodebuildsettings
+		{
+			["LD_DYLIB_INSTALL_NAME"] = "@rpath/libSaturn-SharedStorage.dylib",
+		}

@@ -50,6 +50,9 @@ project "MSDFGen"
 		cppdialect "C++2a"
 		staticruntime "off"
 
+	filter "system:macosx"
+		staticruntime "off"
+
 	filter "configurations:Debug or configurations:Debug-ASan"
 		runtime "Debug"
 		symbols "on"
@@ -62,3 +65,12 @@ project "MSDFGen"
 		runtime "Release"
 		optimize "on"
 		symbols "off"
+
+	filter "action:xcode4"
+		externalincludedirs 
+		{
+			"core",
+			"include",
+			"../../freetype/include"
+		}
+

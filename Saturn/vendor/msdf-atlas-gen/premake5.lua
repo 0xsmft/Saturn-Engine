@@ -8,6 +8,11 @@ project "MSDF-Atlas-Gen"
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
 
+	links
+	{
+		"MSDFGen"
+	}
+
 	files
 	{
 		"msdf-atlas-gen/*.h",
@@ -36,6 +41,9 @@ project "MSDF-Atlas-Gen"
 		systemversion "latest"
 		staticruntime "off"
 
+	filter "system:macosx"
+		staticruntime "off"
+
 	filter "configurations:Debug or configurations:Debug-ASan"
 		runtime "Debug"
 		symbols "on"
@@ -48,3 +56,12 @@ project "MSDF-Atlas-Gen"
 		runtime "Release"
 		optimize "on"
 		symbols "off"
+
+	filter "action:xcode4"
+		externalincludedirs 
+		{
+			 "msdf-atlas-gen",
+        	"msdfgen",
+        	"msdfgen/include"
+		}
+

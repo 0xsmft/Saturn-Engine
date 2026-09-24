@@ -50,9 +50,10 @@ project "Saturn-SharedStorage"
 	filter "configurations:Debug-ASan"
 		sanitize { "Address" }
 	
-	filter "system:windows or system:linux or system:Mac"
+	filter "system:windows or system:linux"
 		systemversion "latest"
 		
+	filter "system:windows or system:linux or system:macosx"
 		filter "configurations:Debug or configurations:Debug-ASan"
 			runtime "Debug"
 			symbols "on"
@@ -67,3 +68,41 @@ project "Saturn-SharedStorage"
 			symbols "Off"
 			kind "StaticLib"
 			defines { "SATURN_SS_STATIC" }
+
+	filter "action:xcode4"
+		externalincludedirs 
+		{
+			"src",
+			"../Saturn/src",
+			"%{IncludeDir.ImGui}",
+			"%{IncludeDir.glm}",
+			"%{IncludeDir.entt}",
+			"%{IncludeDir.assimp}",
+			"%{IncludeDir.glslc}",
+			"%{IncludeDir.shaderc}",
+			"%{IncludeDir.SPIRV_Cross}",
+			"%{IncludeDir.vma}",
+			"%{IncludeDir.yaml_cpp}",
+			"%{IncludeDir.ImGuizmo}",
+			"%{IncludeDir.ImguiNodeEditor}",
+			"%{IncludeDir.ImSpinner}",
+			"%{IncludeDir.Tracy}",
+			"%{IncludeDir.MiniAudio}",
+			"%{IncludeDir.Filewatch}",
+			"%{IncludeDir.zlib}",
+			"%{IncludeDir.PhysX}",
+			"%{IncludeDir.PhysX}/pxshared",
+			"%{IncludeDir.PhysX}/physx",
+			"%{IncludeDir.KTX_Software}",
+			"%{IncludeDir.Recast}",
+			"%{IncludeDir.acl}",
+			"%{IncludeDir.rtm}",
+			"%{IncludeDir.freetype}",
+			"%{IncludeDir.MSDF}",
+			"%{IncludeDir.MSDFAG}",
+		}
+
+		xcodebuildsettings
+		{
+			["LD_DYLIB_INSTALL_NAME"] = "@rpath/libSaturn-SharedStorage.dylib",
+		}

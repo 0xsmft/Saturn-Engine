@@ -622,7 +622,7 @@ namespace Saturn {
 #endif
 		commandLine += " " + rProject.Filepath.string();
 
-		DetachedProcess dp( commandLine, workingDir );
+		DetachedProcess dp( commandLine.wstring(), workingDir.wstring() );
 
 		EngineSettings::Get().AddRecentProject( rProject.Filepath );
 

@@ -247,7 +247,7 @@ namespace Saturn {
 			ImGui::SameLine();
 
 			auto assetID = pPreviewMesh->MeshID;
-			ImGui::Text( "%" PRIu64, assetID );
+			ImGui::Text( "%" PRIu64, ( uint64_t ) assetID );
 
 			if( Auxiliary::DrawAssetFinder( AssetType::StaticMesh, &showFinder, assetID ) )
 			{

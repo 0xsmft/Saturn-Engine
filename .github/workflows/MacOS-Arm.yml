@@ -1,0 +1,42 @@
+name: CI(macOS)
+
+on:
+  push:
+    branches: [ vulkan ]
+  pull_request:
+    branches: [ vulkan ]
+jobs:
+  build:
+    runs-on: macos-15
+    defaults:
+      run:
+        shell: bash
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v6.0.2
+      with:
+        submodules: recursive
+    
+    - name: Install Vulkan SDK
+      uses: jakoch/install-vulkan-sdk-action@v1.5.5
+
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@v6
+      with:
+        dotnet-version: | 
+          9.0.x
+
+    - name: Download Premake
+      uses: BEASTSM96/premake-action@v1.5.1
+
+    - name: Generate Project Files
+      run: premake5 xcode4 --arch=arm64 --file=premake5-AArch.lua
+
+    - name: Generate SaturnBuildTool
+      run: premake5 vs2022 --file=SaturnBuildTool/SBT-ForNonWindows.lua --arch=arm64 --os=macosx
+
+    - name: Build Solution
+      run: xcodebuild build -workspace "Saturn-AArch.xcworkspace" -scheme "Saturn-Editor" -configuration Debug
+    
+    - name: Build SaturnBuildTool
+      run: dotnet build -c Debug SaturnBuildTool/SaturnBuildTool.sln

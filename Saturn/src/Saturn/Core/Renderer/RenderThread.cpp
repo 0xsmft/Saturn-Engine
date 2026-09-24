@@ -100,7 +100,9 @@ namespace Saturn {
 
 	void RenderThread::ThreadRun()
 	{
-		SetThreadDescription( GetCurrentThread(), L"Render Thread" );
+#if defined(SAT_PLATFORM_WINDOWS)
+		::SetThreadDescription( ::GetCurrentThread(), L"Render Thread" );
+#endif
 		m_ThreadID = std::this_thread::get_id();
 
 		while (true)

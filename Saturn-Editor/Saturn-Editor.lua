@@ -1,3 +1,20 @@
+function AppendPkgConfigLibraries(Package)
+	local Result, Err = os.outputof("pkg-config --libs " .. Package) 
+	if not Result or Result == "" then 
+		error("pkg-config failed for '" .. Package .. "': " .. (Err or "unknown error")) 
+	end
+	
+	local Libraries = {} 
+	
+	for Token in Result:gmatch("%S+") do 
+		if Token:sub(1, 2) == "-l" then 
+			table.insert(Libraries, Token:sub(3)) 
+		end
+	end 
+	
+	links(Libraries) 
+end
+
 project "Saturn-Editor"
 	location ""
 	language "C++"
@@ -9,8 +26,15 @@ project "Saturn-Editor"
 	targetdir ("../bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("../bin-int/" .. outputdir .. "/%{prj.name}")
 
-	pchheader "sppch.h"
 	pchsource "../Saturn/src/sppch.cpp"
+
+	filter "action:xcode4"
+   		pchheader "../Saturn/src/sppch.h"
+
+	filter "not action:xcode4"
+		pchheader "sppch.h"
+
+	filter {}
 
 	defines
 	{
@@ -18,6 +42,7 @@ project "Saturn-Editor"
 		"TRACY_ENABLE",
 		"TRACY_DELAYED_INIT",
 		"TRACY_MANUAL_LIFETIME",
+		"SATURN_SS_IMPORT"
 	}
 
 	files
@@ -91,7 +116,6 @@ project "Saturn-Editor"
 		defines
 		{
 			"SAT_PLATFORM_WINDOWS",
-			"SATURN_SS_IMPORT",
 			"_CRT_SECURE_NO_WARNINGS",
 		}
 
@@ -142,10 +166,6 @@ project "Saturn-Editor"
 				}
 
 		filter "configurations:Dist"
-			defines "SAT_DIST"
-			runtime "Release"
-			optimize "on"
-			symbols "Off"
 			kind "WindowedApp"
 
 			removedefines { "SATURN_SS_IMPORT" }
@@ -153,34 +173,77 @@ project "Saturn-Editor"
 
 	filter "system:linux"
 		systemversion "latest"
+		linkgroups "On"
 
 		defines
 		{
 			"SAT_PLATFORM_LINUX"
 		}
 
-		files 
+		links
 		{
-			"../Saturn/src/Saturn/Entry/Unix/**.cpp",
+			"pthread",
+			"dl",
+			"m",
+			"xcb",
+			"xcb-keysyms",
+			"Xrandr",
+			"xcb-randr",
+			"vulkan",
 		}
 
-		filter "configurations:Debug"
-			defines "SAT_DEBUG"
-			runtime "Debug"
-			symbols "on"
+		libdirs
+		{
+			"../Saturn/vendor/assimp/bin",
+			os.getenv('VULKAN_SDK') .. "/lib",
+		}
 
-		filter "configurations:Release"
-			defines "SAT_RELEASE"
-			runtime "Release"
-			optimize "on"
+		links 
+		{
+			"ImGui",
+			"SPIRV-Cross",
+			"yaml-cpp",
+			"Tracy",
+			"zlib",
+			"Recast",
+			"MSDF-Atlas-Gen",
+			"MSDFGen",
+			"Freetype",
+			"JoltPhysics",
+			"NativeFileDialogExtended",
+			"ImTimeline",
 
-		filter "configurations:Dist"
-			defines "SAT_DIST"
-			runtime "Release"
-			optimize "on"
+			"Saturn-SharedStorage",
+		}
 
-	filter "system:Mac"
-		systemversion "latest"
+		if os.target() == "linux" then
+			AppendPkgConfigLibraries("gtk+-3.0")
+		end
+
+		filter { "system:linux", "configurations:Debug" }
+			links
+			{
+				"assimp",
+				"shaderc_shared",
+				"zip",
+				"SPIRV"
+			}
+
+		filter "system:linux"
+			files 
+			{
+				"../Saturn/src/Saturn/Entry/Unix/**.cpp",
+			}
+
+	filter "system:macosx"
+		kind "WindowedApp"
+
+		runpathdirs 
+		{
+			"%{cfg.targetdir}",
+			"/System/Library/Frameworks",
+			"/System/Library/PrivateFrameworks",
+		}
 
 		defines
 		{
@@ -189,19 +252,150 @@ project "Saturn-Editor"
 
 		files 
 		{
+			"../Saturn/src/Saturn/Entry/Unix/**.cpp",
 		}
 
-		filter "configurations:Debug"
-			defines "SAT_DEBUG"
-			runtime "Debug"
-			symbols "on"
+		libdirs
+		{
+			"../Saturn/vendor/assimp/bin",
+			"../Saturn/vendor/libzip/bin/macOS-AArch64",
+			os.getenv('VULKAN_SDK') .. "/lib",
+		}
 
-		filter "configurations:Release"
-			defines "SAT_RELEASE"
-			runtime "Release"
-			optimize "on"
+		links 
+		{
+			"vulkan",
+			"assimp",
+			"shaderc_shared",
+			"zip",
 
-		filter "configurations:Dist"
-			defines "SAT_DIST"
-			runtime "Release"
-			optimize "on"
+			"ImGui",
+			"SPIRV-Cross",
+			"yaml-cpp",
+			"Tracy",
+			"zlib",
+			"Recast",
+			"MSDF-Atlas-Gen",
+			"MSDFGen",
+			"Freetype",
+			"JoltPhysics",
+			"NativeFileDialogExtended",
+			"ImTimeline",
+
+			"Saturn-SharedStorage",
+
+			"Cocoa.framework",
+			"CoreFoundation.framework",
+			"IOKit.framework",
+			"CoreVideo.framework",
+			"CoreAudio.framework",
+			"QuartzCore.framework",
+			"UniformTypeIdentifiers.framework",
+		}
+
+		externalincludedirs
+		{
+			"../Saturn/vendor/spdlog/include",
+			"../Saturn/src",
+			"../Saturn/vendor",
+			"../Saturn/vendor/vulkan/include",
+			"%{IncludeDir.ImGui}",
+			"%{IncludeDir.glm}",
+			"%{IncludeDir.entt}",
+			"%{IncludeDir.assimp}",
+			"%{IncludeDir.glslc}",
+			"%{IncludeDir.shaderc}",
+			"%{IncludeDir.SPIRV_Cross}",
+			"%{IncludeDir.vma}",
+			"%{IncludeDir.JoltPhys}",
+			"%{IncludeDir.Optick}",
+			"%{IncludeDir.ImGuizmo}",
+			"%{IncludeDir.ImSpinner}",
+			"%{IncludeDir.Filewatch}",
+			"%{IncludeDir.MiniAudio}",
+			"%{IncludeDir.yaml_cpp}",
+			"%{IncludeDir.ImguiNodeEditor}",
+			"%{IncludeDir.Tracy}",
+			"%{IncludeDir.KTX_Software}",
+			"%{IncludeDir.Recast}",
+			"%{IncludeDir.acl}",
+			"%{IncludeDir.rtm}",
+			"%{IncludeDir.freetype}",
+			"%{IncludeDir.MSDF}",
+			"%{IncludeDir.MSDFAG}",
+			"%{IncludeDir.ImTimeline}",
+			"%{IncludeDir.libzip}",
+			"%{IncludeDir.ImGuiColorTextEdit}",
+			"%{IncludeDir.CrashCatch}",
+
+			"%{IncludeDir.SharedStorage}"
+		}
+
+		filter "action:xcode4"
+			files 
+			{
+				"content/Dist/macOS/Info.plist",
+				"content/Dist/macOS/Entitlements.plist",
+			}
+
+			xcodebuildsettings
+			{
+				["PRODUCT_BUNDLE_IDENTIFIER"] = 'dev.0xsmft.Saturn',
+				["CODE_SIGN_STYLE"] = "Automatic",
+				["INFOPLIST_FILE"] = "content/Dist/macOS/Info.plist",
+				["CODE_SIGN_ENTITLEMENTS"] = "content/Dist/macOS/Entitlements.plist",
+				["LD_RUNPATH_SEARCH_PATHS"] = "$(inherited) @executable_path/../Frameworks @rpath /System/Library/Frameworks",
+			}
+
+		filter {}
+
+		filter { "system:macosx", "configurations:Debug" }
+			local vulkanSDKPath = os.getenv('VULKAN_SDK')
+
+			postbuildcommands 
+			{
+				'{MKDIR} "%{cfg.targetdir}/Saturn-Editor.app/Contents/Frameworks"',
+				'{MKDIR} "%{cfg.targetdir}/Saturn-Editor.app/Contents/Resources"',
+
+			    '{COPYFILE} "../Saturn-Editor/content/Icons/SaturnIcon.icns" "%{cfg.targetdir}/Saturn-Editor.app/Contents/Resources/"',
+
+				'{COPYFILE} "../bin/Debug-macosx-AARCH64/Saturn-SharedStorage/libSaturn-SharedStorage.dylib" "%{cfg.targetdir}/Saturn-Editor.app/Contents/Frameworks/"',
+				'{COPYFILE} "../Saturn/vendor/assimp/bin/libassimp.dylib" "%{cfg.targetdir}/Saturn-Editor.app/Contents/Frameworks/"',
+				'{COPYFILE} "../Saturn/vendor/assimp/bin/libassimp.5.dylib" "%{cfg.targetdir}/Saturn-Editor.app/Contents/Frameworks/"',
+				'{COPYFILE} "' .. vulkanSDKPath .. '/lib/libshaderc_shared.1.dylib" "%{cfg.targetdir}/Saturn-Editor.app/Contents/Frameworks/"',
+				'{COPYFILE} "' .. vulkanSDKPath .. '/lib/libvulkan.1.dylib" "%{cfg.targetdir}/Saturn-Editor.app/Contents/Frameworks/"',
+			}
+
+		filter { "system:macosx", "configurations:Release" }
+			local vulkanSDKPath = os.getenv('VULKAN_SDK')
+
+			postbuildcommands 
+			{
+				'{MKDIR} "%{cfg.targetdir}/Saturn-Editor.app/Contents/Frameworks"',
+				'{MKDIR} "%{cfg.targetdir}/Saturn-Editor.app/Contents/Resources"',
+
+			    '{COPYFILE} "../Saturn-Editor/content/Icons/SaturnIcon.icns" "%{cfg.targetdir}/Saturn-Editor.app/Contents/Resources/"',
+
+				'{COPYFILE} "../bin/Release-macosx-AARCH64/Saturn-SharedStorage/libSaturn-SharedStorage.dylib" "%{cfg.targetdir}/Saturn-Editor.app/Contents/Frameworks/"',
+				'{COPYFILE} "../Saturn/vendor/assimp/bin/libassimp.dylib" "%{cfg.targetdir}/Saturn-Editor.app/Contents/Frameworks/"',
+				'{COPYFILE} "../Saturn/vendor/assimp/bin/libassimp.5.dylib" "%{cfg.targetdir}/Saturn-Editor.app/Contents/Frameworks/"',
+				'{COPYFILE} "' .. vulkanSDKPath .. '/lib/libshaderc_shared.1.dylib" "%{cfg.targetdir}/Saturn-Editor.app/Contents/Frameworks/"',
+				'{COPYFILE} "' .. vulkanSDKPath .. '/lib/libvulkan.1.dylib" "%{cfg.targetdir}/Saturn-Editor.app/Contents/Frameworks/"',
+			}
+
+	filter "configurations:Debug"
+		defines "SAT_DEBUG"
+		runtime "Debug"
+		symbols "on"
+
+	filter "configurations:Release"
+		defines "SAT_RELEASE"
+		runtime "Release"
+		optimize "off"
+		symbols "on"
+
+	filter "configurations:Dist"
+		defines "SAT_DIST"
+		runtime "Release"
+		optimize "on"
+		symbols "off"

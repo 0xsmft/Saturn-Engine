@@ -47,8 +47,8 @@ POSSIBILITY OF SUCH DAMAGE.  */
 #include "backtrace.hpp"
 #include "internal.hpp"
 
-#include "../client/TracyFastVector.hpp"
-#include "../common/TracyAlloc.hpp"
+#include "../../tracy/client/TracyFastVector.hpp"
+#include "../../tracy/common/TracyAlloc.hpp"
 
 #ifndef S_ISLNK
  #ifndef S_IFLNK

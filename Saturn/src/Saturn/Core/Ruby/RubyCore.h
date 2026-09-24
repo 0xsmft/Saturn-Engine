@@ -28,8 +28,6 @@
 
 #pragma once
 
-#include <string>
-
 #define SAT_RBY_DISABLE_COPY( x ) x(const x&) = delete
 
 // Deprecated
@@ -50,7 +48,9 @@ namespace Saturn {
 	// I did not want to include windows.h here, but we will need to in order to use the HWND handle.
 #include <Windows.h>
 	using WindowType = HWND;
-#else
+#elif defined(SAT_PLATFORM_LINUX)
+	using WindowType = uint32_t;
+#elif defined(SAT_PLATFORM_MACOS)
 	using WindowType = void*;
 #endif
 

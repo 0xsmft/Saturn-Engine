@@ -162,7 +162,7 @@ namespace Saturn {
 		constexpr TextureLoadFlags DEFAULT_TEXTURE_LOAD_FLAGS_NOT_FLIPPED = TextureLoadFlags_LoadOnMainThread;
 		constexpr TextureLoadFlags DEFAULT_TEXTURE_LOAD_FLAGS_FLIPPED = TextureLoadFlags ( ( uint8_t ) TextureLoadFlags_LoadOnMainThread | ( uint8_t ) TextureLoadFlags_FlipVertically );
 
-		m_CheckerboardTexture = Ref< Texture2D >::Create( "content/textures/editor/checkerboard.tga", AddressingMode::Repeat, DEFAULT_TEXTURE_LOAD_FLAGS_FLIPPED );
+		m_CheckerboardTexture = Ref< Texture2D >::Create( "content/textures/editor/Checkerboard.tga", AddressingMode::Repeat, DEFAULT_TEXTURE_LOAD_FLAGS_FLIPPED );
 
 		m_StartRuntimeTexture = Ref< Texture2D >::Create( "content/textures/editor/Play.png", AddressingMode::ClampToEdge, DEFAULT_TEXTURE_LOAD_FLAGS_FLIPPED );
 		m_EndRuntimeTexture = Ref< Texture2D >::Create( "content/textures/editor/Stop.png", AddressingMode::ClampToEdge, DEFAULT_TEXTURE_LOAD_FLAGS_FLIPPED );
@@ -1672,7 +1672,7 @@ namespace Saturn {
 				auto defaultMaterialID = ActiveProject->GetDefaultMaterialAsset();
 
 				ImGui::Text( "Default Material Asset:" );
-				defaultMaterialID == 0 ? ImGui::TextColored( ImVec4( 1.0f, 0.0f, 0.0f, 1.0f ), "None" ) : ImGui::Text( "%" PRIu64, defaultMaterialID );
+				defaultMaterialID == 0 ? ImGui::TextColored( ImVec4( 1.0f, 0.0f, 0.0f, 1.0f ), "None" ) : ImGui::Text( "%" PRIu64, ( uint64_t ) defaultMaterialID );
 
 				ImGui::Spring();
 
@@ -1717,7 +1717,7 @@ namespace Saturn {
 				auto defaultMaterialID = ActiveProject->GetDefaultPhysicsMaterialAsset();
 
 				ImGui::Text( "Default Physics Material Asset:" );
-				defaultMaterialID == 0 ? ImGui::TextColored( ImVec4( 1.0f, 0.0f, 0.0f, 1.0f ), "None" ) : ImGui::Text( "%" PRIu64, defaultMaterialID );
+				defaultMaterialID == 0 ? ImGui::TextColored( ImVec4( 1.0f, 0.0f, 0.0f, 1.0f ), "None" ) : ImGui::Text( "%" PRIu64, ( uint64_t ) defaultMaterialID );
 
 				ImGui::Spring();
 
@@ -1762,7 +1762,7 @@ namespace Saturn {
 				auto defaultFontAsset = ActiveProject->GetDefaultFontAsset();
 
 				ImGui::Text( "Default Font Asset:" );
-				defaultFontAsset == 0 ? ImGui::TextColored( ImVec4( 1.0f, 0.0f, 0.0f, 1.0f ), "None" ) : ImGui::Text( "%" PRIu64, defaultFontAsset );
+				defaultFontAsset == 0 ? ImGui::TextColored( ImVec4( 1.0f, 0.0f, 0.0f, 1.0f ), "None" ) : ImGui::Text( "%" PRIu64, ( uint64_t ) defaultFontAsset );
 
 				ImGui::Spring();
 
@@ -1807,7 +1807,7 @@ namespace Saturn {
 				auto defaultPhysReg = ActiveProject->GetDefaultPhysRegAsset();
 
 				ImGui::Text( "Default Physics Surface Registry Asset:" );
-				defaultPhysReg == 0 ? ImGui::TextColored( ImVec4( 1.0f, 0.0f, 0.0f, 1.0f ), "None" ) : ImGui::Text( "%" PRIu64, defaultPhysReg );
+				defaultPhysReg == 0 ? ImGui::TextColored( ImVec4( 1.0f, 0.0f, 0.0f, 1.0f ), "None" ) : ImGui::Text( "%" PRIu64, ( uint64_t ) defaultPhysReg );
 
 				ImGui::Spring();
 
@@ -2515,7 +2515,7 @@ namespace Saturn {
 					ImGui::Selectable( asset->Name.c_str(), false );
 
 					ImGui::TableSetColumnIndex( 1 );
-					ImGui::Text( "%" PRIu64, id );
+					ImGui::Text( "%" PRIu64, ( uint64_t ) id );
 
 					ImGui::TableSetColumnIndex( 2 );
 					ImGui::Text( AssetTypeToString( asset->Type ).data(), false );
@@ -2581,7 +2581,7 @@ namespace Saturn {
 					ImGui::Selectable( asset->Name.c_str(), false );
 
 					ImGui::TableSetColumnIndex( 1 );
-					ImGui::Text( "%" PRIu64, id );
+					ImGui::Text( "%" PRIu64, ( uint64_t ) id );
 
 					ImGui::TableSetColumnIndex( 2 );
 					ImGui::Text( AssetTypeToString( asset->Type ).data() );
@@ -3215,6 +3215,7 @@ namespace Saturn {
 			if( ImGui::MenuItem( "DEBUG: Reset Read Only state" ) )					m_ImGuiWindowManager->ResetReadOnlyState();
 			if( ImGui::MenuItem( "DEBUG: Mark scene as dirty" ) )					m_EditorScene->MarkDirty();
 			if( ImGui::MenuItem( "DEBUG: Show Alura Style live edit" ) )			m_ShowLiveAluraStyleEditor ^= 1;
+			if( ImGui::MenuItem( "DEBUG: Show attention" ) )						Application::Get()->GetWindow()->FlashAttention();
 
 			ImGui::EndMenu();
 		}
@@ -3271,8 +3272,10 @@ namespace Saturn {
 			ImGui::EndMenu();
 		}
 
+#if !defined(SAT_PLATFORM_MACOS)
 		// Draw Project name text and box.
 		ImGui::SeparatorEx( ImGuiSeparatorFlags_Vertical );
+#endif
 
 #if defined(SAT_DEBUG) || 1
 		const std::string prjName = Project::GetActiveConfig().Name;
@@ -3291,7 +3294,16 @@ namespace Saturn {
 		ImDrawList* pDrawList = ImGui::GetWindowDrawList();
 		const float frameHeight = ImGui::GetFrameHeight();
 
+#if !defined(SAT_PLATFORM_MACOS)
 		const ImVec2 min = ImGui::GetWindowPos() + ImGui::GetCursorPos();
+#else
+		// 7.0f == button offset in RubyCocoaBackend
+		const ImVec2 osOffset = ImVec2( ImGui::GetWindowSize().x - textSize.x - frameHeight - 7.0f, ImGui::GetCursorPos().y );
+		const ImVec2 min = ImGui::GetWindowPos() + osOffset;
+		
+		ImGui::SetCursorPos( osOffset );
+#endif
+
 		const ImVec2 max = min + ImVec2( textSize.x + frameHeight, frameHeight );
 		const ImRect buttonRect( min, max );
 
@@ -3576,7 +3588,7 @@ namespace Saturn {
 									ImGui::Separator();
 
 									ImGui::Text( "%s", dependency->Path.string().c_str() );
-									ImGui::Text( "Asset: %" PRIu64, dependency->ID );
+									ImGui::Text( "Asset: %" PRIu64, ( uint64_t ) dependency->ID );
 									ImGui::Text( "Asset Name: %s", dependency->Name.c_str() );
 									ImGui::Text( "Asset Version: %" PRIu64, dependency->Version );
 
@@ -4597,14 +4609,14 @@ namespace Saturn {
 		std::filesystem::path SaturnDir = Auxiliary::GetEnvironmentVariableWs( L"SATURN_DIR" );
 		std::filesystem::path WorkingDir = SaturnDir / "Saturn-ProjectBrowser";
 
-		const std::string binaryFolderName = std::format( "{0}-{1}-x86_64", Application::GetCurrentConfigName(), Application::GetCurrentPlatformBinaryName() );
+		const std::string binaryFolderName = std::format( "{0}-{1}-" SAT_PLATFORM_ARCHITECTURE_NAME, Application::GetCurrentConfigName(), Application::GetCurrentPlatformBinaryName() );
 
 		SaturnDir /= L"bin";
 		SaturnDir /= binaryFolderName;
 		SaturnDir /= L"Saturn-ProjectBrowser";
 		SaturnDir /= L"Saturn-ProjectBrowser" SAT_PLATFORM_EXE_FILE_EXT;
 	
-		DetachedProcess dp( SaturnDir.wstring(), WorkingDir );
+		DetachedProcess dp( SaturnDir.wstring(), WorkingDir.wstring() );
 		Application::Get()->Close();
 	}
 
@@ -5216,7 +5228,7 @@ namespace Saturn {
 		std::filesystem::path args = Auxiliary::GetEnvironmentVariableWs( L"SATURN_DIR" );
 		std::filesystem::path workingDir = args / "Saturn-Editor";
 
-		const std::string binaryFolderName = std::format( "{0}-{1}-x86_64", Application::GetCurrentConfigName(), Application::GetCurrentPlatformBinaryName() );
+		const std::string binaryFolderName = std::format( "{0}-{1}-" SAT_PLATFORM_ARCHITECTURE_NAME, Application::GetCurrentConfigName(), Application::GetCurrentPlatformBinaryName() );
 
 		args /= L"bin";
 		args /= binaryFolderName;
@@ -5225,7 +5237,7 @@ namespace Saturn {
 
 		args += std::format( " {}", rProjectPath.string() );
 
-		DetachedProcess dp( args.wstring(), workingDir );
+		DetachedProcess dp( args.wstring(), workingDir.wstring() );
 		Application::Get()->Close();
 	}
 

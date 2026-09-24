@@ -3,9 +3,9 @@ newoption {
    value = "API",
    description = "Choose a particular Online-subsystem API",
    allowed = {
-      { "steam",    "Steamworks API" },
+	  { "steam",    "Steamworks API" },
 --      { "epic",  "EOS (Epic Online Services)" },
-      { "none",  "No API (default)" }
+	  { "none",  "No API (default)" }
    },
    default = "none"
 }
@@ -40,6 +40,10 @@ end
 		sanitize { "Address" }
 		buildoptions { "/fsanitize=address" }
 
+	filter "configurations:Debug-ASan"
+		sanitize { "Address" }
+		buildoptions { "/fsanitize=address" }
+
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 -- Include directories relative to root folder (solution directory)
@@ -58,7 +62,7 @@ IncludeDir["yaml_cpp"] = "%{wks.location}/Saturn/vendor/yaml-cpp/include/"
 IncludeDir["ImguiNodeEditor"] = "%{wks.location}/Saturn/vendor/imgui_node_editor"
 IncludeDir["ImSpinner"] = "%{wks.location}/Saturn/vendor/imspinner/src"
 IncludeDir["Tracy"] = "%{wks.location}/Saturn/vendor/tracy/src"
-IncludeDir["Filewatch"] = "%{wks.location}/Saturn/vendor/Filewatch/src"
+IncludeDir["Filewatch"] = "%{wks.location}/Saturn/vendor/filewatch/src"
 IncludeDir["MiniAudio"] = "%{wks.location}/Saturn/vendor/miniaudio/src"
 IncludeDir["SharedStorage"] = "%{wks.location}/Saturn-SharedStorage/src"
 IncludeDir["zlib"] = "%{wks.location}/Saturn/vendor/zlib"
@@ -118,14 +122,7 @@ group "Tools"
 
 -- // -Saturn Build Tool-- 
 group "Tools"
-
--- On Windows, the build tool is built as a .NET Framework application
--- on other platforms it's build as a .NET Core application.
-if os.target() == "windows" then
 	include "SaturnBuildTool/SBT"
-else
-	include "SaturnBuildTool/SBT-ForNonWindows"
-end
 -- // -Saturn Build Tool-- 
 
 -- // -Saturn Header Tool-- 

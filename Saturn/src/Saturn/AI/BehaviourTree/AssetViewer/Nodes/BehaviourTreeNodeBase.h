@@ -48,7 +48,7 @@ namespace Saturn {
 		static SClass* GetStaticClassInternal();
 
 	public:
-		inline static [[nodiscard]] SClass* StaticClass()
+		[[nodiscard]] inline static SClass* StaticClass()
 		{
 			return GetStaticClassInternal();
 		}

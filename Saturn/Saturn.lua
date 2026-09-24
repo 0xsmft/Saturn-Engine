@@ -9,8 +9,15 @@ project "Saturn"
 	targetdir ("../bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("../bin-int/" .. outputdir .. "/%{prj.name}")
 
-	pchheader "sppch.h"
 	pchsource "src/sppch.cpp"
+
+	filter "action:xcode4"
+   		pchheader "src/sppch.h"
+
+	filter "not action:xcode4"
+		pchheader "sppch.h"
+
+	filter {}
 
 	files
 	{
@@ -49,7 +56,8 @@ project "Saturn"
 		"src",
 		"vendor/stb",
 		"vendor/spdlog/include",
-		"vendor/vulkan/include",
+		os.getenv('VULKAN_SDK') .. "/include/vulkan",
+		os.getenv('VULKAN_SDK') .. "/include",
 		"%{IncludeDir.ImGui}",
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.entt}",
@@ -132,7 +140,7 @@ project "Saturn"
 			"pthread",
 			"dl",
 			"m",
-			"X11",
+			"xcb",
 			"Xrandr",
 			"vulkan",
 			"vulkan-1"
@@ -143,6 +151,8 @@ project "Saturn"
 			"SAT_PLATFORM_LINUX"
 		}
 
+		buildoptions { "-fno-ms-extensions", "-Wno-changes-meaning", "-fpermissive" }
+		
 		filter { "options:onlineapi=steam", "system:linux" }
 			links
 			{
@@ -192,8 +202,6 @@ project "Saturn"
 			}
 
 		filter "configurations:Release"
-			defines "SAT_RELEASE"
-			runtime "Release"
 			links
 			{
 				"vendor/assimp/bin/Release/assimp-vc143-mt.lib",
@@ -205,24 +213,119 @@ project "Saturn"
 				"SPIRV-Tools",
 			}
 
-		filter "configurations:Dist"
-			defines "SAT_DIST"
-			runtime "Release"
-			optimize "on"
-			symbols "off"
+	filter "system:macosx"
+		links
+		{
+			"vulkan",
+			"Cocoa.framework",
+			"CoreFoundation.framework",
+			"IOKit.framework",
+			"CoreVideo.framework",
+			"QuartzCore.framework",
+			"UniformTypeIdentifiers.framework",
+			"CoreAudio.framework",
+		}
 
-			removelinks { "Tracy", "Freetype", "MSDFGen", "MSDF-Atlas-Gen", "SPIRV-Cross" }
-			removedefines { "TRACY_ENABLE", "TRACY_DELAYED_INIT", "TRACY_MANUAL_LIFETIME", "SATURN_SS_IMPORT" }
-			removefiles { "vendor/ImGuizmo/src/**.cpp", "vendor/ImGuizmo/src/**.h" }
+		files 
+		{
+			"src/**.mm",
+		}
+		
+		defines
+		{
+			"SAT_PLATFORM_MACOS",
+		}
 
-			defines { "SATURN_SS_STATIC" }
-			links { "Saturn-SharedStorage" }
+		externalincludedirs
+		{
+			"src",
+			"vendor/stb",
+			"vendor/spdlog/include",
+			os.getenv('VULKAN_SDK') .. "/include/vulkan",
+			os.getenv('VULKAN_SDK') .. "/include",
+			"%{IncludeDir.ImGui}",
+			"%{IncludeDir.glm}",
+			"%{IncludeDir.entt}",
+			"%{IncludeDir.assimp}",
+			"%{IncludeDir.glslc}",
+			"%{IncludeDir.shaderc}",
+			"%{IncludeDir.SPIRV_Cross}",
+			"%{IncludeDir.vma}",
+			"%{IncludeDir.yaml_cpp}",
+			"%{IncludeDir.ImGuizmo}",
+			"%{IncludeDir.ImguiNodeEditor}",
+			"%{IncludeDir.ImSpinner}",
+			"%{IncludeDir.Tracy}",
+			"%{IncludeDir.MiniAudio}",
+			"%{IncludeDir.Filewatch}",
+			"%{IncludeDir.zlib}",
+			"%{IncludeDir.JoltPhys}",
+			"%{IncludeDir.KTX_Software}",
+			"%{IncludeDir.Recast}",
+			"%{IncludeDir.acl}",
+			"%{IncludeDir.rtm}",
+			"%{IncludeDir.freetype}",
+			"%{IncludeDir.MSDF}",
+			"%{IncludeDir.MSDFAG}",
+			"%{IncludeDir.NativeFileDialogExtended}",
+			"%{IncludeDir.ImTimeline}",
+			"%{IncludeDir.ImGuiColorTextEdit}",
+			"%{IncludeDir.CrashCatch}",
+
+			"%{IncludeDir.SharedStorage}"
+		}
+
+		filter "files:**.mm"
+   			flags { "NoPCH" }
+
+		filter { "options:onlineapi=steam", "system:macosx" }
+			links
+			{
+				"vendor/steamworks/Bin/macOS/libsteam_api.dylib"
+			}
+
+	filter "configurations:Dist"
+		defines "SAT_DIST"
+		runtime "Release"
+		optimize "on"
+		symbols "off"
+
+		removelinks { "Tracy", "Freetype", "MSDFGen", "MSDF-Atlas-Gen", "SPIRV-Cross" }
+		removedefines { "TRACY_ENABLE", "TRACY_DELAYED_INIT", "TRACY_MANUAL_LIFETIME", "SATURN_SS_IMPORT" }
+		removefiles { "vendor/ImGuizmo/src/**.cpp", "vendor/ImGuizmo/src/**.h" }
+
+		defines { "SATURN_SS_STATIC" }
+		links { "Saturn-SharedStorage" }
 	
 	filter "configurations:Debug or configurations:Release or configurations:Debug-ASan"
 		defines
 		{
-		    "JPH_DEBUG_RENDERER",
-            "JPH_FLOATING_POINT_EXCEPTIONS_ENABLED",
-            "JPH_EXTERNAL_PROFILE",
+			"JPH_DEBUG_RENDERER",
+			"JPH_FLOATING_POINT_EXCEPTIONS_ENABLED",
+			"JPH_EXTERNAL_PROFILE",
 			"JPH_ENABLE_ASSERTS"
 		}
+	
+	filter "configurations:Debug"
+		defines "SAT_DEBUG"
+		runtime "Debug"
+		symbols "on"
+
+	filter "configurations:Release"
+		defines "SAT_RELEASE"
+		runtime "Release"
+		symbols "on"
+	
+	filter "configurations:Dist"
+		defines "SAT_DIST"
+		runtime "Release"
+		optimize "on"
+		symbols "off"
+
+		removelinks { "Tracy", "Freetype", "MSDFGen", "MSDF-Atlas-Gen", "SPIRV-Cross" }
+		removedefines { "TRACY_ENABLE", "TRACY_DELAYED_INIT", "TRACY_MANUAL_LIFETIME", "SATURN_SS_IMPORT" }
+		removefiles { "vendor/ImGuizmo/src/**.cpp", "vendor/ImGuizmo/src/**.h" }
+
+		defines { "SATURN_SS_STATIC" }
+		links { "Saturn-SharedStorage" }
+

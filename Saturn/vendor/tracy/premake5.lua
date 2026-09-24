@@ -47,6 +47,19 @@ project "Tracy"
 			"src/libbacktrace"
 		}
 
+	filter "system:macosx"
+		staticruntime "off"
+
+		defines 
+		{
+			"TRACY_NO_CRASH_HANDLER"
+		}
+
+		includedirs 
+		{
+			"src/libbacktrace"
+		}
+
 	filter "configurations:Debug or configurations:Debug-ASan"
 		runtime "Debug"
 		symbols "on"

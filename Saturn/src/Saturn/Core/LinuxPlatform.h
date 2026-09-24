@@ -43,6 +43,19 @@
 // Windows only defines, however defined on all platforms for compatibility
 #define SAT_ALLOCATOR_ATTR __attribute__(("malloc"))
 #define SAT_PLATFORM_FRIENDLY_NAME "Linux"
+#define SAT_MSVC_STDCALL
+
+#if defined(SAT_COMPILER_GCC)
+#define SAT_GCC_TEMPLATE template
+#else
+#define SAT_GCC_TEMPLATE
+#endif
+
+#if defined(SAT_COMPILER_GCC) || defined(SAT_COMPILER_CLANG)
+#define SAT_GCC_CLANG_TEMPLATE template
+#else
+#define SAT_GCC_CLANG_TEMPLATE
+#endif
 
 #if !defined(SAT_DIST)
 #define SAT_DLLEXPORT __attribute__((visibility("default")))
@@ -64,10 +77,16 @@
 // We only support x86_64
 #if defined(_MSC_VER) && defined(_M_X64)
 #define SAT_PLATFORM_BINARY_FOLDER "linux-x86_64"
+// Name must match with output binary path name.
+#define SAT_PLATFORM_ARCHITECTURE_NAME "x86_64"
 #elif defined(_MSC_VER) && defined(_M_ARM64)
 #define SAT_PLATFORM_BINARY_FOLDER "linux-AARCH64"
+// Name must match with output binary path name.
+#define SAT_PLATFORM_ARCHITECTURE_NAME "AARCH64"
 #else
 #define SAT_PLATFORM_BINARY_FOLDER "linux-ArchUnk"
+// Name must match with output binary path name.
+#define SAT_PLATFORM_ARCHITECTURE_NAME "ArchUnk"
 #endif
 
 // SAT_PLATFORM_LINUX is defined from CLI

@@ -88,7 +88,7 @@ namespace Saturn {
 
 			out << YAML::Key << "Path" << YAML::Value << path;
 #else
-			out << YAML::Key << "Path" << YAML::Value << asset->GetPath();
+			out << YAML::Key << "Path" << YAML::Value << asset->Path;
 #endif
 
 			out << YAML::Key << "Type" << YAML::Value << AssetTypeToString( asset->Type );

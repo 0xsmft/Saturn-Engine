@@ -37,6 +37,10 @@
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Core/JobSystemThreadPool.h>
 
+#if defined(SAT_PLATFORM_LINUX)
+#include <stdarg.h> // For va_start et al.
+#endif
+
 namespace Saturn {
 
 	//////////////////////////////////////////////////////////////////////////

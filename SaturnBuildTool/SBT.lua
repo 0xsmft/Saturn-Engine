@@ -1,11 +1,15 @@
+buildtooloutputdir = "%{cfg.buildcfg}-%{cfg.system}-AnyCPU"
+
+include (path.join( "Saturn-Editor", "content", "Templates", "PremakeCSExtensions.lua"))
+
 project "SaturnBuildTool"
 	language "C#"
 	kind "ConsoleApp"
 	links { "System" }
 	defines { "SAT_BUILDTOOOL_NETFRAMEWORK" }
 
-	targetdir ("../bin/" .. outputdir .. "/%{prj.name}")
-	objdir ("../bin-int/" .. outputdir .. "/%{prj.name}")
+	targetdir ("../bin/" .. buildtooloutputdir .. "/%{prj.name}")
+	objdir ("../bin-int/" .. buildtooloutputdir .. "/%{prj.name}")
 
 	files
 	{

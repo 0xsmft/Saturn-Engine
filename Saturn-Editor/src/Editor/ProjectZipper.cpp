@@ -187,7 +187,7 @@ namespace Saturn {
 			std::filesystem::remove( fullPath );
 		}
 
-		int errnum;
+		int errnum = -1;
 		zip_t* pZipper = zip_open( fullPath.string().c_str(), ZIP_CREATE | ZIP_EXCL | ZIP_TRUNCATE, &errnum );
 
 		if( !pZipper )

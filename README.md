@@ -20,9 +20,11 @@
 
 | Platform | Supported | Architecture | Build Status | Stability |
 | -------- | --------- | ------------ | ------------ | --------- |
-| Windows 10+ | ✅ | x86_64 |     <a href="https://github.com/BEASTSM96/Saturn-Engine/actions/workflows/Windows.yml"><img alt="Repo Size" src="https://github.com/BEASTSM96/Saturn-Engine/actions/workflows/Windows.yml/badge.svg"></a> | Very stable
+| Windows 10+ | ✅ | x86_64 & AArch64 |     <a href="https://github.com/BEASTSM96/Saturn-Engine/actions/workflows/Windows.yml"><img alt="Repo Size" src="https://github.com/BEASTSM96/Saturn-Engine/actions/workflows/Windows.yml/badge.svg"></a> | Very stable
 | Linux | 🕗 *[Progress](https://trello.com/c/o43wueQO/9-preliminary-linux-support)* | x86_64 | No CI yet. | N/A
 | macOS 15+ (Sequoia) | 🕗 *[Progress](https://trello.com/c/bOjSj8Od/272-preliminary-macos-support)*| AArch64 | No CI yet. | Unstable
+
+*Windows ARM builds are only available on Windows 11*
 
 ## Features
 

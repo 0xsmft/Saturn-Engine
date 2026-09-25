@@ -109,7 +109,7 @@ namespace Saturn::Auxiliary {
 		if( pValue )
 			return pValue;
 #endif
-		return "";
+		return {};
 	}
 
 	std::wstring GetEnvironmentVariableWs( const std::wstring& rKey )

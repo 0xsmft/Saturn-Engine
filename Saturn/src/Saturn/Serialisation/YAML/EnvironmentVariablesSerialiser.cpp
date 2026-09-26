@@ -26,16 +26,58 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "EnvironmentVariablesSerialiser.h"
 
-#include <string>
+#include "Saturn/Core/App.h"
+#include "Saturn/Core/EnvironmentVariablesStorage.h"
 
-namespace Saturn::Auxiliary {
+#include <yaml-cpp/yaml.h>
 
-	extern bool HasEnvironmentVariable( const std::string& rKey );
-	extern std::filesystem::path GetEnvironmentVariable( const std::string& rKey );
-	extern void SetEnvironmentVariable( const std::string& rKey, const std::string& rValue );
+namespace Saturn {
+    
+	void EnvironmentVariablesSerialiser::Serialise()
+    {
+		const auto path = Application::Get()->GetAppDataFolder() / "EnvironmentVariables.yaml";
+
+		YAML::Emitter out;
+
+		out << YAML::BeginMap;
+		out << YAML::Key << "EnvironmentVariables";
+
+		out << YAML::BeginSeq;
+		
+		for( const auto& [rKey, rPath] : EnvironmentVariablesStorage::Get().m_Variables )
+		{
+			out << YAML::Key << rKey << YAML::Value << rPath.string();
+		}
+
+		out << YAML::EndSeq;
+		out << YAML::EndMap;
+
+		std::ofstream fout( path );
+		fout << out.c_str();
+    }
+
+    void EnvironmentVariablesSerialiser::Deserialise()
+    {
+		const auto path = Application::Get()->GetAppDataFolder() / "EnvironmentVariables.yaml";
+
+		std::ifstream stream( path );
+		std::stringstream ss;
+		ss << stream.rdbuf();
+
+		YAML::Node data = YAML::Load( ss.str() );
+		if( data.IsNull() )
+			return;
+
+		auto& rStorage = EnvironmentVariablesStorage::Get();
+
+		const auto envVars = data[ "EnvironmentVariables" ];
+		for( const auto key : envVars )
+		{
+			//rStorage.m_Variables.emplace( kStr, vStr );
+		}
+    }
 
 }
-
-#define GetEnvironmentVariableWs(x) GetEnvironmentVariable(x)

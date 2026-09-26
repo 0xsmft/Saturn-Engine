@@ -36,7 +36,7 @@ namespace Saturn {
 
 	bool Premake::Launch( const std::filesystem::path& rWorkingDir, const std::wstring& rPremakeFilename, PremakeAction action )
 	{
-		std::wstring PremakePath = Auxiliary::GetEnvironmentVariableWs( L"SATURN_PREMAKE_PATH" );
+		auto PremakePath = Auxiliary::GetEnvironmentVariableWs( "SATURN_PREMAKE_PATH" );
 		
 		// Append premake filename.
 		PremakePath += L" --file=" + rPremakeFilename;
@@ -73,7 +73,7 @@ namespace Saturn {
 #if defined( _WIN32 )
 		std::replace( PremakePath.begin(), PremakePath.end(), L'/', L'\\' );
 #endif
-		Process premakeProcess( PremakePath, rWorkingDir.wstring() );
+		Process premakeProcess( PremakePath.wstring(), rWorkingDir.wstring() );
 		bool res = ( premakeProcess.ResultOfProcess() == 0 ) ? true : false;
 
 		return res;

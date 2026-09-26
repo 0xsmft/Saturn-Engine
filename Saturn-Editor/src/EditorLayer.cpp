@@ -2759,6 +2759,40 @@ namespace Saturn {
 			}
 			ImGui::EndHorizontal();
 
+            ImGui::Separator();
+            ImGui::Text( "Environment Variables" );
+            {
+                ImGui::BeginHorizontal( "##envvar_satdir" );
+                ImGui::Text( "SATURN_DIR" );
+                ImGui::Spring();
+                
+                if( Auxiliary::HasEnvironmentVariable( "SATURN_DIR" )  )
+                {
+                    const auto saturnDir = Auxiliary::GetEnvironmentVariable( "SATURN_DIR" );
+                    ImGui::Text( "%s", saturnDir.c_str() );
+                }
+                else
+                {
+                    ImGui::Text( "SATURN_DIR not set." );
+                }
+                ImGui::EndHorizontal();
+                
+                ImGui::BeginHorizontal( "##envvar_premakedir" );
+                ImGui::Text( "SATURN_PREMAKE_DIR" );
+                ImGui::Spring();
+                
+                if( Auxiliary::HasEnvironmentVariable( "SATURN_PREMAKE_PATH" )  )
+                {
+                    const auto premakePath = Auxiliary::GetEnvironmentVariable( "SATURN_PREMAKE_PATH" );
+                    ImGui::Text( "%s", premakePath.c_str() );
+                }
+                else
+                {
+                    ImGui::Text( "SATURN_PREMAKE_PATH not set." );
+                }
+                ImGui::EndHorizontal();
+            }
+
 			if( shouldSaveEngSettings )
 			{
 				EngineSettingsSerialiser ess;
@@ -4606,7 +4640,7 @@ namespace Saturn {
 		SaveFile();
 		SaveProject();
 
-		std::filesystem::path SaturnDir = Auxiliary::GetEnvironmentVariableWs( L"SATURN_DIR" );
+		std::filesystem::path SaturnDir = Auxiliary::GetEnvironmentVariableWs( "SATURN_DIR" );
 		std::filesystem::path WorkingDir = SaturnDir / "Saturn-ProjectBrowser";
 
 		const std::string binaryFolderName = std::format( "{0}-{1}-" SAT_PLATFORM_ARCHITECTURE_NAME, Application::GetCurrentConfigName(), Application::GetCurrentPlatformBinaryName() );
@@ -5225,7 +5259,7 @@ namespace Saturn {
 
 	void EditorLayer::CloseEditorAndOpenNewProj( const std::filesystem::path& rProjectPath )
 	{
-		std::filesystem::path args = Auxiliary::GetEnvironmentVariableWs( L"SATURN_DIR" );
+		std::filesystem::path args = Auxiliary::GetEnvironmentVariableWs( "SATURN_DIR" );
 		std::filesystem::path workingDir = args / "Saturn-Editor";
 
 		const std::string binaryFolderName = std::format( "{0}-{1}-" SAT_PLATFORM_ARCHITECTURE_NAME, Application::GetCurrentConfigName(), Application::GetCurrentPlatformBinaryName() );

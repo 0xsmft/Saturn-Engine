@@ -4648,7 +4648,7 @@ namespace Saturn {
 		SaturnDir /= L"bin";
 		SaturnDir /= binaryFolderName;
 		SaturnDir /= L"Saturn-ProjectBrowser";
-		SaturnDir /= L"Saturn-ProjectBrowser" SAT_PLATFORM_EXE_FILE_EXT;
+		SaturnDir /= L"Saturn-ProjectBrowser" SAT_PLATFORM_SPECIAL_EXE_FILE_EXT;
 	
 		DetachedProcess dp( SaturnDir.wstring(), WorkingDir.wstring() );
 		Application::Get()->Close();
@@ -5267,7 +5267,7 @@ namespace Saturn {
 		args /= L"bin";
 		args /= binaryFolderName;
 		args /= L"Saturn-Editor";
-		args /= L"Saturn-Editor" SAT_PLATFORM_EXE_FILE_EXT;
+		args /= L"Saturn-Editor" SAT_PLATFORM_SPECIAL_EXE_FILE_EXT;
 
 		args += std::format( " {}", rProjectPath.string() );
 

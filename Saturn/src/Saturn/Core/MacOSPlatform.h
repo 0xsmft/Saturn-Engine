@@ -66,6 +66,7 @@
 #define SAT_PLATFORM_DYNALIB_FILE_EXT ".dylib"
 #define SAT_PLATFORM_STLIB_FILE_EXT ".a"
 #define SAT_PLATFORM_EXE_FILE_EXT ""
+#define SAT_PLATFORM_SPECIAL_EXE_FILE_EXT ".app"
 
 #define SAT_CLANG_TYPENAME typename
 #define SAT_GCC_TYPENAME typename

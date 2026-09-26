@@ -28,14 +28,52 @@
 
 #pragma once
 
-#include <string>
+namespace Saturn {
 
-namespace Saturn::Auxiliary {
+	//
+	// EnvironmentVariablesStorage
+	//
+	// This class is responsible for managing
+	// environment variables.
+	//
+	// Due to us being cross-platform I have decided against
+	// using real OS environment variables and instead
+	// we just hold a map of the environment variables.
+	//
+	// Environment variables are stored in a yaml file
+	// called EnvironmentVariables.yaml
+	// which can be found in the AppData folder.
+	//
+	class EnvironmentVariablesStorage 
+	{
+    public:
+		SAT_SINGLETON_LAZY( EnvironmentVariablesStorage );
+	public:
+		EnvironmentVariablesStorage();
+		~EnvironmentVariablesStorage();
 
-	extern bool HasEnvironmentVariable( const std::string& rKey );
-	extern std::filesystem::path GetEnvironmentVariable( const std::string& rKey );
-	extern void SetEnvironmentVariable( const std::string& rKey, const std::string& rValue );
+		[[nodiscard]] bool DoesVariableExist( const std::string& rKey ) const;
+		[[nodiscard]] void SetVariable( const std::string& rKey, const std::filesystem::path& rPath );
+
+		//
+		// Get an environment variable, returns nullopt if not found.
+		//
+		[[nodiscard]] std::optional<std::filesystem::path> GetVariable( const std::string& rKey );
+		[[nodiscard]] const std::optional<std::filesystem::path> GetVariable( const std::string& rKey ) const;
+	private:
+		void Serialise();
+		void Deserialise();
+	
+	private:
+		//
+		// I know not every env var is a path but in Saturn,
+		// we only use environment variables to point to paths
+		// so this will be fine for us.
+		//
+		std::unordered_map<std::string, std::filesystem::path> m_Variables;
+
+	private:
+		friend class EnvironmentVariablesSerialiser;
+	};
 
 }
-
-#define GetEnvironmentVariableWs(x) GetEnvironmentVariable(x)

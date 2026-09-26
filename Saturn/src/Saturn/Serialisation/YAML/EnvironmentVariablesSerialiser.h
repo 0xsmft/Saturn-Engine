@@ -28,14 +28,13 @@
 
 #pragma once
 
-#include <string>
+namespace Saturn {
 
-namespace Saturn::Auxiliary {
-
-	extern bool HasEnvironmentVariable( const std::string& rKey );
-	extern std::filesystem::path GetEnvironmentVariable( const std::string& rKey );
-	extern void SetEnvironmentVariable( const std::string& rKey, const std::string& rValue );
-
+	class EnvironmentVariablesSerialiser
+	{
+	public:
+		static void Serialise();
+		static void Deserialise();
+	};
+	
 }
-
-#define GetEnvironmentVariableWs(x) GetEnvironmentVariable(x)

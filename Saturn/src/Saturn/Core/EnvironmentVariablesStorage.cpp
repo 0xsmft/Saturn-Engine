@@ -26,16 +26,69 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "EnvironmentVariablesStorage.h"
 
-#include <string>
+namespace Saturn {
 
-namespace Saturn::Auxiliary {
+	EnvironmentVariablesStorage::EnvironmentVariablesStorage()
+	{
+		Deserialise();
+	}
 
-	extern bool HasEnvironmentVariable( const std::string& rKey );
-	extern std::filesystem::path GetEnvironmentVariable( const std::string& rKey );
-	extern void SetEnvironmentVariable( const std::string& rKey, const std::string& rValue );
+	EnvironmentVariablesStorage::~EnvironmentVariablesStorage()
+	{
+	}
+
+	bool EnvironmentVariablesStorage::DoesVariableExist( const std::string &rKey ) const
+	{
+		return m_Variables.contains( rKey );
+	}
+
+	void EnvironmentVariablesStorage::SetVariable( const std::string &rKey, const std::filesystem::path &rPath )
+	{
+		const auto Itr = m_Variables.find( rKey );
+
+		if( Itr == m_Variables.end() )
+		{
+			m_Variables.emplace( rKey, rPath );
+		}
+		else
+		{
+			m_Variables[ rKey] = rPath;
+		}
+	}
+
+	std::optional<std::filesystem::path> EnvironmentVariablesStorage::GetVariable( const std::string &rKey )
+	{
+		const auto Itr = m_Variables.find( rKey );
+		
+		if( Itr != m_Variables.end() )
+		{
+			return m_Variables[ rKey ];
+		}
+		
+		return std::nullopt;
+	}
+
+	const std::optional<std::filesystem::path> EnvironmentVariablesStorage::GetVariable( const std::string &rKey ) const
+	{
+		const auto Itr = m_Variables.find( rKey );
+				
+		if( Itr != m_Variables.end() )
+		{
+			return m_Variables.at( rKey );
+		}
+		
+		return std::nullopt;
+	}
+	
+	void EnvironmentVariablesStorage::Serialise()
+	{	
+	}
+
+	void EnvironmentVariablesStorage::Deserialise()
+	{
+	}
 
 }
-
-#define GetEnvironmentVariableWs(x) GetEnvironmentVariable(x)

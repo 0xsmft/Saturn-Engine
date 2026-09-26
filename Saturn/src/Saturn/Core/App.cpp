@@ -678,7 +678,7 @@ namespace Saturn {
 		config.showCrashDialog = false;
 		config.onCrash = []( const CrashCatch::CrashContext& rContext )
 		{
-			std::filesystem::path SaturnDir = Auxiliary::GetEnvironmentVariableWs( L"SATURN_DIR" );
+			std::filesystem::path SaturnDir = Auxiliary::GetEnvironmentVariableWs( "SATURN_DIR" );
 			std::filesystem::path WorkingDir = SaturnDir / "Saturn-CrashReporter";
 
 			// This check is important because if the client has never installed a source build of Saturn then this

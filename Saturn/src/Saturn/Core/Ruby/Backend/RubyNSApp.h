@@ -42,6 +42,7 @@ namespace Saturn {
 		~RubyNSApplicationData();
 
 		void Init();
+        void ChangeToBundlePath();
 
 	private:
 		void Cleanup();

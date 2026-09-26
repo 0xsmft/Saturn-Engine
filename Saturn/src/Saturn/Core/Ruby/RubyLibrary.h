@@ -125,6 +125,8 @@ namespace Saturn {
 #if defined(SAT_PLATFORM_MACOS)
 	public:
 		RubyNSApplicationData* GetMacOSData();
+        
+        void ChangeToBundlePath();
 #endif
 
 	private:

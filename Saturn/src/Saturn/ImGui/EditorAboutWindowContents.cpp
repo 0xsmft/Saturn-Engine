@@ -39,7 +39,7 @@ namespace Saturn {
 
 	void EditorAboutWindowContents::DrawContents()
 	{
-		ImGui::Text( "Saturn Engine x64 %s (%s build)", Application::GetCurrentPlatformName(), Application::GetCurrentConfigName() );
+		ImGui::Text( "Saturn Engine " SAT_PLATFORM_ARCHITECTURE_NAME " %s (%s build)", Application::GetCurrentPlatformName(), Application::GetCurrentConfigName() );
 
 		ImGui::Text( "Saturn Engine Version: %s (Internal Number: %i ident: %s)", SAT_CURRENT_VERSION_STRING, SAT_CURRENT_VERSION, SAT_CURRENT_VERSION_BUILD_TAG );
 
@@ -105,6 +105,35 @@ namespace Saturn {
 
 			Auxiliary::EndTreeNode();
 		}
+        
+        ImGui::Separator();
+        
+        if( Auxiliary::TreeNode( "Extra debug information" ) )
+        {
+#if defined(SAT_COMPILER_MSVC)
+            ImGui::Text( "Compiler: MSVC" );
+#elif defined(SAT_COMPILER_GCC)
+            ImGui::Text( "Compiler: GCC" );
+#elif defined(SAT_COMPILER_CLANG)
+            ImGui::Text( "Compiler: Clang" );
+#else
+            ImGui::Text( "Compiler: Unknown" );
+#endif
+            
+            ImGui::Text( "Platform friendly name: " SAT_PLATFORM_FRIENDLY_NAME );
+            
+            ImGui::Text( "Dynamic library file extension: " SAT_PLATFORM_DYNALIB_FILE_EXT );
+            ImGui::Text( "Static library file extension: " SAT_PLATFORM_STLIB_FILE_EXT );
+            ImGui::Text( "Executable file extension: " SAT_PLATFORM_EXE_FILE_EXT );
+            ImGui::Text( "Special exe (.app bundles on macOS) extension: " SAT_PLATFORM_SPECIAL_EXE_FILE_EXT );
+            
+            ImGui::Text( "Vulkan surface name: " SAT_PLATFORM_VULKAN_SURFACE_NAME );
+            
+            ImGui::Text( "Binary folder name: " SAT_PLATFORM_BINARY_FOLDER );
+            ImGui::Text( "CPU architecture name: " SAT_PLATFORM_ARCHITECTURE_NAME );
+            
+            Auxiliary::EndTreeNode();
+        }
 	}
 
 }

@@ -197,6 +197,13 @@ namespace Saturn {
 	RubyNSApplicationData* RubyLibrary::GetMacOSData()
 	{
 		return m_pMacOSData;
-	}
+    }
+
+    void RubyLibrary::ChangeToBundlePath()
+    {
+        SAT_CORE_ASSERT( m_pMacOSData );
+        m_pMacOSData->ChangeToBundlePath();
+    }
+
 #endif
 }

@@ -29,19 +29,27 @@
 #include "sppch.h"
 #include "EnvironmentVariablesStorage.h"
 
+#include "Saturn/Serialisation/YAML/EnvironmentVariablesSerialiser.h"
+
 namespace Saturn {
 
 	EnvironmentVariablesStorage::EnvironmentVariablesStorage()
 	{
-		Deserialise();
 	}
+
+    void EnvironmentVariablesStorage::TryLoadIfNeeded()
+    {
+        if( !m_IsLoaded )
+            Deserialise();
+    }
 
 	EnvironmentVariablesStorage::~EnvironmentVariablesStorage()
 	{
 	}
 
-	bool EnvironmentVariablesStorage::DoesVariableExist( const std::string &rKey ) const
+	bool EnvironmentVariablesStorage::DoesVariableExist( const std::string &rKey )
 	{
+        TryLoadIfNeeded();
 		return m_Variables.contains( rKey );
 	}
 
@@ -55,12 +63,16 @@ namespace Saturn {
 		}
 		else
 		{
-			m_Variables[ rKey] = rPath;
+			m_Variables[ rKey ] = rPath;
 		}
+
+		Serialise();
 	}
 
 	std::optional<std::filesystem::path> EnvironmentVariablesStorage::GetVariable( const std::string &rKey )
 	{
+        TryLoadIfNeeded();
+        
 		const auto Itr = m_Variables.find( rKey );
 		
 		if( Itr != m_Variables.end() )
@@ -70,25 +82,17 @@ namespace Saturn {
 		
 		return std::nullopt;
 	}
-
-	const std::optional<std::filesystem::path> EnvironmentVariablesStorage::GetVariable( const std::string &rKey ) const
-	{
-		const auto Itr = m_Variables.find( rKey );
-				
-		if( Itr != m_Variables.end() )
-		{
-			return m_Variables.at( rKey );
-		}
-		
-		return std::nullopt;
-	}
 	
 	void EnvironmentVariablesStorage::Serialise()
-	{	
+	{
+        TryLoadIfNeeded();
+        EnvironmentVariablesSerialiser::Serialise();
 	}
 
 	void EnvironmentVariablesStorage::Deserialise()
 	{
+        EnvironmentVariablesSerialiser::Deserialise();
+        m_IsLoaded = true;
 	}
 
 }

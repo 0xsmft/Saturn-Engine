@@ -49,11 +49,14 @@ namespace Saturn {
 		
 		for( const auto& [rKey, rPath] : EnvironmentVariablesStorage::Get().m_Variables )
 		{
-			out << YAML::Key << rKey << YAML::Value << rPath.string();
+            out << YAML::BeginMap;
+            out << YAML::Key << "Variable" << YAML::Value << rKey;
+			out << YAML::Key << "Value" << YAML::Value << rPath.string();
+            out << YAML::EndMap; // variable map
 		}
 
 		out << YAML::EndSeq;
-		out << YAML::EndMap;
+		out << YAML::EndMap; // root map
 
 		std::ofstream fout( path );
 		fout << out.c_str();
@@ -74,9 +77,12 @@ namespace Saturn {
 		auto& rStorage = EnvironmentVariablesStorage::Get();
 
 		const auto envVars = data[ "EnvironmentVariables" ];
-		for( const auto key : envVars )
+		for( const auto var : envVars )
 		{
-			//rStorage.m_Variables.emplace( kStr, vStr );
+            const auto name = var[ "Variable" ].as<std::string>();
+            const auto value = var[ "Value" ].as<std::string>();
+            
+            rStorage.m_Variables.emplace( name, value );
 		}
     }
 

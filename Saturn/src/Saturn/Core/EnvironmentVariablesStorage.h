@@ -52,18 +52,19 @@ namespace Saturn {
 		EnvironmentVariablesStorage();
 		~EnvironmentVariablesStorage();
 
-		[[nodiscard]] bool DoesVariableExist( const std::string& rKey ) const;
+		[[nodiscard]] bool DoesVariableExist( const std::string& rKey );
 		[[nodiscard]] void SetVariable( const std::string& rKey, const std::filesystem::path& rPath );
 
 		//
 		// Get an environment variable, returns nullopt if not found.
 		//
 		[[nodiscard]] std::optional<std::filesystem::path> GetVariable( const std::string& rKey );
-		[[nodiscard]] const std::optional<std::filesystem::path> GetVariable( const std::string& rKey ) const;
+
 	private:
 		void Serialise();
 		void Deserialise();
-	
+        void TryLoadIfNeeded();
+        
 	private:
 		//
 		// I know not every env var is a path but in Saturn,
@@ -71,6 +72,8 @@ namespace Saturn {
 		// so this will be fine for us.
 		//
 		std::unordered_map<std::string, std::filesystem::path> m_Variables;
+        
+        bool m_IsLoaded = false;
 
 	private:
 		friend class EnvironmentVariablesSerialiser;

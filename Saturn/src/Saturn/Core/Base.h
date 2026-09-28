@@ -48,11 +48,11 @@ consteval auto BIT( Ty x ) { return 1 << x; }
 template<typename Ty>
 consteval auto SAT_MAKE_VERSION( Ty major, Ty minor, Ty patch ) { return ( ( ( ( unsigned int ) ( major ) ) << 22 ) | ( ( ( unsigned int ) ( minor ) ) << 12 ) | ( ( unsigned int ) ( patch ) ) ); }
 
-// Current version is Alpha 0.2.7 (Alpha 2.7)
-constexpr auto SAT_CURRENT_VERSION = SAT_MAKE_VERSION( 0, 2, 7 );
-constexpr auto SAT_CURRENT_VERSION_STRING = "0.2.7";
+// Current version is Release 1.0.0 (Release 1.0.0)
+constexpr auto SAT_CURRENT_VERSION = SAT_MAKE_VERSION( 0, 2, 8 );
+constexpr auto SAT_CURRENT_VERSION_STRING = "1.0.0";
 
-#define SAT_CURRENT_VERSION_BUILD_TAG "D17KF"
+#define SAT_CURRENT_VERSION_BUILD_TAG "X31AP"
 
 #define SAT_DECODE_VERSION(source, major, minor, patch) \
 patch = (source) & 0xFF; \
@@ -82,6 +82,8 @@ constexpr auto SAT_VERSION_A_0_2_4 = SAT_MAKE_VERSION( 0, 2, 4 );
 constexpr auto SAT_VERSION_A_0_2_5 = SAT_MAKE_VERSION( 0, 2, 5 );
 constexpr auto SAT_VERSION_A_0_2_6 = SAT_MAKE_VERSION( 0, 2, 6 );
 constexpr auto SAT_VERSION_A_0_2_7 = SAT_MAKE_VERSION( 0, 2, 7 );
+
+constexpr auto SAT_VERSION_X_1_0_0_WIP = SAT_MAKE_VERSION( 0, 2, 8 );
 
 namespace Saturn::Core {
 

@@ -39,30 +39,30 @@ static void InitMenuBar()
 {
 	@autoreleasepool 
 	{
-		NSMenu* pBar = [[NSMenu alloc] init];
-		[NSApp setMainMenu:pBar];
+		NSMenu* pBar = [ [ NSMenu alloc ] init ];
+		[ NSApp setMainMenu:pBar ];
 
 		// App menu item.
-		NSMenuItem* pAppMenuItem = [pBar addItemWithTitle:@"" action:NULL keyEquivalent:@""];
-		NSMenu* pAppMenu = [[NSMenu alloc] init];
-		[pAppMenuItem setSubmenu:pAppMenu];
+		NSMenuItem* pAppMenuItem = [ pBar addItemWithTitle:@"" action:NULL keyEquivalent:@"" ];
+		NSMenu* pAppMenu = [ [ NSMenu alloc ] init ];
+		[ pAppMenuItem setSubmenu:pAppMenu ];
 
 		// About.
-		[pAppMenu addItemWithTitle:@"About Saturn"
-					action:@selector(orderFrontStandardAboutPanel:)
-					keyEquivalent:@""];
+		[ pAppMenu addItemWithTitle:@"About Saturn"
+					action:@selector( orderFrontStandardAboutPanel: )
+					keyEquivalent:@"" ];
 		
 		// Separator.
-		[pAppMenu addItem:[NSMenuItem separatorItem]];
+		[ pAppMenu addItem:[ NSMenuItem separatorItem ] ];
 
 		// Quit.
-		[pAppMenu addItemWithTitle:@"Quit Saturn"
-					action:@selector(terminate:)
-					keyEquivalent:@"q"];
+		[ pAppMenu addItemWithTitle:@"Quit Saturn"
+					action:@selector( terminate: )
+					keyEquivalent:@"q" ];
 	}
 }
 
-@interface RubyNSApplicationDelegate : NSObject <NSApplicationDelegate>
+@interface RubyNSApplicationDelegate : NSObject< NSApplicationDelegate >
 @end
 
 namespace Saturn {
@@ -76,17 +76,17 @@ namespace Saturn {
 
 @implementation RubyNSApplicationDelegate
 
-- (void)applicationDidFinishLaunching:(NSNotification *)notification
+- ( void ) applicationDidFinishLaunching:( NSNotification* ) pNotification
 {
-	[NSApp stop:nil];
+	[ NSApp stop:nil ];
 }
 
-- (void)applicationWillFinishLaunching:(NSNotification *)notification
+- ( void ) applicationWillFinishLaunching:( NSNotification* ) pNotification
 {
 	InitMenuBar();
 }
 
-- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender
+- ( NSApplicationTerminateReply ) applicationShouldTerminate:( NSApplication* ) pSender
 {
 	Saturn::Application::Get()->Close();
 	return NSTerminateCancel;
@@ -107,13 +107,13 @@ namespace Saturn {
 		{
 			pImpl = new RubyNSApplicationDataImpl();
 
-			pImpl->pAppDelegateMgr = [[RubyNSApplicationDelegate alloc] init];
+			pImpl->pAppDelegateMgr = [ [ RubyNSApplicationDelegate alloc ] init ];
 
-			[NSApplication sharedApplication];
-			[NSApp setDelegate:pImpl->pAppDelegateMgr];
-			[NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
-			[NSApp finishLaunching];
-			[NSApp activateIgnoringOtherApps:YES];
+			[ NSApplication sharedApplication ];
+			[ NSApp setDelegate:pImpl->pAppDelegateMgr ];
+			[ NSApp setActivationPolicy:NSApplicationActivationPolicyRegular ];
+			[ NSApp finishLaunching ];
+			[ NSApp activateIgnoringOtherApps:YES ];
 		}
 	}
 
@@ -121,9 +121,9 @@ namespace Saturn {
 	{
 		@autoreleasepool
 		{
-			NSString* pResourcePath = [[NSBundle mainBundle] resourcePath];
+			NSString* pResourcePath = [ [ NSBundle mainBundle ] resourcePath ];
 			
-			NSData* pData = [pResourcePath dataUsingEncoding:NSUTF32LittleEndianStringEncoding];
+			NSData* pData = [ pResourcePath dataUsingEncoding:NSUTF32LittleEndianStringEncoding ];
 			if( pData == nil )
 				return;
 
@@ -143,8 +143,8 @@ namespace Saturn {
 		{
 			if( pImpl ) 
 			{
-				[NSApp setDelegate:nil];
-				[pImpl->pAppDelegateMgr release];
+				[ NSApp setDelegate:nil ];
+				[ pImpl->pAppDelegateMgr release ];
 				pImpl->pAppDelegateMgr = nil;
 
 				delete pImpl;

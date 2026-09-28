@@ -1167,17 +1167,17 @@ namespace Saturn {
 		::SendMessageW( m_Handle, WM_SETICON, ICON_SMALL, ( LPARAM ) hIcon );
 	}
 
-    RubyVec2 RubyWindowsBackend::GetFramebufferScale() const
-    {
-        return RubyVec2( 1.0f, 1.0f );
-    }
+	RubyVec2 RubyWindowsBackend::GetFramebufferScale() const
+	{
+		return RubyVec2( 1.0f, 1.0f );
+	}
 
-    RubyIVec2 RubyWindowsBackend::GetFramebufferSize() const
-    {
-        return GetSize();
-    }
+	RubyIVec2 RubyWindowsBackend::GetFramebufferSize() const
+	{
+		return GetSize();
+	}
 
-    void RubyWindowsBackend::SetClipboardText( const std::string& rTextData )
+	void RubyWindowsBackend::SetClipboardText( const std::string& rTextData )
 	{
 		const std::wstring textDataW = Auxiliary::ConvertString( rTextData );
 		SetClipboardText( textDataW );

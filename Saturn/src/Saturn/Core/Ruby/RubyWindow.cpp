@@ -219,13 +219,13 @@ namespace Saturn {
 		return m_pDefaultBackend->GetSize();
 	}
 
-    RubyIVec2 RubyWindow::GetFramebufferSize() const
-    {
+	RubyIVec2 RubyWindow::GetFramebufferSize() const
+	{
 		return m_pDefaultBackend->GetFramebufferSize();
-    }
+	}
 
-    uint32_t RubyWindow::GetWidth() const
-    {
+	uint32_t RubyWindow::GetWidth() const
+	{
 		return m_pDefaultBackend->GetSize().x;
 	}
 
@@ -234,17 +234,17 @@ namespace Saturn {
 		return m_pDefaultBackend->GetSize().y;
 	}
 
-    uint32_t RubyWindow::GetFramebufferWidth() const
-    {
-        return m_pDefaultBackend->GetFramebufferSize().x;
-    }
+	uint32_t RubyWindow::GetFramebufferWidth() const
+	{
+		return m_pDefaultBackend->GetFramebufferSize().x;
+	}
 
-    uint32_t RubyWindow::GetFramebufferHeight() const
-    {
-        return m_pDefaultBackend->GetFramebufferSize().y;
-    }
+	uint32_t RubyWindow::GetFramebufferHeight() const
+	{
+		return m_pDefaultBackend->GetFramebufferSize().y;
+	}
 
-    std::string RubyWindow::GetClipboardText()
+	std::string RubyWindow::GetClipboardText()
 	{
 		return m_pDefaultBackend->GetClipboardText();
 	}
@@ -254,12 +254,12 @@ namespace Saturn {
 		return m_pDefaultBackend->GetClipboardTextW();
 	}
 
-    RubyVec2 RubyWindow::GetFramebufferScale() const
+	RubyVec2 RubyWindow::GetFramebufferScale() const
 	{
 		return m_pDefaultBackend->GetFramebufferScale();
-    }
+	}
 
-    bool RubyWindow::IsFocused()
+	bool RubyWindow::IsFocused()
 	{
 		return m_pDefaultBackend->Focused();
 	}

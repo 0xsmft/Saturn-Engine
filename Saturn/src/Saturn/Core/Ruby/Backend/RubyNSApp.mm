@@ -117,25 +117,25 @@ namespace Saturn {
 		}
 	}
 
-    void RubyNSApplicationData::ChangeToBundlePath()
-    {
-        @autoreleasepool
-        {
-            NSString* pResourcePath = [[NSBundle mainBundle] resourcePath];
-            
-            NSData* pData = [pResourcePath dataUsingEncoding:NSUTF32LittleEndianStringEncoding];
-            if( pData == nil )
-                return;
+	void RubyNSApplicationData::ChangeToBundlePath()
+	{
+		@autoreleasepool
+		{
+			NSString* pResourcePath = [[NSBundle mainBundle] resourcePath];
+			
+			NSData* pData = [pResourcePath dataUsingEncoding:NSUTF32LittleEndianStringEncoding];
+			if( pData == nil )
+				return;
 
-            const wchar_t* pChars = static_cast< const wchar_t* >( [ pData bytes ] );
+			const wchar_t* pChars = static_cast< const wchar_t* >( [ pData bytes ] );
 
-            std::wstring result;
-            const size_t count = [ pData length ] / sizeof( wchar_t );
-            result.assign( pChars, pChars + count );
-            
-            std::filesystem::current_path( result );
-        }
-    }
+			std::wstring result;
+			const size_t count = [ pData length ] / sizeof( wchar_t );
+			result.assign( pChars, pChars + count );
+			
+			std::filesystem::current_path( result );
+		}
+	}
 
 	void RubyNSApplicationData::Cleanup()
 	{

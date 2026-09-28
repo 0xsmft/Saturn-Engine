@@ -460,7 +460,7 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 			int yOffset = GET_WHEEL_DELTA_WPARAM( WParam );
 			yOffset /= WHEEL_DELTA;
 
-			pThis->GetParent()->DispatchEvent<RubyMouseScrollEvent>( EventType::MouseScroll, 0, yOffset );
+			pThis->GetParent()->DispatchEvent<RubyMouseScrollEvent>( EventType::MouseScroll, 0.0f, static_cast< float >( yOffset ) );
 		} return false;
 
 		// Horizontal Scroll
@@ -469,7 +469,7 @@ LRESULT CALLBACK RubyWindowProc( HWND Handle, UINT Msg, WPARAM WParam, LPARAM LP
 			int xOffset = GET_WHEEL_DELTA_WPARAM( WParam );
 			xOffset /= WHEEL_DELTA;
 
-			pThis->GetParent()->DispatchEvent<RubyMouseScrollEvent>( EventType::MouseScroll, xOffset, 0 );
+			pThis->GetParent()->DispatchEvent<RubyMouseScrollEvent>( EventType::MouseScroll, static_cast< float >( xOffset ), 0.0f );
 		} return false;
 
 		// END: Mouse Events

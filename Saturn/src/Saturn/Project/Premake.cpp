@@ -36,10 +36,16 @@ namespace Saturn {
 
 	bool Premake::Launch( const std::filesystem::path& rWorkingDir, const std::wstring& rPremakeFilename, PremakeAction action )
 	{
-		auto PremakePath = Auxiliary::GetEnvironmentVariableWs( "SATURN_PREMAKE_PATH" );
-		
+		auto envVarResult = Auxiliary::GetEnvironmentVariable( "SATURN_PREMAKE_PATH" );
+		if( !envVarResult.has_value() )
+		{
+			return false;
+		}
+
+		auto& rPremakePath = *envVarResult;
+
 		// Append premake filename.
-		PremakePath += L" --file=" + rPremakeFilename;
+		rPremakePath += L" --file=" + rPremakeFilename;
 
 		switch( action )
 		{
@@ -48,30 +54,30 @@ namespace Saturn {
 				break;
 
 			case PremakeAction::Clean:
-				PremakePath += L" clean";
+				rPremakePath += L" clean";
 				break;
 
 			// 2026 not supported by any premake version yet!
 			case PremakeAction::VisualStudio2026:
 			case PremakeAction::VisualStudio2022:
-				PremakePath += L" vs2022";
+				rPremakePath += L" vs2022";
 				break;
 
 			case PremakeAction::Makefile:
-				PremakePath += L" gmake";
+				rPremakePath += L" gmake";
 				break;
 			
 			case PremakeAction::Xcode:
-				PremakePath += L" xcode4";
+				rPremakePath += L" xcode4";
 				break;
 
 			case PremakeAction::Codelite:
-				PremakePath += L" codelite";
+				rPremakePath += L" codelite";
 				break;
 		}
 
-		Process premakeProcess( PremakePath.wstring(), rWorkingDir.wstring() );
-		bool res = ( premakeProcess.ResultOfProcess() == 0 ) ? true : false;
+		Process premakeProcess( rPremakePath.wstring(), rWorkingDir.wstring() );
+		const bool res = ( premakeProcess.ResultOfProcess() == 0 ) ? true : false;
 
 		return res;
 	}

@@ -396,8 +396,14 @@ namespace Saturn {
 
 	std::filesystem::path Project::FindBuildTool() const
 	{
-		const std::filesystem::path SaturnRootDir = Auxiliary::GetEnvironmentVariable( "SATURN_DIR" );
-		std::filesystem::path BuildToolDir = SaturnRootDir;
+		const auto saturnDirResult = Auxiliary::GetEnvironmentVariable( "SATURN_DIR" );
+		if( !saturnDirResult )
+		{
+			return {};
+		}
+
+		const std::filesystem::path& rSaturnRootDir = *saturnDirResult;
+		std::filesystem::path BuildToolDir = rSaturnRootDir;
 
 		BuildToolDir /= "bin";
 		BuildToolDir /= std::format( "{0}-{1}", Application::Get()->GetCurrentConfigName(), SAT_PLATFORM_BINARY_FOLDER );
@@ -502,8 +508,6 @@ namespace Saturn {
 
 	void Project::Dist_CopyAssetBundleIntoBin()
 	{
-		std::filesystem::path SaturnDir = Auxiliary::GetEnvironmentVariable( "SATURN_DIR" );
-
 		// We need to build the path to the bin dir
 		// so projectBinDir will look something like:
 		//

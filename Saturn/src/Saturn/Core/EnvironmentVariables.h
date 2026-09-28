@@ -28,14 +28,16 @@
 
 #pragma once
 
-#include <string>
-
 namespace Saturn::Auxiliary {
 
-	extern bool HasEnvironmentVariable( const std::string& rKey );
-	extern std::filesystem::path GetEnvironmentVariable( const std::string& rKey );
-	extern void SetEnvironmentVariable( const std::string& rKey, const std::string& rValue );
+	//
+	// Wraps the old functions calls to use the new EnvironmentVairableStorage classes.
+	//
+	extern std::optional<std::filesystem::path> GetEnvironmentVariable( const std::string& rKey );
+	extern void SetEnvironmentVariable( const std::string& rKey, const std::filesystem::path& rValue );
+
+	// System API... internal use only!
+	extern std::optional<std::filesystem::path> System_GetEnvironmentVariable( const std::string& rKey );
+	extern void System_SetEnvironmentVariable( const std::string& rKey, const std::string& rValue );
 
 }
-
-#define GetEnvironmentVariableWs(x) GetEnvironmentVariable(x)

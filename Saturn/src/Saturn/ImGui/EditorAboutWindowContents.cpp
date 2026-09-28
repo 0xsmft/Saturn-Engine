@@ -101,7 +101,8 @@ namespace Saturn {
 			ImGui::Text( "Saturn version 0.2.4 (%u)", SAT_VERSION_A_0_2_4 ); // March '26
 			ImGui::Text( "Saturn version 0.2.5 (%u)", SAT_VERSION_A_0_2_5 ); // May '26
 			ImGui::Text( "Saturn version 0.2.6 (%u)", SAT_VERSION_A_0_2_6 ); // July '26
-			ImGui::Text( "Saturn version 0.2.7 (%u)", SAT_VERSION_A_0_2_7_WIP ); // Sept '26
+			ImGui::Text( "Saturn version 0.2.7 (%u)", SAT_VERSION_A_0_2_7 ); // Sept '26
+			ImGui::Text( "Saturn version 1.0.0 (%u)", SAT_VERSION_X_1_0_0_WIP ); // Jan '27
 
 			Auxiliary::EndTreeNode();
 		}

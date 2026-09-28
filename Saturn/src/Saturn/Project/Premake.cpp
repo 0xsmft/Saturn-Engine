@@ -70,9 +70,6 @@ namespace Saturn {
 				break;
 		}
 
-#if defined( _WIN32 )
-		std::replace( PremakePath.begin(), PremakePath.end(), L'/', L'\\' );
-#endif
 		Process premakeProcess( PremakePath.wstring(), rWorkingDir.wstring() );
 		bool res = ( premakeProcess.ResultOfProcess() == 0 ) ? true : false;
 

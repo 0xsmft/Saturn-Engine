@@ -46,25 +46,27 @@ namespace Saturn {
 	//
 	class EnvironmentVariablesStorage 
 	{
-    public:
+	public:
 		SAT_SINGLETON_LAZY( EnvironmentVariablesStorage );
 	public:
 		EnvironmentVariablesStorage();
 		~EnvironmentVariablesStorage();
-
-		[[nodiscard]] bool DoesVariableExist( const std::string& rKey );
-		[[nodiscard]] void SetVariable( const std::string& rKey, const std::filesystem::path& rPath );
 
 		//
 		// Get an environment variable, returns nullopt if not found.
 		//
 		[[nodiscard]] std::optional<std::filesystem::path> GetVariable( const std::string& rKey );
 
+		//
+		// Set an environment variable, if it does not exist in the map it will be added.
+		//
+		[[nodiscard]] void SetVariable( const std::string& rKey, const std::filesystem::path& rPath );
+
 	private:
 		void Serialise();
 		void Deserialise();
-        void TryLoadIfNeeded();
-        
+		void TryLoadIfNeeded();
+		
 	private:
 		//
 		// I know not every env var is a path but in Saturn,
@@ -72,8 +74,8 @@ namespace Saturn {
 		// so this will be fine for us.
 		//
 		std::unordered_map<std::string, std::filesystem::path> m_Variables;
-        
-        bool m_IsLoaded = false;
+		
+		bool m_IsLoaded = false;
 
 	private:
 		friend class EnvironmentVariablesSerialiser;

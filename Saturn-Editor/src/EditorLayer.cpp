@@ -2759,39 +2759,39 @@ namespace Saturn {
 			}
 			ImGui::EndHorizontal();
 
-            ImGui::Separator();
-            ImGui::Text( "Environment Variables" );
-            {
-                ImGui::BeginHorizontal( "##envvar_satdir" );
-                ImGui::Text( "SATURN_DIR" );
-                ImGui::Spring();
-                
-                if( Auxiliary::HasEnvironmentVariable( "SATURN_DIR" )  )
-                {
-                    const auto saturnDir = Auxiliary::GetEnvironmentVariable( "SATURN_DIR" );
-                    ImGui::Text( "%s", saturnDir.c_str() );
-                }
-                else
-                {
-                    ImGui::Text( "SATURN_DIR not set." );
-                }
-                ImGui::EndHorizontal();
-                
-                ImGui::BeginHorizontal( "##envvar_premakedir" );
-                ImGui::Text( "SATURN_PREMAKE_DIR" );
-                ImGui::Spring();
-                
-                if( Auxiliary::HasEnvironmentVariable( "SATURN_PREMAKE_PATH" )  )
-                {
-                    const auto premakePath = Auxiliary::GetEnvironmentVariable( "SATURN_PREMAKE_PATH" );
-                    ImGui::Text( "%s", premakePath.c_str() );
-                }
-                else
-                {
-                    ImGui::Text( "SATURN_PREMAKE_PATH not set." );
-                }
-                ImGui::EndHorizontal();
-            }
+			ImGui::Separator();
+			ImGui::Text( "Environment Variables" );
+			{
+				ImGui::BeginHorizontal( "##envvar_satdir" );
+				ImGui::Text( "SATURN_DIR" );
+				ImGui::Spring();
+				
+				if( const auto result = Auxiliary::GetEnvironmentVariable( "SATURN_DIR" )  )
+				{
+					const auto saturnDir = *result;
+					ImGui::Text( "%s", saturnDir.string().c_str() );
+				}
+				else
+				{
+					ImGui::Text( "SATURN_DIR not set." );
+				}
+				ImGui::EndHorizontal();
+				
+				ImGui::BeginHorizontal( "##envvar_premakedir" );
+				ImGui::Text( "SATURN_PREMAKE_DIR" );
+				ImGui::Spring();
+				
+				if( const auto result = Auxiliary::GetEnvironmentVariable( "SATURN_PREMAKE_PATH" )  )
+				{
+					const auto premakePath = *result;
+					ImGui::Text( "%s", premakePath.string().c_str() );
+				}
+				else
+				{
+					ImGui::Text( "SATURN_PREMAKE_PATH not set." );
+				}
+				ImGui::EndHorizontal();
+			}
 
 			if( shouldSaveEngSettings )
 			{
@@ -2947,7 +2947,10 @@ namespace Saturn {
 
 				if( ImGui::MenuItem( "Recreate project files" ) )
 				{
-					if( !( m_HasPremakePath = Auxiliary::HasEnvironmentVariable( "SATURN_PREMAKE_PATH" ) ) )
+					const auto premakePathRes = Auxiliary::GetEnvironmentVariable( "SATURN_PREMAKE_PATH" );
+					m_HasPremakePath = premakePathRes.has_value();
+
+					if( !m_HasPremakePath )
 					{
 						m_PendingPremakeJobAfterPathIsSet = m_ShowSetPremakePathModal = true;
 					}
@@ -3010,7 +3013,7 @@ namespace Saturn {
 				
 				if( ImGui::MenuItem( "Compile project as distribution target" ) )
 				{
-					m_HasPremakePath = Auxiliary::HasEnvironmentVariable( "SATURN_PREMAKE_PATH" );
+					m_HasPremakePath = Auxiliary::GetEnvironmentVariable( "SATURN_PREMAKE_PATH" ).has_value();
 
 					if( !m_BlockingOperation )
 						m_BlockingOperation = Ref<JobProgress>::Create();
@@ -3974,7 +3977,7 @@ namespace Saturn {
 
 				if( ImGui::Button( "Set" ) )
 				{
-					Auxiliary::SetEnvironmentVariable( "SATURN_PREMAKE_PATH", s_PremakePath.string() );
+					Auxiliary::SetEnvironmentVariable( "SATURN_PREMAKE_PATH", s_PremakePath );
 
 					if( m_PendingPremakeJobAfterPathIsSet )
 					{
@@ -4640,8 +4643,12 @@ namespace Saturn {
 		SaveFile();
 		SaveProject();
 
-		std::filesystem::path SaturnDir = Auxiliary::GetEnvironmentVariableWs( "SATURN_DIR" );
-		std::filesystem::path WorkingDir = SaturnDir / "Saturn-ProjectBrowser";
+		auto saturnDirRes = Auxiliary::GetEnvironmentVariable( "SATURN_DIR" );
+		if( !saturnDirRes )
+			return;
+
+		std::filesystem::path SaturnDir = *saturnDirRes;
+		const std::filesystem::path WorkingDir = SaturnDir / "Saturn-ProjectBrowser";
 
 		const std::string binaryFolderName = std::format( "{0}-{1}-" SAT_PLATFORM_ARCHITECTURE_NAME, Application::GetCurrentConfigName(), Application::GetCurrentPlatformBinaryName() );
 
@@ -4808,7 +4815,7 @@ namespace Saturn {
 				{
 					if( ImGui::Button( "Set" ) )
 					{
-						Auxiliary::SetEnvironmentVariable( "SATURN_PREMAKE_PATH", path.string().c_str() );
+						Auxiliary::SetEnvironmentVariable( "SATURN_PREMAKE_PATH", path );
 
 						ImGui::CloseCurrentPopup();
 						m_HasPremakePath = true;
@@ -5259,7 +5266,11 @@ namespace Saturn {
 
 	void EditorLayer::CloseEditorAndOpenNewProj( const std::filesystem::path& rProjectPath )
 	{
-		std::filesystem::path args = Auxiliary::GetEnvironmentVariableWs( "SATURN_DIR" );
+		auto saturnDirRes = Auxiliary::GetEnvironmentVariable( "SATURN_DIR" );
+		if( !saturnDirRes )
+			return;
+
+		std::filesystem::path args = *saturnDirRes;
 		std::filesystem::path workingDir = args / "Saturn-Editor";
 
 		const std::string binaryFolderName = std::format( "{0}-{1}-" SAT_PLATFORM_ARCHITECTURE_NAME, Application::GetCurrentConfigName(), Application::GetCurrentPlatformBinaryName() );

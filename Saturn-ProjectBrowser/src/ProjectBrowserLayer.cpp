@@ -65,10 +65,11 @@ namespace Saturn {
 
 	ProjectBrowserLayer::ProjectBrowserLayer()
 	{
-		m_HasSaturnDir = Auxiliary::HasEnvironmentVariable( "SATURN_DIR" );
-
-		if( m_HasSaturnDir )
-			m_SaturnDir = Auxiliary::GetEnvironmentVariable( "SATURN_DIR" );
+		if( const auto result = Auxiliary::GetEnvironmentVariable( "SATURN_DIR" ) )
+		{
+			m_SaturnDir = *result;
+			m_HasSaturnDir = true;
+		}	
 
 		std::memset( m_SaturnDirBuffer, 0, 1024 );
 		std::memset( m_ProjectNameBuffer, 0, 1024 );
@@ -240,7 +241,7 @@ namespace Saturn {
 
 					if( ImGui::Button( "Set" ) )
 					{
-						Auxiliary::SetEnvironmentVariable( "SATURN_DIR", m_SaturnDir.string() );
+						Auxiliary::SetEnvironmentVariable( "SATURN_DIR", m_SaturnDir );
 						
 						m_HasSaturnDir = true;
 						ImGui::CloseCurrentPopup();

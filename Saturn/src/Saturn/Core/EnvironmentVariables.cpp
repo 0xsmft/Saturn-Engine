@@ -33,20 +33,135 @@
 
 namespace Saturn::Auxiliary {
 
-	bool HasEnvironmentVariable( const std::string& rKey )
+	std::optional<std::filesystem::path> GetEnvironmentVariable( const std::string& rKey )
 	{
-		return EnvironmentVariablesStorage::Get().DoesVariableExist( rKey );
+		return EnvironmentVariablesStorage::Get().GetVariable( rKey );
 	}
 
-	std::filesystem::path GetEnvironmentVariable( const std::string& rKey )
+	void SetEnvironmentVariable( const std::string& rKey, const std::filesystem::path& rValue )
 	{
-		const auto path = EnvironmentVariablesStorage::Get().GetVariable( rKey );
-		return *path;
+		EnvironmentVariablesStorage::Get().SetVariable( rKey, rValue );
 	}
 
-	void SetEnvironmentVariable( const std::string& rKey, const std::string& rValue )
+	std::optional<std::filesystem::path> System_GetEnvironmentVariable( const std::string& rKey )
 	{
-		EnvironmentVariablesStorage::Get().SetVariable( rKey, std::filesystem::path( rValue ) );
+#if defined( SAT_PLATFORM_WINDOWS )
+		HKEY key;
+		LPCSTR keyPath = "Environment";
+		DWORD keyWasCreated;
+		LSTATUS result = ::RegCreateKeyExA( HKEY_CURRENT_USER, keyPath, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &key, &keyWasCreated );
+
+		if( result == ERROR_SUCCESS )
+		{
+			DWORD type;
+			char* pBuffer = new char[ 512 ];
+			DWORD bufferSize = 512;
+
+			result = ::RegGetValueA( key, NULL, rKey.c_str(), RRF_RT_ANY, &type, ( PBYTE ) pBuffer, &bufferSize );
+
+			::RegCloseKey( key );
+
+			if( result == ERROR_SUCCESS )
+			{
+				std::string res( pBuffer );
+				delete[] pBuffer;
+
+				return std::filesystem::path( res );
+			}
+			else
+			{
+				DWORD errorCode = ::GetLastError();
+				LPTSTR error = NULL;
+
+				::FormatMessage(
+					FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS,
+					NULL,
+					result,
+					MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT ),
+					( LPTSTR ) &error,
+					0,
+					NULL
+				);
+
+				SAT_CORE_ASSERT( false, "HResult failed." );
+
+				::LocalFree( error );
+				error = NULL;
+			}
+		}
+#else
+		const char* pValue = getenv( rKey.c_str() );
+		if( pValue )
+			return std::filesystem::path( pValue );
+#endif
+		return std::nullopt;
+	}
+
+	void System_SetEnvironmentVariable( const std::string& rKey, const std::string& rValue )
+	{
+#if defined( SAT_PLATFORM_WINDOWS )
+		HKEY key;
+		DWORD keyWasCreated;
+		LONG result = ::RegCreateKeyExA( HKEY_CURRENT_USER, "Environment", 0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &key, &keyWasCreated );
+
+		if( result == ERROR_SUCCESS )
+		{
+			result = ::RegSetValueExA( key, rKey.c_str(), 0, REG_SZ, ( PBYTE ) rValue.c_str(), ( DWORD ) rValue.size() + 1 );
+			::RegCloseKey( key );
+
+			if( result == ERROR_SUCCESS )
+			{
+				// Alert other processes that an environment variable has changed...
+				::SendMessageTimeoutA( HWND_BROADCAST, WM_SETTINGCHANGE, 0, ( LPARAM ) "Environment", SMTO_BLOCK, 100, NULL );
+				return;
+			}
+			else
+			{
+				DWORD errorCode = ::GetLastError();
+				LPTSTR error = NULL;
+
+				::FormatMessage(
+					FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS,
+					NULL,
+					result,
+					MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT ),
+					( LPTSTR ) &error,
+					0,
+					NULL
+				);
+
+				SAT_CORE_ASSERT( false, "HResult failed." );
+
+				::LocalFree( error );
+				error = NULL;
+			}
+		}
+		else
+		{
+			DWORD errorCode = ::GetLastError();
+			LPTSTR error = NULL;
+
+			::FormatMessage(
+				FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS,
+				NULL,
+				result,
+				MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT ),
+				( LPTSTR ) &error,
+				0,
+				NULL
+			);
+
+			SAT_CORE_ASSERT( false, "HResult failed." );
+
+			::LocalFree( error );
+			error = NULL;
+		}
+#else
+		if( !setenv( rKey.c_str(), rValue.c_str(), 1 ) ) 
+		{
+			SAT_CORE_ERROR( "Unable to set environment variable!" );
+		}
+#endif
 	}
 
 }

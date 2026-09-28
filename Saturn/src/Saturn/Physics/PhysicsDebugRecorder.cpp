@@ -117,8 +117,14 @@ namespace Saturn {
 			return;
 		}
 
-		const std::filesystem::path SaturnRootDir = Auxiliary::GetEnvironmentVariableWs( "SATURN_DIR" );
-		std::filesystem::path joltViewerPath = SaturnRootDir;
+		const auto saturnEnvVarResult = Auxiliary::GetEnvironmentVariable( "SATURN_DIR" );
+		if( !saturnEnvVarResult )
+		{
+			return;
+		}
+
+		const std::filesystem::path& rSaturnRootDir = *saturnEnvVarResult;
+		std::filesystem::path joltViewerPath = rSaturnRootDir;
 		joltViewerPath /= "Saturn";
 		joltViewerPath /= "vendor";
 		joltViewerPath /= "JoltPhysics";

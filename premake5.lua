@@ -32,17 +32,26 @@ else
 		architecture "x86_64"
 end
 
+	filter "configurations:Debug-ASan"
+		sanitize { "Address" }
+	
+		filter { "configurations:Debug-ASan", "toolset:msc" }
+			buildoptions { "/fsanitize=address" }
+
 	filter "action:vs*"
+		defines { "SAT_COMPILER_MSVC" }
 		linkoptions { "/ignore:4006" }
 		buildoptions { "/utf-8" }
 
-	filter "configurations:Debug-ASan"
-		sanitize { "Address" }
-		buildoptions { "/fsanitize=address" }
+	filter "toolset:clang"
+		defines { "SAT_COMPILER_CLANG" }
+		buildoptions { "-Wno-missing-template-arg-list-after-template-kw", "-Wno-non-pod-varargs" }
 
-	filter "configurations:Debug-ASan"
-		sanitize { "Address" }
-		buildoptions { "/fsanitize=address" }
+	filter "toolset:gcc"
+		defines { "SAT_COMPILER_GCC" }
+		buildoptions { "-fno-ms-extensions", "-Wno-changes-meaning", "-fpermissive", "-fext-numeric-literals" }
+
+	filter {}
 
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 

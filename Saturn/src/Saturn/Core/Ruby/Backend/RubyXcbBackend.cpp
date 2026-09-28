@@ -212,18 +212,18 @@ static int HandleKeyMods( uint16_t state )
 
 xcb_atom_t XcbGetAtom(xcb_connection_t *conn, const char *name)
 {
-    xcb_intern_atom_cookie_t cookie =
-        xcb_intern_atom(conn, 0, strlen(name), name);
+	xcb_intern_atom_cookie_t cookie =
+		xcb_intern_atom(conn, 0, strlen(name), name);
 
-    xcb_intern_atom_reply_t *reply =
-        xcb_intern_atom_reply(conn, cookie, NULL);
+	xcb_intern_atom_reply_t *reply =
+		xcb_intern_atom_reply(conn, cookie, NULL);
 
-    if (!reply)
-        return XCB_NONE;
+	if (!reply)
+		return XCB_NONE;
 
-    xcb_atom_t atom = reply->atom;
-    free(reply);
-    return atom;
+	xcb_atom_t atom = reply->atom;
+	free(reply);
+	return atom;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -273,9 +273,9 @@ namespace Saturn {
 		mask = XCB_CW_BACK_PIXEL | XCB_CW_EVENT_MASK;
 		values[0] = screen->white_pixel;
 		values[1] = XCB_EVENT_MASK_EXPOSURE       | XCB_EVENT_MASK_BUTTON_PRESS   |
-              XCB_EVENT_MASK_BUTTON_RELEASE | XCB_EVENT_MASK_POINTER_MOTION |
-              XCB_EVENT_MASK_ENTER_WINDOW   | XCB_EVENT_MASK_LEAVE_WINDOW   |
-              XCB_EVENT_MASK_KEY_PRESS      | XCB_EVENT_MASK_KEY_RELEASE | XCB_EVENT_MASK_FOCUS_CHANGE;
+			  XCB_EVENT_MASK_BUTTON_RELEASE | XCB_EVENT_MASK_POINTER_MOTION |
+			  XCB_EVENT_MASK_ENTER_WINDOW   | XCB_EVENT_MASK_LEAVE_WINDOW   |
+			  XCB_EVENT_MASK_KEY_PRESS      | XCB_EVENT_MASK_KEY_RELEASE | XCB_EVENT_MASK_FOCUS_CHANGE;
 
 		const xcb_window_t ParentHWND = m_WindowSpecification.pParentWindow != nullptr ? m_WindowSpecification.pParentWindow->GetNativeHandle() : screen->root;
 
@@ -825,9 +825,9 @@ namespace Saturn {
 	void RubyXcbBackend::SetMousePos( double x, double y )
 	{
 		xcb_warp_pointer(m_pConnection,
-                 XCB_NONE,
-                 m_Handle,
-                 0, 0, 0, 0,
+				 XCB_NONE,
+				 m_Handle,
+				 0, 0, 0, 0,
 				(uint16_t)x, (uint16_t)y);
 		xcb_flush(m_pConnection);
 	}

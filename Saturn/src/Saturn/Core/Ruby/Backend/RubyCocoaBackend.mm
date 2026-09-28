@@ -157,7 +157,7 @@ namespace Saturn {
 
 - (BOOL)_mouseInGroup:(NSButton *)button
 {
-    return m_MouseInStandardButtons;
+	return m_MouseInStandardButtons;
 }
 
 - (void)dealloc
@@ -848,7 +848,7 @@ namespace Saturn {
 	void RubyCocoaBackend::Maximize()
 	{
 		if (![m_pData->m_pWindow isZoomed])
-        	[m_pData->m_pWindow zoom:nil];
+			[m_pData->m_pWindow zoom:nil];
 	}
 
 	void RubyCocoaBackend::Minimize()
@@ -860,9 +860,9 @@ namespace Saturn {
 	void RubyCocoaBackend::Restore()
 	{
 		if ([m_pData->m_pWindow isMiniaturized])
-       		[m_pData->m_pWindow deminiaturize:nil];
-    	else if ([m_pData->m_pWindow isZoomed])
-        	[m_pData->m_pWindow zoom:nil];
+			[m_pData->m_pWindow deminiaturize:nil];
+		else if ([m_pData->m_pWindow isZoomed])
+			[m_pData->m_pWindow zoom:nil];
 	}
 
 	bool RubyCocoaBackend::Minimized()
@@ -1080,15 +1080,15 @@ namespace Saturn {
 					m_pData->m_pCursor = [NSCursor resizeUpDownCursor];
 				} break;
 
-                case RubyCursorType::ResizeNWSE:
-                {
-                    m_pData->m_pCursor = [NSCursor respondsToSelector:@selector(_windowResizeNorthWestSouthEastCursor)] ? [NSCursor _windowResizeNorthWestSouthEastCursor] : [NSCursor closedHandCursor];
-                } break;
+				case RubyCursorType::ResizeNWSE:
+				{
+					m_pData->m_pCursor = [NSCursor respondsToSelector:@selector(_windowResizeNorthWestSouthEastCursor)] ? [NSCursor _windowResizeNorthWestSouthEastCursor] : [NSCursor closedHandCursor];
+				} break;
 
-                case RubyCursorType::ResizeNESW:
-                {
-                    m_pData->m_pCursor = [NSCursor respondsToSelector:@selector(_windowResizeNorthEastSouthWestCursor)] ? [NSCursor _windowResizeNorthEastSouthWestCursor] : [NSCursor closedHandCursor];
-                } break;
+				case RubyCursorType::ResizeNESW:
+				{
+					m_pData->m_pCursor = [NSCursor respondsToSelector:@selector(_windowResizeNorthEastSouthWestCursor)] ? [NSCursor _windowResizeNorthEastSouthWestCursor] : [NSCursor closedHandCursor];
+				} break;
 
 				case RubyCursorType::Hand:
 				{
@@ -1218,12 +1218,12 @@ namespace Saturn {
 		{
 			NSPasteboard* pPasteboard = [NSPasteboard generalPasteboard];
 			[pPasteboard declareTypes:@[NSPasteboardTypeString] owner:nil];
-        	
+			
 			NSString* string = [[NSString alloc] initWithBytes:rTextData.data()
 										length:rTextData.size() * sizeof(wchar_t)
 										encoding:NSUTF32LittleEndianStringEncoding];
 
-        	[pPasteboard setString:string forType:NSPasteboardTypeString];
+			[pPasteboard setString:string forType:NSPasteboardTypeString];
 		}
 	}
 

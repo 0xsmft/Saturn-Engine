@@ -96,7 +96,7 @@
 
 namespace Saturn {
 
-	// Reference all SClasses...
+	// Reference all (most) SClasses...
 	void SClassDistReferencer::Reference()
 	{
 		AIAgentEntity::StaticClass();

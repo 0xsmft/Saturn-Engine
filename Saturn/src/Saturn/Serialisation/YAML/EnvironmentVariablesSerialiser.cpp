@@ -35,9 +35,9 @@
 #include <yaml-cpp/yaml.h>
 
 namespace Saturn {
-    
+	
 	void EnvironmentVariablesSerialiser::Serialise()
-    {
+	{
 		const auto path = Application::Get()->GetAppDataFolder() / "EnvironmentVariables.yaml";
 
 		YAML::Emitter out;
@@ -49,10 +49,10 @@ namespace Saturn {
 		
 		for( const auto& [rKey, rPath] : EnvironmentVariablesStorage::Get().m_Variables )
 		{
-            out << YAML::BeginMap;
-            out << YAML::Key << "Variable" << YAML::Value << rKey;
+			out << YAML::BeginMap;
+			out << YAML::Key << "Variable" << YAML::Value << rKey;
 			out << YAML::Key << "Value" << YAML::Value << rPath.string();
-            out << YAML::EndMap; // variable map
+			out << YAML::EndMap; // variable map
 		}
 
 		out << YAML::EndSeq;
@@ -60,10 +60,10 @@ namespace Saturn {
 
 		std::ofstream fout( path );
 		fout << out.c_str();
-    }
+	}
 
-    void EnvironmentVariablesSerialiser::Deserialise()
-    {
+	void EnvironmentVariablesSerialiser::Deserialise()
+	{
 		const auto path = Application::Get()->GetAppDataFolder() / "EnvironmentVariables.yaml";
 
 		std::ifstream stream( path );
@@ -79,11 +79,11 @@ namespace Saturn {
 		const auto envVars = data[ "EnvironmentVariables" ];
 		for( const auto var : envVars )
 		{
-            const auto name = var[ "Variable" ].as<std::string>();
-            const auto value = var[ "Value" ].as<std::string>();
-            
-            rStorage.m_Variables.emplace( name, value );
+			const auto name = var[ "Variable" ].as<std::string>();
+			const auto value = var[ "Value" ].as<std::string>();
+			
+			rStorage.m_Variables.emplace( name, value );
 		}
-    }
+	}
 
 }

@@ -41,7 +41,7 @@ namespace Saturn {
 	{
 		ImGui::Text( "Saturn Engine " SAT_PLATFORM_ARCHITECTURE_NAME " %s (%s build)", Application::GetCurrentPlatformName(), Application::GetCurrentConfigName() );
 
-		ImGui::Text( "Saturn Engine Version: %s (Internal Number: %i ident: %s)", SAT_CURRENT_VERSION_STRING, SAT_CURRENT_VERSION, SAT_CURRENT_VERSION_BUILD_TAG );
+		ImGui::Text( "Saturn Engine Version: %s (Internal Number: %i UBID: %s)", SAT_CURRENT_VERSION_STRING, SAT_CURRENT_VERSION, SAT_CURRENT_VERSION_BUILD_TAG );
 
 		ImGui::Text( "Built on: %s %s", __DATE__, __TIME__ );
 
@@ -131,6 +131,9 @@ namespace Saturn {
             
             ImGui::Text( "Binary folder name: " SAT_PLATFORM_BINARY_FOLDER );
             ImGui::Text( "CPU architecture name: " SAT_PLATFORM_ARCHITECTURE_NAME );
+            
+            const auto workingDir = std::filesystem::current_path();
+            ImGui::Text( "Working directory: %s", workingDir.string().c_str() );
             
             Auxiliary::EndTreeNode();
         }

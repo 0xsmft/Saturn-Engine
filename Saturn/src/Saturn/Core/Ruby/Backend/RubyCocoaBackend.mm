@@ -1312,7 +1312,7 @@ namespace Saturn {
 	{
 		const NSRect contectRect = [ m_pData->m_pWindow contentRectForFrameRect:[ m_pData->m_pWindow frame ] ];
 		
-		return { static_cast< int >( contectRect.origin.x ), static_cast< in t>( RubyTransformYCocoa( contectRect.origin.y + contectRect.size.height - 1 ) ) };
+		return { static_cast< int >( contectRect.origin.x ), static_cast< int >( RubyTransformYCocoa( contectRect.origin.y + contectRect.size.height - 1 ) ) };
 	}
 
 	bool RubyCocoaBackend::MouseInRect()

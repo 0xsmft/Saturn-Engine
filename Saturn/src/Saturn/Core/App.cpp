@@ -743,8 +743,8 @@ namespace Saturn {
 
 #elif defined(SAT_PLATFORM_MACOS)
 		RubyLibrary::Get().ChangeToBundlePath();
-		const auto currentWorkingDir = std::filesystem::current_path();
-		SAT_CORE_VERIFY( std::filesystem::exists( currentWorkingDir / "content" ) );
+		const auto bundleWorkingDir = std::filesystem::current_path();
+		SAT_CORE_VERIFY( std::filesystem::exists( bundleWorkingDir / "content" ) );
 #endif
 	}
 

@@ -226,6 +226,7 @@ namespace Saturn {
 		
 		void BuildRenderCommands();
 		void InitCrashReporter();
+		void FigureOutWorkingDir();
 		void InitWindow();
 		void InitGraphics();
 

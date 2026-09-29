@@ -699,18 +699,14 @@ namespace Saturn {
 			}
 			else
 			{
-				const std::string binaryFolderName = std::format( "{0}-{1}-" SAT_PLATFORM_ARCHITECTURE_NAME, Application::GetCurrentConfigName(), Application::GetCurrentPlatformBinaryName() );
+				const std::string binaryFolderName = std::format( "Release-{0}-" SAT_PLATFORM_ARCHITECTURE_NAME, Application::GetCurrentPlatformBinaryName() );
 
 				SaturnDir /= L"bin";
 				SaturnDir /= binaryFolderName;
 				SaturnDir /= L"Saturn-CrashReporter";
 			}
 
-#if defined( SAT_PLATFORM_WINDOWS )
-			SaturnDir /= L"Saturn-CrashReporter.exe";
-#else
-			SaturnDir /= L"Saturn-CrashReporter";
-#endif
+			SaturnDir /= L"Saturn-CrashReporter" SAT_PLATFORM_EXE_FILE_EXT;
 			SaturnDir += L" ";
 			SaturnDir += rContext.logFilePath;
 

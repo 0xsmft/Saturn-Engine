@@ -89,6 +89,7 @@ namespace SaturnBuildTool
             catch( Exception ex )
             {
                 Console.WriteLine( $"Failed to start header tool process: {ex.Message}" );
+                Console.WriteLine( $"Process path is: {Shared.ProjectInfo.HeaderToolExePath}" );
                 Console.WriteLine( "FAILED" );
 
                 return false;

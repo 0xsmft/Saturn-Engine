@@ -63,7 +63,7 @@ namespace SaturnBuildTool
             ProgramDebugDatabaseExtension = ".pdb";
             PlatformType = PlatformType.Windows;
             PlatformName = "Windows";
-            ArchName = "x64_86";
+            ArchName = "x86_64";
         }
 
         private void InitForLinux()
@@ -77,7 +77,7 @@ namespace SaturnBuildTool
             ProgramDebugDatabaseExtension = string.Empty;
             PlatformType = PlatformType.Linux;
             PlatformName = "Linux";
-            ArchName = "x64_86";
+            ArchName = "x86_64";
         }
 
         private void InitForMacOS() 

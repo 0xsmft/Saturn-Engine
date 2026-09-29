@@ -77,6 +77,8 @@ namespace Saturn {
 #endif
 
 		InitWindow();
+		FigureOutWorkingDir();
+
 		InitGraphics();
 
 		// Now, resize to specification width and height
@@ -682,7 +684,9 @@ namespace Saturn {
 		config.showCrashDialog = false;
 		config.onCrash = []( const CrashCatch::CrashContext& rContext )
 		{
-			std::filesystem::path SaturnDir = Auxiliary::GetEnvironmentVariableWs( "SATURN_DIR" );
+			auto saturnDirRes = Auxiliary::GetEnvironmentVariable( "SATURN_DIR" );
+			
+			std::filesystem::path& SaturnDir = *saturnDirRes;
 			std::filesystem::path WorkingDir = SaturnDir / "Saturn-CrashReporter";
 
 			// This check is important because if the client has never installed a source build of Saturn then this
@@ -714,6 +718,33 @@ namespace Saturn {
 		};
 
 		CrashCatch::initialize( config );
+#endif
+	}
+
+	void Application::FigureOutWorkingDir()
+	{
+		// Right, so we need to figure out what the best working
+		// directory is.
+		// And it also depends on the current platform.
+		// On windows, we can check if the current working directory has a "content" folder
+		// if it does we use it,
+		// if it does not we'll assume we are in the binary folder.
+
+		const auto currentWorkingDir = std::filesystem::current_path();
+		
+		// Nothing todo, current working dir is fine.
+		if( std::filesystem::exists( currentWorkingDir / "content" ) )
+		{
+			return;
+		}
+
+#if defined(SAT_PLATFORM_WINDOWS)
+		SAT_CORE_VERIFY( false, "Wrong working directory... looking for a content folder!" );
+
+#elif defined(SAT_PLATFORM_MACOS)
+		RubyLibrary::Get().ChangeToBundlePath();
+		const auto currentWorkingDir = std::filesystem::current_path();
+		SAT_CORE_VERIFY( std::filesystem::exists( currentWorkingDir / "content" ) );
 #endif
 	}
 

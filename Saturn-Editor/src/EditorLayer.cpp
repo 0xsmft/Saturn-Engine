@@ -4806,15 +4806,15 @@ namespace Saturn {
 				ImGui::SameLine();
 				if( ImGui::Button( "..." ) )
 				{
-                    m_TemporaryEnviromentVariablePath = Application::Get()->OpenFile( "Application|*" SAT_PLATFORM_EXE_FILE_EXT );
+					m_TemporaryEnviromentVariablePath = Application::Get()->OpenFile( "Application|*" SAT_PLATFORM_EXE_FILE_EXT );
 				}
 
 				if( !m_TemporaryEnviromentVariablePath.empty() )
 				{
 					if( ImGui::Button( "Set" ) )
 					{
-                        Auxiliary::SetEnvironmentVariable( "SATURN_PREMAKE_PATH",
-                            m_TemporaryEnviromentVariablePath.string() );
+						Auxiliary::SetEnvironmentVariable( "SATURN_PREMAKE_PATH",
+							m_TemporaryEnviromentVariablePath.string() );
 
 						ImGui::CloseCurrentPopup();
 						m_HasPremakePath = true;

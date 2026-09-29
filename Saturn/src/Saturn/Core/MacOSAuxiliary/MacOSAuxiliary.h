@@ -28,14 +28,14 @@
 
 namespace Saturn::Auxiliary {
 
-    class MacOS 
-    {
-    public:
-        static void OpenFolderInExplorer( const std::filesystem::path& rPath, bool select = false );
-        static void ShowErrorDialogBox( const std::string& rText, const std::string& rTitle );
+	class MacOS 
+	{
+	public:
+		static void OpenFolderInExplorer( const std::filesystem::path& rPath, bool select = false );
+		static void ShowErrorDialogBox( const std::string& rText, const std::string& rTitle );
 
-        static const std::filesystem::path GetAppDataPath();
-    };
+		static const std::filesystem::path GetAppDataPath();
+	};
 
 }
 

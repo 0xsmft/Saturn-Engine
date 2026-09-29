@@ -2707,7 +2707,7 @@ namespace Saturn {
 			ImGui::Text( "Recent Projects" );
 			for( const auto& rPath : rEngineSettings.GetAllRecentProjects() )
 			{
-				ImGui::BulletText( rPath.string().c_str() );
+				ImGui::BulletText( "%s", rPath.string().c_str() );
 			}
 
 			ImGui::BeginHorizontal( "##eng_startprj" );
@@ -2811,8 +2811,8 @@ namespace Saturn {
 
 		if( Auxiliary::TreeNode( "VFS Info", false ) )
 		{
-			ImGui::Text( "Mount Bases: %i", rVirtualFS.GetMountBases() );
-			ImGui::Text( "Mounts: %i", rVirtualFS.GetMounts() );
+			ImGui::Text( "Mount Bases: %" PRIu64 , rVirtualFS.GetMountBases() );
+			ImGui::Text( "Mounts: %" PRIu64, rVirtualFS.GetMounts() );
 
 			Auxiliary::EndTreeNode();
 		}
@@ -4802,20 +4802,19 @@ namespace Saturn {
 
 				ImGui::Separator();
 
-				static std::filesystem::path path = "";
-
-				ImGui::InputText( "##path", ( char* ) path.c_str(), 1024, ImGuiInputTextFlags_ReadOnly );
+				ImGui::InputText( "##path", ( char* ) m_TemporaryEnviromentVariablePath.c_str(), 1024, ImGuiInputTextFlags_ReadOnly );
 				ImGui::SameLine();
 				if( ImGui::Button( "..." ) )
 				{
-					path = Application::Get()->OpenFile( "Application|*" SAT_PLATFORM_EXE_FILE_EXT );
+                    m_TemporaryEnviromentVariablePath = Application::Get()->OpenFile( "Application|*" SAT_PLATFORM_EXE_FILE_EXT );
 				}
 
-				if( !path.empty() )
+				if( !m_TemporaryEnviromentVariablePath.empty() )
 				{
 					if( ImGui::Button( "Set" ) )
 					{
-						Auxiliary::SetEnvironmentVariable( "SATURN_PREMAKE_PATH", path );
+                        Auxiliary::SetEnvironmentVariable( "SATURN_PREMAKE_PATH",
+                            m_TemporaryEnviromentVariablePath.string() );
 
 						ImGui::CloseCurrentPopup();
 						m_HasPremakePath = true;

@@ -942,6 +942,8 @@ namespace Saturn {
 			auto* pIncluder = new ShaderIncludeHelper();
 			pIncluder->AddIncludeDirectory( "content/shaders" );
 			pIncluder->AddIncludeDirectory( "content/shaders/Include" );
+			pIncluder->SetShader( this );
+
 			CompilerOptions.SetIncluder( std::unique_ptr<ShaderIncludeHelper>( pIncluder ) );
 
 			const auto preprocessResult = Compiler.PreprocessGlsl( 
@@ -999,6 +1001,9 @@ namespace Saturn {
 		auto OldDescriptorSets = m_DescriptorSets;
 		auto OldPushConstsRange = m_VulkanRanges;
 		auto OldPushContsts = m_PushConstants;
+		auto OldShaderDeps = m_ShaderDependencies;
+
+		m_ShaderDependencies.clear();
 
 		// Read the updated file.
 		ReadFile();
@@ -1021,6 +1026,7 @@ namespace Saturn {
 			m_PushConstants = OldPushContsts;
 			m_FileContents = OldfileContents;
 			m_FileSize = OldFileSize;
+			m_ShaderDependencies = OldShaderDeps;
 
 			SAT_CORE_ERROR( "Shader hot reloading failed. Shader did not compile successfully!" );
 
@@ -1045,6 +1051,15 @@ namespace Saturn {
 	const UUID Shader::GetShaderHash() const
 	{
 		return m_ShaderHash;
+	}
+
+	void Shader::AddDependency( Passkey<class ShaderIncludeHelper> pk, const std::filesystem::path& rPath )
+	{
+		const auto itr = std::find( m_ShaderDependencies.begin(), m_ShaderDependencies.end(), rPath );
+		if( itr == m_ShaderDependencies.end() )
+		{
+			m_ShaderDependencies.emplace_back( rPath );
+		}
 	}
 
 	//////////////////////////////////////////////////////////////////////////

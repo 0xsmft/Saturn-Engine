@@ -485,6 +485,11 @@ namespace Saturn {
 
 		const UUID GetShaderHash() const;
 
+		std::vector<std::filesystem::path> GetShaderDependencies() { return m_ShaderDependencies; }
+		const std::vector<std::filesystem::path> GetShaderDependencies() const { return m_ShaderDependencies; }
+
+		void AddDependency( Passkey<class ShaderIncludeHelper> pk, const std::filesystem::path& rPath );
+
 	private:
 		void ReadFile();
 
@@ -508,6 +513,9 @@ namespace Saturn {
 		std::filesystem::path m_Filepath;
 
 		ShaderSourceMap m_ShaderSources;
+
+		// List of files that we include in the source glsl file.
+		std::vector<std::filesystem::path> m_ShaderDependencies;
 #endif
 		// Set -> ShaderDescriptorSet
 		std::map< uint32_t, ShaderDescriptorSetTemplate > m_DescriptorSets;
@@ -519,6 +527,7 @@ namespace Saturn {
 
 	private:
 		friend class ShaderBundle;
+		friend class EditorShaderBundle;
 	};
 
 	// The shader library will hold shaders

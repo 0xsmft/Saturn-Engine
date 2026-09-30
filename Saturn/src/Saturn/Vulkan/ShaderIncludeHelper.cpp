@@ -120,14 +120,21 @@ namespace Saturn {
 		const char* pInstigatorPath,
 		size_t depth )
 	{
-		const std::string name = std::string( pRequestedPath );
-		std::string content = ShaderReader::ReadShader( ResolveInclude( name ) );
+		const std::string path = std::string( pRequestedPath );
+		const auto resolvedPath = ResolveInclude( path );
+
+		std::string content = ShaderReader::ReadShader( resolvedPath );
 		content = ShaderReader::RemoveTypeToken( content );
 		
 		ProcessPragmaOnce( content );
 
+		if( m_pShader )
+		{
+			m_pShader->AddDependency( Passkey<ShaderIncludeHelper>(), resolvedPath );
+		}
+
 		auto container = new std::array<std::string, 2>;
-		( *container )[ 0 ] = name;
+		( *container )[ 0 ] = path;
 		( *container )[ 1 ] = content;
 
 		auto data = new shaderc_include_result();
@@ -144,6 +151,22 @@ namespace Saturn {
 	{
 		delete static_cast< std::array<std::string, 2>* >( pData->user_data );
 		delete pData;
+	}
+
+	void ShaderIncludeHelper::AddIncludeDirectory( const std::filesystem::path& rPath )
+	{
+		auto& rIncludePath = m_IncludeDirectories.emplace_back( rPath );
+
+#if defined(SAT_PLATFORM_WINDOWS)
+		auto wPath = rPath.wstring();
+		std::replace( wPath.begin(), wPath.end(), '/', '\\' );
+		rIncludePath = wPath;
+#endif
+	}
+
+	void ShaderIncludeHelper::SetShader( Shader* pShader )
+	{
+		m_pShader = pShader;
 	}
 
 }

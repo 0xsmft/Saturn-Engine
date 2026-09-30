@@ -39,10 +39,20 @@ namespace Saturn {
 
 	static bool s_PendingWrite = false;
 
+	enum class EditorShaderBundleVersion
+	{
+		BeforeVersionWasAdded = 0,
+		ShaderDependencies = 1,
+
+		Lowest = BeforeVersionWasAdded,
+		Latest = ShaderDependencies
+	};
+
 	struct EditorShaderBundleHeader
 	{
 		//									.LA
-		const unsigned char Magic[ 4 ] = { 0x2E, 0x4C, 0x41, 0x00 };
+		const unsigned char Magic[ 3 ] = { 0x2E, 0x4C, 0x41 };
+		EditorShaderBundleVersion EditorBundleVersion = EditorShaderBundleVersion::Lowest;
 		size_t Shaders = 0llu;
 	};
 
@@ -50,24 +60,47 @@ namespace Saturn {
 	{
 		EditorShaderBundleHeader header{};
 		header.Shaders = ShaderLibrary::Get().GetShaderCount();
+		header.EditorBundleVersion = EditorShaderBundleVersion::Latest;
 
-		rStream.write( reinterpret_cast< const char* >( &header.Magic ), 4 );
+		rStream.write( reinterpret_cast< const char* >( &header.Magic ), 3 );
+		rStream.write( reinterpret_cast< const char* >( &header.EditorBundleVersion ), 1 );
 		rStream.write( reinterpret_cast< const char* >( &header.Shaders ), sizeof( size_t ) );
 	}
 
 	static bool ReadHeader( EditorShaderBundleHeader& header, std::ifstream& rStream )
 	{
-		unsigned char magic[ 4 ]{ 0 };
+		unsigned char magic[ 3 ]{ 0 };
 
-		rStream.read( reinterpret_cast< char* >( &magic ), 4 );
+		rStream.read( reinterpret_cast< char* >( &magic ), 3 );
+		rStream.read( reinterpret_cast< char* >( &header.EditorBundleVersion ), 1 );
 		rStream.read( reinterpret_cast< char* >( &header.Shaders ), sizeof( size_t ) );
 
-		if( std::memcmp( magic, ".LA", 4 ) != 0 )
+		if( std::memcmp( magic, ".LA", 3 ) != 0 )
 		{
 			return false;
 		}
 
 		return true;
+	}
+
+	template<typename RepType = std::chrono::milliseconds::rep>
+	static RepType GetLastWriteTimeUnixTimeMs( const std::filesystem::path& rPath ) 
+	{
+		const auto lwt = std::filesystem::last_write_time( rPath );
+
+		// Seems like AppleClang does not support clock_cast
+		// and using lwt.time_since_epoch() works fine on macOS
+		// but on Windows we get the wrong time
+		// so using a clock_cast is needed because I want all
+		// shaders to be the unix epoch time and not the system file clock time.
+#if defined(SAT_PLATFORM_WINDOWS) || defined(SAT_COMPILER_MSVC)
+		const auto systemTime = std::chrono::clock_cast< std::chrono::system_clock >( lwt );
+		const auto unixTimeMs = std::chrono::duration_cast< std::chrono::milliseconds >( systemTime.time_since_epoch() ).count();
+#else
+		const auto unixTimeMs = std::chrono::duration_cast< std::chrono::milliseconds >( lwt.time_since_epoch() ).count();
+#endif
+
+		return unixTimeMs;
 	}
 
 	bool EditorShaderBundle::BundleShaders()
@@ -85,23 +118,25 @@ namespace Saturn {
 		{
 			SAT_CORE_INFO( "Packaging shader: {0}", name );
 
-			const auto& path = shader->GetFilepath();
-			const auto lwt = std::filesystem::last_write_time( path );
- 
-			// Seems like AppleClang doesnt support clock_cast
-			// and using lwt.time_since_epoch() works fine on macOS
-			// but on Windows we get the wrong time
-			// so using a clock_cast is needed because I want all
-			// shaders to be the unix epoch time and not the system file clock time.
-#if defined(SAT_PLATFORM_WINDOWS) || defined(SAT_COMPILER_MSVC)
-			const auto systemTime = std::chrono::clock_cast< std::chrono::system_clock >( lwt );
-			const auto unixTimeMs = std::chrono::duration_cast< std::chrono::milliseconds >( systemTime.time_since_epoch() ).count();
-#else
-			const auto unixTimeMs = std::chrono::duration_cast< std::chrono::milliseconds >( lwt.time_since_epoch() ).count();
-#endif
+			const auto& rShaderPath = shader->GetFilepath();
+			
+			const auto unixTimeMs = GetLastWriteTimeUnixTimeMs( rShaderPath );
 			RawSerialisation::WriteObject( unixTimeMs, fout );
 
 			shader->SerialiseShaderDataForEditor( fout );
+
+			// Shader dependencies
+			const auto shaderDependencies = shader->GetShaderDependencies();
+
+			RawSerialisation::WriteObject( shaderDependencies.size(), fout );
+			
+			for( const auto& rDep : shaderDependencies )
+			{
+				RawSerialisation::WriteString( rDep.string(), fout );
+
+				const auto depTimeMs = GetLastWriteTimeUnixTimeMs( rDep );
+				RawSerialisation::WriteObject( depTimeMs, fout );
+			}
 		}
 
 		fout.close();
@@ -141,27 +176,41 @@ namespace Saturn {
 				continue;
 			}
 
-			const auto lwt = std::filesystem::last_write_time( shader->GetFilepath() );
-
-#if defined(SAT_PLATFORM_WINDOWS) || defined(SAT_COMPILER_MSVC)
-			const auto systemTime = std::chrono::clock_cast< std::chrono::system_clock >( lwt );
-			const auto fsLastWriteTimeMs = std::chrono::duration_cast< std::chrono::milliseconds >( systemTime.time_since_epoch() ).count();
-#else
-		const auto fsLastWriteTimeMs = std::chrono::duration_cast< std::chrono::milliseconds >( lwt.time_since_epoch() ).count();
-#endif
-			// This is a bit hacky but will work fine.
-			// so, if our times match we add it to the library
-			// if not we do, then not we do nothing because when the shader 
-			// is needed it will then load it from the .glsl file
-			// because it does not exist in the map.
-			// 
-			if( fsLastWriteTimeMs == savedLastWriteTime )
+			bool anyDependenciesModified = false;
+			if( header.EditorBundleVersion >= EditorShaderBundleVersion::ShaderDependencies )
 			{
-				ShaderLibrary::Get().Add( shader );
+				size_t mapSize = 0llu;
+				RawSerialisation::ReadObject( mapSize, stream );
+
+				shader->m_ShaderDependencies.reserve( mapSize );
+
+				for( size_t i = 0; i < mapSize; ++i )
+				{
+					std::string dep = RawSerialisation::ReadString( stream );
+					shader->m_ShaderDependencies.push_back( dep );
+
+					std::chrono::milliseconds::rep time = std::chrono::milliseconds::rep( 0 );
+					RawSerialisation::ReadObject( time, stream );
+
+					const auto fsDepTime = GetLastWriteTimeUnixTimeMs( dep );
+					anyDependenciesModified |= ( fsDepTime != time );
+				}
+			}
+
+			const auto fsLastWriteTimeMs = GetLastWriteTimeUnixTimeMs( shader->GetFilepath() );
+			if( ( fsLastWriteTimeMs != savedLastWriteTime ) || anyDependenciesModified )
+			{
+				s_PendingWrite = true;
 			}
 			else
 			{
-				s_PendingWrite = true;
+				// This is a bit hacky but will work fine.
+				// so, if our times match we add it to the library
+				// if not we do, then not we do nothing because when the shader 
+				// is needed it will then load it from the .glsl file
+				// because it does not exist in the map.
+				// 
+				ShaderLibrary::Get().Add( shader );
 			}
 		}
 

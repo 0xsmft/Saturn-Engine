@@ -32,6 +32,8 @@
 
 namespace Saturn {
 
+	class Shader;
+
 	class ShaderIncludeHelper : public shaderc::CompileOptions::IncluderInterface
 	{
 	public:
@@ -42,16 +44,18 @@ namespace Saturn {
 
 		virtual void ReleaseInclude( shaderc_include_result* pData ) override;
 
-		void AddIncludeDirectory( const std::filesystem::path& rPath )
-		{
-			m_IncludeDirectories.emplace_back( rPath );
-		}
+		void AddIncludeDirectory( const std::filesystem::path& rPath );
+
+		void SetShader( Shader* pShader );
 
 	private:
 		std::filesystem::path ResolveInclude( const std::filesystem::path& rIncludeDir );
 
 	private:
 		std::vector<std::filesystem::path> m_IncludeDirectories;
+		
+		// Non-owning ptr.
+		Shader* m_pShader = nullptr;
 	};
 	
 }

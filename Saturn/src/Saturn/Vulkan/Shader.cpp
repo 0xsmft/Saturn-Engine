@@ -33,6 +33,7 @@
 
 #include "VulkanContext.h"
 #include "Renderer.h"
+#include "ShaderIncludeHelper.h"
 
 #include "Saturn/Serialisation/Raw/RawSerialisation.h"
 
@@ -115,23 +116,27 @@ namespace Saturn {
 	}
 #endif
 
-	static ShaderType ShaderTypeFromString( const std::string& Str )
+	static ShaderType ShaderTypeFromString( const std::string& rTypeString )
 	{
-		if( Str == "vertex" )
+		if( rTypeString == "vertex" )
 		{
 			return ShaderType::Vertex;
 		}
-		else if( Str == "fragment" )
+		else if( rTypeString == "fragment" )
 		{
 			return ShaderType::Fragment;
 		}
-		else if( Str == "compute" )
+		else if( rTypeString == "compute" )
 		{
 			return ShaderType::Compute;
 		}
-		else if( Str == "geometry" )
+		else if( rTypeString == "geometry" )
 		{
 			return ShaderType::Geometry;
+		}
+		else if( rTypeString == "header" )
+		{
+			return ShaderType::Resource;
 		}
 		else
 		{
@@ -151,11 +156,40 @@ namespace Saturn {
 				return "Geometry";
 			case Saturn::ShaderType::Compute:
 				return "Compute";
+			case Saturn::ShaderType::Resource:
+				return "Resource";
 			default:
 				break;
 		}
 
 		return "";
+	}
+
+	static shaderc_shader_kind SaturnShaderTypeToShaderc( ShaderType type ) 
+	{
+		switch( type )
+		{
+			case ShaderType::Vertex:
+				return shaderc_glsl_default_vertex_shader;
+
+			case ShaderType::Fragment:
+				return shaderc_glsl_default_fragment_shader;
+
+			case ShaderType::Geometry:
+				return shaderc_glsl_default_geometry_shader;
+
+			case ShaderType::Compute:
+				return shaderc_glsl_default_compute_shader;
+
+			case ShaderType::None:
+			case ShaderType::Resource:
+			case ShaderType::All:
+			default:
+				break;
+		}
+
+		SAT_CORE_ASSERT( false, "Invalid type passed into SaturnShaderTypeToShaderc!" );
+		return ( shaderc_shader_kind ) -1;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -419,6 +453,7 @@ namespace Saturn {
 		constexpr size_t typeTokenLength = typeToken.size();
 
 		size_t typeTokenPosition = m_FileContents.find( typeToken, 0 );
+		SAT_CORE_ASSERT( typeTokenPosition != std::string::npos, "Missing type token in shader! All shaders must have a \"#type <shader_type>\" token in the shader!" );
 
 		while( typeTokenPosition != std::string::npos )
 		{
@@ -1011,15 +1046,40 @@ namespace Saturn {
 		for( auto&& [key, src] : m_ShaderSources )
 		{
 			const std::string& rShaderSrcCode = src.Source;
+			const auto inputFilename = m_Filepath.string();
+
+			const auto shadercShaderType = SaturnShaderTypeToShaderc( key.Type );
+
+			// NB: ShaderIncludeHelper will be owned and freed by shaderc!
+			auto* pIncluder = new ShaderIncludeHelper();
+			pIncluder->AddIncludeDirectory( "content/shaders" );
+			pIncluder->AddIncludeDirectory( "content/shaders/Include" );
+			CompilerOptions.SetIncluder( std::unique_ptr<ShaderIncludeHelper>( pIncluder ) );
+
+			const auto preprocessResult = Compiler.PreprocessGlsl( 
+				rShaderSrcCode,
+				shadercShaderType, 
+				inputFilename.c_str(), 
+				CompilerOptions );
+
+			if( preprocessResult.GetCompilationStatus() != shaderc_compilation_status_success )
+			{
+				SAT_CORE_ERROR( "Shader Precompilation failed!" );
+				SAT_CORE_ERROR( "Shader Error status {0}", ( uint32_t ) preprocessResult.GetCompilationStatus() );
+				SAT_CORE_ERROR( "Shader Error at shader stage: {0}", ShaderTypeToString( key.Type ) );
+				SAT_CORE_ERROR( "Shader Error messages {0}", preprocessResult.GetErrorMessage() );
+				return false;
+			}
 
 			const auto Res = Compiler.CompileGlslToSpv(
 				rShaderSrcCode,
-				src.Type == ShaderType::Vertex ? shaderc_shader_kind::shaderc_glsl_default_vertex_shader : src.Type == ShaderType::Compute ? shaderc_shader_kind::shaderc_glsl_default_compute_shader : shaderc_shader_kind::shaderc_glsl_default_fragment_shader,
-				m_Filepath.string().c_str(),
+				shadercShaderType,
+				inputFilename.c_str(),
 				CompilerOptions );
 
 			if( Res.GetCompilationStatus() != shaderc_compilation_status_success )
 			{
+				SAT_CORE_ERROR( "Shader Compilation failed!" );
 				SAT_CORE_ERROR( "Shader Error status {0}", ( uint32_t ) Res.GetCompilationStatus() );
 				SAT_CORE_ERROR( "Shader Error at shader stage: {0}", ShaderTypeToString( key.Type ) );
 				SAT_CORE_ERROR( "Shader Error messages {0}", Res.GetErrorMessage() );
@@ -1029,7 +1089,6 @@ namespace Saturn {
 			SHADER_INFO( "Shader Warnings {0}", Res.GetNumWarnings() );
 
 			std::vector< uint32_t > SpvBinary( Res.begin(), Res.end() );
-
 			m_SpvCode[ key ] = SpvBinary;
 		}
 

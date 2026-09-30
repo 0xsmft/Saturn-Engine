@@ -46,11 +46,12 @@ namespace Saturn {
 	enum class ShaderType : uint8_t
 	{
 		None = 0,
-		Vertex = 1,
-		Fragment = 2,
-		Geometry = 3,
-		Compute = 4,
-		All = 5
+		Vertex,
+		Fragment,
+		Geometry,
+		Compute,
+		Resource, // Header file
+		All
 	};
 	
 	// ShaderUniformBuffer

@@ -133,18 +133,18 @@ namespace Saturn {
 			m_pShader->AddDependency( Passkey<ShaderIncludeHelper>(), resolvedPath );
 		}
 
-		auto container = new std::array<std::string, 2>;
-		( *container )[ 0 ] = path;
-		( *container )[ 1 ] = content;
+		auto* pContainer = new std::array<std::string, 2>;
+		( *pContainer )[ 0 ] = path;
+		( *pContainer )[ 1 ] = content;
 
-		auto data = new shaderc_include_result();
-		data->user_data = container;
-		data->source_name = ( *container )[ 0 ].data();
-		data->source_name_length = ( *container )[ 0 ].size();
-		data->content = ( *container )[ 1 ].data();
-		data->content_length = ( *container )[ 1 ].size();
+		auto* pData = new shaderc_include_result();
+		pData->user_data = pContainer;
+		pData->source_name = ( *pContainer )[ 0 ].data();
+		pData->source_name_length = ( *pContainer )[ 0 ].size();
+		pData->content = ( *pContainer )[ 1 ].data();
+		pData->content_length = ( *pContainer )[ 1 ].size();
 
-		return data;
+		return pData;
 	}
 
 	void ShaderIncludeHelper::ReleaseInclude( shaderc_include_result* pData )

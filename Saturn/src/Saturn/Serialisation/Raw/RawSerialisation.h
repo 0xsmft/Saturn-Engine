@@ -164,6 +164,18 @@ namespace Saturn {
 			}
 		}
 
+		template<typename OStream>
+		static void WriteVector( const std::vector<std::filesystem::path>& rMap, OStream& rStream )
+		{
+			size_t mapSize = rMap.size();
+			rStream.write( reinterpret_cast< char* >( &mapSize ), sizeof( size_t ) );
+
+			for( const auto& value : rMap )
+			{
+				WriteString( value.string(), rStream );
+			}
+		}
+
 		template<typename Ty, typename OStream>
 		static void WriteN( Ty n, OStream& rStream ) 
 		{

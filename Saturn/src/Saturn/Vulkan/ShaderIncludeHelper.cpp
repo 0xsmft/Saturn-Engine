@@ -29,7 +29,14 @@
 #include "sppch.h"
 #include "ShaderIncludeHelper.h"
 
+#include "Saturn/Core/HashFNV1A.h"
+
+#include "Shader.h"
 #include "ShaderReader.h"
+
+#include <vulkan.h>
+
+#include "ShaderAuxiliary.h"
 
 namespace Saturn {
 
@@ -59,6 +66,54 @@ namespace Saturn {
 		return {};
 	}
 
+	static void ProcessPragmaOnce( std::string& rContent ) 
+	{
+		// Not all headers may have an include guard so let's check for one first.
+		constexpr std::string_view pragmaToken = "#pragma once";
+		constexpr size_t pragmaTokenLength = pragmaToken.size();
+	
+		const size_t pragmaTokenPosition = rContent.find( pragmaToken, 0 );
+		if( pragmaTokenPosition != std::string::npos )
+		{
+			const std::string fileNameAsMacro = std::to_string( FNV1A32( rContent.c_str() ) );
+			const std::string headerGuardBegin = std::format( "#ifndef _{0}_H", fileNameAsMacro );
+			const std::string headerGuardDefine = std::format( "#define _{0}_H", fileNameAsMacro );
+			constexpr std::string_view headerGuardEnd = "#endif";
+
+			// Remove "#pragma once"...
+			const size_t begin = pragmaTokenPosition + pragmaTokenLength + Auxiliary::s_ShaderLineEndingTokenSize;
+			rContent.erase( 0llu, begin );
+
+			const auto sizeBeforeModification = rContent.size();
+
+			// Insert header guard.
+			rContent.insert( 0llu, headerGuardBegin );
+
+			// New line.
+			auto insertionPos = headerGuardBegin.size() + Auxiliary::s_ShaderLineEndingTokenSize;
+			rContent.insert( insertionPos, Auxiliary::s_ShaderLineEndingToken );
+
+			// Header guard definition.
+			rContent.insert( insertionPos, headerGuardDefine );
+
+			// New line after content.
+			insertionPos += headerGuardDefine.size() + sizeBeforeModification;
+			rContent.insert( insertionPos, Auxiliary::s_ShaderLineEndingToken );
+
+			// #endif
+			insertionPos += Auxiliary::s_ShaderLineEndingTokenSize;
+			rContent.insert( insertionPos, headerGuardEnd );
+
+			// Ending new line
+			insertionPos += headerGuardEnd.size();
+			rContent.insert( insertionPos, Auxiliary::s_ShaderLineEndingToken );
+		}
+		else
+		{
+			SAT_CORE_WARN( "No #pragma once preprocesser directive found! This file and it's contents will be copied everytime it's included!" );
+		}
+	}
+
 	shaderc_include_result* ShaderIncludeHelper::GetInclude( 
 		const char* pRequestedPath, 
 		shaderc_include_type type, 
@@ -68,6 +123,8 @@ namespace Saturn {
 		const std::string name = std::string( pRequestedPath );
 		std::string content = ShaderReader::ReadShader( ResolveInclude( name ) );
 		content = ShaderReader::RemoveTypeToken( content );
+		
+		ProcessPragmaOnce( content );
 
 		auto container = new std::array<std::string, 2>;
 		( *container )[ 0 ] = name;

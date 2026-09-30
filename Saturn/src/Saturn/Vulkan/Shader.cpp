@@ -50,45 +50,9 @@
 #define SHADER_INFO(...)
 #endif
 
+#include "ShaderAuxiliary.h"
+
 namespace Saturn {
-
-	static ShaderType VulkanStageToSaturn( VkShaderStageFlags Flags )
-	{
-		switch( Flags )
-		{
-			case VK_SHADER_STAGE_VERTEX_BIT:
-				return ShaderType::Vertex;
-			case VK_SHADER_STAGE_FRAGMENT_BIT:
-				return ShaderType::Fragment;
-			case VK_SHADER_STAGE_GEOMETRY_BIT:
-				return ShaderType::Geometry;
-			case VK_SHADER_STAGE_COMPUTE_BIT:
-				return ShaderType::Compute;
-			default:
-				return ShaderType::All;
-		}
-	}
-
-	static VkShaderStageFlags ShaderTypeToVulkan( ShaderType type )
-	{
-		switch( type )
-		{
-			case Saturn::ShaderType::None:
-				return VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM;
-			case Saturn::ShaderType::Vertex:
-				return VK_SHADER_STAGE_VERTEX_BIT;
-			case Saturn::ShaderType::Fragment:
-				return VK_SHADER_STAGE_FRAGMENT_BIT;
-			case Saturn::ShaderType::Geometry:
-				return VK_SHADER_STAGE_GEOMETRY_BIT;
-			case Saturn::ShaderType::Compute:
-				return VK_SHADER_STAGE_COMPUTE_BIT;
-			case Saturn::ShaderType::All:
-				return VK_SHADER_STAGE_ALL;
-		}
-
-		return VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM;
-	}
 
 #if !defined(SAT_DIST)
 	static ShaderDataType SpvToSaturn( spirv_cross::SPIRType type )
@@ -115,82 +79,6 @@ namespace Saturn {
 		return ShaderDataType::None;
 	}
 #endif
-
-	static ShaderType ShaderTypeFromString( const std::string& rTypeString )
-	{
-		if( rTypeString == "vertex" )
-		{
-			return ShaderType::Vertex;
-		}
-		else if( rTypeString == "fragment" )
-		{
-			return ShaderType::Fragment;
-		}
-		else if( rTypeString == "compute" )
-		{
-			return ShaderType::Compute;
-		}
-		else if( rTypeString == "geometry" )
-		{
-			return ShaderType::Geometry;
-		}
-		else if( rTypeString == "header" )
-		{
-			return ShaderType::Resource;
-		}
-		else
-		{
-			return ShaderType::None;
-		}
-	}
-
-	static std::string ShaderTypeToString( ShaderType Type )
-	{
-		switch( Type )
-		{
-			case Saturn::ShaderType::Vertex:
-				return "Vertex";
-			case Saturn::ShaderType::Fragment:
-				return "Fragment";
-			case Saturn::ShaderType::Geometry:
-				return "Geometry";
-			case Saturn::ShaderType::Compute:
-				return "Compute";
-			case Saturn::ShaderType::Resource:
-				return "Resource";
-			default:
-				break;
-		}
-
-		return "";
-	}
-
-	static shaderc_shader_kind SaturnShaderTypeToShaderc( ShaderType type ) 
-	{
-		switch( type )
-		{
-			case ShaderType::Vertex:
-				return shaderc_glsl_default_vertex_shader;
-
-			case ShaderType::Fragment:
-				return shaderc_glsl_default_fragment_shader;
-
-			case ShaderType::Geometry:
-				return shaderc_glsl_default_geometry_shader;
-
-			case ShaderType::Compute:
-				return shaderc_glsl_default_compute_shader;
-
-			case ShaderType::None:
-			case ShaderType::Resource:
-			case ShaderType::All:
-			default:
-				break;
-		}
-
-		SAT_CORE_ASSERT( false, "Invalid type passed into SaturnShaderTypeToShaderc!" );
-		return ( shaderc_shader_kind ) -1;
-	}
 
 	//////////////////////////////////////////////////////////////////////////
 	// SHADER LIBRARY
@@ -477,12 +365,12 @@ namespace Saturn {
 			const size_t begin = typeTokenPosition + typeTokenLength + 1;
 			const std::string type = temporaryFileCopy.substr( begin, typeTokenEnd - begin );
 
-			const size_t nextLinePos = temporaryFileCopy.find_first_not_of( "\r\n", typeTokenEnd );
+			const size_t nextLinePos = temporaryFileCopy.find_first_not_of( Auxiliary::s_ShaderLineEndingToken, typeTokenEnd );
 			typeTokenPosition = temporaryFileCopy.find( typeToken, nextLinePos );
 
 			const auto rawShaderCode = temporaryFileCopy.substr( nextLinePos, typeTokenPosition - ( nextLinePos == std::string::npos ? temporaryFileCopy.size() - 1 : nextLinePos ) );
 
-			const auto shaderType = ShaderTypeFromString( type );
+			const auto shaderType = Auxiliary::ShaderTypeFromString( type );
 
 			const auto index = shaderType == ShaderType::Vertex ? vertexShaderIndex++ : ( shaderType == ShaderType::Fragment ? fragmentShaderIndex++ : computeShaderIndex++ );
 
@@ -673,7 +561,7 @@ namespace Saturn {
 			shaderPCTemplate.Name = Name;
 			shaderPCTemplate.Size = Size;
 			shaderPCTemplate.Stage = shaderType;
-			m_VulkanRanges.push_back( { .stageFlags = ShaderTypeToVulkan( shaderType ), .offset = OffsetFromLastPC , .size = ( uint32_t ) Size } );
+			m_VulkanRanges.push_back( { .stageFlags = Auxiliary::ShaderTypeToVulkan( shaderType ), .offset = OffsetFromLastPC , .size = ( uint32_t ) Size } );
 
 			SHADER_INFO( "Push constant buffer: {0}", Name );
 			SHADER_INFO( " Size: {0}", Size );
@@ -1048,7 +936,7 @@ namespace Saturn {
 			const std::string& rShaderSrcCode = src.Source;
 			const auto inputFilename = m_Filepath.string();
 
-			const auto shadercShaderType = SaturnShaderTypeToShaderc( key.Type );
+			const auto shadercShaderType = Auxiliary::SaturnShaderTypeToShaderc( key.Type );
 
 			// NB: ShaderIncludeHelper will be owned and freed by shaderc!
 			auto* pIncluder = new ShaderIncludeHelper();
@@ -1066,7 +954,7 @@ namespace Saturn {
 			{
 				SAT_CORE_ERROR( "Shader Precompilation failed!" );
 				SAT_CORE_ERROR( "Shader Error status {0}", ( uint32_t ) preprocessResult.GetCompilationStatus() );
-				SAT_CORE_ERROR( "Shader Error at shader stage: {0}", ShaderTypeToString( key.Type ) );
+				SAT_CORE_ERROR( "Shader Error at shader stage: {0}", Auxiliary::ShaderTypeToString( key.Type ) );
 				SAT_CORE_ERROR( "Shader Error messages {0}", preprocessResult.GetErrorMessage() );
 				return false;
 			}
@@ -1081,7 +969,7 @@ namespace Saturn {
 			{
 				SAT_CORE_ERROR( "Shader Compilation failed!" );
 				SAT_CORE_ERROR( "Shader Error status {0}", ( uint32_t ) Res.GetCompilationStatus() );
-				SAT_CORE_ERROR( "Shader Error at shader stage: {0}", ShaderTypeToString( key.Type ) );
+				SAT_CORE_ERROR( "Shader Error at shader stage: {0}", Auxiliary::ShaderTypeToString( key.Type ) );
 				SAT_CORE_ERROR( "Shader Error messages {0}", Res.GetErrorMessage() );
 				return false;
 			}

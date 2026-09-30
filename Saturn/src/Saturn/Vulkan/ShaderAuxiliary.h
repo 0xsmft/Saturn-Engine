@@ -34,7 +34,7 @@ namespace Saturn::Auxiliary {
 	static constexpr std::string_view s_ShaderLineEndingToken = "\r\n";
 	static constexpr size_t s_ShaderLineEndingTokenSize = s_ShaderLineEndingToken.size();
 #else
-	static constexpr std::string_view ShaderLineEndingToken = "\n";
+	static constexpr std::string_view s_ShaderLineEndingToken = "\n";
 	static constexpr size_t s_ShaderLineEndingTokenSize = s_ShaderLineEndingToken.size();
 #endif
 

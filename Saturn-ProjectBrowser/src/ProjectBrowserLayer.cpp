@@ -486,6 +486,7 @@ namespace Saturn {
 			info.ThumbnailTexture = m_NoIconTexture;
 
 			m_RecentProjects.push_back( info );
+			EngineSettings::Get().AddRecentProject( rPath );
 
 			m_ProjectsNeedSorting.store( true );
 		}

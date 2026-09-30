@@ -50,6 +50,7 @@
 
 #if !defined(SAT_DIST)
 #include "Saturn/ImGui/EmbededFonts/NotoSansAll.embed"
+#include "Saturn/ImGui/EmbededFonts/NotoSansMono.embed"
 #include "Saturn/ImGui/EmbededFonts/Atkinson.embed"
 #endif
 
@@ -92,6 +93,8 @@ namespace Saturn {
 				rIO.Fonts->AddFontFromMemoryTTF( ( void* ) GAtkinsonHyperlegibleNextItalicEmbedded, sizeof( GAtkinsonHyperlegibleNextItalicEmbedded ), 20.0f );
 			} break;
 		}
+
+		rIO.Fonts->AddFontFromMemoryTTF( ( void* ) GNotoSansMonoRegularEmbedded, sizeof( GNotoSansMonoRegularEmbedded ), 18.0f );
 #endif
 	}
 

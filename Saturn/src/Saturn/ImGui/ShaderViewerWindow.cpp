@@ -49,10 +49,13 @@ namespace Saturn {
 
 	void ShaderViewerWindow::OnImGuiRender()
 	{
+		auto monospaceFont = ImGui::GetIO().Fonts->Fonts[ 3 ];
+		ImGui::PushFont( monospaceFont );
 		if( ImGui::Begin( m_Name.c_str(), &m_Open, ImGuiWindowFlags_MenuBar ) )
 		{
 			m_Editor->Render( m_Name.c_str() );
 		}
+		ImGui::PopFont();
 
 		ImGui::End();
 	}

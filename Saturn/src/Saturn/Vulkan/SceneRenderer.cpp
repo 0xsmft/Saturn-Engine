@@ -54,10 +54,6 @@
 
 #include <glm/gtx/matrix_decompose.hpp>
 
-#if defined (SAT_PLATFORM_LINUX) || defined(SAT_PLATFORM_MACOS)
-#undef M_PI
-#endif
-
 #if SAT_SSAO_OLD_KERNEL_GEN == 1
 #include <random>
 #endif
@@ -65,7 +61,7 @@
 // SMAA
 #include "Embedded/SMAA_SearchTex.embed"
 
-constexpr auto M_PI = 3.14159265358979323846;
+constexpr auto SAT_PI = 3.14159265358979323846;
 constexpr auto SHADOW_MAP_SIZE = 4096.0f;
 
 namespace Saturn {

@@ -38,11 +38,7 @@
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#if defined (SAT_PLATFORM_LINUX) || defined(SAT_PLATFORM_MACOS)
-#undef M_PI
-#endif
-
-constexpr double M_PI = 3.14159265358979323846;
+constexpr auto SAT_PI = 3.14159265358979323846;
 
 namespace Saturn {
 
@@ -52,13 +48,13 @@ namespace Saturn {
 		constexpr glm::vec3 position{ -5.0f, 5.0f, 5.0f };
 		m_Distance = glm::distance( m_Position, m_FocalPoint );
 
-		m_Yaw = 3.0f * ( float ) M_PI / 4.0f;
-		m_Pitch = ( float ) M_PI / 4.0f;
+		m_Yaw = 3.0f * ( float ) SAT_PI / 4.0f;
+		m_Pitch = ( float ) SAT_PI / 4.0f;
 
 		m_Position = CalculatePosition();
 		const glm::quat orientation = GetOrientation();
 
-		m_Rotation = glm::eulerAngles( orientation ) * ( 180.0f / ( float ) M_PI );
+		m_Rotation = glm::eulerAngles( orientation ) * ( 180.0f / ( float ) SAT_PI );
 		m_ViewMatrix = glm::translate( glm::mat4( 1.0f ), m_Position ) * glm::toMat4( orientation );
 		m_ViewMatrix = glm::inverse( m_ViewMatrix );
 	}

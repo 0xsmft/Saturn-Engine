@@ -36,11 +36,7 @@
 
 #include <glm/gtx/quaternion.hpp>
 
-#if defined (SAT_PLATFORM_LINUX) || defined(SAT_PLATFORM_MACOS)
-#undef M_PI
-#endif
-
-constexpr auto M_PI = glm::pi<float>();
+constexpr auto SAT_PI = glm::pi<float>();
 
 namespace Saturn {
 	
@@ -50,12 +46,12 @@ namespace Saturn {
 		const glm::vec3 position = { -5, 5, 5 };
 		m_Distance = glm::distance( position, m_FocalPoint );
 
-		m_Yaw = 3.0f * ( float ) M_PI / 4.0f;
-		m_Pitch = M_PI / 4.0f;
+		m_Yaw = 3.0f * ( float ) SAT_PI / 4.0f;
+		m_Pitch = SAT_PI / 4.0f;
 
 		m_Position = CalculatePosition();
 		const glm::quat orientation = GetOrientation();
-		m_Rotation = glm::eulerAngles( orientation ) * ( 180.0f / ( float ) M_PI );
+		m_Rotation = glm::eulerAngles( orientation ) * ( 180.0f / ( float ) SAT_PI );
 		m_ViewMatrix = glm::translate( glm::mat4( 1.0f ), m_Position ) * glm::toMat4( orientation );
 		m_ViewMatrix = glm::inverse( m_ViewMatrix );
 

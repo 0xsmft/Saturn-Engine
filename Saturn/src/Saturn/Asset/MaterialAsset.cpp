@@ -130,7 +130,7 @@ namespace Saturn {
 		return m_Material->GetResource( "u_RoughnessTexture" );
 	}
 
-	glm::vec3 MaterialAsset::GetAlbeoColor()
+	glm::vec3 MaterialAsset::GetAlbeoColor() const
 	{
 		return m_Material->Get<glm::vec3>( "u_Materials.AlbedoColor" );
 	}
@@ -274,22 +274,22 @@ namespace Saturn {
 		*/
 	}
 
-	bool MaterialAsset::IsUsingNormalMap()
+	bool MaterialAsset::IsUsingNormalMap() const
 	{
 		return ( bool ) m_Material->Get<float>( "u_Materials.UseNormalMap" );
 	}
 
-	float MaterialAsset::GetRoughness()
+	float MaterialAsset::GetRoughness() const
 	{
 		return m_Material->Get<float>( "u_Materials.Roughness" );
 	}
 
-	float MaterialAsset::GetMetalness()
+	float MaterialAsset::GetMetalness() const
 	{
 		return m_Material->Get<float>( "u_Materials.Metalness" );
 	}
 
-	float MaterialAsset::GetEmissive()
+	float MaterialAsset::GetEmissive() const
 	{
 		return m_Material->Get<float>( "u_Materials.Emissive" );
 	}

@@ -32,6 +32,7 @@
 #include "Saturn/Asset/TextureSourceAsset.h"
 
 #include "Asset.h"
+#include "MaterialAssetShaderSource.h"
 
 namespace Saturn {
 
@@ -81,11 +82,11 @@ namespace Saturn {
 		Ref<Texture2D> GetRoughnessMap() const;
 
 		// Colors and values
-		glm::vec3 GetAlbeoColor();
-		bool IsUsingNormalMap();
-		float GetRoughness();
-		float GetMetalness();
-		float GetEmissive();
+		glm::vec3 GetAlbeoColor() const;
+		bool IsUsingNormalMap() const;
+		float GetRoughness() const;
+		float GetMetalness() const;
+		float GetEmissive() const;
 
 		std::string& GetMaterialName() { return m_Material->GetName(); }
 		const std::string& GetMaterialName() const { return m_Material->GetName(); }
@@ -135,6 +136,8 @@ namespace Saturn {
 
 		Ref<Material> GetMaterial() const { return m_Material; }
 
+		const MaterialAssetShaderSource& GetShaderSourceData() const { return m_ShaderSource; }
+
 		void RT_ApplyChanges();
 		void SetName( const std::string& rName ) { return m_Material->SetName( rName ); }
 
@@ -151,6 +154,8 @@ namespace Saturn {
 		void ForceUpdate();
 
 		inline void MarkDirty() { m_ValuesChanged = true; }
+
+		MaterialAssetShaderSource& GetShaderSourceData() { return m_ShaderSource; }
 
 	private:
 		std::unordered_map< std::string, VkDescriptorImageInfo > m_TextureCache;
@@ -172,6 +177,8 @@ namespace Saturn {
 		// 3 - Roughness
 		//
 		std::array< Ref<TextureSourceAsset>, 4llu > m_TextureSourceAssets{ nullptr };
+
+		MaterialAssetShaderSource m_ShaderSource{};
 
 		Ref<Material> m_Material = nullptr;
 

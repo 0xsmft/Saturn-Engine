@@ -55,6 +55,7 @@ namespace Saturn {
 		Font, // Alura
 		StyleProfile, // Alura
 		PhysSurfaceRegistry,
+		ShaderPrototype,
 		// ^^^ ADD NEW ASSET TYPES HERE ^^^
 		Unknown,
 		COUNT,
@@ -100,6 +101,8 @@ namespace Saturn {
 				return "StyleProfile";
 			case Saturn::AssetType::PhysSurfaceRegistry:
 				return "PhysSurfaceRegistry";
+			case Saturn::AssetType::ShaderPrototype:
+				return "ShaderPrototype";
 
 			default:
 			case Saturn::AssetType::Unknown:
@@ -122,45 +125,47 @@ namespace Saturn {
 		switch( type )
 		{
 			case Saturn::AssetType::Texture:
-				return COLOR_32( 160, 118, 249, 255 );
+				return COLOR_32( 160, 118, 249, 255 ); // Light blue
 			case Saturn::AssetType::StaticMesh:
-				return COLOR_32( 161, 103, 11, 255 );
+				return COLOR_32( 161, 103, 11, 255 ); // Gold
 			case Saturn::AssetType::SkeletalMesh:
-				return COLOR_32( 161, 103, 11, 255 );
+				return COLOR_32( 161, 103, 11, 255 ); // Gold
 			case Saturn::AssetType::Material:
-				return COLOR_32( 237, 5, 229, 255 );
+				return COLOR_32( 237, 5, 229, 255 );  // Pink
 			case Saturn::AssetType::MaterialInstance:
-				return COLOR_32( 237, 5, 229, 255 );
+				return COLOR_32( 237, 5, 229, 255 );  // Pink
 			case Saturn::AssetType::Sound:
-				return COLOR_32( 237, 202, 5, 255 );
+				return COLOR_32( 237, 202, 5, 255 );  // Gold but not really more yellow-ish
 			case Saturn::AssetType::GraphSound:
-				return COLOR_32( 235, 122, 52, 255 );
+				return COLOR_32( 235, 122, 52, 255 ); // Dark orange, looks like fanta
 			case Saturn::AssetType::Scene:
-				return COLOR_32( 255, 0, 0, 255 );
+				return COLOR_32( 255, 0, 0, 255 );    // Pure Red
 			case Saturn::AssetType::Prefab:
-				return COLOR_32( 255, 0, 255, 255 );
+				return COLOR_32( 255, 0, 255, 255 );  // Pure Pink
 			case Saturn::AssetType::Skeleton:
-				return COLOR_32( 5, 183, 237, 255 );
+				return COLOR_32( 5, 183, 237, 255 );  // Sky blue
 			case Saturn::AssetType::PhysicsMaterial:
-				return COLOR_32( 235, 0, 55, 255 );
+				return COLOR_32( 235, 0, 55, 255 );   // Red
 			case Saturn::AssetType::BehaviourTree:
-				return COLOR_32( 50, 168, 82, 255 );
+				return COLOR_32( 50, 168, 82, 255 );  // Green
 			case Saturn::AssetType::BehaviourTreeMemory:
-				return COLOR_32( 168, 50, 82, 255 );
+				return COLOR_32( 168, 50, 82, 255 );  // Dark red? Maroon?
 			case Saturn::AssetType::SkeletalAnimation:
-				return COLOR_32( 210, 227, 30, 255 );
+				return COLOR_32( 210, 227, 30, 255 ); // Green
 			case Saturn::AssetType::AnimationController:
-				return COLOR_32( 112, 11, 156, 255 );
+				return COLOR_32( 112, 11, 156, 255 ); // Purple
 			case Saturn::AssetType::Font:
-				return COLOR_32( 92, 100, 112, 255 );
+				return COLOR_32( 92, 100, 112, 255 ); // Blue/gray
 			case Saturn::AssetType::StyleProfile:
-				return COLOR_32( 22, 74, 12, 255 );
+				return COLOR_32( 22, 74, 12, 255 );   // Dark green
 			case Saturn::AssetType::PhysSurfaceRegistry:
-				return COLOR_32( 84, 33, 58, 255 );
+				return COLOR_32( 84, 33, 58, 255 );   // Burgundy?
+			case Saturn::AssetType::ShaderPrototype:
+				return COLOR_32( 245, 69, 180, 255 ); // Some shade of pink
 
 			default:
 			case Saturn::AssetType::Unknown:
-				return COLOR_32( 255, 255, 255, 255 );
+				return COLOR_32( 255, 255, 255, 255 ); // White
 		}
 	}
 
@@ -202,6 +207,8 @@ namespace Saturn {
 			return AssetType::StyleProfile;
 		else if( str == "PhysSurfaceRegistry" )
 			return AssetType::PhysSurfaceRegistry;
+		else if( str == "ShaderPrototype" )
+			return AssetType::ShaderPrototype;
 		else
 			return AssetType::Unknown;
 	}
@@ -242,6 +249,8 @@ namespace Saturn {
 			return AssetType::StyleProfile;
 		else if( str == ".spsr" )
 			return AssetType::PhysSurfaceRegistry;
+		else if( str == ".sgsl" )
+			return AssetType::ShaderPrototype;
 		else
 			return AssetType::Unknown;
 	}

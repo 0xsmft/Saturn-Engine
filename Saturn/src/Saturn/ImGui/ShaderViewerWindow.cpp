@@ -50,12 +50,98 @@ namespace Saturn {
 	void ShaderViewerWindow::OnImGuiRender()
 	{
 		auto monospaceFont = ImGui::GetIO().Fonts->Fonts[ 3 ];
-		ImGui::PushFont( monospaceFont );
 		if( ImGui::Begin( m_Name.c_str(), &m_Open, ImGuiWindowFlags_MenuBar ) )
 		{
+			if( ImGui::BeginMenuBar() )
+			{
+				if( ImGui::BeginMenu( "File" ) )
+				{
+					if( ImGui::MenuItem( "Save" ) )
+					{
+						if( !m_IsReadOnly )
+						{
+						}
+					}
+
+					if( ImGui::MenuItem( "Close" ) )
+					{
+						m_Open = false;
+					}
+
+					ImGui::EndMenu();
+				}
+
+				if( ImGui::BeginMenu( "Edit" ) )
+				{
+					if( ImGui::MenuItem( "Undo" ) )
+					{
+						m_Editor->Undo();
+					}
+
+					if( ImGui::MenuItem( "Redo" ) )
+					{
+						m_Editor->Redo();
+					}
+
+					if( ImGui::MenuItem( "Cut" ) )
+					{
+						m_Editor->Cut();
+					}
+
+					if( ImGui::MenuItem( "Copy" ) )
+					{
+						m_Editor->Copy();
+					}
+
+					if( ImGui::MenuItem( "Paste" ) )
+					{
+						m_Editor->Paste();
+					}
+
+					if( ImGui::MenuItem( "Move down line" ) )
+					{
+						m_Editor->MoveDownLines();
+					}
+
+					if( ImGui::MenuItem( "Move up line" ) )
+					{
+						m_Editor->MoveUpLines();
+					}
+
+					ImGui::EndMenu();
+				}
+
+				if( ImGui::BeginMenu( "View" ) )
+				{
+					if( ImGui::MenuItem( "Show whitespace" ) )
+					{
+						m_Editor->SetShowWhitespacesEnabled( !m_Editor->IsShowWhitespacesEnabled() );
+					}
+
+					ImGui::EndMenu();
+				}
+
+				ImGui::EndMenuBar();
+			}
+
+			ImGui::BeginHorizontal( "##optsbtn" );
+
+			if( ImGui::Button( "Compile", { 0.0f, 24.0f } ) )
+			{
+
+			}
+
+			if( ImGui::Button( "View stages", { 0.0f, 24.0f } ) )
+			{
+
+			}
+
+			ImGui::EndHorizontal();
+
+			ImGui::PushFont( monospaceFont );
 			m_Editor->Render( m_Name.c_str() );
+			ImGui::PopFont();
 		}
-		ImGui::PopFont();
 
 		ImGui::End();
 	}
@@ -83,6 +169,7 @@ namespace Saturn {
 		stream.close();
 
 		m_Editor->SetText( text );
+		m_Editor->SetLanguage( ImGuiColorTextEdit::TextEditor::Language::Glsl() );
 	}
 
 }

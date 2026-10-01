@@ -29,6 +29,8 @@
 #include "sppch.h"
 #include "ShaderViewerWindow.h"
 
+#include "ImGuiAuxiliary.h"
+
 #include <imgui.h>
 #include <ImGuiColorTextEdit/TextEditor.h>
 
@@ -52,6 +54,8 @@ namespace Saturn {
 		auto monospaceFont = ImGui::GetIO().Fonts->Fonts[ 3 ];
 		if( ImGui::Begin( m_Name.c_str(), &m_Open, ImGuiWindowFlags_MenuBar ) )
 		{
+			m_Editor->SetReadOnlyEnabled( m_IsReadOnly );
+
 			if( ImGui::BeginMenuBar() )
 			{
 				if( ImGui::BeginMenu( "File" ) )
@@ -73,6 +77,8 @@ namespace Saturn {
 
 				if( ImGui::BeginMenu( "Edit" ) )
 				{
+					Auxiliary::DisabledFlag disabledIfRo( m_IsReadOnly );
+
 					if( ImGui::MenuItem( "Undo" ) )
 					{
 						m_Editor->Undo();
@@ -108,6 +114,8 @@ namespace Saturn {
 						m_Editor->MoveUpLines();
 					}
 
+					disabledIfRo.Pop();
+
 					ImGui::EndMenu();
 				}
 
@@ -126,14 +134,18 @@ namespace Saturn {
 
 			ImGui::BeginHorizontal( "##optsbtn" );
 
-			if( ImGui::Button( "Compile", { 0.0f, 24.0f } ) )
 			{
+				Auxiliary::ScopedDisabledFlag disabledIfRo( m_IsReadOnly );
+			
+				if( ImGui::Button( "Compile", { 0.0f, 24.0f } ) )
+				{
 
-			}
+				}
 
-			if( ImGui::Button( "View stages", { 0.0f, 24.0f } ) )
-			{
+				if( ImGui::Button( "View stages", { 0.0f, 24.0f } ) )
+				{
 
+				}
 			}
 
 			ImGui::EndHorizontal();

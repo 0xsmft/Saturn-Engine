@@ -42,6 +42,7 @@
 #include "Saturn/ImGui/StaticMeshAssetViewer.h"
 #include "Saturn/ImGui/MaterialAssetViewer/MaterialAssetViewer.h"
 #include "Saturn/ImGui/TextureViewer.h"
+#include "Saturn/ImGui/ShaderAssetViewer.h"
 #include "Saturn/ImGui/SoundAssetViewer.h"
 #include "Saturn/Audio/SoundGraph/GraphSoundAssetViewer.h"
 #include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeAssetViewer.h"
@@ -724,6 +725,12 @@ namespace Saturn {
 			case AssetType::PhysSurfaceRegistry: 
 			{
 				const auto viewer = Ref<PhysicsSurfaceRegistryAssetViewer>::Create( m_Asset->ID );
+				ImGuiWindowManager::Get()->AddWindow( viewer, viewer->GetWindowName() );
+			} break;
+
+			case AssetType::ShaderPrototype:
+			{
+				const auto viewer = Ref<ShaderAssetViewer>::Create( m_Asset->ID );
 				ImGuiWindowManager::Get()->AddWindow( viewer, viewer->GetWindowName() );
 			} break;
 

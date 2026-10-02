@@ -28,44 +28,29 @@
 
 #pragma once
 
-#include "ImGuiWindow.h"
-
-namespace ImGuiColorTextEdit {
-	class TextEditor;
-}
+#include "AssetViewer.h"
 
 namespace Saturn {
-	
-	//
-	// This window is for viewing raw GLSL shader source. 
-	// 
-	// Not be confused with the material asset viewer, 
-	// which is for creating materials
-	//
-	// This should also not be confused with ShaderAssetViewer,
-	// which the AssetViewer version of this class.
-	// 
-	//
-	class ShaderViewerWindow : public ImGuiWindow
+
+	class ShaderAsset;
+	class ShaderViewerWindow;
+
+	class ShaderAssetViewer : public AssetViewer
 	{
 	public:
-		ShaderViewerWindow( const std::filesystem::path& rShaderPath );
-		virtual ~ShaderViewerWindow();
+		ShaderAssetViewer( AssetID id );
+		virtual ~ShaderAssetViewer();
 
 		virtual void OnImGuiRender() override;
 		virtual void OnUpdate( Timestep ts ) override;
 		virtual void OnEvent( Event& rEvent ) override;
 
-		static inline const char* GetStaticName() 
-		{
-			return "Shader Viewer Window";
-		}
+	private:
+		void AddShader();
 
 	private:
-		void InitEditorFromFile( const std::filesystem::path& rShaderPath );
-
-	private:
-		std::unique_ptr<ImGuiColorTextEdit::TextEditor> m_Editor;
+		Ref<ShaderAsset> m_ShaderAsset;
+		Ref<ShaderViewerWindow> m_ShaderViewer;
 	};
 	
 }

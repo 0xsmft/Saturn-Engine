@@ -1270,4 +1270,28 @@ namespace Saturn {
 		return true;
 	}
 
+	//////////////////////////////////////////////////////////////////////////
+	// ShaderPrototypeAssetSerialiser
+
+	void ShaderPrototypeAssetSerialiser::Serialise( const Ref<Asset>& rAsset ) const
+	{
+		const auto shaderPrototype = rAsset.As<ShaderAsset>();
+
+		const auto& basePath = rAsset->Path;
+		const auto fullPath = GetFilepathAbs( basePath );
+
+		std::ofstream fout( fullPath );
+		fout << shaderPrototype->GetShaderSourceCode();
+
+		fout.close();
+	}
+
+	bool ShaderPrototypeAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
+	{
+		auto shaderPrototype = Ref<ShaderAsset>::Create( rAsset );
+		rAsset = shaderPrototype;
+
+		return true;
+	}
+
 }

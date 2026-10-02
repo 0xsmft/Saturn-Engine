@@ -26,46 +26,56 @@
 *********************************************************************************************
 */
 
-#pragma once
+#include "sppch.h"
+#include "ShaderAssetViewer.h"
 
-#include "ImGuiWindow.h"
+#include "ShaderViewerWindow.h"
 
-namespace ImGuiColorTextEdit {
-	class TextEditor;
-}
+#include "Saturn/Project/Project.h"
+
+#include "Saturn/Asset/AssetManager.h"
+#include "Saturn/Asset/ShaderAsset.h"
 
 namespace Saturn {
-	
-	//
-	// This window is for viewing raw GLSL shader source. 
-	// 
-	// Not be confused with the material asset viewer, 
-	// which is for creating materials
-	//
-	// This should also not be confused with ShaderAssetViewer,
-	// which the AssetViewer version of this class.
-	// 
-	//
-	class ShaderViewerWindow : public ImGuiWindow
+
+	ShaderAssetViewer::ShaderAssetViewer( AssetID id )
+		: AssetViewer( id )
 	{
-	public:
-		ShaderViewerWindow( const std::filesystem::path& rShaderPath );
-		virtual ~ShaderViewerWindow();
+		m_AssetType = AssetType::ShaderPrototype;
 
-		virtual void OnImGuiRender() override;
-		virtual void OnUpdate( Timestep ts ) override;
-		virtual void OnEvent( Event& rEvent ) override;
+		AddShader();
+	}
 
-		static inline const char* GetStaticName() 
+	ShaderAssetViewer::~ShaderAssetViewer()
+	{
+	}
+
+	void ShaderAssetViewer::OnImGuiRender()
+	{
+		m_ShaderViewer->OnImGuiRender();
+
+		if( !m_ShaderViewer->IsOpen() )
 		{
-			return "Shader Viewer Window";
+			CloseWindow();
 		}
+	}
 
-	private:
-		void InitEditorFromFile( const std::filesystem::path& rShaderPath );
+	void ShaderAssetViewer::OnUpdate( Timestep ts )
+	{
+	}
 
-	private:
-		std::unique_ptr<ImGuiColorTextEdit::TextEditor> m_Editor;
-	};
-	
+	void ShaderAssetViewer::OnEvent( Event& rEvent )
+	{
+	}
+
+	void ShaderAssetViewer::AddShader()
+	{
+		m_ShaderAsset = AssetManager::Get()->GetAssetAs<ShaderAsset>( m_AssetID );
+		m_ShaderViewer = Ref<ShaderViewerWindow>::Create( Project::GetActiveProject()->FilepathAbs( m_ShaderAsset->Path ) );
+		m_ShaderViewer->OpenWindow();
+
+		m_Name = std::format( "{0}##{1}", m_ShaderAsset->Name, ( uint64_t ) m_AssetID );
+		m_Open = true;
+	}
+
 }

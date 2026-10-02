@@ -52,6 +52,9 @@ namespace Saturn {
 	void ShaderViewerWindow::OnImGuiRender()
 	{
 		auto monospaceFont = ImGui::GetIO().Fonts->Fonts[ 3 ];
+
+		ImGui::SetNextWindowPos( ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Once );
+		ImGui::SetNextWindowSize( ImVec2( 350.0f, 350.0f ), ImGuiCond_FirstUseEver );
 		if( ImGui::Begin( m_Name.c_str(), &m_Open, ImGuiWindowFlags_MenuBar ) )
 		{
 			m_Editor->SetReadOnlyEnabled( m_IsReadOnly );
@@ -168,19 +171,23 @@ namespace Saturn {
 
 	void ShaderViewerWindow::InitEditorFromFile( const std::filesystem::path& rShaderPath )
 	{
-		// Load the file.
-		std::ifstream stream( rShaderPath );
+		if( std::filesystem::exists( rShaderPath ) )
+		{
+			// Load the file.
+			std::ifstream stream( rShaderPath );
 
-		std::string text;
+			std::string text;
 
-		stream.seekg( 0, std::ios::end );
-		text.reserve( stream.tellg() );
-		stream.seekg( 0, std::ios::beg );
+			stream.seekg( 0, std::ios::end );
+			text.reserve( stream.tellg() );
+			stream.seekg( 0, std::ios::beg );
 
-		text.assign( std::istreambuf_iterator<char>( stream ), std::istreambuf_iterator<char>() );
-		stream.close();
+			text.assign( std::istreambuf_iterator<char>( stream ), std::istreambuf_iterator<char>() );
+			stream.close();
 
-		m_Editor->SetText( text );
+			m_Editor->SetText( text );
+		}
+
 		m_Editor->SetLanguage( ImGuiColorTextEdit::TextEditor::Language::Glsl() );
 	}
 

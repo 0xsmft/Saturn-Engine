@@ -27,56 +27,24 @@
 */
 
 #include "sppch.h"
-#include "ShaderAssetViewer.h"
+#include "ShaderAsset.h"
 
-#include "ShaderViewerWindow.h"
-
+#if !defined(SAT_DIST)
 #include "Saturn/Project/Project.h"
-
-#include "Saturn/Asset/AssetManager.h"
-#include "Saturn/Asset/ShaderAsset.h"
+#endif
 
 namespace Saturn {
 
-	ShaderAssetViewer::ShaderAssetViewer( AssetID id )
-		: AssetViewer( id )
-	{
-		m_AssetType = AssetType::ShaderPrototype;
-
-		AddShader();
-	}
-
-	ShaderAssetViewer::~ShaderAssetViewer()
+	ShaderAsset::ShaderAsset( const Ref<Asset>& rBase )
+		: Asset( rBase )
 	{
 	}
 
-	void ShaderAssetViewer::OnImGuiRender()
+#if !defined(SAT_DIST)
+	void ShaderAsset::CopyTemplateFile()
 	{
-		m_ShaderViewer->OnImGuiRender();
-
-		if( !m_ShaderViewer->IsOpen() )
-		{
-			CloseWindow();
-		}
+		std::filesystem::copy( "content/Templates/CustomShaderTemplate.glsl", Project::GetActiveProject()->FilepathAbs( Path ) );
 	}
-
-	void ShaderAssetViewer::OnUpdate( Timestep ts )
-	{
-	}
-
-	void ShaderAssetViewer::OnEvent( Event& rEvent )
-	{
-	}
-
-	void ShaderAssetViewer::AddShader()
-	{
-		m_ShaderAsset = AssetManager::Get()->GetAssetAs<ShaderAsset>( m_AssetID );
-		m_ShaderViewer = Ref<ShaderViewerWindow>::Create( Project::GetActiveProject()->FilepathAbs( m_ShaderAsset->Path ) );
-		m_ShaderViewer->OpenWindow();
-		m_ShaderViewer->SetType( ShaderViewFileType::ShaderAsset );
-
-		m_Name = std::format( "{0}##{1}", m_ShaderAsset->Name, ( uint64_t ) m_AssetID );
-		m_Open = true;
-	}
+#endif
 
 }

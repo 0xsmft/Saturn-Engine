@@ -29,6 +29,8 @@
 #include "sppch.h"
 #include "ShaderViewerWindow.h"
 
+#include "Saturn/Core/App.h"
+
 #include "ImGuiAuxiliary.h"
 
 #include <imgui.h>
@@ -51,11 +53,15 @@ namespace Saturn {
 
 	void ShaderViewerWindow::OnImGuiRender()
 	{
-		auto monospaceFont = ImGui::GetIO().Fonts->Fonts[ 3 ];
-
 		ImGui::SetNextWindowPos( ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Once );
 		ImGui::SetNextWindowSize( ImVec2( 350.0f, 350.0f ), ImGuiCond_FirstUseEver );
-		if( ImGui::Begin( m_Name.c_str(), &m_Open, ImGuiWindowFlags_MenuBar ) )
+
+		ImGuiWindowFlags flags = ImGuiWindowFlags_MenuBar;
+		if( IsDirty() )
+			flags |= ImGuiWindowFlags_UnsavedDocument;
+
+		auto monospaceFont = ImGui::GetIO().Fonts->Fonts[ 3 ];
+		if( ImGui::Begin( m_Name.c_str(), &m_Open, flags ) )
 		{
 			m_Editor->SetReadOnlyEnabled( m_IsReadOnly );
 
@@ -67,6 +73,11 @@ namespace Saturn {
 					{
 						if( !m_IsReadOnly )
 						{
+							std::ofstream stream( m_ShaderPath );
+							stream << m_Editor->GetText();
+							stream.close();
+
+							m_SavedUndoIndex = m_Editor->GetUndoIndex();
 						}
 					}
 
@@ -82,14 +93,22 @@ namespace Saturn {
 				{
 					Auxiliary::DisabledFlag disabledIfRo( m_IsReadOnly );
 
-					if( ImGui::MenuItem( "Undo" ) )
 					{
-						m_Editor->Undo();
+						Auxiliary::ScopedDisabledFlag canUndo( !m_Editor->CanUndo() );
+	
+						if( ImGui::MenuItem( "Undo" ) )
+						{
+							m_Editor->Undo();
+						}
 					}
 
-					if( ImGui::MenuItem( "Redo" ) )
 					{
-						m_Editor->Redo();
+						Auxiliary::ScopedDisabledFlag canRedo( !m_Editor->CanRedo() );
+
+						if( ImGui::MenuItem( "Redo" ) )
+						{
+							m_Editor->Redo();
+						}
 					}
 
 					if( ImGui::MenuItem( "Cut" ) )
@@ -149,6 +168,13 @@ namespace Saturn {
 				{
 
 				}
+
+#if !defined(SAT_PLATFORM_LINUX)
+				if( ImGui::Button( "Open in native explorer", { 0.0f, 24.0f } ) )
+				{
+					Application::Get()->OpenNativeFileExplorer( m_ShaderPath, true );
+				}
+#endif
 			}
 
 			ImGui::EndHorizontal();
@@ -169,12 +195,19 @@ namespace Saturn {
 	{
 	}
 
+	bool ShaderViewerWindow::IsDirty() const
+	{
+		return m_Editor->GetUndoIndex() != m_SavedUndoIndex;
+	}
+
 	void ShaderViewerWindow::InitEditorFromFile( const std::filesystem::path& rShaderPath )
 	{
-		if( std::filesystem::exists( rShaderPath ) )
+		m_ShaderPath = rShaderPath;
+
+		if( std::filesystem::exists( m_ShaderPath ) )
 		{
 			// Load the file.
-			std::ifstream stream( rShaderPath );
+			std::ifstream stream( m_ShaderPath );
 
 			std::string text;
 
@@ -189,6 +222,7 @@ namespace Saturn {
 		}
 
 		m_Editor->SetLanguage( ImGuiColorTextEdit::TextEditor::Language::Glsl() );
+		m_SavedUndoIndex = m_Editor->GetUndoIndex();
 	}
 
 }

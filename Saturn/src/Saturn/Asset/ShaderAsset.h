@@ -35,17 +35,24 @@ namespace Saturn {
 	class ShaderAsset : public Asset
 	{
 	public:
-		ShaderAsset( const Ref<Asset>& rBase )
-			: Asset( rBase )
-		{
-		}
-
+		ShaderAsset( const Ref<Asset>& rBase );
 		virtual ~ShaderAsset() = default;
 
 		virtual void OnDelete() override {}
 		virtual void OnAssetDependencyReplace( AssetID oldID, AssetID newID ) override {}
 		virtual bool CanPurge() const override { return false; }
 
+#if !defined(SAT_DIST)
+		void CopyTemplateFile();
+#endif
+
+	public:
+		const std::string& GetShaderSourceCode() const { return m_ShaderSourceCode; }
+
 	private:
+		std::string m_ShaderSourceCode;
+
+	private:
+		friend class ShaderViewerWindow;
 	};
 }

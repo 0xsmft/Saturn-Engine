@@ -36,6 +36,12 @@ namespace ImGuiColorTextEdit {
 
 namespace Saturn {
 	
+	enum class ShaderViewFileType : uint8_t
+	{
+		NormalShader,
+		ShaderAsset
+	};
+
 	//
 	// This window is for viewing raw GLSL shader source. 
 	// 
@@ -61,11 +67,20 @@ namespace Saturn {
 			return "Shader Viewer Window";
 		}
 
+	public:
+		void SetType( ShaderViewFileType type ) { m_Type = type; }
+		ShaderViewFileType GetType() const { return m_Type; }
+
+		bool IsDirty() const;
+
 	private:
 		void InitEditorFromFile( const std::filesystem::path& rShaderPath );
 
 	private:
+		std::filesystem::path m_ShaderPath;
 		std::unique_ptr<ImGuiColorTextEdit::TextEditor> m_Editor;
+		size_t m_SavedUndoIndex = 0llu;
+		ShaderViewFileType m_Type = ShaderViewFileType::NormalShader;
 	};
 	
 }

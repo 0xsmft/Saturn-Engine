@@ -54,5 +54,6 @@ namespace Saturn {
 
 	private:
 		friend class ShaderViewerWindow;
+        friend class ShaderPrototypeAssetSerialiser;
 	};
 }

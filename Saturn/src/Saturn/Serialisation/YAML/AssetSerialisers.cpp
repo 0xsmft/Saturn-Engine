@@ -35,6 +35,7 @@
 #include "Saturn/Physics/PhysicsSurfaceRegistryAsset.h"
 #include "Saturn/Asset/TextureSourceAsset.h"
 #include "Saturn/Asset/MaterialAsset.h"
+#include "Saturn/Asset/ShaderAsset.h"
 #include "Saturn/Animation/SkeletonAsset.h"
 #include "Saturn/Animation/SkeletalAnimationAsset.h"
 #include "Saturn/Audio/SoundSpecification.h"
@@ -1291,6 +1292,16 @@ namespace Saturn {
 		auto shaderPrototype = Ref<ShaderAsset>::Create( rAsset );
 		rAsset = shaderPrototype;
 
+        const auto& basePath = rAsset->Path;
+        const auto fullPath = GetFilepathAbs( basePath );
+        
+        std::ifstream stream( fullPath, std::ios::in );
+        std::stringstream ss;
+        ss << stream.rdbuf();
+        stream.close();
+        
+        shaderPrototype->m_ShaderSourceCode = ss.str();
+        
 		return true;
 	}
 

@@ -40,6 +40,7 @@
 #include "Saturn/Asset/Prefab.h"
 #include "Saturn/Asset/AssetManager.h"
 #include "Saturn/Asset/AssetExtensions.h"
+#include "Saturn/Asset/ShaderAsset.h"
 #include "Saturn/AI/BehaviourTree/BlackboardSpecificationAsset.h"
 #include "Saturn/Alura/AluraStylingProfile.h"
 #include "Saturn/Audio/SoundGraph/SoundGraph.h"
@@ -648,6 +649,31 @@ namespace Saturn {
 				FindAndRenameItem( asset->Name );
 			}
 
+            if( ImGui::MenuItem( "New Shader" ) )
+            {
+                auto id = AssetManager::Get()->CreateAsset( AssetType::ShaderPrototype );
+                auto asset = AssetManager::Get()->FindAsset( id );
+                auto newPath = m_CurrentPath / "Untitled Shader.sgsl";
+                uint32_t count = GetFilenameCount( "Untitled Shader.sgsl" );
+
+                if( count >= 1 )
+                {
+                    newPath.replace_filename( std::format( "{0} ({1}).sgsl", "Untitled Shader", count ) );
+                }
+
+                asset->SetAbsolutePath( newPath );
+                Ref<ShaderAsset> shaderAsset = Ref<ShaderAsset>::Create( asset );
+                
+#if !defined(SAT_DIST)
+                shaderAsset->CopyTemplateFile();
+#endif
+                AssetManager::Get()->Save();
+
+                UpdateFiles( true );
+                FindAndRenameItem( asset->Name );
+            }
+
+            
 			if( ImGui::MenuItem( "New Physics Material" ) )
 			{
 				auto id = AssetManager::Get()->CreateAsset( AssetType::PhysicsMaterial );

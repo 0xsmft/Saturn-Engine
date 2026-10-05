@@ -155,7 +155,14 @@ namespace Saturn {
 			uint32_t offset = m_ShaderPC.MemberOffsets[ Name ];
 			return m_PushConstantData.Read<Ty>( offset );
 		}
-		
+
+        template<typename Ty>
+        const Ty& Get( const std::string& Name ) const
+        {
+            const uint32_t offset = m_ShaderPC.MemberOffsets.at( Name );
+            return m_PushConstantData.Read<Ty>( offset );
+        }
+        
 		VkDescriptorSet GetDescriptorSet( uint32_t index = 0 ) const { return m_DescriptorSets[ index ]; }
 
 		//

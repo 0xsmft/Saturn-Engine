@@ -55,7 +55,7 @@ namespace Saturn {
 	class Material : public RefTarget
 	{
 	public:
-		 Material( const Ref<Shader>& rShader, const std::string& rMaterialName, uint32_t set = 0 );
+		Material( const Ref<Shader> shader, const std::string& rMaterialName, uint32_t set = 0 );
 		virtual ~Material();
 
 		void Copy( Ref<Material>& rOther );
@@ -150,9 +150,9 @@ namespace Saturn {
 		
 		// Get push constant data.
 		template<typename Ty>
-		Ty& Get( const std::string& Name ) 
+		Ty& Get( const std::string& rName )
 		{
-			uint32_t offset = m_ShaderPC.MemberOffsets[ Name ];
+			const uint32_t offset = m_ShaderPC.MemberOffsets[ rName ];
 			return m_PushConstantData.Read<Ty>( offset );
 		}
 

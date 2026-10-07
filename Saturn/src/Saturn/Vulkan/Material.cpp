@@ -37,8 +37,8 @@
 
 namespace Saturn {
 
-	Material::Material( const Ref< Saturn::Shader >& rShader, const std::string& rMaterialName, uint32_t set )
-		: m_Shader( rShader ), m_Set( set )
+	Material::Material( const Ref<Shader> shader, const std::string& rMaterialName, uint32_t set )
+		: m_Shader( shader ), m_Set( set )
 	{
 		Initialise( rMaterialName );
 	}

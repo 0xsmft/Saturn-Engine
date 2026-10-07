@@ -31,6 +31,7 @@
 
 #include "Saturn/ImGui/ImGuiAuxiliary.h"
 #include "Saturn/ImGui/AssetImportPopups.h"
+#include "Saturn/ImGui/AssetCreationPopups.h"
 #include "Saturn/ImGui/EditorIcons.h"
 #include "Saturn/ImGui/UndoRedo/GlobalUndoRedoGroup.h"
 
@@ -39,6 +40,7 @@
 #include "Saturn/Physics/PhysicsSurfaceRegistryAsset.h"
 #include "Saturn/Asset/Prefab.h"
 #include "Saturn/Asset/AssetManager.h"
+#include "Saturn/Asset/ShaderAsset.h"
 #include "Saturn/Asset/AssetExtensions.h"
 #include "Saturn/Asset/ShaderAsset.h"
 #include "Saturn/AI/BehaviourTree/BlackboardSpecificationAsset.h"
@@ -627,15 +629,20 @@ namespace Saturn {
 
 			if( ImGui::MenuItem( "New Material" ) )
 			{
-				auto id = AssetManager::Get()->CreateAsset( AssetType::Material );
-				auto asset = AssetManager::Get()->FindAsset( id );
 				auto newPath = m_CurrentPath / "Untitled Material.smaterial";
-				uint32_t count = GetFilenameCount( "Untitled Material.smaterial" );
-
+				
+				const uint32_t count = GetFilenameCount( "Untitled Material.smaterial" );
 				if( count >= 1 )
 				{
 					newPath.replace_filename( std::format( "{0} ({1}).smaterial", "Untitled Material", count ) );
 				}
+
+				m_CurrentCreationPopup = std::make_shared<MaterialAssetCreationPopup>( newPath );
+				m_CurrentCreationPopup->Initialise();
+
+				/*
+				auto id = AssetManager::Get()->CreateAsset( AssetType::Material );
+				auto asset = AssetManager::Get()->FindAsset( id );
 
 				asset->SetAbsolutePath( newPath );
 				Ref<MaterialAsset> material = Ref<MaterialAsset>::Create( asset, nullptr );
@@ -643,6 +650,28 @@ namespace Saturn {
 				MaterialAssetSerialiser mas;
 				mas.Serialise( material );
 
+				AssetManager::Get()->Save();
+
+				UpdateFiles( true );
+				FindAndRenameItem( asset->Name );
+				*/
+			}
+
+			if( ImGui::MenuItem( "New Shader" ) )
+			{
+				const auto id = AssetManager::Get()->CreateAsset( AssetType::ShaderPrototype );
+				auto asset = AssetManager::Get()->FindAsset( id );
+				auto newPath = m_CurrentPath / "New Shader.sgsl";
+
+				const uint32_t count = GetFilenameCount( "New Shader.sgsl" );
+				if( count >= 1 )
+					newPath.replace_filename( std::format( "{0} ({1}).sgsl", "New Shader", count ) );
+
+				asset->SetAbsolutePath( newPath );
+
+				Ref<ShaderAsset> shaderAsset = Ref<ShaderAsset>::Create( asset );
+				shaderAsset->CopyTemplateFile();
+				
 				AssetManager::Get()->Save();
 
 				UpdateFiles( true );
@@ -1136,58 +1165,8 @@ namespace Saturn {
 				ImGui::EndPopup();
 			}
 
-			// If we have a pending asset and if we do not have an import popup, we need to resolve that.
-			if( !m_PendingAssetPathsToImport.empty() && !m_CurrentImportPopup )
-			{
-				// Resolve to get the current import popup.
-				ResolveAssetImporterBasedOnExt( m_PendingAssetPathsToImport.front() );
-
-				// Remove this asset from the queue.
-				m_PendingAssetPathsToImport.erase( m_PendingAssetPathsToImport.begin() );
-			}
-
-			if( m_CurrentImportPopup )
-			{
-				if( m_CurrentImportPopup->IsReady() )
-				{
-					m_CurrentImportPopup->OnImGuiRender();
-
-					if( !m_CurrentImportPopup->IsOpen() )
-					{
-						switch( m_CurrentImportPopup->GetModificationState() )
-						{
-							case AssetImportModificationState::Failed: break;
-
-							case AssetImportModificationState::Modified:
-							{
-								// Asset import popups do not save the asset manager.
-								AssetManagerSerialiser ars;
-								ars.Serialise();
-
-								UpdateFiles( true );
-							} [[fallthrough]];
-
-							default:
-							case AssetImportModificationState::NotModified:
-							{
-								// Check for errors (dbg)
-								// If there is an error make sure you set the modified state to Failed.
-								SAT_CORE_ASSERT( m_CurrentImportPopup->GetError() == AssetImportPopupError::None );
-
-								m_CurrentImportPopup.reset();
-							} break;
-						}
-					}
-				}
-				else if( m_CurrentImportPopup->HasError() )
-				{
-					DrawErrorImportPopup();
-				}
-				else
-				{
-					DrawNotReadyImportPopup();
-				}
-			}
+			HandleCreationPopup();
+			HandleImportPopups();
 
 			DrawDeleteAssetPopup();
 
@@ -2084,6 +2063,95 @@ namespace Saturn {
 		illegalClassName |= m_NewClassName.contains( ' ' );
 
 		return illegalClassName;
+	}
+
+	void ContentBrowserPanel::HandleImportPopups()
+	{
+		// If we have a pending asset and if we do not have an import popup, we need to resolve that.
+		if( !m_PendingAssetPathsToImport.empty() && !m_CurrentImportPopup )
+		{
+			// Resolve to get the current import popup.
+			ResolveAssetImporterBasedOnExt( m_PendingAssetPathsToImport.front() );
+
+			// Remove this asset from the queue.
+			m_PendingAssetPathsToImport.erase( m_PendingAssetPathsToImport.begin() );
+		}
+
+		if( m_CurrentImportPopup )
+		{
+			if( m_CurrentImportPopup->IsReady() )
+			{
+				m_CurrentImportPopup->OnImGuiRender();
+
+				if( !m_CurrentImportPopup->IsOpen() )
+				{
+					switch( m_CurrentImportPopup->GetModificationState() )
+					{
+						case AssetImportModificationState::Failed: break;
+
+						case AssetImportModificationState::Modified:
+						{
+							// Asset import popups do not save the asset manager.
+							AssetManagerSerialiser ars;
+							ars.Serialise();
+
+							UpdateFiles( true );
+						} [[fallthrough]];
+
+						default:
+						case AssetImportModificationState::NotModified:
+						{
+							// Check for errors (dbg)
+							// If there is an error make sure you set the modified state to Failed.
+							SAT_CORE_ASSERT( m_CurrentImportPopup->GetError() == AssetImportPopupError::None );
+
+							m_CurrentImportPopup.reset();
+						} break;
+					}
+				}
+			}
+			else if( m_CurrentImportPopup->HasError() )
+			{
+				DrawErrorImportPopup();
+			}
+			else
+			{
+				DrawNotReadyImportPopup();
+			}
+		}
+	}
+
+	void ContentBrowserPanel::HandleCreationPopup()
+	{
+		if( m_CurrentCreationPopup )
+		{
+			if( m_CurrentCreationPopup->IsOpen() )
+			{
+				m_CurrentCreationPopup->OnImGuiRender();
+
+				// Check if we are still open after the render call...
+				if( !m_CurrentCreationPopup->IsOpen() )
+				{
+					switch( m_CurrentCreationPopup->GetCreationState() )
+					{
+						case AssetCreationPopupState::Accepted:
+						{
+							// Asset import popups do not save the asset manager.
+							AssetManagerSerialiser ars;
+							ars.Serialise();
+
+							UpdateFiles( true );
+						} [[fallthrough]];
+
+						default:
+						case AssetCreationPopupState::Rejected:
+						{
+							m_CurrentCreationPopup.reset();
+						} break;
+					}
+				}
+			}
+		}
 	}
 
 	void ContentBrowserPanel::ResolveAssetImporterBasedOnExt( const std::filesystem::path& rPath )

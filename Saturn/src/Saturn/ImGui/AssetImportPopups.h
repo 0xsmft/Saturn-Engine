@@ -140,7 +140,7 @@ namespace Saturn {
 	{
 	public:
 		MeshImportPopup( const std::filesystem::path& rAssetToImportPath, const std::filesystem::path& rDestinationPath );
-		~MeshImportPopup() = default;
+		virtual ~MeshImportPopup() = default;
 
 		virtual void Initialise();
 		virtual void OnImGuiRender();
@@ -176,7 +176,7 @@ namespace Saturn {
 	{
 	public:
 		SoundImportPopup( const std::filesystem::path& rAssetToImportPath, const std::filesystem::path& rDestinationPath );
-		~SoundImportPopup() = default;
+		virtual ~SoundImportPopup() = default;
 
 		virtual void Initialise();
 		virtual void OnImGuiRender();
@@ -191,7 +191,7 @@ namespace Saturn {
 	{
 	public:
 		FontImportPopup( const std::filesystem::path& rAssetToImportPath, const std::filesystem::path& rDestinationPath );
-		~FontImportPopup() = default;
+		virtual ~FontImportPopup() = default;
 
 		virtual void Initialise();
 		virtual void OnImGuiRender();

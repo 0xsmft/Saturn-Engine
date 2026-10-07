@@ -61,6 +61,7 @@ namespace Saturn {
 
 	class Event;
 	class AssetImportPopupBase;
+	class AssetCreationPopupBase;
 
 	class ContentBrowserPanel : public Saturn::ImGuiWindow
 	{
@@ -152,6 +153,9 @@ namespace Saturn {
 		void DrawCreateNewClassPopupModal();
 		bool CheckIllegalClassName();
 
+		void HandleImportPopups();
+		void HandleCreationPopup();
+
 		void ResolveAssetImporterBasedOnExt( const std::filesystem::path& rPath );
 
 	private:
@@ -211,6 +215,7 @@ namespace Saturn {
 		std::vector<Ref<ContentBrowserItem>> m_ItemsToDelete;
 
 		std::shared_ptr<AssetImportPopupBase> m_CurrentImportPopup;
+		std::shared_ptr<AssetCreationPopupBase> m_CurrentCreationPopup;
 
 		// Pending asset paths to import.
 		std::vector<std::filesystem::path> m_PendingAssetPathsToImport;

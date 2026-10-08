@@ -471,7 +471,8 @@ static Saturn::RubyKey ConvertMacOSVkToRuby( uint16_t vk )
 		case 0x24: return RubyKey_Enter;
 		case 0x31: return RubyKey_Space;
 
-		case 0x35: return RubyKey_Esc;
+        case 0x35: return RubyKey_Esc;
+        case 0x36: return RubyKey_OSKeyRight;
 
 		case 0x7B: return RubyKey_LeftArrow;
 		case 0x7C: return RubyKey_RightArrow;
@@ -540,6 +541,7 @@ static NSUInteger RubyModifierKeyToNS( Saturn::RubyKey key )
 			return NSEventModifierFlagOption;
 		}
 
+        case Saturn::RubyKey_OSKeyRight:
 		case Saturn::RubyKey_OSKey:
 		{
 			return NSEventModifierFlagCommand;
@@ -559,7 +561,6 @@ static NSUInteger RubyModifierKeyToNS( Saturn::RubyKey key )
 	const uint32_t modifierFlags = [ event modifierFlags ] & NSEventModifierFlagDeviceIndependentFlagsMask;
 	const auto NSEventFlag = RubyModifierKeyToNS( saturnKey );
 
-	bool isPressed = false;
 	if( NSEventFlag & modifierFlags ) 
 	{
 		if( Saturn::RubyLibrary::Get().IsKeyDown( saturnKey ) )

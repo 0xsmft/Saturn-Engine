@@ -38,6 +38,7 @@
 
 #include "Saturn/Project/Project.h"
 
+#include "Saturn/Asset/ShaderAsset.h"
 #include "TextureSourceAsset.h"
 
 #if !defined(SAT_DIST)
@@ -46,19 +47,23 @@
 
 namespace Saturn {
 
-	MaterialAsset::MaterialAsset( Ref<Material> material )
+	MaterialAsset::MaterialAsset( 
+		const Ref<Asset>& rBase, 
+		Ref<Material> material, 
+		const MaterialAssetShaderSource& rSource /*= {} */ 
+	)
+		: Asset( rBase ), m_ShaderSource( rSource )
 	{
 		if( material == nullptr )
 		{
-			m_Material = Ref<Material>::Create( ShaderLibrary::Get().Find( "shader_new" ), "New Material" );
+			m_Material = Ref<Material>::Create( GetShaderFromShaderSource(), "New Material" );
 			Default();
 		}
 		else
 			m_Material->Copy( material );
 	}
 
-	MaterialAsset::MaterialAsset( const Ref<Asset>& rBase, Ref<Material> material )
-		: Asset( rBase )
+	MaterialAsset::MaterialAsset( Ref<Material> material )
 	{
 		if( material == nullptr )
 		{
@@ -365,6 +370,28 @@ namespace Saturn {
 		}
 
 		m_PendingTextureChanges.clear();
+	}
+
+	Ref<Shader> MaterialAsset::GetShaderFromShaderSource()
+	{
+		switch( m_ShaderSource.SourceType )
+		{
+			case MaterialAssetShaderSourceType::Custom:
+			{
+				Ref<ShaderAsset> shaderAsset = AssetManager::Get()->GetAssetAs<ShaderAsset>( m_ShaderSource.ShaderID );
+				if( shaderAsset )
+				{
+					// TODO
+					return ShaderLibrary::Get().Find( "shader_new" );
+				}
+			} break;
+
+			default:
+			case MaterialAssetShaderSourceType::EngineDefault:
+			{
+				return ShaderLibrary::Get().Find( "shader_new" );
+			} break;
+		}
 	}
 
 	void MaterialAsset::SetAlbeoMap( UUID AssetID )

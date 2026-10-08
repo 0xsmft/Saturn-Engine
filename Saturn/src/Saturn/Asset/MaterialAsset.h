@@ -62,9 +62,14 @@ namespace Saturn {
 	class MaterialAsset : public Asset
 	{
 	public:
-		MaterialAsset( const Ref<Asset>& rBase, Ref<Material> material );
-
+		//
+		// Create from base asset with a material specified and (optionally) a shader source specified
+		// Most common ctor.
+		//
+		MaterialAsset( const Ref<Asset>& rBase, Ref<Material> material, const MaterialAssetShaderSource& rSource = {} );
+	
 		MaterialAsset( Ref<Material> material );
+
 		virtual ~MaterialAsset();
 
 		// Asset overrides
@@ -156,6 +161,8 @@ namespace Saturn {
 		inline void MarkDirty() { m_ValuesChanged = true; }
 
 		MaterialAssetShaderSource& GetShaderSourceData() { return m_ShaderSource; }
+
+		Ref<Shader> GetShaderFromShaderSource();
 
 	private:
 		std::unordered_map< std::string, VkDescriptorImageInfo > m_TextureCache;

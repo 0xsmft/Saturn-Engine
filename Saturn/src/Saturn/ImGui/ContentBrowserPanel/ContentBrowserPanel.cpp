@@ -639,22 +639,7 @@ namespace Saturn {
 
 				m_CurrentCreationPopup = std::make_shared<MaterialAssetCreationPopup>( newPath );
 				m_CurrentCreationPopup->Initialise();
-
-				/*
-				auto id = AssetManager::Get()->CreateAsset( AssetType::Material );
-				auto asset = AssetManager::Get()->FindAsset( id );
-
-				asset->SetAbsolutePath( newPath );
-				Ref<MaterialAsset> material = Ref<MaterialAsset>::Create( asset, nullptr );
-
-				MaterialAssetSerialiser mas;
-				mas.Serialise( material );
-
-				AssetManager::Get()->Save();
-
-				UpdateFiles( true );
-				FindAndRenameItem( asset->Name );
-				*/
+				m_CurrentCreationPopup->SetOnCreateFunction( SAT_BIND_EVENT_FN( OnAssetCreated_FromPopup ) );
 			}
 
 			if( ImGui::MenuItem( "New Shader" ) )
@@ -2192,6 +2177,36 @@ namespace Saturn {
 		{
 			m_CurrentImportPopup = std::make_shared<UnknownImportPopup>( rPath );
 			m_CurrentImportPopup->Initialise();
+		}
+	}
+
+	void ContentBrowserPanel::OnAssetCreated_FromPopup()
+	{
+		SAT_CORE_ASSERT( m_CurrentCreationPopup );
+
+		switch( m_CurrentCreationPopup->GetAssetType() )
+		{
+			case AssetType::Material:
+			{
+				const auto materialCreationPopup = std::dynamic_pointer_cast<MaterialAssetCreationPopup>( m_CurrentCreationPopup );
+
+				const auto id = AssetManager::Get()->CreateAsset( AssetType::Material );
+				auto asset = AssetManager::Get()->FindAsset( id );
+
+				asset->SetAbsolutePath( m_CurrentCreationPopup->GetDestinationPath() );
+				Ref<MaterialAsset> material = Ref<MaterialAsset>::Create( asset, nullptr, materialCreationPopup->GetShaderSource() );
+
+				MaterialAssetSerialiser mas;
+				mas.Serialise( material );
+
+				AssetManager::Get()->Save();
+
+				UpdateFiles( true );
+				FindAndRenameItem( asset->Name );
+			} break;
+
+			default:
+				break;
 		}
 	}
 

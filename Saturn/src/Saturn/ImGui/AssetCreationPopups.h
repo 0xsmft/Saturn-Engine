@@ -45,6 +45,8 @@ namespace Saturn {
 	class AssetCreationPopupBase
 	{
 	public:
+		using OnAssetCreatedFunction = std::function<void()>;
+	public:
 		AssetCreationPopupBase( const std::filesystem::path& rPathToCreateIn ) 
 			: m_DestinationPath( rPathToCreateIn )
 		{
@@ -53,15 +55,19 @@ namespace Saturn {
 
 		virtual void Initialise() {}
 		virtual void OnImGuiRender() {}
+		virtual AssetType GetAssetType() { return AssetType::Unknown; }
 
 	public:
 		void Close() { m_Open = false; }
+		void SetOnCreateFunction( OnAssetCreatedFunction&& rrFunc ) { m_OnCreateFunction = std::move( rrFunc ); }
 
 	public:
 		[[nodiscard]] bool IsOpen() const { return m_Open; }
 		[[nodiscard]] AssetCreationPopupState GetCreationState() const { return m_CreationState; }
+		const std::filesystem::path& GetDestinationPath() const { return m_DestinationPath; }
 
 	protected:
+		OnAssetCreatedFunction m_OnCreateFunction;
 		std::filesystem::path m_DestinationPath;
 
 		AssetCreationPopupState m_CreationState = AssetCreationPopupState::Rejected;
@@ -74,11 +80,19 @@ namespace Saturn {
 	class MaterialAssetCreationPopup : public AssetCreationPopupBase
 	{
 	public:
+		static AssetType GetStaticType() { return AssetType::Material; }
+
+	public:
 		MaterialAssetCreationPopup( const std::filesystem::path& rPathToCreateIn );
 		virtual ~MaterialAssetCreationPopup();
 
 		virtual void Initialise() override;
 		virtual void OnImGuiRender() override;
+		virtual AssetType GetAssetType() override { return AssetType::Material; }
+
+	public:
+		const MaterialAssetShaderSource& GetShaderSource() const { return m_ShaderSource; }
+		MaterialAssetShaderSource& GetShaderSource() { return m_ShaderSource; }
 
 	private:
 		MaterialAssetShaderSource m_ShaderSource{};

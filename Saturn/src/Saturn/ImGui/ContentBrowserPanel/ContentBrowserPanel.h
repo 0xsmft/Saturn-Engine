@@ -158,6 +158,12 @@ namespace Saturn {
 
 		void ResolveAssetImporterBasedOnExt( const std::filesystem::path& rPath );
 
+		//
+		// Called from the current creation popup
+		// when the asset is created.
+		//
+		void OnAssetCreated_FromPopup();
+
 	private:
 		// The absolute current path
 		// Used for finding/creating assets.

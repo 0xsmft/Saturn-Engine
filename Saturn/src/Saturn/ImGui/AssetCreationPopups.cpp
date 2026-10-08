@@ -122,6 +122,9 @@ namespace Saturn {
 
 			if( ImGui::Button( "Create" ) )
 			{
+				if( m_OnCreateFunction )
+					( m_OnCreateFunction ) ( );
+
 				Close();
 				m_CreationState = AssetCreationPopupState::Accepted;
 				ImGui::CloseCurrentPopup();

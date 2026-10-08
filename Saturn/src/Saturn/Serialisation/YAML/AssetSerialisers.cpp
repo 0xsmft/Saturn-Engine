@@ -163,7 +163,7 @@ namespace Saturn {
 		const auto& basePath = rAsset->Path;
 		const auto fullPath = GetFilepathAbs( basePath );
 
-		auto materialAsset = rAsset.As<MaterialAsset>();
+		const auto materialAsset = rAsset.As<MaterialAsset>();
 
 		YAML::Emitter out;
 
@@ -175,7 +175,7 @@ namespace Saturn {
 
 		out << YAML::Key << "AlbedoColor" << YAML::Value << materialAsset->GetAlbeoColor();
 
-		auto writeTexture = [&](const char* key, Ref<Texture2D> texture ) 
+		auto writeTexture = [ & ]( const char* key, Ref<Texture2D> texture )
 		{
 			auto asset = AssetManager::Get()->FindAsset( texture->GetSourceAssetID() );
 
@@ -201,9 +201,18 @@ namespace Saturn {
 
 		out << YAML::Key << "Emissive" << YAML::Value << materialAsset->GetEmissive();
 
-		out << YAML::EndMap;
+		out << YAML::Value << "ShaderSource";
+		out << YAML::BeginMap;
 
-		out << YAML::EndMap;
+		const auto& rShaderSource = materialAsset->GetShaderSourceData();
+		out << YAML::Key << "Type" << YAML::Value << ( uint16_t ) rShaderSource.SourceType;
+		out << YAML::Key << "AssetID" << YAML::Value << rShaderSource.ShaderID;
+
+		out << YAML::EndMap; // ShaderSource
+
+		out << YAML::EndMap; // Material
+
+		out << YAML::EndMap; // Root
 
 		std::ofstream file( fullPath );
 		file << out.c_str();
@@ -222,13 +231,37 @@ namespace Saturn {
 		if( data.IsNull() )
 			return false;
 
+		const auto materialData = data[ "Material" ];
+
+		MaterialAssetShaderSource shaderSource{};
+		const auto shaderSourceData = materialData[ "ShaderSource" ];
+		if( shaderSourceData )
+		{
+			const uint16_t type = shaderSourceData[ "Type" ].as<uint16_t>( 0 );
+			if( type >= std::numeric_limits<std::uint8_t>::max() )
+			{
+				SAT_CORE_WARN( "[MaterialSerialiser]: ShaderSource type is too large to be a valid value! Defaulting to zero!" );
+
+				shaderSource.SourceType = MaterialAssetShaderSourceType::EngineDefault;
+			}
+			else
+			{
+				shaderSource.SourceType = ( MaterialAssetShaderSourceType ) ( uint8_t ) type;
+			}
+
+			shaderSource.ShaderID = shaderSourceData[ "AssetID" ].as<uint64_t>( 0llu );
+
+			if( shaderSource.ShaderID != 0llu )
+			{
+				AssetManager::Get()->RegisterAssetDependency( rAsset->ID, shaderSource.ShaderID );
+			}
+		}
+
 		// Create new Material Asset with rAsset being the base Asset
-		auto materialAsset = Ref<MaterialAsset>::Create( rAsset, nullptr );
+		auto materialAsset = Ref<MaterialAsset>::Create( rAsset, nullptr, shaderSource );
 
-		auto materialData = data[ "Material" ];
-
-		auto albedoColor = materialData[ "AlbedoColor" ].as<glm::vec3>();
-		auto albedoID = materialData[ "AlbedoTexture" ].as<uint64_t>( 0 );
+		const auto albedoColor = materialData[ "AlbedoColor" ].as<glm::vec3>();
+		const auto albedoID = materialData[ "AlbedoTexture" ].as<uint64_t>( 0 );
 
 		materialAsset->SetAlbeoColor( albedoColor );
 
@@ -242,8 +275,8 @@ namespace Saturn {
 			AssetManager::Get()->RegisterAssetDependency( rAsset->ID, albedoID );
 		}
 
-		auto useNormal = materialData[ "UseNormal" ].as<bool>( false );
-		auto normalID = materialData[ "NormalTexture" ].as<uint64_t>( 0 );
+		const auto useNormal = materialData[ "UseNormal" ].as<bool>( false );
+		const auto normalID = materialData[ "NormalTexture" ].as<uint64_t>( 0 );
 
 		materialAsset->UseNormalMap( useNormal );
 
@@ -255,8 +288,8 @@ namespace Saturn {
 			AssetManager::Get()->RegisterAssetDependency( rAsset->ID, normalID );
 		}
 
-		auto metalness = materialData[ "Metalness" ].as<float>();
-		auto metallicID = materialData[ "MetalnessTexture" ].as<uint64_t>( 0 );
+		const auto metalness = materialData[ "Metalness" ].as<float>();
+		const auto metallicID = materialData[ "MetalnessTexture" ].as<uint64_t>( 0 );
 
 		materialAsset->SetMetalness( metalness );
 
@@ -268,8 +301,8 @@ namespace Saturn {
 			AssetManager::Get()->RegisterAssetDependency( rAsset->ID, metallicID );
 		}
 
-		auto val = materialData[ "Roughness" ].as<float>();
-		auto roughnessID = materialData[ "RoughnessTexture" ].as<uint64_t>( 0 );
+		const auto val = materialData[ "Roughness" ].as<float>();
+		const auto roughnessID = materialData[ "RoughnessTexture" ].as<uint64_t>( 0 );
 
 		materialAsset->SetRoughness( val );
 
@@ -281,7 +314,7 @@ namespace Saturn {
 			AssetManager::Get()->RegisterAssetDependency( rAsset->ID, roughnessID );
 		}
 
-		auto emissive = materialData[ "Emissive" ].as<float>( 0.0f );
+		const auto emissive = materialData[ "Emissive" ].as<float>( 0.0f );
 		materialAsset->SetEmissive( emissive );
 
 		// We may not always need to do this because most of the time this material will be bound meaning will change the textures.

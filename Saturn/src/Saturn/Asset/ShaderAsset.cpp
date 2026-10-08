@@ -29,6 +29,8 @@
 #include "sppch.h"
 #include "ShaderAsset.h"
 
+#include "Saturn/Vulkan/Shader.h"
+
 #if !defined(SAT_DIST)
 #include "Saturn/Project/Project.h"
 #endif
@@ -45,6 +47,53 @@ namespace Saturn {
 	{
 		std::filesystem::copy( "content/Templates/CustomShaderTemplate.glsl", Project::GetActiveProject()->FilepathAbs( Path ) );
 	}
+
+	bool ShaderAsset::CompileAll()
+	{
+		const auto absPathToShader = Project::GetActiveProject()->FilepathAbs( Path );
+
+		m_ShaderForMaterial = Ref<Shader>::Create( absPathToShader );
+		if( !m_ShaderForMaterial->DidShaderDidCompileSuccessfully() )
+		{
+			return false;
+		}
+		else
+		{
+			m_ShaderForDynamicMeshes = Ref<Shader>::Create( absPathToShader, true );
+			if( m_ShaderForDynamicMeshes->DidShaderDidCompileSuccessfully() )
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
 #endif
+
+	bool ShaderAsset::TryLoadShaders()
+	{
+		return CompileAll();
+
+		const auto cachePath = Project::GetActiveProject()->GetFullCachePath() / "PerUser";
+
+		// Static shader
+		const auto staticShaderPath = ( cachePath / Name ).replace_extension( ".scgs" );
+
+		if( !std::filesystem::exists( staticShaderPath ) )
+		{
+			return false;
+		}
+		return true;
+	}
+
+	Ref<Shader> ShaderAsset::GetShaderForMaterial() const
+	{
+		return m_ShaderForMaterial;
+	}
+
+	Ref<Shader> ShaderAsset::GetShaderForDynamicMeshes() const
+	{
+		return m_ShaderForDynamicMeshes;
+	}
 
 }

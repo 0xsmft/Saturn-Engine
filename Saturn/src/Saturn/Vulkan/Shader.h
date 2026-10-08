@@ -429,7 +429,14 @@ namespace Saturn {
 		// Do not use!
 		Shader() {}
 	
-		Shader( const std::filesystem::path& rFilepath );
+		//
+		// Compile shader via shader glsl shader source path.
+		// 
+		// NB: The last argument is only to be used by game shader,
+		// it tells the shader compiler weather this shader is to be compiled
+		// as a static shader or a dynamic mesh shader.
+		//
+		Shader( const std::filesystem::path& rFilepath, bool forUseByGameShadersOnly = false );
 		virtual ~Shader();
 	
 		std::string& GetName() { return m_Name; }
@@ -490,6 +497,8 @@ namespace Saturn {
 
 		void AddDependency( Passkey<class ShaderIncludeHelper> pk, const std::filesystem::path& rPath );
 
+		bool DidShaderDidCompileSuccessfully() const { return m_ShaderDidCompileSuccessfully; }
+
 	private:
 		void ReadFile();
 
@@ -500,6 +509,9 @@ namespace Saturn {
 		void CreateDescriptors();
 
 		[[nodiscard]] bool CompileGlslToSpvAssembly();
+
+		// Used by this class and the EditorShaderBundle
+		inline void MarkAsCompiled() { m_ShaderDidCompileSuccessfully = true; }
 
 	private:
 		SpvSourceMap m_SpvCode;
@@ -524,6 +536,11 @@ namespace Saturn {
 
 		Ref<DescriptorPool> m_SetPool;
 		UUID m_ShaderHash;
+
+#if !defined(SAT_DIST)
+		bool m_ShaderDidCompileSuccessfully = false;
+		bool m_ForceCompileAsAnimatedShader = false;
+#endif
 
 	private:
 		friend class ShaderBundle;

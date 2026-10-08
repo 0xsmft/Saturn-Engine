@@ -32,6 +32,21 @@
 
 namespace Saturn {
 
+	class Shader;
+
+	//
+	// ShaderAsset
+	// 
+	// In Saturn this class represents two Vulkan Shaders:
+	//
+	// One of them will be a static mesh shader and the
+	// other will be compiled as if it was for a
+	// dynamic mesh.
+	// 
+	// A ShaderAsset only exists in the game and should
+	// NOT be confused with the Shader class (that lives
+	// in /Vulkan/Shader.h)
+	//
 	class ShaderAsset : public Asset
 	{
 	public:
@@ -44,13 +59,27 @@ namespace Saturn {
 
 #if !defined(SAT_DIST)
 		void CopyTemplateFile();
+
+		bool CompileAll();
 #endif
+
+	public:
+		bool TryLoadShaders();
 
 	public:
 		const std::string& GetShaderSourceCode() const { return m_ShaderSourceCode; }
 
+		Ref<Shader> GetShaderForMaterial() const;
+		Ref<Shader> GetShaderForDynamicMeshes() const;
+
 	private:
 		std::string m_ShaderSourceCode;
+
+		// Also known as the static shader.
+		Ref<Shader> m_ShaderForMaterial;
+
+		// Also known as the dynamic mesh shader.
+		Ref<Shader> m_ShaderForDynamicMeshes;
 
 	private:
 		friend class ShaderViewerWindow;

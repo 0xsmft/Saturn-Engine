@@ -74,9 +74,15 @@ namespace Saturn {
 		m_ShaderViewer = Ref<ShaderViewerWindow>::Create( Project::GetActiveProject()->FilepathAbs( m_ShaderAsset->Path ) );
 		m_ShaderViewer->OpenWindow();
 		m_ShaderViewer->SetType( ShaderViewFileType::ShaderAsset );
+		m_ShaderViewer->SetOnCompileFunction( SAT_BIND_EVENT_FN( OnCompile ) );
 
 		m_Name = std::format( "{0}##{1}", m_ShaderAsset->Name, ( uint64_t ) m_AssetID );
 		m_Open = true;
+	}
+
+	void ShaderAssetViewer::OnCompile()
+	{
+		m_ShaderAsset->CompileAll();
 	}
 
 }

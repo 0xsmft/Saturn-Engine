@@ -43,6 +43,7 @@ namespace Saturn {
 	{
 		m_Name = rShaderPath.filename().string();
 		m_Editor = std::make_unique<ImGuiColorTextEdit::TextEditor>();
+		m_Editor->SetPalette( m_Editor->GetDarkPalette() );
 
 		InitEditorFromFile( rShaderPath );
 	}
@@ -161,12 +162,7 @@ namespace Saturn {
 			
 				if( ImGui::Button( "Compile", { 0.0f, 24.0f } ) )
 				{
-
-				}
-
-				if( ImGui::Button( "View stages", { 0.0f, 24.0f } ) )
-				{
-
+					HandleCompilation();
 				}
 
 #if !defined(SAT_PLATFORM_LINUX)
@@ -223,6 +219,12 @@ namespace Saturn {
 
 		m_Editor->SetLanguage( ImGuiColorTextEdit::TextEditor::Language::Glsl() );
 		m_SavedUndoIndex = m_Editor->GetUndoIndex();
+	}
+
+	void ShaderViewerWindow::HandleCompilation()
+	{
+		if( m_OnCompileFunction )
+			( m_OnCompileFunction ) ( );
 	}
 
 }

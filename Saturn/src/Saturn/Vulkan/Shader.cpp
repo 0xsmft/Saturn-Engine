@@ -196,9 +196,9 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// SHADER
 
-	Shader::Shader( const std::filesystem::path& rFilepath )
+	Shader::Shader( const std::filesystem::path& rFilepath, bool forUseByGameShadersOnly /*=false*/ )
 #if !defined(SAT_DIST)
-		: m_Filepath( rFilepath )
+		: m_Filepath( rFilepath ), m_ForceCompileAsAnimatedShader( forUseByGameShadersOnly )
 	{
 		if( !std::filesystem::exists( m_Filepath ) )
 			return;
@@ -208,7 +208,7 @@ namespace Saturn {
 		ReadFile();
 		DetermineShaderTypes();
 
-		if( !CompileGlslToSpvAssembly() )
+		if( m_ShaderDidCompileSuccessfully = CompileGlslToSpvAssembly(); !m_ShaderDidCompileSuccessfully )
 		{
 			SAT_CORE_ERROR( "Shader failed to compile!" );
 			SAT_CORE_ASSERT( false );
@@ -945,6 +945,8 @@ namespace Saturn {
 			pIncluder->SetShader( this );
 
 			CompilerOptions.SetIncluder( std::unique_ptr<ShaderIncludeHelper>( pIncluder ) );
+			if( m_ForceCompileAsAnimatedShader )
+				CompilerOptions.AddMacroDefinition( "__SAT_SHADERCOMP_SH_ANIMATION_PBR" );
 
 			const auto preprocessResult = Compiler.PreprocessGlsl( 
 				rShaderSrcCode,

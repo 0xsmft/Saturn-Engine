@@ -55,6 +55,9 @@ namespace Saturn {
 	class ShaderViewerWindow : public ImGuiWindow
 	{
 	public:
+		using OnCompileFunction = std::function<void()>;
+
+	public:
 		ShaderViewerWindow( const std::filesystem::path& rShaderPath );
 		virtual ~ShaderViewerWindow();
 
@@ -67,6 +70,8 @@ namespace Saturn {
 			return "Shader Viewer Window";
 		}
 
+		void SetOnCompileFunction( OnCompileFunction&& rrFunc ) { m_OnCompileFunction = std::move( rrFunc ); }
+
 	public:
 		void SetType( ShaderViewFileType type ) { m_Type = type; }
 		ShaderViewFileType GetType() const { return m_Type; }
@@ -75,8 +80,10 @@ namespace Saturn {
 
 	private:
 		void InitEditorFromFile( const std::filesystem::path& rShaderPath );
+		void HandleCompilation();
 
 	private:
+		OnCompileFunction m_OnCompileFunction;
 		std::filesystem::path m_ShaderPath;
 		std::unique_ptr<ImGuiColorTextEdit::TextEditor> m_Editor;
 		size_t m_SavedUndoIndex = 0llu;

@@ -47,6 +47,7 @@ namespace Saturn {
 
 	private:
 		void AddShader();
+		void OnCompile();
 
 	private:
 		Ref<ShaderAsset> m_ShaderAsset;

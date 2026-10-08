@@ -45,7 +45,7 @@
   - Node Editors for Materials, Sounds, Animation Graphs and Behaviour Trees.
   - Undo/Redo tracking
   - Asset Browser
-  - World outliner panel
+  - World outliner panel (SceneHierarchyPanel)
   - Many built-in Asset Viewers
   - Autosaves
   - Project Browser
@@ -61,7 +61,7 @@
   - Game UI system (called Alura)
   - Job system
   - ECS via [EnTT](https://github.com/skypjack/entt)
-  - Keybindings
+  - Support for binding custom keys
   - Online subsystem (Steamworks API)
   - Texture streaming
 
@@ -86,6 +86,10 @@ Make sure to check that you are on the branch `vulkan`. If not you can run `git 
 ## Building
 
 See [BUILDING.md](/BUILDING.md)
+
+## Documention
+
+Documention can be found at [0xsmft.dev](https://0xsmft.dev)
 
 ## License
 

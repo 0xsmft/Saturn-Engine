@@ -112,7 +112,7 @@ namespace Saturn {
         if( Auxiliary::TreeNode( "Extra debug information" ) )
         {
 #if defined(SAT_COMPILER_MSVC)
-            ImGui::Text( "Compiler: MSVC" );
+            ImGui::Text( "Compiler: MSVC %d", _MSC_FULL_VER );
 #elif defined(SAT_COMPILER_GCC)
             ImGui::Text( "Compiler: GCC" );
 #elif defined(SAT_COMPILER_CLANG)

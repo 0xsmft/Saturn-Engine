@@ -76,6 +76,9 @@ namespace Saturn {
 
 	//
 	// MaterialAssetCreationPopup
+	// 
+	// Class resposible for managing how a material asset should be created,
+	// allows the user to pick a base shader.
 	//
 	class MaterialAssetCreationPopup : public AssetCreationPopupBase
 	{

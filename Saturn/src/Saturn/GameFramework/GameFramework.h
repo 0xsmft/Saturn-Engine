@@ -46,7 +46,7 @@ namespace Saturn {
 	| Os	   | Online System	  |
 	| Oss	   | Online Sys. Steam|
 	| Ose	   | Online Sys. EOS  |
-	+---------------+-------------+
+	+----------+------------------+
 	*/
 
 	[[nodiscard]] extern bool IptIsMouseLocked();

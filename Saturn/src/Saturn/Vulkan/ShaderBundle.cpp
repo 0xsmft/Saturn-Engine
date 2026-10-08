@@ -68,7 +68,7 @@ namespace Saturn {
 
 		for( auto&& [name, shader] : ShaderLibrary::Get().GetShaders() )
 		{
-			SAT_CORE_INFO( "Packaging shader: {0}", name );
+			SAT_CORE_INFO( "[ShaderBundle]: Packaging shader: {0}", name );
 
 			RawSerialisation::WriteString( name, fout );
 			shader->SerialiseShaderData( fout );
@@ -86,7 +86,7 @@ namespace Saturn {
 
 		if( std::memcmp( header.Magic, ".SB", 4 ) != 0 )
 		{
-			SAT_CORE_ERROR( "Invalid shader bundle file header!" );
+			SAT_CORE_ERROR( "[ShaderBundle]: Invalid shader bundle file header!" );
 			return ShaderBundleResult::InvalidShaderHeader;
 		}
 
@@ -108,7 +108,7 @@ namespace Saturn {
 
 		if( std::memcmp( header.Magic, ".SB", 4 ) != 0 )
 		{
-			SAT_CORE_ERROR( "Invalid shader bundle file header!" );
+			SAT_CORE_ERROR( "[ShaderBundle]: Invalid shader bundle file header!" );
 			return ShaderBundleResult::InvalidShaderHeader;
 		}
 

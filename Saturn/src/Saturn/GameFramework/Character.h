@@ -35,6 +35,13 @@
 
 namespace Saturn {
 
+	//
+	// Player owned and controlled entity
+	// with movement supported already setup.
+	// 
+	// NB: You must set up your own binds for movement
+	//     the Character class does not do that!
+	//
 	class Character : public Entity
 	{
 		SAT_DECLARE_CLASS( Character, Entity );

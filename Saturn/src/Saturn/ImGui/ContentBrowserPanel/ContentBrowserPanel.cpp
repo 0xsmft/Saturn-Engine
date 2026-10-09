@@ -642,27 +642,6 @@ namespace Saturn {
 				m_CurrentCreationPopup->SetOnCreateFunction( SAT_BIND_EVENT_FN( OnAssetCreated_FromPopup ) );
 			}
 
-			if( ImGui::MenuItem( "New Shader" ) )
-			{
-				const auto id = AssetManager::Get()->CreateAsset( AssetType::ShaderPrototype );
-				auto asset = AssetManager::Get()->FindAsset( id );
-				auto newPath = m_CurrentPath / "New Shader.sgsl";
-
-				const uint32_t count = GetFilenameCount( "New Shader.sgsl" );
-				if( count >= 1 )
-					newPath.replace_filename( std::format( "{0} ({1}).sgsl", "New Shader", count ) );
-
-				asset->SetAbsolutePath( newPath );
-
-				Ref<ShaderAsset> shaderAsset = Ref<ShaderAsset>::Create( asset );
-				shaderAsset->CopyTemplateFile();
-				
-				AssetManager::Get()->Save();
-
-				UpdateFiles( true );
-				FindAndRenameItem( asset->Name );
-			}
-
             if( ImGui::MenuItem( "New Shader" ) )
             {
                 auto id = AssetManager::Get()->CreateAsset( AssetType::ShaderPrototype );

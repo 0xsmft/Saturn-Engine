@@ -87,8 +87,8 @@ namespace Saturn {
 		void RenderDynamicMeshWithoutMaterial( VkCommandBuffer CommandBuffer, Ref<Saturn::Pipeline> Pipeline, Ref<SkeletalMesh> mesh, Ref<Material> material, Ref<UniformBufferSet> ubSet, Ref<StorageBufferSet> sbSet, uint32_t count, Ref<VertexBuffer> transformVB, uint32_t TransformOffset, uint32_t SubmeshIndex, uint32_t boneOffset, Ref<Material> set2Material, Buffer additionalData = Buffer() );
 	
 		void SubmitMesh( VkCommandBuffer CommandBuffer, Ref< Saturn::Pipeline > Pipeline, Ref< StaticMesh > mesh,
-			Ref<StorageBufferSet>& rStorageBufferSet, Ref<UniformBufferSet> rUniformBufferSet, Ref< MaterialRegistry > materialRegistry, uint32_t SubmeshIndex, uint32_t count,
-			Ref<VertexBuffer> transformData, uint32_t transformOffset );
+			Ref<StorageBufferSet>& rStorageBufferSet, Ref<UniformBufferSet> rUniformBufferSet, Ref< MaterialRegistry > materialRegistry, uint32_t SubmeshIndex, uint32_t instanceCount,
+			Ref<VertexBuffer> transformData, uint32_t transformOffset, Ref<class PipelineCache> pipelineCache );
 
 		void SubmitDynamicMesh( VkCommandBuffer CommandBuffer, Ref<Saturn::Pipeline> Pipeline, Ref<SkeletalMesh> mesh,
 			Ref<StorageBufferSet>& rStorageBufferSet, Ref<UniformBufferSet> rUniformBufferSet, Ref< MaterialRegistry > materialRegistry, uint32_t SubmeshIndex, uint32_t count,
@@ -170,7 +170,7 @@ namespace Saturn {
 		std::vector<VkSemaphore> m_AcquireSemaphores;
 		std::vector<VkSemaphore> m_SubmitSemaphores;
 
-		std::array<VkCommandBuffer, MAX_FRAMES_IN_FLIGHT> m_CommandBuffers;
+		std::array<VkCommandBuffer, MAX_FRAMES_IN_FLIGHT> m_CommandBuffers{ VK_NULL_HANDLE };
 		
 		Ref<Texture2D> m_PinkTexture;
 		Ref<TextureCube> m_PinkTextureCube;

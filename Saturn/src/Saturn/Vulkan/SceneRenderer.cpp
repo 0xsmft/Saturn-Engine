@@ -2156,18 +2156,18 @@ namespace Saturn {
 				StaticMeshKey key = { mesh->ID, materialRegistry, ( uint32_t ) i };
 
 				// Submit for rendering
-				auto& command = m_DrawList[ key ];
-				command.Mesh = mesh;
-				command.SubmeshIndex = ( uint32_t ) i;
-				instanceOffset = command.Instances;
-				++command.Instances;
-				command.InstanceOffset = instanceOffset;
+				auto& rDrawCommand = m_DrawList[ key ];
+				rDrawCommand.Mesh = mesh;
+				rDrawCommand.SubmeshIndex = ( uint32_t ) i;
+				instanceOffset = rDrawCommand.Instances;
+				++rDrawCommand.Instances;
+				rDrawCommand.InstanceOffset = instanceOffset;
 
-				auto& shadow = m_ShadowMapDrawList[ key ];
-				shadow.Mesh = mesh;
-				shadow.SubmeshIndex = ( uint32_t ) i;
-				++shadow.Instances;
-				shadow.InstanceOffset = instanceOffset;
+				auto& rShadowDrawCommand = m_ShadowMapDrawList[ key ];
+				rShadowDrawCommand.Mesh = mesh;
+				rShadowDrawCommand.SubmeshIndex = ( uint32_t ) i;
+				++rShadowDrawCommand.Instances;
+				rShadowDrawCommand.InstanceOffset = instanceOffset;
 
 				auto& data = m_RendererData.MeshTransforms[ key ].Data.emplace_back();
 				data.TransfromBufferR[ 0 ] = {
@@ -2518,7 +2518,8 @@ namespace Saturn {
 				Cmd.SubmeshIndex,
 				Cmd.Instances,
 				m_RendererData.SubmeshTransformData[ frame ].VertexBuffer,
-				rTransformData.Offset );
+				rTransformData.Offset,
+				m_GeometryPipelineCache );
 		}
 	}
 

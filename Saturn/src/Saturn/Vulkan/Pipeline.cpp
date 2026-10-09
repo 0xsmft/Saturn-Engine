@@ -66,6 +66,11 @@ namespace Saturn {
 		Create();
 	}
 
+	Pipeline::~Pipeline()
+	{
+		Terminate();
+	}
+
 	void Pipeline::Terminate()
 	{
 #if !defined(SAT_DIST)

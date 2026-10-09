@@ -88,27 +88,29 @@ namespace Saturn {
 	class Pipeline : public RefTarget
 	{
 	public:
-		Pipeline() { }
+		Pipeline() = default;
 		Pipeline( const PipelineSpecification& Spec );
-		~Pipeline() { Terminate(); }
+		virtual ~Pipeline();
 		
 		void Bind( VkCommandBuffer CommandBuffer );
 		void Recreate();
 		void Terminate();
 
+	public:
 		VkPipeline GetPipeline() const { return m_Pipeline; }
 		VkPipelineLayout GetPipelineLayout() const { return m_PipelineLayout; }
-		
-		operator VkPipeline() const { return m_Pipeline; }
 
-		Ref<Shader>& GetShader() { return m_Specification.Shader; }
+	public:
+		Ref<Shader> GetShader() { return m_Specification.Shader; }
 
 	private:
 		void Create();
 
-		PipelineSpecification m_Specification = {};
-
+	private:
 		VkPipelineLayout m_PipelineLayout = VK_NULL_HANDLE;
 		VkPipeline m_Pipeline = VK_NULL_HANDLE;
+
+		PipelineSpecification m_Specification{};
 	};
+
 }

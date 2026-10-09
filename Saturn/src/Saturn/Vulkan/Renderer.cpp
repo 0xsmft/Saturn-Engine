@@ -33,6 +33,7 @@
 #include "DescriptorSet.h"
 #include "Shader.h"
 #include "Framebuffer.h"
+#include "PipelineCache.h"
 
 #include "Saturn/Core/Profiler.h"
 
@@ -438,11 +439,24 @@ namespace Saturn {
 	}
 
 	void Renderer::SubmitMesh(
-		VkCommandBuffer CommandBuffer, Ref< Saturn::Pipeline > Pipeline, Ref< StaticMesh > mesh,
-		Ref<StorageBufferSet>& rStorageBufferSet, Ref<UniformBufferSet> rUniformBufferSet, Ref< MaterialRegistry > materialRegistry,
-		uint32_t SubmeshIndex, uint32_t count, Ref<VertexBuffer> transformData, uint32_t transformOffset )
+		VkCommandBuffer CommandBuffer, 
+		Ref< Saturn::Pipeline > Pipeline, 
+		Ref< StaticMesh > mesh,
+		Ref<StorageBufferSet>& rStorageBufferSet, 
+		Ref<UniformBufferSet> uniformBufferSet, 
+		Ref< MaterialRegistry > materialRegistry,
+		uint32_t SubmeshIndex, 
+		uint32_t instanceCount,
+		Ref<VertexBuffer> transformData, 
+		uint32_t transformOffset,
+		Ref<PipelineCache> pipelineCache )
 	{
 		SAT_PF_EVENT();
+
+		Submesh& rSubmesh = mesh->Submeshes()[ SubmeshIndex ];
+		SAT_CORE_ASSERT( rSubmesh.MaterialIndex < materialRegistry->GetMaterialAssets().size(), "MaterialIndex is too big for the number of MaterialAssets!" );
+		auto& rMaterialAsset = materialRegistry->GetMaterialAssets()[ rSubmesh.MaterialIndex ];
+		Ref<Material> mat = rMaterialAsset->GetMaterial();
 
 		VkDeviceSize transformOffsets[ 1 ] = { transformOffset };
 
@@ -450,15 +464,11 @@ namespace Saturn {
 		transformData->Bind( CommandBuffer, 1, transformOffsets );
 
 		mesh->GetIndexBuffer()->Bind( CommandBuffer );
-		Pipeline->Bind( CommandBuffer );
+		auto pipeline = pipelineCache->GetPipeline( mat->GetShader()->GetShaderHash() );
+		pipeline->Bind( CommandBuffer );
 
 		{
-			Submesh& rSubmesh = mesh->Submeshes()[ SubmeshIndex ];
-			SAT_CORE_ASSERT( rSubmesh.MaterialIndex < materialRegistry->GetMaterialAssets().size(), "MaterialIndex is too big for the number of MaterialAssets!" );
-			auto& rMaterialAsset = materialRegistry->GetMaterialAssets()[ rSubmesh.MaterialIndex ];
-			Ref<Material> mat = rMaterialAsset->GetMaterial();
-
-			auto wds = GetUniformBufferWriteDescriptors( rUniformBufferSet, mat );
+			auto wds = GetUniformBufferWriteDescriptors( uniformBufferSet, mat );
 			if( rStorageBufferSet )
 			{
 				const auto& StorageWriteDescriptors = GetStorageBufferWriteDescriptors( rStorageBufferSet, mat );
@@ -475,7 +485,7 @@ namespace Saturn {
 
 			VkDescriptorSet Set = rMaterialAsset->GetMaterial()->GetDescriptorSet( m_FrameInFlightIndex );
 
-			vkCmdPushConstants( CommandBuffer, Pipeline->GetPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, ( uint32_t ) rMaterialAsset->GetPushConstantData().Size, rMaterialAsset->GetPushConstantData().Data );
+			vkCmdPushConstants( CommandBuffer, pipeline->GetPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, ( uint32_t ) rMaterialAsset->GetPushConstantData().Size, rMaterialAsset->GetPushConstantData().Data );
 
 			// Descriptor set 0, for material texture data.
 			// Descriptor set 1, for environment data.
@@ -485,9 +495,9 @@ namespace Saturn {
 			};
 
 			vkCmdBindDescriptorSets( CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-				Pipeline->GetPipelineLayout(), 0, ( uint32_t ) DescriptorSets.size(), DescriptorSets.data(), 0, nullptr );
+				pipeline->GetPipelineLayout(), 0, ( uint32_t ) DescriptorSets.size(), DescriptorSets.data(), 0, nullptr );
 
-			vkCmdDrawIndexed( CommandBuffer, rSubmesh.IndexCount, count, rSubmesh.BaseIndex, rSubmesh.BaseVertex, 0 );
+			vkCmdDrawIndexed( CommandBuffer, rSubmesh.IndexCount, instanceCount, rSubmesh.BaseIndex, rSubmesh.BaseVertex, 0 );
 		}
 	}
 

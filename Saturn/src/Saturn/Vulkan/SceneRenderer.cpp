@@ -41,6 +41,7 @@
 #include "ComputePipeline.h"
 #include "Renderer2D.h"
 #include "AluraRenderer.h"
+#include "PipelineCache.h"
 
 #include "Saturn/Animation/SkeletonAsset.h"
 
@@ -131,6 +132,8 @@ namespace Saturn {
 		m_RendererData.UniformBufferSet->CreateBuffer( sizeof( UBShadowData ), 3u );
 		m_RendererData.UniformBufferSet->CreateBuffer( 4llu, 12u ); // Debug Data
 		m_RendererData.UniformBufferSet->CreateBuffer( sizeof( UBPointLights ), 13u );
+
+		InitPipelineCache();
 
 		InitPreDepth();
 
@@ -240,7 +243,6 @@ namespace Saturn {
 		if( !m_RendererData.StaticMeshShader )
 		{
 			m_RendererData.StaticMeshShader = ShaderLibrary::Get().FindOrLoad( "shader_new", "content/shaders/shader_new.glsl" );
-
 			m_RendererData.StaticMeshMaterial = Ref<Material>::Create( m_RendererData.StaticMeshShader, "StaticMeshMat" );
 		}
 
@@ -270,7 +272,7 @@ namespace Saturn {
 		PipelineSpec.CullMode = CullMode::Back;
 		PipelineSpec.FrontFace = VK_FRONT_FACE_CLOCKWISE;
 
-		m_RendererData.StaticMeshPipeline = Ref< Pipeline >::Create( PipelineSpec );
+		m_RendererData.StaticMeshPipeline = m_GeometryPipelineCache->EmplaceNewPipeline( m_RendererData.StaticMeshShader->GetShaderHash(), PipelineSpec );
 
 		//////////////////////////////////////////////////////////////////////////
 		// DYNAMIC MESHES
@@ -314,7 +316,7 @@ namespace Saturn {
 			{ ShaderDataType::Float4, "a_BoneWeights" }
 		};
 
-		m_RendererData.DynamicMeshPipeline = Ref< Pipeline >::Create( PipelineSpec );
+		m_RendererData.DynamicMeshPipeline = m_GeometryPipelineCache->EmplaceNewPipeline( m_RendererData.DynamicMeshShader->GetShaderHash(), PipelineSpec );
 	}
 
 	void SceneRenderer::InitDirShadowMap()
@@ -1252,7 +1254,11 @@ namespace Saturn {
 			m_RendererData.SMAAEdgeDetectionShader = ShaderLibrary::Get().FindOrLoad( "SMAA-EdgeDetection", "content/shaders/SMAA-EdgeDetection.glsl" );
 		}
 		
-		m_RendererData.SMAAEdgeDetectionOutImage = Ref<Image2D>::Create( ImageFormat::RG8, m_RendererData.Width, m_RendererData.Height, 1, 1, 1, ImageTiling::Optimal, true );
+		m_RendererData.SMAAEdgeDetectionOutImage = Ref<Image2D>::Create( 
+			ImageFormat::RG8, 
+			m_RendererData.Width, m_RendererData.Height, 
+			1, 1, 1, 
+			ImageTiling::Optimal, true );
 
 		m_RendererData.SMAAEdgeDetectionPipeline = Ref<ComputePipeline>::Create( m_RendererData.SMAAEdgeDetectionShader );
 
@@ -2589,7 +2595,7 @@ namespace Saturn {
 
 		m_RendererData.DirShadowMapDynamicMaterialSet2->Update( {} );
 
-		for( int i = 0; i < SHADOW_CASCADE_COUNT; ++i )
+		for( auto i = 0; i < SHADOW_CASCADE_COUNT; ++i )
 		{
 			m_RendererData.ShadowMapTimers[ i ].Reset();
 
@@ -3939,6 +3945,11 @@ namespace Saturn {
 			m_AluraRenderer = Ref<AluraRenderer>::Create();
 			m_AluraRenderer->Init( m_RendererData.LateCompositePass, m_RendererData.LateCompositeFramebuffer );
 		}
+	}
+
+	void SceneRenderer::InitPipelineCache()
+	{
+		m_GeometryPipelineCache = Ref<PipelineCache>::Create();
 	}
 
 	class ScopedDebugLabel

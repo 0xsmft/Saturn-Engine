@@ -621,6 +621,7 @@ namespace Saturn {
 
 	class Renderer2D;
 	class AluraRenderer;
+	class PipelineCache;
 
 	class SceneRenderer : public RefTarget
 	{
@@ -736,6 +737,7 @@ namespace Saturn {
 		void InitBuffers();
 		void InitRenderer2D();
 		void InitAlura();
+		void InitPipelineCache();
 
 		void DirShadowMapPass();
 		void PreDepthPass();
@@ -782,6 +784,7 @@ namespace Saturn {
 		Scene* m_pScene = nullptr;
 		Ref<Renderer2D> m_Renderer2D;
 		Ref<AluraRenderer> m_AluraRenderer;
+		Ref<PipelineCache> m_GeometryPipelineCache;
 
 		std::unordered_map< StaticMeshKey, DrawCommand > m_DrawList;
 		std::unordered_map< StaticMeshKey, DrawCommand > m_ShadowMapDrawList;

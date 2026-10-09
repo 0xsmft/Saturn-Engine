@@ -196,9 +196,9 @@ namespace Saturn {
 	//////////////////////////////////////////////////////////////////////////
 	// SHADER
 
-	Shader::Shader( const std::filesystem::path& rFilepath, bool forUseByGameShadersOnly /*=false*/ )
+	Shader::Shader( const std::filesystem::path& rFilepath, uint8_t shaderFlags )
 #if !defined(SAT_DIST)
-		: m_Filepath( rFilepath ), m_ForceCompileAsAnimatedShader( forUseByGameShadersOnly )
+		: m_Filepath( rFilepath ), m_ShaderFlags( shaderFlags )
 	{
 		if( !std::filesystem::exists( m_Filepath ) )
 			return;
@@ -208,13 +208,15 @@ namespace Saturn {
 		ReadFile();
 		DetermineShaderTypes();
 
-		if( m_ShaderDidCompileSuccessfully = CompileGlslToSpvAssembly(); !m_ShaderDidCompileSuccessfully )
+		if( bool compileSuccessfully = CompileGlslToSpvAssembly(); !compileSuccessfully )
 		{
 			SAT_CORE_ERROR( "Shader failed to compile!" );
 			SAT_CORE_ASSERT( false );
 
 			return;
 		}
+		else
+			m_ShaderFlags |= ShaderFlags_Compiled;
 
 		for( const auto& [k, data] : m_SpvCode )
 		{

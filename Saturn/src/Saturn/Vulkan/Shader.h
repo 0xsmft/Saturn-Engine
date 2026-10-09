@@ -420,6 +420,17 @@ namespace std {
 
 namespace Saturn {
 
+	enum ShaderFlags : uint8_t
+	{
+		ShaderFlags_None = 0,
+
+		ShaderFlags_GameShader = 0x1,
+
+		ShaderFlags_GameShaderAnim = 0x2,
+		
+		ShaderFlags_Compiled = 0x4,
+	};
+
 	class Shader : public RefTarget
 	{
 		using ShaderSourceMap = std::unordered_map< ShaderSourceKey, ShaderSource >;
@@ -436,7 +447,7 @@ namespace Saturn {
 		// it tells the shader compiler weather this shader is to be compiled
 		// as a static shader or a dynamic mesh shader.
 		//
-		Shader( const std::filesystem::path& rFilepath, bool forUseByGameShadersOnly = false );
+		Shader( const std::filesystem::path& rFilepath, uint8_t shaderFlags = ShaderFlags_None );
 		virtual ~Shader();
 	
 		std::string& GetName() { return m_Name; }
@@ -497,7 +508,7 @@ namespace Saturn {
 
 		void AddDependency( Passkey<class ShaderIncludeHelper> pk, const std::filesystem::path& rPath );
 
-		bool DidShaderDidCompileSuccessfully() const { return m_ShaderDidCompileSuccessfully; }
+		bool DidShaderDidCompileSuccessfully() const { return ( m_ShaderFlags & ShaderFlags_Compiled ) != 0; }
 
 	private:
 		void ReadFile();
@@ -509,9 +520,6 @@ namespace Saturn {
 		void CreateDescriptors();
 
 		[[nodiscard]] bool CompileGlslToSpvAssembly();
-
-		// Used by this class and the EditorShaderBundle
-		inline void MarkAsCompiled() { m_ShaderDidCompileSuccessfully = true; }
 
 	private:
 		SpvSourceMap m_SpvCode;
@@ -537,10 +545,7 @@ namespace Saturn {
 		Ref<DescriptorPool> m_SetPool;
 		UUID m_ShaderHash;
 
-#if !defined(SAT_DIST)
-		bool m_ShaderDidCompileSuccessfully = false;
-		bool m_ForceCompileAsAnimatedShader = false;
-#endif
+		std::underlying_type_t<ShaderFlags> m_ShaderFlags = ShaderFlags_None;
 
 	private:
 		friend class ShaderBundle;

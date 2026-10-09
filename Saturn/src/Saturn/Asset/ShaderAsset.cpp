@@ -52,14 +52,14 @@ namespace Saturn {
 	{
 		const auto absPathToShader = Project::GetActiveProject()->FilepathAbs( Path );
 
-		m_ShaderForMaterial = Ref<Shader>::Create( absPathToShader );
+		m_ShaderForMaterial = Ref<Shader>::Create( absPathToShader, ShaderFlags_GameShader );
 		if( !m_ShaderForMaterial->DidShaderDidCompileSuccessfully() )
 		{
 			return false;
 		}
 		else
 		{
-			m_ShaderForDynamicMeshes = Ref<Shader>::Create( absPathToShader, true );
+			m_ShaderForDynamicMeshes = Ref<Shader>::Create( absPathToShader, ShaderFlags_GameShader | ShaderFlags_GameShaderAnim );
 			if( m_ShaderForDynamicMeshes->DidShaderDidCompileSuccessfully() )
 			{
 				return true;

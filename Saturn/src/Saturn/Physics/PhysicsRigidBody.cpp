@@ -428,8 +428,8 @@ namespace Saturn {
 			case PhysicsRigidBodyType::Static:
 			{
 				TransformComponent& tc = m_Entity->GetComponent<TransformComponent>();
-				
-				PhysicsFoundation::Get()->GetBodyInterface()->SetPositionAndRotation( m_BodyID, Auxiliary::GLMToJolt( tc.Position ), Auxiliary::GLMQToJoltQ( tc.GetRotation() ), JPH::EActivation::DontActivate );
+				tc.Position = GetPosition();
+				tc.SetRotation( GetRotation() );
 			} break;
 
 			default: break;

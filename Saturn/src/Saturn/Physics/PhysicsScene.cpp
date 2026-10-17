@@ -267,14 +267,14 @@ namespace Saturn {
 				}
 			}
 
-			// The division here is important because, we ant the vertex
+			// The division here is important because, we want the vertex
 			// indices not the float indices.
 			// rData.VertexBuffer is a flat buffer of vertices
 			// and looks like:
 			//
 			// 0  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17
 			// x0 y0 z0 x1 y1 z1 x2 y2 z2 x3 y3 z3 x4 y4 z4 x5 y5 z5 
-			// vertex 0 ...
+			// vertex 0 vertex 1 vertex 2 ...
 			// if the last shape only had 3 vertices the size would be 9 (because 3 sets of Vec3s) 
 			// and the starting point would be 3.
 			int vertStart = ( int ) rData.VertexBuffer.size() / 3;

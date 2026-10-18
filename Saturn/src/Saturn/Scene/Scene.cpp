@@ -1500,7 +1500,7 @@ namespace Saturn {
 		// and not just copy them.
 		for( auto&& [hnd, originalEntity] : m_EntityIDMap )
 		{
-			NewScene->m_EntityIDMap[ hnd ] = NewScene->CreateEntityWithIDScript( originalEntity->GetUUID(), originalEntity->GetName(), originalEntity->GetClass()->GetName(), false );
+			auto newEntity = NewScene->CreateEntityWithIDScript( originalEntity->GetUUID(), originalEntity->GetName(), originalEntity->GetClass()->GetName(), false );
 
 #if defined(SAT_SCENE_EXTRA_VERBOSE)
 			{
@@ -1509,16 +1509,16 @@ namespace Saturn {
 
 				const std::string hexB =
 					std::format( "{:016X}", reinterpret_cast< uintptr_t >(
-						NewScene->m_EntityIDMap[ hnd ].Get()
+						newEntity.Get()
 						) );
 
-				SAT_CORE_INFO( "Created new copy of entity: {0} vs {1} (0x{2} vs 0x{3})", originalEntity->GetName(), NewScene->m_EntityIDMap[ hnd ]->GetName(), hexA, hexB );
+				SAT_CORE_INFO( "Created new copy of entity: {0} vs {1} (0x{2} vs 0x{3})", originalEntity->GetName(), newEntity->GetName(), hexA, hexB );
 			}
 #endif
 
 			TransferModifiedProperties( 
 				originalEntity, 
-				NewScene->m_EntityIDMap[ hnd ] );
+				newEntity );
 		}
 
 		NewScene->m_Lights = m_Lights;

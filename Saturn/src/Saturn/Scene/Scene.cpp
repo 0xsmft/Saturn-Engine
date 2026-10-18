@@ -292,8 +292,10 @@ namespace Saturn {
 			auto* pController = rEntity->GetComponent<CharacterMovementComponent>().CharacterMovement;
 			if( pController )
 			{
+				auto& rTc = rEntity->GetComponent<TransformComponent>();
+
 				// SyncTransform
-				rEntity->GetComponent<TransformComponent>().Position = pController->GetPosition();
+				rTc.Position = pController->GetPosition();
 			}
 			else
 			{

@@ -110,14 +110,14 @@ namespace Saturn {
 	{
 	}
 
-	void BoxShape::Create( float mass )
+	void BoxShape::Create( float mass, UUID physMatID )
 	{
 		BoxColliderComponent& bcc = m_Entity->GetComponent<BoxColliderComponent>();
 		TransformComponent& transform = m_Entity->GetComponent<TransformComponent>();
 		
 		// Check for rigid body
-		UUID rigidBodyMaterialID = 0;
-		if( m_Entity->HasComponent<RigidbodyComponent>() )
+		UUID rigidBodyMaterialID = physMatID;
+		if( rigidBodyMaterialID == 0 && m_Entity->HasComponent<RigidbodyComponent>() )
 			rigidBodyMaterialID = m_Entity->GetComponent<RigidbodyComponent>().MaterialAssetID;
 
 		Ref<StaticMesh> mesh = nullptr;
@@ -168,14 +168,14 @@ namespace Saturn {
 	{
 	}
 
-	void SphereShape::Create( float mass )
+	void SphereShape::Create( float mass, UUID physMatID )
 	{
 		SphereColliderComponent& scc = m_Entity->GetComponent<SphereColliderComponent>();
 		TransformComponent& transform = m_Entity->GetComponent<TransformComponent>();
 
 		// Check for rigid body
-		UUID rigidBodyMaterialID = 0;
-		if( m_Entity->HasComponent<RigidbodyComponent>() )
+		UUID rigidBodyMaterialID = physMatID;
+		if( rigidBodyMaterialID == 0 && m_Entity->HasComponent<RigidbodyComponent>() )
 			rigidBodyMaterialID = m_Entity->GetComponent<RigidbodyComponent>().MaterialAssetID;
 
 		Ref<StaticMesh> mesh = nullptr;
@@ -224,14 +224,14 @@ namespace Saturn {
 	{
 	}
 
-	void CapsuleShape::Create( float mass )
+	void CapsuleShape::Create( float mass, UUID physMatID )
 	{
 		CapsuleColliderComponent& cap = m_Entity->GetComponent<CapsuleColliderComponent>();
 		TransformComponent& transform = m_Entity->GetComponent<TransformComponent>();
 
 		// Check for rigid body
-		UUID rigidBodyMaterialID = 0;
-		if( m_Entity->HasComponent<RigidbodyComponent>() )
+		UUID rigidBodyMaterialID = physMatID;
+		if( rigidBodyMaterialID == 0 && m_Entity->HasComponent<RigidbodyComponent>() )
 			rigidBodyMaterialID = m_Entity->GetComponent<RigidbodyComponent>().MaterialAssetID;
 
 		// Check for static mesh
@@ -284,7 +284,7 @@ namespace Saturn {
 	{
 	}
 
-	void TriangleMeshShape::Create( float mass )
+	void TriangleMeshShape::Create( float mass, UUID physMatID )
 	{
 		Ref<StaticMesh> staticMesh = m_Entity->GetComponent<StaticMeshComponent>().Mesh;
 		m_Shape = PhysicsFoundation::Get()->GetCooking().CreateTriangleMesh( m_Entity, staticMesh );
@@ -311,7 +311,7 @@ namespace Saturn {
 	{
 	}
 
-	void ConvexMeshShape::Create( float mass )
+	void ConvexMeshShape::Create( float mass, UUID physMatID )
 	{
 		Ref<StaticMesh> staticMesh = m_Entity->GetComponent<StaticMeshComponent>().Mesh;
 		m_Shape = PhysicsFoundation::Get()->GetCooking().CreateConvexMesh( m_Entity, staticMesh );

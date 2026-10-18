@@ -1571,6 +1571,34 @@ namespace Saturn {
 			modified |= Auxiliary::DrawBoolControl( "Control Movement In Air", cm.ControlMovementInAir );
 			modified |= Auxiliary::DrawBoolControl( "Control Rotation In Air ", cm.ControlRotationInAir );
 
+			ImGui::Columns( 2 );
+			ImGui::SetColumnWidth( 0, 125.0f );
+
+			bool openAssetFinder = false;
+			ImGui::BeginHorizontal( "cmPhysMaterial" );
+			{
+				ImGui::Text( "Physics Material" );
+				ImGui::NextColumn();
+
+				ImGui::InputText( "##physMaterial", ( char* ) std::to_string( cm.PhysicsMaterialAssetID ).c_str(), 256, ImGuiInputTextFlags_ReadOnly );
+
+				if( Auxiliary::ImageButton( EditorIcons::GetIcon( "Inspect" ), ImVec2( 24, 24 ) ) )
+				{
+					m_CurrentFinderType = AssetType::PhysicsMaterial;
+					openAssetFinder = true;
+
+					if( cm.PhysicsMaterialAssetID != 0 )
+						m_CurrentAssetID = cm.PhysicsMaterialAssetID;
+				}
+			}
+			ImGui::EndHorizontal();
+
+			if( Auxiliary::DrawAssetFinder( m_CurrentFinderType, &openAssetFinder, m_CurrentAssetID ) )
+			{
+				cm.PhysicsMaterialAssetID = m_CurrentAssetID;
+				modified |= true;
+			}
+
 			if( modified ) m_Context->MarkDirty();
 		} );
 

@@ -281,6 +281,8 @@ namespace Saturn {
 		bool ControlMovementInAir = false;
 		bool ControlRotationInAir = false;
 
+		MemoryAssetDependency<AssetType::PhysicsMaterial> PhysicsMaterialAssetID;
+
 		CharacterMovementComponent() = default;
 		CharacterMovementComponent( float stepOffset, bool noGravity, bool controlMovementInAir, bool controlRotationInAir ) : StepOffset( stepOffset ), NoGravity( noGravity ), ControlMovementInAir( controlMovementInAir ), ControlRotationInAir( controlRotationInAir ) {}
 	};

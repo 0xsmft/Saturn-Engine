@@ -298,6 +298,7 @@ namespace Saturn {
 			{
 				auto& cmc = rEntity->GetComponent< CharacterMovementComponent >();
 
+				RawSerialisation::WriteObject( cmc.PhysicsMaterialAssetID, rStream );
 				RawSerialisation::WriteObject( cmc.StepOffset, rStream );
 				RawSerialisation::WriteObject( cmc.NoGravity, rStream );
 				RawSerialisation::WriteObject( cmc.ControlMovementInAir, rStream );
@@ -611,6 +612,7 @@ namespace Saturn {
 			{
 				auto& cmc = rEntity->GetComponent< CharacterMovementComponent >();
 
+				RawSerialisation::ReadObject( cmc.PhysicsMaterialAssetID, rStream );
 				RawSerialisation::ReadObject( cmc.StepOffset, rStream );
 				RawSerialisation::ReadObject( cmc.NoGravity, rStream );
 				RawSerialisation::ReadObject( cmc.ControlMovementInAir, rStream );

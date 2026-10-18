@@ -48,7 +48,7 @@ namespace Saturn {
 		virtual ~PhysicsShape() = default;
 
 	public:
-		virtual void Create( float mass ) = 0;
+		virtual void Create( float mass, UUID physMatID = 0 ) = 0;
 
 	public:
 		// Runtime only!
@@ -75,7 +75,7 @@ namespace Saturn {
 		virtual ~BoxShape();
 
 	public:
-		void Create( float mass ) override;
+		void Create( float mass, UUID physMatID = 0 ) override;
 
 	public:
 		// Runtime only!
@@ -90,7 +90,7 @@ namespace Saturn {
 		virtual ~SphereShape();
 
 	public:
-		void Create( float mass ) override;
+		void Create( float mass, UUID physMatID = 0 ) override;
 	
 	public:
 		// Runtime only!
@@ -105,7 +105,7 @@ namespace Saturn {
 		virtual ~CapsuleShape();
 
 	public:
-		void Create( float mass ) override;
+		void Create( float mass, UUID physMatID = 0 ) override;
 
 	public:
 		// Runtime only!
@@ -121,7 +121,7 @@ namespace Saturn {
 
 	public:
 		// This assumes the the mesh collider has already been cooked.
-		virtual void Create( float mass ) override;
+		virtual void Create( float mass, UUID physMatID = 0 ) override;
 
 	public:
 		virtual void SetTrigger( bool t ) { }
@@ -139,7 +139,7 @@ namespace Saturn {
 
 	public:
 		// This assumes the the mesh collider has already been cooked.
-		virtual void Create( float mass ) override;
+		virtual void Create( float mass, UUID physMatID = 0 ) override;
 
 	public:
 		virtual void SetTrigger( bool t ) {}

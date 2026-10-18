@@ -153,15 +153,17 @@ namespace Saturn {
 
 	void PhysicsCharacterController::CreateController( PhysicsScene* pScene, SharedPtr<Entity> entity, const glm::vec3& rOriginPosition )
 	{
+		const UUID physMat = entity->GetComponent<CharacterMovementComponent>().PhysicsMaterialAssetID;
+
 		if( entity->HasComponent<CapsuleColliderComponent>() )
 		{
 			m_Shape = Ref<CapsuleShape>::Create( entity );
-			m_Shape->Create( 100.0f );
+			m_Shape->Create( 100.0f, physMat );
 		}
 		else if( entity->HasComponent<SphereColliderComponent>() )
 		{
 			m_Shape = Ref<SphereShape>::Create( entity );
-			m_Shape->Create( 100.0f );
+			m_Shape->Create( 100.0f, physMat );
 		}
 
 		// Null if there is no capsule collider

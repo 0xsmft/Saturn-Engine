@@ -476,6 +476,8 @@ rEmitter << YAML::Key << "Value" << YAML::Value << value; \
 			rEmitter << YAML::Key << "ControlMovementInAir" << YAML::Value << cmc.ControlMovementInAir;
 			rEmitter << YAML::Key << "ControlRotationInAir" << YAML::Value << cmc.ControlRotationInAir;
 
+			rEmitter << YAML::Key << "PhysMat" << YAML::Value << cmc.PhysicsMaterialAssetID;
+
 			rEmitter << YAML::EndMap;
 		}
 
@@ -997,7 +999,8 @@ pCompiledInProperty->SetProperty( DeserialisedEntity.Get(), value ); \
 			cm.StepOffset			= cmc[ "StepOffset" ].as< float >();
 			cm.NoGravity			= cmc[ "NoGravity" ].as< bool >( false );
 			cm.ControlMovementInAir = cmc[ "ControlMovementInAir" ].as< bool >( false );
-			cm.ControlRotationInAir = cmc[ "ControlRotationInAir" ].as< bool>( false );
+			cm.ControlRotationInAir = cmc[ "ControlRotationInAir" ].as< bool >( false );
+			cm.PhysicsMaterialAssetID = cmc[ "PhysMat" ].as< uint64_t >( 0llu );
 		}
 
 		const auto cc = rEntityNode[ "CameraComponent" ];

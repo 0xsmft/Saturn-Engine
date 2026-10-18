@@ -377,6 +377,11 @@ namespace Saturn {
 		}
 	}
 
+	void PhysicsRigidBody::SetGravityFactor( float factor )
+	{
+		PhysicsFoundation::Get()->GetBodyInterface()->SetGravityFactor( m_BodyID, factor );
+	}
+
 	glm::vec3 PhysicsRigidBody::GetPosition() const
 	{
 		return Auxiliary::JoltToGLM( PhysicsFoundation::Get()->GetBodyInterface()->GetPosition( m_BodyID ) );

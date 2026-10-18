@@ -59,6 +59,7 @@ namespace Saturn {
 		void Rotate( const glm::vec3& rRotation );
 		void Rotate( const glm::quat& rRotation );
 		void SetPosition( const glm::vec3& rPosition );
+		void SetGravityFactor( float factor );
 
 		void SyncTransfrom();
 

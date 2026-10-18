@@ -197,27 +197,27 @@ namespace Saturn {
 
 		if( ( m_LockFlags & RigidbodyLock_PositionX ) )
 		{
-			settings.SetLimitedAxis( EAxis::TranslationX, 1.0F, 0.0F );
+			settings.MakeFixedAxis( EAxis::TranslationX );
 		}
 		if( ( m_LockFlags & RigidbodyLock_PositionY ) )
 		{
-			settings.SetLimitedAxis( EAxis::TranslationY, 1.0F, 0.0F );
+			settings.MakeFixedAxis( EAxis::TranslationY );
 		}
 		if( ( m_LockFlags & RigidbodyLock_PositionZ ) )
 		{
-			settings.SetLimitedAxis( EAxis::TranslationZ, 1.0F, 0.0F );
+			settings.MakeFixedAxis( EAxis::TranslationZ );
 		}
 		if( ( m_LockFlags & RigidbodyLock_RotationX ) )
 		{
-			settings.SetLimitedAxis( EAxis::RotationX, 1.0F, 0.0F );
+			settings.MakeFixedAxis( EAxis::RotationX );
 		}
 		if( ( m_LockFlags & RigidbodyLock_RotationY ) )
 		{
-			settings.SetLimitedAxis( EAxis::RotationY, 1.0F, 0.0F );
+			settings.MakeFixedAxis( EAxis::RotationY );
 		}
 		if( ( m_LockFlags & RigidbodyLock_RotationZ ) )
 		{
-			settings.SetLimitedAxis( EAxis::RotationY, 1.0F, 0.0F );
+			settings.MakeFixedAxis( EAxis::RotationZ );
 		}
 
 		// Access
@@ -372,7 +372,7 @@ namespace Saturn {
 				PhysicsFoundation::Get()->GetBodyInterface()->SetPosition( m_BodyID, Auxiliary::GLMToJolt( rPosition ), JPH::EActivation::Activate );
 			} break;
 
-			default:
+			default: 
 				break;
 		}
 	}

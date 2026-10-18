@@ -69,6 +69,10 @@ namespace Saturn {
 		Ref<class Camera> m_Camera;
 		SharedPtr<class Entity> m_CameraEntity;
 
+		// Only valid when using TPS mode.
+		SharedPtr<class Entity> m_PlayerEntity;
+		SharedPtr<class Entity> m_PivotEntity;
+
 		float m_MouseUpMovement = 0.0f;
 		float m_MouseSensitivity = 0.0f;
 		glm::vec2 m_LastMousePos{};

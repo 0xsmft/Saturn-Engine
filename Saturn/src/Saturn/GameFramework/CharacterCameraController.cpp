@@ -29,6 +29,7 @@
 #include "sppch.h"
 #include "CharacterCameraController.h"
 
+#include "Saturn/Scene/Scene.h"
 #include "Saturn/Scene/Entity.h"
 #include "Saturn/Core/Input.h"
 
@@ -46,6 +47,27 @@ namespace Saturn {
 		m_Camera = camera;
 		m_CameraEntity = camEntity;
 		m_CameraMode = desiredMode;
+
+		switch( desiredMode )
+		{
+			default: break;
+			
+			case CharacterCameraControllerMode::ThirdPerson: 
+			{
+				m_PlayerEntity = m_CameraEntity->GetScene()->FindEntityByID( m_CameraEntity->GetParent() );
+
+				SAT_CORE_ASSERT( m_PlayerEntity );
+
+				CreateEntityParameters params{};
+				params.Parent = m_PlayerEntity;
+				params.Tag = "Pivot";
+				params.pClass = Entity::StaticClass();
+
+				m_PivotEntity = m_CameraEntity->GetScene()->CreateEntity( params );
+
+				m_CameraEntity->ChangeToNewParent( m_PivotEntity );
+			} break;
+		}
 	}
 
 	CharacterCameraController::~CharacterCameraController()
@@ -92,7 +114,14 @@ namespace Saturn {
 
 	void CharacterCameraController::Update_ForTP()
 	{
+		const auto& rCamera = m_CameraEntity->GetComponent<CameraComponent>().Camera;
+		auto rot = m_PivotEntity->GetLocalRotation();
 
+		// TODO: This is inverted and is really annoying!!!
+		rot.x = rCamera->GetPitch();
+		rot.y = glm::pi<float>() - rCamera->GetYaw();
+
+		m_PivotEntity->SetRotation( rot );
 	}
 
 	void CharacterCameraController::Update_ForFP()

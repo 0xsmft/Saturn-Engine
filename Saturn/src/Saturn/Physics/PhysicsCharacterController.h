@@ -56,11 +56,16 @@ namespace Saturn {
 		void Rotate( const glm::quat& rRotation );
 		void Jump( float pwr );
 		void StopMovementImmediately();
+		void SetLinearVelocity( const glm::vec3& rVelocity );
 
 	public:
 		[[nodiscard]] bool IsGrounded() const;
 		glm::vec3 GetPosition() const;
+		glm::quat GetRotation() const;
+
 		Ref<PhysicsShape> GetShape() const { return m_Shape; }
+
+		glm::vec3 GetLinearVelocity() const;
 
 	private:
 		Ref<PhysicsShape> m_Shape;

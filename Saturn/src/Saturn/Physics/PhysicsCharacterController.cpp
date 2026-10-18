@@ -217,6 +217,11 @@ namespace Saturn {
 		m_Displacement = {};
 	}
 
+	void PhysicsCharacterController::SetLinearVelocity( const glm::vec3& rVelocity )
+	{
+		m_Controller->SetLinearVelocity( Auxiliary::GLMToJolt( rVelocity ) );
+	}
+
 	void PhysicsCharacterController::Teleport( const glm::vec3& rPosition )
 	{
 		m_Controller->SetPosition( Auxiliary::GLMToJolt( rPosition ) );
@@ -230,6 +235,16 @@ namespace Saturn {
 	glm::vec3 PhysicsCharacterController::GetPosition() const
 	{
 		return Auxiliary::JoltToGLM( m_Controller->GetPosition() );
+	}
+
+	glm::quat PhysicsCharacterController::GetRotation() const
+	{
+		return Auxiliary::JoltQToGLMQ( m_Controller->GetRotation() );
+	}
+
+	glm::vec3 PhysicsCharacterController::GetLinearVelocity() const
+	{
+		return Auxiliary::JoltToGLM( m_Controller->GetLinearVelocity() );
 	}
 
 }

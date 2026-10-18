@@ -1443,7 +1443,7 @@ namespace Saturn {
 			return;
 
 		// Could use GetClass()
-		if( m_NavBoundsEntity->GetUUID() == pEntity->GetUUID() )
+		if( m_NavBoundsEntity && m_NavBoundsEntity->GetUUID() == pEntity->GetUUID() )
 			m_NavBoundsEntity = nullptr;
 
 		// Release reference to main camera entity.

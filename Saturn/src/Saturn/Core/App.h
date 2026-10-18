@@ -202,8 +202,9 @@ namespace Saturn {
 			}
 			else
 			{
-				// Add To Queue
-				std::scoped_lock<std::mutex> lock( m_Mutex );
+				// Add To Queue.
+				// This has a potential for UB, need a better way...
+				std::unique_lock<std::mutex> lock( m_Mutex, std::try_to_lock );
 
 				std::shared_ptr event = std::make_shared<EventT>( std::forward<Args>( rrArgs )... );
 				m_DeferredEventQueue.push( event );

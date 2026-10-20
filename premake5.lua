@@ -16,7 +16,12 @@ workspace "Saturn"
 
 	configurations { "Debug-ASan", "Debug", "Release", "Dist" }
 
-	flags { "MultiProcessorCompile" }
+	if _PREMAKE_VERSION ~= "5.0.0" then
+		flags { "MultiProcessorCompile" }
+	else
+		multiprocessorcompile ( "On" )
+	end
+
 	editandcontinue "Off"
 	debugformat "c7"
 

@@ -134,7 +134,7 @@ namespace Saturn {
 		AppInfo.pEngineName = "Saturn Engine";
 		AppInfo.applicationVersion = VK_MAKE_VERSION( 0, 0, 1 );
 		AppInfo.engineVersion = VK_MAKE_VERSION( 0, 0, 1 );
-		AppInfo.apiVersion = VK_API_VERSION_1_2;
+		AppInfo.apiVersion = VK_API_VERSION_1_4;
 
 		auto Extensions = Application::Get()->GetWindow()->GetVulkanRequiredExtensions();
 		Extensions.push_back( VK_EXT_DEBUG_UTILS_EXTENSION_NAME );

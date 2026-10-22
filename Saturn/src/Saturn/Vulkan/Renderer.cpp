@@ -76,7 +76,7 @@ namespace Saturn {
 				( uint64_t ) m_AcquireSemaphores[ i ], VK_OBJECT_TYPE_SEMAPHORE );
 
 			SetDebugUtilsObjectName( "Submit Semaphore", 
-				( uint64_t ) m_AcquireSemaphores[ i ], VK_OBJECT_TYPE_SEMAPHORE );
+				( uint64_t ) m_SubmitSemaphores[ i ], VK_OBJECT_TYPE_SEMAPHORE );
 		}
 
 		uint32_t* pData = new uint32_t[ 1u * 1u ];
@@ -517,8 +517,6 @@ namespace Saturn {
 		mesh->GetIndexBuffer()->Bind( CommandBuffer );
 		Pipeline->Bind( CommandBuffer );
 
-		auto frame = Renderer::Get()->GetCurrentFrame();
-
 		{
 			Submesh& rSubmesh = mesh->Submeshes()[ SubmeshIndex ];
 			auto& rMaterialAsset = materialRegistry->GetMaterialAssets()[ rSubmesh.MaterialIndex ];
@@ -697,7 +695,7 @@ namespace Saturn {
 		SubmitInfo.pWaitDstStageMask = &WaitStage;
 
 		// SIGNAL the SubmitSemaphore
-		SubmitInfo.pSignalSemaphores = &m_SubmitSemaphores[ m_FrameInFlightIndex ];
+		SubmitInfo.pSignalSemaphores = &m_SubmitSemaphores[ m_ImageIndex ];
 		SubmitInfo.signalSemaphoreCount = 1;
 
 		// WAIT for AcquireSemaphore
@@ -716,7 +714,7 @@ namespace Saturn {
 		PresentInfo.pImageIndices = &m_ImageIndex;
 
 		// WAIT for SubmitSemaphore
-		PresentInfo.pWaitSemaphores = &m_SubmitSemaphores[ m_FrameInFlightIndex ];
+		PresentInfo.pWaitSemaphores = &m_SubmitSemaphores[ m_ImageIndex ];
 		PresentInfo.waitSemaphoreCount = 1;
 
 		{
@@ -744,7 +742,7 @@ namespace Saturn {
 			m_QueuePresentTime = m_QueuePresentTimer.ElapsedMilliseconds();
 		}
 
-		VK_CHECK( vkWaitForFences( LogicalDevice, 1, &m_FlightFences[ m_FrameInFlightIndex ], VK_TRUE, UINT64_MAX ) );
+//		VK_CHECK( vkWaitForFences( LogicalDevice, 1, &m_FlightFences[ m_ImageIndex ], VK_TRUE, UINT64_MAX ) );
 		m_EndFrameTime = ( m_EndFrameTimer.ElapsedMilliseconds() + m_QueuePresentTime );
 
 		// Clear storage buffer sets. Reallocated next frame.

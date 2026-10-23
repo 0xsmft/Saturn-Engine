@@ -60,7 +60,7 @@ namespace Saturn {
 			Default();
 		}
 		else
-			m_Material->Copy( material );
+			m_Material = material;
 	}
 
 	MaterialAsset::MaterialAsset( Ref<Material> material )

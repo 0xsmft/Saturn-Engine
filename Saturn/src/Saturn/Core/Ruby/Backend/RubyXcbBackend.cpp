@@ -40,6 +40,9 @@
 
 #include <xkbcommon/xkbcommon-x11.h>
 #include <X11/keysym.h>
+#include <X11/cursorfont.h>
+
+#include <xcb/xcb_cursor.h>
 
 #include <cstring>
 
@@ -339,11 +342,12 @@ namespace Saturn {
 		
 		m_Symbols = xcb_key_symbols_alloc(m_pConnection);
 
-		// Map the window on the screen.
-		xcb_map_window(m_pConnection, m_Handle);
-		xcb_flush( m_pConnection );
-
-		RubyLibrary::Get().GetAllMonitors();
+		//if( m_WindowSpecification.ShowNow ) 
+		{
+			// Map the window on the screen.
+			xcb_map_window( m_pConnection, m_Handle );
+			xcb_flush( m_pConnection );
+		}
 	}
 	
 	void RubyXcbBackend::HandleXcbEvents()
@@ -581,17 +585,11 @@ namespace Saturn {
 
 					xkb_keysym_t keysym = xkb_state_key_get_one_sym( RubyLibrary::Get().GetXkbState(), keycode );
 
-					char buffer[64];
-					int len = xkb_keysym_to_utf8( keysym, buffer, sizeof( buffer ) );
-
-					if( len > 1 )
+					uint32_t codepoint = xkb_keysym_to_utf32( keysym );
+					if( codepoint != 0 ) 
 					{
-						uint32_t codepoint = xkb_keysym_to_utf32( keysym );
-						if( codepoint != 0 ) 
-						{
-							const wchar_t wc = ( wchar_t )codepoint;
-							pThis->GetParent()->DispatchEvent<RubyCharacterEvent>( EventType::InputCharacter, wc );
-						}					
+						const wchar_t wc = ( wchar_t )codepoint;
+						pThis->GetParent()->DispatchEvent<RubyCharacterEvent>( EventType::InputCharacter, wc );
 					}
 
 					const RubyKey saturnKey = ConvertX11KeycodeToRuby( keycode );
@@ -873,33 +871,112 @@ namespace Saturn {
 		return vkCreateXcbSurfaceKHR( Instance, &CreateInfo, nullptr, pOutSurface );
 	}
 
+	static xcb_cursor_t CreateXcbCursor( 
+		xcb_connection_t* pConnection, 
+		xcb_screen_t* pScreen, 
+		const char* pCursorName )
+	{
+		xcb_cursor_context_t* pCursorContext = nullptr;
+		if( xcb_cursor_context_new( pConnection, pScreen, &pCursorContext ) != 0 )
+		{
+			SAT_CORE_ERROR( "Failed to create XCB cursor context." );
+			return XCB_NONE;
+		}
+
+		xcb_cursor_t cursor = 0u;
+		if( pCursorName == nullptr ) 
+		{
+			cursor = xcb_cursor_load_cursor( pCursorContext, "none" );			
+		}
+		else
+		{
+			cursor = xcb_cursor_load_cursor( pCursorContext, pCursorName );
+		}
+
+		xcb_cursor_context_free( pCursorContext );
+		return cursor;
+	}
+
+	static void SetXcbCursor( xcb_connection_t* pConnection, xcb_window_t window, const char* pCursorName )
+	{
+		xcb_screen_t* pScreen = xcb_setup_roots_iterator( xcb_get_setup( pConnection ) ).data;
+		xcb_cursor_t cursor = CreateXcbCursor( pConnection, pScreen, pCursorName );
+		
+		xcb_change_window_attributes( 
+			pConnection, 
+			window, 
+			XCB_CW_CURSOR, 
+			&cursor );
+
+		xcb_free_cursor( pConnection, cursor );
+
+		xcb_flush( pConnection );
+	}
+
 	void RubyXcbBackend::SetMouseCursor( RubyCursorType Cursor, RubyMouseCursorSetReason Reason )
 	{
+		if( m_BlockMouseCursor || m_CurrentCursorType == Cursor )
+			return;
+
+		m_CurrentCursorType = Cursor;
+
 		switch( Cursor ) 
 		{
 			case RubyCursorType::None:
 			{
-
+				SetXcbCursor( m_pConnection, m_Handle, nullptr );
 			} break;
 
 			case RubyCursorType::Arrow:
 			{
-
+				SetXcbCursor( m_pConnection, m_Handle, "left_ptr" );
 			} break;
-		}
 
-		UpdateCursorIcon();
+			case RubyCursorType::IBeam:
+			{
+				SetXcbCursor( m_pConnection, m_Handle, "xterm" );
+			} break;
+
+			case RubyCursorType::Hand: 
+			{
+				SetXcbCursor( m_pConnection, m_Handle, "hand2" );
+			} break;
+
+			case RubyCursorType::ResizeEW:
+			{
+				SetXcbCursor( m_pConnection, m_Handle, "sb_h_double_arrow" );
+			} break;
+
+			case RubyCursorType::ResizeNS:
+			{
+				SetXcbCursor( m_pConnection, m_Handle, "sb_v_double_arrow" );
+			} break;
+
+			case RubyCursorType::ResizeNESW:
+			{
+				SetXcbCursor( m_pConnection, m_Handle, "bottom_left_corner" );
+			} break;
+
+			case RubyCursorType::ResizeNWSE:
+			{
+				SetXcbCursor( m_pConnection, m_Handle, "bottom_right_corner" );
+			} break;
+
+			case RubyCursorType::NotAllowed:
+			{
+				SetXcbCursor( m_pConnection, m_Handle, "circle" );
+			} break;
+
+			default:
+				break;
+		}
 	}
 
 	void RubyXcbBackend::UpdateCursorIcon()
 	{
 		if( m_pWindow->GetCursorMode() == RubyCursorMode::Locked ) 
 		{
-
-		}
-		else
-		{
-			// Fall back to the default cursor.
+			SetXcbCursor( m_pConnection, m_Handle, nullptr );
 		}
 	}
 
@@ -915,9 +992,6 @@ namespace Saturn {
 
 					m_MouseRestorePoint = {};
 					m_pWindow->m_LockedMousePosition = {};
-
-					// Unhide cursor.
-					// TODO
 				}
 
 				SetMouseCursor( RubyCursorType::Arrow );
@@ -925,7 +999,7 @@ namespace Saturn {
 
 			case RubyCursorMode::Hidden:
 			{
-				// Hide
+				SetMouseCursor( RubyCursorType::None );
 			} break;
 
 			case RubyCursorMode::Locked:
@@ -957,7 +1031,6 @@ namespace Saturn {
 		const auto cookieReq = xcb_query_pointer( m_pConnection, m_Handle );
 		auto reply = xcb_query_pointer_reply( m_pConnection, cookieReq, NULL );
 
-		xcb_get_setup(m_pConnection);
 		xcb_screen_t *screen = xcb_setup_roots_iterator(xcb_get_setup(m_pConnection)).data;
 
 		xcb_translate_coordinates_cookie_t cookie = xcb_translate_coordinates(
@@ -988,11 +1061,46 @@ namespace Saturn {
 
 	void RubyXcbBackend::PresentWindow( RubyWindowShowCmd Command )
 	{
+		switch( Command )
+		{
+			case RubyWindowShowCmd::NoActivate:
+			case RubyWindowShowCmd::Default:
+				xcb_map_window( m_pConnection, m_Handle );
+				break;
+
+			case RubyWindowShowCmd::Fullscreen:
+			{
+				xcb_atom_t stateAtom = XcbGetAtom( m_pConnection, "_NET_WM_STATE" );
+				xcb_atom_t fullscreenAtom = XcbGetAtom( m_pConnection, "_NET_WM_STATE_FULLSCREEN" );
+
+				xcb_screen_t* pScreen = xcb_setup_roots_iterator( xcb_get_setup( m_pConnection ) ).data;
+
+				xcb_client_message_event_t event{ 0} ;
+				event.response_type = XCB_CLIENT_MESSAGE;
+				event.format = 32;
+				event.window = m_Handle;
+				event.type = stateAtom;
+				event.data.data32[ 0 ] = 1; // 1 == add.
+				event.data.data32[ 1 ] = fullscreenAtom;
+				event.data.data32[ 2 ] = XCB_ATOM_NONE;
+				event.data.data32[ 3 ] = 1;
+			
+				xcb_send_event( 
+					m_pConnection, 
+					0, 
+					pScreen->root, 
+					XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY, 
+					reinterpret_cast<const char*>( &event ) );
+			} break;
+		}
+
+		xcb_flush( m_pConnection );
 	}
 
 	void RubyXcbBackend::HideWindow()
 	{
-
+		xcb_unmap_window( m_pConnection, m_Handle );
+		xcb_flush( m_pConnection );
 	}
 
 	void RubyXcbBackend::SetIcon( Ref<class Texture2D> icon )
@@ -1077,6 +1185,29 @@ namespace Saturn {
 
 	void RubyXcbBackend::FlashAttention()
 	{
+		xcb_atom_t stateAtom = XcbGetAtom( m_pConnection, "_NET_WM_STATE" );
+		xcb_atom_t demandsAttention = XcbGetAtom( m_pConnection, "_NET_WM_STATE_DEMANDS_ATTENTION" );
+
+		xcb_client_message_event_t event = { 0 };
+		event.response_type = XCB_CLIENT_MESSAGE;
+		event.format = 32;
+		event.window = m_Handle;
+		event.type = stateAtom;
+		event.data.data32[ 0 ] = 1; // 1 == add.
+		event.data.data32[ 1 ] = demandsAttention;
+		event.data.data32[ 2 ] = XCB_ATOM_NONE;
+		event.data.data32[ 3 ] = 1;
+		
+		xcb_screen_t* pScreen = xcb_setup_roots_iterator( xcb_get_setup( m_pConnection ) ).data;
+
+		xcb_send_event( 
+			m_pConnection, 
+			0, 
+			pScreen->root, 
+			XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY, 
+			reinterpret_cast<const char*>( &event ) );
+
+		xcb_flush( m_pConnection );
 	}
 
 	void RubyXcbBackend::SetClipboardText( const std::string& rTextData )

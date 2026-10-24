@@ -131,6 +131,7 @@ project "Saturn-ProjectBrowser"
 			"vulkan",
 			"xkbcommon",
 			"xkbcommon-x11",
+			"xcb-cursor",
 
 			"ImGui",
 			"SPIRV-Cross",

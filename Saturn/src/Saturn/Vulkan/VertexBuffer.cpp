@@ -105,8 +105,6 @@ namespace Saturn {
 
 	void VertexBuffer::CreateBuffer()
 	{
-		assert( m_Size >= 3 && "Vertex count must be above 3!" );
-		
 		VkDeviceSize BufferSize = m_Size;
 
 		VkBuffer StagingBuffer;
@@ -122,7 +120,7 @@ namespace Saturn {
 		
 		void* dstData = pAllocator->MapMemory< void >( rBufferAlloc );
 
-		memcpy( dstData, m_pData, BufferSize );
+		std::memcpy( dstData, m_pData, BufferSize );
 
 		pAllocator->UnmapMemory( rBufferAlloc );
 
@@ -155,8 +153,14 @@ namespace Saturn {
 
 	void VertexBuffer::Destroy()
 	{
-		if ( m_Buffer != nullptr )
-			VulkanContext::Get()->GetVulkanAllocator()->DestroyBuffer( m_Buffer );
+		if( m_Buffer != nullptr )
+		{
+			VkBuffer buf = m_Buffer;
+			VulkanContext::Get()->SubmitResourceDestory( [ buf ]() 
+			{
+				VulkanContext::Get()->GetVulkanAllocator()->DestroyBuffer( buf );
+			} );
+		}
 		
 		m_Buffer = nullptr;
 	}

@@ -57,8 +57,14 @@ namespace Saturn {
 
 	void UniformBuffer::Terminate()
 	{
-		auto pAllocator = VulkanContext::Get()->GetVulkanAllocator();
-		pAllocator->DestroyBuffer( m_Buffer );
+		if( m_Buffer != nullptr )
+		{
+			VkBuffer buf = m_Buffer;
+			VulkanContext::Get()->SubmitResourceDestory( [ buf ]()
+			{
+				VulkanContext::Get()->GetVulkanAllocator()->DestroyBuffer( buf );
+			} );
+		}
 	}
 
 	UniformBuffer::~UniformBuffer()

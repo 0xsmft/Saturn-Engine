@@ -198,10 +198,15 @@ namespace Saturn {
 	void Pass::Terminate()
 	{
 		if( m_Pass )
-			vkDestroyRenderPass( VulkanContext::Get()->GetDevice(), m_Pass, nullptr );
+		{
+			VkRenderPass pass = m_Pass;
+			VulkanContext::Get()->SubmitResourceDestory( [ pass ]()
+			{
+				vkDestroyRenderPass( VulkanContext::Get()->GetDevice(), pass, nullptr );
+			} );
+		}
 
 		m_ColorAttachments.clear();
-
 		m_Pass = nullptr;
 	}
 	

@@ -78,6 +78,14 @@ namespace Saturn {
 		void LockQueue( bool compute = false );
 		void UnlockQueue( bool compute = false );
 
+		//
+		// Only to be called by the renderer...
+		// 
+		// Clears any pending resources that need to be destroyed
+		// upon a new frame.
+		//
+		void CleanupResources( Passkey<class Renderer> pk );
+
 	public:
 		VkInstance GetInstance() const { return m_Instance; }
 
@@ -103,8 +111,17 @@ namespace Saturn {
 
 		VulkanAllocator* GetVulkanAllocator() { return m_Allocator.get(); }
 
-		// "rrFunction" will be called just before the device is destroyed.
+		//
+		// Adds a function for a resource that will be destroyed when
+		// the vulkan context is terminated.
+		//
 		void SubmitTerminateResource( std::function<void()>&& rrFunction ) { m_TerminateResourceFuncs.push_back( std::move( rrFunction ) ); }
+
+		//
+		// Adds a function for a resource that will be destroyed before a
+		// new frame begins.
+		//
+		void SubmitResourceDestory( std::function<void()>&& rrFunction );
 
 		std::vector< PhysicalDeviceProperties > GetPhysicalDeviceProperties() { return m_DeviceProps; }
 		std::vector< PhysicalDeviceProperties > const GetPhysicalDeviceProperties() const { return m_DeviceProps; }
@@ -152,6 +169,7 @@ namespace Saturn {
 		std::vector<PhysicalDeviceProperties> m_DeviceProps;
 		
 		std::vector<std::function<void()>> m_TerminateResourceFuncs;
+		std::array< std::vector<std::function<void()>>, MAX_FRAMES_IN_FLIGHT> m_ResourceDestroyedFuncs;
 
 		std::vector<const char*> m_DeviceExtensions  ={ VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME };
 

@@ -60,9 +60,16 @@ namespace Saturn {
 	{
 		m_Size = newSize;
 
-		auto pAllocator = VulkanContext::Get()->GetVulkanAllocator();
+		if( m_Buffer != nullptr )
+		{
+			VkBuffer buf = m_Buffer;
+			VulkanContext::Get()->SubmitResourceDestory( [ buf ]()
+			{
+				VulkanContext::Get()->GetVulkanAllocator()->DestroyBuffer( buf );
+			} );
+		}
 
-		pAllocator->DestroyBuffer( m_Buffer );
+		auto pAllocator = VulkanContext::Get()->GetVulkanAllocator();
 
 		VkBufferCreateInfo BufferCreateInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
 		BufferCreateInfo.size = newSize;

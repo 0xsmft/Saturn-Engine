@@ -118,8 +118,6 @@ namespace Saturn {
 		float GetQueuePresentTime() const { return m_QueuePresentTime; }
 		float GetQueueWaitTime() const { return m_QueuePresentTime; }
 
-		void SubmitTerminateResource( std::function<void()>&& rrFunction );
-
 		Ref<Texture2D>          GetPinkTexture() { return m_PinkTexture; }
 		Ref<TextureCube>        GetPinkTextureCube() { return m_PinkTextureCube; }
 		Ref<TextureSourceAsset> GetPinkTextureSrcAsset() { return m_PinkTextureSourceAsset; }
@@ -163,8 +161,6 @@ namespace Saturn {
 		Timer m_QueuePresentTimer;
 
 		std::vector<VkFence> m_FlightFences;
-		
-		std::vector< std::function<void()> > m_TerminateResourceFuncs;
 		
 		// One pair per flight in frame.
 		std::vector<VkSemaphore> m_AcquireSemaphores;

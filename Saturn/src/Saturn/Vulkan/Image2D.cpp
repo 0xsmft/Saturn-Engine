@@ -46,20 +46,31 @@ namespace Saturn {
 
 	Image2D::~Image2D()
 	{
-		vkDestroyImage( VulkanContext::Get()->GetDevice(), m_Image, nullptr );
-		vkDestroySampler( VulkanContext::Get()->GetDevice(), m_Sampler, nullptr );
-		vkFreeMemory( VulkanContext::Get()->GetDevice(), m_Memory, nullptr );
-		vkDestroyImageView( VulkanContext::Get()->GetDevice(), m_ImageView, nullptr );
+		VkImage img = m_Image;
+		VkImageView imgView = m_ImageView;
+		VkSampler sampler = m_Sampler;
+		VkDeviceMemory mem = m_Memory;
+		VulkanContext::Get()->SubmitResourceDestory( [ img, imgView, sampler, mem ]()
+		{
+			vkDestroyImage( VulkanContext::Get()->GetDevice(), img, nullptr );
+			vkDestroySampler( VulkanContext::Get()->GetDevice(), sampler, nullptr );
+			vkDestroyImageView( VulkanContext::Get()->GetDevice(), imgView, nullptr );
+			vkFreeMemory( VulkanContext::Get()->GetDevice(), mem, nullptr );
+		} );
 
 		for( size_t i = 0; i < m_ArrayLevels; ++i )
 		{
-			vkDestroyImageView( VulkanContext::Get()->GetDevice(), m_ImageViews[ i ], nullptr );
-			m_ImageViews[ i ] = nullptr;
+			VkImageView mipImgView = m_ImageViews[ i ];
+			VulkanContext::Get()->SubmitResourceDestory( [ mipImgView ]()
+			{
+				vkDestroyImageView( VulkanContext::Get()->GetDevice(), mipImgView, nullptr );
+			} );
 		}
 
 		m_Image = nullptr;
 		m_Sampler = nullptr;
 		m_Memory = nullptr;
+		m_ImageViews.clear();
 	}
 
 	void Image2D::SetDebugName( const std::string& rName ) const
@@ -69,13 +80,26 @@ namespace Saturn {
 
 	void Image2D::Resize( uint32_t Width, uint32_t Height )
 	{
-		vkDestroyImage( VulkanContext::Get()->GetDevice(), m_Image, nullptr );
-		vkDestroySampler( VulkanContext::Get()->GetDevice(), m_Sampler, nullptr );
-		vkDestroyImageView( VulkanContext::Get()->GetDevice(), m_ImageView, nullptr );
-		vkFreeMemory( VulkanContext::Get()->GetDevice(), m_Memory, nullptr );
+		VkImage img = m_Image;
+		VkImageView imgView = m_ImageView;
+		VkSampler sampler = m_Sampler;
+		VkDeviceMemory mem = m_Memory;
+		VulkanContext::Get()->SubmitResourceDestory( [ img, imgView, sampler, mem ]()
+		{
+			vkDestroyImage( VulkanContext::Get()->GetDevice(), img, nullptr );
+			vkDestroySampler( VulkanContext::Get()->GetDevice(), sampler, nullptr );
+			vkDestroyImageView( VulkanContext::Get()->GetDevice(), imgView, nullptr );
+			vkFreeMemory( VulkanContext::Get()->GetDevice(), mem, nullptr );
+		} );
 
-		for( size_t i = 0; i < m_ArrayLevels; ++i )
-			vkDestroyImageView( VulkanContext::Get()->GetDevice(), m_ImageViews[ i ], nullptr );
+		for( size_t i = 0; i < m_ArrayLevels; ++i ) 
+		{
+			VkImageView mipImgView = m_ImageViews[ i ];
+			VulkanContext::Get()->SubmitResourceDestory( [ mipImgView ]()
+			{
+				vkDestroyImageView( VulkanContext::Get()->GetDevice(), mipImgView, nullptr );
+			} );
+		}
 
 		m_Width = Width;
 		m_Height = Height;

@@ -112,7 +112,13 @@ namespace Saturn {
 	void IndexBuffer::Destroy()
 	{
 		if( m_Buffer != nullptr )
-			VulkanContext::Get()->GetVulkanAllocator()->DestroyBuffer( m_Buffer );
+		{
+			VkBuffer buf = m_Buffer;
+			VulkanContext::Get()->SubmitResourceDestory( [ buf ]()
+			{
+				VulkanContext::Get()->GetVulkanAllocator()->DestroyBuffer( buf );
+			} );
+		}
 
 		m_Buffer = nullptr;
 	}

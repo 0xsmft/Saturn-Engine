@@ -29,10 +29,7 @@
 #pragma once
 
 #include "VulkanError.h"
-#include <vector>
-#include <string>
-#include <filesystem>
-#include <unordered_map>
+
 #include <vulkan.h>
 
 namespace Saturn {
@@ -41,14 +38,14 @@ namespace Saturn {
 
 	class Swapchain : public RefTarget
 	{
+		SAT_DISABLE_COPY( Swapchain );
 	public:
 		Swapchain();
-		~Swapchain();
+		virtual ~Swapchain();
 
 		void Create();
 		void CreateFramebuffers();
 		void Recreate();
-
 		void Terminate();
 
 		bool AcquireNextImage( uint32_t Timeout, VkSemaphore Semaphore, VkFence Fence, uint32_t* pImageIndex );

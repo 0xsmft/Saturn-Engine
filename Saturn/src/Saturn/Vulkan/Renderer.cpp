@@ -139,9 +139,6 @@ namespace Saturn {
 			}
 		}
 
-		for( auto& rFunc : m_TerminateResourceFuncs )
-			rFunc();
-
 #if !defined(SAT_DIST)
 		m_ShaderReloadedCB.clear();
 #endif
@@ -465,6 +462,8 @@ namespace Saturn {
 
 		mesh->GetIndexBuffer()->Bind( CommandBuffer );
 		auto pipeline = pipelineCache->GetPipeline( mat->GetShader()->GetShaderHash() );
+		pipeline = Pipeline;
+		SAT_CORE_ASSERT( pipeline, "Pipeline not found in PipelineCache!" );
 		pipeline->Bind( CommandBuffer );
 
 		{
@@ -660,6 +659,8 @@ namespace Saturn {
 
 		VK_CHECK( vkResetCommandBuffer( m_CommandBuffers[ m_FrameInFlightIndex ], 0u ) );
 
+		VulkanContext::Get()->CleanupResources( Passkey<Renderer>() );
+
 		// Acquire next image.
 		uint32_t ImageIndex = UINT32_MAX;
 		VulkanContext::Get()->GetSwapchain().AcquireNextImage( UINT32_MAX, m_AcquireSemaphores[ m_FrameInFlightIndex ], VK_NULL_HANDLE, &ImageIndex );
@@ -752,11 +753,6 @@ namespace Saturn {
 
 		// Move on to the next frame in flight index.
 		m_FrameInFlightIndex = ( m_FrameInFlightIndex + 1 ) % MAX_FRAMES_IN_FLIGHT;
-	}
-
-	void Renderer::SubmitTerminateResource( std::function<void()>&& rrFunction )
-	{
-		m_TerminateResourceFuncs.push_back( rrFunction );
 	}
 
 	std::pair< Ref<VertexBuffer>, Ref<IndexBuffer> > Renderer::CreateFullscreenQuad()

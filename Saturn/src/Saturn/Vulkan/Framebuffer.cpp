@@ -108,7 +108,13 @@ namespace Saturn {
 	void Framebuffer::Terminate()
 	{
 		if( m_Framebuffer )
-			vkDestroyFramebuffer( VulkanContext::Get()->GetDevice(), m_Framebuffer, nullptr );
+		{
+			VkFramebuffer fb = m_Framebuffer;
+			VulkanContext::Get()->SubmitResourceDestory( [ fb ]()
+			{
+				vkDestroyFramebuffer( VulkanContext::Get()->GetDevice(), fb, nullptr );
+			} );
+		}
 
 		for( auto& resource : m_ColorAttachmentsResources )
 		{

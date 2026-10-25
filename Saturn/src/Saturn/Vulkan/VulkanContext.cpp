@@ -100,13 +100,17 @@ namespace Saturn {
 
 		m_SwapChain.Terminate();
 
-		for( auto& rFunc : m_TerminateResourceFuncs )
-			rFunc();
-
 		ShaderLibrary::Get().Shutdown();
 
 		m_Renderer->Terminate();
 		m_Renderer.reset();
+
+		for( auto& rFrameSet : m_ResourceDestroyedFuncs )
+			for( auto& rFunc : rFrameSet )
+				rFunc();
+
+		for( auto& rFunc : m_TerminateResourceFuncs )
+			rFunc();
 
 		m_Allocator.reset();
 
@@ -390,24 +394,13 @@ namespace Saturn {
 		return Data;
 	}
 
+	void VulkanContext::SubmitResourceDestory( std::function<void()>&& rrFunction )
+	{
+		m_ResourceDestroyedFuncs[ m_Renderer->GetCurrentFrame() ].push_back( std::move( rrFunction ) );
+	}
+
 	VkSampleCountFlagBits VulkanContext::GetMaxUsableMSAASamples()
 	{
-		return VK_SAMPLE_COUNT_1_BIT;
-
-		std::unreachable();
-
-		VkPhysicalDeviceProperties props;
-		vkGetPhysicalDeviceProperties( m_PhysicalDevice, &props );
-
-		VkSampleCountFlags counts = props.limits.framebufferColorSampleCounts & props.limits.framebufferDepthSampleCounts;
-
-		if( counts & VK_SAMPLE_COUNT_64_BIT ) { return VK_SAMPLE_COUNT_64_BIT; }
-		if( counts & VK_SAMPLE_COUNT_32_BIT ) { return VK_SAMPLE_COUNT_32_BIT; }
-		if( counts & VK_SAMPLE_COUNT_16_BIT ) { return VK_SAMPLE_COUNT_16_BIT; }
-		if( counts & VK_SAMPLE_COUNT_8_BIT ) { return VK_SAMPLE_COUNT_8_BIT; }
-		if( counts & VK_SAMPLE_COUNT_4_BIT ) { return VK_SAMPLE_COUNT_4_BIT; }
-		if( counts & VK_SAMPLE_COUNT_2_BIT ) { return VK_SAMPLE_COUNT_2_BIT; }
-
 		return VK_SAMPLE_COUNT_1_BIT;
 	}
 
@@ -614,6 +607,19 @@ namespace Saturn {
 			m_ComputeQueueMutex.unlock();
 		else
 			m_GraphicsQueueMutex.unlock();
+	}
+
+	void VulkanContext::CleanupResources( Passkey<class Renderer> pk )
+	{
+		const auto frameIdx = m_Renderer->GetCurrentFrame();
+
+		for( const auto& rFunction : m_ResourceDestroyedFuncs[ frameIdx ] )
+		{
+			if( rFunction )
+				( rFunction ) ( );
+		}
+
+		m_ResourceDestroyedFuncs[ frameIdx ].clear();
 	}
 
 	void VulkanContext::CreateCommandPool()

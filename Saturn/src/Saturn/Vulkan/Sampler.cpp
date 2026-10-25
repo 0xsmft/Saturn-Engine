@@ -67,7 +67,13 @@ namespace Saturn {
 	void Sampler::Destroy()
 	{
 		if( m_Sampler )
-			vkDestroySampler( VulkanContext::Get()->GetDevice(), m_Sampler, nullptr );
+		{
+			VkSampler sampler = m_Sampler;
+			VulkanContext::Get()->SubmitResourceDestory( [ sampler ]()
+			{
+				vkDestroySampler( VulkanContext::Get()->GetDevice(), sampler, nullptr );
+			} );
+		}
 
 		m_Sampler = nullptr;
 	}

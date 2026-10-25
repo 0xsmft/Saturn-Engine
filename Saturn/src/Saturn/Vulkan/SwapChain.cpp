@@ -79,8 +79,16 @@ namespace Saturn {
 		SwapchainCreateInfo.presentMode    = VK_PRESENT_MODE_IMMEDIATE_KHR;
 		SwapchainCreateInfo.clipped        = true;
 
-		if( m_Swapchain )
+		if( m_Swapchain ) 
+		{
 			SwapchainCreateInfo.oldSwapchain = m_Swapchain;
+
+			VkSwapchainKHR oldSwapchain = m_Swapchain;
+			VulkanContext::Get()->SubmitResourceDestory( [ oldSwapchain ]()
+			{
+				vkDestroySwapchainKHR( VulkanContext::Get()->GetDevice(), oldSwapchain, nullptr );
+			} );
+		}
 		else
 			SwapchainCreateInfo.oldSwapchain = VK_NULL_HANDLE;
 			
@@ -120,14 +128,22 @@ namespace Saturn {
 	void Swapchain::Recreate()
 	{
 		// Destroy old framebuffers and image views that are going to be linked to old swapchain.
-		for( auto& rFramebuffer : m_Framebuffers )
+		for( auto framebuffer : m_Framebuffers )
 		{
-			vkDestroyFramebuffer( VulkanContext::Get()->GetDevice(), rFramebuffer, nullptr );
+			VkFramebuffer fb = framebuffer;
+			VulkanContext::Get()->SubmitResourceDestory( [ fb ]()
+			{
+				vkDestroyFramebuffer( VulkanContext::Get()->GetDevice(), fb, nullptr );
+			} );
 		}
 
-		for( auto& rImageView : m_ImageViews )
+		for( auto imageView : m_ImageViews )
 		{
-			vkDestroyImageView( VulkanContext::Get()->GetDevice(), rImageView, nullptr );
+			VkImageView iv = imageView;
+			VulkanContext::Get()->SubmitResourceDestory( [ iv ]()
+			{
+				vkDestroyImageView( VulkanContext::Get()->GetDevice(), iv, nullptr );
+			} );
 		}
 
 		// Don't destroy Swapchain as we'll pass it into the SwapchainCreateInfo.oldSwapchain

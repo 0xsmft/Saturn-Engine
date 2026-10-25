@@ -45,8 +45,23 @@ namespace Saturn {
 
 	ComputePipeline::~ComputePipeline()
 	{
-		vkDestroyPipeline( VulkanContext::Get()->GetDevice(), m_Pipeline, nullptr );
-		vkDestroyPipelineLayout( VulkanContext::Get()->GetDevice(), m_PipelineLayout, nullptr );
+		if( m_PipelineLayout )
+		{
+			VkPipelineLayout layout = m_PipelineLayout;
+			VulkanContext::Get()->SubmitResourceDestory( [ layout ]()
+			{
+				vkDestroyPipelineLayout( VulkanContext::Get()->GetDevice(), layout, nullptr );
+			} );
+		}
+
+		if( m_Pipeline )
+		{
+			VkPipeline pipeline = m_Pipeline;
+			VulkanContext::Get()->SubmitResourceDestory( [ pipeline ]()
+			{
+				vkDestroyPipeline( VulkanContext::Get()->GetDevice(), pipeline, nullptr );
+			} );
+		}
 	}
 
 	void ComputePipeline::Bind()

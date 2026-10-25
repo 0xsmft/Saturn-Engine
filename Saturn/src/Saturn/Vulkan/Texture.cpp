@@ -153,25 +153,55 @@ namespace Saturn {
 
 	void Texture::Terminate()
 	{
-		if( m_Image )
-			vkDestroyImage( VulkanContext::Get()->GetDevice(), m_Image, nullptr );
+		if( m_Image != nullptr )
+		{
+			VkImage img = m_Image;
+			VulkanContext::Get()->SubmitResourceDestory( [ img ]()
+			{
+				vkDestroyImage( VulkanContext::Get()->GetDevice(), img, nullptr );
+			} );
+		}
 
-		if( m_ImageMemory )
-			vkFreeMemory( VulkanContext::Get()->GetDevice(), m_ImageMemory, nullptr );
+		if( m_ImageMemory != nullptr )
+		{
+			VkDeviceMemory mem = m_ImageMemory;
+			VulkanContext::Get()->SubmitResourceDestory( [ mem ]()
+			{
+				vkFreeMemory( VulkanContext::Get()->GetDevice(), mem, nullptr );
+			} );
+		}
 
-		if( m_ImageView )
-			vkDestroyImageView( VulkanContext::Get()->GetDevice(), m_ImageView, nullptr );
+		if( m_ImageView != nullptr )
+		{
+			VkImageView imgView = m_ImageView;
+			VulkanContext::Get()->SubmitResourceDestory( [ imgView ]()
+			{
+				vkDestroyImageView( VulkanContext::Get()->GetDevice(), imgView, nullptr );
+			} );
+		}
 
-		if( m_Sampler )
-			vkDestroySampler( VulkanContext::Get()->GetDevice(), m_Sampler, nullptr );
+		if( m_Sampler != nullptr )
+		{
+			VkSampler sampler = m_Sampler;
+			VulkanContext::Get()->SubmitResourceDestory( [ sampler ]()
+			{
+				vkDestroySampler( VulkanContext::Get()->GetDevice(), sampler, nullptr );
+			} );
+		}
 
 		m_Image = nullptr;
 		m_ImageMemory = nullptr;
 		m_ImageView = nullptr;
 		m_Sampler = nullptr;
 
-		for( auto&& [mip, view] : m_MipToImageViewMap )
-			vkDestroyImageView( VulkanContext::Get()->GetDevice(), view, nullptr );
+		for( auto&& [mip, view] : m_MipToImageViewMap ) 
+		{
+			VkImageView imgView = view;
+			VulkanContext::Get()->SubmitResourceDestory( [ view ]()
+			{
+				vkDestroyImageView( VulkanContext::Get()->GetDevice(), view, nullptr );
+			} );
+		}
 
 		m_MipToImageViewMap.clear();
 	}

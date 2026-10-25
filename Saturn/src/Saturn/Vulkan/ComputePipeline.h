@@ -40,7 +40,7 @@ namespace Saturn {
 	{
 	public:
 		ComputePipeline( Ref<Shader> ComputeShader );
-		~ComputePipeline();
+		virtual ~ComputePipeline();
 
 		// Begin pipeline in COMPUTE queue
 		void Bind();

@@ -50,18 +50,17 @@ namespace Saturn {
 
 		bool AcquireNextImage( uint32_t Timeout, VkSemaphore Semaphore, VkFence Fence, uint32_t* pImageIndex );
 
-		uint32_t GetImageIndex() const { return m_ImageIndex; }
-
 		VkSwapchainKHR& GetSwapchain() { return m_Swapchain; }
 		std::vector< VkFramebuffer >& GetFramebuffers() { return m_Framebuffers; }
+
+		size_t GetImageCount() const { return m_Images.size(); }
 
 	private:
 		void CreateImageViews();
 
+	private:
 		VkSwapchainKHR m_Swapchain = VK_NULL_HANDLE;
 		VkSemaphore m_PresentSemaphore = VK_NULL_HANDLE;
-		
-		uint32_t m_ImageIndex = 0;
 
 		std::vector< VkFence > m_Fences;
 		std::vector< VkImage > m_Images;

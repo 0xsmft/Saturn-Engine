@@ -60,22 +60,27 @@ namespace Saturn {
 
 		m_FlightFences.resize( MAX_FRAMES_IN_FLIGHT );
 		m_AcquireSemaphores.resize( MAX_FRAMES_IN_FLIGHT );
-		m_SubmitSemaphores.resize( MAX_FRAMES_IN_FLIGHT );
+
+		m_SubmitSemaphores.resize( VulkanContext::Get()->GetSwapchain().GetImageCount() );
 
 		for( auto i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
 		{
 			VK_CHECK( vkCreateFence( VulkanContext::Get()->GetDevice(), &FenceCreateInfo, nullptr, &m_FlightFences[ i ] ) );
 		
 			VK_CHECK( vkCreateSemaphore( VulkanContext::Get()->GetDevice(), &SemaphoreCreateInfo, nullptr, &m_AcquireSemaphores[ i ] ) );
-			VK_CHECK( vkCreateSemaphore( VulkanContext::Get()->GetDevice(), &SemaphoreCreateInfo, nullptr, &m_SubmitSemaphores[ i ] ) );
 
-			SetDebugUtilsObjectName( "Flight Fence",
+			SetDebugUtilsObjectName( std::format( "Flight Fence {}", i ),
 				( uint64_t ) m_FlightFences[ i ], VK_OBJECT_TYPE_FENCE );
 
-			SetDebugUtilsObjectName( "Acquire Semaphore", 
+			SetDebugUtilsObjectName( std::format( "Acquire Semaphore {}", i ),
 				( uint64_t ) m_AcquireSemaphores[ i ], VK_OBJECT_TYPE_SEMAPHORE );
+		}
 
-			SetDebugUtilsObjectName( "Submit Semaphore", 
+		for( size_t i = 0; i < m_SubmitSemaphores.size(); ++i )
+		{
+			VK_CHECK( vkCreateSemaphore( VulkanContext::Get()->GetDevice(), &SemaphoreCreateInfo, nullptr, &m_SubmitSemaphores[ i ] ) );
+
+			SetDebugUtilsObjectName( std::format( "Submit Semaphore {}", i ),
 				( uint64_t ) m_SubmitSemaphores[ i ], VK_OBJECT_TYPE_SEMAPHORE );
 		}
 
@@ -125,18 +130,19 @@ namespace Saturn {
 		for( size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i )
 		{
 			vkDestroySemaphore( VulkanContext::Get()->GetDevice(), m_AcquireSemaphores[ i ], nullptr );
-			vkDestroySemaphore( VulkanContext::Get()->GetDevice(), m_SubmitSemaphores[ i ], nullptr );
 		
 			m_RendererDescriptorSets[ i ] = nullptr;
 			m_RendererDescriptorPools[ i ] = nullptr;
 		}
 
-		if( m_FlightFences.size() )
+		for( size_t i = 0; i < m_SubmitSemaphores.size(); ++i )
 		{
-			for( int i = 0; i < m_FlightFences.size(); ++i )
-			{
-				vkDestroyFence( VulkanContext::Get()->GetDevice(), m_FlightFences[ i ], nullptr );
-			}
+			vkDestroySemaphore( VulkanContext::Get()->GetDevice(), m_SubmitSemaphores[ i ], nullptr );
+		}
+
+		for( size_t i = 0; i < m_FlightFences.size(); ++i )
+		{
+			vkDestroyFence( VulkanContext::Get()->GetDevice(), m_FlightFences[ i ], nullptr );
 		}
 
 #if !defined(SAT_DIST)
@@ -743,7 +749,6 @@ namespace Saturn {
 			m_QueuePresentTime = m_QueuePresentTimer.ElapsedMilliseconds();
 		}
 
-//		VK_CHECK( vkWaitForFences( LogicalDevice, 1, &m_FlightFences[ m_ImageIndex ], VK_TRUE, UINT64_MAX ) );
 		m_EndFrameTime = ( m_EndFrameTimer.ElapsedMilliseconds() + m_QueuePresentTime );
 
 		// Clear storage buffer sets. Reallocated next frame.

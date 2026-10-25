@@ -58,6 +58,7 @@ namespace Saturn {
 	private:
 		void CreateImageViews();
 
+	private:
 		VkSwapchainKHR m_Swapchain = VK_NULL_HANDLE;
 		VkSemaphore m_PresentSemaphore = VK_NULL_HANDLE;
 

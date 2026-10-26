@@ -54,7 +54,7 @@ layout(set = 0, binding = 0) uniform Matrices
 	mat4 ViewProjection;
 } u_Matrices;
 
-layout( set = 0, binding = 1 ) uniform sampler2D u_InputTexture[32];
+layout( set = 0, binding = 1 ) uniform sampler2D u_InputTexture[16];
 
 void main() 
 {

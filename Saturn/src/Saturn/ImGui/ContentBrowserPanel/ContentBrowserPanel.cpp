@@ -49,6 +49,7 @@
 #include "Saturn/AI/BehaviourTree/AssetViewer/Nodes/BehaviourTreeNodeBase.h"
 #include "Saturn/AI/BehaviourTree/AssetViewer/BehaviourTreeNodeEditor.h"
 #include "Saturn/Animation/AssetViewer/Graph/Animation/AnimGraph.h"
+#include "Saturn/LocText/Asset/LocalisationTableAsset.h"
 
 #include "Saturn/Serialisation/YAML/AssetSerialisers.h"
 #include "Saturn/Serialisation/YAML/SceneSerialiser.h"
@@ -849,6 +850,29 @@ namespace Saturn {
 
 				PhysicsSurfaceRegistryAssetSerialiser psras;
 				psras.Serialise( registry );
+
+				AssetManager::Get()->Save();
+
+				UpdateFiles( true );
+				FindAndRenameItem( asset->Name );
+			}
+
+			if( ImGui::MenuItem( "New Localisation Table" ) )
+			{
+				const auto id = AssetManager::Get()->CreateAsset( AssetType::LocalisationTable );
+				auto asset = AssetManager::Get()->FindAsset( id );
+				auto newPath = m_CurrentPath / "New Loc Table.slt";
+				uint32_t count = GetFilenameCount( "New Loc Table.slt" );
+
+				if( count >= 1 )
+					newPath.replace_filename( std::format( "{0} ({1}).slt", "New Loc Table", count ) );
+
+				asset->SetAbsolutePath( newPath );
+
+				Ref<LocalisationTableAsset> locTable = Ref<LocalisationTableAsset>::Create( asset );
+
+				LocalisationTableAssetSerialiser ltas;
+				ltas.Serialise( locTable );
 
 				AssetManager::Get()->Save();
 

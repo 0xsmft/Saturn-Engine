@@ -55,6 +55,7 @@
 #include "Saturn/Alura/AssetViewer/AluraStylingProfileAssetViewer.h"
 #include "Saturn/Physics/AssetViewer/PhysicsMaterialAssetViewer.h"
 #include "Saturn/Physics/AssetViewer/PhysicsSurfaceRegistryAssetViewer.h"
+#include "Saturn/LocText/Asset/LocalisationTableAssetViewer.h"
 
 #include "Saturn/Project/Project.h"
 
@@ -734,6 +735,12 @@ namespace Saturn {
 				ImGuiWindowManager::Get()->AddWindow( viewer, viewer->GetWindowName() );
 			} break;
 
+			case AssetType::LocalisationTable: 
+			{
+				const auto viewer = Ref<LocalisationTableAssetViewer>::Create( m_Asset->ID );
+				ImGuiWindowManager::Get()->AddWindow( viewer, viewer->GetWindowName() );
+			} break;
+			
 			case AssetType::Unknown:
 			case AssetType::COUNT:
 			default:

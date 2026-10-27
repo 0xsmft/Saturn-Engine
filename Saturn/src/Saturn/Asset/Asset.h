@@ -56,6 +56,7 @@ namespace Saturn {
 		StyleProfile, // Alura
 		PhysSurfaceRegistry,
 		ShaderPrototype,
+		LocalisationTable,
 		// ^^^ ADD NEW ASSET TYPES HERE ^^^
 		Unknown,
 		COUNT,
@@ -103,6 +104,8 @@ namespace Saturn {
 				return "PhysSurfaceRegistry";
 			case Saturn::AssetType::ShaderPrototype:
 				return "ShaderPrototype";
+			case Saturn::AssetType::LocalisationTable:
+				return "LocalisationTable";
 
 			default:
 			case Saturn::AssetType::Unknown:
@@ -162,6 +165,8 @@ namespace Saturn {
 				return COLOR_32( 84, 33, 58, 255 );   // Burgundy?
 			case Saturn::AssetType::ShaderPrototype:
 				return COLOR_32( 245, 69, 180, 255 ); // Some shade of pink
+			case Saturn::AssetType::LocalisationTable:
+				return COLOR_32( 252, 186, 3, 255 ); // Light blue
 
 			default:
 			case Saturn::AssetType::Unknown:
@@ -209,6 +214,8 @@ namespace Saturn {
 			return AssetType::PhysSurfaceRegistry;
 		else if( str == "ShaderPrototype" )
 			return AssetType::ShaderPrototype;
+		else if( str == "LocalisationTable" )
+			return AssetType::LocalisationTable;
 		else
 			return AssetType::Unknown;
 	}
@@ -251,6 +258,8 @@ namespace Saturn {
 			return AssetType::PhysSurfaceRegistry;
 		else if( str == ".sgsl" )
 			return AssetType::ShaderPrototype;
+		else if( str == ".slt" )
+			return AssetType::LocalisationTable;
 		else
 			return AssetType::Unknown;
 	}

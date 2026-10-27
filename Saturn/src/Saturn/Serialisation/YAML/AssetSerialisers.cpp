@@ -43,6 +43,7 @@
 #include "Saturn/AI/BehaviourTree/BlackboardSpecificationAsset.h"
 #include "Saturn/Alura/AluraFont.h"
 #include "Saturn/Alura/AluraStylingProfile.h"
+#include "Saturn/LocText/Asset/LocalisationTableAsset.h"
 
 #include "Saturn/Project/Project.h"
 
@@ -1335,6 +1336,91 @@ namespace Saturn {
         
         shaderPrototype->m_ShaderSourceCode = ss.str();
         
+		shaderPrototype->TryLoadShaders();
+
+		return true;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// LocalisationTableAssetSerialiser
+
+	void LocalisationTableAssetSerialiser::Serialise( const Ref<Asset>& rAsset ) const
+	{
+		const auto locTable = rAsset.As<LocalisationTableAsset>();
+		const auto& rLocTableEntries = locTable->GetAllEntries();
+
+		YAML::Emitter out;
+
+		out << YAML::BeginMap;
+
+		out << YAML::Key << "LocalisationTable" << YAML::Value;
+		out << YAML::BeginMap;
+
+		out << YAML::Key << "Count" << YAML::Value << rLocTableEntries.size();
+
+		out << YAML::Key << "Entries" << YAML::Value;
+		out << YAML::BeginSeq;
+
+		for( const auto& [id, entry] : rLocTableEntries )
+		{
+			out << YAML::BeginMap;
+			out << YAML::Key << "Key" << YAML::Value << entry.EntryName;
+			
+			for( const auto& [langType, data] : entry.DataPerLanguage )
+			{
+				out << YAML::Key << "LangType" << YAML::Value << ( uint16_t ) langType;
+				out << YAML::Key << "DataType" << YAML::Value << ( uint8_t ) data.Type;
+
+				switch( data.Type )
+				{
+					case LocalisationTableEntryType::Text:
+					{
+						out << YAML::Key << "Data" << YAML::Value << data.GetTextData();
+					} break;
+
+					case LocalisationTableEntryType::Asset:
+					{
+						out << YAML::Key << "Data" << YAML::Value << data.GetAssetID();
+					} break;
+
+					default:
+					{
+						out << YAML::Key << "Data" << YAML::Value << "";
+					} break;
+				}
+			}
+
+			out << YAML::EndMap; // Entry
+		}
+
+		out << YAML::EndSeq; // Entries
+
+		out << YAML::Key << "UsedLangs" << YAML::Value;
+
+		out << YAML::Flow;
+		out << YAML::BeginSeq;
+		for( const auto& rLangauge : locTable->GetUsedLanguages() )
+		{
+			out << ( uint16_t )rLangauge;
+		}
+		out << YAML::EndSeq; // UsedLangs
+
+		out << YAML::EndMap; // Asset
+
+		out << YAML::EndMap; // Root
+
+		const auto& basePath = rAsset->Path;
+		const auto fullPath = GetFilepathAbs( basePath );
+
+		std::ofstream fout( fullPath );
+		fout << out.c_str();
+	}
+
+	bool LocalisationTableAssetSerialiser::TryLoadData( Ref<Asset>& rAsset ) const
+	{
+		auto locTable = Ref<LocalisationTableAsset>::Create( rAsset );
+		rAsset = locTable;
+
 		return true;
 	}
 

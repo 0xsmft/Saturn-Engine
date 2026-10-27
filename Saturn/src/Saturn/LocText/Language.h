@@ -30,7 +30,7 @@
 
 namespace Saturn {
 
-	enum class Language : uint16_t
+	enum class LocTextLanguage : uint16_t
 	{
 		Unknown = 0,
 		English,
@@ -185,7 +185,7 @@ namespace Saturn {
 		Flemish,
 		SwissGerman,
 		Bavarian,
-		Võro,
+		Voro,
 		Seto,
 		Karelian,
 		Veps,
@@ -507,7 +507,7 @@ namespace Saturn {
 		Woleaian
 	};
 
-	enum class LanguageVariant : uint16_t
+	enum class LocTextLanguageVariant : uint16_t
 	{
 		UnknownUnknown = 0,
 
@@ -628,7 +628,7 @@ namespace Saturn {
 
 	struct LanguageOption
 	{
-		Language LanguageType = Language::Unknown;
-		LanguageVariant Variant = LanguageVariant::UnknownUnknown;
+		LocTextLanguage LanguageType   = LocTextLanguage::Unknown;
+		LocTextLanguageVariant Variant = LocTextLanguageVariant::UnknownUnknown;
 	};
 }

@@ -504,38 +504,7 @@ namespace Saturn {
 		Chuukese,
 		Pohnpeian,
 		Kosraean,
-		Woleaian,
-
-		// Constructed languages
-		Esperanto,
-		Interlingua,
-		Ido,
-		Volapuk,
-		Klingon,
-		Lojban,
-		TokiPona,
-
-		// Historical and classical languages
-		Latin,
-		AncientGreek,
-		BiblicalHebrew,
-		ClassicalArabic,
-		ClassicalSanskrit,
-		Pali,
-		Avestan,
-		Akkadian,
-		Sumerian,
-		AncientEgyptian,
-		ClassicalArmenian,
-		OldChurchSlavonic,
-		Gothic,
-		OldNorse,
-		OldEnglish,
-		MiddleEnglish,
-		OldFrench,
-		MiddleFrench,
-		ClassicalNahuatl,
-		ClassicalMaya
+		Woleaian
 	};
 
 	enum class LanguageVariant : uint16_t
@@ -543,8 +512,8 @@ namespace Saturn {
 		UnknownUnknown = 0,
 
 		// English
-		EnglishUK,
-		EnglishUS,
+		EnglishUnitedKingdom,
+		EnglishUnitedStates,
 		EnglishCanada,
 		EnglishAustralia,
 		EnglishNewZealand,

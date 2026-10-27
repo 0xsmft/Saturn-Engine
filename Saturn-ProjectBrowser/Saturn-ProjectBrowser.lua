@@ -108,6 +108,12 @@ project "Saturn-ProjectBrowser"
 
 	filter "system:linux"
 		systemversion "latest"
+		runpathdirs 
+		{
+			"%{cfg.targetdir}",
+			os.getenv('VULKAN_SDK') .. "/lib",
+			"../Saturn/vendor/assimp/bin/"
+		}
 
 		defines
 		{
@@ -124,6 +130,9 @@ project "Saturn-ProjectBrowser"
 			"Xrandr",
 			"xcb-randr",
 			"vulkan",
+			"xkbcommon",
+			"xkbcommon-x11",
+			"xcb-cursor",
 
 			"ImGui",
 			"SPIRV-Cross",
@@ -151,7 +160,7 @@ project "Saturn-ProjectBrowser"
 			AppendPkgConfigLibraries("gtk+-3.0")
 		end
 
-		filter { "system:linux", "configurations:Debug" }
+		filter { "system:linux", "configurations:Debug or configurations:Debug-ASan" }
 			links
 			{
 				"assimp",

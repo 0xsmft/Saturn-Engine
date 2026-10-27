@@ -243,7 +243,21 @@ namespace SaturnBuildTool
 
                 case ToolchainType.Clang:
                     {
-                        Shared.Toolchain = new ClangToolchain();
+                        if( Shared.Platform.PlatformType == PlatformType.Linux )
+                        {
+                            Shared.Toolchain = new ClangToolchain();
+                        }
+                        else if( Shared.Platform.PlatformType == PlatformType.MacApple )
+                        {
+                            Shared.Toolchain = new AppleClangToolchain();
+                        }
+                        else
+                        {
+                            Console.WriteLine( $"ERROR: Clang toolchain is not supported on platform {Shared.Platform.PlatformType}" );
+
+                            ExitCode = ApplicationExitStatus.Failure;
+                            return false;
+                        }
                     }
                     break;
 

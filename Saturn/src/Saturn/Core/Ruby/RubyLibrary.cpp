@@ -84,11 +84,12 @@ namespace Saturn {
 		: m_pMacOSData( new RubyNSApplicationData() )
 #endif
 	{
-#if defined( SAT_PLATFORM_WINDOWS )
 		GetAllMonitors();
-#elif defined( SAT_PLATFORM_MACOS )
-		GetAllMonitors();
+
+#if defined( SAT_PLATFORM_MACOS )
 		m_pMacOSData->Init();
+#elif defined( SAT_PLATFORM_LINUX )
+		InitXkb();
 #endif
 	}
 
@@ -99,6 +100,14 @@ namespace Saturn {
 		{
 			delete m_pMacOSData;
 			m_pMacOSData = nullptr;
+		}
+#elif defined( SAT_PLATFORM_LINUX )
+		TerminateXkb();
+		
+		if( m_pConnection )
+		{
+			xcb_disconnect( m_pConnection );
+			m_pConnection = nullptr;
 		}
 #endif
 	}
@@ -133,7 +142,13 @@ namespace Saturn {
 			::EnumDisplayMonitors( NULL, NULL, MonitorEnumProc, userData );
 		}
 #elif defined(SAT_PLATFORM_LINUX)
-		xcb_window_t rootWindow = m_Windows.begin()->second->GetNativeHandle();
+		// Open XCB connection.
+		SAT_CORE_ASSERT( TryOpenConnection() );
+
+		const xcb_setup_t* pSetup = xcb_get_setup( m_pConnection );
+		xcb_screen_iterator_t iter = xcb_setup_roots_iterator( pSetup );
+
+		xcb_window_t rootWindow = iter.data->root;
 		xcb_randr_get_monitors_cookie_t cookie = xcb_randr_get_monitors( m_pConnection, rootWindow, 1 );
 
 		xcb_randr_get_monitors_reply_t* reply = xcb_randr_get_monitors_reply( m_pConnection, cookie, nullptr );
@@ -190,6 +205,60 @@ namespace Saturn {
 		m_pConnection = xcb_connect( 0, 0 );
 
 		return m_pConnection != nullptr;
+	}
+
+	void RubyLibrary::InitXkb()
+	{
+		SAT_CORE_ASSERT( m_pConnection );
+
+		xkb_x11_setup_xkb_extension( 
+			m_pConnection, 
+			XKB_X11_MIN_MAJOR_XKB_VERSION, 
+			XKB_X11_MIN_MINOR_XKB_VERSION, 
+			XKB_X11_SETUP_XKB_EXTENSION_NO_FLAGS, 
+			NULL, NULL, NULL, NULL 
+		);
+
+		m_pXkbContext = xkb_context_new( XKB_CONTEXT_NO_FLAGS );
+		SAT_CORE_ASSERT( m_pXkbContext );
+
+		const auto deviceId = xkb_x11_get_core_keyboard_device_id( m_pConnection );
+
+		m_pXkbKeymap = xkb_x11_keymap_new_from_device(
+			m_pXkbContext,
+			m_pConnection,
+			deviceId,
+			XKB_KEYMAP_COMPILE_NO_FLAGS
+		);
+		SAT_CORE_ASSERT( m_pXkbKeymap );
+
+		m_pXkbState = xkb_x11_state_new_from_device(
+			m_pXkbKeymap,
+			m_pConnection,
+			deviceId
+		);
+		SAT_CORE_ASSERT( m_pXkbState );
+	}
+
+	void RubyLibrary::TerminateXkb()
+	{
+		if( m_pXkbState )
+		{
+			xkb_state_unref( m_pXkbState );
+			m_pXkbState = nullptr;
+		}
+
+		if( m_pXkbKeymap )
+		{
+			xkb_keymap_unref( m_pXkbKeymap );
+			m_pXkbKeymap = nullptr;
+		}
+
+		if( m_pXkbContext )
+		{
+			xkb_context_unref( m_pXkbContext );
+			m_pXkbContext = nullptr;
+		}
 	}
 #endif
 

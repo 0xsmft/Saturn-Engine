@@ -30,6 +30,7 @@ project "Tracy"
 	filter "system:linux"
 		systemversion "latest"
 		staticruntime "off"
+		pic "On"
 
 		defines 
 		{

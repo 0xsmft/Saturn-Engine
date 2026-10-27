@@ -76,7 +76,7 @@ namespace SaturnBuildTool
             // Most debug applications on Linux have embedded pdbs...
             ProgramDebugDatabaseExtension = string.Empty;
             PlatformType = PlatformType.Linux;
-            PlatformName = "Linux";
+            PlatformName = "linux";
             ArchName = "x86_64";
         }
 

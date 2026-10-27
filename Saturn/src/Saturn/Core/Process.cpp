@@ -31,6 +31,10 @@
 
 #include "StringAuxiliary.h"
 
+#if !defined(SAT_PLATFORM_WINDOWS)
+#include <unistd.h>
+#endif
+
 namespace Saturn {
 
 	Process::Process( const std::wstring& rCommandLine, const std::wstring& rWorkingDir /*= L""*/, ProcessCreateFlags flags /*= ProcessCreateFlags::Normal */ )
@@ -271,6 +275,22 @@ namespace Saturn {
 		{
 			::CloseHandle( ProcessInfo.hThread );
 			::CloseHandle( ProcessInfo.hProcess );
+		}
+#else
+		const auto newPid = fork();
+		if( newPid == 0 ) 
+		{
+			const std::string commandLine( rCommandLine.begin(), rCommandLine.end() );
+			const std::string workingDir( rWorkingDir.begin(), rWorkingDir.end() );
+
+			if( !workingDir.empty() && ::chdir( workingDir.c_str() ) != 0 )
+			{
+				SAT_CORE_ERROR( "Failed to change working directory to {0}", workingDir );
+			}
+
+			::execl( "/bin/sh", "sh", "-c", commandLine.c_str(), nullptr );
+
+			::_exit( 127 );
 		}
 #endif
 	}

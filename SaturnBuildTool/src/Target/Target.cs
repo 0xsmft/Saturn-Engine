@@ -56,9 +56,25 @@ namespace SaturnBuildTool
                 PreprocessorDefines.AddRange( new string[] { "SAT_PLATFORM_MACOS" } );
                 RTLibraryPaths.Add( "/System/Library/Frameworks" );
                 RTLibraryPaths.Add( "/System/Library/PrivateFrameworks" );
+                RTLibraryPaths.Add( "@loader_path" );
             }
 
-            RTLibraryPaths.Add( "@loader_path" );
+            if( Shared.Platform.PlatformType == PlatformType.Linux )
+            {
+                PreprocessorDefines.AddRange( new string[] { "SAT_PLATFORM_LINUX" } );
+                RTLibraryPaths.Add( "/usr/lib" );
+                RTLibraryPaths.Add( "/usr/local/lib" );
+                RTLibraryPaths.Add( "/lib" );
+                RTLibraryPaths.Add( "'$ORIGIN'" );
+
+                string saturnDir = Shared.ProjectInfo.SaturnDir;
+                RTLibraryPaths.Add( Path.Combine( saturnDir, "Saturn/vendor/assimp/bin" ) );
+
+                string binPath = Path.Combine( saturnDir, "bin" );
+                binPath = Path.Combine( binPath, VendorBinaries.GetRootBinPath( binPath ), "Saturn-SharedStorage" );
+
+                RTLibraryPaths.Add( binPath );
+            }
         }
 
         public List<string> GetIntermediateFiles()

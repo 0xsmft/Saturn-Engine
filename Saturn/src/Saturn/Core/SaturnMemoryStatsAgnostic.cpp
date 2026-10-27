@@ -31,9 +31,46 @@
 
 #if defined(SAT_PLATFORM_WINDOWS)
 #include <Psapi.h>
+#else
+#include <sys/resource.h>
+#endif
+
+#if defined(SAT_PLATFORM_MACOS)
+#include <mach/mach.h>
 #endif
 
 namespace Saturn {
+
+#if defined(SAT_PLATFORM_LINUX)
+	static uint64_t GetWorkingSet()
+	{
+		uint64_t workingSet = 0llu;
+
+		std::ifstream statmFile( "/proc/self/statm" );
+		if( statmFile.is_open() )
+		{
+			uint64_t size = 0llu;
+			uint64_t resident = 0llu;
+			statmFile >> size >> resident;
+			workingSet = resident * sysconf( _SC_PAGESIZE );
+		}
+		
+		return workingSet;
+	}
+#elif defined(SAT_PLATFORM_MACOS)
+	static uint64_t GetWorkingSet()
+	{
+		struct mach_task_basic_info info;
+		mach_msg_type_number_t infoCount = MACH_TASK_BASIC_INFO_COUNT;
+		
+		if( task_info( mach_task_self(), MACH_TASK_BASIC_INFO, ( mach_msg_type_number_t* ) &info, &infoCount ) == KERN_SUCCESS )
+		{
+			return info.resident_size;
+		}
+
+		return 0llu;
+	}
+#endif
 
 #if defined(SAT_PLATFORM_WINDOWS)
 	static SaturnMemoryStatistics SmsGetForWin32() 
@@ -49,12 +86,36 @@ namespace Saturn {
 
 		return sms;
 	}
+#else
+	static SaturnMemoryStatistics SmsGetForPOSIX() 
+	{
+		struct rusage usageData{};
+		if( ::getrusage( RUSAGE_SELF, &usageData ) != 0 )
+			return {};
+
+		SaturnMemoryStatistics sms{};
+		sms.PageFaultCount    = usageData.ru_majflt;
+
+#if defined(SAT_PLATFORM_MACOS)
+		sms.PeakWorkingSet    = usageData.ru_maxrss;
+#else
+		// On linux, ru_maxrss is in kilobytes, but we want it
+		// in megabytes to match with Windows and macOS.
+		sms.PeakWorkingSet    = usageData.ru_maxrss * 1024llu;
+#endif
+
+		sms.CurrentWorkingSet = GetWorkingSet();
+
+		return sms;
+	}
 #endif
 
 	SaturnMemoryStatistics SaturnMemoryStatisticsHelper::Query()
 	{
 #if defined(SAT_PLATFORM_WINDOWS)
 		return SmsGetForWin32();
+#else
+		return SmsGetForPOSIX();
 #endif
 	}
 

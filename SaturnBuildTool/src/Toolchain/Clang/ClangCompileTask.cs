@@ -50,12 +50,12 @@ namespace SaturnBuildTool
             {
                 case ArchitectureKind.x86_64:
                     {
-                        Args.Add( " -arch x86_64" );
+                        Args.Add( " -m64" );
                     } break;
 
                 case ArchitectureKind.AArch64:
                     {
-                        Args.Add( " -arch arm64" );
+                        Args.Add( " -march=armv8-a" );
                     } break;
             }
 
@@ -103,7 +103,7 @@ namespace SaturnBuildTool
                     case CompileSettings.PrecompiledHeaderAction.Create:
                         {
                             outFile += ".pch";
-                            Args.Add( $" -x c++-header -c \"{InputFile}\" -Xclang -emit-pch" );
+                            Args.Add( $" -x c++-header -c \"{InputFile}\"" );
                         }
                         break;
 
@@ -119,7 +119,7 @@ namespace SaturnBuildTool
             }
 
             // Output
-            Args.Add( string.Format( " -o\"{0}\"", Path.Combine( CompileSettings.OutputPath, outFile ) ) );
+            Args.Add( string.Format( " -fPIC -o\"{0}\"", Path.Combine( CompileSettings.OutputPath, outFile ) ) );
 
             if( CompileSettings.X31ShowConsole || CommandLineParser.Instance.FindFlag( "showconsole" ) )
                 Args.Add( " -D\"__X31_SHOWCONSOLE__\"" );
